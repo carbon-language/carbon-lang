@@ -831,8 +831,7 @@ static const char *parse_unresolved_type(const char *first, const char *last,
       t = parse_template_param(first, last, db);
       size_t k1 = db.names.size();
       if (t != first && k1 == k0 + 1) {
-        db.subs.push_back(
-            typename C::sub_type(1, db.names.back(), db.names.get_allocator()));
+        db.subs.push_back(typename C::sub_type(1, db.names.back()));
         first = t;
       } else {
         for (; k1 != k0; --k1)
@@ -845,8 +844,7 @@ static const char *parse_unresolved_type(const char *first, const char *last,
       if (t != first) {
         if (db.names.empty())
           return first;
-        db.subs.push_back(
-            typename C::sub_type(1, db.names.back(), db.names.get_allocator()));
+        db.subs.push_back(typename C::sub_type(1, db.names.back()));
         first = t;
       }
       break;
@@ -861,8 +859,7 @@ static const char *parse_unresolved_type(const char *first, const char *last,
             if (db.names.empty())
               return first;
             db.names.back().first.insert(0, "std::");
-            db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                   db.names.get_allocator()));
+            db.subs.push_back(typename C::sub_type(1, db.names.back()));
             first = t;
           }
         }
@@ -1663,7 +1660,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
         if (t1 != t) {
           if (is_function)
             db.subs.pop_back();
-          db.subs.emplace_back(db.names.get_allocator());
+          db.subs.emplace_back();
           for (size_t k = k0; k < k1; ++k) {
             if (is_function) {
               size_t p = db.names[k].second.size();
@@ -1707,8 +1704,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
             if (db.names.empty())
               return first;
             first = t;
-            db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                   db.names.get_allocator()));
+            db.subs.push_back(typename C::sub_type(1, db.names.back()));
           }
           break;
         case 'C':
@@ -1718,8 +1714,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
               return first;
             db.names.back().first.append(" complex");
             first = t;
-            db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                   db.names.get_allocator()));
+            db.subs.push_back(typename C::sub_type(1, db.names.back()));
           }
           break;
         case 'F':
@@ -1728,8 +1723,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
             if (db.names.empty())
               return first;
             first = t;
-            db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                   db.names.get_allocator()));
+            db.subs.push_back(typename C::sub_type(1, db.names.back()));
           }
           break;
         case 'G':
@@ -1739,8 +1733,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
               return first;
             db.names.back().first.append(" imaginary");
             first = t;
-            db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                   db.names.get_allocator()));
+            db.subs.push_back(typename C::sub_type(1, db.names.back()));
           }
           break;
         case 'M':
@@ -1749,8 +1742,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
             if (db.names.empty())
               return first;
             first = t;
-            db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                   db.names.get_allocator()));
+            db.subs.push_back(typename C::sub_type(1, db.names.back()));
           }
           break;
         case 'O': {
@@ -1758,7 +1750,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
           t = parse_type(first + 1, last, db);
           size_t k1 = db.names.size();
           if (t != first + 1) {
-            db.subs.emplace_back(db.names.get_allocator());
+            db.subs.emplace_back();
             for (size_t k = k0; k < k1; ++k) {
               if (db.names[k].second.substr(0, 2) == " [") {
                 db.names[k].first += " (";
@@ -1780,7 +1772,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
           t = parse_type(first + 1, last, db);
           size_t k1 = db.names.size();
           if (t != first + 1) {
-            db.subs.emplace_back(db.names.get_allocator());
+            db.subs.emplace_back();
             for (size_t k = k0; k < k1; ++k) {
               if (db.names[k].second.substr(0, 2) == " [") {
                 db.names[k].first += " (";
@@ -1807,7 +1799,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
           t = parse_type(first + 1, last, db);
           size_t k1 = db.names.size();
           if (t != first + 1) {
-            db.subs.emplace_back(db.names.get_allocator());
+            db.subs.emplace_back();
             for (size_t k = k0; k < k1; ++k) {
               if (db.names[k].second.substr(0, 2) == " [") {
                 db.names[k].first += " (";
@@ -1829,7 +1821,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
           t = parse_template_param(first, last, db);
           size_t k1 = db.names.size();
           if (t != first) {
-            db.subs.emplace_back(db.names.get_allocator());
+            db.subs.emplace_back();
             for (size_t k = k0; k < k1; ++k)
               db.subs.back().push_back(db.names[k]);
             if (db.try_to_parse_template_args && k1 == k0 + 1) {
@@ -1838,8 +1830,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
                 auto args = db.names.back().move_full();
                 db.names.pop_back();
                 db.names.back().first += std::move(args);
-                db.subs.push_back(typename C::sub_type(
-                    1, db.names.back(), db.names.get_allocator()));
+                db.subs.push_back(typename C::sub_type(1, db.names.back()));
                 t = t1;
               }
             }
@@ -1871,8 +1862,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
                     db.names.push_back(type + " " + proto);
                   }
                 }
-                db.subs.push_back(typename C::sub_type(
-                    1, db.names.back(), db.names.get_allocator()));
+                db.subs.push_back(typename C::sub_type(1, db.names.back()));
                 first = t2;
               }
             }
@@ -1884,8 +1874,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
             if (t != first) {
               if (db.names.empty())
                 return first;
-              db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                     db.names.get_allocator()));
+              db.subs.push_back(typename C::sub_type(1, db.names.back()));
               first = t;
             }
           } else {
@@ -1903,8 +1892,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
                 db.names.back().first += template_args;
                 // Need to create substitution for <template-template-param>
                 // <template-args>
-                db.subs.push_back(typename C::sub_type(
-                    1, db.names.back(), db.names.get_allocator()));
+                db.subs.push_back(typename C::sub_type(1, db.names.back()));
                 first = t;
               }
             }
@@ -1918,7 +1906,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
               t = parse_type(first + 2, last, db);
               size_t k1 = db.names.size();
               if (t != first + 2) {
-                db.subs.emplace_back(db.names.get_allocator());
+                db.subs.emplace_back();
                 for (size_t k = k0; k < k1; ++k)
                   db.subs.back().push_back(db.names[k]);
                 first = t;
@@ -1932,8 +1920,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
               if (t != first) {
                 if (db.names.empty())
                   return first;
-                db.subs.push_back(typename C::sub_type(
-                    1, db.names.back(), db.names.get_allocator()));
+                db.subs.push_back(typename C::sub_type(1, db.names.back()));
                 first = t;
                 return first;
               }
@@ -1943,8 +1930,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
               if (t != first) {
                 if (db.names.empty())
                   return first;
-                db.subs.push_back(typename C::sub_type(
-                    1, db.names.back(), db.names.get_allocator()));
+                db.subs.push_back(typename C::sub_type(1, db.names.back()));
                 first = t;
                 return first;
               }
@@ -1963,8 +1949,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
             if (t != first) {
               if (db.names.empty())
                 return first;
-              db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                     db.names.get_allocator()));
+              db.subs.push_back(typename C::sub_type(1, db.names.back()));
               first = t;
             }
           }
@@ -3443,7 +3428,7 @@ static const char *parse_template_args(const char *first, const char *last,
     std::string args("<");
     while (*t != 'E') {
       if (db.tag_templates)
-        db.template_param.emplace_back(db.names.get_allocator());
+        db.template_param.emplace_back();
       size_t k0 = db.names.size();
       const char *t1 = parse_template_arg(t, last, db);
       size_t k1 = db.names.size();
@@ -3452,7 +3437,7 @@ static const char *parse_template_args(const char *first, const char *last,
       if (t1 == t || t1 == last)
         return first;
       if (db.tag_templates) {
-        db.template_param.back().emplace_back(db.names.get_allocator());
+        db.template_param.back().emplace_back();
         for (size_t k = k0; k < k1; ++k)
           db.template_param.back().back().push_back(db.names[k]);
       }
@@ -3536,8 +3521,7 @@ static const char *parse_nested_name(const char *first, const char *last, C &db,
             return first;
           if (!db.names.back().first.empty()) {
             db.names.back().first += "::" + name;
-            db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                   db.names.get_allocator()));
+            db.subs.push_back(typename C::sub_type(1, db.names.back()));
           } else
             db.names.back().first = name;
           pop_subs = true;
@@ -3556,8 +3540,7 @@ static const char *parse_nested_name(const char *first, const char *last, C &db,
             db.names.back().first += "::" + name;
           else
             db.names.back().first = name;
-          db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                 db.names.get_allocator()));
+          db.subs.push_back(typename C::sub_type(1, db.names.back()));
           pop_subs = true;
           t0 = t1;
         } else
@@ -3576,8 +3559,7 @@ static const char *parse_nested_name(const char *first, const char *last, C &db,
             db.names.back().first += "::" + name;
           else
             db.names.back().first = name;
-          db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                 db.names.get_allocator()));
+          db.subs.push_back(typename C::sub_type(1, db.names.back()));
           pop_subs = true;
           t0 = t1;
         } else
@@ -3591,8 +3573,7 @@ static const char *parse_nested_name(const char *first, const char *last, C &db,
           if (db.names.empty())
             return first;
           db.names.back().first += name;
-          db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                 db.names.get_allocator()));
+          db.subs.push_back(typename C::sub_type(1, db.names.back()));
           t0 = t1;
           component_ends_with_template_args = true;
         } else
@@ -3614,8 +3595,7 @@ static const char *parse_nested_name(const char *first, const char *last, C &db,
             db.names.back().first += "::" + name;
           else
             db.names.back().first = name;
-          db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                 db.names.get_allocator()));
+          db.subs.push_back(typename C::sub_type(1, db.names.back()));
           pop_subs = true;
           t0 = t1;
         } else
@@ -3760,8 +3740,7 @@ static const char *parse_name(const char *first, const char *last, C &db,
         {
           if (db.names.empty())
             return first;
-          db.subs.push_back(typename C::sub_type(1, db.names.back(),
-                                                 db.names.get_allocator()));
+          db.subs.push_back(typename C::sub_type(1, db.names.back()));
           t0 = t1;
           t1 = parse_template_args(t0, last, db);
           if (t1 != t0) {
