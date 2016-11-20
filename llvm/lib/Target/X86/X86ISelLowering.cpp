@@ -25959,7 +25959,9 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
           (MaskVT == MVT::v8f64 || MaskVT == MVT::v8i64 ||
            MaskVT == MVT::v16f32 || MaskVT == MVT::v16i32)) ||
          (Subtarget.hasBWI() && MaskVT == MVT::v32i16) ||
-         (Subtarget.hasBWI() && Subtarget.hasVLX() && MaskVT == MVT::v16i16))) {
+         (Subtarget.hasBWI() && Subtarget.hasVLX() && MaskVT == MVT::v16i16) ||
+         (Subtarget.hasVBMI() && MaskVT == MVT::v64i8) ||
+         (Subtarget.hasVBMI() && Subtarget.hasVLX() && MaskVT == MVT::v32i8))) {
       MVT VPermMaskSVT = MVT::getIntegerVT(MaskEltSizeInBits);
       MVT VPermMaskVT = MVT::getVectorVT(VPermMaskSVT, NumMaskElts);
       SDValue VPermMask = getConstVector(Mask, VPermMaskVT, DAG, DL, true);

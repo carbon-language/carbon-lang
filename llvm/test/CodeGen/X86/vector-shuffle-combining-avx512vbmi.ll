@@ -73,16 +73,14 @@ define <16 x i8> @combine_vpermi2var_16i8_as_vpshufb(<16 x i8> %x0, <16 x i8> %x
 define <32 x i8> @combine_vpermi2var_32i8_as_vpermb(<32 x i8> %x0, <32 x i8> %x1) {
 ; X32-LABEL: combine_vpermi2var_32i8_as_vpermb:
 ; X32:       # BB#0:
-; X32-NEXT:    vpunpcklbw {{.*#+}} ymm1 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[4],ymm1[4],ymm0[5],ymm1[5],ymm0[6],ymm1[6],ymm0[7],ymm1[7],ymm0[16],ymm1[16],ymm0[17],ymm1[17],ymm0[18],ymm1[18],ymm0[19],ymm1[19],ymm0[20],ymm1[20],ymm0[21],ymm1[21],ymm0[22],ymm1[22],ymm0[23],ymm1[23]
-; X32-NEXT:    vmovdqu8 {{.*#+}} ymm0 = [0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22]
-; X32-NEXT:    vpermi2b %ymm1, %ymm1, %ymm0
+; X32-NEXT:    vmovdqu8 {{.*#+}} ymm1 = [0,0,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,0,1,23,2,22,3,21,4,22,5,21,6,20,7,19]
+; X32-NEXT:    vpermb %ymm0, %ymm1, %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_vpermi2var_32i8_as_vpermb:
 ; X64:       # BB#0:
-; X64-NEXT:    vpunpcklbw {{.*#+}} ymm1 = ymm0[0],ymm1[0],ymm0[1],ymm1[1],ymm0[2],ymm1[2],ymm0[3],ymm1[3],ymm0[4],ymm1[4],ymm0[5],ymm1[5],ymm0[6],ymm1[6],ymm0[7],ymm1[7],ymm0[16],ymm1[16],ymm0[17],ymm1[17],ymm0[18],ymm1[18],ymm0[19],ymm1[19],ymm0[20],ymm1[20],ymm0[21],ymm1[21],ymm0[22],ymm1[22],ymm0[23],ymm1[23]
-; X64-NEXT:    vmovdqu8 {{.*#+}} ymm0 = [0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22]
-; X64-NEXT:    vpermi2b %ymm1, %ymm1, %ymm0
+; X64-NEXT:    vmovdqu8 {{.*#+}} ymm1 = [0,0,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,0,1,23,2,22,3,21,4,22,5,21,6,20,7,19]
+; X64-NEXT:    vpermb %ymm0, %ymm1, %ymm0
 ; X64-NEXT:    retq
   %res0 = shufflevector <32 x i8> %x0, <32 x i8> %x1, <32 x i32> <i32 0, i32 32, i32 1, i32 33, i32 2, i32 34, i32 3, i32 35, i32 4, i32 36, i32 5, i32 37, i32 6, i32 38, i32 7, i32 39, i32 16, i32 48, i32 17, i32 49, i32 18, i32 50, i32 19, i32 51, i32 20, i32 52, i32 21, i32 53, i32 22, i32 54, i32 23, i32 55>
   %res1 = call <32 x i8> @llvm.x86.avx512.mask.vpermi2var.qi.256(<32 x i8> %res0, <32 x i8> <i8 0, i8 32, i8 2, i8 30, i8 4, i8 28, i8 6, i8 26, i8 8, i8 28, i8 10, i8 26, i8 12, i8 24, i8 14, i8 22, i8 0, i8 32, i8 2, i8 30, i8 4, i8 28, i8 6, i8 26, i8 8, i8 28, i8 10, i8 26, i8 12, i8 24, i8 14, i8 22>, <32 x i8> %res0, i32 -1)
@@ -91,16 +89,14 @@ define <32 x i8> @combine_vpermi2var_32i8_as_vpermb(<32 x i8> %x0, <32 x i8> %x1
 define <64 x i8> @combine_vpermi2var_64i8_as_vpermb(<64 x i8> %x0, <64 x i8> %x1) {
 ; X32-LABEL: combine_vpermi2var_64i8_as_vpermb:
 ; X32:       # BB#0:
-; X32-NEXT:    vpunpcklbw {{.*#+}} zmm1 = zmm0[0],zmm1[0],zmm0[1],zmm1[1],zmm0[2],zmm1[2],zmm0[3],zmm1[3],zmm0[4],zmm1[4],zmm0[5],zmm1[5],zmm0[6],zmm1[6],zmm0[7],zmm1[7],zmm0[16],zmm1[16],zmm0[17],zmm1[17],zmm0[18],zmm1[18],zmm0[19],zmm1[19],zmm0[20],zmm1[20],zmm0[21],zmm1[21],zmm0[22],zmm1[22],zmm0[23],zmm1[23],zmm0[32],zmm1[32],zmm0[33],zmm1[33],zmm0[34],zmm1[34],zmm0[35],zmm1[35],zmm0[36],zmm1[36],zmm0[37],zmm1[37],zmm0[38],zmm1[38],zmm0[39],zmm1[39],zmm0[48],zmm1[48],zmm0[49],zmm1[49],zmm0[50],zmm1[50],zmm0[51],zmm1[51],zmm0[52],zmm1[52],zmm0[53],zmm1[53],zmm0[54],zmm1[54],zmm0[55],zmm1[55]
-; X32-NEXT:    vmovdqu8 {{.*#+}} zmm0 = [0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22]
-; X32-NEXT:    vpermi2b %zmm1, %zmm1, %zmm0
+; X32-NEXT:    vmovdqu8 {{.*#+}} zmm1 = [0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19]
+; X32-NEXT:    vpermb %zmm0, %zmm1, %zmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_vpermi2var_64i8_as_vpermb:
 ; X64:       # BB#0:
-; X64-NEXT:    vpunpcklbw {{.*#+}} zmm1 = zmm0[0],zmm1[0],zmm0[1],zmm1[1],zmm0[2],zmm1[2],zmm0[3],zmm1[3],zmm0[4],zmm1[4],zmm0[5],zmm1[5],zmm0[6],zmm1[6],zmm0[7],zmm1[7],zmm0[16],zmm1[16],zmm0[17],zmm1[17],zmm0[18],zmm1[18],zmm0[19],zmm1[19],zmm0[20],zmm1[20],zmm0[21],zmm1[21],zmm0[22],zmm1[22],zmm0[23],zmm1[23],zmm0[32],zmm1[32],zmm0[33],zmm1[33],zmm0[34],zmm1[34],zmm0[35],zmm1[35],zmm0[36],zmm1[36],zmm0[37],zmm1[37],zmm0[38],zmm1[38],zmm0[39],zmm1[39],zmm0[48],zmm1[48],zmm0[49],zmm1[49],zmm0[50],zmm1[50],zmm0[51],zmm1[51],zmm0[52],zmm1[52],zmm0[53],zmm1[53],zmm0[54],zmm1[54],zmm0[55],zmm1[55]
-; X64-NEXT:    vmovdqu8 {{.*#+}} zmm0 = [0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22,0,32,2,30,4,28,6,26,8,28,10,26,12,24,14,22]
-; X64-NEXT:    vpermi2b %zmm1, %zmm1, %zmm0
+; X64-NEXT:    vmovdqu8 {{.*#+}} zmm1 = [0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19,0,32,1,23,2,22,3,21,4,22,5,21,6,20,7,19]
+; X64-NEXT:    vpermb %zmm0, %zmm1, %zmm0
 ; X64-NEXT:    retq
   %res0 = shufflevector <64 x i8> %x0, <64 x i8> %x1, <64 x i32> <i32 0, i32 64, i32 1, i32 65, i32 2, i32 66, i32 3, i32 67, i32 4, i32 68, i32 5, i32 69, i32 6, i32 70, i32 7, i32 71, i32 16, i32 80, i32 17, i32 81, i32 18, i32 82, i32 19, i32 83, i32 20, i32 84, i32 21, i32 85, i32 22, i32 86, i32 23, i32 87, i32 32, i32 96, i32 33, i32 97, i32 34, i32 98, i32 35, i32 99, i32 36, i32 100, i32 37, i32 101, i32 38, i32 102, i32 39, i32 103, i32 48, i32 112, i32 49, i32 113, i32 50, i32 114, i32 51, i32 115, i32 52, i32 116, i32 53, i32 117, i32 54, i32 118, i32 55, i32 119>
   %res1 = call <64 x i8> @llvm.x86.avx512.mask.vpermi2var.qi.512(<64 x i8> %res0, <64 x i8> <i8 0, i8 32, i8 2, i8 30, i8 4, i8 28, i8 6, i8 26, i8 8, i8 28, i8 10, i8 26, i8 12, i8 24, i8 14, i8 22, i8 0, i8 32, i8 2, i8 30, i8 4, i8 28, i8 6, i8 26, i8 8, i8 28, i8 10, i8 26, i8 12, i8 24, i8 14, i8 22, i8 0, i8 32, i8 2, i8 30, i8 4, i8 28, i8 6, i8 26, i8 8, i8 28, i8 10, i8 26, i8 12, i8 24, i8 14, i8 22, i8 0, i8 32, i8 2, i8 30, i8 4, i8 28, i8 6, i8 26, i8 8, i8 28, i8 10, i8 26, i8 12, i8 24, i8 14, i8 22>, <64 x i8> %res0, i64 -1)
