@@ -4207,8 +4207,6 @@ static void demangle(const char *first, const char *last, C &db, int &status) {
 }
 
 namespace {
-template <class T> using Vector = std::vector<T>;
-
 template <class StrT> struct string_pair {
   StrT first;
   StrT second;
@@ -4224,11 +4222,11 @@ template <class StrT> struct string_pair {
 };
 
 struct Db {
-  typedef Vector<string_pair<std::string>> sub_type;
-  typedef Vector<sub_type> template_param_type;
+  typedef std::vector<string_pair<std::string>> sub_type;
+  typedef std::vector<sub_type> template_param_type;
   sub_type names;
   template_param_type subs;
-  Vector<template_param_type> template_param;
+  std::vector<template_param_type> template_param;
   unsigned cv = 0;
   unsigned ref = 0;
   unsigned encoding_depth = 0;
