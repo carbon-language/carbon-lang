@@ -1270,7 +1270,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::FP_TO_SINT,       MVT::v8i32, Legal);
       setOperationAction(ISD::FP_TO_UINT,       MVT::v8i32, Legal);
       setOperationAction(ISD::SINT_TO_FP,       MVT::v4i32, Legal);
-      setOperationAction(ISD::UINT_TO_FP,       MVT::v4i32, Legal);
       setOperationAction(ISD::FP_TO_SINT,       MVT::v4i32, Legal);
       setOperationAction(ISD::FP_TO_UINT,       MVT::v4i32, Legal);
       setOperationAction(ISD::ZERO_EXTEND,      MVT::v4i32, Custom);
@@ -2414,7 +2413,7 @@ static SDValue getv64i1Argument(CCValAssign &VA, CCValAssign &NextVA,
   } else {
     // When a physical register is available read the value from it and glue
     // the reads together.
-    ArgValueLo = 
+    ArgValueLo =
       DAG.getCopyFromReg(Root, Dl, VA.getLocReg(), MVT::i32, *InFlag);
     *InFlag = ArgValueLo.getValue(2);
     ArgValueHi =
