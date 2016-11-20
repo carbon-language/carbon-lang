@@ -6096,14 +6096,14 @@ def : Pat<(f32 (fpround FR64X:$src)),
 multiclass avx512_vcvt_fp<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                          X86VectorVTInfo _Src, SDNode OpNode,
                          string Broadcast = _.BroadcastStr,
-                         string Alias = ""> {
+                         string Alias = "", X86MemOperand MemOp = _Src.MemOp> {
 
   defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins _Src.RC:$src), OpcodeStr, "$src", "$src",
                          (_.VT (OpNode (_Src.VT _Src.RC:$src)))>, EVEX;
 
   defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
-                         (ins _Src.MemOp:$src), OpcodeStr#Alias, "$src", "$src",
+                         (ins MemOp:$src), OpcodeStr#Alias, "$src", "$src",
                          (_.VT (OpNode (_Src.VT
                              (bitconvert (_Src.LdFrag addr:$src)))))>, EVEX;
 
@@ -6144,7 +6144,7 @@ multiclass avx512_cvtps2pd<bits<8> opc, string OpcodeStr> {
   }
   let Predicates = [HasVLX] in {
     defm Z128 : avx512_vcvt_fp<opc, OpcodeStr, v2f64x_info, v4f32x_info,
-                               X86vfpext, "{1to2}">, EVEX_V128;
+                               X86vfpext, "{1to2}", "", f64mem>, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4f64x_info, v4f32x_info, fpextend>,
                                      EVEX_V256;
   }
@@ -6203,7 +6203,7 @@ multiclass avx512_cvtdq2pd<bits<8> opc, string OpcodeStr, SDNode OpNode,
 
   let Predicates = [HasVLX] in {
     defm Z128 : avx512_vcvt_fp<opc, OpcodeStr, v2f64x_info, v4i32x_info,
-                                     OpNode128, "{1to2}">, EVEX_V128;
+                                     OpNode128, "{1to2}", "", i64mem>, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4f64x_info, v4i32x_info, OpNode>,
                                      EVEX_V256;
   }
@@ -6375,7 +6375,7 @@ multiclass avx512_cvtps2qq<bits<8> opc, string OpcodeStr,
     // Explicitly specified broadcast string, since we take only 2 elements
     // from v4f32x_info source
     defm Z128 : avx512_vcvt_fp<opc, OpcodeStr, v2i64x_info, v4f32x_info, OpNode,
-                               "{1to2}">, EVEX_V128;
+                               "{1to2}", "", f64mem>, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4i64x_info, v4f32x_info, OpNode>,
                                EVEX_V256;
   }
@@ -6393,7 +6393,7 @@ multiclass avx512_cvttps2qq<bits<8> opc, string OpcodeStr,
     // Explicitly specified broadcast string, since we take only 2 elements
     // from v4f32x_info source
     defm Z128 : avx512_vcvt_fp<opc, OpcodeStr, v2i64x_info, v4f32x_info, OpNode,
-                               "{1to2}">, EVEX_V128;
+                               "{1to2}", "", f64mem>, EVEX_V128;
     defm Z256 : avx512_vcvt_fp<opc, OpcodeStr, v4i64x_info, v4f32x_info, OpNode>,
                                EVEX_V256;
   }
@@ -6428,8 +6428,8 @@ multiclass avx512_cvtqq2ps<bits<8> opc, string OpcodeStr,
   }
 }
 
-defm VCVTDQ2PD : avx512_cvtdq2pd<0xE6, "vcvtdq2pd", sint_to_fp, X86cvtdq2pd>, XS,
-                                EVEX_CD8<32, CD8VH>;
+defm VCVTDQ2PD : avx512_cvtdq2pd<0xE6, "vcvtdq2pd", sint_to_fp, X86cvtdq2pd>,
+                                XS, EVEX_CD8<32, CD8VH>;
 
 defm VCVTDQ2PS : avx512_cvtdq2ps<0x5B, "vcvtdq2ps", sint_to_fp,
                                 X86VSintToFpRnd>,
