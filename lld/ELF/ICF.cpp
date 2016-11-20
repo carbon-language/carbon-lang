@@ -194,8 +194,8 @@ static bool variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RelsA,
       return false;
     if (DA->Value != DB->Value)
       return false;
-    InputSection<ELFT> *X = dyn_cast<InputSection<ELFT>>(DA->Section);
-    InputSection<ELFT> *Y = dyn_cast<InputSection<ELFT>>(DB->Section);
+    auto *X = dyn_cast<InputSection<ELFT>>(DA->Section);
+    auto *Y = dyn_cast<InputSection<ELFT>>(DB->Section);
     return X && Y && X->GroupId && X->GroupId == Y->GroupId;
   };
 
