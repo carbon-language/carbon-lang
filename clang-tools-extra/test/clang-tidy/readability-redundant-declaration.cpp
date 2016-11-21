@@ -21,3 +21,10 @@ static int f();
 // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: redundant 'f' declaration
 // CHECK-FIXES: {{^}}{{$}}
 static int f() {}
+
+// Original check crashed for the code below.
+namespace std {
+  typedef long unsigned int size_t;
+}
+void* operator new(std::size_t) __attribute__((__externally_visible__));
+void* operator new[](std::size_t) __attribute__((__externally_visible__));
