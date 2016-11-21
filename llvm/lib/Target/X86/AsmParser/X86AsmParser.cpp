@@ -2536,7 +2536,7 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
         (Name == "smov" || Name == "smovb" || Name == "smovw" ||
          Name == "smovl" || Name == "smovd" || Name == "smovq"))) &&
       (Operands.size() == 1 || Operands.size() == 3)) {
-    if (Name == "movsd" && Operands.size() == 1)
+    if (Name == "movsd" && Operands.size() == 1 && !isParsingIntelSyntax())
       Operands.back() = X86Operand::CreateToken("movsl", NameLoc);
     AddDefaultSrcDestOperands(TmpOperands, DefaultMemSIOperand(NameLoc),
                               DefaultMemDIOperand(NameLoc));
