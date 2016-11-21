@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s readability-redundant-declaration %t -- -- -target x86_64-unknown-unknown
+// RUN: %check_clang_tidy %s readability-redundant-declaration %t
 
 extern int Xyz;
 extern int Xyz;
@@ -24,7 +24,7 @@ static int f() {}
 
 // Original check crashed for the code below.
 namespace std {
-  typedef long unsigned int size_t;
+  typedef decltype(sizeof(0)) size_t;
 }
 void* operator new(std::size_t) __attribute__((__externally_visible__));
 void* operator new[](std::size_t) __attribute__((__externally_visible__));
