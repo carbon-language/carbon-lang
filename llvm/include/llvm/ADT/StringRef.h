@@ -558,7 +558,6 @@ namespace llvm {
     ///
     /// APInt::fromString is superficially similar but assumes the
     /// string is well-formed in the given radix.
-    LLVM_NODISCARD
     bool getAsInteger(unsigned Radix, APInt &Result) const;
 
     /// @}
