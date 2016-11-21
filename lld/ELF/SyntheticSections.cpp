@@ -1449,6 +1449,11 @@ template <class ELFT> size_t EhFrameHeader<ELFT>::getSize() const {
 }
 
 template <class ELFT>
+void EhFrameHeader<ELFT>::addFde(uint32_t Pc, uint32_t FdeVA) {
+  Fdes.push_back({Pc, FdeVA});
+}
+
+template <class ELFT>
 VersionDefinitionSection<ELFT>::VersionDefinitionSection()
     : SyntheticSection<ELFT>(SHF_ALLOC, SHT_GNU_verdef, sizeof(uint32_t),
                              ".gnu.version_d") {}

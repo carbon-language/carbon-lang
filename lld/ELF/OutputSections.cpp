@@ -62,11 +62,6 @@ void OutputSectionBase::writeHeaderTo(typename ELFT::Shdr *Shdr) {
   Shdr->sh_name = ShName;
 }
 
-template <class ELFT>
-void EhFrameHeader<ELFT>::addFde(uint32_t Pc, uint32_t FdeVA) {
-  Fdes.push_back({Pc, FdeVA});
-}
-
 template <class ELFT> static uint64_t getEntsize(uint32_t Type) {
   switch (Type) {
   case SHT_RELA:
