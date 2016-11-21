@@ -88,44 +88,22 @@ define <8 x i16> @trunc_ashr_v4i32_icmp_v4i32(<4 x i32> %a, <4 x i32> %b) nounwi
 ; X32-SSE:       # BB#0:
 ; X32-SSE-NEXT:    psrad $31, %xmm0
 ; X32-SSE-NEXT:    pcmpgtd {{\.LCPI.*}}, %xmm1
-; X32-SSE-NEXT:    pslld $16, %xmm1
-; X32-SSE-NEXT:    psrad $16, %xmm1
-; X32-SSE-NEXT:    pslld $16, %xmm0
-; X32-SSE-NEXT:    psrad $16, %xmm0
-; X32-SSE-NEXT:    packssdw %xmm1, %xmm0
+; X32-SSE-NEXT:    packsswb %xmm1, %xmm0
 ; X32-SSE-NEXT:    retl
 ;
 ; X64-SSE-LABEL: trunc_ashr_v4i32_icmp_v4i32:
 ; X64-SSE:       # BB#0:
 ; X64-SSE-NEXT:    psrad $31, %xmm0
 ; X64-SSE-NEXT:    pcmpgtd {{.*}}(%rip), %xmm1
-; X64-SSE-NEXT:    pslld $16, %xmm1
-; X64-SSE-NEXT:    psrad $16, %xmm1
-; X64-SSE-NEXT:    pslld $16, %xmm0
-; X64-SSE-NEXT:    psrad $16, %xmm0
-; X64-SSE-NEXT:    packssdw %xmm1, %xmm0
+; X64-SSE-NEXT:    packsswb %xmm1, %xmm0
 ; X64-SSE-NEXT:    retq
 ;
-; X64-AVX1-LABEL: trunc_ashr_v4i32_icmp_v4i32:
-; X64-AVX1:       # BB#0:
-; X64-AVX1-NEXT:    vpsrad $31, %xmm0, %xmm0
-; X64-AVX1-NEXT:    vpcmpgtd {{.*}}(%rip), %xmm1, %xmm1
-; X64-AVX1-NEXT:    vmovdqa {{.*#+}} xmm2 = [0,1,4,5,8,9,12,13,8,9,12,13,12,13,14,15]
-; X64-AVX1-NEXT:    vpshufb %xmm2, %xmm1, %xmm1
-; X64-AVX1-NEXT:    vpshufb %xmm2, %xmm0, %xmm0
-; X64-AVX1-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
-; X64-AVX1-NEXT:    retq
-;
-; X64-AVX2-LABEL: trunc_ashr_v4i32_icmp_v4i32:
-; X64-AVX2:       # BB#0:
-; X64-AVX2-NEXT:    vpsrad $31, %xmm0, %xmm0
-; X64-AVX2-NEXT:    vpcmpgtd {{.*}}(%rip), %xmm1, %xmm1
-; X64-AVX2-NEXT:    vinserti128 $1, %xmm1, %ymm0, %ymm0
-; X64-AVX2-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1,4,5,8,9,12,13],zero,zero,zero,zero,zero,zero,zero,zero,ymm0[16,17,20,21,24,25,28,29],zero,zero,zero,zero,zero,zero,zero,zero
-; X64-AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
-; X64-AVX2-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
-; X64-AVX2-NEXT:    vzeroupper
-; X64-AVX2-NEXT:    retq
+; X64-AVX-LABEL: trunc_ashr_v4i32_icmp_v4i32:
+; X64-AVX:       # BB#0:
+; X64-AVX-NEXT:    vpsrad $31, %xmm0, %xmm0
+; X64-AVX-NEXT:    vpcmpgtd {{.*}}(%rip), %xmm1, %xmm1
+; X64-AVX-NEXT:    vpacksswb %xmm1, %xmm0, %xmm0
+; X64-AVX-NEXT:    retq
   %1 = ashr <4 x i32> %a, <i32 31, i32 31, i32 31, i32 31>
   %2 = icmp sgt <4 x i32> %b, <i32 1, i32 16, i32 255, i32 65535>
   %3 = sext <4 x i1> %2 to <4 x i32>
