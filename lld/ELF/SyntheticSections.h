@@ -529,6 +529,34 @@ private:
   uint32_t CuTypesOffset;
 };
 
+// --eh-frame-hdr option tells linker to construct a header for all the
+// .eh_frame sections. This header is placed to a section named .eh_frame_hdr
+// and also to a PT_GNU_EH_FRAME segment.
+// At runtime the unwinder then can find all the PT_GNU_EH_FRAME segments by
+// calling dl_iterate_phdr.
+// This section contains a lookup table for quick binary search of FDEs.
+// Detailed info about internals can be found in Ian Lance Taylor's blog:
+// http://www.airs.com/blog/archives/460 (".eh_frame")
+// http://www.airs.com/blog/archives/462 (".eh_frame_hdr")
+template <class ELFT>
+class EhFrameHeader final : public SyntheticSection<ELFT> {
+  typedef typename ELFT::uint uintX_t;
+
+public:
+  EhFrameHeader();
+  void writeTo(uint8_t *Buf) override;
+  size_t getSize() const override;
+  void addFde(uint32_t Pc, uint32_t FdeVA);
+
+private:
+  struct FdeData {
+    uint32_t Pc;
+    uint32_t FdeVA;
+  };
+
+  std::vector<FdeData> Fdes;
+};
+
 template <class ELFT> InputSection<ELFT> *createCommonSection();
 template <class ELFT> InputSection<ELFT> *createInterpSection();
 template <class ELFT> MergeInputSection<ELFT> *createCommentSection();
@@ -540,6 +568,7 @@ template <class ELFT> struct In {
   static DynamicSection<ELFT> *Dynamic;
   static StringTableSection<ELFT> *DynStrTab;
   static SymbolTableSection<ELFT> *DynSymTab;
+  static EhFrameHeader<ELFT> *EhFrameHdr;
   static GnuHashTableSection<ELFT> *GnuHashTab;
   static GdbIndexSection<ELFT> *GdbIndex;
   static GotSection<ELFT> *Got;
@@ -563,6 +592,7 @@ template <class ELFT> InputSection<ELFT> *In<ELFT>::Common;
 template <class ELFT> DynamicSection<ELFT> *In<ELFT>::Dynamic;
 template <class ELFT> StringTableSection<ELFT> *In<ELFT>::DynStrTab;
 template <class ELFT> SymbolTableSection<ELFT> *In<ELFT>::DynSymTab;
+template <class ELFT> EhFrameHeader<ELFT> *In<ELFT>::EhFrameHdr;
 template <class ELFT> GdbIndexSection<ELFT> *In<ELFT>::GdbIndex;
 template <class ELFT> GnuHashTableSection<ELFT> *In<ELFT>::GnuHashTab;
 template <class ELFT> GotSection<ELFT> *In<ELFT>::Got;

@@ -27,6 +27,7 @@
 
 #include "lld/Config/Version.h"
 #include "lld/Core/Parallel.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/MD5.h"
 #include "llvm/Support/RandomNumberGenerator.h"
@@ -35,6 +36,7 @@
 #include <cstdlib>
 
 using namespace llvm;
+using namespace llvm::dwarf;
 using namespace llvm::ELF;
 using namespace llvm::object;
 using namespace llvm::support;
@@ -1403,6 +1405,46 @@ template <class ELFT> void GdbIndexSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
+template <class ELFT>
+EhFrameHeader<ELFT>::EhFrameHeader()
+    : SyntheticSection<ELFT>(SHF_ALLOC, SHT_PROGBITS, 1, ".eh_frame_hdr") {}
+
+// .eh_frame_hdr contains a binary search table of pointers to FDEs.
+// Each entry of the search table consists of two values,
+// the starting PC from where FDEs covers, and the FDE's address.
+// It is sorted by PC.
+template <class ELFT> void EhFrameHeader<ELFT>::writeTo(uint8_t *Buf) {
+  const endianness E = ELFT::TargetEndianness;
+
+  // Sort the FDE list by their PC and uniqueify. Usually there is only
+  // one FDE for a PC (i.e. function), but if ICF merges two functions
+  // into one, there can be more than one FDEs pointing to the address.
+  auto Less = [](const FdeData &A, const FdeData &B) { return A.Pc < B.Pc; };
+  std::stable_sort(Fdes.begin(), Fdes.end(), Less);
+  auto Eq = [](const FdeData &A, const FdeData &B) { return A.Pc == B.Pc; };
+  Fdes.erase(std::unique(Fdes.begin(), Fdes.end(), Eq), Fdes.end());
+
+  Buf[0] = 1;
+  Buf[1] = DW_EH_PE_pcrel | DW_EH_PE_sdata4;
+  Buf[2] = DW_EH_PE_udata4;
+  Buf[3] = DW_EH_PE_datarel | DW_EH_PE_sdata4;
+  write32<E>(Buf + 4, Out<ELFT>::EhFrame->Addr - this->getVA() - 4);
+  write32<E>(Buf + 8, Fdes.size());
+  Buf += 12;
+
+  uintX_t VA = this->getVA();
+  for (FdeData &Fde : Fdes) {
+    write32<E>(Buf, Fde.Pc - VA);
+    write32<E>(Buf + 4, Fde.FdeVA - VA);
+    Buf += 8;
+  }
+}
+
+template <class ELFT> size_t EhFrameHeader<ELFT>::getSize() const {
+  // .eh_frame_hdr has a 12 bytes header followed by an array of FDEs.
+  return 12 + Out<ELFT>::EhFrame->NumFdes * 8;
+}
+
 template InputSection<ELF32LE> *elf::createCommonSection();
 template InputSection<ELF32BE> *elf::createCommonSection();
 template InputSection<ELF64LE> *elf::createCommonSection();
@@ -1517,3 +1559,8 @@ template class elf::GdbIndexSection<ELF32LE>;
 template class elf::GdbIndexSection<ELF32BE>;
 template class elf::GdbIndexSection<ELF64LE>;
 template class elf::GdbIndexSection<ELF64BE>;
+
+template class elf::EhFrameHeader<ELF32LE>;
+template class elf::EhFrameHeader<ELF32BE>;
+template class elf::EhFrameHeader<ELF64LE>;
+template class elf::EhFrameHeader<ELF64BE>;

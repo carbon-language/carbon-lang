@@ -42,7 +42,6 @@ public:
   enum Kind {
     Base,
     EHFrame,
-    EHFrameHdr,
     Merge,
     Regular,
     VersDef,
@@ -272,37 +271,6 @@ private:
   llvm::DenseMap<std::pair<ArrayRef<uint8_t>, SymbolBody *>, CieRecord> CieMap;
 };
 
-// --eh-frame-hdr option tells linker to construct a header for all the
-// .eh_frame sections. This header is placed to a section named .eh_frame_hdr
-// and also to a PT_GNU_EH_FRAME segment.
-// At runtime the unwinder then can find all the PT_GNU_EH_FRAME segments by
-// calling dl_iterate_phdr.
-// This section contains a lookup table for quick binary search of FDEs.
-// Detailed info about internals can be found in Ian Lance Taylor's blog:
-// http://www.airs.com/blog/archives/460 (".eh_frame")
-// http://www.airs.com/blog/archives/462 (".eh_frame_hdr")
-template <class ELFT> class EhFrameHeader final : public OutputSectionBase {
-  typedef typename ELFT::uint uintX_t;
-
-public:
-  EhFrameHeader();
-  void finalize() override;
-  void writeTo(uint8_t *Buf) override;
-  void addFde(uint32_t Pc, uint32_t FdeVA);
-  Kind getKind() const override { return EHFrameHdr; }
-  static bool classof(const OutputSectionBase *B) {
-    return B->getKind() == EHFrameHdr;
-  }
-
-private:
-  struct FdeData {
-    uint32_t Pc;
-    uint32_t FdeVA;
-  };
-
-  std::vector<FdeData> Fdes;
-};
-
 // All output sections that are hadnled by the linker specially are
 // globally accessible. Writer initializes them, so don't use them
 // until Writer is initialized.
@@ -311,7 +279,6 @@ template <class ELFT> struct Out {
   typedef typename ELFT::Phdr Elf_Phdr;
 
   static uint8_t First;
-  static EhFrameHeader<ELFT> *EhFrameHdr;
   static EhOutputSection<ELFT> *EhFrame;
   static OutputSection<ELFT> *Bss;
   static OutputSection<ELFT> *MipsRldMap;
@@ -363,7 +330,6 @@ template <class ELFT> uint64_t getHeaderSize() {
 }
 
 template <class ELFT> uint8_t Out<ELFT>::First;
-template <class ELFT> EhFrameHeader<ELFT> *Out<ELFT>::EhFrameHdr;
 template <class ELFT> EhOutputSection<ELFT> *Out<ELFT>::EhFrame;
 template <class ELFT> OutputSection<ELFT> *Out<ELFT>::Bss;
 template <class ELFT> OutputSection<ELFT> *Out<ELFT>::MipsRldMap;
