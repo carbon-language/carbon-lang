@@ -1860,7 +1860,8 @@ private:
 
   /// Create a new SCoP statement for either @p BB.
   ///
-  /// A new statement for @p BB will be created and added to the statement vector
+  /// A new statement for @p BB will be created and added to the statement
+  /// vector
   /// and map.
   ///
   /// @param BB         The basic block we build the statement for.
