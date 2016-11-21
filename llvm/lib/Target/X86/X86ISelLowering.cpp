@@ -14664,8 +14664,8 @@ static SDValue truncateVectorCompareWithPACKSS(EVT DstVT, SDValue In,
                                                const SDLoc &DL,
                                                SelectionDAG &DAG,
                                                const X86Subtarget &Subtarget) {
-  // AVX512 has fast truncate.
-  if (Subtarget.hasAVX512())
+  // Requires SSE2 but AVX512 has fast truncate.
+  if (!Subtarget.hasSSE2() || Subtarget.hasAVX512())
     return SDValue();
 
   EVT SrcVT = In.getValueType();
@@ -31020,22 +31020,20 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 }
 
-/// This function transforms vector truncation of comparison results from
+/// This function transforms vector truncation of 'all or none' bits values.
 /// vXi16/vXi32/vXi64 to vXi8/vXi16/vXi32 into X86ISD::PACKSS operations.
-static SDValue combineVectorCompareTruncation(SDNode *N, SDLoc &DL,
-                                              SelectionDAG &DAG,
-                                              const X86Subtarget &Subtarget) {
-  // AVX512 has fast truncate.
-  if (Subtarget.hasAVX512())
+static SDValue combineVectorSignBitsTruncation(SDNode *N, SDLoc &DL,
+                                               SelectionDAG &DAG,
+                                               const X86Subtarget &Subtarget) {
+  // Requires SSE2 but AVX512 has fast truncate.
+  if (!Subtarget.hasSSE2() || Subtarget.hasAVX512())
     return SDValue();
 
   if (!N->getValueType(0).isVector() || !N->getValueType(0).isSimple())
     return SDValue();
 
-  // TODO: we should be able to support sources other than compares as long
-  // as we are saturating+packing zero/all bits only.
   SDValue In = N->getOperand(0);
-  if (In.getOpcode() != ISD::SETCC || !In.getValueType().isSimple())
+  if (!In.getValueType().isSimple())
     return SDValue();
 
   MVT VT = N->getValueType(0).getSimpleVT();
@@ -31044,9 +31042,11 @@ static SDValue combineVectorCompareTruncation(SDNode *N, SDLoc &DL,
   MVT InVT = In.getValueType().getSimpleVT();
   MVT InSVT = InVT.getScalarType();
 
-  assert(DAG.getTargetLoweringInfo().getBooleanContents(InVT) ==
-             TargetLoweringBase::ZeroOrNegativeOneBooleanContent &&
-         "Expected comparison result to be zero/all bits");
+  // Use PACKSS if the input is a splatted sign bit.
+  // e.g. Comparison result, sext_in_reg, etc.
+  unsigned NumSignBits = DAG.ComputeNumSignBits(In);
+  if (NumSignBits != InSVT.getSizeInBits())
+    return SDValue();
 
   // Check we have a truncation suited for PACKSS.
   if (!VT.is128BitVector() && !VT.is256BitVector())
@@ -31077,8 +31077,8 @@ static SDValue combineTruncate(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(X86ISD::MMX_MOVD2W, DL, MVT::i32, BCSrc);
   }
 
-  // Try to truncate vector comparison results with PACKSS.
-  if (SDValue V = combineVectorCompareTruncation(N, DL, DAG, Subtarget))
+  // Try to truncate extended sign bits with PACKSS.
+  if (SDValue V = combineVectorSignBitsTruncation(N, DL, DAG, Subtarget))
     return V;
 
   return combineVectorTruncation(N, DAG, Subtarget);
