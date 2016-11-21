@@ -557,6 +557,74 @@ private:
   std::vector<FdeData> Fdes;
 };
 
+// For more information about .gnu.version and .gnu.version_r see:
+// https://www.akkadia.org/drepper/symbol-versioning
+
+// The .gnu.version_d section which has a section type of SHT_GNU_verdef shall
+// contain symbol version definitions. The number of entries in this section
+// shall be contained in the DT_VERDEFNUM entry of the .dynamic section.
+// The section shall contain an array of Elf_Verdef structures, optionally
+// followed by an array of Elf_Verdaux structures.
+template <class ELFT>
+class VersionDefinitionSection final : public SyntheticSection<ELFT> {
+  typedef typename ELFT::Verdef Elf_Verdef;
+  typedef typename ELFT::Verdaux Elf_Verdaux;
+
+public:
+  VersionDefinitionSection();
+  void finalize() override;
+  size_t getSize() const override;
+  void writeTo(uint8_t *Buf) override;
+
+private:
+  void writeOne(uint8_t *Buf, uint32_t Index, StringRef Name, size_t NameOff);
+
+  unsigned FileDefNameOff;
+};
+
+// The .gnu.version section specifies the required version of each symbol in the
+// dynamic symbol table. It contains one Elf_Versym for each dynamic symbol
+// table entry. An Elf_Versym is just a 16-bit integer that refers to a version
+// identifier defined in the either .gnu.version_r or .gnu.version_d section.
+// The values 0 and 1 are reserved. All other values are used for versions in
+// the own object or in any of the dependencies.
+template <class ELFT>
+class VersionTableSection final : public SyntheticSection<ELFT> {
+  typedef typename ELFT::Versym Elf_Versym;
+
+public:
+  VersionTableSection();
+  void finalize() override;
+  size_t getSize() const override;
+  void writeTo(uint8_t *Buf) override;
+};
+
+// The .gnu.version_r section defines the version identifiers used by
+// .gnu.version. It contains a linked list of Elf_Verneed data structures. Each
+// Elf_Verneed specifies the version requirements for a single DSO, and contains
+// a reference to a linked list of Elf_Vernaux data structures which define the
+// mapping from version identifiers to version names.
+template <class ELFT>
+class VersionNeedSection final : public SyntheticSection<ELFT> {
+  typedef typename ELFT::Verneed Elf_Verneed;
+  typedef typename ELFT::Vernaux Elf_Vernaux;
+
+  // A vector of shared files that need Elf_Verneed data structures and the
+  // string table offsets of their sonames.
+  std::vector<std::pair<SharedFile<ELFT> *, size_t>> Needed;
+
+  // The next available version identifier.
+  unsigned NextIndex;
+
+public:
+  VersionNeedSection();
+  void addSymbol(SharedSymbol<ELFT> *SS);
+  void finalize() override;
+  void writeTo(uint8_t *Buf) override;
+  size_t getSize() const override;
+  size_t getNeedNum() const { return Needed.size(); }
+};
+
 template <class ELFT> InputSection<ELFT> *createCommonSection();
 template <class ELFT> InputSection<ELFT> *createInterpSection();
 template <class ELFT> MergeInputSection<ELFT> *createCommentSection();
@@ -585,6 +653,9 @@ template <class ELFT> struct In {
   static StringTableSection<ELFT> *ShStrTab;
   static StringTableSection<ELFT> *StrTab;
   static SymbolTableSection<ELFT> *SymTab;
+  static VersionDefinitionSection<ELFT> *VerDef;
+  static VersionTableSection<ELFT> *VerSym;
+  static VersionNeedSection<ELFT> *VerNeed;
 };
 
 template <class ELFT> BuildIdSection<ELFT> *In<ELFT>::BuildId;
@@ -609,6 +680,9 @@ template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaPlt;
 template <class ELFT> StringTableSection<ELFT> *In<ELFT>::ShStrTab;
 template <class ELFT> StringTableSection<ELFT> *In<ELFT>::StrTab;
 template <class ELFT> SymbolTableSection<ELFT> *In<ELFT>::SymTab;
+template <class ELFT> VersionDefinitionSection<ELFT> *In<ELFT>::VerDef;
+template <class ELFT> VersionTableSection<ELFT> *In<ELFT>::VerSym;
+template <class ELFT> VersionNeedSection<ELFT> *In<ELFT>::VerNeed;
 } // namespace elf
 } // namespace lld
 

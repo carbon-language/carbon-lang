@@ -62,11 +62,6 @@ void OutputSectionBase::writeHeaderTo(typename ELFT::Shdr *Shdr) {
   Shdr->sh_name = ShName;
 }
 
-// Returns the number of version definition entries. Because the first entry
-// is for the version definition itself, it is the number of versioned symbols
-// plus one. Note that we don't support multiple versions yet.
-static unsigned getVerDefNum() { return Config->VersionDefinitions.size() + 1; }
-
 template <class ELFT>
 void EhFrameHeader<ELFT>::addFde(uint32_t Pc, uint32_t FdeVA) {
   Fdes.push_back({Pc, FdeVA});
@@ -531,165 +526,6 @@ template <class ELFT> void MergeOutputSection<ELFT>::finalize() {
 }
 
 template <class ELFT>
-VersionDefinitionSection<ELFT>::VersionDefinitionSection()
-    : OutputSectionBase(".gnu.version_d", SHT_GNU_verdef, SHF_ALLOC) {
-  this->Addralign = sizeof(uint32_t);
-}
-
-static StringRef getFileDefName() {
-  if (!Config->SoName.empty())
-    return Config->SoName;
-  return Config->OutputFile;
-}
-
-template <class ELFT> void VersionDefinitionSection<ELFT>::finalize() {
-  FileDefNameOff = In<ELFT>::DynStrTab->addString(getFileDefName());
-  for (VersionDefinition &V : Config->VersionDefinitions)
-    V.NameOff = In<ELFT>::DynStrTab->addString(V.Name);
-
-  this->Size = (sizeof(Elf_Verdef) + sizeof(Elf_Verdaux)) * getVerDefNum();
-  this->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
-
-  // sh_info should be set to the number of definitions. This fact is missed in
-  // documentation, but confirmed by binutils community:
-  // https://sourceware.org/ml/binutils/2014-11/msg00355.html
-  this->Info = getVerDefNum();
-}
-
-template <class ELFT>
-void VersionDefinitionSection<ELFT>::writeOne(uint8_t *Buf, uint32_t Index,
-                                              StringRef Name, size_t NameOff) {
-  auto *Verdef = reinterpret_cast<Elf_Verdef *>(Buf);
-  Verdef->vd_version = 1;
-  Verdef->vd_cnt = 1;
-  Verdef->vd_aux = sizeof(Elf_Verdef);
-  Verdef->vd_next = sizeof(Elf_Verdef) + sizeof(Elf_Verdaux);
-  Verdef->vd_flags = (Index == 1 ? VER_FLG_BASE : 0);
-  Verdef->vd_ndx = Index;
-  Verdef->vd_hash = hashSysV(Name);
-
-  auto *Verdaux = reinterpret_cast<Elf_Verdaux *>(Buf + sizeof(Elf_Verdef));
-  Verdaux->vda_name = NameOff;
-  Verdaux->vda_next = 0;
-}
-
-template <class ELFT>
-void VersionDefinitionSection<ELFT>::writeTo(uint8_t *Buf) {
-  writeOne(Buf, 1, getFileDefName(), FileDefNameOff);
-
-  for (VersionDefinition &V : Config->VersionDefinitions) {
-    Buf += sizeof(Elf_Verdef) + sizeof(Elf_Verdaux);
-    writeOne(Buf, V.Id, V.Name, V.NameOff);
-  }
-
-  // Need to terminate the last version definition.
-  Elf_Verdef *Verdef = reinterpret_cast<Elf_Verdef *>(Buf);
-  Verdef->vd_next = 0;
-}
-
-template <class ELFT>
-VersionTableSection<ELFT>::VersionTableSection()
-    : OutputSectionBase(".gnu.version", SHT_GNU_versym, SHF_ALLOC) {
-  this->Addralign = sizeof(uint16_t);
-}
-
-template <class ELFT> void VersionTableSection<ELFT>::finalize() {
-  this->Size =
-      sizeof(Elf_Versym) * (In<ELFT>::DynSymTab->getSymbols().size() + 1);
-  this->Entsize = sizeof(Elf_Versym);
-  // At the moment of june 2016 GNU docs does not mention that sh_link field
-  // should be set, but Sun docs do. Also readelf relies on this field.
-  this->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
-}
-
-template <class ELFT> void VersionTableSection<ELFT>::writeTo(uint8_t *Buf) {
-  auto *OutVersym = reinterpret_cast<Elf_Versym *>(Buf) + 1;
-  for (const SymbolTableEntry &S : In<ELFT>::DynSymTab->getSymbols()) {
-    OutVersym->vs_index = S.Symbol->symbol()->VersionId;
-    ++OutVersym;
-  }
-}
-
-template <class ELFT>
-VersionNeedSection<ELFT>::VersionNeedSection()
-    : OutputSectionBase(".gnu.version_r", SHT_GNU_verneed, SHF_ALLOC) {
-  this->Addralign = sizeof(uint32_t);
-
-  // Identifiers in verneed section start at 2 because 0 and 1 are reserved
-  // for VER_NDX_LOCAL and VER_NDX_GLOBAL.
-  // First identifiers are reserved by verdef section if it exist.
-  NextIndex = getVerDefNum() + 1;
-}
-
-template <class ELFT>
-void VersionNeedSection<ELFT>::addSymbol(SharedSymbol<ELFT> *SS) {
-  if (!SS->Verdef) {
-    SS->symbol()->VersionId = VER_NDX_GLOBAL;
-    return;
-  }
-  SharedFile<ELFT> *F = SS->file();
-  // If we don't already know that we need an Elf_Verneed for this DSO, prepare
-  // to create one by adding it to our needed list and creating a dynstr entry
-  // for the soname.
-  if (F->VerdefMap.empty())
-    Needed.push_back({F, In<ELFT>::DynStrTab->addString(F->getSoName())});
-  typename SharedFile<ELFT>::NeededVer &NV = F->VerdefMap[SS->Verdef];
-  // If we don't already know that we need an Elf_Vernaux for this Elf_Verdef,
-  // prepare to create one by allocating a version identifier and creating a
-  // dynstr entry for the version name.
-  if (NV.Index == 0) {
-    NV.StrTab = In<ELFT>::DynStrTab->addString(
-        SS->file()->getStringTable().data() + SS->Verdef->getAux()->vda_name);
-    NV.Index = NextIndex++;
-  }
-  SS->symbol()->VersionId = NV.Index;
-}
-
-template <class ELFT> void VersionNeedSection<ELFT>::writeTo(uint8_t *Buf) {
-  // The Elf_Verneeds need to appear first, followed by the Elf_Vernauxs.
-  auto *Verneed = reinterpret_cast<Elf_Verneed *>(Buf);
-  auto *Vernaux = reinterpret_cast<Elf_Vernaux *>(Verneed + Needed.size());
-
-  for (std::pair<SharedFile<ELFT> *, size_t> &P : Needed) {
-    // Create an Elf_Verneed for this DSO.
-    Verneed->vn_version = 1;
-    Verneed->vn_cnt = P.first->VerdefMap.size();
-    Verneed->vn_file = P.second;
-    Verneed->vn_aux =
-        reinterpret_cast<char *>(Vernaux) - reinterpret_cast<char *>(Verneed);
-    Verneed->vn_next = sizeof(Elf_Verneed);
-    ++Verneed;
-
-    // Create the Elf_Vernauxs for this Elf_Verneed. The loop iterates over
-    // VerdefMap, which will only contain references to needed version
-    // definitions. Each Elf_Vernaux is based on the information contained in
-    // the Elf_Verdef in the source DSO. This loop iterates over a std::map of
-    // pointers, but is deterministic because the pointers refer to Elf_Verdef
-    // data structures within a single input file.
-    for (auto &NV : P.first->VerdefMap) {
-      Vernaux->vna_hash = NV.first->vd_hash;
-      Vernaux->vna_flags = 0;
-      Vernaux->vna_other = NV.second.Index;
-      Vernaux->vna_name = NV.second.StrTab;
-      Vernaux->vna_next = sizeof(Elf_Vernaux);
-      ++Vernaux;
-    }
-
-    Vernaux[-1].vna_next = 0;
-  }
-  Verneed[-1].vn_next = 0;
-}
-
-template <class ELFT> void VersionNeedSection<ELFT>::finalize() {
-  this->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
-  this->Info = Needed.size();
-  unsigned Size = Needed.size() * sizeof(Elf_Verneed);
-  for (std::pair<SharedFile<ELFT> *, size_t> &P : Needed)
-    Size += P.first->VerdefMap.size() * sizeof(Elf_Vernaux);
-  this->Size = Size;
-}
-
-template <class ELFT>
 static typename ELFT::uint getOutFlags(InputSectionBase<ELFT> *S) {
   return S->Flags & ~SHF_GROUP & ~SHF_COMPRESSED;
 }
@@ -802,21 +638,6 @@ template class MergeOutputSection<ELF32LE>;
 template class MergeOutputSection<ELF32BE>;
 template class MergeOutputSection<ELF64LE>;
 template class MergeOutputSection<ELF64BE>;
-
-template class VersionTableSection<ELF32LE>;
-template class VersionTableSection<ELF32BE>;
-template class VersionTableSection<ELF64LE>;
-template class VersionTableSection<ELF64BE>;
-
-template class VersionNeedSection<ELF32LE>;
-template class VersionNeedSection<ELF32BE>;
-template class VersionNeedSection<ELF64LE>;
-template class VersionNeedSection<ELF64BE>;
-
-template class VersionDefinitionSection<ELF32LE>;
-template class VersionDefinitionSection<ELF32BE>;
-template class VersionDefinitionSection<ELF64LE>;
-template class VersionDefinitionSection<ELF64BE>;
 
 template class OutputSectionFactory<ELF32LE>;
 template class OutputSectionFactory<ELF32BE>;
