@@ -1267,11 +1267,13 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
 // sections. These are special, we do not include them into output sections
 // list, but have them to simplify the code.
 template <class ELFT> void Writer<ELFT>::fixHeaders() {
-  uintX_t BaseVA = ScriptConfig->HasSections ? 0 : Config->ImageBase;
-  Out<ELFT>::ElfHeader->Addr = BaseVA;
-  uintX_t Off = Out<ELFT>::ElfHeader->Size;
-  Out<ELFT>::ProgramHeaders->Addr = Off + BaseVA;
   Out<ELFT>::ProgramHeaders->Size = sizeof(Elf_Phdr) * Phdrs.size();
+  // If the script has SECTIONS, assignAddresses will compute the values.
+  if (ScriptConfig->HasSections)
+    return;
+  uintX_t BaseVA = Config->ImageBase;
+  Out<ELFT>::ElfHeader->Addr = BaseVA;
+  Out<ELFT>::ProgramHeaders->Addr = BaseVA + Out<ELFT>::ElfHeader->Size;
 }
 
 // Assign VAs (addresses at run-time) to output sections.
