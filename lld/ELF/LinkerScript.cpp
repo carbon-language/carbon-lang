@@ -128,17 +128,19 @@ bool BytesDataCommand::classof(const BaseCommand *C) {
 template <class ELFT> LinkerScript<ELFT>::LinkerScript() = default;
 template <class ELFT> LinkerScript<ELFT>::~LinkerScript() = default;
 
+template <class ELFT> static StringRef basename(InputSectionBase<ELFT> *S) {
+  if (S->getFile())
+    return sys::path::filename(S->getFile()->getName());
+  return "";
+}
+
 template <class ELFT>
 bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
-  for (InputSectionDescription *ID : Opt.KeptSections) {
-    StringRef Filename = S->getFile()->getName();
-    if (!ID->FilePat.match(sys::path::filename(Filename)))
-      continue;
-
-    for (SectionPattern &P : ID->SectionPatterns)
-      if (P.SectionPat.match(S->Name))
-        return true;
-  }
+  for (InputSectionDescription *ID : Opt.KeptSections)
+    if (ID->FilePat.match(basename(S)))
+      for (SectionPattern &P : ID->SectionPatterns)
+        if (P.SectionPat.match(S->Name))
+          return true;
   return false;
 }
 
@@ -202,15 +204,13 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
       if (!S->Live || S->Assigned)
         continue;
 
-      StringRef Filename;
-      if (elf::ObjectFile<ELFT> *F = S->getFile())
-        Filename = sys::path::filename(F->getName());
-
-      if (I->FilePat.match(Filename) && !Pat.ExcludedFilePat.match(Filename) &&
-          Pat.SectionPat.match(S->Name)) {
-        I->Sections.push_back(S);
-        S->Assigned = true;
-      }
+      StringRef Filename = basename(S);
+      if (!I->FilePat.match(Filename) || Pat.ExcludedFilePat.match(Filename))
+        continue;
+      if (!Pat.SectionPat.match(S->Name))
+        continue;
+      I->Sections.push_back(S);
+      S->Assigned = true;
     }
 
     // Sort sections as instructed by SORT-family commands and --sort-section
@@ -342,9 +342,6 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
         if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base.get()))
           if (shouldDefine<ELFT>(OutCmd))
             addSymbol<ELFT>(OutCmd);
-
-      if (V.empty())
-        continue;
 
       for (InputSectionBase<ELFT> *Sec : V) {
         addSection(Factory, Sec, Cmd->Name);
