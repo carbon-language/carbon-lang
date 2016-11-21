@@ -24,3 +24,24 @@
 # CHECK-NEXT:     Alignment: 4096
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
+
+# RUN: ld.lld -o %t2.so --script %t.script %t.o -shared -z max-page-size=0x2000
+# RUN: llvm-readobj -program-headers %t2.so \
+# RUN:   | FileCheck --check-prefix=MAXPAGE %s
+
+# MAXPAGE:      ProgramHeaders [
+# MAXPAGE-NEXT:   ProgramHeader {
+# MAXPAGE-NEXT:     Type: PT_LOAD
+# MAXPAGE-NEXT:     Offset: 0x40
+# MAXPAGE-NEXT:     VirtualAddress: 0x40
+# MAXPAGE-NEXT:     PhysicalAddress: 0x40
+# MAXPAGE-NEXT:     FileSize: 8272
+# MAXPAGE-NEXT:     MemSize: 8272
+# MAXPAGE-NEXT:     Flags [
+# MAXPAGE-NEXT:       PF_R
+# MAXPAGE-NEXT:       PF_W
+# MAXPAGE-NEXT:       PF_X
+# MAXPAGE-NEXT:     ]
+# MAXPAGE-NEXT:     Alignment: 8192
+# MAXPAGE-NEXT:   }
+# MAXPAGE-NEXT: ]

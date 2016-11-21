@@ -717,7 +717,7 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry<ELFT>> &Phdrs) {
 
   // ELF and Program headers need to be right before the first section in
   // memory. Set their addresses accordingly.
-  MinVA = alignDown(MinVA - HeaderSize, Target->PageSize);
+  MinVA = alignDown(MinVA - HeaderSize, Config->MaxPageSize);
   Out<ELFT>::ElfHeader->Addr = MinVA;
   Out<ELFT>::ProgramHeaders->Addr = Out<ELFT>::ElfHeader->Size + MinVA;
 
