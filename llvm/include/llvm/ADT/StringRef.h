@@ -152,8 +152,8 @@ namespace llvm {
     }
 
     // copy - Allocate copy in Allocator and return StringRef to it.
-    LLVM_NODISCARD
-    template <typename Allocator> StringRef copy(Allocator &A) const {
+    template <typename Allocator>
+    LLVM_NODISCARD StringRef copy(Allocator &A) const {
       // Don't request a length 0 copy from the allocator.
       if (empty())
         return StringRef();
@@ -274,8 +274,8 @@ namespace llvm {
     bool startswith_lower(StringRef Prefix) const;
 
     /// Check if this string ends with the given \p Suffix.
-    LLVM_ATTRIBUTE_ALWAYS_INLINE
     LLVM_NODISCARD
+    LLVM_ATTRIBUTE_ALWAYS_INLINE
     bool endswith(StringRef Suffix) const {
       return Length >= Suffix.Length &&
         compareMemory(end() - Suffix.Length, Suffix.Data, Suffix.Length) == 0;
@@ -492,10 +492,10 @@ namespace llvm {
     /// If the string is invalid or if only a subset of the string is valid,
     /// this returns true to signify the error.  The string is considered
     /// erroneous if empty or if it overflows T.
-    LLVM_NODISCARD
     template <typename T>
-    typename std::enable_if<std::numeric_limits<T>::is_signed, bool>::type
-    getAsInteger(unsigned Radix, T &Result) const {
+    LLVM_NODISCARD
+        typename std::enable_if<std::numeric_limits<T>::is_signed, bool>::type
+        getAsInteger(unsigned Radix, T &Result) const {
       long long LLVal;
       if (getAsSignedInteger(*this, Radix, LLVal) ||
             static_cast<T>(LLVal) != LLVal)
@@ -504,10 +504,10 @@ namespace llvm {
       return false;
     }
 
-    LLVM_NODISCARD
     template <typename T>
-    typename std::enable_if<!std::numeric_limits<T>::is_signed, bool>::type
-    getAsInteger(unsigned Radix, T &Result) const {
+    LLVM_NODISCARD
+        typename std::enable_if<!std::numeric_limits<T>::is_signed, bool>::type
+        getAsInteger(unsigned Radix, T &Result) const {
       unsigned long long ULLVal;
       // The additional cast to unsigned long long is required to avoid the
       // Visual C++ warning C4805: '!=' : unsafe mix of type 'bool' and type
