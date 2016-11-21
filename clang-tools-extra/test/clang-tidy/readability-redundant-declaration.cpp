@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s readability-redundant-declaration %t
+// RUN: %check_clang_tidy %s readability-redundant-declaration %t -- -- -target x86_64-unknown-unknown
 
 extern int Xyz;
 extern int Xyz;
