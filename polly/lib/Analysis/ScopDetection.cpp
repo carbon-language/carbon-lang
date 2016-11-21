@@ -943,7 +943,7 @@ bool ScopDetection::isValidInstruction(Instruction &Inst,
     return invalid<ReportFuncCall>(Context, /*Assert=*/true, &Inst);
   }
 
-  if (!Inst.mayWriteToMemory() && !Inst.mayReadFromMemory()) {
+  if (!Inst.mayReadOrWriteMemory()) {
     if (!isa<AllocaInst>(Inst))
       return true;
 
