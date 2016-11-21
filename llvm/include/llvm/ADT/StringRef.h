@@ -667,7 +667,6 @@ namespace llvm {
 
     /// Returns true if this StringRef has the given prefix and removes that
     /// prefix.
-    LLVM_NODISCARD
     LLVM_ATTRIBUTE_ALWAYS_INLINE
     bool consume_front(StringRef Prefix) {
       if (!startswith(Prefix))
@@ -679,7 +678,6 @@ namespace llvm {
 
     /// Returns true if this StringRef has the given suffix and removes that
     /// suffix.
-    LLVM_NODISCARD
     LLVM_ATTRIBUTE_ALWAYS_INLINE
     bool consume_back(StringRef Suffix) {
       if (!endswith(Suffix))
