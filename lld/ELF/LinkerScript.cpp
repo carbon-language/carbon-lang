@@ -33,7 +33,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include <algorithm>
 #include <cassert>
@@ -948,11 +947,12 @@ size_t LinkerScript<ELFT>::getPhdrIndex(StringRef PhdrName) {
   return 0;
 }
 
-class elf::ScriptParser : public ScriptParserBase {
+class elf::ScriptParser final : public ScriptParserBase {
   typedef void (ScriptParser::*Handler)();
 
 public:
-  ScriptParser(StringRef S, bool B) : ScriptParserBase(S), IsUnderSysroot(B) {}
+  ScriptParser(MemoryBufferRef MB, bool B)
+      : ScriptParserBase(MB), IsUnderSysroot(B) {}
 
   void readLinkerScript();
   void readVersionScript();
@@ -1006,6 +1006,7 @@ private:
 
   ScriptConfiguration &Opt = *ScriptConfig;
   bool IsUnderSysroot;
+  std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 
 void ScriptParser::readVersionScript() {
@@ -1148,9 +1149,8 @@ void ScriptParser::readInclude() {
     return;
   }
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
-  StringRef S = Saver.save(MB->getMemBufferRef().getBuffer());
-  std::vector<StringRef> V = tokenize(S);
-  Tokens.insert(Tokens.begin() + Pos, V.begin(), V.end());
+  tokenize(MB->getMemBufferRef());
+  OwningMBs.push_back(std::move(MB));
 }
 
 void ScriptParser::readOutput() {
@@ -1912,11 +1912,11 @@ static bool isUnderSysroot(StringRef Path) {
 
 void elf::readLinkerScript(MemoryBufferRef MB) {
   StringRef Path = MB.getBufferIdentifier();
-  ScriptParser(MB.getBuffer(), isUnderSysroot(Path)).readLinkerScript();
+  ScriptParser(MB, isUnderSysroot(Path)).readLinkerScript();
 }
 
 void elf::readVersionScript(MemoryBufferRef MB) {
-  ScriptParser(MB.getBuffer(), false).readVersionScript();
+  ScriptParser(MB, false).readVersionScript();
 }
 
 template class elf::LinkerScript<ELF32LE>;
