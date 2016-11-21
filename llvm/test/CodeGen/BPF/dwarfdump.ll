@@ -1,4 +1,4 @@
-; RUN: llc -O2 %s -o %t -filetype=obj
+; RUN: llc -O2 -march=bpfel %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=line %t | FileCheck %s
 
 source_filename = "testprog.c"
