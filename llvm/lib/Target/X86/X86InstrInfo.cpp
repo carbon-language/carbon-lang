@@ -5134,7 +5134,7 @@ static unsigned getLoadStoreRegOpcode(unsigned Reg,
     else
       return load ?
         (HasVLX    ? X86::VMOVUPSZ128rm :
-         HasAVX512 ? X86::VMOVAPSZ128rm_NOVLX :
+         HasAVX512 ? X86::VMOVUPSZ128rm_NOVLX :
          HasAVX    ? X86::VMOVUPSrm :
                      X86::MOVUPSrm):
         (HasVLX    ? X86::VMOVUPSZ128mr :
