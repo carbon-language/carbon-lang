@@ -294,21 +294,10 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   if (!Config->Relocatable)
     Symtab<ELFT>::X->Sections.push_back(createCommentSection<ELFT>());
 
-  if (Config->BuildId == BuildIdKind::Fast)
-    In<ELFT>::BuildId = make<BuildIdFastHash<ELFT>>();
-  else if (Config->BuildId == BuildIdKind::Md5)
-    In<ELFT>::BuildId = make<BuildIdMd5<ELFT>>();
-  else if (Config->BuildId == BuildIdKind::Sha1)
-    In<ELFT>::BuildId = make<BuildIdSha1<ELFT>>();
-  else if (Config->BuildId == BuildIdKind::Uuid)
-    In<ELFT>::BuildId = make<BuildIdUuid<ELFT>>();
-  else if (Config->BuildId == BuildIdKind::Hexstring)
-    In<ELFT>::BuildId = make<BuildIdHexstring<ELFT>>();
-  else
-    In<ELFT>::BuildId = nullptr;
-
-  if (In<ELFT>::BuildId)
+  if (Config->BuildId != BuildIdKind::None) {
+    In<ELFT>::BuildId = make<BuildIdSection<ELFT>>();
     Symtab<ELFT>::X->Sections.push_back(In<ELFT>::BuildId);
+  }
 
   InputSection<ELFT> *Common = createCommonSection<ELFT>();
   if (!Common->Data.empty()) {

@@ -245,10 +245,10 @@ template <class ELFT> InputSection<ELFT> *elf::createInterpSection() {
 }
 
 template <class ELFT>
-BuildIdSection<ELFT>::BuildIdSection(size_t HashSize)
+BuildIdSection<ELFT>::BuildIdSection()
     : InputSection<ELFT>(SHF_ALLOC, SHT_NOTE, 1, ArrayRef<uint8_t>(),
                          ".note.gnu.build-id"),
-      HashSize(HashSize) {
+      HashSize(getHashSize()) {
   this->Live = true;
 
   Buf.resize(HeaderSize + HashSize);
@@ -262,8 +262,24 @@ BuildIdSection<ELFT>::BuildIdSection(size_t HashSize)
 
 // Returns the location of the build-id hash value in the output.
 template <class ELFT>
-uint8_t *BuildIdSection<ELFT>::getOutputLoc(uint8_t *Start) const {
+uint8_t *BuildIdSection<ELFT>::getOutputLoc(uint8_t *Start) {
   return Start + this->OutSec->Offset + this->OutSecOff + HeaderSize;
+}
+
+template <class ELFT> size_t BuildIdSection<ELFT>::getHashSize() {
+  switch (Config->BuildId) {
+  case BuildIdKind::Fast:
+    return 8;
+  case BuildIdKind::Md5:
+  case BuildIdKind::Uuid:
+    return 16;
+  case BuildIdKind::Sha1:
+    return 20;
+  case BuildIdKind::Hexstring:
+    return Config->BuildIdVector.size();
+  default:
+    llvm_unreachable("unknown BuildIdKind");
+  }
 }
 
 // Split one uint8 array into small pieces of uint8 arrays.
@@ -300,50 +316,44 @@ void BuildIdSection<ELFT>::computeHash(
   else
     std::for_each(Chunks.begin(), Chunks.end(), Fn);
 
-  HashFn(HashList, this->getOutputLoc(Data.begin()));
+  HashFn(HashList, getOutputLoc(Data.begin()));
 }
 
 template <class ELFT>
-void BuildIdFastHash<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  this->computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
-    write64le(Dest, xxHash64(toStringRef(Arr)));
-  });
-}
-
-template <class ELFT>
-void BuildIdMd5<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  this->computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
-    MD5 Hash;
-    Hash.update(Arr);
-    MD5::MD5Result Res;
-    Hash.final(Res);
-    memcpy(Dest, Res, 16);
-  });
-}
-
-template <class ELFT>
-void BuildIdSha1<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  this->computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
-    SHA1 Hash;
-    Hash.update(Arr);
-    memcpy(Dest, Hash.final().data(), 20);
-  });
-}
-
-template <class ELFT>
-void BuildIdUuid<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  if (getRandomBytes(this->getOutputLoc(Buf.data()), this->HashSize))
-    error("entropy source failure");
-}
-
-template <class ELFT>
-BuildIdHexstring<ELFT>::BuildIdHexstring()
-    : BuildIdSection<ELFT>(Config->BuildIdVector.size()) {}
-
-template <class ELFT>
-void BuildIdHexstring<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
-  memcpy(this->getOutputLoc(Buf.data()), Config->BuildIdVector.data(),
-         Config->BuildIdVector.size());
+void BuildIdSection<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
+  switch (Config->BuildId) {
+  case BuildIdKind::Fast:
+    computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+      write64le(Dest, xxHash64(toStringRef(Arr)));
+    });
+    break;
+  case BuildIdKind::Md5:
+    computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+      MD5 Hash;
+      Hash.update(Arr);
+      MD5::MD5Result Res;
+      Hash.final(Res);
+      memcpy(Dest, Res, 16);
+    });
+    break;
+  case BuildIdKind::Sha1:
+    computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+      SHA1 Hash;
+      Hash.update(Arr);
+      memcpy(Dest, Hash.final().data(), 20);
+    });
+    break;
+  case BuildIdKind::Uuid:
+    if (getRandomBytes(getOutputLoc(Buf.data()), HashSize))
+      error("entropy source failure");
+    break;
+  case BuildIdKind::Hexstring:
+    memcpy(this->getOutputLoc(Buf.data()), Config->BuildIdVector.data(),
+           Config->BuildIdVector.size());
+    break;
+  default:
+    llvm_unreachable("unknown BuildIdKind");
+  }
 }
 
 template <class ELFT>
@@ -1651,31 +1661,6 @@ template class elf::BuildIdSection<ELF32LE>;
 template class elf::BuildIdSection<ELF32BE>;
 template class elf::BuildIdSection<ELF64LE>;
 template class elf::BuildIdSection<ELF64BE>;
-
-template class elf::BuildIdFastHash<ELF32LE>;
-template class elf::BuildIdFastHash<ELF32BE>;
-template class elf::BuildIdFastHash<ELF64LE>;
-template class elf::BuildIdFastHash<ELF64BE>;
-
-template class elf::BuildIdMd5<ELF32LE>;
-template class elf::BuildIdMd5<ELF32BE>;
-template class elf::BuildIdMd5<ELF64LE>;
-template class elf::BuildIdMd5<ELF64BE>;
-
-template class elf::BuildIdSha1<ELF32LE>;
-template class elf::BuildIdSha1<ELF32BE>;
-template class elf::BuildIdSha1<ELF64LE>;
-template class elf::BuildIdSha1<ELF64BE>;
-
-template class elf::BuildIdUuid<ELF32LE>;
-template class elf::BuildIdUuid<ELF32BE>;
-template class elf::BuildIdUuid<ELF64LE>;
-template class elf::BuildIdUuid<ELF64BE>;
-
-template class elf::BuildIdHexstring<ELF32LE>;
-template class elf::BuildIdHexstring<ELF32BE>;
-template class elf::BuildIdHexstring<ELF64LE>;
-template class elf::BuildIdHexstring<ELF64BE>;
 
 template class elf::GotSection<ELF32LE>;
 template class elf::GotSection<ELF32BE>;
