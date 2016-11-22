@@ -221,7 +221,7 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
   };
 
   if (Create)
-    return new MipsOptionsSection<ELFT>(Reginfo);
+    return make<MipsOptionsSection<ELFT>>(Reginfo);
   return nullptr;
 }
 
