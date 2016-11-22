@@ -213,7 +213,6 @@ module std [system] {
   module atomic {
     header "atomic"
     export *
-    requires cplusplus11
   }
   module bitset {
     header "bitset"
