@@ -238,13 +238,8 @@ class StructurizeCFG : public RegionPass {
 public:
   static char ID;
 
-  StructurizeCFG() :
-    RegionPass(ID), SkipUniformRegions(false) {
-    initializeStructurizeCFGPass(*PassRegistry::getPassRegistry());
-  }
-
-  StructurizeCFG(bool SkipUniformRegions) :
-    RegionPass(ID), SkipUniformRegions(SkipUniformRegions) {
+  explicit StructurizeCFG(bool SkipUniformRegions = false)
+      : RegionPass(ID), SkipUniformRegions(SkipUniformRegions) {
     initializeStructurizeCFGPass(*PassRegistry::getPassRegistry());
   }
 
