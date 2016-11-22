@@ -30,8 +30,9 @@ public:
 
   virtual ~SyntheticSection() = default;
   virtual void writeTo(uint8_t *Buf) = 0;
-  virtual size_t getSize() const { return this->Data.size(); }
+  virtual size_t getSize() const = 0;
   virtual void finalize() {}
+
   uintX_t getVA() const {
     return this->OutSec ? this->OutSec->Addr + this->OutSecOff : 0;
   }
