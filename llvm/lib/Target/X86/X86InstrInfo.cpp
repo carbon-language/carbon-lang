@@ -3533,6 +3533,92 @@ static bool commuteVPTERNLOG(MachineInstr &MI, unsigned SrcOpIdx1,
   return true;
 }
 
+// Returns true if this is a VPERMI2 or VPERMT2 instrution that can be
+// commuted.
+static bool isCommutableVPERMV3Instruction(unsigned Opcode) {
+#define VPERM_CASES(Suffix) \
+  case X86::VPERMI2##Suffix##128rr:    case X86::VPERMT2##Suffix##128rr:    \
+  case X86::VPERMI2##Suffix##256rr:    case X86::VPERMT2##Suffix##256rr:    \
+  case X86::VPERMI2##Suffix##rr:       case X86::VPERMT2##Suffix##rr:       \
+  case X86::VPERMI2##Suffix##128rm:    case X86::VPERMT2##Suffix##128rm:    \
+  case X86::VPERMI2##Suffix##256rm:    case X86::VPERMT2##Suffix##256rm:    \
+  case X86::VPERMI2##Suffix##rm:       case X86::VPERMT2##Suffix##rm:       \
+  case X86::VPERMI2##Suffix##128rrkz:  case X86::VPERMT2##Suffix##128rrkz:  \
+  case X86::VPERMI2##Suffix##256rrkz:  case X86::VPERMT2##Suffix##256rrkz:  \
+  case X86::VPERMI2##Suffix##rrkz:     case X86::VPERMT2##Suffix##rrkz:     \
+  case X86::VPERMI2##Suffix##128rmkz:  case X86::VPERMT2##Suffix##128rmkz:  \
+  case X86::VPERMI2##Suffix##256rmkz:  case X86::VPERMT2##Suffix##256rmkz:  \
+  case X86::VPERMI2##Suffix##rmkz:     case X86::VPERMT2##Suffix##rmkz:
+
+#define VPERM_CASES_BROADCAST(Suffix) \
+  VPERM_CASES(Suffix) \
+  case X86::VPERMI2##Suffix##128rmb:   case X86::VPERMT2##Suffix##128rmb:   \
+  case X86::VPERMI2##Suffix##256rmb:   case X86::VPERMT2##Suffix##256rmb:   \
+  case X86::VPERMI2##Suffix##rmb:      case X86::VPERMT2##Suffix##rmb:      \
+  case X86::VPERMI2##Suffix##128rmbkz: case X86::VPERMT2##Suffix##128rmbkz: \
+  case X86::VPERMI2##Suffix##256rmbkz: case X86::VPERMT2##Suffix##256rmbkz: \
+  case X86::VPERMI2##Suffix##rmbkz:    case X86::VPERMT2##Suffix##rmbkz:
+
+  switch (Opcode) {
+  default: return false;
+  VPERM_CASES(B)
+  VPERM_CASES_BROADCAST(D)
+  VPERM_CASES_BROADCAST(PD)
+  VPERM_CASES_BROADCAST(PS)
+  VPERM_CASES_BROADCAST(Q)
+  VPERM_CASES(W)
+    return true;
+  }
+#undef VPERM_CASES_BROADCAST
+#undef VPERM_CASES
+}
+
+// Returns commuted opcode for VPERMI2 and VPERMT2 instructions by switching
+// from the I opcod to the T opcode and vice versa.
+static unsigned getCommutedVPERMV3Opcode(unsigned Opcode) {
+#define VPERM_CASES(Orig, New) \
+  case X86::Orig##128rr:    return X86::New##128rr;   \
+  case X86::Orig##128rrkz:  return X86::New##128rrkz; \
+  case X86::Orig##128rm:    return X86::New##128rm;   \
+  case X86::Orig##128rmkz:  return X86::New##128rmkz; \
+  case X86::Orig##256rr:    return X86::New##256rr;   \
+  case X86::Orig##256rrkz:  return X86::New##256rrkz; \
+  case X86::Orig##256rm:    return X86::New##256rm;   \
+  case X86::Orig##256rmkz:  return X86::New##256rmkz; \
+  case X86::Orig##rr:       return X86::New##rr;      \
+  case X86::Orig##rrkz:     return X86::New##rrkz;    \
+  case X86::Orig##rm:       return X86::New##rm;      \
+  case X86::Orig##rmkz:     return X86::New##rmkz;
+
+#define VPERM_CASES_BROADCAST(Orig, New) \
+  VPERM_CASES(Orig, New) \
+  case X86::Orig##128rmb:   return X86::New##128rmb;   \
+  case X86::Orig##128rmbkz: return X86::New##128rmbkz; \
+  case X86::Orig##256rmb:   return X86::New##256rmb;   \
+  case X86::Orig##256rmbkz: return X86::New##256rmbkz; \
+  case X86::Orig##rmb:      return X86::New##rmb;      \
+  case X86::Orig##rmbkz:    return X86::New##rmbkz;
+
+  switch (Opcode) {
+  VPERM_CASES(VPERMI2B, VPERMT2B)
+  VPERM_CASES_BROADCAST(VPERMI2D,  VPERMT2D)
+  VPERM_CASES_BROADCAST(VPERMI2PD, VPERMT2PD)
+  VPERM_CASES_BROADCAST(VPERMI2PS, VPERMT2PS)
+  VPERM_CASES_BROADCAST(VPERMI2Q,  VPERMT2Q)
+  VPERM_CASES(VPERMI2W, VPERMT2W)
+  VPERM_CASES(VPERMT2B, VPERMI2B)
+  VPERM_CASES_BROADCAST(VPERMT2D,  VPERMI2D)
+  VPERM_CASES_BROADCAST(VPERMT2PD, VPERMI2PD)
+  VPERM_CASES_BROADCAST(VPERMT2PS, VPERMI2PS)
+  VPERM_CASES_BROADCAST(VPERMT2Q,  VPERMI2Q)
+  VPERM_CASES(VPERMT2W, VPERMI2W)
+  }
+
+  llvm_unreachable("Unreachable!");
+#undef VPERM_CASES_BROADCAST
+#undef VPERM_CASES
+}
+
 MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
                                                    unsigned OpIdx1,
                                                    unsigned OpIdx2) const {
@@ -3854,7 +3940,15 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }
-  default:
+  default: {
+    if (isCommutableVPERMV3Instruction(MI.getOpcode())) {
+      unsigned Opc = getCommutedVPERMV3Opcode(MI.getOpcode());
+      auto &WorkingMI = cloneIfNew(MI);
+      WorkingMI.setDesc(get(Opc));
+      return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
+                                                     OpIdx1, OpIdx2);
+    }
+
     const X86InstrFMA3Group *FMA3Group =
         X86InstrFMA3Info::getFMA3Group(MI.getOpcode());
     if (FMA3Group) {
@@ -3869,6 +3963,7 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     }
 
     return TargetInstrInfo::commuteInstructionImpl(MI, NewMI, OpIdx1, OpIdx2);
+  }
   }
 }
 
@@ -4041,12 +4136,26 @@ bool X86InstrInfo::findCommutedOpIndices(MachineInstr &MI, unsigned &SrcOpIdx1,
     // Handled masked instructions since we need to skip over the mask input
     // and the preserved input.
     if (Desc.TSFlags & X86II::EVEX_K) {
+      // First assume that the first input is the mask operand and skip past it.
       unsigned CommutableOpIdx1 = Desc.getNumDefs() + 1;
-      // If there is no preserved input we only need to skip 1 operand.
-      if (MI.getDesc().getOperandConstraint(Desc.getNumDefs(),
-                                            MCOI::TIED_TO) != -1)
-        ++CommutableOpIdx1;
-      unsigned CommutableOpIdx2 = CommutableOpIdx1 + 1;
+      unsigned CommutableOpIdx2 = Desc.getNumDefs() + 2;
+      // Check if the first input is tied. If there isn't one then we only
+      // need to skip the mask operand which we did above.
+      if ((MI.getDesc().getOperandConstraint(Desc.getNumDefs(),
+                                             MCOI::TIED_TO) != -1)) {
+        // If this is zero masking instruction with a tied operand, we need to
+        // move the first index back to the first input since this must
+        // be a 3 input instruction and we want the first two non-mask inputs.
+        // Otherwise this is a 2 input instruction with a preserved input and
+        // mask, so we need to move the indices to skip one more input.
+        if (Desc.TSFlags & X86II::EVEX_Z)
+          --CommutableOpIdx1;
+        else {
+          ++CommutableOpIdx1;
+          ++CommutableOpIdx2;
+        }
+      }
+
       if (!fixCommutedOpIndices(SrcOpIdx1, SrcOpIdx2,
                                 CommutableOpIdx1, CommutableOpIdx2))
         return false;
