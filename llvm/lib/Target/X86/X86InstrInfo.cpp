@@ -550,7 +550,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::MOVSX64rr8,      X86::MOVSX64rm8,          0 },
     { X86::MOVUPDrr,        X86::MOVUPDrm,            TB_ALIGN_16 },
     { X86::MOVUPSrr,        X86::MOVUPSrm,            0 },
-    { X86::MOVZPQILo2PQIrr, X86::MOVZPQILo2PQIrm,     TB_ALIGN_16 },
+    { X86::MOVZPQILo2PQIrr, X86::MOVQI2PQIrm,         TB_NO_REVERSE },
     { X86::MOVZX16rr8,      X86::MOVZX16rm8,          0 },
     { X86::MOVZX32rr16,     X86::MOVZX32rm16,         0 },
     { X86::MOVZX32_NOREXrr8, X86::MOVZX32_NOREXrm8,   0 },
@@ -659,7 +659,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VMOVSHDUPrr,     X86::VMOVSHDUPrm,         0 },
     { X86::VMOVUPDrr,       X86::VMOVUPDrm,           0 },
     { X86::VMOVUPSrr,       X86::VMOVUPSrm,           0 },
-    { X86::VMOVZPQILo2PQIrr,X86::VMOVZPQILo2PQIrm,    TB_ALIGN_16 },
+    { X86::VMOVZPQILo2PQIrr,X86::VMOVQI2PQIrm,        TB_NO_REVERSE },
     { X86::VPABSBrr,        X86::VPABSBrm,            0 },
     { X86::VPABSDrr,        X86::VPABSDrm,            0 },
     { X86::VPABSWrr,        X86::VPABSWrm,            0 },
@@ -855,7 +855,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
 
     // AVX-512 foldable instructions
     { X86::VMOV64toPQIZrr,   X86::VMOVQI2PQIZrm,      0 },
-    { X86::VMOVZPQILo2PQIZrr,X86::VMOVZPQILo2PQIZrm,  TB_ALIGN_16 },
+    { X86::VMOVZPQILo2PQIZrr,X86::VMOVQI2PQIZrm,      TB_NO_REVERSE },
     { X86::VMOVDI2SSZrr,     X86::VMOVDI2SSZrm,       0 },
     { X86::VMOVAPDZrr,       X86::VMOVAPDZrm,         TB_ALIGN_64 },
     { X86::VMOVAPSZrr,       X86::VMOVAPSZrm,         TB_ALIGN_64 },

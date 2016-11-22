@@ -3605,15 +3605,6 @@ def VMOVZPQILo2PQIZrr : AVX512XSI<0x7E, MRMSrcReg, (outs VR128X:$dst),
                                                    (v2i64 VR128X:$src))))],
                                 IIC_SSE_MOVQ_RR>, EVEX, VEX_W;
 
-let AddedComplexity = 20 , isCodeGenOnly = 1 in
-def VMOVZPQILo2PQIZrm : AVX512XSI<0x7E, MRMSrcMem, (outs VR128X:$dst),
-                                 (ins i128mem:$src),
-                                 "vmovq\t{$src, $dst|$dst, $src}",
-                                 [(set VR128X:$dst, (v2i64 (X86vzmovl
-                                                     (loadv2i64 addr:$src))))],
-                                 IIC_SSE_MOVDQ>, EVEX, VEX_W,
-                                 EVEX_CD8<8, CD8VT8>;
-
 let Predicates = [HasAVX512] in {
   let AddedComplexity = 15 in {
     def : Pat<(v4i32 (X86vzmovl (v4i32 (scalar_to_vector GR32:$src)))),
@@ -3643,13 +3634,13 @@ let Predicates = [HasAVX512] in {
     def : Pat<(v8i32 (X86vzload addr:$src)),
               (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrm addr:$src), sub_xmm)>;
     def : Pat<(v2i64 (X86vzmovl (loadv2i64 addr:$src))),
-              (VMOVZPQILo2PQIZrm addr:$src)>;
+              (VMOVQI2PQIZrm addr:$src)>;
     def : Pat<(v2f64 (X86vzmovl (v2f64 VR128X:$src))),
               (VMOVZPQILo2PQIZrr VR128X:$src)>;
     def : Pat<(v2i64 (X86vzload addr:$src)),
-              (VMOVZPQILo2PQIZrm addr:$src)>;
+              (VMOVQI2PQIZrm addr:$src)>;
     def : Pat<(v4i64 (X86vzload addr:$src)),
-              (SUBREG_TO_REG (i64 0), (VMOVZPQILo2PQIZrm addr:$src), sub_xmm)>;
+              (SUBREG_TO_REG (i64 0), (VMOVQI2PQIZrm addr:$src), sub_xmm)>;
   }
 
   // Use regular 128-bit instructions to match 256-bit scalar_to_vec+zext.
@@ -3664,7 +3655,7 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v16i32 (X86vzload addr:$src)),
             (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrm addr:$src), sub_xmm)>;
   def : Pat<(v8i64 (X86vzload addr:$src)),
-            (SUBREG_TO_REG (i64 0), (VMOVZPQILo2PQIZrm addr:$src), sub_xmm)>;
+            (SUBREG_TO_REG (i64 0), (VMOVQI2PQIZrm addr:$src), sub_xmm)>;
 }
 
 def : Pat<(v16i32 (X86Vinsert (v16i32 immAllZerosV), GR32:$src2, (iPTR 0))),
