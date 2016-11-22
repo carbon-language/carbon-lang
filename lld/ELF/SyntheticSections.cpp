@@ -1657,12 +1657,11 @@ template <class ELFT> size_t VersionNeedSection<ELFT>::getSize() const {
 }
 
 template <class ELFT>
-MipsRldMap<ELFT>::MipsRldMap()
+MipsRldMapSection<ELFT>::MipsRldMapSection()
     : SyntheticSection<ELFT>(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
                              sizeof(typename ELFT::uint), ".rld_map") {}
 
-template <class ELFT> void MipsRldMap<ELFT>::writeTo(uint8_t *Buf) {
-
+template <class ELFT> void MipsRldMapSection<ELFT>::writeTo(uint8_t *Buf) {
   // Apply filler from linker script.
   uint64_t Filler = Script<ELFT>::X->getFiller(this->Name);
   Filler = (Filler << 32) | Filler;
@@ -1779,7 +1778,7 @@ template class elf::VersionDefinitionSection<ELF32BE>;
 template class elf::VersionDefinitionSection<ELF64LE>;
 template class elf::VersionDefinitionSection<ELF64BE>;
 
-template class elf::MipsRldMap<ELF32LE>;
-template class elf::MipsRldMap<ELF32BE>;
-template class elf::MipsRldMap<ELF64LE>;
-template class elf::MipsRldMap<ELF64BE>;
+template class elf::MipsRldMapSection<ELF32LE>;
+template class elf::MipsRldMapSection<ELF32BE>;
+template class elf::MipsRldMapSection<ELF64LE>;
+template class elf::MipsRldMapSection<ELF64BE>;

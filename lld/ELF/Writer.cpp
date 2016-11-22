@@ -298,7 +298,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   // Add MIPS-specific sections.
   if (Config->EMachine == EM_MIPS) {
     if (!Config->Shared && In<ELFT>::DynSymTab) {
-      In<ELFT>::MipsRldMap = make<MipsRldMap<ELFT>>();
+      In<ELFT>::MipsRldMap = make<MipsRldMapSection<ELFT>>();
       Symtab<ELFT>::X->Sections.push_back(In<ELFT>::MipsRldMap);
     }
     if (auto *Sec = MipsAbiFlagsSection<ELFT>::create())
