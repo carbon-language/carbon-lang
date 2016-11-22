@@ -263,9 +263,7 @@ static size_t getHashSize() {
 template <class ELFT>
 BuildIdSection<ELFT>::BuildIdSection()
     : SyntheticSection<ELFT>(SHF_ALLOC, SHT_NOTE, 1, ".note.gnu.build-id"),
-      HashSize(getHashSize()) {
-  this->Live = true;
-}
+      HashSize(getHashSize()) {}
 
 template <class ELFT> void BuildIdSection<ELFT>::writeTo(uint8_t *Buf) {
   const endianness E = ELFT::TargetEndianness;
