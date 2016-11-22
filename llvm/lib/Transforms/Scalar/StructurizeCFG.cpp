@@ -163,7 +163,6 @@ public:
 /// breaks and the false values expresses continue states.
 class StructurizeCFG : public RegionPass {
   bool SkipUniformRegions;
-  DivergenceAnalysis *DA;
 
   Type *Boolean;
   ConstantInt *BoolTrue;
@@ -235,8 +234,6 @@ class StructurizeCFG : public RegionPass {
   void createFlow();
 
   void rebuildSSA();
-
-  bool hasOnlyUniformBranches(const Region *R);
 
 public:
   static char ID;
@@ -912,13 +909,14 @@ void StructurizeCFG::rebuildSSA() {
     }
 }
 
-bool StructurizeCFG::hasOnlyUniformBranches(const Region *R) {
+static bool hasOnlyUniformBranches(const Region *R,
+                                   const DivergenceAnalysis &DA) {
   for (const BasicBlock *BB : R->blocks()) {
     const BranchInst *Br = dyn_cast<BranchInst>(BB->getTerminator());
     if (!Br || !Br->isConditional())
       continue;
 
-    if (!DA->isUniform(Br->getCondition()))
+    if (!DA.isUniform(Br->getCondition()))
       return false;
     DEBUG(dbgs() << "BB: " << BB->getName() << " has uniform terminator\n");
   }
@@ -931,9 +929,9 @@ bool StructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
     return false;
 
   if (SkipUniformRegions) {
-    DA = &getAnalysis<DivergenceAnalysis>();
     // TODO: We could probably be smarter here with how we handle sub-regions.
-    if (hasOnlyUniformBranches(R)) {
+    auto &DA = getAnalysis<DivergenceAnalysis>();
+    if (hasOnlyUniformBranches(R, DA)) {
       DEBUG(dbgs() << "Skipping region with uniform control flow: " << *R << '\n');
 
       // Mark all direct child block terminators as having been treated as
