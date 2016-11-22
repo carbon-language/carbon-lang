@@ -1435,6 +1435,13 @@ void LazyCallGraph::RefSCC::insertTrivialRefEdge(Node &SourceN, Node &TargetN) {
 #ifndef NDEBUG
   // Check that the RefSCC is still valid when we finish.
   auto ExitVerifier = make_scope_exit([this] { verify(); });
+
+  // Check that we aren't breaking some invariants of the RefSCC graph.
+  RefSCC &SourceRC = *G->lookupRefSCC(SourceN);
+  RefSCC &TargetRC = *G->lookupRefSCC(TargetN);
+  if (&SourceRC != &TargetRC)
+    assert(SourceRC.isAncestorOf(TargetRC) &&
+           "Ref edge is not trivial in the RefSCC graph!");
 #endif
   // First insert it into the source or find the existing edge.
   auto InsertResult = SourceN.EdgeIndexMap.insert(
