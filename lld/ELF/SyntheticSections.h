@@ -35,19 +35,6 @@ private:
   }
 };
 
-// MIPS .reginfo section.
-template <class ELFT>
-class MipsReginfoSection final : public InputSection<ELFT> {
-  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
-
-public:
-  MipsReginfoSection();
-  void finalize();
-
-private:
-  Elf_Mips_RegInfo Reginfo = {};
-};
-
 template <class ELFT> class SyntheticSection : public InputSection<ELFT> {
   typedef typename ELFT::uint uintX_t;
 
@@ -591,6 +578,22 @@ public:
 
 private:
   Elf_Mips_ABIFlags Flags;
+};
+
+// MIPS .reginfo section.
+template <class ELFT>
+class MipsReginfoSection final : public SyntheticSection<ELFT> {
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
+
+public:
+  static MipsReginfoSection *create();
+
+  MipsReginfoSection(Elf_Mips_RegInfo Reginfo);
+  size_t getSize() const override { return sizeof(Elf_Mips_RegInfo); }
+  void writeTo(uint8_t *Buf) override;
+
+private:
+  Elf_Mips_RegInfo Reginfo;
 };
 
 template <class ELFT> InputSection<ELFT> *createCommonSection();

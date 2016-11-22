@@ -318,10 +318,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
       Symtab<ELFT>::X->Sections.push_back(OptSec);
     }
     // MIPS .reginfo
-    auto *RegSec = make<MipsReginfoSection<ELFT>>();
-    if (RegSec->Live) {
-      In<ELFT>::MipsReginfo = RegSec;
-      Symtab<ELFT>::X->Sections.push_back(RegSec);
+    if (auto *Sec = MipsReginfoSection<ELFT>::create()) {
+      In<ELFT>::MipsReginfo = Sec;
+      Symtab<ELFT>::X->Sections.push_back(Sec);
     }
   }
 
@@ -1500,10 +1499,8 @@ template <class ELFT> void Writer<ELFT>::writeSectionsBinary() {
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
 
-  // Finalize MIPS .reginfo and .MIPS.options sections
-  // because they contain offsets to .got and _gp.
-  if (In<ELFT>::MipsReginfo)
-    In<ELFT>::MipsReginfo->finalize();
+  // Finalize MIPS .MIPS.options sections because that contains
+  // offsets to .got and _gp.
   if (In<ELFT>::MipsOptions)
     In<ELFT>::MipsOptions->finalize();
 

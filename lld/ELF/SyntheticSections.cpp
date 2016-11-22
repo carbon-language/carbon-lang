@@ -221,30 +221,46 @@ template <class ELFT> void MipsOptionsSection<ELFT>::finalize() {
 
 // MIPS .reginfo section.
 template <class ELFT>
-MipsReginfoSection<ELFT>::MipsReginfoSection()
-    : InputSection<ELFT>(SHF_ALLOC, SHT_MIPS_REGINFO, 4, ArrayRef<uint8_t>(),
-                         ".reginfo") {
-  auto Func = [this](ObjectFile<ELFT> *F, ArrayRef<uint8_t> D) {
-    if (D.size() != sizeof(Elf_Mips_RegInfo)) {
-      error(getFilename(F) + ": invalid size of .reginfo section");
-      return;
-    }
-    auto *R = reinterpret_cast<const Elf_Mips_RegInfo *>(D.data());
-    if (Config->Relocatable && R->ri_gp_value)
-      error(getFilename(F) + ": unsupported non-zero ri_gp_value");
-    Reginfo.ri_gprmask |= R->ri_gprmask;
-    F->MipsGp0 = R->ri_gp_value;
-  };
-  iterateSectionContents<ELFT>(SHT_MIPS_REGINFO, Func);
+MipsReginfoSection<ELFT>::MipsReginfoSection(Elf_Mips_RegInfo Reginfo)
+    : SyntheticSection<ELFT>(SHF_ALLOC, SHT_MIPS_REGINFO, 4, ".reginfo"),
+      Reginfo(Reginfo) {}
 
-  this->Data = ArrayRef<uint8_t>((const uint8_t *)&Reginfo, sizeof(Reginfo));
-  // Section should be alive for O32 and N32 ABIs only.
-  this->Live = !ELFT::Is64Bits;
-}
-
-template <class ELFT> void MipsReginfoSection<ELFT>::finalize() {
+template <class ELFT> void MipsReginfoSection<ELFT>::writeTo(uint8_t *Buf) {
   if (!Config->Relocatable)
     Reginfo.ri_gp_value = In<ELFT>::MipsGot->getVA() + MipsGPOffset;
+  memcpy(Buf, &Reginfo, sizeof(Reginfo));
+}
+
+template <class ELFT>
+MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
+  // Section should be alive for O32 and N32 ABIs only.
+  if (ELFT::Is64Bits)
+    return nullptr;
+
+  Elf_Mips_RegInfo Reginfo = {};
+  bool Create = false;
+
+  for (InputSectionBase<ELFT> *Sec : Symtab<ELFT>::X->Sections) {
+    if (!Sec->Live || Sec->Type != SHT_MIPS_REGINFO)
+      continue;
+    Sec->Live = false;
+    Create = true;
+
+    if (Sec->Data.size() != sizeof(Elf_Mips_RegInfo)) {
+      error(getFilename(Sec->getFile()) + ": invalid size of .reginfo section");
+      return nullptr;
+    }
+    auto *R = reinterpret_cast<const Elf_Mips_RegInfo *>(Sec->Data.data());
+    if (Config->Relocatable && R->ri_gp_value)
+      error(getFilename(Sec->getFile()) + ": unsupported non-zero ri_gp_value");
+
+    Reginfo.ri_gprmask |= R->ri_gprmask;
+    Sec->getFile()->MipsGp0 = R->ri_gp_value;
+  };
+
+  if (Create)
+    return make<MipsReginfoSection<ELFT>>(Reginfo);
+  return nullptr;
 }
 
 static ArrayRef<uint8_t> createInterp() {
