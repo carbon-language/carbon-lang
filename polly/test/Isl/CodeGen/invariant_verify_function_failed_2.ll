@@ -11,8 +11,6 @@
 ; SCOPS-NEXT:                 [p_0] -> { Stmt_if_then2457[] : p_0 = 1 };
 ; SCOPS-NEXT:             Schedule :=
 ; SCOPS-NEXT:                 [p_0] -> { Stmt_if_then2457[] -> [1] };
-; SCOPS-NEXT:             ReadAccess :=	[Reduction Type: NONE] [Scalar: 1]
-; SCOPS-NEXT:                 [p_0] -> { Stmt_if_then2457[] -> MemRef_tmp[] };
 ; SCOPS-NEXT:             MustWriteAccess :=	[Reduction Type: NONE] [Scalar: 1]
 ; SCOPS-NEXT:                 [p_0] -> { Stmt_if_then2457[] -> MemRef_sub2464[] };
 ; SCOPS-NEXT:     	Stmt_cond_false2468
@@ -53,11 +51,9 @@ for.body2414:                                     ; preds = %for.inc2621, %entry
 
 if.else2454:                                      ; preds = %for.body2414
   %cmp2455 = icmp eq i64 %indvars.iv902, 2
-  %tmp = load %struct.s*, %struct.s** @enc_picture, align 8, !tbaa !1
   br i1 %cmp2455, label %if.then2457, label %if.else2493
 
 if.then2457:                                      ; preds = %if.else2454
-  %top_poc = getelementptr inbounds %struct.s, %struct.s* %tmp, i64 0, i32 2
   %arrayidx2461 = getelementptr inbounds %struct.s**, %struct.s*** %listX, i64 %indvars.iv902
   %tmp1 = load %struct.s**, %struct.s*** %arrayidx2461, align 8, !tbaa !1
   %arrayidx2462 = getelementptr inbounds %struct.s*, %struct.s** %tmp1, i64 0
