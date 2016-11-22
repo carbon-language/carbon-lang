@@ -939,12 +939,11 @@ bool StructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
       // sub-regions are treated more cleverly, indirect children are not
       // marked as uniform.
       MDNode *MD = MDNode::get(R->getEntry()->getParent()->getContext(), {});
-      Region::element_iterator E = R->element_end();
-      for (Region::element_iterator I = R->element_begin(); I != E; ++I) {
-        if (I->isSubRegion())
+      for (RegionNode *E : R->elements()) {
+        if (E->isSubRegion())
           continue;
 
-        if (Instruction *Term = I->getEntry()->getTerminator())
+        if (Instruction *Term = E->getEntry()->getTerminator())
           Term->setMetadata("structurizecfg.uniform", MD);
       }
 
