@@ -425,12 +425,10 @@ define <2 x double> @uitofp_2i64_to_2f64(<2 x i64> %a) {
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm2 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vmovapd {{.*#+}} xmm3 = [4.503600e+15,1.934281e+25]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm2, %xmm2
-; VEX-NEXT:    vhaddpd %xmm2, %xmm2, %xmm2
 ; VEX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm0, %xmm0
-; VEX-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; VEX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; VEX-NEXT:    vhaddpd %xmm0, %xmm2, %xmm0
 ; VEX-NEXT:    retq
 ;
 ; AVX512-LABEL: uitofp_2i64_to_2f64:
@@ -471,12 +469,10 @@ define <2 x double> @uitofp_2i32_to_2f64(<4 x i32> %a) {
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm2 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vmovapd {{.*#+}} xmm3 = [4.503600e+15,1.934281e+25]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm2, %xmm2
-; VEX-NEXT:    vhaddpd %xmm2, %xmm2, %xmm2
 ; VEX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm0, %xmm0
-; VEX-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; VEX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; VEX-NEXT:    vhaddpd %xmm0, %xmm2, %xmm0
 ; VEX-NEXT:    retq
 ;
 ; AVX512F-LABEL: uitofp_2i32_to_2f64:
@@ -699,20 +695,16 @@ define <4 x double> @uitofp_4i64_to_4f64(<4 x i64> %a) {
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX1-NEXT:    vmovapd {{.*#+}} xmm4 = [4.503600e+15,1.934281e+25]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX1-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm1, %xmm1
-; AVX1-NEXT:    vhaddpd %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm3[0],xmm1[0]
+; AVX1-NEXT:    vhaddpd %xmm1, %xmm3, %xmm1
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX1-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm0, %xmm0
-; AVX1-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm3[0],xmm0[0]
+; AVX1-NEXT:    vhaddpd %xmm0, %xmm3, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -723,20 +715,16 @@ define <4 x double> @uitofp_4i64_to_4f64(<4 x i64> %a) {
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX2-NEXT:    vmovapd {{.*#+}} xmm4 = [4.503600e+15,1.934281e+25]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX2-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX2-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm1, %xmm1
-; AVX2-NEXT:    vhaddpd %xmm1, %xmm1, %xmm1
-; AVX2-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm3[0],xmm1[0]
+; AVX2-NEXT:    vhaddpd %xmm1, %xmm3, %xmm1
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX2-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX2-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm0, %xmm0
-; AVX2-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; AVX2-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm3[0],xmm0[0]
+; AVX2-NEXT:    vhaddpd %xmm0, %xmm3, %xmm0
 ; AVX2-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
 ;
@@ -2456,12 +2444,10 @@ define <2 x double> @uitofp_load_2i64_to_2f64(<2 x i64> *%a) {
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm2 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vmovapd {{.*#+}} xmm3 = [4.503600e+15,1.934281e+25]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm2, %xmm2
-; VEX-NEXT:    vhaddpd %xmm2, %xmm2, %xmm2
 ; VEX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm0, %xmm0
-; VEX-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; VEX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; VEX-NEXT:    vhaddpd %xmm0, %xmm2, %xmm0
 ; VEX-NEXT:    retq
 ;
 ; AVX512F-LABEL: uitofp_load_2i64_to_2f64:
@@ -2515,12 +2501,10 @@ define <2 x double> @uitofp_load_2i32_to_2f64(<2 x i32> *%a) {
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm2 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vmovapd {{.*#+}} xmm3 = [4.503600e+15,1.934281e+25]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm2, %xmm2
-; VEX-NEXT:    vhaddpd %xmm2, %xmm2, %xmm2
 ; VEX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; VEX-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; VEX-NEXT:    vsubpd %xmm3, %xmm0, %xmm0
-; VEX-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; VEX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm2[0],xmm0[0]
+; VEX-NEXT:    vhaddpd %xmm0, %xmm2, %xmm0
 ; VEX-NEXT:    retq
 ;
 ; AVX512F-LABEL: uitofp_load_2i32_to_2f64:
@@ -2652,20 +2636,16 @@ define <4 x double> @uitofp_load_4i64_to_4f64(<4 x i64> *%a) {
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX1-NEXT:    vmovapd {{.*#+}} xmm4 = [4.503600e+15,1.934281e+25]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX1-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm1, %xmm1
-; AVX1-NEXT:    vhaddpd %xmm1, %xmm1, %xmm1
-; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm3[0],xmm1[0]
+; AVX1-NEXT:    vhaddpd %xmm1, %xmm3, %xmm1
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX1-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; AVX1-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX1-NEXT:    vsubpd %xmm4, %xmm0, %xmm0
-; AVX1-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; AVX1-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm3[0],xmm0[0]
+; AVX1-NEXT:    vhaddpd %xmm0, %xmm3, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -2677,20 +2657,16 @@ define <4 x double> @uitofp_load_4i64_to_4f64(<4 x i64> *%a) {
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX2-NEXT:    vmovapd {{.*#+}} xmm4 = [4.503600e+15,1.934281e+25]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX2-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX2-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm1 = xmm1[0],xmm2[0],xmm1[1],xmm2[1]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm1, %xmm1
-; AVX2-NEXT:    vhaddpd %xmm1, %xmm1, %xmm1
-; AVX2-NEXT:    vunpcklpd {{.*#+}} xmm1 = xmm3[0],xmm1[0]
+; AVX2-NEXT:    vhaddpd %xmm1, %xmm3, %xmm1
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm3 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm3, %xmm3
-; AVX2-NEXT:    vhaddpd %xmm3, %xmm3, %xmm3
 ; AVX2-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; AVX2-NEXT:    vpunpckldq {{.*#+}} xmm0 = xmm0[0],xmm2[0],xmm0[1],xmm2[1]
 ; AVX2-NEXT:    vsubpd %xmm4, %xmm0, %xmm0
-; AVX2-NEXT:    vhaddpd %xmm0, %xmm0, %xmm0
-; AVX2-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm3[0],xmm0[0]
+; AVX2-NEXT:    vhaddpd %xmm0, %xmm3, %xmm0
 ; AVX2-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
 ;
