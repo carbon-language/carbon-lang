@@ -112,21 +112,6 @@ template <class ELFT> MergeInputSection<ELFT> *elf::createCommentSection() {
   return Ret;
 }
 
-// Iterate over sections of the specified type. For each section call
-// provided function. After that "kill" the section by turning off
-// "Live" flag, so that they won't be included in the final output.
-template <class ELFT>
-static void iterateSectionContents(
-    uint32_t Type,
-    std::function<void(elf::ObjectFile<ELFT> *, ArrayRef<uint8_t>)> F) {
-  for (InputSectionBase<ELFT> *Sec : Symtab<ELFT>::X->Sections) {
-    if (Sec && Sec->Live && Sec->Type == Type) {
-      Sec->Live = false;
-      F(Sec->getFile(), Sec->Data);
-    }
-  }
-}
-
 // .MIPS.abiflags section.
 template <class ELFT>
 MipsAbiFlagsSection<ELFT>::MipsAbiFlagsSection(Elf_Mips_ABIFlags Flags)
@@ -181,42 +166,62 @@ MipsAbiFlagsSection<ELFT> *MipsAbiFlagsSection<ELFT>::create() {
 
 // .MIPS.options section.
 template <class ELFT>
-MipsOptionsSection<ELFT>::MipsOptionsSection()
-    : InputSection<ELFT>(SHF_ALLOC, SHT_MIPS_OPTIONS, 8, ArrayRef<uint8_t>(),
-                         ".MIPS.options") {
-  Buf.resize(sizeof(Elf_Mips_Options) + sizeof(Elf_Mips_RegInfo));
-  getOptions()->kind = ODK_REGINFO;
-  getOptions()->size = Buf.size();
-  auto Func = [this](ObjectFile<ELFT> *F, ArrayRef<uint8_t> D) {
-    while (!D.empty()) {
-      if (D.size() < sizeof(Elf_Mips_Options)) {
-        error(getFilename(F) + ": invalid size of .MIPS.options section");
-        break;
-      }
-      auto *O = reinterpret_cast<const Elf_Mips_Options *>(D.data());
-      if (O->kind == ODK_REGINFO) {
-        if (Config->Relocatable && O->getRegInfo().ri_gp_value)
-          error(getFilename(F) + ": unsupported non-zero ri_gp_value");
-        getOptions()->getRegInfo().ri_gprmask |= O->getRegInfo().ri_gprmask;
-        F->MipsGp0 = O->getRegInfo().ri_gp_value;
-        break;
-      }
-      if (!O->size)
-        fatal(getFilename(F) + ": zero option descriptor size");
-      D = D.slice(O->size);
-    }
-  };
-  iterateSectionContents<ELFT>(SHT_MIPS_OPTIONS, Func);
+MipsOptionsSection<ELFT>::MipsOptionsSection(Elf_Mips_RegInfo Reginfo)
+    : SyntheticSection<ELFT>(SHF_ALLOC, SHT_MIPS_OPTIONS, 8, ".MIPS.options"),
+      Reginfo(Reginfo) {}
 
-  this->Data = ArrayRef<uint8_t>(Buf);
-  // Section should be alive for N64 ABI only.
-  this->Live = ELFT::Is64Bits;
+template <class ELFT> void MipsOptionsSection<ELFT>::writeTo(uint8_t *Buf) {
+  auto *Options = reinterpret_cast<Elf_Mips_Options *>(Buf);
+  Options->kind = ODK_REGINFO;
+  Options->size = getSize();
+
+  if (!Config->Relocatable)
+    Reginfo.ri_gp_value = In<ELFT>::MipsGot->getVA() + MipsGPOffset;
+  memcpy(Buf + sizeof(Options), &Reginfo, sizeof(Reginfo));
 }
 
-template <class ELFT> void MipsOptionsSection<ELFT>::finalize() {
-  if (!Config->Relocatable)
-    getOptions()->getRegInfo().ri_gp_value =
-        In<ELFT>::MipsGot->getVA() + MipsGPOffset;
+template <class ELFT>
+MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
+  // N64 ABI only.
+  if (!ELFT::Is64Bits)
+    return nullptr;
+
+  Elf_Mips_RegInfo Reginfo = {};
+  bool Create = false;
+
+  for (InputSectionBase<ELFT> *Sec : Symtab<ELFT>::X->Sections) {
+    if (!Sec->Live || Sec->Type != SHT_MIPS_OPTIONS)
+      continue;
+    Sec->Live = false;
+    Create = true;
+
+    std::string Filename = getFilename(Sec->getFile());
+    ArrayRef<uint8_t> D = Sec->Data;
+
+    while (!D.empty()) {
+      if (D.size() < sizeof(Elf_Mips_Options)) {
+        error(Filename + ": invalid size of .MIPS.options section");
+        break;
+      }
+
+      auto *Opt = reinterpret_cast<const Elf_Mips_Options *>(D.data());
+      if (Opt->kind == ODK_REGINFO) {
+        if (Config->Relocatable && Opt->getRegInfo().ri_gp_value)
+          error(Filename + ": unsupported non-zero ri_gp_value");
+        Reginfo.ri_gprmask |= Opt->getRegInfo().ri_gprmask;
+        Sec->getFile()->MipsGp0 = Opt->getRegInfo().ri_gp_value;
+        break;
+      }
+
+      if (!Opt->size)
+        fatal(Filename + ": zero option descriptor size");
+      D = D.slice(Opt->size);
+    }
+  };
+
+  if (Create)
+    return new MipsOptionsSection<ELFT>(Reginfo);
+  return nullptr;
 }
 
 // MIPS .reginfo section.

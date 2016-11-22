@@ -17,24 +17,6 @@
 namespace lld {
 namespace elf {
 
-// .MIPS.options section.
-template <class ELFT>
-class MipsOptionsSection final : public InputSection<ELFT> {
-  typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
-  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
-
-public:
-  MipsOptionsSection();
-  void finalize();
-
-private:
-  std::vector<uint8_t> Buf;
-
-  Elf_Mips_Options *getOptions() {
-    return reinterpret_cast<Elf_Mips_Options *>(Buf.data());
-  }
-};
-
 template <class ELFT> class SyntheticSection : public InputSection<ELFT> {
   typedef typename ELFT::uint uintX_t;
 
@@ -578,6 +560,26 @@ public:
 
 private:
   Elf_Mips_ABIFlags Flags;
+};
+
+// .MIPS.options section.
+template <class ELFT>
+class MipsOptionsSection final : public SyntheticSection<ELFT> {
+  typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
+
+public:
+  static MipsOptionsSection *create();
+
+  MipsOptionsSection(Elf_Mips_RegInfo Reginfo);
+  void writeTo(uint8_t *Buf) override;
+
+  size_t getSize() const override {
+    return sizeof(Elf_Mips_Options) + sizeof(Elf_Mips_RegInfo);
+  }
+
+private:
+  Elf_Mips_RegInfo Reginfo;
 };
 
 // MIPS .reginfo section.

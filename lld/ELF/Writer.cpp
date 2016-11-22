@@ -312,10 +312,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
       Symtab<ELFT>::X->Sections.push_back(Sec);
     }
     // .MIPS.options
-    auto *OptSec = make<MipsOptionsSection<ELFT>>();
-    if (OptSec->Live) {
-      In<ELFT>::MipsOptions = OptSec;
-      Symtab<ELFT>::X->Sections.push_back(OptSec);
+    if (auto *Sec = MipsOptionsSection<ELFT>::create()) {
+      In<ELFT>::MipsOptions = Sec;
+      Symtab<ELFT>::X->Sections.push_back(Sec);
     }
     // MIPS .reginfo
     if (auto *Sec = MipsReginfoSection<ELFT>::create()) {
