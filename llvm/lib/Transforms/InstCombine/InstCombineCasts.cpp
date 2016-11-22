@@ -1778,6 +1778,46 @@ static Instruction *canonicalizeBitCastExtElt(BitCastInst &BitCast,
   return ExtractElementInst::Create(NewBC, ExtElt->getIndexOperand());
 }
 
+/// Change the type of a bitwise logic operation if we can eliminate a bitcast.
+static Instruction *foldBitCastBitwiseLogic(BitCastInst &BitCast,
+                                            InstCombiner::BuilderTy &Builder) {
+  BinaryOperator *BO;
+  if (!match(BitCast.getOperand(0), m_OneUse(m_BinOp(BO))))
+    return nullptr;
+
+  auto Opcode = BO->getOpcode();
+  if (Opcode != Instruction::And && Opcode != Instruction::Or &&
+      Opcode != Instruction::Xor)
+    return nullptr;
+
+  Type *DestTy = BitCast.getType();
+  if (!DestTy->getScalarType()->isIntegerTy())
+    return nullptr;
+  
+  // FIXME: This transform is restricted to vector types to avoid backend
+  // problems caused by creating potentially illegal operations. If a fix-up is
+  // added to handle that situation, we can remove this check.
+  if (!DestTy->isVectorTy() || !BO->getType()->isVectorTy())
+    return nullptr;
+  
+  Value *X;
+  if (match(BO->getOperand(0), m_OneUse(m_BitCast(m_Value(X)))) &&
+      X->getType() == DestTy && !isa<Constant>(X)) {
+    // bitcast(logic(bitcast(X), Y)) --> logic'(X, bitcast(Y))
+    Value *CastedOp1 = Builder.CreateBitCast(BO->getOperand(1), DestTy);
+    return BinaryOperator::Create(Opcode, X, CastedOp1);
+  }
+
+  if (match(BO->getOperand(1), m_OneUse(m_BitCast(m_Value(X)))) &&
+      X->getType() == DestTy && !isa<Constant>(X)) {
+    // bitcast(logic(Y, bitcast(X))) --> logic'(bitcast(Y), X)
+    Value *CastedOp0 = Builder.CreateBitCast(BO->getOperand(0), DestTy);
+    return BinaryOperator::Create(Opcode, CastedOp0, X);
+  }
+
+  return nullptr;
+}
+
 /// Check if all users of CI are StoreInsts.
 static bool hasStoreUsersOnly(CastInst &CI) {
   for (User *U : CI.users()) {
@@ -2028,6 +2068,9 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
       return I;
 
   if (Instruction *I = canonicalizeBitCastExtElt(CI, *this, DL))
+    return I;
+
+  if (Instruction *I = foldBitCastBitwiseLogic(CI, *Builder))
     return I;
 
   if (SrcTy->isPointerTy())
