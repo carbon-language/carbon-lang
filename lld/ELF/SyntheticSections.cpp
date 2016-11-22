@@ -18,6 +18,7 @@
 #include "Config.h"
 #include "Error.h"
 #include "InputFiles.h"
+#include "LinkerScript.h"
 #include "Memory.h"
 #include "OutputSections.h"
 #include "Strings.h"
@@ -883,8 +884,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
     else
       add({DT_MIPS_GOTSYM, In<ELFT>::DynSymTab->getNumSymbols()});
     add({DT_PLTGOT, In<ELFT>::MipsGot});
-    if (Out<ELFT>::MipsRldMap)
-      add({DT_MIPS_RLD_MAP, Out<ELFT>::MipsRldMap});
+    if (In<ELFT>::MipsRldMap)
+      add({DT_MIPS_RLD_MAP, In<ELFT>::MipsRldMap});
   }
 
   this->OutSec->Entsize = this->Entsize;
@@ -1655,6 +1656,19 @@ template <class ELFT> size_t VersionNeedSection<ELFT>::getSize() const {
   return Size;
 }
 
+template <class ELFT>
+MipsRldMap<ELFT>::MipsRldMap()
+    : SyntheticSection<ELFT>(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
+                             sizeof(typename ELFT::uint), ".rld_map") {}
+
+template <class ELFT> void MipsRldMap<ELFT>::writeTo(uint8_t *Buf) {
+
+  // Apply filler from linker script.
+  uint64_t Filler = Script<ELFT>::X->getFiller(this->Name);
+  Filler = (Filler << 32) | Filler;
+  memcpy(Buf, &Filler, getSize());
+}
+
 template InputSection<ELF32LE> *elf::createCommonSection();
 template InputSection<ELF32BE> *elf::createCommonSection();
 template InputSection<ELF64LE> *elf::createCommonSection();
@@ -1764,3 +1778,8 @@ template class elf::VersionDefinitionSection<ELF32LE>;
 template class elf::VersionDefinitionSection<ELF32BE>;
 template class elf::VersionDefinitionSection<ELF64LE>;
 template class elf::VersionDefinitionSection<ELF64BE>;
+
+template class elf::MipsRldMap<ELF32LE>;
+template class elf::MipsRldMap<ELF32BE>;
+template class elf::MipsRldMap<ELF64LE>;
+template class elf::MipsRldMap<ELF64BE>;
