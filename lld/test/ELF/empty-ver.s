@@ -1,7 +1,16 @@
 // REQUIRES: x86
 // RUN: llvm-mc %s -o %t.o -filetype=obj -triple=x86_64-pc-linux
 // RUN: ld.lld %t.o -o %t.so -shared -version-script %p/Inputs/empty-ver.ver
-// RUN: llvm-readobj -version-info %t.so | FileCheck %s
+// RUN: llvm-readobj -s -version-info %t.so | FileCheck %s
+
+// CHECK:      Name: .dynstr
+// CHECK-NEXT: Type: SHT_STRTAB
+// CHECK-NEXT: Flags [
+// CHECK-NEXT:   SHF_ALLOC
+// CHECK-NEXT: ]
+// CHECK-NEXT: Address:
+// CHECK-NEXT: Offset:
+// CHECK-NEXT: Size: 81
 
 // CHECK:      Version symbols {
 // CHECK-NEXT:   Section Name:

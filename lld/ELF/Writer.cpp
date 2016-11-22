@@ -952,11 +952,11 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // symbol table section (DynSymTab) must be the first one.
   finalizeSynthetic<ELFT>(
       {In<ELFT>::DynSymTab, In<ELFT>::GnuHashTab, In<ELFT>::HashTab,
-       In<ELFT>::SymTab, In<ELFT>::ShStrTab, In<ELFT>::StrTab,
+       In<ELFT>::SymTab, In<ELFT>::ShStrTab, In<ELFT>::StrTab, In<ELFT>::VerDef,
        In<ELFT>::DynStrTab, In<ELFT>::GdbIndex, In<ELFT>::Got,
        In<ELFT>::MipsGot, In<ELFT>::GotPlt, In<ELFT>::RelaDyn,
-       In<ELFT>::RelaPlt, In<ELFT>::Plt, In<ELFT>::EhFrameHdr, In<ELFT>::VerDef,
-       In<ELFT>::VerSym, In<ELFT>::VerNeed, In<ELFT>::Dynamic});
+       In<ELFT>::RelaPlt, In<ELFT>::Plt, In<ELFT>::EhFrameHdr, In<ELFT>::VerSym,
+       In<ELFT>::VerNeed, In<ELFT>::Dynamic});
 }
 
 template <class ELFT> bool Writer<ELFT>::needsGot() {
