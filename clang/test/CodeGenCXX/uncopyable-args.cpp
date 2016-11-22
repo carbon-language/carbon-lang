@@ -212,10 +212,7 @@ struct A {
   void *p;
 };
 void *foo(A a) { return a.p; }
-// WIN64-LABEL: define i8* @"\01?foo@definition_only@@YAPEAXUA@1@@Z"{{.*}}
-// WIN64-NEXT: :
-// WIN64-NEXT: getelementptr
-// WIN64-NEXT: load
+// WIN64-LABEL: define i8* @"\01?foo@definition_only@@YAPEAXUA@1@@Z"(%"struct.definition_only::A"*
 }
 
 namespace deleted_by_member {
@@ -229,11 +226,7 @@ struct A {
   B b;
 };
 void *foo(A a) { return a.b.p; }
-// WIN64-LABEL: define i8* @"\01?foo@deleted_by_member@@YAPEAXUA@1@@Z"{{.*}}
-// WIN64-NEXT: :
-// WIN64-NEXT: getelementptr
-// WIN64-NEXT: getelementptr
-// WIN64-NEXT: load
+// WIN64-LABEL: define i8* @"\01?foo@deleted_by_member@@YAPEAXUA@1@@Z"(%"struct.deleted_by_member::A"*
 }
 
 namespace deleted_by_base {
@@ -246,11 +239,34 @@ struct A : B {
   A();
 };
 void *foo(A a) { return a.p; }
-// WIN64-LABEL: define i8* @"\01?foo@deleted_by_base@@YAPEAXUA@1@@Z"{{.*}}
-// WIN64-NEXT: :
-// WIN64-NEXT: bitcast
-// WIN64-NEXT: getelementptr
-// WIN64-NEXT: load
+// WIN64-LABEL: define i8* @"\01?foo@deleted_by_base@@YAPEAXUA@1@@Z"(%"struct.deleted_by_base::A"*
+}
+
+namespace deleted_by_member_copy {
+struct B {
+  B();
+  B(const B &o) = delete;
+  void *p;
+};
+struct A {
+  A();
+  B b;
+};
+void *foo(A a) { return a.b.p; }
+// WIN64-LABEL: define i8* @"\01?foo@deleted_by_member_copy@@YAPEAXUA@1@@Z"(%"struct.deleted_by_member_copy::A"*
+}
+
+namespace deleted_by_base_copy {
+struct B {
+  B();
+  B(const B &o) = delete;
+  void *p;
+};
+struct A : B {
+  A();
+};
+void *foo(A a) { return a.p; }
+// WIN64-LABEL: define i8* @"\01?foo@deleted_by_base_copy@@YAPEAXUA@1@@Z"(%"struct.deleted_by_base_copy::A"*
 }
 
 namespace explicit_delete {
@@ -259,9 +275,6 @@ struct A {
   A(const A &o) = delete;
   void *p;
 };
-// WIN64-LABEL: define i8* @"\01?foo@explicit_delete@@YAPEAXUA@1@@Z"{{.*}}
-// WIN64-NEXT: :
-// WIN64-NEXT: getelementptr
-// WIN64-NEXT: load
+// WIN64-LABEL: define i8* @"\01?foo@explicit_delete@@YAPEAXUA@1@@Z"(%"struct.explicit_delete::A"*
 void *foo(A a) { return a.p; }
 }
