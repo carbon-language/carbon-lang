@@ -305,24 +305,18 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Symtab<ELFT>::X->Sections.push_back(Common);
   }
 
+  // Add MIPS-specific sections.
   if (Config->EMachine == EM_MIPS) {
-    // .MIPS.abiflags
-    if (auto *Sec = MipsAbiFlagsSection<ELFT>::create()) {
-      In<ELFT>::MipsAbiFlags = Sec;
+    if (auto *Sec = MipsAbiFlagsSection<ELFT>::create())
       Symtab<ELFT>::X->Sections.push_back(Sec);
-    }
-    // .MIPS.options
-    if (auto *Sec = MipsOptionsSection<ELFT>::create()) {
-      In<ELFT>::MipsOptions = Sec;
+    if (auto *Sec = MipsOptionsSection<ELFT>::create())
       Symtab<ELFT>::X->Sections.push_back(Sec);
-    }
-    // MIPS .reginfo
-    if (auto *Sec = MipsReginfoSection<ELFT>::create()) {
-      In<ELFT>::MipsReginfo = Sec;
+    if (auto *Sec = MipsReginfoSection<ELFT>::create())
       Symtab<ELFT>::X->Sections.push_back(Sec);
-    }
   }
 
+  // Add .got. MIPS' .got is so different from the other archs,
+  // it has its own class.
   if (Config->EMachine == EM_MIPS)
     In<ELFT>::MipsGot = make<MipsGotSection<ELFT>>();
   else
@@ -1497,11 +1491,6 @@ template <class ELFT> void Writer<ELFT>::writeSectionsBinary() {
 // Write section contents to a mmap'ed file.
 template <class ELFT> void Writer<ELFT>::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
-
-  // Finalize MIPS .MIPS.options sections because that contains
-  // offsets to .got and _gp.
-  if (In<ELFT>::MipsOptions)
-    In<ELFT>::MipsOptions->finalize();
 
   // PPC64 needs to process relocations in the .opd section
   // before processing relocations in code-containing sections.
