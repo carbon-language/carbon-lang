@@ -243,7 +243,6 @@ public:
     initializeStructurizeCFGPass(*PassRegistry::getPassRegistry());
   }
 
-  using Pass::doInitialization;
   bool doInitialization(Region *R, RGPassManager &RGM) override;
 
   bool runOnRegion(Region *R, RGPassManager &RGM) override;
