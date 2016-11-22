@@ -204,3 +204,64 @@ void bar() {
 
 // WIN64-LABEL: declare void @"\01?foo@two_copy_ctors@@YAXUB@1@@Z"(%"struct.two_copy_ctors::B"*)
 }
+
+namespace definition_only {
+struct A {
+  A();
+  A(A &&o);
+  void *p;
+};
+void *foo(A a) { return a.p; }
+// WIN64-LABEL: define i8* @"\01?foo@definition_only@@YAPEAXUA@1@@Z"{{.*}}
+// WIN64-NEXT: :
+// WIN64-NEXT: getelementptr
+// WIN64-NEXT: load
+}
+
+namespace deleted_by_member {
+struct B {
+  B();
+  B(B &&o);
+  void *p;
+};
+struct A {
+  A();
+  B b;
+};
+void *foo(A a) { return a.b.p; }
+// WIN64-LABEL: define i8* @"\01?foo@deleted_by_member@@YAPEAXUA@1@@Z"{{.*}}
+// WIN64-NEXT: :
+// WIN64-NEXT: getelementptr
+// WIN64-NEXT: getelementptr
+// WIN64-NEXT: load
+}
+
+namespace deleted_by_base {
+struct B {
+  B();
+  B(B &&o);
+  void *p;
+};
+struct A : B {
+  A();
+};
+void *foo(A a) { return a.p; }
+// WIN64-LABEL: define i8* @"\01?foo@deleted_by_base@@YAPEAXUA@1@@Z"{{.*}}
+// WIN64-NEXT: :
+// WIN64-NEXT: bitcast
+// WIN64-NEXT: getelementptr
+// WIN64-NEXT: load
+}
+
+namespace explicit_delete {
+struct A {
+  A();
+  A(const A &o) = delete;
+  void *p;
+};
+// WIN64-LABEL: define i8* @"\01?foo@explicit_delete@@YAPEAXUA@1@@Z"{{.*}}
+// WIN64-NEXT: :
+// WIN64-NEXT: getelementptr
+// WIN64-NEXT: load
+void *foo(A a) { return a.p; }
+}
