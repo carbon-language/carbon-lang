@@ -71,6 +71,7 @@ public:
     this->Live = true;
   }
 
+  virtual ~SyntheticSection() = default;
   virtual void writeTo(uint8_t *Buf) = 0;
   virtual size_t getSize() const { return this->Data.size(); }
   virtual void finalize() {}
@@ -81,30 +82,6 @@ public:
   static bool classof(const InputSectionData *D) {
     return D->kind() == InputSectionData::Synthetic;
   }
-
-protected:
-  ~SyntheticSection() = default;
-};
-
-// .note.gnu.build-id section.
-template <class ELFT> class BuildIdSection : public InputSection<ELFT> {
-public:
-  BuildIdSection();
-  void writeBuildId(llvm::MutableArrayRef<uint8_t> Buf);
-
-private:
-  // First 16 bytes are a header.
-  static const unsigned HeaderSize = 16;
-
-  size_t getHashSize();
-  size_t getOutputOffset();
-
-  void
-  computeHash(llvm::MutableArrayRef<uint8_t> Buf,
-              std::function<void(ArrayRef<uint8_t> Arr, uint8_t *Hash)> Hash);
-
-  std::vector<uint8_t> Buf;
-  size_t HashSize;
 };
 
 template <class ELFT> class GotSection final : public SyntheticSection<ELFT> {
@@ -133,6 +110,25 @@ private:
   std::vector<const SymbolBody *> Entries;
   uint32_t TlsIndexOff = -1;
   uintX_t Size = 0;
+};
+
+// .note.gnu.build-id section.
+template <class ELFT> class BuildIdSection : public SyntheticSection<ELFT> {
+  // First 16 bytes are a header.
+  static const unsigned HeaderSize = 16;
+
+public:
+  BuildIdSection();
+  void writeTo(uint8_t *Buf) override;
+  size_t getSize() const override { return HeaderSize + HashSize; }
+  void writeBuildId(llvm::ArrayRef<uint8_t> Buf);
+
+private:
+  void computeHash(llvm::ArrayRef<uint8_t> Buf,
+                   std::function<void(uint8_t *, ArrayRef<uint8_t>)> Hash);
+
+  size_t HashSize;
+  uint8_t *HashBuf;
 };
 
 template <class ELFT> class MipsGotSection final : public SyntheticSection<ELFT> {

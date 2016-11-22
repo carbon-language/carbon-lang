@@ -244,28 +244,7 @@ template <class ELFT> InputSection<ELFT> *elf::createInterpSection() {
   return Ret;
 }
 
-template <class ELFT>
-BuildIdSection<ELFT>::BuildIdSection()
-    : InputSection<ELFT>(SHF_ALLOC, SHT_NOTE, 1, ArrayRef<uint8_t>(),
-                         ".note.gnu.build-id"),
-      HashSize(getHashSize()) {
-  this->Live = true;
-
-  Buf.resize(HeaderSize + HashSize);
-  const endianness E = ELFT::TargetEndianness;
-  write32<E>(Buf.data(), 4);                   // Name size
-  write32<E>(Buf.data() + 4, HashSize);        // Content size
-  write32<E>(Buf.data() + 8, NT_GNU_BUILD_ID); // Type
-  memcpy(Buf.data() + 12, "GNU", 4);           // Name string
-  this->Data = ArrayRef<uint8_t>(Buf);
-}
-
-// Returns the location of the build-id hash value in the output.
-template <class ELFT> size_t BuildIdSection<ELFT>::getOutputOffset() {
-  return this->OutSec->Offset + this->OutSecOff + HeaderSize;
-}
-
-template <class ELFT> size_t BuildIdSection<ELFT>::getHashSize() {
+static size_t getHashSize() {
   switch (Config->BuildId) {
   case BuildIdKind::Fast:
     return 8;
@@ -279,6 +258,22 @@ template <class ELFT> size_t BuildIdSection<ELFT>::getHashSize() {
   default:
     llvm_unreachable("unknown BuildIdKind");
   }
+}
+
+template <class ELFT>
+BuildIdSection<ELFT>::BuildIdSection()
+    : SyntheticSection<ELFT>(SHF_ALLOC, SHT_NOTE, 1, ".note.gnu.build-id"),
+      HashSize(getHashSize()) {
+  this->Live = true;
+}
+
+template <class ELFT> void BuildIdSection<ELFT>::writeTo(uint8_t *Buf) {
+  const endianness E = ELFT::TargetEndianness;
+  write32<E>(Buf, 4);                   // Name size
+  write32<E>(Buf + 4, HashSize);        // Content size
+  write32<E>(Buf + 8, NT_GNU_BUILD_ID); // Type
+  memcpy(Buf + 12, "GNU", 4);           // Name string
+  HashBuf = Buf + 16;
 }
 
 // Split one uint8 array into small pieces of uint8 arrays.
@@ -300,34 +295,36 @@ static std::vector<ArrayRef<uint8_t>> split(ArrayRef<uint8_t> Arr,
 // of the hash values.
 template <class ELFT>
 void BuildIdSection<ELFT>::computeHash(
-    llvm::MutableArrayRef<uint8_t> Data,
-    std::function<void(ArrayRef<uint8_t> Arr, uint8_t *Dest)> HashFn) {
+    llvm::ArrayRef<uint8_t> Data,
+    std::function<void(uint8_t *Dest, ArrayRef<uint8_t> Arr)> HashFn) {
   std::vector<ArrayRef<uint8_t>> Chunks = split(Data, 1024 * 1024);
-  std::vector<uint8_t> HashList(Chunks.size() * HashSize);
+  std::vector<uint8_t> Hashes(Chunks.size() * HashSize);
 
   auto Fn = [&](ArrayRef<uint8_t> &Chunk) {
     size_t Idx = &Chunk - Chunks.data();
-    HashFn(Chunk, HashList.data() + Idx * HashSize);
+    HashFn(Hashes.data() + Idx * HashSize, Chunk);
   };
 
+  // Compute hash values.
   if (Config->Threads)
     parallel_for_each(Chunks.begin(), Chunks.end(), Fn);
   else
     std::for_each(Chunks.begin(), Chunks.end(), Fn);
 
-  HashFn(HashList, Data.data() + getOutputOffset());
+  // Write to the final output buffer.
+  HashFn(HashBuf, Hashes);
 }
 
 template <class ELFT>
-void BuildIdSection<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
+void BuildIdSection<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
   switch (Config->BuildId) {
   case BuildIdKind::Fast:
-    computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+    computeHash(Buf, [](uint8_t *Dest, ArrayRef<uint8_t> Arr) {
       write64le(Dest, xxHash64(toStringRef(Arr)));
     });
     break;
   case BuildIdKind::Md5:
-    computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+    computeHash(Buf, [](uint8_t *Dest, ArrayRef<uint8_t> Arr) {
       MD5 Hash;
       Hash.update(Arr);
       MD5::MD5Result Res;
@@ -336,19 +333,18 @@ void BuildIdSection<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
     });
     break;
   case BuildIdKind::Sha1:
-    computeHash(Buf, [](ArrayRef<uint8_t> Arr, uint8_t *Dest) {
+    computeHash(Buf, [](uint8_t *Dest, ArrayRef<uint8_t> Arr) {
       SHA1 Hash;
       Hash.update(Arr);
       memcpy(Dest, Hash.final().data(), 20);
     });
     break;
   case BuildIdKind::Uuid:
-    if (getRandomBytes(Buf.data() + getOutputOffset(), HashSize))
+    if (getRandomBytes(HashBuf, HashSize))
       error("entropy source failure");
     break;
   case BuildIdKind::Hexstring:
-    memcpy(Buf.data() + getOutputOffset(), Config->BuildIdVector.data(),
-           Config->BuildIdVector.size());
+    memcpy(HashBuf, Config->BuildIdVector.data(), Config->BuildIdVector.size());
     break;
   default:
     llvm_unreachable("unknown BuildIdKind");
