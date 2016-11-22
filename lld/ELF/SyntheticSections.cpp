@@ -268,16 +268,14 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
   return nullptr;
 }
 
-static ArrayRef<uint8_t> createInterp() {
-  // StringSaver guarantees that the returned string ends with '\0'.
-  StringRef S = Saver.save(Config->DynamicLinker);
-  return {(const uint8_t *)S.data(), S.size() + 1};
-}
-
 template <class ELFT> InputSection<ELFT> *elf::createInterpSection() {
   auto *Ret = make<InputSection<ELFT>>(SHF_ALLOC, SHT_PROGBITS, 1,
-                                       createInterp(), ".interp");
+                                       ArrayRef<uint8_t>(), ".interp");
   Ret->Live = true;
+
+  // StringSaver guarantees that the returned string ends with '\0'.
+  StringRef S = Saver.save(Config->DynamicLinker);
+  Ret->Data = {(const uint8_t *)S.data(), S.size() + 1};
   return Ret;
 }
 
