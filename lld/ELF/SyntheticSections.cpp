@@ -129,20 +129,37 @@ static void iterateSectionContents(
 
 // .MIPS.abiflags section.
 template <class ELFT>
-MipsAbiFlagsSection<ELFT>::MipsAbiFlagsSection()
-    : InputSection<ELFT>(SHF_ALLOC, SHT_MIPS_ABIFLAGS, 8, ArrayRef<uint8_t>(),
-                         ".MIPS.abiflags") {
-  auto Func = [this](ObjectFile<ELFT> *F, ArrayRef<uint8_t> D) {
-    if (D.size() != sizeof(Elf_Mips_ABIFlags)) {
-      error(getFilename(F) + ": invalid size of .MIPS.abiflags section");
-      return;
+MipsAbiFlagsSection<ELFT>::MipsAbiFlagsSection(Elf_Mips_ABIFlags Flags)
+    : SyntheticSection<ELFT>(SHF_ALLOC, SHT_MIPS_ABIFLAGS, 8, ".MIPS.abiflags"),
+      Flags(Flags) {}
+
+template <class ELFT> void MipsAbiFlagsSection<ELFT>::writeTo(uint8_t *Buf) {
+  memcpy(Buf, &Flags, sizeof(Flags));
+}
+
+template <class ELFT>
+MipsAbiFlagsSection<ELFT> *MipsAbiFlagsSection<ELFT>::create() {
+  Elf_Mips_ABIFlags Flags = {};
+  bool Create = false;
+
+  for (InputSectionBase<ELFT> *Sec : Symtab<ELFT>::X->Sections) {
+    if (!Sec->Live || Sec->Type != SHT_MIPS_ABIFLAGS)
+      continue;
+    Sec->Live = false;
+    Create = true;
+
+    std::string Filename = getFilename(Sec->getFile());
+    if (Sec->Data.size() != sizeof(Elf_Mips_ABIFlags)) {
+      error(Filename + ": invalid size of .MIPS.abiflags section");
+      return nullptr;
     }
-    auto *S = reinterpret_cast<const Elf_Mips_ABIFlags *>(D.data());
+    auto *S = reinterpret_cast<const Elf_Mips_ABIFlags *>(Sec->Data.data());
     if (S->version != 0) {
-      error(getFilename(F) + ": unexpected .MIPS.abiflags version " +
+      error(Filename + ": unexpected .MIPS.abiflags version " +
             Twine(S->version));
-      return;
+      return nullptr;
     }
+
     // LLD checks ISA compatibility in getMipsEFlags(). Here we just
     // select the highest number of ISA/Rev/Ext.
     Flags.isa_level = std::max(Flags.isa_level, S->isa_level);
@@ -154,13 +171,12 @@ MipsAbiFlagsSection<ELFT>::MipsAbiFlagsSection()
     Flags.ases |= S->ases;
     Flags.flags1 |= S->flags1;
     Flags.flags2 |= S->flags2;
-    Flags.fp_abi =
-        elf::getMipsFpAbiFlag(Flags.fp_abi, S->fp_abi, getFilename(F));
+    Flags.fp_abi = elf::getMipsFpAbiFlag(Flags.fp_abi, S->fp_abi, Filename);
   };
-  iterateSectionContents<ELFT>(SHT_MIPS_ABIFLAGS, Func);
 
-  this->Data = ArrayRef<uint8_t>((const uint8_t *)&Flags, sizeof(Flags));
-  this->Live = true;
+  if (Create)
+    return make<MipsAbiFlagsSection<ELFT>>(Flags);
+  return nullptr;
 }
 
 // .MIPS.options section.

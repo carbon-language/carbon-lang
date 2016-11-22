@@ -17,18 +17,6 @@
 namespace lld {
 namespace elf {
 
-// .MIPS.abiflags section.
-template <class ELFT>
-class MipsAbiFlagsSection final : public InputSection<ELFT> {
-  typedef llvm::object::Elf_Mips_ABIFlags<ELFT> Elf_Mips_ABIFlags;
-
-public:
-  MipsAbiFlagsSection();
-
-private:
-  Elf_Mips_ABIFlags Flags = {};
-};
-
 // .MIPS.options section.
 template <class ELFT>
 class MipsOptionsSection final : public InputSection<ELFT> {
@@ -587,6 +575,22 @@ public:
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override;
   size_t getNeedNum() const { return Needed.size(); }
+};
+
+// .MIPS.abiflags section.
+template <class ELFT>
+class MipsAbiFlagsSection final : public SyntheticSection<ELFT> {
+  typedef llvm::object::Elf_Mips_ABIFlags<ELFT> Elf_Mips_ABIFlags;
+
+public:
+  static MipsAbiFlagsSection *create();
+
+  MipsAbiFlagsSection(Elf_Mips_ABIFlags Flags);
+  size_t getSize() const override { return sizeof(Elf_Mips_ABIFlags); }
+  void writeTo(uint8_t *Buf) override;
+
+private:
+  Elf_Mips_ABIFlags Flags;
 };
 
 template <class ELFT> InputSection<ELFT> *createCommonSection();

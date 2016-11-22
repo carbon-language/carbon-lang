@@ -307,10 +307,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
 
   if (Config->EMachine == EM_MIPS) {
     // .MIPS.abiflags
-    auto *AbiFlags = make<MipsAbiFlagsSection<ELFT>>();
-    if (AbiFlags->Live) {
-      In<ELFT>::MipsAbiFlags = AbiFlags;
-      Symtab<ELFT>::X->Sections.push_back(AbiFlags);
+    if (auto *Sec = MipsAbiFlagsSection<ELFT>::create()) {
+      In<ELFT>::MipsAbiFlags = Sec;
+      Symtab<ELFT>::X->Sections.push_back(Sec);
     }
     // .MIPS.options
     auto *OptSec = make<MipsOptionsSection<ELFT>>();
