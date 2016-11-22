@@ -747,9 +747,7 @@ static bool canEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear,
 
     // If the operation is an AND/OR/XOR and the bits to clear are zero in the
     // other side, BitsToClear is ok.
-    if (Tmp == 0 &&
-        (Opc == Instruction::And || Opc == Instruction::Or ||
-         Opc == Instruction::Xor)) {
+    if (Tmp == 0 && I->isBitwiseLogicOp()) {
       // We use MaskedValueIsZero here for generality, but the case we care
       // about the most is constant RHS.
       unsigned VSize = V->getType()->getScalarSizeInBits();
@@ -1781,17 +1779,11 @@ static Instruction *canonicalizeBitCastExtElt(BitCastInst &BitCast,
 /// Change the type of a bitwise logic operation if we can eliminate a bitcast.
 static Instruction *foldBitCastBitwiseLogic(BitCastInst &BitCast,
                                             InstCombiner::BuilderTy &Builder) {
-  BinaryOperator *BO;
-  if (!match(BitCast.getOperand(0), m_OneUse(m_BinOp(BO))))
-    return nullptr;
-
-  auto Opcode = BO->getOpcode();
-  if (Opcode != Instruction::And && Opcode != Instruction::Or &&
-      Opcode != Instruction::Xor)
-    return nullptr;
-
   Type *DestTy = BitCast.getType();
-  if (!DestTy->getScalarType()->isIntegerTy())
+  BinaryOperator *BO;
+  if (!DestTy->getScalarType()->isIntegerTy() ||
+      !match(BitCast.getOperand(0), m_OneUse(m_BinOp(BO))) ||
+      !BO->isBitwiseLogicOp())
     return nullptr;
   
   // FIXME: This transform is restricted to vector types to avoid backend
@@ -1805,14 +1797,14 @@ static Instruction *foldBitCastBitwiseLogic(BitCastInst &BitCast,
       X->getType() == DestTy && !isa<Constant>(X)) {
     // bitcast(logic(bitcast(X), Y)) --> logic'(X, bitcast(Y))
     Value *CastedOp1 = Builder.CreateBitCast(BO->getOperand(1), DestTy);
-    return BinaryOperator::Create(Opcode, X, CastedOp1);
+    return BinaryOperator::Create(BO->getOpcode(), X, CastedOp1);
   }
 
   if (match(BO->getOperand(1), m_OneUse(m_BitCast(m_Value(X)))) &&
       X->getType() == DestTy && !isa<Constant>(X)) {
     // bitcast(logic(Y, bitcast(X))) --> logic'(bitcast(Y), X)
     Value *CastedOp0 = Builder.CreateBitCast(BO->getOperand(0), DestTy);
-    return BinaryOperator::Create(Opcode, CastedOp0, X);
+    return BinaryOperator::Create(BO->getOpcode(), CastedOp0, X);
   }
 
   return nullptr;
