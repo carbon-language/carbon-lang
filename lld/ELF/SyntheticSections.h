@@ -97,7 +97,7 @@ private:
   static const unsigned HeaderSize = 16;
 
   size_t getHashSize();
-  uint8_t *getOutputLoc(uint8_t *Start);
+  size_t getOutputOffset();
 
   void
   computeHash(llvm::MutableArrayRef<uint8_t> Buf,

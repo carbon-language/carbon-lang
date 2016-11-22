@@ -261,9 +261,8 @@ BuildIdSection<ELFT>::BuildIdSection()
 }
 
 // Returns the location of the build-id hash value in the output.
-template <class ELFT>
-uint8_t *BuildIdSection<ELFT>::getOutputLoc(uint8_t *Start) {
-  return Start + this->OutSec->Offset + this->OutSecOff + HeaderSize;
+template <class ELFT> size_t BuildIdSection<ELFT>::getOutputOffset() {
+  return this->OutSec->Offset + this->OutSecOff + HeaderSize;
 }
 
 template <class ELFT> size_t BuildIdSection<ELFT>::getHashSize() {
@@ -316,7 +315,7 @@ void BuildIdSection<ELFT>::computeHash(
   else
     std::for_each(Chunks.begin(), Chunks.end(), Fn);
 
-  HashFn(HashList, getOutputLoc(Data.begin()));
+  HashFn(HashList, Data.data() + getOutputOffset());
 }
 
 template <class ELFT>
@@ -344,11 +343,11 @@ void BuildIdSection<ELFT>::writeBuildId(MutableArrayRef<uint8_t> Buf) {
     });
     break;
   case BuildIdKind::Uuid:
-    if (getRandomBytes(getOutputLoc(Buf.data()), HashSize))
+    if (getRandomBytes(Buf.data() + getOutputOffset(), HashSize))
       error("entropy source failure");
     break;
   case BuildIdKind::Hexstring:
-    memcpy(this->getOutputLoc(Buf.data()), Config->BuildIdVector.data(),
+    memcpy(Buf.data() + getOutputOffset(), Config->BuildIdVector.data(),
            Config->BuildIdVector.size());
     break;
   default:
