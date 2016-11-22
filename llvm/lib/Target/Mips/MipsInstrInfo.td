@@ -2569,6 +2569,12 @@ def Ulhu : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
 def Ulw : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
                             "ulw\t$rt, $addr">; //, ISA_MIPS1_NOT_32R6_64R6;
 
+def Ush : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
+                            "ush\t$rt, $addr">; //, ISA_MIPS1_NOT_32R6_64R6;
+
+def Usw : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
+                            "usw\t$rt, $addr">; //, ISA_MIPS1_NOT_32R6_64R6;
+
 def LDMacro : MipsAsmPseudoInst<(outs GPR32Opnd:$rt),
                                 (ins mem_simm16:$addr), "ld $rt, $addr">,
                                 ISA_MIPS1_NOT_MIPS3;
