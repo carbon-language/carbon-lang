@@ -778,6 +778,9 @@ static char getSymbolNMTypeChar(ELFObjectFileBase &Obj,
       break;
     case ELF::SHT_NOBITS:
       return 'b';
+    case ELF::SHT_INIT_ARRAY:
+    case ELF::SHT_FINI_ARRAY:
+      return 't';
     }
   }
 
