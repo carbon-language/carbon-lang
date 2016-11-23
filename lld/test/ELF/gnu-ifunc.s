@@ -89,26 +89,26 @@
 
 // DISASM:      Disassembly of section .text:
 // DISASM-NEXT: foo:
-// DISASM-NEXT:    11000: c3 retq
+// DISASM-NEXT:    11000: {{.*}} retq
 // DISASM:      bar:
-// DISASM-NEXT:    11001: c3 retq
+// DISASM-NEXT:    11001: {{.*}} retq
 // DISASM:      _start:
-// DISASM-NEXT:    11002: e8 29 00 00 00 callq 41
-// DISASM-NEXT:    11007: e8 34 00 00 00 callq 52
-// DISASM-NEXT:    1100c: ba 58 01 01 00 movl $65880, %edx
-// DISASM-NEXT:    11011: ba 88 01 01 00 movl $65928, %edx
-// DISASM-NEXT:    11016: ba 89 01 01 00 movl $65929, %edx
+// DISASM-NEXT:    11002: {{.*}} callq 41
+// DISASM-NEXT:    11007: {{.*}} callq 52
+// DISASM-NEXT:    1100c: {{.*}} movl $65880, %edx
+// DISASM-NEXT:    11011: {{.*}} movl $65928, %edx
+// DISASM-NEXT:    11016: {{.*}} movl $65929, %edx
 // DISASM-NEXT: Disassembly of section .plt:
 // DISASM-NEXT: .plt:
-// DISASM-NEXT:    11020: ff 35 e2 0f 00 00 pushq 4066(%rip)
-// DISASM-NEXT:    11026: ff 25 e4 0f 00 00 jmpq *4068(%rip)
-// DISASM-NEXT:    1102c: 0f 1f 40 00       nopl (%rax)
-// DISASM-NEXT:    11030: ff 25 e2 0f 00 00 jmpq *4066(%rip)
-// DISASM-NEXT:    11036: 68 00 00 00 00    pushq $0
-// DISASM-NEXT:    1103b: e9 e0 ff ff ff    jmp -32
-// DISASM-NEXT:    11040: ff 25 da 0f 00 00 jmpq *4058(%rip)
-// DISASM-NEXT:    11046: 68 01 00 00 00    pushq $1
-// DISASM-NEXT:    1104b: e9 d0 ff ff ff    jmp -48
+// DISASM-NEXT:    11020: {{.*}} pushq 4066(%rip)
+// DISASM-NEXT:    11026: {{.*}} jmpq *4068(%rip)
+// DISASM-NEXT:    1102c: {{.*}} nopl (%rax)
+// DISASM-NEXT:    11030: {{.*}} jmpq *4066(%rip)
+// DISASM-NEXT:    11036: {{.*}} pushq $0
+// DISASM-NEXT:    1103b: {{.*}} jmp -32
+// DISASM-NEXT:    11040: {{.*}} jmpq *4058(%rip)
+// DISASM-NEXT:    11046: {{.*}} pushq $1
+// DISASM-NEXT:    1104b: {{.*}} jmp -48
 
 .text
 .type foo STT_GNU_IFUNC

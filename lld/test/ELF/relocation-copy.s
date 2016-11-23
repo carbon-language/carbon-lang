@@ -59,9 +59,9 @@ movl $z, %edx
 // 77844 = 0x13000 + 16 + 4
 // CODE: Disassembly of section .text:
 // CODE-NEXT: _start:
-// CODE-NEXT: 11000: c7 04 25 00 30 01 00 05 00 00 00 movl $5, 77824
-// CODE-NEXT: 1100b: c7 04 25 10 30 01 00 07 00 00 00 movl $7, 77840
-// CODE-NEXT: 11016: c7 04 25 14 30 01 00 09 00 00 00 movl $9, 77844
-// CODE-NEXT: 11021: ba 00 30 01 00                   movl $77824, %edx
-// CODE-NEXT: 11026: ba 10 30 01 00                   movl $77840, %edx
-// CODE-NEXT: 1102b: ba 14 30 01 00                   movl $77844, %edx
+// CODE-NEXT: 11000: {{.*}} movl $5, 77824
+// CODE-NEXT: 1100b: {{.*}} movl $7, 77840
+// CODE-NEXT: 11016: {{.*}} movl $9, 77844
+// CODE-NEXT: 11021: {{.*}} movl $77824, %edx
+// CODE-NEXT: 11026: {{.*}} movl $77840, %edx
+// CODE-NEXT: 1102b: {{.*}} movl $77844, %edx
