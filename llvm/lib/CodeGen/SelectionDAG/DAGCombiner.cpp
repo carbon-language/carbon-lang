@@ -2157,11 +2157,11 @@ SDValue DAGCombiner::visitMUL(SDNode *N) {
 
   // (mul (shl X, c1), c2) -> (mul X, c2 << c1)
   if (N0.getOpcode() == ISD::SHL &&
-      isConstantOrConstantVector(N1) &&
-      isConstantOrConstantVector(N0.getOperand(1))) {
+      isConstantOrConstantVector(N1, /* NoOpaques */ true) &&
+      isConstantOrConstantVector(N0.getOperand(1), /* NoOpaques */ true)) {
     SDValue C3 = DAG.getNode(ISD::SHL, SDLoc(N), VT, N1, N0.getOperand(1));
-    AddToWorklist(C3.getNode());
-    return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), C3);
+    if (isConstantOrConstantVector(C3))
+      return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), C3);
   }
 
   // Change (mul (shl X, C), Y) -> (shl (mul X, Y), C) when the shift has one
@@ -4714,8 +4714,8 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
       isConstantOrConstantVector(N1, /* No Opaques */ true) &&
       isConstantOrConstantVector(N0.getOperand(1), /* No Opaques */ true)) {
     SDValue Shl = DAG.getNode(ISD::SHL, SDLoc(N1), VT, N0.getOperand(1), N1);
-    AddToWorklist(Shl.getNode());
-    return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), Shl);
+    if (isConstantOrConstantVector(Shl))
+      return DAG.getNode(ISD::MUL, SDLoc(N), VT, N0.getOperand(0), Shl);
   }
 
   if (N1C && !N1C->isOpaque())
