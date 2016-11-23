@@ -177,7 +177,7 @@ template <class ELFT> void MipsOptionsSection<ELFT>::writeTo(uint8_t *Buf) {
   Options->size = getSize();
 
   if (!Config->Relocatable)
-    Reginfo.ri_gp_value = In<ELFT>::MipsGot->getVA() + MipsGPOffset;
+    Reginfo.ri_gp_value = In<ELFT>::MipsGot->getGp();
   memcpy(Buf + sizeof(typename ELFT::uint), &Reginfo, sizeof(Reginfo));
 }
 
@@ -233,7 +233,7 @@ MipsReginfoSection<ELFT>::MipsReginfoSection(Elf_Mips_RegInfo Reginfo)
 
 template <class ELFT> void MipsReginfoSection<ELFT>::writeTo(uint8_t *Buf) {
   if (!Config->Relocatable)
-    Reginfo.ri_gp_value = In<ELFT>::MipsGot->getVA() + MipsGPOffset;
+    Reginfo.ri_gp_value = In<ELFT>::MipsGot->getGp();
   memcpy(Buf, &Reginfo, sizeof(Reginfo));
 }
 
@@ -546,7 +546,7 @@ MipsGotSection<ELFT>::getPageEntryOffset(uintX_t EntryValue) {
   size_t NewIndex = PageIndexMap.size() + 2;
   auto P = PageIndexMap.insert(std::make_pair(EntryValue, NewIndex));
   assert(!P.second || PageIndexMap.size() <= PageEntriesNum);
-  return (uintX_t)P.first->second * sizeof(uintX_t) - MipsGPOffset;
+  return (uintX_t)P.first->second * sizeof(uintX_t);
 }
 
 template <class ELFT>
@@ -572,7 +572,7 @@ MipsGotSection<ELFT>::getBodyEntryOffset(const SymbolBody &B,
     assert(It != EntryIndexMap.end());
     GotIndex = It->second;
   }
-  return GotBlockOff + GotIndex * sizeof(uintX_t) - MipsGPOffset;
+  return GotBlockOff + GotIndex * sizeof(uintX_t);
 }
 
 template <class ELFT>
@@ -612,6 +612,10 @@ template <class ELFT> void MipsGotSection<ELFT>::finalize() {
   }
   EntriesNum += getLocalEntriesNum() + GlobalEntries.size();
   Size = EntriesNum * sizeof(uintX_t);
+}
+
+template <class ELFT> unsigned MipsGotSection<ELFT>::getGp() const {
+  return ElfSym<ELFT>::MipsGp->template getVA<ELFT>(0);
 }
 
 template <class ELFT>

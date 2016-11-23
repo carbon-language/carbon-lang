@@ -389,21 +389,26 @@ static typename ELFT::uint getSymVA(uint32_t Type, typename ELFT::uint A,
     // If relocation against MIPS local symbol requires GOT entry, this entry
     // should be initialized by 'page address'. This address is high 16-bits
     // of sum the symbol's value and the addend.
-    return In<ELFT>::MipsGot->getPageEntryOffset(Body.getVA<ELFT>(A));
+    return In<ELFT>::MipsGot->getVA() +
+           In<ELFT>::MipsGot->getPageEntryOffset(Body.getVA<ELFT>(A)) -
+           In<ELFT>::MipsGot->getGp();
   case R_MIPS_GOT_OFF:
   case R_MIPS_GOT_OFF32:
     // In case of MIPS if a GOT relocation has non-zero addend this addend
     // should be applied to the GOT entry content not to the GOT entry offset.
     // That is why we use separate expression type.
-    return In<ELFT>::MipsGot->getBodyEntryOffset(Body, A);
+    return In<ELFT>::MipsGot->getVA() +
+           In<ELFT>::MipsGot->getBodyEntryOffset(Body, A) -
+           In<ELFT>::MipsGot->getGp();
   case R_MIPS_GOTREL:
-    return Body.getVA<ELFT>(A) - In<ELFT>::MipsGot->getVA() - MipsGPOffset;
+    return Body.getVA<ELFT>(A) - In<ELFT>::MipsGot->getGp();
   case R_MIPS_TLSGD:
-    return In<ELFT>::MipsGot->getGlobalDynOffset(Body) +
-           In<ELFT>::MipsGot->getTlsOffset() - MipsGPOffset;
+    return In<ELFT>::MipsGot->getVA() + In<ELFT>::MipsGot->getTlsOffset() +
+           In<ELFT>::MipsGot->getGlobalDynOffset(Body) -
+           In<ELFT>::MipsGot->getGp();
   case R_MIPS_TLSLD:
-    return In<ELFT>::MipsGot->getTlsIndexOff() +
-           In<ELFT>::MipsGot->getTlsOffset() - MipsGPOffset;
+    return In<ELFT>::MipsGot->getVA() + In<ELFT>::MipsGot->getTlsOffset() +
+           In<ELFT>::MipsGot->getTlsIndexOff() - In<ELFT>::MipsGot->getGp();
   case R_PPC_OPD: {
     uint64_t SymVA = Body.getVA<ELFT>(A);
     // If we have an undefined weak symbol, we might get here with a symbol
