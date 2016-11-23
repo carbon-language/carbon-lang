@@ -562,7 +562,7 @@ bool SIFoldOperands::runOnMachineFunction(MachineFunction &MF) {
             MRI.clearKillFlags(Fold.OpToFold->getReg());
           }
           DEBUG(dbgs() << "Folded source from " << MI << " into OpNo " <<
-                Fold.UseOpNo << " of " << *Fold.UseMI << '\n');
+                static_cast<int>(Fold.UseOpNo) << " of " << *Fold.UseMI << '\n');
 
           // Folding the immediate may reveal operations that can be constant
           // folded or replaced with a copy. This can happen for example after
