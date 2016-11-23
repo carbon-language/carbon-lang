@@ -560,7 +560,7 @@ template <class ELFT> X86_64TargetInfo<ELFT>::X86_64TargetInfo() {
   TlsGdRelaxSkip = 2;
   // Align to the large page size (known as a superpage or huge page).
   // FreeBSD automatically promotes large, superpage-aligned allocations.
-  DefaultImageBase = 0x200000;                                         
+  DefaultImageBase = 0x200000;
 }
 
 template <class ELFT>
