@@ -65,7 +65,7 @@ int main()
         char str[50];
         output_iterator<char*> iter = f.put(output_iterator<char*>(str), ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == (sizeof(unsigned long long) == 4 ? "4294967295" : "18446744073709551615"));
+        assert(ex == "18446744073709551615");
     }
     {
         std::ios ios(0);
