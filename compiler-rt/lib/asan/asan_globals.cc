@@ -372,6 +372,11 @@ void __asan_unregister_globals(__asan_global *globals, uptr n) {
   if (!flags()->report_globals) return;
   BlockingMutexLock lock(&mu_for_globals);
   for (uptr i = 0; i < n; i++) {
+    if (SANITIZER_WINDOWS && globals[i].beg == 0) {
+      // Skip globals that look like padding from the MSVC incremental linker.
+      // See comment in __asan_register_globals.
+      continue;
+    }
     UnregisterGlobal(&globals[i]);
   }
 }
