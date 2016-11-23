@@ -3610,6 +3610,38 @@ SDValue TargetLowering::expandUnalignedStore(StoreSDNode *ST,
   return Result;
 }
 
+SDValue 
+TargetLowering::IncrementMemoryAddress(SDValue Addr, SDValue Mask,
+                                       const SDLoc &DL, EVT DataVT,
+                                       SelectionDAG &DAG,
+                                       bool IsCompressedMemory) const {
+  SDValue Increment;
+  EVT AddrVT = Addr.getValueType();
+  EVT MaskVT = Mask.getValueType();
+  assert(DataVT.getVectorNumElements() == MaskVT.getVectorNumElements() &&
+         "Incompatible types of Data and Mask");
+  if (IsCompressedMemory) {
+    // Incrementing the pointer according to number of '1's in the mask.
+    EVT MaskIntVT = EVT::getIntegerVT(*DAG.getContext(), MaskVT.getSizeInBits());
+    SDValue MaskInIntReg = DAG.getBitcast(MaskIntVT, Mask);
+    if (MaskIntVT.getSizeInBits() < 32) {
+      MaskInIntReg = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, MaskInIntReg);
+      MaskIntVT = MVT::i32;
+    }
+
+    // Count '1's with POPCNT.
+    Increment = DAG.getNode(ISD::CTPOP, DL, MaskIntVT, MaskInIntReg);
+    Increment = DAG.getZExtOrTrunc(Increment, DL, AddrVT);
+    // Scale is an element size in bytes.
+    SDValue Scale = DAG.getConstant(DataVT.getScalarSizeInBits() / 8, DL,
+                                    AddrVT);
+    Increment = DAG.getNode(ISD::MUL, DL, AddrVT, Increment, Scale);
+  } else
+    Increment = DAG.getConstant(DataVT.getSizeInBits() / 8, DL, AddrVT);
+
+  return DAG.getNode(ISD::ADD, DL, AddrVT, Addr, Increment);
+}
+
 //===----------------------------------------------------------------------===//
 // Implementation of Emulated TLS Model
 //===----------------------------------------------------------------------===//
