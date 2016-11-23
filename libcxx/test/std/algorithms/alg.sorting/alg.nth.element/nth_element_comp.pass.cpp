@@ -33,7 +33,7 @@ struct indirect_less
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 void
-test_one(unsigned N, unsigned M)
+test_one(int N, int M)
 {
     assert(N != 0);
     assert(M < N);
@@ -48,7 +48,7 @@ test_one(unsigned N, unsigned M)
 }
 
 void
-test(unsigned N)
+test(int N)
 {
     test_one(N, 0);
     test_one(N, 1);
