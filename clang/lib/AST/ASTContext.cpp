@@ -9172,18 +9172,6 @@ void ASTContext::addCopyConstructorForExceptionObject(CXXRecordDecl *RD,
       cast<CXXConstructorDecl>(CD->getFirstDecl()));
 }
 
-void ASTContext::addDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
-                                                 unsigned ParmIdx, Expr *DAE) {
-  ABI->addDefaultArgExprForConstructor(
-      cast<CXXConstructorDecl>(CD->getFirstDecl()), ParmIdx, DAE);
-}
-
-Expr *ASTContext::getDefaultArgExprForConstructor(const CXXConstructorDecl *CD,
-                                                  unsigned ParmIdx) {
-  return ABI->getDefaultArgExprForConstructor(
-      cast<CXXConstructorDecl>(CD->getFirstDecl()), ParmIdx);
-}
-
 void ASTContext::addTypedefNameForUnnamedTagDecl(TagDecl *TD,
                                                  TypedefNameDecl *DD) {
   return ABI->addTypedefNameForUnnamedTagDecl(TD, DD);
