@@ -134,6 +134,13 @@ define i32 @fptosi_float_i64(i32 %arg) {
   ; AVX2: cost of 1 {{.*}} %I64 = fptosi
   ; AVX512: cost of 1 {{.*}} %I64 = fptosi
   %I64 = fptosi float undef to i64
+  ; SSE2: cost of 6 {{.*}} %V2I64 = fptosi
+  ; SSE42: cost of 6 {{.*}} %V2I64 = fptosi
+  ; AVX1: cost of 6 {{.*}} %V2I64 = fptosi
+  ; AVX2: cost of 6 {{.*}} %V2I64 = fptosi
+  ; AVX512F: cost of 6 {{.*}} %V2I64 = fptosi
+  ; AVX512DQ: cost of 6 {{.*}} %V2I64 = fptosi
+  %V2I64 = fptosi <2 x float> undef to <2 x i64>
   ; SSE2: cost of 13 {{.*}} %V4I64 = fptosi
   ; SSE42: cost of 13 {{.*}} %V4I64 = fptosi
   ; AVX1: cost of 12 {{.*}} %V4I64 = fptosi
