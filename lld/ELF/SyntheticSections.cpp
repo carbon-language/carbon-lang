@@ -359,18 +359,12 @@ void BuildIdSection<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
     break;
   case BuildIdKind::Md5:
     computeHash(Buf, [](uint8_t *Dest, ArrayRef<uint8_t> Arr) {
-      MD5 Hash;
-      Hash.update(Arr);
-      MD5::MD5Result Res;
-      Hash.final(Res);
-      memcpy(Dest, Res, 16);
+      memcpy(Dest, MD5::hash(Arr).data(), 16);
     });
     break;
   case BuildIdKind::Sha1:
     computeHash(Buf, [](uint8_t *Dest, ArrayRef<uint8_t> Arr) {
-      SHA1 Hash;
-      Hash.update(Arr);
-      memcpy(Dest, Hash.final().data(), 20);
+      memcpy(Dest, SHA1::hash(Arr).data(), 20);
     });
     break;
   case BuildIdKind::Uuid:
