@@ -577,10 +577,10 @@ void test_swap_noexcept() {
   }
 }
 
-
+#ifdef _LIBCPP_VERSION
 // This is why variant should SFINAE member swap. :-)
-LIBCPP_ONLY(template class std::variant<int, NotSwappable>;)
-
+template class std::variant<int, NotSwappable>;
+#endif
 
 int main() {
   test_swap_valueless_by_exception();
