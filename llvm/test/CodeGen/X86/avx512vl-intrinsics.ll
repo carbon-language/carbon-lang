@@ -3055,8 +3055,6 @@ define <4 x i32>@test_int_x86_avx512_mask_cvt_pd2dq_128_zext(<2 x double> %x0, <
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vcvtpd2dq %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf1,0xff,0x09,0xe6,0xc8]
 ; CHECK-NEXT:    vcvtpd2dq %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xff,0x08,0xe6,0xc0]
-; CHECK-NEXT:    vmovq %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfe,0x08,0x7e,0xc0]
-; CHECK-NEXT:    ## xmm0 = xmm0[0],zero
 ; CHECK-NEXT:    vpaddd %xmm0, %xmm1, %xmm0 ## encoding: [0x62,0xf1,0x75,0x08,0xfe,0xc0]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %res = call <4 x i32> @llvm.x86.avx512.mask.cvtpd2dq.128(<2 x double> %x0, <4 x i32> %x1, i8 %x2)
@@ -3151,8 +3149,6 @@ define <4 x i32>@test_int_x86_avx512_mask_cvt_pd2udq_128_zext(<2 x double> %x0, 
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vcvtpd2udq %xmm0, %xmm1 {%k1} ## encoding: [0x62,0xf1,0xfc,0x09,0x79,0xc8]
 ; CHECK-NEXT:    vcvtpd2udq %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfc,0x08,0x79,0xc0]
-; CHECK-NEXT:    vmovq %xmm0, %xmm0 ## encoding: [0x62,0xf1,0xfe,0x08,0x7e,0xc0]
-; CHECK-NEXT:    ## xmm0 = xmm0[0],zero
 ; CHECK-NEXT:    vpaddd %xmm0, %xmm1, %xmm0 ## encoding: [0x62,0xf1,0x75,0x08,0xfe,0xc0]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %res = call <4 x i32> @llvm.x86.avx512.mask.cvtpd2udq.128(<2 x double> %x0, <4 x i32> %x1, i8 %x2)
