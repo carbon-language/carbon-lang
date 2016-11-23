@@ -10,20 +10,20 @@
 # SYMRELOC:      Symbols [
 # SYMRELOC:       Symbol {
 # SYMRELOC:        Name: bar
-# SYMRELOC-NEXT:   Value: 0x12000
+# SYMRELOC-NEXT:   Value: 0x202000
 
-## 73728 = 0x12000 (bar)
+## 2105344 = 0x202000 (bar)
 # DISASM:      Disassembly of section .text:
 # DISASM-NEXT: _start:
-# DISASM-NEXT:    11000: {{.*}} adcq  $73728, %rax
-# DISASM-NEXT:    11007: {{.*}} addq  $73728, %rbx
-# DISASM-NEXT:    1100e: {{.*}} andq  $73728, %rcx
-# DISASM-NEXT:    11015: {{.*}} cmpq  $73728, %rdx
-# DISASM-NEXT:    1101c: {{.*}} orq   $73728, %rdi
-# DISASM-NEXT:    11023: {{.*}} sbbq  $73728, %rsi
-# DISASM-NEXT:    1102a: {{.*}} subq  $73728, %rbp
-# DISASM-NEXT:    11031: {{.*}} xorq  $73728, %r8
-# DISASM-NEXT:    11038: {{.*}} testq $73728, %r15
+# DISASM-NEXT:   201000: {{.*}} adcq  $2105344, %rax
+# DISASM-NEXT:   201007: {{.*}} addq  $2105344, %rbx
+# DISASM-NEXT:   20100e: {{.*}} andq  $2105344, %rcx
+# DISASM-NEXT:   201015: {{.*}} cmpq  $2105344, %rdx
+# DISASM-NEXT:   20101c: {{.*}} orq   $2105344, %rdi
+# DISASM-NEXT:   201023: {{.*}} sbbq  $2105344, %rsi
+# DISASM-NEXT:   20102a: {{.*}} subq  $2105344, %rbp
+# DISASM-NEXT:   201031: {{.*}} xorq  $2105344, %r8
+# DISASM-NEXT:   201038: {{.*}} testq $2105344, %r15
 
 # RUN: ld.lld -shared %t.o -o %t2
 # RUN: llvm-readobj -s -r -d %t2 | FileCheck --check-prefix=SEC-PIC    %s

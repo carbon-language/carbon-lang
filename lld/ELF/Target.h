@@ -64,12 +64,10 @@ public:
   unsigned PageSize = 4096;
   unsigned MaxPageSize = 4096;
 
-  // On freebsd x86_64 the first page cannot be mmaped.
-  // On linux that is controled by vm.mmap_min_addr. At least on some x86_64
+  // On FreeBSD x86_64 the first page cannot be mmaped.
+  // On Linux that is controled by vm.mmap_min_addr. At least on some x86_64
   // installs that is 65536, so the first 15 pages cannot be used.
   // Given that, the smallest value that can be used in here is 0x10000.
-  // If using 2MB pages, the smallest page aligned address that works is
-  // 0x200000, but it looks like every OS uses 4k pages for executables.
   uint64_t DefaultImageBase = 0x10000;
 
   uint32_t CopyRel;
