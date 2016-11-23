@@ -773,12 +773,12 @@ static InputFile *createELFFile(MemoryBufferRef MB) {
   unsigned char Endian;
   std::tie(Size, Endian) = getElfArchType(MB.getBuffer());
   if (Endian != ELFDATA2LSB && Endian != ELFDATA2MSB)
-    fatal("invalid data encoding: " + MB.getBufferIdentifier());
+    fatal(MB.getBufferIdentifier() + ": invalid data encoding");
 
   size_t BufSize = MB.getBuffer().size();
   if ((Size == ELFCLASS32 && BufSize < sizeof(Elf32_Ehdr)) ||
       (Size == ELFCLASS64 && BufSize < sizeof(Elf64_Ehdr)))
-    fatal("file is too short");
+    fatal(MB.getBufferIdentifier() + ": file is too short");
 
   InputFile *Obj;
   if (Size == ELFCLASS32 && Endian == ELFDATA2LSB)
@@ -790,7 +790,7 @@ static InputFile *createELFFile(MemoryBufferRef MB) {
   else if (Size == ELFCLASS64 && Endian == ELFDATA2MSB)
     Obj = make<T<ELF64BE>>(MB);
   else
-    fatal("invalid file class: " + MB.getBufferIdentifier());
+    fatal(MB.getBufferIdentifier() + ": invalid file class");
 
   if (!Config->FirstElf)
     Config->FirstElf = Obj;

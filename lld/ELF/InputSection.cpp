@@ -15,6 +15,7 @@
 #include "LinkerScript.h"
 #include "Memory.h"
 #include "OutputSections.h"
+#include "Relocations.h"
 #include "SyntheticSections.h"
 #include "Target.h"
 #include "Thunks.h"
@@ -97,7 +98,7 @@ template <class ELFT> size_t InputSectionBase<ELFT>::getSize() const {
 
 // Returns a string for an error message.
 template <class SectionT> static std::string getName(SectionT *Sec) {
-  return (Sec->getFile()->getName() + "(" + Sec->Name + ")").str();
+  return (Sec->getFile()->getName() + ":(" + Sec->Name + ")").str();
 }
 
 template <class ELFT>
@@ -455,7 +456,7 @@ void InputSection<ELFT>::relocateNonAlloc(uint8_t *Buf, ArrayRef<RelTy> Rels) {
 
     SymbolBody &Sym = this->File->getRelocTargetSym(Rel);
     if (Target->getRelExpr(Type, Sym) != R_ABS) {
-      error(getName(this) + " has non-ABS reloc");
+      error(getLocation(*this, Offset) + ": has non-ABS reloc");
       return;
     }
 
