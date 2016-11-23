@@ -300,6 +300,8 @@ private:
 
 template <class ELFT> InputSection<ELFT> InputSection<ELFT>::Discarded;
 
+template <class ELFT> std::string toString(const InputSectionBase<ELFT> *);
+
 } // namespace elf
 } // namespace lld
 

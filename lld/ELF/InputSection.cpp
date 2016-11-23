@@ -32,6 +32,12 @@ using namespace llvm::support::endian;
 using namespace lld;
 using namespace lld::elf;
 
+// Returns a string to construct an error message.
+template <class ELFT>
+std::string elf::toString(const InputSectionBase<ELFT> *Sec) {
+  return (Sec->getFile()->getName() + ":(" + Sec->Name + ")").str();
+}
+
 template <class ELFT>
 static ArrayRef<uint8_t> getSectionContents(elf::ObjectFile<ELFT> *File,
                                             const typename ELFT::Shdr *Hdr) {
@@ -65,13 +71,13 @@ InputSectionBase<ELFT>::InputSectionBase(elf::ObjectFile<ELFT> *File,
   // no alignment constraits.
   uint64_t V = std::max<uint64_t>(Addralign, 1);
   if (!isPowerOf2_64(V))
-    fatal(getFilename(File) + ": section sh_addralign is not a power of 2");
+    fatal(toString(File) + ": section sh_addralign is not a power of 2");
 
   // We reject object files having insanely large alignments even though
   // they are allowed by the spec. I think 4GB is a reasonable limitation.
   // We might want to relax this in the future.
   if (V > UINT32_MAX)
-    fatal(getFilename(File) + ": section sh_addralign is too large");
+    fatal(toString(File) + ": section sh_addralign is too large");
   Alignment = V;
 }
 
@@ -128,10 +134,10 @@ std::pair<ArrayRef<uint8_t>, uint64_t>
 InputSectionBase<ELFT>::getElfCompressedData(ArrayRef<uint8_t> Data) {
   // Compressed section with Elf_Chdr is the ELF standard.
   if (Data.size() < sizeof(Elf_Chdr))
-    fatal(getName(this) + ": corrupted compressed section");
+    fatal(toString(this) + ": corrupted compressed section");
   auto *Hdr = reinterpret_cast<const Elf_Chdr *>(Data.data());
   if (Hdr->ch_type != ELFCOMPRESS_ZLIB)
-    fatal(getName(this) + ": unsupported compression type");
+    fatal(toString(this) + ": unsupported compression type");
   return {Data.slice(sizeof(*Hdr)), Hdr->ch_size};
 }
 
@@ -147,16 +153,16 @@ InputSectionBase<ELFT>::getRawCompressedData(ArrayRef<uint8_t> Data) {
   };
 
   if (Data.size() < sizeof(ZlibHeader))
-    fatal(getName(this) + ": corrupted compressed section");
+    fatal(toString(this) + ": corrupted compressed section");
   auto *Hdr = reinterpret_cast<const ZlibHeader *>(Data.data());
   if (memcmp(Hdr->Magic, "ZLIB", 4))
-    fatal(getName(this) + ": broken ZLIB-compressed section");
+    fatal(toString(this) + ": broken ZLIB-compressed section");
   return {Data.slice(sizeof(*Hdr)), read64be(Hdr->Size)};
 }
 
 template <class ELFT> void InputSectionBase<ELFT>::uncompress() {
   if (!zlib::isAvailable())
-    fatal(getName(this) +
+    fatal(toString(this) +
           ": build lld with zlib to enable compressed sections support");
 
   // This section is compressed. Here we decompress it. Ideally, all
@@ -175,7 +181,7 @@ template <class ELFT> void InputSectionBase<ELFT>::uncompress() {
   // Uncompress Buf.
   char *OutputBuf = BAlloc.Allocate<char>(Size);
   if (zlib::uncompress(toStringRef(Buf), OutputBuf, Size) != zlib::StatusOK)
-    fatal(getName(this) + ": error while uncompressing section");
+    fatal(toString(this) + ": error while uncompressing section");
   Data = ArrayRef<uint8_t>((uint8_t *)OutputBuf, Size);
 }
 
@@ -667,7 +673,7 @@ MergeInputSection<ELFT>::splitStrings(ArrayRef<uint8_t> Data, size_t EntSize) {
   while (!Data.empty()) {
     size_t End = findNull(Data, EntSize);
     if (End == StringRef::npos)
-      fatal(getName(this) + ": string is not null terminated");
+      fatal(toString(this) + ": string is not null terminated");
     size_t Size = End + EntSize;
     V.emplace_back(Off, !IsAlloca);
     Hashes.push_back(hash_value(toStringRef(Data.slice(0, Size))));
@@ -753,7 +759,7 @@ const SectionPiece *
 MergeInputSection<ELFT>::getSectionPiece(uintX_t Offset) const {
   uintX_t Size = this->Data.size();
   if (Offset >= Size)
-    fatal(getName(this) + ": entry is past the end of the section");
+    fatal(toString(this) + ": entry is past the end of the section");
 
   // Find the element this offset points to.
   auto I = fastUpperBound(

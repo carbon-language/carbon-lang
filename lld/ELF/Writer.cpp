@@ -376,14 +376,16 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
   for (elf::ObjectFile<ELFT> *F : Symtab<ELFT>::X->getObjectFiles()) {
     for (SymbolBody *B : F->getLocalSymbols()) {
       if (!B->IsLocal)
-        fatal(getFilename(F) +
+        fatal(toString(F) +
               ": broken object: getLocalSymbols returns a non-local symbol");
       auto *DR = dyn_cast<DefinedRegular<ELFT>>(B);
+
       // No reason to keep local undefined symbol in symtab.
       if (!DR)
         continue;
       if (!includeInSymtab<ELFT>(*B))
         continue;
+
       InputSectionBase<ELFT> *Sec = DR->Section;
       if (!shouldKeepInSymtab<ELFT>(Sec, B->getName(), *B))
         continue;

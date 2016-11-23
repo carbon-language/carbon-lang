@@ -134,7 +134,7 @@ MipsAbiFlagsSection<ELFT> *MipsAbiFlagsSection<ELFT>::create() {
     Sec->Live = false;
     Create = true;
 
-    std::string Filename = getFilename(Sec->getFile());
+    std::string Filename = toString(Sec->getFile());
     if (Sec->Data.size() != sizeof(Elf_Mips_ABIFlags)) {
       error(Filename + ": invalid size of .MIPS.abiflags section");
       return nullptr;
@@ -196,7 +196,7 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
     Sec->Live = false;
     Create = true;
 
-    std::string Filename = getFilename(Sec->getFile());
+    std::string Filename = toString(Sec->getFile());
     ArrayRef<uint8_t> D = Sec->Data;
 
     while (!D.empty()) {
@@ -253,12 +253,12 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
     Create = true;
 
     if (Sec->Data.size() != sizeof(Elf_Mips_RegInfo)) {
-      error(getFilename(Sec->getFile()) + ": invalid size of .reginfo section");
+      error(toString(Sec->getFile()) + ": invalid size of .reginfo section");
       return nullptr;
     }
     auto *R = reinterpret_cast<const Elf_Mips_RegInfo *>(Sec->Data.data());
     if (Config->Relocatable && R->ri_gp_value)
-      error(getFilename(Sec->getFile()) + ": unsupported non-zero ri_gp_value");
+      error(toString(Sec->getFile()) + ": unsupported non-zero ri_gp_value");
 
     Reginfo.ri_gprmask |= R->ri_gprmask;
     Sec->getFile()->MipsGp0 = R->ri_gp_value;
