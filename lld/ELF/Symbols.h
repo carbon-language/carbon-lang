@@ -69,10 +69,9 @@ public:
   bool isShared() const { return SymbolKind == SharedKind; }
   bool isLocal() const { return IsLocal; }
   bool isPreemptible() const;
-
   StringRef getName() const;
-
   uint8_t getVisibility() const { return StOther & 0x3; }
+  void parseSymbolVersion();
 
   bool isInGot() const { return GotIndex != -1U; }
   bool isInPlt() const { return PltIndex != -1U; }
