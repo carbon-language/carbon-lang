@@ -82,6 +82,7 @@ private:
   void addRelIpltSymbols();
   void addStartEndSymbols();
   void addStartStopSymbols(OutputSectionBase *Sec);
+  uintX_t getEntryAddr();
   OutputSectionBase *findSection(StringRef Name);
 
   std::vector<Phdr> Phdrs;
@@ -1360,12 +1361,30 @@ template <class ELFT> void Writer<ELFT>::setPhdrs() {
   }
 }
 
-template <class ELFT> static typename ELFT::uint getEntryAddr() {
+// The entry point address is chosen in the following ways.
+//
+// 1. the '-e' entry command-line option;
+// 2. the ENTRY(symbol) command in a linker control script;
+// 3. the value of the symbol start, if present;
+// 4. the address of the first byte of the .text section, if present;
+// 5. the address 0.
+template <class ELFT> typename ELFT::uint Writer<ELFT>::getEntryAddr() {
+  // Case 1, 2 or 3
   if (Config->Entry.empty())
     return Config->EntryAddr;
   if (SymbolBody *B = Symtab<ELFT>::X->find(Config->Entry))
     return B->getVA<ELFT>();
-  warn("entry symbol " + Config->Entry + " not found, assuming 0");
+
+  // Case 4
+  if (OutputSectionBase *Sec = findSection(".text")) {
+    warn("cannot find entry symbol " + Config->Entry + "; defaulting to 0x" +
+         utohexstr(Sec->Addr));
+    return Sec->Addr;
+  }
+
+  // Case 5
+  warn("cannot find entry symbol " + Config->Entry +
+       "; not setting start address");
   return 0;
 }
 
@@ -1438,7 +1457,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_type = getELFType();
   EHdr->e_machine = Config->EMachine;
   EHdr->e_version = EV_CURRENT;
-  EHdr->e_entry = getEntryAddr<ELFT>();
+  EHdr->e_entry = getEntryAddr();
   EHdr->e_shoff = SectionHeaderOff;
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
   EHdr->e_phnum = Phdrs.size();
