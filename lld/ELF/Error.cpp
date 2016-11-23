@@ -24,6 +24,7 @@ using namespace llvm;
 namespace lld {
 
 bool elf::HasError;
+uint64_t elf::ErrorCount;
 raw_ostream *elf::ErrorOS;
 StringRef elf::Argv0;
 
@@ -40,8 +41,16 @@ void elf::warn(const Twine &Msg) {
 }
 
 void elf::error(const Twine &Msg) {
-  *ErrorOS << Argv0 << ": error: " << Msg << "\n";
+  if (Config->ErrorLimit == 0 || ErrorCount < Config->ErrorLimit) {
+    *ErrorOS << Argv0 << ": error: " << Msg << "\n";
+  } else if (ErrorCount == Config->ErrorLimit) {
+    *ErrorOS << Argv0 << ": error: too many errors emitted, stopping now\n";
+    if (Config->ExitEarly)
+      exitLld(1);
+  }
+
   HasError = true;
+  ++ErrorCount;
 }
 
 void elf::error(std::error_code EC, const Twine &Prefix) {
