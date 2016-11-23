@@ -597,6 +597,10 @@ static void darwinPrintStab(MachOObjectFile *MachO, SymbolListT::iterator I) {
   outs() << Str;
 }
 
+static bool symbolIsDefined(const NMSymbol &Sym) {
+  return Sym.TypeChar != 'U' && Sym.TypeChar != 'w' && Sym.TypeChar != 'v';
+}
+
 static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
                                    const std::string &ArchiveName,
                                    const std::string &ArchitectureName) {
@@ -683,24 +687,28 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
     char SymbolAddrStr[18] = "";
     char SymbolSizeStr[18] = "";
 
-    if (OutputFormat == sysv || I->TypeChar == 'U') {
-      if (OutputFormat == posix)
+    // If the format is SysV or the symbol isn't defined, then print spaces.
+    if (OutputFormat == sysv || !symbolIsDefined(*I)) {
+      if (OutputFormat == posix) {
         format(printFormat, I->Address)
           .print(SymbolAddrStr, sizeof(SymbolAddrStr));
-      else
+        format(printFormat, I->Size)
+            .print(SymbolSizeStr, sizeof(SymbolSizeStr));
+      } else {
         strcpy(SymbolAddrStr, printBlanks);
+        strcpy(SymbolSizeStr, printBlanks);
+      }
     }
-    if (OutputFormat == sysv)
-      strcpy(SymbolSizeStr, printBlanks);
 
-    if (I->TypeChar != 'U') {
+    // Otherwise, print the symbol address and size.
+    if (symbolIsDefined(*I)) {
       if (Obj.isIR())
         strcpy(SymbolAddrStr, printDashes);
       else
         format(printFormat, I->Address)
           .print(SymbolAddrStr, sizeof(SymbolAddrStr));
+      format(printFormat, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
     }
-    format(printFormat, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
 
     // If OutputFormat is darwin or we are printing Mach-O symbols in hex and
     // we have a MachOObjectFile, call darwinPrintSymbol to print as darwin's
