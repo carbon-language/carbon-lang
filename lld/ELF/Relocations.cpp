@@ -556,8 +556,7 @@ std::string getLocation(InputSectionBase<ELFT> &S, typename ELFT::uint Offset) {
     return SrcFile + ":(function " + maybeDemangle(Encl->getName()) + ")";
 
   // If there's no symbol, print out the offset instead of a symbol name.
-  return (SrcFile + ":(" + S.Name + "+0x" + Twine::utohexstr(Offset) + ")")
-      .str();
+  return (SrcFile + ":(" + S.Name + "+0x" + utohexstr(Offset) + ")").str();
 }
 
 template <class ELFT>
