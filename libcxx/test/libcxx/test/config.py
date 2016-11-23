@@ -233,6 +233,7 @@ class Configuration(object):
             self.lit_config.fatal(
                 'unsupported value for "cxx_stdlib_under_test": %s'
                 % self.cxx_stdlib_under_test)
+        self.config.available_features.add(self.cxx_stdlib_under_test)
         if self.cxx_stdlib_under_test == 'libstdc++':
             self.config.available_features.add('libstdc++')
             # Manually enable the experimental and filesystem tests for libstdc++
