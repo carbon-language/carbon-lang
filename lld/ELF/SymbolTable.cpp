@@ -440,7 +440,7 @@ Symbol *SymbolTable<ELFT>::addBitcode(StringRef Name, uint8_t Binding,
       insert(Name, Type, StOther & 3, CanOmitFromDynSym, F);
   int Cmp = compareDefinedNonCommon(S, WasInserted, Binding);
   if (Cmp > 0)
-    replaceBody<DefinedRegular<ELFT>>(S, Name, StOther, Type, F);
+    replaceBody<DefinedRegular<ELFT>>(S, Name, StOther, Type, 0, 0, nullptr, F);
   else if (Cmp == 0)
     reportDuplicate(S->body(), F);
   return S;

@@ -183,9 +183,6 @@ public:
     this->File = File;
   }
 
-  DefinedRegular(StringRef Name, uint8_t StOther, uint8_t Type, BitcodeFile *F)
-      : DefinedRegular(Name, StOther, Type, 0, 0, NullInputSection, F) {}
-
   DefinedRegular(const char *Name, const Elf_Sym &Sym,
                  InputSectionBase<ELFT> *Section)
       : Defined(SymbolBody::DefinedRegularKind, Name, Sym.st_other,
