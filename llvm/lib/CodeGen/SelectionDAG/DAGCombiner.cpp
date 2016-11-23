@@ -10265,11 +10265,22 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
   // TODO: Handle TRUNCSTORE/LOADEXT
   if (OptLevel != CodeGenOpt::None &&
       ISD::isNormalLoad(N) && !LD->isVolatile()) {
-    if (ISD::isNON_TRUNCStore(Chain.getNode())) {
+    // Either a direct store, or a store off of a TokenFactor can be
+    // forwarded.
+    if (Chain->getOpcode() == ISD::TokenFactor) {
+      for (const SDValue &ChainOp : Chain->op_values()) {
+        if (ISD::isNON_TRUNCStore(ChainOp.getNode())) {
+          StoreSDNode *PrevST = cast<StoreSDNode>(ChainOp);
+          if (PrevST->getBasePtr() == Ptr &&
+              PrevST->getValue().getValueType() == N->getValueType(0))
+            return CombineTo(N, PrevST->getOperand(1), Chain);
+        }
+      }
+    } else if (ISD::isNON_TRUNCStore(Chain.getNode())) {
       StoreSDNode *PrevST = cast<StoreSDNode>(Chain);
       if (PrevST->getBasePtr() == Ptr &&
           PrevST->getValue().getValueType() == N->getValueType(0))
-      return CombineTo(N, Chain.getOperand(1), Chain);
+        return CombineTo(N, PrevST->getOperand(1), Chain);
     }
   }
 
