@@ -532,7 +532,7 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
     return;
 
   if (auto *S = dyn_cast<SyntheticSection<ELFT>>(this)) {
-    S->writeTo(Buf);
+    S->writeTo(Buf + OutSecOff);
     return;
   }
 
