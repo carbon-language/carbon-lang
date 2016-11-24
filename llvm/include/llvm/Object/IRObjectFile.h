@@ -60,6 +60,8 @@ public:
   }
   std::unique_ptr<Module> takeModule();
 
+  StringRef getTargetTriple() const;
+
   static inline bool classof(const Binary *v) {
     return v->isIR();
   }

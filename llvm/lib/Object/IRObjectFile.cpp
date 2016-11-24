@@ -213,6 +213,8 @@ basic_symbol_iterator IRObjectFile::symbol_end() const {
   return basic_symbol_iterator(BasicSymbolRef(Ret, this));
 }
 
+StringRef IRObjectFile::getTargetTriple() const { return M->getTargetTriple(); }
+
 ErrorOr<MemoryBufferRef> IRObjectFile::findBitcodeInObject(const ObjectFile &Obj) {
   for (const SectionRef &Sec : Obj.sections()) {
     if (Sec.isBitcode()) {

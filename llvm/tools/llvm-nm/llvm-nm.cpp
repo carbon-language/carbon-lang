@@ -265,14 +265,8 @@ static bool compareSymbolName(const NMSymbol &A, const NMSymbol &B) {
 }
 
 static char isSymbolList64Bit(SymbolicFile &Obj) {
-  if (isa<IRObjectFile>(Obj)) {
-    IRObjectFile *IRobj = dyn_cast<IRObjectFile>(&Obj);
-    Module &M = IRobj->getModule();
-    if (M.getTargetTriple().empty())
-      return false;
-    Triple T(M.getTargetTriple());
-    return T.isArch64Bit();
-  }
+  if (auto *IRObj = dyn_cast<IRObjectFile>(&Obj))
+    return Triple(IRObj->getTargetTriple()).isArch64Bit();
   if (isa<COFFObjectFile>(Obj))
     return false;
   if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(&Obj))
