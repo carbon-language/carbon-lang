@@ -6581,6 +6581,11 @@ let Predicates = [HasDQI, HasVLX] in {
 }
 
 let Predicates = [HasDQI, NoVLX] in {
+def : Pat<(v2i64 (fp_to_sint (v2f64 VR128X:$src1))),
+          (EXTRACT_SUBREG (v8i64 (VCVTTPD2QQZrr
+           (v8f64 (INSERT_SUBREG (IMPLICIT_DEF),
+                                  VR128X:$src1, sub_xmm)))), sub_xmm)>;
+
 def : Pat<(v4i64 (fp_to_sint (v4f32 VR128X:$src1))),
           (EXTRACT_SUBREG (v8i64 (VCVTTPS2QQZrr
            (v8f32 (INSERT_SUBREG (IMPLICIT_DEF),
@@ -6590,6 +6595,11 @@ def : Pat<(v4i64 (fp_to_sint (v4f64 VR256X:$src1))),
           (EXTRACT_SUBREG (v8i64 (VCVTTPD2QQZrr
            (v8f64 (INSERT_SUBREG (IMPLICIT_DEF),
                                   VR256X:$src1, sub_ymm)))), sub_ymm)>;
+
+def : Pat<(v2i64 (fp_to_uint (v2f64 VR128X:$src1))),
+          (EXTRACT_SUBREG (v8i64 (VCVTTPD2UQQZrr
+           (v8f64 (INSERT_SUBREG (IMPLICIT_DEF),
+                                  VR128X:$src1, sub_xmm)))), sub_xmm)>;
 
 def : Pat<(v4i64 (fp_to_uint (v4f32 VR128X:$src1))),
           (EXTRACT_SUBREG (v8i64 (VCVTTPS2UQQZrr
@@ -6606,6 +6616,11 @@ def : Pat<(v4f32 (sint_to_fp (v4i64 VR256X:$src1))),
            (v8i64 (INSERT_SUBREG (IMPLICIT_DEF),
                                   VR256X:$src1, sub_ymm)))), sub_xmm)>;
 
+def : Pat<(v2f64 (sint_to_fp (v2i64 VR128X:$src1))),
+          (EXTRACT_SUBREG (v8f64 (VCVTQQ2PDZrr
+           (v8i64 (INSERT_SUBREG (IMPLICIT_DEF),
+                                  VR128X:$src1, sub_xmm)))), sub_xmm)>;
+
 def : Pat<(v4f64 (sint_to_fp (v4i64 VR256X:$src1))),
           (EXTRACT_SUBREG (v8f64 (VCVTQQ2PDZrr
            (v8i64 (INSERT_SUBREG (IMPLICIT_DEF),
@@ -6615,6 +6630,11 @@ def : Pat<(v4f32 (uint_to_fp (v4i64 VR256X:$src1))),
           (EXTRACT_SUBREG (v8f32 (VCVTUQQ2PSZrr
            (v8i64 (INSERT_SUBREG (IMPLICIT_DEF),
                                   VR256X:$src1, sub_ymm)))), sub_xmm)>;
+
+def : Pat<(v2f64 (uint_to_fp (v2i64 VR128X:$src1))),
+          (EXTRACT_SUBREG (v8f64 (VCVTUQQ2PDZrr
+           (v8i64 (INSERT_SUBREG (IMPLICIT_DEF),
+                                  VR128X:$src1, sub_xmm)))), sub_xmm)>;
 
 def : Pat<(v4f64 (uint_to_fp (v4i64 VR256X:$src1))),
           (EXTRACT_SUBREG (v8f64 (VCVTUQQ2PDZrr

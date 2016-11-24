@@ -1251,18 +1251,18 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     if (Subtarget.hasDQI()) {
       setOperationAction(ISD::SINT_TO_FP,       MVT::v8i64, Legal);
       setOperationAction(ISD::SINT_TO_FP,       MVT::v4i64, Legal);
+      setOperationAction(ISD::SINT_TO_FP,       MVT::v2i64, Legal);
       setOperationAction(ISD::UINT_TO_FP,       MVT::v8i64, Legal);
       setOperationAction(ISD::UINT_TO_FP,       MVT::v4i64, Legal);
+      setOperationAction(ISD::UINT_TO_FP,       MVT::v2i64, Legal);
       setOperationAction(ISD::FP_TO_SINT,       MVT::v8i64, Legal);
       setOperationAction(ISD::FP_TO_SINT,       MVT::v4i64, Legal);
+      setOperationAction(ISD::FP_TO_SINT,       MVT::v2i64, Legal);
       setOperationAction(ISD::FP_TO_UINT,       MVT::v8i64, Legal);
       setOperationAction(ISD::FP_TO_UINT,       MVT::v4i64, Legal);
-      if (Subtarget.hasVLX()) {
-        setOperationAction(ISD::SINT_TO_FP,    MVT::v2i64, Legal);
-        setOperationAction(ISD::UINT_TO_FP,    MVT::v2i64, Legal);
-        setOperationAction(ISD::FP_TO_SINT,    MVT::v2i64, Legal);
-        setOperationAction(ISD::FP_TO_UINT,    MVT::v2i64, Legal);
+      setOperationAction(ISD::FP_TO_UINT,       MVT::v2i64, Legal);
 
+      if (Subtarget.hasVLX()) {
         // Fast v2f32 SINT_TO_FP( v2i32 ) custom conversion.
         setOperationAction(ISD::SINT_TO_FP,    MVT::v2f32, Custom);
       }
