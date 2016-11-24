@@ -174,7 +174,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   // to the string table, and add entries to .got and .plt.
   // finalizeSections does that.
   finalizeSections();
-  if (HasError)
+  if (ErrorCount)
     return;
 
   if (Config->Relocatable) {
@@ -201,7 +201,7 @@ template <class ELFT> void Writer<ELFT>::run() {
 
   // Write the result down to a file.
   openFile();
-  if (HasError)
+  if (ErrorCount)
     return;
   if (!Config->OFormatBinary) {
     writeHeader();
@@ -213,7 +213,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   // Backfill .note.gnu.build-id section content. This is done at last
   // because the content is usually a hash value of the entire output file.
   writeBuildId();
-  if (HasError)
+  if (ErrorCount)
     return;
 
   if (auto EC = Buffer->commit())
@@ -924,7 +924,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   }
 
   // Do not proceed if there was an undefined symbol.
-  if (HasError)
+  if (ErrorCount)
     return;
 
   // So far we have added sections from input object files.
