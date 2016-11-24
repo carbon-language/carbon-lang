@@ -6569,6 +6569,17 @@ let Predicates = [HasAVX512] in {
             (VCVTPS2PDZrm addr:$src)>;
 }
 
+let Predicates = [HasDQI, HasVLX] in {
+  let AddedComplexity = 15 in {
+    def : Pat<(X86vzmovl (v2f64 (bitconvert
+                                (v4f32 (X86VSintToFP (v2i64 VR128X:$src)))))),
+              (VCVTQQ2PSZ128rr VR128:$src)>;
+    def : Pat<(X86vzmovl (v2f64 (bitconvert
+                                (v4f32 (X86VUintToFP (v2i64 VR128X:$src)))))),
+              (VCVTUQQ2PSZ128rr VR128:$src)>;
+  }
+}
+
 let Predicates = [HasDQI, NoVLX] in {
 def : Pat<(v4i64 (fp_to_sint (v4f32 VR128X:$src1))),
           (EXTRACT_SUBREG (v8i64 (VCVTTPS2QQZrr
