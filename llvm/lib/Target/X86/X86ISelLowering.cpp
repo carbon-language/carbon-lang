@@ -1262,6 +1262,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
         setOperationAction(ISD::UINT_TO_FP,    MVT::v2i64, Legal);
         setOperationAction(ISD::FP_TO_SINT,    MVT::v2i64, Legal);
         setOperationAction(ISD::FP_TO_UINT,    MVT::v2i64, Legal);
+
+        // Fast v2f32 SINT_TO_FP( v2i32 ) custom conversion.
+        setOperationAction(ISD::SINT_TO_FP,    MVT::v2f32, Custom);
       }
     }
     if (Subtarget.hasVLX()) {
@@ -22624,13 +22627,28 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     }
     return;
   }
+  case ISD::SINT_TO_FP: {
+    assert(Subtarget.hasDQI() && Subtarget.hasVLX() && "Requires AVX512DQVL!");
+    SDValue Src = N->getOperand(0);
+    if (N->getValueType(0) != MVT::v2f32 || Src.getValueType() != MVT::v2i64)
+      return;
+    Results.push_back(DAG.getNode(X86ISD::CVTSI2P, dl, MVT::v4f32, Src));
+    return;
+  }
   case ISD::UINT_TO_FP: {
     assert(Subtarget.hasSSE2() && "Requires at least SSE2!");
-    if (N->getOperand(0).getValueType() != MVT::v2i32 ||
-        N->getValueType(0) != MVT::v2f32)
+    EVT VT = N->getValueType(0);
+    if (VT != MVT::v2f32)
       return;
-    SDValue ZExtIn = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v2i64,
-                                 N->getOperand(0));
+    SDValue Src = N->getOperand(0);
+    EVT SrcVT = Src.getValueType();
+    if (Subtarget.hasDQI() && Subtarget.hasVLX() && SrcVT == MVT::v2i64) {
+      Results.push_back(DAG.getNode(X86ISD::CVTUI2P, dl, MVT::v4f32, Src));
+      return;
+    }
+    if (SrcVT != MVT::v2i32)
+      return;
+    SDValue ZExtIn = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::v2i64, Src);
     SDValue VBias =
         DAG.getConstantFP(BitsToDouble(0x4330000000000000ULL), dl, MVT::v2f64);
     SDValue Or = DAG.getNode(ISD::OR, dl, MVT::v2i64, ZExtIn,

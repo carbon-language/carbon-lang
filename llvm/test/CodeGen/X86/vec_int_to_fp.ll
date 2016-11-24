@@ -1123,8 +1123,7 @@ define <4 x float> @sitofp_2i64_to_4f32(<2 x i64> %a) {
 ;
 ; AVX512VLDQ-LABEL: sitofp_2i64_to_4f32:
 ; AVX512VLDQ:       # BB#0:
-; AVX512VLDQ-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
-; AVX512VLDQ-NEXT:    vcvtqq2ps %ymm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvtqq2ps %xmm0, %xmm0
 ; AVX512VLDQ-NEXT:    retq
   %cvt = sitofp <2 x i64> %a to <2 x float>
   %ext = shufflevector <2 x float> %cvt, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
@@ -1182,8 +1181,7 @@ define <4 x float> @sitofp_2i64_to_4f32_zero(<2 x i64> %a) {
 ;
 ; AVX512VLDQ-LABEL: sitofp_2i64_to_4f32_zero:
 ; AVX512VLDQ:       # BB#0:
-; AVX512VLDQ-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
-; AVX512VLDQ-NEXT:    vcvtqq2ps %ymm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvtqq2ps %xmm0, %xmm0
 ; AVX512VLDQ-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
 ; AVX512VLDQ-NEXT:    retq
   %cvt = sitofp <2 x i64> %a to <2 x float>
@@ -1740,8 +1738,7 @@ define <4 x float> @uitofp_2i64_to_4f32(<2 x i64> %a) {
 ;
 ; AVX512VLDQ-LABEL: uitofp_2i64_to_4f32:
 ; AVX512VLDQ:       # BB#0:
-; AVX512VLDQ-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
-; AVX512VLDQ-NEXT:    vcvtuqq2ps %ymm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvtuqq2ps %xmm0, %xmm0
 ; AVX512VLDQ-NEXT:    retq
   %cvt = uitofp <2 x i64> %a to <2 x float>
   %ext = shufflevector <2 x float> %cvt, <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
@@ -1849,8 +1846,7 @@ define <4 x float> @uitofp_2i64_to_2f32(<2 x i64> %a) {
 ;
 ; AVX512VLDQ-LABEL: uitofp_2i64_to_2f32:
 ; AVX512VLDQ:       # BB#0:
-; AVX512VLDQ-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<def>
-; AVX512VLDQ-NEXT:    vcvtuqq2ps %ymm0, %xmm0
+; AVX512VLDQ-NEXT:    vcvtuqq2ps %xmm0, %xmm0
 ; AVX512VLDQ-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
 ; AVX512VLDQ-NEXT:    retq
   %cvt = uitofp <2 x i64> %a to <2 x float>
