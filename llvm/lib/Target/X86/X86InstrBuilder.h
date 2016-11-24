@@ -90,29 +90,30 @@ struct X86AddressMode {
 
 /// Compute the addressing mode from an machine instruction starting with the
 /// given operand.
-static inline X86AddressMode getAddressFromInstr(MachineInstr *MI,
+static inline X86AddressMode getAddressFromInstr(const MachineInstr *MI,
                                                  unsigned Operand) {
   X86AddressMode AM;
-  MachineOperand &Op = MI->getOperand(Operand);
-  if (Op.isReg()) {
+  const MachineOperand &Op0 = MI->getOperand(Operand);
+  if (Op0.isReg()) {
     AM.BaseType = X86AddressMode::RegBase;
-    AM.Base.Reg = Op.getReg();
+    AM.Base.Reg = Op0.getReg();
   } else {
     AM.BaseType = X86AddressMode::FrameIndexBase;
-    AM.Base.FrameIndex = Op.getIndex();
+    AM.Base.FrameIndex = Op0.getIndex();
   }
-  Op = MI->getOperand(Operand + 1);
-  if (Op.isImm())
-    AM.Scale = Op.getImm();
-  Op = MI->getOperand(Operand + 2);
-  if (Op.isImm())
-    AM.IndexReg = Op.getImm();
-  Op = MI->getOperand(Operand + 3);
-  if (Op.isGlobal()) {
-    AM.GV = Op.getGlobal();
-  } else {
-    AM.Disp = Op.getImm();
-  }
+
+  const MachineOperand &Op1 = MI->getOperand(Operand + 1);
+  AM.Scale = Op1.getImm();
+
+  const MachineOperand &Op2 = MI->getOperand(Operand + 2);
+  AM.IndexReg = Op2.getReg();
+
+  const MachineOperand &Op3 = MI->getOperand(Operand + 3);
+  if (Op3.isGlobal())
+    AM.GV = Op3.getGlobal();
+  else
+    AM.Disp = Op3.getImm();
+
   return AM;
 }
 
