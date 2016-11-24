@@ -852,6 +852,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
 
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i8,  Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i16, Custom);
+    setOperationAction(ISD::UINT_TO_FP,         MVT::v2i32, Custom);
 
     // Fast v2f32 UINT_TO_FP( v2i32 ) custom conversion.
     setOperationAction(ISD::UINT_TO_FP,         MVT::v2f32, Custom);
@@ -1203,7 +1204,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::UINT_TO_FP,         MVT::v16i32, Legal);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v8i32, Legal);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v4i32, Legal);
-    setOperationAction(ISD::UINT_TO_FP,         MVT::v2i32, Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v16i8, Custom);
     setOperationAction(ISD::UINT_TO_FP,         MVT::v16i16, Custom);
     setOperationAction(ISD::SINT_TO_FP,         MVT::v16i1, Custom);
@@ -14068,6 +14068,41 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i32(SDValue Op,
   return Sub;
 }
 
+static SDValue lowerUINT_TO_FP_v2i32(SDValue Op, SelectionDAG &DAG,
+                                     const X86Subtarget &Subtarget, SDLoc &DL) {
+  if (Op.getSimpleValueType() != MVT::v2f64)
+    return SDValue();
+
+  SDValue N0 = Op.getOperand(0);
+  assert(N0.getSimpleValueType() == MVT::v2i32 && "Unexpected input type");
+
+  // Legalize to v4i32 type.
+  N0 = DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v4i32, N0,
+                   DAG.getUNDEF(MVT::v2i32));
+
+  if (Subtarget.hasAVX512())
+    return DAG.getNode(X86ISD::CVTUI2P, DL, MVT::v2f64, N0);
+
+  // Same implementation as VectorLegalizer::ExpandUINT_TO_FLOAT,
+  // but using v2i32 to v2f64 with X86ISD::CVTSI2P.
+  SDValue HalfWord = DAG.getConstant(16, DL, MVT::v4i32);
+  SDValue HalfWordMask = DAG.getConstant(0x0000FFFF, DL, MVT::v4i32);
+
+  // Two to the power of half-word-size.
+  SDValue TWOHW = DAG.getConstantFP(1 << 16, DL, MVT::v2f64);
+
+  // Clear upper part of LO, lower HI.
+  SDValue HI = DAG.getNode(ISD::SRL, DL, MVT::v4i32, N0, HalfWord);
+  SDValue LO = DAG.getNode(ISD::AND, DL, MVT::v4i32, N0, HalfWordMask);
+
+  SDValue fHI = DAG.getNode(X86ISD::CVTSI2P, DL, MVT::v2f64, HI);
+          fHI = DAG.getNode(ISD::FMUL, DL, MVT::v2f64, fHI, TWOHW);
+  SDValue fLO = DAG.getNode(X86ISD::CVTSI2P, DL, MVT::v2f64, LO);
+
+  // Add the two halves.
+  return DAG.getNode(ISD::FADD, DL, MVT::v2f64, fHI, fLO);
+}
+
 static SDValue lowerUINT_TO_FP_vXi32(SDValue Op, SelectionDAG &DAG,
                                      const X86Subtarget &Subtarget) {
   // The algorithm is the following:
@@ -14181,13 +14216,6 @@ SDValue X86TargetLowering::lowerUINT_TO_FP_vec(SDValue Op,
   switch (SrcVT.SimpleTy) {
   default:
     llvm_unreachable("Custom UINT_TO_FP is not supported!");
-  case MVT::v2i32: {
-    if (VT == MVT::v2f64)
-      return DAG.getNode(X86ISD::CVTUI2P, dl, VT,
-                         DAG.getNode(ISD::CONCAT_VECTORS, dl, MVT::v4i32, N0,
-                         DAG.getUNDEF(SrcVT)));
-    return SDValue();
-  }
   case MVT::v4i8:
   case MVT::v4i16:
   case MVT::v8i8:
@@ -14196,6 +14224,8 @@ SDValue X86TargetLowering::lowerUINT_TO_FP_vec(SDValue Op,
     return DAG.getNode(ISD::SINT_TO_FP, dl, Op.getValueType(),
                        DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, N0));
   }
+  case MVT::v2i32:
+    return lowerUINT_TO_FP_v2i32(Op, DAG, Subtarget, dl);
   case MVT::v4i32:
   case MVT::v8i32:
     return lowerUINT_TO_FP_vXi32(Op, DAG, Subtarget);
