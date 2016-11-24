@@ -612,6 +612,13 @@ public:
   void writeTo(uint8_t *Buf) override;
 };
 
+template <class ELFT> class ARMExidxSentinelSection : public SyntheticSection<ELFT> {
+public:
+  ARMExidxSentinelSection();
+  size_t getSize() const override { return 8; }
+  void writeTo(uint8_t *Buf) override;
+};
+
 template <class ELFT> InputSection<ELFT> *createCommonSection();
 template <class ELFT> InputSection<ELFT> *createInterpSection();
 template <class ELFT> MergeInputSection<ELFT> *createCommentSection();
