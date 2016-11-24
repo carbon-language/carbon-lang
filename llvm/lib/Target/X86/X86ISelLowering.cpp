@@ -24939,6 +24939,10 @@ X86TargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
 MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
                                                MachineBasicBlock *BB) const {
+  MachineFunction *MF = BB->getParent();
+  const TargetInstrInfo *TII = Subtarget.getInstrInfo();
+  DebugLoc DL = MI.getDebugLoc();
+
   switch (MI.getOpcode()) {
   default: llvm_unreachable("Unexpected instr type to insert");
   case X86::TAILJMPd64:
@@ -24992,8 +24996,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 
   case X86::RDFLAGS32:
   case X86::RDFLAGS64: {
-    DebugLoc DL = MI.getDebugLoc();
-    const TargetInstrInfo *TII = Subtarget.getInstrInfo();
     unsigned PushF =
         MI.getOpcode() == X86::RDFLAGS32 ? X86::PUSHF32 : X86::PUSHF64;
     unsigned Pop = MI.getOpcode() == X86::RDFLAGS32 ? X86::POP32r : X86::POP64r;
@@ -25011,8 +25013,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 
   case X86::WRFLAGS32:
   case X86::WRFLAGS64: {
-    DebugLoc DL = MI.getDebugLoc();
-    const TargetInstrInfo *TII = Subtarget.getInstrInfo();
     unsigned Push =
         MI.getOpcode() == X86::WRFLAGS32 ? X86::PUSH32r : X86::PUSH64r;
     unsigned PopF =
@@ -25037,19 +25037,15 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case X86::FP80_TO_INT16_IN_MEM:
   case X86::FP80_TO_INT32_IN_MEM:
   case X86::FP80_TO_INT64_IN_MEM: {
-    MachineFunction *F = BB->getParent();
-    const TargetInstrInfo *TII = Subtarget.getInstrInfo();
-    DebugLoc DL = MI.getDebugLoc();
-
     // Change the floating point control register to use "round towards zero"
     // mode when truncating to an integer value.
-    int CWFrameIdx = F->getFrameInfo().CreateStackObject(2, 2, false);
+    int CWFrameIdx = MF->getFrameInfo().CreateStackObject(2, 2, false);
     addFrameReference(BuildMI(*BB, MI, DL,
                               TII->get(X86::FNSTCW16m)), CWFrameIdx);
 
     // Load the old value of the high byte of the control word...
     unsigned OldCW =
-      F->getRegInfo().createVirtualRegister(&X86::GR16RegClass);
+      MF->getRegInfo().createVirtualRegister(&X86::GR16RegClass);
     addFrameReference(BuildMI(*BB, MI, DL, TII->get(X86::MOV16rm), OldCW),
                       CWFrameIdx);
 
