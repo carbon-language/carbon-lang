@@ -206,8 +206,8 @@ std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
 // Construct a string in the form of "Sym in File1 and File2".
 // Used to construct an error message.
 static std::string conflictMsg(SymbolBody *Existing, InputFile *NewFile) {
-  return "'" + maybeDemangle(Existing->getName()) + "' in " +
-         toString(Existing->File) + " and " + toString(NewFile);
+  return "'" + toString(*Existing) + "' in " + toString(Existing->File) +
+         " and " + toString(NewFile);
 }
 
 // Find an existing symbol or create and insert a new one, then apply the given
@@ -361,8 +361,7 @@ static void reportDuplicate(SymbolBody *Existing,
   std::string OldLoc = getLocation(*D->Section, D->Value);
   std::string NewLoc = getLocation(*ErrSec, ErrOffset);
 
-  print(NewLoc + ": duplicate symbol '" + maybeDemangle(Existing->getName()) +
-        "'");
+  print(NewLoc + ": duplicate symbol '" + toString(*Existing) + "'");
   print(OldLoc + ": previous definition was here");
 }
 
