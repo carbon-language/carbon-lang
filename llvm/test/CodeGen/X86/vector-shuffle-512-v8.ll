@@ -2174,20 +2174,6 @@ define <8 x double> @test_vshuff64x2_512_mem_maskz(<8 x double> %x, <8 x double>
   ret <8 x double> %res
 }
 
-define <16 x float> @test_vshuff32x4_512(<16 x float> %x, <16 x float> %x1) nounwind {
-; AVX512F-LABEL: test_vshuff32x4_512:
-; AVX512F:       # BB#0:
-; AVX512F-NEXT:    vshuff64x2 {{.*#+}} zmm0 = zmm0[0,1,2,3],zmm1[2,3,0,1]
-; AVX512F-NEXT:    retq
-;
-; AVX512F-32-LABEL: test_vshuff32x4_512:
-; AVX512F-32:       # BB#0:
-; AVX512F-32-NEXT:    vshuff64x2 {{.*#+}} zmm0 = zmm0[0,1,2,3],zmm1[2,3,0,1]
-; AVX512F-32-NEXT:    retl
-  %res = shufflevector <16 x float> %x, <16 x float> %x1, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 20, i32 21, i32 22, i32 23, i32 16, i32 17, i32 18, i32 19>
-  ret <16 x float> %res
-}
-
 define <8 x double> @shuffle_v8f64_23014567(<8 x double> %a0, <8 x double> %a1) {
 ; AVX512F-LABEL: shuffle_v8f64_23014567:
 ; AVX512F:       # BB#0:
