@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-// XFAIL: libcpp-no-exceptions
 // <string>
 
 // basic_string substr(size_type pos = 0, size_type n = npos) const;
@@ -24,19 +23,27 @@ template <class S>
 void
 test(const S& s, typename S::size_type pos, typename S::size_type n)
 {
+#ifndef TEST_HAS_NO_EXCEPTIONS
     try
+#else
+    if (pos <= s.size())
+#endif
     {
         S str = s.substr(pos, n);
         LIBCPP_ASSERT(str.__invariants());
+#ifndef TEST_HAS_NO_EXCEPTIONS
         assert(pos <= s.size());
+#endif
         typename S::size_type rlen = std::min(n, s.size() - pos);
         assert(str.size() == rlen);
         assert(S::traits_type::compare(s.data()+pos, str.data(), rlen) == 0);
     }
+#ifndef TEST_HAS_NO_EXCEPTIONS
     catch (std::out_of_range&)
     {
         assert(pos > s.size());
     }
+#endif
 }
 
 int main()
