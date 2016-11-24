@@ -25153,6 +25153,57 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
   case TargetOpcode::PATCHPOINT:
     return emitPatchPoint(MI, BB);
 
+  case X86::LCMPXCHG8B: {
+    const X86RegisterInfo *TRI = Subtarget.getRegisterInfo();
+    // In addition to 4 E[ABCD] registers implied by encoding, CMPXCHG8B
+    // requires a memory operand. If it happens that current architecture is
+    // i686 and for current function we need a base pointer
+    // - which is ESI for i686 - register allocator would not be able to
+    // allocate registers for an address in form of X(%reg, %reg, Y)
+    // - there never would be enough unreserved registers during regalloc
+    // (without the need for base ptr the only option would be X(%edi, %esi, Y).
+    // We are giving a hand to register allocator by precomputing the address in
+    // a new vreg using LEA.
+
+    // If it is not i686 or there is no base pointer - nothing to do here.
+    if (!Subtarget.is32Bit() || !TRI->hasBasePointer(*MF))
+      return BB;
+
+    // Even though this code does not necessarily needs the base pointer to
+    // be ESI, we check for that. The reason: if this assert fails, there are
+    // some changes happened in the compiler base pointer handling, which most
+    // probably have to be addressed somehow here.
+    assert(TRI->getBaseRegister() == X86::ESI &&
+           "LCMPXCHG8B custom insertion for i686 is written with X86::ESI as a "
+           "base pointer in mind");
+
+    MachineRegisterInfo &MRI = MF->getRegInfo();
+    MVT SPTy = getPointerTy(MF->getDataLayout());
+    const TargetRegisterClass *AddrRegClass = getRegClassFor(SPTy);
+    unsigned computedAddrVReg = MRI.createVirtualRegister(AddrRegClass);
+
+    X86AddressMode AM = getAddressFromInstr(&MI, 0);
+    // Regalloc does not need any help when the memory operand of CMPXCHG8B
+    // does not use index register.
+    if (AM.IndexReg == X86::NoRegister)
+      return BB;
+
+    // After X86TargetLowering::ReplaceNodeResults CMPXCHG8B is glued to its
+    // four operand definitions that are E[ABCD] registers. We skip them and
+    // then insert the LEA.
+    MachineBasicBlock::iterator MBBI(MI);
+    while (MBBI->definesRegister(X86::EAX) || MBBI->definesRegister(X86::EBX) ||
+           MBBI->definesRegister(X86::ECX) || MBBI->definesRegister(X86::EDX))
+      --MBBI;
+    addFullAddress(
+        BuildMI(*BB, *MBBI, DL, TII->get(X86::LEA32r), computedAddrVReg), AM);
+
+    setDirectAddressInInstr(&MI, 0, computedAddrVReg);
+
+    return BB;
+  }
+  case X86::LCMPXCHG16B:
+    return BB;
   case X86::LCMPXCHG8B_SAVE_EBX:
   case X86::LCMPXCHG16B_SAVE_RBX: {
     unsigned BasePtr =
