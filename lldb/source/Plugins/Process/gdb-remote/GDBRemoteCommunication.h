@@ -53,6 +53,29 @@ enum class CompressionType {
 
 class ProcessGDBRemote;
 
+template <typename Ratio>
+class Timeout : public llvm::Optional<std::chrono::duration<int64_t, Ratio>> {
+private:
+  template <typename Ratio2> using Dur = std::chrono::duration<int64_t, Ratio2>;
+  template <typename Ratio2>
+  using EnableIf = std::enable_if<
+      std::is_convertible<std::chrono::duration<int64_t, Ratio2>,
+                          std::chrono::duration<int64_t, Ratio>>::value>;
+
+  using Base = llvm::Optional<Dur<Ratio>>;
+
+public:
+  Timeout(llvm::NoneType none) : Base(none) {}
+  Timeout(const Timeout &other) = default;
+
+  template <typename Ratio2, typename = typename EnableIf<Ratio2>::type>
+  Timeout(const Timeout<Ratio2> &other)
+      : Base(other ? Base(Dur<Ratio>(*other)) : llvm::None) {}
+
+  template <typename Ratio2, typename = typename EnableIf<Ratio2>::type>
+  Timeout(const Dur<Ratio2> &other) : Base(Dur<Ratio>(other)) {}
+};
+
 class GDBRemoteCommunication : public Communication {
 public:
   enum {
@@ -226,16 +249,15 @@ protected:
   PacketResult SendPacketNoLock(llvm::StringRef payload);
 
   PacketResult ReadPacket(StringExtractorGDBRemote &response,
-                          uint32_t timeout_usec, bool sync_on_timeout);
+                          Timeout<std::micro> timeout, bool sync_on_timeout);
 
   // Pop a packet from the queue in a thread safe manner
   PacketResult PopPacketFromQueue(StringExtractorGDBRemote &response,
-                                  uint32_t timeout_usec);
+                                  Timeout<std::micro> timeout);
 
-  PacketResult
-  WaitForPacketWithTimeoutMicroSecondsNoLock(StringExtractorGDBRemote &response,
-                                             uint32_t timeout_usec,
-                                             bool sync_on_timeout);
+  PacketResult WaitForPacketNoLock(StringExtractorGDBRemote &response,
+                                   Timeout<std::micro> timeout,
+                                   bool sync_on_timeout);
 
   bool CompressionIsEnabled() {
     return m_compression_type != CompressionType::None;
