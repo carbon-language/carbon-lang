@@ -252,7 +252,7 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^running")
         # Depending on compiler, it can stop at different line
         self.expect(
-            "\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"(29|30)\"")
+            "\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"(28|29|30)\"")
 
         # Test that both --thread and --frame are optional
         self.runCmd("-exec-next-instruction")
