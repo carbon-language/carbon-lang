@@ -94,9 +94,10 @@ public:
 
   Error DeletePortForwarding(const uint16_t local_port);
 
-  Error Shell(const char *command, uint32_t timeout_ms, std::string *output);
+  Error Shell(const char *command, std::chrono::milliseconds timeout,
+              std::string *output);
 
-  Error ShellToFile(const char *command, uint32_t timeout_ms,
+  Error ShellToFile(const char *command, std::chrono::milliseconds timeout,
                     const FileSpec &output_file_spec);
 
   std::unique_ptr<SyncService> GetSyncService(Error &error);

@@ -383,10 +383,10 @@ Error AdbClient::internalShell(const char *command, milliseconds timeout,
   return Error();
 }
 
-Error AdbClient::Shell(const char *command, uint32_t timeout_ms,
+Error AdbClient::Shell(const char *command, milliseconds timeout,
                        std::string *output) {
   std::vector<char> output_buffer;
-  auto error = internalShell(command, milliseconds(timeout_ms), output_buffer);
+  auto error = internalShell(command, timeout, output_buffer);
   if (error.Fail())
     return error;
 
@@ -395,10 +395,10 @@ Error AdbClient::Shell(const char *command, uint32_t timeout_ms,
   return error;
 }
 
-Error AdbClient::ShellToFile(const char *command, uint32_t timeout_ms,
+Error AdbClient::ShellToFile(const char *command, milliseconds timeout,
                              const FileSpec &output_file_spec) {
   std::vector<char> output_buffer;
-  auto error = internalShell(command, milliseconds(timeout_ms), output_buffer);
+  auto error = internalShell(command, timeout, output_buffer);
   if (error.Fail())
     return error;
 
