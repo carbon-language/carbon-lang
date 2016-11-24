@@ -14200,7 +14200,6 @@ static SDValue lowerUINT_TO_FP_vXi32(SDValue Op, SelectionDAG &DAG,
 SDValue X86TargetLowering::lowerUINT_TO_FP_vec(SDValue Op,
                                                SelectionDAG &DAG) const {
   SDValue N0 = Op.getOperand(0);
-  MVT VT = Op.getSimpleValueType();
   MVT SrcVT = N0.getSimpleValueType();
   SDLoc dl(Op);
 
