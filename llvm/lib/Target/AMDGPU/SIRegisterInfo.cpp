@@ -487,7 +487,7 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
                                  EltSize, MinAlign(Align, EltSize * i));
 
     auto MIB = BuildMI(*MBB, MI, DL, Desc)
-      .addReg(SubReg, getDefRegState(!IsStore) | getKillRegState(IsKill))
+      .addReg(SubReg, getDefRegState(!IsStore))
       .addReg(ScratchRsrcReg)
       .addReg(SOffset, SOffsetRegState)
       .addImm(Offset)
