@@ -13,6 +13,7 @@
 
 #include "clang/Tooling/Core/Lookup.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclCXX.h"
 using namespace clang;
 using namespace clang::tooling;
 
@@ -121,14 +122,20 @@ std::string tooling::replaceNestedName(const NestedNameSpecifier *Use,
          "Expected fully-qualified name!");
 
   // We can do a raw name replacement when we are not inside the namespace for
-  // the original function and it is not in the global namespace.  The
+  // the original class/function and it is not in the global namespace.  The
   // assumption is that outside the original namespace we must have a using
   // statement that makes this work out and that other parts of this refactor
-  // will automatically fix using statements to point to the new function
+  // will automatically fix using statements to point to the new class/function.
+  // However, if the `FromDecl` is a class forward declaration, the reference is
+  // still considered as referring to the original definition, so we can't do a
+  // raw name replacement in this case.
   const bool class_name_only = !Use;
   const bool in_global_namespace =
       isa<TranslationUnitDecl>(FromDecl->getDeclContext());
-  if (class_name_only && !in_global_namespace &&
+  const bool is_class_forward_decl =
+      isa<CXXRecordDecl>(FromDecl) &&
+      !cast<CXXRecordDecl>(FromDecl)->isCompleteDefinition();
+  if (class_name_only && !in_global_namespace && !is_class_forward_decl &&
       !usingFromDifferentCanonicalNamespace(FromDecl->getDeclContext(),
                                             UseContext)) {
     auto Pos = ReplacementString.rfind("::");
