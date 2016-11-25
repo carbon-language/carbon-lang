@@ -392,6 +392,24 @@ static bool getArg(opt::InputArgList &Args, unsigned K1, unsigned K2,
   return Default;
 }
 
+// Parse -color-diagnostics={auto,always,never} or -no-color-diagnostics.
+static ColorPolicy getColorDiagnostics(opt::InputArgList &Args) {
+  auto *Arg = Args.getLastArg(OPT_color_diagnostics, OPT_no_color_diagnostics);
+  if (!Arg)
+    return ColorPolicy::Auto;
+  if (Arg->getOption().getID() == OPT_no_color_diagnostics)
+    return ColorPolicy::Never;
+
+  StringRef S = Arg->getValue();
+  if (S == "auto")
+    return ColorPolicy::Auto;
+  if (S == "always")
+    return ColorPolicy::Always;
+  if (S != "never")
+    error("unknown -color-diagnostics value: " + S);
+  return ColorPolicy::Never;
+}
+
 static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
   auto *Arg =
       Args.getLastArg(OPT_discard_all, OPT_discard_locals, OPT_discard_none);
@@ -486,6 +504,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
   Config->Bsymbolic = Args.hasArg(OPT_Bsymbolic);
   Config->BsymbolicFunctions = Args.hasArg(OPT_Bsymbolic_functions);
+  Config->ColorDiagnostics = getColorDiagnostics(Args);
   Config->Demangle = getArg(Args, OPT_demangle, OPT_no_demangle, true);
   Config->DisableVerify = Args.hasArg(OPT_disable_verify);
   Config->Discard = getDiscardOption(Args);
