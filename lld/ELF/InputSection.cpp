@@ -198,6 +198,31 @@ InputSectionBase<ELFT> *InputSectionBase<ELFT>::getLinkOrderDep() const {
   return nullptr;
 }
 
+// Returns a source location string. Used to construct an error message.
+template <class ELFT>
+std::string InputSectionBase<ELFT>::getLocation(typename ELFT::uint Offset) {
+  // First check if we can get desired values from debugging information.
+  std::string LineInfo = File->getLineInfo(this, Offset);
+  if (!LineInfo.empty())
+    return LineInfo;
+
+  // File->SourceFile contains STT_FILE symbol that contains a
+  // source file name. If it's missing, we use an object file name.
+  std::string SrcFile = File->SourceFile;
+  if (SrcFile.empty())
+    SrcFile = toString(File);
+
+  // Find a function symbol that encloses a given location.
+  for (SymbolBody *B : File->getSymbols())
+    if (auto *D = dyn_cast<DefinedRegular<ELFT>>(B))
+      if (D->Section == this && D->Type == STT_FUNC)
+        if (D->Value <= Offset && Offset < D->Value + D->Size)
+          return SrcFile + ":(function " + toString(*D) + ")";
+
+  // If there's no symbol, print out the offset in the section.
+  return (SrcFile + ":(" + Name + "+0x" + utohexstr(Offset) + ")").str();
+}
+
 template <class ELFT>
 InputSection<ELFT>::InputSection() : InputSectionBase<ELFT>() {}
 
@@ -467,7 +492,7 @@ void InputSection<ELFT>::relocateNonAlloc(uint8_t *Buf, ArrayRef<RelTy> Rels) {
 
     SymbolBody &Sym = this->File->getRelocTargetSym(Rel);
     if (Target->getRelExpr(Type, Sym) != R_ABS) {
-      error(getLocation(*this, Offset) + ": has non-ABS reloc");
+      error(this->getLocation(Offset) + ": has non-ABS reloc");
       return;
     }
 
