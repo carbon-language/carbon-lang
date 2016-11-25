@@ -407,36 +407,28 @@ static bool buildMUBUFOffsetLoadStore(const SIInstrInfo *TII,
 
 void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
                                          unsigned LoadStoreOp,
-                                         int Index,
-                                         unsigned ValueReg,
-                                         bool IsKill,
+                                         const MachineOperand *SrcDst,
                                          unsigned ScratchRsrcReg,
-                                         unsigned ScratchOffsetReg,
-                                         int64_t InstOffset,
-                                         MachineMemOperand *MMO,
+                                         unsigned ScratchOffset,
+                                         int64_t Offset,
                                          RegScavenger *RS) const {
+  unsigned Value = SrcDst->getReg();
+  bool IsKill = SrcDst->isKill();
   MachineBasicBlock *MBB = MI->getParent();
   MachineFunction *MF = MI->getParent()->getParent();
   const SISubtarget &ST =  MF->getSubtarget<SISubtarget>();
   const SIInstrInfo *TII = ST.getInstrInfo();
-  const MachineFrameInfo &MFI = MF->getFrameInfo();
 
-  const MCInstrDesc &Desc = TII->get(LoadStoreOp);
-  const DebugLoc &DL = MI->getDebugLoc();
-  bool IsStore = Desc.mayStore();
+  DebugLoc DL = MI->getDebugLoc();
+  bool IsStore = MI->mayStore();
 
   bool RanOutOfSGPRs = false;
   bool Scavenged = false;
-  unsigned SOffset = ScratchOffsetReg;
+  unsigned SOffset = ScratchOffset;
+  unsigned OriginalImmOffset = Offset;
 
-  const TargetRegisterClass *RC = getRegClassForReg(MF->getRegInfo(), ValueReg);
-  unsigned NumSubRegs = AMDGPU::getRegBitWidth(RC->getID()) / 32;
+  unsigned NumSubRegs = getNumSubRegsForSpillOp(MI->getOpcode());
   unsigned Size = NumSubRegs * 4;
-  int64_t Offset = InstOffset + MFI.getObjectOffset(Index);
-  const int64_t OriginalImmOffset = Offset;
-
-  unsigned Align = MFI.getObjectAlignment(Index);
-  const MachinePointerInfo &BasePtrInfo = MMO->getPointerInfo();
 
   if (!isUInt<12>(Offset + Size)) {
     SOffset = AMDGPU::NoRegister;
@@ -455,23 +447,19 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
       // subtract the offset after the spill to return ScratchOffset to it's
       // original value.
       RanOutOfSGPRs = true;
-      SOffset = ScratchOffsetReg;
+      SOffset = ScratchOffset;
     } else {
       Scavenged = true;
     }
-
     BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_ADD_U32), SOffset)
-      .addReg(ScratchOffsetReg)
-      .addImm(Offset);
-
+            .addReg(ScratchOffset)
+            .addImm(Offset);
     Offset = 0;
   }
 
-  const unsigned EltSize = 4;
-
-  for (unsigned i = 0, e = NumSubRegs; i != e; ++i, Offset += EltSize) {
+  for (unsigned i = 0, e = NumSubRegs; i != e; ++i, Offset += 4) {
     unsigned SubReg = NumSubRegs == 1 ?
-      ValueReg : getSubReg(ValueReg, getSubRegFromChannel(i));
+      Value : getSubReg(Value, getSubRegFromChannel(i));
 
     unsigned SOffsetRegState = 0;
     unsigned SrcDstRegState = getDefRegState(!IsStore);
@@ -481,12 +469,7 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
       SrcDstRegState |= getKillRegState(IsKill);
     }
 
-    MachinePointerInfo PInfo = BasePtrInfo.getWithOffset(EltSize * i);
-    MachineMemOperand *NewMMO
-      = MF->getMachineMemOperand(PInfo, MMO->getFlags(),
-                                 EltSize, MinAlign(Align, EltSize * i));
-
-    BuildMI(*MBB, MI, DL, Desc)
+    BuildMI(*MBB, MI, DL, TII->get(LoadStoreOp))
       .addReg(SubReg, getDefRegState(!IsStore))
       .addReg(ScratchRsrcReg)
       .addReg(SOffset, SOffsetRegState)
@@ -494,15 +477,14 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
       .addImm(0) // glc
       .addImm(0) // slc
       .addImm(0) // tfe
-      .addMemOperand(NewMMO)
-      .addReg(ValueReg, RegState::Implicit | SrcDstRegState);
+      .addReg(Value, RegState::Implicit | SrcDstRegState)
+      .setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
   }
-
   if (RanOutOfSGPRs) {
     // Subtract the offset we added to the ScratchOffset register.
-    BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_SUB_U32), ScratchOffsetReg)
-      .addReg(ScratchOffsetReg)
-      .addImm(OriginalImmOffset);
+    BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_SUB_U32), ScratchOffset)
+            .addReg(ScratchOffset)
+            .addImm(OriginalImmOffset);
   }
 }
 
@@ -525,8 +507,6 @@ void SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
 
   bool SpillToSMEM = ST.hasScalarStores() && EnableSpillSGPRToSMEM;
 
-  const unsigned EltSize = 4;
-
   // SubReg carries the "Kill" flag when SubReg == SuperReg.
   unsigned SubKillState = getKillRegState((NumSubRegs == 1) && IsKill);
   for (unsigned i = 0, e = NumSubRegs; i < e; ++i) {
@@ -548,12 +528,13 @@ void SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
       }
 
       int64_t FrOffset = FrameInfo.getObjectOffset(Index);
+      unsigned Size = FrameInfo.getObjectSize(Index);
       unsigned Align = FrameInfo.getObjectAlignment(Index);
       MachinePointerInfo PtrInfo
-        = MachinePointerInfo::getFixedStack(*MF, Index, EltSize * i);
+        = MachinePointerInfo::getFixedStack(*MF, Index);
       MachineMemOperand *MMO
         = MF->getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore,
-                                   EltSize, MinAlign(Align, EltSize * i));
+                                   Size, Align);
 
       unsigned OffsetReg = AMDGPU::M0;
       // Add i * 4 wave offset.
@@ -626,12 +607,13 @@ void SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
         Mov.addReg(SuperReg, RegState::Implicit | SuperKillState);
       }
 
+      unsigned Size = FrameInfo.getObjectSize(Index);
       unsigned Align = FrameInfo.getObjectAlignment(Index);
       MachinePointerInfo PtrInfo
-        = MachinePointerInfo::getFixedStack(*MF, Index, EltSize * i);
+        = MachinePointerInfo::getFixedStack(*MF, Index);
       MachineMemOperand *MMO
         = MF->getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore,
-                                   EltSize, MinAlign(Align, EltSize * i));
+                                   Size, Align);
       BuildMI(*MBB, MI, DL, TII->get(AMDGPU::SI_SPILL_V32_SAVE))
         .addReg(TmpReg, RegState::Kill)         // src
         .addFrameIndex(Index)                   // vaddr
@@ -672,19 +654,18 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
 
   int64_t FrOffset = FrameInfo.getObjectOffset(Index);
 
-  const unsigned EltSize = 4;
-
   for (unsigned i = 0, e = NumSubRegs; i < e; ++i) {
     unsigned SubReg = NumSubRegs == 1 ?
       SuperReg : getSubReg(SuperReg, getSubRegFromChannel(i));
 
     if (SpillToSMEM) {
+      unsigned Size = FrameInfo.getObjectSize(Index);
       unsigned Align = FrameInfo.getObjectAlignment(Index);
       MachinePointerInfo PtrInfo
-        = MachinePointerInfo::getFixedStack(*MF, Index, EltSize * i);
+        = MachinePointerInfo::getFixedStack(*MF, Index);
       MachineMemOperand *MMO
         = MF->getMachineMemOperand(PtrInfo, MachineMemOperand::MOLoad,
-                                   EltSize, MinAlign(Align, EltSize * i));
+                                   Size, Align);
 
       unsigned OffsetReg = AMDGPU::M0;
 
@@ -722,15 +703,16 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
     } else {
       // Restore SGPR from a stack slot.
       // FIXME: We should use S_LOAD_DWORD here for VI.
+
       unsigned TmpReg = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
       unsigned Align = FrameInfo.getObjectAlignment(Index);
+      unsigned Size = FrameInfo.getObjectSize(Index);
 
       MachinePointerInfo PtrInfo
-        = MachinePointerInfo::getFixedStack(*MF, Index, EltSize * i);
+        = MachinePointerInfo::getFixedStack(*MF, Index);
 
-      MachineMemOperand *MMO = MF->getMachineMemOperand(PtrInfo,
-        MachineMemOperand::MOLoad, EltSize,
-        MinAlign(Align, EltSize * i));
+      MachineMemOperand *MMO = MF->getMachineMemOperand(
+        PtrInfo, MachineMemOperand::MOLoad, Size, Align);
 
       BuildMI(*MBB, MI, DL, TII->get(AMDGPU::SI_SPILL_V32_RESTORE), TmpReg)
         .addFrameIndex(Index)                   // vaddr
@@ -738,7 +720,8 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
         .addReg(MFI->getScratchWaveOffsetReg()) // soffset
         .addImm(i * 4)                          // offset
         .addMemOperand(MMO);
-      BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_READFIRSTLANE_B32), SubReg)
+      BuildMI(*MBB, MI, DL,
+              TII->get(AMDGPU::V_READFIRSTLANE_B32), SubReg)
         .addReg(TmpReg, RegState::Kill)
         .addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
     }
@@ -794,38 +777,28 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     case AMDGPU::SI_SPILL_V128_SAVE:
     case AMDGPU::SI_SPILL_V96_SAVE:
     case AMDGPU::SI_SPILL_V64_SAVE:
-    case AMDGPU::SI_SPILL_V32_SAVE: {
-      const MachineOperand *VData = TII->getNamedOperand(*MI,
-                                                         AMDGPU::OpName::vdata);
+    case AMDGPU::SI_SPILL_V32_SAVE:
       buildSpillLoadStore(MI, AMDGPU::BUFFER_STORE_DWORD_OFFSET,
-            Index,
-            VData->getReg(), VData->isKill(),
+            TII->getNamedOperand(*MI, AMDGPU::OpName::vdata),
             TII->getNamedOperand(*MI, AMDGPU::OpName::srsrc)->getReg(),
             TII->getNamedOperand(*MI, AMDGPU::OpName::soffset)->getReg(),
-            TII->getNamedOperand(*MI, AMDGPU::OpName::offset)->getImm(),
-            *MI->memoperands_begin(),
-            RS);
+            FrameInfo.getObjectOffset(Index) +
+            TII->getNamedOperand(*MI, AMDGPU::OpName::offset)->getImm(), RS);
       MFI->addToSpilledVGPRs(getNumSubRegsForSpillOp(MI->getOpcode()));
       MI->eraseFromParent();
       break;
-    }
     case AMDGPU::SI_SPILL_V32_RESTORE:
     case AMDGPU::SI_SPILL_V64_RESTORE:
     case AMDGPU::SI_SPILL_V96_RESTORE:
     case AMDGPU::SI_SPILL_V128_RESTORE:
     case AMDGPU::SI_SPILL_V256_RESTORE:
     case AMDGPU::SI_SPILL_V512_RESTORE: {
-      const MachineOperand *VData = TII->getNamedOperand(*MI,
-                                                         AMDGPU::OpName::vdata);
-
       buildSpillLoadStore(MI, AMDGPU::BUFFER_LOAD_DWORD_OFFSET,
-            Index,
-            VData->getReg(), VData->isKill(),
+            TII->getNamedOperand(*MI, AMDGPU::OpName::vdata),
             TII->getNamedOperand(*MI, AMDGPU::OpName::srsrc)->getReg(),
             TII->getNamedOperand(*MI, AMDGPU::OpName::soffset)->getReg(),
-            TII->getNamedOperand(*MI, AMDGPU::OpName::offset)->getImm(),
-            *MI->memoperands_begin(),
-            RS);
+            FrameInfo.getObjectOffset(Index) +
+            TII->getNamedOperand(*MI, AMDGPU::OpName::offset)->getImm(), RS);
       MI->eraseFromParent();
       break;
     }

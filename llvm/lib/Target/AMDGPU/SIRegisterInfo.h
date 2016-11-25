@@ -253,14 +253,9 @@ public:
 
 private:
   void buildSpillLoadStore(MachineBasicBlock::iterator MI,
-                           unsigned LoadStoreOp,
-                           int Index,
-                           unsigned ValueReg,
-                           bool ValueIsKill,
-                           unsigned ScratchRsrcReg,
-                           unsigned ScratchOffsetReg,
-                           int64_t InstrOffset,
-                           MachineMemOperand *MMO,
+                           unsigned LoadStoreOp, const MachineOperand *SrcDst,
+                           unsigned ScratchRsrcReg, unsigned ScratchOffset,
+                           int64_t Offset,
                            RegScavenger *RS) const;
 };
 
