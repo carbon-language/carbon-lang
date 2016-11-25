@@ -22,6 +22,7 @@
 
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/Endian.h"
+#include <mutex>
 
 using namespace llvm;
 using namespace llvm::ELF;
@@ -160,6 +161,8 @@ InputSectionBase<ELFT>::getRawCompressedData(ArrayRef<uint8_t> Data) {
   return {Data.slice(sizeof(*Hdr)), read64be(Hdr->Size)};
 }
 
+// Uncompress section contents. Note that this function is called
+// from parallel_for_each, so it must be thread-safe.
 template <class ELFT> void InputSectionBase<ELFT>::uncompress() {
   if (!zlib::isAvailable())
     fatal(toString(this) +
@@ -179,7 +182,12 @@ template <class ELFT> void InputSectionBase<ELFT>::uncompress() {
     std::tie(Buf, Size) = getRawCompressedData(Data);
 
   // Uncompress Buf.
-  char *OutputBuf = BAlloc.Allocate<char>(Size);
+  char *OutputBuf;
+  {
+    static std::mutex Mu;
+    std::lock_guard<std::mutex> Lock(Mu);
+    OutputBuf = BAlloc.Allocate<char>(Size);
+  }
   if (zlib::uncompress(toStringRef(Buf), OutputBuf, Size) != zlib::StatusOK)
     fatal(toString(this) + ": error while uncompressing section");
   Data = ArrayRef<uint8_t>((uint8_t *)OutputBuf, Size);
@@ -746,6 +754,12 @@ MergeInputSection<ELFT>::MergeInputSection(elf::ObjectFile<ELFT> *F,
                                            StringRef Name)
     : InputSectionBase<ELFT>(F, Header, Name, InputSectionBase<ELFT>::Merge) {}
 
+// This function is called after we obtain a complete list of input sections
+// that need to be linked. This is responsible to split section contents
+// into small chunks for further processing.
+//
+// Note that this function is called from parallel_for_each. This must be
+// thread-safe (i.e. no memory allocation from the pools).
 template <class ELFT> void MergeInputSection<ELFT>::splitIntoPieces() {
   ArrayRef<uint8_t> Data = this->Data;
   uintX_t EntSize = this->Entsize;
