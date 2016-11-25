@@ -10,8 +10,7 @@
 #ifndef liblldb_Timeout_h_
 #define liblldb_Timeout_h_
 
-#include <llvm/ADT/Optional.h>
-
+#include "llvm/ADT/Optional.h"
 #include <chrono>
 
 namespace lldb_private {
