@@ -1705,7 +1705,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   CASE_ALL_MOV_RM()
     if (!OutStreamer->isVerboseAsm())
       break;
-    if (MI->getNumOperands() > 4)
+    if (MI->getNumOperands() <= 4)
+      break;
     if (auto *C = getConstantFromPool(*MI, MI->getOperand(4))) {
       std::string Comment;
       raw_string_ostream CS(Comment);
