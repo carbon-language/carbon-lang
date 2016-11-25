@@ -801,15 +801,18 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
 
   // MergeInputSection::splitIntoPieces needs to be called before
   // any call of MergeInputSection::getOffset. Do that.
-  parallel_for_each(Symtab.Sections.begin(), Symtab.Sections.end(),
-                    [](InputSectionBase<ELFT> *S) {
-                      if (!S->Live)
-                        return;
-                      if (S->Compressed)
-                        S->uncompress();
-                      if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(S))
-                        MS->splitIntoPieces();
-                    });
+  auto Fn = [](InputSectionBase<ELFT> *S) {
+    if (!S->Live)
+      return;
+    if (S->Compressed)
+      S->uncompress();
+    if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(S))
+      MS->splitIntoPieces();
+  };
+  if (Config->Threads)
+    parallel_for_each(Symtab.Sections.begin(), Symtab.Sections.end(), Fn);
+  else
+    std::for_each(Symtab.Sections.begin(), Symtab.Sections.end(), Fn);
 
   // Write the result to the file.
   writeResult<ELFT>();
