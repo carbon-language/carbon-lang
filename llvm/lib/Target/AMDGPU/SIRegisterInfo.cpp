@@ -486,7 +486,7 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
       = MF->getMachineMemOperand(PInfo, MMO->getFlags(),
                                  EltSize, MinAlign(Align, EltSize * i));
 
-    auto MIB = BuildMI(*MBB, MI, DL, Desc)
+    BuildMI(*MBB, MI, DL, Desc)
       .addReg(SubReg, getDefRegState(!IsStore))
       .addReg(ScratchRsrcReg)
       .addReg(SOffset, SOffsetRegState)
@@ -494,10 +494,8 @@ void SIRegisterInfo::buildSpillLoadStore(MachineBasicBlock::iterator MI,
       .addImm(0) // glc
       .addImm(0) // slc
       .addImm(0) // tfe
-      .addMemOperand(NewMMO);
-
-    if (NumSubRegs > 1)
-      MIB.addReg(ValueReg, RegState::Implicit | SrcDstRegState);
+      .addMemOperand(NewMMO)
+      .addReg(ValueReg, RegState::Implicit | SrcDstRegState);
   }
 
   if (RanOutOfSGPRs) {
@@ -701,15 +699,12 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
           .addReg(MFI->getScratchWaveOffsetReg());
       }
 
-      auto MIB =
-        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_BUFFER_LOAD_DWORD_SGPR), SubReg)
+      BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_BUFFER_LOAD_DWORD_SGPR), SubReg)
         .addReg(MFI->getScratchRSrcReg()) // sbase
         .addReg(OffsetReg)                // soff
         .addImm(0)                        // glc
-        .addMemOperand(MMO);
-
-      if (NumSubRegs > 1)
-        MIB.addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
+        .addMemOperand(MMO)
+        .addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
 
       continue;
     }
@@ -718,14 +713,12 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
       = MFI->getSpilledReg(MF, Index, i);
 
     if (Spill.hasReg()) {
-      auto MIB =
-        BuildMI(*MBB, MI, DL, TII->getMCOpcodeFromPseudo(AMDGPU::V_READLANE_B32),
-                SubReg)
+      BuildMI(*MBB, MI, DL,
+              TII->getMCOpcodeFromPseudo(AMDGPU::V_READLANE_B32),
+              SubReg)
         .addReg(Spill.VGPR)
-        .addImm(Spill.Lane);
-
-      if (NumSubRegs > 1)
-        MIB.addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
+        .addImm(Spill.Lane)
+        .addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
     } else {
       // Restore SGPR from a stack slot.
       // FIXME: We should use S_LOAD_DWORD here for VI.
@@ -745,13 +738,9 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
         .addReg(MFI->getScratchWaveOffsetReg()) // soffset
         .addImm(i * 4)                          // offset
         .addMemOperand(MMO);
-
-      auto MIB =
-        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_READFIRSTLANE_B32), SubReg)
-        .addReg(TmpReg, RegState::Kill);
-
-      if (NumSubRegs > 1)
-        MIB.addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
+      BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_READFIRSTLANE_B32), SubReg)
+        .addReg(TmpReg, RegState::Kill)
+        .addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
     }
   }
 
