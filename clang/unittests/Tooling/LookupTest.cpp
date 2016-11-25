@@ -111,6 +111,14 @@ TEST(LookupTest, replaceNestedName) {
                   "namespace a { namespace b { namespace {"
                   "void f() { foo(); }"
                   "} } }\n");
+
+  Visitor.OnCall = [&](CallExpr *Expr) {
+    EXPECT_EQ("x::bar", replaceCallExpr(Expr, "::a::x::bar"));
+  };
+  Visitor.runOver("namespace a { namespace b { void foo(); } }\n"
+                  "namespace a { namespace b { namespace c {"
+                  "void f() { foo(); }"
+                  "} } }\n");
 }
 
 } // end anonymous namespace
