@@ -43,14 +43,13 @@ static bool useColor() {
 }
 
 static void print(StringRef S, raw_ostream::Colors C) {
+  *ErrorOS << Argv0 + ": ";
   if (useColor()) {
-    ErrorOS->changeColor(raw_ostream::WHITE, /*Bold=*/true);
-    *ErrorOS << Argv0 + ": ";
     ErrorOS->changeColor(C, true);
     *ErrorOS << S;
     ErrorOS->resetColor();
   } else {
-    *ErrorOS << Argv0 + ": " << S;
+    *ErrorOS << S;
   }
 }
 
