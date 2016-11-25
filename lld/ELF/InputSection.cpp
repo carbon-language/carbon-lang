@@ -823,3 +823,8 @@ template class elf::MergeInputSection<ELF32LE>;
 template class elf::MergeInputSection<ELF32BE>;
 template class elf::MergeInputSection<ELF64LE>;
 template class elf::MergeInputSection<ELF64BE>;
+
+template std::string elf::toString(const InputSectionBase<ELF32LE> *);
+template std::string elf::toString(const InputSectionBase<ELF32BE> *);
+template std::string elf::toString(const InputSectionBase<ELF64LE> *);
+template std::string elf::toString(const InputSectionBase<ELF64BE> *);
