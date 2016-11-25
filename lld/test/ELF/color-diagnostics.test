@@ -4,7 +4,7 @@
 # RUN: not ld.lld -color-diagnostics=always /nosuchfile 2>&1 \
 # RUN:   | FileCheck -check-prefix=COLOR %s
 
-# COLOR: {{^.\[0;1;37m.*/ld.lld: .\[0;1;31merror: .\[0mcannot open /nosuchfile}}
+# COLOR: {{ld.lld: .\[0;1;31merror: .\[0mcannot open /nosuchfile}}
 
 # RUN: not ld.lld -color-diagnostics=always -no-color-diagnostics /nosuchfile 2>&1 \
 # RUN:   | FileCheck -check-prefix=NOCOLOR %s
