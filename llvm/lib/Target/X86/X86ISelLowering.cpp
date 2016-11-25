@@ -15319,7 +15319,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
         goto default_case;
 
     if (ConstantSDNode *C =
-        dyn_cast<ConstantSDNode>(ArithOp.getNode()->getOperand(1))) {
+        dyn_cast<ConstantSDNode>(ArithOp.getOperand(1))) {
       // An add of one will be selected as an INC.
       if (C->isOne() && !Subtarget.slowIncDec()) {
         Opcode = X86ISD::INC;
@@ -16322,7 +16322,7 @@ SDValue X86TargetLowering::LowerSETCCE(SDValue Op, SelectionDAG &DAG) const {
 
 /// Return true if opcode is a X86 logical comparison.
 static bool isX86LogicalCmp(SDValue Op) {
-  unsigned Opc = Op.getNode()->getOpcode();
+  unsigned Opc = Op.getOpcode();
   if (Opc == X86ISD::CMP || Opc == X86ISD::COMI || Opc == X86ISD::UCOMI ||
       Opc == X86ISD::SAHF)
     return true;
@@ -17243,7 +17243,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
       case X86::COND_B:
         // These can only come from an arithmetic instruction with overflow,
         // e.g. SADDO, UADDO.
-        Cond = Cond.getNode()->getOperand(1);
+        Cond = Cond.getOperand(1);
         addTest = false;
         break;
       }
@@ -17600,7 +17600,7 @@ SDValue X86TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
   assert(Subtarget.is64Bit() &&
          "LowerVAARG only handles 64-bit va_arg!");
-  assert(Op.getNode()->getNumOperands() == 4);
+  assert(Op.getNumOperands() == 4);
 
   MachineFunction &MF = DAG.getMachineFunction();
   if (Subtarget.isCallingConvWin64(MF.getFunction()->getCallingConv()))
@@ -27520,7 +27520,7 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
       InputVector.getValueType() == MVT::v2i32 &&
       isa<ConstantSDNode>(N->getOperand(1)) &&
       N->getConstantOperandVal(1) == 0) {
-    SDValue MMXSrc = InputVector.getNode()->getOperand(0);
+    SDValue MMXSrc = InputVector.getOperand(0);
 
     // The bitcast source is a direct mmx result.
     if (MMXSrc.getValueType() == MVT::x86mmx)
