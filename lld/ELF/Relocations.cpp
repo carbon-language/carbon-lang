@@ -711,7 +711,11 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
     } else {
       // We don't know anything about the finaly symbol. Just ask the dynamic
       // linker to handle the relocation for us.
+      if (!Target->isPicRel(Type))
+        error(getLocation(C, Offset) + ": relocation " + toString(Type) +
+              " cannot be used against shared object; recompile with -fPIC.");
       AddDyn({Target->getDynRel(Type), &C, Offset, false, &Body, Addend});
+
       // MIPS ABI turns using of GOT and dynamic relocations inside out.
       // While regular ABI uses dynamic relocations to fill up GOT entries
       // MIPS ABI requires dynamic linker to fills up GOT entries using
