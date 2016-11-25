@@ -527,8 +527,6 @@ void SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
 
   bool SpillToSMEM = ST.hasScalarStores() && EnableSpillSGPRToSMEM;
 
-  assert(SuperReg != AMDGPU::M0 && "m0 should never spill");
-
   const unsigned EltSize = 4;
 
   // SubReg carries the "Kill" flag when SubReg == SuperReg.
@@ -538,6 +536,19 @@ void SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
       SuperReg : getSubReg(SuperReg, getSubRegFromChannel(i));
 
     if (SpillToSMEM) {
+      if (SuperReg == AMDGPU::M0) {
+        assert(NumSubRegs == 1);
+        unsigned CopyM0
+          = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
+
+        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::COPY), CopyM0)
+          .addReg(AMDGPU::M0, getKillRegState(IsKill));
+
+        // The real spill now kills the temp copy.
+        SubReg = SuperReg = CopyM0;
+        IsKill = true;
+      }
+
       int64_t FrOffset = FrameInfo.getObjectOffset(Index);
       unsigned Align = FrameInfo.getObjectAlignment(Index);
       MachinePointerInfo PtrInfo
@@ -575,6 +586,18 @@ void SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
     struct SIMachineFunctionInfo::SpilledReg Spill =
       MFI->getSpilledReg(MF, Index, i);
     if (Spill.hasReg()) {
+      if (SuperReg == AMDGPU::M0) {
+        assert(NumSubRegs == 1);
+        unsigned CopyM0
+          = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
+        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_MOV_B32), CopyM0)
+          .addReg(SuperReg, getKillRegState(IsKill));
+
+        // The real spill now kills the temp copy.
+        SubReg = SuperReg = CopyM0;
+        IsKill = true;
+      }
+
       BuildMI(*MBB, MI, DL,
               TII->getMCOpcodeFromPseudo(AMDGPU::V_WRITELANE_B32),
               Spill.VGPR)
@@ -641,7 +664,13 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
   unsigned SuperReg = MI->getOperand(0).getReg();
   bool SpillToSMEM = ST.hasScalarStores() && EnableSpillSGPRToSMEM;
 
-  assert(SuperReg != AMDGPU::M0 && "m0 should never spill");
+  // m0 is not allowed as with readlane/writelane, so a temporary SGPR and
+  // extra copy is needed.
+  bool IsM0 = (SuperReg == AMDGPU::M0);
+  if (IsM0) {
+    assert(NumSubRegs == 1);
+    SuperReg = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
+  }
 
   int64_t FrOffset = FrameInfo.getObjectOffset(Index);
 
@@ -724,6 +753,11 @@ void SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
       if (NumSubRegs > 1)
         MIB.addReg(MI->getOperand(0).getReg(), RegState::ImplicitDefine);
     }
+  }
+
+  if (IsM0 && SuperReg != AMDGPU::M0) {
+    BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
+      .addReg(SuperReg);
   }
 
   MI->eraseFromParent();
