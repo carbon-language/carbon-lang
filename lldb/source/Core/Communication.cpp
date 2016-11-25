@@ -278,11 +278,8 @@ size_t Communication::ReadFromConnection(void *dst, size_t dst_len,
                                          ConnectionStatus &status,
                                          Error *error_ptr) {
   lldb::ConnectionSP connection_sp(m_connection_sp);
-  if (connection_sp) {
-    return connection_sp->Read(dst, dst_len,
-                               timeout ? timeout->count() : UINT32_MAX, status,
-                               error_ptr);
-  }
+  if (connection_sp)
+    return connection_sp->Read(dst, dst_len, timeout, status, error_ptr);
 
   if (error_ptr)
     error_ptr->SetErrorString("Invalid connection.");
