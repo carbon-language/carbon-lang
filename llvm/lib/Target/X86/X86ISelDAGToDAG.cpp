@@ -1533,18 +1533,19 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root,
   if (N.getOpcode() == X86ISD::VZEXT_MOVL && N.getNode()->hasOneUse() &&
       // Check to see if the top elements are all zeros (or bitcast of zeros).
       N.getOperand(0).getOpcode() == ISD::SCALAR_TO_VECTOR &&
-      N.getOperand(0).getNode()->hasOneUse() &&
-      ISD::isNON_EXTLoad(N.getOperand(0).getOperand(0).getNode()) &&
-      N.getOperand(0).getOperand(0).hasOneUse() &&
-      IsProfitableToFold(N.getOperand(0), N.getNode(), Root) &&
-      IsLegalToFold(N.getOperand(0), N.getNode(), Root, OptLevel)) {
-    // Okay, this is a zero extending load.  Fold it.
-    LoadSDNode *LD = cast<LoadSDNode>(N.getOperand(0).getOperand(0));
-    if (!selectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
-      return false;
-    PatternNodeWithChain = SDValue(LD, 0);
-    return true;
+      N.getOperand(0).getNode()->hasOneUse()) {
+    PatternNodeWithChain = N.getOperand(0).getOperand(0);
+    if (ISD::isNON_EXTLoad(PatternNodeWithChain.getNode()) &&
+        PatternNodeWithChain.hasOneUse() &&
+        IsProfitableToFold(PatternNodeWithChain, N.getNode(), Root) &&
+        IsLegalToFold(PatternNodeWithChain, N.getNode(), Root, OptLevel)) {
+      // Okay, this is a zero extending load.  Fold it.
+      LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
+      return selectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp,
+                        Segment);
+    }
   }
+
   return false;
 }
 
