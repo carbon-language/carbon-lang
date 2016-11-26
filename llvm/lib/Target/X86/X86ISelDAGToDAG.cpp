@@ -1523,9 +1523,8 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root,
         IsProfitableToFold(PatternNodeWithChain, N.getNode(), Root) &&
         IsLegalToFold(PatternNodeWithChain, N.getNode(), Root, OptLevel)) {
       LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
-      if (!selectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp, Segment))
-        return false;
-      return true;
+      return selectAddr(LD, LD->getBasePtr(), Base, Scale, Index, Disp,
+                        Segment);
     }
   }
 
