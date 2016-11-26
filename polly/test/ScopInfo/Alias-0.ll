@@ -33,4 +33,4 @@ declare i32 @rnd(...)
 
 
 ; RTA:   1 polly-detect     - Number of regions that a valid part of Scop
-; NORTA: 1 polly-detect     - Number of bad regions for Scop: Found base address alias
+; NORTA: 1 polly-detect     - Number of rejected regions: Base address aliasing
