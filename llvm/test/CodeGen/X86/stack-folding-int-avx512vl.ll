@@ -16,12 +16,56 @@ define <16 x i8> @stack_fold_paddb(<16 x i8> %a0, <16 x i8> %a1) {
   ret <16 x i8> %2
 }
 
+define <16 x i8> @stack_fold_paddb_mask(<16 x i8> %a0, <16 x i8> %a1, <16 x i8>* %a2, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_paddb_mask
+  ;CHECK:       vpaddb {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = add <16 x i8> %a0, %a1
+  %3 = bitcast i16 %mask to <16 x i1>
+  ; load needed to keep the operation from being scheduled about the asm block
+  %4 = load <16 x i8>, <16 x i8>* %a2
+  %5 = select <16 x i1> %3, <16 x i8> %2, <16 x i8> %4
+  ret <16 x i8> %5
+}
+
+define <16 x i8> @stack_fold_paddb_maskz(<16 x i8> %a0, <16 x i8> %a1, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_paddb_maskz
+  ;CHECK:       vpaddb {{-?[0-9]*}}(%rsp), {{%xmm[0-9][0-9]*}}, {{%xmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 16-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = add <16 x i8> %a0, %a1
+  %3 = bitcast i16 %mask to <16 x i1>
+  %4 = select <16 x i1> %3, <16 x i8> %2, <16 x i8> zeroinitializer
+  ret <16 x i8> %4
+}
+
 define <32 x i8> @stack_fold_paddb_ymm(<32 x i8> %a0, <32 x i8> %a1) {
   ;CHECK-LABEL: stack_fold_paddb_ymm
   ;CHECK:       vpaddb {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{.*#+}} 32-byte Folded Reload
   %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
   %2 = add <32 x i8> %a0, %a1
   ret <32 x i8> %2
+}
+
+define <32 x i8> @stack_fold_paddb_mask_ymm(<32 x i8> %a0, <32 x i8> %a1, <32 x i8>* %a2, i32 %mask) {
+  ;CHECK-LABEL: stack_fold_paddb_mask_ymm
+  ;CHECK:       vpaddb {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = add <32 x i8> %a0, %a1
+  %3 = bitcast i32 %mask to <32 x i1>
+  ; load needed to keep the operation from being scheduled about the asm block
+  %4 = load <32 x i8>, <32 x i8>* %a2
+  %5 = select <32 x i1> %3, <32 x i8> %2, <32 x i8> %4
+  ret <32 x i8> %5
+}
+
+define <32 x i8> @stack_fold_paddb_maskz_ymm(<32 x i8> %a0, <32 x i8> %a1, i32 %mask) {
+  ;CHECK-LABEL: stack_fold_paddb_maskz_ymm
+  ;CHECK:       vpaddb {{-?[0-9]*}}(%rsp), {{%ymm[0-9][0-9]*}}, {{%ymm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 32-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = add <32 x i8> %a0, %a1
+  %3 = bitcast i32 %mask to <32 x i1>
+  %4 = select <32 x i1> %3, <32 x i8> %2, <32 x i8> zeroinitializer
+  ret <32 x i8> %4
 }
 
 define <4 x i32> @stack_fold_paddd(<4 x i32> %a0, <4 x i32> %a1) {
