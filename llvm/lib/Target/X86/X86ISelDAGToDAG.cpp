@@ -1519,7 +1519,6 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root,
   if (N.getOpcode() == ISD::SCALAR_TO_VECTOR && N.getNode()->hasOneUse()) {
     PatternNodeWithChain = N.getOperand(0);
     if (ISD::isNON_EXTLoad(PatternNodeWithChain.getNode()) &&
-        PatternNodeWithChain.hasOneUse() &&
         IsProfitableToFold(PatternNodeWithChain, N.getNode(), Root) &&
         IsLegalToFold(PatternNodeWithChain, N.getNode(), Root, OptLevel)) {
       LoadSDNode *LD = cast<LoadSDNode>(PatternNodeWithChain);
@@ -1536,7 +1535,6 @@ bool X86DAGToDAGISel::selectScalarSSELoad(SDNode *Root,
       N.getOperand(0).getNode()->hasOneUse()) {
     PatternNodeWithChain = N.getOperand(0).getOperand(0);
     if (ISD::isNON_EXTLoad(PatternNodeWithChain.getNode()) &&
-        PatternNodeWithChain.hasOneUse() &&
         IsProfitableToFold(PatternNodeWithChain, N.getNode(), Root) &&
         IsLegalToFold(PatternNodeWithChain, N.getNode(), Root, OptLevel)) {
       // Okay, this is a zero extending load.  Fold it.
