@@ -66,8 +66,8 @@ enum class RejectReasonKind {
   // CFG Category
   CFG,
   InvalidTerminator,
-  LastCFG,
   IrreducibleRegion,
+  LastCFG,
 
   // Non-Affinity
   AffFunc,
