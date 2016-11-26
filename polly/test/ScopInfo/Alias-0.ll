@@ -32,5 +32,5 @@ return:                                           ; preds = %bb3
 declare i32 @rnd(...)
 
 
-; RTA:   1 polly-detect     - Number of regions that a valid part of Scop
+; RTA:   1 polly-detect     - Number of scops
 ; NORTA: 1 polly-detect     - Number of rejected regions: Base address aliasing
