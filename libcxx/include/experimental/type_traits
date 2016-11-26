@@ -459,6 +459,24 @@ template <class _Tp>
 using raw_invocation_type_t = typename raw_invocation_type<_Tp>::type;
 */
 
+// 3.3.3, Logical operator traits
+template <class...> using void_t = void;
+
+template <class... _Args>
+struct conjunction : _VSTD::__and_<_Args...> {};
+template <class... _Args>
+_LIBCPP_CONSTEXPR bool conjunction_v = conjunction<_Args...>::value;
+
+template <class... _Args>
+struct disjunction : _VSTD::__or_<_Args...> {};
+template <class... _Args>
+_LIBCPP_CONSTEXPR bool disjunction_v = disjunction<_Args...>::value;
+
+template <class _Tp>
+struct negation : _VSTD::__not_<_Tp> {};
+template<class _Tp>
+_LIBCPP_CONSTEXPR bool negation_v = negation<_Tp>::value;
+
 // 3.3.4, Detection idiom
 template <class...> using void_t = void;
 
