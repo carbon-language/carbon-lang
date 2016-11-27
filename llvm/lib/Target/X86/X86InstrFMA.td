@@ -301,7 +301,6 @@ let isCodeGenOnly = 1, ForceDisassemble = 1, hasSideEffects = 0 in
 multiclass fma4s_int<bits<8> opc, string OpcodeStr, Operand memop,
                      ComplexPattern mem_cpat, Intrinsic Int> {
 let isCodeGenOnly = 1 in {
-  let isCommutable = 1 in
   def rr_Int : FMA4<opc, MRMSrcRegOp4, (outs VR128:$dst),
                (ins VR128:$src1, VR128:$src2, VR128:$src3),
                !strconcat(OpcodeStr,
