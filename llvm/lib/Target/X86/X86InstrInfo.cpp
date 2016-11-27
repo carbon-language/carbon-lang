@@ -1671,25 +1671,33 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
 
     // FMA4 foldable patterns
     { X86::VFMADDSS4rr,       X86::VFMADDSS4mr,        TB_ALIGN_NONE },
+    { X86::VFMADDSS4rr_Int,   X86::VFMADDSS4mr_Int,    TB_NO_REVERSE },
     { X86::VFMADDSD4rr,       X86::VFMADDSD4mr,        TB_ALIGN_NONE },
+    { X86::VFMADDSD4rr_Int,   X86::VFMADDSD4mr_Int,    TB_NO_REVERSE },
     { X86::VFMADDPS4rr,       X86::VFMADDPS4mr,        TB_ALIGN_NONE },
     { X86::VFMADDPD4rr,       X86::VFMADDPD4mr,        TB_ALIGN_NONE },
     { X86::VFMADDPS4Yrr,      X86::VFMADDPS4Ymr,       TB_ALIGN_NONE },
     { X86::VFMADDPD4Yrr,      X86::VFMADDPD4Ymr,       TB_ALIGN_NONE },
     { X86::VFNMADDSS4rr,      X86::VFNMADDSS4mr,       TB_ALIGN_NONE },
+    { X86::VFNMADDSS4rr_Int,  X86::VFNMADDSS4mr_Int,   TB_NO_REVERSE },
     { X86::VFNMADDSD4rr,      X86::VFNMADDSD4mr,       TB_ALIGN_NONE },
+    { X86::VFNMADDSD4rr_Int,  X86::VFNMADDSD4mr_Int,   TB_NO_REVERSE },
     { X86::VFNMADDPS4rr,      X86::VFNMADDPS4mr,       TB_ALIGN_NONE },
     { X86::VFNMADDPD4rr,      X86::VFNMADDPD4mr,       TB_ALIGN_NONE },
     { X86::VFNMADDPS4Yrr,     X86::VFNMADDPS4Ymr,      TB_ALIGN_NONE },
     { X86::VFNMADDPD4Yrr,     X86::VFNMADDPD4Ymr,      TB_ALIGN_NONE },
     { X86::VFMSUBSS4rr,       X86::VFMSUBSS4mr,        TB_ALIGN_NONE },
+    { X86::VFMSUBSS4rr_Int,   X86::VFMSUBSS4mr_Int,    TB_NO_REVERSE },
     { X86::VFMSUBSD4rr,       X86::VFMSUBSD4mr,        TB_ALIGN_NONE },
+    { X86::VFMSUBSD4rr_Int,   X86::VFMSUBSD4mr_Int,    TB_NO_REVERSE },
     { X86::VFMSUBPS4rr,       X86::VFMSUBPS4mr,        TB_ALIGN_NONE },
     { X86::VFMSUBPD4rr,       X86::VFMSUBPD4mr,        TB_ALIGN_NONE },
     { X86::VFMSUBPS4Yrr,      X86::VFMSUBPS4Ymr,       TB_ALIGN_NONE },
     { X86::VFMSUBPD4Yrr,      X86::VFMSUBPD4Ymr,       TB_ALIGN_NONE },
     { X86::VFNMSUBSS4rr,      X86::VFNMSUBSS4mr,       TB_ALIGN_NONE },
+    { X86::VFNMSUBSS4rr_Int,  X86::VFNMSUBSS4mr_Int,   TB_NO_REVERSE },
     { X86::VFNMSUBSD4rr,      X86::VFNMSUBSD4mr,       TB_ALIGN_NONE },
+    { X86::VFNMSUBSD4rr_Int,  X86::VFNMSUBSD4mr_Int,   TB_NO_REVERSE },
     { X86::VFNMSUBPS4rr,      X86::VFNMSUBPS4mr,       TB_ALIGN_NONE },
     { X86::VFNMSUBPD4rr,      X86::VFNMSUBPD4mr,       TB_ALIGN_NONE },
     { X86::VFNMSUBPS4Yrr,     X86::VFNMSUBPS4Ymr,      TB_ALIGN_NONE },
@@ -2140,25 +2148,33 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
   static const X86MemoryFoldTableEntry MemoryFoldTable3[] = {
     // FMA4 foldable patterns
     { X86::VFMADDSS4rr,           X86::VFMADDSS4rm,           TB_ALIGN_NONE },
+    { X86::VFMADDSS4rr_Int,       X86::VFMADDSS4rm_Int,       TB_NO_REVERSE },
     { X86::VFMADDSD4rr,           X86::VFMADDSD4rm,           TB_ALIGN_NONE },
+    { X86::VFMADDSD4rr_Int,       X86::VFMADDSD4rm_Int,       TB_NO_REVERSE },
     { X86::VFMADDPS4rr,           X86::VFMADDPS4rm,           TB_ALIGN_NONE },
     { X86::VFMADDPD4rr,           X86::VFMADDPD4rm,           TB_ALIGN_NONE },
     { X86::VFMADDPS4Yrr,          X86::VFMADDPS4Yrm,          TB_ALIGN_NONE },
     { X86::VFMADDPD4Yrr,          X86::VFMADDPD4Yrm,          TB_ALIGN_NONE },
     { X86::VFNMADDSS4rr,          X86::VFNMADDSS4rm,          TB_ALIGN_NONE },
+    { X86::VFNMADDSS4rr_Int,      X86::VFNMADDSS4rm_Int,      TB_NO_REVERSE },
     { X86::VFNMADDSD4rr,          X86::VFNMADDSD4rm,          TB_ALIGN_NONE },
+    { X86::VFNMADDSD4rr_Int,      X86::VFNMADDSD4rm_Int,      TB_NO_REVERSE },
     { X86::VFNMADDPS4rr,          X86::VFNMADDPS4rm,          TB_ALIGN_NONE },
     { X86::VFNMADDPD4rr,          X86::VFNMADDPD4rm,          TB_ALIGN_NONE },
     { X86::VFNMADDPS4Yrr,         X86::VFNMADDPS4Yrm,         TB_ALIGN_NONE },
     { X86::VFNMADDPD4Yrr,         X86::VFNMADDPD4Yrm,         TB_ALIGN_NONE },
     { X86::VFMSUBSS4rr,           X86::VFMSUBSS4rm,           TB_ALIGN_NONE },
+    { X86::VFMSUBSS4rr_Int,       X86::VFMSUBSS4rm_Int,       TB_NO_REVERSE },
     { X86::VFMSUBSD4rr,           X86::VFMSUBSD4rm,           TB_ALIGN_NONE },
+    { X86::VFMSUBSD4rr_Int,       X86::VFMSUBSD4rm_Int,       TB_NO_REVERSE },
     { X86::VFMSUBPS4rr,           X86::VFMSUBPS4rm,           TB_ALIGN_NONE },
     { X86::VFMSUBPD4rr,           X86::VFMSUBPD4rm,           TB_ALIGN_NONE },
     { X86::VFMSUBPS4Yrr,          X86::VFMSUBPS4Yrm,          TB_ALIGN_NONE },
     { X86::VFMSUBPD4Yrr,          X86::VFMSUBPD4Yrm,          TB_ALIGN_NONE },
     { X86::VFNMSUBSS4rr,          X86::VFNMSUBSS4rm,          TB_ALIGN_NONE },
+    { X86::VFNMSUBSS4rr_Int,      X86::VFNMSUBSS4rm_Int,      TB_NO_REVERSE },
     { X86::VFNMSUBSD4rr,          X86::VFNMSUBSD4rm,          TB_ALIGN_NONE },
+    { X86::VFNMSUBSD4rr_Int,      X86::VFNMSUBSD4rm_Int,      TB_NO_REVERSE },
     { X86::VFNMSUBPS4rr,          X86::VFNMSUBPS4rm,          TB_ALIGN_NONE },
     { X86::VFNMSUBPD4rr,          X86::VFNMSUBPD4rm,          TB_ALIGN_NONE },
     { X86::VFNMSUBPS4Yrr,         X86::VFNMSUBPS4Yrm,         TB_ALIGN_NONE },
@@ -7318,6 +7334,8 @@ static bool isNonFoldablePartialRegisterLoad(const MachineInstr &LoadMI,
     case X86::MINSSrr_Int: case X86::VMINSSrr_Int: case X86::VMINSSZrr_Int:
     case X86::MULSSrr_Int: case X86::VMULSSrr_Int: case X86::VMULSSZrr_Int:
     case X86::SUBSSrr_Int: case X86::VSUBSSrr_Int: case X86::VSUBSSZrr_Int:
+    case X86::VFMADDSS4rr_Int:   case X86::VFNMADDSS4rr_Int:
+    case X86::VFMSUBSS4rr_Int:   case X86::VFNMSUBSS4rr_Int:
     case X86::VFMADD132SSr_Int:  case X86::VFNMADD132SSr_Int:
     case X86::VFMADD213SSr_Int:  case X86::VFNMADD213SSr_Int:
     case X86::VFMADD231SSr_Int:  case X86::VFNMADD231SSr_Int:
@@ -7349,6 +7367,8 @@ static bool isNonFoldablePartialRegisterLoad(const MachineInstr &LoadMI,
     case X86::MINSDrr_Int: case X86::VMINSDrr_Int: case X86::VMINSDZrr_Int:
     case X86::MULSDrr_Int: case X86::VMULSDrr_Int: case X86::VMULSDZrr_Int:
     case X86::SUBSDrr_Int: case X86::VSUBSDrr_Int: case X86::VSUBSDZrr_Int:
+    case X86::VFMADDSD4rr_Int:   case X86::VFNMADDSD4rr_Int:
+    case X86::VFMSUBSD4rr_Int:   case X86::VFNMSUBSD4rr_Int:
     case X86::VFMADD132SDr_Int:  case X86::VFNMADD132SDr_Int:
     case X86::VFMADD213SDr_Int:  case X86::VFNMADD213SDr_Int:
     case X86::VFMADD231SDr_Int:  case X86::VFNMADD231SDr_Int:

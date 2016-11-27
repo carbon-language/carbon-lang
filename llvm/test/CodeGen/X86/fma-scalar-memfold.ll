@@ -26,8 +26,7 @@ define void @fmadd_aab_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fmadd_aab_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfmaddss %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfmaddss (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -60,8 +59,7 @@ define void @fmadd_aba_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fmadd_aba_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfmaddss %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfmaddss %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -94,8 +92,7 @@ define void @fmsub_aab_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fmsub_aab_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfmsubss %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfmsubss (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -128,8 +125,7 @@ define void @fmsub_aba_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fmsub_aba_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfmsubss %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfmsubss %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -162,8 +158,7 @@ define void @fnmadd_aab_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fnmadd_aab_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfnmaddss %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmaddss (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -196,8 +191,7 @@ define void @fnmadd_aba_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fnmadd_aba_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfnmaddss %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmaddss %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -230,8 +224,7 @@ define void @fnmsub_aab_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fnmsub_aab_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfnmsubss %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmsubss (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -264,8 +257,7 @@ define void @fnmsub_aba_ss(float* %a, float* %b) {
 ; FMA4-LABEL: fnmsub_aba_ss:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
-; FMA4-NEXT:    vfnmsubss %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmsubss %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovss %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load float, float* %a
@@ -298,8 +290,7 @@ define void @fmadd_aab_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fmadd_aab_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfmaddsd %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfmaddsd (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
@@ -328,8 +319,7 @@ define void @fmadd_aba_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fmadd_aba_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfmaddsd %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfmaddsd %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
@@ -358,8 +348,7 @@ define void @fmsub_aab_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fmsub_aab_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfmsubsd %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfmsubsd (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
@@ -388,8 +377,7 @@ define void @fmsub_aba_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fmsub_aba_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfmsubsd %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfmsubsd %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
@@ -418,8 +406,7 @@ define void @fnmadd_aab_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fnmadd_aab_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfnmaddsd %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmaddsd (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
@@ -448,8 +435,7 @@ define void @fnmadd_aba_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fnmadd_aba_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfnmaddsd %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmaddsd %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
@@ -478,8 +464,7 @@ define void @fnmsub_aab_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fnmsub_aab_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfnmsubsd %xmm1, %xmm0, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmsubsd (%rsi), %xmm0, %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
@@ -508,8 +493,7 @@ define void @fnmsub_aba_sd(double* %a, double* %b) {
 ; FMA4-LABEL: fnmsub_aba_sd:
 ; FMA4:       # BB#0:
 ; FMA4-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; FMA4-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
-; FMA4-NEXT:    vfnmsubsd %xmm0, %xmm1, %xmm0, %xmm0
+; FMA4-NEXT:    vfnmsubsd %xmm0, (%rsi), %xmm0, %xmm0
 ; FMA4-NEXT:    vmovlpd %xmm0, (%rdi)
 ; FMA4-NEXT:    retq
   %a.val = load double, double* %a
