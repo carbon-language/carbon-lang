@@ -24,13 +24,9 @@ define i32 @shl_shl(i32 %A) {
   ret i32 %C
 }
 
-; FIXME
-
 define <2 x i33> @shl_shl_splat_vec(<2 x i33> %A) {
 ; CHECK-LABEL: @shl_shl_splat_vec(
-; CHECK-NEXT:    [[B:%.*]] = shl <2 x i33> %A, <i33 5, i33 5>
-; CHECK-NEXT:    [[C:%.*]] = shl <2 x i33> [[B]], <i33 28, i33 28>
-; CHECK-NEXT:    ret <2 x i33> [[C]]
+; CHECK-NEXT:    ret <2 x i33> zeroinitializer
 ;
   %B = shl <2 x i33> %A, <i33 5, i33 5>
   %C = shl <2 x i33> %B, <i33 28, i33 28>
@@ -59,26 +55,18 @@ define i232 @lshr_lshr(i232 %A) {
   ret i232 %C
 }
 
-; FIXME
-
 define <2 x i32> @lshr_lshr_splat_vec(<2 x i32> %A) {
 ; CHECK-LABEL: @lshr_lshr_splat_vec(
-; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i32> %A, <i32 28, i32 28>
-; CHECK-NEXT:    [[C:%.*]] = lshr <2 x i32> [[B]], <i32 4, i32 4>
-; CHECK-NEXT:    ret <2 x i32> [[C]]
+; CHECK-NEXT:    ret <2 x i32> zeroinitializer
 ;
   %B = lshr <2 x i32> %A, <i32 28, i32 28>
   %C = lshr <2 x i32> %B, <i32 4, i32 4>
   ret <2 x i32> %C
 }
 
-; FIXME
-
 define <2 x i32> @lshr_lshr_vec(<2 x i32> %A) {
 ; CHECK-LABEL: @lshr_lshr_vec(
-; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i32> %A, <i32 29, i32 28>
-; CHECK-NEXT:    [[C:%.*]] = lshr <2 x i32> [[B]], <i32 4, i32 5>
-; CHECK-NEXT:    ret <2 x i32> [[C]]
+; CHECK-NEXT:    ret <2 x i32> zeroinitializer
 ;
   %B = lshr <2 x i32> %A, <i32 29, i32 28>
   %C = lshr <2 x i32> %B, <i32 4, i32 5>
