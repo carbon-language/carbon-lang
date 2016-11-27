@@ -2028,6 +2028,48 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VXORPSZ128rr,      X86::VXORPSZ128rm,        0 },
     { X86::VXORPSZ256rr,      X86::VXORPSZ256rm,        0 },
 
+    // AVX-512 masked foldable instructions
+    { X86::VPMOVSXBDZrrkz,    X86::VPMOVSXBDZrmkz,      0 },
+    { X86::VPMOVSXBQZrrkz,    X86::VPMOVSXBQZrmkz,      0 },
+    { X86::VPMOVSXBWZrrkz,    X86::VPMOVSXBWZrmkz,      0 },
+    { X86::VPMOVSXDQZrrkz,    X86::VPMOVSXDQZrmkz,      0 },
+    { X86::VPMOVSXWDZrrkz,    X86::VPMOVSXWDZrmkz,      0 },
+    { X86::VPMOVSXWQZrrkz,    X86::VPMOVSXWQZrmkz,      0 },
+    { X86::VPMOVZXBDZrrkz,    X86::VPMOVZXBDZrmkz,      0 },
+    { X86::VPMOVZXBQZrrkz,    X86::VPMOVZXBQZrmkz,      0 },
+    { X86::VPMOVZXBWZrrkz,    X86::VPMOVZXBWZrmkz,      0 },
+    { X86::VPMOVZXDQZrrkz,    X86::VPMOVZXDQZrmkz,      0 },
+    { X86::VPMOVZXWDZrrkz,    X86::VPMOVZXWDZrmkz,      0 },
+    { X86::VPMOVZXWQZrrkz,    X86::VPMOVZXWQZrmkz,      0 },
+
+    // AVX-512VL 256-bit masked foldable instructions
+    { X86::VPMOVSXBDZ256rrkz, X86::VPMOVSXBDZ256rmkz,   0 },
+    { X86::VPMOVSXBQZ256rrkz, X86::VPMOVSXBQZ256rmkz,   0 },
+    { X86::VPMOVSXBWZ256rrkz, X86::VPMOVSXBWZ256rmkz,   0 },
+    { X86::VPMOVSXDQZ256rrkz, X86::VPMOVSXDQZ256rmkz,   0 },
+    { X86::VPMOVSXWDZ256rrkz, X86::VPMOVSXWDZ256rmkz,   0 },
+    { X86::VPMOVSXWQZ256rrkz, X86::VPMOVSXWQZ256rmkz,   0 },
+    { X86::VPMOVZXBDZ256rrkz, X86::VPMOVZXBDZ256rmkz,   0 },
+    { X86::VPMOVZXBQZ256rrkz, X86::VPMOVZXBQZ256rmkz,   0 },
+    { X86::VPMOVZXBWZ256rrkz, X86::VPMOVZXBWZ256rmkz,   0 },
+    { X86::VPMOVZXDQZ256rrkz, X86::VPMOVZXDQZ256rmkz,   0 },
+    { X86::VPMOVZXWDZ256rrkz, X86::VPMOVZXWDZ256rmkz,   0 },
+    { X86::VPMOVZXWQZ256rrkz, X86::VPMOVZXWQZ256rmkz,   0 },
+
+    // AVX-512VL 128-bit masked foldable instructions
+    { X86::VPMOVSXBDZ128rrkz, X86::VPMOVSXBDZ128rmkz,   0 },
+    { X86::VPMOVSXBQZ128rrkz, X86::VPMOVSXBQZ128rmkz,   0 },
+    { X86::VPMOVSXBWZ128rrkz, X86::VPMOVSXBWZ128rmkz,   0 },
+    { X86::VPMOVSXDQZ128rrkz, X86::VPMOVSXDQZ128rmkz,   0 },
+    { X86::VPMOVSXWDZ128rrkz, X86::VPMOVSXWDZ128rmkz,   0 },
+    { X86::VPMOVSXWQZ128rrkz, X86::VPMOVSXWQZ128rmkz,   0 },
+    { X86::VPMOVZXBDZ128rrkz, X86::VPMOVZXBDZ128rmkz,   0 },
+    { X86::VPMOVZXBQZ128rrkz, X86::VPMOVZXBQZ128rmkz,   0 },
+    { X86::VPMOVZXBWZ128rrkz, X86::VPMOVZXBWZ128rmkz,   0 },
+    { X86::VPMOVZXDQZ128rrkz, X86::VPMOVZXDQZ128rmkz,   0 },
+    { X86::VPMOVZXWDZ128rrkz, X86::VPMOVZXWDZ128rmkz,   0 },
+    { X86::VPMOVZXWQZ128rrkz, X86::VPMOVZXWQZ128rmkz,   0 },
+
     // AES foldable instructions
     { X86::AESDECLASTrr,      X86::AESDECLASTrm,        TB_ALIGN_16 },
     { X86::AESDECrr,          X86::AESDECrm,            TB_ALIGN_16 },
@@ -2305,6 +2347,48 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VSUBPSZ128rrkz,        X86::VSUBPSZ128rmkz,        0 },
     { X86::VXORPDZ128rrkz,        X86::VXORPDZ128rmkz,        0 },
     { X86::VXORPSZ128rrkz,        X86::VXORPSZ128rmkz,        0 },
+
+    // AVX-512 masked foldable instructions
+    { X86::VPMOVSXBDZrrk,         X86::VPMOVSXBDZrmk,         0 },
+    { X86::VPMOVSXBQZrrk,         X86::VPMOVSXBQZrmk,         0 },
+    { X86::VPMOVSXBWZrrk,         X86::VPMOVSXBWZrmk,         0 },
+    { X86::VPMOVSXDQZrrk,         X86::VPMOVSXDQZrmk,         0 },
+    { X86::VPMOVSXWDZrrk,         X86::VPMOVSXWDZrmk,         0 },
+    { X86::VPMOVSXWQZrrk,         X86::VPMOVSXWQZrmk,         0 },
+    { X86::VPMOVZXBDZrrk,         X86::VPMOVZXBDZrmk,         0 },
+    { X86::VPMOVZXBQZrrk,         X86::VPMOVZXBQZrmk,         0 },
+    { X86::VPMOVZXBWZrrk,         X86::VPMOVZXBWZrmk,         0 },
+    { X86::VPMOVZXDQZrrk,         X86::VPMOVZXDQZrmk,         0 },
+    { X86::VPMOVZXWDZrrk,         X86::VPMOVZXWDZrmk,         0 },
+    { X86::VPMOVZXWQZrrk,         X86::VPMOVZXWQZrmk,         0 },
+
+    // AVX-512VL 256-bit masked foldable instructions
+    { X86::VPMOVSXBDZ256rrk,      X86::VPMOVSXBDZ256rmk,      0 },
+    { X86::VPMOVSXBQZ256rrk,      X86::VPMOVSXBQZ256rmk,      0 },
+    { X86::VPMOVSXBWZ256rrk,      X86::VPMOVSXBWZ256rmk,      0 },
+    { X86::VPMOVSXDQZ256rrk,      X86::VPMOVSXDQZ256rmk,      0 },
+    { X86::VPMOVSXWDZ256rrk,      X86::VPMOVSXWDZ256rmk,      0 },
+    { X86::VPMOVSXWQZ256rrk,      X86::VPMOVSXWQZ256rmk,      0 },
+    { X86::VPMOVZXBDZ256rrk,      X86::VPMOVZXBDZ256rmk,      0 },
+    { X86::VPMOVZXBQZ256rrk,      X86::VPMOVZXBQZ256rmk,      0 },
+    { X86::VPMOVZXBWZ256rrk,      X86::VPMOVZXBWZ256rmk,      0 },
+    { X86::VPMOVZXDQZ256rrk,      X86::VPMOVZXDQZ256rmk,      0 },
+    { X86::VPMOVZXWDZ256rrk,      X86::VPMOVZXWDZ256rmk,      0 },
+    { X86::VPMOVZXWQZ256rrk,      X86::VPMOVZXWQZ256rmk,      0 },
+
+    // AVX-512VL 128-bit masked foldable instructions
+    { X86::VPMOVSXBDZ128rrk,      X86::VPMOVSXBDZ128rmk,      0 },
+    { X86::VPMOVSXBQZ128rrk,      X86::VPMOVSXBQZ128rmk,      0 },
+    { X86::VPMOVSXBWZ128rrk,      X86::VPMOVSXBWZ128rmk,      0 },
+    { X86::VPMOVSXDQZ128rrk,      X86::VPMOVSXDQZ128rmk,      0 },
+    { X86::VPMOVSXWDZ128rrk,      X86::VPMOVSXWDZ128rmk,      0 },
+    { X86::VPMOVSXWQZ128rrk,      X86::VPMOVSXWQZ128rmk,      0 },
+    { X86::VPMOVZXBDZ128rrk,      X86::VPMOVZXBDZ128rmk,      0 },
+    { X86::VPMOVZXBQZ128rrk,      X86::VPMOVZXBQZ128rmk,      0 },
+    { X86::VPMOVZXBWZ128rrk,      X86::VPMOVZXBWZ128rmk,      0 },
+    { X86::VPMOVZXDQZ128rrk,      X86::VPMOVZXDQZ128rmk,      0 },
+    { X86::VPMOVZXWDZ128rrk,      X86::VPMOVZXWDZ128rmk,      0 },
+    { X86::VPMOVZXWQZ128rrk,      X86::VPMOVZXWQZ128rmk,      0 },
   };
 
   for (X86MemoryFoldTableEntry Entry : MemoryFoldTable3) {
