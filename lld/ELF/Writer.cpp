@@ -1096,7 +1096,7 @@ template <class ELFT> static bool needsPtLoad(OutputSectionBase *Sec) {
 // cannot create a PT_LOAD there.
 template <class ELFT>
 static typename ELFT::uint computeFlags(typename ELFT::uint F) {
-  if (ScriptConfig->HasSections && !(F & PF_W))
+  if (Config->SingleRoRx && !(F & PF_W))
     return F | PF_X;
   return F;
 }

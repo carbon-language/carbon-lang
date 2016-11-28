@@ -696,6 +696,12 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
     }
   }
 
+  // -no-rosegment is used to avoid placing read only non-executable sections in
+  // their own segment. We do the same if SECTIONS command is present in linker
+  // script. See comment for computeFlags().
+  Config->SingleRoRx =
+      Args.hasArg(OPT_no_rosegment) || ScriptConfig->HasSections;
+
   if (Files.empty() && ErrorCount == 0)
     error("no input files");
 }
