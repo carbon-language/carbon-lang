@@ -492,12 +492,12 @@ static bool compareSectionsNonScript(const OutputSectionBase *A,
   if (AIsWritable != BIsWritable)
     return BIsWritable;
 
-  if (!ScriptConfig->HasSections) {
+  if (!Config->SingleRoRx) {
     // For a corresponding reason, put non exec sections first (the program
     // header PT_LOAD is not executable).
     // We only do that if we are not using linker scripts, since with linker
     // scripts ro and rx sections are in the same PT_LOAD, so their relative
-    // order is not important.
+    // order is not important. The same applies for -no-rosegment.
     bool AIsExec = A->Flags & SHF_EXECINSTR;
     bool BIsExec = B->Flags & SHF_EXECINSTR;
     if (AIsExec != BIsExec)
