@@ -43,77 +43,58 @@ typedef SmallPtrSet<BasicBlock *, 8> BBSet;
 typedef MapVector<PHINode *, BBValueVector> PhiMap;
 typedef MapVector<BasicBlock *, BBVector> BB2BBVecMap;
 
-typedef DenseMap<DomTreeNode *, unsigned> DTN2UnsignedMap;
 typedef DenseMap<BasicBlock *, PhiMap> BBPhiMap;
 typedef DenseMap<BasicBlock *, Value *> BBPredicates;
 typedef DenseMap<BasicBlock *, BBPredicates> PredMap;
 typedef DenseMap<BasicBlock *, BasicBlock*> BB2BBMap;
 
 // The name for newly created blocks.
-
 static const char *const FlowBlockName = "Flow";
 
-/// @brief Find the nearest common dominator for multiple BasicBlocks
+/// Finds the nearest common dominator of a set of BasicBlocks.
 ///
-/// Helper class for StructurizeCFG
-/// TODO: Maybe move into common code
+/// For every BB you add to the set, you can specify whether we "remember" the
+/// block.  When you get the common dominator, you can also ask whether it's one
+/// of the blocks we remembered.
 class NearestCommonDominator {
   DominatorTree *DT;
+  BasicBlock *Result = nullptr;
+  bool ResultIsRemembered = false;
 
-  DTN2UnsignedMap IndexMap;
-
-  BasicBlock *Result;
-  unsigned ResultIndex;
-  bool ExplicitMentioned;
-
-public:
-  /// \brief Start a new query
-  NearestCommonDominator(DominatorTree *DomTree) {
-    DT = DomTree;
-    Result = nullptr;
-  }
-
-  /// \brief Add BB to the resulting dominator
-  void addBlock(BasicBlock *BB, bool Remember = true) {
-    DomTreeNode *Node = DT->getNode(BB);
-
+  /// Add BB to the resulting dominator.
+  void addBlock(BasicBlock *BB, bool Remember) {
     if (!Result) {
-      unsigned Numbering = 0;
-      for (;Node;Node = Node->getIDom())
-        IndexMap[Node] = ++Numbering;
       Result = BB;
-      ResultIndex = 1;
-      ExplicitMentioned = Remember;
+      ResultIsRemembered = Remember;
       return;
     }
 
-    for (;Node;Node = Node->getIDom())
-      if (IndexMap.count(Node))
-        break;
-      else
-        IndexMap[Node] = 0;
-
-    assert(Node && "Dominator tree invalid!");
-
-    unsigned Numbering = IndexMap[Node];
-    if (Numbering > ResultIndex) {
-      Result = Node->getBlock();
-      ResultIndex = Numbering;
-      ExplicitMentioned = Remember && (Result == BB);
-    } else if (Numbering == ResultIndex) {
-      ExplicitMentioned |= Remember;
-    }
+    BasicBlock *NewResult = DT->findNearestCommonDominator(Result, BB);
+    if (NewResult != Result)
+      ResultIsRemembered = false;
+    if (NewResult == BB)
+      ResultIsRemembered |= Remember;
+    Result = NewResult;
   }
 
-  /// \brief Is "Result" one of the BBs added with "Remember" = True?
-  bool wasResultExplicitMentioned() {
-    return ExplicitMentioned;
+public:
+  explicit NearestCommonDominator(DominatorTree *DomTree) : DT(DomTree) {}
+
+  void addBlock(BasicBlock *BB) {
+    addBlock(BB, /* Remember = */ false);
   }
 
-  /// \brief Get the query result
-  BasicBlock *getResult() {
-    return Result;
+  void addAndRememberBlock(BasicBlock *BB) {
+    addBlock(BB, /* Remember = */ true);
   }
+
+  /// Get the nearest common dominator of all the BBs added via addBlock() and
+  /// addAndRememberBlock().
+  BasicBlock *result() { return Result; }
+
+  /// Is the BB returned by getResult() one of the blocks we added to the set
+  /// with addAndRememberBlock()?
+  bool resultIsRememberedBlock() { return ResultIsRemembered; }
 };
 
 /// @brief Transforms the control flow graph on one single entry/exit region
@@ -517,7 +498,7 @@ void StructurizeCFG::insertConditions(bool Loops) {
     BBPredicates &Preds = Loops ? LoopPreds[SuccFalse] : Predicates[SuccTrue];
 
     NearestCommonDominator Dominator(DT);
-    Dominator.addBlock(Parent, false);
+    Dominator.addBlock(Parent);
 
     Value *ParentValue = nullptr;
     for (BBPredicates::iterator PI = Preds.begin(), PE = Preds.end();
@@ -528,14 +509,14 @@ void StructurizeCFG::insertConditions(bool Loops) {
         break;
       }
       PhiInserter.AddAvailableValue(PI->first, PI->second);
-      Dominator.addBlock(PI->first);
+      Dominator.addAndRememberBlock(PI->first);
     }
 
     if (ParentValue) {
       Term->setCondition(ParentValue);
     } else {
-      if (!Dominator.wasResultExplicitMentioned())
-        PhiInserter.AddAvailableValue(Dominator.getResult(), Default);
+      if (!Dominator.resultIsRememberedBlock())
+        PhiInserter.AddAvailableValue(Dominator.result(), Default);
 
       Term->setCondition(PhiInserter.GetValueInMiddleOfBlock(Parent));
     }
@@ -590,15 +571,15 @@ void StructurizeCFG::setPhiValues() {
       Updater.AddAvailableValue(To, Undef);
 
       NearestCommonDominator Dominator(DT);
-      Dominator.addBlock(To, false);
+      Dominator.addBlock(To);
       for (const auto &VI : PI.second) {
 
         Updater.AddAvailableValue(VI.first, VI.second);
-        Dominator.addBlock(VI.first);
+        Dominator.addAndRememberBlock(VI.first);
       }
 
-      if (!Dominator.wasResultExplicitMentioned())
-        Updater.AddAvailableValue(Dominator.getResult(), Undef);
+      if (!Dominator.resultIsRememberedBlock())
+        Updater.AddAvailableValue(Dominator.result(), Undef);
 
       for (BasicBlock *FI : From) {
 
