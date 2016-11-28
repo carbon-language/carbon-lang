@@ -23,7 +23,7 @@ def ZEC12Model : SchedMachineModel {
     let PostRAScheduler = 1;
 
     // Extra cycles for a mispredicted branch.
-    let MispredictPenalty  = 8;
+    let MispredictPenalty = 16;
 }
 
 let SchedModel = ZEC12Model in  {
@@ -189,7 +189,6 @@ def : InstRW<[LSU, Lat30, GroupAlone], (instregex "MVST$")>;
 //===----------------------------------------------------------------------===//
 
 def : InstRW<[FXU, Lat2], (instregex "LOC(G)?R(Asm.*)?$")>;
-def : InstRW<[FXU, Lat2], (instregex "LOC(G)?HI(Asm.*)?$")>;
 def : InstRW<[FXU, LSU, Lat6], (instregex "LOC(G)?(Asm.*)?$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "STOC(G)?(Asm.*)?$")>;
 

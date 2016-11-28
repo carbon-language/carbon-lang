@@ -23,7 +23,7 @@ def Z13Model : SchedMachineModel {
     let PostRAScheduler = 1;
 
     // Extra cycles for a mispredicted branch.
-    let MispredictPenalty = 8;
+    let MispredictPenalty = 20;
 }
 
 let SchedModel = Z13Model in  {
@@ -161,6 +161,7 @@ def : InstRW<[FXa], (instregex "Select(32|64|32Mux)$")>;
 def : InstRW<[FXa], (instregex "CondStore16(Inv)?$")>;
 def : InstRW<[FXa], (instregex "CondStore16Mux(Inv)?$")>;
 def : InstRW<[FXa], (instregex "CondStore32(Inv)?$")>;
+def : InstRW<[FXa], (instregex "CondStore32Mux(Inv)?$")>;
 def : InstRW<[FXa], (instregex "CondStore64(Inv)?$")>;
 def : InstRW<[FXa], (instregex "CondStore8(Inv)?$")>;
 def : InstRW<[FXa], (instregex "CondStore8Mux(Inv)?$")>;
@@ -214,10 +215,11 @@ def : InstRW<[LSU, Lat30, GroupAlone], (instregex "MVST$")>;
 // Conditional move instructions
 //===----------------------------------------------------------------------===//
 
-def : InstRW<[FXa, Lat2], (instregex "LOC(G)?R(Asm.*)?$")>;
-def : InstRW<[FXa, Lat2], (instregex "LOC(G)?HI(Asm.*)?$")>;
-def : InstRW<[FXa, LSU, Lat6], (instregex "LOC(G)?(Asm.*)?$")>;
-def : InstRW<[FXb, LSU, Lat5], (instregex "STOC(G)?(Asm.*)?$")>;
+def : InstRW<[FXa, Lat2], (instregex "LOCRMux$")>;
+def : InstRW<[FXa, Lat2], (instregex "LOC(G|FH)?R(Asm.*)?$")>;
+def : InstRW<[FXa, Lat2], (instregex "LOC(G|H)?HI(Asm.*)?$")>;
+def : InstRW<[FXa, LSU, Lat6], (instregex "LOC(G|FH|Mux)?(Asm.*)?$")>;
+def : InstRW<[FXb, LSU, Lat5], (instregex "STOC(G|FH|Mux)?(Asm.*)?$")>;
 
 //===----------------------------------------------------------------------===//
 // Sign extensions
