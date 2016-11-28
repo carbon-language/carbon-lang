@@ -72,8 +72,7 @@ public:
   /// Blocking destructor: the pool will wait for all the threads to complete.
   ~ThreadPool();
 
-  /// Asynchronous submission of a task to the pool. The returned future can be
-  /// used to wait for the task to finish and is *non-blocking* on destruction.
+  /// Asynchronous submission of a task to the pool.
   template <typename Function, typename... Args>
   inline void async(Function &&F, Args &&... ArgList) {
     auto Task =
@@ -87,8 +86,7 @@ public:
 #endif
   }
 
-  /// Asynchronous submission of a task to the pool. The returned future can be
-  /// used to wait for the task to finish and is *non-blocking* on destruction.
+  /// Asynchronous submission of a task to the pool.
   template <typename Function>
   inline void async(Function &&F) {
 #ifndef _MSC_VER
