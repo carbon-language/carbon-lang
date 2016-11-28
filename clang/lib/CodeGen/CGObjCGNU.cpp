@@ -2890,9 +2890,11 @@ llvm::Value *CGObjCGNU::EmitIvarOffset(CodeGenFunction &CGF,
     if (RuntimeVersion < 10 ||
         CGF.CGM.getTarget().getTriple().isKnownWindowsMSVCEnvironment())
       return CGF.Builder.CreateZExtOrBitCast(
-          CGF.Builder.CreateDefaultAlignedLoad(CGF.Builder.CreateAlignedLoad(
-                  ObjCIvarOffsetVariable(Interface, Ivar),
-                  CGF.getPointerAlign(), "ivar")),
+          CGF.Builder.CreateAlignedLoad(
+              Int32Ty, CGF.Builder.CreateAlignedLoad(
+                           ObjCIvarOffsetVariable(Interface, Ivar),
+                           CGF.getPointerAlign(), "ivar"),
+              CharUnits::fromQuantity(4)),
           PtrDiffTy);
     std::string name = "__objc_ivar_offset_value_" +
       Interface->getNameAsString() +"." + Ivar->getNameAsString();
