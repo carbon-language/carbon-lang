@@ -412,14 +412,12 @@ define <16 x i8> @combine_pshufb_as_unary_unpckhwd(<16 x i8> %a0) {
 define <16 x i8> @combine_psrlw_pshufb(<8 x i16> %a0) {
 ; SSE-LABEL: combine_psrlw_pshufb:
 ; SSE:       # BB#0:
-; SSE-NEXT:    psrlw $8, %xmm0
-; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[0],zero,zero,zero,xmm0[0],zero,zero,zero,xmm0[0],zero,zero,zero
+; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[1],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[1],zero,zero,zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_psrlw_pshufb:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpsrlw $8, %xmm0, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[0],zero,zero,zero,xmm0[0],zero,zero,zero,xmm0[0],zero,zero,zero
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[1],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[1],zero,zero,zero,xmm0[1],zero,zero,zero
 ; AVX-NEXT:    retq
   %1 = lshr <8 x i16> %a0, <i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8, i16 8>
   %2 = bitcast <8 x i16> %1 to <16 x i8>
@@ -430,14 +428,12 @@ define <16 x i8> @combine_psrlw_pshufb(<8 x i16> %a0) {
 define <16 x i8> @combine_pslld_pshufb(<4 x i32> %a0) {
 ; SSE-LABEL: combine_pslld_pshufb:
 ; SSE:       # BB#0:
-; SSE-NEXT:    pslld $8, %xmm0
-; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[3,2,1,0,7,6,5,4,11,10,9,8,15,14,13,12]
+; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2,1,0],zero,xmm0[6,5,4],zero,xmm0[10,9,8],zero,xmm0[14,13,12],zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_pslld_pshufb:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpslld $8, %xmm0, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[3,2,1,0,7,6,5,4,11,10,9,8,15,14,13,12]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[2,1,0],zero,xmm0[6,5,4],zero,xmm0[10,9,8],zero,xmm0[14,13,12],zero
 ; AVX-NEXT:    retq
   %1 = shl <4 x i32> %a0, <i32 8, i32 8, i32 8, i32 8>
   %2 = bitcast <4 x i32> %1 to <16 x i8>
@@ -448,14 +444,12 @@ define <16 x i8> @combine_pslld_pshufb(<4 x i32> %a0) {
 define <16 x i8> @combine_psrlq_pshufb(<2 x i64> %a0) {
 ; SSE-LABEL: combine_psrlq_pshufb:
 ; SSE:       # BB#0:
-; SSE-NEXT:    psrlq $48, %xmm0
-; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[7,6,5,4,3,2,1,0,15,14,13,12,11,10,9,8]
+; SSE-NEXT:    pshufb {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,xmm0[7,6],zero,zero,zero,zero,zero,zero,xmm0[15,14]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_psrlq_pshufb:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpsrlq $48, %xmm0, %xmm0
-; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[7,6,5,4,3,2,1,0,15,14,13,12,11,10,9,8]
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = zero,zero,zero,zero,zero,zero,xmm0[7,6],zero,zero,zero,zero,zero,zero,xmm0[15,14]
 ; AVX-NEXT:    retq
   %1 = lshr <2 x i64> %a0, <i64 48, i64 48>
   %2 = bitcast <2 x i64> %1 to <16 x i8>
