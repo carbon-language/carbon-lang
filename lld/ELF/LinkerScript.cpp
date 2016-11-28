@@ -884,13 +884,15 @@ template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
 }
 
 template <class ELFT>
-const OutputSectionBase *LinkerScript<ELFT>::getOutputSection(StringRef Name) {
+const OutputSectionBase *LinkerScript<ELFT>::getOutputSection(const Twine &Loc,
+                                                              StringRef Name) {
   static OutputSectionBase FakeSec("", 0, 0);
 
   for (OutputSectionBase *Sec : *OutputSections)
     if (Sec->getName() == Name)
       return Sec;
-  error("undefined section " + Name);
+
+  error(Loc + ": undefined section " + Name);
   return &FakeSec;
 }
 
@@ -1697,6 +1699,7 @@ Expr ScriptParser::readPrimary() {
     return readParenExpr();
 
   StringRef Tok = next();
+  std::string Location = currentLocation();
 
   if (Tok == "~") {
     Expr E = readPrimary();
@@ -1711,15 +1714,16 @@ Expr ScriptParser::readPrimary() {
   // https://sourceware.org/binutils/docs/ld/Builtin-Functions.html.
   if (Tok == "ADDR") {
     StringRef Name = readParenLiteral();
-    return {
-        [=](uint64_t Dot) { return ScriptBase->getOutputSection(Name)->Addr; },
-        [=] { return false; },
-        [=] { return ScriptBase->getOutputSection(Name); }};
+    return {[=](uint64_t Dot) {
+              return ScriptBase->getOutputSection(Location, Name)->Addr;
+            },
+            [=] { return false; },
+            [=] { return ScriptBase->getOutputSection(Location, Name); }};
   }
   if (Tok == "LOADADDR") {
     StringRef Name = readParenLiteral();
     return [=](uint64_t Dot) {
-      return ScriptBase->getOutputSection(Name)->getLMA();
+      return ScriptBase->getOutputSection(Location, Name)->getLMA();
     };
   }
   if (Tok == "ASSERT")
@@ -1776,7 +1780,7 @@ Expr ScriptParser::readPrimary() {
   if (Tok == "ALIGNOF") {
     StringRef Name = readParenLiteral();
     return [=](uint64_t Dot) {
-      return ScriptBase->getOutputSection(Name)->Addralign;
+      return ScriptBase->getOutputSection(Location, Name)->Addralign;
     };
   }
   if (Tok == "SIZEOF_HEADERS")
