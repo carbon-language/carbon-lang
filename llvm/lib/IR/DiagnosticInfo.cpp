@@ -180,6 +180,12 @@ DiagnosticInfoOptimizationBase::Argument::Argument(StringRef Key, Value *V)
     DLoc = I->getDebugLoc();
 }
 
+DiagnosticInfoOptimizationBase::Argument::Argument(StringRef Key, Type *T)
+    : Key(Key) {
+  raw_string_ostream OS(Val);
+  OS << *T;
+}
+
 DiagnosticInfoOptimizationBase::Argument::Argument(StringRef Key, int N)
     : Key(Key), Val(itostr(N)) {}
 
