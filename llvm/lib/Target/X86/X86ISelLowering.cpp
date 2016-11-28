@@ -5509,6 +5509,15 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     }
     return true;
   }
+  case X86ISD::VZEXT: {
+    // TODO - add support for VPMOVZX with smaller input vector types.
+    SDValue Op0 = N.getOperand(0);
+    if (VT.getSizeInBits() != Op0.getValueSizeInBits())
+      break;
+    DecodeZeroExtendMask(Op0.getSimpleValueType().getScalarType(), VT, Mask);
+    Ops.push_back(Op0);
+    return true;
+  }
   }
 
   return false;
