@@ -30007,7 +30007,7 @@ static SDValue combineOr(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-// Generate NEG and CMOV for integer abs.
+/// Generate NEG and CMOV for integer abs.
 static SDValue combineIntegerAbs(SDNode *N, SelectionDAG &DAG) {
   EVT VT = N->getValueType(0);
 
@@ -30023,21 +30023,19 @@ static SDValue combineIntegerAbs(SDNode *N, SelectionDAG &DAG) {
   // Check pattern of XOR(ADD(X,Y), Y) where Y is SRA(X, size(X)-1)
   // and change it to SUB and CMOV.
   if (VT.isInteger() && N->getOpcode() == ISD::XOR &&
-      N0.getOpcode() == ISD::ADD &&
-      N0.getOperand(1) == N1 &&
-      N1.getOpcode() == ISD::SRA &&
-      N1.getOperand(0) == N0.getOperand(0))
-    if (ConstantSDNode *Y1C = dyn_cast<ConstantSDNode>(N1.getOperand(1)))
-      if (Y1C->getAPIntValue() == VT.getSizeInBits()-1) {
-        // Generate SUB & CMOV.
-        SDValue Neg = DAG.getNode(X86ISD::SUB, DL, DAG.getVTList(VT, MVT::i32),
-                                  DAG.getConstant(0, DL, VT), N0.getOperand(0));
-
-        SDValue Ops[] = { N0.getOperand(0), Neg,
-                          DAG.getConstant(X86::COND_GE, DL, MVT::i8),
-                          SDValue(Neg.getNode(), 1) };
-        return DAG.getNode(X86ISD::CMOV, DL, DAG.getVTList(VT, MVT::Glue), Ops);
-      }
+      N0.getOpcode() == ISD::ADD && N0.getOperand(1) == N1 &&
+      N1.getOpcode() == ISD::SRA && N1.getOperand(0) == N0.getOperand(0)) {
+    auto *Y1C = dyn_cast<ConstantSDNode>(N1.getOperand(1));
+    if (Y1C && Y1C->getAPIntValue() == VT.getSizeInBits() - 1) {
+      // Generate SUB & CMOV.
+      SDValue Neg = DAG.getNode(X86ISD::SUB, DL, DAG.getVTList(VT, MVT::i32),
+                                DAG.getConstant(0, DL, VT), N0.getOperand(0));
+      SDValue Ops[] = {N0.getOperand(0), Neg,
+                       DAG.getConstant(X86::COND_GE, DL, MVT::i8),
+                       SDValue(Neg.getNode(), 1)};
+      return DAG.getNode(X86ISD::CMOV, DL, DAG.getVTList(VT, MVT::Glue), Ops);
+    }
+  }
   return SDValue();
 }
 
