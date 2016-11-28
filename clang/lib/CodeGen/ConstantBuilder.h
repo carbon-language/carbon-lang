@@ -24,14 +24,15 @@
 namespace clang {
 namespace CodeGen {
 
-class ConstantBuilder;
+class ConstantStructBuilder;
+class ConstantArrayBuilder;
 
 /// A convenience builder class for complex constant initializers,
 /// especially for anonymous global structures used by various language
 /// runtimes.
 ///
 /// The basic usage pattern is expected to be something like:
-///    ConstantBuilder builder(CGM);
+///    ConstantInitBuilder builder(CGM);
 ///    auto toplevel = builder.beginStruct();
 ///    toplevel.addInt(CGM.SizeTy, widgets.size());
 ///    auto widgetArray = builder.beginArray();
@@ -45,30 +46,36 @@ class ConstantBuilder;
 ///    toplevel.add(widgetArray.finish());
 ///    auto global = toplevel.finishAndCreateGlobal("WIDGET_LIST", Align,
 ///                                                 /*constant*/ true);
-class ConstantBuilder {
+class ConstantInitBuilder {
   CodeGenModule &CGM;
   llvm::SmallVector<llvm::Constant*, 16> Buffer;
   bool Frozen = false;
 
 public:
-  explicit ConstantBuilder(CodeGenModule &CGM) : CGM(CGM) {}
+  explicit ConstantInitBuilder(CodeGenModule &CGM) : CGM(CGM) {}
 
-  ~ConstantBuilder() {
+  ~ConstantInitBuilder() {
     assert(Buffer.empty() && "didn't claim all values out of buffer");
   }
 
-  class ArrayBuilder;
-  class StructBuilder;
-
   class AggregateBuilder {
   protected:
-    ConstantBuilder &Builder;
+    ConstantInitBuilder &Builder;
     AggregateBuilder *Parent;
     size_t Begin;
     bool Finished = false;
     bool Frozen = false;
 
-    AggregateBuilder(ConstantBuilder &builder, AggregateBuilder *parent)
+    llvm::SmallVectorImpl<llvm::Constant*> &getBuffer() {
+      return Builder.Buffer;
+    }
+
+    const llvm::SmallVectorImpl<llvm::Constant*> &getBuffer() const {
+      return Builder.Buffer;
+    }
+
+    AggregateBuilder(ConstantInitBuilder &builder,
+                     AggregateBuilder *parent)
         : Builder(builder), Parent(parent), Begin(builder.Buffer.size()) {
       if (parent) {
         assert(!parent->Frozen && "parent already has child builder active");
@@ -136,8 +143,8 @@ public:
       return indices;
     }
 
-    ArrayBuilder beginArray(llvm::Type *eltTy = nullptr);
-    StructBuilder beginStruct(llvm::StructType *structTy = nullptr);
+    ConstantArrayBuilder beginArray(llvm::Type *eltTy = nullptr);
+    ConstantStructBuilder beginStruct(llvm::StructType *structTy = nullptr);
 
   private:
     void getGEPIndicesTo(llvm::SmallVectorImpl<llvm::Constant*> &indices,
@@ -158,84 +165,9 @@ public:
     }
   };
 
-  class ArrayBuilder : public AggregateBuilder {
-    llvm::Type *EltTy;
-    friend class ConstantBuilder;
-    ArrayBuilder(ConstantBuilder &builder, AggregateBuilder *parent,
-                 llvm::Type *eltTy)
-      : AggregateBuilder(builder, parent), EltTy(eltTy) {}
-  public:
-    size_t size() const {
-      assert(!Finished);
-      assert(!Frozen);
-      assert(Begin <= Builder.Buffer.size());
-      return Builder.Buffer.size() - Begin;
-    }
+  ConstantArrayBuilder beginArray(llvm::Type *eltTy = nullptr);
 
-    /// Form an array constant from the values that have been added to this
-    /// builder.
-    llvm::Constant *finish() {
-      markFinished();
-
-      auto &buffer = Builder.Buffer;
-      assert((Begin < buffer.size() ||
-              (Begin == buffer.size() && EltTy))
-             && "didn't add any array elements without element type");
-      auto elts = llvm::makeArrayRef(buffer).slice(Begin);
-      auto eltTy = EltTy ? EltTy : elts[0]->getType();
-      auto type = llvm::ArrayType::get(eltTy, elts.size());
-      auto constant = llvm::ConstantArray::get(type, elts);
-      buffer.erase(buffer.begin() + Begin, buffer.end());
-      return constant;
-    }
-
-    template <class... As>
-    llvm::GlobalVariable *finishAndCreateGlobal(As &&...args) {
-      assert(!Parent && "finishing non-root builder");
-      return Builder.createGlobal(finish(), std::forward<As>(args)...);
-    }
-  };
-
-  ArrayBuilder beginArray(llvm::Type *eltTy = nullptr) {
-    return ArrayBuilder(*this, nullptr, eltTy);
-  }
-
-  class StructBuilder : public AggregateBuilder {
-    llvm::StructType *Ty;
-    friend class ConstantBuilder;
-    StructBuilder(ConstantBuilder &builder, AggregateBuilder *parent,
-                  llvm::StructType *ty)
-      : AggregateBuilder(builder, parent), Ty(ty) {}
-  public:
-    /// Finish the struct.
-    llvm::Constant *finish(bool packed = false) {
-      markFinished();
-
-      auto &buffer = Builder.Buffer;
-      assert(Begin < buffer.size() && "didn't add any struct elements?");
-      auto elts = llvm::makeArrayRef(buffer).slice(Begin);
-
-      llvm::Constant *constant;
-      if (Ty) {
-        constant = llvm::ConstantStruct::get(Ty, elts);
-      } else {
-        constant = llvm::ConstantStruct::getAnon(elts, packed);
-      }
-
-      buffer.erase(buffer.begin() + Begin, buffer.end());
-      return constant;
-    }
-
-    template <class... As>
-    llvm::GlobalVariable *finishAndCreateGlobal(As &&...args) {
-      assert(!Parent && "finishing non-root builder");
-      return Builder.createGlobal(finish(), std::forward<As>(args)...);
-    }
-  };
-
-  StructBuilder beginStruct(llvm::StructType *structTy = nullptr) {
-    return StructBuilder(*this, nullptr, structTy);
-  }
+  ConstantStructBuilder beginStruct(llvm::StructType *structTy = nullptr);
 
   llvm::GlobalVariable *createGlobal(llvm::Constant *initializer,
                                      StringRef name,
@@ -258,14 +190,99 @@ public:
   }
 };
 
-inline ConstantBuilder::ArrayBuilder
-ConstantBuilder::AggregateBuilder::beginArray(llvm::Type *eltTy) {
-  return ArrayBuilder(Builder, this, eltTy);
+/// A helper class of ConstantInitBuilder, used for building constant
+/// array initializers.
+class ConstantArrayBuilder : public ConstantInitBuilder::AggregateBuilder {
+  llvm::Type *EltTy;
+  friend class ConstantInitBuilder;
+  ConstantArrayBuilder(ConstantInitBuilder &builder,
+                       AggregateBuilder *parent, llvm::Type *eltTy)
+    : AggregateBuilder(builder, parent), EltTy(eltTy) {}
+public:
+  size_t size() const {
+    assert(!Finished);
+    assert(!Frozen);
+    assert(Begin <= getBuffer().size());
+    return getBuffer().size() - Begin;
+  }
+
+  /// Form an array constant from the values that have been added to this
+  /// builder.
+  llvm::Constant *finish() {
+    markFinished();
+
+    auto &buffer = getBuffer();
+    assert((Begin < buffer.size() ||
+            (Begin == buffer.size() && EltTy))
+           && "didn't add any array elements without element type");
+    auto elts = llvm::makeArrayRef(buffer).slice(Begin);
+    auto eltTy = EltTy ? EltTy : elts[0]->getType();
+    auto type = llvm::ArrayType::get(eltTy, elts.size());
+    auto constant = llvm::ConstantArray::get(type, elts);
+    buffer.erase(buffer.begin() + Begin, buffer.end());
+    return constant;
+  }
+
+  template <class... As>
+  llvm::GlobalVariable *finishAndCreateGlobal(As &&...args) {
+    assert(!Parent && "finishing non-root builder");
+    return Builder.createGlobal(finish(), std::forward<As>(args)...);
+  }
+};
+
+inline ConstantArrayBuilder
+ConstantInitBuilder::beginArray(llvm::Type *eltTy) {
+  return ConstantArrayBuilder(*this, nullptr, eltTy);
 }
 
-inline ConstantBuilder::StructBuilder
-ConstantBuilder::AggregateBuilder::beginStruct(llvm::StructType *structTy) {
-  return StructBuilder(Builder, this, structTy);
+inline ConstantArrayBuilder
+ConstantInitBuilder::AggregateBuilder::beginArray(llvm::Type *eltTy) {
+  return ConstantArrayBuilder(Builder, this, eltTy);
+}
+
+/// A helper class of ConstantInitBuilder, used for building constant
+/// struct initializers.
+class ConstantStructBuilder : public ConstantInitBuilder::AggregateBuilder {
+  llvm::StructType *Ty;
+  friend class ConstantInitBuilder;
+  ConstantStructBuilder(ConstantInitBuilder &builder,
+                        AggregateBuilder *parent, llvm::StructType *ty)
+    : AggregateBuilder(builder, parent), Ty(ty) {}
+public:
+  /// Finish the struct.
+  llvm::Constant *finish(bool packed = false) {
+    markFinished();
+
+    auto &buffer = getBuffer();
+    assert(Begin < buffer.size() && "didn't add any struct elements?");
+    auto elts = llvm::makeArrayRef(buffer).slice(Begin);
+
+    llvm::Constant *constant;
+    if (Ty) {
+      constant = llvm::ConstantStruct::get(Ty, elts);
+    } else {
+      constant = llvm::ConstantStruct::getAnon(elts, packed);
+    }
+
+    buffer.erase(buffer.begin() + Begin, buffer.end());
+    return constant;
+  }
+
+  template <class... As>
+  llvm::GlobalVariable *finishAndCreateGlobal(As &&...args) {
+    assert(!Parent && "finishing non-root builder");
+    return Builder.createGlobal(finish(), std::forward<As>(args)...);
+  }
+};
+
+inline ConstantStructBuilder
+ConstantInitBuilder::beginStruct(llvm::StructType *structTy) {
+  return ConstantStructBuilder(*this, nullptr, structTy);
+}
+
+inline ConstantStructBuilder
+ConstantInitBuilder::AggregateBuilder::beginStruct(llvm::StructType *structTy) {
+  return ConstantStructBuilder(Builder, this, structTy);
 }
 
 }  // end namespace CodeGen

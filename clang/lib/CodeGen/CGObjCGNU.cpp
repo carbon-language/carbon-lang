@@ -222,7 +222,7 @@ protected:
   }
 
   /// Push the property attributes into two structure fields. 
-  void PushPropertyAttributes(ConstantBuilder::StructBuilder &Fields,
+  void PushPropertyAttributes(ConstantStructBuilder &Fields,
       ObjCPropertyDecl *property, bool isSynthesized=true, bool
       isDynamic=true) {
     int attrs = property->getPropertyAttributes();
@@ -1204,7 +1204,7 @@ llvm::Constant *CGObjCGNUstep::GetEHType(QualType T) {
   llvm::Constant *typeName =
     ExportUniqueString(className, "__objc_eh_typename_");
 
-  ConstantBuilder builder(CGM);
+  ConstantInitBuilder builder(CGM);
   auto fields = builder.beginStruct();
   fields.add(BVtable);
   fields.add(typeName);
@@ -1242,7 +1242,7 @@ ConstantAddress CGObjCGNU::GenerateConstantString(const StringLiteral *SL) {
   else if (isa->getType() != PtrToIdTy)
     isa = llvm::ConstantExpr::getBitCast(isa, PtrToIdTy);
 
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto Fields = Builder.beginStruct();
   Fields.add(isa);
   Fields.add(MakeConstantString(Str));
@@ -1524,7 +1524,7 @@ GenerateMethodList(StringRef ClassName,
   if (MethodSels.empty())
     return NULLPtr;
 
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
 
   auto MethodList = Builder.beginStruct();
   MethodList.addNullPointer(CGM.Int8PtrTy);
@@ -1564,7 +1564,7 @@ GenerateIvarList(ArrayRef<llvm::Constant *> IvarNames,
   if (IvarNames.empty())
     return NULLPtr;
 
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
 
   // Structure containing array count followed by array.
   auto IvarList = Builder.beginStruct();
@@ -1639,7 +1639,7 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
       IntPtrTy,               // weak_pointers
       nullptr);
 
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto Elements = Builder.beginStruct(ClassTy);
 
   // Fill in the structure
@@ -1712,7 +1712,7 @@ GenerateProtocolMethodList(ArrayRef<llvm::Constant *> MethodNames,
   // Get the method structure type.
   llvm::StructType *ObjCMethodDescTy =
     llvm::StructType::get(CGM.getLLVMContext(), { PtrToInt8Ty, PtrToInt8Ty });
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto MethodList = Builder.beginStruct();
   MethodList.addInt(IntTy, MethodNames.size());
   auto Methods = MethodList.beginArray(ObjCMethodDescTy);
@@ -1731,7 +1731,7 @@ GenerateProtocolMethodList(ArrayRef<llvm::Constant *> MethodNames,
 llvm::Constant *
 CGObjCGNU::GenerateProtocolList(ArrayRef<std::string> Protocols) {
 
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto ProtocolList = Builder.beginStruct();
   ProtocolList.add(NULLPtr);
   ProtocolList.addInt(LongTy, Protocols.size());
@@ -1770,7 +1770,7 @@ CGObjCGNU::GenerateEmptyProtocol(const std::string &ProtocolName) {
   llvm::Constant *MethodList = GenerateProtocolMethodList({}, {});
   // Protocols are objects containing lists of the methods implemented and
   // protocols adopted.
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto Elements = Builder.beginStruct();
 
   // The isa pointer must be set to a magic number so the runtime knows it's
@@ -1869,13 +1869,13 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
         numReqProperties++;
     }
 
-    ConstantBuilder reqPropertyListBuilder(CGM);
+    ConstantInitBuilder reqPropertyListBuilder(CGM);
     auto reqPropertiesList = reqPropertyListBuilder.beginStruct();
     reqPropertiesList.addInt(IntTy, numReqProperties);
     reqPropertiesList.add(NULLPtr);
     auto reqPropertiesArray = reqPropertiesList.beginArray(propertyMetadataTy);
 
-    ConstantBuilder optPropertyListBuilder(CGM);
+    ConstantInitBuilder optPropertyListBuilder(CGM);
     auto optPropertiesList = optPropertyListBuilder.beginStruct();
     optPropertiesList.addInt(IntTy, numOptProperties);
     optPropertiesList.add(NULLPtr);
@@ -1932,7 +1932,7 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
   // protocols adopted.
   // The isa pointer must be set to a magic number so the runtime knows it's
   // the correct layout.
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto Elements = Builder.beginStruct();
   Elements.add(
       llvm::ConstantExpr::getIntToPtr(
@@ -1956,7 +1956,7 @@ void CGObjCGNU::GenerateProtocolHolderCategory() {
   SmallVector<Selector, 1> MethodSels;
   SmallVector<llvm::Constant*, 1> MethodTypes;
 
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto Elements = Builder.beginStruct();
 
   const std::string ClassName = "__ObjC_Protocol_Holder_Ugly_Hack";
@@ -1971,7 +1971,7 @@ void CGObjCGNU::GenerateProtocolHolderCategory() {
           ClassName, CategoryName, MethodSels, MethodTypes, true), PtrTy));
 
   // Protocol list
-  ConstantBuilder ProtocolListBuilder(CGM);
+  ConstantInitBuilder ProtocolListBuilder(CGM);
   auto ProtocolList = ProtocolListBuilder.beginStruct();
   ProtocolList.add(NULLPtr);
   ProtocolList.addInt(LongTy, ExistingProtocols.size());
@@ -2024,7 +2024,7 @@ llvm::Constant *CGObjCGNU::MakeBitField(ArrayRef<bool> bits) {
     values.push_back(llvm::ConstantInt::get(Int32Ty, word));
   }
 
-  ConstantBuilder builder(CGM);
+  ConstantInitBuilder builder(CGM);
   auto fields = builder.beginStruct();
   fields.addInt(Int32Ty, values.size());
   auto array = fields.beginArray();
@@ -2068,7 +2068,7 @@ void CGObjCGNU::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
        E = Protos.end(); I != E; ++I)
     Protocols.push_back((*I)->getNameAsString());
 
-  ConstantBuilder Builder(CGM);
+  ConstantInitBuilder Builder(CGM);
   auto Elements = Builder.beginStruct();
   Elements.add(MakeConstantString(CategoryName));
   Elements.add(MakeConstantString(ClassName));
@@ -2107,7 +2107,7 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
     numProperties++;
   }
 
-  ConstantBuilder builder(CGM);
+  ConstantInitBuilder builder(CGM);
   auto propertyList = builder.beginStruct();
   propertyList.addInt(IntTy, numProperties);
   propertyList.add(NULLPtr);
@@ -2207,7 +2207,7 @@ void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   SmallVector<llvm::Constant*, 16> IvarTypes;
   SmallVector<llvm::Constant*, 16> IvarOffsets;
 
-  ConstantBuilder IvarOffsetBuilder(CGM);
+  ConstantInitBuilder IvarOffsetBuilder(CGM);
   auto IvarOffsetValues = IvarOffsetBuilder.beginArray(PtrToIntTy);
   SmallVector<bool, 16> WeakIvars;
   SmallVector<bool, 16> StrongIvars;
@@ -2463,7 +2463,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
 
   Elements.clear();
   // Pointer to an array of selectors used in this module.
-  ConstantBuilder SelectorBuilder(CGM);
+  ConstantInitBuilder SelectorBuilder(CGM);
   auto Selectors = SelectorBuilder.beginArray(SelStructTy);
   std::vector<llvm::GlobalAlias*> SelectorAliases;
   for (SelectorMap::iterator iter = SelectorTable.begin(),
