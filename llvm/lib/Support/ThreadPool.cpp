@@ -82,7 +82,7 @@ void ThreadPool::wait() {
                            [&] { return !ActiveThreads && Tasks.empty(); });
 }
 
-std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
+void ThreadPool::asyncImpl(TaskTy Task) {
   /// Wrap the Task in a packaged_task to return a future object.
   PackagedTaskTy PackagedTask(std::move(Task));
   auto Future = PackagedTask.get_future();
@@ -96,7 +96,6 @@ std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
     Tasks.push(std::move(PackagedTask));
   }
   QueueCondition.notify_one();
-  return Future.share();
 }
 
 // The destructor joins all threads, waiting for completion.
@@ -136,7 +135,7 @@ void ThreadPool::wait() {
   }
 }
 
-std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
+void ThreadPool::asyncImpl(TaskTy Task) {
 #ifndef _MSC_VER
   // Get a Future with launch::deferred execution using std::async
   auto Future = std::async(std::launch::deferred, std::move(Task)).share();
@@ -148,7 +147,6 @@ std::shared_future<ThreadPool::VoidTy> ThreadPool::asyncImpl(TaskTy Task) {
   PackagedTaskTy PackagedTask([Future](bool) -> bool { Future.get(); return false; });
 #endif
   Tasks.push(std::move(PackagedTask));
-  return Future;
 }
 
 ThreadPool::~ThreadPool() {
