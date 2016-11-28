@@ -14566,51 +14566,51 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
   return false;
 }
 
+/// Try to fold an expression of the form (N0 cond N1) ? N2 : N3 to a shift and
+/// bitwise 'and'.
 SDValue DAGCombiner::foldSelectCCToShiftAnd(const SDLoc &DL, SDValue N0,
                                             SDValue N1, SDValue N2, SDValue N3,
                                             ISD::CondCode CC) {
   // Check to see if we can perform the "gzip trick", transforming
-  // (select_cc setlt X, 0, A, 0) -> (and (sra X, (sub size(X), 1), A)
-  if (isNullConstant(N3) && CC == ISD::SETLT &&
-      (isNullConstant(N1) ||               // (a < 0) ? b : 0
-       (isOneConstant(N1) && N0 == N2))) { // (a < 1) ? a : 0
-    EVT XType = N0.getValueType();
-    EVT AType = N2.getValueType();
-    if (XType.bitsGE(AType)) {
-      // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
-      // single-bit constant.
-      auto *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
-      if (N2C && ((N2C->getAPIntValue() & (N2C->getAPIntValue() - 1)) == 0)) {
-        unsigned ShCtV = N2C->getAPIntValue().logBase2();
-        ShCtV = XType.getSizeInBits() - ShCtV - 1;
-        SDValue ShCt = DAG.getConstant(ShCtV, SDLoc(N0),
-                                       getShiftAmountTy(N0.getValueType()));
-        SDValue Shift = DAG.getNode(ISD::SRL, SDLoc(N0), XType, N0, ShCt);
-        AddToWorklist(Shift.getNode());
+  // (select_cc setlt X, 0, A, 0) -> (and (sra X, size(X)-1), A)
+  EVT XType = N0.getValueType();
+  EVT AType = N2.getValueType();
+  if (!isNullConstant(N3) || CC != ISD::SETLT || !XType.bitsGE(AType))
+    return SDValue();
 
-        if (XType.bitsGT(AType)) {
-          Shift = DAG.getNode(ISD::TRUNCATE, DL, AType, Shift);
-          AddToWorklist(Shift.getNode());
-        }
+  // (a < 0) ? b : 0
+  // (a < 1) ? a : 0
+  if (!(isNullConstant(N1) || (isOneConstant(N1) && N0 == N2)))
+    return SDValue();
 
-        return DAG.getNode(ISD::AND, DL, AType, Shift, N2);
-      }
+  // and (sra X, size(X)-1), A -> "and (srl X, C2), A" iff A is a single-bit
+  // constant.
+  EVT ShiftAmtTy = getShiftAmountTy(N0.getValueType());
+  auto *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
+  if (N2C && ((N2C->getAPIntValue() & (N2C->getAPIntValue() - 1)) == 0)) {
+    unsigned ShCt = XType.getSizeInBits() - N2C->getAPIntValue().logBase2() - 1;
+    SDValue ShiftAmt = DAG.getConstant(ShCt, DL, ShiftAmtTy);
+    SDValue Shift = DAG.getNode(ISD::SRL, DL, XType, N0, ShiftAmt);
+    AddToWorklist(Shift.getNode());
 
-      SDValue Shift =
-          DAG.getNode(ISD::SRA, SDLoc(N0), XType, N0,
-                      DAG.getConstant(XType.getSizeInBits() - 1, SDLoc(N0),
-                                      getShiftAmountTy(N0.getValueType())));
+    if (XType.bitsGT(AType)) {
+      Shift = DAG.getNode(ISD::TRUNCATE, DL, AType, Shift);
       AddToWorklist(Shift.getNode());
-
-      if (XType.bitsGT(AType)) {
-        Shift = DAG.getNode(ISD::TRUNCATE, DL, AType, Shift);
-        AddToWorklist(Shift.getNode());
-      }
-
-      return DAG.getNode(ISD::AND, DL, AType, Shift, N2);
     }
+
+    return DAG.getNode(ISD::AND, DL, AType, Shift, N2);
   }
-  return SDValue();
+
+  SDValue ShiftAmt = DAG.getConstant(XType.getSizeInBits() - 1, DL, ShiftAmtTy);
+  SDValue Shift = DAG.getNode(ISD::SRA, DL, XType, N0, ShiftAmt);
+  AddToWorklist(Shift.getNode());
+
+  if (XType.bitsGT(AType)) {
+    Shift = DAG.getNode(ISD::TRUNCATE, DL, AType, Shift);
+    AddToWorklist(Shift.getNode());
+  }
+
+  return DAG.getNode(ISD::AND, DL, AType, Shift, N2);
 }
 
 /// Simplify an expression of the form (N0 cond N1) ? N2 : N3
