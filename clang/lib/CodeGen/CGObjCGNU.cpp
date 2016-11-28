@@ -1549,7 +1549,7 @@ GenerateMethodList(StringRef ClassName,
     Methods.add(
         llvm::ConstantStruct::get(ObjCMethodTy, {C, MethodTypes[i], Method}));
   }
-  MethodList.add(Methods.finish());
+  Methods.finishAndAddTo(MethodList);
 
   // Create an instance of the structure
   return MethodList.finishAndCreateGlobal(".objc_method_list",
@@ -1584,9 +1584,9 @@ GenerateIvarList(ArrayRef<llvm::Constant *> IvarNames,
     Ivar.add(IvarNames[i]);
     Ivar.add(IvarTypes[i]);
     Ivar.add(IvarOffsets[i]);
-    Ivars.add(Ivar.finish());
+    Ivar.finishAndAddTo(Ivars);
   }
-  IvarList.add(Ivars.finish());
+  Ivars.finishAndAddTo(IvarList);
 
   // Create an instance of the structure
   return IvarList.finishAndCreateGlobal(".objc_ivar_list",
@@ -1720,9 +1720,9 @@ GenerateProtocolMethodList(ArrayRef<llvm::Constant *> MethodNames,
     auto Method = Methods.beginStruct(ObjCMethodDescTy);
     Method.add(MethodNames[i]);
     Method.add(MethodTypes[i]);
-    Methods.add(Method.finish());
+    Method.finishAndAddTo(Methods);
   }
-  MethodList.add(Methods.finish());
+  Methods.finishAndAddTo(MethodList);
   return MethodList.finishAndCreateGlobal(".objc_method_list",
                                           CGM.getPointerAlign());
 }
@@ -1751,7 +1751,7 @@ CGObjCGNU::GenerateProtocolList(ArrayRef<std::string> Protocols) {
                                                            PtrToInt8Ty);
     Elements.add(Ptr);
   }
-  ProtocolList.add(Elements.finish());
+  Elements.finishAndAddTo(ProtocolList);
   return ProtocolList.finishAndCreateGlobal(".objc_protocol_list",
                                             CGM.getPointerAlign());
 }
@@ -1914,15 +1914,15 @@ void CGObjCGNU::GenerateProtocol(const ObjCProtocolDecl *PD) {
         fields.add(NULLPtr);
       }
 
-      propertiesArray.add(fields.finish());
+      fields.finishAndAddTo(propertiesArray);
     }
 
-    reqPropertiesList.add(reqPropertiesArray.finish());
+    reqPropertiesArray.finishAndAddTo(reqPropertiesList);
     PropertyList =
       reqPropertiesList.finishAndCreateGlobal(".objc_property_list",
                                               CGM.getPointerAlign());
 
-    optPropertiesList.add(optPropertiesArray.finish());
+    optPropertiesArray.finishAndAddTo(optPropertiesList);
     OptionalPropertyList =
       optPropertiesList.finishAndCreateGlobal(".objc_property_list",
                                               CGM.getPointerAlign());
@@ -1982,7 +1982,7 @@ void CGObjCGNU::GenerateProtocolHolderCategory() {
             PtrTy);
     ProtocolElements.add(Ptr);
   }
-  ProtocolList.add(ProtocolElements.finish());
+  ProtocolElements.finishAndAddTo(ProtocolList);
   Elements.add(llvm::ConstantExpr::getBitCast(
                    ProtocolList.finishAndCreateGlobal(".objc_protocol_list",
                                                       CGM.getPointerAlign()),
@@ -2029,7 +2029,7 @@ llvm::Constant *CGObjCGNU::MakeBitField(ArrayRef<bool> bits) {
   fields.addInt(Int32Ty, values.size());
   auto array = fields.beginArray();
   for (auto v : values) array.add(v);
-  fields.add(array.finish());
+  array.finishAndAddTo(fields);
 
   llvm::Constant *GS =
     fields.finishAndCreateGlobal("", CharUnits::fromQuantity(4));
@@ -2153,9 +2153,9 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
       fields.add(NULLPtr);
       fields.add(NULLPtr);
     }
-    properties.add(fields.finish());
+    fields.finishAndAddTo(properties);
   }
-  propertyList.add(properties.finish());
+  properties.finishAndAddTo(propertyList);
 
   return propertyList.finishAndCreateGlobal(".objc_property_list",
                                             CGM.getPointerAlign());
@@ -2483,7 +2483,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
       auto SelStruct = Selectors.beginStruct(SelStructTy);
       SelStruct.add(SelName);
       SelStruct.add(SelectorTypeEncoding);
-      Selectors.add(SelStruct.finish());
+      SelStruct.finishAndAddTo(Selectors);
 
       // Store the selector alias for later replacement
       SelectorAliases.push_back(i->second);
@@ -2498,7 +2498,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
     auto SelStruct = Selectors.beginStruct(SelStructTy);
     SelStruct.add(NULLPtr);
     SelStruct.add(NULLPtr);
-    Selectors.add(SelStruct.finish());
+    SelStruct.finishAndAddTo(Selectors);
   }
 
   // Number of static selectors

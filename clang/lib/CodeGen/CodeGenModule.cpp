@@ -753,7 +753,7 @@ void CodeGenModule::EmitCtorList(CtorList &Fns, const char *GlobalName) {
       ctor.add(llvm::ConstantExpr::getBitCast(I.AssociatedData, VoidPtrTy));
     else
       ctor.addNullPointer(VoidPtrTy);
-    ctors.add(ctor.finish());
+    ctor.finishAndAddTo(ctors);
   }
 
   auto list =

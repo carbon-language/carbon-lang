@@ -2832,7 +2832,7 @@ CGOpenMPRuntime::createOffloadingBinaryDescriptorRegistration() {
     Dev.add(ImgEnd);
     Dev.add(HostEntriesBegin);
     Dev.add(HostEntriesEnd);
-    DeviceImagesEntries.add(Dev.finish());
+    Dev.finishAndAddTo(DeviceImagesEntries);
   }
 
   // Create device images global array.
