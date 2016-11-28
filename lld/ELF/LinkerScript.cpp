@@ -1262,6 +1262,11 @@ void ScriptParser::readSearchDir() {
 
 void ScriptParser::readSections() {
   Opt.HasSections = true;
+  // -no-rosegment is used to avoid placing read only non-executable sections in
+  // their own segment. We do the same if SECTIONS command is present in linker
+  // script. See comment for computeFlags().
+  Config->SingleRoRx = true;
+
   expect("{");
   while (!Error && !consume("}")) {
     StringRef Tok = next();

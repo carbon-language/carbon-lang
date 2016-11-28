@@ -530,6 +530,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
+  Config->SingleRoRx = Args.hasArg(OPT_no_rosegment);
   Config->Shared = Args.hasArg(OPT_shared);
   Config->Target1Rel = getArg(Args, OPT_target1_rel, OPT_target1_abs, false);
   Config->Threads = getArg(Args, OPT_threads, OPT_no_threads, true);
@@ -695,12 +696,6 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       break;
     }
   }
-
-  // -no-rosegment is used to avoid placing read only non-executable sections in
-  // their own segment. We do the same if SECTIONS command is present in linker
-  // script. See comment for computeFlags().
-  Config->SingleRoRx =
-      Args.hasArg(OPT_no_rosegment) || ScriptConfig->HasSections;
 
   if (Files.empty() && ErrorCount == 0)
     error("no input files");
