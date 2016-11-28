@@ -108,11 +108,14 @@ static Distro::DistroType DetectDistro(vfs::FileSystem &VFS) {
       if (!Line.trim().startswith("VERSION"))
         continue;
       std::pair<StringRef, StringRef> SplitLine = Line.split('=');
+      // Old versions have split VERSION and PATCHLEVEL
+      // Newer versions use VERSION = x.y
+      std::pair<StringRef, StringRef> SplitVer = SplitLine.second.trim().split('.');
       int Version;
+
       // OpenSUSE/SLES 10 and older are not supported and not compatible
       // with our rules, so just treat them as Distro::UnknownDistro.
-      if (!SplitLine.second.trim().getAsInteger(10, Version) &&
-          Version > 10)
+      if (!SplitVer.first.getAsInteger(10, Version) && Version > 10)
         return Distro::OpenSUSE;
       return Distro::UnknownDistro;
     }
