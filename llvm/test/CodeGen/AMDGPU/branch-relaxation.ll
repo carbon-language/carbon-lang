@@ -493,9 +493,9 @@ ret:
 ; GCN: s_setpc_b64
 
 ; GCN: [[LONG_BR_DEST0]]
-; GCN: s_cmp_eq_u32
+; GCN: v_cmp_ne_u32_e32
 ; GCN-NEXT: ; implicit-def
-; GCN-NEXT: s_cbranch_scc0
+; GCN-NEXT: s_cbranch_vccz
 ; GCN: s_setpc_b64
 
 ; GCN: s_endpgm
