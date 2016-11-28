@@ -257,7 +257,6 @@ bool SystemZElimCompare::convertToLoadAndTrap(
       return false;
 
   // The transformation is OK.  Rebuild Branch as a load-and-trap.
-  MachineOperand Target(Branch->getOperand(2));
   while (Branch->getNumOperands())
     Branch->RemoveOperand(0);
   Branch->setDesc(TII->get(LATOpcode));
