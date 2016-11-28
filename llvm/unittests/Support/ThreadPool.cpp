@@ -131,6 +131,22 @@ TEST_F(ThreadPoolTest, Async) {
   ASSERT_EQ(2, i.load());
 }
 
+TEST_F(ThreadPoolTest, GetFuture) {
+  CHECK_UNSUPPORTED();
+  ThreadPool Pool{2};
+  std::atomic_int i{0};
+  Pool.async([this, &i] {
+    waitForMainThread();
+    ++i;
+  });
+  // Force the future using get()
+  Pool.async([&i] { ++i; }).get();
+  ASSERT_NE(2, i.load());
+  setMainThreadReady();
+  Pool.wait();
+  ASSERT_EQ(2, i.load());
+}
+
 TEST_F(ThreadPoolTest, PoolDestruction) {
   CHECK_UNSUPPORTED();
   // Test that we are waiting on destruction

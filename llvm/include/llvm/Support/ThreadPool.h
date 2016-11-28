@@ -72,27 +72,32 @@ public:
   /// Blocking destructor: the pool will wait for all the threads to complete.
   ~ThreadPool();
 
-  /// Asynchronous submission of a task to the pool.
+  /// Asynchronous submission of a task to the pool. The returned future can be
+  /// used to wait for the task to finish and is *non-blocking* on destruction.
   template <typename Function, typename... Args>
-  inline void async(Function &&F, Args &&... ArgList) {
+  inline std::shared_future<VoidTy> async(Function &&F, Args &&... ArgList) {
     auto Task =
         std::bind(std::forward<Function>(F), std::forward<Args>(ArgList)...);
 #ifndef _MSC_VER
-    asyncImpl(std::move(Task));
+    return asyncImpl(std::move(Task));
 #else
     // This lambda has to be marked mutable because MSVC 2013's std::bind call
     // operator isn't const qualified.
-    asyncImpl([Task](VoidTy) mutable { Task(); });
+    return asyncImpl([Task](VoidTy) mutable -> VoidTy {
+      Task();
+      return VoidTy();
+    });
 #endif
   }
 
-  /// Asynchronous submission of a task to the pool.
+  /// Asynchronous submission of a task to the pool. The returned future can be
+  /// used to wait for the task to finish and is *non-blocking* on destruction.
   template <typename Function>
-  inline void async(Function &&F) {
+  inline std::shared_future<VoidTy> async(Function &&F) {
 #ifndef _MSC_VER
-    asyncImpl(std::forward<Function>(F));
+    return asyncImpl(std::forward<Function>(F));
 #else
-    asyncImpl([F] (VoidTy) { F(); });
+    return asyncImpl([F] (VoidTy) -> VoidTy { F(); return VoidTy(); });
 #endif
   }
 
@@ -101,8 +106,9 @@ public:
   void wait();
 
 private:
-  /// Asynchronous submission of a task to the pool.
-  void asyncImpl(TaskTy F);
+  /// Asynchronous submission of a task to the pool. The returned future can be
+  /// used to wait for the task to finish and is *non-blocking* on destruction.
+  std::shared_future<VoidTy> asyncImpl(TaskTy F);
 
   /// Threads in flight
   std::vector<llvm::thread> Threads;
