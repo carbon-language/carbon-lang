@@ -426,6 +426,13 @@ let Predicates = [FeatureLoadAndZeroRightmostByte] in {
             (LZRG bdxaddr20only:$src)>;
 }
 
+// Load and trap.
+let Predicates = [FeatureLoadAndTrap] in {
+  def LAT   : UnaryRXY<"lat",   0xE39F, null_frag, GR32, 4>;
+  def LFHAT : UnaryRXY<"lfhat", 0xE3C8, null_frag, GRH32, 4>;
+  def LGAT  : UnaryRXY<"lgat",  0xE385, null_frag, GR64, 8>;
+}
+
 // Register stores.
 let SimpleBDXStore = 1 in {
   // Expands to ST, STY or STFH, depending on the choice of register.
@@ -660,6 +667,12 @@ let Predicates = [FeatureLoadAndZeroRightmostByte] in {
   def LLZRGF : UnaryRXY<"llzrgf", 0xE33A, null_frag, GR64, 4>;
   def : Pat<(and (i64 (azextloadi32 bdxaddr20only:$src)), 0xffffff00),
             (LLZRGF bdxaddr20only:$src)>;
+}
+
+// Load and trap.
+let Predicates = [FeatureLoadAndTrap] in {
+  def LLGFAT : UnaryRXY<"llgfat", 0xE39D, null_frag, GR64, 4>;
+  def LLGTAT : UnaryRXY<"llgtat", 0xE39C, null_frag, GR64, 4>;
 }
 
 //===----------------------------------------------------------------------===//

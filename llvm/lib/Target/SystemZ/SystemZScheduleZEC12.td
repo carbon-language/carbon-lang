@@ -175,6 +175,9 @@ def : InstRW<[FXU], (instregex "LG(F|H)I$")>;
 def : InstRW<[FXU], (instregex "LHI(Mux)?$")>;
 def : InstRW<[FXU], (instregex "LR(Mux)?$")>;
 
+// Load and trap
+def : InstRW<[FXU, LSU, Lat5], (instregex "L(FH|G)?AT$")>;
+
 // Load and test
 def : InstRW<[FXU, LSU, Lat5], (instregex "LT(G)?$")>;
 def : InstRW<[FXU], (instregex "LT(G)?R$")>;
@@ -223,6 +226,9 @@ def : InstRW<[LSU], (instregex "LLH(Mux)?$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "LL(C|H)H$")>;
 def : InstRW<[LSU], (instregex "LLHRL$")>;
 def : InstRW<[LSU], (instregex "LLG(C|H|F|T|HRL|FRL)$")>;
+
+// Load and trap
+def : InstRW<[FXU, LSU, Lat5], (instregex "LLG(F|T)?AT$")>;
 
 //===----------------------------------------------------------------------===//
 // Truncations

@@ -1678,6 +1678,25 @@ unsigned SystemZInstrInfo::getFusedCompare(unsigned Opcode,
   return 0;
 }
 
+unsigned SystemZInstrInfo::getLoadAndTrap(unsigned Opcode) const {
+  if (!STI.hasLoadAndTrap())
+    return 0;
+  switch (Opcode) {
+  case SystemZ::L:
+  case SystemZ::LY:
+    return SystemZ::LAT;
+  case SystemZ::LG:
+    return SystemZ::LGAT;
+  case SystemZ::LFH:
+    return SystemZ::LFHAT;
+  case SystemZ::LLGF:
+    return SystemZ::LLGFAT;
+  case SystemZ::LLGT:
+    return SystemZ::LLGTAT;
+  }
+  return 0;
+}
+
 void SystemZInstrInfo::loadImmediate(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MBBI,
                                      unsigned Reg, uint64_t Value) const {

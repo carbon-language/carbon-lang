@@ -42,6 +42,7 @@ protected:
   bool HasFastSerialization;
   bool HasInterlockedAccess1;
   bool HasMiscellaneousExtensions;
+  bool HasLoadAndTrap;
   bool HasTransactionalExecution;
   bool HasProcessorAssist;
   bool HasVector;
@@ -112,6 +113,9 @@ public:
   bool hasMiscellaneousExtensions() const {
     return HasMiscellaneousExtensions;
   }
+
+  // Return true if the target has the load-and-trap facility.
+  bool hasLoadAndTrap() const { return HasLoadAndTrap; }
 
   // Return true if the target has the transactional-execution facility.
   bool hasTransactionalExecution() const { return HasTransactionalExecution; }

@@ -286,6 +286,10 @@ public:
                            SystemZII::FusedCompareType Type,
                            const MachineInstr *MI = nullptr) const;
 
+  // If Opcode is a LOAD opcode for with an associated LOAD AND TRAP
+  // operation exists, returh the opcode for the latter, otherwise return 0.
+  unsigned getLoadAndTrap(unsigned Opcode) const;
+
   // Emit code before MBBI in MI to move immediate value Value into
   // physical register Reg.
   void loadImmediate(MachineBasicBlock &MBB,

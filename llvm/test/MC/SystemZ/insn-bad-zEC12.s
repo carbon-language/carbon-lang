@@ -54,6 +54,46 @@
         clgto    %r0, 0
         clgtno   %r0, 0
 
+#CHECK: error: invalid operand
+#CHECK: lat	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lat	%r0, 524288
+
+	lat	%r0, -524289
+	lat	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: lfhat	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lfhat	%r0, 524288
+
+	lfhat	%r0, -524289
+	lfhat	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: lgat	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: lgat	%r0, 524288
+
+	lgat	%r0, -524289
+	lgat	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: llgfat	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: llgfat	%r0, 524288
+
+	llgfat	%r0, -524289
+	llgfat	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: llgtat	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: llgtat	%r0, 524288
+
+	llgtat	%r0, -524289
+	llgtat	%r0, 524288
+
 #CHECK: error: instruction requires: vector
 #CHECK: lcbb	%r0, 0, 0
 
