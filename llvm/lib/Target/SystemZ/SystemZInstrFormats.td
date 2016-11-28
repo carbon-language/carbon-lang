@@ -177,6 +177,35 @@ class InstI<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{7-0}  = I1;
 }
 
+class InstIE<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<4, outs, ins, asmstr, pattern> {
+  field bits<32> Inst;
+  field bits<32> SoftFail = 0;
+
+  bits<4> I1;
+  bits<4> I2;
+
+  let Inst{31-16} = op;
+  let Inst{15-8}  = 0;
+  let Inst{7-4}   = I1;
+  let Inst{3-0}   = I2;
+}
+
+class InstMII<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<4> M1;
+  bits<12> RI2;
+  bits<24> RI3;
+
+  let Inst{47-40} = op;
+  let Inst{39-36} = M1;
+  let Inst{35-24} = RI2;
+  let Inst{23-0}  = RI3;
+}
+
 class InstRIa<bits<12> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstSystemZ<4, outs, ins, asmstr, pattern> {
   field bits<32> Inst;
@@ -757,6 +786,22 @@ class InstSIY<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{7-0}   = op{7-0};
 
   let Has20BitOffset = 1;
+}
+
+class InstSMI<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<4> M1;
+  bits<16> RI2;
+  bits<16> BD3;
+
+  let Inst{47-40} = op;
+  let Inst{39-36} = M1;
+  let Inst{35-32} = 0;
+  let Inst{31-16} = BD3;
+  let Inst{15-0}  = RI2;
 }
 
 class InstSSa<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
@@ -1604,6 +1649,9 @@ class ICV<string name>
 //   Prefetch:
 //     One 4-bit immediate operand and one address operand.  The immediate
 //     operand is 1 for a load prefetch and 2 for a store prefetch.
+//
+//   BranchPreload:
+//     One 4-bit immediate operand and two address operands.
 //
 // The format determines which input operands are tied to output operands,
 // and also determines the shape of any address operand.
@@ -2502,6 +2550,13 @@ class SideEffectBinaryRILPC<string mnemonic, bits<12> opcode,
   // However, BDXs have two extra operands and are therefore 6 units more
   // complex.
   let AddedComplexity = 7;
+}
+
+class SideEffectBinaryIE<string mnemonic, bits<16> opcode,
+                         Immediate imm1, Immediate imm2>
+  : InstIE<opcode, (outs), (ins imm1:$I1, imm2:$I2),
+           mnemonic#"\t$I1, $I2", []> {
+  let hasSideEffects = 1;
 }
 
 class SideEffectBinarySIL<string mnemonic, bits<16> opcode,
@@ -3619,6 +3674,16 @@ class PrefetchRILPC<string mnemonic, bits<12> opcode,
   // complex.
   let AddedComplexity = 7;
 }
+
+class BranchPreloadSMI<string mnemonic, bits<8> opcode>
+  : InstSMI<opcode, (outs),
+            (ins imm32zx4:$M1, brtarget16bpp:$RI2, bdxaddr12only:$BD3),
+            mnemonic#"\t$M1, $RI2, $BD3", []>;
+
+class BranchPreloadMII<string mnemonic, bits<8> opcode>
+  : InstMII<opcode, (outs),
+            (ins imm32zx4:$M1, brtarget12bpp:$RI2, brtarget24bpp:$RI3),
+            mnemonic#"\t$M1, $RI2, $RI3", []>;
 
 // A floating-point load-and test operation.  Create both a normal unary
 // operation and one that acts as a comparison against zero.

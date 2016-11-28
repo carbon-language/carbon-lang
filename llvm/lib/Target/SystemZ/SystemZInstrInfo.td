@@ -1382,11 +1382,20 @@ def TML : InstAlias<"tml\t$R, $I", (TMLL GR32:$R, imm32ll16:$I), 0>;
 def TMH : InstAlias<"tmh\t$R, $I", (TMLH GR32:$R, imm32lh16:$I), 0>;
 
 //===----------------------------------------------------------------------===//
-// Prefetch
+// Prefetch and execution hint
 //===----------------------------------------------------------------------===//
 
 def PFD : PrefetchRXY<"pfd", 0xE336, z_prefetch>;
 def PFDRL : PrefetchRILPC<"pfdrl", 0xC62, z_prefetch>;
+
+let Predicates = [FeatureExecutionHint] in {
+  // Branch Prediction Preload
+  def BPP : BranchPreloadSMI<"bpp", 0xC7>;
+  def BPRP : BranchPreloadMII<"bprp", 0xC5>;
+
+  // Next Instruction Access Intent
+  def NIAI : SideEffectBinaryIE<"niai", 0xB2FA, imm32zx4, imm32zx4>;
+}
 
 //===----------------------------------------------------------------------===//
 // Atomic operations

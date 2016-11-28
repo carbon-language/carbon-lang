@@ -487,10 +487,12 @@ def : InstRW<[FXU], (instregex "TMLH(64)?$")>;
 def : InstRW<[FXU], (instregex "TMLL(64)?$")>;
 
 //===----------------------------------------------------------------------===//
-// Prefetch
+// Prefetch and execution hint
 //===----------------------------------------------------------------------===//
 
 def : InstRW<[LSU], (instregex "PFD(RL)?$")>;
+def : InstRW<[LSU], (instregex "BP(R)?P$")>;
+def : InstRW<[FXU], (instregex "NIAI$")>;
 
 //===----------------------------------------------------------------------===//
 // Atomic operations

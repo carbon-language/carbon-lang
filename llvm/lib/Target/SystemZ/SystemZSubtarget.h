@@ -42,6 +42,7 @@ protected:
   bool HasFastSerialization;
   bool HasInterlockedAccess1;
   bool HasMiscellaneousExtensions;
+  bool HasExecutionHint;
   bool HasLoadAndTrap;
   bool HasTransactionalExecution;
   bool HasProcessorAssist;
@@ -113,6 +114,9 @@ public:
   bool hasMiscellaneousExtensions() const {
     return HasMiscellaneousExtensions;
   }
+
+  // Return true if the target has the execution-hint facility.
+  bool hasExecutionHint() const { return HasExecutionHint; }
 
   // Return true if the target has the load-and-trap facility.
   bool hasLoadAndTrap() const { return HasLoadAndTrap; }

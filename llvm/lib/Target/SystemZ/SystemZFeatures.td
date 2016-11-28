@@ -84,6 +84,11 @@ def Arch9NewFeatures : SystemZFeatureList<[
 //
 //===----------------------------------------------------------------------===//
 
+def FeatureExecutionHint : SystemZFeature<
+  "execution-hint", "ExecutionHint",
+  "Assume that the execution-hint facility is installed"
+>;
+
 def FeatureLoadAndTrap : SystemZFeature<
   "load-and-trap", "LoadAndTrap",
   "Assume that the load-and-trap facility is installed"
@@ -105,6 +110,7 @@ def FeatureTransactionalExecution : SystemZFeature<
 >;
 
 def Arch10NewFeatures : SystemZFeatureList<[
+    FeatureExecutionHint,
     FeatureLoadAndTrap,
     FeatureMiscellaneousExtensions,
     FeatureProcessorAssist,

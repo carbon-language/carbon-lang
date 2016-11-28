@@ -5,6 +5,64 @@
 # RUN: FileCheck < %t %s
 
 #CHECK: error: invalid operand
+#CHECK: bpp	-1, 0, 0
+#CHECK: error: invalid operand
+#CHECK: bpp	16, 0, 0
+#CHECK: error: offset out of range
+#CHECK: bpp	0, -0x10002, 0
+#CHECK: error: offset out of range
+#CHECK: bpp	0, -1, 0
+#CHECK: error: offset out of range
+#CHECK: bpp	0, 1, 0
+#CHECK: error: offset out of range
+#CHECK: bpp	0, 0x10000, 0
+#CHECK: error: invalid operand
+#CHECK: bpp	0, 0, -1
+#CHECK: error: invalid operand
+#CHECK: bpp	0, 0, 4096
+
+	bpp	-1, 0, 0
+	bpp	16, 0, 0
+	bpp	0, -0x10002, 0
+	bpp	0, -1, 0
+	bpp	0, 1, 0
+	bpp	0, 0x10000, 0
+	bpp	0, 0, -1
+	bpp	0, 0, 4096
+
+#CHECK: error: invalid operand
+#CHECK:	bprp	-1, 0, 0
+#CHECK: error: invalid operand
+#CHECK:	bprp	16, 0, 0
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, -0x1002, 0
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, -1, 0
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, 1, 0
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, 0x1000, 0
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, 0, -0x1000002
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, 0, -1
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, 0, 1
+#CHECK: error: offset out of range
+#CHECK:	bprp	0, 0, 0x1000000
+
+	bprp	-1, 0, 0
+	bprp	16, 0, 0
+	bprp	0, -0x1002, 0
+	bprp	0, -1, 0
+	bprp	0, 1, 0
+	bprp	0, 0x1000, 0
+	bprp	0, 0, -0x1000002
+	bprp	0, 0, -1
+	bprp	0, 0, 1
+	bprp	0, 0, 0x1000000
+
+#CHECK: error: invalid operand
 #CHECK: clt	%r0, -1, 0
 #CHECK: error: invalid operand
 #CHECK: clt	%r0, 16, 0
@@ -98,6 +156,20 @@
 #CHECK: lcbb	%r0, 0, 0
 
 	lcbb	%r0, 0, 0
+
+#CHECK: error: invalid operand
+#CHECK:	niai	-1, 0
+#CHECK: error: invalid operand
+#CHECK:	niai	16, 0
+#CHECK: error: invalid operand
+#CHECK:	niai	0, -1
+#CHECK: error: invalid operand
+#CHECK:	niai	0, 16
+
+	niai	-1, 0
+	niai	16, 0
+	niai	0, -1
+	niai	0, 16
 
 #CHECK: error: invalid operand
 #CHECK: ntstg	%r0, -524289
