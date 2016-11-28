@@ -93,7 +93,10 @@ def : InstRW<[VBU], (instregex "(Call)?J(G)?(Asm.*)?$")>;
 def : InstRW<[LSU, Lat4], (instregex "(Call)?BC(R)?(Asm.*)?$")>;
 def : InstRW<[LSU, Lat4], (instregex "(Call)?B(R)?(Asm.*)?$")>;
 def : InstRW<[FXU, EndGroup], (instregex "BRCT(G)?$")>;
-def : InstRW<[FXU, FXU, FXU, LSU, Lat7, GroupAlone], (instregex "BRX(H|LE)$")>;
+def : InstRW<[FXU, LSU, Lat5, GroupAlone], (instregex "BRCTH$")>;
+def : InstRW<[FXU, LSU, Lat5, GroupAlone], (instregex "BCT(G)?(R)?$")>;
+def : InstRW<[FXU, FXU, FXU, LSU, Lat7, GroupAlone],
+             (instregex "B(R)?X(H|L).*$")>;
 
 // Compare and branch
 def : InstRW<[FXU], (instregex "C(L)?(G)?(I|R)J(Asm.*)?$")>;
@@ -436,11 +439,11 @@ def : InstRW<[FXU, FXU, Lat3, GroupAlone], (instregex "R(N|O|X)SBG$")>;
 //===----------------------------------------------------------------------===//
 
 def : InstRW<[FXU, LSU, Lat5], (instregex "C(G|Y|Mux|RL)?$")>;
-def : InstRW<[FXU], (instregex "CFI(Mux)?$")>;
+def : InstRW<[FXU], (instregex "C(F|H)I(Mux)?$")>;
 def : InstRW<[FXU], (instregex "CG(F|H)I$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "CG(HSI|RL)$")>;
 def : InstRW<[FXU], (instregex "C(G)?R$")>;
-def : InstRW<[FXU], (instregex "C(HI|IH)$")>;
+def : InstRW<[FXU], (instregex "CIH$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "CH(F|SI)$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "CL(Y|Mux|FHSI)?$")>;
 def : InstRW<[FXU], (instregex "CLFI(Mux)?$")>;

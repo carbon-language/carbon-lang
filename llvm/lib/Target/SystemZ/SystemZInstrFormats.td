@@ -291,6 +291,23 @@ class InstRIEd<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{7-0}   = op{7-0};
 }
 
+class InstRIEe<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<4> R1;
+  bits<4> R3;
+  bits<16> RI2;
+
+  let Inst{47-40} = op{15-8};
+  let Inst{39-36} = R1;
+  let Inst{35-32} = R3;
+  let Inst{31-16} = RI2;
+  let Inst{15-8}  = 0;
+  let Inst{7-0}   = op{7-0};
+}
+
 class InstRIEf<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstSystemZ<6, outs, ins, asmstr, pattern> {
   field bits<48> Inst;
@@ -1506,15 +1523,14 @@ class ICV<string name>
 //     compares the two input operands and branches or traps on the result.
 //
 //   BranchUnary:
-//     One register output operand, one register input operand and
-//     one branch displacement.  The instructions stores a modified
-//     form of the source register in the destination register and
-//     branches on the result.
+//     One register output operand, one register input operand and one branch
+//     target.  The instructions stores a modified form of the source register
+//     in the destination register and branches on the result.
 //
 //   BranchBinary:
 //     One register output operand, two register input operands and one branch
-//     displacement. The instructions stores a modified form of one of the
-//     source registers in the destination register and branches on the result.
+//     target. The instructions stores a modified form of one of the source
+//     registers in the destination register and branches on the result.
 //
 //   LoadMultiple:
 //     One address input operand and two explicit output operands.
@@ -1911,9 +1927,68 @@ class BranchUnaryRI<string mnemonic, bits<12> opcode, RegisterOperand cls>
   let DisableEncoding = "$R1src";
 }
 
+class BranchUnaryRIL<string mnemonic, bits<12> opcode, RegisterOperand cls>
+  : InstRILb<opcode, (outs cls:$R1), (ins cls:$R1src, brtarget32:$RI2),
+             mnemonic##"\t$R1, $RI2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BranchUnaryRR<string mnemonic, bits<8> opcode, RegisterOperand cls>
+  : InstRR<opcode, (outs cls:$R1), (ins cls:$R1src, GR64:$R2),
+           mnemonic##"\t$R1, $R2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BranchUnaryRRE<string mnemonic, bits<16> opcode, RegisterOperand cls>
+  : InstRRE<opcode, (outs cls:$R1), (ins cls:$R1src, GR64:$R2),
+            mnemonic##"\t$R1, $R2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BranchUnaryRX<string mnemonic, bits<8> opcode, RegisterOperand cls>
+  : InstRXa<opcode, (outs cls:$R1), (ins cls:$R1src, bdxaddr12only:$XBD2),
+            mnemonic##"\t$R1, $XBD2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BranchUnaryRXY<string mnemonic, bits<16> opcode, RegisterOperand cls>
+  : InstRXYa<opcode, (outs cls:$R1), (ins cls:$R1src, bdxaddr20only:$XBD2),
+             mnemonic##"\t$R1, $XBD2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
 class BranchBinaryRSI<string mnemonic, bits<8> opcode, RegisterOperand cls>
   : InstRSI<opcode, (outs cls:$R1), (ins cls:$R1src, cls:$R3, brtarget16:$RI2),
             mnemonic##"\t$R1, $R3, $RI2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BranchBinaryRIEe<string mnemonic, bits<16> opcode, RegisterOperand cls>
+  : InstRIEe<opcode, (outs cls:$R1),
+             (ins cls:$R1src, cls:$R3, brtarget16:$RI2),
+             mnemonic##"\t$R1, $R3, $RI2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BranchBinaryRS<string mnemonic, bits<8> opcode, RegisterOperand cls>
+  : InstRSa<opcode, (outs cls:$R1),
+            (ins cls:$R1src, cls:$R3, bdaddr12only:$BD2),
+            mnemonic##"\t$R1, $R3, $BD2", []> {
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BranchBinaryRSY<string mnemonic, bits<16> opcode, RegisterOperand cls>
+  : InstRSYa<opcode,
+             (outs cls:$R1), (ins cls:$R1src, cls:$R3, bdaddr20only:$BD2),
+             mnemonic##"\t$R1, $R3, $BD2", []> {
   let Constraints = "$R1 = $R1src";
   let DisableEncoding = "$R1src";
 }
@@ -3639,7 +3714,9 @@ multiclass BinaryRIAndKPseudo<string key, SDPatternOperator operator,
 // Like CompareRI, but expanded after RA depending on the choice of register.
 class CompareRIPseudo<SDPatternOperator operator, RegisterOperand cls,
                       Immediate imm>
-  : Pseudo<(outs), (ins cls:$R1, imm:$I2), [(operator cls:$R1, imm:$I2)]>;
+  : Pseudo<(outs), (ins cls:$R1, imm:$I2), [(operator cls:$R1, imm:$I2)]> {
+  let isCompare = 1;
+}
 
 // Like CompareRXY, but expanded after RA depending on the choice of register.
 class CompareRXYPseudo<SDPatternOperator operator, RegisterOperand cls,

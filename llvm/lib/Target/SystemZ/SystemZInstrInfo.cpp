@@ -1321,6 +1321,10 @@ bool SystemZInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     expandRIPseudo(MI, SystemZ::AFI, SystemZ::AIH, false);
     return true;
 
+  case SystemZ::CHIMux:
+    expandRIPseudo(MI, SystemZ::CHI, SystemZ::CIH, false);
+    return true;
+
   case SystemZ::CFIMux:
     expandRIPseudo(MI, SystemZ::CFI, SystemZ::CIH, false);
     return true;
@@ -1386,6 +1390,7 @@ SystemZInstrInfo::getBranchInfo(const MachineInstr &MI) const {
                              MI.getOperand(1).getImm(), &MI.getOperand(2));
 
   case SystemZ::BRCT:
+  case SystemZ::BRCTH:
     return SystemZII::Branch(SystemZII::BranchCT, SystemZ::CCMASK_ICMP,
                              SystemZ::CCMASK_CMP_NE, &MI.getOperand(2));
 

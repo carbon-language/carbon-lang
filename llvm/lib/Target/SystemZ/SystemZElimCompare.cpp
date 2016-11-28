@@ -171,7 +171,7 @@ static unsigned getCompareSourceReg(MachineInstr &Compare) {
 
 // Compare compares the result of MI against zero.  If MI is an addition
 // of -1 and if CCUsers is a single branch on nonzero, eliminate the addition
-// and convert the branch to a BRCT(G).  Return true on success.
+// and convert the branch to a BRCT(G) or BRCTH.  Return true on success.
 bool SystemZElimCompare::convertToBRCT(
     MachineInstr &MI, MachineInstr &Compare,
     SmallVectorImpl<MachineInstr *> &CCUsers) {
@@ -182,6 +182,8 @@ bool SystemZElimCompare::convertToBRCT(
     BRCT = SystemZ::BRCT;
   else if (Opcode == SystemZ::AGHI)
     BRCT = SystemZ::BRCTG;
+  else if (Opcode == SystemZ::AIH)
+    BRCT = SystemZ::BRCTH;
   else
     return false;
   if (MI.getOperand(2).getImm() != -1)
@@ -205,16 +207,20 @@ bool SystemZElimCompare::convertToBRCT(
     if (getRegReferences(*MBBI, SrcReg))
       return false;
 
-  // The transformation is OK.  Rebuild Branch as a BRCT(G).
+  // The transformation is OK.  Rebuild Branch as a BRCT(G) or BRCTH.
   MachineOperand Target(Branch->getOperand(2));
   while (Branch->getNumOperands())
     Branch->RemoveOperand(0);
   Branch->setDesc(TII->get(BRCT));
-  MachineInstrBuilder(*Branch->getParent()->getParent(), Branch)
-      .addOperand(MI.getOperand(0))
-      .addOperand(MI.getOperand(1))
-      .addOperand(Target)
-      .addReg(SystemZ::CC, RegState::ImplicitDefine | RegState::Dead);
+  MachineInstrBuilder MIB(*Branch->getParent()->getParent(), Branch);
+  MIB.addOperand(MI.getOperand(0))
+     .addOperand(MI.getOperand(1))
+     .addOperand(Target);
+  // Add a CC def to BRCT(G), since we may have to split them again if the
+  // branch displacement overflows.  BRCTH has a 32-bit displacement, so
+  // this is not necessary there.
+  if (BRCT != SystemZ::BRCTH)
+    MIB.addReg(SystemZ::CC, RegState::ImplicitDefine | RegState::Dead);
   MI.eraseFromParent();
   return true;
 }

@@ -155,15 +155,33 @@ let isBranch = 1, isTerminator = 1 in {
 }
 
 // Decrement a register and branch if it is nonzero.  These don't clobber CC,
-// but we might need to split long branches into sequences that do.
-let isBranch = 1, isTerminator = 1, Defs = [CC] in {
-  def BRCT  : BranchUnaryRI<"brct",  0xA76, GR32>;
-  def BRCTG : BranchUnaryRI<"brctg", 0xA77, GR64>;
+// but we might need to split long relative branches into sequences that do.
+let isBranch = 1, isTerminator = 1 in {
+  let Defs = [CC] in {
+    def BRCT  : BranchUnaryRI<"brct",  0xA76, GR32>;
+    def BRCTG : BranchUnaryRI<"brctg", 0xA77, GR64>;
+  }
+  // This doesn't need to clobber CC since we never need to split it.
+  def BRCTH : BranchUnaryRIL<"brcth", 0xCC6, GRH32>,
+              Requires<[FeatureHighWord]>;
+
+  def BCT   : BranchUnaryRX<"bct",  0x46,GR32>;
+  def BCTR  : BranchUnaryRR<"bctr", 0x06, GR32>;
+  def BCTG  : BranchUnaryRXY<"bctg",  0xE346, GR64>;
+  def BCTGR : BranchUnaryRRE<"bctgr", 0xB946, GR64>;
 }
 
-let isBranch = 1, isTerminator = 1, Defs = [CC] in {
-  def BRXH  : BranchBinaryRSI<"brxh",  0x84, GR32>;
-  def BRXLE : BranchBinaryRSI<"brxle", 0x85, GR32>;
+let isBranch = 1, isTerminator = 1 in {
+  let Defs = [CC] in {
+    def BRXH  : BranchBinaryRSI<"brxh",  0x84, GR32>;
+    def BRXLE : BranchBinaryRSI<"brxle", 0x85, GR32>;
+    def BRXHG : BranchBinaryRIEe<"brxhg", 0xEC44, GR64>;
+    def BRXLG : BranchBinaryRIEe<"brxlg", 0xEC45, GR64>;
+  }
+  def BXH   : BranchBinaryRS<"bxh",  0x86, GR32>;
+  def BXLE  : BranchBinaryRS<"bxle", 0x87, GR32>;
+  def BXHG  : BranchBinaryRSY<"bxhg",  0xEB44, GR64>;
+  def BXLEG : BranchBinaryRSY<"bxleg", 0xEB45, GR64>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1235,7 +1253,10 @@ let Defs = [CC], CCValues = 0xE in {
   def CGFR : CompareRRE<"cgfr", 0xB930, null_frag, GR64, GR32>;
   def CGR  : CompareRRE<"cgr",  0xB920, z_scmp,    GR64, GR64>;
 
-  // Comparison with a signed 16-bit immediate.
+  // Comparison with a signed 16-bit immediate.  CHIMux expands to CHI or CIH,
+  // depending on the choice of register.
+  def CHIMux : CompareRIPseudo<z_scmp, GRX32, imm32sx16>,
+               Requires<[FeatureHighWord]>;
   def CHI  : CompareRI<"chi",  0xA7E, z_scmp, GR32, imm32sx16>;
   def CGHI : CompareRI<"cghi", 0xA7F, z_scmp, GR64, imm64sx16>;
 

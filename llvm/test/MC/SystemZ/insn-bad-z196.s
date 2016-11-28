@@ -34,6 +34,20 @@
 	aih	%r0, (-1 << 31) - 1
 	aih	%r0, (1 << 31)
 
+#CHECK: error: offset out of range
+#CHECK: brcth   %r0, -0x1000000002
+#CHECK: error: offset out of range
+#CHECK: brcth   %r0, -1
+#CHECK: error: offset out of range
+#CHECK: brcth   %r0, 1
+#CHECK: error: offset out of range
+#CHECK: brcth   %r0, 0x100000000
+
+        brcth   %r0, -0x1000000002
+        brcth   %r0, -1
+        brcth   %r0, 1
+        brcth   %r0, 0x100000000
+
 #CHECK: error: invalid operand
 #CHECK: cdfbra	%f0, 0, %r0, -1
 #CHECK: error: invalid operand
