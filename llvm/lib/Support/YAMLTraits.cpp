@@ -112,7 +112,7 @@ bool Input::mapTag(StringRef Tag, bool Default) {
 }
 
 void Input::beginMapping() {
-  if (hasError())
+  if (EC)
     return;
   // CurrentNode can be null if the document is empty.
   MapHNode *MN = dyn_cast_or_null<MapHNode>(CurrentNode);
@@ -124,7 +124,7 @@ void Input::beginMapping() {
 bool Input::preflightKey(const char *Key, bool Required, bool, bool &UseDefault,
                          void *&SaveInfo) {
   UseDefault = false;
-  if (hasError())
+  if (EC)
     return false;
 
   // CurrentNode is null for empty documents, which is an error in case required
@@ -159,7 +159,7 @@ void Input::postflightKey(void *saveInfo) {
 }
 
 void Input::endMapping() {
-  if (hasError())
+  if (EC)
     return;
   // CurrentNode can be null if the document is empty.
   MapHNode *MN = dyn_cast_or_null<MapHNode>(CurrentNode);
@@ -196,7 +196,7 @@ void Input::endSequence() {
 }
 
 bool Input::preflightElement(unsigned Index, void *&SaveInfo) {
-  if (hasError())
+  if (EC)
     return false;
   if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     SaveInfo = CurrentNode;
@@ -213,7 +213,7 @@ void Input::postflightElement(void *SaveInfo) {
 unsigned Input::beginFlowSequence() { return beginSequence(); }
 
 bool Input::preflightFlowElement(unsigned index, void *&SaveInfo) {
-  if (hasError())
+  if (EC)
     return false;
   if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     SaveInfo = CurrentNode;
@@ -271,7 +271,7 @@ bool Input::beginBitSetScalar(bool &DoClear) {
 }
 
 bool Input::bitSetMatch(const char *Str, bool) {
-  if (hasError())
+  if (EC)
     return false;
   if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     unsigned Index = 0;
@@ -293,7 +293,7 @@ bool Input::bitSetMatch(const char *Str, bool) {
 }
 
 void Input::endBitSetScalar() {
-  if (hasError())
+  if (EC)
     return;
   if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     assert(BitValuesUsed.size() == SQ->Entries.size());
@@ -321,8 +321,6 @@ void Input::setError(HNode *hnode, const Twine &message) {
   this->setError(hnode->_node, message);
 }
 
-bool Input::hasError() const { return EC || Strm->failed(); }
-
 void Input::setError(Node *node, const Twine &message) {
   Strm->printError(node, message);
   EC = make_error_code(errc::invalid_argument);
@@ -344,7 +342,7 @@ std::unique_ptr<Input::HNode> Input::createHNodes(Node *N) {
     auto SQHNode = llvm::make_unique<SequenceHNode>(N);
     for (Node &SN : *SQ) {
       auto Entry = this->createHNodes(&SN);
-      if (hasError())
+      if (EC)
         break;
       SQHNode->Entries.push_back(std::move(Entry));
     }
@@ -365,7 +363,7 @@ std::unique_ptr<Input::HNode> Input::createHNodes(Node *N) {
         KeyStr = StringStorage.str().copy(StringAllocator);
       }
       auto ValueHNode = this->createHNodes(KVN.getValue());
-      if (hasError())
+      if (EC)
         break;
       mapHNode->Mapping[KeyStr] = std::move(ValueHNode);
     }

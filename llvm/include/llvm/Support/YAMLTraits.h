@@ -1085,7 +1085,6 @@ private:
   void scalarString(StringRef &, bool) override;
   void blockScalarString(StringRef &) override;
   void setError(const Twine &message) override;
-  bool hasError() const;
   bool canElideEmptySequence() override;
 
   class HNode {
