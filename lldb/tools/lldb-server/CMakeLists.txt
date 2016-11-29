@@ -72,16 +72,6 @@ set( LLDB_USED_LIBS
   lldbPluginExpressionParserGo
   )
 
-# Windows-only libraries
-if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
-  list(APPEND LLDB_USED_LIBS
-    lldbPluginProcessWindows
-    lldbPluginProcessWindowsCommon
-    Ws2_32
-    Rpcrt4
-    )
-endif ()
-
 # Linux-only libraries
 if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
   list(APPEND LLDB_USED_LIBS
@@ -90,29 +80,10 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Linux" )
    )
 endif ()
 
-# FreeBSD-only libraries
-if ( CMAKE_SYSTEM_NAME MATCHES "FreeBSD" )
-  list(APPEND LLDB_USED_LIBS
-    lldbPluginProcessFreeBSD
-    lldbPluginProcessPOSIX
-    )
-endif ()
-
-# NetBSD-only libraries
-if ( CMAKE_SYSTEM_NAME MATCHES "NetBSD" )
-  list(APPEND LLDB_USED_LIBS
-    lldbPluginProcessPOSIX
-    )
-endif ()
-
 # Darwin-only libraries
 if ( CMAKE_SYSTEM_NAME MATCHES "Darwin" )
   list(APPEND LLDB_USED_LIBS
-    lldbPluginDynamicLoaderDarwinKernel
     lldbPluginObjectFileMachO
-    lldbPluginProcessMachCore
-    lldbPluginProcessMacOSXKernel
-    lldbPluginSymbolVendorMacOSX
     )
 endif()
 
