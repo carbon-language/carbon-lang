@@ -2,10 +2,15 @@
 
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %t.o
 # RUN: ld.lld %t.o -shared -o %t.so
-# RUN: llvm-objdump -d -t %t.so | FileCheck %s
+# RUN: llvm-objdump -s %t.so | FileCheck -check-prefix=RAW %s
 # RUN: llvm-readobj -r -mips-plt-got %t.so | FileCheck -check-prefix=GOT %s
 
 # REQUIRES: mips
+
+# RAW:      Contents of section .got:
+# RAW-NEXT:  20000 00000000 80000000 00010000 00020000
+# RAW-NEXT:  20010 00030000 00040000 00050000 00060000
+# RAW-NEXT:  20020 00051008 00000000
 
 # CHECK:      Disassembly of section .text:
 # CHECK-NEXT: __start:
