@@ -382,12 +382,6 @@ public:
   /// \brief Used to set IsVerbose via the stream interface.
   struct setIsVerbose {};
 
-  /// \brief When an instance of this is inserted into the stream, the arguments
-  /// following will not appear in the remark printed in the compiler output
-  /// (-Rpass) but only in the optimization record file
-  /// (-fsave-optimization-record).
-  struct setExtraArgs {};
-
   /// \brief Used in the streaming interface as the general argument type.  It
   /// internally converts everything into a key-value pair.
   struct Argument {
@@ -458,7 +452,6 @@ public:
   DiagnosticInfoOptimizationBase &operator<<(StringRef S);
   DiagnosticInfoOptimizationBase &operator<<(Argument A);
   DiagnosticInfoOptimizationBase &operator<<(setIsVerbose V);
-  DiagnosticInfoOptimizationBase &operator<<(setExtraArgs EA);
 
   /// \see DiagnosticInfo::print.
   void print(DiagnosticPrinter &DP) const override;
@@ -507,11 +500,6 @@ private:
 
   /// The remark is expected to be noisy.
   bool IsVerbose = false;
-
-  /// \brief If positive, the index of the first argument that only appear in
-  /// the optimization records and not in the remark printed in the compiler
-  /// output.
-  int FirstExtraArgIndex = -1;
 
   friend struct yaml::MappingTraits<DiagnosticInfoOptimizationBase *>;
 };

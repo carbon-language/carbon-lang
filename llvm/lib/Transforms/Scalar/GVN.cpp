@@ -1590,13 +1590,10 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
   return true;
 }
 
-static void reportLoadElim(LoadInst *LI, Value *AvailableValue,
-                           OptimizationRemarkEmitter *ORE) {
-  using namespace ore;
+static void reportLoadElim(LoadInst *LI, OptimizationRemarkEmitter *ORE) {
   ORE->emit(OptimizationRemark(DEBUG_TYPE, "LoadElim", LI)
-            << "load of type " << NV("Type", LI->getType()) << " eliminated"
-            << setExtraArgs() << " in favor of "
-            << NV("InfavorOfValue", AvailableValue));
+            << "load of type " << ore::NV("Type", LI->getType())
+            << " eliminated");
 }
 
 /// Attempt to eliminate a load whose dependencies are
@@ -1669,7 +1666,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
       MD->invalidateCachedPointerInfo(V);
     markInstructionForDeletion(LI);
     ++NumGVNLoad;
-    reportLoadElim(LI, V, ORE);
+    reportLoadElim(LI, ORE);
     return true;
   }
 
@@ -1816,7 +1813,7 @@ bool GVN::processLoad(LoadInst *L) {
     patchAndReplaceAllUsesWith(L, AvailableValue);
     markInstructionForDeletion(L);
     ++NumGVNLoad;
-    reportLoadElim(L, AvailableValue, ORE);
+    reportLoadElim(L, ORE);
     // Tell MDA to rexamine the reused pointer since we might have more
     // information after forwarding it.
     if (MD && AvailableValue->getType()->getScalarType()->isPointerTy())

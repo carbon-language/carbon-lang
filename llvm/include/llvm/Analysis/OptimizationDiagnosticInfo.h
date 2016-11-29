@@ -223,7 +223,6 @@ private:
 namespace ore {
 using NV = DiagnosticInfoOptimizationBase::Argument;
 using setIsVerbose = DiagnosticInfoOptimizationBase::setIsVerbose;
-using setExtraArgs = DiagnosticInfoOptimizationBase::setExtraArgs;
 }
 
 /// OptimizationRemarkEmitter legacy analysis pass
