@@ -8554,6 +8554,10 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
     assert(HowLong == 0 && !Signed && !Unsigned && "Bad modifiers for 'z'!");
     Type = Context.getSizeType();
     break;
+  case 'w':  // wchar_t.
+    assert(HowLong == 0 && !Signed && !Unsigned && "Bad modifiers for 'w'!");
+    Type = Context.getWideCharType();
+    break;
   case 'F':
     Type = Context.getCFConstantStringType();
     break;
