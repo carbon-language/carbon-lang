@@ -202,7 +202,12 @@ public:
   GVNHoist(DominatorTree *DT, AliasAnalysis *AA, MemoryDependenceResults *MD,
            MemorySSA *MSSA, bool OptForMinSize)
       : DT(DT), AA(AA), MD(MD), MSSA(MSSA), OptForMinSize(OptForMinSize),
-        HoistingGeps(OptForMinSize), HoistedCtr(0) {}
+        HoistingGeps(OptForMinSize), HoistedCtr(0) {
+      // Hoist as far as possible when optimizing for code-size.
+      if (OptForMinSize)
+        MaxNumberOfBBSInPath = -1;
+  }
+
   bool run(Function &F) {
     VN.setDomTree(DT);
     VN.setAliasAnalysis(AA);
@@ -500,10 +505,13 @@ private:
   bool safeToHoistScalar(const BasicBlock *HoistBB,
                          SmallPtrSetImpl<const BasicBlock *> &WL,
                          int &NBBsOnAllPaths) {
-    // Check that the hoisted expression is needed on all paths.  Enable scalar
-    // hoisting at -Oz as it is safe to hoist scalars to a place where they are
-    // partially needed.
-    if (!OptForMinSize && !hoistingFromAllPaths(HoistBB, WL))
+    // Enable scalar hoisting at -Oz as it is safe to hoist scalars to a place
+    // where they are partially needed.
+    if (OptForMinSize)
+      return true;
+
+    // Check that the hoisted expression is needed on all paths.
+    if (!hoistingFromAllPaths(HoistBB, WL))
       return false;
 
     for (const BasicBlock *BB : WL)
