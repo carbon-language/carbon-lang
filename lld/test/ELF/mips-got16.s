@@ -17,9 +17,9 @@
 # CHECK-NEXT:    10014:       21 08 90 04     addi    $8, $8, -28668
 # CHECK-NEXT:    10018:       8f 88 80 20     lw      $8, -32736($gp)
 # CHECK-NEXT:    1001c:       21 08 10 04     addi    $8, $8, 4100
-# CHECK-NEXT:    10020:       8f 88 80 28     lw      $8, -32728($gp)
+# CHECK-NEXT:    10020:       8f 88 80 30     lw      $8, -32720($gp)
 # CHECK-NEXT:    10024:       21 08 10 08     addi    $8, $8, 4104
-# CHECK-NEXT:    10028:       8f 88 80 2c     lw      $8, -32724($gp)
+# CHECK-NEXT:    10028:       8f 88 80 34     lw      $8, -32716($gp)
 #
 # CHECK: SYMBOL TABLE:
 # CHECK: 00051008         .data           00000000 .hidden bar
@@ -72,15 +72,27 @@
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x20018
-# GOT-NEXT:       Access: -327
+# GOT-NEXT:       Access: -32728
+# GOT-NEXT:       Initial: 0x0
+#                          ^-- redundant unused entry
+# GOT-NEXT:     }
+# GOT-NEXT:     Entry {
+# GOT-NEXT:       Address: 0x2001C
+# GOT-NEXT:       Access: -32724
+# GOT-NEXT:       Initial: 0x0
+#                          ^-- redundant unused entry
+# GOT-NEXT:     }
+# GOT-NEXT:     Entry {
+# GOT-NEXT:       Address: 0x20020
+# GOT-NEXT:       Access: -32720
 # GOT-NEXT:       Initial: 0x51008
 #                          ^-- 'bar' address
 # GOT-NEXT:     }
 # GOT-NEXT:   ]
 # GOT-NEXT:   Global entries [
 # GOT-NEXT:     Entry {
-# GOT-NEXT:       Address: 0x2001C
-# GOT-NEXT:       Access: -32724
+# GOT-NEXT:       Address: 0x20024
+# GOT-NEXT:       Access: -32716
 # GOT-NEXT:       Initial: 0x0
 # GOT-NEXT:       Value: 0x0
 # GOT-NEXT:       Type: None

@@ -538,7 +538,7 @@ MipsGotSection<ELFT>::getPageEntryOffset(uintX_t EntryValue) {
   // See comment in the MipsGotSection::writeTo.
   size_t NewIndex = PageIndexMap.size() + 2;
   auto P = PageIndexMap.insert(std::make_pair(EntryValue, NewIndex));
-  assert(!P.second || PageIndexMap.size() <= PageEntriesNum);
+  assert(!P.second || PageIndexMap.size() <= (PageEntriesNum - 2));
   return (uintX_t)P.first->second * sizeof(uintX_t);
 }
 
@@ -594,14 +594,14 @@ template <class ELFT> void MipsGotSection<ELFT>::finalize() {
   size_t EntriesNum = TlsEntries.size();
   // Take into account MIPS GOT header.
   // See comment in the MipsGotSection::writeTo.
-  PageEntriesNum += 2;
+  PageEntriesNum = 2;
   for (const OutputSectionBase *OutSec : OutSections) {
     // Calculate an upper bound of MIPS GOT entries required to store page
     // addresses of local symbols. We assume the worst case - each 64kb
     // page of the output section has at least one GOT relocation against it.
     // Add 0x8000 to the section's size because the page address stored
     // in the GOT entry is calculated as (value + 0x8000) & ~0xffff.
-    PageEntriesNum += (OutSec->Size + 0x8000 + 0xfffe) / 0xffff;
+    PageEntriesNum += (OutSec->Size + 0xfffe) / 0xffff + 1;
   }
   EntriesNum += getLocalEntriesNum() + GlobalEntries.size();
   Size = EntriesNum * sizeof(uintX_t);
