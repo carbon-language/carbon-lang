@@ -5474,6 +5474,10 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
 
   MVT VT = N.getSimpleValueType();
   unsigned NumElts = VT.getVectorNumElements();
+  unsigned NumSizeInBits = VT.getSizeInBits();
+  unsigned NumBitsPerElt = VT.getScalarSizeInBits();
+  assert((NumBitsPerElt % 8) == 0 && (NumSizeInBits % 8) == 0 &&
+         "Expected byte aligned value types");
 
   unsigned Opcode = N.getOpcode();
   switch (Opcode) {
@@ -5481,7 +5485,7 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
   case X86ISD::VSRLI: {
     uint64_t ShiftVal = N.getConstantOperandVal(1);
     // Out of range bit shifts are guaranteed to be zero.
-    if (VT.getScalarSizeInBits() <= ShiftVal) {
+    if (NumBitsPerElt <= ShiftVal) {
       Mask.append(NumElts, SM_SentinelZero);
       return true;
     }
@@ -5491,8 +5495,8 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
       break;
 
     uint64_t ByteShift = ShiftVal / 8;
-    unsigned NumBytes = VT.getSizeInBits() / 8;
-    unsigned NumBytesPerElt = VT.getScalarSizeInBits() / 8;
+    unsigned NumBytes = NumSizeInBits / 8;
+    unsigned NumBytesPerElt = NumBitsPerElt / 8;
     Ops.push_back(N.getOperand(0));
 
     // Clear mask to all zeros and insert the shifted byte indices.
@@ -5511,11 +5515,12 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
   }
   case X86ISD::VZEXT: {
     // TODO - add support for VPMOVZX with smaller input vector types.
-    SDValue Op0 = N.getOperand(0);
-    if (VT.getSizeInBits() != Op0.getValueSizeInBits())
+    SDValue Src = N.getOperand(0);
+    MVT SrcVT = Src.getSimpleValueType();
+    if (NumSizeInBits != SrcVT.getSizeInBits())
       break;
-    DecodeZeroExtendMask(Op0.getSimpleValueType().getScalarType(), VT, Mask);
-    Ops.push_back(Op0);
+    DecodeZeroExtendMask(SrcVT.getScalarType(), VT, Mask);
+    Ops.push_back(Src);
     return true;
   }
   }
