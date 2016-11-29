@@ -1109,9 +1109,9 @@ public:
   /// Insert a CFI pseudo instruction in a basic block. This pseudo instruction
   /// is a placeholder that refers to a real MCCFIInstruction object kept by
   /// this function that will be emitted at that position.
-  BinaryBasicBlock::const_iterator
-  addCFIPseudo(BinaryBasicBlock *BB, BinaryBasicBlock::const_iterator Pos,
-               uint32_t Offset) {
+  BinaryBasicBlock::iterator addCFIPseudo(BinaryBasicBlock *BB,
+                                          BinaryBasicBlock::iterator Pos,
+                                          uint32_t Offset) {
     MCInst CFIPseudo;
     BC.MIA->createCFI(CFIPseudo, Offset);
     return BB->insertPseudoInstr(Pos, CFIPseudo);

@@ -2043,7 +2043,7 @@ bool BinaryFunction::fixCFIState() {
 
   auto replayCFIInstrs =
       [this](uint32_t FromState, uint32_t ToState, BinaryBasicBlock *InBB,
-             BinaryBasicBlock::const_iterator InsertIt) -> bool {
+             BinaryBasicBlock::iterator InsertIt) -> bool {
         if (FromState == ToState)
           return true;
         assert(FromState < ToState);
@@ -2111,7 +2111,7 @@ bool BinaryFunction::fixCFIState() {
       // reach the desired state.
       uint32_t OldState = BBCFIState[BBIndex];
       // Remember state at function entry point (our reference state).
-      BinaryBasicBlock::const_iterator InsertIt = FDEStartBB->begin();
+      auto InsertIt = FDEStartBB->begin();
       while (InsertIt != FDEStartBB->end() && BC.MIA->isCFI(*InsertIt))
         ++InsertIt;
       addCFIPseudo(FDEStartBB, InsertIt, FrameInstructions.size());
