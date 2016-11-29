@@ -1357,10 +1357,11 @@ Value *IslNodeBuilder::createRTC(isl_ast_expr *Condition) {
 
   if (PollyGenerateRTCPrint) {
     auto *F = Builder.GetInsertBlock()->getParent();
-    RuntimeDebugBuilder::createCPUPrinter(
-        Builder, "F: " + F->getName().str() + " R: " +
-                     S.getRegion().getNameStr() + " __RTC: ",
-        RTC, " Overflow: ", OverflowHappened);
+    RuntimeDebugBuilder::createCPUPrinter(Builder,
+                                          "F: " + F->getName().str() + " R: " +
+                                              S.getRegion().getNameStr() +
+                                              " __RTC: ",
+                                          RTC, " Overflow: ", OverflowHappened);
   }
 
   RTC = Builder.CreateAnd(RTC, OverflowHappened, "polly.rtc.result");
