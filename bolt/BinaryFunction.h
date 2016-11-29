@@ -1501,7 +1501,6 @@ inline raw_ostream &operator<<(raw_ostream &OS,
 inline raw_ostream &operator<<(raw_ostream &OS,
                                const BinaryFunction::State State) {
   switch (State) {
-  default:                                  OS << "<unknown>"; break;
   case BinaryFunction::State::Empty:        OS << "empty";  break;
   case BinaryFunction::State::Disassembled: OS << "disassembled";  break;
   case BinaryFunction::State::CFG:          OS << "CFG constructed";  break;
