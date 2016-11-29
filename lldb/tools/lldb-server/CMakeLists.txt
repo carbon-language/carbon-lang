@@ -43,6 +43,7 @@ set( LLDB_USED_LIBS
   lldbPluginSymbolFileDWARF
   lldbPluginSymbolFilePDB
   lldbPluginSymbolFileSymtab
+  lldbPluginDynamicLoaderPosixDYLD
 
   lldbPluginCPlusPlusLanguage
   lldbPluginGoLanguage
@@ -54,20 +55,24 @@ set( LLDB_USED_LIBS
   lldbPluginObjectFileELF
   lldbPluginObjectFileJIT
   lldbPluginSymbolVendorELF
+  lldbPluginPlatformPOSIX
   lldbPluginObjectContainerBSDArchive
   lldbPluginObjectContainerMachOArchive
   lldbPluginProcessGDBRemote
   lldbPluginProcessUtility
   lldbPluginObjectContainerMachOArchive
   lldbPluginObjectContainerBSDArchive
+  lldbPluginPlatformMacOSX
   lldbPluginUnwindAssemblyInstEmulation
   lldbPluginUnwindAssemblyX86
+  lldbPluginAppleObjCRuntime
   lldbPluginCXXItaniumABI
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
   lldbPluginInstructionMIPS
   lldbPluginInstructionMIPS64
   lldbPluginObjectFilePECOFF
+  lldbPluginProcessElfCore
   lldbPluginExpressionParserClang
   lldbPluginExpressionParserGo
   )
