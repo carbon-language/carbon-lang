@@ -396,16 +396,16 @@ private:
         continue;
       }
 
+      // Stop walk once the limit is reached.
+      if (NBBsOnAllPaths == 0)
+        return true;
+
       // Impossible to hoist with exceptions on the path.
       if (hasEH(*I))
         return true;
 
       // Check that we do not move a store past loads.
       if (hasMemoryUse(NewPt, Def, *I))
-        return true;
-
-      // Stop walk once the limit is reached.
-      if (NBBsOnAllPaths == 0)
         return true;
 
       // -1 is unlimited number of blocks on all paths.
@@ -438,12 +438,12 @@ private:
         continue;
       }
 
-      // Impossible to hoist with exceptions on the path.
-      if (hasEH(*I))
-        return true;
-
       // Stop walk once the limit is reached.
       if (NBBsOnAllPaths == 0)
+        return true;
+
+      // Impossible to hoist with exceptions on the path.
+      if (hasEH(*I))
         return true;
 
       // -1 is unlimited number of blocks on all paths.
@@ -538,7 +538,7 @@ private:
       std::sort(InstructionsToHoist.begin(), InstructionsToHoist.end(), Pred);
     }
 
-    int NBBsOnAllPaths = MaxNumberOfBBSInPath;
+    int NumBBsOnAllPaths = MaxNumberOfBBSInPath;
 
     SmallVecImplInsn::iterator II = InstructionsToHoist.begin();
     SmallVecImplInsn::iterator Start = II;
@@ -554,10 +554,12 @@ private:
       BasicBlock *NewHoistBB;
       Instruction *NewHoistPt;
 
-      if (BB == HoistBB) {
+      if (BB == HoistBB) { // Both are in the same Basic Block.
         NewHoistBB = HoistBB;
         NewHoistPt = firstInBB(Insn, HoistPt) ? Insn : HoistPt;
       } else {
+        // If the hoisting point contains one of the instructions,
+        // then hoist there, otherwise hoist before the terminator.
         NewHoistBB = DT->findNearestCommonDominator(HoistBB, BB);
         if (NewHoistBB == BB)
           NewHoistPt = Insn;
@@ -572,7 +574,7 @@ private:
       WL.insert(BB);
 
       if (K == InsKind::Scalar) {
-        if (safeToHoistScalar(NewHoistBB, WL, NBBsOnAllPaths)) {
+        if (safeToHoistScalar(NewHoistBB, WL, NumBBsOnAllPaths)) {
           // Extend HoistPt to NewHoistPt.
           HoistPt = NewHoistPt;
           HoistBB = NewHoistBB;
@@ -589,9 +591,9 @@ private:
              hoistingFromAllPaths(NewHoistBB, WL)) &&
             // Also check that it is safe to move the load or store from HoistPt
             // to NewHoistPt, and from Insn to NewHoistPt.
-            safeToHoistLdSt(NewHoistPt, HoistPt, UD, K, NBBsOnAllPaths) &&
+            safeToHoistLdSt(NewHoistPt, HoistPt, UD, K, NumBBsOnAllPaths) &&
             safeToHoistLdSt(NewHoistPt, Insn, MSSA->getMemoryAccess(Insn),
-                            K, NBBsOnAllPaths)) {
+                            K, NumBBsOnAllPaths)) {
           // Extend HoistPt to NewHoistPt.
           HoistPt = NewHoistPt;
           HoistBB = NewHoistBB;
@@ -610,7 +612,7 @@ private:
         UD = MSSA->getMemoryAccess(*Start);
       HoistPt = Insn;
       HoistBB = BB;
-      NBBsOnAllPaths = MaxNumberOfBBSInPath;
+      NumBBsOnAllPaths = MaxNumberOfBBSInPath;
     }
 
     // Save the last partition.
