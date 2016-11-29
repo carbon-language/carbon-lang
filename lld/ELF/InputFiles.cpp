@@ -450,7 +450,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
     if (this->StringTable.size() <= Sym->st_name)
       fatal(toString(this) + ": invalid symbol name offset");
 
-    const char *Name = this->StringTable.data() + Sym->st_name;
+    StringRefZ Name = this->StringTable.data() + Sym->st_name;
     if (Sym->st_shndx == SHN_UNDEF)
       return new (BAlloc)
           Undefined(Name, /*IsLocal=*/true, StOther, Type, this);
