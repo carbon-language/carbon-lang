@@ -13,13 +13,10 @@ define i1 @andn_cmp(i32 %x, i32 %y) {
   ret i1 %cmp
 }
 
-; FIXME: Recognize a disguised bics.
-
 define i1 @and_cmp(i32 %x, i32 %y) {
 ; CHECK-LABEL: and_cmp:
 ; CHECK:       // BB#0:
-; CHECK-NEXT:    and w8, w0, w1
-; CHECK-NEXT:    cmp w8, w1
+; CHECK-NEXT:    bics wzr, w1, w0
 ; CHECK-NEXT:    cset w0, eq
 ; CHECK-NEXT:    ret
 ;
@@ -32,8 +29,7 @@ define i1 @and_cmp_const(i32 %x) {
 ; CHECK-LABEL: and_cmp_const:
 ; CHECK:       // BB#0:
 ; CHECK-NEXT:    mov w8, #43
-; CHECK-NEXT:    and w8, w0, w8
-; CHECK-NEXT:    cmp w8, #43
+; CHECK-NEXT:    bics wzr, w8, w0
 ; CHECK-NEXT:    cset w0, eq
 ; CHECK-NEXT:    ret
 ;
