@@ -18,12 +18,12 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
-#include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
 class DebugLoc;
+class Function;
 class LLVMContext;
 class Loop;
 class Pass;
@@ -193,19 +193,6 @@ public:
   /// debug location from the Loop parameter \p L.
   void emitOptimizationRemarkAnalysisAliasing(const char *PassName, Loop *L,
                                               const Twine &Msg);
-
-  /// \brief Whether we allow for extra compile-time budget to perform more
-  /// analysis to produce fewer false positives.
-  ///
-  /// This is useful when reporting missed optimizations.  In this case we can
-  /// use the extra analysis (1) to filter trivial false positives or (2) to
-  /// provide more context so that non-trivial false positives can be quickly
-  /// detected by the user.
-  bool allowExtraAnalysis() const {
-    // For now, only allow this with -fsave-optimization-record since the -Rpass
-    // options are handled in the front-end.
-    return F->getContext().getDiagnosticsOutputFile();
-  }
 
 private:
   Function *F;
