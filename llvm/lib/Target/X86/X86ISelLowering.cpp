@@ -5018,6 +5018,25 @@ static SDValue peekThroughOneUseBitcasts(SDValue V) {
   return V;
 }
 
+static const Constant *getTargetConstantFromNode(SDValue Op) {
+  Op = peekThroughBitcasts(Op);
+
+  auto *Load = dyn_cast<LoadSDNode>(Op);
+  if (!Load)
+    return nullptr;
+
+  SDValue Ptr = Load->getBasePtr();
+  if (Ptr->getOpcode() == X86ISD::Wrapper ||
+      Ptr->getOpcode() == X86ISD::WrapperRIP)
+    Ptr = Ptr->getOperand(0);
+
+  auto *CNode = dyn_cast<ConstantPoolSDNode>(Ptr);
+  if (!CNode || CNode->isMachineConstantPoolEntry())
+    return nullptr;
+
+  return dyn_cast<Constant>(CNode->getConstVal());
+}
+
 static bool getTargetShuffleMaskIndices(SDValue MaskNode,
                                         unsigned MaskEltSizeInBits,
                                         SmallVectorImpl<uint64_t> &RawMask) {
@@ -5099,25 +5118,6 @@ static bool getTargetShuffleMaskIndices(SDValue MaskNode,
   }
 
   return true;
-}
-
-static const Constant *getTargetConstantFromNode(SDValue Op) {
-  Op = peekThroughBitcasts(Op);
-
-  auto *Load = dyn_cast<LoadSDNode>(Op);
-  if (!Load)
-    return nullptr;
-
-  SDValue Ptr = Load->getBasePtr();
-  if (Ptr->getOpcode() == X86ISD::Wrapper ||
-      Ptr->getOpcode() == X86ISD::WrapperRIP)
-    Ptr = Ptr->getOperand(0);
-
-  auto *CNode = dyn_cast<ConstantPoolSDNode>(Ptr);
-  if (!CNode || CNode->isMachineConstantPoolEntry())
-    return nullptr;
-
-  return dyn_cast<Constant>(CNode->getConstVal());
 }
 
 /// Calculates the shuffle mask corresponding to the target-specific opcode.
