@@ -536,10 +536,10 @@ MipsGotSection<ELFT>::getPageEntryOffset(uintX_t EntryValue) {
   EntryValue = (EntryValue + 0x8000) & ~0xffff;
   // Take into account MIPS GOT header.
   // See comment in the MipsGotSection::writeTo.
-  size_t NewIndex = PageIndexMap.size() + 2;
+  size_t NewIndex = PageIndexMap.size();
   auto P = PageIndexMap.insert(std::make_pair(EntryValue, NewIndex));
-  assert(!P.second || PageIndexMap.size() <= (PageEntriesNum - 2));
-  return (uintX_t)P.first->second * sizeof(uintX_t);
+  assert(!P.second || PageIndexMap.size() <= PageEntriesNum);
+  return (HeaderEntriesNum + P.first->second) * sizeof(uintX_t);
 }
 
 template <class ELFT>
@@ -547,25 +547,22 @@ typename MipsGotSection<ELFT>::uintX_t
 MipsGotSection<ELFT>::getBodyEntryOffset(const SymbolBody &B,
                                          uintX_t Addend) const {
   // Calculate offset of the GOT entries block: TLS, global, local.
-  uintX_t GotBlockOff;
+  uintX_t Index = HeaderEntriesNum + PageEntriesNum;
   if (B.isTls())
-    GotBlockOff = getTlsOffset();
+    Index += LocalEntries.size() + LocalEntries32.size() + GlobalEntries.size();
   else if (B.IsInGlobalMipsGot)
-    GotBlockOff = getLocalEntriesNum() * sizeof(uintX_t);
+    Index += LocalEntries.size() + LocalEntries32.size();
   else if (B.Is32BitMipsGot)
-    GotBlockOff = (PageEntriesNum + LocalEntries.size()) * sizeof(uintX_t);
-  else
-    GotBlockOff = PageEntriesNum * sizeof(uintX_t);
-  // Calculate index of the GOT entry in the block.
-  uintX_t GotIndex;
+    Index += LocalEntries.size();
+  // Calculate offset of the GOT entry in the block.
   if (B.isInGot())
-    GotIndex = B.GotIndex;
+    Index += B.GotIndex;
   else {
     auto It = EntryIndexMap.find({&B, Addend});
     assert(It != EntryIndexMap.end());
-    GotIndex = It->second;
+    Index += It->second;
   }
-  return GotBlockOff + GotIndex * sizeof(uintX_t);
+  return Index * sizeof(uintX_t);
 }
 
 template <class ELFT>
@@ -587,14 +584,15 @@ const SymbolBody *MipsGotSection<ELFT>::getFirstGlobalEntry() const {
 
 template <class ELFT>
 unsigned MipsGotSection<ELFT>::getLocalEntriesNum() const {
-  return PageEntriesNum + LocalEntries.size() + LocalEntries32.size();
+  return HeaderEntriesNum + PageEntriesNum + LocalEntries.size() +
+         LocalEntries32.size();
 }
 
 template <class ELFT> void MipsGotSection<ELFT>::finalize() {
   size_t EntriesNum = TlsEntries.size();
   // Take into account MIPS GOT header.
   // See comment in the MipsGotSection::writeTo.
-  PageEntriesNum = 2;
+  PageEntriesNum = 0;
   for (const OutputSectionBase *OutSec : OutSections) {
     // Calculate an upper bound of MIPS GOT entries required to store page
     // addresses of local symbols. We assume the worst case - each 64kb
@@ -640,6 +638,7 @@ template <class ELFT> void MipsGotSection<ELFT>::writeTo(uint8_t *Buf) {
   // if we had to do this.
   auto *P = reinterpret_cast<typename ELFT::Off *>(Buf);
   P[1] = uintX_t(1) << (ELFT::Is64Bits ? 63 : 31);
+  Buf += HeaderEntriesNum * sizeof(uintX_t);
   // Write 'page address' entries to the local part of the GOT.
   for (std::pair<uintX_t, size_t> &L : PageIndexMap) {
     uint8_t *Entry = Buf + L.second * sizeof(uintX_t);

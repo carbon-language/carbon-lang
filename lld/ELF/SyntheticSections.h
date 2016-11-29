@@ -164,7 +164,9 @@ private:
   // TLS entries:
   //   Entries created by TLS relocations.
 
-  // Total number of allocated "Header" and "Page" entries.
+  // Number of "Header" entries.
+  static const unsigned HeaderEntriesNum = 2;
+  // Number of allocated "Page" entries.
   uint32_t PageEntriesNum = 0;
   // Output sections referenced by MIPS GOT relocations.
   llvm::SmallPtrSet<const OutputSectionBase *, 10> OutSections;
