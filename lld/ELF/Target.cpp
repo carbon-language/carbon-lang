@@ -800,6 +800,7 @@ void X86_64TargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_X86_64_64:
   case R_X86_64_DTPOFF64:
+  case R_X86_64_GLOB_DAT:
   case R_X86_64_PC64:
   case R_X86_64_SIZE64:
     write64le(Loc, Val);
@@ -1319,6 +1320,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     write32le(Loc, Val);
     break;
   case R_AARCH64_ABS64:
+  case R_AARCH64_GLOB_DAT:
   case R_AARCH64_PREL64:
     write64le(Loc, Val);
     break;
@@ -1685,6 +1687,7 @@ void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   switch (Type) {
   case R_ARM_ABS32:
   case R_ARM_BASE_PREL:
+  case R_ARM_GLOB_DAT:
   case R_ARM_GOTOFF32:
   case R_ARM_GOT_BREL:
   case R_ARM_GOT_PREL:
@@ -1696,6 +1699,7 @@ void ARMTargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   case R_ARM_TLS_LDM32:
   case R_ARM_TLS_LDO32:
   case R_ARM_TLS_LE32:
+  case R_ARM_TLS_TPOFF32:
     write32le(Loc, Val);
     break;
   case R_ARM_PREL31:
