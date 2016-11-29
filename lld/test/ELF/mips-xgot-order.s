@@ -20,7 +20,7 @@
 # CHECK-NEXT:    20018:       20 42 00 00     addi    $2, $2, 0
 
 # CHECK:      Contents of section .got:
-# CHECK-NEXT:  30000 00000000 80000000 00040000 00000000
+# CHECK-NEXT:  30000 00000000 80000000 00040000 00050000
 #                                      ^ %hi(loc)
 #                                               ^ redundant entry
 # CHECK-NEXT:  30010 00020010 00020000 00040000

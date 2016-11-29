@@ -423,7 +423,7 @@ static typename ELFT::uint getSymVA(uint32_t Type, typename ELFT::uint A,
     // should be initialized by 'page address'. This address is high 16-bits
     // of sum the symbol's value and the addend.
     return In<ELFT>::MipsGot->getVA() +
-           In<ELFT>::MipsGot->getPageEntryOffset(Body.getVA<ELFT>(A)) -
+           In<ELFT>::MipsGot->getPageEntryOffset(Body, A) -
            In<ELFT>::MipsGot->getGp();
   case R_MIPS_GOT_OFF:
   case R_MIPS_GOT_OFF32:

@@ -50,7 +50,7 @@
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x30018
 # GOT-NEXT:       Access: -32728
-# GOT-NEXT:       Initial: 0x0
+# GOT-NEXT:       Initial: 0x30000
 # GOT-NEXT:     }
 # GOT-NEXT:     Entry {
 # GOT-NEXT:       Address: 0x30020

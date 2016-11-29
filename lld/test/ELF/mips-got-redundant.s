@@ -22,7 +22,7 @@
 # CHECK-NEXT:   Entry {
 # CHECK-NEXT:     Address: 0x20010
 # CHECK-NEXT:     Access: -32736
-# CHECK-NEXT:     Initial: 0x0
+# CHECK-NEXT:     Initial: 0x50000
 #                          ^-- redundant
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Entry {

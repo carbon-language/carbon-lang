@@ -470,8 +470,7 @@ void MipsGotSection<ELFT>::addEntry(SymbolBody &Sym, uintX_t Addend,
     // sections referenced by GOT relocations. Then later in the `finalize`
     // method calculate number of "pages" required to cover all saved output
     // section and allocate appropriate number of GOT entries.
-    auto *OutSec = cast<DefinedRegular<ELFT>>(&Sym)->Section->OutSec;
-    OutSections.insert(OutSec);
+    PageIndexMap.insert({cast<DefinedRegular<ELFT>>(&Sym)->Section->OutSec, 0});
     return;
   }
   if (Sym.isTls()) {
@@ -528,18 +527,25 @@ template <class ELFT> bool MipsGotSection<ELFT>::addTlsIndex() {
   return true;
 }
 
+static uint64_t getMipsPageAddr(uint64_t Addr) {
+  return (Addr + 0x8000) & ~0xffff;
+}
+
+static uint64_t getMipsPageCount(uint64_t Size) {
+  return (Size + 0xfffe) / 0xffff + 1;
+}
+
 template <class ELFT>
 typename MipsGotSection<ELFT>::uintX_t
-MipsGotSection<ELFT>::getPageEntryOffset(uintX_t EntryValue) {
-  // Initialize the entry by the %hi(EntryValue) expression
-  // but without right-shifting.
-  EntryValue = (EntryValue + 0x8000) & ~0xffff;
-  // Take into account MIPS GOT header.
-  // See comment in the MipsGotSection::writeTo.
-  size_t NewIndex = PageIndexMap.size();
-  auto P = PageIndexMap.insert(std::make_pair(EntryValue, NewIndex));
-  assert(!P.second || PageIndexMap.size() <= PageEntriesNum);
-  return (HeaderEntriesNum + P.first->second) * sizeof(uintX_t);
+MipsGotSection<ELFT>::getPageEntryOffset(const SymbolBody &B,
+                                         uintX_t Addend) const {
+  const OutputSectionBase *OutSec =
+      cast<DefinedRegular<ELFT>>(&B)->Section->OutSec;
+  uintX_t SecAddr = getMipsPageAddr(OutSec->Addr);
+  uintX_t SymAddr = getMipsPageAddr(B.getVA<ELFT>(Addend));
+  uintX_t Index = PageIndexMap.lookup(OutSec) + (SymAddr - SecAddr) / 0xffff;
+  assert(Index < PageEntriesNum);
+  return (HeaderEntriesNum + Index) * sizeof(uintX_t);
 }
 
 template <class ELFT>
@@ -589,20 +595,19 @@ unsigned MipsGotSection<ELFT>::getLocalEntriesNum() const {
 }
 
 template <class ELFT> void MipsGotSection<ELFT>::finalize() {
-  size_t EntriesNum = TlsEntries.size();
-  // Take into account MIPS GOT header.
-  // See comment in the MipsGotSection::writeTo.
   PageEntriesNum = 0;
-  for (const OutputSectionBase *OutSec : OutSections) {
-    // Calculate an upper bound of MIPS GOT entries required to store page
-    // addresses of local symbols. We assume the worst case - each 64kb
-    // page of the output section has at least one GOT relocation against it.
-    // Add 0x8000 to the section's size because the page address stored
-    // in the GOT entry is calculated as (value + 0x8000) & ~0xffff.
-    PageEntriesNum += (OutSec->Size + 0xfffe) / 0xffff + 1;
+  for (std::pair<const OutputSectionBase *, size_t> &P : PageIndexMap) {
+    // For each output section referenced by GOT page relocations calculate
+    // and save into PageIndexMap an upper bound of MIPS GOT entries required
+    // to store page addresses of local symbols. We assume the worst case -
+    // each 64kb page of the output section has at least one GOT relocation
+    // against it. And take in account the case when the section intersects
+    // page boundaries.
+    P.second = PageEntriesNum;
+    PageEntriesNum += getMipsPageCount(P.first->Size);
   }
-  EntriesNum += getLocalEntriesNum() + GlobalEntries.size();
-  Size = EntriesNum * sizeof(uintX_t);
+  Size = (getLocalEntriesNum() + GlobalEntries.size() + TlsEntries.size()) *
+         sizeof(uintX_t);
 }
 
 template <class ELFT> bool MipsGotSection<ELFT>::empty() const {
@@ -640,9 +645,13 @@ template <class ELFT> void MipsGotSection<ELFT>::writeTo(uint8_t *Buf) {
   P[1] = uintX_t(1) << (ELFT::Is64Bits ? 63 : 31);
   Buf += HeaderEntriesNum * sizeof(uintX_t);
   // Write 'page address' entries to the local part of the GOT.
-  for (std::pair<uintX_t, size_t> &L : PageIndexMap) {
-    uint8_t *Entry = Buf + L.second * sizeof(uintX_t);
-    writeUint<ELFT>(Entry, L.first);
+  for (std::pair<const OutputSectionBase *, size_t> &L : PageIndexMap) {
+    size_t PageCount = getMipsPageCount(L.first->Size);
+    uintX_t FirstPageAddr = getMipsPageAddr(L.first->Addr);
+    for (size_t PI = 0; PI < PageCount; ++PI) {
+      uint8_t *Entry = Buf + (L.second + PI) * sizeof(uintX_t);
+      writeUint<ELFT>(Entry, FirstPageAddr + PI * 0x10000);
+    }
   }
   Buf += PageEntriesNum * sizeof(uintX_t);
   auto AddEntry = [&](const GotEntry &SA) {

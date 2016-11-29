@@ -104,7 +104,7 @@ public:
   void addEntry(SymbolBody &Sym, uintX_t Addend, RelExpr Expr);
   bool addDynTlsEntry(SymbolBody &Sym);
   bool addTlsIndex();
-  uintX_t getPageEntryOffset(uintX_t Addr);
+  uintX_t getPageEntryOffset(const SymbolBody &B, uintX_t Addend) const;
   uintX_t getBodyEntryOffset(const SymbolBody &B, uintX_t Addend) const;
   uintX_t getGlobalDynOffset(const SymbolBody &B) const;
 
@@ -168,10 +168,9 @@ private:
   static const unsigned HeaderEntriesNum = 2;
   // Number of allocated "Page" entries.
   uint32_t PageEntriesNum = 0;
-  // Output sections referenced by MIPS GOT relocations.
-  llvm::SmallPtrSet<const OutputSectionBase *, 10> OutSections;
-  // Map from "page" address to the GOT index.
-  llvm::DenseMap<uintX_t, size_t> PageIndexMap;
+  // Map output sections referenced by MIPS GOT relocations
+  // to the first index of "Page" entries allocated for this section.
+  llvm::SmallDenseMap<const OutputSectionBase *, size_t> PageIndexMap;
 
   typedef std::pair<const SymbolBody *, uintX_t> GotEntry;
   typedef std::vector<GotEntry> GotEntries;
