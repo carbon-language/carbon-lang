@@ -1137,6 +1137,12 @@ TEST_F(FormatTest, KeepsParameterWithTrailingCommentsOnTheirOwnLine) {
             format("SomeFunction(a,     // comment\n"
                    "          b,\n"
                    "      c); // comment"));
+  EXPECT_EQ("aaaaaaaaaa(aaaa(aaaa,\n"
+            "                aaaa), //\n"
+            "           aaaa, bbbbb);",
+            format("aaaaaaaaaa(aaaa(aaaa,\n"
+                   "aaaa), //\n"
+                   "aaaa, bbbbb);"));
 }
 
 TEST_F(FormatTest, RemovesTrailingWhitespaceOfComments) {

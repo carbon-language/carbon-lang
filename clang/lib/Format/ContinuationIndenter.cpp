@@ -523,7 +523,8 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
           Style.ContinuationIndentWidth;
   }
 
-  if ((Previous.isOneOf(tok::comma, tok::semi) &&
+  if ((PreviousNonComment &&
+       PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
        !State.Stack.back().AvoidBinPacking) ||
       Previous.is(TT_BinaryOperator))
     State.Stack.back().BreakBeforeParameter = false;
