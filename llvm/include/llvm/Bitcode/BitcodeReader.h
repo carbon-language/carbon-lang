@@ -66,7 +66,9 @@ namespace llvm {
                   bool ShouldLazyLoadMetadata);
 
   public:
-    ArrayRef<uint8_t> getBuffer() const { return Buffer; }
+    StringRef getBuffer() const {
+      return StringRef((const char *)Buffer.begin(), Buffer.size());
+    }
 
     /// Read the bitcode module and prepare for lazy deserialization of function
     /// bodies. If ShouldLazyLoadMetadata is true, lazily load metadata as well.
