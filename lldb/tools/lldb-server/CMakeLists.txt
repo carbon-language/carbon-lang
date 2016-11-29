@@ -60,28 +60,14 @@ set( LLDB_USED_LIBS
   lldbPluginProcessUtility
   lldbPluginObjectContainerMachOArchive
   lldbPluginObjectContainerBSDArchive
-  lldbPluginStructuredDataDarwinLog
   lldbPluginUnwindAssemblyInstEmulation
   lldbPluginUnwindAssemblyX86
-  lldbPluginAppleObjCRuntime
-  lldbPluginRenderScriptRuntime
-  lldbPluginLanguageRuntimeGo
-  lldbPluginLanguageRuntimeJava
   lldbPluginCXXItaniumABI
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
   lldbPluginInstructionMIPS
   lldbPluginInstructionMIPS64
   lldbPluginObjectFilePECOFF
-  lldbPluginOSGo
-  lldbPluginOSPython
-  lldbPluginMemoryHistoryASan
-  lldbPluginInstrumentationRuntimeAddressSanitizer
-  lldbPluginInstrumentationRuntimeThreadSanitizer
-  lldbPluginSystemRuntimeMacOSX
-  lldbPluginProcessElfCore
-  lldbPluginProcessMinidump
-  lldbPluginJITLoaderGDB
   lldbPluginExpressionParserClang
   lldbPluginExpressionParserGo
   )
