@@ -12,7 +12,7 @@
 
 #include "GdbIndex.h"
 #include "InputSection.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/MapVector.h"
 
 namespace lld {
 namespace elf {
@@ -170,7 +170,7 @@ private:
   uint32_t PageEntriesNum = 0;
   // Map output sections referenced by MIPS GOT relocations
   // to the first index of "Page" entries allocated for this section.
-  llvm::SmallDenseMap<const OutputSectionBase *, size_t> PageIndexMap;
+  llvm::SmallMapVector<const OutputSectionBase *, size_t, 16> PageIndexMap;
 
   typedef std::pair<const SymbolBody *, uintX_t> GotEntry;
   typedef std::vector<GotEntry> GotEntries;
