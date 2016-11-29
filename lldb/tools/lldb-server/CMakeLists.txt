@@ -43,10 +43,6 @@ set( LLDB_USED_LIBS
   lldbPluginSymbolFileDWARF
   lldbPluginSymbolFilePDB
   lldbPluginSymbolFileSymtab
-  lldbPluginDynamicLoaderStatic
-  lldbPluginDynamicLoaderPosixDYLD
-  lldbPluginDynamicLoaderHexagonDYLD
-  lldbPluginDynamicLoaderWindowsDYLD
 
   lldbPluginCPlusPlusLanguage
   lldbPluginGoLanguage
@@ -62,19 +58,9 @@ set( LLDB_USED_LIBS
   lldbPluginObjectContainerMachOArchive
   lldbPluginProcessGDBRemote
   lldbPluginProcessUtility
-  lldbPluginPlatformAndroid
-  lldbPluginPlatformGDB
-  lldbPluginPlatformFreeBSD
-  lldbPluginPlatformKalimba
-  lldbPluginPlatformLinux
-  lldbPluginPlatformNetBSD
-  lldbPluginPlatformPOSIX
-  lldbPluginPlatformWindows
   lldbPluginObjectContainerMachOArchive
   lldbPluginObjectContainerBSDArchive
-  lldbPluginPlatformMacOSX
   lldbPluginStructuredDataDarwinLog
-  lldbPluginDynamicLoaderMacOSXDYLD
   lldbPluginUnwindAssemblyInstEmulation
   lldbPluginUnwindAssemblyX86
   lldbPluginAppleObjCRuntime
@@ -82,19 +68,6 @@ set( LLDB_USED_LIBS
   lldbPluginLanguageRuntimeGo
   lldbPluginLanguageRuntimeJava
   lldbPluginCXXItaniumABI
-  lldbPluginABIMacOSX_arm
-  lldbPluginABIMacOSX_arm64
-  lldbPluginABIMacOSX_i386
-  lldbPluginABISysV_arm
-  lldbPluginABISysV_arm64
-  lldbPluginABISysV_i386
-  lldbPluginABISysV_x86_64
-  lldbPluginABISysV_hexagon
-  lldbPluginABISysV_ppc
-  lldbPluginABISysV_ppc64
-  lldbPluginABISysV_mips
-  lldbPluginABISysV_mips64
-  lldbPluginABISysV_s390x
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
   lldbPluginInstructionMIPS
