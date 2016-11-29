@@ -753,7 +753,7 @@ LabelDecl *Sema::GetOrCreateMSAsmLabel(StringRef ExternalLabelName,
     // Create an internal name for the label.  The name should not be a valid mangled
     // name, and should be unique.  We use a dot to make the name an invalid mangled
     // name.
-    OS << "__MSASMLABEL_.{:uid}__";
+    OS << "__MSASMLABEL_.${:uid}__";
     for (char C : ExternalLabelName) {
       OS << C;
       // We escape '$' in asm strings by replacing it with "$$"
