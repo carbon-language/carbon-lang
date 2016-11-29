@@ -658,9 +658,7 @@ llvm::opt::InputArgList ArgParser::parse(ArrayRef<const char *> ArgsArr) {
   }
 
   if (MissingCount)
-    fatal("missing arg value for \"" + Twine(Args.getArgString(MissingIndex)) +
-          "\", expected " + Twine(MissingCount) +
-          (MissingCount == 1 ? " argument." : " arguments."));
+    fatal(Twine(Args.getArgString(MissingIndex)) + ": missing argument");
   for (auto *Arg : Args.filtered(OPT_UNKNOWN))
     llvm::errs() << "ignoring unknown argument: " << Arg->getSpelling() << "\n";
   return Args;
