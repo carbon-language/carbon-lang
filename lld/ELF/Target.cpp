@@ -800,8 +800,8 @@ void X86_64TargetInfo<ELFT>::relocateOne(uint8_t *Loc, uint32_t Type,
     break;
   case R_X86_64_64:
   case R_X86_64_DTPOFF64:
-  case R_X86_64_SIZE64:
   case R_X86_64_PC64:
+  case R_X86_64_SIZE64:
     write64le(Loc, Val);
     break;
   default:
