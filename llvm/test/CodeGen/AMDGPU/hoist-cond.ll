@@ -4,7 +4,7 @@
 ; At the same time condition shall not be serialized into a VGPR and deserialized later
 ; using another v_cmp + v_cndmask, but used directly in s_and_saveexec_b64.
 
-; CHECK: v_cmp_{{..}}_u32_e64 [[COND:s\[[0-9]+:[0-9]+\]]]
+; CHECK: v_cmp_{{..}}_u32_e{{32|64}} [[COND:s\[[0-9]+:[0-9]+\]|vcc]]
 ; CHECK: BB0_1:
 ; CHECK-NOT: v_cmp
 ; CHECK_NOT: v_cndmask
