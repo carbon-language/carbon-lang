@@ -514,7 +514,7 @@ InlineSmallFunctions::inlineCall(
     // instructions in the last block of the inlined instance.
     // (Is it OK to have a basic block with just CFI instructions?)
     std::vector<MCInst> TrailInstructions =
-      std::move(CallerBB->splitInstructions(&CallInst));
+        CallerBB->splitInstructions(&CallInst);
     assert(TrailInstructions.size() > 0);
     InlinedInstance.back()->addInstructions(
         TrailInstructions.begin(),
