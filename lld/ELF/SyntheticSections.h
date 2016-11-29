@@ -446,6 +446,7 @@ public:
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override { return CuTypesOffset; }
+  bool empty() const override;
 
   // Pairs of [CU Offset, CU length].
   std::vector<std::pair<uintX_t, uintX_t>> CompilationUnits;

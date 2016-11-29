@@ -1448,6 +1448,10 @@ template <class ELFT> void GdbIndexSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
+template <class ELFT> bool GdbIndexSection<ELFT>::empty() const {
+  return !Out<ELFT>::DebugInfo;
+}
+
 template <class ELFT>
 EhFrameHeader<ELFT>::EhFrameHeader()
     : SyntheticSection<ELFT>(SHF_ALLOC, SHT_PROGBITS, 1, ".eh_frame_hdr") {}
