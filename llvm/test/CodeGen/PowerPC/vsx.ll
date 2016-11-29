@@ -1096,9 +1096,7 @@ define <2 x double> @test69(<2 x i16> %a) {
 ; CHECK-LE: mtvsrwa
 ; CHECK-LE: xscvsxddp
 ; CHECK-LE: xscvsxddp
-; CHECK-LE: xxspltd
-; CHECK-LE: xxspltd
-; CHECK-LE: xxmrgld
+; CHECK-LE: xxmrghd
 ; CHECK-LE: blr
 }
 
@@ -1121,9 +1119,7 @@ define <2 x double> @test70(<2 x i8> %a) {
 ; CHECK-LE: mtvsrwa
 ; CHECK-LE: xscvsxddp
 ; CHECK-LE: xscvsxddp
-; CHECK-LE: xxspltd
-; CHECK-LE: xxspltd
-; CHECK-LE: xxmrgld
+; CHECK-LE: xxmrghd
 ; CHECK-LE: blr
 }
 
