@@ -140,6 +140,7 @@ static MallocFreeTracer AllocTracer;
 
 void MallocHook(const volatile void *ptr, size_t size) {
   size_t N = AllocTracer.Mallocs++;
+  F->HandleMalloc(size);
   if (int TraceLevel = AllocTracer.TraceLevel) {
     Printf("MALLOC[%zd] %p %zd\n", N, ptr, size);
     if (TraceLevel >= 2 && EF)
@@ -153,6 +154,21 @@ void FreeHook(const volatile void *ptr) {
     if (TraceLevel >= 2 && EF)
       EF->__sanitizer_print_stack_trace();
   }
+}
+
+// Crash on a single malloc that exceeds the rss limit.
+void Fuzzer::HandleMalloc(size_t Size) {
+  if ((Size >> 20) < (size_t)Options.RssLimitMb)
+    return;
+  Printf("==%d== ERROR: libFuzzer: out-of-memory (malloc(%zd))\n", GetPid(),
+         Size);
+  Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n\n");
+  if (EF->__sanitizer_print_stack_trace)
+    EF->__sanitizer_print_stack_trace();
+  DumpCurrentUnit("oom-");
+  Printf("SUMMARY: libFuzzer: out-of-memory\n");
+  PrintFinalStats();
+  _Exit(Options.ErrorExitCode); // Stop right now.
 }
 
 Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,

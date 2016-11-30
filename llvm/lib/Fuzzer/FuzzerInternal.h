@@ -105,6 +105,8 @@ public:
   void TryDetectingAMemoryLeak(const uint8_t *Data, size_t Size,
                                bool DuringInitialCorpusExecution);
 
+  void HandleMalloc(size_t Size);
+
 private:
   void AlarmCallback();
   void CrashCallback();
