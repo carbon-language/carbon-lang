@@ -190,19 +190,6 @@ class MachineModuleInfo : public ImmutablePass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  struct VariableDbgInfo {
-    const DILocalVariable *Var;
-    const DIExpression *Expr;
-    unsigned Slot;
-    const DILocation *Loc;
-
-    VariableDbgInfo(const DILocalVariable *Var, const DIExpression *Expr,
-                    unsigned Slot, const DILocation *Loc)
-        : Var(Var), Expr(Expr), Slot(Slot), Loc(Loc) {}
-  };
-  typedef SmallVector<VariableDbgInfo, 4> VariableDbgInfoMapTy;
-  VariableDbgInfoMapTy VariableDbgInfos;
-
   explicit MachineModuleInfo(const TargetMachine *TM = nullptr);
   ~MachineModuleInfo() override;
 
@@ -396,15 +383,6 @@ public:
   const std::vector<unsigned> &getFilterIds() const {
     return FilterIds;
   }
-
-  /// Collect information used to emit debugging information of a variable.
-  void setVariableDbgInfo(const DILocalVariable *Var, const DIExpression *Expr,
-                          unsigned Slot, const DILocation *Loc) {
-    VariableDbgInfos.emplace_back(Var, Expr, Slot, Loc);
-  }
-
-  VariableDbgInfoMapTy &getVariableDbgInfo() { return VariableDbgInfos; }
-
 }; // End class MachineModuleInfo
 
 //===- MMI building helpers -----------------------------------------------===//

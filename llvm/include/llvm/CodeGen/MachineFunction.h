@@ -264,6 +264,20 @@ class MachineFunction {
   /// \pre Fn, Target, MMI, and FunctionNumber are properly set.
   void init();
 public:
+
+  struct VariableDbgInfo {
+    const DILocalVariable *Var;
+    const DIExpression *Expr;
+    unsigned Slot;
+    const DILocation *Loc;
+
+    VariableDbgInfo(const DILocalVariable *Var, const DIExpression *Expr,
+                    unsigned Slot, const DILocation *Loc)
+        : Var(Var), Expr(Expr), Slot(Slot), Loc(Loc) {}
+  };
+  typedef SmallVector<VariableDbgInfo, 4> VariableDbgInfoMapTy;
+  VariableDbgInfoMapTy VariableDbgInfos;
+
   MachineFunction(const Function *Fn, const TargetMachine &TM,
                   unsigned FunctionNum, MachineModuleInfo &MMI);
   ~MachineFunction();
@@ -656,6 +670,17 @@ public:
   LLVM_NODISCARD unsigned addFrameInst(const MCCFIInstruction &Inst) {
     FrameInstructions.push_back(Inst);
     return FrameInstructions.size() - 1;
+  }
+
+  /// Collect information used to emit debugging information of a variable.
+  void setVariableDbgInfo(const DILocalVariable *Var, const DIExpression *Expr,
+                          unsigned Slot, const DILocation *Loc) {
+    VariableDbgInfos.emplace_back(Var, Expr, Slot, Loc);
+  }
+
+  VariableDbgInfoMapTy &getVariableDbgInfo() { return VariableDbgInfos; }
+  const VariableDbgInfoMapTy &getVariableDbgInfo() const {
+    return VariableDbgInfos;
   }
 };
 

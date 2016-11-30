@@ -240,7 +240,6 @@ void MachineModuleInfo::EndFunction() {
   CallsEHReturn = false;
   CallsUnwindInit = false;
   HasEHFunclets = false;
-  VariableDbgInfos.clear();
 }
 
 //===- Address of Block Management ----------------------------------------===//
