@@ -152,7 +152,7 @@ namespace clang {
         LLVMIRGeneration.stopTimer();
     }
 
-    void HandleInterestingDecl(DeclGroupRef D) {
+    void HandleInterestingDecl(DeclGroupRef D) override {
       // Ignore interesting decls from the AST reader after IRGen is finished.
       if (!IRGenFinished)
         HandleTopLevelDecl(D);
