@@ -5642,7 +5642,7 @@ static void checkDLLAttributeRedeclaration(Sema &S, NamedDecl *OldDecl,
                                            NamedDecl *NewDecl,
                                            bool IsSpecialization,
                                            bool IsDefinition) {
-  if(OldDecl->isInvalidDecl())
+  if (OldDecl->isInvalidDecl())
     return;
 
   if (TemplateDecl *OldTD = dyn_cast<TemplateDecl>(OldDecl)) {
