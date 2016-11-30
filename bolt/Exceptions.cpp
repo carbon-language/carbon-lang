@@ -489,7 +489,6 @@ void BinaryFunction::emitLSDA(MCStreamer *Streamer) {
 }
 
 const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
-const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
 
 bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
   uint64_t Address = Function.getAddress();
@@ -584,14 +583,14 @@ bool CFIReaderWriter::fillCFIInfoFor(BinaryFunction &Function) const {
           break;
         case DW_CFA_def_cfa:
           Function.addCFIInstruction(
-              Offset, MCCFIInstruction::createDefCfa(nullptr, Instr.Ops[1],
-                                                     Instr.Ops[0]));
+              Offset, MCCFIInstruction::createDefCfa(nullptr, Instr.Ops[0],
+                                                     Instr.Ops[1]));
           break;
         case DW_CFA_def_cfa_sf:
           Function.addCFIInstruction(
               Offset, MCCFIInstruction::createDefCfa(
-                          nullptr, Instr.Ops[1],
-                          DataAlignment * int64_t(Instr.Ops[0])));
+                          nullptr, Instr.Ops[0],
+                          DataAlignment * int64_t(Instr.Ops[1])));
           break;
         case DW_CFA_def_cfa_register:
           Function.addCFIInstruction(
