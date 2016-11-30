@@ -33,6 +33,9 @@ void ReadDirToVectorOfUnits(const char *Path, std::vector<Unit> *V,
 std::string DirPlusFile(const std::string &DirPath,
                         const std::string &FileName);
 
+// Returns the name of the dir, similar to the 'dirname' utility.
+std::string DirName(const std::string &FileName);
+
 void DupAndCloseStderr();
 
 void CloseStdout();

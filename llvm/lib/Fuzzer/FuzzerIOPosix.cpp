@@ -18,8 +18,9 @@
 #include <dirent.h>
 #include <fstream>
 #include <iterator>
-#include <sys/types.h>
+#include <libgen.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 namespace fuzzer {
@@ -72,6 +73,14 @@ int DuplicateFile(int Fd) {
 
 void DeleteFile(const std::string &Path) {
   unlink(Path.c_str());
+}
+
+std::string DirName(const std::string &FileName) {
+  char *Tmp = new char[FileName.size() + 1];
+  memcpy(Tmp, FileName.c_str(), FileName.size() + 1);
+  std::string Res = dirname(Tmp);
+  delete [] Tmp;
+  return Res;
 }
 
 }  // namespace fuzzer

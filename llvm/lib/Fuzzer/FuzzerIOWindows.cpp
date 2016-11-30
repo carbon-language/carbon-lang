@@ -139,5 +139,9 @@ void DeleteFile(const std::string &Path) {
   _unlink(Path.c_str());
 }
 
+std::string DirName(const std::string &FileName) {
+  assert(0 && "Unimplemented");
+}
+
 }  // namespace fuzzer
 #endif // LIBFUZZER_WINDOWS
