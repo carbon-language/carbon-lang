@@ -560,11 +560,6 @@ public:
   llvm::Constant *BuildByrefLayout(CodeGenModule &CGM, QualType T) override {
     return NULLPtr;
   }
-
-  llvm::GlobalVariable *GetClassGlobal(StringRef Name,
-                                       bool Weak = false) override {
-    return nullptr;
-  }
 };
 
 /// Class representing the legacy GCC Objective-C ABI.  This is the default when
