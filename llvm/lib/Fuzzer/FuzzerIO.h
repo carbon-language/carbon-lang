@@ -15,14 +15,10 @@
 
 namespace fuzzer {
 
-bool IsFile(const std::string &Path);
-
 long GetEpoch(const std::string &Path);
 
 Unit FileToVector(const std::string &Path, size_t MaxSize = 0,
                   bool ExitOnError = true);
-
-void DeleteFile(const std::string &Path);
 
 std::string FileToString(const std::string &Path);
 
@@ -42,6 +38,22 @@ void DupAndCloseStderr();
 void CloseStdout();
 
 void Printf(const char *Fmt, ...);
+
+// Platform specific functions:
+bool IsFile(const std::string &Path);
+
+void ListFilesInDirRecursive(const std::string &Dir, long *Epoch,
+                             std::vector<std::string> *V, bool TopDir);
+
+char GetSeparator();
+
+FILE* OpenFile(int Fd, const char *Mode);
+
+int CloseFile(int Fd);
+
+int DuplicateFile(int Fd);
+
+void DeleteFile(const std::string &Path);
 
 }  // namespace fuzzer
 #endif  // LLVM_FUZZER_IO_H
