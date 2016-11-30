@@ -8,8 +8,9 @@
 //===----------------------------------------------------------------------===//
 // IO functions.
 //===----------------------------------------------------------------------===//
-#include "FuzzerExtFunctions.h"
+#include "FuzzerIO.h"
 #include "FuzzerDefs.h"
+#include "FuzzerExtFunctions.h"
 #include <iterator>
 #include <fstream>
 #include <dirent.h>

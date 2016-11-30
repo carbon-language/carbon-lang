@@ -9,16 +9,17 @@
 // Fuzzer's main loop.
 //===----------------------------------------------------------------------===//
 
-#include "FuzzerInternal.h"
 #include "FuzzerCorpus.h"
+#include "FuzzerInternal.h"
+#include "FuzzerIO.h"
 #include "FuzzerMutate.h"
-#include "FuzzerTracePC.h"
 #include "FuzzerRandom.h"
+#include "FuzzerTracePC.h"
 
 #include <algorithm>
 #include <cstring>
-#include <set>
 #include <memory>
+#include <set>
 
 #if defined(__has_include)
 #if __has_include(<sanitizer / coverage_interface.h>)

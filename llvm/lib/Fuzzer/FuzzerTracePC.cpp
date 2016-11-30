@@ -12,16 +12,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <map>
-#include <set>
-#include <sstream>
-
 #include "FuzzerCorpus.h"
 #include "FuzzerDefs.h"
 #include "FuzzerDictionary.h"
 #include "FuzzerExtFunctions.h"
+#include "FuzzerIO.h"
 #include "FuzzerTracePC.h"
 #include "FuzzerValueBitMap.h"
+#include <map>
+#include <set>
+#include <sstream>
 
 namespace fuzzer {
 

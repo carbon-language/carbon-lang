@@ -23,6 +23,7 @@
 #include "FuzzerExtFunctions.h"
 #include "FuzzerInterface.h"
 #include "FuzzerOptions.h"
+#include "FuzzerSHA1.h"
 #include "FuzzerValueBitMap.h"
 
 namespace fuzzer {
