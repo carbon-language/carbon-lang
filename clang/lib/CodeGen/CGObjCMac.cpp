@@ -1166,7 +1166,7 @@ public:
 
 class CGObjCMac : public CGObjCCommonMac {
 private:
-  friend class ProtocolMethodLists;
+  friend ProtocolMethodLists;
 
   ObjCTypesHelper ObjCTypes;
 
@@ -1356,7 +1356,7 @@ public:
 
 class CGObjCNonFragileABIMac : public CGObjCCommonMac {
 private:
-  friend class ProtocolMethodLists;
+  friend ProtocolMethodLists;
   ObjCNonFragileABITypesHelper ObjCTypes;
   llvm::GlobalVariable* ObjCEmptyCacheVar;
   llvm::Constant* ObjCEmptyVtableVar;
