@@ -122,10 +122,6 @@ class MachineModuleInfo : public ImmutablePass {
   /// want.
   MachineModuleInfoImpl *ObjFileMMI;
 
-  /// List of moves done by a function's prolog.  Used to construct frame maps
-  /// by debug and exception handling consumers.
-  std::vector<MCCFIInstruction> FrameInstructions;
-
   /// List of LandingPadInfo describing the landing pad information in the
   /// current function.
   std::vector<LandingPadInfo> LandingPads;
@@ -277,18 +273,6 @@ public:
 
   void setUsesMorestackAddr(bool b) {
     UsesMorestackAddr = b;
-  }
-
-  /// Returns a reference to a list of cfi instructions in the current
-  /// function's prologue.  Used to construct frame maps for debug and
-  /// exception handling comsumers.
-  const std::vector<MCCFIInstruction> &getFrameInstructions() const {
-    return FrameInstructions;
-  }
-
-  LLVM_NODISCARD unsigned addFrameInst(const MCCFIInstruction &Inst) {
-    FrameInstructions.push_back(Inst);
-    return FrameInstructions.size() - 1;
   }
 
   /// Return the symbol to be used for the specified basic block when its

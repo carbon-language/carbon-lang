@@ -230,9 +230,6 @@ bool MachineModuleInfo::doFinalization(Module &M) {
 }
 
 void MachineModuleInfo::EndFunction() {
-  // Clean up frame info.
-  FrameInstructions.clear();
-
   // Clean up exception info.
   LandingPads.clear();
   PersonalityTypeCache = EHPersonality::Unknown;

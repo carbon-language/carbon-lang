@@ -888,8 +888,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI,
     OS << "<mcsymbol " << *Op.getMCSymbol() << ">";
     break;
   case MachineOperand::MO_CFIIndex: {
-    const auto &MMI = Op.getParent()->getParent()->getParent()->getMMI();
-    print(MMI.getFrameInstructions()[Op.getCFIIndex()], TRI);
+    const MachineFunction &MF = *Op.getParent()->getParent()->getParent();
+    print(MF.getFrameInstructions()[Op.getCFIIndex()], TRI);
     break;
   }
   case MachineOperand::MO_IntrinsicID: {
