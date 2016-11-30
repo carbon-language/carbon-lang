@@ -24980,7 +24980,6 @@ X86TargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
                                          MachineBasicBlock *BB) const {
   DebugLoc DL = MI.getDebugLoc();
   MachineFunction *MF = BB->getParent();
-  MachineModuleInfo *MMI = &MF->getMMI();
   MachineFrameInfo &MFI = MF->getFrameInfo();
   MachineRegisterInfo *MRI = &MF->getRegInfo();
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
@@ -25004,10 +25003,10 @@ X86TargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
       break;
     }
 
-    if (!MMI->hasCallSiteLandingPad(Sym))
+    if (!MF->hasCallSiteLandingPad(Sym))
       continue;
 
-    for (unsigned CSI : MMI->getCallSiteLandingPad(Sym)) {
+    for (unsigned CSI : MF->getCallSiteLandingPad(Sym)) {
       CallSiteNumToLPad[CSI].push_back(&MBB);
       MaxCSNum = std::max(MaxCSNum, CSI);
     }
