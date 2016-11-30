@@ -434,13 +434,6 @@ private:
   /// int * but is actually an Obj-C class pointer.
   llvm::WeakVH CFConstantStringClassRef;
 
-  /// Cached reference to the class for constant strings. This value has type
-  /// int * but is actually an Obj-C class pointer.
-  llvm::WeakVH ConstantStringClassRef;
-
-  /// \brief The LLVM type corresponding to NSConstantString.
-  llvm::StructType *NSConstantStringType = nullptr;
-
   /// \brief The type used to describe the state of a fast enumeration in
   /// Objective-C's for..in loop.
   QualType ObjCFastEnumerationStateType;

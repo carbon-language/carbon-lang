@@ -888,6 +888,15 @@ protected:
   /// DefinedNonLazyCategories - List of defined "non-lazy" categories.
   SmallVector<llvm::GlobalValue*, 16> DefinedNonLazyCategories;
 
+  /// Cached reference to the class for constant strings. This value has type
+  /// int * but is actually an Obj-C class pointer.
+  llvm::WeakVH ConstantStringClassRef;
+
+  /// \brief The LLVM type corresponding to NSConstantString.
+  llvm::StructType *NSConstantStringType = nullptr;
+
+  llvm::StringMap<llvm::GlobalVariable *> NSConstantStringMap;
+
   /// GetNameForMethod - Return a name for the given method.
   /// \param[out] NameOut - The return value.
   void GetNameForMethod(const ObjCMethodDecl *OMD,
@@ -1054,6 +1063,7 @@ public:
   }
 
   ConstantAddress GenerateConstantString(const StringLiteral *SL) override;
+  ConstantAddress GenerateConstantNSString(const StringLiteral *SL);
 
   llvm::Function *GenerateMethod(const ObjCMethodDecl *OMD,
                                  const ObjCContainerDecl *CD=nullptr) override;
@@ -1070,6 +1080,9 @@ public:
   /// forward references will be filled in with empty bodies if no
   /// definition is seen. The return value has type ProtocolPtrTy.
   virtual llvm::Constant *GetOrEmitProtocolRef(const ObjCProtocolDecl *PD)=0;
+
+  virtual llvm::Constant *getNSConstantStringClassRef() = 0;
+
   llvm::Constant *BuildGCBlockLayout(CodeGen::CodeGenModule &CGM,
                                      const CGBlockInfo &blockInfo) override;
   llvm::Constant *BuildRCBlockLayout(CodeGen::CodeGenModule &CGM,
@@ -1265,6 +1278,8 @@ private:
 
 public:
   CGObjCMac(CodeGen::CodeGenModule &cgm);
+
+  llvm::Constant *getNSConstantStringClassRef() override;
 
   llvm::Function *ModuleInitFunction() override;
 
@@ -1536,7 +1551,9 @@ private:
 
 public:
   CGObjCNonFragileABIMac(CodeGen::CodeGenModule &cgm);
-  // FIXME. All stubs for now!
+
+  llvm::Constant *getNSConstantStringClassRef() override;
+
   llvm::Function *ModuleInitFunction() override;
 
   CodeGen::RValue GenerateMessageSend(CodeGen::CodeGenFunction &CGF,
@@ -1846,11 +1863,115 @@ llvm::Constant *CGObjCMac::GetEHType(QualType T) {
    };
 */
 
-ConstantAddress CGObjCCommonMac::GenerateConstantString(
-  const StringLiteral *SL) {
-  return (CGM.getLangOpts().NoConstantCFStrings == 0 ? 
-          CGM.GetAddrOfConstantCFString(SL) :
-          CGM.GetAddrOfConstantString(SL));
+ConstantAddress
+CGObjCCommonMac::GenerateConstantString(const StringLiteral *SL) {
+  return (!CGM.getLangOpts().NoConstantCFStrings
+            ? CGM.GetAddrOfConstantCFString(SL)
+            : GenerateConstantNSString(SL));
+}
+
+static llvm::StringMapEntry<llvm::GlobalVariable *> &
+GetConstantStringEntry(llvm::StringMap<llvm::GlobalVariable *> &Map,
+                       const StringLiteral *Literal, unsigned &StringLength) {
+  StringRef String = Literal->getString();
+  StringLength = String.size();
+  return *Map.insert(std::make_pair(String, nullptr)).first;
+}
+
+llvm::Constant *CGObjCMac::getNSConstantStringClassRef() {
+  if (llvm::Value *V = ConstantStringClassRef)
+    return cast<llvm::Constant>(V);
+
+  auto &StringClass = CGM.getLangOpts().ObjCConstantStringClass;
+  std::string str =
+    StringClass.empty() ? "_NSConstantStringClassReference"
+                        : "_" + StringClass + "ClassReference";
+
+  llvm::Type *PTy = llvm::ArrayType::get(CGM.IntTy, 0);
+  auto GV = CGM.CreateRuntimeVariable(PTy, str);
+  auto V = llvm::ConstantExpr::getBitCast(GV, CGM.IntTy->getPointerTo());
+  ConstantStringClassRef = V;
+  return V;
+}
+
+llvm::Constant *CGObjCNonFragileABIMac::getNSConstantStringClassRef() {
+  if (llvm::Value *V = ConstantStringClassRef)
+    return cast<llvm::Constant>(V);
+
+  auto &StringClass = CGM.getLangOpts().ObjCConstantStringClass;
+  std::string str = 
+    StringClass.empty() ? "OBJC_CLASS_$_NSConstantString" 
+                        : "OBJC_CLASS_$_" + StringClass;
+  auto GV = GetClassGlobal(str);
+
+  // Make sure the result is of the correct type.
+  auto V = llvm::ConstantExpr::getBitCast(GV, CGM.IntTy->getPointerTo());
+
+  ConstantStringClassRef = V;
+  return V;
+}
+
+ConstantAddress
+CGObjCCommonMac::GenerateConstantNSString(const StringLiteral *Literal) {
+  unsigned StringLength = 0;
+  llvm::StringMapEntry<llvm::GlobalVariable *> &Entry =
+    GetConstantStringEntry(NSConstantStringMap, Literal, StringLength);
+
+  if (auto *C = Entry.second)
+    return ConstantAddress(C, CharUnits::fromQuantity(C->getAlignment()));
+
+  // If we don't already have it, get _NSConstantStringClassReference.
+  llvm::Constant *Class = getNSConstantStringClassRef();
+
+  // If we don't already have it, construct the type for a constant NSString.
+  if (!NSConstantStringType) {
+    NSConstantStringType =
+      llvm::StructType::create({
+        CGM.Int32Ty->getPointerTo(),
+        CGM.Int8PtrTy,
+        CGM.IntTy
+      }, "struct.__builtin_NSString");
+  }
+
+  ConstantInitBuilder Builder(CGM);
+  auto Fields = Builder.beginStruct(NSConstantStringType);
+
+  // Class pointer.
+  Fields.add(Class);
+
+  // String pointer.
+  llvm::Constant *C =
+    llvm::ConstantDataArray::getString(VMContext, Entry.first());
+
+  llvm::GlobalValue::LinkageTypes Linkage = llvm::GlobalValue::PrivateLinkage;
+  bool isConstant = !CGM.getLangOpts().WritableStrings;
+
+  auto *GV = new llvm::GlobalVariable(CGM.getModule(), C->getType(), isConstant,
+                                      Linkage, C, ".str");
+  GV->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
+  // Don't enforce the target's minimum global alignment, since the only use
+  // of the string is via this class initializer.
+  GV->setAlignment(1);
+  Fields.addBitCast(GV, CGM.Int8PtrTy);
+
+  // String length.
+  Fields.addInt(CGM.IntTy, StringLength);
+
+  // The struct.
+  CharUnits Alignment = CGM.getPointerAlign();
+  GV = Fields.finishAndCreateGlobal("_unnamed_nsstring_", Alignment,
+                                    /*constant*/ true,
+                                    llvm::GlobalVariable::PrivateLinkage);
+  const char *NSStringSection = "__OBJC,__cstring_object,regular,no_dead_strip";
+  const char *NSStringNonFragileABISection =
+      "__DATA,__objc_stringobj,regular,no_dead_strip";
+  // FIXME. Fix section.
+  GV->setSection(CGM.getLangOpts().ObjCRuntime.isNonFragile()
+                     ? NSStringNonFragileABISection
+                     : NSStringSection);
+  Entry.second = GV;
+
+  return ConstantAddress(GV, Alignment);
 }
 
 enum {

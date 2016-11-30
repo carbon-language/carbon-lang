@@ -3131,14 +3131,6 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::GlobalVariable *> &Map,
                          nullptr)).first;
 }
 
-static llvm::StringMapEntry<llvm::GlobalVariable *> &
-GetConstantStringEntry(llvm::StringMap<llvm::GlobalVariable *> &Map,
-                       const StringLiteral *Literal, unsigned &StringLength) {
-  StringRef String = Literal->getString();
-  StringLength = String.size();
-  return *Map.insert(std::make_pair(String, nullptr)).first;
-}
-
 ConstantAddress
 CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   unsigned StringLength = 0;
@@ -3260,120 +3252,6 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     GV->setSection("__DATA,__cfstring");
     break;
   }
-  Entry.second = GV;
-
-  return ConstantAddress(GV, Alignment);
-}
-
-ConstantAddress
-CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
-  unsigned StringLength = 0;
-  llvm::StringMapEntry<llvm::GlobalVariable *> &Entry =
-      GetConstantStringEntry(CFConstantStringMap, Literal, StringLength);
-
-  if (auto *C = Entry.second)
-    return ConstantAddress(C, CharUnits::fromQuantity(C->getAlignment()));
-  
-  llvm::Constant *Zero = llvm::Constant::getNullValue(Int32Ty);
-  llvm::Constant *Zeros[] = { Zero, Zero };
-  llvm::Value *V;
-  // If we don't already have it, get _NSConstantStringClassReference.
-  if (!ConstantStringClassRef) {
-    std::string StringClass(getLangOpts().ObjCConstantStringClass);
-    llvm::Type *Ty = getTypes().ConvertType(getContext().IntTy);
-    llvm::Constant *GV;
-    if (LangOpts.ObjCRuntime.isNonFragile()) {
-      std::string str = 
-        StringClass.empty() ? "OBJC_CLASS_$_NSConstantString" 
-                            : "OBJC_CLASS_$_" + StringClass;
-      GV = getObjCRuntime().GetClassGlobal(str);
-      // Make sure the result is of the correct type.
-      llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
-      V = llvm::ConstantExpr::getBitCast(GV, PTy);
-      ConstantStringClassRef = V;
-    } else {
-      std::string str =
-        StringClass.empty() ? "_NSConstantStringClassReference"
-                            : "_" + StringClass + "ClassReference";
-      llvm::Type *PTy = llvm::ArrayType::get(Ty, 0);
-      GV = CreateRuntimeVariable(PTy, str);
-      // Decay array -> ptr
-      V = llvm::ConstantExpr::getGetElementPtr(PTy, GV, Zeros);
-      ConstantStringClassRef = V;
-    }
-  } else
-    V = ConstantStringClassRef;
-
-  if (!NSConstantStringType) {
-    // Construct the type for a constant NSString.
-    RecordDecl *D = Context.buildImplicitRecord("__builtin_NSString");
-    D->startDefinition();
-      
-    QualType FieldTypes[3];
-    
-    // const int *isa;
-    FieldTypes[0] = Context.getPointerType(Context.IntTy.withConst());
-    // const char *str;
-    FieldTypes[1] = Context.getPointerType(Context.CharTy.withConst());
-    // unsigned int length;
-    FieldTypes[2] = Context.UnsignedIntTy;
-    
-    // Create fields
-    for (unsigned i = 0; i < 3; ++i) {
-      FieldDecl *Field = FieldDecl::Create(Context, D,
-                                           SourceLocation(),
-                                           SourceLocation(), nullptr,
-                                           FieldTypes[i], /*TInfo=*/nullptr,
-                                           /*BitWidth=*/nullptr,
-                                           /*Mutable=*/false,
-                                           ICIS_NoInit);
-      Field->setAccess(AS_public);
-      D->addDecl(Field);
-    }
-    
-    D->completeDefinition();
-    QualType NSTy = Context.getTagDeclType(D);
-    NSConstantStringType = cast<llvm::StructType>(getTypes().ConvertType(NSTy));
-  }
-  
-  ConstantInitBuilder Builder(*this);
-  auto Fields = Builder.beginStruct(NSConstantStringType);
-  
-  // Class pointer.
-  Fields.add(cast<llvm::ConstantExpr>(V));
-  
-  // String pointer.
-  llvm::Constant *C =
-      llvm::ConstantDataArray::getString(VMContext, Entry.first());
-
-  llvm::GlobalValue::LinkageTypes Linkage = llvm::GlobalValue::PrivateLinkage;
-  bool isConstant = !LangOpts.WritableStrings;
-
-  auto *GV = new llvm::GlobalVariable(getModule(), C->getType(), isConstant,
-                                      Linkage, C, ".str");
-  GV->setUnnamedAddr(llvm::GlobalValue::UnnamedAddr::Global);
-  // Don't enforce the target's minimum global alignment, since the only use
-  // of the string is via this class initializer.
-  CharUnits Align = getContext().getTypeAlignInChars(getContext().CharTy);
-  GV->setAlignment(Align.getQuantity());
-  Fields.add(
-      llvm::ConstantExpr::getGetElementPtr(GV->getValueType(), GV, Zeros));
-
-  // String length.
-  Fields.addInt(IntTy, StringLength);
-  
-  // The struct.
-  CharUnits Alignment = getPointerAlign();
-  GV = Fields.finishAndCreateGlobal("_unnamed_nsstring_", Alignment,
-                                    /*constant*/ true,
-                                    llvm::GlobalVariable::PrivateLinkage);
-  const char *NSStringSection = "__OBJC,__cstring_object,regular,no_dead_strip";
-  const char *NSStringNonFragileABISection =
-      "__DATA,__objc_stringobj,regular,no_dead_strip";
-  // FIXME. Fix section.
-  GV->setSection(LangOpts.ObjCRuntime.isNonFragile()
-                     ? NSStringNonFragileABISection
-                     : NSStringSection);
   Entry.second = GV;
 
   return ConstantAddress(GV, Alignment);
