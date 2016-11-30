@@ -19,12 +19,12 @@ define i1 @test1(i32 %A, i32 %B) {
   ret i1 %ELIM3
 }
 
-; TODO: The next 6 (3 logic ops * (scalar+vector)) tests show potential cases for narrowing a bitwise logic op.
+; The next 6 (3 logic ops * (scalar+vector)) tests show potential cases for narrowing a bitwise logic op.
 
 define i32 @shrink_xor(i64 %a) {
 ; CHECK-LABEL: @shrink_xor(
-; CHECK-NEXT:    [[XOR:%.*]] = xor i64 %a, 1
-; CHECK-NEXT:    [[TRUNC:%.*]] = trunc i64 [[XOR]] to i32
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i64 %a to i32
+; CHECK-NEXT:    [[TRUNC:%.*]] = xor i32 [[TMP1]], 1
 ; CHECK-NEXT:    ret i32 [[TRUNC]]
 ;
   %xor = xor i64 %a, 1
@@ -36,8 +36,8 @@ define i32 @shrink_xor(i64 %a) {
 
 define <2 x i32> @shrink_xor_vec(<2 x i64> %a) {
 ; CHECK-LABEL: @shrink_xor_vec(
-; CHECK-NEXT:    [[XOR:%.*]] = xor <2 x i64> %a, <i64 2, i64 2>
-; CHECK-NEXT:    [[TRUNC:%.*]] = trunc <2 x i64> [[XOR]] to <2 x i32>
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc <2 x i64> %a to <2 x i32>
+; CHECK-NEXT:    [[TRUNC:%.*]] = xor <2 x i32> [[TMP1]], <i32 2, i32 2>
 ; CHECK-NEXT:    ret <2 x i32> [[TRUNC]]
 ;
   %xor = xor <2 x i64> %a, <i64 2, i64 2>
@@ -49,8 +49,8 @@ define <2 x i32> @shrink_xor_vec(<2 x i64> %a) {
 
 define i3 @shrink_or(i6 %a) {
 ; CHECK-LABEL: @shrink_or(
-; CHECK-NEXT:    [[OR:%.*]] = or i6 %a, 1
-; CHECK-NEXT:    [[TRUNC:%.*]] = trunc i6 [[OR]] to i3
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc i6 %a to i3
+; CHECK-NEXT:    [[TRUNC:%.*]] = or i3 [[TMP1]], 1
 ; CHECK-NEXT:    ret i3 [[TRUNC]]
 ;
   %or = or i6 %a, 33
@@ -62,8 +62,8 @@ define i3 @shrink_or(i6 %a) {
 
 define <2 x i8> @shrink_or_vec(<2 x i16> %a) {
 ; CHECK-LABEL: @shrink_or_vec(
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i16> %a, <i16 -1, i16 256>
-; CHECK-NEXT:    [[TRUNC:%.*]] = trunc <2 x i16> [[OR]] to <2 x i8>
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc <2 x i16> %a to <2 x i8>
+; CHECK-NEXT:    [[TRUNC:%.*]] = or <2 x i8> [[TMP1]], <i8 -1, i8 0>
 ; CHECK-NEXT:    ret <2 x i8> [[TRUNC]]
 ;
   %or = or <2 x i16> %a, <i16 -1, i16 256>
@@ -71,7 +71,7 @@ define <2 x i8> @shrink_or_vec(<2 x i16> %a) {
   ret <2 x i8> %trunc
 }
 
-; We discriminate against weird types?
+; We discriminate against weird types.
 
 define i31 @shrink_and(i64 %a) {
 ; CHECK-LABEL: @shrink_and(
@@ -88,8 +88,8 @@ define i31 @shrink_and(i64 %a) {
 
 define <2 x i32> @shrink_and_vec(<2 x i33> %a) {
 ; CHECK-LABEL: @shrink_and_vec(
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i33> %a, <i33 -4294967296, i33 6>
-; CHECK-NEXT:    [[TRUNC:%.*]] = trunc <2 x i33> [[AND]] to <2 x i32>
+; CHECK-NEXT:    [[TMP1:%.*]] = trunc <2 x i33> %a to <2 x i32>
+; CHECK-NEXT:    [[TRUNC:%.*]] = and <2 x i32> [[TMP1]], <i32 0, i32 6>
 ; CHECK-NEXT:    ret <2 x i32> [[TRUNC]]
 ;
   %and = and <2 x i33> %a, <i33 4294967296, i33 6>
