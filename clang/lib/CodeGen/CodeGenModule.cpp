@@ -1296,7 +1296,7 @@ void CodeGenModule::EmitDeferred() {
     // might had been created for another decl with the same mangled name but
     // different type.
     llvm::GlobalValue *GV = dyn_cast<llvm::GlobalValue>(
-        GetAddrOfGlobal(D, /*IsForDefinition=*/true));
+        GetAddrOfGlobal(D, ForDefinition));
 
     // In case of different address spaces, we may still get a cast, even with
     // IsForDefinition equal to true. Query mangled names table to get
@@ -1864,7 +1864,7 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                        GlobalDecl GD, bool ForVTable,
                                        bool DontDefer, bool IsThunk,
                                        llvm::AttributeSet ExtraAttrs,
-                                       bool IsForDefinition) {
+                                       ForDefinition_t IsForDefinition) {
   const Decl *D = GD.getDecl();
 
   // Lookup the entry, lazily creating it if necessary.
@@ -2024,7 +2024,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
                                                  llvm::Type *Ty,
                                                  bool ForVTable,
                                                  bool DontDefer,
-                                                 bool IsForDefinition) {
+                                              ForDefinition_t IsForDefinition) {
   // If there was no specific requested type, just convert it now.
   if (!Ty) {
     const auto *FD = cast<FunctionDecl>(GD.getDecl());
@@ -2103,7 +2103,7 @@ llvm::Constant *
 CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
                                      llvm::PointerType *Ty,
                                      const VarDecl *D,
-                                     bool IsForDefinition) {
+                                     ForDefinition_t IsForDefinition) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
@@ -2218,7 +2218,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
 
 llvm::Constant *
 CodeGenModule::GetAddrOfGlobal(GlobalDecl GD,
-                               bool IsForDefinition) {
+                               ForDefinition_t IsForDefinition) {
   if (isa<CXXConstructorDecl>(GD.getDecl()))
     return getAddrOfCXXStructor(cast<CXXConstructorDecl>(GD.getDecl()),
                                 getFromCtorType(GD.getCtorType()),
@@ -2295,7 +2295,7 @@ CodeGenModule::CreateOrReplaceCXXRuntimeVariable(StringRef Name,
 /// variable with the same mangled name but some other type.
 llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
                                                   llvm::Type *Ty,
-                                                  bool IsForDefinition) {
+                                           ForDefinition_t IsForDefinition) {
   assert(D->hasGlobalStorage() && "Not a global variable");
   QualType ASTTy = D->getType();
   if (!Ty)
@@ -2485,7 +2485,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D,
 
   llvm::Type* InitType = Init->getType();
   llvm::Constant *Entry =
-      GetAddrOfGlobalVar(D, InitType, /*IsForDefinition=*/!IsTentative);
+      GetAddrOfGlobalVar(D, InitType, ForDefinition_t(!IsTentative));
 
   // Strip off a bitcast if we got one back.
   if (auto *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
@@ -2518,7 +2518,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D,
 
     // Make a new global with the correct type, this is now guaranteed to work.
     GV = cast<llvm::GlobalVariable>(
-        GetAddrOfGlobalVar(D, InitType, /*IsForDefinition=*/!IsTentative));
+        GetAddrOfGlobalVar(D, InitType, ForDefinition_t(!IsTentative)));
 
     // Replace all uses of the old global with the new global
     llvm::Constant *NewPtrForOldDecl =
@@ -2922,7 +2922,7 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
   if (!GV || (GV->getType()->getElementType() != Ty))
     GV = cast<llvm::GlobalValue>(GetAddrOfFunction(GD, Ty, /*ForVTable=*/false,
                                                    /*DontDefer=*/true,
-                                                   /*IsForDefinition=*/true));
+                                                   ForDefinition));
 
   // Already emitted.
   if (!GV->isDeclaration())
