@@ -18,9 +18,9 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Target/Process.h"
 #include "llvm/Support/Compiler.h"
 
-#include "Plugins/Process/elf-core/ProcessElfCore.h"
 #include "RegisterContextPOSIX_x86.h"
 #include "RegisterContext_x86.h"
 
@@ -372,11 +372,6 @@ RegisterContextPOSIX_x86::RegisterContextPOSIX_x86(
   m_iovec.iov_len = sizeof(m_fpr.xstate.xsave);
 
   ::memset(&m_fpr, 0, sizeof(FPR));
-
-  // elf-core yet to support ReadFPR()
-  ProcessSP base = CalculateProcess();
-  if (base.get()->GetPluginName() == ProcessElfCore::GetPluginNameStatic())
-    return;
 
   m_fpr_type = eNotValid;
 }
