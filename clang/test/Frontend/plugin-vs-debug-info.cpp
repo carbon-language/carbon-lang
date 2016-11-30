@@ -2,8 +2,10 @@
 // happens to use a RecursiveASTVisitor that forces deserialization of AST
 // files.
 //
-// RUN: %clang_cc1 -fdelayed-template-parsing -std=c++14 -emit-pch -o %t.pch %s
-// RUN: %clang_cc1 -load %llvmshlibdir/PrintFunctionNames%pluginext \
+// RUN: %clang_cc1 -triple %itanium_abi_triple -fdelayed-template-parsing \
+// RUN:      -std=c++14 -emit-pch -o %t.pch %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple \
+// RUN:     -load %llvmshlibdir/PrintFunctionNames%pluginext \
 // RUN:     -add-plugin print-fns -std=c++14 -include-pch %t.pch %s -emit-llvm \
 // RUN:     -fdelayed-template-parsing -debug-info-kind=limited \
 // RUN:     -o %t.ll 2>&1 | FileCheck --check-prefix=DECLS %s
