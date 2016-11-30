@@ -420,7 +420,7 @@ size_t RegisterContextPOSIX_x86::GetGPRSize() {
 }
 
 size_t RegisterContextPOSIX_x86::GetFXSAVEOffset() {
-  return m_register_info_ap->GetFXSAVEOffset();
+  return GetRegisterInfo()[m_reg_info.first_fpr].byte_offset;
 }
 
 const RegisterInfo *RegisterContextPOSIX_x86::GetRegisterInfo() {
