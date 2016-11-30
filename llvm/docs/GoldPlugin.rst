@@ -5,10 +5,10 @@ The LLVM gold plugin
 Introduction
 ============
 
-Building with link time optimization requires cooperation from
-the system linker. LTO support on Linux systems requires that you use the
-`gold linker`_ which supports LTO via plugins. This is the same mechanism
-used by the `GCC LTO`_ project.
+Building with link time optimization requires cooperation from the system
+linker. LTO support on Linux systems requires that you use the `gold linker`_
+which supports LTO via plugins. This is the same mechanism used by the `GCC
+LTO`_ project.
 
 The LLVM gold plugin implements the gold plugin interface on top of
 :ref:`libLTO`.  The same plugin can also be used by other tools such as
