@@ -2450,7 +2450,8 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   llvm::GlobalVariable *selectorList = [&] {
     ConstantInitBuilder builder(CGM);
     auto selectors = builder.beginArray(selStructTy);
-    for (auto &entry : SelectorTable) {
+    auto &table = SelectorTable; // MSVC workaround
+    for (auto &entry : table) {
 
       std::string selNameStr = entry.first.getAsString();
       llvm::Constant *selName = ExportUniqueString(selNameStr, ".objc_sel_name");
