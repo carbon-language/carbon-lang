@@ -404,13 +404,14 @@ void RewriteInstance::generateDebugRanges() {
     SmallVector<char, 16> RangesBuffer;
     raw_svector_ostream OS(RangesBuffer);
 
-    auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
-    auto Writer = MAB->createObjectWriter(OS);
+    auto MAB = std::unique_ptr<MCAsmBackend>(
+        BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, ""));
+    auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
 
     if (RT == RANGES) {
-      RangesSectionsWriter.WriteRangesSection(Writer);
+      RangesSectionsWriter.WriteRangesSection(Writer.get());
     } else {
-      RangesSectionsWriter.WriteArangesSection(Writer);
+      RangesSectionsWriter.WriteArangesSection(Writer.get());
     }
     const auto &DebugRangesContents = OS.str();
 
@@ -432,13 +433,14 @@ void RewriteInstance::updateLocationLists() {
   SmallVector<char, 16> DebugLocBuffer;
   raw_svector_ostream OS(DebugLocBuffer);
 
-  auto MAB = BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, "");
-  auto Writer = MAB->createObjectWriter(OS);
+  auto MAB = std::unique_ptr<MCAsmBackend>(
+      BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, ""));
+  auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
 
   DebugLocWriter LocationListsWriter;
 
   for (const auto &Loc : BC->LocationLists) {
-    LocationListsWriter.write(Loc, Writer);
+    LocationListsWriter.write(Loc, Writer.get());
   }
 
   const auto &DebugLocContents = OS.str();
