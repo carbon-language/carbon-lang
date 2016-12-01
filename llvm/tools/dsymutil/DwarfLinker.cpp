@@ -2716,10 +2716,9 @@ DIE *DwarfLinker::DIECloner::cloneDIE(
   if (!Die) {
     // The DIE might have been already created by a forward reference
     // (see cloneDieReferenceAttribute()).
-    if (Info.Clone)
-      Die = Info.Clone;
-    else
-      Die = Info.Clone = DIE::get(DIEAlloc, dwarf::Tag(InputDIE.getTag()));
+    if (!Info.Clone)
+      Info.Clone = DIE::get(DIEAlloc, dwarf::Tag(InputDIE.getTag()));
+    Die = Info.Clone;
   }
 
   assert(Die->getTag() == InputDIE.getTag());
