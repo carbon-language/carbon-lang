@@ -101,7 +101,8 @@ void SystemZMCAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 
   // Big-endian insertion of Size bytes.
   Value = extractBitsForFixup(Kind, Value);
-  Value &= ((uint64_t)1 << BitSize) - 1;
+  if (BitSize < 64)
+    Value &= ((uint64_t)1 << BitSize) - 1;
   unsigned ShiftValue = (Size * 8) - 8;
   for (unsigned I = 0; I != Size; ++I) {
     Data[Offset + I] |= uint8_t(Value >> ShiftValue);
