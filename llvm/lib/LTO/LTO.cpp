@@ -99,26 +99,6 @@ static void computeCacheKey(
   Key = toHex(Hasher.result());
 }
 
-// Simple helper to load a module from bitcode
-std::unique_ptr<Module>
-llvm::loadModuleFromBuffer(const MemoryBufferRef &Buffer, LLVMContext &Context,
-                           bool Lazy) {
-  SMDiagnostic Err;
-  Expected<std::unique_ptr<Module>> ModuleOrErr =
-      Lazy ? getLazyBitcodeModule(Buffer, Context,
-                                  /* ShouldLazyLoadMetadata */ true)
-           : parseBitcodeFile(Buffer, Context);
-  if (!ModuleOrErr) {
-    handleAllErrors(ModuleOrErr.takeError(), [&](ErrorInfoBase &EIB) {
-      SMDiagnostic Err = SMDiagnostic(Buffer.getBufferIdentifier(),
-                                      SourceMgr::DK_Error, EIB.message());
-      Err.print("ThinLTO", errs());
-    });
-    report_fatal_error("Can't load module, abort.");
-  }
-  return std::move(ModuleOrErr.get());
-}
-
 static void thinLTOResolveWeakForLinkerGUID(
     GlobalValueSummaryList &GVSummaryList, GlobalValue::GUID GUID,
     DenseSet<GlobalValueSummary *> &GlobalInvolvedWithAlias,
