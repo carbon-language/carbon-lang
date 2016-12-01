@@ -22,7 +22,7 @@ using namespace lld::elf;
 
 // Returns a whole line containing the current token.
 StringRef ScriptParserBase::getLine() {
-  StringRef S = currentBuffer().getBuffer();
+  StringRef S = getCurrentMB().getBuffer();
   StringRef Tok = Tokens[Pos - 1];
 
   size_t Pos = S.rfind('\n', Tok.data() - S.data());
@@ -33,7 +33,7 @@ StringRef ScriptParserBase::getLine() {
 
 // Returns 1-based line number of the current token.
 size_t ScriptParserBase::getLineNumber() {
-  StringRef S = currentBuffer().getBuffer();
+  StringRef S = getCurrentMB().getBuffer();
   StringRef Tok = Tokens[Pos - 1];
   return S.substr(0, Tok.data() - S.data()).count('\n') + 1;
 }
@@ -45,7 +45,7 @@ size_t ScriptParserBase::getColumnNumber() {
 }
 
 std::string ScriptParserBase::getCurrentLocation() {
-  std::string Filename = currentBuffer().getBufferIdentifier();
+  std::string Filename = getCurrentMB().getBufferIdentifier();
   if (!Pos)
     return Filename;
   return (Filename + ":" + Twine(getLineNumber())).str();
@@ -182,21 +182,19 @@ void ScriptParserBase::expect(StringRef Expect) {
     setError(Expect + " expected, but got " + Tok);
 }
 
-// Returns true if string 'Bigger' contains string 'Shorter'.
-static bool containsString(StringRef Bigger, StringRef Shorter) {
-  const char *BiggerEnd = Bigger.data() + Bigger.size();
-  const char *ShorterEnd = Shorter.data() + Shorter.size();
-
-  return Bigger.data() <= Shorter.data() && BiggerEnd >= ShorterEnd;
+// Returns true if S encloses T.
+static bool encloses(StringRef S, StringRef T) {
+  return S.bytes_begin() <= T.bytes_begin() && T.bytes_end() <= S.bytes_end();
 }
 
-MemoryBufferRef ScriptParserBase::currentBuffer() {
+MemoryBufferRef ScriptParserBase::getCurrentMB() {
   // Find input buffer containing the current token.
   assert(!MBs.empty());
-  if (Pos)
-    for (MemoryBufferRef MB : MBs)
-      if (containsString(MB.getBuffer(), Tokens[Pos - 1]))
-        return MB;
+  if (!Pos)
+    return MBs[0];
 
-  return MBs.front();
+  for (MemoryBufferRef MB : MBs)
+    if (encloses(MB.getBuffer(), Tokens[Pos - 1]))
+      return MB;
+  llvm_unreachable("getCurrentMB: failed to find a token");
 }

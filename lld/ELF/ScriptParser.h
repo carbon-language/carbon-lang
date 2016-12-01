@@ -44,7 +44,7 @@ private:
   size_t getLineNumber();
   size_t getColumnNumber();
 
-  MemoryBufferRef currentBuffer();
+  MemoryBufferRef getCurrentMB();
 };
 
 } // namespace elf
