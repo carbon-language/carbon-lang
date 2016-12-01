@@ -109,7 +109,8 @@ void ModuleSymbolTable::CollectAsmSymbols(
   for (auto &KV : Streamer) {
     StringRef Key = KV.first();
     RecordStreamer::State Value = KV.second;
-    uint32_t Res = BasicSymbolRef::SF_None;
+    // FIXME: For now we just assume that all asm symbols are executable.
+    uint32_t Res = BasicSymbolRef::SF_Executable;
     switch (Value) {
     case RecordStreamer::NeverSeen:
       llvm_unreachable("NeverSeen should have been replaced earlier");
@@ -163,6 +164,8 @@ uint32_t ModuleSymbolTable::getSymbolFlags(Symbol S) const {
     if (GVar->isConstant())
       Res |= BasicSymbolRef::SF_Const;
   }
+  if (dyn_cast_or_null<Function>(GV->getBaseObject()))
+    Res |= BasicSymbolRef::SF_Executable;
   if (GV->hasPrivateLinkage())
     Res |= BasicSymbolRef::SF_FormatSpecific;
   if (!GV->hasLocalLinkage())
