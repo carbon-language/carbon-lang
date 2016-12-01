@@ -33,6 +33,7 @@
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
+#include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/Analysis/PHITransAddr.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -587,7 +588,8 @@ PreservedAnalyses GVN::run(Function &F, FunctionAnalysisManager &AM) {
   auto &AA = AM.getResult<AAManager>(F);
   auto &MemDep = AM.getResult<MemoryDependenceAnalysis>(F);
   auto *LI = AM.getCachedResult<LoopAnalysis>(F);
-  bool Changed = runImpl(F, AC, DT, TLI, AA, &MemDep, LI);
+  auto &ORE = AM.getResult<OptimizationRemarkEmitterAnalysis>(F);
+  bool Changed = runImpl(F, AC, DT, TLI, AA, &MemDep, LI, &ORE);
   if (!Changed)
     return PreservedAnalyses::all();
   PreservedAnalyses PA;
@@ -1583,8 +1585,16 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
   if (V->getType()->getScalarType()->isPointerTy())
     MD->invalidateCachedPointerInfo(V);
   markInstructionForDeletion(LI);
+  ORE->emit(OptimizationRemark(DEBUG_TYPE, "LoadPRE", LI)
+            << "load eliminated by PRE");
   ++NumPRELoad;
   return true;
+}
+
+static void reportLoadElim(LoadInst *LI, OptimizationRemarkEmitter *ORE) {
+  ORE->emit(OptimizationRemark(DEBUG_TYPE, "LoadElim", LI)
+            << "load of type " << ore::NV("Type", LI->getType())
+            << " eliminated");
 }
 
 /// Attempt to eliminate a load whose dependencies are
@@ -1657,6 +1667,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
       MD->invalidateCachedPointerInfo(V);
     markInstructionForDeletion(LI);
     ++NumGVNLoad;
+    reportLoadElim(LI, ORE);
     return true;
   }
 
@@ -1803,6 +1814,7 @@ bool GVN::processLoad(LoadInst *L) {
     patchAndReplaceAllUsesWith(L, AvailableValue);
     markInstructionForDeletion(L);
     ++NumGVNLoad;
+    reportLoadElim(L, ORE);
     // Tell MDA to rexamine the reused pointer since we might have more
     // information after forwarding it.
     if (MD && AvailableValue->getType()->getScalarType()->isPointerTy())
@@ -2180,7 +2192,8 @@ bool GVN::processInstruction(Instruction *I) {
 /// runOnFunction - This is the main transformation entry point for a function.
 bool GVN::runImpl(Function &F, AssumptionCache &RunAC, DominatorTree &RunDT,
                   const TargetLibraryInfo &RunTLI, AAResults &RunAA,
-                  MemoryDependenceResults *RunMD, LoopInfo *LI) {
+                  MemoryDependenceResults *RunMD, LoopInfo *LI,
+                  OptimizationRemarkEmitter *RunORE) {
   AC = &RunAC;
   DT = &RunDT;
   VN.setDomTree(DT);
@@ -2188,6 +2201,7 @@ bool GVN::runImpl(Function &F, AssumptionCache &RunAC, DominatorTree &RunDT,
   VN.setAliasAnalysis(&RunAA);
   MD = RunMD;
   VN.setMemDep(MD);
+  ORE = RunORE;
 
   bool Changed = false;
   bool ShouldContinue = true;
@@ -2703,7 +2717,8 @@ public:
         getAnalysis<AAResultsWrapperPass>().getAAResults(),
         NoLoads ? nullptr
                 : &getAnalysis<MemoryDependenceWrapperPass>().getMemDep(),
-        LIWP ? &LIWP->getLoopInfo() : nullptr);
+        LIWP ? &LIWP->getLoopInfo() : nullptr,
+        &getAnalysis<OptimizationRemarkEmitterWrapperPass>().getORE());
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
@@ -2716,6 +2731,7 @@ public:
 
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<GlobalsAAWrapperPass>();
+    AU.addRequired<OptimizationRemarkEmitterWrapperPass>();
   }
 
 private:
@@ -2737,4 +2753,5 @@ INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(AAResultsWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(GlobalsAAWrapperPass)
+INITIALIZE_PASS_DEPENDENCY(OptimizationRemarkEmitterWrapperPass)
 INITIALIZE_PASS_END(GVNLegacyPass, "gvn", "Global Value Numbering", false, false)
