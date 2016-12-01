@@ -202,7 +202,6 @@ public:
     return true;
   }
 
-  
   /// Merge the specified lattice value into this one, updating this
   /// one and returning true if anything changed.
   bool mergeIn(const LVILatticeVal &RHS, const DataLayout &DL) {
