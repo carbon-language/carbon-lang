@@ -1,5 +1,5 @@
 CHECK: COVERAGE:
-CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:13
+DISABLED-CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:13
 CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:14
 CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:16
 CHECK-DAG: COVERED: {{.*}}in LLVMFuzzerTestOneInput {{.*}}NullDerefTest.cpp:19
