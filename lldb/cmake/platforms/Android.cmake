@@ -172,27 +172,3 @@ if ( ANDROID_ABI STREQUAL "armeabi" )
  set( HAVE_UNWIND_BACKTRACE 0 CACHE INTERNAL "Hack to disable the finding of unwind.h on Android arm" )
 endif()
 ################# END EVIL HACK ####################
-
-################# BEGIN EVIL HACK ##################
-# lldb-server links against libdl even though it's not being used and
-# libdl.a is currently missing from the toolchain (b.android.com/178517).
-# Therefore, in order to statically link lldb-server, we need a temporary
-# workaround. This creates a dummy libdl.a stub until the actual
-# libdl.a can be implemented in the toolchain.
-if( LLVM_BUILD_STATIC )
- set( libdl "${CMAKE_BINARY_DIR}/libdl_stub" )
- file( MAKE_DIRECTORY ${libdl} )
- file( WRITE "${libdl}/libdl.c" "
-#include <dlfcn.h>
-void *       dlopen  (const char *filename, int flag)   { return 0; }
-const char * dlerror (void)                             { return 0; }
-void *       dlsym   (void *handle, const char *symbol) { return 0; }
-int          dlclose (void *handle)                     { return 0; }
-int          dladdr  (const void *addr, Dl_info *info)  { return 0; }")
- set( flags "${CMAKE_C_FLAGS}" )
- separate_arguments( flags )
- execute_process( COMMAND ${CMAKE_C_COMPILER} ${flags} -c ${libdl}/libdl.c -o ${libdl}/libdl.o )
- execute_process( COMMAND ${CMAKE_AR} rcs ${libdl}/libdl.a ${libdl}/libdl.o )
- set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L${libdl}" )
-endif()
-################# END EVIL HACK ##################
