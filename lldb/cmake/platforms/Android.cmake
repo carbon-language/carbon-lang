@@ -163,12 +163,3 @@ set( CMAKE_FIND_ROOT_PATH "${ANDROID_TOOLCHAIN_DIR}/bin" "${ANDROID_TOOLCHAIN_DI
 set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY )
 set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
 set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
-
-################# BEGIN EVIL HACK ##################
-# In the android-arm NDK unwind.h and link.h contains 2 conflicting
-# typedef for _Unwind_Ptr. Force HAVE_UNWIND_BACKTRACE to 0 to prevent
-# LLVM from finding unwind.h what would break the build.
-if ( ANDROID_ABI STREQUAL "armeabi" )
- set( HAVE_UNWIND_BACKTRACE 0 CACHE INTERNAL "Hack to disable the finding of unwind.h on Android arm" )
-endif()
-################# END EVIL HACK ####################
