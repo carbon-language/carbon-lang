@@ -202,7 +202,7 @@ DIEUnit::DIEUnit(uint16_t V, uint8_t A, dwarf::Tag UnitTag)
     : Die(UnitTag), Section(nullptr), Offset(0), Length(0), Version(V),
       AddrSize(A)
 {
-  Die.setUnit(this);
+  Die.Owner = this;
   assert((UnitTag == dwarf::DW_TAG_compile_unit ||
           UnitTag == dwarf::DW_TAG_type_unit ||
           UnitTag == dwarf::DW_TAG_partial_unit) && "expected a unit TAG");

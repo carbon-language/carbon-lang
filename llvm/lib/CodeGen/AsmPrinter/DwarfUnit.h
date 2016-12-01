@@ -112,7 +112,7 @@ public:
   const DICompileUnit *getCUNode() const { return CUNode; }
 
   /// Return true if this compile unit has something to write out.
-  bool hasContent() const { return Die.hasChildren(); }
+  bool hasContent() const { return getUnitDie().hasChildren(); }
 
   /// Get string containing language specific context for a global name.
   ///

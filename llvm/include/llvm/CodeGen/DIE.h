@@ -619,10 +619,6 @@ class DIE : IntrusiveBackListNode, public DIEValueList {
   DIE() = delete;
   explicit DIE(dwarf::Tag Tag) : Offset(0), Size(0), Tag(Tag) {}
 
-protected:
-  void setUnit(DIEUnit *U) {
-    Owner = U;
-  }
 public:
   static DIE *get(BumpPtrAllocator &Alloc, dwarf::Tag Tag) {
     return new (Alloc) DIE(Tag);
@@ -706,7 +702,6 @@ public:
 //===--------------------------------------------------------------------===//
 /// Represents a compile or type unit.
 class DIEUnit {
-protected:
   /// The compile unit or type unit DIE. This variable must be an instance of
   /// DIE so that we can calculate the DIEUnit from any DIE by traversing the
   /// parent backchain and getting the Unit DIE, and then casting itself to a

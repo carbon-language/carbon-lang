@@ -194,7 +194,7 @@ public:
   void emitHeader(bool UseOffsets) override;
 
   MCSymbol *getLabelBegin() const {
-    assert(Section);
+    assert(getSection());
     return LabelBegin;
   }
 
