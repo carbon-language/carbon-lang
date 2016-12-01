@@ -72,7 +72,7 @@ void ScriptParserBase::setError(const Twine &Msg) {
 
 // Split S into linker script tokens.
 void ScriptParserBase::tokenize(MemoryBufferRef MB) {
-  std::vector<StringRef> Ret;
+  std::vector<StringRef> Vec;
   MBs.push_back(MB);
   StringRef S = MB.getBuffer();
   StringRef Begin = S;
@@ -91,11 +91,11 @@ void ScriptParserBase::tokenize(MemoryBufferRef MB) {
       if (E == StringRef::npos) {
         StringRef Filename = MB.getBufferIdentifier();
         size_t Lineno = Begin.substr(0, S.data() - Begin.data()).count('\n');
-        error(Filename + ":" + Twine(Lineno) + ": unclosed quote");
+        error(Filename + ":" + Twine(Lineno + 1) + ": unclosed quote");
         return;
       }
 
-      Ret.push_back(S.take_front(E + 1));
+      Vec.push_back(S.take_front(E + 1));
       S = S.substr(E + 1);
       continue;
     }
@@ -110,11 +110,11 @@ void ScriptParserBase::tokenize(MemoryBufferRef MB) {
     // punctuation) forms a single character token.
     if (Pos == 0)
       Pos = 1;
-    Ret.push_back(S.substr(0, Pos));
+    Vec.push_back(S.substr(0, Pos));
     S = S.substr(Pos);
   }
 
-  Tokens.insert(Tokens.begin() + Pos, Ret.begin(), Ret.end());
+  Tokens.insert(Tokens.begin() + Pos, Vec.begin(), Vec.end());
 }
 
 // Skip leading whitespace characters or comments.
