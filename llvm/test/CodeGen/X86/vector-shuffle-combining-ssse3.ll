@@ -299,8 +299,7 @@ define <16 x i8> @combine_and_pshufb(<16 x i8> %a0) {
 define <16 x i8> @combine_pshufb_and(<16 x i8> %a0) {
 ; SSSE3-LABEL: combine_pshufb_and:
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0,1],zero,zero,zero,zero,zero,zero,xmm0[8,9],zero,zero,zero,zero,zero,zero
-; SSSE3-NEXT:    pand {{.*}}(%rip), %xmm0
+; SSSE3-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSSE3-NEXT:    retq
 ;
 ; SSE41-LABEL: combine_pshufb_and:

@@ -29889,6 +29889,17 @@ static SDValue combineAnd(SDNode *N, SelectionDAG &DAG,
   SDValue N1 = N->getOperand(1);
   SDLoc DL(N);
 
+  // Attempt to recursively combine a bitmask AND with shuffles.
+  if (VT.isVector() && (VT.getScalarSizeInBits() % 8) == 0) {
+    SDValue Op(N, 0);
+    SmallVector<int, 1> NonceMask; // Just a placeholder.
+    NonceMask.push_back(0);
+    if (combineX86ShufflesRecursively({Op}, 0, Op, NonceMask,
+                                      /*Depth*/ 1, /*HasPSHUFB*/ false, DAG,
+                                      DCI, Subtarget))
+      return SDValue(); // This routine will use CombineTo to replace N.
+  }
+
   // Create BEXTR instructions
   // BEXTR is ((X >> imm) & (2**size-1))
   if (VT != MVT::i32 && VT != MVT::i64)
