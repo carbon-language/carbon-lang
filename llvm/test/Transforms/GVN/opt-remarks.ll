@@ -15,6 +15,8 @@
 ; YAML-NEXT:   - String:          'load of type '
 ; YAML-NEXT:   - Type:            i32
 ; YAML-NEXT:   - String:          ' eliminated'
+; YAML-NEXT:   - String:          ' in favor of '
+; YAML-NEXT:   - InfavorOfValue:  i
 ; YAML-NEXT: ...
 ; YAML-NEXT: --- !Passed
 ; YAML-NEXT: Pass:            gvn
@@ -24,6 +26,8 @@
 ; YAML-NEXT:   - String:          'load of type '
 ; YAML-NEXT:   - Type:            i32
 ; YAML-NEXT:   - String:          ' eliminated'
+; YAML-NEXT:   - String:          ' in favor of '
+; YAML-NEXT:   - InfavorOfValue:  '4'
 ; YAML-NEXT: ...
 ; YAML-NEXT: --- !Passed
 ; YAML-NEXT: Pass:            gvn
@@ -33,6 +37,8 @@
 ; YAML-NEXT:   - String:          'load of type '
 ; YAML-NEXT:   - Type:            i32
 ; YAML-NEXT:   - String:          ' eliminated'
+; YAML-NEXT:   - String:          ' in favor of '
+; YAML-NEXT:   - InfavorOfValue:  load
 ; YAML-NEXT: ...
 
 
