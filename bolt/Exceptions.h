@@ -27,8 +27,7 @@ class BinaryFunction;
 /// BinaryFunction, as well as rewriting CFI sections.
 class CFIReaderWriter {
 public:
-  explicit CFIReaderWriter(const DWARFFrame &EHFrame)
-      : EHFrame(EHFrame) {
+  explicit CFIReaderWriter(const DWARFFrame &EHFrame) {
     // Prepare FDEs for fast lookup
     for (const auto &Entry : EHFrame.Entries) {
       const dwarf::FrameEntry *FE = Entry.get();
@@ -67,7 +66,6 @@ public:
   }
 
 private:
-  const DWARFFrame &EHFrame;
   FDEsMap FDEs;
 };
 
