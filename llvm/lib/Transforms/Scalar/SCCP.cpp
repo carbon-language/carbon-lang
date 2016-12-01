@@ -616,9 +616,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
     return;
   }
 
-#ifndef NDEBUG
-  dbgs() << "Unknown terminator instruction: " << TI << '\n';
-#endif
+  DEBUG(dbgs() << "Unknown terminator instruction: " << TI << '\n');
   llvm_unreachable("SCCP: Don't know how to handle this terminator!");
 }
 
@@ -672,9 +670,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
   if (isa<IndirectBrInst>(TI))
     return true;
 
-#ifndef NDEBUG
-  dbgs() << "Unknown terminator instruction: " << *TI << '\n';
-#endif
+  DEBUG(dbgs() << "Unknown terminator instruction: " << *TI << '\n');
   llvm_unreachable("SCCP: Don't know how to handle this terminator!");
 }
 
