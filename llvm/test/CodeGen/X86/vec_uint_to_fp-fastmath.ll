@@ -1,9 +1,9 @@
 ; RUN: llc < %s -mtriple=x86_64 -enable-unsafe-fp-math \
-; RUN:   | FileCheck %s --check-prefix=CHECK --check-prefix=SSE --check-prefix=CST
+; RUN:   | FileCheck %s --check-prefix=CHECK --check-prefix=CST --check-prefix=SSE --check-prefix=SSE2
 ; RUN: llc < %s -mtriple=x86_64 -enable-unsafe-fp-math -mattr=+sse4.1 \
-; RUN:   | FileCheck %s --check-prefix=CHECK --check-prefix=SSE --check-prefix=CST
+; RUN:   | FileCheck %s --check-prefix=CHECK --check-prefix=CST --check-prefix=SSE --check-prefix=SSE41
 ; RUN: llc < %s -mtriple=x86_64 -enable-unsafe-fp-math -mattr=+avx \
-; RUN:   | FileCheck %s --check-prefix=CHECK --check-prefix=AVX --check-prefix=CST
+; RUN:   | FileCheck %s --check-prefix=CHECK --check-prefix=CST --check-prefix=AVX
 ; RUN: llc < %s -mtriple=x86_64 -enable-unsafe-fp-math -mattr=+avx2 \
 ; RUN:   | FileCheck %s --check-prefix=CHECK --check-prefix=AVX2
 ; RUN: llc < %s -mtriple=x86_64 -enable-unsafe-fp-math -mattr=+avx512f \
