@@ -32,7 +32,7 @@ public:
   void skip();
   bool consume(StringRef Tok);
   void expect(StringRef Expect);
-  std::string currentLocation();
+  std::string getCurrentLocation();
 
   std::vector<MemoryBufferRef> MBs;
   std::vector<StringRef> Tokens;
@@ -40,6 +40,10 @@ public:
   bool Error = false;
 
 private:
+  StringRef getLine();
+  size_t getLineNumber();
+  size_t getColumnNumber();
+
   MemoryBufferRef currentBuffer();
 };
 
