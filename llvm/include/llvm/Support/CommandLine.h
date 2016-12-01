@@ -31,6 +31,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include <cassert>
+#include <climits>
 #include <cstddef>
 #include <initializer_list>
 #include <string>
