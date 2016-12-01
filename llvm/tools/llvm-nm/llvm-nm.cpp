@@ -998,13 +998,8 @@ dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
     uint32_t SymFlags = Sym.getFlags();
     if (!DebugSyms && (SymFlags & SymbolRef::SF_FormatSpecific))
       continue;
-    if (WithoutAliases) {
-      if (IRObjectFile *IR = dyn_cast<IRObjectFile>(&Obj)) {
-        const GlobalValue *GV = IR->getSymbolGV(Sym.getRawDataRefImpl());
-        if (GV && isa<GlobalAlias>(GV))
-          continue;
-      }
-    }
+    if (WithoutAliases && (SymFlags & SymbolRef::SF_Indirect))
+      continue;
     // If a "-s segname sectname" option was specified and this is a Mach-O
     // file and this section appears in this file, Nsect will be non-zero then
     // see if this symbol is a symbol from that section and if not skip it.

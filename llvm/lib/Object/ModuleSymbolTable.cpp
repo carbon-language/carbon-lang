@@ -166,6 +166,8 @@ uint32_t ModuleSymbolTable::getSymbolFlags(Symbol S) const {
   }
   if (dyn_cast_or_null<Function>(GV->getBaseObject()))
     Res |= BasicSymbolRef::SF_Executable;
+  if (isa<GlobalAlias>(GV))
+    Res |= BasicSymbolRef::SF_Indirect;
   if (GV->hasPrivateLinkage())
     Res |= BasicSymbolRef::SF_FormatSpecific;
   if (!GV->hasLocalLinkage())
