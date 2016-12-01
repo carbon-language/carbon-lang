@@ -75,7 +75,7 @@ void ARMException::endFunction(const MachineFunction *MF) {
     F->hasPersonalityFn() && !isNoOpWithoutInvoke(classifyEHPersonality(Per)) &&
     F->needsUnwindTableEntry();
   bool shouldEmitPersonality = forceEmitPersonality ||
-    !MF->getLandingPads().empty();
+    !MMI->getLandingPads().empty();
   if (!Asm->MF->getFunction()->needsUnwindTableEntry() &&
       !shouldEmitPersonality)
     ATS.emitCantUnwind();
@@ -99,9 +99,8 @@ void ARMException::endFunction(const MachineFunction *MF) {
 }
 
 void ARMException::emitTypeInfos(unsigned TTypeEncoding) {
-  const MachineFunction *MF = Asm->MF;
-  const std::vector<const GlobalValue *> &TypeInfos = MF->getTypeInfos();
-  const std::vector<unsigned> &FilterIds = MF->getFilterIds();
+  const std::vector<const GlobalValue *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 
   bool VerboseAsm = Asm->OutStreamer->isVerboseAsm();
 

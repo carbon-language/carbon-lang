@@ -82,7 +82,7 @@ void SystemZFrameLowering::determineCalleeSaves(MachineFunction &MF,
       SavedRegs.set(SystemZ::ArgGPRs[I]);
 
   // If there are any landing pads, entering them will modify r6/r7.
-  if (!MF.getLandingPads().empty()) {
+  if (!MF.getMMI().getLandingPads().empty()) {
     SavedRegs.set(SystemZ::R6D);
     SavedRegs.set(SystemZ::R7D);
   }

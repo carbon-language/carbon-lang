@@ -84,7 +84,7 @@ void TargetFrameLowering::determineCalleeSaves(MachineFunction &MF,
     return;
 
   // Functions which call __builtin_unwind_init get all their registers saved.
-  bool CallsUnwindInit = MF.callsUnwindInit();
+  bool CallsUnwindInit = MF.getMMI().callsUnwindInit();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];

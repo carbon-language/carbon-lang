@@ -44,11 +44,11 @@ DwarfCFIExceptionBase::DwarfCFIExceptionBase(AsmPrinter *A)
 void DwarfCFIExceptionBase::markFunctionEnd() {
   endFragment();
 
+  if (MMI->getLandingPads().empty())
+    return;
+
   // Map all labels and get rid of any dead landing pads.
-  if (!Asm->MF->getLandingPads().empty()) {
-    MachineFunction *NonConstMF = const_cast<MachineFunction*>(Asm->MF);
-    NonConstMF->tidyLandingPads();
-  }
+  MMI->TidyLandingPads();
 }
 
 void DwarfCFIExceptionBase::endFragment() {
@@ -98,7 +98,7 @@ void DwarfCFIException::beginFunction(const MachineFunction *MF) {
   const Function *F = MF->getFunction();
 
   // If any landing pads survive, we need an EH table.
-  bool hasLandingPads = !MF->getLandingPads().empty();
+  bool hasLandingPads = !MMI->getLandingPads().empty();
 
   // See if we need frame move info.
   AsmPrinter::CFIMoveType MoveType = Asm->needsCFIMoves();
@@ -170,7 +170,7 @@ void DwarfCFIException::beginFragment(const MachineBasicBlock *MBB,
 
 /// endFunction - Gather and emit post-function exception information.
 ///
-void DwarfCFIException::endFunction(const MachineFunction *MF) {
+void DwarfCFIException::endFunction(const MachineFunction *) {
   if (!shouldEmitPersonality)
     return;
 

@@ -270,7 +270,7 @@ X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   bool HasSSE = Subtarget.hasSSE1();
   bool HasAVX = Subtarget.hasAVX();
   bool HasAVX512 = Subtarget.hasAVX512();
-  bool CallsEHReturn = MF->callsEHReturn();
+  bool CallsEHReturn = MF->getMMI().callsEHReturn();
 
   switch (MF->getFunction()->getCallingConv()) {
   case CallingConv::GHC:

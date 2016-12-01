@@ -947,8 +947,8 @@ void AsmPrinter::EmitFunctionBody() {
   // Emit target-specific gunk after the function body.
   EmitFunctionBodyEnd();
 
-  if (!MF->getLandingPads().empty() || MMI->hasDebugInfo() ||
-      MF->hasEHFunclets() || MAI->hasDotTypeDotSizeDirective()) {
+  if (!MMI->getLandingPads().empty() || MMI->hasDebugInfo() ||
+      MMI->hasEHFunclets() || MAI->hasDotTypeDotSizeDirective()) {
     // Create a symbol for the end of function.
     CurrentFnEnd = createTempSymbol("func_end");
     OutStreamer->EmitLabel(CurrentFnEnd);
@@ -981,6 +981,7 @@ void AsmPrinter::EmitFunctionBody() {
                        HI.TimerGroupDescription, TimePassesIsEnabled);
     HI.Handler->endFunction(MF);
   }
+  MMI->EndFunction();
 
   OutStreamer->AddBlankLine();
 }
@@ -1272,8 +1273,8 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   CurrentFnBegin = nullptr;
   CurExceptionSym = nullptr;
   bool NeedsLocalForSize = MAI->needsLocalForSize();
-  if (!MF.getLandingPads().empty() || MMI->hasDebugInfo() ||
-      MF.hasEHFunclets() || NeedsLocalForSize) {
+  if (!MMI->getLandingPads().empty() || MMI->hasDebugInfo() ||
+      MMI->hasEHFunclets() || NeedsLocalForSize) {
     CurrentFnBegin = createTempSymbol("func_begin");
     if (NeedsLocalForSize)
       CurrentFnSymForSize = CurrentFnBegin;

@@ -83,12 +83,14 @@ X86FrameLowering::needsFrameIndexResolution(const MachineFunction &MF) const {
 /// or if frame pointer elimination is disabled.
 bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo &MFI = MF.getFrameInfo();
+  const MachineModuleInfo &MMI = MF.getMMI();
+
   return (MF.getTarget().Options.DisableFramePointerElim(MF) ||
           TRI->needsStackRealignment(MF) ||
           MFI.hasVarSizedObjects() ||
           MFI.isFrameAddressTaken() || MFI.hasOpaqueSPAdjustment() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
-          MF.callsUnwindInit() || MF.hasEHFunclets() || MF.callsEHReturn() ||
+          MMI.callsUnwindInit() || MMI.hasEHFunclets() || MMI.callsEHReturn() ||
           MFI.hasStackMap() || MFI.hasPatchPoint() ||
           MFI.hasCopyImplyingStackAdjustment());
 }
@@ -149,7 +151,7 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
                                        bool Is64Bit) {
   const MachineFunction *MF = MBB.getParent();
   const Function *F = MF->getFunction();
-  if (!F || MF->callsEHReturn())
+  if (!F || MF->getMMI().callsEHReturn())
     return 0;
 
   const TargetRegisterClass &AvailableRegs = *TRI->getGPRsForTailCall(*MF);
@@ -917,7 +919,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   if (Fn->hasPersonalityFn())
     Personality = classifyEHPersonality(Fn->getPersonalityFn());
   bool FnHasClrFunclet =
-      MF.hasEHFunclets() && Personality == EHPersonality::CoreCLR;
+      MMI.hasEHFunclets() && Personality == EHPersonality::CoreCLR;
   bool IsClrFunclet = IsFunclet && FnHasClrFunclet;
   bool HasFP = hasFP(MF);
   bool IsWin64CC = STI.isCallingConvWin64(Fn->getCallingConv());
@@ -2038,7 +2040,7 @@ void X86FrameLowering::determineCalleeSaves(MachineFunction &MF,
     SavedRegs.set(TRI->getBaseRegister());
 
     // Allocate a spill slot for EBP if we have a base pointer and EH funclets.
-    if (MF.hasEHFunclets()) {
+    if (MF.getMMI().hasEHFunclets()) {
       int FI = MFI.CreateSpillStackObject(SlotSize, SlotSize);
       X86FI->setHasSEHFramePtrSave(true);
       X86FI->setSEHFramePtrSaveIndex(FI);
@@ -2608,7 +2610,8 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // GNU_ARGS_SIZE.
     // TODO: We don't need to reset this between subsequent functions,
     // if it didn't change.
-    bool HasDwarfEHHandlers = !WindowsCFI && !MF.getLandingPads().empty();
+    bool HasDwarfEHHandlers = !WindowsCFI &&
+                              !MF.getMMI().getLandingPads().empty();
 
     if (HasDwarfEHHandlers && !isDestroy &&
         MF.getInfo<X86MachineFunctionInfo>()->getHasPushSequences())
@@ -2946,7 +2949,7 @@ void X86FrameLowering::processFunctionBeforeFrameFinalized(
   // If this function isn't doing Win64-style C++ EH, we don't need to do
   // anything.
   const Function *Fn = MF.getFunction();
-  if (!STI.is64Bit() || !MF.hasEHFunclets() ||
+  if (!STI.is64Bit() || !MF.getMMI().hasEHFunclets() ||
       classifyEHPersonality(Fn->getPersonalityFn()) != EHPersonality::MSVC_CXX)
     return;
 

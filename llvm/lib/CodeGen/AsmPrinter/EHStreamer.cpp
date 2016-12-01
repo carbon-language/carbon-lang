@@ -74,7 +74,7 @@ computeActionsTable(const SmallVectorImpl<const LandingPadInfo*> &LandingPads,
   // output using a fixed width encoding.  FilterOffsets[i] holds the byte
   // offset corresponding to FilterIds[i].
 
-  const std::vector<unsigned> &FilterIds = Asm->MF->getFilterIds();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
   SmallVector<int, 16> FilterOffsets;
   FilterOffsets.reserve(FilterIds.size());
   int Offset = -1;
@@ -296,7 +296,7 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
         else {
           // SjLj EH must maintain the call sites in the order assigned
           // to them by the SjLjPrepare pass.
-          unsigned SiteNo = Asm->MF->getCallSiteBeginLabel(BeginLabel);
+          unsigned SiteNo = MMI->getCallSiteBeginLabel(BeginLabel);
           if (CallSites.size() < SiteNo)
             CallSites.resize(SiteNo);
           CallSites[SiteNo - 1] = Site;
@@ -336,10 +336,9 @@ computeCallSiteTable(SmallVectorImpl<CallSiteEntry> &CallSites,
 ///  3. Type ID table contains references to all the C++ typeinfo for all
 ///     catches in the function.  This tables is reverse indexed base 1.
 void EHStreamer::emitExceptionTable() {
-  const MachineFunction *MF = Asm->MF;
-  const std::vector<const GlobalValue *> &TypeInfos = MF->getTypeInfos();
-  const std::vector<unsigned> &FilterIds = MF->getFilterIds();
-  const std::vector<LandingPadInfo> &PadInfos = MF->getLandingPads();
+  const std::vector<const GlobalValue *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
+  const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
 
   // Sort the landing pads in order of their type ids.  This is used to fold
   // duplicate actions.
@@ -650,9 +649,8 @@ void EHStreamer::emitExceptionTable() {
 }
 
 void EHStreamer::emitTypeInfos(unsigned TTypeEncoding) {
-  const MachineFunction *MF = Asm->MF;
-  const std::vector<const GlobalValue *> &TypeInfos = MF->getTypeInfos();
-  const std::vector<unsigned> &FilterIds = MF->getFilterIds();
+  const std::vector<const GlobalValue *> &TypeInfos = MMI->getTypeInfos();
+  const std::vector<unsigned> &FilterIds = MMI->getFilterIds();
 
   bool VerboseAsm = Asm->OutStreamer->isVerboseAsm();
 
