@@ -762,17 +762,11 @@ private:
 /// Class to manage reading and parsing function summary index bitcode
 /// files/sections.
 class ModuleSummaryIndexBitcodeReader : public BitcodeReaderBase {
-  /// Eventually points to the module index built during parsing.
-  ModuleSummaryIndex *TheIndex = nullptr;
-
-  /// Used to indicate whether caller only wants to check for the presence
-  /// of the global value summary bitcode section. All blocks are skipped,
-  /// but the SeenGlobalValSummary boolean is set.
-  bool CheckGlobalValSummaryPresenceOnly = false;
+  /// The module index built during parsing.
+  ModuleSummaryIndex *TheIndex;
 
   /// Indicates whether we have encountered a global value summary section
-  /// yet during parsing, used when checking if file contains global value
-  /// summary section.
+  /// yet during parsing.
   bool SeenGlobalValSummary = false;
 
   /// Indicates whether we have already parsed the VST, used for error checking.
@@ -803,17 +797,11 @@ class ModuleSummaryIndexBitcodeReader : public BitcodeReaderBase {
 
 public:
   ModuleSummaryIndexBitcodeReader(
-      BitstreamCursor Stream, bool CheckGlobalValSummaryPresenceOnly = false);
+      BitstreamCursor Stream, ModuleSummaryIndex *TheIndex);
 
-  /// Check if the parser has encountered a summary section.
-  bool foundGlobalValSummary() { return SeenGlobalValSummary; }
-
-  /// \brief Main interface to parsing a bitcode buffer.
-  /// \returns true if an error occurred.
-  Error parseSummaryIndexInto(ModuleSummaryIndex *I, StringRef ModulePath);
+  Error parseModule(StringRef ModulePath);
 
 private:
-  Error parseModule(StringRef ModulePath);
   Error parseValueSymbolTable(
       uint64_t Offset,
       DenseMap<unsigned, GlobalValue::LinkageTypes> &ValueIdToLinkageMap);
@@ -5895,9 +5883,8 @@ std::vector<StructType *> BitcodeReader::getIdentifiedStructTypes() const {
 }
 
 ModuleSummaryIndexBitcodeReader::ModuleSummaryIndexBitcodeReader(
-    BitstreamCursor Cursor, bool CheckGlobalValSummaryPresenceOnly)
-    : BitcodeReaderBase(std::move(Cursor)),
-      CheckGlobalValSummaryPresenceOnly(CheckGlobalValSummaryPresenceOnly) {}
+    BitstreamCursor Cursor, ModuleSummaryIndex *TheIndex)
+    : BitcodeReaderBase(std::move(Cursor)), TheIndex(TheIndex) {}
 
 std::pair<GlobalValue::GUID, GlobalValue::GUID>
 ModuleSummaryIndexBitcodeReader::getGUIDFromValueId(unsigned ValueId) {
@@ -6027,16 +6014,6 @@ Error ModuleSummaryIndexBitcodeReader::parseModule(StringRef ModulePath) {
       return Error::success();
 
     case BitstreamEntry::SubBlock:
-      if (CheckGlobalValSummaryPresenceOnly) {
-        if (Entry.ID == bitc::GLOBALVAL_SUMMARY_BLOCK_ID) {
-          SeenGlobalValSummary = true;
-          // No need to parse the rest since we found the summary.
-          return Error::success();
-        }
-        if (Stream.SkipBlock())
-          return error("Invalid record");
-        continue;
-      }
       switch (Entry.ID) {
       default: // Skip unknown content.
         if (Stream.SkipBlock())
@@ -6097,8 +6074,6 @@ Error ModuleSummaryIndexBitcodeReader::parseModule(StringRef ModulePath) {
         case bitc::MODULE_CODE_HASH: {
           if (Record.size() != 5)
             return error("Invalid hash length " + Twine(Record.size()).str());
-          if (!TheIndex)
-            break;
           if (TheIndex->modulePaths().empty())
             // We always seed the index with the module.
             TheIndex->addModulePath(ModulePath, 0);
@@ -6116,7 +6091,10 @@ Error ModuleSummaryIndexBitcodeReader::parseModule(StringRef ModulePath) {
         case bitc::MODULE_CODE_VSTOFFSET:
           if (Record.size() < 1)
             return error("Invalid record");
-          VSTOffset = Record[0];
+          // Note that we subtract 1 here because the offset is relative to one
+          // word before the start of the identification or module block, which
+          // was historically always the start of the regular bitcode header.
+          VSTOffset = Record[0] - 1;
           break;
         // GLOBALVAR: [pointer type, isconst, initid,
         //             linkage, alignment, section, visibility, threadlocal,
@@ -6488,35 +6466,6 @@ Error ModuleSummaryIndexBitcodeReader::parseModuleStringTable() {
   llvm_unreachable("Exit infinite loop");
 }
 
-// Parse the function info index from the bitcode streamer into the given index.
-Error ModuleSummaryIndexBitcodeReader::parseSummaryIndexInto(
-    ModuleSummaryIndex *I, StringRef ModulePath) {
-  TheIndex = I;
-
-  // We expect a number of well-defined blocks, though we don't necessarily
-  // need to understand them all.
-  while (true) {
-    if (Stream.AtEndOfStream()) {
-      // We didn't really read a proper Module block.
-      return error("Malformed block");
-    }
-
-    BitstreamEntry Entry =
-        Stream.advance(BitstreamCursor::AF_DontAutoprocessAbbrevs);
-
-    if (Entry.Kind != BitstreamEntry::SubBlock)
-      return error("Malformed block");
-
-    // If we see a MODULE_BLOCK, parse it to find the blocks needed for
-    // building the function summary index.
-    if (Entry.ID == bitc::MODULE_BLOCK_ID)
-      return parseModule(ModulePath);
-
-    if (Stream.SkipBlock())
-      return error("Invalid record");
-  }
-}
-
 namespace {
 
 // FIXME: This class is only here to support the transition to llvm::Error. It
@@ -6661,9 +6610,54 @@ BitcodeModule::getLazyModule(LLVMContext &Context,
   return getModuleImpl(Context, false, ShouldLazyLoadMetadata);
 }
 
-Expected<std::unique_ptr<Module>>
-llvm::getLazyBitcodeModule(MemoryBufferRef Buffer,
-                           LLVMContext &Context, bool ShouldLazyLoadMetadata) {
+// Parse the specified bitcode buffer, returning the function info index.
+Expected<std::unique_ptr<ModuleSummaryIndex>> BitcodeModule::getSummary() {
+  BitstreamCursor Stream(Buffer);
+  Stream.JumpToBit(ModuleBit);
+
+  auto Index = llvm::make_unique<ModuleSummaryIndex>();
+  ModuleSummaryIndexBitcodeReader R(std::move(Stream), Index.get());
+
+  if (Error Err = R.parseModule(ModuleIdentifier))
+    return std::move(Err);
+
+  return std::move(Index);
+}
+
+// Check if the given bitcode buffer contains a global value summary block.
+Expected<bool> BitcodeModule::hasSummary() {
+  BitstreamCursor Stream(Buffer);
+  Stream.JumpToBit(ModuleBit);
+
+  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
+    return error("Invalid record");
+
+  while (true) {
+    BitstreamEntry Entry = Stream.advance();
+
+    switch (Entry.Kind) {
+    case BitstreamEntry::Error:
+      return error("Malformed block");
+    case BitstreamEntry::EndBlock:
+      return false;
+
+    case BitstreamEntry::SubBlock:
+      if (Entry.ID == bitc::GLOBALVAL_SUMMARY_BLOCK_ID)
+        return true;
+
+      // Ignore other sub-blocks.
+      if (Stream.SkipBlock())
+        return error("Malformed block");
+      continue;
+
+    case BitstreamEntry::Record:
+      Stream.skipRecord(Entry.ID);
+      continue;
+    }
+  }
+}
+
+static Expected<BitcodeModule> getSingleModule(MemoryBufferRef Buffer) {
   Expected<std::vector<BitcodeModule>> MsOrErr = getBitcodeModuleList(Buffer);
   if (!MsOrErr)
     return MsOrErr.takeError();
@@ -6671,7 +6665,17 @@ llvm::getLazyBitcodeModule(MemoryBufferRef Buffer,
   if (MsOrErr->size() != 1)
     return error("Expected a single module");
 
-  return (*MsOrErr)[0].getLazyModule(Context, ShouldLazyLoadMetadata);
+  return (*MsOrErr)[0];
+}
+
+Expected<std::unique_ptr<Module>>
+llvm::getLazyBitcodeModule(MemoryBufferRef Buffer,
+                           LLVMContext &Context, bool ShouldLazyLoadMetadata) {
+  Expected<BitcodeModule> BM = getSingleModule(Buffer);
+  if (!BM)
+    return BM.takeError();
+
+  return BM->getLazyModule(Context, ShouldLazyLoadMetadata);
 }
 
 Expected<std::unique_ptr<Module>>
@@ -6693,14 +6697,11 @@ BitcodeModule::parseModule(LLVMContext &Context) {
 
 Expected<std::unique_ptr<Module>> llvm::parseBitcodeFile(MemoryBufferRef Buffer,
                                                          LLVMContext &Context) {
-  Expected<std::vector<BitcodeModule>> MsOrErr = getBitcodeModuleList(Buffer);
-  if (!MsOrErr)
-    return MsOrErr.takeError();
+  Expected<BitcodeModule> BM = getSingleModule(Buffer);
+  if (!BM)
+    return BM.takeError();
 
-  if (MsOrErr->size() != 1)
-    return error("Expected a single module");
-
-  return (*MsOrErr)[0].parseModule(Context);
+  return BM->parseModule(Context);
 }
 
 Expected<std::string> llvm::getBitcodeTargetTriple(MemoryBufferRef Buffer) {
@@ -6727,35 +6728,19 @@ Expected<std::string> llvm::getBitcodeProducerString(MemoryBufferRef Buffer) {
   return readIdentificationCode(*StreamOrErr);
 }
 
-// Parse the specified bitcode buffer, returning the function info index.
 Expected<std::unique_ptr<ModuleSummaryIndex>>
 llvm::getModuleSummaryIndex(MemoryBufferRef Buffer) {
-  Expected<BitstreamCursor> StreamOrErr = initStream(Buffer);
-  if (!StreamOrErr)
-    return StreamOrErr.takeError();
+  Expected<BitcodeModule> BM = getSingleModule(Buffer);
+  if (!BM)
+    return BM.takeError();
 
-  ModuleSummaryIndexBitcodeReader R(std::move(*StreamOrErr));
-
-  auto Index = llvm::make_unique<ModuleSummaryIndex>();
-
-  if (Error Err =
-          R.parseSummaryIndexInto(Index.get(), Buffer.getBufferIdentifier()))
-    return std::move(Err);
-
-  return std::move(Index);
+  return BM->getSummary();
 }
 
-// Check if the given bitcode buffer contains a global value summary block.
 Expected<bool> llvm::hasGlobalValueSummary(MemoryBufferRef Buffer) {
-  Expected<BitstreamCursor> StreamOrErr = initStream(Buffer);
-  if (!StreamOrErr)
-    return StreamOrErr.takeError();
+  Expected<BitcodeModule> BM = getSingleModule(Buffer);
+  if (!BM)
+    return BM.takeError();
 
-  ModuleSummaryIndexBitcodeReader R(std::move(*StreamOrErr), true);
-
-  if (Error Err =
-          R.parseSummaryIndexInto(nullptr, Buffer.getBufferIdentifier()))
-    return std::move(Err);
-
-  return R.foundGlobalValSummary();
+  return BM->hasSummary();
 }
