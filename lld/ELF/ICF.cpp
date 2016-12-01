@@ -243,8 +243,6 @@ bool ICF<ELFT>::variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RelsA,
     auto *Y = dyn_cast<InputSection<ELFT>>(DB->Section);
     if (!X || !Y)
       return false;
-    if (X->Color[Cnt % 2] == 0)
-      return false;
 
     // Performance hack for single-thread. If no other threads are
     // running, we can safely read next colors as there is no race
@@ -252,6 +250,11 @@ bool ICF<ELFT>::variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RelsA,
     // iterations of the main loop because we can see results of the
     // same iteration.
     size_t Idx = (Config->Threads ? Cnt : Cnt + 1) % 2;
+
+    // All colorable sections must have some colors.
+    // 0 is a default non-color value.
+    assert(X->Color[Idx] != 0 && Y->Color[Idx] != 0);
+
     return X->Color[Idx] == Y->Color[Idx];
   };
 
