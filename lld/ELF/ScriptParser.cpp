@@ -20,23 +20,22 @@ using namespace llvm;
 using namespace lld;
 using namespace lld::elf;
 
-// Returns the line that the token Tok is in.
-static StringRef getLine(StringRef Data, StringRef Tok) {
-  size_t Pos = Tok.data() - Data.data();
-  size_t Begin = Data.rfind('\n', Pos);
-  size_t End = Data.find('\n', Pos);
-  Begin = (Begin == StringRef::npos) ? 0 : Begin + 1;
-  if (End == StringRef::npos)
-    End = Data.size();
-  // rtrim for DOS-style newlines.
-  return Data.substr(Begin, End - Begin).rtrim();
+// Returns a line containing a token.
+static StringRef getLine(StringRef S, StringRef Tok) {
+  size_t Pos = S.rfind('\n', Tok.data() - S.data());
+  if (Pos != StringRef::npos)
+    S = S.substr(Pos + 1);
+  return S.substr(0, S.find_first_of("\r\n"));
 }
 
-static std::pair<size_t, size_t> getPos(StringRef Data, StringRef Tok) {
-  StringRef Line = getLine(Data, Tok);
-  size_t LineNo =
-      StringRef(Data.data(), Tok.data() - Data.data()).count('\n') + 1;
-  return {LineNo, Tok.data() - Line.data()};
+// Returns 1-based line number of a given token.
+static size_t getLineNumber(StringRef S, StringRef Tok) {
+  return S.substr(0, Tok.data() - S.data()).count('\n') + 1;
+}
+
+// Returns 0-based column number of a given token.
+static size_t getColumnNumber(StringRef S, StringRef Tok) {
+  return Tok.data() - getLine(S, Tok).data();
 }
 
 ScriptParserBase::ScriptParserBase(MemoryBufferRef MB) { tokenize(MB); }
@@ -45,22 +44,23 @@ ScriptParserBase::ScriptParserBase(MemoryBufferRef MB) { tokenize(MB); }
 void ScriptParserBase::setError(const Twine &Msg) {
   if (Error)
     return;
-
-  std::pair<size_t, size_t> ErrPos;
-  MemoryBufferRef MB = currentBuffer();
-  std::string Location = MB.getBufferIdentifier();
-  if (Pos) {
-    ErrPos = getPos(MB.getBuffer(), Tokens[Pos - 1]);
-    Location += ":";
-    Location += std::to_string(ErrPos.first);
-  }
-  error(Location + ": " + Msg);
-  if (Pos) {
-    error(Location + ": " + getLine(MB.getBuffer(), Tokens[Pos - 1]));
-    error(Location + ": " + std::string(ErrPos.second, ' ') + "^");
-  }
-
   Error = true;
+
+  MemoryBufferRef MB = currentBuffer();
+  std::string Filename = MB.getBufferIdentifier();
+
+  if (!Pos) {
+    error(Filename + ": " + Msg);
+    return;
+  }
+
+  StringRef Buf = MB.getBuffer();
+  StringRef Tok = Tokens[Pos - 1];
+  std::string S = (Filename + ":" + Twine(getLineNumber(Buf, Tok))).str();
+
+  error(S + ": " + Msg);
+  error(S + ": " + getLine(Buf, Tok));
+  error(S + ": " + std::string(getColumnNumber(Buf, Tok), ' ') + "^");
 }
 
 // Split S into linker script tokens.
@@ -81,8 +81,7 @@ void ScriptParserBase::tokenize(MemoryBufferRef MB) {
     if (S.startswith("\"")) {
       size_t E = S.find("\"", 1);
       if (E == StringRef::npos) {
-        auto ErrPos = getPos(Begin, S);
-        error(MB.getBufferIdentifier() + ":" + Twine(ErrPos.first) +
+        error(MB.getBufferIdentifier() + ":" + Twine(getLineNumber(Begin, S)) +
               ": unclosed quote");
         return;
       }
@@ -175,7 +174,7 @@ void ScriptParserBase::expect(StringRef Expect) {
 std::string ScriptParserBase::currentLocation() {
   MemoryBufferRef MB = currentBuffer();
   return (MB.getBufferIdentifier() + ":" +
-          Twine(getPos(MB.getBuffer(), Tokens[Pos - 1]).first))
+          Twine(getLineNumber(MB.getBuffer(), Tokens[Pos - 1])))
       .str();
 }
 
