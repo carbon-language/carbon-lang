@@ -162,12 +162,9 @@ public:
       skip();
     }
 
+    /// Returns the mangled name of the global.
     StringRef getName() const { return Name; }
-    StringRef getIRName() const {
-      if (GV)
-        return GV->getName();
-      return StringRef();
-    }
+
     uint32_t getFlags() const { return Flags; }
     GlobalValue::VisibilityTypes getVisibility() const {
       if (GV)

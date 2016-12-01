@@ -381,7 +381,10 @@ Error LTO::addRegularLTO(std::unique_ptr<InputFile> Input,
     // We also record if we see an instance of a common as prevailing, so that
     // if none is prevailing we can ignore it later.
     if (Sym.getFlags() & object::BasicSymbolRef::SF_Common) {
-      auto &CommonRes = RegularLTO.Commons[Sym.getIRName()];
+      // FIXME: We should figure out what to do about commons defined by asm.
+      // For now they aren't reported correctly by ModuleSymbolTable.
+      assert(GV);
+      auto &CommonRes = RegularLTO.Commons[GV->getName()];
       CommonRes.Size = std::max(CommonRes.Size, Sym.getCommonSize());
       CommonRes.Align = std::max(CommonRes.Align, Sym.getCommonAlignment());
       CommonRes.Prevailing |= Res.Prevailing;
