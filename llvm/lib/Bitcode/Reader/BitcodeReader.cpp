@@ -763,7 +763,7 @@ private:
 /// files/sections.
 class ModuleSummaryIndexBitcodeReader : public BitcodeReaderBase {
   /// The module index built during parsing.
-  ModuleSummaryIndex *TheIndex;
+  ModuleSummaryIndex &TheIndex;
 
   /// Indicates whether we have encountered a global value summary section
   /// yet during parsing.
@@ -797,7 +797,7 @@ class ModuleSummaryIndexBitcodeReader : public BitcodeReaderBase {
 
 public:
   ModuleSummaryIndexBitcodeReader(
-      BitstreamCursor Stream, ModuleSummaryIndex *TheIndex);
+      BitstreamCursor Stream, ModuleSummaryIndex &TheIndex);
 
   Error parseModule(StringRef ModulePath);
 
@@ -5883,7 +5883,7 @@ std::vector<StructType *> BitcodeReader::getIdentifiedStructTypes() const {
 }
 
 ModuleSummaryIndexBitcodeReader::ModuleSummaryIndexBitcodeReader(
-    BitstreamCursor Cursor, ModuleSummaryIndex *TheIndex)
+    BitstreamCursor Cursor, ModuleSummaryIndex &TheIndex)
     : BitcodeReaderBase(std::move(Cursor)), TheIndex(TheIndex) {}
 
 std::pair<GlobalValue::GUID, GlobalValue::GUID>
@@ -6074,12 +6074,12 @@ Error ModuleSummaryIndexBitcodeReader::parseModule(StringRef ModulePath) {
         case bitc::MODULE_CODE_HASH: {
           if (Record.size() != 5)
             return error("Invalid hash length " + Twine(Record.size()).str());
-          if (TheIndex->modulePaths().empty())
+          if (TheIndex.modulePaths().empty())
             // We always seed the index with the module.
-            TheIndex->addModulePath(ModulePath, 0);
-          if (TheIndex->modulePaths().size() != 1)
+            TheIndex.addModulePath(ModulePath, 0);
+          if (TheIndex.modulePaths().size() != 1)
             return error("Don't expect multiple modules defined?");
-          auto &Hash = TheIndex->modulePaths().begin()->second.second;
+          auto &Hash = TheIndex.modulePaths().begin()->second.second;
           int Pos = 0;
           for (auto &Val : Record) {
             assert(!(Val >> 32) && "Unexpected high bits set");
@@ -6181,7 +6181,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       // to clean them up (especially since that may not run for the first
       // module's index if we merge into that).
       if (!Combined)
-        TheIndex->removeEmptySummaryEntries();
+        TheIndex.removeEmptySummaryEntries();
       return Error::success();
     case BitstreamEntry::Record:
       // The interesting case.
@@ -6219,7 +6219,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       // string table section in the per-module index, we create a single
       // module path string table entry with an empty (0) ID to take
       // ownership.
-      FS->setModulePath(TheIndex->addModulePath(ModulePath, 0)->first());
+      FS->setModulePath(TheIndex.addModulePath(ModulePath, 0)->first());
       static int RefListStartIndex = 4;
       int CallGraphEdgeStartIndex = RefListStartIndex + NumRefs;
       assert(Record.size() >= RefListStartIndex + NumRefs &&
@@ -6240,7 +6240,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       }
       auto GUID = getGUIDFromValueId(ValueID);
       FS->setOriginalName(GUID.second);
-      TheIndex->addGlobalValueSummary(GUID.first, std::move(FS));
+      TheIndex.addGlobalValueSummary(GUID.first, std::move(FS));
       break;
     }
     // FS_ALIAS: [valueid, flags, valueid]
@@ -6257,17 +6257,17 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       // string table section in the per-module index, we create a single
       // module path string table entry with an empty (0) ID to take
       // ownership.
-      AS->setModulePath(TheIndex->addModulePath(ModulePath, 0)->first());
+      AS->setModulePath(TheIndex.addModulePath(ModulePath, 0)->first());
 
       GlobalValue::GUID AliaseeGUID = getGUIDFromValueId(AliaseeID).first;
-      auto *AliaseeSummary = TheIndex->getGlobalValueSummary(AliaseeGUID);
+      auto *AliaseeSummary = TheIndex.getGlobalValueSummary(AliaseeGUID);
       if (!AliaseeSummary)
         return error("Alias expects aliasee summary to be parsed");
       AS->setAliasee(AliaseeSummary);
 
       auto GUID = getGUIDFromValueId(ValueID);
       AS->setOriginalName(GUID.second);
-      TheIndex->addGlobalValueSummary(GUID.first, std::move(AS));
+      TheIndex.addGlobalValueSummary(GUID.first, std::move(AS));
       break;
     }
     // FS_PERMODULE_GLOBALVAR_INIT_REFS: [valueid, flags, n x valueid]
@@ -6277,7 +6277,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       auto Flags = getDecodedGVSummaryFlags(RawFlags, Version);
       std::unique_ptr<GlobalVarSummary> FS =
           llvm::make_unique<GlobalVarSummary>(Flags);
-      FS->setModulePath(TheIndex->addModulePath(ModulePath, 0)->first());
+      FS->setModulePath(TheIndex.addModulePath(ModulePath, 0)->first());
       for (unsigned I = 2, E = Record.size(); I != E; ++I) {
         unsigned RefValueId = Record[I];
         GlobalValue::GUID RefGUID = getGUIDFromValueId(RefValueId).first;
@@ -6285,7 +6285,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       }
       auto GUID = getGUIDFromValueId(ValueID);
       FS->setOriginalName(GUID.second);
-      TheIndex->addGlobalValueSummary(GUID.first, std::move(FS));
+      TheIndex.addGlobalValueSummary(GUID.first, std::move(FS));
       break;
     }
     // FS_COMBINED: [valueid, modid, flags, instcount, numrefs,
@@ -6324,7 +6324,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
         FS->addCallGraphEdge(CalleeGUID, CalleeInfo(Hotness));
       }
       GlobalValue::GUID GUID = getGUIDFromValueId(ValueID).first;
-      TheIndex->addGlobalValueSummary(GUID, std::move(FS));
+      TheIndex.addGlobalValueSummary(GUID, std::move(FS));
       Combined = true;
       break;
     }
@@ -6343,13 +6343,13 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
 
       auto AliaseeGUID = getGUIDFromValueId(AliaseeValueId).first;
       auto AliaseeInModule =
-          TheIndex->findSummaryInModule(AliaseeGUID, AS->modulePath());
+          TheIndex.findSummaryInModule(AliaseeGUID, AS->modulePath());
       if (!AliaseeInModule)
         return error("Alias expects aliasee summary to be parsed");
       AS->setAliasee(AliaseeInModule);
 
       GlobalValue::GUID GUID = getGUIDFromValueId(ValueID).first;
-      TheIndex->addGlobalValueSummary(GUID, std::move(AS));
+      TheIndex.addGlobalValueSummary(GUID, std::move(AS));
       Combined = true;
       break;
     }
@@ -6369,7 +6369,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
         FS->addRefEdge(RefGUID);
       }
       GlobalValue::GUID GUID = getGUIDFromValueId(ValueID).first;
-      TheIndex->addGlobalValueSummary(GUID, std::move(FS));
+      TheIndex.addGlobalValueSummary(GUID, std::move(FS));
       Combined = true;
       break;
     }
@@ -6440,7 +6440,7 @@ Error ModuleSummaryIndexBitcodeReader::parseModuleStringTable() {
       if (convertToString(Record, 1, ModulePath))
         return error("Invalid record");
 
-      LastSeenModulePath = TheIndex->addModulePath(ModulePath, ModuleId);
+      LastSeenModulePath = TheIndex.addModulePath(ModulePath, ModuleId);
       ModuleIdMap[ModuleId] = LastSeenModulePath->first();
 
       ModulePath.clear();
@@ -6450,7 +6450,7 @@ Error ModuleSummaryIndexBitcodeReader::parseModuleStringTable() {
     case bitc::MST_CODE_HASH: {
       if (Record.size() != 5)
         return error("Invalid hash length " + Twine(Record.size()).str());
-      if (LastSeenModulePath == TheIndex->modulePaths().end())
+      if (LastSeenModulePath == TheIndex.modulePaths().end())
         return error("Invalid hash that does not follow a module path");
       int Pos = 0;
       for (auto &Val : Record) {
@@ -6458,7 +6458,7 @@ Error ModuleSummaryIndexBitcodeReader::parseModuleStringTable() {
         LastSeenModulePath->second.second[Pos++] = Val;
       }
       // Reset LastSeenModulePath to avoid overriding the hash unexpectedly.
-      LastSeenModulePath = TheIndex->modulePaths().end();
+      LastSeenModulePath = TheIndex.modulePaths().end();
       break;
     }
     }
@@ -6616,7 +6616,7 @@ Expected<std::unique_ptr<ModuleSummaryIndex>> BitcodeModule::getSummary() {
   Stream.JumpToBit(ModuleBit);
 
   auto Index = llvm::make_unique<ModuleSummaryIndex>();
-  ModuleSummaryIndexBitcodeReader R(std::move(Stream), Index.get());
+  ModuleSummaryIndexBitcodeReader R(std::move(Stream), *Index);
 
   if (Error Err = R.parseModule(ModuleIdentifier))
     return std::move(Err);
