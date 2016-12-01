@@ -116,7 +116,7 @@ bool X86InterleavedAccessGroup::decompose(
     Instruction *VecInst, unsigned NumSubVectors, VectorType *SubVecTy,
     SmallVectorImpl<Instruction *> &DecomposedVectors) {
   Type *VecTy = VecInst->getType();
-
+  (void)VecTy;
   assert(VecTy->isVectorTy() &&
          DL.getTypeSizeInBits(VecTy) >=
              DL.getTypeSizeInBits(SubVecTy) * NumSubVectors &&
