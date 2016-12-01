@@ -122,7 +122,7 @@ DIEAbbrev DIE::generateAbbrev() const {
 unsigned DIE::getDebugSectionOffset() const {
   const DIEUnit *Unit = getUnit();
   assert(Unit && "DIE must be owned by a DIEUnit to get its absolute offset");
-  return getUnit()->getDebugSectionOffset() + getOffset();
+  return Unit->getDebugSectionOffset() + getOffset();
 }
 
 const DIE *DIE::getUnitDie() const {
