@@ -5558,6 +5558,25 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
 
   unsigned Opcode = N.getOpcode();
   switch (Opcode) {
+  case ISD::AND: {
+    // Attempt to decode as a per-byte mask.
+    SmallBitVector UndefElts;
+    SmallVector<APInt, 32> EltBits;
+    if (!getTargetConstantBitsFromNode(N.getOperand(1), 8, UndefElts, EltBits))
+      return false;
+    for (int i = 0, e = (int)EltBits.size(); i != e; ++i) {
+      if (UndefElts[i]) {
+        Mask.push_back(SM_SentinelUndef);
+        continue;
+      }
+      uint64_t ByteBits = EltBits[i].getZExtValue();
+      if (ByteBits != 0 && ByteBits != 255)
+        return false;
+      Mask.push_back(ByteBits == 0 ? SM_SentinelZero : i);
+    }
+    Ops.push_back(N.getOperand(0));
+    return true;
+  }
   case X86ISD::VSHLI:
   case X86ISD::VSRLI: {
     uint64_t ShiftVal = N.getConstantOperandVal(1);

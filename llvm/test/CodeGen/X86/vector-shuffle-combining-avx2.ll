@@ -72,13 +72,11 @@ define <32 x i8> @combine_pshufb_vpermps(<8 x float> %a) {
 define <32 x i8> @combine_and_pshufb(<32 x i8> %a0) {
 ; X32-LABEL: combine_and_pshufb:
 ; X32:       # BB#0:
-; X32-NEXT:    vpand {{\.LCPI.*}}, %ymm0, %ymm0
 ; X32-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1],zero,zero,zero,zero,zero,zero,ymm0[8,9],zero,zero,zero,zero,zero,zero,ymm0[16,17],zero,zero,zero,zero,zero,zero,ymm0[24,25],zero,zero,zero,zero,zero,zero
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_and_pshufb:
 ; X64:       # BB#0:
-; X64-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; X64-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,1],zero,zero,zero,zero,zero,zero,ymm0[8,9],zero,zero,zero,zero,zero,zero,ymm0[16,17],zero,zero,zero,zero,zero,zero,ymm0[24,25],zero,zero,zero,zero,zero,zero
 ; X64-NEXT:    retq
   %1 = shufflevector <32 x i8> %a0, <32 x i8> zeroinitializer, <32 x i32> <i32 0, i32 1, i32 32, i32 32, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31>
