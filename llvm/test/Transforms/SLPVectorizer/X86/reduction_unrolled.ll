@@ -10,10 +10,10 @@
 ;   return sum;
 ; }
 
-; Vector cost is 5, Scalar cost is 32
-; CHECK: Adding cost -27 for reduction that starts with   %7 = load i32, i32* %arrayidx.7, align 4 (It is a splitting reduction)
-; Vector cost is 17, Scalar cost is 16
-; SSE2:  Adding cost 1 for reduction that starts with   %7 = load i32, i32* %arrayidx.7, align 4 (It is a splitting reduction)
+; Vector cost is 5, Scalar cost is 7
+; CHECK: Adding cost -2 for reduction that starts with   %7 = load i32, i32* %arrayidx.7, align 4 (It is a splitting reduction)
+; Vector cost is 11, Scalar cost is 7
+; SSE2:  Adding cost 4 for reduction that starts with   %7 = load i32, i32* %arrayidx.7, align 4 (It is a splitting reduction)
 define i32 @test(i32* nocapture readonly %p) {
 ; CHECK-LABEL: @test(
 ; CHECK:         [[BC:%.*]] = bitcast i32* %p to <8 x i32>*
