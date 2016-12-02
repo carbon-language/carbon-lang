@@ -1150,7 +1150,9 @@ bool DwarfUnit::applySubprogramDefinitionAttributes(const DISubprogram *SP,
     assert(DeclDie && "This DIE should've already been constructed when the "
                       "definition DIE was created in "
                       "getOrCreateSubprogramDIE");
-    DeclLinkageName = SPDecl->getLinkageName();
+    // Look at the Decl's linkage name only if we emitted it.
+    if (DD->useAllLinkageNames())
+      DeclLinkageName = SPDecl->getLinkageName();
     unsigned DeclID =
         getOrCreateSourceID(SPDecl->getFilename(), SPDecl->getDirectory());
     unsigned DefID = getOrCreateSourceID(SP->getFilename(), SP->getDirectory());
