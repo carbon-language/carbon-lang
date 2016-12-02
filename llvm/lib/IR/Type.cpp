@@ -673,7 +673,9 @@ PointerType *PointerType::get(Type *EltTy, unsigned AddressSpace) {
 
 
 PointerType::PointerType(Type *E, unsigned AddrSpace)
-  : SequentialType(PointerTyID, E) {
+  : Type(E->getContext(), PointerTyID), PointeeTy(E) {
+  ContainedTys = &PointeeTy;
+  NumContainedTys = 1;
   setSubclassData(AddrSpace);
 }
 

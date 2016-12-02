@@ -120,7 +120,6 @@ static Constant *FoldBitCast(Constant *V, Type *DestTy) {
             IdxList.push_back(Zero);
           } else if (SequentialType *STy =
                      dyn_cast<SequentialType>(ElTy)) {
-            if (ElTy->isPointerTy()) break;  // Can't index into pointers!
             ElTy = STy->getElementType();
             IdxList.push_back(Zero);
           } else {
@@ -2206,11 +2205,6 @@ Constant *llvm::ConstantFoldGetElementPtr(Type *PointeeTy, Constant *C,
       continue;
     }
     auto *STy = cast<SequentialType>(Ty);
-    if (isa<PointerType>(STy)) {
-      // We don't know if it's in range or not.
-      Unknown = true;
-      continue;
-    }
     if (isa<VectorType>(STy)) {
       // There can be awkward padding in after a non-power of two vector.
       Unknown = true;
@@ -2222,7 +2216,7 @@ Constant *llvm::ConstantFoldGetElementPtr(Type *PointeeTy, Constant *C,
                                   CI))
       // It's in range, skip to the next index.
       continue;
-    if (!isa<SequentialType>(Prev)) {
+    if (isa<StructType>(Prev)) {
       // It's out of range, but the prior dimension is a struct
       // so we can't do anything about it.
       Unknown = true;
