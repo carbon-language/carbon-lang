@@ -453,7 +453,7 @@ private:
   static constexpr auto __make_farray(_Fs&&... __fs) {
     __std_visit_visitor_return_type_check<decay_t<_Fs>...>();
     using __result = array<common_type_t<decay_t<_Fs>...>, sizeof...(_Fs)>;
-    return __result{_VSTD::forward<_Fs>(__fs)...};
+    return __result{{_VSTD::forward<_Fs>(__fs)...}};
   }
 
   template <class _Fp, class... _Vs, size_t... _Is>
@@ -645,13 +645,14 @@ class _LIBCPP_TYPE_VIS_ONLY __base {
 public:
   inline _LIBCPP_INLINE_VISIBILITY
   explicit constexpr __base(__valueless_t tag) noexcept
-      : __index(__variant_npos), __data(tag) {}
+      : __data(tag), __index(__variant_npos) {}
 
   template <size_t _Ip, class... _Args>
   inline _LIBCPP_INLINE_VISIBILITY
   explicit constexpr __base(in_place_index_t<_Ip>, _Args&&... __args)
-      : __index(_Ip),
-        __data(in_place_index<_Ip>, _VSTD::forward<_Args>(__args)...) {}
+      :
+        __data(in_place_index<_Ip>, _VSTD::forward<_Args>(__args)...),
+        __index(_Ip) {}
 
   inline _LIBCPP_INLINE_VISIBILITY
   constexpr bool valueless_by_exception() const noexcept {
