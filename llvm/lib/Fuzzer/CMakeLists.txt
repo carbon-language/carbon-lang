@@ -13,6 +13,7 @@ if( LLVM_USE_SANITIZE_COVERAGE )
     FuzzerDriver.cpp
     FuzzerExtFunctionsDlsym.cpp
     FuzzerExtFunctionsWeak.cpp
+    FuzzerExtFunctionsWeakAlias.cpp
     FuzzerIO.cpp
     FuzzerIOPosix.cpp
     FuzzerIOWindows.cpp
