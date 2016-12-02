@@ -387,16 +387,16 @@ void test_copy_assignment_different_index() {
 
 template <size_t NewIdx, class ValueType>
 constexpr bool test_constexpr_assign_extension_imp(
-    std::variant<long, void*, const int>&& v, ValueType&& new_value)
+    std::variant<long, void*, int>&& v, ValueType&& new_value)
 {
-  const std::variant<long, void*, const int> cp(
+  const std::variant<long, void*, int> cp(
       std::forward<ValueType>(new_value));
   v = cp;
   return v.index() == NewIdx &&
         std::get<NewIdx>(v) == std::get<NewIdx>(cp);
 }
 
-void test_constexpr_move_ctor_extension() {
+void test_constexpr_copy_assignment_extension() {
 #ifdef _LIBCPP_VERSION
   using V = std::variant<long, void*, int>;
   static_assert(std::is_trivially_copyable<V>::value, "");
