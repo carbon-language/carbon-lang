@@ -1546,9 +1546,38 @@ def ATOMIC_CMP_SWAPW
   let hasNoSchedulingInfo = 1;
 }
 
+// Test and set.
+let mayLoad = 1, Defs = [CC] in
+  def TS : StoreInherentS<"ts", 0x9300, null_frag, 1>;
+
+// Compare and swap.
 let Defs = [CC] in {
   defm CS  : CmpSwapRSPair<"cs", 0xBA, 0xEB14, atomic_cmp_swap_32, GR32>;
   def  CSG : CmpSwapRSY<"csg", 0xEB30, atomic_cmp_swap_64, GR64>;
+}
+
+// Compare double and swap.
+let Defs = [CC] in {
+  defm CDS  : CmpSwapRSPair<"cds", 0xBB, 0xEB31, null_frag, GR128>;
+  def  CDSG : CmpSwapRSY<"cdsg", 0xEB3E, null_frag, GR128>;
+}
+
+// Compare and swap and store.
+let Uses = [R0L, R1D], Defs = [CC], mayStore = 1, mayLoad = 1 in
+  def CSST : SideEffectTernarySSF<"csst", 0xC82, GR64>;
+
+// Perform locked operation.
+let Uses = [R0L, R1D], Defs = [CC], mayStore = 1, mayLoad =1 in
+  def PLO : SideEffectQuaternarySSe<"plo", 0xEE, GR64>;
+
+// Load/store pair from/to quadword.
+def LPQ  : UnaryRXY<"lpq", 0xE38F, null_frag, GR128, 16>;
+def STPQ : StoreRXY<"stpq", 0xE38E, null_frag, GR128, 16>;
+
+// Load pair disjoint.
+let Predicates = [FeatureInterlockedAccess1], Defs = [CC] in {
+  def LPD  : BinarySSF<"lpd", 0xC84, GR128>;
+  def LPDG : BinarySSF<"lpdg", 0xC85, GR128>;
 }
 
 //===----------------------------------------------------------------------===//

@@ -833,6 +833,23 @@ class InstSSd<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{15-0}  = BD2;
 }
 
+class InstSSe<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<4> R1;
+  bits<16> BD2;
+  bits<4> R3;
+  bits<16> BD4;
+
+  let Inst{47-40} = op;
+  let Inst{39-36} = R1;
+  let Inst{35-32} = R3;
+  let Inst{31-16} = BD2;
+  let Inst{15-0}  = BD4;
+}
+
 class InstSSE<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstSystemZ<6, outs, ins, asmstr, pattern> {
   field bits<48> Inst;
@@ -2872,6 +2889,12 @@ multiclass BinarySIPair<string mnemonic, bits<8> siOpcode,
   }
 }
 
+class BinarySSF<string mnemonic, bits<12> opcode, RegisterOperand cls>
+  : InstSSF<opcode, (outs cls:$R3), (ins bdaddr12pair:$BD1, bdaddr12pair:$BD2),
+            mnemonic#"\t$R3, $BD1, $BD2", []> {
+  let mayLoad = 1;
+}
+
 class BinaryVRIb<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                  TypedReg tr, bits<4> type>
   : InstVRIb<opcode, (outs tr.op:$V1), (ins imm32zx8:$I2, imm32zx8:$I3),
@@ -3610,6 +3633,12 @@ multiclass QuaternaryOptVRRdSPairGeneric<string mnemonic, bits<16> opcode> {
                   (!cast<Instruction>(NAME) VR128:$V1, VR128:$V2, VR128:$V3,
                                             VR128:$V4, imm32zx4:$M5, 0)>;
 }
+
+class SideEffectQuaternarySSe<string mnemonic, bits<8> opcode,
+                              RegisterOperand cls>
+  : InstSSe<opcode, (outs),
+            (ins cls:$R1, bdaddr12only:$BD2, cls:$R3, bdaddr12only:$BD4),
+            mnemonic#"\t$R1, $BD2, $R3, $BD4", []>;
 
 class LoadAndOpRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                   RegisterOperand cls, AddressingMode mode = bdaddr20only>

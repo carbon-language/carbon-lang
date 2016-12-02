@@ -537,8 +537,30 @@ def : InstRW<[FXb, LSU, Lat5], (instregex "LAN(G)?$")>;
 def : InstRW<[FXb, LSU, Lat5], (instregex "LAO(G)?$")>;
 def : InstRW<[FXb, LSU, Lat5], (instregex "LAX(G)?$")>;
 
+// Test and set
+def : InstRW<[FXb, LSU, Lat5, EndGroup], (instregex "TS$")>;
+
 // Compare and swap
 def : InstRW<[FXa, FXb, LSU, Lat6, GroupAlone], (instregex "CS(G|Y)?$")>;
+
+// Compare double and swap
+def : InstRW<[FXa, FXa, FXb, FXb, FXa, LSU, Lat10, GroupAlone],
+             (instregex "CDS(Y)?$")>;
+def : InstRW<[FXa, FXa, FXb, FXb, LSU, FXb, FXb, LSU, LSU, Lat20, GroupAlone],
+             (instregex "CDSG$")>;
+
+// Compare and swap and store
+def : InstRW<[FXa, Lat30, GroupAlone], (instregex "CSST$")>;
+
+// Perform locked operation
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "PLO$")>;
+
+// Load/store pair from/to quadword
+def : InstRW<[LSU, LSU, Lat5, GroupAlone], (instregex "LPQ$")>;
+def : InstRW<[FXb, FXb, LSU, Lat6, GroupAlone], (instregex "STPQ$")>;
+
+// Load pair disjoint
+def : InstRW<[LSU, LSU, Lat5, GroupAlone], (instregex "LPD(G)?$")>;
 
 //===----------------------------------------------------------------------===//
 // Access registers
