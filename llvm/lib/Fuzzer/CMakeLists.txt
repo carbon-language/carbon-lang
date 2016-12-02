@@ -25,8 +25,6 @@ if( LLVM_USE_SANITIZE_COVERAGE )
     FuzzerUtil.cpp
     FuzzerUtilDarwin.cpp
     FuzzerUtilLinux.cpp
-    FuzzerUtilPosix.cpp
-    FuzzerUtilWindows.cpp
     )
   add_library(LLVMFuzzerNoMain STATIC
     $<TARGET_OBJECTS:LLVMFuzzerNoMainObjects>
