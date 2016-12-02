@@ -328,19 +328,21 @@ template <class ELFT> void ICF<ELFT>::run() {
   };
 
   // Compare static contents and assign unique IDs for each static content.
-  auto End = Ranges.end();
-  foreach(Ranges.begin(), End, [&](Range &R) { segregate(&R, true); });
-  foreach(End, Ranges.end(), Copy);
+  size_t Size = Ranges.size();
+  foreach(Ranges.begin(), Ranges.end(),
+          [&](Range &R) { segregate(&R, true); });
+  foreach(Ranges.begin() + Size, Ranges.end(), Copy);
   ++Cnt;
 
   // Split ranges by comparing relocations until convergence is obtained.
   for (;;) {
-    auto End = Ranges.end();
-    foreach(Ranges.begin(), End, [&](Range &R) { segregate(&R, false); });
-    foreach(End, Ranges.end(), Copy);
+    size_t Size = Ranges.size();
+    foreach(Ranges.begin(), Ranges.end(),
+            [&](Range &R) { segregate(&R, false); });
+    foreach(Ranges.begin() + Size, Ranges.end(), Copy);
     ++Cnt;
 
-    if (End == Ranges.end())
+    if (Size == Ranges.size())
       break;
   }
 
