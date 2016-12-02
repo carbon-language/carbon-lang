@@ -1526,7 +1526,8 @@ struct _LIBCPP_TYPE_VIS_ONLY hash<variant<_Types...>> {
   inline _LIBCPP_INLINE_VISIBILITY
   result_type operator()(const argument_type& __v) const {
     using __variant_detail::__visitation::__variant;
-    return __v.valueless_by_exception()
+    size_t __res =
+        __v.valueless_by_exception()
                ? __v.index()
                : __variant::__visit_alt(
                      [](const auto& __alt) {
@@ -1535,6 +1536,7 @@ struct _LIBCPP_TYPE_VIS_ONLY hash<variant<_Types...>> {
                        return hash<__value_type>{}(__alt.__value);
                      },
                      __v);
+    return __hash_combine(__res, hash<size_t>{}(__v.index()));
   }
 };
 
