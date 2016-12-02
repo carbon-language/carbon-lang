@@ -3283,12 +3283,12 @@ Important Derived Types
   * ``const Type * getElementType() const``: Returns the type of each
     of the elements in the sequential type.
 
+  * ``uint64_t getNumElements() const``: Returns the number of elements
+    in the sequential type.
+
 ``ArrayType``
   This is a subclass of SequentialType and defines the interface for array
   types.
-
-  * ``unsigned getNumElements() const``: Returns the number of elements
-    in the array.
 
 ``PointerType``
   Subclass of Type for pointer types.

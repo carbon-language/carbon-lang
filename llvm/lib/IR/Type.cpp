@@ -601,9 +601,7 @@ bool CompositeType::indexValid(unsigned Idx) const {
 //===----------------------------------------------------------------------===//
 
 ArrayType::ArrayType(Type *ElType, uint64_t NumEl)
-  : SequentialType(ArrayTyID, ElType) {
-  NumElements = NumEl;
-}
+  : SequentialType(ArrayTyID, ElType, NumEl) {}
 
 ArrayType *ArrayType::get(Type *ElementType, uint64_t NumElements) {
   assert(isValidElementType(ElementType) && "Invalid type for array element!");
@@ -628,9 +626,7 @@ bool ArrayType::isValidElementType(Type *ElemTy) {
 //===----------------------------------------------------------------------===//
 
 VectorType::VectorType(Type *ElType, unsigned NumEl)
-  : SequentialType(VectorTyID, ElType) {
-  NumElements = NumEl;
-}
+  : SequentialType(VectorTyID, ElType, NumEl) {}
 
 VectorType *VectorType::get(Type *ElementType, unsigned NumElements) {
   assert(NumElements > 0 && "#Elements of a VectorType must be greater than 0");

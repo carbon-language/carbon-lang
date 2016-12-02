@@ -891,10 +891,8 @@ Constant *llvm::ConstantFoldInsertValueInstruction(Constant *Agg,
   unsigned NumElts;
   if (StructType *ST = dyn_cast<StructType>(Agg->getType()))
     NumElts = ST->getNumElements();
-  else if (ArrayType *AT = dyn_cast<ArrayType>(Agg->getType()))
-    NumElts = AT->getNumElements();
   else
-    NumElts = Agg->getType()->getVectorNumElements();
+    NumElts = cast<SequentialType>(Agg->getType())->getNumElements();
 
   SmallVector<Constant*, 32> Result;
   for (unsigned i = 0; i != NumElts; ++i) {
@@ -2210,10 +2208,7 @@ Constant *llvm::ConstantFoldGetElementPtr(Type *PointeeTy, Constant *C,
       Unknown = true;
       continue;
     }
-    if (isIndexInRangeOfArrayType(isa<ArrayType>(STy)
-                                      ? cast<ArrayType>(STy)->getNumElements()
-                                      : cast<VectorType>(STy)->getNumElements(),
-                                  CI))
+    if (isIndexInRangeOfArrayType(STy->getNumElements(), CI))
       // It's in range, skip to the next index.
       continue;
     if (isa<StructType>(Prev)) {
