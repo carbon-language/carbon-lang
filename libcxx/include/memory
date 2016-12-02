@@ -3352,7 +3352,7 @@ inline size_t __hash_combine(size_t __lhs, size_t __rhs) _NOEXCEPT {
       size_t second;
     };
     typedef __scalar_hash<_PairT> _HashT;
-    const _PairT __p{__lhs, __rhs};
+    const _PairT __p = {__lhs, __rhs};
     return _HashT()(__p);
 }
 
