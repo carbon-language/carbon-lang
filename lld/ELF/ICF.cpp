@@ -242,9 +242,10 @@ bool ICF<ELFT>::variableEq(const InputSection<ELFT> *A, ArrayRef<RelTy> RelsA,
     // same iteration.
     size_t Idx = (Config->Threads ? Cnt : Cnt + 1) % 2;
 
-    // All colorable sections must have some colors.
-    // 0 is a default non-color value.
-    assert(X->Color[Idx] != 0 && Y->Color[Idx] != 0);
+    // Ineligible sections have the special color 0.
+    // They can never be the same in terms of section colors.
+    if (X->Color[Idx] == 0)
+      return false;
 
     return X->Color[Idx] == Y->Color[Idx];
   };
