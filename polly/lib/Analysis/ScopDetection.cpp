@@ -109,6 +109,13 @@ static cl::opt<bool>
                    cl::Hidden, cl::init(false), cl::ZeroOrMore,
                    cl::cat(PollyCategory));
 
+bool polly::PollyAllowUnsignedOperations;
+static cl::opt<bool, true> XPollyAllowUnsignedOperations(
+    "polly-allow-unsigned-operations",
+    cl::desc("Allow unsigned operations such as comparisons or zero-extends."),
+    cl::location(PollyAllowUnsignedOperations), cl::Hidden, cl::ZeroOrMore,
+    cl::init(true), cl::cat(PollyCategory));
+
 bool polly::PollyUseRuntimeAliasChecks;
 static cl::opt<bool, true> XPollyUseRuntimeAliasChecks(
     "polly-use-runtime-alias-checks",
@@ -453,6 +460,11 @@ bool ScopDetection::isValidBranch(BasicBlock &BB, BranchInst *BI,
   Loop *L = LI->getLoopFor(&BB);
   const SCEV *LHS = SE->getSCEVAtScope(ICmp->getOperand(0), L);
   const SCEV *RHS = SE->getSCEVAtScope(ICmp->getOperand(1), L);
+
+  // If unsigned operations are not allowed try to approximate the region.
+  if (ICmp->isUnsigned() && !PollyAllowUnsignedOperations)
+    return !IsLoopBranch && AllowNonAffineSubRegions &&
+           addOverApproximatedRegion(RI->getRegionFor(&BB), Context);
 
   // Check for invalid usage of different pointers in one expression.
   if (ICmp->isEquality() && involvesMultiplePtrs(LHS, nullptr, L) &&
