@@ -14,6 +14,7 @@
 
 #include <cassert>
 
+#ifdef __cpp_noexcept_function_type
 struct X {
   template<bool Noexcept> void f() noexcept(Noexcept) {}
 };
@@ -60,11 +61,12 @@ void check_deep() {
 
 int main()
 {
-#ifdef __cpp_noexcept_function_type
     check<false, false>();
     check<false, true>();
     check<true, false>();
     check<true, true>();
     check_deep();
-#endif
 }
+#else
+int main() {}
+#endif
