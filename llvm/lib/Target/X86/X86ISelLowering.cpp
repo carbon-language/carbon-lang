@@ -5131,7 +5131,7 @@ static const Constant *getTargetConstantFromNode(SDValue Op) {
   return dyn_cast<Constant>(CNode->getConstVal());
 }
 
-// Extract constant bits from constant pool vector.
+// Extract raw constant bits from constant pools.
 static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
                                           SmallBitVector &UndefElts,
                                           SmallVectorImpl<APInt> &EltBits) {
@@ -5143,63 +5143,75 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   assert((SizeInBits % EltSizeInBits) == 0 && "Can't split constant!");
   unsigned NumElts = SizeInBits / EltSizeInBits;
 
-  auto *Cst = getTargetConstantFromNode(Op);
-  if (!Cst)
-    return false;
-
-  Type *CstTy = Cst->getType();
-  if (!CstTy->isVectorTy() || (SizeInBits != CstTy->getPrimitiveSizeInBits()))
-    return false;
-
   // Extract all the undef/constant element data and pack into single bitsets.
   APInt UndefBits(SizeInBits, 0);
   APInt MaskBits(SizeInBits, 0);
 
-  unsigned CstEltSizeInBits = CstTy->getScalarSizeInBits();
-  for (unsigned i = 0, e = CstTy->getVectorNumElements(); i != e; ++i) {
-    auto *COp = Cst->getAggregateElement(i);
-    if (!COp ||
-        !(isa<UndefValue>(COp) || isa<ConstantInt>(COp) ||
-          isa<ConstantFP>(COp)))
+  // Split the undef/constant single bitset data into the target elements.
+  auto SplitBitData = [&]() {
+    UndefElts = SmallBitVector(NumElts, false);
+    EltBits.resize(NumElts, APInt(EltSizeInBits, 0));
+
+    for (unsigned i = 0; i != NumElts; ++i) {
+      APInt UndefEltBits = UndefBits.lshr(i * EltSizeInBits);
+      UndefEltBits = UndefEltBits.zextOrTrunc(EltSizeInBits);
+
+      // Only treat an element as UNDEF if all bits are UNDEF, otherwise
+      // treat it as zero.
+      if (UndefEltBits.isAllOnesValue()) {
+        UndefElts[i] = true;
+        continue;
+      }
+
+      APInt Bits = MaskBits.lshr(i * EltSizeInBits);
+      Bits = Bits.zextOrTrunc(EltSizeInBits);
+      EltBits[i] = Bits.getZExtValue();
+    }
+    return true;
+  };
+
+  // Extract constant bits from constant pool scalar/vector.
+  if (auto *Cst = getTargetConstantFromNode(Op)) {
+    Type *CstTy = Cst->getType();
+    if (!CstTy->isVectorTy() || (SizeInBits != CstTy->getPrimitiveSizeInBits()))
       return false;
 
-    if (isa<UndefValue>(COp)) {
-      APInt EltUndef = APInt::getLowBitsSet(SizeInBits, CstEltSizeInBits);
-      UndefBits |= EltUndef.shl(i * CstEltSizeInBits);
-      continue;
+    auto ExtractConstantBits = [SizeInBits](const Constant *Cst, APInt &Mask,
+                                            APInt &Undefs) {
+      if (!Cst)
+        return false;
+      unsigned CstSizeInBits = Cst->getType()->getPrimitiveSizeInBits();
+      if (isa<UndefValue>(Cst)) {
+        Mask = APInt::getNullValue(SizeInBits);
+        Undefs = APInt::getLowBitsSet(SizeInBits, CstSizeInBits);
+        return true;
+      }
+      if (auto *CInt = dyn_cast<ConstantInt>(Cst)) {
+        Mask = CInt->getValue().zextOrTrunc(SizeInBits);
+        Undefs = APInt::getNullValue(SizeInBits);
+        return true;
+      }
+      if (auto *CFP = dyn_cast<ConstantFP>(Cst)) {
+        Mask = CFP->getValueAPF().bitcastToAPInt().zextOrTrunc(SizeInBits);
+        Undefs = APInt::getNullValue(SizeInBits);
+        return true;
+      }
+      return false;
+    };
+
+    unsigned CstEltSizeInBits = CstTy->getScalarSizeInBits();
+    for (unsigned i = 0, e = CstTy->getVectorNumElements(); i != e; ++i) {
+      APInt Bits, Undefs;
+      if (!ExtractConstantBits(Cst->getAggregateElement(i), Bits, Undefs))
+        return false;
+      MaskBits |= Bits.shl(i * CstEltSizeInBits);
+      UndefBits |= Undefs.shl(i * CstEltSizeInBits);
     }
 
-    APInt Bits;
-    if (auto *CInt = dyn_cast<ConstantInt>(COp))
-      Bits = CInt->getValue();
-    else if (auto *CFP = dyn_cast<ConstantFP>(COp))
-      Bits = CFP->getValueAPF().bitcastToAPInt();
-
-    Bits = Bits.zextOrTrunc(SizeInBits);
-    MaskBits |= Bits.shl(i * CstEltSizeInBits);
+    return SplitBitData();
   }
 
-  UndefElts = SmallBitVector(NumElts, false);
-  EltBits.resize(NumElts, APInt(EltSizeInBits, 0));
-
-  // Now extract the undef/constant bit data into the target elts.
-  for (unsigned i = 0; i != NumElts; ++i) {
-    APInt UndefEltBits = UndefBits.lshr(i * EltSizeInBits);
-    UndefEltBits = UndefEltBits.zextOrTrunc(EltSizeInBits);
-
-    // Only treat the element as UNDEF if all bits are UNDEF, otherwise
-    // treat it as zero.
-    if (UndefEltBits.isAllOnesValue()) {
-      UndefElts[i] = true;
-      continue;
-    }
-
-    APInt Bits = MaskBits.lshr(i * EltSizeInBits);
-    Bits = Bits.zextOrTrunc(EltSizeInBits);
-    EltBits[i] = Bits.getZExtValue();
-  }
-
-  return true;
+  return false;
 }
 
 static bool getTargetShuffleMaskIndices(SDValue MaskNode,
