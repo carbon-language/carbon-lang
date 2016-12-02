@@ -54,7 +54,11 @@ constexpr bool throws_callable() {
 void test_noexcept_function_pointers()
 {
     struct Dummy { void foo() noexcept {} static void bar() noexcept {} };
-#if !defined(__cpp_noexcept_function_type)
+
+// FIXME(EricWF): Remove the __clang__ workaround. As of 2/12/2016 Clang has
+// a bug where calling a noexcept function pointer is not noexcept.
+// See https://llvm.org/bugs/show_bug.cgi?id=31244
+#if !defined(__cpp_noexcept_function_type) || defined(__clang__)
     {
         // Check that PMF's and function pointers *work*. is_nothrow_callable will always
         // return false because 'noexcept' is not part of the function type.
