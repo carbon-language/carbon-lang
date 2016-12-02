@@ -2452,7 +2452,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
     if (IFace && (IV = IFace->lookupInstanceVariable(II, ClassDeclared))) {
       // Diagnose using an ivar in a class method.
       if (IsClassMethod)
-        return ExprError(Diag(Loc, diag::error_ivar_use_in_class_method)
+        return ExprError(Diag(Loc, diag::err_ivar_use_in_class_method)
                          << IV->getDeclName());
 
       // If we're referencing an invalid decl, just return this as a silent
@@ -2468,7 +2468,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       if (IV->getAccessControl() == ObjCIvarDecl::Private &&
           !declaresSameEntity(ClassDeclared, IFace) &&
           !getLangOpts().DebuggerSupport)
-        Diag(Loc, diag::error_private_ivar_access) << IV->getDeclName();
+        Diag(Loc, diag::err_private_ivar_access) << IV->getDeclName();
 
       // FIXME: This should use a new expr for a direct reference, don't
       // turn this into Self->ivar, just return a BareIVarExpr or something.
@@ -2524,7 +2524,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
              Lookup.getFoundDecl()->isDefinedOutsideFunctionOrMethod()) {
     // If accessing a stand-alone ivar in a class method, this is an error.
     if (const ObjCIvarDecl *IV = dyn_cast<ObjCIvarDecl>(Lookup.getFoundDecl()))
-      return ExprError(Diag(Loc, diag::error_ivar_use_in_class_method)
+      return ExprError(Diag(Loc, diag::err_ivar_use_in_class_method)
                        << IV->getDeclName());
   }
 
@@ -10092,10 +10092,10 @@ static bool CheckForModifiableLvalue(Expr *E, SourceLocation Loc, Sema &S) {
   case Expr::MLV_NoSetterProperty:
     llvm_unreachable("readonly properties should be processed differently");
   case Expr::MLV_InvalidMessageExpression:
-    DiagID = diag::error_readonly_message_assignment;
+    DiagID = diag::err_readonly_message_assignment;
     break;
   case Expr::MLV_SubObjCPropertySetting:
-    DiagID = diag::error_no_subobject_property_setting;
+    DiagID = diag::err_no_subobject_property_setting;
     break;
   }
 

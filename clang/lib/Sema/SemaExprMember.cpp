@@ -1456,11 +1456,11 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
         if (IV->getAccessControl() == ObjCIvarDecl::Private) {
           if (!declaresSameEntity(ClassDeclared, IDecl) ||
               !declaresSameEntity(ClassOfMethodDecl, ClassDeclared))
-            S.Diag(MemberLoc, diag::error_private_ivar_access)
+            S.Diag(MemberLoc, diag::err_private_ivar_access)
               << IV->getDeclName();
         } else if (!IDecl->isSuperClassOf(ClassOfMethodDecl))
           // @protected
-          S.Diag(MemberLoc, diag::error_protected_ivar_access)
+          S.Diag(MemberLoc, diag::err_protected_ivar_access)
               << IV->getDeclName();
       }
     }
@@ -1473,7 +1473,7 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
       
       if (DeclRefExpr *DE = dyn_cast<DeclRefExpr>(BaseExp))
         if (DE->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {
-          S.Diag(DE->getLocation(), diag::error_arc_weak_ivar_access);
+          S.Diag(DE->getLocation(), diag::err_arc_weak_ivar_access);
           warn = false;
         }
     }
