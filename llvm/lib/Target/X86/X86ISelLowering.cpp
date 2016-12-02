@@ -26002,12 +26002,12 @@ static bool matchBinaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
       if (Mask[i] < 0)
         Zeroable[i] = true;
 
-    if (Zeroable.any())
-      if (matchVectorShuffleAsInsertPS(V1, V2, PermuteImm, Zeroable, Mask, DAG)) {
-        Shuffle = X86ISD::INSERTPS;
-        ShuffleVT = MVT::v4f32;
-        return true;
-      }
+    if (Zeroable.any() &&
+        matchVectorShuffleAsInsertPS(V1, V2, PermuteImm, Zeroable, Mask, DAG)) {
+      Shuffle = X86ISD::INSERTPS;
+      ShuffleVT = MVT::v4f32;
+      return true;
+    }
   }
 
   return false;
