@@ -5138,6 +5138,8 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   assert(UndefElts.empty() && "Expected an empty UndefElts vector");
   assert(EltBits.empty() && "Expected an empty EltBits vector");
 
+  Op = peekThroughBitcasts(Op);
+
   EVT VT = Op.getValueType();
   unsigned SizeInBits = VT.getSizeInBits();
   assert((SizeInBits % EltSizeInBits) == 0 && "Can't split constant!");
@@ -5170,34 +5172,34 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     return true;
   };
 
-  // Extract constant bits from constant pool scalar/vector.
+  auto ExtractConstantBits = [SizeInBits](const Constant *Cst, APInt &Mask,
+                                          APInt &Undefs) {
+    if (!Cst)
+      return false;
+    unsigned CstSizeInBits = Cst->getType()->getPrimitiveSizeInBits();
+    if (isa<UndefValue>(Cst)) {
+      Mask = APInt::getNullValue(SizeInBits);
+      Undefs = APInt::getLowBitsSet(SizeInBits, CstSizeInBits);
+      return true;
+    }
+    if (auto *CInt = dyn_cast<ConstantInt>(Cst)) {
+      Mask = CInt->getValue().zextOrTrunc(SizeInBits);
+      Undefs = APInt::getNullValue(SizeInBits);
+      return true;
+    }
+    if (auto *CFP = dyn_cast<ConstantFP>(Cst)) {
+      Mask = CFP->getValueAPF().bitcastToAPInt().zextOrTrunc(SizeInBits);
+      Undefs = APInt::getNullValue(SizeInBits);
+      return true;
+    }
+    return false;
+  };
+
+  // Extract constant bits from constant pool vector.
   if (auto *Cst = getTargetConstantFromNode(Op)) {
     Type *CstTy = Cst->getType();
     if (!CstTy->isVectorTy() || (SizeInBits != CstTy->getPrimitiveSizeInBits()))
       return false;
-
-    auto ExtractConstantBits = [SizeInBits](const Constant *Cst, APInt &Mask,
-                                            APInt &Undefs) {
-      if (!Cst)
-        return false;
-      unsigned CstSizeInBits = Cst->getType()->getPrimitiveSizeInBits();
-      if (isa<UndefValue>(Cst)) {
-        Mask = APInt::getNullValue(SizeInBits);
-        Undefs = APInt::getLowBitsSet(SizeInBits, CstSizeInBits);
-        return true;
-      }
-      if (auto *CInt = dyn_cast<ConstantInt>(Cst)) {
-        Mask = CInt->getValue().zextOrTrunc(SizeInBits);
-        Undefs = APInt::getNullValue(SizeInBits);
-        return true;
-      }
-      if (auto *CFP = dyn_cast<ConstantFP>(Cst)) {
-        Mask = CFP->getValueAPF().bitcastToAPInt().zextOrTrunc(SizeInBits);
-        Undefs = APInt::getNullValue(SizeInBits);
-        return true;
-      }
-      return false;
-    };
 
     unsigned CstEltSizeInBits = CstTy->getScalarSizeInBits();
     for (unsigned i = 0, e = CstTy->getVectorNumElements(); i != e; ++i) {
@@ -5211,9 +5213,27 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     return SplitBitData();
   }
 
+  // Extract constant bits from a broadcasted constant pool scalar.
+  if (Op.getOpcode() == X86ISD::VBROADCAST &&
+      EltSizeInBits <= Op.getScalarValueSizeInBits()) {
+    if (auto *Broadcast = getTargetConstantFromNode(Op.getOperand(0))) {
+      APInt Bits, Undefs;
+      if (ExtractConstantBits(Broadcast, Bits, Undefs)) {
+        unsigned NumBroadcastBits = Op.getScalarValueSizeInBits();
+        unsigned NumBroadcastElts = SizeInBits / NumBroadcastBits;
+        for (unsigned i = 0; i != NumBroadcastElts; ++i) {
+          MaskBits |= Bits.shl(i * NumBroadcastBits);
+          UndefBits |= Undefs.shl(i * NumBroadcastBits);
+        }
+        return SplitBitData();
+      }
+    }
+  }
+
   return false;
 }
 
+// TODO: Merge more of this with getTargetConstantBitsFromNode.
 static bool getTargetShuffleMaskIndices(SDValue MaskNode,
                                         unsigned MaskEltSizeInBits,
                                         SmallVectorImpl<uint64_t> &RawMask) {
