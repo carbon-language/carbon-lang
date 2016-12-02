@@ -802,6 +802,17 @@ def : InstRW<[VecDF, VecDF, Lat20, GroupAlone], (instregex "CXBR$")>;
 def : InstRW<[LSU, VecXsPm, Lat9], (instregex "TC(E|D)B$")>;
 def : InstRW<[LSU, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "TCXB$")>;
 
+//===----------------------------------------------------------------------===//
+// FP: Floating-point control register instructions
+//===----------------------------------------------------------------------===//
+
+def : InstRW<[FXa, LSU, Lat4, GroupAlone], (instregex "EFPC$")>;
+def : InstRW<[FXb, LSU, Lat5, GroupAlone], (instregex "STFPC$")>;
+def : InstRW<[LSU, Lat3, GroupAlone], (instregex "SFPC$")>;
+def : InstRW<[LSU, LSU, Lat6, GroupAlone], (instregex "LFPC$")>;
+def : InstRW<[FXa, Lat30, GroupAlone], (instregex "SFASR$")>;
+def : InstRW<[FXa, LSU, Lat30, GroupAlone], (instregex "LFAS$")>;
+def : InstRW<[FXb, Lat3, GroupAlone], (instregex "SRNM(B|T)?$")>;
 
 // --------------------------------- Vector --------------------------------- //
 

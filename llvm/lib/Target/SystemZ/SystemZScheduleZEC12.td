@@ -769,5 +769,17 @@ def : InstRW<[FPU, FPU, Lat30], (instregex "CXBR$")>;
 def : InstRW<[FPU, LSU, Lat15], (instregex "TC(E|D)B$")>;
 def : InstRW<[FPU2, FPU2, LSU, Lat15, GroupAlone], (instregex "TCXB$")>;
 
+//===----------------------------------------------------------------------===//
+// FP: Floating-point control register instructions
+//===----------------------------------------------------------------------===//
+
+def : InstRW<[FXU, LSU, Lat4, GroupAlone], (instregex "EFPC$")>;
+def : InstRW<[LSU, Lat3, GroupAlone], (instregex "SFPC$")>;
+def : InstRW<[LSU, LSU, Lat6, GroupAlone], (instregex "LFPC$")>;
+def : InstRW<[LSU, Lat3, GroupAlone], (instregex "STFPC$")>;
+def : InstRW<[FXU, Lat30, GroupAlone], (instregex "SFASR$")>;
+def : InstRW<[FXU, LSU, Lat30, GroupAlone], (instregex "LFAS$")>;
+def : InstRW<[FXU, Lat2, GroupAlone], (instregex "SRNM(B|T)?$")>;
+
 }
 

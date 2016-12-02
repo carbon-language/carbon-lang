@@ -1632,7 +1632,7 @@ let hasSideEffects = 1, Predicates = [FeatureTransactionalExecution] in {
 
   // Transaction Abort
   let isTerminator = 1, isBarrier = 1 in
-    def TABORT : SideEffectUnaryS<"tabort", 0xB2FC, int_s390_tabort>;
+    def TABORT : SideEffectAddressS<"tabort", 0xB2FC, int_s390_tabort>;
 
   // Nontransactional Store
   def NTSTG : StoreRXY<"ntstg", 0xE325, int_s390_ntstg, GR64, 8>;
@@ -1691,14 +1691,14 @@ let hasSideEffects = 1, isCall = 1, Defs = [CC] in
 
 // Store clock.
 let hasSideEffects = 1, Defs = [CC] in {
-  def STCK  : StoreInherentS<"stck",  0xB205>;
-  def STCKF : StoreInherentS<"stckf", 0xB27C>;
-  def STCKE : StoreInherentS<"stcke", 0xB278>;
+  def STCK  : StoreInherentS<"stck",  0xB205, null_frag, 8>;
+  def STCKF : StoreInherentS<"stckf", 0xB27C, null_frag, 8>;
+  def STCKE : StoreInherentS<"stcke", 0xB278, null_frag, 16>;
 }
 
 // Store facility list.
-let hasSideEffects = 1, Defs = [CC] in
-  def STFLE : StoreInherentS<"stfle", 0xB2B0>;
+let hasSideEffects = 1, Uses = [R0D], Defs = [R0D, CC] in
+  def STFLE : StoreInherentS<"stfle", 0xB2B0, null_frag, 0>;
 
 // Extract CPU time.
 let Defs = [R0D, R1D], hasSideEffects = 1, mayLoad = 1 in

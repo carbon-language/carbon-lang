@@ -2008,6 +2008,28 @@
 	lfh	%r0, 0
 
 #CHECK: error: invalid operand
+#CHECK: lfas	-1
+#CHECK: error: invalid operand
+#CHECK: lfas	4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lfas	0(%r1,%r2)
+
+	lfas	-1
+	lfas	4096
+	lfas	0(%r1,%r2)
+
+#CHECK: error: invalid operand
+#CHECK: lfpc	-1
+#CHECK: error: invalid operand
+#CHECK: lfpc	4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: lfpc	0(%r1,%r2)
+
+	lfpc	-1
+	lfpc	4096
+	lfpc	0(%r1,%r2)
+
+#CHECK: error: invalid operand
 #CHECK: lg	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: lg	%r0, 524288
@@ -3538,6 +3560,33 @@
 	srlk	%r2,%r3,4(%r5)
 
 #CHECK: error: invalid operand
+#CHECK: srnm	-1
+#CHECK: error: invalid operand
+#CHECK: srnm	4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: srnm	0(%r1,%r2)
+
+	srnm	-1
+	srnm	4096
+	srnm	0(%r1,%r2)
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: srnmb	0(%r1)
+
+	srnmb	0(%r1)
+
+#CHECK: error: invalid operand
+#CHECK: srnmt	-1
+#CHECK: error: invalid operand
+#CHECK: srnmt	4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: srnmt	0(%r1,%r2)
+
+	srnmt	-1
+	srnmt	4096
+	srnmt	0(%r1,%r2)
+
+#CHECK: error: invalid operand
 #CHECK: st	%r0, -1
 #CHECK: error: invalid operand
 #CHECK: st	%r0, 4096
@@ -3616,6 +3665,17 @@
 
 	stey	%f0, -524289
 	stey	%f0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: stfpc	-1
+#CHECK: error: invalid operand
+#CHECK: stfpc	4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: stfpc	0(%r1,%r2)
+
+	stfpc	-1
+	stfpc	4096
+	stfpc	0(%r1,%r2)
 
 #CHECK: error: invalid operand
 #CHECK: stg	%r0, -524289

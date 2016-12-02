@@ -1598,6 +1598,9 @@ class ICV<string name>
 //   LoadAddress:
 //     One register output operand and one address operand.
 //
+//   SideEffectAddress:
+//     One address operand.  No output operands, but causes some side effect.
+//
 //   Unary:
 //     One register output operand and one input operand.
 //
@@ -1677,10 +1680,12 @@ class InherentVRIa<string mnemonic, bits<16> opcode, bits<16> value>
   let M3 = 0;
 }
 
-class StoreInherentS<string mnemonic, bits<16> opcode>
+class StoreInherentS<string mnemonic, bits<16> opcode,
+                     SDPatternOperator operator, bits<5> bytes>
   : InstS<opcode, (outs), (ins bdaddr12only:$BD2),
-          mnemonic#"\t$BD2", []> {
+          mnemonic#"\t$BD2", [(operator bdaddr12only:$BD2)]> {
   let mayStore = 1;
+  let AccessBytes = bytes;
 }
 
 class SideEffectInherentE<string mnemonic, bits<16>opcode>
@@ -2265,10 +2270,27 @@ class SideEffectUnaryRR<string mnemonic, bits<8>opcode, RegisterOperand cls>
   let R2 = 0;
 }
 
+class SideEffectUnaryRRE<string mnemonic, bits<16> opcode, RegisterOperand cls,
+                         SDPatternOperator operator>
+  : InstRRE<opcode, (outs), (ins cls:$R1),
+            mnemonic#"\t$R1", [(operator cls:$R1)]> {
+  let R2 = 0;
+}
+
 class SideEffectUnaryS<string mnemonic, bits<16> opcode,
-                       SDPatternOperator operator>
-  : InstS<opcode, (outs), (ins bdaddr12only:$BD2),
-          mnemonic#"\t$BD2", [(operator bdaddr12only:$BD2)]>;
+                       SDPatternOperator operator, bits<5> bytes,
+                       AddressingMode mode = bdaddr12only>
+  : InstS<opcode, (outs), (ins mode:$BD2),
+          mnemonic#"\t$BD2", [(operator mode:$BD2)]> {
+  let mayLoad = 1;
+  let AccessBytes = bytes;
+}
+
+class SideEffectAddressS<string mnemonic, bits<16> opcode,
+                        SDPatternOperator operator,
+                        AddressingMode mode = bdaddr12only>
+  : InstS<opcode, (outs), (ins mode:$BD2),
+          mnemonic#"\t$BD2", [(operator mode:$BD2)]>;
 
 class LoadAddressRX<string mnemonic, bits<8> opcode,
                     SDPatternOperator operator, AddressingMode mode>

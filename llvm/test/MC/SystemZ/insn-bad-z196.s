@@ -874,6 +874,17 @@
 	srlk	%r0,%r0,0(%r1,%r2)
 
 #CHECK: error: invalid operand
+#CHECK: srnmb	-1
+#CHECK: error: invalid operand
+#CHECK: srnmb	4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: srnmb	0(%r1,%r2)
+
+	srnmb	-1
+	srnmb	4096
+	srnmb	0(%r1,%r2)
+
+#CHECK: error: invalid operand
 #CHECK: stch	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: stch	%r0, 524288

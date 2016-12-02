@@ -1469,6 +1469,20 @@
 	srlk	%r0,%r0,524287(%r1)
 	srlk	%r0,%r0,524287(%r15)
 
+#CHECK: srnmb	0                       # encoding: [0xb2,0xb8,0x00,0x00]
+#CHECK: srnmb	0(%r1)                  # encoding: [0xb2,0xb8,0x10,0x00]
+#CHECK: srnmb	0(%r15)                 # encoding: [0xb2,0xb8,0xf0,0x00]
+#CHECK: srnmb	4095                    # encoding: [0xb2,0xb8,0x0f,0xff]
+#CHECK: srnmb	4095(%r1)               # encoding: [0xb2,0xb8,0x1f,0xff]
+#CHECK: srnmb	4095(%r15)              # encoding: [0xb2,0xb8,0xff,0xff]
+
+	srnmb	0
+	srnmb	0(%r1)
+	srnmb	0(%r15)
+	srnmb	4095
+	srnmb	4095(%r1)
+	srnmb	4095(%r15)
+
 #CHECK: stch	%r0, -524288            # encoding: [0xe3,0x00,0x00,0x00,0x80,0xc3]
 #CHECK: stch	%r0, -1                 # encoding: [0xe3,0x00,0x0f,0xff,0xff,0xc3]
 #CHECK: stch	%r0, 0                  # encoding: [0xe3,0x00,0x00,0x00,0x00,0xc3]
