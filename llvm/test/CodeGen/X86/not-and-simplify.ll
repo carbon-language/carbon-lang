@@ -37,7 +37,7 @@ define i8 @shrink_xor_constant2(i8 %x) {
 ; NO_BMI-NEXT:    movl %edi, %eax
 ; NO_BMI-NEXT:    retq
 ;
-; BMI-LABEL: shrink_xor_constant3:
+; BMI-LABEL: shrink_xor_constant2:
 ; BMI:       # BB#0:
 ; BMI-NEXT:    shlb $5, %dil
 ; BMI-NEXT:    notb %dil
