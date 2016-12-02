@@ -12761,7 +12761,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   Diag(Loc, FDiag);
   if (DiagKind == diag::warn_incompatible_qualified_id &&
       PDecl && IFace && !IFace->hasDefinition())
-      Diag(IFace->getLocation(), diag::not_incomplete_class_and_qualified_id)
+      Diag(IFace->getLocation(), diag::note_incomplete_class_and_qualified_id)
         << IFace->getName() << PDecl->getName();
     
   if (SecondType == Context.OverloadTy)

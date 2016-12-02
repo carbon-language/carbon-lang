@@ -13,10 +13,11 @@
 
 let Component = "Parse" in {
 
-def w_asm_qualifier_ignored : Warning<"ignored %0 qualifier on asm">,
-                              CatInlineAsm;
+def warn_asm_qualifier_ignored : Warning<
+  "ignored %0 qualifier on asm">, CatInlineAsm, InGroup<ASMIgnoredQualifier>;
 def warn_file_asm_volatile : Warning<
-  "meaningless 'volatile' on asm outside function">, CatInlineAsm;
+  "meaningless 'volatile' on asm outside function">, CatInlineAsm,
+  InGroup<ASMIgnoredQualifier>;
 
 let CategoryName = "Inline Assembly Issue" in {
 def err_asm_empty : Error<"__asm used with no assembly instructions">;

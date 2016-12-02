@@ -1104,8 +1104,9 @@ Sema::ObjCSubscriptKind
   Diag(FromE->getExprLoc(), diag::err_objc_multiple_subscript_type_conversion)
       << FromE->getType();
   for (unsigned int i = 0; i < ConversionDecls.size(); i++)
-    Diag(ConversionDecls[i]->getLocation(), diag::not_conv_function_declared_at);
-    
+    Diag(ConversionDecls[i]->getLocation(),
+         diag::note_conv_function_declared_at);
+
   return OS_Error;
 }
 

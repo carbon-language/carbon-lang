@@ -1112,7 +1112,7 @@ static bool HelperToDiagnoseMismatchedMethodsInGlobalPool(Sema &S,
                                       MatchingMethodDecl, Sema::MMS_loose)) {
       if (!Warned) {
         Warned = true;
-        S.Diag(AtLoc, diag::warning_multiple_selectors)
+        S.Diag(AtLoc, diag::warn_multiple_selectors)
           << Method->getSelector() << FixItHint::CreateInsertion(LParenLoc, "(")
           << FixItHint::CreateInsertion(RParenLoc, ")");
         S.Diag(Method->getLocation(), diag::note_method_declared_at)
@@ -1131,7 +1131,7 @@ static void DiagnoseMismatchedSelectors(Sema &S, SourceLocation AtLoc,
                                         SourceLocation RParenLoc,
                                         bool WarnMultipleSelectors) {
   if (!WarnMultipleSelectors ||
-      S.Diags.isIgnored(diag::warning_multiple_selectors, SourceLocation()))
+      S.Diags.isIgnored(diag::warn_multiple_selectors, SourceLocation()))
     return;
   bool Warned = false;
   for (Sema::GlobalMethodPool::iterator b = S.MethodPool.begin(),

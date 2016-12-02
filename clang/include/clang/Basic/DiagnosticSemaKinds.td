@@ -906,7 +906,7 @@ def warn_strict_multiple_method_decl : Warning<
   "multiple methods named %0 found">, InGroup<StrictSelector>, DefaultIgnore;
 def warn_accessor_property_type_mismatch : Warning<
   "type of property %0 does not match type of accessor %1">;
-def not_conv_function_declared_at : Note<"type conversion function declared here">;
+def note_conv_function_declared_at : Note<"type conversion function declared here">;
 def note_method_declared_at : Note<"method %0 declared here">;
 def note_property_attribute : Note<"property %0 is declared "
   "%select{deprecated|unavailable|partial}1 here">;
@@ -1134,7 +1134,7 @@ def warn_unimplemented_selector:  Warning<
   InGroup<Selector>, DefaultIgnore;
 def warn_unimplemented_protocol_method : Warning<
   "method %0 in protocol %1 not implemented">, InGroup<Protocol>;
-def warning_multiple_selectors: Warning<
+def warn_multiple_selectors: Warning<
   "several methods with selector %0 of mismatched types are found "
   "for the @selector expression">,
   InGroup<SelectorTypeMismatch>, DefaultIgnore;
@@ -6409,7 +6409,7 @@ def err_typecheck_missing_return_type_incompatible : Error<
   "return type must match previous return type}0,1 when %select{block "
   "literal|lambda expression}2 has unspecified explicit return type">;
 
-def not_incomplete_class_and_qualified_id : Note<
+def note_incomplete_class_and_qualified_id : Note<
   "conformance of forward class %0 to protocol %1 can not be confirmed">;
 def warn_incompatible_qualified_id : Warning<
   "%select{%diff{assigning to $ from incompatible type $|"
@@ -8555,7 +8555,7 @@ def err_omp_expected_int_param : Error<
   "expected a reference to an integer-typed parameter">;
 def err_omp_at_least_one_motion_clause_required : Error<
   "expected at least one 'to' clause or 'from' clause specified to '#pragma omp target update'">;
-def  err_omp_usedeviceptr_not_a_pointer : Error<
+def err_omp_usedeviceptr_not_a_pointer : Error<
   "expected pointer or reference to pointer in 'use_device_ptr' clause">;
 def err_omp_argument_type_isdeviceptr : Error <
   "expected pointer, array, reference to pointer, or reference to array in 'is_device_ptr clause'">;
