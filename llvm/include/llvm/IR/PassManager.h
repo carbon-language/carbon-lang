@@ -619,24 +619,25 @@ public:
     }
 
     // Now erase the results that were marked above as invalidated.
-    for (auto I = ResultsList.begin(), E = ResultsList.end(); I != E;) {
-      AnalysisKey *ID = I->first;
-      if (!IsResultInvalidated.lookup(ID)) {
-        ++I;
-        continue;
+    if (!IsResultInvalidated.empty()) {
+      for (auto I = ResultsList.begin(), E = ResultsList.end(); I != E;) {
+        AnalysisKey *ID = I->first;
+        if (!IsResultInvalidated.lookup(ID)) {
+          ++I;
+          continue;
+        }
+
+        if (DebugLogging)
+          dbgs() << "Invalidating analysis: " << this->lookUpPass(ID).name()
+                 << "\n";
+
+        I = ResultsList.erase(I);
+        AnalysisResults.erase({ID, &IR});
       }
-
-      if (DebugLogging)
-        dbgs() << "Invalidating analysis: " << this->lookupPass(ID).name()
-               << "\n";
-
-      I = ResultsList.erase(I);
-      AnalysisResults.erase({ID, &IR});
     }
+
     if (ResultsList.empty())
       AnalysisResultLists.erase(&IR);
-
-    return;
   }
 
 private:
