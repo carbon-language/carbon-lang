@@ -638,16 +638,16 @@ public:
   }
 
 private:
-  /// \brief Lookup a registered analysis pass.
-  PassConceptT &lookupPass(AnalysisKey *ID) {
+  /// \brief Look up a registered analysis pass.
+  PassConceptT &lookUpPass(AnalysisKey *ID) {
     typename AnalysisPassMapT::iterator PI = AnalysisPasses.find(ID);
     assert(PI != AnalysisPasses.end() &&
            "Analysis passes must be registered prior to being queried!");
     return *PI->second;
   }
 
-  /// \brief Lookup a registered analysis pass.
-  const PassConceptT &lookupPass(AnalysisKey *ID) const {
+  /// \brief Look up a registered analysis pass.
+  const PassConceptT &lookUpPass(AnalysisKey *ID) const {
     typename AnalysisPassMapT::const_iterator PI = AnalysisPasses.find(ID);
     assert(PI != AnalysisPasses.end() &&
            "Analysis passes must be registered prior to being queried!");
@@ -665,7 +665,7 @@ private:
     // If we don't have a cached result for this function, look up the pass and
     // run it to produce a result, which we then add to the cache.
     if (Inserted) {
-      auto &P = this->lookupPass(ID);
+      auto &P = this->lookUpPass(ID);
       if (DebugLogging)
         dbgs() << "Running analysis: " << P.name() << "\n";
       AnalysisResultListT &ResultList = AnalysisResultLists[&IR];
@@ -697,7 +697,7 @@ private:
       return;
 
     if (DebugLogging)
-      dbgs() << "Invalidating analysis: " << this->lookupPass(ID).name()
+      dbgs() << "Invalidating analysis: " << this->lookUpPass(ID).name()
              << "\n";
     AnalysisResultLists[&IR].erase(RI->second);
     AnalysisResults.erase(RI);
