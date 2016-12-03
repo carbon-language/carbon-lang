@@ -575,6 +575,13 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->Target2 = getTarget2Option(Args);
   Config->UnresolvedSymbols = getUnresolvedSymbolOption(Args);
 
+  // --omagic is an option to create old-fashioned executables in which
+  // .text segments are writable. Today, the option is still in use to
+  // create special-purpose programs such as boot loaders. It doesn't
+  // make sense to create PT_GNU_RELRO for such executables.
+  if (Config->OMagic)
+    Config->ZRelro = false;
+
   if (!Config->Relocatable)
     Config->Strip = getStripOption(Args);
 
