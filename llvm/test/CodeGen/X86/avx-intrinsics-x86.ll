@@ -2545,7 +2545,8 @@ define <8 x i16> @test_x86_ssse3_pmadd_ub_sw_128_load_op0(<16 x i8>* %ptr, <16 x
 ; AVX-LABEL: test_x86_ssse3_pmadd_ub_sw_128_load_op0:
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX-NEXT:    vpmaddubsw (%eax), %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x04,0x00]
+; AVX-NEXT:    vmovdqa (%eax), %xmm1 ## encoding: [0xc5,0xf9,0x6f,0x08]
+; AVX-NEXT:    vpmaddubsw %xmm0, %xmm1, %xmm0 ## encoding: [0xc4,0xe2,0x71,0x04,0xc0]
 ; AVX-NEXT:    retl ## encoding: [0xc3]
 ;
 ; AVX512VL-LABEL: test_x86_ssse3_pmadd_ub_sw_128_load_op0:
