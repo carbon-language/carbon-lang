@@ -811,3 +811,66 @@ define <32 x i16> @stack_fold_pshuflw_zmm_maskz(<32 x i16> %a0, i32 %mask) {
   %4 = select <32 x i1> %3, <32 x i16> %2, <32 x i16> zeroinitializer
   ret <32 x i16> %4
 }
+
+define <32 x i16> @stack_fold_pmaddubsw_zmm(<64 x i8> %a0, <64 x i8> %a1) {
+  ;CHECK-LABEL: stack_fold_pmaddubsw_zmm
+  ;CHECK:       vpmaddubsw {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <32 x i16> @llvm.x86.avx512.mask.pmaddubs.w.512(<64 x i8> %a0, <64 x i8> %a1, <32 x i16> undef, i32 -1)
+  ret <32 x i16> %2
+}
+declare <32 x i16> @llvm.x86.avx512.mask.pmaddubs.w.512(<64 x i8>, <64 x i8>, <32 x i16>, i32) nounwind readnone
+
+define <32 x i16> @stack_fold_pmaddubsw_zmm_mask(<32 x i16>* %passthru, <64 x i8> %a0, <64 x i8> %a1, i32 %mask) {
+  ;CHECK-LABEL: stack_fold_pmaddubsw_zmm_mask
+  ;CHECK:       vpmaddubsw {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <32 x i16> @llvm.x86.avx512.mask.pmaddubs.w.512(<64 x i8> %a0, <64 x i8> %a1, <32 x i16> undef, i32 -1)
+  %3 = bitcast i32 %mask to <32 x i1>
+  ; load needed to keep the operation from being scheduled about the asm block
+  %4 = load <32 x i16>, <32 x i16>* %passthru
+  %5 = select <32 x i1> %3, <32 x i16> %2, <32 x i16> %4
+  ret <32 x i16> %5
+}
+
+define <32 x i16> @stack_fold_pmaddubsw_zmm_maskz(<64 x i8> %a0, <64 x i8> %a1, i32 %mask) {
+  ;CHECK-LABEL: stack_fold_pmaddubsw_zmm_maskz
+  ;CHECK:       vpmaddubsw {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <32 x i16> @llvm.x86.avx512.mask.pmaddubs.w.512(<64 x i8> %a0, <64 x i8> %a1, <32 x i16> undef, i32 -1)
+  %3 = bitcast i32 %mask to <32 x i1>
+  %4 = select <32 x i1> %3, <32 x i16> %2, <32 x i16> zeroinitializer
+  ret <32 x i16> %4
+}
+
+define <16 x i32> @stack_fold_pmaddwd_zmm(<32 x i16> %a0, <32 x i16> %a1) {
+  ;CHECK-LABEL: stack_fold_pmaddwd_zmm
+  ;CHECK:       vpmaddwd {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <16 x i32> @llvm.x86.avx512.mask.pmaddw.d.512(<32 x i16> %a0, <32 x i16> %a1, <16 x i32> undef, i16 -1)
+  ret <16 x i32> %2
+}
+declare <16 x i32> @llvm.x86.avx512.mask.pmaddw.d.512(<32 x i16>, <32 x i16>, <16 x i32>, i16) nounwind readnone
+
+define <16 x i32> @stack_fold_pmaddwd_zmm_mask(<16 x i32>* %passthru, <32 x i16> %a0, <32 x i16> %a1, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_pmaddwd_zmm_mask
+  ;CHECK:       vpmaddwd {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <16 x i32> @llvm.x86.avx512.mask.pmaddw.d.512(<32 x i16> %a0, <32 x i16> %a1, <16 x i32> undef, i16 -1)
+  %3 = bitcast i16 %mask to <16 x i1>
+  ; load needed to keep the operation from being scheduled about the asm block
+  %4 = load <16 x i32>, <16 x i32>* %passthru
+  %5 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> %4
+  ret <16 x i32> %5
+}
+
+define <16 x i32> @stack_fold_pmaddwd_zmm_maskz(<16 x i32>* %passthru, <32 x i16> %a0, <32 x i16> %a1, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_pmaddwd_zmm_maskz
+  ;CHECK:       vpmaddwd {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <16 x i32> @llvm.x86.avx512.mask.pmaddw.d.512(<32 x i16> %a0, <32 x i16> %a1, <16 x i32> undef, i16 -1)
+  %3 = bitcast i16 %mask to <16 x i1>
+  ; load needed to keep the operation from being scheduled about the asm block
+  %4 = select <16 x i1> %3, <16 x i32> %2, <16 x i32> zeroinitializer
+  ret <16 x i32> %4
+}
