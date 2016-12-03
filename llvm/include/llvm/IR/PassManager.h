@@ -477,7 +477,7 @@ public:
       return;
     // Clear the map pointing into the results list.
     for (auto &IDAndResult : ResultsListI->second)
-      AnalysisResults.erase(std::make_pair(IDAndResult.first, &IR));
+      AnalysisResults.erase({IDAndResult.first, &IR});
 
     // And actually destroy and erase the results associated with this IR.
     AnalysisResultLists.erase(ResultsListI);
@@ -676,7 +676,7 @@ private:
 
       // P.run may have inserted elements into AnalysisResults and invalidated
       // RI.
-      RI = AnalysisResults.find(std::make_pair(ID, &IR));
+      RI = AnalysisResults.find({ID, &IR});
       assert(RI != AnalysisResults.end() && "we just inserted it!");
 
       RI->second = std::prev(ResultList.end());
@@ -688,14 +688,14 @@ private:
   /// \brief Get a cached analysis result or return null.
   ResultConceptT *getCachedResultImpl(AnalysisKey *ID, IRUnitT &IR) const {
     typename AnalysisResultMapT::const_iterator RI =
-        AnalysisResults.find(std::make_pair(ID, &IR));
+        AnalysisResults.find({ID, &IR});
     return RI == AnalysisResults.end() ? nullptr : &*RI->second->second;
   }
 
   /// \brief Invalidate a function pass result.
   void invalidateImpl(AnalysisKey *ID, IRUnitT &IR) {
     typename AnalysisResultMapT::iterator RI =
-        AnalysisResults.find(std::make_pair(ID, &IR));
+        AnalysisResults.find({ID, &IR});
     if (RI == AnalysisResults.end())
       return;
 
