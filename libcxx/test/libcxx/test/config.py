@@ -640,8 +640,7 @@ class Configuration(object):
                 '-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
                 '-Wall', '-Wextra', '-Werror'
             ]
-            # FIXME turn this back on after fixing potential breakage.
-            #self.cxx.addWarningFlagIfSupported('-Wshadow')
+            self.cxx.addWarningFlagIfSupported('-Wshadow')
             self.cxx.addWarningFlagIfSupported('-Wno-unused-command-line-argument')
             self.cxx.addWarningFlagIfSupported('-Wno-attributes')
             self.cxx.addWarningFlagIfSupported('-Wno-pessimizing-move')
@@ -649,10 +648,10 @@ class Configuration(object):
             self.cxx.addWarningFlagIfSupported('-Wno-user-defined-literals')
             # TODO(EricWF) Remove the unused warnings once the test suite
             # compiles clean with them.
+            self.cxx.addWarningFlagIfSupported('-Wno-sign-compare')
             self.cxx.addWarningFlagIfSupported('-Wno-unused-local-typedef')
             self.cxx.addWarningFlagIfSupported('-Wno-unused-variable')
             self.cxx.addWarningFlagIfSupported('-Wno-unused-parameter')
-            self.cxx.addWarningFlagIfSupported('-Wno-sign-compare')
             std = self.get_lit_conf('std', None)
             if std in ['c++98', 'c++03']:
                 # The '#define static_assert' provided by libc++ in C++03 mode
