@@ -634,7 +634,11 @@ class Configuration(object):
         self.cxx.compile_flags += ['-D_LIBCPP_DEBUG=%s' % debug_level]
 
     def configure_warnings(self):
-        enable_warnings = self.get_lit_bool('enable_warnings', False)
+        default_enable_warnings = len(
+            self.config.available_features.intersection(
+                ['c++11', 'c++14', 'c++1z'])) != 0
+        enable_warnings = self.get_lit_bool('enable_warnings',
+                                            default_enable_warnings)
         if enable_warnings:
             self.cxx.warning_flags += [
                 '-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
