@@ -548,7 +548,8 @@ public:
   /// interface also lends itself to minimizing the number of times we have to
   /// do lookups for analyses or construct complex passes only to throw them
   /// away.
-  template <typename PassBuilderT> bool registerPass(PassBuilderT PassBuilder) {
+  template <typename PassBuilderT>
+  bool registerPass(PassBuilderT &&PassBuilder) {
     typedef decltype(PassBuilder()) PassT;
     typedef detail::AnalysisPassModel<IRUnitT, PassT, PreservedAnalyses,
                                       Invalidator, ExtraArgTs...>
