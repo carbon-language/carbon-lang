@@ -2167,6 +2167,131 @@ computePointerICmp(const DataLayout &DL, const TargetLibraryInfo *TLI,
   return nullptr;
 }
 
+/// Fold an icmp when its operands have i1 scalar type.
+static Value *simplifyICmpOfBools(CmpInst::Predicate Pred, Value *LHS,
+                                  Value *RHS, const Query &Q) {
+  Type *ITy = GetCompareTy(LHS); // The return type.
+  Type *OpTy = LHS->getType();   // The operand type.
+  if (!OpTy->getScalarType()->isIntegerTy(1))
+    return nullptr;
+
+  switch (Pred) {
+  default:
+    break;
+  case ICmpInst::ICMP_EQ:
+    // X == 1 -> X
+    if (match(RHS, m_One()))
+      return LHS;
+    break;
+  case ICmpInst::ICMP_NE:
+    // X != 0 -> X
+    if (match(RHS, m_Zero()))
+      return LHS;
+    break;
+  case ICmpInst::ICMP_UGT:
+    // X >u 0 -> X
+    if (match(RHS, m_Zero()))
+      return LHS;
+    break;
+  case ICmpInst::ICMP_UGE:
+    // X >=u 1 -> X
+    if (match(RHS, m_One()))
+      return LHS;
+    if (isImpliedCondition(RHS, LHS, Q.DL).getValueOr(false))
+      return getTrue(ITy);
+    break;
+  case ICmpInst::ICMP_SGE:
+    /// For signed comparison, the values for an i1 are 0 and -1
+    /// respectively. This maps into a truth table of:
+    /// LHS | RHS | LHS >=s RHS   | LHS implies RHS
+    ///  0  |  0  |  1 (0 >= 0)   |  1
+    ///  0  |  1  |  1 (0 >= -1)  |  1
+    ///  1  |  0  |  0 (-1 >= 0)  |  0
+    ///  1  |  1  |  1 (-1 >= -1) |  1
+    if (isImpliedCondition(LHS, RHS, Q.DL).getValueOr(false))
+      return getTrue(ITy);
+    break;
+  case ICmpInst::ICMP_SLT:
+    // X <s 0 -> X
+    if (match(RHS, m_Zero()))
+      return LHS;
+    break;
+  case ICmpInst::ICMP_SLE:
+    // X <=s -1 -> X
+    if (match(RHS, m_One()))
+      return LHS;
+    break;
+  case ICmpInst::ICMP_ULE:
+    if (isImpliedCondition(LHS, RHS, Q.DL).getValueOr(false))
+      return getTrue(ITy);
+    break;
+  }
+
+  return nullptr;
+}
+
+/// Try hard to fold icmp with zero RHS because this is a common case.
+static Value *simplifyICmpWithZero(CmpInst::Predicate Pred, Value *LHS,
+                                   Value *RHS, const Query &Q) {
+  if (!match(RHS, m_Zero()))
+    return nullptr;
+
+  Type *ITy = GetCompareTy(LHS); // The return type.
+  bool LHSKnownNonNegative, LHSKnownNegative;
+  switch (Pred) {
+  default:
+    llvm_unreachable("Unknown ICmp predicate!");
+  case ICmpInst::ICMP_ULT:
+    return getFalse(ITy);
+  case ICmpInst::ICMP_UGE:
+    return getTrue(ITy);
+  case ICmpInst::ICMP_EQ:
+  case ICmpInst::ICMP_ULE:
+    if (isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
+      return getFalse(ITy);
+    break;
+  case ICmpInst::ICMP_NE:
+  case ICmpInst::ICMP_UGT:
+    if (isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
+      return getTrue(ITy);
+    break;
+  case ICmpInst::ICMP_SLT:
+    ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
+                   Q.CxtI, Q.DT);
+    if (LHSKnownNegative)
+      return getTrue(ITy);
+    if (LHSKnownNonNegative)
+      return getFalse(ITy);
+    break;
+  case ICmpInst::ICMP_SLE:
+    ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
+                   Q.CxtI, Q.DT);
+    if (LHSKnownNegative)
+      return getTrue(ITy);
+    if (LHSKnownNonNegative && isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
+      return getFalse(ITy);
+    break;
+  case ICmpInst::ICMP_SGE:
+    ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
+                   Q.CxtI, Q.DT);
+    if (LHSKnownNegative)
+      return getFalse(ITy);
+    if (LHSKnownNonNegative)
+      return getTrue(ITy);
+    break;
+  case ICmpInst::ICMP_SGT:
+    ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
+                   Q.CxtI, Q.DT);
+    if (LHSKnownNegative)
+      return getFalse(ITy);
+    if (LHSKnownNonNegative && isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
+      return getTrue(ITy);
+    break;
+  }
+
+  return nullptr;
+}
+
 static Value *simplifyICmpWithConstant(CmpInst::Predicate Pred, Value *LHS,
                                        Value *RHS) {
   const APInt *C;
@@ -2323,7 +2448,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   }
 
   Type *ITy = GetCompareTy(LHS); // The return type.
-  Type *OpTy = LHS->getType();   // The operand type.
 
   // icmp X, X -> true/false
   // X icmp undef -> true/false.  For example, icmp ugt %X, undef -> false
@@ -2331,118 +2455,11 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   if (LHS == RHS || isa<UndefValue>(RHS))
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
 
-  // Special case logic when the operands have i1 type.
-  if (OpTy->getScalarType()->isIntegerTy(1)) {
-    switch (Pred) {
-    default: break;
-    case ICmpInst::ICMP_EQ:
-      // X == 1 -> X
-      if (match(RHS, m_One()))
-        return LHS;
-      break;
-    case ICmpInst::ICMP_NE:
-      // X != 0 -> X
-      if (match(RHS, m_Zero()))
-        return LHS;
-      break;
-    case ICmpInst::ICMP_UGT:
-      // X >u 0 -> X
-      if (match(RHS, m_Zero()))
-        return LHS;
-      break;
-    case ICmpInst::ICMP_UGE: {
-      // X >=u 1 -> X
-      if (match(RHS, m_One()))
-        return LHS;
-      if (isImpliedCondition(RHS, LHS, Q.DL).getValueOr(false))
-        return getTrue(ITy);
-      break;
-    }
-    case ICmpInst::ICMP_SGE: {
-      /// For signed comparison, the values for an i1 are 0 and -1
-      /// respectively. This maps into a truth table of:
-      /// LHS | RHS | LHS >=s RHS   | LHS implies RHS
-      ///  0  |  0  |  1 (0 >= 0)   |  1
-      ///  0  |  1  |  1 (0 >= -1)  |  1
-      ///  1  |  0  |  0 (-1 >= 0)  |  0
-      ///  1  |  1  |  1 (-1 >= -1) |  1
-      if (isImpliedCondition(LHS, RHS, Q.DL).getValueOr(false))
-        return getTrue(ITy);
-      break;
-    }
-    case ICmpInst::ICMP_SLT:
-      // X <s 0 -> X
-      if (match(RHS, m_Zero()))
-        return LHS;
-      break;
-    case ICmpInst::ICMP_SLE:
-      // X <=s -1 -> X
-      if (match(RHS, m_One()))
-        return LHS;
-      break;
-    case ICmpInst::ICMP_ULE: {
-      if (isImpliedCondition(LHS, RHS, Q.DL).getValueOr(false))
-        return getTrue(ITy);
-      break;
-    }
-    }
-  }
+  if (Value *V = simplifyICmpOfBools(Pred, LHS, RHS, Q))
+    return V;
 
-  // If we are comparing with zero then try hard since this is a common case.
-  if (match(RHS, m_Zero())) {
-    bool LHSKnownNonNegative, LHSKnownNegative;
-    switch (Pred) {
-    default: llvm_unreachable("Unknown ICmp predicate!");
-    case ICmpInst::ICMP_ULT:
-      return getFalse(ITy);
-    case ICmpInst::ICMP_UGE:
-      return getTrue(ITy);
-    case ICmpInst::ICMP_EQ:
-    case ICmpInst::ICMP_ULE:
-      if (isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
-        return getFalse(ITy);
-      break;
-    case ICmpInst::ICMP_NE:
-    case ICmpInst::ICMP_UGT:
-      if (isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
-        return getTrue(ITy);
-      break;
-    case ICmpInst::ICMP_SLT:
-      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
-                     Q.CxtI, Q.DT);
-      if (LHSKnownNegative)
-        return getTrue(ITy);
-      if (LHSKnownNonNegative)
-        return getFalse(ITy);
-      break;
-    case ICmpInst::ICMP_SLE:
-      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
-                     Q.CxtI, Q.DT);
-      if (LHSKnownNegative)
-        return getTrue(ITy);
-      if (LHSKnownNonNegative &&
-          isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
-        return getFalse(ITy);
-      break;
-    case ICmpInst::ICMP_SGE:
-      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
-                     Q.CxtI, Q.DT);
-      if (LHSKnownNegative)
-        return getFalse(ITy);
-      if (LHSKnownNonNegative)
-        return getTrue(ITy);
-      break;
-    case ICmpInst::ICMP_SGT:
-      ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, Q.DL, 0, Q.AC,
-                     Q.CxtI, Q.DT);
-      if (LHSKnownNegative)
-        return getFalse(ITy);
-      if (LHSKnownNonNegative &&
-          isKnownNonZero(LHS, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
-        return getTrue(ITy);
-      break;
-    }
-  }
+  if (Value *V = simplifyICmpWithZero(Pred, LHS, RHS, Q))
+    return V;
 
   if (Value *V = simplifyICmpWithConstant(Pred, LHS, RHS))
     return V;
