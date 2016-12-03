@@ -469,9 +469,6 @@ public:
     if (DebugLogging)
       dbgs() << "Clearing all analysis results for: " << IR.getName() << "\n";
 
-    // Clear all the invalidated results associated specifically with this
-    // function.
-    SmallVector<AnalysisKey *, 8> InvalidatedIDs;
     auto ResultsListI = AnalysisResultLists.find(&IR);
     if (ResultsListI == AnalysisResultLists.end())
       return;
