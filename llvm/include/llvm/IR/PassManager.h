@@ -137,7 +137,7 @@ public:
   }
 
   /// \brief Query whether all of the analyses in the set are preserved.
-  bool preserved(PreservedAnalyses Arg) {
+  bool preserved(const PreservedAnalyses& Arg) {
     if (Arg.areAllPreserved())
       return areAllPreserved();
     for (auto ID : Arg.PreservedAnalysisIDs)
