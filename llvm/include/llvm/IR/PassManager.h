@@ -251,7 +251,8 @@ public:
   /// \brief Construct a pass manager.
   ///
   /// It can be passed a flag to get debug logging as the passes are run.
-  PassManager(bool DebugLogging = false) : DebugLogging(DebugLogging) {}
+  explicit PassManager(bool DebugLogging = false) : DebugLogging(DebugLogging) {}
+
   // FIXME: These are equivalent to the default move constructor/move
   // assignment. However, using = default triggers linker errors due to the
   // explicit instantiations below. Find away to use the default and remove the
