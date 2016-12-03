@@ -7687,7 +7687,6 @@ Sema::ActOnExplicitInstantiation(Scope *S,
         assert(DelayedDllExportClasses.empty() &&
                "delayed exports present at explicit instantiation");
         checkClassLevelDLLAttribute(Def);
-        referenceDLLExportedClassMethods();
 
         // Propagate attribute to base class templates.
         for (auto &B : Def->bases()) {
@@ -7695,6 +7694,8 @@ Sema::ActOnExplicitInstantiation(Scope *S,
                   B.getType()->getAsCXXRecordDecl()))
             propagateDLLAttrToBaseClassTemplate(Def, A, BT, B.getLocStart());
         }
+
+        referenceDLLExportedClassMethods();
       }
     }
 
