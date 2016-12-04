@@ -47,7 +47,7 @@ public:
   TableGenStringKey(StringRef str) : data(str) {}
   TableGenStringKey(const char *str) : data(str) {}
 
-  const std::string &str() const { return data; }
+  StringRef str() const { return data; }
 
   friend hash_code hash_value(const TableGenStringKey &Value) {
     using llvm::hash_value;
@@ -667,7 +667,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         return StringInit::get(LHSi->getAsString());
     } else {
       if (StringInit *LHSs = dyn_cast<StringInit>(LHS)) {
-        const std::string &Name = LHSs->getValue();
+        StringRef Name = LHSs->getValue();
 
         // From TGParser::ParseIDValue
         if (CurRec) {
@@ -1298,7 +1298,7 @@ VarInit *VarInit::get(Init *VN, RecTy *T) {
   return I.get();
 }
 
-const std::string &VarInit::getName() const {
+StringRef VarInit::getName() const {
   StringInit *NameString = cast<StringInit>(getNameInit());
   return NameString->getValue();
 }
@@ -1612,7 +1612,7 @@ RecordVal::RecordVal(StringRef N, RecTy *T, bool P)
   assert(Value && "Cannot create unset value for current type!");
 }
 
-const std::string &RecordVal::getName() const {
+StringRef RecordVal::getName() const {
   return cast<StringInit>(getNameInit())->getValue();
 }
 
@@ -1652,7 +1652,7 @@ DefInit *Record::getDefInit() {
   return TheInit.get();
 }
 
-const std::string &Record::getName() const {
+StringRef Record::getName() const {
   return cast<StringInit>(Name)->getValue();
 }
 

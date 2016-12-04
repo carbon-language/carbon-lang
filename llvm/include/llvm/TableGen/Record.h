@@ -617,7 +617,7 @@ public:
 
   static StringInit *get(StringRef);
 
-  const std::string &getValue() const { return Value; }
+  StringRef getValue() const { return Value; }
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
@@ -655,7 +655,7 @@ public:
 
   static CodeInit *get(StringRef);
 
-  const std::string &getValue() const { return Value; }
+  StringRef getValue() const { return Value; }
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
@@ -964,7 +964,7 @@ public:
   static VarInit *get(StringRef VN, RecTy *T);
   static VarInit *get(Init *VN, RecTy *T);
 
-  const std::string &getName() const;
+  StringRef getName() const;
   Init *getNameInit() const { return VarName; }
 
   std::string getNameInitAsString() const {
@@ -1179,14 +1179,14 @@ public:
 
   Init *getOperator() const { return Val; }
 
-  const std::string &getName() const { return ValName; }
+  StringRef getName() const { return ValName; }
 
   unsigned getNumArgs() const { return Args.size(); }
   Init *getArg(unsigned Num) const {
     assert(Num < Args.size() && "Arg number out of range!");
     return Args[Num];
   }
-  const std::string &getArgName(unsigned Num) const {
+  StringRef getArgName(unsigned Num) const {
     assert(Num < ArgNames.size() && "Arg number out of range!");
     return ArgNames[Num];
   }
@@ -1233,7 +1233,7 @@ public:
   RecordVal(Init *N, RecTy *T, bool P);
   RecordVal(StringRef N, RecTy *T, bool P);
 
-  const std::string &getName() const;
+  StringRef getName() const;
   const Init *getNameInit() const { return NameAndPrefix.getPointer(); }
 
   std::string getNameInitAsString() const {
@@ -1324,7 +1324,7 @@ public:
 
   unsigned getID() const { return ID; }
 
-  const std::string &getName() const;
+  StringRef getName() const;
   Init *getNameInit() const {
     return Name;
   }
