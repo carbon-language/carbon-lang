@@ -15,6 +15,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
@@ -839,8 +840,12 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   case STRCONCAT: {
     StringInit *LHSs = dyn_cast<StringInit>(LHS);
     StringInit *RHSs = dyn_cast<StringInit>(RHS);
-    if (LHSs && RHSs)
-      return StringInit::get(LHSs->getValue() + RHSs->getValue());
+    if (LHSs && RHSs) {
+      // STRCONCAT is common; Use a SmallString to avoid most heap allocations.
+      SmallString<80> Concat(LHSs->getValue());
+      Concat.append(RHSs->getValue());
+      return StringInit::get(Concat);
+    }
     break;
   }
   case EQ: {
