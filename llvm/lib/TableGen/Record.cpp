@@ -43,7 +43,7 @@ namespace llvm {
 
 class TableGenStringKey {
 public:
-  TableGenStringKey(const std::string &str) : data(str) {}
+  TableGenStringKey(StringRef str) : data(str) {}
   TableGenStringKey(const char *str) : data(str) {}
 
   const std::string &str() const { return data; }
@@ -1155,7 +1155,7 @@ std::string TernOpInit::getAsString() const {
          RHS->getAsString() + ")";
 }
 
-RecTy *TypedInit::getFieldType(const std::string &FieldName) const {
+RecTy *TypedInit::getFieldType(StringRef FieldName) const {
   if (RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType()))
     if (RecordVal *Field = RecordType->getRecord()->getValue(FieldName))
       return Field->getType();
@@ -1277,7 +1277,7 @@ TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
 }
 
 
-VarInit *VarInit::get(const std::string &VN, RecTy *T) {
+VarInit *VarInit::get(StringRef VN, RecTy *T) {
   Init *Value = StringInit::get(VN);
   return VarInit::get(Value, T);
 }
@@ -1327,7 +1327,7 @@ Init *VarInit::resolveListElementReference(Record &R,
   return nullptr;
 }
 
-RecTy *VarInit::getFieldType(const std::string &FieldName) const {
+RecTy *VarInit::getFieldType(StringRef FieldName) const {
   if (RecordRecTy *RTy = dyn_cast<RecordRecTy>(getType()))
     if (const RecordVal *RV = RTy->getRecord()->getValue(FieldName))
       return RV->getType();
@@ -1335,7 +1335,7 @@ RecTy *VarInit::getFieldType(const std::string &FieldName) const {
 }
 
 Init *VarInit::getFieldInit(Record &R, const RecordVal *RV,
-                            const std::string &FieldName) const {
+                            StringRef FieldName) const {
   if (isa<RecordRecTy>(getType()))
     if (const RecordVal *Val = R.getValue(VarName)) {
       if (RV != Val && (RV || isa<UnsetInit>(Val->getValue())))
@@ -1442,14 +1442,14 @@ Init *DefInit::convertInitializerTo(RecTy *Ty) const {
   return nullptr;
 }
 
-RecTy *DefInit::getFieldType(const std::string &FieldName) const {
+RecTy *DefInit::getFieldType(StringRef FieldName) const {
   if (const RecordVal *RV = Def->getValue(FieldName))
     return RV->getType();
   return nullptr;
 }
 
 Init *DefInit::getFieldInit(Record &R, const RecordVal *RV,
-                            const std::string &FieldName) const {
+                            StringRef FieldName) const {
   return Def->getValue(FieldName)->getValue();
 }
 
@@ -1457,7 +1457,7 @@ std::string DefInit::getAsString() const {
   return Def->getName();
 }
 
-FieldInit *FieldInit::get(Init *R, const std::string &FN) {
+FieldInit *FieldInit::get(Init *R, StringRef FN) {
   typedef std::pair<Init *, TableGenStringKey> Key;
   static DenseMap<Key, std::unique_ptr<FieldInit>> ThePool;
 
@@ -1503,7 +1503,7 @@ Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) const {
   return const_cast<FieldInit *>(this);
 }
 
-static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, const std::string &VN,
+static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, StringRef VN,
                            ArrayRef<Init *> ArgRange,
                            ArrayRef<std::string> NameRange) {
   ID.AddPointer(V);
@@ -1520,8 +1520,7 @@ static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, const std::string &VN,
 }
 
 DagInit *
-DagInit::get(Init *V, const std::string &VN,
-             ArrayRef<Init *> ArgRange,
+DagInit::get(Init *V, StringRef VN, ArrayRef<Init *> ArgRange,
              ArrayRef<std::string> NameRange) {
   static FoldingSet<DagInit> ThePool;
   static std::vector<std::unique_ptr<DagInit>> TheActualPool;
@@ -1540,7 +1539,7 @@ DagInit::get(Init *V, const std::string &VN,
 }
 
 DagInit *
-DagInit::get(Init *V, const std::string &VN,
+DagInit::get(Init *V, StringRef VN,
              const std::vector<std::pair<Init*, std::string> > &args) {
   std::vector<Init *> Args;
   std::vector<std::string> Names;
@@ -1602,7 +1601,7 @@ RecordVal::RecordVal(Init *N, RecTy *T, bool P)
   assert(Value && "Cannot create unset value for current type!");
 }
 
-RecordVal::RecordVal(const std::string &N, RecTy *T, bool P)
+RecordVal::RecordVal(StringRef N, RecTy *T, bool P)
   : NameAndPrefix(StringInit::get(N), P), Ty(T) {
   Value = UnsetInit::get()->convertInitializerTo(Ty);
   assert(Value && "Cannot create unset value for current type!");
@@ -1668,7 +1667,7 @@ void Record::setName(Init *NewName) {
   // this.  See TGParser::ParseDef and TGParser::ParseDefm.
 }
 
-void Record::setName(const std::string &Name) {
+void Record::setName(StringRef Name) {
   setName(StringInit::get(Name));
 }
 
@@ -1909,7 +1908,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const RecordKeeper &RK) {
 }
 
 std::vector<Record *>
-RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
+RecordKeeper::getAllDerivedDefinitions(StringRef ClassName) const {
   Record *Class = getClass(ClassName);
   if (!Class)
     PrintFatalError("ERROR: Couldn't find the `" + ClassName + "' class!\n");
@@ -1923,7 +1922,7 @@ RecordKeeper::getAllDerivedDefinitions(const std::string &ClassName) const {
 }
 
 Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
-                        Init *Name, const std::string &Scoper) {
+                        Init *Name, StringRef Scoper) {
   RecTy *Type = cast<TypedInit>(Name)->getType();
 
   BinOpInit *NewName =
@@ -1950,7 +1949,6 @@ Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
 }
 
 Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
-                        const std::string &Name,
-                        const std::string &Scoper) {
+                        StringRef Name, StringRef Scoper) {
   return QualifyName(CurRec, CurMultiClass, StringInit::get(Name), Scoper);
 }
