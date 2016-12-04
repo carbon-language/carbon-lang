@@ -63,7 +63,7 @@ public:
 
 private:
   RecTyKind Kind;
-  std::unique_ptr<ListRecTy> ListTy;
+  ListRecTy *ListTy = nullptr;
 
 public:
   RecTy(RecTyKind K) : Kind(K) {}
@@ -408,11 +408,6 @@ class TypedInit : public Init {
 protected:
   explicit TypedInit(InitKind K, RecTy *T, uint8_t Opc = 0)
     : Init(K, Opc), Ty(T) {}
-  ~TypedInit() override {
-    // If this is a DefInit we need to delete the RecordRecTy.
-    if (getKind() == IK_DefInit)
-      delete Ty;
-  }
 
 public:
   TypedInit(const TypedInit &Other) = delete;
@@ -602,7 +597,7 @@ public:
 /// "foo" - Represent an initialization by a string value.
 ///
 class StringInit : public TypedInit {
-  std::string Value;
+  StringRef Value;
 
   explicit StringInit(StringRef V)
       : TypedInit(IK_StringInit, StringRecTy::get()), Value(V) {}
@@ -621,7 +616,7 @@ public:
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
-  std::string getAsString() const override { return "\"" + Value + "\""; }
+  std::string getAsString() const override { return "\"" + Value.str() + "\""; }
 
   std::string getAsUnquotedString() const override { return Value; }
 
@@ -639,7 +634,7 @@ public:
 };
 
 class CodeInit : public TypedInit {
-  std::string Value;
+  StringRef Value;
 
   explicit CodeInit(StringRef V)
       : TypedInit(IK_CodeInit, static_cast<RecTy *>(CodeRecTy::get())),
@@ -660,7 +655,7 @@ public:
   Init *convertInitializerTo(RecTy *Ty) const override;
 
   std::string getAsString() const override {
-    return "[{" + Value + "}]";
+    return "[{" + Value.str() + "}]";
   }
 
   std::string getAsUnquotedString() const override { return Value; }
@@ -1276,7 +1271,7 @@ class Record {
   // Tracks Record instances. Not owned by Record.
   RecordKeeper &TrackedRecords;
 
-  std::unique_ptr<DefInit> TheInit;
+  DefInit *TheInit = nullptr;
 
   // Unique record ID.
   unsigned ID;
