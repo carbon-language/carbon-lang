@@ -19,7 +19,8 @@
 //
 // Fortunately, when a linker links large programs (when the link time is
 // most critical), it spends most of the time to work on massive number of
-// small pieces of data of the same kind. Here are examples:
+// small pieces of data of the same kind, and there are opportunities for
+// large parallelism there. Here are examples:
 //
 //  - We have hundreds of thousands of input sections that need to be
 //    copied to a result file at the last step of link. Once we fix a file
@@ -43,9 +44,9 @@
 // The above approach seems to be working fairly well. As an example, when
 // linking Chromium (output size 1.6 GB), using 4 cores reduces latency to
 // 75% compared to single core (from 12.66 seconds to 9.55 seconds) on my
-// machine. Using 40 cores reduces it to 63% (from 12.66 seconds to 7.95
-// seconds). Because of the Amdahl's law, the speedup is not linear, but
-// as you add more cores, it gets faster.
+// Ivy Bridge Xeon 2.8 GHz machine. Using 40 cores reduces it to 63% (from
+// 12.66 seconds to 7.95 seconds). Because of the Amdahl's law, the
+// speedup is not linear, but as you add more cores, it gets faster.
 //
 // On a final note, if you are trying to optimize, keep the axiom "don't
 // guess, measure!" in mind. Some important passes of the linker are not
