@@ -74,7 +74,7 @@ unsigned IRTranslator::getOrCreateVReg(const Value &Val) {
         if (!TPC->isGlobalISelAbortEnabled()) {
           MIRBuilder.getMF().getProperties().set(
               MachineFunctionProperties::Property::FailedISel);
-          return 0;
+          return VReg;
         }
         reportTranslationError(Val, "unable to translate constant");
       }
