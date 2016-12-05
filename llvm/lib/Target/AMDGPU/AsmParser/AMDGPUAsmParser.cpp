@@ -804,11 +804,43 @@ struct OptionalOperand {
   bool (*ConvertResult)(int64_t&);
 };
 
+// May be called with integer type with equivalent bitwidth.
+static const fltSemantics *getFltSemantics(MVT VT) {
+  switch (VT.getSizeInBits()) {
+  case 32:
+    return &APFloat::IEEEsingle;
+  case 64:
+    return &APFloat::IEEEdouble;
+  case 16:
+    return &APFloat::IEEEhalf;
+  default:
+    llvm_unreachable("unsupported fp type");
+  }
+}
+
 }
 
 //===----------------------------------------------------------------------===//
 // Operand
 //===----------------------------------------------------------------------===//
+
+static bool canLosslesslyConvertToFPType(APFloat &FPLiteral, MVT VT) {
+  bool Lost;
+
+  // Convert literal to single precision
+  APFloat::opStatus Status = FPLiteral.convert(*getFltSemantics(VT),
+                                               APFloat::rmNearestTiesToEven,
+                                               &Lost);
+  // We allow precision lost but not overflow or underflow
+  if (Status != APFloat::opOK &&
+      Lost &&
+      ((Status & APFloat::opOverflow)  != 0 ||
+       (Status & APFloat::opUnderflow) != 0)) {
+    return false;
+  }
+
+  return true;
+}
 
 bool AMDGPUOperand::isInlinableImm(MVT type) const {
   if (!isImmTy(ImmTyNone)) {
@@ -824,35 +856,27 @@ bool AMDGPUOperand::isInlinableImm(MVT type) const {
   if (Imm.IsFPImm) { // We got fp literal token
     if (type == MVT::f64 || type == MVT::i64) { // Expected 64-bit operand
       return AMDGPU::isInlinableLiteral64(Imm.Val, AsmParser->isVI());
-    } else { // Expected 32-bit operand
-      bool lost;
-      APFloat FPLiteral(APFloat::IEEEdouble, Literal);
-      // Convert literal to single precision
-      APFloat::opStatus status = FPLiteral.convert(APFloat::IEEEsingle,
-                                                    APFloat::rmNearestTiesToEven,
-                                                    &lost);
-      // We allow precision lost but not overflow or underflow
-      if (status != APFloat::opOK &&
-          lost &&
-          ((status & APFloat::opOverflow)  != 0 ||
-            (status & APFloat::opUnderflow) != 0)) {
-        return false;
-      }
-      // Check if single precision literal is inlinable
-      return AMDGPU::isInlinableLiteral32(
-              static_cast<int32_t>(FPLiteral.bitcastToAPInt().getZExtValue()),
-              AsmParser->isVI());
     }
-  } else { // We got int literal token
-    if (type == MVT::f64 || type == MVT::i64) { // Expected 64-bit operand
-      return AMDGPU::isInlinableLiteral64(Imm.Val, AsmParser->isVI());
-    } else { // Expected 32-bit operand
-      return AMDGPU::isInlinableLiteral32(
-            static_cast<int32_t>(Literal.getLoBits(32).getZExtValue()),
-            AsmParser->isVI());
-    }
+
+    APFloat FPLiteral(APFloat::IEEEdouble, APInt(64, Imm.Val));
+    if (!canLosslesslyConvertToFPType(FPLiteral, type))
+      return false;
+
+    // Check if single precision literal is inlinable
+    return AMDGPU::isInlinableLiteral32(
+      static_cast<int32_t>(FPLiteral.bitcastToAPInt().getZExtValue()),
+      AsmParser->isVI());
   }
-  return false;
+
+
+  // We got int literal token.
+  if (type == MVT::f64 || type == MVT::i64) { // Expected 64-bit operand
+    return AMDGPU::isInlinableLiteral64(Imm.Val, AsmParser->isVI());
+  }
+
+  return AMDGPU::isInlinableLiteral32(
+    static_cast<int32_t>(Literal.getLoBits(32).getZExtValue()),
+    AsmParser->isVI());
 }
 
 bool AMDGPUOperand::isLiteralImm(MVT type) const {
@@ -861,45 +885,28 @@ bool AMDGPUOperand::isLiteralImm(MVT type) const {
     return false;
   }
 
-  APInt Literal(64, Imm.Val);
+  if (!Imm.IsFPImm) {
+    // We got int literal token.
 
-  if (Imm.IsFPImm) { // We got fp literal token
-    if (type == MVT::f64) { // Expected 64-bit fp operand
-      // We would set low 64-bits of literal to zeroes but we accept this literals
-      return true;
-    } else if (type == MVT::i64) { // Expected 64-bit int operand
-        // We don't allow fp literals in 64-bit integer instructions. It is
-        // unclear how we should encode them.
-      return false;
-    } else { // Expected 32-bit operand
-      bool lost;
-      APFloat FPLiteral(APFloat::IEEEdouble, Literal);
-      // Convert literal to single precision
-      APFloat::opStatus status = FPLiteral.convert(APFloat::IEEEsingle,
-                                                    APFloat::rmNearestTiesToEven,
-                                                    &lost);
-      // We allow precision lost but not overflow or underflow
-      if (status != APFloat::opOK &&
-          lost &&
-          ((status & APFloat::opOverflow)  != 0 ||
-            (status & APFloat::opUnderflow) != 0)) {
-        return false;
-      }
-      return true;
-    }
-  } else { // We got int literal token
-    APInt HiBits = Literal.getHiBits(32);
-    if (HiBits == 0xffffffff &&
-        (*Literal.getLoBits(32).getRawData() & 0x80000000) != 0) {
-      // If high 32 bits aren't zeroes then they all should be ones and 32nd
-      // bit should be set. So that this 64-bit literal is sign-extension of
-      // 32-bit value.
-      return true;
-    } else if (HiBits == 0) {
-      return true;
-    }
+    // FIXME: 64-bit operands can zero extend, sign extend, or pad zeroes for FP
+    // types.
+    return isUInt<32>(Imm.Val) || isInt<32>(Imm.Val);
   }
-  return false;
+
+  // We got fp literal token
+  if (type == MVT::f64) { // Expected 64-bit fp operand
+    // We would set low 64-bits of literal to zeroes but we accept this literals
+    return true;
+  }
+
+  if (type == MVT::i64) { // Expected 64-bit int operand
+    // We don't allow fp literals in 64-bit integer instructions. It is
+    // unclear how we should encode them.
+    return false;
+  }
+
+  APFloat FPLiteral(APFloat::IEEEdouble, APInt(64, Imm.Val));
+  return canLosslesslyConvertToFPType(FPLiteral, type);
 }
 
 bool AMDGPUOperand::isRegClass(unsigned RCID) const {
