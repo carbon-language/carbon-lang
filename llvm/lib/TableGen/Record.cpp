@@ -533,19 +533,28 @@ void ListInit::Profile(FoldingSetNodeID &ID) const {
 }
 
 Init *ListInit::convertInitializerTo(RecTy *Ty) const {
+  if (getType() == Ty)
+    return const_cast<ListInit*>(this);
+
   if (auto *LRT = dyn_cast<ListRecTy>(Ty)) {
     std::vector<Init*> Elements;
+    Elements.reserve(getValues().size());
 
     // Verify that all of the elements of the list are subclasses of the
     // appropriate class!
+    bool Changed = false;
+    RecTy *ElementType = LRT->getElementType();
     for (Init *I : getValues())
-      if (Init *CI = I->convertInitializerTo(LRT->getElementType()))
+      if (Init *CI = I->convertInitializerTo(ElementType)) {
         Elements.push_back(CI);
-      else
+        if (CI != I)
+          Changed = true;
+	  } else
         return nullptr;
 
-    if (isa<ListRecTy>(getType()))
-      return ListInit::get(Elements, Ty);
+    if (!Changed)
+      return const_cast<ListInit*>(this);
+    return ListInit::get(Elements, Ty);
   }
 
   return nullptr;
