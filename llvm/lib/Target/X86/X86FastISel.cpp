@@ -1558,7 +1558,7 @@ bool X86FastISel::X86SelectZExt(const Instruction *I) {
 
   // Handle zero-extension from i1 to i8, which is common.
   MVT SrcVT = TLI.getSimpleValueType(DL, I->getOperand(0)->getType());
-  if (SrcVT.SimpleTy == MVT::i1) {
+  if (SrcVT == MVT::i1) {
     // Set the high bits to zero.
     ResultReg = fastEmitZExtFromI1(MVT::i8, ResultReg, /*TODO: Kill=*/false);
     SrcVT = MVT::i8;
@@ -1933,15 +1933,15 @@ bool X86FastISel::X86SelectDivRem(const Instruction *I) {
       // Copy the zero into the appropriate sub/super/identical physical
       // register. Unfortunately the operations needed are not uniform enough
       // to fit neatly into the table above.
-      if (VT.SimpleTy == MVT::i16) {
+      if (VT == MVT::i16) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(Copy), TypeEntry.HighInReg)
           .addReg(Zero32, 0, X86::sub_16bit);
-      } else if (VT.SimpleTy == MVT::i32) {
+      } else if (VT == MVT::i32) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(Copy), TypeEntry.HighInReg)
             .addReg(Zero32);
-      } else if (VT.SimpleTy == MVT::i64) {
+      } else if (VT == MVT::i64) {
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(TargetOpcode::SUBREG_TO_REG), TypeEntry.HighInReg)
             .addImm(0).addReg(Zero32).addImm(X86::sub_32bit);
@@ -2193,7 +2193,7 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
     const TargetRegisterClass *VK1 = &X86::VK1RegClass;
 
     unsigned CmpOpcode =
-      (RetVT.SimpleTy == MVT::f32) ? X86::VCMPSSZrr : X86::VCMPSDZrr;
+      (RetVT == MVT::f32) ? X86::VCMPSSZrr : X86::VCMPSDZrr;
     unsigned CmpReg = fastEmitInst_rri(CmpOpcode, VK1, CmpLHSReg, CmpLHSIsKill,
                                        CmpRHSReg, CmpRHSIsKill, CC);
 
@@ -2206,7 +2206,7 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
     // Place RHSReg is the passthru of the masked movss/sd operation and put
     // LHS in the input. The mask input comes from the compare.
     unsigned MovOpcode =
-      (RetVT.SimpleTy == MVT::f32) ? X86::VMOVSSZrrk : X86::VMOVSDZrrk;
+      (RetVT == MVT::f32) ? X86::VMOVSSZrrk : X86::VMOVSDZrrk;
     unsigned MovReg = fastEmitInst_rrrr(MovOpcode, VR128X, RHSReg, RHSIsKill,
                                         CmpReg, true, ImplicitDefReg, true,
                                         LHSReg, LHSIsKill);
@@ -2224,10 +2224,10 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
     // instructions as the AND/ANDN/OR sequence due to register moves, so
     // don't bother.
     unsigned CmpOpcode =
-      (RetVT.SimpleTy == MVT::f32) ? X86::VCMPSSrr : X86::VCMPSDrr;
+      (RetVT == MVT::f32) ? X86::VCMPSSrr : X86::VCMPSDrr;
     unsigned BlendOpcode =
-      (RetVT.SimpleTy == MVT::f32) ? X86::VBLENDVPSrr : X86::VBLENDVPDrr;
-    
+      (RetVT == MVT::f32) ? X86::VBLENDVPSrr : X86::VBLENDVPDrr;
+
     unsigned CmpReg = fastEmitInst_rri(CmpOpcode, RC, CmpLHSReg, CmpLHSIsKill,
                                        CmpRHSReg, CmpRHSIsKill, CC);
     unsigned VBlendReg = fastEmitInst_rrr(BlendOpcode, VR128, RHSReg, RHSIsKill,
@@ -3247,7 +3247,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
       assert(VA.getLocVT().isInteger() && !VA.getLocVT().isVector() &&
              "Unexpected extend");
 
-      if (ArgVT.SimpleTy == MVT::i1)
+      if (ArgVT == MVT::i1)
         return false;
 
       bool Emitted = X86FastEmitExtend(ISD::SIGN_EXTEND, VA.getLocVT(), ArgReg,
@@ -3261,7 +3261,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
              "Unexpected extend");
 
       // Handle zero-extension from i1 to i8, which is common.
-      if (ArgVT.SimpleTy == MVT::i1) {
+      if (ArgVT == MVT::i1) {
         // Set the high bits to zero.
         ArgReg = fastEmitZExtFromI1(MVT::i8, ArgReg, /*TODO: Kill=*/false);
         ArgVT = MVT::i8;
