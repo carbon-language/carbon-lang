@@ -58,6 +58,6 @@ int main() {
   TestLoop();
 }
 #endif
-// CHECK: NOT FOUND null: (nil)
+// CHECK: NOT FOUND null: {{.*}}
 // CHECK-NEXT: FOUND callerpc: {{.*}}/get_module_and_offset_for_pc.cc.tmp {{.*}}
 // CHECK-NEXT: FOUND foo: {{.*}}/get_module_and_offset_for_pc.so {{.*}}
