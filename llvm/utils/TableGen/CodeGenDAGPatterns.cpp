@@ -2072,7 +2072,7 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
     ///   (foo GPR, imm) -> (foo GPR, (imm))
     if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag"))
       return ParseTreePattern(
-        DagInit::get(DI, "",
+        DagInit::get(DI, nullptr,
                      std::vector<std::pair<Init*, std::string> >()),
         OpName);
 
@@ -2226,9 +2226,9 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
   TreePatternNode *Result = new TreePatternNode(Operator, Children, NumResults);
   Result->setName(OpName);
 
-  if (!Dag->getName().empty()) {
+  if (Dag->getName()) {
     assert(Result->getName().empty());
-    Result->setName(Dag->getName());
+    Result->setName(Dag->getNameStr());
   }
   return Result;
 }
@@ -2546,7 +2546,7 @@ void CodeGenDAGPatterns::ParseDefaultOperands() {
     for (unsigned op = 0, e = DefaultInfo->getNumArgs(); op != e; ++op)
       Ops.push_back(std::make_pair(DefaultInfo->getArg(op),
                                    DefaultInfo->getArgName(op)));
-    DagInit *DI = DagInit::get(SomeSDNode, "", Ops);
+    DagInit *DI = DagInit::get(SomeSDNode, nullptr, Ops);
 
     // Create a TreePattern to parse this.
     TreePattern P(DefaultOps[i], DI, false, *this);

@@ -1418,13 +1418,13 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     if (!Operator) return nullptr;
 
     // If the operator name is present, parse it.
-    std::string OperatorName;
+    StringInit *OperatorName = nullptr;
     if (Lex.getCode() == tgtok::colon) {
       if (Lex.Lex() != tgtok::VarName) { // eat the ':'
         TokError("expected variable name in dag operator");
         return nullptr;
       }
-      OperatorName = Lex.getCurStrVal();
+      OperatorName = StringInit::get(Lex.getCurStrVal());
       Lex.Lex();  // eat the VarName.
     }
 

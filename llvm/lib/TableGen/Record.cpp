@@ -838,7 +838,7 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
         Args.push_back(RHSs->getArg(i));
         ArgNames.push_back(RHSs->getArgName(i));
       }
-      return DagInit::get(LHSs->getOperator(), "", Args, ArgNames);
+      return DagInit::get(LHSs->getOperator(), nullptr, Args, ArgNames);
     }
     break;
   }
@@ -1035,7 +1035,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
       args.push_back(std::make_pair(Arg, ArgName));
     }
 
-    return DagInit::get(Val, "", args);
+    return DagInit::get(Val, nullptr, args);
   }
 
   ListInit *MHSl = dyn_cast<ListInit>(MHS);
@@ -1523,11 +1523,11 @@ Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) const {
   return const_cast<FieldInit *>(this);
 }
 
-static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, StringRef VN,
+static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, StringInit *VN,
                            ArrayRef<Init *> ArgRange,
                            ArrayRef<std::string> NameRange) {
   ID.AddPointer(V);
-  ID.AddString(VN);
+  ID.AddPointer(VN);
 
   ArrayRef<Init *>::iterator Arg  = ArgRange.begin();
   ArrayRef<std::string>::iterator  Name = NameRange.begin();
@@ -1540,7 +1540,7 @@ static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, StringRef VN,
 }
 
 DagInit *
-DagInit::get(Init *V, StringRef VN, ArrayRef<Init *> ArgRange,
+DagInit::get(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
              ArrayRef<std::string> NameRange) {
   static FoldingSet<DagInit> ThePool;
   static std::vector<DagInit*> TheActualPool;
@@ -1559,7 +1559,7 @@ DagInit::get(Init *V, StringRef VN, ArrayRef<Init *> ArgRange,
 }
 
 DagInit *
-DagInit::get(Init *V, StringRef VN,
+DagInit::get(Init *V, StringInit *VN,
              const std::vector<std::pair<Init*, std::string> > &args) {
   std::vector<Init *> Args;
   std::vector<std::string> Names;
@@ -1598,8 +1598,8 @@ Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) const {
 
 std::string DagInit::getAsString() const {
   std::string Result = "(" + Val->getAsString();
-  if (!ValName.empty())
-    Result += ":" + ValName;
+  if (ValName)
+    Result += ":" + ValName->getAsUnquotedString();
   if (!Args.empty()) {
     Result += " " + Args[0]->getAsString();
     if (!ArgNames[0].empty()) Result += ":$" + ArgNames[0];

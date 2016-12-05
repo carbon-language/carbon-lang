@@ -1146,11 +1146,11 @@ public:
 ///
 class DagInit : public TypedInit, public FoldingSetNode {
   Init *Val;
-  std::string ValName;
+  StringInit *ValName;
   std::vector<Init*> Args;
   std::vector<std::string> ArgNames;
 
-  DagInit(Init *V, StringRef VN, ArrayRef<Init *> ArgRange,
+  DagInit(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
           ArrayRef<std::string> NameRange)
       : TypedInit(IK_DagInit, DagRecTy::get()), Val(V), ValName(VN),
           Args(ArgRange.begin(), ArgRange.end()),
@@ -1164,9 +1164,9 @@ public:
     return I->getKind() == IK_DagInit;
   }
 
-  static DagInit *get(Init *V, StringRef VN, ArrayRef<Init *> ArgRange,
+  static DagInit *get(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
                       ArrayRef<std::string> NameRange);
-  static DagInit *get(Init *V, StringRef VN,
+  static DagInit *get(Init *V, StringInit *VN,
                       const std::vector<std::pair<Init*, std::string>> &args);
 
   void Profile(FoldingSetNodeID &ID) const;
@@ -1175,7 +1175,10 @@ public:
 
   Init *getOperator() const { return Val; }
 
-  StringRef getName() const { return ValName; }
+  StringInit *getName() const { return ValName; }
+  StringRef getNameStr() const {
+    return ValName ? ValName->getValue() : StringRef();
+  }
 
   unsigned getNumArgs() const { return Args.size(); }
   Init *getArg(unsigned Num) const {
