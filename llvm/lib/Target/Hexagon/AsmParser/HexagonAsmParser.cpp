@@ -314,6 +314,14 @@ public:
 
   bool ism6_0Imm() const { return CheckImmRange(6, 0, false, false, false); }
   bool isn8_0Imm() const { return CheckImmRange(8, 0, false, false, false); }
+  bool isn1Const() const {
+    if (!isImm())
+      return false;
+    int64_t Value;
+    if (!getImm()->evaluateAsAbsolute(Value))
+      return false;
+    return Value == -1;
+  }
 
   bool iss16_0Ext() const { return CheckImmRange(16 + 26, 0, true, true, true); }
   bool iss12_0Ext() const { return CheckImmRange(12 + 26, 0, true, true, true); }
@@ -505,6 +513,9 @@ public:
   }
   void adds11_3ExtOperands(MCInst &Inst, unsigned N) const {
     addSignedImmOperands(Inst, N);
+  }
+  void addn1ConstOperands(MCInst &Inst, unsigned N) const {
+    addImmOperands(Inst, N);
   }
 
   void addu7_0ExtOperands(MCInst &Inst, unsigned N) const {
