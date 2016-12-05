@@ -389,7 +389,7 @@ module std [system] {
   }
   module strstream {
     header "strstream"
-    requires !cplusplus11
+    export *
   }
   module system_error {
     header "system_error"

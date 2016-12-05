@@ -65,8 +65,6 @@ class Configuration(object):
         self.cxx_library_root = None
         self.cxx_runtime_root = None
         self.abi_library_root = None
-        self.enable_modules = False
-        self.modules_flags = None
         self.env = {}
         self.use_target = False
         self.use_system_cxx_lib = False
@@ -128,6 +126,9 @@ class Configuration(object):
         # Print the final compile and link flags.
         self.lit_config.note('Using compiler: %s' % self.cxx.path)
         self.lit_config.note('Using flags: %s' % self.cxx.flags)
+        if self.cxx.use_modules:
+            self.lit_config.note('Using modules flags: %s' %
+                                 self.cxx.modules_flags)
         self.lit_config.note('Using compile flags: %s'
                              % self.cxx.compile_flags)
         if len(self.cxx.warning_flags):
@@ -735,8 +736,8 @@ class Configuration(object):
         if platform.system() != 'Darwin':
             modules_flags += ['-Xclang', '-fmodules-local-submodule-visibility']
         supports_modules = self.cxx.hasCompileFlag(modules_flags)
-        self.enable_modules = self.get_lit_bool('enable_modules', False)
-        if self.enable_modules and not supports_modules:
+        enable_modules = self.get_lit_bool('enable_modules', False)
+        if enable_modules and not supports_modules:
             self.lit_config.fatal(
                 '-fmodules is enabled but not supported by the compiler')
         if not supports_modules:
@@ -748,11 +749,11 @@ class Configuration(object):
         if os.path.isdir(module_cache):
             shutil.rmtree(module_cache)
         os.makedirs(module_cache)
-        self.modules_flags = modules_flags + \
+        self.cxx.modules_flags = modules_flags + \
             ['-fmodules-cache-path=' + module_cache]
-        if self.enable_modules:
+        if enable_modules:
             self.config.available_features.add('-fmodules')
-            self.cxx.compile_flags += self.modules_flags
+            self.cxx.useModules()
 
     def configure_substitutions(self):
         sub = self.config.substitutions
@@ -777,10 +778,10 @@ class Configuration(object):
         build_str = self.cxx.path + ' -o %t.exe %s ' + all_flags
         sub.append(('%compile', compile_str))
         sub.append(('%link', link_str))
-        if self.enable_modules:
+        if self.cxx.use_modules:
             sub.append(('%build_module', build_str))
-        elif self.modules_flags is not None:
-            modules_str = ' '.join(self.modules_flags) + ' '
+        elif self.cxx.modules_flags is not None:
+            modules_str = ' '.join(self.cxx.modules_flags) + ' '
             sub.append(('%build_module', build_str + ' ' + modules_str))
         sub.append(('%build', build_str))
         # Configure exec prefix substitutions.
