@@ -25846,8 +25846,10 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
 static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
                                      SDValue &V1, SDValue &V2,
                                      const X86Subtarget &Subtarget,
-                                     unsigned &Shuffle, MVT &ShuffleVT) {
+                                     unsigned &Shuffle, MVT &ShuffleVT,
+                                     bool IsUnary) {
   bool FloatDomain = MaskVT.isFloatingPoint();
+  unsigned EltSizeInBits = MaskVT.getScalarSizeInBits();
 
   if (MaskVT.is128BitVector()) {
     if (isTargetShuffleEquivalent(Mask, {0, 0}) && FloatDomain) {
@@ -25875,33 +25877,65 @@ static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
       ShuffleVT = MVT::v4f32;
       return true;
     }
-    if (isTargetShuffleEquivalent(Mask, {0, 0, 1, 1}) && FloatDomain) {
-      V2 = V1;
-      Shuffle = X86ISD::UNPCKL;
-      ShuffleVT = MVT::v4f32;
-      return true;
-    }
-    if (isTargetShuffleEquivalent(Mask, {2, 2, 3, 3}) && FloatDomain) {
-      V2 = V1;
-      Shuffle = X86ISD::UNPCKH;
-      ShuffleVT = MVT::v4f32;
-      return true;
-    }
-    if (isTargetShuffleEquivalent(Mask, {0, 0, 1, 1, 2, 2, 3, 3}) ||
-        isTargetShuffleEquivalent(
-            Mask, {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7})) {
-      V2 = V1;
-      Shuffle = X86ISD::UNPCKL;
-      ShuffleVT = Mask.size() == 8 ? MVT::v8i16 : MVT::v16i8;
-      return true;
-    }
-    if (isTargetShuffleEquivalent(Mask, {4, 4, 5, 5, 6, 6, 7, 7}) ||
-        isTargetShuffleEquivalent(Mask, {8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13,
-                                         13, 14, 14, 15, 15})) {
-      V2 = V1;
-      Shuffle = X86ISD::UNPCKH;
-      ShuffleVT = Mask.size() == 8 ? MVT::v8i16 : MVT::v16i8;
-      return true;
+  }
+
+  // Attempt to match against either a unary or binary UNPCKL/UNPCKH shuffle.
+  if ((MaskVT == MVT::v4f32 && Subtarget.hasSSE1()) ||
+      (MaskVT.is128BitVector() && Subtarget.hasSSE2()) ||
+      (MaskVT.is256BitVector() && 32 <= EltSizeInBits && Subtarget.hasAVX()) ||
+      (MaskVT.is256BitVector() && Subtarget.hasAVX2()) ||
+      (MaskVT.is512BitVector() && Subtarget.hasAVX512())) {
+    MVT LegalVT = MaskVT;
+    if (LegalVT.is256BitVector() && !Subtarget.hasAVX2())
+      LegalVT = (32 == EltSizeInBits ? MVT::v8f32 : MVT::v4f64);
+
+    SmallVector<int, 64> Unpckl, Unpckh;
+    if (IsUnary) {
+      createUnpackShuffleMask(MaskVT, Unpckl, true, true);
+      if (isTargetShuffleEquivalent(Mask, Unpckl)) {
+        V2 = V1;
+        Shuffle = X86ISD::UNPCKL;
+        ShuffleVT = LegalVT;
+        return true;
+      }
+
+      createUnpackShuffleMask(MaskVT, Unpckh, false, true);
+      if (isTargetShuffleEquivalent(Mask, Unpckh)) {
+        V2 = V1;
+        Shuffle = X86ISD::UNPCKH;
+        ShuffleVT = LegalVT;
+        return true;
+      }
+    } else {
+      createUnpackShuffleMask(MaskVT, Unpckl, true, false);
+      if (isTargetShuffleEquivalent(Mask, Unpckl)) {
+        Shuffle = X86ISD::UNPCKL;
+        ShuffleVT = LegalVT;
+        return true;
+      }
+
+      createUnpackShuffleMask(MaskVT, Unpckh, false, false);
+      if (isTargetShuffleEquivalent(Mask, Unpckh)) {
+        Shuffle = X86ISD::UNPCKH;
+        ShuffleVT = LegalVT;
+        return true;
+      }
+
+      ShuffleVectorSDNode::commuteMask(Unpckl);
+      if (isTargetShuffleEquivalent(Mask, Unpckl)) {
+        std::swap(V1, V2);
+        Shuffle = X86ISD::UNPCKL;
+        ShuffleVT = LegalVT;
+        return true;
+      }
+
+      ShuffleVectorSDNode::commuteMask(Unpckh);
+      if (isTargetShuffleEquivalent(Mask, Unpckh)) {
+        std::swap(V1, V2);
+        Shuffle = X86ISD::UNPCKH;
+        ShuffleVT = LegalVT;
+        return true;
+      }
     }
   }
 
@@ -26167,7 +26201,7 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
   }
 
   if (matchBinaryVectorShuffle(MaskVT, Mask, V1, V2, Subtarget, Shuffle,
-                               ShuffleVT)) {
+                               ShuffleVT, UnaryShuffle)) {
     if (Depth == 1 && Root.getOpcode() == Shuffle)
       return false; // Nothing to do!
     if (IsEVEXShuffle && (NumRootElts != ShuffleVT.getVectorNumElements()))
