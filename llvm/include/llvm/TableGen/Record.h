@@ -342,8 +342,7 @@ public:
   /// out, returning them as a new init of bits type.  If it is not legal to use
   /// the bit subscript operator on this initializer, return null.
   ///
-  virtual Init *
-  convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
+  virtual Init *convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
     return nullptr;
   }
 
@@ -352,8 +351,7 @@ public:
   /// elements, returning them as a new init of list type.  If it is not legal
   /// to take a slice of this, return null.
   ///
-  virtual Init *
-  convertInitListSlice(const std::vector<unsigned> &Elements) const {
+  virtual Init *convertInitListSlice(ArrayRef<unsigned> Elements) const {
     return nullptr;
   }
 
@@ -423,10 +421,8 @@ public:
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
-  Init *
-  convertInitializerBitRange(const std::vector<unsigned> &Bits) const override;
-  Init *
-  convertInitListSlice(const std::vector<unsigned> &Elements) const override;
+  Init *convertInitializerBitRange(ArrayRef<unsigned> Bits) const override;
+  Init *convertInitListSlice(ArrayRef<unsigned> Elements) const override;
 
   /// This method is used to implement the FieldInit class.
   /// Implementors of this method should return the type of the named field if
@@ -523,8 +519,7 @@ public:
   unsigned getNumBits() const { return NumBits; }
 
   Init *convertInitializerTo(RecTy *Ty) const override;
-  Init *
-  convertInitializerBitRange(const std::vector<unsigned> &Bits) const override;
+  Init *convertInitializerBitRange(ArrayRef<unsigned> Bits) const override;
 
   bool isComplete() const override {
     for (unsigned i = 0; i != getNumBits(); ++i)
@@ -577,8 +572,7 @@ public:
   int64_t getValue() const { return Value; }
 
   Init *convertInitializerTo(RecTy *Ty) const override;
-  Init *
-  convertInitializerBitRange(const std::vector<unsigned> &Bits) const override;
+  Init *convertInitializerBitRange(ArrayRef<unsigned> Bits) const override;
 
   std::string getAsString() const override;
 
@@ -708,8 +702,7 @@ public:
 
   Record *getElementAsRecord(unsigned i) const;
 
-  Init *
-    convertInitListSlice(const std::vector<unsigned> &Elements) const override;
+  Init *convertInitListSlice(ArrayRef<unsigned> Elements) const override;
 
   Init *convertInitializerTo(RecTy *Ty) const override;
 
@@ -760,7 +753,7 @@ public:
   }
 
   // Clone - Clone this operator, replacing arguments with the new list
-  virtual OpInit *clone(std::vector<Init *> &Operands) const = 0;
+  virtual OpInit *clone(ArrayRef<Init *> Operands) const = 0;
 
   virtual unsigned getNumOperands() const = 0;
   virtual Init *getOperand(unsigned i) const = 0;
@@ -800,7 +793,7 @@ public:
   void Profile(FoldingSetNodeID &ID) const;
 
   // Clone - Clone this operator, replacing arguments with the new list
-  OpInit *clone(std::vector<Init *> &Operands) const override {
+  OpInit *clone(ArrayRef<Init *> Operands) const override {
     assert(Operands.size() == 1 &&
            "Wrong number of operands for unary operation");
     return UnOpInit::get(getOpcode(), *Operands.begin(), getType());
@@ -852,7 +845,7 @@ public:
   void Profile(FoldingSetNodeID &ID) const;
 
   // Clone - Clone this operator, replacing arguments with the new list
-  OpInit *clone(std::vector<Init *> &Operands) const override {
+  OpInit *clone(ArrayRef<Init *> Operands) const override {
     assert(Operands.size() == 2 &&
            "Wrong number of operands for binary operation");
     return BinOpInit::get(getOpcode(), Operands[0], Operands[1], getType());
@@ -908,7 +901,7 @@ public:
   void Profile(FoldingSetNodeID &ID) const;
 
   // Clone - Clone this operator, replacing arguments with the new list
-  OpInit *clone(std::vector<Init *> &Operands) const override {
+  OpInit *clone(ArrayRef<Init *> Operands) const override {
     assert(Operands.size() == 3 &&
            "Wrong number of operands for ternary operation");
     return TernOpInit::get(getOpcode(), Operands[0], Operands[1], Operands[2],
@@ -1086,7 +1079,7 @@ public:
 
   Record *getDef() const { return Def; }
 
-  //virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
+  //virtual Init *convertInitializerBitRange(ArrayRef<unsigned> Bits);
 
   RecTy *getFieldType(StringInit *FieldName) const override;
   Init *getFieldInit(Record &R, const RecordVal *RV,
@@ -1147,8 +1140,8 @@ public:
 class DagInit : public TypedInit, public FoldingSetNode {
   Init *Val;
   StringInit *ValName;
-  std::vector<Init*> Args;
-  std::vector<StringInit*> ArgNames;
+  SmallVector<Init*, 4> Args;
+  SmallVector<StringInit*, 4> ArgNames;
 
   DagInit(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
           ArrayRef<StringInit *> NameRange)
@@ -1165,9 +1158,9 @@ public:
   }
 
   static DagInit *get(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
-                      ArrayRef<StringInit *> NameRange);
+                      ArrayRef<StringInit*> NameRange);
   static DagInit *get(Init *V, StringInit *VN,
-                      const std::vector<std::pair<Init*, StringInit*>> &args);
+                      ArrayRef<std::pair<Init*, StringInit*>> Args);
 
   void Profile(FoldingSetNodeID &ID) const;
 
@@ -1198,8 +1191,8 @@ public:
 
   std::string getAsString() const override;
 
-  typedef std::vector<Init*>::const_iterator       const_arg_iterator;
-  typedef std::vector<StringInit*>::const_iterator const_name_iterator;
+  typedef SmallVectorImpl<Init*>::const_iterator       const_arg_iterator;
+  typedef SmallVectorImpl<StringInit*>::const_iterator const_name_iterator;
 
   inline const_arg_iterator  arg_begin() const { return Args.begin(); }
   inline const_arg_iterator  arg_end  () const { return Args.end();   }

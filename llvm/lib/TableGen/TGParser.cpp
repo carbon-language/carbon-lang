@@ -1428,9 +1428,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       Lex.Lex();  // eat the VarName.
     }
 
-    std::vector<std::pair<llvm::Init*, StringInit*> > DagArgs;
+    SmallVector<std::pair<llvm::Init*, StringInit*>, 8> DagArgs;
     if (Lex.getCode() != tgtok::r_paren) {
-      DagArgs = ParseDagArgList(CurRec);
+      ParseDagArgList(DagArgs, CurRec);
       if (DagArgs.empty()) return nullptr;
     }
 
@@ -1603,9 +1603,9 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
 ///    DagArg     ::= VARNAME
 ///    DagArgList ::= DagArg
 ///    DagArgList ::= DagArgList ',' DagArg
-std::vector<std::pair<llvm::Init*, StringInit*> >
-TGParser::ParseDagArgList(Record *CurRec) {
-  std::vector<std::pair<llvm::Init*, StringInit*> > Result;
+void TGParser::ParseDagArgList(
+    SmallVectorImpl<std::pair<llvm::Init*, StringInit*>> &Result,
+    Record *CurRec) {
 
   while (true) {
     // DagArg ::= VARNAME
@@ -1617,15 +1617,18 @@ TGParser::ParseDagArgList(Record *CurRec) {
     } else {
       // DagArg ::= Value (':' VARNAME)?
       Init *Val = ParseValue(CurRec);
-      if (!Val)
-        return std::vector<std::pair<llvm::Init*, StringInit*> >();
+      if (!Val) {
+        Result.clear();
+        return;
+      }
 
       // If the variable name is present, add it.
       StringInit *VarName = nullptr;
       if (Lex.getCode() == tgtok::colon) {
         if (Lex.Lex() != tgtok::VarName) { // eat the ':'
           TokError("expected variable name in dag literal");
-          return std::vector<std::pair<llvm::Init*, StringInit*> >();
+          Result.clear();
+          return;
         }
         VarName = StringInit::get(Lex.getCurStrVal());
         Lex.Lex();  // eat the VarName.
@@ -1636,8 +1639,6 @@ TGParser::ParseDagArgList(Record *CurRec) {
     if (Lex.getCode() != tgtok::comma) break;
     Lex.Lex(); // eat the ','
   }
-
-  return Result;
 }
 
 /// ParseValueList - Parse a comma separated list of values, returning them as a

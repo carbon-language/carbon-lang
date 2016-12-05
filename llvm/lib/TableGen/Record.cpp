@@ -320,7 +320,7 @@ Init *BitsInit::convertInitializerTo(RecTy *Ty) const {
 }
 
 Init *
-BitsInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
+BitsInit::convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
   SmallVector<Init *, 16> NewBits(Bits.size());
 
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
@@ -445,7 +445,7 @@ Init *IntInit::convertInitializerTo(RecTy *Ty) const {
 }
 
 Init *
-IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
+IntInit::convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
   SmallVector<Init *, 16> NewBits(Bits.size());
 
   for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
@@ -537,7 +537,7 @@ Init *ListInit::convertInitializerTo(RecTy *Ty) const {
     return const_cast<ListInit*>(this);
 
   if (auto *LRT = dyn_cast<ListRecTy>(Ty)) {
-    std::vector<Init*> Elements;
+    SmallVector<Init*, 8> Elements;
     Elements.reserve(getValues().size());
 
     // Verify that all of the elements of the list are subclasses of the
@@ -560,9 +560,8 @@ Init *ListInit::convertInitializerTo(RecTy *Ty) const {
   return nullptr;
 }
 
-Init *
-ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
-  std::vector<Init*> Vals;
+Init *ListInit::convertInitListSlice(ArrayRef<unsigned> Elements) const {
+  SmallVector<Init*, 8> Vals;
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
     if (Elements[i] >= size())
       return nullptr;
@@ -580,7 +579,7 @@ Record *ListInit::getElementAsRecord(unsigned i) const {
 }
 
 Init *ListInit::resolveReferences(Record &R, const RecordVal *RV) const {
-  std::vector<Init*> Resolved;
+  SmallVector<Init*, 8> Resolved;
   Resolved.reserve(size());
   bool Changed = false;
 
@@ -837,8 +836,8 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       DefInit *ROp = dyn_cast<DefInit>(RHSs->getOperator());
       if (!LOp || !ROp || LOp->getDef() != ROp->getDef())
         PrintFatalError("Concated Dag operators do not match!");
-      std::vector<Init*> Args;
-      std::vector<StringInit*> ArgNames;
+      SmallVector<Init*, 8> Args;
+      SmallVector<StringInit*, 8> ArgNames;
       for (unsigned i = 0, e = LHSs->getNumArgs(); i != e; ++i) {
         Args.push_back(LHSs->getArg(i));
         ArgNames.push_back(LHSs->getArgName(i));
@@ -855,7 +854,7 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     ListInit *LHSs = dyn_cast<ListInit>(LHS);
     ListInit *RHSs = dyn_cast<ListInit>(RHS);
     if (LHSs && RHSs) {
-      std::vector<Init *> Args;
+      SmallVector<Init *, 8> Args;
       Args.insert(Args.end(), LHSs->begin(), LHSs->end());
       Args.insert(Args.end(), RHSs->begin(), RHSs->end());
       return ListInit::get(
@@ -989,7 +988,7 @@ static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
     if (isa<DagRecTy>(TArg->getType()))
       return ForeachHelper(LHS, Arg, RHSo, Type, CurRec, CurMultiClass);
 
-  std::vector<Init *> NewOperands;
+  SmallVector<Init *, 8> NewOperands;
   for (unsigned i = 0; i < RHSo->getNumOperands(); ++i) {
     if (auto *RHSoo = dyn_cast<OpInit>(RHSo->getOperand(i))) {
       if (Init *Result = EvaluateOperation(RHSoo, LHS, Arg,
@@ -1030,7 +1029,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
                                          Type, CurRec, CurMultiClass))
       Val = Result;
 
-    std::vector<std::pair<Init *, StringInit*> > args;
+    SmallVector<std::pair<Init *, StringInit*>, 8> args;
     for (unsigned int i = 0; i < MHSd->getNumArgs(); ++i) {
       Init *Arg = MHSd->getArg(i);
       StringInit *ArgName = MHSd->getArgName(i);
@@ -1049,8 +1048,8 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
 
   ListInit *MHSl = dyn_cast<ListInit>(MHS);
   if (MHSl && isa<ListRecTy>(Type)) {
-    std::vector<Init *> NewOperands;
-    std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
+    SmallVector<Init *, 8> NewOperands;
+    SmallVector<Init *, 8> NewList(MHSl->begin(), MHSl->end());
 
     for (Init *&Item : NewList) {
       NewOperands.clear();
@@ -1271,8 +1270,7 @@ TypedInit::convertInitializerTo(RecTy *Ty) const {
   return nullptr;
 }
 
-Init *
-TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
+Init *TypedInit::convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
   BitsRecTy *T = dyn_cast<BitsRecTy>(getType());
   if (!T) return nullptr;  // Cannot subscript a non-bits variable.
   unsigned NumBits = T->getNumBits();
@@ -1287,15 +1285,14 @@ TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
   return BitsInit::get(NewBits);
 }
 
-Init *
-TypedInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
+Init *TypedInit::convertInitListSlice(ArrayRef<unsigned> Elements) const {
   ListRecTy *T = dyn_cast<ListRecTy>(getType());
   if (!T) return nullptr;  // Cannot subscript a non-list variable.
 
   if (Elements.size() == 1)
     return VarListElementInit::get(const_cast<TypedInit *>(this), Elements[0]);
 
-  std::vector<Init*> ListInits;
+  SmallVector<Init*, 8> ListInits;
   ListInits.reserve(Elements.size());
   for (unsigned i = 0, e = Elements.size(); i != e; ++i)
     ListInits.push_back(VarListElementInit::get(const_cast<TypedInit *>(this),
@@ -1569,9 +1566,9 @@ DagInit::get(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
 
 DagInit *
 DagInit::get(Init *V, StringInit *VN,
-             const std::vector<std::pair<Init*, StringInit*> > &args) {
-  std::vector<Init *> Args;
-  std::vector<StringInit *> Names;
+             ArrayRef<std::pair<Init*, StringInit*>> args) {
+  SmallVector<Init *, 8> Args;
+  SmallVector<StringInit *, 8> Names;
 
   for (const auto &Arg : args) {
     Args.push_back(Arg.first);
@@ -1593,13 +1590,17 @@ Init *DagInit::convertInitializerTo(RecTy *Ty) const {
 }
 
 Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) const {
-  std::vector<Init*> NewArgs;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i)
-    NewArgs.push_back(Args[i]->resolveReferences(R, RV));
+  SmallVector<Init*, 8> NewArgs;
+  NewArgs.reserve(Args.size());
+  bool ArgsChanged = false;
+  for (const Init *Arg : Args) {
+    Init *NewArg = Arg->resolveReferences(R, RV);
+    NewArgs.push_back(NewArg);
+    ArgsChanged |= NewArg != Arg;
+  }
 
   Init *Op = Val->resolveReferences(R, RV);
-
-  if (Args != NewArgs || Op != Val)
+  if (Op != Val || ArgsChanged)
     return DagInit::get(Op, ValName, NewArgs, ArgNames);
 
   return const_cast<DagInit *>(this);
