@@ -766,7 +766,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
   // Now that we've got the ABI handling code, it's safe to set a location for
   // any Constants we find in the IR.
   if (MBB.empty())
-    EntryBuilder.setMBB(MBB);
+    EntryBuilder.setMBB(MBB, /* Beginning */ true);
   else
     EntryBuilder.setInstr(MBB.back(), /* Before */ false);
 

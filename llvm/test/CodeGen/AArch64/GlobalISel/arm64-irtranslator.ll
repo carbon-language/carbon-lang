@@ -1,4 +1,4 @@
-; RUN: llc -O0 -stop-after=irtranslator -global-isel -verify-machineinstrs %s -o - 2>&1 | FileCheck %s
+; RUN: llc -O0 -aarch64-enable-atomic-cfg-tidy=0 -stop-after=irtranslator -global-isel -verify-machineinstrs %s -o - 2>&1 | FileCheck %s
 
 ; This file checks that the translation from llvm IR to generic MachineInstr
 ; is correct.
@@ -383,8 +383,8 @@ next:
 }
 
 ; CHECK-LABEL: name: constant_int_start
-; CHECK: [[TWO:%[0-9]+]](s32) = G_CONSTANT i32 2
 ; CHECK: [[ANSWER:%[0-9]+]](s32) = G_CONSTANT i32 42
+; CHECK: [[TWO:%[0-9]+]](s32) = G_CONSTANT i32 2
 ; CHECK: [[RES:%[0-9]+]](s32) = G_ADD [[TWO]], [[ANSWER]]
 define i32 @constant_int_start() {
   %res = add i32 2, 42
@@ -914,4 +914,18 @@ define void @test_large_const(i128* %addr) {
 ; CHECK: G_STORE [[VAL]](s128), [[ADDR]](p0)
   store i128 42, i128* %addr
   ret void
+}
+
+; When there was no formal argument handling (so the first BB was empty) we used
+; to insert the constants at the end of the block, even if they were encountered
+; after the block's terminators had been emitted.
+define i32 @test_const_placement() {
+; CHECK-LABEL: name: test_const_placement
+; CHECK: [[VAL:%[0-9]+]](s32) = G_CONSTANT i32 42
+; CHECK: G_BR
+
+  br label %next
+
+next:
+  ret i32 42
 }
