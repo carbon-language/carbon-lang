@@ -562,10 +562,11 @@ Init *ListInit::convertInitializerTo(RecTy *Ty) const {
 
 Init *ListInit::convertInitListSlice(ArrayRef<unsigned> Elements) const {
   SmallVector<Init*, 8> Vals;
-  for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
-    if (Elements[i] >= size())
+  Vals.reserve(Elements.size());
+  for (unsigned Element : Elements) {
+    if (Element >= size())
       return nullptr;
-    Vals.push_back(getElement(Elements[i]));
+    Vals.push_back(getElement(Element));
   }
   return ListInit::get(Vals, getType());
 }
@@ -614,9 +615,11 @@ Init *ListInit::resolveListElementReference(Record &R, const RecordVal *IRV,
 
 std::string ListInit::getAsString() const {
   std::string Result = "[";
-  for (unsigned i = 0, e = NumValues; i != e; ++i) {
-    if (i) Result += ", ";
-    Result += getElement(i)->getAsString();
+  const char *sep = "";
+  for (Init *Element : *this) {
+    Result += sep;
+    sep = ", ";
+    Result += Element->getAsString();
   }
   return Result + "]";
 }
@@ -989,7 +992,8 @@ static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
       return ForeachHelper(LHS, Arg, RHSo, Type, CurRec, CurMultiClass);
 
   SmallVector<Init *, 8> NewOperands;
-  for (unsigned i = 0; i < RHSo->getNumOperands(); ++i) {
+  NewOperands.reserve(RHSo->getNumOperands());
+  for (unsigned i = 0, e = RHSo->getNumOperands(); i < e; ++i) {
     if (auto *RHSoo = dyn_cast<OpInit>(RHSo->getOperand(i))) {
       if (Init *Result = EvaluateOperation(RHSoo, LHS, Arg,
                                            Type, CurRec, CurMultiClass))
@@ -1275,12 +1279,13 @@ Init *TypedInit::convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
   if (!T) return nullptr;  // Cannot subscript a non-bits variable.
   unsigned NumBits = T->getNumBits();
 
-  SmallVector<Init *, 16> NewBits(Bits.size());
-  for (unsigned i = 0, e = Bits.size(); i != e; ++i) {
-    if (Bits[i] >= NumBits)
+  SmallVector<Init *, 16> NewBits;
+  NewBits.reserve(Bits.size());
+  for (unsigned Bit : Bits) {
+    if (Bit >= NumBits)
       return nullptr;
 
-    NewBits[i] = VarBitInit::get(const_cast<TypedInit *>(this), Bits[i]);
+    NewBits.push_back(VarBitInit::get(const_cast<TypedInit *>(this), Bit));
   }
   return BitsInit::get(NewBits);
 }
@@ -1294,9 +1299,9 @@ Init *TypedInit::convertInitListSlice(ArrayRef<unsigned> Elements) const {
 
   SmallVector<Init*, 8> ListInits;
   ListInits.reserve(Elements.size());
-  for (unsigned i = 0, e = Elements.size(); i != e; ++i)
+  for (unsigned Element : Elements)
     ListInits.push_back(VarListElementInit::get(const_cast<TypedInit *>(this),
-                                                Elements[i]));
+                                                Element));
   return ListInit::get(ListInits, T);
 }
 
@@ -1702,13 +1707,13 @@ void Record::setName(StringRef Name) {
 }
 
 void Record::resolveReferencesTo(const RecordVal *RV) {
-  for (unsigned i = 0, e = Values.size(); i != e; ++i) {
-    if (RV == &Values[i]) // Skip resolve the same field as the given one
+  for (RecordVal &Value : Values) {
+    if (RV == &Value) // Skip resolve the same field as the given one
       continue;
-    if (Init *V = Values[i].getValue())
-      if (Values[i].setValue(V->resolveReferences(*this, RV)))
+    if (Init *V = Value.getValue())
+      if (Value.setValue(V->resolveReferences(*this, RV)))
         PrintFatalError(getLoc(), "Invalid value is found when setting '" +
-                        Values[i].getNameInitAsString() +
+                        Value.getNameInitAsString() +
                         "' after resolving references" +
                         (RV ? " against '" + RV->getNameInitAsString() +
                               "' of (" + RV->getValue()->getAsUnquotedString() +
