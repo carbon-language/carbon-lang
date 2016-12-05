@@ -175,7 +175,7 @@ private:  // Parser methods.
                    IDParseMode Mode = ParseValueMode);
   std::vector<Init*> ParseValueList(Record *CurRec, Record *ArgsRec = nullptr,
                                     RecTy *EltTy = nullptr);
-  std::vector<std::pair<llvm::Init*, std::string> > ParseDagArgList(Record *);
+  std::vector<std::pair<llvm::Init*, StringInit*> > ParseDagArgList(Record *);
   bool ParseOptionalRangeList(std::vector<unsigned> &Ranges);
   bool ParseOptionalBitList(std::vector<unsigned> &Ranges);
   std::vector<unsigned> ParseRangeList();

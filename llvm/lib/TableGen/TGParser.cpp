@@ -1428,7 +1428,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       Lex.Lex();  // eat the VarName.
     }
 
-    std::vector<std::pair<llvm::Init*, std::string> > DagArgs;
+    std::vector<std::pair<llvm::Init*, StringInit*> > DagArgs;
     if (Lex.getCode() != tgtok::r_paren) {
       DagArgs = ParseDagArgList(CurRec);
       if (DagArgs.empty()) return nullptr;
@@ -1603,30 +1603,31 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
 ///    DagArg     ::= VARNAME
 ///    DagArgList ::= DagArg
 ///    DagArgList ::= DagArgList ',' DagArg
-std::vector<std::pair<llvm::Init*, std::string> >
+std::vector<std::pair<llvm::Init*, StringInit*> >
 TGParser::ParseDagArgList(Record *CurRec) {
-  std::vector<std::pair<llvm::Init*, std::string> > Result;
+  std::vector<std::pair<llvm::Init*, StringInit*> > Result;
 
   while (true) {
     // DagArg ::= VARNAME
     if (Lex.getCode() == tgtok::VarName) {
       // A missing value is treated like '?'.
-      Result.emplace_back(UnsetInit::get(), Lex.getCurStrVal());
+      StringInit *VarName = StringInit::get(Lex.getCurStrVal());
+      Result.emplace_back(UnsetInit::get(), VarName);
       Lex.Lex();
     } else {
       // DagArg ::= Value (':' VARNAME)?
       Init *Val = ParseValue(CurRec);
       if (!Val)
-        return std::vector<std::pair<llvm::Init*, std::string> >();
+        return std::vector<std::pair<llvm::Init*, StringInit*> >();
 
       // If the variable name is present, add it.
-      std::string VarName;
+      StringInit *VarName = nullptr;
       if (Lex.getCode() == tgtok::colon) {
         if (Lex.Lex() != tgtok::VarName) { // eat the ':'
           TokError("expected variable name in dag literal");
-          return std::vector<std::pair<llvm::Init*, std::string> >();
+          return std::vector<std::pair<llvm::Init*, StringInit*> >();
         }
-        VarName = Lex.getCurStrVal();
+        VarName = StringInit::get(Lex.getCurStrVal());
         Lex.Lex();  // eat the VarName.
       }
 

@@ -829,7 +829,7 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       if (!LOp || !ROp || LOp->getDef() != ROp->getDef())
         PrintFatalError("Concated Dag operators do not match!");
       std::vector<Init*> Args;
-      std::vector<std::string> ArgNames;
+      std::vector<StringInit*> ArgNames;
       for (unsigned i = 0, e = LHSs->getNumArgs(); i != e; ++i) {
         Args.push_back(LHSs->getArg(i));
         ArgNames.push_back(LHSs->getArgName(i));
@@ -1021,10 +1021,10 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
                                          Type, CurRec, CurMultiClass))
       Val = Result;
 
-    std::vector<std::pair<Init *, std::string> > args;
+    std::vector<std::pair<Init *, StringInit*> > args;
     for (unsigned int i = 0; i < MHSd->getNumArgs(); ++i) {
       Init *Arg = MHSd->getArg(i);
-      std::string ArgName = MHSd->getArgName(i);
+      StringInit *ArgName = MHSd->getArgName(i);
 
       // Process args
       if (Init *Result = EvaluateOperation(RHSo, LHS, Arg, Type,
@@ -1525,23 +1525,23 @@ Init *FieldInit::resolveReferences(Record &R, const RecordVal *RV) const {
 
 static void ProfileDagInit(FoldingSetNodeID &ID, Init *V, StringInit *VN,
                            ArrayRef<Init *> ArgRange,
-                           ArrayRef<std::string> NameRange) {
+                           ArrayRef<StringInit *> NameRange) {
   ID.AddPointer(V);
   ID.AddPointer(VN);
 
-  ArrayRef<Init *>::iterator Arg  = ArgRange.begin();
-  ArrayRef<std::string>::iterator  Name = NameRange.begin();
+  ArrayRef<Init *>::iterator Arg = ArgRange.begin();
+  ArrayRef<StringInit *>::iterator Name = NameRange.begin();
   while (Arg != ArgRange.end()) {
     assert(Name != NameRange.end() && "Arg name underflow!");
     ID.AddPointer(*Arg++);
-    ID.AddString(*Name++);
+    ID.AddPointer(*Name++);
   }
   assert(Name == NameRange.end() && "Arg name overflow!");
 }
 
 DagInit *
 DagInit::get(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
-             ArrayRef<std::string> NameRange) {
+             ArrayRef<StringInit *> NameRange) {
   static FoldingSet<DagInit> ThePool;
   static std::vector<DagInit*> TheActualPool;
 
@@ -1560,9 +1560,9 @@ DagInit::get(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
 
 DagInit *
 DagInit::get(Init *V, StringInit *VN,
-             const std::vector<std::pair<Init*, std::string> > &args) {
+             const std::vector<std::pair<Init*, StringInit*> > &args) {
   std::vector<Init *> Args;
-  std::vector<std::string> Names;
+  std::vector<StringInit *> Names;
 
   for (const auto &Arg : args) {
     Args.push_back(Arg.first);
@@ -1602,10 +1602,10 @@ std::string DagInit::getAsString() const {
     Result += ":" + ValName->getAsUnquotedString();
   if (!Args.empty()) {
     Result += " " + Args[0]->getAsString();
-    if (!ArgNames[0].empty()) Result += ":$" + ArgNames[0];
+    if (ArgNames[0]) Result += ":$" + ArgNames[0]->getAsUnquotedString();
     for (unsigned i = 1, e = Args.size(); i != e; ++i) {
       Result += ", " + Args[i]->getAsString();
-      if (!ArgNames[i].empty()) Result += ":$" + ArgNames[i];
+      if (ArgNames[i]) Result += ":$" + ArgNames[i]->getAsUnquotedString();
     }
   }
   return Result + ")";

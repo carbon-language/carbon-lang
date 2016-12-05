@@ -1148,10 +1148,10 @@ class DagInit : public TypedInit, public FoldingSetNode {
   Init *Val;
   StringInit *ValName;
   std::vector<Init*> Args;
-  std::vector<std::string> ArgNames;
+  std::vector<StringInit*> ArgNames;
 
   DagInit(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
-          ArrayRef<std::string> NameRange)
+          ArrayRef<StringInit *> NameRange)
       : TypedInit(IK_DagInit, DagRecTy::get()), Val(V), ValName(VN),
           Args(ArgRange.begin(), ArgRange.end()),
           ArgNames(NameRange.begin(), NameRange.end()) {}
@@ -1165,9 +1165,9 @@ public:
   }
 
   static DagInit *get(Init *V, StringInit *VN, ArrayRef<Init *> ArgRange,
-                      ArrayRef<std::string> NameRange);
+                      ArrayRef<StringInit *> NameRange);
   static DagInit *get(Init *V, StringInit *VN,
-                      const std::vector<std::pair<Init*, std::string>> &args);
+                      const std::vector<std::pair<Init*, StringInit*>> &args);
 
   void Profile(FoldingSetNodeID &ID) const;
 
@@ -1185,9 +1185,13 @@ public:
     assert(Num < Args.size() && "Arg number out of range!");
     return Args[Num];
   }
-  StringRef getArgName(unsigned Num) const {
+  StringInit *getArgName(unsigned Num) const {
     assert(Num < ArgNames.size() && "Arg number out of range!");
     return ArgNames[Num];
+  }
+  StringRef getArgNameStr(unsigned Num) const {
+    StringInit *Init = getArgName(Num);
+    return Init ? Init->getValue() : StringRef();
   }
 
   Init *resolveReferences(Record &R, const RecordVal *RV) const override;
@@ -1195,7 +1199,7 @@ public:
   std::string getAsString() const override;
 
   typedef std::vector<Init*>::const_iterator       const_arg_iterator;
-  typedef std::vector<std::string>::const_iterator const_name_iterator;
+  typedef std::vector<StringInit*>::const_iterator const_name_iterator;
 
   inline const_arg_iterator  arg_begin() const { return Args.begin(); }
   inline const_arg_iterator  arg_end  () const { return Args.end();   }
