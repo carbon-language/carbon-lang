@@ -717,14 +717,16 @@ RecTy *TGParser::ParseType() {
 /// has already been read.
 Init *TGParser::ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
                              IDParseMode Mode) {
+  StringInit *NameInit;
   if (CurRec) {
     if (const RecordVal *RV = CurRec->getValue(Name))
       return VarInit::get(Name, RV->getType());
 
-    Init *TemplateArgName = QualifyName(*CurRec, CurMultiClass, Name, ":");
+    NameInit = StringInit::get(Name);
+    Init *TemplateArgName = QualifyName(*CurRec, CurMultiClass, NameInit, ":");
 
     if (CurMultiClass)
-      TemplateArgName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name,
+      TemplateArgName = QualifyName(CurMultiClass->Rec, CurMultiClass, NameInit,
                                     "::");
 
     if (CurRec->isTemplateArg(TemplateArgName)) {
@@ -732,10 +734,11 @@ Init *TGParser::ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
       assert(RV && "Template arg doesn't exist??");
       return VarInit::get(TemplateArgName, RV->getType());
     }
-  }
+  } else
+    NameInit = StringInit::get(Name);
 
   if (CurMultiClass) {
-    Init *MCName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name,
+    Init *MCName = QualifyName(CurMultiClass->Rec, CurMultiClass, NameInit,
                                "::");
 
     if (CurMultiClass->Rec.isTemplateArg(MCName)) {
@@ -748,12 +751,12 @@ Init *TGParser::ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
   // If this is in a foreach loop, make sure it's not a loop iterator
   for (const auto &L : Loops) {
     VarInit *IterVar = dyn_cast<VarInit>(L.IterVar);
-    if (IterVar && IterVar->getName() == Name)
+    if (IterVar && IterVar->getNameInit() == NameInit)
       return IterVar;
   }
 
   if (Mode == ParseNameMode)
-    return StringInit::get(Name);
+    return NameInit;
 
   if (Record *D = Records.getDef(Name))
     return DefInit::get(D);
@@ -763,7 +766,7 @@ Init *TGParser::ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
     return nullptr;
   }
 
-  return StringInit::get(Name);
+  return NameInit;
 }
 
 /// ParseOperation - Parse an operator.  This returns null on error.
@@ -1525,19 +1528,21 @@ Init *TGParser::ParseValue(Record *CurRec, RecTy *ItemType, IDParseMode Mode) {
       Lex.Lex();
       break;
     }
-    case tgtok::period:
+    case tgtok::period: {
       if (Lex.Lex() != tgtok::Id) {  // eat the .
         TokError("expected field identifier after '.'");
         return nullptr;
       }
-      if (!Result->getFieldType(Lex.getCurStrVal())) {
+      StringInit *FieldName = StringInit::get(Lex.getCurStrVal());
+      if (!Result->getFieldType(FieldName)) {
         TokError("Cannot access field '" + Lex.getCurStrVal() + "' of value '" +
                  Result->getAsString() + "'");
         return nullptr;
       }
-      Result = FieldInit::get(Result, Lex.getCurStrVal());
+      Result = FieldInit::get(Result, FieldName);
       Lex.Lex();  // eat field name
       break;
+    }
 
     case tgtok::paste:
       SMLoc PasteLoc = Lex.getLoc();

@@ -678,9 +678,7 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       if (IntInit *LHSi = dyn_cast<IntInit>(LHS))
         return StringInit::get(LHSi->getAsString());
     } else {
-      if (StringInit *LHSs = dyn_cast<StringInit>(LHS)) {
-        StringRef Name = LHSs->getValue();
-
+      if (StringInit *Name = dyn_cast<StringInit>(LHS)) {
         // From TGParser::ParseIDValue
         if (CurRec) {
           if (const RecordVal *RV = CurRec->getValue(Name)) {
@@ -718,11 +716,11 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
           }
         }
         assert(CurRec && "NULL pointer");
-        if (Record *D = (CurRec->getRecords()).getDef(Name))
+        if (Record *D = (CurRec->getRecords()).getDef(Name->getValue()))
           return DefInit::get(D);
 
         PrintFatalError(CurRec->getLoc(),
-                        "Undefined reference:'" + Name + "'\n");
+                        "Undefined reference:'" + Name->getValue() + "'\n");
       }
 
       if (isa<IntRecTy>(getType())) {
@@ -1175,7 +1173,7 @@ std::string TernOpInit::getAsString() const {
          RHS->getAsString() + ")";
 }
 
-RecTy *TypedInit::getFieldType(StringRef FieldName) const {
+RecTy *TypedInit::getFieldType(StringInit *FieldName) const {
   if (RecordRecTy *RecordType = dyn_cast<RecordRecTy>(getType()))
     if (RecordVal *Field = RecordType->getRecord()->getValue(FieldName))
       return Field->getType();
@@ -1348,7 +1346,7 @@ Init *VarInit::resolveListElementReference(Record &R,
   return nullptr;
 }
 
-RecTy *VarInit::getFieldType(StringRef FieldName) const {
+RecTy *VarInit::getFieldType(StringInit *FieldName) const {
   if (RecordRecTy *RTy = dyn_cast<RecordRecTy>(getType()))
     if (const RecordVal *RV = RTy->getRecord()->getValue(FieldName))
       return RV->getType();
@@ -1356,7 +1354,7 @@ RecTy *VarInit::getFieldType(StringRef FieldName) const {
 }
 
 Init *VarInit::getFieldInit(Record &R, const RecordVal *RV,
-                            StringRef FieldName) const {
+                            StringInit *FieldName) const {
   if (isa<RecordRecTy>(getType()))
     if (const RecordVal *Val = R.getValue(VarName)) {
       if (RV != Val && (RV || isa<UnsetInit>(Val->getValue())))
@@ -1464,14 +1462,14 @@ Init *DefInit::convertInitializerTo(RecTy *Ty) const {
   return nullptr;
 }
 
-RecTy *DefInit::getFieldType(StringRef FieldName) const {
+RecTy *DefInit::getFieldType(StringInit *FieldName) const {
   if (const RecordVal *RV = Def->getValue(FieldName))
     return RV->getType();
   return nullptr;
 }
 
 Init *DefInit::getFieldInit(Record &R, const RecordVal *RV,
-                            StringRef FieldName) const {
+                            StringInit *FieldName) const {
   return Def->getValue(FieldName)->getValue();
 }
 
@@ -1479,8 +1477,8 @@ std::string DefInit::getAsString() const {
   return Def->getName();
 }
 
-FieldInit *FieldInit::get(Init *R, StringRef FN) {
-  typedef std::pair<Init *, TableGenStringKey> Key;
+FieldInit *FieldInit::get(Init *R, StringInit *FN) {
+  typedef std::pair<Init *, StringInit *> Key;
   static DenseMap<Key, FieldInit*> ThePool;
 
   Key TheKey(std::make_pair(R, FN));
@@ -1964,9 +1962,4 @@ Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
   if (BinOpInit *BinOp = dyn_cast<BinOpInit>(NewName))
     NewName = BinOp->Fold(&CurRec, CurMultiClass);
   return NewName;
-}
-
-Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
-                        StringRef Name, StringRef Scoper) {
-  return QualifyName(CurRec, CurMultiClass, StringInit::get(Name), Scoper);
 }

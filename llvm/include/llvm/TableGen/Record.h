@@ -38,10 +38,11 @@
 namespace llvm {
 
 class ListRecTy;
-struct MultiClass;
 class Record;
-class RecordVal;
 class RecordKeeper;
+class RecordVal;
+class StringInit;
+struct MultiClass;
 
 //===----------------------------------------------------------------------===//
 //  Type Classes
@@ -360,7 +361,7 @@ public:
   /// Implementors of this method should return the type of the named field if
   /// they are of record type.
   ///
-  virtual RecTy *getFieldType(StringRef FieldName) const {
+  virtual RecTy *getFieldType(StringInit *FieldName) const {
     return nullptr;
   }
 
@@ -369,7 +370,7 @@ public:
   /// this method should return non-null, otherwise it returns null.
   ///
   virtual Init *getFieldInit(Record &R, const RecordVal *RV,
-                             StringRef FieldName) const {
+                             StringInit *FieldName) const {
     return nullptr;
   }
 
@@ -431,7 +432,7 @@ public:
   /// Implementors of this method should return the type of the named field if
   /// they are of record type.
   ///
-  RecTy *getFieldType(StringRef FieldName) const override;
+  RecTy *getFieldType(StringInit *FieldName) const override;
 
   /// This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable
@@ -969,9 +970,9 @@ public:
   Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                     unsigned Elt) const override;
 
-  RecTy *getFieldType(StringRef FieldName) const override;
+  RecTy *getFieldType(StringInit *FieldName) const override;
   Init *getFieldInit(Record &R, const RecordVal *RV,
-                     StringRef FieldName) const override;
+                     StringInit *FieldName) const override;
 
   /// This method is used by classes that refer to other
   /// variables which may not be defined at the time they expression is formed.
@@ -1087,9 +1088,9 @@ public:
 
   //virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
 
-  RecTy *getFieldType(StringRef FieldName) const override;
+  RecTy *getFieldType(StringInit *FieldName) const override;
   Init *getFieldInit(Record &R, const RecordVal *RV,
-                     StringRef FieldName) const override;
+                     StringInit *FieldName) const override;
 
   std::string getAsString() const override;
 
@@ -1110,9 +1111,9 @@ public:
 ///
 class FieldInit : public TypedInit {
   Init *Rec;                // Record we are referring to
-  std::string FieldName;    // Field we are accessing
+  StringInit *FieldName;    // Field we are accessing
 
-  FieldInit(Init *R, StringRef FN)
+  FieldInit(Init *R, StringInit *FN)
       : TypedInit(IK_FieldInit, R->getFieldType(FN)), Rec(R), FieldName(FN) {
     assert(getType() && "FieldInit with non-record type!");
   }
@@ -1125,7 +1126,7 @@ public:
     return I->getKind() == IK_FieldInit;
   }
 
-  static FieldInit *get(Init *R, StringRef FN);
+  static FieldInit *get(Init *R, StringInit *FN);
 
   Init *getBit(unsigned Bit) const override;
 
@@ -1135,7 +1136,7 @@ public:
   Init *resolveReferences(Record &R, const RecordVal *RV) const override;
 
   std::string getAsString() const override {
-    return Rec->getAsString() + "." + FieldName;
+    return Rec->getAsString() + "." + FieldName->getValue().str();
   }
 };
 
@@ -1711,11 +1712,6 @@ raw_ostream &operator<<(raw_ostream &OS, const RecordKeeper &RK);
 /// to CurRec's name.
 Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
                   Init *Name, StringRef Scoper);
-
-/// Return an Init with a qualifier prefix referring
-/// to CurRec's name.
-Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
-                  StringRef Name, StringRef Scoper);
 
 } // end namespace llvm
 
