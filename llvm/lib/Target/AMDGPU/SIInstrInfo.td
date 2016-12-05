@@ -518,32 +518,39 @@ class SIMCInstr <string pseudo, int subtarget> {
 // EXP classes
 //===----------------------------------------------------------------------===//
 
-class EXPCommon : InstSI<
+class EXP_Helper<bit done, SDPatternOperator node = null_frag> : EXPCommon<
   (outs),
-  (ins i32imm:$en, i32imm:$tgt, i32imm:$compr, i32imm:$done, i32imm:$vm,
-       VGPR_32:$src0, VGPR_32:$src1, VGPR_32:$src2, VGPR_32:$src3),
-  "exp $en, $tgt, $compr, $done, $vm, $src0, $src1, $src2, $src3",
-  [] > {
+  (ins i8imm:$tgt, VGPR_32:$src0, VGPR_32:$src1, VGPR_32:$src2, VGPR_32:$src3,
+       i1imm:$vm, i1imm:$compr, i8imm:$en),
+  "exp $en, $tgt, $compr, "#!if(done, "1", "0")#", $vm, $src0, $src1, $src2, $src3",
+  [(node (i8 timm:$en), (i1 timm:$vm), (i8 timm:$tgt), (i1 timm:$compr),
+         f32:$src0, f32:$src1, f32:$src2, f32:$src3)]
+>;
 
-  let EXP_CNT = 1;
-  let Uses = [EXEC];
-  let SchedRW = [WriteExport];
-}
+// Split EXP instruction into EXP and EXP_DONE so we can set
+// mayLoad for done=1.
+multiclass EXP_m<bit done, SDPatternOperator node> {
+  let mayLoad = done in {
+    let isPseudo = 1, isCodeGenOnly = 1 in {
+      def "" : EXP_Helper<done, node>,
+               SIMCInstr <"exp"#!if(done, "_done", ""), SIEncodingFamily.NONE>;
+    }
 
-multiclass EXP_m {
+    let done = done in {
+      def _si : EXP_Helper<done>,
+                SIMCInstr <"exp"#!if(done, "_done", ""), SIEncodingFamily.SI>,
+                EXPe {
+        let DecoderNamespace = "SICI";
+        let DisableDecoder = DisableSIDecoder;
+      }
 
-  let isPseudo = 1, isCodeGenOnly = 1 in {
-    def "" : EXPCommon, SIMCInstr <"exp", SIEncodingFamily.NONE> ;
-  }
-
-  def _si : EXPCommon, SIMCInstr <"exp", SIEncodingFamily.SI>, EXPe {
-    let DecoderNamespace="SICI";
-    let DisableDecoder = DisableSIDecoder;
-  }
-
-  def _vi : EXPCommon, SIMCInstr <"exp", SIEncodingFamily.VI>, EXPe_vi {
-    let DecoderNamespace="VI";
-    let DisableDecoder = DisableVIDecoder;
+      def _vi : EXP_Helper<done>,
+                SIMCInstr <"exp"#!if(done, "_done", ""), SIEncodingFamily.VI>,
+                EXPe_vi {
+        let DecoderNamespace = "VI";
+        let DisableDecoder = DisableVIDecoder;
+      }
+    }
   }
 }
 
