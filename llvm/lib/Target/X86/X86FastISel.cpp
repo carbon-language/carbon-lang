@@ -3563,8 +3563,14 @@ X86FastISel::fastSelectInstruction(const Instruction *I)  {
     if (!SrcVT.isSimple() || !DstVT.isSimple())
       return false;
 
-    if (!SrcVT.is128BitVector() &&
-        !(Subtarget->hasAVX() && SrcVT.is256BitVector()))
+    MVT SVT = SrcVT.getSimpleVT();
+    MVT DVT = DstVT.getSimpleVT();
+
+    if (!SVT.is128BitVector() &&
+        !(Subtarget->hasAVX() && SVT.is256BitVector()) &&
+        !(Subtarget->hasAVX512() && SVT.is512BitVector() &&
+          (Subtarget->hasBWI() || (SVT.getScalarSizeInBits() >= 32 &&
+                                   DVT.getScalarSizeInBits() >= 32))))
       return false;
 
     unsigned Reg = getRegForValue(I->getOperand(0));
