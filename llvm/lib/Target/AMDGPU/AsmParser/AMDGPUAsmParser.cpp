@@ -135,6 +135,8 @@ public:
     ImmTyDA,
     ImmTyR128,
     ImmTyLWE,
+    ImmTyExpCompr,
+    ImmTyExpVM,
     ImmTyHwreg,
     ImmTySendMsg,
   };
@@ -228,6 +230,8 @@ public:
   bool isDA() const { return isImmTy(ImmTyDA); }
   bool isR128() const { return isImmTy(ImmTyUNorm); }
   bool isLWE() const { return isImmTy(ImmTyLWE); }
+  bool isExpVM() const { return isImmTy(ImmTyExpVM); }
+  bool isExpCompr() const { return isImmTy(ImmTyExpCompr); }
   bool isOffen() const { return isImmTy(ImmTyOffen); }
   bool isIdxen() const { return isImmTy(ImmTyIdxen); }
   bool isAddr64() const { return isImmTy(ImmTyAddr64); }
@@ -484,6 +488,8 @@ public:
     case ImmTyDA: OS << "DA"; break;
     case ImmTyR128: OS << "R128"; break;
     case ImmTyLWE: OS << "LWE"; break;
+    case ImmTyExpCompr: OS << "ExpCompr"; break;
+    case ImmTyExpVM: OS << "ExpVM"; break;
     case ImmTyHwreg: OS << "Hwreg"; break;
     case ImmTySendMsg: OS << "SendMsg"; break;
     }
@@ -745,6 +751,8 @@ public:
   AMDGPUOperand::Ptr defaultSMRDOffset8() const;
   AMDGPUOperand::Ptr defaultSMRDOffset20() const;
   AMDGPUOperand::Ptr defaultSMRDLiteralOffset() const;
+  AMDGPUOperand::Ptr defaultExpCompr() const;
+  AMDGPUOperand::Ptr defaultExpVM() const;
 
   OperandMatchResultTy parseOModOperand(OperandVector &Operands);
 
@@ -2529,6 +2537,14 @@ AMDGPUOperand::Ptr AMDGPUAsmParser::defaultR128() const {
 
 AMDGPUOperand::Ptr AMDGPUAsmParser::defaultLWE() const {
   return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyLWE);
+}
+
+AMDGPUOperand::Ptr AMDGPUAsmParser::defaultExpCompr() const {
+  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyExpCompr);
+}
+
+AMDGPUOperand::Ptr AMDGPUAsmParser::defaultExpVM() const {
+  return AMDGPUOperand::CreateImm(this, 0, SMLoc(), AMDGPUOperand::ImmTyExpVM);
 }
 
 //===----------------------------------------------------------------------===//

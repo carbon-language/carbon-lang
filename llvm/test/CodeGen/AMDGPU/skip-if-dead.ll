@@ -106,7 +106,7 @@ define amdgpu_ps void @test_kill_depth_var_x2_instructions(float %x) #0 {
 ; CHECK: v_cmpx_le_f32_e32 vcc, 0, v7
 ; CHECK-NEXT: s_cbranch_execnz [[SPLIT_BB:BB[0-9]+_[0-9]+]]
 ; CHECK-NEXT: ; BB#2:
-; CHECK-NEXT: exp 0, 9, 0, 1, 1, v0, v0, v0, v0
+; CHECK-NEXT: exp null off, off, off, off done vm
 ; CHECK-NEXT: s_endpgm
 
 ; CHECK-NEXT: {{^}}[[SPLIT_BB]]:
@@ -158,7 +158,7 @@ exit:
 ; CHECK-NEXT: s_cbranch_execnz [[SPLIT_BB:BB[0-9]+_[0-9]+]]
 
 ; CHECK-NEXT: ; BB#2:
-; CHECK-NEXT: exp 0, 9, 0, 1, 1, v0, v0, v0, v0
+; CHECK-NEXT: exp null off, off, off, off done vm
 ; CHECK-NEXT: s_endpgm
 
 ; CHECK-NEXT: {{^}}[[SPLIT_BB]]:

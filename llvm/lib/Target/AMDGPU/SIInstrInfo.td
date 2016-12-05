@@ -385,6 +385,8 @@ def unorm : NamedOperandBit<"UNorm", NamedMatchClass<"UNorm">>;
 def da : NamedOperandBit<"DA", NamedMatchClass<"DA">>;
 def r128 : NamedOperandBit<"R128", NamedMatchClass<"R128">>;
 def lwe : NamedOperandBit<"LWE", NamedMatchClass<"LWE">>;
+def exp_compr : NamedOperandBit<"ExpCompr", NamedMatchClass<"ExpCompr">>;
+def exp_vm : NamedOperandBit<"ExpVM", NamedMatchClass<"ExpVM">>;
 
 def dmask : NamedOperandU16<"DMask", NamedMatchClass<"DMask">>;
 
@@ -399,6 +401,10 @@ def src1_sel : NamedOperandU32<"SDWASrc1Sel", NamedMatchClass<"SDWASrc1Sel">>;
 def dst_unused : NamedOperandU32<"SDWADstUnused", NamedMatchClass<"SDWADstUnused">>;
 
 def hwreg : NamedOperandU16<"Hwreg", NamedMatchClass<"Hwreg", 0>>;
+
+def exp_tgt : Operand<i8> {
+  let PrintMethod = "printExpTgt";
+}
 
 } // End OperandType = "OPERAND_IMMEDIATE"
 
@@ -520,9 +526,10 @@ class SIMCInstr <string pseudo, int subtarget> {
 
 class EXP_Helper<bit done, SDPatternOperator node = null_frag> : EXPCommon<
   (outs),
-  (ins i8imm:$tgt, VGPR_32:$src0, VGPR_32:$src1, VGPR_32:$src2, VGPR_32:$src3,
-       i1imm:$vm, i1imm:$compr, i8imm:$en),
-  "exp $en, $tgt, $compr, "#!if(done, "1", "0")#", $vm, $src0, $src1, $src2, $src3",
+  (ins exp_tgt:$tgt,
+       ExpSrc0:$src0, ExpSrc1:$src1, ExpSrc2:$src2, ExpSrc3:$src3,
+       exp_vm:$vm, exp_compr:$compr, i8imm:$en),
+  "exp$tgt $src0, $src1, $src2, $src3"#!if(done, " done", "")#"$compr$vm",
   [(node (i8 timm:$en), (i1 timm:$vm), (i8 timm:$tgt), (i1 timm:$compr),
          f32:$src0, f32:$src1, f32:$src2, f32:$src3)]
 >;
