@@ -9802,6 +9802,9 @@ private:
                                   const FunctionDecl *FDecl,
                                   IdentifierInfo *FnInfo);
 
+  void CheckMinZero(const CallExpr *Call, const FunctionDecl *FDecl,
+                    IdentifierInfo *FnInfo);
+
   void CheckMemaccessArguments(const CallExpr *Call,
                                unsigned BId,
                                IdentifierInfo *FnName);
