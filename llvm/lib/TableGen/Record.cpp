@@ -813,6 +813,13 @@ void BinOpInit::Profile(FoldingSetNodeID &ID) const {
   ProfileBinOpInit(ID, getOpcode(), getLHS(), getRHS(), getType());
 }
 
+static StringInit *ConcatStringInits(const StringInit *I0,
+                                     const StringInit *I1) {
+  SmallString<80> Concat(I0->getValue());
+  Concat.append(I1->getValue());
+  return StringInit::get(Concat);
+}
+
 Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   switch (getOpcode()) {
   case CONCAT: {
@@ -852,12 +859,8 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   case STRCONCAT: {
     StringInit *LHSs = dyn_cast<StringInit>(LHS);
     StringInit *RHSs = dyn_cast<StringInit>(RHS);
-    if (LHSs && RHSs) {
-      // STRCONCAT is common; Use a SmallString to avoid most heap allocations.
-      SmallString<80> Concat(LHSs->getValue());
-      Concat.append(RHSs->getValue());
-      return StringInit::get(Concat);
-    }
+    if (LHSs && RHSs)
+      return ConcatStringInits(LHSs, RHSs);
     break;
   }
   case EQ: {
@@ -1940,31 +1943,27 @@ RecordKeeper::getAllDerivedDefinitions(StringRef ClassName) const {
   return Defs;
 }
 
+static Init *GetStrConcat(Init *I0, Init *I1) {
+  // Shortcut for the common case of concatenating two strings.
+  if (const StringInit *I0s = dyn_cast<StringInit>(I0))
+    if (const StringInit *I1s = dyn_cast<StringInit>(I1))
+      return ConcatStringInits(I0s, I1s);
+  return BinOpInit::get(BinOpInit::STRCONCAT, I0, I1, StringRecTy::get());
+}
+
 Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
                         Init *Name, StringRef Scoper) {
-  RecTy *Type = cast<TypedInit>(Name)->getType();
-
-  BinOpInit *NewName =
-    BinOpInit::get(BinOpInit::STRCONCAT,
-                   BinOpInit::get(BinOpInit::STRCONCAT,
-                                  CurRec.getNameInit(),
-                                  StringInit::get(Scoper),
-                                  Type)->Fold(&CurRec, CurMultiClass),
-                   Name,
-                   Type);
-
+  Init *NewName = GetStrConcat(CurRec.getNameInit(), StringInit::get(Scoper));
+  NewName = GetStrConcat(NewName, Name);
   if (CurMultiClass && Scoper != "::") {
-    NewName =
-      BinOpInit::get(BinOpInit::STRCONCAT,
-                     BinOpInit::get(BinOpInit::STRCONCAT,
-                                    CurMultiClass->Rec.getNameInit(),
-                                    StringInit::get("::"),
-                                    Type)->Fold(&CurRec, CurMultiClass),
-                     NewName->Fold(&CurRec, CurMultiClass),
-                     Type);
+    Init *Prefix = GetStrConcat(CurMultiClass->Rec.getNameInit(),
+                                StringInit::get("::"));
+    NewName = GetStrConcat(Prefix, NewName);
   }
 
-  return NewName->Fold(&CurRec, CurMultiClass);
+  if (BinOpInit *BinOp = dyn_cast<BinOpInit>(NewName))
+    NewName = BinOp->Fold(&CurRec, CurMultiClass);
+  return NewName;
 }
 
 Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
