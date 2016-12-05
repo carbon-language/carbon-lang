@@ -1615,14 +1615,14 @@ std::string DagInit::getAsString() const {
 //===----------------------------------------------------------------------===//
 
 RecordVal::RecordVal(Init *N, RecTy *T, bool P)
-  : NameAndPrefix(N, P), Ty(T) {
-  Value = UnsetInit::get()->convertInitializerTo(Ty);
+  : Name(N), TyAndPrefix(T, P) {
+  Value = UnsetInit::get()->convertInitializerTo(T);
   assert(Value && "Cannot create unset value for current type!");
 }
 
 RecordVal::RecordVal(StringRef N, RecTy *T, bool P)
-  : NameAndPrefix(StringInit::get(N), P), Ty(T) {
-  Value = UnsetInit::get()->convertInitializerTo(Ty);
+  : Name(StringInit::get(N)), TyAndPrefix(T, P) {
+  Value = UnsetInit::get()->convertInitializerTo(T);
   assert(Value && "Cannot create unset value for current type!");
 }
 

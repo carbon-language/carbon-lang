@@ -1220,8 +1220,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 class RecordVal {
-  PointerIntPair<Init *, 1, bool> NameAndPrefix;
-  RecTy *Ty;
+  Init *Name;
+  PointerIntPair<RecTy *, 1, bool> TyAndPrefix;
   Init *Value;
 
 public:
@@ -1229,19 +1229,19 @@ public:
   RecordVal(StringRef N, RecTy *T, bool P);
 
   StringRef getName() const;
-  const Init *getNameInit() const { return NameAndPrefix.getPointer(); }
+  const Init *getNameInit() const { return Name; }
 
   std::string getNameInitAsString() const {
     return getNameInit()->getAsUnquotedString();
   }
 
-  bool getPrefix() const { return NameAndPrefix.getInt(); }
-  RecTy *getType() const { return Ty; }
+  bool getPrefix() const { return TyAndPrefix.getInt(); }
+  RecTy *getType() const { return TyAndPrefix.getPointer(); }
   Init *getValue() const { return Value; }
 
   bool setValue(Init *V) {
     if (V) {
-      Value = V->convertInitializerTo(Ty);
+      Value = V->convertInitializerTo(getType());
       return Value == nullptr;
     }
     Value = nullptr;
