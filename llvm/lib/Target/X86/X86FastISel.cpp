@@ -170,6 +170,12 @@ private:
 
   const MachineInstrBuilder &addFullAddress(const MachineInstrBuilder &MIB,
                                             X86AddressMode &AM);
+
+  unsigned fastEmitInst_rrrr(unsigned MachineInstOpcode,
+                             const TargetRegisterClass *RC, unsigned Op0,
+                             bool Op0IsKill, unsigned Op1, bool Op1IsKill,
+                             unsigned Op2, bool Op2IsKill, unsigned Op3,
+                             bool Op3IsKill);
 };
 
 } // end anonymous namespace.
@@ -2180,9 +2186,36 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
 
   const TargetRegisterClass *RC = TLI.getRegClassFor(RetVT);
   unsigned ResultReg;
-  
-  if (Subtarget->hasAVX()) {
-    const TargetRegisterClass *FR32 = &X86::FR32RegClass;
+
+  if (Subtarget->hasAVX512()) {
+    // If we have AVX512 we can use a mask compare and masked movss/sd.
+    const TargetRegisterClass *VR128X = &X86::VR128XRegClass;
+    const TargetRegisterClass *VK1 = &X86::VK1RegClass;
+
+    unsigned CmpOpcode =
+      (RetVT.SimpleTy == MVT::f32) ? X86::VCMPSSZrr : X86::VCMPSDZrr;
+    unsigned CmpReg = fastEmitInst_rri(CmpOpcode, VK1, CmpLHSReg, CmpLHSIsKill,
+                                       CmpRHSReg, CmpRHSIsKill, CC);
+
+    // Need an IMPLICIT_DEF for the input that is used to generate the upper
+    // bits of the result register since its not based on any of the inputs.
+    unsigned ImplicitDefReg = createResultReg(VR128X);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::IMPLICIT_DEF), ImplicitDefReg);
+
+    // Place RHSReg is the passthru of the masked movss/sd operation and put
+    // LHS in the input. The mask input comes from the compare.
+    unsigned MovOpcode =
+      (RetVT.SimpleTy == MVT::f32) ? X86::VMOVSSZrrk : X86::VMOVSDZrrk;
+    unsigned MovReg = fastEmitInst_rrrr(MovOpcode, VR128X, RHSReg, RHSIsKill,
+                                        CmpReg, true, ImplicitDefReg, true,
+                                        LHSReg, LHSIsKill);
+
+    ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg).addReg(MovReg);
+
+  } else if (Subtarget->hasAVX()) {
     const TargetRegisterClass *VR128 = &X86::VR128RegClass;
 
     // If we have AVX, create 1 blendv instead of 3 logic instructions.
@@ -2195,7 +2228,7 @@ bool X86FastISel::X86FastEmitSSESelect(MVT RetVT, const Instruction *I) {
     unsigned BlendOpcode =
       (RetVT.SimpleTy == MVT::f32) ? X86::VBLENDVPSrr : X86::VBLENDVPDrr;
     
-    unsigned CmpReg = fastEmitInst_rri(CmpOpcode, FR32, CmpLHSReg, CmpLHSIsKill,
+    unsigned CmpReg = fastEmitInst_rri(CmpOpcode, RC, CmpLHSReg, CmpLHSIsKill,
                                        CmpRHSReg, CmpRHSIsKill, CC);
     unsigned VBlendReg = fastEmitInst_rrr(BlendOpcode, VR128, RHSReg, RHSIsKill,
                                           LHSReg, LHSIsKill, CmpReg, true);
@@ -3847,6 +3880,38 @@ bool X86FastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
   Result->addMemOperand(*FuncInfo.MF, createMachineMemOperandFor(LI));
   MI->eraseFromParent();
   return true;
+}
+
+unsigned X86FastISel::fastEmitInst_rrrr(unsigned MachineInstOpcode,
+                                        const TargetRegisterClass *RC,
+                                        unsigned Op0, bool Op0IsKill,
+                                        unsigned Op1, bool Op1IsKill,
+                                        unsigned Op2, bool Op2IsKill,
+                                        unsigned Op3, bool Op3IsKill) {
+  const MCInstrDesc &II = TII.get(MachineInstOpcode);
+
+  unsigned ResultReg = createResultReg(RC);
+  Op0 = constrainOperandRegClass(II, Op0, II.getNumDefs());
+  Op1 = constrainOperandRegClass(II, Op1, II.getNumDefs() + 1);
+  Op2 = constrainOperandRegClass(II, Op2, II.getNumDefs() + 2);
+  Op2 = constrainOperandRegClass(II, Op2, II.getNumDefs() + 3);
+
+  if (II.getNumDefs() >= 1)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II, ResultReg)
+        .addReg(Op0, getKillRegState(Op0IsKill))
+        .addReg(Op1, getKillRegState(Op1IsKill))
+        .addReg(Op2, getKillRegState(Op2IsKill))
+        .addReg(Op3, getKillRegState(Op3IsKill));
+  else {
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II)
+        .addReg(Op0, getKillRegState(Op0IsKill))
+        .addReg(Op1, getKillRegState(Op1IsKill))
+        .addReg(Op2, getKillRegState(Op2IsKill))
+        .addReg(Op3, getKillRegState(Op3IsKill));
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg).addReg(II.ImplicitDefs[0]);
+  }
+  return ResultReg;
 }
 
 
