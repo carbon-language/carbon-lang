@@ -1349,11 +1349,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     write64le(Loc, Val);
     break;
   case R_AARCH64_ADD_ABS_LO12_NC:
-    // This relocation stores 12 bits and there's no instruction
-    // to do it. Instead, we do a 32 bits store of the value
-    // of r_addend bitwise-or'ed Loc. This assumes that the addend
-    // bits in Loc are zero.
-    or32le(Loc, (Val & 0xFFF) << 10);
+    updateAArch64Add(Loc, Val);
     break;
   case R_AARCH64_ADR_GOT_PAGE:
   case R_AARCH64_ADR_PREL_PG_HI21:
