@@ -703,9 +703,7 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
   else if (isa<UndefValue>(C))
     EntryBuilder.buildInstr(TargetOpcode::IMPLICIT_DEF).addDef(Reg);
   else if (isa<ConstantPointerNull>(C))
-    EntryBuilder.buildInstr(TargetOpcode::G_CONSTANT)
-        .addDef(Reg)
-        .addImm(0);
+    EntryBuilder.buildConstant(Reg, 0);
   else if (auto GV = dyn_cast<GlobalValue>(&C))
     EntryBuilder.buildGlobalValue(Reg, GV);
   else if (auto CE = dyn_cast<ConstantExpr>(&C)) {

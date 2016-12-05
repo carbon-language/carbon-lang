@@ -41,7 +41,7 @@ define void @test_indirect_call(void()* %func) {
 
 ; CHECK-LABEL: name: test_multiple_args
 ; CHECK: [[IN:%[0-9]+]](s64) = COPY %x0
-; CHECK: [[ANSWER:%[0-9]+]](s32) = G_CONSTANT 42
+; CHECK: [[ANSWER:%[0-9]+]](s32) = G_CONSTANT i32 42
 ; CHECK: %w0 = COPY [[ANSWER]]
 ; CHECK: %x1 = COPY [[IN]]
 ; CHECK: BL @multiple_args_callee, csr_aarch64_aapcs, implicit-def %lr, implicit %sp, implicit %w0, implicit %x1
@@ -158,14 +158,14 @@ define i64 @test_stack_slots([8 x i64], i64 %lhs, i64 %rhs) {
 }
 
 ; CHECK-LABEL: name: test_call_stack
-; CHECK: [[C42:%[0-9]+]](s64) = G_CONSTANT 42
-; CHECK: [[C12:%[0-9]+]](s64) = G_CONSTANT 12
+; CHECK: [[C42:%[0-9]+]](s64) = G_CONSTANT i64 42
+; CHECK: [[C12:%[0-9]+]](s64) = G_CONSTANT i64 12
 ; CHECK: [[SP:%[0-9]+]](p0) = COPY %sp
-; CHECK: [[C42_OFFS:%[0-9]+]](s64) = G_CONSTANT 0
+; CHECK: [[C42_OFFS:%[0-9]+]](s64) = G_CONSTANT i64 0
 ; CHECK: [[C42_LOC:%[0-9]+]](p0) = G_GEP [[SP]], [[C42_OFFS]](s64)
 ; CHECK: G_STORE [[C42]](s64), [[C42_LOC]](p0) :: (store 8 into stack, align 0)
 ; CHECK: [[SP:%[0-9]+]](p0) = COPY %sp
-; CHECK: [[C12_OFFS:%[0-9]+]](s64) = G_CONSTANT 8
+; CHECK: [[C12_OFFS:%[0-9]+]](s64) = G_CONSTANT i64 8
 ; CHECK: [[C12_LOC:%[0-9]+]](p0) = G_GEP [[SP]], [[C12_OFFS]](s64)
 ; CHECK: G_STORE [[C12]](s64), [[C12_LOC]](p0) :: (store 8 into stack + 8, align 0)
 ; CHECK: BL @test_stack_slots
