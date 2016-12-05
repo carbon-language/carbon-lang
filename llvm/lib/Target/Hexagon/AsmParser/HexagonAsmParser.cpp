@@ -1484,12 +1484,6 @@ unsigned HexagonAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
                ? Match_Success
                : Match_InvalidOperand;
   }
-  case MCK__MINUS_1: {
-    int64_t Value;
-    return Op->isImm() && Op->Imm.Val->evaluateAsAbsolute(Value) && Value == -1
-               ? Match_Success
-               : Match_InvalidOperand;
-  }
   }
   if (Op->Kind == HexagonOperand::Token && Kind != InvalidMatchClass) {
     StringRef myStringRef = StringRef(Op->Tok.Data, Op->Tok.Length);

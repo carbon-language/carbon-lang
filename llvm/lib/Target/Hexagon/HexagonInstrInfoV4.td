@@ -1388,7 +1388,7 @@ class NVJ_ConstImm_template<string mnemonic, bits<3> majOp, string ImmVal,
         (ins IntRegs:$src1, n1Const:$n1, brtarget:$offset),
         (ins IntRegs:$src1, brtarget:$offset)),
     "if ("#!if(isNegCond, "!","")#mnemonic
-    #"($src1.new, #" # ImmVal # ")) jump:"
+    #"($src1.new, #" # !if(!eq(ImmVal, "{-1}"), "$n1", ImmVal) # ")) jump:"
     #!if(isTak, "t","nt")#" $offset", []> {
 
       let isTaken = isTak;
