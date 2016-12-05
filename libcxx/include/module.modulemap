@@ -481,4 +481,120 @@ module std [system] {
   module __tuple { header "__tuple" export * }
   module __undef_min_max { header "__undef_min_max" export * }
   module __undef___deallocate { header "__undef___deallocate" export * }
+
+  module experimental {
+    module algorithm {
+      header "experimental/algorithm"
+      export *
+    }
+    module any {
+      header "experimental/any"
+      export *
+    }
+    module chrono {
+      header "experimental/chrono"
+      export *
+    }
+    module deque {
+      header "experimental/deque"
+      export *
+    }
+    module dynarray {
+      header "experimental/dynarray"
+      export *
+    }
+    module filesystem {
+      header "experimental/filesystem"
+      export *
+    }
+    module forward_list {
+      header "experimental/forward_list"
+      export *
+    }
+    module functional {
+      header "experimental/functional"
+      export *
+    }
+    module iterator {
+      header "experimental/iterator"
+      export *
+    }
+    module list {
+      header "experimental/list"
+      export *
+    }
+    module map {
+      header "experimental/map"
+      export *
+    }
+    module memory_resource {
+      header "experimental/memory_resource"
+      export *
+    }
+    module numeric {
+      header "experimental/numeric"
+      export *
+    }
+    module optional {
+      header "experimental/optional"
+      export *
+    }
+    module propagate_const {
+      header "experimental/propagate_const"
+      export *
+    }
+    module ratio {
+      header "experimental/ratio"
+      export *
+    }
+    module regex {
+      header "experimental/regex"
+      export *
+    }
+    module set {
+      header "experimental/set"
+      export *
+    }
+    module string {
+      header "experimental/string"
+      export *
+    }
+    module string_view {
+      header "experimental/string_view"
+      export *
+    }
+    module system_error {
+      header "experimental/system_error"
+      export *
+    }
+    module tuple {
+      header "experimental/tuple"
+      export *
+    }
+    module type_traits {
+      header "experimental/type_traits"
+      export *
+    }
+    module unordered_map {
+      header "experimental/unordered_map"
+      export *
+    }
+    module unordered_set {
+      header "experimental/unordered_set"
+      export *
+    }
+    module utility {
+      header "experimental/utility"
+      export *
+    }
+    module vector {
+      header "experimental/vector"
+      export *
+    }
+    // FIXME these should be private
+    module __memory {
+      header "experimental/__memory"
+      export *
+    }
+  } // end experimental
 }
