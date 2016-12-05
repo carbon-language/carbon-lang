@@ -906,3 +906,12 @@ define void @test_objectsize(i8* %addr0, i8* %addr1) {
   %size32.intmin = call i32 @llvm.objectsize.i32(i8* %addr0, i1 1)
   ret void
 }
+
+define void @test_large_const(i128* %addr) {
+; CHECK-LABEL: name: test_large_const
+; CHECK: [[ADDR:%[0-9]+]](p0) = COPY %x0
+; CHECK: [[VAL:%[0-9]+]](s128) = G_CONSTANT i128 42
+; CHECK: G_STORE [[VAL]](s128), [[ADDR]](p0)
+  store i128 42, i128* %addr
+  ret void
+}
