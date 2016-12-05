@@ -37,3 +37,23 @@ define i128 @ABIi128(i128 %arg1) {
 define [1 x double] @constant() {
   ret [1 x double] [double 1.0]
 }
+
+  ; The key problem here is that we may fail to create an MBB referenced by a
+  ; PHI. If so, we cannot complete the G_PHI and mustn't try or bad things
+  ; happen.
+; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for pending_phis
+define i32 @pending_phis(i1 %tst, i32 %val, i32* %addr) {
+  br i1 %tst, label %true, label %false
+
+end:
+  %res = phi i32 [%val, %true], [42, %false]
+  ret i32 %res
+
+true:
+  store atomic i32 42, i32* %addr seq_cst, align 4
+  br label %end
+
+false:
+  br label %end
+
+}

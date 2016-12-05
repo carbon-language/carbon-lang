@@ -678,8 +678,6 @@ void IRTranslator::finishPendingPhis() {
       MIB.addMBB(BBToMBB[PI->getIncomingBlock(i)]);
     }
   }
-
-  PendingPHIs.clear();
 }
 
 bool IRTranslator::translate(const Instruction &Inst) {
@@ -725,10 +723,9 @@ bool IRTranslator::translate(const Constant &C, unsigned Reg) {
 }
 
 void IRTranslator::finalizeFunction() {
-  finishPendingPhis();
-
   // Release the memory used by the different maps we
   // needed during the translation.
+  PendingPHIs.clear();
   ValToVReg.clear();
   FrameIndices.clear();
   Constants.clear();
@@ -758,6 +755,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
     if (!TPC->isGlobalISelAbortEnabled()) {
       MIRBuilder.getMF().getProperties().set(
           MachineFunctionProperties::Property::FailedISel);
+      finalizeFunction();
       return false;
     }
     report_fatal_error("Unable to lower arguments");
@@ -777,7 +775,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
     MIRBuilder.setMBB(MBB);
 
     for (const Instruction &Inst: BB) {
-      bool Succeeded = translate(Inst);
+      Succeeded &= translate(Inst);
       if (!Succeeded) {
         if (TPC->isGlobalISelAbortEnabled())
           reportTranslationError(Inst, "unable to translate instruction");
@@ -787,11 +785,15 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
-  finalizeFunction();
+  if (Succeeded) {
+    finishPendingPhis();
 
-  // Now that the MachineFrameInfo has been configured, no further changes to
-  // the reserved registers are possible.
-  MRI->freezeReservedRegs(MF);
+    // Now that the MachineFrameInfo has been configured, no further changes to
+    // the reserved registers are possible.
+    MRI->freezeReservedRegs(MF);
+  }
+
+  finalizeFunction();
 
   return false;
 }
