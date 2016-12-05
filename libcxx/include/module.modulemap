@@ -205,6 +205,10 @@ module std [system] {
     export initializer_list
     export *
   }
+  module any {
+    header "any"
+    export *
+  }
   module array {
     header "array"
     export initializer_list
@@ -331,6 +335,10 @@ module std [system] {
     header "numeric"
     export *
   }
+  module optional {
+    header "optional"
+    export *
+  }
   module ostream {
     header "ostream"
     // FIXME: should re-export ios, streambuf?
@@ -433,6 +441,10 @@ module std [system] {
   module valarray {
     header "valarray"
     export initializer_list
+    export *
+  }
+  module variant {
+    header "variant"
     export *
   }
   module vector {
