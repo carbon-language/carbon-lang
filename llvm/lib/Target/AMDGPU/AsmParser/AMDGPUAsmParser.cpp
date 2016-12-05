@@ -666,6 +666,10 @@ public:
     return AMDGPU::isVI(getSTI());
   }
 
+  bool hasInv2PiInlineImm() const {
+    return getSTI().getFeatureBits()[AMDGPU::FeatureInv2PiInlineImm];
+  }
+
   bool hasSGPR102_SGPR103() const {
     return !isVI();
   }
@@ -855,7 +859,8 @@ bool AMDGPUOperand::isInlinableImm(MVT type) const {
 
   if (Imm.IsFPImm) { // We got fp literal token
     if (type == MVT::f64 || type == MVT::i64) { // Expected 64-bit operand
-      return AMDGPU::isInlinableLiteral64(Imm.Val, AsmParser->isVI());
+      return AMDGPU::isInlinableLiteral64(Imm.Val,
+                                          AsmParser->hasInv2PiInlineImm());
     }
 
     APFloat FPLiteral(APFloat::IEEEdouble, APInt(64, Imm.Val));
@@ -865,18 +870,19 @@ bool AMDGPUOperand::isInlinableImm(MVT type) const {
     // Check if single precision literal is inlinable
     return AMDGPU::isInlinableLiteral32(
       static_cast<int32_t>(FPLiteral.bitcastToAPInt().getZExtValue()),
-      AsmParser->isVI());
+      AsmParser->hasInv2PiInlineImm());
   }
 
 
   // We got int literal token.
   if (type == MVT::f64 || type == MVT::i64) { // Expected 64-bit operand
-    return AMDGPU::isInlinableLiteral64(Imm.Val, AsmParser->isVI());
+    return AMDGPU::isInlinableLiteral64(Imm.Val,
+                                        AsmParser->hasInv2PiInlineImm());
   }
 
   return AMDGPU::isInlinableLiteral32(
     static_cast<int32_t>(Literal.getLoBits(32).getZExtValue()),
-    AsmParser->isVI());
+    AsmParser->hasInv2PiInlineImm());
 }
 
 bool AMDGPUOperand::isLiteralImm(MVT type) const {
@@ -945,7 +951,8 @@ void AMDGPUOperand::addLiteralImmOperand(MCInst &Inst, int64_t Val) const {
   if (Imm.IsFPImm) { // We got fp literal token
     if (OpSize == 8) { // Expected 64-bit operand
       // Check if literal is inlinable
-      if (AMDGPU::isInlinableLiteral64(Literal.getZExtValue(), AsmParser->isVI())) {
+      if (AMDGPU::isInlinableLiteral64(Literal.getZExtValue(),
+                                       AsmParser->hasInv2PiInlineImm())) {
         Inst.addOperand(MCOperand::createImm(Literal.getZExtValue()));
       } else if (AMDGPU::isSISrcFPOperand(InstDesc, OpNum)) { // Expected 64-bit fp operand
         // For fp operands we check if low 32 bits are zeros
@@ -974,13 +981,15 @@ void AMDGPUOperand::addLiteralImmOperand(MCInst &Inst, int64_t Val) const {
   } else { // We got int literal token
     if (OpSize == 8) { // Expected 64-bit operand
       auto LiteralVal = Literal.getZExtValue();
-      if (AMDGPU::isInlinableLiteral64(LiteralVal, AsmParser->isVI())) {
+      if (AMDGPU::isInlinableLiteral64(LiteralVal,
+                                       AsmParser->hasInv2PiInlineImm())) {
         Inst.addOperand(MCOperand::createImm(LiteralVal));
         return;
       }
     } else { // Expected 32-bit operand
       auto LiteralVal = static_cast<int32_t>(Literal.getLoBits(32).getZExtValue());
-      if (AMDGPU::isInlinableLiteral32(LiteralVal, AsmParser->isVI())) {
+      if (AMDGPU::isInlinableLiteral32(LiteralVal,
+                                       AsmParser->hasInv2PiInlineImm())) {
         Inst.addOperand(MCOperand::createImm(LiteralVal));
         return;
       }
