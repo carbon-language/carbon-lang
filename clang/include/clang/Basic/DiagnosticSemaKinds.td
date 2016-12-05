@@ -1050,8 +1050,6 @@ def err_synthesize_category_decl : Error<
   "@synthesize not allowed in a category's implementation">;
 def err_synthesize_on_class_property : Error<
   "@synthesize not allowed on a class property %0">;
-def err_reference_property : Error<
-  "property of reference type is not supported">;
 def err_missing_property_interface : Error<
   "property implementation in a category with no category declaration">;
 def err_bad_category_property_decl : Error<
@@ -1306,8 +1304,6 @@ def err_mismatched_exception_spec : Error<
   "exception specification in declaration does not match previous declaration">;
 def ext_mismatched_exception_spec : ExtWarn<err_mismatched_exception_spec.Text>,
   InGroup<MicrosoftExceptionSpec>;
-def warn_mismatched_exception_spec_no_exceptions : ExtWarn<err_mismatched_exception_spec.Text>,
-  InGroup<DiagGroup<"exception-spec-no-exceptions">>;
 def err_override_exception_spec : Error<
   "exception specification of overriding function is more lax than "
   "base version">;
@@ -7943,8 +7939,6 @@ def warn_direct_super_initialize_call : Warning<
    InGroup<ExplicitInitializeCall>;
 def err_ivar_use_in_class_method : Error<
   "instance variable %0 accessed in class method">;
-def err_implicit_ivar_access : Error<
-  "instance variable %0 cannot be accessed because 'self' has been redeclared">;
 def err_private_ivar_access : Error<"instance variable %0 is private">,
   AccessControl;
 def err_protected_ivar_access : Error<"instance variable %0 is protected">,
