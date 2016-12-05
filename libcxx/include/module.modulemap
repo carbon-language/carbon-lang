@@ -393,6 +393,14 @@ module std [system] {
   module string {
     header "string"
     export initializer_list
+    export string_view
+    export __string
+    export *
+  }
+  module string_view {
+    header "string_view"
+    export initializer_list
+    export __string
     export *
   }
   module strstream {
@@ -468,6 +476,7 @@ module std [system] {
   module __split_buffer { header "__split_buffer" export * }
   module __sso_allocator { header "__sso_allocator" export * }
   module __std_stream { header "__std_stream" export * }
+  module __string { header "__string" export * }
   module __tree { header "__tree" export * }
   module __tuple { header "__tuple" export * }
   module __undef_min_max { header "__undef_min_max" export * }
