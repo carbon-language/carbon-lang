@@ -5054,29 +5054,35 @@ static SDValue getOnesVector(EVT VT, const X86Subtarget &Subtarget,
   return DAG.getBitcast(VT, Vec);
 }
 
+/// Generate unpacklo/unpackhi shuffle mask.
+static void createUnpackShuffleMask(MVT VT, SmallVectorImpl<int> &Mask, bool Lo,
+                                    bool Unary) {
+  assert(Mask.empty() && "Expected an empty shuffle mask vector");
+  int NumElts = VT.getVectorNumElements();
+  int NumEltsInLane = 128 / VT.getScalarSizeInBits();
+
+  for (int i = 0; i < NumElts; ++i) {
+    unsigned LaneStart = (i / NumEltsInLane) * NumEltsInLane;
+    int Pos = (i % NumEltsInLane) / 2 + LaneStart;
+    Pos += (Unary ? 0 : NumElts * (i % 2));
+    Pos += (Lo ? 0 : NumEltsInLane / 2);
+    Mask.push_back(Pos);
+  }
+}
+
 /// Returns a vector_shuffle node for an unpackl operation.
 static SDValue getUnpackl(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
                           SDValue V1, SDValue V2) {
-  assert(VT.is128BitVector() && "Expected a 128-bit vector type");
-  unsigned NumElems = VT.getVectorNumElements();
-  SmallVector<int, 8> Mask(NumElems);
-  for (unsigned i = 0, e = NumElems/2; i != e; ++i) {
-    Mask[i * 2]     = i;
-    Mask[i * 2 + 1] = i + NumElems;
-  }
+  SmallVector<int, 8> Mask;
+  createUnpackShuffleMask(VT, Mask, /* Lo = */ true, /* Unary = */ false);
   return DAG.getVectorShuffle(VT, dl, V1, V2, Mask);
 }
 
 /// Returns a vector_shuffle node for an unpackh operation.
 static SDValue getUnpackh(SelectionDAG &DAG, const SDLoc &dl, MVT VT,
                           SDValue V1, SDValue V2) {
-  assert(VT.is128BitVector() && "Expected a 128-bit vector type");
-  unsigned NumElems = VT.getVectorNumElements();
-  SmallVector<int, 8> Mask(NumElems);
-  for (unsigned i = 0, Half = NumElems/2; i != Half; ++i) {
-    Mask[i * 2]     = i + Half;
-    Mask[i * 2 + 1] = i + NumElems + Half;
-  }
+  SmallVector<int, 8> Mask;
+  createUnpackShuffleMask(VT, Mask, /* Lo = */ false, /* Unary = */ false);
   return DAG.getVectorShuffle(VT, dl, V1, V2, Mask);
 }
 
@@ -7854,21 +7860,13 @@ static SDValue lowerVectorShuffleWithPSHUFB(const SDLoc &DL, MVT VT,
 static SDValue lowerVectorShuffleWithUNPCK(const SDLoc &DL, MVT VT,
                                            ArrayRef<int> Mask, SDValue V1,
                                            SDValue V2, SelectionDAG &DAG) {
-  int NumElts = VT.getVectorNumElements();
-  int NumEltsInLane = 128 / VT.getScalarSizeInBits();
-  SmallVector<int, 8> Unpckl(NumElts);
-  SmallVector<int, 8> Unpckh(NumElts);
-
-  for (int i = 0; i < NumElts; ++i) {
-    unsigned LaneStart = (i / NumEltsInLane) * NumEltsInLane;
-    int LoPos = (i % NumEltsInLane) / 2 + LaneStart + NumElts * (i % 2);
-    int HiPos = LoPos + NumEltsInLane / 2;
-    Unpckl[i] = LoPos;
-    Unpckh[i] = HiPos;
-  }
-
+  SmallVector<int, 8> Unpckl;
+  createUnpackShuffleMask(VT, Unpckl, /* Lo = */ true, /* Unary = */ false);
   if (isShuffleEquivalent(V1, V2, Mask, Unpckl))
     return DAG.getNode(X86ISD::UNPCKL, DL, VT, V1, V2);
+
+  SmallVector<int, 8> Unpckh;
+  createUnpackShuffleMask(VT, Unpckh, /* Lo = */ false, /* Unary = */ false);
   if (isShuffleEquivalent(V1, V2, Mask, Unpckh))
     return DAG.getNode(X86ISD::UNPCKH, DL, VT, V1, V2);
 
