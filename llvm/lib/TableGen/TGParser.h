@@ -32,11 +32,11 @@ namespace llvm {
   struct SubMultiClassReference;
 
   struct LetRecord {
-    std::string Name;
+    StringInit *Name;
     std::vector<unsigned> Bits;
     Init *Value;
     SMLoc Loc;
-    LetRecord(StringRef N, ArrayRef<unsigned> B, Init *V, SMLoc L)
+    LetRecord(StringInit *N, ArrayRef<unsigned> B, Init *V, SMLoc L)
       : Name(N), Bits(B), Value(V), Loc(L) {
     }
   };
@@ -106,12 +106,6 @@ private:  // Semantic analysis methods.
   bool SetValue(Record *TheRec, SMLoc Loc, Init *ValName,
                 ArrayRef<unsigned> BitList, Init *V,
                 bool AllowSelfAssignment = false);
-  bool SetValue(Record *TheRec, SMLoc Loc, StringRef ValName,
-                ArrayRef<unsigned> BitList, Init *V,
-                bool AllowSelfAssignment = false) {
-    return SetValue(TheRec, Loc, StringInit::get(ValName), BitList, V,
-                    AllowSelfAssignment);
-  }
   bool AddSubClass(Record *Rec, SubClassReference &SubClass);
   bool AddSubMultiClass(MultiClass *CurMC,
                         SubMultiClassReference &SubMultiClass);
@@ -166,7 +160,7 @@ private:  // Parser methods.
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
   SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMC);
 
-  Init *ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
+  Init *ParseIDValue(Record *CurRec, StringInit *Name, SMLoc NameLoc,
                      IDParseMode Mode = ParseValueMode);
   Init *ParseSimpleValue(Record *CurRec, RecTy *ItemType = nullptr,
                          IDParseMode Mode = ParseValueMode);

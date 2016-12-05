@@ -1702,10 +1702,10 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
   OS << "\n";
 
   for (const RecordVal &Val : R.getValues())
-    if (Val.getPrefix() && !R.isTemplateArg(Val.getName()))
+    if (Val.getPrefix() && !R.isTemplateArg(Val.getNameInit()))
       OS << Val;
   for (const RecordVal &Val : R.getValues())
-    if (!Val.getPrefix() && !R.isTemplateArg(Val.getName()))
+    if (!Val.getPrefix() && !R.isTemplateArg(Val.getNameInit()))
       OS << Val;
 
   return OS << "}\n";

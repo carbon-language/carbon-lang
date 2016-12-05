@@ -339,14 +339,14 @@ bool TGParser::ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals){
 
     IterRec->addValue(RecordVal(IterVar->getName(), IVal->getType(), false));
 
-    if (SetValue(IterRec.get(), Loc, IterVar->getName(), None, IVal))
+    if (SetValue(IterRec.get(), Loc, IterVar->getNameInit(), None, IVal))
       return Error(Loc, "when instantiating this def");
 
     // Resolve it next.
-    IterRec->resolveReferencesTo(IterRec->getValue(IterVar->getName()));
+    IterRec->resolveReferencesTo(IterRec->getValue(IterVar->getNameInit()));
 
     // Remove it.
-    IterRec->removeValue(IterVar->getName());
+    IterRec->removeValue(IterVar->getNameInit());
   }
 
   if (Records.getDef(IterRec->getNameInitAsString())) {
@@ -716,18 +716,16 @@ RecTy *TGParser::ParseType() {
 
 /// ParseIDValue - This is just like ParseIDValue above, but it assumes the ID
 /// has already been read.
-Init *TGParser::ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
+Init *TGParser::ParseIDValue(Record *CurRec, StringInit *Name, SMLoc NameLoc,
                              IDParseMode Mode) {
-  StringInit *NameInit;
   if (CurRec) {
     if (const RecordVal *RV = CurRec->getValue(Name))
       return VarInit::get(Name, RV->getType());
 
-    NameInit = StringInit::get(Name);
-    Init *TemplateArgName = QualifyName(*CurRec, CurMultiClass, NameInit, ":");
+    Init *TemplateArgName = QualifyName(*CurRec, CurMultiClass, Name, ":");
 
     if (CurMultiClass)
-      TemplateArgName = QualifyName(CurMultiClass->Rec, CurMultiClass, NameInit,
+      TemplateArgName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name,
                                     "::");
 
     if (CurRec->isTemplateArg(TemplateArgName)) {
@@ -735,12 +733,10 @@ Init *TGParser::ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
       assert(RV && "Template arg doesn't exist??");
       return VarInit::get(TemplateArgName, RV->getType());
     }
-  } else
-    NameInit = StringInit::get(Name);
+  }
 
   if (CurMultiClass) {
-    Init *MCName = QualifyName(CurMultiClass->Rec, CurMultiClass, NameInit,
-                               "::");
+    Init *MCName = QualifyName(CurMultiClass->Rec, CurMultiClass, Name, "::");
 
     if (CurMultiClass->Rec.isTemplateArg(MCName)) {
       const RecordVal *RV = CurMultiClass->Rec.getValue(MCName);
@@ -752,22 +748,22 @@ Init *TGParser::ParseIDValue(Record *CurRec, StringRef Name, SMLoc NameLoc,
   // If this is in a foreach loop, make sure it's not a loop iterator
   for (const auto &L : Loops) {
     VarInit *IterVar = dyn_cast<VarInit>(L.IterVar);
-    if (IterVar && IterVar->getNameInit() == NameInit)
+    if (IterVar && IterVar->getNameInit() == Name)
       return IterVar;
   }
 
   if (Mode == ParseNameMode)
-    return NameInit;
+    return Name;
 
-  if (Record *D = Records.getDef(Name))
+  if (Record *D = Records.getDef(Name->getValue()))
     return DefInit::get(D);
 
   if (Mode == ParseValueMode) {
-    Error(NameLoc, "Variable not defined: '" + Name + "'");
+    Error(NameLoc, "Variable not defined: '" + Name->getValue() + "'");
     return nullptr;
   }
 
-  return NameInit;
+  return Name;
 }
 
 /// ParseOperation - Parse an operator.  This returns null on error.
@@ -1187,7 +1183,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     break;
   case tgtok::Id: {
     SMLoc NameLoc = Lex.getLoc();
-    std::string Name = Lex.getCurStrVal();
+    StringInit *Name = StringInit::get(Lex.getCurStrVal());
     if (Lex.Lex() != tgtok::less)  // consume the Id.
       return ParseIDValue(CurRec, Name, NameLoc, Mode);    // Value ::= IDValue
 
@@ -1200,9 +1196,9 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     // This is a CLASS<initvalslist> expression.  This is supposed to synthesize
     // a new anonymous definition, deriving from CLASS<initvalslist> with no
     // body.
-    Record *Class = Records.getClass(Name);
+    Record *Class = Records.getClass(Name->getValue());
     if (!Class) {
-      Error(NameLoc, "Expected a class name, got '" + Name + "'");
+      Error(NameLoc, "Expected a class name, got '" + Name->getValue() + "'");
       return nullptr;
     }
 
@@ -1891,7 +1887,7 @@ bool TGParser::ParseBodyItem(Record *CurRec) {
     return TokError("expected field identifier after let");
 
   SMLoc IdLoc = Lex.getLoc();
-  std::string FieldName = Lex.getCurStrVal();
+  StringInit *FieldName = StringInit::get(Lex.getCurStrVal());
   Lex.Lex();  // eat the field name.
 
   SmallVector<unsigned, 16> BitList;
@@ -1905,7 +1901,7 @@ bool TGParser::ParseBodyItem(Record *CurRec) {
 
   RecordVal *Field = CurRec->getValue(FieldName);
   if (!Field)
-    return TokError("Value '" + FieldName + "' unknown!");
+    return TokError("Value '" + FieldName->getValue() + "' unknown!");
 
   RecTy *Type = Field->getType();
 
@@ -2169,7 +2165,7 @@ void TGParser::ParseLetList(SmallVectorImpl<LetRecord> &Result) {
       return;
     }
 
-    std::string Name = Lex.getCurStrVal();
+    StringInit *Name = StringInit::get(Lex.getCurStrVal());
     SMLoc NameLoc = Lex.getLoc();
     Lex.Lex();  // Eat the identifier.
 
@@ -2195,7 +2191,7 @@ void TGParser::ParseLetList(SmallVectorImpl<LetRecord> &Result) {
     }
 
     // Now that we have everything, add the record.
-    Result.emplace_back(std::move(Name), Bits, Val, NameLoc);
+    Result.emplace_back(Name, Bits, Val, NameLoc);
 
     if (Lex.getCode() != tgtok::comma)
       return;
@@ -2382,8 +2378,8 @@ Record *TGParser::InstantiateMulticlassDef(MultiClass &MC, Record *DefProto,
   // Set the value for NAME. We don't resolve references to it 'til later,
   // though, so that uses in nested multiclass names don't get
   // confused.
-  if (SetValue(CurRec.get(), Ref.RefRange.Start, "NAME", None, DefmPrefix,
-               /*AllowSelfAssignment*/true)) {
+  if (SetValue(CurRec.get(), Ref.RefRange.Start, StringInit::get("NAME"), None,
+               DefmPrefix, /*AllowSelfAssignment*/true)) {
     Error(DefmPrefixRange.Start, "Could not resolve " +
           CurRec->getNameInitAsString() + ":NAME to '" +
           DefmPrefix->getAsUnquotedString() + "'");

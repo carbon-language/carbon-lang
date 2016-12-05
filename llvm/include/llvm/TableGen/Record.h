@@ -1231,7 +1231,7 @@ public:
   RecordVal(StringRef N, RecTy *T, bool P);
 
   StringRef getName() const;
-  const Init *getNameInit() const { return Name; }
+  Init *getNameInit() const { return Name; }
 
   std::string getNameInitAsString() const {
     return getNameInit()->getAsUnquotedString();
