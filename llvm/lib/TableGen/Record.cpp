@@ -31,61 +31,6 @@ using namespace llvm;
 static BumpPtrAllocator Allocator;
 
 //===----------------------------------------------------------------------===//
-//    std::string wrapper for DenseMap purposes
-//===----------------------------------------------------------------------===//
-
-namespace llvm {
-
-/// This is a wrapper for std::string suitable for using as a key to a DenseMap.
-/// Because there isn't a particularly
-/// good way to indicate tombstone or empty keys for strings, we want
-/// to wrap std::string to indicate that this is a "special" string
-/// not expected to take on certain values (those of the tombstone and
-/// empty keys).  This makes things a little safer as it clarifies
-/// that DenseMap is really not appropriate for general strings.
-
-class TableGenStringKey {
-public:
-  TableGenStringKey(StringRef str) : data(str) {}
-  TableGenStringKey(const char *str) : data(str) {}
-
-  StringRef str() const { return data; }
-
-  friend hash_code hash_value(const TableGenStringKey &Value) {
-    using llvm::hash_value;
-    return hash_value(Value.str());
-  }
-
-private:
-  std::string data;
-};
-
-/// Specialize DenseMapInfo for TableGenStringKey.
-template<> struct DenseMapInfo<TableGenStringKey> {
-  static inline TableGenStringKey getEmptyKey() {
-    TableGenStringKey Empty("<<<EMPTY KEY>>>");
-    return Empty;
-  }
-
-  static inline TableGenStringKey getTombstoneKey() {
-    TableGenStringKey Tombstone("<<<TOMBSTONE KEY>>>");
-    return Tombstone;
-  }
-
-  static unsigned getHashValue(const TableGenStringKey& Val) {
-    using llvm::hash_value;
-    return hash_value(Val);
-  }
-
-  static bool isEqual(const TableGenStringKey& LHS,
-                      const TableGenStringKey& RHS) {
-    return LHS.str() == RHS.str();
-  }
-};
-
-} // end namespace llvm
-
-//===----------------------------------------------------------------------===//
 //    Type implementations
 //===----------------------------------------------------------------------===//
 
