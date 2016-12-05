@@ -1381,7 +1381,7 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     or32le(Loc, (Val & 0x0FF8) << 6);
     break;
   case R_AARCH64_LDST16_ABS_LO12_NC:
-    or32le(Loc, (Val & 0x0FFC) << 9);
+    or32le(Loc, (Val & 0x0FFE) << 9);
     break;
   case R_AARCH64_LDST8_ABS_LO12_NC:
     or32le(Loc, (Val & 0xFFF) << 10);
