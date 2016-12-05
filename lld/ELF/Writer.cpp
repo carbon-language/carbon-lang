@@ -60,7 +60,6 @@ private:
   void sortSections();
   void finalizeSections();
   void addPredefinedSections();
-  void removeEmptyOutputSections();
 
   std::vector<Phdr> createPhdrs();
   void addPtArmExid(std::vector<Phdr> &Phdrs);
@@ -911,36 +910,27 @@ finalizeSynthetic(const std::vector<SyntheticSection<ELFT> *> &Sections) {
 }
 
 // We need to add input synthetic sections early in createSyntheticSections()
-// to make them visible from linker scripts before we can see whether they
-// will be needed or not. As a result, some syntehtic input sections could be
-// left empty. We remove such sections in this function.
-template <class ELFT> static void removeEmptySyntheticSections() {
+// to make them visible from linkescript side. But not all sections are always
+// required to be in output. For example we don't need dynamic section content
+// sometimes. This function filters out such unused sections from output.
+template <class ELFT>
+static void removeUnusedSyntheticSections(std::vector<OutputSectionBase *> &V) {
   // Input synthetic sections are placed after all regular ones. We iterate over
   // them all and exit at first non-synthetic.
-  for (InputSectionBase<ELFT> *Sec : llvm::reverse(Symtab<ELFT>::X->Sections)) {
-    SyntheticSection<ELFT> *In = dyn_cast<SyntheticSection<ELFT>>(S);
-    if (!In)
+  for (InputSectionBase<ELFT> *S : llvm::reverse(Symtab<ELFT>::X->Sections)) {
+    SyntheticSection<ELFT> *SS = dyn_cast<SyntheticSection<ELFT>>(S);
+    if (!SS)
       return;
-    if (!In->empty() || !In->OutSec)
+    if (!SS->empty() || !SS->OutSec)
       continue;
 
-    OutputSection<ELFT> *Out = cast<OutputSection<ELFT>>(In->OutSec);
-    Out->Sections.erase(
-        std::find(Out->Sections.begin(), Out->Sections.end(), In));
+    OutputSection<ELFT> *OutSec = cast<OutputSection<ELFT>>(SS->OutSec);
+    OutSec->Sections.erase(
+        std::find(OutSec->Sections.begin(), OutSec->Sections.end(), SS));
+    // If there is no other sections in output section, remove it from output.
+    if (OutSec->Sections.empty())
+      V.erase(std::find(V.begin(), V.end(), OutSec));
   }
-}
-
-// This function removes empty output sections so that LLD doesn't create
-// empty sections. Such output sections are usually results of linker scripts.
-template <class ELFT> void Writer<ELFT>::removeEmptyOutputSections() {
-  OutputSections.erase(
-      std::remove_if(OutputSections.begin(), OutputSections.end(),
-                     [](OutputSectionBase *Sec) {
-                       if (auto *S = dyn_cast<OutputSection<ELFT>>(Sec))
-                         return S->Sections.empty();
-                       return false;
-                     }),
-      OutputSections.end());
 }
 
 // Create output section objects and add them to OutputSections.
@@ -1003,8 +993,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // So far we have added sections from input object files.
   // This function adds linker-created Out<ELFT>::* sections.
   addPredefinedSections();
-  removeEmptySyntheticSections<ELFT>();
-  removeEmptyOutputSections();
+  removeUnusedSyntheticSections<ELFT>(OutputSections);
 
   sortSections();
 
