@@ -1221,6 +1221,7 @@ public:
 //===----------------------------------------------------------------------===//
 
 class RecordVal {
+  friend class Record;
   Init *Name;
   PointerIntPair<RecTy *, 1, bool> TyAndPrefix;
   Init *Value;
@@ -1359,7 +1360,7 @@ public:
 
   const RecordVal *getValue(const Init *Name) const {
     for (const RecordVal &Val : Values)
-      if (Val.getNameInit() == Name) return &Val;
+      if (Val.Name == Name) return &Val;
     return nullptr;
   }
 
@@ -1369,7 +1370,7 @@ public:
 
   RecordVal *getValue(const Init *Name) {
     for (RecordVal &Val : Values)
-      if (Val.getNameInit() == Name) return &Val;
+      if (Val.Name == Name) return &Val;
     return nullptr;
   }
 
