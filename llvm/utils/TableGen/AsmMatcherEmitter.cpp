@@ -1595,15 +1595,15 @@ void AsmMatcherInfo::buildInfo() {
   // Reorder classes so that classes precede super classes.
   Classes.sort();
 
-#ifndef NDEBUG
-  // Verify that the table is now sorted
+#ifdef EXPENSIVE_CHECKS
+  // Verify that the table is sorted and operator < works transitively.
   for (auto I = Classes.begin(), E = Classes.end(); I != E; ++I) {
     for (auto J = I; J != E; ++J) {
       assert(!(*J < *I));
       assert(I == J || !J->isSubsetOf(*I));
     }
   }
-#endif // NDEBUG
+#endif
 }
 
 /// buildInstructionOperandReference - The specified operand is a reference to a
@@ -2718,6 +2718,16 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
                    [](const std::unique_ptr<MatchableInfo> &a,
                       const std::unique_ptr<MatchableInfo> &b){
                      return *a < *b;});
+
+#ifdef EXPENSIVE_CHECKS
+  // Verify that the table is sorted and operator < works transitively.
+  for (auto I = Info.Matchables.begin(), E = Info.Matchables.end(); I != E;
+       ++I) {
+    for (auto J = I; J != E; ++J) {
+      assert(!(**J < **I));
+    }
+  }
+#endif
 
   DEBUG_WITH_TYPE("instruction_info", {
       for (const auto &MI : Info.Matchables)
