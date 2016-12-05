@@ -449,24 +449,3 @@ def VRegSrc_32 : RegisterOperand<VGPR_32> {
 //===----------------------------------------------------------------------===//
 
 defm VCSrc : RegInlineOperand<"VS", "VCSrc">;
-
-// ===----------------------------------------------------------------------===//
-// ExpSrc* Special cases for exp src operands which are printed as
-// "off" depending on en operand.
-// ===----------------------------------------------------------------------===//
-
-def ExpSrc0 : RegisterOperand<VGPR_32> {
-  let PrintMethod = "printExpSrc0";
-}
-
-def ExpSrc1 : RegisterOperand<VGPR_32> {
-  let PrintMethod = "printExpSrc1";
-}
-
-def ExpSrc2 : RegisterOperand<VGPR_32> {
-  let PrintMethod = "printExpSrc2";
-}
-
-def ExpSrc3 : RegisterOperand<VGPR_32> {
-  let PrintMethod = "printExpSrc3";
-}

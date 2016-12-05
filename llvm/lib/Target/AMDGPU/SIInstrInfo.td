@@ -315,6 +315,13 @@ def SendMsgMatchClass : AsmOperandClass {
   let RenderMethod = "addImmOperands";
 }
 
+def ExpTgtMatchClass : AsmOperandClass {
+  let Name = "ExpTgt";
+  let PredicateMethod = "isExpTgt";
+  let ParserMethod = "parseExpTgt";
+  let RenderMethod = "printExpTgt";
+}
+
 def SendMsgImm : Operand<i32> {
   let PrintMethod = "printSendMsg";
   let ParserMatchClass = SendMsgMatchClass;
@@ -326,6 +333,11 @@ def SWaitMatchClass : AsmOperandClass {
   let ParserMethod = "parseSWaitCntOps";
 }
 
+def VReg32OrOffClass : AsmOperandClass {
+  let Name = "VReg32OrOff";
+  let ParserMethod = "parseVReg32OrOff";
+}
+
 def WAIT_FLAG : Operand <i32> {
   let ParserMatchClass = SWaitMatchClass;
   let PrintMethod = "printWaitFlag";
@@ -333,6 +345,31 @@ def WAIT_FLAG : Operand <i32> {
 
 include "SIInstrFormats.td"
 include "VIInstrFormats.td"
+
+// ===----------------------------------------------------------------------===//
+// ExpSrc* Special cases for exp src operands which are printed as
+// "off" depending on en operand.
+// ===----------------------------------------------------------------------===//
+
+def ExpSrc0 : RegisterOperand<VGPR_32> {
+  let PrintMethod = "printExpSrc0";
+  let ParserMatchClass = VReg32OrOffClass;
+}
+
+def ExpSrc1 : RegisterOperand<VGPR_32> {
+  let PrintMethod = "printExpSrc1";
+  let ParserMatchClass = VReg32OrOffClass;
+}
+
+def ExpSrc2 : RegisterOperand<VGPR_32> {
+  let PrintMethod = "printExpSrc2";
+  let ParserMatchClass = VReg32OrOffClass;
+}
+
+def ExpSrc3 : RegisterOperand<VGPR_32> {
+  let PrintMethod = "printExpSrc3";
+  let ParserMatchClass = VReg32OrOffClass;
+}
 
 class NamedMatchClass<string CName, bit Optional = 1> : AsmOperandClass {
   let Name = "Imm"#CName;
@@ -402,8 +439,8 @@ def dst_unused : NamedOperandU32<"SDWADstUnused", NamedMatchClass<"SDWADstUnused
 
 def hwreg : NamedOperandU16<"Hwreg", NamedMatchClass<"Hwreg", 0>>;
 
-def exp_tgt : Operand<i8> {
-  let PrintMethod = "printExpTgt";
+def exp_tgt : NamedOperandU8<"ExpTgt", NamedMatchClass<"ExpTgt", 0>> {
+
 }
 
 } // End OperandType = "OPERAND_IMMEDIATE"
@@ -531,8 +568,9 @@ class EXP_Helper<bit done, SDPatternOperator node = null_frag> : EXPCommon<
        exp_vm:$vm, exp_compr:$compr, i8imm:$en),
   "exp$tgt $src0, $src1, $src2, $src3"#!if(done, " done", "")#"$compr$vm",
   [(node (i8 timm:$en), (i1 timm:$vm), (i8 timm:$tgt), (i1 timm:$compr),
-         f32:$src0, f32:$src1, f32:$src2, f32:$src3)]
->;
+         f32:$src0, f32:$src1, f32:$src2, f32:$src3)]> {
+  let AsmMatchConverter = "cvtExp";
+}
 
 // Split EXP instruction into EXP and EXP_DONE so we can set
 // mayLoad for done=1.
