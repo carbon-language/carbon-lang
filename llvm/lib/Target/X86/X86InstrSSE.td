@@ -6268,10 +6268,10 @@ let Predicates = [UseAVX] in {
 // SSE4.1 - Round Instructions
 //===----------------------------------------------------------------------===//
 
-multiclass sse41_fp_unop_rm<bits<8> opcps, bits<8> opcpd, string OpcodeStr,
-                            X86MemOperand x86memop, RegisterClass RC,
-                            PatFrag mem_frag32, PatFrag mem_frag64,
-                            Intrinsic V4F32Int, Intrinsic V2F64Int> {
+multiclass sse41_fp_unop_p<bits<8> opcps, bits<8> opcpd, string OpcodeStr,
+                           X86MemOperand x86memop, RegisterClass RC,
+                           PatFrag mem_frag32, PatFrag mem_frag64,
+                           Intrinsic V4F32Int, Intrinsic V2F64Int> {
 let ExeDomain = SSEPackedSingle in {
   // Intrinsic operation, reg.
   // Vector intrinsic operation, reg
@@ -6312,35 +6312,73 @@ let ExeDomain = SSEPackedDouble in {
 } // ExeDomain = SSEPackedDouble
 }
 
-multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
+multiclass avx_fp_unop_rm<bits<8> opcss, bits<8> opcsd,
+                          string OpcodeStr> {
+let ExeDomain = GenericDomain, hasSideEffects = 0 in {
+  def SSr : SS4AIi8<opcss, MRMSrcReg,
+        (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, i32u8imm:$src3),
+        !strconcat(OpcodeStr,
+            "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+      []>, Sched<[WriteFAdd]>;
+
+  let mayLoad = 1 in
+  def SSm : SS4AIi8<opcss, MRMSrcMem,
+        (outs FR32:$dst), (ins FR32:$src1, f32mem:$src2, i32u8imm:$src3),
+        !strconcat(OpcodeStr,
+             "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        []>, Sched<[WriteFAddLd, ReadAfterLd]>;
+
+  def SDr : SS4AIi8<opcsd, MRMSrcReg,
+        (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, i32u8imm:$src3),
+        !strconcat(OpcodeStr,
+              "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        []>, Sched<[WriteFAdd]>;
+
+  let mayLoad = 1 in
+  def SDm : SS4AIi8<opcsd, MRMSrcMem,
+        (outs FR64:$dst), (ins FR64:$src1, f64mem:$src2, i32u8imm:$src3),
+        !strconcat(OpcodeStr,
+             "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+        []>, Sched<[WriteFAddLd, ReadAfterLd]>;
+} // ExeDomain = GenericDomain, hasSideEffects = 0
+}
+
+multiclass sse41_fp_unop_s<bits<8> opcss, bits<8> opcsd,
+                           string OpcodeStr> {
+let ExeDomain = GenericDomain, hasSideEffects = 0 in {
+  def SSr : SS4AIi8<opcss, MRMSrcReg,
+                    (outs FR32:$dst), (ins FR32:$src1, i32u8imm:$src2),
+                    !strconcat(OpcodeStr,
+                               "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, Sched<[WriteFAdd]>;
+
+  let mayLoad = 1 in
+  def SSm : SS4AIi8<opcss, MRMSrcMem,
+                    (outs FR32:$dst), (ins f32mem:$src1, i32u8imm:$src2),
+                    !strconcat(OpcodeStr,
+                               "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, Sched<[WriteFAddLd, ReadAfterLd]>;
+
+  def SDr : SS4AIi8<opcsd, MRMSrcReg,
+                    (outs FR64:$dst), (ins FR64:$src1, i32u8imm:$src2),
+                    !strconcat(OpcodeStr,
+                               "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, Sched<[WriteFAdd]>;
+
+  let mayLoad = 1 in
+  def SDm : SS4AIi8<opcsd, MRMSrcMem,
+                    (outs FR64:$dst), (ins f64mem:$src1, i32u8imm:$src2),
+                    !strconcat(OpcodeStr,
+                               "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                    []>, Sched<[WriteFAddLd, ReadAfterLd]>;
+} // ExeDomain = GenericDomain, hasSideEffects = 0
+}
+
+multiclass sse41_fp_binop_s<bits<8> opcss, bits<8> opcsd,
                             string OpcodeStr,
                             Intrinsic F32Int,
                             Intrinsic F64Int, bit Is2Addr = 1> {
-let ExeDomain = GenericDomain in {
-  // Operation, reg.
-  let hasSideEffects = 0 in
-  def SSr : SS4AIi8<opcss, MRMSrcReg,
-      (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, i32u8imm:$src3),
-      !if(Is2Addr,
-          !strconcat(OpcodeStr,
-              "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-          !strconcat(OpcodeStr,
-              "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-      []>, Sched<[WriteFAdd]>;
-
-  // Operation, mem.
-  let mayLoad = 1, hasSideEffects = 0 in
-  def SSm : SS4AIi8<opcss, MRMSrcMem,
-        (outs FR32:$dst), (ins FR32:$src1, f32mem:$src2, i32u8imm:$src3),
-        !if(Is2Addr,
-            !strconcat(OpcodeStr,
-                "ss\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-            !strconcat(OpcodeStr,
-                "ss\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-        []>, Sched<[WriteFAddLd, ReadAfterLd]>;
-
-  // Intrinsic operation, reg.
-  let isCodeGenOnly = 1 in
+let ExeDomain = GenericDomain, isCodeGenOnly = 1 in {
   def SSr_Int : SS4AIi8<opcss, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32u8imm:$src3),
         !if(Is2Addr,
@@ -6351,8 +6389,6 @@ let ExeDomain = GenericDomain in {
         [(set VR128:$dst, (F32Int VR128:$src1, VR128:$src2, imm:$src3))]>,
         Sched<[WriteFAdd]>;
 
-  // Intrinsic operation, mem.
-  let isCodeGenOnly = 1 in
   def SSm_Int : SS4AIi8<opcss, MRMSrcMem,
         (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2, i32u8imm:$src3),
         !if(Is2Addr,
@@ -6364,30 +6400,6 @@ let ExeDomain = GenericDomain in {
              (F32Int VR128:$src1, sse_load_f32:$src2, imm:$src3))]>,
         Sched<[WriteFAddLd, ReadAfterLd]>;
 
-  // Operation, reg.
-  let hasSideEffects = 0 in
-  def SDr : SS4AIi8<opcsd, MRMSrcReg,
-        (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, i32u8imm:$src3),
-        !if(Is2Addr,
-            !strconcat(OpcodeStr,
-                "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-            !strconcat(OpcodeStr,
-                "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-        []>, Sched<[WriteFAdd]>;
-
-  // Operation, mem.
-  let mayLoad = 1, hasSideEffects = 0 in
-  def SDm : SS4AIi8<opcsd, MRMSrcMem,
-        (outs FR64:$dst), (ins FR64:$src1, f64mem:$src2, i32u8imm:$src3),
-        !if(Is2Addr,
-            !strconcat(OpcodeStr,
-                "sd\t{$src3, $src2, $dst|$dst, $src2, $src3}"),
-            !strconcat(OpcodeStr,
-                "sd\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
-        []>, Sched<[WriteFAddLd, ReadAfterLd]>;
-
-  // Intrinsic operation, reg.
-  let isCodeGenOnly = 1 in
   def SDr_Int : SS4AIi8<opcsd, MRMSrcReg,
         (outs VR128:$dst), (ins VR128:$src1, VR128:$src2, i32u8imm:$src3),
         !if(Is2Addr,
@@ -6398,8 +6410,6 @@ let ExeDomain = GenericDomain in {
         [(set VR128:$dst, (F64Int VR128:$src1, VR128:$src2, imm:$src3))]>,
         Sched<[WriteFAdd]>;
 
-  // Intrinsic operation, mem.
-  let isCodeGenOnly = 1 in
   def SDm_Int : SS4AIi8<opcsd, MRMSrcMem,
         (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2, i32u8imm:$src3),
         !if(Is2Addr,
@@ -6410,23 +6420,24 @@ let ExeDomain = GenericDomain in {
         [(set VR128:$dst,
               (F64Int VR128:$src1, sse_load_f64:$src2, imm:$src3))]>,
         Sched<[WriteFAddLd, ReadAfterLd]>;
-} // ExeDomain = GenericDomain
+} // ExeDomain = GenericDomain, isCodeGenOnly = 1
 }
 
 // FP round - roundss, roundps, roundsd, roundpd
 let Predicates = [HasAVX] in {
   // Intrinsic form
-  defm VROUND  : sse41_fp_unop_rm<0x08, 0x09, "vround", f128mem, VR128,
-                                  loadv4f32, loadv2f64,
-                                  int_x86_sse41_round_ps,
-                                  int_x86_sse41_round_pd>, VEX;
-  defm VROUNDY : sse41_fp_unop_rm<0x08, 0x09, "vround", f256mem, VR256,
-                                  loadv8f32, loadv4f64,
-                                  int_x86_avx_round_ps_256,
-                                  int_x86_avx_round_pd_256>, VEX, VEX_L;
-  defm VROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "vround",
-                                  int_x86_sse41_round_ss,
-                                  int_x86_sse41_round_sd, 0>, VEX_4V, VEX_LIG;
+  defm VROUND  : sse41_fp_unop_p<0x08, 0x09, "vround", f128mem, VR128,
+                                 loadv4f32, loadv2f64,
+                                 int_x86_sse41_round_ps,
+                                 int_x86_sse41_round_pd>, VEX;
+  defm VROUNDY : sse41_fp_unop_p<0x08, 0x09, "vround", f256mem, VR256,
+                                 loadv8f32, loadv4f64,
+                                 int_x86_avx_round_ps_256,
+                                 int_x86_avx_round_pd_256>, VEX, VEX_L;
+  defm VROUND  : sse41_fp_binop_s<0x0A, 0x0B, "vround",
+                                 int_x86_sse41_round_ss,
+                                 int_x86_sse41_round_sd, 0>, VEX_4V, VEX_LIG;
+  defm VROUND  : avx_fp_unop_rm<0x0A, 0x0B, "vround">, VEX_4V, VEX_LIG;                                 
 }
 
 let Predicates = [UseAVX] in {
@@ -6498,34 +6509,37 @@ let Predicates = [HasAVX] in {
             (VROUNDYPDr VR256:$src, (i32 0xB))>;
 }
 
-defm ROUND  : sse41_fp_unop_rm<0x08, 0x09, "round", f128mem, VR128,
-                               memopv4f32, memopv2f64,
-                               int_x86_sse41_round_ps, int_x86_sse41_round_pd>;
+defm ROUND  : sse41_fp_unop_p<0x08, 0x09, "round", f128mem, VR128,
+                              memopv4f32, memopv2f64, int_x86_sse41_round_ps,
+                              int_x86_sse41_round_pd>;
+
+defm ROUND  : sse41_fp_unop_s<0x0A, 0x0B, "round">;
+
 let Constraints = "$src1 = $dst" in
-defm ROUND  : sse41_fp_binop_rm<0x0A, 0x0B, "round",
+defm ROUND  : sse41_fp_binop_s<0x0A, 0x0B, "round",
                                int_x86_sse41_round_ss, int_x86_sse41_round_sd>;
 
 let Predicates = [UseSSE41] in {
   def : Pat<(ffloor FR32:$src),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x9))>;
+            (ROUNDSSr FR32:$src, (i32 0x9))>;
   def : Pat<(f64 (ffloor FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x9))>;
+            (ROUNDSDr FR64:$src, (i32 0x9))>;
   def : Pat<(f32 (fnearbyint FR32:$src)),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xC))>;
+            (ROUNDSSr FR32:$src, (i32 0xC))>;
   def : Pat<(f64 (fnearbyint FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xC))>;
+            (ROUNDSDr FR64:$src, (i32 0xC))>;
   def : Pat<(f32 (fceil FR32:$src)),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xA))>;
+            (ROUNDSSr FR32:$src, (i32 0xA))>;
   def : Pat<(f64 (fceil FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xA))>;
+            (ROUNDSDr FR64:$src, (i32 0xA))>;
   def : Pat<(f32 (frint FR32:$src)),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0x4))>;
+            (ROUNDSSr FR32:$src, (i32 0x4))>;
   def : Pat<(f64 (frint FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0x4))>;
+            (ROUNDSDr FR64:$src, (i32 0x4))>;
   def : Pat<(f32 (ftrunc FR32:$src)),
-            (ROUNDSSr (f32 (IMPLICIT_DEF)), FR32:$src, (i32 0xB))>;
+            (ROUNDSSr FR32:$src, (i32 0xB))>;
   def : Pat<(f64 (ftrunc FR64:$src)),
-            (ROUNDSDr (f64 (IMPLICIT_DEF)), FR64:$src, (i32 0xB))>;
+            (ROUNDSDr FR64:$src, (i32 0xB))>;
 
   def : Pat<(v4f32 (ffloor VR128:$src)),
             (ROUNDPSr VR128:$src, (i32 0x9))>;
