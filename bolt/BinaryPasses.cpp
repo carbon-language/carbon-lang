@@ -11,7 +11,6 @@
 
 #include "BinaryPasses.h"
 #include "llvm/Support/Options.h"
-#include <unordered_map>
 
 #define DEBUG_TYPE "bolt"
 
@@ -135,7 +134,7 @@ enum SctcModes : char {
   SctcPreserveDirection,
   SctcHeuristic
 };
-  
+
 static cl::opt<SctcModes>
 SctcMode(
     "sctc-mode",
@@ -932,7 +931,7 @@ SimplifyConditionalTailCalls::shouldRewriteBranch(const BinaryBasicBlock *PredBB
 
   if (IsForward)
     ++NumOrigForwardBranches;
-  else 
+  else
     ++NumOrigBackwardBranches;
 
   if (opts::SctcMode == opts::SctcAlways)

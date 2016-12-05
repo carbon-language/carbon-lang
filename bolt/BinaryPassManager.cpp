@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPassManager.h"
+#include "FrameOptimizerPass.h"
 #include "llvm/Support/Timer.h"
 
 using namespace llvm;
@@ -60,6 +61,9 @@ SimplifyRODataLoads("simplify-rodata-loads",
                              "constant found in the corresponding "
                              "section"),
                     cl::ZeroOrMore);
+
+static cl::opt<bool> OptimizeFrameAccesses(
+    "frame-opt", cl::desc("optimize stack frame accesses"), cl::ZeroOrMore);
 
 static cl::opt<bool>
 IdenticalCodeFolding(
@@ -125,6 +129,12 @@ PrintInline("print-inline",
             cl::desc("print functions after inlining optimization"),
             cl::ZeroOrMore,
             cl::Hidden);
+
+static cl::opt<bool>
+PrintFOP("print-fop",
+         cl::desc("print functions after frame optimizer pass"),
+         cl::ZeroOrMore,
+         cl::Hidden);
 
 static cl::opt<bool>
 NeverPrint("never-print",
@@ -226,6 +236,9 @@ void BinaryFunctionPassManager::runAllPasses(
   // passes breaks the sync - they either need to re-run the pass or
   // fix branches consistency internally.
   Manager.registerPass(llvm::make_unique<FixupBranches>(PrintAfterBranchFixup));
+
+  Manager.registerPass(llvm::make_unique<FrameOptimizerPass>(PrintFOP),
+                       OptimizeFrameAccesses);
 
   // This pass introduces conditional jumps into external functions.
   // Between extending CFG to support this and isolating this pass we chose

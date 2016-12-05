@@ -23,6 +23,7 @@ add_llvm_tool(llvm-bolt
   DataReader.cpp
   DebugData.cpp
   Exceptions.cpp
+  FrameOptimizerPass.cpp
   RewriteInstance.cpp
   ReorderAlgorithm.cpp
   DWARFRewriter.cpp
