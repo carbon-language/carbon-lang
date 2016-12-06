@@ -169,7 +169,7 @@ MachineInstrBuilder MachineIRBuilder::buildConstant(unsigned Res,
                                                     const ConstantInt &Val) {
   LLT Ty = MRI->getType(Res);
 
-  assert(Ty.isScalar() || Ty.isPointer() && "invalid operand type");
+  assert((Ty.isScalar() || Ty.isPointer()) && "invalid operand type");
 
   const ConstantInt *NewVal = &Val;
   if (Ty.getSizeInBits() != Val.getBitWidth())
