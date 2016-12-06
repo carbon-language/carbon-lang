@@ -1159,10 +1159,8 @@ bool LazyValueInfoImpl::solveBlockValueCast(LVILatticeVal &BBLV,
   // NOTE: We're currently limited by the set of operations that ConstantRange
   // can evaluate symbolically.  Enhancing that set will allows us to analyze
   // more definitions.
-  LVILatticeVal Result;
   auto CastOp = (Instruction::CastOps) BBI->getOpcode();
-  Result.markConstantRange(LHSRange.castOp(CastOp, ResultBitWidth));
-  BBLV = Result;
+  BBLV = LVILatticeVal::getRange(LHSRange.castOp(CastOp, ResultBitWidth));
   return true;
 }
 
@@ -1220,10 +1218,8 @@ bool LazyValueInfoImpl::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
   // NOTE: We're currently limited by the set of operations that ConstantRange
   // can evaluate symbolically.  Enhancing that set will allows us to analyze
   // more definitions.
-  LVILatticeVal Result;
   auto BinOp = (Instruction::BinaryOps) BBI->getOpcode();
-  Result.markConstantRange(LHSRange.binaryOp(BinOp, RHSRange));
-  BBLV = Result;
+  BBLV = LVILatticeVal::getRange(LHSRange.binaryOp(BinOp, RHSRange));
   return true;
 }
 
