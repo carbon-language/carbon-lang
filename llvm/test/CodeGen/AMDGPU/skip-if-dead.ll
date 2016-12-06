@@ -308,10 +308,8 @@ end:
 ; CHECK: s_mov_b64 exec, 0
 
 ; CHECK: [[SKIPKILL]]:
-; CHECK: v_cmp_nge_f32
-; CHECK-NEXT: s_cbranch_vccz [[UNREACHABLE:BB[0-9]+_[0-9]+]]
-
-; CHECK: [[UNREACHABLE]]:
+; CHECK: v_cmp_nge_f32_e32 vcc
+; CHECK-NEXT: BB#3: ; %bb5
 ; CHECK-NEXT: .Lfunc_end{{[0-9]+}}
 define amdgpu_ps void @no_skip_no_successors(float inreg %arg, float inreg %arg1) #0 {
 bb:
