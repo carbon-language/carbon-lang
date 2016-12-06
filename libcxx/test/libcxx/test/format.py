@@ -227,9 +227,7 @@ class LibcxxTestFormat(object):
         if test_cxx.type != 'gcc':
             test_cxx.flags += ['-fsyntax-only']
         if use_verify:
-            test_cxx.flags += ['-Xclang', '-verify',
-                               '-Xclang', '-verify-ignore-unexpected=note',
-                               '-ferror-limit=1024']
+            test_cxx.useVerify()
         cmd, out, err, rc = test_cxx.compile(source_path, out=os.devnull)
         expected_rc = 0 if use_verify else 1
         if rc == expected_rc:

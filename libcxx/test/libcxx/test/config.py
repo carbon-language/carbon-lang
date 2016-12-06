@@ -251,8 +251,9 @@ class Configuration(object):
         if self.use_clang_verify is None:
             # NOTE: We do not test for the -verify flag directly because
             #   -verify will always exit with non-zero on an empty file.
-            self.use_clang_verify = self.cxx.hasCompileFlag(
-                ['-Xclang', '-verify-ignore-unexpected'])
+            self.use_clang_verify = self.cxx.isVerifySupported()
+            if self.use_clang_verify:
+                self.config.available_features.add('verify-support')
             self.lit_config.note(
                 "inferred use_clang_verify as: %r" % self.use_clang_verify)
 
@@ -771,21 +772,25 @@ class Configuration(object):
         sub.append(('%compile_flags', compile_flags_str))
         sub.append(('%link_flags', link_flags_str))
         sub.append(('%all_flags', all_flags))
-
+        if self.cxx.isVerifySupported():
+            verify_str = ' ' + ' '.join(self.cxx.verify_flags) + ' '
+            sub.append(('%verify', verify_str))
         # Add compile and link shortcuts
         compile_str = (self.cxx.path + ' -o %t.o %s -c ' + flags_str
-                       + compile_flags_str)
-        link_str = (self.cxx.path + ' -o %t.exe %t.o ' + flags_str
+                       + ' ' + compile_flags_str)
+        link_str = (self.cxx.path + ' -o %t.exe %t.o ' + flags_str + ' '
                     + link_flags_str)
         assert type(link_str) is str
         build_str = self.cxx.path + ' -o %t.exe %s ' + all_flags
-        sub.append(('%compile', compile_str))
-        sub.append(('%link', link_str))
         if self.cxx.use_modules:
+            sub.append(('%compile_module', compile_str))
             sub.append(('%build_module', build_str))
         elif self.cxx.modules_flags is not None:
             modules_str = ' '.join(self.cxx.modules_flags) + ' '
+            sub.append(('%compile_module', compile_str + ' ' + modules_str))
             sub.append(('%build_module', build_str + ' ' + modules_str))
+        sub.append(('%compile', compile_str))
+        sub.append(('%link', link_str))
         sub.append(('%build', build_str))
         # Configure exec prefix substitutions.
         exec_env_str = 'env ' if len(self.env) != 0 else ''
@@ -800,8 +805,8 @@ class Configuration(object):
         sub.append(('%run', exec_str + ' %t.exe'))
         # Configure not program substitutions
         not_py = os.path.join(self.libcxx_src_root, 'utils', 'not', 'not.py')
-        not_str = '%s %s' % (sys.executable, not_py)
-        sub.append(('not', not_str))
+        not_str = '%s %s ' % (sys.executable, not_py)
+        sub.append(('not ', not_str))
 
     def configure_triple(self):
         # Get or infer the target triple.
