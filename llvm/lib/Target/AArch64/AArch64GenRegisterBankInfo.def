@@ -37,7 +37,8 @@ enum PartialMappingIdx {
   PMI_FirstGPR = PMI_GPR32,
   PMI_LastGPR = PMI_GPR64,
   PMI_FirstFPR = PMI_FPR32,
-  PMI_LastFPR = PMI_FPR512
+  PMI_LastFPR = PMI_FPR512,
+  PMI_Min = PMI_FirstGPR,
 };
 
 static unsigned getRegBankBaseIdxOffset(unsigned Size) {
@@ -76,34 +77,53 @@ enum ValueMappingIdx {
 };
 
 // ValueMappings.
-RegisterBankInfo::ValueMapping ValMappings[] {
-  /* BreakDown, NumBreakDowns */
-  // 3-operands instructions (all binary operations should end up with one of
-  // those mapping).
-  // 0: GPR 32-bit value. <-- This must match First3OpsIdx.
-  {&PartMappings[0], 1}, {&PartMappings[0], 1}, {&PartMappings[0], 1},
-  // 3: GPR 64-bit value.
-  {&PartMappings[1], 1}, {&PartMappings[1], 1}, {&PartMappings[1], 1},
-  // 6: FPR 32-bit value.
-  {&PartMappings[2], 1}, {&PartMappings[2], 1}, {&PartMappings[2], 1},
-  // 9: FPR 64-bit value.
-  {&PartMappings[3], 1}, {&PartMappings[3], 1}, {&PartMappings[3], 1},
-  // 12: FPR 128-bit value.
-  {&PartMappings[4], 1}, {&PartMappings[4], 1}, {&PartMappings[4], 1},
-  // 15: FPR 256-bit value.
-  {&PartMappings[5], 1}, {&PartMappings[5], 1}, {&PartMappings[5], 1},
-  // 18: FPR 512-bit value. <-- This must match Last3OpsIdx.
-  {&PartMappings[6], 1}, {&PartMappings[6], 1}, {&PartMappings[6], 1},
-  // Cross register bank copies.
-  // 21: GPR 32-bit value to FPR 32-bit value. <-- This must match FirstCrossRegCpyIdx.
-  {&PartMappings[0], 1}, {&PartMappings[2], 1},
-  // 23: GPR 64-bit value to FPR 64-bit value.
-  {&PartMappings[1], 1}, {&PartMappings[3], 1},
-  // 25: FPR 32-bit value to GPR 32-bit value.
-  {&PartMappings[2], 1}, {&PartMappings[0], 1},
-  // 27: FPR 64-bit value to GPR 64-bit value. <-- This must match LastCrossRegCpyIdx.
-  {&PartMappings[3], 1}, {&PartMappings[1], 1}
-
+RegisterBankInfo::ValueMapping ValMappings[]{
+    /* BreakDown, NumBreakDowns */
+    // 3-operands instructions (all binary operations should end up with one of
+    // those mapping).
+    // 0: GPR 32-bit value. <-- This must match First3OpsIdx.
+    {&PartMappings[PMI_GPR32 - PMI_Min], 1},
+    {&PartMappings[PMI_GPR32 - PMI_Min], 1},
+    {&PartMappings[PMI_GPR32 - PMI_Min], 1},
+    // 3: GPR 64-bit value.
+    {&PartMappings[PMI_GPR64 - PMI_Min], 1},
+    {&PartMappings[PMI_GPR64 - PMI_Min], 1},
+    {&PartMappings[PMI_GPR64 - PMI_Min], 1},
+    // 6: FPR 32-bit value.
+    {&PartMappings[PMI_FPR32 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR32 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR32 - PMI_Min], 1},
+    // 9: FPR 64-bit value.
+    {&PartMappings[PMI_FPR64 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR64 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR64 - PMI_Min], 1},
+    // 12: FPR 128-bit value.
+    {&PartMappings[PMI_FPR128 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR128 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR128 - PMI_Min], 1},
+    // 15: FPR 256-bit value.
+    {&PartMappings[PMI_FPR256 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR256 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR256 - PMI_Min], 1},
+    // 18: FPR 512-bit value. <-- This must match Last3OpsIdx.
+    {&PartMappings[PMI_FPR512 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR512 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR512 - PMI_Min], 1},
+    // Cross register bank copies.
+    // 21: GPR 32-bit value to FPR 32-bit value. <-- This must match
+    //                                               FirstCrossRegCpyIdx.
+    {&PartMappings[PMI_GPR32 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR32 - PMI_Min], 1},
+    // 23: GPR 64-bit value to FPR 64-bit value.
+    {&PartMappings[PMI_GPR64 - PMI_Min], 1},
+    {&PartMappings[PMI_FPR64 - PMI_Min], 1},
+    // 25: FPR 32-bit value to GPR 32-bit value.
+    {&PartMappings[PMI_FPR32 - PMI_Min], 1},
+    {&PartMappings[PMI_GPR32 - PMI_Min], 1},
+    // 27: FPR 64-bit value to GPR 64-bit value. <-- This must match
+    //                                               LastCrossRegCpyIdx.
+    {&PartMappings[PMI_FPR64 - PMI_Min], 1},
+    {&PartMappings[PMI_GPR64 - PMI_Min], 1}
 };
 
 /// Get the pointer to the ValueMapping representing the RegisterBank
