@@ -42,6 +42,7 @@ define [1 x double] @constant() {
   ; PHI. If so, we cannot complete the G_PHI and mustn't try or bad things
   ; happen.
 ; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for pending_phis
+; FALLBACK-WITH-REPORT-OUT-LABEL: pending_phis:
 define i32 @pending_phis(i1 %tst, i32 %val, i32* %addr) {
   br i1 %tst, label %true, label %false
 
@@ -56,4 +57,11 @@ true:
 false:
   br label %end
 
+}
+
+; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for odd_type
+; FALLBACK-WITH-REPORT-OUT-LABEL: odd_type:
+define void @odd_type(i42* %addr) {
+  %val42 = load i42, i42* %addr
+  ret void
 }
