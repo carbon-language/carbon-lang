@@ -215,7 +215,7 @@ int main()
         assert(c.max_load_factor() == 1);
         assert(c.hash_function() == test_hash<std::hash<int> >(8));
         assert(c.key_eq() == test_compare<std::equal_to<int> >(9));
-        assert(c.get_allocator() == A{});;
+        assert(c.get_allocator() == A{});
     }
 #endif
 }
