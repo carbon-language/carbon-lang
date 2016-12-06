@@ -56,6 +56,7 @@ module std [system] {
       // <stdio.h>'s __need_* macros require textual inclusion.
       textual header "stdio.h"
       export *
+      export Darwin.C.stdio
     }
     module stdlib_h {
       // <stdlib.h>'s __need_* macros require textual inclusion.
@@ -192,6 +193,7 @@ module std [system] {
     // FIXME: <cuchar> is missing.
     module cwchar {
       header "cwchar"
+      export depr.stdio_h
       export *
     }
     module cwctype {
