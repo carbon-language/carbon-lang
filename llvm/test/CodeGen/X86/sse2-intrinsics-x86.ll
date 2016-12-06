@@ -1504,7 +1504,8 @@ define <2 x double> @test_x86_sse2_sqrt_sd_vec_load(<2 x double>* %a0) {
 ; SSE-LABEL: test_x86_sse2_sqrt_sd_vec_load:
 ; SSE:       ## BB#0:
 ; SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; SSE-NEXT:    sqrtsd (%eax), %xmm0 ## encoding: [0xf2,0x0f,0x51,0x00]
+; SSE-NEXT:    movaps (%eax), %xmm0 ## encoding: [0x0f,0x28,0x00]
+; SSE-NEXT:    sqrtsd %xmm0, %xmm0 ## encoding: [0xf2,0x0f,0x51,0xc0]
 ; SSE-NEXT:    retl ## encoding: [0xc3]
 ;
 ; AVX2-LABEL: test_x86_sse2_sqrt_sd_vec_load:

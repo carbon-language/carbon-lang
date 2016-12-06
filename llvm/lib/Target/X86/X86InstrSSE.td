@@ -3421,9 +3421,6 @@ multiclass sse_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
   // because the high elements of the destination are unchanged in SSE.
   def : Pat<(Intr VR128:$src),
             (!cast<Instruction>(NAME#Suffix##r_Int) VR128:$src, VR128:$src)>;
-  def : Pat<(Intr (load addr:$src)),
-            (vt (COPY_TO_REGCLASS(!cast<Instruction>(NAME#Suffix##m)
-                                      addr:$src), VR128))>;
   }
   // We don't want to fold scalar loads into these instructions unless
   // optimizing for size. This is because the folded instruction will have a
