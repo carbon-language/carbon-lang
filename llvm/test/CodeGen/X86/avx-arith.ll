@@ -360,3 +360,15 @@ define <4 x float> @int_sqrt_ss() {
  %x2 = call <4 x float> @llvm.x86.sse.sqrt.ss(<4 x float> %x1) nounwind
  ret <4 x float> %x2
 }
+
+define <2 x double> @vector_sqrt_scalar_load(double* %a0) optsize {
+; CHECK-LABEL: vector_sqrt_scalar_load:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vsqrtsd (%rdi), %xmm0, %xmm0
+; CHECK-NEXT:    retq
+  %a1 = load double, double* %a0
+  %a2 = insertelement <2 x double> undef, double %a1, i32 0
+  %res = call <2 x double> @llvm.sqrt.v2f64(<2 x double> %a2) ; <<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.sqrt.v2f64(<2 x double>) nounwind readnone
