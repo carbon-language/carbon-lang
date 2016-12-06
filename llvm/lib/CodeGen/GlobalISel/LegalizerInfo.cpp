@@ -93,7 +93,9 @@ LegalizerInfo::getAction(const InstrAspect &Aspect) const {
     if (DefaultAction != DefaultActions.end() && DefaultAction->second == Legal)
       return std::make_pair(Legal, Ty);
 
-    assert(DefaultAction->second == NarrowScalar && "unexpected default");
+    if (DefaultAction == DefaultActions.end() ||
+        DefaultAction->second != NarrowScalar)
+      return std::make_pair(Unsupported, LLT());
     return findLegalAction(Aspect, NarrowScalar);
   }
 

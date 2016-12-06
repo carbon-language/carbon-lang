@@ -74,3 +74,11 @@ define void @odd_type(i42* %addr) {
 define void @sequence_mapping([2 x i64] %in) {
   ret void
 }
+
+  ; Legalizer was asserting when it enountered an unexpected default action.
+; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for legal_default
+; FALLBACK-WITH-REPORT-LABEL: legal_default:
+define void @legal_default(i64 %in) {
+  insertvalue [2 x i64] undef, i64 %in, 0
+  ret void
+}
