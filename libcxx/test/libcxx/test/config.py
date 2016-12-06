@@ -736,7 +736,10 @@ class Configuration(object):
         if platform.system() != 'Darwin':
             modules_flags += ['-Xclang', '-fmodules-local-submodule-visibility']
         supports_modules = self.cxx.hasCompileFlag(modules_flags)
-        enable_modules = self.get_lit_bool('enable_modules', False)
+        enable_modules_default = supports_modules and \
+            os.environ.get('LIBCXX_USE_MODULES') is not None
+        enable_modules = self.get_lit_bool('enable_modules',
+                                           enable_modules_default)
         if enable_modules and not supports_modules:
             self.lit_config.fatal(
                 '-fmodules is enabled but not supported by the compiler')
