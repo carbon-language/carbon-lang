@@ -2083,16 +2083,16 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     const ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op);
     assert(NumElts == SVN->getMask().size() && "Unexpected vector size");
     for (unsigned i = 0; i != NumElts; ++i) {
+      if (!DemandedElts[i])
+        continue;
+
       int M = SVN->getMaskElt(i);
       if (M < 0) {
         // For UNDEF elements, we don't know anything about the common state of
         // the shuffle result.
-        // FIXME: Is this too pessimistic?
         KnownZero = KnownOne = APInt(BitWidth, 0);
         break;
       }
-      if (!DemandedElts[i])
-        continue;
 
       if ((unsigned)M < NumElts)
         DemandedLHS.setBit((unsigned)M % NumElts);
