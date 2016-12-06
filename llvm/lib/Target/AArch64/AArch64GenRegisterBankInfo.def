@@ -26,18 +26,18 @@ RegisterBank *RegBanks[] = {&GPRRegBank, &FPRRegBank, &CCRRegBank};
 
 // PartialMappings.
 enum PartialMappingIdx {
-  None = -1,
-  GPR32 = 0,
-  GPR64,
-  FPR32,
-  FPR64,
-  FPR128,
-  FPR256,
-  FPR512,
-  FirstGPR = GPR32,
-  LastGPR = GPR64,
-  FirstFPR = FPR32,
-  LastFPR = FPR512
+  PMI_None = -1,
+  PMI_GPR32 = 0,
+  PMI_GPR64,
+  PMI_FPR32,
+  PMI_FPR64,
+  PMI_FPR128,
+  PMI_FPR256,
+  PMI_FPR512,
+  PMI_FirstGPR = PMI_GPR32,
+  PMI_LastGPR = PMI_GPR64,
+  PMI_FirstFPR = PMI_FPR32,
+  PMI_LastFPR = PMI_FPR512
 };
 
 static unsigned getRegBankBaseIdxOffset(unsigned Size) {
@@ -115,7 +115,7 @@ RegisterBankInfo::ValueMapping ValMappings[] {
 /// \pre \p RBIdx != PartialMappingIdx::None
 const RegisterBankInfo::ValueMapping *
 getValueMapping(PartialMappingIdx RBIdx, unsigned Size) {
-  assert(RBIdx != PartialMappingIdx::None && "No mapping needed for that");
+  assert(RBIdx != PartialMappingIdx::PMI_None && "No mapping needed for that");
   unsigned ValMappingIdx = First3OpsIdx +
                       (RBIdx + getRegBankBaseIdxOffset(Size)) *
                           ValueMappingIdx::DistanceBetweenRegBanks;
@@ -133,14 +133,14 @@ getValueMapping(PartialMappingIdx RBIdx, unsigned Size) {
 /// otherwise it is on FPR. Same thing for \p SrcIsGPR.
 const RegisterBankInfo::ValueMapping *
 getCopyMapping(bool DstIsGPR, bool SrcIsGPR, unsigned Size) {
-  PartialMappingIdx DstRBIdx = DstIsGPR ? FirstGPR : FirstFPR;
-  PartialMappingIdx SrcRBIdx = SrcIsGPR ? FirstGPR : FirstFPR;
+  PartialMappingIdx DstRBIdx = DstIsGPR ? PMI_FirstGPR : PMI_FirstFPR;
+  PartialMappingIdx SrcRBIdx = SrcIsGPR ? PMI_FirstGPR : PMI_FirstFPR;
   if (DstRBIdx == SrcRBIdx)
     return getValueMapping(DstRBIdx, Size);
   assert(Size <= 64 && "GPR cannot handle that size");
   unsigned ValMappingIdx =
       FirstCrossRegCpyIdx +
-      (DstRBIdx - FirstGPR + getRegBankBaseIdxOffset(Size)) *
+      (DstRBIdx - PMI_FirstGPR + getRegBankBaseIdxOffset(Size)) *
           ValueMappingIdx::DistanceBetweenCrossRegCpy;
   assert(ValMappingIdx >= AArch64::FirstCrossRegCpyIdx &&
          ValMappingIdx <= AArch64::LastCrossRegCpyIdx &&
