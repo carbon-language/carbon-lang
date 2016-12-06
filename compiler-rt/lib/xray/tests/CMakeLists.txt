@@ -53,6 +53,6 @@ macro(add_xray_unittest testname)
   endif()
 endmacro()
 
-if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
+if(COMPILER_RT_CAN_EXECUTE_TESTS)
   add_subdirectory(unit)
 endif()
