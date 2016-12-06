@@ -70,6 +70,27 @@ define <4 x i32> @knownbits_mask_shuffle_sext(<8 x i16> %a0) nounwind {
   ret <4 x i32> %3
 }
 
+define <4 x i32> @knownbits_mask_shuffle_shuffle_sext(<8 x i16> %a0) nounwind {
+; X32-LABEL: knownbits_mask_shuffle_shuffle_sext:
+; X32:       # BB#0:
+; X32-NEXT:    vpand {{\.LCPI.*}}, %xmm0, %xmm0
+; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; X32-NEXT:    vpmovsxwd %xmm0, %xmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_mask_shuffle_shuffle_sext:
+; X64:       # BB#0:
+; X64-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; X64-NEXT:    vpmovsxwd %xmm0, %xmm0
+; X64-NEXT:    retq
+  %1 = and <8 x i16> %a0, <i16 -1, i16 -1, i16 -1, i16 -1, i16 15, i16 15, i16 15, i16 15>
+  %2 = shufflevector <8 x i16> %1, <8 x i16> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
+  %3 = shufflevector <8 x i16> %2, <8 x i16> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %4 = sext <4 x i16> %3 to <4 x i32>
+  ret <4 x i32> %4
+}
+
 define <4 x float> @knownbits_mask_shuffle_uitofp(<4 x i32> %a0) nounwind {
 ; X32-LABEL: knownbits_mask_shuffle_uitofp:
 ; X32:       # BB#0:
