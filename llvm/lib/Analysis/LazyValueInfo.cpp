@@ -140,6 +140,7 @@ public:
     return Range;
   }
 
+private:
   /// Return true if this is a change in status.
   bool markOverdefined() {
     if (isOverdefined())
@@ -148,7 +149,6 @@ public:
     return true;
   }
 
-private:
   /// Return true if this is a change in status.
   bool markConstant(Constant *V) {
     assert(V && "Marking constant with NULL");
@@ -872,7 +872,7 @@ bool LazyValueInfoImpl::solveBlockValueNonLocal(LVILatticeVal &BBLV,
       PointerType *PTy = cast<PointerType>(Val->getType());
       Result = LVILatticeVal::getNot(ConstantPointerNull::get(PTy));
     } else {
-      Result.markOverdefined();
+      Result = LVILatticeVal::getOverdefined();
     }
     BBLV = Result;
     return true;
@@ -996,28 +996,28 @@ bool LazyValueInfoImpl::solveBlockValueSelect(LVILatticeVal &BBLV,
   if (!hasBlockValue(SI->getTrueValue(), BB)) {
     if (pushBlockValue(std::make_pair(BB, SI->getTrueValue())))
       return false;
-    BBLV.markOverdefined();
+    BBLV = LVILatticeVal::getOverdefined();
     return true;
   }
   LVILatticeVal TrueVal = getBlockValue(SI->getTrueValue(), BB);
   // If we hit overdefined, don't ask more queries.  We want to avoid poisoning
   // extra slots in the table if we can.
   if (TrueVal.isOverdefined()) {
-    BBLV.markOverdefined();
+    BBLV = LVILatticeVal::getOverdefined();
     return true;
   }
 
   if (!hasBlockValue(SI->getFalseValue(), BB)) {
     if (pushBlockValue(std::make_pair(BB, SI->getFalseValue())))
       return false;
-    BBLV.markOverdefined();
+    BBLV = LVILatticeVal::getOverdefined();
     return true;
   }
   LVILatticeVal FalseVal = getBlockValue(SI->getFalseValue(), BB);
   // If we hit overdefined, don't ask more queries.  We want to avoid poisoning
   // extra slots in the table if we can.
   if (FalseVal.isOverdefined()) {
-    BBLV.markOverdefined();
+    BBLV = LVILatticeVal::getOverdefined();
     return true;
   }
 
@@ -1116,7 +1116,7 @@ bool LazyValueInfoImpl::solveBlockValueCast(LVILatticeVal &BBLV,
   if (!BBI->getOperand(0)->getType()->isSized()) {
     // Without knowing how wide the input is, we can't analyze it in any useful
     // way.
-    BBLV.markOverdefined();
+    BBLV = LVILatticeVal::getOverdefined();
     return true;
   }
 
@@ -1133,7 +1133,7 @@ bool LazyValueInfoImpl::solveBlockValueCast(LVILatticeVal &BBLV,
     // Unhandled instructions are overdefined.
     DEBUG(dbgs() << " compute BB '" << BB->getName()
                  << "' - overdefined (unknown cast).\n");
-    BBLV.markOverdefined();
+    BBLV = LVILatticeVal::getOverdefined();
     return true;
   }
 
@@ -1192,7 +1192,7 @@ bool LazyValueInfoImpl::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
     // Unhandled instructions are overdefined.
     DEBUG(dbgs() << " compute BB '" << BB->getName()
                  << "' - overdefined (unknown binary operator).\n");
-    BBLV.markOverdefined();
+    BBLV = LVILatticeVal::getOverdefined();
     return true;
   };
 
@@ -1404,7 +1404,7 @@ bool LazyValueInfoImpl::getEdgeValue(Value *Val, BasicBlock *BBFrom,
   if (!getEdgeValueLocal(Val, BBFrom, BBTo, LocalResult))
     // If we couldn't constrain the value on the edge, LocalResult doesn't
     // provide any information.
-    LocalResult.markOverdefined();
+    LocalResult = LVILatticeVal::getOverdefined();
 
   if (hasSingleValue(LocalResult)) {
     // Can't get any more precise here
