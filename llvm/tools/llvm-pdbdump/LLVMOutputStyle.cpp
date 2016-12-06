@@ -357,15 +357,7 @@ Error LLVMOutputStyle::dumpGlobalsStream() {
 
   auto Globals = File.getPDBGlobalsStream();
   if (!Globals)
-    return handleErrors(Globals.takeError(),
-                        [&](const msf::MSFError &E) -> Error {
-                          if (E.Code == msf::msf_error_code::no_stream) {
-                            P.printString("Globals Stream not present");
-                            return Error::success();
-                          } else {
-                            return make_error<msf::MSFError>(E);
-                          }
-                        });
+    return Globals.takeError();
   DictScope D(P, "Globals Stream");
 
   auto Dbi = File.getPDBDbiStream();
