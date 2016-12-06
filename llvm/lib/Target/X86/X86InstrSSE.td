@@ -3414,9 +3414,6 @@ multiclass sse_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
   }
 
   let Predicates = [target] in {
-  def : Pat<(vt (OpNode mem_cpat:$src)),
-            (vt (COPY_TO_REGCLASS (vt (!cast<Instruction>(NAME#Suffix##m_Int)
-                 (vt (IMPLICIT_DEF)), mem_cpat:$src)), RC))>;
   // These are unary operations, but they are modeled as having 2 source operands
   // because the high elements of the destination are unchanged in SSE.
   def : Pat<(Intr VR128:$src),
@@ -3490,9 +3487,6 @@ multiclass avx_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
     def : Pat<(ScalarVT (OpNode (load addr:$src))),
               (!cast<Instruction>("V"#NAME#Suffix##m) (ScalarVT (IMPLICIT_DEF)),
             addr:$src)>;
-    def : Pat<(vt (OpNode mem_cpat:$src)),
-              (!cast<Instruction>("V"#NAME#Suffix##m_Int) (vt (IMPLICIT_DEF)),
-                                  mem_cpat:$src)>;
   }
 }
 

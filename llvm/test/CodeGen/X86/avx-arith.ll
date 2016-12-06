@@ -364,7 +364,8 @@ define <4 x float> @int_sqrt_ss() {
 define <2 x double> @vector_sqrt_scalar_load(double* %a0) optsize {
 ; CHECK-LABEL: vector_sqrt_scalar_load:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vsqrtsd (%rdi), %xmm0, %xmm0
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vsqrtpd %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %a1 = load double, double* %a0
   %a2 = insertelement <2 x double> undef, double %a1, i32 0
