@@ -2777,39 +2777,6 @@ defm PANDN : PDI_binop_all<0xDF, "pandn", X86andnp, v2i64, v4i64,
 // SSE 1 & 2 - Logical Instructions
 //===----------------------------------------------------------------------===//
 
-// Multiclass for scalars using the X86 logical operation aliases for FP.
-multiclass sse12_fp_packed_scalar_logical_alias<
-    bits<8> opc, string OpcodeStr, SDNode OpNode, OpndItins itins> {
-  defm V#NAME#PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode,
-                FR32, f32, f128mem, loadf32_128, SSEPackedSingle, itins, 0>,
-                PS, VEX_4V;
-
-  defm V#NAME#PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode,
-                FR64, f64, f128mem, loadf64_128, SSEPackedDouble, itins, 0>,
-                PD, VEX_4V;
-
-  let Constraints = "$src1 = $dst" in {
-    defm PS : sse12_fp_packed<opc, !strconcat(OpcodeStr, "ps"), OpNode, FR32,
-                f32, f128mem, memopfsf32_128, SSEPackedSingle, itins>, PS;
-
-    defm PD : sse12_fp_packed<opc, !strconcat(OpcodeStr, "pd"), OpNode, FR64,
-                f64, f128mem, memopfsf64_128, SSEPackedDouble, itins>, PD;
-  }
-}
-
-let isCodeGenOnly = 1 in {
-  defm FsAND  : sse12_fp_packed_scalar_logical_alias<0x54, "and", X86fand,
-                SSE_BIT_ITINS_P>;
-  defm FsOR   : sse12_fp_packed_scalar_logical_alias<0x56, "or", X86for,
-                SSE_BIT_ITINS_P>;
-  defm FsXOR  : sse12_fp_packed_scalar_logical_alias<0x57, "xor", X86fxor,
-                SSE_BIT_ITINS_P>;
-
-  let isCommutable = 0 in
-    defm FsANDN : sse12_fp_packed_scalar_logical_alias<0x55, "andn", X86fandn,
-                  SSE_BIT_ITINS_P>;
-}
-
 /// sse12_fp_packed_logical - SSE 1 & 2 packed FP logical ops
 ///
 multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
@@ -2965,6 +2932,43 @@ let Predicates = [HasAVX, NoVLX_Or_NoDQI] in {
             (VANDNPDYrm VR256:$src1, addr:$src2)>;
 }
 
+let Predicates = [HasAVX] in {
+  // Use packed logical operations for scalar ops.
+  def : Pat<(f64 (X86fand FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (VANDPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
+  def : Pat<(f64 (X86for FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (VORPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
+  def : Pat<(f64 (X86fxor FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (VXORPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
+  def : Pat<(f64 (X86fandn FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (VANDNPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
+
+  def : Pat<(f32 (X86fand FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (VANDPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
+  def : Pat<(f32 (X86for FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (VORPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
+  def : Pat<(f32 (X86fxor FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (VXORPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
+  def : Pat<(f32 (X86fandn FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (VANDNPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
+}
+
 let Predicates = [UseSSE1] in {
   def : Pat<(v4f32 (X86fand VR128:$src1, VR128:$src2)),
             (ANDPSrr VR128:$src1, VR128:$src2)>;
@@ -2983,6 +2987,24 @@ let Predicates = [UseSSE1] in {
             (XORPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86fandn VR128:$src1, (memopv4f32 addr:$src2)),
             (ANDNPSrm VR128:$src1, addr:$src2)>;
+
+  // Use packed logical operations for scalar ops.
+  def : Pat<(f32 (X86fand FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (ANDPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
+  def : Pat<(f32 (X86for FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (ORPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
+  def : Pat<(f32 (X86fxor FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (XORPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
+  def : Pat<(f32 (X86fandn FR32:$src1, FR32:$src2)),
+            (COPY_TO_REGCLASS (ANDNPSrr
+                               (COPY_TO_REGCLASS FR32:$src1, VR128),
+                               (COPY_TO_REGCLASS FR32:$src2, VR128)), FR32)>;
 }
 
 let Predicates = [UseSSE2] in {
@@ -3003,6 +3025,24 @@ let Predicates = [UseSSE2] in {
             (XORPDrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86fandn VR128:$src1, (memopv2f64 addr:$src2)),
             (ANDNPDrm VR128:$src1, addr:$src2)>;
+
+  // Use packed logical operations for scalar ops.
+  def : Pat<(f64 (X86fand FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (ANDPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
+  def : Pat<(f64 (X86for FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (ORPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
+  def : Pat<(f64 (X86fxor FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (XORPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
+  def : Pat<(f64 (X86fandn FR64:$src1, FR64:$src2)),
+            (COPY_TO_REGCLASS (ANDNPDrr
+                               (COPY_TO_REGCLASS FR64:$src1, VR128),
+                               (COPY_TO_REGCLASS FR64:$src2, VR128)), FR64)>;
 }
 
 //===----------------------------------------------------------------------===//
