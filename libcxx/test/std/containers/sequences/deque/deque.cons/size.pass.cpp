@@ -13,6 +13,7 @@
 
 #include <deque>
 #include <cassert>
+#include <cstddef>
 
 #include "test_macros.h"
 #include "test_allocator.h"
@@ -31,7 +32,7 @@ test2(unsigned n)
     C d(n, Allocator());
     assert(DefaultOnly::count == n);
     assert(d.size() == n);
-    assert(distance(d.begin(), d.end()) == d.size());
+    assert(static_cast<std::size_t>(distance(d.begin(), d.end())) == d.size());
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     for (const_iterator i = d.begin(), e = d.end(); i != e; ++i)
         assert(*i == T());
@@ -52,7 +53,7 @@ test1(unsigned n)
     C d(n);
     assert(DefaultOnly::count == n);
     assert(d.size() == n);
-    assert(distance(d.begin(), d.end()) == d.size());
+    assert(static_cast<std::size_t>(distance(d.begin(), d.end())) == d.size());
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     for (const_iterator i = d.begin(), e = d.end(); i != e; ++i)
         assert(*i == T());
