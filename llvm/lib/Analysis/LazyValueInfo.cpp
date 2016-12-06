@@ -623,6 +623,7 @@ namespace {
   // returned means that the work item was not completely processed and must
   // be revisited after going through the new items.
   bool solveBlockValue(Value *Val, BasicBlock *BB);
+  bool solveBlockValueImpl(LVILatticeVal &Res, Value *Val, BasicBlock *BB);
   bool solveBlockValueNonLocal(LVILatticeVal &BBLV, Value *Val, BasicBlock *BB);
   bool solveBlockValuePHINode(LVILatticeVal &BBLV, PHINode *PN, BasicBlock *BB);
   bool solveBlockValueSelect(LVILatticeVal &BBLV, SelectInst *S,
@@ -747,28 +748,26 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
   // Hold off inserting this value into the Cache in case we have to return
   // false and come back later.
   LVILatticeVal Res;
+  if (!solveBlockValueImpl(Res, Val, BB))
+    // Work pushed, will revisit
+    return false;
+
+  TheCache.insertResult(Val, BB, Res);
+  return true;
+}
+
+bool LazyValueInfoImpl::solveBlockValueImpl(LVILatticeVal &Res,
+                                            Value *Val, BasicBlock *BB) {
 
   Instruction *BBI = dyn_cast<Instruction>(Val);
-  if (!BBI || BBI->getParent() != BB) {
-    if (!solveBlockValueNonLocal(Res, Val, BB))
-      return false;
-   TheCache.insertResult(Val, BB, Res);
-   return true;
-  }
+  if (!BBI || BBI->getParent() != BB)
+    return solveBlockValueNonLocal(Res, Val, BB);
 
-  if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
-    if (!solveBlockValuePHINode(Res, PN, BB))
-      return false;
-    TheCache.insertResult(Val, BB, Res);
-    return true;
-  }
+  if (PHINode *PN = dyn_cast<PHINode>(BBI))
+    return solveBlockValuePHINode(Res, PN, BB);
 
-  if (auto *SI = dyn_cast<SelectInst>(BBI)) {
-    if (!solveBlockValueSelect(Res, SI, BB))
-      return false;
-    TheCache.insertResult(Val, BB, Res);
-    return true;
-  }
+  if (auto *SI = dyn_cast<SelectInst>(BBI))
+    return solveBlockValueSelect(Res, SI, BB);
 
   // If this value is a nonnull pointer, record it's range and bailout.  Note
   // that for all other pointer typed values, we terminate the search at the
@@ -782,29 +781,20 @@ bool LazyValueInfoImpl::solveBlockValue(Value *Val, BasicBlock *BB) {
   PointerType *PT = dyn_cast<PointerType>(BBI->getType());
   if (PT && isKnownNonNull(BBI)) {
     Res = LVILatticeVal::getNot(ConstantPointerNull::get(PT));
-    TheCache.insertResult(Val, BB, Res);
     return true;
   }
   if (BBI->getType()->isIntegerTy()) {
-    if (isa<CastInst>(BBI)) {
-      if (!solveBlockValueCast(Res, BBI, BB))
-        return false;
-      TheCache.insertResult(Val, BB, Res);
-      return true;
-    }
+    if (isa<CastInst>(BBI))
+      return solveBlockValueCast(Res, BBI, BB);
+    
     BinaryOperator *BO = dyn_cast<BinaryOperator>(BBI);
-    if (BO && isa<ConstantInt>(BO->getOperand(1))) {
-      if (!solveBlockValueBinaryOp(Res, BBI, BB))
-        return false;
-      TheCache.insertResult(Val, BB, Res);
-      return true;
-    }
+    if (BO && isa<ConstantInt>(BO->getOperand(1)))
+      return solveBlockValueBinaryOp(Res, BBI, BB);
   }
 
   DEBUG(dbgs() << " compute BB '" << BB->getName()
                  << "' - unknown inst def found.\n");
   Res = getFromRangeMetadata(BBI);
-  TheCache.insertResult(Val, BB, Res);
   return true;
 }
 
