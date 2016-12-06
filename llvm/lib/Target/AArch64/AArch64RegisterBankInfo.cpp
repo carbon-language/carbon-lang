@@ -312,17 +312,17 @@ AArch64RegisterBankInfo::getInstrAlternativeMappings(
         /*NumOperands*/ 2);
     InstructionMapping FPRMapping(
         /*ID*/ 2, /*Cost*/ 1,
-        AArch64::getCopyMapping(/*DstIsFPR*/ false, /*SrcIsFPR*/ false, Size),
+        AArch64::getCopyMapping(/*DstIsGPR*/ false, /*SrcIsGPR*/ false, Size),
         /*NumOperands*/ 2);
     InstructionMapping GPRToFPRMapping(
         /*ID*/ 3,
         /*Cost*/ copyCost(AArch64::GPRRegBank, AArch64::FPRRegBank, Size),
-        AArch64::getCopyMapping(/*DstIsFPR*/ false, /*SrcIsFPR*/ true, Size),
+        AArch64::getCopyMapping(/*DstIsGPR*/ false, /*SrcIsGPR*/ true, Size),
         /*NumOperands*/ 2);
     InstructionMapping FPRToGPRMapping(
         /*ID*/ 3,
         /*Cost*/ copyCost(AArch64::GPRRegBank, AArch64::FPRRegBank, Size),
-        AArch64::getCopyMapping(/*DstIsFPR*/ true, /*SrcIsFPR*/ false, Size),
+        AArch64::getCopyMapping(/*DstIsGPR*/ true, /*SrcIsGPR*/ false, Size),
         /*NumOperands*/ 2);
 
     AltMappings.emplace_back(std::move(GPRMapping));
