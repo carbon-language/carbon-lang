@@ -228,15 +228,6 @@ public:
       if (RHS.isNotConstant()) {
         if (Val == RHS.Val)
           return markOverdefined();
-
-        // Unless we can prove that the two Constants are different, we must
-        // move to overdefined.
-        if (ConstantInt *Res =
-                dyn_cast<ConstantInt>(ConstantFoldCompareInstOperands(
-                    CmpInst::ICMP_NE, getConstant(), RHS.getNotConstant(), DL)))
-          if (Res->isOne())
-            return markNotConstant(RHS.getNotConstant());
-
         return markOverdefined();
       }
 
@@ -247,15 +238,6 @@ public:
       if (RHS.isConstant()) {
         if (Val == RHS.Val)
           return markOverdefined();
-
-        // Unless we can prove that the two Constants are different, we must
-        // move to overdefined.
-        if (ConstantInt *Res =
-                dyn_cast<ConstantInt>(ConstantFoldCompareInstOperands(
-                    CmpInst::ICMP_NE, getNotConstant(), RHS.getConstant(), DL)))
-          if (Res->isOne())
-            return false;
-
         return markOverdefined();
       }
 
