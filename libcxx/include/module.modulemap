@@ -483,6 +483,8 @@ module std [system] {
   module __undef___deallocate { header "__undef___deallocate" export * }
 
   module experimental {
+    requires cplusplus11
+
     module algorithm {
       header "experimental/algorithm"
       export *
