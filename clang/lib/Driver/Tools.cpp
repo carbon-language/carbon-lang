@@ -4061,6 +4061,11 @@ void Clang::DumpCompilationDatabase(Compilation &C, StringRef Filename,
   Buf = "-x";
   Buf += types::getTypeName(Input.getType());
   CDB << ", \"" << escape(Buf) << "\"";
+  if (!D.SysRoot.empty() && !Args.hasArg(options::OPT__sysroot_EQ)) {
+    Buf = "--sysroot=";
+    Buf += D.SysRoot;
+    CDB << ", \"" << escape(Buf) << "\"";
+  }
   CDB << ", \"" << escape(Input.getFilename()) << "\"";
   for (auto &A: Args) {
     auto &O = A->getOption();
