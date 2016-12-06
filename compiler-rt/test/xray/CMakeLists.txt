@@ -26,12 +26,14 @@ if (COMPILER_RT_BUILD_XRAY AND COMPILER_RT_HAS_XRAY)
 endif()
 
 # Add unit tests.
-if(COMPILER_RT_INCLUDE_TESTS AND COMPILER_RT_CAN_EXECUTE_TESTS)
+if(COMPILER_RT_INCLUDE_TESTS)
   configure_lit_site_cfg(
     ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
     ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg)
-  list(APPEND XRAY_TEST_DEPS XRayUnitTests)
-  list(APPEND XRAY_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/Unit)
+  if (COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
+    list(APPEND XRAY_TEST_DEPS XRayUnitTests)
+    list(APPEND XRAY_TESTSUITES ${CMAKE_CURRENT_BINARY_DIR}/Unit)
+  endif()
 endif()
 
 add_lit_testsuite(check-xray "Running the XRay tests"
