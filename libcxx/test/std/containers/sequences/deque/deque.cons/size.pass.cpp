@@ -30,7 +30,7 @@ test2(unsigned n)
     assert(DefaultOnly::count == 0);
     {
     C d(n, Allocator());
-    assert(DefaultOnly::count == n);
+    assert(static_cast<unsigned>(DefaultOnly::count) == n);
     assert(d.size() == n);
     assert(static_cast<std::size_t>(distance(d.begin(), d.end())) == d.size());
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -51,7 +51,7 @@ test1(unsigned n)
     assert(DefaultOnly::count == 0);
     {
     C d(n);
-    assert(DefaultOnly::count == n);
+    assert(static_cast<unsigned>(DefaultOnly::count) == n);
     assert(d.size() == n);
     assert(static_cast<std::size_t>(distance(d.begin(), d.end())) == d.size());
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
