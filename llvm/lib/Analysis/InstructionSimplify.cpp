@@ -1518,8 +1518,41 @@ static Value *simplifyUnsignedRangeCheck(ICmpInst *ZeroICmp,
   return nullptr;
 }
 
+/// Commuted variants are assumed to be handled by calling this function again
+/// with the parameters swapped.
+static Value *simplifyAndOfICmpsWithSameOperands(ICmpInst *Op0, ICmpInst *Op1) {
+  ICmpInst::Predicate Pred0, Pred1;
+  Value *A ,*B;
+  match(Op0, m_ICmp(Pred0, m_Value(A), m_Value(B)));
+  if (match(Op1, m_ICmp(Pred1, m_Specific(B), m_Specific(A))))
+    Op1->swapOperands();
+
+  if (!match(Op1, m_ICmp(Pred1, m_Specific(A), m_Specific(B))))
+    return nullptr;
+
+  // We have (icmp Pred0, A, B) & (icmp Pred1, A, B).
+  // If Op1 is always implied true by Op0, then Op0 is a subset of Op1, and we
+  // can eliminate Op1 from this 'and'.
+  if (ICmpInst::isImpliedTrueByMatchingCmp(Pred0, Pred1))
+    return Op0;
+
+  // Check for any combination of predicates that are guaranteed to be disjoint.
+  if ((Pred0 == ICmpInst::getInversePredicate(Pred1)) ||
+      (Pred0 == ICmpInst::ICMP_EQ && ICmpInst::isFalseWhenEqual(Pred1)) ||
+      (Pred0 == ICmpInst::ICMP_SLT && Pred1 == ICmpInst::ICMP_SGT) ||
+      (Pred0 == ICmpInst::ICMP_ULT && Pred1 == ICmpInst::ICMP_UGT))
+    return getFalse(Op0->getType());
+
+  return nullptr;
+}
+
+/// Commuted variants are assumed to be handled by calling this function again
+/// with the parameters swapped.
 static Value *SimplifyAndOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
   if (Value *X = simplifyUnsignedRangeCheck(Op0, Op1, /*IsAnd=*/true))
+    return X;
+
+  if (Value *X = simplifyAndOfICmpsWithSameOperands(Op0, Op1))
     return X;
 
   // Look for this pattern: (icmp V, C0) & (icmp V, C1)).
