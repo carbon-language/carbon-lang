@@ -1700,10 +1700,42 @@ Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const DataLayout &DL,
                            RecursionLimit);
 }
 
-/// Simplify (or (icmp ...) (icmp ...)) to true when we can tell that the union
-/// contains all possible values.
+/// Commuted variants are assumed to be handled by calling this function again
+/// with the parameters swapped.
+static Value *simplifyOrOfICmpsWithSameOperands(ICmpInst *Op0, ICmpInst *Op1) {
+  ICmpInst::Predicate Pred0, Pred1;
+  Value *A ,*B;
+  match(Op0, m_ICmp(Pred0, m_Value(A), m_Value(B)));
+  if (match(Op1, m_ICmp(Pred1, m_Specific(B), m_Specific(A))))
+    Op1->swapOperands();
+
+  if (!match(Op1, m_ICmp(Pred1, m_Specific(A), m_Specific(B))))
+    return nullptr;
+
+  // We have (icmp Pred0, A, B) | (icmp Pred1, A, B).
+  // If Op1 is always implied true by Op0, then Op0 is a subset of Op1, and we
+  // can eliminate Op0 from this 'or'.
+  if (ICmpInst::isImpliedTrueByMatchingCmp(Pred0, Pred1))
+    return Op1;
+
+  // Check for any combination of predicates that cover the entire range of
+  // possibilities.
+  if ((Pred0 == ICmpInst::getInversePredicate(Pred1)) ||
+      (Pred0 == ICmpInst::ICMP_NE && ICmpInst::isTrueWhenEqual(Pred1)) ||
+      (Pred0 == ICmpInst::ICMP_SLE && Pred1 == ICmpInst::ICMP_SGE) ||
+      (Pred0 == ICmpInst::ICMP_ULE && Pred1 == ICmpInst::ICMP_UGE))
+    return getTrue(Op0->getType());
+
+  return nullptr;
+}
+
+/// Commuted variants are assumed to be handled by calling this function again
+/// with the parameters swapped.
 static Value *SimplifyOrOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
   if (Value *X = simplifyUnsignedRangeCheck(Op0, Op1, /*IsAnd=*/false))
+    return X;
+
+  if (Value *X = simplifyOrOfICmpsWithSameOperands(Op0, Op1))
     return X;
 
   // (icmp (add V, C0), C1) | (icmp V, C0)
