@@ -19,7 +19,7 @@
 using namespace __xray;
 
 BufferQueue::BufferQueue(std::size_t B, std::size_t N)
-    : BufferSize(B), Buffers(N) {
+    : BufferSize(B), Buffers(N), Mutex(), OwnedBuffers(), Finalizing(false) {
   for (auto &Buf : Buffers) {
     void *Tmp = malloc(BufferSize);
     Buf.Buffer = Tmp;
