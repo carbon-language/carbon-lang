@@ -148,6 +148,7 @@ public:
     return true;
   }
 
+private:
   /// Return true if this is a change in status.
   bool markConstant(Constant *V) {
     assert(V && "Marking constant with NULL");
@@ -201,6 +202,8 @@ public:
     Range = std::move(NewR);
     return true;
   }
+
+public:
 
   /// Merge the specified lattice value into this one, updating this
   /// one and returning true if anything changed.
@@ -1028,22 +1031,22 @@ bool LazyValueInfoImpl::solveBlockValueSelect(LVILatticeVal &BBLV,
     // ValueTracking getting smarter looking back past our immediate inputs.)
     if (SelectPatternResult::isMinOrMax(SPR.Flavor) &&
         LHS == SI->getTrueValue() && RHS == SI->getFalseValue()) {
-      switch (SPR.Flavor) {
-      default:
-        llvm_unreachable("unexpected minmax type!");
-      case SPF_SMIN:                   /// Signed minimum
-        BBLV.markConstantRange(TrueCR.smin(FalseCR));
-        return true;
-      case SPF_UMIN:                   /// Unsigned minimum
-        BBLV.markConstantRange(TrueCR.umin(FalseCR));
-        return true;
-      case SPF_SMAX:                   /// Signed maximum
-        BBLV.markConstantRange(TrueCR.smax(FalseCR));
-        return true;
-      case SPF_UMAX:                   /// Unsigned maximum
-        BBLV.markConstantRange(TrueCR.umax(FalseCR));
-        return true;
-      };
+      ConstantRange ResultCR = [&]() {
+        switch (SPR.Flavor) {
+        default:
+          llvm_unreachable("unexpected minmax type!");
+        case SPF_SMIN:                   /// Signed minimum
+          return TrueCR.smin(FalseCR);
+        case SPF_UMIN:                   /// Unsigned minimum
+          return TrueCR.umin(FalseCR);
+        case SPF_SMAX:                   /// Signed maximum
+          return TrueCR.smax(FalseCR);
+        case SPF_UMAX:                   /// Unsigned maximum
+          return TrueCR.umax(FalseCR);
+        };
+      }();
+      BBLV = LVILatticeVal::getRange(ResultCR);
+      return true;
     }
 
     // TODO: ABS, NABS from the SelectPatternResult
