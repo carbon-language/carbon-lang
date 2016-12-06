@@ -9795,11 +9795,9 @@ private:
                             llvm::SmallBitVector &CheckedVarArgs);
 
   void CheckAbsoluteValueFunction(const CallExpr *Call,
-                                  const FunctionDecl *FDecl,
-                                  IdentifierInfo *FnInfo);
+                                  const FunctionDecl *FDecl);
 
-  void CheckMinZero(const CallExpr *Call, const FunctionDecl *FDecl,
-                    IdentifierInfo *FnInfo);
+  void CheckMaxUnsignedZero(const CallExpr *Call, const FunctionDecl *FDecl);
 
   void CheckMemaccessArguments(const CallExpr *Call,
                                unsigned BId,

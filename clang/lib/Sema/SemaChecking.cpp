@@ -2517,8 +2517,8 @@ bool Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall,
   if (!FnInfo)
     return false;
 
-  CheckAbsoluteValueFunction(TheCall, FDecl, FnInfo);
-  CheckMinZero(TheCall, FDecl, FnInfo);
+  CheckAbsoluteValueFunction(TheCall, FDecl);
+  CheckMaxUnsignedZero(TheCall, FDecl);
 
   if (getLangOpts().ObjC1)
     DiagnoseCStringFormatDirectiveInCFAPI(*this, FDecl, Args, NumArgs);
@@ -6666,23 +6666,14 @@ static void emitReplacement(Sema &S, SourceLocation Loc, SourceRange Range,
                                                     << FunctionName;
 }
 
-static bool IsFunctionStdAbs(const FunctionDecl *FDecl) {
+template <std::size_t StrLen>
+static bool IsStdFunction(const FunctionDecl *FDecl,
+                          const char (&Str)[StrLen]) {
   if (!FDecl)
     return false;
-
-  if (!FDecl->getIdentifier() || !FDecl->getIdentifier()->isStr("abs"))
+  if (!FDecl->getIdentifier() || !FDecl->getIdentifier()->isStr(Str))
     return false;
-
-  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(FDecl->getDeclContext());
-
-  while (ND && ND->isInlineNamespace()) {
-    ND = dyn_cast<NamespaceDecl>(ND->getDeclContext());
-  }
-
-  if (!ND || !ND->getIdentifier() || !ND->getIdentifier()->isStr("std"))
-    return false;
-
-  if (!isa<TranslationUnitDecl>(ND->getDeclContext()))
+  if (!FDecl->isInStdNamespace())
     return false;
 
   return true;
@@ -6690,13 +6681,12 @@ static bool IsFunctionStdAbs(const FunctionDecl *FDecl) {
 
 // Warn when using the wrong abs() function.
 void Sema::CheckAbsoluteValueFunction(const CallExpr *Call,
-                                      const FunctionDecl *FDecl,
-                                      IdentifierInfo *FnInfo) {
+                                      const FunctionDecl *FDecl) {
   if (Call->getNumArgs() != 1)
     return;
 
   unsigned AbsKind = getAbsoluteValueFunctionKind(FDecl);
-  bool IsStdAbs = IsFunctionStdAbs(FDecl);
+  bool IsStdAbs = IsStdFunction(FDecl, "abs");
   if (AbsKind == 0 && !IsStdAbs)
     return;
 
@@ -6770,30 +6760,8 @@ void Sema::CheckAbsoluteValueFunction(const CallExpr *Call,
 }
 
 //===--- CHECK: Warn on use of std::max and unsigned zero. r---------------===//
-static bool IsFunctionStdMax(const FunctionDecl *FDecl) {
-  if (!FDecl)
-    return false;
-
-  if (!FDecl->getIdentifier() || !FDecl->getIdentifier()->isStr("max"))
-    return false;
-
-  const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(FDecl->getDeclContext());
-
-  while (ND && ND->isInlineNamespace()) {
-    ND = dyn_cast<NamespaceDecl>(ND->getDeclContext());
-  }
-
-  if (!ND || !ND->getIdentifier() || !ND->getIdentifier()->isStr("std"))
-    return false;
-
-  if (!isa<TranslationUnitDecl>(ND->getDeclContext()))
-    return false;
-
-  return true;
-}
-
-void Sema::CheckMinZero(const CallExpr *Call, const FunctionDecl *FDecl,
-                        IdentifierInfo *FnInfo) {
+void Sema::CheckMaxUnsignedZero(const CallExpr *Call,
+                                const FunctionDecl *FDecl) {
   if (!Call || !FDecl) return;
 
   // Ignore template specializations and macros.
@@ -6802,7 +6770,7 @@ void Sema::CheckMinZero(const CallExpr *Call, const FunctionDecl *FDecl,
 
   // Only care about the one template argument, two function parameter std::max
   if (Call->getNumArgs() != 2) return;
-  if (!IsFunctionStdMax(FDecl)) return;
+  if (!IsStdFunction(FDecl, "max")) return;
   const auto * ArgList = FDecl->getTemplateSpecializationArgs();
   if (!ArgList) return;
   if (ArgList->size() != 1) return;
