@@ -59,9 +59,18 @@ false:
 
 }
 
+  ; General legalizer inability to handle types whose size wasn't a power of 2.
 ; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for odd_type
 ; FALLBACK-WITH-REPORT-OUT-LABEL: odd_type:
 define void @odd_type(i42* %addr) {
   %val42 = load i42, i42* %addr
+  ret void
+}
+
+  ; RegBankSelect crashed when given invalid mappings, and AArch64's
+  ; implementation produce valid-but-nonsense mappings for G_SEQUENCE.
+; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for sequence_mapping
+; FALLBACK-WITH-REPORT-OUT-LABEL: sequence_mapping:
+define void @sequence_mapping([2 x i64] %in) {
   ret void
 }
