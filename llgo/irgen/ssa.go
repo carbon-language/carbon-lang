@@ -327,7 +327,7 @@ func (u *unit) defineFunction(f *ssa.Function) {
 	fr.addCommonFunctionAttrs(fr.function)
 	fr.function.SetLinkage(linkage)
 
-	fr.logf("Define function: %s", f.String())
+	fr.logf("Define function: %s @ %s", f.String(), fr.pkg.Prog.Fset.Position(f.Pos()))
 	fti := u.llvmtypes.getSignatureInfo(f.Signature)
 	delete(u.undefinedFuncs, f)
 	fr.retInf = fti.retInf

@@ -154,9 +154,6 @@ func (d *DIBuilder) Value(b llvm.Builder, v ssa.Value, llv llvm.Value, paramInde
 
 // SetLocation sets the current debug location.
 func (d *DIBuilder) SetLocation(b llvm.Builder, pos token.Pos) {
-	if !pos.IsValid() {
-		return
-	}
 	position := d.fset.Position(pos)
 	d.lb = llvm.Metadata{}
 	if position.Filename != d.fnFile && position.Filename != "" {
