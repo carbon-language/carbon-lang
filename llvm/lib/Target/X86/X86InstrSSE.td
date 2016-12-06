@@ -3481,7 +3481,7 @@ multiclass avx_fp_unop_s<bits<8> opc, string OpcodeStr, RegisterClass RC,
   }
   let Predicates = [HasAVX] in {
    def : Pat<(Intr VR128:$src),
-             (!cast<Instruction>("V"#NAME#Suffix##r_Int) (vt (IMPLICIT_DEF)),
+             (!cast<Instruction>("V"#NAME#Suffix##r_Int) VR128:$src,
                                  VR128:$src)>;
   }
   let Predicates = [HasAVX, OptForSize] in {
