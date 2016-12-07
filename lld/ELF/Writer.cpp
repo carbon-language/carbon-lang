@@ -1325,7 +1325,7 @@ static uintX_t getFileAlignment(uintX_t Off, OutputSectionBase *Sec) {
   // If two sections share the same PT_LOAD the file offset is calculated using
   // this formula: Off2 = Off1 + (VA2 - VA1).
   if (Sec == First)
-    return alignTo(Off, Target->MaxPageSize, Sec->Addr);
+    return alignTo(Off, Config->MaxPageSize, Sec->Addr);
   return First->Offset + Sec->Addr - First->Addr;
 }
 
