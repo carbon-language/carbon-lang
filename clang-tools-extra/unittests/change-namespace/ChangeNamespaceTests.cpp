@@ -425,6 +425,36 @@ TEST_F(ChangeNamespaceTest, FixUsingShadowDecl) {
   EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
 }
 
+TEST_F(ChangeNamespaceTest, DontFixUsingShadowDeclInClasses) {
+  std::string Code = "namespace na {\n"
+                     "class A {};\n"
+                     "class Base { public: Base() {} void m() {} };\n"
+                     "namespace nb {\n"
+                     "class D : public Base {\n"
+                     "public:\n"
+                     "  using AA = A; using B = Base;\n"
+                     "  using Base::m; using Base::Base;\n"
+                     "};"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+
+  std::string Expected = "namespace na {\n"
+                         "class A {};\n"
+                         "class Base { public: Base() {} void m() {} };\n"
+                         "\n"
+                         "} // namespace na\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "class D : public na::Base {\n"
+                         "public:\n"
+                         "  using AA = na::A; using B = na::Base;\n"
+                         "  using Base::m; using Base::Base;\n"
+                         "};"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
 TEST_F(ChangeNamespaceTest, TypeInNestedNameSpecifier) {
   std::string Code =
       "namespace na {\n"

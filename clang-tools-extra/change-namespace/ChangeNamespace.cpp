@@ -327,6 +327,12 @@ void ChangeNamespaceTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
           hasAncestor(cxxRecordDecl()),
           allOf(IsInMovedNs, unless(cxxRecordDecl(unless(isDefinition())))))));
 
+  // Using shadow declarations in classes always refers to base class, which
+  // does not need to be qualified since it can be inferred from inheritance.
+  // Note that this does not match using alias declarations.
+  auto UsingShadowDeclInClass =
+      usingDecl(hasAnyUsingShadowDecl(decl()), hasParent(cxxRecordDecl()));
+
   // Match TypeLocs on the declaration. Carefully match only the outermost
   // TypeLoc and template specialization arguments (which are not outermost)
   // that are directly linked to types matching `DeclMatcher`. Nested name
@@ -337,28 +343,36 @@ void ChangeNamespaceTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
               unless(anyOf(hasParent(typeLoc(loc(qualType(
                                allOf(hasDeclaration(DeclMatcher),
                                      unless(templateSpecializationType())))))),
-                           hasParent(nestedNameSpecifierLoc()))),
+                           hasParent(nestedNameSpecifierLoc()),
+                           hasAncestor(isImplicit()),
+                           hasAncestor(UsingShadowDeclInClass))),
               hasAncestor(decl().bind("dc")))
           .bind("type"),
       this);
 
   // Types in `UsingShadowDecl` is not matched by `typeLoc` above, so we need to
   // special case it.
-  Finder->addMatcher(usingDecl(IsInMovedNs, hasAnyUsingShadowDecl(decl()))
+  // Since using declarations inside classes must have the base class in the
+  // nested name specifier, we leave it to the nested name specifier matcher.
+  Finder->addMatcher(usingDecl(IsInMovedNs, hasAnyUsingShadowDecl(decl()),
+                               unless(UsingShadowDeclInClass))
                          .bind("using_with_shadow"),
                      this);
 
   // Handle types in nested name specifier. Specifiers that are in a TypeLoc
   // matched above are not matched, e.g. "A::" in "A::A" is not matched since
   // "A::A" would have already been fixed.
-  Finder->addMatcher(nestedNameSpecifierLoc(
-                         hasAncestor(decl(IsInMovedNs).bind("dc")),
-                         loc(nestedNameSpecifier(specifiesType(
-                             hasDeclaration(DeclMatcher.bind("from_decl"))))),
-                         unless(hasAncestor(typeLoc(loc(qualType(hasDeclaration(
-                             decl(equalsBoundNode("from_decl")))))))))
-                         .bind("nested_specifier_loc"),
-                     this);
+  Finder->addMatcher(
+      nestedNameSpecifierLoc(
+          hasAncestor(decl(IsInMovedNs).bind("dc")),
+          loc(nestedNameSpecifier(
+              specifiesType(hasDeclaration(DeclMatcher.bind("from_decl"))))),
+          unless(anyOf(hasAncestor(isImplicit()),
+                       hasAncestor(UsingShadowDeclInClass),
+                       hasAncestor(typeLoc(loc(qualType(hasDeclaration(
+                           decl(equalsBoundNode("from_decl"))))))))))
+          .bind("nested_specifier_loc"),
+      this);
 
   // Matches base class initializers in constructors. TypeLocs of base class
   // initializers do not need to be fixed. For example,
