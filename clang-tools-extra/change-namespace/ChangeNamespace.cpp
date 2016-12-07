@@ -663,6 +663,10 @@ void ChangeNamespaceTool::replaceQualifiedSymbolInDeclContext(
   // old namespace, we don't create replacement.
   if (NestedName == ReplaceName)
     return;
+  // If the reference need to be fully-qualified, add a leading "::" unless
+  // NewNamespace is the global namespace.
+  if (ReplaceName == FromDeclName && !NewNamespace.empty())
+    ReplaceName = "::" + ReplaceName;
   auto R = createReplacement(Start, End, ReplaceName, *Result.SourceManager);
   auto Err = FileToReplacements[R.getFilePath()].add(R);
   if (Err)
