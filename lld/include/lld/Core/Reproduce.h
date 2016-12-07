@@ -66,8 +66,8 @@ std::string rewritePath(StringRef S);
 // Returns the string form of the given argument.
 std::string stringize(llvm::opt::Arg *Arg);
 
-// Converts path to use unix path separators.
-void convertToUnixPathSeparator(llvm::MutableArrayRef<char> Path);
+// Replaces backslashes with slashes if Windows.
+std::string convertToUnixPathSeparator(StringRef S);
 
 }
 
