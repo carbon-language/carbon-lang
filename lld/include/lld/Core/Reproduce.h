@@ -68,7 +68,6 @@ std::string stringize(llvm::opt::Arg *Arg);
 
 // Replaces backslashes with slashes if Windows.
 std::string convertToUnixPathSeparator(StringRef S);
-
 }
 
 #endif
