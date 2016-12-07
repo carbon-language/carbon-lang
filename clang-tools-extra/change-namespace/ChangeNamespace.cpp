@@ -303,10 +303,18 @@ void ChangeNamespaceTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
           .bind("old_ns"),
       this);
 
-  // Match forward-declarations in the old namespace.
+  // Match class forward-declarations in the old namespace.
+  // Note that forward-declarations in classes are not matched.
+  Finder->addMatcher(cxxRecordDecl(unless(anyOf(isImplicit(), isDefinition())),
+                                   IsInMovedNs, hasParent(namespaceDecl()))
+                         .bind("class_fwd_decl"),
+                     this);
+
+  // Match template class forward-declarations in the old namespace.
   Finder->addMatcher(
-      cxxRecordDecl(unless(anyOf(isImplicit(), isDefinition())), IsInMovedNs)
-          .bind("fwd_decl"),
+      classTemplateDecl(unless(hasDescendant(cxxRecordDecl(isDefinition()))),
+                        IsInMovedNs, hasParent(namespaceDecl()))
+          .bind("template_class_fwd_decl"),
       this);
 
   // Match references to types that are not defined in the old namespace.
@@ -401,8 +409,12 @@ void ChangeNamespaceTool::run(
                  Result.Nodes.getNodeAs<NamespaceDecl>("old_ns")) {
     moveOldNamespace(Result, NsDecl);
   } else if (const auto *FwdDecl =
-                 Result.Nodes.getNodeAs<CXXRecordDecl>("fwd_decl")) {
-    moveClassForwardDeclaration(Result, FwdDecl);
+                 Result.Nodes.getNodeAs<CXXRecordDecl>("class_fwd_decl")) {
+    moveClassForwardDeclaration(Result, cast<NamedDecl>(FwdDecl));
+  } else if (const auto *TemplateFwdDecl =
+                 Result.Nodes.getNodeAs<ClassTemplateDecl>(
+                     "template_class_fwd_decl")) {
+    moveClassForwardDeclaration(Result, cast<NamedDecl>(TemplateFwdDecl));
   } else if (const auto *UsingWithShadow =
                  Result.Nodes.getNodeAs<UsingDecl>("using_with_shadow")) {
     fixUsingShadowDecl(Result, UsingWithShadow);
@@ -539,7 +551,7 @@ void ChangeNamespaceTool::moveOldNamespace(
 //   }  // x
 void ChangeNamespaceTool::moveClassForwardDeclaration(
     const ast_matchers::MatchFinder::MatchResult &Result,
-    const CXXRecordDecl *FwdDecl) {
+    const NamedDecl *FwdDecl) {
   SourceLocation Start = FwdDecl->getLocStart();
   SourceLocation End = FwdDecl->getLocEnd();
   SourceLocation AfterSemi = Lexer::findLocationAfterToken(

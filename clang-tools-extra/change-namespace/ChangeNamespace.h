@@ -64,7 +64,7 @@ private:
 
   void moveClassForwardDeclaration(
       const ast_matchers::MatchFinder::MatchResult &Result,
-      const CXXRecordDecl *FwdDecl);
+      const NamedDecl *FwdDecl);
 
   void replaceQualifiedSymbolInDeclContext(
       const ast_matchers::MatchFinder::MatchResult &Result,

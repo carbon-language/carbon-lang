@@ -278,6 +278,7 @@ TEST_F(ChangeNamespaceTest, LeaveForwardDeclarationBehind) {
   std::string Code = "namespace na {\n"
                      "namespace nb {\n"
                      "class FWD;\n"
+                     "class FWD2;\n"
                      "class A {\n"
                      "  FWD *fwd;\n"
                      "};\n"
@@ -286,6 +287,7 @@ TEST_F(ChangeNamespaceTest, LeaveForwardDeclarationBehind) {
   std::string Expected = "namespace na {\n"
                          "namespace nb {\n"
                          "class FWD;\n"
+                         "class FWD2;\n"
                          "} // namespace nb\n"
                          "} // namespace na\n"
                          "namespace x {\n"
@@ -293,6 +295,58 @@ TEST_F(ChangeNamespaceTest, LeaveForwardDeclarationBehind) {
                          "\n"
                          "class A {\n"
                          "  na::nb::FWD *fwd;\n"
+                         "};\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, TemplateClassForwardDeclaration) {
+  std::string Code = "namespace na {\n"
+                     "namespace nb {\n"
+                     "class FWD;\n"
+                     "template<typename T> class FWD_TEMP;\n"
+                     "class A {\n"
+                     "  FWD *fwd;\n"
+                     "};\n"
+                     "template<typename T> class TEMP {};\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "namespace na {\n"
+                         "namespace nb {\n"
+                         "class FWD;\n"
+                         "template<typename T> class FWD_TEMP;\n"
+                         "} // namespace nb\n"
+                         "} // namespace na\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "\n"
+                         "class A {\n"
+                         "  na::nb::FWD *fwd;\n"
+                         "};\n"
+                         "template<typename T> class TEMP {};\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, DontMoveForwardDeclarationInClass) {
+  std::string Code = "namespace na {\n"
+                     "namespace nb {\n"
+                     "class A {\n"
+                     "  class FWD;\n"
+                     "  FWD *fwd;\n"
+                     "  template<typename T> class FWD_TEMP;\n"
+                     "};\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "\n\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "class A {\n"
+                         "  class FWD;\n"
+                         "  FWD *fwd;\n"
+                         "  template<typename T> class FWD_TEMP;\n"
                          "};\n"
                          "} // namespace y\n"
                          "} // namespace x\n";
