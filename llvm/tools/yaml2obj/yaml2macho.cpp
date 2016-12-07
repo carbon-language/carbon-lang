@@ -389,22 +389,9 @@ Error MachOWriter::writeDWARFData(raw_ostream &OS,
   for(auto Section : Sections) {
     ZeroToOffset(OS, Section.offset);
     if (0 == strncmp(&Section.sectname[0], "__debug_str", 16)) {
-      for (auto Str : Obj.DWARF.DebugStrings) {
-        OS.write(Str.data(), Str.size());
-        OS.write('\0');
-      }
+      yaml2debug_str(OS, Obj.DWARF);
     } else if (0 == strncmp(&Section.sectname[0], "__debug_abbrev", 16)) {
-      for (auto AbbrevDecl : Obj.DWARF.AbbrevDecls) {
-        encodeULEB128(AbbrevDecl.Code, OS);
-        encodeULEB128(AbbrevDecl.Tag, OS);
-        OS.write(AbbrevDecl.Children);
-        for (auto Attr : AbbrevDecl.Attributes) {
-          encodeULEB128(Attr.Attribute, OS);
-          encodeULEB128(Attr.Form, OS);
-        }
-        encodeULEB128(0, OS);
-        encodeULEB128(0, OS);
-      }
+      yaml2debug_abbrev(OS, Obj.DWARF);
     }
   }
   return Error::success();
