@@ -207,6 +207,7 @@ template <typename T> class IslObjTraits;
     }                                                                          \
   };
 
+DECLARE_TRAITS(id)
 DECLARE_TRAITS(val)
 DECLARE_TRAITS(space)
 DECLARE_TRAITS(basic_map)
@@ -216,6 +217,7 @@ DECLARE_TRAITS(basic_set)
 DECLARE_TRAITS(set)
 DECLARE_TRAITS(union_set)
 DECLARE_TRAITS(aff)
+DECLARE_TRAITS(multi_aff)
 DECLARE_TRAITS(pw_aff)
 DECLARE_TRAITS(union_pw_aff)
 DECLARE_TRAITS(multi_union_pw_aff)
