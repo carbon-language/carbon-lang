@@ -141,37 +141,36 @@ public:
   }
 
 private:
-  /// Return true if this is a change in status.
-  bool markOverdefined() {
+  void markOverdefined() {
     if (isOverdefined())
-      return false;
+      return;
     Tag = overdefined;
-    return true;
   }
 
-  /// Return true if this is a change in status.
-  bool markConstant(Constant *V) {
+  void markConstant(Constant *V) {
     assert(V && "Marking constant with NULL");
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return markConstantRange(ConstantRange(CI->getValue()));
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      markConstantRange(ConstantRange(CI->getValue()));
+      return;
+    }
     if (isa<UndefValue>(V))
-      return false;
+      return;
 
     assert((!isConstant() || getConstant() == V) &&
            "Marking constant with different value");
     assert(isUndefined());
     Tag = constant;
     Val = V;
-    return true;
   }
 
-  /// Return true if this is a change in status.
-  bool markNotConstant(Constant *V) {
+  void markNotConstant(Constant *V) {
     assert(V && "Marking constant with NULL");
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(V))
-      return markConstantRange(ConstantRange(CI->getValue()+1, CI->getValue()));
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+      markConstantRange(ConstantRange(CI->getValue()+1, CI->getValue()));
+      return;
+    }
     if (isa<UndefValue>(V))
-      return false;
+      return;
 
     assert((!isConstant() || getConstant() != V) &&
            "Marking constant !constant with same value");
@@ -180,27 +179,26 @@ private:
     assert(isUndefined() || isConstant());
     Tag = notconstant;
     Val = V;
-    return true;
   }
 
-  /// Return true if this is a change in status.
-  bool markConstantRange(ConstantRange NewR) {
+  void markConstantRange(ConstantRange NewR) {
     if (isConstantRange()) {
       if (NewR.isEmptySet())
-        return markOverdefined();
-
-      bool changed = Range != NewR;
-      Range = std::move(NewR);
-      return changed;
+        markOverdefined();
+      else {
+        bool changed = Range != NewR;
+        Range = std::move(NewR);
+      }
+      return;
     }
 
     assert(isUndefined());
     if (NewR.isEmptySet())
-      return markOverdefined();
-
-    Tag = constantrange;
-    Range = std::move(NewR);
-    return true;
+      markOverdefined();
+    else {
+      Tag = constantrange;
+      Range = std::move(NewR);
+    }
   }
 
 public:
