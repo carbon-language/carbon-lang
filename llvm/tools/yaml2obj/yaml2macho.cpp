@@ -393,6 +393,18 @@ Error MachOWriter::writeDWARFData(raw_ostream &OS,
         OS.write(Str.data(), Str.size());
         OS.write('\0');
       }
+    } else if (0 == strncmp(&Section.sectname[0], "__debug_abbrev", 16)) {
+      for (auto AbbrevDecl : Obj.DWARF.AbbrevDecls) {
+        encodeULEB128(AbbrevDecl.Code, OS);
+        encodeULEB128(AbbrevDecl.Tag, OS);
+        OS.write(AbbrevDecl.Children);
+        for (auto Attr : AbbrevDecl.Attributes) {
+          encodeULEB128(Attr.Attribute, OS);
+          encodeULEB128(Attr.Form, OS);
+        }
+        encodeULEB128(0, OS);
+        encodeULEB128(0, OS);
+      }
     }
   }
   return Error::success();

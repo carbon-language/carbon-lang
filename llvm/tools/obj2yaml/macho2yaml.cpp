@@ -36,7 +36,10 @@ class MachODumper {
   void dumpExportTrie(std::unique_ptr<MachOYAML::Object> &Y);
   void dumpSymbols(std::unique_ptr<MachOYAML::Object> &Y);
   void dumpDWARF(std::unique_ptr<MachOYAML::Object> &Y);
-  void dumpDebugStrings(DWARFContextInMemory &DCtx, std::unique_ptr<MachOYAML::Object> &Y);
+  void dumpDebugAbbrev(DWARFContextInMemory &DCtx,
+                        std::unique_ptr<MachOYAML::Object> &Y);
+  void dumpDebugStrings(DWARFContextInMemory &DCtx,
+                        std::unique_ptr<MachOYAML::Object> &Y);
 
 public:
   MachODumper(const object::MachOObjectFile &O) : Obj(O) {}
@@ -466,6 +469,7 @@ void MachODumper::dumpSymbols(std::unique_ptr<MachOYAML::Object> &Y) {
 void MachODumper::dumpDWARF(std::unique_ptr<MachOYAML::Object> &Y) {
   DWARFContextInMemory DICtx(Obj);
   dumpDebugStrings(DICtx, Y);
+  dumpDebugAbbrev(DICtx, Y);
 }
 
 void MachODumper::dumpDebugStrings(DWARFContextInMemory &DICtx,
@@ -475,6 +479,29 @@ void MachODumper::dumpDebugStrings(DWARFContextInMemory &DICtx,
     auto SymbolPair = RemainingTable.split('\0');
     RemainingTable = SymbolPair.second;
     Y->DWARF.DebugStrings.push_back(SymbolPair.first);
+  }
+}
+
+void MachODumper::dumpDebugAbbrev(DWARFContextInMemory &DCtx,
+                        std::unique_ptr<MachOYAML::Object> &Y) {
+  auto AbbrevSetPtr = DCtx.getDebugAbbrev();
+  if(AbbrevSetPtr) {
+    for(auto AbbrvDeclSet : *AbbrevSetPtr) {
+      for(auto AbbrvDecl : AbbrvDeclSet.second) {
+        MachOYAML::DWARFAbbrev Abbrv;
+        Abbrv.Code = AbbrvDecl.getCode();
+        Abbrv.Tag = AbbrvDecl.getTag();
+        Abbrv.Children = AbbrvDecl.hasChildren() ? dwarf::DW_CHILDREN_yes
+                                                 : dwarf::DW_CHILDREN_no;
+        for(auto Attribute : AbbrvDecl.attributes()) {
+          MachOYAML::DWARFAttributeAbbrev AttAbrv;
+          AttAbrv.Attribute = Attribute.Attr;
+          AttAbrv.Form = Attribute.Form;
+          Abbrv.Attributes.push_back(AttAbrv);
+        }
+        Y->DWARF.AbbrevDecls.push_back(Abbrv);
+      }
+    }
   }
 }
 

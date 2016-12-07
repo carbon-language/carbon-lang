@@ -30,7 +30,7 @@ bool MachOYAML::LinkEditData::isEmpty() const {
 }
 
 bool MachOYAML::DWARFData::isEmpty() const {
-  return 0 == DebugStrings.size();
+  return 0 == DebugStrings.size() + AbbrevDecls.size();
 }
 
 namespace yaml {
@@ -559,7 +559,22 @@ void MappingTraits<MachO::version_min_command>::mapping(
 
 void MappingTraits<MachOYAML::DWARFData>::mapping(
     IO &IO, MachOYAML::DWARFData &DWARF) {
-  IO.mapRequired("DebugStrings", DWARF.DebugStrings);
+  IO.mapOptional("DebugStrings", DWARF.DebugStrings);
+  IO.mapOptional("AbbrevDecls", DWARF.AbbrevDecls);
+}
+
+void MappingTraits<MachOYAML::DWARFAbbrev>::mapping(
+    IO &IO, MachOYAML::DWARFAbbrev &Abbrev) {
+  IO.mapRequired("Code", Abbrev.Code);
+  IO.mapRequired("Tag", Abbrev.Tag);
+  IO.mapRequired("Children", Abbrev.Children);
+  IO.mapRequired("Attributes", Abbrev.Attributes);
+}
+
+void MappingTraits<MachOYAML::DWARFAttributeAbbrev>::mapping(
+    IO &IO, MachOYAML::DWARFAttributeAbbrev &AttAbbrev) {
+  IO.mapRequired("Attribute", AttAbbrev.Attribute);
+  IO.mapRequired("Form", AttAbbrev.Form);
 }
 
 } // namespace llvm::yaml
