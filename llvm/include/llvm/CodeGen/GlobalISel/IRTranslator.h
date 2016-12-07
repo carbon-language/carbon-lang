@@ -320,6 +320,9 @@ private:
   // as a convenient location for Constants.
   MachineIRBuilder EntryBuilder;
 
+  // The MachineFunction currently being translated.
+  MachineFunction *MF;
+
   /// MachineRegisterInfo used to create virtual registers.
   MachineRegisterInfo *MRI;
 
