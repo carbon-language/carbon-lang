@@ -50,6 +50,43 @@ define float @knownbits_mask_extract_uitofp(<2 x i64> %a0) nounwind {
   ret float %3
 }
 
+define <4 x float> @knownbits_insert_uitofp(<4 x i32> %a0, i16 %a1, i16 %a2) nounwind {
+; X32-LABEL: knownbits_insert_uitofp:
+; X32:       # BB#0:
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movzwl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    vpinsrd $0, %eax, %xmm0, %xmm0
+; X32-NEXT:    vpinsrd $2, %ecx, %xmm0, %xmm0
+; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,2,2]
+; X32-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
+; X32-NEXT:    vpsrld $16, %xmm0, %xmm0
+; X32-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
+; X32-NEXT:    vaddps {{\.LCPI.*}}, %xmm0, %xmm0
+; X32-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: knownbits_insert_uitofp:
+; X64:       # BB#0:
+; X64-NEXT:    movzwl %di, %eax
+; X64-NEXT:    movzwl %si, %ecx
+; X64-NEXT:    vpinsrd $0, %eax, %xmm0, %xmm0
+; X64-NEXT:    vpinsrd $2, %ecx, %xmm0, %xmm0
+; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,2,2]
+; X64-NEXT:    vpblendw {{.*#+}} xmm1 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
+; X64-NEXT:    vpsrld $16, %xmm0, %xmm0
+; X64-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0],mem[1],xmm0[2],mem[3],xmm0[4],mem[5],xmm0[6],mem[7]
+; X64-NEXT:    vaddps {{.*}}(%rip), %xmm0, %xmm0
+; X64-NEXT:    vaddps %xmm0, %xmm1, %xmm0
+; X64-NEXT:    retq
+  %1 = zext i16 %a1 to i32
+  %2 = zext i16 %a2 to i32
+  %3 = insertelement <4 x i32> %a0, i32 %1, i32 0
+  %4 = insertelement <4 x i32>  %3, i32 %2, i32 2
+  %5 = shufflevector <4 x i32> %4, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
+  %6 = uitofp <4 x i32> %5 to <4 x float>
+  ret <4 x float> %6
+}
+
 define <4 x i32> @knownbits_mask_shuffle_sext(<8 x i16> %a0) nounwind {
 ; X32-LABEL: knownbits_mask_shuffle_sext:
 ; X32:       # BB#0:
