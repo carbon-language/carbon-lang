@@ -488,13 +488,13 @@ void MachODumper::dumpDebugAbbrev(DWARFContextInMemory &DCtx,
   if(AbbrevSetPtr) {
     for(auto AbbrvDeclSet : *AbbrevSetPtr) {
       for(auto AbbrvDecl : AbbrvDeclSet.second) {
-        MachOYAML::DWARFAbbrev Abbrv;
+        DWARFYAML::DWARFAbbrev Abbrv;
         Abbrv.Code = AbbrvDecl.getCode();
         Abbrv.Tag = AbbrvDecl.getTag();
         Abbrv.Children = AbbrvDecl.hasChildren() ? dwarf::DW_CHILDREN_yes
                                                  : dwarf::DW_CHILDREN_no;
         for(auto Attribute : AbbrvDecl.attributes()) {
-          MachOYAML::DWARFAttributeAbbrev AttAbrv;
+          DWARFYAML::DWARFAttributeAbbrev AttAbrv;
           AttAbrv.Attribute = Attribute.Attr;
           AttAbrv.Form = Attribute.Form;
           Abbrv.Attributes.push_back(AttAbrv);

@@ -29,10 +29,6 @@ bool MachOYAML::LinkEditData::isEmpty() const {
              NameList.size() + StringTable.size();
 }
 
-bool MachOYAML::DWARFData::isEmpty() const {
-  return 0 == DebugStrings.size() + AbbrevDecls.size();
-}
-
 namespace yaml {
 
 void ScalarTraits<char_16>::output(const char_16 &Val, void *,
@@ -555,26 +551,6 @@ void MappingTraits<MachO::version_min_command>::mapping(
 
   IO.mapRequired("version", LoadCommand.version);
   IO.mapRequired("sdk", LoadCommand.sdk);
-}
-
-void MappingTraits<MachOYAML::DWARFData>::mapping(
-    IO &IO, MachOYAML::DWARFData &DWARF) {
-  IO.mapOptional("debug_str", DWARF.DebugStrings);
-  IO.mapOptional("debug_abbrev", DWARF.AbbrevDecls);
-}
-
-void MappingTraits<MachOYAML::DWARFAbbrev>::mapping(
-    IO &IO, MachOYAML::DWARFAbbrev &Abbrev) {
-  IO.mapRequired("Code", Abbrev.Code);
-  IO.mapRequired("Tag", Abbrev.Tag);
-  IO.mapRequired("Children", Abbrev.Children);
-  IO.mapRequired("Attributes", Abbrev.Attributes);
-}
-
-void MappingTraits<MachOYAML::DWARFAttributeAbbrev>::mapping(
-    IO &IO, MachOYAML::DWARFAttributeAbbrev &AttAbbrev) {
-  IO.mapRequired("Attribute", AttAbbrev.Attribute);
-  IO.mapRequired("Form", AttAbbrev.Form);
 }
 
 } // namespace llvm::yaml
