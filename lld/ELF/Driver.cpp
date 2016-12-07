@@ -762,7 +762,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   // Initialize Config->MaxPageSize. The default value is defined by
   // each target.
   Config->MaxPageSize =
-      getZOptionValue(Args, "max-page-size", Target->MaxPageSize);
+      getZOptionValue(Args, "max-page-size", Target->DefaultMaxPageSize);
   if (!isPowerOf2_64(Config->MaxPageSize))
     error("max-page-size: value isn't a power of 2");
 
