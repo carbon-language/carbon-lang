@@ -92,7 +92,7 @@ std::string elf::ObjectFile<ELFT>::getLineInfo(InputSectionBase<ELFT> *S,
   if (Info.Line == 0)
     return "";
   std::string Ret = Info.FileName + ":" + std::to_string(Info.Line);
-  convertToUnixPathSeparator({(char*)Ret.data(), Ret.size()});
+  convertToUnixPathSeparator({(char *)Ret.data(), Ret.size()});
   return Ret;
 }
 
