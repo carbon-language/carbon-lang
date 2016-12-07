@@ -216,7 +216,7 @@ class GlobalTypeMember final : TrailingObjects<GlobalTypeMember, MDNode *> {
   GlobalObject *GO;
   size_t NTypes;
 
-  friend class TrailingObjects;
+  friend TrailingObjects;
   size_t numTrailingObjects(OverloadToken<MDNode *>) const { return NTypes; }
 
 public:
