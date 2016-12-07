@@ -963,10 +963,9 @@ define i8* @test_const_placement() {
 ; CHECK-LABEL: name: test_const_placement
 ; CHECK: bb.0:
 ; CHECK:   [[VAL_INT:%[0-9]+]](s32) = G_CONSTANT i32 42
+; CHECK:   [[VAL:%[0-9]+]](p0) = G_INTTOPTR [[VAL_INT]](s32)
 ; CHECK: bb.1:
 ; CHECK:   G_BR
-; CHECK: bb.2:
-; CHECK:   [[VAL:%[0-9]+]](p0) = G_INTTOPTR [[VAL_INT]](s32)
   br label %next
 
 next:
