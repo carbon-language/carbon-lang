@@ -764,34 +764,38 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
 
+  // Use default entry point name if -e was missing. AMDGPU binaries
+  // have no entries. For some reason, MIPS' entry point name is
+  // different from others.
+  if (Config->Entry.empty() && !Config->Relocatable &&
+      Config->EMachine != EM_AMDGPU)
+    Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
+
   // Handle --trace-symbol.
   for (auto *Arg : Args.filtered(OPT_trace_symbol))
     Symtab.trace(Arg->getValue());
 
   // Initialize Config->MaxPageSize. The default value is defined by
-  // the target, but it can be overriden using the option.
+  // each target.
   Config->MaxPageSize =
       getZOptionValue(Args, "max-page-size", Target->MaxPageSize);
   if (!isPowerOf2_64(Config->MaxPageSize))
     error("max-page-size: value isn't a power of 2");
 
-  // Add all files to the symbol table. After this, the symbol table
-  // contains all known names except a few linker-synthesized symbols.
+  // Add all files to the symbol table. This will add almost all
+  // symbols that we need to the symbol table.
   for (InputFile *F : Files)
     Symtab.addFile(F);
 
-  // Add the start symbol. Note that AMDGPU binaries have no entries.
-  if (Config->Entry.empty() && !Config->Relocatable &&
-      Config->EMachine != EM_AMDGPU)
-    Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
-
-  // If an object file defining the entry symbol is in an archive file,
-  // extract the file now.
+  // If an entry symbol is in a static archive, pull out that file now
+  // to complete the symbol table. After this, no new names except a
+  // few linker-synthesized ones will be added to the symbol table.
   if (Symtab.find(Config->Entry))
     Symtab.addUndefined(Config->Entry);
 
+  // Return if there were name resolution errors.
   if (ErrorCount)
-    return; // There were duplicate symbols or incompatible files
+    return;
 
   Symtab.scanUndefinedFlags();
   Symtab.scanShlibUndefined();
