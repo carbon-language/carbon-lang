@@ -86,12 +86,14 @@ std::string elf::ObjectFile<ELFT>::getLineInfo(InputSectionBase<ELFT> *S,
   // Use fake address calcuated by adding section file offset and offset in
   // section. See comments for ObjectInfo class.
   DILineInfo Info;
-  DILineInfoSpecifier Spec;
-  Tbl->getFileLineInfoForAddress(S->Offset + Offset, nullptr, Spec.FLIKind,
-                                 Info);
+  Tbl->getFileLineInfoForAddress(
+      S->Offset + Offset, nullptr,
+      DILineInfoSpecifier::FileLineInfoKind::AbsoluteFilePath, Info);
   if (Info.Line == 0)
     return "";
-  return Info.FileName + ":" + std::to_string(Info.Line);
+  std::string Ret = Info.FileName + ":" + std::to_string(Info.Line);
+  convertToUnixPathSeparator({(char*)Ret.data(), Ret.size()});
+  return Ret;
 }
 
 // Returns "(internal)", "foo.a(bar.o)" or "baz.o".

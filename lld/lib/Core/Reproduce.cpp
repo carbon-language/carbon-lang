@@ -50,14 +50,6 @@ static void writeMember(raw_fd_ostream &OS, StringRef Path, StringRef Data) {
   OS << Data;                            // c_filedata
 }
 
-// Converts path to use unix path separators so the cpio can be extracted on
-// both unix and windows.
-static void convertToUnixPathSeparator(SmallString<128> &Path) {
-#ifdef LLVM_ON_WIN32
-  std::replace(Path.begin(), Path.end(), '\\', '/');
-#endif
-}
-
 void CpioFile::append(StringRef Path, StringRef Data) {
   if (!Seen.insert(Path).second)
     return;
@@ -126,4 +118,10 @@ std::string lld::stringize(opt::Arg *Arg) {
   if (Arg->getOption().getRenderStyle() == opt::Option::RenderJoinedStyle)
     return K + V;
   return K + " " + V;
+}
+
+void lld::convertToUnixPathSeparator(MutableArrayRef<char> Path) {
+#ifdef LLVM_ON_WIN32
+  std::replace(Path.begin(), Path.end(), '\\', '/');
+#endif
 }
