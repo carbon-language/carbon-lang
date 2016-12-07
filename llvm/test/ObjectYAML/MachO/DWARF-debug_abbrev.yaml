@@ -286,7 +286,7 @@ LoadCommands:
         reserved2:       0x00000000
         reserved3:       0x00000000
 DWARF:           
-  AbbrevDecls:     
+  debug_abbrev:     
     - Code:            0x00000001
       Tag:             DW_TAG_compile_unit
       Children:        DW_CHILDREN_yes
@@ -360,7 +360,7 @@ DWARF:
 ...
 
 #CHECK: DWARF:           
-#CHECK:   AbbrevDecls:     
+#CHECK:   debug_abbrev:     
 #CHECK:     - Code:            0x00000001
 #CHECK:       Tag:             DW_TAG_compile_unit
 #CHECK:       Children:        DW_CHILDREN_yes

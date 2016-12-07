@@ -559,8 +559,8 @@ void MappingTraits<MachO::version_min_command>::mapping(
 
 void MappingTraits<MachOYAML::DWARFData>::mapping(
     IO &IO, MachOYAML::DWARFData &DWARF) {
-  IO.mapOptional("DebugStrings", DWARF.DebugStrings);
-  IO.mapOptional("AbbrevDecls", DWARF.AbbrevDecls);
+  IO.mapOptional("debug_str", DWARF.DebugStrings);
+  IO.mapOptional("debug_abbrev", DWARF.AbbrevDecls);
 }
 
 void MappingTraits<MachOYAML::DWARFAbbrev>::mapping(
