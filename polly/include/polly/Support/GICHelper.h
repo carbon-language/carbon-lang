@@ -365,12 +365,33 @@ static llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
+/// Enumerate all isl_basic_maps of an isl_map.
+///
+/// This basically wraps isl_map_foreach_basic_map() and allows to call back
+/// C++11 closures.
+void foreachElt(NonowningIslPtr<isl_map> Map,
+                const std::function<void(IslPtr<isl_basic_map>)> &F);
+
+/// Enumerate all isl_basic_sets of an isl_set.
+///
+/// This basically wraps isl_set_foreach_basic_set() and allows to call back
+/// C++11 closures.
+void foreachElt(NonowningIslPtr<isl_set> Set,
+                const std::function<void(IslPtr<isl_basic_set>)> &F);
+
 /// Enumerate all isl_maps of an isl_union_map.
 ///
 /// This basically wraps isl_union_map_foreach_map() and allows to call back
 /// C++11 closures.
 void foreachElt(NonowningIslPtr<isl_union_map> UMap,
                 const std::function<void(IslPtr<isl_map> Map)> &F);
+
+/// Enumerate all isl_sets of an isl_union_set.
+///
+/// This basically wraps isl_union_set_foreach_set() and allows to call back
+/// C++11 closures.
+void foreachElt(NonowningIslPtr<isl_union_set> USet,
+                const std::function<void(IslPtr<isl_set> Set)> &F);
 
 /// Enumerate all isl_pw_aff of an isl_union_pw_aff.
 ///

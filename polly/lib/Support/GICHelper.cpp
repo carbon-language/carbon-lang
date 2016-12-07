@@ -225,6 +225,34 @@ DEFINE_ISLPTR(multi_union_pw_aff)
 DEFINE_ISLPTR(union_pw_multi_aff)
 }
 
+void polly::foreachElt(NonowningIslPtr<isl_map> Map,
+                       const std::function<void(IslPtr<isl_basic_map>)> &F) {
+  isl_map_foreach_basic_map(
+      Map.keep(),
+      [](__isl_take isl_basic_map *BMap, void *User) -> isl_stat {
+        auto &F =
+            *static_cast<const std::function<void(IslPtr<isl_basic_map>)> *>(
+                User);
+        F(give(BMap));
+        return isl_stat_ok;
+      },
+      const_cast<void *>(static_cast<const void *>(&F)));
+}
+
+void polly::foreachElt(NonowningIslPtr<isl_set> Set,
+                       const std::function<void(IslPtr<isl_basic_set>)> &F) {
+  isl_set_foreach_basic_set(
+      Set.keep(),
+      [](__isl_take isl_basic_set *BSet, void *User) -> isl_stat {
+        auto &F =
+            *static_cast<const std::function<void(IslPtr<isl_basic_set>)> *>(
+                User);
+        F(give(BSet));
+        return isl_stat_ok;
+      },
+      const_cast<void *>(static_cast<const void *>(&F)));
+}
+
 void polly::foreachElt(NonowningIslPtr<isl_union_map> UMap,
                        const std::function<void(IslPtr<isl_map> Map)> &F) {
   isl_union_map_foreach_map(
@@ -233,6 +261,19 @@ void polly::foreachElt(NonowningIslPtr<isl_union_map> UMap,
         auto &F =
             *static_cast<const std::function<void(IslPtr<isl_map>)> *>(User);
         F(give(Map));
+        return isl_stat_ok;
+      },
+      const_cast<void *>(static_cast<const void *>(&F)));
+}
+
+void polly::foreachElt(NonowningIslPtr<isl_union_set> USet,
+                       const std::function<void(IslPtr<isl_set> Set)> &F) {
+  isl_union_set_foreach_set(
+      USet.keep(),
+      [](__isl_take isl_set *Set, void *User) -> isl_stat {
+        auto &F =
+            *static_cast<const std::function<void(IslPtr<isl_set>)> *>(User);
+        F(give(Set));
         return isl_stat_ok;
       },
       const_cast<void *>(static_cast<const void *>(&F)));
