@@ -744,13 +744,18 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
 
   assert(PendingPHIs.empty() && "stale PHIs");
 
-  // Setup the arguments.
-  MachineBasicBlock &MBB = getOrCreateBB(F.front());
-  MIRBuilder.setMBB(MBB);
+  // Setup a separate basic-block for the arguments and constants, falling
+  // through to the IR-level Function's entry block.
+  MachineBasicBlock *EntryBB = MF.CreateMachineBasicBlock();
+  MF.push_back(EntryBB);
+  EntryBB->addSuccessor(&getOrCreateBB(F.front()));
+  EntryBuilder.setMBB(*EntryBB);
+
+  // Lower the actual args into this basic block.
   SmallVector<unsigned, 8> VRegArgs;
   for (const Argument &Arg: F.args())
     VRegArgs.push_back(getOrCreateVReg(Arg));
-  bool Succeeded = CLI->lowerFormalArguments(MIRBuilder, F, VRegArgs);
+  bool Succeeded = CLI->lowerFormalArguments(EntryBuilder, F, VRegArgs);
   if (!Succeeded) {
     if (!TPC->isGlobalISelAbortEnabled()) {
       MIRBuilder.getMF().getProperties().set(
@@ -761,13 +766,7 @@ bool IRTranslator::runOnMachineFunction(MachineFunction &MF) {
     report_fatal_error("Unable to lower arguments");
   }
 
-  // Now that we've got the ABI handling code, it's safe to set a location for
-  // any Constants we find in the IR.
-  if (MBB.empty())
-    EntryBuilder.setMBB(MBB, /* Beginning */ true);
-  else
-    EntryBuilder.setInstr(MBB.back(), /* Before */ false);
-
+  // And translate the function!
   for (const BasicBlock &BB: F) {
     MachineBasicBlock &MBB = getOrCreateBB(BB);
     // Set the insertion point of all the following translations to
