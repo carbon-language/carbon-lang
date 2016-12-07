@@ -521,7 +521,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->EnableNewDtags = !Args.hasArg(OPT_disable_new_dtags);
   Config->ExportDynamic = Args.hasArg(OPT_export_dynamic);
   Config->FatalWarnings = Args.hasArg(OPT_fatal_warnings);
-  Config->HasEntry = Args.hasArg(OPT_entry);
   Config->GcSections = getArg(Args, OPT_gc_sections, OPT_no_gc_sections, false);
   Config->GdbIndex = Args.hasArg(OPT_gdb_index);
   Config->ICF = Args.hasArg(OPT_icf);
@@ -577,6 +576,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->SortSection = getSortKind(Args);
   Config->Target2 = getTarget2Option(Args);
   Config->UnresolvedSymbols = getUnresolvedSymbolOption(Args);
+  Config->WarnMissingEntry = (Args.hasArg(OPT_entry) || !Config->Shared);
 
   // --omagic is an option to create old-fashioned executables in which
   // .text segments are writable. Today, the option is still in use to

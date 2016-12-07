@@ -107,7 +107,6 @@ struct Configuration {
   bool GcSections;
   bool GdbIndex;
   bool GnuHash = false;
-  bool HasEntry = false;
   bool ICF;
   bool Mips64EL = false;
   bool MipsN32Abi = false;
@@ -131,6 +130,7 @@ struct Configuration {
   bool Trace;
   bool Verbose;
   bool WarnCommon;
+  bool WarnMissingEntry;
   bool ZCombreloc;
   bool ZExecstack;
   bool ZNodelete;
