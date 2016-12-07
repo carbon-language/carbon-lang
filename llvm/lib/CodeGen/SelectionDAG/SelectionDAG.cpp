@@ -2562,9 +2562,6 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     break;
   }
   case ISD::EXTRACT_VECTOR_ELT: {
-    // At the moment we keep this simple and skip tracking the specific
-    // element. This way we get the lowest common denominator for all elements
-    // of the vector.
     SDValue InVec = Op.getOperand(0);
     SDValue EltNo = Op.getOperand(1);
     EVT VecVT = InVec.getValueType();
