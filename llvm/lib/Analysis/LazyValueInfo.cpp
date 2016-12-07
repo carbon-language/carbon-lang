@@ -186,7 +186,6 @@ private:
       if (NewR.isEmptySet())
         markOverdefined();
       else {
-        bool changed = Range != NewR;
         Range = std::move(NewR);
       }
       return;
