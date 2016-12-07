@@ -58,7 +58,7 @@ template <class ELFT> void elf::ObjectFile<ELFT>::initializeDwarfLine() {
             "createObjectFile failed");
 
   ObjectInfo ObjInfo;
-  DWARFContextInMemory Dwarf(*Obj.get(), &ObjInfo);
+  DWARFContextInMemory Dwarf(*Obj, &ObjInfo);
   DwarfLine.reset(new DWARFDebugLine(&Dwarf.getLineSection().Relocs));
   DataExtractor LineData(Dwarf.getLineSection().Data,
                          ELFT::TargetEndianness == support::little,
