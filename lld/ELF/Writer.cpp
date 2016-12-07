@@ -1402,11 +1402,13 @@ template <class ELFT> void Writer<ELFT>::setPhdrs() {
 // 4. the address of the first byte of the .text section, if present;
 // 5. the address 0.
 template <class ELFT> typename ELFT::uint Writer<ELFT>::getEntryAddr() {
-  // Case 1, 2 or 3
-  if (Config->Entry.empty())
-    return Config->EntryAddr;
+  // Case 1, 2 or 3. As a special case, if the symbol is actually
+  // a number, we'll use that number as an address.
   if (SymbolBody *B = Symtab<ELFT>::X->find(Config->Entry))
     return B->getVA<ELFT>();
+  uint64_t Addr;
+  if (!Config->Entry.getAsInteger(0, Addr))
+    return Addr;
 
   // Case 4
   if (OutputSectionBase *Sec = findSection(".text")) {

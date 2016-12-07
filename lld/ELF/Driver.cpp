@@ -780,18 +780,10 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   for (InputFile *F : Files)
     Symtab.addFile(F);
 
-  // Add the start symbol.
-  // It initializes either Config->Entry or Config->EntryAddr.
-  // Note that AMDGPU binaries have no entries.
-  if (!Config->Entry.empty()) {
-    // It is either "-e <addr>" or "-e <symbol>".
-    if (!Config->Entry.getAsInteger(0, Config->EntryAddr))
-      Config->Entry = "";
-  } else if (!Config->Relocatable && Config->EMachine != EM_AMDGPU) {
-    // -e was not specified. Use the default start symbol name
-    // if it is resolvable.
+  // Add the start symbol. Note that AMDGPU binaries have no entries.
+  if (Config->Entry.empty() && !Config->Relocatable &&
+      Config->EMachine != EM_AMDGPU)
     Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
-  }
 
   // If an object file defining the entry symbol is in an archive file,
   // extract the file now.
