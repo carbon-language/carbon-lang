@@ -207,43 +207,39 @@ public:
 
   /// Merge the specified lattice value into this one, updating this
   /// one and returning true if anything changed.
-  bool mergeIn(const LVILatticeVal &RHS, const DataLayout &DL) {
-    if (RHS.isUndefined() || isOverdefined()) return false;
-    if (RHS.isOverdefined()) return markOverdefined();
+  void mergeIn(const LVILatticeVal &RHS, const DataLayout &DL) {
+    if (RHS.isUndefined() || isOverdefined())
+      return;
+    if (RHS.isOverdefined()) {
+      markOverdefined();
+      return;
+    }
 
     if (isUndefined()) {
-      Tag = RHS.Tag;
-      Val = RHS.Val;
-      Range = RHS.Range;
-      return true;
+      *this = RHS;
+      return;
     }
 
     if (isConstant()) {
-      if (RHS.isConstant()) {
-        if (Val == RHS.Val)
-          return false;
-        return markOverdefined();
-      }
-      return markOverdefined();
+      if (RHS.isConstant() && Val == RHS.Val)
+          return;
+      markOverdefined();
+      return;
     }
 
     if (isNotConstant()) {
-      if (RHS.isNotConstant()) {
-        if (Val == RHS.Val)
-          return false;
-        return markOverdefined();
-      }
-      return markOverdefined();
+      if (RHS.isNotConstant() && Val == RHS.Val)
+          return;
+      markOverdefined();
+      return;
     }
 
     assert(isConstantRange() && "New LVILattice type?");
-    if (!RHS.isConstantRange())
-      return markOverdefined();
-
     ConstantRange NewR = Range.unionWith(RHS.getConstantRange());
     if (NewR.isFullSet())
-      return markOverdefined();
-    return markConstantRange(NewR);
+      markOverdefined();
+    else
+      markConstantRange(NewR);
   }
 };
 
