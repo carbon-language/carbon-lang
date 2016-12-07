@@ -124,7 +124,7 @@ struct AsBase : Noncopyable {
   AsBase() : Noncopyable(make()) {} // expected-error {{deleted}}
 };
 struct AsDelegating final {
-  AsDelegating(const AsDelegating &) = delete;
+  AsDelegating(const AsDelegating &) = delete; // expected-note {{deleted}}
   static AsDelegating make(int);
 
   // The base constructor version of this is problematic; the complete object
