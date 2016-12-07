@@ -119,7 +119,7 @@ std::string lld::stringize(opt::Arg *Arg) {
 
 std::string lld::convertToUnixPathSeparator(StringRef S) {
 #ifdef LLVM_ON_WIN32
-  std:string Ret = S.str();
+  std::string Ret = S.str();
   std::replace(Ret.begin(), Ret.end(), '\\', '/');
   return Ret;
 #else
