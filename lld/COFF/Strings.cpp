@@ -10,8 +10,8 @@
 #include "Strings.h"
 
 #if defined(_MSC_VER)
-#include <DbgHelp.h>
 #include <Windows.h>
+#include <DbgHelp.h>
 #pragma comment(lib, "dbghelp.lib")
 #endif
 
