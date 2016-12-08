@@ -150,7 +150,7 @@ public:
   void EndCOFFSymbolDef() override;
   void EmitCOFFSafeSEH(MCSymbol const *Symbol) override;
   void EmitCOFFSectionIndex(MCSymbol const *Symbol) override;
-  void EmitCOFFSecRel32(MCSymbol const *Symbol, uint64_t Offset) override;
+  void EmitCOFFSecRel32(MCSymbol const *Symbol) override;
   void emitELFSize(MCSymbol *Symbol, const MCExpr *Value) override;
   void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                         unsigned ByteAlignment) override;
@@ -614,11 +614,9 @@ void MCAsmStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol, uint64_t Offset) {
+void MCAsmStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
   OS << "\t.secrel32\t";
   Symbol->print(OS, MAI);
-  if (Offset != 0)
-    OS << '+' << Offset;
   EmitEOL();
 }
 

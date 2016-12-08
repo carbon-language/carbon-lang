@@ -642,7 +642,7 @@ void DIEEntry::EmitValue(const AsmPrinter *AP, dwarf::Form Form) const {
       MCSection *Section = Unit->getSection();
       if (Section) {
         const MCSymbol *SectionSym = Section->getBeginSymbol();
-        AP->EmitLabelPlusOffset(SectionSym, Addr, SizeOf(AP, Form), true);
+        AP->EmitLabelPlusOffset(SectionSym, Addr, SizeOf(AP, Form));
         return;
       }
     }

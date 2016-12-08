@@ -125,7 +125,7 @@ void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
   if (!IsSectionRelative)
     EmitValueImpl(MCSymbolRefExpr::create(Sym, getContext()), Size);
   else
-    EmitCOFFSecRel32(Sym, /*Offset=*/0);
+    EmitCOFFSecRel32(Sym);
 }
 
 void MCStreamer::EmitDTPRel64Value(const MCExpr *Value) {
@@ -689,7 +689,8 @@ void MCStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
 void MCStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
 }
 
-void MCStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol, uint64_t Offset) {}
+void MCStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
+}
 
 /// EmitRawText - If this file is backed by an assembly streamer, this dumps
 /// the specified string in the output .s file.  This capability is
