@@ -28,6 +28,7 @@ typedef volatile std::packaged_task<A(int, char)> VPT;
 
 int main()
 {
-    PT p { VPT{} }; // expected-error {{no matching constructor for initialization of 'PT' (aka 'packaged_task<A (int, char)>')}}
+    VPT init{};
+    PT p{init}; // expected-error {{no matching constructor for initialization of 'PT' (aka 'packaged_task<A (int, char)>')}}
     // expected-note@future:* 1 {{candidate template ignored: disabled by 'enable_if'}}
 }
