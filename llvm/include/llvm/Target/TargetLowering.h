@@ -3047,8 +3047,6 @@ public:
   /// respectively, each computing an n/2-bit part of the result.
   /// \param Result A vector that will be filled with the parts of the result
   ///        in little-endian order.
-  /// \param HalfVT The value type to use for the result nodes.
-  /// \param OnlyLegalOrCustom Only legal or custom instructions are used.
   /// \param LL Low bits of the LHS of the MUL.  You can use this parameter
   ///        if you want to control how low bits are extracted from the LHS.
   /// \param LH High bits of the LHS of the MUL.  See LL for meaning.
@@ -3064,7 +3062,6 @@ public:
   /// Expand a MUL into two nodes.  One that computes the high bits of
   /// the result and one that computes the low bits.
   /// \param HiLoVT The value type to use for the Lo and Hi nodes.
-  /// \param OnlyLegalOrCustom Only legal or custom instructions are used.
   /// \param LL Low bits of the LHS of the MUL.  You can use this parameter
   ///        if you want to control how low bits are extracted from the LHS.
   /// \param LH High bits of the LHS of the MUL.  See LL for meaning.
