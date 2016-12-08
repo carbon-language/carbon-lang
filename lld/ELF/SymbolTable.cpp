@@ -460,20 +460,6 @@ template <class ELFT> SymbolBody *SymbolTable<ELFT>::find(StringRef Name) {
   return SymVector[V.Idx]->body();
 }
 
-// Returns a list of defined symbols that match with a given pattern.
-template <class ELFT>
-std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(StringRef GlobPat) {
-  std::vector<SymbolBody *> Res;
-  StringMatcher M({GlobPat});
-  for (Symbol *Sym : SymVector) {
-    SymbolBody *B = Sym->body();
-    StringRef Name = B->getName();
-    if (!B->isUndefined() && M.match(Name))
-      Res.push_back(B);
-  }
-  return Res;
-}
-
 template <class ELFT>
 void SymbolTable<ELFT>::addLazyArchive(ArchiveFile *F,
                                        const object::Archive::Symbol Sym) {
@@ -600,10 +586,11 @@ std::vector<SymbolBody *> SymbolTable<ELFT>::find(SymbolVersion Ver) {
 
 template <class ELFT>
 std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(SymbolVersion Ver) {
+  std::vector<SymbolBody *> Res;
+  StringMatcher M({Ver.Name});
+
   if (Ver.IsExternCpp) {
     initDemangledSyms();
-    std::vector<SymbolBody *> Res;
-    StringMatcher M({Ver.Name});
     for (auto &P : *DemangledSyms)
       if (M.match(P.first()))
         for (SymbolBody *Body : P.second)
@@ -611,7 +598,14 @@ std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(SymbolVersion Ver) {
             Res.push_back(Body);
     return Res;
   }
-  return findAll(Ver.Name);
+
+  for (Symbol *Sym : SymVector) {
+    SymbolBody *B = Sym->body();
+    StringRef Name = B->getName();
+    if (!B->isUndefined() && M.match(Name))
+      Res.push_back(B);
+  }
+  return Res;
 }
 
 // If there's only one anonymous version definition in a version
