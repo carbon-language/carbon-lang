@@ -71,7 +71,7 @@ void SymbolTable::readArchives() {
   for (std::future<ArchiveFile *> &Future : ArchiveQueue) {
     ArchiveFile *File = Future.get();
     if (Config->Verbose)
-      llvm::outs() << "Reading " << toString(File) << "\n";
+      outs() << "Reading " << toString(File) << "\n";
     for (Lazy &Sym : File->getLazySymbols())
       addLazy(&Sym, &LazySyms);
   }
@@ -92,7 +92,7 @@ void SymbolTable::readObjects() {
   for (size_t I = 0; I < ObjectQueue.size(); ++I) {
     InputFile *File = ObjectQueue[I].get();
     if (Config->Verbose)
-      llvm::outs() << "Reading " << toString(File) << "\n";
+      outs() << "Reading " << toString(File) << "\n";
     // Adding symbols may add more files to ObjectQueue
     // (but not to ArchiveQueue).
     for (SymbolBody *Sym : File->getSymbols())
@@ -102,7 +102,7 @@ void SymbolTable::readObjects() {
     if (!S.empty()) {
       Directives.push_back(S);
       if (Config->Verbose)
-        llvm::outs() << "Directives: " << toString(File) << ": " << S << "\n";
+        outs() << "Directives: " << toString(File) << ": " << S << "\n";
     }
   }
   ObjectQueue.clear();
@@ -118,7 +118,7 @@ bool SymbolTable::queueEmpty() {
 }
 
 void SymbolTable::reportRemainingUndefines(bool Resolve) {
-  llvm::SmallPtrSet<SymbolBody *, 8> Undefs;
+  SmallPtrSet<SymbolBody *, 8> Undefs;
   for (auto &I : Symtab) {
     Symbol *Sym = I.second;
     auto *Undef = dyn_cast<Undefined>(Sym->Body);
@@ -155,13 +155,13 @@ void SymbolTable::reportRemainingUndefines(bool Resolve) {
     return;
   for (Undefined *U : Config->GCRoot)
     if (Undefs.count(U->repl()))
-      llvm::errs() << "<root>: undefined symbol: " << U->getName() << "\n";
+      errs() << "<root>: undefined symbol: " << U->getName() << "\n";
   for (InputFile *File : Files)
     if (!isa<ArchiveFile>(File))
       for (SymbolBody *Sym : File->getSymbols())
         if (Undefs.count(Sym->repl()))
-          llvm::errs() << toString(File)
-                       << ": undefined symbol: " << Sym->getName() << "\n";
+          errs() << toString(File) << ": undefined symbol: " << Sym->getName()
+                 << "\n";
   if (!Config->Force)
     fatal("link failed");
 }
@@ -237,8 +237,7 @@ void SymbolTable::addMemberFile(Lazy *Body) {
   if (!File)
     return;
   if (Config->Verbose)
-    llvm::outs() << "Loaded " << toString(File) << " for " << Body->getName()
-                 << "\n";
+    outs() << "Loaded " << toString(File) << " for " << Body->getName() << "\n";
   addFile(File);
 }
 
