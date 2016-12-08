@@ -1,0 +1,22 @@
+# RUN: llc -O0 -run-pass=avr-expand-pseudo %s -o - 2>&1 | FileCheck %s
+# XFAIL: *
+
+# This test checks the expansion of the 16-bit CPCW pseudo instruction.
+
+--- |
+  target triple = "avr--"
+  define void @test_cpcwrdrr() {
+  entry:
+    ret void
+  }
+...
+
+---
+name:            test_cpcwrdrr
+body: |
+  bb.0.entry:
+
+    ; CHECK-LABEL: test_cpcwrdrr
+
+    %r15r14 = CPCWRdRr %r15r14, %r21r20, implicit-def %sreg, implicit %sreg
+...
