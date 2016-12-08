@@ -19,14 +19,14 @@
 
 using namespace llvm;
 
-void yaml2debug_str(raw_ostream &OS, const DWARFYAML::DWARFData &DI) {
+void yaml2debug_str(raw_ostream &OS, const DWARFYAML::Data &DI) {
   for (auto Str : DI.DebugStrings) {
     OS.write(Str.data(), Str.size());
     OS.write('\0');
   }
 }
 
-void yaml2debug_abbrev(raw_ostream &OS, const DWARFYAML::DWARFData &DI) {
+void yaml2debug_abbrev(raw_ostream &OS, const DWARFYAML::Data &DI) {
   for (auto AbbrevDecl : DI.AbbrevDecls) {
     encodeULEB128(AbbrevDecl.Code, OS);
     encodeULEB128(AbbrevDecl.Tag, OS);

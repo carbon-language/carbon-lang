@@ -23,48 +23,48 @@
 namespace llvm {
 namespace DWARFYAML {
 
-struct DWARFAttributeAbbrev {
+struct AttributeAbbrev {
   llvm::dwarf::Attribute Attribute;
   llvm::dwarf::Form Form;
 };
 
-struct DWARFAbbrev {
+struct Abbrev {
   llvm::yaml::Hex32 Code;
   llvm::dwarf::Tag Tag;
   llvm::dwarf::Constants Children;
-  std::vector<DWARFAttributeAbbrev> Attributes;
+  std::vector<AttributeAbbrev> Attributes;
 };
 
-struct DWARFData {
-  std::vector<DWARFAbbrev> AbbrevDecls;
+struct Data {
+  std::vector<Abbrev> AbbrevDecls;
   std::vector<StringRef> DebugStrings;
 
   bool isEmpty() const;
-}; 
+};
 
 } // namespace llvm::DWARFYAML
 } // namespace llvm
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::StringRef)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::DWARFAttributeAbbrev)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::DWARFAbbrev)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::AttributeAbbrev)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Abbrev)
 
 namespace llvm {
 namespace yaml {
 
-template <> struct MappingTraits<DWARFYAML::DWARFData> {
-  static void mapping(IO &IO, DWARFYAML::DWARFData &DWARF);
+template <> struct MappingTraits<DWARFYAML::Data> {
+  static void mapping(IO &IO, DWARFYAML::Data &DWARF);
 };
 
-template <> struct MappingTraits<DWARFYAML::DWARFAbbrev> {
-  static void mapping(IO &IO, DWARFYAML::DWARFAbbrev &Abbrev);
+template <> struct MappingTraits<DWARFYAML::Abbrev> {
+  static void mapping(IO &IO, DWARFYAML::Abbrev &Abbrev);
 };
 
-template <> struct MappingTraits<DWARFYAML::DWARFAttributeAbbrev> {
-  static void mapping(IO &IO, DWARFYAML::DWARFAttributeAbbrev &AttAbbrev);
+template <> struct MappingTraits<DWARFYAML::AttributeAbbrev> {
+  static void mapping(IO &IO, DWARFYAML::AttributeAbbrev &AttAbbrev);
 };
 
-#define HANDLE_DW_TAG(unused, name)                                             \
+#define HANDLE_DW_TAG(unused, name)                                            \
   io.enumCase(value, "DW_TAG_" #name, dwarf::DW_TAG_##name);
 
 template <> struct ScalarEnumerationTraits<dwarf::Tag> {
@@ -84,7 +84,7 @@ template <> struct ScalarEnumerationTraits<dwarf::Attribute> {
   }
 };
 
-#define HANDLE_DW_FORM(unused, name)                                            \
+#define HANDLE_DW_FORM(unused, name)                                           \
   io.enumCase(value, "DW_FORM_" #name, dwarf::DW_FORM_##name);
 
 template <> struct ScalarEnumerationTraits<dwarf::Form> {

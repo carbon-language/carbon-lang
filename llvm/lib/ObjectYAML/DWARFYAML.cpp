@@ -16,28 +16,28 @@
 
 namespace llvm {
 
-bool DWARFYAML::DWARFData::isEmpty() const {
+bool DWARFYAML::Data::isEmpty() const {
   return 0 == DebugStrings.size() + AbbrevDecls.size();
 }
 
 namespace yaml {
 
-void MappingTraits<DWARFYAML::DWARFData>::mapping(
-    IO &IO, DWARFYAML::DWARFData &DWARF) {
+void MappingTraits<DWARFYAML::Data>::mapping(
+    IO &IO, DWARFYAML::Data &DWARF) {
   IO.mapOptional("debug_str", DWARF.DebugStrings);
   IO.mapOptional("debug_abbrev", DWARF.AbbrevDecls);
 }
 
-void MappingTraits<DWARFYAML::DWARFAbbrev>::mapping(
-    IO &IO, DWARFYAML::DWARFAbbrev &Abbrev) {
+void MappingTraits<DWARFYAML::Abbrev>::mapping(
+    IO &IO, DWARFYAML::Abbrev &Abbrev) {
   IO.mapRequired("Code", Abbrev.Code);
   IO.mapRequired("Tag", Abbrev.Tag);
   IO.mapRequired("Children", Abbrev.Children);
   IO.mapRequired("Attributes", Abbrev.Attributes);
 }
 
-void MappingTraits<DWARFYAML::DWARFAttributeAbbrev>::mapping(
-    IO &IO, DWARFYAML::DWARFAttributeAbbrev &AttAbbrev) {
+void MappingTraits<DWARFYAML::AttributeAbbrev>::mapping(
+    IO &IO, DWARFYAML::AttributeAbbrev &AttAbbrev) {
   IO.mapRequired("Attribute", AttAbbrev.Attribute);
   IO.mapRequired("Form", AttAbbrev.Form);
 }

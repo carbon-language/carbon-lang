@@ -13,18 +13,18 @@
 
 using namespace llvm;
 
-void dumpDebugAbbrev(DWARFContextInMemory &DCtx, DWARFYAML::DWARFData &Y) {
+void dumpDebugAbbrev(DWARFContextInMemory &DCtx, DWARFYAML::Data &Y) {
   auto AbbrevSetPtr = DCtx.getDebugAbbrev();
   if (AbbrevSetPtr) {
     for (auto AbbrvDeclSet : *AbbrevSetPtr) {
       for (auto AbbrvDecl : AbbrvDeclSet.second) {
-        DWARFYAML::DWARFAbbrev Abbrv;
+        DWARFYAML::Abbrev Abbrv;
         Abbrv.Code = AbbrvDecl.getCode();
         Abbrv.Tag = AbbrvDecl.getTag();
         Abbrv.Children = AbbrvDecl.hasChildren() ? dwarf::DW_CHILDREN_yes
                                                  : dwarf::DW_CHILDREN_no;
         for (auto Attribute : AbbrvDecl.attributes()) {
-          DWARFYAML::DWARFAttributeAbbrev AttAbrv;
+          DWARFYAML::AttributeAbbrev AttAbrv;
           AttAbrv.Attribute = Attribute.Attr;
           AttAbrv.Form = Attribute.Form;
           Abbrv.Attributes.push_back(AttAbrv);
@@ -35,7 +35,7 @@ void dumpDebugAbbrev(DWARFContextInMemory &DCtx, DWARFYAML::DWARFData &Y) {
   }
 }
 
-void dumpDebugStrings(DWARFContextInMemory &DCtx, DWARFYAML::DWARFData &Y) {
+void dumpDebugStrings(DWARFContextInMemory &DCtx, DWARFYAML::Data &Y) {
   StringRef RemainingTable = DCtx.getStringSection();
   while (RemainingTable.size() > 0) {
     auto SymbolPair = RemainingTable.split('\0');
@@ -45,7 +45,7 @@ void dumpDebugStrings(DWARFContextInMemory &DCtx, DWARFYAML::DWARFData &Y) {
 }
 
 std::error_code dwarf2yaml(DWARFContextInMemory &DCtx,
-                           DWARFYAML::DWARFData &Y) {
+                           DWARFYAML::Data &Y) {
   dumpDebugAbbrev(DCtx, Y);
   dumpDebugStrings(DCtx, Y);
 
