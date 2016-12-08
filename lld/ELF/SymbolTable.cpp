@@ -585,40 +585,33 @@ void SymbolTable<ELFT>::initDemangledSyms() {
 }
 
 template <class ELFT>
-ArrayRef<SymbolBody *> SymbolTable<ELFT>::findDemangled(StringRef Name) {
-  initDemangledSyms();
-  auto I = DemangledSyms->find(Name);
-  if (I != DemangledSyms->end())
-    return I->second;
-  return {};
-}
-
-template <class ELFT>
 std::vector<SymbolBody *> SymbolTable<ELFT>::find(SymbolVersion Ver) {
-  if (Ver.IsExternCpp)
-    return findDemangled(Ver.Name);
+  if (Ver.IsExternCpp) {
+    initDemangledSyms();
+    auto I = DemangledSyms->find(Ver.Name);
+    if (I != DemangledSyms->end())
+      return I->second;
+    return {};
+  }
   std::vector<SymbolBody *> Syms;
   Syms.push_back(find(Ver.Name));
   return Syms;
 }
 
 template <class ELFT>
-std::vector<SymbolBody *>
-SymbolTable<ELFT>::findAllDemangled(StringRef GlobPat) {
-  initDemangledSyms();
-  std::vector<SymbolBody *> Res;
-  StringMatcher M({GlobPat});
-  for (auto &P : *DemangledSyms)
-    if (M.match(P.first()))
-      for (SymbolBody *Body : P.second)
-        if (!Body->isUndefined())
-          Res.push_back(Body);
-  return Res;
-}
-
-template <class ELFT>
 std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(SymbolVersion Ver) {
-  return Ver.IsExternCpp ? findAllDemangled(Ver.Name) : findAll(Ver.Name);
+  if (Ver.IsExternCpp) {
+    initDemangledSyms();
+    std::vector<SymbolBody *> Res;
+    StringMatcher M({Ver.Name});
+    for (auto &P : *DemangledSyms)
+      if (M.match(P.first()))
+        for (SymbolBody *Body : P.second)
+          if (!Body->isUndefined())
+            Res.push_back(Body);
+    return Res;
+  }
+  return findAll(Ver.Name);
 }
 
 // If there's only one anonymous version definition in a version

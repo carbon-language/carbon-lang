@@ -98,9 +98,7 @@ private:
                                    uint8_t Visibility, bool CanOmitFromDynSym,
                                    InputFile *File);
 
-  ArrayRef<SymbolBody *> findDemangled(StringRef Name);
   std::vector<SymbolBody *> find(SymbolVersion Ver);
-  std::vector<SymbolBody *> findAllDemangled(StringRef GlobPat);
   std::vector<SymbolBody *> findAll(SymbolVersion Ver);
 
   void initDemangledSyms();
