@@ -51,7 +51,7 @@ public:
 
   DefinedRegular<ELFT> *addAbsolute(StringRef Name,
                                     uint8_t Visibility = llvm::ELF::STV_HIDDEN,
-                                    uint8_t Type = llvm::ELF::STB_GLOBAL);
+                                    uint8_t Binding = llvm::ELF::STB_GLOBAL);
   DefinedRegular<ELFT> *addIgnored(StringRef Name,
                                    uint8_t Visibility = llvm::ELF::STV_HIDDEN);
 
