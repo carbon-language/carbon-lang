@@ -13676,7 +13676,11 @@ static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
 }
 
 // Returns the appropriate wrapper opcode for a global reference.
-unsigned X86TargetLowering::getGlobalWrapperKind() const {
+unsigned X86TargetLowering::getGlobalWrapperKind(const GlobalValue *GV) const {
+  // References to absolute symbols are never PC-relative.
+  if (GV && GV->isAbsoluteSymbolRef())
+    return X86ISD::Wrapper;
+
   CodeModel::Model M = getTargetMachine().getCodeModel();
   if (Subtarget.isPICStyleRIPRel() &&
       (M == CodeModel::Small || M == CodeModel::Kernel))
@@ -13805,7 +13809,7 @@ SDValue X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV,
     Result = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, OpFlags);
   }
 
-  Result = DAG.getNode(getGlobalWrapperKind(), dl, PtrVT, Result);
+  Result = DAG.getNode(getGlobalWrapperKind(GV), dl, PtrVT, Result);
 
   // With PIC, the address is actually $g + Offset.
   if (isGlobalRelativeToPICBase(OpFlags)) {
