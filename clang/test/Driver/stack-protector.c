@@ -47,3 +47,16 @@
 // SSP_MACOSX_KERNEL-NOT: "-stack-protector"
 // RUN: %clang -target x86_64-apple-darwin10 -mmacosx-version-min=10.6 -### %s 2>&1 | FileCheck %s -check-prefix=SSP_MACOSX_10_6_KERNEL
 // SSP_MACOSX_10_6_KERNEL: "-stack-protector" "1"
+
+// Test default stack protector values for Darwin platforms with -ffreestanding
+
+// RUN: %clang -ffreestanding -target armv7k-apple-watchos2.0 -### %s 2>&1 | FileCheck %s -check-prefix=SSP_FREE_WATCHOS
+// SSP_FREE_WATCHOS-NOT: "-stack-protector"
+// RUN: %clang -ffreestanding -target arm64-apple-ios8.0.0 -### %s 2>&1 | FileCheck %s -check-prefix=SSP_FREE_IOS
+// SSP_FREE_IOS-NOT: "-stack-protector"
+// RUN: %clang -ffreestanding -target x86_64-apple-darwin10 -mmacosx-version-min=10.6 -### %s 2>&1 | FileCheck %s -check-prefix=SSP_FREE_MACOSX
+// SSP_FREE_MACOSX-NOT: "-stack-protector"
+// RUN: %clang -ffreestanding -target x86_64-apple-darwin10 -mmacosx-version-min=10.5 -### %s 2>&1 | FileCheck %s -check-prefix=SSP_FREE_MACOSX_10_5
+// SSP_FREE_MACOSX_10_5-NOT: "-stack-protector"
+// RUN: %clang -ffreestanding -target x86_64-apple-darwin10 -mmacosx-version-min=10.6 -### %s 2>&1 | FileCheck %s -check-prefix=SSP_FREE_MACOSX_10_6_KERNEL
+// SSP_FREE_MACOSX_10_6_KERNEL-NOT: "-stack-protector"
