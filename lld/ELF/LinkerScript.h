@@ -66,6 +66,8 @@ void readLinkerScript(MemoryBufferRef MB);
 // Parses a version script.
 void readVersionScript(MemoryBufferRef MB);
 
+void readDynamicList(MemoryBufferRef MB);
+
 // This enum is used to implement linker script SECTIONS command.
 // https://sourceware.org/binutils/docs/ld/SECTIONS.html#SECTIONS
 enum SectionsCommandKind {

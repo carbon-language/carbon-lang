@@ -81,7 +81,6 @@ public:
 
   void scanUndefinedFlags();
   void scanShlibUndefined();
-  void scanDynamicList();
   void scanVersionScript();
 
   SymbolBody *find(StringRef Name);

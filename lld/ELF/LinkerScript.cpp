@@ -987,6 +987,7 @@ public:
 
   void readLinkerScript();
   void readVersionScript();
+  void readDynamicList();
 
 private:
   void addFile(StringRef Path);
@@ -1039,6 +1040,13 @@ private:
   bool IsUnderSysroot;
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
+
+void ScriptParser::readDynamicList() {
+  expect("{");
+  readAnonymousDeclaration();
+  if (!atEOF())
+    setError("EOF expected, but got " + next());
+}
 
 void ScriptParser::readVersionScript() {
   readVersionScriptCommand();
@@ -1932,7 +1940,7 @@ std::vector<SymbolVersion> ScriptParser::readVersionExtern() {
   StringRef Tok = next();
   bool IsCXX = Tok == "\"C++\"";
   if (!IsCXX && Tok != "\"C\"")
-    setError("Unknown Language");
+    setError("Unknown language");
   expect("{");
 
   std::vector<SymbolVersion> Ret;
@@ -1954,6 +1962,10 @@ void elf::readLinkerScript(MemoryBufferRef MB) {
 
 void elf::readVersionScript(MemoryBufferRef MB) {
   ScriptParser(MB).readVersionScript();
+}
+
+void elf::readDynamicList(MemoryBufferRef MB) {
+  ScriptParser(MB).readDynamicList();
 }
 
 template class elf::LinkerScript<ELF32LE>;
