@@ -62,5 +62,5 @@
 // RUN: %clang -target i686-windows -fms-extensions -dM -E - </dev/null -o - | FileCheck %s -check-prefix CHECK-MS-EXTENSIONS
 
 // CHECK-MS-EXTENSIONS: _MSC_BUILD 1
-// CHECK-MS-EXTENSIONS: _MSC_FULL_VER {{..}}000000
+// CHECK-MS-EXTENSIONS: _MSC_FULL_VER {{.+}}
 // CHECK-MS-EXTENSIONS: _MSC_VER {{..}}00
