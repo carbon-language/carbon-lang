@@ -139,6 +139,8 @@ template <class ELFT> void Writer<ELFT>::removeEmptyPTLoad() {
   auto I = std::remove_if(Phdrs.begin(), Phdrs.end(), [&](const Phdr &P) {
     if (P.H.p_type != PT_LOAD)
       return false;
+    if (!P.First)
+      return true;
     uintX_t Size = P.Last->Addr + P.Last->Size - P.First->Addr;
     return Size == 0;
   });
