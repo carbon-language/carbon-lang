@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPassManager.h"
+#include "llvm/Support/Timer.h"
 
 using namespace llvm;
 
@@ -18,6 +19,10 @@ namespace opts {
 extern llvm::cl::opt<bool> PrintAll;
 extern llvm::cl::opt<bool> DumpDotAll;
 extern llvm::cl::opt<bool> DynoStatsAll;
+
+llvm::cl::opt<bool> TimeOpts("time-opts",
+                             cl::desc("print time spent in each optimization"),
+                             cl::init(false), cl::ZeroOrMore);
 
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
@@ -135,6 +140,9 @@ namespace bolt {
 
 using namespace opts;
 
+const char BinaryFunctionPassManager::TimerGroupName[] =
+    "Binary Function Pass Manager";
+
 cl::opt<bool> BinaryFunctionPassManager::AlwaysOn(
   "always-run-pass",
   cl::desc("Used for passes that are always enabled"),
@@ -147,6 +155,8 @@ void BinaryFunctionPassManager::runPasses() {
       continue;
 
     auto &Pass = OptPassPair.second;
+
+    NamedRegionTimer(Pass->getName(), TimerGroupName, TimeOpts);
 
     callWithDynoStats(
       [this,&Pass] {
