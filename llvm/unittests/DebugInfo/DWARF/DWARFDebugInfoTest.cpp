@@ -51,14 +51,15 @@ Triple getHostTripleForAddrSize(uint8_t AddrSize) {
 /// \returns true if there were errors, false otherwise.
 template <typename T>
 static bool HandleExpectedError(T &Expected) {
-  if (!Expected)
-    return false;
   std::string ErrorMsg;
   handleAllErrors(Expected.takeError(), [&](const llvm::ErrorInfoBase &EI) {
     ErrorMsg = EI.message();
   });
-  ::testing::AssertionFailure() << "error: " << ErrorMsg;
-  return true;
+  if (!ErrorMsg.empty()) {
+    ::testing::AssertionFailure() << "error: " << ErrorMsg;
+    return true;
+  }
+  return false;
 }
 
 template <uint16_t Version, class AddrType, class RefAddrType>
