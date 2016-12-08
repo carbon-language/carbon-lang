@@ -1,14 +1,10 @@
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   AsmPrinter
-  CodeGen
-  Core
   DebugInfoDWARF
   MC
-  MIRParser
   Object
   Support
-  Target
   )
 
 set(DebugInfoSources
