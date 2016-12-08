@@ -1181,6 +1181,8 @@ unsigned SIRegisterInfo::getNumAddressableSGPRs(const SISubtarget &ST) const {
 unsigned SIRegisterInfo::getNumReservedSGPRs(const SISubtarget &ST) const {
   if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
     return 6; // VCC, FLAT_SCRATCH, XNACK.
+  if (ST.getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS)
+    return 4; // VCC, FLAT_SCRATCH.
   return 2; // VCC.
 }
 
