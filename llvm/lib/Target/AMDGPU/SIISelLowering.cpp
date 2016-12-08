@@ -610,6 +610,13 @@ bool SITargetLowering::isNoopAddrSpaceCast(unsigned SrcAS,
   return isFlatGlobalAddrSpace(SrcAS) && isFlatGlobalAddrSpace(DestAS);
 }
 
+bool SITargetLowering::isMemOpHasNoClobberedMemOperand(const SDNode *N) const {
+  const MemSDNode *MemNode = cast<MemSDNode>(N);
+  const Value *Ptr = MemNode->getMemOperand()->getValue();
+  const Instruction *I = dyn_cast<Instruction>(Ptr);
+  return I && I->getMetadata("amdgpu.noclobber");
+}
+
 bool SITargetLowering::isCheapAddrSpaceCast(unsigned SrcAS,
                                             unsigned DestAS) const {
   // Flat -> private/local is a simple truncate.
@@ -2773,11 +2780,19 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     if (isMemOpUniform(Load))
       return SDValue();
     // Non-uniform loads will be selected to MUBUF instructions, so they
-    // have the same legalization requires ments as global and private
+    // have the same legalization requirements as global and private
     // loads.
     //
     LLVM_FALLTHROUGH;
-  case AMDGPUAS::GLOBAL_ADDRESS:
+  case AMDGPUAS::GLOBAL_ADDRESS: {
+    if (isMemOpUniform(Load) && isMemOpHasNoClobberedMemOperand(Load))
+      return SDValue();
+    // Non-uniform loads will be selected to MUBUF instructions, so they
+    // have the same legalization requirements as global and private
+    // loads.
+    //
+  }
+    LLVM_FALLTHROUGH;
   case AMDGPUAS::FLAT_ADDRESS:
     if (NumElements > 4)
       return SplitVectorLoad(Op, DAG);

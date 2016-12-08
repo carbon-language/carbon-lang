@@ -61,6 +61,14 @@ static cl::opt<bool> EnableLoadStoreVectorizer(
   cl::init(true),
   cl::Hidden);
 
+// Option to to control global loads scalarization
+static cl::opt<bool> ScalarizeGlobal(
+  "amdgpu-scalarize-global-loads",
+  cl::desc("Enable global load scalarization"),
+  cl::init(false),
+  cl::Hidden);
+
+
 extern "C" void LLVMInitializeAMDGPUTarget() {
   // Register the target
   RegisterTargetMachine<R600TargetMachine> X(getTheAMDGPUTarget());
@@ -261,6 +269,8 @@ const SISubtarget *GCNTargetMachine::getSubtargetImpl(const Function &F) const {
 
     I->setGISelAccessor(*GISel);
   }
+
+  I->setScalarizeGlobalBehavior(ScalarizeGlobal);
 
   return I.get();
 }
