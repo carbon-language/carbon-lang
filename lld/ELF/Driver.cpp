@@ -720,6 +720,16 @@ void LinkerDriver::inferMachineType() {
   error("target emulation unknown: -m or at least one .o file required");
 }
 
+// Parse -z max-page-size=<value>. The default value is defined by
+// each target.
+static uint64_t getMaxPageSize(opt::InputArgList &Args) {
+  uint64_t Val =
+      getZOptionValue(Args, "max-page-size", Target->DefaultMaxPageSize);
+  if (!isPowerOf2_64(Val))
+    error("max-page-size: value isn't a power of 2");
+  return Val;
+}
+
 // Parses -image-base option.
 static uint64_t getImageBase(opt::InputArgList &Args) {
   // Use default if no -image-base option is given.
@@ -755,14 +765,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
       ELFT::Is64Bits || Config->EMachine == EM_X86_64 || Config->MipsN32Abi;
   Config->Mips64EL =
       (Config->EMachine == EM_MIPS && Config->EKind == ELF64LEKind);
-
-  // Initialize Config->MaxPageSize. The default value is defined by
-  // each target.
-  Config->MaxPageSize =
-      getZOptionValue(Args, "max-page-size", Target->DefaultMaxPageSize);
-  if (!isPowerOf2_64(Config->MaxPageSize))
-    error("max-page-size: value isn't a power of 2");
-
+  Config->MaxPageSize = getMaxPageSize(Args);
   Config->ImageBase = getImageBase(Args);
 
   // Default output filename is "a.out" by the Unix tradition.
