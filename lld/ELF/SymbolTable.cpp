@@ -594,6 +594,15 @@ ArrayRef<SymbolBody *> SymbolTable<ELFT>::findDemangled(StringRef Name) {
 }
 
 template <class ELFT>
+std::vector<SymbolBody *> SymbolTable<ELFT>::find(SymbolVersion Ver) {
+  if (Ver.IsExternCpp)
+    return findDemangled(Ver.Name);
+  std::vector<SymbolBody *> Syms;
+  Syms.push_back(find(Ver.Name));
+  return Syms;
+}
+
+template <class ELFT>
 std::vector<SymbolBody *>
 SymbolTable<ELFT>::findAllDemangled(StringRef GlobPat) {
   initDemangledSyms();
@@ -605,6 +614,11 @@ SymbolTable<ELFT>::findAllDemangled(StringRef GlobPat) {
         if (!Body->isUndefined())
           Res.push_back(Body);
   return Res;
+}
+
+template <class ELFT>
+std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(SymbolVersion Ver) {
+  return Ver.IsExternCpp ? findAllDemangled(Ver.Name) : findAll(Ver.Name);
 }
 
 // If there's only one anonymous version definition in a version
@@ -633,11 +647,7 @@ void SymbolTable<ELFT>::assignExactVersion(SymbolVersion Ver, uint16_t VersionId
     return;
 
   // Get a list of symbols which we need to assign the version to.
-  std::vector<SymbolBody *> Syms;
-  if (Ver.IsExternCpp)
-    Syms = findDemangled(Ver.Name);
-  else
-    Syms.push_back(find(Ver.Name));
+  std::vector<SymbolBody *> Syms = find(Ver);
 
   // Assign the version.
   for (SymbolBody *B : Syms) {
@@ -659,8 +669,7 @@ void SymbolTable<ELFT>::assignWildcardVersion(SymbolVersion Ver,
                                               uint16_t VersionId) {
   if (!Ver.HasWildcard)
     return;
-  std::vector<SymbolBody *> Syms =
-      Ver.IsExternCpp ? findAllDemangled(Ver.Name) : findAll(Ver.Name);
+  std::vector<SymbolBody *> Syms = findAll(Ver);
 
   // Exact matching takes precendence over fuzzy matching,
   // so we set a version to a symbol only if no version has been assigned
