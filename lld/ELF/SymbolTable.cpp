@@ -614,7 +614,7 @@ SymbolTable<ELFT>::findAllDemangled(StringRef GlobPat) {
 // In this function, we make specified symbols global.
 template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
   for (SymbolVersion &Ver : Config->VersionScriptGlobals) {
-    if (hasWildcard(Ver.Name)) {
+    if (Ver.HasWildcard) {
       for (SymbolBody *B : findAll(Ver.Name))
         B->symbol()->VersionId = VER_NDX_GLOBAL;
       continue;
