@@ -852,7 +852,7 @@ void LinkerScript<ELFT>::writeDataBytes(StringRef Name, uint8_t *Buf) {
   auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I].get());
   for (const std::unique_ptr<BaseCommand> &Base : Cmd->Commands)
     if (auto *Data = dyn_cast<BytesDataCommand>(Base.get()))
-      writeInt<ELFT>(Buf + Data->Offset, Data->Data, Data->Size);
+      writeInt<ELFT>(Buf + Data->Offset, Data->Expression(0), Data->Size);
 }
 
 template <class ELFT> bool LinkerScript<ELFT>::hasLMA(StringRef Name) {
@@ -1688,13 +1688,7 @@ BytesDataCommand *ScriptParser::readBytesDataCommand(StringRef Tok) {
   if (Size == -1)
     return nullptr;
 
-  expect("(");
-  uint64_t Val = 0;
-  StringRef S = next();
-  if (!readInteger(S, Val))
-    setError("unexpected value: " + S);
-  expect(")");
-  return new BytesDataCommand(Val, Size);
+  return new BytesDataCommand(readParenExpr(), Size);
 }
 
 StringRef ScriptParser::readParenLiteral() {
