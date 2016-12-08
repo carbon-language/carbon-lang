@@ -150,11 +150,11 @@ StringRef LinkerDriver::doFindFile(StringRef Filename) {
     SmallString<128> Path = Dir;
     sys::path::append(Path, Filename);
     if (sys::fs::exists(Path.str()))
-      return Alloc.save(Path.str());
+      return Saver.save(Path.str());
     if (!HasExt) {
       Path.append(".obj");
       if (sys::fs::exists(Path.str()))
-        return Alloc.save(Path.str());
+        return Saver.save(Path.str());
     }
   }
   return Filename;
@@ -175,7 +175,7 @@ StringRef LinkerDriver::doFindLib(StringRef Filename) {
   // Add ".lib" to Filename if that has no file extension.
   bool HasExt = (Filename.find('.') != StringRef::npos);
   if (!HasExt)
-    Filename = Alloc.save(Filename + ".lib");
+    Filename = Saver.save(Filename + ".lib");
   return doFindFile(Filename);
 }
 
@@ -199,7 +199,7 @@ void LinkerDriver::addLibSearchPaths() {
   Optional<std::string> EnvOpt = Process::GetEnv("LIB");
   if (!EnvOpt.hasValue())
     return;
-  StringRef Env = Alloc.save(*EnvOpt);
+  StringRef Env = Saver.save(*EnvOpt);
   while (!Env.empty()) {
     StringRef Path;
     std::tie(Path, Env) = Env.split(';');
@@ -217,7 +217,7 @@ Undefined *LinkerDriver::addUndefined(StringRef Name) {
 StringRef LinkerDriver::mangle(StringRef Sym) {
   assert(Config->Machine != IMAGE_FILE_MACHINE_UNKNOWN);
   if (Config->Machine == I386)
-    return Alloc.save("_" + Sym);
+    return Saver.save("_" + Sym);
   return Sym;
 }
 
@@ -633,9 +633,9 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
     Export E = parseExport(Arg->getValue());
     if (Config->Machine == I386) {
       if (!isDecorated(E.Name))
-        E.Name = Alloc.save("_" + E.Name);
+        E.Name = Saver.save("_" + E.Name);
       if (!E.ExtName.empty() && !isDecorated(E.ExtName))
-        E.ExtName = Alloc.save("_" + E.ExtName);
+        E.ExtName = Saver.save("_" + E.ExtName);
     }
     Config->Exports.push_back(E);
   }
@@ -644,7 +644,7 @@ void LinkerDriver::link(ArrayRef<const char *> ArgsArr) {
   if (auto *Arg = Args.getLastArg(OPT_deffile)) {
     MemoryBufferRef MB = openFile(Arg->getValue());
     // parseModuleDefs mutates Config object.
-    parseModuleDefs(MB, &Alloc);
+    parseModuleDefs(MB);
   }
 
   // Handle /delayload

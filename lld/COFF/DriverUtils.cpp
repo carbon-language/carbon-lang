@@ -17,6 +17,7 @@
 #include "Driver.h"
 #include "Error.h"
 #include "Symbols.h"
+#include "lld/Support/Memory.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Object/COFF.h"
@@ -678,7 +679,6 @@ opt::InputArgList ArgParser::parseLINK(ArrayRef<const char *> Args) {
 
 std::vector<const char *> ArgParser::tokenize(StringRef S) {
   SmallVector<const char *, 16> Tokens;
-  StringSaver Saver(AllocAux);
   cl::TokenizeWindowsCommandLine(S, Saver, Tokens);
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
@@ -688,7 +688,6 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
 std::vector<const char *>
 ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
   SmallVector<const char *, 256> Tokens(Argv.data(), Argv.data() + Argv.size());
-  StringSaver Saver(AllocAux);
   ExpandResponseFiles(Saver, TokenizeWindowsCommandLine, Tokens);
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
