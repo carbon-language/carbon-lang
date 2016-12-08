@@ -62,12 +62,10 @@ define double @fmul_X_1(double %a) {
   ret double %b
 }
 
-; FIXME:
 ; fdiv X, 1.0 ==> X
 define float @fdiv_x_1(float %a) {
 ; CHECK-LABEL: @fdiv_x_1(
-; CHECK-NEXT:    [[RET:%.*]] = fdiv float %a, 1.000000e+00
-; CHECK-NEXT:    ret float [[RET]]
+; CHECK-NEXT:    ret float %a
 ;
   %ret = fdiv float %a, 1.0
   ret float %ret
