@@ -11,7 +11,6 @@
 #include "Error.h"
 #include "InputFiles.h"
 #include "Strings.h"
-#include "lld/Support/Memory.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -182,23 +181,23 @@ DefinedImportThunk::DefinedImportThunk(StringRef Name, DefinedImportData *S,
   }
 }
 
-InputFile *Lazy::getMember() {
+std::unique_ptr<InputFile> Lazy::getMember() {
   MemoryBufferRef MBRef = File->getMember(&Sym);
 
   // getMember returns an empty buffer if the member was already
   // read from the library.
   if (MBRef.getBuffer().empty())
-    return nullptr;
+    return std::unique_ptr<InputFile>(nullptr);
 
   file_magic Magic = identify_magic(MBRef.getBuffer());
   if (Magic == file_magic::coff_import_library)
-    return make<ImportFile>(MBRef);
+    return std::unique_ptr<InputFile>(new ImportFile(MBRef));
 
-  InputFile *Obj;
+  std::unique_ptr<InputFile> Obj;
   if (Magic == file_magic::coff_object)
-    Obj = make<ObjectFile>(MBRef);
+    Obj.reset(new ObjectFile(MBRef));
   else if (Magic == file_magic::bitcode)
-    Obj = make<BitcodeFile>(MBRef);
+    Obj.reset(new BitcodeFile(MBRef));
   else
     fatal("unknown file type: " + File->getName());
 

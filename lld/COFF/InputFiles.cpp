@@ -7,14 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "InputFiles.h"
 #include "Chunks.h"
 #include "Config.h"
 #include "Driver.h"
 #include "Error.h"
+#include "InputFiles.h"
 #include "Symbols.h"
-#include "lld/Support/Memory.h"
-#include "llvm-c/lto.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/Twine.h"
@@ -29,6 +27,7 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm-c/lto.h"
 #include <cstring>
 #include <system_error>
 #include <utility>
@@ -98,10 +97,14 @@ MutableArrayRef<Lazy> ArchiveFile::getLazySymbols() { return LazySymbols; }
 
 void ObjectFile::parse() {
   // Parse a memory buffer as a COFF file.
-  std::error_code EC;
-  COFFObj = new COFFObjectFile(MB, EC);
-  if (EC)
-    fatal(EC, "failed to parse object");
+  std::unique_ptr<Binary> Bin = check(createBinary(MB), toString(this));
+
+  if (auto *Obj = dyn_cast<COFFObjectFile>(Bin.get())) {
+    Bin.release();
+    COFFObj.reset(Obj);
+  } else {
+    fatal(toString(this) + " is not a COFF file");
+  }
 
   // Read section and symbol tables.
   initializeChunks();

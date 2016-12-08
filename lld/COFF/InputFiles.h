@@ -127,7 +127,7 @@ public:
   }
 
   // Returns the underying COFF file.
-  COFFObjectFile *getCOFFObj() { return COFFObj; }
+  COFFObjectFile *getCOFFObj() { return COFFObj.get(); }
 
   // True if this object file is compatible with SEH.
   // COFF-specific and x86-only.
@@ -145,7 +145,7 @@ private:
   Defined *createDefined(COFFSymbolRef Sym, const void *Aux, bool IsFirst);
   Undefined *createUndefined(COFFSymbolRef Sym);
 
-  COFFObjectFile *COFFObj;
+  std::unique_ptr<COFFObjectFile> COFFObj;
   llvm::BumpPtrAllocator Alloc;
   const coff_section *SXData = nullptr;
 
