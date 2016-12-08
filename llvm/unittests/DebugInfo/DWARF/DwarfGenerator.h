@@ -120,7 +120,7 @@ public:
   /// \param Form the dwarf::Form to use when encoding the attribute. The form
   /// must be one of DW_FORM_strp or DW_FORM_string.
   /// \param P a pointer to the data to store as the attribute value.
-  /// \param S the size in bytes of the data pointed to by \param P .
+  /// \param S the size in bytes of the data pointed to by P .
   void addAttribute(uint16_t Attr, dwarf::Form Form, const void *P, size_t S);
 
   /// Add a new child to this DIE object.
