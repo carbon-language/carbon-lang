@@ -134,7 +134,7 @@ public:
   /// Generate the abbreviation declaration for a DIE and return a pointer to
   /// the generated abbreviation.
   ///
-  /// \param DIE the debug info entry to generate the abbreviation for.
+  /// \param Die the debug info entry to generate the abbreviation for.
   /// \returns A reference to the uniqued abbreviation declaration that is
   /// owned by this class.
   DIEAbbrev &uniqueAbbreviation(DIE &Die);
