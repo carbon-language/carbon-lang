@@ -27,17 +27,16 @@
 #include "Target.h"
 #include "Error.h"
 #include "InputFiles.h"
-#include "Memory.h"
 #include "OutputSections.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Thunks.h"
 #include "Writer.h"
-
+#include "lld/Support/Memory.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/ELF.h"
-#include "llvm/Support/Endian.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/Endian.h"
 
 using namespace llvm;
 using namespace llvm::object;
