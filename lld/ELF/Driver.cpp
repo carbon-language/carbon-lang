@@ -48,12 +48,9 @@ bool elf::link(ArrayRef<const char *> Args, bool CanExitEarly,
   ErrorOS = &Error;
   Argv0 = Args[0];
 
-  Configuration C;
-  LinkerDriver D;
-  ScriptConfiguration SC;
-  Config = &C;
-  Driver = &D;
-  ScriptConfig = &SC;
+  Config = make<Configuration>();
+  Driver = make<LinkerDriver>();
+  ScriptConfig = make<ScriptConfiguration>();
 
   Driver->main(Args, CanExitEarly);
   freeArena();
