@@ -156,7 +156,7 @@ void BinaryFunctionPassManager::runPasses() {
 
     auto &Pass = OptPassPair.second;
 
-    NamedRegionTimer(Pass->getName(), TimerGroupName, TimeOpts);
+    NamedRegionTimer T(Pass->getName(), TimerGroupName, TimeOpts);
 
     callWithDynoStats(
       [this,&Pass] {
