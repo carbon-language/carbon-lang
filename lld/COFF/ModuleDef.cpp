@@ -279,7 +279,6 @@ private:
   Lexer Lex;
   Token Tok;
   std::vector<Token> Stack;
-  StringSaver *Alloc;
 };
 
 } // anonymous namespace
