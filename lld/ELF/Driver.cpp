@@ -222,9 +222,6 @@ static void checkOptions(opt::InputArgList &Args) {
   if (Config->EMachine == EM_MIPS && Config->GnuHash)
     error("the .gnu.hash section is not compatible with the MIPS target.");
 
-  if (Config->EMachine == EM_AMDGPU && !Config->Entry.empty())
-    error("-e option is not valid for AMDGPU.");
-
   if (Config->Pie && Config->Shared)
     error("-shared and -pie may not be used together");
 
@@ -772,11 +769,10 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
 
-  // Use default entry point name if -e was missing. AMDGPU binaries
-  // have no entries. For some reason, MIPS' entry point name is
+  // Use default entry point name if no name was given via the command
+  // line nor linker scripts. For some reason, MIPS entry point name is
   // different from others.
-  if (Config->Entry.empty() && !Config->Relocatable &&
-      Config->EMachine != EM_AMDGPU)
+  if (Config->Entry.empty() && !Config->Relocatable)
     Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
 
   // Handle --trace-symbol.
