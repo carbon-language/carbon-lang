@@ -1327,9 +1327,9 @@ static void updateAArch64Addr(uint8_t *L, uint64_t Imm) {
   write32le(L, (read32le(L) & ~Mask) | ImmLo | ImmHi);
 }
 
-// Return the bits [Start, End] from Val shifted Start bits.  For instance,
-// getBits<4,8>(0xF0) returns 0xF.
-template <uint8_t Start, uint8_t End> static uint64_t getBits(uint64_t Val) {
+// Return the bits [Start, End] from Val shifted Start bits.
+// For instance, getBits(0xF0, 4, 8) returns 0xF.
+static uint64_t getBits(uint64_t Val, int Start, int End) {
   uint64_t Mask = ((uint64_t)1 << (End + 1 - Start)) - 1;
   return (Val >> Start) & Mask;
 }
@@ -1387,19 +1387,19 @@ void AArch64TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
     or32le(Loc, (Val & 0xFF8) << 7);
     break;
   case R_AARCH64_LDST8_ABS_LO12_NC:
-    updateAArch64LdStrAdd(Loc, getBits<0, 11>(Val));
+    updateAArch64LdStrAdd(Loc, getBits(Val, 0, 11));
     break;
   case R_AARCH64_LDST16_ABS_LO12_NC:
-    updateAArch64LdStrAdd(Loc, getBits<1, 11>(Val));
+    updateAArch64LdStrAdd(Loc, getBits(Val, 1, 11));
     break;
   case R_AARCH64_LDST32_ABS_LO12_NC:
-    updateAArch64LdStrAdd(Loc, getBits<2, 11>(Val));
+    updateAArch64LdStrAdd(Loc, getBits(Val, 2, 11));
     break;
   case R_AARCH64_LDST64_ABS_LO12_NC:
-    updateAArch64LdStrAdd(Loc, getBits<3, 11>(Val));
+    updateAArch64LdStrAdd(Loc, getBits(Val, 3, 11));
     break;
   case R_AARCH64_LDST128_ABS_LO12_NC:
-    updateAArch64LdStrAdd(Loc, getBits<4, 11>(Val));
+    updateAArch64LdStrAdd(Loc, getBits(Val, 4, 11));
     break;
   case R_AARCH64_MOVW_UABS_G0_NC:
     or32le(Loc, (Val & 0xFFFF) << 5);
