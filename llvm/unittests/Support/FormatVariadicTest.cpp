@@ -28,10 +28,10 @@ using detail::uses_format_member;
 static_assert(uses_format_member<Format>::value, "");
 static_assert(uses_format_member<Format &>::value, "");
 static_assert(uses_format_member<Format &&>::value, "");
-static_assert(not uses_format_member<const Format>::value, "");
-static_assert(not uses_format_member<const Format &>::value, "");
-static_assert(not uses_format_member<const volatile Format>::value, "");
-static_assert(not uses_format_member<const volatile Format &>::value, "");
+static_assert(!uses_format_member<const Format>::value, "");
+static_assert(!uses_format_member<const Format &>::value, "");
+static_assert(!uses_format_member<const volatile Format>::value, "");
+static_assert(!uses_format_member<const volatile Format &>::value, "");
 
 static_assert(uses_format_member<ConstFormat>::value, "");
 static_assert(uses_format_member<ConstFormat &>::value, "");
