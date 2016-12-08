@@ -755,11 +755,8 @@ static uint64_t getImageBase(opt::InputArgList &Args) {
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
   elf::Symtab<ELFT>::X = &Symtab;
-
-  std::unique_ptr<TargetInfo> TI(createTarget());
-  Target = TI.get();
-  LinkerScript<ELFT> LS;
-  ScriptBase = Script<ELFT>::X = &LS;
+  Target = createTarget();
+  ScriptBase = Script<ELFT>::X = make<LinkerScript<ELFT>>();
 
   Config->Rela =
       ELFT::Is64Bits || Config->EMachine == EM_X86_64 || Config->MipsN32Abi;

@@ -27,6 +27,7 @@
 #include "Target.h"
 #include "Error.h"
 #include "InputFiles.h"
+#include "Memory.h"
 #include "OutputSections.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
@@ -221,34 +222,34 @@ TargetInfo *createTarget() {
   switch (Config->EMachine) {
   case EM_386:
   case EM_IAMCU:
-    return new X86TargetInfo();
+    return make<X86TargetInfo>();
   case EM_AARCH64:
-    return new AArch64TargetInfo();
+    return make<AArch64TargetInfo>();
   case EM_AMDGPU:
-    return new AMDGPUTargetInfo();
+    return make<AMDGPUTargetInfo>();
   case EM_ARM:
-    return new ARMTargetInfo();
+    return make<ARMTargetInfo>();
   case EM_MIPS:
     switch (Config->EKind) {
     case ELF32LEKind:
-      return new MipsTargetInfo<ELF32LE>();
+      return make<MipsTargetInfo<ELF32LE>>();
     case ELF32BEKind:
-      return new MipsTargetInfo<ELF32BE>();
+      return make<MipsTargetInfo<ELF32BE>>();
     case ELF64LEKind:
-      return new MipsTargetInfo<ELF64LE>();
+      return make<MipsTargetInfo<ELF64LE>>();
     case ELF64BEKind:
-      return new MipsTargetInfo<ELF64BE>();
+      return make<MipsTargetInfo<ELF64BE>>();
     default:
       fatal("unsupported MIPS target");
     }
   case EM_PPC:
-    return new PPCTargetInfo();
+    return make<PPCTargetInfo>();
   case EM_PPC64:
-    return new PPC64TargetInfo();
+    return make<PPC64TargetInfo>();
   case EM_X86_64:
     if (Config->EKind == ELF32LEKind)
-      return new X86_64TargetInfo<ELF32LE>();
-    return new X86_64TargetInfo<ELF64LE>();
+      return make<X86_64TargetInfo<ELF32LE>>();
+    return make<X86_64TargetInfo<ELF64LE>>();
   }
   fatal("unknown target machine");
 }
