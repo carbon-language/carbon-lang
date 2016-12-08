@@ -83,6 +83,12 @@
 
 # ENTRY-SCRIPT: Entry: 0x1
 
+# RUN: echo "ENTRY(no_such_symbol);" > %t.script
+# RUN: ld.lld -o %t2 %t.script %t 2>&1 | \
+# RUN:   FileCheck -check-prefix=ENTRY-MISSING %s
+
+# ENTRY-MISSING: warning: cannot find entry symbol no_such_symbol
+
 # RUN: echo "OUTPUT_FORMAT(elf64-x86-64) /*/*/ GROUP(\"%t\" )" > %t.script
 # RUN: ld.lld -o %t2 %t.script
 # RUN: llvm-readobj %t2 > /dev/null

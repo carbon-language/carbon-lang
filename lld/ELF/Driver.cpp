@@ -570,7 +570,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->SortSection = getSortKind(Args);
   Config->Target2 = getTarget2Option(Args);
   Config->UnresolvedSymbols = getUnresolvedSymbolOption(Args);
-  Config->WarnMissingEntry = (Args.hasArg(OPT_entry) || !Config->Shared);
 
   // --omagic is an option to create old-fashioned executables in which
   // .text segments are writable. Today, the option is still in use to
@@ -779,6 +778,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   // Use default entry point name if no name was given via the command
   // line nor linker scripts. For some reason, MIPS entry point name is
   // different from others.
+  Config->WarnMissingEntry = (!Config->Entry.empty() || !Config->Shared);
   if (Config->Entry.empty() && !Config->Relocatable)
     Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
 
