@@ -1396,8 +1396,8 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
               break;
         }
 
-        // undef >>a X -> all ones
-        markForcedConstant(&I, Constant::getAllOnesValue(ITy));
+        // undef >>a X -> 0
+        markForcedConstant(&I, Constant::getNullValue(ITy));
         return true;
       case Instruction::LShr:
       case Instruction::Shl:
