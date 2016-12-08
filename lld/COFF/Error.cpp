@@ -14,6 +14,10 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
 
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#endif
+
 using namespace llvm;
 
 namespace lld {
@@ -29,7 +33,10 @@ void fatal(const Twine &Msg) {
   }
 
   errs() << Msg << "\n";
-  exit(1);
+
+  outs().flush();
+  errs().flush();
+  _exit(1);
 }
 
 void fatal(std::error_code EC, const Twine &Msg) {

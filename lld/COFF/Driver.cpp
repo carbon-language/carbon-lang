@@ -15,6 +15,7 @@
 #include "Symbols.h"
 #include "Writer.h"
 #include "lld/Driver/Driver.h"
+#include "lld/Support/Memory.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/LibDriver/LibDriver.h"
@@ -43,10 +44,8 @@ Configuration *Config;
 LinkerDriver *Driver;
 
 bool link(llvm::ArrayRef<const char *> Args) {
-  Configuration C;
-  LinkerDriver D;
-  Config = &C;
-  Driver = &D;
+  Config = make<Configuration>();
+  Driver = make<LinkerDriver>();
   Driver->link(Args);
   return true;
 }
@@ -69,7 +68,7 @@ MemoryBufferRef LinkerDriver::openFile(StringRef Path) {
   return MBRef;
 }
 
-static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
+static InputFile *createFile(MemoryBufferRef MB) {
   if (Driver->Cpio)
     Driver->Cpio->append(relativeToRoot(MB.getBufferIdentifier()),
                          MB.getBuffer());
@@ -77,15 +76,15 @@ static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
   // File type is detected by contents, not by file extension.
   file_magic Magic = identify_magic(MB.getBuffer());
   if (Magic == file_magic::archive)
-    return std::unique_ptr<InputFile>(new ArchiveFile(MB));
+    return make<ArchiveFile>(MB);
   if (Magic == file_magic::bitcode)
-    return std::unique_ptr<InputFile>(new BitcodeFile(MB));
+    return make<BitcodeFile>(MB);
   if (Magic == file_magic::coff_cl_gl_object)
     fatal(MB.getBufferIdentifier() + ": is not a native COFF file. "
           "Recompile without /GL");
   if (Config->OutputFile == "")
     Config->OutputFile = getOutputPath(MB.getBufferIdentifier());
-  return std::unique_ptr<InputFile>(new ObjectFile(MB));
+  return make<ObjectFile>(MB);
 }
 
 static bool isDecorated(StringRef Sym) {
@@ -572,7 +571,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Determine machine type and check if all object files are
   // for the same CPU type. Note that this needs to be done before
   // any call to mangle().
-  for (std::unique_ptr<InputFile> &File : Symtab.getFiles()) {
+  for (InputFile *File : Symtab.getFiles()) {
     MachineTypes MT = File->getMachineType();
     if (MT == IMAGE_FILE_MACHINE_UNKNOWN)
       continue;
@@ -581,7 +580,7 @@ void LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       continue;
     }
     if (Config->Machine != MT)
-      fatal(toString(File.get()) + ": machine type " + machineToStr(MT) +
+      fatal(toString(File) + ": machine type " + machineToStr(MT) +
             " conflicts with " + machineToStr(Config->Machine));
   }
   if (Config->Machine == IMAGE_FILE_MACHINE_UNKNOWN) {

@@ -24,15 +24,14 @@ using namespace llvm;
 namespace lld {
 namespace coff {
 
-void SymbolTable::addFile(std::unique_ptr<InputFile> FileP) {
+void SymbolTable::addFile(InputFile *File) {
 #if LLVM_ENABLE_THREADS
   std::launch Policy = std::launch::async;
 #else
   std::launch Policy = std::launch::deferred;
 #endif
 
-  InputFile *File = FileP.get();
-  Files.push_back(std::move(FileP));
+  Files.push_back(File);
   if (auto *F = dyn_cast<ArchiveFile>(File)) {
     ArchiveQueue.push_back(
         std::async(Policy, [=]() { F->parse(); return F; }));
@@ -156,11 +155,11 @@ void SymbolTable::reportRemainingUndefines(bool Resolve) {
   for (Undefined *U : Config->GCRoot)
     if (Undefs.count(U->repl()))
       llvm::errs() << "<root>: undefined symbol: " << U->getName() << "\n";
-  for (std::unique_ptr<InputFile> &File : Files)
-    if (!isa<ArchiveFile>(File.get()))
+  for (InputFile *File : Files)
+    if (!isa<ArchiveFile>(File))
       for (SymbolBody *Sym : File->getSymbols())
         if (Undefs.count(Sym->repl()))
-          llvm::errs() << toString(File.get())
+          llvm::errs() << toString(File)
                        << ": undefined symbol: " << Sym->getName() << "\n";
   if (!Config->Force)
     fatal("link failed");
@@ -230,16 +229,16 @@ Symbol *SymbolTable::insert(SymbolBody *New) {
 
 // Reads an archive member file pointed by a given symbol.
 void SymbolTable::addMemberFile(Lazy *Body) {
-  std::unique_ptr<InputFile> File = Body->getMember();
+  InputFile *File = Body->getMember();
 
   // getMember returns an empty buffer if the member was already
   // read from the library.
   if (!File)
     return;
   if (Config->Verbose)
-    llvm::outs() << "Loaded " << toString(File.get()) << " for "
-                 << Body->getName() << "\n";
-  addFile(std::move(File));
+    llvm::outs() << "Loaded " << toString(File) << " for " << Body->getName()
+                 << "\n";
+  addFile(File);
 }
 
 std::vector<Chunk *> SymbolTable::getChunks() {
