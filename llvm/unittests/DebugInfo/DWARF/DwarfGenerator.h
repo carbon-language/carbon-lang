@@ -1,4 +1,4 @@
-//===--- lib/CodeGen/DwarfGenerator.h ---------------------------*- C++ -*-===//
+//===--- unittests/DebugInfo/DWARF/DwarfGenerator.h -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFGENERATOR_H
-#define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFGENERATOR_H
+#ifndef LLVM_UNITTESTS_DEBUG_INFO_DWARF_DWARFGENERATOR_H
+#define LLVM_UNITTESTS_DEBUG_INFO_DWARF_DWARFGENERATOR_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/DIE.h"
@@ -228,4 +228,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_LIB_CODEGEN_ASMPRINTER_DWARFGENERATOR_H
+#endif // LLVM_UNITTESTS_DEBUG_INFO_DWARF_DWARFGENERATOR_H

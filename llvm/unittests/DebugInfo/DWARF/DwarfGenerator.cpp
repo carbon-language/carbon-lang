@@ -1,4 +1,4 @@
-//===--- lib/CodeGen/DwarfGenerator.cpp -------------------------*- C++ -*-===//
+//===--- unittests/DebugInfo/DWARF/DwarfGenerator.cpp -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../lib/CodeGen/AsmPrinter/DwarfStringPool.h"
 #include "DwarfGenerator.h"
-#include "AsmPrinter/DwarfStringPool.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/DIE.h"
