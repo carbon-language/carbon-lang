@@ -622,11 +622,11 @@ std::vector<SymbolBody *> SymbolTable<ELFT>::findAll(SymbolVersion Ver) {
 template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
   for (SymbolVersion &Ver : Config->VersionScriptGlobals) {
     if (Ver.HasWildcard) {
-      for (SymbolBody *B : findAll(Ver.Name))
+      for (SymbolBody *B : findAll(Ver))
         B->symbol()->VersionId = VER_NDX_GLOBAL;
       continue;
     }
-    if (SymbolBody *B = find(Ver.Name))
+    for (SymbolBody *B : find(Ver))
       B->symbol()->VersionId = VER_NDX_GLOBAL;
   }
 }
