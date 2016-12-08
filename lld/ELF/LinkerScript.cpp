@@ -1929,14 +1929,17 @@ std::vector<SymbolVersion> ScriptParser::readSymbols() {
 // Reads an "extern C++" directive, e.g.,
 // "extern "C++" { ns::*; "f(int, double)"; };"
 std::vector<SymbolVersion> ScriptParser::readVersionExtern() {
-  expect("\"C++\"");
+  StringRef Tok = next();
+  bool IsCXX = Tok == "\"C++\"";
+  if (!IsCXX && Tok != "\"C\"")
+    setError("Unknown Language");
   expect("{");
 
   std::vector<SymbolVersion> Ret;
   while (!Error && peek() != "}") {
     StringRef Tok = next();
     bool HasWildcard = !Tok.startswith("\"") && hasWildcard(Tok);
-    Ret.push_back({unquote(Tok), true, HasWildcard});
+    Ret.push_back({unquote(Tok), IsCXX, HasWildcard});
     expect(";");
   }
 
