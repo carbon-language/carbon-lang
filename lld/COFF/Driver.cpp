@@ -15,6 +15,7 @@
 #include "Symbols.h"
 #include "Writer.h"
 #include "lld/Driver/Driver.h"
+#include "lld/Support/Memory.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/LibDriver/LibDriver.h"
@@ -43,10 +44,8 @@ Configuration *Config;
 LinkerDriver *Driver;
 
 bool link(llvm::ArrayRef<const char *> Args) {
-  Configuration C;
-  LinkerDriver D;
-  Config = &C;
-  Driver = &D;
+  Config = make<Configuration>();
+  Driver = make<LinkerDriver>();
   Driver->link(Args);
   return true;
 }
