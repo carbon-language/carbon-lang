@@ -618,7 +618,8 @@ template <class ELFT> void SymbolTable<ELFT>::handleAnonymousVersion() {
       continue;
     }
     for (SymbolBody *B : find(Ver))
-      B->symbol()->VersionId = VER_NDX_GLOBAL;
+      if (B)
+        B->symbol()->VersionId = VER_NDX_GLOBAL;
   }
 }
 
