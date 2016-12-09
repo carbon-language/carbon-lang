@@ -1244,6 +1244,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            NoexceptExpr.isUsable() ?
                                              NoexceptExpr.get() : nullptr,
                                            /*ExceptionSpecTokens*/nullptr,
+                                           /*DeclsInPrototype=*/None,
                                            LParenLoc, FunLocalRangeEnd, D,
                                            TrailingReturnType),
                   Attr, DeclEndLoc);
@@ -1313,6 +1314,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                                /*NumExceptions=*/0,
                                                /*NoexceptExpr=*/nullptr,
                                                /*ExceptionSpecTokens=*/nullptr,
+                                               /*DeclsInPrototype=*/None,
                                                DeclLoc, DeclEndLoc, D,
                                                TrailingReturnType),
                   Attr, DeclEndLoc);
