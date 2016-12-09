@@ -12430,7 +12430,8 @@ static bool isClassCompatTagKind(TagTypeKind Tag)
   return Tag == TTK_Struct || Tag == TTK_Class || Tag == TTK_Interface;
 }
 
-Sema::NonTagKind Sema::getNonTagTypeDeclKind(const Decl *PrevDecl) {
+Sema::NonTagKind Sema::getNonTagTypeDeclKind(const Decl *PrevDecl,
+                                             TagTypeKind TTK) {
   if (isa<TypedefDecl>(PrevDecl))
     return NTK_Typedef;
   else if (isa<TypeAliasDecl>(PrevDecl))
@@ -12441,7 +12442,17 @@ Sema::NonTagKind Sema::getNonTagTypeDeclKind(const Decl *PrevDecl) {
     return NTK_TypeAliasTemplate;
   else if (isa<TemplateTemplateParmDecl>(PrevDecl))
     return NTK_TemplateTemplateArgument;
-  return NTK_Unknown;
+  switch (TTK) {
+  case TTK_Struct:
+  case TTK_Interface:
+  case TTK_Class:
+    return getLangOpts().CPlusPlus ? NTK_NonClass : NTK_NonStruct;
+  case TTK_Union:
+    return NTK_NonUnion;
+  case TTK_Enum:
+    return NTK_NonEnum;
+  }
+  llvm_unreachable("invalid TTK");
 }
 
 /// \brief Determine whether a tag with a given kind is acceptable
@@ -13224,8 +13235,9 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // (non-redeclaration) lookup.
       if ((TUK == TUK_Reference || TUK == TUK_Friend) &&
           !Previous.isForRedeclaration()) {
-        NonTagKind NTK = getNonTagTypeDeclKind(PrevDecl);
-        Diag(NameLoc, diag::err_tag_reference_non_tag) << NTK;
+        NonTagKind NTK = getNonTagTypeDeclKind(PrevDecl, Kind);
+        Diag(NameLoc, diag::err_tag_reference_non_tag) << PrevDecl << NTK
+                                                       << Kind;
         Diag(PrevDecl->getLocation(), diag::note_declared_at);
         Invalid = true;
 
@@ -13236,7 +13248,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
       // Diagnose implicit declarations introduced by elaborated types.
       } else if (TUK == TUK_Reference || TUK == TUK_Friend) {
-        NonTagKind NTK = getNonTagTypeDeclKind(PrevDecl);
+        NonTagKind NTK = getNonTagTypeDeclKind(PrevDecl, Kind);
         Diag(NameLoc, diag::err_tag_reference_conflict) << NTK;
         Diag(PrevDecl->getLocation(), diag::note_previous_decl) << PrevDecl;
         Invalid = true;
