@@ -206,7 +206,8 @@ public:
 
   /// \returns Maximum number of SGPRs that meets given number of waves per
   /// execution unit requirement for given subtarget.
-  unsigned getMaxNumSGPRs(const SISubtarget &ST, unsigned WavesPerEU) const;
+  unsigned getMaxNumSGPRs(const SISubtarget &ST, unsigned WavesPerEU,
+                          bool Addressable) const;
 
   /// \returns Maximum number of SGPRs that meets number of waves per execution
   /// unit requirement for function \p MF, or number of SGPRs explicitly
