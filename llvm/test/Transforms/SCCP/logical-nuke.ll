@@ -30,9 +30,10 @@ define i32 @test4(i32 %X) {
   ret i32 %Y
 }
 
+; X * 0 = 0 even if X is overdefined.
 ; CHECK-LABEL: test5
 ; CHECK: ret i32 0
 define i32 @test5(i32 %foo) {
-  %patatino = mul i32 %foo, undef
+  %patatino = mul i32 %foo, 0
   ret i32 %patatino
 }
