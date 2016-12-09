@@ -1,5 +1,4 @@
 # RUN: llc -O0 -run-pass=avr-expand-pseudo %s -o - 2>&1 | FileCheck %s
-# XFAIL: *
 
 # This test checks the expansion of the 16-bit CPW pseudo instruction.
 
@@ -18,5 +17,8 @@ body: |
 
     ; CHECK-LABEL: test_cpwrdrr
 
-    %r15r14 = CPWRdRr %r15r14, %r21r20, implicit-def %sreg
+    ; CHECK:      CPRdRr %r14, %r20, implicit-def %sreg
+    ; CHECK-NEXT: CPCRdRr %r15, %r21, implicit-def %sreg, implicit killed %sreg
+
+    CPWRdRr %r15r14, %r21r20, implicit-def %sreg
 ...
