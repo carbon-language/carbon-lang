@@ -54,9 +54,8 @@ class ScudoLargeMmapAllocator {
       uptr NewMapBeg = UserBeg - HeadersSize;
       NewMapBeg = RoundDownTo(NewMapBeg, PageSize) - PageSize;
       CHECK_GE(NewMapBeg, MapBeg);
-      uptr NewMapEnd =
-          RoundUpTo(UserBeg + Size - Alignment - AlignedChunkHeaderSize,
-                    PageSize) + PageSize;
+      uptr NewMapSize = RoundUpTo(MapSize - Alignment, PageSize);
+      uptr NewMapEnd = NewMapBeg + NewMapSize;
       CHECK_LE(NewMapEnd, MapEnd);
       // Unmap the extra memory if it's large enough.
       uptr Diff = NewMapBeg - MapBeg;
@@ -66,8 +65,8 @@ class ScudoLargeMmapAllocator {
       if (Diff > PageSize)
         UnmapOrDie(reinterpret_cast<void *>(NewMapEnd), Diff);
       MapBeg = NewMapBeg;
+      MapSize = NewMapSize;
       MapEnd = NewMapEnd;
-      MapSize = NewMapEnd - NewMapBeg;
     }
     uptr UserEnd = UserBeg - AlignedChunkHeaderSize + Size;
     // For larger alignments, Alignment was added by the frontend to Size.
