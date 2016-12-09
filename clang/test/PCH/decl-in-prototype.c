@@ -8,7 +8,7 @@
 // RUN: %clang_cc1 -emit-pch -o %t %s
 // RUN: %clang_cc1 -include-pch %t -emit-llvm -o - %s | FileCheck %s
 
-// CHECK-LABEL: define i32 @main()
+// CHECK-LABEL: define {{.*}}i32 @main()
 // CHECK:   ret i32 1
 
 #ifndef HEADER
