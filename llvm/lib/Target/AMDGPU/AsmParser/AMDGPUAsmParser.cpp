@@ -15,30 +15,45 @@
 #include "Utils/AMDKernelCodeTUtils.h"
 #include "Utils/AMDGPUAsmUtils.h"
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/MC/MCParser/MCAsmParserExtension.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCParser/MCTargetAsmParser.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCSymbolELF.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/Casting.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
-#include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/TargetRegistry.h"
-#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/SMLoc.h"
+#include "llvm/Support/TargetRegistry.h"
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace llvm;
 using namespace llvm::AMDGPU;
@@ -46,7 +61,6 @@ using namespace llvm::AMDGPU;
 namespace {
 
 class AMDGPUAsmParser;
-struct OptionalOperand;
 
 enum RegisterKind { IS_UNKNOWN, IS_VGPR, IS_SGPR, IS_TTMP, IS_SPECIAL };
 
@@ -364,7 +378,6 @@ public:
     const MCSymbolRefExpr *S = cast<MCSymbolRefExpr>(Expr);
     return S->getSymbol().getName();
   }
-
 
   StringRef getToken() const {
     assert(isToken());
@@ -715,13 +728,15 @@ public:
   //bool ProcessInstruction(MCInst &Inst);
 
   OperandMatchResultTy parseIntWithPrefix(const char *Prefix, int64_t &Int);
-  OperandMatchResultTy parseIntWithPrefix(const char *Prefix,
-                                          OperandVector &Operands,
-                                          enum AMDGPUOperand::ImmTy ImmTy = AMDGPUOperand::ImmTyNone,
-                                          bool (*ConvertResult)(int64_t&) = 0);
-  OperandMatchResultTy parseNamedBit(const char *Name, OperandVector &Operands,
-                                     enum AMDGPUOperand::ImmTy ImmTy = AMDGPUOperand::ImmTyNone);
-  OperandMatchResultTy parseStringWithPrefix(StringRef Prefix, StringRef &Value);
+  OperandMatchResultTy
+  parseIntWithPrefix(const char *Prefix, OperandVector &Operands,
+                     enum AMDGPUOperand::ImmTy ImmTy = AMDGPUOperand::ImmTyNone,
+                     bool (*ConvertResult)(int64_t &) = nullptr);
+  OperandMatchResultTy
+  parseNamedBit(const char *Name, OperandVector &Operands,
+                enum AMDGPUOperand::ImmTy ImmTy = AMDGPUOperand::ImmTyNone);
+  OperandMatchResultTy parseStringWithPrefix(StringRef Prefix,
+                                             StringRef &Value);
 
   OperandMatchResultTy parseImm(OperandVector &Operands);
   OperandMatchResultTy parseRegOrImm(OperandVector &Operands);
@@ -808,6 +823,8 @@ struct OptionalOperand {
   bool (*ConvertResult)(int64_t&);
 };
 
+} // end anonymous namespace
+
 // May be called with integer type with equivalent bitwidth.
 static const fltSemantics *getFltSemantics(MVT VT) {
   switch (VT.getSizeInBits()) {
@@ -820,8 +837,6 @@ static const fltSemantics *getFltSemantics(MVT VT) {
   default:
     llvm_unreachable("unsupported fp type");
   }
-}
-
 }
 
 //===----------------------------------------------------------------------===//
@@ -1556,7 +1571,6 @@ bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectVersion() {
 }
 
 bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectISA() {
-
   uint32_t Major;
   uint32_t Minor;
   uint32_t Stepping;
@@ -1572,7 +1586,6 @@ bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectISA() {
                                                       "AMD", "AMDGPU");
     return false;
   }
-
 
   if (ParseDirectiveMajorMinor(Major, Minor))
     return true;
@@ -1624,12 +1637,10 @@ bool AMDGPUAsmParser::ParseAMDKernelCodeTValue(StringRef ID,
 }
 
 bool AMDGPUAsmParser::ParseDirectiveAMDKernelCodeT() {
-
   amd_kernel_code_t Header;
   AMDGPU::initDefaultAMDKernelCodeT(Header, getSTI().getFeatureBits());
 
   while (true) {
-
     // Lex EndOfStatement.  This is in a while loop, because lexing a comment
     // will set the current token to EndOfStatement.
     while(getLexer().is(AsmToken::EndOfStatement))
@@ -1998,7 +2009,6 @@ AMDGPUAsmParser::parseStringWithPrefix(StringRef Prefix, StringRef &Value) {
 
 void AMDGPUAsmParser::cvtDSOffset01(MCInst &Inst,
                                     const OperandVector &Operands) {
-
   OptionalImmIndexMap OptionalIdx;
 
   for (unsigned i = 1, e = Operands.size(); i != e; ++i) {
@@ -2022,7 +2032,6 @@ void AMDGPUAsmParser::cvtDSOffset01(MCInst &Inst,
 }
 
 void AMDGPUAsmParser::cvtDS(MCInst &Inst, const OperandVector &Operands) {
-
   std::map<enum AMDGPUOperand::ImmTy, unsigned> OptionalIdx;
   bool GDSOnly = false;
 
@@ -2517,7 +2526,7 @@ AMDGPUAsmParser::parseSendMsgOp(OperandVector &Operands) {
           }
           Imm16Val |= (StreamId << STREAM_ID_SHIFT_);
         }
-      } while (0);
+      } while (false);
     }
     break;
   }
@@ -3224,24 +3233,24 @@ void AMDGPUAsmParser::cvtSDWA(MCInst &Inst, const OperandVector &Operands,
   if (Inst.getOpcode() != AMDGPU::V_NOP_sdwa) {
     // V_NOP_sdwa has no optional sdwa arguments
     switch (BasicInstType) {
-    case SIInstrFlags::VOP1: {
+    case SIInstrFlags::VOP1:
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaDstSel, 6);
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaDstUnused, 2);
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaSrc0Sel, 6);
       break;
-    }
-    case SIInstrFlags::VOP2: {
+
+    case SIInstrFlags::VOP2:
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaDstSel, 6);
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaDstUnused, 2);
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaSrc0Sel, 6);
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaSrc1Sel, 6);
       break;
-    }
-    case SIInstrFlags::VOPC: {
+
+    case SIInstrFlags::VOPC:
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaSrc0Sel, 6);
       addOptionalImmOperand(Inst, Operands, OptionalIdx, AMDGPUOperand::ImmTySdwaSrc1Sel, 6);
       break;
-    }
+
     default:
       llvm_unreachable("Invalid instruction type. Only VOP1, VOP2 and VOPC allowed");
     }
@@ -3268,7 +3277,6 @@ extern "C" void LLVMInitializeAMDGPUAsmParser() {
 #define GET_REGISTER_MATCHER
 #define GET_MATCHER_IMPLEMENTATION
 #include "AMDGPUGenAsmMatcher.inc"
-
 
 // This fuction should be defined after auto-generated include so that we have
 // MatchClassKind enum defined
