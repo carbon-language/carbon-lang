@@ -1006,8 +1006,8 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   DebugHandlerBase::beginInstruction(MI);
   assert(CurMI);
 
-  // Check if source location changes, but ignore DBG_VALUE locations.
-  if (MI->isDebugValue())
+  // Check if source location changes, but ignore DBG_VALUE and CFI locations.
+  if (MI->isDebugValue() || MI->isCFIInstruction())
     return;
   const DebugLoc &DL = MI->getDebugLoc();
   if (DL == PrevInstLoc)
