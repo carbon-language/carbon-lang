@@ -1,6 +1,6 @@
 ; RUN: opt < %s -sccp -S | FileCheck %s
 
-; Test that SCCP has basic knowledge of when and/or nuke overdefined values.
+; Test that SCCP has basic knowledge of when and/or/mul nuke overdefined values.
 
 ; CHECK-LABEL: test
 ; CHECK: ret i32 0
@@ -28,4 +28,11 @@ define i32 @test3(i32 %X) {
 define i32 @test4(i32 %X) {
   %Y = or i32 %X, undef
   ret i32 %Y
+}
+
+; CHECK-LABEL: test5
+; CHECK: ret i32 0
+define i32 @test5(i32 %foo) {
+  %patatino = mul i32 %foo, undef
+  ret i32 %patatino
 }

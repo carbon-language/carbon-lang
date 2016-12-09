@@ -916,7 +916,8 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
 
   // If this is an AND or OR with 0 or -1, it doesn't matter that the other
   // operand is overdefined.
-  if (I.getOpcode() == Instruction::And || I.getOpcode() == Instruction::Or) {
+  if (I.getOpcode() == Instruction::And || I.getOpcode() == Instruction::Mul ||
+      I.getOpcode() == Instruction::Or) {
     LatticeVal *NonOverdefVal = nullptr;
     if (!V1State.isOverdefined())
       NonOverdefVal = &V1State;
@@ -927,8 +928,10 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
       if (NonOverdefVal->isUnknown())
         return;
 
-      if (I.getOpcode() == Instruction::And) {
+      if (I.getOpcode() == Instruction::And ||
+          I.getOpcode() == Instruction::Mul) {
         // X and 0 = 0
+        // X * 0 = 0
         if (NonOverdefVal->getConstant()->isNullValue())
           return markConstant(IV, &I, NonOverdefVal->getConstant());
       } else {
