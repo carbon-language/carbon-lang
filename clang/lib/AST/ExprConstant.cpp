@@ -76,8 +76,8 @@ namespace {
       const Expr *Inner = Temp->skipRValueSubobjectAdjustments(CommaLHSs,
                                                                Adjustments);
       // Keep any cv-qualifiers from the reference if we generated a temporary
-      // for it.
-      if (Inner != Temp)
+      // for it directly. Otherwise use the type after adjustment.
+      if (!Adjustments.empty())
         return Inner->getType();
     }
 
