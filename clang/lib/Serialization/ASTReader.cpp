@@ -1953,7 +1953,7 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
   }
 
   if (Latest)
-    PP.setLoadedMacroDirective(II, Latest);
+    PP.setLoadedMacroDirective(II, Earliest, Latest);
 }
 
 ASTReader::InputFileInfo
