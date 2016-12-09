@@ -203,7 +203,7 @@ llvm::Error dwarfgen::Generator::init(Triple TheTriple, uint16_t V) {
   MC->setDwarfVersion(Version);
   Asm->setDwarfVersion(Version);
 
-  StringPool = new DwarfStringPool(Allocator, *Asm, StringRef());
+  StringPool = llvm::make_unique<DwarfStringPool>(Allocator, *Asm, StringRef());
 
   return Error::success();
 }
