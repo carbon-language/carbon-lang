@@ -35,9 +35,24 @@ struct Abbrev {
   std::vector<AttributeAbbrev> Attributes;
 };
 
+struct ARangeDescriptor {
+  llvm::yaml::Hex64 Address;
+  uint64_t Length;
+};
+
+struct ARange {
+  uint32_t Length;
+  uint16_t Version;
+  uint32_t CuOffset;
+  uint8_t AddrSize;
+  uint8_t SegSize;
+  std::vector<ARangeDescriptor> Descriptors;
+};
+
 struct Data {
   std::vector<Abbrev> AbbrevDecls;
   std::vector<StringRef> DebugStrings;
+  std::vector<ARange> ARanges;
 
   bool isEmpty() const;
 };
@@ -48,6 +63,8 @@ struct Data {
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::StringRef)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::AttributeAbbrev)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Abbrev)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARangeDescriptor)
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARange)
 
 namespace llvm {
 namespace yaml {
@@ -62,6 +79,14 @@ template <> struct MappingTraits<DWARFYAML::Abbrev> {
 
 template <> struct MappingTraits<DWARFYAML::AttributeAbbrev> {
   static void mapping(IO &IO, DWARFYAML::AttributeAbbrev &AttAbbrev);
+};
+
+template <> struct MappingTraits<DWARFYAML::ARangeDescriptor> {
+  static void mapping(IO &IO, DWARFYAML::ARangeDescriptor &Descriptor);
+};
+
+template <> struct MappingTraits<DWARFYAML::ARange> {
+  static void mapping(IO &IO, DWARFYAML::ARange &Range);
 };
 
 #define HANDLE_DW_TAG(unused, name)                                            \

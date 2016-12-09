@@ -19,6 +19,12 @@
 
 using namespace llvm;
 
+void ZeroFillBytes(raw_ostream &OS, size_t Size) {
+  std::vector<uint8_t> FillData;
+  FillData.insert(FillData.begin(), Size, 0);
+  OS.write(reinterpret_cast<char *>(FillData.data()), Size);
+}
+
 void yaml2debug_str(raw_ostream &OS, const DWARFYAML::Data &DI) {
   for (auto Str : DI.DebugStrings) {
     OS.write(Str.data(), Str.size());
@@ -37,5 +43,26 @@ void yaml2debug_abbrev(raw_ostream &OS, const DWARFYAML::Data &DI) {
     }
     encodeULEB128(0, OS);
     encodeULEB128(0, OS);
+  }
+}
+
+void yaml2debug_aranges(raw_ostream &OS, const DWARFYAML::Data &DI) {
+  for (auto Range : DI.ARanges) {
+    auto HeaderStart = OS.tell();
+    OS.write(reinterpret_cast<char *>(&Range.Length), 4);
+    OS.write(reinterpret_cast<char *>(&Range.Version), 2);
+    OS.write(reinterpret_cast<char *>(&Range.CuOffset), 4);
+    OS.write(reinterpret_cast<char *>(&Range.AddrSize), 1);
+    OS.write(reinterpret_cast<char *>(&Range.SegSize), 1);
+
+    auto HeaderSize = OS.tell() - HeaderStart;
+    auto FirstDescriptor = alignTo(HeaderSize, Range.AddrSize * 2);
+    ZeroFillBytes(OS, FirstDescriptor - HeaderSize);
+
+    for (auto Descriptor : Range.Descriptors) {
+      OS.write(reinterpret_cast<char *>(&Descriptor.Address), Range.AddrSize);
+      OS.write(reinterpret_cast<char *>(&Descriptor.Length), Range.AddrSize);
+    }
+    ZeroFillBytes(OS, Range.AddrSize * 2);
   }
 }

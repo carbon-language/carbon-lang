@@ -42,4 +42,6 @@ void yaml2debug_abbrev(llvm::raw_ostream &OS,
 void yaml2debug_str(llvm::raw_ostream &OS,
                     const llvm::DWARFYAML::Data &DI);
 
+void yaml2debug_aranges(llvm::raw_ostream &OS, const llvm::DWARFYAML::Data &DI);
+
 #endif

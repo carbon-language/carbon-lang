@@ -9,6 +9,7 @@
 
 #include "Error.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugArangeSet.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
 
 using namespace llvm;
@@ -44,10 +45,33 @@ void dumpDebugStrings(DWARFContextInMemory &DCtx, DWARFYAML::Data &Y) {
   }
 }
 
+void dumpDebugARanges(DWARFContextInMemory &DCtx, DWARFYAML::Data &Y) {
+  DataExtractor ArangesData(DCtx.getARangeSection(), DCtx.isLittleEndian(), 0);
+  uint32_t Offset = 0;
+  DWARFDebugArangeSet Set;
+
+  while (Set.extract(ArangesData, &Offset)) {
+    DWARFYAML::ARange Range;
+    Range.Length = Set.getHeader().Length;
+    Range.Version = Set.getHeader().Version;
+    Range.CuOffset = Set.getHeader().CuOffset;
+    Range.AddrSize = Set.getHeader().AddrSize;
+    Range.SegSize = Set.getHeader().SegSize;
+    for (auto Descriptor : Set.descriptors()) {
+      DWARFYAML::ARangeDescriptor Desc;
+      Desc.Address = Descriptor.Address;
+      Desc.Length = Descriptor.Length;
+      Range.Descriptors.push_back(Desc);
+    }
+    Y.ARanges.push_back(Range);
+  }
+}
+
 std::error_code dwarf2yaml(DWARFContextInMemory &DCtx,
                            DWARFYAML::Data &Y) {
   dumpDebugAbbrev(DCtx, Y);
   dumpDebugStrings(DCtx, Y);
+  dumpDebugARanges(DCtx, Y);
 
   return obj2yaml_error::success;
 }
