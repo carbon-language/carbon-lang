@@ -4,6 +4,7 @@
 #
 # CHECK-NOT: .loc 1 0
 # CHECK:     .cfi_def_cfa_offset
+# REQUIRES: debug_frame
 
 --- |
   ; ModuleID = 'no-cfi-loc.ll'
