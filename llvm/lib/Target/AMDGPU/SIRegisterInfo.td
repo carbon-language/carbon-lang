@@ -283,13 +283,13 @@ def TTMP_64 : RegisterClass<"AMDGPU", [v2i32, i64, f64], 32, (add TTMP_64Regs)> 
 }
 
 def SReg_64_XEXEC : RegisterClass<"AMDGPU", [v2i32, i64, f64, i1], 32,
-  (add SGPR_64, VCC, FLAT_SCR)> {
+  (add SGPR_64, VCC, FLAT_SCR, TTMP_64, TBA, TMA)> {
   let CopyCost = 1;
   let AllocationPriority = 2;
 }
 
 def SReg_64 : RegisterClass<"AMDGPU", [v2i32, i64, f64, i1], 32,
-  (add SReg_64_XEXEC, EXEC, TTMP_64, TBA, TMA)> {
+  (add SReg_64_XEXEC, EXEC)> {
   let CopyCost = 1;
   let AllocationPriority = 2;
 }
