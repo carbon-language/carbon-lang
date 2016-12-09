@@ -7,5 +7,5 @@ AlwaysBreakTemplateDeclarations: true
 
 # Disable formatting options which may break tests.
 SortIncludes: false
-ReflowCommends: false
+ReflowComments: false
 ---
