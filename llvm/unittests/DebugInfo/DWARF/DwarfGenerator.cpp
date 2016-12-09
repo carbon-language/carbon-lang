@@ -61,7 +61,8 @@ void dwarfgen::DIE::addAttribute(uint16_t A, dwarf::Form Form,
   auto &DG = CU->getGenerator();
   if (Form == DW_FORM_string) {
     Die->addValue(DG.getAllocator(), static_cast<dwarf::Attribute>(A), Form,
-                  new (DG.getAllocator()) DIEInlineString(String));
+                  new (DG.getAllocator())
+                      DIEInlineString(String, DG.getAllocator()));
   } else {
     Die->addValue(
         DG.getAllocator(), static_cast<dwarf::Attribute>(A), Form,
