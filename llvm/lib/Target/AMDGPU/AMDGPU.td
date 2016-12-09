@@ -363,8 +363,7 @@ def FeatureISAVersion7_0_1 : SubtargetFeatureISAVersion <7,0,1,
 
 def FeatureISAVersion7_0_2 : SubtargetFeatureISAVersion <7,0,2,
   [FeatureSeaIslands,
-   FeatureLDSBankCount16,
-   FeatureXNACK]>;
+   FeatureLDSBankCount16]>;
 
 def FeatureISAVersion8_0_0 : SubtargetFeatureISAVersion <8,0,0,
   [FeatureVolcanicIslands,
