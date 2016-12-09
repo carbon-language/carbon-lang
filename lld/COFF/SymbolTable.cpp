@@ -139,7 +139,7 @@ void SymbolTable::reportRemainingUndefines(bool Resolve) {
         if (!Resolve)
           continue;
         auto *D = cast<Defined>(Imp->Body);
-        auto *S = new (Alloc) DefinedLocalImport(Name, D);
+        auto *S = make<DefinedLocalImport>(Name, D);
         LocalImportChunks.push_back(S->getChunk());
         Sym->Body = S;
         continue;
@@ -148,7 +148,7 @@ void SymbolTable::reportRemainingUndefines(bool Resolve) {
     // Remaining undefined symbols are not fatal if /force is specified.
     // They are replaced with dummy defined symbols.
     if (Config->Force && Resolve)
-      Sym->Body = new (Alloc) DefinedAbsolute(Name, 0);
+      Sym->Body = make<DefinedAbsolute>(Name, 0);
     Undefs.insert(Sym->Body);
   }
   if (Undefs.empty())
@@ -223,7 +223,7 @@ Symbol *SymbolTable::insert(SymbolBody *New) {
     New->setBackref(Sym);
     return Sym;
   }
-  Sym = new (Alloc) Symbol(New);
+  Sym = make<Symbol>(New);
   New->setBackref(Sym);
   return Sym;
 }
@@ -299,7 +299,7 @@ void SymbolTable::mangleMaybe(Undefined *U) {
 }
 
 Undefined *SymbolTable::addUndefined(StringRef Name) {
-  auto *New = new (Alloc) Undefined(Name);
+  auto *New = make<Undefined>(Name);
   addSymbol(New);
   if (auto *U = dyn_cast<Undefined>(New->repl()))
     return U;
@@ -307,13 +307,13 @@ Undefined *SymbolTable::addUndefined(StringRef Name) {
 }
 
 DefinedRelative *SymbolTable::addRelative(StringRef Name, uint64_t VA) {
-  auto *New = new (Alloc) DefinedRelative(Name, VA);
+  auto *New = make<DefinedRelative>(Name, VA);
   addSymbol(New);
   return New;
 }
 
 DefinedAbsolute *SymbolTable::addAbsolute(StringRef Name, uint64_t VA) {
-  auto *New = new (Alloc) DefinedAbsolute(Name, VA);
+  auto *New = make<DefinedAbsolute>(Name, VA);
   addSymbol(New);
   return New;
 }

@@ -119,7 +119,6 @@ private:
 
   std::vector<BitcodeFile *> BitcodeFiles;
   std::vector<SmallString<0>> Objs;
-  llvm::BumpPtrAllocator Alloc;
 };
 
 } // namespace coff
