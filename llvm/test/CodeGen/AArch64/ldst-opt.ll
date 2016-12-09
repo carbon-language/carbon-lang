@@ -1370,8 +1370,11 @@ entry:
 define void @merge_zr32_2_offset(i32* %p) {
 ; CHECK-LABEL: merge_zr32_2_offset:
 ; CHECK: // %entry
-; CHECK-NEXT: stp xzr, xzr, [x{{[0-9]+}}, #504]
+; CHECK-NEXT: str	xzr, [x0, #512]
+; CHECK-NEXT: str	xzr, [x0, #504]
 ; CHECK-NEXT: ret
+; We should be able to merge these stores
+; CHECKFIXME-NEXT: stp xzr, xzr, [x{{[0-9]+}}, #504]
 entry:
   %p0 = getelementptr i32, i32* %p, i32 126
   store i32 0, i32* %p0
@@ -1411,8 +1414,8 @@ entry:
 define void @merge_zr32_3(i32* %p) {
 ; CHECK-LABEL: merge_zr32_3:
 ; CHECK: // %entry
-; CHECK-NEXT: movi v[[REG:[0-9]]].2d, #0000000000000000
-; CHECK-NEXT: stp q[[REG]], q[[REG]], [x{{[0-9]+}}]
+; CHECK-NEXT:	stp	xzr, xzr, [x[[REG:[0-9]+]]]
+; CHECK-NEXT:	stp	xzr, xzr, [x[[REG]], #16]
 ; CHECK-NEXT: ret
 entry:
   store i32 0, i32* %p
@@ -1507,8 +1510,8 @@ entry:
 define void @merge_zr64_2(i64* %p) {
 ; CHECK-LABEL: merge_zr64_2:
 ; CHECK: // %entry
-; CHECK-NEXT: movi v[[REG:[0-9]]].2d, #0000000000000000
-; CHECK-NEXT: stp q[[REG]], q[[REG]], [x{{[0-9]+}}]
+; CHECK-NEXT:	stp	xzr, xzr, [x[[REG:[0-9]+]]]
+; CHECK-NEXT:	stp	xzr, xzr, [x[[REG]], #16]
 ; CHECK-NEXT: ret
 entry:
   store i64 0, i64* %p
