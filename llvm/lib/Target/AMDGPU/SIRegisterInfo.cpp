@@ -1178,11 +1178,19 @@ unsigned SIRegisterInfo::getNumAddressableSGPRs(const SISubtarget &ST) const {
   return 104;
 }
 
-unsigned SIRegisterInfo::getNumReservedSGPRs(const SISubtarget &ST) const {
+unsigned SIRegisterInfo::getNumReservedSGPRs(const SISubtarget &ST,
+                                             const SIMachineFunctionInfo &MFI) const {
+  if (MFI.hasFlatScratchInit()) {
+    if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+      return 6; // FLAT_SCRATCH, XNACK, VCC (in that order)
+
+    if (ST.getGeneration() == AMDGPUSubtarget::SEA_ISLANDS)
+      return 4; // FLAT_SCRATCH, VCC (in that order)
+  }
+
   if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
-    return 6; // VCC, FLAT_SCRATCH, XNACK.
-  if (ST.getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS)
-    return 4; // VCC, FLAT_SCRATCH.
+    return 4; // XNACK, VCC (in that order)
+
   return 2; // VCC.
 }
 
@@ -1254,7 +1262,7 @@ unsigned SIRegisterInfo::getMaxNumSGPRs(const MachineFunction &MF) const {
       F, "amdgpu-num-sgpr", MaxNumSGPRs);
 
     // Make sure requested value does not violate subtarget's specifications.
-    if (Requested && (Requested <= getNumReservedSGPRs(ST)))
+    if (Requested && (Requested <= getNumReservedSGPRs(ST, MFI)))
       Requested = 0;
 
     // If more SGPRs are required to support the input user/system SGPRs,
@@ -1283,7 +1291,8 @@ unsigned SIRegisterInfo::getMaxNumSGPRs(const MachineFunction &MF) const {
   if (ST.hasSGPRInitBug())
     MaxNumSGPRs = SISubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
 
-  return std::min(MaxNumSGPRs - getNumReservedSGPRs(ST), MaxNumAddressableSGPRs);
+  return std::min(MaxNumSGPRs - getNumReservedSGPRs(ST, MFI),
+                  MaxNumAddressableSGPRs);
 }
 
 unsigned SIRegisterInfo::getNumDebuggerReservedVGPRs(

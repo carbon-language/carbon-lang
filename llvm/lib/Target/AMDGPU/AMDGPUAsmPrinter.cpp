@@ -391,7 +391,10 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
         case AMDGPU::FLAT_SCR:
         case AMDGPU::FLAT_SCR_LO:
         case AMDGPU::FLAT_SCR_HI:
-          FlatUsed = true;
+          // Even if FLAT_SCRATCH is implicitly used, it has no effect if flat
+          // instructions aren't used to access the scratch buffer.
+          if (MFI->hasFlatScratchInit())
+            FlatUsed = true;
           continue;
 
         case AMDGPU::TBA:

@@ -22,6 +22,7 @@ namespace llvm {
 
 class SISubtarget;
 class MachineRegisterInfo;
+class SIMachineFunctionInfo;
 
 class SIRegisterInfo final : public AMDGPURegisterInfo {
 private:
@@ -198,7 +199,8 @@ public:
   unsigned getNumAddressableSGPRs(const SISubtarget &ST) const;
 
   /// \returns Number of reserved SGPRs supported by the subtarget.
-  unsigned getNumReservedSGPRs(const SISubtarget &ST) const;
+  unsigned getNumReservedSGPRs(const SISubtarget &ST,
+                               const SIMachineFunctionInfo &MFI) const;
 
   /// \returns Minimum number of SGPRs that meets given number of waves per
   /// execution unit requirement for given subtarget.
