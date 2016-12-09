@@ -510,13 +510,13 @@ void fixupExports() {
   }
 
   for (Export &E : Config->Exports) {
+    SymbolBody *Sym = E.Sym;
     if (!E.ForwardTo.empty()) {
       E.SymbolName = E.Name;
-    } else if (Undefined *U = cast_or_null<Undefined>(E.Sym->WeakAlias)) {
-      E.SymbolName = U->getName();
-    } else {
-      E.SymbolName = E.Sym->getName();
-    }
+    } else if (auto *U = dyn_cast<Undefined>(Sym))
+      if (U->WeakAlias)
+        Sym = U->WeakAlias;
+    E.SymbolName = Sym->getName();
   }
 
   for (Export &E : Config->Exports) {
