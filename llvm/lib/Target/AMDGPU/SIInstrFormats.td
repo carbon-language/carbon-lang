@@ -229,7 +229,19 @@ let Uses = [EXEC] in {
 
 class VINTRPCommon <dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern> {
-  let mayLoad = 1;
+
+  // VINTRP instructions read parameter values from LDS, but these parameter
+  // values are stored outside of the LDS memory that is allocated to the
+  // shader for general purpose use.
+  //
+  // While it may be possible for ds_read/ds_write instructions to access
+  // the parameter values in LDS, this would essentially be an out-of-bounds
+  // memory access which we consider to be undefined behavior.
+  //
+  // So even though these instructions read memory, this memory is outside the
+  // addressable memory space for the shader, and we consider these instructions
+  // to be readnone.
+  let mayLoad = 0;
   let mayStore = 0;
   let hasSideEffects = 0;
 }
