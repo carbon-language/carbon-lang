@@ -534,6 +534,34 @@ define <16 x float> @stack_fold_vpermi2ps(<16 x i32> %x0, <16 x float> %x1, <16 
 }
 declare <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32>, <16 x float>, <16 x float>, i16)
 
+define <16 x float> @stack_fold_vpermi2ps_mask(<16 x float> %x0, <16 x i32>* %x1, <16 x float> %x2, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_vpermi2ps_mask
+  ;CHECK:       vpermi2ps {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %x1b = load <16 x i32>, <16 x i32>* %x1
+  %res = call <16 x float> @llvm.x86.avx512.mask.vpermi2var.ps.512(<16 x float> %x0, <16 x i32> %x1b, <16 x float> %x2, i16 %mask)
+  ret <16 x float> %res
+}
+
+define <16 x float> @stack_fold_vpermt2ps_mask(<16 x i32>* %x0, <16 x float> %x1, <16 x float> %x2, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_vpermt2ps_mask
+  ;CHECK:       vpermt2ps {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %x0b = load <16 x i32>, <16 x i32>* %x0
+  %res = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %x0b, <16 x float> %x1, <16 x float> %x2, i16 %mask)
+  ret <16 x float> %res
+}
+
+define <16 x float> @stack_fold_vpermt2ps_maskz(<16 x i32>* %x0, <16 x float> %x1, <16 x float> %x2, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_vpermt2ps_maskz
+  ;CHECK:       vpermt2ps {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %x0b = load <16 x i32>, <16 x i32>* %x0
+  %res = call <16 x float> @llvm.x86.avx512.maskz.vpermt2var.ps.512(<16 x i32> %x0b, <16 x float> %x1, <16 x float> %x2, i16 %mask)
+  ret <16 x float> %res
+}
+declare <16 x float> @llvm.x86.avx512.maskz.vpermt2var.ps.512(<16 x i32>, <16 x float>, <16 x float>, i16)
+
 define <8 x double> @stack_fold_vpermt2pd(<8 x double> %x0, <8 x i64> %x1, <8 x double> %x2) {
   ;CHECK-LABEL: stack_fold_vpermt2pd
   ;CHECK:       vpermt2pd {{-?[0-9]*}}(%rsp), %zmm1, %zmm0 # 64-byte Folded Reload
