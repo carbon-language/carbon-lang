@@ -1188,7 +1188,7 @@ unsigned SIRegisterInfo::getNumReservedSGPRs(const SISubtarget &ST,
       return 4; // FLAT_SCRATCH, VCC (in that order)
   }
 
-  if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+  if (ST.isXNACKEnabled())
     return 4; // XNACK, VCC (in that order)
 
   return 2; // VCC.

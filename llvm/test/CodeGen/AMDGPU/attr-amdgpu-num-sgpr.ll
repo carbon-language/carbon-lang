@@ -9,10 +9,10 @@
 ; FIXME: Should be ablo to skip this copying of the private segment
 ; buffer because all the SGPR spills are to VGPRs.
 
-; ALL: s_mov_b64 s[6:7], s[2:3]
-; ALL: s_mov_b64 s[4:5], s[0:1]
+; ALL: s_mov_b64 s[10:11], s[2:3]
+; ALL: s_mov_b64 s[8:9], s[0:1]
 ; ALL: SGPRBlocks: 1
-; ALL: NumSGPRsForWavesPerEU: 12
+; ALL: NumSGPRsForWavesPerEU: 14
 define void @max_12_sgprs(i32 addrspace(1)* %out1,
 
                           i32 addrspace(1)* %out2,
@@ -46,9 +46,9 @@ define void @max_12_sgprs(i32 addrspace(1)* %out1,
 ; TOSGPR: SGPRBlocks: 1
 ; TOSGPR: NumSGPRsForWavesPerEU: 16
 
-; TOSMEM: s_mov_b64 s[6:7], s[2:3]
-; TOSMEM: s_mov_b32 s9, s13
-; TOSMEM: s_mov_b64 s[4:5], s[0:1]
+; TOSMEM: s_mov_b64 s[10:11], s[2:3]
+; TOSMEM: s_mov_b64 s[8:9], s[0:1]
+; TOSMEM: s_mov_b32 s7, s13
 
 ; TOSMEM: SGPRBlocks: 1
 ; TOSMEM: NumSGPRsForWavesPerEU: 16
