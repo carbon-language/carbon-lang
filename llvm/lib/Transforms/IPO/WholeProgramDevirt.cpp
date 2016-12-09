@@ -293,7 +293,7 @@ struct DevirtModule {
   void buildTypeIdentifierMap(
       std::vector<VTableBits> &Bits,
       DenseMap<Metadata *, std::set<TypeMemberInfo>> &TypeIdMap);
-  Constant *getValueAtOffset(Constant *I, uint64_t Offset);
+  Constant *getPointerAtOffset(Constant *I, uint64_t Offset);
   bool
   tryFindVirtualCallTargets(std::vector<VirtualCallTarget> &TargetsForSlot,
                             const std::set<TypeMemberInfo> &TypeMemberInfos,
@@ -383,36 +383,36 @@ void DevirtModule::buildTypeIdentifierMap(
   }
 }
 
-Constant *DevirtModule::getValueAtOffset(Constant *I, uint64_t Offset) {
+Constant *DevirtModule::getPointerAtOffset(Constant *I, uint64_t Offset) {
+  if (I->getType()->isPointerTy()) {
+    if (Offset == 0)
+      return I;
+    return nullptr;
+  }
+
   const DataLayout &DL = M.getDataLayout();
-  unsigned Op;
 
   if (auto *C = dyn_cast<ConstantStruct>(I)) {
     const StructLayout *SL = DL.getStructLayout(C->getType());
-
     if (Offset >= SL->getSizeInBytes())
       return nullptr;
 
-    Op = SL->getElementContainingOffset(Offset);
-
-    if (Offset != SL->getElementOffset(Op))
-      return nullptr;
-
-  } else if (auto *C = dyn_cast<ConstantArray>(I)) {
+    unsigned Op = SL->getElementContainingOffset(Offset);
+    return getPointerAtOffset(cast<Constant>(I->getOperand(Op)),
+                              Offset - SL->getElementOffset(Op));
+  }
+  if (auto *C = dyn_cast<ConstantArray>(I)) {
     ArrayType *VTableTy = C->getType();
     uint64_t ElemSize = DL.getTypeAllocSize(VTableTy->getElementType());
 
-    if (Offset % ElemSize != 0)
-      return nullptr;
-
-    Op = Offset / ElemSize;
-
+    unsigned Op = Offset / ElemSize;
     if (Op >= C->getNumOperands())
       return nullptr;
-  } else
-    return nullptr;
 
-  return cast<Constant>(I->getOperand(Op));
+    return getPointerAtOffset(cast<Constant>(I->getOperand(Op)),
+                              Offset % ElemSize);
+  }
+  return nullptr;
 }
 
 bool DevirtModule::tryFindVirtualCallTargets(
@@ -422,13 +422,12 @@ bool DevirtModule::tryFindVirtualCallTargets(
     if (!TM.Bits->GV->isConstant())
       return false;
 
-    Constant *I = TM.Bits->GV->getInitializer();
-    Value *V = getValueAtOffset(I, TM.Offset + ByteOffset);
-
-    if (!V)
+    Constant *Ptr = getPointerAtOffset(TM.Bits->GV->getInitializer(),
+                                       TM.Offset + ByteOffset);
+    if (!Ptr)
       return false;
 
-    auto Fn = dyn_cast<Function>(V->stripPointerCasts());
+    auto Fn = dyn_cast<Function>(Ptr->stripPointerCasts());
     if (!Fn)
       return false;
 
