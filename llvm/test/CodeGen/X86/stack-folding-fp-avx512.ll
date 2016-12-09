@@ -606,5 +606,127 @@ define <16 x float> @stack_fold_permps(<16 x i32> %a0, <16 x float> %a1) {
 }
 declare <16 x float> @llvm.x86.avx512.mask.permvar.sf.512(<16 x float>, <16 x i32>, <16 x float>, i16) nounwind readonly
 
+define <8 x double> @stack_fold_permilpd_zmm(<8 x double> %a0) {
+  ;CHECK-LABEL: stack_fold_permilpd_zmm
+  ;CHECK:   vpermilpd $85, {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = shufflevector <8 x double> %a0, <8 x double> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  ret <8 x double> %2
+}
+
+define <8 x double> @stack_fold_permilpd_zmm_mask(<8 x double>* %passthru, <8 x double> %a0, i8 %mask) {
+  ;CHECK-LABEL: stack_fold_permilpd_zmm_mask
+  ;CHECK:   vpermilpd $85, {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = shufflevector <8 x double> %a0, <8 x double> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %3 = bitcast i8 %mask to <8 x i1>
+  ; load needed to keep the operation from being scheduled above the asm block
+  %4 = load <8 x double>, <8 x double>* %passthru
+  %5 = select <8 x i1> %3, <8 x double> %2, <8 x double> %4
+  ret <8 x double> %5
+}
+
+define <8 x double> @stack_fold_permilpd_zmm_maskz(<8 x double> %a0, i8 %mask) {
+  ;CHECK-LABEL: stack_fold_permilpd_zmm_maskz
+  ;CHECK:   vpermilpd $85, {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = shufflevector <8 x double> %a0, <8 x double> undef, <8 x i32> <i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6>
+  %3 = bitcast i8 %mask to <8 x i1>
+  %4 = select <8 x i1> %3, <8 x double> %2, <8 x double> zeroinitializer
+  ret <8 x double> %4
+}
+
+define <8 x double> @stack_fold_permilpdvar_zmm(<8 x double> %a0, <8 x i64> %a1) {
+  ;CHECK-LABEL: stack_fold_permilpdvar_zmm
+  ;CHECK:       vpermilpd {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <8 x double> @llvm.x86.avx512.mask.vpermilvar.pd.512(<8 x double> %a0, <8 x i64> %a1, <8 x double> undef, i8 -1)
+  ret <8 x double> %2
+}
+declare <8 x double> @llvm.x86.avx512.mask.vpermilvar.pd.512(<8 x double>, <8 x i64>, <8 x double>, i8) nounwind readnone
+
+define <8 x double> @stack_fold_permilpdvar_zmm_mask(<8 x double>* %passthru, <8 x double> %a0, <8 x i64> %a1, i8 %mask) {
+  ;CHECK-LABEL: stack_fold_permilpdvar_zmm_mask
+  ;CHECK:       vpermilpd {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <8 x double> @llvm.x86.avx512.mask.vpermilvar.pd.512(<8 x double> %a0, <8 x i64> %a1, <8 x double> undef, i8 -1)
+  %3 = bitcast i8 %mask to <8 x i1>
+  ; load needed to keep the operation from being scheduled above the asm block
+  %4 = load <8 x double>, <8 x double>* %passthru
+  %5 = select <8 x i1> %3, <8 x double> %2, <8 x double> %4
+  ret <8 x double> %5
+}
+
+define <8 x double> @stack_fold_permilpdvar_zmm_maskz(<8 x double> %a0, <8 x i64> %a1, i8 %mask) {
+  ;CHECK-LABEL: stack_fold_permilpdvar_zmm_maskz
+  ;CHECK:       vpermilpd {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <8 x double> @llvm.x86.avx512.mask.vpermilvar.pd.512(<8 x double> %a0, <8 x i64> %a1, <8 x double> undef, i8 -1)
+  %3 = bitcast i8 %mask to <8 x i1>
+  %4 = select <8 x i1> %3, <8 x double> %2, <8 x double> zeroinitializer
+  ret <8 x double> %4
+}
+
+define <16 x float> @stack_fold_permilps_zmm(<16 x float> %a0) {
+  ;CHECK-LABEL: stack_fold_permilps_zmm
+  ;CHECK:   vpermilps $27, {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = shufflevector <16 x float> %a0, <16 x float> undef, <16 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4, i32 11, i32 10, i32 9, i32 8, i32 15, i32 14, i32 13, i32 12>
+  ret <16 x float> %2
+}
+
+define <16 x float> @stack_fold_permilps_zmm_mask(<16 x float>* %passthru, <16 x float> %a0, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_permilps_zmm_mask
+  ;CHECK:   vpermilps $27, {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = shufflevector <16 x float> %a0, <16 x float> undef, <16 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4, i32 11, i32 10, i32 9, i32 8, i32 15, i32 14, i32 13, i32 12>
+  %3 = bitcast i16 %mask to <16 x i1>
+  ; load needed to keep the operation from being scheduled above the asm block
+  %4 = load <16 x float>, <16 x float>* %passthru
+  %5 = select <16 x i1> %3, <16 x float> %2, <16 x float> %4
+  ret <16 x float> %5
+}
+
+define <16 x float> @stack_fold_permilps_zmm_maskz(<16 x float> %a0, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_permilps_zmm_maskz
+  ;CHECK:   vpermilps $27, {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm1},~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = shufflevector <16 x float> %a0, <16 x float> undef, <16 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4, i32 11, i32 10, i32 9, i32 8, i32 15, i32 14, i32 13, i32 12>
+  %3 = bitcast i16 %mask to <16 x i1>
+  %4 = select <16 x i1> %3, <16 x float> %2, <16 x float> zeroinitializer
+  ret <16 x float> %4
+}
+
+define <16 x float> @stack_fold_permilpsvar_zmm(<16 x float> %a0, <16 x i32> %a1) {
+  ;CHECK-LABEL: stack_fold_permilpsvar_zmm
+  ;CHECK:       vpermilps {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <16 x float> @llvm.x86.avx512.mask.vpermilvar.ps.512(<16 x float> %a0, <16 x i32> %a1, <16 x float> undef, i16 -1)
+  ret <16 x float> %2
+}
+declare <16 x float> @llvm.x86.avx512.mask.vpermilvar.ps.512(<16 x float>, <16 x i32>, <16 x float>, i16) nounwind readnone
+
+define <16 x float> @stack_fold_permilpsvar_zmm_mask(<16 x float>* %passthru, <16 x float> %a0, <16 x i32> %a1, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_permilpsvar_zmm_mask
+  ;CHECK:       vpermilps {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <16 x float> @llvm.x86.avx512.mask.vpermilvar.ps.512(<16 x float> %a0, <16 x i32> %a1, <16 x float> undef, i16 -1)
+  %3 = bitcast i16 %mask to <16 x i1>
+  ; load needed to keep the operation from being scheduled above the asm block
+  %4 = load <16 x float>, <16 x float>* %passthru
+  %5 = select <16 x i1> %3, <16 x float> %2, <16 x float> %4
+  ret <16 x float> %5
+}
+
+define <16 x float> @stack_fold_permilpsvar_zmm_maskz(<16 x float> %a0, <16 x i32> %a1, i16 %mask) {
+  ;CHECK-LABEL: stack_fold_permilpsvar_zmm_maskz
+  ;CHECK:       vpermilps {{-?[0-9]*}}(%rsp), {{%zmm[0-9][0-9]*}}, {{%zmm[0-9][0-9]*}} {{{%k[0-7]}}} {z} {{.*#+}} 64-byte Folded Reload
+  %1 = tail call <2 x i64> asm sideeffect "nop", "=x,~{xmm2},~{xmm3},~{xmm4},~{xmm5},~{xmm6},~{xmm7},~{xmm8},~{xmm9},~{xmm10},~{xmm11},~{xmm12},~{xmm13},~{xmm14},~{xmm15},~{xmm16},~{xmm17},~{xmm18},~{xmm19},~{xmm20},~{xmm21},~{xmm22},~{xmm23},~{xmm24},~{xmm25},~{xmm26},~{xmm27},~{xmm28},~{xmm29},~{xmm30},~{xmm31},~{flags}"()
+  %2 = call <16 x float> @llvm.x86.avx512.mask.vpermilvar.ps.512(<16 x float> %a0, <16 x i32> %a1, <16 x float> undef, i16 -1)
+  %3 = bitcast i16 %mask to <16 x i1>
+  %4 = select <16 x i1> %3, <16 x float> %2, <16 x float> zeroinitializer
+  ret <16 x float> %4
+}
+
 attributes #0 = { "unsafe-fp-math"="false" }
 attributes #1 = { "unsafe-fp-math"="true" }
