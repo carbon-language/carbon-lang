@@ -1147,12 +1147,9 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, const SDLoc &DL,
     // This situation occurs in MIPS MSA.
 
     SmallVector<SDValue, 8> Ops;
-    for (unsigned i = 0; i < VT.getVectorNumElements(); ++i)
+    for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
       Ops.insert(Ops.end(), EltParts.begin(), EltParts.end());
-
-    SDValue Result = getNode(ISD::BITCAST, DL, VT,
-                             getNode(ISD::BUILD_VECTOR, DL, ViaVecVT, Ops));
-    return Result;
+    return getNode(ISD::BITCAST, DL, VT, getBuildVector(ViaVecVT, DL, Ops));
   }
 
   assert(Elt->getBitWidth() == EltVT.getSizeInBits() &&
@@ -3094,7 +3091,7 @@ static SDValue FoldCONCAT_VECTORS(const SDLoc &DL, EVT VT,
                ? DAG.getZExtOrTrunc(Op, DL, SVT)
                : DAG.getSExtOrTrunc(Op, DL, SVT);
 
-  return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Elts);
+  return DAG.getBuildVector(VT, DL, Elts);
 }
 
 /// Gets or creates the specified node.
@@ -7129,8 +7126,8 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
   for (; i < ResNE; ++i)
     Scalars.push_back(getUNDEF(EltVT));
 
-  return getNode(ISD::BUILD_VECTOR, dl,
-                 EVT::getVectorVT(*getContext(), EltVT, ResNE), Scalars);
+  EVT VecVT = EVT::getVectorVT(*getContext(), EltVT, ResNE);
+  return getBuildVector(VecVT, dl, Scalars);
 }
 
 bool SelectionDAG::areNonVolatileConsecutiveLoads(LoadSDNode *LD,
