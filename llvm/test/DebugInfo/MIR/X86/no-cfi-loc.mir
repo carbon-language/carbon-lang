@@ -4,7 +4,7 @@
 #
 # CHECK-NOT: .loc 1 0
 # CHECK:     .cfi_def_cfa_offset
-# REQUIRES: debug_frame
+# UNSUPPORTED: cygwin,mingw32,win32
 
 --- |
   ; ModuleID = 'no-cfi-loc.ll'
