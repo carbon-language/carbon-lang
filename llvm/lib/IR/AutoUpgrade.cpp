@@ -313,6 +313,10 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "avx512.mask.sub.pd.256" || // Added in 4.0
          Name == "avx512.mask.sub.ps.128" || // Added in 4.0
          Name == "avx512.mask.sub.ps.256" || // Added in 4.0
+         Name == "avx512.mask.vpermilvar.ps.128" || // Added in 4.0
+         Name == "avx512.mask.vpermilvar.ps.256" || // Added in 4.0
+         Name == "avx512.mask.vpermilvar.pd.128" || // Added in 4.0
+         Name == "avx512.mask.vpermilvar.pd.256" || // Added in 4.0
          Name.startswith("avx512.mask.psll.d") || // Added in 4.0
          Name.startswith("avx512.mask.psll.q") || // Added in 4.0
          Name.startswith("avx512.mask.psll.w") || // Added in 4.0
@@ -1658,6 +1662,24 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       Rep = UpgradeX86MaskedShift(Builder, *CI, IID);
     } else if (IsX86 && Name.startswith("avx512.mask.move.s")) {
       Rep = upgradeMaskedMove(Builder, *CI);
+    } else if (IsX86 && Name.startswith("avx512.mask.vpermilvar.")) {
+      Intrinsic::ID IID;
+      if (Name.endswith("ps.128"))
+        IID = Intrinsic::x86_avx_vpermilvar_ps;
+      else if (Name.endswith("pd.128"))
+        IID = Intrinsic::x86_avx_vpermilvar_pd;
+      else if (Name.endswith("ps.256"))
+        IID = Intrinsic::x86_avx_vpermilvar_ps_256;
+      else if (Name.endswith("pd.256"))
+        IID = Intrinsic::x86_avx_vpermilvar_pd_256;
+      else
+        llvm_unreachable("Unexpected vpermilvar intrinsic");
+
+      Function *Intrin = Intrinsic::getDeclaration(F->getParent(), IID);
+      Rep = Builder.CreateCall(Intrin,
+                               { CI->getArgOperand(0), CI->getArgOperand(1) });
+      Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                          CI->getArgOperand(2));
     } else {
       llvm_unreachable("Unknown function for CallInst upgrade.");
     }
