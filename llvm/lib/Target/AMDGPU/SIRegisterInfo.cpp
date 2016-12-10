@@ -1085,19 +1085,6 @@ bool SIRegisterInfo::shouldRewriteCopySrc(
   return getCommonSubClass(DefRC, SrcRC) != nullptr;
 }
 
-bool SIRegisterInfo::opCanUseLiteralConstant(unsigned OpType) const {
-  return OpType == AMDGPU::OPERAND_REG_IMM32_INT ||
-         OpType == AMDGPU::OPERAND_REG_IMM32_FP;
-}
-
-bool SIRegisterInfo::opCanUseInlineConstant(unsigned OpType) const {
-  if (opCanUseLiteralConstant(OpType))
-    return true;
-
-  return OpType == AMDGPU::OPERAND_REG_INLINE_C_INT ||
-         OpType == AMDGPU::OPERAND_REG_INLINE_C_FP;
-}
-
 // FIXME: Most of these are flexible with HSA and we don't need to reserve them
 // as input registers if unused. Whether the dispatch ptr is necessary should be
 // easy to detect from used intrinsics. Scratch setup is harder to know.

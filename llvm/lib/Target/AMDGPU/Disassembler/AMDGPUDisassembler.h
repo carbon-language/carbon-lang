@@ -66,6 +66,7 @@ public:
   MCOperand decodeOperand_VGPR_32(unsigned Val) const;
   MCOperand decodeOperand_VS_32(unsigned Val) const;
   MCOperand decodeOperand_VS_64(unsigned Val) const;
+  MCOperand decodeOperand_VSrc16(unsigned Val) const;
 
   MCOperand decodeOperand_VReg_64(unsigned Val) const;
   MCOperand decodeOperand_VReg_96(unsigned Val) const;
@@ -83,6 +84,7 @@ public:
     OPW32,
     OPW64,
     OPW128,
+    OPW16,
     OPW_LAST_,
     OPW_FIRST_ = OPW32
   };
@@ -92,7 +94,7 @@ public:
   unsigned getTtmpClassId(const OpWidthTy Width) const;
 
   static MCOperand decodeIntImmed(unsigned Imm);
-  static MCOperand decodeFPImmed(bool Is32, unsigned Imm);
+  static MCOperand decodeFPImmed(OpWidthTy Width, unsigned Imm);
   MCOperand decodeLiteralConstant() const;
 
   MCOperand decodeSrcOp(const OpWidthTy Width, unsigned Val) const;

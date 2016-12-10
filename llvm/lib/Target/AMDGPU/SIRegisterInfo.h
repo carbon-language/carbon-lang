@@ -16,6 +16,7 @@
 #define LLVM_LIB_TARGET_AMDGPU_SIREGISTERINFO_H
 
 #include "AMDGPURegisterInfo.h"
+#include "SIDefines.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 namespace llvm {
@@ -138,12 +139,19 @@ public:
 
   /// \returns True if operands defined with this operand type can accept
   /// a literal constant (i.e. any 32-bit immediate).
-  bool opCanUseLiteralConstant(unsigned OpType) const;
+  bool opCanUseLiteralConstant(unsigned OpType) const {
+    // TODO: 64-bit operands have extending behavior from 32-bit literal.
+    return OpType >= AMDGPU::OPERAND_REG_IMM_FIRST &&
+           OpType <= AMDGPU::OPERAND_REG_IMM_LAST;
+  }
 
   /// \returns True if operands defined with this operand type can accept
   /// an inline constant. i.e. An integer value in the range (-16, 64) or
   /// -4.0f, -2.0f, -1.0f, -0.5f, 0.0f, 0.5f, 1.0f, 2.0f, 4.0f.
-  bool opCanUseInlineConstant(unsigned OpType) const;
+  bool opCanUseInlineConstant(unsigned OpType) const {
+    return OpType >= AMDGPU::OPERAND_SRC_FIRST &&
+           OpType <= AMDGPU::OPERAND_SRC_LAST;
+  }
 
   enum PreloadedValue {
     // SGPRS:
