@@ -679,15 +679,18 @@ void AMDGPUInstPrinter::printInterpSlot(const MCInst *MI, unsigned OpNum,
                                         const MCSubtargetInfo &STI,
                                         raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();
-
-  if (Imm == 2) {
-    O << "P0";
-  } else if (Imm == 1) {
-    O << "P20";
-  } else if (Imm == 0) {
-    O << "P10";
-  } else {
-    llvm_unreachable("Invalid interpolation parameter slot");
+  switch (Imm) {
+  case 0:
+    O << "p10";
+    break;
+  case 1:
+    O << "p20";
+    break;
+  case 2:
+    O << "p0";
+    break;
+  default:
+    O << "invalid_param_" << Imm;
   }
 }
 
