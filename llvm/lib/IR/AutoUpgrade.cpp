@@ -258,8 +258,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "sse2.pminu.b" || // Added in 3.9
          Name == "sse41.pminuw" || // Added in 3.9
          Name == "sse41.pminud" || // Added in 3.9
-         Name == "avx512.mask.pshuf.b.128" || // Added in 4.0
-         Name == "avx512.mask.pshuf.b.256" || // Added in 4.0
+         Name.startswith("avx512.mask.pshuf.b.") || // Added in 4.0
          Name.startswith("avx2.pmax") || // Added in 3.9
          Name.startswith("avx2.pmin") || // Added in 3.9
          Name.startswith("avx512.mask.pmax") || // Added in 4.0
@@ -1451,6 +1450,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         IID = Intrinsic::x86_ssse3_pshuf_b_128;
       else if (VecTy->getPrimitiveSizeInBits() == 256)
         IID = Intrinsic::x86_avx2_pshuf_b;
+      else if (VecTy->getPrimitiveSizeInBits() == 512)
+        IID = Intrinsic::x86_avx512_pshuf_b_512;
       else
         llvm_unreachable("Unexpected intrinsic");
 
