@@ -21917,8 +21917,9 @@ static SDValue LowerHorizontalByteSum(SDValue V, MVT VT,
     // two v2i64 vectors which concatenated are the 4 population counts. We can
     // then use PACKUSWB to shrink and concatenate them into a v4i32 again.
     SDValue Zeros = getZeroVector(VT, Subtarget, DAG, DL);
-    SDValue Low = DAG.getNode(X86ISD::UNPCKL, DL, VT, V, Zeros);
-    SDValue High = DAG.getNode(X86ISD::UNPCKH, DL, VT, V, Zeros);
+    SDValue V32 = DAG.getBitcast(VT, V);
+    SDValue Low = DAG.getNode(X86ISD::UNPCKL, DL, VT, V32, Zeros);
+    SDValue High = DAG.getNode(X86ISD::UNPCKH, DL, VT, V32, Zeros);
 
     // Do the horizontal sums into two v2i64s.
     Zeros = getZeroVector(ByteVecVT, Subtarget, DAG, DL);
