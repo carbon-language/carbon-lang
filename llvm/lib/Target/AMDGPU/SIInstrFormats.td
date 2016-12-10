@@ -242,7 +242,7 @@ let Uses = [EXEC] in {
 
 class VINTRPCommon <dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern> {
-
+  let VINTRP = 1;
   // VINTRP instructions read parameter values from LDS, but these parameter
   // values are stored outside of the LDS memory that is allocated to the
   // shader for general purpose use.
