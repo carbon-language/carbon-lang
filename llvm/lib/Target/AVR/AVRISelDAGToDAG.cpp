@@ -203,8 +203,6 @@ unsigned AVRDAGToDAGISel::selectIndexedProgMemLoad(const LoadSDNode *LD,
 bool AVRDAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op,
                                                    unsigned ConstraintCode,
                                                    std::vector<SDValue> &OutOps) {
-  // Yes hardcoded 'm' symbol. Just because it also has been hardcoded in
-  // SelectionDAGISel (callee for this method).
   assert(ConstraintCode == InlineAsm::Constraint_m ||
          ConstraintCode == InlineAsm::Constraint_Q &&
       "Unexpected asm memory constraint");
