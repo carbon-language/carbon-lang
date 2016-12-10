@@ -205,7 +205,7 @@ bool AVRDAGToDAGISel::SelectInlineAsmMemoryOperand(const SDValue &Op,
                                                    std::vector<SDValue> &OutOps) {
   // Yes hardcoded 'm' symbol. Just because it also has been hardcoded in
   // SelectionDAGISel (callee for this method).
-  assert(ConstraintCode == 'm' && "Unexpected asm memory constraint");
+  assert(ConstraintCode == InlineAsm::Constraint_m && "Unexpected asm memory constraint");
 
   MachineRegisterInfo &RI = MF->getRegInfo();
   const AVRSubtarget &STI = MF->getSubtarget<AVRSubtarget>();
