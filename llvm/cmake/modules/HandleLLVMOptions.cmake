@@ -567,7 +567,7 @@ if(LLVM_USE_SANITIZER)
     message(FATAL_ERROR "LLVM_USE_SANITIZER is not supported on this platform.")
   endif()
   if (LLVM_USE_SANITIZE_COVERAGE)
-    append("-fsanitize-coverage=edge,indirect-calls,8bit-counters,trace-cmp" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    append("-fsanitize-coverage=trace-pc-guard,indirect-calls,trace-cmp" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   endif()
 endif()
 
