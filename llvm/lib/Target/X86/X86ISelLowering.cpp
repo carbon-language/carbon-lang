@@ -11071,8 +11071,6 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     if (Mask[i] >= 0)
       (i < 8 ? LoBlendMask[i] : HiBlendMask[i % 8]) = Mask[i];
 
-  SDValue Zero = getZeroVector(MVT::v8i16, Subtarget, DAG, DL);
-
   SDValue VLoHalf, VHiHalf;
   // Check if any of the odd lanes in the v16i8 are used. If not, we can mask
   // them out and avoid using UNPCK{L,H} to extract the elements of V as
@@ -11097,6 +11095,8 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   } else {
     // Otherwise just unpack the low half of V into VLoHalf and the high half into
     // VHiHalf so that we can blend them as i16s.
+    SDValue Zero = getZeroVector(MVT::v16i8, Subtarget, DAG, DL);
+
     VLoHalf = DAG.getBitcast(
         MVT::v8i16, DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V, Zero));
     VHiHalf = DAG.getBitcast(
