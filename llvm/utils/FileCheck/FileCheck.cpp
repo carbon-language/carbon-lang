@@ -654,18 +654,16 @@ struct CheckString {
                   StringMap<StringRef> &VariableTable) const;
 };
 
-/// Canonicalize whitespaces in the input file. Line endings are replaced
-/// with UNIX-style '\n'.
+/// Canonicalize whitespaces in the file. Line endings are replaced with
+/// UNIX-style '\n'.
 ///
 /// \param PreserveHorizontal Don't squash consecutive horizontal whitespace
 /// characters to a single space.
-static std::unique_ptr<MemoryBuffer>
-CanonicalizeInputFile(std::unique_ptr<MemoryBuffer> MB,
-                      bool PreserveHorizontal) {
-  SmallString<128> NewFile;
-  NewFile.reserve(MB->getBufferSize());
+static StringRef CanonicalizeFile(MemoryBuffer &MB, bool PreserveHorizontal,
+                                  SmallVectorImpl<char> &OutputBuffer) {
+  OutputBuffer.reserve(MB.getBufferSize());
 
-  for (const char *Ptr = MB->getBufferStart(), *End = MB->getBufferEnd();
+  for (const char *Ptr = MB.getBufferStart(), *End = MB.getBufferEnd();
        Ptr != End; ++Ptr) {
     // Eliminate trailing dosish \r.
     if (Ptr <= End - 2 && Ptr[0] == '\r' && Ptr[1] == '\n') {
@@ -675,19 +673,20 @@ CanonicalizeInputFile(std::unique_ptr<MemoryBuffer> MB,
     // If current char is not a horizontal whitespace or if horizontal
     // whitespace canonicalization is disabled, dump it to output as is.
     if (PreserveHorizontal || (*Ptr != ' ' && *Ptr != '\t')) {
-      NewFile.push_back(*Ptr);
+      OutputBuffer.push_back(*Ptr);
       continue;
     }
 
     // Otherwise, add one space and advance over neighboring space.
-    NewFile.push_back(' ');
+    OutputBuffer.push_back(' ');
     while (Ptr+1 != End &&
            (Ptr[1] == ' ' || Ptr[1] == '\t'))
       ++Ptr;
   }
 
-  return std::unique_ptr<MemoryBuffer>(
-      MemoryBuffer::getMemBufferCopy(NewFile.str(), MB->getBufferIdentifier()));
+  // Add a null byte and then return all but that byte.
+  OutputBuffer.push_back('\0');
+  return StringRef(OutputBuffer.data(), OutputBuffer.size() - 1);
 }
 
 static bool IsPartOfWord(char c) {
@@ -861,26 +860,8 @@ static StringRef FindFirstMatchingPrefix(StringRef &Buffer,
 /// ReadCheckFile - Read the check file, which specifies the sequence of
 /// expected strings.  The strings are added to the CheckStrings vector.
 /// Returns true in case of an error, false otherwise.
-static bool ReadCheckFile(SourceMgr &SM,
+static bool ReadCheckFile(SourceMgr &SM, StringRef Buffer,
                           std::vector<CheckString> &CheckStrings) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
-      MemoryBuffer::getFileOrSTDIN(CheckFilename);
-  if (std::error_code EC = FileOrErr.getError()) {
-    errs() << "Could not open check file '" << CheckFilename
-           << "': " << EC.message() << '\n';
-    return true;
-  }
-
-  // If we want to canonicalize whitespace, strip excess whitespace from the
-  // buffer containing the CHECK lines. Remove DOS style line endings.
-  std::unique_ptr<MemoryBuffer> F = CanonicalizeInputFile(
-      std::move(FileOrErr.get()), NoCanonicalizeWhiteSpace);
-
-  // Find all instances of CheckPrefix followed by : in the file.
-  StringRef Buffer = F->getBuffer();
-
-  SM.AddNewSourceBuffer(std::move(F), SMLoc());
-
   std::vector<Pattern> ImplicitNegativeChecks;
   for (const auto &PatternString : ImplicitCheckNot) {
     // Create a buffer with fake command line content in order to display the
@@ -1308,6 +1289,68 @@ static void DumpCommandLine(int argc, char **argv) {
   errs() << "\n";
 }
 
+/// Check the input to FileCheck provided in the \p Buffer against the \p
+/// CheckStrings read from the check file.
+///
+/// Returns false if the input fails to satisfy the checks.
+bool CheckInput(SourceMgr &SM, StringRef Buffer,
+                ArrayRef<CheckString> CheckStrings) {
+  bool ChecksFailed = false;
+
+  /// VariableTable - This holds all the current filecheck variables.
+  StringMap<StringRef> VariableTable;
+
+  unsigned i = 0, j = 0, e = CheckStrings.size();
+  while (true) {
+    StringRef CheckRegion;
+    if (j == e) {
+      CheckRegion = Buffer;
+    } else {
+      const CheckString &CheckLabelStr = CheckStrings[j];
+      if (CheckLabelStr.Pat.getCheckTy() != Check::CheckLabel) {
+        ++j;
+        continue;
+      }
+
+      // Scan to next CHECK-LABEL match, ignoring CHECK-NOT and CHECK-DAG
+      size_t MatchLabelLen = 0;
+      size_t MatchLabelPos = CheckLabelStr.Check(SM, Buffer, true,
+                                                 MatchLabelLen, VariableTable);
+      if (MatchLabelPos == StringRef::npos)
+        // Immediately bail of CHECK-LABEL fails, nothing else we can do.
+        return false;
+
+      CheckRegion = Buffer.substr(0, MatchLabelPos + MatchLabelLen);
+      Buffer = Buffer.substr(MatchLabelPos + MatchLabelLen);
+      ++j;
+    }
+
+    for ( ; i != j; ++i) {
+      const CheckString &CheckStr = CheckStrings[i];
+
+      // Check each string within the scanned region, including a second check
+      // of any final CHECK-LABEL (to verify CHECK-NOT and CHECK-DAG)
+      size_t MatchLen = 0;
+      size_t MatchPos = CheckStr.Check(SM, CheckRegion, false, MatchLen,
+                                       VariableTable);
+
+      if (MatchPos == StringRef::npos) {
+        ChecksFailed = true;
+        i = j;
+        break;
+      }
+
+      CheckRegion = CheckRegion.substr(MatchPos + MatchLen);
+    }
+
+    if (j == e)
+      break;
+  }
+
+  // Success if no checks failed.
+  return !ChecksFailed;
+}
+
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
@@ -1325,90 +1368,50 @@ int main(int argc, char **argv) {
   SourceMgr SM;
 
   // Read the expected strings from the check file.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> CheckFileOrErr =
+      MemoryBuffer::getFileOrSTDIN(CheckFilename);
+  if (std::error_code EC = CheckFileOrErr.getError()) {
+    errs() << "Could not open check file '" << CheckFilename
+           << "': " << EC.message() << '\n';
+    return 2;
+  }
+  MemoryBuffer &CheckFile = *CheckFileOrErr.get();
+
+  SmallString<4096> CheckFileBuffer;
+  StringRef CheckFileText =
+      CanonicalizeFile(CheckFile, NoCanonicalizeWhiteSpace, CheckFileBuffer);
+
+  SM.AddNewSourceBuffer(MemoryBuffer::getMemBuffer(
+                            CheckFileText, CheckFile.getBufferIdentifier()),
+                        SMLoc());
+
   std::vector<CheckString> CheckStrings;
-  if (ReadCheckFile(SM, CheckStrings))
+  if (ReadCheckFile(SM, CheckFileText, CheckStrings))
     return 2;
 
+
   // Open the file to check and add it to SourceMgr.
-  ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
+  ErrorOr<std::unique_ptr<MemoryBuffer>> InputFileOrErr =
       MemoryBuffer::getFileOrSTDIN(InputFilename);
-  if (std::error_code EC = FileOrErr.getError()) {
+  if (std::error_code EC = InputFileOrErr.getError()) {
     errs() << "Could not open input file '" << InputFilename
            << "': " << EC.message() << '\n';
     return 2;
   }
-  std::unique_ptr<MemoryBuffer> &File = FileOrErr.get();
+  MemoryBuffer &InputFile = *InputFileOrErr.get();
 
-  if (File->getBufferSize() == 0 && !AllowEmptyInput) {
+  if (InputFile.getBufferSize() == 0 && !AllowEmptyInput) {
     errs() << "FileCheck error: '" << InputFilename << "' is empty.\n";
     DumpCommandLine(argc, argv);
     return 2;
   }
 
-  // Remove duplicate spaces in the input file if requested.
-  // Remove DOS style line endings.
-  std::unique_ptr<MemoryBuffer> F =
-      CanonicalizeInputFile(std::move(File), NoCanonicalizeWhiteSpace);
+  SmallString<4096> InputFileBuffer;
+  StringRef InputFileText =
+      CanonicalizeFile(InputFile, NoCanonicalizeWhiteSpace, InputFileBuffer);
 
-  // Check that we have all of the expected strings, in order, in the input
-  // file.
-  StringRef Buffer = F->getBuffer();
+  SM.AddNewSourceBuffer(
+      MemoryBuffer::getMemBuffer(InputFileText, InputFile.getBufferIdentifier()), SMLoc());
 
-  SM.AddNewSourceBuffer(std::move(F), SMLoc());
-
-  /// VariableTable - This holds all the current filecheck variables.
-  StringMap<StringRef> VariableTable;
-
-  bool hasError = false;
-
-  unsigned i = 0, j = 0, e = CheckStrings.size();
-
-  while (true) {
-    StringRef CheckRegion;
-    if (j == e) {
-      CheckRegion = Buffer;
-    } else {
-      const CheckString &CheckLabelStr = CheckStrings[j];
-      if (CheckLabelStr.Pat.getCheckTy() != Check::CheckLabel) {
-        ++j;
-        continue;
-      }
-
-      // Scan to next CHECK-LABEL match, ignoring CHECK-NOT and CHECK-DAG
-      size_t MatchLabelLen = 0;
-      size_t MatchLabelPos = CheckLabelStr.Check(SM, Buffer, true,
-                                                 MatchLabelLen, VariableTable);
-      if (MatchLabelPos == StringRef::npos) {
-        hasError = true;
-        break;
-      }
-
-      CheckRegion = Buffer.substr(0, MatchLabelPos + MatchLabelLen);
-      Buffer = Buffer.substr(MatchLabelPos + MatchLabelLen);
-      ++j;
-    }
-
-    for ( ; i != j; ++i) {
-      const CheckString &CheckStr = CheckStrings[i];
-
-      // Check each string within the scanned region, including a second check
-      // of any final CHECK-LABEL (to verify CHECK-NOT and CHECK-DAG)
-      size_t MatchLen = 0;
-      size_t MatchPos = CheckStr.Check(SM, CheckRegion, false, MatchLen,
-                                       VariableTable);
-
-      if (MatchPos == StringRef::npos) {
-        hasError = true;
-        i = j;
-        break;
-      }
-
-      CheckRegion = CheckRegion.substr(MatchPos + MatchLen);
-    }
-
-    if (j == e)
-      break;
-  }
-
-  return hasError ? 1 : 0;
+  return CheckInput(SM, InputFileText, CheckStrings) ? EXIT_SUCCESS : 1;
 }
