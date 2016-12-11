@@ -659,6 +659,7 @@ class Configuration(object):
             # These warnings should be enabled in order to support the MSVC
             # team using the test suite; They enable the warnings below and
             # expect the test suite to be clean.
+            # FIXME: Re-enable this after fixing remaining occurrences.
             self.cxx.addWarningFlagIfSupported('-Wsign-compare')
             # FIXME: Enable the two warnings below.
             self.cxx.addWarningFlagIfSupported('-Wno-unused-variable')
