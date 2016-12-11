@@ -805,11 +805,11 @@ static Value *simplifyX86pshufb(const IntrinsicInst &II,
   auto *VecTy = cast<VectorType>(II.getType());
   auto *MaskEltTy = Type::getInt32Ty(II.getContext());
   unsigned NumElts = VecTy->getNumElements();
-  assert((NumElts == 16 || NumElts == 32) &&
+  assert((NumElts == 16 || NumElts == 32 || NumElts == 64) &&
          "Unexpected number of elements in shuffle mask!");
 
   // Construct a shuffle mask from constant integers or UNDEFs.
-  Constant *Indexes[32] = {nullptr};
+  Constant *Indexes[64] = {nullptr};
 
   // Each byte in the shuffle control mask forms an index to permute the
   // corresponding byte in the destination operand.
@@ -2081,6 +2081,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
   case Intrinsic::x86_ssse3_pshuf_b_128:
   case Intrinsic::x86_avx2_pshuf_b:
+  case Intrinsic::x86_avx512_pshuf_b_512:
     if (Value *V = simplifyX86pshufb(*II, *Builder))
       return replaceInstUsesWith(*II, V);
     break;
