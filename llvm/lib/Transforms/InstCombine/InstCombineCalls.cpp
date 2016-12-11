@@ -849,12 +849,15 @@ static Value *simplifyX86vpermilvar(const IntrinsicInst &II,
   if (!V)
     return nullptr;
 
+  auto *VecTy = cast<VectorType>(II.getType());
   auto *MaskEltTy = Type::getInt32Ty(II.getContext());
-  unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
-  assert(NumElts == 8 || NumElts == 4 || NumElts == 2);
+  unsigned NumElts = VecTy->getVectorNumElements();
+  bool IsPD = VecTy->getScalarType()->isDoubleTy();
+  unsigned NumLaneElts = IsPD ? 2 : 4;
+  assert(NumElts == 16 || NumElts == 8 || NumElts == 4 || NumElts == 2);
 
   // Construct a shuffle mask from constant integers or UNDEFs.
-  Constant *Indexes[8] = {nullptr};
+  Constant *Indexes[16] = {nullptr};
 
   // The intrinsics only read one or two bits, clear the rest.
   for (unsigned I = 0; I < NumElts; ++I) {
@@ -872,18 +875,13 @@ static Value *simplifyX86vpermilvar(const IntrinsicInst &II,
 
     // The PD variants uses bit 1 to select per-lane element index, so
     // shift down to convert to generic shuffle mask index.
-    if (II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd ||
-        II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256)
+    if (IsPD)
       Index = Index.lshr(1);
 
     // The _256 variants are a bit trickier since the mask bits always index
     // into the corresponding 128 half. In order to convert to a generic
     // shuffle, we have to make that explicit.
-    if ((II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_ps_256 ||
-         II.getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256) &&
-        ((NumElts / 2) <= I)) {
-      Index += APInt(32, NumElts / 2);
-    }
+    Index += APInt(32, (I / NumLaneElts) * NumLaneElts);
 
     Indexes[I] = ConstantInt::get(MaskEltTy, Index);
   }
@@ -2088,8 +2086,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
   case Intrinsic::x86_avx_vpermilvar_ps:
   case Intrinsic::x86_avx_vpermilvar_ps_256:
+  case Intrinsic::x86_avx512_vpermilvar_ps_512:
   case Intrinsic::x86_avx_vpermilvar_pd:
   case Intrinsic::x86_avx_vpermilvar_pd_256:
+  case Intrinsic::x86_avx512_vpermilvar_pd_512:
     if (Value *V = simplifyX86vpermilvar(*II, *Builder))
       return replaceInstUsesWith(*II, V);
     break;
