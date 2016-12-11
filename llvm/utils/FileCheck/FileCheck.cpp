@@ -89,10 +89,11 @@ enum CheckType {
   CheckDAG,
   CheckLabel,
 
-  /// MatchEOF - When set, this pattern only matches the end of file. This is
-  /// used for trailing CHECK-NOTs.
+  /// Indicates the pattern only matches the end of file. This is used for
+  /// trailing CHECK-NOTs.
   CheckEOF,
-  /// CheckBadNot - Found -NOT combined with another CHECK suffix.
+
+  /// Marks when parsing found a -NOT check combined with another CHECK suffix.
   CheckBadNot
 };
 }
@@ -100,54 +101,41 @@ enum CheckType {
 class Pattern {
   SMLoc PatternLoc;
 
-  /// FixedStr - If non-empty, this pattern is a fixed string match with the
-  /// specified fixed string.
+  /// A fixed string to match as the pattern or empty if this pattern requires
+  /// a regex match.
   StringRef FixedStr;
 
-  /// RegEx - If non-empty, this is a regex pattern.
+  /// A regex string to match as the pattern or empty if this pattern requires
+  /// a fixed string to match.
   std::string RegExStr;
 
-  /// VariableUses - Entries in this vector map to uses of a variable in the
-  /// pattern, e.g. "foo[[bar]]baz".  In this case, the RegExStr will contain
-  /// "foobaz" and we'll get an entry in this vector that tells us to insert the
-  /// value of bar at offset 3.
+  /// Entries in this vector map to uses of a variable in the pattern, e.g.
+  /// "foo[[bar]]baz".  In this case, the RegExStr will contain "foobaz" and
+  /// we'll get an entry in this vector that tells us to insert the value of
+  /// bar at offset 3.
   std::vector<std::pair<StringRef, unsigned>> VariableUses;
 
-  /// VariableDefs - Maps definitions of variables to their parenthesized
-  /// capture numbers.
-  /// E.g. for the pattern "foo[[bar:.*]]baz", VariableDefs will map "bar" to 1.
+  /// Maps definitions of variables to their parenthesized capture numbers.
+  /// 
+  /// E.g. for the pattern "foo[[bar:.*]]baz", VariableDefs will map "bar" to
+  /// 1.
   std::map<StringRef, unsigned> VariableDefs;
 
   Check::CheckType CheckTy;
 
-  /// \brief Contains the number of line this pattern is in.
+  /// Contains the number of line this pattern is in.
   unsigned LineNumber;
 
 public:
   explicit Pattern(Check::CheckType Ty) : CheckTy(Ty) {}
 
-  /// getLoc - Return the location in source code.
+  /// Returns the location in source code.
   SMLoc getLoc() const { return PatternLoc; }
 
-  /// ParsePattern - Parse the given string into the Pattern. Prefix provides
-  /// which prefix is being matched, SM provides the SourceMgr used for error
-  /// reports, and LineNumber is the line number in the input file from which
-  /// the pattern string was read.  Returns true in case of an error, false
-  /// otherwise.
   bool ParsePattern(StringRef PatternStr, StringRef Prefix, SourceMgr &SM,
                     unsigned LineNumber);
-
-  /// Match - Match the pattern string against the input buffer Buffer.  This
-  /// returns the position that is matched or npos if there is no match.  If
-  /// there is a match, the size of the matched string is returned in MatchLen.
-  ///
-  /// The VariableTable StringMap provides the current values of filecheck
-  /// variables and is updated if this match defines new values.
   size_t Match(StringRef Buffer, size_t &MatchLen,
                StringMap<StringRef> &VariableTable) const;
-
-  /// PrintFailureInfo - Print additional information about a failure to match
-  /// involving this pattern.
   void PrintFailureInfo(const SourceMgr &SM, StringRef Buffer,
                         const StringMap<StringRef> &VariableTable) const;
 
@@ -160,26 +148,19 @@ public:
 private:
   bool AddRegExToRegEx(StringRef RS, unsigned &CurParen, SourceMgr &SM);
   void AddBackrefToRegEx(unsigned BackrefNum);
-
-  /// ComputeMatchDistance - Compute an arbitrary estimate for the quality of
-  /// matching this pattern at the start of \arg Buffer; a distance of zero
-  /// should correspond to a perfect match.
   unsigned
   ComputeMatchDistance(StringRef Buffer,
                        const StringMap<StringRef> &VariableTable) const;
-
-  /// \brief Evaluates expression and stores the result to \p Value.
-  /// \return true on success. false when the expression has invalid syntax.
   bool EvaluateExpression(StringRef Expr, std::string &Value) const;
-
-  /// \brief Finds the closing sequence of a regex variable usage or
-  /// definition. Str has to point in the beginning of the definition
-  /// (right after the opening sequence).
-  /// \return offset of the closing sequence within Str, or npos if it was not
-  /// found.
   size_t FindRegexVarEnd(StringRef Str, SourceMgr &SM);
 };
 
+/// Parses the given string into the Pattern.
+///
+/// \p Prefix provides which prefix is being matched, \p SM provides the
+/// SourceMgr used for error reports, and \p LineNumber is the line number in
+/// the input file from which the pattern string was read. Returns true in
+/// case of an error, false otherwise.
 bool Pattern::ParsePattern(StringRef PatternStr, StringRef Prefix,
                            SourceMgr &SM, unsigned LineNumber) {
   bool MatchFullLinesHere = MatchFullLines && CheckTy != Check::CheckNot;
@@ -373,6 +354,9 @@ void Pattern::AddBackrefToRegEx(unsigned BackrefNum) {
   RegExStr += Backref;
 }
 
+/// Evaluates expression and stores the result to \p Value.
+///
+/// Returns true on success and false when the expression has invalid syntax.
 bool Pattern::EvaluateExpression(StringRef Expr, std::string &Value) const {
   // The only supported expression is @LINE([\+-]\d+)?
   if (!Expr.startswith("@LINE"))
@@ -391,9 +375,14 @@ bool Pattern::EvaluateExpression(StringRef Expr, std::string &Value) const {
   return true;
 }
 
-/// Match - Match the pattern string against the input buffer Buffer.  This
-/// returns the position that is matched or npos if there is no match.  If
-/// there is a match, the size of the matched string is returned in MatchLen.
+/// Matches the pattern string against the input buffer \p Buffer
+///
+/// This returns the position that is matched or npos if there is no match. If
+/// there is a match, the size of the matched string is returned in \p
+/// MatchLen.
+///
+/// The \p VariableTable StringMap provides the current values of filecheck
+/// variables and is updated if this match defines new values.
 size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
                       StringMap<StringRef> &VariableTable) const {
   // If this is the EOF pattern, match it immediately.
@@ -463,6 +452,10 @@ size_t Pattern::Match(StringRef Buffer, size_t &MatchLen,
   return FullMatch.data() - Buffer.data();
 }
 
+
+/// Computes an arbitrary estimate for the quality of matching this pattern at
+/// the start of \p Buffer; a distance of zero should correspond to a perfect
+/// match.
 unsigned
 Pattern::ComputeMatchDistance(StringRef Buffer,
                               const StringMap<StringRef> &VariableTable) const {
@@ -482,6 +475,8 @@ Pattern::ComputeMatchDistance(StringRef Buffer,
   return BufferPrefix.edit_distance(ExampleString);
 }
 
+/// Prints additional information about a failure to match involving this
+/// pattern.
 void Pattern::PrintFailureInfo(
     const SourceMgr &SM, StringRef Buffer,
     const StringMap<StringRef> &VariableTable) const {
@@ -562,6 +557,11 @@ void Pattern::PrintFailureInfo(
   }
 }
 
+/// Finds the closing sequence of a regex variable usage or definition.
+///
+/// \p Str has to point in the beginning of the definition (right after the
+/// opening sequence). Returns the offset of the closing sequence within Str,
+/// or npos if it was not found.
 size_t Pattern::FindRegexVarEnd(StringRef Str, SourceMgr &SM) {
   // Offset keeps track of the current offset within the input Str
   size_t Offset = 0;
@@ -604,45 +604,32 @@ size_t Pattern::FindRegexVarEnd(StringRef Str, SourceMgr &SM) {
 // Check Strings.
 //===----------------------------------------------------------------------===//
 
-/// CheckString - This is a check that we found in the input file.
+/// A check that we found in the input file.
 struct CheckString {
-  /// Pat - The pattern to match.
+  /// The pattern to match.
   Pattern Pat;
 
-  /// Prefix - Which prefix name this check matched.
+  /// Which prefix name this check matched.
   StringRef Prefix;
 
-  /// Loc - The location in the match file that the check string was specified.
+  /// The location in the match file that the check string was specified.
   SMLoc Loc;
 
-  /// CheckTy - Specify what kind of check this is. e.g. CHECK-NEXT: directive,
-  /// as opposed to a CHECK: directive.
-  //  Check::CheckType CheckTy;
-
-  /// DagNotStrings - These are all of the strings that are disallowed from
-  /// occurring between this match string and the previous one (or start of
-  /// file).
+  /// All of the strings that are disallowed from occurring between this match
+  /// string and the previous one (or start of file).
   std::vector<Pattern> DagNotStrings;
 
   CheckString(const Pattern &P, StringRef S, SMLoc L)
       : Pat(P), Prefix(S), Loc(L) {}
 
-  /// Check - Match check string and its "not strings" and/or "dag strings".
   size_t Check(const SourceMgr &SM, StringRef Buffer, bool IsLabelScanMode,
                size_t &MatchLen, StringMap<StringRef> &VariableTable) const;
 
-  /// CheckNext - Verify there is a single line in the given buffer.
   bool CheckNext(const SourceMgr &SM, StringRef Buffer) const;
-
-  /// CheckSame - Verify there is no newline in the given buffer.
   bool CheckSame(const SourceMgr &SM, StringRef Buffer) const;
-
-  /// CheckNot - Verify there's no "not strings" in the given buffer.
   bool CheckNot(const SourceMgr &SM, StringRef Buffer,
                 const std::vector<const Pattern *> &NotStrings,
                 StringMap<StringRef> &VariableTable) const;
-
-  /// CheckDag - Match "dag strings" and their mixed "not strings".
   size_t CheckDag(const SourceMgr &SM, StringRef Buffer,
                   std::vector<const Pattern *> &NotStrings,
                   StringMap<StringRef> &VariableTable) const;
@@ -850,9 +837,10 @@ static StringRef FindFirstMatchingPrefix(StringRef &Buffer,
   return StringRef();
 }
 
-/// ReadCheckFile - Read the check file, which specifies the sequence of
-/// expected strings.  The strings are added to the CheckStrings vector.
-/// Returns true in case of an error, false otherwise.
+/// Read the check file, which specifies the sequence of expected strings.
+///
+/// The strings are added to the CheckStrings vector. Returns true in case of
+/// an error, false otherwise.
 static bool ReadCheckFile(SourceMgr &SM, StringRef Buffer,
                           std::vector<CheckString> &CheckStrings) {
   std::vector<Pattern> ImplicitNegativeChecks;
@@ -1004,8 +992,7 @@ static void PrintCheckFailed(const SourceMgr &SM, const CheckString &CheckStr,
   PrintCheckFailed(SM, CheckStr.Loc, CheckStr.Pat, Buffer, VariableTable);
 }
 
-/// CountNumNewlinesBetween - Count the number of newlines in the specified
-/// range.
+/// Count the number of newlines in the specified range.
 static unsigned CountNumNewlinesBetween(StringRef Range,
                                         const char *&FirstNewLine) {
   unsigned NumNewLines = 0;
@@ -1028,6 +1015,7 @@ static unsigned CountNumNewlinesBetween(StringRef Range,
   }
 }
 
+/// Match check string and its "not strings" and/or "dag strings".
 size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
                           bool IsLabelScanMode, size_t &MatchLen,
                           StringMap<StringRef> &VariableTable) const {
@@ -1077,6 +1065,7 @@ size_t CheckString::Check(const SourceMgr &SM, StringRef Buffer,
   return LastPos + MatchPos;
 }
 
+/// Verify there is a single line in the given buffer.
 bool CheckString::CheckNext(const SourceMgr &SM, StringRef Buffer) const {
   if (Pat.getCheckTy() != Check::CheckNext)
     return false;
@@ -1117,6 +1106,7 @@ bool CheckString::CheckNext(const SourceMgr &SM, StringRef Buffer) const {
   return false;
 }
 
+/// Verify there is no newline in the given buffer.
 bool CheckString::CheckSame(const SourceMgr &SM, StringRef Buffer) const {
   if (Pat.getCheckTy() != Check::CheckSame)
     return false;
@@ -1145,6 +1135,7 @@ bool CheckString::CheckSame(const SourceMgr &SM, StringRef Buffer) const {
   return false;
 }
 
+/// Verify there's no "not strings" in the given buffer.
 bool CheckString::CheckNot(const SourceMgr &SM, StringRef Buffer,
                            const std::vector<const Pattern *> &NotStrings,
                            StringMap<StringRef> &VariableTable) const {
@@ -1167,6 +1158,7 @@ bool CheckString::CheckNot(const SourceMgr &SM, StringRef Buffer,
   return false;
 }
 
+/// Match "dag strings" and their mixed "not strings".
 size_t CheckString::CheckDag(const SourceMgr &SM, StringRef Buffer,
                              std::vector<const Pattern *> &NotStrings,
                              StringMap<StringRef> &VariableTable) const {
