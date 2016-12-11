@@ -11867,35 +11867,52 @@ static SDValue lowerShuffleAsRepeatedMaskAndLanePermute(
                               SubLaneMask);
 }
 
-static SDValue lowerVectorShuffleWithSHUFPD(const SDLoc &DL, MVT VT,
-                                            ArrayRef<int> Mask, SDValue V1,
-                                            SDValue V2, SelectionDAG &DAG) {
+static bool matchVectorShuffleWithSHUFPD(MVT VT, SDValue &V1, SDValue &V2,
+                                         unsigned &ShuffleImm,
+                                         ArrayRef<int> Mask) {
+  int NumElts = VT.getVectorNumElements();
+  assert(VT.getScalarType() == MVT::f64 &&
+         (NumElts == 2 || NumElts == 4 || NumElts == 8) &&
+         "Unexpected data type for VSHUFPD");
 
   // Mask for V8F64: 0/1,  8/9,  2/3,  10/11, 4/5, ..
   // Mask for V4F64; 0/1,  4/5,  2/3,  6/7..
-  assert(VT.getScalarSizeInBits() == 64 && "Unexpected data type for VSHUFPD");
-  int NumElts = VT.getVectorNumElements();
+  ShuffleImm = 0;
   bool ShufpdMask = true;
   bool CommutableMask = true;
-  unsigned Immediate = 0;
   for (int i = 0; i < NumElts; ++i) {
-    if (Mask[i] < 0)
+    if (Mask[i] == SM_SentinelUndef)
       continue;
+    if (Mask[i] < 0)
+      return false;
     int Val = (i & 6) + NumElts * (i & 1);
-    int CommutVal = (i & 0xe) + NumElts * ((i & 1)^1);
-    if (Mask[i] < Val ||  Mask[i] > Val + 1)
+    int CommutVal = (i & 0xe) + NumElts * ((i & 1) ^ 1);
+    if (Mask[i] < Val || Mask[i] > Val + 1)
       ShufpdMask = false;
-    if (Mask[i] < CommutVal ||  Mask[i] > CommutVal + 1)
+    if (Mask[i] < CommutVal || Mask[i] > CommutVal + 1)
       CommutableMask = false;
-    Immediate |= (Mask[i] % 2) << i;
+    ShuffleImm |= (Mask[i] % 2) << i;
   }
+
   if (ShufpdMask)
-    return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
-                       DAG.getConstant(Immediate, DL, MVT::i8));
-  if (CommutableMask)
-    return DAG.getNode(X86ISD::SHUFP, DL, VT, V2, V1,
-                       DAG.getConstant(Immediate, DL, MVT::i8));
-  return SDValue();
+    return true;
+  if (CommutableMask) {
+    std::swap(V1, V2);
+    return true;
+  }
+
+  return false;
+}
+
+static SDValue lowerVectorShuffleWithSHUFPD(const SDLoc &DL, MVT VT,
+                                            ArrayRef<int> Mask, SDValue V1,
+                                            SDValue V2, SelectionDAG &DAG) {
+  unsigned Immediate = 0;
+  if (!matchVectorShuffleWithSHUFPD(VT, V1, V2, Immediate, Mask))
+    return SDValue();
+
+  return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
+                     DAG.getConstant(Immediate, DL, MVT::i8));
 }
 
 static SDValue lowerVectorShuffleWithPERMV(const SDLoc &DL, MVT VT,
@@ -26195,6 +26212,17 @@ static bool matchBinaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
         matchVectorShuffleAsInsertPS(V1, V2, PermuteImm, Zeroable, Mask, DAG)) {
       Shuffle = X86ISD::INSERTPS;
       ShuffleVT = MVT::v4f32;
+      return true;
+    }
+  }
+
+  // Attempt to combine to SHUFPD.
+  if ((MaskVT == MVT::v2f64 && Subtarget.hasSSE2()) ||
+      (MaskVT == MVT::v4f64 && Subtarget.hasAVX()) ||
+      (MaskVT == MVT::v8f64 && Subtarget.hasAVX512())) {
+    if (matchVectorShuffleWithSHUFPD(MaskVT, V1, V2, PermuteImm, Mask)) {
+      Shuffle = X86ISD::SHUFP;
+      ShuffleVT = MaskVT;
       return true;
     }
   }
