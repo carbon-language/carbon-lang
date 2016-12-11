@@ -637,10 +637,7 @@ struct CheckString {
 
 /// Canonicalize whitespaces in the file. Line endings are replaced with
 /// UNIX-style '\n'.
-///
-/// \param PreserveHorizontal Don't squash consecutive horizontal whitespace
-/// characters to a single space.
-static StringRef CanonicalizeFile(MemoryBuffer &MB, bool PreserveHorizontal,
+static StringRef CanonicalizeFile(MemoryBuffer &MB,
                                   SmallVectorImpl<char> &OutputBuffer) {
   OutputBuffer.reserve(MB.getBufferSize());
 
@@ -653,7 +650,7 @@ static StringRef CanonicalizeFile(MemoryBuffer &MB, bool PreserveHorizontal,
 
     // If current char is not a horizontal whitespace or if horizontal
     // whitespace canonicalization is disabled, dump it to output as is.
-    if (PreserveHorizontal || (*Ptr != ' ' && *Ptr != '\t')) {
+    if (NoCanonicalizeWhiteSpace || (*Ptr != ' ' && *Ptr != '\t')) {
       OutputBuffer.push_back(*Ptr);
       continue;
     }
@@ -1360,8 +1357,7 @@ int main(int argc, char **argv) {
   MemoryBuffer &CheckFile = *CheckFileOrErr.get();
 
   SmallString<4096> CheckFileBuffer;
-  StringRef CheckFileText =
-      CanonicalizeFile(CheckFile, NoCanonicalizeWhiteSpace, CheckFileBuffer);
+  StringRef CheckFileText = CanonicalizeFile(CheckFile, CheckFileBuffer);
 
   SM.AddNewSourceBuffer(MemoryBuffer::getMemBuffer(
                             CheckFileText, CheckFile.getBufferIdentifier()),
@@ -1388,8 +1384,7 @@ int main(int argc, char **argv) {
   }
 
   SmallString<4096> InputFileBuffer;
-  StringRef InputFileText =
-      CanonicalizeFile(InputFile, NoCanonicalizeWhiteSpace, InputFileBuffer);
+  StringRef InputFileText = CanonicalizeFile(InputFile, InputFileBuffer);
 
   SM.AddNewSourceBuffer(MemoryBuffer::getMemBuffer(
                             InputFileText, InputFile.getBufferIdentifier()),
