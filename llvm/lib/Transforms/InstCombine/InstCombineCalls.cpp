@@ -1775,6 +1775,37 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+  case Intrinsic::x86_avx512_mask_add_ss_round:
+  case Intrinsic::x86_avx512_mask_div_ss_round:
+  case Intrinsic::x86_avx512_mask_mul_ss_round:
+  case Intrinsic::x86_avx512_mask_sub_ss_round:
+  case Intrinsic::x86_avx512_mask_max_ss_round:
+  case Intrinsic::x86_avx512_mask_min_ss_round:
+  case Intrinsic::x86_avx512_mask_add_sd_round:
+  case Intrinsic::x86_avx512_mask_div_sd_round:
+  case Intrinsic::x86_avx512_mask_mul_sd_round:
+  case Intrinsic::x86_avx512_mask_sub_sd_round:
+  case Intrinsic::x86_avx512_mask_max_sd_round:
+  case Intrinsic::x86_avx512_mask_min_sd_round: {
+    // These intrinsics only demand the lowest element of the second and third
+    // input vector.
+    bool MadeChange = false;
+    Value *Arg1 = II->getArgOperand(1);
+    Value *Arg2 = II->getArgOperand(2);
+    unsigned VWidth = Arg1->getType()->getVectorNumElements();
+    if (Value *V = SimplifyDemandedVectorEltsLow(Arg1, VWidth, 1)) {
+      II->setArgOperand(1, V);
+      MadeChange = true;
+    }
+    if (Value *V = SimplifyDemandedVectorEltsLow(Arg2, VWidth, 1)) {
+      II->setArgOperand(2, V);
+      MadeChange = true;
+    }
+    if (MadeChange)
+      return II;
+    break;
+  }
+
   case Intrinsic::x86_sse41_round_ss:
   case Intrinsic::x86_sse41_round_sd: {
     // These intrinsics demand the upper elements of the first input vector and
