@@ -2100,14 +2100,26 @@ const MCPhysReg *X86TargetLowering::getScratchRegisters(CallingConv::ID) const {
 }
 
 /// Lowers masks values (v*i1) to the local register values
+/// \returns DAG node after lowering to register type
 static SDValue lowerMasksToReg(const SDValue &ValArg, const EVT &ValLoc,
                                const SDLoc &Dl, SelectionDAG &DAG) {
   EVT ValVT = ValArg.getValueType();
 
-  if (ValVT == MVT::v64i1 && ValLoc == MVT::i64) {
+  if ((ValVT == MVT::v8i1 && (ValLoc == MVT::i8 || ValLoc == MVT::i32)) ||
+      (ValVT == MVT::v16i1 && (ValLoc == MVT::i16 || ValLoc == MVT::i32))) {
+    // Two stage lowering might be required
+    // bitcast:   v8i1 -> i8 / v16i1 -> i16
+    // anyextend: i8   -> i32 / i16   -> i32
+    EVT TempValLoc = ValVT == MVT::v8i1 ? MVT::i8 : MVT::i16;
+    SDValue ValToCopy = DAG.getBitcast(TempValLoc, ValArg);
+    if (ValLoc == MVT::i32)
+      ValToCopy = DAG.getNode(ISD::ANY_EXTEND, Dl, ValLoc, ValToCopy);
+    return ValToCopy;
+  } else if ((ValVT == MVT::v32i1 && ValLoc == MVT::i32) ||
+             (ValVT == MVT::v64i1 && ValLoc == MVT::i64)) {
     // One stage lowering is required
-    // bitcast:   v64i1 -> i64
-    return DAG.getBitcast(MVT::i64, ValArg);
+    // bitcast:   v32i1 -> i32 / v64i1 -> i64
+    return DAG.getBitcast(ValLoc, ValArg);
   } else
     return DAG.getNode(ISD::SIGN_EXTEND, Dl, ValLoc, ValArg);
 }
@@ -2379,14 +2391,14 @@ EVT X86TargetLowering::getTypeForExtReturn(LLVMContext &Context, EVT VT,
 }
 
 /// Reads two 32 bit registers and creates a 64 bit mask value.
-/// @param VA The current 32 bit value that need to be assigned.
-/// @param NextVA The next 32 bit value that need to be assigned.
-/// @param Root The parent DAG node.
-/// @param [in,out] InFlag Represents SDvalue in the parent DAG node for
+/// \param VA The current 32 bit value that need to be assigned.
+/// \param NextVA The next 32 bit value that need to be assigned.
+/// \param Root The parent DAG node.
+/// \param [in,out] InFlag Represents SDvalue in the parent DAG node for
 ///                        glue purposes. In the case the DAG is already using
 ///                        physical register instead of virtual, we should glue
 ///                        our new SDValue to InFlag SDvalue.
-/// @return a new SDvalue of size 64bit.
+/// \return a new SDvalue of size 64bit.
 static SDValue getv64i1Argument(CCValAssign &VA, CCValAssign &NextVA,
                                 SDValue &Root, SelectionDAG &DAG,
                                 const SDLoc &Dl, const X86Subtarget &Subtarget,
@@ -2436,23 +2448,38 @@ static SDValue getv64i1Argument(CCValAssign &VA, CCValAssign &NextVA,
   return DAG.getNode(ISD::CONCAT_VECTORS, Dl, MVT::v64i1, Lo, Hi);
 }
 
+/// The function will lower a register of various sizes (8/16/32/64)
+/// to a mask value of the expected size (v8i1/v16i1/v32i1/v64i1)
+/// \returns a DAG node contains the operand after lowering to mask type.
 static SDValue lowerRegToMasks(const SDValue &ValArg, const EVT &ValVT,
                                const EVT &ValLoc, const SDLoc &Dl,
                                SelectionDAG &DAG) {
-  assert((ValLoc == MVT::i64 || ValLoc == MVT::i32) &&
-         "Expecting register location of size 32/64 bit");
+  SDValue ValReturned = ValArg;
 
-  // Currently not referenced - will be used in other mask lowering
-  (void)Dl;
+  if (ValVT == MVT::v64i1) {
+    // In 32 bit machine, this case is handled by getv64i1Argument
+    assert(ValLoc == MVT::i64 && "Expecting only i64 locations");
+    // In 64 bit machine, There is no need to truncate the value only bitcast
+  } else {
+    MVT maskLen;
+    switch (ValVT.getSimpleVT().SimpleTy) {
+    case MVT::v8i1:
+      maskLen = MVT::i8;
+      break;
+    case MVT::v16i1:
+      maskLen = MVT::i16;
+      break;
+    case MVT::v32i1:
+      maskLen = MVT::i32;
+      break;
+    default:
+      llvm_unreachable("Expecting a vector of i1 types");
+    }
 
-  // In the case of v64i1 no special handling is required due to two reasons:
-  // In 32 bit machine, this case is handled by getv64i1Argument
-  // In 64 bit machine, There is no need to truncate the value only bitcast
-  if (ValVT == MVT::v64i1 && ValLoc == MVT::i32) {
-    llvm_unreachable("Expecting only i64 locations");
+    ValReturned = DAG.getNode(ISD::TRUNCATE, Dl, maskLen, ValReturned);
   }
 
-  return DAG.getBitcast(ValVT, ValArg);
+  return DAG.getBitcast(ValVT, ValReturned);
 }
 
 /// Lower the result values of a call into the
@@ -2513,8 +2540,9 @@ SDValue X86TargetLowering::LowerCallResult(
 
     if (VA.isExtInLoc() && (VA.getValVT().getScalarType() == MVT::i1)) {
       if (VA.getValVT().isVector() &&
-          (VA.getLocVT() == MVT::i32 || VA.getLocVT() == MVT::i64)) {
-        // promoting a mask type (v*i1) into a register of type i64/i32
+          ((VA.getLocVT() == MVT::i64) || (VA.getLocVT() == MVT::i32) ||
+           (VA.getLocVT() == MVT::i16) || (VA.getLocVT() == MVT::i8))) {
+        // promoting a mask type (v*i1) into a register of type i64/i32/i16/i8
         Val = lowerRegToMasks(Val, VA.getValVT(), VA.getLocVT(), dl, DAG);
       } else
         Val = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), Val);
@@ -2867,8 +2895,9 @@ SDValue X86TargetLowering::LowerFormalArguments(
           ArgValue = DAG.getNode(X86ISD::MOVDQ2Q, dl, VA.getValVT(), ArgValue);
         else if (VA.getValVT().isVector() &&
                  VA.getValVT().getScalarType() == MVT::i1 &&
-                 ((RegVT == MVT::i32) || (RegVT == MVT::i64))) {
-          // Promoting a mask type (v*i1) into a register of type i64/i32
+                 ((VA.getLocVT() == MVT::i64) || (VA.getLocVT() == MVT::i32) ||
+                  (VA.getLocVT() == MVT::i16) || (VA.getLocVT() == MVT::i8))) {
+          // Promoting a mask type (v*i1) into a register of type i64/i32/i16/i8
           ArgValue = lowerRegToMasks(ArgValue, VA.getValVT(), RegVT, dl, DAG);
         } else
           ArgValue = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), ArgValue);
