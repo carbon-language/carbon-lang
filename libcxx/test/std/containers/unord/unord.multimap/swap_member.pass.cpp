@@ -44,7 +44,7 @@ int main()
         assert(c1.size() == 0);
         assert(c1.hash_function() == Hash(2));
         assert(c1.key_eq() == Compare(2));
-        assert(c1.get_allocator() == Alloc(1));
+        assert(c1.get_allocator().get_id() == 1);
         assert(static_cast<std::size_t>(std::distance(c1.begin(), c1.end())) == c1.size());
         assert(static_cast<std::size_t>(std::distance(c1.cbegin(), c1.cend())) == c1.size());
         assert(c1.max_load_factor() == 2);
@@ -53,7 +53,7 @@ int main()
         assert(c2.size() == 0);
         assert(c2.hash_function() == Hash(1));
         assert(c2.key_eq() == Compare(1));
-        assert(c2.get_allocator() == Alloc(2));
+        assert(c2.get_allocator().get_id() == 2);
         assert(static_cast<std::size_t>(std::distance(c2.begin(), c2.end())) == c2.size());
         assert(static_cast<std::size_t>(std::distance(c2.cbegin(), c2.cend())) == c2.size());
         assert(c2.max_load_factor() == 1);
@@ -92,7 +92,7 @@ int main()
         assert(c1.find(80)->second == "eighty");
         assert(c1.hash_function() == Hash(2));
         assert(c1.key_eq() == Compare(2));
-        assert(c1.get_allocator() == Alloc(1));
+        assert(c1.get_allocator().get_id() == 1);
         assert(static_cast<std::size_t>(std::distance(c1.begin(), c1.end())) == c1.size());
         assert(static_cast<std::size_t>(std::distance(c1.cbegin(), c1.cend())) == c1.size());
         assert(c1.max_load_factor() == 2);
@@ -101,7 +101,7 @@ int main()
         assert(c2.size() == 0);
         assert(c2.hash_function() == Hash(1));
         assert(c2.key_eq() == Compare(1));
-        assert(c2.get_allocator() == Alloc(2));
+        assert(c2.get_allocator().get_id() == 2);
         assert(static_cast<std::size_t>(std::distance(c2.begin(), c2.end())) == c2.size());
         assert(static_cast<std::size_t>(std::distance(c2.cbegin(), c2.cend())) == c2.size());
         assert(c2.max_load_factor() == 1);
@@ -130,7 +130,7 @@ int main()
         assert(c1.size() == 0);
         assert(c1.hash_function() == Hash(2));
         assert(c1.key_eq() == Compare(2));
-        assert(c1.get_allocator() == Alloc(1));
+        assert(c1.get_allocator().get_id() == 1);
         assert(static_cast<std::size_t>(std::distance(c1.begin(), c1.end())) == c1.size());
         assert(static_cast<std::size_t>(std::distance(c1.cbegin(), c1.cend())) == c1.size());
         assert(c1.max_load_factor() == 2);
@@ -145,7 +145,7 @@ int main()
         assert(c2.find(4)->second == "four");
         assert(c2.hash_function() == Hash(1));
         assert(c2.key_eq() == Compare(1));
-        assert(c2.get_allocator() == Alloc(2));
+        assert(c2.get_allocator().get_id() == 2);
         assert(static_cast<std::size_t>(std::distance(c2.begin(), c2.end())) == c2.size());
         assert(static_cast<std::size_t>(std::distance(c2.cbegin(), c2.cend())) == c2.size());
         assert(c2.max_load_factor() == 1);
@@ -193,7 +193,7 @@ int main()
         assert(c1.find(80)->second == "eighty");
         assert(c1.hash_function() == Hash(2));
         assert(c1.key_eq() == Compare(2));
-        assert(c1.get_allocator() == Alloc(1));
+        assert(c1.get_allocator().get_id() == 1);
         assert(static_cast<std::size_t>(std::distance(c1.begin(), c1.end())) == c1.size());
         assert(static_cast<std::size_t>(std::distance(c1.cbegin(), c1.cend())) == c1.size());
         assert(c1.max_load_factor() == 2);
@@ -208,7 +208,7 @@ int main()
         assert(c2.find(4)->second == "four");
         assert(c2.hash_function() == Hash(1));
         assert(c2.key_eq() == Compare(1));
-        assert(c2.get_allocator() == Alloc(2));
+        assert(c2.get_allocator().get_id() == 2);
         assert(static_cast<std::size_t>(std::distance(c2.begin(), c2.end())) == c2.size());
         assert(static_cast<std::size_t>(std::distance(c2.cbegin(), c2.cend())) == c2.size());
         assert(c2.max_load_factor() == 1);
