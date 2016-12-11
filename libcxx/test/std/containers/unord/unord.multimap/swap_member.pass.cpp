@@ -35,8 +35,8 @@ int main()
         typedef test_allocator<std::pair<const int, std::string> > Alloc;
         typedef std::unordered_multimap<int, std::string, Hash, Compare, Alloc> C;
         typedef std::pair<int, std::string> P;
-        C c1(0, Hash(1), Compare(1), Alloc(1));
-        C c2(0, Hash(2), Compare(2), Alloc(2));
+        C c1(0, Hash(1), Compare(1), Alloc(1, 1));
+        C c2(0, Hash(2), Compare(2), Alloc(1, 2));
         c2.max_load_factor(2);
         c1.swap(c2);
 
@@ -75,8 +75,8 @@ int main()
             P(70, "seventy"),
             P(80, "eighty"),
         };
-        C c1(0, Hash(1), Compare(1), Alloc(1));
-        C c2(std::begin(a2), std::end(a2), 0, Hash(2), Compare(2), Alloc(2));
+        C c1(0, Hash(1), Compare(1), Alloc(1, 1));
+        C c2(std::begin(a2), std::end(a2), 0, Hash(2), Compare(2), Alloc(1, 2));
         c2.max_load_factor(2);
         c1.swap(c2);
 
@@ -121,8 +121,8 @@ int main()
             P(1, "four"),
             P(2, "four"),
         };
-        C c1(std::begin(a1), std::end(a1), 0, Hash(1), Compare(1), Alloc(1));
-        C c2(0, Hash(2), Compare(2), Alloc(2));
+        C c1(std::begin(a1), std::end(a1), 0, Hash(1), Compare(1), Alloc(1, 1));
+        C c2(0, Hash(2), Compare(2), Alloc(1, 2));
         c2.max_load_factor(2);
         c1.swap(c2);
 
@@ -176,8 +176,8 @@ int main()
             P(70, "seventy"),
             P(80, "eighty"),
         };
-        C c1(std::begin(a1), std::end(a1), 0, Hash(1), Compare(1), Alloc(1));
-        C c2(std::begin(a2), std::end(a2), 0, Hash(2), Compare(2), Alloc(2));
+        C c1(std::begin(a1), std::end(a1), 0, Hash(1), Compare(1), Alloc(1, 1));
+        C c2(std::begin(a2), std::end(a2), 0, Hash(2), Compare(2), Alloc(1, 2));
         c2.max_load_factor(2);
         c1.swap(c2);
 
