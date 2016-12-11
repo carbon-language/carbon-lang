@@ -660,7 +660,7 @@ class Configuration(object):
             # team using the test suite; They enable the warnings below and
             # expect the test suite to be clean.
             # FIXME: Re-enable this after fixing remaining occurrences.
-            self.cxx.addWarningFlagIfSupported('-Wsign-compare')
+            self.cxx.addWarningFlagIfSupported('-Wno-sign-compare')
             # FIXME: Enable the two warnings below.
             self.cxx.addWarningFlagIfSupported('-Wno-unused-variable')
             self.cxx.addWarningFlagIfSupported('-Wno-unused-parameter')
