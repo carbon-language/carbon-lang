@@ -11,6 +11,7 @@
 #define LLD_COFF_SYMBOL_TABLE_H
 
 #include "InputFiles.h"
+#include "llvm/ADT/CachedHashString.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/Allocator.h"
@@ -120,7 +121,7 @@ private:
   void addCombinedLTOObject(ObjectFile *Obj);
   std::vector<ObjectFile *> createLTOObjects(llvm::LTOCodeGenerator *CG);
 
-  llvm::DenseMap<StringRef, Symbol *> Symtab;
+  llvm::DenseMap<llvm::CachedHashStringRef, Symbol *> Symtab;
 
   std::vector<BitcodeFile *> BitcodeFiles;
   std::vector<SmallString<0>> Objs;

@@ -117,7 +117,7 @@ void SymbolTable::reportRemainingUndefines() {
 }
 
 std::pair<Symbol *, bool> SymbolTable::insert(StringRef Name) {
-  Symbol *&Sym = Symtab[Name];
+  Symbol *&Sym = Symtab[CachedHashStringRef(Name)];
   if (Sym)
     return {Sym, false};
   Sym = make<Symbol>();
@@ -302,7 +302,7 @@ std::vector<Chunk *> SymbolTable::getChunks() {
 }
 
 Symbol *SymbolTable::find(StringRef Name) {
-  auto It = Symtab.find(Name);
+  auto It = Symtab.find(CachedHashStringRef(Name));
   if (It == Symtab.end())
     return nullptr;
   return It->second;
@@ -316,7 +316,7 @@ Symbol *SymbolTable::findUnderscore(StringRef Name) {
 
 StringRef SymbolTable::findByPrefix(StringRef Prefix) {
   for (auto Pair : Symtab) {
-    StringRef Name = Pair.first;
+    StringRef Name = Pair.first.val();
     if (Name.startswith(Prefix))
       return Name;
   }
