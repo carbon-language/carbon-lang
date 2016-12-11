@@ -688,7 +688,7 @@ bool AVRExpandPseudo::expand<AVR::LDDWRdPtrQ>(Block &MBB, BlockIt MBBI) {
     BitVector Available = RS.getRegsAvailable(&AVR::GPR8RegClass);
     Available &= Candidates;
 
-    unsigned TmpReg = Available.find_first();
+    signed TmpReg = Available.find_first();
     assert(TmpReg != -1 && "ran out of registers");
 
     MIBLO = buildMI(MBB, MBBI, OpLo)
