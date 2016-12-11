@@ -31720,7 +31720,7 @@ static SDValue combineFneg(SDNode *N, SelectionDAG &DAG,
     return DAG.getBitcast(OrigVT, NewNode);
   }
 
-  // If we're negating a FMA node, then we can adjust the
+  // If we're negating an FMA node, then we can adjust the
   // instruction to include the extra negation.
   unsigned NewOpcode = 0;
   if (Arg.hasOneUse()) {
