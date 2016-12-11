@@ -234,10 +234,7 @@ public:
 MemCounter globalMemCounter((MemCounter::MemCounterCtorArg_()));
 
 #ifndef DISABLE_NEW_COUNT
-void* operator new(std::size_t s)
-#if TEST_STD_VER < 11
-    throw(std::bad_alloc)
-#endif
+void* operator new(std::size_t s) TEST_THROW_SPEC(std::bad_alloc)
 {
     globalMemCounter.newCalled(s);
     void* ret = std::malloc(s);
@@ -246,34 +243,21 @@ void* operator new(std::size_t s)
     return ret;
 }
 
-void  operator delete(void* p)
-#if TEST_STD_VER < 11
-    throw()
-#else
-    noexcept
-#endif
+void  operator delete(void* p) TEST_NOEXCEPT
 {
     globalMemCounter.deleteCalled(p);
     std::free(p);
 }
 
 
-void* operator new[](std::size_t s)
-#if TEST_STD_VER < 11
-    throw(std::bad_alloc)
-#endif
+void* operator new[](std::size_t s) TEST_THROW_SPEC(std::bad_alloc)
 {
     globalMemCounter.newArrayCalled(s);
     return operator new(s);
 }
 
 
-void operator delete[](void* p)
-#if TEST_STD_VER < 11
-    throw()
-#else
-    noexcept
-#endif
+void operator delete[](void* p) TEST_NOEXCEPT
 {
     globalMemCounter.deleteArrayCalled(p);
     operator delete(p);

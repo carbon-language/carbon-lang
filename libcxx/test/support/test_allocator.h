@@ -61,13 +61,13 @@ public:
 
     template <class U> struct rebind {typedef test_allocator<U> other;};
 
-    test_allocator() throw() : data_(0) {++count;}
-    explicit test_allocator(int i) throw() : data_(i) {++count;}
-    test_allocator(const test_allocator& a) throw()
+    test_allocator() TEST_NOEXCEPT : data_(0) {++count;}
+    explicit test_allocator(int i) TEST_NOEXCEPT : data_(i) {++count;}
+    test_allocator(const test_allocator& a) TEST_NOEXCEPT
         : data_(a.data_) {++count;}
-    template <class U> test_allocator(const test_allocator<U>& a) throw()
+    template <class U> test_allocator(const test_allocator<U>& a) TEST_NOEXCEPT
         : data_(a.data_) {++count;}
-    ~test_allocator() throw() {assert(data_ >= 0); --count; data_ = -1;}
+    ~test_allocator() TEST_NOEXCEPT {assert(data_ >= 0); --count; data_ = -1;}
     pointer address(reference x) const {return &x;}
     const_pointer address(const_reference x) const {return &x;}
     pointer allocate(size_type n, const void* = 0)
@@ -86,7 +86,7 @@ public:
         }
     void deallocate(pointer p, size_type)
         {assert(data_ >= 0); --alloc_count; ::operator delete((void*)p);}
-    size_type max_size() const throw()
+    size_type max_size() const TEST_NOEXCEPT
         {return UINT_MAX / sizeof(T);}
 #if TEST_STD_VER < 11
     void construct(pointer p, const T& val)
@@ -122,13 +122,13 @@ public:
 
     template <class U> struct rebind {typedef non_default_test_allocator<U> other;};
 
-//    non_default_test_allocator() throw() : data_(0) {++count;}
-    explicit non_default_test_allocator(int i) throw() : data_(i) {++count;}
-    non_default_test_allocator(const non_default_test_allocator& a) throw()
+//    non_default_test_allocator() TEST_NOEXCEPT : data_(0) {++count;}
+    explicit non_default_test_allocator(int i) TEST_NOEXCEPT : data_(i) {++count;}
+    non_default_test_allocator(const non_default_test_allocator& a) TEST_NOEXCEPT
         : data_(a.data_) {++count;}
-    template <class U> non_default_test_allocator(const non_default_test_allocator<U>& a) throw()
+    template <class U> non_default_test_allocator(const non_default_test_allocator<U>& a) TEST_NOEXCEPT
         : data_(a.data_) {++count;}
-    ~non_default_test_allocator() throw() {assert(data_ >= 0); --count; data_ = -1;}
+    ~non_default_test_allocator() TEST_NOEXCEPT {assert(data_ >= 0); --count; data_ = -1;}
     pointer address(reference x) const {return &x;}
     const_pointer address(const_reference x) const {return &x;}
     pointer allocate(size_type n, const void* = 0)
@@ -147,7 +147,7 @@ public:
         }
     void deallocate(pointer p, size_type)
         {assert(data_ >= 0); --alloc_count; ::operator delete((void*)p); }
-    size_type max_size() const throw()
+    size_type max_size() const TEST_NOEXCEPT
         {return UINT_MAX / sizeof(T);}
 #if TEST_STD_VER < 11
     void construct(pointer p, const T& val)
@@ -181,13 +181,13 @@ public:
 
     template <class U> struct rebind {typedef test_allocator<U> other;};
 
-    test_allocator() throw() : data_(0) {}
-    explicit test_allocator(int i) throw() : data_(i) {}
-    test_allocator(const test_allocator& a) throw()
+    test_allocator() TEST_NOEXCEPT : data_(0) {}
+    explicit test_allocator(int i) TEST_NOEXCEPT : data_(i) {}
+    test_allocator(const test_allocator& a) TEST_NOEXCEPT
         : data_(a.data_) {}
-    template <class U> test_allocator(const test_allocator<U>& a) throw()
+    template <class U> test_allocator(const test_allocator<U>& a) TEST_NOEXCEPT
         : data_(a.data_) {}
-    ~test_allocator() throw() {data_ = -1;}
+    ~test_allocator() TEST_NOEXCEPT {data_ = -1;}
 
     friend bool operator==(const test_allocator& x, const test_allocator& y)
         {return x.data_ == y.data_;}
