@@ -312,10 +312,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "avx512.mask.sub.pd.256" || // Added in 4.0
          Name == "avx512.mask.sub.ps.128" || // Added in 4.0
          Name == "avx512.mask.sub.ps.256" || // Added in 4.0
-         Name == "avx512.mask.vpermilvar.ps.128" || // Added in 4.0
-         Name == "avx512.mask.vpermilvar.ps.256" || // Added in 4.0
-         Name == "avx512.mask.vpermilvar.pd.128" || // Added in 4.0
-         Name == "avx512.mask.vpermilvar.pd.256" || // Added in 4.0
+         Name.startswith("avx512.mask.vpermilvar.") || // Added in 4.0
          Name.startswith("avx512.mask.psll.d") || // Added in 4.0
          Name.startswith("avx512.mask.psll.q") || // Added in 4.0
          Name.startswith("avx512.mask.psll.w") || // Added in 4.0
@@ -1673,6 +1670,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         IID = Intrinsic::x86_avx_vpermilvar_ps_256;
       else if (Name.endswith("pd.256"))
         IID = Intrinsic::x86_avx_vpermilvar_pd_256;
+      else if (Name.endswith("ps.512"))
+        IID = Intrinsic::x86_avx512_vpermilvar_ps_512;
+      else if (Name.endswith("pd.512"))
+        IID = Intrinsic::x86_avx512_vpermilvar_pd_512;
       else
         llvm_unreachable("Unexpected vpermilvar intrinsic");
 
