@@ -595,9 +595,6 @@ class BitcodeReader : public BitcodeReaderBase, public GVMaterializer {
   /// (e.g.) blockaddress forward references.
   bool WillMaterializeAllForwardRefs = false;
 
-  /// True if any Metadata block has been materialized.
-  bool IsMetadataMaterialized = false;
-
   bool StripDebugInfo = false;
 
   /// Functions that need to be matched with subprograms when upgrading old
@@ -2410,7 +2407,6 @@ Error BitcodeReader::parseMetadata(bool ModuleLevel) {
   assert((ModuleLevel || DeferredMetadataInfo.empty()) &&
          "Must read all module-level metadata before function-level");
 
-  IsMetadataMaterialized = true;
   unsigned NextMetadataNo = MetadataList.size();
 
   if (!ModuleLevel && MetadataList.hasFwdRefs())
@@ -3959,7 +3955,7 @@ Error BitcodeReader::parseModule(uint64_t ResumeBit,
           return Err;
         break;
       case bitc::METADATA_BLOCK_ID:
-        if (ShouldLazyLoadMetadata && !IsMetadataMaterialized) {
+        if (ShouldLazyLoadMetadata) {
           if (Error Err = rememberAndSkipMetadata())
             return Err;
           break;
