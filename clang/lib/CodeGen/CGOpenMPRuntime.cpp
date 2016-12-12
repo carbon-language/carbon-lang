@@ -490,7 +490,7 @@ enum OpenMPSchedType {
   OMP_sch_runtime = 37,
   OMP_sch_auto = 38,
   /// static with chunk adjustment (e.g., simd)
-  OMP_sch_static_balanced_chunked   = 45,
+  OMP_sch_static_balanced_chunked = 45,
   /// \brief Lower bound for 'ordered' versions.
   OMP_ord_lower = 64,
   OMP_ord_static_chunked = 65,
@@ -2930,8 +2930,8 @@ void CGOpenMPRuntime::createOffloadEntry(llvm::Constant *ID,
 
 void CGOpenMPRuntime::createOffloadEntriesAndInfoMetadata() {
   // Emit the offloading entries and metadata so that the device codegen side
-  // can
-  // easily figure out what to emit. The produced metadata looks like this:
+  // can easily figure out what to emit. The produced metadata looks like
+  // this:
   //
   // !omp_offload.info = !{!1, ...}
   //
@@ -4444,9 +4444,8 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
   auto *IdentTLoc = emitUpdateLocation(CGF, Loc, OMP_ATOMIC_REDUCE);
   auto *ThreadId = getThreadID(CGF, Loc);
   auto *ReductionArrayTySize = CGF.getTypeSize(ReductionArrayTy);
-  auto *RL =
-    CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(ReductionList.getPointer(),
-                                                    CGF.VoidPtrTy);
+  auto *RL = CGF.Builder.CreatePointerBitCastOrAddrSpaceCast(
+      ReductionList.getPointer(), CGF.VoidPtrTy);
   llvm::Value *Args[] = {
       IdentTLoc,                             // ident_t *<loc>
       ThreadId,                              // i32 <gtid>
