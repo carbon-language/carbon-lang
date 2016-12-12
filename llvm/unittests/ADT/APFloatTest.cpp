@@ -15,6 +15,7 @@
 #include <cmath>
 #include <ostream>
 #include <string>
+#include <tuple>
 
 using namespace llvm;
 
@@ -3176,24 +3177,26 @@ TEST(APFloatTest, PPCDoubleDoubleAddSpecial) {
                               APFloat::fltCategory, APFloat::roundingMode>;
   DataType Data[] = {
       // (1 + 0) + (-1 + 0) = fcZero
-      {0x3ff0000000000000ull, 0, 0xbff0000000000000ull, 0, APFloat::fcZero,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x3ff0000000000000ull, 0, 0xbff0000000000000ull, 0,
+                      APFloat::fcZero, APFloat::rmNearestTiesToEven),
       // LDBL_MAX + (1.1 >> (1023 - 106) + 0)) = fcInfinity
-      {0x7fefffffffffffffull, 0x7c8ffffffffffffeull, 0x7948000000000000ull,
-       0ull, APFloat::fcInfinity, APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x7fefffffffffffffull, 0x7c8ffffffffffffeull,
+                      0x7948000000000000ull, 0ull, APFloat::fcInfinity,
+                      APFloat::rmNearestTiesToEven),
       // TODO: change the 4th 0x75effffffffffffe to 0x75efffffffffffff when
       // PPCDoubleDoubleImpl is gone.
       // LDBL_MAX + (1.011111... >> (1023 - 106) + (1.1111111...0 >> (1023 -
       // 160))) = fcNormal
-      {0x7fefffffffffffffull, 0x7c8ffffffffffffeull, 0x7947ffffffffffffull,
-       0x75effffffffffffeull, APFloat::fcNormal, APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x7fefffffffffffffull, 0x7c8ffffffffffffeull,
+                      0x7947ffffffffffffull, 0x75effffffffffffeull,
+                      APFloat::fcNormal, APFloat::rmNearestTiesToEven),
       // LDBL_MAX + (1.1 >> (1023 - 106) + 0)) = fcInfinity
-      {0x7fefffffffffffffull, 0x7c8ffffffffffffeull, 0x7fefffffffffffffull,
-       0x7c8ffffffffffffeull, APFloat::fcInfinity,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x7fefffffffffffffull, 0x7c8ffffffffffffeull,
+                      0x7fefffffffffffffull, 0x7c8ffffffffffffeull,
+                      APFloat::fcInfinity, APFloat::rmNearestTiesToEven),
       // NaN + (1 + 0) = fcNaN
-      {0x7ff8000000000000ull, 0, 0x3ff0000000000000ull, 0, APFloat::fcNaN,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x7ff8000000000000ull, 0, 0x3ff0000000000000ull, 0,
+                      APFloat::fcNaN, APFloat::rmNearestTiesToEven),
   };
 
   for (auto Tp : Data) {
@@ -3215,35 +3218,35 @@ TEST(APFloatTest, PPCDoubleDoubleAdd) {
                               uint64_t, APFloat::roundingMode>;
   DataType Data[] = {
       // (1 + 0) + (1e-105 + 0) = (1 + 1e-105)
-      {0x3ff0000000000000ull, 0, 0x3960000000000000ull, 0,
-       0x3ff0000000000000ull, 0x3960000000000000ull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x3ff0000000000000ull, 0, 0x3960000000000000ull, 0,
+                      0x3ff0000000000000ull, 0x3960000000000000ull,
+                      APFloat::rmNearestTiesToEven),
       // (1 + 0) + (1e-106 + 0) = (1 + 1e-106)
-      {0x3ff0000000000000ull, 0, 0x3950000000000000ull, 0,
-       0x3ff0000000000000ull, 0x3950000000000000ull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x3ff0000000000000ull, 0, 0x3950000000000000ull, 0,
+                      0x3ff0000000000000ull, 0x3950000000000000ull,
+                      APFloat::rmNearestTiesToEven),
       // (1 + 1e-106) + (1e-106 + 0) = (1 + 1e-105)
-      {0x3ff0000000000000ull, 0x3950000000000000ull, 0x3950000000000000ull, 0,
-       0x3ff0000000000000ull, 0x3960000000000000ull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x3ff0000000000000ull, 0x3950000000000000ull,
+                      0x3950000000000000ull, 0, 0x3ff0000000000000ull,
+                      0x3960000000000000ull, APFloat::rmNearestTiesToEven),
       // (1 + 0) + (epsilon + 0) = (1 + epsilon)
-      {0x3ff0000000000000ull, 0, 0x0000000000000001ull, 0,
-       0x3ff0000000000000ull, 0x0000000000000001ull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x3ff0000000000000ull, 0, 0x0000000000000001ull, 0,
+                      0x3ff0000000000000ull, 0x0000000000000001ull,
+                      APFloat::rmNearestTiesToEven),
       // TODO: change 0xf950000000000000 to 0xf940000000000000, when
       // PPCDoubleDoubleImpl is gone.
       // (DBL_MAX - 1 << (1023 - 105)) + (1 << (1023 - 53) + 0) = DBL_MAX +
       // 1.11111... << (1023 - 52)
-      {0x7fefffffffffffffull, 0xf950000000000000ull, 0x7c90000000000000ull, 0,
-       0x7fefffffffffffffull, 0x7c8ffffffffffffeull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x7fefffffffffffffull, 0xf950000000000000ull,
+                      0x7c90000000000000ull, 0, 0x7fefffffffffffffull,
+                      0x7c8ffffffffffffeull, APFloat::rmNearestTiesToEven),
       // TODO: change 0xf950000000000000 to 0xf940000000000000, when
       // PPCDoubleDoubleImpl is gone.
       // (1 << (1023 - 53) + 0) + (DBL_MAX - 1 << (1023 - 105)) = DBL_MAX +
       // 1.11111... << (1023 - 52)
-      {0x7c90000000000000ull, 0, 0x7fefffffffffffffull, 0xf950000000000000ull,
-       0x7fefffffffffffffull, 0x7c8ffffffffffffeull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x7c90000000000000ull, 0, 0x7fefffffffffffffull,
+                      0xf950000000000000ull, 0x7fefffffffffffffull,
+                      0x7c8ffffffffffffeull, APFloat::rmNearestTiesToEven),
   };
 
   for (auto Tp : Data) {
@@ -3266,13 +3269,13 @@ TEST(APFloatTest, PPCDoubleDoubleSubtract) {
                               uint64_t, APFloat::roundingMode>;
   DataType Data[] = {
       // (1 + 0) - (-1e-105 + 0) = (1 + 1e-105)
-      {0x3ff0000000000000ull, 0, 0xb960000000000000ull, 0,
-       0x3ff0000000000000ull, 0x3960000000000000ull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x3ff0000000000000ull, 0, 0xb960000000000000ull, 0,
+                      0x3ff0000000000000ull, 0x3960000000000000ull,
+                      APFloat::rmNearestTiesToEven),
       // (1 + 0) - (-1e-106 + 0) = (1 + 1e-106)
-      {0x3ff0000000000000ull, 0, 0xb950000000000000ull, 0,
-       0x3ff0000000000000ull, 0x3950000000000000ull,
-       APFloat::rmNearestTiesToEven},
+      std::make_tuple(0x3ff0000000000000ull, 0, 0xb950000000000000ull, 0,
+                      0x3ff0000000000000ull, 0x3950000000000000ull,
+                      APFloat::rmNearestTiesToEven),
   };
 
   for (auto Tp : Data) {
