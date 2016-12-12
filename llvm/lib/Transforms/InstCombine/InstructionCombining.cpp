@@ -2260,18 +2260,18 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
     Value *NewCond = Builder->CreateTrunc(Cond, Ty, "trunc");
     SI.setCondition(NewCond);
 
-    for (auto &C : SI.cases())
-      static_cast<SwitchInst::CaseIt *>(&C)->setValue(ConstantInt::get(
-          SI.getContext(), C.getCaseValue()->getValue().trunc(NewWidth)));
+    for (SwitchInst::CaseIt CaseIter : SI.cases()) {
+      APInt TruncatedCase = CaseIter.getCaseValue()->getValue().trunc(NewWidth);
+      CaseIter.setValue(ConstantInt::get(SI.getContext(), TruncatedCase));
+    }
   }
 
   Value *Op0 = nullptr;
   ConstantInt *AddRHS = nullptr;
   if (match(Cond, m_Add(m_Value(Op0), m_ConstantInt(AddRHS)))) {
     // Change 'switch (X+4) case 1:' into 'switch (X) case -3'.
-    for (SwitchInst::CaseIt i = SI.case_begin(), e = SI.case_end(); i != e;
-         ++i) {
-      ConstantInt *CaseVal = i.getCaseValue();
+    for (SwitchInst::CaseIt CaseIter : SI.cases()) {
+      ConstantInt *CaseVal = CaseIter.getCaseValue();
       Constant *LHS = CaseVal;
       if (TruncCond) {
         LHS = LeadingKnownZeros
@@ -2281,7 +2281,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
       Constant *NewCaseVal = ConstantExpr::getSub(LHS, AddRHS);
       assert(isa<ConstantInt>(NewCaseVal) &&
              "Result of expression should be constant");
-      i.setValue(cast<ConstantInt>(NewCaseVal));
+      CaseIter.setValue(cast<ConstantInt>(NewCaseVal));
     }
     SI.setCondition(Op0);
     if (auto *CondI = dyn_cast<Instruction>(Cond))
