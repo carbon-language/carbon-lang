@@ -51,13 +51,21 @@ protected:
     return ScalarEvolution(F, TLI, *AC, *DT, *LI);
   }
 
-  void runWithFunctionAndSE(
-      Module &M, StringRef FuncName,
-      function_ref<void(Function &F, ScalarEvolution &SE)> Test) {
+  void runSCEVTest(Module &M, StringRef FuncName,
+                   function_ref<void(Function &F, DominatorTree &DT,
+                                     LoopInfo &LI, ScalarEvolution &SE)>
+                       Test) {
     auto *F = M.getFunction(FuncName);
     ASSERT_NE(F, nullptr) << "Could not find " << FuncName;
     ScalarEvolution SE = buildSE(*F);
-    Test(*F, SE);
+    Test(*F, *DT, *LI, SE);
+  }
+
+  void runWithFunctionAndSE(
+      Module &M, StringRef FuncName,
+      function_ref<void(Function &F, ScalarEvolution &SE)> Test) {
+    runSCEVTest(M, FuncName, [&](Function &F, DominatorTree &DT, LoopInfo &LI,
+                                 ScalarEvolution &SE) { Test(F, SE); });
   }
 };
 
@@ -579,7 +587,8 @@ TEST_F(ScalarEvolutionsTest, BadHoistingSCEVExpander_PR30942) {
   assert(M && "Could not parse module?");
   assert(!verifyModule(*M) && "Must have been well formed!");
 
-  runWithFunctionAndSE(*M, "f_1", [&](Function &F, ScalarEvolution &SE) {
+  runSCEVTest(*M, "f_1", [&](Function &F, DominatorTree &DT, LoopInfo &LI,
+                             ScalarEvolution &SE) {
     SCEVExpander Expander(SE, M->getDataLayout(), "unittests");
     auto *DivInst = getInstructionByName(F, "div");
 
@@ -604,6 +613,25 @@ TEST_F(ScalarEvolutionsTest, BadHoistingSCEVExpander_PR30942) {
           dyn_cast<Instruction>(DivFromScratchExpansion);
       ASSERT_NE(DivFromScratchExpansionInst, nullptr);
       EXPECT_EQ(DivInst->getParent(), DivFromScratchExpansionInst->getParent());
+    }
+
+    {
+      auto *ArgY = getArgByName(F, "y");
+      auto *One = SE.getOne(ArgY->getType());
+      auto *DivFromScratchSCEV = SE.getUDivExpr(One, SE.getSCEV(ArgY));
+      auto *L = LI.getLoopFor(DivInst->getParent());
+      auto *ARFromScratchSCEV =
+          SE.getAddRecExpr(DivFromScratchSCEV, One, L, SCEV::FlagAnyWrap);
+
+      Expander.disableCanonicalMode();
+
+      auto *ARFromScratchExpansion = Expander.expandCodeFor(
+          ARFromScratchSCEV, ARFromScratchSCEV->getType(),
+          DivInst->getParent()->getTerminator());
+      auto *ARFromScratchExpansionInst =
+          dyn_cast<Instruction>(ARFromScratchExpansion);
+      ASSERT_NE(ARFromScratchExpansionInst, nullptr);
+      ASSERT_FALSE(verifyFunction(F));
     }
   });
 }
