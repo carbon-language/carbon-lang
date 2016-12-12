@@ -233,6 +233,7 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
     llvm::sys::path::native(UmbrellaDir.Entry->getName(), DirNative);
 
     vfs::FileSystem &FS = *FileMgr.getVirtualFileSystem();
+    SmallVector<std::pair<std::string, const FileEntry *>, 8> Headers;
     for (vfs::recursive_directory_iterator Dir(FS, DirNative, EC), End;
          Dir != End && !EC; Dir.increment(EC)) {
       // Check whether this entry has an extension typically associated with 
@@ -263,13 +264,20 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
            ++It)
         llvm::sys::path::append(RelativeHeader, *It);
 
-      // Include this header as part of the umbrella directory.
-      Module->addTopHeader(Header);
-      addHeaderInclude(RelativeHeader, Includes, LangOpts, Module->IsExternC);
+      Headers.push_back(std::make_pair(RelativeHeader.str(), Header));
     }
 
     if (EC)
       return EC;
+
+    // Sort header paths and make the header inclusion order deterministic
+    // across different OSs and filesystems.
+    llvm::array_pod_sort(Headers.begin(), Headers.end());
+    for (auto &H : Headers) {
+      // Include this header as part of the umbrella directory.
+      Module->addTopHeader(H.second);
+      addHeaderInclude(H.first, Includes, LangOpts, Module->IsExternC);
+    }
   }
 
   // Recurse into submodules.
