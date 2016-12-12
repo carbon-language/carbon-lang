@@ -37,6 +37,8 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Utils/SanitizerStats.h"
 
+#include <string>
+
 using namespace clang;
 using namespace CodeGen;
 
