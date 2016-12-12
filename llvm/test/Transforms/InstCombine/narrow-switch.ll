@@ -135,10 +135,11 @@ sw.default:
 define i8 @PR31260(i8 %x) {
 ; ALL-LABEL: @PR31260(
 ; ALL-NEXT:  entry:
-; ALL-NEXT:    [[T4:%.*]] = and i8 %x, 2
-; ALL-NEXT:    switch i8 [[T4]], label %exit [
-; ALL-NEXT:    i8 -128, label %case126
-; ALL-NEXT:    i8 -126, label %case124
+; ALL-NEXT:    [[TMP0:%.*]] = trunc i8 %x to i2
+; ALL-NEXT:    [[TRUNC:%.*]] = and i2 [[TMP0]], -2
+; ALL-NEXT:    switch i2 [[TRUNC]], label %exit [
+; ALL-NEXT:    i2 0, label %case126
+; ALL-NEXT:    i2 -2, label %case124
 ; ALL-NEXT:    ]
 ; ALL:       exit:
 ; ALL-NEXT:    ret i8 1

@@ -2232,6 +2232,20 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
 
 Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   Value *Cond = SI.getCondition();
+  Value *Op0;
+  ConstantInt *AddRHS;
+  if (match(Cond, m_Add(m_Value(Op0), m_ConstantInt(AddRHS)))) {
+    // Change 'switch (X+4) case 1:' into 'switch (X) case -3'.
+    for (SwitchInst::CaseIt CaseIter : SI.cases()) {
+      Constant *NewCase = ConstantExpr::getSub(CaseIter.getCaseValue(), AddRHS);
+      assert(isa<ConstantInt>(NewCase) &&
+             "Result of expression should be constant");
+      CaseIter.setValue(cast<ConstantInt>(NewCase));
+    }
+    SI.setCondition(Op0);
+    return &SI;
+  }
+
   unsigned BitWidth = cast<IntegerType>(Cond->getType())->getBitWidth();
   APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
   computeKnownBits(Cond, KnownZero, KnownOne, 0, &SI);
@@ -2252,9 +2266,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   // Shrink the condition operand if the new type is smaller than the old type.
   // This may produce a non-standard type for the switch, but that's ok because
   // the backend should extend back to a legal type for the target.
-  bool TruncCond = false;
   if (NewWidth > 0 && NewWidth < BitWidth) {
-    TruncCond = true;
     IntegerType *Ty = IntegerType::get(SI.getContext(), NewWidth);
     Builder->SetInsertPoint(&SI);
     Value *NewCond = Builder->CreateTrunc(Cond, Ty, "trunc");
@@ -2264,32 +2276,10 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
       APInt TruncatedCase = CaseIter.getCaseValue()->getValue().trunc(NewWidth);
       CaseIter.setValue(ConstantInt::get(SI.getContext(), TruncatedCase));
     }
-  }
-
-  Value *Op0 = nullptr;
-  ConstantInt *AddRHS = nullptr;
-  if (match(Cond, m_Add(m_Value(Op0), m_ConstantInt(AddRHS)))) {
-    // Change 'switch (X+4) case 1:' into 'switch (X) case -3'.
-    for (SwitchInst::CaseIt CaseIter : SI.cases()) {
-      ConstantInt *CaseVal = CaseIter.getCaseValue();
-      Constant *LHS = CaseVal;
-      if (TruncCond) {
-        LHS = LeadingKnownZeros
-                  ? ConstantExpr::getZExt(CaseVal, Cond->getType())
-                  : ConstantExpr::getSExt(CaseVal, Cond->getType());
-      }
-      Constant *NewCaseVal = ConstantExpr::getSub(LHS, AddRHS);
-      assert(isa<ConstantInt>(NewCaseVal) &&
-             "Result of expression should be constant");
-      CaseIter.setValue(cast<ConstantInt>(NewCaseVal));
-    }
-    SI.setCondition(Op0);
-    if (auto *CondI = dyn_cast<Instruction>(Cond))
-      Worklist.Add(CondI);
     return &SI;
   }
 
-  return TruncCond ? &SI : nullptr;
+  return nullptr;
 }
 
 Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
