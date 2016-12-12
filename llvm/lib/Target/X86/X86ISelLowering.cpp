@@ -27718,7 +27718,7 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
     SmallVector<int, 1> NonceMask; // Just a placeholder.
     NonceMask.push_back(0);
     if (combineX86ShufflesRecursively({Op}, 0, Op, NonceMask,
-                                      /*Depth*/ 1, /*HasPSHUFB*/ false, DAG,
+                                      /*Depth*/ 1, /*HasVarMask*/ false, DAG,
                                       DCI, Subtarget))
       return SDValue(); // This routine will use CombineTo to replace N.
   }
@@ -29784,7 +29784,7 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
     SmallVector<int, 1> NonceMask; // Just a placeholder.
     NonceMask.push_back(0);
     if (combineX86ShufflesRecursively({Op}, 0, Op, NonceMask,
-                                      /*Depth*/ 1, /*HasPSHUFB*/ false, DAG,
+                                      /*Depth*/ 1, /*HasVarMask*/ false, DAG,
                                       DCI, Subtarget))
       return SDValue(); // This routine will use CombineTo to replace N.
   }
@@ -30118,7 +30118,7 @@ static SDValue combineAnd(SDNode *N, SelectionDAG &DAG,
     SmallVector<int, 1> NonceMask; // Just a placeholder.
     NonceMask.push_back(0);
     if (combineX86ShufflesRecursively({Op}, 0, Op, NonceMask,
-                                      /*Depth*/ 1, /*HasPSHUFB*/ false, DAG,
+                                      /*Depth*/ 1, /*HasVarMask*/ false, DAG,
                                       DCI, Subtarget))
       return SDValue(); // This routine will use CombineTo to replace N.
   }
