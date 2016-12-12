@@ -29761,6 +29761,37 @@ static SDValue combineShift(SDNode* N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
+                                  TargetLowering::DAGCombinerInfo &DCI,
+                                  const X86Subtarget &Subtarget) {
+  assert((X86ISD::VSHLI == N->getOpcode() || X86ISD::VSRLI == N->getOpcode()) &&
+         "Unexpected opcode");
+  EVT VT = N->getValueType(0);
+  unsigned NumBitsPerElt = VT.getScalarSizeInBits();
+
+  // This fails for mask register (vXi1) shifts.
+  if ((NumBitsPerElt % 8) != 0)
+    return SDValue();
+
+  // Out of range logical bit shifts are guaranteed to be zero.
+  APInt ShiftVal = cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
+  if (ShiftVal.zextOrTrunc(8).uge(NumBitsPerElt))
+    return getZeroVector(VT.getSimpleVT(), Subtarget, DAG, SDLoc(N));
+
+  // We can decode 'whole byte' logical bit shifts as shuffles.
+  if ((ShiftVal.getZExtValue() % 8) == 0) {
+    SDValue Op(N, 0);
+    SmallVector<int, 1> NonceMask; // Just a placeholder.
+    NonceMask.push_back(0);
+    if (combineX86ShufflesRecursively({Op}, 0, Op, NonceMask,
+                                      /*Depth*/ 1, /*HasPSHUFB*/ false, DAG,
+                                      DCI, Subtarget))
+      return SDValue(); // This routine will use CombineTo to replace N.
+  }
+
+  return SDValue();
+}
+
 /// Recognize the distinctive (AND (setcc ...) (setcc ..)) where both setccs
 /// reference the same FP CMP, and rewrite for CMPEQSS and friends. Likewise for
 /// OR -> CMPNEQSS.
@@ -33127,6 +33158,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SETCC:          return combineSetCC(N, DAG, Subtarget);
   case X86ISD::SETCC:       return combineX86SetCC(N, DAG, DCI, Subtarget);
   case X86ISD::BRCOND:      return combineBrCond(N, DAG, DCI, Subtarget);
+  case X86ISD::VSHLI:
+  case X86ISD::VSRLI:       return combineVectorShift(N, DAG, DCI, Subtarget);
   case X86ISD::VSEXT:
   case X86ISD::VZEXT:       return combineVSZext(N, DAG, DCI, Subtarget);
   case X86ISD::SHUFP:       // Handle all target specific shuffles
