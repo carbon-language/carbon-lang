@@ -2529,7 +2529,7 @@ static void emitCheckHandlerCall(CodeGenFunction &CGF,
   const StringRef CheckName = CheckInfo.Name;
   std::string FnName =
       ("__ubsan_handle_" + CheckName +
-       (CheckInfo.Version ? "_v" + std::to_string(CheckInfo.Version) : "") +
+       (CheckInfo.Version ? "_v" + llvm::utostr(CheckInfo.Version) : "") +
        (NeedsAbortSuffix ? "_abort" : ""))
           .str();
   bool MayReturn =
