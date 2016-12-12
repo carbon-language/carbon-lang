@@ -130,7 +130,7 @@ sw.default:
   ret void
 }
 
-; FIXME: https://llvm.org/bugs/show_bug.cgi?id=31260
+; https://llvm.org/bugs/show_bug.cgi?id=31260
 
 define i8 @PR31260(i8 %x) {
 ; ALL-LABEL: @PR31260(
