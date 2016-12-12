@@ -1280,8 +1280,8 @@ MetadataLoader::~MetadataLoader() = default;
 MetadataLoader::MetadataLoader(BitstreamCursor &Stream, Module &TheModule,
                                BitcodeReaderValueList &ValueList,
                                std::function<Type *(unsigned)> getTypeByID)
-    : Pimpl(make_unique<MetadataLoaderImpl>(Stream, TheModule, ValueList,
-                                            getTypeByID)) {}
+    : Pimpl(llvm::make_unique<MetadataLoaderImpl>(Stream, TheModule, ValueList,
+                                                  getTypeByID)) {}
 
 Error MetadataLoader::parseMetadata(bool ModuleLevel) {
   return Pimpl->parseMetadata(ModuleLevel);
