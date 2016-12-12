@@ -2769,7 +2769,6 @@ createOffloadingBinaryDescriptorFunction(CodeGenModule &CGM, StringRef Name,
   Args.push_back(&DummyPtr);
 
   CodeGenFunction CGF(CGM);
-  GlobalDecl();
   auto &FI = CGM.getTypes().arrangeBuiltinFunctionDeclaration(C.VoidTy, Args);
   auto FTy = CGM.getTypes().GetFunctionType(FI);
   auto *Fn =
@@ -6142,7 +6141,7 @@ bool CGOpenMPRuntime::emitTargetFunctions(GlobalDecl GD) {
   // Try to detect target regions in the function.
   scanForTargetRegionsFunctions(FD.getBody(), CGM.getMangledName(GD));
 
-  // We should not emit any function othen that the ones created during the
+  // We should not emit any function other that the ones created during the
   // scanning. Therefore, we signal that this function is completely dealt
   // with.
   return true;
