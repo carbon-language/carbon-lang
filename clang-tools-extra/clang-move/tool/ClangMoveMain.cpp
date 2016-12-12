@@ -10,6 +10,7 @@
 #include "ClangMove.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Tooling/ArgumentsAdjusters.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
@@ -108,7 +109,7 @@ int main(int argc, const char **argv) {
                                 OptionsParser.getSourcePathList());
   // Add "-fparse-all-comments" compile option to make clang parse all comments.
   Tool.appendArgumentsAdjuster(tooling::getInsertArgumentAdjuster(
-      "-fparse-all-comments", ArgumentInsertPosition::BEGIN));
+      "-fparse-all-comments", tooling::ArgumentInsertPosition::BEGIN));
   move::MoveDefinitionSpec Spec;
   Spec.Names = {Names.begin(), Names.end()};
   Spec.OldHeader = OldHeader;
