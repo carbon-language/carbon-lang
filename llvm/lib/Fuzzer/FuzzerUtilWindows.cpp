@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 // Misc utils implementation for Windows.
 //===----------------------------------------------------------------------===//
-
 #include "FuzzerDefs.h"
 #if LIBFUZZER_WINDOWS
 #include "FuzzerIO.h"
@@ -179,4 +178,5 @@ const void *SearchMemory(const void *Data, size_t DataLen, const void *Patt,
 }
 
 } // namespace fuzzer
+
 #endif // LIBFUZZER_WINDOWS

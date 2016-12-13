@@ -15,7 +15,6 @@
 #include "FuzzerIO.h"
 #include "FuzzerMutate.h"
 #include "FuzzerRandom.h"
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>

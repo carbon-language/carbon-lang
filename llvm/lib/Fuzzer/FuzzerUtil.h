@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 // Util functions.
 //===----------------------------------------------------------------------===//
+
 #ifndef LLVM_FUZZER_UTIL_H
 #define LLVM_FUZZER_UTIL_H
 
@@ -67,4 +68,5 @@ inline std::string CloneArgsWithoutX(const std::vector<std::string> &Args,
 }
 
 }  // namespace fuzzer
+
 #endif  // LLVM_FUZZER_UTIL_H

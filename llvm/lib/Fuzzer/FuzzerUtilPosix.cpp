@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 // Misc utils implementation using Posix API.
 //===----------------------------------------------------------------------===//
-
 #include "FuzzerDefs.h"
 #if LIBFUZZER_POSIX
 #include "FuzzerIO.h"
@@ -113,5 +112,6 @@ const void *SearchMemory(const void *Data, size_t DataLen, const void *Patt,
   return memmem(Data, DataLen, Patt, PattLen);
 }
 
-} // namespace fuzzer
+}  // namespace fuzzer
+
 #endif // LIBFUZZER_POSIX

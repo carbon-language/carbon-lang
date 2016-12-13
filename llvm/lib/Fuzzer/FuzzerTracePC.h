@@ -12,10 +12,9 @@
 #ifndef LLVM_FUZZER_TRACE_PC
 #define LLVM_FUZZER_TRACE_PC
 
-#include <set>
-
 #include "FuzzerDefs.h"
 #include "FuzzerValueBitMap.h"
+#include <set>
 
 namespace fuzzer {
 

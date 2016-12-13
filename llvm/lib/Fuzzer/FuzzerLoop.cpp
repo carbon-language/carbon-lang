@@ -15,7 +15,6 @@
 #include "FuzzerMutate.h"
 #include "FuzzerRandom.h"
 #include "FuzzerTracePC.h"
-
 #include <algorithm>
 #include <cstring>
 #include <memory>

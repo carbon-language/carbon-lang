@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 // IO functions implementation for Windows.
 //===----------------------------------------------------------------------===//
-
 #include "FuzzerDefs.h"
 #if LIBFUZZER_WINDOWS
+
 #include "FuzzerExtFunctions.h"
 #include "FuzzerIO.h"
 #include <cstdarg>
@@ -18,8 +18,8 @@
 #include <fstream>
 #include <io.h>
 #include <iterator>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <windows.h>
 
 namespace fuzzer {
@@ -144,4 +144,5 @@ std::string DirName(const std::string &FileName) {
 }
 
 }  // namespace fuzzer
+
 #endif // LIBFUZZER_WINDOWS

@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 // IO functions implementation using Posix API.
 //===----------------------------------------------------------------------===//
-
 #include "FuzzerDefs.h"
 #if LIBFUZZER_POSIX
+
 #include "FuzzerExtFunctions.h"
 #include "FuzzerIO.h"
 #include <cstdarg>
@@ -84,4 +84,5 @@ std::string DirName(const std::string &FileName) {
 }
 
 }  // namespace fuzzer
+
 #endif // LIBFUZZER_POSIX
