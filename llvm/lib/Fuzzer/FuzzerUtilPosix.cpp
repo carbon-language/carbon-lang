@@ -64,13 +64,24 @@ void SetTimer(int Seconds) {
   SetSigaction(SIGALRM, AlarmHandler);
 }
 
-void SetSigSegvHandler() { SetSigaction(SIGSEGV, CrashHandler); }
-void SetSigBusHandler() { SetSigaction(SIGBUS, CrashHandler); }
-void SetSigAbrtHandler() { SetSigaction(SIGABRT, CrashHandler); }
-void SetSigIllHandler() { SetSigaction(SIGILL, CrashHandler); }
-void SetSigFpeHandler() { SetSigaction(SIGFPE, CrashHandler); }
-void SetSigIntHandler() { SetSigaction(SIGINT, InterruptHandler); }
-void SetSigTermHandler() { SetSigaction(SIGTERM, InterruptHandler); }
+void SetSignalHandler(const FuzzingOptions& Options) {
+  if (Options.UnitTimeoutSec > 0)
+    SetTimer(Options.UnitTimeoutSec / 2 + 1);
+  if (Options.HandleInt)
+    SetSigaction(SIGINT, InterruptHandler);
+  if (Options.HandleTerm)
+    SetSigaction(SIGTERM, InterruptHandler);
+  if (Options.HandleSegv)
+    SetSigaction(SIGSEGV, CrashHandler);
+  if (Options.HandleBus)
+    SetSigaction(SIGBUS, CrashHandler);
+  if (Options.HandleAbrt)
+    SetSigaction(SIGABRT, CrashHandler);
+  if (Options.HandleIll)
+    SetSigaction(SIGILL, CrashHandler);
+  if (Options.HandleFpe)
+    SetSigaction(SIGFPE, CrashHandler);
+}
 
 void SleepSeconds(int Seconds) {
   sleep(Seconds); // Use C API to avoid coverage from instrumented libc++.

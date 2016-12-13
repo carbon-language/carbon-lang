@@ -457,16 +457,14 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
 
   StartRssThread(F, Flags.rss_limit_mb);
 
-  // Timer
-  if (Flags.timeout > 0)
-    SetTimer(Flags.timeout / 2 + 1);
-  if (Flags.handle_segv) SetSigSegvHandler();
-  if (Flags.handle_bus) SetSigBusHandler();
-  if (Flags.handle_abrt) SetSigAbrtHandler();
-  if (Flags.handle_ill) SetSigIllHandler();
-  if (Flags.handle_fpe) SetSigFpeHandler();
-  if (Flags.handle_int) SetSigIntHandler();
-  if (Flags.handle_term) SetSigTermHandler();
+  Options.HandleAbrt = Flags.handle_abrt;
+  Options.HandleBus = Flags.handle_bus;
+  Options.HandleFpe = Flags.handle_fpe;
+  Options.HandleIll = Flags.handle_ill;
+  Options.HandleInt = Flags.handle_int;
+  Options.HandleSegv = Flags.handle_segv;
+  Options.HandleTerm = Flags.handle_term;
+  SetSignalHandler(Options);
 
   if (Flags.minimize_crash_internal_step)
     return MinimizeCrashInputInternalStep(F, Corpus);

@@ -43,15 +43,7 @@ int NumberOfCpuCores();
 bool ExecuteCommandAndReadOutput(const std::string &Command, std::string *Out);
 
 // Platform specific functions.
-void SetTimer(int Seconds);
-
-void SetSigSegvHandler();
-void SetSigBusHandler();
-void SetSigAbrtHandler();
-void SetSigIllHandler();
-void SetSigFpeHandler();
-void SetSigIntHandler();
-void SetSigTermHandler();
+void SetSignalHandler(const FuzzingOptions& Options);
 
 void SleepSeconds(int Seconds);
 
