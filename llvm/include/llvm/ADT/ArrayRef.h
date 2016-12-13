@@ -424,12 +424,12 @@ namespace llvm {
     }
     OwningArrayRef(OwningArrayRef &&Other) { *this = Other; }
     OwningArrayRef &operator=(OwningArrayRef &&Other) {
-      delete this->data();
+      delete[] this->data();
       this->MutableArrayRef<T>::operator=(Other);
       Other.MutableArrayRef<T>::operator=(MutableArrayRef<T>());
       return *this;
     }
-    ~OwningArrayRef() { delete this->data(); }
+    ~OwningArrayRef() { delete[] this->data(); }
   };
 
   /// @name ArrayRef Convenience constructors
