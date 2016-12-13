@@ -598,7 +598,7 @@ int main(int argc, char **argv) {
     if (!MissingLibs.empty()) {
       switch (LinkMode) {
       case LinkModeShared:
-        if (DyLibExists && !BuiltSharedLibs)
+        if (LinkDyLib && !BuiltSharedLibs)
           break;
         // Using component shared libraries.
         for (auto &Lib : MissingLibs)
@@ -674,7 +674,7 @@ int main(int argc, char **argv) {
         }
       };
 
-      if (LinkMode == LinkModeShared && !BuiltSharedLibs) {
+      if (LinkMode == LinkModeShared && LinkDyLib) {
         PrintForLib(DyLibName);
       } else {
         for (unsigned i = 0, e = RequiredLibs.size(); i != e; ++i) {
