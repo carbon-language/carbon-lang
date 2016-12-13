@@ -550,12 +550,13 @@ int main(int argc, char **argv) {
         OS << ActivePrefix << '\n';
       } else if (Arg == "--src-root") {
         OS << LLVM_SRC_ROOT << '\n';
+      } else if (Arg == "--ignore-libllvm") {
+        LinkDyLib = false;
+        LinkMode = BuiltSharedLibs ? LinkModeShared : LinkModeAuto;
       } else if (Arg == "--link-shared") {
         LinkMode = LinkModeShared;
       } else if (Arg == "--link-static") {
         LinkMode = LinkModeStatic;
-      } else if (Arg == "--ignore-libllvm") {
-        LinkDyLib = false;
       } else {
         usage();
       }
