@@ -200,10 +200,10 @@ static void PulseThread() {
   }
 }
 
-static void WorkerThread(const std::string &Cmd, std::atomic<int> *Counter,
-                        int NumJobs, std::atomic<bool> *HasErrors) {
+static void WorkerThread(const std::string &Cmd, std::atomic<unsigned> *Counter,
+                         unsigned NumJobs, std::atomic<bool> *HasErrors) {
   while (true) {
-    int C = (*Counter)++;
+    unsigned C = (*Counter)++;
     if (C >= NumJobs) break;
     std::string Log = "fuzz-" + std::to_string(C) + ".log";
     std::string ToRun = Cmd + " > " + Log + " 2>&1\n";
@@ -213,7 +213,7 @@ static void WorkerThread(const std::string &Cmd, std::atomic<int> *Counter,
     if (ExitCode != 0)
       *HasErrors = true;
     std::lock_guard<std::mutex> Lock(Mu);
-    Printf("================== Job %d exited with exit code %d ============\n",
+    Printf("================== Job %u exited with exit code %d ============\n",
            C, ExitCode);
     fuzzer::CopyFileToErr(Log);
   }
@@ -231,14 +231,14 @@ std::string CloneArgsWithoutX(const std::vector<std::string> &Args,
 }
 
 static int RunInMultipleProcesses(const std::vector<std::string> &Args,
-                                  int NumWorkers, int NumJobs) {
-  std::atomic<int> Counter(0);
+                                  unsigned NumWorkers, unsigned NumJobs) {
+  std::atomic<unsigned> Counter(0);
   std::atomic<bool> HasErrors(false);
   std::string Cmd = CloneArgsWithoutX(Args, "jobs", "workers");
   std::vector<std::thread> V;
   std::thread Pulse(PulseThread);
   Pulse.detach();
-  for (int i = 0; i < NumWorkers; i++)
+  for (unsigned i = 0; i < NumWorkers; i++)
     V.push_back(std::thread(WorkerThread, Cmd, &Counter, NumJobs, &HasErrors));
   for (auto &T : V)
     T.join();
@@ -379,7 +379,7 @@ int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   if (Flags.jobs > 0 && Flags.workers == 0) {
     Flags.workers = std::min(NumberOfCpuCores() / 2, Flags.jobs);
     if (Flags.workers > 1)
-      Printf("Running %d workers\n", Flags.workers);
+      Printf("Running %u workers\n", Flags.workers);
   }
 
   if (Flags.workers > 0 && Flags.jobs > 0)

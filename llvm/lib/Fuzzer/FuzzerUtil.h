@@ -38,7 +38,7 @@ void PrintPC(const char *SymbolizedFMT, const char *FallbackFMT, uintptr_t PC);
 
 std::string DescribePC(const char *SymbolizedFMT, uintptr_t PC);
 
-int NumberOfCpuCores();
+unsigned NumberOfCpuCores();
 
 bool ExecuteCommandAndReadOutput(const std::string &Command, std::string *Out);
 
