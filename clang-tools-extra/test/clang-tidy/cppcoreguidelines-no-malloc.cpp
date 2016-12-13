@@ -1,6 +1,6 @@
 // RUN: %check_clang_tidy %s cppcoreguidelines-no-malloc %t
 
-using size_t = unsigned long;
+using size_t = __SIZE_TYPE__;
 
 void *malloc(size_t size);
 void *calloc(size_t num, size_t size);
