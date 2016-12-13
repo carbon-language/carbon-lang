@@ -227,33 +227,37 @@ void TestAllForms() {
   //----------------------------------------------------------------------
   // Test block forms
   //----------------------------------------------------------------------
-  DWARFFormValue FormValue;
+  Optional<DWARFFormValue> FormValue;
   ArrayRef<uint8_t> ExtractedBlockData;
   Optional<ArrayRef<uint8_t>> BlockDataOpt;
 
-  EXPECT_TRUE(DieDG.getAttributeValue(Attr_DW_FORM_block, FormValue));
-  BlockDataOpt = FormValue.getAsBlock();
+  FormValue = DieDG.getAttributeValue(Attr_DW_FORM_block);
+  EXPECT_TRUE((bool)FormValue);
+  BlockDataOpt = FormValue->getAsBlock();
   EXPECT_TRUE(BlockDataOpt.hasValue());
   ExtractedBlockData = BlockDataOpt.getValue();
   EXPECT_EQ(ExtractedBlockData.size(), BlockSize);
   EXPECT_TRUE(memcmp(ExtractedBlockData.data(), BlockData, BlockSize) == 0);
 
-  EXPECT_TRUE(DieDG.getAttributeValue(Attr_DW_FORM_block1, FormValue));
-  BlockDataOpt = FormValue.getAsBlock();
+  FormValue = DieDG.getAttributeValue(Attr_DW_FORM_block1);
+  EXPECT_TRUE((bool)FormValue);
+  BlockDataOpt = FormValue->getAsBlock();
   EXPECT_TRUE(BlockDataOpt.hasValue());
   ExtractedBlockData = BlockDataOpt.getValue();
   EXPECT_EQ(ExtractedBlockData.size(), BlockSize);
   EXPECT_TRUE(memcmp(ExtractedBlockData.data(), BlockData, BlockSize) == 0);
 
-  EXPECT_TRUE(DieDG.getAttributeValue(Attr_DW_FORM_block2, FormValue));
-  BlockDataOpt = FormValue.getAsBlock();
+  FormValue = DieDG.getAttributeValue(Attr_DW_FORM_block2);
+  EXPECT_TRUE((bool)FormValue);
+  BlockDataOpt = FormValue->getAsBlock();
   EXPECT_TRUE(BlockDataOpt.hasValue());
   ExtractedBlockData = BlockDataOpt.getValue();
   EXPECT_EQ(ExtractedBlockData.size(), BlockSize);
   EXPECT_TRUE(memcmp(ExtractedBlockData.data(), BlockData, BlockSize) == 0);
 
-  EXPECT_TRUE(DieDG.getAttributeValue(Attr_DW_FORM_block4, FormValue));
-  BlockDataOpt = FormValue.getAsBlock();
+  FormValue = DieDG.getAttributeValue(Attr_DW_FORM_block4);
+  EXPECT_TRUE((bool)FormValue);
+  BlockDataOpt = FormValue->getAsBlock();
   EXPECT_TRUE(BlockDataOpt.hasValue());
   ExtractedBlockData = BlockDataOpt.getValue();
   EXPECT_EQ(ExtractedBlockData.size(), BlockSize);

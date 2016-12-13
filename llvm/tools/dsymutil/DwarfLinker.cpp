@@ -2136,19 +2136,19 @@ unsigned DwarfLinker::shouldKeepSubprogramDIE(
 
   Flags |= TF_Keep;
 
-  DWARFFormValue HighPcValue;
-  if (!DIE.getAttributeValue(dwarf::DW_AT_high_pc, HighPcValue)) {
+  Optional<DWARFFormValue> HighPcValue;
+  if (!(HighPcValue = DIE.getAttributeValue(dwarf::DW_AT_high_pc))) {
     reportWarning("Function without high_pc. Range will be discarded.\n",
                   &DIE);
     return Flags;
   }
 
   uint64_t HighPc;
-  if (HighPcValue.isFormClass(DWARFFormValue::FC_Address)) {
-    HighPc = *HighPcValue.getAsAddress();
+  if (HighPcValue->isFormClass(DWARFFormValue::FC_Address)) {
+    HighPc = *HighPcValue->getAsAddress();
   } else {
-    assert(HighPcValue.isFormClass(DWARFFormValue::FC_Constant));
-    HighPc = LowPc + *HighPcValue.getAsUnsignedConstant();
+    assert(HighPcValue->isFormClass(DWARFFormValue::FC_Constant));
+    HighPc = LowPc + *HighPcValue->getAsUnsignedConstant();
   }
 
   // Replace the debug map range with a more accurate one.

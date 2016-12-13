@@ -10,6 +10,7 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFDIE_H
 #define LLVM_LIB_DEBUGINFO_DWARFDIE_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
 
 namespace llvm {
@@ -117,8 +118,7 @@ public:
   /// \param Attr the attribute to extract.
   /// \param FormValue contains the attribute value if true is returned.
   /// \returns true if the attribute was extracted from this DIE.
-  bool getAttributeValue(dwarf::Attribute Attr,
-                         DWARFFormValue &FormValue) const;
+  Optional<DWARFFormValue> getAttributeValue(dwarf::Attribute Attr) const;
   
   /// Extract the specified attribute from this DIE as a C string.
   ///

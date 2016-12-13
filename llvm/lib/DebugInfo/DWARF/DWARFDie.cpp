@@ -133,68 +133,68 @@ bool DWARFDie::isSubroutineDIE() const {
   return Tag == DW_TAG_subprogram || Tag == DW_TAG_inlined_subroutine;
 }
 
-bool DWARFDie::getAttributeValue(dwarf::Attribute Attr,
-                                 DWARFFormValue &FormValue) const {
-  if (!U)
-    return false;
+Optional<DWARFFormValue>
+DWARFDie::getAttributeValue(dwarf::Attribute Attr) const {
+  if (!isValid())
+    return None;
   auto AbbrevDecl = getAbbreviationDeclarationPtr();
   if (AbbrevDecl)
-    return AbbrevDecl->getAttributeValue(getOffset(), Attr, *U, FormValue);
-  return false;
+    return AbbrevDecl->getAttributeValue(getOffset(), Attr, *U);
+  return None;
 }
 
 const char *DWARFDie::getAttributeValueAsString(dwarf::Attribute Attr,
                                                 const char *FailValue) const {
-  DWARFFormValue FormValue;
-  if (!getAttributeValue(Attr, FormValue))
+  auto FormValue = getAttributeValue(Attr);
+  if (!FormValue)
     return FailValue;
-  Optional<const char *> Result = FormValue.getAsCString();
+  Optional<const char *> Result = FormValue->getAsCString();
   return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 uint64_t DWARFDie::getAttributeValueAsAddress(dwarf::Attribute Attr,
                                               uint64_t FailValue) const {
-  DWARFFormValue FormValue;
-  if (!getAttributeValue(Attr, FormValue))
+  auto FormValue = getAttributeValue(Attr);
+  if (!FormValue)
     return FailValue;
-  Optional<uint64_t> Result = FormValue.getAsAddress();
+  Optional<uint64_t> Result = FormValue->getAsAddress();
   return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 int64_t DWARFDie::getAttributeValueAsSignedConstant(dwarf::Attribute Attr,
                                                     int64_t FailValue) const {
-  DWARFFormValue FormValue;
-  if (!getAttributeValue(Attr, FormValue))
+  auto FormValue = getAttributeValue(Attr);
+  if (!FormValue)
     return FailValue;
-  Optional<int64_t> Result = FormValue.getAsSignedConstant();
+  Optional<int64_t> Result = FormValue->getAsSignedConstant();
   return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 uint64_t
 DWARFDie::getAttributeValueAsUnsignedConstant(dwarf::Attribute Attr,
                                               uint64_t FailValue) const {
-  DWARFFormValue FormValue;
-  if (!getAttributeValue(Attr, FormValue))
+  auto FormValue = getAttributeValue(Attr);
+  if (!FormValue)
     return FailValue;
-  Optional<uint64_t> Result = FormValue.getAsUnsignedConstant();
+  Optional<uint64_t> Result = FormValue->getAsUnsignedConstant();
   return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 uint64_t DWARFDie::getAttributeValueAsReference(dwarf::Attribute Attr,
                                                 uint64_t FailValue) const {
-  DWARFFormValue FormValue;
-  if (!getAttributeValue(Attr, FormValue))
+  auto FormValue = getAttributeValue(Attr);
+  if (!FormValue)
     return FailValue;
-  Optional<uint64_t> Result = FormValue.getAsReference();
+  Optional<uint64_t> Result = FormValue->getAsReference();
   return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
 uint64_t DWARFDie::getAttributeValueAsSectionOffset(dwarf::Attribute Attr,
                                                     uint64_t FailValue) const {
-  DWARFFormValue FormValue;
-  if (!getAttributeValue(Attr, FormValue))
+  auto FormValue = getAttributeValue(Attr);
+  if (!FormValue)
     return FailValue;
-  Optional<uint64_t> Result = FormValue.getAsSectionOffset();
+  Optional<uint64_t> Result = FormValue->getAsSectionOffset();
   return Result.hasValue() ? Result.getValue() : FailValue;
 }
 
