@@ -87,7 +87,7 @@ void SleepSeconds(int Seconds) {
   sleep(Seconds); // Use C API to avoid coverage from instrumented libc++.
 }
 
-int GetPid() { return getpid(); }
+unsigned long GetPid() { return (unsigned long)getpid(); }
 
 size_t GetPeakRSSMb() {
   struct rusage usage;

@@ -265,7 +265,7 @@ void Fuzzer::StaticInterruptCallback() {
 }
 
 void Fuzzer::CrashCallback() {
-  Printf("==%d== ERROR: libFuzzer: deadly signal\n", GetPid());
+  Printf("==%lu== ERROR: libFuzzer: deadly signal\n", GetPid());
   if (EF->__sanitizer_print_stack_trace)
     EF->__sanitizer_print_stack_trace();
   Printf("NOTE: libFuzzer has rudimentary signal handlers.\n"
@@ -278,7 +278,7 @@ void Fuzzer::CrashCallback() {
 }
 
 void Fuzzer::InterruptCallback() {
-  Printf("==%d== libFuzzer: run interrupted; exiting\n", GetPid());
+  Printf("==%lu== libFuzzer: run interrupted; exiting\n", GetPid());
   PrintFinalStats();
   _Exit(0);  // Stop right now, don't perform any at-exit actions.
 }
@@ -300,7 +300,7 @@ void Fuzzer::AlarmCallback() {
     Printf("       and the timeout value is %d (use -timeout=N to change)\n",
            Options.UnitTimeoutSec);
     DumpCurrentUnit("timeout-");
-    Printf("==%d== ERROR: libFuzzer: timeout after %d seconds\n", GetPid(),
+    Printf("==%lu== ERROR: libFuzzer: timeout after %d seconds\n", GetPid(),
            Seconds);
     if (EF->__sanitizer_print_stack_trace)
       EF->__sanitizer_print_stack_trace();
@@ -312,7 +312,7 @@ void Fuzzer::AlarmCallback() {
 
 void Fuzzer::RssLimitCallback() {
   Printf(
-      "==%d== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
+      "==%lu== ERROR: libFuzzer: out-of-memory (used: %zdMb; limit: %zdMb)\n",
       GetPid(), GetPeakRSSMb(), Options.RssLimitMb);
   Printf("   To change the out-of-memory limit use -rss_limit_mb=<N>\n\n");
   if (EF->__sanitizer_print_memory_profile)

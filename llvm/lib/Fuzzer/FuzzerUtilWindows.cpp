@@ -140,7 +140,7 @@ void SetSignalHandler(const FuzzingOptions& Options) {
 
 void SleepSeconds(int Seconds) { Sleep(Seconds * 1000); }
 
-int GetPid() { return GetCurrentProcessId(); }
+unsigned long GetPid() { return GetCurrentProcessId(); }
 
 size_t GetPeakRSSMb() {
   PROCESS_MEMORY_COUNTERS info;

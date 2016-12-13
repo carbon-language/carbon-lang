@@ -47,7 +47,7 @@ void SetSignalHandler(const FuzzingOptions& Options);
 
 void SleepSeconds(int Seconds);
 
-int GetPid();
+unsigned long GetPid();
 
 size_t GetPeakRSSMb();
 
