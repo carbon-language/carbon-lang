@@ -4446,7 +4446,8 @@ collectByteProviders(SDValue Op, bool CheckNumberOfUses = false) {
     Result.insert(Result.begin(), ByteShift, ByteProvider::getZero());
     Result.insert(Result.end(), Original->begin(),
                   std::prev(Original->end(), ByteShift));
-    assert(Result.size() == ByteWidth && "sanity");
+    assert(Result.size() == ByteWidth &&
+           "Computed width doesn't match from type width");
     return Result;
   }
   case ISD::ZERO_EXTEND: {
@@ -4460,7 +4461,8 @@ collectByteProviders(SDValue Op, bool CheckNumberOfUses = false) {
     Result.insert(Result.begin(), Original->begin(), Original->end());
     Result.insert(Result.end(), ByteWidth - NarrowByteWidth,
                   ByteProvider::getZero());
-    assert(Result.size() == ByteWidth && "sanity");
+    assert(Result.size() == ByteWidth &&
+           "Computed width doesn't match from type width");
     return Result;
   }
   case ISD::LOAD: {
@@ -4469,7 +4471,8 @@ collectByteProviders(SDValue Op, bool CheckNumberOfUses = false) {
         L->getExtensionType() != ISD::NON_EXTLOAD)
       return None;
 
-    assert(BitWidth == L->getMemoryVT().getSizeInBits() && "sanity");
+    assert(BitWidth == L->getMemoryVT().getSizeInBits() &&
+           "For non-extend loads widths must be the same");
 
     SmallVector<ByteProvider, 4> Result(ByteWidth);
     for (unsigned i = 0; i < ByteWidth; i++)
@@ -4517,7 +4520,8 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
     return SDValue();
   auto &Bytes = Res.getValue();
   unsigned ByteWidth = Bytes.size();
-  assert(VT.getSizeInBits() == ByteWidth * 8 && "sanity");
+  assert(VT.getSizeInBits() == ByteWidth * 8 &&
+         "collectByteProviders computed width differs from type width");
 
   auto LittleEndianByteAt = [](unsigned BW, unsigned i) { return i; };
   auto BigEndianByteAt = [](unsigned BW, unsigned i) { return BW - i - 1; };
