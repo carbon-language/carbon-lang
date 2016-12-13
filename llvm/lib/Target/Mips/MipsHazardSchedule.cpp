@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 /// \file
-/// This pass is used to workaround certain pipeline hazards. For now, this covers
-/// compact branch hazards. In future this pass can be extended to other pipeline
-/// hazards, such as various MIPS1 hazards, processor errata that require
-/// instruction reorganization, etc.
+/// This pass is used to workaround certain pipeline hazards. For now, this
+/// covers compact branch hazards. In future this pass can be extended to other
+/// pipeline hazards, such as various MIPS1 hazards, processor errata that
+/// require instruction reorganization, etc.
 ///
 /// This pass has to run after the delay slot filler as that pass can introduce
 /// pipeline hazards, hence the existing hazard recognizer is not suitable.
@@ -18,8 +18,8 @@
 /// Hazards handled: forbidden slots for MIPSR6.
 ///
 /// A forbidden slot hazard occurs when a compact branch instruction is executed
-/// and the adjacent instruction in memory is a control transfer instruction such
-/// as a branch or jump, ERET, ERETNC, DERET, WAIT and PAUSE.
+/// and the adjacent instruction in memory is a control transfer instruction
+/// such as a branch or jump, ERET, ERETNC, DERET, WAIT and PAUSE.
 ///
 /// For example:
 ///
