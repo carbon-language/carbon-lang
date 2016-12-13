@@ -1549,8 +1549,9 @@ ItaniumCXXABI::getVTableAddressPoint(BaseSubobject Base,
     llvm::ConstantInt::get(CGM.Int32Ty, AddressPoint.AddressPointIndex),
   };
 
-  return llvm::ConstantExpr::getInBoundsGetElementPtr(VTable->getValueType(),
-                                                      VTable, Indices);
+  return llvm::ConstantExpr::getGetElementPtr(VTable->getValueType(), VTable,
+                                              Indices, /*InBounds=*/true,
+                                              /*InRangeIndex=*/1);
 }
 
 llvm::Value *ItaniumCXXABI::getVTableAddressPointInStructorWithVTT(

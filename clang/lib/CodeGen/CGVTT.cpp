@@ -80,8 +80,9 @@ CodeGenVTables::EmitVTTDefinition(llvm::GlobalVariable *VTT,
        llvm::ConstantInt::get(Int32Ty, AddressPoint.AddressPointIndex),
      };
 
-     llvm::Constant *Init = llvm::ConstantExpr::getInBoundsGetElementPtr(
-         VTable->getValueType(), VTable, Idxs);
+     llvm::Constant *Init = llvm::ConstantExpr::getGetElementPtr(
+         VTable->getValueType(), VTable, Idxs, /*InBounds=*/true,
+         /*InRangeIndex=*/1);
 
      Init = llvm::ConstantExpr::getBitCast(Init, Int8PtrTy);
 
