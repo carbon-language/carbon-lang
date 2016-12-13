@@ -16,6 +16,7 @@
 #include "FuzzerUtil.h"
 
 #include <fstream>
+#include <iterator>
 #include <sstream>
 
 namespace fuzzer {
