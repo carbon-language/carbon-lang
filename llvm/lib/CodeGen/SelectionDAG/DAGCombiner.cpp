@@ -4469,8 +4469,7 @@ collectByteProviders(SDValue Op, bool CheckNumberOfUses = false) {
         L->getExtensionType() != ISD::NON_EXTLOAD)
       return None;
 
-    EVT VT = L->getMemoryVT();
-    assert(BitWidth == VT.getSizeInBits() && "sanity");
+    assert(BitWidth == L->getMemoryVT().getSizeInBits() && "sanity");
 
     SmallVector<ByteProvider, 4> Result(ByteWidth);
     for (unsigned i = 0; i < ByteWidth; i++)
