@@ -30,28 +30,16 @@ class ObjectFile;
 class IRObjectFile : public SymbolicFile {
   std::unique_ptr<Module> M;
   ModuleSymbolTable SymTab;
+  IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> M);
 
 public:
-  IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> M);
   ~IRObjectFile() override;
   void moveSymbolNext(DataRefImpl &Symb) const override;
   std::error_code printSymbolName(raw_ostream &OS,
                                   DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
-  GlobalValue *getSymbolGV(DataRefImpl Symb);
-  const GlobalValue *getSymbolGV(DataRefImpl Symb) const {
-    return const_cast<IRObjectFile *>(this)->getSymbolGV(Symb);
-  }
   basic_symbol_iterator symbol_begin() const override;
   basic_symbol_iterator symbol_end() const override;
-
-  const Module &getModule() const {
-    return const_cast<IRObjectFile*>(this)->getModule();
-  }
-  Module &getModule() {
-    return *M;
-  }
-  std::unique_ptr<Module> takeModule();
 
   StringRef getTargetTriple() const;
 

@@ -60,12 +60,6 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   return SymTab.getSymbolFlags(getSym(Symb));
 }
 
-GlobalValue *IRObjectFile::getSymbolGV(DataRefImpl Symb) {
-  return getSym(Symb).dyn_cast<GlobalValue *>();
-}
-
-std::unique_ptr<Module> IRObjectFile::takeModule() { return std::move(M); }
-
 basic_symbol_iterator IRObjectFile::symbol_begin() const {
   DataRefImpl Ret;
   Ret.p = reinterpret_cast<uintptr_t>(SymTab.symbols().data());
@@ -127,5 +121,6 @@ llvm::object::IRObjectFile::create(MemoryBufferRef Object,
     return MOrErr.takeError();
 
   std::unique_ptr<Module> &M = MOrErr.get();
-  return llvm::make_unique<IRObjectFile>(BCOrErr.get(), std::move(M));
+  return std::unique_ptr<IRObjectFile>(
+      new IRObjectFile(*BCOrErr, std::move(M)));
 }
