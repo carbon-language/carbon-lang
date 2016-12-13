@@ -71,7 +71,7 @@ int DuplicateFile(int Fd) {
   return dup(Fd);
 }
 
-void DeleteFile(const std::string &Path) {
+void RemoveFile(const std::string &Path) {
   unlink(Path.c_str());
 }
 

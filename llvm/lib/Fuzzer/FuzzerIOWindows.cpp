@@ -135,7 +135,7 @@ int DuplicateFile(int Fd) {
   return _dup(Fd);
 }
 
-void DeleteFile(const std::string &Path) {
+void RemoveFile(const std::string &Path) {
   _unlink(Path.c_str());
 }
 

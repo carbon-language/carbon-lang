@@ -221,7 +221,7 @@ void Fuzzer::CrashResistantMerge(const std::vector<std::string> &Args,
   std::string CFPath =
       "libFuzzerTemp." + std::to_string(GetPid()) + ".txt";
   // Write the control file.
-  DeleteFile(CFPath);
+  RemoveFile(CFPath);
   std::ofstream ControlFile(CFPath);
   ControlFile << AllFiles.size() << "\n";
   ControlFile << NumFilesInFirstCorpus << "\n";
@@ -253,7 +253,7 @@ void Fuzzer::CrashResistantMerge(const std::vector<std::string> &Args,
   for (auto &F: NewFiles)
     WriteToOutputCorpus(FileToVector(F));
   // We are done, delete the control file.
-  DeleteFile(CFPath);
+  RemoveFile(CFPath);
 }
 
 } // namespace fuzzer
