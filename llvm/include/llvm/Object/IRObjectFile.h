@@ -28,9 +28,10 @@ namespace object {
 class ObjectFile;
 
 class IRObjectFile : public SymbolicFile {
-  std::unique_ptr<Module> M;
+  std::vector<std::unique_ptr<Module>> Mods;
   ModuleSymbolTable SymTab;
-  IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> M);
+  IRObjectFile(MemoryBufferRef Object,
+               std::vector<std::unique_ptr<Module>> Mods);
 
 public:
   ~IRObjectFile() override;
