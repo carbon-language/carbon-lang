@@ -91,12 +91,36 @@ FunctionPass *llvm::createMipsHazardSchedule() {
   return new MipsHazardSchedule();
 }
 
-// Find the next real instruction from the current position.
-static Iter getNextMachineInstr(Iter Position) {
+// Find the next real instruction from the current position in current basic
+// block.
+static Iter getNextMachineInstrInBB(Iter Position) {
   Iter I = Position, E = Position->getParent()->end();
-  I = std::find_if_not(I, E, [](const Iter &Insn) { return Insn->isTransient(); });
-  assert(I != E);
+  I = std::find_if_not(I, E,
+                       [](const Iter &Insn) { return Insn->isTransient(); });
+
   return I;
+}
+
+// Find the next real instruction from the current position, looking through
+// basic block boundaries.
+static Iter getNextMachineInstr(Iter Position) {
+  if (std::next(Position) == Position->getParent()->end()) {
+    const MachineBasicBlock * MBB = (&*Position)->getParent();
+    for (auto *Succ : MBB->successors()) {
+      if (MBB->isLayoutSuccessor(Succ)) {
+        Iter I = Succ->begin();
+        Iter Next = getNextMachineInstrInBB(I);
+        if (Next == Succ->end()) {
+          return getNextMachineInstr(I);
+        } else {
+          return I;
+        }
+      }
+    }
+    llvm_unreachable("Should have identified the end of the function earlier!");
+  }
+
+  return getNextMachineInstrInBB(Position);
 }
 
 bool MipsHazardSchedule::runOnMachineFunction(MachineFunction &MF) {
@@ -104,7 +128,7 @@ bool MipsHazardSchedule::runOnMachineFunction(MachineFunction &MF) {
   const MipsSubtarget *STI =
       &static_cast<const MipsSubtarget &>(MF.getSubtarget());
 
-  // Forbidden slot hazards are only defined for MIPSR6.
+  // Forbidden slot hazards are only defined for MIPSR6 but not microMIPSR6.
   if (!STI->hasMips32r6() || STI->inMicroMipsMode())
     return false;
 
@@ -118,27 +142,23 @@ bool MipsHazardSchedule::runOnMachineFunction(MachineFunction &MF) {
       if (!TII->HasForbiddenSlot(*I))
         continue;
 
-      bool InsertNop = false;
-      // Next instruction in the basic block.
-      if (std::next(I) != FI->end() &&
-          !TII->SafeInForbiddenSlot(*getNextMachineInstr(std::next(I)))) {
-        InsertNop = true;
-      } else {
-        // Next instruction in the physical successor basic block.
-        for (auto *Succ : FI->successors()) {
-          if (FI->isLayoutSuccessor(Succ) &&
-              getNextMachineInstr(Succ->begin()) != Succ->end() &&
-              !TII->SafeInForbiddenSlot(*getNextMachineInstr(Succ->begin()))) {
-            InsertNop = true;
-            break;
-          }
+      Iter Inst;
+      bool LastInstInFunction =
+          std::next(I) == FI->end() && std::next(FI) == MF.end();
+      if (!LastInstInFunction) {
+        if (std::next(I) != FI->end()) {
+          // Start looking from the next instruction in the basic block.
+          Inst = getNextMachineInstr(std::next(I));
+        } else {
+          // Next instruction in the physical successor basic block.
+          Inst = getNextMachineInstr(I);
         }
       }
 
-      if (InsertNop) {
+      if (LastInstInFunction || !TII->SafeInForbiddenSlot(*Inst)) {
         Changed = true;
-        MIBundleBuilder(&*I).append(
-            BuildMI(MF, I->getDebugLoc(), TII->get(Mips::NOP)));
+        MIBundleBuilder(&*I)
+            .append(BuildMI(MF, I->getDebugLoc(), TII->get(Mips::NOP)));
         NumInsertedNops++;
       }
     }
