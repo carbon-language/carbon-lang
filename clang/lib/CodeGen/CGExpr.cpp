@@ -2508,7 +2508,7 @@ struct SanitizerHandlerInfo {
   char const *const Name;
   unsigned Version;
 };
-};
+}
 
 const SanitizerHandlerInfo SanitizerHandlers[] = {
 #define SANITIZER_CHECK(Enum, Name, Version) {#Name, Version},
