@@ -116,8 +116,8 @@ public:
   /// DW_AT_abstract_origin referenced DIEs.
   ///
   /// \param Attr the attribute to extract.
-  /// \param FormValue contains the attribute value if true is returned.
-  /// \returns true if the attribute was extracted from this DIE.
+  /// \returns an optional DWARFFormValue that will have the form value if the
+  /// attribute was successfully extracted.
   Optional<DWARFFormValue> getAttributeValue(dwarf::Attribute Attr) const;
   
   /// Extract the specified attribute from this DIE as a C string.
