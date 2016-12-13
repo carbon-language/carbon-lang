@@ -25,11 +25,10 @@ bool DWARFTypeUnit::extractImpl(DataExtractor debug_info,
 }
 
 void DWARFTypeUnit::dump(raw_ostream &OS, bool SummarizeTypes) {
-  const DWARFDebugInfoEntryMinimal *TD =
-      getDIEForOffset(TypeOffset + getOffset());
+  DWARFDie TD = getDIEForOffset(TypeOffset + getOffset());
   DWARFFormValue NameVal;
   const char *Name = "";
-  if (TD->getAttributeValue(this, llvm::dwarf::DW_AT_name, NameVal))
+  if (TD.getAttributeValue(llvm::dwarf::DW_AT_name, NameVal))
     if (auto ON = NameVal.getAsCString())
       Name = *ON;
 
@@ -50,8 +49,8 @@ void DWARFTypeUnit::dump(raw_ostream &OS, bool SummarizeTypes) {
      << " type_offset = " << format("0x%04x", TypeOffset)
      << " (next unit at " << format("0x%08x", getNextUnitOffset()) << ")\n";
 
-  if (const DWARFDebugInfoEntryMinimal *TU = getUnitDIE(false))
-    TU->dump(OS, this, -1U);
+  if (DWARFDie TU = getUnitDIE(false))
+    TU.dump(OS, -1U);
   else
     OS << "<type unit can't be parsed!>\n\n";
 }
