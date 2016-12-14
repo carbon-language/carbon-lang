@@ -29,7 +29,7 @@
 #if LLVM_ENABLE_ABI_BREAKING_CHECKS
 namespace llvm {
 template <class T = void> struct ReverseIterate { static bool value; };
-template <class T> bool ReverseIterate<T>::value = true;
+template <class T> bool ReverseIterate<T>::value = false;
 }
 #endif
 
