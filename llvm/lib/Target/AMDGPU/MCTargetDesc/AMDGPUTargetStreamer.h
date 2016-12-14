@@ -14,7 +14,6 @@
 #include "llvm/MC/MCStreamer.h"
 
 namespace llvm {
-#include "AMDGPURuntimeMetadata.h"
 
 class DataLayout;
 class Function;
