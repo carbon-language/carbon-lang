@@ -576,7 +576,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i)
       BinOp->andIRFlags(PN.getIncomingValue(i));
 
-    BinOp->setDebugLoc(FirstInst->getDebugLoc());
+    BinOp->setDebugLoc(PHIArgMergedDebugLoc(PN));
     return BinOp;
   }
 

@@ -214,6 +214,47 @@ if.end:                                           ; preds = %if.else, %if.then
   ret i64 %r.0, !dbg !44
 }
 
+; Test folding of a binary op with a RHS constant.  Generated from source:
+
+; extern int foo(void);
+; extern int bar(void);
+; 
+; int binop_const(int a) {
+;   int r;
+;   if(a)
+;     r = foo() - 5;
+;   else
+;     r = bar() - 5;
+;   return r;
+; }
+
+; CHECK: define i32 @binop_const
+; CHECK-LABEL: if.end:
+; CHECK: %[[PHI:.*]] = phi i32 [ %call, %if.then ], [ %call1, %if.else ]
+; CHECK: add nsw i32 %[[PHI]], -5
+; CHECK-NOT: !dbg
+; CHECK: ret i32
+
+define i32 @binop_const(i32 %a) !dbg !45 {
+entry:
+  %tobool = icmp ne i32 %a, 0, !dbg !46
+  br i1 %tobool, label %if.then, label %if.else, !dbg !46
+
+if.then:                                          ; preds = %entry
+  %call = call i32 @foo(), !dbg !47
+  %sub = sub nsw i32 %call, 5, !dbg !48
+  br label %if.end, !dbg !49
+
+if.else:                                          ; preds = %entry
+  %call1 = call i32 @bar(), !dbg !50
+  %sub2 = sub nsw i32 %call1, 5, !dbg !51
+  br label %if.end
+
+if.end:                                           ; preds = %if.else, %if.then
+  %r.0 = phi i32 [ %sub, %if.then ], [ %sub2, %if.else ]
+  ret i32 %r.0, !dbg !52
+}
+
 declare i32 @foo()
 declare i32 @bar()
 declare i64 @foo2()
@@ -268,3 +309,11 @@ declare i32* @bar3()
 !42 = !DILocation(line: 46, column: 5, scope: !39)
 !43 = !DILocation(line: 48, column: 9, scope: !39)
 !44 = !DILocation(line: 49, column: 3, scope: !39)
+!45 = distinct !DISubprogram(name: "binop_const", scope: !1, file: !1, line: 52, type: !7, isLocal: false, isDefinition: true, scopeLine: 52, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!46 = !DILocation(line: 54, column: 6, scope: !45)
+!47 = !DILocation(line: 55, column: 9, scope: !45)
+!48 = !DILocation(line: 55, column: 15, scope: !45)
+!49 = !DILocation(line: 55, column: 5, scope: !45)
+!50 = !DILocation(line: 57, column: 9, scope: !45)
+!51 = !DILocation(line: 57, column: 15, scope: !45)
+!52 = !DILocation(line: 58, column: 3, scope: !45)
