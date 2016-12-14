@@ -78,6 +78,37 @@ define void @store.v4f32.variable(<4 x float> %arg, <4 x i1> %mask) sanitize_add
   ret void
 }
 
+;; Store using two masked.stores, which should instrument them both.
+define void @store.v4f32.1010.split(<4 x float> %arg) sanitize_address {
+; BOTH-LABEL: @store.v4f32.1010.split
+  %p = load <4 x float>*, <4 x float>** @v4f32, align 8
+; STORE: [[GEP0:%[0-9A-Za-z]+]] = getelementptr <4 x float>, <4 x float>* %p, i64 0, i64 0
+; STORE: [[PGEP0:%[0-9A-Za-z]+]] = ptrtoint float* [[GEP0]] to i64
+; STORE: call void @__asan_store4(i64 [[PGEP0]])
+; STORE: tail call void @llvm.masked.store.v4f32.p0v4f32(<4 x float> %arg, <4 x float>* %p, i32 4, <4 x i1> <i1 true, i1 false, i1 false, i1 false>)
+  tail call void @llvm.masked.store.v4f32.p0v4f32(<4 x float> %arg, <4 x float>* %p, i32 4, <4 x i1> <i1 true, i1 false, i1 false, i1 false>)
+; STORE: [[GEP1:%[0-9A-Za-z]+]] = getelementptr <4 x float>, <4 x float>* %p, i64 0, i64 2
+; STORE: [[PGEP1:%[0-9A-Za-z]+]] = ptrtoint float* [[GEP1]] to i64
+; STORE: call void @__asan_store4(i64 [[PGEP1]])
+; STORE: tail call void @llvm.masked.store.v4f32.p0v4f32(<4 x float> %arg, <4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 true, i1 false>)
+  tail call void @llvm.masked.store.v4f32.p0v4f32(<4 x float> %arg, <4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 true, i1 false>)
+  ret void
+}
+
+;; Store using a masked.store after a full store. Shouldn't instrument the second one.
+define void @store.v4f32.0010.after.full.store(<4 x float> %arg) sanitize_address {
+; BOTH-LABEL: @store.v4f32.0010.after.full.store
+  %p = load <4 x float>*, <4 x float>** @v4f32, align 8
+; STORE: [[PTRTOINT:%[0-9A-Za-z]+]] = ptrtoint <4 x float>* %p to i64
+; STORE: call void @__asan_store16(i64 [[PTRTOINT]])
+; STORE: store <4 x float> %arg, <4 x float>* %p
+  store <4 x float> %arg, <4 x float>* %p
+; STORE-NOT: call void @__asan_store
+; STORE: tail call void @llvm.masked.store.v4f32.p0v4f32(<4 x float> %arg, <4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 true, i1 false>)
+  tail call void @llvm.masked.store.v4f32.p0v4f32(<4 x float> %arg, <4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 true, i1 false>)
+  ret void
+}
+
 ;;;;;;;;;;;;;;;; LOAD
 declare <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>*, i32, <4 x i1>, <4 x float>) argmemonly nounwind
 declare <8 x i32> @llvm.masked.load.v8i32.p0v8i32(<8 x i32>*, i32, <8 x i1>, <8 x i32>) argmemonly nounwind
@@ -137,4 +168,35 @@ define <4 x float> @load.v4f32.variable(<4 x float> %arg, <4 x i1> %mask) saniti
 ; ALL-NOT: call void @__asan_load
   %res = tail call <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>* %p, i32 4, <4 x i1> %mask, <4 x float> %arg)
   ret <4 x float> %res
+}
+
+;; Load using two masked.loads, which should instrument them both.
+define <4 x float> @load.v4f32.1001.split(<4 x float> %arg) sanitize_address {
+; BOTH-LABEL: @load.v4f32.1001
+  %p = load <4 x float>*, <4 x float>** @v4f32, align 8
+; LOAD: [[GEP0:%[0-9A-Za-z]+]] = getelementptr <4 x float>, <4 x float>* %p, i64 0, i64 0
+; LOAD: [[PGEP0:%[0-9A-Za-z]+]] = ptrtoint float* [[GEP0]] to i64
+; LOAD: call void @__asan_load4(i64 [[PGEP0]])
+; LOAD: %res = tail call <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>* %p, i32 4, <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x float> %arg)
+  %res = tail call <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>* %p, i32 4, <4 x i1> <i1 true, i1 false, i1 false, i1 false>, <4 x float> %arg)
+; LOAD: [[GEP3:%[0-9A-Za-z]+]] = getelementptr <4 x float>, <4 x float>* %p, i64 0, i64 3
+; LOAD: [[PGEP3:%[0-9A-Za-z]+]] = ptrtoint float* [[GEP3]] to i64
+; LOAD: call void @__asan_load4(i64 [[PGEP3]])
+; LOAD: tail call <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 false, i1 true>, <4 x float> %res)
+  %res2 = tail call <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 false, i1 true>, <4 x float> %res)
+  ret <4 x float> %res2
+}
+
+;; Load using a masked.load after a full load. Shouldn't instrument the second one.
+define <4 x float> @load.v4f32.1001.after.full.load(<4 x float> %arg) sanitize_address {
+; BOTH-LABEL: @load.v4f32.1001.after.full.load
+  %p = load <4 x float>*, <4 x float>** @v4f32, align 8
+; LOAD: [[PTRTOINT:%[0-9A-Za-z]+]] = ptrtoint <4 x float>* %p to i64
+; LOAD: call void @__asan_load16(i64 [[PTRTOINT]])
+; LOAD: %res = load <4 x float>, <4 x float>* %p
+  %res = load <4 x float>, <4 x float>* %p
+; LOAD-NOT: call void @__asan_load
+; LOAD: tail call <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 false, i1 true>, <4 x float> %arg)
+  %res2 = tail call <4 x float> @llvm.masked.load.v4f32.p0v4f32(<4 x float>* %p, i32 4, <4 x i1> <i1 false, i1 false, i1 false, i1 true>, <4 x float> %arg)
+  ret <4 x float> %res2
 }
