@@ -565,7 +565,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   if (CastInst *FirstCI = dyn_cast<CastInst>(FirstInst)) {
     CastInst *NewCI = CastInst::Create(FirstCI->getOpcode(), PhiVal,
                                        PN.getType());
-    NewCI->setDebugLoc(FirstInst->getDebugLoc());
+    NewCI->setDebugLoc(PHIArgMergedDebugLoc(PN));
     return NewCI;
   }
 

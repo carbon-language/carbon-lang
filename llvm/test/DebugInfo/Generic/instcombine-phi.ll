@@ -173,6 +173,47 @@ if.end:                                           ; preds = %if.else, %if.then
   ret i32 %r.0, !dbg !38
 }
 
+; Test folding of a cast.  Generated from source:
+
+; extern int foo(void);
+; extern int bar(void);
+; 
+; long long cast(int a) {
+;   long long r;
+;   if(a)
+;     r = foo();
+;   else
+;     r = bar();
+;   return r;
+; }
+
+; CHECK: define i64 @cast
+; CHECK-LABEL: if.end:
+; CHECK: %[[PHI:.*]] = phi i32 [ %call, %if.then ], [ %call1, %if.else ]
+; CHECK: sext i32 %[[PHI]] to i64
+; CHECK-NOT: !dbg
+; CHECK: ret i64
+
+define i64 @cast(i32 %a) !dbg !39 {
+entry:
+  %tobool = icmp ne i32 %a, 0, !dbg !40
+  br i1 %tobool, label %if.then, label %if.else, !dbg !40
+
+if.then:                                          ; preds = %entry
+  %call = call i32 @foo(), !dbg !41
+  %conv = sext i32 %call to i64, !dbg !41
+  br label %if.end, !dbg !42
+
+if.else:                                          ; preds = %entry
+  %call1 = call i32 @bar(), !dbg !43
+  %conv2 = sext i32 %call1 to i64, !dbg !43
+  br label %if.end
+
+if.end:                                           ; preds = %if.else, %if.then
+  %r.0 = phi i64 [ %conv, %if.then ], [ %conv2, %if.else ]
+  ret i64 %r.0, !dbg !44
+}
+
 declare i32 @foo()
 declare i32 @bar()
 declare i64 @foo2()
@@ -221,3 +262,9 @@ declare i32* @bar3()
 !36 = !DILocation(line: 39, column: 10, scope: !31)
 !37 = !DILocation(line: 39, column: 9, scope: !31)
 !38 = !DILocation(line: 40, column: 3, scope: !31)
+!39 = distinct !DISubprogram(name: "cast", scope: !1, file: !1, line: 43, type: !7, isLocal: false, isDefinition: true, scopeLine: 43, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!40 = !DILocation(line: 45, column: 6, scope: !39)
+!41 = !DILocation(line: 46, column: 9, scope: !39)
+!42 = !DILocation(line: 46, column: 5, scope: !39)
+!43 = !DILocation(line: 48, column: 9, scope: !39)
+!44 = !DILocation(line: 49, column: 3, scope: !39)
