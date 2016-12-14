@@ -103,7 +103,9 @@ void do_derived_construct_test() {
     assert(std::get<1>(t).checkConstruct(101, VC));
   }
   {
-    DerivedFromTup<std::array<int, 2>> d = {{{42, 101}}};
+    DerivedFromTup<std::array<int, 2>> d;
+    d[0] = 42;
+    d[1] = 101;
     Tup1 t = ValueCategoryCast<VC>(d);
     assert(std::get<0>(t) == 42);
     assert(std::get<1>(t).checkConstruct(101, VC));
@@ -132,7 +134,9 @@ void do_derived_construct_test() {
     using D = DerivedFromTup<std::array<int, 2>>;
     static_assert(!std::is_convertible<ApplyValueCategoryT<VC, D>, Tup2>::value,
                   "");
-    D d = {{{42, 101}}};
+    D d;
+    d[0] = 42;
+    d[1] = 101;
     Tup2 t(ValueCategoryCast<VC>(d));
     assert(std::get<0>(t) == 42);
     assert(std::get<1>(t).checkConstruct(101, VC));

@@ -95,7 +95,9 @@ void do_derived_assign_test() {
   }
   reset();
   {
-    DerivedFromTup<std::array<int, 2>> d = {{{42, 101}}};
+    DerivedFromTup<std::array<int, 2>> d;
+    d[0] = 42;
+    d[1] = 101;
     t = ValueCategoryCast<VC>(d);
     assert(std::get<0>(t) == 42);
     assert(std::get<1>(t).checkAssign(101, VC));
