@@ -52,7 +52,7 @@ namespace llvm {
 // This will help uncover differences in codegen caused due to undefined
 // iteration order.
 static cl::opt<bool, true> ReverseIteration("reverse-iterate",
-  cl::location(ReverseIterate<bool>::value), cl::init(true));
+  cl::location(ReverseIterate<bool>::value));
 }
 #endif
 
