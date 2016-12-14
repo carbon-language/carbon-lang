@@ -72,7 +72,7 @@ namespace RuntimeMD {
     const char PrintfInfo[]               = "amd.PrintfInfo";           // Prinf function call information
     const char ArgActualAcc[]             = "amd.ArgActualAcc";         // The actual kernel argument access qualifier
     const char ArgPointeeAlign[]          = "amd.ArgPointeeAlign";      // Alignment of pointee type
-  };
+  }
 
   namespace KernelArg {
     enum Kind : uint8_t {
