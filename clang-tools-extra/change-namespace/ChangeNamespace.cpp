@@ -709,7 +709,7 @@ void ChangeNamespaceTool::fixTypeLoc(
       return;
   }
 
-  const Decl *DeclCtx = Result.Nodes.getNodeAs<Decl>("dc");
+  const auto *DeclCtx = Result.Nodes.getNodeAs<Decl>("dc");
   assert(DeclCtx && "Empty decl context.");
   replaceQualifiedSymbolInDeclContext(Result, DeclCtx->getDeclContext(), Start,
                                       End, FromDecl);
