@@ -553,6 +553,10 @@ private:
   Instruction *FoldPHIArgLoadIntoPHI(PHINode &PN);
   Instruction *FoldPHIArgZextsIntoPHI(PHINode &PN);
 
+  /// Helper function for FoldPHIArgXIntoPHI() to get debug location for the
+  /// folded operation.
+  DebugLoc PHIArgMergedDebugLoc(PHINode &PN);
+
   Instruction *foldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                            ICmpInst::Predicate Cond, Instruction &I);
   Instruction *foldAllocaCmp(ICmpInst &ICI, const AllocaInst *Alloca,

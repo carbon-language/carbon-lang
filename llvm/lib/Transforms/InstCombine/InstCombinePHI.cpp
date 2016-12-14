@@ -18,10 +18,26 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/IR/DebugInfo.h"
 using namespace llvm;
 using namespace llvm::PatternMatch;
 
 #define DEBUG_TYPE "instcombine"
+
+/// The PHI arguments will be folded into a single operation with a PHI node
+/// as input. The debug location of the single operation will be the merged
+/// locations of the original PHI node arguments.
+DebugLoc InstCombiner::PHIArgMergedDebugLoc(PHINode &PN) {
+  auto *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
+  DILocation *Loc = FirstInst->getDebugLoc();
+
+  for (unsigned i = 1; i != PN.getNumIncomingValues(); ++i) {
+    auto *I = cast<Instruction>(PN.getIncomingValue(i));
+    Loc = DILocation::getMergedLocation(Loc, I->getDebugLoc());
+  }
+
+  return Loc;
+}
 
 /// If we have something like phi [add (a,b), add(a,c)] and if a/b/c and the
 /// adds all have a single use, turn this into a phi and a single binop.
@@ -114,7 +130,7 @@ Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   for (unsigned i = 1, e = PN.getNumIncomingValues(); i != e; ++i)
     NewBinOp->andIRFlags(PN.getIncomingValue(i));
 
-  NewBinOp->setDebugLoc(FirstInst->getDebugLoc());
+  NewBinOp->setDebugLoc(PHIArgMergedDebugLoc(PN));
   return NewBinOp;
 }
 
