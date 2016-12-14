@@ -3205,8 +3205,8 @@ TEST(APFloatTest, PPCDoubleDoubleAddSpecial) {
     APFloat::roundingMode RM;
     std::tie(Op1[0], Op1[1], Op2[0], Op2[1], Expected, RM) = Tp;
 
-    APFloat A1(APFloat::PPCDoubleDouble, APInt(128, 2, Op1));
-    APFloat A2(APFloat::PPCDoubleDouble, APInt(128, 2, Op2));
+    APFloat A1(APFloat::PPCDoubleDouble(), APInt(128, 2, Op1));
+    APFloat A2(APFloat::PPCDoubleDouble(), APInt(128, 2, Op2));
     A1.add(A2, RM);
 
     EXPECT_EQ(Expected, A1.getCategory());
@@ -3254,8 +3254,8 @@ TEST(APFloatTest, PPCDoubleDoubleAdd) {
     APFloat::roundingMode RM;
     std::tie(Op1[0], Op1[1], Op2[0], Op2[1], Expected[0], Expected[1], RM) = Tp;
 
-    APFloat A1(APFloat::PPCDoubleDouble, APInt(128, 2, Op1));
-    APFloat A2(APFloat::PPCDoubleDouble, APInt(128, 2, Op2));
+    APFloat A1(APFloat::PPCDoubleDouble(), APInt(128, 2, Op1));
+    APFloat A2(APFloat::PPCDoubleDouble(), APInt(128, 2, Op2));
     A1.add(A2, RM);
 
     EXPECT_EQ(Expected[0], A1.bitcastToAPInt().getRawData()[0]);
@@ -3283,8 +3283,8 @@ TEST(APFloatTest, PPCDoubleDoubleSubtract) {
     APFloat::roundingMode RM;
     std::tie(Op1[0], Op1[1], Op2[0], Op2[1], Expected[0], Expected[1], RM) = Tp;
 
-    APFloat A1(APFloat::PPCDoubleDouble, APInt(128, 2, Op1));
-    APFloat A2(APFloat::PPCDoubleDouble, APInt(128, 2, Op2));
+    APFloat A1(APFloat::PPCDoubleDouble(), APInt(128, 2, Op1));
+    APFloat A2(APFloat::PPCDoubleDouble(), APInt(128, 2, Op2));
     A1.subtract(A2, RM);
 
     EXPECT_EQ(Expected[0], A1.bitcastToAPInt().getRawData()[0]);
