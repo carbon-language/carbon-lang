@@ -57,6 +57,7 @@ bool getReqNTIDy(const Function &, unsigned &);
 bool getReqNTIDz(const Function &, unsigned &);
 
 bool getMinCTASm(const Function &, unsigned &);
+bool getMaxNReg(const Function &, unsigned &);
 bool isKernelFunction(const Function &);
 
 bool getAlign(const Function &, unsigned index, unsigned &);

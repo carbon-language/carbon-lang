@@ -266,6 +266,10 @@ bool getMinCTASm(const Function &F, unsigned &x) {
   return findOneNVVMAnnotation(&F, "minctasm", x);
 }
 
+bool getMaxNReg(const Function &F, unsigned &x) {
+  return findOneNVVMAnnotation(&F, "maxnreg", x);
+}
+
 bool isKernelFunction(const Function &F) {
   unsigned x = 0;
   bool retval = findOneNVVMAnnotation(&F, "kernel", x);
