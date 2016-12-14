@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=amdgcn--amdhsa -filetype=obj -o - < %s | llvm-readobj -amdgpu-runtime-metadata | FileCheck %s
-; RUN: llc -mtriple=amdgcn--amdhsa -filetype=obj -amdgpu-dump-rtmd -amdgpu-check-rtmd-parser %s 2>&1 | FileCheck --check-prefix=CHECK --check-prefix=PARSER %s
+; RUN: llc -mtriple=amdgcn--amdhsa -filetype=obj -amdgpu-dump-rtmd -amdgpu-check-rtmd-parser %s -o - 2>&1 | FileCheck --check-prefix=CHECK --check-prefix=PARSER %s
 
 %struct.A = type { i8, float }
 %opencl.image1d_t = type opaque
