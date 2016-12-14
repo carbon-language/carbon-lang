@@ -239,7 +239,7 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
       GetElementPtrInst::Create(FirstInst->getSourceElementType(), Base,
                                 makeArrayRef(FixedOperands).slice(1));
   if (AllInBounds) NewGEP->setIsInBounds();
-  NewGEP->setDebugLoc(FirstInst->getDebugLoc());
+  NewGEP->setDebugLoc(PHIArgMergedDebugLoc(PN));
   return NewGEP;
 }
 

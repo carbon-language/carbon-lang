@@ -91,8 +91,51 @@ if.end:                                           ; preds = %if.else, %if.then
   ret i32 %conv, !dbg !22
 }
 
+; Test folding of getelementptr.  Generated from source:
+
+; extern long long foo2(void);
+; extern long long bar2(void);
+; 
+; int *gep(int a, int *b) {
+;   int *r;
+;   if(a)
+;     r = &b[foo2()];
+;   else
+;     r = &b[bar2()];
+;   return p;
+; }
+
+; CHECK: define i32* @gep
+; CHECK-LABEL: if.end:
+; CHECK: %[[PHI:.*]] = phi i64 [ %call, %if.then ], [ %call1, %if.else ]
+; CHECK: getelementptr inbounds i32, i32* %b, i64 %[[PHI]]
+; CHECK-NOT: !dbg
+; CHECK: ret i32*
+
+define i32* @gep(i32 %a, i32* %b) !dbg !23 {
+entry:
+  %tobool = icmp ne i32 %a, 0, !dbg !24
+  br i1 %tobool, label %if.then, label %if.else, !dbg !24
+
+if.then:                                          ; preds = %entry
+  %call = call i64 @foo2(), !dbg !25
+  %arrayidx = getelementptr inbounds i32, i32* %b, i64 %call, !dbg !26
+  br label %if.end, !dbg !27
+
+if.else:                                          ; preds = %entry
+  %call1 = call i64 @bar2(), !dbg !28
+  %arrayidx2 = getelementptr inbounds i32, i32* %b, i64 %call1, !dbg !29
+  br label %if.end
+
+if.end:                                           ; preds = %if.else, %if.then
+  %r.0 = phi i32* [ %arrayidx, %if.then ], [ %arrayidx2, %if.else ]
+  ret i32* %r.0, !dbg !30
+}
+
 declare i32 @foo()
 declare i32 @bar()
+declare i64 @foo2()
+declare i64 @bar2()
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
@@ -119,3 +162,11 @@ declare i32 @bar()
 !20 = !DILocation(line: 21, column: 9, scope: !15)
 !21 = !DILocation(line: 21, column: 15, scope: !15)
 !22 = !DILocation(line: 22, column: 3, scope: !15)
+!23 = distinct !DISubprogram(name: "gep", scope: !1, file: !1, line: 25, type: !7, isLocal: false, isDefinition: true, scopeLine: 25, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!24 = !DILocation(line: 27, column: 6, scope: !23)
+!25 = !DILocation(line: 28, column: 12, scope: !23)
+!26 = !DILocation(line: 28, column: 10, scope: !23)
+!27 = !DILocation(line: 28, column: 5, scope: !23)
+!28 = !DILocation(line: 30, column: 12, scope: !23)
+!29 = !DILocation(line: 30, column: 10, scope: !23)
+!30 = !DILocation(line: 31, column: 3, scope: !23)
