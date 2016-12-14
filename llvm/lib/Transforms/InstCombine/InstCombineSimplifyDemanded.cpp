@@ -1352,6 +1352,18 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     // Three input scalar-as-vector operations that work column-wise. The high
     // elements come from operand 0 and the low element is a function of all
     // three inputs.
+    case Intrinsic::x86_avx512_mask_add_ss_round:
+    case Intrinsic::x86_avx512_mask_div_ss_round:
+    case Intrinsic::x86_avx512_mask_mul_ss_round:
+    case Intrinsic::x86_avx512_mask_sub_ss_round:
+    case Intrinsic::x86_avx512_mask_max_ss_round:
+    case Intrinsic::x86_avx512_mask_min_ss_round:
+    case Intrinsic::x86_avx512_mask_add_sd_round:
+    case Intrinsic::x86_avx512_mask_div_sd_round:
+    case Intrinsic::x86_avx512_mask_mul_sd_round:
+    case Intrinsic::x86_avx512_mask_sub_sd_round:
+    case Intrinsic::x86_avx512_mask_max_sd_round:
+    case Intrinsic::x86_avx512_mask_min_sd_round:
     case Intrinsic::x86_fma_vfmadd_ss:
     case Intrinsic::x86_fma_vfmsub_ss:
     case Intrinsic::x86_fma_vfnmadd_ss:
