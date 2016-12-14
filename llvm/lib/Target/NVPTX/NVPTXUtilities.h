@@ -63,15 +63,6 @@ bool isKernelFunction(const Function &);
 bool getAlign(const Function &, unsigned index, unsigned &);
 bool getAlign(const CallInst &, unsigned index, unsigned &);
 
-BasicBlock *getParentBlock(Value *v);
-Function *getParentFunction(Value *v);
-void dumpBlock(Value *v, char *blockName);
-Instruction *getInst(Value *base, char *instName);
-void dumpInst(Value *base, char *instName);
-void dumpInstRec(Value *v, std::set<Instruction *> *visited);
-void dumpInstRec(Value *v);
-void dumpParent(Value *v);
-
 }
 
 #endif
