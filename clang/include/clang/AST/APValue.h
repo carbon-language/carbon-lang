@@ -135,15 +135,14 @@ public:
   }
   APValue(const APValue &RHS);
   APValue(APValue &&RHS) : Kind(Uninitialized) { swap(RHS); }
-  APValue(LValueBase B, const CharUnits &O, NoLValuePath N, unsigned CallIndex,
-          bool IsNullPtr = false)
+  APValue(LValueBase B, const CharUnits &O, NoLValuePath N, unsigned CallIndex)
       : Kind(Uninitialized) {
-    MakeLValue(); setLValue(B, O, N, CallIndex, IsNullPtr);
+    MakeLValue(); setLValue(B, O, N, CallIndex);
   }
   APValue(LValueBase B, const CharUnits &O, ArrayRef<LValuePathEntry> Path,
-          bool OnePastTheEnd, unsigned CallIndex, bool IsNullPtr = false)
+          bool OnePastTheEnd, unsigned CallIndex)
       : Kind(Uninitialized) {
-    MakeLValue(); setLValue(B, O, Path, OnePastTheEnd, CallIndex, IsNullPtr);
+    MakeLValue(); setLValue(B, O, Path, OnePastTheEnd, CallIndex);
   }
   APValue(UninitArray, unsigned InitElts, unsigned Size) : Kind(Uninitialized) {
     MakeArray(InitElts, Size);
@@ -255,7 +254,6 @@ public:
   bool hasLValuePath() const;
   ArrayRef<LValuePathEntry> getLValuePath() const;
   unsigned getLValueCallIndex() const;
-  bool isNullPointer() const;
 
   APValue &getVectorElt(unsigned I) {
     assert(isVector() && "Invalid accessor");
@@ -376,10 +374,10 @@ public:
     ((ComplexAPFloat *)(char *)Data.buffer)->Imag = std::move(I);
   }
   void setLValue(LValueBase B, const CharUnits &O, NoLValuePath,
-                 unsigned CallIndex, bool IsNullPtr);
+                 unsigned CallIndex);
   void setLValue(LValueBase B, const CharUnits &O,
                  ArrayRef<LValuePathEntry> Path, bool OnePastTheEnd,
-                 unsigned CallIndex, bool IsNullPtr);
+                 unsigned CallIndex);
   void setUnion(const FieldDecl *Field, const APValue &Value) {
     assert(isUnion() && "Invalid accessor");
     ((UnionData*)(char*)Data.buffer)->Field = Field;

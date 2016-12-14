@@ -27,7 +27,6 @@ namespace {
     CharUnits Offset;
     unsigned PathLength;
     unsigned CallIndex;
-    bool IsNullPtr;
   };
 }
 
@@ -150,11 +149,10 @@ APValue::APValue(const APValue &RHS) : Kind(Uninitialized) {
     MakeLValue();
     if (RHS.hasLValuePath())
       setLValue(RHS.getLValueBase(), RHS.getLValueOffset(), RHS.getLValuePath(),
-                RHS.isLValueOnePastTheEnd(), RHS.getLValueCallIndex(),
-                RHS.isNullPointer());
+                RHS.isLValueOnePastTheEnd(), RHS.getLValueCallIndex());
     else
       setLValue(RHS.getLValueBase(), RHS.getLValueOffset(), NoLValuePath(),
-                RHS.getLValueCallIndex(), RHS.isNullPointer());
+                RHS.getLValueCallIndex());
     break;
   case Array:
     MakeArray(RHS.getArrayInitializedElts(), RHS.getArraySize());
@@ -581,13 +579,8 @@ unsigned APValue::getLValueCallIndex() const {
   return ((const LV*)(const char*)Data.buffer)->CallIndex;
 }
 
-bool APValue::isNullPointer() const {
-  assert(isLValue() && "Invalid usage");
-  return ((const LV*)(const char*)Data.buffer)->IsNullPtr;
-}
-
 void APValue::setLValue(LValueBase B, const CharUnits &O, NoLValuePath,
-                        unsigned CallIndex, bool IsNullPtr) {
+                        unsigned CallIndex) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data.buffer);
   LVal.BaseAndIsOnePastTheEnd.setPointer(B);
@@ -595,12 +588,11 @@ void APValue::setLValue(LValueBase B, const CharUnits &O, NoLValuePath,
   LVal.Offset = O;
   LVal.CallIndex = CallIndex;
   LVal.resizePath((unsigned)-1);
-  LVal.IsNullPtr = IsNullPtr;
 }
 
 void APValue::setLValue(LValueBase B, const CharUnits &O,
                         ArrayRef<LValuePathEntry> Path, bool IsOnePastTheEnd,
-                        unsigned CallIndex, bool IsNullPtr) {
+                        unsigned CallIndex) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data.buffer);
   LVal.BaseAndIsOnePastTheEnd.setPointer(B);
@@ -609,7 +601,6 @@ void APValue::setLValue(LValueBase B, const CharUnits &O,
   LVal.CallIndex = CallIndex;
   LVal.resizePath(Path.size());
   memcpy(LVal.getPath(), Path.data(), Path.size() * sizeof(LValuePathEntry));
-  LVal.IsNullPtr = IsNullPtr;
 }
 
 const ValueDecl *APValue::getMemberPointerDecl() const {

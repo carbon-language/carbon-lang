@@ -736,14 +736,10 @@ CodeGenTypes::getCGRecordLayout(const RecordDecl *RD) {
   return *Layout;
 }
 
-bool CodeGenTypes::isPointerZeroInitializable(QualType T) {
-  assert (T->getAs<PointerType>() && "Invalid type");
-  return isZeroInitializable(T);
-}
-
 bool CodeGenTypes::isZeroInitializable(QualType T) {
-  if (T->getAs<PointerType>())
-    return Context.getTargetNullPointerValue(T) == 0;
+  // No need to check for member pointers when not compiling C++.
+  if (!Context.getLangOpts().CPlusPlus)
+    return true;
 
   if (const auto *AT = Context.getAsArrayType(T)) {
     if (isa<IncompleteArrayType>(AT))
@@ -757,7 +753,7 @@ bool CodeGenTypes::isZeroInitializable(QualType T) {
   // Records are non-zero-initializable if they contain any
   // non-zero-initializable subobjects.
   if (const RecordType *RT = T->getAs<RecordType>()) {
-    auto RD = cast<RecordDecl>(RT->getDecl());
+    const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
     return isZeroInitializable(RD);
   }
 

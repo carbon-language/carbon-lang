@@ -352,10 +352,6 @@ public:  // These are internal details of CGT that shouldn't be used externally.
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
   bool isZeroInitializable(QualType T);
 
-  /// Check if the pointer type can be zero-initialized (in the C++ sense)
-  /// with an LLVM zeroinitializer.
-  bool isPointerZeroInitializable(QualType T);
-
   /// IsZeroInitializable - Return whether a record type can be
   /// zero-initialized (in the C++ sense) with an LLVM zeroinitializer.
   bool isZeroInitializable(const RecordDecl *RD);
