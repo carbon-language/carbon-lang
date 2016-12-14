@@ -136,7 +136,7 @@
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m2 | FileCheck %s --check-prefix=EXYNOS-M2
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m2  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=EXYNOS-M1-FAST
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m2 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
-; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m3 | FileCheck %s --check-prefix=EXYNOS-m3
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m3 | FileCheck %s --check-prefix=EXYNOS-M3
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m3  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=EXYNOS-M1-FAST
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m3 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv8.1a-linux-gnueabi  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=GENERIC-ARMV8_1-A-FAST
@@ -1507,7 +1507,7 @@
 ; EXYNOS-M2-NOT:  .eabi_attribute 44
 ; EXYNOS-M2:  .eabi_attribute 68, 3
 
-; EXYNOS-M3:  .cpu exynos-M3
+; EXYNOS-M3:  .cpu exynos-m3
 ; EXYNOS-M3:  .eabi_attribute 6, 14
 ; EXYNOS-M3:  .eabi_attribute 7, 65
 ; EXYNOS-M3:  .eabi_attribute 8, 1
