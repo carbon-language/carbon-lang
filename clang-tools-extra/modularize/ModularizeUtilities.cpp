@@ -75,7 +75,6 @@ ModularizeUtilities *ModularizeUtilities::createModularizeUtilities(
 
 // Load all header lists and dependencies.
 std::error_code ModularizeUtilities::loadAllHeaderListsAndDependencies() {
-  typedef std::vector<std::string>::iterator Iter;
   // For each input file.
   for (auto I = InputFilePaths.begin(), E = InputFilePaths.end(); I != E; ++I) {
     llvm::StringRef InputPath = *I;
