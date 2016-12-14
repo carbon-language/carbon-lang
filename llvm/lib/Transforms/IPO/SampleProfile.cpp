@@ -1315,7 +1315,8 @@ bool SampleProfileLoader::runOnModule(Module &M) {
       clearFunctionData();
       retval |= runOnFunction(F);
     }
-  M.setProfileSummary(Reader->getSummary().getMD(M.getContext()));
+  if (M.getProfileSummary() == nullptr)
+    M.setProfileSummary(Reader->getSummary().getMD(M.getContext()));
   return retval;
 }
 
