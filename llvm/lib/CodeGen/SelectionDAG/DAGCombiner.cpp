@@ -14879,17 +14879,31 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
 SDValue DAGCombiner::foldSelectCCToShiftAnd(const SDLoc &DL, SDValue N0,
                                             SDValue N1, SDValue N2, SDValue N3,
                                             ISD::CondCode CC) {
-  // Check to see if we can perform the "gzip trick", transforming
-  // (select_cc setlt X, 0, A, 0) -> (and (sra X, size(X)-1), A)
+  // If this is a select where the false operand is zero and the compare is a
+  // check of the sign bit, see if we can perform the "gzip trick":
+  // select_cc setlt X, 0, A, 0 -> and (sra X, size(X)-1), A
+  // select_cc setgt X, 0, A, 0 -> and (not (sra X, size(X)-1)), A
   EVT XType = N0.getValueType();
   EVT AType = N2.getValueType();
-  if (!isNullConstant(N3) || CC != ISD::SETLT || !XType.bitsGE(AType))
+  if (!isNullConstant(N3) || !XType.bitsGE(AType))
     return SDValue();
 
-  // (a < 0) ? b : 0
-  // (a < 1) ? a : 0
-  if (!(isNullConstant(N1) || (isOneConstant(N1) && N0 == N2)))
+  // If the comparison is testing for a positive value, we have to invert
+  // the sign bit mask, so only do that transform if the target has a bitwise
+  // 'and not' instruction (the invert is free).
+  if (CC == ISD::SETGT && TLI.hasAndNot(N2)) {
+    // (X > -1) ? A : 0
+    // (X >  0) ? X : 0 <-- This is canonical signed max.
+    if (!(isAllOnesConstant(N1) || (isNullConstant(N1) && N0 == N2)))
+      return SDValue();
+  } else if (CC == ISD::SETLT) {
+    // (X <  0) ? A : 0
+    // (X <  1) ? X : 0 <-- This is un-canonicalized signed min.
+    if (!(isNullConstant(N1) || (isOneConstant(N1) && N0 == N2)))
+      return SDValue();
+  } else {
     return SDValue();
+  }
 
   // and (sra X, size(X)-1), A -> "and (srl X, C2), A" iff A is a single-bit
   // constant.
@@ -14906,6 +14920,9 @@ SDValue DAGCombiner::foldSelectCCToShiftAnd(const SDLoc &DL, SDValue N0,
       AddToWorklist(Shift.getNode());
     }
 
+    if (CC == ISD::SETGT)
+      Shift = DAG.getNOT(DL, Shift, AType);
+
     return DAG.getNode(ISD::AND, DL, AType, Shift, N2);
   }
 
@@ -14917,6 +14934,9 @@ SDValue DAGCombiner::foldSelectCCToShiftAnd(const SDLoc &DL, SDValue N0,
     Shift = DAG.getNode(ISD::TRUNCATE, DL, AType, Shift);
     AddToWorklist(Shift.getNode());
   }
+
+  if (CC == ISD::SETGT)
+    Shift = DAG.getNOT(DL, Shift, AType);
 
   return DAG.getNode(ISD::AND, DL, AType, Shift, N2);
 }
