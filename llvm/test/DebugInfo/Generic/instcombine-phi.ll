@@ -255,6 +255,49 @@ if.end:                                           ; preds = %if.else, %if.then
   ret i32 %r.0, !dbg !52
 }
 
+; Test folding of a compare with RHS constant.  Generated from source (with
+; editing to common the zext):
+
+; extern int foo(void);
+; extern int bar(void);
+; 
+; int cmp_const(int a) {
+;   int r;
+;   if(a)
+;     r = foo() < 10;
+;   else
+;     r = bar() < 10;
+;   return r;
+; }
+
+; CHECK: define i32 @cmp_const
+; CHECK-LABEL: if.end:
+; CHECK: %[[PHI:.*]] = phi i32 [ %call, %if.then ], [ %call1, %if.else ]
+; CHECK: icmp slt i32 %[[PHI]], 10
+; CHECK-NOT: !dbg
+; CHECK: ret i32
+
+define i32 @cmp_const(i32 %a) !dbg !53 {
+entry:
+  %tobool = icmp ne i32 %a, 0, !dbg !54
+  br i1 %tobool, label %if.then, label %if.else, !dbg !54
+
+if.then:                                          ; preds = %entry
+  %call = call i32 @foo(), !dbg !55
+  %cmp = icmp slt i32 %call, 10, !dbg !56
+  br label %if.end, !dbg !57
+
+if.else:                                          ; preds = %entry
+  %call1 = call i32 @bar(), !dbg !58
+  %cmp2 = icmp slt i32 %call1, 10, !dbg !59
+  br label %if.end
+
+if.end:                                           ; preds = %if.else, %if.then
+  %r.0 = phi i1 [ %cmp, %if.then ], [ %cmp2, %if.else ]
+  %conv = zext i1 %r.0 to i32
+  ret i32 %conv, !dbg !60
+}
+
 declare i32 @foo()
 declare i32 @bar()
 declare i64 @foo2()
@@ -317,3 +360,11 @@ declare i32* @bar3()
 !50 = !DILocation(line: 57, column: 9, scope: !45)
 !51 = !DILocation(line: 57, column: 15, scope: !45)
 !52 = !DILocation(line: 58, column: 3, scope: !45)
+!53 = distinct !DISubprogram(name: "cmp_const", scope: !1, file: !1, line: 61, type: !7, isLocal: false, isDefinition: true, scopeLine: 61, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!54 = !DILocation(line: 63, column: 6, scope: !53)
+!55 = !DILocation(line: 64, column: 9, scope: !53)
+!56 = !DILocation(line: 64, column: 15, scope: !53)
+!57 = !DILocation(line: 64, column: 5, scope: !53)
+!58 = !DILocation(line: 66, column: 9, scope: !53)
+!59 = !DILocation(line: 66, column: 15, scope: !53)
+!60 = !DILocation(line: 67, column: 3, scope: !53)

@@ -583,7 +583,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   CmpInst *CIOp = cast<CmpInst>(FirstInst);
   CmpInst *NewCI = CmpInst::Create(CIOp->getOpcode(), CIOp->getPredicate(),
                                    PhiVal, ConstantOp);
-  NewCI->setDebugLoc(FirstInst->getDebugLoc());
+  NewCI->setDebugLoc(PHIArgMergedDebugLoc(PN));
   return NewCI;
 }
 
