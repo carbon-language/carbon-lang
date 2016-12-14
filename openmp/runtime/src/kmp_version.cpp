@@ -1,5 +1,5 @@
 /*
- * kmp_version.c
+ * kmp_version.cpp
  */
 
 

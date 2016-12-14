@@ -1,5 +1,5 @@
 /*
- * KMP_IO.c -- RTL IO
+ * kmp_io.cpp -- RTL IO
  */
 
 

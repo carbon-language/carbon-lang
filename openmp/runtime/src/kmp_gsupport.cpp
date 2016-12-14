@@ -1,5 +1,5 @@
 /*
- * kmp_gsupport.c
+ * kmp_gsupport.cpp
  */
 
 

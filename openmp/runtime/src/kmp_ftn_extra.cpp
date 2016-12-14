@@ -1,5 +1,5 @@
 /*
- * kmp_ftn_extra.c -- Fortran 'extra' linkage support for OpenMP.
+ * kmp_ftn_extra.cpp -- Fortran 'extra' linkage support for OpenMP.
  */
 
 

@@ -1,5 +1,5 @@
 /*
- * kmp_error.c -- KPTS functions for error checking at runtime
+ * kmp_error.cpp -- KPTS functions for error checking at runtime
  */
 
 

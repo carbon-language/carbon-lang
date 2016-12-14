@@ -1,5 +1,5 @@
 /*
- * kmp_str.c -- String manipulation routines.
+ * kmp_str.cpp -- String manipulation routines.
  */
 
 

@@ -1,5 +1,5 @@
 /*
- * kmp_threadprivate.c -- OpenMP threadprivate support library
+ * kmp_threadprivate.cpp -- OpenMP threadprivate support library
  */
 
 

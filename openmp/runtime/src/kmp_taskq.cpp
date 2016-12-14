@@ -1,5 +1,5 @@
 /*
- * kmp_taskq.c -- TASKQ support for OpenMP.
+ * kmp_taskq.cpp -- TASKQ support for OpenMP.
  */
 
 

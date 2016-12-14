@@ -1,5 +1,5 @@
 /*
- * kmp_i18n.c
+ * kmp_i18n.cpp
  */
 
 

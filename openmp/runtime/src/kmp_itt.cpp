@@ -2,7 +2,7 @@
 
 #if USE_ITT_BUILD
 /*
- * kmp_itt.c -- ITT Notify interface.
+ * kmp_itt.cpp -- ITT Notify interface.
  */
 
 

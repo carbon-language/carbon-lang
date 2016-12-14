@@ -1,5 +1,5 @@
 /*
- * kmp_import.c
+ * kmp_import.cpp
  */
 
 

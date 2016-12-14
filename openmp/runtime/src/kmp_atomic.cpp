@@ -1,5 +1,5 @@
 /*
- * kmp_atomic.c -- ATOMIC implementation routines
+ * kmp_atomic.cpp -- ATOMIC implementation routines
  */
 
 

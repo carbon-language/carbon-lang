@@ -1,5 +1,5 @@
 /*
- * kmp_runtime.c -- KPTS runtime support library
+ * kmp_runtime.cpp -- KPTS runtime support library
  */
 
 

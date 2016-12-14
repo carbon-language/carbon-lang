@@ -1,5 +1,5 @@
 /*
- * kmp_utility.c -- Utility routines for the OpenMP support library.
+ * kmp_utility.cpp -- Utility routines for the OpenMP support library.
  */
 
 

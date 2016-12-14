@@ -1,5 +1,5 @@
 /*
- * tsan_annotations.c -- ThreadSanitizer annotations to support data
+ * tsan_annotations.cpp -- ThreadSanitizer annotations to support data
  * race detection in OpenMP programs.
  */
 

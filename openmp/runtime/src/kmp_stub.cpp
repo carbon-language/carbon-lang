@@ -1,5 +1,5 @@
 /*
- * kmp_stub.c -- stub versions of user-callable OpenMP RT functions.
+ * kmp_stub.cpp -- stub versions of user-callable OpenMP RT functions.
  */
 
 
@@ -56,16 +56,16 @@ static size_t __kmps_init() {
     static size_t dummy = 0;
     if ( ! initialized ) {
 
-        // TODO: Analyze KMP_VERSION environment variable, print __kmp_version_copyright and
-        // __kmp_version_build_time.
-        // WARNING: Do not use "fprintf( stderr, ... )" because it will cause unresolved "__iob"
-        // symbol (see C70080). We need to extract __kmp_printf() stuff from kmp_runtime.c and use
-        // it.
+        // TODO: Analyze KMP_VERSION environment variable, print
+        // __kmp_version_copyright and __kmp_version_build_time.
+        // WARNING: Do not use "fprintf( stderr, ... )" because it will cause
+        // unresolved "__iob" symbol (see C70080). We need to extract
+        // __kmp_printf() stuff from kmp_runtime.cpp and use it.
 
-        // Trick with dummy variable forces linker to keep __kmp_version_copyright and
-        // __kmp_version_build_time strings in executable file (in case of static linkage).
-        // When KMP_VERSION analyze is implemented, dummy variable should be deleted, function
-        // should return void.
+        // Trick with dummy variable forces linker to keep __kmp_version_copyright
+        // and __kmp_version_build_time strings in executable file (in case of
+        // static linkage). When KMP_VERSION analysis is implemented, dummy
+        // variable should be deleted, function should return void.
         dummy = __kmp_version_copyright - __kmp_version_build_time;
 
         #if KMP_OS_WINDOWS

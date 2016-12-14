@@ -1,5 +1,5 @@
 /*
- * z_Windows_NT-586_util.c -- platform specific routines.
+ * z_Windows_NT-586_util.cpp -- platform specific routines.
  */
 
 

@@ -1,5 +1,5 @@
 /*
- * z_Linux_util.c -- platform specific routines.
+ * z_Linux_util.cpp -- platform specific routines.
  */
 
 
@@ -1503,7 +1503,7 @@ __kmp_atfork_child (void)
        Suggestion is to make the library initialization lazier, similar
        to what done for __kmpc_begin(). */
     // TODO: synchronize all static initializations with regular library
-    //       startup; look at kmp_global.c and etc.
+    //       startup; look at kmp_global.cpp and etc.
     //__kmp_internal_begin ();
 
 }

@@ -1,5 +1,5 @@
 /*
- * kmp_csupport.c -- kfront linkage support for OpenMP.
+ * kmp_csupport.cpp -- kfront linkage support for OpenMP.
  */
 
 
@@ -464,9 +464,10 @@ when the condition is false.
 void
 __kmpc_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
 {
-    __kmp_serialized_parallel(loc, global_tid); /* The implementation is now in kmp_runtime.c so that it can share static functions with
-                                                 * kmp_fork_call since the tasks to be done are similar in each case.
-                                                 */
+    // The implementation is now in kmp_runtime.cpp so that it can share static
+    // functions with kmp_fork_call since the tasks to be done are similar in
+    // each case.
+    __kmp_serialized_parallel(loc, global_tid);
 }
 
 /*!
