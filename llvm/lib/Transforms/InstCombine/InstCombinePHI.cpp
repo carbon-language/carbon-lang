@@ -399,7 +399,7 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
     for (Value *IncValue : PN.incoming_values())
       cast<LoadInst>(IncValue)->setVolatile(false);
 
-  NewLI->setDebugLoc(FirstLI->getDebugLoc());
+  NewLI->setDebugLoc(PHIArgMergedDebugLoc(PN));
   return NewLI;
 }
 

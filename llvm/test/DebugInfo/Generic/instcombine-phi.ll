@@ -132,10 +132,53 @@ if.end:                                           ; preds = %if.else, %if.then
   ret i32* %r.0, !dbg !30
 }
 
+; Test folding of load.  Generated from source:
+
+; extern int *foo3(void);
+; extern int *bar3(void);
+; 
+; int load(int a) {
+;   int r;
+;   if(a)
+;     r = *foo3();
+;   else
+;     r = *bar3();
+;   return r;
+; }
+
+; CHECK: define i32 @load
+; CHECK-LABEL: if.end:
+; CHECK: %[[PHI:.*]] = phi i32* [ %call, %if.then ], [ %call1, %if.else ]
+; CHECK: load i32, i32* %[[PHI]]
+; CHECK-NOT: !dbg
+; CHECK: ret i32
+
+define i32 @load(i32 %a) !dbg !31 {
+entry:
+  %tobool = icmp ne i32 %a, 0, !dbg !32
+  br i1 %tobool, label %if.then, label %if.else, !dbg !32
+
+if.then:                                          ; preds = %entry
+  %call = call i32* @foo3(), !dbg !33
+  %0 = load i32, i32* %call, align 4, !dbg !34
+  br label %if.end, !dbg !35
+
+if.else:                                          ; preds = %entry
+  %call1 = call i32* @bar3(), !dbg !36
+  %1 = load i32, i32* %call1, align 4, !dbg !37
+  br label %if.end
+
+if.end:                                           ; preds = %if.else, %if.then
+  %r.0 = phi i32 [ %0, %if.then ], [ %1, %if.else ]
+  ret i32 %r.0, !dbg !38
+}
+
 declare i32 @foo()
 declare i32 @bar()
 declare i64 @foo2()
 declare i64 @bar2()
+declare i32* @foo3()
+declare i32* @bar3()
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!3, !4}
@@ -170,3 +213,11 @@ declare i64 @bar2()
 !28 = !DILocation(line: 30, column: 12, scope: !23)
 !29 = !DILocation(line: 30, column: 10, scope: !23)
 !30 = !DILocation(line: 31, column: 3, scope: !23)
+!31 = distinct !DISubprogram(name: "load", scope: !1, file: !1, line: 34, type: !7, isLocal: false, isDefinition: true, scopeLine: 34, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!32 = !DILocation(line: 36, column: 6, scope: !31)
+!33 = !DILocation(line: 37, column: 10, scope: !31)
+!34 = !DILocation(line: 37, column: 9, scope: !31)
+!35 = !DILocation(line: 37, column: 5, scope: !31)
+!36 = !DILocation(line: 39, column: 10, scope: !31)
+!37 = !DILocation(line: 39, column: 9, scope: !31)
+!38 = !DILocation(line: 40, column: 3, scope: !31)
