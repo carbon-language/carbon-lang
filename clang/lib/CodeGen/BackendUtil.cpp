@@ -464,10 +464,8 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
   if (CodeGenOpts.hasProfileIRUse())
     PMBuilder.PGOInstrUse = CodeGenOpts.ProfileInstrumentUsePath;
 
-  if (!CodeGenOpts.SampleProfileFile.empty()) {
-    MPM.add(createPruneEHPass());
-    MPM.add(createSampleProfileLoaderPass(CodeGenOpts.SampleProfileFile));
-  }
+  if (!CodeGenOpts.SampleProfileFile.empty())
+    PMBuilder.PGOSampleUse = CodeGenOpts.SampleProfileFile;
 
   PMBuilder.populateFunctionPassManager(FPM);
   PMBuilder.populateModulePassManager(MPM);
