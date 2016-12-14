@@ -48,6 +48,49 @@ if.end:                                           ; preds = %if.else, %if.then
   ret i32 %b.addr.0, !dbg !14
 }
 
+; Test folding of a compare.  Generated from source (with editing to
+; common the zext):
+
+; extern int foo(void);
+; extern int bar(void);
+; 
+; int cmp(int a, int b) {
+;   int r;
+;   if(a)
+;     r = foo() < b;
+;   else
+;     r = bar() < b;
+;   return r;
+; }
+
+; CHECK: define i32 @cmp
+; CHECK-LABEL: if.end:
+; CHECK: %[[PHI:.*]] = phi i32 [ %call, %if.then ], [ %call1, %if.else ]
+; CHECK: icmp slt i32 %[[PHI]], %b
+; CHECK-NOT: !dbg
+; CHECK: ret i32
+
+define i32 @cmp(i32 %a, i32 %b) !dbg !15 {
+entry:
+  %tobool = icmp ne i32 %a, 0, !dbg !16
+  br i1 %tobool, label %if.then, label %if.else, !dbg !16
+
+if.then:                                          ; preds = %entry
+  %call = call i32 @foo(), !dbg !17
+  %cmp = icmp slt i32 %call, %b, !dbg !18
+  br label %if.end, !dbg !19
+
+if.else:                                          ; preds = %entry
+  %call1 = call i32 @bar(), !dbg !20
+  %cmp2 = icmp slt i32 %call1, %b, !dbg !21
+  br label %if.end
+
+if.end:                                           ; preds = %if.else, %if.then
+  %r.0 = phi i1 [ %cmp, %if.then ], [ %cmp2, %if.else ]
+  %conv = zext i1 %r.0 to i32
+  ret i32 %conv, !dbg !22
+}
+
 declare i32 @foo()
 declare i32 @bar()
 
@@ -68,3 +111,11 @@ declare i32 @bar()
 !12 = !DILocation(line: 12, column: 10, scope: !6)
 !13 = !DILocation(line: 12, column: 7, scope: !6)
 !14 = !DILocation(line: 13, column: 3, scope: !6)
+!15 = distinct !DISubprogram(name: "cmp", scope: !1, file: !1, line: 16, type: !7, isLocal: false, isDefinition: true, scopeLine: 16, flags: DIFlagPrototyped, isOptimized: false, unit: !0, variables: !2)
+!16 = !DILocation(line: 18, column: 6, scope: !15)
+!17 = !DILocation(line: 19, column: 9, scope: !15)
+!18 = !DILocation(line: 19, column: 15, scope: !15)
+!19 = !DILocation(line: 19, column: 5, scope: !15)
+!20 = !DILocation(line: 21, column: 9, scope: !15)
+!21 = !DILocation(line: 21, column: 15, scope: !15)
+!22 = !DILocation(line: 22, column: 3, scope: !15)
