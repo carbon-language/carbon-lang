@@ -224,7 +224,7 @@ protected:
   FunctionSamples *Samples;
 
   /// \brief Name of the profile file to load.
-  StringRef Filename;
+  std::string Filename;
 
   /// \brief Flag indicating whether the profile input loaded successfully.
   bool ProfileIsValid;
