@@ -31,5 +31,5 @@ int main()
   static_assert((std::is_trivially_destructible<
       std::pair<int, float> >::value), "");
   static_assert((!std::is_trivially_destructible<
-      std::pair<int, std::string>::value), "");
+      std::pair<int, std::string> >::value), "");
 }
