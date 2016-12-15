@@ -9076,27 +9076,16 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
       ASTContext::GetBuiltinTypeError Error;
       LookupPredefedObjCSuperType(*this, S, NewFD->getIdentifier());
       QualType T = Context.GetBuiltinType(BuiltinID, Error);
-      if (!T.isNull() && !Context.hasSameType(T, NewFD->getType())) {
-        auto WithoutExceptionSpec = [&](QualType T) -> QualType {
-          auto *Proto = T->getAs<FunctionProtoType>();
-          if (!Proto)
-            return T;
-          return Context.getFunctionType(
-              Proto->getReturnType(), Proto->getParamTypes(),
-              Proto->getExtProtoInfo().withExceptionSpec(EST_None));
-        };
-
-        // If the type of the builtin differs only in its exception
-        // specification, that's OK.
-        // FIXME: If the types do differ in this way, it would be better to
-        // retain the 'noexcept' form of the type.
-        if (!getLangOpts().CPlusPlus1z ||
-            !Context.hasSameType(WithoutExceptionSpec(T),
-                                 WithoutExceptionSpec(NewFD->getType())))
-          // The type of this function differs from the type of the builtin,
-          // so forget about the builtin entirely.
-          Context.BuiltinInfo.forgetBuiltin(BuiltinID, Context.Idents);
-      }
+      // If the type of the builtin differs only in its exception
+      // specification, that's OK.
+      // FIXME: If the types do differ in this way, it would be better to
+      // retain the 'noexcept' form of the type.
+      if (!T.isNull() &&
+          !Context.hasSameFunctionTypeIgnoringExceptionSpec(T,
+                                                            NewFD->getType()))
+        // The type of this function differs from the type of the builtin,
+        // so forget about the builtin entirely.
+        Context.BuiltinInfo.forgetBuiltin(BuiltinID, Context.Idents);
     }
 
     // If this function is declared as being extern "C", then check to see if
