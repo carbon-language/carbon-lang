@@ -24,7 +24,7 @@ template <class ELFT> struct AddressEntry {
   InputSectionBase<ELFT> *Section;
   uint64_t LowAddress;
   uint64_t HighAddress;
-  uint32_t CuIndex;
+  size_t CuIndex;
 };
 
 // GdbIndexBuilder is a helper class used for extracting data required
