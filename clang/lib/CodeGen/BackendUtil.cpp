@@ -14,6 +14,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
