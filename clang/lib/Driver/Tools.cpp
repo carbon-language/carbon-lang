@@ -12105,7 +12105,11 @@ void NVPTX::Assembler::ConstructJob(Compilation &C, const JobAction &JA,
   for (const auto& A : Args.getAllArgValues(options::OPT_Xcuda_ptxas))
     CmdArgs.push_back(Args.MakeArgString(A));
 
-  const char *Exec = Args.MakeArgString(TC.GetProgramPath("ptxas"));
+  const char *Exec;
+  if (Arg *A = Args.getLastArg(options::OPT_ptxas_path_EQ))
+    Exec = A->getValue();
+  else
+    Exec = Args.MakeArgString(TC.GetProgramPath("ptxas"));
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
 
