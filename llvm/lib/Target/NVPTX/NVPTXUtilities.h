@@ -25,9 +25,6 @@
 
 namespace llvm {
 
-#define NVCL_IMAGE2D_READONLY_FUNCNAME "__is_image2D_readonly"
-#define NVCL_IMAGE3D_READONLY_FUNCNAME "__is_image3D_readonly"
-
 void clearAnnotationCache(const Module *);
 
 bool findOneNVVMAnnotation(const GlobalValue *, const std::string &,
