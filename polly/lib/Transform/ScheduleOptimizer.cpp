@@ -610,17 +610,15 @@ getMacroKernelParams(const MicroKernelParamsTy &MicroKernelParams) {
         CacheLevelSizes[0] > 0 && CacheLevelSizes[1] > 0 &&
         CacheLevelAssociativity[0] > 2 && CacheLevelAssociativity[1] > 2))
     return {1, 1, 1};
-  int Cbr = floor(
+  int Car = floor(
       (CacheLevelAssociativity[0] - 1) /
       (1 + static_cast<double>(MicroKernelParams.Nr) / MicroKernelParams.Mr));
-  int Kc = (Cbr * CacheLevelSizes[0]) /
+  int Kc = (Car * CacheLevelSizes[0]) /
            (MicroKernelParams.Mr * CacheLevelAssociativity[0] * 8);
   double Cac = static_cast<double>(Kc * 8 * CacheLevelAssociativity[1]) /
                CacheLevelSizes[1];
-  double Cbc = static_cast<double>(Kc * 8 * CacheLevelAssociativity[1]) /
-               CacheLevelSizes[1];
   int Mc = floor((CacheLevelAssociativity[1] - 2) / Cac);
-  int Nc = floor(1 / Cbc);
+  int Nc = floor(1 / Cac);
   return {Mc, Nc, Kc};
 }
 
