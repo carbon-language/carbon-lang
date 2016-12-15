@@ -8457,6 +8457,8 @@ static const uint16_t ReplaceableInstrs[][3] = {
   { X86::MOVUPSmr,   X86::MOVUPDmr,  X86::MOVDQUmr  },
   { X86::MOVUPSrm,   X86::MOVUPDrm,  X86::MOVDQUrm  },
   { X86::MOVLPSmr,   X86::MOVLPDmr,  X86::MOVPQI2QImr  },
+  { X86::MOVSDrm,    X86::MOVSDrm,   X86::MOVQI2PQIrm },
+  { X86::MOVSSrm,    X86::MOVSSrm,   X86::MOVDI2PDIrm },
   { X86::MOVNTPSmr,  X86::MOVNTPDmr, X86::MOVNTDQmr },
   { X86::ANDNPSrm,   X86::ANDNPDrm,  X86::PANDNrm   },
   { X86::ANDNPSrr,   X86::ANDNPDrr,  X86::PANDNrr   },
@@ -8473,6 +8475,8 @@ static const uint16_t ReplaceableInstrs[][3] = {
   { X86::VMOVUPSmr,  X86::VMOVUPDmr,  X86::VMOVDQUmr  },
   { X86::VMOVUPSrm,  X86::VMOVUPDrm,  X86::VMOVDQUrm  },
   { X86::VMOVLPSmr,  X86::VMOVLPDmr,  X86::VMOVPQI2QImr  },
+  { X86::VMOVSDrm,   X86::VMOVSDrm,   X86::VMOVQI2PQIrm },
+  { X86::VMOVSSrm,   X86::VMOVSSrm,   X86::VMOVDI2PDIrm },
   { X86::VMOVNTPSmr, X86::VMOVNTPDmr, X86::VMOVNTDQmr },
   { X86::VANDNPSrm,  X86::VANDNPDrm,  X86::VPANDNrm   },
   { X86::VANDNPSrr,  X86::VANDNPDrr,  X86::VPANDNrr   },
@@ -8549,6 +8553,8 @@ static const uint16_t ReplaceableInstrsAVX512[][4] = {
   { X86::VMOVAPSZrr,    X86::VMOVAPDZrr,    X86::VMOVDQA64Zrr,    X86::VMOVDQA32Zrr     },
   { X86::VMOVUPSZmr,    X86::VMOVUPDZmr,    X86::VMOVDQU64Zmr,    X86::VMOVDQU32Zmr     },
   { X86::VMOVUPSZrm,    X86::VMOVUPDZrm,    X86::VMOVDQU64Zrm,    X86::VMOVDQU32Zrm     },
+  { X86::VMOVSDZrm,     X86::VMOVSDZrm,     X86::VMOVQI2PQIZrm,   X86::VMOVQI2PQIZrm,   },
+  { X86::VMOVSSZrm,     X86::VMOVSSZrm,     X86::VMOVDI2PDIZrm,   X86::VMOVDI2PDIZrm,   },
 };
 
 static const uint16_t ReplaceableInstrsAVX512DQ[][4] = {

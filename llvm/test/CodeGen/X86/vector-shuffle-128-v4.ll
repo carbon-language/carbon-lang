@@ -2055,12 +2055,12 @@ define <4 x i32> @insert_reg_and_zero_v4i32(i32 %a) {
 define <4 x i32> @insert_mem_and_zero_v4i32(i32* %ptr) {
 ; SSE-LABEL: insert_mem_and_zero_v4i32:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; SSE-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: insert_mem_and_zero_v4i32:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; AVX-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; AVX-NEXT:    retq
   %a = load i32, i32* %ptr
   %v = insertelement <4 x i32> undef, i32 %a, i32 0

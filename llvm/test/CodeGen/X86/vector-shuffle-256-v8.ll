@@ -2434,7 +2434,7 @@ define <8 x i32> @shuffle_v8i32_12305674(<8 x i32> %a, <8 x i32> %b) {
 define <8x float> @concat_v2f32_1(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_1:
 ; ALL:       # BB#0: # %entry
-; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; ALL-NEXT:    retq
 entry:
@@ -2449,7 +2449,7 @@ entry:
 define <8x float> @concat_v2f32_2(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_2:
 ; ALL:       # BB#0: # %entry
-; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; ALL-NEXT:    retq
 entry:
@@ -2462,7 +2462,7 @@ entry:
 define <8x float> @concat_v2f32_3(<2 x float>* %tmp64, <2 x float>* %tmp65) {
 ; ALL-LABEL: concat_v2f32_3:
 ; ALL:       # BB#0: # %entry
-; ALL-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; ALL-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; ALL-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; ALL-NEXT:    retq
 entry:
@@ -2476,7 +2476,7 @@ entry:
 define <8 x i32> @insert_mem_and_zero_v8i32(i32* %ptr) {
 ; ALL-LABEL: insert_mem_and_zero_v8i32:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; ALL-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
 ; ALL-NEXT:    retq
   %a = load i32, i32* %ptr
   %v = insertelement <8 x i32> undef, i32 %a, i32 0

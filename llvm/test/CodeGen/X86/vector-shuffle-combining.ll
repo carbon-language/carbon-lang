@@ -1782,13 +1782,13 @@ define <4 x i32> @combine_test21(<8 x i32> %a, <4 x i32>* %ptr) {
 define <8 x float> @combine_test22(<2 x float>* %a, <2 x float>* %b) {
 ; SSE-LABEL: combine_test22:
 ; SSE:       # BB#0:
-; SSE-NEXT:    movq {{.*#+}} xmm0 = mem[0],zero
+; SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
 ; SSE-NEXT:    movhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_test22:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; AVX-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
 ; AVX-NEXT:    retq
 ; Current AVX2 lowering of this is still awful, not adding a test case.
@@ -2818,13 +2818,13 @@ define void @combine_scalar_load_with_blend_with_zero(double* %a0, <4 x float>* 
 ; SSE-LABEL: combine_scalar_load_with_blend_with_zero:
 ; SSE:       # BB#0:
 ; SSE-NEXT:    movsd {{.*#+}} xmm0 = mem[0],zero
-; SSE-NEXT:    movapd %xmm0, (%rsi)
+; SSE-NEXT:    movaps %xmm0, (%rsi)
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: combine_scalar_load_with_blend_with_zero:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; AVX-NEXT:    vmovapd %xmm0, (%rsi)
+; AVX-NEXT:    vmovaps %xmm0, (%rsi)
 ; AVX-NEXT:    retq
   %1 = load double, double* %a0, align 8
   %2 = insertelement <2 x double> undef, double %1, i32 0
