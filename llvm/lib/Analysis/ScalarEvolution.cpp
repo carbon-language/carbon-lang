@@ -3529,7 +3529,9 @@ void ScalarEvolution::addAffectedFromOperands(const SCEV *S) {
       if (AMI == AffectedMap.end())
         continue;
 
-      AffectedMap[S].insert(AMI->second.begin(), AMI->second.end());
+      auto &ISet = AffectedMap[S];
+      AMI = AffectedMap.find(Op);
+      ISet.insert(AMI->second.begin(), AMI->second.end());
     }
 }
 
