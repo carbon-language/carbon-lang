@@ -29,7 +29,7 @@ template <class ELFT> struct AddressEntry {
 
 // GdbIndexBuilder is a helper class used for extracting data required
 // for building .gdb_index section from objects.
-template <class ELFT> class GdbIndexBuilder : public LoadedObjectInfo {
+template <class ELFT> class GdbIndexBuilder : public llvm::LoadedObjectInfo {
   typedef typename ELFT::uint uintX_t;
 
   InputSection<ELFT> *DebugInfoSec;
