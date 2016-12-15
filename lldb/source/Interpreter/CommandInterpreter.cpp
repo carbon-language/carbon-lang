@@ -1527,7 +1527,7 @@ bool CommandInterpreter::HandleCommand(const char *command_line,
   std::string original_command_string(command_line);
 
   Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_COMMANDS));
-  llvm::PrettyStackTraceFormat PST("HandleCommand(command = \"%s\")",
+  llvm::PrettyStackTraceFormat stack_trace("HandleCommand(command = \"%s\")",
                                    command_line);
 
   if (log)

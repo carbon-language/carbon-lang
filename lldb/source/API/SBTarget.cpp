@@ -2130,7 +2130,7 @@ lldb::SBValue SBTarget::EvaluateExpression(const char *expr,
       StreamString frame_description;
       if (frame)
         frame->DumpUsingSettingsFormat(&frame_description);
-      llvm::PrettyStackTraceFormat PST(
+      llvm::PrettyStackTraceFormat stack_trace(
           "SBTarget::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = "
           "%u) %s",
           expr, options.GetFetchDynamicValue(),

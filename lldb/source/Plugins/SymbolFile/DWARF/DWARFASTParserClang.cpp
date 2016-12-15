@@ -1473,7 +1473,7 @@ TypeSP DWARFASTParserClang::ParseTypeFromDWARF(const SymbolContext &sc,
                         }
 
                         if (add_method) {
-                          llvm::PrettyStackTraceFormat PST(
+                          llvm::PrettyStackTraceFormat stack_trace(
                               "SymbolFileDWARF::ParseType() is adding a method "
                               "%s to class %s in DIE 0x%8.8" PRIx64 " from %s",
                               type_name_cstr,
