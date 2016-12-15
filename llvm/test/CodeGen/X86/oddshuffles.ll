@@ -359,7 +359,7 @@ define void @v7i32(<4 x i32> %a, <4 x i32> %b, <7 x i32>* %p) nounwind {
 ; AVX1-NEXT:    vpermilps {{.*#+}} xmm2 = xmm2[0,2,3,2]
 ; AVX1-NEXT:    vblendps {{.*#+}} xmm0 = xmm1[0],xmm0[1],xmm1[2,3]
 ; AVX1-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[1,3,0,3]
-; AVX1-NEXT:    vmovd %xmm1, 24(%rdi)
+; AVX1-NEXT:    vmovss %xmm1, 24(%rdi)
 ; AVX1-NEXT:    vmovlps %xmm0, 16(%rdi)
 ; AVX1-NEXT:    vmovaps %xmm2, (%rdi)
 ; AVX1-NEXT:    retq

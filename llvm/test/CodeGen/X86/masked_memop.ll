@@ -979,12 +979,12 @@ define void @test21(<4 x i32> %trigger, <4 x i32>* %addr, <4 x i32> %val) {
 define void @one_mask_bit_set1(<4 x i32>* %addr, <4 x i32> %val) {
 ; AVX-LABEL: one_mask_bit_set1:
 ; AVX:       ## BB#0:
-; AVX-NEXT:    vmovd %xmm0, (%rdi)
+; AVX-NEXT:    vmovss %xmm0, (%rdi)
 ; AVX-NEXT:    retq
 ;
 ; AVX512-LABEL: one_mask_bit_set1:
 ; AVX512:       ## BB#0:
-; AVX512-NEXT:    vmovd %xmm0, (%rdi)
+; AVX512-NEXT:    vmovss %xmm0, (%rdi)
 ; AVX512-NEXT:    retq
   call void @llvm.masked.store.v4i32.p0v4i32(<4 x i32> %val, <4 x i32>* %addr, i32 4, <4 x i1><i1 true, i1 false, i1 false, i1 false>)
   ret void
