@@ -211,8 +211,6 @@ public:
         return false;
       case PercentArg:
         return false;
-      case InvalidSpecifier:
-        return false;
       default:
         return true;
     }
