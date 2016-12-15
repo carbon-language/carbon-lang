@@ -139,7 +139,7 @@ class TracePcGuardController {
 
 static TracePcGuardController pc_guard_controller;
 
-};  // namespace
+}  // namespace
 
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_dump_coverage(  // NOLINT
