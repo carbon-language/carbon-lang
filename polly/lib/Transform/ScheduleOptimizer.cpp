@@ -538,8 +538,10 @@ permuteBandNodeDimensions(__isl_take isl_schedule_node *Node, unsigned FirstDim,
 
 __isl_give isl_schedule_node *ScheduleTreeOptimizer::createMicroKernel(
     __isl_take isl_schedule_node *Node, MicroKernelParamsTy MicroKernelParams) {
-  return applyRegisterTiling(Node, {MicroKernelParams.Mr, MicroKernelParams.Nr},
-                             1);
+  applyRegisterTiling(Node, {MicroKernelParams.Mr, MicroKernelParams.Nr}, 1);
+  Node = isl_schedule_node_parent(isl_schedule_node_parent(Node));
+  Node = permuteBandNodeDimensions(Node, 0, 1);
+  return isl_schedule_node_child(isl_schedule_node_child(Node, 0), 0);
 }
 
 __isl_give isl_schedule_node *ScheduleTreeOptimizer::createMacroKernel(
@@ -553,6 +555,7 @@ __isl_give isl_schedule_node *ScheduleTreeOptimizer::createMacroKernel(
       {MacroKernelParams.Mc, MacroKernelParams.Nc, MacroKernelParams.Kc}, 1);
   Node = isl_schedule_node_parent(isl_schedule_node_parent(Node));
   Node = permuteBandNodeDimensions(Node, 1, 2);
+  Node = permuteBandNodeDimensions(Node, 0, 2);
   return isl_schedule_node_child(isl_schedule_node_child(Node, 0), 0);
 }
 
@@ -609,18 +612,15 @@ getMacroKernelParams(const MicroKernelParamsTy &MicroKernelParams) {
     return {1, 1, 1};
   int Cbr = floor(
       (CacheLevelAssociativity[0] - 1) /
-      (1 + static_cast<double>(MicroKernelParams.Mr) / MicroKernelParams.Nr));
+      (1 + static_cast<double>(MicroKernelParams.Nr) / MicroKernelParams.Mr));
   int Kc = (Cbr * CacheLevelSizes[0]) /
-           (MicroKernelParams.Nr * CacheLevelAssociativity[0] * 8);
-  double Cac = static_cast<double>(MicroKernelParams.Mr * Kc * 8 *
-                                   CacheLevelAssociativity[1]) /
+           (MicroKernelParams.Mr * CacheLevelAssociativity[0] * 8);
+  double Cac = static_cast<double>(Kc * 8 * CacheLevelAssociativity[1]) /
                CacheLevelSizes[1];
-  double Cbc = static_cast<double>(MicroKernelParams.Nr * Kc * 8 *
-                                   CacheLevelAssociativity[1]) /
+  double Cbc = static_cast<double>(Kc * 8 * CacheLevelAssociativity[1]) /
                CacheLevelSizes[1];
-  int Mc = floor(MicroKernelParams.Mr / Cac);
-  int Nc =
-      floor((MicroKernelParams.Nr * (CacheLevelAssociativity[1] - 2)) / Cbc);
+  int Mc = floor((CacheLevelAssociativity[1] - 2) / Cac);
+  int Nc = floor(1 / Cbc);
   return {Mc, Nc, Kc};
 }
 
@@ -867,36 +867,38 @@ static __isl_give isl_schedule_node *optimizeDataLayoutMatrMulPattern(
   Node = isl_schedule_node_parent(Node);
   Node = isl_schedule_node_child(isl_schedule_node_band_split(Node, 2), 0);
   auto *AccRel =
-      getMatMulAccRel(isl_map_copy(MapOldIndVar), MacroParams.Kc, 3, 6);
-  unsigned FirstDimSize = MacroParams.Mc * MacroParams.Kc / MicroParams.Mr;
-  unsigned SecondDimSize = MicroParams.Mr;
+      getMatMulAccRel(isl_map_copy(MapOldIndVar), MacroParams.Kc, 3, 7);
+  unsigned FirstDimSize = MacroParams.Nc * MacroParams.Kc / MicroParams.Nr;
+  unsigned SecondDimSize = MicroParams.Nr;
   auto *SAI = Stmt->getParent()->createScopArrayInfo(
-      MemAccessA->getElementType(), "Packed_A", {FirstDimSize, SecondDimSize});
+      MemAccessB->getElementType(), "Packed_B", {FirstDimSize, SecondDimSize});
   AccRel = isl_map_set_tuple_id(AccRel, isl_dim_out, SAI->getBasePtrId());
-  auto *OldAcc = MemAccessA->getAccessRelation();
-  MemAccessA->setNewAccessRelation(AccRel);
+  auto *OldAcc = MemAccessB->getAccessRelation();
+  MemAccessB->setNewAccessRelation(AccRel);
   auto *ExtMap =
-      getMatMulExt(Stmt->getIslCtx(), MacroParams.Mc, 0, MacroParams.Kc);
-  ExtMap = isl_map_project_out(ExtMap, isl_dim_in, 1, 1);
+      getMatMulExt(Stmt->getIslCtx(), 0, MacroParams.Nc, MacroParams.Kc);
+  isl_map_move_dims(ExtMap, isl_dim_out, 0, isl_dim_in, 0, 1);
+  isl_map_move_dims(ExtMap, isl_dim_in, 2, isl_dim_out, 0, 1);
+  ExtMap = isl_map_project_out(ExtMap, isl_dim_in, 2, 1);
   auto *Domain = Stmt->getDomain();
   auto *NewStmt = Stmt->getParent()->addScopStmt(
-      OldAcc, MemAccessA->getAccessRelation(), isl_set_copy(Domain));
+      OldAcc, MemAccessB->getAccessRelation(), isl_set_copy(Domain));
   ExtMap = isl_map_set_tuple_id(ExtMap, isl_dim_out, NewStmt->getDomainId());
   Node = createExtensionNode(Node, ExtMap);
   Node = isl_schedule_node_child(Node, 0);
-  AccRel = getMatMulAccRel(MapOldIndVar, MacroParams.Kc, 4, 7);
-  FirstDimSize = MacroParams.Nc * MacroParams.Kc / MicroParams.Nr;
-  SecondDimSize = MicroParams.Nr;
+  AccRel = getMatMulAccRel(MapOldIndVar, MacroParams.Kc, 4, 6);
+  FirstDimSize = MacroParams.Mc * MacroParams.Kc / MicroParams.Mr;
+  SecondDimSize = MicroParams.Mr;
   SAI = Stmt->getParent()->createScopArrayInfo(
-      MemAccessB->getElementType(), "Packed_B", {FirstDimSize, SecondDimSize});
+      MemAccessA->getElementType(), "Packed_A", {FirstDimSize, SecondDimSize});
   AccRel = isl_map_set_tuple_id(AccRel, isl_dim_out, SAI->getBasePtrId());
-  OldAcc = MemAccessB->getAccessRelation();
-  MemAccessB->setNewAccessRelation(AccRel);
-  ExtMap = getMatMulExt(Stmt->getIslCtx(), 0, MacroParams.Nc, MacroParams.Kc);
-  isl_map_move_dims(ExtMap, isl_dim_out, 0, isl_dim_in, 1, 1);
+  OldAcc = MemAccessA->getAccessRelation();
+  MemAccessA->setNewAccessRelation(AccRel);
+  ExtMap = getMatMulExt(Stmt->getIslCtx(), MacroParams.Mc, 0, MacroParams.Kc);
+  isl_map_move_dims(ExtMap, isl_dim_out, 0, isl_dim_in, 0, 1);
   isl_map_move_dims(ExtMap, isl_dim_in, 2, isl_dim_out, 0, 1);
   NewStmt = Stmt->getParent()->addScopStmt(
-      OldAcc, MemAccessB->getAccessRelation(), Domain);
+      OldAcc, MemAccessA->getAccessRelation(), Domain);
   ExtMap = isl_map_set_tuple_id(ExtMap, isl_dim_out, NewStmt->getDomainId());
   Node = createExtensionNode(Node, ExtMap);
   Node = isl_schedule_node_child(isl_schedule_node_child(Node, 0), 0);
