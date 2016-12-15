@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -71,8 +70,7 @@ static void completeEphemeralValues(SmallPtrSetImpl<const Value *> &Visited,
 
 // Find all ephemeral values.
 void CodeMetrics::collectEphemeralValues(
-    const Loop *L, AssumptionCache *AC,
-    SmallPtrSetImpl<const Value *> &EphValues) {
+    const Loop *L, SmallPtrSetImpl<const Value *> &EphValues) {
   SmallPtrSet<const Value *, 32> Visited;
   SmallVector<const Value *, 16> Worklist;
 
@@ -87,8 +85,7 @@ void CodeMetrics::collectEphemeralValues(
 }
 
 void CodeMetrics::collectEphemeralValues(
-    const Function *F, AssumptionCache *AC,
-    SmallPtrSetImpl<const Value *> &EphValues) {
+    const Function *F, SmallPtrSetImpl<const Value *> &EphValues) {
   SmallPtrSet<const Value *, 32> Visited;
   SmallVector<const Value *, 16> Worklist;
 

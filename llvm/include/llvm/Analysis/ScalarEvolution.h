@@ -37,7 +37,6 @@
 
 namespace llvm {
 class APInt;
-class AssumptionCache;
 class Constant;
 class ConstantInt;
 class DominatorTree;
@@ -474,9 +473,6 @@ private:
   /// The target library information for the target we are targeting.
   ///
   TargetLibraryInfo &TLI;
-
-  /// The tracker for @llvm.assume intrinsics in this function.
-  AssumptionCache &AC;
 
   /// The dominator tree.
   ///
@@ -1114,7 +1110,7 @@ private:
   bool isAddRecNeverPoison(const Instruction *I, const Loop *L);
 
 public:
-  ScalarEvolution(Function &F, TargetLibraryInfo &TLI, AssumptionCache &AC,
+  ScalarEvolution(Function &F, TargetLibraryInfo &TLI,
                   DominatorTree &DT, LoopInfo &LI);
   ~ScalarEvolution();
   ScalarEvolution(ScalarEvolution &&Arg);

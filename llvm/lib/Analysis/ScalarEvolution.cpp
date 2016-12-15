@@ -64,8 +64,8 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
@@ -4322,7 +4322,7 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
   // PHI's incoming blocks are in a different loop, in which case doing so
   // risks breaking LCSSA form. Instcombine would normally zap these, but
   // it doesn't have DominatorTree information, so it may miss cases.
-  if (Value *V = SimplifyInstruction(PN, getDataLayout(), &TLI, &DT, &AC))
+  if (Value *V = SimplifyInstruction(PN, getDataLayout(), &TLI, &DT))
     if (LI.replacementPreservesLCSSAForm(PN, V))
       return getSCEV(V);
 
@@ -4510,7 +4510,7 @@ ScalarEvolution::GetMinTrailingZeros(const SCEV *S) {
     // For a SCEVUnknown, ask ValueTracking.
     unsigned BitWidth = getTypeSizeInBits(U->getType());
     APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-    computeKnownBits(U->getValue(), Zeros, Ones, getDataLayout(), 0, &AC,
+    computeKnownBits(U->getValue(), Zeros, Ones, getDataLayout(), 0,
                      nullptr, &DT);
     return Zeros.countTrailingOnes();
   }
@@ -4681,14 +4681,14 @@ ScalarEvolution::getRange(const SCEV *S,
     if (SignHint == ScalarEvolution::HINT_RANGE_UNSIGNED) {
       // For a SCEVUnknown, ask ValueTracking.
       APInt Zeros(BitWidth, 0), Ones(BitWidth, 0);
-      computeKnownBits(U->getValue(), Zeros, Ones, DL, 0, &AC, nullptr, &DT);
+      computeKnownBits(U->getValue(), Zeros, Ones, DL, 0, nullptr, &DT);
       if (Ones != ~Zeros + 1)
         ConservativeResult =
             ConservativeResult.intersectWith(ConstantRange(Ones, ~Zeros + 1));
     } else {
       assert(SignHint == ScalarEvolution::HINT_RANGE_SIGNED &&
              "generalize as needed!");
-      unsigned NS = ComputeNumSignBits(U->getValue(), DL, 0, &AC, nullptr, &DT);
+      unsigned NS = ComputeNumSignBits(U->getValue(), DL, 0, nullptr, &DT);
       if (NS > 1)
         ConservativeResult = ConservativeResult.intersectWith(
             ConstantRange(APInt::getSignedMinValue(BitWidth).ashr(NS - 1),
@@ -5177,7 +5177,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
         unsigned BitWidth = A.getBitWidth();
         APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
         computeKnownBits(BO->LHS, KnownZero, KnownOne, getDataLayout(),
-                         0, &AC, nullptr, &DT);
+                         0, nullptr, &DT);
 
         APInt EffectiveMask =
             APInt::getLowBitsSet(BitWidth, BitWidth - LZ - TZ).shl(TZ);
@@ -6372,7 +6372,7 @@ ScalarEvolution::ExitLimit ScalarEvolution::computeShiftCompareExitLimit(
     // bitwidth(K) iterations.
     Value *FirstValue = PN->getIncomingValueForBlock(Predecessor);
     bool KnownZero, KnownOne;
-    ComputeSignBit(FirstValue, KnownZero, KnownOne, DL, 0, nullptr,
+    ComputeSignBit(FirstValue, KnownZero, KnownOne, DL, 0,
                    Predecessor->getTerminator(), &DT);
     auto *Ty = cast<IntegerType>(RHS->getType());
     if (KnownZero)
@@ -9534,9 +9534,8 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //===----------------------------------------------------------------------===//
 
 ScalarEvolution::ScalarEvolution(Function &F, TargetLibraryInfo &TLI,
-                                 AssumptionCache &AC, DominatorTree &DT,
-                                 LoopInfo &LI)
-    : F(F), TLI(TLI), AC(AC), DT(DT), LI(LI),
+                                 DominatorTree &DT, LoopInfo &LI)
+    : F(F), TLI(TLI), DT(DT), LI(LI),
       CouldNotCompute(new SCEVCouldNotCompute()),
       WalkingBEDominatingConds(false), ProvingSplitPredicate(false),
       ValuesAtScopes(64), LoopDispositions(64), BlockDispositions(64),
@@ -9558,7 +9557,7 @@ ScalarEvolution::ScalarEvolution(Function &F, TargetLibraryInfo &TLI,
 }
 
 ScalarEvolution::ScalarEvolution(ScalarEvolution &&Arg)
-    : F(Arg.F), HasGuards(Arg.HasGuards), TLI(Arg.TLI), AC(Arg.AC), DT(Arg.DT),
+    : F(Arg.F), HasGuards(Arg.HasGuards), TLI(Arg.TLI), DT(Arg.DT),
       LI(Arg.LI), CouldNotCompute(std::move(Arg.CouldNotCompute)),
       ValueExprMap(std::move(Arg.ValueExprMap)),
       PendingLoopPredicates(std::move(Arg.PendingLoopPredicates)),
@@ -10029,7 +10028,7 @@ void ScalarEvolution::verify() const {
 
   // Gather stringified backedge taken counts for all loops using a fresh
   // ScalarEvolution object.
-  ScalarEvolution SE2(F, TLI, AC, DT, LI);
+  ScalarEvolution SE2(F, TLI, DT, LI);
   for (LoopInfo::reverse_iterator I = LI.rbegin(), E = LI.rend(); I != E; ++I)
     getLoopBackedgeTakenCounts(*I, BackedgeDumpsNew, SE2);
 
@@ -10070,7 +10069,6 @@ AnalysisKey ScalarEvolutionAnalysis::Key;
 ScalarEvolution ScalarEvolutionAnalysis::run(Function &F,
                                              FunctionAnalysisManager &AM) {
   return ScalarEvolution(F, AM.getResult<TargetLibraryAnalysis>(F),
-                         AM.getResult<AssumptionAnalysis>(F),
                          AM.getResult<DominatorTreeAnalysis>(F),
                          AM.getResult<LoopAnalysis>(F));
 }
@@ -10083,7 +10081,6 @@ ScalarEvolutionPrinterPass::run(Function &F, FunctionAnalysisManager &AM) {
 
 INITIALIZE_PASS_BEGIN(ScalarEvolutionWrapperPass, "scalar-evolution",
                       "Scalar Evolution Analysis", false, true)
-INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(LoopInfoWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
@@ -10098,7 +10095,6 @@ ScalarEvolutionWrapperPass::ScalarEvolutionWrapperPass() : FunctionPass(ID) {
 bool ScalarEvolutionWrapperPass::runOnFunction(Function &F) {
   SE.reset(new ScalarEvolution(
       F, getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(),
-      getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F),
       getAnalysis<DominatorTreeWrapperPass>().getDomTree(),
       getAnalysis<LoopInfoWrapperPass>().getLoopInfo()));
   return false;
@@ -10119,7 +10115,6 @@ void ScalarEvolutionWrapperPass::verifyAnalysis() const {
 
 void ScalarEvolutionWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequiredTransitive<AssumptionCacheTracker>();
   AU.addRequiredTransitive<LoopInfoWrapperPass>();
   AU.addRequiredTransitive<DominatorTreeWrapperPass>();
   AU.addRequiredTransitive<TargetLibraryInfoWrapperPass>();
