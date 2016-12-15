@@ -1597,7 +1597,9 @@ void MachineBlockPlacement::buildCFGChains() {
                    << getBlockName(BB) << " -> " << getBlockName(NextBB)
                    << "\n");
       Chain->merge(NextBB, nullptr);
+#ifndef NDEBUG
       BlocksWithUnanalyzableExits.insert(&*BB);
+#endif
       FI = NextFI;
       BB = NextBB;
     }
