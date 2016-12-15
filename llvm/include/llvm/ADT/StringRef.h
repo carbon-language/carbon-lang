@@ -847,7 +847,7 @@ namespace llvm {
   public:
     template <size_t N>
     constexpr StringLiteral(const char (&Str)[N])
-#if defined(__clang__)
+#if defined(__clang__) && __has_attribute(enable_if)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgcc-compat"
         __attribute((enable_if(__builtin_strlen(Str) == N - 1,
