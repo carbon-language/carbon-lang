@@ -2879,7 +2879,15 @@ bool Generic_GCC::IsUnwindTablesDefault() const {
 }
 
 bool Generic_GCC::isPICDefault() const {
-  return getArch() == llvm::Triple::x86_64 && getTriple().isOSWindows();
+  switch (getArch()) {
+  case llvm::Triple::x86_64:
+    return getTriple().isOSWindows();
+  case llvm::Triple::ppc64:
+  case llvm::Triple::ppc64le:
+    return !getTriple().isOSBinFormatMachO() && !getTriple().isMacOSX();
+  default:
+    return false;
+  }
 }
 
 bool Generic_GCC::isPIEDefault() const { return false; }
