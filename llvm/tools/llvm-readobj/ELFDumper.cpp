@@ -2350,7 +2350,7 @@ template <class ELFT> void ELFDumper<ELFT>::printAMDGPURuntimeMD() {
   ArrayRef<uint8_t> Sec = unwrapOrError(Obj->getSectionContents(Shdr));
 
   const uint32_t RuntimeMDNoteType = 7;
-  for (auto I = reinterpret_cast<const uint32_t *>(&Sec[0]),
+  for (auto I = reinterpret_cast<const Elf_Word *>(&Sec[0]),
        E = I + Sec.size()/4; I != E;) {
     uint32_t NameSZ = I[0];
     uint32_t DescSZ = I[1];
