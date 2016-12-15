@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj %s -o - \
+// RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux-gnu %s -o - \
 // RUN: | llvm-readobj -s -t | FileCheck %s
 
         .section .text,    "0x806", %progbits, unique, 0
