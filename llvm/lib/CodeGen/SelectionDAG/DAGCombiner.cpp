@@ -14377,6 +14377,11 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       Level < AfterLegalizeDAG && TLI.isTypeLegal(VT)) {
     ShuffleVectorSDNode *OtherSV = cast<ShuffleVectorSDNode>(N0);
 
+    // Don't try to fold splats; they're likely to simplify somehow, or they
+    // might be free.
+    if (OtherSV->isSplat())
+      return SDValue();
+
     // The incoming shuffle must be of the same type as the result of the
     // current shuffle.
     assert(OtherSV->getOperand(0).getValueType() == VT &&
