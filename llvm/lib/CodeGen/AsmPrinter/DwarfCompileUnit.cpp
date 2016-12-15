@@ -569,8 +569,6 @@ DIE *DwarfCompileUnit::createScopeChildrenDIE(LexicalScope *Scope,
 }
 
 void DwarfCompileUnit::constructSubprogramScopeDIE(const DISubprogram *Sub, LexicalScope *Scope) {
-  DD->getProcessedSPNodes().insert(Sub);
-
   DIE &ScopeDIE = updateSubprogramScopeDIE(Sub);
 
   if (Scope) {
