@@ -1390,17 +1390,15 @@ define <8 x i32> @mul_v8i64_zero_upper(<8 x i32> %val1, <8 x i32> %val2) {
 ;
 ; AVX2-LABEL: mul_v8i64_zero_upper:
 ; AVX2:       # BB#0: # %entry
-; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm2
-; AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm2 = xmm2[0],zero,xmm2[1],zero,xmm2[2],zero,xmm2[3],zero
+; AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm2 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
+; AVX2-NEXT:    vextracti128 $1, %ymm0, %xmm0
 ; AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero
-; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm3
-; AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm3 = xmm3[0],zero,xmm3[1],zero,xmm3[2],zero,xmm3[3],zero
+; AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm3 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero
+; AVX2-NEXT:    vextracti128 $1, %ymm1, %xmm1
 ; AVX2-NEXT:    vpmovzxdq {{.*#+}} ymm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero
 ; AVX2-NEXT:    vpmuludq %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vpmuludq %ymm3, %ymm2, %ymm1
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm1 = ymm1[0,1,1,3,4,5,5,7]
-; AVX2-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[1,3,2,3,5,7,6,7]
-; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3],ymm0[4,5],ymm1[6,7]
+; AVX2-NEXT:    vshufps {{.*#+}} ymm0 = ymm1[1,3],ymm0[1,3],ymm1[5,7],ymm0[5,7]
 ; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; AVX2-NEXT:    retq
 ;
@@ -1410,9 +1408,7 @@ define <8 x i32> @mul_v8i64_zero_upper(<8 x i32> %val1, <8 x i32> %val2) {
 ; AVX512-NEXT:    vpmovzxdq {{.*#+}} zmm1 = ymm1[0],zero,ymm1[1],zero,ymm1[2],zero,ymm1[3],zero,ymm1[4],zero,ymm1[5],zero,ymm1[6],zero,ymm1[7],zero
 ; AVX512-NEXT:    vpmuludq %zmm1, %zmm0, %zmm0
 ; AVX512-NEXT:    vextracti64x4 $1, %zmm0, %ymm1
-; AVX512-NEXT:    vpshufd {{.*#+}} ymm1 = ymm1[0,1,1,3,4,5,5,7]
-; AVX512-NEXT:    vpshufd {{.*#+}} ymm0 = ymm0[1,3,2,3,5,7,6,7]
-; AVX512-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0,1],ymm1[2,3],ymm0[4,5],ymm1[6,7]
+; AVX512-NEXT:    vshufps {{.*#+}} ymm0 = ymm0[1,3],ymm1[1,3],ymm0[5,7],ymm1[5,7]
 ; AVX512-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,1,3]
 ; AVX512-NEXT:    retq
 entry:
