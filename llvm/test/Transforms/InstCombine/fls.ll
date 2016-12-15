@@ -43,6 +43,15 @@ define i32 @flsnotconst(i64 %z) {
   ret i32 %goo
 }
 
+; Make sure we lower fls(0) to 0 and not to `undef`.
+; CHECK-LABEL: define i32 @flszero(
+; CHECK: ret i32 0
+; CHECK: }
+define i32 @flszero() {
+  %zero = call i32 @fls(i32 0)
+  ret i32 %zero
+}
+
 declare i32 @fls(i32)
 declare i32 @flsl(i64)
 declare i32 @flsll(i64)
