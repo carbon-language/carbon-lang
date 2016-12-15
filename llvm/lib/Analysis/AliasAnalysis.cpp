@@ -470,9 +470,9 @@ ModRefInfo AAResults::callCapturesBefore(const Instruction *I,
     // escape.
     if (isNoAlias(MemoryLocation(*CI), MemoryLocation(Object)))
       continue;
-    if (ArgNo < CS.getNumArgOperands() && CS.doesNotAccessMemory(ArgNo))
+    if (CS.doesNotAccessMemory(ArgNo))
       continue;
-    if (ArgNo < CS.getNumArgOperands() && CS.onlyReadsMemory(ArgNo)) {
+    if (CS.onlyReadsMemory(ArgNo)) {
       R = MRI_Ref;
       continue;
     }
