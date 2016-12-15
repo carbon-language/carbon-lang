@@ -2015,6 +2015,11 @@ static const char *getX86TargetCPU(const ArgList &Args,
   if (Triple.isOSDarwin()) {
     if (Triple.getArchName() == "x86_64h")
       return "core-avx2";
+    // macosx10.12 drops support for all pre-Penryn Macs.
+    // Simulators can still run on 10.11 though, like Xcode.
+    if (Triple.isMacOSX() && !Triple.isOSVersionLT(10, 12))
+      return "penryn";
+    // The oldest x86_64 Macs have core2/Merom; the oldest x86 Macs have Yonah.
     return Is64Bit ? "core2" : "yonah";
   }
 
