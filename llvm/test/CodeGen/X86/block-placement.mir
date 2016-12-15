@@ -1,4 +1,4 @@
-# RUN: llc -O3 -run-pass=block-placement -o - %s | FileCheck %s
+# RUN: llc -mtriple=x86_64-apple-macosx10.12.0 -O3 -run-pass=block-placement -o - %s | FileCheck %s
 
 --- |
   ; ModuleID = 'test.ll'
