@@ -51,7 +51,9 @@
 #include <termios.h>
 #include <time.h>
 #include <wchar.h>
+#if !SANITIZER_MAC
 #include <utmp.h>
+#endif
 
 #if !SANITIZER_IOS
 #include <net/route.h>
@@ -286,7 +288,9 @@ namespace __sanitizer {
   int shmctl_shm_stat = (int)SHM_STAT;
 #endif
 
+#if !SANITIZER_MAC
   unsigned struct_utmp_sz = sizeof(struct utmp);
+#endif
 #if !SANITIZER_ANDROID
   unsigned struct_utmpx_sz = sizeof(struct utmpx);
 #endif
