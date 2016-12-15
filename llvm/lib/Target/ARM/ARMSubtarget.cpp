@@ -94,8 +94,8 @@ ARMSubtarget::ARMSubtarget(const Triple &TT, const std::string &CPU,
                            const std::string &FS,
                            const ARMBaseTargetMachine &TM, bool IsLittle)
     : ARMGenSubtargetInfo(TT, CPU, FS), UseMulOps(UseFusedMulOps),
-      CPUString(CPU), IsLittle(IsLittle), TargetTriple(TT), Options(TM.Options),
-      TM(TM), GenExecuteOnly(EnableExecuteOnly),
+      GenExecuteOnly(EnableExecuteOnly), CPUString(CPU), IsLittle(IsLittle),
+      TargetTriple(TT), Options(TM.Options), TM(TM),
       FrameLowering(initializeFrameLowering(CPU, FS)),
       // At this point initializeSubtargetDependencies has been called so
       // we can query directly.
