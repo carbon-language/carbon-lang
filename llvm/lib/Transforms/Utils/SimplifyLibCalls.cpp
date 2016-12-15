@@ -1521,21 +1521,11 @@ void LibCallSimplifier::replaceTrigInsts(SmallVectorImpl<CallInst *> &Calls,
 //===----------------------------------------------------------------------===//
 
 Value *LibCallSimplifier::optimizeFFS(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  Value *Op = CI->getArgOperand(0);
-
-  // Constant fold.
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(Op)) {
-    if (CI->isZero()) // ffs(0) -> 0.
-      return B.getInt32(0);
-    // ffs(c) -> cttz(c)+1
-    return B.getInt32(CI->getValue().countTrailingZeros() + 1);
-  }
-
   // ffs(x) -> x != 0 ? (i32)llvm.cttz(x)+1 : 0
+  Value *Op = CI->getArgOperand(0);
   Type *ArgType = Op->getType();
-  Value *F =
-      Intrinsic::getDeclaration(Callee->getParent(), Intrinsic::cttz, ArgType);
+  Value *F = Intrinsic::getDeclaration(CI->getCalledFunction()->getParent(),
+                                       Intrinsic::cttz, ArgType);
   Value *V = B.CreateCall(F, {Op, B.getTrue()}, "cttz");
   V = B.CreateAdd(V, ConstantInt::get(V->getType(), 1));
   V = B.CreateIntCast(V, B.getInt32Ty(), false);
