@@ -1534,6 +1534,18 @@ Value *LibCallSimplifier::optimizeFFS(CallInst *CI, IRBuilder<> &B) {
   return B.CreateSelect(Cond, V, B.getInt32(0));
 }
 
+Value *LibCallSimplifier::optimizeFls(CallInst *CI, IRBuilder<> &B) {
+  // fls(x) -> (i32)(sizeInBits(x) - llvm.ctlz(x, false))
+  Value *Op = CI->getArgOperand(0);
+  Type *ArgType = Op->getType();
+  Value *F = Intrinsic::getDeclaration(CI->getCalledFunction()->getParent(),
+                                       Intrinsic::ctlz, ArgType);
+  Value *V = B.CreateCall(F, {Op, B.getFalse()}, "ctlz");
+  V = B.CreateSub(ConstantInt::get(V->getType(), ArgType->getIntegerBitWidth()),
+                  V);
+  return B.CreateIntCast(V, CI->getType(), false);
+}
+
 Value *LibCallSimplifier::optimizeAbs(CallInst *CI, IRBuilder<> &B) {
   // abs(x) -> x >s -1 ? x : -x
   Value *Op = CI->getArgOperand(0);
@@ -2070,6 +2082,10 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     case LibFunc::ffsl:
     case LibFunc::ffsll:
       return optimizeFFS(CI, Builder);
+    case LibFunc::fls:
+    case LibFunc::flsl:
+    case LibFunc::flsll:
+      return optimizeFls(CI, Builder);
     case LibFunc::abs:
     case LibFunc::labs:
     case LibFunc::llabs:

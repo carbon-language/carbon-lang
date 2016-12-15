@@ -137,6 +137,7 @@ private:
 
   // Integer Library Call Optimizations
   Value *optimizeFFS(CallInst *CI, IRBuilder<> &B);
+  Value *optimizeFls(CallInst *CI, IRBuilder<> &B);
   Value *optimizeAbs(CallInst *CI, IRBuilder<> &B);
   Value *optimizeIsDigit(CallInst *CI, IRBuilder<> &B);
   Value *optimizeIsAscii(CallInst *CI, IRBuilder<> &B);
