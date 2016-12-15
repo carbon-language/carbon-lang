@@ -14076,16 +14076,20 @@ static SDValue partitionShuffleOfConcats(SDNode *N, SelectionDAG &DAG) {
 
 // Attempt to combine a shuffle of 2 inputs of 'scalar sources' -
 // BUILD_VECTOR or SCALAR_TO_VECTOR into a single BUILD_VECTOR.
-// This combine is done in the following cases:
-// 1. Both N0,N1 are BUILD_VECTOR's composed of constants or undefs.
-// 2. Only one of N0,N1 is a BUILD_VECTOR composed of constants or undefs -
-//    Combine iff that node is ALL_ZEROS. We prefer not to combine a
-//    BUILD_VECTOR of all constants to allow efficient materialization of
-//    constant vectors, but the ALL_ZEROS is an exception because
-//    zero-extension matching seems to rely on having BUILD_VECTOR nodes with
-//    zero padding between elements. FIXME: Eliminate this exception for
-//    ALL_ZEROS constant vectors.
-// 3. Neither N0,N1 are composed of only constants.
+//
+// SHUFFLE(BUILD_VECTOR(), BUILD_VECTOR()) -> BUILD_VECTOR() is always
+// a simplification in some sense, but it isn't appropriate in general: some
+// BUILD_VECTORs are substantially cheaper than others. The general case
+// of a BUILD_VECTOR requires inserting each element individually (or
+// performing the equivalent in a temporary stack variable). A BUILD_VECTOR of
+// all constants is a single constant pool load.  A BUILD_VECTOR where each
+// element is identical is a splat.  A BUILD_VECTOR where most of the operands
+// are undef lowers to a small number of element insertions.
+//
+// To deal with this, we currently use a bunch of mostly arbitrary heuristics.
+// We don't fold shuffles where one side is a non-zero constant, and we don't
+// fold shuffles if the resulting BUILD_VECTOR would have duplicate
+// non-constant operands. This seems to work out reasonably well in practice.
 static SDValue combineShuffleOfScalars(ShuffleVectorSDNode *SVN,
                                        SelectionDAG &DAG,
                                        const TargetLowering &TLI) {
@@ -14108,6 +14112,7 @@ static SDValue combineShuffleOfScalars(ShuffleVectorSDNode *SVN,
   }
 
   SmallVector<SDValue, 8> Ops;
+  SmallSet<SDValue, 16> DuplicateOps;
   for (int M : SVN->getMask()) {
     SDValue Op = DAG.getUNDEF(VT.getScalarType());
     if (M >= 0) {
@@ -14123,6 +14128,14 @@ static SDValue combineShuffleOfScalars(ShuffleVectorSDNode *SVN,
         return SDValue();
       }
     }
+
+    // Don't duplicate a non-constant BUILD_VECTOR operand; semantically, this is
+    // fine, but it's likely to generate low-quality code if the target can't
+    // reconstruct an appropriate shuffle.
+    if (!Op.isUndef() && !isa<ConstantSDNode>(Op) && !isa<ConstantFPSDNode>(Op))
+      if (!DuplicateOps.insert(Op).second)
+        return SDValue();
+
     Ops.push_back(Op);
   }
   // BUILD_VECTOR requires all inputs to be of the same type, find the
