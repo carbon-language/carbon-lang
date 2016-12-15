@@ -54,6 +54,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Value.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -1572,12 +1573,19 @@ static bool sinkLastInstruction(ArrayRef<BasicBlock*> Blocks) {
     I0->getOperandUse(O).set(NewOperands[O]);
   I0->moveBefore(&*BBEnd->getFirstInsertionPt());
 
-  // Update metadata and IR flags.
+  // The debug location for the "common" instruction is the merged locations of
+  // all the commoned instructions.  We start with the original location of the
+  // "common" instruction and iteratively merge each location in the loop below.
+  DILocation *Loc = I0->getDebugLoc();
+
+  // Update metadata and IR flags, and merge debug locations.
   for (auto *I : Insts)
     if (I != I0) {
+      Loc = DILocation::getMergedLocation(Loc, I->getDebugLoc());
       combineMetadataForCSE(I0, I);
       I0->andIRFlags(I);
     }
+  I0->setDebugLoc(Loc);
 
   if (!isa<StoreInst>(I0)) {
     // canSinkLastInstruction checked that all instructions were used by
