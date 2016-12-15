@@ -838,22 +838,21 @@ namespace llvm {
 
   /// A wrapper around a string literal that serves as a proxy for constructing
   /// global tables of StringRefs with the length computed at compile time.
-  /// Using this class with a non-literal char array is considered undefined
-  /// behavior.  To prevent this, it is recommended that StringLiteral *only*
-  /// be used in a constexpr context, as such:
+  /// In order to avoid the invocation of a global constructor, StringLiteral
+  /// should *only* be used in a constexpr context, as such:
   ///
   /// constexpr StringLiteral S("test");
-  ///
-  /// Note: There is a subtle behavioral difference in the constructor of
-  /// StringRef and StringLiteral, as illustrated below:
-  ///
-  /// constexpr StringLiteral S("a\0b");  // S.size() == 3
-  /// StringRef S("a\0b");  // S.size() == 1
   ///
   class StringLiteral : public StringRef {
   public:
     template <size_t N>
-    constexpr StringLiteral(const char (&Str)[N]) : StringRef(Str, N - 1) {}
+    constexpr StringLiteral(const char (&Str)[N])
+#if __has_attribute(enable_if)
+        __attribute((enable_if(__builtin_strlen(Str) == N - 1,
+                               "invalid string literal")))
+#endif
+        : StringRef(Str, N - 1) {
+    }
   };
 
   /// @name StringRef Comparison Operators
@@ -865,9 +864,7 @@ namespace llvm {
   }
 
   LLVM_ATTRIBUTE_ALWAYS_INLINE
-  inline bool operator!=(StringRef LHS, StringRef RHS) {
-    return !(LHS == RHS);
-  }
+  inline bool operator!=(StringRef LHS, StringRef RHS) { return !(LHS == RHS); }
 
   inline bool operator<(StringRef LHS, StringRef RHS) {
     return LHS.compare(RHS) == -1;
