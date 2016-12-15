@@ -460,7 +460,8 @@ ModRefInfo AAResults::callCapturesBefore(const Instruction *I,
     // pointer were passed to arguments that were neither of these, then it
     // couldn't be no-capture.
     if (!(*CI)->getType()->isPointerTy() ||
-        (!CS.doesNotCapture(ArgNo) && !CS.isByValArgument(ArgNo)))
+        (!CS.doesNotCapture(ArgNo) &&
+         ArgNo < CS.getNumArgOperands() && !CS.isByValArgument(ArgNo)))
       continue;
 
     // If this is a no-capture pointer argument, see if we can tell that it
@@ -469,9 +470,9 @@ ModRefInfo AAResults::callCapturesBefore(const Instruction *I,
     // escape.
     if (isNoAlias(MemoryLocation(*CI), MemoryLocation(Object)))
       continue;
-    if (CS.doesNotAccessMemory(ArgNo))
+    if (ArgNo < CS.getNumArgOperands() && CS.doesNotAccessMemory(ArgNo))
       continue;
-    if (CS.onlyReadsMemory(ArgNo)) {
+    if (ArgNo < CS.getNumArgOperands() && CS.onlyReadsMemory(ArgNo)) {
       R = MRI_Ref;
       continue;
     }
