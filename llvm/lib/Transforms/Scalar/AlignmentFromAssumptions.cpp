@@ -425,9 +425,12 @@ bool AlignmentFromAssumptionsPass::runImpl(Function &F, AssumptionCache &AC,
   NewSrcAlignments.clear();
 
   bool Changed = false;
-  for (auto &AssumeVH : AC.assumptions())
-    if (AssumeVH)
-      Changed |= processAssumption(cast<CallInst>(AssumeVH));
+
+  for (auto &B : F)
+    for (auto &I : B)
+      if (auto *II = dyn_cast<IntrinsicInst>(&I))
+        if (II->getIntrinsicID() == Intrinsic::assume)
+          Changed |= processAssumption(II);
 
   return Changed;
 }

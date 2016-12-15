@@ -2518,6 +2518,78 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (KnownOne.isAllOnesValue())
       return eraseInstFromFunction(*II);
 
+    // For assumptions, add to the associated operand bundle the values to which
+    // the assumption might apply.
+    // Note: This code must be kept in-sync with the code in
+    // computeKnownBitsFromAssume in ValueTracking.
+    SmallVector<Value *, 16> Affected;
+    auto AddAffected = [&Affected](Value *V) {
+      if (isa<Argument>(V)) {
+        Affected.push_back(V);
+      } else if (auto *I = dyn_cast<Instruction>(V)) {
+        Affected.push_back(I);
+
+        if (I->getOpcode() == Instruction::BitCast ||
+            I->getOpcode() == Instruction::PtrToInt) {
+          V = I->getOperand(0);
+          if (isa<Instruction>(V) || isa<Argument>(V))
+            Affected.push_back(V);
+        }
+      }
+    };
+
+    CmpInst::Predicate Pred;
+    if (match(IIOperand, m_ICmp(Pred, m_Value(A), m_Value(B)))) {
+      AddAffected(A);
+      AddAffected(B);
+
+      if (Pred == ICmpInst::ICMP_EQ) {
+        // For equality comparisons, we handle the case of bit inversion.
+        auto AddAffectedFromEq = [&AddAffected](Value *V) {
+          Value *A;
+          if (match(V, m_Not(m_Value(A)))) {
+            AddAffected(A);
+            V = A;
+          }
+
+          Value *B;
+          ConstantInt *C;
+          if (match(V,
+                    m_CombineOr(m_And(m_Value(A), m_Value(B)),
+                      m_CombineOr(m_Or(m_Value(A), m_Value(B)),
+                                  m_Xor(m_Value(A), m_Value(B)))))) {
+            AddAffected(A);
+            AddAffected(B);
+          } else if (match(V,
+                           m_CombineOr(m_Shl(m_Value(A), m_ConstantInt(C)),
+                             m_CombineOr(m_LShr(m_Value(A), m_ConstantInt(C)),
+                                         m_AShr(m_Value(A),
+                                                m_ConstantInt(C)))))) {
+            AddAffected(A);
+          }
+        };
+
+        AddAffectedFromEq(A);
+        AddAffectedFromEq(B);
+      }
+    }
+
+    // If the list of affected values is the same as the existing list then
+    // there's nothing more to do here.
+    if (!Affected.empty())
+      if (auto OB = CI.getOperandBundle("affected"))
+        if (Affected.size() == OB.getValue().Inputs.size() &&
+            std::equal(Affected.begin(), Affected.end(),
+                       OB.getValue().Inputs.begin()))
+          Affected.clear();
+
+    if (!Affected.empty()) {
+      Builder->CreateCall(AssumeIntrinsic, IIOperand,
+                          OperandBundleDef("affected", Affected),
+                          II->getName());
+      return eraseInstFromFunction(*II);
+    }
+
     break;
   }
   case Intrinsic::experimental_gc_relocate: {

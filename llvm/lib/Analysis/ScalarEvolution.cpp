@@ -1212,6 +1212,7 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
   SCEV *S = new (SCEVAllocator) SCEVTruncateExpr(ID.Intern(SCEVAllocator),
                                                  Op, Ty);
   UniqueSCEVs.InsertNode(S, IP);
+  addAffectedFromOperands(S);
   return S;
 }
 
@@ -1598,7 +1599,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
       // these to prove lack of overflow.  Use this fact to avoid
       // doing extra work that may not pay off.
       if (!isa<SCEVCouldNotCompute>(MaxBECount) || HasGuards ||
-          !AC.assumptions().empty()) {
+          !AffectedMap.empty()) {
         // If the backedge is guarded by a comparison with the pre-inc
         // value the addrec is safe. Also, if the entry is guarded by
         // a comparison with the start value and the backedge is
@@ -1664,6 +1665,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
   SCEV *S = new (SCEVAllocator) SCEVZeroExtendExpr(ID.Intern(SCEVAllocator),
                                                    Op, Ty);
   UniqueSCEVs.InsertNode(S, IP);
+  addAffectedFromOperands(S);
   return S;
 }
 
@@ -1833,7 +1835,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
       // doing extra work that may not pay off.
 
       if (!isa<SCEVCouldNotCompute>(MaxBECount) || HasGuards ||
-          !AC.assumptions().empty()) {
+          !AffectedMap.empty()) {
         // If the backedge is guarded by a comparison with the pre-inc
         // value the addrec is safe. Also, if the entry is guarded by
         // a comparison with the start value and the backedge is
@@ -1891,6 +1893,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   SCEV *S = new (SCEVAllocator) SCEVSignExtendExpr(ID.Intern(SCEVAllocator),
                                                    Op, Ty);
   UniqueSCEVs.InsertNode(S, IP);
+  addAffectedFromOperands(S);
   return S;
 }
 
@@ -2444,6 +2447,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
     S = new (SCEVAllocator) SCEVAddExpr(ID.Intern(SCEVAllocator),
                                         O, Ops.size());
     UniqueSCEVs.InsertNode(S, IP);
+    addAffectedFromOperands(S);
   }
   S->setNoWrapFlags(Flags);
   return S;
@@ -2736,6 +2740,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
     S = new (SCEVAllocator) SCEVMulExpr(ID.Intern(SCEVAllocator),
                                         O, Ops.size());
     UniqueSCEVs.InsertNode(S, IP);
+    addAffectedFromOperands(S);
   }
   S->setNoWrapFlags(Flags);
   return S;
@@ -2856,6 +2861,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
   SCEV *S = new (SCEVAllocator) SCEVUDivExpr(ID.Intern(SCEVAllocator),
                                              LHS, RHS);
   UniqueSCEVs.InsertNode(S, IP);
+  addAffectedFromOperands(S);
   return S;
 }
 
@@ -3036,6 +3042,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
     S = new (SCEVAllocator) SCEVAddRecExpr(ID.Intern(SCEVAllocator),
                                            O, Operands.size(), L);
     UniqueSCEVs.InsertNode(S, IP);
+    addAffectedFromOperands(S);
   }
   S->setNoWrapFlags(Flags);
   return S;
@@ -3191,6 +3198,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   SCEV *S = new (SCEVAllocator) SCEVSMaxExpr(ID.Intern(SCEVAllocator),
                                              O, Ops.size());
   UniqueSCEVs.InsertNode(S, IP);
+  addAffectedFromOperands(S);
   return S;
 }
 
@@ -3292,6 +3300,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   SCEV *S = new (SCEVAllocator) SCEVUMaxExpr(ID.Intern(SCEVAllocator),
                                              O, Ops.size());
   UniqueSCEVs.InsertNode(S, IP);
+  addAffectedFromOperands(S);
   return S;
 }
 
@@ -3492,7 +3501,36 @@ const SCEV *ScalarEvolution::getSCEV(Value *V) {
         ExprValueMap[Stripped].insert({V, Offset});
     }
   }
+
+  // If this value is an instruction or an argument, and might be affected by
+  // an assumption, and its SCEV to the AffectedMap.
+  if (isa<Instruction>(V) || isa<Argument>(V)) {
+    for (auto *U : V->users()) {
+      auto *II = dyn_cast<IntrinsicInst>(U);
+      if (!II)
+        continue;
+      if (II->getIntrinsicID() != Intrinsic::assume)
+        continue;
+
+      AffectedMap[S].insert(II);
+    }
+  }
+
   return S;
+}
+
+// If one of this SCEV's operands is in the AffectedMap (meaning that it might
+// be affected by an assumption), then this SCEV might be affected by the same
+// assumption.
+void ScalarEvolution::addAffectedFromOperands(const SCEV *S) {
+  if (auto *NS = dyn_cast<SCEVNAryExpr>(S))
+    for (auto *Op : NS->operands()) {
+      auto AMI = AffectedMap.find(Op);
+      if (AMI == AffectedMap.end())
+        continue;
+
+      AffectedMap[S].insert(AMI->second.begin(), AMI->second.end());
+    }
 }
 
 const SCEV *ScalarEvolution::getExistingSCEV(Value *V) {
@@ -7926,16 +7964,23 @@ ScalarEvolution::isLoopBackedgeGuardedByCond(const Loop *L,
   }
 
   // Check conditions due to any @llvm.assume intrinsics.
-  for (auto &AssumeVH : AC.assumptions()) {
-    if (!AssumeVH)
-      continue;
-    auto *CI = cast<CallInst>(AssumeVH);
-    if (!DT.dominates(CI, Latch->getTerminator()))
-      continue;
+  auto CheckAssumptions = [&](const SCEV *S) {
+    auto AMI = AffectedMap.find(S);
+    if (AMI != AffectedMap.end())
+      for (auto *Assume : AMI->second) {
+        auto *CI = cast<CallInst>(Assume);
+        if (!DT.dominates(CI, Latch->getTerminator()))
+          continue;
 
-    if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
-      return true;
-  }
+        if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
+          return true;
+      }
+
+    return false;
+  };
+
+  if (CheckAssumptions(LHS) || CheckAssumptions(RHS))
+    return true;
 
   // If the loop is not reachable from the entry block, we risk running into an
   // infinite loop as we walk up into the dom tree.  These loops do not matter
@@ -8020,16 +8065,23 @@ ScalarEvolution::isLoopEntryGuardedByCond(const Loop *L,
   }
 
   // Check conditions due to any @llvm.assume intrinsics.
-  for (auto &AssumeVH : AC.assumptions()) {
-    if (!AssumeVH)
-      continue;
-    auto *CI = cast<CallInst>(AssumeVH);
-    if (!DT.dominates(CI, L->getHeader()))
-      continue;
+  auto CheckAssumptions = [&](const SCEV *S) {
+    auto AMI = AffectedMap.find(S);
+    if (AMI != AffectedMap.end())
+      for (auto *Assume : AMI->second) {
+        auto *CI = cast<CallInst>(Assume);
+        if (!DT.dominates(CI, L->getHeader()))
+          continue;
 
-    if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
-      return true;
-  }
+        if (isImpliedCond(Pred, LHS, RHS, CI->getArgOperand(0), false))
+          return true;
+      }
+
+    return false;
+  };
+
+  if (CheckAssumptions(LHS) || CheckAssumptions(RHS))
+    return true;
 
   return false;
 }

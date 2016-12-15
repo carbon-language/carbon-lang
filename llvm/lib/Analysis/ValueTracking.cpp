@@ -526,30 +526,27 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
 
   unsigned BitWidth = KnownZero.getBitWidth();
 
-  for (auto &AssumeVH : Q.AC->assumptions()) {
-    if (!AssumeVH)
+  for (auto *U : V->users()) {
+    auto *II = dyn_cast<IntrinsicInst>(U);
+    if (!II)
       continue;
-    CallInst *I = cast<CallInst>(AssumeVH);
-    assert(I->getParent()->getParent() == Q.CxtI->getParent()->getParent() &&
-           "Got assumption for the wrong function!");
-    if (Q.isExcluded(I))
+    if (II->getIntrinsicID() != Intrinsic::assume)
+      continue;
+    if (Q.isExcluded(II))
       continue;
 
-    // Warning: This loop can end up being somewhat performance sensetive.
-    // We're running this loop for once for each value queried resulting in a
-    // runtime of ~O(#assumes * #values).
+    Value *Arg = II->getArgOperand(0);
 
-    assert(I->getCalledFunction()->getIntrinsicID() == Intrinsic::assume &&
-           "must be an assume intrinsic");
-
-    Value *Arg = I->getArgOperand(0);
-
-    if (Arg == V && isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+    if (Arg == V && isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       assert(BitWidth == 1 && "assume operand is not i1?");
       KnownZero.clearAllBits();
       KnownOne.setAllBits();
       return;
     }
+
+    // Note that the patterns below need to be kept in sync with the code
+    // in InstCombiner::visitCallInst that adds relevant values to each
+    // assume's operand bundles.
 
     // The remaining tests are all recursive, so bail out if we hit the limit.
     if (Depth == MaxDepth)
@@ -564,20 +561,20 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     ConstantInt *C;
     // assume(v = a)
     if (match(Arg, m_c_ICmp(Pred, m_V, m_Value(A))) &&
-        Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+        Pred == ICmpInst::ICMP_EQ && isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       KnownZero |= RHSKnownZero;
       KnownOne  |= RHSKnownOne;
     // assume(v & b = a)
     } else if (match(Arg,
                      m_c_ICmp(Pred, m_c_And(m_V, m_Value(B)), m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       APInt MaskKnownZero(BitWidth, 0), MaskKnownOne(BitWidth, 0);
-      computeKnownBits(B, MaskKnownZero, MaskKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(B, MaskKnownZero, MaskKnownOne, Depth+1, Query(Q, II));
 
       // For those bits in the mask that are known to be one, we can propagate
       // known bits from the RHS to V.
@@ -587,11 +584,11 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_c_And(m_V, m_Value(B))),
                                    m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       APInt MaskKnownZero(BitWidth, 0), MaskKnownOne(BitWidth, 0);
-      computeKnownBits(B, MaskKnownZero, MaskKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(B, MaskKnownZero, MaskKnownOne, Depth+1, Query(Q, II));
 
       // For those bits in the mask that are known to be one, we can propagate
       // inverted known bits from the RHS to V.
@@ -601,11 +598,11 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     } else if (match(Arg,
                      m_c_ICmp(Pred, m_c_Or(m_V, m_Value(B)), m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       APInt BKnownZero(BitWidth, 0), BKnownOne(BitWidth, 0);
-      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, II));
 
       // For those bits in B that are known to be zero, we can propagate known
       // bits from the RHS to V.
@@ -615,11 +612,11 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_c_Or(m_V, m_Value(B))),
                                    m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       APInt BKnownZero(BitWidth, 0), BKnownOne(BitWidth, 0);
-      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, II));
 
       // For those bits in B that are known to be zero, we can propagate
       // inverted known bits from the RHS to V.
@@ -629,11 +626,11 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     } else if (match(Arg,
                      m_c_ICmp(Pred, m_c_Xor(m_V, m_Value(B)), m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       APInt BKnownZero(BitWidth, 0), BKnownOne(BitWidth, 0);
-      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, II));
 
       // For those bits in B that are known to be zero, we can propagate known
       // bits from the RHS to V. For those bits in B that are known to be one,
@@ -646,11 +643,11 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_c_Xor(m_V, m_Value(B))),
                                    m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       APInt BKnownZero(BitWidth, 0), BKnownOne(BitWidth, 0);
-      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(B, BKnownZero, BKnownOne, Depth+1, Query(Q, II));
 
       // For those bits in B that are known to be zero, we can propagate
       // inverted known bits from the RHS to V. For those bits in B that are
@@ -663,9 +660,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     } else if (match(Arg, m_c_ICmp(Pred, m_Shl(m_V, m_ConstantInt(C)),
                                    m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       // For those bits in RHS that are known, we can propagate them to known
       // bits in V shifted to the right by C.
       KnownZero |= RHSKnownZero.lshr(C->getZExtValue());
@@ -674,9 +671,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     } else if (match(Arg, m_c_ICmp(Pred, m_Not(m_Shl(m_V, m_ConstantInt(C))),
                                    m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       // For those bits in RHS that are known, we can propagate them inverted
       // to known bits in V shifted to the right by C.
       KnownZero |= RHSKnownOne.lshr(C->getZExtValue());
@@ -687,9 +684,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
                                                 m_AShr(m_V, m_ConstantInt(C))),
                               m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       // For those bits in RHS that are known, we can propagate them to known
       // bits in V shifted to the right by C.
       KnownZero |= RHSKnownZero << C->getZExtValue();
@@ -700,9 +697,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
                                              m_AShr(m_V, m_ConstantInt(C)))),
                                    m_Value(A))) &&
                Pred == ICmpInst::ICMP_EQ &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
       // For those bits in RHS that are known, we can propagate them inverted
       // to known bits in V shifted to the right by C.
       KnownZero |= RHSKnownOne  << C->getZExtValue();
@@ -710,9 +707,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     // assume(v >=_s c) where c is non-negative
     } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SGE &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
 
       if (RHSKnownZero.isNegative()) {
         // We know that the sign bit is zero.
@@ -721,9 +718,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     // assume(v >_s c) where c is at least -1.
     } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SGT &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
 
       if (RHSKnownOne.isAllOnesValue() || RHSKnownZero.isNegative()) {
         // We know that the sign bit is zero.
@@ -732,9 +729,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     // assume(v <=_s c) where c is negative
     } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SLE &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
 
       if (RHSKnownOne.isNegative()) {
         // We know that the sign bit is one.
@@ -743,9 +740,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     // assume(v <_s c) where c is non-positive
     } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_SLT &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
 
       if (RHSKnownZero.isAllOnesValue() || RHSKnownOne.isNegative()) {
         // We know that the sign bit is one.
@@ -754,9 +751,9 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     // assume(v <=_u c)
     } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_ULE &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
 
       // Whatever high bits in c are zero are known to be zero.
       KnownZero |=
@@ -764,13 +761,13 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
     // assume(v <_u c)
     } else if (match(Arg, m_ICmp(Pred, m_V, m_Value(A))) &&
                Pred == ICmpInst::ICMP_ULT &&
-               isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+               isValidAssumeForContext(II, Q.CxtI, Q.DT)) {
       APInt RHSKnownZero(BitWidth, 0), RHSKnownOne(BitWidth, 0);
-      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, I));
+      computeKnownBits(A, RHSKnownZero, RHSKnownOne, Depth+1, Query(Q, II));
 
       // Whatever high bits in c are zero are known to be zero (if c is a power
       // of 2, then one more).
-      if (isKnownToBeAPowerOfTwo(A, false, Depth + 1, Query(Q, I)))
+      if (isKnownToBeAPowerOfTwo(A, false, Depth + 1, Query(Q, II)))
         KnownZero |=
           APInt::getHighBitsSet(BitWidth, RHSKnownZero.countLeadingOnes()+1);
       else

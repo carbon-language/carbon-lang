@@ -924,14 +924,16 @@ void LazyValueInfoImpl::intersectAssumeOrGuardBlockValueConstantRange(
   if (!BBI)
     return;
 
-  for (auto &AssumeVH : AC->assumptions()) {
-    if (!AssumeVH)
+  for (auto *U : Val->users()) {
+    auto *II = dyn_cast<IntrinsicInst>(U);
+    if (!II)
       continue;
-    auto *I = cast<CallInst>(AssumeVH);
-    if (!isValidAssumeForContext(I, BBI, DT))
+    if (II->getIntrinsicID() != Intrinsic::assume)
+      continue;
+    if (!isValidAssumeForContext(II, BBI, DT))
       continue;
 
-    BBLV = intersect(BBLV, getValueFromCondition(Val, I->getArgOperand(0)));
+    BBLV = intersect(BBLV, getValueFromCondition(Val, II->getArgOperand(0)));
   }
 
   // If guards are not used in the module, don't spend time looking for them
