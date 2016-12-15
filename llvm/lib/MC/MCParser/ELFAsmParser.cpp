@@ -264,6 +264,10 @@ bool ELFAsmParser::ParseSectionName(StringRef &SectionName) {
 static unsigned parseSectionFlags(StringRef flagsStr, bool *UseLastGroup) {
   unsigned flags = 0;
 
+  // If a valid numerical value is set for the section flag, use it verbatim
+  if (!flagsStr.getAsInteger(0, flags))
+    return flags;
+
   for (char i : flagsStr) {
     switch (i) {
     case 'a':
