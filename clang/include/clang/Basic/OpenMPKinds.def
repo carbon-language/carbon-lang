@@ -451,7 +451,6 @@ OPENMP_TARGET_EXIT_DATA_CLAUSE(nowait)
 OPENMP_TARGET_EXIT_DATA_CLAUSE(depend)
 
 // Clauses allowed for OpenMP directive 'target parallel'.
-// TODO: add target clauses 'is_device_ptr'
 OPENMP_TARGET_PARALLEL_CLAUSE(if)
 OPENMP_TARGET_PARALLEL_CLAUSE(device)
 OPENMP_TARGET_PARALLEL_CLAUSE(map)
@@ -465,6 +464,7 @@ OPENMP_TARGET_PARALLEL_CLAUSE(default)
 OPENMP_TARGET_PARALLEL_CLAUSE(proc_bind)
 OPENMP_TARGET_PARALLEL_CLAUSE(shared)
 OPENMP_TARGET_PARALLEL_CLAUSE(reduction)
+OPENMP_TARGET_PARALLEL_CLAUSE(is_device_ptr)
 
 // Clauses allowed for OpenMP directive 'target parallel for'.
 // TODO: add target clauses 'is_device_ptr'
