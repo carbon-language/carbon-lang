@@ -143,6 +143,45 @@ static inline CXTranslationUnit GetTU(CXType CT) {
   return static_cast<CXTranslationUnit>(CT.data[1]);
 }
 
+static Optional<ArrayRef<TemplateArgument>>
+GetTemplateArguments(QualType Type) {
+  assert(!Type.isNull());
+  if (const auto *Specialization = Type->getAs<TemplateSpecializationType>())
+    return Specialization->template_arguments();
+
+  if (const auto *RecordDecl = Type->getAsCXXRecordDecl()) {
+    const auto *TemplateDecl =
+      dyn_cast<ClassTemplateSpecializationDecl>(RecordDecl);
+    if (TemplateDecl)
+      return TemplateDecl->getTemplateArgs().asArray();
+  }
+
+  return None;
+}
+
+static Optional<QualType> TemplateArgumentToQualType(const TemplateArgument &A) {
+  if (A.getKind() == TemplateArgument::Type)
+    return A.getAsType();
+  return None;
+}
+
+static Optional<QualType>
+FindTemplateArgumentTypeAt(ArrayRef<TemplateArgument> TA, unsigned index) {
+  unsigned current = 0;
+  for (const auto &A : TA) {
+    if (A.getKind() == TemplateArgument::Pack) {
+      if (index < current + A.pack_size())
+        return TemplateArgumentToQualType(A.getPackAsArray()[index - current]);
+      current += A.pack_size();
+      continue;
+    }
+    if (current == index)
+      return TemplateArgumentToQualType(A);
+    current++;
+  }
+  return None;
+}
+
 extern "C" {
 
 CXType clang_getCursorType(CXCursor C) {
@@ -920,22 +959,6 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   return cxstring::createDup(encoding);
 }
 
-static Optional<ArrayRef<TemplateArgument>>
-GetTemplateArguments(QualType Type) {
-  assert(!Type.isNull());
-  if (const auto *Specialization = Type->getAs<TemplateSpecializationType>())
-    return Specialization->template_arguments();
-
-  if (const auto *RecordDecl = Type->getAsCXXRecordDecl()) {
-    const auto *TemplateDecl =
-      dyn_cast<ClassTemplateSpecializationDecl>(RecordDecl);
-    if (TemplateDecl)
-      return TemplateDecl->getTemplateArgs().asArray();
-  }
-
-  return None;
-}
-
 static unsigned GetTemplateArgumentArraySize(ArrayRef<TemplateArgument> TA) {
   unsigned size = TA.size();
   for (const auto &Arg : TA)
@@ -954,29 +977,6 @@ int clang_Type_getNumTemplateArguments(CXType CT) {
     return -1;
 
   return GetTemplateArgumentArraySize(TA.getValue());
-}
-
-static Optional<QualType> TemplateArgumentToQualType(const TemplateArgument &A) {
-  if (A.getKind() == TemplateArgument::Type)
-    return A.getAsType();
-  return None;
-}
-
-static Optional<QualType>
-FindTemplateArgumentTypeAt(ArrayRef<TemplateArgument> TA, unsigned index) {
-  unsigned current = 0;
-  for (const auto &A : TA) {
-    if (A.getKind() == TemplateArgument::Pack) {
-      if (index < current + A.pack_size())
-        return TemplateArgumentToQualType(A.getPackAsArray()[index - current]);
-      current += A.pack_size();
-      continue;
-    }
-    if (current == index)
-      return TemplateArgumentToQualType(A);
-    current++;
-  }
-  return None;
 }
 
 CXType clang_Type_getTemplateArgumentAsType(CXType CT, unsigned index) {
