@@ -15490,10 +15490,6 @@ int printf(__constant const char* st, ...);
 #define CLK_FILTER_NEAREST              0x10
 #define CLK_FILTER_LINEAR               0x20
 
-#ifdef cl_khr_gl_msaa_sharing
-#pragma OPENCL EXTENSION cl_khr_gl_msaa_sharing : enable
-#endif //cl_khr_gl_msaa_sharing
-
 /**
  * Use the coordinate (coord.xy) to do an element lookup in
  * the 2D image object specified by image.

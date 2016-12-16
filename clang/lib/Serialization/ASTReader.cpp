@@ -3164,38 +3164,8 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       break;
 
     case OPENCL_EXTENSIONS:
-      for (unsigned I = 0, E = Record.size(); I != E; ) {
-        auto Name = ReadString(Record, I);
-        OpenCLExtensions.OptMap[Name] = {
-            static_cast<bool>(Record[I++]) /* Supported */,
-            static_cast<bool>(Record[I++]) /* Enabled */,
-            static_cast<unsigned>(Record[I++]) /* Avail */,
-            static_cast<unsigned>(Record[I++]) /* Core */};
-      }
-      break;
-
-    case OPENCL_EXTENSION_TYPES:
-      for (unsigned I = 0, E = Record.size(); I != E;) {
-        auto TypeID = static_cast<::TypeID>(Record[I++]);
-        auto *Type = GetType(TypeID).getTypePtr();
-        auto NumExt = static_cast<unsigned>(Record[I++]);
-        for (unsigned II = 0; II != NumExt; ++II) {
-          auto Ext = ReadString(Record, I);
-          OpenCLTypeExtMap[Type].insert(Ext);
-        }
-      }
-      break;
-
-    case OPENCL_EXTENSION_DECLS:
-      for (unsigned I = 0, E = Record.size(); I != E;) {
-        auto DeclID = static_cast<::DeclID>(Record[I++]);
-        auto *Decl = GetDecl(DeclID);
-        auto NumExt = static_cast<unsigned>(Record[I++]);
-        for (unsigned II = 0; II != NumExt; ++II) {
-          auto Ext = ReadString(Record, I);
-          OpenCLDeclExtMap[Decl].insert(Ext);
-        }
-      }
+      // Later tables overwrite earlier ones.
+      OpenCLExtensions.swap(Record);
       break;
 
     case TENTATIVE_DEFINITIONS:
@@ -7121,9 +7091,14 @@ void ASTReader::InitializeSema(Sema &S) {
     SemaObj->FPFeatures.fp_contract = FPPragmaOptions[0];
   }
 
-  SemaObj->OpenCLFeatures.copy(OpenCLExtensions);
-  SemaObj->OpenCLTypeExtMap = OpenCLTypeExtMap;
-  SemaObj->OpenCLDeclExtMap = OpenCLDeclExtMap;
+  // FIXME: What happens if these are changed by a module import?
+  if (!OpenCLExtensions.empty()) {
+    unsigned I = 0;
+#define OPENCLEXT(nm)  SemaObj->OpenCLFeatures.nm = OpenCLExtensions[I++];
+#include "clang/Basic/OpenCLExtensions.def"
+
+    assert(OpenCLExtensions.size() == I && "Wrong number of OPENCL_EXTENSIONS");
+  }
 
   UpdateSema();
 }

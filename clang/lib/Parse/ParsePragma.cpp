@@ -486,48 +486,42 @@ StmtResult Parser::HandlePragmaCaptured()
 }
 
 namespace {
-  enum OpenCLExtState : char {
-    Disable, Enable, Begin, End
-  };
-  typedef std::pair<const IdentifierInfo *, OpenCLExtState> OpenCLExtData;
+  typedef llvm::PointerIntPair<IdentifierInfo *, 1, bool> OpenCLExtData;
 }
 
 void Parser::HandlePragmaOpenCLExtension() {
   assert(Tok.is(tok::annot_pragma_opencl_extension));
-  OpenCLExtData *Data = static_cast<OpenCLExtData*>(Tok.getAnnotationValue());
-  auto State = Data->second;
-  auto Ident = Data->first;
+  OpenCLExtData data =
+      OpenCLExtData::getFromOpaqueValue(Tok.getAnnotationValue());
+  unsigned state = data.getInt();
+  IdentifierInfo *ename = data.getPointer();
   SourceLocation NameLoc = Tok.getLocation();
   ConsumeToken(); // The annotation token.
 
-  auto &Opt = Actions.getOpenCLOptions();
-  auto Name = Ident->getName();
+  OpenCLOptions &f = Actions.getOpenCLOptions();
+  auto CLVer = getLangOpts().OpenCLVersion;
+  auto &Supp = getTargetInfo().getSupportedOpenCLOpts();
   // OpenCL 1.1 9.1: "The all variant sets the behavior for all extensions,
   // overriding all previously issued extension directives, but only if the
   // behavior is set to disable."
-  if (Name == "all") {
-    if (State == Disable)
-      Opt.disableAll();
-    else
-      PP.Diag(NameLoc, diag::warn_pragma_expected_predicate) << 1;
-  } else if (State == Begin) {
-    if (!Opt.isKnown(Name) ||
-        !Opt.isSupported(Name, getLangOpts().OpenCLVersion)) {
-      Opt.support(Name);
-    }
-    Actions.setCurrentOpenCLExtension(Name);
-  } else if (State == End) {
-    if (Name != Actions.getCurrentOpenCLExtension())
-      PP.Diag(NameLoc, diag::warn_pragma_begin_end_mismatch);
-    Actions.setCurrentOpenCLExtension("");
-  } else if (!Opt.isKnown(Name))
-    PP.Diag(NameLoc, diag::warn_pragma_unknown_extension) << Ident;
-  else if (Opt.isSupportedExtension(Name, getLangOpts().OpenCLVersion))
-    Opt.enable(Name, State == Enable);
-  else if (Opt.isSupportedCore(Name, getLangOpts().OpenCLVersion))
-    PP.Diag(NameLoc, diag::warn_pragma_extension_is_core) << Ident;
-  else
-    PP.Diag(NameLoc, diag::warn_pragma_unsupported_extension) << Ident;
+  if (state == 0 && ename->isStr("all")) {
+#define OPENCLEXT(nm) \
+    if (Supp.is_##nm##_supported_extension(CLVer)) \
+      f.nm = 0;
+#include "clang/Basic/OpenCLExtensions.def"
+  }
+#define OPENCLEXT(nm) else if (ename->isStr(#nm)) \
+   if (Supp.is_##nm##_supported_extension(CLVer)) \
+     f.nm = state; \
+   else if (Supp.is_##nm##_supported_core(CLVer)) \
+     PP.Diag(NameLoc, diag::warn_pragma_extension_is_core) << ename; \
+   else \
+     PP.Diag(NameLoc, diag::warn_pragma_unsupported_extension) << ename;
+#include "clang/Basic/OpenCLExtensions.def"
+  else {
+    PP.Diag(NameLoc, diag::warn_pragma_unknown_extension) << ename;
+    return;
+  }
 }
 
 void Parser::HandlePragmaMSPointersToMembers() {
@@ -1447,34 +1441,29 @@ PragmaOpenCLExtensionHandler::HandlePragma(Preprocessor &PP,
       "OPENCL";
     return;
   }
-  IdentifierInfo *Ext = Tok.getIdentifierInfo();
+  IdentifierInfo *ename = Tok.getIdentifierInfo();
   SourceLocation NameLoc = Tok.getLocation();
 
   PP.Lex(Tok);
   if (Tok.isNot(tok::colon)) {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_colon) << Ext;
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_colon) << ename;
     return;
   }
 
   PP.Lex(Tok);
   if (Tok.isNot(tok::identifier)) {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_predicate) << 0;
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_enable_disable);
     return;
   }
-  IdentifierInfo *Pred = Tok.getIdentifierInfo();
+  IdentifierInfo *op = Tok.getIdentifierInfo();
 
-  OpenCLExtState State;
-  if (Pred->isStr("enable")) {
-    State = Enable;
-  } else if (Pred->isStr("disable")) {
-    State = Disable;
-  } else if (Pred->isStr("begin"))
-    State = Begin;
-  else if (Pred->isStr("end"))
-    State = End;
-  else {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_predicate)
-      << Ext->isStr("all");
+  unsigned state;
+  if (op->isStr("enable")) {
+    state = 1;
+  } else if (op->isStr("disable")) {
+    state = 0;
+  } else {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_enable_disable);
     return;
   }
   SourceLocation StateLoc = Tok.getLocation();
@@ -1486,21 +1475,19 @@ PragmaOpenCLExtensionHandler::HandlePragma(Preprocessor &PP,
     return;
   }
 
-  auto Info = PP.getPreprocessorAllocator().Allocate<OpenCLExtData>(1);
-  Info->first = Ext;
-  Info->second = State;
+  OpenCLExtData data(ename, state);
   MutableArrayRef<Token> Toks(PP.getPreprocessorAllocator().Allocate<Token>(1),
                               1);
   Toks[0].startToken();
   Toks[0].setKind(tok::annot_pragma_opencl_extension);
   Toks[0].setLocation(NameLoc);
-  Toks[0].setAnnotationValue(static_cast<void*>(Info));
+  Toks[0].setAnnotationValue(data.getOpaqueValue());
   Toks[0].setAnnotationEndLoc(StateLoc);
   PP.EnterTokenStream(Toks, /*DisableMacroExpansion=*/true);
 
   if (PP.getPPCallbacks())
-    PP.getPPCallbacks()->PragmaOpenCLExtension(NameLoc, Ext, 
-                                               StateLoc, State);
+    PP.getPPCallbacks()->PragmaOpenCLExtension(NameLoc, ename, 
+                                               StateLoc, state);
 }
 
 /// \brief Handle '#pragma omp ...' when OpenMP is disabled.

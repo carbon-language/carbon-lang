@@ -807,13 +807,7 @@ private:
   SourceLocation PointersToMembersPragmaLocation;
 
   /// \brief The OpenCL extension settings.
-  OpenCLOptions OpenCLExtensions;
-
-  /// \brief Extensions required by an OpenCL type.
-  llvm::DenseMap<const Type *, std::set<std::string>> OpenCLTypeExtMap;
-
-  /// \brief Extensions required by an OpenCL declaration.
-  llvm::DenseMap<const Decl *, std::set<std::string>> OpenCLDeclExtMap;
+  SmallVector<uint64_t, 1> OpenCLExtensions;
 
   /// \brief A list of the namespaces we've seen.
   SmallVector<uint64_t, 4> KnownNamespaces;

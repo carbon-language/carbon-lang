@@ -1053,8 +1053,6 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(HEADER_SEARCH_TABLE);
   RECORD(FP_PRAGMA_OPTIONS);
   RECORD(OPENCL_EXTENSIONS);
-  RECORD(OPENCL_EXTENSION_TYPES);
-  RECORD(OPENCL_EXTENSION_DECLS);
   RECORD(DELEGATING_CTORS);
   RECORD(KNOWN_NAMESPACES);
   RECORD(MODULE_OFFSET_MAP);
@@ -3941,44 +3939,9 @@ void ASTWriter::WriteOpenCLExtensions(Sema &SemaRef) {
 
   const OpenCLOptions &Opts = SemaRef.getOpenCLOptions();
   RecordData Record;
-  for (const auto &I:Opts.OptMap) {
-    AddString(I.getKey(), Record);
-    auto V = I.getValue();
-    Record.push_back(V.Supported);
-    Record.push_back(V.Enabled);
-    Record.push_back(V.Avail);
-    Record.push_back(V.Core);
-  }
+#define OPENCLEXT(nm)  Record.push_back(Opts.nm);
+#include "clang/Basic/OpenCLExtensions.def"
   Stream.EmitRecord(OPENCL_EXTENSIONS, Record);
-}
-
-void ASTWriter::WriteOpenCLExtensionTypes(Sema &SemaRef) {
-  if (!SemaRef.Context.getLangOpts().OpenCL)
-    return;
-
-  RecordData Record;
-  for (const auto &I : SemaRef.OpenCLTypeExtMap) {
-    Record.push_back(
-        static_cast<unsigned>(getTypeID(I.first->getCanonicalTypeInternal())));
-    Record.push_back(I.second.size());
-    for (auto Ext : I.second)
-      AddString(Ext, Record);
-  }
-  Stream.EmitRecord(OPENCL_EXTENSION_TYPES, Record);
-}
-
-void ASTWriter::WriteOpenCLExtensionDecls(Sema &SemaRef) {
-  if (!SemaRef.Context.getLangOpts().OpenCL)
-    return;
-
-  RecordData Record;
-  for (const auto &I : SemaRef.OpenCLDeclExtMap) {
-    Record.push_back(getDeclID(I.first));
-    Record.push_back(static_cast<unsigned>(I.second.size()));
-    for (auto Ext : I.second)
-      AddString(Ext, Record);
-  }
-  Stream.EmitRecord(OPENCL_EXTENSION_DECLS, Record);
 }
 
 void ASTWriter::WriteCUDAPragmas(Sema &SemaRef) {
@@ -4665,8 +4628,6 @@ uint64_t ASTWriter::WriteASTCore(Sema &SemaRef, StringRef isysroot,
   WriteIdentifierTable(PP, SemaRef.IdResolver, isModule);
   WriteFPPragmaOptions(SemaRef.getFPOptions());
   WriteOpenCLExtensions(SemaRef);
-  WriteOpenCLExtensionTypes(SemaRef);
-  WriteOpenCLExtensionDecls(SemaRef);
   WriteCUDAPragmas(SemaRef);
   WritePragmaDiagnosticMappings(Context.getDiagnostics(), isModule);
 
