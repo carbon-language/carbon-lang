@@ -144,13 +144,13 @@ bool LivePhysRegs::available(const MachineRegisterInfo &MRI,
 void LivePhysRegs::addBlockLiveIns(const MachineBasicBlock &MBB) {
   for (const auto &LI : MBB.liveins()) {
     MCSubRegIndexIterator S(LI.PhysReg, TRI);
-    if (LI.LaneMask.all() || (!LI.LaneMask.none() && !S.isValid())) {
+    if (LI.LaneMask.all() || (LI.LaneMask.any() && !S.isValid())) {
       addReg(LI.PhysReg);
       continue;
     }
     for (; S.isValid(); ++S) {
       unsigned SI = S.getSubRegIndex();
-      if (!(LI.LaneMask & TRI->getSubRegIndexLaneMask(SI)).none())
+      if ((LI.LaneMask & TRI->getSubRegIndexLaneMask(SI)).any())
         addReg(S.getSubReg());
     }
   }
