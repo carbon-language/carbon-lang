@@ -12733,7 +12733,9 @@ static SDValue lowerV16I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   // efficient instructions that mirror the shuffles across the four 128-bit
   // lanes.
   SmallVector<int, 4> RepeatedMask;
-  if (is128BitLaneRepeatedShuffleMask(MVT::v16i32, Mask, RepeatedMask)) {
+  bool Is128BitLaneRepeatedShuffle =
+      is128BitLaneRepeatedShuffleMask(MVT::v16i32, Mask, RepeatedMask);
+  if (Is128BitLaneRepeatedShuffle) {
     assert(RepeatedMask.size() == 4 && "Unexpected repeated mask size!");
     if (V2.isUndef())
       return DAG.getNode(X86ISD::PSHUFD, DL, MVT::v16i32, V1,
@@ -12760,6 +12762,16 @@ static SDValue lowerV16I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
     if (SDValue Rotate = lowerVectorShuffleAsByteRotate(
             DL, MVT::v16i32, V1, V2, Mask, Subtarget, DAG))
       return Rotate;
+
+  // Assume that a single SHUFPS is faster than using a permv shuffle.
+  // If some CPU is harmed by the domain switch, we can fix it in a later pass.
+  if (Is128BitLaneRepeatedShuffle && isSingleSHUFPSMask(RepeatedMask)) {
+    SDValue CastV1 = DAG.getBitcast(MVT::v16f32, V1);
+    SDValue CastV2 = DAG.getBitcast(MVT::v16f32, V2);
+    SDValue ShufPS =
+        DAG.getVectorShuffle(MVT::v16f32, DL, CastV1, CastV2, Mask);
+    return DAG.getBitcast(MVT::v16i32, ShufPS);
+  }
 
   return lowerVectorShuffleWithPERMV(DL, MVT::v16i32, Mask, V1, V2, DAG);
 }
