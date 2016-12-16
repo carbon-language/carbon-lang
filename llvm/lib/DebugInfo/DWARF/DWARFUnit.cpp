@@ -87,10 +87,7 @@ bool DWARFUnit::getStringOffsetSectionItem(uint32_t Index,
 bool DWARFUnit::extractImpl(DataExtractor debug_info, uint32_t *offset_ptr) {
   Length = debug_info.getU32(offset_ptr);
   Version = debug_info.getU16(offset_ptr);
-  auto AI = InfoSection.Relocs.find(*offset_ptr);
   uint64_t AbbrOffset = debug_info.getU32(offset_ptr);
-  if (AI != InfoSection.Relocs.end())
-    AbbrOffset += AI->second.second;
   if (IndexEntry) {
     if (AbbrOffset)
       return false;

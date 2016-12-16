@@ -1,8 +1,0 @@
-RUN: llvm-dwarfdump -debug-dump=info %p/Inputs/dwarfdump-abbrev-off.elf-x86-64 | FileCheck %s
-
-Check that we apply relocations to the abbr_offset - while LLVM never produces
-an object file like this, a reproduction can be produced by linking two simple
-object files together with ld -r.
-
-CHECK: abbr_offset = 0x0000
-CHECK: abbr_offset = 0x0010
