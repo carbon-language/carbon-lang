@@ -103,9 +103,38 @@ class ArrayRefPrinter:
   def display_hint (self):
     return 'array'
 
+class OptionalPrinter:
+  """Print an llvm::Optional object."""
+
+  def __init__(self, value):
+    self.value = value
+
+  class _iterator:
+    def __init__(self, member, empty):
+      self.member = member
+      self.done = empty
+
+    def __iter__(self):
+      return self
+
+    def next(self):
+      if self.done:
+        raise StopIteration
+      self.done = True
+      return ('value', self.member.dereference())
+
+  def children(self):
+    if not self.value['hasVal']:
+      return self._iterator('', True)
+    return self._iterator(self.value['storage']['buffer'].address.cast(self.value.type.template_argument(0).pointer()), False)
+
+  def to_string(self):
+    return 'llvm::Optional is %sinitialized' % ('' if self.value['hasVal'] else 'not ')
+
 pp = gdb.printing.RegexpCollectionPrettyPrinter("LLVMSupport")
 pp.add_printer('llvm::SmallString', '^llvm::SmallString<.*>$', SmallStringPrinter)
 pp.add_printer('llvm::StringRef', '^llvm::StringRef$', StringRefPrinter)
 pp.add_printer('llvm::SmallVectorImpl', '^llvm::SmallVector(Impl)?<.*>$', SmallVectorPrinter)
 pp.add_printer('llvm::ArrayRef', '^llvm::(Const)?ArrayRef<.*>$', ArrayRefPrinter)
+pp.add_printer('llvm::Optional', '^llvm::Optional<.*>$', OptionalPrinter)
 gdb.printing.register_pretty_printer(gdb.current_objfile(), pp)
