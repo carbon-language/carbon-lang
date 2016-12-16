@@ -62,8 +62,8 @@ class TBAAVerifier {
 public:
   TBAAVerifier(VerifierSupport *Diagnostic = nullptr)
       : Diagnostic(Diagnostic) {}
-  // Visit an instruction and return true if it is valid, return false it an
-  // invalid TBAA is attached.
+  /// Visit an instruction and return true if it is valid, return false if an
+  /// invalid TBAA is attached.
   bool visitTBAAMetadata(Instruction &I, MDNode *MD);
 };
 
