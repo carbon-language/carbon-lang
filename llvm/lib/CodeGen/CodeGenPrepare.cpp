@@ -206,7 +206,6 @@ class TypePromotionTransaction;
                         unsigned CreatedInstCost);
     bool splitBranchCondition(Function &F);
     bool simplifyOffsetableRelocate(Instruction &I);
-    void stripInvariantGroupMetadata(Instruction &I);
   };
 }
 
@@ -5316,7 +5315,7 @@ bool CodeGenPrepare::optimizeInst(Instruction *I, bool& ModifiedDT) {
       return OptimizeCmpExpression(CI, TLI);
 
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    stripInvariantGroupMetadata(*LI);
+    LI->setMetadata(LLVMContext::MD_invariant_group, nullptr);
     if (TLI) {
       bool Modified = optimizeLoadExt(LI);
       unsigned AS = LI->getPointerAddressSpace();
@@ -5327,7 +5326,7 @@ bool CodeGenPrepare::optimizeInst(Instruction *I, bool& ModifiedDT) {
   }
 
   if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-    stripInvariantGroupMetadata(*SI);
+    SI->setMetadata(LLVMContext::MD_invariant_group, nullptr);
     if (TLI) {
       unsigned AS = SI->getPointerAddressSpace();
       return optimizeMemoryInst(I, SI->getOperand(1),
@@ -5732,8 +5731,4 @@ bool CodeGenPrepare::splitBranchCondition(Function &F) {
           TmpBB->dump());
   }
   return MadeChange;
-}
-
-void CodeGenPrepare::stripInvariantGroupMetadata(Instruction &I) {
-  I.setMetadata(LLVMContext::MD_invariant_group, nullptr);
 }
