@@ -9,7 +9,6 @@
 #include <cstring>
 #include <iostream>
 #include <thread>
-#include <unistd.h>
 
 static volatile char *SinkPtr;
 
