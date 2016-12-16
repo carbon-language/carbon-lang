@@ -8,9 +8,7 @@ add_llvm_library(LLVMDebugInfoCodeView
   ModuleSubstream.cpp
   ModuleSubstreamVisitor.cpp
   RecordSerialization.cpp
-  SymbolRecordMapping.cpp
   SymbolDumper.cpp
-  SymbolSerializer.cpp
   TypeDumper.cpp
   TypeRecord.cpp
   TypeRecordMapping.cpp

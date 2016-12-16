@@ -361,9 +361,7 @@ void CodeViewContext::encodeInlineLineTable(MCAsmLayout &Layout,
     // Exit early if our line table would produce an oversized InlineSiteSym
     // record. Account for the ChangeCodeLength annotation emitted after the
     // loop ends.
-    constexpr uint32_t InlineSiteSize = 12;
-    constexpr uint32_t AnnotationSize = 8;
-    size_t MaxBufferSize = MaxRecordLength - InlineSiteSize - AnnotationSize;
+    size_t MaxBufferSize = MaxRecordLength - sizeof(InlineSiteSym::Hdr) - 8;
     if (Buffer.size() >= MaxBufferSize)
       break;
 

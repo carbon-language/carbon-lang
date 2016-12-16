@@ -2072,39 +2072,35 @@ void CodeViewDebug::emitLocalVariable(const LocalVariable &Var) {
                       (DefRange.StructOffset
                        << DefRangeRegisterRelSym::OffsetInParentShift);
       }
-      DefRangeRegisterRelSym Sym(S_DEFRANGE_REGISTER_REL);
-      Sym.Hdr.Register = DefRange.CVRegister;
-      Sym.Hdr.Flags = RegRelFlags;
-      Sym.Hdr.BasePointerOffset = DefRange.DataOffset;
+      DefRangeRegisterRelSym Sym(DefRange.CVRegister, RegRelFlags,
+                                 DefRange.DataOffset, None);
       ulittle16_t SymKind = ulittle16_t(S_DEFRANGE_REGISTER_REL);
       BytePrefix +=
           StringRef(reinterpret_cast<const char *>(&SymKind), sizeof(SymKind));
       BytePrefix +=
-          StringRef(reinterpret_cast<const char *>(&Sym.Hdr), sizeof(Sym.Hdr));
+          StringRef(reinterpret_cast<const char *>(&Sym.Header),
+                    sizeof(Sym.Header) - sizeof(LocalVariableAddrRange));
     } else {
       assert(DefRange.DataOffset == 0 && "unexpected offset into register");
       if (DefRange.IsSubfield) {
         // Unclear what matters here.
-        DefRangeSubfieldRegisterSym Sym(S_DEFRANGE_SUBFIELD_REGISTER);
-        Sym.Hdr.Register = DefRange.CVRegister;
-        Sym.Hdr.MayHaveNoName = 0;
-        Sym.Hdr.OffsetInParent = DefRange.StructOffset;
-
+        DefRangeSubfieldRegisterSym Sym(DefRange.CVRegister, 0,
+                                        DefRange.StructOffset, None);
         ulittle16_t SymKind = ulittle16_t(S_DEFRANGE_SUBFIELD_REGISTER);
         BytePrefix += StringRef(reinterpret_cast<const char *>(&SymKind),
                                 sizeof(SymKind));
-        BytePrefix += StringRef(reinterpret_cast<const char *>(&Sym.Hdr),
-                                sizeof(Sym.Hdr));
+        BytePrefix +=
+            StringRef(reinterpret_cast<const char *>(&Sym.Header),
+                      sizeof(Sym.Header) - sizeof(LocalVariableAddrRange));
       } else {
         // Unclear what matters here.
-        DefRangeRegisterSym Sym(S_DEFRANGE_REGISTER);
-        Sym.Hdr.Register = DefRange.CVRegister;
-        Sym.Hdr.MayHaveNoName = 0;
+        DefRangeRegisterSym Sym(DefRange.CVRegister, 0, None);
         ulittle16_t SymKind = ulittle16_t(S_DEFRANGE_REGISTER);
         BytePrefix += StringRef(reinterpret_cast<const char *>(&SymKind),
                                 sizeof(SymKind));
-        BytePrefix += StringRef(reinterpret_cast<const char *>(&Sym.Hdr),
-                                sizeof(Sym.Hdr));
+        BytePrefix +=
+            StringRef(reinterpret_cast<const char *>(&Sym.Header),
+                      sizeof(Sym.Header) - sizeof(LocalVariableAddrRange));
       }
     }
     OS.EmitCVDefRangeDirective(DefRange.Ranges, BytePrefix);
