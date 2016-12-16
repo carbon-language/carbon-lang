@@ -12281,7 +12281,8 @@ static SDValue lowerV8I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (Is128BitLaneRepeatedShuffle && isSingleSHUFPSMask(RepeatedMask)) {
     SDValue CastV1 = DAG.getBitcast(MVT::v8f32, V1);
     SDValue CastV2 = DAG.getBitcast(MVT::v8f32, V2);
-    SDValue ShufPS = DAG.getVectorShuffle(MVT::v8f32, DL, CastV1, CastV2, Mask);
+    SDValue ShufPS = lowerVectorShuffleWithSHUFPS(DL, MVT::v8f32, RepeatedMask,
+                                                  CastV1, CastV2, DAG);
     return DAG.getBitcast(MVT::v8i32, ShufPS);
   }
 
@@ -12768,8 +12769,8 @@ static SDValue lowerV16I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (Is128BitLaneRepeatedShuffle && isSingleSHUFPSMask(RepeatedMask)) {
     SDValue CastV1 = DAG.getBitcast(MVT::v16f32, V1);
     SDValue CastV2 = DAG.getBitcast(MVT::v16f32, V2);
-    SDValue ShufPS =
-        DAG.getVectorShuffle(MVT::v16f32, DL, CastV1, CastV2, Mask);
+    SDValue ShufPS = lowerVectorShuffleWithSHUFPS(DL, MVT::v16f32, RepeatedMask,
+                                                  CastV1, CastV2, DAG);
     return DAG.getBitcast(MVT::v16i32, ShufPS);
   }
 
