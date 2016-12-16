@@ -349,37 +349,16 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   return TailLen;
 }
 
-void BranchFolder::computeLiveIns(MachineBasicBlock &MBB) {
-  if (!UpdateLiveIns)
-    return;
-
-  LiveRegs.init(*TRI);
-  LiveRegs.addLiveOutsNoPristines(MBB);
-  for (MachineInstr &MI : make_range(MBB.rbegin(), MBB.rend()))
-    LiveRegs.stepBackward(MI);
-
-  for (unsigned Reg : LiveRegs) {
-    // Skip the register if we are about to add one of its super registers.
-    bool ContainsSuperReg = false;
-    for (MCSuperRegIterator SReg(Reg, TRI); SReg.isValid(); ++SReg) {
-      if (LiveRegs.contains(*SReg)) {
-        ContainsSuperReg = true;
-        break;
-      }
-    }
-    if (ContainsSuperReg)
-      continue;
-    MBB.addLiveIn(Reg);
-  }
-}
-
 /// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
 /// after it, replacing it with an unconditional branch to NewDest.
 void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                            MachineBasicBlock *NewDest) {
   TII->ReplaceTailWithBranchTo(OldInst, NewDest);
 
-  computeLiveIns(*NewDest);
+  if (UpdateLiveIns) {
+    NewDest->clearLiveIns();
+    computeLiveIns(LiveRegs, *TRI, *NewDest);
+  }
 
   ++NumTailMerge;
 }
@@ -417,7 +396,8 @@ MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
   // NewMBB inherits CurMBB's block frequency.
   MBBFreqInfo.setBlockFreq(NewMBB, MBBFreqInfo.getBlockFreq(&CurMBB));
 
-  computeLiveIns(*NewMBB);
+  if (UpdateLiveIns)
+    computeLiveIns(LiveRegs, *TRI, *NewMBB);
 
   // Add the new block to the funclet.
   const auto &FuncletI = FuncletMembership.find(&CurMBB);

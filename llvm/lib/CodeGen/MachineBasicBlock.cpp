@@ -1288,3 +1288,7 @@ MachineBasicBlock::getEndClobberMask(const TargetRegisterInfo *TRI) const {
   // care what kind of return it is, putting a mask after it is a no-op.
   return isReturnBlock() && !succ_empty() ? TRI->getNoPreservedMask() : nullptr;
 }
+
+void MachineBasicBlock::clearLiveIns() {
+  LiveIns.clear();
+}

@@ -289,6 +289,9 @@ public:
   /// LiveIn insertion.
   void sortUniqueLiveIns();
 
+  /// Clear live in list.
+  void clearLiveIns();
+
   /// Add PhysReg as live in to this block, and ensure that there is a copy of
   /// PhysReg to a virtual register of class RC. Return the virtual register
   /// that is a copy of the live in PhysReg.
