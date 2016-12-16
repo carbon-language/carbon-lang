@@ -28937,18 +28937,19 @@ static SDValue combineSetCCAtomicArith(SDValue Cmp, X86::CondCode &CC,
   if (Opc == ISD::ATOMIC_LOAD_SUB)
     Addend = -Addend;
 
-  if (Comparand == -Addend)
-    CC = CC; // No change.
-  else if (CC == X86::COND_S && Comparand == 0 && Addend == 1)
+  if (Comparand == -Addend) {
+    // No change to CC.
+  } else if (CC == X86::COND_S && Comparand == 0 && Addend == 1) {
     CC = X86::COND_LE;
-  else if (CC == X86::COND_NS && Comparand == 0 && Addend == 1)
+  } else if (CC == X86::COND_NS && Comparand == 0 && Addend == 1) {
     CC = X86::COND_G;
-  else if (CC == X86::COND_G && Comparand == 0 && Addend == -1)
+  } else if (CC == X86::COND_G && Comparand == 0 && Addend == -1) {
     CC = X86::COND_GE;
-  else if (CC == X86::COND_LE && Comparand == 0 && Addend == -1)
+  } else if (CC == X86::COND_LE && Comparand == 0 && Addend == -1) {
     CC = X86::COND_L;
-  else
+  } else {
     return SDValue();
+  }
 
   SDValue LockOp = lowerAtomicArithWithLOCK(CmpLHS, DAG);
   DAG.ReplaceAllUsesOfValueWith(CmpLHS.getValue(0),
