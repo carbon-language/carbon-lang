@@ -48,6 +48,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/GVMaterializer.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
@@ -60,6 +61,7 @@
 #include "llvm/IR/TrackingMDRef.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -146,6 +148,16 @@ static bool convertToString(ArrayRef<uint64_t> Record, unsigned Idx,
   for (unsigned i = Idx, e = Record.size(); i != e; ++i)
     Result += (char)Record[i];
   return false;
+}
+
+// Strip all the TBAA attachment for the module.
+void stripTBAA(Module *M) {
+  for (auto &F : *M) {
+    if (F.isMaterializable())
+      continue;
+    for (auto &I : instructions(F))
+      I.setMetadata(LLVMContext::MD_tbaa, nullptr);
+  }
 }
 
 /// Read the "IDENTIFICATION_BLOCK_ID" block, do some basic enforcement on the
@@ -460,6 +472,7 @@ class BitcodeReader : public BitcodeReaderBase, public GVMaterializer {
   bool WillMaterializeAllForwardRefs = false;
 
   bool StripDebugInfo = false;
+  TBAAVerifier TBAAVerifyHelper;
 
   std::vector<std::string> BundleTags;
 
@@ -4448,6 +4461,17 @@ Error BitcodeReader::materialize(GlobalValue *GV) {
   // Finish fn->subprogram upgrade for materialized functions.
   if (DISubprogram *SP = MDLoader->lookupSubprogramForFunction(F))
     F->setSubprogram(SP);
+
+  // Check if the TBAA Metadata are valid, otherwise we will need to strip them.
+  if (!MDLoader->isStrippingTBAA()) {
+    for (auto &I : instructions(F)) {
+      MDNode *TBAA = I.getMetadata(LLVMContext::MD_tbaa);
+      if (!TBAA || TBAAVerifyHelper.visitTBAAMetadata(I, TBAA))
+        continue;
+      MDLoader->setStripTBAA(true);
+      stripTBAA(F->getParent());
+    }
+  }
 
   // Bring in any functions that this function forward-referenced via
   // blockaddresses.

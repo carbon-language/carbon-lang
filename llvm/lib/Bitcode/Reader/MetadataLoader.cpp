@@ -382,6 +382,7 @@ class MetadataLoader::MetadataLoaderImpl {
   // Map the bitcode's custom MDKind ID to the Module's MDKind ID.
   DenseMap<unsigned, unsigned> MDKindMap;
 
+  bool StripTBAA = false;
   bool HasSeenOldLoopTags = false;
 
   Error parseMetadataStrings(ArrayRef<uint64_t> Record, StringRef Blob,
@@ -419,6 +420,9 @@ public:
       Function &F, const SmallVectorImpl<Instruction *> &InstructionList);
 
   Error parseMetadataKinds();
+
+  void setStripTBAA(bool Value) { StripTBAA = Value; }
+  bool isStrippingTBAA() { return StripTBAA; }
 
   unsigned size() const { return MetadataList.size(); }
   void shrinkTo(unsigned N) { MetadataList.shrinkTo(N); }
@@ -1208,6 +1212,9 @@ Error MetadataLoader::MetadataLoaderImpl::parseMetadataAttachment(
         DenseMap<unsigned, unsigned>::iterator I = MDKindMap.find(Kind);
         if (I == MDKindMap.end())
           return error("Invalid ID");
+        if (I->second == LLVMContext::MD_tbaa && StripTBAA)
+          continue;
+
         Metadata *Node = MetadataList.getMetadataFwdRef(Record[i + 1]);
         if (isa<LocalAsMetadata>(Node))
           // Drop the attachment.  This used to be legal, but there's no
@@ -1326,6 +1333,12 @@ Error MetadataLoader::parseMetadataAttachment(
 Error MetadataLoader::parseMetadataKinds() {
   return Pimpl->parseMetadataKinds();
 }
+
+void MetadataLoader::setStripTBAA(bool StripTBAA) {
+  return Pimpl->setStripTBAA(StripTBAA);
+}
+
+bool MetadataLoader::isStrippingTBAA() { return Pimpl->isStrippingTBAA(); }
 
 unsigned MetadataLoader::size() const { return Pimpl->size(); }
 void MetadataLoader::shrinkTo(unsigned N) { return Pimpl->shrinkTo(N); }
