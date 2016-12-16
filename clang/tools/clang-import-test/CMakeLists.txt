@@ -1,4 +1,5 @@
 set(LLVM_LINK_COMPONENTS
+  core
   support
 )
 
@@ -17,6 +18,7 @@ set(CLANG_IMPORT_TEST_LIB_DEPS
   clangBasic
   clangCodeGen
   clangFrontend
+  clangParse
   )
 
 target_link_libraries(clang-import-test
