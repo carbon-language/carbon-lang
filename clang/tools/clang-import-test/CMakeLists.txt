@@ -18,6 +18,7 @@ set(CLANG_IMPORT_TEST_LIB_DEPS
   clangBasic
   clangCodeGen
   clangFrontend
+  clangLex
   clangParse
   )
 
