@@ -28879,11 +28879,19 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// Combine:
+/// Combine brcond/cmov/setcc/.. based on comparing the result of
+/// atomic_load_add to use EFLAGS produced by the addition
+/// directly if possible. For example:
+///
+///   (setcc (cmp (atomic_load_add x, -C) C), COND_E)
+/// becomes:
+///   (setcc (LADD x, -C), COND_E)
+///
+/// and
 ///   (brcond/cmov/setcc .., (cmp (atomic_load_add x, 1), 0), COND_S)
-/// to:
+/// becomes:
 ///   (brcond/cmov/setcc .., (LADD x, 1), COND_LE)
-/// i.e., reusing the EFLAGS produced by the LOCKed instruction.
+///
 /// Note that this is only legal for some op/cc combinations.
 static SDValue combineSetCCAtomicArith(SDValue Cmp, X86::CondCode &CC,
                                        SelectionDAG &DAG) {
@@ -28892,7 +28900,7 @@ static SDValue combineSetCCAtomicArith(SDValue Cmp, X86::CondCode &CC,
         (Cmp.getOpcode() == X86ISD::SUB && !Cmp->hasAnyUseOfValue(0))))
     return SDValue();
 
-  // This only applies to variations of the common case:
+  // This applies to variations of the common case:
   //   (icmp slt x, 0) -> (icmp sle (add x, 1), 0)
   //   (icmp sge x, 0) -> (icmp sgt (add x, 1), 0)
   //   (icmp sle x, 0) -> (icmp slt (sub x, 1), 0)
@@ -28911,8 +28919,9 @@ static SDValue combineSetCCAtomicArith(SDValue Cmp, X86::CondCode &CC,
     return SDValue();
 
   auto *CmpRHSC = dyn_cast<ConstantSDNode>(CmpRHS);
-  if (!CmpRHSC || CmpRHSC->getZExtValue() != 0)
+  if (!CmpRHSC)
     return SDValue();
+  APInt Comparand = CmpRHSC->getAPIntValue();
 
   const unsigned Opc = CmpLHS.getOpcode();
 
@@ -28928,13 +28937,15 @@ static SDValue combineSetCCAtomicArith(SDValue Cmp, X86::CondCode &CC,
   if (Opc == ISD::ATOMIC_LOAD_SUB)
     Addend = -Addend;
 
-  if (CC == X86::COND_S && Addend == 1)
+  if (Comparand == -Addend)
+    CC = CC; // No change.
+  else if (CC == X86::COND_S && Comparand == 0 && Addend == 1)
     CC = X86::COND_LE;
-  else if (CC == X86::COND_NS && Addend == 1)
+  else if (CC == X86::COND_NS && Comparand == 0 && Addend == 1)
     CC = X86::COND_G;
-  else if (CC == X86::COND_G && Addend == -1)
+  else if (CC == X86::COND_G && Comparand == 0 && Addend == -1)
     CC = X86::COND_GE;
-  else if (CC == X86::COND_LE && Addend == -1)
+  else if (CC == X86::COND_LE && Comparand == 0 && Addend == -1)
     CC = X86::COND_L;
   else
     return SDValue();
