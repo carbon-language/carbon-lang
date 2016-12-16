@@ -42,8 +42,7 @@ declare void @extfunc(i8 signext)
 !3 = !{!4}
 ; Find list of global variables and make sure it's the one used by DICompileUnit
 ; CHECK: [[GLOBALSNODE]] = !{[[GVNODE:![0-9]+]]}
-!4 = distinct !DIGlobalVariable(name: "static_var", scope: !0, file: !1, line: 2, type: !5, isLocal: false,
-               isDefinition: true)
+!4 = !DIGlobalVariableExpression(var: distinct !DIGlobalVariable(name: "static_var", scope: !0, file: !1, line: 2, type: !5, isLocal: false, isDefinition: true))
 ; Debug info must also be updated to reflect new address space.
 ; CHECK: [[GVNODE]] = distinct !DIGlobalVariable(name: "static_var"
 ; CHECK-SAME: scope: [[CUNODE]]
