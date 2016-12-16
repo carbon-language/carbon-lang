@@ -32,24 +32,24 @@ class OpenCLOptions {
   };
   llvm::StringMap<Info> OptMap;
 public:
-  bool isKnown(StringRef Ext) const {
+  bool isKnown(llvm::StringRef Ext) const {
     return OptMap.find(Ext) != OptMap.end();
   }
 
-  bool isEnabled(StringRef Ext) const {
+  bool isEnabled(llvm::StringRef Ext) const {
     return OptMap.find(Ext)->second.Enabled;
   }
 
   // Is supported as either an extension or an (optional) core feature for
   // OpenCL version \p CLVer.
-  bool isSupported(StringRef Ext, unsigned CLVer) const {
+  bool isSupported(llvm::StringRef Ext, unsigned CLVer) const {
     auto I = OptMap.find(Ext)->getValue();
     return I.Supported && I.Avail <= CLVer;
   }
 
   // Is supported (optional) OpenCL core features for OpenCL version \p CLVer.
   // For supported extension, return false.
-  bool isSupportedCore(StringRef Ext, unsigned CLVer) const {
+  bool isSupportedCore(llvm::StringRef Ext, unsigned CLVer) const {
     auto I = OptMap.find(Ext)->getValue();
     return I.Supported && I.Avail <= CLVer &&
       I.Core != ~0U && CLVer >= I.Core;
@@ -57,13 +57,13 @@ public:
 
   // Is supported OpenCL extension for OpenCL version \p CLVer.
   // For supported (optional) core feature, return false.
- bool isSupportedExtension(StringRef Ext, unsigned CLVer) const {
+ bool isSupportedExtension(llvm::StringRef Ext, unsigned CLVer) const {
     auto I = OptMap.find(Ext)->getValue();
     return I.Supported && I.Avail <= CLVer &&
       (I.Core == ~0U || CLVer < I.Core);
   }
 
-  void enable(StringRef Ext, bool V = true) {
+  void enable(llvm::StringRef Ext, bool V = true) {
     OptMap[Ext].Enabled = V;
   }
 
@@ -71,7 +71,7 @@ public:
   /// \param Ext name of the extension optionally prefixed with
   ///        '+' or '-'
   /// \param Enable used when \p Ext is not prefixed by '+' or '-'
-  void support(StringRef Ext, bool V = true) {
+  void support(llvm::StringRef Ext, bool V = true) {
     assert(!Ext.empty() && "Extension is empty.");
 
     switch (Ext[0]) {
