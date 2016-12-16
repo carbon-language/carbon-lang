@@ -198,9 +198,7 @@ void TracePC::PrintCoverage() {
 // For cmp instructions the interesting value is a XOR of the parameters.
 // The interesting value is mixed up with the PC and is then added to the map.
 
-#ifdef __clang__  // avoid gcc warning.
-__attribute__((no_sanitize("memory")))
-#endif
+ATTRIBUTE_NO_SANITIZE_MEMORY
 void TracePC::AddValueForMemcmp(void *caller_pc, const void *s1, const void *s2,
                               size_t n) {
   if (!n) return;
@@ -218,9 +216,7 @@ void TracePC::AddValueForMemcmp(void *caller_pc, const void *s1, const void *s2,
   TPC.HandleValueProfile((PC & 4095) | (Idx << 12));
 }
 
-#ifdef __clang__  // avoid gcc warning.
-__attribute__((no_sanitize("memory")))
-#endif
+ATTRIBUTE_NO_SANITIZE_MEMORY
 void TracePC::AddValueForStrcmp(void *caller_pc, const char *s1, const char *s2,
                               size_t n) {
   if (!n) return;
