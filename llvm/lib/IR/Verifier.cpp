@@ -117,7 +117,7 @@ using namespace llvm;
 
 static cl::opt<bool> VerifyDebugInfo("verify-debug-info", cl::init(true));
 
-namespace {
+namespace llvm {
 
 struct VerifierSupport {
   raw_ostream *OS;
@@ -247,6 +247,10 @@ public:
       WriteTs(V1, Vs...);
   }
 };
+
+} // namespace llvm
+
+namespace {
 
 class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   friend class InstVisitor<Verifier>;

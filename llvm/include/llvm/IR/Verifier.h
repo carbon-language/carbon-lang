@@ -23,10 +23,6 @@
 
 #include "llvm/IR/PassManager.h"
 
-namespace {
-struct VerifierSupport;
-}
-
 namespace llvm {
 
 class Function;
@@ -34,6 +30,7 @@ class FunctionPass;
 class ModulePass;
 class Module;
 class raw_ostream;
+struct VerifierSupport;
 
 /// Verify that the TBAA Metadatas are valid.
 class TBAAVerifier {
