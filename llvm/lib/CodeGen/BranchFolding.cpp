@@ -1733,10 +1733,8 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
 
   // The terminator is probably a conditional branch, try not to separate the
   // branch from condition setting instruction.
-  MachineBasicBlock::iterator PI = Loc;
-  --PI;
-  while (PI != MBB->begin() && PI->isDebugValue())
-    --PI;
+  MachineBasicBlock::iterator PI =
+    skipDebugInstructionsBackward(std::prev(Loc), MBB->begin());
 
   bool IsDef = false;
   for (const MachineOperand &MO : PI->operands()) {
@@ -1830,18 +1828,11 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
   MachineBasicBlock::iterator FIE = FBB->end();
   while (TIB != TIE && FIB != FIE) {
     // Skip dbg_value instructions. These do not count.
-    if (TIB->isDebugValue()) {
-      while (TIB != TIE && TIB->isDebugValue())
-        ++TIB;
-      if (TIB == TIE)
-        break;
-    }
-    if (FIB->isDebugValue()) {
-      while (FIB != FIE && FIB->isDebugValue())
-        ++FIB;
-      if (FIB == FIE)
-        break;
-    }
+    TIB = skipDebugInstructionsForward(TIB, TIE);
+    FIB = skipDebugInstructionsForward(FIB, FIE);
+    if (TIB == TIE || FIB == FIE)
+      break;
+
     if (!TIB->isIdenticalTo(*FIB, MachineInstr::CheckKillDead))
       break;
 

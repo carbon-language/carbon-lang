@@ -191,10 +191,7 @@ MachineBasicBlock::instr_iterator MachineBasicBlock::getFirstInstrTerminator() {
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstNonDebugInstr() {
   // Skip over begin-of-block dbg_value instructions.
-  iterator I = begin(), E = end();
-  while (I != E && I->isDebugValue())
-    ++I;
-  return I;
+  return skipDebugInstructionsForward(begin(), end());
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getLastNonDebugInstr() {
@@ -1140,17 +1137,11 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
 /// instructions.  Return UnknownLoc if there is none.
 DebugLoc
 MachineBasicBlock::findDebugLoc(instr_iterator MBBI) {
-  DebugLoc DL;
-  instr_iterator E = instr_end();
-  if (MBBI == E)
-    return DL;
-
   // Skip debug declarations, we don't want a DebugLoc from them.
-  while (MBBI != E && MBBI->isDebugValue())
-    MBBI++;
-  if (MBBI != E)
-    DL = MBBI->getDebugLoc();
-  return DL;
+  MBBI = skipDebugInstructionsForward(MBBI, instr_end());
+  if (MBBI != instr_end())
+    return MBBI->getDebugLoc();
+  return {};
 }
 
 /// Return probability of the edge from this block to MBB.

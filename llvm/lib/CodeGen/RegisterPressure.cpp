@@ -266,9 +266,8 @@ bool RegPressureTracker::isBottomClosed() const {
 
 
 SlotIndex RegPressureTracker::getCurrSlot() const {
-  MachineBasicBlock::const_iterator IdxPos = CurrPos;
-  while (IdxPos != MBB->end() && IdxPos->isDebugValue())
-    ++IdxPos;
+  MachineBasicBlock::const_iterator IdxPos =
+    skipDebugInstructionsForward(CurrPos, MBB->end());
   if (IdxPos == MBB->end())
     return LIS->getMBBEndIdx(MBB);
   return LIS->getInstructionIndex(*IdxPos).getRegSlot();
@@ -817,9 +816,7 @@ void RegPressureTracker::recedeSkipDebugValues() {
     static_cast<RegionPressure&>(P).openTop(CurrPos);
 
   // Find the previous instruction.
-  do
-    --CurrPos;
-  while (CurrPos != MBB->begin() && CurrPos->isDebugValue());
+  CurrPos = skipDebugInstructionsBackward(std::prev(CurrPos), MBB->begin());
 
   SlotIndex SlotIdx;
   if (RequireIntervals)
@@ -895,9 +892,7 @@ void RegPressureTracker::advance(const RegisterOperands &RegOpers) {
   bumpDeadDefs(RegOpers.DeadDefs);
 
   // Find the next instruction.
-  do
-    ++CurrPos;
-  while (CurrPos != MBB->end() && CurrPos->isDebugValue());
+  CurrPos = skipDebugInstructionsForward(std::next(CurrPos), MBB->end());
 }
 
 void RegPressureTracker::advance() {
