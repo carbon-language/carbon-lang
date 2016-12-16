@@ -356,7 +356,8 @@ Error lto::thinBackend(Config &Conf, unsigned Task, AddStreamFn AddStream,
     auto I = ModuleMap.find(Identifier);
     assert(I != ModuleMap.end());
     return I->second.getLazyModule(Mod.getContext(),
-                                   /*ShouldLazyLoadMetadata=*/true);
+                                   /*ShouldLazyLoadMetadata=*/true,
+                                   /*IsImporting*/ true);
   };
 
   FunctionImporter Importer(CombinedIndex, ModuleLoader);
