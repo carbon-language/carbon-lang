@@ -290,12 +290,22 @@ void __sanitizer_cov_trace_cmp1(uint8_t Arg1, uint8_t Arg2) {
 
 __attribute__((visibility("default")))
 void __sanitizer_cov_trace_switch(uint64_t Val, uint64_t *Cases) {
+  // Updates the value profile based on the relative position of Val and Cases.
+  // We want to handle one random case at every call (handling all is slow).
+  // Since none of the arguments contain any random bits we use a thread-local
+  // counter to choose the random case to handle.
+  static thread_local size_t Counter;
+  Counter++;
   uint64_t N = Cases[0];
   uint64_t *Vals = Cases + 2;
   char *PC = (char*)__builtin_return_address(0);
-  for (size_t i = 0; i < N; i++)
-    if (Val != Vals[i])
-      fuzzer::TPC.HandleCmp(PC + i, Val, Vals[i]);
+  size_t Idx = Counter % N;
+  uint64_t TwoIn32 = 1ULL << 32;
+  if ((Val | Vals[Idx]) < TwoIn32)
+    fuzzer::TPC.HandleCmp(PC + Idx, static_cast<uint32_t>(Val),
+                          static_cast<uint32_t>(Vals[Idx]));
+  else
+    fuzzer::TPC.HandleCmp(PC + Idx, Val, Vals[Idx]);
 }
 
 __attribute__((visibility("default")))
