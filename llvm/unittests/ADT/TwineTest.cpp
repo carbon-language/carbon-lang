@@ -103,7 +103,7 @@ TEST(TwineTest, toNullTerminatedStringRef) {
 
 TEST(TwineTest, LazyEvaluation) {
   struct formatter : FormatAdapter<int> {
-    explicit formatter(int &Count) : Count(Count), FormatAdapter(0) {}
+    explicit formatter(int &Count) : FormatAdapter(0), Count(Count) {}
     int &Count;
 
     void format(raw_ostream &OS, StringRef Style) { ++Count; }
