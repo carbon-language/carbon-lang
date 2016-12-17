@@ -299,7 +299,17 @@ void __sanitizer_cov_trace_switch(uint64_t Val, uint64_t *Cases) {
   uint64_t N = Cases[0];
   uint64_t *Vals = Cases + 2;
   char *PC = (char*)__builtin_return_address(0);
-  size_t Idx = Counter % N;
+  // We need a random number < N using Counter as a seed. But w/o DIV.
+  // * find a power of two >= N
+  // * mask Counter with this power of two.
+  // * maybe subtract N.
+  size_t Nlog = sizeof(long) * 8 - __builtin_clzl((long)N);
+  size_t PowerOfTwoGeN = 1U << Nlog;
+  assert(PowerOfTwoGeN >= N);
+  size_t Idx = Counter & (PowerOfTwoGeN - 1);
+  if (Idx >= N)
+    Idx -= N;
+  assert(Idx < N);
   uint64_t TwoIn32 = 1ULL << 32;
   if ((Val | Vals[Idx]) < TwoIn32)
     fuzzer::TPC.HandleCmp(PC + Idx, static_cast<uint32_t>(Val),
