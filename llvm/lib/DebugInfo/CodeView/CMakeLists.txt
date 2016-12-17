@@ -10,7 +10,6 @@ add_llvm_library(LLVMDebugInfoCodeView
   RecordSerialization.cpp
   SymbolRecordMapping.cpp
   SymbolDumper.cpp
-  SymbolSerializer.cpp
   TypeDumper.cpp
   TypeRecord.cpp
   TypeRecordMapping.cpp
