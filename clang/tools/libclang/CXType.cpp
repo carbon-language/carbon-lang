@@ -182,8 +182,6 @@ FindTemplateArgumentTypeAt(ArrayRef<TemplateArgument> TA, unsigned index) {
   return None;
 }
 
-extern "C" {
-
 CXType clang_getCursorType(CXCursor C) {
   using namespace cxcursor;
 
@@ -1038,5 +1036,3 @@ CXType clang_Type_getNamedType(CXType CT){
 
   return MakeCXType(QualType(), GetTU(CT));
 }
-
-} // end: extern "C"

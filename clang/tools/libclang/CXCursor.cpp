@@ -1104,8 +1104,6 @@ bool cxcursor::isFirstInDeclGroup(CXCursor C) {
 // libclang CXCursor APIs
 //===----------------------------------------------------------------------===//
 
-extern "C" {
-
 int clang_Cursor_isNull(CXCursor cursor) {
   return clang_equalCursors(cursor, clang_getNullCursor());
 }
@@ -1295,8 +1293,6 @@ unsigned long long clang_Cursor_getTemplateArgumentUnsignedValue(CXCursor C,
   return TA.getAsIntegral().getZExtValue();
 }
 
-} // end: extern "C"
-
 //===----------------------------------------------------------------------===//
 // CXCursorSet.
 //===----------------------------------------------------------------------===//
@@ -1330,7 +1326,6 @@ public:
 };
 }
 
-extern "C" {
 CXCursorSet clang_createCXCursorSet() {
   return packCXCursorSet(new CXCursorSet_Impl());
 }
@@ -1393,7 +1388,6 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
   }
   return nullptr;
 }
-} // end: extern C.
 
 namespace {
   struct OverridenCursorsPool {
@@ -1418,7 +1412,6 @@ void cxcursor::disposeOverridenCXCursorsPool(void *pool) {
   delete static_cast<OverridenCursorsPool*>(pool);
 }
  
-extern "C" {
 void clang_getOverriddenCursors(CXCursor cursor,
                                 CXCursor **overridden,
                                 unsigned *num_overridden) {
@@ -1540,5 +1533,3 @@ CXType clang_Cursor_getReceiverType(CXCursor C) {
 
   return cxtype::MakeCXType(QualType(), TU);
 }
-
-} // end: extern "C"
