@@ -22,7 +22,7 @@ define double @FsANDPSrr(double %x, double %y) {
 ;
 ; AVX512DQ-LABEL: FsANDPSrr:
 ; AVX512DQ:       # BB#0:
-; AVX512DQ-NEXT:    vandps %xmm1, %xmm0, %xmm0 # encoding: [0xc5,0xf8,0x54,0xc1]
+; AVX512DQ-NEXT:    vandps %xmm1, %xmm0, %xmm0 # encoding: [0x62,0xf1,0x7c,0x08,0x54,0xc1]
 ; AVX512DQ-NEXT:    retq # encoding: [0xc3]
 ;
   %bc1 = bitcast double %x to i64
@@ -46,7 +46,7 @@ define double @FsANDNPSrr(double %x, double %y) {
 ;
 ; AVX512DQ-LABEL: FsANDNPSrr:
 ; AVX512DQ:       # BB#0:
-; AVX512DQ-NEXT:    vandnps %xmm0, %xmm1, %xmm0 # encoding: [0xc5,0xf0,0x55,0xc0]
+; AVX512DQ-NEXT:    vandnps %xmm0, %xmm1, %xmm0 # encoding: [0x62,0xf1,0x74,0x08,0x55,0xc0]
 ; AVX512DQ-NEXT:    retq # encoding: [0xc3]
 ;
   %bc1 = bitcast double %x to i64
@@ -70,7 +70,7 @@ define double @FsORPSrr(double %x, double %y) {
 ;
 ; AVX512DQ-LABEL: FsORPSrr:
 ; AVX512DQ:       # BB#0:
-; AVX512DQ-NEXT:    vorps %xmm1, %xmm0, %xmm0 # encoding: [0xc5,0xf8,0x56,0xc1]
+; AVX512DQ-NEXT:    vorps %xmm1, %xmm0, %xmm0 # encoding: [0x62,0xf1,0x7c,0x08,0x56,0xc1]
 ; AVX512DQ-NEXT:    retq # encoding: [0xc3]
 ;
   %bc1 = bitcast double %x to i64
@@ -93,7 +93,7 @@ define double @FsXORPSrr(double %x, double %y) {
 ;
 ; AVX512DQ-LABEL: FsXORPSrr:
 ; AVX512DQ:       # BB#0:
-; AVX512DQ-NEXT:    vxorps %xmm1, %xmm0, %xmm0 # encoding: [0xc5,0xf8,0x57,0xc1]
+; AVX512DQ-NEXT:    vxorps %xmm1, %xmm0, %xmm0 # encoding: [0x62,0xf1,0x7c,0x08,0x57,0xc1]
 ; AVX512DQ-NEXT:    retq # encoding: [0xc3]
 ;
   %bc1 = bitcast double %x to i64
