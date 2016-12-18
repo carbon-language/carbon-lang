@@ -451,6 +451,16 @@ def AVX512_256_SET0 : I<0, Pseudo, (outs VR256X:$dst), (ins), "",
                [(set VR256X:$dst, (v8i32 immAllZerosV))]>;
 }
 
+// Alias instructions that map fld0 to xorps for sse or vxorps for avx.
+// This is expanded by ExpandPostRAPseudos.
+let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
+    isPseudo = 1, SchedRW = [WriteZero], Predicates = [HasVLX, HasDQI] in {
+  def AVX512_FsFLD0SS : I<0, Pseudo, (outs FR32X:$dst), (ins), "",
+                          [(set FR32X:$dst, fp32imm0)]>;
+  def AVX512_FsFLD0SD : I<0, Pseudo, (outs FR64X:$dst), (ins), "",
+                          [(set FR64X:$dst, fpimm0)]>;
+}
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - VECTOR INSERT
 //
