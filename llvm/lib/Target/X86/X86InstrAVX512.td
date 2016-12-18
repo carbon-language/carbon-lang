@@ -4559,7 +4559,7 @@ defm : avx512_fp_logical_lowering_sizes<"VPOR", or>;
 defm : avx512_fp_logical_lowering_sizes<"VPXOR", xor>;
 defm : avx512_fp_logical_lowering_sizes<"VPANDN", X86andnp>;
 
-let Predicates = [HasDQI] in {
+let Predicates = [HasVLX,HasDQI] in {
   // Use packed logical operations for scalar ops.
   def : Pat<(f64 (X86fand FR64X:$src1, FR64X:$src2)),
             (COPY_TO_REGCLASS (VANDPDZ128rr

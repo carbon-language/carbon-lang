@@ -2932,7 +2932,7 @@ let Predicates = [HasAVX, NoVLX_Or_NoDQI] in {
             (VANDNPDYrm VR256:$src1, addr:$src2)>;
 }
 
-let Predicates = [HasAVX, NoDQI] in {
+let Predicates = [HasAVX, NoVLX_Or_NoDQI] in {
   // Use packed logical operations for scalar ops.
   def : Pat<(f64 (X86fand FR64:$src1, FR64:$src2)),
             (COPY_TO_REGCLASS (VANDPDrr
