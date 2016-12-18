@@ -3944,8 +3944,8 @@ void ASTWriter::WriteOpenCLExtensions(Sema &SemaRef) {
   for (const auto &I:Opts.OptMap) {
     AddString(I.getKey(), Record);
     auto V = I.getValue();
-    Record.push_back(V.Supported);
-    Record.push_back(V.Enabled);
+    Record.push_back(V.Supported ? 1 : 0);
+    Record.push_back(V.Enabled ? 1 : 0);
     Record.push_back(V.Avail);
     Record.push_back(V.Core);
   }
