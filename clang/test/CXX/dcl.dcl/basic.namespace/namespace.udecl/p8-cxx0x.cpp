@@ -87,12 +87,12 @@ namespace PR21933 {
     extern int a(); // expected-error {{different kind of symbol}}
     a();
 
-    extern int b();
-    using T::b;
+    extern int b(); // expected-note {{previous}}
+    using T::b; // expected-error {{different kind of symbol}}
     b();
 
-    using T::c;
-    using U::c;
+    using T::c; // expected-note {{previous}}
+    using U::c; // expected-error-re {{redefinition of 'c'{{$}}}}
     c();
   }
 
@@ -101,29 +101,28 @@ namespace PR21933 {
     typedef struct {} Xt; // expected-error {{different kind of symbol}}
     (void)Xt;
 
-    using T::Xs; // expected-note {{candidate}}
-    struct Xs {}; // expected-note {{candidate}}
-    // FIXME: This is wrong, the using declaration hides the type.
-    Xs xs; // expected-error {{ambiguous}}
+    using T::Xs; // expected-note {{hidden by}}
+    struct Xs {};
+    (void)Xs;
+    Xs xs; // expected-error {{must use 'struct'}}
 
-    using T::Xe; // expected-note {{candidate}}
-    enum Xe {}; // expected-note {{candidate}}
-    // FIXME: This is wrong, the using declaration hides the type.
-    Xe xe; // expected-error {{ambiguous}}
+    using T::Xe; // expected-note {{hidden by}}
+    enum Xe {};
+    (void)Xe;
+    Xe xe; // expected-error {{must use 'enum'}}
 
     typedef struct {} Yt; // expected-note {{candidate}}
     using T::Yt; // eypected-error {{different kind of symbol}} expected-note {{candidate}}
     Yt yt; // expected-error {{ambiguous}}
 
-    struct Ys {}; // expected-note {{candidate}}
-    using T::Ys; // expected-note {{candidate}}
-    // FIXME: This is wrong, the using declaration hides the type.
-    Ys ys; // expected-error {{ambiguous}}
+    struct Ys {};
+    using T::Ys; // expected-note {{hidden by}}
+    (void)Ys;
+    Ys ys; // expected-error {{must use 'struct'}}
 
-    enum Ye {}; // expected-note {{candidate}}
-    using T::Ye; // expected-note {{candidate}}
-    // FIXME: This is wrong, the using declaration hides the type.
-    Ye ye; // expected-error {{ambiguous}}
+    enum Ye {};
+    using T::Ye; // expected-note {{hidden by}}
+    Ye ye; // expected-error {{must use 'enum'}}
   }
 
   template<typename T> void type() {
