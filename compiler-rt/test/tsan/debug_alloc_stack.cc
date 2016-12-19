@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if !__APPLE__
+#ifndef __APPLE__
 #include <sys/types.h>
 #endif
 
@@ -19,7 +19,7 @@ void alloc_func() { mem = (char *)malloc(10); }
 
 void *AllocThread(void *context) {
   uint64_t tid;
-#if __APPLE__
+#ifdef __APPLE__
   pthread_threadid_np(NULL, &tid);
 #else
   tid = gettid();
