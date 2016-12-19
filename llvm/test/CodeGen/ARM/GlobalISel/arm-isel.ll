@@ -7,8 +7,26 @@ entry:
   ret void
 }
 
-define i32 @test_add(i32 %x, i32 %y) {
-; CHECK-LABEL: test_add:
+define i8 @test_add_i8(i8 %x, i8 %y) {
+; CHECK-LABEL: test_add_i8:
+; CHECK: add r0, r0, r1
+; CHECK: bx lr
+entry:
+  %sum = add i8 %x, %y
+  ret i8 %sum
+}
+
+define i16 @test_add_i16(i16 %x, i16 %y) {
+; CHECK-LABEL: test_add_i16:
+; CHECK: add r0, r0, r1
+; CHECK: bx lr
+entry:
+  %sum = add i16 %x, %y
+  ret i16 %sum
+}
+
+define i32 @test_add_i32(i32 %x, i32 %y) {
+; CHECK-LABEL: test_add_i32:
 ; CHECK: add r0, r0, r1
 ; CHECK: bx lr
 entry:

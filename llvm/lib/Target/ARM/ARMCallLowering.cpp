@@ -33,8 +33,11 @@ ARMCallLowering::ARMCallLowering(const ARMTargetLowering &TLI)
 static bool isSupportedType(const DataLayout DL, const ARMTargetLowering &TLI,
                             Type *T) {
   EVT VT = TLI.getValueType(DL, T);
-  return VT.isSimple() && VT.isInteger() &&
-         VT.getSimpleVT().getSizeInBits() == 32;
+  if (!VT.isSimple() || !VT.isInteger() || VT.isVector())
+    return false;
+
+  unsigned VTSize = VT.getSimpleVT().getSizeInBits();
+  return VTSize == 8 || VTSize == 16 || VTSize == 32;
 }
 
 namespace {
@@ -53,8 +56,12 @@ struct FuncReturnHandler : public CallLowering::ValueHandler {
     assert(VA.isRegLoc() && "Value shouldn't be assigned to reg");
     assert(VA.getLocReg() == PhysReg && "Assigning to the wrong reg?");
 
-    assert(VA.getValVT().getSizeInBits() == 32 && "Unsupported value size");
+    assert(VA.getValVT().getSizeInBits() <= 32 && "Unsupported value size");
     assert(VA.getLocVT().getSizeInBits() == 32 && "Unsupported location size");
+
+    assert(VA.getLocInfo() != CCValAssign::SExt &&
+           VA.getLocInfo() != CCValAssign::ZExt &&
+           "ABI extensions not supported yet");
 
     MIRBuilder.buildCopy(PhysReg, ValVReg);
     MIB.addUse(PhysReg, RegState::Implicit);
@@ -144,7 +151,7 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
     assert(VA.isRegLoc() && "Value shouldn't be assigned to reg");
     assert(VA.getLocReg() == PhysReg && "Assigning to the wrong reg?");
 
-    assert(VA.getValVT().getSizeInBits() == 32 && "Unsupported value size");
+    assert(VA.getValVT().getSizeInBits() <= 32 && "Unsupported value size");
     assert(VA.getLocVT().getSizeInBits() == 32 && "Unsupported location size");
 
     MIRBuilder.getMBB().addLiveIn(PhysReg);
@@ -167,9 +174,17 @@ bool ARMCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   auto &TLI = *getTLI<ARMTargetLowering>();
 
   auto &Args = F.getArgumentList();
-  for (auto &Arg : Args)
+  unsigned ArgIdx = 0;
+  for (auto &Arg : Args) {
+    ArgIdx++;
     if (!isSupportedType(DL, TLI, Arg.getType()))
       return false;
+
+    // FIXME: This check as well as ArgIdx are going away as soon as we support
+    // loading values < 32 bits.
+    if (ArgIdx > 4 && Arg.getType()->getIntegerBitWidth() != 32)
+      return false;
+  }
 
   CCAssignFn *AssignFn =
       TLI.CCAssignFnForCall(F.getCallingConv(), F.isVarArg());
