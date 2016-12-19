@@ -19,6 +19,7 @@
 #include "ARMISelLowering.h"
 
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
 
@@ -115,7 +116,27 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
 
   unsigned getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO) override {
-    llvm_unreachable("Don't know how to get a stack address yet");
+    assert(Size == 4 && "Unsupported size");
+
+    auto &MFI = MIRBuilder.getMF().getFrameInfo();
+
+    int FI = MFI.CreateFixedObject(Size, Offset, true);
+    MPO = MachinePointerInfo::getFixedStack(MIRBuilder.getMF(), FI);
+
+    unsigned AddrReg =
+        MRI.createGenericVirtualRegister(LLT::pointer(MPO.getAddrSpace(), 32));
+    MIRBuilder.buildFrameIndex(AddrReg, FI);
+
+    return AddrReg;
+  }
+
+  void assignValueToAddress(unsigned ValVReg, unsigned Addr, uint64_t Size,
+                            MachinePointerInfo &MPO, CCValAssign &VA) override {
+    assert(Size == 4 && "Unsupported size");
+
+    auto MMO = MIRBuilder.getMF().getMachineMemOperand(
+        MPO, MachineMemOperand::MOLoad, Size, /* Alignment */ 0);
+    MIRBuilder.buildLoad(ValVReg, Addr, *MMO);
   }
 
   void assignValueToReg(unsigned ValVReg, unsigned PhysReg,
@@ -129,11 +150,6 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
     MIRBuilder.getMBB().addLiveIn(PhysReg);
     MIRBuilder.buildCopy(ValVReg, PhysReg);
   }
-
-  void assignValueToAddress(unsigned ValVReg, unsigned Addr, uint64_t Size,
-                            MachinePointerInfo &MPO, CCValAssign &VA) override {
-    llvm_unreachable("Don't know how to assign a value to an address yet");
-  }
 };
 } // End anonymous namespace
 
@@ -143,10 +159,6 @@ bool ARMCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   // Quick exit if there aren't any args
   if (F.arg_empty())
     return true;
-
-  // Stick to only 4 arguments for now
-  if (F.arg_size() > 4)
-    return false;
 
   if (F.isVarArg())
     return false;
