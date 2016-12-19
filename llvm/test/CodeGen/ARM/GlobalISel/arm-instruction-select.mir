@@ -27,8 +27,14 @@ body:             |
     %0(s8) = COPY %r0
     ; CHECK: [[VREGX:%[0-9]+]] = COPY %r0
 
-    %r0 = COPY %0(s8)
-    ; CHECK: %r0 = COPY [[VREGX]]
+    %1(s8) = COPY %r1
+    ; CHECK: [[VREGY:%[0-9]+]] = COPY %r1
+
+    %2(s8) = G_ADD %0, %1
+    ; CHECK: [[VREGSUM:%[0-9]+]] = ADDrr [[VREGX]], [[VREGY]], 14, _, _
+
+    %r0 = COPY %2(s8)
+    ; CHECK: %r0 = COPY [[VREGSUM]]
 
     BX_RET 14, _, implicit %r0
     ; CHECK: BX_RET 14, _, implicit %r0
@@ -54,8 +60,14 @@ body:             |
     %0(s16) = COPY %r0
     ; CHECK: [[VREGX:%[0-9]+]] = COPY %r0
 
-    %r0 = COPY %0(s16)
-    ; CHECK: %r0 = COPY [[VREGX]]
+    %1(s16) = COPY %r1
+    ; CHECK: [[VREGY:%[0-9]+]] = COPY %r1
+
+    %2(s16) = G_ADD %0, %1
+    ; CHECK: [[VREGSUM:%[0-9]+]] = ADDrr [[VREGX]], [[VREGY]], 14, _, _
+
+    %r0 = COPY %2(s16)
+    ; CHECK: %r0 = COPY [[VREGSUM]]
 
     BX_RET 14, _, implicit %r0
     ; CHECK: BX_RET 14, _, implicit %r0
