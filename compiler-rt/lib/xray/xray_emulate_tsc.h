@@ -15,6 +15,7 @@
 
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "xray_defs.h"
+#include <cerrno>
 #include <cstdint>
 #include <time.h>
 
