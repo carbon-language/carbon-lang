@@ -83,9 +83,9 @@ registers:
   - { id: 0, class: gprb }
   - { id: 1, class: gprb }
   - { id: 2, class: gprb }
-#CHECK: id: 0, class: gpr
-#CHECK: id: 1, class: gpr
-#CHECK: id: 2, class: gpr
+# CHECK: id: 0, class: gpr
+# CHECK: id: 1, class: gpr
+# CHECK: id: 2, class: gpr
 body:             |
   bb.0:
     liveins: %r0, %r1
