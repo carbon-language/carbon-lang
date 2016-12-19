@@ -42,8 +42,15 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
   (void)RegBank;
   assert(RegBank && "Can't get reg bank for virtual register");
 
-  assert(MRI.getType(DstReg).getSizeInBits() ==
-             RBI.getSizeInBits(I.getOperand(1).getReg(), MRI, TRI) &&
+  const unsigned DstSize = MRI.getType(DstReg).getSizeInBits();
+  unsigned SrcReg = I.getOperand(1).getReg();
+  const unsigned SrcSize = RBI.getSizeInBits(SrcReg, MRI, TRI);
+  (void)SrcSize;
+  assert((DstSize == SrcSize ||
+          // Copies are a means to setup initial types, the number of
+          // bits may not exactly match.
+          (TargetRegisterInfo::isPhysicalRegister(SrcReg) &&
+           DstSize <= SrcSize)) &&
          "Copy with different width?!");
 
   assert(RegBank->getID() == ARM::GPRRegBankID && "Unsupported reg bank");

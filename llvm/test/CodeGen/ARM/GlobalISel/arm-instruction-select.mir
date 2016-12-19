@@ -1,11 +1,68 @@
 # RUN: llc -O0 -mtriple arm-- -global-isel -run-pass=instruction-select -verify-machineinstrs %s -o - | FileCheck %s
 --- |
-  define void @test_adds32() { ret void }
+  define void @test_add_s8() { ret void }
+  define void @test_add_s16() { ret void }
+  define void @test_add_s32() { ret void }
+
   define void @test_load_from_stack() { ret void }
 ...
 ---
-name:            test_adds32
-# CHECK-LABEL: name: test_adds32
+name:            test_add_s8
+# CHECK-LABEL: name: test_add_s8
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+  - { id: 1, class: gprb }
+  - { id: 2, class: gprb }
+# CHECK-DAG: id: 0, class: gpr
+# CHECK-DAG: id: 1, class: gpr
+# CHECK-DAG: id: 2, class: gpr
+body:             |
+  bb.0:
+    liveins: %r0, %r1
+
+    %0(s8) = COPY %r0
+    ; CHECK: [[VREGX:%[0-9]+]] = COPY %r0
+
+    %r0 = COPY %0(s8)
+    ; CHECK: %r0 = COPY [[VREGX]]
+
+    BX_RET 14, _, implicit %r0
+    ; CHECK: BX_RET 14, _, implicit %r0
+...
+---
+name:            test_add_s16
+# CHECK-LABEL: name: test_add_s16
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+  - { id: 1, class: gprb }
+  - { id: 2, class: gprb }
+# CHECK-DAG: id: 0, class: gpr
+# CHECK-DAG: id: 1, class: gpr
+# CHECK-DAG: id: 2, class: gpr
+body:             |
+  bb.0:
+    liveins: %r0, %r1
+
+    %0(s16) = COPY %r0
+    ; CHECK: [[VREGX:%[0-9]+]] = COPY %r0
+
+    %r0 = COPY %0(s16)
+    ; CHECK: %r0 = COPY [[VREGX]]
+
+    BX_RET 14, _, implicit %r0
+    ; CHECK: BX_RET 14, _, implicit %r0
+...
+---
+name:            test_add_s32
+# CHECK-LABEL: name: test_add_s32
 legalized:       true
 regBankSelected: true
 selected:        false
