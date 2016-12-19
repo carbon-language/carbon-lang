@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - -fcxx-exceptions -fexceptions -std=c++03 | FileCheck %s -check-prefixes=CHECK,CHECKv03
-// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - -fcxx-exceptions -fexceptions -std=c++11 | FileCheck %s -check-prefixes=CHECK,CHECKv11
+// RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - -fcxx-exceptions -fexceptions | FileCheck %s
 
 // Test IR generation for partial destruction of aggregates.
 
@@ -46,8 +45,7 @@ namespace test0 {
   // CHECK-NEXT: br label
   // CHECK:      [[ED_AFTER:%.*]] = phi [[A]]* [ [[ED_END]], {{%.*}} ], [ [[ED_CUR:%.*]], {{%.*}} ]
   // CHECK-NEXT: [[ED_CUR]] = getelementptr inbounds [[A]], [[A]]* [[ED_AFTER]], i64 -1
-  // CHECKv03-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[ED_CUR]])
-  // CHECKv11-NEXT: call   void @_ZN5test01AD1Ev([[A]]* [[ED_CUR]])
+  // CHECK-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[ED_CUR]])
   // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[ED_CUR]], [[ED_BEGIN]]
   // CHECK-NEXT: br i1 [[T0]],
   // CHECK:      ret void
@@ -60,8 +58,7 @@ namespace test0 {
   // CHECK-NEXT: br i1 [[T0]],
   // CHECK:      [[E_AFTER:%.*]] = phi [[A]]* [ [[PARTIAL_END]], {{%.*}} ], [ [[E_CUR:%.*]], {{%.*}} ]
   // CHECK-NEXT: [[E_CUR]] = getelementptr inbounds [[A]], [[A]]* [[E_AFTER]], i64 -1
-  // CHECKv03-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[E_CUR]])
-  // CHECKv11-NEXT: call   void @_ZN5test01AD1Ev([[A]]* [[E_CUR]])
+  // CHECK-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[E_CUR]])
   // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[E_CUR]], [[E_BEGIN]]
   // CHECK-NEXT: br i1 [[T0]],
 
@@ -76,21 +73,20 @@ namespace test0 {
   // FIXME: There's some really bad block ordering here which causes
   // the partial destroy for the primary normal destructor to fall
   // within the primary EH destructor.
-  // CHECKv03:      landingpad { i8*, i32 }
-  // CHECKv03-NEXT:   cleanup
-  // CHECKv03:      [[T0:%.*]] = icmp eq [[A]]* [[ED_BEGIN]], [[ED_CUR]]
-  // CHECKv03-NEXT: br i1 [[T0]]
-  // CHECKv03:      [[EDD_AFTER:%.*]] = phi [[A]]* [ [[ED_CUR]], {{%.*}} ], [ [[EDD_CUR:%.*]], {{%.*}} ]
-  // CHECKv03-NEXT: [[EDD_CUR]] = getelementptr inbounds [[A]], [[A]]* [[EDD_AFTER]], i64 -1
-  // CHECKv03-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[EDD_CUR]])
-  // CHECKv03:      [[T0:%.*]] = icmp eq [[A]]* [[EDD_CUR]], [[ED_BEGIN]]
-  // CHECKv03-NEXT: br i1 [[T0]]
+  // CHECK:      landingpad { i8*, i32 }
+  // CHECK-NEXT:   cleanup
+  // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[ED_BEGIN]], [[ED_CUR]]
+  // CHECK-NEXT: br i1 [[T0]]
+  // CHECK:      [[EDD_AFTER:%.*]] = phi [[A]]* [ [[ED_CUR]], {{%.*}} ], [ [[EDD_CUR:%.*]], {{%.*}} ]
+  // CHECK-NEXT: [[EDD_CUR]] = getelementptr inbounds [[A]], [[A]]* [[EDD_AFTER]], i64 -1
+  // CHECK-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[EDD_CUR]])
+  // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[EDD_CUR]], [[ED_BEGIN]]
+  // CHECK-NEXT: br i1 [[T0]]
 
   // Back to the primary EH destructor.
   // CHECK:      [[E_AFTER:%.*]] = phi [[A]]* [ [[E_END]], {{%.*}} ], [ [[E_CUR:%.*]], {{%.*}} ]
   // CHECK-NEXT: [[E_CUR]] = getelementptr inbounds [[A]], [[A]]* [[E_AFTER]], i64 -1
-  // CHECKv03-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[E_CUR]])
-  // CHECKv11-NEXT: call   void @_ZN5test01AD1Ev([[A]]* [[E_CUR]])
+  // CHECK-NEXT: invoke void @_ZN5test01AD1Ev([[A]]* [[E_CUR]])
   // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[E_CUR]], [[E0]]
   // CHECK-NEXT: br i1 [[T0]],
 
@@ -124,10 +120,8 @@ namespace test1 {
   // CHECK-NEXT:   cleanup
   // CHECK:      landingpad { i8*, i32 }
   // CHECK-NEXT:   cleanup
-  // CHECKv03:      invoke void @_ZN5test11AD1Ev([[A]]* [[Y]])
-  // CHECKv03:      invoke void @_ZN5test11AD1Ev([[A]]* [[X]])
-  // CHECKv11:      call   void @_ZN5test11AD1Ev([[A]]* [[Y]])
-  // CHECKv11:      call   void @_ZN5test11AD1Ev([[A]]* [[X]])
+  // CHECK:      invoke void @_ZN5test11AD1Ev([[A]]* [[Y]])
+  // CHECK:      invoke void @_ZN5test11AD1Ev([[A]]* [[X]])
 }
 
 namespace test2 {
@@ -159,8 +153,7 @@ namespace test2 {
     // CHECK-NEXT: br i1 [[EMPTY]],
     // CHECK:      [[PAST:%.*]] = phi [[A]]* [ [[CUR]], {{%.*}} ], [ [[DEL:%.*]], {{%.*}} ]
     // CHECK-NEXT: [[DEL]] = getelementptr inbounds [[A]], [[A]]* [[PAST]], i64 -1
-    // CHECKv03-NEXT: invoke void @_ZN5test21AD1Ev([[A]]* [[DEL]])
-    // CHECKv11-NEXT: call   void @_ZN5test21AD1Ev([[A]]* [[DEL]])
+    // CHECK-NEXT: invoke void @_ZN5test21AD1Ev([[A]]* [[DEL]])
     // CHECK:      [[T0:%.*]] = icmp eq [[A]]* [[DEL]], [[BEGIN]]
     // CHECK-NEXT: br i1 [[T0]],
   }

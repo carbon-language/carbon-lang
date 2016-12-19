@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -triple armv7-apple-darwin9 -emit-llvm -o - %s -Wno-return-type-c-linkage -std=c++03 | FileCheck %s -check-prefixes=CHECK,CHECKv03
-// RUN: %clang_cc1 -triple armv7-apple-darwin9 -emit-llvm -o - %s -Wno-return-type-c-linkage -std=c++11 | FileCheck %s -check-prefixes=CHECK,CHECKv11
+// RUN: %clang_cc1 -triple armv7-apple-darwin9 -emit-llvm -o - %s -Wno-return-type-c-linkage | FileCheck %s
 
 // This isn't really testing anything ARM-specific; it's just a convenient
 // 32-bit platform.
@@ -49,8 +48,7 @@ typedef struct {
 TEST(struct_1);
 // CHECK-LABEL: define {{.*}} @return_struct_1()
 // CHECK:   [[RET:%.*]] = alloca [[REC:%.*]], align 4
-// CHECKv03:   @llvm.memset
-// CHECKv11:   @llvm.memcpy
+// CHECK:   @llvm.memset
 // CHECK:   [[CAST_TMP:%.*]] = bitcast [[REC]]* [[RET]] to [[AGG:{ i32, \[2 x i8\], i8, \[1 x i8\], float, float }]]*
 // CHECK:   [[T0:%.*]] = getelementptr inbounds [[AGG]], [[AGG]]* [[CAST_TMP]], i32 0, i32 0
 // CHECK:   [[FIRST:%.*]] = load i32, i32* [[T0]], align 4

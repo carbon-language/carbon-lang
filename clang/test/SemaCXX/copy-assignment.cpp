@@ -1,11 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98
-// RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
-
-#if __cplusplus >= 201103L
-// expected-note@+3 2 {{candidate constructor}}
-// expected-note@+2 {{passing argument to parameter here}}
-#endif
+// RUN: %clang_cc1 -fsyntax-only -verify %s 
 struct A {
 };
 
@@ -14,9 +7,6 @@ struct ConvertibleToA {
 };
 
 struct ConvertibleToConstA {
-#if __cplusplus >= 201103L
-// expected-note@+2 {{candidate function}}
-#endif
   operator const A();
 };
 
@@ -79,9 +69,6 @@ void test() {
   na = a;
   na = constA;
   na = convertibleToA;
-#if __cplusplus >= 201103L
-// expected-error@+2 {{no viable conversion}}
-#endif
   na = convertibleToConstA;
   na += a; // expected-error{{no viable overloaded '+='}}
 

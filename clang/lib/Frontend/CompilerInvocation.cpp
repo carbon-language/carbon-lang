@@ -1570,6 +1570,8 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
       break;
     case IK_CXX:
     case IK_PreprocessedCXX:
+      LangStd = LangStandard::lang_gnucxx11; // PTR
+      break;
     case IK_ObjCXX:
     case IK_PreprocessedObjCXX:
       LangStd = LangStandard::lang_gnucxx98;

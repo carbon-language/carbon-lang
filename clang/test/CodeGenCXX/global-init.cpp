@@ -1,12 +1,7 @@
-// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm -fexceptions %s -o - -std=c++03 | FileCheck %s -check-prefixes=CHECK,CHECKv03
-// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm -fexceptions %s -o - -std=c++11 | FileCheck %s -check-prefixes=CHECK,CHECKv11
-// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm %s -o - -std=c++03 | FileCheck -check-prefix CHECK-NOEXC %s
-// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm %s -o - -std=c++11 | FileCheck -check-prefix CHECK-NOEXC %s
+// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm -fexceptions %s -o - |FileCheck %s
+// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm %s -o - |FileCheck -check-prefix CHECK-NOEXC %s
 // RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm \
-// RUN:     -momit-leaf-frame-pointer -mdisable-fp-elim %s -o - -std=c++03 \
-// RUN:   | FileCheck -check-prefix CHECK-FP %s
-// RUN: %clang_cc1 -triple=x86_64-apple-darwin10 -emit-llvm \
-// RUN:     -momit-leaf-frame-pointer -mdisable-fp-elim %s -o - -std=c++11 \
+// RUN:     -momit-leaf-frame-pointer -mdisable-fp-elim %s -o - \
 // RUN:   | FileCheck -check-prefix CHECK-FP %s
 
 struct A {
@@ -175,8 +170,7 @@ namespace test7 {
   const B &b2 = B();
   const int b3 = B().n;
 
-  // CHECKv03-NOT: @_ZN5test7L2c1E
-  // CHECKv11:     @_ZN5test7L2c1E
+  // CHECK-NOT: @_ZN5test7L2c1E
   // CHECK: @_ZN5test7L2c2E
   // CHECK-NOT: @_ZN5test7L2c3E
   // CHECK: @_ZN5test7L2c4E
