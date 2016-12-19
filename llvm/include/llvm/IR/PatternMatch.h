@@ -1349,14 +1349,21 @@ m_c_Xor(const LHS &L, const RHS &R) {
   return m_CombineOr(m_Xor(L, R), m_Xor(R, L));
 }
 
-// TODO: Add the related SMax, UMax, UMin commuted matchers.
+// TODO: Add the related UMax and UMin commuted matchers.
 
 /// Matches an SMin with LHS and RHS in either order.
-template<typename LHS, typename RHS>
+template <typename LHS, typename RHS>
 inline match_combine_or<MaxMin_match<ICmpInst, LHS, RHS, smin_pred_ty>,
                         MaxMin_match<ICmpInst, RHS, LHS, smin_pred_ty>>
 m_c_SMin(const LHS &L, const RHS &R) {
   return m_CombineOr(m_SMin(L, R), m_SMin(R, L));
+}
+/// Matches an SMax with LHS and RHS in either order.
+template <typename LHS, typename RHS>
+inline match_combine_or<MaxMin_match<ICmpInst, LHS, RHS, smax_pred_ty>,
+                        MaxMin_match<ICmpInst, RHS, LHS, smax_pred_ty>>
+m_c_SMax(const LHS &L, const RHS &R) {
+  return m_CombineOr(m_SMax(L, R), m_SMax(R, L));
 }
 
 } // end namespace PatternMatch
