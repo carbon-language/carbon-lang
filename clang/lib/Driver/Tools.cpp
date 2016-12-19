@@ -1158,6 +1158,7 @@ static void getARMTargetFeatures(const ToolChain &TC,
           D.Diag(diag::err_opt_not_valid_with_opt) << A->getAsString(Args) << B->getAsString(Args);
       }
 
+      CmdArgs.push_back("-backend-option");
       CmdArgs.push_back("-arm-execute-only");
     }
   }
