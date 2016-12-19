@@ -25,7 +25,13 @@ using namespace llvm;
 
 ARMLegalizerInfo::ARMLegalizerInfo() {
   using namespace TargetOpcode;
+  const LLT p0 = LLT::pointer(0, 32);
   const LLT s32 = LLT::scalar(32);
+
+  setAction({G_FRAME_INDEX, p0}, Legal);
+
+  setAction({G_LOAD, s32}, Legal);
+  setAction({G_LOAD, 1, p0}, Legal);
 
   setAction({G_ADD, s32}, Legal);
 

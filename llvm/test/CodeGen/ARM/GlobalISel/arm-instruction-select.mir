@@ -1,6 +1,7 @@
 # RUN: llc -O0 -mtriple arm-- -global-isel -run-pass=instruction-select -verify-machineinstrs %s -o - | FileCheck %s
 --- |
   define void @test_adds32() { ret void }
+  define void @test_load_from_stack() { ret void }
 ...
 ---
 name:            test_adds32
@@ -34,4 +35,34 @@ body:             |
 
     BX_RET 14, _, implicit %r0
     ; CHECK: BX_RET 14, _, implicit %r0
+...
+---
+name:            test_load_from_stack
+# CHECK-LABEL: name: test_load_from_stack
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+  - { id: 1, class: gprb }
+  - { id: 2, class: gprb }
+  - { id: 3, class: gprb }
+fixedStack:
+  - { id: 0, offset: 0, size: 4, alignment: 4, isImmutable: true, isAliased: false }
+  - { id: 1, offset: 4, size: 4, alignment: 4, isImmutable: true, isAliased: false }
+  - { id: 2, offset: 8, size: 4, alignment: 4, isImmutable: true, isAliased: false }
+# CHECK: id: [[FRAME_INDEX:[0-9]+]], offset: 8
+body:             |
+  bb.0:
+    liveins: %r0, %r1, %r2, %r3
+
+    %0(p0) = G_FRAME_INDEX %fixed-stack.2
+    ; CHECK: [[FIVREG:%[0-9]+]] = ADDri %fixed-stack.[[FRAME_INDEX]], 0, 14, _, _
+
+    %1(s32) = G_LOAD %0(p0)
+    ; CHECK: {{%[0-9]+}} = LDRi12 [[FIVREG]], 0, 14, _
+
+    BX_RET 14, _
+    ; CHECK: BX_RET 14, _
 ...
