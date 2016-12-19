@@ -2250,15 +2250,37 @@ SourceRange UsingDecl::getSourceRange() const {
   return SourceRange(Begin, getNameInfo().getEndLoc());
 }
 
+void UsingPackDecl::anchor() { }
+
+UsingPackDecl *UsingPackDecl::Create(ASTContext &C, DeclContext *DC,
+                                     NamedDecl *InstantiatedFrom,
+                                     ArrayRef<NamedDecl *> UsingDecls) {
+  size_t Extra = additionalSizeToAlloc<NamedDecl *>(UsingDecls.size());
+  return new (C, DC, Extra) UsingPackDecl(DC, InstantiatedFrom, UsingDecls);
+}
+
+UsingPackDecl *UsingPackDecl::CreateDeserialized(ASTContext &C, unsigned ID,
+                                                 unsigned NumExpansions) {
+  size_t Extra = additionalSizeToAlloc<NamedDecl *>(NumExpansions);
+  auto *Result = new (C, ID, Extra) UsingPackDecl(nullptr, nullptr, None);
+  Result->NumExpansions = NumExpansions;
+  auto *Trail = Result->getTrailingObjects<NamedDecl *>();
+  for (unsigned I = 0; I != NumExpansions; ++I)
+    new (Trail + I) NamedDecl*(nullptr);
+  return Result;
+}
+
 void UnresolvedUsingValueDecl::anchor() { }
 
 UnresolvedUsingValueDecl *
 UnresolvedUsingValueDecl::Create(ASTContext &C, DeclContext *DC,
                                  SourceLocation UsingLoc,
                                  NestedNameSpecifierLoc QualifierLoc,
-                                 const DeclarationNameInfo &NameInfo) {
+                                 const DeclarationNameInfo &NameInfo,
+                                 SourceLocation EllipsisLoc) {
   return new (C, DC) UnresolvedUsingValueDecl(DC, C.DependentTy, UsingLoc,
-                                              QualifierLoc, NameInfo);
+                                              QualifierLoc, NameInfo,
+                                              EllipsisLoc);
 }
 
 UnresolvedUsingValueDecl *
@@ -2266,7 +2288,8 @@ UnresolvedUsingValueDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (C, ID) UnresolvedUsingValueDecl(nullptr, QualType(),
                                               SourceLocation(),
                                               NestedNameSpecifierLoc(),
-                                              DeclarationNameInfo());
+                                              DeclarationNameInfo(),
+                                              SourceLocation());
 }
 
 SourceRange UnresolvedUsingValueDecl::getSourceRange() const {
@@ -2283,17 +2306,18 @@ UnresolvedUsingTypenameDecl::Create(ASTContext &C, DeclContext *DC,
                                     SourceLocation TypenameLoc,
                                     NestedNameSpecifierLoc QualifierLoc,
                                     SourceLocation TargetNameLoc,
-                                    DeclarationName TargetName) {
+                                    DeclarationName TargetName,
+                                    SourceLocation EllipsisLoc) {
   return new (C, DC) UnresolvedUsingTypenameDecl(
       DC, UsingLoc, TypenameLoc, QualifierLoc, TargetNameLoc,
-      TargetName.getAsIdentifierInfo());
+      TargetName.getAsIdentifierInfo(), EllipsisLoc);
 }
 
 UnresolvedUsingTypenameDecl *
 UnresolvedUsingTypenameDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (C, ID) UnresolvedUsingTypenameDecl(
       nullptr, SourceLocation(), SourceLocation(), NestedNameSpecifierLoc(),
-      SourceLocation(), nullptr);
+      SourceLocation(), nullptr, SourceLocation());
 }
 
 void StaticAssertDecl::anchor() { }
