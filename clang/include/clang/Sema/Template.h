@@ -515,11 +515,6 @@ namespace clang {
         VarTemplateDecl *VarTemplate,
         VarTemplatePartialSpecializationDecl *PartialSpec);
     void InstantiateEnumDefinition(EnumDecl *Enum, EnumDecl *Pattern);
-
-  private:
-    template<typename T>
-    Decl *instantiateUnresolvedUsingDecl(T *D,
-                                         bool InstantiatingPackElement = false);
   };  
 }
 

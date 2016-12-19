@@ -322,7 +322,6 @@ namespace clang {
     void VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D);
     void VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D);
     void VisitUsingDecl(UsingDecl *D);
-    void VisitUsingPackDecl(UsingPackDecl *D);
     void VisitUsingShadowDecl(UsingShadowDecl *D);
     void VisitConstructorUsingShadowDecl(ConstructorUsingShadowDecl *D);
     void VisitLinkageSpecDecl(LinkageSpecDecl *D);
@@ -1420,15 +1419,6 @@ void ASTDeclReader::VisitUsingDecl(UsingDecl *D) {
   mergeMergeable(D);
 }
 
-void ASTDeclReader::VisitUsingPackDecl(UsingPackDecl *D) {
-  VisitNamedDecl(D);
-  D->InstantiatedFrom = ReadDeclAs<NamedDecl>();
-  NamedDecl **Expansions = D->getTrailingObjects<NamedDecl*>();
-  for (unsigned I = 0; I != D->NumExpansions; ++I)
-    Expansions[I] = ReadDeclAs<NamedDecl>();
-  mergeMergeable(D);
-}
-
 void ASTDeclReader::VisitUsingShadowDecl(UsingShadowDecl *D) {
   RedeclarableResult Redecl = VisitRedeclarable(D);
   VisitNamedDecl(D);
@@ -1462,7 +1452,6 @@ void ASTDeclReader::VisitUnresolvedUsingValueDecl(UnresolvedUsingValueDecl *D) {
   D->setUsingLoc(ReadSourceLocation());
   D->QualifierLoc = Record.ReadNestedNameSpecifierLoc(Idx);
   ReadDeclarationNameLoc(D->DNLoc, D->getDeclName());
-  D->EllipsisLoc = ReadSourceLocation();
   mergeMergeable(D);
 }
 
@@ -1471,7 +1460,6 @@ void ASTDeclReader::VisitUnresolvedUsingTypenameDecl(
   VisitTypeDecl(D);
   D->TypenameLocation = ReadSourceLocation();
   D->QualifierLoc = Record.ReadNestedNameSpecifierLoc(Idx);
-  D->EllipsisLoc = ReadSourceLocation();
   mergeMergeable(D);
 }
 
@@ -3308,9 +3296,6 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     break;
   case DECL_USING:
     D = UsingDecl::CreateDeserialized(Context, ID);
-    break;
-  case DECL_USING_PACK:
-    D = UsingPackDecl::CreateDeserialized(Context, ID, Record[Idx++]);
     break;
   case DECL_USING_SHADOW:
     D = UsingShadowDecl::CreateDeserialized(Context, ID);

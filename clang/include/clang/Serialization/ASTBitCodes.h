@@ -1103,8 +1103,6 @@ namespace clang {
       DECL_NAMESPACE_ALIAS,
       /// \brief A UsingDecl record.
       DECL_USING,
-      /// \brief A UsingPackDecl record.
-      DECL_USING_PACK,
       /// \brief A UsingShadowDecl record.
       DECL_USING_SHADOW,
       /// \brief A ConstructorUsingShadowDecl record.

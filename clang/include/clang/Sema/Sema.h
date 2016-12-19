@@ -4324,15 +4324,12 @@ public:
 
   NamedDecl *BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
                                    SourceLocation UsingLoc,
-                                   bool HasTypenameKeyword,
-                                   SourceLocation TypenameLoc,
                                    CXXScopeSpec &SS,
                                    DeclarationNameInfo NameInfo,
-                                   SourceLocation EllipsisLoc,
                                    AttributeList *AttrList,
-                                   bool IsInstantiation);
-  NamedDecl *BuildUsingPackDecl(NamedDecl *InstantiatedFrom,
-                                ArrayRef<NamedDecl *> Expansions);
+                                   bool IsInstantiation,
+                                   bool HasTypenameKeyword,
+                                   SourceLocation TypenameLoc);
 
   bool CheckInheritingConstructorUsingDecl(UsingDecl *UD);
 
@@ -4346,11 +4343,10 @@ public:
   Decl *ActOnUsingDeclaration(Scope *CurScope,
                               AccessSpecifier AS,
                               SourceLocation UsingLoc,
-                              SourceLocation TypenameLoc,
                               CXXScopeSpec &SS,
                               UnqualifiedId &Name,
-                              SourceLocation EllipsisLoc,
-                              AttributeList *AttrList);
+                              AttributeList *AttrList,
+                              SourceLocation TypenameLoc);
   Decl *ActOnAliasDeclaration(Scope *CurScope,
                               AccessSpecifier AS,
                               MultiTemplateParamsArg TemplateParams,
@@ -6355,7 +6351,7 @@ public:
   ///
   /// \param SS The nested-name-specifier that will be traversed to find
   /// unexpanded parameter packs.
-  void collectUnexpandedParameterPacks(NestedNameSpecifierLoc NNS,
+  void collectUnexpandedParameterPacks(CXXScopeSpec &SS,
                          SmallVectorImpl<UnexpandedParameterPack> &Unexpanded);
 
   /// \brief Collect the set of unexpanded parameter packs within the given
