@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include <cassert>
+#include <cstdint>
 #include <cstdio>
 #include <fcntl.h>
 #include <mutex>
@@ -113,8 +114,7 @@ static int __xray_OpenLogFile() XRAY_NEVER_INSTRUMENT {
   static char TmpWildcardPattern[] = "XXXXXX";
   auto E = internal_strncat(TmpFilename, flags()->xray_logfile_base,
                             sizeof(TmpFilename) - 10);
-  if (static_cast<size_t>((E + 6) - TmpFilename) >
-      (sizeof(TmpFilename) - 1)) {
+  if (static_cast<size_t>((E + 6) - TmpFilename) > (sizeof(TmpFilename) - 1)) {
     Report("XRay log file base too long: %s\n", flags()->xray_logfile_base);
     return -1;
   }
