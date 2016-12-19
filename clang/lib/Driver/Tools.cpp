@@ -4263,6 +4263,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Add default argument set.
     if (!Args.hasArg(options::OPT__analyzer_no_default_checks)) {
       CmdArgs.push_back("-analyzer-checker=core");
+      CmdArgs.push_back("-analyzer-checker=apiModeling");
 
     if (!IsWindowsMSVC) {
       CmdArgs.push_back("-analyzer-checker=unix");
