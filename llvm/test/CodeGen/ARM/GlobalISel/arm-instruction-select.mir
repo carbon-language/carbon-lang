@@ -117,6 +117,10 @@ registers:
   - { id: 1, class: gprb }
   - { id: 2, class: gprb }
   - { id: 3, class: gprb }
+# CHECK-DAG: id: 0, class: gpr
+# CHECK-DAG: id: 1, class: gpr
+# CHECK-DAG: id: 2, class: gpr
+# CHECK-DAG: id: 3, class: gpr
 fixedStack:
   - { id: 0, offset: 0, size: 4, alignment: 4, isImmutable: true, isAliased: false }
   - { id: 1, offset: 4, size: 4, alignment: 4, isImmutable: true, isAliased: false }
