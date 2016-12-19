@@ -32,7 +32,7 @@ int main() {
   type = __tsan_locate_address(&global_var, name, 128, &start, &size);
   fprintf(stderr, "type: %s, name = %s, start = %p, size = %zu\n", type, name,
           start, size);
-  // CHECK: type: global, name = global_var, start = [[GLOBAL_VAR]], size = 8
+  // CHECK: type: global, name = global_var, start = [[GLOBAL_VAR]], size = {{8|0}}
 
   type = __tsan_locate_address(heap_var, name, 128, &start, &size);
   fprintf(stderr, "type: %s, start = %p, size = %zu\n", type, start, size);
