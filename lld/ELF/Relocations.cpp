@@ -156,7 +156,7 @@ static unsigned handleTlsRelocation(uint32_t Type, SymbolBody &Body,
     if (In<ELFT>::Got->addDynTlsEntry(Body)) {
       uintX_t Off = In<ELFT>::Got->getGlobalDynOffset(Body);
       In<ELFT>::RelaDyn->addReloc({Target->TlsDescRel, In<ELFT>::Got, Off,
-                                   !Body.isPreemptible(), &Body, 0});
+                                   !IsPreemptible, &Body, 0});
     }
     if (Expr != R_TLSDESC_CALL)
       C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
