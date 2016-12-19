@@ -89,6 +89,7 @@ private:
 
   uintX_t FileSize;
   uintX_t SectionHeaderOff;
+  bool AllocateHeader = true;
 };
 } // anonymous namespace
 
@@ -192,15 +193,6 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (Config->Relocatable) {
     assignFileOffsets();
   } else {
-    // Binary output does not have PHDRS.
-    if (!Config->OFormatBinary) {
-      Phdrs = Script<ELFT>::X->hasPhdrsCommands()
-                  ? Script<ELFT>::X->createPhdrs()
-                  : createPhdrs();
-      addPtArmExid(Phdrs);
-      fixHeaders();
-    }
-
     if (ScriptConfig->HasSections) {
       Script<ELFT>::X->assignAddresses(Phdrs);
     } else {
@@ -532,6 +524,17 @@ static bool compareSectionsNonScript(const OutputSectionBase *A,
   // allocatable sections.
   if (!AIsAlloc)
     return false;
+
+  // We want to put section specified by -T option first, so we
+  // can start assigning VA starting from them later.
+  auto AAddrSetI = Config->SectionStartMap.find(A->getName());
+  auto BAddrSetI = Config->SectionStartMap.find(B->getName());
+  bool AHasAddrSet = AAddrSetI != Config->SectionStartMap.end();
+  bool BHasAddrSet = BAddrSetI != Config->SectionStartMap.end();
+  if (AHasAddrSet != BHasAddrSet)
+    return AHasAddrSet;
+  if (AHasAddrSet)
+    return AAddrSetI->second < BAddrSetI->second;
 
   // We want the read only sections first so that they go in the PT_LOAD
   // covering the program headers at the start of the file.
@@ -1038,6 +1041,16 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     Sec->ShName = In<ELFT>::ShStrTab->addString(Sec->getName());
   }
 
+  // Binary and relocatable output does not have PHDRS.
+  // The headers have to be created before finalize as that can influence the
+  // image base and the dynamic section on mips includes the image base.
+  if (!Config->Relocatable && !Config->OFormatBinary) {
+    Phdrs = Script<ELFT>::X->hasPhdrsCommands() ? Script<ELFT>::X->createPhdrs()
+                                                : createPhdrs();
+    addPtArmExid(Phdrs);
+    fixHeaders();
+  }
+
   // Fill other section headers. The dynamic table is finalized
   // at the end because some tags like RELSZ depend on result
   // of finalizing other sections.
@@ -1159,10 +1172,6 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
   // Add the first PT_LOAD segment for regular output sections.
   uintX_t Flags = computeFlags<ELFT>(PF_R);
   PhdrEntry *Load = AddHdr(PT_LOAD, Flags);
-  if (!ScriptConfig->HasSections) {
-    Load->add(Out<ELFT>::ElfHeader);
-    Load->add(Out<ELFT>::ProgramHeaders);
-  }
 
   PhdrEntry TlsHdr(PT_TLS, PF_R);
   PhdrEntry RelRo(PT_GNU_RELRO, PF_R);
@@ -1270,7 +1279,7 @@ void Writer<ELFT>::addPtArmExid(std::vector<PhdrEntry> &Phdrs) {
 // have to be page aligned so that the dynamic linker can set the permissions.
 template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
   for (const PhdrEntry &P : Phdrs)
-    if (P.p_type == PT_LOAD)
+    if (P.p_type == PT_LOAD && P.First)
       P.First->PageAlign = true;
 
   for (const PhdrEntry &P : Phdrs) {
@@ -1288,6 +1297,23 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
   }
 }
 
+template <class ELFT>
+void elf::allocateHeaders(MutableArrayRef<PhdrEntry> Phdrs,
+                          ArrayRef<OutputSectionBase *> OutputSections) {
+  auto FirstPTLoad =
+      std::find_if(Phdrs.begin(), Phdrs.end(),
+                   [](const PhdrEntry &E) { return E.p_type == PT_LOAD; });
+  if (FirstPTLoad == Phdrs.end())
+    return;
+  if (FirstPTLoad->First)
+    for (OutputSectionBase *Sec : OutputSections)
+      if (Sec->FirstInPtLoad == FirstPTLoad->First)
+        Sec->FirstInPtLoad = Out<ELFT>::ElfHeader;
+  FirstPTLoad->First = Out<ELFT>::ElfHeader;
+  if (!FirstPTLoad->Last)
+    FirstPTLoad->Last = Out<ELFT>::ProgramHeaders;
+}
+
 // We should set file offsets and VAs for elf header and program headers
 // sections. These are special, we do not include them into output sections
 // list, but have them to simplify the code.
@@ -1296,6 +1322,25 @@ template <class ELFT> void Writer<ELFT>::fixHeaders() {
   // If the script has SECTIONS, assignAddresses will compute the values.
   if (ScriptConfig->HasSections)
     return;
+
+  uintX_t HeaderSize = getHeaderSize<ELFT>();
+  // When -T<section> option is specified, lower the base to make room for those
+  // sections.
+  if (!Config->SectionStartMap.empty()) {
+    uint64_t Min = -1;
+    for (const auto &P : Config->SectionStartMap)
+      Min = std::min(Min, P.second);
+    if (HeaderSize < Min)
+      Min -= HeaderSize;
+    else
+      AllocateHeader = false;
+    if (Min < Config->ImageBase)
+      Config->ImageBase = alignDown(Min, Config->MaxPageSize);
+  }
+
+  if (AllocateHeader)
+    allocateHeaders<ELFT>(Phdrs, OutputSections);
+
   uintX_t BaseVA = Config->ImageBase;
   Out<ELFT>::ElfHeader->Addr = BaseVA;
   Out<ELFT>::ProgramHeaders->Addr = BaseVA + Out<ELFT>::ElfHeader->Size;
@@ -1303,7 +1348,9 @@ template <class ELFT> void Writer<ELFT>::fixHeaders() {
 
 // Assign VAs (addresses at run-time) to output sections.
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
-  uintX_t VA = Config->ImageBase + getHeaderSize<ELFT>();
+  uintX_t VA = Config->ImageBase;
+  if (AllocateHeader)
+    VA += getHeaderSize<ELFT>();
   uintX_t ThreadBssOffset = 0;
   for (OutputSectionBase *Sec : OutputSections) {
     uintX_t Alignment = Sec->Addralign;
@@ -1681,6 +1728,15 @@ template void elf::writeResult<ELF32LE>();
 template void elf::writeResult<ELF32BE>();
 template void elf::writeResult<ELF64LE>();
 template void elf::writeResult<ELF64BE>();
+
+template void elf::allocateHeaders<ELF32LE>(MutableArrayRef<PhdrEntry>,
+                                            ArrayRef<OutputSectionBase *>);
+template void elf::allocateHeaders<ELF32BE>(MutableArrayRef<PhdrEntry>,
+                                            ArrayRef<OutputSectionBase *>);
+template void elf::allocateHeaders<ELF64LE>(MutableArrayRef<PhdrEntry>,
+                                            ArrayRef<OutputSectionBase *>);
+template void elf::allocateHeaders<ELF64BE>(MutableArrayRef<PhdrEntry>,
+                                            ArrayRef<OutputSectionBase *>);
 
 template bool elf::isRelroSection<ELF32LE>(const OutputSectionBase *);
 template bool elf::isRelroSection<ELF32BE>(const OutputSectionBase *);
