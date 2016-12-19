@@ -273,7 +273,7 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
       continue;
 
     // Ignore layouts that are bound to violate the column limit.
-    if (Format.TotalWidth > Style.ColumnLimit)
+    if (Format.TotalWidth > Style.ColumnLimit && Columns > 1)
       continue;
 
     Formats.push_back(Format);
@@ -287,7 +287,7 @@ CommaSeparatedList::getColumnFormat(unsigned RemainingCharacters) const {
            I = Formats.rbegin(),
            E = Formats.rend();
        I != E; ++I) {
-    if (I->TotalWidth <= RemainingCharacters) {
+    if (I->TotalWidth <= RemainingCharacters || I->Columns == 1) {
       if (BestFormat && I->LineCount > BestFormat->LineCount)
         break;
       BestFormat = &*I;
