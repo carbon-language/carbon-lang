@@ -517,6 +517,7 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
     Builder.defineMacro("__cpp_namespace_attributes", "201411");
     Builder.defineMacro("__cpp_enumerator_attributes", "201411");
     Builder.defineMacro("__cpp_nested_namespace_definitions", "201411");
+    Builder.defineMacro("__cpp_variadic_using", "201611");
     Builder.defineMacro("__cpp_aggregate_bases", "201603");
     Builder.defineMacro("__cpp_nontype_template_args", "201411");
     Builder.defineMacro("__cpp_fold_expressions", "201603");
