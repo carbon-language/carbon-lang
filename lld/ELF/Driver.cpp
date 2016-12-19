@@ -487,7 +487,7 @@ static void parseSymbolOrderingList(MemoryBufferRef MB) {
   SmallVector<StringRef, 0> Arr;
   MB.getBuffer().split(Arr, '\n');
   for (StringRef S : Arr)
-    Config->SymbolOrderingFile.insert({CachedHashStringRef(S.trim()), I++});
+    Config->SymbolOrderingFile.insert({S.trim(), I++});
 }
 
 // Initializes Config members by the command line options.
