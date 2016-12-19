@@ -43,6 +43,7 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
   assert(RegBank && "Can't get reg bank for virtual register");
 
   const unsigned DstSize = MRI.getType(DstReg).getSizeInBits();
+  (void)DstSize;
   unsigned SrcReg = I.getOperand(1).getReg();
   const unsigned SrcSize = RBI.getSizeInBits(SrcReg, MRI, TRI);
   (void)SrcSize;
