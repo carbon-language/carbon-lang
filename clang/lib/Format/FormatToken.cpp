@@ -92,6 +92,14 @@ unsigned CommaSeparatedList::formatAfterToken(LineState &State,
 
   // Find the best ColumnFormat, i.e. the best number of columns to use.
   const ColumnFormat *Format = getColumnFormat(RemainingCodePoints);
+
+  // Formatting with 1 Column isn't really a column layout, so we don't need the
+  // special logic here. We can just avoid bin packing any of the parameters.
+  if (Format && Format->Columns == 1) {
+    State.Stack.back().AvoidBinPacking = true;
+    return 0;
+  }
+
   // If no ColumnFormat can be used, the braced list would generally be
   // bin-packed. Add a severe penalty to this so that column layouts are
   // preferred if possible.

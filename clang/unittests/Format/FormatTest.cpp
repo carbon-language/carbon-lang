@@ -6641,7 +6641,7 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
       "std::this_thread::sleep_for(\n"
       "    std::chrono::nanoseconds{ std::chrono::seconds{ 1 } } / 5);",
       ExtraSpaces);
-  verifyFormat("std::vector<MyValues> aaaaaaaaaaaaaaaaaaa{\n"
+  verifyFormat("std::vector<MyValues> aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa{\n"
                "    aaaaaaa,\n"
                "    aaaaaaaaaa,\n"
                "    aaaaa,\n"
