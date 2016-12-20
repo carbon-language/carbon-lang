@@ -765,33 +765,34 @@ template <class ELFT> static void sortCtorsDtors(OutputSectionBase *S) {
 
 // Sort input sections using the list provided by --symbol-ordering-file.
 template <class ELFT>
-static void sortBySymbolsOrder(ArrayRef<OutputSectionBase *> V) {
+static void sortBySymbolsOrder(ArrayRef<OutputSectionBase *> OutputSections) {
   if (Config->SymbolOrderingFile.empty())
     return;
 
-  // Build sections order map from symbols list.
-  DenseMap<InputSectionBase<ELFT> *, unsigned> SectionsOrder;
+  // Build a map from symbols to their priorities. Symbols that didn't
+  // appear in the symbol ordering file have the lowest priority 0.
+  // All explicitly mentioned symbols have negative (higher) priorities.
+  DenseMap<StringRef, int> SymbolOrder;
+  int Priority = -Config->SymbolOrderingFile.size();
+  for (StringRef S : Config->SymbolOrderingFile)
+    SymbolOrder.insert({S, Priority++});
+
+  // Build a map from sections to their priorities.
+  DenseMap<InputSectionBase<ELFT> *, int> SectionOrder;
   for (elf::ObjectFile<ELFT> *File : Symtab<ELFT>::X->getObjectFiles()) {
     for (SymbolBody *Body : File->getSymbols()) {
       auto *D = dyn_cast<DefinedRegular<ELFT>>(Body);
       if (!D || !D->Section)
         continue;
-      auto It = Config->SymbolOrderingFile.find(Body->getName());
-      if (It == Config->SymbolOrderingFile.end())
-        continue;
-
-      auto It2 = SectionsOrder.insert({D->Section, It->second});
-      if (!It2.second)
-        It2.first->second = std::min(It->second, It2.first->second);
+      int &Priority = SectionOrder[D->Section];
+      Priority = std::min(Priority, SymbolOrder.lookup(D->getName()));
     }
   }
 
-  for (OutputSectionBase *Base : V)
+  // Sort sections by priority.
+  for (OutputSectionBase *Base : OutputSections)
     if (auto *Sec = dyn_cast<OutputSection<ELFT>>(Base))
-      Sec->sort([&](InputSection<ELFT> *S) {
-        auto It = SectionsOrder.find(S);
-        return It == SectionsOrder.end() ? UINT32_MAX : It->second;
-      });
+      Sec->sort([&](InputSection<ELFT> *S) { return SectionOrder.lookup(S); });
 }
 
 template <class ELFT>

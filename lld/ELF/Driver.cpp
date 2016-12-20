@@ -491,16 +491,6 @@ static std::vector<StringRef> getLines(MemoryBufferRef MB) {
   return Ret;
 }
 
-// Parse the --symbol-ordering-file argument. File has form:
-// symbolName1
-// [...]
-// symbolNameN
-static void parseSymbolOrderingList(MemoryBufferRef MB) {
-  unsigned I = 0;
-  for (StringRef S : getLines(MB))
-    Config->SymbolOrderingFile.insert({S, I++});
-}
-
 // Initializes Config members by the command line options.
 void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_L))
@@ -645,7 +635,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   if (auto *Arg = Args.getLastArg(OPT_symbol_ordering_file))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
-      parseSymbolOrderingList(*Buffer);
+      Config->SymbolOrderingFile = getLines(*Buffer);
 
   // If --retain-symbol-file is used, we'll retail only the symbols listed in
   // the file and discard all others.

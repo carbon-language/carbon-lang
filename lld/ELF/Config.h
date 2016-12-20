@@ -72,7 +72,6 @@ struct VersionDefinition {
 struct Configuration {
   InputFile *FirstElf = nullptr;
   uint8_t OSABI = 0;
-  llvm::DenseMap<llvm::StringRef, unsigned> SymbolOrderingFile;
   llvm::StringMap<uint64_t> SectionStartMap;
   llvm::StringRef DynamicLinker;
   llvm::StringRef Entry;
@@ -89,6 +88,7 @@ struct Configuration {
   std::vector<VersionDefinition> VersionDefinitions;
   std::vector<llvm::StringRef> AuxiliaryList;
   std::vector<llvm::StringRef> SearchPaths;
+  std::vector<llvm::StringRef> SymbolOrderingFile;
   std::vector<llvm::StringRef> Undefined;
   std::vector<SymbolVersion> VersionScriptGlobals;
   std::vector<SymbolVersion> VersionScriptLocals;
