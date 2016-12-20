@@ -134,11 +134,10 @@ static Optional<AllocFnsTy> getAllocationData(const Value *V, AllocType AllocTy,
   if (!TLI || !TLI->getLibFunc(FnName, TLIFn) || !TLI->has(TLIFn))
     return None;
 
-  const auto *Iter =
-      std::find_if(std::begin(AllocationFnData), std::end(AllocationFnData),
-                   [TLIFn](const std::pair<LibFunc::Func, AllocFnsTy> &P) {
-                     return P.first == TLIFn;
-                   });
+  const auto *Iter = find_if(
+      AllocationFnData, [TLIFn](const std::pair<LibFunc::Func, AllocFnsTy> &P) {
+        return P.first == TLIFn;
+      });
 
   if (Iter == std::end(AllocationFnData))
     return None;
