@@ -21,7 +21,7 @@ using namespace llvm;
 using namespace lld;
 using namespace lld::elf;
 
-StringMatcher::StringMatcher(const std::vector<StringRef> &Pat) {
+StringMatcher::StringMatcher(ArrayRef<StringRef> Pat) {
   for (StringRef S : Pat) {
     Expected<GlobPattern> Pat = GlobPattern::create(S);
     if (!Pat)

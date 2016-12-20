@@ -61,7 +61,7 @@ private:
 class StringMatcher {
 public:
   StringMatcher() = default;
-  explicit StringMatcher(const std::vector<StringRef> &Pat);
+  explicit StringMatcher(ArrayRef<StringRef> Pat);
 
   bool match(StringRef S) const;
 
