@@ -82,8 +82,6 @@ public:
   Optional<uint64_t> getAsAddress() const;
   Optional<uint64_t> getAsSectionOffset() const;
   Optional<ArrayRef<uint8_t>> getAsBlock() const;
-  Optional<uint64_t> getAsCStringOffset() const;
-  Optional<uint64_t> getAsReferenceUVal() const;
   /// Get the fixed byte size for a given form.
   ///
   /// If the form always has a fixed valid byte size that doesn't depend on a
