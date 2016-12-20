@@ -2,7 +2,7 @@
 // RUN: env %env_tsan_opts=stack_trace_format=DEFAULT %deflake %run %t 2>&1 | FileCheck %s
 
 // Until I figure out how to make this test work on Linux
-// REQUIRES: x86_64-darwin
+// REQUIRES: system-darwin
 
 #include "test.h"
 #include <pthread.h>
