@@ -5,7 +5,7 @@ struct S {
 };
 
 struct PositiveValueChar {
-  PositiveValueChar() : c0(), c1(), c2(), c3() {}
+  PositiveValueChar() : c0(), c1()/*, c2(), c3()*/ {}
   // CHECK-FIXES: PositiveValueChar()  {}
   const char c0;
   // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: use default member initializer for 'c0' [modernize-use-default-member-init]
@@ -13,12 +13,12 @@ struct PositiveValueChar {
   wchar_t c1;
   // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: use default member initializer for 'c1'
   // CHECK-FIXES: wchar_t c1 = L'\0';
-  char16_t c2;
-  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: use default member initializer for 'c2'
-  // CHECK-FIXES: char16_t c2 = u'\0';
-  char32_t c3;
-  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: use default member initializer for 'c3'
-  // CHECK-FIXES: char32_t c3 = U'\0';
+  // FIXME: char16_t c2;
+  // C HECK-MESSAGES: :[[@LINE-1]]:12: warning: use default member initializer for 'c2'
+  // C HECK-FIXES: char16_t c2 = u'\0';
+  // FIXME: char32_t c3;
+  // C HECK-MESSAGES: :[[@LINE-1]]:12: warning: use default member initializer for 'c3'
+  // C HECK-FIXES: char32_t c3 = U'\0';
 };
 
 struct PositiveChar {
