@@ -1697,9 +1697,32 @@ static MachineBasicBlock *emitIndirectDst(MachineInstr &MI,
 
 MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
   MachineInstr &MI, MachineBasicBlock *BB) const {
+
+  const SIInstrInfo *TII = getSubtarget()->getInstrInfo();
+  MachineFunction *MF = BB->getParent();
+  SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
+
+  if (TII->isMIMG(MI)) {
+      if (!MI.memoperands_empty())
+        return BB;
+    // Add a memoperand for mimg instructions so that they aren't assumed to
+    // be ordered memory instuctions.
+
+    MachinePointerInfo PtrInfo(MFI->getImagePSV());
+    MachineMemOperand::Flags Flags = MachineMemOperand::MODereferenceable;
+    if (MI.mayStore())
+      Flags |= MachineMemOperand::MOStore;
+
+    if (MI.mayLoad())
+      Flags |= MachineMemOperand::MOLoad;
+
+    auto MMO = MF->getMachineMemOperand(PtrInfo, Flags, 0, 0);
+    MI.addMemOperand(*MF, MMO);
+    return BB;
+  }
+
   switch (MI.getOpcode()) {
   case AMDGPU::SI_INIT_M0: {
-    const SIInstrInfo *TII = getSubtarget()->getInstrInfo();
     BuildMI(*BB, MI.getIterator(), MI.getDebugLoc(),
             TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
       .addOperand(MI.getOperand(0));
@@ -1707,10 +1730,6 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
     return BB;
   }
   case AMDGPU::GET_GROUPSTATICSIZE: {
-    const SIInstrInfo *TII = getSubtarget()->getInstrInfo();
-
-    MachineFunction *MF = BB->getParent();
-    SIMachineFunctionInfo *MFI = MF->getInfo<SIMachineFunctionInfo>();
     DebugLoc DL = MI.getDebugLoc();
     BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_MOV_B32))
       .addOperand(MI.getOperand(0))
@@ -1734,7 +1753,6 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
     return splitKillBlock(MI, BB);
   case AMDGPU::V_CNDMASK_B64_PSEUDO: {
     MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
-    const SIInstrInfo *TII = getSubtarget()->getInstrInfo();
 
     unsigned Dst = MI.getOperand(0).getReg();
     unsigned Src0 = MI.getOperand(1).getReg();
