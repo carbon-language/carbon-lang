@@ -8340,6 +8340,7 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_IntegralComplexToFloatingComplex:
   case CK_BuiltinFnToFnPtr:
   case CK_ZeroToOCLEvent:
+  case CK_ZeroToOCLQueue:
   case CK_NonAtomicToAtomic:
   case CK_AddressSpaceConversion:
   case CK_IntToOCLSampler:
@@ -8837,6 +8838,7 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
   case CK_CopyAndAutoreleaseBlockObject:
   case CK_BuiltinFnToFnPtr:
   case CK_ZeroToOCLEvent:
+  case CK_ZeroToOCLQueue:
   case CK_NonAtomicToAtomic:
   case CK_AddressSpaceConversion:
   case CK_IntToOCLSampler:
