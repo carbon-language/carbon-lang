@@ -7462,17 +7462,11 @@ Sema::CheckMicrosoftIfExistsSymbol(Scope *S, SourceLocation KeywordLoc,
                                    UnqualifiedId &Name) {
   DeclarationNameInfo TargetNameInfo = GetNameFromUnqualifiedId(Name);
 
-  // Check for unexpanded parameter packs.
-  SmallVector<UnexpandedParameterPack, 4> Unexpanded;
-  collectUnexpandedParameterPacks(SS, Unexpanded);
-  collectUnexpandedParameterPacks(TargetNameInfo, Unexpanded);
-  if (!Unexpanded.empty()) {
-    DiagnoseUnexpandedParameterPacks(KeywordLoc,
-                                     IsIfExists? UPPC_IfExists
-                                               : UPPC_IfNotExists,
-                                     Unexpanded);
+  // Check for an unexpanded parameter pack.
+  auto UPPC = IsIfExists ? UPPC_IfExists : UPPC_IfNotExists;
+  if (DiagnoseUnexpandedParameterPack(SS, UPPC) ||
+      DiagnoseUnexpandedParameterPack(TargetNameInfo, UPPC))
     return IER_Error;
-  }
 
   return CheckMicrosoftIfExistsSymbol(S, SS, TargetNameInfo);
 }
