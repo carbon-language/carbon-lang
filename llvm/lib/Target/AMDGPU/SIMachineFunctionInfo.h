@@ -47,6 +47,29 @@ public:
   }
 };
 
+class AMDGPUBufferPseudoSourceValue : public PseudoSourceValue {
+public:
+  explicit AMDGPUBufferPseudoSourceValue() :
+    PseudoSourceValue(PseudoSourceValue::TargetCustom) { }
+
+  bool isConstant(const MachineFrameInfo *) const override {
+    // This should probably be true for most images, but we will start by being
+    // conservative.
+    return false;
+  }
+
+  bool isAliased(const MachineFrameInfo *) const override {
+    // FIXME: If we ever change image intrinsics to accept fat pointers, then
+    // this could be true for some cases.
+    return false;
+  }
+
+  bool mayAlias(const MachineFrameInfo*) const override {
+    // FIXME: If we ever change image intrinsics to accept fat pointers, then
+    // this could be true for some cases.
+    return false;
+  }
+};
 
 /// This class keeps track of the SPI_SP_INPUT_ADDR config register, which
 /// tells the hardware which interpolation parameters to load.
@@ -98,6 +121,7 @@ class SIMachineFunctionInfo final : public AMDGPUMachineFunction {
   // Stack object indices for work item IDs.
   std::array<int, 3> DebuggerWorkItemIDStackObjectIndices;
 
+  AMDGPUBufferPseudoSourceValue BufferPSV;
   std::unique_ptr<AMDGPUImagePseudoSourceValue> ImagePSV;
 
 public:
@@ -460,6 +484,10 @@ public:
       return AMDGPU::VGPR2;
     }
     llvm_unreachable("unexpected dimension");
+  }
+
+  const AMDGPUBufferPseudoSourceValue *getBufferPSV() const {
+    return &BufferPSV;
   }
 
   AMDGPUImagePseudoSourceValue *getImagePSV() {
