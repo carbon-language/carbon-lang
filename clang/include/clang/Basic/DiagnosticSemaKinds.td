@@ -2930,7 +2930,7 @@ def warn_impcast_integer_precision_constant : Warning<
   "implicit conversion from %2 to %3 changes value from %0 to %1">,
   InGroup<ConstantConversion>;
 def warn_impcast_bitfield_precision_constant : Warning<
-  "implicit truncation from %2 to bitfield changes value from %0 to %1">,
+  "implicit truncation from %2 to bit-field changes value from %0 to %1">,
   InGroup<BitFieldConstantConversion>;
 
 def warn_impcast_literal_float_to_integer : Warning<
@@ -8088,7 +8088,7 @@ def err_opencl_function_variable : Error<
 def err_static_function_scope : Error<
   "variables in function scope cannot be declared static">;
 def err_opencl_bitfields : Error<
-  "bitfields are not supported in OpenCL">;
+  "bit-fields are not supported in OpenCL">;
 def err_opencl_vla : Error<
   "variable length arrays are not supported in OpenCL">;
 def err_bad_kernel_param_type : Error<
