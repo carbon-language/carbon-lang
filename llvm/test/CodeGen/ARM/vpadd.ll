@@ -213,33 +213,44 @@ define <2 x i64> @vpaddlQu32(<4 x i32>* %A) nounwind {
 	ret <2 x i64> %tmp2
 }
 
-; Test AddCombine optimization that generates a vpaddl.s
-define void @addCombineToVPADDL() nounwind ssp {
-; CHECK-LABEL: addCombineToVPADDL:
+; Combine vuzp+vadd->vpadd.
+; FIXME: Implement this optimization
+define void @addCombineToVPADD(<16 x i8> *%cbcr, <8 x i8> *%X) nounwind ssp {
+; CHECK-LABEL: addCombineToVPADD:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    .save {r11}
-; CHECK-NEXT:    push {r11}
-; CHECK-NEXT:    .setfp r11, sp
-; CHECK-NEXT:    mov r11, sp
-; CHECK-NEXT:    .pad #44
-; CHECK-NEXT:    sub sp, sp, #44
-; CHECK-NEXT:    bic sp, sp, #15
-; CHECK-NEXT:    add r0, sp, #16
-; CHECK-NEXT:    vld1.64 {d16, d17}, [r0:128]
-; CHECK-NEXT:    vpaddl.s8 q8, q8
-; CHECK-NEXT:    vmovn.i16 d16, q8
-; CHECK-NEXT:    vstr d16, [sp, #8]
-; CHECK-NEXT:    mov sp, r11
-; CHECK-NEXT:    pop {r11}
+; CHECK-NEXT:    vld1.64 {d16, d17}, [r0]
+; CHECK-NEXT:    vorr d18, d17, d17
+; CHECK-NEXT:    vuzp.8 d16, d18
+; CHECK-NEXT:    vadd.i8 d16, d18, d16
+; CHECK-NEXT:    vstr d16, [r1]
 ; CHECK-NEXT:    mov pc, lr
-  %cbcr = alloca <16 x i8>, align 16
-  %X = alloca <8 x i8>, align 8
   %tmp = load <16 x i8>, <16 x i8>* %cbcr
   %tmp1 = shufflevector <16 x i8> %tmp, <16 x i8> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
-  %tmp2 = load <16 x i8>, <16 x i8>* %cbcr
-  %tmp3 = shufflevector <16 x i8> %tmp2, <16 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  %tmp3 = shufflevector <16 x i8> %tmp, <16 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+
   %add = add <8 x i8> %tmp3, %tmp1
   store <8 x i8> %add, <8 x i8>* %X, align 8
+  ret void
+}
+
+; Combine vuzp+vaddl->vpaddl
+; FIXME: Implement this optimization.
+define void @addCombineToVPADDL_sext(<16 x i8> *%cbcr, <8 x i16> *%X) nounwind ssp {
+; CHECK-LABEL: addCombineToVPADDL_sext:
+; CHECK:       @ BB#0:
+; CHECK-NEXT:    vld1.64 {d16, d17}, [r0]
+; CHECK-NEXT:    vorr d18, d17, d17
+; CHECK-NEXT:    vuzp.8 d16, d18
+; CHECK-NEXT:    vaddl.s8 q8, d18, d16
+; CHECK-NEXT:    vst1.64 {d16, d17}, [r1]
+; CHECK-NEXT:    mov pc, lr
+  %tmp = load <16 x i8>, <16 x i8>* %cbcr
+  %tmp1 = shufflevector <16 x i8> %tmp, <16 x i8> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  %tmp3 = shufflevector <16 x i8> %tmp, <16 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  %tmp4 = sext <8 x i8> %tmp3 to <8 x i16>
+  %tmp5 = sext <8 x i8> %tmp1 to <8 x i16>
+  %add = add <8 x i16> %tmp4, %tmp5
+  store <8 x i16> %add, <8 x i16>* %X, align 8
   ret void
 }
 

@@ -7,14 +7,14 @@ define <8 x i8> @vuzpi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-NEXT:    vldr d16, [r1]
 ; CHECK-NEXT:    vldr d17, [r0]
 ; CHECK-NEXT:    vuzp.8 d17, d16
-; CHECK-NEXT:    vadd.i8 d16, d17, d16
+; CHECK-NEXT:    vmul.i8 d16, d17, d16
 ; CHECK-NEXT:    vmov r0, r1, d16
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
 	%tmp4 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
-        %tmp5 = add <8 x i8> %tmp3, %tmp4
+        %tmp5 = mul <8 x i8> %tmp3, %tmp4
 	ret <8 x i8> %tmp5
 }
 
@@ -39,14 +39,14 @@ define <4 x i16> @vuzpi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ; CHECK-NEXT:    vldr d16, [r1]
 ; CHECK-NEXT:    vldr d17, [r0]
 ; CHECK-NEXT:    vuzp.16 d17, d16
-; CHECK-NEXT:    vadd.i16 d16, d17, d16
+; CHECK-NEXT:    vmul.i16 d16, d17, d16
 ; CHECK-NEXT:    vmov r0, r1, d16
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <4 x i16>, <4 x i16>* %A
 	%tmp2 = load <4 x i16>, <4 x i16>* %B
 	%tmp3 = shufflevector <4 x i16> %tmp1, <4 x i16> %tmp2, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
 	%tmp4 = shufflevector <4 x i16> %tmp1, <4 x i16> %tmp2, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
-        %tmp5 = add <4 x i16> %tmp3, %tmp4
+        %tmp5 = mul <4 x i16> %tmp3, %tmp4
 	ret <4 x i16> %tmp5
 }
 
@@ -207,14 +207,14 @@ define <8 x i8> @vuzpi8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-NEXT:    vldr d16, [r1]
 ; CHECK-NEXT:    vldr d17, [r0]
 ; CHECK-NEXT:    vuzp.8 d17, d16
-; CHECK-NEXT:    vadd.i8 d16, d17, d16
+; CHECK-NEXT:    vmul.i8 d16, d17, d16
 ; CHECK-NEXT:    vmov r0, r1, d16
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <8 x i8>, <8 x i8>* %A
 	%tmp2 = load <8 x i8>, <8 x i8>* %B
 	%tmp3 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 0, i32 2, i32 undef, i32 undef, i32 8, i32 10, i32 12, i32 14>
 	%tmp4 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 undef, i32 undef, i32 13, i32 15>
-        %tmp5 = add <8 x i8> %tmp3, %tmp4
+        %tmp5 = mul <8 x i8> %tmp3, %tmp4
 	ret <8 x i8> %tmp5
 }
 
@@ -549,4 +549,23 @@ define <10 x i8> @vuzp_wide_type(<10 x i8> %tr0, <10 x i8> %tr1,
   %c = shufflevector <5 x i1> %c0, <5 x i1> %cmp2, <10 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
   %rv = select <10 x i1> %c, <10 x i8> %tr0, <10 x i8> %tr1
   ret <10 x i8> %rv
+}
+
+%struct.uint8x8x2_t = type { [2 x <8 x i8>] }
+define %struct.uint8x8x2_t @vuzp_extract_subvector(<16 x i8> %t) #0 {
+; CHECK-LABEL: vuzp_extract_subvector:
+; CHECK:       @ BB#0:
+; CHECK-NEXT:    vmov d17, r2, r3
+; CHECK-NEXT:    vmov d16, r0, r1
+; CHECK-NEXT:    vorr d18, d17, d17
+; CHECK-NEXT:    vuzp.8 d16, d18
+; CHECK-NEXT:    vmov r0, r1, d16
+; CHECK-NEXT:    vmov r2, r3, d18
+; CHECK-NEXT:    mov pc, lr
+
+  %vuzp.i = shufflevector <16 x i8> %t, <16 x i8> undef, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  %vuzp1.i = shufflevector <16 x i8> %t, <16 x i8> undef, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  %.fca.0.0.insert = insertvalue %struct.uint8x8x2_t undef, <8 x i8> %vuzp.i, 0, 0
+  %.fca.0.1.insert = insertvalue %struct.uint8x8x2_t %.fca.0.0.insert, <8 x i8> %vuzp1.i, 0, 1
+  ret %struct.uint8x8x2_t %.fca.0.1.insert
 }
