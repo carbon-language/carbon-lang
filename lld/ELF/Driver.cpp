@@ -479,9 +479,10 @@ static SortSectionPolicy getSortKind(opt::InputArgList &Args) {
 }
 
 static std::vector<StringRef> getLines(MemoryBufferRef MB) {
-  std::vector<StringRef> Ret;
   SmallVector<StringRef, 0> Arr;
   MB.getBuffer().split(Arr, '\n');
+
+  std::vector<StringRef> Ret;
   for (StringRef S : Arr) {
     S = S.trim();
     if (!S.empty())
@@ -498,15 +499,6 @@ static void parseSymbolOrderingList(MemoryBufferRef MB) {
   unsigned I = 0;
   for (StringRef S : getLines(MB))
     Config->SymbolOrderingFile.insert({S, I++});
-}
-
-// Parse the --retain-symbols-file argument. File has form:
-// symbolName1
-// [...]
-// symbolNameN
-static void parseRetainSymbolsList(MemoryBufferRef MB) {
-  for (StringRef S : getLines(MB))
-    Config->RetainSymbolsFile.insert(S);
 }
 
 // Initializes Config members by the command line options.
@@ -660,7 +652,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   if (auto *Arg = Args.getLastArg(OPT_retain_symbols_file)) {
     Config->Discard = DiscardPolicy::RetainFile;
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
-      parseRetainSymbolsList(*Buffer);
+      for (StringRef S : getLines(*Buffer))
+        Config->RetainSymbolsFile.insert(S);
   }
 
   for (auto *Arg : Args.filtered(OPT_export_dynamic_symbol))
