@@ -52,7 +52,6 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
     WavesPerEU(0, 0),
     DebuggerWorkGroupIDStackObjectIndices({{0, 0, 0}}),
     DebuggerWorkItemIDStackObjectIndices({{0, 0, 0}}),
-    ImagePSV(llvm::make_unique<AMDGPUImagePseudoSourceValue>()),
     LDSWaveSpillSize(0),
     PSInputEna(0),
     NumUserSGPRs(0),

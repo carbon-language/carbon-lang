@@ -122,7 +122,7 @@ class SIMachineFunctionInfo final : public AMDGPUMachineFunction {
   std::array<int, 3> DebuggerWorkItemIDStackObjectIndices;
 
   AMDGPUBufferPseudoSourceValue BufferPSV;
-  std::unique_ptr<AMDGPUImagePseudoSourceValue> ImagePSV;
+  AMDGPUImagePseudoSourceValue ImagePSV;
 
 public:
   // FIXME: Make private
@@ -490,8 +490,8 @@ public:
     return &BufferPSV;
   }
 
-  AMDGPUImagePseudoSourceValue *getImagePSV() {
-    return ImagePSV.get();
+  const AMDGPUImagePseudoSourceValue *getImagePSV() const {
+    return &ImagePSV;
   }
 };
 
