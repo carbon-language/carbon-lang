@@ -3077,7 +3077,6 @@ void InitializationSequence::Step::Destroy() {
   case SK_StdInitializerListConstructorCall:
   case SK_OCLSamplerInit:
   case SK_OCLZeroEvent:
-  case SK_OCLZeroQueue:
     break;
 
   case SK_ConversionSequence:
@@ -3362,13 +3361,6 @@ void InitializationSequence::AddOCLSamplerInitStep(QualType T) {
 void InitializationSequence::AddOCLZeroEventStep(QualType T) {
   Step S;
   S.Kind = SK_OCLZeroEvent;
-  S.Type = T;
-  Steps.push_back(S);
-}
-
-void InitializationSequence::AddOCLZeroQueueStep(QualType T) {
-  Step S;
-  S.Kind = SK_OCLZeroQueue;
   S.Type = T;
   Steps.push_back(S);
 }
@@ -5038,20 +5030,6 @@ static bool TryOCLZeroEventInitialization(Sema &S,
   return true;
 }
 
-static bool TryOCLZeroQueueInitialization(Sema &S,
-                                          InitializationSequence &Sequence,
-                                          QualType DestType,
-                                          Expr *Initializer) {
-  if (!S.getLangOpts().OpenCL || S.getLangOpts().OpenCLVersion < 200 ||
-      !DestType->isQueueT() ||
-      !Initializer->isIntegerConstantExpr(S.getASTContext()) ||
-      (Initializer->EvaluateKnownConstInt(S.getASTContext()) != 0))
-    return false;
-
-  Sequence.AddOCLZeroQueueStep(DestType);
-  return true;
-}
-
 InitializationSequence::InitializationSequence(Sema &S,
                                                const InitializedEntity &Entity,
                                                const InitializationKind &Kind,
@@ -5313,9 +5291,6 @@ void InitializationSequence::InitializeFrom(Sema &S,
 
     if (TryOCLZeroEventInitialization(S, *this, DestType, Initializer))
       return;
-
-    if (TryOCLZeroQueueInitialization(S, *this, DestType, Initializer))
-       return;
 
     // Handle initialization in C
     AddCAssignmentStep(DestType);
@@ -6554,8 +6529,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_ProduceObjCObject:
   case SK_StdInitializerList:
   case SK_OCLSamplerInit:
-  case SK_OCLZeroEvent:
-  case SK_OCLZeroQueue: {
+  case SK_OCLZeroEvent: {
     assert(Args.size() == 1);
     CurInit = Args[0];
     if (!CurInit.get()) return ExprError();
@@ -7236,15 +7210,6 @@ InitializationSequence::Perform(Sema &S,
 
       CurInit = S.ImpCastExprToType(CurInit.get(), Step->Type,
                                     CK_ZeroToOCLEvent,
-                                    CurInit.get()->getValueKind());
-      break;
-    }
-    case SK_OCLZeroQueue: {
-      assert(Step->Type->isQueueT() &&
-             "Event initialization on non queue type.");
-
-      CurInit = S.ImpCastExprToType(CurInit.get(), Step->Type,
-                                    CK_ZeroToOCLQueue,
                                     CurInit.get()->getValueKind());
       break;
     }
@@ -8075,10 +8040,6 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case SK_OCLZeroEvent:
       OS << "OpenCL event_t from zero";
-      break;
-
-    case SK_OCLZeroQueue:
-      OS << "OpenCL queue_t from zero";
       break;
     }
 
