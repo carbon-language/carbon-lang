@@ -17,6 +17,8 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <algorithm>
+
 using namespace llvm;
 
 void ZeroFillBytes(raw_ostream &OS, size_t Size) {
@@ -78,5 +80,123 @@ void yaml2pubsection(raw_ostream &OS, const DWARFYAML::PubSection &Sect) {
       OS.write(reinterpret_cast<const char *>(&Entry.Descriptor), 4);
     OS.write(Entry.Name.data(), Entry.Name.size());
     OS.write('\0');
+  }
+}
+
+void yaml2debug_info(raw_ostream &OS, const DWARFYAML::Data &DI) {
+
+  for (auto CU : DI.CompileUnits) {
+    OS.write(reinterpret_cast<char *>(&CU.Length), 4);
+    OS.write(reinterpret_cast<char *>(&CU.Version), 2);
+    OS.write(reinterpret_cast<char *>(&CU.AbbrOffset), 4);
+    OS.write(reinterpret_cast<char *>(&CU.AddrSize), 1);
+
+    for (auto Entry : CU.Entries) {
+      encodeULEB128(Entry.AbbrCode, OS);
+      bool Indirect = false;
+      auto &Abbrev = DI.AbbrevDecls[Entry.AbbrCode-1];
+
+      auto FormVal = Entry.Values.begin();
+      auto AbbrForm = Abbrev.Attributes.begin();
+      for (;
+           FormVal != Entry.Values.end() && AbbrForm != Abbrev.Attributes.end();
+           ++FormVal, ++AbbrForm) {
+        dwarf::Form Form = AbbrForm->Form;
+        do {
+          bool Indirect = false;
+          switch (Form) {
+          case dwarf::DW_FORM_addr:
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), CU.AddrSize);
+            break;
+          case dwarf::DW_FORM_ref_addr: {
+            // TODO: Handle DWARF32/DWARF64 after Line Table data is done
+            auto writeSize = CU.Version == 2 ? CU.AddrSize : 4;
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), writeSize);
+            break;
+          }
+          case dwarf::DW_FORM_exprloc:
+          case dwarf::DW_FORM_block:
+            encodeULEB128(FormVal->BlockData.size(), OS);
+            OS.write(reinterpret_cast<char *>(&FormVal->BlockData[0]),
+                     FormVal->BlockData.size());
+            break;
+          case dwarf::DW_FORM_block1: {
+            auto writeSize = FormVal->BlockData.size();
+            OS.write(reinterpret_cast<char *>(&writeSize), 1);
+            OS.write(reinterpret_cast<char *>(&FormVal->BlockData[0]),
+                     FormVal->BlockData.size());
+            break;
+          }
+          case dwarf::DW_FORM_block2: {
+            auto writeSize = FormVal->BlockData.size();
+            OS.write(reinterpret_cast<char *>(&writeSize), 2);
+            OS.write(reinterpret_cast<char *>(&FormVal->BlockData[0]),
+                     FormVal->BlockData.size());
+            break;
+          }
+          case dwarf::DW_FORM_block4: {
+            auto writeSize = FormVal->BlockData.size();
+            OS.write(reinterpret_cast<char *>(&writeSize), 4);
+            OS.write(reinterpret_cast<char *>(&FormVal->BlockData[0]),
+                     FormVal->BlockData.size());
+            break;
+          }
+          case dwarf::DW_FORM_data1:
+          case dwarf::DW_FORM_ref1:
+          case dwarf::DW_FORM_flag:
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), 1);
+            break;
+          case dwarf::DW_FORM_data2:
+          case dwarf::DW_FORM_ref2:
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), 2);
+            break;
+          case dwarf::DW_FORM_data4:
+          case dwarf::DW_FORM_ref4:
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), 4);
+            break;
+          case dwarf::DW_FORM_data8:
+          case dwarf::DW_FORM_ref8:
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), 8);
+            break;
+          case dwarf::DW_FORM_sdata:
+            encodeSLEB128(FormVal->Value, OS);
+            break;
+          case dwarf::DW_FORM_udata:
+          case dwarf::DW_FORM_ref_udata:
+            encodeULEB128(FormVal->Value, OS);
+            break;
+          case dwarf::DW_FORM_string:
+            OS.write(FormVal->CStr.data(), FormVal->CStr.size());
+            OS.write('\0');
+            break;
+          case dwarf::DW_FORM_indirect:
+            encodeULEB128(FormVal->Value, OS);
+            Indirect = true;
+            Form = static_cast<dwarf::Form>((uint64_t)FormVal->Value);
+            ++FormVal;
+            break;
+          case dwarf::DW_FORM_strp:
+          case dwarf::DW_FORM_sec_offset:
+          case dwarf::DW_FORM_GNU_ref_alt:
+          case dwarf::DW_FORM_GNU_strp_alt:
+          case dwarf::DW_FORM_line_strp:
+          case dwarf::DW_FORM_strp_sup:
+          case dwarf::DW_FORM_ref_sup:
+            // TODO: Handle DWARF32/64
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), 4);
+            break;
+          case dwarf::DW_FORM_ref_sig8:
+            OS.write(reinterpret_cast<char *>(&FormVal->Value), 8);
+            break;
+          case dwarf::DW_FORM_GNU_addr_index:
+          case dwarf::DW_FORM_GNU_str_index:
+            encodeULEB128(FormVal->Value, OS);
+            break;
+          default:
+            break;
+          }
+        } while (Indirect);
+      }
+    }
   }
 }

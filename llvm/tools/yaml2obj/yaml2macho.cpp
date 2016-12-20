@@ -398,6 +398,8 @@ Error MachOWriter::writeDWARFData(raw_ostream &OS,
       yaml2pubsection(OS, Obj.DWARF.PubNames);
     } else if (0 == strncmp(&Section.sectname[0], "__debug_pubtypes", 16)) {
       yaml2pubsection(OS, Obj.DWARF.PubTypes);
+    } else if (0 == strncmp(&Section.sectname[0], "__debug_info", 16)) {
+      yaml2debug_info(OS, Obj.DWARF);
     }
   }
   return Error::success();
