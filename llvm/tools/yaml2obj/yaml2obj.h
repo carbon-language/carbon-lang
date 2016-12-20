@@ -46,6 +46,5 @@ void yaml2debug_str(llvm::raw_ostream &OS,
 void yaml2debug_aranges(llvm::raw_ostream &OS, const llvm::DWARFYAML::Data &DI);
 void yaml2pubsection(llvm::raw_ostream &OS,
                      const llvm::DWARFYAML::PubSection &Sect);
-void yaml2debug_info(llvm::raw_ostream &OS, const llvm::DWARFYAML::Data &DI);
 
 #endif

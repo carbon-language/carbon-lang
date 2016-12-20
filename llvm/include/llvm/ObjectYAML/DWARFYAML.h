@@ -66,25 +66,6 @@ struct PubSection {
   std::vector<PubEntry> Entries;
 };
 
-struct FormValue {
-  llvm::yaml::Hex64 Value;
-  StringRef CStr;
-  std::vector<llvm::yaml::Hex8> BlockData;
-};
-
-struct Entry {
-  llvm::yaml::Hex32 AbbrCode;
-  std::vector<FormValue> Values;
-};
-
-struct Unit {
-  uint32_t Length;
-  uint16_t Version;
-  uint32_t AbbrOffset;
-  uint8_t AddrSize;
-  std::vector<Entry> Entries;
-};
-
 struct Data {
   std::vector<Abbrev> AbbrevDecls;
   std::vector<StringRef> DebugStrings;
@@ -94,8 +75,6 @@ struct Data {
 
   PubSection GNUPubNames;
   PubSection GNUPubTypes;
-  
-  std::vector<Unit> CompileUnits;
 
   bool isEmpty() const;
 };
@@ -103,17 +82,12 @@ struct Data {
 } // namespace llvm::DWARFYAML
 } // namespace llvm
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(uint8_t)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::StringRef)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::Hex8)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::AttributeAbbrev)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Abbrev)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARangeDescriptor)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARange)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::PubEntry)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Unit)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::FormValue)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Entry)
 
 namespace llvm {
 namespace yaml {
@@ -144,18 +118,6 @@ template <> struct MappingTraits<DWARFYAML::PubEntry> {
 
 template <> struct MappingTraits<DWARFYAML::PubSection> {
   static void mapping(IO &IO, DWARFYAML::PubSection &Section);
-};
-
-template <> struct MappingTraits<DWARFYAML::Unit> {
-  static void mapping(IO &IO, DWARFYAML::Unit &Unit);
-};
-
-template <> struct MappingTraits<DWARFYAML::Entry> {
-  static void mapping(IO &IO, DWARFYAML::Entry &Entry);
-};
-
-template <> struct MappingTraits<DWARFYAML::FormValue> {
-  static void mapping(IO &IO, DWARFYAML::FormValue &FormValue);
 };
 
 #define HANDLE_DW_TAG(unused, name)                                            \
