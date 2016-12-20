@@ -85,9 +85,7 @@ namespace llvm {
     /// Construct a string ref from a pointer and length.
     LLVM_ATTRIBUTE_ALWAYS_INLINE
     /*implicit*/ constexpr StringRef(const char *data, size_t length)
-        : Data(data),
-          Length((data || length == 0) ? length : (assert(0 && "Bad StringRef"),
-                                                   length)) {}
+        : Data(data), Length(length) {}
 
     /// Construct a string ref from an std::string.
     LLVM_ATTRIBUTE_ALWAYS_INLINE
