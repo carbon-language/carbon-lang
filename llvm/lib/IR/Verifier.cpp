@@ -648,11 +648,12 @@ void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
   // Visit any debug info attachments.
   SmallVector<MDNode *, 1> MDs;
   GV.getMetadata(LLVMContext::MD_dbg, MDs);
-  for (auto *MD : MDs)
+  for (auto *MD : MDs) {
     if (auto *GVE = dyn_cast<DIGlobalVariableExpression>(MD))
       visitDIGlobalVariableExpression(*GVE);
     else
       AssertDI(false, "!dbg attachment of global variable must be a DIGlobalVariableExpression");
+  }
 
   if (!GV.hasInitializer()) {
     visitGlobalValue(GV);
