@@ -3609,17 +3609,7 @@ static void TryConstructorInitialization(Sema &S,
       UnwrappedArgs.size() == 1 && UnwrappedArgs[0]->isRValue() &&
       S.Context.hasSameUnqualifiedType(UnwrappedArgs[0]->getType(), DestType)) {
     // Convert qualifications if necessary.
-    QualType InitType = UnwrappedArgs[0]->getType();
-    ImplicitConversionSequence ICS;
-    ICS.setStandard();
-    ICS.Standard.setAsIdentityConversion();
-    ICS.Standard.setFromType(InitType);
-    ICS.Standard.setAllToTypes(InitType);
-    if (!S.Context.hasSameType(InitType, DestType)) {
-      ICS.Standard.Third = ICK_Qualification;
-      ICS.Standard.setToType(2, DestType);
-    }
-    Sequence.AddConversionSequenceStep(ICS, DestType);
+    Sequence.AddQualificationConversionStep(DestType, VK_RValue);
     if (ILE)
       Sequence.RewrapReferenceInitList(DestType, ILE);
     return;
@@ -4790,6 +4780,8 @@ static void TryUserDefinedConversion(Sema &S,
     // FIXME: Mark this copy as extraneous.
     if (!S.getLangOpts().CPlusPlus1z)
       Sequence.AddFinalCopy(DestType);
+    else if (DestType.hasQualifiers())
+      Sequence.AddQualificationConversionStep(DestType, VK_RValue);
     return;
   }
 
@@ -4812,6 +4804,8 @@ static void TryUserDefinedConversion(Sema &S,
         Function->getReturnType()->isReferenceType() ||
         !S.Context.hasSameUnqualifiedType(ConvType, DestType))
       Sequence.AddFinalCopy(DestType);
+    else if (!S.Context.hasSameType(ConvType, DestType))
+      Sequence.AddQualificationConversionStep(DestType, VK_RValue);
     return;
   }
 
