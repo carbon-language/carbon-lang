@@ -155,7 +155,6 @@ PassManagerBuilder::PassManagerBuilder() {
     SizeLevel = 0;
     LibraryInfo = nullptr;
     Inliner = nullptr;
-    ModuleSummary = nullptr;
     DisableUnitAtATime = false;
     DisableUnrollLoops = false;
     BBVectorize = RunBBVectorization;
@@ -670,9 +669,6 @@ void PassManagerBuilder::addLTOOptimizationPasses(legacy::PassManagerBase &PM) {
   // Provide AliasAnalysis services for optimizations.
   addInitialAliasAnalysisPasses(PM);
 
-  if (ModuleSummary)
-    PM.add(createFunctionImportPass(ModuleSummary));
-
   // Allow forcing function attributes as a debugging and tuning aid.
   PM.add(createForceFunctionAttrsLegacyPass());
 
@@ -831,9 +827,6 @@ void PassManagerBuilder::populateThinLTOPassManager(
 
   if (VerifyInput)
     PM.add(createVerifierPass());
-
-  if (ModuleSummary)
-    PM.add(createFunctionImportPass(ModuleSummary));
 
   populateModulePassManager(PM);
 
