@@ -60,37 +60,53 @@ private:
 
 class RPCFoo {};
 
-template <>
-class llvm::orc::rpc::RPCTypeName<RPCFoo> {
-public:
-  static const char* getName() { return "RPCFoo"; }
-};
+namespace llvm {
+namespace orc {
+namespace rpc {
 
-template <>
-class llvm::orc::rpc::SerializationTraits<QueueChannel, RPCFoo, RPCFoo> {
-public:
-  static Error serialize(QueueChannel&, const RPCFoo&) {
-    return Error::success();
-  }
+  template <>
+  class RPCTypeName<RPCFoo> {
+  public:
+    static const char* getName() { return "RPCFoo"; }
+  };
 
-  static Error deserialize(QueueChannel&, RPCFoo&) {
-    return Error::success();
-  }
-};
+  template <>
+  class SerializationTraits<QueueChannel, RPCFoo, RPCFoo> {
+  public:
+    static Error serialize(QueueChannel&, const RPCFoo&) {
+      return Error::success();
+    }
+
+    static Error deserialize(QueueChannel&, RPCFoo&) {
+      return Error::success();
+    }
+  };
+
+} // end namespace rpc
+} // end namespace orc
+} // end namespace llvm
 
 class RPCBar {};
 
-template <>
-class llvm::orc::rpc::SerializationTraits<QueueChannel, RPCFoo, RPCBar> {
-public:
-  static Error serialize(QueueChannel&, const RPCBar&) {
-    return Error::success();
-  }
+namespace llvm {
+namespace orc {
+namespace rpc {
 
-  static Error deserialize(QueueChannel&, RPCBar&) {
-    return Error::success();
-  }
+  template <>
+  class SerializationTraits<QueueChannel, RPCFoo, RPCBar> {
+  public:
+    static Error serialize(QueueChannel&, const RPCBar&) {
+      return Error::success();
+    }
+
+    static Error deserialize(QueueChannel&, RPCBar&) {
+      return Error::success();
+    }
 };
+
+} // end namespace rpc
+} // end namespace orc
+} // end namespace llvm
 
 class DummyRPCAPI {
 public:
