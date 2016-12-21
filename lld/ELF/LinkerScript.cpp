@@ -1030,7 +1030,6 @@ private:
 
   ScriptConfiguration &Opt = *ScriptConfig;
   bool IsUnderSysroot;
-  std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 
 void ScriptParser::readDynamicList() {
@@ -1180,8 +1179,7 @@ void ScriptParser::readInclude() {
     return;
   }
   std::unique_ptr<MemoryBuffer> &MB = *MBOrErr;
-  tokenize(MB->getMemBufferRef());
-  OwningMBs.push_back(std::move(MB));
+  tokenize({Saver.save(MB->getBuffer()), unquote(Tok)});
 }
 
 void ScriptParser::readOutput() {
