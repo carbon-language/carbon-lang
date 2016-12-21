@@ -534,15 +534,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
         SMKind |= SMF_MoveConstructor;
     }
 
-    // C++ [dcl.init.aggr]p1:
-    //   An aggregate is an array or a class with no user-declared
-    //   constructors [...].
     // C++11 [dcl.init.aggr]p1: DR1518
-    //  An aggregate is an array or a class with no user-provided, explicit, or
-    //  inherited constructors
-    if (getASTContext().getLangOpts().CPlusPlus11
-            ? (Constructor->isUserProvided() || Constructor->isExplicit())
-            : !Constructor->isImplicit())
+    //   An aggregate is an array or a class with no user-provided, explicit, or
+    //   inherited constructors
+    if (Constructor->isUserProvided() || Constructor->isExplicit())
       data().Aggregate = false;
   }
 
