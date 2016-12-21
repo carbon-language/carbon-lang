@@ -1171,8 +1171,14 @@ void ScriptParser::readGroup() {
 }
 
 void ScriptParser::readInclude() {
-  StringRef Tok = next();
-  auto MBOrErr = MemoryBuffer::getFile(unquote(Tok));
+  StringRef Tok = unquote(next());
+  // https://sourceware.org/binutils/docs/ld/File-Commands.html:
+  // The file will be searched for in the current directory, and in any
+  // directory specified with the -L option.
+  auto MBOrErr = MemoryBuffer::getFile(Tok);
+  if (!MBOrErr)
+    if (Optional<std::string> Path = findFromSearchPaths(Tok))
+      MBOrErr = MemoryBuffer::getFile(*Path);
   if (!MBOrErr) {
     setError("cannot open " + Tok);
     return;
