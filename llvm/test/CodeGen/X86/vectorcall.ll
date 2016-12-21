@@ -217,7 +217,7 @@ entry:
 ; CHECK:       movaps  %xmm2, %xmm3
 ; CHECK:       movaps  %xmm1, %xmm2
 ; X32:         movasd  %xmm0, %xmm1
-; X64:         movapd  %xmm5, %xmm1
+; X64:         movap{{d|s}}  %xmm5, %xmm1
 ; CHECK:       call{{l|q}}   test_mixed_9_callee@@40
 ; CHECK:       addsd   {{.*}}, %xmm0
 ; CHECK:       ret{{l|q}}
