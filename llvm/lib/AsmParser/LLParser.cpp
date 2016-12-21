@@ -3193,20 +3193,23 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
             ExplicitTypeLoc,
             "explicit pointee type doesn't match operand's pointee type");
 
+      unsigned GEPWidth =
+          BaseType->isVectorTy() ? BaseType->getVectorNumElements() : 0;
+
       ArrayRef<Constant *> Indices(Elts.begin() + 1, Elts.end());
       for (Constant *Val : Indices) {
         Type *ValTy = Val->getType();
         if (!ValTy->getScalarType()->isIntegerTy())
           return Error(ID.Loc, "getelementptr index must be an integer");
-        if (ValTy->isVectorTy() != BaseType->isVectorTy())
-          return Error(ID.Loc, "getelementptr index type missmatch");
         if (ValTy->isVectorTy()) {
           unsigned ValNumEl = ValTy->getVectorNumElements();
-          unsigned PtrNumEl = BaseType->getVectorNumElements();
-          if (ValNumEl != PtrNumEl)
+          if (GEPWidth && (ValNumEl != GEPWidth))
             return Error(
                 ID.Loc,
                 "getelementptr vector index has a wrong number of elements");
+          // GEPWidth may have been unknown because the base is a scalar,
+          // but it is known now.
+          GEPWidth = ValNumEl;
         }
       }
 
