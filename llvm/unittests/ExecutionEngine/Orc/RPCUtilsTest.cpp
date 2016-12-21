@@ -61,13 +61,13 @@ private:
 class RPCFoo {};
 
 template <>
-class RPCTypeName<RPCFoo> {
+class llvm::orc::rpc::RPCTypeName<RPCFoo> {
 public:
   static const char* getName() { return "RPCFoo"; }
 };
 
 template <>
-class SerializationTraits<QueueChannel, RPCFoo, RPCFoo> {
+class llvm::orc::rpc::SerializationTraits<QueueChannel, RPCFoo, RPCFoo> {
 public:
   static Error serialize(QueueChannel&, const RPCFoo&) {
     return Error::success();
@@ -81,7 +81,7 @@ public:
 class RPCBar {};
 
 template <>
-class SerializationTraits<QueueChannel, RPCFoo, RPCBar> {
+class llvm::orc::rpc::SerializationTraits<QueueChannel, RPCFoo, RPCBar> {
 public:
   static Error serialize(QueueChannel&, const RPCBar&) {
     return Error::success();
