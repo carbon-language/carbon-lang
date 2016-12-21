@@ -1192,7 +1192,7 @@ const OutputSectionBase *
 SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
   switch (Sym->kind()) {
   case SymbolBody::DefinedSyntheticKind:
-    return cast<DefinedSynthetic<ELFT>>(Sym)->Section;
+    return cast<DefinedSynthetic>(Sym)->Section;
   case SymbolBody::DefinedRegularKind: {
     auto &D = cast<DefinedRegular<ELFT>>(*Sym);
     if (D.Section)

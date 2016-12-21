@@ -78,8 +78,7 @@ template <class ELFT> static void addSynthetic(SymbolAssignment *Cmd) {
 
   // If we already know section then we can calculate symbol value immediately.
   if (Sec)
-    cast<DefinedSynthetic<ELFT>>(Cmd->Sym)->Value =
-        Cmd->Expression(0) - Sec->Addr;
+    cast<DefinedSynthetic>(Cmd->Sym)->Value = Cmd->Expression(0) - Sec->Addr;
 }
 
 static bool isUnderSysroot(StringRef Path) {
@@ -395,7 +394,7 @@ static void assignSectionSymbol(SymbolAssignment *Cmd,
   if (!Cmd->Sym)
     return;
 
-  if (auto *Body = dyn_cast<DefinedSynthetic<ELFT>>(Cmd->Sym)) {
+  if (auto *Body = dyn_cast<DefinedSynthetic>(Cmd->Sym)) {
     Body->Section = Cmd->Expression.Section();
     Body->Value = Cmd->Expression(Value) - Body->Section->Addr;
     return;
@@ -933,7 +932,7 @@ const OutputSectionBase *LinkerScript<ELFT>::getSymbolSection(StringRef S) {
 
   if (auto *DR = dyn_cast_or_null<DefinedRegular<ELFT>>(Sym))
     return DR->Section ? DR->Section->OutSec : nullptr;
-  if (auto *DS = dyn_cast_or_null<DefinedSynthetic<ELFT>>(Sym))
+  if (auto *DS = dyn_cast_or_null<DefinedSynthetic>(Sym))
     return DS->Section;
 
   return nullptr;
