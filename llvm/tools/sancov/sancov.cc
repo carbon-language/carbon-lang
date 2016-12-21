@@ -408,6 +408,8 @@ static void operator<<(JSONWriter &W,
 
     for (const auto &P : PointsByFn) {
       std::string FunctionName = P.first;
+      std::set<std::string> WrittenIds;
+
       ByFn->key(FunctionName);
 
       // Output <point_id> : "<line>:<col>".
@@ -416,7 +418,10 @@ static void operator<<(JSONWriter &W,
         for (const auto &Loc : Point->Locs) {
           if (Loc.FileName != FileName || Loc.FunctionName != FunctionName)
             continue;
+          if (WrittenIds.find(Point->Id) != WrittenIds.end())
+            continue;
 
+          WrittenIds.insert(Point->Id);
           ById->key(Point->Id);
           W << (utostr(Loc.Line) + ":" + utostr(Loc.Column));
         }
