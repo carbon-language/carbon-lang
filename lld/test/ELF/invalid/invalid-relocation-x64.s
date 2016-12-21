@@ -25,7 +25,6 @@ Sections:
         Symbol:          ''
         Type:            R_X86_64_NONE
 
-		
 # RUN: not ld.lld %p/Inputs/invalid-relocation-x64.elf -o %t2 2>&1 | FileCheck %s
 # CHECK: unrecognized reloc 152
 # CHECK: unrecognized reloc 153
