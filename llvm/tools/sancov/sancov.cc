@@ -1079,8 +1079,7 @@ merge(const std::vector<std::unique_ptr<SymbolizedCoverage>> &Coverages) {
     std::string Prefix;
     if (Coverages.size() > 1) {
       // prefix is not needed when there's only one file.
-      Prefix =
-          (Coverage.BinaryHash.size() ? Coverage.BinaryHash : utostr(I)) + ":";
+      Prefix = utostr(I);
     }
 
     for (const auto &Id : Coverage.CoveredIds) {
