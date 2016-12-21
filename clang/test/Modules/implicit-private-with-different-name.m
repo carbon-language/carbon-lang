@@ -11,7 +11,7 @@
 
 // expected-warning@Inputs/implicit-private-with-different-name/A.framework/Modules/module.private.modulemap:1{{top-level module 'APrivate' in private module map, expected a submodule of 'A'}}
 // expected-note@Inputs/implicit-private-with-different-name/A.framework/Modules/module.private.modulemap:1{{make 'APrivate' a submodule of 'A' to ensure it can be found by name}}
-// CHECK: fix-it:"{{.*}}/Inputs/implicit-private-with-different-name/A.framework/Modules/module.private.modulemap":{1:18-1:26}:"A.Private"
+// CHECK: fix-it:"{{.*}}module.private.modulemap":{1:18-1:26}:"A.Private"
 
 #ifndef HEADER
 #define HEADER
