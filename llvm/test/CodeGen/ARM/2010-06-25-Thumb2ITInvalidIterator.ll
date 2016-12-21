@@ -45,6 +45,7 @@ declare i32 @x1() optsize
 declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnone
 
 !llvm.dbg.cu = !{!3}
+!llvm.module.flags = !{!27, !28}
 
 !0 = !DILocalVariable(name: "buf", line: 4, arg: 1, scope: !1, file: !2, type: !6)
 !1 = distinct !DISubprogram(name: "x0", linkageName: "x0", line: 5, isLocal: false, isDefinition: true, virtualIndex: 6, isOptimized: false, unit: !3, file: !26, scope: null, type: !4)
@@ -73,3 +74,5 @@ declare void @llvm.dbg.value(metadata, i64, metadata, metadata) nounwind readnon
 !24 = !DILocation(line: 14, column: 2, scope: !22)
 !25 = !DILocation(line: 15, column: 1, scope: !11)
 !26 = !DIFile(filename: "t.c", directory: "/private/tmp")
+!27 = !{i32 2, !"Dwarf Version", i32 2}
+!28 = !{i32 2, !"Debug Info Version", i32 3}
