@@ -646,8 +646,7 @@ def warn_mmap_mismatched_top_level_private : Warning<
   "top-level module '%0' in private module map, expected a submodule of '%1'">,
   InGroup<PrivateModule>;
 def note_mmap_rename_top_level_private_as_submodule : Note<
-  "make '%0' a submodule of '%1' to ensure it can be found by name">,
-  InGroup<PrivateModule>;
+  "make '%0' a submodule of '%1' to ensure it can be found by name">;
 
 def warn_auto_module_import : Warning<
   "treating #%select{include|import|include_next|__include_macros}0 as an "
