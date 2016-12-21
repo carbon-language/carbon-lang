@@ -185,6 +185,12 @@ static cl::opt<int> RegisterDefaultTileSize(
              " --polly-register-tile-sizes)"),
     cl::Hidden, cl::init(2), cl::ZeroOrMore, cl::cat(PollyCategory));
 
+static cl::opt<int> PollyPatternMatchingNcQuotient(
+    "polly-pattern-matching-nc-quotient",
+    cl::desc("Quotient that is obtained by dividing Nc, the parameter of the"
+             "macro-kernel, by Nr, the parameter of the micro-kernel"),
+    cl::Hidden, cl::init(256), cl::ZeroOrMore, cl::cat(PollyCategory));
+
 static cl::list<int>
     RegisterTileSizes("polly-register-tile-sizes",
                       cl::desc("A tile size for each loop dimension, filled "
@@ -610,6 +616,9 @@ getMacroKernelParams(const MicroKernelParamsTy &MicroKernelParams) {
         CacheLevelSizes[0] > 0 && CacheLevelSizes[1] > 0 &&
         CacheLevelAssociativity[0] > 2 && CacheLevelAssociativity[1] > 2))
     return {1, 1, 1};
+  // The quotient should be greater than zero.
+  if (PollyPatternMatchingNcQuotient <= 0)
+    return {1, 1, 1};
   int Car = floor(
       (CacheLevelAssociativity[0] - 1) /
       (1 + static_cast<double>(MicroKernelParams.Nr) / MicroKernelParams.Mr));
@@ -618,7 +627,7 @@ getMacroKernelParams(const MicroKernelParamsTy &MicroKernelParams) {
   double Cac = static_cast<double>(Kc * 8 * CacheLevelAssociativity[1]) /
                CacheLevelSizes[1];
   int Mc = floor((CacheLevelAssociativity[1] - 2) / Cac);
-  int Nc = floor(1 / Cac);
+  int Nc = PollyPatternMatchingNcQuotient * MicroKernelParams.Nr;
   return {Mc, Nc, Kc};
 }
 
