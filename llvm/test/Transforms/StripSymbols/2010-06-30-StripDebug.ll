@@ -6,7 +6,7 @@
 
 define void @foo() nounwind readnone optsize ssp !dbg !0 {
 entry:
-  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !5, metadata !{}), !dbg !10
+  tail call void @llvm.dbg.value(metadata i32 0, i64 0, metadata !5, metadata !DIExpression()), !dbg !10
   ret void, !dbg !11
 }
 
