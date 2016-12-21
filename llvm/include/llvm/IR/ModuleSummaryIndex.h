@@ -284,12 +284,17 @@ private:
   /// List of <CalleeValueInfo, CalleeInfo> call edge pairs from this function.
   std::vector<EdgeTy> CallGraphEdgeList;
 
+  /// List of type identifiers used by this function, represented as GUIDs.
+  std::vector<GlobalValue::GUID> TypeIdList;
+
 public:
   /// Summary constructors.
   FunctionSummary(GVFlags Flags, unsigned NumInsts, std::vector<ValueInfo> Refs,
-                  std::vector<EdgeTy> CGEdges)
+                  std::vector<EdgeTy> CGEdges,
+                  std::vector<GlobalValue::GUID> TypeIds)
       : GlobalValueSummary(FunctionKind, Flags, std::move(Refs)),
-        InstCount(NumInsts), CallGraphEdgeList(std::move(CGEdges)) {}
+        InstCount(NumInsts), CallGraphEdgeList(std::move(CGEdges)),
+        TypeIdList(std::move(TypeIds)) {}
 
   /// Check if this is a function summary.
   static bool classof(const GlobalValueSummary *GVS) {
@@ -301,6 +306,9 @@ public:
 
   /// Return the list of <CalleeValueInfo, CalleeInfo> pairs.
   ArrayRef<EdgeTy> calls() const { return CallGraphEdgeList; }
+
+  /// Returns the list of type identifiers used by this function.
+  ArrayRef<GlobalValue::GUID> type_tests() const { return TypeIdList; }
 };
 
 /// \brief Global variable summary information to aid decisions and
