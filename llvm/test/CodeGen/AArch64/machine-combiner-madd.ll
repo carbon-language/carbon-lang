@@ -7,6 +7,11 @@
 ; RUN: llc -mtriple=aarch64-linux-gnu -mcpu=exynos-m2  < %s | FileCheck %s
 ; RUN: llc -mtriple=aarch64-linux-gnu -mcpu=kryo       < %s | FileCheck %s
 ; RUN: llc -mtriple=aarch64-linux-gnu -mcpu=vulcan     < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-linux-gnu -mcpu=cortex-a57 -debug-only=machine-combiner < %s 2>&1 > /dev/null | FileCheck %s --check-prefix COMBINE-DUMP
+
+; The machine-combiner debugging dumps should print the new instruction.
+; COMBINE-DUMP: NEW INSTR{{.*}}MADDXrrr
+; COMBINE-DUMP-NOT: NEW INSTR{{.*}}UNKNOWN
 
 ; Make sure that inst-combine fuses the multiply add in the addressing mode of
 ; the load.
