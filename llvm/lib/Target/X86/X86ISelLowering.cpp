@@ -2837,8 +2837,8 @@ SDValue X86TargetLowering::LowerFormalArguments(
 
   // The next loop assumes that the locations are in the same order of the
   // input arguments.
-  assert(isSortedByValueNo(ArgLocs) &&
-         "Argument Location list must be sorted before lowering");
+  if (!isSortedByValueNo(ArgLocs))
+    llvm_unreachable("Argument Location list must be sorted before lowering");
 
   SDValue ArgValue;
   for (unsigned I = 0, InsIndex = 0, E = ArgLocs.size(); I != E;
@@ -3349,8 +3349,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // The next loop assumes that the locations are in the same order of the
   // input arguments.
-  assert(isSortedByValueNo(ArgLocs) &&
-         "Argument Location list must be sorted before lowering");
+  if (!isSortedByValueNo(ArgLocs))
+    llvm_unreachable("Argument Location list must be sorted before lowering");
 
   // Walk the register/memloc assignments, inserting copies/loads.  In the case
   // of tail call optimization arguments are handle later.
