@@ -278,6 +278,8 @@ Error MachOWriter::writeSectionData(raw_ostream &OS) {
             yaml2pubsection(OS, Obj.DWARF.PubNames, Obj.IsLittleEndian);
           } else if (0 == strncmp(&Sec.sectname[0], "__debug_pubtypes", 16)) {
             yaml2pubsection(OS, Obj.DWARF.PubTypes, Obj.IsLittleEndian);
+          } else if (0 == strncmp(&Sec.sectname[0], "__debug_info", 16)) {
+            yaml2debug_info(OS, Obj.DWARF);
           }
         } else {
           // Fills section data with 0xDEADBEEF
