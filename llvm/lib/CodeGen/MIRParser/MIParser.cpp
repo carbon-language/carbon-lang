@@ -1042,12 +1042,12 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest,
 
     MRI.setType(Reg, Ty);
   } else if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-    // Generic virtual registers must have a size.
-    // If we end up here this means the size hasn't been specified and
+    // Generic virtual registers must have a type.
+    // If we end up here this means the type hasn't been specified and
     // this is bad!
     if (RegInfo->Kind == VRegInfo::GENERIC ||
         RegInfo->Kind == VRegInfo::REGBANK)
-      return error("generic virtual registers must have a size");
+      return error("generic virtual registers must have a type");
   }
   Dest = MachineOperand::CreateReg(
       Reg, Flags & RegState::Define, Flags & RegState::Implicit,

@@ -1023,7 +1023,7 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
             return;
           }
 
-          // The gvreg must have a size and it must not have a SubIdx.
+          // The gvreg must have a type and it must not have a SubIdx.
           LLT Ty = MRI->getType(Reg);
           if (!Ty.isValid()) {
             report("Generic virtual register must have a valid type", MO,
