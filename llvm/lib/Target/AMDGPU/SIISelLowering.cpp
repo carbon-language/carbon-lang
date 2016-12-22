@@ -3959,12 +3959,15 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       break;
 
     EVT VT = N->getValueType(0);
-    if (VT != MVT::f32)
+    if (VT == MVT::f64)
       break;
+
+    assert(!VT.isVector());
 
     // Only do this if we are not trying to support denormals. v_mad_f32 does
     // not support denormals ever.
-    if (Subtarget->hasFP32Denormals())
+    if ((VT == MVT::f32 && Subtarget->hasFP32Denormals()) ||
+        (VT == MVT::f16 && Subtarget->hasFP16Denormals()))
       break;
 
     SDValue LHS = N->getOperand(0);
@@ -3977,7 +3980,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     if (LHS.getOpcode() == ISD::FADD) {
       SDValue A = LHS.getOperand(0);
       if (A == LHS.getOperand(1)) {
-        const SDValue Two = DAG.getConstantFP(2.0, DL, MVT::f32);
+        const SDValue Two = DAG.getConstantFP(2.0, DL, VT);
         return DAG.getNode(ISD::FMAD, DL, VT, Two, A, RHS);
       }
     }
@@ -3986,7 +3989,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     if (RHS.getOpcode() == ISD::FADD) {
       SDValue A = RHS.getOperand(0);
       if (A == RHS.getOperand(1)) {
-        const SDValue Two = DAG.getConstantFP(2.0, DL, MVT::f32);
+        const SDValue Two = DAG.getConstantFP(2.0, DL, VT);
         return DAG.getNode(ISD::FMAD, DL, VT, Two, A, LHS);
       }
     }
@@ -3998,13 +4001,15 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       break;
 
     EVT VT = N->getValueType(0);
+    assert(!VT.isVector());
 
     // Try to get the fneg to fold into the source modifier. This undoes generic
     // DAG combines and folds them into the mad.
     //
     // Only do this if we are not trying to support denormals. v_mad_f32 does
     // not support denormals ever.
-    if (VT == MVT::f32 && !Subtarget->hasFP32Denormals()) {
+    if ((VT == MVT::f32 && !Subtarget->hasFP32Denormals()) ||
+        (VT == MVT::f16 && !Subtarget->hasFP16Denormals())) {
       SDValue LHS = N->getOperand(0);
       SDValue RHS = N->getOperand(1);
       if (LHS.getOpcode() == ISD::FADD) {
@@ -4012,7 +4017,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
         SDValue A = LHS.getOperand(0);
         if (A == LHS.getOperand(1)) {
-          const SDValue Two = DAG.getConstantFP(2.0, DL, MVT::f32);
+          const SDValue Two = DAG.getConstantFP(2.0, DL, VT);
           SDValue NegRHS = DAG.getNode(ISD::FNEG, DL, VT, RHS);
 
           return DAG.getNode(ISD::FMAD, DL, VT, Two, A, NegRHS);
@@ -4024,7 +4029,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
         SDValue A = RHS.getOperand(0);
         if (A == RHS.getOperand(1)) {
-          const SDValue NegTwo = DAG.getConstantFP(-2.0, DL, MVT::f32);
+          const SDValue NegTwo = DAG.getConstantFP(-2.0, DL, VT);
           return DAG.getNode(ISD::FMAD, DL, VT, NegTwo, A, LHS);
         }
       }
