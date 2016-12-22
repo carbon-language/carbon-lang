@@ -1706,12 +1706,8 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   if (Function.getSize() == 0)
     return;
 
-  if (Function.isDuplicate()) {
-         DEBUG(dbgs() << "BOLT-DEBUG: skipping code generation for function "
-                 << Function << " because it is a duplicate of function "
-                 << *Function.getIdenticalFunction() << '\n');
+  if (Function.getState() == BinaryFunction::State::Empty)
     return;
-  }
 
   MCSection *Section;
   if (opts::Relocs) {
@@ -1741,57 +1737,17 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     Streamer.EmitCodeAlignment(Function.getAlignment());
   }
 
-  // Emit all names the function and its twins (for ICF) are known under.
-  auto EmitFunctionSymbols = [&](BinaryFunction &BF) {
-    for (const auto &Name : BF.getNames()) {
-      Twine EmitName = EmitColdPart ? Twine(Name).concat(".cold") : Name;
-      auto *EmitSymbol = BC.Ctx->getOrCreateSymbol(EmitName);
-      Streamer.EmitSymbolAttribute(EmitSymbol, MCSA_ELF_TypeFunction);
-      DEBUG(dbgs() << "emitting symbol " << EmitSymbol->getName()
-                   << " for function " << BF
-                   << " from function " << Function << '\n');
-      Streamer.EmitLabel(EmitSymbol);
-    }
-  };
-
   MCContext &Context = Streamer.getContext();
   const MCAsmInfo *MAI = Context.getAsmInfo();
 
   // Emit all names the function is known under.
-  EmitFunctionSymbols(Function);
-  for (auto *TwinFunction : Function.getTwins()) {
-    assert(TwinFunction != &Function && "function cannot be its own twin");
-    EmitFunctionSymbols(*TwinFunction);
-  }
-
-  if (opts::Verbosity >= 2 && !EmitColdPart && !Function.getTwins().empty()) {
-    std::vector<std::string> AllNames;
-    AllNames.insert(AllNames.end(),
-                    Function.getNames().begin(),
-                    Function.getNames().end());
-    for (auto *TwinFunction : Function.getTwins()) {
-      AllNames.insert(AllNames.end(),
-                      TwinFunction->getNames().begin(),
-                      TwinFunction->getNames().end());
-    }
-
-    outs() << "BOLT-INFO: all duplicate names (" << AllNames.size()
-           << ") for function " << Function << ": \n";
-    for (const auto &Name : AllNames) {
-      outs() << "  " << Name << '\n';
-    }
-
-    AllNames.clear();
-    AllNames.emplace_back(Function.getPrintName());
-    for (auto *TwinFunction : Function.getTwins()) {
-      AllNames.emplace_back(TwinFunction->getPrintName());
-    }
-    std::sort(AllNames.begin(), AllNames.end());
-    outs() << "BOLT-INFO: all ICF names (" << AllNames.size()
-           << ") for function " << Function << ": \n";
-    for (const auto &Name : AllNames) {
-      outs() << "  " << Name << '\n';
-    }
+  for (const auto &Name : Function.getNames()) {
+    Twine EmitName = EmitColdPart ? Twine(Name).concat(".cold") : Name;
+    auto *EmitSymbol = BC.Ctx->getOrCreateSymbol(EmitName);
+    Streamer.EmitSymbolAttribute(EmitSymbol, MCSA_ELF_TypeFunction);
+    DEBUG(dbgs() << "emitting symbol " << EmitSymbol->getName()
+                 << " for function " << Function << '\n');
+    Streamer.EmitLabel(EmitSymbol);
   }
 
   // Emit CFI start
@@ -2139,9 +2095,6 @@ void RewriteInstance::mapFileSections(
     for (auto &BFI : BinaryFunctions) {
       auto &Function = BFI.second;
       if (!Function.isSimple() || !opts::shouldProcess(Function))
-        continue;
-
-      if (Function.isDuplicate())
         continue;
 
       auto TooLarge = false;
@@ -2936,7 +2889,7 @@ void RewriteInstance::patchELFDynamic(ELFObjectFile<ELFT> *File) {
 }
 
 uint64_t RewriteInstance::getNewFunctionAddress(uint64_t OldAddress) {
-  const auto *Function = getBinaryFunctionContainingAddress(OldAddress);
+  const auto *Function = getBinaryFunctionAtAddress(OldAddress);
   if (!Function)
     return 0;
   auto JITS = OLT.findSymbol(Function->getSymbol()->getName(), false);
@@ -3212,4 +3165,13 @@ RewriteInstance::getBinaryFunctionContainingAddress(uint64_t Address,
   if (Address >= FI->first + FI->second.getSize() + CheckPastEnd)
     return nullptr;
   return &FI->second;
+}
+
+const BinaryFunction *
+RewriteInstance::getBinaryFunctionAtAddress(uint64_t Address) const {
+  const auto *Symbol = BC->getGlobalSymbolAtAddress(Address);
+  if (!Symbol)
+    return nullptr;
+
+  return BC->getFunctionForSymbol(Symbol);
 }

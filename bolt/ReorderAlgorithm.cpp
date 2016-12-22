@@ -131,7 +131,7 @@ void GreedyClusterAlgorithm::clusterBasicBlocks(const BinaryFunction &BF,
     // Populate priority queue with edges.
     auto BI = BB->branch_info_begin();
     for (auto &I : BB->successors()) {
-      assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+      assert(BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
              "attempted reordering blocks of function with no profile data");
       Queue.emplace_back(EdgeTy(BB, I, BI->Count));
       ++BI;
@@ -252,7 +252,7 @@ int64_t MinBranchGreedyClusterAlgorithm::calculateWeight(
   // Adjust the weight by taking into account other edges with the same source.
   auto BI = SrcBB->branch_info_begin();
   for (const BinaryBasicBlock *SuccBB : SrcBB->successors()) {
-    assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+    assert(BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
            "attempted reordering blocks of function with no profile data");
     assert(BI->Count <= std::numeric_limits<int64_t>::max() &&
            "overflow detected");
@@ -277,7 +277,7 @@ int64_t MinBranchGreedyClusterAlgorithm::calculateWeight(
       ++BI;
     }
     assert(BI != PredBB->branch_info_end() && "invalid control flow graph");
-    assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+    assert(BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
            "attempted reordering blocks of function with no profile data");
     assert(BI->Count <= std::numeric_limits<int64_t>::max() &&
            "overflow detected");
@@ -399,7 +399,7 @@ void OptimalReorderAlgorithm::reorderBasicBlocks(
     auto BI = BB->branch_info_begin();
     Weight[BBToIndex[BB]].resize(N);
     for (auto I : BB->successors()) {
-      if (BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
+      if (BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         Weight[BBToIndex[BB]][BBToIndex[I]] = BI->Count;
       ++BI;
     }

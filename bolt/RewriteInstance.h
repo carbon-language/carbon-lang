@@ -192,7 +192,8 @@ public:
   /// disassembleFunctions(), also preserve the original version.
   void rewriteFile();
 
-  /// Return address of the function in the new binary.
+  /// Return address of a function in the new binary corresponding to
+  /// \p OldAddress address in the original binary.
   uint64_t getNewFunctionAddress(uint64_t OldAddress);
 
   /// Return value for the symbol \p Name in the output.
@@ -210,6 +211,8 @@ public:
   /// references pointing immediately past a function body.
   BinaryFunction *getBinaryFunctionContainingAddress(uint64_t Address,
                                                      bool CheckPastEnd = false);
+
+  const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const;
 
 private:
 
@@ -382,7 +385,7 @@ private:
   /// Store all non-zero symbols in this map for a quick address lookup.
   std::map<uint64_t, llvm::object::SymbolRef> FileSymRefs;
 
-  /// Store all functions seen in the binary, sorted by address.
+  /// Store all functions in the binary, sorted by original address.
   std::map<uint64_t, BinaryFunction> BinaryFunctions;
 
   /// Stores and serializes information that will be put into the .debug_ranges

@@ -198,6 +198,9 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
 
 size_t
 BinaryFunction::getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const {
+  if (CurrentState != State::CFG)
+    return 0;
+
   auto Index = getIndex(BB);
   if (Index + 1 == BasicBlocks.size()) {
     return Size - BB->getOffset();
@@ -322,6 +325,10 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  IsSimple    : "   << IsSimple
      << "\n  IsSplit     : "   << IsSplit
      << "\n  BB Count    : "   << BasicBlocksLayout.size();
+
+  if (CurrentState == State::CFG) {
+    OS << "\n  Hash        : "   << Twine::utohexstr(hash());
+  }
   if (FrameInstructions.size()) {
     OS << "\n  CFI Instrs  : "   << FrameInstructions.size();
   }
@@ -338,18 +345,6 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
   if (ExecutionCount != COUNT_NO_PROFILE) {
     OS << "\n  Exec Count  : " << ExecutionCount;
     OS << "\n  Profile Acc : " << format("%.1f%%", ProfileMatchRatio * 100.0f);
-  }
-  if (getIdenticalFunction()) {
-    OS << "\n  Copy Of     : " << *getIdenticalFunction();
-  }
-
-  if (!Twins.empty()) {
-    OS << "\n  Twins       : ";
-    auto Sep = "";
-    for (auto *TwinFunction : Twins) {
-      OS << Sep << *TwinFunction;
-      Sep = ", ";
-    }
   }
 
   if (opts::PrintDynoStats && !BasicBlocksLayout.empty()) {
@@ -387,8 +382,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       OS << "-------   HOT-COLD SPLIT POINT   -------\n\n";
 
     OS << BB->getName() << " ("
-       << BB->size() << " instructions, align : "
-       << BB->getAlignment() << ")\n";
+       << BB->size() << " instructions, align : " << BB->getAlignment()
+       << ")\n";
 
     if (BB->isEntryPoint())
       OS << "  Entry Point\n";
@@ -397,7 +392,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
       OS << "  Landing Pad\n";
 
     uint64_t BBExecCount = BB->getExecutionCount();
-    if (BBExecCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
+    if (hasValidProfile()) {
       OS << "  Exec Count : " << BBExecCount << "\n";
     }
     if (!BBCFIState.empty()) {
@@ -435,11 +430,11 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
         assert(BI != BB->branch_info_end() && "missing BranchInfo entry");
         OS << Sep << Succ->getName();
         if (ExecutionCount != COUNT_NO_PROFILE &&
-            BI->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+            BI->MispredictedCount != BinaryBasicBlock::COUNT_INFERRED) {
           OS << " (mispreds: " << BI->MispredictedCount
              << ", count: " << BI->Count << ")";
         } else if (ExecutionCount != COUNT_NO_PROFILE &&
-                   BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+                   BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) {
           OS << " (inferred count: " << BI->Count << ")";
         }
         Sep = ", ";
@@ -1221,12 +1216,8 @@ void BinaryFunction::postProcessJumpTables() {
       if (TargetOffset < getSize())
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
 
-      // The relocations for PIC-style jump table have to be ignored.
-      //
-      // We can ignore the rest too if we output jump table to a different
-      // section.
-      if (JT->Type == JumpTable::JTT_PIC)
-        BC.IgnoredRelocations.emplace(JT->Address + EntryOffset);
+      // Ignore relocations for jump tables.
+      BC.IgnoredRelocations.emplace(JT->Address + EntryOffset);
 
       EntryOffset += JT->EntrySize;
 
@@ -1651,8 +1642,8 @@ bool BinaryFunction::buildCFG() {
   bool IsPrevFT = false; // Is previous block a fall-through.
   for (auto BB : BasicBlocks) {
     if (IsPrevFT) {
-      PrevBB->addSuccessor(BB, BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE,
-                           BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE);
+      PrevBB->addSuccessor(BB, BinaryBasicBlock::COUNT_NO_PROFILE,
+                           BinaryBasicBlock::COUNT_INFERRED);
     }
     if (BB->empty()) {
       IsPrevFT = true;
@@ -1708,6 +1699,8 @@ bool BinaryFunction::buildCFG() {
   // Infer frequency for non-taken branches
   if (hasValidProfile())
     inferFallThroughCounts();
+  else
+    clearProfile();
 
   // Update CFI information for each BB
   BBCFIState = annotateCFIState();
@@ -1914,6 +1907,19 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
   }
 }
 
+void BinaryFunction::clearProfile() {
+  // Keep function execution profile the same. Only clear basic block and edge
+  // counts.
+  for (auto *BB : BasicBlocks) {
+    BB->ExecutionCount = 0;
+    for (auto &BI : BB->branch_info()) {
+      BI.Count = 0;
+      BI.MispredictedCount = 0;
+    }
+  }
+}
+
+
 void BinaryFunction::inferFallThroughCounts() {
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
 
@@ -1921,23 +1927,20 @@ void BinaryFunction::inferFallThroughCounts() {
 
   // Compute preliminary execution time for each basic block
   for (auto CurBB : BasicBlocks) {
-    if (CurBB == *BasicBlocks.begin()) {
-      CurBB->setExecutionCount(ExecutionCount);
-      continue;
-    }
     CurBB->ExecutionCount = 0;
   }
+  BasicBlocks.front()->setExecutionCount(ExecutionCount);
 
   for (auto CurBB : BasicBlocks) {
     auto SuccCount = CurBB->branch_info_begin();
     for (auto Succ : CurBB->successors()) {
       // Do not update execution count of the entry block (when we have tail
       // calls). We already accounted for those when computing the func count.
-      if (Succ == *BasicBlocks.begin()) {
+      if (Succ == BasicBlocks.front()) {
         ++SuccCount;
         continue;
       }
-      if (SuccCount->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
+      if (SuccCount->Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         Succ->setExecutionCount(Succ->getExecutionCount() + SuccCount->Count);
       ++SuccCount;
     }
@@ -1954,8 +1957,9 @@ void BinaryFunction::inferFallThroughCounts() {
     }
   }
 
-  // Work on a basic block at a time, propagating frequency information forwards
-  // It is important to walk in the layout order
+  // Work on a basic block at a time, propagating frequency information
+  // forwards.
+  // It is important to walk in the layout order.
   for (auto CurBB : BasicBlocks) {
     uint64_t BBExecCount = CurBB->getExecutionCount();
 
@@ -1965,15 +1969,15 @@ void BinaryFunction::inferFallThroughCounts() {
       continue;
 
     // Calculate frequency of outgoing branches from this node according to
-    // LBR data
+    // LBR data.
     uint64_t ReportedBranches = 0;
     for (const auto &SuccCount : CurBB->branch_info()) {
-      if (SuccCount.Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE)
+      if (SuccCount.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
         ReportedBranches += SuccCount.Count;
     }
 
     // Calculate frequency of outgoing tail calls from this node according to
-    // LBR data
+    // LBR data.
     uint64_t ReportedTailCalls = 0;
     auto TCI = TailCallTerminatedBlocks.find(CurBB);
     if (TCI != TailCallTerminatedBlocks.end()) {
@@ -1993,7 +1997,7 @@ void BinaryFunction::inferFallThroughCounts() {
       ReportedBranches + ReportedTailCalls + ReportedThrows;
 
     // Infer the frequency of the fall-through edge, representing not taking the
-    // branch
+    // branch.
     uint64_t Inferred = 0;
     if (BBExecCount > TotalReportedJumps)
       Inferred = BBExecCount - TotalReportedJumps;
@@ -2012,7 +2016,7 @@ void BinaryFunction::inferFallThroughCounts() {
       // If there is an FT it will be the last successor.
       auto &SuccCount = *CurBB->branch_info_rbegin();
       auto &Succ = *CurBB->succ_rbegin();
-      if (SuccCount.Count == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+      if (SuccCount.Count == BinaryBasicBlock::COUNT_NO_PROFILE) {
         SuccCount.Count = Inferred;
         Succ->ExecutionCount += Inferred;
       }
@@ -2662,10 +2666,10 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                    Branch.c_str());
 
       if (BB->getExecutionCount() != COUNT_NO_PROFILE &&
-          BI->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+          BI->MispredictedCount != BinaryBasicBlock::COUNT_INFERRED) {
         OS << "\\n(M:" << BI->MispredictedCount << ",C:" << BI->Count << ")";
       } else if (ExecutionCount != COUNT_NO_PROFILE &&
-                 BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
+                 BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) {
         OS << "\\n(IC:" << BI->Count << ")";
       }
       OS << "\"]\n";
@@ -2881,61 +2885,54 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
 }
 
 void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
-  if (!hasValidProfile() || !BF.hasValidProfile())
+  // No reason to merge invalid or empty profiles into BF.
+  if (!hasValidProfile())
     return;
 
-  // Update BF's execution count.
-  uint64_t MyExecutionCount = getExecutionCount();
-  if (MyExecutionCount != BinaryFunction::COUNT_NO_PROFILE) {
-    uint64_t OldExecCount = BF.getExecutionCount();
-    uint64_t NewExecCount =
-      OldExecCount == BinaryFunction::COUNT_NO_PROFILE ?
-        MyExecutionCount :
-        MyExecutionCount + OldExecCount;
-    BF.setExecutionCount(NewExecCount);
+  // Update function execution count.
+  if (getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE) {
+    BF.setExecutionCount(BF.getKnownExecutionCount() + getExecutionCount());
   }
 
-  // Update BF's basic block and edge counts.
+  // Since we are merging a valid profile, the new profile should be valid too.
+  // It has either already been valid, or it has been cleaned up.
+  BF.ProfileMatchRatio = 1.0f;
+
+  // Update basic block and edge counts.
   auto BBMergeI = BF.begin();
   for (BinaryBasicBlock *BB : BasicBlocks) {
     BinaryBasicBlock *BBMerge = &*BBMergeI;
     assert(getIndex(BB) == BF.getIndex(BBMerge));
 
-    // Update BF's basic block count.
-    uint64_t MyBBExecutionCount = BB->getExecutionCount();
-    if (MyBBExecutionCount != BinaryBasicBlock::COUNT_NO_PROFILE) {
-      uint64_t OldExecCount = BBMerge->getExecutionCount();
-      uint64_t NewExecCount =
-        OldExecCount == BinaryBasicBlock::COUNT_NO_PROFILE ?
-          MyBBExecutionCount :
-          MyBBExecutionCount + OldExecCount;
-      BBMerge->setExecutionCount(NewExecCount);
+    // Update basic block count.
+    if (BB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE) {
+      BBMerge->setExecutionCount(
+          BBMerge->getKnownExecutionCount() + BB->getExecutionCount());
     }
 
-    // Update BF's edge count for successors of this basic block.
+    // Update edge count for successors of this basic block.
     auto BBMergeSI = BBMerge->succ_begin();
-    auto BII = BB->branch_info_begin();
     auto BIMergeI = BBMerge->branch_info_begin();
-    for (BinaryBasicBlock *BBSucc : BB->successors()) {
-      BinaryBasicBlock *BBMergeSucc = *BBMergeSI;
+    auto BII = BB->branch_info_begin();
+    for (const auto *BBSucc : BB->successors()) {
+      auto *BBMergeSucc = *BBMergeSI;
       assert(getIndex(BBSucc) == BF.getIndex(BBMergeSucc));
 
-      if (BII->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
-        uint64_t OldBranchCount = BIMergeI->Count;
-        uint64_t NewBranchCount =
-          OldBranchCount == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE ?
-            BII->Count :
-            BII->Count + OldBranchCount;
-        BIMergeI->Count = NewBranchCount;
-      }
+      // At this point no branch count should be set to COUNT_NO_PROFILE.
+      assert(BII->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
+             "unexpected unknown branch profile");
+      assert(BIMergeI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
+             "unexpected unknown branch profile");
 
-      if (BII->MispredictedCount != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE) {
-        uint64_t OldMispredictedCount = BIMergeI->MispredictedCount;
-        uint64_t NewMispredictedCount =
-          OldMispredictedCount == BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE ?
-            BII->MispredictedCount :
-            BII->MispredictedCount + OldMispredictedCount;
-        BIMergeI->MispredictedCount = NewMispredictedCount;
+      BIMergeI->Count += BII->Count;
+
+      // When we merge inferred and real fall-through branch data, the merged
+      // data is considered inferred.
+      if (BII->MispredictedCount != BinaryBasicBlock::COUNT_INFERRED &&
+          BIMergeI->MispredictedCount != BinaryBasicBlock::COUNT_INFERRED) {
+        BIMergeI->MispredictedCount += BII->MispredictedCount;
+      } else {
+        BIMergeI->MispredictedCount = BinaryBasicBlock::COUNT_INFERRED;
       }
 
       ++BBMergeSI;
@@ -2949,171 +2946,46 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
   assert(BBMergeI == BF.end());
 }
 
-std::pair<bool, unsigned> BinaryFunction::isCalleeEquivalentWith(
-    const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
-    const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const {
-  // The callee operand in a direct call is the first operand. This
-  // operand should be a symbol corresponding to the callee function.
-  constexpr unsigned CalleeOpIndex = 0;
+__attribute__((noinline)) BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
+  BasicBlockOrderType DFS;
+  unsigned Index = 0;
+  std::stack<BinaryBasicBlock *> Stack;
 
-  // Helper function.
-  auto getGlobalAddress = [this] (const MCSymbol &Symbol) -> uint64_t {
-    auto AI = BC.GlobalSymbols.find(Symbol.getName());
-    assert(AI != BC.GlobalSymbols.end());
-    return AI->second;
-  };
-
-  const MCOperand &CalleeOp = Inst.getOperand(CalleeOpIndex);
-  const MCOperand &CalleeOpOther = InstOther.getOperand(CalleeOpIndex);
-  if (!CalleeOp.isExpr() || !CalleeOpOther.isExpr()) {
-    // At least one of these is actually an indirect call.
-    return std::make_pair(false, 0);
-  }
-
-  const MCSymbol &CalleeSymbol = CalleeOp.getExpr()->getSymbol();
-  uint64_t CalleeAddress = getGlobalAddress(CalleeSymbol);
-
-  const MCSymbol &CalleeSymbolOther = CalleeOpOther.getExpr()->getSymbol();
-  uint64_t CalleeAddressOther = getGlobalAddress(CalleeSymbolOther);
-
-  bool BothRecursiveCalls =
-    CalleeAddress == getAddress() &&
-    CalleeAddressOther == BF.getAddress();
-
-  bool SameCallee = CalleeAddress == CalleeAddressOther;
-
-  return std::make_pair(BothRecursiveCalls || SameCallee, CalleeOpIndex);
-}
-
-std::pair<bool, unsigned> BinaryFunction::isTargetEquivalentWith(
-    const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
-    const BinaryBasicBlock &BBOther, const BinaryFunction &BF,
-    bool AreInvokes) const {
-  // The target operand in a (non-indirect) jump instruction is the
-  // first operand.
-  unsigned TargetOpIndex = 0;
-  if (AreInvokes) {
-    // The landing pad operand in an invoke is either the second or the
-    // sixth operand, depending on the number of operands of the invoke.
-    TargetOpIndex = 1;
-    if (Inst.getNumOperands() == 7 || Inst.getNumOperands() == 8)
-      TargetOpIndex = 5;
-  }
-
-  const MCOperand &TargetOp = Inst.getOperand(TargetOpIndex);
-  const MCOperand &TargetOpOther = InstOther.getOperand(TargetOpIndex);
-  if (!TargetOp.isExpr() || !TargetOpOther.isExpr()) {
-    assert(AreInvokes);
-    // An invoke without a landing pad operand has no catch handler. As long
-    // as both invokes have no catch target, we can consider they have the
-    // same catch target.
-    return std::make_pair(!TargetOp.isExpr() && !TargetOpOther.isExpr(),
-                          TargetOpIndex);
-  }
-
-  const MCSymbol &TargetSymbol = TargetOp.getExpr()->getSymbol();
-  BinaryBasicBlock *TargetBB =
-    AreInvokes ?
-      BB.getLandingPad(&TargetSymbol) :
-      BB.getSuccessor(&TargetSymbol);
-
-  const MCSymbol &TargetSymbolOther = TargetOpOther.getExpr()->getSymbol();
-  BinaryBasicBlock *TargetBBOther =
-    AreInvokes ?
-      BBOther.getLandingPad(&TargetSymbolOther) :
-      BBOther.getSuccessor(&TargetSymbolOther);
-
-  if (TargetBB == nullptr || TargetBBOther == nullptr) {
-    assert(!AreInvokes);
-    // This is a tail call implemented with a jump that was not
-    // converted to a call (e.g. conditional jump). Since the
-    // instructions were not identical, the functions canot be
-    // proven identical either.
-    return std::make_pair(false, 0);
-  }
-
-  return std::make_pair(getIndex(TargetBB) == BF.getIndex(TargetBBOther),
-                        TargetOpIndex);
-}
-
-bool BinaryFunction::isInstrEquivalentWith(
-    const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
-    const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const {
-  // First check their opcodes.
-  if (Inst.getOpcode() != InstOther.getOpcode()) {
-    return false;
-  }
-
-  // Then check if they have the same number of operands.
-  unsigned NumOperands = Inst.getNumOperands();
-  unsigned NumOperandsOther = InstOther.getNumOperands();
-  if (NumOperands != NumOperandsOther) {
-    return false;
-  }
-
-  // We are interested in 3 special cases:
+  // Push entry points to the stack in reverse order.
   //
-  // a) both instructions are recursive calls.
-  // b) both instructions are local jumps to basic blocks with same indices.
-  // c) both instructions are invokes with landing pad blocks with same indices.
-  //
-  // In any of these cases the instructions will differ in some operands, but
-  // given identical CFG of the functions, they can still be considered
-  // equivalent.
-  bool BothCalls =
-    BC.MIA->isCall(Inst) &&
-    BC.MIA->isCall(InstOther);
-  bool BothInvokes =
-    BC.MIA->isInvoke(Inst) &&
-    BC.MIA->isInvoke(InstOther);
-  bool BothBranches =
-    BC.MIA->isBranch(Inst) &&
-    !BC.MIA->isIndirectBranch(Inst) &&
-    BC.MIA->isBranch(InstOther) &&
-    !BC.MIA->isIndirectBranch(InstOther);
-
-  if (!BothCalls && !BothInvokes && !BothBranches) {
-    return Inst.equals(InstOther);
+  // NB: we rely on the original order of entries to match.
+  for (auto BBI = layout_rbegin(); BBI != layout_rend(); ++BBI) {
+    auto *BB = *BBI;
+    if (BB->isEntryPoint())
+      Stack.push(BB);
+    BB->setLayoutIndex(BinaryBasicBlock::InvalidIndex);
   }
 
-  // We figure out if both instructions are recursive calls (case a) or else
-  // if they are calls to the same function.
-  bool EquivCallees = false;
-  unsigned CalleeOpIndex = 0;
-  if (BothCalls) {
-    std::tie(EquivCallees, CalleeOpIndex) =
-      isCalleeEquivalentWith(Inst, BB, InstOther, BBOther, BF);
-  }
+  while (!Stack.empty()) {
+    auto *BB = Stack.top();
+    Stack.pop();
 
-  // We figure out if both instructions are jumps (case b) or invokes (case c)
-  // with equivalent jump targets or landing pads respectively.
-  assert(!(BothInvokes && BothBranches));
-  bool SameTarget = false;
-  unsigned TargetOpIndex = 0;
-  if (BothInvokes || BothBranches) {
-    std::tie(SameTarget, TargetOpIndex) =
-      isTargetEquivalentWith(Inst, BB, InstOther, BBOther, BF, BothInvokes);
-  }
-
-  // Compare all operands.
-  for (unsigned i = 0; i < NumOperands; ++i) {
-    if (i == CalleeOpIndex && BothCalls && EquivCallees)
+    if (BB->getLayoutIndex() != BinaryBasicBlock::InvalidIndex)
       continue;
 
-    if (i == TargetOpIndex && (BothInvokes || BothBranches) && SameTarget)
-      continue;
+    BB->setLayoutIndex(Index++);
+    DFS.push_back(BB);
 
-    if (!Inst.getOperand(i).equals(InstOther.getOperand(i)))
-      return false;
+    for (auto *SuccBB : BB->landing_pads()) {
+      Stack.push(SuccBB);
+    }
+
+    for (auto *SuccBB : BB->successors()) {
+      Stack.push(SuccBB);
+    }
   }
 
-  // The instructions are equal although (some of) their operands
-  // may differ.
-  return true;
+  return DFS;
 }
 
-bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF) const {
-
+bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF,
+                                     bool IgnoreSymbols,
+                                     bool UseDFS) const {
   assert(CurrentState == State::CFG && OtherBF.CurrentState == State::CFG);
 
   // Compare the two functions, one basic block at a time.
@@ -3121,26 +2993,29 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF) const {
   // instruction sequences and the same index in their corresponding
   // functions. The latter is important for CFG equality.
 
-  // We do not consider functions with just different pseudo instruction
-  // sequences non-identical by default. However we print a warning
-  // in case two instructions that are identical have different pseudo
-  // instruction sequences.
-  bool PseudosDiffer = false;
-
-  if (size() != OtherBF.size())
+  if (layout_size() != OtherBF.layout_size())
     return false;
 
-  // Make sure indices are up to date for both functions.
-  updateLayoutIndices();
-  OtherBF.updateLayoutIndices();
+  // Comparing multi-entry functions could be non-trivial.
+  if (isMultiEntry() || OtherBF.isMultiEntry())
+    return false;
 
-  auto BBI = OtherBF.layout_begin();
-  for (const auto *BB : layout()) {
+  // Process both functions in either DFS or existing order.
+  const auto &Order = UseDFS ? dfs() : BasicBlocksLayout;
+  const auto &OtherOrder = UseDFS ? OtherBF.dfs() : OtherBF.BasicBlocksLayout;
+
+  auto BBI = OtherOrder.begin();
+  for (const auto *BB : Order) {
     const auto *OtherBB = *BBI;
 
+    if (BB->getLayoutIndex() != OtherBB->getLayoutIndex())
+      return false;
+
     // Compare successor basic blocks.
+    // NOTE: the comparison for jump tables is only partially verified here.
     if (BB->succ_size() != OtherBB->succ_size())
       return false;
+
     auto SuccBBI = OtherBB->succ_begin();
     for (const auto *SuccBB : BB->successors()) {
       const auto *SuccOtherBB = *SuccBBI;
@@ -3149,94 +3024,155 @@ bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF) const {
       ++SuccBBI;
     }
 
-    // Compare landing pads.
-    if (BB->lp_size() != OtherBB->lp_size())
-      return false;
-    auto LPI = OtherBB->lp_begin();
-    for (const auto *LP : BB->landing_pads()) {
-      const auto *LPOther = *LPI;
-      if (LP->getLayoutIndex() != LPOther->getLayoutIndex())
-        return false;
-      ++LPI;
-    }
-
-    // Compare instructions.
+    // Compare all instructions including pseudos.
     auto I = BB->begin(), E = BB->end();
     auto OtherI = OtherBB->begin(), OtherE = OtherBB->end();
     while (I != E && OtherI != OtherE) {
-      const MCInst &Inst = *I;
-      const MCInst &InstOther = *OtherI;
 
-      bool IsInstPseudo = BC.MII->get(Inst.getOpcode()).isPseudo();
-      bool IsInstOtherPseudo = BC.MII->get(InstOther.getOpcode()).isPseudo();
+      bool Identical;
+      if (IgnoreSymbols) {
+        Identical =
+          isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB, OtherBF,
+                                [](const MCSymbol *A, const MCSymbol *B) {
+                                  return true;
+                                });
+      } else {
+        // Compare symbols.
+        auto AreSymbolsIdentical = [&] (const MCSymbol *A, const MCSymbol *B) {
+          if (A == B)
+            return true;
 
-      if (IsInstPseudo == IsInstOtherPseudo) {
-        // Either both are pseudos or none is.
-        bool areEqual =
-          isInstrEquivalentWith(Inst, *BB, InstOther, *OtherBB, OtherBF);
+          // All local symbols are considered identical since they affect a
+          // control flow and we check the control flow separately.
+          // If a local symbol is escaped, then the function (potentially) has
+          // multiple entry points and we exclude such functions from
+          // comparison.
+          if (A->isTemporary() && B->isTemporary())
+            return true;
 
-        if (!areEqual && IsInstPseudo) {
-          // Different pseudo instructions.
-          PseudosDiffer = true;
-        }
-        else if (!areEqual) {
-          // Different non-pseudo instructions.
-          return false;
-        }
+          // Compare symbols as functions.
+          const auto *FunctionA = BC.getFunctionForSymbol(A);
+          const auto *FunctionB = BC.getFunctionForSymbol(B);
+          if (FunctionA && FunctionB) {
+            // Self-referencing functions and recursive calls.
+            if (FunctionA == this && FunctionB == &OtherBF)
+              return true;
+            return FunctionA == FunctionB;
+          }
 
-        ++I; ++OtherI;
+          // Check if symbols are jump tables.
+          auto SIA = BC.GlobalSymbols.find(A->getName());
+          if (SIA == BC.GlobalSymbols.end())
+            return false;
+          auto SIB = BC.GlobalSymbols.find(B->getName());
+          if (SIB == BC.GlobalSymbols.end())
+            return false;
+
+          assert((SIA->second != SIB->second) &&
+                 "different symbols should not have the same value");
+
+          const auto *JumpTableA = getJumpTableContainingAddress(SIA->second);
+          if (!JumpTableA)
+            return false;
+          const auto *JumpTableB =
+            OtherBF.getJumpTableContainingAddress(SIB->second);
+          if (!JumpTableB)
+            return false;
+
+          if ((SIA->second - JumpTableA->Address) !=
+              (SIB->second - JumpTableB->Address))
+            return false;
+
+          return equalJumpTables(JumpTableA, JumpTableB, OtherBF);
+        };
+
+        Identical =
+          isInstrEquivalentWith(*I, *BB, *OtherI, *OtherBB, OtherBF,
+                                AreSymbolsIdentical);
       }
-      else {
-        // One instruction is a pseudo while the other is not.
-        PseudosDiffer = true;
-        IsInstPseudo ? ++I : ++OtherI;
-      }
+
+      if (!Identical)
+        return false;
+
+      ++I; ++OtherI;
     }
 
-    // Check for trailing instructions or pseudos in one of the basic blocks.
-    auto TrailI = I == E ? OtherI : I;
-    auto TrailE = I == E ? OtherE : E;
-    while (TrailI != TrailE) {
-      const MCInst &InstTrail = *TrailI;
-      if (!BC.MII->get(InstTrail.getOpcode()).isPseudo()) {
-        // One of the functions has more instructions in this basic block
-        // than the other, hence not identical.
-        return false;
-      }
-
-      // There are trailing pseudos only in one of the basic blocks.
-      PseudosDiffer = true;
-      ++TrailI;
+    // One of the identical blocks may have a trailing unconditional jump that
+    // is ignored for CFG purposes.
+    auto *TrailingInstr = (I != E ? &(*I)
+                                  : (OtherI != OtherE ? &(*OtherI) : 0));
+    if (TrailingInstr && !BC.MIA->isUnconditionalBranch(*TrailingInstr)) {
+      return false;
     }
 
     ++BBI;
   }
 
-  if (opts::Verbosity >= 1 && PseudosDiffer) {
-    errs() << "BOLT-WARNING: functions " << *this << " and "
-           << OtherBF << " are identical, but have different"
-           << " pseudo instruction sequences.\n";
+  return true;
+}
+
+bool BinaryFunction::equalJumpTables(const JumpTable *JumpTableA,
+                                     const JumpTable *JumpTableB,
+                                     const BinaryFunction &BFB) const {
+  if (JumpTableA->EntrySize != JumpTableB->EntrySize)
+    return false;
+
+  if (JumpTableA->Type != JumpTableB->Type)
+    return false;
+
+  if (JumpTableA->getSize() != JumpTableB->getSize())
+    return false;
+
+  for (uint64_t Index = 0; Index < JumpTableA->Entries.size(); ++Index) {
+    const auto *LabelA = JumpTableA->Entries[Index];
+    const auto *LabelB = JumpTableB->Entries[Index];
+
+    const auto *TargetA = getBasicBlockForLabel(LabelA);
+    const auto *TargetB = BFB.getBasicBlockForLabel(LabelB);
+
+    if (!TargetA || !TargetB) {
+      assert((TargetA || LabelA == getFunctionEndLabel()) &&
+             "no target basic block found");
+      assert((TargetB || LabelB == BFB.getFunctionEndLabel()) &&
+             "no target basic block found");
+
+      if (TargetA != TargetB)
+        return false;
+
+      continue;
+    }
+
+    assert(TargetA && TargetB && "cannot locate target block(s)");
+
+    if (TargetA->getLayoutIndex() != TargetB->getLayoutIndex())
+      return false;
   }
 
   return true;
 }
 
-std::size_t BinaryFunction::hash() const {
+std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {
   assert(CurrentState == State::CFG);
+
+  if (!Recompute)
+    return Hash;
+
+  const auto &Order = UseDFS ? dfs() : BasicBlocksLayout;
 
   // The hash is computed by creating a string of all the opcodes
   // in the function and hashing that string with std::hash.
   std::string Opcodes;
-  for (const auto *BB : layout()) {
+  for (const auto *BB : Order) {
     for (const auto &Inst : *BB) {
       unsigned Opcode = Inst.getOpcode();
 
       if (BC.MII->get(Opcode).isPseudo())
         continue;
 
-      // Ignore conditional jumps because the conditional code is not
-      // always up to date.
-      if (BC.MIA->isConditionalBranch(Inst))
+      // Ignore unconditional jumps since we check CFG consistency by processing
+      // basic blocks in order and do not rely on branches to be in-sync with
+      // CFG. Note that we still use condition code of conditional jumps.
+      if (BC.MIA->isUnconditionalBranch(Inst))
         continue;
 
       if (Opcode == 0) {
@@ -3252,7 +3188,7 @@ std::size_t BinaryFunction::hash() const {
     }
   }
 
-  return std::hash<std::string>{}(Opcodes);
+  return Hash = std::hash<std::string>{}(Opcodes);
 }
 
 void BinaryFunction::insertBasicBlocks(
@@ -3508,7 +3444,7 @@ void BinaryFunction::calculateLoopInfo() {
       auto BI = Latch->branch_info_begin();
       for (BinaryBasicBlock *Succ : Latch->successors()) {
         if (Succ == L->getHeader()) {
-          assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+          assert(BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
                  "profile data not found");
           L->TotalBackEdgeCount += BI->Count;
         }
@@ -3528,7 +3464,7 @@ void BinaryFunction::calculateLoopInfo() {
       auto BI = Exiting->branch_info_begin();
       for (BinaryBasicBlock *Succ : Exiting->successors()) {
         if (Succ == ExitTarget) {
-          assert(BI->Count != BinaryBasicBlock::COUNT_FALLTHROUGH_EDGE &&
+          assert(BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
                  "profile data not found");
           L->ExitCount += BI->Count;
         }
@@ -3605,9 +3541,11 @@ DynoStats BinaryFunction::getDynoStats() const {
     // basic block especially since the block may contain a function that
     // does not return or a function that throws an exception.
     uint64_t BBExecutionCount = 0;
-    for (const auto &BI : BB->branch_info())
-      if (BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE)
-        BBExecutionCount += BI.Count;
+    for (const auto &BI : BB->branch_info()) {
+      assert(BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
+             "unexpected empty profile");
+      BBExecutionCount += BI.Count;
+    }
 
     // Ignore empty blocks and blocks that were not executed.
     if (BB->getNumNonPseudos() == 0 || BBExecutionCount == 0)

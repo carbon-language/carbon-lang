@@ -121,7 +121,7 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
 }
 
 void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {
-  LandingPads.insert(LPBlock);
+  LandingPads.push_back(LPBlock);
   LPBlock->Throwers.insert(this);
 }
 
@@ -190,7 +190,7 @@ BinaryBasicBlock::getBranchStats(const BinaryBasicBlock *Succ) const {
     uint64_t TotalCount = 0;
     uint64_t TotalMispreds = 0;
     for (const auto &BI : BranchInfo) {
-      if (BI.Count != COUNT_FALLTHROUGH_EDGE) {
+      if (BI.Count != COUNT_NO_PROFILE) {
         TotalCount += BI.Count;
         TotalMispreds += BI.MispredictedCount;
       }
@@ -200,7 +200,7 @@ BinaryBasicBlock::getBranchStats(const BinaryBasicBlock *Succ) const {
       auto Itr = std::find(Successors.begin(), Successors.end(), Succ);
       assert(Itr != Successors.end());
       const auto &BI = BranchInfo[Itr - Successors.begin()];
-      if (BI.Count && BI.Count != COUNT_FALLTHROUGH_EDGE) {
+      if (BI.Count && BI.Count != COUNT_NO_PROFILE) {
         if (TotalMispreds == 0) TotalMispreds = 1;
         return std::make_pair(double(BI.Count) / TotalCount,
                               double(BI.MispredictedCount) / TotalMispreds);

@@ -88,9 +88,13 @@ public:
   SymbolMapType GlobalSymbols;
 
   /// [address] -> [name1], [name2], ...
+  /// Global addresses never change.
   std::multimap<uint64_t, std::string> GlobalAddresses;
 
   /// [MCSymbol] -> [BinaryFunction]
+  ///
+  /// As we fold identical functions, multiple symbols can point
+  /// to the same BinaryFunction.
   std::unordered_map<const MCSymbol *,
                      const BinaryFunction *> SymbolToFunctionMap;
 
@@ -219,6 +223,13 @@ public:
     // Register the name with MCContext.
     return Ctx->getOrCreateSymbol(Name);
   }
+
+  /// Replaces all references to \p ChildBF with \p ParentBF. \p ChildBF is then
+  /// removed from the list of functions \p BFs. The profile data of \p ChildBF
+  /// is merged into that of \p ParentBF.
+  void foldFunction(BinaryFunction &ChildBF,
+                    BinaryFunction &ParentBF,
+                    std::map<uint64_t, BinaryFunction> &BFs);
 
   /// Add section relocation.
   void addSectionRelocation(SectionRef Section, uint64_t Address,

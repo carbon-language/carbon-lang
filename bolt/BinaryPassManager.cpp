@@ -66,12 +66,6 @@ static cl::opt<bool> OptimizeFrameAccesses(
     "frame-opt", cl::desc("optimize stack frame accesses"), cl::ZeroOrMore);
 
 static cl::opt<bool>
-IdenticalCodeFolding(
-    "icf",
-    cl::desc("fold functions with identical code"),
-    cl::ZeroOrMore);
-
-static cl::opt<bool>
 PrintReordered("print-reordered",
                cl::desc("print functions after layout optimization"),
                cl::ZeroOrMore,
@@ -209,8 +203,7 @@ void BinaryFunctionPassManager::runAllPasses(
   // Run this pass first to use stats for the original functions.
   Manager.registerPass(llvm::make_unique<PrintSortedBy>(NeverPrint));
 
-  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
-                       opts::IdenticalCodeFolding);
+  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF));
 
   Manager.registerPass(llvm::make_unique<InlineSmallFunctions>(PrintInline),
                        opts::InlineSmallFunctions);
@@ -222,6 +215,8 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<SimplifyRODataLoads>(PrintSimplifyROLoads),
     opts::SimplifyRODataLoads);
+
+  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF));
 
   Manager.registerPass(llvm::make_unique<ReorderBasicBlocks>(PrintReordered));
 

@@ -17,10 +17,13 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 
-namespace llvm {
-namespace bolt {
+
+using namespace llvm;
+using namespace bolt;
 
 namespace opts {
+
+extern cl::opt<bool> Relocs;
 
 static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
@@ -66,6 +69,42 @@ MCSymbol *BinaryContext::getGlobalSymbolAtAddress(uint64_t Address) const {
   assert(Symbol && "symbol cannot be NULL at this point");
 
   return Symbol;
+}
+
+void BinaryContext::foldFunction(BinaryFunction &ChildBF,
+                                 BinaryFunction &ParentBF,
+                                 std::map<uint64_t, BinaryFunction> &BFs) {
+
+  // Copy name list.
+  ParentBF.addNewNames(ChildBF.getNames());
+
+  // Update internal bookkeeping info.
+  for (auto &Name : ChildBF.getNames()) {
+    // Calls to functions are handled via symbols, and we keep the lookup table
+    // that we need to update.
+    auto *Symbol = Ctx->lookupSymbol(Name);
+    assert(Symbol && "symbol cannot be NULL at this point");
+    SymbolToFunctionMap[Symbol] = &ParentBF;
+
+    // NB: there's no need to update GlobalAddresses and GlobalSymbols.
+  }
+
+  // Merge execution counts of ChildBF into those of ParentBF.
+  ChildBF.mergeProfileDataInto(ParentBF);
+
+  if (opts::Relocs) {
+    // Remove ChildBF from the global set of functions in relocs mode.
+    auto FI = BFs.find(ChildBF.getAddress());
+    assert(FI != BFs.end() && "function not found");
+    assert(&ChildBF == &FI->second && "function mismatch");
+    FI = BFs.erase(FI);
+  } else {
+    // In non-relocation mode we keep the function, but rename it.
+    std::string NewName = "__ICF_" + ChildBF.Names.back();
+    ChildBF.Names.clear();
+    ChildBF.Names.push_back(NewName);
+    ChildBF.OutputSymbol = Ctx->getOrCreateSymbol(NewName);
+  }
 }
 
 void BinaryContext::printGlobalSymbols(raw_ostream& OS) const {
@@ -378,6 +417,3 @@ void BinaryContext::addSectionRelocation(SectionRef Section, uint64_t Address,
   }
   RI->second.emplace_back(Relocation{Address, Symbol, Type, Addend});
 }
-
-} // namespace bolt
-} // namespace llvm

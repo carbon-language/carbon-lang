@@ -34,6 +34,17 @@ class BinaryFunction;
 /// we might switch to it at some point.
 class BinaryBasicBlock {
 public:
+
+  /// Profile execution information for a given edge in CFG.
+  ///
+  /// If MispredictedCount equals COUNT_INFERRED, then we have a profile
+  /// data for a fall-through edge with a Count representing an inferred
+  /// execution count, i.e. the count we calculated internally, not the one
+  /// coming from profile data.
+  ///
+  /// For all other values of MispredictedCount, Count represents the number of
+  /// branch executions from a profile, and MispredictedCount is the number
+  /// of times the branch was mispredicted according to this profile.
   struct BinaryBranchInfo {
     uint64_t Count;
     uint64_t MispredictedCount; /// number of branches mispredicted
@@ -47,7 +58,7 @@ private:
   std::vector<BinaryBasicBlock *> Predecessors;
   std::vector<BinaryBasicBlock *> Successors;
   std::set<BinaryBasicBlock *> Throwers;
-  std::set<BinaryBasicBlock *> LandingPads;
+  std::vector<BinaryBasicBlock *> LandingPads;
 
   /// Each successor has a corresponding BranchInfo entry in the list.
   std::vector<BinaryBranchInfo> BranchInfo;
@@ -121,7 +132,7 @@ private:
   }
 
 public:
-  static constexpr uint64_t COUNT_FALLTHROUGH_EDGE =
+  static constexpr uint64_t COUNT_INFERRED =
       std::numeric_limits<uint64_t>::max();
   static constexpr uint64_t COUNT_NO_PROFILE =
       std::numeric_limits<uint64_t>::max();
@@ -476,6 +487,12 @@ public:
   /// Return COUNT_NO_PROFILE if there's no profile info.
   uint64_t getExecutionCount() const {
     return ExecutionCount;
+  }
+
+  /// Return the execution count for blocks with known profile.
+  /// Return 0 if the block has no profile.
+  uint64_t getKnownExecutionCount() const {
+    return ExecutionCount == COUNT_NO_PROFILE ? 0 : ExecutionCount;
   }
 
   /// Set the execution count for this block.

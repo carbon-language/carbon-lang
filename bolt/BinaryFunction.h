@@ -194,7 +194,7 @@ public:
   };
 
   static constexpr uint64_t COUNT_NO_PROFILE =
-    std::numeric_limits<uint64_t>::max();
+    BinaryBasicBlock::COUNT_NO_PROFILE;
   // Function size, in number of BBs, above which we fallback to a heuristic
   // solution to the layout problem instead of seeking the optimal one.
   static constexpr uint64_t FUNC_SIZE_THRESHOLD = 10;
@@ -215,20 +215,6 @@ private:
   /// Address of the function in memory. Also could be an offset from
   /// base address for position independent binaries.
   uint64_t Address;
-
-  /// List of functions that are identical to this one. We only maintain
-  /// the list for the function that should be emitted, for the rest we
-  /// set IdenticalFunction. When we emit this function we have
-  /// to emit symbols for all its twins.
-  std::set<BinaryFunction *> Twins;
-
-  /// Address of an identical function that can replace this one.
-  ///
-  /// In case multiple functions are identical to each other, one of the
-  /// functions (the representative) will have it set to nullptr, while the
-  /// rest of the functions will point to the representative through one or
-  /// more steps.
-  BinaryFunction *IdenticalFunction{nullptr};
 
   /// Original size of the function.
   uint64_t Size;
@@ -264,6 +250,9 @@ private:
   /// True if the function uses DW_CFA_GNU_args_size CFIs.
   bool UsesGnuArgsSize{false};
 
+  /// True if the function has more than one entry point.
+  bool IsMultiEntry{false};
+
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
 
@@ -298,10 +287,18 @@ private:
   /// the output binary.
   uint32_t AddressRangesOffset{-1U};
 
+  /// Last computed hash value.
+  mutable uint64_t Hash{0};
+
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
     assert(BB->getIndex() < BasicBlocks.size());
     return BB->getIndex();
+  }
+
+  BinaryBasicBlock *getBasicBlockForLabel(const MCSymbol *Label) const {
+    auto I = LabelToBB.find(Label);
+    return I == LabelToBB.end() ? nullptr : I->second;
   }
 
   /// Return basic block that originally contained offset \p Offset
@@ -332,28 +329,46 @@ private:
   /// Helper function that compares an instruction of this function to the
   /// given instruction of the given function. The functions should have
   /// identical CFG.
+  template <class Compare>
   bool isInstrEquivalentWith(
-      const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
-      const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const;
+      const MCInst &InstA, const BinaryBasicBlock &BBA,
+      const MCInst &InstB, const BinaryBasicBlock &BBB,
+      const BinaryFunction &BFB, Compare Comp) const {
+    if (InstA.getOpcode() != InstB.getOpcode()) {
+      return false;
+    }
 
-  /// Helper function that compares the callees of two call instructions.
-  /// Callees are considered equivalent if both refer to the same function
-  /// or if both calls are recursive. Instructions should have same opcodes
-  /// and same number of operands. Returns true and the callee operand index
-  /// when callees are quivalent, and false, 0 otherwise.
-  std::pair<bool, unsigned> isCalleeEquivalentWith(
-      const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
-      const BinaryBasicBlock &BBOther, const BinaryFunction &BF) const;
+    // In this function we check for special conditions:
+    //
+    //    * instructions with landing pads
+    //
+    // Most of the common cases should be handled by MCInst::equals()
+    // that compares regular instruction operands.
+    //
+    // NB: there's no need to compare jump table indirect jump instructions
+    //     separately as jump tables are handled by comparing corresponding
+    //     symbols.
+    const auto EHInfoA = BC.MIA->getEHInfo(InstA);
+    const auto EHInfoB = BC.MIA->getEHInfo(InstB);
 
-  /// Helper function that compares the targets two jump or invoke instructions.
-  /// A target of an invoke we consider its landing pad basic block. The
-  /// corresponding functions should have identical CFG. Instructions should
-  /// have same opcodes and same number of operands. Returns true and the target
-  /// operand index when targets are equivalent,  and false, 0 otherwise.
-  std::pair<bool, unsigned> isTargetEquivalentWith(
-      const MCInst &Inst, const BinaryBasicBlock &BB, const MCInst &InstOther,
-      const BinaryBasicBlock &BBOther, const BinaryFunction &BF,
-      bool AreInvokes) const;
+    // Action indices should match.
+    if (EHInfoA.second != EHInfoB.second)
+      return false;
+
+    if (!EHInfoA.first != !EHInfoB.first)
+      return false;
+
+    if (EHInfoA.first && EHInfoB.first) {
+      const auto *LPA = BBA.getLandingPad(EHInfoA.first);
+      const auto *LPB = BBB.getLandingPad(EHInfoB.first);
+      assert(LPA && LPB && "cannot locate landing pad(s)");
+
+      if (LPA->getLayoutIndex() != LPB->getLayoutIndex())
+        return false;
+    }
+
+    return InstA.equals(InstB, Comp);
+  }
 
   /// Clear the landing pads for all blocks contained in the range of
   /// [StartIndex, StartIndex + NumBlocks).  This also has the effect of
@@ -371,6 +386,9 @@ private:
 
   /// Temporary holder of offsets that are potentially entry points.
   std::unordered_set<uint64_t> EntryOffsets;
+
+  /// Map labels to corresponding basic blocks.
+  std::unordered_map<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
 
   using BranchListType = std::vector<std::pair<uint32_t, uint32_t>>;
   BranchListType TakenBranches; /// All local taken branches.
@@ -407,7 +425,7 @@ private:
     uint32_t Index;             // index of the tail call in the basic block
     uint64_t TargetAddress;     // address of the callee
     uint64_t Count{0};          // taken count from profile data
-    uint64_t Mispreds{0};       // mispredicted count from progile data
+    uint64_t Mispreds{0};       // mispredicted count from profile data
     uint32_t CFIStateBefore{0}; // CFI state before the tail call instruction
 
     TailCallInfo(uint32_t Offset, uint32_t Index, uint64_t TargetAddress) :
@@ -532,6 +550,23 @@ private:
     return nullptr;
   }
 
+  const JumpTable *getJumpTableContainingAddress(uint64_t Address) const {
+    auto JTI = JumpTables.upper_bound(Address);
+    if (JTI == JumpTables.begin())
+      return nullptr;
+    --JTI;
+    if (JTI->first + JTI->second.getSize() > Address) {
+      return &JTI->second;
+    }
+    return nullptr;
+  }
+
+  /// Compare two jump tables in 2 functions. The function relies on consistent
+  /// ordering of basic blocks in both binary functions (e.g. DFS).
+  bool equalJumpTables(const JumpTable *JumpTableA,
+                       const JumpTable *JumpTableB,
+                       const BinaryFunction &BFB) const;
+
   /// All jump table sites in the function.
   std::vector<std::pair<uint64_t, uint64_t>> JTSites;
 
@@ -572,15 +607,18 @@ private:
   CFIStateVector BBCFIState;
 
   /// Symbol in the output.
+  ///
+  /// NB: function can have multiple symbols associated with it. We will emit
+  ///     all symbols for the function
   MCSymbol *OutputSymbol;
 
   MCSymbol *ColdSymbol{nullptr};
 
   /// Symbol at the end of the function.
-  MCSymbol *FunctionEndLabel{nullptr};
+  mutable MCSymbol *FunctionEndLabel{nullptr};
 
   /// Symbol at the end of the cold part of split function.
-  MCSymbol *FunctionColdEndLabel{nullptr};
+  mutable MCSymbol *FunctionColdEndLabel{nullptr};
 
   /// Unique number associated with the function.
   uint64_t  FunctionNumber;
@@ -603,6 +641,11 @@ private:
     Itr itr;
   };
 
+  /// Register alternative function name.
+  void addAlternativeName(std::string NewName) {
+    Names.emplace_back(NewName);
+  }
+
   /// Return label at a given \p Address in the function. If the label does
   /// not exist - create it. Assert if the \p Address does not belong to
   /// the function. If \p CreatePastEnd is true, then return the function
@@ -613,6 +656,7 @@ private:
   /// Register an entry point at a given \p Offset into the function.
   MCSymbol *addEntryPointAtOffset(uint64_t Offset) {
     EntryOffsets.emplace(Offset);
+    IsMultiEntry = (Offset == 0 ? IsMultiEntry : true);
     return getOrCreateLocalLabel(getAddress() + Offset);
   }
 
@@ -645,6 +689,7 @@ private:
   BinaryFunction(const BinaryFunction &) = delete;
 
   friend class RewriteInstance;
+  friend class BinaryContext;
 
   /// Creation should be handled by RewriteInstance::createBinaryFunction().
   BinaryFunction(const std::string &Name, SectionRef Section, uint64_t Address,
@@ -737,6 +782,10 @@ public:
     return iterator_range<const_cfi_iterator>(cie_begin(), cie_end());
   }
 
+  /// Return a list of basic blocks sorted using DFS and update layout indices
+  /// using the same order. Does not modify the current layout.
+  BasicBlockOrderType dfs() const;
+
   /// Modify code layout making necessary adjustments to instructions at the
   /// end of basic blocks.
   void modifyLayout(LayoutType Type, bool MinBranchClusters, bool Split);
@@ -825,7 +874,7 @@ public:
     return Names;
   }
 
-  State getCurrentState() const {
+  State getState() const {
     return CurrentState;
   }
 
@@ -882,7 +931,7 @@ public:
   }
 
   /// Return MC symbol associated with the end of the function.
-  MCSymbol *getFunctionEndLabel() {
+  MCSymbol *getFunctionEndLabel() const {
     assert(BC.Ctx && "cannot be called with empty context");
     if (!FunctionEndLabel) {
       FunctionEndLabel = BC.Ctx->createTempSymbol("func_end", true);
@@ -891,7 +940,7 @@ public:
   }
 
   /// Return MC symbol associated with the end of the cold part of the function.
-  MCSymbol *getFunctionColdEndLabel() {
+  MCSymbol *getFunctionColdEndLabel() const {
     if (!FunctionColdEndLabel) {
       FunctionColdEndLabel = BC.Ctx->createTempSymbol("func_cold_end", true);
     }
@@ -965,6 +1014,16 @@ public:
     return UsesGnuArgsSize;
   }
 
+  /// Return true if the function has more than one entry point.
+  bool isMultiEntry() const {
+    return IsMultiEntry;
+  }
+
+  /// Return true if the function uses jump tables.
+  bool hasJumpTables() const {
+    return JumpTables.size();
+  }
+
   const MCSymbol *getPersonalityFunction() const {
     return PersonalityFunction;
   }
@@ -988,9 +1047,9 @@ public:
     return Address <= PC && PC < Address + Size;
   }
 
-  /// Register alternative function name.
-  void addAlternativeName(std::string NewName) {
-    Names.emplace_back(NewName);
+  /// Add new names this function is known under.
+  void addNewNames(const std::vector<std::string> &NewNames) {
+    Names.insert(Names.begin(),  NewNames.begin(), NewNames.end());
   }
 
   /// Create a basic block at a given \p Offset in the
@@ -999,7 +1058,6 @@ public:
   /// on the alignment of the existing offset.
   /// The new block is not inserted into the CFG.  The client must
   /// use insertBasicBlocks to add any new blocks to the CFG.
-  ///
   std::unique_ptr<BinaryBasicBlock>
   createBasicBlock(uint64_t Offset,
                    MCSymbol *Label = nullptr,
@@ -1015,6 +1073,8 @@ public:
       uint64_t DerivedAlignment = Offset & (1 + ~Offset);
       BB->setAlignment(std::min(DerivedAlignment, uint64_t(32)));
     }
+
+    LabelToBB.emplace(Label, BB.get());
 
     return BB;
   }
@@ -1140,6 +1200,12 @@ public:
            "can only call function in Disassembled state");
     auto II = Instructions.find(Offset);
     return (II == Instructions.end()) ? nullptr : &II->second;
+  }
+
+  /// Return true if function has a profile, even if the profile does not
+  /// match CFG 100%.
+  bool hasProfile() const {
+    return ExecutionCount != COUNT_NO_PROFILE;
   }
 
   /// Return true if function profile is present and accurate.
@@ -1298,43 +1364,15 @@ public:
     return ExecutionCount;
   }
 
+  /// Return the execution count for functions with known profile.
+  /// Return 0 if the function has no profile.
+  uint64_t getKnownExecutionCount() const {
+    return ExecutionCount == COUNT_NO_PROFILE ? 0 : ExecutionCount;
+  }
+
   /// Return original LSDA address for the function or NULL.
   uint64_t getLSDAAddress() const {
     return LSDAAddress;
-  }
-
-  /// Return the address of an identical function. If none is found this will
-  /// return NULL.
-  BinaryFunction *getIdenticalFunction() const {
-    return IdenticalFunction;
-  }
-
-  /// Set the address of an identical function.
-  void setIdenticalFunction(BinaryFunction *BF) {
-    IdenticalFunction = BF;
-    // Copy over the list of twins.
-    if (!Twins.empty()) {
-      BF->getTwins().insert(Twins.begin(), Twins.end());
-      Twins.clear();
-    }
-  }
-
-  /// Return functions that are duplicates of this one.
-  std::set<BinaryFunction *> &getTwins() {
-    return Twins;
-  }
-
-  /// Register function that is identical to this one.
-  void addIdenticalFunction(BinaryFunction *BF) {
-    Twins.emplace(BF);
-  }
-
-  /// Return true if this function is a duplicate of another function.
-  bool isDuplicate() const {
-    bool IsDuplicate = getIdenticalFunction();
-    assert((Twins.empty() || !IsDuplicate) &&
-           "function with twins cannot be a duplicate of another function");
-    return IsDuplicate;
   }
 
   /// Return symbol pointing to function's LSDA.
@@ -1425,6 +1463,9 @@ public:
   /// has been filled with LBR data.
   void inferFallThroughCounts();
 
+  /// Clear execution profile of the function.
+  void clearProfile();
+
   /// Converts conditional tail calls to unconditional tail calls. We do this to
   /// handle conditional tail calls correctly and to give a chance to the
   /// simplify conditional tail call pass to decide whether to re-optimize them
@@ -1497,12 +1538,26 @@ public:
   /// isIdenticalWith.
   void mergeProfileDataInto(BinaryFunction &BF) const;
 
-  /// Returns true if this function has identical code and
-  /// CFG with the given function.
-  bool isIdenticalWith(const BinaryFunction &BF) const;
+  /// Returns true if this function has identical code and CFG with
+  /// the given function \p BF.
+  ///
+  /// If \p IgnoreSymbols is set to true, then symbolic operands are ignored
+  /// during comparison.
+  ///
+  /// If \p UseDFS is set to true, then compute DFS of each function and use
+  /// is for CFG equivalency. Potentially it will help to catch more cases,
+  /// but is slower.
+  bool isIdenticalWith(const BinaryFunction &BF,
+                       bool IgnoreSymbols = false,
+                       bool UseDFS = false) const;
 
-  /// Returns a hash value for the function. To be used for ICF.
-  std::size_t hash() const;
+  /// Returns a hash value for the function. To be used for ICF. Two congruent
+  /// functions (functions with different symbolic references but identical
+  /// otherwise) are required to have identical hashes.
+  ///
+  /// If \p UseDFS is set, then process blocks in DFS order that we recompute.
+  /// Otherwise use the existing layout order.
+  std::size_t hash(bool Recompute = true, bool UseDFS = false) const;
 
   /// Sets the associated .debug_info entry.
   void addSubprogramDIE(DWARFCompileUnit *Unit,
