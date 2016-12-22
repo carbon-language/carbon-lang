@@ -3789,10 +3789,8 @@ static void addPS4ProfileRTArgs(const ToolChain &TC, const ArgList &Args,
 /// this compile should be using PIC mode or not. Returns a tuple of
 /// (RelocationModel, PICLevel, IsPIE).
 static std::tuple<llvm::Reloc::Model, unsigned, bool>
-ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &Triple,
+ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &EffectiveTriple,
              const ArgList &Args) {
-  // FIXME: why does this code...and so much everywhere else, use both
-  // ToolChain.getTriple() and Triple?
   bool PIE = ToolChain.isPIEDefault();
   bool PIC = PIE || ToolChain.isPICDefault();
   // The Darwin/MachO default to use PIC does not apply when using -static.
@@ -3874,7 +3872,7 @@ ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &Triple,
             O.matches(options::OPT_fPIE) || O.matches(options::OPT_fPIC);
       } else {
         PIE = PIC = false;
-        if (Triple.isPS4CPU()) {
+        if (EffectiveTriple.isPS4CPU()) {
           Arg *ModelArg = Args.getLastArg(options::OPT_mcmodel_EQ);
           StringRef Model = ModelArg ? ModelArg->getValue() : "";
           if (Model != "kernel") {
@@ -3890,13 +3888,14 @@ ParsePICArgs(const ToolChain &ToolChain, const llvm::Triple &Triple,
   // Introduce a Darwin and PS4-specific hack. If the default is PIC, but the
   // PIC level would've been set to level 1, force it back to level 2 PIC
   // instead.
-  if (PIC && (ToolChain.getTriple().isOSDarwin() || Triple.isPS4CPU()))
+  if (PIC && (ToolChain.getTriple().isOSDarwin() || EffectiveTriple.isPS4CPU()))
     IsPICLevelTwo |= ToolChain.isPICDefault();
 
   // This kernel flags are a trump-card: they will disable PIC/PIE
   // generation, independent of the argument order.
-  if (KernelOrKext && ((!Triple.isiOS() || Triple.isOSVersionLT(6)) &&
-                       !Triple.isWatchOS()))
+  if (KernelOrKext &&
+      ((!EffectiveTriple.isiOS() || EffectiveTriple.isOSVersionLT(6)) &&
+       !EffectiveTriple.isWatchOS()))
     PIC = PIE = false;
 
   if (Arg *A = Args.getLastArg(options::OPT_mdynamic_no_pic)) {
