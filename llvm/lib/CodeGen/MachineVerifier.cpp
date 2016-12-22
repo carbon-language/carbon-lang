@@ -1056,6 +1056,21 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
                    MONum);
             return;
           }
+
+          // If this is a target specific instruction and this operand
+          // has register class constraint, the virtual register must
+          // comply to it.
+          if (!isPreISelGenericOpcode(MCID.getOpcode()) &&
+              TII->getRegClass(MCID, MONum, TRI, *MF)) {
+            report("Virtual register does not match instruction constraint", MO,
+                   MONum);
+            errs() << "Expect register class "
+                   << TRI->getRegClassName(
+                          TII->getRegClass(MCID, MONum, TRI, *MF))
+                   << " but got nothing\n";
+            return;
+          }
+
           break;
         }
         if (SubIdx) {
