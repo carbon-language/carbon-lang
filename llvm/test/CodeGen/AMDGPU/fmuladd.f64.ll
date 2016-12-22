@@ -112,6 +112,69 @@ define void @mad_sub_f64(double addrspace(1)* noalias nocapture %out, double add
   ret void
 }
 
+; GCN-LABEL: {{^}}fadd_a_a_b_f64_fast_add0:
+; GCN-STRICT: v_add_f64
+; GCN-STRICT: v_add_f64
+
+; GCN-CONTRACT: v_fma_f64
+define void @fadd_a_a_b_f64_fast_add0(double addrspace(1)* %out,
+                                      double addrspace(1)* %in1,
+                                      double addrspace(1)* %in2) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x() nounwind readnone
+  %gep.0 = getelementptr double, double addrspace(1)* %out, i32 %tid
+  %gep.1 = getelementptr double, double addrspace(1)* %gep.0, i32 1
+  %gep.out = getelementptr double, double addrspace(1)* %out, i32 %tid
+
+  %r0 = load volatile double, double addrspace(1)* %gep.0
+  %r1 = load volatile double, double addrspace(1)* %gep.1
+
+  %add.0 = fadd fast double %r0, %r0
+  %add.1 = fadd double %add.0, %r1
+  store double %add.1, double addrspace(1)* %gep.out
+  ret void
+}
+
+; GCN-LABEL: {{^}}fadd_a_a_b_f64_fast_add1:
+; GCN-STRICT: v_add_f64
+; GCN-STRICT: v_add_f64
+
+; GCN-CONTRACT: v_fma_f64
+define void @fadd_a_a_b_f64_fast_add1(double addrspace(1)* %out,
+                                      double addrspace(1)* %in1,
+                                      double addrspace(1)* %in2) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x() nounwind readnone
+  %gep.0 = getelementptr double, double addrspace(1)* %out, i32 %tid
+  %gep.1 = getelementptr double, double addrspace(1)* %gep.0, i32 1
+  %gep.out = getelementptr double, double addrspace(1)* %out, i32 %tid
+
+  %r0 = load volatile double, double addrspace(1)* %gep.0
+  %r1 = load volatile double, double addrspace(1)* %gep.1
+
+  %add.0 = fadd double %r0, %r0
+  %add.1 = fadd fast double %add.0, %r1
+  store double %add.1, double addrspace(1)* %gep.out
+  ret void
+}
+
+; GCN-LABEL: {{^}}fadd_a_a_b_f64_fast:
+; GCN: v_fma_f64
+define void @fadd_a_a_b_f64_fast(double addrspace(1)* %out,
+                                 double addrspace(1)* %in1,
+                                double addrspace(1)* %in2) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x() nounwind readnone
+  %gep.0 = getelementptr double, double addrspace(1)* %out, i32 %tid
+  %gep.1 = getelementptr double, double addrspace(1)* %gep.0, i32 1
+  %gep.out = getelementptr double, double addrspace(1)* %out, i32 %tid
+
+  %r0 = load volatile double, double addrspace(1)* %gep.0
+  %r1 = load volatile double, double addrspace(1)* %gep.1
+
+  %add.0 = fadd fast double %r0, %r0
+  %add.1 = fadd fast double %add.0, %r1
+  store double %add.1, double addrspace(1)* %gep.out
+  ret void
+}
+
 declare i32 @llvm.amdgcn.workitem.id.x() #1
 declare double @llvm.fmuladd.f64(double, double, double) #1
 
