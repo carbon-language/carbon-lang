@@ -10272,8 +10272,10 @@ bool AArch64TargetLowering::getIndexedAddressParts(SDNode *Op, SDValue &Base,
   // All of the indexed addressing mode instructions take a signed
   // 9 bit immediate offset.
   if (ConstantSDNode *RHS = dyn_cast<ConstantSDNode>(Op->getOperand(1))) {
-    int64_t RHSC = (int64_t)RHS->getZExtValue();
-    if (RHSC >= 256 || RHSC <= -256)
+    int64_t RHSC = RHS->getSExtValue();
+    if (Op->getOpcode() == ISD::SUB)
+      RHSC = -(uint64_t)RHSC;
+    if (!isInt<9>(RHSC))
       return false;
     IsInc = (Op->getOpcode() == ISD::ADD);
     Offset = Op->getOperand(1);
