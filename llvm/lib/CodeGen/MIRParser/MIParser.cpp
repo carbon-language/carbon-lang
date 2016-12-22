@@ -1026,9 +1026,9 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest,
       }
     }
   } else if (consumeIfPresent(MIToken::lparen)) {
-    // Virtual registers may have a size with GlobalISel.
+    // Virtual registers may have a tpe with GlobalISel.
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
-      return error("unexpected size on physical register");
+      return error("unexpected type on physical register");
 
     LLT Ty;
     if (parseLowLevelType(Token.location(), Ty))
