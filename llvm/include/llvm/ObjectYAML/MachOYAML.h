@@ -106,6 +106,7 @@ struct LinkEditData {
 };
 
 struct Object {
+  bool IsLittleEndian;
   FileHeader Header;
   std::vector<LoadCommand> LoadCommands;
   std::vector<Section> Sections;

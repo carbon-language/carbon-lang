@@ -67,6 +67,7 @@ struct PubSection {
 };
 
 struct Data {
+  bool IsLittleEndian;
   std::vector<Abbrev> AbbrevDecls;
   std::vector<StringRef> DebugStrings;
   std::vector<ARange> ARanges;
