@@ -134,7 +134,7 @@ void yaml2debug_info(raw_ostream &OS, const DWARFYAML::Data &DI) {
            ++FormVal, ++AbbrForm) {
         dwarf::Form Form = AbbrForm->Form;
         do {
-          bool Indirect = false;
+          Indirect = false;
           switch (Form) {
           case dwarf::DW_FORM_addr:
             writeVariableSizedInteger(FormVal->Value, CU.AddrSize, OS,
