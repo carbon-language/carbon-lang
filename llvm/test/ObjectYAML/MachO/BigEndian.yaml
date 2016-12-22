@@ -89,7 +89,6 @@ LinkEditData:
     - ''
 ...
 
-#CHECK: IsLittleEndian:  false
 #CHECK: FileHeader:      
 #CHECK:   magic:           0xFEEDFACE
 #CHECK:   cputype:         0x00000012

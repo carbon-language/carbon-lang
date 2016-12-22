@@ -358,7 +358,7 @@ void writeNListEntry(MachOYAML::NListEntry &NLE, raw_ostream &OS,
   ListEntry.n_desc = NLE.n_desc;
   ListEntry.n_value = NLE.n_value;
 
-  if (sys::IsBigEndianHost)
+  if (IsLittleEndian != sys::IsLittleEndianHost)
     MachO::swapStruct(ListEntry);
   OS.write(reinterpret_cast<const char *>(&ListEntry), sizeof(NListType));
 }
