@@ -574,14 +574,9 @@ template <class ELFT>
 std::vector<SymbolBody *> SymbolTable<ELFT>::findByVersion(SymbolVersion Ver) {
   if (Ver.IsExternCpp) {
     initDemangledSyms();
-    auto I = DemangledSyms->find(Ver.Name);
-    if (I != DemangledSyms->end())
-      return I->second;
-    return {};
+    return DemangledSyms->lookup(Ver.Name);
   }
-  std::vector<SymbolBody *> Syms;
-  Syms.push_back(find(Ver.Name));
-  return Syms;
+  return {find(Ver.Name)};
 }
 
 template <class ELFT>
