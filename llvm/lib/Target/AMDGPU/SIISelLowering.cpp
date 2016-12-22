@@ -2925,16 +2925,18 @@ SDValue SITargetLowering::lowerFastUnsafeFDIV(SDValue Op,
   bool Unsafe = DAG.getTarget().Options.UnsafeFPMath;
 
   if (const ConstantFPSDNode *CLHS = dyn_cast<ConstantFPSDNode>(LHS)) {
-    if ((Unsafe || (VT == MVT::f32 && !Subtarget->hasFP32Denormals()))) {
-
+    if (Unsafe || (VT == MVT::f32 && !Subtarget->hasFP32Denormals()) ||
+        VT == MVT::f16) {
       if (CLHS->isExactlyValue(1.0)) {
         // v_rcp_f32 and v_rsq_f32 do not support denormals, and according to
         // the CI documentation has a worst case error of 1 ulp.
         // OpenCL requires <= 2.5 ulp for 1.0 / x, so it should always be OK to
         // use it as long as we aren't trying to use denormals.
+        //
+        // v_rcp_f16 and v_rsq_f16 DO support denormals.
 
         // 1.0 / sqrt(x) -> rsq(x)
-        //
+
         // XXX - Is UnsafeFPMath sufficient to do this for f64? The maximum ULP
         // error seems really high at 2^29 ULP.
         if (RHS.getOpcode() == ISD::FSQRT)
@@ -3009,6 +3011,9 @@ static SDValue getFPTernOp(SelectionDAG &DAG, unsigned Opcode, const SDLoc &SL,
 }
 
 SDValue SITargetLowering::LowerFDIV16(SDValue Op, SelectionDAG &DAG) const {
+  if (SDValue FastLowered = lowerFastUnsafeFDIV(Op, DAG))
+    return FastLowered;
+
   SDLoc SL(Op);
   SDValue Src0 = Op.getOperand(0);
   SDValue Src1 = Op.getOperand(1);
