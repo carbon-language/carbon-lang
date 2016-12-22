@@ -2676,7 +2676,7 @@ void SwingSchedulerDAG::generateExistingPhis(
               replaceRegUsesAfterLoop(Def, NewReg, BB, MRI, LIS);
             continue;
           }
-        } else if (StageDiff > 0 &&
+        } else if (InKernel && StageDiff > 0 &&
                    VRMap[CurStageNum - StageDiff - np].count(LoopVal))
           PhiOp2 = VRMap[CurStageNum - StageDiff - np][LoopVal];
       }
@@ -3216,7 +3216,7 @@ unsigned SwingSchedulerDAG::getPrevMapVal(unsigned StageNum, unsigned PhiStage,
       // The previous name is defined in the current stage when the instruction
       // order is swapped.
       PrevVal = VRMap[StageNum][LoopVal];
-    else if (!LoopInst->isPHI())
+    else if (!LoopInst->isPHI() || LoopInst->getParent() != BB)
       // The loop value hasn't yet been scheduled.
       PrevVal = LoopVal;
     else if (StageNum == PhiStage + 1)
