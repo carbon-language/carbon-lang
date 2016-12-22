@@ -118,6 +118,9 @@ class VOP3_Real <VOP3_Pseudo ps, int EncodingFamily> :
   let isPseudo = 0;
   let isCodeGenOnly = 0;
 
+  let Constraints     = ps.Constraints;
+  let DisableEncoding = ps.DisableEncoding;
+
   // copy relevant pseudo op flags
   let SubtargetPredicate = ps.SubtargetPredicate;
   let AsmMatchConverter  = ps.AsmMatchConverter;

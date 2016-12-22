@@ -71,6 +71,9 @@ class VOPC_Real <VOPC_Pseudo ps, int EncodingFamily> :
   let isPseudo = 0;
   let isCodeGenOnly = 0;
 
+  let Constraints     = ps.Constraints;
+  let DisableEncoding = ps.DisableEncoding;
+
   // copy relevant pseudo op flags
   let SubtargetPredicate = ps.SubtargetPredicate;
   let AsmMatchConverter  = ps.AsmMatchConverter;
@@ -826,6 +829,8 @@ class VOPC_SDWA<bits<8> op, VOPC_Pseudo ps, VOPProfile P = ps.Pfl> :
   let AsmMatchConverter = "cvtSdwaVOPC";
   let isCompare = ps.isCompare;
   let isCommutable = ps.isCommutable;
+  let Constraints = ps.Constraints;
+  let DisableEncoding = ps.DisableEncoding;
 
   bits<8> src1;
   let Inst{8-0}   = 0xf9; // sdwa
