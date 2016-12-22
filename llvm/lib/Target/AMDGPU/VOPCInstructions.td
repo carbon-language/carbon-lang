@@ -178,6 +178,7 @@ multiclass VOPC_Pseudos <string opName,
 def VOPC_I1_F16_F16 : VOPC_Profile<[Write32Bit], f16>;
 def VOPC_I1_F32_F32 : VOPC_Profile<[Write32Bit], f32>;
 def VOPC_I1_F64_F64 : VOPC_Profile<[WriteDoubleAdd], f64>;
+def VOPC_I1_I16_I16 : VOPC_Profile<[Write32Bit], i16>;
 def VOPC_I1_I32_I32 : VOPC_Profile<[Write32Bit], i32>;
 def VOPC_I1_I64_I64 : VOPC_Profile<[Write64Bit], i64>;
 
@@ -189,6 +190,9 @@ multiclass VOPC_F32 <string opName, PatLeaf cond = COND_NULL, string revOp = opN
 
 multiclass VOPC_F64 <string opName, PatLeaf cond = COND_NULL, string revOp = opName> :
   VOPC_Pseudos <opName, VOPC_I1_F64_F64, cond, revOp, 0>;
+
+multiclass VOPC_I16 <string opName, PatLeaf cond = COND_NULL, string revOp = opName> :
+  VOPC_Pseudos <opName, VOPC_I1_I16_I16, cond, revOp, 0>;
 
 multiclass VOPC_I32 <string opName, PatLeaf cond = COND_NULL, string revOp = opName> :
   VOPC_Pseudos <opName, VOPC_I1_I32_I32, cond, revOp, 0>;
@@ -356,7 +360,7 @@ defm V_CMPSX_TRU_F64 : VOPCX_F64 <"v_cmpsx_tru_f64">;
 
 } // End SubtargetPredicate = isSICI
 
-let SubtargetPredicate = isVI in {
+let SubtargetPredicate = Has16BitInsts in {
 
 defm V_CMP_F_F16    : VOPC_F16 <"v_cmp_f_f16">;
 defm V_CMP_LT_F16   : VOPC_F16 <"v_cmp_lt_f16", COND_OLT, "v_cmp_gt_f16">;
@@ -392,7 +396,25 @@ defm V_CMPX_NEQ_F16 : VOPCX_F16 <"v_cmpx_neq_f16">;
 defm V_CMPX_NLT_F16 : VOPCX_F16 <"v_cmpx_nlt_f16">;
 defm V_CMPX_TRU_F16 : VOPCX_F16 <"v_cmpx_tru_f16">;
 
-} // End SubtargetPredicate = isVI
+defm V_CMP_F_I16 : VOPC_I16 <"v_cmp_f_i16">;
+defm V_CMP_LT_I16 : VOPC_I16 <"v_cmp_lt_i16", COND_SLT, "v_cmp_gt_i16">;
+defm V_CMP_EQ_I16 : VOPC_I16 <"v_cmp_eq_i16">;
+defm V_CMP_LE_I16 : VOPC_I16 <"v_cmp_le_i16", COND_SLE, "v_cmp_ge_i16">;
+defm V_CMP_GT_I16 : VOPC_I16 <"v_cmp_gt_i16", COND_SGT>;
+defm V_CMP_NE_I16 : VOPC_I16 <"v_cmp_ne_i16">;
+defm V_CMP_GE_I16 : VOPC_I16 <"v_cmp_ge_i16", COND_SGE>;
+defm V_CMP_T_I16 : VOPC_I16 <"v_cmp_t_i16">;
+
+defm V_CMP_F_U16 : VOPC_I16 <"v_cmp_f_u16">;
+defm V_CMP_LT_U16 : VOPC_I16 <"v_cmp_lt_u16", COND_ULT, "v_cmp_gt_u16">;
+defm V_CMP_EQ_U16 : VOPC_I16 <"v_cmp_eq_u16", COND_EQ>;
+defm V_CMP_LE_U16 : VOPC_I16 <"v_cmp_le_u16", COND_ULE, "v_cmp_ge_u16">;
+defm V_CMP_GT_U16 : VOPC_I16 <"v_cmp_gt_u16", COND_UGT>;
+defm V_CMP_NE_U16 : VOPC_I16 <"v_cmp_ne_u16", COND_NE>;
+defm V_CMP_GE_U16 : VOPC_I16 <"v_cmp_ge_u16", COND_UGE>;
+defm V_CMP_T_U16 : VOPC_I16 <"v_cmp_t_u16">;
+
+} // End SubtargetPredicate = Has16BitInsts
 
 defm V_CMP_F_I32 : VOPC_I32 <"v_cmp_f_i32">;
 defm V_CMP_LT_I32 : VOPC_I32 <"v_cmp_lt_i32", COND_SLT, "v_cmp_gt_i32">;
@@ -991,6 +1013,24 @@ defm V_CMPX_NLE_F64   : VOPC_Real_vi <0x7c>;
 defm V_CMPX_NEQ_F64   : VOPC_Real_vi <0x7d>;
 defm V_CMPX_NLT_F64   : VOPC_Real_vi <0x7e>;
 defm V_CMPX_TRU_F64   : VOPC_Real_vi <0x7f>;
+
+defm V_CMP_F_I16      : VOPC_Real_vi <0xa0>;
+defm V_CMP_LT_I16     : VOPC_Real_vi <0xa1>;
+defm V_CMP_EQ_I16     : VOPC_Real_vi <0xa2>;
+defm V_CMP_LE_I16     : VOPC_Real_vi <0xa3>;
+defm V_CMP_GT_I16     : VOPC_Real_vi <0xa4>;
+defm V_CMP_NE_I16     : VOPC_Real_vi <0xa5>;
+defm V_CMP_GE_I16     : VOPC_Real_vi <0xa6>;
+defm V_CMP_T_I16      : VOPC_Real_vi <0xa7>;
+
+defm V_CMP_F_U16      : VOPC_Real_vi <0xa8>;
+defm V_CMP_LT_U16     : VOPC_Real_vi <0xa9>;
+defm V_CMP_EQ_U16     : VOPC_Real_vi <0xaa>;
+defm V_CMP_LE_U16     : VOPC_Real_vi <0xab>;
+defm V_CMP_GT_U16     : VOPC_Real_vi <0xac>;
+defm V_CMP_NE_U16     : VOPC_Real_vi <0xad>;
+defm V_CMP_GE_U16     : VOPC_Real_vi <0xae>;
+defm V_CMP_T_U16      : VOPC_Real_vi <0xaf>;
 
 defm V_CMP_F_I32      : VOPC_Real_vi <0xc0>;
 defm V_CMP_LT_I32     : VOPC_Real_vi <0xc1>;
