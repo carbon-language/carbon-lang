@@ -3648,6 +3648,9 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
 
     if (VT == MVT::f64 && !Subtarget->hasFP64Denormals())
       return DAG.getConstantFP(0.0, SDLoc(N), VT);
+
+    if (VT == MVT::f16 && !Subtarget->hasFP16Denormals())
+      return DAG.getConstantFP(0.0, SDLoc(N), VT);
   }
 
   if (C.isNaN()) {
