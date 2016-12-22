@@ -2059,8 +2059,7 @@ static bool isSameTemplateArg(ASTContext &Context,
 ///
 /// \param NTTPType For a declaration template argument, the type of
 /// the non-type template parameter that corresponds to this template
-/// argument. Can be null if no type sugar is available to add to the
-/// type from the template argument.
+/// argument.
 ///
 /// \param Loc The source location to use for the resulting template
 /// argument.
@@ -2076,16 +2075,12 @@ Sema::getTrivialTemplateArgumentLoc(const TemplateArgument &Arg,
         Arg, Context.getTrivialTypeSourceInfo(Arg.getAsType(), Loc));
 
   case TemplateArgument::Declaration: {
-    if (NTTPType.isNull())
-      NTTPType = Arg.getParamTypeForDecl();
     Expr *E = BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
                   .getAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(E), E);
   }
 
   case TemplateArgument::NullPtr: {
-    if (NTTPType.isNull())
-      NTTPType = Arg.getNullPtrType();
     Expr *E = BuildExpressionFromDeclTemplateArgument(Arg, NTTPType, Loc)
                   .getAs<Expr>();
     return TemplateArgumentLoc(TemplateArgument(NTTPType, /*isNullPtr*/true),
@@ -2136,13 +2131,31 @@ ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
                                TemplateDeductionInfo &Info,
                                bool InFunctionTemplate,
                                SmallVectorImpl<TemplateArgument> &Output) {
+  // First, for a non-type template parameter type that is
+  // initialized by a declaration, we need the type of the
+  // corresponding non-type template parameter.
+  QualType NTTPType;
+  if (NonTypeTemplateParmDecl *NTTP =
+          dyn_cast<NonTypeTemplateParmDecl>(Param)) {
+    NTTPType = NTTP->getType();
+    if (NTTPType->isDependentType()) {
+      TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack, Output);
+      NTTPType = S.SubstType(NTTPType,
+                             MultiLevelTemplateArgumentList(TemplateArgs),
+                             NTTP->getLocation(),
+                             NTTP->getDeclName());
+      if (NTTPType.isNull())
+        return true;
+    }
+  }
+
   auto ConvertArg = [&](DeducedTemplateArgument Arg,
                         unsigned ArgumentPackIndex) {
     // Convert the deduced template argument into a template
     // argument that we can check, almost as if the user had written
     // the template argument explicitly.
     TemplateArgumentLoc ArgLoc =
-        S.getTrivialTemplateArgumentLoc(Arg, QualType(), Info.getLocation());
+        S.getTrivialTemplateArgumentLoc(Arg, NTTPType, Info.getLocation());
 
     // Check the template argument, converting it as necessary.
     return S.CheckTemplateArgument(
@@ -2174,28 +2187,22 @@ ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
     }
 
     // If the pack is empty, we still need to substitute into the parameter
-    // itself, in case that substitution fails.
-    if (PackedArgsBuilder.empty()) {
+    // itself, in case that substitution fails. For non-type parameters, we did
+    // this above. For type parameters, no substitution is ever required.
+    auto *TTP = dyn_cast<TemplateTemplateParmDecl>(Param);
+    if (TTP && PackedArgsBuilder.empty()) {
+      // Set up a template instantiation context.
       LocalInstantiationScope Scope(S);
-      TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack, Output);
-      MultiLevelTemplateArgumentList Args(TemplateArgs);
+      Sema::InstantiatingTemplate Inst(S, Template->getLocation(), Template,
+                                       TTP, Output,
+                                       Template->getSourceRange());
+      if (Inst.isInvalid())
+        return true;
 
-      if (auto *NTTP = dyn_cast<NonTypeTemplateParmDecl>(Param)) {
-        Sema::InstantiatingTemplate Inst(S, Template->getLocation(), Template,
-                                         NTTP, Output,
-                                         Template->getSourceRange());
-        if (Inst.isInvalid() || 
-            S.SubstType(NTTP->getType(), Args, NTTP->getLocation(),
-                        NTTP->getDeclName()).isNull())
-          return true;
-      } else if (auto *TTP = dyn_cast<TemplateTemplateParmDecl>(Param)) {
-        Sema::InstantiatingTemplate Inst(S, Template->getLocation(), Template,
-                                         TTP, Output,
-                                         Template->getSourceRange());
-        if (Inst.isInvalid() || !S.SubstDecl(TTP, S.CurContext, Args))
-          return true;
-      }
-      // For type parameters, no substitution is ever required.
+      TemplateArgumentList TemplateArgs(TemplateArgumentList::OnStack, Output);
+      if (!S.SubstDecl(TTP, S.CurContext,
+                       MultiLevelTemplateArgumentList(TemplateArgs)))
+        return true;
     }
 
     // Create the resulting argument pack.
