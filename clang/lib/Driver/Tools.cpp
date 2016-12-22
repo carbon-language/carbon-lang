@@ -3805,7 +3805,7 @@ ParsePICArgs(const ToolChain &ToolChain, const ArgList &Args) {
 
   // Android-specific defaults for PIC/PIE
   if (Triple.isAndroid()) {
-    switch (ToolChain.getArch()) {
+    switch (Triple.getArch()) {
     case llvm::Triple::arm:
     case llvm::Triple::armeb:
     case llvm::Triple::thumb:
@@ -3917,7 +3917,7 @@ ParsePICArgs(const ToolChain &ToolChain, const ArgList &Args) {
   }
 
   bool EmbeddedPISupported;
-  switch (ToolChain.getArch()) {
+  switch (Triple.getArch()) {
     case llvm::Triple::arm:
     case llvm::Triple::armeb:
     case llvm::Triple::thumb:
@@ -3946,9 +3946,8 @@ ParsePICArgs(const ToolChain &ToolChain, const ArgList &Args) {
   }
 
   // ROPI and RWPI are not comaptible with PIC or PIE.
-  if ((ROPI || RWPI) && (PIC || PIE)) {
+  if ((ROPI || RWPI) && (PIC || PIE))
     ToolChain.getDriver().Diag(diag::err_drv_ropi_rwpi_incompatible_with_pic);
-  }
 
   if (PIC)
     return std::make_tuple(llvm::Reloc::PIC_, IsPICLevelTwo ? 2U : 1U, PIE);
