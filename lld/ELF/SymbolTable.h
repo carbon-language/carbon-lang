@@ -22,8 +22,6 @@ class Lazy;
 class OutputSectionBase;
 struct Symbol;
 
-typedef llvm::CachedHashStringRef SymName;
-
 // SymbolTable is a bucket of all known symbols, including defined,
 // undefined, or lazy symbols (the last one is symbols in archive
 // files whose archive members are not yet loaded).
@@ -118,7 +116,7 @@ private:
   // but a bit inefficient.
   // FIXME: Experiment with passing in a custom hashing or sorting the symbols
   // once symbol resolution is finished.
-  llvm::DenseMap<SymName, SymIndex> Symtab;
+  llvm::DenseMap<llvm::CachedHashStringRef, SymIndex> Symtab;
   std::vector<Symbol *> SymVector;
 
   // Comdat groups define "link once" sections. If two comdat groups have the
