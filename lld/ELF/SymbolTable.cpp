@@ -243,6 +243,8 @@ template <class ELFT> Symbol *SymbolTable<ELFT>::addUndefined(StringRef Name) {
                       /*CanOmitFromDynSym*/ false, /*File*/ nullptr);
 }
 
+static uint8_t getVisibility(uint8_t StOther) { return StOther & 3; }
+
 template <class ELFT>
 Symbol *SymbolTable<ELFT>::addUndefined(StringRef Name, bool IsLocal,
                                         uint8_t Binding, uint8_t StOther,
@@ -251,7 +253,7 @@ Symbol *SymbolTable<ELFT>::addUndefined(StringRef Name, bool IsLocal,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) =
-      insert(Name, Type, StOther & 3, CanOmitFromDynSym, File);
+      insert(Name, Type, getVisibility(StOther), CanOmitFromDynSym, File);
   if (WasInserted) {
     S->Binding = Binding;
     replaceBody<Undefined>(S, Name, IsLocal, StOther, Type, File);
@@ -322,8 +324,8 @@ Symbol *SymbolTable<ELFT>::addCommon(StringRef N, uint64_t Size,
                                      InputFile *File) {
   Symbol *S;
   bool WasInserted;
-  std::tie(S, WasInserted) =
-      insert(N, Type, StOther & 3, /*CanOmitFromDynSym*/ false, File);
+  std::tie(S, WasInserted) = insert(N, Type, getVisibility(StOther),
+                                    /*CanOmitFromDynSym*/ false, File);
   int Cmp = compareDefined(S, WasInserted, Binding);
   if (Cmp > 0) {
     S->Binding = Binding;
@@ -383,7 +385,7 @@ Symbol *SymbolTable<ELFT>::addRegular(StringRef Name, uint8_t StOther,
                                       InputFile *File) {
   Symbol *S;
   bool WasInserted;
-  std::tie(S, WasInserted) = insert(Name, Type, StOther & 3,
+  std::tie(S, WasInserted) = insert(Name, Type, getVisibility(StOther),
                                     /*CanOmitFromDynSym*/ false, File);
   int Cmp = compareDefinedNonCommon<ELFT>(S, WasInserted, Binding,
                                           Section == nullptr, Value);
@@ -401,7 +403,7 @@ Symbol *SymbolTable<ELFT>::addSynthetic(StringRef N,
                                         uintX_t Value, uint8_t StOther) {
   Symbol *S;
   bool WasInserted;
-  std::tie(S, WasInserted) = insert(N, STT_NOTYPE, /*Visibility*/ StOther & 0x3,
+  std::tie(S, WasInserted) = insert(N, STT_NOTYPE, getVisibility(StOther),
                                     /*CanOmitFromDynSym*/ false, nullptr);
   int Cmp = compareDefinedNonCommon<ELFT>(S, WasInserted, STB_GLOBAL,
                                           /*IsAbsolute*/ false, /*Value*/ 0);
@@ -444,7 +446,7 @@ Symbol *SymbolTable<ELFT>::addBitcode(StringRef Name, uint8_t Binding,
   Symbol *S;
   bool WasInserted;
   std::tie(S, WasInserted) =
-      insert(Name, Type, StOther & 3, CanOmitFromDynSym, F);
+      insert(Name, Type, getVisibility(StOther), CanOmitFromDynSym, F);
   int Cmp = compareDefinedNonCommon<ELFT>(S, WasInserted, Binding,
                                           /*IsAbs*/ false, /*Value*/ 0);
   if (Cmp > 0)
