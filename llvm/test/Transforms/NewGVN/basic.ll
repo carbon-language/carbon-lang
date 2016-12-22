@@ -1,6 +1,5 @@
 ; XFAIL: *
 ; RUN: opt < %s -newgvn -S | FileCheck %s
-; RUN: opt < %s -passes=gvn -S | FileCheck %s
 
 define i32 @main() {
 block1:
