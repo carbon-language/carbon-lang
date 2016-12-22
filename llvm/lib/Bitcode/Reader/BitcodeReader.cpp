@@ -4915,6 +4915,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       auto FS = llvm::make_unique<FunctionSummary>(
           Flags, InstCount, std::move(Refs), std::move(Calls),
           std::move(PendingTypeTests));
+      PendingTypeTests.clear();
       auto GUID = getGUIDFromValueId(ValueID);
       FS->setModulePath(TheIndex.addModulePath(ModulePath, 0)->first());
       FS->setOriginalName(GUID.second);
@@ -4989,6 +4990,7 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       auto FS = llvm::make_unique<FunctionSummary>(
           Flags, InstCount, std::move(Refs), std::move(Edges),
           std::move(PendingTypeTests));
+      PendingTypeTests.clear();
       LastSeenSummary = FS.get();
       FS->setModulePath(ModuleIdMap[ModuleId]);
       TheIndex.addGlobalValueSummary(GUID, std::move(FS));
