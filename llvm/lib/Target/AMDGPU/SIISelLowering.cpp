@@ -1847,6 +1847,8 @@ bool SITargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
     return Subtarget->hasFP32Denormals() && Subtarget->hasFastFMAF32();
   case MVT::f64:
     return true;
+  case MVT::f16:
+    return Subtarget->has16BitInsts() && Subtarget->hasFP16Denormals();
   default:
     break;
   }
