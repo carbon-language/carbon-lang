@@ -37,6 +37,17 @@ class VOP2_MADKe <bits<6> op, VOPProfile P> : Enc64 {
   let Inst{63-32} = imm;
 }
 
+class VOP2_SDWAe <bits<6> op, VOPProfile P> : VOP_SDWAe <P> {
+  bits<8> vdst;
+  bits<8> src1;
+  
+  let Inst{8-0}   = 0xf9; // sdwa
+  let Inst{16-9}  = !if(P.HasSrc1, src1{7-0}, 0);
+  let Inst{24-17} = !if(P.EmitDst, vdst{7-0}, 0);
+  let Inst{30-25} = op;
+  let Inst{31}    = 0x0; // encoding
+}
+
 class VOP2_Pseudo <string opName, VOPProfile P, list<dag> pattern=[], string suffix = "_e32"> :
   InstSI <P.Outs32, P.Ins32, "", pattern>,
   VOP <opName>,
@@ -84,6 +95,11 @@ class VOP2_Real <VOP2_Pseudo ps, int EncodingFamily> :
   let TSFlags            = ps.TSFlags;
 }
 
+class VOP2_SDWA_Pseudo <string OpName, VOPProfile P, list<dag> pattern=[]> :
+  VOP_SDWA_Pseudo <OpName, P, pattern> {
+  let AsmMatchConverter = "cvtSdwaVOP2";
+}
+
 class getVOP2Pat64 <SDPatternOperator node, VOPProfile P> : LetDummies {
   list<dag> ret = !if(P.HasModifiers,
     [(set P.DstVT:$vdst,
@@ -102,8 +118,12 @@ multiclass VOP2Inst <string opName,
 
   def _e64 : VOP3_Pseudo <opName, P, getVOP2Pat64<node, P>.ret>,
              Commutable_REV<revOp#"_e64", !eq(revOp, opName)>;
+
+  def _sdwa : VOP2_SDWA_Pseudo <opName, P>,
+              Commutable_REV<revOp#"_sdwa", !eq(revOp, opName)>;
 }
 
+// TODO: add SDWA pseudo instructions for VOP2bInst and VOP2eInst
 multiclass VOP2bInst <string opName,
                       VOPProfile P,
                       SDPatternOperator node = null_frag,
@@ -554,25 +574,6 @@ defm V_CVT_PK_I16_I32     : VOP2_Real_e32e64_si <0x31>;
 // VI
 //===----------------------------------------------------------------------===//
 
-class VOP2_SDWA <bits<6> op, VOP2_Pseudo ps, VOPProfile P = ps.Pfl> :
-  VOP_SDWA <ps.OpName, P> {
-  let Defs = ps.Defs;
-  let Uses = ps.Uses;
-  let SchedRW = ps.SchedRW;
-  let hasSideEffects = ps.hasSideEffects;
-  let Constraints = ps.Constraints;
-  let DisableEncoding = ps.DisableEncoding;
-  let AsmMatchConverter = "cvtSdwaVOP2";
-
-  bits<8> vdst;
-  bits<8> src1;
-  let Inst{8-0}   = 0xf9; // sdwa
-  let Inst{16-9}  = !if(P.HasSrc1, src1{7-0}, 0);
-  let Inst{24-17} = !if(P.EmitDst, vdst{7-0}, 0);
-  let Inst{30-25} = op;
-  let Inst{31}    = 0x0; // encoding
-}
-
 class VOP2_DPP <bits<6> op, VOP2_Pseudo ps, VOPProfile P = ps.Pfl> :
   VOP_DPP <ps.OpName, P> {
   let Defs = ps.Defs;
@@ -627,12 +628,17 @@ multiclass Base_VOP2_Real_e32e64_vi <bits<6> op> :
   VOP2_Real_e64_vi<{0, 1, 0, 0, op{5-0}}>;
 
 } // End AssemblerPredicates = [isVI], DecoderNamespace = "VI"
+ 
+multiclass VOP2_SDWA_Real <bits<6> op> {
+  def _sdwa_vi :
+    VOP_SDWA_Real <!cast<VOP2_SDWA_Pseudo>(NAME#"_sdwa")>,
+    VOP2_SDWAe <op{5-0}, !cast<VOP2_SDWA_Pseudo>(NAME#"_sdwa").Pfl>;
+}
 
 multiclass VOP2_Real_e32e64_vi <bits<6> op> :
-  Base_VOP2_Real_e32e64_vi<op> {
-  // for now left sdwa/dpp only for asm/dasm
+  Base_VOP2_Real_e32e64_vi<op>, VOP2_SDWA_Real<op> {
+  // For now left dpp only for asm/dasm
   // TODO: add corresponding pseudo
-  def _sdwa : VOP2_SDWA<op, !cast<VOP2_Pseudo>(NAME#"_e32")>;
   def _dpp : VOP2_DPP<op, !cast<VOP2_Pseudo>(NAME#"_e32")>;
 }
 

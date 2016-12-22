@@ -21,6 +21,19 @@ class VOPCe <bits<8> op> : Enc32 {
   let Inst{31-25} = 0x3e;
 }
 
+class VOPC_SDWAe <bits<8> op, VOPProfile P> : VOP_SDWAe <P> {
+  bits<8> src1;
+
+  let Inst{8-0}   = 0xf9; // sdwa
+  let Inst{16-9}  = !if(P.HasSrc1, src1{7-0}, 0);
+  let Inst{24-17} = op;
+  let Inst{31-25} = 0x3e; // encoding
+
+  // VOPC disallows dst_sel and dst_unused as they have no effect on destination
+  let Inst{42-40} = SDWA.DWORD;
+  let Inst{44-43} = SDWA.UNUSED_PRESERVE;
+}
+
 //===----------------------------------------------------------------------===//
 // VOPC classes
 //===----------------------------------------------------------------------===//
@@ -82,6 +95,11 @@ class VOPC_Real <VOPC_Pseudo ps, int EncodingFamily> :
   let TSFlags            = ps.TSFlags;
 }
 
+class VOPC_SDWA_Pseudo <string OpName, VOPProfile P, list<dag> pattern=[]> :
+  VOP_SDWA_Pseudo <OpName, P, pattern> {
+  let AsmMatchConverter = "cvtSdwaVOPC";
+}
+
 // This class is used only with VOPC instructions. Use $sdst for out operand
 class VOPCInstAlias <VOP3_Pseudo ps, Instruction inst, VOPProfile p = ps.Pfl> :
   InstAlias <ps.OpName#" "#p.Asm32, (inst)>, PredicateControl {
@@ -131,6 +149,7 @@ multiclass VOPC_Pseudos <string opName,
     let isCompare = 1;
     let isCommutable = 1;
   }
+
   def _e64 : VOP3_Pseudo<opName, P,
     !if(P.HasModifiers,
       [(set i1:$sdst,
@@ -142,6 +161,15 @@ multiclass VOPC_Pseudos <string opName,
     Commutable_REV<revOp#"_e64", !eq(revOp, opName)> {
     let Defs = !if(DefExec, [EXEC], []);
     let SchedRW = P.Schedule;
+    let isCompare = 1;
+    let isCommutable = 1;
+  }
+
+  def _sdwa : VOPC_SDWA_Pseudo <opName, P>,
+              Commutable_REV<revOp#"_sdwa", !eq(revOp, opName)> {
+    let Defs = !if(DefExec, [VCC, EXEC], [VCC]);
+    let SchedRW = P.Schedule;
+    let isConvergent = DefExec;
     let isCompare = 1;
     let isCommutable = 1;
   }
@@ -471,9 +499,16 @@ multiclass VOPC_Class_Pseudos <string opName, VOPC_Profile p, bit DefExec> {
     let SchedRW = p.Schedule;
     let isConvergent = DefExec;
   }
+
   def _e64 : VOP3_Pseudo<opName, p, getVOPCClassPat64<p>.ret> {
     let Defs = !if(DefExec, [EXEC], []);
     let SchedRW = p.Schedule;
+  }
+
+  def _sdwa : VOPC_SDWA_Pseudo <opName, p> {
+    let Defs = !if(DefExec, [VCC, EXEC], [VCC]);
+    let SchedRW = p.Schedule;
+    let isConvergent = DefExec;
   }
 }
 
@@ -822,27 +857,6 @@ defm V_CMPX_CLASS_F64 : VOPC_Real_si <0xb8>;
 // VI
 //===----------------------------------------------------------------------===//
 
-class VOPC_SDWA<bits<8> op, VOPC_Pseudo ps, VOPProfile P = ps.Pfl> :
-  VOP_SDWA <ps.OpName, P> {
-  let Defs = ps.Defs;
-  let hasSideEffects = ps.hasSideEffects;
-  let AsmMatchConverter = "cvtSdwaVOPC";
-  let isCompare = ps.isCompare;
-  let isCommutable = ps.isCommutable;
-  let Constraints = ps.Constraints;
-  let DisableEncoding = ps.DisableEncoding;
-
-  bits<8> src1;
-  let Inst{8-0}   = 0xf9; // sdwa
-  let Inst{16-9}  = !if(P.HasSrc1, src1{7-0}, 0);
-  let Inst{24-17} = op;
-  let Inst{31-25} = 0x3e; // encoding
-
-  // VOPC disallows dst_sel and dst_unused as they have no effect on destination
-  let Inst{42-40} = SDWA_DWORD;
-  let Inst{44-43} = SDWA_UNUSED_PRESERVE;
-}
-
 multiclass VOPC_Real_vi <bits<10> op> {
   let AssemblerPredicates = [isVI], DecoderNamespace = "VI" in {
     def _e32_vi :
@@ -859,9 +873,9 @@ multiclass VOPC_Real_vi <bits<10> op> {
     }
   }
 
-  // for now left sdwa only for asm/dasm
-  // TODO: add corresponding pseudo
-  def _sdwa : VOPC_SDWA<op{7-0}, !cast<VOPC_Pseudo>(NAME#"_e32")>;
+  def _sdwa_vi :
+    VOP_SDWA_Real <!cast<VOPC_SDWA_Pseudo>(NAME#"_sdwa")>,
+    VOPC_SDWAe <op{7-0}, !cast<VOPC_SDWA_Pseudo>(NAME#"_sdwa").Pfl>;
 
   def : VOPCInstAlias <!cast<VOP3_Pseudo>(NAME#"_e64"),
                        !cast<Instruction>(NAME#"_e32_vi")> {
