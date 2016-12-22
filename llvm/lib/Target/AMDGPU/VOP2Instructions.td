@@ -416,18 +416,18 @@ def : Pat<
 multiclass Bits_OpsRev_i16_Pats <SDPatternOperator op, Instruction inst> {
 
 def : Pat<
-  (op i16:$src0, i32:$src1),
+  (op i16:$src0, i16:$src1),
   (inst $src1, $src0)
 >;
 
 def : Pat<
-  (i32 (zext (op i16:$src0, i32:$src1))),
+  (i32 (zext (op i16:$src0, i16:$src1))),
   (inst $src1, $src0)
 >;
 
 
 def : Pat<
-  (i64 (zext (op i16:$src0, i32:$src1))),
+  (i64 (zext (op i16:$src0, i16:$src1))),
    (REG_SEQUENCE VReg_64,
      (inst $src1, $src0), sub0,
      (V_MOV_B32_e32 (i32 0)), sub1)
@@ -464,9 +464,9 @@ def : Pat <
   (V_XOR_B32_e64 $src0, $src1)
 >;
 
-defm : Bits_OpsRev_i16_Pats<shl, V_LSHLREV_B16_e32>;
-defm : Bits_OpsRev_i16_Pats<srl, V_LSHRREV_B16_e32>;
-defm : Bits_OpsRev_i16_Pats<sra, V_ASHRREV_I16_e32>;
+defm : Bits_OpsRev_i16_Pats<shl, V_LSHLREV_B16_e64>;
+defm : Bits_OpsRev_i16_Pats<srl, V_LSHRREV_B16_e64>;
+defm : Bits_OpsRev_i16_Pats<sra, V_ASHRREV_I16_e64>;
 
 def : ZExt_i16_i1_Pat<zext>;
 def : ZExt_i16_i1_Pat<anyext>;

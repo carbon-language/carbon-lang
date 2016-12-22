@@ -1811,8 +1811,10 @@ EVT SITargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &Ctx,
   return EVT::getVectorVT(Ctx, MVT::i1, VT.getVectorNumElements());
 }
 
-MVT SITargetLowering::getScalarShiftAmountTy(const DataLayout &, EVT) const {
-  return MVT::i32;
+MVT SITargetLowering::getScalarShiftAmountTy(const DataLayout &, EVT VT) const {
+  // TODO: Should i16 be used always if legal? For now it would force VALU
+  // shifts.
+  return (VT == MVT::i16) ? MVT::i16 : MVT::i32;
 }
 
 // Answering this is somewhat tricky and depends on the specific device which
