@@ -69,6 +69,8 @@ class SITargetLowering final : public AMDGPUTargetLowering {
                                unsigned AS,
                                DAGCombinerInfo &DCI) const;
 
+  SDValue performMemSDNodeCombine(MemSDNode *N, DAGCombinerInfo &DCI) const;
+
   SDValue splitBinaryBitConstantOp(DAGCombinerInfo &DCI, const SDLoc &SL,
                                    unsigned Opc, SDValue LHS,
                                    const ConstantSDNode *CRHS) const;
@@ -81,7 +83,10 @@ class SITargetLowering final : public AMDGPUTargetLowering {
 
   SDValue performMinMaxCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
+  SDValue performFAddCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue performFSubCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performSetCCCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue performCvtF32UByteNCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
   bool isLegalFlatAddressingMode(const AddrMode &AM) const;
   bool isLegalMUBUFAddressingMode(const AddrMode &AM) const;
