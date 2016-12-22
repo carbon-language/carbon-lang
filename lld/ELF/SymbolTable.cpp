@@ -556,26 +556,24 @@ template <class ELFT> void SymbolTable<ELFT>::scanShlibUndefined() {
 // So, if "extern C++" feature is used, we need to demangle all known
 // symbols.
 template <class ELFT>
-void SymbolTable<ELFT>::initDemangledSyms() {
-  if (DemangledSyms)
-    return;
-  DemangledSyms.emplace();
-
-  for (Symbol *Sym : SymVector) {
-    SymbolBody *B = Sym->body();
-    if (Optional<std::string> S = demangle(B->getName()))
-      (*DemangledSyms)[*S].push_back(B);
-    else
-      (*DemangledSyms)[B->getName()].push_back(B);
+StringMap<std::vector<SymbolBody *>> &SymbolTable<ELFT>::getDemangledSyms() {
+  if (!DemangledSyms) {
+    DemangledSyms.emplace();
+    for (Symbol *Sym : SymVector) {
+      SymbolBody *B = Sym->body();
+      if (Optional<std::string> S = demangle(B->getName()))
+        (*DemangledSyms)[*S].push_back(B);
+      else
+        (*DemangledSyms)[B->getName()].push_back(B);
+    }
   }
+  return *DemangledSyms;
 }
 
 template <class ELFT>
 std::vector<SymbolBody *> SymbolTable<ELFT>::findByVersion(SymbolVersion Ver) {
-  if (Ver.IsExternCpp) {
-    initDemangledSyms();
-    return DemangledSyms->lookup(Ver.Name);
-  }
+  if (Ver.IsExternCpp)
+    return getDemangledSyms().lookup(Ver.Name);
   return {find(Ver.Name)};
 }
 
@@ -586,8 +584,7 @@ SymbolTable<ELFT>::findAllByVersion(SymbolVersion Ver) {
   StringMatcher M(Ver.Name);
 
   if (Ver.IsExternCpp) {
-    initDemangledSyms();
-    for (auto &P : *DemangledSyms)
+    for (auto &P : getDemangledSyms())
       if (M.match(P.first()))
         for (SymbolBody *Body : P.second)
           if (!Body->isUndefined())
