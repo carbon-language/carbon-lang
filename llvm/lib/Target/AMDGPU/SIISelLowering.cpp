@@ -3917,7 +3917,7 @@ SDValue SITargetLowering::performFAddCombine(SDNode *N,
       unsigned FusedOp = getFusedOpcode(DAG, N, LHS.getNode());
       if (FusedOp != 0) {
         const SDValue Two = DAG.getConstantFP(2.0, SL, VT);
-        return DAG.getNode(FusedOp, SL, VT, Two, A, RHS);
+        return DAG.getNode(FusedOp, SL, VT, A, Two, RHS);
       }
     }
   }
@@ -3929,7 +3929,7 @@ SDValue SITargetLowering::performFAddCombine(SDNode *N,
       unsigned FusedOp = getFusedOpcode(DAG, N, RHS.getNode());
       if (FusedOp != 0) {
         const SDValue Two = DAG.getConstantFP(2.0, SL, VT);
-        return DAG.getNode(FusedOp, SL, VT, Two, A, LHS);
+        return DAG.getNode(FusedOp, SL, VT, A, Two, LHS);
       }
     }
   }
@@ -3963,7 +3963,7 @@ SDValue SITargetLowering::performFSubCombine(SDNode *N,
         const SDValue Two = DAG.getConstantFP(2.0, SL, VT);
         SDValue NegRHS = DAG.getNode(ISD::FNEG, SL, VT, RHS);
 
-        return DAG.getNode(FusedOp, SL, VT, Two, A, NegRHS);
+        return DAG.getNode(FusedOp, SL, VT, A, Two, NegRHS);
       }
     }
   }
@@ -3976,7 +3976,7 @@ SDValue SITargetLowering::performFSubCombine(SDNode *N,
       unsigned FusedOp = getFusedOpcode(DAG, N, RHS.getNode());
       if (FusedOp != 0){
         const SDValue NegTwo = DAG.getConstantFP(-2.0, SL, VT);
-        return DAG.getNode(FusedOp, SL, VT, NegTwo, A, LHS);
+        return DAG.getNode(FusedOp, SL, VT, A, NegTwo, LHS);
       }
     }
   }

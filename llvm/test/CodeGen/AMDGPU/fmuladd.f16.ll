@@ -199,7 +199,7 @@ define void @fmuladd_2.0_neg_a_b_f16(half addrspace(1)* %out, half addrspace(1)*
 ; GCN-LABEL: {{^}}fmuladd_2.0_a_neg_b_f16
 ; GCN: {{buffer|flat}}_load_ushort [[R1:v[0-9]+]],
 ; GCN: {{buffer|flat}}_load_ushort [[R2:v[0-9]+]],
-; VI-FLUSH: v_mad_f16 [[RESULT:v[0-9]+]], 2.0, [[R1]], -[[R2]]
+; VI-FLUSH: v_mad_f16 [[RESULT:v[0-9]+]], [[R1]], 2.0, -[[R2]]
 ; VI-DENORM: v_fma_f16 [[RESULT:v[0-9]+]], [[R1]], 2.0, -[[R2]]
 ; VI: flat_store_short v{{\[[0-9]+:[0-9]+\]}}, [[RESULT]]
 define void @fmuladd_2.0_a_neg_b_f16(half addrspace(1)* %out, half addrspace(1)* %in) #0 {
@@ -439,7 +439,7 @@ define void @fsub_c_fadd_a_a_f16(half addrspace(1)* %out, half addrspace(1)* %in
 ; GCN: {{buffer|flat}}_load_ushort [[R1:v[0-9]+]],
 ; GCN: {{buffer|flat}}_load_ushort [[R2:v[0-9]+]],
 
-; VI-FLUSH: v_mad_f16 [[RESULT:v[0-9]+]], 2.0, [[R1]], -[[R2]]
+; VI-FLUSH: v_mad_f16 [[RESULT:v[0-9]+]], [[R1]], 2.0, -[[R2]]
 
 ; VI-DENORM-CONTRACT: v_fma_f16 [[R2]], [[R1]], 2.0, -[[R2]]
 

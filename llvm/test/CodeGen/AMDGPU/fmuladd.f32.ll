@@ -275,7 +275,7 @@ define void @fmuladd_2.0_neg_a_b_f32(float addrspace(1)* %out, float addrspace(1
 ; GCN-LABEL: {{^}}fmuladd_2.0_a_neg_b_f32:
 ; GCN: {{buffer|flat}}_load_dword [[R1:v[0-9]+]],
 ; GCN: {{buffer|flat}}_load_dword [[R2:v[0-9]+]],
-; GCN-FLUSH: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], -[[R2]]
+; GCN-FLUSH: v_mad_f32 [[RESULT:v[0-9]+]], [[R1]], 2.0, -[[R2]]
 ; SI-FLUSH: buffer_store_dword [[RESULT]]
 ; VI-FLUSH: flat_store_dword v{{\[[0-9]+:[0-9]+\]}}, [[RESULT]]
 
@@ -551,7 +551,7 @@ define void @fsub_c_fadd_a_a_f32(float addrspace(1)* %out, float addrspace(1)* %
 ; GCN-LABEL: {{^}}fsub_fadd_a_a_c_f32:
 ; GCN: {{buffer|flat}}_load_dword [[R1:v[0-9]+]],
 ; GCN: {{buffer|flat}}_load_dword [[R2:v[0-9]+]],
-; GCN-FLUSH: v_mad_f32 [[RESULT:v[0-9]+]], 2.0, [[R1]], -[[R2]]
+; GCN-FLUSH: v_mad_f32 [[RESULT:v[0-9]+]], [[R1]], 2.0, -[[R2]]
 
 ; GCN-DENORM-FASTFMA-CONTRACT: v_fma_f32 [[RESULT:v[0-9]+]], [[R1]], 2.0, -[[R2]]
 
