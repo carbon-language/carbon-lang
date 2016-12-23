@@ -266,27 +266,6 @@ $comdat12 = comdat any
 
 define linkonce void @inner12() alwaysinline comdat($comdat12) {
 ; CHECK-LABEL: @inner12(
-t :qentry:
-  ret void
-}
-
-define void @outer12() comdat($comdat12) {
-; CHECK-LABEL: @outer12(
-entry:
-  call void @inner12()
-; CHECK-NOT: call void @inner12
-
-  ret void
-; CHECK: ret void
-}
-
-; The 'inner12' and 'outer12' functions test that we don't remove functions
-; which are part of a comdat group even if they otherwise seem dead.
-$comdat12 = comdat any
-
-define linkonce void @inner12() alwaysinline comdat($comdat12) {
-; CHECK-LABEL: @inner12(
-entry:
   ret void
 }
 
