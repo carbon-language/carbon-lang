@@ -697,7 +697,7 @@ Expected<bool> FunctionImporter::importFunctions(
       }
     }
 
-#ifndef DEBUG
+#ifndef NDEBUG
     // Note: this can't be done after `renameModuleForThinLTO` as it leaves the
     // module in a state that does not pass the verifier (for example aliases
     // pointing to available_externally functions).
