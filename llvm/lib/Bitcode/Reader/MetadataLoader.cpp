@@ -372,8 +372,14 @@ DistinctMDOperandPlaceholder &PlaceholderQueue::getPlaceholderOp(unsigned ID) {
 
 void PlaceholderQueue::flush(BitcodeReaderMetadataList &MetadataList) {
   while (!PHs.empty()) {
-    PHs.front().replaceUseWith(
-        MetadataList.getMetadataFwdRef(PHs.front().getID()));
+    auto *MD = MetadataList.getMetadataFwdRef(PHs.front().getID());
+#ifndef NDEBUG
+    if (auto MDN = dyn_cast<MDNode>(MD)) {
+      assert(MDN->isResolved() &&
+             "Flushing Placeholder while cycles aren't resolved");
+    }
+#endif
+    PHs.front().replaceUseWith(MD);
     PHs.pop_front();
   }
 }
