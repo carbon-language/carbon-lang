@@ -289,9 +289,6 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
   if (CodeGenOpts.DisableLLVMPasses)
     return;
 
-  unsigned OptLevel = CodeGenOpts.OptimizationLevel;
-  CodeGenOptions::InliningMethod Inlining = CodeGenOpts.getInlining();
-
   PassManagerBuilderWrapper PMBuilder(CodeGenOpts, LangOpts);
 
   // Figure out TargetLibraryInfo.  This needs to be added to MPM and FPM
@@ -302,26 +299,17 @@ void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
   std::unique_ptr<TargetLibraryInfoImpl> TLII(
       createTLII(TargetTriple, CodeGenOpts));
 
-  switch (Inlining) {
-  case CodeGenOptions::NoInlining:
-    break;
-  case CodeGenOptions::NormalInlining:
-  case CodeGenOptions::OnlyHintInlining: {
-    PMBuilder.Inliner =
-        createFunctionInliningPass(OptLevel, CodeGenOpts.OptimizeSize);
-    break;
-  }
-  case CodeGenOptions::OnlyAlwaysInlining:
-    // Respect always_inline.
-    if (OptLevel == 0)
-      // Do not insert lifetime intrinsics at -O0.
-      PMBuilder.Inliner = createAlwaysInlinerLegacyPass(false);
-    else
-      PMBuilder.Inliner = createAlwaysInlinerLegacyPass();
-    break;
+  // At O0 and O1 we only run the always inliner which is more efficient. At
+  // higher optimization levels we run the normal inliner.
+  if (CodeGenOpts.OptimizationLevel <= 1) {
+    bool InsertLifetimeIntrinsics = CodeGenOpts.OptimizationLevel != 0;
+    PMBuilder.Inliner = createAlwaysInlinerLegacyPass(InsertLifetimeIntrinsics);
+  } else {
+    PMBuilder.Inliner = createFunctionInliningPass(
+        CodeGenOpts.OptimizationLevel, CodeGenOpts.OptimizeSize);
   }
 
-  PMBuilder.OptLevel = OptLevel;
+  PMBuilder.OptLevel = CodeGenOpts.OptimizationLevel;
   PMBuilder.SizeLevel = CodeGenOpts.OptimizeSize;
   PMBuilder.BBVectorize = CodeGenOpts.VectorizeBB;
   PMBuilder.SLPVectorize = CodeGenOpts.VectorizeSLP;

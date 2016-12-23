@@ -104,8 +104,6 @@ CODEGENOPT(NoInfsFPMath      , 1, 0) ///< Assume FP arguments, results not +-Inf
 CODEGENOPT(NoSignedZeros     , 1, 0) ///< Allow ignoring the signedness of FP zero
 CODEGENOPT(ReciprocalMath    , 1, 0) ///< Allow FP divisions to be reassociated.
 CODEGENOPT(NoTrappingMath    , 1, 0) ///< Set when -fno-trapping-math is enabled.
-CODEGENOPT(NoInline          , 1, 0) ///< Set when -fno-inline is enabled.
-                                     ///< Disables use of the inline keyword.
 CODEGENOPT(NoNaNsFPMath      , 1, 0) ///< Assume FP arguments, results not NaN.
 CODEGENOPT(FlushDenorm       , 1, 0) ///< Allow FP denorm numbers to be flushed to zero
 CODEGENOPT(CorrectlyRoundedDivSqrt, 1, 0) ///< -cl-fp32-correctly-rounded-divide-sqrt
@@ -233,7 +231,7 @@ VALUE_CODEGENOPT(DwarfVersion, 3, 0)
 CODEGENOPT(EmitCodeView, 1, 0)
 
 /// The kind of inlining to perform.
-ENUM_CODEGENOPT(Inlining, InliningMethod, 2, NoInlining)
+ENUM_CODEGENOPT(Inlining, InliningMethod, 2, NormalInlining)
 
 // Vector functions library to use.
 ENUM_CODEGENOPT(VecLib, VectorLibrary, 2, NoLibrary)
