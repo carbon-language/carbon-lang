@@ -212,6 +212,10 @@
   }
 #endif
 
+#ifndef COMMON_INTERCEPT_FUNCTION_MEMCPY
+#define COMMON_INTERCEPT_FUNCTION_MEMCPY() {}
+#endif
+
 struct FileMetadata {
   // For open_memstream().
   char **addr;
