@@ -158,6 +158,19 @@ class ImplicitNullChecks : public MachineFunctionPass {
                                    MachineBasicBlock *HandlerMBB);
   void rewriteNullChecks(ArrayRef<NullCheck> NullCheckList);
 
+  /// Is \p MI a memory operation that can be used to implicitly null check the
+  /// value in \p PointerReg?  \p PrevInsts is the set of instruction seen since
+  /// the explicit null check on \p PointerReg.
+  bool isSuitableMemoryOp(MachineInstr &MI, unsigned PointerReg,
+                          ArrayRef<MachineInstr *> PrevInsts);
+
+  /// Return true if \p FaultingMI can be hoisted from after the the
+  /// instructions in \p InstsSeenSoFar to before them.  Set \p Dependence to a
+  /// non-null value if we also need to (and legally can) hoist a depedency.
+  bool canHoistLoadInst(MachineInstr *FaultingMI, unsigned PointerReg,
+                        ArrayRef<MachineInstr *> InstsSeenSoFar,
+                        MachineBasicBlock *NullSucc, MachineInstr *&Dependence);
+
 public:
   static char ID;
 
@@ -270,6 +283,96 @@ static bool AnyAliasLiveIn(const TargetRegisterInfo *TRI,
   return false;
 }
 
+bool ImplicitNullChecks::isSuitableMemoryOp(
+    MachineInstr &MI, unsigned PointerReg, ArrayRef<MachineInstr *> PrevInsts) {
+  int64_t Offset;
+  unsigned BaseReg;
+
+  if (!TII->getMemOpBaseRegImmOfs(MI, BaseReg, Offset, TRI) ||
+      BaseReg != PointerReg)
+    return false;
+
+  // We want the load to be issued at a sane offset from PointerReg, so that
+  // if PointerReg is null then the load reliably page faults.
+  if (!(MI.mayLoad() && !MI.isPredicable() && Offset < PageSize))
+    return false;
+
+  // Finally, we need to make sure that the load instruction actually is
+  // loading from PointerReg, and there isn't some re-definition of PointerReg
+  // between the compare and the load.
+  for (auto *PrevMI : PrevInsts)
+    for (auto &PrevMO : PrevMI->operands())
+      if (PrevMO.isReg() && PrevMO.getReg() &&
+          TRI->regsOverlap(PrevMO.getReg(), PointerReg))
+        return false;
+
+  return true;
+}
+
+bool ImplicitNullChecks::canHoistLoadInst(
+    MachineInstr *FaultingMI, unsigned PointerReg,
+    ArrayRef<MachineInstr *> InstsSeenSoFar, MachineBasicBlock *NullSucc,
+    MachineInstr *&Dependence) {
+  auto DepResult = computeDependence(FaultingMI, InstsSeenSoFar);
+  if (!DepResult.CanReorder)
+    return false;
+
+  if (!DepResult.PotentialDependence) {
+    Dependence = nullptr;
+    return true;
+  }
+
+  auto DependenceItr = *DepResult.PotentialDependence;
+  auto *DependenceMI = *DependenceItr;
+
+  // We don't want to reason about speculating loads.  Note -- at this point
+  // we should have already filtered out all of the other non-speculatable
+  // things, like calls and stores.
+  assert(canHandle(DependenceMI) && "Should never have reached here!");
+  if (DependenceMI->mayLoad())
+    return false;
+
+  for (auto &DependenceMO : DependenceMI->operands()) {
+    if (!(DependenceMO.isReg() && DependenceMO.getReg()))
+      continue;
+
+    // Make sure that we won't clobber any live ins to the sibling block by
+    // hoisting Dependency.  For instance, we can't hoist INST to before the
+    // null check (even if it safe, and does not violate any dependencies in
+    // the non_null_block) if %rdx is live in to _null_block.
+    //
+    //    test %rcx, %rcx
+    //    je _null_block
+    //  _non_null_block:
+    //    %rdx<def> = INST
+    //    ...
+    //
+    // This restriction does not apply to the faulting load inst because in
+    // case the pointer loaded from is in the null page, the load will not
+    // semantically execute, and affect machine state.  That is, if the load
+    // was loading into %rax and it faults, the value of %rax should stay the
+    // same as it would have been had the load not have executed and we'd have
+    // branched to NullSucc directly.
+    if (AnyAliasLiveIn(TRI, NullSucc, DependenceMO.getReg()))
+      return false;
+
+    // The Dependency can't be re-defining the base register -- then we won't
+    // get the memory operation on the address we want.  This is already
+    // checked in \c IsSuitableMemoryOp.
+    assert(!TRI->regsOverlap(DependenceMO.getReg(), PointerReg) &&
+           "Should have been checked before!");
+  }
+
+  auto DepDepResult =
+      computeDependence(DependenceMI, {InstsSeenSoFar.begin(), DependenceItr});
+
+  if (!DepDepResult.CanReorder || DepDepResult.PotentialDependence)
+    return false;
+
+  Dependence = DependenceMI;
+  return true;
+}
+
 /// Analyze MBB to check if its terminating branch can be turned into an
 /// implicit null check.  If yes, append a description of the said null check to
 /// NullCheckList and return true, else return false.
@@ -373,107 +476,14 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
 
   SmallVector<MachineInstr *, 8> InstsSeenSoFar;
 
-  // Is \p MI a memory operation that can be used to null check the value in \p
-  // PointerReg?
-  auto IsSuitableMemoryOp = [&](MachineInstr &MI,
-                                ArrayRef<MachineInstr *> PrevInsts) {
-    int64_t Offset;
-    unsigned BaseReg;
-
-    if (!TII->getMemOpBaseRegImmOfs(MI, BaseReg, Offset, TRI) ||
-        BaseReg != PointerReg)
-      return false;
-
-    // We want the load to be issued at a sane offset from PointerReg, so that
-    // if PointerReg is null then the load reliably page faults.
-    if (!(MI.mayLoad() && !MI.isPredicable() && Offset < PageSize))
-      return false;
-
-    // Finally, we need to make sure that the load instruction actually is
-    // loading from PointerReg, and there isn't some re-definition of PointerReg
-    // between the compare and the load.
-    for (auto *PrevMI : PrevInsts)
-      for (auto &PrevMO : PrevMI->operands())
-        if (PrevMO.isReg() && PrevMO.getReg() &&
-            TRI->regsOverlap(PrevMO.getReg(), PointerReg))
-          return false;
-
-    return true;
-  };
-
-  // Return true if \p FaultingMI can be hoisted from after the the instructions
-  // in \p InstsSeenSoFar to before them.  Set \p Dependence to a non-null value
-  // if we also need to (and legally can) hoist a depedency.
-  auto CanHoistLoadInst = [&](MachineInstr *FaultingMI,
-                              ArrayRef<MachineInstr *> InstsSeenSoFar,
-                              MachineInstr *&Dependence) {
-    auto DepResult = computeDependence(FaultingMI, InstsSeenSoFar);
-    if (!DepResult.CanReorder)
-      return false;
-
-    if (!DepResult.PotentialDependence) {
-      Dependence = nullptr;
-      return true;
-    }
-
-    auto DependenceItr = *DepResult.PotentialDependence;
-    auto *DependenceMI = *DependenceItr;
-
-    // We don't want to reason about speculating loads.  Note -- at this point
-    // we should have already filtered out all of the other non-speculatable
-    // things, like calls and stores.
-    assert(canHandle(DependenceMI) && "Should never have reached here!");
-    if (DependenceMI->mayLoad())
-      return false;
-
-    for (auto &DependenceMO : DependenceMI->operands()) {
-      if (!(DependenceMO.isReg() && DependenceMO.getReg()))
-        continue;
-
-      // Make sure that we won't clobber any live ins to the sibling block by
-      // hoisting Dependency.  For instance, we can't hoist INST to before the
-      // null check (even if it safe, and does not violate any dependencies in
-      // the non_null_block) if %rdx is live in to _null_block.
-      //
-      //    test %rcx, %rcx
-      //    je _null_block
-      //  _non_null_block:
-      //    %rdx<def> = INST
-      //    ...
-      //
-      // This restriction does not apply to the faulting load inst because in
-      // case the pointer loaded from is in the null page, the load will not
-      // semantically execute, and affect machine state.  That is, if the load
-      // was loading into %rax and it faults, the value of %rax should stay the
-      // same as it would have been had the load not have executed and we'd have
-      // branched to NullSucc directly.
-      if (AnyAliasLiveIn(TRI, NullSucc, DependenceMO.getReg()))
-        return false;
-
-      // The Dependency can't be re-defining the base register -- then we won't
-      // get the memory operation on the address we want.  This is already
-      // checked in \c IsSuitableMemoryOp.
-      assert(!TRI->regsOverlap(DependenceMO.getReg(), PointerReg) &&
-             "Should have been checked before!");
-    }
-
-    auto DepDepResult = computeDependence(
-        DependenceMI, {InstsSeenSoFar.begin(), DependenceItr});
-
-    if (!DepDepResult.CanReorder || DepDepResult.PotentialDependence)
-      return false;
-
-    Dependence = DependenceMI;
-    return true;
-  };
-
   for (auto &MI : *NotNullSucc) {
     if (!canHandle(&MI) || InstsSeenSoFar.size() >= MaxInstsToConsider)
       return false;
 
     MachineInstr *Dependence;
-    if (IsSuitableMemoryOp(MI, InstsSeenSoFar) &&
-        CanHoistLoadInst(&MI, InstsSeenSoFar, Dependence)) {
+    if (isSuitableMemoryOp(MI, PointerReg, InstsSeenSoFar) &&
+        canHoistLoadInst(&MI, PointerReg, InstsSeenSoFar, NullSucc,
+                         Dependence)) {
       NullCheckList.emplace_back(&MI, MBP.ConditionDef, &MBB, NotNullSucc,
                                  NullSucc, Dependence);
       return true;
