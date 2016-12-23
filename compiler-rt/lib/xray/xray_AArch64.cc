@@ -19,8 +19,6 @@
 #include <atomic>
 #include <cassert>
 
-extern void __clear_cache(void* start, void* end);
-
 namespace __xray {
 
 uint64_t cycleFrequency() XRAY_NEVER_INSTRUMENT {
@@ -77,8 +75,8 @@ inline static bool patchSled(const bool Enable, const uint32_t FuncId,
   //   B #32
 
   uint32_t *FirstAddress = reinterpret_cast<uint32_t *>(Sled.Address);
-  uint32_t *CurAddress = FirstAddress + 1;
   if (Enable) {
+    uint32_t *CurAddress = FirstAddress + 1;
     *CurAddress = uint32_t(PatchOpcodes::PO_LdrW0_12);
     CurAddress++;
     *CurAddress = uint32_t(PatchOpcodes::PO_LdrX16_12);
@@ -90,7 +88,6 @@ inline static bool patchSled(const bool Enable, const uint32_t FuncId,
     *reinterpret_cast<void (**)()>(CurAddress) = TracingHook;
     CurAddress += 2;
     *CurAddress = uint32_t(PatchOpcodes::PO_LdpX0X30SP_16);
-    CurAddress++;
     std::atomic_store_explicit(
         reinterpret_cast<std::atomic<uint32_t> *>(FirstAddress),
         uint32_t(PatchOpcodes::PO_StpX0X30SP_m16e), std::memory_order_release);
@@ -99,8 +96,6 @@ inline static bool patchSled(const bool Enable, const uint32_t FuncId,
         reinterpret_cast<std::atomic<uint32_t> *>(FirstAddress),
         uint32_t(PatchOpcodes::PO_B32), std::memory_order_release);
   }
-  __clear_cache(reinterpret_cast<char*>(FirstAddress),
-      reinterpret_cast<char*>(CurAddress));
   return true;
 }
 
