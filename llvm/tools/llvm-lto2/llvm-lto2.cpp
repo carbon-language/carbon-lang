@@ -64,7 +64,7 @@ static cl::opt<bool>
                                        "import files for the "
                                        "distributed backend case"));
 
-static cl::opt<int> Threads("-thinlto-threads",
+static cl::opt<int> Threads("thinlto-threads",
                             cl::init(llvm::heavyweight_hardware_concurrency()));
 
 static cl::list<std::string> SymbolResolutions(
