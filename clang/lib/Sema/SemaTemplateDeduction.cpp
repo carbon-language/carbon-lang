@@ -158,6 +158,20 @@ checkDeducedTemplateArguments(ASTContext &Context,
   if (Y.isNull())
     return X;
 
+  // If we have two non-type template argument values deduced for the same
+  // parameter, they must both match the type of the parameter, and thus must
+  // match each other's type. As we're only keeping one of them, we must check
+  // for that now. The exception is that if either was deduced from an array
+  // bound, the type is permitted to differ.
+  if (!X.wasDeducedFromArrayBound() && !Y.wasDeducedFromArrayBound()) {
+    QualType XType = X.getNonTypeTemplateArgumentType();
+    if (!XType.isNull()) {
+      QualType YType = Y.getNonTypeTemplateArgumentType();
+      if (YType.isNull() || !Context.hasSameType(XType, YType))
+        return DeducedTemplateArgument();
+    }
+  }
+
   switch (X.getKind()) {
   case TemplateArgument::Null:
     llvm_unreachable("Non-deduced template arguments handled above");
@@ -184,9 +198,7 @@ checkDeducedTemplateArguments(ASTContext &Context,
         Y.getKind() == TemplateArgument::Declaration ||
         (Y.getKind() == TemplateArgument::Integral &&
          hasSameExtendedValue(X.getAsIntegral(), Y.getAsIntegral())))
-      return DeducedTemplateArgument(X,
-                                     X.wasDeducedFromArrayBound() &&
-                                     Y.wasDeducedFromArrayBound());
+      return X.wasDeducedFromArrayBound() ? Y : X;
 
     // All other combinations are incompatible.
     return DeducedTemplateArgument();
@@ -208,37 +220,38 @@ checkDeducedTemplateArguments(ASTContext &Context,
     // All other combinations are incompatible.
     return DeducedTemplateArgument();
 
-  case TemplateArgument::Expression:
-    // If we deduced a dependent expression in one case and either an integral
-    // constant or a declaration in another case, keep the integral constant
-    // or declaration.
-    if (Y.getKind() == TemplateArgument::Integral ||
-        Y.getKind() == TemplateArgument::Declaration)
-      return DeducedTemplateArgument(Y, X.wasDeducedFromArrayBound() &&
-                                     Y.wasDeducedFromArrayBound());
+  case TemplateArgument::Expression: {
+    if (Y.getKind() != TemplateArgument::Expression)
+      return checkDeducedTemplateArguments(Context, Y, X);
 
-    if (Y.getKind() == TemplateArgument::Expression) {
-      // Compare the expressions for equality
-      llvm::FoldingSetNodeID ID1, ID2;
-      X.getAsExpr()->Profile(ID1, Context, true);
-      Y.getAsExpr()->Profile(ID2, Context, true);
-      if (ID1 == ID2)
-        return X;
-    }
+    // Compare the expressions for equality
+    llvm::FoldingSetNodeID ID1, ID2;
+    X.getAsExpr()->Profile(ID1, Context, true);
+    Y.getAsExpr()->Profile(ID2, Context, true);
+    if (ID1 == ID2)
+      return X.wasDeducedFromArrayBound() ? Y : X;
 
-    // All other combinations are incompatible.
+    // Differing dependent expressions are incompatible.
     return DeducedTemplateArgument();
+  }
 
   case TemplateArgument::Declaration:
+    assert(!X.wasDeducedFromArrayBound());
+
     // If we deduced a declaration and a dependent expression, keep the
     // declaration.
     if (Y.getKind() == TemplateArgument::Expression)
       return X;
 
     // If we deduced a declaration and an integral constant, keep the
-    // integral constant.
-    if (Y.getKind() == TemplateArgument::Integral)
+    // integral constant and whichever type did not come from an array
+    // bound.
+    if (Y.getKind() == TemplateArgument::Integral) {
+      if (Y.wasDeducedFromArrayBound())
+        return TemplateArgument(Context, Y.getAsIntegral(),
+                                X.getParamTypeForDecl());
       return Y;
+    }
 
     // If we deduced two declarations, make sure they they refer to the
     // same declaration.
@@ -260,9 +273,8 @@ checkDeducedTemplateArguments(ASTContext &Context,
     if (Y.getKind() == TemplateArgument::Integral)
       return Y;
 
-    // If we deduced two null pointers, make sure they have the same type.
-    if (Y.getKind() == TemplateArgument::NullPtr &&
-        Context.hasSameType(X.getNullPtrType(), Y.getNullPtrType()))
+    // If we deduced two null pointers, they are the same.
+    if (Y.getKind() == TemplateArgument::NullPtr)
       return X;
 
     // All other combinations are incompatible.
@@ -405,7 +417,7 @@ DeduceNonTypeTemplateArgument(Sema &S,
          "Cannot deduce non-type template argument with depth > 0");
 
   D = D ? cast<ValueDecl>(D->getCanonicalDecl()) : nullptr;
-  TemplateArgument New(D, NTTP->getType());
+  TemplateArgument New(D, T);
   DeducedTemplateArgument NewDeduced(New);
   DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
                                                      Deduced[NTTP->getIndex()],
@@ -1685,7 +1697,8 @@ DeduceTemplateArgumentsByTypeMatch(Sema &S,
         llvm::APSInt ArgSize(S.Context.getTypeSize(S.Context.IntTy), false);
         ArgSize = VectorArg->getNumElements();
         return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP, ArgSize,
-                                             S.Context.IntTy, false, Info, Deduced);
+                                             S.Context.IntTy, false, Info,
+                                             Deduced);
       }
 
       if (const DependentSizedExtVectorType *VectorArg
