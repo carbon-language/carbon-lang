@@ -1129,7 +1129,6 @@ void NewGVN::processOutgoingEdges(TerminatorInst *TI, BasicBlock *B) {
     // Remember how many outgoing edges there are to every successor.
     SmallDenseMap<BasicBlock *, unsigned, 16> SwitchEdges;
 
-    bool MultipleEdgesOneReachable = false;
     Value *SwitchCond = SI->getCondition();
     Value *CondEvaluated = findConditionEquivalence(SwitchCond, B);
     // See if we were able to turn this switch statement into a constant.
@@ -1147,17 +1146,6 @@ void NewGVN::processOutgoingEdges(TerminatorInst *TI, BasicBlock *B) {
       // Now get where it goes and mark it reachable.
       BasicBlock *TargetBlock = CaseVal.getCaseSuccessor();
       updateReachableEdge(B, TargetBlock);
-      unsigned WhichSucc = CaseVal.getSuccessorIndex();
-      // Calculate whether our single reachable edge is really a single edge to
-      // the target block.  If not, and the block has multiple predecessors, we
-      // can only replace phi node values.
-      for (unsigned i = 0, e = SI->getNumSuccessors(); i != e; ++i) {
-        if (i == WhichSucc)
-          continue;
-        BasicBlock *Block = SI->getSuccessor(i);
-        if (Block == TargetBlock)
-          MultipleEdgesOneReachable = true;
-      }
     } else {
       for (unsigned i = 0, e = SI->getNumSuccessors(); i != e; ++i) {
         BasicBlock *TargetBlock = SI->getSuccessor(i);
