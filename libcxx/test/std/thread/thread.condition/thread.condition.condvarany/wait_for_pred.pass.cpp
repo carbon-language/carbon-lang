@@ -45,7 +45,7 @@ int test2 = 0;
 
 int runs = 0;
 
-void f()
+void f(bool expect_result)
 {
     typedef std::chrono::system_clock Clock;
     typedef std::chrono::milliseconds milliseconds;
@@ -54,7 +54,8 @@ void f()
     test1 = 1;
     cv.notify_one();
     Clock::time_point t0 = Clock::now();
-    bool r = cv.wait_for(lk, milliseconds(250), Pred(test2));
+    bool result = cv.wait_for(lk, milliseconds(250), Pred(test2));
+    assert(result == expect_result);
     Clock::time_point t1 = Clock::now();
     if (runs == 0)
     {
@@ -73,7 +74,7 @@ int main()
 {
     {
         L1 lk(m0);
-        std::thread t(f);
+        std::thread t(f, /*expect_result*/true);
         assert(test1 == 0);
         while (test1 == 0)
             cv.wait(lk);
@@ -87,7 +88,7 @@ int main()
     test2 = 0;
     {
         L1 lk(m0);
-        std::thread t(f);
+        std::thread t(f, /*expect_result*/false);
         assert(test1 == 0);
         while (test1 == 0)
             cv.wait(lk);

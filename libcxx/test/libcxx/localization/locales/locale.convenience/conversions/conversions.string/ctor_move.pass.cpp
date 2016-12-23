@@ -31,5 +31,5 @@ int main()
     assert(myconv.converted() == 4);
     // move construct a new converter and make sure the state is the same.
     Myconv myconv2(std::move(myconv));
-    assert(myconv2.converted() == 4);
+    assert(myconv2.converted() == old_converted);
 }
