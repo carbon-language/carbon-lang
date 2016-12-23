@@ -295,6 +295,8 @@ void BitcodeReaderMetadataList::tryToResolveCycles() {
 
   // Make sure we return early again until there's another forward ref.
   AnyFwdRefs = false;
+  MinFwdRef = 0;
+  MaxFwdRef = 0;
 }
 
 void BitcodeReaderMetadataList::addTypeRef(MDString &UUID,
