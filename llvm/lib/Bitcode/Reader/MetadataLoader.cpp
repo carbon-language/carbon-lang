@@ -97,10 +97,18 @@ namespace {
 static int64_t unrotateSign(uint64_t U) { return U & 1 ? ~(U >> 1) : U >> 1; }
 
 class BitcodeReaderMetadataList {
-  unsigned NumFwdRefs;
-  bool AnyFwdRefs;
-  unsigned MinFwdRef;
-  unsigned MaxFwdRef;
+  /// Keep track of the current number of ForwardReference in the list.
+  unsigned NumFwdRefs = 0;
+  /// Maintain the range [min-max] that needs to be inspected to resolve cycles.
+  /// This is the range of Metadata that have involved forward reference during
+  /// loading and that needs to be inspected to resolve cycles. It is purely an
+  /// optimization to avoid spending time resolving cycles outside of this
+  /// range, i.e. where there hasn't been any forward reference.
+  unsigned MinFwdRef = 0;
+  unsigned MaxFwdRef = 0;
+  /// Set to true if there was any FwdRef encountered. This is used to track if
+  /// we need to resolve cycles after loading metadatas.
+  bool AnyFwdRefs = false;
 
   /// Array of metadata references.
   ///
@@ -119,8 +127,7 @@ class BitcodeReaderMetadataList {
   LLVMContext &Context;
 
 public:
-  BitcodeReaderMetadataList(LLVMContext &C)
-      : NumFwdRefs(0), AnyFwdRefs(false), Context(C) {}
+  BitcodeReaderMetadataList(LLVMContext &C) : Context(C) {}
 
   // vector compatibility methods
   unsigned size() const { return MetadataPtrs.size(); }
