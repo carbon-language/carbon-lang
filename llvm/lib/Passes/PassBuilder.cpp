@@ -544,6 +544,33 @@ ModulePassManager PassBuilder::buildLTODefaultPipeline(OptimizationLevel Level,
   return MPM;
 }
 
+AAManager PassBuilder::buildDefaultAAPipeline() {
+  AAManager AA;
+
+  // The order in which these are registered determines their priority when
+  // being queried.
+
+  // First we register the basic alias analysis that provides the majority of
+  // per-function local AA logic. This is a stateless, on-demand local set of
+  // AA techniques.
+  AA.registerFunctionAnalysis<BasicAA>();
+
+  // Next we query fast, specialized alias analyses that wrap IR-embedded
+  // information about aliasing.
+  AA.registerFunctionAnalysis<ScopedNoAliasAA>();
+  AA.registerFunctionAnalysis<TypeBasedAA>();
+
+  // Add support for querying global aliasing information when available.
+  // Because this is a module analysis this will use any cached analysis state
+  // available but isn't enough to cause it to be available.
+  // FIXME: Enable once the invalidation logic supports this.
+#if 0
+  AA.registerModuleAnalysis<GlobalsAA>();
+#endif
+
+  return AA;
+}
+
 static Optional<int> parseRepeatPassName(StringRef Name) {
   if (!Name.consume_front("repeat<") || !Name.consume_back(">"))
     return None;
@@ -1084,6 +1111,13 @@ bool PassBuilder::parsePassPipeline(ModulePassManager &MPM,
 }
 
 bool PassBuilder::parseAAPipeline(AAManager &AA, StringRef PipelineText) {
+  // If the pipeline just consists of the word 'default' just replace the AA
+  // manager with our default one.
+  if (PipelineText == "default") {
+    AA = buildDefaultAAPipeline();
+    return true;
+  }
+
   while (!PipelineText.empty()) {
     StringRef Name;
     std::tie(Name, PipelineText) = PipelineText.split(',');
