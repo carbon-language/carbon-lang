@@ -1,5 +1,7 @@
 // Make sure -finline-functions family flags are behaving correctly.
-
+//
+// REQUIRES: x86-registered-target
+//
 // RUN: %clang_cc1 -triple i686-pc-win32 -emit-llvm %s -o - | FileCheck -check-prefix=NOINLINE %s
 // RUN: %clang_cc1 -triple i686-pc-win32 -fexperimental-new-pass-manager -emit-llvm %s -o - | FileCheck -check-prefix=NOINLINE %s
 // RUN: %clang_cc1 -triple i686-pc-win32 -O3 -fno-inline-functions -emit-llvm %s -o - | FileCheck -check-prefix=NOINLINE %s
