@@ -373,10 +373,6 @@ int X86FrameLowering::mergeSPUpdates(MachineBasicBlock &MBB,
   MachineBasicBlock::iterator PI = doMergeWithPrevious ? std::prev(MBBI) : MBBI;
   MachineBasicBlock::iterator NI = doMergeWithPrevious ? nullptr
                                                        : std::next(MBBI);
-  PI = skipDebugInstructionsBackward(PI, MBB.begin());
-  if (NI != nullptr)
-    NI = skipDebugInstructionsForward(NI, MBB.end());
-
   unsigned Opc = PI->getOpcode();
   int Offset = 0;
 
@@ -2590,7 +2586,6 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   uint64_t Amount = !reserveCallFrame ? I->getOperand(0).getImm() : 0;
   uint64_t InternalAmt = (isDestroy || Amount) ? I->getOperand(1).getImm() : 0;
   I = MBB.erase(I);
-  I = skipDebugInstructionsForward(I, MBB.end());
 
   if (!reserveCallFrame) {
     // If the stack pointer can be changed after prologue, turn the
