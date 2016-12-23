@@ -391,6 +391,9 @@ class MetadataLoader::MetadataLoaderImpl {
   bool StripTBAA = false;
   bool HasSeenOldLoopTags = false;
 
+  /// True if metadata is being parsed for a module being ThinLTO imported.
+  bool IsImporting = false;
+
   Error parseMetadataStrings(ArrayRef<uint64_t> Record, StringRef Blob,
                              unsigned &NextMetadataNo);
   Error parseGlobalObjectAttachment(GlobalObject &GO,
@@ -400,12 +403,13 @@ class MetadataLoader::MetadataLoaderImpl {
 public:
   MetadataLoaderImpl(BitstreamCursor &Stream, Module &TheModule,
                      BitcodeReaderValueList &ValueList,
-                     std::function<Type *(unsigned)> getTypeByID)
+                     std::function<Type *(unsigned)> getTypeByID,
+                     bool IsImporting)
       : MetadataList(TheModule.getContext()), ValueList(ValueList),
         Stream(Stream), Context(TheModule.getContext()), TheModule(TheModule),
-        getTypeByID(getTypeByID) {}
+        getTypeByID(getTypeByID), IsImporting(IsImporting) {}
 
-  Error parseMetadata(bool ModuleLevel, bool IsImporting);
+  Error parseMetadata(bool ModuleLevel);
 
   bool hasFwdRefs() const { return MetadataList.hasFwdRefs(); }
   Metadata *getMetadataFwdRef(unsigned Idx) {
@@ -441,8 +445,7 @@ Error error(const Twine &Message) {
 
 /// Parse a METADATA_BLOCK. If ModuleLevel is true then we are parsing
 /// module level metadata.
-Error MetadataLoader::MetadataLoaderImpl::parseMetadata(bool ModuleLevel,
-                                                        bool IsImporting) {
+Error MetadataLoader::MetadataLoaderImpl::parseMetadata(bool ModuleLevel) {
   if (!ModuleLevel && MetadataList.hasFwdRefs())
     return error("Invalid metadata: fwd refs into function blocks");
 
@@ -1333,7 +1336,7 @@ MetadataLoader &MetadataLoader::operator=(MetadataLoader &&RHS) {
   return *this;
 }
 MetadataLoader::MetadataLoader(MetadataLoader &&RHS)
-    : Pimpl(std::move(RHS.Pimpl)), IsImporting(RHS.IsImporting) {}
+    : Pimpl(std::move(RHS.Pimpl)) {}
 
 MetadataLoader::~MetadataLoader() = default;
 MetadataLoader::MetadataLoader(BitstreamCursor &Stream, Module &TheModule,
@@ -1341,11 +1344,10 @@ MetadataLoader::MetadataLoader(BitstreamCursor &Stream, Module &TheModule,
                                bool IsImporting,
                                std::function<Type *(unsigned)> getTypeByID)
     : Pimpl(llvm::make_unique<MetadataLoaderImpl>(Stream, TheModule, ValueList,
-                                                  getTypeByID)),
-      IsImporting(IsImporting) {}
+                                                  getTypeByID, IsImporting)) {}
 
 Error MetadataLoader::parseMetadata(bool ModuleLevel) {
-  return Pimpl->parseMetadata(ModuleLevel, IsImporting);
+  return Pimpl->parseMetadata(ModuleLevel);
 }
 
 bool MetadataLoader::hasFwdRefs() const { return Pimpl->hasFwdRefs(); }
