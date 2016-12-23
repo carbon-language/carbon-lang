@@ -641,7 +641,7 @@ INTERCEPTOR(void *, memcpy, void *dst, const void *src, uptr size) {
   COMMON_INTERCEPTOR_MEMCPY_IMPL(ctx, dst, src, size);
 }
 
-#define INIT_MEMCPY COMMON_INTERCEPT_FUNCTION(memcpy)
+#define INIT_MEMCPY COMMON_INTERCEPT_FUNCTION_MEMCPY()
 #else
 #define INIT_MEMCPY
 #endif

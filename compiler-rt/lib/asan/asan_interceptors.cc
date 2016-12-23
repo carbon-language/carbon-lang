@@ -272,6 +272,17 @@ DECLARE_REAL_AND_INTERCEPTOR(void, free, void *)
     ASAN_MEMSET_IMPL(ctx, block, c, size);                  \
   } while (false)
 
+// In asan, REAL(memmove) is not used, but it is used in msan.
+#define COMMON_INTERCEPT_FUNCTION_MEMCPY()           \
+  do {                                               \
+    if (PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE) { \
+      ASAN_INTERCEPT_FUNC(memcpy);                   \
+    } else {                                         \
+      ASSIGN_REAL(memcpy, memmove);                  \
+    }                                                \
+    CHECK(REAL(memcpy));                             \
+  } while (false)
+
 #include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 // Syscall interceptors don't have contexts, we don't support suppressions
@@ -721,17 +732,6 @@ void InitializeAsanInterceptors() {
   CHECK(!was_called_once);
   was_called_once = true;
   InitializeCommonInterceptors();
-
-  // Intercept mem* functions.
-  ASAN_INTERCEPT_FUNC(memmove);
-  ASAN_INTERCEPT_FUNC(memset);
-  if (PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE) {
-    // In asan, REAL(memmove) is not used, but it is used in msan.
-    ASAN_INTERCEPT_FUNC(memcpy);
-  } else {
-    ASSIGN_REAL(memcpy, memmove);
-  }
-  CHECK(REAL(memcpy));
 
   // Intercept str* functions.
   ASAN_INTERCEPT_FUNC(strcat);  // NOLINT
