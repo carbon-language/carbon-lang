@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o %t
-// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o %t.opt -O1 -disable-llvm-optzns
+// RUN: %clang_cc1 %s -triple=x86_64-pc-linux-gnu -munwind-tables -emit-llvm -o %t.opt -O1 -disable-llvm-passes
 // RUN: FileCheck %s < %t
 // RUN: FileCheck %s < %t.opt
 // RUN: FileCheck --check-prefix=CHECK-NONOPT %s < %t

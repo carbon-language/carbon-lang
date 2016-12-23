@@ -284,18 +284,13 @@ static void addSymbolRewriterPass(const CodeGenOptions &Opts,
 
 void EmitAssemblyHelper::CreatePasses(legacy::PassManager &MPM,
                                       legacy::FunctionPassManager &FPM) {
+  // Handle disabling of all LLVM passes, where we want to preserve the
+  // internal module before any optimization.
   if (CodeGenOpts.DisableLLVMPasses)
     return;
 
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
   CodeGenOptions::InliningMethod Inlining = CodeGenOpts.getInlining();
-
-  // Handle disabling of LLVM optimization, where we want to preserve the
-  // internal module before any optimization.
-  if (CodeGenOpts.DisableLLVMOpts) {
-    OptLevel = 0;
-    Inlining = CodeGenOpts.NoInlining;
-  }
 
   PassManagerBuilderWrapper PMBuilder(CodeGenOpts, LangOpts);
 
