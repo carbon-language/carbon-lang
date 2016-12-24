@@ -4145,9 +4145,9 @@ def note_explicit_template_arg_substitution_here : Note<
 def note_function_template_deduction_instantiation_here : Note<
   "while substituting deduced template arguments into function template %0 "
   "%1">;
-def note_partial_spec_deduct_instantiation_here : Note<
-  "during template argument deduction for class template partial "
-  "specialization %0 %1">;
+def note_deduced_template_arg_substitution_here : Note<
+  "during template argument deduction for %select{class|variable}0 template "
+  "partial specialization %1 %2">;
 def note_prior_template_arg_substitution : Note<
   "while substituting prior template arguments into %select{non-type|template}0"
   " template parameter%1 %2">;
