@@ -551,6 +551,27 @@ AST_MATCHER_P(FieldDecl, hasBitWidth, unsigned, Width) {
          Node.getBitWidthValue(Finder->getASTContext()) == Width;
 }
 
+/// \brief Matches non-static data members that have an in-class initializer.
+///
+/// Given
+/// \code
+///   class C {
+///     int a = 2;
+///     int b = 3;
+///     int c;
+///   };
+/// \endcode
+/// fieldDecl(hasInClassInitializer(integerLiteral(equals(2))))
+///   matches 'int a;' but not 'int b;'.
+/// fieldDecl(hasInClassInitializer(anything()))
+///   matches 'int a;' and 'int b;' but not 'int c;'.
+AST_MATCHER_P(FieldDecl, hasInClassInitializer, internal::Matcher<Expr>,
+              InnerMatcher) {
+  const Expr *Initializer = Node.getInClassInitializer();
+  return (Initializer != nullptr &&
+          InnerMatcher.matches(*Initializer, Finder, Builder));
+}
+
 /// \brief Matches a declaration that has been implicitly added
 /// by the compiler (eg. implicit default/copy constructors).
 AST_MATCHER(Decl, isImplicit) {
