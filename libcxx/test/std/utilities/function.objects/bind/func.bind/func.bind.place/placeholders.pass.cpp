@@ -57,6 +57,7 @@ constexpr decltype(std::placeholders::_10) cp10 = std::placeholders::_10;
 #endif // TEST_STD_VER >= 11
 
 void use_placeholders_to_prevent_unused_warning() {
+#if TEST_STD_VER >= 11
   ((void)cp1);
   ((void)cp2);
   ((void)cp3);
@@ -77,6 +78,7 @@ void use_placeholders_to_prevent_unused_warning() {
   ((void)default8);
   ((void)default9);
   ((void)default10);
+#endif
 }
 
 int main()

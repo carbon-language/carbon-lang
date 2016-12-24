@@ -44,8 +44,9 @@ int test1 = 0;
 int test2 = 0;
 
 int runs = 0;
+bool expect_result = false;
 
-void f(bool expect_result)
+void f()
 {
     typedef std::chrono::system_clock Clock;
     typedef std::chrono::milliseconds milliseconds;
@@ -73,8 +74,9 @@ void f(bool expect_result)
 int main()
 {
     {
+        expect_result = true;
         L1 lk(m0);
-        std::thread t(f, /*expect_result*/true);
+        std::thread t(f);
         assert(test1 == 0);
         while (test1 == 0)
             cv.wait(lk);
@@ -87,8 +89,9 @@ int main()
     test1 = 0;
     test2 = 0;
     {
+        expect_result = false;
         L1 lk(m0);
-        std::thread t(f, /*expect_result*/false);
+        std::thread t(f);
         assert(test1 == 0);
         while (test1 == 0)
             cv.wait(lk);
