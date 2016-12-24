@@ -533,7 +533,8 @@ AST_MATCHER(FieldDecl, isBitField) {
   return Node.isBitField();
 }
 
-/// \brief Matches non-static data members that are bit-fields.
+/// \brief Matches non-static data members that are bit-fields of the specified
+/// bit width.
 ///
 /// Given
 /// \code
@@ -543,7 +544,7 @@ AST_MATCHER(FieldDecl, isBitField) {
 ///     int c : 2;
 ///   };
 /// \endcode
-/// fieldDecl(isBitField())
+/// fieldDecl(hasBitWidth(2))
 ///   matches 'int a;' and 'int c;' but not 'int b;'.
 AST_MATCHER_P(FieldDecl, hasBitWidth, unsigned, Width) {
   return Node.isBitField() &&

@@ -2430,7 +2430,8 @@ designatorCountIs(2)
 
 
 <tr><td>Matcher&lt;<a href="http://clang.llvm.org/doxygen/classclang_1_1FieldDecl.html">FieldDecl</a>&gt;</td><td class="name" onclick="toggle('hasBitWidth0')"><a name="hasBitWidth0Anchor">hasBitWidth</a></td><td>unsigned Width</td></tr>
-<tr><td colspan="4" class="doc" id="hasBitWidth0"><pre>Matches non-static data members that are bit-fields.
+<tr><td colspan="4" class="doc" id="hasBitWidth0"><pre>Matches non-static data members that are bit-fields of the specified
+bit width.
 
 Given
   class C {
@@ -2438,7 +2439,7 @@ Given
     int b : 4;
     int c : 2;
   };
-fieldDecl(isBitField())
+fieldDecl(hasBitWidth(2))
   matches 'int a;' and 'int c;' but not 'int b;'.
 </pre></td></tr>
 
