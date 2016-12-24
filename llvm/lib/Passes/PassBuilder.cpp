@@ -561,10 +561,12 @@ AAManager PassBuilder::buildDefaultAAPipeline() {
   AA.registerFunctionAnalysis<TypeBasedAA>();
 
   // Add support for querying global aliasing information when available.
-  // Because this is a module analysis this will use any cached analysis state
-  // available but isn't enough to cause it to be available.
-  // FIXME: Enable once the invalidation logic supports this.
+  // Because the `AAManager` is a function analysis and `GlobalsAA` is a module
+  // analysis, all that the `AAManager` can do is query for any *cached*
+  // results from `GlobalsAA` through a readonly proxy..
 #if 0
+  // FIXME: Enable once the invalidation logic supports this. Currently, the
+  // `AAManager` will hold stale references to the module analyses.
   AA.registerModuleAnalysis<GlobalsAA>();
 #endif
 
