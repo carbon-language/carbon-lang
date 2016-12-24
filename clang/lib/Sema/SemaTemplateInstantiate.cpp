@@ -508,7 +508,6 @@ void Sema::PrintInstantiationStack() {
           llvm_unreachable("unexpected template kind");
         }
 
-          //<< Context.getTypeDeclType(PartialSpec)
         Diags.Report(Active->PointOfInstantiation,
                      diag::note_deduced_template_arg_substitution_here)
           << IsVar << cast<NamedDecl>(Active->Entity)
