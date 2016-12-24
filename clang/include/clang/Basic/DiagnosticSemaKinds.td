@@ -4103,9 +4103,9 @@ def note_template_class_instantiation_was_here : Note<
 def note_template_class_explicit_specialization_was_here : Note<
   "class template %0 was explicitly specialized here">;
 def note_template_class_instantiation_here : Note<
-  "in instantiation of template class %0 requested here">;
+  "in instantiation of template class %q0 requested here">;
 def note_template_member_class_here : Note<
-  "in instantiation of member class %0 requested here">;
+  "in instantiation of member class %q0 requested here">;
 def note_template_member_function_here : Note<
   "in instantiation of member function %q0 requested here">;
 def note_function_template_spec_here : Note<

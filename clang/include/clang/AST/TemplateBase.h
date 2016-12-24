@@ -596,6 +596,10 @@ public:
     return getTrailingObjects<TemplateArgumentLoc>();
   }
 
+  llvm::ArrayRef<TemplateArgumentLoc> arguments() const {
+    return llvm::makeArrayRef(getTemplateArgs(), NumTemplateArgs);
+  }
+
   const TemplateArgumentLoc &operator[](unsigned I) const {
     return getTemplateArgs()[I];
   }

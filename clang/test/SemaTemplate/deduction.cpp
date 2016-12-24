@@ -336,3 +336,18 @@ namespace member_pointer {
   };
   C<B<int, &A::f>> c;
 }
+
+namespace deduction_substitution_failure {
+  template<typename T> struct Fail { typedef typename T::error error; }; // expected-error {{prior to '::'}}
+
+  template<typename T, typename U> struct A {};
+  template<typename T> struct A<T, typename Fail<T>::error> {}; // expected-note {{instantiation of}}
+  A<int, int> ai; // expected-note {{during template argument deduction for class template partial specialization 'A<T, typename Fail<T>::error>' [with T = int]}}
+
+  // FIXME: This tickles an assertion.
+#if 0
+  template<typename T, typename U> int B; // expected-warning 0-1 {{extension}}
+  template<typename T> int B<T, typename Fail<T>::error> {};
+  int bi = B<char, char>;
+#endif
+}

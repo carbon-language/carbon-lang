@@ -423,8 +423,7 @@ void Sema::PrintInstantiationStack() {
         if (isa<ClassTemplateSpecializationDecl>(Record))
           DiagID = diag::note_template_class_instantiation_here;
         Diags.Report(Active->PointOfInstantiation, DiagID)
-          << Context.getTypeDeclType(Record)
-          << Active->InstantiationRange;
+          << Record << Active->InstantiationRange;
       } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
         unsigned DiagID;
         if (Function->getPrimaryTemplate())
@@ -490,7 +489,7 @@ void Sema::PrintInstantiationStack() {
             dyn_cast<ClassTemplatePartialSpecializationDecl>(Active->Entity)) {
         Diags.Report(Active->PointOfInstantiation,
                      diag::note_partial_spec_deduct_instantiation_here)
-          << Context.getTypeDeclType(PartialSpec)
+          << PartialSpec
           << getTemplateArgumentBindingsText(
                                          PartialSpec->getTemplateParameters(), 
                                              Active->TemplateArgs, 
