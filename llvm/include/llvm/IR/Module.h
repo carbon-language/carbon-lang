@@ -590,29 +590,69 @@ public:
 /// @name Convenience iterators
 /// @{
 
-  typedef concat_iterator<GlobalObject, iterator, global_iterator>
-      global_object_iterator;
-  typedef concat_iterator<const GlobalObject, const_iterator,
-                          const_global_iterator>
+  template <bool IsConst> class global_object_iterator_t {
+    friend Module;
+
+    typename std::conditional<IsConst, const_iterator, iterator>::type
+        function_i,
+        function_e;
+    typename std::conditional<IsConst, const_global_iterator,
+                              global_iterator>::type global_i;
+
+    typedef
+        typename std::conditional<IsConst, const Module, Module>::type ModuleTy;
+
+    global_object_iterator_t(ModuleTy &M)
+        : function_i(M.begin()), function_e(M.end()),
+          global_i(M.global_begin()) {}
+    global_object_iterator_t(ModuleTy &M, int)
+        : function_i(M.end()), function_e(M.end()), global_i(M.global_end()) {}
+
+  public:
+    global_object_iterator_t &operator++() {
+      if (function_i != function_e)
+        ++function_i;
+      else
+        ++global_i;
+      return *this;
+    }
+
+    typename std::conditional<IsConst, const GlobalObject, GlobalObject>::type &
+    operator*() const {
+      if (function_i != function_e)
+        return *function_i;
+      else
+        return *global_i;
+    }
+
+    bool operator!=(const global_object_iterator_t &other) const {
+      return function_i != other.function_i || global_i != other.global_i;
+    }
+  };
+
+  typedef global_object_iterator_t</*IsConst=*/false> global_object_iterator;
+  typedef global_object_iterator_t</*IsConst=*/true>
       const_global_object_iterator;
 
-  iterator_range<global_object_iterator> global_objects() {
-    return concat<GlobalObject>(functions(), globals());
-  }
-  iterator_range<const_global_object_iterator> global_objects() const {
-    return concat<const GlobalObject>(functions(), globals());
-  }
-
   global_object_iterator global_object_begin() {
-    return global_objects().begin();
+    return global_object_iterator(*this);
   }
-  global_object_iterator global_object_end() { return global_objects().end(); }
+  global_object_iterator global_object_end() {
+    return global_object_iterator(*this, 0);
+  }
 
   const_global_object_iterator global_object_begin() const {
-    return global_objects().begin();
+    return const_global_object_iterator(*this);
   }
   const_global_object_iterator global_object_end() const {
-    return global_objects().end();
+    return const_global_object_iterator(*this, 0);
+  }
+
+  iterator_range<global_object_iterator> global_objects() {
+    return make_range(global_object_begin(), global_object_end());
+  }
+  iterator_range<const_global_object_iterator> global_objects() const {
+    return make_range(global_object_begin(), global_object_end());
   }
 
   /// @}
