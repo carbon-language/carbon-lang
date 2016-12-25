@@ -815,13 +815,17 @@ Error MetadataLoader::MetadataLoaderImpl::parseOneMetadata(
   }
 
   case bitc::METADATA_FILE: {
-    if (Record.size() != 3)
+    if (Record.size() != 3 && Record.size() != 5)
       return error("Invalid record");
 
     IsDistinct = Record[0];
     MetadataList.assignValue(
         GET_OR_DISTINCT(
-            DIFile, (Context, getMDString(Record[1]), getMDString(Record[2]))),
+            DIFile,
+            (Context, getMDString(Record[1]), getMDString(Record[2]),
+             Record.size() == 3 ? DIFile::CSK_None
+                                : static_cast<DIFile::ChecksumKind>(Record[3]),
+             Record.size() == 3 ? nullptr : getMDString(Record[4]))),
         NextMetadataNo++);
     break;
   }
