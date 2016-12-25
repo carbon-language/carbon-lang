@@ -83,14 +83,13 @@ template <typename DerivedFunc, typename RetT, typename... ArgTs>
 std::string Function<DerivedFunc, RetT(ArgTs...)>::Name;
 
 /// Provides a typedef for a tuple containing the decayed argument types.
-template <typename T>
-class FunctionArgsTuple;
+template <typename T> class FunctionArgsTuple;
 
 template <typename RetT, typename... ArgTs>
 class FunctionArgsTuple<RetT(ArgTs...)> {
 public:
   using Type = std::tuple<typename std::decay<
-                 typename std::remove_reference<ArgTs>::type>::type...>;
+      typename std::remove_reference<ArgTs>::type>::type...>;
 };
 
 /// Allocates RPC function ids during autonegotiation.
@@ -601,35 +600,35 @@ private:
 
 // Checks that predicate P holds for each corresponding pair of type arguments
 // from T1 and T2 tuple.
-template <template<class, class> class P, typename T1Tuple,
-          typename T2Tuple>
+template <template <class, class> class P, typename T1Tuple, typename T2Tuple>
 class RPCArgTypeCheckHelper;
 
-template <template<class, class> class P>
+template <template <class, class> class P>
 class RPCArgTypeCheckHelper<P, std::tuple<>, std::tuple<>> {
 public:
   static const bool value = true;
 };
 
-template <template<class, class> class P, typename T, typename... Ts,
+template <template <class, class> class P, typename T, typename... Ts,
           typename U, typename... Us>
 class RPCArgTypeCheckHelper<P, std::tuple<T, Ts...>, std::tuple<U, Us...>> {
 public:
   static const bool value =
-    P<T, U>::value &&
-    RPCArgTypeCheckHelper<P, std::tuple<Ts...>, std::tuple<Us...>>::value;
+      P<T, U>::value &&
+      RPCArgTypeCheckHelper<P, std::tuple<Ts...>, std::tuple<Us...>>::value;
 };
 
-template <template<class, class> class P, typename T1Sig, typename T2Sig>
+template <template <class, class> class P, typename T1Sig, typename T2Sig>
 class RPCArgTypeCheck {
 public:
-
   using T1Tuple = typename FunctionArgsTuple<T1Sig>::Type;
   using T2Tuple = typename FunctionArgsTuple<T2Sig>::Type;
 
-  static_assert(std::tuple_size<T1Tuple>::value >= std::tuple_size<T2Tuple>::value,
+  static_assert(std::tuple_size<T1Tuple>::value >=
+                    std::tuple_size<T2Tuple>::value,
                 "Too many arguments to RPC call");
-  static_assert(std::tuple_size<T1Tuple>::value <= std::tuple_size<T2Tuple>::value,
+  static_assert(std::tuple_size<T1Tuple>::value <=
+                    std::tuple_size<T2Tuple>::value,
                 "Too few arguments to RPC call");
 
   static const bool value = RPCArgTypeCheckHelper<P, T1Tuple, T2Tuple>::value;
@@ -643,14 +642,12 @@ private:
   template <typename T>
   static std::true_type
   check(typename std::enable_if<
-                   std::is_same<
-                     decltype(T::serialize(std::declval<ChannelT&>(),
-                                           std::declval<const ConcreteT&>())),
+        std::is_same<decltype(T::serialize(std::declval<ChannelT &>(),
+                                           std::declval<const ConcreteT &>())),
                      Error>::value,
-                   void*>::type);
+        void *>::type);
 
-  template <typename>
-  static std::false_type check(...);
+  template <typename> static std::false_type check(...);
 
 public:
   static const bool value = decltype(check<S>(0))::value;
@@ -664,14 +661,12 @@ private:
   template <typename T>
   static std::true_type
   check(typename std::enable_if<
-                   std::is_same<
-                     decltype(T::deserialize(std::declval<ChannelT&>(),
-                                             std::declval<ConcreteT&>())),
+        std::is_same<decltype(T::deserialize(std::declval<ChannelT &>(),
+                                             std::declval<ConcreteT &>())),
                      Error>::value,
-                   void*>::type);
+        void *>::type);
 
-  template <typename>
-  static std::false_type check(...);
+  template <typename> static std::false_type check(...);
 
 public:
   static const bool value = decltype(check<S>(0))::value;
@@ -691,7 +686,6 @@ template <typename ImplT, typename ChannelT, typename FunctionIdT,
           typename SequenceNumberT>
 class RPCBase {
 protected:
-
   class OrcRPCInvalid : public Function<OrcRPCInvalid, void()> {
   public:
     static const char *getName() { return "__orc_rpc$invalid"; }
@@ -724,7 +718,7 @@ protected:
   // deserializers.
   template <typename WireT, typename ConcreteT>
   class CanDeserializeCheck
-    : detail::CanDeserialize<ChannelT, WireT, ConcreteT> {
+      : detail::CanDeserialize<ChannelT, WireT, ConcreteT> {
   public:
     using detail::CanDeserialize<ChannelT, WireT, ConcreteT>::value;
 
@@ -759,10 +753,9 @@ public:
   Error appendCallAsync(HandlerT Handler, const ArgTs &... Args) {
 
     static_assert(
-      detail::RPCArgTypeCheck<CanSerializeCheck, typename Func::Type,
-                              void(ArgTs...)>
-        ::value,
-      "");
+        detail::RPCArgTypeCheck<CanSerializeCheck, typename Func::Type,
+                                void(ArgTs...)>::value,
+        "");
 
     // Look up the function ID.
     FunctionIdT FnId;
@@ -860,12 +853,10 @@ protected:
   template <typename Func, typename HandlerT>
   void addHandlerImpl(HandlerT Handler, LaunchPolicy Launch) {
 
-    static_assert(
-      detail::RPCArgTypeCheck<CanDeserializeCheck,
-                              typename Func::Type,
-                              typename detail::HandlerTraits<HandlerT>::Type>
-        ::value,
-      "");
+    static_assert(detail::RPCArgTypeCheck<
+                      CanDeserializeCheck, typename Func::Type,
+                      typename detail::HandlerTraits<HandlerT>::Type>::value,
+                  "");
 
     FunctionIdT NewFnId = FnIdAllocator.template allocate<Func>();
     LocalFunctionIds[Func::getPrototype()] = NewFnId;
