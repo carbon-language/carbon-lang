@@ -5008,9 +5008,15 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
   // If the parameter type somehow involves auto, deduce the type now.
   if (getLangOpts().CPlusPlus1z && ParamType->isUndeducedType()) {
+    // When checking a deduced template argument, deduce from its type even if
+    // the type is dependent, in order to check the types of non-type template
+    // arguments line up properly in partial ordering.
+    Optional<unsigned> Depth;
+    if (CTAK != CTAK_Specified)
+      Depth = Param->getDepth() + 1;
     if (DeduceAutoType(
             Context.getTrivialTypeSourceInfo(ParamType, Param->getLocation()),
-                       Arg, ParamType) == DAR_Failed) {
+            Arg, ParamType, Depth) == DAR_Failed) {
       Diag(Arg->getExprLoc(),
            diag::err_non_type_template_parm_type_deduction_failure)
         << Param->getDeclName() << Param->getType() << Arg->getType()
@@ -5027,14 +5033,6 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       Diag(Param->getLocation(), diag::note_template_param_here);
       return ExprError();
     }
-  }
-
-  // If either the parameter has a dependent type or the argument is
-  // type-dependent, there's nothing we can check now.
-  if (ParamType->isDependentType() || Arg->isTypeDependent()) {
-    // FIXME: Produce a cloned, canonical expression?
-    Converted = TemplateArgument(Arg);
-    return Arg;
   }
 
   // We should have already dropped all cv-qualifiers by now.
@@ -5056,6 +5054,14 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
       << ParamType.getUnqualifiedType();
     Diag(Param->getLocation(), diag::note_template_param_here);
     return ExprError();
+  }
+
+  // If either the parameter has a dependent type or the argument is
+  // type-dependent, there's nothing we can check now.
+  if (ParamType->isDependentType() || Arg->isTypeDependent()) {
+    // FIXME: Produce a cloned, canonical expression?
+    Converted = TemplateArgument(Arg);
+    return Arg;
   }
 
   if (getLangOpts().CPlusPlus1z) {

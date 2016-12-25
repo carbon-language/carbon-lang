@@ -6655,10 +6655,12 @@ public:
     DAR_FailedAlreadyDiagnosed
   };
 
-  DeduceAutoResult DeduceAutoType(TypeSourceInfo *AutoType, Expr *&Initializer,
-                                  QualType &Result);
-  DeduceAutoResult DeduceAutoType(TypeLoc AutoTypeLoc, Expr *&Initializer,
-                                  QualType &Result);
+  DeduceAutoResult
+  DeduceAutoType(TypeSourceInfo *AutoType, Expr *&Initializer, QualType &Result,
+                 Optional<unsigned> DependentDeductionDepth = None);
+  DeduceAutoResult
+  DeduceAutoType(TypeLoc AutoTypeLoc, Expr *&Initializer, QualType &Result,
+                 Optional<unsigned> DependentDeductionDepth = None);
   void DiagnoseAutoDeductionFailure(VarDecl *VDecl, Expr *Init);
   bool DeduceReturnType(FunctionDecl *FD, SourceLocation Loc,
                         bool Diagnose = true);
