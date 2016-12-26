@@ -215,6 +215,24 @@ public:
     OS << "} ";
   }
 };
+class op_inserter
+    : public std::iterator<std::output_iterator_tag, void, void, void, void> {
+private:
+  typedef BasicExpression Container;
+  Container *BE;
+public:
+  explicit op_inserter(BasicExpression &E) : BE(&E) {}
+  explicit op_inserter(BasicExpression *E) : BE(E) {}
+
+  op_inserter &operator=(Value *val) {
+    BE->op_push_back(val);
+    return *this;
+  }
+  op_inserter &operator*() { return *this; }
+  op_inserter &operator++() { return *this; }
+  op_inserter &operator++(int) { return *this; }
+};
+
 
 class CallExpression final : public BasicExpression {
 private:
@@ -417,6 +435,24 @@ public:
     OS << "}";
   }
 };
+class int_op_inserter
+    : public std::iterator<std::output_iterator_tag, void, void, void, void> {
+private:
+  typedef AggregateValueExpression Container;
+  Container *AVE;
+
+public:
+  explicit int_op_inserter(AggregateValueExpression &E) : AVE(&E) {}
+  explicit int_op_inserter(AggregateValueExpression *E) : AVE(E) {}
+  int_op_inserter &operator=(unsigned int val) {
+    AVE->int_op_push_back(val);
+    return *this;
+  }
+  int_op_inserter &operator*() { return *this; }
+  int_op_inserter &operator++() { return *this; }
+  int_op_inserter &operator++(int) { return *this; }
+};
+
 
 class PHIExpression final : public BasicExpression {
 private:

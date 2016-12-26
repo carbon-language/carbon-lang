@@ -407,20 +407,22 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
   E->allocateOperands(ArgRecycler, ExpressionAllocator);
   E->setType(I->getType());
   E->setOpcode(I->getOpcode());
-  for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
-    BasicBlock *B = PN->getIncomingBlock(i);
-    if (!ReachableBlocks.count(B)) {
-      DEBUG(dbgs() << "Skipping unreachable block " << getBlockName(B)
-                   << " in PHI node " << *PN << "\n");
-      continue;
-    }
-    if (I->getOperand(i) != I) {
-      const BasicBlockEdge BBE(B, PhiBlock);
-      E->op_push_back(lookupOperandLeader(I->getOperand(i), I, BBE));
-    } else {
-      E->op_push_back(I->getOperand(i));
-    }
-  }
+
+  auto ReachablePhiArg = [&](const Use &U) {
+    return ReachableBlocks.count(PN->getIncomingBlock(U));
+  };
+
+  // Filter out unreachable operands
+  auto Filtered = make_filter_range(PN->operands(), ReachablePhiArg);
+
+  std::transform(Filtered.begin(), Filtered.end(), op_inserter(E),
+                 [&](const Use &U) -> Value * {
+                   // Don't try to transform self-defined phis
+                   if (U == PN)
+                     return PN;
+                   const BasicBlockEdge BBE(PN->getIncomingBlock(U), PhiBlock);
+                   return lookupOperandLeader(U, I, BBE);
+                 });
   return E;
 }
 
@@ -436,12 +438,14 @@ bool NewGVN::setBasicExpressionInfo(Instruction *I, BasicExpression *E,
   E->setOpcode(I->getOpcode());
   E->allocateOperands(ArgRecycler, ExpressionAllocator);
 
-  for (auto &O : I->operands()) {
+  // Transform the operand array into an operand leader array, and keep track of
+  // whether all members are constant.
+  std::transform(I->op_begin(), I->op_end(), op_inserter(E), [&](Value *O) {
     auto Operand = lookupOperandLeader(O, I, B);
-    if (!isa<Constant>(Operand))
-      AllConstant = false;
-    E->op_push_back(Operand);
-  }
+    AllConstant &= isa<Constant>(Operand);
+    return Operand;
+  });
+
   return AllConstant;
 }
 
@@ -615,19 +619,14 @@ NewGVN::createAggregateValueExpression(Instruction *I, const BasicBlock *B) {
         AggregateValueExpression(I->getNumOperands(), II->getNumIndices());
     setBasicExpressionInfo(I, E, B);
     E->allocateIntOperands(ExpressionAllocator);
-
-    for (auto &Index : II->indices())
-      E->int_op_push_back(Index);
+    std::copy(II->idx_begin(), II->idx_end(), int_op_inserter(E));
     return E;
-
   } else if (auto *EI = dyn_cast<ExtractValueInst>(I)) {
     AggregateValueExpression *E = new (ExpressionAllocator)
         AggregateValueExpression(I->getNumOperands(), EI->getNumIndices());
     setBasicExpressionInfo(EI, E, B);
     E->allocateIntOperands(ExpressionAllocator);
-
-    for (auto &Index : EI->indices())
-      E->int_op_push_back(Index);
+    std::copy(EI->idx_begin(), EI->idx_end(), int_op_inserter(E));
     return E;
   }
   llvm_unreachable("Unhandled type of aggregate value operation");
@@ -777,9 +776,11 @@ const Expression *NewGVN::performSymbolicCallEvaluation(Instruction *I,
   CallInst *CI = cast<CallInst>(I);
   if (AA->doesNotAccessMemory(CI))
     return createCallExpression(CI, nullptr, B);
-  else if (AA->onlyReadsMemory(CI))
-    return createCallExpression(CI, MSSAWalker->getClobberingMemoryAccess(CI),
+  else if (AA->onlyReadsMemory(CI)) {
+    MemoryAccess *DefiningAccess = MSSAWalker->getClobberingMemoryAccess(CI);
+    return createCallExpression(CI, lookupMemoryAccessEquiv(DefiningAccess),
                                 B);
+  }
   else
     return nullptr;
 }
@@ -1226,13 +1227,12 @@ void NewGVN::initializeCongruenceClasses(Function &F) {
   NextCongruenceNum = 2;
   // Initialize all other instructions to be in INITIAL class.
   CongruenceClass::MemberSet InitialValues;
-  for (auto &B : F)
-    for (auto &I : B)
-      InitialValues.insert(&I);
-
   InitialClass = createCongruenceClass(NULL, NULL);
-  for (auto L : InitialValues)
-    ValueToClass[L] = InitialClass;
+  for (auto &B : F)
+    for (auto &I : B) {
+      InitialValues.insert(&I);
+      ValueToClass[&I] = InitialClass;
+    }
   InitialClass->Members.swap(InitialValues);
 
   // Initialize arguments to be in their own unique congruence classes
@@ -1472,14 +1472,14 @@ bool NewGVN::runGVN(Function &F, DominatorTree *_DT, AssumptionCache *_AC,
   }
 
   // Delete all unreachable blocks.
-  for (auto &B : F) {
-    BasicBlock *BB = &B;
-    if (!ReachableBlocks.count(BB)) {
-      DEBUG(dbgs() << "We believe block " << getBlockName(BB)
-                   << " is unreachable\n");
-      deleteInstructionsInBlock(BB);
-      Changed = true;
-    }
+  auto UnreachableBlockPred =
+      [&](const BasicBlock &BB) { return !ReachableBlocks.count(&BB); };
+
+  for (auto &BB : make_filter_range(F, UnreachableBlockPred)) {
+    DEBUG(dbgs() << "We believe block " << getBlockName(&BB)
+          << " is unreachable\n");
+    deleteInstructionsInBlock(&BB);
+    Changed = true;
   }
 
   cleanupTables();
@@ -1750,18 +1750,24 @@ bool NewGVN::eliminateInstructions(Function &F) {
   // values, and eliminating them.  However, this is mildly
   // pointless. It requires doing lookups on every instruction,
   // regardless of whether we will ever eliminate it.  For
-  // instructions part of most singleton congruence class, we know we
-  // will never eliminate it.
+  // instructions part of most singleton congruence classes, we know we
+  // will never eliminate them.
 
   // Instead, this eliminator looks at the congruence classes directly, sorts
   // them into a DFS ordering of the dominator tree, and then we just
-  // perform eliminate straight on the sets by walking the congruence
+  // perform elimination straight on the sets by walking the congruence
   // class member uses in order, and eliminate the ones dominated by the
-  // last member.   This is technically O(N log N) where N = number of
-  // instructions (since in theory all instructions may be in the same
-  // congruence class).
+  // last member.   This is worst case O(E log E) where E = number of
+  // instructions in a single congruence class.  In theory, this is all
+  // instructions.   In practice, it is much faster, as most instructions are
+  // either in singleton congruence classes or can't possibly be eliminated
+  // anyway (if there are no overlapping DFS ranges in class).
   // When we find something not dominated, it becomes the new leader
-  // for elimination purposes
+  // for elimination purposes.
+  // TODO: If we wanted to be faster, We could remove any members with no
+  // overlapping ranges while sorting, as we will never eliminate anything
+  // with those members, as they don't dominate anything else in our set.
+
 
   bool AnythingReplaced = false;
 
