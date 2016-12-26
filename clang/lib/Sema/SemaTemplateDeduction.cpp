@@ -2196,7 +2196,7 @@ ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
         Sema::InstantiatingTemplate Inst(S, Template->getLocation(), Template,
                                          NTTP, Output,
                                          Template->getSourceRange());
-        if (Inst.isInvalid() || 
+        if (Inst.isInvalid() ||
             S.SubstType(NTTP->getType(), Args, NTTP->getLocation(),
                         NTTP->getDeclName()).isNull())
           return true;
@@ -4572,7 +4572,7 @@ UnresolvedSetIterator Sema::getMostSpecialized(
 /// Determine whether one partial specialization, P1, is at least as
 /// specialized than another, P2.
 ///
-/// \param PartialSpecializationDecl The kind of P2, which must be a
+/// \tparam PartialSpecializationDecl The kind of P2, which must be a
 /// {Class,Var}TemplatePartialSpecializationDecl.
 /// \param T1 The injected-class-name of P1 (faked for a variable template).
 /// \param T2 The injected-class-name of P2 (faked for a variable template).
