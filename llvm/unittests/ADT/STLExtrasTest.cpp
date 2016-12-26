@@ -297,4 +297,15 @@ TEST(STLExtrasTest, PartitionAdaptor) {
   EXPECT_EQ(7, V[7]);
 }
 
+TEST(STLExtrasTest, EraseIf) {
+  std::vector<int> V = {1, 2, 3, 4, 5, 6, 7, 8};
+
+  erase_if(V, [](int i) { return i % 2 == 0; });
+  EXPECT_EQ(4u, V.size());
+  EXPECT_EQ(1, V[0]);
+  EXPECT_EQ(3, V[1]);
+  EXPECT_EQ(5, V[2]);
+  EXPECT_EQ(7, V[3]);
+}
+
 }
