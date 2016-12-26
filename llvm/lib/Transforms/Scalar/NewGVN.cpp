@@ -1344,10 +1344,9 @@ void NewGVN::valueNumberMemoryPhi(MemoryPhi *MP) {
 // congruence finding, and updating mappings.
 void NewGVN::valueNumberInstruction(Instruction *I) {
   DEBUG(dbgs() << "Processing instruction " << *I << "\n");
-  if (I->use_empty() && !I->getType()->isVoidTy()) {
+  if (isInstructionTriviallyDead(I, TLI)) {
     DEBUG(dbgs() << "Skipping unused instruction\n");
-    if (isInstructionTriviallyDead(I, TLI))
-      markInstructionForDeletion(I);
+    markInstructionForDeletion(I);
     return;
   }
   if (!I->isTerminator()) {
