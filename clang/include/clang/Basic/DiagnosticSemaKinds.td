@@ -7069,6 +7069,10 @@ let CategoryName = "Inline Assembly Issue" in {
     "constraint '%0' is already present here">;
 }
 
+  def error_inoutput_conflict_with_clobber : Error<
+    "asm-specifier for input or output variable conflicts with asm"
+    " clobber list">;
+
 let CategoryName = "Semantic Issue" in {
 
 def err_invalid_conversion_between_vectors : Error<
