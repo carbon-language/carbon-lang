@@ -808,6 +808,13 @@ OutputIt transform(R &&Range, OutputIt d_first, UnaryPredicate P) {
   return std::transform(std::begin(Range), std::end(Range), d_first, P);
 }
 
+/// Provide wrappers to std::partition which take ranges instead of having to
+/// pass begin/end explicitly.
+template <typename R, typename UnaryPredicate>
+auto partition(R &&Range, UnaryPredicate P) -> decltype(std::begin(Range)) {
+  return std::partition(std::begin(Range), std::end(Range), P);
+}
+
 //===----------------------------------------------------------------------===//
 //     Extra additions to <memory>
 //===----------------------------------------------------------------------===//
