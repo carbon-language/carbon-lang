@@ -5041,14 +5041,13 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
   if (CTAK == CTAK_Deduced &&
       !Context.hasSameUnqualifiedType(ParamType, Arg->getType())) {
-    // C++ [temp.deduct.type]p17:
-    //   If, in the declaration of a function template with a non-type
-    //   template-parameter, the non-type template-parameter is used
-    //   in an expression in the function parameter-list and, if the
-    //   corresponding template-argument is deduced, the
-    //   template-argument type shall match the type of the
-    //   template-parameter exactly, except that a template-argument
-    //   deduced from an array bound may be of any integral type.
+    // C++ [temp.deduct.type]p17: (DR1770)
+    //   If P has a form that contains <i>, and if the type of i differs from
+    //   the type of the corresponding template parameter of the template named
+    //   by the enclosing simple-template-id, deduction fails.
+    //
+    // Note that CTAK will be CTAK_DeducedFromArrayBound if the form was [i]
+    // rather than <i>.
     Diag(StartLoc, diag::err_deduced_non_type_template_arg_type_mismatch)
       << Arg->getType().getUnqualifiedType()
       << ParamType.getUnqualifiedType();
