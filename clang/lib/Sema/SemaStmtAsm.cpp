@@ -164,9 +164,8 @@ getClobberConflictLocation(MultiExprArg Exprs, StringLiteral **Constraints,
                            const TargetInfo &Target, ASTContext &Cont) {
   llvm::StringSet<> InOutVars;
   // Collect all the input and output registers from the extended asm
-  // statement
-  // in order to check for conflicts with the clobber list
-  for (int i = 0; i < Exprs.size(); ++i) {
+  // statement in order to check for conflicts with the clobber list
+  for (unsigned int i = 0; i < Exprs.size(); ++i) {
     StringRef Constraint = Constraints[i]->getString();
     StringRef InOutReg = Target.getConstraintRegister(
         Constraint, extractRegisterName(Exprs[i], Target));
