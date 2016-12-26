@@ -416,8 +416,7 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
     }
     if (I->getOperand(i) != I) {
       const BasicBlockEdge BBE(B, PhiBlock);
-      auto Operand = lookupOperandLeader(I->getOperand(i), I, BBE);
-      E->op_push_back(Operand);
+      E->op_push_back(lookupOperandLeader(I->getOperand(i), I, BBE));
     } else {
       E->op_push_back(I->getOperand(i));
     }
@@ -691,8 +690,7 @@ LoadExpression *NewGVN::createLoadExpression(Type *LoadType, Value *PointerOp,
 
   // Give store and loads same opcode so they value number together.
   E->setOpcode(0);
-  auto Operand = lookupOperandLeader(PointerOp, LI, B);
-  E->op_push_back(Operand);
+  E->op_push_back(lookupOperandLeader(PointerOp, LI, B));
   if (LI)
     E->setAlignment(LI->getAlignment());
 
