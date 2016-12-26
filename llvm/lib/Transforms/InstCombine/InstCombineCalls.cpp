@@ -1996,6 +1996,21 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return replaceInstUsesWith(*II, V);
     break;
 
+  case Intrinsic::x86_sse2_pmulu_dq:
+  case Intrinsic::x86_sse41_pmuldq:
+  case Intrinsic::x86_avx2_pmul_dq:
+  case Intrinsic::x86_avx2_pmulu_dq: {
+    unsigned VWidth = II->getType()->getVectorNumElements();
+    APInt UndefElts(VWidth, 0);
+    APInt DemandedElts = APInt::getAllOnesValue(VWidth);
+    if (Value *V = SimplifyDemandedVectorElts(II, DemandedElts, UndefElts)) {
+      if (V != II)
+        return replaceInstUsesWith(*II, V);
+      return II;
+    }
+    break;
+  }
+
   case Intrinsic::x86_sse41_insertps:
     if (Value *V = simplifyX86insertps(*II, *Builder))
       return replaceInstUsesWith(*II, V);

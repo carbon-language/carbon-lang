@@ -7,11 +7,10 @@
 
 define <2 x i64> @test_demanded_elts_pmuludq_128(<4 x i32> %a0, <4 x i32> %a1) {
 ; CHECK-LABEL: @test_demanded_elts_pmuludq_128(
-; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> %a0, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
-; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <4 x i32> %a1, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 3, i32 3>
-; CHECK-NEXT:    [[TMP3:%.*]] = call <2 x i64> @llvm.x86.sse2.pmulu.dq(<4 x i32> [[TMP1]], <4 x i32> [[TMP2]])
-; CHECK-NEXT:    [[TMP4:%.*]] = shufflevector <2 x i64> [[TMP3]], <2 x i64> undef, <2 x i32> zeroinitializer
-; CHECK-NEXT:    ret <2 x i64> [[TMP4]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> %a1, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+; CHECK-NEXT:    [[TMP2:%.*]] = call <2 x i64> @llvm.x86.sse2.pmulu.dq(<4 x i32> %a0, <4 x i32> [[TMP1]])
+; CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <2 x i64> [[TMP2]], <2 x i64> undef, <2 x i32> zeroinitializer
+; CHECK-NEXT:    ret <2 x i64> [[TMP3]]
 ;
   %1 = shufflevector <4 x i32> %a0, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
   %2 = shufflevector <4 x i32> %a1, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 3, i32 3>
@@ -22,10 +21,9 @@ define <2 x i64> @test_demanded_elts_pmuludq_128(<4 x i32> %a0, <4 x i32> %a1) {
 
 define <4 x i64> @test_demanded_elts_pmuludq_256(<8 x i32> %a0, <8 x i32> %a1) {
 ; CHECK-LABEL: @test_demanded_elts_pmuludq_256(
-; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <8 x i32> %a0, <8 x i32> undef, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
-; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <8 x i32> %a1, <8 x i32> undef, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 5, i32 5, i32 7, i32 7>
-; CHECK-NEXT:    [[TMP3:%.*]] = call <4 x i64> @llvm.x86.avx2.pmulu.dq(<8 x i32> [[TMP1]], <8 x i32> [[TMP2]])
-; CHECK-NEXT:    ret <4 x i64> [[TMP3]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <8 x i32> %a1, <8 x i32> undef, <8 x i32> <i32 1, i32 undef, i32 3, i32 undef, i32 5, i32 undef, i32 7, i32 undef>
+; CHECK-NEXT:    [[TMP2:%.*]] = call <4 x i64> @llvm.x86.avx2.pmulu.dq(<8 x i32> %a0, <8 x i32> [[TMP1]])
+; CHECK-NEXT:    ret <4 x i64> [[TMP2]]
 ;
   %1 = shufflevector <8 x i32> %a0, <8 x i32> undef, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
   %2 = shufflevector <8 x i32> %a1, <8 x i32> undef, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 5, i32 5, i32 7, i32 7>
@@ -35,10 +33,9 @@ define <4 x i64> @test_demanded_elts_pmuludq_256(<8 x i32> %a0, <8 x i32> %a1) {
 
 define <2 x i64> @test_demanded_elts_pmuldq_128(<4 x i32> %a0, <4 x i32> %a1) {
 ; CHECK-LABEL: @test_demanded_elts_pmuldq_128(
-; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> %a0, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
-; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <4 x i32> %a1, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 3, i32 3>
-; CHECK-NEXT:    [[TMP3:%.*]] = call <2 x i64> @llvm.x86.sse41.pmuldq(<4 x i32> [[TMP1]], <4 x i32> [[TMP2]])
-; CHECK-NEXT:    ret <2 x i64> [[TMP3]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <4 x i32> %a1, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 3, i32 undef>
+; CHECK-NEXT:    [[TMP2:%.*]] = call <2 x i64> @llvm.x86.sse41.pmuldq(<4 x i32> %a0, <4 x i32> [[TMP1]])
+; CHECK-NEXT:    ret <2 x i64> [[TMP2]]
 ;
   %1 = shufflevector <4 x i32> %a0, <4 x i32> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
   %2 = shufflevector <4 x i32> %a1, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 3, i32 3>
@@ -48,11 +45,10 @@ define <2 x i64> @test_demanded_elts_pmuldq_128(<4 x i32> %a0, <4 x i32> %a1) {
 
 define <4 x i64> @test_demanded_elts_pmuluq_256(<8 x i32> %a0, <8 x i32> %a1) {
 ; CHECK-LABEL: @test_demanded_elts_pmuluq_256(
-; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <8 x i32> %a0, <8 x i32> undef, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
-; CHECK-NEXT:    [[TMP2:%.*]] = shufflevector <8 x i32> %a1, <8 x i32> undef, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 5, i32 5, i32 7, i32 7>
-; CHECK-NEXT:    [[TMP3:%.*]] = call <4 x i64> @llvm.x86.avx2.pmul.dq(<8 x i32> [[TMP1]], <8 x i32> [[TMP2]])
-; CHECK-NEXT:    [[TMP4:%.*]] = shufflevector <4 x i64> [[TMP3]], <4 x i64> undef, <4 x i32> <i32 0, i32 0, i32 3, i32 3>
-; CHECK-NEXT:    ret <4 x i64> [[TMP4]]
+; CHECK-NEXT:    [[TMP1:%.*]] = shufflevector <8 x i32> %a1, <8 x i32> undef, <8 x i32> <i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 7, i32 undef>
+; CHECK-NEXT:    [[TMP2:%.*]] = call <4 x i64> @llvm.x86.avx2.pmul.dq(<8 x i32> %a0, <8 x i32> [[TMP1]])
+; CHECK-NEXT:    [[TMP3:%.*]] = shufflevector <4 x i64> [[TMP2]], <4 x i64> undef, <4 x i32> <i32 0, i32 0, i32 3, i32 3>
+; CHECK-NEXT:    ret <4 x i64> [[TMP3]]
 ;
   %1 = shufflevector <8 x i32> %a0, <8 x i32> undef, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
   %2 = shufflevector <8 x i32> %a1, <8 x i32> undef, <8 x i32> <i32 1, i32 1, i32 3, i32 3, i32 5, i32 5, i32 7, i32 7>
