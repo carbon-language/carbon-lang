@@ -586,9 +586,9 @@ public:
     return make_range(ifunc_begin(), ifunc_end());
   }
 
-/// @}
-/// @name Convenience iterators
-/// @{
+  /// @}
+  /// @name Convenience iterators
+  /// @{
 
   typedef concat_iterator<GlobalObject, iterator, global_iterator>
       global_object_iterator;
