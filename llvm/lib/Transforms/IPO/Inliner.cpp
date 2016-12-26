@@ -35,6 +35,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/ModuleUtils.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "inline"
@@ -668,8 +669,7 @@ bool LegacyInlinerBase::doFinalization(CallGraph &CG) {
 bool LegacyInlinerBase::removeDeadFunctions(CallGraph &CG,
                                             bool AlwaysInlineOnly) {
   SmallVector<CallGraphNode *, 16> FunctionsToRemove;
-  SmallVector<CallGraphNode *, 16> DeadFunctionsInComdats;
-  SmallDenseMap<const Comdat *, int, 16> ComdatEntriesAlive;
+  SmallVector<Function *, 16> DeadFunctionsInComdats;
 
   auto RemoveCGN = [&](CallGraphNode *CGN) {
     // Remove any call graph edges from the function to its callees.
@@ -710,9 +710,8 @@ bool LegacyInlinerBase::removeDeadFunctions(CallGraph &CG,
     // The inliner doesn't visit non-function entities which are in COMDAT
     // groups so it is unsafe to do so *unless* the linkage is local.
     if (!F->hasLocalLinkage()) {
-      if (const Comdat *C = F->getComdat()) {
-        --ComdatEntriesAlive[C];
-        DeadFunctionsInComdats.push_back(CGN);
+      if (F->hasComdat()) {
+        DeadFunctionsInComdats.push_back(F);
         continue;
       }
     }
@@ -720,32 +719,11 @@ bool LegacyInlinerBase::removeDeadFunctions(CallGraph &CG,
     RemoveCGN(CGN);
   }
   if (!DeadFunctionsInComdats.empty()) {
-    // Count up all the entities in COMDAT groups
-    auto ComdatGroupReferenced = [&](const Comdat *C) {
-      auto I = ComdatEntriesAlive.find(C);
-      if (I != ComdatEntriesAlive.end())
-        ++(I->getSecond());
-    };
-    for (const Function &F : CG.getModule())
-      if (const Comdat *C = F.getComdat())
-        ComdatGroupReferenced(C);
-    for (const GlobalVariable &GV : CG.getModule().globals())
-      if (const Comdat *C = GV.getComdat())
-        ComdatGroupReferenced(C);
-    for (const GlobalAlias &GA : CG.getModule().aliases())
-      if (const Comdat *C = GA.getComdat())
-        ComdatGroupReferenced(C);
-    for (CallGraphNode *CGN : DeadFunctionsInComdats) {
-      Function *F = CGN->getFunction();
-      const Comdat *C = F->getComdat();
-      int NumAlive = ComdatEntriesAlive[C];
-      // We can remove functions in a COMDAT group if the entire group is dead.
-      assert(NumAlive >= 0);
-      if (NumAlive > 0)
-        continue;
-
-      RemoveCGN(CGN);
-    }
+    // Filter out the functions whose comdats remain alive.
+    filterDeadComdatFunctions(CG.getModule(), DeadFunctionsInComdats);
+    // Remove the rest.
+    for (Function *F : DeadFunctionsInComdats)
+      RemoveCGN(CG[F]);
   }
 
   if (FunctionsToRemove.empty())
