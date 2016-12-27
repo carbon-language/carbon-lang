@@ -72,9 +72,11 @@
 
 // Platform-specific options.
 #if SANITIZER_MAC
+namespace __sanitizer {
 bool PlatformHasDifferentMemcpyAndMemmove();
+}
 #define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE \
-  (PlatformHasDifferentMemcpyAndMemmove())
+  (__sanitizer::PlatformHasDifferentMemcpyAndMemmove())
 #elif SANITIZER_WINDOWS64
 #define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE false
 #else
