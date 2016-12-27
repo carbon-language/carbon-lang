@@ -2624,6 +2624,36 @@ makeTemplateArgumentListInfo(Sema &S, TemplateIdAnnotation &TemplateId) {
   return TemplateArgs;
 }
 
+template<typename PartialSpecDecl>
+static void checkMoreSpecializedThanPrimary(Sema &S, PartialSpecDecl *Partial) {
+  if (Partial->getDeclContext()->isDependentContext())
+    return;
+
+  // FIXME: Get the TDK from deduction in order to provide better diagnostics
+  // for non-substitution-failure issues?
+  TemplateDeductionInfo Info(Partial->getLocation());
+  if (S.isMoreSpecializedThanPrimary(Partial, Info))
+    return;
+
+  auto *Template = Partial->getSpecializedTemplate();
+  S.Diag(Partial->getLocation(),
+         diag::err_partial_spec_not_more_specialized_than_primary)
+      << /*variable template*/isa<VarTemplateDecl>(Template);
+
+  if (Info.hasSFINAEDiagnostic()) {
+    PartialDiagnosticAt Diag = {SourceLocation(),
+                                PartialDiagnostic::NullDiagnostic()};
+    Info.takeSFINAEDiagnostic(Diag);
+    SmallString<128> SFINAEArgString;
+    Diag.second.EmitToString(S.getDiagnostics(), SFINAEArgString);
+    S.Diag(Diag.first,
+           diag::note_partial_spec_not_more_specialized_than_primary)
+      << SFINAEArgString;
+  }
+
+  S.Diag(Template->getLocation(), diag::note_template_decl_here);
+}
+
 DeclResult Sema::ActOnVarTemplateSpecialization(
     Scope *S, Declarator &D, TypeSourceInfo *DI, SourceLocation TemplateKWLoc,
     TemplateParameterList *TemplateParams, StorageClass SC,
@@ -2748,6 +2778,11 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
     // template specialization, make a note of that.
     if (PrevPartial && PrevPartial->getInstantiatedFromMember())
       PrevPartial->setMemberSpecialization();
+
+    // C++1z [temp.class.spec]p8: (DR1495)
+    //   - The specialization shall be more specialized than the primary
+    //     template (14.5.5.2).
+    checkMoreSpecializedThanPrimary(*this, Partial);
 
     // Check that all of the template parameters of the variable template
     // partial specialization are deducible from the template
@@ -5041,7 +5076,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
 
   if (CTAK == CTAK_Deduced &&
       !Context.hasSameType(ParamType.getNonLValueExprType(Context),
-                           Arg->getType().getNonLValueExprType(Context))) {
+                           Arg->getType())) {
     // C++ [temp.deduct.type]p17: (DR1770)
     //   If P has a form that contains <i>, and if the type of i differs from
     //   the type of the corresponding template parameter of the template named
@@ -5055,7 +5090,7 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     // itself, and so strip off references before comparing types. It's
     // not clear how this is supposed to work for references.
     Diag(StartLoc, diag::err_deduced_non_type_template_arg_type_mismatch)
-      << Arg->getType().getUnqualifiedType()
+      << Arg->getType()
       << ParamType.getUnqualifiedType();
     Diag(Param->getLocation(), diag::note_template_param_here);
     return ExprError();
@@ -6501,6 +6536,9 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
       //
       //   -- The argument list of the specialization shall not be identical
       //      to the implicit argument list of the primary template.
+      //
+      // This rule has since been removed, because it's redundant given DR1495,
+      // but we keep it because it produces better diagnostics and recovery.
       Diag(TemplateNameLoc, diag::err_partial_spec_args_match_primary_template)
         << /*class template*/0 << (TUK == TUK_Definition)
         << FixItHint::CreateRemoval(SourceRange(LAngleLoc, RAngleLoc));
@@ -6542,6 +6580,11 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     // template specialization, make a note of that.
     if (PrevPartial && PrevPartial->getInstantiatedFromMember())
       PrevPartial->setMemberSpecialization();
+
+    // C++1z [temp.class.spec]p8: (DR1495)
+    //   - The specialization shall be more specialized than the primary
+    //     template (14.5.5.2).
+    checkMoreSpecializedThanPrimary(*this, Partial);
 
     // Check that all of the template parameters of the class template
     // partial specialization are deducible from the template
