@@ -307,20 +307,18 @@ checkDeducedTemplateArguments(ASTContext &Context,
 }
 
 /// \brief Deduce the value of the given non-type template parameter
-/// from the given integral constant.
+/// as the given deduced template argument. All non-type template parameter
+/// deduction is funneled through here.
 static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
     Sema &S, TemplateParameterList *TemplateParams,
-    NonTypeTemplateParmDecl *NTTP, const llvm::APSInt &Value,
-    QualType ValueType, bool DeducedFromArrayBound, TemplateDeductionInfo &Info,
+    NonTypeTemplateParmDecl *NTTP, const DeducedTemplateArgument &NewDeduced,
+    QualType ValueType, TemplateDeductionInfo &Info,
     SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   assert(NTTP->getDepth() == Info.getDeducedDepth() &&
          "deducing non-type template argument with wrong depth");
 
-  DeducedTemplateArgument NewDeduced(S.Context, Value, ValueType,
-                                     DeducedFromArrayBound);
-  DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
-                                                     Deduced[NTTP->getIndex()],
-                                                                 NewDeduced);
+  DeducedTemplateArgument Result = checkDeducedTemplateArguments(
+      S.Context, Deduced[NTTP->getIndex()], NewDeduced);
   if (Result.isNull()) {
     Info.Param = NTTP;
     Info.FirstArg = Deduced[NTTP->getIndex()];
@@ -334,8 +332,22 @@ static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
                    S, TemplateParams, NTTP->getType(), ValueType, Info, Deduced,
                    TDF_ParamWithReferenceType | TDF_SkipNonDependent,
                    /*PartialOrdering=*/false,
-                   /*ArrayBound=*/DeducedFromArrayBound)
+                   /*ArrayBound=*/NewDeduced.wasDeducedFromArrayBound())
              : Sema::TDK_Success;
+}
+
+/// \brief Deduce the value of the given non-type template parameter
+/// from the given integral constant.
+static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
+    Sema &S, TemplateParameterList *TemplateParams,
+    NonTypeTemplateParmDecl *NTTP, const llvm::APSInt &Value,
+    QualType ValueType, bool DeducedFromArrayBound, TemplateDeductionInfo &Info,
+    SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
+  return DeduceNonTypeTemplateArgument(
+      S, TemplateParams, NTTP,
+      DeducedTemplateArgument(S.Context, Value, ValueType,
+                              DeducedFromArrayBound),
+      ValueType, Info, Deduced);
 }
 
 /// \brief Deduce the value of the given non-type template parameter
@@ -350,94 +362,39 @@ static Sema::TemplateDeductionResult DeduceNullPtrTemplateArgument(
                               S.Context.NullPtrTy, NTTP->getLocation()),
                           NullPtrType, CK_NullToPointer)
           .get();
-  DeducedTemplateArgument NewDeduced(Value);
-  DeducedTemplateArgument Result = checkDeducedTemplateArguments(
-      S.Context, Deduced[NTTP->getIndex()], NewDeduced);
-
-  if (Result.isNull()) {
-    Info.Param = NTTP;
-    Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = NewDeduced;
-    return Sema::TDK_Inconsistent;
-  }
-
-  Deduced[NTTP->getIndex()] = Result;
-  return S.getLangOpts().CPlusPlus1z
-             ? DeduceTemplateArgumentsByTypeMatch(
-                   S, TemplateParams, NTTP->getType(), Value->getType(), Info,
-                   Deduced, TDF_ParamWithReferenceType | TDF_SkipNonDependent)
-             : Sema::TDK_Success;
+  return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP,
+                                       DeducedTemplateArgument(Value),
+                                       Value->getType(), Info, Deduced);
 }
 
 /// \brief Deduce the value of the given non-type template parameter
 /// from the given type- or value-dependent expression.
 ///
 /// \returns true if deduction succeeded, false otherwise.
-static Sema::TemplateDeductionResult
-DeduceNonTypeTemplateArgument(Sema &S,
-                              TemplateParameterList *TemplateParams,
-                              NonTypeTemplateParmDecl *NTTP,
-                              Expr *Value,
-                              TemplateDeductionInfo &Info,
-                    SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
-  assert(NTTP->getDepth() == Info.getDeducedDepth() &&
-         "deducing non-type template argument with wrong depth");
+static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
+    Sema &S, TemplateParameterList *TemplateParams,
+    NonTypeTemplateParmDecl *NTTP, Expr *Value, TemplateDeductionInfo &Info,
+    SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   assert((Value->isTypeDependent() || Value->isValueDependent()) &&
          "Expression template argument must be type- or value-dependent.");
-
-  DeducedTemplateArgument NewDeduced(Value);
-  DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
-                                                     Deduced[NTTP->getIndex()],
-                                                                 NewDeduced);
-
-  if (Result.isNull()) {
-    Info.Param = NTTP;
-    Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = NewDeduced;
-    return Sema::TDK_Inconsistent;
-  }
-
-  Deduced[NTTP->getIndex()] = Result;
-  return S.getLangOpts().CPlusPlus1z
-             ? DeduceTemplateArgumentsByTypeMatch(
-                   S, TemplateParams, NTTP->getType(), Value->getType(), Info,
-                   Deduced, TDF_ParamWithReferenceType | TDF_SkipNonDependent)
-             : Sema::TDK_Success;
+  return DeduceNonTypeTemplateArgument(S, TemplateParams, NTTP,
+                                       DeducedTemplateArgument(Value),
+                                       Value->getType(), Info, Deduced);
 }
 
 /// \brief Deduce the value of the given non-type template parameter
 /// from the given declaration.
 ///
 /// \returns true if deduction succeeded, false otherwise.
-static Sema::TemplateDeductionResult
-DeduceNonTypeTemplateArgument(Sema &S,
-                            TemplateParameterList *TemplateParams,
-                            NonTypeTemplateParmDecl *NTTP,
-                            ValueDecl *D, QualType T,
-                            TemplateDeductionInfo &Info,
-                            SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
-  assert(NTTP->getDepth() == Info.getDeducedDepth() &&
-         "deducing non-type template argument with wrong depth");
-
+static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
+    Sema &S, TemplateParameterList *TemplateParams,
+    NonTypeTemplateParmDecl *NTTP, ValueDecl *D, QualType T,
+    TemplateDeductionInfo &Info,
+    SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   D = D ? cast<ValueDecl>(D->getCanonicalDecl()) : nullptr;
   TemplateArgument New(D, T);
-  DeducedTemplateArgument NewDeduced(New);
-  DeducedTemplateArgument Result = checkDeducedTemplateArguments(S.Context,
-                                                     Deduced[NTTP->getIndex()],
-                                                                 NewDeduced);
-  if (Result.isNull()) {
-    Info.Param = NTTP;
-    Info.FirstArg = Deduced[NTTP->getIndex()];
-    Info.SecondArg = NewDeduced;
-    return Sema::TDK_Inconsistent;
-  }
-
-  Deduced[NTTP->getIndex()] = Result;
-  return S.getLangOpts().CPlusPlus1z
-             ? DeduceTemplateArgumentsByTypeMatch(
-                   S, TemplateParams, NTTP->getType(), T, Info, Deduced,
-                   TDF_ParamWithReferenceType | TDF_SkipNonDependent)
-             : Sema::TDK_Success;
+  return DeduceNonTypeTemplateArgument(
+      S, TemplateParams, NTTP, DeducedTemplateArgument(New), T, Info, Deduced);
 }
 
 static Sema::TemplateDeductionResult
