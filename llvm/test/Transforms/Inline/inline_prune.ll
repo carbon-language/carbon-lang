@@ -1,4 +1,5 @@
 ; RUN: opt < %s -inline -S | FileCheck %s
+; RUN: opt < %s -passes='cgscc(inline)' -S | FileCheck %s
 
 define internal i32 @callee1(i32 %A, i32 %B) {
 ; CHECK-NOT: @callee1
