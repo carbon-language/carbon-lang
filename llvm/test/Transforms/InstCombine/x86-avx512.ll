@@ -43,6 +43,18 @@ define <4 x float> @test_add_ss_mask(<4 x float> %a, <4 x float> %b, <4 x float>
   ret <4 x float> %4
 }
 
+define <4 x float> @test_add_ss_mask_round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask) {
+; CHECK-LABEL: @test_add_ss_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <4 x float> [[TMP1]]
+;
+  %1 = insertelement <4 x float> %c, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %3, i8 %mask, i32 8)
+  ret <4 x float> %4
+}
+
 define float @test_add_ss_1(float %a, float %b) {
 ; CHECK-LABEL: @test_add_ss_1(
 ; CHECK-NEXT:    ret float 1.000000e+00
@@ -92,6 +104,16 @@ define <2 x double> @test_add_sd_mask(<2 x double> %a, <2 x double> %b, <2 x dou
 ;
   %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 4)
+  ret <2 x double> %2
+}
+
+define <2 x double> @test_add_sd_mask_round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask) {
+; CHECK-LABEL: @test_add_sd_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
+;
+  %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
+  %2 = tail call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 8)
   ret <2 x double> %2
 }
 
@@ -149,6 +171,18 @@ define <4 x float> @test_sub_ss_mask(<4 x float> %a, <4 x float> %b, <4 x float>
   ret <4 x float> %4
 }
 
+define <4 x float> @test_sub_ss_mask_round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask) {
+; CHECK-LABEL: @test_sub_ss_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.avx512.mask.sub.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <4 x float> [[TMP1]]
+;
+  %1 = insertelement <4 x float> %c, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.avx512.mask.sub.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %3, i8 %mask, i32 8)
+  ret <4 x float> %4
+}
+
 define float @test_sub_ss_1(float %a, float %b) {
 ; CHECK-LABEL: @test_sub_ss_1(
 ; CHECK-NEXT:    ret float 1.000000e+00
@@ -198,6 +232,16 @@ define <2 x double> @test_sub_sd_mask(<2 x double> %a, <2 x double> %b, <2 x dou
 ;
   %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.avx512.mask.sub.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 4)
+  ret <2 x double> %2
+}
+
+define <2 x double> @test_sub_sd_mask_round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask) {
+; CHECK-LABEL: @test_sub_sd_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.avx512.mask.sub.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
+;
+  %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
+  %2 = tail call <2 x double> @llvm.x86.avx512.mask.sub.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 8)
   ret <2 x double> %2
 }
 
@@ -255,6 +299,18 @@ define <4 x float> @test_mul_ss_mask(<4 x float> %a, <4 x float> %b, <4 x float>
   ret <4 x float> %4
 }
 
+define <4 x float> @test_mul_ss_mask_round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask) {
+; CHECK-LABEL: @test_mul_ss_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.avx512.mask.mul.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <4 x float> [[TMP1]]
+;
+  %1 = insertelement <4 x float> %c, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.avx512.mask.mul.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %3, i8 %mask, i32 8)
+  ret <4 x float> %4
+}
+
 define float @test_mul_ss_1(float %a, float %b) {
 ; CHECK-LABEL: @test_mul_ss_1(
 ; CHECK-NEXT:    ret float 1.000000e+00
@@ -304,6 +360,16 @@ define <2 x double> @test_mul_sd_mask(<2 x double> %a, <2 x double> %b, <2 x dou
 ;
   %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.avx512.mask.mul.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 4)
+  ret <2 x double> %2
+}
+
+define <2 x double> @test_mul_sd_mask_round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask) {
+; CHECK-LABEL: @test_mul_sd_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.avx512.mask.mul.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
+;
+  %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
+  %2 = tail call <2 x double> @llvm.x86.avx512.mask.mul.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 8)
   ret <2 x double> %2
 }
 
@@ -361,6 +427,18 @@ define <4 x float> @test_div_ss_mask(<4 x float> %a, <4 x float> %b, <4 x float>
   ret <4 x float> %4
 }
 
+define <4 x float> @test_div_ss_mask_round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask) {
+; CHECK-LABEL: @test_div_ss_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <4 x float> @llvm.x86.avx512.mask.div.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <4 x float> [[TMP1]]
+;
+  %1 = insertelement <4 x float> %c, float 1.000000e+00, i32 1
+  %2 = insertelement <4 x float> %1, float 2.000000e+00, i32 2
+  %3 = insertelement <4 x float> %2, float 3.000000e+00, i32 3
+  %4 = tail call <4 x float> @llvm.x86.avx512.mask.div.ss.round(<4 x float> %a, <4 x float> %b, <4 x float> %3, i8 %mask, i32 8)
+  ret <4 x float> %4
+}
+
 define float @test_div_ss_1(float %a, float %b) {
 ; CHECK-LABEL: @test_div_ss_1(
 ; CHECK-NEXT:    ret float 1.000000e+00
@@ -410,6 +488,16 @@ define <2 x double> @test_div_sd_mask(<2 x double> %a, <2 x double> %b, <2 x dou
 ;
   %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
   %2 = tail call <2 x double> @llvm.x86.avx512.mask.div.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 4)
+  ret <2 x double> %2
+}
+
+define <2 x double> @test_div_sd_mask_round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask) {
+; CHECK-LABEL: @test_div_sd_mask_round(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x double> @llvm.x86.avx512.mask.div.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %c, i8 %mask, i32 8)
+; CHECK-NEXT:    ret <2 x double> [[TMP1]]
+;
+  %1 = insertelement <2 x double> %c, double 1.000000e+00, i32 1
+  %2 = tail call <2 x double> @llvm.x86.avx512.mask.div.sd.round(<2 x double> %a, <2 x double> %b, <2 x double> %1, i8 %mask, i32 8)
   ret <2 x double> %2
 }
 
