@@ -433,8 +433,6 @@
 ; CHECK-O: Running pass: SimplifyCFGPass
 ; CHECK-O: Running pass: ReassociatePass
 ; CHECK-O: Starting llvm::Loop pass manager run.
-; CHECK-O: Running pass: LoopRotatePass
-; CHECK-O: Running pass: LICMPass
 ; CHECK-O: Finished llvm::Loop pass manager run.
 ; CHECK-O: Running pass: SimplifyCFGPass
 ; CHECK-O: Running pass: InstCombinePass
@@ -447,7 +445,6 @@
 ; CHECK-O: Running pass: JumpThreadingPass
 ; CHECK-O: Running pass: CorrelatedValuePropagationPass
 ; CHECK-O: Running pass: DSEPass
-; CHECK-O: Running pass: FunctionToLoopPassAdaptor<{{.*}}LICMPass>
 ; CHECK-O: Running pass: ADCEPass
 ; CHECK-O: Running pass: SimplifyCFGPass
 ; CHECK-O: Running pass: InstCombinePass
