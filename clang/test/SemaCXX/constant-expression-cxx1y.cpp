@@ -959,18 +959,21 @@ namespace PR27989 {
 }
 
 namespace const_char {
-template <int M, int N>
+template <int N>
 constexpr int sum(const char (&Arr)[N]) {
-  static_assert(N >= M, "");
   int S = 0;
-  for (unsigned I = 0; I != M; ++I)
-    S += Arr[I];
+  for (unsigned I = 0; I != N; ++I)
+    S += Arr[I]; // expected-note 2{{read of non-constexpr variable 'Cs' is not allowed}}
   return S;
 }
 
 // As an extension, we support evaluating some things that are `const` as though
-// they were `constexpr`.
-const char Cs[] = {'a', 'b', 'c'};
-const int N = 2;
-static_assert(sum<N>(Cs) == 'a' + 'b', "");
+// they were `constexpr` when folding, but it should not be allowed in normal
+// constexpr evaluation.
+const char Cs[] = {'a', 'b'};
+void foo() __attribute__((enable_if(sum(Cs) == 'a' + 'b', "")));
+void run() { foo(); }
+
+static_assert(sum(Cs) == 'a' + 'b', ""); // expected-error{{not an integral constant expression}} expected-note{{in call to 'sum(Cs)'}}
+constexpr int S = sum(Cs); // expected-error{{must be initialized by a constant expression}} expected-note{{in call}}
 }
