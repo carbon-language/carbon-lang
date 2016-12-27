@@ -842,6 +842,9 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
           if (!NewCallee->isDeclaration())
             Calls.push_back(CS);
 
+      // Merge the attributes based on the inlining.
+      AttributeFuncs::mergeAttributesForInlining(F, Callee);
+
       // For local functions, check whether this makes the callee trivially
       // dead. In that case, we can drop the body of the function eagerly
       // which may reduce the number of callers of other functions to one,
