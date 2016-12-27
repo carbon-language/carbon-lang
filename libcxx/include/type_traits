@@ -2020,13 +2020,21 @@ template <class ...Tp> struct __common_types;
 template <class, class = void>
 struct __common_type_impl {};
 
+template <class _Tp, class _Up>
+struct __common_type_impl<
+    __common_types<_Tp, _Up>,
+    typename __void_t<typename common_type<_Tp, _Up>::type>::type>
+{
+  typedef typename common_type<_Tp, _Up>::type type;
+};
+
 template <class _Tp, class _Up, class ..._Vp>
 struct __common_type_impl<__common_types<_Tp, _Up, _Vp...>,
     typename __void_t<typename common_type<_Tp, _Up>::type>::type>
+  : __common_type_impl<
+      __common_types<typename common_type<_Tp, _Up>::type, _Vp...> >
 {
-    typedef typename common_type<
-        typename common_type<_Tp, _Up>::type, _Vp...
-    >::type type;
+
 };
 
 template <class _Tp, class _Up, class ..._Vp>

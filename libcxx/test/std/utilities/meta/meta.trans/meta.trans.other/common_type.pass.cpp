@@ -33,12 +33,21 @@ namespace std
 }
 
 #if TEST_STD_VER >= 11
-template <class T, class U, class = void>
-struct no_common_type : std::true_type {};
+template <class Tp>
+struct always_bool_imp { using type = bool; };
+template <class Tp> using always_bool = typename always_bool_imp<Tp>::type;
 
-template <class T, class U>
-struct no_common_type<T, U, typename std::conditional<false,
-    typename std::common_type<T, U>::type, void>::type> : std::false_type {};
+template <class ...Args>
+constexpr auto no_common_type_imp(int)
+  -> always_bool<typename std::common_type<Args...>::type>
+  { return false; }
+
+template <class ...Args>
+constexpr bool no_common_type_imp(long) { return true; }
+
+template <class ...Args>
+using no_common_type = std::integral_constant<bool, no_common_type_imp<Args...>(0)>;
+
 #endif // TEST_STD_VER >= 11
 
 int main()
@@ -93,6 +102,9 @@ int main()
     static_assert((no_common_type<void, int>::value), "");
     static_assert((no_common_type<int, void>::value), "");
     static_assert((no_common_type<int, E>::value), "");
+    static_assert((no_common_type<int, int, E>::value), "");
+    static_assert((no_common_type<int, int, E, int>::value), "");
+    static_assert((no_common_type<int, int, int, E>::value), "");
     static_assert((no_common_type<int, X<int> >::value), "");
 #endif // TEST_STD_VER >= 11
 
