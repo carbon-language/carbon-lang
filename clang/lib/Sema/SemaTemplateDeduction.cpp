@@ -327,13 +327,18 @@ static Sema::TemplateDeductionResult DeduceNonTypeTemplateArgument(
   }
 
   Deduced[NTTP->getIndex()] = Result;
-  return S.getLangOpts().CPlusPlus1z
-             ? DeduceTemplateArgumentsByTypeMatch(
-                   S, TemplateParams, NTTP->getType(), ValueType, Info, Deduced,
-                   TDF_ParamWithReferenceType | TDF_SkipNonDependent,
-                   /*PartialOrdering=*/false,
-                   /*ArrayBound=*/NewDeduced.wasDeducedFromArrayBound())
-             : Sema::TDK_Success;
+  if (!S.getLangOpts().CPlusPlus1z)
+    return Sema::TDK_Success;
+
+  // FIXME: It's not clear how deduction of a parameter of reference
+  // type from an argument (of non-reference type) should be performed.
+  // For now, we just remove reference types from both sides and let
+  // the final check for matching types sort out the mess.
+  return DeduceTemplateArgumentsByTypeMatch(
+      S, TemplateParams, NTTP->getType().getNonReferenceType(),
+      ValueType.getNonReferenceType(), Info, Deduced, TDF_SkipNonDependent,
+      /*PartialOrdering=*/false,
+      /*ArrayBound=*/NewDeduced.wasDeducedFromArrayBound());
 }
 
 /// \brief Deduce the value of the given non-type template parameter

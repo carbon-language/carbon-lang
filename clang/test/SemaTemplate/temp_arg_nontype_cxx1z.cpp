@@ -278,6 +278,12 @@ namespace Auto {
 
     using R1 = fn_result_type<foo>::type;
     using R1 = double;
+
+    template<int, auto &f> struct fn_result_type_partial_order;
+    template<auto &f> struct fn_result_type_partial_order<0, f>;
+    template<class R, class... Args, R (& f)(Args...)>
+    struct fn_result_type_partial_order<0, f> {};
+    fn_result_type_partial_order<0, foo> frtpo;
   }
 
   namespace Variadic {

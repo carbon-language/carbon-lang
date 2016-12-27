@@ -374,3 +374,28 @@ namespace partial_order_different_types {
   template<typename T, typename U, U V> struct A<0, 0, T, U, V> {}; // expected-note {{matches}}
   A<0, 0, int, int, 0> a; // expected-error {{ambiguous partial specializations}}
 }
+
+namespace partial_order_references {
+  // FIXME: The standard does not appear to consider the second specialization
+  // to be more more specialized than the first! The problem is that deducing
+  // an 'int&' parameter from an argument 'R' results in a type mismatch,
+  // because the parameter has a reference type and the argument is an
+  // expression and thus does not have reference type. We resolve this by
+  // matching the type of an expression corresponding to the parameter rather
+  // than matching the parameter itself.
+  template <int, int, int &> struct A {};
+  template <int N, int &R> struct A<N, 0, R> {};
+  template <int &R> struct A<0, 0, R> {};
+  int N;
+  A<0, 0, N> a;
+
+  // FIXME: These should both be rejected as they are not more specialized than
+  // the primary template (they can never be used due to the type mismatch).
+  template<int, int &R> struct B; // expected-note {{template}}
+  template<const int &R> struct B<0, R> {};
+  B<0, N> b; // expected-error {{undefined}}
+
+  template<int, const int &R> struct C; // expected-note {{template}}
+  template<int &R> struct C<0, R> {};
+  C<0, N> c; // expected-error {{undefined}}
+}

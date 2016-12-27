@@ -5040,7 +5040,8 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
          "non-type template parameter type cannot be qualified");
 
   if (CTAK == CTAK_Deduced &&
-      !Context.hasSameUnqualifiedType(ParamType, Arg->getType())) {
+      !Context.hasSameType(ParamType.getNonLValueExprType(Context),
+                           Arg->getType().getNonLValueExprType(Context))) {
     // C++ [temp.deduct.type]p17: (DR1770)
     //   If P has a form that contains <i>, and if the type of i differs from
     //   the type of the corresponding template parameter of the template named
@@ -5048,6 +5049,11 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //
     // Note that CTAK will be CTAK_DeducedFromArrayBound if the form was [i]
     // rather than <i>.
+    //
+    // FIXME: We interpret the 'i' here as referring to the expression
+    // denoting the non-type template parameter rather than the parameter
+    // itself, and so strip off references before comparing types. It's
+    // not clear how this is supposed to work for references.
     Diag(StartLoc, diag::err_deduced_non_type_template_arg_type_mismatch)
       << Arg->getType().getUnqualifiedType()
       << ParamType.getUnqualifiedType();
