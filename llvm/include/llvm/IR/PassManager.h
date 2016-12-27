@@ -1218,11 +1218,9 @@ struct InvalidateAnalysisPass
   /// context requires.
   template <typename IRUnitT, typename AnalysisManagerT, typename... ExtraArgTs>
   PreservedAnalyses run(IRUnitT &Arg, AnalysisManagerT &AM, ExtraArgTs &&...) {
-    // We have to directly invalidate the analysis result as we can't
-    // enumerate all other analyses and use the preserved set to control it.
-    AM.template invalidate<AnalysisT>(Arg);
-
-    return PreservedAnalyses::all();
+    auto PA = PreservedAnalyses::all();
+    PA.abandon<AnalysisT>();
+    return PA;
   }
 };
 
