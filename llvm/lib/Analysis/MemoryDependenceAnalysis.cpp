@@ -1683,6 +1683,24 @@ void MemoryDependenceWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequiredTransitive<TargetLibraryInfoWrapperPass>();
 }
 
+bool MemoryDependenceResults::invalidate(Function &F, const PreservedAnalyses &PA,
+                               FunctionAnalysisManager::Invalidator &Inv) {
+  // Check whether our analysis is preserved.
+  auto PAC = PA.getChecker<MemoryDependenceAnalysis>();
+  if (!PAC.preserved() && !PAC.preservedSet<AllAnalysesOn<Function>>())
+    // If not, give up now.
+    return true;
+
+  // Check whether the analyses we depend on became invalid for any reason.
+  if (Inv.invalidate<AAManager>(F, PA) ||
+      Inv.invalidate<AssumptionAnalysis>(F, PA) ||
+      Inv.invalidate<DominatorTreeAnalysis>(F, PA))
+    return true;
+
+  // Otherwise this analysis result remains valid.
+  return false;
+}
+
 unsigned MemoryDependenceResults::getDefaultBlockScanLimit() const {
   return BlockScanLimit;
 }
