@@ -1434,7 +1434,9 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
     case Intrinsic::x86_sse2_pmulu_dq:
     case Intrinsic::x86_sse41_pmuldq:
     case Intrinsic::x86_avx2_pmul_dq:
-    case Intrinsic::x86_avx2_pmulu_dq: {
+    case Intrinsic::x86_avx2_pmulu_dq:
+    case Intrinsic::x86_avx512_pmul_dq_512:
+    case Intrinsic::x86_avx512_pmulu_dq_512: {
       Value *Op0 = II->getArgOperand(0);
       Value *Op1 = II->getArgOperand(1);
       unsigned InnerVWidth = Op0->getType()->getVectorNumElements();

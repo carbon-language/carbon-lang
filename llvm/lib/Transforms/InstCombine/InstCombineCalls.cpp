@@ -2048,7 +2048,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_sse2_pmulu_dq:
   case Intrinsic::x86_sse41_pmuldq:
   case Intrinsic::x86_avx2_pmul_dq:
-  case Intrinsic::x86_avx2_pmulu_dq: {
+  case Intrinsic::x86_avx2_pmulu_dq:
+  case Intrinsic::x86_avx512_pmul_dq_512:
+  case Intrinsic::x86_avx512_pmulu_dq_512: {
     unsigned VWidth = II->getType()->getVectorNumElements();
     APInt UndefElts(VWidth, 0);
     APInt DemandedElts = APInt::getAllOnesValue(VWidth);
