@@ -1789,6 +1789,50 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+  case Intrinsic::x86_avx512_mask_add_ps_512:
+  case Intrinsic::x86_avx512_mask_div_ps_512:
+  case Intrinsic::x86_avx512_mask_mul_ps_512:
+  case Intrinsic::x86_avx512_mask_sub_ps_512:
+  case Intrinsic::x86_avx512_mask_add_pd_512:
+  case Intrinsic::x86_avx512_mask_div_pd_512:
+  case Intrinsic::x86_avx512_mask_mul_pd_512:
+  case Intrinsic::x86_avx512_mask_sub_pd_512:
+    // If the rounding mode is CUR_DIRECTION(4) we can turn these into regular
+    // IR operations.
+    if (auto *R = dyn_cast<ConstantInt>(II->getArgOperand(4))) {
+      if (R->getValue() == 4) {
+        Value *Arg0 = II->getArgOperand(0);
+        Value *Arg1 = II->getArgOperand(1);
+
+        Value *V;
+        switch (II->getIntrinsicID()) {
+        default: llvm_unreachable("Case stmts out of sync!");
+        case Intrinsic::x86_avx512_mask_add_ps_512:
+        case Intrinsic::x86_avx512_mask_add_pd_512:
+          V = Builder->CreateFAdd(Arg0, Arg1);
+          break;
+        case Intrinsic::x86_avx512_mask_sub_ps_512:
+        case Intrinsic::x86_avx512_mask_sub_pd_512:
+          V = Builder->CreateFSub(Arg0, Arg1);
+          break;
+        case Intrinsic::x86_avx512_mask_mul_ps_512:
+        case Intrinsic::x86_avx512_mask_mul_pd_512:
+          V = Builder->CreateFMul(Arg0, Arg1);
+          break;
+        case Intrinsic::x86_avx512_mask_div_ps_512:
+        case Intrinsic::x86_avx512_mask_div_pd_512:
+          V = Builder->CreateFDiv(Arg0, Arg1);
+          break;
+        }
+
+        // Create a select for the masking.
+        V = emitX86MaskSelect(II->getArgOperand(3), V, II->getArgOperand(2),
+                              *Builder);
+        return replaceInstUsesWith(*II, V);
+      }
+    }
+    break;
+
   case Intrinsic::x86_avx512_mask_add_ss_round:
   case Intrinsic::x86_avx512_mask_div_ss_round:
   case Intrinsic::x86_avx512_mask_mul_ss_round:
