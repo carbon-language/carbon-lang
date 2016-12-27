@@ -353,6 +353,7 @@ MemoryDependenceResults::getInvariantGroupPointerDependency(LoadInst *LI,
   // Queue to process all pointers that are equivalent to load operand.
   SmallVector<Value *, 8> LoadOperandsQueue;
   LoadOperandsQueue.push_back(LoadOperand);
+  Seen.insert(LoadOperand);
   while (!LoadOperandsQueue.empty()) {
     Value *Ptr = LoadOperandsQueue.pop_back_val();
     if (isa<GlobalValue>(Ptr))
