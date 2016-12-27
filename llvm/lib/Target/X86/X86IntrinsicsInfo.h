@@ -1522,6 +1522,8 @@ static const IntrinsicData  IntrinsicsWithoutChain[] = {
                      X86ISD::VPMADD52L, 0),
   X86_INTRINSIC_DATA(avx512_maskz_vpmadd52l_uq_512, FMA_OP_MASKZ,
                      X86ISD::VPMADD52L, 0),
+  X86_INTRINSIC_DATA(avx512_pmul_dq_512, INTR_TYPE_2OP, X86ISD::PMULDQ, 0),
+  X86_INTRINSIC_DATA(avx512_pmulu_dq_512, INTR_TYPE_2OP, X86ISD::PMULUDQ, 0),
   X86_INTRINSIC_DATA(avx512_psad_bw_512, INTR_TYPE_2OP, X86ISD::PSADBW, 0),
   X86_INTRINSIC_DATA(avx512_pshuf_b_512, INTR_TYPE_2OP, X86ISD::PSHUFB, 0),
   X86_INTRINSIC_DATA(avx512_psll_d_512, INTR_TYPE_2OP, X86ISD::VSHL, 0),
