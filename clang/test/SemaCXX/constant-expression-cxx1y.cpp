@@ -957,3 +957,20 @@ namespace PR27989 {
   }
   static_assert(f(0) == 1, "");
 }
+
+namespace const_char {
+template <int M, int N>
+constexpr int sum(const char (&Arr)[N]) {
+  static_assert(N >= M, "");
+  int S = 0;
+  for (unsigned I = 0; I != M; ++I)
+    S += Arr[I];
+  return S;
+}
+
+// As an extension, we support evaluating some things that are `const` as though
+// they were `constexpr`.
+const char Cs[] = {'a', 'b', 'c'};
+const int N = 2;
+static_assert(sum<N>(Cs) == 'a' + 'b', "");
+}
