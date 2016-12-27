@@ -788,7 +788,13 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
   // We also use a secondary worklist of call sites within a particular node to
   // allow quickly continuing to inline through newly inlined call sites where
   // possible.
-  SmallVector<CallSite, 16> Calls;
+  SmallVector<std::pair<CallSite, int>, 16> Calls;
+
+  // When inlining a callee produces new call sites, we want to keep track of
+  // the fact that they were inlined from the callee.  This allows us to avoid
+  // infinite inlining in some obscure cases.  To represent this, we use an
+  // index into the InlineHistory vector.
+  SmallVector<std::pair<Function *, int>, 16> InlineHistory;
 
   // Track a set vector of inlined callees so that we can augment the caller
   // with all of their edges in the call graph before pruning out the ones that
@@ -820,12 +826,18 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
       if (auto CS = CallSite(&I))
         if (Function *Callee = CS.getCalledFunction())
           if (!Callee->isDeclaration())
-            Calls.push_back(CS);
+            Calls.push_back({CS, -1});
 
     bool DidInline = false;
     while (!Calls.empty()) {
-      CallSite CS = Calls.pop_back_val();
+      int InlineHistoryID;
+      CallSite CS;
+      std::tie(CS, InlineHistoryID) = Calls.pop_back_val();
       Function &Callee = *CS.getCalledFunction();
+
+      if (InlineHistoryID != -1 &&
+          InlineHistoryIncludes(&Callee, InlineHistoryID, InlineHistory))
+        continue;
 
       // Check whether we want to inline this callsite.
       if (!shouldInline(CS, GetInlineCost, ORE))
@@ -837,10 +849,14 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
       InlinedCallees.insert(&Callee);
 
       // Add any new callsites to defined functions to the worklist.
-      for (CallSite &CS : reverse(IFI.InlinedCallSites))
-        if (Function *NewCallee = CS.getCalledFunction())
-          if (!NewCallee->isDeclaration())
-            Calls.push_back(CS);
+      if (!IFI.InlinedCallSites.empty()) {
+        int NewHistoryID = InlineHistory.size();
+        InlineHistory.push_back({&Callee, InlineHistoryID});
+        for (CallSite &CS : reverse(IFI.InlinedCallSites))
+          if (Function *NewCallee = CS.getCalledFunction())
+            if (!NewCallee->isDeclaration())
+              Calls.push_back({CS, NewHistoryID});
+      }
 
       // Merge the attributes based on the inlining.
       AttributeFuncs::mergeAttributesForInlining(F, Callee);
