@@ -325,13 +325,14 @@
 ; CHECK-AA-DEFAULT: Finished llvm::Module pass manager run
 
 ; RUN: opt -disable-output -disable-verify -debug-pass-manager %s 2>&1 \
-; RUN:     -passes='require<aa>,invalidate<basic-aa>,aa-eval' -aa-pipeline='basic-aa' \
+; RUN:     -passes='require<aa>,invalidate<domtree>,aa-eval' -aa-pipeline='basic-aa' \
 ; RUN:     | FileCheck %s --check-prefix=CHECK-AA-FUNCTION-INVALIDATE
 ; CHECK-AA-FUNCTION-INVALIDATE: Starting llvm::Function pass manager run
 ; CHECK-AA-FUNCTION-INVALIDATE: Running pass: RequireAnalysisPass
 ; CHECK-AA-FUNCTION-INVALIDATE: Running analysis: AAManager
 ; CHECK-AA-FUNCTION-INVALIDATE: Running analysis: BasicAA
 ; CHECK-AA-FUNCTION-INVALIDATE: Running pass: InvalidateAnalysisPass
+; CHECK-AA-FUNCTION-INVALIDATE: Invalidating analysis: DominatorTreeAnalysis
 ; CHECK-AA-FUNCTION-INVALIDATE: Invalidating analysis: BasicAA
 ; CHECK-AA-FUNCTION-INVALIDATE: Invalidating analysis: AAManager
 ; CHECK-AA-FUNCTION-INVALIDATE: Running pass: AAEvaluator
