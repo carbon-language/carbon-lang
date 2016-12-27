@@ -77,8 +77,8 @@ static const std::pair<LibFunc::Func, AllocFnsTy> AllocationFnData[] = {
   // TODO: Handle "int posix_memalign(void **, size_t, size_t)"
 };
 
-
-static Function *getCalledFunction(const Value *V, bool LookThroughBitCast) {
+static Function *getCalledFunction(const Value *V, bool LookThroughBitCast,
+                                   bool &IsNoBuiltin) {
   // Don't care about intrinsics in this case.
   if (isa<IntrinsicInst>(V))
     return nullptr;
@@ -90,8 +90,7 @@ static Function *getCalledFunction(const Value *V, bool LookThroughBitCast) {
   if (!CS.getInstruction())
     return nullptr;
 
-  if (CS.isNoBuiltin())
-    return nullptr;
+  IsNoBuiltin = CS.isNoBuiltin();
 
   Function *Callee = CS.getCalledFunction();
   if (!Callee || !Callee->isDeclaration())
@@ -143,22 +142,28 @@ getAllocationDataForFunction(const Function *Callee, AllocType AllocTy,
 static Optional<AllocFnsTy> getAllocationData(const Value *V, AllocType AllocTy,
                                               const TargetLibraryInfo *TLI,
                                               bool LookThroughBitCast = false) {
-  if (const Function *Callee = getCalledFunction(V, LookThroughBitCast))
-    return getAllocationDataForFunction(Callee, AllocTy, TLI);
+  bool IsNoBuiltinCall;
+  if (const Function *Callee =
+          getCalledFunction(V, LookThroughBitCast, IsNoBuiltinCall))
+    if (!IsNoBuiltinCall)
+      return getAllocationDataForFunction(Callee, AllocTy, TLI);
   return None;
 }
 
 static Optional<AllocFnsTy> getAllocationSize(const Value *V,
                                               const TargetLibraryInfo *TLI) {
-  const Function *Callee = getCalledFunction(V, /*LookThroughBitCast=*/false);
+  bool IsNoBuiltinCall;
+  const Function *Callee =
+      getCalledFunction(V, /*LookThroughBitCast=*/false, IsNoBuiltinCall);
   if (!Callee)
     return None;
 
   // Prefer to use existing information over allocsize. This will give us an
   // accurate AllocTy.
-  if (Optional<AllocFnsTy> Data =
-          getAllocationDataForFunction(Callee, AnyAlloc, TLI))
-    return Data;
+  if (!IsNoBuiltinCall)
+    if (Optional<AllocFnsTy> Data =
+            getAllocationDataForFunction(Callee, AnyAlloc, TLI))
+      return Data;
 
   Attribute Attr = Callee->getFnAttribute(Attribute::AllocSize);
   if (Attr == Attribute())
