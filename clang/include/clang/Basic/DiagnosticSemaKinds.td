@@ -4043,14 +4043,16 @@ def err_partial_spec_args_match_primary_template : Error<
     "%select{class|variable}0 template partial specialization does not "
     "specialize any template argument; to %select{declare|define}1 the "
     "primary template, remove the template argument list">; 
-def err_partial_spec_not_more_specialized_than_primary : Error<
+def ext_partial_spec_not_more_specialized_than_primary : ExtWarn<
     "%select{class|variable}0 template partial specialization is not "
-    "more specialized than the primary template">; 
+    "more specialized than the primary template">, DefaultError,
+    InGroup<DiagGroup<"invalid-partial-specialization">>;
 def note_partial_spec_not_more_specialized_than_primary : Note<"%0">;
 def warn_partial_specs_not_deducible : Warning<
     "%select{class|variable}0 template partial specialization contains "
     "%select{a template parameter|template parameters}1 that cannot be "
-    "deduced; this partial specialization will never be used">;
+    "deduced; this partial specialization will never be used">,
+    InGroup<DiagGroup<"unusable-partial-specialization">>;
 def note_partial_spec_unused_parameter : Note<
     "non-deducible template parameter %0">;
 def err_partial_spec_ordering_ambiguous : Error<

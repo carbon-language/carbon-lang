@@ -2637,8 +2637,8 @@ static void checkMoreSpecializedThanPrimary(Sema &S, PartialSpecDecl *Partial) {
 
   auto *Template = Partial->getSpecializedTemplate();
   S.Diag(Partial->getLocation(),
-         diag::err_partial_spec_not_more_specialized_than_primary)
-      << /*variable template*/isa<VarTemplateDecl>(Template);
+         diag::ext_partial_spec_not_more_specialized_than_primary)
+      << isa<VarTemplateDecl>(Template);
 
   if (Info.hasSFINAEDiagnostic()) {
     PartialDiagnosticAt Diag = {SourceLocation(),
