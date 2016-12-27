@@ -63,10 +63,14 @@ bool isCurrentDebugType(const char *DebugType) {
 /// debug output to be produced.
 ///
 void setCurrentDebugType(const char *Type) {
-  CurrentDebugType->clear();
-  CurrentDebugType->push_back(Type);
+  setCurrentDebugTypes(&Type, 1);
 }
 
+void setCurrentDebugTypes(const char **Types, unsigned Count) {
+  CurrentDebugType->clear();
+  for (size_t T = 0; T < Count; ++T)
+    CurrentDebugType->push_back(Types[T]);
+}
 } // namespace llvm
 
 // All Debug.h functionality is a no-op in NDEBUG mode.
