@@ -389,7 +389,7 @@ namespace partial_order_references {
   int N;
   A<0, 0, N> a;
 
-  // FIXME: These should both be rejected as they are not more specialized than
+  // FIXME: These should all be rejected as they are not more specialized than
   // the primary template (they can never be used due to the type mismatch).
   template<int, int &R> struct B; // expected-note {{template}}
   template<const int &R> struct B<0, R> {};
@@ -398,4 +398,9 @@ namespace partial_order_references {
   template<int, const int &R> struct C; // expected-note {{template}}
   template<int &R> struct C<0, R> {};
   C<0, N> c; // expected-error {{undefined}}
+
+  template<int, const int &R> struct D; // expected-note {{template}}
+  template<int N> struct D<0, N> {};
+  extern const int K = 5;
+  D<0, K> d; // expected-error {{undefined}}
 }
