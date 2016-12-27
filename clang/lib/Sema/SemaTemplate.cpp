@@ -5076,8 +5076,8 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     // For a value-dependent argument, CheckConvertedConstantExpression is
     // permitted (and expected) to be unable to determine a value.
     if (ArgResult.get()->isValueDependent()) {
-      Converted = TemplateArgument(Arg);
-      return Arg;
+      Converted = TemplateArgument(ArgResult.get());
+      return ArgResult;
     }
 
     QualType CanonParamType = Context.getCanonicalType(ParamType);
@@ -5184,14 +5184,6 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
     //      conversions (4.7) are applied.
 
     if (getLangOpts().CPlusPlus11) {
-      // We can't check arbitrary value-dependent arguments.
-      // FIXME: If there's no viable conversion to the template parameter type,
-      // we should be able to diagnose that prior to instantiation.
-      if (Arg->isValueDependent()) {
-        Converted = TemplateArgument(Arg);
-        return Arg;
-      }
-
       // C++ [temp.arg.nontype]p1:
       //   A template-argument for a non-type, non-template template-parameter
       //   shall be one of:
@@ -5205,6 +5197,12 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
                                          CCEK_TemplateArg);
       if (ArgResult.isInvalid())
         return ExprError();
+
+      // We can't check arbitrary value-dependent arguments.
+      if (ArgResult.get()->isValueDependent()) {
+        Converted = TemplateArgument(ArgResult.get());
+        return ArgResult;
+      }
 
       // Widen the argument value to sizeof(parameter type). This is almost
       // always a no-op, except when the parameter type is bool. In

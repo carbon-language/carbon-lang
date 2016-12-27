@@ -137,7 +137,7 @@ namespace DeduceDifferentType {
   struct Z { constexpr operator Y&() { return y; } } z;
   constexpr Y::operator Z&() { return z; }
   template<Y &> struct D {};
-  template<Z &z> int d(D<z>); // expected-note {{does not have the same type}}
+  template<Z &z> int d(D<z>); // expected-note {{couldn't infer template argument 'z'}}
   int d_imp = d(D<y>()); // expected-error {{no matching function}}
   int d_exp = d<y>(D<y>());
 }
