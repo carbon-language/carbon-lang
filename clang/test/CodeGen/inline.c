@@ -1,3 +1,5 @@
+// REQUIRES: x86-registered-target
+//
 // RUN: echo "GNU89 tests:"
 // RUN: %clang_cc1 %s -triple i386-unknown-unknown -O1 -disable-llvm-passes -emit-llvm -o - -std=gnu89 | FileCheck %s --check-prefix=CHECK1
 // RUN: %clang_cc1 %s -triple i386-unknown-unknown -fexperimental-new-pass-manager -O1 -disable-llvm-passes -emit-llvm -o - -std=gnu89 | FileCheck %s --check-prefix=CHECK1
