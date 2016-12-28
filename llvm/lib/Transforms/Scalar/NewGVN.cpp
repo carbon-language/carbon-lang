@@ -350,36 +350,26 @@ char NewGVN::ID = 0;
 // createGVNPass - The public interface to this file.
 FunctionPass *llvm::createNewGVNPass() { return new NewGVN(); }
 
-bool LoadExpression::equals(const Expression &Other) const {
-  if (!isa<LoadExpression>(Other) && !isa<StoreExpression>(Other))
+template <typename T>
+static bool equalsLoadStoreHelper(const T &LHS, const Expression &RHS) {
+  if ((!isa<LoadExpression>(RHS) && !isa<StoreExpression>(RHS)) ||
+      !LHS.BasicExpression::equals(RHS))
     return false;
-  if (!this->BasicExpression::equals(Other))
-    return false;
-  if (const auto *OtherL = dyn_cast<LoadExpression>(&Other)) {
-    if (DefiningAccess != OtherL->getDefiningAccess())
+  if (const auto *L = dyn_cast<LoadExpression>(&RHS))
+    if (LHS.getDefiningAccess() != L->getDefiningAccess())
       return false;
-  } else if (const auto *OtherS = dyn_cast<StoreExpression>(&Other)) {
-    if (DefiningAccess != OtherS->getDefiningAccess())
+  if (const auto *S = dyn_cast<StoreExpression>(&RHS))
+    if (LHS.getDefiningAccess() != S->getDefiningAccess())
       return false;
-  }
-
   return true;
 }
 
-bool StoreExpression::equals(const Expression &Other) const {
-  if (!isa<LoadExpression>(Other) && !isa<StoreExpression>(Other))
-    return false;
-  if (!this->BasicExpression::equals(Other))
-    return false;
-  if (const auto *OtherL = dyn_cast<LoadExpression>(&Other)) {
-    if (DefiningAccess != OtherL->getDefiningAccess())
-      return false;
-  } else if (const auto *OtherS = dyn_cast<StoreExpression>(&Other)) {
-    if (DefiningAccess != OtherS->getDefiningAccess())
-      return false;
-  }
+bool LoadExpression::equals(const Expression &Other) const {
+  return equalsLoadStoreHelper(*this, Other);
+}
 
-  return true;
+bool StoreExpression::equals(const Expression &Other) const {
+  return equalsLoadStoreHelper(*this, Other);
 }
 
 #ifndef NDEBUG
