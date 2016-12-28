@@ -29,8 +29,8 @@ int main()
   }
   {
     // test that the libc++ exception type derives from std::exception
-    static_assert(std::is_base_of<std::exception,
+    static_assert((std::is_base_of<std::exception,
                                   std::__libcpp_debug_exception
-                  >::value, "must be an exception");
+                  >::value), "must be an exception");
   }
 }

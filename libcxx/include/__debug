@@ -26,7 +26,7 @@
 
 #if _LIBCPP_DEBUG_LEVEL >= 1 && !defined(_LIBCPP_ASSERT)
 # define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : \
-  _VSTD::__libcpp_debug_function(_VSTD::__libcpp_debug_info{__FILE__, __LINE__, #x, m}))
+  _VSTD::__libcpp_debug_function(_VSTD::__libcpp_debug_info(__FILE__, __LINE__, #x, m)))
 #endif
 
 #if _LIBCPP_DEBUG_LEVEL >= 2
@@ -53,6 +53,9 @@ class _LIBCPP_EXCEPTION_ABI __libcpp_debug_exception;
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 struct _LIBCPP_TYPE_VIS_ONLY __libcpp_debug_info {
+  _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+  __libcpp_debug_info(const char* __f, int __l, const char* __p, const char* __m)
+    : __file_(__f), __line_(__l), __pred_(__p), __msg_(__m) {}
   const char* __file_;
   int __line_;
   const char* __pred_;
