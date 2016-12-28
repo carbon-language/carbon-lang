@@ -41,7 +41,11 @@ _LIBCPP_NORETURN void __libcpp_abort_debug_function(__libcpp_debug_info const& i
 }
 
 _LIBCPP_NORETURN void __libcpp_throw_debug_function(__libcpp_debug_info const& info) {
+#ifndef _LIBCPP_NO_EXCEPTIONS
   throw __libcpp_debug_exception(info);
+#else
+  __libcpp_abort_debug_function(info);
+#endif
 }
 
 struct __libcpp_debug_exception::__libcpp_debug_exception_imp {

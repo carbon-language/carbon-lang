@@ -16,7 +16,7 @@ New entries should be added directly below the "Version" header.
 Version 4.0
 -----------
 
-* rTBD - Add _LIBCPP_ASSERT debug handling functions
+* r290651 - Add _LIBCPP_ASSERT debug handling functions
 
   All Platforms
   -------------

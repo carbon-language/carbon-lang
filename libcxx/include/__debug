@@ -82,6 +82,9 @@ bool __libcpp_set_debug_function(__libcpp_debug_function_type __func);
 
 // Setup the throwing debug handler during dynamic initialization.
 #if _LIBCPP_DEBUG_LEVEL >= 1 && defined(_LIBCPP_DEBUG_USE_EXCEPTIONS)
+# if defined(_LIBCPP_NO_EXCEPTIONS)
+#   error _LIBCPP_DEBUG_USE_EXCEPTIONS cannot be used when exceptions are disabled.
+# endif
 static bool __init_dummy = __libcpp_set_debug_function(__libcpp_throw_debug_function);
 #endif
 
