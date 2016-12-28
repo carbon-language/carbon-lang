@@ -5927,6 +5927,15 @@ public:
                                  MultiTemplateParamsArg TemplateParameterLists,
                                    SkipBodyInfo *SkipBody = nullptr);
 
+  bool CheckTemplatePartialSpecializationArgs(SourceLocation Loc,
+                                              TemplateDecl *PrimaryTemplate,
+                                              unsigned NumExplicitArgs,
+                                              ArrayRef<TemplateArgument> Args);
+  void CheckTemplatePartialSpecialization(
+      ClassTemplatePartialSpecializationDecl *Partial);
+  void CheckTemplatePartialSpecialization(
+      VarTemplatePartialSpecializationDecl *Partial);
+
   Decl *ActOnTemplateDeclarator(Scope *S,
                                 MultiTemplateParamsArg TemplateParameterLists,
                                 Declarator &D);
