@@ -284,7 +284,7 @@ private:
   }
 
   CongruenceClass *createSingletonCongruenceClass(Value *Member) {
-    CongruenceClass *CClass = createCongruenceClass(Member, NULL);
+    CongruenceClass *CClass = createCongruenceClass(Member, nullptr);
     CClass->Members.insert(Member);
     ValueToClass[Member] = CClass;
     return CClass;
@@ -374,7 +374,7 @@ bool StoreExpression::equals(const Expression &Other) const {
 
 #ifndef NDEBUG
 static std::string getBlockName(const BasicBlock *B) {
-  return DOTGraphTraits<const Function *>::getSimpleNodeLabel(B, NULL);
+  return DOTGraphTraits<const Function *>::getSimpleNodeLabel(B, nullptr);
 }
 #endif
 
@@ -809,7 +809,7 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I,
   // choose a value that is the same for them.
   for (const Value *Arg : E->operands())
     if (Arg != AllSameValue && !isa<UndefValue>(Arg)) {
-      AllSameValue = NULL;
+      AllSameValue = nullptr;
       break;
     }
 
@@ -882,7 +882,7 @@ NewGVN::performSymbolicAggrValueEvaluation(Instruction *I,
 // Substitute and symbolize the value before value numbering.
 const Expression *NewGVN::performSymbolicEvaluation(Value *V,
                                                     const BasicBlock *B) {
-  const Expression *E = NULL;
+  const Expression *E = nullptr;
   if (auto *C = dyn_cast<Constant>(V))
     E = createConstantExpression(C);
   else if (isa<Argument>(V) || isa<GlobalVariable>(V)) {
@@ -1007,14 +1007,14 @@ void NewGVN::performCongruenceFinding(Value *V, const Expression *E) {
   CongruenceClass *EClass;
   // Expressions we can't symbolize are always in their own unique
   // congruence class.
-  if (E == NULL) {
+  if (E == nullptr) {
     // We may have already made a unique class.
     if (VClass->Members.size() != 1 || VClass->RepLeader != V) {
-      CongruenceClass *NewClass = createCongruenceClass(V, NULL);
+      CongruenceClass *NewClass = createCongruenceClass(V, nullptr);
       // We should always be adding the member in the below code.
       EClass = NewClass;
       DEBUG(dbgs() << "Created new congruence class for " << *V
-                   << " due to NULL expression\n");
+                   << " due to nullptr expression\n");
     } else {
       EClass = VClass;
     }
@@ -1025,7 +1025,7 @@ void NewGVN::performCongruenceFinding(Value *V, const Expression *E) {
 
     // If it's not in the value table, create a new congruence class.
     if (lookupResult.second) {
-      CongruenceClass *NewClass = createCongruenceClass(NULL, E);
+      CongruenceClass *NewClass = createCongruenceClass(nullptr, E);
       auto place = lookupResult.first;
       place->second = NewClass;
 
@@ -1209,7 +1209,7 @@ void NewGVN::initializeCongruenceClasses(Function &F) {
   NextCongruenceNum = 2;
   // Initialize all other instructions to be in INITIAL class.
   CongruenceClass::MemberSet InitialValues;
-  InitialClass = createCongruenceClass(NULL, NULL);
+  InitialClass = createCongruenceClass(nullptr, nullptr);
   for (auto &B : F)
     for (auto &I : B) {
       InitialValues.insert(&I);
@@ -1229,7 +1229,7 @@ void NewGVN::cleanupTables() {
     // Make sure we delete the congruence class (probably worth switching to
     // a unique_ptr at some point.
     delete CongruenceClasses[i];
-    CongruenceClasses[i] = NULL;
+    CongruenceClasses[i] = nullptr;
   }
 
   ValueToClass.clear();
