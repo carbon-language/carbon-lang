@@ -47,24 +47,6 @@ sections with improvements to Clang's support for those languages.
 Major New Features
 ------------------
 
-- Enhanced devirtualization with `-fstrict-vtable-pointers`. Clang devirtualizes
-across different basic blocks, like loops:
-
-.. code-block:: c++
-   struct A {
-       virtual void foo() {}
-   };
-   void indirect(A &a, int n) {
-       for (int i = 0 ; i < n; i++)
-           a.foo();
-
-   }
-   void test(int n) {
-       A a;
-       indirect(a);
-   }
-
-
 -  ...
 
 Improvements to Clang's diagnostics
