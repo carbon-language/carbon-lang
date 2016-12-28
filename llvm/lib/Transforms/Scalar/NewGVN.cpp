@@ -955,8 +955,6 @@ const Expression *NewGVN::performSymbolicEvaluation(Value *V,
       return nullptr;
     }
   }
-  if (!E)
-    return nullptr;
   return E;
 }
 
