@@ -80,7 +80,7 @@ protected:
         ValueType(Ty), Linkage(Linkage), Visibility(DefaultVisibility),
         UnnamedAddrVal(unsigned(UnnamedAddr::None)),
         DllStorageClass(DefaultStorageClass), ThreadLocal(NotThreadLocal),
-        IntID((Intrinsic::ID)0U), Parent(nullptr) {
+        IntID((Intrinsic::ID)0U), HasLLVMReservedName(false), Parent(nullptr) {
     setName(Name);
   }
 
@@ -137,7 +137,12 @@ protected:
   /// Subclasses can use it to store their intrinsic ID, if they have one.
   ///
   /// This is stored here to save space in Function on 64-bit hosts.
-  Intrinsic::ID IntID;
+  Intrinsic::ID IntID : 31;
+
+  /// True if the function's name starts with "llvm.".  This corresponds to the
+  /// value of Function::isIntrinsic(), which may be true even if
+  /// Function::intrinsicID() returns Intrinsic::not_intrinsic.
+  bool HasLLVMReservedName : 1;
 
   unsigned getGlobalValueSubClassData() const {
     return SubClassData;
