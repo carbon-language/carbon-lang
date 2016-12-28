@@ -127,6 +127,7 @@ Design Documents
 .. toctree::
    :maxdepth: 1
 
+   DesignDocs/DebugMode
    DesignDocs/CapturingConfigInfo
    DesignDocs/ABIVersioning
    DesignDocs/VisibilityMacros
