@@ -241,7 +241,7 @@ enum MetadataCodes {
   METADATA_SUBPROGRAM = 21,      // [distinct, ...]
   METADATA_LEXICAL_BLOCK = 22,   // [distinct, scope, file, line, column]
   METADATA_LEXICAL_BLOCK_FILE = 23, //[distinct, scope, file, discriminator]
-  METADATA_NAMESPACE = 24,       // [distinct, scope, file, name, line, exportSymbols]
+  METADATA_NAMESPACE = 24, // [distinct, scope, file, name, line, exportSymbols]
   METADATA_TEMPLATE_TYPE = 25,   // [distinct, scope, name, type, ...]
   METADATA_TEMPLATE_VALUE = 26,  // [distinct, scope, name, type, value, ...]
   METADATA_GLOBAL_VAR = 27,      // [distinct, ...]
@@ -254,7 +254,9 @@ enum MetadataCodes {
   METADATA_MACRO_FILE = 34,      // [distinct, macinfo, line, file, ...]
   METADATA_STRINGS = 35,         // [count, offset] blob([lengths][chars])
   METADATA_GLOBAL_DECL_ATTACHMENT = 36, // [valueid, n x [id, mdnode]]
-  METADATA_GLOBAL_VAR_EXPR = 37, // [distinct, var, expr]
+  METADATA_GLOBAL_VAR_EXPR = 37,        // [distinct, var, expr]
+  METADATA_INDEX_OFFSET = 38,           // [offset]
+  METADATA_INDEX = 39,                  // [bitpos]
 };
 
 // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
