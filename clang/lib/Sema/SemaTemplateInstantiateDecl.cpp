@@ -2085,18 +2085,18 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
     ExpandedParameterPackTypes.reserve(D->getNumExpansionTypes());
     ExpandedParameterPackTypesAsWritten.reserve(D->getNumExpansionTypes());
     for (unsigned I = 0, N = D->getNumExpansionTypes(); I != N; ++I) {
-      TypeSourceInfo *NewDI =SemaRef.SubstType(D->getExpansionTypeSourceInfo(I),
-                                               TemplateArgs,
-                                               D->getLocation(),
-                                               D->getDeclName());
+      TypeSourceInfo *NewDI =
+          SemaRef.SubstType(D->getExpansionTypeSourceInfo(I), TemplateArgs,
+                            D->getLocation(), D->getDeclName());
       if (!NewDI)
         return nullptr;
 
-      ExpandedParameterPackTypesAsWritten.push_back(NewDI);
-      QualType NewT =SemaRef.CheckNonTypeTemplateParameterType(NewDI->getType(),
-                                                              D->getLocation());
+      QualType NewT =
+          SemaRef.CheckNonTypeTemplateParameterType(NewDI, D->getLocation());
       if (NewT.isNull())
         return nullptr;
+
+      ExpandedParameterPackTypesAsWritten.push_back(NewDI);
       ExpandedParameterPackTypes.push_back(NewT);
     }
 
@@ -2136,12 +2136,12 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
         if (!NewDI)
           return nullptr;
 
-        ExpandedParameterPackTypesAsWritten.push_back(NewDI);
-        QualType NewT = SemaRef.CheckNonTypeTemplateParameterType(
-                                                              NewDI->getType(),
-                                                              D->getLocation());
+        QualType NewT =
+            SemaRef.CheckNonTypeTemplateParameterType(NewDI, D->getLocation());
         if (NewT.isNull())
           return nullptr;
+
+        ExpandedParameterPackTypesAsWritten.push_back(NewDI);
         ExpandedParameterPackTypes.push_back(NewT);
       }
 
@@ -2161,6 +2161,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
       if (!NewPattern)
         return nullptr;
 
+      SemaRef.CheckNonTypeTemplateParameterType(NewPattern, D->getLocation());
       DI = SemaRef.CheckPackExpansion(NewPattern, Expansion.getEllipsisLoc(),
                                       NumExpansions);
       if (!DI)
@@ -2176,8 +2177,7 @@ Decl *TemplateDeclInstantiator::VisitNonTypeTemplateParmDecl(
       return nullptr;
 
     // Check that this type is acceptable for a non-type template parameter.
-    T = SemaRef.CheckNonTypeTemplateParameterType(DI->getType(),
-                                                  D->getLocation());
+    T = SemaRef.CheckNonTypeTemplateParameterType(DI, D->getLocation());
     if (T.isNull()) {
       T = SemaRef.Context.IntTy;
       Invalid = true;

@@ -729,8 +729,22 @@ Decl *Sema::ActOnTypeParameter(Scope *S, bool Typename,
 ///
 /// \returns the (possibly-promoted) parameter type if valid;
 /// otherwise, produces a diagnostic and returns a NULL type.
-QualType
-Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
+QualType Sema::CheckNonTypeTemplateParameterType(TypeSourceInfo *&TSI,
+                                                 SourceLocation Loc) {
+  if (TSI->getType()->isUndeducedType()) {
+    // C++1z [temp.dep.expr]p3:
+    //   An id-expression is type-dependent if it contains
+    //    - an identifier associated by name lookup with a non-type
+    //      template-parameter declared with a type that contains a
+    //      placeholder type (7.1.7.4),
+    TSI = SubstAutoTypeSourceInfo(TSI, Context.DependentTy);
+  }
+
+  return CheckNonTypeTemplateParameterType(TSI->getType(), Loc);
+}
+
+QualType Sema::CheckNonTypeTemplateParameterType(QualType T,
+                                                 SourceLocation Loc) {
   // We don't allow variably-modified types as the type of non-type template
   // parameters.
   if (T->isVariablyModifiedType()) {
@@ -759,10 +773,6 @@ Sema::CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc) {
       T->isDependentType() ||
       // Allow use of auto in template parameter declarations.
       T->isUndeducedType()) {
-    if (T->isUndeducedType()) {
-      Diag(Loc, diag::warn_cxx14_compat_template_nontype_parm_auto_type)
-          << QualType(T->getContainedAutoType(), 0);
-    }
     // C++ [temp.param]p5: The top-level cv-qualifiers on the template-parameter
     // are ignored when determining its type.
     return T.getUnqualifiedType();
@@ -788,13 +798,18 @@ Decl *Sema::ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                           SourceLocation EqualLoc,
                                           Expr *Default) {
   TypeSourceInfo *TInfo = GetTypeForDeclarator(D, S);
-  QualType T = TInfo->getType();
+
+  if (TInfo->getType()->isUndeducedType()) {
+    Diag(D.getIdentifierLoc(),
+         diag::warn_cxx14_compat_template_nontype_parm_auto_type)
+      << QualType(TInfo->getType()->getContainedAutoType(), 0);
+  }
 
   assert(S->isTemplateParamScope() &&
          "Non-type template parameter not in template parameter scope!");
   bool Invalid = false;
 
-  T = CheckNonTypeTemplateParameterType(T, D.getIdentifierLoc());
+  QualType T = CheckNonTypeTemplateParameterType(TInfo, D.getIdentifierLoc());
   if (T.isNull()) {
     T = Context.IntTy; // Recover with an 'int' type.
     Invalid = true;

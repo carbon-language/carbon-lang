@@ -5790,7 +5790,10 @@ public:
                            SourceLocation EqualLoc,
                            ParsedType DefaultArg);
 
+  QualType CheckNonTypeTemplateParameterType(TypeSourceInfo *&TSI,
+                                             SourceLocation Loc);
   QualType CheckNonTypeTemplateParameterType(QualType T, SourceLocation Loc);
+
   Decl *ActOnNonTypeTemplateParameter(Scope *S, Declarator &D,
                                       unsigned Depth,
                                       unsigned Position,
