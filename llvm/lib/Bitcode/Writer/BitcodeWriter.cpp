@@ -1920,7 +1920,8 @@ void ModuleBitcodeWriter::writeModuleMetadata() {
 
   BitCodeAbbrev *Abbv = new BitCodeAbbrev();
   Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_INDEX_OFFSET));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 64));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
+  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 32));
   unsigned OffsetAbbrev = Stream.EmitAbbrev(Abbv);
 
   Abbv = new BitCodeAbbrev();
@@ -1939,7 +1940,7 @@ void ModuleBitcodeWriter::writeModuleMetadata() {
     // which is written after the records, so that it can include
     // the offset of each entry. The placeholder offset will be
     // updated after all records are emitted.
-    uint64_t Vals[] = {0};
+    uint64_t Vals[] = {0, 0};
     Stream.EmitRecord(bitc::METADATA_INDEX_OFFSET, Vals, OffsetAbbrev);
   }
 

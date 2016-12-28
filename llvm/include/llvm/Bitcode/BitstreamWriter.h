@@ -284,7 +284,7 @@ private:
     default: llvm_unreachable("Unknown encoding!");
     case BitCodeAbbrevOp::Fixed:
       if (Op.getEncodingData())
-        Emit64(V, (unsigned)Op.getEncodingData());
+        Emit((unsigned)V, (unsigned)Op.getEncodingData());
       break;
     case BitCodeAbbrevOp::VBR:
       if (Op.getEncodingData())

@@ -609,7 +609,12 @@ static bool ParseBlock(BitstreamCursor &Stream, BitstreamBlockInfo &BlockInfo,
       // and validate its forward reference offset was correct!
       if (BlockID == bitc::METADATA_BLOCK_ID) {
         if (Code == bitc::METADATA_INDEX_OFFSET) {
-          MetadataIndexOffset = Stream.GetCurrentBitNo() + Record[0];
+          if (Record.size() != 2)
+            outs() << "(Invalid record)";
+          else {
+            auto Offset = Record[0] + (Record[1] << 32);
+            MetadataIndexOffset = Stream.GetCurrentBitNo() + Offset;
+          }
         }
         if (Code == bitc::METADATA_INDEX) {
           outs() << " (offset ";
