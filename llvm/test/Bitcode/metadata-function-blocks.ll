@@ -19,9 +19,6 @@
 ; Each node gets a new number.  Bottom-up traversal of nodes.
 !named = !{!6}
 
-; Before the records we emit an offset to the index for the block
-; CHECK-NEXT:   <INDEX_OFFSET
-
 ; CHECK-NEXT:   <NODE op0=1/>
 !4 = !{!"named"}
 

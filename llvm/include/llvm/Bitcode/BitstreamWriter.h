@@ -112,11 +112,6 @@ public:
         &Out[ByteNo], NewWord, BitNo & 7);
   }
 
-  void BackpatchWord64(uint64_t BitNo, uint64_t Val) {
-    BackpatchWord(BitNo, (uint32_t)Val);
-    BackpatchWord(BitNo + 32, (uint32_t)(Val >> 32));
-  }
-
   void Emit(uint32_t Val, unsigned NumBits) {
     assert(NumBits && NumBits <= 32 && "Invalid value size!");
     assert((Val & ~(~0U >> (32-NumBits))) == 0 && "High bits set!");
@@ -284,7 +279,7 @@ private:
     default: llvm_unreachable("Unknown encoding!");
     case BitCodeAbbrevOp::Fixed:
       if (Op.getEncodingData())
-        Emit64(V, (unsigned)Op.getEncodingData());
+        Emit((unsigned)V, (unsigned)Op.getEncodingData());
       break;
     case BitCodeAbbrevOp::VBR:
       if (Op.getEncodingData())

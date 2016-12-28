@@ -17,10 +17,6 @@
 ; CHECK-NEXT:  <DISTINCT_NODE op0=1 op1=3 op2=2/>
 !4 = distinct !{!1, !3, !2}
 
-; Before the named records we emit the index containing the position of the
-; previously emitted records
-; CHECK-NEXT:   <INDEX {{.*}} (offset match)
-
 ; Note: named metadata nodes are not cannot reference null so their operands
 ; are numbered off-by-one.
 ; CHECK-NEXT:  <NAME

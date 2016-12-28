@@ -224,9 +224,7 @@ private:
   void writeMetadataStrings(ArrayRef<const Metadata *> Strings,
                             SmallVectorImpl<uint64_t> &Record);
   void writeMetadataRecords(ArrayRef<const Metadata *> MDs,
-                            SmallVectorImpl<uint64_t> &Record,
-                            std::vector<unsigned> *MDAbbrevs = nullptr,
-                            std::vector<uint64_t> *IndexPos = nullptr);
+                            SmallVectorImpl<uint64_t> &Record);
   void writeModuleMetadata();
   void writeFunctionMetadata(const Function &F);
   void writeFunctionMetadataAttachment(const Function &F);
@@ -1856,16 +1854,8 @@ void ModuleBitcodeWriter::writeMetadataStrings(
   Record.clear();
 }
 
-// Generates an enum to use as an index in the Abbrev array of Metadata record.
-enum MetadataAbbrev : unsigned {
-#define HANDLE_MDNODE_LEAF(CLASS) CLASS##AbbrevID,
-#include "llvm/IR/Metadata.def"
-  LastPlusOne
-};
-
 void ModuleBitcodeWriter::writeMetadataRecords(
-    ArrayRef<const Metadata *> MDs, SmallVectorImpl<uint64_t> &Record,
-    std::vector<unsigned> *MDAbbrevs, std::vector<uint64_t> *IndexPos) {
+    ArrayRef<const Metadata *> MDs, SmallVectorImpl<uint64_t> &Record) {
   if (MDs.empty())
     return;
 
@@ -1874,8 +1864,6 @@ void ModuleBitcodeWriter::writeMetadataRecords(
 #include "llvm/IR/Metadata.def"
 
   for (const Metadata *MD : MDs) {
-    if (IndexPos)
-      IndexPos->push_back(Stream.GetCurrentBitNo());
     if (const MDNode *N = dyn_cast<MDNode>(MD)) {
       assert(N->isResolved() && "Expected forward references to be resolved");
 
@@ -1884,11 +1872,7 @@ void ModuleBitcodeWriter::writeMetadataRecords(
         llvm_unreachable("Invalid MDNode subclass");
 #define HANDLE_MDNODE_LEAF(CLASS)                                              \
   case Metadata::CLASS##Kind:                                                  \
-    if (MDAbbrevs)                                                             \
-      write##CLASS(cast<CLASS>(N), Record,                                     \
-                   (*MDAbbrevs)[MetadataAbbrev::CLASS##AbbrevID]);             \
-    else                                                                       \
-      write##CLASS(cast<CLASS>(N), Record, CLASS##Abbrev);                     \
+    write##CLASS(cast<CLASS>(N), Record, CLASS##Abbrev);                       \
     continue;
 #include "llvm/IR/Metadata.def"
       }
@@ -1901,69 +1885,10 @@ void ModuleBitcodeWriter::writeModuleMetadata() {
   if (!VE.hasMDs() && M.named_metadata_empty())
     return;
 
-  Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 4);
+  Stream.EnterSubblock(bitc::METADATA_BLOCK_ID, 3);
   SmallVector<uint64_t, 64> Record;
-
-  // Emit all abbrevs upfront, so that the reader can jump in the middle of the
-  // block and load any metadata.
-  std::vector<unsigned> MDAbbrevs;
-
-  MDAbbrevs.resize(MetadataAbbrev::LastPlusOne);
-  MDAbbrevs[MetadataAbbrev::DILocationAbbrevID] = createDILocationAbbrev();
-  MDAbbrevs[MetadataAbbrev::GenericDINodeAbbrevID] =
-      createGenericDINodeAbbrev();
-
-  BitCodeAbbrev *Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_INDEX_OFFSET));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 64));
-  unsigned OffsetAbbrev = Stream.EmitAbbrev(Abbv);
-
-  Abbv = new BitCodeAbbrev();
-  Abbv->Add(BitCodeAbbrevOp(bitc::METADATA_INDEX));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
-  Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));
-  unsigned IndexAbbrev = Stream.EmitAbbrev(Abbv);
-
-  // Emit MDStrings together upfront.
   writeMetadataStrings(VE.getMDStrings(), Record);
-
-  // Write a placeholder value in for the offset of the metadata index,
-  // which is written after the records, so that it can include
-  // the offset of each entry. The placeholder offset will be
-  // updated after all records are emitted.
-  uint64_t Vals[] = {0};
-  Stream.EmitRecord(bitc::METADATA_INDEX_OFFSET, Vals, OffsetAbbrev);
-
-  // Compute and save the bit offset to the current position, which will be
-  // patched when we emit the index later. We can simply subtract the 64-bit
-  // fixed size from the current bit number to get the location to backpatch.
-  uint64_t IndexOffsetRecordBitPos = Stream.GetCurrentBitNo();
-
-  // This index will contain the bitpos for each individual record.
-  std::vector<uint64_t> IndexPos;
-  IndexPos.reserve(VE.getNonMDStrings().size());
-
-  // Write all the records
-  writeMetadataRecords(VE.getNonMDStrings(), Record, &MDAbbrevs, &IndexPos);
-
-  // Now that we have emitted all the records we will emit the index. But first
-  // backpatch the forward reference so that the reader can skip the records
-  // efficiently.
-  Stream.BackpatchWord64(IndexOffsetRecordBitPos - 64,
-                         Stream.GetCurrentBitNo() - IndexOffsetRecordBitPos);
-
-  // Delta encode the index.
-  uint64_t PreviousValue = IndexOffsetRecordBitPos;
-  for (auto &Elt : IndexPos) {
-    auto EltDelta = Elt - PreviousValue;
-    PreviousValue = Elt;
-    Elt = EltDelta;
-  }
-  // Emit the index record.
-  Stream.EmitRecord(bitc::METADATA_INDEX, IndexPos, IndexAbbrev);
-  IndexPos.clear();
-
-  // Write the named metadata now.
+  writeMetadataRecords(VE.getNonMDStrings(), Record);
   writeNamedMetadata(Record);
 
   auto AddDeclAttachedMetadata = [&](const GlobalObject &GO) {
