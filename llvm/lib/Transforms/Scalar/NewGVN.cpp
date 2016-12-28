@@ -1915,10 +1915,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
 
     // Cleanup the congruence class.
     SmallPtrSet<Value *, 4> MembersLeft;
-    for (auto MI = CC->Members.begin(), ME = CC->Members.end(); MI != ME;) {
-      auto CurrIter = MI;
-      ++MI;
-      Value *Member = *CurrIter;
+    for (Value * Member : CC->Members) {
       if (Member->getType()->isVoidTy()) {
         MembersLeft.insert(Member);
         continue;
