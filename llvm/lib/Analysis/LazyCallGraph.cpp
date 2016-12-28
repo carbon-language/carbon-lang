@@ -1117,6 +1117,13 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN, Node &TargetN) {
   if (&SourceN == &TargetN)
     return Result;
 
+  // If this ref edge is within an SCC then there are sufficient other edges to
+  // form a cycle without this edge so removing it is a no-op.
+  SCC &SourceC = *G->lookupSCC(SourceN);
+  SCC &TargetC = *G->lookupSCC(TargetN);
+  if (&SourceC == &TargetC)
+    return Result;
+
   // We build somewhat synthetic new RefSCCs by providing a postorder mapping
   // for each inner SCC. We also store these associated with *nodes* rather
   // than SCCs because this saves a round-trip through the node->SCC map and in
@@ -1139,7 +1146,6 @@ LazyCallGraph::RefSCC::removeInternalRefEdge(Node &SourceN, Node &TargetN) {
   // and handle participants in that cycle without walking all the edges that
   // form the connections, and instead by relying on the fundamental guarantee
   // coming into this operation.
-  SCC &TargetC = *G->lookupSCC(TargetN);
   for (Node &N : TargetC)
     PostOrderMapping[&N] = RootPostOrderNumber;
 

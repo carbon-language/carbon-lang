@@ -1600,6 +1600,84 @@ TEST(LazyCallGraphTest, InternalEdgeRemoval) {
   EXPECT_EQ(E, J);
 }
 
+TEST(LazyCallGraphTest, InternalNoOpEdgeRemoval) {
+  LLVMContext Context;
+  // A graph with a single cycle formed both from call and reference edges
+  // which makes the reference edges trivial to delete. The graph looks like:
+  //
+  // Reference edges: a -> b -> c -> a
+  //      Call edges: a -> c -> b -> a
+  std::unique_ptr<Module> M = parseAssembly(
+      Context, "define void @a(i8** %ptr) {\n"
+               "entry:\n"
+               "  call void @b(i8** %ptr)\n"
+               "  store i8* bitcast (void(i8**)* @c to i8*), i8** %ptr\n"
+               "  ret void\n"
+               "}\n"
+               "define void @b(i8** %ptr) {\n"
+               "entry:\n"
+               "  store i8* bitcast (void(i8**)* @a to i8*), i8** %ptr\n"
+               "  call void @c(i8** %ptr)\n"
+               "  ret void\n"
+               "}\n"
+               "define void @c(i8** %ptr) {\n"
+               "entry:\n"
+               "  call void @a(i8** %ptr)\n"
+               "  store i8* bitcast (void(i8**)* @b to i8*), i8** %ptr\n"
+               "  ret void\n"
+               "}\n");
+  LazyCallGraph CG(*M);
+
+  // Force the graph to be fully expanded.
+  auto I = CG.postorder_ref_scc_begin(), E = CG.postorder_ref_scc_end();
+  LazyCallGraph::RefSCC &RC = *I;
+  EXPECT_EQ(E, std::next(I));
+
+  LazyCallGraph::SCC &C = *RC.begin();
+  EXPECT_EQ(RC.end(), std::next(RC.begin()));
+
+  LazyCallGraph::Node &AN = *CG.lookup(lookupFunction(*M, "a"));
+  LazyCallGraph::Node &BN = *CG.lookup(lookupFunction(*M, "b"));
+  LazyCallGraph::Node &CN = *CG.lookup(lookupFunction(*M, "c"));
+  EXPECT_EQ(&RC, CG.lookupRefSCC(AN));
+  EXPECT_EQ(&RC, CG.lookupRefSCC(BN));
+  EXPECT_EQ(&RC, CG.lookupRefSCC(CN));
+  EXPECT_EQ(&C, CG.lookupSCC(AN));
+  EXPECT_EQ(&C, CG.lookupSCC(BN));
+  EXPECT_EQ(&C, CG.lookupSCC(CN));
+
+  // Remove the edge from a -> c which doesn't change anything.
+  SmallVector<LazyCallGraph::RefSCC *, 1> NewRCs =
+      RC.removeInternalRefEdge(AN, CN);
+  EXPECT_EQ(0u, NewRCs.size());
+  EXPECT_EQ(&RC, CG.lookupRefSCC(AN));
+  EXPECT_EQ(&RC, CG.lookupRefSCC(BN));
+  EXPECT_EQ(&RC, CG.lookupRefSCC(CN));
+  EXPECT_EQ(&C, CG.lookupSCC(AN));
+  EXPECT_EQ(&C, CG.lookupSCC(BN));
+  EXPECT_EQ(&C, CG.lookupSCC(CN));
+  auto J = CG.postorder_ref_scc_begin();
+  EXPECT_EQ(I, J);
+  EXPECT_EQ(&RC, &*J);
+  EXPECT_EQ(E, std::next(J));
+
+  // Remove the edge from b -> a and c -> b; again this doesn't change
+  // anything.
+  NewRCs = RC.removeInternalRefEdge(BN, AN);
+  NewRCs = RC.removeInternalRefEdge(CN, BN);
+  EXPECT_EQ(0u, NewRCs.size());
+  EXPECT_EQ(&RC, CG.lookupRefSCC(AN));
+  EXPECT_EQ(&RC, CG.lookupRefSCC(BN));
+  EXPECT_EQ(&RC, CG.lookupRefSCC(CN));
+  EXPECT_EQ(&C, CG.lookupSCC(AN));
+  EXPECT_EQ(&C, CG.lookupSCC(BN));
+  EXPECT_EQ(&C, CG.lookupSCC(CN));
+  J = CG.postorder_ref_scc_begin();
+  EXPECT_EQ(I, J);
+  EXPECT_EQ(&RC, &*J);
+  EXPECT_EQ(E, std::next(J));
+}
+
 TEST(LazyCallGraphTest, InternalCallEdgeToRef) {
   LLVMContext Context;
   // A nice fully connected (including self-edges) SCC (and RefSCC)
