@@ -277,7 +277,7 @@ private:
   // Congruence class handling.
   CongruenceClass *createCongruenceClass(Value *Leader, const Expression *E) {
     auto *result = new CongruenceClass(NextCongruenceNum++, Leader, E);
-    CongruenceClasses.emplace_back(result);
+    CongruenceClasses.push_back(result);
     return result;
   }
 
@@ -589,7 +589,7 @@ const Expression *NewGVN::createExpression(Instruction *I,
 
     SmallVector<Constant *, 8> C;
     for (Value *Arg : E->operands())
-      C.emplace_back(cast<Constant>(Arg));
+      C.push_back(cast<Constant>(Arg));
 
     if (Value *V = ConstantFoldInstOperands(I, C, *DL, TLI))
       if (const Expression *SimplifiedE = checkSimplificationResults(E, I, V))
@@ -1256,12 +1256,12 @@ std::pair<unsigned, unsigned> NewGVN::assignDFSNumbers(BasicBlock *B,
   unsigned End = Start;
   if (MemoryAccess *MemPhi = MSSA->getMemoryAccess(B)) {
     InstrDFS[MemPhi] = End++;
-    DFSToInstr.emplace_back(MemPhi);
+    DFSToInstr.push_back(MemPhi);
   }
 
   for (auto &I : *B) {
     InstrDFS[&I] = End++;
-    DFSToInstr.emplace_back(&I);
+    DFSToInstr.push_back(&I);
   }
 
   // All of the range functions taken half-open ranges (open on the end side).
@@ -1585,7 +1585,7 @@ void NewGVN::convertDenseToDFSOrdered(CongruenceClass::MemberSet &Dense,
     else
       llvm_unreachable("Should have been an instruction");
 
-    DFSOrderedSet.emplace_back(VD);
+    DFSOrderedSet.push_back(VD);
 
     // Now add the users.
     for (auto &U : D->uses()) {
@@ -1606,7 +1606,7 @@ void NewGVN::convertDenseToDFSOrdered(CongruenceClass::MemberSet &Dense,
         VD.DFSIn = DFSPair.first;
         VD.DFSOut = DFSPair.second;
         VD.U = &U;
-        DFSOrderedSet.emplace_back(VD);
+        DFSOrderedSet.push_back(VD);
       }
     }
   }
@@ -1695,7 +1695,7 @@ public:
   std::pair<int, int> dfs_back() const { return DFSStack.back(); }
 
   void push_back(Value *V, int DFSIn, int DFSOut) {
-    ValueStack.emplace_back(V);
+    ValueStack.push_back(V);
     DFSStack.emplace_back(DFSIn, DFSOut);
   }
   bool empty() const { return DFSStack.empty(); }
