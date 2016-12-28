@@ -54,6 +54,9 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 struct _LIBCPP_TYPE_VIS_ONLY __libcpp_debug_info {
   _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
+  __libcpp_debug_info()
+      : __file_(nullptr), __line_(-1), __pred_(nullptr), __msg_(nullptr) {}
+  _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR
   __libcpp_debug_info(const char* __f, int __l, const char* __p, const char* __m)
     : __file_(__f), __line_(__l), __pred_(__p), __msg_(__m) {}
   const char* __file_;
