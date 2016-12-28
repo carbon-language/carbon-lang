@@ -120,7 +120,7 @@ PHIExpression::~PHIExpression() = default;
 // propagation and reassociation of values.
 //
 struct CongruenceClass {
-  typedef SmallPtrSet<Value *, 4> MemberSet;
+  using MemberSet = SmallPtrSet<Value *, 4>;
   unsigned ID;
   // Representative leader.
   Value *RepLeader = nullptr;
@@ -192,7 +192,7 @@ class NewGVN : public FunctionPass {
   DenseMap<MemoryAccess *, MemoryAccess *> MemoryAccessEquiv;
 
   // Expression to class mapping.
-  typedef DenseMap<const Expression *, CongruenceClass *> ExpressionClassMap;
+  using ExpressionClassMap = DenseMap<const Expression *, CongruenceClass *>;
   ExpressionClassMap ExpressionToClass;
 
   // Which values have changed as a result of leader changes.
