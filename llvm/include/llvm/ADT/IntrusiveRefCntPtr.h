@@ -38,16 +38,16 @@ namespace llvm {
 ///  reference count hits 0) on such objects is an error.
 //===----------------------------------------------------------------------===//
 template <class Derived> class RefCountedBase {
-  mutable unsigned ref_cnt = 0;
+  mutable unsigned RefCount = 0;
 
 public:
   RefCountedBase() = default;
-  RefCountedBase(const RefCountedBase &) : ref_cnt(0) {}
+  RefCountedBase(const RefCountedBase &) : RefCount(0) {}
 
-  void Retain() const { ++ref_cnt; }
+  void Retain() const { ++RefCount; }
   void Release() const {
-    assert(ref_cnt > 0 && "Reference count is already zero.");
-    if (--ref_cnt == 0)
+    assert(RefCount > 0 && "Reference count is already zero.");
+    if (--RefCount == 0)
       delete static_cast<const Derived *>(this);
   }
 };
