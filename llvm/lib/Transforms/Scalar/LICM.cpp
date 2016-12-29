@@ -256,27 +256,42 @@ bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
   // preheader for SSA updater, so also avoid sinking when no preheader
   // is available.
   if (!DisablePromotion && Preheader && L->hasDedicatedExits()) {
+    // Figure out the loop exits and their insertion points
     SmallVector<BasicBlock *, 8> ExitBlocks;
-    SmallVector<Instruction *, 8> InsertPts;
-    PredIteratorCache PIC;
+    L->getUniqueExitBlocks(ExitBlocks);
 
-    bool Promoted = false;
+    // We can't insert into a catchswitch.
+    bool HasCatchSwitch = llvm::any_of(ExitBlocks, [](BasicBlock *Exit) {
+      return isa<CatchSwitchInst>(Exit->getTerminator());
+    });
 
-    // Loop over all of the alias sets in the tracker object.
-    for (AliasSet &AS : *CurAST)
-      Promoted |= promoteLoopAccessesToScalars(
-          AS, ExitBlocks, InsertPts, PIC, LI, DT, TLI, L, CurAST, &SafetyInfo);
+    if (!HasCatchSwitch) {
+      SmallVector<Instruction *, 8> InsertPts;
+      InsertPts.reserve(ExitBlocks.size());
+      for (BasicBlock *ExitBlock : ExitBlocks)
+        InsertPts.push_back(&*ExitBlock->getFirstInsertionPt());
 
-    // Once we have promoted values across the loop body we have to recursively
-    // reform LCSSA as any nested loop may now have values defined within the
-    // loop used in the outer loop.
-    // FIXME: This is really heavy handed. It would be a bit better to use an
-    // SSAUpdater strategy during promotion that was LCSSA aware and reformed
-    // it as it went.
-    if (Promoted)
-      formLCSSARecursively(*L, *DT, LI, SE);
+      PredIteratorCache PIC;
 
-    Changed |= Promoted;
+      bool Promoted = false;
+
+      // Loop over all of the alias sets in the tracker object.
+      for (AliasSet &AS : *CurAST)
+        Promoted |=
+            promoteLoopAccessesToScalars(AS, ExitBlocks, InsertPts, PIC, LI, DT,
+                                         TLI, L, CurAST, &SafetyInfo);
+
+      // Once we have promoted values across the loop body we have to
+      // recursively reform LCSSA as any nested loop may now have values defined
+      // within the loop used in the outer loop.
+      // FIXME: This is really heavy handed. It would be a bit better to use an
+      // SSAUpdater strategy during promotion that was LCSSA aware and reformed
+      // it as it went.
+      if (Promoted)
+        formLCSSARecursively(*L, *DT, LI, SE);
+
+      Changed |= Promoted;
+    }
   }
 
   // Check that neither this loop nor its parent have had LCSSA broken. LICM is
@@ -1016,23 +1031,9 @@ bool llvm::promoteLoopAccessesToScalars(
     PromotionIsLegal =
         isAllocLikeFn(Object, TLI) && !PointerMayBeCaptured(Object, true, true);
   }
+
   if (!PromotionIsLegal)
     return Changed;
-
-  // Figure out the loop exits and their insertion points, if this is the
-  // first promotion.
-  if (ExitBlocks.empty()) {
-    CurLoop->getUniqueExitBlocks(ExitBlocks);
-    InsertPts.clear();
-    InsertPts.reserve(ExitBlocks.size());
-    for (BasicBlock *ExitBlock : ExitBlocks)
-      InsertPts.push_back(&*ExitBlock->getFirstInsertionPt());
-  }
-
-  // Can't insert into a catchswitch.
-  for (BasicBlock *ExitBlock : ExitBlocks)
-    if (isa<CatchSwitchInst>(ExitBlock->getTerminator()))
-      return Changed;
 
   // Otherwise, this is safe to promote, lets do it!
   DEBUG(dbgs() << "LICM: Promoting value stored to in loop: " << *SomePtr
