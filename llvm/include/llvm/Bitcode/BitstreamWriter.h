@@ -136,15 +136,6 @@ public:
     CurBit = (CurBit+NumBits) & 31;
   }
 
-  void Emit64(uint64_t Val, unsigned NumBits) {
-    if (NumBits <= 32)
-      Emit((uint32_t)Val, NumBits);
-    else {
-      Emit((uint32_t)Val, 32);
-      Emit((uint32_t)(Val >> 32), NumBits-32);
-    }
-  }
-
   void FlushToWord() {
     if (CurBit) {
       WriteWord(CurValue);
