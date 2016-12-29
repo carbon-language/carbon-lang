@@ -9,9 +9,9 @@
 //
 // This file defines IntrusiveRefCntPtr, a template class that
 // implements a "smart" pointer for objects that maintain their own
-// internal reference count, and RefCountedBase/RefCountedBaseVPTR, two
-// generic base classes for objects that wish to have their lifetimes
-// managed using reference counting.
+// internal reference count, and RefCountedBase, a generic base class
+// for objects that wish to have their lifetimes managed using reference
+// counting.
 //
 // IntrusiveRefCntPtr is similar to Boost's intrusive_ptr with added
 // LLVM-style casting.
@@ -51,36 +51,6 @@ namespace llvm {
       if (--ref_cnt == 0) delete static_cast<const Derived*>(this);
     }
   };
-
-//===----------------------------------------------------------------------===//
-/// RefCountedBaseVPTR - A class that has the same function as
-///  RefCountedBase, but with a virtual destructor. Should be used
-///  instead of RefCountedBase for classes that already have virtual
-///  methods to enforce dynamic allocation via 'new'. Classes that
-///  inherit from RefCountedBaseVPTR can't be allocated on stack -
-///  attempting to do this will produce a compile error.
-//===----------------------------------------------------------------------===//
-  class RefCountedBaseVPTR {
-    mutable unsigned ref_cnt = 0;
-
-    virtual void anchor();
-
-  protected:
-    RefCountedBaseVPTR() = default;
-    RefCountedBaseVPTR(const RefCountedBaseVPTR &) : ref_cnt(0) {}
-
-    virtual ~RefCountedBaseVPTR() = default;
-
-    void Retain() const { ++ref_cnt; }
-    void Release() const {
-      assert (ref_cnt > 0 && "Reference count is already zero.");
-      if (--ref_cnt == 0) delete this;
-    }
-
-    template <typename T>
-    friend struct IntrusiveRefCntPtrInfo;
-  };
-
 
   template <typename T> struct IntrusiveRefCntPtrInfo {
     static void retain(T *obj) { obj->Retain(); }
@@ -124,10 +94,9 @@ public:
 ///  wrapping NULL pointers.
 ///
 /// Reference counting is implemented via calls to
-///  Obj->Retain()/Obj->Release(). Release() is required to destroy
-///  the object when the reference count reaches zero. Inheriting from
-///  RefCountedBase/RefCountedBaseVPTR takes care of this
-///  automatically.
+///  Obj->Retain()/Obj->Release(). Release() is required to destroy the
+///  object when the reference count reaches zero. Inheriting from
+///  RefCountedBase takes care of this automatically.
 //===----------------------------------------------------------------------===//
   template <typename T>
   class IntrusiveRefCntPtr {
