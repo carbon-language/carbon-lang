@@ -255,9 +255,11 @@ bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
     SmallVector<Instruction *, 8> InsertPts;
     PredIteratorCache PIC;
 
+    bool Promoted = false;
+
     // Loop over all of the alias sets in the tracker object.
     for (AliasSet &AS : *CurAST)
-      Changed |= promoteLoopAccessesToScalars(
+      Promoted |= promoteLoopAccessesToScalars(
           AS, ExitBlocks, InsertPts, PIC, LI, DT, TLI, L, CurAST, &SafetyInfo);
 
     // Once we have promoted values across the loop body we have to recursively
@@ -266,9 +268,10 @@ bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
     // FIXME: This is really heavy handed. It would be a bit better to use an
     // SSAUpdater strategy during promotion that was LCSSA aware and reformed
     // it as it went.
-    if (Changed) {
+    if (Promoted)
       formLCSSARecursively(*L, *DT, LI, SE);
-    }
+
+    Changed |= Promoted;
   }
 
   // Check that neither this loop nor its parent have had LCSSA broken. LICM is
