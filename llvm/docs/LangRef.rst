@@ -12663,7 +12663,7 @@ mechanisms commonly desired in dynamic language JITs. These intrinsics
 are described in :doc:`StackMaps`.
 
 Element Wise Atomic Memory Intrinsics
------------------------------
+-------------------------------------
 
 These intrinsics are similar to the standard library memory intrinsics except
 that they perform memory transfer as a sequence of atomic memory accesses.
@@ -12671,7 +12671,7 @@ that they perform memory transfer as a sequence of atomic memory accesses.
 .. _int_memcpy_element_atomic:
 
 '``llvm.memcpy.element.atomic``' Intrinsic
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
 """""""
@@ -12730,7 +12730,7 @@ provided by a set of unordered loads from the source location and stores to the
 destination.
 
 Lowering:
-""""""""""
+"""""""""
 
 In the most general case call to the '``llvm.memcpy.element.atomic.*``' is lowered
 to a call to the symbol ``__llvm_memcpy_element_atomic_*``. Where '*' is replaced
