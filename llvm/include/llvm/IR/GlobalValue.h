@@ -85,6 +85,9 @@ protected:
   }
 
   Type *ValueType;
+
+  static const unsigned GlobalValueSubClassDataBits = 18;
+
   // All bitfields use unsigned as the underlying type so that MSVC will pack
   // them.
   unsigned Linkage : 4;       // The linkage of this global
@@ -99,8 +102,6 @@ protected:
   /// value of Function::isIntrinsic(), which may be true even if
   /// Function::intrinsicID() returns Intrinsic::not_intrinsic.
   unsigned HasLLVMReservedName : 1;
-
-  static const unsigned GlobalValueSubClassDataBits = 18;
 
 private:
   friend class Constant;
