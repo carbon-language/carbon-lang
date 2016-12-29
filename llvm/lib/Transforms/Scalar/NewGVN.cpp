@@ -189,7 +189,7 @@ class NewGVN : public FunctionPass {
   // We could use the congruence class machinery, but the MemoryAccess's are
   // abstract memory states, so they can only ever be equivalent to each other,
   // and not to constants, etc.
-  DenseMap<MemoryAccess *, MemoryAccess *> MemoryAccessEquiv;
+  DenseMap<const MemoryAccess *, MemoryAccess *> MemoryAccessEquiv;
 
   // Expression to class mapping.
   using ExpressionClassMap = DenseMap<const Expression *, CongruenceClass *>;
@@ -351,14 +351,15 @@ FunctionPass *llvm::createNewGVNPass() { return new NewGVN(); }
 template <typename T>
 static bool equalsLoadStoreHelper(const T &LHS, const Expression &RHS) {
   if ((!isa<LoadExpression>(RHS) && !isa<StoreExpression>(RHS)) ||
-      !LHS.BasicExpression::equals(RHS))
+      !LHS.BasicExpression::equals(RHS)) {
     return false;
-  if (const auto *L = dyn_cast<LoadExpression>(&RHS))
+  } else if (const auto *L = dyn_cast<LoadExpression>(&RHS)) {
     if (LHS.getDefiningAccess() != L->getDefiningAccess())
       return false;
-  if (const auto *S = dyn_cast<StoreExpression>(&RHS))
+  } else if (const auto *S = dyn_cast<StoreExpression>(&RHS)) {
     if (LHS.getDefiningAccess() != S->getDefiningAccess())
       return false;
+  }
   return true;
 }
 
