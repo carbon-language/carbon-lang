@@ -33,12 +33,17 @@ namespace bolt {
 ///
 /// The third step performs a forward dataflow analysis, using intersection as
 /// the confluence operator, to propagate information about available
-/// stack definitions at each point of the program. Those occur in the form:
+/// stack definitions at each point of the program. This definition shows
+/// an equivalence between the value in a stack position and the value of a
+/// register or immediate. To have those preserved, both register and the value
+/// in the stack position cannot be touched by another instruction.
+/// These definitions we are tracking occur in the form:
 ///
 ///     stack def:  MEM[FRAME - 0x5c]  <= RAX
 ///
 /// Any instruction that writes to RAX will kill this definition, meaning RAX
-/// cannot be used to recover the same value that is in FRAME - 0x5c.
+/// cannot be used to recover the same value that is in FRAME - 0x5c. Any memory
+/// write instruction to FRAME - 0x5c will also kill this definition.
 ///
 /// If such a definition is available at an instruction that loads from this
 /// frame offset, we have detected a redundant load. For example, if the
@@ -86,6 +91,7 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   /// it is called until it returns to the caller.
   std::map<const BinaryFunction *, BitVector> RegsKilledMap;
 
+public:
   /// Alias analysis information attached to each instruction that accesses a
   /// frame position. This is called a "frame index" by LLVM Target libs when
   /// it is building a MachineFunction frame, and we use the same name here
@@ -110,43 +116,46 @@ class FrameOptimizerPass : public BinaryFunctionPass {
     /// understand but we know it may write to a frame position.
     bool IsSimple;
   };
-  std::unordered_map<const MCInst *, const FrameIndexEntry> FrameIndexMap;
+  typedef std::unordered_map<const MCInst *, const FrameIndexEntry>
+      FrameIndexMapTy;
+  FrameIndexMapTy FrameIndexMap;
 
+  /// Compute the set of registers \p Inst may write to, marking them in
+  /// \p KillSet. If this is a call, try to get the set of registers the call
+  /// target will write to.
+  void getInstClobberList(const BinaryContext &BC, const MCInst &Inst,
+                          BitVector &KillSet) const;
+private:
   /// Perform the initial step of populating CallGraphEdges and
   /// ReverseCallGraphEdges for all functions in BFs.
-  void buildCallGraph(BinaryContext &BC,
+  void buildCallGraph(const BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs);
 
   /// Compute a DFS traversal of the call graph in Functions, CallGraphEdges
   /// and ReverseCallGraphEdges and stores it in TopologicalCGOrder.
   void buildCGTraversalOrder();
 
-  /// Compute the set of registers \p Inst may write to, marking them in
-  /// \p KillSet. If this is a call, try to get the set of registers the call
-  /// target will write to.
-  void getInstClobberList(BinaryContext &BC, const MCInst &Inst,
-                          BitVector &KillSet) const;
-
   /// Compute the set of registers \p Func may write to during its execution,
   /// starting at the point when it is called up until when it returns. Returns
   /// a BitVector the size of the target number of registers, representing the
   /// set of clobbered registers.
-  BitVector getFunctionClobberList(BinaryContext &BC,
+  BitVector getFunctionClobberList(const BinaryContext &BC,
                                    const BinaryFunction *Func);
 
   /// Perform the step of building the set of registers clobbered by each
   /// function execution, populating RegsKilledMap.
-  void buildClobberMap(BinaryContext &BC);
+  void buildClobberMap(const BinaryContext &BC);
 
   /// Alias analysis to disambiguate which frame position is accessed by each
   /// instruction in function \p BF. Populates FrameIndexMap.
-  bool restoreFrameIndex(BinaryContext &BC, BinaryFunction *BF);
+  bool restoreFrameIndex(const BinaryContext &BC, const BinaryFunction &BF);
 
   /// Uses RegsKilledMap and FrameIndexMap to perform a dataflow analysis in
   /// \p BF to reveal unnecessary reloads from the frame. Use the analysis
   /// to convert memory loads to register moves or immediate loads. Delete
   /// redundant register moves.
-  void removeUnnecessarySpills(BinaryContext &BC, BinaryFunction *BF);
+  void removeUnnecessarySpills(const BinaryContext &BC,
+                               BinaryFunction &BF);
 
 public:
   explicit FrameOptimizerPass(const cl::opt<bool> &PrintPass)

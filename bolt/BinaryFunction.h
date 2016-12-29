@@ -866,7 +866,7 @@ public:
 
   /// Check if (possibly one out of many) function name matches the given
   /// string. Use this member function instead of direct name comparison.
-  bool hasName(std::string &FunctionName) const {
+  bool hasName(const std::string &FunctionName) const {
     for (auto &Name : Names)
       if (Name == FunctionName)
         return true;

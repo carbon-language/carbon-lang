@@ -543,6 +543,7 @@ public:
   }
 
   /// Erase given (non-pseudo) instruction if found.
+  /// Warning: this will invalidate succeeding instruction pointers.
   bool eraseInstruction(MCInst *Inst) {
     return replaceInstruction(Inst, std::vector<MCInst>());
   }
