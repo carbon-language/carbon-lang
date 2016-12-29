@@ -1353,16 +1353,36 @@ bool NewGVN::runGVN(Function &F, DominatorTree *_DT, AssumptionCache *_AC,
   // Count number of instructions for sizing of hash tables, and come
   // up with a global dfs numbering for instructions.
   unsigned ICount = 0;
-  SmallPtrSet<BasicBlock *, 16> VisitedBlocks;
-
   // Note: We want RPO traversal of the blocks, which is not quite the same as
   // dominator tree order, particularly with regard whether backedges get
   // visited first or second, given a block with multiple successors.
   // If we visit in the wrong order, we will end up performing N times as many
   // iterations.
+  // The dominator tree does guarantee that, for a given dom tree node, it's
+  // parent must occur before it in the RPO ordering. Thus, we only need to sort
+  // the siblings.
+  DenseMap<const DomTreeNode *, unsigned> RPOOrdering;
   ReversePostOrderTraversal<Function *> RPOT(&F);
+  unsigned Counter = 0;
   for (auto &B : RPOT) {
-    VisitedBlocks.insert(B);
+    auto *Node = DT->getNode(B);
+    assert(Node && "RPO and Dominator tree should have same reachability");
+    RPOOrdering[Node] = ++Counter;
+  }
+  // Sort dominator tree children arrays into RPO.
+  for (auto &B : RPOT) {
+    auto *Node = DT->getNode(B);
+    if (Node->getChildren().size() > 1)
+      std::sort(Node->begin(), Node->end(),
+                [&RPOOrdering](const DomTreeNode *A, const DomTreeNode *B) {
+                  return RPOOrdering[A] < RPOOrdering[B];
+                });
+  }
+
+  // Now a standard depth first ordering of the domtree is equivalent to RPO.
+  auto DFI = df_begin(DT->getRootNode());
+  for (auto DFE = df_end(DT->getRootNode()); DFI != DFE; ++DFI) {
+    BasicBlock *B = DFI->getBlock();
     const auto &BlockRange = assignDFSNumbers(B, ICount);
     BlockInstRange.insert({B, BlockRange});
     ICount += BlockRange.second - BlockRange.first;
@@ -1372,7 +1392,7 @@ bool NewGVN::runGVN(Function &F, DominatorTree *_DT, AssumptionCache *_AC,
   // have single preds.
   for (auto &B : F) {
     // Assign numbers to unreachable blocks.
-    if (!VisitedBlocks.count(&B)) {
+    if (!DFI.nodeVisited(DT->getNode(&B))) {
       const auto &BlockRange = assignDFSNumbers(&B, ICount);
       BlockInstRange.insert({&B, BlockRange});
       ICount += BlockRange.second - BlockRange.first;
