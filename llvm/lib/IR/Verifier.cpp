@@ -4533,7 +4533,7 @@ template <typename... Tys> void TBAAVerifier::CheckFailed(Tys &&... Args) {
 /// TBAA scheme.  This means \p BaseNode is either a scalar node, or a
 /// struct-type node describing an aggregate data structure (like a struct).
 TBAAVerifier::TBAABaseNodeSummary
-TBAAVerifier::verifyTBAABaseNode(Instruction &I, MDNode *BaseNode) {
+TBAAVerifier::verifyTBAABaseNode(Instruction &I, const MDNode *BaseNode) {
   if (BaseNode->getNumOperands() < 2) {
     CheckFailed("Base nodes must have at least two operands", &I, BaseNode);
     return {true, ~0u};
@@ -4551,7 +4551,7 @@ TBAAVerifier::verifyTBAABaseNode(Instruction &I, MDNode *BaseNode) {
 }
 
 TBAAVerifier::TBAABaseNodeSummary
-TBAAVerifier::verifyTBAABaseNodeImpl(Instruction &I, MDNode *BaseNode) {
+TBAAVerifier::verifyTBAABaseNodeImpl(Instruction &I, const MDNode *BaseNode) {
   const TBAAVerifier::TBAABaseNodeSummary InvalidNode = {true, ~0u};
 
   if (BaseNode->getNumOperands() == 2) {
@@ -4674,7 +4674,7 @@ bool TBAAVerifier::isValidScalarTBAANode(const MDNode *MD) {
 ///
 /// We assume we've okayed \p BaseNode via \c verifyTBAABaseNode.
 MDNode *TBAAVerifier::getFieldNodeFromTBAABaseNode(Instruction &I,
-                                                   MDNode *BaseNode,
+                                                   const MDNode *BaseNode,
                                                    APInt &Offset) {
   assert(BaseNode->getNumOperands() >= 2 && "Invalid base node!");
 
@@ -4708,10 +4708,10 @@ MDNode *TBAAVerifier::getFieldNodeFromTBAABaseNode(Instruction &I,
   return cast<MDNode>(BaseNode->getOperand(BaseNode->getNumOperands() - 2));
 }
 
-bool TBAAVerifier::visitTBAAMetadata(Instruction &I, MDNode *MD) {
+bool TBAAVerifier::visitTBAAMetadata(Instruction &I, const MDNode *MD) {
   AssertTBAA(isa<LoadInst>(I) || isa<StoreInst>(I) || isa<CallInst>(I) ||
-             isa<VAArgInst>(I) || isa<AtomicRMWInst>(I) ||
-             isa<AtomicCmpXchgInst>(I),
+                 isa<VAArgInst>(I) || isa<AtomicRMWInst>(I) ||
+                 isa<AtomicCmpXchgInst>(I),
              "TBAA is only for loads, stores and calls!", &I);
 
   bool IsStructPathTBAA =
