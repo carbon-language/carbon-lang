@@ -7,14 +7,49 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines IntrusiveRefCntPtr, a template class that
-// implements a "smart" pointer for objects that maintain their own
-// internal reference count, and RefCountedBase, a generic base class
-// for objects that wish to have their lifetimes managed using reference
-// counting.
+// This file defines the RefCountedBase, ThreadSafeRefCountedBase, and
+// IntrusiveRefCntPtr classes.
 //
-// IntrusiveRefCntPtr is similar to Boost's intrusive_ptr with added
-// LLVM-style casting.
+// IntrusiveRefCntPtr is a smart pointer to an object which maintains a
+// reference count.  (ThreadSafe)RefCountedBase is a mixin class that adds a
+// refcount member variable and methods for updating the refcount.  An object
+// that inherits from (ThreadSafe)RefCountedBase deletes itself when its
+// refcount hits zero.
+//
+// For example:
+//
+//   class MyClass : public RefCountedBase<MyClass> {};
+//
+//   void foo() {
+//     // Objects that inherit from RefCountedBase should always be instantiated
+//     // on the heap, never on the stack.
+//     IntrusiveRefCntPtr<MyClass> Ptr1(new MyClass());
+//
+//     // Copying an IntrusiveRefCntPtr increases the pointee's refcount by 1.
+//     IntrusiveRefCntPtr<MyClass> Ptr2(Ptr1);
+//
+//     // Constructing an IntrusiveRefCntPtr has no effect on the object's
+//     // refcount.  After a move, the moved-from pointer is null.
+//     IntrusiveRefCntPtr<MyClass> Ptr3(std::move(Ptr1));
+//     assert(Ptr1 == nullptr);
+//
+//     // Clearing an IntrusiveRefCntPtr decreases the pointee's refcount by 1.
+//     Ptr2.reset();
+//
+//     // The object deletes itself when we return from the function, because
+//     // Ptr3's destructor decrements its refcount to 0.
+//   }
+//
+// You can use IntrusiveRefCntPtr with isa<T>(), dyn_cast<T>(), etc.:
+//
+//   IntrusiveRefCntPtr<MyClass> Ptr(new MyClass());
+//   OtherClass *Other = dyn_cast<OtherClass>(Ptr);  // Ptr.get() not required
+//
+// IntrusiveRefCntPtr works with any class that
+//
+//  - inherits from (ThreadSafe)RefCountedBase,
+//  - has Retain() and Release() methods, or
+//  - specializes IntrusiveRefCntPtrInfo.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,16 +62,15 @@
 
 namespace llvm {
 
-//===----------------------------------------------------------------------===//
-/// RefCountedBase - A generic base class for objects that wish to
-///  have their lifetimes managed using reference counts. Classes
-///  subclass RefCountedBase to obtain such functionality, and are
-///  typically handled with IntrusiveRefCntPtr "smart pointers" (see below)
-///  which automatically handle the management of reference counts.
-///  Objects that subclass RefCountedBase should not be allocated on
-///  the stack, as invoking "delete" (which is called when the
-///  reference count hits 0) on such objects is an error.
-//===----------------------------------------------------------------------===//
+/// A CRTP mixin class that adds reference counting to a type.
+///
+/// The lifetime of an object which inherits from RefCountedBase is managed by
+/// calls to Release() and Retain(), which increment and decrement the object's
+/// refcount, respectively.  When a Release() call decrements the refcount to 0,
+/// the object deletes itself.
+///
+/// Objects that inherit from RefCountedBase should always be allocated with
+/// operator new.
 template <class Derived> class RefCountedBase {
   mutable unsigned RefCount = 0;
 
@@ -52,18 +86,7 @@ public:
   }
 };
 
-template <typename T> struct IntrusiveRefCntPtrInfo {
-  static void retain(T *obj) { obj->Retain(); }
-  static void release(T *obj) { obj->Release(); }
-};
-
-/// \brief A thread-safe version of \c llvm::RefCountedBase.
-///
-/// A generic base class for objects that wish to have their lifetimes managed
-/// using reference counts. Classes subclass \c ThreadSafeRefCountedBase to
-/// obtain such functionality, and are typically handled with
-/// \c IntrusiveRefCntPtr "smart pointers" which automatically handle the
-/// management of reference counts.
+/// A thread-safe version of \c RefCountedBase.
 template <class Derived> class ThreadSafeRefCountedBase {
   mutable std::atomic<int> RefCount;
 
@@ -81,22 +104,37 @@ public:
   }
 };
 
-//===----------------------------------------------------------------------===//
-/// IntrusiveRefCntPtr - A template class that implements a "smart pointer"
-///  that assumes the wrapped object has a reference count associated
-///  with it that can be managed via calls to
-///  IntrusivePtrAddRef/IntrusivePtrRelease.  The smart pointers
-///  manage reference counts via the RAII idiom: upon creation of
-///  smart pointer the reference count of the wrapped object is
-///  incremented and upon destruction of the smart pointer the
-///  reference count is decremented.  This class also safely handles
-///  wrapping NULL pointers.
+/// Class you can specialize to provide custom retain/release functionality for
+/// a type.
 ///
-/// Reference counting is implemented via calls to
-///  Obj->Retain()/Obj->Release(). Release() is required to destroy the
-///  object when the reference count reaches zero. Inheriting from
-///  RefCountedBase takes care of this automatically.
-//===----------------------------------------------------------------------===//
+/// Usually specializing this class is not necessary, as IntrusiveRefCntPtr
+/// works with any type which defines Retain() and Release() functions -- you
+/// can define those functions yourself if RefCountedBase doesn't work for you.
+///
+/// One case when you might want to specialize this type is if you have
+///  - Foo.h defines type Foo and includes Bar.h, and
+///  - Bar.h uses IntrusiveRefCntPtr<Foo> in inline functions.
+///
+/// Because Foo.h includes Bar.h, Bar.h can't include Foo.h in order to pull in
+/// the declaration of Foo.  Without the declaration of Foo, normally Bar.h
+/// wouldn't be able to use IntrusiveRefCntPtr<Foo>, which wants to call
+/// T::Retain and T::Release.
+///
+/// To resolve this, Bar.h could include a third header, FooFwd.h, which
+/// forward-declares Foo and specializes IntrusiveRefCntPtrInfo<Foo>.  Then
+/// Bar.h could use IntrusiveRefCntPtr<Foo>, although it still couldn't call any
+/// functions on Foo itself, because Foo would be an incomplete type.
+template <typename T> struct IntrusiveRefCntPtrInfo {
+  static void retain(T *obj) { obj->Retain(); }
+  static void release(T *obj) { obj->Release(); }
+};
+
+/// A smart pointer to a reference-counted object that inherits from
+/// RefCountedBase or ThreadSafeRefCountedBase.
+///
+/// This class increments its pointee's reference count when it is created, and
+/// decrements its refcount when it's destroyed (or is changed to point to a
+/// different object).
 template <typename T> class IntrusiveRefCntPtr {
   T *Obj = nullptr;
 
@@ -208,10 +246,8 @@ bool operator!=(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
   return !(A == B);
 }
 
-//===----------------------------------------------------------------------===//
-// LLVM-style downcasting support for IntrusiveRefCntPtr objects
-//===----------------------------------------------------------------------===//
-
+// Make IntrusiveRefCntPtr work with dyn_cast, isa, and the other idioms from
+// Casting.h.
 template <typename From> struct simplify_type;
 
 template <class T> struct simplify_type<IntrusiveRefCntPtr<T>> {
