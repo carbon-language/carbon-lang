@@ -3952,6 +3952,32 @@ void Verifier::visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS) {
            CS);
     break;
   }
+  case Intrinsic::memcpy_element_atomic: {
+    ConstantInt *ElementSizeCI = dyn_cast<ConstantInt>(CS.getArgOperand(3));
+    Assert(ElementSizeCI, "element size of the element-wise atomic memory "
+                          "intrinsic must be a constant int",
+           CS);
+    const APInt &ElementSizeVal = ElementSizeCI->getValue();
+    Assert(ElementSizeVal.isPowerOf2(),
+           "element size of the element-wise atomic memory intrinsic "
+           "must be a power of 2",
+           CS);
+
+    auto IsValidAlignment = [&](uint64_t Alignment) {
+      return isPowerOf2_64(Alignment) && ElementSizeVal.ule(Alignment);
+    };
+    
+    uint64_t DstAlignment = CS.getParamAlignment(1),
+             SrcAlignment = CS.getParamAlignment(2);
+
+    Assert(IsValidAlignment(DstAlignment),
+           "incorrect alignment of the destination argument",
+           CS);
+    Assert(IsValidAlignment(SrcAlignment),
+           "incorrect alignment of the source argument",
+           CS);
+    break;
+  }
   case Intrinsic::gcroot:
   case Intrinsic::gcwrite:
   case Intrinsic::gcread:
