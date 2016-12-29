@@ -4555,26 +4555,20 @@ TBAAVerifier::verifyTBAABaseNodeImpl(Instruction &I, const MDNode *BaseNode) {
   const TBAAVerifier::TBAABaseNodeSummary InvalidNode = {true, ~0u};
 
   if (BaseNode->getNumOperands() == 2) {
-    // This is a scalar base node.
-    if (!BaseNode->getOperand(0) || !BaseNode->getOperand(1)) {
-      CheckFailed("Null operands in scalar type nodes!", &I, BaseNode);
-      return InvalidNode;
-    }
-    if (!isa<MDNode>(BaseNode->getOperand(1))) {
-      CheckFailed("Invalid parent operand in scalar TBAA node", &I, BaseNode);
-      return InvalidNode;
-    }
-    if (!isa<MDString>(BaseNode->getOperand(0))) {
-      CheckFailed("Invalid name operand in scalar TBAA node", &I, BaseNode);
-      return InvalidNode;
-    }
-
     // Scalar nodes can only be accessed at offset 0.
-    return {false, 0};
+    return isValidScalarTBAANode(BaseNode)
+               ? TBAAVerifier::TBAABaseNodeSummary({false, 0})
+               : InvalidNode;
   }
 
   if (BaseNode->getNumOperands() % 2 != 1) {
     CheckFailed("Struct tag nodes must have an odd number of operands!",
+                BaseNode);
+    return InvalidNode;
+  }
+
+  if (!isa<MDString>(BaseNode->getOperand(0))) {
+    CheckFailed("Struct tag nodes have a string as their first operand",
                 BaseNode);
     return InvalidNode;
   }
@@ -4640,18 +4634,20 @@ static bool IsRootTBAANode(const MDNode *MD) {
 
 static bool IsScalarTBAANodeImpl(const MDNode *MD,
                                  SmallPtrSetImpl<const MDNode *> &Visited) {
-  if (MD->getNumOperands() == 2)
-    return true;
-
-  if (MD->getNumOperands() != 3)
+  if (MD->getNumOperands() != 2 && MD->getNumOperands() != 3)
     return false;
 
-  auto *Offset = mdconst::dyn_extract<ConstantInt>(MD->getOperand(2));
-  if (!(Offset && Offset->isZero() && isa<MDString>(MD->getOperand(0))))
+  if (!isa<MDString>(MD->getOperand(0)))
     return false;
 
-  auto *Parent = dyn_cast<MDNode>(MD->getOperand(1));
-  return Visited.insert(Parent).second &&
+  if (MD->getNumOperands() == 3) {
+    auto *Offset = mdconst::dyn_extract<ConstantInt>(MD->getOperand(2));
+    if (!(Offset && Offset->isZero() && isa<MDString>(MD->getOperand(0))))
+      return false;
+  }
+
+  auto *Parent = dyn_cast_or_null<MDNode>(MD->getOperand(1));
+  return Parent && Visited.insert(Parent).second &&
          (IsRootTBAANode(Parent) || IsScalarTBAANodeImpl(Parent, Visited));
 }
 
@@ -4745,7 +4741,8 @@ bool TBAAVerifier::visitTBAAMetadata(Instruction &I, const MDNode *MD) {
              &I, MD, BaseNode, AccessType);
 
   AssertTBAA(isValidScalarTBAANode(AccessType),
-             "Access type node must be scalar", &I, MD, AccessType);
+             "Access type node must be a valid scalar type", &I, MD,
+             AccessType);
 
   auto *OffsetCI = mdconst::dyn_extract_or_null<ConstantInt>(MD->getOperand(2));
   AssertTBAA(OffsetCI, "Offset must be constant integer", &I, MD);
