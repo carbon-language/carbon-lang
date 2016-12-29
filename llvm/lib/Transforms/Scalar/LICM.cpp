@@ -250,7 +250,12 @@ bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can.
-  if (!DisablePromotion && (Preheader || L->hasDedicatedExits())) {
+  // Don't sink stores from loops without dedicated block exits. Exits
+  // containing indirect branches are not transformed by loop simplify,
+  // make sure we catch that. An additional load may be generated in the
+  // preheader for SSA updater, so also avoid sinking when no preheader
+  // is available.
+  if (!DisablePromotion && Preheader && L->hasDedicatedExits()) {
     SmallVector<BasicBlock *, 8> ExitBlocks;
     SmallVector<Instruction *, 8> InsertPts;
     PredIteratorCache PIC;
@@ -909,15 +914,6 @@ bool llvm::promoteLoopAccessesToScalars(
   // us to prove better alignment.
   unsigned Alignment = 1;
   AAMDNodes AATags;
-  bool HasDedicatedExits = CurLoop->hasDedicatedExits();
-
-  // Don't sink stores from loops without dedicated block exits. Exits
-  // containing indirect branches are not transformed by loop simplify,
-  // make sure we catch that. An additional load may be generated in the
-  // preheader for SSA updater, so also avoid sinking when no preheader
-  // is available.
-  if (!HasDedicatedExits || !Preheader)
-    return false;
 
   const DataLayout &MDL = Preheader->getModule()->getDataLayout();
 
