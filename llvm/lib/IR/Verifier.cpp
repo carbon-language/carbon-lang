@@ -4655,9 +4655,18 @@ static bool IsScalarTBAANodeImpl(const MDNode *MD,
          (IsRootTBAANode(Parent) || IsScalarTBAANodeImpl(Parent, Visited));
 }
 
-static bool IsScalarTBAANode(const MDNode *MD) {
+bool TBAAVerifier::isValidScalarTBAANode(const MDNode *MD) {
+  auto ResultIt = TBAAScalarNodes.find(MD);
+  if (ResultIt != TBAAScalarNodes.end())
+    return ResultIt->second;
+
   SmallPtrSet<const MDNode *, 4> Visited;
-  return IsScalarTBAANodeImpl(MD, Visited);
+  bool Result = IsScalarTBAANodeImpl(MD, Visited);
+  auto InsertResult = TBAAScalarNodes.insert({MD, Result});
+  (void)InsertResult;
+  assert(InsertResult.second && "Just checked!");
+
+  return Result;
 }
 
 /// Returns the field node at the offset \p Offset in \p BaseNode.  Update \p
@@ -4735,8 +4744,8 @@ bool TBAAVerifier::visitTBAAMetadata(Instruction &I, MDNode *MD) {
              "should be non-null and point to Metadata nodes",
              &I, MD, BaseNode, AccessType);
 
-  AssertTBAA(IsScalarTBAANode(AccessType), "Access type node must be scalar",
-             &I, MD, AccessType);
+  AssertTBAA(isValidScalarTBAANode(AccessType),
+             "Access type node must be scalar", &I, MD, AccessType);
 
   auto *OffsetCI = mdconst::dyn_extract_or_null<ConstantInt>(MD->getOperand(2));
   AssertTBAA(OffsetCI, "Offset must be constant integer", &I, MD);
@@ -4764,7 +4773,7 @@ bool TBAAVerifier::visitTBAAMetadata(Instruction &I, MDNode *MD) {
 
     SeenAccessTypeInPath |= BaseNode == AccessType;
 
-    if (IsScalarTBAANode(BaseNode) || BaseNode == AccessType)
+    if (isValidScalarTBAANode(BaseNode) || BaseNode == AccessType)
       AssertTBAA(Offset == 0, "Offset not zero at the point of scalar access",
                  &I, MD, &Offset);
 

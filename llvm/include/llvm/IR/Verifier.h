@@ -50,6 +50,10 @@ class TBAAVerifier {
   typedef std::pair<bool, unsigned> TBAABaseNodeSummary;
   DenseMap<MDNode *, TBAABaseNodeSummary> TBAABaseNodes;
 
+  /// Maps an alleged scalar TBAA node to a boolean that is true if the said
+  /// TBAA node is a valid scalar TBAA node or false otherwise.
+  DenseMap<const MDNode *, bool> TBAAScalarNodes;
+
   /// \name Helper functions used by \c visitTBAAMetadata.
   /// @{
   MDNode *getFieldNodeFromTBAABaseNode(Instruction &I, MDNode *BaseNode,
@@ -57,6 +61,8 @@ class TBAAVerifier {
   TBAAVerifier::TBAABaseNodeSummary verifyTBAABaseNode(Instruction &I,
                                                        MDNode *BaseNode);
   TBAABaseNodeSummary verifyTBAABaseNodeImpl(Instruction &I, MDNode *BaseNode);
+
+  bool isValidScalarTBAANode(const MDNode *MD);
   /// @}
 
 public:
