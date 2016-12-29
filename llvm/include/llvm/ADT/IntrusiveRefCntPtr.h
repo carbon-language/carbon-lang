@@ -37,25 +37,25 @@ namespace llvm {
 ///  the stack, as invoking "delete" (which is called when the
 ///  reference count hits 0) on such objects is an error.
 //===----------------------------------------------------------------------===//
-  template <class Derived>
-  class RefCountedBase {
-    mutable unsigned ref_cnt = 0;
+template <class Derived> class RefCountedBase {
+  mutable unsigned ref_cnt = 0;
 
-  public:
-    RefCountedBase() = default;
-    RefCountedBase(const RefCountedBase &) : ref_cnt(0) {}
+public:
+  RefCountedBase() = default;
+  RefCountedBase(const RefCountedBase &) : ref_cnt(0) {}
 
-    void Retain() const { ++ref_cnt; }
-    void Release() const {
-      assert (ref_cnt > 0 && "Reference count is already zero.");
-      if (--ref_cnt == 0) delete static_cast<const Derived*>(this);
-    }
-  };
+  void Retain() const { ++ref_cnt; }
+  void Release() const {
+    assert(ref_cnt > 0 && "Reference count is already zero.");
+    if (--ref_cnt == 0)
+      delete static_cast<const Derived *>(this);
+  }
+};
 
-  template <typename T> struct IntrusiveRefCntPtrInfo {
-    static void retain(T *obj) { obj->Retain(); }
-    static void release(T *obj) { obj->Release(); }
-  };
+template <typename T> struct IntrusiveRefCntPtrInfo {
+  static void retain(T *obj) { obj->Retain(); }
+  static void release(T *obj) { obj->Release(); }
+};
 
 /// \brief A thread-safe version of \c llvm::RefCountedBase.
 ///
@@ -64,8 +64,7 @@ namespace llvm {
 /// obtain such functionality, and are typically handled with
 /// \c IntrusiveRefCntPtr "smart pointers" which automatically handle the
 /// management of reference counts.
-template <class Derived>
-class ThreadSafeRefCountedBase {
+template <class Derived> class ThreadSafeRefCountedBase {
   mutable std::atomic<int> RefCount;
 
 protected:
@@ -78,7 +77,7 @@ public:
     int NewRefCount = RefCount.fetch_sub(1, std::memory_order_acq_rel) - 1;
     assert(NewRefCount >= 0 && "Reference count was already zero.");
     if (NewRefCount == 0)
-      delete static_cast<const Derived*>(this);
+      delete static_cast<const Derived *>(this);
   }
 };
 
@@ -98,157 +97,136 @@ public:
 ///  object when the reference count reaches zero. Inheriting from
 ///  RefCountedBase takes care of this automatically.
 //===----------------------------------------------------------------------===//
-  template <typename T>
-  class IntrusiveRefCntPtr {
-    T* Obj = nullptr;
+template <typename T> class IntrusiveRefCntPtr {
+  T *Obj = nullptr;
 
-  public:
-    typedef T element_type;
+public:
+  typedef T element_type;
 
-    explicit IntrusiveRefCntPtr() = default;
+  explicit IntrusiveRefCntPtr() = default;
+  IntrusiveRefCntPtr(T *obj) : Obj(obj) { retain(); }
+  IntrusiveRefCntPtr(const IntrusiveRefCntPtr &S) : Obj(S.Obj) { retain(); }
+  IntrusiveRefCntPtr(IntrusiveRefCntPtr &&S) : Obj(S.Obj) { S.Obj = nullptr; }
 
-    IntrusiveRefCntPtr(T* obj) : Obj(obj) {
-      retain();
-    }
-
-    IntrusiveRefCntPtr(const IntrusiveRefCntPtr& S) : Obj(S.Obj) {
-      retain();
-    }
-
-    IntrusiveRefCntPtr(IntrusiveRefCntPtr&& S) : Obj(S.Obj) {
-      S.Obj = nullptr;
-    }
-
-    template <class X>
-    IntrusiveRefCntPtr(IntrusiveRefCntPtr<X>&& S) : Obj(S.get()) {
-      S.Obj = nullptr;
-    }
-
-    template <class X>
-    IntrusiveRefCntPtr(const IntrusiveRefCntPtr<X>& S)
-      : Obj(S.get()) {
-      retain();
-    }
-
-    IntrusiveRefCntPtr& operator=(IntrusiveRefCntPtr S) {
-      swap(S);
-      return *this;
-    }
-
-    ~IntrusiveRefCntPtr() { release(); }
-
-    T& operator*() const { return *Obj; }
-
-    T* operator->() const { return Obj; }
-
-    T* get() const { return Obj; }
-
-    explicit operator bool() const { return Obj; }
-
-    void swap(IntrusiveRefCntPtr& other) {
-      T* tmp = other.Obj;
-      other.Obj = Obj;
-      Obj = tmp;
-    }
-
-    void reset() {
-      release();
-      Obj = nullptr;
-    }
-
-    void resetWithoutRelease() {
-      Obj = nullptr;
-    }
-
-  private:
-    void retain() { if (Obj) IntrusiveRefCntPtrInfo<T>::retain(Obj); }
-    void release() { if (Obj) IntrusiveRefCntPtrInfo<T>::release(Obj); }
-
-    template <typename X>
-    friend class IntrusiveRefCntPtr;
-  };
-
-  template<class T, class U>
-  inline bool operator==(const IntrusiveRefCntPtr<T>& A,
-                         const IntrusiveRefCntPtr<U>& B)
-  {
-    return A.get() == B.get();
+  template <class X>
+  IntrusiveRefCntPtr(IntrusiveRefCntPtr<X> &&S) : Obj(S.get()) {
+    S.Obj = nullptr;
   }
 
-  template<class T, class U>
-  inline bool operator!=(const IntrusiveRefCntPtr<T>& A,
-                         const IntrusiveRefCntPtr<U>& B)
-  {
-    return A.get() != B.get();
+  template <class X>
+  IntrusiveRefCntPtr(const IntrusiveRefCntPtr<X> &S) : Obj(S.get()) {
+    retain();
   }
 
-  template<class T, class U>
-  inline bool operator==(const IntrusiveRefCntPtr<T>& A,
-                         U* B)
-  {
-    return A.get() == B;
+  IntrusiveRefCntPtr &operator=(IntrusiveRefCntPtr S) {
+    swap(S);
+    return *this;
   }
 
-  template<class T, class U>
-  inline bool operator!=(const IntrusiveRefCntPtr<T>& A,
-                         U* B)
-  {
-    return A.get() != B;
+  ~IntrusiveRefCntPtr() { release(); }
+
+  T &operator*() const { return *Obj; }
+  T *operator->() const { return Obj; }
+  T *get() const { return Obj; }
+  explicit operator bool() const { return Obj; }
+
+  void swap(IntrusiveRefCntPtr &other) {
+    T *tmp = other.Obj;
+    other.Obj = Obj;
+    Obj = tmp;
   }
 
-  template<class T, class U>
-  inline bool operator==(T* A,
-                         const IntrusiveRefCntPtr<U>& B)
-  {
-    return A == B.get();
+  void reset() {
+    release();
+    Obj = nullptr;
   }
 
-  template<class T, class U>
-  inline bool operator!=(T* A,
-                         const IntrusiveRefCntPtr<U>& B)
-  {
-    return A != B.get();
+  void resetWithoutRelease() { Obj = nullptr; }
+
+private:
+  void retain() {
+    if (Obj)
+      IntrusiveRefCntPtrInfo<T>::retain(Obj);
+  }
+  void release() {
+    if (Obj)
+      IntrusiveRefCntPtrInfo<T>::release(Obj);
   }
 
-  template <class T>
-  bool operator==(std::nullptr_t A, const IntrusiveRefCntPtr<T> &B) {
-    return !B;
-  }
+  template <typename X> friend class IntrusiveRefCntPtr;
+};
 
-  template <class T>
-  bool operator==(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
-    return B == A;
-  }
+template <class T, class U>
+inline bool operator==(const IntrusiveRefCntPtr<T> &A,
+                       const IntrusiveRefCntPtr<U> &B) {
+  return A.get() == B.get();
+}
 
-  template <class T>
-  bool operator!=(std::nullptr_t A, const IntrusiveRefCntPtr<T> &B) {
-    return !(A == B);
-  }
+template <class T, class U>
+inline bool operator!=(const IntrusiveRefCntPtr<T> &A,
+                       const IntrusiveRefCntPtr<U> &B) {
+  return A.get() != B.get();
+}
 
-  template <class T>
-  bool operator!=(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
-    return !(A == B);
-  }
+template <class T, class U>
+inline bool operator==(const IntrusiveRefCntPtr<T> &A, U *B) {
+  return A.get() == B;
+}
+
+template <class T, class U>
+inline bool operator!=(const IntrusiveRefCntPtr<T> &A, U *B) {
+  return A.get() != B;
+}
+
+template <class T, class U>
+inline bool operator==(T *A, const IntrusiveRefCntPtr<U> &B) {
+  return A == B.get();
+}
+
+template <class T, class U>
+inline bool operator!=(T *A, const IntrusiveRefCntPtr<U> &B) {
+  return A != B.get();
+}
+
+template <class T>
+bool operator==(std::nullptr_t A, const IntrusiveRefCntPtr<T> &B) {
+  return !B;
+}
+
+template <class T>
+bool operator==(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
+  return B == A;
+}
+
+template <class T>
+bool operator!=(std::nullptr_t A, const IntrusiveRefCntPtr<T> &B) {
+  return !(A == B);
+}
+
+template <class T>
+bool operator!=(const IntrusiveRefCntPtr<T> &A, std::nullptr_t B) {
+  return !(A == B);
+}
 
 //===----------------------------------------------------------------------===//
 // LLVM-style downcasting support for IntrusiveRefCntPtr objects
 //===----------------------------------------------------------------------===//
 
-  template <typename From> struct simplify_type;
+template <typename From> struct simplify_type;
 
-  template<class T> struct simplify_type<IntrusiveRefCntPtr<T>> {
-    typedef T* SimpleType;
-    static SimpleType getSimplifiedValue(IntrusiveRefCntPtr<T>& Val) {
-      return Val.get();
-    }
-  };
+template <class T> struct simplify_type<IntrusiveRefCntPtr<T>> {
+  typedef T *SimpleType;
+  static SimpleType getSimplifiedValue(IntrusiveRefCntPtr<T> &Val) {
+    return Val.get();
+  }
+};
 
-  template<class T> struct simplify_type<const IntrusiveRefCntPtr<T>> {
-    typedef /*const*/ T* SimpleType;
-    static SimpleType getSimplifiedValue(const IntrusiveRefCntPtr<T>& Val) {
-      return Val.get();
-    }
-  };
+template <class T> struct simplify_type<const IntrusiveRefCntPtr<T>> {
+  typedef /*const*/ T *SimpleType;
+  static SimpleType getSimplifiedValue(const IntrusiveRefCntPtr<T> &Val) {
+    return Val.get();
+  }
+};
 
 } // end namespace llvm
 
