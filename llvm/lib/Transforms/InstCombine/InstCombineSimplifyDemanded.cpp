@@ -1090,7 +1090,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
       Constant *Value = nullptr;
       unsigned Idx = -1u;
 
-      // Find constant vector wigth the single element in shuffle (LHS or RHS).
+      // Find constant vector with the single element in shuffle (LHS or RHS).
       if (LHSIdx < LHSVWidth && RHSUniform) {
         if (auto *CV = dyn_cast<ConstantVector>(Shuffle->getOperand(0))) {
           Op = Shuffle->getOperand(1);
