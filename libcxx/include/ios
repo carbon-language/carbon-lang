@@ -585,9 +585,22 @@ public:
     typedef typename traits_type::pos_type pos_type;
     typedef typename traits_type::off_type off_type;
 
+#if defined(_LIBCPP_CXX03_LANG)
+private:
+    struct __bool_tag {};
+    typedef void (basic_ios::*_BoolType)(__bool_tag) const;
+    void __true_value(__bool_tag) const {}
+
+public:
     _LIBCPP_ALWAYS_INLINE
-        _LIBCPP_EXPLICIT
-        operator bool() const {return !fail();}
+    operator _BoolType() const {
+        return !fail() ? &basic_ios::__true_value : nullptr;
+    }
+#else
+    _LIBCPP_ALWAYS_INLINE
+    _LIBCPP_EXPLICIT operator bool() const {return !fail();}
+#endif
+
     _LIBCPP_ALWAYS_INLINE bool operator!() const    {return  fail();}
     _LIBCPP_ALWAYS_INLINE iostate rdstate() const   {return ios_base::rdstate();}
     _LIBCPP_ALWAYS_INLINE void clear(iostate __state = goodbit) {ios_base::clear(__state);}
