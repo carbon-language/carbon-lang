@@ -89,6 +89,10 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
   if (const auto *Conversion =
       Result.Nodes.getNodeAs<CXXConversionDecl>("conversion")) {
     SourceLocation Loc = Conversion->getLocation();
+    // Ignore all macros until we learn to ignore specific ones (e.g. used in
+    // gmock to define matchers).
+    if (Loc.isMacroID())
+      return;
     diag(Loc, WarningMessage)
         << Conversion << FixItHint::CreateInsertion(Loc, "explicit ");
     return;

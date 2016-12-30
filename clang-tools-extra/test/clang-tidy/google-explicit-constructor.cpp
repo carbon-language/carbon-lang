@@ -168,5 +168,11 @@ void f2() {
   if (b) {}
   (void)(F<double>*)b;
   (void)(F<double*>*)b;
-
 }
+
+#define DEFINE_STRUCT_WITH_OPERATOR_BOOL(name) \
+  struct name {                                \
+    operator bool() const;                     \
+  }
+
+DEFINE_STRUCT_WITH_OPERATOR_BOOL(H);
