@@ -525,23 +525,28 @@ void LazyValueInfoCache::threadEdgeImpl(BasicBlock *OldSucc,
     // Skip blocks only accessible through NewSucc.
     if (ToUpdate == NewSucc) continue;
 
+    // If a value was marked overdefined in OldSucc, and is here too...
+    auto OI = OverDefinedCache.find(ToUpdate);
+    if (OI == OverDefinedCache.end())
+      continue;
+    SmallPtrSetImpl<Value *> &ValueSet = OI->second;
+
     bool changed = false;
     for (Value *V : ValsToClear) {
-      // If a value was marked overdefined in OldSucc, and is here too...
-      auto OI = OverDefinedCache.find(ToUpdate);
-      if (OI == OverDefinedCache.end())
-        continue;
-      SmallPtrSetImpl<Value *> &ValueSet = OI->second;
+      // TODO: count and erase can be converted to a find/erase(itr) pattern
       if (!ValueSet.count(V))
         continue;
 
       ValueSet.erase(V);
-      if (ValueSet.empty())
-        OverDefinedCache.erase(OI);
 
       // If we removed anything, then we potentially need to update
       // blocks successors too.
       changed = true;
+
+      if (ValueSet.empty()) {
+        OverDefinedCache.erase(OI);
+        break;
+      }
     }
 
     if (!changed) continue;
