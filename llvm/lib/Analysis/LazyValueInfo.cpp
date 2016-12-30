@@ -462,8 +462,7 @@ void LazyValueInfoCache::eraseValue(Value *V) {
   SmallVector<AssertingVH<BasicBlock>, 4> ToErase;
   for (auto &I : OverDefinedCache) {
     SmallPtrSetImpl<Value *> &ValueSet = I.second;
-    if (ValueSet.count(V))
-      ValueSet.erase(V);
+    ValueSet.erase(V);
     if (ValueSet.empty())
       ToErase.push_back(I.first);
   }
@@ -533,11 +532,8 @@ void LazyValueInfoCache::threadEdgeImpl(BasicBlock *OldSucc,
 
     bool changed = false;
     for (Value *V : ValsToClear) {
-      // TODO: count and erase can be converted to a find/erase(itr) pattern
-      if (!ValueSet.count(V))
+      if (!ValueSet.erase(V))
         continue;
-
-      ValueSet.erase(V);
 
       // If we removed anything, then we potentially need to update
       // blocks successors too.
