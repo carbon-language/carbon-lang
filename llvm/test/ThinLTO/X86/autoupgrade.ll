@@ -1,6 +1,7 @@
 ; Verify that auto-upgrading intrinsics works with Lazy loaded bitcode
 ; Do setup work for all below tests: generate bitcode and combined index
 ; RUN: opt -module-summary %s -o %t.bc
+; RUN: llvm-lto -thinlto-action=thinlink -o %t3.bc %t.bc %p/Inputs/autoupgrade.bc
 
 ; We can't use llvm-dis here, because it would do the autoupgrade itself.
 
