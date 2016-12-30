@@ -946,7 +946,6 @@ bool llvm::promoteLoopAccessesToScalars(
   // Check that all of the pointers in the alias set have the same type.  We
   // cannot (yet) promote a memory location that is loaded and stored in
   // different sizes.  While we are at it, collect alignment and AA info.
-  bool Changed = false;
   for (const auto &ASI : AS) {
     Value *ASIV = ASI.getValue();
     PointerMustAliases.insert(ASIV);
@@ -955,7 +954,7 @@ bool llvm::promoteLoopAccessesToScalars(
     // cannot (yet) promote a memory location that is loaded and stored in
     // different sizes.
     if (SomePtr->getType() != ASIV->getType())
-      return Changed;
+      return false;
 
     for (User *U : ASIV->users()) {
       // Ignore instructions that are outside the loop.
@@ -968,7 +967,7 @@ bool llvm::promoteLoopAccessesToScalars(
       if (const LoadInst *Load = dyn_cast<LoadInst>(UI)) {
         assert(!Load->isVolatile() && "AST broken");
         if (!Load->isSimple())
-          return Changed;
+          return false;
 
         if (!DereferenceableInPH)
           DereferenceableInPH = isSafeToExecuteUnconditionally(
@@ -980,7 +979,7 @@ bool llvm::promoteLoopAccessesToScalars(
           continue;
         assert(!Store->isVolatile() && "AST broken");
         if (!Store->isSimple())
-          return Changed;
+          return false;
 
         // If the store is guaranteed to execute, both properties are satisfied.
         // We may want to check if a store is guaranteed to execute even if we
@@ -1009,7 +1008,7 @@ bool llvm::promoteLoopAccessesToScalars(
               Preheader->getTerminator(), DT);
         }
       } else
-        return Changed; // Not a load or store.
+        return false; // Not a load or store.
 
       // Merge the AA tags.
       if (LoopUses.empty()) {
@@ -1026,7 +1025,7 @@ bool llvm::promoteLoopAccessesToScalars(
 
   // If we couldn't prove we can hoist the load, bail.
   if (!DereferenceableInPH)
-    return Changed;
+    return false;
 
   // We know we can hoist the load, but don't have a guaranteed store.
   // Check whether the location is thread-local. If it is, then we can insert
@@ -1040,12 +1039,11 @@ bool llvm::promoteLoopAccessesToScalars(
 
   // If we've still failed to prove we can sink the store, give up.
   if (!SafeToInsertStore)
-    return Changed;
+    return false;
 
   // Otherwise, this is safe to promote, lets do it!
   DEBUG(dbgs() << "LICM: Promoting value stored to in loop: " << *SomePtr
                << '\n');
-  Changed = true;
   ++NumPromoted;
 
   // Grab a debug location for the inserted loads/stores; given that the
@@ -1078,7 +1076,7 @@ bool llvm::promoteLoopAccessesToScalars(
   if (PreheaderLoad->use_empty())
     PreheaderLoad->eraseFromParent();
 
-  return Changed;
+  return true;
 }
 
 /// Returns an owning pointer to an alias set which incorporates aliasing info
