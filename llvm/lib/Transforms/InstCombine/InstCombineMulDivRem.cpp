@@ -434,7 +434,8 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         Constant *CI =
             ConstantExpr::getTrunc(Op1C, Op0Conv->getOperand(0)->getType());
         if (ConstantExpr::getZExt(CI, I.getType()) == Op1C &&
-            WillNotOverflowSignedMul(Op0Conv->getOperand(0), CI, I)) {
+            computeOverflowForUnsignedMul(Op0Conv->getOperand(0), CI, &I) ==
+                OverflowResult::NeverOverflows) {
           // Insert the new, smaller mul.
           Value *NewMul =
               Builder->CreateNUWMul(Op0Conv->getOperand(0), CI, "mulconv");

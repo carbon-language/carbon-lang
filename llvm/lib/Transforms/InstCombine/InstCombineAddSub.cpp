@@ -1266,7 +1266,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         Constant *CI =
             ConstantExpr::getTrunc(RHSC, LHSConv->getOperand(0)->getType());
         if (ConstantExpr::getZExt(CI, I.getType()) == RHSC &&
-            WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI, I)) {
+            computeOverflowForUnsignedAdd(LHSConv->getOperand(0), CI, &I) ==
+                OverflowResult::NeverOverflows) {
           // Insert the new, smaller add.
           Value *NewAdd =
               Builder->CreateNUWAdd(LHSConv->getOperand(0), CI, "addconv");
