@@ -27,8 +27,10 @@ void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(cxxConstructorDecl(unless(isInstantiated())).bind("ctor"),
                      this);
   Finder->addMatcher(
-      cxxConversionDecl(unless(isExplicit()), // Already marked explicit.
-                        unless(isImplicit())) // Compiler-generated.
+      cxxConversionDecl(unless(anyOf(isExplicit(), // Already marked explicit.
+                                     isImplicit(), // Compiler-generated.
+                                     isInstantiated())))
+
           .bind("conversion"),
       this);
 }
