@@ -1034,7 +1034,8 @@ bool llvm::promoteLoopAccessesToScalars(
   if (!SafeToInsertStore) {
     Value *Object = GetUnderlyingObject(SomePtr, MDL);
     SafeToInsertStore =
-        isAllocLikeFn(Object, TLI) && !PointerMayBeCaptured(Object, true, true);
+        (isAllocLikeFn(Object, TLI) || isa<AllocaInst>(Object)) &&
+        !PointerMayBeCaptured(Object, true, true);
   }
 
   // If we've still failed to prove we can sink the store, give up.
