@@ -290,12 +290,6 @@ public:
 
   SmallPtrSetIterator operator++(int) {        // Postincrement
     SmallPtrSetIterator tmp = *this;
-#if LLVM_ENABLE_ABI_BREAKING_CHECKS
-    if (ReverseIterate<bool>::value) {
-      --*this;
-      return tmp;
-    }
-#endif
     ++*this;
     return tmp;
   }
