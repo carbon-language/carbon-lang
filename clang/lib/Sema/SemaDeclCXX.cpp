@@ -12913,7 +12913,7 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
     //   Literal suffix identifiers that do not start with an underscore
     //   are reserved for future standardization.
     Diag(FnDecl->getLocation(), diag::warn_user_literal_reserved)
-      << NumericLiteralParser::isValidUDSuffix(getLangOpts(), LiteralName);
+      << StringLiteralParser::isValidUDSuffix(getLangOpts(), LiteralName);
   }
 
   return false;
