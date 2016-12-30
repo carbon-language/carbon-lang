@@ -917,7 +917,7 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_PROVIDES_DEFAULT_RUNE_TABLE
 #endif
 
-// Thread-unsafe functions such as strtok(), mbtowc() and localtime()
+// Thread-unsafe functions such as strtok() and localtime()
 // are not available.
 #ifdef __CloudABI__
 #define _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
