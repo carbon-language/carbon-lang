@@ -3656,9 +3656,10 @@ bool llvm::isGuaranteedToTransferExecutionToSuccessor(const Instruction *I) {
     return false;
 
   // Calls can throw, or contain an infinite loop, or kill the process.
-  if (CallSite CS = CallSite(const_cast<Instruction*>(I))) {
+  if (auto CS = ImmutableCallSite(I)) {
     // Calls which don't write to arbitrary memory are safe.
-    // FIXME: Ignoring infinite loops without any side-effects is too aggressive,
+    // FIXME: Ignoring infinite loops without any side-effects is too
+    // aggressive,
     // but it's consistent with other passes. See http://llvm.org/PR965 .
     // FIXME: This isn't aggressive enough; a call which only writes to a
     // global is guaranteed to return.
