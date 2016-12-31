@@ -3368,6 +3368,8 @@ static bool isKnownNonNullFromDominatingCondition(const Value *V,
                                                   const DominatorTree *DT) {
   assert(V->getType()->isPointerTy() && "V must be pointer type");
   assert(!isa<ConstantData>(V) && "Did not expect ConstantPointerNull");
+  assert(CtxI && "Context instruction required for analysis");
+  assert(DT && "Dominator tree required for analysis");
 
   unsigned NumUsesExplored = 0;
   for (auto *U : V->users()) {
@@ -3410,7 +3412,10 @@ bool llvm::isKnownNonNullAt(const Value *V, const Instruction *CtxI,
   if (isKnownNonNull(V))
     return true;
 
-  return CtxI ? ::isKnownNonNullFromDominatingCondition(V, CtxI, DT) : false;
+  if (!CtxI || !DT)
+    return false;
+
+  return ::isKnownNonNullFromDominatingCondition(V, CtxI, DT);
 }
 
 OverflowResult llvm::computeOverflowForUnsignedMul(const Value *LHS,
