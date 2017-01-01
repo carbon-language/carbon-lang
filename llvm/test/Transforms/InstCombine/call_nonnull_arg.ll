@@ -31,6 +31,9 @@ dead:
   unreachable
 }
 
+; FIXME: The nonnull attribute in the 'bar' declaration could be 
+; propagated to the parameters of the 'baz' callsite. 
+
 declare void @bar(i8*, i8* nonnull)
 declare void @baz(i8*, i8*)
 
