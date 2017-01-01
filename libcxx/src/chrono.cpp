@@ -25,10 +25,10 @@
 #endif
 #endif
 
-#if !defined(_LIBCPP_HAS_NO_MONOTONIC_CLOCK) && !defined(CLOCK_MONOTONIC)
+#if !defined(_LIBCPP_HAS_NO_MONOTONIC_CLOCK)
 #if __APPLE__
 #include <mach/mach_time.h>  // mach_absolute_time, mach_timebase_info_data_t
-#else
+#elif !defined(_WIN32) && !defined(CLOCK_MONOTONIC)
 #error "Monotonic clock not implemented"
 #endif
 #endif
@@ -101,18 +101,7 @@ system_clock::from_time_t(time_t t) _NOEXCEPT
 
 const bool steady_clock::is_steady;
 
-#ifdef CLOCK_MONOTONIC
-
-steady_clock::time_point
-steady_clock::now() _NOEXCEPT
-{
-    struct timespec tp;
-    if (0 != clock_gettime(CLOCK_MONOTONIC, &tp))
-        __throw_system_error(errno, "clock_gettime(CLOCK_MONOTONIC) failed");
-    return time_point(seconds(tp.tv_sec) + nanoseconds(tp.tv_nsec));
-}
-
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
 
 //   mach_absolute_time() * MachInfo.numer / MachInfo.denom is the number of
 //   nanoseconds since the computer booted up.  MachInfo.numer and MachInfo.denom
@@ -164,6 +153,32 @@ steady_clock::now() _NOEXCEPT
 {
     static FP fp = init_steady_clock();
     return time_point(duration(fp()));
+}
+
+#elif defined(_WIN32)
+
+steady_clock::time_point
+steady_clock::now() _NOEXCEPT
+{
+  static LARGE_INTEGER liFreq;
+  static BOOL bQPFRun = FALSE;
+  if (bQPFRun == FALSE)
+    bQPFRun = QueryPerformanceFrequency(&liFreq);
+
+  LARGE_INTEGER liCntr;
+  QueryPerformanceCounter(&liCntr);
+  return time_point(duration(liCntr.QuadPart * nano::den / liFreq.QuadPart));
+}
+
+#elif defined(CLOCK_MONOTONIC)
+
+steady_clock::time_point
+steady_clock::now() _NOEXCEPT
+{
+    struct timespec tp;
+    if (0 != clock_gettime(CLOCK_MONOTONIC, &tp))
+        __throw_system_error(errno, "clock_gettime(CLOCK_MONOTONIC) failed");
+    return time_point(seconds(tp.tv_sec) + nanoseconds(tp.tv_nsec));
 }
 
 #else
