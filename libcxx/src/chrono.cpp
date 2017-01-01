@@ -46,26 +46,30 @@ system_clock::time_point
 system_clock::now() _NOEXCEPT
 {
 #if defined(_WIN32)
-  // The Windows epoch is Jan 1 1601, the Unix epoch Jan 1 1970.  The difference
-  // in nanoseconds is the windows epoch offset.
-  static const constexpr __int64 kWindowsEpochOffset = 0x19db1ded53e8000;
+  // FILETIME is in 100ns units
+  using filetime_duration =
+      _VSTD::chrono::duration<__int64,
+                              _VSTD::ratio_multiply<_VSTD::ratio<100, 1>,
+                                                    nanoseconds::period>>;
 
-  FILETIME ftSystemTime;
+  // The Windows epoch is Jan 1 1601, the Unix epoch Jan 1 1970.
+  static _LIBCPP_CONSTEXPR const filetime_duration
+      nt_to_unix_epoch{11644473600};
+
+  FILETIME ft;
 #if _WIN32_WINNT >= _WIN32_WINNT_WIN8
 #if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
-  GetSystemTimePreciseAsFileTime(&ftSystemTime);
+  GetSystemTimePreciseAsFileTime(&ft);
 #else
-  GetSystemTimeAsFileTime(&ftSystemTime);
+  GetSystemTimeAsFileTime(&ft);
 #endif
 #else
-  GetSystemTimeAsFileTime(&ftSystemTime);
+  GetSystemTimeAsFileTime(&ft);
 #endif
-  __int64 llWinTimeNS =
-      ((static_cast<__int64>(ftSystemTime.dwHighDateTime) << 32) |
-       static_cast<__int64>(ftSystemTime.dwLowDateTime)) *
-      100;
-  return time_point(duration_cast<duration>(
-      (nanoseconds(llWinTimeNS - kWindowsEpochOffset))));
+
+  filetime_duration d{(static_cast<__int64>(ft.dwHighDateTime) << 32) |
+                       static_cast<__int64>(ft.dwLowDateTime)};
+  return time_point(duration_cast<duration>(d - nt_to_unix_epoch));
 #else
 #ifdef CLOCK_REALTIME
     struct timespec tp;
