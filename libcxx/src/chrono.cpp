@@ -12,8 +12,17 @@
 #include "system_error"  // __throw_system_error
 #include <time.h>        // clock_gettime, CLOCK_MONOTONIC and CLOCK_REALTIME
 
+#if defined(_WIN32)
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRA_LEAN
+#include <Windows.h>
+#if _WIN32_WINNT >= _WIN32_WINNT_WIN8
+#include <winapifamily.h>
+#endif
+#else
 #if !defined(CLOCK_REALTIME)
 #include <sys/time.h>        // for gettimeofday and timeval
+#endif
 #endif
 
 #if !defined(_LIBCPP_HAS_NO_MONOTONIC_CLOCK) && !defined(CLOCK_MONOTONIC)
@@ -36,6 +45,28 @@ const bool system_clock::is_steady;
 system_clock::time_point
 system_clock::now() _NOEXCEPT
 {
+#if defined(_WIN32)
+  // The Windows epoch is Jan 1 1601, the Unix epoch Jan 1 1970.  The difference
+  // in nanoseconds is the windows epoch offset.
+  static const constexpr __int64 kWindowsEpochOffset = 0x19db1ded53e8000;
+
+  FILETIME ftSystemTime;
+#if _WIN32_WINNT >= _WIN32_WINNT_WIN8
+#if WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+  GetSystemTimePreciseAsFileTime(&ftSystemTime);
+#else
+  GetSystemTimeAsFileTime(&ftSystemTime);
+#endif
+#else
+  GetSystemTimeAsFileTime(&ftSystemTime);
+#endif
+  __int64 llWinTimeNS =
+      ((static_cast<__int64>(ftSystemTime.dwHighDateTime) << 32) |
+       static_cast<__int64>(ftSystemTime.dwLowDateTime)) *
+      100;
+  return time_point(duration_cast<duration>(
+      (nanoseconds(llWinTimeNS - kWindowsEpochOffset))));
+#else
 #ifdef CLOCK_REALTIME
     struct timespec tp;
     if (0 != clock_gettime(CLOCK_REALTIME, &tp))
@@ -46,6 +77,7 @@ system_clock::now() _NOEXCEPT
     gettimeofday(&tv, 0);
     return time_point(seconds(tv.tv_sec) + microseconds(tv.tv_usec));
 #endif  // CLOCK_REALTIME
+#endif
 }
 
 time_t
