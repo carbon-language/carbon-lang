@@ -160,14 +160,14 @@ steady_clock::now() _NOEXCEPT
 steady_clock::time_point
 steady_clock::now() _NOEXCEPT
 {
-  static LARGE_INTEGER liFreq;
-  static BOOL bQPFRun = FALSE;
-  if (bQPFRun == FALSE)
-    bQPFRun = QueryPerformanceFrequency(&liFreq);
+  static LARGE_INTEGER freq;
+  static BOOL initialized = FALSE;
+  if (!initialized)
+    initialized = QueryPerformanceFrequency(&freq); // always succceeds
 
-  LARGE_INTEGER liCntr;
-  QueryPerformanceCounter(&liCntr);
-  return time_point(duration(liCntr.QuadPart * nano::den / liFreq.QuadPart));
+  LARGE_INTEGER counter;
+  QueryPerformanceCounter(&counter);
+  return time_point(duration(counter.QuadPart * nano::den / freq.QuadPart));
 }
 
 #elif defined(CLOCK_MONOTONIC)
