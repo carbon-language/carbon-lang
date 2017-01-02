@@ -780,12 +780,8 @@ const Expression *NewGVN::performSymbolicCallEvaluation(Instruction *I,
 // Update the memory access equivalence table to say that From is equal to To,
 // and return true if this is different from what already existed in the table.
 bool NewGVN::setMemoryAccessEquivTo(MemoryAccess *From, MemoryAccess *To) {
-  DEBUG(dbgs() << "Setting " << *From << " equivalent to ");
-  if (!To)
-    DEBUG(dbgs() << "itself");
-  else
-    DEBUG(dbgs() << *To);
-  DEBUG(dbgs() << "\n");
+  DEBUG(dbgs() << "Setting " << *From << " equivalent to "
+               << (To ? "itself" : *To) << "\n");
   auto LookupResult = MemoryAccessEquiv.find(From);
   bool Changed = false;
   // If it's already in the table, see if the value changed.
@@ -1092,16 +1088,11 @@ void NewGVN::performCongruenceFinding(Value *V, const Expression *E) {
     if (auto *I = dyn_cast<Instruction>(V)) {
       if (MemoryAccess *MA = MSSA->getMemoryAccess(I)) {
         // If this is a MemoryDef, we need to update the equivalence table. If
-        // we
-        // determined the expression is congruent to a different memory state,
-        // use that different memory state.  If we determined it didn't, we
-        // update
-        // that as well. Note that currently, we do not guarantee the
-        // "different" memory state dominates us.  The goal is to make things
-        // that are congruent look congruent, not ensure we can eliminate one in
-        // favor of the other.
+        // we determined the expression is congruent to a different memory
+        // state, use that different memory state.  If we determined it didn't,
+        // we update that as well.
         // Right now, the only way they can be equivalent is for store
-        // expresions.
+        // expressions.
         if (!isa<MemoryUse>(MA)) {
           if (E && isa<StoreExpression>(E) && EClass->Members.size() != 1) {
             auto *DefAccess = cast<StoreExpression>(E)->getDefiningAccess();
@@ -1391,7 +1382,7 @@ void NewGVN::valueNumberInstruction(Instruction *I) {
   } else {
     // Handle terminators that return values. All of them produce values we
     // don't currently understand.
-    if (!I->getType()->isVoidTy()){
+    if (!I->getType()->isVoidTy()) {
       auto *Symbolized = createUnknownExpression(I);
       performCongruenceFinding(I, Symbolized);
     }
@@ -1588,7 +1579,6 @@ bool NewGVN::runGVN(Function &F, DominatorTree *_DT, AssumptionCache *_AC,
     }
   }
 
-// FIXME: Move this to expensive checks when we are satisfied with NewGVN
 #ifndef NDEBUG
   verifyMemoryCongruency();
 #endif
@@ -2070,7 +2060,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
 
     // Cleanup the congruence class.
     SmallPtrSet<Value *, 4> MembersLeft;
-    for (Value * Member : CC->Members) {
+    for (Value *Member : CC->Members) {
       if (Member->getType()->isVoidTy()) {
         MembersLeft.insert(Member);
         continue;
