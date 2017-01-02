@@ -714,16 +714,15 @@ const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I,
   // Unlike loads, we never try to eliminate stores, so we do not check if they
   // are simple and avoid value numbering them.
   auto *SI = cast<StoreInst>(I);
-  // If this store's memorydef stores the same value as the last store, the
-  // memory accesses are equivalent.
-  // Get the expression, if any, for the RHS of the MemoryDef.
   MemoryAccess *StoreAccess = MSSA->getMemoryAccess(SI);
-  MemoryAccess *StoreRHS = lookupMemoryAccessEquiv(
-      cast<MemoryDef>(StoreAccess)->getDefiningAccess());
-  const Expression *OldStore = createStoreExpression(SI, StoreRHS, B);
-  // See if this store expression already has a value, and it's the same as our
-  // current store.  FIXME: Right now, we only do this for simple stores.
+  // See if we are defined by a previous store expression, it already has a
+  // value, and it's the same value as our current store. FIXME: Right now, we
+  // only do this for simple stores, we should expand to cover memcpys, etc.
   if (SI->isSimple()) {
+    // Get the expression, if any, for the RHS of the MemoryDef.
+    MemoryAccess *StoreRHS = lookupMemoryAccessEquiv(
+        cast<MemoryDef>(StoreAccess)->getDefiningAccess());
+    const Expression *OldStore = createStoreExpression(SI, StoreRHS, B);
     CongruenceClass *CC = ExpressionToClass.lookup(OldStore);
     if (CC && CC->DefiningExpr && isa<StoreExpression>(CC->DefiningExpr) &&
         CC->RepLeader == lookupOperandLeader(SI->getValueOperand(), SI, B))
@@ -1094,16 +1093,14 @@ void NewGVN::performCongruenceFinding(Value *V, const Expression *E) {
         // If this is a MemoryDef, we need to update the equivalence table. If
         // we determined the expression is congruent to a different memory
         // state, use that different memory state.  If we determined it didn't,
-        // we update that as well.
-        // Right now, the only way they can be equivalent is for store
+        // we update that as well.  Right now, we only support store
         // expressions.
-        if (!isa<MemoryUse>(MA)) {
-          if (E && isa<StoreExpression>(E) && EClass->Members.size() != 1) {
-            auto *DefAccess = cast<StoreExpression>(E)->getDefiningAccess();
-            setMemoryAccessEquivTo(MA, DefAccess != MA ? DefAccess : nullptr);
-          } else {
-            setMemoryAccessEquivTo(MA, nullptr);
-          }
+        if (!isa<MemoryUse>(MA) && isa<StoreExpression>(E) &&
+            EClass->Members.size() != 1) {
+          auto *DefAccess = cast<StoreExpression>(E)->getDefiningAccess();
+          setMemoryAccessEquivTo(MA, DefAccess != MA ? DefAccess : nullptr);
+        } else {
+          setMemoryAccessEquivTo(MA, nullptr);
         }
         markMemoryUsersTouched(MA);
       }
