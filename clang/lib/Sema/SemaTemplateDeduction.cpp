@@ -4786,9 +4786,6 @@ bool Sema::isTemplateTemplateParameterAtLeastAsSpecializedAs(
   QualType AType = Context.getTemplateSpecializationType(X, AArgs);
   QualType PType = Context.getTemplateSpecializationType(X, PArgs);
 
-  SmallVector<DeducedTemplateArgument, 4> Deduced;
-  Deduced.resize(A->size());
-
   //   ... the function template corresponding to P is at least as specialized
   //   as the function template corresponding to A according to the partial
   //   ordering rules for function templates.
