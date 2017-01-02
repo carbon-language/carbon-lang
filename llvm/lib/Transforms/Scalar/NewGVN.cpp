@@ -1422,14 +1422,12 @@ void NewGVN::verifyMemoryCongruency() {
       continue;
     if (auto *FirstMUD = dyn_cast<MemoryUseOrDef>(KV.first)) {
       auto *SecondMUD = dyn_cast<MemoryUseOrDef>(KV.second);
-      if (FirstMUD && SecondMUD) {
-        auto *FirstInst = FirstMUD->getMemoryInst();
-        auto *SecondInst = SecondMUD->getMemoryInst();
+      if (FirstMUD && SecondMUD)
         assert(
-            ValueToClass.lookup(FirstInst) == ValueToClass.lookup(SecondInst) &&
+            ValueToClass.lookup(FirstMUD->getMemoryInst()) ==
+                ValueToClass.lookup(SecondMUD->getMemoryInst()) &&
             "The instructions for these memory operations should have been in "
             "the same congruence class");
-      }
     } else if (auto *FirstMP = dyn_cast<MemoryPhi>(KV.first)) {
 
       // We can only sanely verify that MemoryDefs in the operand list all have
