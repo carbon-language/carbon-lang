@@ -29,9 +29,11 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 // class error_category
 
+#if defined(_LIBCPP_DEPRECATED_ABI_EXTERNAL_ERROR_CATEGORY_CONSTRUCTOR)
 error_category::error_category() _NOEXCEPT
 {
 }
+#endif
 
 error_category::~error_category() _NOEXCEPT
 {
