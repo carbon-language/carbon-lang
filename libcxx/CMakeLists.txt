@@ -442,9 +442,6 @@ if (LIBCXX_ENABLE_ASSERTIONS)
   define_if_not(MSVC -D_DEBUG)
 endif()
 
-# Feature flags ===============================================================
-define_if(MSVC -D_CRT_SECURE_NO_WARNINGS)
-
 # Modules flags ===============================================================
 # FIXME The libc++ sources are fundamentally non-modular. They need special
 # versions of the headers in order to provide C++03 and legacy ABI definitions.

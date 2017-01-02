@@ -161,6 +161,28 @@ split_list(LIBCXX_LINK_FLAGS)
 
 # Add a object library that contains the compiled source files.
 add_library(cxx_objects OBJECT ${exclude_from_all} ${LIBCXX_SOURCES} ${LIBCXX_HEADERS})
+if(WIN32 AND NOT MINGW)
+  target_compile_definitions(cxx_objects
+                             PRIVATE
+                               # Ignore the -MSC_VER mismatch, as we may build
+                               # with a different compatibility version.
+                               _ALLOW_MSC_VER_MISMATCH
+                               # Don't check the msvcprt iterator debug levels
+                               # as we will define the iterator types; libc++
+                               # uses a different macro to identify the debug
+                               # level.
+                               _ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH
+                               # We are building the c++ runtime, don't pull in
+                               # msvcprt.
+                               _CRTBLD
+                               # Don't warn on the use of "deprecated"
+                               # "insecure" functions which are standards
+                               # specified.
+                               _CRT_SECURE_NO_WARNINGS
+                               # Use the ISO conforming behaviour for conversion
+                               # in printf, scanf.
+                               _CRT_STDIO_ISO_WIDE_SPECIFIERS)
+endif()
 
 set_target_properties(cxx_objects
   PROPERTIES
