@@ -780,8 +780,12 @@ const Expression *NewGVN::performSymbolicCallEvaluation(Instruction *I,
 // Update the memory access equivalence table to say that From is equal to To,
 // and return true if this is different from what already existed in the table.
 bool NewGVN::setMemoryAccessEquivTo(MemoryAccess *From, MemoryAccess *To) {
-  DEBUG(dbgs() << "Setting " << *From << " equivalent to "
-               << (To ? "itself" : *To) << "\n");
+  DEBUG(dbgs() << "Setting " << *From << " equivalent to ");
+  if (!To)
+    DEBUG(dbgs() << "itself");
+  else
+    DEBUG(dbgs() << *To);
+  DEBUG(dbgs() << "\n");
   auto LookupResult = MemoryAccessEquiv.find(From);
   bool Changed = false;
   // If it's already in the table, see if the value changed.
