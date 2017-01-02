@@ -262,6 +262,7 @@ private:
   const VariableExpression *createVariableExpression(Value *);
   const ConstantExpression *createConstantExpression(Constant *);
   const Expression *createVariableOrConstant(Value *V, const BasicBlock *B);
+  const UnknownExpression *createUnknownExpression(Instruction *);
   const StoreExpression *createStoreExpression(StoreInst *, MemoryAccess *,
                                                const BasicBlock *);
   LoadExpression *createLoadExpression(Type *, Value *, LoadInst *,
@@ -640,6 +641,12 @@ const ConstantExpression *NewGVN::createConstantExpression(Constant *C) {
   return E;
 }
 
+const UnknownExpression *NewGVN::createUnknownExpression(Instruction *I) {
+  auto *E = new (ExpressionAllocator) UnknownExpression(I);
+  E->setOpcode(I->getOpcode());
+  return E;
+}
+
 const CallExpression *NewGVN::createCallExpression(CallInst *CI,
                                                    MemoryAccess *HV,
                                                    const BasicBlock *B) {
@@ -1012,24 +1019,7 @@ void NewGVN::performCongruenceFinding(Value *V, const Expression *E) {
   assert(!VClass->Dead && "Found a dead class");
 
   CongruenceClass *EClass;
-  // Expressions we can't symbolize are always in their own unique
-  // congruence class.  FIXME: This is hard to perfect. Long term, we should try
-  // to create expressions for everything. We should add UnknownExpression(Inst)
-  // or something to avoid wasting time creating real ones.  Then the existing
-  // logic will just work.
-  if (E == nullptr) {
-    // We may have already made a unique class.
-    // Test whether we are still in the initial class, or we have found a class
-    if (VClass == InitialClass || VClass->RepLeader != V) {
-      CongruenceClass *NewClass = createCongruenceClass(V, nullptr);
-      // We should always be adding the member in the below code.
-      EClass = NewClass;
-      DEBUG(dbgs() << "Created new congruence class for " << *V
-                   << " due to nullptr expression\n");
-    } else {
-      EClass = VClass;
-    }
-  } else if (const auto *VE = dyn_cast<VariableExpression>(E)) {
+  if (const auto *VE = dyn_cast<VariableExpression>(E)) {
     EClass = ValueToClass[VE->getVariableValue()];
   } else {
     auto lookupResult = ExpressionToClass.insert({E, nullptr});
@@ -1392,9 +1382,19 @@ void NewGVN::valueNumberInstruction(Instruction *I) {
     return;
   }
   if (!I->isTerminator()) {
-    const Expression *Symbolized = performSymbolicEvaluation(I, I->getParent());
+    const auto *Symbolized = performSymbolicEvaluation(I, I->getParent());
+    // If we couldn't come up with a symbolic expression, use the unknown
+    // expression
+    if (Symbolized == nullptr)
+      Symbolized = createUnknownExpression(I);
     performCongruenceFinding(I, Symbolized);
   } else {
+    // Handle terminators that return values. All of them produce values we
+    // don't currently understand.
+    if (!I->getType()->isVoidTy()){
+      auto *Symbolized = createUnknownExpression(I);
+      performCongruenceFinding(I, Symbolized);
+    }
     processOutgoingEdges(dyn_cast<TerminatorInst>(I), I->getParent());
   }
 }
