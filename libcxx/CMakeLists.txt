@@ -87,13 +87,13 @@ if (NOT LIBCXX_ENABLE_SHARED AND NOT LIBCXX_ENABLE_STATIC)
 endif()
 
 # ABI Library options ---------------------------------------------------------
-set(LIBCXX_CXX_ABI "default" CACHE STRING
-    "Specify C++ ABI library to use.")
-set(CXXABIS none default libcxxabi libcxxrt libstdc++ libsupc++)
+set(LIBCXX_CXX_ABI "${LIBCXX_CXX_ABI}" CACHE STRING
+    "Specify C++ ABI library to use." FORCE)
+set(CXXABIS none libcxxabi libcxxrt libstdc++ libsupc++)
 set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 
 # Setup the default options if LIBCXX_CXX_ABI is not specified.
-if (LIBCXX_CXX_ABI STREQUAL "default")
+if (NOT LIBCXX_CXX_ABI)
   find_path(
     LIBCXX_LIBCXXABI_INCLUDES_INTERNAL
     cxxabi.h
@@ -107,7 +107,7 @@ if (LIBCXX_CXX_ABI STREQUAL "default")
     set(LIBCXX_CXX_ABI_INCLUDE_PATHS "${LIBCXX_LIBCXXABI_INCLUDES_INTERNAL}")
     set(LIBCXX_CXX_ABI_INTREE 1)
   else()
-    set(LIBCXX_CXX_ABI_LIBNAME "default")
+    set(LIBCXX_CXX_ABI_LIBNAME "none")
   endif()
 else()
   set(LIBCXX_CXX_ABI_LIBNAME "${LIBCXX_CXX_ABI}")
@@ -125,7 +125,6 @@ option(LIBCXX_ENABLE_STATIC_ABI_LIBRARY "Statically link the ABI library" OFF)
 set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE OFF)
 if (LLVM_HAVE_LINK_VERSION_SCRIPT AND NOT LIBCXX_ENABLE_STATIC_ABI_LIBRARY
       AND NOT LIBCXX_CXX_ABI_LIBNAME STREQUAL "none"
-      AND NOT LIBCXX_CXX_ABI_LIBNAME STREQUAL "default"
       AND PYTHONINTERP_FOUND
       AND LIBCXX_ENABLE_SHARED)
     set(ENABLE_LINKER_SCRIPT_DEFAULT_VALUE ON)

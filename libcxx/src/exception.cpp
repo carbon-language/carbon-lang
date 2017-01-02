@@ -12,8 +12,7 @@
 #include "exception"
 #include "new"
 
-#if defined(__APPLE__) && !defined(LIBCXXRT) && \
-    !defined(_LIBCPP_BUILDING_HAS_NO_ABI_LIBRARY)
+#if defined(__APPLE__) && !defined(LIBCXXRT)
   #include <cxxabi.h>
 
   using namespace __cxxabiv1;
@@ -107,8 +106,7 @@ bool uncaught_exception() _NOEXCEPT { return uncaught_exceptions() > 0; }
 
 int uncaught_exceptions() _NOEXCEPT
 {
-#if !defined(_LIBCPP_BUILDING_HAS_NO_ABI_LIBRARY) && \
-    (defined(__APPLE__) || defined(_LIBCPPABI_VERSION))
+#if defined(__APPLE__) || defined(_LIBCPPABI_VERSION)
    // on Darwin, there is a helper function so __cxa_get_globals is private
 # if _LIBCPPABI_VERSION > 1101
     return __cxa_uncaught_exceptions();
