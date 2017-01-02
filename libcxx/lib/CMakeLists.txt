@@ -181,6 +181,13 @@ if (LIBCXX_ENABLE_SHARED)
       SOVERSION     "${LIBCXX_ABI_VERSION}"
   )
   list(APPEND LIBCXX_TARGETS "cxx_shared")
+  if(WIN32 AND NOT MINGW AND NOT "${CMAKE_HOST_SYSTEM_NAME}" STREQUAL "Windows")
+    # Since we most likely do not have a mt.exe replacement, disable the
+    # manifest bundling.  This allows a normal cmake invocation to pass which
+    # will attempt to use the manifest tool to generate the bundled manifest
+    set_target_properties(cxx_shared PROPERTIES
+                          APPEND_STRING PROPERTY LINK_FLAGS " /MANIFEST:NO")
+  endif()
 endif()
 
 # Build the static library.
