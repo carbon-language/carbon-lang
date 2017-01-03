@@ -21,16 +21,10 @@ namespace __xray {
 
 static constexpr size_t kSize = 4096;
 
-TEST(BufferQueueTest, API) {
-  bool Success = false;
-  BufferQueue Buffers(kSize, 1, Success);
-  ASSERT_TRUE(Success);
-}
+TEST(BufferQueueTest, API) { BufferQueue Buffers(kSize, 1); }
 
 TEST(BufferQueueTest, GetAndRelease) {
-  bool Success = false;
-  BufferQueue Buffers(kSize, 1, Success);
-  ASSERT_TRUE(Success);
+  BufferQueue Buffers(kSize, 1);
   BufferQueue::Buffer Buf;
   ASSERT_EQ(Buffers.getBuffer(Buf), std::error_code());
   ASSERT_NE(nullptr, Buf.Buffer);
@@ -39,9 +33,7 @@ TEST(BufferQueueTest, GetAndRelease) {
 }
 
 TEST(BufferQueueTest, GetUntilFailed) {
-  bool Success = false;
-  BufferQueue Buffers(kSize, 1, Success);
-  ASSERT_TRUE(Success);
+  BufferQueue Buffers(kSize, 1);
   BufferQueue::Buffer Buf0;
   EXPECT_EQ(Buffers.getBuffer(Buf0), std::error_code());
   BufferQueue::Buffer Buf1;
@@ -50,9 +42,7 @@ TEST(BufferQueueTest, GetUntilFailed) {
 }
 
 TEST(BufferQueueTest, ReleaseUnknown) {
-  bool Success = false;
-  BufferQueue Buffers(kSize, 1, Success);
-  ASSERT_TRUE(Success);
+  BufferQueue Buffers(kSize, 1);
   BufferQueue::Buffer Buf;
   Buf.Buffer = reinterpret_cast<void *>(0xdeadbeef);
   Buf.Size = kSize;
@@ -60,9 +50,7 @@ TEST(BufferQueueTest, ReleaseUnknown) {
 }
 
 TEST(BufferQueueTest, ErrorsWhenFinalising) {
-  bool Success = false;
-  BufferQueue Buffers(kSize, 2, Success);
-  ASSERT_TRUE(Success);
+  BufferQueue Buffers(kSize, 2);
   BufferQueue::Buffer Buf;
   ASSERT_EQ(Buffers.getBuffer(Buf), std::error_code());
   ASSERT_NE(nullptr, Buf.Buffer);
@@ -74,9 +62,7 @@ TEST(BufferQueueTest, ErrorsWhenFinalising) {
 }
 
 TEST(BufferQueueTest, MultiThreaded) {
-  bool Success = false;
-  BufferQueue Buffers(kSize, 100, Success);
-  ASSERT_TRUE(Success);
+  BufferQueue Buffers(kSize, 100);
   auto F = [&] {
     BufferQueue::Buffer B;
     while (!Buffers.getBuffer(B)) {
@@ -90,20 +76,6 @@ TEST(BufferQueueTest, MultiThreaded) {
       ;
   });
   F();
-}
-
-TEST(BufferQueueTest, Apply) {
-  bool Success = false;
-  BufferQueue Buffers(kSize, 10, Success);
-  ASSERT_TRUE(Success);
-  auto Count = 0;
-  BufferQueue::Buffer B;
-  for (int I = 0; I < 10; ++I) {
-    ASSERT_FALSE(Buffers.getBuffer(B));
-    ASSERT_FALSE(Buffers.releaseBuffer(B));
-  }
-  Buffers.apply([&](const BufferQueue::Buffer &B) { ++Count; });
-  ASSERT_EQ(Count, 10);
 }
 
 } // namespace __xray
