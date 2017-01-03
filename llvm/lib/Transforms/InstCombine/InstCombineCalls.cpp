@@ -1625,6 +1625,18 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
     break;
   }
+  case Intrinsic::fabs: {
+    Value *Cond;
+    Constant *LHS, *RHS;
+    if (match(II->getArgOperand(0),
+              m_Select(m_Value(Cond), m_Constant(LHS), m_Constant(RHS)))) {
+      CallInst *Call0 = Builder->CreateCall(II->getCalledFunction(), {LHS});
+      CallInst *Call1 = Builder->CreateCall(II->getCalledFunction(), {RHS});
+      return SelectInst::Create(Cond, Call0, Call1);
+    }
+
+    break;
+  }
   case Intrinsic::ppc_altivec_lvx:
   case Intrinsic::ppc_altivec_lvxl:
     // Turn PPC lvx -> load if the pointer is known aligned.
