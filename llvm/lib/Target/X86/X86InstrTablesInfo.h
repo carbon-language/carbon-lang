@@ -1,4 +1,4 @@
-//===-- X86AVX512Info.h - X86 Instruction Tables Information ----*- C++ -*-===//
+//===-- X86InstrTablesInfo.h - X86 Instruction Tables -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
