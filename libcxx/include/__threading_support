@@ -67,7 +67,11 @@ typedef pthread_mutex_t __libcpp_mutex_t;
 typedef pthread_cond_t __libcpp_condvar_t;
 #define _LIBCPP_CONDVAR_INITIALIZER PTHREAD_COND_INITIALIZER
 
-// THread ID
+// Execute once
+typedef pthread_once_t __libcpp_exec_once_flag;
+#define _LIBCPP_EXEC_ONCE_INITIALIZER PTHREAD_ONCE_INIT
+
+// Thread id
 typedef pthread_t __libcpp_thread_id;
 
 // Thread
@@ -110,7 +114,17 @@ int __libcpp_condvar_timedwait(__libcpp_condvar_t *__cv, __libcpp_mutex_t *__m,
 _LIBCPP_THREAD_ABI_VISIBILITY
 int __libcpp_condvar_destroy(__libcpp_condvar_t* __cv);
 
-// Thread ID
+// Execute once
+_LIBCPP_THREAD_ABI_VISIBILITY
+int __libcpp_execute_once(__libcpp_exec_once_flag *flag,
+                          void (*init_routine)(void));
+
+// Thread id
+#if defined(__APPLE__) && !defined(__arm__)
+_LIBCPP_THREAD_ABI_VISIBILITY
+mach_port_t __libcpp_thread_get_port();
+#endif
+
 _LIBCPP_THREAD_ABI_VISIBILITY
 bool __libcpp_thread_id_equal(__libcpp_thread_id t1, __libcpp_thread_id t2);
 
@@ -145,7 +159,7 @@ _LIBCPP_THREAD_ABI_VISIBILITY
 void *__libcpp_tls_get(__libcpp_tls_key __key);
 
 _LIBCPP_THREAD_ABI_VISIBILITY
-void __libcpp_tls_set(__libcpp_tls_key __key, void *__p);
+int __libcpp_tls_set(__libcpp_tls_key __key, void *__p);
 
 #if defined(_LIBCPP_HAS_THREAD_API_PTHREAD) || \
     defined(_LIBCPP_BUILDING_THREAD_API_EXTERNAL_PTHREAD)
@@ -221,6 +235,19 @@ int __libcpp_condvar_destroy(__libcpp_condvar_t *__cv)
   return pthread_cond_destroy(__cv);
 }
 
+// Execute once
+int __libcpp_execute_once(__libcpp_exec_once_flag *flag,
+                          void (*init_routine)(void)) {
+  return pthread_once(flag, init_routine);
+}
+
+// Thread id
+#if defined(__APPLE__) && !defined(__arm__)
+mach_port_t __libcpp_thread_get_port() {
+    return pthread_mach_thread_np(pthread_self());
+}
+#endif
+
 // Returns non-zero if the thread ids are equal, otherwise 0
 bool __libcpp_thread_id_equal(__libcpp_thread_id t1, __libcpp_thread_id t2)
 {
@@ -276,9 +303,9 @@ void *__libcpp_tls_get(__libcpp_tls_key __key)
   return pthread_getspecific(__key);
 }
 
-void __libcpp_tls_set(__libcpp_tls_key __key, void *__p)
+int __libcpp_tls_set(__libcpp_tls_key __key, void *__p)
 {
-  pthread_setspecific(__key, __p);
+    return pthread_setspecific(__key, __p);
 }
 
 #endif // _LIBCPP_HAS_THREAD_API_PTHREAD
