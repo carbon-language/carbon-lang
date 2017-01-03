@@ -26,6 +26,14 @@ class LinuxCoreTestCase(TestBase):
     _x86_64_regions = 5
     _s390x_regions = 2
 
+    def setUp(self):
+        super(LinuxCoreTestCase, self).setUp()
+        self._initial_platform = lldb.DBG.GetSelectedPlatform()
+
+    def tearDown(self):
+        lldb.DBG.SetSelectedPlatform(self._initial_platform)
+        super(LinuxCoreTestCase, self).tearDown()
+
     @skipIf(oslist=['windows'])
     @skipIf(triple='^mips')
     def test_i386(self):
