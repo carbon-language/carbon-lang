@@ -209,34 +209,22 @@ entry:
 }
 
 define <4 x i64> @QQ64(i64* %ptr) nounwind uwtable readnone ssp {
-; X32-AVX2-LABEL: QQ64:
-; X32-AVX2:       ## BB#0: ## %entry
-; X32-AVX2-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX2-NEXT:    movl (%eax), %ecx
-; X32-AVX2-NEXT:    movl 4(%eax), %eax
-; X32-AVX2-NEXT:    vmovd %ecx, %xmm0
-; X32-AVX2-NEXT:    vpinsrd $1, %eax, %xmm0, %xmm0
-; X32-AVX2-NEXT:    vpinsrd $2, %ecx, %xmm0, %xmm0
-; X32-AVX2-NEXT:    vpinsrd $3, %eax, %xmm0, %xmm0
-; X32-AVX2-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
-; X32-AVX2-NEXT:    retl
+; X32-LABEL: QQ64:
+; X32:       ## BB#0: ## %entry
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl (%eax), %ecx
+; X32-NEXT:    movl 4(%eax), %eax
+; X32-NEXT:    vmovd %ecx, %xmm0
+; X32-NEXT:    vpinsrd $1, %eax, %xmm0, %xmm0
+; X32-NEXT:    vpinsrd $2, %ecx, %xmm0, %xmm0
+; X32-NEXT:    vpinsrd $3, %eax, %xmm0, %xmm0
+; X32-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
+; X32-NEXT:    retl
 ;
 ; X64-LABEL: QQ64:
 ; X64:       ## BB#0: ## %entry
 ; X64-NEXT:    vbroadcastsd (%rdi), %ymm0
 ; X64-NEXT:    retq
-;
-; X32-AVX512VL-LABEL: QQ64:
-; X32-AVX512VL:       ## BB#0: ## %entry
-; X32-AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax
-; X32-AVX512VL-NEXT:    movl (%eax), %ecx
-; X32-AVX512VL-NEXT:    movl 4(%eax), %eax
-; X32-AVX512VL-NEXT:    vmovd %ecx, %xmm0
-; X32-AVX512VL-NEXT:    vpinsrd $1, %eax, %xmm0, %xmm0
-; X32-AVX512VL-NEXT:    vpinsrd $2, %ecx, %xmm0, %xmm0
-; X32-AVX512VL-NEXT:    vpinsrd $3, %eax, %xmm0, %xmm0
-; X32-AVX512VL-NEXT:    vinserti32x4 $1, %xmm0, %ymm0, %ymm0
-; X32-AVX512VL-NEXT:    retl
 entry:
   %q = load i64, i64* %ptr, align 4
   %q0 = insertelement <4 x i64> undef, i64 %q, i32 0
@@ -1683,7 +1671,7 @@ define void @isel_crash_4q(i64* %cV_R.addr) {
 ; X32-AVX512VL-NEXT:    vpinsrd $1, %eax, %xmm1, %xmm1
 ; X32-AVX512VL-NEXT:    vpinsrd $2, %ecx, %xmm1, %xmm1
 ; X32-AVX512VL-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm1
-; X32-AVX512VL-NEXT:    vinserti32x4 $1, %xmm1, %ymm1, %ymm1
+; X32-AVX512VL-NEXT:    vinserti128 $1, %xmm1, %ymm1, %ymm1
 ; X32-AVX512VL-NEXT:    vmovaps %ymm0, {{[0-9]+}}(%esp)
 ; X32-AVX512VL-NEXT:    vmovdqa %ymm1, {{[0-9]+}}(%esp)
 ; X32-AVX512VL-NEXT:    movl %ebp, %esp
