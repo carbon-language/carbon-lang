@@ -272,14 +272,8 @@ static const Value *getNoopInput(const Value *V,
                TLI.allowTruncateForTailCall(Op->getType(), I->getType())) {
       DataBits = std::min(DataBits, I->getType()->getPrimitiveSizeInBits());
       NoopInput = Op;
-    } else if (auto *CI = dyn_cast<CallInst>(I)) {
-      // Look through call operands.
-      Value *ReturnedOp = CI->getReturnedArgOperand();
-      if (ReturnedOp && isNoopBitcast(ReturnedOp->getType(), I->getType(), TLI))
-        NoopInput = ReturnedOp;
-    } else if (auto *II = dyn_cast<InvokeInst>(I)) {
-      // Look through invoke operands.
-      Value *ReturnedOp = II->getReturnedArgOperand();
+    } else if (auto CS = ImmutableCallSite(I)) {
+      const Value *ReturnedOp = CS.getReturnedArgOperand();
       if (ReturnedOp && isNoopBitcast(ReturnedOp->getType(), I->getType(), TLI))
         NoopInput = ReturnedOp;
     } else if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(V)) {
