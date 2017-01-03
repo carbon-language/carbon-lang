@@ -12590,6 +12590,40 @@ static SDValue lower256BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   }
 }
 
+/// \brief Try to lower a vector shuffle as a 256-bit shuffle.
+static SDValue lowerV2X256VectorShuffle(const SDLoc &DL, MVT VT,
+                                        ArrayRef<int> Mask, SDValue V1,
+                                        SDValue V2, SelectionDAG &DAG) {
+  assert(VT.getScalarSizeInBits() == 64 &&
+         "Unexpected element type size for 128bit shuffle.");
+
+  // To handle 256 bit vector requires VLX and most probably
+  // function lowerV2X128VectorShuffle() is better solution.
+  assert(VT.is512BitVector() && "Unexpected vector size for 512bit shuffle.");
+
+  assert(Mask.size() == 4 && "Expect mask to already be widened to 128-bits.");
+
+  SmallVector<int, 2> WidenedMask;
+  if (!canWidenShuffleElements(Mask, WidenedMask))
+    return SDValue();
+
+  // Check for patterns which can be matched with a single insert of a 256-bit
+  // subvector.
+  bool OnlyUsesV1 = isShuffleEquivalent(V1, V2, WidenedMask, {0, 0});
+  if (OnlyUsesV1 || isShuffleEquivalent(V1, V2, WidenedMask, {0, 2})) {
+    MVT SubVT = MVT::getVectorVT(VT.getVectorElementType(),
+                                 VT.getVectorNumElements() / 2);
+    SDValue LoV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT, V1,
+                              DAG.getIntPtrConstant(0, DL));
+    SDValue HiV = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, SubVT,
+                              OnlyUsesV1 ? V1 : V2,
+                              DAG.getIntPtrConstant(0, DL));
+    return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LoV, HiV);
+  }
+
+  return SDValue();
+}
+
 /// \brief Try to lower a vector shuffle as a 128-bit shuffles.
 static SDValue lowerV4X128VectorShuffle(const SDLoc &DL, MVT VT,
                                         ArrayRef<int> Mask, SDValue V1,
@@ -12604,6 +12638,11 @@ static SDValue lowerV4X128VectorShuffle(const SDLoc &DL, MVT VT,
   SmallVector<int, 4> WidenedMask;
   if (!canWidenShuffleElements(Mask, WidenedMask))
     return SDValue();
+
+  // See if we can widen even further to a 256-bit element.
+  if (SDValue Shuf256 = lowerV2X256VectorShuffle(DL, VT, WidenedMask, V1, V2,
+                                                 DAG))
+    return Shuf256;
 
   SDValue Ops[2] = {DAG.getUNDEF(VT), DAG.getUNDEF(VT)};
   // Insure elements came from the same Op.

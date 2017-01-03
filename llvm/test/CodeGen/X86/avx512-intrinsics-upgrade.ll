@@ -3020,11 +3020,10 @@ declare <8 x double> @llvm.x86.avx512.mask.insertf64x4.512(<8 x double>, <4 x do
 define <8 x double>@test_int_x86_avx512_mask_insertf64x4_512(<8 x double> %x0, <4 x double> %x1, <8 x double> %x3, i8 %x4) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_insertf64x4_512:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
-; CHECK-NEXT:    vshuff64x2 {{.*#+}} zmm3 = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vinsertf64x4 $1, %ymm1, %zmm0, %zmm3
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vshuff64x2 {{.*#+}} zmm2 {%k1} = zmm0[0,1,2,3],zmm1[0,1,2,3]
-; CHECK-NEXT:    vshuff64x2 {{.*#+}} zmm0 {%k1} {z} = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vinsertf64x4 $1, %ymm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vinsertf64x4 $1, %ymm1, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    vaddpd %zmm3, %zmm2, %zmm1
 ; CHECK-NEXT:    vaddpd %zmm1, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
@@ -3041,11 +3040,10 @@ declare <8 x i64> @llvm.x86.avx512.mask.inserti64x4.512(<8 x i64>, <4 x i64>, i3
 define <8 x i64>@test_int_x86_avx512_mask_inserti64x4_512(<8 x i64> %x0, <4 x i64> %x1, <8 x i64> %x3, i8 %x4) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_inserti64x4_512:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
-; CHECK-NEXT:    vshufi64x2 {{.*#+}} zmm3 = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm3
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vshufi64x2 {{.*#+}} zmm2 {%k1} = zmm0[0,1,2,3],zmm1[0,1,2,3]
-; CHECK-NEXT:    vshufi64x2 {{.*#+}} zmm0 {%k1} {z} = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vinserti64x4 $1, %ymm1, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    vpaddq %zmm3, %zmm2, %zmm1
 ; CHECK-NEXT:    vpaddq %zmm1, %zmm0, %zmm0
 ; CHECK-NEXT:    retq

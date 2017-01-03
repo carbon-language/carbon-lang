@@ -58,11 +58,10 @@ declare <16 x float> @llvm.x86.avx512.mask.insertf32x8.512(<16 x float>, <8 x fl
 define <16 x float>@test_int_x86_avx512_mask_insertf32x8_512(<16 x float> %x0, <8 x float> %x1, <16 x float> %x3, i16 %x4) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_insertf32x8_512:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
-; CHECK-NEXT:    vshuff32x4 {{.*#+}} zmm3 = zmm0[0,1,2,3,4,5,6,7],zmm1[0,1,2,3,4,5,6,7]
+; CHECK-NEXT:    vinsertf32x8 $1, %ymm1, %zmm0, %zmm3
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vshuff32x4 {{.*#+}} zmm2 {%k1} = zmm0[0,1,2,3,4,5,6,7],zmm1[0,1,2,3,4,5,6,7]
-; CHECK-NEXT:    vshuff32x4 {{.*#+}} zmm0 {%k1} {z} = zmm0[0,1,2,3,4,5,6,7],zmm1[0,1,2,3,4,5,6,7]
+; CHECK-NEXT:    vinsertf32x8 $1, %ymm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vinsertf32x8 $1, %ymm1, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    vaddps %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    vaddps %zmm0, %zmm3, %zmm0
 ; CHECK-NEXT:    retq
@@ -102,11 +101,10 @@ declare <16 x i32> @llvm.x86.avx512.mask.inserti32x8.512(<16 x i32>, <8 x i32>, 
 define <16 x i32>@test_int_x86_avx512_mask_inserti32x8_512(<16 x i32> %x0, <8 x i32> %x1, <16 x i32> %x3, i16 %x4) {
 ; CHECK-LABEL: test_int_x86_avx512_mask_inserti32x8_512:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
-; CHECK-NEXT:    vshufi32x4 {{.*#+}} zmm3 = zmm0[0,1,2,3,4,5,6,7],zmm1[0,1,2,3,4,5,6,7]
+; CHECK-NEXT:    vinserti32x8 $1, %ymm1, %zmm0, %zmm3
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vshufi32x4 {{.*#+}} zmm2 {%k1} = zmm0[0,1,2,3,4,5,6,7],zmm1[0,1,2,3,4,5,6,7]
-; CHECK-NEXT:    vshufi32x4 {{.*#+}} zmm0 {%k1} {z} = zmm0[0,1,2,3,4,5,6,7],zmm1[0,1,2,3,4,5,6,7]
+; CHECK-NEXT:    vinserti32x8 $1, %ymm1, %zmm0, %zmm2 {%k1}
+; CHECK-NEXT:    vinserti32x8 $1, %ymm1, %zmm0, %zmm0 {%k1} {z}
 ; CHECK-NEXT:    vpaddd %zmm0, %zmm2, %zmm0
 ; CHECK-NEXT:    vpaddd %zmm3, %zmm0, %zmm0
 ; CHECK-NEXT:    retq
