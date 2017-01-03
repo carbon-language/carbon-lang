@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangMove.h"
+#include "HelperDeclRefGraph.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Format/Format.h"
@@ -16,7 +17,10 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Core/Replacement.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
+
+#define DEBUG_TYPE "clang-move"
 
 using namespace clang::ast_matchers;
 
@@ -394,6 +398,25 @@ createInsertedReplacements(const std::vector<std::string> &Includes,
       clang::tooling::Replacement(FileName, 0, 0, NewCode));
 }
 
+// Return a set of all decls which are used/referenced by the given Decls.
+// Specically, given a class member declaration, this method will return all
+// decls which are used by the whole class.
+llvm::DenseSet<const Decl *>
+getUsedDecls(const HelperDeclRefGraph *RG,
+             const std::vector<const NamedDecl *> &Decls) {
+  assert(RG);
+  llvm::DenseSet<const CallGraphNode *> Nodes;
+  for (const auto *D : Decls) {
+    auto Result = RG->getReachableNodes(
+        HelperDeclRGBuilder::getOutmostClassOrFunDecl(D));
+    Nodes.insert(Result.begin(), Result.end());
+  }
+  llvm::DenseSet<const Decl *> Results;
+  for (const auto *Node : Nodes)
+    Results.insert(Node->getDecl());
+  return Results;
+}
+
 } // namespace
 
 std::unique_ptr<clang::ASTConsumer>
@@ -455,23 +478,17 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
   //============================================================================
   // Matchers for old cc
   //============================================================================
-  auto InOldCCNamedOrGlobalNamespace =
-      allOf(hasParent(decl(anyOf(namespaceDecl(unless(isAnonymous())),
-                                 translationUnitDecl()))),
-            InOldCC);
-  // Matching using decls/type alias decls which are in named namespace or
-  // global namespace. Those in classes, functions and anonymous namespaces are
-  // covered in other matchers.
+  auto IsOldCCTopLevelDecl = allOf(
+      hasParent(decl(anyOf(namespaceDecl(), translationUnitDecl()))), InOldCC);
+  // Matching using decls/type alias decls which are in named/anonymous/global
+  // namespace, these decls are always copied to new.h/cc. Those in classes,
+  // functions are covered in other matchers.
   Finder->addMatcher(
-      namedDecl(anyOf(usingDecl(InOldCCNamedOrGlobalNamespace),
-                      usingDirectiveDecl(InOldCCNamedOrGlobalNamespace),
-                      typeAliasDecl( InOldCCNamedOrGlobalNamespace)))
+      namedDecl(anyOf(usingDecl(IsOldCCTopLevelDecl),
+                      usingDirectiveDecl(IsOldCCTopLevelDecl),
+                      typeAliasDecl(IsOldCCTopLevelDecl)))
           .bind("using_decl"),
       this);
-
-  // Match anonymous namespace decl in old cc.
-  Finder->addMatcher(namespaceDecl(isAnonymous(), InOldCC).bind("anonymous_ns"),
-                     this);
 
   // Match static functions/variable definitions which are defined in named
   // namespaces.
@@ -489,13 +506,37 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
   }
   auto InMovedClass =
       hasOutermostEnclosingClass(cxxRecordDecl(*HasAnySymbolNames));
-  auto IsOldCCStaticDefinition =
-      allOf(isDefinition(), unless(InMovedClass), InOldCCNamedOrGlobalNamespace,
-            isStaticStorageClass());
-  Finder->addMatcher(namedDecl(anyOf(functionDecl(IsOldCCStaticDefinition),
-                                     varDecl(IsOldCCStaticDefinition)))
-                         .bind("static_decls"),
-                     this);
+
+  // Matchers for helper declarations in old.cc.
+  auto InAnonymousNS = hasParent(namespaceDecl(isAnonymous()));
+  auto DefinitionInOldCC = allOf(isDefinition(), unless(InMovedClass), InOldCC);
+  auto IsOldCCHelperDefinition =
+      allOf(DefinitionInOldCC, anyOf(isStaticStorageClass(), InAnonymousNS));
+  // Match helper classes separately with helper functions/variables since we
+  // want to reuse these matchers in finding helpers usage below.
+  auto HelperFuncOrVar = namedDecl(anyOf(functionDecl(IsOldCCHelperDefinition),
+                                         varDecl(IsOldCCHelperDefinition)));
+  auto HelperClasses = cxxRecordDecl(DefinitionInOldCC, InAnonymousNS);
+  // Save all helper declarations in old.cc.
+  Finder->addMatcher(
+      namedDecl(anyOf(HelperFuncOrVar, HelperClasses)).bind("helper_decls"),
+      this);
+
+  // Construct an AST-based call graph of helper declarations in old.cc.
+  // In the following matcheres, "dc" is a caller while "helper_decls" and
+  // "used_class" is a callee, so a new edge starting from caller to callee will
+  // be add in the graph.
+  //
+  // Find helper function/variable usages.
+  Finder->addMatcher(
+      declRefExpr(to(HelperFuncOrVar), hasAncestor(decl().bind("dc")))
+          .bind("func_ref"),
+      &RGBuilder);
+  // Find helper class usages.
+  Finder->addMatcher(
+      typeLoc(loc(recordType(hasDeclaration(HelperClasses.bind("used_class")))),
+              hasAncestor(decl().bind("dc"))),
+      &RGBuilder);
 
   //============================================================================
   // Matchers for old files, including old.h/old.cc
@@ -543,12 +584,13 @@ void ClangMoveTool::run(const ast_matchers::MatchFinder::MatchResult &Result) {
       else
         MovedDecls.push_back(FWD);
     }
-  } else if (const auto *ANS =
-                 Result.Nodes.getNodeAs<clang::NamespaceDecl>("anonymous_ns")) {
-    MovedDecls.push_back(ANS);
   } else if (const auto *ND =
                  Result.Nodes.getNodeAs<clang::NamedDecl>("static_decls")) {
     MovedDecls.push_back(ND);
+  } else if (const auto *ND =
+                 Result.Nodes.getNodeAs<clang::NamedDecl>("helper_decls")) {
+    MovedDecls.push_back(ND);
+    HelperDeclarations.push_back(ND);
   } else if (const auto *UD =
                  Result.Nodes.getNodeAs<clang::NamedDecl>("using_decl")) {
     MovedDecls.push_back(UD);
@@ -567,9 +609,6 @@ void ClangMoveTool::addIncludes(llvm::StringRef IncludeHeader, bool IsAngled,
   SmallVector<char, 128> HeaderWithSearchPath;
   llvm::sys::path::append(HeaderWithSearchPath, SearchPath, IncludeHeader);
   std::string AbsoluteOldHeader = makeAbsolutePath(Context->Spec.OldHeader);
-  // FIXME: Add old.h to the new.cc/h when the new target has dependencies on
-  // old.h/c. For instance, when moved class uses another class defined in
-  // old.h, the old.h should be added in new.h.
   if (AbsoluteOldHeader ==
       MakeAbsolutePath(SM, llvm::StringRef(HeaderWithSearchPath.data(),
                                            HeaderWithSearchPath.size()))) {
@@ -591,6 +630,28 @@ void ClangMoveTool::addIncludes(llvm::StringRef IncludeHeader, bool IsAngled,
 
 void ClangMoveTool::removeDeclsInOldFiles() {
   if (RemovedDecls.empty()) return;
+
+  // If old_header is not specified (only move declarations from old.cc), remain
+  // all the helper function declarations in old.cc as UnremovedDeclsInOldHeader
+  // is empty in this case, there is no way to verify unused/used helpers.
+  if (!Context->Spec.OldHeader.empty()) {
+    std::vector<const NamedDecl *> UnremovedDecls;
+    for (const auto *D : UnremovedDeclsInOldHeader)
+      UnremovedDecls.push_back(D);
+
+    auto UsedDecls = getUsedDecls(RGBuilder.getGraph(), UnremovedDecls);
+
+    // We remove the helper declarations which are not used in the old.cc after
+    // moving the given declarations.
+    for (const auto *D : HelperDeclarations) {
+      if (!UsedDecls.count(HelperDeclRGBuilder::getOutmostClassOrFunDecl(D))) {
+        DEBUG(llvm::dbgs() << "Helper removed in old.cc: "
+                           << D->getNameAsString() << " " << D << "\n");
+        RemovedDecls.push_back(D);
+      }
+    }
+  }
+
   for (const auto *RemovedDecl : RemovedDecls) {
     const auto &SM = RemovedDecl->getASTContext().getSourceManager();
     auto Range = getFullRange(RemovedDecl);
@@ -650,6 +711,22 @@ void ClangMoveTool::moveDeclsToNewFiles() {
       NewCCDecls.push_back(MovedDecl);
   }
 
+  auto UsedDecls = getUsedDecls(RGBuilder.getGraph(), RemovedDecls);
+  std::vector<const NamedDecl *> ActualNewCCDecls;
+
+  // Filter out all unused helpers in NewCCDecls.
+  // We only move the used helpers (including transively used helpers) and the
+  // given symbols being moved.
+  for (const auto *D : NewCCDecls) {
+    if (llvm::is_contained(HelperDeclarations, D) &&
+        !UsedDecls.count(HelperDeclRGBuilder::getOutmostClassOrFunDecl(D)))
+      continue;
+
+    DEBUG(llvm::dbgs() << "Helper used in new.cc: " << D->getNameAsString()
+                       << " " << D << "\n");
+    ActualNewCCDecls.push_back(D);
+  }
+
   if (!Context->Spec.NewHeader.empty()) {
     std::string OldHeaderInclude =
         Context->Spec.NewDependOnOld
@@ -662,7 +739,8 @@ void ClangMoveTool::moveDeclsToNewFiles() {
   }
   if (!Context->Spec.NewCC.empty())
     Context->FileToReplacements[Context->Spec.NewCC] =
-        createInsertedReplacements(CCIncludes, NewCCDecls, Context->Spec.NewCC);
+        createInsertedReplacements(CCIncludes, ActualNewCCDecls,
+                                   Context->Spec.NewCC);
 }
 
 // Move all contents from OldFile to NewFile.
@@ -737,8 +815,9 @@ void ClangMoveTool::onEndOfTranslationUnit() {
     moveAll(SM, Context->Spec.OldCC, Context->Spec.NewCC);
     return;
   }
-  removeDeclsInOldFiles();
+  DEBUG(RGBuilder.getGraph()->dump());
   moveDeclsToNewFiles();
+  removeDeclsInOldFiles();
 }
 
 } // namespace move
