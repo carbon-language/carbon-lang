@@ -11474,6 +11474,10 @@ static SDValue lowerV2X128VectorShuffle(const SDLoc &DL, MVT VT, SDValue V1,
                                         const SmallBitVector &Zeroable,
                                         const X86Subtarget &Subtarget,
                                         SelectionDAG &DAG) {
+  SmallVector<int, 4> WidenedMask;
+  if (!canWidenShuffleElements(Mask, WidenedMask))
+    return SDValue();
+
   // TODO: If minimizing size and one of the inputs is a zero vector and the
   // the zero vector has only one use, we could use a VPERM2X128 to save the
   // instruction bytes needed to explicitly generate the zero vector.
@@ -11521,15 +11525,10 @@ static SDValue lowerV2X128VectorShuffle(const SDLoc &DL, MVT VT, SDValue V1,
   //    [6]   - ignore
   //    [7]   - zero high half of destination
 
-  int MaskLO = Mask[0];
-  if (MaskLO == SM_SentinelUndef)
-    MaskLO = Mask[1] == SM_SentinelUndef ? 0 : Mask[1];
+  int MaskLO = WidenedMask[0] < 0 ? 0 : WidenedMask[0];
+  int MaskHI = WidenedMask[1] < 0 ? 0 : WidenedMask[1];
 
-  int MaskHI = Mask[2];
-  if (MaskHI == SM_SentinelUndef)
-    MaskHI = Mask[3] == SM_SentinelUndef ? 0 : Mask[3];
-
-  unsigned PermMask = MaskLO / 2 | (MaskHI / 2) << 4;
+  unsigned PermMask = MaskLO | (MaskHI << 4);
 
   // If either input is a zero vector, replace it with an undef input.
   // Shuffle mask values <  4 are selecting elements of V1.
@@ -11538,16 +11537,16 @@ static SDValue lowerV2X128VectorShuffle(const SDLoc &DL, MVT VT, SDValue V1,
   // selecting the zero vector and setting the zero mask bit.
   if (IsV1Zero) {
     V1 = DAG.getUNDEF(VT);
-    if (MaskLO < 4)
+    if (MaskLO < 2)
       PermMask = (PermMask & 0xf0) | 0x08;
-    if (MaskHI < 4)
+    if (MaskHI < 2)
       PermMask = (PermMask & 0x0f) | 0x80;
   }
   if (IsV2Zero) {
     V2 = DAG.getUNDEF(VT);
-    if (MaskLO >= 4)
+    if (MaskLO >= 2)
       PermMask = (PermMask & 0xf0) | 0x08;
-    if (MaskHI >= 4)
+    if (MaskHI >= 2)
       PermMask = (PermMask & 0x0f) | 0x80;
   }
 
@@ -12012,11 +12011,9 @@ static SDValue lowerV4F64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   assert(V2.getSimpleValueType() == MVT::v4f64 && "Bad operand type!");
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
 
-  SmallVector<int, 4> WidenedMask;
-  if (canWidenShuffleElements(Mask, WidenedMask))
-    if (SDValue V = lowerV2X128VectorShuffle(DL, MVT::v4f64, V1, V2, Mask,
-                                             Zeroable, Subtarget, DAG))
-      return V;
+  if (SDValue V = lowerV2X128VectorShuffle(DL, MVT::v4f64, V1, V2, Mask,
+                                           Zeroable, Subtarget, DAG))
+    return V;
 
   if (V2.isUndef()) {
     // Check for being able to broadcast a single element.
@@ -12107,11 +12104,9 @@ static SDValue lowerV4I64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
   assert(Subtarget.hasAVX2() && "We can only lower v4i64 with AVX2!");
 
-  SmallVector<int, 4> WidenedMask;
-  if (canWidenShuffleElements(Mask, WidenedMask))
-    if (SDValue V = lowerV2X128VectorShuffle(DL, MVT::v4i64, V1, V2, Mask,
-                                             Zeroable, Subtarget, DAG))
-      return V;
+  if (SDValue V = lowerV2X128VectorShuffle(DL, MVT::v4i64, V1, V2, Mask,
+                                           Zeroable, Subtarget, DAG))
+    return V;
 
   if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v4i64, V1, V2, Mask,
                                                 Zeroable, Subtarget, DAG))
