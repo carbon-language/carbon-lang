@@ -16,8 +16,6 @@
 //===----------------------------------------------------------------------===//
 
 #include <cassert>
-#include <cstdint>
-#include <cstdio>
 #include <fcntl.h>
 #include <mutex>
 #include <sys/stat.h>
@@ -39,6 +37,7 @@
 #include "xray_defs.h"
 #include "xray_flags.h"
 #include "xray_interface_internal.h"
+#include "xray_utils.h"
 
 // __xray_InMemoryRawLog will use a thread-local aligned buffer capped to a
 // certain size (32kb by default) and use it as if it were a circular buffer for
@@ -52,25 +51,6 @@ void __xray_InMemoryRawLog(int32_t FuncId,
 namespace __xray {
 
 std::mutex LogMutex;
-
-static void retryingWriteAll(int Fd, char *Begin,
-                             char *End) XRAY_NEVER_INSTRUMENT {
-  if (Begin == End)
-    return;
-  auto TotalBytes = std::distance(Begin, End);
-  while (auto Written = write(Fd, Begin, TotalBytes)) {
-    if (Written < 0) {
-      if (errno == EINTR)
-        continue; // Try again.
-      Report("Failed to write; errno = %d\n", errno);
-      return;
-    }
-    TotalBytes -= Written;
-    if (TotalBytes == 0)
-      break;
-    Begin += Written;
-  }
-}
 
 class ThreadExitFlusher {
   int Fd;
@@ -102,50 +82,6 @@ public:
 
 using namespace __xray;
 
-void PrintToStdErr(const char *Buffer) XRAY_NEVER_INSTRUMENT {
-  fprintf(stderr, "%s", Buffer);
-}
-
-static int __xray_OpenLogFile() XRAY_NEVER_INSTRUMENT {
-  // FIXME: Figure out how to make this less stderr-dependent.
-  SetPrintfAndReportCallback(PrintToStdErr);
-  // Open a temporary file once for the log.
-  static char TmpFilename[256] = {};
-  static char TmpWildcardPattern[] = "XXXXXX";
-  auto E = internal_strncat(TmpFilename, flags()->xray_logfile_base,
-                            sizeof(TmpFilename) - 10);
-  if (static_cast<size_t>((E + 6) - TmpFilename) > (sizeof(TmpFilename) - 1)) {
-    Report("XRay log file base too long: %s\n", flags()->xray_logfile_base);
-    return -1;
-  }
-  internal_strncat(TmpFilename, TmpWildcardPattern,
-                   sizeof(TmpWildcardPattern) - 1);
-  int Fd = mkstemp(TmpFilename);
-  if (Fd == -1) {
-    Report("XRay: Failed opening temporary file '%s'; not logging events.\n",
-           TmpFilename);
-    return -1;
-  }
-  if (Verbosity())
-    fprintf(stderr, "XRay: Log file in '%s'\n", TmpFilename);
-
-  // Since we're here, we get to write the header. We set it up so that the
-  // header will only be written once, at the start, and let the threads
-  // logging do writes which just append.
-  XRayFileHeader Header;
-  Header.Version = 1;
-  Header.Type = FileTypes::NAIVE_LOG;
-  Header.CycleFrequency = __xray::cycleFrequency();
-
-  // FIXME: Actually check whether we have 'constant_tsc' and 'nonstop_tsc'
-  // before setting the values in the header.
-  Header.ConstantTSC = 1;
-  Header.NonstopTSC = 1;
-  retryingWriteAll(Fd, reinterpret_cast<char *>(&Header),
-                   reinterpret_cast<char *>(&Header) + sizeof(Header));
-  return Fd;
-}
-
 void __xray_InMemoryRawLog(int32_t FuncId,
                            XRayEntryType Type) XRAY_NEVER_INSTRUMENT {
   using Buffer =
@@ -153,7 +89,28 @@ void __xray_InMemoryRawLog(int32_t FuncId,
   static constexpr size_t BuffLen = 1024;
   thread_local static Buffer InMemoryBuffer[BuffLen] = {};
   thread_local static size_t Offset = 0;
-  static int Fd = __xray_OpenLogFile();
+  static int Fd = []() {
+    int F = getLogFD();
+    auto CPUFrequency = getCPUFrequency();
+    if (F == -1)
+      return -1;
+    // Since we're here, we get to write the header. We set it up so that the
+    // header will only be written once, at the start, and let the threads
+    // logging do writes which just append.
+    XRayFileHeader Header;
+    Header.Version = 1;
+    Header.Type = FileTypes::NAIVE_LOG;
+    Header.CycleFrequency =
+        CPUFrequency == -1 ? 0 : static_cast<uint64_t>(CPUFrequency);
+
+    // FIXME: Actually check whether we have 'constant_tsc' and 'nonstop_tsc'
+    // before setting the values in the header.
+    Header.ConstantTSC = 1;
+    Header.NonstopTSC = 1;
+    retryingWriteAll(Fd, reinterpret_cast<char *>(&Header),
+                     reinterpret_cast<char *>(&Header) + sizeof(Header));
+    return F;
+  }();
   if (Fd == -1)
     return;
   thread_local __xray::ThreadExitFlusher Flusher(
