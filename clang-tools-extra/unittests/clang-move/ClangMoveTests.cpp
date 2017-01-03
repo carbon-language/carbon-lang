@@ -370,7 +370,6 @@ TEST(ClangMove, IgnoreUnsupportedKindsAndMoveAll) {
   std::vector<std::string> TestHeaders = {
       "typedef int Int;\nclass A {\npublic:\n  int f();\n};\n",
       "using Int = int;\nclass A {\npublic:\n  int f();\n};\n",
-      "enum Color { RED };\nclass A {\npublic:\n  int f();\n};\n",
   };
   move::MoveDefinitionSpec Spec;
   Spec.Names.push_back("A");

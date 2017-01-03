@@ -140,6 +140,14 @@ private:
   ClangMoveTool *const MoveTool;
 };
 
+/// Add a declatration being moved to new.h/cc. Note that the declaration will
+/// also be deleted in old.h/cc.
+void MoveDeclFromOldFileToNewFile(ClangMoveTool *MoveTool, const NamedDecl *D) {
+  MoveTool->getMovedDecls().push_back(D);
+  MoveTool->addRemovedDecl(D);
+  MoveTool->getUnremovedDeclsInOldHeader().erase(D);
+}
+
 class FunctionDeclarationMatch : public MatchFinder::MatchCallback {
 public:
   explicit FunctionDeclarationMatch(ClangMoveTool *MoveTool)
@@ -151,9 +159,22 @@ public:
     const clang::NamedDecl *D = FD;
     if (const auto *FTD = FD->getDescribedFunctionTemplate())
       D = FTD;
-    MoveTool->getMovedDecls().push_back(D);
-    MoveTool->getUnremovedDeclsInOldHeader().erase(D);
-    MoveTool->addRemovedDecl(D);
+    MoveDeclFromOldFileToNewFile(MoveTool, D);
+  }
+
+private:
+  ClangMoveTool *MoveTool;
+};
+
+class EnumDeclarationMatch : public MatchFinder::MatchCallback {
+public:
+  explicit EnumDeclarationMatch(ClangMoveTool *MoveTool)
+      : MoveTool(MoveTool) {}
+
+  void run(const MatchFinder::MatchResult &Result) override {
+    const auto *ED = Result.Nodes.getNodeAs<clang::EnumDecl>("enum");
+    assert(ED);
+    MoveDeclFromOldFileToNewFile(MoveTool, ED);
   }
 
 private:
@@ -196,9 +217,7 @@ private:
 
   void MatchClassStaticVariable(const clang::NamedDecl *VD,
                                 clang::SourceManager* SM) {
-    MoveTool->getMovedDecls().push_back(VD);
-    MoveTool->addRemovedDecl(VD);
-    MoveTool->getUnremovedDeclsInOldHeader().erase(VD);
+    MoveDeclFromOldFileToNewFile(MoveTool, VD);
   }
 
   void MatchClassDeclaration(const clang::CXXRecordDecl *CD,
@@ -449,6 +468,8 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
   auto InOldFiles = anyOf(InOldHeader, InOldCC);
   auto ForwardDecls =
       cxxRecordDecl(unless(anyOf(isImplicit(), isDefinition())));
+  auto TopLevelDecl =
+      hasDeclContext(anyOf(namespaceDecl(), translationUnitDecl()));
 
   //============================================================================
   // Matchers for old header
@@ -544,11 +565,9 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
   // Create a MatchCallback for class declarations.
   MatchCallbacks.push_back(llvm::make_unique<ClassDeclarationMatch>(this));
   // Match moved class declarations.
-  auto MovedClass =
-      cxxRecordDecl(
-          InOldFiles, *HasAnySymbolNames, isDefinition(),
-          hasDeclContext(anyOf(namespaceDecl(), translationUnitDecl())))
-          .bind("moved_class");
+  auto MovedClass = cxxRecordDecl(InOldFiles, *HasAnySymbolNames,
+                                  isDefinition(), TopLevelDecl)
+                        .bind("moved_class");
   Finder->addMatcher(MovedClass, MatchCallbacks.back().get());
   // Match moved class methods (static methods included) which are defined
   // outside moved class declaration.
@@ -564,11 +583,17 @@ void ClangMoveTool::registerMatchers(ast_matchers::MatchFinder *Finder) {
       MatchCallbacks.back().get());
 
   MatchCallbacks.push_back(llvm::make_unique<FunctionDeclarationMatch>(this));
-  Finder->addMatcher(functionDecl(InOldFiles, *HasAnySymbolNames,
-                                  anyOf(hasDeclContext(namespaceDecl()),
-                                        hasDeclContext(translationUnitDecl())))
+  Finder->addMatcher(functionDecl(InOldFiles, *HasAnySymbolNames, TopLevelDecl)
                          .bind("function"),
                      MatchCallbacks.back().get());
+
+  // Match enum definition in old.h. Enum helpers (which are definied in old.cc)
+  // will not be moved for now no matter whether they are used or not.
+  MatchCallbacks.push_back(llvm::make_unique<EnumDeclarationMatch>(this));
+  Finder->addMatcher(
+      enumDecl(InOldHeader, *HasAnySymbolNames, isDefinition(), TopLevelDecl)
+          .bind("enum"),
+      MatchCallbacks.back().get());
 }
 
 void ClangMoveTool::run(const ast_matchers::MatchFinder::MatchResult &Result) {
@@ -802,6 +827,7 @@ void ClangMoveTool::onEndOfTranslationUnit() {
     case Decl::Kind::FunctionTemplate:
     case Decl::Kind::ClassTemplate:
     case Decl::Kind::CXXRecord:
+    case Decl::Kind::Enum:
       return true;
     default:
       return false;
