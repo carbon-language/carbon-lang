@@ -1583,11 +1583,18 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   }
   case Intrinsic::fma:
   case Intrinsic::fmuladd: {
-    Value *LHS = nullptr;
-    Value *RHS = nullptr;
-
     Value *Src0 = II->getArgOperand(0);
     Value *Src1 = II->getArgOperand(1);
+
+    // Canonicalize constants into the RHS.
+    if (isa<Constant>(Src0) && !isa<Constant>(Src1)) {
+      II->setArgOperand(0, Src1);
+      II->setArgOperand(1, Src0);
+      std::swap(Src0, Src1);
+    }
+
+    Value *LHS = nullptr;
+    Value *RHS = nullptr;
 
     // fma fneg(x), fneg(y), z -> fma x, y, z
     if (match(Src0, m_FNeg(m_Value(LHS))) &&
@@ -1607,6 +1614,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       NewCall->takeName(II);
       NewCall->copyFastMathFlags(II);
       return replaceInstUsesWith(*II, NewCall);
+    }
+
+    // fma x, 1, z -> fadd x, z
+    if (match(Src1, m_FPOne())) {
+      Instruction *RI = BinaryOperator::CreateFAdd(Src0, II->getArgOperand(2));
+      RI->copyFastMathFlags(II);
+      return RI;
     }
 
     break;
