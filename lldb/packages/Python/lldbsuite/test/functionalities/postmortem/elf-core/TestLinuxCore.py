@@ -38,9 +38,7 @@ class LinuxCoreTestCase(TestBase):
         """Test that lldb can read the process information from an x86_64 linux core file."""
         self.do_test("linux-x86_64", self._x86_64_pid, self._x86_64_regions)
 
-    # This seems to hang on non-s390x platforms for some reason.  Disabling
-    # for now.
-    @skipIf(archs=no_match(['s390x']))
+    @skipIf(oslist=['windows'])
     @skipIf(triple='^mips')
     def test_s390x(self):
         """Test that lldb can read the process information from an s390x linux core file."""
