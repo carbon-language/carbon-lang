@@ -28685,6 +28685,29 @@ static bool combineBitcastForMaskedOp(SDValue OrigOp, SelectionDAG &DAG,
     return BitcastAndCombineShuffle(Opcode, Op.getOperand(0), Op.getOperand(1),
                                     Op.getOperand(2));
   }
+  case ISD::INSERT_SUBVECTOR: {
+    unsigned EltSize = EltVT.getSizeInBits();
+    if (EltSize != 32 && EltSize != 64)
+      return false;
+    MVT OpEltVT = Op.getSimpleValueType().getVectorElementType();
+    // Only change element size, not type.
+    if (VT.isInteger() != OpEltVT.isInteger())
+      return false;
+    uint64_t Imm = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
+    Imm = (Imm * OpEltVT.getSizeInBits()) / EltSize;
+    SDValue Op0 = DAG.getBitcast(VT, Op.getOperand(0));
+    DCI.AddToWorklist(Op0.getNode());
+    // Op1 needs to be bitcasted to a smaller vector with the same element type.
+    SDValue Op1 = Op.getOperand(1);
+    MVT Op1VT = MVT::getVectorVT(EltVT,
+                            Op1.getSimpleValueType().getSizeInBits() / EltSize);
+    Op1 = DAG.getBitcast(Op1VT, Op1);
+    DCI.AddToWorklist(Op1.getNode());
+    DCI.CombineTo(OrigOp.getNode(),
+                  DAG.getNode(Opcode, DL, VT, Op0, Op1,
+                              DAG.getConstant(Imm, DL, MVT::i8)));
+    return true;
+  }
   }
 
   return false;
