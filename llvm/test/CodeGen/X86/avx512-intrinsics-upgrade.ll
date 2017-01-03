@@ -2970,3 +2970,89 @@ define <4 x double> @test_vextractf64x4(<8 x double> %a) {
 }
 
 declare <4 x double> @llvm.x86.avx512.mask.vextractf64x4.512(<8 x double>, i32, <4 x double>, i8)
+
+declare <16 x float> @llvm.x86.avx512.mask.insertf32x4.512(<16 x float>, <4 x float>, i32, <16 x float>, i16)
+
+define <16 x float>@test_int_x86_avx512_mask_insertf32x4_512(<16 x float> %x0, <4 x float> %x1, <16 x float> %x3, i16 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_insertf32x4_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    ## kill: %XMM1<def> %XMM1<kill> %ZMM1<def>
+; CHECK-NEXT:    vmovapd {{.*#+}} zmm3 = [0,1,8,9,4,5,6,7]
+; CHECK-NEXT:    vpermi2pd %zmm1, %zmm0, %zmm3
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vblendmps %zmm3, %zmm2, %zmm0 {%k1}
+; CHECK-NEXT:    vmovaps %zmm3, %zmm1 {%k1} {z}
+; CHECK-NEXT:    vaddps %zmm3, %zmm0, %zmm0
+; CHECK-NEXT:    vaddps %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <16 x float> @llvm.x86.avx512.mask.insertf32x4.512(<16 x float> %x0, <4 x float> %x1, i32 1, <16 x float> %x3, i16 %x4)
+  %res1 = call <16 x float> @llvm.x86.avx512.mask.insertf32x4.512(<16 x float> %x0, <4 x float> %x1, i32 1, <16 x float> %x3, i16 -1)
+  %res2 = call <16 x float> @llvm.x86.avx512.mask.insertf32x4.512(<16 x float> %x0, <4 x float> %x1, i32 1, <16 x float> zeroinitializer, i16 %x4)
+  %res3 = fadd <16 x float> %res, %res1
+  %res4 = fadd <16 x float> %res2, %res3
+  ret <16 x float> %res4
+}
+
+declare <16 x i32> @llvm.x86.avx512.mask.inserti32x4.512(<16 x i32>, <4 x i32>, i32, <16 x i32>, i16)
+
+define <16 x i32>@test_int_x86_avx512_mask_inserti32x4_512(<16 x i32> %x0, <4 x i32> %x1, <16 x i32> %x3, i16 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_inserti32x4_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    ## kill: %XMM1<def> %XMM1<kill> %ZMM1<def>
+; CHECK-NEXT:    vmovdqa64 {{.*#+}} zmm3 = [0,1,8,9,4,5,6,7]
+; CHECK-NEXT:    vpermi2q %zmm1, %zmm0, %zmm3
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vpblendmd %zmm3, %zmm2, %zmm0 {%k1}
+; CHECK-NEXT:    vmovdqa32 %zmm3, %zmm1 {%k1} {z}
+; CHECK-NEXT:    vpaddd %zmm3, %zmm0, %zmm0
+; CHECK-NEXT:    vpaddd %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <16 x i32> @llvm.x86.avx512.mask.inserti32x4.512(<16 x i32> %x0, <4 x i32> %x1, i32 1, <16 x i32> %x3, i16 %x4)
+  %res1 = call <16 x i32> @llvm.x86.avx512.mask.inserti32x4.512(<16 x i32> %x0, <4 x i32> %x1, i32 1, <16 x i32> %x3, i16 -1)
+  %res2 = call <16 x i32> @llvm.x86.avx512.mask.inserti32x4.512(<16 x i32> %x0, <4 x i32> %x1, i32 1, <16 x i32> zeroinitializer, i16 %x4)
+  %res3 = add <16 x i32> %res, %res1
+  %res4 = add <16 x i32> %res2, %res3
+  ret <16 x i32> %res4
+}
+
+declare <8 x double> @llvm.x86.avx512.mask.insertf64x4.512(<8 x double>, <4 x double>, i32, <8 x double>, i8)
+
+define <8 x double>@test_int_x86_avx512_mask_insertf64x4_512(<8 x double> %x0, <4 x double> %x1, <8 x double> %x3, i8 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_insertf64x4_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
+; CHECK-NEXT:    vshuff64x2 {{.*#+}} zmm3 = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vshuff64x2 {{.*#+}} zmm2 {%k1} = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vshuff64x2 {{.*#+}} zmm0 {%k1} {z} = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vaddpd %zmm3, %zmm2, %zmm1
+; CHECK-NEXT:    vaddpd %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <8 x double> @llvm.x86.avx512.mask.insertf64x4.512(<8 x double> %x0, <4 x double> %x1, i32 1, <8 x double> %x3, i8 %x4)
+  %res1 = call <8 x double> @llvm.x86.avx512.mask.insertf64x4.512(<8 x double> %x0, <4 x double> %x1, i32 1, <8 x double> %x3, i8 -1)
+  %res2 = call <8 x double> @llvm.x86.avx512.mask.insertf64x4.512(<8 x double> %x0, <4 x double> %x1, i32 1, <8 x double> zeroinitializer, i8 %x4)
+  %res3 = fadd <8 x double> %res, %res1
+  %res4 = fadd <8 x double> %res2, %res3
+  ret <8 x double> %res4
+}
+
+declare <8 x i64> @llvm.x86.avx512.mask.inserti64x4.512(<8 x i64>, <4 x i64>, i32, <8 x i64>, i8)
+
+define <8 x i64>@test_int_x86_avx512_mask_inserti64x4_512(<8 x i64> %x0, <4 x i64> %x1, <8 x i64> %x3, i8 %x4) {
+; CHECK-LABEL: test_int_x86_avx512_mask_inserti64x4_512:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
+; CHECK-NEXT:    vshufi64x2 {{.*#+}} zmm3 = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    vshufi64x2 {{.*#+}} zmm2 {%k1} = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vshufi64x2 {{.*#+}} zmm0 {%k1} {z} = zmm0[0,1,2,3],zmm1[0,1,2,3]
+; CHECK-NEXT:    vpaddq %zmm3, %zmm2, %zmm1
+; CHECK-NEXT:    vpaddq %zmm1, %zmm0, %zmm0
+; CHECK-NEXT:    retq
+  %res = call <8 x i64> @llvm.x86.avx512.mask.inserti64x4.512(<8 x i64> %x0, <4 x i64> %x1, i32 1, <8 x i64> %x3, i8 %x4)
+  %res1 = call <8 x i64> @llvm.x86.avx512.mask.inserti64x4.512(<8 x i64> %x0, <4 x i64> %x1, i32 1, <8 x i64> %x3, i8 -1)
+  %res2 = call <8 x i64> @llvm.x86.avx512.mask.inserti64x4.512(<8 x i64> %x0, <4 x i64> %x1, i32 1, <8 x i64> zeroinitializer, i8 %x4)
+  %res3 = add <8 x i64> %res, %res1
+  %res4 = add <8 x i64> %res2, %res3
+  ret <8 x i64> %res4
+}
