@@ -2868,3 +2868,105 @@ define <8 x i64> @test_mask_mul_epu32_rmbkz(<16 x i32> %a, i64* %ptr_b, i8 %mask
 }
 
 declare <8 x i64> @llvm.x86.avx512.mask.pmulu.dq.512(<16 x i32>, <16 x i32>, <8 x i64>, i8)
+
+define <4 x float> @test_mask_vextractf32x4(<4 x float> %b, <16 x float> %a, i8 %mask) {
+; CHECK-LABEL: test_mask_vextractf32x4:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vextractf32x4 $2, %zmm1, %xmm1
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    kshiftlw $12, %k1, %k0
+; CHECK-NEXT:    kshiftrw $15, %k0, %k0
+; CHECK-NEXT:    kshiftlw $13, %k1, %k2
+; CHECK-NEXT:    kshiftrw $15, %k2, %k2
+; CHECK-NEXT:    kshiftlw $15, %k1, %k3
+; CHECK-NEXT:    kshiftrw $15, %k3, %k3
+; CHECK-NEXT:    kshiftlw $14, %k1, %k1
+; CHECK-NEXT:    kshiftrw $15, %k1, %k1
+; CHECK-NEXT:    kmovw %k1, %eax
+; CHECK-NEXT:    kmovw %k3, %ecx
+; CHECK-NEXT:    vmovd %ecx, %xmm2
+; CHECK-NEXT:    vpinsrd $1, %eax, %xmm2, %xmm2
+; CHECK-NEXT:    kmovw %k2, %eax
+; CHECK-NEXT:    vpinsrd $2, %eax, %xmm2, %xmm2
+; CHECK-NEXT:    kmovw %k0, %eax
+; CHECK-NEXT:    vpinsrd $3, %eax, %xmm2, %xmm2
+; CHECK-NEXT:    vpslld $31, %xmm2, %xmm2
+; CHECK-NEXT:    vblendvps %xmm2, %xmm1, %xmm0, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <4 x float> @llvm.x86.avx512.mask.vextractf32x4.512(<16 x float> %a, i32 2, <4 x float> %b, i8 %mask)
+  ret <4 x float> %res
+}
+
+declare <4 x float> @llvm.x86.avx512.mask.vextractf32x4.512(<16 x float>, i32, <4 x float>, i8)
+
+define <4 x i64> @test_mask_vextracti64x4(<4 x i64> %b, <8 x i64> %a, i8 %mask) {
+; CHECK-LABEL: test_mask_vextracti64x4:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    kshiftlw $12, %k1, %k0
+; CHECK-NEXT:    kshiftrw $15, %k0, %k0
+; CHECK-NEXT:    kshiftlw $13, %k1, %k2
+; CHECK-NEXT:    kshiftrw $15, %k2, %k2
+; CHECK-NEXT:    kshiftlw $15, %k1, %k3
+; CHECK-NEXT:    kshiftrw $15, %k3, %k3
+; CHECK-NEXT:    kshiftlw $14, %k1, %k1
+; CHECK-NEXT:    kshiftrw $15, %k1, %k1
+; CHECK-NEXT:    kmovw %k1, %eax
+; CHECK-NEXT:    kmovw %k3, %ecx
+; CHECK-NEXT:    vmovd %ecx, %xmm2
+; CHECK-NEXT:    vpinsrd $1, %eax, %xmm2, %xmm2
+; CHECK-NEXT:    kmovw %k2, %eax
+; CHECK-NEXT:    vpinsrd $2, %eax, %xmm2, %xmm2
+; CHECK-NEXT:    kmovw %k0, %eax
+; CHECK-NEXT:    vpinsrd $3, %eax, %xmm2, %xmm2
+; CHECK-NEXT:    vpslld $31, %xmm2, %xmm2
+; CHECK-NEXT:    vpmovsxdq %xmm2, %ymm2
+; CHECK-NEXT:    vblendvpd %ymm2, %ymm1, %ymm0, %ymm0
+; CHECK-NEXT:    retq
+  %res = call <4 x i64> @llvm.x86.avx512.mask.vextracti64x4.512(<8 x i64> %a, i32 2, <4 x i64> %b, i8 %mask)
+  ret <4 x i64> %res
+}
+
+declare <4 x i64> @llvm.x86.avx512.mask.vextracti64x4.512(<8 x i64>, i32, <4 x i64>, i8)
+
+define <4 x i32> @test_maskz_vextracti32x4(<16 x i32> %a, i8 %mask) {
+; CHECK-LABEL: test_maskz_vextracti32x4:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vextracti32x4 $2, %zmm0, %xmm0
+; CHECK-NEXT:    kmovw %edi, %k1
+; CHECK-NEXT:    kshiftlw $12, %k1, %k0
+; CHECK-NEXT:    kshiftrw $15, %k0, %k0
+; CHECK-NEXT:    kshiftlw $13, %k1, %k2
+; CHECK-NEXT:    kshiftrw $15, %k2, %k2
+; CHECK-NEXT:    kshiftlw $15, %k1, %k3
+; CHECK-NEXT:    kshiftrw $15, %k3, %k3
+; CHECK-NEXT:    kshiftlw $14, %k1, %k1
+; CHECK-NEXT:    kshiftrw $15, %k1, %k1
+; CHECK-NEXT:    kmovw %k1, %eax
+; CHECK-NEXT:    kmovw %k3, %ecx
+; CHECK-NEXT:    vmovd %ecx, %xmm1
+; CHECK-NEXT:    vpinsrd $1, %eax, %xmm1, %xmm1
+; CHECK-NEXT:    kmovw %k2, %eax
+; CHECK-NEXT:    vpinsrd $2, %eax, %xmm1, %xmm1
+; CHECK-NEXT:    kmovw %k0, %eax
+; CHECK-NEXT:    vpinsrd $3, %eax, %xmm1, %xmm1
+; CHECK-NEXT:    vpslld $31, %xmm1, %xmm1
+; CHECK-NEXT:    vpsrad $31, %xmm1, %xmm1
+; CHECK-NEXT:    vpand %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %res = call <4 x i32> @llvm.x86.avx512.mask.vextracti32x4.512(<16 x i32> %a, i32 2, <4 x i32> zeroinitializer, i8 %mask)
+  ret <4 x i32> %res
+}
+
+declare <4 x i32> @llvm.x86.avx512.mask.vextracti32x4.512(<16 x i32>, i32, <4 x i32>, i8)
+
+define <4 x double> @test_vextractf64x4(<8 x double> %a) {
+; CHECK-LABEL: test_vextractf64x4:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
+; CHECK-NEXT:    retq
+  %res = call <4 x double> @llvm.x86.avx512.mask.vextractf64x4.512(<8 x double> %a, i32 2, <4 x double> zeroinitializer, i8 -1)
+  ret <4 x double> %res
+}
+
+declare <4 x double> @llvm.x86.avx512.mask.vextractf64x4.512(<8 x double>, i32, <4 x double>, i8)

@@ -344,6 +344,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
          Name == "avx2.vinserti128" || // Added in 3.7
          Name.startswith("avx.vextractf128.") || // Added in 3.7
          Name == "avx2.vextracti128" || // Added in 3.7
+         Name.startswith("avx512.mask.vextract") || // Added in 4.0
          Name.startswith("sse4a.movnt.") || // Added in 3.9
          Name.startswith("avx.movnt.") || // Added in 3.2
          Name.startswith("avx512.storent.") || // Added in 3.9
@@ -1188,23 +1189,28 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
         Idxs[i] = Imm ? (i + NumElts / 2) : i;
       Rep = Builder.CreateShuffleVector(Op0, Rep, Idxs);
     } else if (IsX86 && (Name.startswith("avx.vextractf128.") ||
-                         Name == "avx2.vextracti128")) {
+                         Name == "avx2.vextracti128" ||
+                         Name.startswith("avx512.mask.vextract"))) {
       Value *Op0 = CI->getArgOperand(0);
       unsigned Imm = cast<ConstantInt>(CI->getArgOperand(1))->getZExtValue();
-      VectorType *VecTy = cast<VectorType>(CI->getType());
-      unsigned NumElts = VecTy->getNumElements();
+      unsigned DstNumElts = CI->getType()->getVectorNumElements();
+      unsigned SrcNumElts = Op0->getType()->getVectorNumElements();
+      unsigned Scale = SrcNumElts / DstNumElts;
 
       // Mask off the high bits of the immediate value; hardware ignores those.
-      Imm = Imm & 1;
+      Imm = Imm % Scale;
 
-      // Get indexes for either the high half or low half of the input vector.
-      SmallVector<uint32_t, 4> Idxs(NumElts);
-      for (unsigned i = 0; i != NumElts; ++i) {
-        Idxs[i] = Imm ? (i + NumElts) : i;
+      // Get indexes for the subvector of the input vector.
+      SmallVector<uint32_t, 8> Idxs(DstNumElts);
+      for (unsigned i = 0; i != DstNumElts; ++i) {
+        Idxs[i] = i + (Imm * DstNumElts);
       }
+      Rep = Builder.CreateShuffleVector(Op0, Op0, Idxs);
 
-      Value *UndefV = UndefValue::get(Op0->getType());
-      Rep = Builder.CreateShuffleVector(Op0, UndefV, Idxs);
+      // If the intrinsic has a mask operand, handle that.
+      if (CI->getNumArgOperands() == 4)
+        Rep = EmitX86Select(Builder, CI->getArgOperand(3), Rep,
+                            CI->getArgOperand(2));
     } else if (!IsX86 && Name == "stackprotectorcheck") {
       Rep = nullptr;
     } else if (IsX86 && (Name.startswith("avx512.mask.perm.df.") ||
