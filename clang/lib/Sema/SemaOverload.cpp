@@ -8958,9 +8958,7 @@ OverloadCandidateSet::BestViableFunction(Sema &S, SourceLocation Loc,
                S.IdentifyCUDAPreference(Caller, Cand->Function) ==
                    Sema::CFP_WrongSide;
       };
-      Candidates.erase(std::remove_if(Candidates.begin(), Candidates.end(),
-                                      IsWrongSideCandidate),
-                       Candidates.end());
+      llvm::erase_if(Candidates, IsWrongSideCandidate);
     }
   }
 
