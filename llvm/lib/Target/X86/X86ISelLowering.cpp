@@ -13085,10 +13085,10 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 static bool canonicalizeShuffleMaskWithCommute(ArrayRef<int> Mask) {
   int NumElements = Mask.size();
 
-  int NumV1Elements = 0, NumV2Elements = 0, NumSentinelElements = 0;
+  int NumV1Elements = 0, NumV2Elements = 0;
   for (int M : Mask)
     if (M < 0)
-      ++NumSentinelElements;
+      continue;
     else if (M < NumElements)
       ++NumV1Elements;
     else
