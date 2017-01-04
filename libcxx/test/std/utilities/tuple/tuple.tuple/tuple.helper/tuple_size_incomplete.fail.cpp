@@ -51,7 +51,7 @@ int main()
   // Test that tuple_size<const T> is not incomplete when tuple_size<T>::value
   // is well-formed but not convertible to size_t.
   {
-    // expected-error@__tuple:* 1 {{value of type 'void ()' is not implicitly convertible to 'unsigned long'}}
+    // expected-error@__tuple:* 1 {{value of type 'void ()' is not implicitly convertible to}}
     (void)std::tuple_size<const Dummy2>::value; // expected-note {{here}}
   }
   // Test that tuple_size<const T> generates an error when tuple_size<T> is
