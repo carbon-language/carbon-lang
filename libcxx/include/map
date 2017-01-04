@@ -682,7 +682,7 @@ struct __extract_key_value_types<__value_type<_Key, _Tp> >
 };
 
 template <class _TreeIterator>
-class _LIBCPP_TYPE_VIS_ONLY __map_iterator
+class _LIBCPP_TEMPLATE_VIS __map_iterator
 {
     typedef typename _TreeIterator::_NodeTypes                   _NodeTypes;
     typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
@@ -735,13 +735,13 @@ public:
     bool operator!=(const __map_iterator& __x, const __map_iterator& __y)
         {return __x.__i_ != __y.__i_;}
 
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY map;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multimap;
-    template <class> friend class _LIBCPP_TYPE_VIS_ONLY __map_const_iterator;
+    template <class, class, class, class> friend class _LIBCPP_TEMPLATE_VIS map;
+    template <class, class, class, class> friend class _LIBCPP_TEMPLATE_VIS multimap;
+    template <class> friend class _LIBCPP_TEMPLATE_VIS __map_const_iterator;
 };
 
 template <class _TreeIterator>
-class _LIBCPP_TYPE_VIS_ONLY __map_const_iterator
+class _LIBCPP_TEMPLATE_VIS __map_const_iterator
 {
     typedef typename _TreeIterator::_NodeTypes                   _NodeTypes;
     typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
@@ -797,14 +797,14 @@ public:
     bool operator!=(const __map_const_iterator& __x, const __map_const_iterator& __y)
         {return __x.__i_ != __y.__i_;}
 
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY map;
-    template <class, class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY multimap;
-    template <class, class, class> friend class _LIBCPP_TYPE_VIS_ONLY __tree_const_iterator;
+    template <class, class, class, class> friend class _LIBCPP_TEMPLATE_VIS map;
+    template <class, class, class, class> friend class _LIBCPP_TEMPLATE_VIS multimap;
+    template <class, class, class> friend class _LIBCPP_TEMPLATE_VIS __tree_const_iterator;
 };
 
 template <class _Key, class _Tp, class _Compare = less<_Key>,
           class _Allocator = allocator<pair<const _Key, _Tp> > >
-class _LIBCPP_TYPE_VIS_ONLY map
+class _LIBCPP_TEMPLATE_VIS map
 {
 public:
     // types:
@@ -820,7 +820,7 @@ public:
     static_assert((is_same<typename allocator_type::value_type, value_type>::value),
                   "Allocator::value_type must be same type as value_type");
 
-    class _LIBCPP_TYPE_VIS_ONLY value_compare
+    class _LIBCPP_TEMPLATE_VIS value_compare
         : public binary_function<value_type, value_type, bool>
     {
         friend class map;
@@ -1529,7 +1529,7 @@ swap(map<_Key, _Tp, _Compare, _Allocator>& __x,
 
 template <class _Key, class _Tp, class _Compare = less<_Key>,
           class _Allocator = allocator<pair<const _Key, _Tp> > >
-class _LIBCPP_TYPE_VIS_ONLY multimap
+class _LIBCPP_TEMPLATE_VIS multimap
 {
 public:
     // types:
@@ -1545,7 +1545,7 @@ public:
     static_assert((is_same<typename allocator_type::value_type, value_type>::value),
                   "Allocator::value_type must be same type as value_type");
 
-    class _LIBCPP_TYPE_VIS_ONLY value_compare
+    class _LIBCPP_TEMPLATE_VIS value_compare
         : public binary_function<value_type, value_type, bool>
     {
         friend class multimap;

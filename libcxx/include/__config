@@ -557,7 +557,7 @@ namespace std {
 #define _LIBCPP_FUNC_VIS            _LIBCPP_DLL_VIS
 #define _LIBCPP_EXCEPTION_ABI       _LIBCPP_DLL_VIS
 #define _LIBCPP_HIDDEN
-#define _LIBCPP_TYPE_VIS_ONLY
+#define _LIBCPP_TEMPLATE_VIS
 #define _LIBCPP_FUNC_VIS_ONLY
 #define _LIBCPP_ENUM_VIS
 
@@ -600,8 +600,8 @@ namespace std {
 #  endif
 #endif
 
-#ifndef _LIBCPP_TYPE_VIS_ONLY
-# define _LIBCPP_TYPE_VIS_ONLY _LIBCPP_TYPE_VIS
+#ifndef _LIBCPP_TEMPLATE_VIS
+# define _LIBCPP_TEMPLATE_VIS _LIBCPP_TYPE_VIS
 #endif
 
 #ifndef _LIBCPP_FUNC_VIS_ONLY
