@@ -335,8 +335,12 @@ class Configuration(object):
         if self.get_lit_bool('has_libatomic', False):
             self.config.available_features.add('libatomic')
 
-        if '__cpp_if_constexpr' not in self.cxx.dumpMacros():
+        macros = self.cxx.dumpMacros()
+        if '__cpp_if_constexpr' not in macros:
             self.config.available_features.add('libcpp-no-if-constexpr')
+
+        if '__cpp_structured_bindings' not in macros:
+            self.config.available_features.add('libcpp-no-structured-bindings')
 
     def configure_compile_flags(self):
         no_default_flags = self.get_lit_bool('no_default_flags', False)
