@@ -477,8 +477,8 @@ public:
     return CurAbbrevs[AbbrevNo].get();
   }
 
-  /// Read the current record and discard it.
-  void skipRecord(unsigned AbbrevID);
+  /// Read the current record and discard it, returning the code for the record.
+  unsigned skipRecord(unsigned AbbrevID);
 
   unsigned readRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
                       StringRef *Blob = nullptr);
