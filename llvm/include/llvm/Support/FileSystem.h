@@ -769,17 +769,13 @@ namespace detail {
   std::error_code directory_iterator_increment(DirIterState &);
   std::error_code directory_iterator_destruct(DirIterState &);
 
-  /// DirIterState - Keeps state for the directory_iterator. It is reference
-  /// counted in order to preserve InputIterator semantics on copy.
-  struct DirIterState : public RefCountedBase<DirIterState> {
-    DirIterState()
-      : IterationHandle(0) {}
-
+  /// Keeps state for the directory_iterator.
+  struct DirIterState {
     ~DirIterState() {
       directory_iterator_destruct(*this);
     }
 
-    intptr_t IterationHandle;
+    intptr_t IterationHandle = 0;
     directory_entry CurrentEntry;
   };
 } // end namespace detail
@@ -788,23 +784,23 @@ namespace detail {
 /// operator++ because we need an error_code. If it's really needed we can make
 /// it call report_fatal_error on error.
 class directory_iterator {
-  IntrusiveRefCntPtr<detail::DirIterState> State;
+  std::shared_ptr<detail::DirIterState> State;
 
 public:
   explicit directory_iterator(const Twine &path, std::error_code &ec) {
-    State = new detail::DirIterState;
+    State = std::make_shared<detail::DirIterState>();
     SmallString<128> path_storage;
     ec = detail::directory_iterator_construct(*State,
             path.toStringRef(path_storage));
   }
 
   explicit directory_iterator(const directory_entry &de, std::error_code &ec) {
-    State = new detail::DirIterState;
+    State = std::make_shared<detail::DirIterState>();
     ec = detail::directory_iterator_construct(*State, de.path());
   }
 
   /// Construct end iterator.
-  directory_iterator() : State(nullptr) {}
+  directory_iterator() = default;
 
   // No operator++ because we need error_code.
   directory_iterator &increment(std::error_code &ec) {
