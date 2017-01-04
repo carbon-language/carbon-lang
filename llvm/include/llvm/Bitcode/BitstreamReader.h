@@ -42,7 +42,7 @@ public:
   /// describe abbreviations that all blocks of the specified ID inherit.
   struct BlockInfo {
     unsigned BlockID;
-    std::vector<IntrusiveRefCntPtr<BitCodeAbbrev>> Abbrevs;
+    std::vector<std::shared_ptr<BitCodeAbbrev>> Abbrevs;
     std::string Name;
     std::vector<std::pair<unsigned, std::string> > RecordNames;
   };
@@ -316,11 +316,11 @@ class BitstreamCursor : SimpleBitstreamCursor {
   unsigned CurCodeSize = 2;
 
   /// Abbrevs installed at in this block.
-  std::vector<IntrusiveRefCntPtr<BitCodeAbbrev>> CurAbbrevs;
+  std::vector<std::shared_ptr<BitCodeAbbrev>> CurAbbrevs;
 
   struct Block {
     unsigned PrevCodeSize;
-    std::vector<IntrusiveRefCntPtr<BitCodeAbbrev>> PrevAbbrevs;
+    std::vector<std::shared_ptr<BitCodeAbbrev>> PrevAbbrevs;
 
     explicit Block(unsigned PCS) : PrevCodeSize(PCS) {}
   };
