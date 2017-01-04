@@ -1069,6 +1069,7 @@ StringRef sys::getHostCPUName() {
       .Case("POWER7", "pwr7")
       .Case("POWER8", "pwr8")
       .Case("POWER8E", "pwr8")
+      .Case("POWER8NVL", "pwr8")
       .Case("POWER9", "pwr9")
       .Default(generic);
 }
