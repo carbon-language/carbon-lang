@@ -3279,10 +3279,9 @@ DeduceTemplateArgumentByListElement(Sema &S,
   // For all other cases, just match by type.
   QualType ArgType = Arg->getType();
   if (AdjustFunctionParmAndArgTypesForDeduction(S, TemplateParams, ParamType,
-                                                ArgType, Arg, TDF)) {
-    Info.Expression = Arg;
-    return Sema::TDK_FailedOverloadResolution;
-  }
+                                                ArgType, Arg, TDF))
+    return Sema::TDK_Success;
+
   return DeduceTemplateArgumentsByTypeMatch(S, TemplateParams, ParamType,
                                             ArgType, Info, Deduced, TDF);
 }
