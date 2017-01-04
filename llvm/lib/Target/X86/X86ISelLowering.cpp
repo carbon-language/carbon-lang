@@ -31833,6 +31833,83 @@ static SDValue combineFaddFsub(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// Attempt to pre-truncate inputs to arithmetic ops if it will simplify
+/// the codegen.
+/// e.g. TRUNC( BINOP( X, Y ) ) --> BINOP( TRUNC( X ), TRUNC( Y ) )
+static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
+                                          const X86Subtarget &Subtarget,
+                                          SDLoc &DL) {
+  assert(N->getOpcode() == ISD::TRUNCATE && "Wrong opcode");
+  SDValue Src = N->getOperand(0);
+  unsigned Opcode = Src.getOpcode();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+
+  EVT VT = N->getValueType(0);
+  EVT SrcVT = Src.getValueType();
+
+  auto IsRepeatedOpOrOneUseConstant = [](SDValue Op0, SDValue Op1) {
+    // TODO: Add extra cases where we can truncate both inputs for the
+    // cost of one (or none).
+    // e.g. TRUNC( BINOP( EXT( X ), EXT( Y ) ) ) --> BINOP( X, Y )
+    if (Op0 == Op1)
+      return true;
+
+    SDValue BC0 = peekThroughOneUseBitcasts(Op0);
+    SDValue BC1 = peekThroughOneUseBitcasts(Op1);
+    return ISD::isBuildVectorOfConstantSDNodes(BC0.getNode()) ||
+           ISD::isBuildVectorOfConstantSDNodes(BC1.getNode());
+  };
+
+  auto TruncateArithmetic = [&](SDValue N0, SDValue N1) {
+    SDValue Trunc0 = DAG.getNode(ISD::TRUNCATE, DL, VT, N0);
+    SDValue Trunc1 = DAG.getNode(ISD::TRUNCATE, DL, VT, N1);
+    return DAG.getNode(Opcode, DL, VT, Trunc0, Trunc1);
+  };
+
+  // Don't combine if the operation has other uses.
+  if (!N->isOnlyUserOf(Src.getNode()))
+    return SDValue();
+
+  // Only support vector truncation for now.
+  // TODO: i64 scalar math would benefit as well.
+  if (!VT.isVector())
+    return SDValue();
+
+  // In most cases its only worth pre-truncating if we're only facing the cost
+  // of one truncation.
+  // i.e. if one of the inputs will constant fold or the input is repeated.
+  switch (Opcode) {
+  case ISD::AND:
+  case ISD::XOR:
+  case ISD::OR: {
+    SDValue Op0 = Src.getOperand(0);
+    SDValue Op1 = Src.getOperand(1);
+    if (TLI.isOperationLegalOrPromote(Opcode, VT) &&
+        IsRepeatedOpOrOneUseConstant(Op0, Op1))
+      return TruncateArithmetic(Op0, Op1);
+    break;
+  }
+
+  case ISD::MUL:
+    // X86 is rubbish at scalar and vector i64 multiplies (until AVX512DQ) - its
+    // better to truncate if we have the chance.
+    if (SrcVT.getScalarType() == MVT::i64 && TLI.isOperationLegal(Opcode, VT) &&
+        !TLI.isOperationLegal(Opcode, SrcVT))
+      return TruncateArithmetic(Src.getOperand(0), Src.getOperand(1));
+    LLVM_FALLTHROUGH;
+  case ISD::ADD: {
+    SDValue Op0 = Src.getOperand(0);
+    SDValue Op1 = Src.getOperand(1);
+    if (TLI.isOperationLegal(Opcode, VT) &&
+        IsRepeatedOpOrOneUseConstant(Op0, Op1))
+      return TruncateArithmetic(Op0, Op1);
+    break;
+  }
+  }
+
+  return SDValue();
+}
+
 /// Truncate a group of v4i32 into v16i8/v8i16 using X86ISD::PACKUS.
 static SDValue
 combineVectorTruncationWithPACKUS(SDNode *N, SelectionDAG &DAG,
@@ -32018,6 +32095,10 @@ static SDValue combineTruncate(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
   SDValue Src = N->getOperand(0);
   SDLoc DL(N);
+
+  // Attempt to pre-truncate inputs to arithmetic ops instead.
+  if (SDValue V = combineTruncatedArithmetic(N, DAG, Subtarget, DL))
+    return V;
 
   // Try to detect AVG pattern first.
   if (SDValue Avg = detectAVGPattern(Src, VT, DAG, Subtarget, DL))
