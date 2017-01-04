@@ -822,6 +822,7 @@ public:
   bool isForcedVOP3() const { return ForcedEncodingSize == 64; }
   bool isForcedDPP() const { return ForcedDPP; }
   bool isForcedSDWA() const { return ForcedSDWA; }
+  ArrayRef<unsigned> getMatchedVariants() const;
 
   std::unique_ptr<AMDGPUOperand> parseRegister();
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
@@ -1630,31 +1631,34 @@ unsigned AMDGPUAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   return Match_Success;
 }
 
+// What asm variants we should check
+ArrayRef<unsigned> AMDGPUAsmParser::getMatchedVariants() const {
+  if (getForcedEncodingSize() == 32)
+    return {AMDGPUAsmVariants::DEFAULT};
+
+  if (isForcedVOP3())
+    return {AMDGPUAsmVariants::VOP3};
+
+  if (isForcedSDWA())
+    return {AMDGPUAsmVariants::SDWA};
+
+  if (isForcedDPP())
+    return {AMDGPUAsmVariants::DPP};
+
+  return {AMDGPUAsmVariants::DEFAULT,
+          AMDGPUAsmVariants::VOP3,
+          AMDGPUAsmVariants::SDWA,
+          AMDGPUAsmVariants::DPP};
+}
+
 bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                               OperandVector &Operands,
                                               MCStreamer &Out,
                                               uint64_t &ErrorInfo,
                                               bool MatchingInlineAsm) {
-  // What asm variants we should check
-  std::vector<unsigned> MatchedVariants;
-  if (getForcedEncodingSize() == 32) {
-    MatchedVariants = {AMDGPUAsmVariants::DEFAULT};
-  } else if (isForcedVOP3()) {
-    MatchedVariants = {AMDGPUAsmVariants::VOP3};
-  } else if (isForcedSDWA()) {
-    MatchedVariants = {AMDGPUAsmVariants::SDWA};
-  } else if (isForcedDPP()) {
-    MatchedVariants = {AMDGPUAsmVariants::DPP};
-  } else {
-    MatchedVariants = {AMDGPUAsmVariants::DEFAULT,
-                       AMDGPUAsmVariants::VOP3,
-                       AMDGPUAsmVariants::SDWA,
-                       AMDGPUAsmVariants::DPP};
-  }
-
   MCInst Inst;
   unsigned Result = Match_Success;
-  for (auto Variant : MatchedVariants) {
+  for (auto Variant : getMatchedVariants()) {
     uint64_t EI;
     auto R = MatchInstructionImpl(Operands, Inst, EI, MatchingInlineAsm,
                                   Variant);
