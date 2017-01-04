@@ -385,8 +385,6 @@ namespace overload_vs_pack {
 
   int n1 = g1(X<int, float>(), f, g); // expected-error {{no matching function}}
   int n2 = g2(x<int, float>, f, g); // expected-error {{no matching function}}
-  int n3 = g1(X<int, float, double, char>(), f);
-  int n4 = g2(x<int, float, double, long>, f);
 
   int &a1 = h1<double>(0); // ok, skip deduction for 'f's, deduce matching value from 'g'
   int &a2 = h2<double>(0);
@@ -399,4 +397,13 @@ namespace overload_vs_pack {
 
   template<typename ...T> int partial_deduction_2(void (*...f)(T), ...); // expected-note {{deduced incomplete pack <(no value), double> for template parameter 'T'}}
   int pd2 = partial_deduction_2(f, g); // expected-error {{no matching function}}
+
+  namespace cwg_example {
+    void f(char, char);
+    void f(int, int);
+    void x(int, char);
+
+    template<typename T, typename ...U> void j(void(*)(U...), void (*...fns)(T, U));
+    void test() { j(x, f, x); }
+  }
 }
