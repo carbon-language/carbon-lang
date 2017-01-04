@@ -3468,12 +3468,8 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
       if (InitListExpr *ILE = dyn_cast<InitListExpr>(Arg)) {
         TemplateDeductionResult Result;
         if (!DeduceFromInitializerList(*this, TemplateParams, ParamType, ILE,
-                                       Info, Deduced, TDF, Result)) {
-          // FIXME: Bailing out here is wrong; we could still need to deduce
-          // from later pack elements.
-          ++ArgIdx;
-          break;
-        }
+                                       Info, Deduced, TDF, Result))
+          continue;
 
         if (Result)
           return Result;
