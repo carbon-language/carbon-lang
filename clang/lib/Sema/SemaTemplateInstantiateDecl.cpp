@@ -1470,8 +1470,11 @@ Decl *TemplateDeclInstantiator::VisitCXXRecordDecl(CXXRecordDecl *D) {
                              TSK_ImplicitInstantiation,
                              /*Complain=*/true);
 
-    SemaRef.InstantiateClassMembers(D->getLocation(), Record, TemplateArgs,
-                                    TSK_ImplicitInstantiation);
+    // For nested local classes, we will instantiate the members when we
+    // reach the end of the outermost (non-nested) local class.
+    if (!D->isCXXClassMember())
+      SemaRef.InstantiateClassMembers(D->getLocation(), Record, TemplateArgs,
+                                      TSK_ImplicitInstantiation);
 
     // This class may have local implicit instantiations that need to be
     // performed within this scope.
