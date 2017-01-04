@@ -18,7 +18,6 @@
 #ifndef LLVM_BITCODE_BITCODES_H
 #define LLVM_BITCODE_BITCODES_H
 
-#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"
