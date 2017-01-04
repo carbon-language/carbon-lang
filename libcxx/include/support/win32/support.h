@@ -110,7 +110,7 @@ _LIBCPP_ALWAYS_INLINE int __builtin_ctzll(unsigned long long mask)
   unsigned long where;
 // Search from LSB to MSB for first set bit.
 // Returns zero if no set bit is found.
-#if (defined(_M_ARM) || defined(__arm__)) ||                                   \
+#if defined(_LIBCPP_HAS_BITSCAN64)
     (defined(_M_AMD64) || defined(__x86_64__))
   if (_BitScanForward64(&where, mask))
     return static_cast<int>(where);
@@ -151,8 +151,7 @@ _LIBCPP_ALWAYS_INLINE int __builtin_clzll(unsigned long long mask)
   unsigned long where;
 // BitScanReverse scans from MSB to LSB for first set bit.
 // Returns 0 if no set bit is found.
-#if (defined(_M_ARM) || defined(__arm__)) ||                                   \
-    (defined(_M_AMD64) || defined(__x86_64__))
+#if defined(_LIBCPP_HAS_BITSCAN64)
   if (_BitScanReverse64(&where, mask))
     return static_cast<int>(63 - where);
 #else
