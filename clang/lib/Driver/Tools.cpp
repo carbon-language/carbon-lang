@@ -3067,6 +3067,10 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
         continue;
       }
 
+      if (C.getDefaultToolChain().getTriple().isOSBinFormatCOFF() &&
+          Value == "-mbig-obj")
+        continue; // LLVM handles bigobj automatically
+
       switch (C.getDefaultToolChain().getArch()) {
       default:
         break;
