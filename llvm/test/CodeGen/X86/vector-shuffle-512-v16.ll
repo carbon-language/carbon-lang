@@ -397,8 +397,8 @@ define <16 x i32> @mask_shuffle_v16i32_02_03_04_05_06_07_08_09_10_11_12_13_14_15
   ret <16 x i32> %res
 }
 
-define <16 x i32> @mask_shuffle_v16i32_01_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16(<16 x i32> %a, <16 x i32> %b, <16 x i32> %passthru, i16 %mask) {
-; ALL-LABEL: mask_shuffle_v16i32_01_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16:
+define <16 x i32> @mask_shuffle_v16i32_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16_17(<16 x i32> %a, <16 x i32> %b, <16 x i32> %passthru, i16 %mask) {
+; ALL-LABEL: mask_shuffle_v16i32_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16_17:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    kmovw %edi, %k1
 ; ALL-NEXT:    valignd {{.*#+}} zmm2 {%k1} = zmm0[2,3,4,5,6,7,8,9,10,11,12,13,14,15],zmm1[0,1]
@@ -422,8 +422,8 @@ define <16 x i32> @maskz_shuffle_v16i32_02_03_04_05_06_07_08_09_10_11_12_13_14_1
   ret <16 x i32> %res
 }
 
-define <16 x i32> @maskz_shuffle_v16i32_01_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
-; ALL-LABEL: maskz_shuffle_v16i32_01_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16:
+define <16 x i32> @maskz_shuffle_v16i32_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16_17(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
+; ALL-LABEL: maskz_shuffle_v16i32_02_03_04_05_06_07_08_09_10_11_12_13_14_15_16_17:
 ; ALL:       # BB#0:
 ; ALL-NEXT:    kmovw %edi, %k1
 ; ALL-NEXT:    valignd {{.*#+}} zmm0 {%k1} {z} = zmm0[2,3,4,5,6,7,8,9,10,11,12,13,14,15],zmm1[0,1]
