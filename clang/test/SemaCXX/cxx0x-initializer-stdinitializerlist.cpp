@@ -104,7 +104,7 @@ template <typename T>
 T deduce_ref(const std::initializer_list<T>&); // expected-note {{conflicting types for parameter 'T' ('int' vs. 'double')}}
 
 template<typename T, typename U> struct pair { pair(...); };
-template<typename T> void deduce_pairs(std::initializer_list<pair<T, typename T::type>>);
+template<typename T> void deduce_pairs(std::initializer_list<pair<T, typename T::type>>); // expected-note {{something}}
 struct WithIntType { typedef int type; };
 
 template<typename ...T> void deduce_after_init_list_in_pack(void (*)(T...), T...); // expected-note {{<int, int> vs. <(no value), double>}}
@@ -123,7 +123,7 @@ void argument_deduction() {
   pair<WithIntType, int> pi;
   pair<WithIntType, float> pf;
   deduce_pairs({pi, pi, pi}); // ok
-  deduce_pairs({pi, pf, pi}); // FIXME: This should be rejected, as we fail to produce a type that exactly matches the argument type.
+  deduce_pairs({pi, pf, pi}); // expected-error {{no matching function}}
 
   deduce_after_init_list_in_pack((void(*)(int,int))0, {}, 0);
   deduce_after_init_list_in_pack((void(*)(int,int))0, {}, 0.0); // expected-error {{no matching function}}
