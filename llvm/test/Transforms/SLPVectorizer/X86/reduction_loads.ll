@@ -14,7 +14,7 @@ define i32 @test(i32* nocapture readonly %p) {
 ; CHECK-NEXT:    [[ARRAYIDX_7:%.*]] = getelementptr inbounds i32, i32* %p, i64 7
 ; CHECK-NEXT:    br label %for.body
 ; CHECK:       for.body:
-; CHECK-NEXT:    [[SUM:%.*]] = phi i32 [ 0, %entry ], [ [[ADD_7]], %for.body ]
+; CHECK-NEXT:    [[SUM:%.*]] = phi i32 [ 0, %entry ], [ %add.7, %for.body ]
 ; CHECK-NEXT:    [[TMP0:%.*]] = bitcast i32* %p to <8 x i32>*
 ; CHECK-NEXT:    [[TMP1:%.*]] = load <8 x i32>, <8 x i32>* [[TMP0]], align 4
 ; CHECK-NEXT:    [[TMP2:%.*]] = mul <8 x i32> <i32 42, i32 42, i32 42, i32 42, i32 42, i32 42, i32 42, i32 42>, [[TMP1]]
