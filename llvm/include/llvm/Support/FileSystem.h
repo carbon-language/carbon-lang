@@ -829,23 +829,28 @@ public:
 };
 
 namespace detail {
-  /// Keeps state for the recursive_directory_iterator.
-  struct RecDirIterState {
+  /// RecDirIterState - Keeps state for the recursive_directory_iterator. It is
+  /// reference counted in order to preserve InputIterator semantics on copy.
+  struct RecDirIterState : public RefCountedBase<RecDirIterState> {
+    RecDirIterState()
+      : Level(0)
+      , HasNoPushRequest(false) {}
+
     std::stack<directory_iterator, std::vector<directory_iterator>> Stack;
-    uint16_t Level = 0;
-    bool HasNoPushRequest = false;
+    uint16_t Level;
+    bool HasNoPushRequest;
   };
 } // end namespace detail
 
 /// recursive_directory_iterator - Same as directory_iterator except for it
 /// recurses down into child directories.
 class recursive_directory_iterator {
-  std::shared_ptr<detail::RecDirIterState> State;
+  IntrusiveRefCntPtr<detail::RecDirIterState> State;
 
 public:
   recursive_directory_iterator() = default;
   explicit recursive_directory_iterator(const Twine &path, std::error_code &ec)
-      : State(std::make_shared<detail::RecDirIterState>()) {
+      : State(new detail::RecDirIterState) {
     State->Stack.push(directory_iterator(path, ec));
     if (State->Stack.top() == directory_iterator())
       State.reset();

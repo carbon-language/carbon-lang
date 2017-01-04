@@ -101,10 +101,10 @@ TEST(BitstreamReaderTest, readRecordWithBlobWhileStreaming) {
       Stream.Emit(Magic, 32);
       Stream.EnterSubblock(BlockID, 3);
 
-      auto Abbrev = std::make_shared<BitCodeAbbrev>();
+      BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
       Abbrev->Add(BitCodeAbbrevOp(RecordID));
       Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
-      AbbrevID = Stream.EmitAbbrev(std::move(Abbrev));
+      AbbrevID = Stream.EmitAbbrev(Abbrev);
       unsigned Record[] = {RecordID};
       Stream.EmitRecordWithBlob(AbbrevID, makeArrayRef(Record), BlobIn);
 
