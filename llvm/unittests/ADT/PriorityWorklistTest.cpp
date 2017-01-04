@@ -109,6 +109,14 @@ TYPED_TEST(PriorityWorklistTest, InsertSequence) {
   EXPECT_EQ(7, W.pop_back_val());
   EXPECT_EQ(2, W.pop_back_val());
   ASSERT_TRUE(W.empty());
+
+  ASSERT_TRUE(W.insert(2));
+  ASSERT_TRUE(W.insert(7));
+  // Inserting an empty sequence does nothing.
+  W.insert(std::vector<int>());
+  EXPECT_EQ(7, W.pop_back_val());
+  EXPECT_EQ(2, W.pop_back_val());
+  ASSERT_TRUE(W.empty());
 }
 
 TYPED_TEST(PriorityWorklistTest, EraseIf) {

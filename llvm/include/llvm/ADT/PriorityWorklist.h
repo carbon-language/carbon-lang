@@ -112,12 +112,16 @@ public:
   template <typename SequenceT>
   typename std::enable_if<!std::is_convertible<SequenceT, T>::value>::type
   insert(SequenceT &&Input) {
+    if (std::begin(Input) == std::end(Input))
+      // Nothing to do for an empty input sequence.
+      return;
+
     // First pull the input sequence into the vector as a bulk append
     // operation.
     ptrdiff_t StartIndex = V.size();
     V.insert(V.end(), std::begin(Input), std::end(Input));
     // Now walk backwards fixing up the index map and deleting any duplicates.
-    for (auto i : reverse(seq<ptrdiff_t>(StartIndex, V.size()))) {
+    for (ptrdiff_t i = V.size() - 1; i >= StartIndex; --i) {
       auto InsertResult = M.insert({V[i], i});
       if (InsertResult.second)
         continue;
