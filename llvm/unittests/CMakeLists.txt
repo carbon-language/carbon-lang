@@ -1,11 +1,6 @@
 add_custom_target(UnitTests)
 set_target_properties(UnitTests PROPERTIES FOLDER "Tests")
 
-# Some parts of gtest rely on this GNU extension, don't warn on it.
-if(SUPPORTS_NO_GNU_ZERO_VARIADIC_MACRO_ARGUMENTS_FLAG)
-  add_definitions("-Wno-gnu-zero-variadic-macro-arguments")
-endif()
-
 function(add_llvm_unittest test_dirname)
   add_unittest(UnitTests ${test_dirname} ${ARGN})
 endfunction()
