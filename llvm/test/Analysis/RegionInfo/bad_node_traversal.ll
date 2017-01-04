@@ -39,4 +39,5 @@ bb8:                                              ; preds = %bb7, %bb
 ; CHECK:      [0] bb => <Function Return>
 ; CHECK-NEXT:   [1] bb => bb8
 ; CHECK-NEXT:     [2] bb1 => bb7
+; CHECK-NEXT: End region tree
 
