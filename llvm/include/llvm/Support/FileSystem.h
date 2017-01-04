@@ -858,7 +858,7 @@ public:
 
   // No operator++ because we need error_code.
   recursive_directory_iterator &increment(std::error_code &ec) {
-    const directory_iterator end_itr;
+    const directory_iterator end_itr = {};
 
     if (State->HasNoPushRequest)
       State->HasNoPushRequest = false;
@@ -905,7 +905,7 @@ public:
     assert(State && "Cannot pop an end iterator!");
     assert(State->Level > 0 && "Cannot pop an iterator with level < 1");
 
-    const directory_iterator end_itr;
+    const directory_iterator end_itr = {};
     std::error_code ec;
     do {
       if (ec)
