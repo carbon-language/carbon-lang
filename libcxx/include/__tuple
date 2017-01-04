@@ -49,9 +49,9 @@ class _LIBCPP_TYPE_VIS_ONLY tuple_size<__enable_if_tuple_size_imp<
     : public integral_constant<size_t, tuple_size<_Tp>::value> {};
 
 #else
-template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_size<const _Tp> : tuple_size<_Tp> {};
-template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_size<volatile _Tp> : tuple_size<_Tp> {};
-template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_size<const volatile _Tp> : tuple_size<_Tp> {};
+template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_size<const _Tp> : public tuple_size<_Tp> {};
+template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_size<volatile _Tp> : public tuple_size<_Tp> {};
+template <class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_size<const volatile _Tp> : public tuple_size<_Tp> {};
 #endif
 
 template <size_t _Ip, class _Tp> class _LIBCPP_TYPE_VIS_ONLY tuple_element;
