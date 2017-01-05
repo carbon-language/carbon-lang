@@ -408,6 +408,7 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
           CurAST->deleteValue(&I);
           I.eraseFromParent();
         }
+        Changed = true;
         continue;
       }
 
