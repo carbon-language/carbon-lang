@@ -370,8 +370,9 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
                                               getDiagnostics(),
                                               getLangOpts(),
                                               &getTarget());
-  PP = new Preprocessor(&getPreprocessorOpts(), getDiagnostics(), getLangOpts(),
-                        getSourceManager(), *HeaderInfo, *this, PTHMgr,
+  PP = new Preprocessor(Invocation->getPreprocessorOptsPtr(), getDiagnostics(),
+                        getLangOpts(), getSourceManager(), *HeaderInfo, *this,
+                        PTHMgr,
                         /*OwnsHeaderSearch=*/true, TUKind);
   PP->Initialize(getTarget(), getAuxTarget());
 

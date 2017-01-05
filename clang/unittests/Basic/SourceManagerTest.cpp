@@ -80,8 +80,8 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, SourceMgr,
-                  HeaderInfo, ModLoader,
+  Preprocessor PP(std::make_shared<PreprocessorOptions>(), Diags, LangOpts,
+                  SourceMgr, HeaderInfo, ModLoader,
                   /*IILookup =*/nullptr,
                   /*OwnsHeaderSearch =*/false);
   PP.Initialize(*Target);
@@ -200,8 +200,8 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, SourceMgr,
-                  HeaderInfo, ModLoader,
+  Preprocessor PP(std::make_shared<PreprocessorOptions>(), Diags, LangOpts,
+                  SourceMgr, HeaderInfo, ModLoader,
                   /*IILookup =*/nullptr,
                   /*OwnsHeaderSearch =*/false);
   PP.Initialize(*Target);
@@ -300,8 +300,8 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, SourceMgr,
-                  HeaderInfo, ModLoader,
+  Preprocessor PP(std::make_shared<PreprocessorOptions>(), Diags, LangOpts,
+                  SourceMgr, HeaderInfo, ModLoader,
                   /*IILookup =*/nullptr,
                   /*OwnsHeaderSearch =*/false);
   PP.Initialize(*Target);

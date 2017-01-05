@@ -68,7 +68,7 @@ public:
   IntrusiveRefCntPtr<HeaderSearchOptions> HeaderSearchOpts;
 
   /// Options controlling the preprocessor (aside from \#include handling).
-  IntrusiveRefCntPtr<PreprocessorOptions> PreprocessorOpts;
+  std::shared_ptr<PreprocessorOptions> PreprocessorOpts;
 
   CompilerInvocationBase();
   ~CompilerInvocationBase();
@@ -90,6 +90,9 @@ public:
     return *HeaderSearchOpts;
   }
 
+  std::shared_ptr<PreprocessorOptions> getPreprocessorOptsPtr() {
+    return PreprocessorOpts;
+  }
   PreprocessorOptions &getPreprocessorOpts() { return *PreprocessorOpts; }
   const PreprocessorOptions &getPreprocessorOpts() const {
     return *PreprocessorOpts;

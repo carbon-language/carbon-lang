@@ -683,7 +683,7 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
                                          AST->ASTFileLangOpts,
                                          /*Target=*/nullptr));
 
-  PreprocessorOptions *PPOpts = new PreprocessorOptions();
+  auto PPOpts = std::make_shared<PreprocessorOptions>();
 
   for (const auto &RemappedFile : RemappedFiles)
     PPOpts->addRemappedFile(RemappedFile.first, RemappedFile.second);
@@ -693,11 +693,11 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
   HeaderSearch &HeaderInfo = *AST->HeaderInfo;
   unsigned Counter;
 
-  AST->PP =
-      new Preprocessor(PPOpts, AST->getDiagnostics(), AST->ASTFileLangOpts,
-                       AST->getSourceManager(), HeaderInfo, *AST,
-                       /*IILookup=*/nullptr,
-                       /*OwnsHeaderSearch=*/false);
+  AST->PP = new Preprocessor(std::move(PPOpts), AST->getDiagnostics(),
+                             AST->ASTFileLangOpts, AST->getSourceManager(),
+                             HeaderInfo, *AST,
+                             /*IILookup=*/nullptr,
+                             /*OwnsHeaderSearch=*/false);
   Preprocessor &PP = *AST->PP;
 
   AST->Ctx = new ASTContext(AST->ASTFileLangOpts, AST->getSourceManager(),

@@ -95,7 +95,7 @@ enum MacroUse {
 /// know anything about preprocessor-level issues like the \#include stack,
 /// token expansion, etc.
 class Preprocessor : public RefCountedBase<Preprocessor> {
-  IntrusiveRefCntPtr<PreprocessorOptions> PPOpts;
+  std::shared_ptr<PreprocessorOptions> PPOpts;
   DiagnosticsEngine        *Diags;
   LangOptions       &LangOpts;
   const TargetInfo  *Target;
@@ -650,10 +650,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   void updateOutOfDateIdentifier(IdentifierInfo &II) const;
 
 public:
-  Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
-               DiagnosticsEngine &diags, LangOptions &opts,
-               SourceManager &SM, HeaderSearch &Headers,
-               ModuleLoader &TheModuleLoader,
+  Preprocessor(std::shared_ptr<PreprocessorOptions> PPOpts,
+               DiagnosticsEngine &diags, LangOptions &opts, SourceManager &SM,
+               HeaderSearch &Headers, ModuleLoader &TheModuleLoader,
                IdentifierInfoLookup *IILookup = nullptr,
                bool OwnsHeaderSearch = false,
                TranslationUnitKind TUKind = TU_Complete);

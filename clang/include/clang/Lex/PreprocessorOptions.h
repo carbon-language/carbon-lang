@@ -40,7 +40,7 @@ enum ObjCXXARCStandardLibraryKind {
   
 /// PreprocessorOptions - This class is used for passing the various options
 /// used in preprocessor initialization to InitializePreprocessor().
-class PreprocessorOptions : public RefCountedBase<PreprocessorOptions> {
+class PreprocessorOptions {
 public:
   std::vector<std::pair<std::string, bool/*isUndef*/> > Macros;
   std::vector<std::string> Includes;
