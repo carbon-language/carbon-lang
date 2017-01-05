@@ -3102,9 +3102,9 @@ static bool isCombineInstrCandidateFP(const MachineInstr &Inst) {
   case AArch64::FSUBv2f32:
   case AArch64::FSUBv2f64:
   case AArch64::FSUBv4f32:
-		TargetOptions Options = Inst.getParent()->getParent()->getTarget().Options; 
-    return (Options.UnsafeFPMath || 
-				    Options.AllowFPOpFusion == FPOpFusion::Fast);
+    TargetOptions Options = Inst.getParent()->getParent()->getTarget().Options;
+    return (Options.UnsafeFPMath ||
+            Options.AllowFPOpFusion == FPOpFusion::Fast);
   }
   return false;
 }
