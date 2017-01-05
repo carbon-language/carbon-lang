@@ -535,8 +535,7 @@ static typename ELFT::uint getOutFlags(InputSectionBase<ELFT> *S) {
 }
 
 template <class ELFT>
-static SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
-                                            StringRef OutsecName) {
+static SectionKey createKey(InputSectionBase<ELFT> *C, StringRef OutsecName) {
   //  The ELF spec just says
   // ----------------------------------------------------------------
   // In the first phase, input sections that match in name, type and
@@ -598,14 +597,14 @@ static SectionKey<ELFT::Is64Bits> createKey(InputSectionBase<ELFT> *C,
       (Config->Relocatable && (C->Flags & SHF_MERGE)))
     Alignment = std::max<uintX_t>(C->Alignment, C->Entsize);
 
-  return SectionKey<ELFT::Is64Bits>{OutsecName, Flags, Alignment};
+  return SectionKey{OutsecName, Flags, Alignment};
 }
 
 template <class ELFT>
 std::pair<OutputSectionBase *, bool>
 OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
                                    StringRef OutsecName) {
-  SectionKey<ELFT::Is64Bits> Key = createKey(C, OutsecName);
+  SectionKey Key = createKey(C, OutsecName);
   return create(Key, C);
 }
 
@@ -615,7 +614,7 @@ static uint64_t getIncompatibleFlags(uint64_t Flags) {
 
 template <class ELFT>
 std::pair<OutputSectionBase *, bool>
-OutputSectionFactory<ELFT>::create(const SectionKey<ELFT::Is64Bits> &Key,
+OutputSectionFactory<ELFT>::create(const SectionKey &Key,
                                    InputSectionBase<ELFT> *C) {
   uintX_t Flags = getOutFlags(C);
   OutputSectionBase *&Sec = Map[Key];
@@ -645,34 +644,22 @@ OutputSectionFactory<ELFT>::create(const SectionKey<ELFT::Is64Bits> &Key,
   return {Sec, true};
 }
 
-template <bool Is64Bits>
-typename lld::elf::SectionKey<Is64Bits>
-DenseMapInfo<lld::elf::SectionKey<Is64Bits>>::getEmptyKey() {
-  return SectionKey<Is64Bits>{DenseMapInfo<StringRef>::getEmptyKey(), 0, 0};
+SectionKey DenseMapInfo<SectionKey>::getEmptyKey() {
+  return SectionKey{DenseMapInfo<StringRef>::getEmptyKey(), 0, 0};
 }
 
-template <bool Is64Bits>
-typename lld::elf::SectionKey<Is64Bits>
-DenseMapInfo<lld::elf::SectionKey<Is64Bits>>::getTombstoneKey() {
-  return SectionKey<Is64Bits>{DenseMapInfo<StringRef>::getTombstoneKey(), 0, 0};
+SectionKey DenseMapInfo<SectionKey>::getTombstoneKey() {
+  return SectionKey{DenseMapInfo<StringRef>::getTombstoneKey(), 0, 0};
 }
 
-template <bool Is64Bits>
-unsigned
-DenseMapInfo<lld::elf::SectionKey<Is64Bits>>::getHashValue(const Key &Val) {
+unsigned DenseMapInfo<SectionKey>::getHashValue(const SectionKey &Val) {
   return hash_combine(Val.Name, Val.Flags, Val.Alignment);
 }
 
-template <bool Is64Bits>
-bool DenseMapInfo<lld::elf::SectionKey<Is64Bits>>::isEqual(const Key &LHS,
-                                                           const Key &RHS) {
+bool DenseMapInfo<SectionKey>::isEqual(const SectionKey &LHS,
+                                       const SectionKey &RHS) {
   return DenseMapInfo<StringRef>::isEqual(LHS.Name, RHS.Name) &&
          LHS.Flags == RHS.Flags && LHS.Alignment == RHS.Alignment;
-}
-
-namespace llvm {
-template struct DenseMapInfo<SectionKey<true>>;
-template struct DenseMapInfo<SectionKey<false>>;
 }
 
 namespace lld {
