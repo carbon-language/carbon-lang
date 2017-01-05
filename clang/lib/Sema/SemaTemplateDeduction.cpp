@@ -1899,8 +1899,9 @@ DeduceTemplateArguments(Sema &S, TemplateParameterList *TemplateParams,
 
       // Check whether we have enough arguments.
       if (!hasTemplateArgumentForDeduction(Args, ArgIdx))
-        return NumberOfArgumentsMustMatch ? Sema::TDK_TooFewArguments
-                                          : Sema::TDK_Success;
+        return NumberOfArgumentsMustMatch
+                   ? Sema::TDK_MiscellaneousDeductionFailure
+                   : Sema::TDK_Success;
 
       // C++1z [temp.deduct.type]p9:
       //   During partial ordering, if Ai was originally a pack expansion [and]
