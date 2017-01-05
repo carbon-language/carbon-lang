@@ -414,7 +414,7 @@ private:
   IdentifierResolver DummyIdResolver;
 
   /// A mapping from extension block names to module file extensions.
-  llvm::StringMap<IntrusiveRefCntPtr<ModuleFileExtension>> ModuleFileExtensions;
+  llvm::StringMap<std::shared_ptr<ModuleFileExtension>> ModuleFileExtensions;
 
   /// \brief A timer used to track the time spent deserializing.
   std::unique_ptr<llvm::Timer> ReadTimer;
@@ -1366,7 +1366,7 @@ public:
   /// deserializing.
   ASTReader(Preprocessor &PP, ASTContext &Context,
             const PCHContainerReader &PCHContainerRdr,
-            ArrayRef<IntrusiveRefCntPtr<ModuleFileExtension>> Extensions,
+            ArrayRef<std::shared_ptr<ModuleFileExtension>> Extensions,
             StringRef isysroot = "", bool DisableValidation = false,
             bool AllowASTWithCompilerErrors = false,
             bool AllowConfigurationMismatch = false,

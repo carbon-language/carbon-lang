@@ -926,7 +926,7 @@ public:
                              const Preprocessor &PP, StringRef isysroot,
                              std::unique_ptr<raw_ostream> Out)
       : PCHGenerator(PP, "", isysroot, std::make_shared<PCHBuffer>(),
-                     ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>>(),
+                     ArrayRef<std::shared_ptr<ModuleFileExtension>>(),
                      /*AllowASTWithErrors=*/true),
         Unit(Unit), Hash(Unit.getCurrentTopLevelHashValue()), Action(Action),
         Out(std::move(Out)) {

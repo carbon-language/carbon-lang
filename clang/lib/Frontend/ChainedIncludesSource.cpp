@@ -159,7 +159,7 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
     Clang->createASTContext();
 
     auto Buffer = std::make_shared<PCHBuffer>();
-    ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>> Extensions;
+    ArrayRef<std::shared_ptr<ModuleFileExtension>> Extensions;
     auto consumer = llvm::make_unique<PCHGenerator>(
         Clang->getPreprocessor(), "-", /*isysroot=*/"", Buffer,
         Extensions, /*AllowASTWithErrors=*/true);

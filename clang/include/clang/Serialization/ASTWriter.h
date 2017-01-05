@@ -498,7 +498,7 @@ public:
   /// \brief Create a new precompiled header writer that outputs to
   /// the given bitstream.
   ASTWriter(llvm::BitstreamWriter &Stream,
-            ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>> Extensions,
+            ArrayRef<std::shared_ptr<ModuleFileExtension>> Extensions,
             bool IncludeTimestamps = true);
   ~ASTWriter() override;
 
@@ -934,13 +934,10 @@ protected:
   SmallVectorImpl<char> &getPCH() const { return Buffer->Data; }
 
 public:
-  PCHGenerator(
-    const Preprocessor &PP, StringRef OutputFile,
-    StringRef isysroot,
-    std::shared_ptr<PCHBuffer> Buffer,
-    ArrayRef<llvm::IntrusiveRefCntPtr<ModuleFileExtension>> Extensions,
-    bool AllowASTWithErrors = false,
-    bool IncludeTimestamps = true);
+  PCHGenerator(const Preprocessor &PP, StringRef OutputFile, StringRef isysroot,
+               std::shared_ptr<PCHBuffer> Buffer,
+               ArrayRef<std::shared_ptr<ModuleFileExtension>> Extensions,
+               bool AllowASTWithErrors = false, bool IncludeTimestamps = true);
   ~PCHGenerator() override;
   void InitializeSema(Sema &S) override { SemaPtr = &S; }
   void HandleTranslationUnit(ASTContext &Ctx) override;
