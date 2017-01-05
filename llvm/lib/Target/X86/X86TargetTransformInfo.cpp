@@ -214,11 +214,9 @@ int X86TTIImpl::getArithmeticInstrCost(
   };
 
   // Look for AVX512DQ lowering tricks for custom cases.
-  if (ST->hasDQI()) {
-    if (const auto *Entry = CostTableLookup(AVX512DQCostTable, ISD,
-                                            LT.second))
+  if (ST->hasDQI())
+    if (const auto *Entry = CostTableLookup(AVX512DQCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry AVX512BWCostTable[] = {
     { ISD::MUL,   MVT::v64i8,     11 }, // extend/pmullw/trunc sequence.
@@ -237,11 +235,9 @@ int X86TTIImpl::getArithmeticInstrCost(
   };
 
   // Look for AVX512BW lowering tricks for custom cases.
-  if (ST->hasBWI()) {
-    if (const auto *Entry = CostTableLookup(AVX512BWCostTable, ISD,
-                                            LT.second))
+  if (ST->hasBWI())
+    if (const auto *Entry = CostTableLookup(AVX512BWCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry AVX512CostTable[] = {
     { ISD::SHL,     MVT::v16i32,    1 },
@@ -257,10 +253,9 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::MUL,     MVT::v8i64,     8 }  // 3*pmuludq/3*shift/2*add
   };
 
-  if (ST->hasAVX512()) {
+  if (ST->hasAVX512())
     if (const auto *Entry = CostTableLookup(AVX512CostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry AVX2CostTable[] = {
     // Shifts on v4i64/v8i32 on AVX2 is legal even though we declare to
@@ -320,10 +315,9 @@ int X86TTIImpl::getArithmeticInstrCost(
   };
 
   // Look for XOP lowering tricks.
-  if (ST->hasXOP()) {
+  if (ST->hasXOP())
     if (const auto *Entry = CostTableLookup(XOPCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry AVX2CustomCostTable[] = {
     { ISD::SHL,  MVT::v32i8,      11 }, // vpblendvb sequence.
@@ -351,11 +345,10 @@ int X86TTIImpl::getArithmeticInstrCost(
   };
 
   // Look for AVX2 lowering tricks for custom cases.
-  if (ST->hasAVX2()) {
+  if (ST->hasAVX2())
     if (const auto *Entry = CostTableLookup(AVX2CustomCostTable, ISD,
                                             LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry AVXCustomCostTable[] = {
     { ISD::MUL,   MVT::v32i8,  26 }, // extend/pmullw/trunc sequence.
@@ -379,11 +372,10 @@ int X86TTIImpl::getArithmeticInstrCost(
   };
 
   // Look for AVX2 lowering tricks for custom cases.
-  if (ST->hasAVX()) {
+  if (ST->hasAVX())
     if (const auto *Entry = CostTableLookup(AVXCustomCostTable, ISD,
                                             LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry
   SSE2UniformCostTable[] = {
@@ -480,10 +472,9 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::MUL,  MVT::v4i32,     1 }  // pmulld
   };
 
-  if (ST->hasSSE41()) {
+  if (ST->hasSSE41())
     if (const auto *Entry = CostTableLookup(SSE41CostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry SSE2CostTable[] = {
     // We don't correctly identify costs of casts because they are marked as
@@ -532,10 +523,9 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::UDIV,  MVT::v2i64,  2*20 },
   };
 
-  if (ST->hasSSE2()) {
+  if (ST->hasSSE2())
     if (const auto *Entry = CostTableLookup(SSE2CostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
-  }
 
   static const CostTblEntry AVX1CostTable[] = {
     // We don't have to scalarize unsupported ops. We can issue two half-sized
@@ -560,22 +550,19 @@ int X86TTIImpl::getArithmeticInstrCost(
   };
 
   // Look for AVX1 lowering tricks.
-  if (ST->hasAVX() && !ST->hasAVX2()) {
-    MVT VT = LT.second;
-
-    if (const auto *Entry = CostTableLookup(AVX1CostTable, ISD, VT))
+  if (ST->hasAVX() && !ST->hasAVX2())
+    if (const auto *Entry = CostTableLookup(AVX1CostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
-  }
 
-  static const CostTblEntry SSE1FloatCostTable[] = {
+  static const CostTblEntry SSE1CostTable[] = {
     { ISD::FDIV, MVT::f32,   17 }, // Pentium III from http://www.agner.org/
     { ISD::FDIV, MVT::v4f32, 34 }, // Pentium III from http://www.agner.org/
   };
 
   if (ST->hasSSE1())
-    if (const auto *Entry = CostTableLookup(SSE1FloatCostTable, ISD,
-                                            LT.second))
+    if (const auto *Entry = CostTableLookup(SSE1CostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
+
   // Fallback to the default implementation.
   return BaseT::getArithmeticInstrCost(Opcode, Ty, Op1Info, Op2Info);
 }
