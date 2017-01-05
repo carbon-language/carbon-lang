@@ -371,7 +371,7 @@ public:
     DataConsumer->setASTContext(CI.getASTContext());
     Preprocessor &PP = CI.getPreprocessor();
     PP.addPPCallbacks(llvm::make_unique<IndexPPCallbacks>(PP, *DataConsumer));
-    DataConsumer->setPreprocessor(PP);
+    DataConsumer->setPreprocessor(CI.getPreprocessorPtr());
 
     if (SKData) {
       auto *PPRec = new PPConditionalDirectiveRecord(PP.getSourceManager());

@@ -96,7 +96,9 @@ void CompilerInstance::setSourceManager(SourceManager *Value) {
   SourceMgr = Value;
 }
 
-void CompilerInstance::setPreprocessor(Preprocessor *Value) { PP = Value; }
+void CompilerInstance::setPreprocessor(std::shared_ptr<Preprocessor> Value) {
+  PP = std::move(Value);
+}
 
 void CompilerInstance::setASTContext(ASTContext *Value) {
   Context = Value;
@@ -370,10 +372,10 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
                                               getDiagnostics(),
                                               getLangOpts(),
                                               &getTarget());
-  PP = new Preprocessor(Invocation->getPreprocessorOptsPtr(), getDiagnostics(),
-                        getLangOpts(), getSourceManager(), *HeaderInfo, *this,
-                        PTHMgr,
-                        /*OwnsHeaderSearch=*/true, TUKind);
+  PP = std::make_shared<Preprocessor>(
+      Invocation->getPreprocessorOptsPtr(), getDiagnostics(), getLangOpts(),
+      getSourceManager(), *HeaderInfo, *this, PTHMgr,
+      /*OwnsHeaderSearch=*/true, TUKind);
   PP->Initialize(getTarget(), getAuxTarget());
 
   // Note that this is different then passing PTHMgr to Preprocessor's ctor.

@@ -94,7 +94,7 @@ enum MacroUse {
 /// Lexers know only about tokens within a single source file, and don't
 /// know anything about preprocessor-level issues like the \#include stack,
 /// token expansion, etc.
-class Preprocessor : public RefCountedBase<Preprocessor> {
+class Preprocessor {
   std::shared_ptr<PreprocessorOptions> PPOpts;
   DiagnosticsEngine        *Diags;
   LangOptions       &LangOpts;

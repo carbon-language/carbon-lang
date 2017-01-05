@@ -91,7 +91,7 @@ class CompilerInstance : public ModuleLoader {
   IntrusiveRefCntPtr<SourceManager> SourceMgr;
 
   /// The preprocessor.
-  IntrusiveRefCntPtr<Preprocessor> PP;
+  std::shared_ptr<Preprocessor> PP;
 
   /// The AST context.
   IntrusiveRefCntPtr<ASTContext> Context;
@@ -433,13 +433,14 @@ public:
     return *PP;
   }
 
+  std::shared_ptr<Preprocessor> getPreprocessorPtr() { return PP; }
+
   void resetAndLeakPreprocessor() {
-    BuryPointer(PP.get());
-    PP.resetWithoutRelease();
+    BuryPointer(new std::shared_ptr<Preprocessor>(PP));
   }
 
   /// Replace the current preprocessor.
-  void setPreprocessor(Preprocessor *Value);
+  void setPreprocessor(std::shared_ptr<Preprocessor> Value);
 
   /// }
   /// @name ASTContext

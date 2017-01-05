@@ -257,7 +257,9 @@ ASTUnit::~ASTUnit() {
     fprintf(stderr, "--- %u translation units\n", --ActiveASTUnitObjects);
 }
 
-void ASTUnit::setPreprocessor(Preprocessor *pp) { PP = pp; }
+void ASTUnit::setPreprocessor(std::shared_ptr<Preprocessor> PP) {
+  this->PP = std::move(PP);
+}
 
 /// \brief Determine the set of code-completion contexts in which this 
 /// declaration should be shown.
@@ -693,11 +695,11 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
   HeaderSearch &HeaderInfo = *AST->HeaderInfo;
   unsigned Counter;
 
-  AST->PP = new Preprocessor(std::move(PPOpts), AST->getDiagnostics(),
-                             AST->ASTFileLangOpts, AST->getSourceManager(),
-                             HeaderInfo, *AST,
-                             /*IILookup=*/nullptr,
-                             /*OwnsHeaderSearch=*/false);
+  AST->PP = std::make_shared<Preprocessor>(
+      std::move(PPOpts), AST->getDiagnostics(), AST->ASTFileLangOpts,
+      AST->getSourceManager(), HeaderInfo, *AST,
+      /*IILookup=*/nullptr,
+      /*OwnsHeaderSearch=*/false);
   Preprocessor &PP = *AST->PP;
 
   AST->Ctx = new ASTContext(AST->ASTFileLangOpts, AST->getSourceManager(),
@@ -1671,7 +1673,7 @@ void ASTUnit::transferASTDataFromCompilerInstance(CompilerInstance &CI) {
   if (CI.hasASTContext())
     Ctx = &CI.getASTContext();
   if (CI.hasPreprocessor())
-    PP = &CI.getPreprocessor();
+    PP = CI.getPreprocessorPtr();
   CI.setSourceManager(nullptr);
   CI.setFileManager(nullptr);
   if (CI.hasTarget())

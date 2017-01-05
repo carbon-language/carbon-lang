@@ -86,7 +86,7 @@ private:
   IntrusiveRefCntPtr<SourceManager>       SourceMgr;
   std::unique_ptr<HeaderSearch>           HeaderInfo;
   IntrusiveRefCntPtr<TargetInfo>          Target;
-  IntrusiveRefCntPtr<Preprocessor>        PP;
+  std::shared_ptr<Preprocessor>           PP;
   IntrusiveRefCntPtr<ASTContext>          Ctx;
   std::shared_ptr<TargetOptions>          TargetOpts;
   IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts;
@@ -496,12 +496,13 @@ public:
 
   const Preprocessor &getPreprocessor() const { return *PP; }
         Preprocessor &getPreprocessor()       { return *PP; }
+  std::shared_ptr<Preprocessor> getPreprocessorPtr() const { return PP; }
 
   const ASTContext &getASTContext() const { return *Ctx; }
         ASTContext &getASTContext()       { return *Ctx; }
 
   void setASTContext(ASTContext *ctx) { Ctx = ctx; }
-  void setPreprocessor(Preprocessor *pp);
+  void setPreprocessor(std::shared_ptr<Preprocessor> pp);
 
   bool hasSema() const { return (bool)TheSema; }
   Sema &getSema() const { 
