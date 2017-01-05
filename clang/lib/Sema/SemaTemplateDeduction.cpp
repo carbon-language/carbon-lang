@@ -2215,25 +2215,26 @@ static Sema::TemplateDeductionResult ConvertDeducedTemplateArguments(
 
     if (!Deduced[I].isNull()) {
       if (I < NumAlreadyConverted) {
-        // We have already fully type-checked and converted this
-        // argument, because it was explicitly-specified. Just record the
-        // presence of this argument.
-        Builder.push_back(Deduced[I]);
         // We may have had explicitly-specified template arguments for a
         // template parameter pack (that may or may not have been extended
         // via additional deduced arguments).
-        if (Param->isParameterPack() && CurrentInstantiationScope) {
-          if (CurrentInstantiationScope->getPartiallySubstitutedPack() ==
-              Param) {
-            // Forget the partially-substituted pack; its substitution is now
-            // complete.
-            CurrentInstantiationScope->ResetPartiallySubstitutedPack();
-          }
+        if (Param->isParameterPack() && CurrentInstantiationScope &&
+            CurrentInstantiationScope->getPartiallySubstitutedPack() == Param) {
+          // Forget the partially-substituted pack; its substitution is now
+          // complete.
+          CurrentInstantiationScope->ResetPartiallySubstitutedPack();
+          // We still need to check the argument in case it was extended by
+          // deduction.
+        } else {
+          // We have already fully type-checked and converted this
+          // argument, because it was explicitly-specified. Just record the
+          // presence of this argument.
+          Builder.push_back(Deduced[I]);
+          continue;
         }
-        continue;
       }
 
-      // We have deduced this argument, so it still needs to be
+      // We may have deduced this argument, so it still needs to be
       // checked and converted.
       if (ConvertDeducedTemplateArgument(S, Param, Deduced[I], Template, Info,
                                          IsDeduced, Builder)) {
