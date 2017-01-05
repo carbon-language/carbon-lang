@@ -474,8 +474,10 @@ getIntelProcessorTypeAndSubtype(unsigned int Family, unsigned int Model,
       break;
 
     // Skylake:
-    case 0x4e:
-    case 0x5e:
+    case 0x4e: // Skylake mobile
+    case 0x5e: // Skylake desktop
+    case 0x8e: // Kaby Lake mobile
+    case 0x9e: // Kaby Lake desktop
       *Type = INTEL_COREI7; // "skylake"
       *Subtype = INTEL_COREI7_SKYLAKE;
       break;
