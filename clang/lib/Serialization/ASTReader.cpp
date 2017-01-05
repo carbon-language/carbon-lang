@@ -8901,29 +8901,15 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     : Listener(DisableValidation
                    ? cast<ASTReaderListener>(new SimpleASTReaderListener(PP))
                    : cast<ASTReaderListener>(new PCHValidator(PP, *this))),
-      DeserializationListener(nullptr), OwnsDeserializationListener(false),
       SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
-      PCHContainerRdr(PCHContainerRdr), Diags(PP.getDiagnostics()),
-      SemaObj(nullptr), PP(PP), Context(Context), Consumer(nullptr),
-      ModuleMgr(PP.getFileManager(), PCHContainerRdr), DummyIdResolver(PP),
-      ReadTimer(std::move(ReadTimer)), PragmaMSStructState(-1),
-      PragmaMSPointersToMembersState(-1), isysroot(isysroot),
+      PCHContainerRdr(PCHContainerRdr), Diags(PP.getDiagnostics()), PP(PP),
+      Context(Context), ModuleMgr(PP.getFileManager(), PCHContainerRdr),
+      DummyIdResolver(PP), ReadTimer(std::move(ReadTimer)), isysroot(isysroot),
       DisableValidation(DisableValidation),
       AllowASTWithCompilerErrors(AllowASTWithCompilerErrors),
       AllowConfigurationMismatch(AllowConfigurationMismatch),
       ValidateSystemInputs(ValidateSystemInputs),
-      UseGlobalIndex(UseGlobalIndex), TriedLoadingGlobalIndex(false),
-      ProcessingUpdateRecords(false), CurrSwitchCaseStmts(&SwitchCaseStmts),
-      NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
-      TotalNumStatements(0), NumMacrosRead(0), TotalNumMacros(0),
-      NumIdentifierLookups(0), NumIdentifierLookupHits(0), NumSelectorsRead(0),
-      NumMethodPoolEntriesRead(0), NumMethodPoolLookups(0),
-      NumMethodPoolHits(0), NumMethodPoolTableLookups(0),
-      NumMethodPoolTableHits(0), TotalNumMethodPoolEntries(0),
-      NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
-      NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
-      TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
-      PassingDeclsToConsumer(false), ReadingKind(Read_None) {
+      UseGlobalIndex(UseGlobalIndex), CurrSwitchCaseStmts(&SwitchCaseStmts) {
   SourceMgr.setExternalSLocEntrySource(this);
 
   for (const auto &Ext : Extensions) {
