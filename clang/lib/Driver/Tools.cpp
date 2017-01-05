@@ -12191,3 +12191,19 @@ void NVPTX::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   const char *Exec = Args.MakeArgString(TC.GetProgramPath("fatbinary"));
   C.addCommand(llvm::make_unique<Command>(JA, *this, Exec, CmdArgs, Inputs));
 }
+
+void AVR::Linker::ConstructJob(Compilation &C, const JobAction &JA,
+                               const InputInfo &Output,
+                               const InputInfoList &Inputs,
+                               const ArgList &Args,
+                               const char *LinkingOutput) const {
+
+  std::string Linker = getToolChain().GetProgramPath(getShortName());
+  ArgStringList CmdArgs;
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs, JA);
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+  C.addCommand(llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Linker),
+                                          CmdArgs, Inputs));
+}
+// AVR tools end.
