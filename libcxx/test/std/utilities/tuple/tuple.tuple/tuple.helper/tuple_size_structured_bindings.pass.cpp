@@ -16,7 +16,7 @@
 //     : public integral_constant<size_t, sizeof...(Types)> { };
 
 // UNSUPPORTED: c++98, c++03, c++11, c++14
-// XFAIL: libcpp-no-structured-bindings
+// UNSUPPORTED: libcpp-no-structured-bindings
 
 #include <tuple>
 #include <array>
