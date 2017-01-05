@@ -2583,7 +2583,7 @@ MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
   //
   // <rdar://problem/11522048>
   //
-  if (MI.isCopy()) {
+  if (MI.isFullCopy()) {
     unsigned DstReg = MI.getOperand(0).getReg();
     unsigned SrcReg = MI.getOperand(1).getReg();
     if (SrcReg == AArch64::SP &&
@@ -2598,7 +2598,7 @@ MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
     }
   }
 
-  // Handle the case where a copy is being spilled or refilled but the source
+  // Handle the case where a copy is being spilled or filled but the source
   // and destination register class don't match.  For example:
   //
   //   %vreg0<def> = COPY %XZR; GPR64common:%vreg0
@@ -2613,7 +2613,7 @@ MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
   //
   //   %vreg0<def> = COPY %vreg1; GPR64:%vreg0, FPR64:%vreg1
   //
-  // will be refilled as
+  // will be filled as
   //
   //   LDRDui %vreg0, fi<#0>
   //
@@ -2622,9 +2622,11 @@ MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
   //   LDRXui %vregTemp, fi<#0>
   //   %vreg0 = FMOV %vregTemp
   //
-  if (MI.isFullCopy() && Ops.size() == 1 &&
+  if (MI.isCopy() && Ops.size() == 1 &&
       // Make sure we're only folding the explicit COPY defs/uses.
       (Ops[0] == 0 || Ops[0] == 1)) {
+    bool IsSpill = Ops[0] == 0;
+    bool IsFill = !IsSpill;
     const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
     const MachineRegisterInfo &MRI = MF.getRegInfo();
     MachineBasicBlock &MBB = *MI.getParent();
@@ -2632,20 +2634,111 @@ MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
     const MachineOperand &SrcMO = MI.getOperand(1);
     unsigned DstReg = DstMO.getReg();
     unsigned SrcReg = SrcMO.getReg();
+    // This is slightly expensive to compute for physical regs since
+    // getMinimalPhysRegClass is slow.
     auto getRegClass = [&](unsigned Reg) {
       return TargetRegisterInfo::isVirtualRegister(Reg)
                  ? MRI.getRegClass(Reg)
                  : TRI.getMinimalPhysRegClass(Reg);
     };
-    const TargetRegisterClass &DstRC = *getRegClass(DstReg);
-    const TargetRegisterClass &SrcRC = *getRegClass(SrcReg);
-    if (DstRC.getSize() == SrcRC.getSize()) {
-      if (Ops[0] == 0)
+
+    if (DstMO.getSubReg() == 0 && SrcMO.getSubReg() == 0) {
+      assert(getRegClass(DstReg)->getSize() == getRegClass(SrcReg)->getSize() &&
+             "Mismatched register size in non subreg COPY");
+      if (IsSpill)
         storeRegToStackSlot(MBB, InsertPt, SrcReg, SrcMO.isKill(), FrameIndex,
-                            &SrcRC, &TRI);
+                            getRegClass(SrcReg), &TRI);
       else
-        loadRegFromStackSlot(MBB, InsertPt, DstReg, FrameIndex, &DstRC, &TRI);
+        loadRegFromStackSlot(MBB, InsertPt, DstReg, FrameIndex,
+                             getRegClass(DstReg), &TRI);
       return &*--InsertPt;
+    }
+
+    // Handle cases like spilling def of:
+    //
+    //   %vreg0:sub_32<def,read-undef> = COPY %WZR; GPR64common:%vreg0
+    //
+    // where the physical register source can be widened and stored to the full
+    // virtual reg destination stack slot, in this case producing:
+    //
+    //   STRXui %XZR, <fi#0>
+    //
+    if (IsSpill && DstMO.isUndef() &&
+        TargetRegisterInfo::isPhysicalRegister(SrcReg)) {
+      assert(SrcMO.getSubReg() == 0 &&
+             "Unexpected subreg on physical register");
+      const TargetRegisterClass *SpillRC;
+      unsigned SpillSubreg;
+      switch (DstMO.getSubReg()) {
+      default:
+        SpillRC = nullptr;
+        break;
+      case AArch64::sub_32:
+      case AArch64::ssub:
+        if (AArch64::GPR32RegClass.contains(SrcReg)) {
+          SpillRC = &AArch64::GPR64RegClass;
+          SpillSubreg = AArch64::sub_32;
+        } else if (AArch64::FPR32RegClass.contains(SrcReg)) {
+          SpillRC = &AArch64::FPR64RegClass;
+          SpillSubreg = AArch64::ssub;
+        } else
+          SpillRC = nullptr;
+        break;
+      case AArch64::dsub:
+        if (AArch64::FPR64RegClass.contains(SrcReg)) {
+          SpillRC = &AArch64::FPR128RegClass;
+          SpillSubreg = AArch64::dsub;
+        } else
+          SpillRC = nullptr;
+        break;
+      }
+
+      if (SpillRC)
+        if (unsigned WidenedSrcReg =
+                TRI.getMatchingSuperReg(SrcReg, SpillSubreg, SpillRC)) {
+          storeRegToStackSlot(MBB, InsertPt, WidenedSrcReg, SrcMO.isKill(),
+                              FrameIndex, SpillRC, &TRI);
+          return &*--InsertPt;
+        }
+    }
+
+    // Handle cases like filling use of:
+    //
+    //   %vreg0:sub_32<def,read-undef> = COPY %vreg1; GPR64:%vreg0, GPR32:%vreg1
+    //
+    // where we can load the full virtual reg source stack slot, into the subreg
+    // destination, in this case producing:
+    //
+    //   LDRWui %vreg0:sub_32<def,read-undef>, <fi#0>
+    //
+    if (IsFill && SrcMO.getSubReg() == 0 && DstMO.isUndef()) {
+      const TargetRegisterClass *FillRC;
+      switch (DstMO.getSubReg()) {
+      default:
+        FillRC = nullptr;
+        break;
+      case AArch64::sub_32:
+        FillRC = &AArch64::GPR32RegClass;
+        break;
+      case AArch64::ssub:
+        FillRC = &AArch64::FPR32RegClass;
+        break;
+      case AArch64::dsub:
+        FillRC = &AArch64::FPR64RegClass;
+        break;
+      }
+
+      if (FillRC) {
+        assert(getRegClass(SrcReg)->getSize() == FillRC->getSize() &&
+               "Mismatched regclass size on folded subreg COPY");
+        loadRegFromStackSlot(MBB, InsertPt, DstReg, FrameIndex, FillRC, &TRI);
+        MachineInstr &LoadMI = *--InsertPt;
+        MachineOperand &LoadDst = LoadMI.getOperand(0);
+        assert(LoadDst.getSubReg() == 0 && "unexpected subreg on fill load");
+        LoadDst.setSubReg(DstMO.getSubReg());
+        LoadDst.setIsUndef();
+        return &LoadMI;
+      }
     }
   }
 
