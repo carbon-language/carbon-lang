@@ -54,8 +54,7 @@ void __sanitizer_default_free_hook(void *ptr) { }
 const char* __asan_default_default_options() { return ""; }
 const char* __asan_default_default_suppressions() { return ""; }
 void __asan_default_on_error() {}
-// 64-bit msvc will not prepend an underscore for symbols.
-#ifdef _WIN64
+const char* __sancov_default_options() { return ""; }
 #pragma comment(linker, "/alternatename:__sanitizer_malloc_hook=__sanitizer_default_malloc_hook")  // NOLINT
 #pragma comment(linker, "/alternatename:__sanitizer_free_hook=__sanitizer_default_free_hook")      // NOLINT
 #pragma comment(linker, "/alternatename:__asan_default_options=__asan_default_default_options")    // NOLINT
