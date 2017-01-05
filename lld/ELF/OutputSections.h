@@ -232,6 +232,8 @@ template <class ELFT> class OutputSectionFactory {
   typedef typename ELFT::uint uintX_t;
 
 public:
+  OutputSectionFactory();
+  ~OutputSectionFactory();
   std::pair<OutputSectionBase *, bool> create(InputSectionBase<ELFT> *C,
                                               StringRef OutsecName);
   std::pair<OutputSectionBase *, bool> create(const SectionKey &Key,
@@ -262,14 +264,5 @@ template <class ELFT> OutputSectionBase *Out<ELFT>::FiniArray;
 } // namespace elf
 } // namespace lld
 
-namespace llvm {
-template <> struct DenseMapInfo<lld::elf::SectionKey> {
-  static lld::elf::SectionKey getEmptyKey();
-  static lld::elf::SectionKey getTombstoneKey();
-  static unsigned getHashValue(const lld::elf::SectionKey &Val);
-  static bool isEqual(const lld::elf::SectionKey &LHS,
-                      const lld::elf::SectionKey &RHS);
-};
-}
 
 #endif
