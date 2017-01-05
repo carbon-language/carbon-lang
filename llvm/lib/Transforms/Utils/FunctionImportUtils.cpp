@@ -57,9 +57,8 @@ bool FunctionImportGlobalProcessing::shouldPromoteLocalToGlobal(
     return false;
 
   if (isPerformingImport()) {
-    assert(!GlobalsToImport->count(SGV) ||
-           !isNonRenamableLocal(*SGV) &&
-               "Attempting to promote non-renamable local");
+    assert((!GlobalsToImport->count(SGV) || !isNonRenamableLocal(*SGV)) &&
+           "Attempting to promote non-renamable local");
     // We don't know for sure yet if we are importing this value (as either
     // a reference or a def), since we are simply walking all values in the
     // module. But by necessity if we end up importing it and it is local,
