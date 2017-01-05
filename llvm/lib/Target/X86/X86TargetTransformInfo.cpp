@@ -485,29 +485,21 @@ int X86TTIImpl::getArithmeticInstrCost(
     // We don't correctly identify costs of casts because they are marked as
     // custom.
     { ISD::SHL,  MVT::v16i8,    26 }, // cmpgtb sequence.
-    { ISD::SHL,  MVT::v32i8,  2*26 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v8i16,    32 }, // cmpgtb sequence.
-    { ISD::SHL,  MVT::v16i16, 2*32 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v4i32,   2*5 }, // We optimized this using mul.
     { ISD::SHL,  MVT::v8i32, 2*2*5 }, // We optimized this using mul.
     { ISD::SHL,  MVT::v2i64,     4 }, // splat+shuffle sequence.
     { ISD::SHL,  MVT::v4i64,   2*4 }, // splat+shuffle sequence.
 
     { ISD::SRL,  MVT::v16i8,    26 }, // cmpgtb sequence.
-    { ISD::SRL,  MVT::v32i8,  2*26 }, // cmpgtb sequence.
     { ISD::SRL,  MVT::v8i16,    32 }, // cmpgtb sequence.
-    { ISD::SRL,  MVT::v16i16, 2*32 }, // cmpgtb sequence.
     { ISD::SRL,  MVT::v4i32,    16 }, // Shift each lane + blend.
-    { ISD::SRL,  MVT::v8i32,  2*16 }, // Shift each lane + blend.
     { ISD::SRL,  MVT::v2i64,     4 }, // splat+shuffle sequence.
     { ISD::SRL,  MVT::v4i64,   2*4 }, // splat+shuffle sequence.
 
     { ISD::SRA,  MVT::v16i8,    54 }, // unpacked cmpgtb sequence.
-    { ISD::SRA,  MVT::v32i8,  2*54 }, // unpacked cmpgtb sequence.
     { ISD::SRA,  MVT::v8i16,    32 }, // cmpgtb sequence.
-    { ISD::SRA,  MVT::v16i16, 2*32 }, // cmpgtb sequence.
     { ISD::SRA,  MVT::v4i32,    16 }, // Shift each lane + blend.
-    { ISD::SRA,  MVT::v8i32,  2*16 }, // Shift each lane + blend.
     { ISD::SRA,  MVT::v2i64,    12 }, // srl/xor/sub sequence.
     { ISD::SRA,  MVT::v4i64,  2*12 }, // srl/xor/sub sequence.
 
