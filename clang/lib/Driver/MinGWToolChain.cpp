@@ -20,10 +20,9 @@ using namespace clang::driver::toolchains;
 using namespace clang;
 using namespace llvm::opt;
 
-namespace {
 // Simplified from Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple.
-bool findGccVersion(StringRef LibDir, std::string &GccLibDir,
-                    std::string &Ver) {
+static bool findGccVersion(StringRef LibDir, std::string &GccLibDir,
+                           std::string &Ver) {
   Generic_GCC::GCCVersion Version = Generic_GCC::GCCVersion::Parse("0.0.0");
   std::error_code EC;
   for (llvm::sys::fs::directory_iterator LI(LibDir, EC), LE; !EC && LI != LE;
@@ -39,7 +38,6 @@ bool findGccVersion(StringRef LibDir, std::string &GccLibDir,
     GccLibDir = LI->path();
   }
   return Ver.size();
-}
 }
 
 void MinGW::findGccLibDir() {
