@@ -18306,27 +18306,33 @@ static SDValue getTargetVShiftNode(unsigned Opc, const SDLoc &dl, MVT VT,
     case X86ISD::VSRAI: Opc = X86ISD::VSRA; break;
   }
 
+  // Need to build a vector containing shift amount.
+  // SSE/AVX packed shifts only use the lower 64-bit of the shift count.
+  // +=================+============+=======================================+
+  // | ShAmt is        | HasSSE4.1? | Construct ShAmt vector as             |
+  // +=================+============+=======================================+
+  // | i64             | Yes, No    | Use ShAmt as lowest elt               |
+  // | i32             | Yes        | zero-extend in-reg                    |
+  // | (i32 zext(i16)) | Yes        | zero-extend in-reg                    |
+  // | i16/i32         | No         | v4i32 build_vector(ShAmt, 0, ud, ud)) |
+  // +=================+============+=======================================+
   const X86Subtarget &Subtarget =
       static_cast<const X86Subtarget &>(DAG.getSubtarget());
-  if (Subtarget.hasSSE41() && ShAmt.getOpcode() == ISD::ZERO_EXTEND &&
-      ShAmt.getOperand(0).getSimpleValueType() == MVT::i16) {
-    // Let the shuffle legalizer expand this shift amount node.
+  if (SVT == MVT::i64)
+    ShAmt = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(ShAmt), MVT::v2i64, ShAmt);
+  else if (Subtarget.hasSSE41() && ShAmt.getOpcode() == ISD::ZERO_EXTEND &&
+           ShAmt.getOperand(0).getSimpleValueType() == MVT::i16) {
     SDValue Op0 = ShAmt.getOperand(0);
     Op0 = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(Op0), MVT::v8i16, Op0);
-    ShAmt = getShuffleVectorZeroOrUndef(Op0, 0, true, Subtarget, DAG);
+    ShAmt = DAG.getZeroExtendVectorInReg(Op0, SDLoc(Op0), MVT::v2i64);
+  } else if (Subtarget.hasSSE41() &&
+             ShAmt.getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
+    ShAmt = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(ShAmt), MVT::v4i32, ShAmt);
+    ShAmt = DAG.getZeroExtendVectorInReg(ShAmt, SDLoc(ShAmt), MVT::v2i64);
   } else {
-    // Need to build a vector containing shift amount.
-    // SSE/AVX packed shifts only use the lower 64-bit of the shift count.
-    SmallVector<SDValue, 4> ShOps;
-    ShOps.push_back(ShAmt);
-    if (SVT == MVT::i32) {
-      ShOps.push_back(DAG.getConstant(0, dl, SVT));
-      ShOps.push_back(DAG.getUNDEF(SVT));
-    }
-    ShOps.push_back(DAG.getUNDEF(SVT));
-
-    MVT BVT = SVT == MVT::i32 ? MVT::v4i32 : MVT::v2i64;
-    ShAmt = DAG.getBuildVector(BVT, dl, ShOps);
+    SmallVector<SDValue, 4> ShOps = {ShAmt, DAG.getConstant(0, dl, SVT),
+                                     DAG.getUNDEF(SVT), DAG.getUNDEF(SVT)};
+    ShAmt = DAG.getBuildVector(MVT::v4i32, dl, ShOps);
   }
 
   // The return type has to be a 128-bit type with the same element
