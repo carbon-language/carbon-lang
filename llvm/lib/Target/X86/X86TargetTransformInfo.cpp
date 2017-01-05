@@ -605,7 +605,14 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
   // 64-bit packed integer vectors (v2i32) are promoted to type v2i64.
   std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
 
-  if (Kind == TTI::SK_Reverse || Kind == TTI::SK_Alternate) {
+  if (Kind == TTI::SK_Reverse || Kind == TTI::SK_Alternate ||
+      Kind == TTI::SK_Broadcast) {
+    // For Broadcasts we are splatting the first element from the first input
+    // register, so only need to reference that input and all the output
+    // registers are the same.
+    if (Kind == TTI::SK_Broadcast)
+      LT.first = 1;
+
     static const CostTblEntry AVX512VBMIShuffleTbl[] = {
       { TTI::SK_Reverse, MVT::v64i8,  1 }, // vpermb
       { TTI::SK_Reverse, MVT::v32i8,  1 }  // vpermb
@@ -617,10 +624,13 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return LT.first * Entry->Cost;
 
     static const CostTblEntry AVX512BWShuffleTbl[] = {
-      { TTI::SK_Reverse, MVT::v32i16, 1 }, // vpermw
-      { TTI::SK_Reverse, MVT::v16i16, 1 }, // vpermw
-      { TTI::SK_Reverse, MVT::v64i8,  6 }  // vextracti64x4 + 2*vperm2i128
-                                           // + 2*pshufb + vinserti64x4
+      { TTI::SK_Broadcast, MVT::v32i16, 1 }, // vpbroadcastw
+      { TTI::SK_Broadcast, MVT::v64i8,  1 }, // vpbroadcastb
+
+      { TTI::SK_Reverse,   MVT::v32i16, 1 }, // vpermw
+      { TTI::SK_Reverse,   MVT::v16i16, 1 }, // vpermw
+      { TTI::SK_Reverse,   MVT::v64i8,  6 }  // vextracti64x4 + 2*vperm2i128
+                                             // + 2*pshufb + vinserti64x4
     };
 
     if (ST->hasBWI())
@@ -629,10 +639,15 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return LT.first * Entry->Cost;
 
     static const CostTblEntry AVX512ShuffleTbl[] = {
-      { TTI::SK_Reverse, MVT::v8f64,  1 }, // vpermpd
-      { TTI::SK_Reverse, MVT::v16f32, 1 }, // vpermps
-      { TTI::SK_Reverse, MVT::v8i64,  1 }, // vpermq
-      { TTI::SK_Reverse, MVT::v16i32, 1 }, // vpermd
+      { TTI::SK_Broadcast, MVT::v8f64,  1 }, // vbroadcastpd
+      { TTI::SK_Broadcast, MVT::v16f32, 1 }, // vbroadcastps
+      { TTI::SK_Broadcast, MVT::v8i64,  1 }, // vpbroadcastq
+      { TTI::SK_Broadcast, MVT::v16i32, 1 }, // vpbroadcastd
+
+      { TTI::SK_Reverse,   MVT::v8f64,  1 }, // vpermpd
+      { TTI::SK_Reverse,   MVT::v16f32, 1 }, // vpermps
+      { TTI::SK_Reverse,   MVT::v8i64,  1 }, // vpermq
+      { TTI::SK_Reverse,   MVT::v16i32, 1 }  // vpermd
     };
 
     if (ST->hasAVX512())
@@ -641,6 +656,13 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return LT.first * Entry->Cost;
 
     static const CostTblEntry AVX2ShuffleTbl[] = {
+      { TTI::SK_Broadcast, MVT::v4f64,  1 }, // vbroadcastpd
+      { TTI::SK_Broadcast, MVT::v8f32,  1 }, // vbroadcastps
+      { TTI::SK_Broadcast, MVT::v4i64,  1 }, // vpbroadcastq
+      { TTI::SK_Broadcast, MVT::v8i32,  1 }, // vpbroadcastd
+      { TTI::SK_Broadcast, MVT::v16i16, 1 }, // vpbroadcastw
+      { TTI::SK_Broadcast, MVT::v32i8,  1 }, // vpbroadcastb
+
       { TTI::SK_Reverse,   MVT::v4f64,  1 }, // vpermpd
       { TTI::SK_Reverse,   MVT::v8f32,  1 }, // vpermps
       { TTI::SK_Reverse,   MVT::v4i64,  1 }, // vpermq
@@ -657,6 +679,13 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return LT.first * Entry->Cost;
 
     static const CostTblEntry AVX1ShuffleTbl[] = {
+      { TTI::SK_Broadcast, MVT::v4f64,  2 }, // vperm2f128 + vpermilpd
+      { TTI::SK_Broadcast, MVT::v8f32,  2 }, // vperm2f128 + vpermilps
+      { TTI::SK_Broadcast, MVT::v4i64,  2 }, // vperm2f128 + vpermilpd
+      { TTI::SK_Broadcast, MVT::v8i32,  2 }, // vperm2f128 + vpermilps
+      { TTI::SK_Broadcast, MVT::v16i16, 3 }, // vpshuflw + vpshufd + vinsertf128
+      { TTI::SK_Broadcast, MVT::v32i8,  2 }, // vpshufb + vinsertf128
+
       { TTI::SK_Reverse,   MVT::v4f64,  2 }, // vperm2f128 + vpermilpd
       { TTI::SK_Reverse,   MVT::v8f32,  2 }, // vperm2f128 + vpermilps
       { TTI::SK_Reverse,   MVT::v4i64,  2 }, // vperm2f128 + vpermilpd
@@ -692,6 +721,9 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return LT.first * Entry->Cost;
 
     static const CostTblEntry SSSE3ShuffleTbl[] = {
+      { TTI::SK_Broadcast, MVT::v8i16,  1 }, // pshufb
+      { TTI::SK_Broadcast, MVT::v16i8,  1 }, // pshufb
+
       { TTI::SK_Reverse,   MVT::v8i16,  1 }, // pshufb
       { TTI::SK_Reverse,   MVT::v16i8,  1 }, // pshufb
 
@@ -704,6 +736,12 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return LT.first * Entry->Cost;
 
     static const CostTblEntry SSE2ShuffleTbl[] = {
+      { TTI::SK_Broadcast, MVT::v2f64,  1 }, // shufpd
+      { TTI::SK_Broadcast, MVT::v2i64,  1 }, // pshufd
+      { TTI::SK_Broadcast, MVT::v4i32,  1 }, // pshufd
+      { TTI::SK_Broadcast, MVT::v8i16,  2 }, // pshuflw  + pshufd
+      { TTI::SK_Broadcast, MVT::v16i8,  3 }, // unpck + pshuflw + pshufd
+
       { TTI::SK_Reverse,   MVT::v2f64,  1 }, // shufpd
       { TTI::SK_Reverse,   MVT::v2i64,  1 }, // pshufd
       { TTI::SK_Reverse,   MVT::v4i32,  1 }, // pshufd
@@ -723,6 +761,7 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return LT.first * Entry->Cost;
 
     static const CostTblEntry SSE1ShuffleTbl[] = {
+      { TTI::SK_Broadcast, MVT::v4f32,  1 }, // shufps
       { TTI::SK_Reverse,   MVT::v4f32,  1 }, // shufps
       { TTI::SK_Alternate, MVT::v4f32,  2 }  // 2*shufps
     };
