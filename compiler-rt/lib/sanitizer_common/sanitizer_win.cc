@@ -37,7 +37,8 @@
 // macro should not terminate the process to avoid infinite recursion.
 #if defined(__clang__)
 # define BUILTIN_UNREACHABLE() __builtin_unreachable()
-#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#elif defined(__GNUC__) && \
+    (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5))
 # define BUILTIN_UNREACHABLE() __builtin_unreachable()
 #elif defined(_MSC_VER)
 # define BUILTIN_UNREACHABLE() __assume(0)
