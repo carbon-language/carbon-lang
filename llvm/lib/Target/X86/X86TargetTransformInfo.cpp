@@ -605,294 +605,249 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
   // 64-bit packed integer vectors (v2i32) are promoted to type v2i64.
   std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
 
-  if (Kind == TTI::SK_Reverse || Kind == TTI::SK_Alternate ||
-      Kind == TTI::SK_Broadcast) {
-    // For Broadcasts we are splatting the first element from the first input
-    // register, so only need to reference that input and all the output
-    // registers are the same.
-    if (Kind == TTI::SK_Broadcast)
-      LT.first = 1;
+  // For Broadcasts we are splatting the first element from the first input
+  // register, so only need to reference that input and all the output
+  // registers are the same.
+  if (Kind == TTI::SK_Broadcast)
+    LT.first = 1;
 
-    static const CostTblEntry AVX512VBMIShuffleTbl[] = {
-      { TTI::SK_Reverse, MVT::v64i8,  1 }, // vpermb
-      { TTI::SK_Reverse, MVT::v32i8,  1 }  // vpermb
-    };
+  // We are going to permute multiple sources and the result will be in multiple
+  // destinations. Providing an accurate cost only for splits where the element
+  // type remains the same.
+  if (Kind == TTI::SK_PermuteSingleSrc && LT.first != 1) {
+    MVT LegalVT = LT.second;
+    if (LegalVT.getVectorElementType().getSizeInBits() ==
+            Tp->getVectorElementType()->getPrimitiveSizeInBits() &&
+        LegalVT.getVectorNumElements() < Tp->getVectorNumElements()) {
 
-    if (ST->hasVBMI())
-      if (const auto *Entry =
-              CostTableLookup(AVX512VBMIShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
+      unsigned VecTySize = DL.getTypeStoreSize(Tp);
+      unsigned LegalVTSize = LegalVT.getStoreSize();
+      // Number of source vectors after legalization:
+      unsigned NumOfSrcs = (VecTySize + LegalVTSize - 1) / LegalVTSize;
+      // Number of destination vectors after legalization:
+      unsigned NumOfDests = LT.first;
 
-    static const CostTblEntry AVX512BWShuffleTbl[] = {
-      { TTI::SK_Broadcast, MVT::v32i16, 1 }, // vpbroadcastw
-      { TTI::SK_Broadcast, MVT::v64i8,  1 }, // vpbroadcastb
+      Type *SingleOpTy = VectorType::get(Tp->getVectorElementType(),
+                                         LegalVT.getVectorNumElements());
 
-      { TTI::SK_Reverse,   MVT::v32i16, 1 }, // vpermw
-      { TTI::SK_Reverse,   MVT::v16i16, 1 }, // vpermw
-      { TTI::SK_Reverse,   MVT::v64i8,  6 }  // vextracti64x4 + 2*vperm2i128
-                                             // + 2*pshufb + vinserti64x4
-    };
+      unsigned NumOfShuffles = (NumOfSrcs - 1) * NumOfDests;
+      return NumOfShuffles *
+             getShuffleCost(TTI::SK_PermuteTwoSrc, SingleOpTy, 0, nullptr);
+    }
 
-    if (ST->hasBWI())
-      if (const auto *Entry =
-              CostTableLookup(AVX512BWShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
+    return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
+  }
 
-    static const CostTblEntry AVX512ShuffleTbl[] = {
-      { TTI::SK_Broadcast, MVT::v8f64,  1 }, // vbroadcastpd
-      { TTI::SK_Broadcast, MVT::v16f32, 1 }, // vbroadcastps
-      { TTI::SK_Broadcast, MVT::v8i64,  1 }, // vpbroadcastq
-      { TTI::SK_Broadcast, MVT::v16i32, 1 }, // vpbroadcastd
-
-      { TTI::SK_Reverse,   MVT::v8f64,  1 }, // vpermpd
-      { TTI::SK_Reverse,   MVT::v16f32, 1 }, // vpermps
-      { TTI::SK_Reverse,   MVT::v8i64,  1 }, // vpermq
-      { TTI::SK_Reverse,   MVT::v16i32, 1 }  // vpermd
-    };
-
-    if (ST->hasAVX512())
-      if (const auto *Entry =
-              CostTableLookup(AVX512ShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
-
-    static const CostTblEntry AVX2ShuffleTbl[] = {
-      { TTI::SK_Broadcast, MVT::v4f64,  1 }, // vbroadcastpd
-      { TTI::SK_Broadcast, MVT::v8f32,  1 }, // vbroadcastps
-      { TTI::SK_Broadcast, MVT::v4i64,  1 }, // vpbroadcastq
-      { TTI::SK_Broadcast, MVT::v8i32,  1 }, // vpbroadcastd
-      { TTI::SK_Broadcast, MVT::v16i16, 1 }, // vpbroadcastw
-      { TTI::SK_Broadcast, MVT::v32i8,  1 }, // vpbroadcastb
-
-      { TTI::SK_Reverse,   MVT::v4f64,  1 }, // vpermpd
-      { TTI::SK_Reverse,   MVT::v8f32,  1 }, // vpermps
-      { TTI::SK_Reverse,   MVT::v4i64,  1 }, // vpermq
-      { TTI::SK_Reverse,   MVT::v8i32,  1 }, // vpermd
-      { TTI::SK_Reverse,   MVT::v16i16, 2 }, // vperm2i128 + pshufb
-      { TTI::SK_Reverse,   MVT::v32i8,  2 }, // vperm2i128 + pshufb
-
-      { TTI::SK_Alternate, MVT::v16i16, 1 }, // vpblendw
-      { TTI::SK_Alternate, MVT::v32i8,  1 }  // vpblendvb
-    };
-
-    if (ST->hasAVX2())
-      if (const auto *Entry = CostTableLookup(AVX2ShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
-
-    static const CostTblEntry AVX1ShuffleTbl[] = {
-      { TTI::SK_Broadcast, MVT::v4f64,  2 }, // vperm2f128 + vpermilpd
-      { TTI::SK_Broadcast, MVT::v8f32,  2 }, // vperm2f128 + vpermilps
-      { TTI::SK_Broadcast, MVT::v4i64,  2 }, // vperm2f128 + vpermilpd
-      { TTI::SK_Broadcast, MVT::v8i32,  2 }, // vperm2f128 + vpermilps
-      { TTI::SK_Broadcast, MVT::v16i16, 3 }, // vpshuflw + vpshufd + vinsertf128
-      { TTI::SK_Broadcast, MVT::v32i8,  2 }, // vpshufb + vinsertf128
-
-      { TTI::SK_Reverse,   MVT::v4f64,  2 }, // vperm2f128 + vpermilpd
-      { TTI::SK_Reverse,   MVT::v8f32,  2 }, // vperm2f128 + vpermilps
-      { TTI::SK_Reverse,   MVT::v4i64,  2 }, // vperm2f128 + vpermilpd
-      { TTI::SK_Reverse,   MVT::v8i32,  2 }, // vperm2f128 + vpermilps
-      { TTI::SK_Reverse,   MVT::v16i16, 4 }, // vextractf128 + 2*pshufb
-                                             // + vinsertf128
-      { TTI::SK_Reverse,   MVT::v32i8,  4 }, // vextractf128 + 2*pshufb
-                                             // + vinsertf128
-
-      { TTI::SK_Alternate, MVT::v4i64,  1 }, // vblendpd
-      { TTI::SK_Alternate, MVT::v4f64,  1 }, // vblendpd
-      { TTI::SK_Alternate, MVT::v8i32,  1 }, // vblendps
-      { TTI::SK_Alternate, MVT::v8f32,  1 }, // vblendps
-      { TTI::SK_Alternate, MVT::v16i16, 3 }, // vpand + vpandn + vpor
-      { TTI::SK_Alternate, MVT::v32i8,  3 }  // vpand + vpandn + vpor
-    };
-
-    if (ST->hasAVX())
-      if (const auto *Entry = CostTableLookup(AVX1ShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
-
-    static const CostTblEntry SSE41ShuffleTbl[] = {
-      { TTI::SK_Alternate, MVT::v2i64,  1 }, // pblendw
-      { TTI::SK_Alternate, MVT::v2f64,  1 }, // movsd
-      { TTI::SK_Alternate, MVT::v4i32,  1 }, // pblendw
-      { TTI::SK_Alternate, MVT::v4f32,  1 }, // blendps
-      { TTI::SK_Alternate, MVT::v8i16,  1 }, // pblendw
-      { TTI::SK_Alternate, MVT::v16i8,  1 }  // pblendvb
-    };
-
-    if (ST->hasSSE41())
-      if (const auto *Entry = CostTableLookup(SSE41ShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
-
-    static const CostTblEntry SSSE3ShuffleTbl[] = {
-      { TTI::SK_Broadcast, MVT::v8i16,  1 }, // pshufb
-      { TTI::SK_Broadcast, MVT::v16i8,  1 }, // pshufb
-
-      { TTI::SK_Reverse,   MVT::v8i16,  1 }, // pshufb
-      { TTI::SK_Reverse,   MVT::v16i8,  1 }, // pshufb
-
-      { TTI::SK_Alternate, MVT::v8i16,  3 }, // pshufb + pshufb + por
-      { TTI::SK_Alternate, MVT::v16i8,  3 }  // pshufb + pshufb + por
-    };
-
-    if (ST->hasSSSE3())
-      if (const auto *Entry = CostTableLookup(SSSE3ShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
-
-    static const CostTblEntry SSE2ShuffleTbl[] = {
-      { TTI::SK_Broadcast, MVT::v2f64,  1 }, // shufpd
-      { TTI::SK_Broadcast, MVT::v2i64,  1 }, // pshufd
-      { TTI::SK_Broadcast, MVT::v4i32,  1 }, // pshufd
-      { TTI::SK_Broadcast, MVT::v8i16,  2 }, // pshuflw  + pshufd
-      { TTI::SK_Broadcast, MVT::v16i8,  3 }, // unpck + pshuflw + pshufd
-
-      { TTI::SK_Reverse,   MVT::v2f64,  1 }, // shufpd
-      { TTI::SK_Reverse,   MVT::v2i64,  1 }, // pshufd
-      { TTI::SK_Reverse,   MVT::v4i32,  1 }, // pshufd
-      { TTI::SK_Reverse,   MVT::v8i16,  3 }, // pshuflw + pshufhw  + pshufd
-      { TTI::SK_Reverse,   MVT::v16i8,  9 }, // 2*pshuflw + 2*pshufhw
-                                             // + 2*pshufd + 2*unpck + packus
-
-      { TTI::SK_Alternate, MVT::v2i64,  1 }, // movsd
-      { TTI::SK_Alternate, MVT::v2f64,  1 }, // movsd
-      { TTI::SK_Alternate, MVT::v4i32,  2 }, // 2*shufps
-      { TTI::SK_Alternate, MVT::v8i16,  3 }, // pand + pandn + por
-      { TTI::SK_Alternate, MVT::v16i8,  3 }  // pand + pandn + por
-    };
-
-    if (ST->hasSSE2())
-      if (const auto *Entry = CostTableLookup(SSE2ShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
-
-    static const CostTblEntry SSE1ShuffleTbl[] = {
-      { TTI::SK_Broadcast, MVT::v4f32,  1 }, // shufps
-      { TTI::SK_Reverse,   MVT::v4f32,  1 }, // shufps
-      { TTI::SK_Alternate, MVT::v4f32,  2 }  // 2*shufps
-    };
-
-    if (ST->hasSSE1())
-      if (const auto *Entry = CostTableLookup(SSE1ShuffleTbl, Kind, LT.second))
-        return LT.first * Entry->Cost;
-
-  } else if (Kind == TTI::SK_PermuteTwoSrc) {
+  // For 2-input shuffles, we must account for splitting the 2 inputs into many.
+  if (Kind == TTI::SK_PermuteTwoSrc && LT.first != 1) {
     // We assume that source and destination have the same vector type.
     int NumOfDests = LT.first;
     int NumOfShufflesPerDest = LT.first * 2 - 1;
-    int NumOfShuffles = NumOfDests * NumOfShufflesPerDest;
-
-    static const CostTblEntry AVX512VBMIShuffleTbl[] = {
-        {ISD::VECTOR_SHUFFLE, MVT::v64i8, 1}, // vpermt2b
-        {ISD::VECTOR_SHUFFLE, MVT::v32i8, 1}, // vpermt2b
-        {ISD::VECTOR_SHUFFLE, MVT::v16i8, 1}  // vpermt2b
-    };
-
-    if (ST->hasVBMI())
-      if (const auto *Entry = CostTableLookup(AVX512VBMIShuffleTbl,
-                                              ISD::VECTOR_SHUFFLE, LT.second))
-        return NumOfShuffles * Entry->Cost;
-
-    static const CostTblEntry AVX512BWShuffleTbl[] = {
-        {ISD::VECTOR_SHUFFLE, MVT::v32i16, 1}, // vpermt2w
-        {ISD::VECTOR_SHUFFLE, MVT::v16i16, 1}, // vpermt2w
-        {ISD::VECTOR_SHUFFLE, MVT::v8i16, 1},  // vpermt2w
-        {ISD::VECTOR_SHUFFLE, MVT::v32i8, 3},  // zext + vpermt2w + trunc
-        {ISD::VECTOR_SHUFFLE, MVT::v64i8, 19}, // 6 * v32i8 + 1
-        {ISD::VECTOR_SHUFFLE, MVT::v16i8, 3}   // zext + vpermt2w + trunc
-    };
-
-    if (ST->hasBWI())
-      if (const auto *Entry = CostTableLookup(AVX512BWShuffleTbl,
-                                              ISD::VECTOR_SHUFFLE, LT.second))
-        return NumOfShuffles * Entry->Cost;
-
-    static const CostTblEntry AVX512ShuffleTbl[] = {
-        {ISD::VECTOR_SHUFFLE, MVT::v8f64, 1},  // vpermt2pd
-        {ISD::VECTOR_SHUFFLE, MVT::v16f32, 1}, // vpermt2ps
-        {ISD::VECTOR_SHUFFLE, MVT::v8i64, 1},  // vpermt2q
-        {ISD::VECTOR_SHUFFLE, MVT::v16i32, 1}, // vpermt2d
-        {ISD::VECTOR_SHUFFLE, MVT::v4f64, 1},  // vpermt2pd
-        {ISD::VECTOR_SHUFFLE, MVT::v8f32, 1},  // vpermt2ps
-        {ISD::VECTOR_SHUFFLE, MVT::v4i64, 1},  // vpermt2q
-        {ISD::VECTOR_SHUFFLE, MVT::v8i32, 1},  // vpermt2d
-        {ISD::VECTOR_SHUFFLE, MVT::v2f64, 1},  // vpermt2pd
-        {ISD::VECTOR_SHUFFLE, MVT::v4f32, 1},  // vpermt2ps
-        {ISD::VECTOR_SHUFFLE, MVT::v2i64, 1},  // vpermt2q
-        {ISD::VECTOR_SHUFFLE, MVT::v4i32, 1}   // vpermt2d
-    };
-
-    if (ST->hasAVX512())
-      if (const auto *Entry =
-              CostTableLookup(AVX512ShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second))
-        return NumOfShuffles * Entry->Cost;
-
-  } else if (Kind == TTI::SK_PermuteSingleSrc) {
-    if (LT.first == 1) {
-      static const CostTblEntry AVX512VBMIShuffleTbl[] = {
-          {ISD::VECTOR_SHUFFLE, MVT::v64i8, 1}, // vpermb
-          {ISD::VECTOR_SHUFFLE, MVT::v32i8, 1}  // vpermb
-      };
-
-      if (ST->hasVBMI())
-        if (const auto *Entry = CostTableLookup(AVX512VBMIShuffleTbl,
-                                                ISD::VECTOR_SHUFFLE, LT.second))
-          return Entry->Cost;
-
-      static const CostTblEntry AVX512BWShuffleTbl[] = {
-          {ISD::VECTOR_SHUFFLE, MVT::v32i16, 1}, // vpermw
-          {ISD::VECTOR_SHUFFLE, MVT::v16i16, 1}, // vpermw
-          {ISD::VECTOR_SHUFFLE, MVT::v8i16, 1},  // vpermw
-          {ISD::VECTOR_SHUFFLE, MVT::v64i8, 8},  // extend to v32i16
-          {ISD::VECTOR_SHUFFLE, MVT::v32i8, 3}   // vpermw + zext/trunc
-      };
-
-      if (ST->hasBWI())
-        if (const auto *Entry = CostTableLookup(AVX512BWShuffleTbl,
-                                                ISD::VECTOR_SHUFFLE, LT.second))
-          return Entry->Cost;
-
-      static const CostTblEntry AVX512ShuffleTbl[] = {
-          {ISD::VECTOR_SHUFFLE, MVT::v8f64, 1},  // vpermpd
-          {ISD::VECTOR_SHUFFLE, MVT::v4f64, 1},  // vpermpd
-          {ISD::VECTOR_SHUFFLE, MVT::v2f64, 1},  // vpermpd
-          {ISD::VECTOR_SHUFFLE, MVT::v16f32, 1}, // vpermps
-          {ISD::VECTOR_SHUFFLE, MVT::v8f32, 1},  // vpermps
-          {ISD::VECTOR_SHUFFLE, MVT::v4f32, 1},  // vpermps
-          {ISD::VECTOR_SHUFFLE, MVT::v8i64, 1},  // vpermq
-          {ISD::VECTOR_SHUFFLE, MVT::v4i64, 1},  // vpermq
-          {ISD::VECTOR_SHUFFLE, MVT::v2i64, 1},  // vpermq
-          {ISD::VECTOR_SHUFFLE, MVT::v16i32, 1}, // vpermd
-          {ISD::VECTOR_SHUFFLE, MVT::v8i32, 1},  // vpermd
-          {ISD::VECTOR_SHUFFLE, MVT::v4i32, 1},  // vpermd
-          {ISD::VECTOR_SHUFFLE, MVT::v16i8, 1}   // pshufb
-      };
-
-      if (ST->hasAVX512())
-        if (const auto *Entry =
-            CostTableLookup(AVX512ShuffleTbl, ISD::VECTOR_SHUFFLE, LT.second))
-          return Entry->Cost;
-
-    } else {
-      // We are going to permute multiple sources and the result will be in
-      // multiple destinations. Providing an accurate cost only for splits where
-      // the element type remains the same.
-
-      MVT LegalVT = LT.second;
-      if (LegalVT.getVectorElementType().getSizeInBits() ==
-              Tp->getVectorElementType()->getPrimitiveSizeInBits() &&
-          LegalVT.getVectorNumElements() < Tp->getVectorNumElements()) {
-
-        unsigned VecTySize = DL.getTypeStoreSize(Tp);
-        unsigned LegalVTSize = LegalVT.getStoreSize();
-        // Number of source vectors after legalization:
-        unsigned NumOfSrcs = (VecTySize + LegalVTSize - 1) / LegalVTSize;
-        // Number of destination vectors after legalization:
-        unsigned NumOfDests = LT.first;
-
-        Type *SingleOpTy = VectorType::get(Tp->getVectorElementType(),
-                                           LegalVT.getVectorNumElements());
-
-        unsigned NumOfShuffles = (NumOfSrcs - 1) * NumOfDests;
-        return NumOfShuffles *
-               getShuffleCost(TTI::SK_PermuteTwoSrc, SingleOpTy, 0, nullptr);
-      }
-    }
+    LT.first = NumOfDests * NumOfShufflesPerDest;
   }
+
+  static const CostTblEntry AVX512VBMIShuffleTbl[] = {
+    { TTI::SK_Reverse,          MVT::v64i8,  1 }, // vpermb
+    { TTI::SK_Reverse,          MVT::v32i8,  1 }, // vpermb
+
+    { TTI::SK_PermuteSingleSrc, MVT::v64i8,  1 }, // vpermb
+    { TTI::SK_PermuteSingleSrc, MVT::v32i8,  1 }, // vpermb
+
+    { TTI::SK_PermuteTwoSrc,    MVT::v64i8,  1 }, // vpermt2b
+    { TTI::SK_PermuteTwoSrc,    MVT::v32i8,  1 }, // vpermt2b
+    { TTI::SK_PermuteTwoSrc,    MVT::v16i8,  1 }  // vpermt2b
+  };
+
+  if (ST->hasVBMI())
+    if (const auto *Entry =
+            CostTableLookup(AVX512VBMIShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry AVX512BWShuffleTbl[] = {
+    { TTI::SK_Broadcast,        MVT::v32i16, 1 }, // vpbroadcastw
+    { TTI::SK_Broadcast,        MVT::v64i8,  1 }, // vpbroadcastb
+
+    { TTI::SK_Reverse,          MVT::v32i16, 1 }, // vpermw
+    { TTI::SK_Reverse,          MVT::v16i16, 1 }, // vpermw
+    { TTI::SK_Reverse,          MVT::v64i8,  6 }, // vextracti64x4 + 2*vperm2i128
+                                                  // + 2*pshufb + vinserti64x4
+
+    { TTI::SK_PermuteSingleSrc, MVT::v32i16, 1 }, // vpermw
+    { TTI::SK_PermuteSingleSrc, MVT::v16i16, 1 }, // vpermw
+    { TTI::SK_PermuteSingleSrc, MVT::v8i16,  1 }, // vpermw
+    { TTI::SK_PermuteSingleSrc, MVT::v64i8,  8 }, // extend to v32i16
+    { TTI::SK_PermuteSingleSrc, MVT::v32i8,  3 }, // vpermw + zext/trunc
+
+    { TTI::SK_PermuteTwoSrc,    MVT::v32i16, 1 }, // vpermt2w
+    { TTI::SK_PermuteTwoSrc,    MVT::v16i16, 1 }, // vpermt2w
+    { TTI::SK_PermuteTwoSrc,    MVT::v8i16,  1 }, // vpermt2w
+    { TTI::SK_PermuteTwoSrc,    MVT::v32i8,  3 }, // zext + vpermt2w + trunc
+    { TTI::SK_PermuteTwoSrc,    MVT::v64i8, 19 }, // 6 * v32i8 + 1
+    { TTI::SK_PermuteTwoSrc,    MVT::v16i8,  3 }  // zext + vpermt2w + trunc
+  };
+
+  if (ST->hasBWI())
+    if (const auto *Entry =
+            CostTableLookup(AVX512BWShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry AVX512ShuffleTbl[] = {
+    { TTI::SK_Broadcast,        MVT::v8f64,  1 }, // vbroadcastpd
+    { TTI::SK_Broadcast,        MVT::v16f32, 1 }, // vbroadcastps
+    { TTI::SK_Broadcast,        MVT::v8i64,  1 }, // vpbroadcastq
+    { TTI::SK_Broadcast,        MVT::v16i32, 1 }, // vpbroadcastd
+
+    { TTI::SK_Reverse,          MVT::v8f64,  1 }, // vpermpd
+    { TTI::SK_Reverse,          MVT::v16f32, 1 }, // vpermps
+    { TTI::SK_Reverse,          MVT::v8i64,  1 }, // vpermq
+    { TTI::SK_Reverse,          MVT::v16i32, 1 }, // vpermd
+
+    { TTI::SK_PermuteSingleSrc, MVT::v8f64,  1 }, // vpermpd
+    { TTI::SK_PermuteSingleSrc, MVT::v4f64,  1 }, // vpermpd
+    { TTI::SK_PermuteSingleSrc, MVT::v2f64,  1 }, // vpermpd
+    { TTI::SK_PermuteSingleSrc, MVT::v16f32, 1 }, // vpermps
+    { TTI::SK_PermuteSingleSrc, MVT::v8f32,  1 }, // vpermps
+    { TTI::SK_PermuteSingleSrc, MVT::v4f32,  1 }, // vpermps
+    { TTI::SK_PermuteSingleSrc, MVT::v8i64,  1 }, // vpermq
+    { TTI::SK_PermuteSingleSrc, MVT::v4i64,  1 }, // vpermq
+    { TTI::SK_PermuteSingleSrc, MVT::v2i64,  1 }, // vpermq
+    { TTI::SK_PermuteSingleSrc, MVT::v16i32, 1 }, // vpermd
+    { TTI::SK_PermuteSingleSrc, MVT::v8i32,  1 }, // vpermd
+    { TTI::SK_PermuteSingleSrc, MVT::v4i32,  1 }, // vpermd
+    { TTI::SK_PermuteSingleSrc, MVT::v16i8,  1 }, // pshufb
+
+    { TTI::SK_PermuteTwoSrc,    MVT::v8f64,  1 }, // vpermt2pd
+    { TTI::SK_PermuteTwoSrc,    MVT::v16f32, 1 }, // vpermt2ps
+    { TTI::SK_PermuteTwoSrc,    MVT::v8i64,  1 }, // vpermt2q
+    { TTI::SK_PermuteTwoSrc,    MVT::v16i32, 1 }, // vpermt2d
+    { TTI::SK_PermuteTwoSrc,    MVT::v4f64,  1 }, // vpermt2pd
+    { TTI::SK_PermuteTwoSrc,    MVT::v8f32,  1 }, // vpermt2ps
+    { TTI::SK_PermuteTwoSrc,    MVT::v4i64,  1 }, // vpermt2q
+    { TTI::SK_PermuteTwoSrc,    MVT::v8i32,  1 }, // vpermt2d
+    { TTI::SK_PermuteTwoSrc,    MVT::v2f64,  1 }, // vpermt2pd
+    { TTI::SK_PermuteTwoSrc,    MVT::v4f32,  1 }, // vpermt2ps
+    { TTI::SK_PermuteTwoSrc,    MVT::v2i64,  1 }, // vpermt2q
+    { TTI::SK_PermuteTwoSrc,    MVT::v4i32,  1 }  // vpermt2d
+  };
+
+  if (ST->hasAVX512())
+    if (const auto *Entry = CostTableLookup(AVX512ShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry AVX2ShuffleTbl[] = {
+    { TTI::SK_Broadcast, MVT::v4f64,  1 }, // vbroadcastpd
+    { TTI::SK_Broadcast, MVT::v8f32,  1 }, // vbroadcastps
+    { TTI::SK_Broadcast, MVT::v4i64,  1 }, // vpbroadcastq
+    { TTI::SK_Broadcast, MVT::v8i32,  1 }, // vpbroadcastd
+    { TTI::SK_Broadcast, MVT::v16i16, 1 }, // vpbroadcastw
+    { TTI::SK_Broadcast, MVT::v32i8,  1 }, // vpbroadcastb
+
+    { TTI::SK_Reverse,   MVT::v4f64,  1 }, // vpermpd
+    { TTI::SK_Reverse,   MVT::v8f32,  1 }, // vpermps
+    { TTI::SK_Reverse,   MVT::v4i64,  1 }, // vpermq
+    { TTI::SK_Reverse,   MVT::v8i32,  1 }, // vpermd
+    { TTI::SK_Reverse,   MVT::v16i16, 2 }, // vperm2i128 + pshufb
+    { TTI::SK_Reverse,   MVT::v32i8,  2 }, // vperm2i128 + pshufb
+
+    { TTI::SK_Alternate, MVT::v16i16, 1 }, // vpblendw
+    { TTI::SK_Alternate, MVT::v32i8,  1 }  // vpblendvb
+  };
+
+  if (ST->hasAVX2())
+    if (const auto *Entry = CostTableLookup(AVX2ShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry AVX1ShuffleTbl[] = {
+    { TTI::SK_Broadcast, MVT::v4f64,  2 }, // vperm2f128 + vpermilpd
+    { TTI::SK_Broadcast, MVT::v8f32,  2 }, // vperm2f128 + vpermilps
+    { TTI::SK_Broadcast, MVT::v4i64,  2 }, // vperm2f128 + vpermilpd
+    { TTI::SK_Broadcast, MVT::v8i32,  2 }, // vperm2f128 + vpermilps
+    { TTI::SK_Broadcast, MVT::v16i16, 3 }, // vpshuflw + vpshufd + vinsertf128
+    { TTI::SK_Broadcast, MVT::v32i8,  2 }, // vpshufb + vinsertf128
+
+    { TTI::SK_Reverse,   MVT::v4f64,  2 }, // vperm2f128 + vpermilpd
+    { TTI::SK_Reverse,   MVT::v8f32,  2 }, // vperm2f128 + vpermilps
+    { TTI::SK_Reverse,   MVT::v4i64,  2 }, // vperm2f128 + vpermilpd
+    { TTI::SK_Reverse,   MVT::v8i32,  2 }, // vperm2f128 + vpermilps
+    { TTI::SK_Reverse,   MVT::v16i16, 4 }, // vextractf128 + 2*pshufb
+                                           // + vinsertf128
+    { TTI::SK_Reverse,   MVT::v32i8,  4 }, // vextractf128 + 2*pshufb
+                                           // + vinsertf128
+
+    { TTI::SK_Alternate, MVT::v4i64,  1 }, // vblendpd
+    { TTI::SK_Alternate, MVT::v4f64,  1 }, // vblendpd
+    { TTI::SK_Alternate, MVT::v8i32,  1 }, // vblendps
+    { TTI::SK_Alternate, MVT::v8f32,  1 }, // vblendps
+    { TTI::SK_Alternate, MVT::v16i16, 3 }, // vpand + vpandn + vpor
+    { TTI::SK_Alternate, MVT::v32i8,  3 }  // vpand + vpandn + vpor
+  };
+
+  if (ST->hasAVX())
+    if (const auto *Entry = CostTableLookup(AVX1ShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry SSE41ShuffleTbl[] = {
+    { TTI::SK_Alternate, MVT::v2i64,  1 }, // pblendw
+    { TTI::SK_Alternate, MVT::v2f64,  1 }, // movsd
+    { TTI::SK_Alternate, MVT::v4i32,  1 }, // pblendw
+    { TTI::SK_Alternate, MVT::v4f32,  1 }, // blendps
+    { TTI::SK_Alternate, MVT::v8i16,  1 }, // pblendw
+    { TTI::SK_Alternate, MVT::v16i8,  1 }  // pblendvb
+  };
+
+  if (ST->hasSSE41())
+    if (const auto *Entry = CostTableLookup(SSE41ShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry SSSE3ShuffleTbl[] = {
+    { TTI::SK_Broadcast, MVT::v8i16,  1 }, // pshufb
+    { TTI::SK_Broadcast, MVT::v16i8,  1 }, // pshufb
+
+    { TTI::SK_Reverse,   MVT::v8i16,  1 }, // pshufb
+    { TTI::SK_Reverse,   MVT::v16i8,  1 }, // pshufb
+
+    { TTI::SK_Alternate, MVT::v8i16,  3 }, // pshufb + pshufb + por
+    { TTI::SK_Alternate, MVT::v16i8,  3 }  // pshufb + pshufb + por
+  };
+
+  if (ST->hasSSSE3())
+    if (const auto *Entry = CostTableLookup(SSSE3ShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry SSE2ShuffleTbl[] = {
+    { TTI::SK_Broadcast, MVT::v2f64,  1 }, // shufpd
+    { TTI::SK_Broadcast, MVT::v2i64,  1 }, // pshufd
+    { TTI::SK_Broadcast, MVT::v4i32,  1 }, // pshufd
+    { TTI::SK_Broadcast, MVT::v8i16,  2 }, // pshuflw  + pshufd
+    { TTI::SK_Broadcast, MVT::v16i8,  3 }, // unpck + pshuflw + pshufd
+
+    { TTI::SK_Reverse,   MVT::v2f64,  1 }, // shufpd
+    { TTI::SK_Reverse,   MVT::v2i64,  1 }, // pshufd
+    { TTI::SK_Reverse,   MVT::v4i32,  1 }, // pshufd
+    { TTI::SK_Reverse,   MVT::v8i16,  3 }, // pshuflw + pshufhw  + pshufd
+    { TTI::SK_Reverse,   MVT::v16i8,  9 }, // 2*pshuflw + 2*pshufhw
+                                           // + 2*pshufd + 2*unpck + packus
+
+    { TTI::SK_Alternate, MVT::v2i64,  1 }, // movsd
+    { TTI::SK_Alternate, MVT::v2f64,  1 }, // movsd
+    { TTI::SK_Alternate, MVT::v4i32,  2 }, // 2*shufps
+    { TTI::SK_Alternate, MVT::v8i16,  3 }, // pand + pandn + por
+    { TTI::SK_Alternate, MVT::v16i8,  3 }  // pand + pandn + por
+  };
+
+  if (ST->hasSSE2())
+    if (const auto *Entry = CostTableLookup(SSE2ShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
+
+  static const CostTblEntry SSE1ShuffleTbl[] = {
+    { TTI::SK_Broadcast, MVT::v4f32,  1 }, // shufps
+    { TTI::SK_Reverse,   MVT::v4f32,  1 }, // shufps
+    { TTI::SK_Alternate, MVT::v4f32,  2 }  // 2*shufps
+  };
+
+  if (ST->hasSSE1())
+    if (const auto *Entry = CostTableLookup(SSE1ShuffleTbl, Kind, LT.second))
+      return LT.first * Entry->Cost;
 
   return BaseT::getShuffleCost(Kind, Tp, Index, SubTp);
 }
