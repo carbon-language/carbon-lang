@@ -1,4 +1,4 @@
-; RUN: llc -mtriple thumbv7--- -I %p/include -filetype asm -o - %s | FileCheck %s
+; RUN: llc -I %p/include -filetype asm -o - %s | FileCheck %s
 
 module asm ".include \22module.x\22"
 
