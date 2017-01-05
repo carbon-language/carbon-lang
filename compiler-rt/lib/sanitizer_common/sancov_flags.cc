@@ -13,6 +13,12 @@
 
 #include "sancov_flags.h"
 #include "sanitizer_flag_parser.h"
+#include "sanitizer_platform.h"
+
+#if SANITIZER_WINDOWS
+// Windows doesn't have weak symbols.
+extern "C" const char* __sancov_default_options() { return ""; }
+#endif
 
 using namespace __sanitizer;
 
