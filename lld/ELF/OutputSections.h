@@ -220,7 +220,6 @@ template <class ELFT> struct Out {
 template <bool Is64Bits> struct SectionKey {
   typedef typename std::conditional<Is64Bits, uint64_t, uint32_t>::type uintX_t;
   StringRef Name;
-  uint32_t Type;
   uintX_t Flags;
   uintX_t Alignment;
 };
