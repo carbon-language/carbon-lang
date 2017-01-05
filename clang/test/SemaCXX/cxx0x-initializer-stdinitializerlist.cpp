@@ -337,3 +337,13 @@ namespace update_rbrace_loc_crash {
     Explode<ContainsIncomplete, 4>([](int) {});
   }
 }
+
+namespace no_conversion_after_auto_list_deduction {
+  // We used to deduce 'auto' == 'std::initializer_list<X>' here, and then
+  // incorrectly accept the declaration of 'x'.
+  struct X { using T = std::initializer_list<X> X::*; operator T(); };
+  auto X::*x = { X() }; // expected-error {{from initializer list}}
+
+  struct Y { using T = std::initializer_list<Y>(*)(); operator T(); };
+  auto (*y)() = { Y() }; // expected-error {{from initializer list}}
+}

@@ -4127,6 +4127,12 @@ Sema::DeduceAutoType(TypeLoc Type, Expr *&Init, QualType &Result,
 
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (InitList) {
+    // Notionally, we substitute std::initializer_list<T> for 'auto' and deduce
+    // against that. Such deduction only succeeds if removing cv-qualifiers and
+    // references results in std::initializer_list<T>.
+    if (!Type.getType().getNonReferenceType()->getAs<AutoType>())
+      return DAR_Failed;
+
     for (unsigned i = 0, e = InitList->getNumInits(); i < e; ++i) {
       if (DeduceTemplateArgumentsFromCallArgument(
               *this, TemplateParamsSt.get(), TemplArg, InitList->getInit(i),
