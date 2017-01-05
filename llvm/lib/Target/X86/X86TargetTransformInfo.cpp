@@ -601,11 +601,11 @@ int X86TTIImpl::getArithmeticInstrCost(
 
 int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
                                Type *SubTp) {
-  if (Kind == TTI::SK_Reverse || Kind == TTI::SK_Alternate) {
-    // 64-bit packed float vectors (v2f32) are widened to type v4f32.
-    // 64-bit packed integer vectors (v2i32) are promoted to type v2i64.
-    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
+  // 64-bit packed float vectors (v2f32) are widened to type v4f32.
+  // 64-bit packed integer vectors (v2i32) are promoted to type v2i64.
+  std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
 
+  if (Kind == TTI::SK_Reverse || Kind == TTI::SK_Alternate) {
     static const CostTblEntry AVX512VBMIShuffleTbl[] = {
       { TTI::SK_Reverse, MVT::v64i8,  1 }, // vpermb
       { TTI::SK_Reverse, MVT::v32i8,  1 }  // vpermb
@@ -733,7 +733,6 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
 
   } else if (Kind == TTI::SK_PermuteTwoSrc) {
     // We assume that source and destination have the same vector type.
-    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
     int NumOfDests = LT.first;
     int NumOfShufflesPerDest = LT.first * 2 - 1;
     int NumOfShuffles = NumOfDests * NumOfShufflesPerDest;
@@ -784,9 +783,7 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
         return NumOfShuffles * Entry->Cost;
 
   } else if (Kind == TTI::SK_PermuteSingleSrc) {
-    std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Tp);
     if (LT.first == 1) {
-
       static const CostTblEntry AVX512VBMIShuffleTbl[] = {
           {ISD::VECTOR_SHUFFLE, MVT::v64i8, 1}, // vpermb
           {ISD::VECTOR_SHUFFLE, MVT::v32i8, 1}  // vpermb
