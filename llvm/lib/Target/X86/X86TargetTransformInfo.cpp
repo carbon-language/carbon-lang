@@ -253,6 +253,7 @@ int X86TTIImpl::getArithmeticInstrCost(
 
     { ISD::MUL,     MVT::v32i8,    13 }, // extend/pmullw/trunc sequence.
     { ISD::MUL,     MVT::v16i8,     5 }, // extend/pmullw/trunc sequence.
+    { ISD::MUL,     MVT::v16i32,    1 }, // pmulld
     { ISD::MUL,     MVT::v8i64,     8 }  // 3*pmuludq/3*shift/2*add
   };
 
@@ -338,6 +339,7 @@ int X86TTIImpl::getArithmeticInstrCost(
 
     { ISD::MUL,   MVT::v32i8,     17 }, // extend/pmullw/trunc sequence.
     { ISD::MUL,   MVT::v16i8,      7 }, // extend/pmullw/trunc sequence.
+    { ISD::MUL,   MVT::v8i32,      1 }, // pmulld
     { ISD::MUL,   MVT::v4i64,      8 }, // 3*pmuludq/3*shift/2*add
 
     { ISD::FDIV,  MVT::f32,        7 }, // Haswell from http://www.agner.org/
@@ -474,6 +476,8 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::SRA,  MVT::v16i16, 2*14 }, // pblendvb sequence.
     { ISD::SRA,  MVT::v4i32,    12 }, // Shift each lane + blend.
     { ISD::SRA,  MVT::v8i32,  2*12 }, // Shift each lane + blend.
+
+    { ISD::MUL,  MVT::v4i32,     1 }  // pmulld
   };
 
   if (ST->hasSSE41()) {
@@ -504,6 +508,7 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::SRA,  MVT::v4i64,  2*12 }, // srl/xor/sub sequence.
 
     { ISD::MUL,  MVT::v16i8,    12 }, // extend/pmullw/trunc sequence.
+    { ISD::MUL,  MVT::v4i32,     6 }, // 3*pmuludq/4*shuffle
     { ISD::MUL,  MVT::v2i64,     8 }, // 3*pmuludq/3*shift/2*add
 
     { ISD::FDIV, MVT::f32,      23 }, // Pentium IV from http://www.agner.org/
@@ -561,12 +566,6 @@ int X86TTIImpl::getArithmeticInstrCost(
     if (const auto *Entry = CostTableLookup(AVX1CostTable, ISD, VT))
       return LT.first * Entry->Cost;
   }
-
-  // Special lowering of v4i32 mul on sse2, sse3: Lower v4i32 mul as 2x shuffle,
-  // 2x pmuludq, 2x shuffle.
-  if (ISD == ISD::MUL && LT.second == MVT::v4i32 && ST->hasSSE2() &&
-      !ST->hasSSE41())
-    return LT.first * 6;
 
   static const CostTblEntry SSE1FloatCostTable[] = {
     { ISD::FDIV, MVT::f32,   17 }, // Pentium III from http://www.agner.org/
