@@ -1626,17 +1626,29 @@ int X86TTIImpl::getMaskedMemoryOpCost(unsigned Opcode, Type *SrcTy,
   return Cost+LT.first;
 }
 
-int X86TTIImpl::getAddressComputationCost(Type *Ty, bool IsComplex) {
+int X86TTIImpl::getAddressComputationCost(Type *Ty, ScalarEvolution *SE,
+                                          const SCEV *Ptr) {
   // Address computations in vectorized code with non-consecutive addresses will
   // likely result in more instructions compared to scalar code where the
   // computation can more often be merged into the index mode. The resulting
   // extra micro-ops can significantly decrease throughput.
   unsigned NumVectorInstToHideOverhead = 10;
 
-  if (Ty->isVectorTy() && IsComplex)
-    return NumVectorInstToHideOverhead;
+  // Cost modeling of Strided Access Computation is hidden by the indexing
+  // modes of X86 regardless of the stride value. We dont believe that there
+  // is a difference between constant strided access in gerenal and constant
+  // strided value which is less than or equal to 64.
+  // Even in the case of (loop invariant) stride whose value is not known at
+  // compile time, the address computation will not incur more than one extra
+  // ADD instruction.
+  if (Ty->isVectorTy() && SE) {
+    if (!BaseT::isStridedAccess(Ptr))
+      return NumVectorInstToHideOverhead;
+    if (!BaseT::getConstantStrideStep(SE, Ptr))
+      return 1;
+  }
 
-  return BaseT::getAddressComputationCost(Ty, IsComplex);
+  return BaseT::getAddressComputationCost(Ty, SE, Ptr);
 }
 
 int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
