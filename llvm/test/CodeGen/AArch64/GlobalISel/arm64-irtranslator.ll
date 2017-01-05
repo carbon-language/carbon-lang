@@ -52,10 +52,10 @@ define void @allocai64() {
 ; CHECK: body:
 ;
 ; ABI/constant lowering and IR-level entry basic block.
-; CHECK: {{bb.[0-9]+}}:
+; CHECK: {{bb.[0-9]+}} (%ir-block.{{[0-9]+}}):
 ;
 ; Make sure we have one successor and only one.
-; CHECK-NEXT: successors: %[[END:bb.[0-9]+]](0x80000000)
+; CHECK-NEXT: successors: %[[END:bb.[0-9]+.end]](0x80000000)
 ;
 ; Check that we emit the correct branch.
 ; CHECK: G_BR %[[END]]
@@ -74,10 +74,10 @@ end:
 ; CHECK: body:
 ;
 ; ABI/constant lowering and IR-level entry basic block.
-; CHECK: {{bb.[0-9]+}}:
+; CHECK: {{bb.[0-9]+}} (%ir-block.{{[0-9]+}}):
 ; Make sure we have two successors
-; CHECK-NEXT: successors: %[[TRUE:bb.[0-9]+]](0x40000000),
-; CHECK:                  %[[FALSE:bb.[0-9]+]](0x40000000)
+; CHECK-NEXT: successors: %[[TRUE:bb.[0-9]+.true]](0x40000000),
+; CHECK:                  %[[FALSE:bb.[0-9]+.false]](0x40000000)
 ;
 ; CHECK: [[ADDR:%.*]](p0) = COPY %x0
 ;
@@ -105,8 +105,8 @@ false:
 ; CHECK-LABEL: name: switch
 ; CHECK: body:
 ;
-; CHECK: {{bb.[0-9]+}}:
-; CHECK-NEXT: successors: %[[BB_CASE100:bb.[0-9]+]](0x40000000), %[[BB_NOTCASE100_CHECKNEXT:bb.[0-9]+.entry]](0x40000000)
+; CHECK: {{bb.[0-9]+.entry}}:
+; CHECK-NEXT: successors: %[[BB_CASE100:bb.[0-9]+.case100]](0x40000000), %[[BB_NOTCASE100_CHECKNEXT:bb.[0-9]+.entry]](0x40000000)
 ; CHECK: %0(s32) = COPY %w0
 ; CHECK: %[[reg100:[0-9]+]](s32) = G_CONSTANT i32 100
 ; CHECK: %[[reg200:[0-9]+]](s32) = G_CONSTANT i32 200
@@ -118,21 +118,21 @@ false:
 ; CHECK: G_BR %[[BB_NOTCASE100_CHECKNEXT]]
 ;
 ; CHECK: [[BB_CASE100]]:
-; CHECK-NEXT: successors: %[[BB_RET:bb.[0-9]+]](0x80000000)
+; CHECK-NEXT: successors: %[[BB_RET:bb.[0-9]+.return]](0x80000000)
 ; CHECK: %[[regretc100:[0-9]+]](s32) = G_ADD %0, %[[reg1]]
 ; CHECK: G_BR %[[BB_RET]]
 ; CHECK: [[BB_NOTCASE100_CHECKNEXT]]:
-; CHECK-NEXT: successors: %[[BB_CASE200:bb.[0-9]+]](0x40000000), %[[BB_NOTCASE200_CHECKNEXT:bb.[0-9]+.entry]](0x40000000)
+; CHECK-NEXT: successors: %[[BB_CASE200:bb.[0-9]+.case200]](0x40000000), %[[BB_NOTCASE200_CHECKNEXT:bb.[0-9]+.entry]](0x40000000)
 ; CHECK: %[[regicmp200:[0-9]+]](s1) = G_ICMP intpred(eq), %[[reg200]](s32), %0
 ; CHECK: G_BRCOND %[[regicmp200]](s1), %[[BB_CASE200]]
 ; CHECK: G_BR %[[BB_NOTCASE200_CHECKNEXT]]
 ;
 ; CHECK: [[BB_CASE200]]:
-; CHECK-NEXT: successors: %[[BB_RET:bb.[0-9]+]](0x80000000)
+; CHECK-NEXT: successors: %[[BB_RET:bb.[0-9]+.return]](0x80000000)
 ; CHECK: %[[regretc200:[0-9]+]](s32) = G_ADD %0, %[[reg2]]
 ; CHECK: G_BR %[[BB_RET]]
 ; CHECK: [[BB_NOTCASE200_CHECKNEXT]]:
-; CHECK-NEXT: successors: %[[BB_DEFAULT:bb.[0-9]+]](0x80000000)
+; CHECK-NEXT: successors: %[[BB_DEFAULT:bb.[0-9]+.default]](0x80000000)
 ; CHECK: G_BR %[[BB_DEFAULT]]
 ;
 ; CHECK: [[BB_DEFAULT]]:
@@ -167,7 +167,6 @@ return:
   %res = phi i32 [ %tmp0, %default ], [ %tmp1, %case100 ], [ %tmp2, %case200 ]
   ret i32 %res
 }
-
 
 ; Tests for or.
 ; CHECK-LABEL: name: ori64
@@ -292,11 +291,11 @@ define i64* @trivial_bitcast(i8* %a) {
 
 ; CHECK-LABEL: name: trivial_bitcast_with_copy
 ; CHECK:     [[A:%[0-9]+]](p0) = COPY %x0
-; CHECK:     G_BR %[[CAST:bb\.[0-9]+]]
+; CHECK:     G_BR %[[CAST:bb\.[0-9]+.cast]]
 
 ; CHECK: [[CAST]]:
 ; CHECK:     {{%[0-9]+}}(p0) = COPY [[A]]
-; CHECK:     G_BR %[[END:bb\.[0-9]+]]
+; CHECK:     G_BR %[[END:bb\.[0-9]+.end]]
 
 ; CHECK: [[END]]:
 define i64* @trivial_bitcast_with_copy(i8* %a) {
@@ -393,8 +392,8 @@ define void @intrinsics(i32 %cur, i32 %bits) {
 }
 
 ; CHECK-LABEL: name: test_phi
-; CHECK:     G_BRCOND {{%.*}}, %[[TRUE:bb\.[0-9]+]]
-; CHECK:     G_BR %[[FALSE:bb\.[0-9]+]]
+; CHECK:     G_BRCOND {{%.*}}, %[[TRUE:bb\.[0-9]+.true]]
+; CHECK:     G_BR %[[FALSE:bb\.[0-9]+.false]]
 
 ; CHECK: [[TRUE]]:
 ; CHECK:     [[RES1:%[0-9]+]](s32) = G_LOAD
@@ -1002,7 +1001,7 @@ define void @test_large_const(i128* %addr) {
 ; correct.
 define i8* @test_const_placement() {
 ; CHECK-LABEL: name: test_const_placement
-; CHECK: bb.{{[0-9]+}}:
+; CHECK: bb.{{[0-9]+}} (%ir-block.{{[0-9]+}}):
 ; CHECK:   [[VAL_INT:%[0-9]+]](s32) = G_CONSTANT i32 42
 ; CHECK:   [[VAL:%[0-9]+]](p0) = G_INTTOPTR [[VAL_INT]](s32)
 ; CHECK:   G_BR

@@ -125,8 +125,11 @@ unsigned IRTranslator::getMemOpAlignment(const Instruction &I) {
 MachineBasicBlock &IRTranslator::getOrCreateBB(const BasicBlock &BB) {
   MachineBasicBlock *&MBB = BBToMBB[&BB];
   if (!MBB) {
-    MBB = MF->CreateMachineBasicBlock();
+    MBB = MF->CreateMachineBasicBlock(&BB);
     MF->push_back(MBB);
+
+    if (BB.hasAddressTaken())
+      MBB->setHasAddressTaken();
   }
   return *MBB;
 }
