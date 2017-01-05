@@ -383,19 +383,6 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry SSE42FloatCostTable[] = {
-    { ISD::FDIV,  MVT::f32,   14 }, // Nehalem from http://www.agner.org/
-    { ISD::FDIV,  MVT::v4f32, 14 }, // Nehalem from http://www.agner.org/
-    { ISD::FDIV,  MVT::f64,   22 }, // Nehalem from http://www.agner.org/
-    { ISD::FDIV,  MVT::v2f64, 22 }, // Nehalem from http://www.agner.org/
-  };
-
-  if (ST->hasSSE42()) {
-    if (const auto *Entry = CostTableLookup(SSE42FloatCostTable, ISD,
-                                            LT.second))
-      return LT.first * Entry->Cost;
-  }
-
   static const CostTblEntry
   SSE2UniformCostTable[] = {
     // Uniform splats are cheaper for the following instructions.
@@ -456,6 +443,17 @@ int X86TTIImpl::getArithmeticInstrCost(
     if (VT == MVT::v4i32 && ST->hasSSE2())
       ISD = ISD::MUL;
   }
+
+  static const CostTblEntry SSE42CostTable[] = {
+    { ISD::FDIV,  MVT::f32,   14 }, // Nehalem from http://www.agner.org/
+    { ISD::FDIV,  MVT::v4f32, 14 }, // Nehalem from http://www.agner.org/
+    { ISD::FDIV,  MVT::f64,   22 }, // Nehalem from http://www.agner.org/
+    { ISD::FDIV,  MVT::v2f64, 22 }, // Nehalem from http://www.agner.org/
+  };
+
+  if (ST->hasSSE42())
+    if (const auto *Entry = CostTableLookup(SSE42CostTable, ISD, LT.second))
+      return LT.first * Entry->Cost;
 
   static const CostTblEntry SSE41CostTable[] = {
     { ISD::SHL,  MVT::v16i8,    11 }, // pblendvb sequence.
