@@ -822,7 +822,6 @@ public:
   bool isForcedVOP3() const { return ForcedEncodingSize == 64; }
   bool isForcedDPP() const { return ForcedDPP; }
   bool isForcedSDWA() const { return ForcedSDWA; }
-  ArrayRef<unsigned> getMatchedVariants() const;
 
   std::unique_ptr<AMDGPUOperand> parseRegister();
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
@@ -1631,44 +1630,31 @@ unsigned AMDGPUAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   return Match_Success;
 }
 
-// What asm variants we should check
-ArrayRef<unsigned> AMDGPUAsmParser::getMatchedVariants() const {
-  if (getForcedEncodingSize() == 32) {
-    static const unsigned Variants[] = {AMDGPUAsmVariants::DEFAULT};
-    return Variants;
-  }
-
-  if (isForcedVOP3()) {
-    static const unsigned Variants[] = {AMDGPUAsmVariants::VOP3};
-    return Variants;
-  }
-
-  if (isForcedSDWA()) {
-    static const unsigned Variants[] = {AMDGPUAsmVariants::SDWA};
-    return Variants;
-  }
-
-  if (isForcedDPP()) {
-    static const unsigned Variants[] = {AMDGPUAsmVariants::DPP};
-  return Variants;
-  }
-
-  static const unsigned Variants[] = {
-    AMDGPUAsmVariants::DEFAULT, AMDGPUAsmVariants::VOP3,
-    AMDGPUAsmVariants::SDWA, AMDGPUAsmVariants::DPP
-  };
-
-  return Variants;
-}
-
 bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                               OperandVector &Operands,
                                               MCStreamer &Out,
                                               uint64_t &ErrorInfo,
                                               bool MatchingInlineAsm) {
+  // What asm variants we should check
+  std::vector<unsigned> MatchedVariants;
+  if (getForcedEncodingSize() == 32) {
+    MatchedVariants = {AMDGPUAsmVariants::DEFAULT};
+  } else if (isForcedVOP3()) {
+    MatchedVariants = {AMDGPUAsmVariants::VOP3};
+  } else if (isForcedSDWA()) {
+    MatchedVariants = {AMDGPUAsmVariants::SDWA};
+  } else if (isForcedDPP()) {
+    MatchedVariants = {AMDGPUAsmVariants::DPP};
+  } else {
+    MatchedVariants = {AMDGPUAsmVariants::DEFAULT,
+                       AMDGPUAsmVariants::VOP3,
+                       AMDGPUAsmVariants::SDWA,
+                       AMDGPUAsmVariants::DPP};
+  }
+
   MCInst Inst;
   unsigned Result = Match_Success;
-  for (auto Variant : getMatchedVariants()) {
+  for (auto Variant : MatchedVariants) {
     uint64_t EI;
     auto R = MatchInstructionImpl(Operands, Inst, EI, MatchingInlineAsm,
                                   Variant);
@@ -3500,7 +3486,7 @@ void AMDGPUAsmParser::cvtSDWA(MCInst &Inst, const OperandVector &Operands,
   for (unsigned E = Operands.size(); I != E; ++I) {
     AMDGPUOperand &Op = ((AMDGPUOperand &)*Operands[I]);
     // Add the register arguments
-    if ((BasicInstType == SIInstrFlags::VOPC ||
+    if ((BasicInstType == SIInstrFlags::VOPC || 
          BasicInstType == SIInstrFlags::VOP2)&&
         Op.isReg() &&
         Op.Reg.RegNo == AMDGPU::VCC) {
