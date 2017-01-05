@@ -195,6 +195,45 @@ bool IRTranslator::translateBr(const User &U, MachineIRBuilder &MIRBuilder) {
   return true;
 }
 
+bool IRTranslator::translateSwitch(const User &U,
+                                   MachineIRBuilder &MIRBuilder) {
+  // For now, just translate as a chain of conditional branches.
+  // FIXME: could we share most of the logic/code in
+  // SelectionDAGBuilder::visitSwitch between SelectionDAG and GlobalISel?
+  // At first sight, it seems most of the logic in there is independent of
+  // SelectionDAG-specifics and a lot of work went in to optimize switch
+  // lowering in there.
+
+  const SwitchInst &SwInst = cast<SwitchInst>(U);
+  const unsigned SwCondValue = getOrCreateVReg(*SwInst.getCondition());
+
+  LLT LLTi1 = LLT(*Type::getInt1Ty(U.getContext()), *DL);
+  for (auto &CaseIt : SwInst.cases()) {
+    const unsigned CaseValueReg = getOrCreateVReg(*CaseIt.getCaseValue());
+    const unsigned Tst = MRI->createGenericVirtualRegister(LLTi1);
+    MIRBuilder.buildICmp(CmpInst::ICMP_EQ, Tst, CaseValueReg, SwCondValue);
+    MachineBasicBlock &CurBB = MIRBuilder.getMBB();
+    MachineBasicBlock &TrueBB = getOrCreateBB(*CaseIt.getCaseSuccessor());
+
+    MIRBuilder.buildBrCond(Tst, TrueBB);
+    CurBB.addSuccessor(&TrueBB);
+
+    MachineBasicBlock *FalseBB =
+        MF->CreateMachineBasicBlock(SwInst.getParent());
+    MF->push_back(FalseBB);
+    MIRBuilder.buildBr(*FalseBB);
+    CurBB.addSuccessor(FalseBB);
+
+    MIRBuilder.setMBB(*FalseBB);
+  }
+  // handle default case
+  MachineBasicBlock &DefaultBB = getOrCreateBB(*SwInst.getDefaultDest());
+  MIRBuilder.buildBr(DefaultBB);
+  MIRBuilder.getMBB().addSuccessor(&DefaultBB);
+
+  return true;
+}
+
 bool IRTranslator::translateLoad(const User &U, MachineIRBuilder &MIRBuilder) {
   const LoadInst &LI = cast<LoadInst>(U);
 
