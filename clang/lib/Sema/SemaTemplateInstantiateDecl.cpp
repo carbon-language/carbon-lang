@@ -3619,6 +3619,27 @@ TemplateDeclInstantiator::InitMethodInstantiation(CXXMethodDecl *New,
   return false;
 }
 
+/// In the MS ABI, we need to instantiate default arguments of dllexported
+/// default constructors along with the constructor definition. This allows IR
+/// gen to emit a constructor closure which calls the default constructor with
+/// its default arguments.
+static void InstantiateDefaultCtorDefaultArgs(Sema &S,
+                                              CXXConstructorDecl *Ctor) {
+  assert(S.Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+         Ctor->isDefaultConstructor());
+  unsigned NumParams = Ctor->getNumParams();
+  if (NumParams == 0)
+    return;
+  DLLExportAttr *Attr = Ctor->getAttr<DLLExportAttr>();
+  if (!Attr)
+    return;
+  for (unsigned I = 0; I != NumParams; ++I) {
+    (void)S.CheckCXXDefaultArgExpr(Attr->getLocation(), Ctor,
+                                   Ctor->getParamDecl(I));
+    S.DiscardCleanupsInEvaluationContext();
+  }
+}
+
 /// \brief Instantiate the definition of the given function from its
 /// template.
 ///
@@ -3796,11 +3817,17 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
                                          TemplateArgs))
       return;
 
-    // If this is a constructor, instantiate the member initializers.
-    if (const CXXConstructorDecl *Ctor =
-          dyn_cast<CXXConstructorDecl>(PatternDecl)) {
-      InstantiateMemInitializers(cast<CXXConstructorDecl>(Function), Ctor,
+    if (CXXConstructorDecl *Ctor = dyn_cast<CXXConstructorDecl>(Function)) {
+      // If this is a constructor, instantiate the member initializers.
+      InstantiateMemInitializers(Ctor, cast<CXXConstructorDecl>(PatternDecl),
                                  TemplateArgs);
+
+      // If this is an MS ABI dllexport default constructor, instantiate any
+      // default arguments.
+      if (Context.getTargetInfo().getCXXABI().isMicrosoft() &&
+          Ctor->isDefaultConstructor()) {
+        InstantiateDefaultCtorDefaultArgs(*this, Ctor);
+      }
     }
 
     // Instantiate the function body.
