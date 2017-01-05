@@ -556,9 +556,9 @@ int X86TTIImpl::getArithmeticInstrCost(
     // A v4i64 multiply is custom lowered as two split v2i64 vectors that then
     // are lowered as a series of long multiplies(3), shifts(3) and adds(2)
     // Because we believe v4i64 to be a legal type, we must also include the
-    // split factor of two in the cost table. Therefore, the cost here is 16
+    // extract+insert in the cost table. Therefore, the cost here is 18
     // instead of 8.
-    { ISD::MUL,     MVT::v4i64,    16 },
+    { ISD::MUL,     MVT::v4i64,    18 },
   };
 
   // Look for AVX1 lowering tricks.
