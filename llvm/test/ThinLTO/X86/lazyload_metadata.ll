@@ -2,7 +2,7 @@
 ; RUN: opt -module-summary %s -o %t.bc -bitcode-mdindex-threshold=0
 ; RUN: opt -module-summary %p/Inputs/lazyload_metadata.ll -o %t2.bc -bitcode-mdindex-threshold=0
 ; RUN: llvm-lto -thinlto-action=thinlink -o %t3.bc %t.bc %t2.bc
-
+; REQUIRES: asserts
 
 ; Check that importing @globalfunc1 does not trigger loading all the global
 ; metadata for @globalfunc2 and @globalfunc3
