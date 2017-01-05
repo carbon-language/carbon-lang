@@ -63,7 +63,7 @@ void MinGW::findGccLibDir() {
 }
 
 MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
-    : ToolChain(D, Triple, Args) {
+    : ToolChain(D, Triple, Args), CudaInstallation(D, Triple, Args) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
 
 // In Windows there aren't any standard install locations, we search
@@ -133,6 +133,15 @@ bool MinGW::isPICDefaultForced() const {
 
 bool MinGW::UseSEHExceptions() const {
   return getArch() == llvm::Triple::x86_64;
+}
+
+void MinGW::AddCudaIncludeArgs(const ArgList &DriverArgs,
+                               ArgStringList &CC1Args) const {
+  CudaInstallation.AddCudaIncludeArgs(DriverArgs, CC1Args);
+}
+
+void MinGW::printVerboseInfo(raw_ostream &OS) const {
+  CudaInstallation.print(OS);
 }
 
 // Include directories for various hosts:

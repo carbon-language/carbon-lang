@@ -1810,14 +1810,21 @@ CudaInstallationDetector::CudaInstallationDetector(
     : D(D) {
   SmallVector<std::string, 4> CudaPathCandidates;
 
-  if (Args.hasArg(options::OPT_cuda_path_EQ))
+  // In decreasing order so we prefer newer versions to older versions.
+  std::initializer_list<const char *> Versions = {"8.0", "7.5", "7.0"};
+
+  if (Args.hasArg(options::OPT_cuda_path_EQ)) {
     CudaPathCandidates.push_back(
         Args.getLastArgValue(options::OPT_cuda_path_EQ));
-  else {
+  } else if (HostTriple.isOSWindows()) {
+    for (const char *Ver : Versions)
+      CudaPathCandidates.push_back(
+          D.SysRoot + "/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v" +
+          Ver);
+  } else {
     CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda");
-    CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-8.0");
-    CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.5");
-    CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-7.0");
+    for (const char *Ver : Versions)
+      CudaPathCandidates.push_back(D.SysRoot + "/usr/local/cuda-" + Ver);
   }
 
   for (const auto &CudaPath : CudaPathCandidates) {
@@ -5019,6 +5026,11 @@ SanitizerMask CudaToolChain::getSupportedSanitizers() const {
   // invocations often share the command line, so the device toolchain must
   // tolerate flags meant only for the host toolchain.
   return HostTC.getSupportedSanitizers();
+}
+
+VersionTuple CudaToolChain::computeMSVCVersion(const Driver *D,
+                                               const ArgList &Args) const {
+  return HostTC.computeMSVCVersion(D, Args);
 }
 
 /// XCore tool chain
