@@ -8423,31 +8423,39 @@ public:
     resetDataLayout("e-p:16:16:16-i8:8:8-i16:16:16-i32:32:32-i64:64:64"
 		    "-f32:32:32-f64:64:64-n8");
   }
+
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
     Builder.defineMacro("__AVR__");
   }
+
   ArrayRef<Builtin::Info> getTargetBuiltins() const override {
     return None;
   }
+
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::VoidPtrBuiltinVaList;
   }
+
   const char *getClobbers() const override {
     return "";
   }
+
   ArrayRef<const char *> getGCCRegNames() const override {
     static const char * const GCCRegNames[] = {
       "r0",   "r1",   "r2",   "r3",   "r4",   "r5",   "r6",   "r7",
       "r8",   "r9",   "r10",  "r11",  "r12",  "r13",  "r14",  "r15",
       "r16",  "r17",  "r18",  "r19",  "r20",  "r21",  "r22",  "r23",
-      "r24",  "r25",  "X",    "Y",    "Z",    "SP"
+      "r24",  "r25",  "r26",  "r27",  "r28",  "r29",  "r30",  "r31",
+      "X",    "Y",    "Z",    "SP"
     };
     return llvm::makeArrayRef(GCCRegNames);
   }
+
   ArrayRef<TargetInfo::GCCRegAlias> getGCCRegAliases() const override {
     return None;
   }
+
   ArrayRef<TargetInfo::AddlRegName> getGCCAddlRegNames() const override {
     static const TargetInfo::AddlRegName AddlRegNames[] = {
       { { "r26", "r27"}, 26 },
@@ -8457,16 +8465,19 @@ public:
     };
     return llvm::makeArrayRef(AddlRegNames);
   }
+
   bool validateAsmConstraint(const char *&Name,
                              TargetInfo::ConstraintInfo &Info) const override {
     return false;
   }
+
   IntType getIntTypeByWidth(unsigned BitWidth,
                             bool IsSigned) const final {
     // AVR prefers int for 16-bit integers.
     return BitWidth == 16 ? (IsSigned ? SignedInt : UnsignedInt)
                           : TargetInfo::getIntTypeByWidth(BitWidth, IsSigned);
   }
+
   IntType getLeastIntTypeByWidth(unsigned BitWidth,
                                  bool IsSigned) const final {
     // AVR uses int for int_least16_t and int_fast16_t.
