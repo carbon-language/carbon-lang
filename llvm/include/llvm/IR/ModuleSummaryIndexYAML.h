@@ -80,7 +80,7 @@ template <> struct CustomMappingTraits<GlobalValueSummaryMapTy> {
     for (auto &FSum : FSums) {
       GlobalValueSummary::GVFlags GVFlags(GlobalValue::ExternalLinkage, false,
                                           false, false);
-      Elem.push_back(make_unique<FunctionSummary>(
+      Elem.push_back(llvm::make_unique<FunctionSummary>(
           GVFlags, 0, ArrayRef<ValueInfo>{},
           ArrayRef<FunctionSummary::EdgeTy>{}, std::move(FSum.TypeTests)));
     }
@@ -93,7 +93,7 @@ template <> struct CustomMappingTraits<GlobalValueSummaryMapTy> {
           FSums.push_back(FunctionSummaryYaml{FSum->type_tests()});
       }
       if (!FSums.empty())
-        io.mapRequired(std::to_string(P.first).c_str(), FSums);
+        io.mapRequired(llvm::utostr(P.first).c_str(), FSums);
     }
   }
 };
