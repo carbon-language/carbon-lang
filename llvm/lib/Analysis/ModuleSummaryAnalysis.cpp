@@ -88,7 +88,7 @@ static void
 computeFunctionSummary(ModuleSummaryIndex &Index, const Module &M,
                        const Function &F, BlockFrequencyInfo *BFI,
                        ProfileSummaryInfo *PSI, bool HasLocalsInUsed,
-                       SmallPtrSet<GlobalValue::GUID, 8> &CantBePromoted) {
+                       DenseSet<GlobalValue::GUID> &CantBePromoted) {
   // Summary not currently supported for anonymous functions, they should
   // have been named.
   assert(F.hasName());
@@ -200,7 +200,7 @@ computeFunctionSummary(ModuleSummaryIndex &Index, const Module &M,
 
 static void
 computeVariableSummary(ModuleSummaryIndex &Index, const GlobalVariable &V,
-                       SmallPtrSet<GlobalValue::GUID, 8> &CantBePromoted) {
+                       DenseSet<GlobalValue::GUID> &CantBePromoted) {
   SetVector<ValueInfo> RefEdges;
   SmallPtrSet<const User *, 8> Visited;
   findRefEdges(&V, RefEdges, Visited);
@@ -215,7 +215,7 @@ computeVariableSummary(ModuleSummaryIndex &Index, const GlobalVariable &V,
 
 static void
 computeAliasSummary(ModuleSummaryIndex &Index, const GlobalAlias &A,
-                    SmallPtrSet<GlobalValue::GUID, 8> &CantBePromoted) {
+                    DenseSet<GlobalValue::GUID> &CantBePromoted) {
   bool NonRenamableLocal = isNonRenamableLocal(A);
   GlobalValueSummary::GVFlags Flags(A.getLinkage(), NonRenamableLocal);
   auto AS = llvm::make_unique<AliasSummary>(Flags, ArrayRef<ValueInfo>{});
@@ -245,7 +245,7 @@ ModuleSummaryIndex llvm::buildModuleSummaryIndex(
   collectUsedGlobalVariables(M, Used, /*CompilerUsed*/ false);
   // Next collect those in the llvm.compiler.used set.
   collectUsedGlobalVariables(M, Used, /*CompilerUsed*/ true);
-  SmallPtrSet<GlobalValue::GUID, 8> CantBePromoted;
+  DenseSet<GlobalValue::GUID> CantBePromoted;
   for (auto *V : Used) {
     if (V->hasLocalLinkage()) {
       LocalsUsed.insert(V);
