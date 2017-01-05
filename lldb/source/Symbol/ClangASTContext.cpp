@@ -2119,7 +2119,7 @@ CompilerType ClangASTContext::CreateStructForIdentifier(
   if (!type_name.IsEmpty() &&
       (type = GetTypeForIdentifier<clang::CXXRecordDecl>(type_name))
           .IsValid()) {
-    lldbassert("Trying to create a type for an existing name");
+    lldbassert(0 && "Trying to create a type for an existing name");
     return type;
   }
 

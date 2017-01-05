@@ -498,7 +498,7 @@ void ClangModulesDeclVendorImpl::ForEachMacro(
                       ti->getLocation(), &invalid);
 
               if (invalid) {
-                lldbassert(!"Unhandled token kind");
+                lldbassert(0 && "Unhandled token kind");
                 macro_expansion.append("<unknown literal value>");
               } else {
                 macro_expansion.append(
