@@ -5637,6 +5637,9 @@ struct _LIBCPP_TYPE_VIS pointer_safety
     __lx __v_;
 
     _LIBCPP_INLINE_VISIBILITY
+    pointer_safety() : __v_() {}
+
+    _LIBCPP_INLINE_VISIBILITY
     pointer_safety(__lx __v) : __v_(__v) {}
     _LIBCPP_INLINE_VISIBILITY
     operator int() const {return __v_;}
