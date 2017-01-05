@@ -1962,6 +1962,16 @@ public:
     Opts.support("cl_khr_local_int32_base_atomics");
     Opts.support("cl_khr_local_int32_extended_atomics");
   }
+
+  CallingConvCheckResult checkCallingConvention(CallingConv CC) const override {
+    // CUDA compilations support all of the host's calling conventions.
+    //
+    // TODO: We should warn if you apply a non-default CC to anything other than
+    // a host function.
+    if (HostTarget)
+      return HostTarget->checkCallingConvention(CC);
+    return CCCR_Warning;
+  }
 };
 
 const Builtin::Info NVPTXTargetInfo::BuiltinInfo[] = {
