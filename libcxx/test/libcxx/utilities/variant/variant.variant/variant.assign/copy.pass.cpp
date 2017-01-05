@@ -63,7 +63,7 @@ struct TCopyAssignNTMoveAssign {
   int value;
 };
 
-static_assert(std::is_trivially_copy_assignable_v<TCopyAssignNTMoveAssign>);
+static_assert(std::is_trivially_copy_assignable_v<TCopyAssignNTMoveAssign>, "");
 
 void test_copy_assignment_sfinae() {
   {
@@ -99,8 +99,8 @@ void test_copy_assignment_same_index() {
       }
     } test;
     constexpr auto result = test();
-    static_assert(result.index == 0);
-    static_assert(result.value == 42);
+    static_assert(result.index == 0, "");
+    static_assert(result.value == 42, "");
   }
   {
     struct {
@@ -113,8 +113,8 @@ void test_copy_assignment_same_index() {
       }
     } test;
     constexpr auto result = test();
-    static_assert(result.index == 1);
-    static_assert(result.value == 42l);
+    static_assert(result.index == 1, "");
+    static_assert(result.value == 42l, "");
   }
   {
     struct {
@@ -127,8 +127,8 @@ void test_copy_assignment_same_index() {
       }
     } test;
     constexpr auto result = test();
-    static_assert(result.index == 1);
-    static_assert(result.value == 42);
+    static_assert(result.index == 1, "");
+    static_assert(result.value == 42, "");
   }
   {
     struct {
@@ -141,8 +141,8 @@ void test_copy_assignment_same_index() {
       }
     } test;
     constexpr auto result = test();
-    static_assert(result.index == 1);
-    static_assert(result.value == 42);
+    static_assert(result.index == 1, "");
+    static_assert(result.value == 42, "");
   }
 }
 
@@ -158,8 +158,8 @@ void test_copy_assignment_different_index() {
       }
     } test;
     constexpr auto result = test();
-    static_assert(result.index == 1);
-    static_assert(result.value == 42l);
+    static_assert(result.index == 1, "");
+    static_assert(result.value == 42l, "");
   }
   {
     struct {
@@ -172,8 +172,8 @@ void test_copy_assignment_different_index() {
       }
     } test;
     constexpr auto result = test();
-    static_assert(result.index == 1);
-    static_assert(result.value == 42);
+    static_assert(result.index == 1, "");
+    static_assert(result.value == 42, "");
   }
 }
 
