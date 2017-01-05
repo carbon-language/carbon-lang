@@ -3219,6 +3219,9 @@ static Sema::TemplateDeductionResult DeduceFromInitializerList(
   //   parameter type and the initializer element as its argument
   //
   // We've already removed references and cv-qualifiers here.
+  if (!ILE->getNumInits())
+    return Sema::TDK_Success;
+
   QualType ElTy;
   auto *ArrTy = S.Context.getAsArrayType(AdjustedParamType);
   if (ArrTy)
@@ -3241,7 +3244,6 @@ static Sema::TemplateDeductionResult DeduceFromInitializerList(
 
   //   in the P0[N] case, if N is a non-type template parameter, N is deduced
   //   from the length of the initializer list.
-  // FIXME: We're not supposed to get here if N would be deduced as 0.
   if (auto *DependentArrTy = dyn_cast_or_null<DependentSizedArrayType>(ArrTy)) {
     // Determine the array bound is something we can deduce.
     if (NonTypeTemplateParmDecl *NTTP =
