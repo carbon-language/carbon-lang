@@ -3246,7 +3246,7 @@ GDBRemoteCommunicationClient::GetModulesInfo(
     JSONObject::SP module_sp = std::make_shared<JSONObject>();
     module_array_sp->AppendObject(module_sp);
     module_sp->SetObject(
-        "file", std::make_shared<JSONString>(module_file_spec.GetPath()));
+        "file", std::make_shared<JSONString>(module_file_spec.GetPath(false)));
     module_sp->SetObject("triple",
                          std::make_shared<JSONString>(triple.getTriple()));
   }
