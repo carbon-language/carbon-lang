@@ -60,12 +60,14 @@ const char* __sancov_default_options() { return ""; }
 #pragma comment(linker, "/alternatename:__asan_default_options=__asan_default_default_options")    // NOLINT
 #pragma comment(linker, "/alternatename:__asan_default_suppressions=__asan_default_default_suppressions")    // NOLINT
 #pragma comment(linker, "/alternatename:__asan_on_error=__asan_default_on_error")                  // NOLINT
+#pragma comment(linker, "/alternatename:__sancov_default_options=__sancov_default_default_options")                  // NOLINT
 #else
 #pragma comment(linker, "/alternatename:___sanitizer_malloc_hook=___sanitizer_default_malloc_hook")  // NOLINT
 #pragma comment(linker, "/alternatename:___sanitizer_free_hook=___sanitizer_default_free_hook")      // NOLINT
 #pragma comment(linker, "/alternatename:___asan_default_options=___asan_default_default_options")    // NOLINT
 #pragma comment(linker, "/alternatename:___asan_default_suppressions=___asan_default_default_suppressions")    // NOLINT
 #pragma comment(linker, "/alternatename:___asan_on_error=___asan_default_on_error")                  // NOLINT
+#pragma comment(linker, "/alternatename:___sancov_default_options=___sancov_default_default_options")                  // NOLINT
 #endif
 // }}}
 }  // extern "C"
