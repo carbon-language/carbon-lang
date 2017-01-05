@@ -916,12 +916,12 @@ using ::std::tuple_size;
 #  define GTEST_HAS_SEH 0
 # endif
 
+#endif  // GTEST_HAS_SEH
+
 #define GTEST_IS_THREADSAFE \
     (GTEST_HAS_MUTEX_AND_THREAD_LOCAL_ \
      || (GTEST_OS_WINDOWS && !GTEST_OS_WINDOWS_PHONE && !GTEST_OS_WINDOWS_RT) \
      || GTEST_HAS_PTHREAD)
-
-#endif  // GTEST_HAS_SEH
 
 #ifdef _MSC_VER
 # if GTEST_LINKED_AS_SHARED_LIBRARY
