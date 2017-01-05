@@ -189,7 +189,8 @@ computeFunctionSummary(ModuleSummaryIndex &Index, const Module &M,
       // Inliner doesn't handle variadic functions.
       // FIXME: refactor this to use the same code that inliner is using.
       F.isVarArg();
-  GlobalValueSummary::GVFlags Flags(F.getLinkage(), NotEligibleForImport);
+  GlobalValueSummary::GVFlags Flags(F.getLinkage(), NotEligibleForImport,
+                                    /* LiveRoot = */ false);
   auto FuncSummary = llvm::make_unique<FunctionSummary>(
       Flags, NumInsts, RefEdges.takeVector(), CallGraphEdges.takeVector(),
       TypeTests.takeVector());
@@ -205,7 +206,8 @@ computeVariableSummary(ModuleSummaryIndex &Index, const GlobalVariable &V,
   SmallPtrSet<const User *, 8> Visited;
   findRefEdges(&V, RefEdges, Visited);
   bool NonRenamableLocal = isNonRenamableLocal(V);
-  GlobalValueSummary::GVFlags Flags(V.getLinkage(), NonRenamableLocal);
+  GlobalValueSummary::GVFlags Flags(V.getLinkage(), NonRenamableLocal,
+                                    /* LiveRoot = */ false);
   auto GVarSummary =
       llvm::make_unique<GlobalVarSummary>(Flags, RefEdges.takeVector());
   if (NonRenamableLocal)
@@ -217,7 +219,8 @@ static void
 computeAliasSummary(ModuleSummaryIndex &Index, const GlobalAlias &A,
                     DenseSet<GlobalValue::GUID> &CantBePromoted) {
   bool NonRenamableLocal = isNonRenamableLocal(A);
-  GlobalValueSummary::GVFlags Flags(A.getLinkage(), NonRenamableLocal);
+  GlobalValueSummary::GVFlags Flags(A.getLinkage(), NonRenamableLocal,
+                                    /* LiveRoot = */ false);
   auto AS = llvm::make_unique<AliasSummary>(Flags, ArrayRef<ValueInfo>{});
   auto *Aliasee = A.getBaseObject();
   auto *AliaseeSummary = Index.getGlobalValueSummary(*Aliasee);
@@ -226,6 +229,16 @@ computeAliasSummary(ModuleSummaryIndex &Index, const GlobalAlias &A,
   if (NonRenamableLocal)
     CantBePromoted.insert(A.getGUID());
   Index.addGlobalValueSummary(A.getName(), std::move(AS));
+}
+
+// Set LiveRoot flag on entries matching the given value name.
+static void setLiveRoot(ModuleSummaryIndex &Index, StringRef Name) {
+  auto SummaryList =
+      Index.findGlobalValueSummaryList(GlobalValue::getGUID(Name));
+  if (SummaryList == Index.end())
+    return;
+  for (auto &Summary : SummaryList->second)
+    Summary->setLiveRoot();
 }
 
 ModuleSummaryIndex llvm::buildModuleSummaryIndex(
@@ -293,6 +306,15 @@ ModuleSummaryIndex llvm::buildModuleSummaryIndex(
     Summary->setNotEligibleToImport();
   }
 
+  // The linker doesn't know about these LLVM produced values, so we need
+  // to flag them as live in the index to ensure index-based dead value
+  // analysis treats them as live roots of the analysis.
+  setLiveRoot(Index, "llvm.used");
+  setLiveRoot(Index, "llvm.compiler.used");
+  setLiveRoot(Index, "llvm.global_ctors");
+  setLiveRoot(Index, "llvm.global_dtors");
+  setLiveRoot(Index, "llvm.global.annotations");
+
   if (!M.getModuleInlineAsm().empty()) {
     // Collect the local values defined by module level asm, and set up
     // summaries for these symbols so that they can be marked as NoRename,
@@ -316,7 +338,8 @@ ModuleSummaryIndex llvm::buildModuleSummaryIndex(
             return;
           assert(GV->isDeclaration() && "Def in module asm already has definition");
           GlobalValueSummary::GVFlags GVFlags(GlobalValue::InternalLinkage,
-                                              /* NotEligibleToImport */ true);
+                                              /* NotEligibleToImport */ true,
+                                              /* LiveRoot */ true);
           CantBePromoted.insert(GlobalValue::getGUID(Name));
           // Create the appropriate summary type.
           if (isa<Function>(GV)) {

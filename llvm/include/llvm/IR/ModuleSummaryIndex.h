@@ -121,10 +121,16 @@ public:
     /// be renamed or references something that can't be renamed).
     unsigned NotEligibleToImport : 1;
 
+    /// Indicate that the global value must be considered a live root for
+    /// index-based liveness analysis. Used for special LLVM values such as
+    /// llvm.global_ctors that the linker does not know about.
+    unsigned LiveRoot : 1;
+
     /// Convenience Constructors
     explicit GVFlags(GlobalValue::LinkageTypes Linkage,
-                     bool NotEligibleToImport)
-        : Linkage(Linkage), NotEligibleToImport(NotEligibleToImport) {}
+                     bool NotEligibleToImport, bool LiveRoot)
+        : Linkage(Linkage), NotEligibleToImport(NotEligibleToImport),
+          LiveRoot(LiveRoot) {}
   };
 
 private:
@@ -194,6 +200,14 @@ public:
 
   /// Return true if this global value can't be imported.
   bool notEligibleToImport() const { return Flags.NotEligibleToImport; }
+
+  /// Return true if this global value must be considered a root for live
+  /// value analysis on the index.
+  bool liveRoot() const { return Flags.LiveRoot; }
+
+  /// Flag that this global value must be considered a root for live
+  /// value analysis on the index.
+  void setLiveRoot() { Flags.LiveRoot = true; }
 
   /// Flag that this global value cannot be imported.
   void setNotEligibleToImport() { Flags.NotEligibleToImport = true; }
@@ -366,6 +380,7 @@ public:
   const_gvsummary_iterator begin() const { return GlobalValueMap.begin(); }
   gvsummary_iterator end() { return GlobalValueMap.end(); }
   const_gvsummary_iterator end() const { return GlobalValueMap.end(); }
+  size_t size() const { return GlobalValueMap.size(); }
 
   /// Get the list of global value summary objects for a given value name.
   const GlobalValueSummaryList &getGlobalValueSummaryList(StringRef ValueName) {

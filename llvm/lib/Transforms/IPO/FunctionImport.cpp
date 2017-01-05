@@ -36,7 +36,10 @@
 
 using namespace llvm;
 
-STATISTIC(NumImported, "Number of functions imported");
+STATISTIC(NumImportedFunctions, "Number of functions imported");
+STATISTIC(NumImportedModules, "Number of modules imported from");
+STATISTIC(NumDeadSymbols, "Number of dead stripped symbols in index");
+STATISTIC(NumLiveSymbols, "Number of live symbols in index");
 
 /// Limit on instruction count of imported functions.
 static cl::opt<unsigned> ImportInstrLimit(
@@ -68,6 +71,9 @@ static cl::opt<float> ImportColdMultiplier(
 
 static cl::opt<bool> PrintImports("print-imports", cl::init(false), cl::Hidden,
                                   cl::desc("Print imported functions"));
+
+static cl::opt<bool> ComputeDead("compute-dead", cl::init(true), cl::Hidden,
+                                 cl::desc("Compute dead symbols"));
 
 // Temporary allows the function import pass to disable always linking
 // referenced discardable symbols.
@@ -274,7 +280,8 @@ static void computeImportForFunction(
 static void ComputeImportForModule(
     const GVSummaryMapTy &DefinedGVSummaries, const ModuleSummaryIndex &Index,
     FunctionImporter::ImportMapTy &ImportList,
-    StringMap<FunctionImporter::ExportSetTy> *ExportLists = nullptr) {
+    StringMap<FunctionImporter::ExportSetTy> *ExportLists = nullptr,
+    const DenseSet<GlobalValue::GUID> *DeadSymbols = nullptr) {
   // Worklist contains the list of function imported in this module, for which
   // we will analyse the callees and may import further down the callgraph.
   SmallVector<EdgeInfo, 128> Worklist;
@@ -282,6 +289,10 @@ static void ComputeImportForModule(
   // Populate the worklist with the import for the functions in the current
   // module
   for (auto &GVSummary : DefinedGVSummaries) {
+    if (DeadSymbols && DeadSymbols->count(GVSummary.first)) {
+      DEBUG(dbgs() << "Ignores Dead GUID: " << GVSummary.first << "\n");
+      continue;
+    }
     auto *Summary = GVSummary.second;
     if (auto *AS = dyn_cast<AliasSummary>(Summary))
       Summary = &AS->getAliasee();
@@ -321,14 +332,15 @@ void llvm::ComputeCrossModuleImport(
     const ModuleSummaryIndex &Index,
     const StringMap<GVSummaryMapTy> &ModuleToDefinedGVSummaries,
     StringMap<FunctionImporter::ImportMapTy> &ImportLists,
-    StringMap<FunctionImporter::ExportSetTy> &ExportLists) {
+    StringMap<FunctionImporter::ExportSetTy> &ExportLists,
+    const DenseSet<GlobalValue::GUID> *DeadSymbols) {
   // For each module that has function defined, compute the import/export lists.
   for (auto &DefinedGVSummaries : ModuleToDefinedGVSummaries) {
     auto &ImportList = ImportLists[DefinedGVSummaries.first()];
     DEBUG(dbgs() << "Computing import for Module '"
                  << DefinedGVSummaries.first() << "'\n");
     ComputeImportForModule(DefinedGVSummaries.second, Index, ImportList,
-                           &ExportLists);
+                           &ExportLists, DeadSymbols);
   }
 
   // When computing imports we added all GUIDs referenced by anything
@@ -388,6 +400,86 @@ void llvm::ComputeCrossModuleImportForModule(
                  << SrcModName << "\n");
   }
 #endif
+}
+
+DenseSet<GlobalValue::GUID> llvm::computeDeadSymbols(
+    const ModuleSummaryIndex &Index,
+    const DenseSet<GlobalValue::GUID> &GUIDPreservedSymbols) {
+  if (!ComputeDead)
+    return DenseSet<GlobalValue::GUID>();
+  if (GUIDPreservedSymbols.empty())
+    // Don't do anything when nothing is live, this is friendly with tests.
+    return DenseSet<GlobalValue::GUID>();
+  DenseSet<GlobalValue::GUID> LiveSymbols = GUIDPreservedSymbols;
+  SmallVector<GlobalValue::GUID, 128> Worklist;
+  Worklist.reserve(LiveSymbols.size() * 2);
+  for (auto GUID : LiveSymbols) {
+    DEBUG(dbgs() << "Live root: " << GUID << "\n");
+    Worklist.push_back(GUID);
+  }
+  // Add values flagged in the index as live roots to the worklist.
+  for (const auto &Entry : Index) {
+    bool IsLiveRoot = llvm::any_of(
+        Entry.second,
+        [&](const std::unique_ptr<llvm::GlobalValueSummary> &Summary) {
+          return Summary->liveRoot();
+        });
+    if (!IsLiveRoot)
+      continue;
+    DEBUG(dbgs() << "Live root (summary): " << Entry.first << "\n");
+    Worklist.push_back(Entry.first);
+  }
+
+  while (!Worklist.empty()) {
+    auto GUID = Worklist.pop_back_val();
+    auto It = Index.findGlobalValueSummaryList(GUID);
+    if (It == Index.end()) {
+      DEBUG(dbgs() << "Not in index: " << GUID << "\n");
+      continue;
+    }
+
+    // FIXME: we should only make the prevailing copy live here
+    for (auto &Summary : It->second) {
+      for (auto Ref : Summary->refs()) {
+        auto RefGUID = Ref.getGUID();
+        if (LiveSymbols.insert(RefGUID).second) {
+          DEBUG(dbgs() << "Marking live (ref): " << RefGUID << "\n");
+          Worklist.push_back(RefGUID);
+        }
+      }
+      if (auto *FS = dyn_cast<FunctionSummary>(Summary.get())) {
+        for (auto Call : FS->calls()) {
+          auto CallGUID = Call.first.getGUID();
+          if (LiveSymbols.insert(CallGUID).second) {
+            DEBUG(dbgs() << "Marking live (call): " << CallGUID << "\n");
+            Worklist.push_back(CallGUID);
+          }
+        }
+      }
+      if (auto *AS = dyn_cast<AliasSummary>(Summary.get())) {
+        auto AliaseeGUID = AS->getAliasee().getOriginalName();
+        if (LiveSymbols.insert(AliaseeGUID).second) {
+          DEBUG(dbgs() << "Marking live (alias): " << AliaseeGUID << "\n");
+          Worklist.push_back(AliaseeGUID);
+        }
+      }
+    }
+  }
+  DenseSet<GlobalValue::GUID> DeadSymbols;
+  DeadSymbols.reserve(
+      std::min(Index.size(), Index.size() - LiveSymbols.size()));
+  for (auto &Entry : Index) {
+    auto GUID = Entry.first;
+    if (!LiveSymbols.count(GUID)) {
+      DEBUG(dbgs() << "Marking dead: " << GUID << "\n");
+      DeadSymbols.insert(GUID);
+    }
+  }
+  DEBUG(dbgs() << LiveSymbols.size() << " symbols Live, and "
+               << DeadSymbols.size() << " symbols Dead \n");
+  NumDeadSymbols += DeadSymbols.size();
+  NumLiveSymbols += LiveSymbols.size();
+  return DeadSymbols;
 }
 
 /// Compute the set of summaries needed for a ThinLTO backend compilation of
@@ -648,9 +740,10 @@ Expected<bool> FunctionImporter::importFunctions(
       report_fatal_error("Function Import: link error");
 
     ImportedCount += GlobalsToImport.size();
+    NumImportedModules++;
   }
 
-  NumImported += ImportedCount;
+  NumImportedFunctions += ImportedCount;
 
   DEBUG(dbgs() << "Imported " << ImportedCount << " functions for Module "
                << DestModule.getModuleIdentifier() << "\n");
