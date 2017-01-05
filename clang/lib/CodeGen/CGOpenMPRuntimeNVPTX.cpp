@@ -306,7 +306,7 @@ CGOpenMPRuntimeNVPTX::createNVPTXRuntimeFunction(unsigned Function) {
 
 void CGOpenMPRuntimeNVPTX::createOffloadEntry(llvm::Constant *ID,
                                               llvm::Constant *Addr,
-                                              uint64_t Size) {
+                                              uint64_t Size, int32_t) {
   auto *F = dyn_cast<llvm::Function>(Addr);
   // TODO: Add support for global variables on the device after declare target
   // support.
