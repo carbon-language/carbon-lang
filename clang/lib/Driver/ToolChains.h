@@ -43,7 +43,7 @@ private:
   mutable llvm::SmallSet<CudaArch, 4> ArchsWithVersionTooLowErrors;
 
 public:
-  CudaInstallationDetector(const Driver &D, const llvm::Triple &Triple,
+  CudaInstallationDetector(const Driver &D, const llvm::Triple &HostTriple,
                            const llvm::opt::ArgList &Args);
 
   void AddCudaIncludeArgs(const llvm::opt::ArgList &DriverArgs,

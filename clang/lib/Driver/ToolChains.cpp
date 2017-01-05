@@ -1805,7 +1805,7 @@ static CudaVersion ParseCudaVersionFile(llvm::StringRef V) {
 }
 
 CudaInstallationDetector::CudaInstallationDetector(
-    const Driver &D, const llvm::Triple &TargetTriple,
+    const Driver &D, const llvm::Triple &HostTriple,
     const llvm::opt::ArgList &Args)
     : D(D) {
   SmallVector<std::string, 4> CudaPathCandidates;
@@ -1840,7 +1840,7 @@ CudaInstallationDetector::CudaInstallationDetector(
     // It's sufficient for our purposes to be flexible: If both lib and lib64
     // exist, we choose whichever one matches our triple.  Otherwise, if only
     // lib exists, we use it.
-    if (TargetTriple.isArch64Bit() && FS.exists(InstallPath + "/lib64"))
+    if (HostTriple.isArch64Bit() && FS.exists(InstallPath + "/lib64"))
       LibPath = InstallPath + "/lib64";
     else if (FS.exists(InstallPath + "/lib"))
       LibPath = InstallPath + "/lib";
@@ -4870,7 +4870,7 @@ Tool *DragonFly::buildLinker() const {
 CudaToolChain::CudaToolChain(const Driver &D, const llvm::Triple &Triple,
                              const ToolChain &HostTC, const ArgList &Args)
     : ToolChain(D, Triple, Args), HostTC(HostTC),
-      CudaInstallation(D, Triple, Args) {
+      CudaInstallation(D, HostTC.getTriple(), Args) {
   if (CudaInstallation.isValid())
     getProgramPaths().push_back(CudaInstallation.getBinPath());
 }
