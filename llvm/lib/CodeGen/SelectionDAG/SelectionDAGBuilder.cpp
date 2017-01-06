@@ -7344,7 +7344,7 @@ SDValue SelectionDAGBuilder::lowerRangeToAssertZExt(SelectionDAG &DAG,
     return Op;
 
   Constant *Hi = cast<ConstantAsMetadata>(Range->getOperand(1))->getValue();
-  unsigned Bits = cast<ConstantInt>(Hi)->getValue().logBase2();
+  unsigned Bits = cast<ConstantInt>(Hi)->getValue().ceilLogBase2();
 
   EVT SmallVT = EVT::getIntegerVT(*DAG.getContext(), Bits);
 
