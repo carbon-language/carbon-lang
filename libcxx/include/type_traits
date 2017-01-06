@@ -1503,7 +1503,7 @@ template <class _Tp> _LIBCPP_CONSTEXPR bool is_empty_v
 
 // is_polymorphic
 
-#if __has_feature(is_polymorphic) || defined(_LIBCPP_MSVC)
+#if __has_feature(is_polymorphic) || defined(_LIBCPP_COMPILER_MSVC)
 
 template <class _Tp>
 struct _LIBCPP_TEMPLATE_VIS is_polymorphic
