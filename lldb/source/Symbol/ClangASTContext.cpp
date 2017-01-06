@@ -390,7 +390,7 @@ static void ParseLangArgs(LangOptions &Opts, InputKind IK, const char *triple) {
     case IK_AST:
     case IK_LLVM_IR:
     case IK_RenderScript:
-      assert(!"Invalid input kind!");
+      llvm_unreachable("Invalid input kind!");
     case IK_OpenCL:
       LangStd = LangStandard::lang_opencl;
       break;
@@ -7568,8 +7568,7 @@ ClangASTContext::GetTemplateArgument(lldb::opaque_compiler_type_t type,
             return CompilerType();
 
           default:
-            assert(!"Unhandled clang::TemplateArgument::ArgKind");
-            break;
+            llvm_unreachable("Unhandled clang::TemplateArgument::ArgKind");
           }
         }
       }

@@ -2599,10 +2599,7 @@ size_t GDBRemoteCommunicationClient::GetCurrentThreadIDs(
       thread_ids.push_back(1);
     }
   } else {
-#if defined(LLDB_CONFIGURATION_DEBUG)
-// assert(!"ProcessGDBRemote::UpdateThreadList() failed due to not getting the
-// sequence mutex");
-#else
+#if !defined(LLDB_CONFIGURATION_DEBUG)
     Log *log(ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet(GDBR_LOG_PROCESS |
                                                            GDBR_LOG_PACKETS));
     if (log)
