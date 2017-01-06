@@ -572,9 +572,9 @@ define <4 x double> @mask_extract_v8f64_v4f64_1(<8 x double> %a, <4 x double> %p
 define <8 x i32> @mask_extract_v8i64_v8i32_1(<8 x i64> %a, <8 x i32> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_extract_v8i64_v8i32_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextracti64x4 $1, %zmm0, %ymm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vpblendmd %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vextracti32x8 $1, %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovdqa %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %shuffle.cast = bitcast <4 x i64> %shuffle to <8 x i32>
@@ -586,9 +586,9 @@ define <8 x i32> @mask_extract_v8i64_v8i32_1(<8 x i64> %a, <8 x i32> %passthru, 
 define <8 x float> @mask_extract_v8f64_v8f32_1(<8 x double> %a, <8 x float> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_extract_v8f64_v8f32_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextractf64x4 $1, %zmm0, %ymm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vblendmps %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vextractf32x8 $1, %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovaps %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %shuffle.cast = bitcast <4 x double> %shuffle to <8 x float>
@@ -600,9 +600,9 @@ define <8 x float> @mask_extract_v8f64_v8f32_1(<8 x double> %a, <8 x float> %pas
 define <4 x i32> @mask_cast_extract_v8i64_v4i32_1(<8 x i64> %a, <4 x i32> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_cast_extract_v8i64_v4i32_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextracti64x2 $1, %zmm0, %xmm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vpblendmd %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vextracti32x4 $1, %zmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovdqa %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> undef, <2 x i32> <i32 2, i32 3>
   %shuffle.cast = bitcast <2 x i64> %shuffle to <4 x i32>
@@ -615,9 +615,9 @@ define <4 x i32> @mask_cast_extract_v8i64_v4i32_1(<8 x i64> %a, <4 x i32> %passt
 define <4 x float> @mask_cast_extract_v8f64_v4f32_1(<8 x double> %a, <4 x float> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_cast_extract_v8f64_v4f32_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextractf64x2 $1, %zmm0, %xmm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vblendmps %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vextractf32x4 $1, %zmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovaps %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> undef, <2 x i32> <i32 2, i32 3>
   %shuffle.cast = bitcast <2 x double> %shuffle to <4 x float>
@@ -630,9 +630,9 @@ define <4 x float> @mask_cast_extract_v8f64_v4f32_1(<8 x double> %a, <4 x float>
 define <4 x i64> @mask_cast_extract_v16i32_v4i64_1(<16 x i32> %a, <4 x i64> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_cast_extract_v16i32_v4i64_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextracti32x8 $1, %zmm0, %ymm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vpblendmq %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vextracti64x4 $1, %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovdqa %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   %shuffle.cast = bitcast <8 x i32> %shuffle to <4 x i64>
@@ -645,9 +645,9 @@ define <4 x i64> @mask_cast_extract_v16i32_v4i64_1(<16 x i32> %a, <4 x i64> %pas
 define <4 x double> @mask_cast_extract_v16f32_v4f64_1(<16 x float> %a, <4 x double> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_cast_extract_v16f32_v4f64_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextractf32x8 $1, %zmm0, %ymm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vblendmpd %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vextractf64x4 $1, %zmm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovapd %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <16 x float> %a, <16 x float> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   %shuffle.cast = bitcast <8 x float> %shuffle to <4 x double>
@@ -660,9 +660,9 @@ define <4 x double> @mask_cast_extract_v16f32_v4f64_1(<16 x float> %a, <4 x doub
 define <2 x i64> @mask_cast_extract_v16i32_v2i64_1(<16 x i32> %a, <2 x i64> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_cast_extract_v16i32_v2i64_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextracti32x4 $1, %zmm0, %xmm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vpblendmq %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vextracti64x2 $1, %zmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovdqa %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <16 x i32> %a, <16 x i32> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %shuffle.cast = bitcast <4 x i32> %shuffle to <2 x i64>
@@ -675,9 +675,9 @@ define <2 x i64> @mask_cast_extract_v16i32_v2i64_1(<16 x i32> %a, <2 x i64> %pas
 define <2 x double> @mask_cast_extract_v16f32_v2f64_1(<16 x float> %a, <2 x double> %passthru, i8 %mask) {
 ; CHECK-LABEL: mask_cast_extract_v16f32_v2f64_1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    vextractf32x4 $1, %zmm0, %xmm0
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vblendmpd %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vextractf64x2 $1, %zmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovapd %xmm1, %xmm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <16 x float> %a, <16 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
   %shuffle.cast = bitcast <4 x float> %shuffle to <2 x double>
