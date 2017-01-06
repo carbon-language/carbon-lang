@@ -894,7 +894,8 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #endif
 
 // Thread API
-#if !defined(_LIBCPP_HAS_NO_THREADS)
+#if !defined(_LIBCPP_HAS_NO_THREADS) && \
+    !defined(_LIBCPP_HAS_THREAD_API_PTHREAD)
 # if defined(__FreeBSD__) || \
     defined(__Fuchsia__) || \
     defined(__NetBSD__) || \
@@ -902,9 +903,7 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
     defined(__APPLE__) || \
     defined(__CloudABI__) || \
     defined(__sun__)
-#   ifndef _LIBCPP_HAS_THREAD_API_PTHREAD
-#     define _LIBCPP_HAS_THREAD_API_PTHREAD
-#   endif
+#   define _LIBCPP_HAS_THREAD_API_PTHREAD
 # else
 #  error "No thread API"
 # endif // _LIBCPP_HAS_THREAD_API
