@@ -55,7 +55,7 @@ std::string lld::rewritePath(StringRef S) {
   return S;
 }
 
-std::string lld::stringize(opt::Arg *Arg) {
+std::string lld::toString(opt::Arg *Arg) {
   std::string K = Arg->getSpelling();
   if (Arg->getNumValues() == 0)
     return K;
