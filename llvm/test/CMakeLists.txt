@@ -7,7 +7,8 @@ llvm_canonicalize_cmake_booleans(
   HAVE_LIBZ
   HAVE_LIBXAR
   LLVM_ENABLE_DIA_SDK
-  LLVM_ENABLE_FFI)
+  LLVM_ENABLE_FFI
+  BUILD_SHARED_LIBS)
 
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
