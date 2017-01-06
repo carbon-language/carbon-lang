@@ -201,5 +201,18 @@ define i1 @icmp_sgt11(i8 %x) {
   ret i1 %cmp
 }
 
+; Splat vector version should fold the same way.
+
+define <2 x i1> @icmp_sgt11_vec(<2 x i8> %x) {
+; CHECK-LABEL: @icmp_sgt11_vec(
+; CHECK-NEXT:    [[SHL:%.*]] = shl nsw <2 x i8> %x, <i8 7, i8 7>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt <2 x i8> [[SHL]], <i8 -2, i8 -2>
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %shl = shl nsw <2 x i8> %x, <i8 7, i8 7>
+  %cmp = icmp sgt <2 x i8> %shl, <i8 -2, i8 -2>
+  ret <2 x i1> %cmp
+}
+
 ; Known bits analysis returns false for compares with >=0.
 
