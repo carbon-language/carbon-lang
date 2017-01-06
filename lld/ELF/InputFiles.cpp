@@ -96,7 +96,7 @@ std::string elf::ObjectFile<ELFT>::getLineInfo(InputSectionBase<ELFT> *S,
 }
 
 // Returns "(internal)", "foo.a(bar.o)" or "baz.o".
-std::string elf::toString(const InputFile *F) {
+std::string lld::toString(const InputFile *F) {
   if (!F)
     return "(internal)";
   if (!F->ArchiveName.empty())
