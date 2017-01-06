@@ -1,3 +1,14 @@
+llvm_canonicalize_cmake_booleans(
+  LLVM_TOOL_LTO_BUILD
+  HAVE_OCAMLOPT
+  HAVE_OCAML_OUNIT
+  LLVM_INCLUDE_GO_TESTS
+  LLVM_USE_INTEL_JITEVENTS
+  HAVE_LIBZ
+  HAVE_LIBXAR
+  LLVM_ENABLE_DIA_SDK
+  LLVM_ENABLE_FFI)
+
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg

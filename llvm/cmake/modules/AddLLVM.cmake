@@ -1067,6 +1067,19 @@ function(llvm_add_go_executable binary pkgpath)
   endif()
 endfunction()
 
+# This function canonicalize the CMake variables passed by names
+# from CMake boolean to 0/1 suitable for passing into Python or C++,
+# in place.
+function(llvm_canonicalize_cmake_booleans)
+  foreach(var ${ARGN})
+    if(${var})
+      set(${var} 1 PARENT_SCOPE)
+    else()
+      set(${var} 0 PARENT_SCOPE)
+    endif()
+  endforeach()
+endfunction(llvm_canonicalize_cmake_booleans)
+
 # This function provides an automatic way to 'configure'-like generate a file
 # based on a set of common and custom variables, specifically targeting the
 # variables needed for the 'lit.site.cfg' files. This function bundles the
