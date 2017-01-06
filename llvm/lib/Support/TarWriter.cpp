@@ -9,21 +9,13 @@
 //
 // TarWriter class provides a feature to create a tar archive file.
 //
-// I put emphasis on simplicity over comprehensiveness when
-// implementing this class because we don't need a full-fledged
-// archive file generator in LLVM at the moment.
+// I put emphasis on simplicity over comprehensiveness when implementing this
+// class because we don't need a full-fledged archive file generator in LLVM
+// at the moment.
 //
-// The filename field in the Unix V7 tar header is 100 bytes, which is
-// apparently too small. Various extensions were proposed and
-// implemented to fix the issue. The writer implemented in this file
-// uses PAX extension headers.
-//
-// Note that we emit PAX headers even if filenames fit in the V7
-// header for the sake of simplicity. So, generated files are N
-// kilobyte larger than the ideal where N is the number of files in
-// archives. In practice, I think you don't need to worry about that.
-//
-// The PAX header is standardized in IEEE Std 1003.1-2001.
+// The filename field in the Unix V7 tar header is 100 bytes. Longer filenames
+// are stored using the PAX extension. The PAX header is standardized in
+// POSIX.1-2001.
 //
 // The struct definition of UstarHeader is copied from
 // https://www.freebsd.org/cgi/man.cgi?query=tar&sektion=5
@@ -68,8 +60,8 @@ static_assert(sizeof(UstarHeader) == BlockSize, "invalid Ustar header");
 //   25 ctime=1084839148.1212\n
 //
 // This function create such string.
-static std::string formatPax(StringRef Key, const Twine &Val) {
-  int Len = Key.size() + Val.str().size() + 3; // +3 for " ", "=" and "\n"
+static std::string formatPax(StringRef Key, StringRef Val) {
+  int Len = Key.size() + Val.size() + 3; // +3 for " ", "=" and "\n"
 
   // We need to compute total size twice because appending
   // a length field could change total size by one.
@@ -79,8 +71,7 @@ static std::string formatPax(StringRef Key, const Twine &Val) {
 }
 
 // Headers in tar files must be aligned to 512 byte boundaries.
-// This function writes null bytes so that the file is a multiple
-// of 512 bytes.
+// This function forwards the current file position to the next boundary.
 static void pad(raw_fd_ostream &OS) {
   uint64_t Pos = OS.tell();
   OS.seek(alignTo(Pos, BlockSize));
@@ -100,7 +91,7 @@ static void computeChecksum(UstarHeader &Hdr) {
 }
 
 // Create a tar header and write it to a given output stream.
-static void writePaxHeader(raw_fd_ostream &OS, const Twine &Path) {
+static void writePaxHeader(raw_fd_ostream &OS, StringRef Path) {
   // A PAX header consists of a 512-byte header followed
   // by key-value strings. First, create key-value strings.
   std::string PaxAttr = formatPax("path", Path);
@@ -120,12 +111,12 @@ static void writePaxHeader(raw_fd_ostream &OS, const Twine &Path) {
 
 // The PAX header is an extended format, so a PAX header needs
 // to be followed by a "real" header.
-static void writeUstarHeader(raw_fd_ostream &OS, size_t Size) {
+static void writeUstarHeader(raw_fd_ostream &OS, StringRef Path, size_t Size) {
   UstarHeader Hdr = {};
+  memcpy(Hdr.Name, Path.data(), Path.size());
   strcpy(Hdr.Mode, "0000664");
   sprintf(Hdr.Size, "%011lo", Size);
   memcpy(Hdr.Magic, "ustar", 6);
-
   computeChecksum(Hdr);
   OS << StringRef(reinterpret_cast<char *>(&Hdr), sizeof(Hdr));
 }
@@ -154,8 +145,14 @@ TarWriter::TarWriter(int FD, StringRef BaseDir)
 // Append a given file to an archive.
 void TarWriter::append(StringRef Path, StringRef Data) {
   // Write Path and Data.
-  writePaxHeader(OS, BaseDir + "/" + canonicalize(Path));
-  writeUstarHeader(OS, Data.size());
+  std::string S = BaseDir + "/" + canonicalize(Path) + "\0";
+  if (S.size() <= sizeof(UstarHeader::Name)) {
+    writeUstarHeader(OS, S, Data.size());
+  } else {
+    writePaxHeader(OS, S);
+    writeUstarHeader(OS, "", Data.size());
+  }
+
   OS << Data;
   pad(OS);
 
