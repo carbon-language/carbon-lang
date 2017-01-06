@@ -51,7 +51,7 @@ bool ParseDiagnosticArgs(DiagnosticOptions &Opts, llvm::opt::ArgList &Args,
                          bool DefaultDiagColor = true,
                          bool DefaultShowOpt = true);
 
-class CompilerInvocationBase : public RefCountedBase<CompilerInvocation> {
+class CompilerInvocationBase {
   void operator=(const CompilerInvocationBase &) = delete;
 
 public:

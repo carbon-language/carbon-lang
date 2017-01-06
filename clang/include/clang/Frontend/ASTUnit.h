@@ -108,8 +108,8 @@ private:
 
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.
-  IntrusiveRefCntPtr<CompilerInvocation> Invocation;
-  
+  std::shared_ptr<CompilerInvocation> Invocation;
+
   // OnlyLocalDecls - when true, walking this AST should only visit declarations
   // that come from the AST itself, not from included precompiled headers.
   // FIXME: This is temporary; eventually, CIndex will always do this.
@@ -358,22 +358,21 @@ public:
   }
   
   /// \brief Retrieve the allocator used to cache global code completions.
-  IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
+  std::shared_ptr<GlobalCodeCompletionAllocator>
   getCachedCompletionAllocator() {
     return CachedCompletionAllocator;
   }
 
   CodeCompletionTUInfo &getCodeCompletionTUInfo() {
     if (!CCTUInfo)
-      CCTUInfo.reset(new CodeCompletionTUInfo(
-                                            new GlobalCodeCompletionAllocator));
+      CCTUInfo = llvm::make_unique<CodeCompletionTUInfo>(
+          std::make_shared<GlobalCodeCompletionAllocator>());
     return *CCTUInfo;
   }
 
 private:
   /// \brief Allocator used to store cached code completions.
-  IntrusiveRefCntPtr<GlobalCodeCompletionAllocator>
-    CachedCompletionAllocator;
+  std::shared_ptr<GlobalCodeCompletionAllocator> CachedCompletionAllocator;
 
   std::unique_ptr<CodeCompletionTUInfo> CCTUInfo;
 
@@ -702,11 +701,11 @@ public:
   /// remapped contents of that file.
   typedef std::pair<std::string, llvm::MemoryBuffer *> RemappedFile;
 
-  /// \brief Create a ASTUnit. Gets ownership of the passed CompilerInvocation. 
-  static ASTUnit *create(CompilerInvocation *CI,
-                         IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                         bool CaptureDiagnostics,
-                         bool UserFilesAreVolatile);
+  /// \brief Create a ASTUnit. Gets ownership of the passed CompilerInvocation.
+  static std::unique_ptr<ASTUnit>
+  create(std::shared_ptr<CompilerInvocation> CI,
+         IntrusiveRefCntPtr<DiagnosticsEngine> Diags, bool CaptureDiagnostics,
+         bool UserFilesAreVolatile);
 
   /// \brief Create a ASTUnit from an AST file.
   ///
@@ -771,7 +770,7 @@ public:
   /// created ASTUnit was passed in \p Unit then the caller can check that.
   ///
   static ASTUnit *LoadFromCompilerInvocationAction(
-      CompilerInvocation *CI,
+      std::shared_ptr<CompilerInvocation> CI,
       std::shared_ptr<PCHContainerOperations> PCHContainerOps,
       IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
       FrontendAction *Action = nullptr, ASTUnit *Unit = nullptr,
@@ -798,7 +797,7 @@ public:
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
   static std::unique_ptr<ASTUnit> LoadFromCompilerInvocation(
-      CompilerInvocation *CI,
+      std::shared_ptr<CompilerInvocation> CI,
       std::shared_ptr<PCHContainerOperations> PCHContainerOps,
       IntrusiveRefCntPtr<DiagnosticsEngine> Diags, FileManager *FileMgr,
       bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,

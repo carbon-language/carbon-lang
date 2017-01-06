@@ -66,8 +66,9 @@ CompilerInstance::~CompilerInstance() {
   assert(OutputFiles.empty() && "Still output files in flight?");
 }
 
-void CompilerInstance::setInvocation(CompilerInvocation *Value) {
-  Invocation = Value;
+void CompilerInstance::setInvocation(
+    std::shared_ptr<CompilerInvocation> Value) {
+  Invocation = std::move(Value);
 }
 
 bool CompilerInstance::shouldBuildGlobalModuleIndex() const {
@@ -1019,8 +1020,8 @@ static bool compileModuleImpl(CompilerInstance &ImportingInstance,
     = ImportingInstance.getPreprocessor().getHeaderSearchInfo().getModuleMap();
     
   // Construct a compiler invocation for creating this module.
-  IntrusiveRefCntPtr<CompilerInvocation> Invocation
-    (new CompilerInvocation(ImportingInstance.getInvocation()));
+  auto Invocation =
+      std::make_shared<CompilerInvocation>(ImportingInstance.getInvocation());
 
   PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
   
@@ -1076,7 +1077,8 @@ static bool compileModuleImpl(CompilerInstance &ImportingInstance,
   // module.
   CompilerInstance Instance(ImportingInstance.getPCHContainerOperations(),
                             /*BuildingModule=*/true);
-  Instance.setInvocation(&*Invocation);
+  auto &Inv = *Invocation;
+  Instance.setInvocation(std::move(Invocation));
 
   Instance.createDiagnostics(new ForwardingDiagnosticConsumer(
                                    ImportingInstance.getDiagnosticClient()),
@@ -1098,7 +1100,7 @@ static bool compileModuleImpl(CompilerInstance &ImportingInstance,
   // between all of the module CompilerInstances. Other than that, we don't
   // want to produce any dependency output from the module build.
   Instance.setModuleDepCollector(ImportingInstance.getModuleDepCollector());
-  Invocation->getDependencyOutputOpts() = DependencyOutputOptions();
+  Inv.getDependencyOutputOpts() = DependencyOutputOptions();
 
   // Get or create the module map that we'll use to build this module.
   std::string InferredModuleMapContent;
