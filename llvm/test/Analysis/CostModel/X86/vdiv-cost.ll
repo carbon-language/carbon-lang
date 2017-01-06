@@ -118,7 +118,5 @@ define <16 x i32> @test11(<16 x i32> %a) {
 ; CHECK: 'Cost Model Analysis' for function 'test11':
 ; SSE: Found an estimated cost of 320 for instruction:   %div
 ; AVX: Found an estimated cost of 320 for instruction:   %div
-; AVX512F: Found an estimated cost of 48 for instruction:   %div
-; AVX512BW: Found an estimated cost of 320 for instruction:   %div
-; AVX512DQ: Found an estimated cost of 48 for instruction:   %div
+; AVX512: Found an estimated cost of 320 for instruction:   %div
 }
