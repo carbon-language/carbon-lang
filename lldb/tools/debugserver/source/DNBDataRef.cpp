@@ -115,13 +115,18 @@ uint32_t DNBDataRef::GetMax32(offset_t *offset_ptr, uint32_t byte_size) const {
   switch (byte_size) {
   case 1:
     return Get8(offset_ptr);
+    break;
   case 2:
     return Get16(offset_ptr);
+    break;
   case 4:
     return Get32(offset_ptr);
+    break;
   default:
-    llvm_unreachable("GetMax32 unhandled case!");
+    assert(!"GetMax32 unhandled case!");
+    break;
   }
+  return 0;
 }
 
 //----------------------------------------------------------------------
@@ -134,15 +139,21 @@ uint64_t DNBDataRef::GetMax64(offset_t *offset_ptr, uint32_t size) const {
   switch (size) {
   case 1:
     return Get8(offset_ptr);
+    break;
   case 2:
     return Get16(offset_ptr);
+    break;
   case 4:
     return Get32(offset_ptr);
+    break;
   case 8:
     return Get64(offset_ptr);
+    break;
   default:
-    llvm_unreachable("GetMax64 unhandled case!");
+    assert(!"GetMax64 unhandled case!");
+    break;
   }
+  return 0;
 }
 
 //----------------------------------------------------------------------
