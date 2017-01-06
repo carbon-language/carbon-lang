@@ -30948,9 +30948,9 @@ static SDValue foldVectorXorShiftIntoCmp(SDNode *N, SelectionDAG &DAG,
   return DAG.getNode(X86ISD::PCMPGT, SDLoc(N), VT, Shift.getOperand(0), Ones);
 }
 
-/// Check if truncation with saturation form type \p SrcVT to \p DstVT 
+/// Check if truncation with saturation form type \p SrcVT to \p DstVT
 /// is valid for the given \p Subtarget.
-static bool 
+static bool
 isSATValidOnSubtarget(EVT SrcVT, EVT DstVT, const X86Subtarget &Subtarget) {
   if (!Subtarget.hasAVX512())
     return false;
@@ -30969,7 +30969,7 @@ isSATValidOnSubtarget(EVT SrcVT, EVT DstVT, const X86Subtarget &Subtarget) {
 /// (truncate (umin (x, unsigned_max_of_dest_type)) to dest_type).
 /// Return the source value to be truncated or SDValue() if the pattern was not
 /// matched or the unsupported on the current target.
-static SDValue 
+static SDValue
 detectUSatPattern(SDValue In, EVT VT, const X86Subtarget &Subtarget) {
   if (In.getOpcode() != ISD::UMIN)
     return SDValue();
