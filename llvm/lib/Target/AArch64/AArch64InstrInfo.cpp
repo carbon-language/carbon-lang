@@ -14,16 +14,37 @@
 #include "AArch64InstrInfo.h"
 #include "AArch64Subtarget.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
+#include "Utils/AArch64BaseInfo.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrDesc.h"
+#include "llvm/Support/Casting.h"
+#include "llvm/Support/CodeGen.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/TargetRegistry.h"
-#include <algorithm>
+#include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
+#include <cassert>
+#include <cstdint>
+#include <iterator>
+#include <utility>
 
 using namespace llvm;
 
@@ -529,19 +550,19 @@ void AArch64InstrInfo::insertSelect(MachineBasicBlock &MBB,
     default:
       llvm_unreachable("Unknown branch opcode in Cond");
     case AArch64::CBZW:
-      Is64Bit = 0;
+      Is64Bit = false;
       CC = AArch64CC::EQ;
       break;
     case AArch64::CBZX:
-      Is64Bit = 1;
+      Is64Bit = true;
       CC = AArch64CC::EQ;
       break;
     case AArch64::CBNZW:
-      Is64Bit = 0;
+      Is64Bit = false;
       CC = AArch64CC::NE;
       break;
     case AArch64::CBNZX:
-      Is64Bit = 1;
+      Is64Bit = true;
       CC = AArch64CC::NE;
       break;
     }
@@ -1044,7 +1065,7 @@ static unsigned sForm(MachineInstr &Instr) {
   case AArch64::SUBSWri:
   case AArch64::SUBSXrr:
   case AArch64::SUBSXri:
-    return Instr.getOpcode();;
+    return Instr.getOpcode();
 
   case AArch64::ADDWrr:    return AArch64::ADDSWrr;
   case AArch64::ADDWri:    return AArch64::ADDSWri;
@@ -1072,12 +1093,15 @@ static bool areCFlagsAliveInSuccessors(MachineBasicBlock *MBB) {
 }
 
 namespace {
+
 struct UsedNZCV {
-  bool N;
-  bool Z;
-  bool C;
-  bool V;
-  UsedNZCV(): N(false), Z(false), C(false), V(false) {}
+  bool N = false;
+  bool Z = false;
+  bool C = false;
+  bool V = false;
+
+  UsedNZCV() = default;
+
   UsedNZCV& operator |=(const UsedNZCV& UsedFlags) {
     this->N |= UsedFlags.N;
     this->Z |= UsedFlags.Z;
@@ -1086,6 +1110,7 @@ struct UsedNZCV {
     return *this;
   }
 };
+
 } // end anonymous namespace
 
 /// Find a condition code used by the instruction.
@@ -1561,7 +1586,7 @@ bool AArch64InstrInfo::isScaledAddr(const MachineInstr &MI) const {
 
 /// Check all MachineMemOperands for a hint to suppress pairing.
 bool AArch64InstrInfo::isLdStPairSuppressed(const MachineInstr &MI) const {
-  return any_of(MI.memoperands(), [](MachineMemOperand *MMO) {
+  return llvm::any_of(MI.memoperands(), [](MachineMemOperand *MMO) {
     return MMO->getFlags() & MOSuppressPair;
   });
 }
@@ -1994,7 +2019,7 @@ static bool forwardCopyWillClobberTuple(unsigned DestReg, unsigned SrcReg,
 void AArch64InstrInfo::copyPhysRegTuple(
     MachineBasicBlock &MBB, MachineBasicBlock::iterator I, const DebugLoc &DL,
     unsigned DestReg, unsigned SrcReg, bool KillSrc, unsigned Opcode,
-    llvm::ArrayRef<unsigned> Indices) const {
+    ArrayRef<unsigned> Indices) const {
   assert(Subtarget.hasNEON() &&
          "Unexpected register copy without NEON");
   const TargetRegisterInfo *TRI = &getRegisterInfo();
@@ -3029,7 +3054,7 @@ bool AArch64InstrInfo::useMachineCombiner() const {
 
   return true;
 }
-//
+
 // True when Opc sets flag
 static bool isCombineInstrSettingFlag(unsigned Opc) {
   switch (Opc) {
@@ -3048,7 +3073,7 @@ static bool isCombineInstrSettingFlag(unsigned Opc) {
   }
   return false;
 }
-//
+
 // 32b Opcodes that can be combined with a MUL
 static bool isCombineInstrCandidate32(unsigned Opc) {
   switch (Opc) {
@@ -3067,7 +3092,7 @@ static bool isCombineInstrCandidate32(unsigned Opc) {
   }
   return false;
 }
-//
+
 // 64b Opcodes that can be combined with a MUL
 static bool isCombineInstrCandidate64(unsigned Opc) {
   switch (Opc) {
@@ -3086,7 +3111,7 @@ static bool isCombineInstrCandidate64(unsigned Opc) {
   }
   return false;
 }
-//
+
 // FP Opcodes that can be combined with a FMUL
 static bool isCombineInstrCandidateFP(const MachineInstr &Inst) {
   switch (Inst.getOpcode()) {
@@ -3108,7 +3133,7 @@ static bool isCombineInstrCandidateFP(const MachineInstr &Inst) {
   }
   return false;
 }
-//
+
 // Opcodes that can be combined with a MUL
 static bool isCombineInstrCandidate(unsigned Opc) {
   return (isCombineInstrCandidate32(Opc) || isCombineInstrCandidate64(Opc));
@@ -3298,7 +3323,7 @@ static bool getFMAPatterns(MachineInstr &Root,
                            SmallVectorImpl<MachineCombinerPattern> &Patterns) {
 
   if (!isCombineInstrCandidateFP(Root))
-    return 0;
+    return false;
 
   MachineBasicBlock &MBB = *Root.getParent();
   bool Found = false;
@@ -4064,8 +4089,6 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
   // Record MUL and ADD/SUB for deletion
   DelInstrs.push_back(MUL);
   DelInstrs.push_back(&Root);
-
-  return;
 }
 
 /// \brief Replace csincr-branch sequence by simple conditional branch
@@ -4241,6 +4264,7 @@ AArch64InstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
 ArrayRef<std::pair<unsigned, const char *>>
 AArch64InstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
   using namespace AArch64II;
+
   static const std::pair<unsigned, const char *> TargetFlags[] = {
       {MO_PAGE, "aarch64-page"},
       {MO_PAGEOFF, "aarch64-pageoff"},
@@ -4255,6 +4279,7 @@ AArch64InstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
 ArrayRef<std::pair<unsigned, const char *>>
 AArch64InstrInfo::getSerializableBitmaskMachineOperandTargetFlags() const {
   using namespace AArch64II;
+
   static const std::pair<unsigned, const char *> TargetFlags[] = {
       {MO_GOT, "aarch64-got"},
       {MO_NC, "aarch64-nc"},
