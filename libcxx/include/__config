@@ -275,10 +275,6 @@ typedef __char32_t char32_t;
 #  define _LIBCPP_NORETURN __attribute__ ((noreturn))
 #endif
 
-#if !(__has_feature(cxx_deleted_functions))
-#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
-#endif  // !(__has_feature(cxx_deleted_functions))
-
 #if !(__has_feature(cxx_lambdas))
 #define _LIBCPP_HAS_NO_LAMBDAS
 #endif
@@ -431,7 +427,6 @@ namespace std {
 
 #ifndef __GXX_EXPERIMENTAL_CXX0X__
 #define _LIBCPP_HAS_NO_DECLTYPE
-#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_NULLPTR
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
@@ -448,7 +443,6 @@ namespace std {
 
 #if _GNUC_VER < 404
 #define _LIBCPP_HAS_NO_DECLTYPE
-#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_VARIADICS
 #define _LIBCPP_HAS_NO_GENERALIZED_INITIALIZERS
@@ -483,7 +477,6 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #if _MSC_VER <= 1800
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #endif
-#define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_NOEXCEPT
 #define __alignof__ __alignof
 #define _LIBCPP_NORETURN __declspec(noreturn)
@@ -739,7 +732,7 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_DEFAULT = default;
 #endif
 
-#ifdef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#ifdef _LIBCPP_CXX03_LANG
 #define _LIBCPP_EQUAL_DELETE
 #else
 #define _LIBCPP_EQUAL_DELETE = delete

@@ -489,7 +489,7 @@ addressof(__unsafe_unretained _Tp& __x) _NOEXCEPT
 }
 #endif
 
-#if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_DELETED_FUNCTIONS)
+#if !defined(_LIBCPP_CXX03_LANG)
 template <class _Tp> _Tp* addressof(const _Tp&&) noexcept = delete;
 #endif
 
@@ -1566,7 +1566,7 @@ struct __type_list
 
 struct __nat
 {
-#ifndef _LIBCPP_HAS_NO_DELETED_FUNCTIONS
+#ifndef _LIBCPP_CXX03_LANG
     __nat() = delete;
     __nat(const __nat&) = delete;
     __nat& operator=(const __nat&) = delete;
