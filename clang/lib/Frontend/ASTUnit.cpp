@@ -245,7 +245,7 @@ ASTUnit::~ASTUnit() {
   // perform this operation here because we explicitly request that the
   // compiler instance *not* free these buffers for each invocation of the
   // parser.
-  if (Invocation && OwnsRemappedFileBuffers) {
+  if (Invocation.get() && OwnsRemappedFileBuffers) {
     PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();
     for (const auto &RB : PPOpts.RemappedFileBuffers)
       delete RB.second;
@@ -348,7 +348,7 @@ void ASTUnit::CacheCodeCompletionResults() {
   // Gather the set of global code completions.
   typedef CodeCompletionResult Result;
   SmallVector<Result, 8> Results;
-  CachedCompletionAllocator = std::make_shared<GlobalCodeCompletionAllocator>();
+  CachedCompletionAllocator = new GlobalCodeCompletionAllocator;
   CodeCompletionTUInfo CCTUInfo(CachedCompletionAllocator);
   TheSema->GatherGlobalCodeCompletions(*CachedCompletionAllocator,
                                        CCTUInfo, Results);
@@ -1048,7 +1048,10 @@ bool ASTUnit::Parse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
     CICleanup(Clang.get());
 
-  Clang->setInvocation(std::make_shared<CompilerInvocation>(*Invocation));
+  IntrusiveRefCntPtr<CompilerInvocation>
+    CCInvocation(new CompilerInvocation(*Invocation));
+
+  Clang->setInvocation(CCInvocation.get());
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].getFile();
     
   // Set up diagnostics, capturing any diagnostics that would
@@ -1341,8 +1344,8 @@ ASTUnit::getMainBufferWithPrecompiledPreamble(
     const CompilerInvocation &PreambleInvocationIn, bool AllowRebuild,
     unsigned MaxLines) {
 
-  auto PreambleInvocation =
-      std::make_shared<CompilerInvocation>(PreambleInvocationIn);
+  IntrusiveRefCntPtr<CompilerInvocation>
+    PreambleInvocation(new CompilerInvocation(PreambleInvocationIn));
   FrontendOptions &FrontendOpts = PreambleInvocation->getFrontendOpts();
   PreprocessorOptions &PreprocessorOpts
     = PreambleInvocation->getPreprocessorOpts();
@@ -1520,7 +1523,7 @@ ASTUnit::getMainBufferWithPrecompiledPreamble(
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
     CICleanup(Clang.get());
 
-  Clang->setInvocation(std::move(PreambleInvocation));
+  Clang->setInvocation(&*PreambleInvocation);
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].getFile();
   
   // Set up diagnostics, capturing all of the diagnostics produced.
@@ -1706,29 +1709,30 @@ StringRef ASTUnit::getASTFileName() const {
   return Mod.FileName;
 }
 
-std::unique_ptr<ASTUnit>
-ASTUnit::create(std::shared_ptr<CompilerInvocation> CI,
-                IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                bool CaptureDiagnostics, bool UserFilesAreVolatile) {
-  std::unique_ptr<ASTUnit> AST(new ASTUnit(false));
+ASTUnit *ASTUnit::create(CompilerInvocation *CI,
+                         IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+                         bool CaptureDiagnostics,
+                         bool UserFilesAreVolatile) {
+  std::unique_ptr<ASTUnit> AST;
+  AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, *AST, CaptureDiagnostics);
+  AST->Diagnostics = Diags;
+  AST->Invocation = CI;
+  AST->FileSystemOpts = CI->getFileSystemOpts();
   IntrusiveRefCntPtr<vfs::FileSystem> VFS =
       createVFSFromCompilerInvocation(*CI, *Diags);
   if (!VFS)
     return nullptr;
-  AST->Diagnostics = Diags;
-  AST->FileSystemOpts = CI->getFileSystemOpts();
-  AST->Invocation = std::move(CI);
   AST->FileMgr = new FileManager(AST->FileSystemOpts, VFS);
   AST->UserFilesAreVolatile = UserFilesAreVolatile;
   AST->SourceMgr = new SourceManager(AST->getDiagnostics(), *AST->FileMgr,
                                      UserFilesAreVolatile);
 
-  return AST;
+  return AST.release();
 }
 
 ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(
-    std::shared_ptr<CompilerInvocation> CI,
+    CompilerInvocation *CI,
     std::shared_ptr<PCHContainerOperations> PCHContainerOps,
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags, FrontendAction *Action,
     ASTUnit *Unit, bool Persistent, StringRef ResourceFilesPath,
@@ -1742,7 +1746,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(
   ASTUnit *AST = Unit;
   if (!AST) {
     // Create the AST unit.
-    OwnAST = create(CI, Diags, CaptureDiagnostics, UserFilesAreVolatile);
+    OwnAST.reset(create(CI, Diags, CaptureDiagnostics, UserFilesAreVolatile));
     AST = OwnAST.get();
     if (!AST)
       return nullptr;
@@ -1781,7 +1785,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
     CICleanup(Clang.get());
 
-  Clang->setInvocation(std::move(CI));
+  Clang->setInvocation(CI);
   AST->OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].getFile();
     
   // Set up diagnostics, capturing any diagnostics that would
@@ -1899,7 +1903,7 @@ bool ASTUnit::LoadFromCompilerInvocation(
 }
 
 std::unique_ptr<ASTUnit> ASTUnit::LoadFromCompilerInvocation(
-    std::shared_ptr<CompilerInvocation> CI,
+    CompilerInvocation *CI,
     std::shared_ptr<PCHContainerOperations> PCHContainerOps,
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags, FileManager *FileMgr,
     bool OnlyLocalDecls, bool CaptureDiagnostics,
@@ -1916,7 +1920,7 @@ std::unique_ptr<ASTUnit> ASTUnit::LoadFromCompilerInvocation(
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->IncludeBriefCommentsInCodeCompletion
     = IncludeBriefCommentsInCodeCompletion;
-  AST->Invocation = std::move(CI);
+  AST->Invocation = CI;
   AST->FileSystemOpts = FileMgr->getFileSystemOpts();
   AST->FileMgr = FileMgr;
   AST->UserFilesAreVolatile = UserFilesAreVolatile;
@@ -1948,8 +1952,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
   assert(Diags.get() && "no DiagnosticsEngine was provided");
 
   SmallVector<StoredDiagnostic, 4> StoredDiagnostics;
-
-  std::shared_ptr<CompilerInvocation> CI;
+  
+  IntrusiveRefCntPtr<CompilerInvocation> CI;
 
   {
 
@@ -1957,7 +1961,8 @@ ASTUnit *ASTUnit::LoadFromCommandLine(
                                       StoredDiagnostics);
 
     CI = clang::createInvocationFromCommandLine(
-        llvm::makeArrayRef(ArgBegin, ArgEnd), Diags);
+                                           llvm::makeArrayRef(ArgBegin, ArgEnd),
+                                           Diags);
     if (!CI)
       return nullptr;
   }
@@ -2328,7 +2333,8 @@ void ASTUnit::CodeComplete(
   CompletionTimer.setOutput("Code completion @ " + File + ":" +
                             Twine(Line) + ":" + Twine(Column));
 
-  auto CCInvocation = std::make_shared<CompilerInvocation>(*Invocation);
+  IntrusiveRefCntPtr<CompilerInvocation>
+    CCInvocation(new CompilerInvocation(*Invocation));
 
   FrontendOptions &FrontendOpts = CCInvocation->getFrontendOpts();
   CodeCompleteOptions &CodeCompleteOpts = FrontendOpts.CodeCompleteOpts;
@@ -2360,8 +2366,7 @@ void ASTUnit::CodeComplete(
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
     CICleanup(Clang.get());
 
-  auto &Inv = *CCInvocation;
-  Clang->setInvocation(std::move(CCInvocation));
+  Clang->setInvocation(&*CCInvocation);
   OriginalSourceFile = Clang->getFrontendOpts().Inputs[0].getFile();
     
   // Set up diagnostics, capturing any diagnostics produced.
@@ -2369,8 +2374,8 @@ void ASTUnit::CodeComplete(
   CaptureDroppedDiagnostics Capture(true, 
                                     Clang->getDiagnostics(), 
                                     StoredDiagnostics);
-  ProcessWarningOptions(Diag, Inv.getDiagnosticOpts());
-
+  ProcessWarningOptions(Diag, CCInvocation->getDiagnosticOpts());
+  
   // Create the target instance.
   Clang->setTarget(TargetInfo::CreateTargetInfo(
       Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
@@ -2426,7 +2431,7 @@ void ASTUnit::CodeComplete(
       if (!llvm::sys::fs::getUniqueID(MainPath, MainID)) {
         if (CompleteFileID == MainID && Line > 1)
           OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(
-              PCHContainerOps, Inv, false, Line - 1);
+              PCHContainerOps, *CCInvocation, false, Line - 1);
       }
     }
   }

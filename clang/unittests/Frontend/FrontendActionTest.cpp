@@ -79,7 +79,7 @@ private:
 };
 
 TEST(ASTFrontendAction, Sanity) {
-  auto invocation = std::make_shared<CompilerInvocation>();
+  CompilerInvocation *invocation = new CompilerInvocation;
   invocation->getPreprocessorOpts().addRemappedFile(
       "test.cc",
       MemoryBuffer::getMemBuffer("int main() { float x; }").release());
@@ -88,7 +88,7 @@ TEST(ASTFrontendAction, Sanity) {
   invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
   invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance compiler;
-  compiler.setInvocation(std::move(invocation));
+  compiler.setInvocation(invocation);
   compiler.createDiagnostics();
 
   TestASTFrontendAction test_action;
@@ -99,7 +99,7 @@ TEST(ASTFrontendAction, Sanity) {
 }
 
 TEST(ASTFrontendAction, IncrementalParsing) {
-  auto invocation = std::make_shared<CompilerInvocation>();
+  CompilerInvocation *invocation = new CompilerInvocation;
   invocation->getPreprocessorOpts().addRemappedFile(
       "test.cc",
       MemoryBuffer::getMemBuffer("int main() { float x; }").release());
@@ -108,7 +108,7 @@ TEST(ASTFrontendAction, IncrementalParsing) {
   invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
   invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance compiler;
-  compiler.setInvocation(std::move(invocation));
+  compiler.setInvocation(invocation);
   compiler.createDiagnostics();
 
   TestASTFrontendAction test_action(/*enableIncrementalProcessing=*/true);
@@ -119,7 +119,7 @@ TEST(ASTFrontendAction, IncrementalParsing) {
 }
 
 TEST(ASTFrontendAction, LateTemplateIncrementalParsing) {
-  auto invocation = std::make_shared<CompilerInvocation>();
+  CompilerInvocation *invocation = new CompilerInvocation;
   invocation->getLangOpts()->CPlusPlus = true;
   invocation->getLangOpts()->DelayedTemplateParsing = true;
   invocation->getPreprocessorOpts().addRemappedFile(
@@ -135,7 +135,7 @@ TEST(ASTFrontendAction, LateTemplateIncrementalParsing) {
   invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
   invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance compiler;
-  compiler.setInvocation(std::move(invocation));
+  compiler.setInvocation(invocation);
   compiler.createDiagnostics();
 
   TestASTFrontendAction test_action(/*enableIncrementalProcessing=*/true,
@@ -172,7 +172,7 @@ public:
 };
 
 TEST(PreprocessorFrontendAction, EndSourceFile) {
-  auto Invocation = std::make_shared<CompilerInvocation>();
+  CompilerInvocation *Invocation = new CompilerInvocation;
   Invocation->getPreprocessorOpts().addRemappedFile(
       "test.cc",
       MemoryBuffer::getMemBuffer("int main() { float x; }").release());
@@ -181,7 +181,7 @@ TEST(PreprocessorFrontendAction, EndSourceFile) {
   Invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
   Invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance Compiler;
-  Compiler.setInvocation(std::move(Invocation));
+  Compiler.setInvocation(Invocation);
   Compiler.createDiagnostics();
 
   TestPPCallbacks *Callbacks = new TestPPCallbacks;
@@ -231,7 +231,7 @@ struct TypoDiagnosticConsumer : public DiagnosticConsumer {
 };
 
 TEST(ASTFrontendAction, ExternalSemaSource) {
-  auto Invocation = std::make_shared<CompilerInvocation>();
+  auto *Invocation = new CompilerInvocation;
   Invocation->getLangOpts()->CPlusPlus = true;
   Invocation->getPreprocessorOpts().addRemappedFile(
       "test.cc", MemoryBuffer::getMemBuffer("void fooo();\n"
@@ -242,7 +242,7 @@ TEST(ASTFrontendAction, ExternalSemaSource) {
   Invocation->getFrontendOpts().ProgramAction = frontend::ParseSyntaxOnly;
   Invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance Compiler;
-  Compiler.setInvocation(std::move(Invocation));
+  Compiler.setInvocation(Invocation);
   auto *TDC = new TypoDiagnosticConsumer;
   Compiler.createDiagnostics(TDC, /*ShouldOwnClient=*/true);
   Compiler.setExternalSemaSource(new TypoExternalSemaSource(Compiler));

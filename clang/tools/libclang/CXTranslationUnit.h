@@ -38,8 +38,7 @@ struct CXTranslationUnitImpl {
 namespace clang {
 namespace cxtu {
 
-CXTranslationUnitImpl *MakeCXTranslationUnit(CIndexer *CIdx,
-                                             std::unique_ptr<ASTUnit> AU);
+CXTranslationUnitImpl *MakeCXTranslationUnit(CIndexer *CIdx, ASTUnit *AU);
 
 static inline ASTUnit *getASTUnit(CXTranslationUnit TU) {
   if (!TU)

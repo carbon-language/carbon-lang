@@ -49,14 +49,14 @@ bool testExternalASTSource(ExternalASTSource *Source,
   CompilerInstance Compiler;
   Compiler.createDiagnostics();
 
-  auto Invocation = std::make_shared<CompilerInvocation>();
+  CompilerInvocation *Invocation = new CompilerInvocation;
   Invocation->getPreprocessorOpts().addRemappedFile(
       "test.cc", MemoryBuffer::getMemBuffer(FileContents).release());
   const char *Args[] = { "test.cc" };
   CompilerInvocation::CreateFromArgs(*Invocation, Args,
                                      Args + array_lengthof(Args),
                                      Compiler.getDiagnostics());
-  Compiler.setInvocation(std::move(Invocation));
+  Compiler.setInvocation(Invocation);
 
   TestFrontendAction Action(Source);
   return Compiler.ExecuteAction(Action);

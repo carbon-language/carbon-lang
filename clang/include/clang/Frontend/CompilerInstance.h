@@ -70,7 +70,7 @@ class TargetInfo;
 /// and a long form that takes explicit instances of any required objects.
 class CompilerInstance : public ModuleLoader {
   /// The options used in this compiler instance.
-  std::shared_ptr<CompilerInvocation> Invocation;
+  IntrusiveRefCntPtr<CompilerInvocation> Invocation;
 
   /// The diagnostics engine instance.
   IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
@@ -228,7 +228,7 @@ public:
   }
 
   /// setInvocation - Replace the current invocation.
-  void setInvocation(std::shared_ptr<CompilerInvocation> Value);
+  void setInvocation(CompilerInvocation *Value);
 
   /// \brief Indicates whether we should (re)build the global module index.
   bool shouldBuildGlobalModuleIndex() const;

@@ -157,7 +157,7 @@ BuildCompilerInstance(ArrayRef<const char *> ClangArgv) {
   Inv->getCodeGenOpts().setDebugInfo(codegenoptions::FullDebugInfo);
   Inv->getTargetOpts().Triple = llvm::sys::getDefaultTargetTriple();
 
-  Ins->setInvocation(std::move(Inv));
+  Ins->setInvocation(Inv.release());
 
   TargetInfo *TI = TargetInfo::CreateTargetInfo(
       Ins->getDiagnostics(), Ins->getInvocation().TargetOpts);

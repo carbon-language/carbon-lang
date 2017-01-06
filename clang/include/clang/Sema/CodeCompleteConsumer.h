@@ -509,18 +509,23 @@ public:
 };
 
 /// \brief Allocator for a cached set of global code completions.
-class GlobalCodeCompletionAllocator : public CodeCompletionAllocator {};
+class GlobalCodeCompletionAllocator 
+  : public CodeCompletionAllocator,
+    public RefCountedBase<GlobalCodeCompletionAllocator>
+{
+
+};
 
 class CodeCompletionTUInfo {
   llvm::DenseMap<const DeclContext *, StringRef> ParentNames;
-  std::shared_ptr<GlobalCodeCompletionAllocator> AllocatorRef;
+  IntrusiveRefCntPtr<GlobalCodeCompletionAllocator> AllocatorRef;
 
 public:
   explicit CodeCompletionTUInfo(
-      std::shared_ptr<GlobalCodeCompletionAllocator> Allocator)
+      IntrusiveRefCntPtr<GlobalCodeCompletionAllocator> Allocator)
       : AllocatorRef(std::move(Allocator)) {}
 
-  std::shared_ptr<GlobalCodeCompletionAllocator> getAllocatorRef() const {
+  IntrusiveRefCntPtr<GlobalCodeCompletionAllocator> getAllocatorRef() const {
     return AllocatorRef;
   }
   CodeCompletionAllocator &getAllocator() const {
@@ -960,8 +965,8 @@ public:
   /// results to the given raw output stream.
   PrintingCodeCompleteConsumer(const CodeCompleteOptions &CodeCompleteOpts,
                                raw_ostream &OS)
-      : CodeCompleteConsumer(CodeCompleteOpts, false), OS(OS),
-        CCTUInfo(std::make_shared<GlobalCodeCompletionAllocator>()) {}
+    : CodeCompleteConsumer(CodeCompleteOpts, false), OS(OS),
+      CCTUInfo(new GlobalCodeCompletionAllocator) {}
 
   /// \brief Prints the finalized code-completion results.
   void ProcessCodeCompleteResults(Sema &S, CodeCompletionContext Context,

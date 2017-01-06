@@ -271,7 +271,7 @@ bool arcmt::checkForManualIssues(
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
   std::unique_ptr<ASTUnit> Unit(ASTUnit::LoadFromCompilerInvocationAction(
-      std::move(CInvok), PCHContainerOps, Diags));
+      CInvok.release(), PCHContainerOps, Diags));
   if (!Unit) {
     errRec.FinishCapture();
     return true;
@@ -547,7 +547,7 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   ASTAction.reset(new ARCMTMacroTrackerAction(ARCMTMacroLocs));
 
   std::unique_ptr<ASTUnit> Unit(ASTUnit::LoadFromCompilerInvocationAction(
-      std::move(CInvok), PCHContainerOps, Diags, ASTAction.get()));
+      CInvok.release(), PCHContainerOps, Diags, ASTAction.get()));
   if (!Unit) {
     errRec.FinishCapture();
     return true;

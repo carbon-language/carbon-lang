@@ -69,8 +69,7 @@ public:
 
   /// \brief Perform an action for an invocation.
   virtual bool
-  runInvocation(std::shared_ptr<clang::CompilerInvocation> Invocation,
-                FileManager *Files,
+  runInvocation(clang::CompilerInvocation *Invocation, FileManager *Files,
                 std::shared_ptr<PCHContainerOperations> PCHContainerOps,
                 DiagnosticConsumer *DiagConsumer) = 0;
 };
@@ -86,8 +85,7 @@ public:
   ~FrontendActionFactory() override;
 
   /// \brief Invokes the compiler with a FrontendAction created by create().
-  bool runInvocation(std::shared_ptr<clang::CompilerInvocation> Invocation,
-                     FileManager *Files,
+  bool runInvocation(clang::CompilerInvocation *Invocation, FileManager *Files,
                      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
                      DiagnosticConsumer *DiagConsumer) override;
 
@@ -263,7 +261,7 @@ public:
 
   bool runInvocation(const char *BinaryName,
                      clang::driver::Compilation *Compilation,
-                     std::shared_ptr<clang::CompilerInvocation> Invocation,
+                     clang::CompilerInvocation *Invocation,
                      std::shared_ptr<PCHContainerOperations> PCHContainerOps);
 
   std::vector<std::string> CommandLine;

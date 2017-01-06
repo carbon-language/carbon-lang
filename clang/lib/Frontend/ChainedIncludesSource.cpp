@@ -147,7 +147,7 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
 
     std::unique_ptr<CompilerInstance> Clang(
         new CompilerInstance(CI.getPCHContainerOperations()));
-    Clang->setInvocation(std::move(CInvok));
+    Clang->setInvocation(CInvok.release());
     Clang->setDiagnostics(Diags.get());
     Clang->setTarget(TargetInfo::CreateTargetInfo(
         Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));

@@ -279,12 +279,13 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   SmallVector<const llvm::MemoryBuffer *, 1> TemporaryBuffers;
   
   /// \brief Allocator used to store globally cached code-completion results.
-  std::shared_ptr<clang::GlobalCodeCompletionAllocator>
-      CachedCompletionAllocator;
-
+  IntrusiveRefCntPtr<clang::GlobalCodeCompletionAllocator>
+    CachedCompletionAllocator;
+  
   /// \brief Allocator used to store code completion results.
-  std::shared_ptr<clang::GlobalCodeCompletionAllocator> CodeCompletionAllocator;
-
+  IntrusiveRefCntPtr<clang::GlobalCodeCompletionAllocator>
+    CodeCompletionAllocator;
+  
   /// \brief Context under which completion occurred.
   enum clang::CodeCompletionContext::Kind ContextKind;
   
@@ -314,15 +315,15 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
 ///
 /// Used for debugging purposes only.
 static std::atomic<unsigned> CodeCompletionResultObjects;
-
+  
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
     IntrusiveRefCntPtr<FileManager> FileMgr)
-    : CXCodeCompleteResults(), DiagOpts(new DiagnosticOptions),
+    : CXCodeCompleteResults(),
+      DiagOpts(new DiagnosticOptions),
       Diag(new DiagnosticsEngine(
           IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts)),
       FileMgr(FileMgr), SourceMgr(new SourceManager(*Diag, *FileMgr)),
-      CodeCompletionAllocator(
-          std::make_shared<clang::GlobalCodeCompletionAllocator>()),
+      CodeCompletionAllocator(new clang::GlobalCodeCompletionAllocator),
       Contexts(CXCompletionContext_Unknown),
       ContainerKind(CXCursor_InvalidCode), ContainerIsIncomplete(1) {
   if (getenv("LIBCLANG_OBJTRACKING"))

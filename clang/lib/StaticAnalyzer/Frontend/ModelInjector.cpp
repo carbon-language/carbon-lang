@@ -62,7 +62,8 @@ void ModelInjector::onBodySynthesis(const NamedDecl *D) {
     return;
   }
 
-  auto Invocation = std::make_shared<CompilerInvocation>(CI.getInvocation());
+  IntrusiveRefCntPtr<CompilerInvocation> Invocation(
+      new CompilerInvocation(CI.getInvocation()));
 
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   InputKind IK = IK_CXX; // FIXME
@@ -75,7 +76,7 @@ void ModelInjector::onBodySynthesis(const NamedDecl *D) {
   // Modules are parsed by a separate CompilerInstance, so this code mimics that
   // behavior for models
   CompilerInstance Instance(CI.getPCHContainerOperations());
-  Instance.setInvocation(std::move(Invocation));
+  Instance.setInvocation(&*Invocation);
   Instance.createDiagnostics(
       new ForwardingDiagnosticConsumer(CI.getDiagnosticClient()),
       /*ShouldOwnClient=*/true);
