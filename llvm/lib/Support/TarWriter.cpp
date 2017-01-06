@@ -87,7 +87,7 @@ static void computeChecksum(UstarHeader &Hdr) {
   unsigned Chksum = 0;
   for (size_t I = 0; I < sizeof(Hdr); ++I)
     Chksum += reinterpret_cast<uint8_t *>(&Hdr)[I];
-  sprintf(Hdr.Checksum, "%06o", Chksum);
+  snprintf(Hdr.Checksum, sizeof(Hdr.Checksum), "%06o", Chksum);
 }
 
 // Create a tar header and write it to a given output stream.
@@ -98,7 +98,7 @@ static void writePaxHeader(raw_fd_ostream &OS, StringRef Path) {
 
   // Create a 512-byte header.
   UstarHeader Hdr = {};
-  sprintf(Hdr.Size, "%011lo", PaxAttr.size());
+  snprintf(Hdr.Size, sizeof(Hdr.Size), "%011zo", PaxAttr.size());
   Hdr.TypeFlag = 'x';            // PAX magic
   memcpy(Hdr.Magic, "ustar", 6); // Ustar magic
   computeChecksum(Hdr);
@@ -114,8 +114,8 @@ static void writePaxHeader(raw_fd_ostream &OS, StringRef Path) {
 static void writeUstarHeader(raw_fd_ostream &OS, StringRef Path, size_t Size) {
   UstarHeader Hdr = {};
   memcpy(Hdr.Name, Path.data(), Path.size());
-  strcpy(Hdr.Mode, "0000664");
-  sprintf(Hdr.Size, "%011lo", Size);
+  memcpy(Hdr.Mode, "0000664", 8);
+  snprintf(Hdr.Size, sizeof(Hdr.Size), "%011zo", Size);
   memcpy(Hdr.Magic, "ustar", 6);
   computeChecksum(Hdr);
   OS << StringRef(reinterpret_cast<char *>(&Hdr), sizeof(Hdr));
