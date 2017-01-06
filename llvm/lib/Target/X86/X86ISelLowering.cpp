@@ -18288,6 +18288,7 @@ static SDValue getTargetVShiftByConstNode(unsigned Opc, const SDLoc &dl, MVT VT,
 /// constant. Takes immediate version of shift as input.
 static SDValue getTargetVShiftNode(unsigned Opc, const SDLoc &dl, MVT VT,
                                    SDValue SrcOp, SDValue ShAmt,
+                                   const X86Subtarget &Subtarget,
                                    SelectionDAG &DAG) {
   MVT SVT = ShAmt.getSimpleValueType();
   assert((SVT == MVT::i32 || SVT == MVT::i64) && "Unexpected value type!");
@@ -18315,8 +18316,7 @@ static SDValue getTargetVShiftNode(unsigned Opc, const SDLoc &dl, MVT VT,
   // | (i32 zext(i16)) | Yes        | zero-extend in-reg                    |
   // | i16/i32         | No         | v4i32 build_vector(ShAmt, 0, ud, ud)) |
   // +=================+============+=======================================+
-  const X86Subtarget &Subtarget =
-      static_cast<const X86Subtarget &>(DAG.getSubtarget());
+
   if (SVT == MVT::i64)
     ShAmt = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(ShAmt), MVT::v2i64, ShAmt);
   else if (Subtarget.hasSSE41() && ShAmt.getOpcode() == ISD::ZERO_EXTEND &&
@@ -19019,7 +19019,8 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
     }
     case VSHIFT:
       return getTargetVShiftNode(IntrData->Opc0, dl, Op.getSimpleValueType(),
-                                 Op.getOperand(1), Op.getOperand(2), DAG);
+                                 Op.getOperand(1), Op.getOperand(2), Subtarget,
+                                 DAG);
     case COMPRESS_EXPAND_IN_REG: {
       SDValue Mask = Op.getOperand(3);
       SDValue DataToCompress = Op.getOperand(1);
@@ -21281,7 +21282,7 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
       else if (EltVT.bitsLT(MVT::i32))
         BaseShAmt = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i32, BaseShAmt);
 
-      return getTargetVShiftNode(X86OpcI, dl, VT, R, BaseShAmt, DAG);
+      return getTargetVShiftNode(X86OpcI, dl, VT, R, BaseShAmt, Subtarget, DAG);
     }
   }
 
@@ -32052,7 +32053,8 @@ combineVectorTruncationWithPACKUS(SDNode *N, SelectionDAG &DAG,
 
 /// Truncate a group of v4i32 into v8i16 using X86ISD::PACKSS.
 static SDValue
-combineVectorTruncationWithPACKSS(SDNode *N, SelectionDAG &DAG,
+combineVectorTruncationWithPACKSS(SDNode *N, const X86Subtarget &Subtarget,
+                                  SelectionDAG &DAG,
                                   SmallVector<SDValue, 8> &Regs) {
   assert(Regs.size() > 0 && Regs[0].getValueType() == MVT::v4i32);
   EVT OutVT = N->getValueType(0);
@@ -32061,8 +32063,10 @@ combineVectorTruncationWithPACKSS(SDNode *N, SelectionDAG &DAG,
   // Shift left by 16 bits, then arithmetic-shift right by 16 bits.
   SDValue ShAmt = DAG.getConstant(16, DL, MVT::i32);
   for (auto &Reg : Regs) {
-    Reg = getTargetVShiftNode(X86ISD::VSHLI, DL, MVT::v4i32, Reg, ShAmt, DAG);
-    Reg = getTargetVShiftNode(X86ISD::VSRAI, DL, MVT::v4i32, Reg, ShAmt, DAG);
+    Reg = getTargetVShiftNode(X86ISD::VSHLI, DL, MVT::v4i32, Reg, ShAmt,
+                              Subtarget, DAG);
+    Reg = getTargetVShiftNode(X86ISD::VSRAI, DL, MVT::v4i32, Reg, ShAmt,
+                              Subtarget, DAG);
   }
 
   for (unsigned i = 0, e = Regs.size() / 2; i < e; i++)
@@ -32131,7 +32135,7 @@ static SDValue combineVectorTruncation(SDNode *N, SelectionDAG &DAG,
   if (Subtarget.hasSSE41() || OutSVT == MVT::i8)
     return combineVectorTruncationWithPACKUS(N, DAG, SubVec);
   else if (InSVT == MVT::i32)
-    return combineVectorTruncationWithPACKSS(N, DAG, SubVec);
+    return combineVectorTruncationWithPACKSS(N, Subtarget, DAG, SubVec);
   else
     return SDValue();
 }
