@@ -25961,8 +25961,7 @@ static bool matchUnaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
                                     unsigned &Shuffle, MVT &SrcVT, MVT &DstVT) {
   unsigned NumMaskElts = Mask.size();
   unsigned MaskEltSize = MaskVT.getScalarSizeInBits();
-  bool FloatDomain = MaskVT.isFloatingPoint() ||
-                     (!Subtarget.hasAVX2() && MaskVT.is256BitVector());
+  bool FloatDomain = MaskVT.isFloatingPoint();
 
   // Match against a VZEXT_MOVL instruction, SSE1 only supports 32-bits (MOVSS).
   if (((MaskEltSize == 32) || (MaskEltSize == 64 && Subtarget.hasSSE2())) &&
