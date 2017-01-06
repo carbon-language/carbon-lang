@@ -39,12 +39,8 @@ namespace llvm {
 namespace {
 
 class LanaiMCCodeEmitter : public MCCodeEmitter {
-  const MCInstrInfo &InstrInfo;
-  MCContext &Context;
-
 public:
-  LanaiMCCodeEmitter(const MCInstrInfo &MCII, MCContext &C)
-      : InstrInfo(MCII), Context(C) {}
+  LanaiMCCodeEmitter(const MCInstrInfo &MCII, MCContext &C) {}
   LanaiMCCodeEmitter(const LanaiMCCodeEmitter &) = delete;
   void operator=(const LanaiMCCodeEmitter &) = delete;
   ~LanaiMCCodeEmitter() override = default;
