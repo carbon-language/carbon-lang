@@ -519,11 +519,22 @@ void EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
            .Case("dynamic-no-pic", llvm::Reloc::DynamicNoPIC);
   assert(RM.hasValue() && "invalid PIC model!");
 
-  CodeGenOpt::Level OptLevel = CodeGenOpt::Default;
+  CodeGenOpt::Level OptLevel;
   switch (CodeGenOpts.OptimizationLevel) {
-  default: break;
-  case 0: OptLevel = CodeGenOpt::None; break;
-  case 3: OptLevel = CodeGenOpt::Aggressive; break;
+  default:
+    llvm_unreachable("Invalid optimization level!");
+  case 0:
+    OptLevel = CodeGenOpt::None;
+    break;
+  case 1:
+    OptLevel = CodeGenOpt::Less;
+    break;
+  case 2:
+    OptLevel = CodeGenOpt::Default;
+    break; // O2/Os/Oz
+  case 3:
+    OptLevel = CodeGenOpt::Aggressive;
+    break;
   }
 
   llvm::TargetOptions Options;
