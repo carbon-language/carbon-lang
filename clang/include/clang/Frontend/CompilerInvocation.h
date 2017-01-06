@@ -65,7 +65,7 @@ public:
   IntrusiveRefCntPtr<DiagnosticOptions> DiagnosticOpts;
 
   /// Options controlling the \#include directive.
-  IntrusiveRefCntPtr<HeaderSearchOptions> HeaderSearchOpts;
+  std::shared_ptr<HeaderSearchOptions> HeaderSearchOpts;
 
   /// Options controlling the preprocessor (aside from \#include handling).
   std::shared_ptr<PreprocessorOptions> PreprocessorOpts;
@@ -88,6 +88,9 @@ public:
   HeaderSearchOptions &getHeaderSearchOpts() { return *HeaderSearchOpts; }
   const HeaderSearchOptions &getHeaderSearchOpts() const {
     return *HeaderSearchOpts;
+  }
+  std::shared_ptr<HeaderSearchOptions> getHeaderSearchOptsPtr() const {
+    return HeaderSearchOpts;
   }
 
   std::shared_ptr<PreprocessorOptions> getPreprocessorOptsPtr() {
