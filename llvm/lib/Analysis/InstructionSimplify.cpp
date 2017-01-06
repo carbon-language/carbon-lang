@@ -1247,6 +1247,16 @@ static Value *SimplifyURemInst(Value *Op0, Value *Op1, const Query &Q,
   if (Value *V = SimplifyRem(Instruction::URem, Op0, Op1, Q, MaxRecurse))
     return V;
 
+  // urem %V, C -> %V if %V < C
+  if (MaxRecurse) {
+    if (Constant *C = dyn_cast_or_null<Constant>(SimplifyICmpInst(
+            ICmpInst::ICMP_ULT, Op0, Op1, Q, MaxRecurse - 1))) {
+      if (C->isAllOnesValue()) {
+        return Op0;
+      }
+    }
+  }
+
   return nullptr;
 }
 
