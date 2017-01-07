@@ -216,7 +216,8 @@ define <8 x i32> @mask_shuffle_v8i32_23456701(<8 x i32> %a, <8 x i32> %passthru,
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[1,2,3,0]
 ; CHECK-NEXT:    kmovb %edi, %k1
-; CHECK-NEXT:    vpblendmd %ymm0, %ymm1, %ymm0 {%k1}
+; CHECK-NEXT:    vmovdqa32 %ymm0, %ymm1 {%k1}
+; CHECK-NEXT:    vmovdqa %ymm1, %ymm0
 ; CHECK-NEXT:    retq
   %shuffle = shufflevector <8 x i32> %a, <8 x i32> undef, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 0, i32 1>
   %mask.cast = bitcast i8 %mask to <8 x i1>
@@ -691,7 +692,7 @@ define <2 x double> @broadcast_v4f32_0101_from_v2f32_mask(double* %x, <2 x doubl
 ; CHECK-LABEL: broadcast_v4f32_0101_from_v2f32_mask:
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    kmovb %esi, %k1
-; CHECK-NEXT:    vblendmpd (%rdi){1to2}, %xmm0, %xmm0 {%k1}
+; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 {%k1} = mem[0,0]
 ; CHECK-NEXT:    retq
   %q = load double, double* %x, align 1
   %vecinit.i = insertelement <2 x double> undef, double %q, i32 0

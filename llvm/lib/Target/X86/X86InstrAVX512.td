@@ -1485,8 +1485,7 @@ defm VPERMT2PD : avx512_perm_t_sizes<0x7F, "vpermt2pd",
 // AVX-512 - BLEND using mask
 //
 multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
-  let ExeDomain = _.ExeDomain in {
-  let hasSideEffects = 0 in
+  let ExeDomain = _.ExeDomain, hasSideEffects = 0 in {
   def rr : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
              (ins _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
@@ -1496,16 +1495,13 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
              (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}}|${dst} {${mask}}, $src1, $src2}"),
-             [(set _.RC:$dst, (vselect _.KRCWM:$mask,
-                                (_.VT _.RC:$src2),
-                                (_.VT _.RC:$src1)))]>, EVEX_4V, EVEX_K;
-  let hasSideEffects = 0 in
+             []>, EVEX_4V, EVEX_K;
   def rrkz : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src1, $src2}"),
              []>, EVEX_4V, EVEX_KZ;
-  let mayLoad = 1, hasSideEffects = 0 in
+  let mayLoad = 1 in {
   def rm  : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
              (ins _.RC:$src1, _.MemOp:$src2),
              !strconcat(OpcodeStr,
@@ -1515,16 +1511,13 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
              (ins _.KRCWM:$mask, _.RC:$src1, _.MemOp:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}}|${dst} {${mask}}, $src1, $src2}"),
-             [(set _.RC:$dst, (vselect _.KRCWM:$mask,
-                                 (_.VT (bitconvert (_.LdFrag addr:$src2))),
-                                 (_.VT _.RC:$src1)))]>,
-              EVEX_4V, EVEX_K, EVEX_CD8<_.EltSize, CD8VF>;
-  let mayLoad = 1, hasSideEffects = 0 in
+             []>, EVEX_4V, EVEX_K, EVEX_CD8<_.EltSize, CD8VF>;
   def rmkz : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
              (ins _.KRCWM:$mask, _.RC:$src1, _.MemOp:$src2),
              !strconcat(OpcodeStr,
              "\t{$src2, $src1, ${dst} {${mask}} {z}|${dst} {${mask}} {z}, $src1, $src2}"),
              []>, EVEX_4V, EVEX_KZ, EVEX_CD8<_.EltSize, CD8VF>;
+  }
   }
 }
 multiclass avx512_blendmask_rmb<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
