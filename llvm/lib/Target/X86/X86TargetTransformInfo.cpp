@@ -366,33 +366,6 @@ int X86TTIImpl::getArithmeticInstrCost(
                                             LT.second))
       return LT.first * Entry->Cost;
 
-  static const CostTblEntry AVXCustomCostTable[] = {
-    { ISD::MUL,   MVT::v32i8,  26 }, // extend/pmullw/trunc sequence.
-
-    { ISD::FDIV,  MVT::f32,    14 }, // SNB from http://www.agner.org/
-    { ISD::FDIV,  MVT::v4f32,  14 }, // SNB from http://www.agner.org/
-    { ISD::FDIV,  MVT::v8f32,  28 }, // SNB from http://www.agner.org/
-    { ISD::FDIV,  MVT::f64,    22 }, // SNB from http://www.agner.org/
-    { ISD::FDIV,  MVT::v2f64,  22 }, // SNB from http://www.agner.org/
-    { ISD::FDIV,  MVT::v4f64,  44 }, // SNB from http://www.agner.org/
-
-    // Vectorizing division is a bad idea. See the SSE2 table for more comments.
-    { ISD::SDIV,  MVT::v32i8,  32*20 },
-    { ISD::SDIV,  MVT::v16i16, 16*20 },
-    { ISD::SDIV,  MVT::v8i32,  8*20 },
-    { ISD::SDIV,  MVT::v4i64,  4*20 },
-    { ISD::UDIV,  MVT::v32i8,  32*20 },
-    { ISD::UDIV,  MVT::v16i16, 16*20 },
-    { ISD::UDIV,  MVT::v8i32,  8*20 },
-    { ISD::UDIV,  MVT::v4i64,  4*20 },
-  };
-
-  // Look for AVX2 lowering tricks for custom cases.
-  if (ST->hasAVX())
-    if (const auto *Entry = CostTableLookup(AVXCustomCostTable, ISD,
-                                            LT.second))
-      return LT.first * Entry->Cost;
-
   static const CostTblEntry
   SSE2UniformCostTable[] = {
     // Uniform splats are cheaper for the following instructions.
@@ -458,23 +431,42 @@ int X86TTIImpl::getArithmeticInstrCost(
     // We don't have to scalarize unsupported ops. We can issue two half-sized
     // operations and we only need to extract the upper YMM half.
     // Two ops + 1 extract + 1 insert = 4.
-    { ISD::MUL,     MVT::v16i16,   4 },
-    { ISD::MUL,     MVT::v8i32,    4 },
-    { ISD::SUB,     MVT::v32i8,    4 },
-    { ISD::ADD,     MVT::v32i8,    4 },
-    { ISD::SUB,     MVT::v16i16,   4 },
-    { ISD::ADD,     MVT::v16i16,   4 },
-    { ISD::SUB,     MVT::v8i32,    4 },
-    { ISD::ADD,     MVT::v8i32,    4 },
-    { ISD::SUB,     MVT::v4i64,    4 },
-    { ISD::ADD,     MVT::v4i64,    4 },
+    { ISD::MUL,     MVT::v16i16,     4 },
+    { ISD::MUL,     MVT::v8i32,      4 },
+    { ISD::SUB,     MVT::v32i8,      4 },
+    { ISD::ADD,     MVT::v32i8,      4 },
+    { ISD::SUB,     MVT::v16i16,     4 },
+    { ISD::ADD,     MVT::v16i16,     4 },
+    { ISD::SUB,     MVT::v8i32,      4 },
+    { ISD::ADD,     MVT::v8i32,      4 },
+    { ISD::SUB,     MVT::v4i64,      4 },
+    { ISD::ADD,     MVT::v4i64,      4 },
 
     // A v4i64 multiply is custom lowered as two split v2i64 vectors that then
     // are lowered as a series of long multiplies(3), shifts(3) and adds(2)
     // Because we believe v4i64 to be a legal type, we must also include the
     // extract+insert in the cost table. Therefore, the cost here is 18
     // instead of 8.
-    { ISD::MUL,     MVT::v4i64,    18 },
+    { ISD::MUL,     MVT::v4i64,     18 },
+
+    { ISD::MUL,     MVT::v32i8,     26 }, // extend/pmullw/trunc sequence.
+
+    { ISD::FDIV,    MVT::f32,       14 }, // SNB from http://www.agner.org/
+    { ISD::FDIV,    MVT::v4f32,     14 }, // SNB from http://www.agner.org/
+    { ISD::FDIV,    MVT::v8f32,     28 }, // SNB from http://www.agner.org/
+    { ISD::FDIV,    MVT::f64,       22 }, // SNB from http://www.agner.org/
+    { ISD::FDIV,    MVT::v2f64,     22 }, // SNB from http://www.agner.org/
+    { ISD::FDIV,    MVT::v4f64,     44 }, // SNB from http://www.agner.org/
+
+    // Vectorizing division is a bad idea. See the SSE2 table for more comments.
+    { ISD::SDIV,    MVT::v32i8,  32*20 },
+    { ISD::SDIV,    MVT::v16i16, 16*20 },
+    { ISD::SDIV,    MVT::v8i32,   8*20 },
+    { ISD::SDIV,    MVT::v4i64,   4*20 },
+    { ISD::UDIV,    MVT::v32i8,  32*20 },
+    { ISD::UDIV,    MVT::v16i16, 16*20 },
+    { ISD::UDIV,    MVT::v8i32,   8*20 },
+    { ISD::UDIV,    MVT::v4i64,   4*20 },
   };
 
   if (ST->hasAVX())
