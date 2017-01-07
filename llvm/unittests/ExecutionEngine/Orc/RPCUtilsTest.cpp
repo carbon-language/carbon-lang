@@ -137,11 +137,10 @@ public:
 
 };
 
-class DummyRPCEndpoint : public DummyRPCAPI,
-                         public SingleThreadedRPC<QueueChannel> {
+class DummyRPCEndpoint : public SingleThreadedRPCEndpoint<QueueChannel> {
 public:
   DummyRPCEndpoint(Queue &Q1, Queue &Q2)
-      : SingleThreadedRPC(C, true), C(Q1, Q2) {}
+      : SingleThreadedRPCEndpoint(C, true), C(Q1, Q2) {}
 private:
   QueueChannel C;
 };

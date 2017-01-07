@@ -702,7 +702,7 @@ public:
 /// sync.
 template <typename ImplT, typename ChannelT, typename FunctionIdT,
           typename SequenceNumberT>
-class RPCBase {
+class RPCEndpointBase {
 protected:
   class OrcRPCInvalid : public Function<OrcRPCInvalid, void()> {
   public:
@@ -747,7 +747,7 @@ protected:
 
 public:
   /// Construct an RPC instance on a channel.
-  RPCBase(ChannelT &C, bool LazyAutoNegotiation)
+  RPCEndpointBase(ChannelT &C, bool LazyAutoNegotiation)
       : C(C), LazyAutoNegotiation(LazyAutoNegotiation) {
     // Hold ResponseId in a special variable, since we expect Response to be
     // called relatively frequently, and want to avoid the map lookup.
@@ -1021,17 +1021,18 @@ protected:
 
 template <typename ChannelT, typename FunctionIdT = uint32_t,
           typename SequenceNumberT = uint32_t>
-class MultiThreadedRPC
-    : public detail::RPCBase<
-          MultiThreadedRPC<ChannelT, FunctionIdT, SequenceNumberT>, ChannelT,
-          FunctionIdT, SequenceNumberT> {
+class MultiThreadedRPCEndpoint
+    : public detail::RPCEndpointBase<
+          MultiThreadedRPCEndpoint<ChannelT, FunctionIdT, SequenceNumberT>,
+          ChannelT, FunctionIdT, SequenceNumberT> {
 private:
   using BaseClass =
-      detail::RPCBase<MultiThreadedRPC<ChannelT, FunctionIdT, SequenceNumberT>,
-                      ChannelT, FunctionIdT, SequenceNumberT>;
+      detail::RPCEndpointBase<
+        MultiThreadedRPCEndpoint<ChannelT, FunctionIdT, SequenceNumberT>,
+        ChannelT, FunctionIdT, SequenceNumberT>;
 
 public:
-  MultiThreadedRPC(ChannelT &C, bool LazyAutoNegotiation)
+  MultiThreadedRPCEndpoint(ChannelT &C, bool LazyAutoNegotiation)
       : BaseClass(C, LazyAutoNegotiation) {}
 
   /// The LaunchPolicy type allows a launch policy to be specified when adding
@@ -1169,19 +1170,20 @@ public:
 
 template <typename ChannelT, typename FunctionIdT = uint32_t,
           typename SequenceNumberT = uint32_t>
-class SingleThreadedRPC
-    : public detail::RPCBase<
-          SingleThreadedRPC<ChannelT, FunctionIdT, SequenceNumberT>, ChannelT,
-          FunctionIdT, SequenceNumberT> {
+class SingleThreadedRPCEndpoint
+    : public detail::RPCEndpointBase<
+          SingleThreadedRPCEndpoint<ChannelT, FunctionIdT, SequenceNumberT>,
+          ChannelT, FunctionIdT, SequenceNumberT> {
 private:
   using BaseClass =
-      detail::RPCBase<SingleThreadedRPC<ChannelT, FunctionIdT, SequenceNumberT>,
-                      ChannelT, FunctionIdT, SequenceNumberT>;
+      detail::RPCEndpointBase<
+        SingleThreadedRPCEndpoint<ChannelT, FunctionIdT, SequenceNumberT>,
+        ChannelT, FunctionIdT, SequenceNumberT>;
 
   using LaunchPolicy = typename BaseClass::LaunchPolicy;
 
 public:
-  SingleThreadedRPC(ChannelT &C, bool LazyAutoNegotiation)
+  SingleThreadedRPCEndpoint(ChannelT &C, bool LazyAutoNegotiation)
       : BaseClass(C, LazyAutoNegotiation) {}
 
   template <typename Func, typename HandlerT>
