@@ -56,9 +56,6 @@ if(APPLE)
       SOURCES ${UBSAN_STANDALONE_SOURCES}
       CFLAGS ${UBSAN_STANDALONE_CFLAGS})
 
-    add_weak_symbols("ubsan" WEAK_SYMBOL_LINKFLAGS)
-    add_weak_symbols("sanitizer_common" WEAK_SYMBOL_LINKFLAGS)
-
     add_compiler_rt_runtime(clang_rt.ubsan
       SHARED
       OS ${SANITIZER_COMMON_SUPPORTED_OS}
@@ -67,7 +64,6 @@ if(APPLE)
                   RTUbsan_standalone
                   RTSanitizerCommon
                   RTSanitizerCommonLibc
-      LINKFLAGS ${WEAK_SYMBOL_LINKFLAGS}
       PARENT_TARGET ubsan)
   endif()
 
