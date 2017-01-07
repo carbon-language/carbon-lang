@@ -639,8 +639,7 @@ int X86TTIImpl::getShuffleCost(TTI::ShuffleKind Kind, Type *Tp, int Index,
 
     { TTI::SK_Reverse,          MVT::v32i16, 1 }, // vpermw
     { TTI::SK_Reverse,          MVT::v16i16, 1 }, // vpermw
-    { TTI::SK_Reverse,          MVT::v64i8,  6 }, // vextracti64x4 + 2*vperm2i128
-                                                  // + 2*pshufb + vinserti64x4
+    { TTI::SK_Reverse,          MVT::v64i8,  2 }, // pshufb + vshufi64x2
 
     { TTI::SK_PermuteSingleSrc, MVT::v32i16, 1 }, // vpermw
     { TTI::SK_PermuteSingleSrc, MVT::v16i16, 1 }, // vpermw
