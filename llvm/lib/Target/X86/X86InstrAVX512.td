@@ -8646,6 +8646,28 @@ def : Pat<(v2f64 (X86VBroadcast (loadf64 addr:$src))),
           (VMOVDDUPZ128rm addr:$src)>;
 def : Pat<(v2f64 (X86VBroadcast f64:$src)),
           (VMOVDDUPZ128rr (COPY_TO_REGCLASS FR64X:$src, VR128X))>;
+
+def : Pat<(vselect (v2i1 VK2WM:$mask), (X86Movddup (loadv2f64 addr:$src)),
+                   (v2f64 VR128X:$src0)),
+          (VMOVDDUPZ128rmk VR128X:$src0, VK2WM:$mask, addr:$src)>;
+def : Pat<(vselect (v2i1 VK2WM:$mask), (X86Movddup (loadv2f64 addr:$src)),
+                   (bitconvert (v4i32 immAllZerosV))),
+          (VMOVDDUPZ128rmkz VK2WM:$mask, addr:$src)>;
+
+def : Pat<(vselect (v2i1 VK2WM:$mask), (v2f64 (X86VBroadcast f64:$src)),
+                   (v2f64 VR128X:$src0)),
+          (VMOVDDUPZ128rrk VR128X:$src0, VK2WM:$mask,
+                           (COPY_TO_REGCLASS FR64X:$src, VR128X))>;
+def : Pat<(vselect (v2i1 VK2WM:$mask), (v2f64 (X86VBroadcast f64:$src)),
+                   (bitconvert (v4i32 immAllZerosV))),
+          (VMOVDDUPZ128rrkz VK2WM:$mask, (COPY_TO_REGCLASS FR64X:$src, VR128X))>;
+
+def : Pat<(vselect (v2i1 VK2WM:$mask), (v2f64 (X86VBroadcast (loadf64 addr:$src))),
+                   (v2f64 VR128X:$src0)),
+          (VMOVDDUPZ128rmk VR128X:$src0, VK2WM:$mask, addr:$src)>;
+def : Pat<(vselect (v2i1 VK2WM:$mask), (v2f64 (X86VBroadcast (loadf64 addr:$src))),
+                   (bitconvert (v4i32 immAllZerosV))),
+          (VMOVDDUPZ128rmkz VK2WM:$mask, addr:$src)>;
 }
 
 //===----------------------------------------------------------------------===//

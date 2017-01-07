@@ -686,3 +686,33 @@ define <2 x double> @mask_cast_extract_v16f32_v2f64_1(<16 x float> %a, <2 x doub
   %res = select <2 x i1> %mask.extract, <2 x double> %shuffle.cast, <2 x double> %passthru
   ret <2 x double> %res
 }
+
+define <2 x double> @broadcast_v4f32_0101_from_v2f32_mask(double* %x, <2 x double> %passthru, i8 %mask) {
+; CHECK-LABEL: broadcast_v4f32_0101_from_v2f32_mask:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vblendmpd (%rdi){1to2}, %xmm0, %xmm0 {%k1}
+; CHECK-NEXT:    retq
+  %q = load double, double* %x, align 1
+  %vecinit.i = insertelement <2 x double> undef, double %q, i32 0
+  %vecinit2.i = insertelement <2 x double> %vecinit.i, double %q, i32 1
+  %mask.cast = bitcast i8 %mask to <8 x i1>
+  %mask.extract = shufflevector <8 x i1> %mask.cast, <8 x i1> undef, <2 x i32> <i32 0, i32 1>
+  %res = select <2 x i1> %mask.extract, <2 x double> %vecinit2.i, <2 x double> %passthru
+  ret <2 x double> %res
+}
+
+define <2 x double> @broadcast_v4f32_0101_from_v2f32_maskz(double* %x, i8 %mask) {
+; CHECK-LABEL: broadcast_v4f32_0101_from_v2f32_maskz:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vmovddup {{.*#+}} xmm0 {%k1} {z} = mem[0,0]
+; CHECK-NEXT:    retq
+  %q = load double, double* %x, align 1
+  %vecinit.i = insertelement <2 x double> undef, double %q, i32 0
+  %vecinit2.i = insertelement <2 x double> %vecinit.i, double %q, i32 1
+  %mask.cast = bitcast i8 %mask to <8 x i1>
+  %mask.extract = shufflevector <8 x i1> %mask.cast, <8 x i1> undef, <2 x i32> <i32 0, i32 1>
+  %res = select <2 x i1> %mask.extract, <2 x double> %vecinit2.i, <2 x double> zeroinitializer
+  ret <2 x double> %res
+}
