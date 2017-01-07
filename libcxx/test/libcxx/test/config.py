@@ -217,8 +217,7 @@ class Configuration(object):
     def _configure_clang_cl(self, clang_path):
         assert self.cxx_is_clang_cl
         # FIXME: don't hardcode the target
-        flags = ['-fms-compatibility-version=19.00',
-                 '--target=i686-unknown-windows']
+        flags = ['--target=i686-pc-windows']
         compile_flags = []
         link_flags = ['-fuse-ld=lld']
         if 'INCLUDE' in os.environ:
