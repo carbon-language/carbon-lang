@@ -8,7 +8,7 @@ target triple = "wasm32-unknown-unknown"
 ; CHECK-LABEL: test:
 ; CHECK-NEXT: call        .Lbitcast@FUNCTION{{$}}
 ; CHECK-NEXT: call        .Lbitcast.1@FUNCTION{{$}}
-; CHECK-NEXT: i32.const   $push[[L0:[0-9]*]]=, 0
+; CHECK-NEXT: i32.const   $push[[L0:[0-9]+]]=, 0
 ; CHECK-NEXT: call        .Lbitcast.2@FUNCTION, $pop[[L0]]{{$}}
 ; CHECK-NEXT: i32.call    $drop=, .Lbitcast.3@FUNCTION{{$}}
 ; CHECK-NEXT: call        foo2@FUNCTION{{$}}

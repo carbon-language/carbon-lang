@@ -77,6 +77,9 @@ static void FindUses(Value *V, Function &F,
 //  - Call with fewer arguments than needed: arguments are filled in with undef
 //  - Return value is not needed: drop it
 //  - Return value needed but not present: supply an undef
+//  
+// For now, return nullptr without creating a wrapper if the wrapper cannot
+// be generated due to incompatible types.
 static Function *CreateWrapper(Function *F, FunctionType *Ty) {
   Module *M = F->getParent();
 
@@ -90,8 +93,10 @@ static Function *CreateWrapper(Function *F, FunctionType *Ty) {
   FunctionType::param_iterator PI = F->getFunctionType()->param_begin();
   FunctionType::param_iterator PE = F->getFunctionType()->param_end();
   for (; AI != Wrapper->arg_end() && PI != PE; ++AI, ++PI) {
-    assert(AI->getType() == *PI &&
-           "mismatched argument types not supported yet");
+    if (AI->getType() != *PI) {
+      Wrapper->eraseFromParent();
+      return nullptr;
+    }
     Args.push_back(&*AI);
   }
   for (; PI != PE; ++PI)
@@ -107,8 +112,10 @@ static Function *CreateWrapper(Function *F, FunctionType *Ty) {
                        BB);
   else if (F->getFunctionType()->getReturnType() == Ty->getReturnType())
     ReturnInst::Create(M->getContext(), Call, BB);
-  else
-    llvm_unreachable("mismatched return types not supported yet");
+  else {
+    Wrapper->eraseFromParent();
+    return nullptr;
+  }
 
   return Wrapper;
 }
@@ -138,10 +145,14 @@ bool FixFunctionBitcasts::runOnModule(Module &M) {
     if (Pair.second)
       Pair.first->second = CreateWrapper(F, Ty);
 
+    Function *Wrapper = Pair.first->second;
+    if (!Wrapper)
+      continue;
+
     if (isa<Constant>(U->get()))
-      U->get()->replaceAllUsesWith(Pair.first->second);
+      U->get()->replaceAllUsesWith(Wrapper);
     else
-      U->set(Pair.first->second);
+      U->set(Wrapper);
   }
 
   return true;
