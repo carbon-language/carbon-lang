@@ -1562,8 +1562,6 @@ Error MetadataLoader::MetadataLoaderImpl::parseMetadataAttachment(
 
   SmallVector<uint64_t, 64> Record;
 
-  PlaceholderQueue Placeholders;
-
   while (true) {
     BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
 
@@ -1572,7 +1570,6 @@ Error MetadataLoader::MetadataLoaderImpl::parseMetadataAttachment(
     case BitstreamEntry::Error:
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
-      resolveForwardRefsAndPlaceholders(Placeholders);
       return Error::success();
     case BitstreamEntry::Record:
       // The interesting case.
@@ -1608,10 +1605,13 @@ Error MetadataLoader::MetadataLoaderImpl::parseMetadataAttachment(
 
         auto Idx = Record[i + 1];
         if (Idx < (MDStringRef.size() + GlobalMetadataBitPosIndex.size()) &&
-            !MetadataList.lookup(Idx))
+            !MetadataList.lookup(Idx)) {
           // Load the attachment if it is in the lazy-loadable range and hasn't
           // been loaded yet.
+          PlaceholderQueue Placeholders;
           lazyLoadOneMetadata(Idx, Placeholders);
+          resolveForwardRefsAndPlaceholders(Placeholders);
+        }
 
         Metadata *Node = MetadataList.getMetadataFwdRef(Idx);
         if (isa<LocalAsMetadata>(Node))
