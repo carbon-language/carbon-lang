@@ -322,28 +322,38 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
 
   static const CostTblEntry AVX2CustomCostTable[] = {
-    { ISD::SHL,  MVT::v32i8,      11 }, // vpblendvb sequence.
-    { ISD::SHL,  MVT::v16i16,     10 }, // extend/vpsrlvd/pack sequence.
+    { ISD::SHL,  MVT::v32i8,     11 }, // vpblendvb sequence.
+    { ISD::SHL,  MVT::v16i16,    10 }, // extend/vpsrlvd/pack sequence.
 
-    { ISD::SRL,  MVT::v32i8,      11 }, // vpblendvb sequence.
-    { ISD::SRL,  MVT::v16i16,     10 }, // extend/vpsrlvd/pack sequence.
+    { ISD::SRL,  MVT::v32i8,     11 }, // vpblendvb sequence.
+    { ISD::SRL,  MVT::v16i16,    10 }, // extend/vpsrlvd/pack sequence.
 
-    { ISD::SRA,  MVT::v32i8,      24 }, // vpblendvb sequence.
-    { ISD::SRA,  MVT::v16i16,     10 }, // extend/vpsravd/pack sequence.
-    { ISD::SRA,  MVT::v2i64,       4 }, // srl/xor/sub sequence.
-    { ISD::SRA,  MVT::v4i64,       4 }, // srl/xor/sub sequence.
+    { ISD::SRA,  MVT::v32i8,     24 }, // vpblendvb sequence.
+    { ISD::SRA,  MVT::v16i16,    10 }, // extend/vpsravd/pack sequence.
+    { ISD::SRA,  MVT::v2i64,      4 }, // srl/xor/sub sequence.
+    { ISD::SRA,  MVT::v4i64,      4 }, // srl/xor/sub sequence.
 
-    { ISD::MUL,   MVT::v32i8,     17 }, // extend/pmullw/trunc sequence.
-    { ISD::MUL,   MVT::v16i8,      7 }, // extend/pmullw/trunc sequence.
-    { ISD::MUL,   MVT::v8i32,      1 }, // pmulld
-    { ISD::MUL,   MVT::v4i64,      8 }, // 3*pmuludq/3*shift/2*add
+    { ISD::SUB,  MVT::v32i8,      1 }, // psubb
+    { ISD::ADD,  MVT::v32i8,      1 }, // paddb
+    { ISD::SUB,  MVT::v16i16,     1 }, // psubw
+    { ISD::ADD,  MVT::v16i16,     1 }, // paddw
+    { ISD::SUB,  MVT::v8i32,      1 }, // psubd
+    { ISD::ADD,  MVT::v8i32,      1 }, // paddd
+    { ISD::SUB,  MVT::v4i64,      1 }, // psubq
+    { ISD::ADD,  MVT::v4i64,      1 }, // paddq
 
-    { ISD::FDIV,  MVT::f32,        7 }, // Haswell from http://www.agner.org/
-    { ISD::FDIV,  MVT::v4f32,      7 }, // Haswell from http://www.agner.org/
-    { ISD::FDIV,  MVT::v8f32,     14 }, // Haswell from http://www.agner.org/
-    { ISD::FDIV,  MVT::f64,       14 }, // Haswell from http://www.agner.org/
-    { ISD::FDIV,  MVT::v2f64,     14 }, // Haswell from http://www.agner.org/
-    { ISD::FDIV,  MVT::v4f64,     28 }, // Haswell from http://www.agner.org/
+    { ISD::MUL,  MVT::v32i8,     17 }, // extend/pmullw/trunc sequence.
+    { ISD::MUL,  MVT::v16i8,      7 }, // extend/pmullw/trunc sequence.
+    { ISD::MUL,  MVT::v16i16,     1 }, // pmullw
+    { ISD::MUL,  MVT::v8i32,      1 }, // pmulld
+    { ISD::MUL,  MVT::v4i64,      8 }, // 3*pmuludq/3*shift/2*add
+
+    { ISD::FDIV, MVT::f32,        7 }, // Haswell from http://www.agner.org/
+    { ISD::FDIV, MVT::v4f32,      7 }, // Haswell from http://www.agner.org/
+    { ISD::FDIV, MVT::v8f32,     14 }, // Haswell from http://www.agner.org/
+    { ISD::FDIV, MVT::f64,       14 }, // Haswell from http://www.agner.org/
+    { ISD::FDIV, MVT::v2f64,     14 }, // Haswell from http://www.agner.org/
+    { ISD::FDIV, MVT::v4f64,     28 }, // Haswell from http://www.agner.org/
   };
 
   // Look for AVX2 lowering tricks for custom cases.
@@ -463,7 +473,7 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::MUL,     MVT::v4i64,    18 },
   };
 
-  if (ST->hasAVX() && !ST->hasAVX2())
+  if (ST->hasAVX())
     if (const auto *Entry = CostTableLookup(AVX1CostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
 
