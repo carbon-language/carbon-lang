@@ -489,6 +489,8 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::SHL,  MVT::v32i8,  2*11 }, // pblendvb sequence.
     { ISD::SHL,  MVT::v8i16,    14 }, // pblendvb sequence.
     { ISD::SHL,  MVT::v16i16, 2*14 }, // pblendvb sequence.
+    { ISD::SHL,  MVT::v4i32,     4 }, // pslld/paddd/cvttps2dq/pmulld
+    { ISD::SHL,  MVT::v8i32,   2*4 }, // pslld/paddd/cvttps2dq/pmulld
 
     { ISD::SRL,  MVT::v16i8,    12 }, // pblendvb sequence.
     { ISD::SRL,  MVT::v32i8,  2*12 }, // pblendvb sequence.
