@@ -1529,24 +1529,21 @@ multiclass avx512_blendmask<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
 }
 multiclass avx512_blendmask_rmb<bits<8> opc, string OpcodeStr, X86VectorVTInfo _> {
 
+  let mayLoad = 1, hasSideEffects = 0 in {
   def rmbk : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
       (ins _.KRCWM:$mask, _.RC:$src1, _.ScalarMemOp:$src2),
        !strconcat(OpcodeStr,
             "\t{${src2}", _.BroadcastStr, ", $src1, $dst {${mask}}|",
             "$dst {${mask}}, $src1, ${src2}", _.BroadcastStr, "}"),
-      [(set _.RC:$dst,(vselect _.KRCWM:$mask,
-                        (X86VBroadcast (_.ScalarLdFrag addr:$src2)),
-                        (_.VT _.RC:$src1)))]>,
-      EVEX_4V, EVEX_K, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>;
+      []>, EVEX_4V, EVEX_K, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>;
 
-  let mayLoad = 1, hasSideEffects = 0 in
   def rmb : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
       (ins _.RC:$src1, _.ScalarMemOp:$src2),
        !strconcat(OpcodeStr,
             "\t{${src2}", _.BroadcastStr, ", $src1, $dst|",
             "$dst, $src1, ${src2}", _.BroadcastStr, "}"),
       []>,  EVEX_4V, EVEX_B, EVEX_CD8<_.EltSize, CD8VF>;
-
+  }
 }
 
 multiclass blendmask_dq <bits<8> opc, string OpcodeStr,
