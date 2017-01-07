@@ -291,6 +291,20 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
+  static const CostTblEntry AVX2UniformCostTable[] = {
+    // Uniform splats are cheaper for the following instructions.
+    { ISD::SRL,  MVT::v16i16, 1 }, // psrlw.
+    { ISD::SRA,  MVT::v16i16, 1 }, // psraw.
+  };
+
+  if (ST->hasAVX2() &&
+      ((Op2Info == TargetTransformInfo::OK_UniformConstantValue) ||
+       (Op2Info == TargetTransformInfo::OK_UniformValue))) {
+    if (const auto *Entry =
+            CostTableLookup(AVX2UniformCostTable, ISD, LT.second))
+      return LT.first * Entry->Cost;
+  }
+
   static const CostTblEntry XOPShiftCostTable[] = {
     // 128bit shifts take 1cy, but right shifts require negation beforehand.
     { ISD::SHL,     MVT::v16i8,    1 },
@@ -325,8 +339,7 @@ int X86TTIImpl::getArithmeticInstrCost(
     if (const auto *Entry = CostTableLookup(XOPShiftCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
 
-  static const CostTblEntry
-  SSE2UniformCostTable[] = {
+  static const CostTblEntry SSE2UniformCostTable[] = {
     // Uniform splats are cheaper for the following instructions.
     { ISD::SHL,  MVT::v16i8,  1 }, // psllw.
     { ISD::SHL,  MVT::v32i8,  2 }, // psllw.
