@@ -849,7 +849,7 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I,
     // common value unless it dominates the phi block.
     if (HasUndef) {
       // Only have to check for instructions
-      if (Instruction *AllSameInst = dyn_cast<Instruction>(AllSameValue))
+      if (auto *AllSameInst = dyn_cast<Instruction>(AllSameValue))
         if (!DT->dominates(AllSameInst, I))
           return E;
     }
