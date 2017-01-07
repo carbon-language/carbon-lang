@@ -48,8 +48,6 @@ class FixFunctionBitcasts final : public ModulePass {
 
   bool runOnModule(Module &M) override;
 
-  SmallVector<std::pair<Use *, Function *>, 0> Uses;
-
 public:
   static char ID;
   FixFunctionBitcasts() : ModulePass(ID) {}
@@ -116,6 +114,8 @@ static Function *CreateWrapper(Function *F, FunctionType *Ty) {
 }
 
 bool FixFunctionBitcasts::runOnModule(Module &M) {
+  SmallVector<std::pair<Use *, Function *>, 0> Uses;
+
   // Collect all the places that need wrappers.
   for (Function &F : M)
     FindUses(&F, F, Uses);
