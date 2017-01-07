@@ -252,3 +252,10 @@ namespace NoInstantiationWhenSelectingOverload {
   void h() { (void)sizeof(char{f(0)}); }
   void i() { (void)sizeof(char{f("oops")}); } // expected-note {{instantiation of}}
 }
+
+namespace PR20090 {
+  template <typename T> constexpr T fact(T n) {
+    return n == 0 ? 1 : [=] { return n * fact(n - 1); }();
+  }
+  static_assert(fact(0) == 1, "");
+}
