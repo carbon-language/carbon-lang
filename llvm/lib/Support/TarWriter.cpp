@@ -123,7 +123,7 @@ static std::pair<StringRef, StringRef> splitPath(StringRef Path) {
 
 // Returns true if a given path can be stored to a Ustar header
 // without the PAX extension.
-static bool fitInUstar(StringRef Path) {
+static bool fitsInUstar(StringRef Path) {
   StringRef Prefix;
   StringRef Name;
   std::tie(Prefix, Name) = splitPath(Path);
@@ -172,7 +172,7 @@ TarWriter::TarWriter(int FD, StringRef BaseDir)
 void TarWriter::append(StringRef Path, StringRef Data) {
   // Write Path and Data.
   std::string S = BaseDir + "/" + canonicalize(Path) + "\0";
-  if (S.size() <= sizeof(UstarHeader::Name)) {
+  if (fitsInUstar(S)) {
     writeUstarHeader(OS, S, Data.size());
   } else {
     writePaxHeader(OS, S);
