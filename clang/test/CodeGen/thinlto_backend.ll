@@ -15,7 +15,7 @@
 ; Ensure we ignore empty index file under -ignore-empty-index-file, and run
 ; non-ThinLTO compilation which would not import f2
 ; RUN: touch %t4.thinlto.bc
-; RUN: %clang -O2 -o %t4.o -x ir %t1.o -c -fthinlto-index=%t4.thinlto.bc -mllvm -ignore-empty-index-file
+; RUN: %clang -target x86_64-unknown-linux-gnu -O2 -o %t4.o -x ir %t1.o -c -fthinlto-index=%t4.thinlto.bc -mllvm -ignore-empty-index-file
 ; RUN: llvm-nm %t4.o | FileCheck --check-prefix=CHECK-OBJ-IGNORE-EMPTY %s
 ; CHECK-OBJ-IGNORE-EMPTY: T f1
 ; CHECK-OBJ-IGNORE-EMPTY: U f2
