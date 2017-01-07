@@ -109,14 +109,40 @@ static void writePaxHeader(raw_fd_ostream &OS, StringRef Path) {
   pad(OS);
 }
 
+// In the Ustar header, a path can be split at any '/' to store
+// a path into UstarHeader::Name and UstarHeader::Prefix. This
+// function splits a given path for that purpose.
+static std::pair<StringRef, StringRef> splitPath(StringRef Path) {
+  if (Path.size() <= sizeof(UstarHeader::Name))
+    return {"", Path};
+  size_t Sep = Path.rfind('/', sizeof(UstarHeader::Name) + 1);
+  if (Sep == StringRef::npos)
+    return {"", Path};
+  return {Path.substr(0, Sep), Path.substr(Sep + 1)};
+}
+
+// Returns true if a given path can be stored to a Ustar header
+// without the PAX extension.
+static bool fitInUstar(StringRef Path) {
+  StringRef Prefix;
+  StringRef Name;
+  std::tie(Prefix, Name) = splitPath(Path);
+  return Name.size() <= sizeof(UstarHeader::Name);
+}
+
 // The PAX header is an extended format, so a PAX header needs
 // to be followed by a "real" header.
 static void writeUstarHeader(raw_fd_ostream &OS, StringRef Path, size_t Size) {
+  StringRef Prefix;
+  StringRef Name;
+  std::tie(Prefix, Name) = splitPath(Path);
+
   UstarHeader Hdr = {};
-  memcpy(Hdr.Name, Path.data(), Path.size());
+  memcpy(Hdr.Name, Name.data(), Name.size());
   memcpy(Hdr.Mode, "0000664", 8);
   snprintf(Hdr.Size, sizeof(Hdr.Size), "%011zo", Size);
   memcpy(Hdr.Magic, "ustar", 6);
+  memcpy(Hdr.Prefix, Prefix.data(), Prefix.size());
   computeChecksum(Hdr);
   OS << StringRef(reinterpret_cast<char *>(&Hdr), sizeof(Hdr));
 }
