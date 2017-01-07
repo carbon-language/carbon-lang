@@ -79,7 +79,8 @@ STATISTIC(NumGVNInstrDeleted, "Number of instructions deleted");
 STATISTIC(NumGVNBlocksDeleted, "Number of blocks deleted");
 STATISTIC(NumGVNOpsSimplified, "Number of Expressions simplified");
 STATISTIC(NumGVNPhisAllSame, "Number of PHIs whos arguments are all the same");
-STATISTIC(NumGVNMaxIterations, "Maximum Number of iterations it took to converge GVN");
+STATISTIC(NumGVNMaxIterations,
+          "Maximum Number of iterations it took to converge GVN");
 
 //===----------------------------------------------------------------------===//
 //                                GVN Pass
@@ -1023,7 +1024,6 @@ void NewGVN::markMemoryUsersTouched(MemoryAccess *MA) {
 
 // Perform congruence finding on a given value numbering expression.
 void NewGVN::performCongruenceFinding(Value *V, const Expression *E) {
-
   ValueToExpression[V] = E;
   // This is guaranteed to return something, since it will at least find
   // INITIAL.
@@ -1881,6 +1881,7 @@ private:
   SmallVector<std::pair<int, int>, 8> DFSStack;
 };
 }
+
 bool NewGVN::eliminateInstructions(Function &F) {
   // This is a non-standard eliminator. The normal way to eliminate is
   // to walk the dominator tree in order, keeping track of available
