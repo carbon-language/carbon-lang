@@ -17206,22 +17206,26 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op,
   if (NumElts != 8 && NumElts != 16 && !Subtarget.hasBWI())
     return SDValue();
 
-  if (VT.is512BitVector() && InVT.getVectorElementType() != MVT::i1) {
+  if (VT.is512BitVector() && InVTElt != MVT::i1) {
     if (In.getOpcode() == X86ISD::VSEXT || In.getOpcode() == X86ISD::VZEXT)
       return DAG.getNode(In.getOpcode(), dl, VT, In.getOperand(0));
     return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
   }
 
-  assert (InVT.getVectorElementType() == MVT::i1 && "Unexpected vector type");
+  assert (InVTElt == MVT::i1 && "Unexpected vector type");
   MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
-  SDValue NegOne = DAG.getConstant(
-      APInt::getAllOnesValue(ExtVT.getScalarSizeInBits()), dl, ExtVT);
-  SDValue Zero = DAG.getConstant(
-      APInt::getNullValue(ExtVT.getScalarSizeInBits()), dl, ExtVT);
+  SDValue V;
+  if (Subtarget.hasDQI()) {
+    V = DAG.getNode(X86ISD::VSEXT, dl, ExtVT, In);
+    assert(!VT.is512BitVector() && "Unexpected vector type");
+  } else {
+    SDValue NegOne = getOnesVector(ExtVT, Subtarget, DAG, dl);
+    SDValue Zero = getZeroVector(ExtVT, Subtarget, DAG, dl);
+    V = DAG.getNode(ISD::VSELECT, dl, ExtVT, In, NegOne, Zero);
+    if (VT.is512BitVector())
+      return V;
+  }
 
-  SDValue V = DAG.getNode(ISD::VSELECT, dl, ExtVT, In, NegOne, Zero);
-  if (VT.is512BitVector())
-    return V;
   return DAG.getNode(X86ISD::VTRUNC, dl, VT, V);
 }
 
