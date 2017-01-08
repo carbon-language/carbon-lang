@@ -16991,9 +16991,16 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, VT, newSelect, zeroConst);
   }
 
-  if (Cond.getOpcode() == ISD::SETCC)
-    if (SDValue NewCond = LowerSETCC(Cond, DAG))
+  if (Cond.getOpcode() == ISD::SETCC) {
+    if (SDValue NewCond = LowerSETCC(Cond, DAG)) {
       Cond = NewCond;
+      // If the condition was updated, it's possible that the operands of the
+      // select were also updated (for example, EmitTest has a RAUW). Refresh
+      // the local references to the select operands in case they got stale.
+      Op1 = Op.getOperand(1);
+      Op2 = Op.getOperand(2);
+    }
+  }
 
   // (select (x == 0), -1, y) -> (sign_bit (x - 1)) | y
   // (select (x == 0), y, -1) -> ~(sign_bit (x - 1)) | y
