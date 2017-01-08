@@ -144,6 +144,10 @@ int X86TTIImpl::getArithmeticInstrCost(
   }
 
   static const CostTblEntry AVX512BWUniformConstCostTable[] = {
+    { ISD::SHL,  MVT::v64i8,   2 }, // psllw + pand.
+    { ISD::SRL,  MVT::v64i8,   2 }, // psrlw + pand.
+    { ISD::SRA,  MVT::v64i8,   4 }, // psrlw, pand, pxor, psubb.
+
     { ISD::SDIV, MVT::v32i16,  6 }, // vpmulhw sequence
     { ISD::UDIV, MVT::v32i16,  6 }, // vpmulhuw sequence
   };
@@ -168,6 +172,10 @@ int X86TTIImpl::getArithmeticInstrCost(
   }
 
   static const CostTblEntry AVX2UniformConstCostTable[] = {
+    { ISD::SHL,  MVT::v32i8,   2 }, // psllw + pand.
+    { ISD::SRL,  MVT::v32i8,   2 }, // psrlw + pand.
+    { ISD::SRA,  MVT::v32i8,   4 }, // psrlw, pand, pxor, psubb.
+
     { ISD::SRA,  MVT::v4i64,   4 }, // 2 x psrad + shuffle.
 
     { ISD::SDIV, MVT::v16i16,  6 }, // vpmulhw sequence
@@ -184,6 +192,14 @@ int X86TTIImpl::getArithmeticInstrCost(
   }
 
   static const CostTblEntry SSE2UniformConstCostTable[] = {
+    { ISD::SHL,  MVT::v16i8,   2 }, // psllw + pand.
+    { ISD::SRL,  MVT::v16i8,   2 }, // psrlw + pand.
+    { ISD::SRA,  MVT::v16i8,   4 }, // psrlw, pand, pxor, psubb.
+
+    { ISD::SHL,  MVT::v32i8,   4 }, // 2*(psllw + pand).
+    { ISD::SRL,  MVT::v32i8,   4 }, // 2*(psrlw + pand).
+    { ISD::SRA,  MVT::v32i8,   8 }, // 2*(psrlw, pand, pxor, psubb).
+
     { ISD::SDIV, MVT::v16i16, 12 }, // pmulhw sequence
     { ISD::SDIV, MVT::v8i16,   6 }, // pmulhw sequence
     { ISD::UDIV, MVT::v16i16, 12 }, // pmulhuw sequence
@@ -364,20 +380,14 @@ int X86TTIImpl::getArithmeticInstrCost(
 
   static const CostTblEntry SSE2UniformShiftCostTable[] = {
     // Uniform splats are cheaper for the following instructions.
-    { ISD::SHL,  MVT::v16i8,  1 }, // psllw.
-    { ISD::SHL,  MVT::v32i8,  2 }, // psllw.
     { ISD::SHL,  MVT::v16i16, 2 }, // psllw.
     { ISD::SHL,  MVT::v8i32,  2 }, // pslld
     { ISD::SHL,  MVT::v4i64,  2 }, // psllq.
 
-    { ISD::SRL,  MVT::v16i8,  1 }, // psrlw.
-    { ISD::SRL,  MVT::v32i8,  2 }, // psrlw.
     { ISD::SRL,  MVT::v16i16, 2 }, // psrlw.
     { ISD::SRL,  MVT::v8i32,  2 }, // psrld.
     { ISD::SRL,  MVT::v4i64,  2 }, // psrlq.
 
-    { ISD::SRA,  MVT::v16i8,  4 }, // psrlw, pand, pxor, psubb.
-    { ISD::SRA,  MVT::v32i8,  8 }, // psrlw, pand, pxor, psubb.
     { ISD::SRA,  MVT::v16i16, 2 }, // psraw.
     { ISD::SRA,  MVT::v8i32,  2 }, // psrad.
     { ISD::SRA,  MVT::v2i64,  4 }, // 2 x psrad + shuffle.
