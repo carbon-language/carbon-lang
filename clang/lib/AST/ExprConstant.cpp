@@ -4543,6 +4543,12 @@ public:
                              Call.getLValueBase().dyn_cast<const ValueDecl*>());
       if (!FD)
         return Error(Callee);
+      // Don't call function pointers which have been cast to some other type.
+      // Per DR (no number yet), the caller and callee can differ in noexcept.
+      if (!Info.Ctx.hasSameFunctionTypeIgnoringExceptionSpec(
+        CalleeType->getPointeeType(), FD->getType())) {
+        return Error(E);
+      }
 
       // Overloaded operator calls to member functions are represented as normal
       // calls with '*this' as the first argument.
@@ -4558,14 +4564,42 @@ public:
           return false;
         This = &ThisVal;
         Args = Args.slice(1);
+      } else if (MD && MD->isLambdaStaticInvoker()) {   
+        // Map the static invoker for the lambda back to the call operator.
+        // Conveniently, we don't have to slice out the 'this' argument (as is
+        // being done for the non-static case), since a static member function
+        // doesn't have an implicit argument passed in.
+        const CXXRecordDecl *ClosureClass = MD->getParent();
+        assert(
+            ClosureClass->captures_begin() == ClosureClass->captures_end() &&
+            "Number of captures must be zero for conversion to function-ptr");
+
+        const CXXMethodDecl *LambdaCallOp =
+            ClosureClass->getLambdaCallOperator();
+
+        // Set 'FD', the function that will be called below, to the call
+        // operator.  If the closure object represents a generic lambda, find
+        // the corresponding specialization of the call operator.
+
+        if (ClosureClass->isGenericLambda()) {
+          assert(MD->isFunctionTemplateSpecialization() &&
+                 "A generic lambda's static-invoker function must be a "
+                 "template specialization");
+          const TemplateArgumentList *TAL = MD->getTemplateSpecializationArgs();
+          FunctionTemplateDecl *CallOpTemplate =
+              LambdaCallOp->getDescribedFunctionTemplate();
+          void *InsertPos = nullptr;
+          FunctionDecl *CorrespondingCallOpSpecialization =
+              CallOpTemplate->findSpecialization(TAL->asArray(), InsertPos);
+          assert(CorrespondingCallOpSpecialization &&
+                 "We must always have a function call operator specialization "
+                 "that corresponds to our static invoker specialization");
+          FD = cast<CXXMethodDecl>(CorrespondingCallOpSpecialization);
+        } else
+          FD = LambdaCallOp;
       }
 
-      // Don't call function pointers which have been cast to some other type.
-      // Per DR (no number yet), the caller and callee can differ in noexcept.
-      if (!Info.Ctx.hasSameFunctionTypeIgnoringExceptionSpec(
-              CalleeType->getPointeeType(), FD->getType())) {
-        return Error(E);
-      }
+      
     } else
       return Error(E);
 
