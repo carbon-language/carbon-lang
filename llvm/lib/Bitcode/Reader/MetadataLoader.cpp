@@ -1561,6 +1561,7 @@ Error MetadataLoader::MetadataLoaderImpl::parseMetadataAttachment(
     return error("Invalid record");
 
   SmallVector<uint64_t, 64> Record;
+  PlaceholderQueue Placeholders;
 
   while (true) {
     BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
@@ -1570,6 +1571,7 @@ Error MetadataLoader::MetadataLoaderImpl::parseMetadataAttachment(
     case BitstreamEntry::Error:
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
+      resolveForwardRefsAndPlaceholders(Placeholders);
       return Error::success();
     case BitstreamEntry::Record:
       // The interesting case.
@@ -1608,7 +1610,6 @@ Error MetadataLoader::MetadataLoaderImpl::parseMetadataAttachment(
             !MetadataList.lookup(Idx)) {
           // Load the attachment if it is in the lazy-loadable range and hasn't
           // been loaded yet.
-          PlaceholderQueue Placeholders;
           lazyLoadOneMetadata(Idx, Placeholders);
           resolveForwardRefsAndPlaceholders(Placeholders);
         }
