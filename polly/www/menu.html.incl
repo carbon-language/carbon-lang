@@ -44,6 +44,9 @@ Optimizations</span></h2>
     <a href="https://www.pollylabs.org"><img style="padding-left: 3.5em;
     padding-right: 1em; width:10em" src="/images/pollylabs.png" /></a>
     <br>
+    <div class="container" style="width: 240px">
+      <div class="inner" style="width: 240px"></div>
+    </div>
     <a href="https://www.polyhedral.info">polyhedral.info Community</a>
     <a href="http://impact.gforge.inria.fr/impact2017/">IMPACT Polyhedral Workshop<a><br>
   </div>
@@ -60,3 +63,27 @@ Optimizations</span></h2>
 
 </script>
 
+<script>
+
+$(document).ready(function() {
+    
+    var yql = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20rss%20where%20url%3D%22http%3A%2F%2Fpollylabs.org%2Frss.xml%22%20LIMIT%208&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+    
+    $.getJSON(yql, function(res) {
+        console.log(res);   
+	str = "";
+	for (var i = 0; i < res.query.count; i++) {
+	  var it = res.query.results.item[i];
+	  str = str + "<a href=\"" + it.link + "\">";
+	  str = str + "<h6>" + res.query.results.item[i].title + "</h6>";
+          str = str + "</a>";
+	}
+	str = str + "";
+	str = str + "<a href=\"http://pollylabs.org/blog.html\"><h6> ... more news </h6></a>";
+	$( ".inner" ).append(str);
+	console.log(str);
+    }, "jsonp");
+    
+});
+
+</script>
