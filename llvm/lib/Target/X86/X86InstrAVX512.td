@@ -2725,7 +2725,7 @@ multiclass avx512_load<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                       (ins _.KRCWM:$mask,  _.RC:$src),
                       !strconcat(OpcodeStr, "\t{$src, ${dst} {${mask}} {z}|",
                        "${dst} {${mask}} {z}, $src}"),
-                       [(set _.RC:$dst, (_.VT (vselect _.KRCWM:$mask,
+                       [(set _.RC:$dst, (_.VT (SelectOprr _.KRCWM:$mask,
                                            (_.VT _.RC:$src),
                                            _.ImmAllZerosV)))], _.ExeDomain>,
                        EVEX, EVEX_KZ;
