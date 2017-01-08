@@ -342,7 +342,7 @@ namespace deduction_substitution_failure {
 
   template<typename T, typename U> struct A {};
   template<typename T> struct A<T, typename Fail<T>::error> {}; // expected-note {{instantiation of}}
-  A<int, int> ai; // expected-note {{during template argument deduction for class template partial specialization 'A<T, typename Fail<T>::error>' [with T = int]}}
+  A<int, int> ai; // expected-note {{during template argument deduction for class template partial specialization 'A<T, typename Fail<T>::error>' [with T = int]}} expected-note {{in instantiation of template class 'deduction_substitution_failure::A<int, int>'}}
 
   template<typename T, typename U> int B; // expected-warning 0-1 {{extension}}
   template<typename T> int B<T, typename Fail<T>::error> {}; // expected-note {{instantiation of}}
