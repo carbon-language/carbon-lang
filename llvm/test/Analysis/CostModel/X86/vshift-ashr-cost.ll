@@ -529,8 +529,7 @@ define <4 x i32> @splatconstant_shift_v4i32(<4 x i32> %a) {
 ; AVX: Found an estimated cost of 1 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
-; XOPAVX: Found an estimated cost of 2 for instruction:   %shift
-; XOPAVX2: Found an estimated cost of 1 for instruction:   %shift
+; XOP: Found an estimated cost of 1 for instruction:   %shift
   %shift = ashr <4 x i32> %a, <i32 5, i32 5, i32 5, i32 5>
   ret <4 x i32> %shift
 }
@@ -568,7 +567,7 @@ define <8 x i16> @splatconstant_shift_v8i16(<8 x i16> %a) {
 ; AVX: Found an estimated cost of 1 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
-; XOP: Found an estimated cost of 2 for instruction:   %shift
+; XOP: Found an estimated cost of 1 for instruction:   %shift
   %shift = ashr <8 x i16> %a, <i16 3, i16 3, i16 3, i16 3, i16 3, i16 3, i16 3, i16 3>
   ret <8 x i16> %shift
 }

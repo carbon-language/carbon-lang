@@ -207,6 +207,43 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
+  static const CostTblEntry AVX2UniformCostTable[] = {
+    // Uniform splats are cheaper for the following instructions.
+    { ISD::SHL,  MVT::v16i16, 1 }, // psllw.
+    { ISD::SRL,  MVT::v16i16, 1 }, // psrlw.
+    { ISD::SRA,  MVT::v16i16, 1 }, // psraw.
+  };
+
+  if (ST->hasAVX2() &&
+      ((Op2Info == TargetTransformInfo::OK_UniformConstantValue) ||
+       (Op2Info == TargetTransformInfo::OK_UniformValue))) {
+    if (const auto *Entry =
+            CostTableLookup(AVX2UniformCostTable, ISD, LT.second))
+      return LT.first * Entry->Cost;
+  }
+
+  static const CostTblEntry SSE2UniformCostTable[] = {
+    // Uniform splats are cheaper for the following instructions.
+    { ISD::SHL,  MVT::v8i16,  1 }, // psllw.
+    { ISD::SHL,  MVT::v4i32,  1 }, // pslld
+    { ISD::SHL,  MVT::v2i64,  1 }, // psllq.
+
+    { ISD::SRL,  MVT::v8i16,  1 }, // psrlw.
+    { ISD::SRL,  MVT::v4i32,  1 }, // psrld.
+    { ISD::SRL,  MVT::v2i64,  1 }, // psrlq.
+
+    { ISD::SRA,  MVT::v8i16,  1 }, // psraw.
+    { ISD::SRA,  MVT::v4i32,  1 }, // psrad.
+  };
+
+  if (ST->hasSSE2() &&
+      ((Op2Info == TargetTransformInfo::OK_UniformConstantValue) ||
+       (Op2Info == TargetTransformInfo::OK_UniformValue))) {
+    if (const auto *Entry =
+            CostTableLookup(SSE2UniformCostTable, ISD, LT.second))
+      return LT.first * Entry->Cost;
+  }
+
   static const CostTblEntry AVX512DQCostTable[] = {
     { ISD::MUL,  MVT::v2i64, 1 },
     { ISD::MUL,  MVT::v4i64, 1 },
@@ -291,20 +328,6 @@ int X86TTIImpl::getArithmeticInstrCost(
       return LT.first * Entry->Cost;
   }
 
-  static const CostTblEntry AVX2UniformCostTable[] = {
-    // Uniform splats are cheaper for the following instructions.
-    { ISD::SRL,  MVT::v16i16, 1 }, // psrlw.
-    { ISD::SRA,  MVT::v16i16, 1 }, // psraw.
-  };
-
-  if (ST->hasAVX2() &&
-      ((Op2Info == TargetTransformInfo::OK_UniformConstantValue) ||
-       (Op2Info == TargetTransformInfo::OK_UniformValue))) {
-    if (const auto *Entry =
-            CostTableLookup(AVX2UniformCostTable, ISD, LT.second))
-      return LT.first * Entry->Cost;
-  }
-
   static const CostTblEntry XOPShiftCostTable[] = {
     // 128bit shifts take 1cy, but right shifts require negation beforehand.
     { ISD::SHL,     MVT::v16i8,    1 },
@@ -339,31 +362,23 @@ int X86TTIImpl::getArithmeticInstrCost(
     if (const auto *Entry = CostTableLookup(XOPShiftCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
 
-  static const CostTblEntry SSE2UniformCostTable[] = {
+  static const CostTblEntry SSE2UniformShiftCostTable[] = {
     // Uniform splats are cheaper for the following instructions.
     { ISD::SHL,  MVT::v16i8,  1 }, // psllw.
     { ISD::SHL,  MVT::v32i8,  2 }, // psllw.
-    { ISD::SHL,  MVT::v8i16,  1 }, // psllw.
     { ISD::SHL,  MVT::v16i16, 2 }, // psllw.
-    { ISD::SHL,  MVT::v4i32,  1 }, // pslld
     { ISD::SHL,  MVT::v8i32,  2 }, // pslld
-    { ISD::SHL,  MVT::v2i64,  1 }, // psllq.
     { ISD::SHL,  MVT::v4i64,  2 }, // psllq.
 
     { ISD::SRL,  MVT::v16i8,  1 }, // psrlw.
     { ISD::SRL,  MVT::v32i8,  2 }, // psrlw.
-    { ISD::SRL,  MVT::v8i16,  1 }, // psrlw.
     { ISD::SRL,  MVT::v16i16, 2 }, // psrlw.
-    { ISD::SRL,  MVT::v4i32,  1 }, // psrld.
     { ISD::SRL,  MVT::v8i32,  2 }, // psrld.
-    { ISD::SRL,  MVT::v2i64,  1 }, // psrlq.
     { ISD::SRL,  MVT::v4i64,  2 }, // psrlq.
 
     { ISD::SRA,  MVT::v16i8,  4 }, // psrlw, pand, pxor, psubb.
     { ISD::SRA,  MVT::v32i8,  8 }, // psrlw, pand, pxor, psubb.
-    { ISD::SRA,  MVT::v8i16,  1 }, // psraw.
     { ISD::SRA,  MVT::v16i16, 2 }, // psraw.
-    { ISD::SRA,  MVT::v4i32,  1 }, // psrad.
     { ISD::SRA,  MVT::v8i32,  2 }, // psrad.
     { ISD::SRA,  MVT::v2i64,  4 }, // 2 x psrad + shuffle.
     { ISD::SRA,  MVT::v4i64,  8 }, // 2 x psrad + shuffle.
@@ -373,7 +388,7 @@ int X86TTIImpl::getArithmeticInstrCost(
       ((Op2Info == TargetTransformInfo::OK_UniformConstantValue) ||
        (Op2Info == TargetTransformInfo::OK_UniformValue))) {
     if (const auto *Entry =
-            CostTableLookup(SSE2UniformCostTable, ISD, LT.second))
+            CostTableLookup(SSE2UniformShiftCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;
   }
 
