@@ -82,14 +82,10 @@ li.rss-item {
 }
 
 .rss-date {
-  font-size: 0.8em;
-  color: #f35555;
-  padding-left: 0.4em;
-  margin-bottom: 2em;
-  padding-bottom: 2em;
-  text-align: right;
-  float: right;
+  font-size: 0.6em;
+  color: gray;
 }
-h6 {
+.rss-title {
+  font-size: 0.7em;
   margin: 0px;
 }
