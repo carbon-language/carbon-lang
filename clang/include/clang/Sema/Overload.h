@@ -601,6 +601,10 @@ namespace clang {
 
     /// This candidate was not viable because its OpenCL extension is disabled.
     ovl_fail_ext_disabled,
+
+    /// This inherited constructor is not viable because it would slice the
+    /// argument.
+    ovl_fail_inhctor_slice,
   };
 
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).

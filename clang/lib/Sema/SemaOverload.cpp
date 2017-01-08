@@ -5971,6 +5971,31 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
     }
   }
 
+  // C++ [over.best.ics]p4+: (proposed DR resolution)
+  //   If the target is the first parameter of an inherited constructor when
+  //   constructing an object of type C with an argument list that has exactly
+  //   one expression, an implicit conversion sequence cannot be formed if C is
+  //   reference-related to the type that the argument would have after the
+  //   application of the user-defined conversion (if any) and before the final
+  //   standard conversion sequence. 
+  auto *Shadow = dyn_cast<ConstructorUsingShadowDecl>(FoundDecl.getDecl());
+  if (Shadow && Args.size() == 1 && !isa<InitListExpr>(Args.front())) {
+    bool DerivedToBase, ObjCConversion, ObjCLifetimeConversion;
+    QualType ConvertedArgumentType = Args.front()->getType();
+    if (Candidate.Conversions[0].isUserDefined())
+      ConvertedArgumentType =
+          Candidate.Conversions[0].UserDefined.After.getFromType();
+    if (CompareReferenceRelationship(Args.front()->getLocStart(),
+                                     Context.getRecordType(Shadow->getParent()),
+                                     ConvertedArgumentType, DerivedToBase,
+                                     ObjCConversion,
+                                     ObjCLifetimeConversion) >= Ref_Related) {
+      Candidate.Viable = false;
+      Candidate.FailureKind = ovl_fail_inhctor_slice;
+      return;
+    }
+  }
+
   if (EnableIfAttr *FailedAttr = CheckEnableIf(Function, Args)) {
     Candidate.Viable = false;
     Candidate.FailureKind = ovl_fail_enable_if;
@@ -9926,6 +9951,12 @@ static void NoteFunctionCandidate(Sema &S, OverloadCandidate *Cand,
 
   case ovl_fail_ext_disabled:
     return DiagnoseOpenCLExtensionDisabled(S, Cand);
+
+  case ovl_fail_inhctor_slice:
+    S.Diag(Fn->getLocation(),
+           diag::note_ovl_candidate_inherited_constructor_slice);
+    MaybeEmitInheritedConstructorNote(S, Cand->FoundDecl);
+    return;
 
   case ovl_fail_addr_not_available: {
     bool Available = checkAddressOfCandidateIsAvailable(S, Cand->Function);
