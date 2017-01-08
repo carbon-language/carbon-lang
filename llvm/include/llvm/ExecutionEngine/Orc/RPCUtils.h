@@ -1062,6 +1062,15 @@ public:
                                                std::move(Launch));
   }
 
+  /// Add a class-method as a handler.
+  template <typename Func, typename ClassT, typename RetT, typename... ArgTs>
+  void addHandler(ClassT &Object, RetT (ClassT::*Method)(ArgTs...),
+                  LaunchPolicy Launch = LaunchPolicy()) {
+    addHandler<Func>(
+      detail::MemberFnWrapper<ClassT, RetT, ArgTs...>(Object, Method),
+      Launch);
+  }
+
   /// Negotiate a function id for Func with the other end of the channel.
   template <typename Func> Error negotiateFunction() {
     using OrcRPCNegotiate = typename BaseClass::OrcRPCNegotiate;
