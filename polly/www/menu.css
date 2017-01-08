@@ -74,11 +74,11 @@ a.rss-item {
 }
 
 li.rss-item {
-  padding-bottom: 1em;
+  padding-bottom: 0em;
 }
 
 .rss_item {
-  padding-top: 1em;
+  padding-top: 0em;
 }
 
 .rss-date {
@@ -89,4 +89,7 @@ li.rss-item {
   padding-bottom: 2em;
   text-align: right;
   float: right;
+}
+h6 {
+  margin: 0px;
 }
