@@ -122,7 +122,7 @@ static void writePaxHeader(raw_fd_ostream &OS, StringRef Path) {
 static std::pair<StringRef, StringRef> splitPath(StringRef Path) {
   if (Path.size() <= sizeof(UstarHeader::Name))
     return {"", Path};
-  size_t Sep = Path.rfind('/', sizeof(UstarHeader::Name) + 1);
+  size_t Sep = Path.rfind('/', sizeof(UstarHeader::Prefix) + 1);
   if (Sep == StringRef::npos)
     return {"", Path};
   return {Path.substr(0, Sep), Path.substr(Sep + 1)};
