@@ -859,7 +859,9 @@ TEST_F(FormatTestJS, AutomaticSemicolonInsertionHeuristic) {
                "a = null\n"
                "  return   1");
   verifyFormat(
-      "x = {a: 1}\n"
+      "x = {\n"
+      "  a: 1\n"
+      "}\n"
       "class Y {}",
       "  x  =  {a  : 1}\n"
       "   class  Y {  }");
