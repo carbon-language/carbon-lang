@@ -328,7 +328,7 @@ private:
   // Elimination.
   struct ValueDFS;
   void convertDenseToDFSOrdered(CongruenceClass::MemberSet &,
-                                std::vector<ValueDFS> &);
+                                SmallVectorImpl<ValueDFS> &);
 
   bool eliminateInstructions(Function &);
   void replaceInstruction(Instruction *, Value *);
@@ -1757,8 +1757,9 @@ struct NewGVN::ValueDFS {
   }
 };
 
-void NewGVN::convertDenseToDFSOrdered(CongruenceClass::MemberSet &Dense,
-                                      std::vector<ValueDFS> &DFSOrderedSet) {
+void NewGVN::convertDenseToDFSOrdered(
+    CongruenceClass::MemberSet &Dense,
+    SmallVectorImpl<ValueDFS> &DFSOrderedSet) {
   for (auto D : Dense) {
     // First add the value.
     BasicBlock *BB = getBlockForValue(D);
@@ -2021,17 +2022,17 @@ bool NewGVN::eliminateInstructions(Function &F) {
         ValueDFSStack EliminationStack;
 
         // Convert the members to DFS ordered sets and then merge them.
-        std::vector<ValueDFS> DFSOrderedSet;
+        SmallVector<ValueDFS, 8> DFSOrderedSet;
         convertDenseToDFSOrdered(CC->Members, DFSOrderedSet);
 
         // Sort the whole thing.
-        sort(DFSOrderedSet.begin(), DFSOrderedSet.end());
+        std::sort(DFSOrderedSet.begin(), DFSOrderedSet.end());
 
-        for (auto &C : DFSOrderedSet) {
-          int MemberDFSIn = C.DFSIn;
-          int MemberDFSOut = C.DFSOut;
-          Value *Member = C.Val;
-          Use *MemberUse = C.U;
+        for (auto &VD : DFSOrderedSet) {
+          int MemberDFSIn = VD.DFSIn;
+          int MemberDFSOut = VD.DFSOut;
+          Value *Member = VD.Val;
+          Use *MemberUse = VD.U;
 
           if (Member) {
             // We ignore void things because we can't get a value from them.
