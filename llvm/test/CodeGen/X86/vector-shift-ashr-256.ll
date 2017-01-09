@@ -215,16 +215,10 @@ define <16 x i16> @var_shift_v16i16(<16 x i16> %a, <16 x i16> %b) nounwind {
 ;
 ; AVX512DQ-LABEL: var_shift_v16i16:
 ; AVX512DQ:       # BB#0:
-; AVX512DQ-NEXT:    vpxor %ymm2, %ymm2, %ymm2
-; AVX512DQ-NEXT:    vpunpckhwd {{.*#+}} ymm3 = ymm1[4],ymm2[4],ymm1[5],ymm2[5],ymm1[6],ymm2[6],ymm1[7],ymm2[7],ymm1[12],ymm2[12],ymm1[13],ymm2[13],ymm1[14],ymm2[14],ymm1[15],ymm2[15]
-; AVX512DQ-NEXT:    vpunpckhwd {{.*#+}} ymm4 = ymm2[4],ymm0[4],ymm2[5],ymm0[5],ymm2[6],ymm0[6],ymm2[7],ymm0[7],ymm2[12],ymm0[12],ymm2[13],ymm0[13],ymm2[14],ymm0[14],ymm2[15],ymm0[15]
-; AVX512DQ-NEXT:    vpsravd %ymm3, %ymm4, %ymm3
-; AVX512DQ-NEXT:    vpsrld $16, %ymm3, %ymm3
-; AVX512DQ-NEXT:    vpunpcklwd {{.*#+}} ymm1 = ymm1[0],ymm2[0],ymm1[1],ymm2[1],ymm1[2],ymm2[2],ymm1[3],ymm2[3],ymm1[8],ymm2[8],ymm1[9],ymm2[9],ymm1[10],ymm2[10],ymm1[11],ymm2[11]
-; AVX512DQ-NEXT:    vpunpcklwd {{.*#+}} ymm0 = ymm2[0],ymm0[0],ymm2[1],ymm0[1],ymm2[2],ymm0[2],ymm2[3],ymm0[3],ymm2[8],ymm0[8],ymm2[9],ymm0[9],ymm2[10],ymm0[10],ymm2[11],ymm0[11]
-; AVX512DQ-NEXT:    vpsravd %ymm1, %ymm0, %ymm0
-; AVX512DQ-NEXT:    vpsrld $16, %ymm0, %ymm0
-; AVX512DQ-NEXT:    vpackusdw %ymm3, %ymm0, %ymm0
+; AVX512DQ-NEXT:    vpmovzxwd {{.*#+}} zmm1 = ymm1[0],zero,ymm1[1],zero,ymm1[2],zero,ymm1[3],zero,ymm1[4],zero,ymm1[5],zero,ymm1[6],zero,ymm1[7],zero,ymm1[8],zero,ymm1[9],zero,ymm1[10],zero,ymm1[11],zero,ymm1[12],zero,ymm1[13],zero,ymm1[14],zero,ymm1[15],zero
+; AVX512DQ-NEXT:    vpmovsxwd %ymm0, %zmm0
+; AVX512DQ-NEXT:    vpsravd %zmm1, %zmm0, %zmm0
+; AVX512DQ-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512BW-LABEL: var_shift_v16i16:
@@ -821,17 +815,9 @@ define <16 x i16> @constant_shift_v16i16(<16 x i16> %a) nounwind {
 ;
 ; AVX512DQ-LABEL: constant_shift_v16i16:
 ; AVX512DQ:       # BB#0:
-; AVX512DQ-NEXT:    vpxor %ymm1, %ymm1, %ymm1
-; AVX512DQ-NEXT:    vmovdqa {{.*#+}} ymm2 = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
-; AVX512DQ-NEXT:    vpunpckhwd {{.*#+}} ymm3 = ymm2[4],ymm1[4],ymm2[5],ymm1[5],ymm2[6],ymm1[6],ymm2[7],ymm1[7],ymm2[12],ymm1[12],ymm2[13],ymm1[13],ymm2[14],ymm1[14],ymm2[15],ymm1[15]
-; AVX512DQ-NEXT:    vpunpckhwd {{.*#+}} ymm4 = ymm1[4],ymm0[4],ymm1[5],ymm0[5],ymm1[6],ymm0[6],ymm1[7],ymm0[7],ymm1[12],ymm0[12],ymm1[13],ymm0[13],ymm1[14],ymm0[14],ymm1[15],ymm0[15]
-; AVX512DQ-NEXT:    vpsravd %ymm3, %ymm4, %ymm3
-; AVX512DQ-NEXT:    vpsrld $16, %ymm3, %ymm3
-; AVX512DQ-NEXT:    vpunpcklwd {{.*#+}} ymm2 = ymm2[0],ymm1[0],ymm2[1],ymm1[1],ymm2[2],ymm1[2],ymm2[3],ymm1[3],ymm2[8],ymm1[8],ymm2[9],ymm1[9],ymm2[10],ymm1[10],ymm2[11],ymm1[11]
-; AVX512DQ-NEXT:    vpunpcklwd {{.*#+}} ymm0 = ymm1[0],ymm0[0],ymm1[1],ymm0[1],ymm1[2],ymm0[2],ymm1[3],ymm0[3],ymm1[8],ymm0[8],ymm1[9],ymm0[9],ymm1[10],ymm0[10],ymm1[11],ymm0[11]
-; AVX512DQ-NEXT:    vpsravd %ymm2, %ymm0, %ymm0
-; AVX512DQ-NEXT:    vpsrld $16, %ymm0, %ymm0
-; AVX512DQ-NEXT:    vpackusdw %ymm3, %ymm0, %ymm0
+; AVX512DQ-NEXT:    vpmovsxwd %ymm0, %zmm0
+; AVX512DQ-NEXT:    vpsravd {{.*}}(%rip), %zmm0, %zmm0
+; AVX512DQ-NEXT:    vpmovdw %zmm0, %ymm0
 ; AVX512DQ-NEXT:    retq
 ;
 ; AVX512BW-LABEL: constant_shift_v16i16:

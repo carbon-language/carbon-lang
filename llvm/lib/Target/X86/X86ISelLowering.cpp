@@ -21653,11 +21653,12 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     }
   }
 
-  // It's worth extending once and using the v8i32 shifts for 16-bit types, but
+  // It's worth extending once and using the vXi32 shifts for 16-bit types, but
   // the extra overheads to get from v16i8 to v8i32 make the existing SSE
   // solution better.
-  if (Subtarget.hasInt256() && VT == MVT::v8i16) {
-    MVT ExtVT = MVT::v8i32;
+  if ((Subtarget.hasInt256() && VT == MVT::v8i16) ||
+      (Subtarget.hasAVX512() && VT == MVT::v16i16)) {
+    MVT ExtVT = MVT::getVectorVT(MVT::i32, VT.getVectorNumElements());
     unsigned ExtOpc =
         Op.getOpcode() == ISD::SRA ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
     R = DAG.getNode(ExtOpc, dl, ExtVT, R);
