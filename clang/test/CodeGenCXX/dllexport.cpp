@@ -498,6 +498,12 @@ struct CtorWithClosure {
 // M32-DAG:   ret void
 };
 
+struct CtorWithClosureOutOfLine {
+  __declspec(dllexport) CtorWithClosureOutOfLine(...);
+};
+CtorWithClosureOutOfLine::CtorWithClosureOutOfLine(...) {}
+// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??_FCtorWithClosureOutOfLine@@QAEXXZ"({{.*}}) {{#[0-9]+}} comdat
+
 #define DELETE_IMPLICIT_MEMBERS(ClassName) \
     ClassName(ClassName &&) = delete; \
     ClassName(ClassName &) = delete; \
