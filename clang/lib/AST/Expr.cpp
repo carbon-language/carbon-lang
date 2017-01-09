@@ -582,12 +582,13 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
         if (i) POut << ", ";
         POut << Decl->getParamDecl(i)->getType().stream(Policy);
       }
-      if (!Context.getLangOpts().CPlusPlus && !Decl->getNumParams())
-        POut << "void";
 
       if (FT->isVariadic()) {
         if (FD->getNumParams()) POut << ", ";
         POut << "...";
+      } else if ((IT == FuncSig || !Context.getLangOpts().CPlusPlus) &&
+                 !Decl->getNumParams()) {
+        POut << "void";
       }
     }
     POut << ")";
