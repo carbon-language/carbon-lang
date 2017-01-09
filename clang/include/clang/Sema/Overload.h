@@ -531,6 +531,13 @@ namespace clang {
       Ambiguous.construct();
     }
 
+    void setAsIdentityConversion(QualType T) {
+      setStandard();
+      Standard.setAsIdentityConversion();
+      Standard.setFromType(T);
+      Standard.setAllToTypes(T);
+    }
+
     /// \brief Whether the target is really a std::initializer_list, and the
     /// sequence only represents the worst element conversion.
     bool isStdInitializerListElement() const {
@@ -607,6 +614,11 @@ namespace clang {
     ovl_fail_inhctor_slice,
   };
 
+  /// A list of implicit conversion sequences for the arguments of an
+  /// OverloadCandidate.
+  typedef llvm::MutableArrayRef<ImplicitConversionSequence>
+      ConversionSequenceList;
+
   /// OverloadCandidate - A single candidate in an overload set (C++ 13.3).
   struct OverloadCandidate {
     /// Function - The actual function that this candidate
@@ -631,17 +643,12 @@ namespace clang {
     /// is a surrogate, but only if IsSurrogate is true.
     CXXConversionDecl *Surrogate;
 
-    /// Conversions - The conversion sequences used to convert the
-    /// function arguments to the function parameters, the pointer points to a
-    /// fixed size array with NumConversions elements. The memory is owned by
-    /// the OverloadCandidateSet.
-    ImplicitConversionSequence *Conversions;
+    /// The conversion sequences used to convert the function arguments
+    /// to the function parameters.
+    ConversionSequenceList Conversions;
 
     /// The FixIt hints which can be used to fix the Bad candidate.
     ConversionFixItGenerator Fix;
-
-    /// NumConversions - The number of elements in the Conversions array.
-    unsigned NumConversions;
 
     /// Viable - True to indicate that this overload candidate is viable.
     bool Viable;
@@ -701,9 +708,9 @@ namespace clang {
     /// hasAmbiguousConversion - Returns whether this overload
     /// candidate requires an ambiguous conversion or not.
     bool hasAmbiguousConversion() const {
-      for (unsigned i = 0, e = NumConversions; i != e; ++i) {
-        if (!Conversions[i].isInitialized()) return false;
-        if (Conversions[i].isAmbiguous()) return true;
+      for (auto &C : Conversions) {
+        if (!C.isInitialized()) return false;
+        if (C.isAmbiguous()) return true;
       }
       return false;
     }
@@ -752,7 +759,7 @@ namespace clang {
     SmallVector<OverloadCandidate, 16> Candidates;
     llvm::SmallPtrSet<Decl *, 16> Functions;
 
-    // Allocator for OverloadCandidate::Conversions and DiagnoseIfAttr* arrays.
+    // Allocator for ConversionSequenceLists and DiagnoseIfAttr* arrays.
     // We store the first few of each of these inline to avoid allocation for
     // small sets.
     llvm::BumpPtrAllocator SlabAllocator;
@@ -823,18 +830,32 @@ namespace clang {
     size_t size() const { return Candidates.size(); }
     bool empty() const { return Candidates.empty(); }
 
+    /// \brief Allocate storage for conversion sequences for NumConversions
+    /// conversions.
+    ConversionSequenceList
+    allocateConversionSequences(unsigned NumConversions) {
+      ImplicitConversionSequence *Conversions =
+          slabAllocate<ImplicitConversionSequence>(NumConversions);
+
+      // Construct the new objects.
+      for (unsigned I = 0; I != NumConversions; ++I)
+        new (&Conversions[I]) ImplicitConversionSequence();
+
+      return ConversionSequenceList(Conversions, NumConversions);
+    }
+
     /// \brief Add a new candidate with NumConversions conversion sequence slots
     /// to the overload set.
-    OverloadCandidate &addCandidate(unsigned NumConversions = 0) {
+    OverloadCandidate &addCandidate(unsigned NumConversions = 0,
+                                    ConversionSequenceList Conversions = None) {
+      assert((Conversions.empty() || Conversions.size() == NumConversions) &&
+             "preallocated conversion sequence has wrong length");
+
       Candidates.push_back(OverloadCandidate());
       OverloadCandidate &C = Candidates.back();
-
-      C.Conversions = slabAllocate<ImplicitConversionSequence>(NumConversions);
-      // Construct the new objects.
-      for (unsigned i = 0; i != NumConversions; ++i)
-        new (&C.Conversions[i]) ImplicitConversionSequence();
-
-      C.NumConversions = NumConversions;
+      C.Conversions = Conversions.empty()
+                          ? allocateConversionSequences(NumConversions)
+                          : Conversions;
       return C;
     }
 

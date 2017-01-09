@@ -361,6 +361,10 @@ namespace deduction_after_explicit_pack {
     g<int, float&, double&>(a, b, c, &c); // ok
   }
 
+  template<class... ExtraArgs>
+  int test(ExtraArgs..., unsigned vla_size, const char *input);
+  int n = test(0, "");
+
   template <typename... T> void i(T..., int, T..., ...); // expected-note 5{{deduced conflicting}}
   void j() {
     i(0);

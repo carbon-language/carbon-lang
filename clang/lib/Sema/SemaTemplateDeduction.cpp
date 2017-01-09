@@ -2912,14 +2912,13 @@ static unsigned getPackIndexForParam(Sema &S,
 ///
 /// \param OriginalCallArgs If non-NULL, the original call arguments against
 /// which the deduced argument types should be compared.
-Sema::TemplateDeductionResult
-Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
-                       SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                                      unsigned NumExplicitlySpecified,
-                                      FunctionDecl *&Specialization,
-                                      TemplateDeductionInfo &Info,
-        SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs,
-                                      bool PartialOverloading) {
+Sema::TemplateDeductionResult Sema::FinishTemplateArgumentDeduction(
+    FunctionTemplateDecl *FunctionTemplate,
+    SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+    unsigned NumExplicitlySpecified, FunctionDecl *&Specialization,
+    TemplateDeductionInfo &Info,
+    SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs,
+    bool PartialOverloading, llvm::function_ref<bool()> CheckNonDependent) {
   // Unevaluated SFINAE context.
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
   SFINAETrap Trap(*this);
@@ -2945,6 +2944,18 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
           CurrentInstantiationScope, NumExplicitlySpecified,
           PartialOverloading))
     return Result;
+
+  // C++ [temp.deduct.call]p10: [DR1391]
+  //   If deduction succeeds for all parameters that contain
+  //   template-parameters that participate in template argument deduction,
+  //   and all template arguments are explicitly specified, deduced, or
+  //   obtained from default template arguments, remaining parameters are then
+  //   compared with the corresponding arguments. For each remaining parameter
+  //   P with a type that was non-dependent before substitution of any
+  //   explicitly-specified template arguments, if the corresponding argument
+  //   A cannot be implicitly converted to P, deduction fails.
+  if (CheckNonDependent())
+    return TDK_NonDependentConversionFailure;
 
   // Form the template argument list from the deduced template arguments.
   TemplateArgumentList *DeducedArgumentList
@@ -3392,12 +3403,19 @@ static Sema::TemplateDeductionResult DeduceTemplateArgumentsFromCallArgument(
 /// \param Info the argument will be updated to provide additional information
 /// about template argument deduction.
 ///
+/// \param CheckNonDependent A callback to invoke to check conversions for
+/// non-dependent parameters, between deduction and substitution, per DR1391.
+/// If this returns true, substitution will be skipped and we return
+/// TDK_NonDependentConversionFailure. The callback is passed the parameter
+/// types (after substituting explicit template arguments).
+///
 /// \returns the result of template argument deduction.
 Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
     FunctionTemplateDecl *FunctionTemplate,
     TemplateArgumentListInfo *ExplicitTemplateArgs, ArrayRef<Expr *> Args,
     FunctionDecl *&Specialization, TemplateDeductionInfo &Info,
-    bool PartialOverloading) {
+    bool PartialOverloading,
+    llvm::function_ref<bool(ArrayRef<QualType>)> CheckNonDependent) {
   if (FunctionTemplate->isInvalidDecl())
     return TDK_Invalid;
 
@@ -3425,7 +3443,7 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
   SmallVector<DeducedTemplateArgument, 4> Deduced;
-  SmallVector<QualType, 4> ParamTypes;
+  SmallVector<QualType, 8> ParamTypes;
   unsigned NumExplicitlySpecified = 0;
   if (ExplicitTemplateArgs) {
     TemplateDeductionResult Result =
@@ -3445,7 +3463,7 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
       ParamTypes.push_back(Function->getParamDecl(I)->getType());
   }
 
-  SmallVector<OriginalCallArg, 4> OriginalCallArgs;
+  SmallVector<OriginalCallArg, 8> OriginalCallArgs;
 
   // Deduce an argument of type ParamType from an expression with index ArgIdx.
   auto DeduceCallArgument = [&](QualType ParamType, unsigned ArgIdx) {
@@ -3464,6 +3482,7 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
 
   // Deduce template arguments from the function parameters.
   Deduced.resize(TemplateParams->size());
+  SmallVector<QualType, 8> ParamTypesForArgChecking;
   for (unsigned ParamIdx = 0, NumParamTypes = ParamTypes.size(), ArgIdx = 0;
        ParamIdx != NumParamTypes; ++ParamIdx) {
     QualType ParamType = ParamTypes[ParamIdx];
@@ -3475,6 +3494,7 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
       if (ArgIdx >= Args.size())
         break;
 
+      ParamTypesForArgChecking.push_back(ParamType);
       if (auto Result = DeduceCallArgument(ParamType, ArgIdx++))
         return Result;
 
@@ -3502,20 +3522,25 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
     // parameter pack and 0 otherwise, and we treat each deduction as a
     // non-deduced context.
     if (ParamIdx + 1 == NumParamTypes) {
-      for (; ArgIdx < Args.size(); PackScope.nextPackElement(), ++ArgIdx)
+      for (; ArgIdx < Args.size(); PackScope.nextPackElement(), ++ArgIdx) {
+        ParamTypesForArgChecking.push_back(ParamPattern);
         if (auto Result = DeduceCallArgument(ParamPattern, ArgIdx))
           return Result;
+      }
     } else {
       // If the parameter type contains an explicitly-specified pack that we
       // could not expand, skip the number of parameters notionally created
       // by the expansion.
       Optional<unsigned> NumExpansions = ParamExpansion->getNumExpansions();
-      if (NumExpansions && !PackScope.isPartiallyExpanded())
+      if (NumExpansions && !PackScope.isPartiallyExpanded()) {
         for (unsigned I = 0; I != *NumExpansions && ArgIdx < Args.size();
-             ++I, ++ArgIdx)
+             ++I, ++ArgIdx) {
+          ParamTypesForArgChecking.push_back(ParamPattern);
           // FIXME: Should we add OriginalCallArgs for these? What if the
           // corresponding argument is a list?
           PackScope.nextPackElement();
+        }
+      }
     }
 
     // Build argument packs for each of the parameter packs expanded by this
@@ -3524,10 +3549,10 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
       return Result;
   }
 
-  return FinishTemplateArgumentDeduction(FunctionTemplate, Deduced,
-                                         NumExplicitlySpecified, Specialization,
-                                         Info, &OriginalCallArgs,
-                                         PartialOverloading);
+  return FinishTemplateArgumentDeduction(
+      FunctionTemplate, Deduced, NumExplicitlySpecified, Specialization, Info,
+      &OriginalCallArgs, PartialOverloading,
+      [&]() { return CheckNonDependent(ParamTypesForArgChecking); });
 }
 
 QualType Sema::adjustCCAndNoReturn(QualType ArgFunctionType,
