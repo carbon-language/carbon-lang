@@ -49,6 +49,10 @@ class Quarantine {
   }
 
   void Init(uptr size, uptr cache_size) {
+    // Thread local quarantine size can be zero only when global quarantine size
+    // is zero (it allows us to perform just one atomic read per Put() call).
+    CHECK((size == 0 && cache_size == 0) || cache_size != 0);
+
     atomic_store(&max_size_, size, memory_order_relaxed);
     atomic_store(&min_size_, size / 10 * 9,
                  memory_order_relaxed);  // 90% of max size.
@@ -61,8 +65,15 @@ class Quarantine {
   }
 
   void Put(Cache *c, Callback cb, Node *ptr, uptr size) {
-    c->Enqueue(cb, ptr, size);
-    if (c->Size() > GetCacheSize())
+    uptr cache_size = GetCacheSize();
+    if (cache_size) {
+      c->Enqueue(cb, ptr, size);
+    } else {
+      // cache_size == 0 only when size == 0 (see Init).
+      cb.Recycle(ptr);
+    }
+    // Check cache size anyway to accommodate for runtime cache_size change.
+    if (c->Size() > cache_size)
       Drain(c, cb);
   }
 
@@ -207,6 +218,7 @@ class QuarantineCache {
     return b;
   }
 };
+
 } // namespace __sanitizer
 
 #endif // SANITIZER_QUARANTINE_H
