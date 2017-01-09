@@ -2,7 +2,6 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-; Function Attrs: nounwind uwtable
 define i32 @foo1(i32* %a) #0 {
 entry:
   %0 = load i32, i32* %a, align 4
@@ -22,7 +21,6 @@ entry:
   ret i32 %0
 }
 
-; Function Attrs: nounwind uwtable
 define i32 @foo2(i32* %a) #0 {
 entry:
 ; Same check as in @foo1, but make sure it works if the assume is first too.
@@ -40,7 +38,6 @@ entry:
   ret i32 %0
 }
 
-; Function Attrs: nounwind
 declare void @llvm.assume(i1) #1
 
 define i32 @simple(i32 %a) #1 {
@@ -55,7 +52,6 @@ entry:
   ret i32 %a
 }
 
-; Function Attrs: nounwind uwtable
 define i32 @can1(i1 %a, i1 %b, i1 %c) {
 entry:
   %and1 = and i1 %a, %b
@@ -71,7 +67,6 @@ entry:
   ret i32 5
 }
 
-; Function Attrs: nounwind uwtable
 define i32 @can2(i1 %a, i1 %b, i1 %c) {
 entry:
   %v = or i1 %a, %b
@@ -103,7 +98,6 @@ entry:
   ret i32 %and1
 }
 
-; Function Attrs: nounwind uwtable
 define i32 @bar2(i32 %a) #0 {
 entry:
 ; CHECK-LABEL: @bar2
@@ -118,7 +112,6 @@ entry:
   ret i32 %and1
 }
 
-; Function Attrs: nounwind uwtable
 define i32 @bar3(i32 %a, i1 %x, i1 %y) #0 {
 entry:
   %and1 = and i32 %a, 3
@@ -139,7 +132,6 @@ entry:
   ret i32 %and1
 }
 
-; Function Attrs: nounwind uwtable
 define i32 @bar4(i32 %a, i32 %b) {
 entry:
   %and1 = and i32 %b, 3
@@ -172,7 +164,6 @@ entry:
 
 }
 
-; Function Attrs: nounwind uwtable
 define i32 @icmp2(i32 %a) #0 {
 entry:
   %cmp = icmp sgt i32 %a, 5
