@@ -5,6 +5,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX2
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+xop,+avx | FileCheck %s --check-prefix=ALL --check-prefix=XOP --check-prefix=XOPAVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+xop,+avx2 | FileCheck %s --check-prefix=ALL --check-prefix=XOP --check-prefix=XOPAVX2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=knl -mattr=+avx512dq | FileCheck %s --check-prefix=ALL --check-prefix=AVX512 --check-prefix=AVX512DQ
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=knl -mattr=+avx512bw | FileCheck %s --check-prefix=ALL --check-prefix=AVX512 --check-prefix=AVX512BW
 ;
 ; Just one 32-bit run to make sure we do reasonable things for i64 shifts.
@@ -245,13 +246,22 @@ define <8 x i16> @var_shift_v8i16(<8 x i16> %a, <8 x i16> %b) nounwind {
 ; XOP-NEXT:    vpshlw %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
-; AVX512-LABEL: var_shift_v8i16:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    # kill: %XMM1<def> %XMM1<kill> %ZMM1<def>
-; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
-; AVX512-NEXT:    vpsllvw %zmm1, %zmm0, %zmm0
-; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
-; AVX512-NEXT:    retq
+; AVX512DQ-LABEL: var_shift_v8i16:
+; AVX512DQ:       # BB#0:
+; AVX512DQ-NEXT:    vpmovzxwd {{.*#+}} ymm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
+; AVX512DQ-NEXT:    vpmovzxwd {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; AVX512DQ-NEXT:    vpsllvd %ymm1, %ymm0, %ymm0
+; AVX512DQ-NEXT:    vpmovdw %zmm0, %ymm0
+; AVX512DQ-NEXT:    # kill: %XMM0<def> %XMM0<kill> %YMM0<kill>
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: var_shift_v8i16:
+; AVX512BW:       # BB#0:
+; AVX512BW-NEXT:    # kill: %XMM1<def> %XMM1<kill> %ZMM1<def>
+; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
+; AVX512BW-NEXT:    vpsllvw %zmm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE-LABEL: var_shift_v8i16:
 ; X32-SSE:       # BB#0:
@@ -827,13 +837,18 @@ define <8 x i16> @constant_shift_v8i16(<8 x i16> %a) nounwind {
 ; XOP-NEXT:    vpshlw {{.*}}(%rip), %xmm0, %xmm0
 ; XOP-NEXT:    retq
 ;
-; AVX512-LABEL: constant_shift_v8i16:
-; AVX512:       # BB#0:
-; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
-; AVX512-NEXT:    vmovdqa {{.*#+}} xmm1 = [0,1,2,3,4,5,6,7]
-; AVX512-NEXT:    vpsllvw %zmm1, %zmm0, %zmm0
-; AVX512-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
-; AVX512-NEXT:    retq
+; AVX512DQ-LABEL: constant_shift_v8i16:
+; AVX512DQ:       # BB#0:
+; AVX512DQ-NEXT:    vpmullw {{.*}}(%rip), %xmm0, %xmm0
+; AVX512DQ-NEXT:    retq
+;
+; AVX512BW-LABEL: constant_shift_v8i16:
+; AVX512BW:       # BB#0:
+; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
+; AVX512BW-NEXT:    vmovdqa {{.*#+}} xmm1 = [0,1,2,3,4,5,6,7]
+; AVX512BW-NEXT:    vpsllvw %zmm1, %zmm0, %zmm0
+; AVX512BW-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
+; AVX512BW-NEXT:    retq
 ;
 ; X32-SSE-LABEL: constant_shift_v8i16:
 ; X32-SSE:       # BB#0:
