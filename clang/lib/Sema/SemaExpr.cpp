@@ -13097,8 +13097,10 @@ void Sema::PopExpressionEvaluationContext() {
         //   evaluate [...] a lambda-expression.
         D = diag::err_lambda_in_constant_expression;
       }
-      for (const auto *L : Rec.Lambdas)
-        Diag(L->getLocStart(), D);
+      // C++1z allows lambda expressions as core constant expressions.
+      if (Rec.Context != ConstantEvaluated || !getLangOpts().CPlusPlus1z)
+        for (const auto *L : Rec.Lambdas)
+          Diag(L->getLocStart(), D);
     } else {
       // Mark the capture expressions odr-used. This was deferred
       // during lambda expression creation.

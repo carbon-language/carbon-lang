@@ -5868,6 +5868,7 @@ namespace {
     bool VisitCXXConstructExpr(const CXXConstructExpr *E) {
       return VisitCXXConstructExpr(E, E->getType());
     }
+    bool VisitLambdaExpr(const LambdaExpr *E);
     bool VisitCXXInheritedCtorInitExpr(const CXXInheritedCtorInitExpr *E);
     bool VisitCXXConstructExpr(const CXXConstructExpr *E, QualType T);
     bool VisitCXXStdInitializerListExpr(const CXXStdInitializerListExpr *E);
@@ -6202,6 +6203,21 @@ bool RecordExprEvaluator::VisitCXXStdInitializerListExpr(
   return true;
 }
 
+bool RecordExprEvaluator::VisitLambdaExpr(const LambdaExpr *E) {
+  const CXXRecordDecl *ClosureClass = E->getLambdaClass();
+  if (ClosureClass->isInvalidDecl()) return false;
+
+  if (Info.checkingPotentialConstantExpression()) return true;
+  if (E->capture_size()) {
+    Info.FFDiag(E, diag::note_unimplemented_constexpr_lambda_feature_ast)
+        << "can not evaluate lambda expressions with captures";
+    return false;
+  }
+  // FIXME: Implement captures.
+  Result = APValue(APValue::UninitStruct(), /*NumBases*/0, /*NumFields*/0);
+  return true;
+}
+
 static bool EvaluateRecord(const Expr *E, const LValue &This,
                            APValue &Result, EvalInfo &Info) {
   assert(E->isRValue() && E->getType()->isRecordType() &&
@@ -6249,6 +6265,9 @@ public:
     return VisitConstructExpr(E);
   }
   bool VisitCXXStdInitializerListExpr(const CXXStdInitializerListExpr *E) {
+    return VisitConstructExpr(E);
+  }
+  bool VisitLambdaExpr(const LambdaExpr *E) {
     return VisitConstructExpr(E);
   }
 };
