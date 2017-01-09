@@ -152,29 +152,28 @@ entry:
 }
 
 define i32 @icmp1(i32 %a) #0 {
-entry:
+; CHECK-LABEL: @icmp1(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[A:%.*]], 5
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    ret i32 1
+;
   %cmp = icmp sgt i32 %a, 5
   tail call void @llvm.assume(i1 %cmp)
   %conv = zext i1 %cmp to i32
   ret i32 %conv
-
-; CHECK-LABEL: @icmp1
-; CHECK: call void @llvm.assume
-; CHECK: ret i32 1
-
 }
 
 define i32 @icmp2(i32 %a) #0 {
-entry:
+; CHECK-LABEL: @icmp2(
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt i32 [[A:%.*]], 5
+; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; CHECK-NEXT:    ret i32 0
+;
   %cmp = icmp sgt i32 %a, 5
   tail call void @llvm.assume(i1 %cmp)
-  %0 = zext i1 %cmp to i32
-  %lnot.ext = xor i32 %0, 1
+  %t0 = zext i1 %cmp to i32
+  %lnot.ext = xor i32 %t0, 1
   ret i32 %lnot.ext
-
-; CHECK-LABEL: @icmp2
-; CHECK: call void @llvm.assume
-; CHECK: ret i32 0
 }
 
 declare void @escape(i32* %a)
