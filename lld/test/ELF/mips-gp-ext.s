@@ -1,17 +1,11 @@
 # Check that the linker use a value of _gp symbol defined
 # in a linker script to calculate GOT relocations.
 
-# FIXME: This test is xfailed because there is currently a bug
-# that causes symbols defined by linker scripts to be put in the
-# wrong sections.  In particular, `_gp = . + 0x100` ends up in
-# `.text` when it should be in `*ABS*`.
-# XFAIL: *
-
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %t.o
 
 # RUN: echo "SECTIONS { \
 # RUN:          .text : { *(.text) } \
-# RUN:          _gp = . + 0x100; \
+# RUN:          _gp = ABSOLUTE(.) + 0x100; \
 # RUN:          .got  : { *(.got) } }" > %t.rel.script
 # RUN: ld.lld -shared -o %t.rel.so --script %t.rel.script %t.o
 # RUN: llvm-objdump -s -t %t.rel.so | FileCheck --check-prefix=REL %s
