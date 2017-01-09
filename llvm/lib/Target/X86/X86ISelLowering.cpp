@@ -6962,22 +6962,23 @@ static SDValue ExpandHorizontalBinOp(const SDValue &V0, const SDValue &V1,
   return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, LO, HI);
 }
 
-/// Try to fold a build_vector that performs an 'addsub' to an X86ISD::ADDSUB
-/// node.
-static SDValue LowerToAddSub(const BuildVectorSDNode *BV,
-                             const X86Subtarget &Subtarget, SelectionDAG &DAG) {
+/// Returns true iff \p BV builds a vector with the result equivalent to
+/// the result of ADDSUB operation.
+/// If true is returned then the operands of ADDSUB = Opnd0 +- Opnd1 operation
+/// are written to the parameters \p Opnd0 and \p Opnd1.
+static bool isAddSub(const BuildVectorSDNode *BV,
+                     const X86Subtarget &Subtarget, SelectionDAG &DAG,
+                     SDValue &Opnd0, SDValue &Opnd1) {
+
   MVT VT = BV->getSimpleValueType(0);
   if ((!Subtarget.hasSSE3() || (VT != MVT::v4f32 && VT != MVT::v2f64)) &&
-      (!Subtarget.hasAVX() || (VT != MVT::v8f32 && VT != MVT::v4f64)))
-    return SDValue();
+      (!Subtarget.hasAVX() || (VT != MVT::v8f32 && VT != MVT::v4f64)) &&
+      (!Subtarget.hasAVX512() || (VT != MVT::v16f32 && VT != MVT::v8f64)))
+    return false;
 
-  SDLoc DL(BV);
   unsigned NumElts = VT.getVectorNumElements();
   SDValue InVec0 = DAG.getUNDEF(VT);
   SDValue InVec1 = DAG.getUNDEF(VT);
-
-  assert((VT == MVT::v8f32 || VT == MVT::v4f64 || VT == MVT::v4f32 ||
-          VT == MVT::v2f64) && "build_vector with an invalid type found!");
 
   // Odd-numbered elements in the input build vector are obtained from
   // adding two integer/float elements.
@@ -7000,7 +7001,7 @@ static SDValue LowerToAddSub(const BuildVectorSDNode *BV,
 
     // Early exit if we found an unexpected opcode.
     if (Opcode != ExpectedOpcode)
-      return SDValue();
+      return false;
 
     SDValue Op0 = Op.getOperand(0);
     SDValue Op1 = Op.getOperand(1);
@@ -7013,11 +7014,11 @@ static SDValue LowerToAddSub(const BuildVectorSDNode *BV,
         !isa<ConstantSDNode>(Op0.getOperand(1)) ||
         !isa<ConstantSDNode>(Op1.getOperand(1)) ||
         Op0.getOperand(1) != Op1.getOperand(1))
-      return SDValue();
+      return false;
 
     unsigned I0 = cast<ConstantSDNode>(Op0.getOperand(1))->getZExtValue();
     if (I0 != i)
-      return SDValue();
+      return false;
 
     // We found a valid add/sub node. Update the information accordingly.
     if (i & 1)
@@ -7029,39 +7030,118 @@ static SDValue LowerToAddSub(const BuildVectorSDNode *BV,
     if (InVec0.isUndef()) {
       InVec0 = Op0.getOperand(0);
       if (InVec0.getSimpleValueType() != VT)
-        return SDValue();
+        return false;
     }
     if (InVec1.isUndef()) {
       InVec1 = Op1.getOperand(0);
       if (InVec1.getSimpleValueType() != VT)
-        return SDValue();
+        return false;
     }
 
     // Make sure that operands in input to each add/sub node always
     // come from a same pair of vectors.
     if (InVec0 != Op0.getOperand(0)) {
       if (ExpectedOpcode == ISD::FSUB)
-        return SDValue();
+        return false;
 
       // FADD is commutable. Try to commute the operands
       // and then test again.
       std::swap(Op0, Op1);
       if (InVec0 != Op0.getOperand(0))
-        return SDValue();
+        return false;
     }
 
     if (InVec1 != Op1.getOperand(0))
-      return SDValue();
+      return false;
 
     // Update the pair of expected opcodes.
     std::swap(ExpectedOpcode, NextExpectedOpcode);
   }
 
   // Don't try to fold this build_vector into an ADDSUB if the inputs are undef.
-  if (AddFound && SubFound && !InVec0.isUndef() && !InVec1.isUndef())
-    return DAG.getNode(X86ISD::ADDSUB, DL, VT, InVec0, InVec1);
+  if (!AddFound || !SubFound || InVec0.isUndef() || InVec1.isUndef())
+    return false;
 
-  return SDValue();
+  Opnd0 = InVec0;
+  Opnd1 = InVec1;
+  return true;
+}
+
+/// Returns true if is possible to fold MUL and an idiom that has already been
+/// recognized as ADDSUB(\p Opnd0, \p Opnd1) into FMADDSUB(x, y, \p Opnd1).
+/// If (and only if) true is returned, the operands of FMADDSUB are written to
+/// parameters \p Opnd0, \p Opnd1, \p Opnd2.
+///
+/// Prior to calling this function it should be known that there is some
+/// SDNode that potentially can be replaced with an X86ISD::ADDSUB operation
+/// using \p Opnd0 and \p Opnd1 as operands. Also, this method is called
+/// before replacement of such SDNode with ADDSUB operation. Thus the number
+/// of \p Opnd0 uses is expected to be equal to 2.
+/// For example, this function may be called for the following IR:
+///    %AB = fmul fast <2 x double> %A, %B
+///    %Sub = fsub fast <2 x double> %AB, %C
+///    %Add = fadd fast <2 x double> %AB, %C
+///    %Addsub = shufflevector <2 x double> %Sub, <2 x double> %Add,
+///                            <2 x i32> <i32 0, i32 3>
+/// There is a def for %Addsub here, which potentially can be replaced by
+/// X86ISD::ADDSUB operation:
+///    %Addsub = X86ISD::ADDSUB %AB, %C
+/// and such ADDSUB can further be replaced with FMADDSUB:
+///    %Addsub = FMADDSUB %A, %B, %C.
+///
+/// The main reason why this method is called before the replacement of the
+/// recognized ADDSUB idiom with ADDSUB operation is that such replacement
+/// is illegal sometimes. E.g. 512-bit ADDSUB is not available, while 512-bit
+/// FMADDSUB is.
+static bool isFMAddSub(const X86Subtarget &Subtarget, SelectionDAG &DAG,
+                       SDValue &Opnd0, SDValue &Opnd1, SDValue &Opnd2) {
+  if (Opnd0.getOpcode() != ISD::FMUL || Opnd0->use_size() != 2 ||
+      !Subtarget.hasAnyFMA())
+    return false;
+
+  // FIXME: These checks must match the similar ones in
+  // DAGCombiner::visitFADDForFMACombine. It would be good to have one
+  // function that would answer if it is Ok to fuse MUL + ADD to FMADD
+  // or MUL + ADDSUB to FMADDSUB.
+  const TargetOptions &Options = DAG.getTarget().Options;
+  bool AllowFusion =
+      (Options.AllowFPOpFusion == FPOpFusion::Fast || Options.UnsafeFPMath);
+  if (!AllowFusion)
+    return false;
+
+  Opnd2 = Opnd1;
+  Opnd1 = Opnd0.getOperand(1);
+  Opnd0 = Opnd0.getOperand(0);
+
+  return true;
+}
+
+/// Try to fold a build_vector that performs an 'addsub' or 'fmaddsub' operation
+/// accordingly to X86ISD::ADDSUB or X86ISD::FMADDSUB node.
+static SDValue lowerToAddSubOrFMAddSub(const BuildVectorSDNode *BV,
+                                       const X86Subtarget &Subtarget,
+                                       SelectionDAG &DAG) {
+  SDValue Opnd0, Opnd1;
+  if (!isAddSub(BV, Subtarget, DAG, Opnd0, Opnd1))
+    return SDValue();
+
+  MVT VT = BV->getSimpleValueType(0);
+  SDLoc DL(BV);
+
+  // Try to generate X86ISD::FMADDSUB node here.
+  SDValue Opnd2;
+  if (isFMAddSub(Subtarget, DAG, Opnd0, Opnd1, Opnd2))
+    return DAG.getNode(X86ISD::FMADDSUB, DL, VT, Opnd0, Opnd1, Opnd2);
+
+  // Do not generate X86ISD::ADDSUB node for 512-bit types even though
+  // the ADDSUB idiom has been successfully recognized. There are no known
+  // X86 targets with 512-bit ADDSUB instructions!
+  // 512-bit ADDSUB idiom recognition was needed only as part of FMADDSUB idiom
+  // recognition.
+  if (VT.is512BitVector())
+    return SDValue();
+
+  return DAG.getNode(X86ISD::ADDSUB, DL, VT, Opnd0, Opnd1);
 }
 
 /// Lower BUILD_VECTOR to a horizontal add/sub operation if possible.
@@ -7290,7 +7370,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     return VectorConstant;
 
   BuildVectorSDNode *BV = cast<BuildVectorSDNode>(Op.getNode());
-  if (SDValue AddSub = LowerToAddSub(BV, Subtarget, DAG))
+  if (SDValue AddSub = lowerToAddSubOrFMAddSub(BV, Subtarget, DAG))
     return AddSub;
   if (SDValue HorizontalOp = LowerToHorizontalOp(BV, Subtarget, DAG))
     return HorizontalOp;
@@ -27784,29 +27864,32 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// \brief Try to combine a shuffle into a target-specific add-sub node.
+/// Returns true iff the shuffle node \p N can be replaced with ADDSUB
+/// operation. If true is returned then the operands of ADDSUB operation
+/// are written to the parameters \p Opnd0 and \p Opnd1.
 ///
-/// We combine this directly on the abstract vector shuffle nodes so it is
-/// easier to generically match. We also insert dummy vector shuffle nodes for
-/// the operands which explicitly discard the lanes which are unused by this
-/// operation to try to flow through the rest of the combiner the fact that
-/// they're unused.
-static SDValue combineShuffleToAddSub(SDNode *N, const X86Subtarget &Subtarget,
-                                      SelectionDAG &DAG) {
-  SDLoc DL(N);
+/// We combine shuffle to ADDSUB directly on the abstract vector shuffle nodes
+/// so it is easier to generically match. We also insert dummy vector shuffle
+/// nodes for the operands which explicitly discard the lanes which are unused
+/// by this operation to try to flow through the rest of the combiner
+/// the fact that they're unused.
+static bool isAddSub(SDNode *N, const X86Subtarget &Subtarget,
+                     SDValue &Opnd0, SDValue &Opnd1) {
+
   EVT VT = N->getValueType(0);
   if ((!Subtarget.hasSSE3() || (VT != MVT::v4f32 && VT != MVT::v2f64)) &&
-      (!Subtarget.hasAVX() || (VT != MVT::v8f32 && VT != MVT::v4f64)))
-    return SDValue();
+      (!Subtarget.hasAVX() || (VT != MVT::v8f32 && VT != MVT::v4f64)) &&
+      (!Subtarget.hasAVX512() || (VT != MVT::v16f32 && VT != MVT::v8f64)))
+    return false;
 
   // We only handle target-independent shuffles.
   // FIXME: It would be easy and harmless to use the target shuffle mask
   // extraction tool to support more.
   if (N->getOpcode() != ISD::VECTOR_SHUFFLE)
-    return SDValue();
+    return false;
 
   ArrayRef<int> OrigMask = cast<ShuffleVectorSDNode>(N)->getMask();
-  SmallVector<int, 8> Mask(OrigMask.begin(), OrigMask.end());
+  SmallVector<int, 16> Mask(OrigMask.begin(), OrigMask.end());
 
   SDValue V1 = N->getOperand(0);
   SDValue V2 = N->getOperand(1);
@@ -27817,27 +27900,57 @@ static SDValue combineShuffleToAddSub(SDNode *N, const X86Subtarget &Subtarget,
     ShuffleVectorSDNode::commuteMask(Mask);
     std::swap(V1, V2);
   } else if (V1.getOpcode() != ISD::FSUB || V2.getOpcode() != ISD::FADD)
-    return SDValue();
+    return false;
 
   // If there are other uses of these operations we can't fold them.
   if (!V1->hasOneUse() || !V2->hasOneUse())
-    return SDValue();
+    return false;
 
   // Ensure that both operations have the same operands. Note that we can
   // commute the FADD operands.
   SDValue LHS = V1->getOperand(0), RHS = V1->getOperand(1);
   if ((V2->getOperand(0) != LHS || V2->getOperand(1) != RHS) &&
       (V2->getOperand(0) != RHS || V2->getOperand(1) != LHS))
-    return SDValue();
+    return false;
 
   // We're looking for blends between FADD and FSUB nodes. We insist on these
   // nodes being lined up in a specific expected pattern.
   if (!(isShuffleEquivalent(V1, V2, Mask, {0, 3}) ||
         isShuffleEquivalent(V1, V2, Mask, {0, 5, 2, 7}) ||
-        isShuffleEquivalent(V1, V2, Mask, {0, 9, 2, 11, 4, 13, 6, 15})))
+        isShuffleEquivalent(V1, V2, Mask, {0, 9, 2, 11, 4, 13, 6, 15}) ||
+        isShuffleEquivalent(V1, V2, Mask, {0, 17, 2, 19, 4, 21, 6, 23,
+                                           8, 25, 10, 27, 12, 29, 14, 31})))
+    return false;
+
+  Opnd0 = LHS;
+  Opnd1 = RHS;
+  return true;
+}
+
+/// \brief Try to combine a shuffle into a target-specific add-sub or
+/// mul-add-sub node.
+static SDValue combineShuffleToAddSubOrFMAddSub(SDNode *N,
+                                                const X86Subtarget &Subtarget,
+                                                SelectionDAG &DAG) {
+  SDValue Opnd0, Opnd1;
+  if (!isAddSub(N, Subtarget, Opnd0, Opnd1))
     return SDValue();
 
-  return DAG.getNode(X86ISD::ADDSUB, DL, VT, LHS, RHS);
+  EVT VT = N->getValueType(0);
+  SDLoc DL(N);
+
+  // Try to generate X86ISD::FMADDSUB node here.
+  SDValue Opnd2;
+  if (isFMAddSub(Subtarget, DAG, Opnd0, Opnd1, Opnd2))
+    return DAG.getNode(X86ISD::FMADDSUB, DL, VT, Opnd0, Opnd1, Opnd2);
+
+  // Do not generate X86ISD::ADDSUB node for 512-bit types even though
+  // the ADDSUB idiom has been successfully recognized. There are no known
+  // X86 targets with 512-bit ADDSUB instructions!
+  if (VT.is512BitVector())
+    return SDValue();
+
+  return DAG.getNode(X86ISD::ADDSUB, DL, VT, Opnd0, Opnd1);
 }
 
 // We are looking for a shuffle where both sources are concatenated with undef
@@ -27899,7 +28012,7 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
   // If we have legalized the vector types, look for blends of FADD and FSUB
   // nodes that we can fuse into an ADDSUB node.
   if (TLI.isTypeLegal(VT))
-    if (SDValue AddSub = combineShuffleToAddSub(N, Subtarget, DAG))
+    if (SDValue AddSub = combineShuffleToAddSubOrFMAddSub(N, Subtarget, DAG))
       return AddSub;
 
   // During Type Legalization, when promoting illegal vector types,
