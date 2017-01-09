@@ -902,7 +902,7 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       llvm_unreachable("Can't mangle Objective-C selector names here!");
 
     case DeclarationName::CXXConstructorName:
-      if (Structor == getStructor(ND)) {
+      if (isStructorDecl(ND)) {
         if (StructorType == Ctor_CopyingClosure) {
           Out << "?_O";
           return;
