@@ -61,3 +61,22 @@ struct __declspec(dllexport) NestedOuter {
 
 // CHECK-LABEL: define weak_odr dllexport x86_thiscallcc void @"\01??_FNestedOuter@@QAEXXZ"({{.*}}) {{#[0-9]+}} comdat
 // CHECK-LABEL: define weak_odr dllexport x86_thiscallcc void @"\01??_FNestedInner@NestedOuter@@QAEXXZ"({{.*}}) {{#[0-9]+}} comdat
+
+struct HasDtor {
+  ~HasDtor();
+  int o;
+};
+struct HasImplicitDtor1 { HasDtor o; };
+struct HasImplicitDtor2 { HasDtor o; };
+struct __declspec(dllexport) CtorClosureInline {
+  CtorClosureInline(const HasImplicitDtor1 &v = {}) {}
+};
+struct __declspec(dllexport) CtorClosureOutOfLine {
+  CtorClosureOutOfLine(const HasImplicitDtor2 &v = {});
+};
+CtorClosureOutOfLine::CtorClosureOutOfLine(const HasImplicitDtor2 &v) {}
+
+// CHECK-LABEL: define weak_odr dllexport x86_thiscallcc void @"\01??_FCtorClosureInline@@QAEXXZ"
+// CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??1HasImplicitDtor1@@QAE@XZ"
+// CHECK-LABEL: define weak_odr dllexport x86_thiscallcc void @"\01??_FCtorClosureOutOfLine@@QAEXXZ"
+// CHECK-LABEL: define linkonce_odr x86_thiscallcc void @"\01??1HasImplicitDtor2@@QAE@XZ"
