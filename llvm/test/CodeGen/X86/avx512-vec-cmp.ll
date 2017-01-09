@@ -122,8 +122,8 @@ define <8 x i32> @test9(<8 x i32> %x, <8 x i32> %y) nounwind {
 ; KNL-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
 ; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<def>
 ; KNL-NEXT:    vpcmpeqd %zmm1, %zmm0, %k1
-; KNL-NEXT:    vpblendmd %zmm0, %zmm1, %zmm0 {%k1}
-; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
+; KNL-NEXT:    vmovdqa32 %zmm0, %zmm1 {%k1}
+; KNL-NEXT:    vmovdqa %ymm1, %ymm0
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test9:
@@ -143,8 +143,8 @@ define <8 x float> @test10(<8 x float> %x, <8 x float> %y) nounwind {
 ; KNL-NEXT:    ## kill: %YMM1<def> %YMM1<kill> %ZMM1<def>
 ; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<def>
 ; KNL-NEXT:    vcmpeqps %zmm1, %zmm0, %k1
-; KNL-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1}
-; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
+; KNL-NEXT:    vmovaps %zmm0, %zmm1 {%k1}
+; KNL-NEXT:    vmovaps %ymm1, %ymm0
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test10:
@@ -1020,8 +1020,8 @@ define <8 x float> @test35(<8 x float> %x, <8 x float> %x1, <8 x float>* %yp) no
 ; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<def>
 ; KNL-NEXT:    vmovups (%rdi), %ymm2
 ; KNL-NEXT:    vcmpltps %zmm2, %zmm0, %k1
-; KNL-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1}
-; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
+; KNL-NEXT:    vmovaps %zmm0, %zmm1 {%k1}
+; KNL-NEXT:    vmovaps %ymm1, %ymm0
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test35:
@@ -1140,8 +1140,8 @@ define <8  x float> @test41(<8  x float> %x, <8  x float> %x1, float* %ptr) noun
 ; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<def>
 ; KNL-NEXT:    vbroadcastss (%rdi), %ymm2
 ; KNL-NEXT:    vcmpltps %zmm2, %zmm0, %k1
-; KNL-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1}
-; KNL-NEXT:    ## kill: %YMM0<def> %YMM0<kill> %ZMM0<kill>
+; KNL-NEXT:    vmovaps %zmm0, %zmm1 {%k1}
+; KNL-NEXT:    vmovaps %ymm1, %ymm0
 ; KNL-NEXT:    retq
 ;
 ; SKX-LABEL: test41:
