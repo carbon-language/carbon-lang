@@ -2893,14 +2893,13 @@ static unsigned getPackIndexForParam(Sema &S,
 ///
 /// \param OriginalCallArgs If non-NULL, the original call arguments against
 /// which the deduced argument types should be compared.
-Sema::TemplateDeductionResult
-Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
-                       SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                                      unsigned NumExplicitlySpecified,
-                                      FunctionDecl *&Specialization,
-                                      TemplateDeductionInfo &Info,
-        SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs,
-                                      bool PartialOverloading) {
+Sema::TemplateDeductionResult Sema::FinishTemplateArgumentDeduction(
+    FunctionTemplateDecl *FunctionTemplate,
+    SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+    unsigned NumExplicitlySpecified, FunctionDecl *&Specialization,
+    TemplateDeductionInfo &Info,
+    SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs,
+    bool PartialOverloading, llvm::function_ref<bool()> CheckNonDependent) {
   // Unevaluated SFINAE context.
   EnterExpressionEvaluationContext Unevaluated(*this, Sema::Unevaluated);
   SFINAETrap Trap(*this);
@@ -2926,6 +2925,18 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
           CurrentInstantiationScope, NumExplicitlySpecified,
           PartialOverloading))
     return Result;
+
+  // C++ [temp.deduct.call]p10: [DR1391]
+  //   If deduction succeeds for all parameters that contain
+  //   template-parameters that participate in template argument deduction,
+  //   and all template arguments are explicitly specified, deduced, or
+  //   obtained from default template arguments, remaining parameters are then
+  //   compared with the corresponding arguments. For each remaining parameter
+  //   P with a type that was non-dependent before substitution of any
+  //   explicitly-specified template arguments, if the corresponding argument
+  //   A cannot be implicitly converted to P, deduction fails.
+  if (CheckNonDependent())
+    return TDK_NonDependentConversionFailure;
 
   // Form the template argument list from the deduced template arguments.
   TemplateArgumentList *DeducedArgumentList
@@ -3373,12 +3384,19 @@ static Sema::TemplateDeductionResult DeduceTemplateArgumentsFromCallArgument(
 /// \param Info the argument will be updated to provide additional information
 /// about template argument deduction.
 ///
+/// \param CheckNonDependent A callback to invoke to check conversions for
+/// non-dependent parameters, between deduction and substitution, per DR1391.
+/// If this returns true, substitution will be skipped and we return
+/// TDK_NonDependentConversionFailure. The callback is passed the parameter
+/// types (after substituting explicit template arguments).
+///
 /// \returns the result of template argument deduction.
 Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
     FunctionTemplateDecl *FunctionTemplate,
     TemplateArgumentListInfo *ExplicitTemplateArgs, ArrayRef<Expr *> Args,
     FunctionDecl *&Specialization, TemplateDeductionInfo &Info,
-    bool PartialOverloading) {
+    bool PartialOverloading,
+    llvm::function_ref<bool(ArrayRef<QualType>)> CheckNonDependent) {
   if (FunctionTemplate->isInvalidDecl())
     return TDK_Invalid;
 
@@ -3497,10 +3515,10 @@ Sema::TemplateDeductionResult Sema::DeduceTemplateArguments(
     break;
   }
 
-  return FinishTemplateArgumentDeduction(FunctionTemplate, Deduced,
-                                         NumExplicitlySpecified, Specialization,
-                                         Info, &OriginalCallArgs,
-                                         PartialOverloading);
+  return FinishTemplateArgumentDeduction(
+      FunctionTemplate, Deduced, NumExplicitlySpecified, Specialization, Info,
+      &OriginalCallArgs, PartialOverloading,
+      [&]() { return CheckNonDependent(ParamTypes); });
 }
 
 QualType Sema::adjustCCAndNoReturn(QualType ArgFunctionType,

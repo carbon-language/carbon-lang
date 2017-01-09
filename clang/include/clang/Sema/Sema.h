@@ -120,6 +120,7 @@ namespace clang {
   class FunctionProtoType;
   class FunctionTemplateDecl;
   class ImplicitConversionSequence;
+  typedef MutableArrayRef<ImplicitConversionSequence> ConversionSequenceList;
   class InitListExpr;
   class InitializationKind;
   class InitializationSequence;
@@ -2518,10 +2519,11 @@ public:
   void AddOverloadCandidate(FunctionDecl *Function,
                             DeclAccessPair FoundDecl,
                             ArrayRef<Expr *> Args,
-                            OverloadCandidateSet& CandidateSet,
+                            OverloadCandidateSet &CandidateSet,
                             bool SuppressUserConversions = false,
                             bool PartialOverloading = false,
-                            bool AllowExplicit = false);
+                            bool AllowExplicit = false,
+                            ConversionSequenceList EarlyConversions = None);
   void AddFunctionCandidates(const UnresolvedSetImpl &Functions,
                       ArrayRef<Expr *> Args,
                       OverloadCandidateSet &CandidateSet,
@@ -2541,7 +2543,8 @@ public:
                           ArrayRef<Expr *> Args,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversions = false,
-                          bool PartialOverloading = false);
+                          bool PartialOverloading = false,
+                          ConversionSequenceList EarlyConversions = None);
   void AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
                                   DeclAccessPair FoundDecl,
                                   CXXRecordDecl *ActingContext,
@@ -2559,6 +2562,16 @@ public:
                                     OverloadCandidateSet& CandidateSet,
                                     bool SuppressUserConversions = false,
                                     bool PartialOverloading = false);
+  bool CheckNonDependentConversions(FunctionTemplateDecl *FunctionTemplate,
+                                    ArrayRef<QualType> ParamTypes,
+                                    ArrayRef<Expr *> Args,
+                                    OverloadCandidateSet &CandidateSet,
+                                    ConversionSequenceList &Conversions,
+                                    bool SuppressUserConversions,
+                                    CXXRecordDecl *ActingContext = nullptr,
+                                    QualType ObjectType = QualType(),
+                                    Expr::Classification
+                                        ObjectClassification = {});
   void AddConversionCandidate(CXXConversionDecl *Conversion,
                               DeclAccessPair FoundDecl,
                               CXXRecordDecl *ActingContext,
@@ -6591,6 +6604,8 @@ public:
     /// \brief The explicitly-specified template arguments were not valid
     /// template arguments for the given template.
     TDK_InvalidExplicitArguments,
+    /// \brief Checking non-dependent argument conversions failed.
+    TDK_NonDependentConversionFailure,
     /// \brief Deduction failed; that's all we know.
     TDK_MiscellaneousDeductionFailure,
     /// \brief CUDA Target attributes do not match.
@@ -6629,22 +6644,21 @@ public:
     QualType OriginalArgType;
   };
 
-  TemplateDeductionResult
-  FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
-                      SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                                  unsigned NumExplicitlySpecified,
-                                  FunctionDecl *&Specialization,
-                                  sema::TemplateDeductionInfo &Info,
-           SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs = nullptr,
-                                  bool PartialOverloading = false);
+  TemplateDeductionResult FinishTemplateArgumentDeduction(
+      FunctionTemplateDecl *FunctionTemplate,
+      SmallVectorImpl<DeducedTemplateArgument> &Deduced,
+      unsigned NumExplicitlySpecified, FunctionDecl *&Specialization,
+      sema::TemplateDeductionInfo &Info,
+      SmallVectorImpl<OriginalCallArg> const *OriginalCallArgs = nullptr,
+      bool PartialOverloading = false,
+      llvm::function_ref<bool()> CheckNonDependent = []{ return false; });
 
-  TemplateDeductionResult
-  DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
-                          TemplateArgumentListInfo *ExplicitTemplateArgs,
-                          ArrayRef<Expr *> Args,
-                          FunctionDecl *&Specialization,
-                          sema::TemplateDeductionInfo &Info,
-                          bool PartialOverloading = false);
+  TemplateDeductionResult DeduceTemplateArguments(
+      FunctionTemplateDecl *FunctionTemplate,
+      TemplateArgumentListInfo *ExplicitTemplateArgs, ArrayRef<Expr *> Args,
+      FunctionDecl *&Specialization, sema::TemplateDeductionInfo &Info,
+      bool PartialOverloading,
+      llvm::function_ref<bool(ArrayRef<QualType>)> CheckNonDependent);
 
   TemplateDeductionResult
   DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
