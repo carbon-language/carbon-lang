@@ -1,8 +1,10 @@
 # Check that the linker use a value of _gp symbol defined
 # in a linker script to calculate GOT relocations.
 
-# FIXME: This test is xfailed because it depends on D27276 patch
-# that enables absolute symbols redefinition by a linker's script.
+# FIXME: This test is xfailed because there is currently a bug
+# that causes symbols defined by linker scripts to be put in the
+# wrong sections.  In particular, `_gp = . + 0x100` ends up in
+# `.text` when it should be in `*ABS*`.
 # XFAIL: *
 
 # RUN: llvm-mc -filetype=obj -triple=mips-unknown-linux %s -o %t.o
