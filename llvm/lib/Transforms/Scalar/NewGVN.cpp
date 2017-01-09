@@ -714,6 +714,15 @@ const StoreExpression *NewGVN::createStoreExpression(StoreInst *SI,
   return E;
 }
 
+// Utility function to check whether the congruence class has a member other
+// than the given instruction.
+bool hasMemberOtherThanUs(const CongruenceClass *CC, Instruction *I) {
+  // Either it has more than one member, in which case it must contain something
+  // other than us (because it's indexed by value), or if it only has one member
+  // right now, that member should not be us.
+  return CC->Members.size() > 1 || CC->Members.count(I) == 0;
+}
+
 const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I,
                                                          const BasicBlock *B) {
   // Unlike loads, we never try to eliminate stores, so we do not check if they
@@ -729,8 +738,12 @@ const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I,
         cast<MemoryDef>(StoreAccess)->getDefiningAccess());
     const Expression *OldStore = createStoreExpression(SI, StoreRHS, B);
     CongruenceClass *CC = ExpressionToClass.lookup(OldStore);
+    // Basically, check if the congruence class the store is in is defined by a
+    // store that isn't us, and has the same value.  MemorySSA takes care of
+    // ensuring the store has the same memory state as us already.
     if (CC && CC->DefiningExpr && isa<StoreExpression>(CC->DefiningExpr) &&
-        CC->RepLeader == lookupOperandLeader(SI->getValueOperand(), SI, B))
+        CC->RepLeader == lookupOperandLeader(SI->getValueOperand(), SI, B) &&
+        hasMemberOtherThanUs(CC, I))
       return createStoreExpression(SI, StoreRHS, B);
   }
 
