@@ -1635,10 +1635,12 @@ static void unlinkAsync(StringRef Path) {
   // Path as a new file. If we do that in a different thread, the new
   // thread can remove the new file.
   SmallString<128> TempPath;
-  if (auto EC = sys::fs::createUniqueFile(Path + "tmp%%%%%%%%", TempPath))
-    fatal(EC, "createUniqueFile failed");
-  if (auto EC = sys::fs::rename(Path, TempPath))
-    fatal(EC, "rename failed");
+  if (sys::fs::createUniqueFile(Path + "tmp%%%%%%%%", TempPath))
+    return;
+  if (sys::fs::rename(Path, TempPath)) {
+    sys::fs::remove(TempPath);
+    return;
+  }
 
   // Remove TempPath in background.
   std::thread([=] { ::remove(TempPath.str().str().c_str()); }).detach();
