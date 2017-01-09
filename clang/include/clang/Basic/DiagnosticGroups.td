@@ -495,6 +495,7 @@ def UnusedPropertyIvar :  DiagGroup<"unused-property-ivar">;
 def UnusedGetterReturnValue : DiagGroup<"unused-getter-return-value">;
 def UsedButMarkedUnused : DiagGroup<"used-but-marked-unused">;
 def UserDefinedLiterals : DiagGroup<"user-defined-literals">;
+def UserDefinedWarnings : DiagGroup<"user-defined-warnings">;
 def Reorder : DiagGroup<"reorder">;
 def UndeclaredSelector : DiagGroup<"undeclared-selector">;
 def ImplicitAtomic : DiagGroup<"implicit-atomic-properties">;
@@ -683,7 +684,8 @@ def Most : DiagGroup<"most", [
     OverloadedVirtual,
     PrivateExtern,
     SelTypeCast,
-    ExternCCompat
+    ExternCCompat,
+    UserDefinedWarnings
  ]>;
 
 // Thread Safety warnings 

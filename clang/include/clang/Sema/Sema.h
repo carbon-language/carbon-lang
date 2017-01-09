@@ -2531,14 +2531,14 @@ public:
   void AddMethodCandidate(DeclAccessPair FoundDecl,
                           QualType ObjectType,
                           Expr::Classification ObjectClassification,
-                          ArrayRef<Expr *> Args,
+                          Expr *ThisArg, ArrayRef<Expr *> Args,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversion = false);
   void AddMethodCandidate(CXXMethodDecl *Method,
                           DeclAccessPair FoundDecl,
                           CXXRecordDecl *ActingContext, QualType ObjectType,
                           Expr::Classification ObjectClassification,
-                          ArrayRef<Expr *> Args,
+                          Expr *ThisArg, ArrayRef<Expr *> Args,
                           OverloadCandidateSet& CandidateSet,
                           bool SuppressUserConversions = false,
                           bool PartialOverloading = false);
@@ -2548,6 +2548,7 @@ public:
                                  TemplateArgumentListInfo *ExplicitTemplateArgs,
                                   QualType ObjectType,
                                   Expr::Classification ObjectClassification,
+                                  Expr *ThisArg,
                                   ArrayRef<Expr *> Args,
                                   OverloadCandidateSet& CandidateSet,
                                   bool SuppressUserConversions = false,
@@ -2610,6 +2611,38 @@ public:
   /// failing attribute, or NULL if they were all successful.
   EnableIfAttr *CheckEnableIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
                               bool MissingImplicitThis = false);
+
+  /// Check the diagnose_if attributes on the given function. Returns the
+  /// first succesful fatal attribute, or null if calling Function(Args) isn't
+  /// an error.
+  ///
+  /// This only considers ArgDependent DiagnoseIfAttrs.
+  ///
+  /// This will populate Nonfatal with all non-error DiagnoseIfAttrs that
+  /// succeed. If this function returns non-null, the contents of Nonfatal are
+  /// unspecified.
+  DiagnoseIfAttr *
+  checkArgDependentDiagnoseIf(FunctionDecl *Function, ArrayRef<Expr *> Args,
+                              SmallVectorImpl<DiagnoseIfAttr *> &Nonfatal,
+                              bool MissingImplicitThis = false,
+                              Expr *ThisArg = nullptr);
+
+  /// Check the diagnose_if expressions on the given function. Returns the
+  /// first succesful fatal attribute, or null if using Function isn't
+  /// an error.
+  ///
+  /// This ignores all ArgDependent DiagnoseIfAttrs.
+  ///
+  /// This will populate Nonfatal with all non-error DiagnoseIfAttrs that
+  /// succeed. If this function returns non-null, the contents of Nonfatal are
+  /// unspecified.
+  DiagnoseIfAttr *
+  checkArgIndependentDiagnoseIf(FunctionDecl *Function,
+                                SmallVectorImpl<DiagnoseIfAttr *> &Nonfatal);
+
+  /// Emits the diagnostic contained in the given DiagnoseIfAttr at Loc. Also
+  /// emits a note about the location of said attribute.
+  void emitDiagnoseIfDiagnostic(SourceLocation Loc, const DiagnoseIfAttr *DIA);
 
   /// Returns whether the given function's address can be taken or not,
   /// optionally emitting a diagnostic if the address can't be taken.

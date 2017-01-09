@@ -10410,9 +10410,24 @@ bool Expr::isCXX11ConstantExpr(const ASTContext &Ctx, APValue *Result,
 
 bool Expr::EvaluateWithSubstitution(APValue &Value, ASTContext &Ctx,
                                     const FunctionDecl *Callee,
-                                    ArrayRef<const Expr*> Args) const {
+                                    ArrayRef<const Expr*> Args,
+                                    const Expr *This) const {
   Expr::EvalStatus Status;
   EvalInfo Info(Ctx, Status, EvalInfo::EM_ConstantExpressionUnevaluated);
+
+  LValue ThisVal;
+  const LValue *ThisPtr = nullptr;
+  if (This) {
+#ifndef NDEBUG
+    auto *MD = dyn_cast<CXXMethodDecl>(Callee);
+    assert(MD && "Don't provide `this` for non-methods.");
+    assert(!MD->isStatic() && "Don't provide `this` for static methods.");
+#endif
+    if (EvaluateObjectArgument(Info, This, ThisVal))
+      ThisPtr = &ThisVal;
+    if (Info.EvalStatus.HasSideEffects)
+      return false;
+  }
 
   ArgVector ArgValues(Args.size());
   for (ArrayRef<const Expr*>::iterator I = Args.begin(), E = Args.end();
@@ -10426,7 +10441,7 @@ bool Expr::EvaluateWithSubstitution(APValue &Value, ASTContext &Ctx,
   }
 
   // Build fake call to Callee.
-  CallStackFrame Frame(Info, Callee->getLocation(), Callee, /*This*/nullptr,
+  CallStackFrame Frame(Info, Callee->getLocation(), Callee, ThisPtr,
                        ArgValues.data());
   return Evaluate(Value, Info, this) && !Info.EvalStatus.HasSideEffects;
 }
