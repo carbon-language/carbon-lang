@@ -509,30 +509,10 @@ define <16 x i8> @var_shift_v16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ;
 ; AVX512-LABEL: var_shift_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vpsllw $5, %xmm1, %xmm1
-; AVX512-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15]
-; AVX512-NEXT:    vpunpckhbw {{.*#+}} xmm3 = xmm0[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
-; AVX512-NEXT:    vpsraw $4, %xmm3, %xmm4
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm3
-; AVX512-NEXT:    vpsraw $2, %xmm3, %xmm4
-; AVX512-NEXT:    vpaddw %xmm2, %xmm2, %xmm2
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm3
-; AVX512-NEXT:    vpsraw $1, %xmm3, %xmm4
-; AVX512-NEXT:    vpaddw %xmm2, %xmm2, %xmm2
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm2
-; AVX512-NEXT:    vpsrlw $8, %xmm2, %xmm2
-; AVX512-NEXT:    vpunpcklbw {{.*#+}} xmm1 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
-; AVX512-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
-; AVX512-NEXT:    vpsraw $4, %xmm0, %xmm3
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsraw $2, %xmm0, %xmm3
-; AVX512-NEXT:    vpaddw %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsraw $1, %xmm0, %xmm3
-; AVX512-NEXT:    vpaddw %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsrlw $8, %xmm0, %xmm0
-; AVX512-NEXT:    vpackuswb %xmm2, %xmm0, %xmm0
+; AVX512-NEXT:    vpmovzxbd {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero,xmm1[8],zero,zero,zero,xmm1[9],zero,zero,zero,xmm1[10],zero,zero,zero,xmm1[11],zero,zero,zero,xmm1[12],zero,zero,zero,xmm1[13],zero,zero,zero,xmm1[14],zero,zero,zero,xmm1[15],zero,zero,zero
+; AVX512-NEXT:    vpmovsxbd %xmm0, %zmm0
+; AVX512-NEXT:    vpsravd %zmm1, %zmm0, %zmm0
+; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512-NEXT:    retq
 ;
 ; X32-SSE-LABEL: var_shift_v16i8:
@@ -921,30 +901,10 @@ define <16 x i8> @splatvar_shift_v16i8(<16 x i8> %a, <16 x i8> %b) nounwind {
 ; AVX512-LABEL: splatvar_shift_v16i8:
 ; AVX512:       # BB#0:
 ; AVX512-NEXT:    vpbroadcastb %xmm1, %xmm1
-; AVX512-NEXT:    vpsllw $5, %xmm1, %xmm1
-; AVX512-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15]
-; AVX512-NEXT:    vpunpckhbw {{.*#+}} xmm3 = xmm0[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
-; AVX512-NEXT:    vpsraw $4, %xmm3, %xmm4
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm3
-; AVX512-NEXT:    vpsraw $2, %xmm3, %xmm4
-; AVX512-NEXT:    vpaddw %xmm2, %xmm2, %xmm2
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm3
-; AVX512-NEXT:    vpsraw $1, %xmm3, %xmm4
-; AVX512-NEXT:    vpaddw %xmm2, %xmm2, %xmm2
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm2
-; AVX512-NEXT:    vpsrlw $8, %xmm2, %xmm2
-; AVX512-NEXT:    vpunpcklbw {{.*#+}} xmm1 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
-; AVX512-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
-; AVX512-NEXT:    vpsraw $4, %xmm0, %xmm3
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsraw $2, %xmm0, %xmm3
-; AVX512-NEXT:    vpaddw %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsraw $1, %xmm0, %xmm3
-; AVX512-NEXT:    vpaddw %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsrlw $8, %xmm0, %xmm0
-; AVX512-NEXT:    vpackuswb %xmm2, %xmm0, %xmm0
+; AVX512-NEXT:    vpmovsxbd %xmm0, %zmm0
+; AVX512-NEXT:    vpmovzxbd {{.*#+}} zmm1 = xmm1[0],zero,zero,zero,xmm1[1],zero,zero,zero,xmm1[2],zero,zero,zero,xmm1[3],zero,zero,zero,xmm1[4],zero,zero,zero,xmm1[5],zero,zero,zero,xmm1[6],zero,zero,zero,xmm1[7],zero,zero,zero,xmm1[8],zero,zero,zero,xmm1[9],zero,zero,zero,xmm1[10],zero,zero,zero,xmm1[11],zero,zero,zero,xmm1[12],zero,zero,zero,xmm1[13],zero,zero,zero,xmm1[14],zero,zero,zero,xmm1[15],zero,zero,zero
+; AVX512-NEXT:    vpsravd %zmm1, %zmm0, %zmm0
+; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512-NEXT:    retq
 ;
 ; X32-SSE-LABEL: splatvar_shift_v16i8:
@@ -1402,31 +1362,9 @@ define <16 x i8> @constant_shift_v16i8(<16 x i8> %a) nounwind {
 ;
 ; AVX512-LABEL: constant_shift_v16i8:
 ; AVX512:       # BB#0:
-; AVX512-NEXT:    vmovdqa {{.*#+}} xmm1 = [0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0]
-; AVX512-NEXT:    vpsllw $5, %xmm1, %xmm1
-; AVX512-NEXT:    vpunpckhbw {{.*#+}} xmm2 = xmm0[8],xmm1[8],xmm0[9],xmm1[9],xmm0[10],xmm1[10],xmm0[11],xmm1[11],xmm0[12],xmm1[12],xmm0[13],xmm1[13],xmm0[14],xmm1[14],xmm0[15],xmm1[15]
-; AVX512-NEXT:    vpunpckhbw {{.*#+}} xmm3 = xmm0[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
-; AVX512-NEXT:    vpsraw $4, %xmm3, %xmm4
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm3
-; AVX512-NEXT:    vpsraw $2, %xmm3, %xmm4
-; AVX512-NEXT:    vpaddw %xmm2, %xmm2, %xmm2
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm3
-; AVX512-NEXT:    vpsraw $1, %xmm3, %xmm4
-; AVX512-NEXT:    vpaddw %xmm2, %xmm2, %xmm2
-; AVX512-NEXT:    vpblendvb %xmm2, %xmm4, %xmm3, %xmm2
-; AVX512-NEXT:    vpsrlw $8, %xmm2, %xmm2
-; AVX512-NEXT:    vpunpcklbw {{.*#+}} xmm1 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3],xmm0[4],xmm1[4],xmm0[5],xmm1[5],xmm0[6],xmm1[6],xmm0[7],xmm1[7]
-; AVX512-NEXT:    vpunpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
-; AVX512-NEXT:    vpsraw $4, %xmm0, %xmm3
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsraw $2, %xmm0, %xmm3
-; AVX512-NEXT:    vpaddw %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsraw $1, %xmm0, %xmm3
-; AVX512-NEXT:    vpaddw %xmm1, %xmm1, %xmm1
-; AVX512-NEXT:    vpblendvb %xmm1, %xmm3, %xmm0, %xmm0
-; AVX512-NEXT:    vpsrlw $8, %xmm0, %xmm0
-; AVX512-NEXT:    vpackuswb %xmm2, %xmm0, %xmm0
+; AVX512-NEXT:    vpmovsxbd %xmm0, %zmm0
+; AVX512-NEXT:    vpsravd {{.*}}(%rip), %zmm0, %zmm0
+; AVX512-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512-NEXT:    retq
 ;
 ; X32-SSE-LABEL: constant_shift_v16i8:

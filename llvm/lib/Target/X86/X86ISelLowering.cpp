@@ -21545,6 +21545,23 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
     return DAG.getVectorShuffle(VT, dl, R02, R13, {0, 5, 2, 7});
   }
 
+  // It's worth extending once and using the vXi16/vXi32 shifts for smaller
+  // types, but without AVX512 the extra overheads to get from vXi8 to vXi32
+  // make the existing SSE solution better.
+  if ((Subtarget.hasInt256() && VT == MVT::v8i16) ||
+      (Subtarget.hasAVX512() && VT == MVT::v16i16) ||
+      (Subtarget.hasAVX512() && VT == MVT::v16i8) ||
+      (Subtarget.hasBWI() && VT == MVT::v32i8)) {
+    MVT EvtSVT = (VT == MVT::v32i8 ? MVT::i16 : MVT::i32);
+    MVT ExtVT = MVT::getVectorVT(EvtSVT, VT.getVectorNumElements());
+    unsigned ExtOpc =
+        Op.getOpcode() == ISD::SRA ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
+    R = DAG.getNode(ExtOpc, dl, ExtVT, R);
+    Amt = DAG.getNode(ISD::ANY_EXTEND, dl, ExtVT, Amt);
+    return DAG.getNode(ISD::TRUNCATE, dl, VT,
+                       DAG.getNode(Op.getOpcode(), dl, ExtVT, R, Amt));
+  }
+
   if (VT == MVT::v16i8 ||
       (VT == MVT::v32i8 && Subtarget.hasInt256() && !Subtarget.hasXOP())) {
     MVT ExtVT = MVT::getVectorVT(MVT::i16, VT.getVectorNumElements() / 2);
@@ -21651,20 +21668,6 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget &Subtarget,
           DAG.getNode(ISD::SRL, dl, ExtVT, RHi, DAG.getConstant(8, dl, ExtVT));
       return DAG.getNode(X86ISD::PACKUS, dl, VT, RLo, RHi);
     }
-  }
-
-  // It's worth extending once and using the vXi32 shifts for 16-bit types, but
-  // the extra overheads to get from v16i8 to v8i32 make the existing SSE
-  // solution better.
-  if ((Subtarget.hasInt256() && VT == MVT::v8i16) ||
-      (Subtarget.hasAVX512() && VT == MVT::v16i16)) {
-    MVT ExtVT = MVT::getVectorVT(MVT::i32, VT.getVectorNumElements());
-    unsigned ExtOpc =
-        Op.getOpcode() == ISD::SRA ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND;
-    R = DAG.getNode(ExtOpc, dl, ExtVT, R);
-    Amt = DAG.getNode(ISD::ANY_EXTEND, dl, ExtVT, Amt);
-    return DAG.getNode(ISD::TRUNCATE, dl, VT,
-                       DAG.getNode(Op.getOpcode(), dl, ExtVT, R, Amt));
   }
 
   if (Subtarget.hasInt256() && !Subtarget.hasXOP() && VT == MVT::v16i16) {
