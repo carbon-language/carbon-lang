@@ -608,8 +608,7 @@ define <8 x i1> @test_cmp_v8f64(<8 x double> %a0, <8 x double> %a1) nounwind {
 ; AVX512F-LABEL: test_cmp_v8f64:
 ; AVX512F:       # BB#0:
 ; AVX512F-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
-; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512F-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512F-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
@@ -623,8 +622,7 @@ define <8 x i1> @test_cmp_v8f64(<8 x double> %a0, <8 x double> %a1) nounwind {
 ; AVX512BW-LABEL: test_cmp_v8f64:
 ; AVX512BW:       # BB#0:
 ; AVX512BW-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
-; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512BW-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512BW-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512BW-NEXT:    retq
   %1 = fcmp ogt <8 x double> %a0, %a1
@@ -670,8 +668,7 @@ define <16 x i1> @test_cmp_v16f32(<16 x float> %a0, <16 x float> %a1) nounwind {
 ; AVX512F-LABEL: test_cmp_v16f32:
 ; AVX512F:       # BB#0:
 ; AVX512F-NEXT:    vcmpltps %zmm0, %zmm1, %k1
-; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512F-NEXT:    vmovdqa32 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
@@ -685,8 +682,7 @@ define <16 x i1> @test_cmp_v16f32(<16 x float> %a0, <16 x float> %a1) nounwind {
 ; AVX512BW-LABEL: test_cmp_v16f32:
 ; AVX512BW:       # BB#0:
 ; AVX512BW-NEXT:    vcmpltps %zmm0, %zmm1, %k1
-; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512BW-NEXT:    vmovdqa32 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512BW-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512BW-NEXT:    retq
   %1 = fcmp ogt <16 x float> %a0, %a1
@@ -783,8 +779,7 @@ define <8 x i1> @test_cmp_v8i64(<8 x i64> %a0, <8 x i64> %a1) nounwind {
 ; AVX512F-LABEL: test_cmp_v8i64:
 ; AVX512F:       # BB#0:
 ; AVX512F-NEXT:    vpcmpgtq %zmm1, %zmm0, %k1
-; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512F-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512F-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
@@ -798,8 +793,7 @@ define <8 x i1> @test_cmp_v8i64(<8 x i64> %a0, <8 x i64> %a1) nounwind {
 ; AVX512BW-LABEL: test_cmp_v8i64:
 ; AVX512BW:       # BB#0:
 ; AVX512BW-NEXT:    vpcmpgtq %zmm1, %zmm0, %k1
-; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512BW-NEXT:    vmovdqa64 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512BW-NEXT:    vpmovqw %zmm0, %xmm0
 ; AVX512BW-NEXT:    retq
   %1 = icmp sgt <8 x i64> %a0, %a1
@@ -848,8 +842,7 @@ define <16 x i1> @test_cmp_v16i32(<16 x i32> %a0, <16 x i32> %a1) nounwind {
 ; AVX512F-LABEL: test_cmp_v16i32:
 ; AVX512F:       # BB#0:
 ; AVX512F-NEXT:    vpcmpgtd %zmm1, %zmm0, %k1
-; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512F-NEXT:    vmovdqa32 %zmm0, %zmm0 {%k1} {z}
+; AVX512F-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512F-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512F-NEXT:    retq
 ;
@@ -863,8 +856,7 @@ define <16 x i1> @test_cmp_v16i32(<16 x i32> %a0, <16 x i32> %a1) nounwind {
 ; AVX512BW-LABEL: test_cmp_v16i32:
 ; AVX512BW:       # BB#0:
 ; AVX512BW-NEXT:    vpcmpgtd %zmm1, %zmm0, %k1
-; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0
-; AVX512BW-NEXT:    vmovdqa32 %zmm0, %zmm0 {%k1} {z}
+; AVX512BW-NEXT:    vpternlogd $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
 ; AVX512BW-NEXT:    vpmovdb %zmm0, %xmm0
 ; AVX512BW-NEXT:    retq
   %1 = icmp sgt <16 x i32> %a0, %a1
