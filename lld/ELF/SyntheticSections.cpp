@@ -1061,15 +1061,7 @@ static bool sortMipsSymbols(const SymbolBody *L, const SymbolBody *R) {
 }
 
 static uint8_t getSymbolBinding(SymbolBody *Body) {
-  Symbol *S = Body->symbol();
-  if (Config->Relocatable)
-    return S->Binding;
-  uint8_t Visibility = S->Visibility;
-  if (Visibility != STV_DEFAULT && Visibility != STV_PROTECTED)
-    return STB_LOCAL;
-  if (Config->NoGnuUnique && S->Binding == STB_GNU_UNIQUE)
-    return STB_GLOBAL;
-  return S->Binding;
+  return Body->symbol()->computeBinding();
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
