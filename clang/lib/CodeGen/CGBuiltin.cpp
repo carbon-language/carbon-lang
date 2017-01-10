@@ -4318,9 +4318,9 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
 
   if (BuiltinID == ARM::BI__builtin_arm_rbit) {
-    return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_rbit),
-                                               EmitScalarExpr(E->getArg(0)),
-                              "rbit");
+    llvm::Value *Arg = EmitScalarExpr(E->getArg(0));
+    return Builder.CreateCall(
+        CGM.getIntrinsic(Intrinsic::bitreverse, Arg->getType()), Arg, "rbit");
   }
 
   if (BuiltinID == ARM::BI__clear_cache) {
