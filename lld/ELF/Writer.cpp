@@ -557,30 +557,38 @@ static bool compareSectionsNonScript(const OutputSectionBase *A,
 
   // If we got here we know that both A and B are in the same PT_LOAD.
 
-  // The TLS initialization block needs to be a single contiguous block in a R/W
-  // PT_LOAD, so stick TLS sections directly before R/W sections. The TLS NOBITS
-  // sections are placed here as they don't take up virtual address space in the
-  // PT_LOAD.
   bool AIsTls = A->Flags & SHF_TLS;
   bool BIsTls = B->Flags & SHF_TLS;
-  if (AIsTls != BIsTls)
-    return AIsTls;
-
-  // The next requirement we have is to put nobits sections last. The
-  // reason is that the only thing the dynamic linker will see about
-  // them is a p_memsz that is larger than p_filesz. Seeing that it
-  // zeros the end of the PT_LOAD, so that has to correspond to the
-  // nobits sections.
   bool AIsNoBits = A->Type == SHT_NOBITS;
   bool BIsNoBits = B->Type == SHT_NOBITS;
-  if (AIsNoBits != BIsNoBits)
-    return BIsNoBits;
 
-  // We place RelRo section before plain r/w ones.
+  // The first requirement we have is to put (non-TLS) nobits sections last. The
+  // reason is that the only thing the dynamic linker will see about them is a
+  // p_memsz that is larger than p_filesz. Seeing that it zeros the end of the
+  // PT_LOAD, so that has to correspond to the nobits sections.
+  bool AIsNonTlsNoBits = AIsNoBits && !AIsTls;
+  bool BIsNonTlsNoBits = BIsNoBits && !BIsTls;
+  if (AIsNonTlsNoBits != BIsNonTlsNoBits)
+    return BIsNonTlsNoBits;
+
+  // We place nobits RelRo sections before plain r/w ones, and non-nobits RelRo
+  // sections after r/w ones, so that the RelRo sections are contiguous.
   bool AIsRelRo = isRelroSection<ELFT>(A);
   bool BIsRelRo = isRelroSection<ELFT>(B);
   if (AIsRelRo != BIsRelRo)
-    return AIsRelRo;
+    return AIsNonTlsNoBits ? AIsRelRo : BIsRelRo;
+
+  // The TLS initialization block needs to be a single contiguous block in a R/W
+  // PT_LOAD, so stick TLS sections directly before the other RelRo R/W
+  // sections. The TLS NOBITS sections are placed here as they don't take up
+  // virtual address space in the PT_LOAD.
+  if (AIsTls != BIsTls)
+    return AIsTls;
+
+  // Within the TLS initialization block, the non-nobits sections need to appear
+  // first.
+  if (AIsNoBits != BIsNoBits)
+    return BIsNoBits;
 
   // Some architectures have additional ordering restrictions for sections
   // within the same PT_LOAD.
@@ -1272,8 +1280,9 @@ void Writer<ELFT>::addPtArmExid(std::vector<PhdrEntry> &Phdrs) {
   Phdrs.push_back(ARMExidx);
 }
 
-// The first section of each PT_LOAD and the first section after PT_GNU_RELRO
-// have to be page aligned so that the dynamic linker can set the permissions.
+// The first section of each PT_LOAD, the first section in PT_GNU_RELRO and the
+// first section after PT_GNU_RELRO have to be page aligned so that the dynamic
+// linker can set the permissions.
 template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
   for (const PhdrEntry &P : Phdrs)
     if (P.p_type == PT_LOAD && P.First)
@@ -1282,6 +1291,8 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
   for (const PhdrEntry &P : Phdrs) {
     if (P.p_type != PT_GNU_RELRO)
       continue;
+    if (P.First)
+      P.First->PageAlign = true;
     // Find the first section after PT_GNU_RELRO. If it is in a PT_LOAD we
     // have to align it to a page.
     auto End = OutputSections.end();
