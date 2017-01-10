@@ -77,6 +77,7 @@ void TestAllForms() {
   const uint64_t Data8 = 0x0011223344556677ULL;
   const uint64_t Data8_2 = 0xAABBCCDDEEFF0011ULL;
   const int64_t SData = INT64_MIN;
+  const int64_t ICSData = INT64_MAX; // DW_FORM_implicit_const SData
   const uint64_t UData[] = {UINT64_MAX - 1, UINT64_MAX - 2, UINT64_MAX - 3,
                             UINT64_MAX - 4, UINT64_MAX - 5, UINT64_MAX - 6,
                             UINT64_MAX - 7, UINT64_MAX - 8, UINT64_MAX - 9};
@@ -180,6 +181,12 @@ void TestAllForms() {
   //----------------------------------------------------------------------
   const auto Attr_DW_FORM_sdata = static_cast<dwarf::Attribute>(Attr++);
   CUDie.addAttribute(Attr_DW_FORM_sdata, DW_FORM_sdata, SData);
+
+  const auto Attr_DW_FORM_implicit_const =
+    static_cast<dwarf::Attribute>(Attr++);
+  if (Version >= 5)
+    CUDie.addAttribute(Attr_DW_FORM_implicit_const, DW_FORM_implicit_const,
+                       ICSData);
 
   //----------------------------------------------------------------------
   // Test ULEB128 based forms
@@ -323,13 +330,14 @@ void TestAllForms() {
                 Attr_DW_FORM_flag_present, 0ULL),
             1ULL);
 
-  // TODO: test Attr_DW_FORM_implicit_const extraction
-
   //----------------------------------------------------------------------
   // Test SLEB128 based forms
   //----------------------------------------------------------------------
   EXPECT_EQ(DieDG.getAttributeValueAsSignedConstant(Attr_DW_FORM_sdata, 0),
             SData);
+  if (Version >= 5)
+    EXPECT_EQ(DieDG.getAttributeValueAsSignedConstant(
+              Attr_DW_FORM_implicit_const, 0), ICSData);
 
   //----------------------------------------------------------------------
   // Test ULEB128 based forms
@@ -406,6 +414,24 @@ TEST(DWARFDebugInfo, TestDWARF32Version4Addr8AllForms) {
   // DW_FORM_ref_addr are 4 bytes in DWARF32 for version 3 and later
   typedef uint32_t RefAddrType;
   TestAllForms<4, AddrType, RefAddrType>();
+}
+
+TEST(DWARFDebugInfo, TestDWARF32Version5Addr4AllForms) {
+  // Test that we can decode all forms for DWARF32, version 5, with 4 byte
+  // addresses.
+  typedef uint32_t AddrType;
+  // DW_FORM_ref_addr are 4 bytes in DWARF32 for version 3 and later
+  typedef uint32_t RefAddrType;
+  TestAllForms<5, AddrType, RefAddrType>();
+}
+
+TEST(DWARFDebugInfo, TestDWARF32Version5Addr8AllForms) {
+  // Test that we can decode all forms for DWARF32, version 5, with 8 byte
+  // addresses.
+  typedef uint64_t AddrType;
+  // DW_FORM_ref_addr are 4 bytes in DWARF32 for version 3 and later
+  typedef uint32_t RefAddrType;
+  TestAllForms<5, AddrType, RefAddrType>();
 }
 
 template <uint16_t Version, class AddrType> void TestChildren() {
