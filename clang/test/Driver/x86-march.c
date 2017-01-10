@@ -103,3 +103,7 @@
 // RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=btver2 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=btver2
 // btver2: "-target-cpu" "btver2"
+//
+// RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=znver1 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=znver1
+// znver1: "-target-cpu" "znver1"
