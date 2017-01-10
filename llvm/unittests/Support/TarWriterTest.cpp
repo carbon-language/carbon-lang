@@ -49,7 +49,7 @@ static UstarHeader create(StringRef Base, StringRef Filename) {
   EXPECT_TRUE((bool)TarOrErr);
   std::unique_ptr<TarWriter> Tar = std::move(*TarOrErr);
   Tar->append(Filename, "contents");
-  Tar.release();
+  Tar.reset();
 
   // Read the tar file.
   ErrorOr<std::unique_ptr<MemoryBuffer>> MBOrErr = MemoryBuffer::getFile(Path);
