@@ -10,8 +10,6 @@
 // XRay log reader implementation.
 //
 //===----------------------------------------------------------------------===//
-#include <sys/types.h>
-
 #include "xray-log-reader.h"
 #include "xray-record-yaml.h"
 #include "llvm/Support/DataExtractor.h"
