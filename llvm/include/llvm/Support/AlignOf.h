@@ -107,20 +107,18 @@ LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128)
 // Once these are the baselines for LLVM, we can use std::aligned_union instead.
 
 namespace detail {
-template <typename... Ts> class AlignerImpl;
+template <typename T1> constexpr size_t aligner() { return alignof(T1); }
 
-template <typename T1, typename... Ts>
-class AlignerImpl<T1, Ts...> : AlignerImpl<Ts...> {
-  T1 t;
-  AlignerImpl() = delete;
-};
-
-template <> class AlignerImpl<> { AlignerImpl() = delete; };
+template <typename T1, typename T2, typename... Ts> constexpr size_t aligner() {
+  size_t rest = aligner<T2, Ts...>();
+  return (alignof(T1) > rest) ? alignof(T1) : rest;
+}
 
 template <typename T1> constexpr size_t sizer() { return sizeof(T1); }
 
 template <typename T1, typename T2, typename... Ts> constexpr size_t sizer() {
-  return (sizeof(T1) > sizer<T2, Ts...>()) ? sizeof(T1) : sizer<T2, Ts...>();
+  size_t rest = sizer<T2, Ts...>();
+  return (sizeof(T1) > rest) ? sizeof(T1) : rest;
 }
 } // end namespace detail
 
@@ -132,7 +130,7 @@ template <typename T1, typename T2, typename... Ts> constexpr size_t sizer() {
 /// a placement new of any of these types.
 template <typename... Ts>
 struct AlignedCharArrayUnion
-    : llvm::AlignedCharArray<alignof(llvm::detail::AlignerImpl<Ts...>),
+    : llvm::AlignedCharArray<detail::aligner<Ts...>(),
                              detail::sizer<Ts...>()> {};
 } // end namespace llvm
 
