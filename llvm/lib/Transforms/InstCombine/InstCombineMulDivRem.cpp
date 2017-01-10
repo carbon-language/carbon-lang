@@ -1443,6 +1443,16 @@ Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
     }
   }
 
+  Value *LHS;
+  Value *RHS;
+
+  // -x / -y -> x / y
+  if (match(Op0, m_FNeg(m_Value(LHS))) && match(Op1, m_FNeg(m_Value(RHS)))) {
+    I.setOperand(0, LHS);
+    I.setOperand(1, RHS);
+    return &I;
+  }
+
   return nullptr;
 }
 
