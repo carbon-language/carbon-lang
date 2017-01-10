@@ -103,6 +103,7 @@ protected: // Can only create subclasses.
   unsigned O0WantsFastISel : 1;
 
 public:
+  const TargetOptions DefaultOptions;
   mutable TargetOptions Options;
 
   virtual ~TargetMachine();

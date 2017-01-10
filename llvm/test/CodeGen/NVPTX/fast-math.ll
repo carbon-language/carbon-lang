@@ -21,14 +21,14 @@ define float @sqrt_div_fast(float %a, float %b) #0 {
 }
 
 ; CHECK-LABEL: fadd
-; CHECK: add.f32
+; CHECK: add.rn.f32
 define float @fadd(float %a, float %b) {
   %t1 = fadd float %a, %b
   ret float %t1
 }
 
 ; CHECK-LABEL: fadd_ftz
-; CHECK: add.ftz.f32
+; CHECK: add.rn.ftz.f32
 define float @fadd_ftz(float %a, float %b) #1 {
   %t1 = fadd float %a, %b
   ret float %t1
