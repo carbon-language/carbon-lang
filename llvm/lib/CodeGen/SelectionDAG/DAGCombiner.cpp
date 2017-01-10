@@ -5470,7 +5470,6 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   }
 
   // select (xor Cond, 1), X, Y -> select Cond, Y, X
-  // select (xor Cond, 0), X, Y -> selext Cond, X, Y
   if (VT0 == MVT::i1) {
     if (N0->getOpcode() == ISD::XOR) {
       if (auto *C = dyn_cast<ConstantSDNode>(N0->getOperand(1))) {
@@ -5478,9 +5477,6 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
         if (C->isOne())
           return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(),
                              Cond0, N2, N1);
-        else
-          return DAG.getNode(ISD::SELECT, SDLoc(N), N1.getValueType(),
-                             Cond0, N1, N2);
       }
     }
   }
