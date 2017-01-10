@@ -42,7 +42,7 @@
 #include <winapifamily.h>
 #endif
 #else
-#if !defined(CLOCK_REALTIME)
+#if !defined(CLOCK_REALTIME) || !defined(_LIBCXX_USE_CLOCK_GETTIME)
 #include <sys/time.h>        // for gettimeofday and timeval
 #endif // !defined(CLOCK_REALTIME)
 #endif // defined(_LIBCPP_WIN32API)
