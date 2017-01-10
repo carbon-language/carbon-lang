@@ -106,6 +106,7 @@ LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128)
 // That is supported by Visual Studio 2015 and GCC 5.1.
 // Once these are the baselines for LLVM, we can use std::aligned_union instead.
 
+namespace support {
 namespace detail {
 template <typename T1> constexpr size_t aligner() { return alignof(T1); }
 
@@ -120,6 +121,7 @@ template <typename T1, typename T2, typename... Ts> constexpr size_t sizer() {
   return (sizeof(T1) > sizer<T2, Ts...>()) ? sizeof(T1) : sizer<T2, Ts...>();
 }
 } // end namespace detail
+} // end namespace support
 
 /// \brief This union template exposes a suitably aligned and sized character
 /// array member which can hold elements of any of a number of types.
@@ -129,8 +131,8 @@ template <typename T1, typename T2, typename... Ts> constexpr size_t sizer() {
 /// a placement new of any of these types.
 template <typename... Ts>
 struct AlignedCharArrayUnion
-    : llvm::AlignedCharArray<detail::aligner<Ts...>(),
-                             detail::sizer<Ts...>()> {};
+    : llvm::AlignedCharArray<support::detail::aligner<Ts...>(),
+                             support::detail::sizer<Ts...>()> {};
 } // end namespace llvm
 
 #endif // LLVM_SUPPORT_ALIGNOF_H
