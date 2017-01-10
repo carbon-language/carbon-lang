@@ -450,7 +450,6 @@ OPENMP_TARGET_CLAUSE(firstprivate)
 OPENMP_TARGET_CLAUSE(is_device_ptr)
 
 // Clauses allowed for OpenMP directive 'target data'.
-// TODO More clauses for 'target data' directive.
 OPENMP_TARGET_DATA_CLAUSE(if)
 OPENMP_TARGET_DATA_CLAUSE(device)
 OPENMP_TARGET_DATA_CLAUSE(map)
@@ -508,7 +507,6 @@ OPENMP_TARGET_PARALLEL_FOR_CLAUSE(linear)
 OPENMP_TARGET_PARALLEL_FOR_CLAUSE(is_device_ptr)
 
 // Clauses allowed for OpenMP directive 'target update'.
-// TODO More clauses for 'target update' directive.
 OPENMP_TARGET_UPDATE_CLAUSE(if)
 OPENMP_TARGET_UPDATE_CLAUSE(device)
 OPENMP_TARGET_UPDATE_CLAUSE(to)
@@ -517,7 +515,6 @@ OPENMP_TARGET_UPDATE_CLAUSE(nowait)
 OPENMP_TARGET_UPDATE_CLAUSE(depend)
 
 // Clauses allowed for OpenMP directive 'teams'.
-// TODO More clauses for 'teams' directive.
 OPENMP_TEAMS_CLAUSE(default)
 OPENMP_TEAMS_CLAUSE(private)
 OPENMP_TEAMS_CLAUSE(firstprivate)
@@ -527,7 +524,6 @@ OPENMP_TEAMS_CLAUSE(num_teams)
 OPENMP_TEAMS_CLAUSE(thread_limit)
 
 // Clauses allowed for OpenMP directive 'ordered'.
-// TODO More clauses for 'ordered' directive.
 OPENMP_ORDERED_CLAUSE(threads)
 OPENMP_ORDERED_CLAUSE(simd)
 OPENMP_ORDERED_CLAUSE(depend)
