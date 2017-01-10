@@ -36,6 +36,30 @@
 // RUN:   | FileCheck %s -check-prefix=broadwell
 // broadwell: "-target-cpu" "broadwell"
 //
+// RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=skylake 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=skylake
+// skylake: "-target-cpu" "skylake"
+//
+// RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=skylake-avx512 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=skylake-avx512
+// skylake-avx512: "-target-cpu" "skylake-avx512"
+//
+// RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=skx 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=skx
+// skx: "-target-cpu" "skx"
+//
+// RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=knl 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=knl
+// knl: "-target-cpu" "knl"
+//
+// RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=cannonlake 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=cannonlake
+// cannonlake: "-target-cpu" "cannonlake"
+//
+// RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=lakemont 2>&1 \
+// RUN:   | FileCheck %s -check-prefix=lakemont
+// lakemont: "-target-cpu" "lakemont"
+//
 // RUN: %clang -target x86_64-unknown-unknown -c -### %s -march=bonnell 2>&1 \
 // RUN:   | FileCheck %s -check-prefix=bonnell
 // bonnell: "-target-cpu" "bonnell"
