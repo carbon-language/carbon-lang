@@ -7451,7 +7451,8 @@ OMPClause *Sema::ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
         CurrDir == OMPD_target_teams ||
         CurrDir == OMPD_target_teams_distribute ||
         CurrDir == OMPD_target_teams_distribute_parallel_for ||
-        CurrDir == OMPD_target_teams_distribute_parallel_for_simd) {
+        CurrDir == OMPD_target_teams_distribute_parallel_for_simd ||
+        CurrDir == OMPD_target_parallel_for_simd) {
       OpenMPClauseKind ConflictKind;
       if (DSAStack->checkMappableExprComponentListsForDecl(
               VD, /*CurrentRegionOnly=*/true,
@@ -7712,7 +7713,8 @@ OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
           CurrDir == OMPD_target_teams ||
           CurrDir == OMPD_target_teams_distribute ||
           CurrDir == OMPD_target_teams_distribute_parallel_for ||
-          CurrDir == OMPD_target_teams_distribute_parallel_for_simd) {
+          CurrDir == OMPD_target_teams_distribute_parallel_for_simd ||
+          CurrDir == OMPD_target_parallel_for_simd) {
         OpenMPClauseKind ConflictKind;
         if (DSAStack->checkMappableExprComponentListsForDecl(
                 VD, /*CurrentRegionOnly=*/true,
