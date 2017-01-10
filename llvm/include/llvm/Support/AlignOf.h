@@ -110,15 +110,14 @@ namespace detail {
 template <typename T1> constexpr size_t aligner() { return alignof(T1); }
 
 template <typename T1, typename T2, typename... Ts> constexpr size_t aligner() {
-  size_t rest = aligner<T2, Ts...>();
-  return (alignof(T1) > rest) ? alignof(T1) : rest;
+  return (alignof(T1) > aligner<T2, Ts...>()) ? alignof(T1)
+                                              : aligner<T2, Ts...>();
 }
 
 template <typename T1> constexpr size_t sizer() { return sizeof(T1); }
 
 template <typename T1, typename T2, typename... Ts> constexpr size_t sizer() {
-  size_t rest = sizer<T2, Ts...>();
-  return (sizeof(T1) > rest) ? sizeof(T1) : rest;
+  return (sizeof(T1) > sizer<T2, Ts...>()) ? sizeof(T1) : sizer<T2, Ts...>();
 }
 } // end namespace detail
 
