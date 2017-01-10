@@ -1060,10 +1060,6 @@ static bool sortMipsSymbols(const SymbolBody *L, const SymbolBody *R) {
   return L->GotIndex < R->GotIndex;
 }
 
-static uint8_t getSymbolBinding(SymbolBody *Body) {
-  return Body->symbol()->computeBinding();
-}
-
 template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   this->OutSec->Link = this->Link = StrTabSec.OutSec->SectionIndex;
   this->OutSec->Info = this->Info = NumLocals + 1;
@@ -1077,11 +1073,12 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
   }
 
   if (!StrTabSec.isDynamic()) {
-    std::stable_sort(Symbols.begin(), Symbols.end(),
-                     [](const SymbolTableEntry &L, const SymbolTableEntry &R) {
-                       return getSymbolBinding(L.Symbol) == STB_LOCAL &&
-                              getSymbolBinding(R.Symbol) != STB_LOCAL;
-                     });
+    std::stable_sort(
+        Symbols.begin(), Symbols.end(),
+        [](const SymbolTableEntry &L, const SymbolTableEntry &R) {
+          return L.Symbol->symbol()->computeBinding() == STB_LOCAL &&
+                 R.Symbol->symbol()->computeBinding() != STB_LOCAL;
+        });
     return;
   }
   if (In<ELFT>::GnuHashTab)
@@ -1151,7 +1148,7 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
     uint8_t Type = Body->Type;
     uintX_t Size = Body->getSize<ELFT>();
 
-    ESym->setBindingAndType(getSymbolBinding(Body), Type);
+    ESym->setBindingAndType(Body->symbol()->computeBinding(), Type);
     ESym->st_size = Size;
     ESym->st_name = StrOff;
     ESym->setVisibility(Body->symbol()->Visibility);
