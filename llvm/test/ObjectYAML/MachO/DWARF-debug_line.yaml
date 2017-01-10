@@ -6,11 +6,20 @@ FileHeader:
   cputype:         0x01000007
   cpusubtype:      0x00000003
   filetype:        0x0000000A
-  ncmds:           5
-  sizeofcmds:      1800
+  ncmds:           7
+  sizeofcmds:      1848
   flags:           0x00000000
   reserved:        0x00000000
 LoadCommands:    
+  - cmd:             LC_UUID
+    cmdsize:         24
+    uuid:            B4D48511-37F4-3ED4-AFA7-1683DCE69AC4
+  - cmd:             LC_SYMTAB
+    cmdsize:         24
+    symoff:          4096
+    nsyms:           2
+    stroff:          4128
+    strsize:         28
   - cmd:             LC_SEGMENT_64
     cmdsize:         72
     segname:         __PAGEZERO
@@ -303,6 +312,16 @@ LinkEditData:
     - __mh_execute_header
     - _main
 DWARF:           
+  debug_str:       
+    - ''
+    - 'clang version 4.0.0 (trunk 288923) (llvm/trunk 288991)'
+    - hello_world.c
+    - /Users/cbieneman/dev/open-source/llvm-build-rel
+    - main
+    - argc
+    - argv
+    - int
+    - char
   debug_abbrev:    
     - Code:            0x00000001
       Tag:             DW_TAG_compile_unit
@@ -383,6 +402,24 @@ DWARF:
       Descriptors:     
         - Address:         0x0000000100000F50
           Length:          52
+  debug_pubnames:  
+    Length:          23
+    Version:         2
+    UnitOffset:      0
+    UnitSize:        121
+    Entries:         
+      - DieOffset:       0x0000002A
+        Name:            main
+  debug_pubtypes:  
+    Length:          31
+    Version:         2
+    UnitOffset:      0
+    UnitSize:        121
+    Entries:         
+      - DieOffset:       0x00000060
+        Name:            int
+      - DieOffset:       0x00000071
+        Name:            char
   debug_info:      
     - Length:          117
       Version:         4
@@ -456,6 +493,7 @@ DWARF:
       Version:         2
       PrologueLength:  36
       MinInstLength:   1
+      MaxOpsPerInst:   0
       DefaultIsStmt:   1
       LineBase:        251
       LineRange:       14
@@ -503,75 +541,56 @@ DWARF:
           SubOpcode:       DW_LNE_end_sequence
           Data:            11
 ...
-...
 
-
-#CHECK: DWARF:           
-#CHECK:   debug_info:      
-#CHECK:     - Length:          117
-#CHECK:       Version:         4
-#CHECK:       AbbrOffset:      0
-#CHECK:       AddrSize:        8
-#CHECK:       Entries:         
-#CHECK:         - AbbrCode:        0x00000001
-#CHECK:           Values:          
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:             - Value:           0x000000000000000C
-#CHECK:             - Value:           0x0000000000000038
-#CHECK:             - Value:           0x0000000000000000
-#CHECK:             - Value:           0x0000000000000046
-#CHECK:             - Value:           0x0000000100000F50
-#CHECK:             - Value:           0x0000000000000034
-#CHECK:         - AbbrCode:        0x00000002
-#CHECK:           Values:          
-#CHECK:             - Value:           0x0000000100000F50
-#CHECK:             - Value:           0x0000000000000034
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:               BlockData:       
-#CHECK:                 - 0x56
-#CHECK:             - Value:           0x0000000000000076
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:             - Value:           0x0000000000000003
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:             - Value:           0x0000000000000060
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:         - AbbrCode:        0x00000003
-#CHECK:           Values:          
-#CHECK:             - Value:           0x0000000000000002
-#CHECK:               BlockData:       
-#CHECK:                 - 0x91
-#CHECK:                 - 0x78
-#CHECK:             - Value:           0x000000000000007B
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:             - Value:           0x0000000000000003
-#CHECK:             - Value:           0x0000000000000060
-#CHECK:         - AbbrCode:        0x00000003
-#CHECK:           Values:          
-#CHECK:             - Value:           0x0000000000000002
-#CHECK:               BlockData:       
-#CHECK:                 - 0x91
-#CHECK:                 - 0x70
-#CHECK:             - Value:           0x0000000000000080
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:             - Value:           0x0000000000000003
-#CHECK:             - Value:           0x0000000000000067
-#CHECK:         - AbbrCode:        0x00000000
-#CHECK:           Values:          
-#CHECK:         - AbbrCode:        0x00000004
-#CHECK:           Values:          
-#CHECK:             - Value:           0x0000000000000085
-#CHECK:             - Value:           0x0000000000000005
-#CHECK:             - Value:           0x0000000000000004
-#CHECK:         - AbbrCode:        0x00000005
-#CHECK:           Values:          
-#CHECK:             - Value:           0x000000000000006C
-#CHECK:         - AbbrCode:        0x00000005
-#CHECK:           Values:          
-#CHECK:             - Value:           0x0000000000000071
-#CHECK:         - AbbrCode:        0x00000004
-#CHECK:           Values:          
-#CHECK:             - Value:           0x0000000000000089
-#CHECK:             - Value:           0x0000000000000006
-#CHECK:             - Value:           0x0000000000000001
-#CHECK:         - AbbrCode:        0x00000000
-#CHECK:           Values:          
+#CHECK:   debug_line:      
+#CHECK:     - TotalLength:     65
+#CHECK:       Version:         2
+#CHECK:       PrologueLength:  36
+#CHECK:       MinInstLength:   1
+#CHECK:       DefaultIsStmt:   1
+#CHECK:       LineBase:        251
+#CHECK:       LineRange:       14
+#CHECK:       OpcodeBase:      13
+#CHECK:       StandardOpcodeLengths: 
+#CHECK:         - 0
+#CHECK:         - 1
+#CHECK:         - 1
+#CHECK:         - 1
+#CHECK:         - 1
+#CHECK:         - 0
+#CHECK:         - 0
+#CHECK:         - 0
+#CHECK:         - 1
+#CHECK:         - 0
+#CHECK:         - 0
+#CHECK:         - 1
+#CHECK:       IncludeDirs:     
+#CHECK:       Files:           
+#CHECK:         - Name:            hello_world.c
+#CHECK:           DirIdx:          0
+#CHECK:           ModTime:         0
+#CHECK:           Length:          0
+#CHECK:       Opcodes:         
+#CHECK:         - Opcode:          DW_LNS_extended_op
+#CHECK:           ExtLen:          9
+#CHECK:           SubOpcode:       DW_LNE_set_address
+#CHECK:           Data:            4294971216
+#CHECK:         - Opcode:          0x14
+#CHECK:           Data:            4294971216
+#CHECK:         - Opcode:          DW_LNS_set_column
+#CHECK:           Data:            3
+#CHECK:         - Opcode:          DW_LNS_set_prologue_end
+#CHECK:           Data:            3
+#CHECK:         - Opcode:          DW_LNS_const_add_pc
+#CHECK:           Data:            3
+#CHECK:         - Opcode:          0xBB
+#CHECK:           Data:            3
+#CHECK:         - Opcode:          0xBB
+#CHECK:           Data:            3
+#CHECK:         - Opcode:          DW_LNS_advance_pc
+#CHECK:           Data:            11
+#CHECK:         - Opcode:          DW_LNS_extended_op
+#CHECK:           ExtLen:          1
+#CHECK:           SubOpcode:       DW_LNE_end_sequence
+#CHECK:           Data:            11
+#CHECK: ...
