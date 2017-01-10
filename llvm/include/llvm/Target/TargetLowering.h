@@ -3118,6 +3118,13 @@ public:
                                  EVT DataVT, SelectionDAG &DAG,
                                  bool IsCompressedMemory) const;
 
+  /// Get a pointer to vector element \p Idx located in memory for a vector of
+  /// type \p VecVT starting at a base address of \p VecPtr. If \p Idx is out of
+  /// bounds the returned pointer is unspecified, but will be within the vector
+  /// bounds.
+  SDValue getVectorElementPointer(SelectionDAG &DAG, SDValue VecPtr, EVT VecVT,
+                                  SDValue Idx) const;
+
   //===--------------------------------------------------------------------===//
   // Instruction Emitting Hooks
   //

@@ -846,7 +846,6 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_SUBVECTOR(SDNode *N, SDValue &Lo,
   GetSplitVector(Vec, Lo, Hi);
 
   EVT VecVT = Vec.getValueType();
-  EVT VecElemVT = VecVT.getVectorElementType();
   unsigned VecElems = VecVT.getVectorNumElements();
   unsigned SubElems = SubVec.getValueType().getVectorNumElements();
 
@@ -872,7 +871,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_SUBVECTOR(SDNode *N, SDValue &Lo,
       DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, MachinePointerInfo());
 
   // Store the new subvector into the specified index.
-  SDValue SubVecPtr = GetVectorElementPointer(StackPtr, VecElemVT, Idx);
+  SDValue SubVecPtr = TLI.getVectorElementPointer(DAG, StackPtr, VecVT, Idx);
   Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
   unsigned Alignment = DAG.getDataLayout().getPrefTypeAlignment(VecType);
   Store = DAG.getStore(Store, dl, SubVec, SubVecPtr, MachinePointerInfo());
@@ -1003,7 +1002,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
 
   // Store the new element.  This may be larger than the vector element type,
   // so use a truncating store.
-  SDValue EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
+  SDValue EltPtr = TLI.getVectorElementPointer(DAG, StackPtr, VecVT, Idx);
   Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
   unsigned Alignment = DAG.getDataLayout().getPrefTypeAlignment(VecType);
   Store =
@@ -1650,7 +1649,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
       DAG.getStore(DAG.getEntryNode(), dl, Vec, StackPtr, MachinePointerInfo());
 
   // Load back the required element.
-  StackPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
+  StackPtr = TLI.getVectorElementPointer(DAG, StackPtr, VecVT, Idx);
   return DAG.getExtLoad(ISD::EXTLOAD, dl, N->getValueType(0), Store, StackPtr,
                         MachinePointerInfo(), EltVT);
 }
