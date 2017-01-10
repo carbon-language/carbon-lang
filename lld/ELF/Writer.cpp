@@ -250,6 +250,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   // Create singleton output sections.
   Out<ELFT>::Bss =
       make<OutputSection<ELFT>>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+  Out<ELFT>::BssRelRo = make<OutputSection<ELFT>>(".bss.rel.ro", SHT_NOBITS,
+                                                  SHF_ALLOC | SHF_WRITE);
   In<ELFT>::DynStrTab = make<StringTableSection<ELFT>>(".dynstr", true);
   In<ELFT>::Dynamic = make<DynamicSection<ELFT>>();
   Out<ELFT>::EhFrame = make<EhOutputSection<ELFT>>();
@@ -497,6 +499,8 @@ template <class ELFT> bool elf::isRelroSection(const OutputSectionBase *Sec) {
   if (In<ELFT>::Got && Sec == In<ELFT>::Got->OutSec)
     return true;
   if (In<ELFT>::MipsGot && Sec == In<ELFT>::MipsGot->OutSec)
+    return true;
+  if (Sec == Out<ELFT>::BssRelRo)
     return true;
   StringRef S = Sec->getName();
   return S == ".data.rel.ro" || S == ".ctors" || S == ".dtors" || S == ".jcr" ||
@@ -1079,6 +1083,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   if (Out<ELFT>::Bss->Size > 0)
     OutputSections.push_back(Out<ELFT>::Bss);
+  if (Out<ELFT>::BssRelRo->Size > 0)
+    OutputSections.push_back(Out<ELFT>::BssRelRo);
 
   auto OS = dyn_cast_or_null<OutputSection<ELFT>>(findSection(".ARM.exidx"));
   if (OS && !OS->Sections.empty() && !Config->Relocatable)
