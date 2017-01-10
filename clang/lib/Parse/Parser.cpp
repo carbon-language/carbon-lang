@@ -1737,17 +1737,12 @@ bool Parser::TryAnnotateTypeOrScopeToken() {
 bool Parser::TryAnnotateTypeOrScopeTokenAfterScopeSpec(CXXScopeSpec &SS,
                                                        bool IsNewScope) {
   if (Tok.is(tok::identifier)) {
-    IdentifierInfo *CorrectedII = nullptr;
     // Determine whether the identifier is a type name.
     if (ParsedType Ty = Actions.getTypeName(
             *Tok.getIdentifierInfo(), Tok.getLocation(), getCurScope(), &SS,
             false, NextToken().is(tok::period), nullptr,
             /*IsCtorOrDtorName=*/false,
             /*NonTrivialTypeSourceInfo*/ true)) {
-      // A FixIt was applied as a result of typo correction
-      if (CorrectedII)
-        Tok.setIdentifierInfo(CorrectedII);
-
       SourceLocation BeginLoc = Tok.getLocation();
       if (SS.isNotEmpty()) // it was a C++ qualified type name.
         BeginLoc = SS.getBeginLoc();
