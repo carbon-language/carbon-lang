@@ -1629,31 +1629,6 @@ SDValue SelectionDAG::getCommutedVectorShuffle(const ShuffleVectorSDNode &SV) {
   return getVectorShuffle(VT, SDLoc(&SV), Op1, Op0, MaskVec);
 }
 
-SDValue SelectionDAG::getConvertRndSat(EVT VT, const SDLoc &dl, SDValue Val,
-                                       SDValue DTy, SDValue STy, SDValue Rnd,
-                                       SDValue Sat, ISD::CvtCode Code) {
-  // If the src and dest types are the same and the conversion is between
-  // integer types of the same sign or two floats, no conversion is necessary.
-  if (DTy == STy &&
-      (Code == ISD::CVT_UU || Code == ISD::CVT_SS || Code == ISD::CVT_FF))
-    return Val;
-
-  FoldingSetNodeID ID;
-  SDValue Ops[] = { Val, DTy, STy, Rnd, Sat };
-  AddNodeIDNode(ID, ISD::CONVERT_RNDSAT, getVTList(VT), Ops);
-  void* IP = nullptr;
-  if (SDNode *E = FindNodeOrInsertPos(ID, dl, IP))
-    return SDValue(E, 0);
-
-  auto *N =
-      newSDNode<CvtRndSatSDNode>(VT, dl.getIROrder(), dl.getDebugLoc(), Code);
-  createOperands(N, Ops);
-
-  CSEMap.InsertNode(N, IP);
-  InsertNode(N);
-  return SDValue(N, 0);
-}
-
 SDValue SelectionDAG::getRegister(unsigned RegNo, EVT VT) {
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::Register, getVTList(VT), None);
