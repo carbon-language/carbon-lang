@@ -253,6 +253,10 @@ private:
   /// True if the function has more than one entry point.
   bool IsMultiEntry{false};
 
+  /// Indicate if the function body was folded into another function. Used
+  /// for ICF optimization without relocations.
+  bool IsFolded{false};
+
   /// The address for the code for this function in codegen memory.
   uint64_t ImageAddress{0};
 
@@ -1019,6 +1023,10 @@ public:
     return IsMultiEntry;
   }
 
+  bool isFolded() const {
+    return IsFolded;
+  }
+
   /// Return true if the function uses jump tables.
   bool hasJumpTables() const {
     return JumpTables.size();
@@ -1288,6 +1296,11 @@ public:
 
   BinaryFunction &setUsesGnuArgsSize(bool Uses = true) {
     UsesGnuArgsSize = Uses;
+    return *this;
+  }
+
+  BinaryFunction &setFolded(bool Folded = true) {
+    IsFolded = Folded;
     return *this;
   }
 

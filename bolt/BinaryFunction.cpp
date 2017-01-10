@@ -3531,6 +3531,11 @@ DynoStats BinaryFunction::getDynoStats() const {
   if (!isSimple() || !hasValidProfile())
     return Stats;
 
+  // If the function was folded in non-relocation mode we keep its profile
+  // for optimization. However, it should be excluded from the dyno stats.
+  if (isFolded())
+    return Stats;
+
   // Update enumeration of basic blocks for correct detection of branch'
   // direction.
   updateLayoutIndices();

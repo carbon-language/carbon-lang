@@ -104,6 +104,7 @@ void BinaryContext::foldFunction(BinaryFunction &ChildBF,
     ChildBF.Names.clear();
     ChildBF.Names.push_back(NewName);
     ChildBF.OutputSymbol = Ctx->getOrCreateSymbol(NewName);
+    ChildBF.setFolded();
   }
 }
 

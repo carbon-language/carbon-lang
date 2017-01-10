@@ -1330,6 +1330,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
   uint64_t NumFunctionsFolded = 0;
   uint64_t NumJTFunctionsFolded = 0;
   uint64_t BytesSavedEstimate = 0;
+  uint64_t CallsSavedEstimate = 0;
   static bool UseDFS = opts::UseDFSForICF;
 
   // This hash table is used to identify identical functions. It maps
@@ -1356,7 +1357,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
                      KeyHash, KeyCongruent> CongruentBuckets;
   for (auto &BFI : BFs) {
     auto &BF = BFI.second;
-    if (!shouldOptimize(BF))
+    if (!shouldOptimize(BF) || BF.isFolded())
       continue;
 
     // Make sure indices are in-order.
@@ -1414,9 +1415,11 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
           Candidates.erase(FI);
 
           // Fold the function and remove from the list of processed functions.
+          BytesSavedEstimate += ChildBF->getSize();
+          CallsSavedEstimate += std::min(ChildBF->getKnownExecutionCount(),
+                                         ParentBF->getKnownExecutionCount());
           BC.foldFunction(*ChildBF, *ParentBF, BFs);
 
-          BytesSavedEstimate += ChildBF->getSize();
           ++NumFoldedLastIteration;
 
           if (ParentBF->hasJumpTables())
@@ -1456,7 +1459,8 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
            << NumJTFunctionsFolded << " functions had jump tables.\n"
            << "BOLT-INFO: Removing all identical functions will save "
            << format("%.2lf", (double) BytesSavedEstimate / 1024)
-           << " KB of code space.\n";
+           << " KB of code space. Folded functions were called "
+           << CallsSavedEstimate << " times based on profile.\n";
   }
 }
 
