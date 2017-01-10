@@ -49,7 +49,7 @@ entry:
   %tmp29 = lshr i32 %x, %n
   %tmp3 = and i32 1, %tmp29
   %tmp4 = icmp eq i32 %tmp3, 0
-  br i1 %tmp4, label %bb, label %UnifiedReturnBlock
+  br i1 %tmp4, label %bb, label %UnifiedReturnBlock, !prof !1
 
 bb:
   call void @foo()
@@ -89,7 +89,7 @@ entry:
   %tmp29 = ashr i32 %x, %n
   %tmp3 = and i32 1, %tmp29
   %tmp4 = icmp eq i32 %tmp3, 0
-  br i1 %tmp4, label %bb, label %UnifiedReturnBlock
+  br i1 %tmp4, label %bb, label %UnifiedReturnBlock, !prof !1
 
 bb:
   call void @foo()
@@ -109,7 +109,7 @@ entry:
   %tmp29 = shl i32 1, %n
   %tmp3 = and i32 %tmp29, %x
   %tmp4 = icmp eq i32 %tmp3, 0
-  br i1 %tmp4, label %bb, label %UnifiedReturnBlock
+  br i1 %tmp4, label %bb, label %UnifiedReturnBlock, !prof !1
 
 bb:
   call void @foo()
@@ -129,7 +129,7 @@ entry:
   %tmp29 = shl i32 1, %n
   %tmp3 = and i32 %x, %tmp29
   %tmp4 = icmp eq i32 %tmp3, 0
-  br i1 %tmp4, label %bb, label %UnifiedReturnBlock
+  br i1 %tmp4, label %bb, label %UnifiedReturnBlock, !prof !1
 
 bb:
   call void @foo()
@@ -608,3 +608,5 @@ entry:
   %tobool = icmp ne i64 %and1, 0
   ret i1 %tobool
 }
+
+!1 = !{!"branch_weights", i32 2, i32 1}

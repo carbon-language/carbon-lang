@@ -24,6 +24,7 @@ cond.end.i:                                       ; preds = %entry
 
 ; CHECK-LABEL: test1:
 ; CHECK: testb %dil, %dil
-; CHECK: jne LBB0_2
+; CHECK: je LBB0_1
+; CHECK: retq
+; CHECK: LBB0_1:
 ; CHECK: divl
-; CHECK: LBB0_2:

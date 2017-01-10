@@ -297,7 +297,7 @@ define void @f13(i32 %x, i32 %y) {
 ; CHECK: iihf [[REG]], 2102030405
 ; CHECK: blah [[REG]]
 ; CHECK: br %r14
-  %cmp = icmp eq i32 %x, 0
+  %cmp = icmp ne i32 %x, 0
   %val = select i1 %cmp, i32 0, i32 2102030405
   call void asm sideeffect "blah $0", "h"(i32 %val)
   ret void
@@ -311,7 +311,7 @@ define void @f14(i32 %x, i32 %y) {
 ; CHECK: iilf [[REG]], 2102030405
 ; CHECK: blah [[REG]]
 ; CHECK: br %r14
-  %cmp = icmp eq i32 %x, 0
+  %cmp = icmp ne i32 %x, 0
   %val = select i1 %cmp, i32 0, i32 2102030405
   call void asm sideeffect "blah $0", "r"(i32 %val)
   ret void

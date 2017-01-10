@@ -37,7 +37,10 @@ bb5:                                              ; preds = %bb3, %bb1
 ; OPT-NOT: call i1 @llvm.amdgcn.loop
 
 ; GCN-LABEL: {{^}}annotate_ret_noloop:
-; GCN: s_cbranch_scc1
+; GCN: s_cbranch_scc0 [[BODY:BB[0-9]+_[0-9]+]]
+; GCN: s_endpgm
+
+; GCN: {{^}}[[BODY]]:
 ; GCN: s_endpgm
 ; GCN: .Lfunc_end1
 define void @annotate_ret_noloop(<4 x float> addrspace(1)* noalias nocapture readonly %arg) #0 {

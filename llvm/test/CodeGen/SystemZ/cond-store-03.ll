@@ -226,8 +226,11 @@ define void @f13(i64 %base, i64 %index, i32 %alt, i32 %limit) {
 define void @f14(i32 *%ptr, i32 %alt, i32 %limit) {
 ; CHECK-LABEL: f14:
 ; CHECK: l {{%r[0-5]}}, 0(%r2)
-; CHECK: {{jl|jnl}} [[LABEL:[^ ]*]]
+; CHECK: {{jhe|jnhe}} [[LABEL:[^ ]*]]
+; CHECK: st {{%r[0-5]}}, 0(%r2)
+; CHECK: br %r14
 ; CHECK: [[LABEL]]:
+; CHECK: lr {{%r[0-5]}}, {{%r[0-5]}}
 ; CHECK: st {{%r[0-5]}}, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 420
@@ -260,8 +263,11 @@ define void @f16(i32 *%ptr, i32 %alt, i32 %limit) {
 ; FIXME: should use a normal load instead of CS.
 ; CHECK-LABEL: f16:
 ; CHECK: l {{%r[0-5]}}, 0(%r2)
-; CHECK: {{jl|jnl}} [[LABEL:[^ ]*]]
+; CHECK: {{jhe|jnhe}} [[LABEL:[^ ]*]]
+; CHECK: st {{%r[0-5]}}, 0(%r2)
+; CHECK: br %r14
 ; CHECK: [[LABEL]]:
+; CHECK: lr {{%r[0-5]}}, {{%r[0-5]}}
 ; CHECK: st {{%r[0-5]}}, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 420

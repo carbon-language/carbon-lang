@@ -27,7 +27,7 @@ test4:
   %val4 = load volatile i64, i64* @var64
   %tst4 = icmp ne i64 %val4, 0
   br i1 %tst4, label %end, label %test5, !prof !1
-; CHECK: cbnz {{x[0-9]+}}, .LBB
+; CHECK: cbz {{x[0-9]+}}, .LBB
 
 test5:
   store volatile i64 %val4, i64* @var64

@@ -30,7 +30,8 @@ entry:
   %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
   %sum = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
-  br i1 %obit, label %overflow, label %normal
+  %notobit = xor i1 1, %obit
+  br i1 %notobit, label %normal, label %overflow
 
 normal:
   store i32 0, i32* %X
@@ -53,7 +54,8 @@ entry:
   %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %v1, i32 %v2)
   %sum = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
-  br i1 %obit, label %carry, label %normal
+  %notobit = xor i1 1, %obit
+  br i1 %notobit, label %normal, label %carry
 
 normal:
   store i32 0, i32* %X

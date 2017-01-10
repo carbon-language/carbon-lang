@@ -52,7 +52,7 @@ exit:
 define double @f3(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f3:
 ; CHECK: tm 0(%r2), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %byte = load i8 , i8 *%src
   %and = and i8 %byte, 1
@@ -80,7 +80,7 @@ define double @f4(i8 *%src, double %a, double %b) {
 define double @f5(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f5:
 ; CHECK: tm 0(%r2), 1
-; CHECK: jne {{\.L.*}}
+; CHECK: je {{\.L.*}}
 ; CHECK: br %r14
   %byte = load i8 , i8 *%src
   %and = and i8 %byte, 1
@@ -93,7 +93,7 @@ define double @f5(i8 *%src, double %a, double %b) {
 define double @f6(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f6:
 ; CHECK: tm 0(%r2), 254
-; CHECK: jo {{\.L.*}}
+; CHECK: jno {{\.L.*}}
 ; CHECK: br %r14
   %byte = load i8 , i8 *%src
   %and = and i8 %byte, 254
@@ -106,7 +106,7 @@ define double @f6(i8 *%src, double %a, double %b) {
 define double @f7(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f7:
 ; CHECK: tm 0(%r2), 254
-; CHECK: jno {{\.L.*}}
+; CHECK: jo {{\.L.*}}
 ; CHECK: br %r14
   %byte = load i8 , i8 *%src
   %and = and i8 %byte, 254
@@ -121,7 +121,7 @@ define double @f8(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f8:
 ; CHECK: llc [[REG:%r[0-5]]], 0(%r2)
 ; CHECK: tmll [[REG]], 3
-; CHECK: jh {{\.L.*}}
+; CHECK: jnh {{\.L.*}}
 ; CHECK: br %r14
   %byte = load i8 , i8 *%src
   %and = and i8 %byte, 3
@@ -135,7 +135,7 @@ define double @f9(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f9:
 ; CHECK: llc [[REG:%r[0-5]]], 0(%r2)
 ; CHECK: tmll [[REG]], 3
-; CHECK: jl {{\.L.*}}
+; CHECK: jnl {{\.L.*}}
 ; CHECK: br %r14
   %byte = load i8 , i8 *%src
   %and = and i8 %byte, 3
@@ -148,7 +148,7 @@ define double @f9(i8 *%src, double %a, double %b) {
 define double @f10(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f10:
 ; CHECK: tm 4095(%r2), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %ptr = getelementptr i8, i8 *%src, i64 4095
   %byte = load i8 , i8 *%ptr
@@ -162,7 +162,7 @@ define double @f10(i8 *%src, double %a, double %b) {
 define double @f11(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f11:
 ; CHECK: tmy 4096(%r2), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %ptr = getelementptr i8, i8 *%src, i64 4096
   %byte = load i8 , i8 *%ptr
@@ -176,7 +176,7 @@ define double @f11(i8 *%src, double %a, double %b) {
 define double @f12(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f12:
 ; CHECK: tmy 524287(%r2), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %ptr = getelementptr i8, i8 *%src, i64 524287
   %byte = load i8 , i8 *%ptr
@@ -191,7 +191,7 @@ define double @f13(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f13:
 ; CHECK: agfi %r2, 524288
 ; CHECK: tm 0(%r2), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %ptr = getelementptr i8, i8 *%src, i64 524288
   %byte = load i8 , i8 *%ptr
@@ -205,7 +205,7 @@ define double @f13(i8 *%src, double %a, double %b) {
 define double @f14(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f14:
 ; CHECK: tmy -524288(%r2), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %ptr = getelementptr i8, i8 *%src, i64 -524288
   %byte = load i8 , i8 *%ptr
@@ -220,7 +220,7 @@ define double @f15(i8 *%src, double %a, double %b) {
 ; CHECK-LABEL: f15:
 ; CHECK: agfi %r2, -524289
 ; CHECK: tm 0(%r2), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %ptr = getelementptr i8, i8 *%src, i64 -524289
   %byte = load i8 , i8 *%ptr
@@ -234,7 +234,7 @@ define double @f15(i8 *%src, double %a, double %b) {
 define double @f16(i8 *%src, i64 %index, double %a, double %b) {
 ; CHECK-LABEL: f16:
 ; CHECK: tm 0({{%r[1-5]}}), 1
-; CHECK: je {{\.L.*}}
+; CHECK: jne {{\.L.*}}
 ; CHECK: br %r14
   %ptr = getelementptr i8, i8 *%src, i64 %index
   %byte = load i8 , i8 *%ptr

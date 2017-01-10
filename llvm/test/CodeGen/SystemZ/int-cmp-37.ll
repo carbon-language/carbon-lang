@@ -15,8 +15,8 @@ define i32 @f1(i32 %src1) {
 entry:
   %val = load i16 , i16 *@g
   %src2 = zext i16 %val to i32
-  %cond = icmp ult i32 %src1, %src2
-  br i1 %cond, label %exit, label %mulb
+  %cond = icmp uge i32 %src1, %src2
+  br i1 %cond, label %mulb, label %exit
 mulb:
   %mul = mul i32 %src1, %src1
   br label %exit
@@ -34,8 +34,8 @@ define i32 @f2(i32 %src1) {
 entry:
   %val = load i16 , i16 *@g
   %src2 = zext i16 %val to i32
-  %cond = icmp slt i32 %src1, %src2
-  br i1 %cond, label %exit, label %mulb
+  %cond = icmp sge i32 %src1, %src2
+  br i1 %cond, label %mulb, label %exit
 mulb:
   %mul = mul i32 %src1, %src1
   br label %exit
@@ -54,8 +54,8 @@ define i32 @f3(i32 %src1) {
 entry:
   %val = load i16 , i16 *@g
   %src2 = zext i16 %val to i32
-  %cond = icmp eq i32 %src1, %src2
-  br i1 %cond, label %exit, label %mulb
+  %cond = icmp ne i32 %src1, %src2
+  br i1 %cond, label %mulb, label %exit
 mulb:
   %mul = mul i32 %src1, %src1
   br label %exit
@@ -74,8 +74,8 @@ define i32 @f4(i32 %src1) {
 entry:
   %val = load i16 , i16 *@g
   %src2 = zext i16 %val to i32
-  %cond = icmp ne i32 %src1, %src2
-  br i1 %cond, label %exit, label %mulb
+  %cond = icmp eq i32 %src1, %src2
+  br i1 %cond, label %mulb, label %exit
 mulb:
   %mul = mul i32 %src1, %src1
   br label %exit
@@ -95,8 +95,8 @@ define i32 @f5(i32 %src1) {
 entry:
   %val = load i16 , i16 *@h, align 1
   %src2 = zext i16 %val to i32
-  %cond = icmp ult i32 %src1, %src2
-  br i1 %cond, label %exit, label %mulb
+  %cond = icmp uge i32 %src1, %src2
+  br i1 %cond, label %mulb, label %exit
 mulb:
   %mul = mul i32 %src1, %src1
   br label %exit
@@ -115,8 +115,8 @@ define i32 @f6(i32 %src2) {
 entry:
   %val = load i16 , i16 *@g
   %src1 = zext i16 %val to i32
-  %cond = icmp ult i32 %src1, %src2
-  br i1 %cond, label %exit, label %mulb
+  %cond = icmp uge i32 %src1, %src2
+  br i1 %cond, label %mulb, label %exit
 mulb:
   %mul = mul i32 %src2, %src2
   br label %exit

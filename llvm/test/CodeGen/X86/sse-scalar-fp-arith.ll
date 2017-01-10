@@ -1110,10 +1110,12 @@ define <4 x float> @add_ss_mask(<4 x float> %a, <4 x float> %b, <4 x float> %c, 
 ; AVX1-LABEL: add_ss_mask:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    testb $1, %dil
-; AVX1-NEXT:    je .LBB62_2
-; AVX1-NEXT:  # BB#1:
+; AVX1-NEXT:    jne .LBB62_1
+; AVX1-NEXT:  # BB#2:
+; AVX1-NEXT:    vblendps {{.*#+}} xmm0 = xmm2[0],xmm0[1,2,3]
+; AVX1-NEXT:    retq
+; AVX1-NEXT:  .LBB62_1:
 ; AVX1-NEXT:    vaddss %xmm1, %xmm0, %xmm2
-; AVX1-NEXT:  .LBB62_2:
 ; AVX1-NEXT:    vblendps {{.*#+}} xmm0 = xmm2[0],xmm0[1,2,3]
 ; AVX1-NEXT:    retq
 ;
@@ -1165,10 +1167,12 @@ define <2 x double> @add_sd_mask(<2 x double> %a, <2 x double> %b, <2 x double> 
 ; AVX1-LABEL: add_sd_mask:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    testb $1, %dil
-; AVX1-NEXT:    je .LBB63_2
-; AVX1-NEXT:  # BB#1:
+; AVX1-NEXT:    jne .LBB63_1
+; AVX1-NEXT:  # BB#2:
+; AVX1-NEXT:    vblendpd {{.*#+}} xmm0 = xmm2[0],xmm0[1]
+; AVX1-NEXT:    retq
+; AVX1-NEXT:  .LBB63_1:
 ; AVX1-NEXT:    vaddsd %xmm1, %xmm0, %xmm2
-; AVX1-NEXT:  .LBB63_2:
 ; AVX1-NEXT:    vblendpd {{.*#+}} xmm0 = xmm2[0],xmm0[1]
 ; AVX1-NEXT:    retq
 ;
