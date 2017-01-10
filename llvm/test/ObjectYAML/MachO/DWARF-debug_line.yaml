@@ -493,7 +493,6 @@ DWARF:
       Version:         2
       PrologueLength:  36
       MinInstLength:   1
-      MaxOpsPerInst:   0
       DefaultIsStmt:   1
       LineBase:        251
       LineRange:       14
