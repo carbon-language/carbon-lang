@@ -6596,7 +6596,9 @@ Sema::AddMethodTemplateCandidate(FunctionTemplateDecl *MethodTmpl,
     Candidate.Function = MethodTmpl->getTemplatedDecl();
     Candidate.Viable = false;
     Candidate.IsSurrogate = false;
-    Candidate.IgnoreObjectArgument = false;
+    Candidate.IgnoreObjectArgument =
+        cast<CXXMethodDecl>(Candidate.Function)->isStatic() ||
+        ObjectType.isNull();
     Candidate.ExplicitCallArguments = Args.size();
     if (Result == TDK_NonDependentConversionFailure)
       Candidate.FailureKind = ovl_fail_bad_conversion;
@@ -6658,7 +6660,11 @@ Sema::AddTemplateOverloadCandidate(FunctionTemplateDecl *FunctionTemplate,
     Candidate.Function = FunctionTemplate->getTemplatedDecl();
     Candidate.Viable = false;
     Candidate.IsSurrogate = false;
-    Candidate.IgnoreObjectArgument = false;
+    // Ignore the object argument if there is one, since we don't have an object
+    // type.
+    Candidate.IgnoreObjectArgument =
+        isa<CXXMethodDecl>(Candidate.Function) &&
+        !isa<CXXConstructorDecl>(Candidate.Function);
     Candidate.ExplicitCallArguments = Args.size();
     if (Result == TDK_NonDependentConversionFailure)
       Candidate.FailureKind = ovl_fail_bad_conversion;
