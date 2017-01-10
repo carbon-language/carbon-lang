@@ -18418,13 +18418,13 @@ static SDValue getTargetVShiftNode(unsigned Opc, const SDLoc &dl, MVT VT,
     ShAmt = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(ShAmt), MVT::v2i64, ShAmt);
   else if (Subtarget.hasSSE41() && ShAmt.getOpcode() == ISD::ZERO_EXTEND &&
            ShAmt.getOperand(0).getSimpleValueType() == MVT::i16) {
-    SDValue Op0 = ShAmt.getOperand(0);
-    Op0 = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(Op0), MVT::v8i16, Op0);
-    ShAmt = DAG.getZeroExtendVectorInReg(Op0, SDLoc(Op0), MVT::v2i64);
+    ShAmt = ShAmt.getOperand(0);
+    ShAmt = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(ShAmt), MVT::v8i16, ShAmt);
+    ShAmt = DAG.getNode(X86ISD::VZEXT, SDLoc(ShAmt), MVT::v2i64, ShAmt);
   } else if (Subtarget.hasSSE41() &&
              ShAmt.getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
     ShAmt = DAG.getNode(ISD::SCALAR_TO_VECTOR, SDLoc(ShAmt), MVT::v4i32, ShAmt);
-    ShAmt = DAG.getZeroExtendVectorInReg(ShAmt, SDLoc(ShAmt), MVT::v2i64);
+    ShAmt = DAG.getNode(X86ISD::VZEXT, SDLoc(ShAmt), MVT::v2i64, ShAmt);
   } else {
     SmallVector<SDValue, 4> ShOps = {ShAmt, DAG.getConstant(0, dl, SVT),
                                      DAG.getUNDEF(SVT), DAG.getUNDEF(SVT)};
