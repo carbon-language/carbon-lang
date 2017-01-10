@@ -1104,7 +1104,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, const SDLoc &DL,
   if (VT.isVector() && TLI->getTypeAction(*getContext(), EltVT) ==
       TargetLowering::TypePromoteInteger) {
    EltVT = TLI->getTypeToTransformTo(*getContext(), EltVT);
-   APInt NewVal = Elt->getValue().zext(EltVT.getSizeInBits());
+   APInt NewVal = Elt->getValue().zextOrTrunc(EltVT.getSizeInBits());
    Elt = ConstantInt::get(*getContext(), NewVal);
   }
   // In other cases the element type is illegal and needs to be expanded, for
@@ -1130,7 +1130,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, const SDLoc &DL,
     SmallVector<SDValue, 2> EltParts;
     for (unsigned i = 0; i < ViaVecNumElts / VT.getVectorNumElements(); ++i) {
       EltParts.push_back(getConstant(NewVal.lshr(i * ViaEltSizeInBits)
-                                           .trunc(ViaEltSizeInBits), DL,
+                                           .zextOrTrunc(ViaEltSizeInBits), DL,
                                      ViaEltVT, isT, isO));
     }
 
