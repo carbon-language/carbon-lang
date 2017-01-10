@@ -215,6 +215,8 @@ LOCAL_LABEL(CHECK_NAN_2):
 6:
     pop     {r6, pc}
 #else
+    mov     r2,         r0, lsl #1
+    mov     r3,         r1, lsl #1
     orrs    r12,    r2, r3, lsr #1
     it ne
     eorsne  r12,    r0, r1
