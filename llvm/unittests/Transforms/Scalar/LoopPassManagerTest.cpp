@@ -777,7 +777,7 @@ TEST_F(LoopPassManagerTest, IndirectOuterPassInvalidation) {
         auto &FAMP = AM.getResult<FunctionAnalysisManagerLoopProxy>(L, AR);
         auto &FAM = FAMP.getManager();
         Function &F = *L.getHeader()->getParent();
-        if (auto *FA = FAM.getCachedResult<FunctionAnalysis>(F))
+        if (FAM.getCachedResult<FunctionAnalysis>(F))
           FAMP.registerOuterAnalysisInvalidation<FunctionAnalysis,
                                                  LoopAnalysis>();
         return MLAHandle.getResult();
