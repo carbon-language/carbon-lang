@@ -482,7 +482,7 @@ void getLoopAnalysisUsage(AnalysisUsage &AU);
 /// preheader to loop body (no speculation).
 /// If SafetyInfo is not null, we are checking for hoisting/sinking
 /// instructions from loop body to preheader/exit. Check if the instruction
-/// can execute specultatively.
+/// can execute speculatively.
 ///
 bool canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
                         Loop *CurLoop, AliasSetTracker *CurAST,
