@@ -12845,7 +12845,7 @@ static SDValue lowerV4X128VectorShuffle(const SDLoc &DL, MVT VT,
 
 /// \brief Handle lowering of 8-lane 64-bit floating point shuffles.
 static SDValue lowerV8F64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
-                                       const SmallBitVector &Zeroable, 
+                                       const SmallBitVector &Zeroable,
                                        SDValue V1, SDValue V2,
                                        const X86Subtarget &Subtarget,
                                        SelectionDAG &DAG) {
@@ -12897,7 +12897,7 @@ static SDValue lowerV8F64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
 
 /// \brief Handle lowering of 16-lane 32-bit floating point shuffles.
 static SDValue lowerV16F32VectorShuffle(SDLoc DL, ArrayRef<int> Mask,
-                                        const SmallBitVector &Zeroable, 
+                                        const SmallBitVector &Zeroable,
                                         SDValue V1, SDValue V2,
                                         const X86Subtarget &Subtarget,
                                         SelectionDAG &DAG) {
@@ -31220,7 +31220,7 @@ static SDValue foldVectorXorShiftIntoCmp(SDNode *N, SelectionDAG &DAG,
   return DAG.getNode(X86ISD::PCMPGT, SDLoc(N), VT, Shift.getOperand(0), Ones);
 }
 
-/// Check if truncation with saturation form type \p SrcVT to \p DstVT 
+/// Check if truncation with saturation form type \p SrcVT to \p DstVT
 /// is valid for the given \p Subtarget.
 static bool isSATValidOnAVX512Subtarget(EVT SrcVT, EVT DstVT,
                                         const X86Subtarget &Subtarget) {
