@@ -79,7 +79,7 @@ bool Decompressor::isGnuStyle(StringRef Name) {
 
 bool Decompressor::isCompressed(const object::SectionRef &Section) {
   StringRef Name;
-  if (std::error_code E = Section.getName(Name))
+  if (Section.getName(Name))
     return false;
   return Section.isCompressed() || isGnuStyle(Name);
 }
