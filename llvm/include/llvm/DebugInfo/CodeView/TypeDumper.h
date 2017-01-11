@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSet.h"
+#include "llvm/DebugInfo/CodeView/TypeDatabase.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
@@ -27,7 +28,6 @@ public:
   CVTypeDumper(ScopedPrinter *W, bool PrintRecordBytes)
       : W(W), PrintRecordBytes(PrintRecordBytes) {}
 
-  StringRef getTypeName(TypeIndex TI);
   void printTypeIndex(StringRef FieldName, TypeIndex TI);
 
   /// Dumps one type record.  Returns false if there was a type parsing error,
@@ -45,19 +45,6 @@ public:
   /// CVTypeArray overload when type records are laid out contiguously in
   /// memory.
   Error dump(ArrayRef<uint8_t> Data);
-
-  /// Gets the type index for the next type record.
-  unsigned getNextTypeIndex() const {
-    return 0x1000 + CVUDTNames.size();
-  }
-
-  /// Records the name of a type, and reserves its type index.
-  void recordType(StringRef Name) { CVUDTNames.push_back(Name); }
-
-  /// Saves the name in a StringSet and creates a stable StringRef.
-  StringRef saveName(StringRef TypeName) {
-    return TypeNames.insert(TypeName).first->getKey();
-  }
 
   void setPrinter(ScopedPrinter *P);
   ScopedPrinter *getPrinter() { return W; }
@@ -91,15 +78,7 @@ private:
   bool IsInFieldList = false;
   bool PrintRecordBytes = false;
 
-  /// Name of the current type. Only valid before visitTypeEnd.
-  StringRef Name;
-
-  /// All user defined type records in .debug$T live in here. Type indices
-  /// greater than 0x1000 are user defined. Subtract 0x1000 from the index to
-  /// index into this vector.
-  SmallVector<StringRef, 10> CVUDTNames;
-
-  StringSet<> TypeNames;
+  TypeDatabase TypeDB;
 };
 
 } // end namespace codeview
