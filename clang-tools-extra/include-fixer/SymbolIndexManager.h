@@ -23,7 +23,12 @@ namespace include_fixer {
 class SymbolIndexManager {
 public:
   void addSymbolIndex(std::function<std::unique_ptr<SymbolIndex>()> F) {
-    SymbolIndices.push_back(std::async(std::launch::async, F));
+#if LLVM_ENABLE_THREADS
+    auto Strategy = std::launch::async;
+#else
+    auto Strategy = std::launch::deferred;
+#endif
+    SymbolIndices.push_back(std::async(Strategy, F));
   }
 
   /// Search for header files to be included for an identifier.
