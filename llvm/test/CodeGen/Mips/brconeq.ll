@@ -8,11 +8,11 @@ define void @test() nounwind {
 entry:
   %0 = load i32, i32* @i, align 4
   %1 = load i32, i32* @j, align 4
-  %cmp = icmp ne i32 %0, %1
+  %cmp = icmp eq i32 %0, %1
 ; 16:	cmp	${{[0-9]+}}, ${{[0-9]+}}
 ; 16:	bteqz	$[[LABEL:[0-9A-Ba-b_]+]]
 ; 16: $[[LABEL]]:
-  br i1 %cmp, label %if.then, label %if.end
+  br i1 %cmp, label %if.end, label %if.then
 
 if.then:                                          ; preds = %entry
   store i32 1, i32* @result, align 4

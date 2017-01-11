@@ -210,7 +210,7 @@ test2:
 
 test3:
 ; CHECK: tst {{x[0-9]+}}, {{x[0-9]+}}, asr #12
-; CHECK: b.le .L
+; CHECK: b.gt .L
   %asr_op = ashr i64 %val2, 12
   %asr_and = and i64 %asr_op, %val1
   %tst3 = icmp sgt i64 %asr_and, 0

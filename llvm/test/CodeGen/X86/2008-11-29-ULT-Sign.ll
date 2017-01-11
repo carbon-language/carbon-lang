@@ -4,8 +4,8 @@ target triple = "i686-pc-linux-gnu"
 
 define i32 @a(i32 %x) nounwind {
 entry:
-	%cmp = icmp uge i32 %x, -2147483648		; <i1> [#uses=1]
-	br i1 %cmp, label %if.then, label %if.end
+	%cmp = icmp ult i32 %x, -2147483648		; <i1> [#uses=1]
+	br i1 %cmp, label %if.end, label %if.then
 
 if.then:		; preds = %entry
 	%call = call i32 (...) @b()		; <i32> [#uses=0]

@@ -156,11 +156,8 @@ define void @f9(i64 %base, i64 %index, float %alt, i32 %limit) {
 define void @f10(float *%ptr, float %alt, i32 %limit) {
 ; CHECK-LABEL: f10:
 ; CHECK: le {{%f[0-5]}}, 0(%r2)
-; CHECK: {{jhe|jnhe}} [[LABEL:[^ ]*]]
-; CHECK: ste {{%f[0-5]}}, 0(%r2)
-; CHECK: br %r14
+; CHECK: {{jl|jnl}} [[LABEL:[^ ]*]]
 ; CHECK: [[LABEL]]:
-; CHECK: ler {{%f[0-5]}}, {{%f[0-5]}}
 ; CHECK: ste {{%f[0-5]}}, 0(%r2)
 ; CHECK: br %r14
   %cond = icmp ult i32 %limit, 420

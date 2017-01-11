@@ -26,27 +26,25 @@ nonzero:
 nonzeroord:
 ; CHECK: lhi %r2, 2
 ; CHECK: tcdb %f0, 48
-; CHECK: je [[FINITE:.]]
+; CHECK: jl [[RET]]
   %abs = tail call double @llvm.fabs.f64(double %x)
   %testinf = fcmp oeq double %abs, 0x7FF0000000000000
   br i1 %testinf, label %ret, label %finite, !prof !1
-
-ret:
-; CHECK: [[RET]]:
-; CHECK: br %r14
-  %res = phi i32 [ 5, %entry ], [ 1, %nonzero ], [ 2, %nonzeroord ], [ %finres, %finite ]
-  ret i32 %res
 
 finite:
 ; CHECK: lhi %r2, 3
 ; CHECK: tcdb %f0, 831
 ; CHECK: blr %r14
 ; CHECK: lhi %r2, 4
-; CHECK: br %r14
   %testnormal = fcmp uge double %abs, 0x10000000000000
   %finres = select i1 %testnormal, i32 3, i32 4
   br label %ret
 
+ret:
+; CHECK: [[RET]]:
+; CHECK: br %r14
+  %res = phi i32 [ 5, %entry ], [ 1, %nonzero ], [ 2, %nonzeroord ], [ %finres, %finite ]
+  ret i32 %res
 }
 
 !1 = !{!"branch_weights", i32 1, i32 1}

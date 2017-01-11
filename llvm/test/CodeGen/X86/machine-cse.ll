@@ -86,8 +86,8 @@ entry:
 ; CHECK-LABEL: cross_mbb_phys_cse:
 ; CHECK: cmpl
 ; CHECK: ja
-  %cmp = icmp ule i32 %a, %b
-  br i1 %cmp, label %if.end, label %return
+  %cmp = icmp ugt i32 %a, %b
+  br i1 %cmp, label %return, label %if.end
 
 if.end:                                           ; preds = %entry
 ; CHECK-NOT: cmpl

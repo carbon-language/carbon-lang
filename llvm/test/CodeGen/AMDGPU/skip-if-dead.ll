@@ -263,25 +263,18 @@ exit:
 ; CHECK-NEXT: s_endpgm
 
 ; CHECK: [[KILLBB:BB[0-9]+_[0-9]+]]:
-; CHECK-NEXT: s_cbranch_scc1 [[BB8:BB[0-9]+_[0-9]+]]
+; CHECK-NEXT: s_cbranch_scc0 [[PHIBB:BB[0-9]+_[0-9]+]]
 
+; CHECK: [[PHIBB]]:
 ; CHECK: v_cmp_eq_f32_e32 vcc, 0, [[PHIREG]]
-; CHECK-NEXT: s_cbranch_vccnz [[BB10:BB[0-9]+_[0-9]+]]
-; CHECK-NEXT: s_branch [[END:BB[0-9]+_[0-9]+]]
+; CHECK-NEXT: s_cbranch_vccz [[ENDBB:BB[0-9]+_[0-9]+]]
 
-; CHECK [[BB8]]: ; %BB8
-; CHECK: v_mov_b32_e32 v{{[0-9]+}}, 8
-; CHECK: buffer_store_dword
-; CHECK: v_cmp_eq_f32_e32 vcc, 0, [[PHIREG]]
-; CHECK-NEXT: s_cbranch_vccz [[END]]
-
-; CHECK: [[BB10]]: ; %bb10
+; CHECK: ; %bb10
 ; CHECK: v_mov_b32_e32 v{{[0-9]+}}, 9
 ; CHECK: buffer_store_dword
 
-; CHECK: [[END:BB[0-9]+_[0-9]+]]: ; %end
+; CHECK: [[ENDBB]]:
 ; CHECK-NEXT: s_endpgm
-
 define amdgpu_ps void @phi_use_def_before_kill() #0 {
 bb:
   %tmp = fadd float undef, 1.000000e+00

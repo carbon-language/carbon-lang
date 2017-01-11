@@ -26,8 +26,7 @@ define double @foo(double %x, double %y, i1 %c) nounwind {
 
 ; CHECK-LABEL: split:
 ; CHECK-NEXT: testb $1, %dil
-; CHECK-NEXT: jne
-; CHECK:      ret
+; CHECK-NEXT: je
 ; CHECK:      divsd
 ; CHECK:      movapd
 ; CHECK:      ret

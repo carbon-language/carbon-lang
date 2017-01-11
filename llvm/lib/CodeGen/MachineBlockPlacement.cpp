@@ -403,10 +403,6 @@ class MachineBlockPlacement : public MachineFunctionPass {
   void buildCFGChains();
   void optimizeBranches();
   void alignBlocks();
-  bool shouldTailDuplicate(MachineBasicBlock *BB);
-  bool canTailDuplicateUnplacedPreds(
-      MachineBasicBlock *BB, MachineBasicBlock *Succ,
-      BlockChain &Chain, const BlockFilterSet *BlockFilter);
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -565,45 +561,6 @@ getAdjustedProbability(BranchProbability OrigProb,
   return SuccProb;
 }
 
-/// Check if a block should be tail duplicated.
-/// \p BB Block to check.
-bool MachineBlockPlacement::shouldTailDuplicate(MachineBasicBlock *BB) {
-  // Blocks with single successors don't create additional fallthrough
-  // opportunities. Don't duplicate them. TODO: When conditional exits are
-  // analyzable, allow them to be duplicated.
-  bool IsSimple = TailDup.isSimpleBB(BB);
-
-  if (BB->succ_size() == 1)
-    return false;
-  return TailDup.shouldTailDuplicate(IsSimple, *BB);
-}
-
-/// When the option TailDupPlacement is on, this method checks if the
-/// fallthrough candidate block \p Succ (of block \p BB) can be tail-duplicated
-/// into all of its unplaced, unfiltered predecessors, that are not BB. In
-/// addition we keep a set of blocks that have been tail-duplicated into and
-/// allow those blocks to be unplaced as well. This allows the creation of a
-/// second (larger) spine and a short fallthrough spine.
-/// We also identify blocks with the CFG that would have been produced by
-/// tail-duplication and lay them out in the same manner.
-bool MachineBlockPlacement::canTailDuplicateUnplacedPreds(
-    MachineBasicBlock *BB, MachineBasicBlock *Succ, BlockChain &Chain,
-    const BlockFilterSet *BlockFilter) {
-  if (!shouldTailDuplicate(Succ))
-    return false;
-
-  for (MachineBasicBlock *Pred : Succ->predecessors()) {
-    // Make sure all unplaced and unfiltered predecessors can be
-    // tail-duplicated into.
-    if (Pred == BB || (BlockFilter && !BlockFilter->count(Pred))
-        || BlockToChain[Pred] == &Chain)
-      continue;
-    if (!TailDup.canTailDuplicate(Succ, Pred))
-      return false;
-  }
-  return true;
-}
-
 /// When the option OutlineOptionalBranches is on, this method
 /// checks if the fallthrough candidate block \p Succ (of block
 /// \p BB) also has other unscheduled predecessor blocks which
@@ -675,12 +632,6 @@ bool MachineBlockPlacement::hasBetterLayoutPredecessor(
 
   // There isn't a better layout when there are no unscheduled predecessors.
   if (SuccChain.UnscheduledPredecessors == 0)
-    return false;
-
-  // As a heuristic, if we can duplicate the block into all its unscheduled
-  // predecessors, we return false.
-  if (TailDupPlacement
-      && canTailDuplicateUnplacedPreds(BB, Succ, Chain, BlockFilter))
     return false;
 
   // There are two basic scenarios here:
@@ -1957,8 +1908,13 @@ bool MachineBlockPlacement::maybeTailDuplicateBlock(
   DuplicatedToLPred = false;
   DEBUG(dbgs() << "Redoing tail duplication for Succ#"
         << BB->getNumber() << "\n");
-
-  if (!shouldTailDuplicate(BB))
+  bool IsSimple = TailDup.isSimpleBB(BB);
+  // Blocks with single successors don't create additional fallthrough
+  // opportunities. Don't duplicate them. TODO: When conditional exits are
+  // analyzable, allow them to be duplicated.
+  if (!IsSimple && BB->succ_size() == 1)
+    return false;
+  if (!TailDup.shouldTailDuplicate(IsSimple, *BB))
     return false;
   // This has to be a callback because none of it can be done after
   // BB is deleted.
@@ -2011,7 +1967,6 @@ bool MachineBlockPlacement::maybeTailDuplicateBlock(
       llvm::function_ref<void(MachineBasicBlock*)>(RemovalCallback);
 
   SmallVector<MachineBasicBlock *, 8> DuplicatedPreds;
-  bool IsSimple = TailDup.isSimpleBB(BB);
   TailDup.tailDuplicateAndUpdate(IsSimple, BB, LPred,
                                  &DuplicatedPreds, &RemovalCallbackRef);
 

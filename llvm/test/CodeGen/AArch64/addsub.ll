@@ -140,16 +140,11 @@ test4:
 
 test5:
 ; CHECK: cmn {{w[0-9]+}}, #444
-; CHECK: b.le [[TEST6:.?LBB[0-9]+_[0-9]+]]
+; CHECK: b.gt [[RET]]
   %newval5 = add i32 %val, 4
   store i32 %newval5, i32* @var_i32
   %cmp_neg_uge = icmp sgt i32 %val2, -444
   br i1 %cmp_neg_uge, label %ret, label %test6
-
-; CHECK: {{^}}[[RET]]:
-; CHECK: ret
-; CHECK: {{^}}[[TEST6]]:
-; CHECK: ret
 
 test6:
   %newval6 = add i32 %val, 5

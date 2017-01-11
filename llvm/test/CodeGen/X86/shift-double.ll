@@ -14,13 +14,11 @@ define i64 @test1(i64 %X, i8 %C) nounwind {
 ; CHECK-NEXT:    shll %cl, %eax
 ; CHECK-NEXT:    shldl %cl, %esi, %edx
 ; CHECK-NEXT:    testb $32, %cl
-; CHECK-NEXT:    jne .LBB0_1
-; CHECK-NEXT:  # BB#2:
-; CHECK-NEXT:    popl %esi
-; CHECK-NEXT:    retl
-; CHECK-NEXT:  .LBB0_1:
+; CHECK-NEXT:    je .LBB0_2
+; CHECK-NEXT:  # BB#1:
 ; CHECK-NEXT:    movl %eax, %edx
 ; CHECK-NEXT:    xorl %eax, %eax
+; CHECK-NEXT:  .LBB0_2:
 ; CHECK-NEXT:    popl %esi
 ; CHECK-NEXT:    retl
         %shift.upgrd.1 = zext i8 %C to i64              ; <i64> [#uses=1]
@@ -39,14 +37,12 @@ define i64 @test2(i64 %X, i8 %C) nounwind {
 ; CHECK-NEXT:    sarl %cl, %edx
 ; CHECK-NEXT:    shrdl %cl, %esi, %eax
 ; CHECK-NEXT:    testb $32, %cl
-; CHECK-NEXT:    jne .LBB1_1
-; CHECK-NEXT:  # BB#2:
-; CHECK-NEXT:    popl %esi
-; CHECK-NEXT:    retl
-; CHECK-NEXT:  .LBB1_1:
+; CHECK-NEXT:    je .LBB1_2
+; CHECK-NEXT:  # BB#1:
 ; CHECK-NEXT:    sarl $31, %esi
 ; CHECK-NEXT:    movl %edx, %eax
 ; CHECK-NEXT:    movl %esi, %edx
+; CHECK-NEXT:  .LBB1_2:
 ; CHECK-NEXT:    popl %esi
 ; CHECK-NEXT:    retl
         %shift.upgrd.2 = zext i8 %C to i64              ; <i64> [#uses=1]
@@ -65,13 +61,11 @@ define i64 @test3(i64 %X, i8 %C) nounwind {
 ; CHECK-NEXT:    shrl %cl, %edx
 ; CHECK-NEXT:    shrdl %cl, %esi, %eax
 ; CHECK-NEXT:    testb $32, %cl
-; CHECK-NEXT:    jne .LBB2_1
-; CHECK-NEXT:  # BB#2:
-; CHECK-NEXT:    popl %esi
-; CHECK-NEXT:    retl
-; CHECK-NEXT:  .LBB2_1:
+; CHECK-NEXT:    je .LBB2_2
+; CHECK-NEXT:  # BB#1:
 ; CHECK-NEXT:    movl %edx, %eax
 ; CHECK-NEXT:    xorl %edx, %edx
+; CHECK-NEXT:  .LBB2_2:
 ; CHECK-NEXT:    popl %esi
 ; CHECK-NEXT:    retl
         %shift.upgrd.3 = zext i8 %C to i64              ; <i64> [#uses=1]

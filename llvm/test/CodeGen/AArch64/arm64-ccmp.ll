@@ -108,10 +108,10 @@ if.end:                                           ; preds = %if.then, %lor.lhs.f
 ; CHECK: cmp w0, #1
 ; CHECK: sdiv [[DIVRES:w[0-9]+]], w1, w0
 ; CHECK: ccmp [[DIVRES]], #16, #0, ge
-; CHECK: b.le [[BLOCK:LBB[0-9_]+]]
-; CHECK: orr w0, wzr, #0x7
-; CHECK: [[BLOCK]]:
+; CHECK: b.gt [[BLOCK:LBB[0-9_]+]]
 ; CHECK: bl _foo
+; CHECK: [[BLOCK]]:
+; CHECK: orr w0, wzr, #0x7
 define i32 @speculate_division(i32 %a, i32 %b) nounwind ssp {
 entry:
   %cmp = icmp sgt i32 %a, 0
@@ -135,7 +135,7 @@ if.end:
 ; CHECK: cmp
 ; CHECK-NOT: b.
 ; CHECK: fccmp {{.*}}, #8, ge
-; CHECK: b.ge
+; CHECK: b.lt
 define i32 @single_fcmp(i32 %a, float %b) nounwind ssp {
 entry:
   %cmp = icmp sgt i32 %a, 0
