@@ -383,6 +383,8 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     return R_TLS;
   case R_386_TLS_LE_32:
     return R_NEG_TLS;
+  case R_386_NONE:
+    return R_HINT;
   default:
     error("do not know how to handle relocation " + toString(Type) + " (" +
           Twine(Type) + ")");
