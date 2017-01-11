@@ -91,10 +91,11 @@ static bool sink(Instruction &I, const LoopInfo *LI, const DominatorTree *DT,
                  const Loop *CurLoop, AliasSetTracker *CurAST,
                  const LoopSafetyInfo *SafetyInfo,
                  OptimizationRemarkEmitter *ORE);
-static bool isSafeToExecuteUnconditionally(const Instruction &Inst,
+static bool isSafeToExecuteUnconditionally(Instruction &Inst,
                                            const DominatorTree *DT,
                                            const Loop *CurLoop,
                                            const LoopSafetyInfo *SafetyInfo,
+                                           OptimizationRemarkEmitter *ORE,
                                            const Instruction *CtxI = nullptr);
 static bool pointerInvalidatedByLoop(Value *V, uint64_t Size,
                                      const AAMDNodes &AAInfo,
@@ -434,7 +435,7 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       if (CurLoop->hasLoopInvariantOperands(&I) &&
           canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo, ORE) &&
           isSafeToExecuteUnconditionally(
-              I, DT, CurLoop, SafetyInfo,
+              I, DT, CurLoop, SafetyInfo, ORE,
               CurLoop->getLoopPreheader()->getTerminator()))
         Changed |= hoist(I, DT, CurLoop, SafetyInfo, ORE);
     }
@@ -819,15 +820,28 @@ static bool hoist(Instruction &I, const DominatorTree *DT, const Loop *CurLoop,
 /// Only sink or hoist an instruction if it is not a trapping instruction,
 /// or if the instruction is known not to trap when moved to the preheader.
 /// or if it is a trapping instruction and is guaranteed to execute.
-static bool isSafeToExecuteUnconditionally(const Instruction &Inst,
+static bool isSafeToExecuteUnconditionally(Instruction &Inst,
                                            const DominatorTree *DT,
                                            const Loop *CurLoop,
                                            const LoopSafetyInfo *SafetyInfo,
+                                           OptimizationRemarkEmitter *ORE,
                                            const Instruction *CtxI) {
   if (isSafeToSpeculativelyExecute(&Inst, CtxI, DT))
     return true;
 
-  return isGuaranteedToExecute(Inst, DT, CurLoop, SafetyInfo);
+  bool GuaranteedToExecute =
+      isGuaranteedToExecute(Inst, DT, CurLoop, SafetyInfo);
+
+  if (!GuaranteedToExecute) {
+    auto *LI = dyn_cast<LoadInst>(&Inst);
+    if (LI && CurLoop->isLoopInvariant(LI->getPointerOperand()))
+      ORE->emit(OptimizationRemarkMissed(
+                    DEBUG_TYPE, "LoadWithLoopInvariantAddressCondExecuted", LI)
+                << "failed to hoist load with loop-invariant address "
+                   "because load is conditionally executed");
+  }
+
+  return GuaranteedToExecute;
 }
 
 namespace {
@@ -1016,14 +1030,14 @@ bool llvm::promoteLoopAccessesToScalars(
 
       // If there is an non-load/store instruction in the loop, we can't promote
       // it.
-      if (const LoadInst *Load = dyn_cast<LoadInst>(UI)) {
+      if (LoadInst *Load = dyn_cast<LoadInst>(UI)) {
         assert(!Load->isVolatile() && "AST broken");
         if (!Load->isSimple())
           return false;
 
         if (!DereferenceableInPH)
           DereferenceableInPH = isSafeToExecuteUnconditionally(
-              *Load, DT, CurLoop, SafetyInfo, Preheader->getTerminator());
+              *Load, DT, CurLoop, SafetyInfo, ORE, Preheader->getTerminator());
       } else if (const StoreInst *Store = dyn_cast<StoreInst>(UI)) {
         // Stores *of* the pointer are not interesting, only stores *to* the
         // pointer.
