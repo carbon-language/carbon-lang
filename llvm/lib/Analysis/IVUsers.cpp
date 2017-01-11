@@ -16,8 +16,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/AssumptionCache.h"
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/Analysis/LoopPass.h"
-#include "llvm/Analysis/LoopPassManager.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
@@ -39,13 +39,6 @@ AnalysisKey IVUsersAnalysis::Key;
 IVUsers IVUsersAnalysis::run(Loop &L, LoopAnalysisManager &AM,
                              LoopStandardAnalysisResults &AR) {
   return IVUsers(&L, &AR.AC, &AR.LI, &AR.DT, &AR.SE);
-}
-
-PreservedAnalyses IVUsersPrinterPass::run(Loop &L, LoopAnalysisManager &AM,
-                                          LoopStandardAnalysisResults &AR,
-                                          LPMUpdater &U) {
-  AM.getResult<IVUsersAnalysis>(L, AR).print(OS);
-  return PreservedAnalyses::all();
 }
 
 char IVUsersWrapperPass::ID = 0;

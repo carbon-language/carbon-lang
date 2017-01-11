@@ -12,22 +12,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/EquivalenceClasses.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/PointerIntPair.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
-#include "llvm/Analysis/LoopAccessAnalysis.h"
+#include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/LoopPassManager.h"
 #include "llvm/Analysis/MemoryLocation.h"
 #include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -44,10 +44,10 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
-#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/Type.h"
@@ -2123,17 +2123,6 @@ AnalysisKey LoopAccessAnalysis::Key;
 LoopAccessInfo LoopAccessAnalysis::run(Loop &L, LoopAnalysisManager &AM,
                                        LoopStandardAnalysisResults &AR) {
   return LoopAccessInfo(&L, &AR.SE, &AR.TLI, &AR.AA, &AR.DT, &AR.LI);
-}
-
-PreservedAnalyses
-LoopAccessInfoPrinterPass::run(Loop &L, LoopAnalysisManager &AM,
-                               LoopStandardAnalysisResults &AR, LPMUpdater &) {
-  Function &F = *L.getHeader()->getParent();
-  auto &LAI = AM.getResult<LoopAccessAnalysis>(L, AR);
-  OS << "Loop access info in function '" << F.getName() << "':\n";
-  OS.indent(2) << L.getHeader()->getName() << ":\n";
-  LAI.print(OS, 4);
-  return PreservedAnalyses::all();
 }
 
 namespace llvm {

@@ -15,9 +15,9 @@
 #define LLVM_TRANSFORMS_SCALAR_LOOPDELETION_H
 
 #include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/LoopPassManager.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Transforms/Scalar/LoopPassManager.h"
 
 namespace llvm {
 
