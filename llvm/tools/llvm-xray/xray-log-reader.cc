@@ -123,7 +123,7 @@ Error llvm::xray::NaiveLogLoader(StringRef Data, XRayFileHeader &FileHeader,
     default:
       return make_error<StringError>(
           Twine("Unknown record type '") + Twine(int{Type}) + "'",
-          std::make_error_code(std::errc::protocol_error));
+          std::make_error_code(std::errc::executable_format_error));
     }
     Record.FuncId = RecordExtractor.getSigned(&OffsetPtr, sizeof(int32_t));
     Record.TSC = RecordExtractor.getU64(&OffsetPtr);
