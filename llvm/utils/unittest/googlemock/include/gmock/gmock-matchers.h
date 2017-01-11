@@ -2462,11 +2462,14 @@ class BeginEndDistanceIsMatcher {
   template <typename Container>
   class Impl : public MatcherInterface<Container> {
    public:
-    typedef internal::StlContainerView<
-        GTEST_REMOVE_REFERENCE_AND_CONST_(Container)> ContainerView;
+    typedef GTEST_REMOVE_REFERENCE_AND_CONST_(Container) RawContainer;
+    typedef internal::StlContainerView<RawContainer> View;
+    typedef typename View::type StlContainer;
+    typedef typename View::const_reference StlContainerReference;
+    typedef decltype(std::begin(
+        std::declval<StlContainerReference>())) StlContainerConstIterator;
     typedef typename std::iterator_traits<
-        typename ContainerView::type::const_iterator>::difference_type
-        DistanceType;
+        StlContainerConstIterator>::difference_type DistanceType;
     explicit Impl(const DistanceMatcher& distance_matcher)
         : distance_matcher_(MatcherCast<DistanceType>(distance_matcher)) {}
 
@@ -3111,7 +3114,10 @@ class ElementsAreMatcherImpl : public MatcherInterface<Container> {
   typedef internal::StlContainerView<RawContainer> View;
   typedef typename View::type StlContainer;
   typedef typename View::const_reference StlContainerReference;
-  typedef typename StlContainer::value_type Element;
+  typedef decltype(std::begin(
+      std::declval<StlContainerReference>())) StlContainerConstIterator;
+  typedef typename std::remove_reference<decltype(
+      *std::declval<StlContainerConstIterator &>())>::type Element;
 
   // Constructs the matcher from a sequence of element values or
   // element matchers.
@@ -3168,7 +3174,7 @@ class ElementsAreMatcherImpl : public MatcherInterface<Container> {
     // explanations[i] is the explanation of the element at index i.
     ::std::vector<internal::string> explanations(count());
     StlContainerReference stl_container = View::ConstReference(container);
-    typename StlContainer::const_iterator it = stl_container.begin();
+    StlContainerConstIterator it = stl_container.begin();
     size_t exam_pos = 0;
     bool mismatch_found = false;  // Have we found a mismatched element yet?
 
@@ -3350,8 +3356,10 @@ class UnorderedElementsAreMatcherImpl
   typedef internal::StlContainerView<RawContainer> View;
   typedef typename View::type StlContainer;
   typedef typename View::const_reference StlContainerReference;
-  typedef typename StlContainer::const_iterator StlContainerConstIterator;
-  typedef typename StlContainer::value_type Element;
+  typedef decltype(std::begin(
+      std::declval<StlContainerReference>())) StlContainerConstIterator;
+  typedef typename std::remove_reference<decltype(
+      *std::declval<StlContainerConstIterator &>())>::type Element;
 
   // Constructs the matcher from a sequence of element values or
   // element matchers.
@@ -3456,8 +3464,12 @@ class UnorderedElementsAreMatcher {
   template <typename Container>
   operator Matcher<Container>() const {
     typedef GTEST_REMOVE_REFERENCE_AND_CONST_(Container) RawContainer;
-    typedef typename internal::StlContainerView<RawContainer>::type View;
-    typedef typename View::value_type Element;
+    typedef internal::StlContainerView<RawContainer> View;
+    typedef typename View::const_reference StlContainerReference;
+    typedef decltype(std::begin(
+        std::declval<StlContainerReference>())) StlContainerConstIterator;
+    typedef typename std::remove_reference<decltype(
+        *std::declval<StlContainerConstIterator &>())>::type Element;
     typedef ::std::vector<Matcher<const Element&> > MatcherVec;
     MatcherVec matchers;
     matchers.reserve(::testing::tuple_size<MatcherTuple>::value);
@@ -3481,8 +3493,12 @@ class ElementsAreMatcher {
   template <typename Container>
   operator Matcher<Container>() const {
     typedef GTEST_REMOVE_REFERENCE_AND_CONST_(Container) RawContainer;
-    typedef typename internal::StlContainerView<RawContainer>::type View;
-    typedef typename View::value_type Element;
+    typedef internal::StlContainerView<RawContainer> View;
+    typedef typename View::const_reference StlContainerReference;
+    typedef decltype(std::begin(
+        std::declval<StlContainerReference>())) StlContainerConstIterator;
+    typedef typename std::remove_reference<decltype(
+        *std::declval<StlContainerConstIterator &>())>::type Element;
     typedef ::std::vector<Matcher<const Element&> > MatcherVec;
     MatcherVec matchers;
     matchers.reserve(::testing::tuple_size<MatcherTuple>::value);
