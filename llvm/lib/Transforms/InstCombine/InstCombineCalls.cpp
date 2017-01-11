@@ -2756,6 +2756,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (KnownOne.isAllOnesValue())
       return eraseInstFromFunction(*II);
 
+    // Update the cache of affected values for this assumption (we might be
+    // here because we just simplified the condition).
+    AC.updateAffectedValues(II);
     break;
   }
   case Intrinsic::experimental_gc_relocate: {

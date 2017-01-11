@@ -526,7 +526,10 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
 
   unsigned BitWidth = KnownZero.getBitWidth();
 
-  for (auto &AssumeVH : Q.AC->assumptions()) {
+  // Note that the patterns below need to be kept in sync with the code
+  // in AssumptionCache::updateAffectedValues.
+
+  for (auto &AssumeVH : Q.AC->assumptionsFor(V)) {
     if (!AssumeVH)
       continue;
     CallInst *I = cast<CallInst>(AssumeVH);
