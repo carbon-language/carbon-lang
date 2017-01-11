@@ -99,6 +99,34 @@ char SIFoldOperands::ID = 0;
 
 char &llvm::SIFoldOperandsID = SIFoldOperands::ID;
 
+// Wrapper around isInlineConstant that understands special cases when
+// instruction types are replaced during operand folding.
+static bool isInlineConstantIfFolded(const SIInstrInfo *TII,
+                                     const MachineInstr &UseMI,
+                                     unsigned OpNo,
+                                     const MachineOperand &OpToFold) {
+  if (TII->isInlineConstant(UseMI, OpNo, OpToFold))
+    return true;
+
+  unsigned Opc = UseMI.getOpcode();
+  switch (Opc) {
+  case AMDGPU::V_MAC_F32_e64:
+  case AMDGPU::V_MAC_F16_e64: {
+    // Special case for mac. Since this is replaced with mad when folded into
+    // src2, we need to check the legality for the final instruction.
+    int Src2Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2);
+    if (static_cast<int>(OpNo) == Src2Idx) {
+      bool IsF32 = Opc == AMDGPU::V_MAC_F32_e64;
+      const MCInstrDesc &MadDesc
+        = TII->get(IsF32 ? AMDGPU::V_MAD_F32 : AMDGPU::V_MAD_F16);
+      return TII->isInlineConstant(OpToFold, MadDesc.OpInfo[OpNo].OperandType);
+    }
+  }
+  default:
+    return false;
+  }
+}
+
 FunctionPass *llvm::createSIFoldOperandsPass() {
   return new SIFoldOperands();
 }
@@ -171,7 +199,7 @@ static bool tryAddToFoldList(SmallVectorImpl<FoldCandidate> &FoldList,
     unsigned Opc = MI->getOpcode();
     if ((Opc == AMDGPU::V_MAC_F32_e64 || Opc == AMDGPU::V_MAC_F16_e64) &&
         (int)OpNo == AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src2)) {
-      bool IsF32  = Opc == AMDGPU::V_MAC_F32_e64;
+      bool IsF32 = Opc == AMDGPU::V_MAC_F32_e64;
 
       // Check if changing this to a v_mad_{f16, f32} instruction will allow us
       // to fold the operand.
@@ -611,7 +639,7 @@ void SIFoldOperands::foldInstOperand(MachineInstr &MI,
       // Folding immediates with more than one use will increase program size.
       // FIXME: This will also reduce register usage, which may be better
       // in some cases. A better heuristic is needed.
-      if (TII->isInlineConstant(*UseMI, OpNo, OpToFold)) {
+      if (isInlineConstantIfFolded(TII, *UseMI, OpNo, OpToFold)) {
         foldOperand(OpToFold, UseMI, OpNo, FoldList, CopiesToReplace);
       } else {
         if (++NumLiteralUses == 1) {
