@@ -43,6 +43,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/LoopPassManager.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionAliasAnalysis.h"
 #include "llvm/Analysis/TargetLibraryInfo.h"
@@ -84,10 +85,12 @@ static bool inSubLoop(BasicBlock *BB, Loop *CurLoop, LoopInfo *LI);
 static bool isNotUsedInLoop(const Instruction &I, const Loop *CurLoop,
                             const LoopSafetyInfo *SafetyInfo);
 static bool hoist(Instruction &I, const DominatorTree *DT, const Loop *CurLoop,
-                  const LoopSafetyInfo *SafetyInfo);
+                  const LoopSafetyInfo *SafetyInfo,
+                  OptimizationRemarkEmitter *ORE);
 static bool sink(Instruction &I, const LoopInfo *LI, const DominatorTree *DT,
                  const Loop *CurLoop, AliasSetTracker *CurAST,
-                 const LoopSafetyInfo *SafetyInfo);
+                 const LoopSafetyInfo *SafetyInfo,
+                 OptimizationRemarkEmitter *ORE);
 static bool isSafeToExecuteUnconditionally(const Instruction &Inst,
                                            const DominatorTree *DT,
                                            const Loop *CurLoop,
@@ -104,7 +107,8 @@ CloneInstructionInExitBlock(Instruction &I, BasicBlock &ExitBlock, PHINode &PN,
 namespace {
 struct LoopInvariantCodeMotion {
   bool runOnLoop(Loop *L, AliasAnalysis *AA, LoopInfo *LI, DominatorTree *DT,
-                 TargetLibraryInfo *TLI, ScalarEvolution *SE, bool DeleteAST);
+                 TargetLibraryInfo *TLI, ScalarEvolution *SE,
+                 OptimizationRemarkEmitter *ORE, bool DeleteAST);
 
   DenseMap<Loop *, AliasSetTracker *> &getLoopToAliasSetMap() {
     return LoopToAliasSetMap;
@@ -135,12 +139,16 @@ struct LegacyLICMPass : public LoopPass {
     }
 
     auto *SE = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
+    // For the old PM, we can't use OptimizationRemarkEmitter as an analysis
+    // pass.  Function analyses need to be preserved across loop transformations
+    // but ORE cannot be preserved (see comment before the pass definition).
+    OptimizationRemarkEmitter ORE(L->getHeader()->getParent());
     return LICM.runOnLoop(L,
                           &getAnalysis<AAResultsWrapperPass>().getAAResults(),
                           &getAnalysis<LoopInfoWrapperPass>().getLoopInfo(),
                           &getAnalysis<DominatorTreeWrapperPass>().getDomTree(),
                           &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI(),
-                          SE ? &SE->getSE() : nullptr, false);
+                          SE ? &SE->getSE() : nullptr, &ORE, false);
   }
 
   /// This transformation requires natural loop information & requires that
@@ -186,11 +194,13 @@ PreservedAnalyses LICMPass::run(Loop &L, LoopAnalysisManager &AM) {
   auto *DT = FAM.getCachedResult<DominatorTreeAnalysis>(*F);
   auto *TLI = FAM.getCachedResult<TargetLibraryAnalysis>(*F);
   auto *SE = FAM.getCachedResult<ScalarEvolutionAnalysis>(*F);
-  assert((AA && LI && DT && TLI && SE) && "Analyses for LICM not available");
+  auto *ORE = FAM.getCachedResult<OptimizationRemarkEmitterAnalysis>(*F);
+  assert((AA && LI && DT && TLI && SE && ORE) &&
+         "Analyses for LICM not available");
 
   LoopInvariantCodeMotion LICM;
 
-  if (!LICM.runOnLoop(&L, AA, LI, DT, TLI, SE, true))
+  if (!LICM.runOnLoop(&L, AA, LI, DT, TLI, SE, ORE, true))
     return PreservedAnalyses::all();
 
   // FIXME: There is no setPreservesCFG in the new PM. When that becomes
@@ -217,7 +227,9 @@ Pass *llvm::createLICMPass() { return new LegacyLICMPass(); }
 bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
                                         LoopInfo *LI, DominatorTree *DT,
                                         TargetLibraryInfo *TLI,
-                                        ScalarEvolution *SE, bool DeleteAST) {
+                                        ScalarEvolution *SE,
+                                        OptimizationRemarkEmitter *ORE,
+                                        bool DeleteAST) {
   bool Changed = false;
 
   assert(L->isLCSSAForm(*DT) && "Loop is not in LCSSA form.");
@@ -243,10 +255,10 @@ bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
   //
   if (L->hasDedicatedExits())
     Changed |= sinkRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, L,
-                          CurAST, &SafetyInfo);
+                          CurAST, &SafetyInfo, ORE);
   if (Preheader)
     Changed |= hoistRegion(DT->getNode(L->getHeader()), AA, LI, DT, TLI, L,
-                           CurAST, &SafetyInfo);
+                           CurAST, &SafetyInfo, ORE);
 
   // Now that all loop invariants have been removed from the loop, promote any
   // memory references to scalars that we can.
@@ -279,7 +291,7 @@ bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
       for (AliasSet &AS : *CurAST)
         Promoted |=
             promoteLoopAccessesToScalars(AS, ExitBlocks, InsertPts, PIC, LI, DT,
-                                         TLI, L, CurAST, &SafetyInfo);
+                                         TLI, L, CurAST, &SafetyInfo, ORE);
 
       // Once we have promoted values across the loop body we have to
       // recursively reform LCSSA as any nested loop may now have values defined
@@ -320,7 +332,8 @@ bool LoopInvariantCodeMotion::runOnLoop(Loop *L, AliasAnalysis *AA,
 ///
 bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
                       DominatorTree *DT, TargetLibraryInfo *TLI, Loop *CurLoop,
-                      AliasSetTracker *CurAST, LoopSafetyInfo *SafetyInfo) {
+                      AliasSetTracker *CurAST, LoopSafetyInfo *SafetyInfo,
+                      OptimizationRemarkEmitter *ORE) {
 
   // Verify inputs.
   assert(N != nullptr && AA != nullptr && LI != nullptr && DT != nullptr &&
@@ -336,7 +349,8 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
   bool Changed = false;
   const std::vector<DomTreeNode *> &Children = N->getChildren();
   for (DomTreeNode *Child : Children)
-    Changed |= sinkRegion(Child, AA, LI, DT, TLI, CurLoop, CurAST, SafetyInfo);
+    Changed |=
+        sinkRegion(Child, AA, LI, DT, TLI, CurLoop, CurAST, SafetyInfo, ORE);
 
   // Only need to process the contents of this block if it is not part of a
   // subloop (which would already have been processed).
@@ -365,7 +379,7 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
     if (isNotUsedInLoop(I, CurLoop, SafetyInfo) &&
         canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo)) {
       ++II;
-      Changed |= sink(I, LI, DT, CurLoop, CurAST, SafetyInfo);
+      Changed |= sink(I, LI, DT, CurLoop, CurAST, SafetyInfo, ORE);
     }
   }
   return Changed;
@@ -378,7 +392,8 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
 ///
 bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
                        DominatorTree *DT, TargetLibraryInfo *TLI, Loop *CurLoop,
-                       AliasSetTracker *CurAST, LoopSafetyInfo *SafetyInfo) {
+                       AliasSetTracker *CurAST, LoopSafetyInfo *SafetyInfo,
+                       OptimizationRemarkEmitter *ORE) {
   // Verify inputs.
   assert(N != nullptr && AA != nullptr && LI != nullptr && DT != nullptr &&
          CurLoop != nullptr && CurAST != nullptr && SafetyInfo != nullptr &&
@@ -421,12 +436,13 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
           isSafeToExecuteUnconditionally(
               I, DT, CurLoop, SafetyInfo,
               CurLoop->getLoopPreheader()->getTerminator()))
-        Changed |= hoist(I, DT, CurLoop, SafetyInfo);
+        Changed |= hoist(I, DT, CurLoop, SafetyInfo, ORE);
     }
 
   const std::vector<DomTreeNode *> &Children = N->getChildren();
   for (DomTreeNode *Child : Children)
-    Changed |= hoistRegion(Child, AA, LI, DT, TLI, CurLoop, CurAST, SafetyInfo);
+    Changed |=
+        hoistRegion(Child, AA, LI, DT, TLI, CurLoop, CurAST, SafetyInfo, ORE);
   return Changed;
 }
 
@@ -680,8 +696,11 @@ CloneInstructionInExitBlock(Instruction &I, BasicBlock &ExitBlock, PHINode &PN,
 ///
 static bool sink(Instruction &I, const LoopInfo *LI, const DominatorTree *DT,
                  const Loop *CurLoop, AliasSetTracker *CurAST,
-                 const LoopSafetyInfo *SafetyInfo) {
+                 const LoopSafetyInfo *SafetyInfo,
+                 OptimizationRemarkEmitter *ORE) {
   DEBUG(dbgs() << "LICM sinking instruction: " << I << "\n");
+  ORE->emit(OptimizationRemark(DEBUG_TYPE, "InstSunk", &I)
+            << "sinking " << ore::NV("Inst", &I));
   bool Changed = false;
   if (isa<LoadInst>(I))
     ++NumMovedLoads;
@@ -748,10 +767,13 @@ static bool sink(Instruction &I, const LoopInfo *LI, const DominatorTree *DT,
 /// is safe to hoist, this instruction is called to do the dirty work.
 ///
 static bool hoist(Instruction &I, const DominatorTree *DT, const Loop *CurLoop,
-                  const LoopSafetyInfo *SafetyInfo) {
+                  const LoopSafetyInfo *SafetyInfo,
+                  OptimizationRemarkEmitter *ORE) {
   auto *Preheader = CurLoop->getLoopPreheader();
   DEBUG(dbgs() << "LICM hoisting to " << Preheader->getName() << ": " << I
                << "\n");
+  ORE->emit(OptimizationRemark(DEBUG_TYPE, "Hoisted", &I)
+            << "hosting " << ore::NV("Inst", &I));
 
   // Metadata can be dependent on conditions we are hoisting above.
   // Conservatively strip all metadata on the instruction unless we were
@@ -882,7 +904,8 @@ bool llvm::promoteLoopAccessesToScalars(
     AliasSet &AS, SmallVectorImpl<BasicBlock *> &ExitBlocks,
     SmallVectorImpl<Instruction *> &InsertPts, PredIteratorCache &PIC,
     LoopInfo *LI, DominatorTree *DT, const TargetLibraryInfo *TLI,
-    Loop *CurLoop, AliasSetTracker *CurAST, LoopSafetyInfo *SafetyInfo) {
+    Loop *CurLoop, AliasSetTracker *CurAST, LoopSafetyInfo *SafetyInfo,
+    OptimizationRemarkEmitter *ORE) {
   // Verify inputs.
   assert(LI != nullptr && DT != nullptr && CurLoop != nullptr &&
          CurAST != nullptr && SafetyInfo != nullptr &&
@@ -1074,6 +1097,9 @@ bool llvm::promoteLoopAccessesToScalars(
   // Otherwise, this is safe to promote, lets do it!
   DEBUG(dbgs() << "LICM: Promoting value stored to in loop: " << *SomePtr
                << '\n');
+  ORE->emit(
+      OptimizationRemark(DEBUG_TYPE, "PromoteLoopAccessesToScalar", LoopUses[0])
+      << "Moving accesses to memory location out of the loop");
   ++NumPromoted;
 
   // Grab a debug location for the inserted loads/stores; given that the
