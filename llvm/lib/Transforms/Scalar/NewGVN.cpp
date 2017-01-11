@@ -198,7 +198,7 @@ class NewGVN : public FunctionPass {
   ExpressionClassMap ExpressionToClass;
 
   // Which values have changed as a result of leader changes.
-  SmallPtrSet<Value *, 8> ChangedValues;
+  SmallPtrSet<Value *, 8> LeaderChanges;
 
   // Reachability info.
   using BlockEdge = BasicBlockEdge;
@@ -317,7 +317,8 @@ private:
   template <class T>
   Value *lookupOperandLeader(Value *, const User *, const T &) const;
   void performCongruenceFinding(Value *, const Expression *);
-
+  void moveValueToNewCongruenceClass(Value *, CongruenceClass *,
+                                     CongruenceClass *);
   // Reachability handling.
   void updateReachableEdge(BasicBlock *, BasicBlock *);
   void processOutgoingEdges(TerminatorInst *, BasicBlock *);
@@ -1044,7 +1045,40 @@ void NewGVN::markLeaderChangeTouched(CongruenceClass *CC) {
   for (auto M : CC->Members) {
     if (auto *I = dyn_cast<Instruction>(M))
       TouchedInstructions.set(InstrDFS[I]);
-    ChangedValues.insert(M);
+    LeaderChanges.insert(M);
+  }
+}
+
+// Move a value, currently in OldClass, to be part of NewClass
+// Update OldClass for the move (including changing leaders, etc)
+void NewGVN::moveValueToNewCongruenceClass(Value *V, CongruenceClass *OldClass,
+                                           CongruenceClass *NewClass) {
+  DEBUG(dbgs() << "New congruence class for " << V << " is " << NewClass->ID
+               << "\n");
+  OldClass->Members.erase(V);
+  NewClass->Members.insert(V);
+  if (isa<StoreInst>(V)) {
+    --OldClass->StoreCount;
+    assert(OldClass->StoreCount >= 0);
+    ++NewClass->StoreCount;
+    assert(NewClass->StoreCount >= 0);
+  }
+
+  ValueToClass[V] = NewClass;
+  // See if we destroyed the class or need to swap leaders.
+  if (OldClass->Members.empty() && OldClass != InitialClass) {
+    if (OldClass->DefiningExpr) {
+      OldClass->Dead = true;
+      DEBUG(dbgs() << "Erasing expression " << OldClass->DefiningExpr
+                   << " from table\n");
+      ExpressionToClass.erase(OldClass->DefiningExpr);
+    }
+  } else if (OldClass->RepLeader == V) {
+    // When the leader changes, the value numbering of
+    // everything may change due to symbolization changes, so we need to
+    // reprocess.
+    OldClass->RepLeader = *(OldClass->Members.begin());
+    markLeaderChangeTouched(OldClass);
   }
 }
 
@@ -1101,33 +1135,15 @@ void NewGVN::performCongruenceFinding(Value *V, const Expression *E) {
       assert(!EClass->Dead && "We accidentally looked up a dead class");
     }
   }
-  bool WasInChanged = ChangedValues.erase(V);
-  if (VClass != EClass || WasInChanged) {
+  bool ClassChanged = VClass != EClass;
+  bool LeaderChanged = LeaderChanges.erase(V);
+  if (ClassChanged || LeaderChanged) {
     DEBUG(dbgs() << "Found class " << EClass->ID << " for expression " << E
                  << "\n");
 
-    if (VClass != EClass) {
-      DEBUG(dbgs() << "New congruence class for " << V << " is " << EClass->ID
-                   << "\n");
+    if (ClassChanged)
 
-      VClass->Members.erase(V);
-      EClass->Members.insert(V);
-      ValueToClass[V] = EClass;
-      // See if we destroyed the class or need to swap leaders.
-      if (VClass->Members.empty() && VClass != InitialClass) {
-        if (VClass->DefiningExpr) {
-          VClass->Dead = true;
-          DEBUG(dbgs() << "Erasing expression " << *E << " from table\n");
-          ExpressionToClass.erase(VClass->DefiningExpr);
-        }
-      } else if (VClass->RepLeader == V) {
-        // When the leader changes, the value numbering of
-        // everything may change due to symbolization changes, so we need to
-        // reprocess.
-        VClass->RepLeader = *(VClass->Members.begin());
-        markLeaderChangeTouched(VClass);
-      }
-    }
+      moveValueToNewCongruenceClass(V, VClass, EClass);
 
     markUsersTouched(V);
     if (auto *I = dyn_cast<Instruction>(V)) {
