@@ -325,11 +325,11 @@ MemDepResult MemoryDependenceResults::getPointerDependencyFrom(
 
   if (QueryInst != nullptr) {
     if (auto *LI = dyn_cast<LoadInst>(QueryInst)) {
-      MemDepResult invariantGroupDependency =
+      MemDepResult InvariantGroupDependency =
           getInvariantGroupPointerDependency(LI, BB);
 
-      if (invariantGroupDependency.isDef())
-        return invariantGroupDependency;
+      if (InvariantGroupDependency.isDef())
+        return InvariantGroupDependency;
     }
   }
   return getSimplePointerDependencyFrom(MemLoc, isLoad, ScanIt, BB, QueryInst,
