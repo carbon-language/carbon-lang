@@ -38,6 +38,7 @@
 #include "llvm/Analysis/LazyValueInfo.h"
 #include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopPassManager.h"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/Analysis/ModuleSummaryAnalysis.h"
 #include "llvm/Analysis/OptimizationDiagnosticInfo.h"
@@ -220,7 +221,8 @@ public:
 
 /// \brief No-op loop pass which does nothing.
 struct NoOpLoopPass {
-  PreservedAnalyses run(Loop &L, LoopAnalysisManager &) {
+  PreservedAnalyses run(Loop &L, LoopAnalysisManager &,
+                        LoopStandardAnalysisResults &, LPMUpdater &) {
     return PreservedAnalyses::all();
   }
   static StringRef name() { return "NoOpLoopPass"; }
@@ -233,7 +235,9 @@ class NoOpLoopAnalysis : public AnalysisInfoMixin<NoOpLoopAnalysis> {
 
 public:
   struct Result {};
-  Result run(Loop &, LoopAnalysisManager &) { return Result(); }
+  Result run(Loop &, LoopAnalysisManager &, LoopStandardAnalysisResults &) {
+    return Result();
+  }
   static StringRef name() { return "NoOpLoopAnalysis"; }
 };
 
@@ -1019,7 +1023,9 @@ bool PassBuilder::parseLoopPass(LoopPassManager &LPM, const PipelineElement &E,
 #define LOOP_ANALYSIS(NAME, CREATE_PASS)                                       \
   if (Name == "require<" NAME ">") {                                           \
     LPM.addPass(RequireAnalysisPass<                                           \
-                std::remove_reference<decltype(CREATE_PASS)>::type, Loop>());  \
+                std::remove_reference<decltype(CREATE_PASS)>::type, Loop,      \
+                LoopAnalysisManager, LoopStandardAnalysisResults &,            \
+                LPMUpdater &>());                                              \
     return true;                                                               \
   }                                                                            \
   if (Name == "invalidate<" NAME ">") {                                        \

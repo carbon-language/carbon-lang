@@ -23,7 +23,8 @@ struct LoopUnrollPass : public PassInfoMixin<LoopUnrollPass> {
   Optional<bool> ProvidedRuntime;
   Optional<bool> ProvidedUpperBound;
 
-  PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM);
+  PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM,
+                        LoopStandardAnalysisResults &AR, LPMUpdater &U);
 };
 } // end namespace llvm
 

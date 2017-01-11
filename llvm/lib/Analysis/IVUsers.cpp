@@ -36,19 +36,15 @@ using namespace llvm;
 
 AnalysisKey IVUsersAnalysis::Key;
 
-IVUsers IVUsersAnalysis::run(Loop &L, LoopAnalysisManager &AM) {
-  const auto &FAM =
-      AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
-  Function *F = L.getHeader()->getParent();
-
-  return IVUsers(&L, FAM.getCachedResult<AssumptionAnalysis>(*F),
-                 FAM.getCachedResult<LoopAnalysis>(*F),
-                 FAM.getCachedResult<DominatorTreeAnalysis>(*F),
-                 FAM.getCachedResult<ScalarEvolutionAnalysis>(*F));
+IVUsers IVUsersAnalysis::run(Loop &L, LoopAnalysisManager &AM,
+                             LoopStandardAnalysisResults &AR) {
+  return IVUsers(&L, &AR.AC, &AR.LI, &AR.DT, &AR.SE);
 }
 
-PreservedAnalyses IVUsersPrinterPass::run(Loop &L, LoopAnalysisManager &AM) {
-  AM.getResult<IVUsersAnalysis>(L).print(OS);
+PreservedAnalyses IVUsersPrinterPass::run(Loop &L, LoopAnalysisManager &AM,
+                                          LoopStandardAnalysisResults &AR,
+                                          LPMUpdater &U) {
+  AM.getResult<IVUsersAnalysis>(L, AR).print(OS);
   return PreservedAnalyses::all();
 }
 

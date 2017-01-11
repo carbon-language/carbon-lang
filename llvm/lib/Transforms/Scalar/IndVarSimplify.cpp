@@ -2482,23 +2482,13 @@ bool IndVarSimplify::run(Loop *L) {
   return Changed;
 }
 
-PreservedAnalyses IndVarSimplifyPass::run(Loop &L, LoopAnalysisManager &AM) {
-  auto &FAM = AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
+PreservedAnalyses IndVarSimplifyPass::run(Loop &L, LoopAnalysisManager &AM,
+                                          LoopStandardAnalysisResults &AR,
+                                          LPMUpdater &) {
   Function *F = L.getHeader()->getParent();
   const DataLayout &DL = F->getParent()->getDataLayout();
 
-  auto *LI = FAM.getCachedResult<LoopAnalysis>(*F);
-  auto *SE = FAM.getCachedResult<ScalarEvolutionAnalysis>(*F);
-  auto *DT = FAM.getCachedResult<DominatorTreeAnalysis>(*F);
-
-  assert((LI && SE && DT) &&
-         "Analyses required for indvarsimplify not available!");
-
-  // Optional analyses.
-  auto *TTI = FAM.getCachedResult<TargetIRAnalysis>(*F);
-  auto *TLI = FAM.getCachedResult<TargetLibraryAnalysis>(*F);
-
-  IndVarSimplify IVS(LI, SE, DT, DL, TLI, TTI);
+  IndVarSimplify IVS(&AR.LI, &AR.SE, &AR.DT, DL, &AR.TLI, &AR.TTI);
   if (!IVS.run(&L))
     return PreservedAnalyses::all();
 

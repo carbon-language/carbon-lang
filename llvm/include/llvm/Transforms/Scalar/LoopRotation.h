@@ -24,7 +24,8 @@ namespace llvm {
 class LoopRotatePass : public PassInfoMixin<LoopRotatePass> {
 public:
   LoopRotatePass(bool EnableHeaderDuplication = true);
-  PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM);
+  PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM,
+                        LoopStandardAnalysisResults &AR, LPMUpdater &U);
 
 private:
   const bool EnableHeaderDuplication;

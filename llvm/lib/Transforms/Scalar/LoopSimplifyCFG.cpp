@@ -64,16 +64,10 @@ static bool simplifyLoopCFG(Loop &L, DominatorTree &DT, LoopInfo &LI) {
   return Changed;
 }
 
-PreservedAnalyses LoopSimplifyCFGPass::run(Loop &L, LoopAnalysisManager &AM) {
-  const auto &FAM =
-      AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
-  Function *F = L.getHeader()->getParent();
-
-  auto *LI = FAM.getCachedResult<LoopAnalysis>(*F);
-  auto *DT = FAM.getCachedResult<DominatorTreeAnalysis>(*F);
-  assert((LI && DT) && "Analyses for LoopSimplifyCFG not available");
-
-  if (!simplifyLoopCFG(L, *DT, *LI))
+PreservedAnalyses LoopSimplifyCFGPass::run(Loop &L, LoopAnalysisManager &AM,
+                                           LoopStandardAnalysisResults &AR,
+                                           LPMUpdater &) {
+  if (!simplifyLoopCFG(L, AR.DT, AR.LI))
     return PreservedAnalyses::all();
   return getLoopPassPreservedAnalyses();
 }

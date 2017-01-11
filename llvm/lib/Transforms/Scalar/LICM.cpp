@@ -185,23 +185,20 @@ private:
 };
 }
 
-PreservedAnalyses LICMPass::run(Loop &L, LoopAnalysisManager &AM) {
+PreservedAnalyses LICMPass::run(Loop &L, LoopAnalysisManager &AM,
+                                LoopStandardAnalysisResults &AR, LPMUpdater &) {
   const auto &FAM =
-      AM.getResult<FunctionAnalysisManagerLoopProxy>(L).getManager();
+      AM.getResult<FunctionAnalysisManagerLoopProxy>(L, AR).getManager();
   Function *F = L.getHeader()->getParent();
 
-  auto *AA = FAM.getCachedResult<AAManager>(*F);
-  auto *LI = FAM.getCachedResult<LoopAnalysis>(*F);
-  auto *DT = FAM.getCachedResult<DominatorTreeAnalysis>(*F);
-  auto *TLI = FAM.getCachedResult<TargetLibraryAnalysis>(*F);
-  auto *SE = FAM.getCachedResult<ScalarEvolutionAnalysis>(*F);
   auto *ORE = FAM.getCachedResult<OptimizationRemarkEmitterAnalysis>(*F);
-  assert((AA && LI && DT && TLI && SE && ORE) &&
-         "Analyses for LICM not available");
+  // FIXME: This should probably be optional rather than required.
+  if (!ORE)
+    report_fatal_error("LICM: OptimizationRemarkEmitterAnalysis not "
+                       "cached at a higher level");
 
   LoopInvariantCodeMotion LICM;
-
-  if (!LICM.runOnLoop(&L, AA, LI, DT, TLI, SE, ORE, true))
+  if (!LICM.runOnLoop(&L, &AR.AA, &AR.LI, &AR.DT, &AR.TLI, &AR.SE, ORE, true))
     return PreservedAnalyses::all();
 
   // FIXME: There is no setPreservesCFG in the new PM. When that becomes

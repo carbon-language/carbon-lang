@@ -7641,7 +7641,7 @@ PreservedAnalyses LoopVectorizePass::run(Function &F,
     auto &TTI = AM.getResult<TargetIRAnalysis>(F);
     auto &DT = AM.getResult<DominatorTreeAnalysis>(F);
     auto &BFI = AM.getResult<BlockFrequencyAnalysis>(F);
-    auto *TLI = AM.getCachedResult<TargetLibraryAnalysis>(F);
+    auto &TLI = AM.getResult<TargetLibraryAnalysis>(F);
     auto &AA = AM.getResult<AAManager>(F);
     auto &AC = AM.getResult<AssumptionAnalysis>(F);
     auto &DB = AM.getResult<DemandedBitsAnalysis>(F);
@@ -7650,10 +7650,11 @@ PreservedAnalyses LoopVectorizePass::run(Function &F,
     auto &LAM = AM.getResult<LoopAnalysisManagerFunctionProxy>(F).getManager();
     std::function<const LoopAccessInfo &(Loop &)> GetLAA =
         [&](Loop &L) -> const LoopAccessInfo & {
-      return LAM.getResult<LoopAccessAnalysis>(L);
+      LoopStandardAnalysisResults AR = {AA, AC, DT, LI, SE, TLI, TTI};
+      return LAM.getResult<LoopAccessAnalysis>(L, AR);
     };
     bool Changed =
-        runImpl(F, SE, LI, TTI, DT, BFI, TLI, DB, AA, AC, GetLAA, ORE);
+        runImpl(F, SE, LI, TTI, DT, BFI, &TLI, DB, AA, AC, GetLAA, ORE);
     if (!Changed)
       return PreservedAnalyses::all();
     PreservedAnalyses PA;
