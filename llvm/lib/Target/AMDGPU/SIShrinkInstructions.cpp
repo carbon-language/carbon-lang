@@ -84,7 +84,7 @@ static bool canShrink(MachineInstr &MI, const SIInstrInfo *TII,
   // FIXME: v_cndmask_b32 has 3 operands and is shrinkable, but we need to add
   // a special case for it.  It can only be shrunk if the third operand
   // is vcc.  We should handle this the same way we handle vopc, by addding
-  // a register allocation hint pre-regalloc and then do the shrining
+  // a register allocation hint pre-regalloc and then do the shrinking
   // post-regalloc.
   if (Src2) {
     switch (MI.getOpcode()) {
@@ -454,6 +454,16 @@ bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
         }
         if (SReg != AMDGPU::VCC)
           continue;
+      }
+
+      // Check for the bool flag output for instructions like V_ADD_I32_e64.
+      const MachineOperand *SDst = TII->getNamedOperand(MI,
+                                                        AMDGPU::OpName::sdst);
+      if (SDst && SDst->getReg() != AMDGPU::VCC) {
+        if (TargetRegisterInfo::isVirtualRegister(SDst->getReg()))
+          MRI.setRegAllocationHint(SDst->getReg(), 0, AMDGPU::VCC);
+
+        continue;
       }
 
       // We can shrink this instruction
