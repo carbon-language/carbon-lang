@@ -176,4 +176,20 @@ entry:
   ret i8 %tmp2
 }
 
+define i8 @test_add_1_cmov_cmov(i64* %p, i8* %q) #0 {
+; TODO: It's possible to use "lock inc" here, but both cmovs need to be updated.
+; CHECK-LABEL: test_add_1_cmov_cmov:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    movl $1, %eax
+; CHECK-NEXT:    lock xaddq %rax, (%rdi)
+; CHECK-NEXT:    testq   %rax, %rax
+entry:
+  %add = atomicrmw add i64* %p, i64 1 seq_cst
+  %cmp = icmp slt i64 %add, 0
+  %s1 = select i1 %cmp, i8 12, i8 34
+  store i8 %s1, i8* %q
+  %s2 = select i1 %cmp, i8 56, i8 78
+  ret i8 %s2
+}
+
 attributes #0 = { nounwind }

@@ -29404,6 +29404,12 @@ static SDValue combineSetCCAtomicArith(SDValue Cmp, X86::CondCode &CC,
         (Cmp.getOpcode() == X86ISD::SUB && !Cmp->hasAnyUseOfValue(0))))
     return SDValue();
 
+  // Can't replace the cmp if it has more uses than the one we're looking at.
+  // FIXME: We would like to be able to handle this, but would need to make sure
+  // all uses were updated.
+  if (!Cmp.hasOneUse())
+    return SDValue();
+
   // This only applies to variations of the common case:
   //   (icmp slt x, 0) -> (icmp sle (add x, 1), 0)
   //   (icmp sge x, 0) -> (icmp sgt (add x, 1), 0)
