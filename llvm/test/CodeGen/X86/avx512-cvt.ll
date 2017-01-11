@@ -448,6 +448,17 @@ define <4 x float> @fptrunc02(<4 x double> %b, <4 x i1> %mask) {
   ret <4 x float> %c
 }
 
+define <4 x float> @fptrunc03(<2 x double> %a0, <4 x float> %a1) nounwind {
+; ALL-LABEL: fptrunc03:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vcvtsd2ss %xmm0, %xmm1, %xmm0
+; ALL-NEXT:    retq
+  %ext = extractelement <2 x double> %a0, i32 0
+  %cvt = fptrunc double %ext to float
+  %res = insertelement <4 x float> %a1, float %cvt, i32 0
+  ret <4 x float> %res
+}
+
 define <8 x double> @fpext00(<8 x float> %b) nounwind {
 ; ALL-LABEL: fpext00:
 ; ALL:       ## BB#0:
@@ -474,6 +485,17 @@ define <4 x double> @fpext01(<4 x float> %b, <4 x double>%b1, <4 x double>%a1) {
   %mask = fcmp ogt <4 x double>%a1, %b1
   %c = select <4 x i1>%mask,  <4 x double>%a, <4 x double>zeroinitializer
   ret <4 x double> %c
+}
+
+define <2 x double> @fpext02(<2 x double> %a0, <4 x float> %a1) nounwind {
+; ALL-LABEL: fpext02:
+; ALL:       ## BB#0:
+; ALL-NEXT:    vcvtss2sd %xmm1, %xmm0, %xmm0
+; ALL-NEXT:    retq
+  %ext = extractelement <4 x float> %a1, i32 0
+  %cvt = fpext float %ext to double
+  %res = insertelement <2 x double> %a0, double %cvt, i32 0
+  ret <2 x double> %res
 }
 
 define double @funcA(i64* nocapture %e) {
