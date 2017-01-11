@@ -5966,15 +5966,6 @@ SDValue DAGCombiner::visitVSELECT(SDNode *N) {
       return CV;
   }
 
-  // Fold (vselect (N0 xor AllOnes), N1, N2) -> (vselect N0, N2, N1)
-  if (N0.getOpcode() == ISD::XOR &&
-      ISD::isBuildVectorAllOnes(N0.getOperand(1).getNode()) &&
-      TLI.getBooleanContents(N0.getValueType()) ==
-            TargetLowering::ZeroOrNegativeOneBooleanContent) {
-    EVT VT = N->getValueType(0);
-    return DAG.getNode(ISD::VSELECT, DL, VT, N0.getOperand(0), N2, N1);
-  }
-
   return SDValue();
 }
 
