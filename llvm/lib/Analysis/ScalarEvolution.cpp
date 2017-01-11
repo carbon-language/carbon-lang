@@ -7207,6 +7207,23 @@ ScalarEvolution::howFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
   //   N = Distance (as unsigned)
   if (StepC->getValue()->equalsInt(1) || StepC->getValue()->isAllOnesValue()) {
     APInt MaxBECount = getUnsignedRange(Distance).getUnsignedMax();
+
+    // When a loop like "for (int i = 0; i != n; ++i) { /* body */ }" is rotated,
+    // we end up with a loop whose backedge-taken count is n - 1.  Detect this
+    // case, and see if we can improve the bound.
+    //
+    // Explicitly handling this here is necessary because getUnsignedRange
+    // isn't context-sensitive; it doesn't know that we only care about the
+    // range inside the loop.
+    const SCEV *Zero = getZero(Distance->getType());
+    const SCEV *One = getOne(Distance->getType());
+    const SCEV *DistancePlusOne = getAddExpr(Distance, One);
+    if (isLoopEntryGuardedByCond(L, ICmpInst::ICMP_NE, DistancePlusOne, Zero)) {
+      // If Distance + 1 doesn't overflow, we can compute the maximum distance
+      // as "unsigned_max(Distance + 1) - 1".
+      ConstantRange CR = getUnsignedRange(DistancePlusOne);
+      MaxBECount = APIntOps::umin(MaxBECount, CR.getUnsignedMax() - 1);
+    }
     return ExitLimit(Distance, getConstant(MaxBECount), false, Predicates);
   }
 

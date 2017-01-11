@@ -242,9 +242,8 @@ bar.exit:
   ret i32 0
 }
 
-; TODO: Improve count based on guard.
 ; CHECK-LABEL: @ne_max_trip_count_3
-; CHECK: Loop %for.body: max backedge-taken count is -1
+; CHECK: Loop %for.body: max backedge-taken count is 6
 define i32 @ne_max_trip_count_3(i32 %n) {
 entry:
   %masked = and i32 %n, 7
@@ -267,9 +266,8 @@ exit:
   ret i32 0
 }
 
-; TODO: Improve count based on guard.
 ; CHECK-LABEL: @ne_max_trip_count_4
-; CHECK: Loop %for.body: max backedge-taken count is -1
+; CHECK: Loop %for.body: max backedge-taken count is -2
 define i32 @ne_max_trip_count_4(i32 %n) {
 entry:
   %guard = icmp eq i32 %n, 0
