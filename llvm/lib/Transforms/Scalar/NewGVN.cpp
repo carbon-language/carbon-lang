@@ -137,7 +137,7 @@ struct CongruenceClass {
 
   // Number of stores in this congruence class.
   // This is used so we can detect store equivalence changes properly.
-  unsigned StoreCount = 0;
+  int StoreCount = 0;
 
   explicit CongruenceClass(unsigned ID) : ID(ID) {}
   CongruenceClass(unsigned ID, Value *Leader, const Expression *E)
@@ -1066,7 +1066,7 @@ void NewGVN::moveValueToNewCongruenceClass(Value *V, CongruenceClass *OldClass,
     --OldClass->StoreCount;
     assert(OldClass->StoreCount >= 0);
     ++NewClass->StoreCount;
-    assert(NewClass->StoreCount >= 0);
+    assert(NewClass->StoreCount > 0);
   }
 
   ValueToClass[V] = NewClass;
@@ -1337,9 +1337,12 @@ void NewGVN::initializeCongruenceClasses(Function &F) {
       // MemoryDef's for stores and all MemoryPhis to be equal.  Right now, no
       // other expression can generate a memory equivalence.  If we start
       // handling memcpy/etc, we can expand this.
-      if (isa<StoreInst>(&I))
+      if (isa<StoreInst>(&I)) {
         MemoryAccessEquiv.insert(
             {MSSA->getMemoryAccess(&I), MSSA->getLiveOnEntryDef()});
+        ++InitialClass->StoreCount;
+        assert(InitialClass->StoreCount > 0);
+      }
     }
   }
   InitialClass->Members.swap(InitialValues);
