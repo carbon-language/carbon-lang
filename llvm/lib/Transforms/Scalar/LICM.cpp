@@ -377,7 +377,7 @@ bool llvm::sinkRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
     // operands of the instruction are loop invariant.
     //
     if (isNotUsedInLoop(I, CurLoop, SafetyInfo) &&
-        canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo)) {
+        canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo, ORE)) {
       ++II;
       Changed |= sink(I, LI, DT, CurLoop, CurAST, SafetyInfo, ORE);
     }
@@ -432,7 +432,7 @@ bool llvm::hoistRegion(DomTreeNode *N, AliasAnalysis *AA, LoopInfo *LI,
       // is safe to hoist the instruction.
       //
       if (CurLoop->hasLoopInvariantOperands(&I) &&
-          canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo) &&
+          canSinkOrHoistInst(I, AA, DT, CurLoop, CurAST, SafetyInfo, ORE) &&
           isSafeToExecuteUnconditionally(
               I, DT, CurLoop, SafetyInfo,
               CurLoop->getLoopPreheader()->getTerminator()))
@@ -481,7 +481,8 @@ void llvm::computeLoopSafetyInfo(LoopSafetyInfo *SafetyInfo, Loop *CurLoop) {
 
 bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
                               Loop *CurLoop, AliasSetTracker *CurAST,
-                              LoopSafetyInfo *SafetyInfo) {
+                              LoopSafetyInfo *SafetyInfo,
+                              OptimizationRemarkEmitter *ORE) {
   // Loads have extra constraints we have to verify before we can hoist them.
   if (LoadInst *LI = dyn_cast<LoadInst>(&I)) {
     if (!LI->isUnordered())
@@ -502,7 +503,17 @@ bool llvm::canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
     AAMDNodes AAInfo;
     LI->getAAMetadata(AAInfo);
 
-    return !pointerInvalidatedByLoop(LI->getOperand(0), Size, AAInfo, CurAST);
+    bool Invalidated =
+        pointerInvalidatedByLoop(LI->getOperand(0), Size, AAInfo, CurAST);
+    // Check loop-invariant address because this may also be a sinkable load
+    // whose address is not necessarily loop-invariant.
+    if (ORE && Invalidated && CurLoop->isLoopInvariant(LI->getPointerOperand()))
+      ORE->emit(OptimizationRemarkMissed(
+                    DEBUG_TYPE, "LoadWithLoopInvariantAddressInvalidated", LI)
+                << "failed to move load with loop-invariant address "
+                   "because the loop may invalidate its value");
+
+    return !Invalidated;
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Don't sink or hoist dbg info; it's legal, but not useful.
     if (isa<DbgInfoIntrinsic>(I))

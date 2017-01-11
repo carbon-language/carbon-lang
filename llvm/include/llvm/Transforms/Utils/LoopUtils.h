@@ -483,10 +483,11 @@ void getLoopAnalysisUsage(AnalysisUsage &AU);
 /// If SafetyInfo is not null, we are checking for hoisting/sinking
 /// instructions from loop body to preheader/exit. Check if the instruction
 /// can execute speculatively.
-///
+/// If \p ORE is set use it to emit optimization remarks.
 bool canSinkOrHoistInst(Instruction &I, AAResults *AA, DominatorTree *DT,
                         Loop *CurLoop, AliasSetTracker *CurAST,
-                        LoopSafetyInfo *SafetyInfo);
+                        LoopSafetyInfo *SafetyInfo,
+                        OptimizationRemarkEmitter *ORE = nullptr);
 }
 
 #endif
