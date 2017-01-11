@@ -16,6 +16,8 @@
 #include "llvm/DebugInfo/CodeView/CVDebugRecord.h"
 #include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
+#include "llvm/DebugInfo/CodeView/TypeDatabase.h"
+#include "llvm/DebugInfo/CodeView/TypeDumpVisitor.h"
 #include "llvm/DebugInfo/MSF/ByteStream.h"
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
 #include "llvm/DebugInfo/MSF/MSFCommon.h"
@@ -80,9 +82,10 @@ static void dumpDebugT(ScopedPrinter &W, ObjectFile *File) {
   if (Data.empty())
     return;
 
-  msf::ByteStream Stream(Data);
-  CVTypeDumper TypeDumper(&W, false);
-  if (auto EC = TypeDumper.dump(Data))
+  TypeDatabase TDB;
+  TypeDumpVisitor TDV(TDB, &W, false);
+  CVTypeDumper TypeDumper(TDB);
+  if (auto EC = TypeDumper.dump(Data, TDV))
     fatal(EC, "CVTypeDumper::dump failed");
 }
 
@@ -97,8 +100,8 @@ static void dumpDebugS(ScopedPrinter &W, ObjectFile *File) {
   if (auto EC = Reader.readArray(Symbols, Reader.getLength()))
     fatal(EC, "StreamReader.readArray<CVSymbolArray> failed");
 
-  CVTypeDumper TypeDumper(&W, false);
-  CVSymbolDumper SymbolDumper(W, TypeDumper, nullptr, false);
+  TypeDatabase TDB;
+  CVSymbolDumper SymbolDumper(W, TDB, nullptr, false);
   if (auto EC = SymbolDumper.dump(Symbols))
     fatal(EC, "CVSymbolDumper::dump failed");
 }
