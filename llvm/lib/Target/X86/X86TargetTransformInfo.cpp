@@ -323,6 +323,10 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::SRL,   MVT::v32i16,     1 }, // vpsrlvw
     { ISD::SRA,   MVT::v32i16,     1 }, // vpsravw
 
+    { ISD::SHL,   MVT::v64i8,     11 }, // vpblendvb sequence.
+    { ISD::SRL,   MVT::v64i8,     11 }, // vpblendvb sequence.
+    { ISD::SRA,   MVT::v64i8,     24 }, // vpblendvb sequence.
+
     { ISD::MUL,   MVT::v64i8,     11 }, // extend/pmullw/trunc sequence.
     { ISD::MUL,   MVT::v32i8,      4 }, // extend/pmullw/trunc sequence.
     { ISD::MUL,   MVT::v16i8,      4 }, // extend/pmullw/trunc sequence.
