@@ -114,14 +114,61 @@ unsigned X86TTIImpl::getMaxInterleaveFactor(unsigned VF) {
 }
 
 int X86TTIImpl::getArithmeticInstrCost(
-    unsigned Opcode, Type *Ty, TTI::OperandValueKind Op1Info,
-    TTI::OperandValueKind Op2Info, TTI::OperandValueProperties Opd1PropInfo,
-    TTI::OperandValueProperties Opd2PropInfo) {
+    unsigned Opcode, Type *Ty,  
+    TTI::OperandValueKind Op1Info, TTI::OperandValueKind Op2Info,
+    TTI::OperandValueProperties Opd1PropInfo,
+    TTI::OperandValueProperties Opd2PropInfo,
+    ArrayRef<const Value *> Args) {
   // Legalize the type.
   std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, Ty);
 
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
+
+  static const CostTblEntry SLMCostTable[] = {
+    { ISD::MUL,  MVT::v4i32, 11 }, // pmulld
+    { ISD::MUL,  MVT::v8i16, 2  }, // pmullw
+    { ISD::MUL,  MVT::v16i8, 14 }, // extend/pmullw/trunc sequence.
+    { ISD::FMUL, MVT::f64,   2  }, // mulsd
+    { ISD::FMUL, MVT::v2f64, 4  }, // mulpd
+    { ISD::FMUL, MVT::v4f32, 2  }, // mulps
+    { ISD::FDIV, MVT::f32,   17 }, // divss
+    { ISD::FDIV, MVT::v4f32, 39 }, // divps
+    { ISD::FDIV, MVT::f64,   32 }, // divsd
+    { ISD::FDIV, MVT::v2f64, 69 }, // divpd
+    { ISD::FADD, MVT::v2f64, 2  }, // addpd
+    { ISD::FSUB, MVT::v2f64, 2  }, // subpd
+    // v2i64/v4i64 mul is custom lowered as a series of long
+    // multiplies(3), shifts(3) and adds(2).
+    // slm muldq version throughput is 2
+    { ISD::MUL,  MVT::v2i64, 11 },
+  };
+
+  if (ST->isSLM()) {
+    if (Args.size() == 2 && ISD == ISD::MUL && LT.second == MVT::v4i32) {
+      // Check if the operands can be shrinked into a smaller datatype.
+      bool Op1Signed = false;
+      unsigned Op1MinSize = BaseT::minRequiredElementSize(Args[0], Op1Signed);
+      bool Op2Signed = false;
+      unsigned Op2MinSize = BaseT::minRequiredElementSize(Args[1], Op2Signed);
+
+      bool signedMode = Op1Signed | Op2Signed;
+      unsigned OpMinSize = std::max(Op1MinSize, Op2MinSize);
+
+      if (OpMinSize <= 7)
+        return LT.first * 3; // pmullw/sext
+      if (!signedMode && OpMinSize <= 8)
+        return LT.first * 3; // pmullw/zext
+      if (OpMinSize <= 15)
+        return LT.first * 5; // pmullw/pmulhw/pshuf
+      if (!signedMode && OpMinSize <= 16)
+        return LT.first * 5; // pmullw/pmulhw/pshuf
+    }
+    if (const auto *Entry = CostTableLookup(SLMCostTable, ISD,
+                                            LT.second)) {
+      return LT.first * Entry->Cost;
+    }
+  }
 
   if (ISD == ISD::SDIV &&
       Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
