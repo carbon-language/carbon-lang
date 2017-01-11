@@ -75,7 +75,6 @@ private:
 
   ScopedPrinter *W;
 
-  bool IsInFieldList = false;
   bool PrintRecordBytes = false;
 
   TypeDatabase TypeDB;
