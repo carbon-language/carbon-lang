@@ -1063,10 +1063,10 @@ void NewGVN::moveValueToNewCongruenceClass(Value *V, CongruenceClass *OldClass,
   OldClass->Members.erase(V);
   NewClass->Members.insert(V);
   if (isa<StoreInst>(V)) {
-    assert(OldClass->StoreCount > 0 && "Store count underflow detected");
     --OldClass->StoreCount;
-    assert(NewClass->StoreCount < UINT_MAX && "Store count overflow detected");
+    assert(OldClass->StoreCount >= 0);
     ++NewClass->StoreCount;
+    assert(NewClass->StoreCount >= 0);
   }
 
   ValueToClass[V] = NewClass;
