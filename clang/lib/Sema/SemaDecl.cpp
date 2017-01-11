@@ -15652,11 +15652,10 @@ DeclResult Sema::ActOnModuleImport(SourceLocation StartLoc,
 
 void Sema::ActOnModuleInclude(SourceLocation DirectiveLoc, Module *Mod) {
   checkModuleImportContext(*this, Mod, DirectiveLoc, CurContext, true);
-  BuildModuleInclude(DirectiveLoc, Mod, false/*NoImport*/);
+  BuildModuleInclude(DirectiveLoc, Mod);
 }
 
-void Sema::BuildModuleInclude(SourceLocation DirectiveLoc, Module *Mod,
-                              bool NoImport) {
+void Sema::BuildModuleInclude(SourceLocation DirectiveLoc, Module *Mod) {
   // Determine whether we're in the #include buffer for a module. The #includes
   // in that buffer do not qualify as module imports; they're just an
   // implementation detail of us building the module.
@@ -15666,7 +15665,7 @@ void Sema::BuildModuleInclude(SourceLocation DirectiveLoc, Module *Mod,
       TUKind == TU_Module &&
       getSourceManager().isWrittenInMainFile(DirectiveLoc);
 
-  bool ShouldAddImport = !IsInModuleIncludes && !NoImport;
+  bool ShouldAddImport = !IsInModuleIncludes;
 
   // If this module import was due to an inclusion directive, create an
   // implicit import declaration to capture it in the AST.
@@ -15714,11 +15713,7 @@ void Sema::ActOnModuleEnd(SourceLocation EofLoc, Module *Mod) {
   assert(File != getSourceManager().getMainFileID() &&
          "end of submodule in main source file");
   SourceLocation DirectiveLoc = getSourceManager().getIncludeLoc(File);
-  // Do not create implicit ImportDecl if we are building the implementation
-  // of a module.
-  bool NoImport = Mod->getTopLevelModuleName() == getLangOpts().CurrentModule &&
-                  !getLangOpts().isCompilingModule();
-  BuildModuleInclude(DirectiveLoc, Mod, NoImport);
+  BuildModuleInclude(DirectiveLoc, Mod);
 }
 
 void Sema::createImplicitModuleImportForErrorRecovery(SourceLocation Loc,
