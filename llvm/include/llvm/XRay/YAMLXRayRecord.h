@@ -1,4 +1,4 @@
-//===- xray-record-yaml.h - XRay Record YAML Support Definitions ----------===//
+//===- YAMLXRayRecord.h - XRay Record YAML Support Definitions ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,13 +10,13 @@
 // Types and traits specialisations for YAML I/O of XRay log entries.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_LLVM_XRAY_XRAY_RECORD_YAML_H
-#define LLVM_TOOLS_LLVM_XRAY_XRAY_RECORD_YAML_H
+#ifndef LLVM_XRAY_YAML_XRAY_RECORD_H
+#define LLVM_XRAY_YAML_XRAY_RECORD_H
 
 #include <type_traits>
 
-#include "xray-record.h"
 #include "llvm/Support/YAMLTraits.h"
+#include "llvm/XRay/XRayRecord.h"
 
 namespace llvm {
 namespace xray {
@@ -43,9 +43,6 @@ struct YAMLXRayTrace {
   YAMLXRayFileHeader Header;
   std::vector<YAMLXRayRecord> Records;
 };
-
-using XRayRecordStorage =
-    std::aligned_storage<sizeof(XRayRecord), alignof(XRayRecord)>::type;
 
 } // namespace xray
 
@@ -97,6 +94,6 @@ template <> struct MappingTraits<xray::YAMLXRayTrace> {
 } // namespace yaml
 } // namespace llvm
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(xray::YAMLXRayRecord) 
+LLVM_YAML_IS_SEQUENCE_VECTOR(xray::YAMLXRayRecord)
 
-#endif // LLVM_TOOLS_LLVM_XRAY_XRAY_RECORD_YAML_H
+#endif // LLVM_XRAY_YAML_XRAY_RECORD_H

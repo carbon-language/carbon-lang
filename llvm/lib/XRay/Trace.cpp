@@ -1,4 +1,4 @@
-//===- xray-log-reader.cc - XRay Log Reader Implementation ----------------===//
+//===- Trace.cpp - XRay Trace Loading implementation. ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,56 +10,22 @@
 // XRay log reader implementation.
 //
 //===----------------------------------------------------------------------===//
-#include "xray-log-reader.h"
-#include "xray-record-yaml.h"
+#include "llvm/XRay/Trace.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DataExtractor.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/XRay/YAMLXRayRecord.h"
 
 using namespace llvm;
 using namespace llvm::xray;
 using llvm::yaml::Input;
 
-LogReader::LogReader(
-    StringRef Filename, Error &Err, bool Sort,
-    std::function<Error(StringRef, XRayFileHeader &, std::vector<XRayRecord> &)>
-        Loader) {
-  ErrorAsOutParameter Guard(&Err);
-  int Fd;
-  if (auto EC = sys::fs::openFileForRead(Filename, Fd)) {
-    Err = make_error<StringError>(
-        Twine("Cannot read log from '") + Filename + "'", EC);
-    return;
-  }
-  uint64_t FileSize;
-  if (auto EC = sys::fs::file_size(Filename, FileSize)) {
-    Err = make_error<StringError>(
-        Twine("Cannot read log from '") + Filename + "'", EC);
-    return;
-  }
+using XRayRecordStorage =
+    std::aligned_storage<sizeof(XRayRecord), alignof(XRayRecord)>::type;
 
-  std::error_code EC;
-  sys::fs::mapped_file_region MappedFile(
-      Fd, sys::fs::mapped_file_region::mapmode::readonly, FileSize, 0, EC);
-  if (EC) {
-    Err = make_error<StringError>(
-        Twine("Cannot read log from '") + Filename + "'", EC);
-    return;
-  }
-
-  if (auto E = Loader(StringRef(MappedFile.data(), MappedFile.size()),
-                      FileHeader, Records)) {
-    Err = std::move(E);
-    return;
-  }
-
-  if (Sort)
-    std::sort(
-        Records.begin(), Records.end(),
-        [](const XRayRecord &L, const XRayRecord &R) { return L.TSC < R.TSC; });
-}
-
-Error llvm::xray::NaiveLogLoader(StringRef Data, XRayFileHeader &FileHeader,
-                                 std::vector<XRayRecord> &Records) {
+Error NaiveLogLoader(StringRef Data, XRayFileHeader &FileHeader,
+                     std::vector<XRayRecord> &Records) {
   // FIXME: Maybe deduce whether the data is little or big-endian using some
   // magic bytes in the beginning of the file?
 
@@ -132,8 +98,8 @@ Error llvm::xray::NaiveLogLoader(StringRef Data, XRayFileHeader &FileHeader,
   return Error::success();
 }
 
-Error llvm::xray::YAMLLogLoader(StringRef Data, XRayFileHeader &FileHeader,
-                                std::vector<XRayRecord> &Records) {
+Error YAMLLogLoader(StringRef Data, XRayFileHeader &FileHeader,
+                    std::vector<XRayRecord> &Records) {
 
   // Load the documents from the MappedFile.
   YAMLXRayTrace Trace;
@@ -160,4 +126,71 @@ Error llvm::xray::YAMLLogLoader(StringRef Data, XRayFileHeader &FileHeader,
                                      R.FuncId,     R.TSC, R.TId};
                  });
   return Error::success();
+}
+
+Expected<Trace> llvm::xray::loadTraceFile(StringRef Filename, bool Sort) {
+  int Fd;
+  if (auto EC = sys::fs::openFileForRead(Filename, Fd)) {
+    return make_error<StringError>(
+        Twine("Cannot read log from '") + Filename + "'", EC);
+  }
+
+  // Attempt to get the filesize.
+  uint64_t FileSize;
+  if (auto EC = sys::fs::file_size(Filename, FileSize)) {
+    return make_error<StringError>(
+        Twine("Cannot read log from '") + Filename + "'", EC);
+  }
+  if (FileSize < 4) {
+    return make_error<StringError>(
+        Twine("File '") + Filename + "' too small for XRay.",
+        std::make_error_code(std::errc::protocol_error));
+  }
+
+  // Attempt to mmap the file.
+  std::error_code EC;
+  sys::fs::mapped_file_region MappedFile(
+      Fd, sys::fs::mapped_file_region::mapmode::readonly, FileSize, 0, EC);
+  if (EC) {
+    return make_error<StringError>(
+        Twine("Cannot read log from '") + Filename + "'", EC);
+  }
+
+  // Attempt to detect the file type using file magic. We have a slight bias
+  // towards the binary format, and we do this by making sure that the first 4
+  // bytes of the binary file is some combination of the following byte
+  // patterns:
+  //
+  //   0x0001 0x0000 - version 1, "naive" format
+  //   0x0001 0x0001 - version 1, "flight data recorder" format
+  //
+  // YAML files dont' typically have those first four bytes as valid text so we
+  // try loading assuming YAML if we don't find these bytes.
+  //
+  // Only if we can't load either the binary or the YAML format will we yield an
+  // error.
+  StringRef Magic(MappedFile.data(), 4);
+  DataExtractor HeaderExtractor(Magic, true, 8);
+  uint32_t OffsetPtr = 0;
+  uint16_t Version = HeaderExtractor.getU16(&OffsetPtr);
+  uint16_t Type = HeaderExtractor.getU16(&OffsetPtr);
+
+  Trace T;
+  if (Version == 1 && (Type == 0 || Type == 1)) {
+    if (auto E = NaiveLogLoader(StringRef(MappedFile.data(), MappedFile.size()),
+                                T.FileHeader, T.Records))
+      return std::move(E);
+  } else {
+    if (auto E = YAMLLogLoader(StringRef(MappedFile.data(), MappedFile.size()),
+                               T.FileHeader, T.Records))
+      return std::move(E);
+  }
+
+  if (Sort)
+    std::sort(T.Records.begin(), T.Records.end(),
+              [&](const XRayRecord &L, const XRayRecord &R) {
+                return L.TSC < R.TSC;
+              });
+
+  return std::move(T);
 }
