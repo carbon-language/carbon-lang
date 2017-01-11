@@ -74,7 +74,7 @@ bool RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
     const RegisterBank &RegBank = getRegBank(Idx);
     assert(Idx == RegBank.getID() &&
            "ID does not match the index in the array");
-    dbgs() << "Verify " << RegBank << '\n';
+    DEBUG(dbgs() << "Verify " << RegBank << '\n');
     assert(RegBank.verify(TRI) && "RegBank is invalid");
   }
 #endif // NDEBUG
