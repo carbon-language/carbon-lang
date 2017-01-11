@@ -32,15 +32,6 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(HandleOutOfTreeLLVM)
 endif()
 
-if (LIBCXX_STANDALONE_BUILD)
-  include(FindPythonInterp)
-  if( NOT PYTHONINTERP_FOUND )
-    message(WARNING "Failed to find python interpreter. "
-                    "The libc++ test suite will be disabled.")
-    set(LLVM_INCLUDE_TESTS OFF)
-  endif()
-endif()
-
 # Require out of source build.
 include(MacroEnsureOutOfSourceBuild)
 MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
