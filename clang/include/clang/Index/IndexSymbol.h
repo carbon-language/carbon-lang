@@ -64,6 +64,8 @@ enum class SymbolSubKind {
   None,
   CXXCopyConstructor,
   CXXMoveConstructor,
+  AccessorGetter,
+  AccessorSetter,
 };
 
 /// Set of properties that provide additional info about a symbol.
