@@ -4308,10 +4308,21 @@ static Value *SimplifyIntrinsic(Function *F, IterTy ArgBegin, IterTy ArgEnd,
     return nullptr;
 
   // Unary Ops
-  if (NumOperands == 1)
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(*ArgBegin))
+  if (NumOperands == 1) {
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(*ArgBegin)) {
       if (II->getIntrinsicID() == IID)
         return II;
+    }
+
+    switch (IID) {
+    case Intrinsic::fabs: {
+      if (SignBitMustBeZero(*ArgBegin, Q.TLI))
+        return *ArgBegin;
+    }
+    default:
+      break;
+    }
+  }
 
   return nullptr;
 }
