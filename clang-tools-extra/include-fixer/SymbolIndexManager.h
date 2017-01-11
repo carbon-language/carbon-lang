@@ -42,7 +42,8 @@ public:
   ///
   /// \returns A list of symbol candidates.
   std::vector<find_all_symbols::SymbolInfo>
-  search(llvm::StringRef Identifier, bool IsNestedSearch = true) const;
+  search(llvm::StringRef Identifier, bool IsNestedSearch = true,
+         llvm::StringRef FileName = "") const;
 
 private:
   std::vector<std::shared_future<std::unique_ptr<SymbolIndex>>> SymbolIndices;
