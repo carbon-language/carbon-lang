@@ -75,6 +75,15 @@ public:
   }
 
 protected:
+  // FIXME: MSVC seems unable to handle a lambda argument to Invoke from within
+  // the template, so we use a boring static function.
+  static bool invalidateCallback(IRUnitT &IR, const PreservedAnalyses &PA,
+                                 typename AnalysisManagerT::Invalidator &Inv) {
+    auto PAC = PA.template getChecker<Analysis>();
+    return !PAC.preserved() &&
+           !PAC.template preservedSet<AllAnalysesOn<IRUnitT>>();
+  }
+
   /// Derived classes should call this in their constructor to set up default
   /// mock actions. (We can't do this in our constructor because this has to
   /// run after the DerivedT is constructed.)
@@ -82,14 +91,8 @@ protected:
     ON_CALL(static_cast<DerivedT &>(*this),
             run(_, _, testing::Matcher<ExtraArgTs>(_)...))
         .WillByDefault(Return(this->getResult()));
-    auto InvalidateLambda = [](IRUnitT &IR, const PreservedAnalyses &PA,
-                               typename AnalysisManagerT::Invalidator &Inv) {
-      auto PAC = PA.template getChecker<Analysis>();
-      return !PAC.preserved() &&
-             !PAC.template preservedSet<AllAnalysesOn<IRUnitT>>();
-    };
     ON_CALL(static_cast<DerivedT &>(*this), invalidate(_, _, _))
-        .WillByDefault(Invoke(InvalidateLambda));
+        .WillByDefault(Invoke(&invalidateCallback));
   }
 };
 
