@@ -83,7 +83,7 @@ protected:
             run(_, _, testing::Matcher<ExtraArgTs>(_)...))
         .WillByDefault(Return(this->getResult()));
     ON_CALL(static_cast<DerivedT &>(*this), invalidate(_, _, _))
-        .WillByDefault(Invoke([](IRUnitT &, const PreservedAnalyses &PA,
+        .WillByDefault(Invoke([](IRUnitT &IR, const PreservedAnalyses &PA,
                                  typename AnalysisManagerT::Invalidator &Inv) {
           auto PAC = PA.template getChecker<Analysis>();
           return !PAC.preserved() &&
