@@ -1,4 +1,5 @@
-; RUN: opt -S -lowertypetests < %s | FileCheck %s
+; FIXME: We should not require -O2 to simplify this to return false.
+; RUN: opt -S -lowertypetests -O2 < %s | FileCheck %s
 
 target datalayout = "e-p:32:32"
 
