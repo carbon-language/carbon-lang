@@ -1,4 +1,4 @@
-//===-- TypeDumper.h - CodeView type info dumper ----------------*- C++ -*-===//
+//===-- CVTypeDumper.h - CodeView type info dumper --------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_CODEVIEW_TYPEDUMPER_H
-#define LLVM_DEBUGINFO_CODEVIEW_TYPEDUMPER_H
+#ifndef LLVM_DEBUGINFO_CODEVIEW_CVTYPEDUMPER_H
+#define LLVM_DEBUGINFO_CODEVIEW_CVTYPEDUMPER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSet.h"

@@ -1,4 +1,4 @@
-//===- FunctionDumper.cpp ------------------------------------ *- C++ *-===//
+//===- PrettyFunctionDumper.cpp --------------------------------- *- C++ *-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "FunctionDumper.h"
-#include "BuiltinDumper.h"
+#include "PrettyFunctionDumper.h"
 #include "LinePrinter.h"
+#include "PrettyBuiltinDumper.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"

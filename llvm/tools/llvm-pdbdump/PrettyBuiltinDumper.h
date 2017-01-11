@@ -1,4 +1,4 @@
-//===- ExternalSymbolDumper.h --------------------------------- *- C++ --*-===//
+//===- PrettyBuiltinDumper.h ---------------------------------- *- C++ --*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,9 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_EXTERNALSYMBOLDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_EXTERNALSYMBOLDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_PRETTYBUILTINDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_PRETTYBUILTINDUMPER_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
 namespace llvm {
@@ -17,15 +18,15 @@ namespace pdb {
 
 class LinePrinter;
 
-class ExternalSymbolDumper : public PDBSymDumper {
+class BuiltinDumper : public PDBSymDumper {
 public:
-  ExternalSymbolDumper(LinePrinter &P);
+  BuiltinDumper(LinePrinter &P);
 
-  void start(const PDBSymbolExe &Symbol);
-
-  void dump(const PDBSymbolPublicSymbol &Symbol) override;
+  void start(const PDBSymbolTypeBuiltin &Symbol);
 
 private:
+  StringRef getTypeName(const PDBSymbolTypeBuiltin &Symbol);
+
   LinePrinter &Printer;
 };
 }

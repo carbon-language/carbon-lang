@@ -1,4 +1,4 @@
-//===- CompilandDumper.h - llvm-pdbdump compiland symbol dumper *- C++ --*-===//
+//===- PrettyCompilandDumper.h - llvm-pdbdump compiland dumper -*- C++ --*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_COMPILANDDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_COMPILANDDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_PRETTYCOMPILANDDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_PRETTYCOMPILANDDUMPER_H
 
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 

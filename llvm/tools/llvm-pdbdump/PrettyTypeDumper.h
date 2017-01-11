@@ -1,4 +1,4 @@
-//===- TypeDumper.h - PDBSymDumper implementation for types *- C++ ------*-===//
+//===- PrettyTypeDumper.h - PDBSymDumper implementation for types *- C++ *-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_TYPEDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_TYPEDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_PRETTYTYPEDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_PRETTYTYPEDUMPER_H
 
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 

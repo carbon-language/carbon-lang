@@ -1,4 +1,4 @@
-//===-- TypeDumper.cpp - CodeView type info dumper --------------*- C++ -*-===//
+//===-- CVTypeDumper.cpp - CodeView type info dumper ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/CodeView/TypeDumper.h"
+#include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/TypeDatabase.h"
@@ -46,10 +46,8 @@ static const EnumEntry<uint16_t> ClassOptionNames[] = {
 };
 
 static const EnumEntry<uint8_t> MemberAccessNames[] = {
-    ENUM_ENTRY(MemberAccess, None),
-    ENUM_ENTRY(MemberAccess, Private),
-    ENUM_ENTRY(MemberAccess, Protected),
-    ENUM_ENTRY(MemberAccess, Public),
+    ENUM_ENTRY(MemberAccess, None), ENUM_ENTRY(MemberAccess, Private),
+    ENUM_ENTRY(MemberAccess, Protected), ENUM_ENTRY(MemberAccess, Public),
 };
 
 static const EnumEntry<uint16_t> MethodOptionNames[] = {
@@ -107,8 +105,7 @@ static const EnumEntry<uint16_t> PtrMemberRepNames[] = {
 };
 
 static const EnumEntry<uint16_t> TypeModifierNames[] = {
-    ENUM_ENTRY(ModifierOptions, Const),
-    ENUM_ENTRY(ModifierOptions, Volatile),
+    ENUM_ENTRY(ModifierOptions, Const), ENUM_ENTRY(ModifierOptions, Volatile),
     ENUM_ENTRY(ModifierOptions, Unaligned),
 };
 

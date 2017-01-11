@@ -1,4 +1,4 @@
-//===- EnumDumper.h - -------------------------------------------*- C++ -*-===//
+//===- PrettyExternalSymbolDumper.h --------------------------- *- C++ --*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_ENUMDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_ENUMDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_PRETTYEXTERNALSYMBOLDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_PRETTYEXTERNALSYMBOLDUMPER_H
 
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
@@ -17,15 +17,18 @@ namespace pdb {
 
 class LinePrinter;
 
-class EnumDumper : public PDBSymDumper {
+class ExternalSymbolDumper : public PDBSymDumper {
 public:
-  EnumDumper(LinePrinter &P);
+  ExternalSymbolDumper(LinePrinter &P);
 
-  void start(const PDBSymbolTypeEnum &Symbol);
+  void start(const PDBSymbolExe &Symbol);
+
+  void dump(const PDBSymbolPublicSymbol &Symbol) override;
 
 private:
   LinePrinter &Printer;
 };
 }
 }
+
 #endif

@@ -1,4 +1,4 @@
-//===- ClassDefinitionDumper.cpp --------------------------------*- C++ -*-===//
+//===- PrettyClassDefinitionDumper.cpp --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ClassDefinitionDumper.h"
-#include "EnumDumper.h"
-#include "FunctionDumper.h"
+#include "PrettyClassDefinitionDumper.h"
+
 #include "LinePrinter.h"
+#include "PrettyEnumDumper.h"
+#include "PrettyFunctionDumper.h"
+#include "PrettyTypedefDumper.h"
+#include "PrettyVariableDumper.h"
 #include "llvm-pdbdump.h"
-#include "TypedefDumper.h"
-#include "VariableDumper.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"

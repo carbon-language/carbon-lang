@@ -1,4 +1,4 @@
-//===- BuiltinDumper.cpp ---------------------------------------- *- C++ *-===//
+//===- PrettyBuiltinDumper.cpp ---------------------------------- *- C++ *-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "BuiltinDumper.h"
+#include "PrettyBuiltinDumper.h"
 #include "LinePrinter.h"
 #include "llvm-pdbdump.h"
 

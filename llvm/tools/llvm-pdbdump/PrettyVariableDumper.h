@@ -1,4 +1,4 @@
-//===- FunctionDumper.h --------------------------------------- *- C++ --*-===//
+//===- PrettyVariableDumper.h - PDBSymDumper variable dumper ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,37 +7,38 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_FUNCTIONDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_FUNCTIONDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_PRETTYVARIABLEDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_PRETTYVARIABLEDUMPER_H
 
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
 namespace llvm {
+
+class StringRef;
+
 namespace pdb {
+
 class LinePrinter;
 
-class FunctionDumper : public PDBSymDumper {
+class VariableDumper : public PDBSymDumper {
 public:
-  FunctionDumper(LinePrinter &P);
+  VariableDumper(LinePrinter &P);
 
-  enum class PointerType { None, Pointer, Reference };
+  void start(const PDBSymbolData &Var);
 
-  void start(const PDBSymbolTypeFunctionSig &Symbol, const char *Name,
-             PointerType Pointer);
-  void start(const PDBSymbolFunc &Symbol, PointerType Pointer);
-
-  void dump(const PDBSymbolTypeArray &Symbol) override;
   void dump(const PDBSymbolTypeBuiltin &Symbol) override;
   void dump(const PDBSymbolTypeEnum &Symbol) override;
-  void dump(const PDBSymbolTypeFunctionArg &Symbol) override;
+  void dump(const PDBSymbolTypeFunctionSig &Symbol) override;
   void dump(const PDBSymbolTypePointer &Symbol) override;
   void dump(const PDBSymbolTypeTypedef &Symbol) override;
   void dump(const PDBSymbolTypeUDT &Symbol) override;
 
 private:
+  void dumpSymbolTypeAndName(const PDBSymbol &Type, StringRef Name);
+  bool tryDumpFunctionPointer(const PDBSymbol &Type, StringRef Name);
+
   LinePrinter &Printer;
 };
 }
 }
-
 #endif

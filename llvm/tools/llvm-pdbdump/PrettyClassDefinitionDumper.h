@@ -1,4 +1,4 @@
-//===- ClassDefinitionDumper.h - --------------------------------*- C++ -*-===//
+//===- PrettyClassDefinitionDumper.h ----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_CLASSDEFINITIONDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_CLASSDEFINITIONDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_PRETTYCLASSDEFINITIONDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_PRETTYCLASSDEFINITIONDUMPER_H
 
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
-#include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"
+#include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 
 #include <list>
 #include <memory>

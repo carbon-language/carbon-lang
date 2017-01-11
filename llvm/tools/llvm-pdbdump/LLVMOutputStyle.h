@@ -12,7 +12,7 @@
 
 #include "OutputStyle.h"
 
-#include "llvm/DebugInfo/CodeView/TypeDumper.h"
+#include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/Support/ScopedPrinter.h"
 
 namespace llvm {

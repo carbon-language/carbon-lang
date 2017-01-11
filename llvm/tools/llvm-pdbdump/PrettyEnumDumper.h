@@ -1,4 +1,4 @@
-//===- BuiltinDumper.h ---------------------------------------- *- C++ --*-===//
+//===- PrettyEnumDumper.h ---------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_BUILTINDUMPER_H
-#define LLVM_TOOLS_LLVMPDBDUMP_BUILTINDUMPER_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_PRETTYENUMDUMPER_H
+#define LLVM_TOOLS_LLVMPDBDUMP_PRETTYENUMDUMPER_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/PDB/PDBSymDumper.h"
 
 namespace llvm {
@@ -18,18 +17,15 @@ namespace pdb {
 
 class LinePrinter;
 
-class BuiltinDumper : public PDBSymDumper {
+class EnumDumper : public PDBSymDumper {
 public:
-  BuiltinDumper(LinePrinter &P);
+  EnumDumper(LinePrinter &P);
 
-  void start(const PDBSymbolTypeBuiltin &Symbol);
+  void start(const PDBSymbolTypeEnum &Symbol);
 
 private:
-  StringRef getTypeName(const PDBSymbolTypeBuiltin &Symbol);
-
   LinePrinter &Printer;
 };
 }
 }
-
 #endif

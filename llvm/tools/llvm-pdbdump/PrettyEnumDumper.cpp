@@ -1,4 +1,4 @@
-//===- EnumDumper.cpp -------------------------------------------*- C++ -*-===//
+//===- PrettyEnumDumper.cpp -------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "EnumDumper.h"
+#include "PrettyEnumDumper.h"
 
-#include "BuiltinDumper.h"
 #include "LinePrinter.h"
+#include "PrettyBuiltinDumper.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"

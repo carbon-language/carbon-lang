@@ -1,4 +1,4 @@
-//===- ExternalSymbolDumper.cpp -------------------------------- *- C++ *-===//
+//===- PrettyExternalSymbolDumper.cpp -------------------------- *- C++ *-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExternalSymbolDumper.h"
+#include "PrettyExternalSymbolDumper.h"
 #include "LinePrinter.h"
 
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"

@@ -1,4 +1,4 @@
-//===- TypedefDumper.cpp - PDBSymDumper impl for typedefs -------- * C++ *-===//
+//===- PrettyTypedefDumper.cpp - PDBSymDumper impl for typedefs -- * C++ *-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TypedefDumper.h"
+#include "PrettyTypedefDumper.h"
 
-#include "BuiltinDumper.h"
-#include "FunctionDumper.h"
 #include "LinePrinter.h"
+#include "PrettyBuiltinDumper.h"
+#include "PrettyFunctionDumper.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
