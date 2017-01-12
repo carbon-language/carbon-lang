@@ -710,7 +710,7 @@ Parser::ParseUsingDeclaration(unsigned Context,
                                       : "using declaration"))
     SkipUntil(tok::semi);
 
-  return Actions.BuildDeclaratorGroup(DeclsInGroup, /*MayContainAuto*/false);
+  return Actions.BuildDeclaratorGroup(DeclsInGroup);
 }
 
 Decl *Parser::ParseAliasDeclarationAfterDeclarator(
@@ -2539,7 +2539,7 @@ Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     DS.complete(TheDecl);
     if (AnonRecord) {
       Decl* decls[] = {AnonRecord, TheDecl};
-      return Actions.BuildDeclaratorGroup(decls, /*TypeMayContainAuto=*/false);
+      return Actions.BuildDeclaratorGroup(decls);
     }
     return Actions.ConvertDeclToDeclGroup(TheDecl);
   }
@@ -2769,11 +2769,10 @@ Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       if (Init.isInvalid())
         SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
       else if (ThisDecl)
-        Actions.AddInitializerToDecl(ThisDecl, Init.get(), EqualLoc.isInvalid(),
-                                     DS.containsPlaceholderType());
+        Actions.AddInitializerToDecl(ThisDecl, Init.get(), EqualLoc.isInvalid());
     } else if (ThisDecl && DS.getStorageClassSpec() == DeclSpec::SCS_static)
       // No initializer.
-      Actions.ActOnUninitializedDecl(ThisDecl, DS.containsPlaceholderType());
+      Actions.ActOnUninitializedDecl(ThisDecl);
 
     if (ThisDecl) {
       if (!ThisDecl->isInvalidDecl()) {

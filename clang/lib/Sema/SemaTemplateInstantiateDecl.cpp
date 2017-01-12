@@ -4085,7 +4085,6 @@ void Sema::InstantiateVariableInitializer(
     }
 
     if (!Init.isInvalid()) {
-      bool TypeMayContainAuto = true;
       Expr *InitExpr = Init.get();
 
       if (Var->hasAttr<DLLImportAttr>() &&
@@ -4094,9 +4093,9 @@ void Sema::InstantiateVariableInitializer(
         // Do not dynamically initialize dllimport variables.
       } else if (InitExpr) {
         bool DirectInit = OldVar->isDirectInit();
-        AddInitializerToDecl(Var, InitExpr, DirectInit, TypeMayContainAuto);
+        AddInitializerToDecl(Var, InitExpr, DirectInit);
       } else
-        ActOnUninitializedDecl(Var, TypeMayContainAuto);
+        ActOnUninitializedDecl(Var);
     } else {
       // FIXME: Not too happy about invalidating the declaration
       // because of a bogus initializer.
@@ -4119,7 +4118,7 @@ void Sema::InstantiateVariableInitializer(
     if (Var->isCXXForRangeDecl())
       return;
 
-    ActOnUninitializedDecl(Var, false);
+    ActOnUninitializedDecl(Var);
   }
 }
 
