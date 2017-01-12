@@ -2813,6 +2813,8 @@ static bool fnegFoldsIntoOp(unsigned Opc) {
   case ISD::FMUL:
   case ISD::FMA:
   case ISD::FMAD:
+  case AMDGPUISD::RCP:
+  case AMDGPUISD::RCP_LEGACY:
     return true;
   default:
     return false;
@@ -2899,10 +2901,13 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
       DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
     return Res;
   }
-  case ISD::FP_EXTEND: {
+  case ISD::FP_EXTEND:
+  case AMDGPUISD::RCP:
+  case AMDGPUISD::RCP_LEGACY: {
     SDValue CvtSrc = N0.getOperand(0);
     if (CvtSrc.getOpcode() == ISD::FNEG) {
       // (fneg (fp_extend (fneg x))) -> (fp_extend x)
+      // (fneg (rcp (fneg x))) -> (rcp x)
       return DAG.getNode(Opc, SL, VT, CvtSrc.getOperand(0));
     }
 
@@ -2910,6 +2915,7 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
       return SDValue();
 
     // (fneg (fp_extend x)) -> (fp_extend (fneg x))
+    // (fneg (rcp x)) -> (rcp (fneg x))
     SDValue Neg = DAG.getNode(ISD::FNEG, SL, CvtSrc.getValueType(), CvtSrc);
     return DAG.getNode(Opc, SL, VT, Neg);
   }

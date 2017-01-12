@@ -954,9 +954,109 @@ define void @v_fneg_fp_round_multi_use_fneg_f32_to_f16(half addrspace(1)* %out, 
   ret void
 }
 
+; --------------------------------------------------------------------------------
+; rcp tests
+; --------------------------------------------------------------------------------
+
+; GCN-LABEL: {{^}}v_fneg_rcp_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_rcp_f32_e64 [[RESULT:v[0-9]+]], -[[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_rcp_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %rcp = call float @llvm.amdgcn.rcp.f32(float %a)
+  %fneg = fsub float -0.000000e+00, %rcp
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_rcp_fneg_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_rcp_f32_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_rcp_fneg_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %fneg.a = fsub float -0.000000e+00, %a
+  %rcp = call float @llvm.amdgcn.rcp.f32(float %fneg.a)
+  %fneg = fsub float -0.000000e+00, %rcp
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_rcp_store_use_fneg_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN-DAG: v_rcp_f32_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN-DAG: v_xor_b32_e32 [[NEG_A:v[0-9]+]], 0x80000000, [[A]]
+; GCN: buffer_store_dword [[RESULT]]
+; GCN: buffer_store_dword [[NEG_A]]
+define void @v_fneg_rcp_store_use_fneg_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %fneg.a = fsub float -0.000000e+00, %a
+  %rcp = call float @llvm.amdgcn.rcp.f32(float %fneg.a)
+  %fneg = fsub float -0.000000e+00, %rcp
+  store volatile float %fneg, float addrspace(1)* %out.gep
+  store volatile float %fneg.a, float addrspace(1)* undef
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_rcp_multi_use_fneg_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN-DAG: v_rcp_f32_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN-DAG: v_mul_f32_e64 [[MUL:v[0-9]+]], -[[A]], s{{[0-9]+}}
+; GCN: buffer_store_dword [[RESULT]]
+; GCN: buffer_store_dword [[MUL]]
+define void @v_fneg_rcp_multi_use_fneg_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr, float %c) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %fneg.a = fsub float -0.000000e+00, %a
+  %rcp = call float @llvm.amdgcn.rcp.f32(float %fneg.a)
+  %fneg = fsub float -0.000000e+00, %rcp
+  %use1 = fmul float %fneg.a, %c
+  store volatile float %fneg, float addrspace(1)* %out.gep
+  store volatile float %use1, float addrspace(1)* undef
+  ret void
+}
+
+; --------------------------------------------------------------------------------
+; rcp_legacy tests
+; --------------------------------------------------------------------------------
+
+; GCN-LABEL: {{^}}v_fneg_rcp_legacy_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_rcp_legacy_f32_e64 [[RESULT:v[0-9]+]], -[[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_rcp_legacy_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %rcp = call float @llvm.amdgcn.rcp.legacy(float %a)
+  %fneg = fsub float -0.000000e+00, %rcp
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
 declare i32 @llvm.amdgcn.workitem.id.x() #1
 declare float @llvm.fma.f32(float, float, float) #1
 declare float @llvm.fmuladd.f32(float, float, float) #1
+declare float @llvm.amdgcn.rcp.f32(float) #1
+declare float @llvm.amdgcn.rcp.legacy(float) #1
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }
