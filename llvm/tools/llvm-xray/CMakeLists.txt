@@ -8,6 +8,7 @@ set(LLVM_LINK_COMPONENTS
 
 set(LLVM_XRAY_TOOLS
   func-id-helper.cc
+  xray-account.cc
   xray-converter.cc
   xray-extract.cc
   xray-extract.cc
