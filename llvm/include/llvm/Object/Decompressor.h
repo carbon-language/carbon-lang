@@ -24,7 +24,7 @@ public:
   /// @param Name        Section name.
   /// @param Data        Section content.
   /// @param IsLE        Flag determines if Data is in little endian form.
-  /// @param Name        Flag determines if object is 64 bit.
+  /// @param Is64Bit     Flag determines if object is 64 bit.
   static Expected<Decompressor> create(StringRef Name, StringRef Data,
                                        bool IsLE, bool Is64Bit);
 
