@@ -77,10 +77,6 @@ void elf::error(const Twine &Msg) {
   ++ErrorCount;
 }
 
-void elf::error(std::error_code EC, const Twine &Prefix) {
-  error(Prefix + ": " + EC.message());
-}
-
 void elf::exitLld(int Val) {
   // Dealloc/destroy ManagedStatic variables before calling
   // _exit(). In a non-LTO build, this is a nop. In an LTO
