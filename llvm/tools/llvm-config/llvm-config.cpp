@@ -242,7 +242,7 @@ std::vector<std::string> GetAllDyLibComponents(const bool IsInDevelopmentTree,
   size_t Offset = 0;
   while (true) {
     const size_t NextOffset = DyLibComponentsStr.find(';', Offset);
-    DyLibComponents.push_back(DyLibComponentsStr.substr(Offset, NextOffset));
+    DyLibComponents.push_back(DyLibComponentsStr.substr(Offset, NextOffset-Offset));
     if (NextOffset == std::string::npos) {
       break;
     }
