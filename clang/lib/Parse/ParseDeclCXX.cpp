@@ -3544,7 +3544,7 @@ Parser::tryParseExceptionSpecification(bool Delayed,
           Actions.CheckBooleanCondition(KeywordLoc, NoexceptExpr.get());
       NoexceptRange = SourceRange(KeywordLoc, T.getCloseLocation());
     } else {
-      NoexceptType = EST_None;
+      NoexceptType = EST_BasicNoexcept;
     }
   } else {
     // There is no argument.
