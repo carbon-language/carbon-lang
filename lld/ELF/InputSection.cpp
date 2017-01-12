@@ -143,7 +143,8 @@ template <class ELFT> void InputSectionBase<ELFT>::uncompress() {
   }
 
   if (Error E = Decompressor.decompress({OutputBuf, Size}))
-    fatal(E, toString(this));
+    fatal(toString(this) +
+          ": decompress failed: " + llvm::toString(std::move(E)));
   Data = ArrayRef<uint8_t>((uint8_t *)OutputBuf, Size);
 }
 
