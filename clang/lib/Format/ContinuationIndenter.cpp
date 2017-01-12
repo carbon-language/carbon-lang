@@ -930,6 +930,13 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
     return;
   }
 
+  const FormatToken *Previous = Current.getPreviousNonComment();
+  if (Previous && Previous->is(tok::comma) &&
+      !Previous->is(TT_OverloadedOperator)) {
+    if (!Newline)
+      State.Stack.back().NoLineBreak = true;
+  }
+
   unsigned NewIndent;
   unsigned NewIndentLevel = State.Stack.back().IndentLevel;
   unsigned LastSpace = State.Stack.back().LastSpace;
