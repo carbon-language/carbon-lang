@@ -458,17 +458,17 @@ TEST_F(IRBuilderTest, DIBuilderMacro) {
   auto MUndef1 = DIB.createMacro(TMF1, 7, dwarf::DW_MACINFO_undef, "M1");
 
   EXPECT_EQ(dwarf::DW_MACINFO_define, MDef1->getMacinfoType());
-  EXPECT_EQ(3, MDef1->getLine());
+  EXPECT_EQ(3u, MDef1->getLine());
   EXPECT_EQ("M1", MDef1->getName());
   EXPECT_EQ("V1", MDef1->getValue());
 
   EXPECT_EQ(dwarf::DW_MACINFO_undef, MUndef1->getMacinfoType());
-  EXPECT_EQ(7, MUndef1->getLine());
+  EXPECT_EQ(7u, MUndef1->getLine());
   EXPECT_EQ("M1", MUndef1->getName());
   EXPECT_EQ("", MUndef1->getValue());
 
   EXPECT_EQ(dwarf::DW_MACINFO_start_file, TMF2->getMacinfoType());
-  EXPECT_EQ(5, TMF2->getLine());
+  EXPECT_EQ(5u, TMF2->getLine());
   EXPECT_EQ(File2, TMF2->getFile());
 
   DIB.finalize();
