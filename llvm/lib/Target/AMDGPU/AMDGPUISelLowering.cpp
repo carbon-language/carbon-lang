@@ -477,6 +477,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::FADD);
   setTargetDAGCombine(ISD::FSUB);
+  setTargetDAGCombine(ISD::FNEG);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2805,6 +2806,63 @@ SDValue AMDGPUTargetLowering::performSelectCombine(SDNode *N,
   return performCtlzCombine(SDLoc(N), Cond, True, False, DCI);
 }
 
+static bool fnegFoldsIntoOp(unsigned Opc) {
+  switch (Opc) {
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+  case ISD::FMA:
+  case ISD::FMAD:
+    return true;
+  default:
+    return false;
+  }
+}
+
+SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
+                                                 DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  unsigned Opc = N0.getOpcode();
+
+  // If the input has multiple uses and we can either fold the negate down, or
+  // the other uses cannot, give up. This both prevents unprofitable
+  // transformations and infinite loops: we won't repeatedly try to fold around
+  // a negate that has no 'good' form.
+  //
+  // TODO: Check users can fold
+  if (fnegFoldsIntoOp(Opc) && !N0.hasOneUse())
+    return SDValue();
+
+  SDLoc SL(N);
+  switch (Opc) {
+  case ISD::FADD: {
+    // (fneg (fadd x, y)) -> (fadd (fneg x), (fneg y))
+    SDValue LHS = N0.getOperand(0);
+    SDValue RHS = N0.getOperand(1);
+
+    if (LHS.getOpcode() != ISD::FNEG)
+      LHS = DAG.getNode(ISD::FNEG, SL, VT, LHS);
+    else
+      LHS = LHS.getOperand(0);
+
+    if (RHS.getOpcode() != ISD::FNEG)
+      RHS = DAG.getNode(ISD::FNEG, SL, VT, RHS);
+    else
+      RHS = RHS.getOperand(0);
+
+    SDValue Res = DAG.getNode(ISD::FADD, SL, VT, LHS, RHS);
+    if (!N0.hasOneUse())
+      DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
+    return Res;
+  }
+  default:
+    return SDValue();
+  }
+}
+
 SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
                                                 DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -2910,6 +2968,8 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
     return performMulLoHi24Combine(N, DCI);
   case ISD::SELECT:
     return performSelectCombine(N, DCI);
+  case ISD::FNEG:
+    return performFNegCombine(N, DCI);
   case AMDGPUISD::BFE_I32:
   case AMDGPUISD::BFE_U32: {
     assert(!N->getValueType(0).isVector() &&
