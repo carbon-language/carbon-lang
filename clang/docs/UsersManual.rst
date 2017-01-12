@@ -2462,7 +2462,7 @@ Clang expects the GCC executable "gcc.exe" compiled for
 clang-cl
 ========
 
-clang-cl is an alternative command-line interface to Clang driver, designed for
+clang-cl is an alternative command-line interface to Clang, designed for
 compatibility with the Visual C++ compiler, cl.exe.
 
 To enable clang-cl to find system headers, libraries, and the linker when run
@@ -2470,7 +2470,7 @@ from the command-line, it should be executed inside a Visual Studio Native Tools
 Command Prompt or a regular Command Prompt where the environment has been set
 up using e.g. `vcvars32.bat <http://msdn.microsoft.com/en-us/library/f2ccy3wt.aspx>`_.
 
-clang-cl can also be used from inside Visual Studio  by using an LLVM Platform
+clang-cl can also be used from inside Visual Studio by using an LLVM Platform
 Toolset.
 
 Command-Line Options
@@ -2505,116 +2505,124 @@ Execute ``clang-cl /?`` to see a list of supported options:
   ::
 
     CL.EXE COMPATIBILITY OPTIONS:
-      /?                     Display available options
-      /arch:<value>          Set architecture for code generation
-      /Brepro-               Emit an object file which cannot be reproduced over time
-      /Brepro                Emit an object file which can be reproduced over time
-      /C                     Don't discard comments when preprocessing
-      /c                     Compile only
-      /D <macro[=value]>     Define macro
-      /EH<value>             Exception handling model
-      /EP                    Disable linemarker output and preprocess to stdout
-      /E                     Preprocess to stdout
-      /fallback              Fall back to cl.exe if clang-cl fails to compile
-      /FA                    Output assembly code file during compilation
-      /Fa<file or directory> Output assembly code to this file during compilation (with /FA)
-      /Fe<file or directory> Set output executable file or directory (ends in / or \)
-      /FI <value>            Include file before parsing
-      /Fi<file>              Set preprocess output file name (with /P)
-      /Fo<file or directory> Set output object file, or directory (ends in / or \) (with /c)
+      /?                      Display available options
+      /arch:<value>           Set architecture for code generation
+      /Brepro-                Emit an object file which cannot be reproduced over time
+      /Brepro                 Emit an object file which can be reproduced over time
+      /C                      Don't discard comments when preprocessing
+      /c                      Compile only
+      /D <macro[=value]>      Define macro
+      /EH<value>              Exception handling model
+      /EP                     Disable linemarker output and preprocess to stdout
+      /execution-charset:<value>
+                              Runtime encoding, supports only UTF-8
+      /E                      Preprocess to stdout
+      /fallback               Fall back to cl.exe if clang-cl fails to compile
+      /FA                     Output assembly code file during compilation
+      /Fa<file or directory>  Output assembly code to this file during compilation (with /FA)
+      /Fe<file or directory>  Set output executable file or directory (ends in / or \)
+      /FI <value>             Include file before parsing
+      /Fi<file>               Set preprocess output file name (with /P)
+      /Fo<file or directory>  Set output object file, or directory (ends in / or \) (with /c)
       /fp:except-
       /fp:except
       /fp:fast
       /fp:precise
       /fp:strict
-      /Fp<filename>          Set pch filename (with /Yc and /Yu)
-      /GA                    Assume thread-local variables are defined in the executable
-      /Gd                    Set __cdecl as a default calling convention
-      /GF-                   Disable string pooling
-      /GR-                   Disable emission of RTTI data
-      /GR                    Enable emission of RTTI data
-      /Gr                    Set __fastcall as a default calling convention
-      /GS-                   Disable buffer security check
-      /GS                    Enable buffer security check
-      /Gs<value>             Set stack probe size
-      /Gv                    Set __vectorcall as a default calling convention
-      /Gw-                   Don't put each data item in its own section
-      /Gw                    Put each data item in its own section
-      /GX-                   Enable exception handling
-      /GX                    Enable exception handling
-      /Gy-                   Don't put each function in its own section
-      /Gy                    Put each function in its own section
-      /Gz                    Set __stdcall as a default calling convention
-      /help                  Display available options
-      /imsvc <dir>           Add directory to system include search path, as if part of %INCLUDE%
-      /I <dir>               Add directory to include search path
-      /J                     Make char type unsigned
-      /LDd                   Create debug DLL
-      /LD                    Create DLL
-      /link <options>        Forward options to the linker
-      /MDd                   Use DLL debug run-time
-      /MD                    Use DLL run-time
-      /MTd                   Use static debug run-time
-      /MT                    Use static run-time
-      /Od                    Disable optimization
-      /Oi-                   Disable use of builtin functions
-      /Oi                    Enable use of builtin functions
-      /Os                    Optimize for size
-      /Ot                    Optimize for speed
-      /O<value>              Optimization level
-      /o <file or directory> Set output file or directory (ends in / or \)
-      /P                     Preprocess to file
-      /Qvec-                 Disable the loop vectorization passes
-      /Qvec                  Enable the loop vectorization passes
-      /showIncludes          Print info about included files to stderr
-      /std:<value>           Language standard to compile for
-      /TC                    Treat all source files as C
-      /Tc <filename>         Specify a C source file
-      /TP                    Treat all source files as C++
-      /Tp <filename>         Specify a C++ source file
-      /U <macro>             Undefine macro
-      /vd<value>             Control vtordisp placement
-      /vmb                   Use a best-case representation method for member pointers
-      /vmg                   Use a most-general representation for member pointers
-      /vmm                   Set the default most-general representation to multiple inheritance
-      /vms                   Set the default most-general representation to single inheritance
-      /vmv                   Set the default most-general representation to virtual inheritance
-      /volatile:iso          Volatile loads and stores have standard semantics
-      /volatile:ms           Volatile loads and stores have acquire and release semantics
-      /W0                    Disable all warnings
-      /W1                    Enable -Wall
-      /W2                    Enable -Wall
-      /W3                    Enable -Wall
-      /W4                    Enable -Wall and -Wextra
-      /Wall                  Enable -Wall and -Wextra
-      /WX-                   Do not treat warnings as errors
-      /WX                    Treat warnings as errors
-      /w                     Disable all warnings
-      /Y-                    Disable precompiled headers, overrides /Yc and /Yu
-      /Yc<filename>          Generate a pch file for all code up to and including <filename>
-      /Yu<filename>          Load a pch file and use it instead of all code up to and including <filename>
-      /Z7                    Enable CodeView debug information in object files
-      /Zc:sizedDealloc-      Disable C++14 sized global deallocation functions
-      /Zc:sizedDealloc       Enable C++14 sized global deallocation functions
-      /Zc:strictStrings      Treat string literals as const
-      /Zc:threadSafeInit-    Disable thread-safe initialization of static variables
-      /Zc:threadSafeInit     Enable thread-safe initialization of static variables
-      /Zc:trigraphs-         Disable trigraphs (default)
-      /Zc:trigraphs          Enable trigraphs
-      /Zd                    Emit debug line number tables only
-      /Zi                    Alias for /Z7. Does not produce PDBs.
-      /Zl                    Don't mention any default libraries in the object file
-      /Zp                    Set the default maximum struct packing alignment to 1
-      /Zp<value>             Specify the default maximum struct packing alignment
-      /Zs                    Syntax-check only
+      /Fp<filename>           Set pch filename (with /Yc and /Yu)
+      /GA                     Assume thread-local variables are defined in the executable
+      /Gd                     Set __cdecl as a default calling convention
+      /GF-                    Disable string pooling
+      /GR-                    Disable emission of RTTI data
+      /GR                     Enable emission of RTTI data
+      /Gr                     Set __fastcall as a default calling convention
+      /GS-                    Disable buffer security check
+      /GS                     Enable buffer security check
+      /Gs<value>              Set stack probe size
+      /Gv                     Set __vectorcall as a default calling convention
+      /Gw-                    Don't put each data item in its own section
+      /Gw                     Put each data item in its own section
+      /GX-                    Enable exception handling
+      /GX                     Enable exception handling
+      /Gy-                    Don't put each function in its own section
+      /Gy                     Put each function in its own section
+      /Gz                     Set __stdcall as a default calling convention
+      /help                   Display available options
+      /imsvc <dir>            Add directory to system include search path, as if part of %INCLUDE%
+      /I <dir>                Add directory to include search path
+      /J                      Make char type unsigned
+      /LDd                    Create debug DLL
+      /LD                     Create DLL
+      /link <options>         Forward options to the linker
+      /MDd                    Use DLL debug run-time
+      /MD                     Use DLL run-time
+      /MTd                    Use static debug run-time
+      /MT                     Use static run-time
+      /Od                     Disable optimization
+      /Oi-                    Disable use of builtin functions
+      /Oi                     Enable use of builtin functions
+      /Os                     Optimize for size
+      /Ot                     Optimize for speed
+      /O<value>               Optimization level
+      /o <file or directory>  Set output file or directory (ends in / or \)
+      /P                      Preprocess to file
+      /Qvec-                  Disable the loop vectorization passes
+      /Qvec                   Enable the loop vectorization passes
+      /showIncludes           Print info about included files to stderr
+      /source-charset:<value> Source encoding, supports only UTF-8
+      /std:<value>            Language standard to compile for
+      /TC                     Treat all source files as C
+      /Tc <filename>          Specify a C source file
+      /TP                     Treat all source files as C++
+      /Tp <filename>          Specify a C++ source file
+      /U <macro>              Undefine macro
+      /vd<value>              Control vtordisp placement
+      /vmb                    Use a best-case representation method for member pointers
+      /vmg                    Use a most-general representation for member pointers
+      /vmm                    Set the default most-general representation to multiple inheritance
+      /vms                    Set the default most-general representation to single inheritance
+      /vmv                    Set the default most-general representation to virtual inheritance
+      /volatile:iso           Volatile loads and stores have standard semantics
+      /volatile:ms            Volatile loads and stores have acquire and release semantics
+      /W0                     Disable all warnings
+      /W1                     Enable -Wall
+      /W2                     Enable -Wall
+      /W3                     Enable -Wall
+      /W4                     Enable -Wall and -Wextra
+      /Wall                   Enable -Wall and -Wextra
+      /WX-                    Do not treat warnings as errors
+      /WX                     Treat warnings as errors
+      /w                      Disable all warnings
+      /Y-                     Disable precompiled headers, overrides /Yc and /Yu
+      /Yc<filename>           Generate a pch file for all code up to and including <filename>
+      /Yu<filename>           Load a pch file and use it instead of all code up to and including <filename>
+      /Z7                     Enable CodeView debug information in object files
+      /Zc:sizedDealloc-       Disable C++14 sized global deallocation functions
+      /Zc:sizedDealloc        Enable C++14 sized global deallocation functions
+      /Zc:strictStrings       Treat string literals as const
+      /Zc:threadSafeInit-     Disable thread-safe initialization of static variables
+      /Zc:threadSafeInit      Enable thread-safe initialization of static variables
+      /Zc:trigraphs-          Disable trigraphs (default)
+      /Zc:trigraphs           Enable trigraphs
+      /Zd                     Emit debug line number tables only
+      /Zi                     Alias for /Z7. Does not produce PDBs.
+      /Zl                     Don't mention any default libraries in the object file
+      /Zp                     Set the default maximum struct packing alignment to 1
+      /Zp<value>              Specify the default maximum struct packing alignment
+      /Zs                     Syntax-check only
 
     OPTIONS:
       -###                    Print (but do not run) the commands to run for this compilation
       --analyze               Run the static analyzer
       -fansi-escape-codes     Use ANSI escape codes for diagnostics
       -fcolor-diagnostics     Use colors in diagnostics
+      -fdelayed-template-parsing
+                              Parse templated function definitions at the end of the translation unit
+      -fdiagnostics-absolute-paths
+                              Print absolute paths in diagnostics
       -fdiagnostics-parseable-fixits
                               Print fix-its in machine parseable form
+      -flto                   Enable LTO in 'full' mode
       -fms-compatibility-version=<value>
                               Dot-separated value representing the Microsoft compiler version
                               number to report in _MSC_VER (0 = don't define it (default))
@@ -2628,6 +2636,15 @@ Execute ``clang-cl /?`` to see a list of supported options:
                               Disable recovery for specified sanitizers
       -fno-sanitize-trap=<value>
                               Disable trapping for specified sanitizers
+      -fno-standalone-debug   Limit debug information produced to reduce size of debug binary
+      -fprofile-instr-generate=<file>
+                              Generate instrumented code to collect execution counts into <file>
+                              (overridden by LLVM_PROFILE_FILE env var)
+      -fprofile-instr-generate
+                              Generate instrumented code to collect execution counts into default.profraw file
+                              (overriden by '=' form of option or LLVM_PROFILE_FILE env var)
+      -fprofile-instr-use=<value>
+                              Use instrumentation data for profile-guided optimization
       -fsanitize-blacklist=<value>
                               Path to blacklist file for sanitizers
       -fsanitize-coverage=<value>
@@ -2637,6 +2654,7 @@ Execute ``clang-cl /?`` to see a list of supported options:
       -fsanitize-trap=<value> Enable trapping for specified sanitizers
       -fsanitize=<check>      Turn on runtime checks for various forms of undefined or suspicious
                               behavior. See user manual for available checks
+      -fstandalone-debug      Emit full debug info for all types used by the program
       -gcodeview              Generate CodeView debug information
       -gline-tables-only      Emit debug line number tables only
       -miamcu                 Use Intel MCU ABI
