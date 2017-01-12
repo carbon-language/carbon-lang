@@ -209,9 +209,8 @@ struct _LIBCPP_TEMPLATE_VIS char_traits<char>
     static inline _LIBCPP_CONSTEXPR bool lt(char_type __c1, char_type __c2) _NOEXCEPT
         {return (unsigned char)__c1 < (unsigned char)__c2;}
 
-    static inline _LIBCPP_CONSTEXPR_AFTER_CXX14
-    int compare(const char_type* __s1, const char_type* __s2, size_t __n) _NOEXCEPT
-        {return __n == 0 ? 0 : __builtin_memcmp(__s1, __s2, __n);}
+    static _LIBCPP_CONSTEXPR_AFTER_CXX14
+    int compare(const char_type* __s1, const char_type* __s2, size_t __n) _NOEXCEPT;
     static inline size_t _LIBCPP_CONSTEXPR_AFTER_CXX14
     length(const char_type* __s)  _NOEXCEPT {return __builtin_strlen(__s);}
     static _LIBCPP_CONSTEXPR_AFTER_CXX14
@@ -237,6 +236,28 @@ struct _LIBCPP_TEMPLATE_VIS char_traits<char>
     static inline _LIBCPP_CONSTEXPR int_type  eof() _NOEXCEPT
         {return int_type(EOF);}
 };
+
+inline _LIBCPP_CONSTEXPR_AFTER_CXX14
+int
+char_traits<char>::compare(const char_type* __s1, const char_type* __s2, size_t __n) _NOEXCEPT
+{
+    if (__n == 0)
+        return 0;
+#ifdef _LIBCPP_BUILTIN_MEMCMP_ISCONSTEXPR
+    return __builtin_memcmp(__s1, __s2, __n);
+#elif _LIBCPP_STD_VER <= 14
+    return memcmp(__s1, __s2, __n);
+#else
+    for (; __n; --__n, ++__s1, ++__s2)
+    {
+        if (lt(*__s1, *__s2))
+            return -1;
+        if (lt(*__s2, *__s1))
+            return 1;
+    }
+    return 0;
+#endif
+}
 
 inline _LIBCPP_CONSTEXPR_AFTER_CXX14
 const char*
