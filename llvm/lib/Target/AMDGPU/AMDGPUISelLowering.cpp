@@ -2813,8 +2813,10 @@ static bool fnegFoldsIntoOp(unsigned Opc) {
   case ISD::FMUL:
   case ISD::FMA:
   case ISD::FMAD:
+  case ISD::FSIN:
   case AMDGPUISD::RCP:
   case AMDGPUISD::RCP_LEGACY:
+  case AMDGPUISD::SIN_HW:
   case AMDGPUISD::FMUL_LEGACY:
     return true;
   default:
@@ -2906,7 +2908,9 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
   }
   case ISD::FP_EXTEND:
   case AMDGPUISD::RCP:
-  case AMDGPUISD::RCP_LEGACY: {
+  case AMDGPUISD::RCP_LEGACY:
+  case ISD::FSIN:
+  case AMDGPUISD::SIN_HW: {
     SDValue CvtSrc = N0.getOperand(0);
     if (CvtSrc.getOpcode() == ISD::FNEG) {
       // (fneg (fp_extend (fneg x))) -> (fp_extend x)
