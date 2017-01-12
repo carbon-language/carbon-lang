@@ -7032,20 +7032,21 @@ static const SCEV *SolveLinEquationWithOverflow(const APInt &A, const APInt &B,
   // 3. Compute I: the multiplicative inverse of (A / D) in arithmetic
   // modulo (N / D).
   //
-  // (N / D) may need BW+1 bits in its representation.  Hence, we'll use this
-  // bit width during computations.
+  // If D == 1, (N / D) == N == 2^BW, so we need one extra bit to represent
+  // (N / D) in general. The inverse itself always fits into BW bits, though,
+  // so we immediately truncate it.
   APInt AD = A.lshr(Mult2).zext(BW + 1);  // AD = A / D
   APInt Mod(BW + 1, 0);
   Mod.setBit(BW - Mult2);  // Mod = N / D
-  APInt I = AD.multiplicativeInverse(Mod);
+  APInt I = AD.multiplicativeInverse(Mod).trunc(BW);
 
   // 4. Compute the minimum unsigned root of the equation:
   // I * (B / D) mod (N / D)
-  APInt Result = (I * B.lshr(Mult2).zext(BW + 1)).urem(Mod);
+  // To simplify the computation, we factor out the divide by D:
+  // (I * B mod N) / D
+  APInt Result = (I * B).lshr(Mult2);
 
-  // The result is guaranteed to be less than 2^BW so we may truncate it to BW
-  // bits.
-  return SE.getConstant(Result.trunc(BW));
+  return SE.getConstant(Result);
 }
 
 /// Find the roots of the quadratic equation for the given quadratic chrec
