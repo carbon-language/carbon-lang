@@ -2858,6 +2858,23 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
       DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
     return Res;
   }
+  case ISD::FMUL: {
+    // (fneg (fmul x, y)) -> (fmul x, (fneg y))
+    SDValue LHS = N0.getOperand(0);
+    SDValue RHS = N0.getOperand(1);
+
+    if (LHS.getOpcode() == ISD::FNEG)
+      LHS = LHS.getOperand(0);
+    else if (RHS.getOpcode() == ISD::FNEG)
+      RHS = RHS.getOperand(0);
+    else
+      RHS = DAG.getNode(ISD::FNEG, SL, VT, RHS);
+
+    SDValue Res = DAG.getNode(ISD::FMUL, SL, VT, LHS, RHS);
+    if (!N0.hasOneUse())
+      DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
+    return Res;
+  }
   default:
     return SDValue();
   }
