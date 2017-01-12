@@ -36,7 +36,10 @@ using namespace lld::elf;
 // Returns a string to construct an error message.
 template <class ELFT>
 std::string lld::toString(const InputSectionBase<ELFT> *Sec) {
-  return (Sec->getFile()->getName() + ":(" + Sec->Name + ")").str();
+  // File can absent if section is synthetic.
+  std::string FileName =
+      Sec->getFile() ? Sec->getFile()->getName() : "<internal>";
+  return (FileName + ":(" + Sec->Name + ")").str();
 }
 
 template <class ELFT>
