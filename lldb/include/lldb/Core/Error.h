@@ -302,7 +302,7 @@ protected:
 } // namespace lldb_private
 
 namespace llvm {
-template <> struct llvm::format_provider<lldb_private::Error> {
+template <> struct format_provider<lldb_private::Error> {
   static void format(const lldb_private::Error &error, llvm::raw_ostream &OS,
                      llvm::StringRef Options) {
     llvm::format_provider<llvm::StringRef>::format(error.AsCString(), OS,
