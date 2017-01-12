@@ -386,7 +386,7 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_386_NONE:
     return R_HINT;
   default:
-    error("do not know how to handle relocation " + toString(Type) + " (" +
+    error("do not know how to handle relocation '" + toString(Type) + "' (" +
           Twine(Type) + ")");
     return R_HINT;
   }
