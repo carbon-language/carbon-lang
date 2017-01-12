@@ -1,44 +1,56 @@
-; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mattr=+idivl-to-divb < %s | FileCheck -check-prefix=DIV32 %s
-; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mattr=+idivq-to-divl < %s | FileCheck -check-prefix=DIV64 %s
+; Check that a division is bypassed when appropriate only.
+; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mcpu=atom       < %s | FileCheck -check-prefixes=ATOM,CHECK %s
+; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mcpu=silvermont < %s | FileCheck -check-prefixes=REST,CHECK %s
+; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mcpu=skylake    < %s | FileCheck -check-prefixes=REST,CHECK %s
 
+; Verify that div32 is bypassed only for Atoms.
 define i32 @div32(i32 %a, i32 %b) {
 entry:
-; DIV32-LABEL: div32:
-; DIV32: orl %{{.*}}, [[REG:%[a-z]+]]
-; DIV32: testl $-256, [[REG]]
-; DIV32: divb
-; DIV64-LABEL: div32:
-; DIV64-NOT: divb
+; ATOM-LABEL: div32:
+; ATOM: orl   %{{.*}}, [[REG:%[a-z]+]]
+; ATOM: testl $-256, [[REG]]
+; ATOM: divb
+;
+; REST-LABEL: div32:
+; REST-NOT: divb
+;
   %div = sdiv i32 %a, %b
   ret i32 %div
 }
 
+; Verify that div64 is always bypassed.
 define i64 @div64(i64 %a, i64 %b) {
 entry:
-; DIV32-LABEL: div64:
-; DIV32-NOT: divl
-; DIV64-LABEL: div64:
-; DIV64-DAG: movabsq $-4294967296, [[REGMSK:%[a-z]+]]
-; DIV64-DAG: orq %{{.*}}, [[REG:%[a-z]+]]
-; DIV64: testq [[REGMSK]], [[REG]]
-; DIV64: divl
+; CHECK-LABEL: div64:
+; CHECK-DAG: movabsq $-4294967296, [[REGMSK:%[a-z]+]]
+; CHECK-DAG: orq     %{{.*}}, [[REG:%[a-z]+]]
+; CHECK:     testq   [[REGMSK]], [[REG]]
+; CHECK:     divl
+;
   %div = sdiv i64 %a, %b
   ret i64 %div
 }
 
+
 ; Verify that no extra code is generated when optimizing for size.
 
+define i64 @div64_optsize(i64 %a, i64 %b) optsize {
+; CHECK-LABEL: div64_optsize:
+; CHECK-NOT: divl
+  %div = sdiv i64 %a, %b
+  ret i64 %div
+}
+
 define i32 @div32_optsize(i32 %a, i32 %b) optsize {
-; DIV32-LABEL: div32_optsize:
-; DIV32-NOT: divb
+; CHECK-LABEL: div32_optsize:
+; CHECK-NOT: divb
   %div = sdiv i32 %a, %b
   ret i32 %div
 }
 
 define i32 @div32_minsize(i32 %a, i32 %b) minsize {
-; DIV32-LABEL: div32_minsize:
-; DIV32-NOT: divb
+; CHECK-LABEL: div32_minsize:
+; CHECK-NOT: divb
   %div = sdiv i32 %a, %b
   ret i32 %div
 }
-
