@@ -15295,13 +15295,13 @@ static  SDValue LowerZERO_EXTEND_AVX512(SDValue Op,
   MVT InVT = In.getSimpleValueType();
   SDLoc DL(Op);
   unsigned NumElts = VT.getVectorNumElements();
-  if (NumElts != 8 && NumElts != 16 && !Subtarget.hasBWI())
-    return SDValue();
 
-  if (VT.is512BitVector() && InVT.getVectorElementType() != MVT::i1)
+  if (VT.is512BitVector() && InVT.getVectorElementType() != MVT::i1 &&
+      (NumElts == 8 || NumElts == 16 || Subtarget.hasBWI()))
     return DAG.getNode(X86ISD::VZEXT, DL, VT, In);
 
-  assert(InVT.getVectorElementType() == MVT::i1);
+  if (InVT.getVectorElementType() != MVT::i1)
+    return SDValue();
 
   // Extend VT if the target is 256 or 128bit vector and VLX is not supported.
   MVT ExtVT = VT;
