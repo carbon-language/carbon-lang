@@ -81,107 +81,15 @@ bool RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
   return true;
 }
 
-void RegisterBankInfo::createRegisterBank(unsigned ID, const char *Name) {
-  DEBUG(dbgs() << "Create register bank: " << ID << " with name \"" << Name
-               << "\"\n");
-  RegisterBank &RegBank = getRegBank(ID);
-  assert(RegBank.getID() == RegisterBank::InvalidID &&
-         "A register bank should be created only once");
-  RegBank.ID = ID;
-  RegBank.Name = Name;
-}
-
-void RegisterBankInfo::addRegBankCoverage(unsigned ID, unsigned RCId,
-                                          const TargetRegisterInfo &TRI) {
+void RegisterBankInfo::setRegBankData(unsigned ID, const char *Name,
+                                      unsigned Size,
+                                      const uint32_t *CoveredClasses) {
   RegisterBank &RB = getRegBank(ID);
-  unsigned NbOfRegClasses = TRI.getNumRegClasses();
-
-  DEBUG(dbgs() << "Add coverage for: " << RB << '\n');
-
-  // Check if RB is underconstruction.
-  if (!RB.isValid())
-    RB.ContainedRegClasses.resize(NbOfRegClasses);
-  else if (RB.covers(*TRI.getRegClass(RCId)))
-    // If RB already covers this register class, there is nothing
-    // to do.
-    return;
-
-  BitVector &Covered = RB.ContainedRegClasses;
-  SmallVector<unsigned, 8> WorkList;
-
-  WorkList.push_back(RCId);
-  Covered.set(RCId);
-
-  unsigned &MaxSize = RB.Size;
-  do {
-    unsigned RCId = WorkList.pop_back_val();
-
-    const TargetRegisterClass &CurRC = *TRI.getRegClass(RCId);
-
-    DEBUG(dbgs() << "Examine: " << TRI.getRegClassName(&CurRC)
-                 << "(Size*8: " << (CurRC.getSize() * 8) << ")\n");
-
-    // Remember the biggest size in bits.
-    MaxSize = std::max(MaxSize, CurRC.getSize() * 8);
-
-    // Walk through all sub register classes and push them into the worklist.
-    bool First = true;
-    for (BitMaskClassIterator It(CurRC.getSubClassMask(), TRI); It.isValid();
-         ++It) {
-      unsigned SubRCId = It.getID();
-      if (!Covered.test(SubRCId)) {
-        if (First)
-          DEBUG(dbgs() << "  Enqueue sub-class: ");
-        DEBUG(dbgs() << TRI.getRegClassName(TRI.getRegClass(SubRCId)) << ", ");
-        WorkList.push_back(SubRCId);
-        // Remember that we saw the sub class.
-        Covered.set(SubRCId);
-        First = false;
-      }
-    }
-    if (!First)
-      DEBUG(dbgs() << '\n');
-
-    // Push also all the register classes that can be accessed via a
-    // subreg index, i.e., its subreg-class (which is different than
-    // its subclass).
-    //
-    // Note: It would probably be faster to go the other way around
-    // and have this method add only super classes, since this
-    // information is available in a more efficient way. However, it
-    // feels less natural for the client of this APIs plus we will
-    // TableGen the whole bitset at some point, so compile time for
-    // the initialization is not very important.
-    First = true;
-    for (unsigned SubRCId = 0; SubRCId < NbOfRegClasses; ++SubRCId) {
-      if (Covered.test(SubRCId))
-        continue;
-      bool Pushed = false;
-      const TargetRegisterClass *SubRC = TRI.getRegClass(SubRCId);
-      for (SuperRegClassIterator SuperRCIt(SubRC, &TRI); SuperRCIt.isValid();
-           ++SuperRCIt) {
-        if (Pushed)
-          break;
-        for (BitMaskClassIterator It(SuperRCIt.getMask(), TRI); It.isValid();
-             ++It) {
-          unsigned SuperRCId = It.getID();
-          if (SuperRCId == RCId) {
-            if (First)
-              DEBUG(dbgs() << "  Enqueue subreg-class: ");
-            DEBUG(dbgs() << TRI.getRegClassName(SubRC) << ", ");
-            WorkList.push_back(SubRCId);
-            // Remember that we saw the sub class.
-            Covered.set(SubRCId);
-            Pushed = true;
-            First = false;
-            break;
-          }
-        }
-      }
-    }
-    if (!First)
-      DEBUG(dbgs() << '\n');
-  } while (!WorkList.empty());
+  RB.ID = ID;
+  RB.Name = Name;
+  RB.Size = Size;
+  RB.ContainedRegClasses.resize(200);
+  RB.ContainedRegClasses.setBitsInMask(CoveredClasses);
 }
 
 const RegisterBank *
