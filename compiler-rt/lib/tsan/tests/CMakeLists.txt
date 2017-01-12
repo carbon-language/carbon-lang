@@ -69,6 +69,7 @@ macro(add_tsan_unittest testname)
           $<TARGET_OBJECTS:RTInterception.osx>
           $<TARGET_OBJECTS:RTSanitizerCommon.osx>
           $<TARGET_OBJECTS:RTSanitizerCommonLibc.osx>
+          $<TARGET_OBJECTS:RTSancovLibc.osx>
           $<TARGET_OBJECTS:RTUbsan.osx>)
         set(TSAN_TEST_RUNTIME RTTsanTest.${testname}.${arch})
         add_library(${TSAN_TEST_RUNTIME} STATIC ${TSAN_TEST_RUNTIME_OBJECTS})

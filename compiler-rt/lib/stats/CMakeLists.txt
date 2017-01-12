@@ -22,6 +22,7 @@ add_compiler_rt_runtime(clang_rt.stats
   SOURCES stats.cc
   OBJECT_LIBS RTSanitizerCommon
               RTSanitizerCommonLibc
+              RTSancovLibc
   CFLAGS ${SANITIZER_COMMON_CFLAGS}
   LINK_FLAGS ${WEAK_SYMBOL_LINK_FLAGS}
   PARENT_TARGET stats)

@@ -200,7 +200,8 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
   if(APPLE)
     add_sanitizer_common_lib("RTSanitizerCommon.test.osx"
                              $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-                             $<TARGET_OBJECTS:RTSanitizerCommonLibc.osx>)
+                             $<TARGET_OBJECTS:RTSanitizerCommonLibc.osx>
+                             $<TARGET_OBJECTS:RTSancovLibc.osx>)
   else()
     if(CAN_TARGET_x86_64)
       add_sanitizer_common_lib("RTSanitizerCommon.test.nolibc.x86_64"
@@ -210,7 +211,8 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
     foreach(arch ${SANITIZER_UNITTEST_SUPPORTED_ARCH})
       add_sanitizer_common_lib("RTSanitizerCommon.test.${arch}"
                                $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-                               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
+                               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+                               $<TARGET_OBJECTS:RTSancovLibc.${arch}>)
     endforeach()
   endif()
   foreach(arch ${SANITIZER_UNITTEST_SUPPORTED_ARCH})
@@ -224,7 +226,8 @@ if(ANDROID)
       ${SANITIZER_UNITTESTS}
       ${COMPILER_RT_GTEST_SOURCE}
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>)
+      $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+      $<TARGET_OBJECTS:RTSancovLibc.${arch}>)
     set_target_compile_flags(SanitizerTest
       ${SANITIZER_COMMON_CFLAGS}
       ${SANITIZER_TEST_CFLAGS_COMMON})

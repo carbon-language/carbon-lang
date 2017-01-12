@@ -26,6 +26,7 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+            $<TARGET_OBJECTS:RTSancovLibc.${arch}>
     CFLAGS ${DD_CFLAGS}
     PARENT_TARGET dd)
 
@@ -40,6 +41,7 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+            $<TARGET_OBJECTS:RTSancovLibc.${arch}>
     LINK_LIBS ${DD_LINKLIBS}
     PARENT_TARGET dd)
 endif()

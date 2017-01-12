@@ -23,6 +23,7 @@ foreach(arch ${DFSAN_SUPPORTED_ARCH})
             $<TARGET_OBJECTS:RTInterception.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+            $<TARGET_OBJECTS:RTSancovLibc.${arch}>
     CFLAGS ${DFSAN_CFLAGS}
     PARENT_TARGET dfsan)
   add_sanitizer_rt_symbols(clang_rt.dfsan

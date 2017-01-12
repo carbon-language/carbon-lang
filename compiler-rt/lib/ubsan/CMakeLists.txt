@@ -67,6 +67,7 @@ if(APPLE)
                   RTUbsan_standalone
                   RTSanitizerCommon
                   RTSanitizerCommonLibc
+                  RTSancovLibc
       LINK_FLAGS ${WEAK_SYMBOL_LINK_FLAGS}
       PARENT_TARGET ubsan)
   endif()
@@ -102,6 +103,7 @@ else()
       ARCHS ${UBSAN_SUPPORTED_ARCH}
       OBJECT_LIBS RTSanitizerCommon
               RTSanitizerCommonLibc
+              RTSancovLibc
               RTUbsan
               RTUbsan_standalone
       CFLAGS ${UBSAN_CFLAGS}

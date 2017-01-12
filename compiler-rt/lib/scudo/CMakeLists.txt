@@ -29,6 +29,7 @@ if(COMPILER_RT_HAS_SCUDO)
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonNoTermination.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+              $<TARGET_OBJECTS:RTSancovLibc.${arch}>
       CFLAGS ${SCUDO_CFLAGS}
       PARENT_TARGET scudo)
   endforeach()
