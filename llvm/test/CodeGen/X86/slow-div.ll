@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mattr=+idivl-to-divb < %s | FileCheck -check-prefix=DIV32 %s
-; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mattr=+idivq-to-divw < %s | FileCheck -check-prefix=DIV64 %s
+; RUN: llc -mtriple=x86_64-unknown-linux-gnu -mattr=+idivq-to-divl < %s | FileCheck -check-prefix=DIV64 %s
 
 define i32 @div32(i32 %a, i32 %b) {
 entry:
@@ -16,11 +16,12 @@ entry:
 define i64 @div64(i64 %a, i64 %b) {
 entry:
 ; DIV32-LABEL: div64:
-; DIV32-NOT: divw
+; DIV32-NOT: divl
 ; DIV64-LABEL: div64:
-; DIV64: orq %{{.*}}, [[REG:%[a-z]+]]
-; DIV64: testq   $-65536, [[REG]]
-; DIV64: divw
+; DIV64-DAG: movabsq $-4294967296, [[REGMSK:%[a-z]+]]
+; DIV64-DAG: orq %{{.*}}, [[REG:%[a-z]+]]
+; DIV64: testq [[REGMSK]], [[REG]]
+; DIV64: divl
   %div = sdiv i64 %a, %b
   ret i64 %div
 }

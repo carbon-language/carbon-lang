@@ -97,12 +97,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   const X86RegisterInfo *RegInfo = Subtarget.getRegisterInfo();
   setStackPointerRegisterToSaveRestore(RegInfo->getStackRegister());
 
-  // Bypass expensive divides on Atom when compiling with O2.
+  // Bypass expensive divides and use cheaper ones.
   if (TM.getOptLevel() >= CodeGenOpt::Default) {
     if (Subtarget.hasSlowDivide32())
       addBypassSlowDiv(32, 8);
     if (Subtarget.hasSlowDivide64() && Subtarget.is64Bit())
-      addBypassSlowDiv(64, 16);
+      addBypassSlowDiv(64, 32);
   }
 
   if (Subtarget.isTargetKnownWindowsMSVC() ||
