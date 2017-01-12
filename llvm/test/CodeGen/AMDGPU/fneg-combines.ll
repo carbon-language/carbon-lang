@@ -782,6 +782,178 @@ define void @v_fneg_multi_foldable_use_fp_extend_fneg_f16_to_f32(float addrspace
   ret void
 }
 
+; --------------------------------------------------------------------------------
+; fp_round tests
+; --------------------------------------------------------------------------------
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_f64_to_f32:
+; GCN: {{buffer|flat}}_load_dwordx2 [[A:v\[[0-9]+:[0-9]+\]]]
+; GCN: v_cvt_f32_f64_e64 [[RESULT:v[0-9]+]], -[[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_fp_round_f64_to_f32(float addrspace(1)* %out, double addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds double, double addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile double, double addrspace(1)* %a.gep
+  %fpround = fptrunc double %a to float
+  %fneg = fsub float -0.000000e+00, %fpround
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_fneg_f64_to_f32:
+; GCN: {{buffer|flat}}_load_dwordx2 [[A:v\[[0-9]+:[0-9]+\]]]
+; GCN: v_cvt_f32_f64_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_fp_round_fneg_f64_to_f32(float addrspace(1)* %out, double addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds double, double addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile double, double addrspace(1)* %a.gep
+  %fneg.a = fsub double -0.000000e+00, %a
+  %fpround = fptrunc double %fneg.a to float
+  %fneg = fsub float -0.000000e+00, %fpround
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_store_use_fneg_f64_to_f32:
+; GCN: {{buffer|flat}}_load_dwordx2 v{{\[}}[[A_LO:[0-9]+]]:[[A_HI:[0-9]+]]{{\]}}
+; GCN-DAG: v_cvt_f32_f64_e32 [[RESULT:v[0-9]+]], v{{\[}}[[A_LO]]:[[A_HI]]{{\]}}
+; GCN-DAG: v_xor_b32_e32 v[[NEG_A_HI:[0-9]+]], 0x80000000, v[[A_HI]]
+; GCN-DAG: v_mov_b32_e32 v[[NEG_A_LO:[0-9]+]], v[[A_LO]]
+; GCN: buffer_store_dword [[RESULT]]
+; GCN: buffer_store_dwordx2 v{{\[}}[[NEG_A_LO]]:[[NEG_A_HI]]{{\]}}
+define void @v_fneg_fp_round_store_use_fneg_f64_to_f32(float addrspace(1)* %out, double addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds double, double addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile double, double addrspace(1)* %a.gep
+  %fneg.a = fsub double -0.000000e+00, %a
+  %fpround = fptrunc double %fneg.a to float
+  %fneg = fsub float -0.000000e+00, %fpround
+  store volatile float %fneg, float addrspace(1)* %out.gep
+  store volatile double %fneg.a, double addrspace(1)* undef
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_multi_use_fneg_f64_to_f32:
+; GCN: {{buffer|flat}}_load_dwordx2 [[A:v\[[0-9]+:[0-9]+\]]]
+; GCN-DAG: v_cvt_f32_f64_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN-DAG: v_mul_f64 [[USE1:v\[[0-9]+:[0-9]+\]]], -[[A]], s{{\[}}
+; GCN: buffer_store_dword [[RESULT]]
+; GCN: buffer_store_dwordx2 [[USE1]]
+define void @v_fneg_fp_round_multi_use_fneg_f64_to_f32(float addrspace(1)* %out, double addrspace(1)* %a.ptr, double %c) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds double, double addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile double, double addrspace(1)* %a.gep
+  %fneg.a = fsub double -0.000000e+00, %a
+  %fpround = fptrunc double %fneg.a to float
+  %fneg = fsub float -0.000000e+00, %fpround
+  %use1 = fmul double %fneg.a, %c
+  store volatile float %fneg, float addrspace(1)* %out.gep
+  store volatile double %use1, double addrspace(1)* undef
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_f32_to_f16:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_cvt_f16_f32_e64 [[RESULT:v[0-9]+]], -[[A]]
+; GCN: buffer_store_short [[RESULT]]
+define void @v_fneg_fp_round_f32_to_f16(half addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds half, half addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %fpround = fptrunc float %a to half
+  %fneg = fsub half -0.000000e+00, %fpround
+  store half %fneg, half addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_fneg_f32_to_f16:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_cvt_f16_f32_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN: buffer_store_short [[RESULT]]
+define void @v_fneg_fp_round_fneg_f32_to_f16(half addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds half, half addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %fneg.a = fsub float -0.000000e+00, %a
+  %fpround = fptrunc float %fneg.a to half
+  %fneg = fsub half -0.000000e+00, %fpround
+  store half %fneg, half addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_multi_use_fp_round_fneg_f64_to_f32:
+; GCN: {{buffer|flat}}_load_dwordx2 [[A:v\[[0-9]+:[0-9]+\]]]
+; GCN-DAG: v_cvt_f32_f64_e32 [[CVT:v[0-9]+]], [[A]]
+; GCN-DAG: v_xor_b32_e32 [[NEG:v[0-9]+]], 0x80000000, [[CVT]]
+; GCN: buffer_store_dword [[NEG]]
+; GCN: buffer_store_dword [[CVT]]
+define void @v_fneg_multi_use_fp_round_fneg_f64_to_f32(float addrspace(1)* %out, double addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds double, double addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile double, double addrspace(1)* %a.gep
+  %fpround = fptrunc double %a to float
+  %fneg = fsub float -0.000000e+00, %fpround
+  store volatile float %fneg, float addrspace(1)* %out.gep
+  store volatile float %fpround, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_store_use_fneg_f32_to_f16:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN-DAG: v_cvt_f16_f32_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN-DAG: v_xor_b32_e32 [[NEG_A:v[0-9]+]], 0x80000000, [[A]]
+; GCN: buffer_store_short [[RESULT]]
+; GCN: buffer_store_dword [[NEG_A]]
+define void @v_fneg_fp_round_store_use_fneg_f32_to_f16(half addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds half, half addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %fneg.a = fsub float -0.000000e+00, %a
+  %fpround = fptrunc float %fneg.a to half
+  %fneg = fsub half -0.000000e+00, %fpround
+  store volatile half %fneg, half addrspace(1)* %out.gep
+  store volatile float %fneg.a, float addrspace(1)* undef
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_fp_round_multi_use_fneg_f32_to_f16:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN-DAG: v_cvt_f16_f32_e32 [[RESULT:v[0-9]+]], [[A]]
+; GCN-DAG: v_mul_f32_e64 [[USE1:v[0-9]+]], -[[A]], s
+; GCN: buffer_store_short [[RESULT]]
+; GCN: buffer_store_dword [[USE1]]
+define void @v_fneg_fp_round_multi_use_fneg_f32_to_f16(half addrspace(1)* %out, float addrspace(1)* %a.ptr, float %c) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds half, half addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %fneg.a = fsub float -0.000000e+00, %a
+  %fpround = fptrunc float %fneg.a to half
+  %fneg = fsub half -0.000000e+00, %fpround
+  %use1 = fmul float %fneg.a, %c
+  store volatile half %fneg, half addrspace(1)* %out.gep
+  store volatile float %use1, float addrspace(1)* undef
+  ret void
+}
+
 declare i32 @llvm.amdgcn.workitem.id.x() #1
 declare float @llvm.fma.f32(float, float, float) #1
 declare float @llvm.fmuladd.f32(float, float, float) #1
