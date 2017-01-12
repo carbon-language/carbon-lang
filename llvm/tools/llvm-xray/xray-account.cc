@@ -477,7 +477,7 @@ static CommandRegistration Unused(&Account, []() -> Error {
     return joinErrors(
         make_error<StringError>(
             Twine("Failed loading input file '") + AccountInput + "'",
-            std::make_error_code(std::errc::protocol_error)),
+            std::make_error_code(std::errc::executable_format_error)),
         TraceOrErr.takeError());
   }
 

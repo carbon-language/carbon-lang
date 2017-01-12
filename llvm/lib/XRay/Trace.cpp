@@ -144,7 +144,7 @@ Expected<Trace> llvm::xray::loadTraceFile(StringRef Filename, bool Sort) {
   if (FileSize < 4) {
     return make_error<StringError>(
         Twine("File '") + Filename + "' too small for XRay.",
-        std::make_error_code(std::errc::protocol_error));
+        std::make_error_code(std::errc::executable_format_error));
   }
 
   // Attempt to mmap the file.

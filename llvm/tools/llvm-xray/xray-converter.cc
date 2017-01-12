@@ -192,7 +192,7 @@ static CommandRegistration Unused(&Convert, []() -> Error {
     return joinErrors(
         make_error<StringError>(
             Twine("Failed loading input file '") + ConvertInput + "'.",
-            std::make_error_code(std::errc::protocol_error)),
+            std::make_error_code(std::errc::executable_format_error)),
         TraceOrErr.takeError());
   }
   return Error::success();
