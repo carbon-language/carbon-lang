@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <numeric>
 #include <system_error>
 #include <utility>
 
