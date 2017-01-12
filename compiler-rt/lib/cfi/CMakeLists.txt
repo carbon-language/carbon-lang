@@ -20,7 +20,6 @@ foreach(arch ${CFI_SUPPORTED_ARCH})
     OBJECT_LIBS RTInterception
                 RTSanitizerCommon
                 RTSanitizerCommonLibc
-                RTSancovLibc
     CFLAGS ${CFI_CFLAGS}
     PARENT_TARGET cfi)
   add_compiler_rt_runtime(clang_rt.cfi_diag
@@ -30,7 +29,6 @@ foreach(arch ${CFI_SUPPORTED_ARCH})
     OBJECT_LIBS RTInterception
                 RTSanitizerCommon
                 RTSanitizerCommonLibc
-                RTSancovLibc
 		RTUbsan
     CFLAGS ${CFI_CFLAGS} ${CFI_DIAG_CFLAGS}
     PARENT_TARGET cfi)

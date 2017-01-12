@@ -36,10 +36,6 @@ function(compiler_rt_build_sanitizer sanitizer)
   endif()
 endfunction()
 
-if(COMPILER_RT_HAS_SANITIZER_COMMON)
-  add_subdirectory(sancov)
-endif()
-
 if(COMPILER_RT_BUILD_SANITIZERS)
   compiler_rt_build_runtime(interception)
 

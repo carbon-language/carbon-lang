@@ -119,7 +119,6 @@ if(APPLE)
     OBJECT_LIBS RTInterception
                 RTSanitizerCommon
                 RTSanitizerCommonLibc
-                RTSancovLibc
                 RTUbsan
     CFLAGS ${TSAN_RTL_CFLAGS}
     LINK_FLAGS ${WEAK_SYMBOL_LINK_FLAGS}
@@ -180,7 +179,6 @@ else()
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-              $<TARGET_OBJECTS:RTSancovLibc.${arch}>
               $<TARGET_OBJECTS:RTUbsan.${arch}>
       CFLAGS ${TSAN_RTL_CFLAGS})
     add_compiler_rt_runtime(clang_rt.tsan_cxx

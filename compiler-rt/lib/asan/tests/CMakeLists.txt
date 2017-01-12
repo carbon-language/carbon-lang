@@ -281,7 +281,6 @@ macro(add_asan_tests_for_arch_and_kind arch kind)
       $<TARGET_OBJECTS:RTInterception.osx>
       $<TARGET_OBJECTS:RTSanitizerCommon.osx>
       $<TARGET_OBJECTS:RTSanitizerCommonLibc.osx>
-      $<TARGET_OBJECTS:RTSancovLibc.osx>
       $<TARGET_OBJECTS:RTLSanCommon.osx>
       $<TARGET_OBJECTS:RTUbsan.osx>)
   else()
@@ -291,7 +290,6 @@ macro(add_asan_tests_for_arch_and_kind arch kind)
       $<TARGET_OBJECTS:RTInterception.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-      $<TARGET_OBJECTS:RTSancovLibc.${arch}>
       $<TARGET_OBJECTS:RTLSanCommon.${arch}>
       $<TARGET_OBJECTS:RTUbsan.${arch}>
       $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>)
@@ -344,7 +342,6 @@ if(ANDROID)
       $<TARGET_OBJECTS:RTInterception.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-      $<TARGET_OBJECTS:RTSancovLibc.${arch}>
       $<TARGET_OBJECTS:RTUbsan.${arch}>
       $<TARGET_OBJECTS:RTUbsan_cxx.${arch}>
       ${COMPILER_RT_GTEST_SOURCE}

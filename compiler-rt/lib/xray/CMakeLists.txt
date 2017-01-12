@@ -51,8 +51,7 @@ add_compiler_rt_component(xray-fdr)
 
 set(XRAY_COMMON_RUNTIME_OBJECT_LIBS
     RTSanitizerCommon
-    RTSanitizerCommonLibc
-    RTSancovLibc)
+    RTSanitizerCommonLibc)
 
 foreach(arch ${XRAY_SUPPORTED_ARCH})
   if(CAN_TARGET_${arch})

@@ -32,7 +32,6 @@ if(COMPILER_RT_HAS_LSAN)
               $<TARGET_OBJECTS:RTInterception.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
               $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-              $<TARGET_OBJECTS:RTSancovLibc.${arch}>
               $<TARGET_OBJECTS:RTLSanCommon.${arch}>
       CFLAGS ${LSAN_CFLAGS}
       PARENT_TARGET lsan)

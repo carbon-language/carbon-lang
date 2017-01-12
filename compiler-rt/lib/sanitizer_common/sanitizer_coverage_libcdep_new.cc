@@ -9,10 +9,10 @@
 // Sanitizer Coverage Controller for Trace PC Guard.
 
 #include "sancov_flags.h"
-#include "sanitizer_common/sanitizer_allocator_internal.h"
-#include "sanitizer_common/sanitizer_atomic.h"
-#include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_symbolizer.h"
+#include "sanitizer_allocator_internal.h"
+#include "sanitizer_atomic.h"
+#include "sanitizer_common.h"
+#include "sanitizer_symbolizer.h"
 
 using namespace __sanitizer;
 

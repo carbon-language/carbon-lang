@@ -118,7 +118,6 @@ if(APPLE)
                 RTInterception
                 RTSanitizerCommon
                 RTSanitizerCommonLibc
-                RTSancovLibc
                 RTLSanCommon
                 RTUbsan
     CFLAGS ${ASAN_DYNAMIC_CFLAGS}
@@ -132,7 +131,6 @@ else()
     RTInterception
     RTSanitizerCommon
     RTSanitizerCommonLibc
-    RTSancovLibc
     RTLSanCommon
     RTUbsan)
 

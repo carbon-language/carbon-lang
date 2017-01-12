@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "sancov_flags.h"
-#include "sanitizer_common/sanitizer_flag_parser.h"
-#include "sanitizer_common/sanitizer_platform.h"
+#include "sanitizer_flag_parser.h"
+#include "sanitizer_platform.h"
 
 #if !SANITIZER_LINUX
 // other platforms do not have weak symbols out of the box.

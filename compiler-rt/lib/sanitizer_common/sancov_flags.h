@@ -13,8 +13,8 @@
 #ifndef SANCOV_FLAGS_H
 #define SANCOV_FLAGS_H
 
-#include "sanitizer_common/sanitizer_flag_parser.h"
-#include "sanitizer_common/sanitizer_internal_defs.h"
+#include "sanitizer_flag_parser.h"
+#include "sanitizer_internal_defs.h"
 
 namespace __sancov {
 
