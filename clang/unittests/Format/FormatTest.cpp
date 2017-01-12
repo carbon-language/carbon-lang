@@ -6822,6 +6822,8 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "             {List1, List2,\n"
                "              List3});",
                getLLVMStyleWithColumns(35));
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaa, {},\n"
+               "                               aaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
