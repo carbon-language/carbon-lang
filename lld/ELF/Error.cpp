@@ -99,8 +99,4 @@ void elf::fatal(const Twine &Msg) {
   exitLld(1);
 }
 
-void elf::fatal(std::error_code EC, const Twine &Prefix) {
-  fatal(Prefix + ": " + EC.message());
-}
-
 } // namespace lld
