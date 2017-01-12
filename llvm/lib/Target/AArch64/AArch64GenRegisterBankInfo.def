@@ -141,9 +141,9 @@ const uint32_t CCRCoverageData[] = {
     0,
 };
 
-RegisterBank GPRRegBank;
-RegisterBank FPRRegBank;
-RegisterBank CCRRegBank;
+RegisterBank GPRRegBank(AArch64::GPRRegBankID, "GPR", 64, GPRCoverageData);
+RegisterBank FPRRegBank(AArch64::FPRRegBankID, "FPR", 512, FPRCoverageData);
+RegisterBank CCRRegBank(AArch64::CCRRegBankID, "CCR", 32, CCRCoverageData);
 
 RegisterBank *RegBanks[] = {&GPRRegBank, &FPRRegBank, &CCRRegBank};
 

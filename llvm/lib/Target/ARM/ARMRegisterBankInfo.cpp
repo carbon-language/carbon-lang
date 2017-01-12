@@ -55,7 +55,7 @@ const uint32_t GPRCoverageData[] = {
     0,
 };
 
-RegisterBank GPRRegBank;
+RegisterBank GPRRegBank(ARM::GPRRegBankID, "GPRB", 32, ARM::GPRCoverageData);
 RegisterBank *RegBanks[] = {&GPRRegBank};
 
 RegisterBankInfo::PartialMapping GPRPartialMapping{0, 32, GPRRegBank};
@@ -77,11 +77,11 @@ ARMRegisterBankInfo::ARMRegisterBankInfo(const TargetRegisterInfo &TRI)
     return;
   AlreadyInit = true;
 
-  // Initialize the GPR bank.
-  setRegBankData(ARM::GPRRegBankID, "GPRB", 32, ARM::GPRCoverageData);
   const RegisterBank &RBGPR = getRegBank(ARM::GPRRegBankID);
   (void)RBGPR;
   assert(&ARM::GPRRegBank == &RBGPR && "The order in RegBanks is messed up");
+
+  // Initialize the GPR bank.
   assert(RBGPR.covers(*TRI.getRegClass(ARM::GPRRegClassID)) &&
          "Subclass not added?");
   assert(RBGPR.covers(*TRI.getRegClass(ARM::GPRwithAPSRRegClassID)) &&

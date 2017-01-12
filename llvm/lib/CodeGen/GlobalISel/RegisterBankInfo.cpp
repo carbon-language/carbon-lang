@@ -56,8 +56,10 @@ RegisterBankInfo::RegisterBankInfo(RegisterBank **RegBanks,
                                    unsigned NumRegBanks)
     : RegBanks(RegBanks), NumRegBanks(NumRegBanks) {
 #ifndef NDEBUG
-  for (unsigned Idx = 0, End = getNumRegBanks(); Idx != End; ++Idx)
+  for (unsigned Idx = 0, End = getNumRegBanks(); Idx != End; ++Idx) {
     assert(RegBanks[Idx] != nullptr && "Invalid RegisterBank");
+    assert(RegBanks[Idx]->isValid() && "RegisterBank should be valid");
+  }
 #endif // NDEBUG
 }
 
@@ -79,17 +81,6 @@ bool RegisterBankInfo::verify(const TargetRegisterInfo &TRI) const {
   }
 #endif // NDEBUG
   return true;
-}
-
-void RegisterBankInfo::setRegBankData(unsigned ID, const char *Name,
-                                      unsigned Size,
-                                      const uint32_t *CoveredClasses) {
-  RegisterBank &RB = getRegBank(ID);
-  RB.ID = ID;
-  RB.Name = Name;
-  RB.Size = Size;
-  RB.ContainedRegClasses.resize(200);
-  RB.ContainedRegClasses.setBitsInMask(CoveredClasses);
 }
 
 const RegisterBank *

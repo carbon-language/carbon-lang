@@ -396,9 +396,6 @@ protected:
     llvm_unreachable("This constructor should not be executed");
   }
 
-  void setRegBankData(unsigned ID, const char *Name, unsigned Size,
-                      const uint32_t *CoveredClasses);
-
   /// Get the register bank identified by \p ID.
   RegisterBank &getRegBank(unsigned ID) {
     assert(ID < getNumRegBanks() && "Accessing an unknown register bank");
