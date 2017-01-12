@@ -55,6 +55,11 @@ struct MemIntrinsicInfo {
   // Same Id is set by the target for corresponding load/store intrinsics.
   unsigned short MatchingId;
   int NumMemRefs;
+
+  /// This is the pointer that the intrinsic is loading from or storing to.
+  /// If this is non-null, then analysis/optimization passes can assume that
+  /// this intrinsic is functionally equivalent to a load/store from this
+  /// pointer.
   Value *PtrVal;
 };
 
