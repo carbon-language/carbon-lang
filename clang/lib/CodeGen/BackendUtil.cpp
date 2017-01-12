@@ -862,8 +862,7 @@ void EmitAssemblyHelper::EmitAssemblyWithNewPassManager(
 }
 
 static void runThinLTOBackend(ModuleSummaryIndex *CombinedIndex, Module *M,
-                              std::unique_ptr<raw_pwrite_stream> OS,
-                              std::string SampleProfile) {
+                              std::unique_ptr<raw_pwrite_stream> OS) {
   StringMap<std::map<GlobalValue::GUID, GlobalValueSummary *>>
       ModuleToDefinedGVSummaries;
   CombinedIndex->collectDefinedGVSummariesPerModule(ModuleToDefinedGVSummaries);
@@ -931,7 +930,6 @@ static void runThinLTOBackend(ModuleSummaryIndex *CombinedIndex, Module *M,
     return llvm::make_unique<lto::NativeObjectStream>(std::move(OS));
   };
   lto::Config Conf;
-  Conf.SampleProfile = SampleProfile;
   if (Error E = thinBackend(
           Conf, 0, AddStream, *M, *CombinedIndex, ImportList,
           ModuleToDefinedGVSummaries[M->getModuleIdentifier()], ModuleMap)) {
@@ -967,8 +965,7 @@ void clang::EmitBackendOutput(DiagnosticsEngine &Diags,
     // of an error).
     bool DoThinLTOBackend = CombinedIndex != nullptr;
     if (DoThinLTOBackend) {
-      runThinLTOBackend(CombinedIndex.get(), M, std::move(OS),
-                        CGOpts.SampleProfileFile);
+      runThinLTOBackend(CombinedIndex.get(), M, std::move(OS));
       return;
     }
   }
