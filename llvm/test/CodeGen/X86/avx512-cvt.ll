@@ -876,18 +876,18 @@ define <8 x double> @sitofp_8i8_double(<8 x i8> %a) {
 }
 
 define <16 x double> @sitofp_16i1_double(<16 x double> %a) {
-; NODQ-LABEL: sitofp_16i1_double:
-; NODQ:       ## BB#0:
-; NODQ-NEXT:    vpxord %zmm2, %zmm2, %zmm2
-; NODQ-NEXT:    vcmpltpd %zmm1, %zmm2, %k1
-; NODQ-NEXT:    vcmpltpd %zmm0, %zmm2, %k2
-; NODQ-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k2} {z}
-; NODQ-NEXT:    vpmovqd %zmm0, %ymm0
-; NODQ-NEXT:    vcvtdq2pd %ymm0, %zmm0
-; NODQ-NEXT:    vpternlogq $255, %zmm1, %zmm1, %zmm1 {%k1} {z}
-; NODQ-NEXT:    vpmovqd %zmm1, %ymm1
-; NODQ-NEXT:    vcvtdq2pd %ymm1, %zmm1
-; NODQ-NEXT:    retq
+; NOVLDQ-LABEL: sitofp_16i1_double:
+; NOVLDQ:       ## BB#0:
+; NOVLDQ-NEXT:    vpxord %zmm2, %zmm2, %zmm2
+; NOVLDQ-NEXT:    vcmpltpd %zmm1, %zmm2, %k1
+; NOVLDQ-NEXT:    vcmpltpd %zmm0, %zmm2, %k2
+; NOVLDQ-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k2} {z}
+; NOVLDQ-NEXT:    vpmovqd %zmm0, %ymm0
+; NOVLDQ-NEXT:    vcvtdq2pd %ymm0, %zmm0
+; NOVLDQ-NEXT:    vpternlogq $255, %zmm1, %zmm1, %zmm1 {%k1} {z}
+; NOVLDQ-NEXT:    vpmovqd %zmm1, %ymm1
+; NOVLDQ-NEXT:    vcvtdq2pd %ymm1, %zmm1
+; NOVLDQ-NEXT:    retq
 ;
 ; VLDQ-LABEL: sitofp_16i1_double:
 ; VLDQ:       ## BB#0:
@@ -899,6 +899,18 @@ define <16 x double> @sitofp_16i1_double(<16 x double> %a) {
 ; VLDQ-NEXT:    vpmovm2d %k0, %ymm1
 ; VLDQ-NEXT:    vcvtdq2pd %ymm1, %zmm1
 ; VLDQ-NEXT:    retq
+;
+; VLNODQ-LABEL: sitofp_16i1_double:
+; VLNODQ:       ## BB#0:
+; VLNODQ-NEXT:    vpxord %zmm2, %zmm2, %zmm2
+; VLNODQ-NEXT:    vcmpltpd %zmm1, %zmm2, %k1
+; VLNODQ-NEXT:    vcmpltpd %zmm0, %zmm2, %k2
+; VLNODQ-NEXT:    vpcmpeqd %ymm1, %ymm1, %ymm1
+; VLNODQ-NEXT:    vmovdqa32 %ymm1, %ymm0 {%k2} {z}
+; VLNODQ-NEXT:    vcvtdq2pd %ymm0, %zmm0
+; VLNODQ-NEXT:    vmovdqa32 %ymm1, %ymm1 {%k1} {z}
+; VLNODQ-NEXT:    vcvtdq2pd %ymm1, %zmm1
+; VLNODQ-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: sitofp_16i1_double:
 ; AVX512DQ:       ## BB#0:
@@ -918,14 +930,14 @@ define <16 x double> @sitofp_16i1_double(<16 x double> %a) {
 }
 
 define <8 x double> @sitofp_8i1_double(<8 x double> %a) {
-; NODQ-LABEL: sitofp_8i1_double:
-; NODQ:       ## BB#0:
-; NODQ-NEXT:    vpxord %zmm1, %zmm1, %zmm1
-; NODQ-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
-; NODQ-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
-; NODQ-NEXT:    vpmovqd %zmm0, %ymm0
-; NODQ-NEXT:    vcvtdq2pd %ymm0, %zmm0
-; NODQ-NEXT:    retq
+; NOVLDQ-LABEL: sitofp_8i1_double:
+; NOVLDQ:       ## BB#0:
+; NOVLDQ-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; NOVLDQ-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; NOVLDQ-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
+; NOVLDQ-NEXT:    vpmovqd %zmm0, %ymm0
+; NOVLDQ-NEXT:    vcvtdq2pd %ymm0, %zmm0
+; NOVLDQ-NEXT:    retq
 ;
 ; VLDQ-LABEL: sitofp_8i1_double:
 ; VLDQ:       ## BB#0:
@@ -934,6 +946,15 @@ define <8 x double> @sitofp_8i1_double(<8 x double> %a) {
 ; VLDQ-NEXT:    vpmovm2d %k0, %ymm0
 ; VLDQ-NEXT:    vcvtdq2pd %ymm0, %zmm0
 ; VLDQ-NEXT:    retq
+;
+; VLNODQ-LABEL: sitofp_8i1_double:
+; VLNODQ:       ## BB#0:
+; VLNODQ-NEXT:    vpxord %zmm1, %zmm1, %zmm1
+; VLNODQ-NEXT:    vcmpltpd %zmm0, %zmm1, %k1
+; VLNODQ-NEXT:    vpcmpeqd %ymm0, %ymm0, %ymm0
+; VLNODQ-NEXT:    vmovdqa32 %ymm0, %ymm0 {%k1} {z}
+; VLNODQ-NEXT:    vcvtdq2pd %ymm0, %zmm0
+; VLNODQ-NEXT:    retq
 ;
 ; AVX512DQ-LABEL: sitofp_8i1_double:
 ; AVX512DQ:       ## BB#0:
@@ -971,8 +992,8 @@ define <8 x float> @sitofp_8i1_float(<8 x float> %a) {
 ; VLNODQ:       ## BB#0:
 ; VLNODQ-NEXT:    vpxor %ymm1, %ymm1, %ymm1
 ; VLNODQ-NEXT:    vcmpltps %ymm0, %ymm1, %k1
-; VLNODQ-NEXT:    vpternlogq $255, %zmm0, %zmm0, %zmm0 {%k1} {z}
-; VLNODQ-NEXT:    vpmovqd %zmm0, %ymm0
+; VLNODQ-NEXT:    vpcmpeqd %ymm0, %ymm0, %ymm0
+; VLNODQ-NEXT:    vmovdqa32 %ymm0, %ymm0 {%k1} {z}
 ; VLNODQ-NEXT:    vcvtdq2ps %ymm0, %ymm0
 ; VLNODQ-NEXT:    retq
 ;
@@ -1009,40 +1030,9 @@ define <4 x float> @sitofp_4i1_float(<4 x float> %a) {
 ; VLNODQ-LABEL: sitofp_4i1_float:
 ; VLNODQ:       ## BB#0:
 ; VLNODQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; VLNODQ-NEXT:    vcmpltps %xmm0, %xmm1, %k2
-; VLNODQ-NEXT:    kshiftlw $12, %k2, %k0
-; VLNODQ-NEXT:    kshiftrw $15, %k0, %k0
-; VLNODQ-NEXT:    kshiftlw $13, %k2, %k1
-; VLNODQ-NEXT:    kshiftrw $15, %k1, %k1
-; VLNODQ-NEXT:    kshiftlw $15, %k2, %k3
-; VLNODQ-NEXT:    kshiftrw $15, %k3, %k3
-; VLNODQ-NEXT:    kshiftlw $14, %k2, %k2
-; VLNODQ-NEXT:    kshiftrw $15, %k2, %k2
-; VLNODQ-NEXT:    kmovw %k2, %eax
-; VLNODQ-NEXT:    andl $1, %eax
-; VLNODQ-NEXT:    xorl %ecx, %ecx
-; VLNODQ-NEXT:    testb %al, %al
-; VLNODQ-NEXT:    movl $-1, %eax
-; VLNODQ-NEXT:    movl $0, %edx
-; VLNODQ-NEXT:    cmovnel %eax, %edx
-; VLNODQ-NEXT:    kmovw %k3, %esi
-; VLNODQ-NEXT:    andl $1, %esi
-; VLNODQ-NEXT:    testb %sil, %sil
-; VLNODQ-NEXT:    movl $0, %esi
-; VLNODQ-NEXT:    cmovnel %eax, %esi
-; VLNODQ-NEXT:    vmovd %esi, %xmm0
-; VLNODQ-NEXT:    vpinsrd $1, %edx, %xmm0, %xmm0
-; VLNODQ-NEXT:    kmovw %k1, %edx
-; VLNODQ-NEXT:    andl $1, %edx
-; VLNODQ-NEXT:    testb %dl, %dl
-; VLNODQ-NEXT:    movl $0, %edx
-; VLNODQ-NEXT:    cmovnel %eax, %edx
-; VLNODQ-NEXT:    vpinsrd $2, %edx, %xmm0, %xmm0
-; VLNODQ-NEXT:    kmovw %k0, %edx
-; VLNODQ-NEXT:    andl $1, %edx
-; VLNODQ-NEXT:    testb %dl, %dl
-; VLNODQ-NEXT:    cmovnel %eax, %ecx
-; VLNODQ-NEXT:    vpinsrd $3, %ecx, %xmm0, %xmm0
+; VLNODQ-NEXT:    vcmpltps %xmm0, %xmm1, %k1
+; VLNODQ-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; VLNODQ-NEXT:    vmovdqa32 %xmm0, %xmm0 {%k1} {z}
 ; VLNODQ-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; VLNODQ-NEXT:    retq
   %cmpres = fcmp ogt <4 x float> %a, zeroinitializer
@@ -1070,40 +1060,9 @@ define <4 x double> @sitofp_4i1_double(<4 x double> %a) {
 ; VLNODQ-LABEL: sitofp_4i1_double:
 ; VLNODQ:       ## BB#0:
 ; VLNODQ-NEXT:    vpxor %ymm1, %ymm1, %ymm1
-; VLNODQ-NEXT:    vcmpltpd %ymm0, %ymm1, %k2
-; VLNODQ-NEXT:    kshiftlw $12, %k2, %k0
-; VLNODQ-NEXT:    kshiftrw $15, %k0, %k0
-; VLNODQ-NEXT:    kshiftlw $13, %k2, %k1
-; VLNODQ-NEXT:    kshiftrw $15, %k1, %k1
-; VLNODQ-NEXT:    kshiftlw $15, %k2, %k3
-; VLNODQ-NEXT:    kshiftrw $15, %k3, %k3
-; VLNODQ-NEXT:    kshiftlw $14, %k2, %k2
-; VLNODQ-NEXT:    kshiftrw $15, %k2, %k2
-; VLNODQ-NEXT:    kmovw %k2, %eax
-; VLNODQ-NEXT:    andl $1, %eax
-; VLNODQ-NEXT:    xorl %ecx, %ecx
-; VLNODQ-NEXT:    testb %al, %al
-; VLNODQ-NEXT:    movl $-1, %eax
-; VLNODQ-NEXT:    movl $0, %edx
-; VLNODQ-NEXT:    cmovnel %eax, %edx
-; VLNODQ-NEXT:    kmovw %k3, %esi
-; VLNODQ-NEXT:    andl $1, %esi
-; VLNODQ-NEXT:    testb %sil, %sil
-; VLNODQ-NEXT:    movl $0, %esi
-; VLNODQ-NEXT:    cmovnel %eax, %esi
-; VLNODQ-NEXT:    vmovd %esi, %xmm0
-; VLNODQ-NEXT:    vpinsrd $1, %edx, %xmm0, %xmm0
-; VLNODQ-NEXT:    kmovw %k1, %edx
-; VLNODQ-NEXT:    andl $1, %edx
-; VLNODQ-NEXT:    testb %dl, %dl
-; VLNODQ-NEXT:    movl $0, %edx
-; VLNODQ-NEXT:    cmovnel %eax, %edx
-; VLNODQ-NEXT:    vpinsrd $2, %edx, %xmm0, %xmm0
-; VLNODQ-NEXT:    kmovw %k0, %edx
-; VLNODQ-NEXT:    andl $1, %edx
-; VLNODQ-NEXT:    testb %dl, %dl
-; VLNODQ-NEXT:    cmovnel %eax, %ecx
-; VLNODQ-NEXT:    vpinsrd $3, %ecx, %xmm0, %xmm0
+; VLNODQ-NEXT:    vcmpltpd %ymm0, %ymm1, %k1
+; VLNODQ-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; VLNODQ-NEXT:    vmovdqa32 %xmm0, %xmm0 {%k1} {z}
 ; VLNODQ-NEXT:    vcvtdq2pd %xmm0, %ymm0
 ; VLNODQ-NEXT:    retq
   %cmpres = fcmp ogt <4 x double> %a, zeroinitializer
@@ -1131,40 +1090,9 @@ define <2 x float> @sitofp_2i1_float(<2 x float> %a) {
 ; VLNODQ-LABEL: sitofp_2i1_float:
 ; VLNODQ:       ## BB#0:
 ; VLNODQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; VLNODQ-NEXT:    vcmpltps %xmm0, %xmm1, %k2
-; VLNODQ-NEXT:    kshiftlw $12, %k2, %k0
-; VLNODQ-NEXT:    kshiftrw $15, %k0, %k0
-; VLNODQ-NEXT:    kshiftlw $13, %k2, %k1
-; VLNODQ-NEXT:    kshiftrw $15, %k1, %k1
-; VLNODQ-NEXT:    kshiftlw $15, %k2, %k3
-; VLNODQ-NEXT:    kshiftrw $15, %k3, %k3
-; VLNODQ-NEXT:    kshiftlw $14, %k2, %k2
-; VLNODQ-NEXT:    kshiftrw $15, %k2, %k2
-; VLNODQ-NEXT:    kmovw %k2, %eax
-; VLNODQ-NEXT:    andl $1, %eax
-; VLNODQ-NEXT:    xorl %ecx, %ecx
-; VLNODQ-NEXT:    testb %al, %al
-; VLNODQ-NEXT:    movl $-1, %eax
-; VLNODQ-NEXT:    movl $0, %edx
-; VLNODQ-NEXT:    cmovnel %eax, %edx
-; VLNODQ-NEXT:    kmovw %k3, %esi
-; VLNODQ-NEXT:    andl $1, %esi
-; VLNODQ-NEXT:    testb %sil, %sil
-; VLNODQ-NEXT:    movl $0, %esi
-; VLNODQ-NEXT:    cmovnel %eax, %esi
-; VLNODQ-NEXT:    vmovd %esi, %xmm0
-; VLNODQ-NEXT:    vpinsrd $1, %edx, %xmm0, %xmm0
-; VLNODQ-NEXT:    kmovw %k1, %edx
-; VLNODQ-NEXT:    andl $1, %edx
-; VLNODQ-NEXT:    testb %dl, %dl
-; VLNODQ-NEXT:    movl $0, %edx
-; VLNODQ-NEXT:    cmovnel %eax, %edx
-; VLNODQ-NEXT:    vpinsrd $2, %edx, %xmm0, %xmm0
-; VLNODQ-NEXT:    kmovw %k0, %edx
-; VLNODQ-NEXT:    andl $1, %edx
-; VLNODQ-NEXT:    testb %dl, %dl
-; VLNODQ-NEXT:    cmovnel %eax, %ecx
-; VLNODQ-NEXT:    vpinsrd $3, %ecx, %xmm0, %xmm0
+; VLNODQ-NEXT:    vcmpltps %xmm0, %xmm1, %k1
+; VLNODQ-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; VLNODQ-NEXT:    vmovdqa32 %xmm0, %xmm0 {%k1} {z}
 ; VLNODQ-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; VLNODQ-NEXT:    retq
   %cmpres = fcmp ogt <2 x float> %a, zeroinitializer
@@ -1192,25 +1120,14 @@ define <2 x double> @sitofp_2i1_double(<2 x double> %a) {
 ; VLNODQ-LABEL: sitofp_2i1_double:
 ; VLNODQ:       ## BB#0:
 ; VLNODQ-NEXT:    vpxor %xmm1, %xmm1, %xmm1
-; VLNODQ-NEXT:    vcmpltpd %xmm0, %xmm1, %k0
-; VLNODQ-NEXT:    kshiftlw $15, %k0, %k1
-; VLNODQ-NEXT:    kshiftrw $15, %k1, %k1
-; VLNODQ-NEXT:    kshiftlw $14, %k0, %k0
-; VLNODQ-NEXT:    kshiftrw $15, %k0, %k0
-; VLNODQ-NEXT:    kmovw %k0, %eax
-; VLNODQ-NEXT:    andl $1, %eax
-; VLNODQ-NEXT:    xorl %ecx, %ecx
-; VLNODQ-NEXT:    testb %al, %al
-; VLNODQ-NEXT:    movl $-1, %eax
-; VLNODQ-NEXT:    movl $0, %edx
-; VLNODQ-NEXT:    cmovnel %eax, %edx
-; VLNODQ-NEXT:    vcvtsi2sdl %edx, %xmm2, %xmm0
-; VLNODQ-NEXT:    kmovw %k1, %edx
-; VLNODQ-NEXT:    andl $1, %edx
-; VLNODQ-NEXT:    testb %dl, %dl
-; VLNODQ-NEXT:    cmovnel %eax, %ecx
-; VLNODQ-NEXT:    vcvtsi2sdl %ecx, %xmm2, %xmm1
-; VLNODQ-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; VLNODQ-NEXT:    vcmpltpd %xmm0, %xmm1, %k1
+; VLNODQ-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; VLNODQ-NEXT:    vmovdqa64 %xmm0, %xmm0 {%k1} {z}
+; VLNODQ-NEXT:    vpextrq $1, %xmm0, %rax
+; VLNODQ-NEXT:    vcvtsi2sdq %rax, %xmm2, %xmm1
+; VLNODQ-NEXT:    vmovq %xmm0, %rax
+; VLNODQ-NEXT:    vcvtsi2sdq %rax, %xmm2, %xmm0
+; VLNODQ-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
 ; VLNODQ-NEXT:    retq
   %cmpres = fcmp ogt <2 x double> %a, zeroinitializer
   %1 = sitofp <2 x i1> %cmpres to <2 x double>

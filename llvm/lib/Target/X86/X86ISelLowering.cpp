@@ -1280,6 +1280,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::FP_TO_UINT,       MVT::v4i32, Legal);
       setOperationAction(ISD::ZERO_EXTEND,      MVT::v4i32, Custom);
       setOperationAction(ISD::ZERO_EXTEND,      MVT::v2i64, Custom);
+      setOperationAction(ISD::SIGN_EXTEND,      MVT::v4i32, Custom);
+      setOperationAction(ISD::SIGN_EXTEND,      MVT::v2i64, Custom);
 
       // FIXME. This commands are available on SSE/AVX2, add relevant patterns.
       setLoadExtAction(ISD::EXTLOAD, MVT::v8i32, MVT::v8i8,  Legal);
@@ -1306,10 +1308,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i8, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v8i16, Custom);
     setOperationAction(ISD::SIGN_EXTEND,        MVT::v16i16, Custom);
-    if (Subtarget.hasDQI()) {
-      setOperationAction(ISD::SIGN_EXTEND,        MVT::v4i32, Custom);
-      setOperationAction(ISD::SIGN_EXTEND,        MVT::v2i64, Custom);
-    }
+
     for (auto VT : { MVT::v16f32, MVT::v8f64 }) {
       setOperationAction(ISD::FFLOOR,     VT, Legal);
       setOperationAction(ISD::FCEIL,      VT, Legal);
@@ -17392,17 +17391,20 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op,
 
   unsigned NumElts = VT.getVectorNumElements();
 
-  if (NumElts != 8 && NumElts != 16 && !Subtarget.hasBWI())
-    return SDValue();
-
-  if (VT.is512BitVector() && InVTElt != MVT::i1) {
+  if (VT.is512BitVector() && InVTElt != MVT::i1 &&
+      (NumElts == 8 || NumElts == 16 || Subtarget.hasBWI())) {
     if (In.getOpcode() == X86ISD::VSEXT || In.getOpcode() == X86ISD::VZEXT)
       return DAG.getNode(In.getOpcode(), dl, VT, In.getOperand(0));
     return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
   }
 
-  assert (InVTElt == MVT::i1 && "Unexpected vector type");
-  MVT ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
+  if (InVTElt != MVT::i1)
+    return SDValue();
+
+  MVT ExtVT = VT;
+  if (!VT.is512BitVector() && !Subtarget.hasVLX())
+    ExtVT = MVT::getVectorVT(MVT::getIntegerVT(512/NumElts), NumElts);
+
   SDValue V;
   if (Subtarget.hasDQI()) {
     V = DAG.getNode(X86ISD::VSEXT, dl, ExtVT, In);
@@ -17411,7 +17413,7 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op,
     SDValue NegOne = getOnesVector(ExtVT, Subtarget, DAG, dl);
     SDValue Zero = getZeroVector(ExtVT, Subtarget, DAG, dl);
     V = DAG.getNode(ISD::VSELECT, dl, ExtVT, In, NegOne, Zero);
-    if (VT.is512BitVector())
+    if (ExtVT == VT)
       return V;
   }
 
