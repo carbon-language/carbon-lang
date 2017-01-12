@@ -1577,7 +1577,7 @@ static bool sinkLastInstruction(ArrayRef<BasicBlock*> Blocks) {
   // The debug location for the "common" instruction is the merged locations of
   // all the commoned instructions.  We start with the original location of the
   // "common" instruction and iteratively merge each location in the loop below.
-  DILocation *Loc = I0->getDebugLoc();
+  const DILocation *Loc = I0->getDebugLoc();
 
   // Update metadata and IR flags, and merge debug locations.
   for (auto *I : Insts)
