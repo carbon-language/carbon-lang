@@ -484,6 +484,24 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
 // Target Information
 //===----------------------------------------------------------------------===//
 
+static bool fnegFoldsIntoOp(unsigned Opc) {
+  switch (Opc) {
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+  case ISD::FMA:
+  case ISD::FMAD:
+  case ISD::FSIN:
+  case AMDGPUISD::RCP:
+  case AMDGPUISD::RCP_LEGACY:
+  case AMDGPUISD::SIN_HW:
+  case AMDGPUISD::FMUL_LEGACY:
+    return true;
+  default:
+    return false;
+  }
+}
+
 MVT AMDGPUTargetLowering::getVectorIdxTy(const DataLayout &) const {
   return MVT::i32;
 }
@@ -2738,20 +2756,31 @@ static SDValue foldFreeOpFromSelect(TargetLowering::DAGCombinerInfo &DCI,
     SDValue NewLHS = LHS.getOperand(0);
     SDValue NewRHS = RHS;
 
-    // TODO: Skip for operations where other combines can absord the fneg.
+    // Careful: if the neg can be folded up, don't try to pull it back down.
+    bool ShouldFoldNeg = true;
 
-    if (LHS.getOpcode() == ISD::FNEG)
-      NewRHS = DAG.getNode(ISD::FNEG, SL, VT, RHS);
-    else if (CRHS->isNegative())
-      return SDValue();
+    if (NewLHS.hasOneUse()) {
+      unsigned Opc = NewLHS.getOpcode();
+      if (LHS.getOpcode() == ISD::FNEG && fnegFoldsIntoOp(Opc))
+        ShouldFoldNeg = false;
+      if (LHS.getOpcode() == ISD::FABS && Opc == ISD::FMUL)
+        ShouldFoldNeg = false;
+    }
 
-    if (Inv)
-      std::swap(NewLHS, NewRHS);
+    if (ShouldFoldNeg) {
+      if (LHS.getOpcode() == ISD::FNEG)
+        NewRHS = DAG.getNode(ISD::FNEG, SL, VT, RHS);
+      else if (CRHS->isNegative())
+        return SDValue();
 
-    SDValue NewSelect = DAG.getNode(ISD::SELECT, SL, VT,
-                                    Cond, NewLHS, NewRHS);
-    DCI.AddToWorklist(NewSelect.getNode());
-    return DAG.getNode(LHS.getOpcode(), SL, VT, NewSelect);
+      if (Inv)
+        std::swap(NewLHS, NewRHS);
+
+      SDValue NewSelect = DAG.getNode(ISD::SELECT, SL, VT,
+                                      Cond, NewLHS, NewRHS);
+      DCI.AddToWorklist(NewSelect.getNode());
+      return DAG.getNode(LHS.getOpcode(), SL, VT, NewSelect);
+    }
   }
 
   return SDValue();
@@ -2804,24 +2833,6 @@ SDValue AMDGPUTargetLowering::performSelectCombine(SDNode *N,
 
   // There's no reason to not do this if the condition has other uses.
   return performCtlzCombine(SDLoc(N), Cond, True, False, DCI);
-}
-
-static bool fnegFoldsIntoOp(unsigned Opc) {
-  switch (Opc) {
-  case ISD::FADD:
-  case ISD::FSUB:
-  case ISD::FMUL:
-  case ISD::FMA:
-  case ISD::FMAD:
-  case ISD::FSIN:
-  case AMDGPUISD::RCP:
-  case AMDGPUISD::RCP_LEGACY:
-  case AMDGPUISD::SIN_HW:
-  case AMDGPUISD::FMUL_LEGACY:
-    return true;
-  default:
-    return false;
-  }
 }
 
 SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
