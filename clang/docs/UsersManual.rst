@@ -2575,6 +2575,7 @@ Execute ``clang-cl /?`` to see a list of supported options:
       /Tc <filename>          Specify a C source file
       /TP                     Treat all source files as C++
       /Tp <filename>          Specify a C++ source file
+      /utf-8                  Set source and runtime encoding to UTF-8 (default)
       /U <macro>              Undefine macro
       /vd<value>              Control vtordisp placement
       /vmb                    Use a best-case representation method for member pointers
@@ -2630,6 +2631,8 @@ Execute ``clang-cl /?`` to see a list of supported options:
       -fms-extensions         Accept some non-standard constructs supported by the Microsoft compiler
       -fmsc-version=<value>   Microsoft compiler version number to report in _MSC_VER
                               (0 = don't define it (default))
+      -fno-delayed-template-parsing
+                              Disable delayed template parsing
       -fno-sanitize-coverage=<value>
                               Disable specified features of coverage instrumentation for Sanitizers
       -fno-sanitize-recover=<value>
