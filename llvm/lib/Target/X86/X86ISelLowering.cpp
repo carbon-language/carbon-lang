@@ -16018,6 +16018,12 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
       }
   }
 
+  // Sometimes flags can be set either with an AND or with an SRL/SHL
+  // instruction. SRL/SHL variant should be preferred for masks longer than this
+  // number of bits.
+  const int ShiftToAndMaxMaskWidth = 32;
+  const bool ZeroCheck = (X86CC == X86::COND_E || X86CC == X86::COND_NE);
+
   // NOTICE: In the code below we use ArithOp to hold the arithmetic operation
   // which may be the result of a CAST.  We use the variable 'Op', which is the
   // non-casted variable when we check for possible users.
@@ -16066,7 +16072,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
     // If we have a constant logical shift that's only used in a comparison
     // against zero turn it into an equivalent AND. This allows turning it into
     // a TEST instruction later.
-    if ((X86CC == X86::COND_E || X86CC == X86::COND_NE) && Op->hasOneUse() &&
+    if (ZeroCheck && Op->hasOneUse() &&
         isa<ConstantSDNode>(Op->getOperand(1)) && !hasNonFlagsUse(Op)) {
       EVT VT = Op.getValueType();
       unsigned BitWidth = VT.getSizeInBits();
@@ -16076,7 +16082,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
       APInt Mask = ArithOp.getOpcode() == ISD::SRL
                        ? APInt::getHighBitsSet(BitWidth, BitWidth - ShAmt)
                        : APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt);
-      if (!Mask.isSignedIntN(32)) // Avoid large immediates.
+      if (!Mask.isSignedIntN(ShiftToAndMaxMaskWidth))
         break;
       Op = DAG.getNode(ISD::AND, dl, VT, Op->getOperand(0),
                        DAG.getConstant(Mask, dl, VT));
@@ -16085,18 +16091,59 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
 
   case ISD::AND:
     // If the primary 'and' result isn't used, don't bother using X86ISD::AND,
-    // because a TEST instruction will be better.
+    // because a TEST instruction will be better. However, AND should be
+    // preferred if the instruction can be combined into ANDN.
     if (!hasNonFlagsUse(Op)) {
       SDValue Op0 = ArithOp->getOperand(0);
       SDValue Op1 = ArithOp->getOperand(1);
       EVT VT = ArithOp.getValueType();
       bool isAndn = isBitwiseNot(Op0) || isBitwiseNot(Op1);
       bool isLegalAndnType = VT == MVT::i32 || VT == MVT::i64;
+      bool isProperAndn = isAndn && isLegalAndnType && Subtarget.hasBMI();
 
-      // But if we can combine this into an ANDN operation, then create an AND
-      // now and allow it to be pattern matched into an ANDN.
-      if (!Subtarget.hasBMI() || !isAndn || !isLegalAndnType)
+      // If we cannot select an ANDN instruction, check if we can replace
+      // AND+IMM64 with a shift before giving up. This is possible for masks
+      // like 0xFF000000 or 0x00FFFFFF and if we care only about the zero flag.
+      if (!isProperAndn) {
+        if (!ZeroCheck)
+          break;
+
+        assert(!isa<ConstantSDNode>(Op0) && "AND node isn't canonicalized");
+        auto *CN = dyn_cast<ConstantSDNode>(Op1);
+        if (!CN)
+          break;
+
+        const APInt &Mask = CN->getAPIntValue();
+        if (Mask.isSignedIntN(ShiftToAndMaxMaskWidth))
+          break; // Prefer TEST instruction.
+
+        unsigned BitWidth = Mask.getBitWidth();
+        unsigned LeadingOnes = Mask.countLeadingOnes();
+        unsigned TrailingZeros = Mask.countTrailingZeros();
+
+        if (LeadingOnes + TrailingZeros == BitWidth) {
+          assert(TrailingZeros < VT.getSizeInBits() &&
+                 "Shift amount should be less than the type width");
+          MVT ShTy = getScalarShiftAmountTy(DAG.getDataLayout(), VT);
+          SDValue ShAmt = DAG.getConstant(TrailingZeros, dl, ShTy);
+          Op = DAG.getNode(ISD::SRL, dl, VT, Op0, ShAmt);
+          break;
+        }
+
+        unsigned LeadingZeros = Mask.countLeadingZeros();
+        unsigned TrailingOnes = Mask.countTrailingOnes();
+
+        if (LeadingZeros + TrailingOnes == BitWidth) {
+          assert(LeadingZeros < VT.getSizeInBits() &&
+                 "Shift amount should be less than the type width");
+          MVT ShTy = getScalarShiftAmountTy(DAG.getDataLayout(), VT);
+          SDValue ShAmt = DAG.getConstant(LeadingZeros, dl, ShTy);
+          Op = DAG.getNode(ISD::SHL, dl, VT, Op0, ShAmt);
+          break;
+        }
+
         break;
+      }
     }
     LLVM_FALLTHROUGH;
   case ISD::SUB:
@@ -16116,7 +16163,7 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, const SDLoc &dl,
     case ISD::XOR: Opcode = X86ISD::XOR; break;
     case ISD::AND: Opcode = X86ISD::AND; break;
     case ISD::OR: {
-      if (!NeedTruncation && (X86CC == X86::COND_E || X86CC == X86::COND_NE)) {
+      if (!NeedTruncation && ZeroCheck) {
         if (SDValue EFLAGS = LowerVectorAllZeroTest(Op, Subtarget, DAG))
           return EFLAGS;
       }

@@ -9,8 +9,7 @@ define i64 @Test_get_quotient(i64 %a, i64 %b) nounwind {
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    orq %rsi, %rax
-; CHECK-NEXT:    movabsq $-4294967296, %rcx # imm = 0xFFFFFFFF00000000
-; CHECK-NEXT:    testq %rcx, %rax
+; CHECK-NEXT:    shrq $32, %rax
 ; CHECK-NEXT:    je .LBB0_1
 ; CHECK-NEXT:  # BB#2:
 ; CHECK-NEXT:    movq %rdi, %rax
@@ -32,8 +31,7 @@ define i64 @Test_get_remainder(i64 %a, i64 %b) nounwind {
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    orq %rsi, %rax
-; CHECK-NEXT:    movabsq $-4294967296, %rcx # imm = 0xFFFFFFFF00000000
-; CHECK-NEXT:    testq %rcx, %rax
+; CHECK-NEXT:    shrq $32, %rax
 ; CHECK-NEXT:    je .LBB1_1
 ; CHECK-NEXT:  # BB#2:
 ; CHECK-NEXT:    movq %rdi, %rax
@@ -57,8 +55,7 @@ define i64 @Test_get_quotient_and_remainder(i64 %a, i64 %b) nounwind {
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    orq %rsi, %rax
-; CHECK-NEXT:    movabsq $-4294967296, %rcx # imm = 0xFFFFFFFF00000000
-; CHECK-NEXT:    testq %rcx, %rax
+; CHECK-NEXT:    shrq $32, %rax
 ; CHECK-NEXT:    je .LBB2_1
 ; CHECK-NEXT:  # BB#2:
 ; CHECK-NEXT:    movq %rdi, %rax

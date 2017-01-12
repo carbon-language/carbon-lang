@@ -22,9 +22,8 @@ entry:
 define i64 @div64(i64 %a, i64 %b) {
 entry:
 ; CHECK-LABEL: div64:
-; CHECK-DAG: movabsq $-4294967296, [[REGMSK:%[a-z]+]]
-; CHECK-DAG: orq     %{{.*}}, [[REG:%[a-z]+]]
-; CHECK:     testq   [[REGMSK]], [[REG]]
+; CHECK:     orq     %{{.*}}, [[REG:%[a-z]+]]
+; CHECK:     shrq    $32, [[REG]]
 ; CHECK:     divl
 ;
   %div = sdiv i64 %a, %b
