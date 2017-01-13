@@ -7854,10 +7854,11 @@ void ARMTargetLowering::SetupEntryBlockForSjLj(MachineInstr &MI,
         .add(predOps(ARMCC::AL));
     // Set the low bit because of thumb mode.
     unsigned NewVReg2 = MRI->createVirtualRegister(TRC);
-    AddDefaultCC(BuildMI(*MBB, MI, dl, TII->get(ARM::t2ORRri), NewVReg2)
-                     .addReg(NewVReg1, RegState::Kill)
-                     .addImm(0x01)
-                     .add(predOps(ARMCC::AL)));
+    BuildMI(*MBB, MI, dl, TII->get(ARM::t2ORRri), NewVReg2)
+        .addReg(NewVReg1, RegState::Kill)
+        .addImm(0x01)
+        .add(predOps(ARMCC::AL))
+        .add(condCodeOp());
     unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
     BuildMI(*MBB, MI, dl, TII->get(ARM::tPICADD), NewVReg3)
       .addReg(NewVReg2, RegState::Kill)
@@ -8084,11 +8085,12 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
         .add(predOps(ARMCC::AL));
 
     unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
-    AddDefaultCC(BuildMI(DispContBB, dl, TII->get(ARM::t2ADDrs), NewVReg4)
-                     .addReg(NewVReg3, RegState::Kill)
-                     .addReg(NewVReg1)
-                     .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))
-                     .add(predOps(ARMCC::AL)));
+    BuildMI(DispContBB, dl, TII->get(ARM::t2ADDrs), NewVReg4)
+        .addReg(NewVReg3, RegState::Kill)
+        .addReg(NewVReg1)
+        .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))
+        .add(predOps(ARMCC::AL))
+        .add(condCodeOp());
 
     BuildMI(DispContBB, dl, TII->get(ARM::t2BR_JT))
       .addReg(NewVReg4, RegState::Kill)
@@ -8237,10 +8239,11 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
       .addReg(ARM::CPSR);
 
     unsigned NewVReg3 = MRI->createVirtualRegister(TRC);
-    AddDefaultCC(BuildMI(DispContBB, dl, TII->get(ARM::MOVsi), NewVReg3)
-                     .addReg(NewVReg1)
-                     .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))
-                     .add(predOps(ARMCC::AL)));
+    BuildMI(DispContBB, dl, TII->get(ARM::MOVsi), NewVReg3)
+        .addReg(NewVReg1)
+        .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, 2))
+        .add(predOps(ARMCC::AL))
+        .add(condCodeOp());
     unsigned NewVReg4 = MRI->createVirtualRegister(TRC);
     BuildMI(DispContBB, dl, TII->get(ARM::LEApcrelJT), NewVReg4)
         .addJumpTableIndex(MJTI)
@@ -8676,7 +8679,10 @@ ARMTargetLowering::EmitStructByval(MachineInstr &MI,
     MachineInstrBuilder MIB =
         BuildMI(*BB, BB->end(), dl,
                 TII->get(IsThumb2 ? ARM::t2SUBri : ARM::SUBri), varLoop);
-    AddDefaultCC(MIB.addReg(varPhi).addImm(UnitSize).add(predOps(ARMCC::AL)));
+    MIB.addReg(varPhi)
+        .addImm(UnitSize)
+        .add(predOps(ARMCC::AL))
+        .add(condCodeOp());
     MIB->getOperand(5).setReg(ARM::CPSR);
     MIB->getOperand(5).setIsDef(true);
   }
@@ -8770,11 +8776,12 @@ ARMTargetLowering::EmitLowered__chkstk(MachineInstr &MI,
   }
   }
 
-  AddDefaultCC(BuildMI(*MBB, MI, DL, TII.get(ARM::t2SUBrr), ARM::SP)
-                   .addReg(ARM::SP, RegState::Kill)
-                   .addReg(ARM::R4, RegState::Kill)
-                   .setMIFlags(MachineInstr::FrameSetup)
-                   .add(predOps(ARMCC::AL)));
+  BuildMI(*MBB, MI, DL, TII.get(ARM::t2SUBrr), ARM::SP)
+      .addReg(ARM::SP, RegState::Kill)
+      .addReg(ARM::R4, RegState::Kill)
+      .setMIFlags(MachineInstr::FrameSetup)
+      .add(predOps(ARMCC::AL))
+      .add(condCodeOp());
 
   MI.eraseFromParent();
   return MBB;

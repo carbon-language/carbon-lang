@@ -734,9 +734,10 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   bool GPRSrc = ARM::GPRRegClass.contains(SrcReg);
 
   if (GPRDest && GPRSrc) {
-    AddDefaultCC(BuildMI(MBB, I, DL, get(ARM::MOVr), DestReg)
-                     .addReg(SrcReg, getKillRegState(KillSrc))
-                     .add(predOps(ARMCC::AL)));
+    BuildMI(MBB, I, DL, get(ARM::MOVr), DestReg)
+        .addReg(SrcReg, getKillRegState(KillSrc))
+        .add(predOps(ARMCC::AL))
+        .add(condCodeOp());
     return;
   }
 
@@ -850,7 +851,7 @@ void ARMBaseInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Mov = Mov.add(predOps(ARMCC::AL));
     // MOVr can set CC.
     if (Opc == ARM::MOVr)
-      Mov = AddDefaultCC(Mov);
+      Mov = Mov.add(condCodeOp());
   }
   // Add implicit super-register defs and kills to the last instruction.
   Mov->addRegisterDefined(DestReg, TRI);
@@ -1966,7 +1967,7 @@ ARMBaseInstrInfo::optimizeSelect(MachineInstr &MI,
 
   // DefMI is not the -S version that sets CPSR, so add an optional %noreg.
   if (NewMI->hasOptionalDef())
-    AddDefaultCC(NewMI);
+    NewMI.add(condCodeOp());
 
   // The output register value when the predicate is false is an implicit
   // register operand tied to the first def.
@@ -2832,11 +2833,12 @@ bool ARMBaseInstrInfo::FoldImmediate(MachineInstr &UseMI, MachineInstr &DefMI,
   unsigned Reg1 = UseMI.getOperand(OpIdx).getReg();
   bool isKill = UseMI.getOperand(OpIdx).isKill();
   unsigned NewReg = MRI->createVirtualRegister(MRI->getRegClass(Reg));
-  AddDefaultCC(BuildMI(*UseMI.getParent(), UseMI, UseMI.getDebugLoc(),
-                       get(NewUseOpc), NewReg)
-                   .addReg(Reg1, getKillRegState(isKill))
-                   .addImm(SOImmValV1)
-                   .add(predOps(ARMCC::AL)));
+  BuildMI(*UseMI.getParent(), UseMI, UseMI.getDebugLoc(), get(NewUseOpc),
+          NewReg)
+      .addReg(Reg1, getKillRegState(isKill))
+      .addImm(SOImmValV1)
+      .add(predOps(ARMCC::AL))
+      .add(condCodeOp());
   UseMI.setDesc(get(NewUseOpc));
   UseMI.getOperand(1).setReg(NewReg);
   UseMI.getOperand(1).setIsKill();

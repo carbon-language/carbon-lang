@@ -257,23 +257,26 @@ static void emitAligningInstructions(MachineFunction &MF, ARMFunctionInfo *AFI,
           .addImm(~AlignMask)
           .add(predOps(ARMCC::AL));
     } else if (AlignMask <= 255) {
-      AddDefaultCC(BuildMI(MBB, MBBI, DL, TII.get(ARM::BICri), Reg)
-                       .addReg(Reg, RegState::Kill)
-                       .addImm(AlignMask)
-                       .add(predOps(ARMCC::AL)));
+      BuildMI(MBB, MBBI, DL, TII.get(ARM::BICri), Reg)
+          .addReg(Reg, RegState::Kill)
+          .addImm(AlignMask)
+          .add(predOps(ARMCC::AL))
+          .add(condCodeOp());
     } else {
       assert(!MustBeSingleInstruction &&
              "Shouldn't call emitAligningInstructions demanding a single "
              "instruction to be emitted for large stack alignment for a target "
              "without BFC.");
-      AddDefaultCC(BuildMI(MBB, MBBI, DL, TII.get(ARM::MOVsi), Reg)
-                       .addReg(Reg, RegState::Kill)
-                       .addImm(ARM_AM::getSORegOpc(ARM_AM::lsr, NrBitsToZero))
-                       .add(predOps(ARMCC::AL)));
-      AddDefaultCC(BuildMI(MBB, MBBI, DL, TII.get(ARM::MOVsi), Reg)
-                       .addReg(Reg, RegState::Kill)
-                       .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, NrBitsToZero))
-                       .add(predOps(ARMCC::AL)));
+      BuildMI(MBB, MBBI, DL, TII.get(ARM::MOVsi), Reg)
+          .addReg(Reg, RegState::Kill)
+          .addImm(ARM_AM::getSORegOpc(ARM_AM::lsr, NrBitsToZero))
+          .add(predOps(ARMCC::AL))
+          .add(condCodeOp());
+      BuildMI(MBB, MBBI, DL, TII.get(ARM::MOVsi), Reg)
+          .addReg(Reg, RegState::Kill)
+          .addImm(ARM_AM::getSORegOpc(ARM_AM::lsl, NrBitsToZero))
+          .add(predOps(ARMCC::AL))
+          .add(condCodeOp());
     }
   } else {
     // Since this is only reached for Thumb-2 targets, the BFC instruction
@@ -484,11 +487,12 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF,
       break;
     }
 
-    AddDefaultCC(BuildMI(MBB, MBBI, dl, TII.get(ARM::t2SUBrr), ARM::SP)
-                     .addReg(ARM::SP, RegState::Kill)
-                     .addReg(ARM::R4, RegState::Kill)
-                     .setMIFlags(MachineInstr::FrameSetup)
-                     .add(predOps(ARMCC::AL)));
+    BuildMI(MBB, MBBI, dl, TII.get(ARM::t2SUBrr), ARM::SP)
+        .addReg(ARM::SP, RegState::Kill)
+        .addReg(ARM::R4, RegState::Kill)
+        .setMIFlags(MachineInstr::FrameSetup)
+        .add(predOps(ARMCC::AL))
+        .add(condCodeOp());
     NumBytes = 0;
   }
 
@@ -1120,10 +1124,11 @@ static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
   // sub r4, sp, #numregs * 8
   // The immediate is <= 64, so it doesn't need any special encoding.
   unsigned Opc = isThumb ? ARM::t2SUBri : ARM::SUBri;
-  AddDefaultCC(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::R4)
-                   .addReg(ARM::SP)
-                   .addImm(8 * NumAlignedDPRCS2Regs)
-                   .add(predOps(ARMCC::AL)));
+  BuildMI(MBB, MI, DL, TII.get(Opc), ARM::R4)
+      .addReg(ARM::SP)
+      .addImm(8 * NumAlignedDPRCS2Regs)
+      .add(predOps(ARMCC::AL))
+      .add(condCodeOp());
 
   unsigned MaxAlign = MF.getFrameInfo().getMaxAlignment();
   // We must set parameter MustBeSingleInstruction to true, since
@@ -1142,7 +1147,7 @@ static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
                                 .addReg(ARM::R4)
                                 .add(predOps(ARMCC::AL));
   if (!isThumb)
-    AddDefaultCC(MIB);
+    MIB.add(condCodeOp());
 
   // Now spill NumAlignedDPRCS2Regs registers starting from d8.
   // r4 holds the stack slot address.
@@ -1270,10 +1275,11 @@ static void emitAlignedDPRCS2Restores(MachineBasicBlock &MBB,
   assert(!AFI->isThumb1OnlyFunction() && "Can't realign stack for thumb1");
 
   unsigned Opc = isThumb ? ARM::t2ADDri : ARM::ADDri;
-  AddDefaultCC(BuildMI(MBB, MI, DL, TII.get(Opc), ARM::R4)
-                   .addFrameIndex(D8SpillFI)
-                   .addImm(0)
-                   .add(predOps(ARMCC::AL)));
+  BuildMI(MBB, MI, DL, TII.get(Opc), ARM::R4)
+      .addFrameIndex(D8SpillFI)
+      .addImm(0)
+      .add(predOps(ARMCC::AL))
+      .add(condCodeOp());
 
   // Now restore NumAlignedDPRCS2Regs registers starting from d8.
   unsigned NextReg = ARM::D8;
@@ -2149,7 +2155,8 @@ void ARMFrameLowering::adjustForSegmentedStacks(
 
   // sub SR1, sp, #StackSize
   if (!CompareStackPointer && Thumb) {
-    AddDefaultCC(BuildMI(McrMBB, DL, TII.get(ARM::tSUBi8), ScratchReg1))
+    BuildMI(McrMBB, DL, TII.get(ARM::tSUBi8), ScratchReg1)
+        .add(condCodeOp())
         .addReg(ScratchReg1)
         .addImm(AlignedStackSize)
         .add(predOps(ARMCC::AL));
@@ -2223,7 +2230,8 @@ void ARMFrameLowering::adjustForSegmentedStacks(
   // Pass first argument for the __morestack by Scratch Register #0.
   //   The amount size of stack required
   if (Thumb) {
-    AddDefaultCC(BuildMI(AllocMBB, DL, TII.get(ARM::tMOVi8), ScratchReg0))
+    BuildMI(AllocMBB, DL, TII.get(ARM::tMOVi8), ScratchReg0)
+        .add(condCodeOp())
         .addImm(AlignedStackSize)
         .add(predOps(ARMCC::AL));
   } else {
@@ -2235,7 +2243,8 @@ void ARMFrameLowering::adjustForSegmentedStacks(
   // Pass second argument for the __morestack by Scratch Register #1.
   //   The amount size of stack consumed to save function arguments.
   if (Thumb) {
-    AddDefaultCC(BuildMI(AllocMBB, DL, TII.get(ARM::tMOVi8), ScratchReg1))
+    BuildMI(AllocMBB, DL, TII.get(ARM::tMOVi8), ScratchReg1)
+        .add(condCodeOp())
         .addImm(alignToARMConstant(ARMFI->getArgumentStackSize()))
         .add(predOps(ARMCC::AL));
   } else {

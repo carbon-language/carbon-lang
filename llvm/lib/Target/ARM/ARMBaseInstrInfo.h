@@ -410,13 +410,13 @@ static inline std::array<MachineOperand, 2> predOps(ARMCC::CondCodes Pred,
            MachineOperand::CreateReg(PredReg, 0)}};
 }
 
-// FIXME: Replace with something that returns a MachineOperand
-static inline
-const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
-  return MIB.addReg(0);
+/// Get the operand corresponding to the conditional code result. By default,
+/// this is 0 (no register).
+static inline MachineOperand condCodeOp(unsigned CCReg = 0) {
+  return MachineOperand::CreateReg(CCReg, 0);
 }
 
-// FIXME: Replace with something that returns a MachineOperand
+// FIXME: Replace with something that returns a MachineOperand directly.
 static inline
 const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB,
                                           bool isDead = false) {

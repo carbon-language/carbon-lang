@@ -350,7 +350,7 @@ void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,
                                   .add(predOps(ARMCC::AL))
                                   .setMIFlags(MIFlags);
     if (HasCCOut)
-      AddDefaultCC(MIB);
+      MIB.add(condCodeOp());
 
     BaseReg = DestReg;
   }

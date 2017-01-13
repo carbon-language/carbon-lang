@@ -1189,11 +1189,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
                                     "bits set.");
           unsigned bicOpc = AFI->isThumbFunction() ?
             ARM::t2BICri : ARM::BICri;
-          AddDefaultCC(
-              BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(bicOpc), ARM::R6)
-                  .addReg(ARM::R6, RegState::Kill)
-                  .addImm(MaxAlign - 1)
-                  .add(predOps(ARMCC::AL)));
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(bicOpc), ARM::R6)
+              .addReg(ARM::R6, RegState::Kill)
+              .addImm(MaxAlign - 1)
+              .add(predOps(ARMCC::AL))
+              .add(condCodeOp());
         }
 
       }

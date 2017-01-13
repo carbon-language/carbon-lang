@@ -265,7 +265,7 @@ ARMFastISel::AddOptionalDefs(const MachineInstrBuilder &MIB) {
     if (CPSR)
       AddDefaultT1CC(MIB);
     else
-      AddDefaultCC(MIB);
+      MIB.add(condCodeOp());
   }
   return MIB;
 }
@@ -2691,7 +2691,7 @@ unsigned ARMFastISel::ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
         .addImm(ImmEnc)
         .add(predOps(ARMCC::AL));
     if (hasS)
-      AddDefaultCC(MIB);
+      MIB.add(condCodeOp());
     // Second instruction consumes the first's result.
     SrcReg = ResultReg;
   }

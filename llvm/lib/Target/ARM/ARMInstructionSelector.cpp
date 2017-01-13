@@ -89,13 +89,13 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
   switch (I.getOpcode()) {
   case G_ADD:
     I.setDesc(TII.get(ARM::ADDrr));
-    AddDefaultCC(MIB.add(predOps(ARMCC::AL)));
+    MIB.add(predOps(ARMCC::AL)).add(condCodeOp());
     break;
   case G_FRAME_INDEX:
     // Add 0 to the given frame index and hope it will eventually be folded into
     // the user(s).
     I.setDesc(TII.get(ARM::ADDri));
-    AddDefaultCC(MIB.addImm(0).add(predOps(ARMCC::AL)));
+    MIB.addImm(0).add(predOps(ARMCC::AL)).add(condCodeOp());
     break;
   case G_LOAD:
     I.setDesc(TII.get(ARM::LDRi12));
