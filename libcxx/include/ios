@@ -573,7 +573,7 @@ ios_base::exceptions(iostate __iostate)
 }
 
 #if defined(_LIBCPP_CXX03_LANG)
-struct _LIBCPP_TYPE_VIS_ONLY __cxx03_bool {
+struct _LIBCPP_TYPE_VIS __cxx03_bool {
   typedef void (__cxx03_bool::*__bool_type)();
   void __true_value() {}
 };
