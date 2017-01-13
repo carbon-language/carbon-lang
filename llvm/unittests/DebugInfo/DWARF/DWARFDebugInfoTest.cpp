@@ -1309,11 +1309,11 @@ TEST(DWARFDebugInfo, TestAttributeIterators) {
   
   ASSERT_NE(E, ++I);
   EXPECT_EQ(I->Attr, DW_AT_declaration);
-  EXPECT_EQ(1ull, I->Value.getAsUnsignedConstant());
+  EXPECT_EQ(1ull, *I->Value.getAsUnsignedConstant());
   
   ASSERT_NE(E, ++I);
   EXPECT_EQ(I->Attr, DW_AT_low_pc);
-  EXPECT_EQ(CULowPC, I->Value.getAsAddress());
+  EXPECT_EQ(CULowPC, *I->Value.getAsAddress());
   
   EXPECT_EQ(E, ++I);
 }
