@@ -62,7 +62,7 @@ enum LTOKind {
 /// Driver - Encapsulate logic for constructing compilation processes
 /// from a set of gcc-driver-like command line arguments.
 class Driver {
-  llvm::opt::OptTable *Opts;
+  std::unique_ptr<llvm::opt::OptTable> Opts;
 
   DiagnosticsEngine &Diags;
 

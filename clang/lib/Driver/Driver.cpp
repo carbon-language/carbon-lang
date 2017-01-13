@@ -86,8 +86,6 @@ Driver::Driver(StringRef ClangExecutable, StringRef DefaultTargetTriple,
 }
 
 Driver::~Driver() {
-  delete Opts;
-
   llvm::DeleteContainerSeconds(ToolChains);
 }
 
@@ -214,9 +212,9 @@ phases::ID Driver::getFinalPhase(const DerivedArgList &DAL,
   return FinalPhase;
 }
 
-static Arg *MakeInputArg(DerivedArgList &Args, OptTable *Opts,
+static Arg *MakeInputArg(DerivedArgList &Args, OptTable &Opts,
                          StringRef Value) {
-  Arg *A = new Arg(Opts->getOption(options::OPT_INPUT), Value,
+  Arg *A = new Arg(Opts.getOption(options::OPT_INPUT), Value,
                    Args.getBaseArgs().MakeIndex(Value), Value.data());
   Args.AddSynthesizedArg(A);
   A->claim();
@@ -287,7 +285,7 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     if (A->getOption().matches(options::OPT__DASH_DASH)) {
       A->claim();
       for (StringRef Val : A->getValues())
-        DAL->append(MakeInputArg(*DAL, Opts, Val));
+        DAL->append(MakeInputArg(*DAL, *Opts, Val));
       continue;
     }
 
@@ -1561,14 +1559,14 @@ void Driver::BuildInputs(const ToolChain &TC, DerivedArgList &Args,
     } else if (A->getOption().matches(options::OPT__SLASH_Tc)) {
       StringRef Value = A->getValue();
       if (DiagnoseInputExistence(*this, Args, Value, types::TY_C)) {
-        Arg *InputArg = MakeInputArg(Args, Opts, A->getValue());
+        Arg *InputArg = MakeInputArg(Args, *Opts, A->getValue());
         Inputs.push_back(std::make_pair(types::TY_C, InputArg));
       }
       A->claim();
     } else if (A->getOption().matches(options::OPT__SLASH_Tp)) {
       StringRef Value = A->getValue();
       if (DiagnoseInputExistence(*this, Args, Value, types::TY_CXX)) {
-        Arg *InputArg = MakeInputArg(Args, Opts, A->getValue());
+        Arg *InputArg = MakeInputArg(Args, *Opts, A->getValue());
         Inputs.push_back(std::make_pair(types::TY_CXX, InputArg));
       }
       A->claim();
@@ -1594,7 +1592,7 @@ void Driver::BuildInputs(const ToolChain &TC, DerivedArgList &Args,
   if (CCCIsCPP() && Inputs.empty()) {
     // If called as standalone preprocessor, stdin is processed
     // if no other input is present.
-    Arg *A = MakeInputArg(Args, Opts, "-");
+    Arg *A = MakeInputArg(Args, *Opts, "-");
     Inputs.push_back(std::make_pair(types::TY_C, A));
   }
 }
@@ -2497,7 +2495,7 @@ void Driver::BuildActions(Compilation &C, DerivedArgList &Args,
         const types::ID HeaderType = lookupHeaderTypeForSourceType(InputType);
         llvm::SmallVector<phases::ID, phases::MaxNumberOfPhases> PCHPL;
         types::getCompilationPhases(HeaderType, PCHPL);
-        Arg *PchInputArg = MakeInputArg(Args, Opts, YcArg->getValue());
+        Arg *PchInputArg = MakeInputArg(Args, *Opts, YcArg->getValue());
 
         // Build the pipeline for the pch file.
         Action *ClangClPch =
