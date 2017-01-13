@@ -712,33 +712,35 @@ class Configuration(object):
                 ['c++11', 'c++14', 'c++1z'])) != 0
         enable_warnings = self.get_lit_bool('enable_warnings',
                                             default_enable_warnings)
-        if enable_warnings:
-            self.cxx.useWarnings(True)
-            self.cxx.warning_flags += [
-                '-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
-                '-Wall', '-Wextra', '-Werror'
-            ]
-            self.cxx.addWarningFlagIfSupported('-Wshadow')
-            self.cxx.addWarningFlagIfSupported('-Wno-unused-command-line-argument')
-            self.cxx.addWarningFlagIfSupported('-Wno-attributes')
-            self.cxx.addWarningFlagIfSupported('-Wno-pessimizing-move')
-            self.cxx.addWarningFlagIfSupported('-Wno-c++11-extensions')
-            self.cxx.addWarningFlagIfSupported('-Wno-user-defined-literals')
-            # These warnings should be enabled in order to support the MSVC
-            # team using the test suite; They enable the warnings below and
-            # expect the test suite to be clean.
-            self.cxx.addWarningFlagIfSupported('-Wsign-compare')
-            self.cxx.addWarningFlagIfSupported('-Wunused-variable')
-            self.cxx.addWarningFlagIfSupported('-Wunused-parameter')
-            self.cxx.addWarningFlagIfSupported('-Wunreachable-code')
-            # FIXME: Enable the two warnings below.
-            self.cxx.addWarningFlagIfSupported('-Wno-conversion')
+        self.cxx.useWarnings(enable_warnings)
+        self.cxx.warning_flags += [
+            '-D_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER',
+            '-Wall', '-Wextra', '-Werror'
+        ]
+        if self.cxx.hasWarningFlag('-Wuser-defined-warnings'):
+            self.cxx.warning_flags += ['-Wuser-defined-warnings']
+            self.config.available_features.add('diagnose-if-support')
+        self.cxx.addWarningFlagIfSupported('-Wshadow')
+        self.cxx.addWarningFlagIfSupported('-Wno-unused-command-line-argument')
+        self.cxx.addWarningFlagIfSupported('-Wno-attributes')
+        self.cxx.addWarningFlagIfSupported('-Wno-pessimizing-move')
+        self.cxx.addWarningFlagIfSupported('-Wno-c++11-extensions')
+        self.cxx.addWarningFlagIfSupported('-Wno-user-defined-literals')
+        # These warnings should be enabled in order to support the MSVC
+        # team using the test suite; They enable the warnings below and
+        # expect the test suite to be clean.
+        self.cxx.addWarningFlagIfSupported('-Wsign-compare')
+        self.cxx.addWarningFlagIfSupported('-Wunused-variable')
+        self.cxx.addWarningFlagIfSupported('-Wunused-parameter')
+        self.cxx.addWarningFlagIfSupported('-Wunreachable-code')
+        # FIXME: Enable the two warnings below.
+        self.cxx.addWarningFlagIfSupported('-Wno-conversion')
+        self.cxx.addWarningFlagIfSupported('-Wno-unused-local-typedef')
+        std = self.get_lit_conf('std', None)
+        if std in ['c++98', 'c++03']:
+            # The '#define static_assert' provided by libc++ in C++03 mode
+            # causes an unused local typedef whenever it is used.
             self.cxx.addWarningFlagIfSupported('-Wno-unused-local-typedef')
-            std = self.get_lit_conf('std', None)
-            if std in ['c++98', 'c++03']:
-                # The '#define static_assert' provided by libc++ in C++03 mode
-                # causes an unused local typedef whenever it is used.
-                self.cxx.addWarningFlagIfSupported('-Wno-unused-local-typedef')
 
     def configure_sanitizer(self):
         san = self.get_lit_conf('use_sanitizer', '').strip()
