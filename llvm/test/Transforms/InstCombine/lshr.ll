@@ -43,8 +43,8 @@ define i32 @lshr_ctpop(i32 %x) {
 
 define <2 x i8> @lshr_ctlz_zero_is_not_undef_splat_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @lshr_ctlz_zero_is_not_undef_splat_vec(
-; CHECK-NEXT:    [[CT:%.*]] = call <2 x i8> @llvm.ctlz.v2i8(<2 x i8> %x, i1 false)
-; CHECK-NEXT:    [[SH:%.*]] = lshr <2 x i8> [[CT]], <i8 3, i8 3>
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i8> %x, zeroinitializer
+; CHECK-NEXT:    [[SH:%.*]] = zext <2 x i1> [[TMP1]] to <2 x i8>
 ; CHECK-NEXT:    ret <2 x i8> [[SH]]
 ;
   %ct = call <2 x i8> @llvm.ctlz.v2i8(<2 x i8> %x, i1 false)
@@ -54,8 +54,8 @@ define <2 x i8> @lshr_ctlz_zero_is_not_undef_splat_vec(<2 x i8> %x) {
 
 define <2 x i8> @lshr_cttz_zero_is_not_undef_splat_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @lshr_cttz_zero_is_not_undef_splat_vec(
-; CHECK-NEXT:    [[CT:%.*]] = call <2 x i8> @llvm.cttz.v2i8(<2 x i8> %x, i1 false)
-; CHECK-NEXT:    [[SH:%.*]] = lshr <2 x i8> [[CT]], <i8 3, i8 3>
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i8> %x, zeroinitializer
+; CHECK-NEXT:    [[SH:%.*]] = zext <2 x i1> [[TMP1]] to <2 x i8>
 ; CHECK-NEXT:    ret <2 x i8> [[SH]]
 ;
   %ct = call <2 x i8> @llvm.cttz.v2i8(<2 x i8> %x, i1 false)
@@ -65,8 +65,8 @@ define <2 x i8> @lshr_cttz_zero_is_not_undef_splat_vec(<2 x i8> %x) {
 
 define <2 x i8> @lshr_ctpop_splat_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @lshr_ctpop_splat_vec(
-; CHECK-NEXT:    [[CT:%.*]] = call <2 x i8> @llvm.ctpop.v2i8(<2 x i8> %x)
-; CHECK-NEXT:    [[SH:%.*]] = lshr <2 x i8> [[CT]], <i8 3, i8 3>
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i8> %x, <i8 -1, i8 -1>
+; CHECK-NEXT:    [[SH:%.*]] = zext <2 x i1> [[TMP1]] to <2 x i8>
 ; CHECK-NEXT:    ret <2 x i8> [[SH]]
 ;
   %ct = call <2 x i8> @llvm.ctpop.v2i8(<2 x i8> %x)
@@ -91,7 +91,7 @@ define <2 x i8> @lshr_exact_splat_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @lshr_exact_splat_vec(
 ; CHECK-NEXT:    [[SHL:%.*]] = shl <2 x i8> %x, <i8 2, i8 2>
 ; CHECK-NEXT:    [[ADD:%.*]] = add <2 x i8> [[SHL]], <i8 4, i8 4>
-; CHECK-NEXT:    [[LSHR:%.*]] = lshr <2 x i8> [[ADD]], <i8 2, i8 2>
+; CHECK-NEXT:    [[LSHR:%.*]] = lshr exact <2 x i8> [[ADD]], <i8 2, i8 2>
 ; CHECK-NEXT:    ret <2 x i8> [[LSHR]]
 ;
   %shl = shl <2 x i8> %x, <i8 2, i8 2>
