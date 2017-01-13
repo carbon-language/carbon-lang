@@ -511,6 +511,7 @@ public:
   getPreferredVectorAction(EVT VT) const override;
 
   bool allowFMA(MachineFunction &MF, CodeGenOpt::Level OptLevel) const;
+  bool allowUnsafeFPMath(MachineFunction &MF) const;
 
   bool isFMAFasterThanFMulAndFAdd(EVT) const override { return true; }
 

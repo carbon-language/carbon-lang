@@ -34,6 +34,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXDAGToDAGISel : public SelectionDAGISel {
   bool usePrecSqrtF32() const;
   bool useF32FTZ() const;
   bool allowFMA() const;
+  bool allowUnsafeFPMath() const;
 
 public:
   explicit NVPTXDAGToDAGISel(NVPTXTargetMachine &tm,

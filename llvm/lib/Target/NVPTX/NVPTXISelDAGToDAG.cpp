@@ -103,6 +103,11 @@ bool NVPTXDAGToDAGISel::allowFMA() const {
   return TL->allowFMA(*MF, OptLevel);
 }
 
+bool NVPTXDAGToDAGISel::allowUnsafeFPMath() const {
+  const NVPTXTargetLowering *TL = Subtarget->getTargetLowering();
+  return TL->allowUnsafeFPMath(*MF);
+}
+
 /// Select - Select instructions not customized! Used for
 /// expanded, promoted and normal instructions.
 void NVPTXDAGToDAGISel::Select(SDNode *N) {

@@ -3863,27 +3863,35 @@ NVPTXTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
 
 bool NVPTXTargetLowering::allowFMA(MachineFunction &MF,
                                    CodeGenOpt::Level OptLevel) const {
-  const Function *F = MF.getFunction();
-  const TargetOptions &TO = MF.getTarget().Options;
-
   // Always honor command-line argument
-  if (FMAContractLevelOpt.getNumOccurrences() > 0) {
+  if (FMAContractLevelOpt.getNumOccurrences() > 0)
     return FMAContractLevelOpt > 0;
-  } else if (OptLevel == 0) {
-    // Do not contract if we're not optimizing the code
+
+  // Do not contract if we're not optimizing the code.
+  if (OptLevel == 0)
     return false;
-  } else if (TO.AllowFPOpFusion == FPOpFusion::Fast || TO.UnsafeFPMath) {
-    // Honor TargetOptions flags that explicitly say fusion is okay
+
+  // Honor TargetOptions flags that explicitly say fusion is okay.
+  if (MF.getTarget().Options.AllowFPOpFusion == FPOpFusion::Fast)
     return true;
-  } else if (F->hasFnAttribute("unsafe-fp-math")) {
-    // Check for unsafe-fp-math=true coming from Clang
+
+  return allowUnsafeFPMath(MF);
+}
+
+bool NVPTXTargetLowering::allowUnsafeFPMath(MachineFunction &MF) const {
+  // Honor TargetOptions flags that explicitly say unsafe math is okay.
+  if (MF.getTarget().Options.UnsafeFPMath)
+    return true;
+
+  // Allow unsafe math if unsafe-fp-math attribute explicitly says so.
+  const Function *F = MF.getFunction();
+  if (F->hasFnAttribute("unsafe-fp-math")) {
     Attribute Attr = F->getFnAttribute("unsafe-fp-math");
     StringRef Val = Attr.getValueAsString();
     if (Val == "true")
       return true;
   }
 
-  // We did not have a clear indication that fusion is allowed, so assume not
   return false;
 }
 

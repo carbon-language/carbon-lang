@@ -134,6 +134,7 @@ def doMulWide      : Predicate<"doMulWide">;
 
 def allowFMA : Predicate<"allowFMA()">;
 def noFMA : Predicate<"!allowFMA()">;
+def allowUnsafeFPMath : Predicate<"allowUnsafeFPMath()">;
 
 def do_DIVF32_APPROX : Predicate<"getDivF32Level()==0">;
 def do_DIVF32_FULL : Predicate<"getDivF32Level()==1">;
@@ -949,10 +950,12 @@ defm FMA64     : FMA<"fma.rn.f64", Float64Regs, f64imm, true>;
 // sin/cos
 def SINF:  NVPTXInst<(outs Float32Regs:$dst), (ins Float32Regs:$src),
                       "sin.approx.f32 \t$dst, $src;",
-                      [(set Float32Regs:$dst, (fsin Float32Regs:$src))]>;
+                      [(set Float32Regs:$dst, (fsin Float32Regs:$src))]>,
+                      Requires<[allowUnsafeFPMath]>;
 def COSF:  NVPTXInst<(outs Float32Regs:$dst), (ins Float32Regs:$src),
                       "cos.approx.f32 \t$dst, $src;",
-                      [(set Float32Regs:$dst, (fcos Float32Regs:$src))]>;
+                      [(set Float32Regs:$dst, (fcos Float32Regs:$src))]>,
+                      Requires<[allowUnsafeFPMath]>;
 
 // Lower (frem x, y) into (sub x, (mul (floor (div x, y)) y)),
 // i.e. "poor man's fmod()"
