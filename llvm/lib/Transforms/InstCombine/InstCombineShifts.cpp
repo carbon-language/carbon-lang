@@ -22,8 +22,8 @@ using namespace PatternMatch;
 #define DEBUG_TYPE "instcombine"
 
 Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
-  assert(I.getOperand(1)->getType() == I.getOperand(0)->getType());
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  assert(Op0->getType() == Op1->getType());
 
   // See if we can fold away this shift.
   if (SimplifyDemandedInstructionBits(I))
@@ -715,15 +715,15 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return replaceInstUsesWith(I, V);
 
-  if (Value *V =
-          SimplifyShlInst(I.getOperand(0), I.getOperand(1), I.hasNoSignedWrap(),
-                          I.hasNoUnsignedWrap(), DL, &TLI, &DT, &AC))
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  if (Value *V = SimplifyShlInst(Op0, Op1, I.hasNoSignedWrap(),
+                                 I.hasNoUnsignedWrap(), DL, &TLI, &DT, &AC))
     return replaceInstUsesWith(I, V);
 
   if (Instruction *V = commonShiftTransforms(I))
     return V;
 
-  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(I.getOperand(1))) {
+  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     unsigned ShAmt = Op1C->getZExtValue();
 
     // Turn:
@@ -735,7 +735,7 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
     //  %res = zext i32 %shl to i64
     //
     // This is only valid if %V would have zeros shifted out.
-    if (auto *ZI = dyn_cast<ZExtInst>(I.getOperand(0))) {
+    if (auto *ZI = dyn_cast<ZExtInst>(Op0)) {
       unsigned SrcBitWidth = ZI->getSrcTy()->getScalarSizeInBits();
       if (ShAmt < SrcBitWidth &&
           MaskedValueIsZero(ZI->getOperand(0),
@@ -747,16 +747,14 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
 
     // If the shifted-out value is known-zero, then this is a NUW shift.
     if (!I.hasNoUnsignedWrap() &&
-        MaskedValueIsZero(I.getOperand(0),
-                          APInt::getHighBitsSet(Op1C->getBitWidth(), ShAmt), 0,
-                          &I)) {
+        MaskedValueIsZero(
+            Op0, APInt::getHighBitsSet(Op1C->getBitWidth(), ShAmt), 0, &I)) {
       I.setHasNoUnsignedWrap();
       return &I;
     }
 
-    // If the shifted out value is all signbits, this is a NSW shift.
-    if (!I.hasNoSignedWrap() &&
-        ComputeNumSignBits(I.getOperand(0), 0, &I) > ShAmt) {
+    // If the shifted-out value is all signbits, then this is a NSW shift.
+    if (!I.hasNoSignedWrap() && ComputeNumSignBits(Op0, 0, &I) > ShAmt) {
       I.setHasNoSignedWrap();
       return &I;
     }
@@ -765,8 +763,8 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
   // (C1 << A) << C2 -> (C1 << C2) << A
   Constant *C1, *C2;
   Value *A;
-  if (match(I.getOperand(0), m_OneUse(m_Shl(m_Constant(C1), m_Value(A)))) &&
-      match(I.getOperand(1), m_Constant(C2)))
+  if (match(Op0, m_OneUse(m_Shl(m_Constant(C1), m_Value(A)))) &&
+      match(Op1, m_Constant(C2)))
     return BinaryOperator::CreateShl(ConstantExpr::getShl(C1, C2), A);
 
   return nullptr;
@@ -776,14 +774,12 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return replaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyLShrInst(I.getOperand(0), I.getOperand(1), I.isExact(),
-                                  DL, &TLI, &DT, &AC))
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  if (Value *V = SimplifyLShrInst(Op0, Op1, I.isExact(), DL, &TLI, &DT, &AC))
     return replaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))
     return R;
-
-  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     unsigned ShAmt = Op1C->getZExtValue();
@@ -820,14 +816,12 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
   if (Value *V = SimplifyVectorOp(I))
     return replaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyAShrInst(I.getOperand(0), I.getOperand(1), I.isExact(),
-                                  DL, &TLI, &DT, &AC))
+  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+  if (Value *V = SimplifyAShrInst(Op0, Op1, I.isExact(), DL, &TLI, &DT, &AC))
     return replaceInstUsesWith(I, V);
 
   if (Instruction *R = commonShiftTransforms(I))
     return R;
-
-  Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
     unsigned ShAmt = Op1C->getZExtValue();
