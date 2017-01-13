@@ -685,9 +685,9 @@ void ARMAttributeParser::Parse(ArrayRef<uint8_t> Section, bool isLittle) {
   unsigned SectionNumber = 0;
 
   while (Offset < Section.size()) {
-    uint32_t SectionLength = isLittle ?
-      *reinterpret_cast<const support::ulittle32_t*>(Section.data() + Offset) :
-      *reinterpret_cast<const support::ubig32_t*>(Section.data() + Offset);
+    uint32_t SectionLength =
+        isLittle ? support::endian::read32le(Section.data() + Offset)
+                 : support::endian::read32be(Section.data() + Offset);
 
     if (SW) {
       SW->startLine() << "Section " << ++SectionNumber << " {\n";
