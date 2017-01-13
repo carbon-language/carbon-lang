@@ -192,6 +192,13 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &add(ArrayRef<MachineOperand> MOs) const {
+    for (const MachineOperand &MO : MOs) {
+      MI->addOperand(*MF, MO);
+    }
+    return *this;
+  }
+
   const MachineInstrBuilder &addMetadata(const MDNode *MD) const {
     MI->addOperand(*MF, MachineOperand::CreateMetadata(MD));
     assert((MI->isDebugValue() ? static_cast<bool>(MI->getDebugVariable())

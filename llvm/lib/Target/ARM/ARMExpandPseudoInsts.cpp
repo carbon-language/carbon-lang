@@ -797,7 +797,7 @@ bool ARMExpandPseudo::ExpandCMP_SWAP(MachineBasicBlock &MBB,
             .addReg(Desired.getReg(), RegState::Kill);
     if (!IsThumb)
       MIB.addImm(0);
-    AddDefaultPred(MIB);
+    MIB.add(predOps(ARMCC::AL));
   }
 
   // .Lloadcmp:
@@ -814,12 +814,13 @@ bool ARMExpandPseudo::ExpandCMP_SWAP(MachineBasicBlock &MBB,
   MIB.addReg(Addr.getReg());
   if (LdrexOp == ARM::t2LDREX)
     MIB.addImm(0); // a 32-bit Thumb ldrex (only) allows an offset.
-  AddDefaultPred(MIB);
+  MIB.add(predOps(ARMCC::AL));
 
   unsigned CMPrr = IsThumb ? ARM::tCMPhir : ARM::CMPrr;
-  AddDefaultPred(BuildMI(LoadCmpBB, DL, TII->get(CMPrr))
-                     .addReg(Dest.getReg(), getKillRegState(Dest.isDead()))
-                     .addOperand(Desired));
+  BuildMI(LoadCmpBB, DL, TII->get(CMPrr))
+      .addReg(Dest.getReg(), getKillRegState(Dest.isDead()))
+      .addOperand(Desired)
+      .add(predOps(ARMCC::AL));
   unsigned Bcc = IsThumb ? ARM::tBcc : ARM::Bcc;
   BuildMI(LoadCmpBB, DL, TII->get(Bcc))
       .addMBB(DoneBB)
@@ -842,12 +843,13 @@ bool ARMExpandPseudo::ExpandCMP_SWAP(MachineBasicBlock &MBB,
   MIB.addOperand(Addr);
   if (StrexOp == ARM::t2STREX)
     MIB.addImm(0); // a 32-bit Thumb strex (only) allows an offset.
-  AddDefaultPred(MIB);
+  MIB.add(predOps(ARMCC::AL));
 
   unsigned CMPri = IsThumb ? ARM::t2CMPri : ARM::CMPri;
-  AddDefaultPred(BuildMI(StoreBB, DL, TII->get(CMPri))
-                     .addReg(StatusReg, RegState::Kill)
-                     .addImm(0));
+  BuildMI(StoreBB, DL, TII->get(CMPri))
+      .addReg(StatusReg, RegState::Kill)
+      .addImm(0)
+      .add(predOps(ARMCC::AL));
   BuildMI(StoreBB, DL, TII->get(Bcc))
       .addMBB(LoadCmpBB)
       .addImm(ARMCC::NE)
@@ -927,13 +929,13 @@ bool ARMExpandPseudo::ExpandCMP_SWAP_64(MachineBasicBlock &MBB,
   MachineInstrBuilder MIB;
   MIB = BuildMI(LoadCmpBB, DL, TII->get(LDREXD));
   addExclusiveRegPair(MIB, Dest, RegState::Define, IsThumb, TRI);
-  MIB.addReg(Addr.getReg());
-  AddDefaultPred(MIB);
+  MIB.addReg(Addr.getReg()).add(predOps(ARMCC::AL));
 
   unsigned CMPrr = IsThumb ? ARM::tCMPhir : ARM::CMPrr;
-  AddDefaultPred(BuildMI(LoadCmpBB, DL, TII->get(CMPrr))
-                     .addReg(DestLo, getKillRegState(Dest.isDead()))
-                     .addReg(DesiredLo, getKillRegState(Desired.isDead())));
+  BuildMI(LoadCmpBB, DL, TII->get(CMPrr))
+      .addReg(DestLo, getKillRegState(Dest.isDead()))
+      .addReg(DesiredLo, getKillRegState(Desired.isDead()))
+      .add(predOps(ARMCC::AL));
 
   BuildMI(LoadCmpBB, DL, TII->get(CMPrr))
       .addReg(DestHi, getKillRegState(Dest.isDead()))
@@ -959,13 +961,13 @@ bool ARMExpandPseudo::ExpandCMP_SWAP_64(MachineBasicBlock &MBB,
   unsigned STREXD = IsThumb ? ARM::t2STREXD : ARM::STREXD;
   MIB = BuildMI(StoreBB, DL, TII->get(STREXD), StatusReg);
   addExclusiveRegPair(MIB, New, 0, IsThumb, TRI);
-  MIB.addOperand(Addr);
-  AddDefaultPred(MIB);
+  MIB.addOperand(Addr).add(predOps(ARMCC::AL));
 
   unsigned CMPri = IsThumb ? ARM::t2CMPri : ARM::CMPri;
-  AddDefaultPred(BuildMI(StoreBB, DL, TII->get(CMPri))
-                     .addReg(StatusReg, RegState::Kill)
-                     .addImm(0));
+  BuildMI(StoreBB, DL, TII->get(CMPri))
+      .addReg(StatusReg, RegState::Kill)
+      .addImm(0)
+      .add(predOps(ARMCC::AL));
   BuildMI(StoreBB, DL, TII->get(Bcc))
       .addMBB(LoadCmpBB)
       .addImm(ARMCC::NE)
@@ -1187,10 +1189,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
                                     "bits set.");
           unsigned bicOpc = AFI->isThumbFunction() ?
             ARM::t2BICri : ARM::BICri;
-          AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                                              TII->get(bicOpc), ARM::R6)
-                                      .addReg(ARM::R6, RegState::Kill)
-                                      .addImm(MaxAlign-1)));
+          AddDefaultCC(
+              BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(bicOpc), ARM::R6)
+                  .addReg(ARM::R6, RegState::Kill)
+                  .addImm(MaxAlign - 1)
+                  .add(predOps(ARMCC::AL)));
         }
 
       }
@@ -1201,24 +1204,25 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::MOVsrl_flag:
     case ARM::MOVsra_flag: {
       // These are just fancy MOVs instructions.
-      AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
-                             MI.getOperand(0).getReg())
-                     .addOperand(MI.getOperand(1))
-                     .addImm(ARM_AM::getSORegOpc((Opcode == ARM::MOVsrl_flag ?
-                                                  ARM_AM::lsr : ARM_AM::asr),
-                                                 1)))
-        .addReg(ARM::CPSR, RegState::Define);
+      BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
+              MI.getOperand(0).getReg())
+          .addOperand(MI.getOperand(1))
+          .addImm(ARM_AM::getSORegOpc(
+              (Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr : ARM_AM::asr), 1))
+          .add(predOps(ARMCC::AL))
+          .addReg(ARM::CPSR, RegState::Define);
       MI.eraseFromParent();
       return true;
     }
     case ARM::RRX: {
       // This encodes as "MOVs Rd, Rm, rrx
       MachineInstrBuilder MIB =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),TII->get(ARM::MOVsi),
-                               MI.getOperand(0).getReg())
-                       .addOperand(MI.getOperand(1))
-                       .addImm(ARM_AM::getSORegOpc(ARM_AM::rrx, 0)))
-        .addReg(0);
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
+                  MI.getOperand(0).getReg())
+              .addOperand(MI.getOperand(1))
+              .addImm(ARM_AM::getSORegOpc(ARM_AM::rrx, 0))
+              .add(predOps(ARMCC::AL))
+              .addReg(0);
       TransferImpOps(MI, MIB, MIB);
       MI.eraseFromParent();
       return true;
@@ -1248,9 +1252,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned DstReg = MI.getOperand(0).getReg();
       bool DstIsDead = MI.getOperand(0).isDead();
       MachineInstrBuilder MIB1 =
-        AddDefaultPred(BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                               TII->get(NewLdOpc), DstReg)
-                       .addOperand(MI.getOperand(1)));
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewLdOpc), DstReg)
+              .addOperand(MI.getOperand(1))
+              .add(predOps(ARMCC::AL));
       MIB1->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
                                          TII->get(ARM::tPICADD))
@@ -1299,7 +1303,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
             .addConstantPoolIndex(MCP->getConstantPoolIndex(CPV, 4));
       if (IsARM)
         MIB.addImm(0);
-      AddDefaultPred(MIB);
+      MIB.add(predOps(ARMCC::AL));
 
       if (IsPIC) {
         MachineInstrBuilder MIB =
@@ -1309,7 +1313,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
             .addImm(ARMPCLabelIndex);
 
         if (IsARM)
-          AddDefaultPred(MIB);
+          MIB.add(predOps(ARMCC::AL));
       }
 
       MI.eraseFromParent();
@@ -1348,7 +1352,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
         .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
         .addReg(DstReg).addImm(LabelId);
       if (isARM) {
-        AddDefaultPred(MIB3);
+        MIB3.add(predOps(ARMCC::AL));
         if (Opcode == ARM::MOV_ga_pcrel_ldr)
           MIB3->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       }

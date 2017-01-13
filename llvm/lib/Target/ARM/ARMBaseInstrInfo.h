@@ -401,22 +401,29 @@ public:
   bool isSwiftFastImmShift(const MachineInstr *MI) const;
 };
 
-static inline
-const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
-  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
+/// Get the operands corresponding to the given \p Pred value. By default, the
+/// predicate register is assumed to be 0 (no register), but you can pass in a
+/// \p PredReg if that is not the case.
+static inline std::array<MachineOperand, 2> predOps(ARMCC::CondCodes Pred,
+                                                    unsigned PredReg = 0) {
+  return {{MachineOperand::CreateImm(static_cast<int64_t>(Pred)),
+           MachineOperand::CreateReg(PredReg, 0)}};
 }
 
+// FIXME: Replace with something that returns a MachineOperand
 static inline
 const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
   return MIB.addReg(0);
 }
 
+// FIXME: Replace with something that returns a MachineOperand
 static inline
 const MachineInstrBuilder &AddDefaultT1CC(const MachineInstrBuilder &MIB,
                                           bool isDead = false) {
   return MIB.addReg(ARM::CPSR, getDefRegState(true) | getDeadRegState(isDead));
 }
 
+// FIXME: Replace with something that returns a MachineOperand
 static inline
 const MachineInstrBuilder &AddNoT1CC(const MachineInstrBuilder &MIB) {
   return MIB.addReg(0);

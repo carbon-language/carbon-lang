@@ -621,12 +621,13 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
         MI->getOperand(MCID.getNumOperands()-1).getReg() == ARM::CPSR)
       return false;
 
-    MachineInstrBuilder MIB = BuildMI(MBB, MI, MI->getDebugLoc(),
-                                      TII->get(ARM::tADDrSPi))
-      .addOperand(MI->getOperand(0))
-      .addOperand(MI->getOperand(1))
-      .addImm(Imm / 4); // The tADDrSPi has an implied scale by four.
-    AddDefaultPred(MIB);
+    MachineInstrBuilder MIB =
+        BuildMI(MBB, MI, MI->getDebugLoc(),
+                TII->get(ARM::tADDrSPi))
+            .addOperand(MI->getOperand(0))
+            .addOperand(MI->getOperand(1))
+            .addImm(Imm / 4) // The tADDrSPi has an implied scale by four.
+            .add(predOps(ARMCC::AL));
 
     // Transfer MI flags.
     MIB.setMIFlags(MI->getFlags());
@@ -912,7 +913,7 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
     MIB.addOperand(MO);
   }
   if (!MCID.isPredicable() && NewMCID.isPredicable())
-    AddDefaultPred(MIB);
+    MIB.add(predOps(ARMCC::AL));
 
   // Transfer MI flags.
   MIB.setMIFlags(MI->getFlags());
