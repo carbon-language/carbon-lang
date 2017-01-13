@@ -226,9 +226,7 @@ size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
   // If CU DIE was just parsed, copy several attribute values from it.
   if (!HasCUDie) {
     DWARFDie UnitDie = getUnitDIE();
-    auto BaseAddr = toAddress(UnitDie.find(DW_AT_low_pc));
-    if (!BaseAddr)
-      BaseAddr = toAddress(UnitDie.find(DW_AT_entry_pc));
+    auto BaseAddr = toAddress(UnitDie.find({DW_AT_low_pc, DW_AT_entry_pc}));
     if (BaseAddr)
       setBaseAddress(*BaseAddr);
     AddrOffsetSectionBase = toSectionOffset(UnitDie.find(DW_AT_GNU_addr_base), 0);

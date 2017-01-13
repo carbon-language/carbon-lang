@@ -10,6 +10,7 @@
 #ifndef LLVM_LIB_DEBUGINFO_DWARFDIE_H
 #define LLVM_LIB_DEBUGINFO_DWARFDIE_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/Optional.h"
@@ -125,8 +126,20 @@ public:
   /// \returns an optional DWARFFormValue that will have the form value if the
   /// attribute was successfully extracted.
   Optional<DWARFFormValue> find(dwarf::Attribute Attr) const;
-
   
+  /// Extract the first value of any attribute in Attrs from this DIE.
+  ///
+  /// Extract the first attribute that matches from this DIE only. This call
+  /// doesn't look for the attribute value in any DW_AT_specification or
+  /// DW_AT_abstract_origin referenced DIEs. The attributes will be searched
+  /// linearly in the order they are specified within Attrs.
+  ///
+  /// \param Attrs an array of DWARF attribute to look for.
+  /// \returns an optional that has a valid DWARFFormValue for the first
+  /// matching attribute in Attrs, or None if none of the attributes in Attrs
+  /// exist in this DIE.
+  Optional<DWARFFormValue> find(ArrayRef<dwarf::Attribute> Attrs) const;
+
   /// Extract an attribute value from this DIE and recurse into any
   /// DW_AT_specification or DW_AT_abstract_origin referenced DIEs.
   ///
@@ -134,6 +147,18 @@ public:
   /// \returns an optional DWARFFormValue that will have the form value if the
   /// attribute was successfully extracted.
   Optional<DWARFFormValue> findRecursively(dwarf::Attribute Attr) const;
+
+  /// Extract the first value of any attribute in Attrs from this DIE and
+  /// recurse into any DW_AT_specification or DW_AT_abstract_origin referenced
+  /// DIEs.
+  ///
+  /// \param Attrs an array of DWARF attribute to look for.
+  /// \returns an optional that has a valid DWARFFormValue for the first
+  /// matching attribute in Attrs, or None if none of the attributes in Attrs
+  /// exist in this DIE or in any DW_AT_specification or DW_AT_abstract_origin
+  /// DIEs.
+  Optional<DWARFFormValue>
+  findRecursively(ArrayRef<dwarf::Attribute> Attrs) const;
 
   /// Extract the specified attribute from this DIE as the referenced DIE.
   ///

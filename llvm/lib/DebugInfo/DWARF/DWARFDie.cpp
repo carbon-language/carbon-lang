@@ -158,6 +158,35 @@ DWARFDie::findRecursively(dwarf::Attribute Attr) const {
   return None;
 }
 
+Optional<DWARFFormValue>
+DWARFDie::find(ArrayRef<dwarf::Attribute> Attrs) const {
+  if (!isValid())
+    return None;
+  auto AbbrevDecl = getAbbreviationDeclarationPtr();
+  if (AbbrevDecl) {
+    for (auto Attr : Attrs) {
+      if (auto Value = AbbrevDecl->getAttributeValue(getOffset(), Attr, *U))
+        return Value;
+    }
+  }
+  return None;
+}
+
+Optional<DWARFFormValue>
+DWARFDie::findRecursively(ArrayRef<dwarf::Attribute> Attrs) const {
+  if (!isValid())
+    return None;
+  if (auto Value = find(Attrs))
+    return Value;
+  if (auto Die = getAttributeValueAsReferencedDie(DW_AT_abstract_origin))
+    if (auto Value = Die.find(Attrs))
+      return Value;
+  if (auto Die = getAttributeValueAsReferencedDie(DW_AT_specification))
+    if (auto Value = Die.find(Attrs))
+      return Value;
+  return None;
+}
+
 DWARFDie
 DWARFDie::getAttributeValueAsReferencedDie(dwarf::Attribute Attr) const {
   auto SpecRef = toReference(find(Attr));
@@ -171,10 +200,7 @@ DWARFDie::getAttributeValueAsReferencedDie(dwarf::Attribute Attr) const {
 
 Optional<uint64_t>
 DWARFDie::getRangesBaseAttribute() const {
-  auto Result = toSectionOffset(find(DW_AT_rnglists_base));
-  if (Result)
-    return Result;
-  return toSectionOffset(find(DW_AT_GNU_ranges_base));
+  return toSectionOffset(find({DW_AT_rnglists_base, DW_AT_GNU_ranges_base}));
 }
 
 Optional<uint64_t> DWARFDie::getHighPC(uint64_t LowPC) const {
@@ -256,11 +282,8 @@ DWARFDie::getName(DINameKind Kind) const {
     return nullptr;
   // Try to get mangled name only if it was asked for.
   if (Kind == DINameKind::LinkageName) {
-    if (auto Name = dwarf::toString(findRecursively(DW_AT_MIPS_linkage_name),
-                                    nullptr))
-      return Name;
-    if (auto Name = dwarf::toString(findRecursively(DW_AT_linkage_name),
-                                    nullptr))
+    if (auto Name = dwarf::toString(findRecursively({DW_AT_MIPS_linkage_name,
+                                    DW_AT_linkage_name}), nullptr))
       return Name;
   }
   if (auto Name = dwarf::toString(findRecursively(DW_AT_name), nullptr))

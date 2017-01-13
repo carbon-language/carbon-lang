@@ -1476,4 +1476,71 @@ TEST(DWARFDebugInfo, TestDwarfToFunctions) {
   // Test
 }
 
+TEST(DWARFDebugInfo, TestFindAttrs) {
+  // Test the DWARFDie::find() and DWARFDie::findRecursively() that take an
+  // ArrayRef<dwarf::Attribute> value to make sure they work correctly.
+  uint16_t Version = 4;
+  
+  const uint8_t AddrSize = sizeof(void *);
+  initLLVMIfNeeded();
+  Triple Triple = getHostTripleForAddrSize(AddrSize);
+  auto ExpectedDG = dwarfgen::Generator::create(Triple, Version);
+  if (HandleExpectedError(ExpectedDG))
+    return;
+  dwarfgen::Generator *DG = ExpectedDG.get().get();
+  dwarfgen::CompileUnit &CU = DG->addCompileUnit();
+  
+  StringRef DieMangled("_Z3fooi");
+  // Scope to allow us to re-use the same DIE names
+  {
+    // Create a compile unit DIE that has an abbreviation that says it has
+    // children, but doesn't have any actual attributes. This helps us test
+    // a DIE that has only one child: a NULL DIE.
+    auto CUDie = CU.getUnitDIE();
+    auto FuncSpecDie = CUDie.addChild(DW_TAG_subprogram);
+    auto FuncDie = CUDie.addChild(DW_TAG_subprogram);
+    FuncSpecDie.addAttribute(DW_AT_MIPS_linkage_name, DW_FORM_strp, DieMangled);
+    FuncDie.addAttribute(DW_AT_specification, DW_FORM_ref4, FuncSpecDie);
+  }
+  
+  MemoryBufferRef FileBuffer(DG->generate(), "dwarf");
+  auto Obj = object::ObjectFile::createObjectFile(FileBuffer);
+  EXPECT_TRUE((bool)Obj);
+  DWARFContextInMemory DwarfContext(*Obj.get());
+  
+  // Verify the number of compile units is correct.
+  uint32_t NumCUs = DwarfContext.getNumCompileUnits();
+  EXPECT_EQ(NumCUs, 1u);
+  DWARFCompileUnit *U = DwarfContext.getCompileUnitAtIndex(0);
+  
+  // Get the compile unit DIE is valid.
+  auto CUDie = U->getUnitDIE(false);
+  EXPECT_TRUE(CUDie.isValid());
+  
+  auto FuncSpecDie = CUDie.getFirstChild();
+  auto FuncDie = FuncSpecDie.getSibling();
+
+  // Make sure that passing in an empty attribute list behave correctly.
+  EXPECT_FALSE(FuncDie.find(ArrayRef<dwarf::Attribute>()).hasValue());
+
+  // Make sure that passing in a list of attribute that are not contained
+  // in the DIE returns nothing.
+  EXPECT_FALSE(FuncDie.find({DW_AT_low_pc, DW_AT_entry_pc}).hasValue());
+
+  ArrayRef<dwarf::Attribute>
+      Attrs = { DW_AT_linkage_name, DW_AT_MIPS_linkage_name };
+  
+  // Make sure we can't extract the linkage name attributes when using
+  // DWARFDie::find() since it won't check the DW_AT_specification DIE.
+  EXPECT_FALSE(FuncDie.find(Attrs).hasValue());
+  
+  // Make sure we can extract the name from the specification die when using
+  // DWARFDie::findRecursively() since it should recurse through the
+  // DW_AT_specification DIE.
+  auto NameOpt = FuncDie.findRecursively(Attrs);
+  EXPECT_TRUE(NameOpt.hasValue());
+  EXPECT_EQ(DieMangled, toString(NameOpt, ""));
+  
+}
+
 } // end anonymous namespace

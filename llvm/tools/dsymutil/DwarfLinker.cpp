@@ -3184,10 +3184,8 @@ void DwarfLinker::DIECloner::copyAbbrev(
 
 static uint64_t getDwoId(const DWARFDie &CUDie,
                          const DWARFUnit &Unit) {
-  auto DwoId = dwarf::toUnsigned(CUDie.find(dwarf::DW_AT_dwo_id));
-  if (DwoId)
-    return *DwoId;
-  DwoId = dwarf::toUnsigned(CUDie.find(dwarf::DW_AT_GNU_dwo_id));
+  auto DwoId = dwarf::toUnsigned(CUDie.find({dwarf::DW_AT_dwo_id,
+                                             dwarf::DW_AT_GNU_dwo_id}));
   if (DwoId)
     return *DwoId;
   return 0;
@@ -3196,9 +3194,9 @@ static uint64_t getDwoId(const DWARFDie &CUDie,
 bool DwarfLinker::registerModuleReference(
     const DWARFDie &CUDie, const DWARFUnit &Unit,
     DebugMap &ModuleMap, unsigned Indent) {
-  std::string PCMfile = dwarf::toString(CUDie.find(dwarf::DW_AT_dwo_name), "");
-  if (PCMfile.empty())
-    PCMfile = dwarf::toString(CUDie.find(dwarf::DW_AT_GNU_dwo_name), "");
+  std::string PCMfile =
+      dwarf::toString(CUDie.find({dwarf::DW_AT_dwo_name,
+                                  dwarf::DW_AT_GNU_dwo_name}), "");
   if (PCMfile.empty())
     return false;
 
