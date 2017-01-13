@@ -1008,9 +1008,9 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 
 #if __has_attribute(diagnose_if) && !defined(_LIBCPP_DISABLE_ADDITIONAL_DIAGNOSTICS)
 # define _LIBCPP_DIAGNOSE_WARNING(...) \
-    __attribute__((__diagnose_if__(__VA_ARGS__, "warning")))
+    __attribute__((diagnose_if(__VA_ARGS__, "warning")))
 # define _LIBCPP_DIAGNOSE_ERROR(...) \
-    __attribute__((__diagnose_if__(__VA_ARGS__, "error")))
+    __attribute__((diagnose_if(__VA_ARGS__, "error")))
 #else
 # define _LIBCPP_DIAGNOSE_WARNING(...)
 # define _LIBCPP_DIAGNOSE_ERROR(...)
