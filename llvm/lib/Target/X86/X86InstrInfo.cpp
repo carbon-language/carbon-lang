@@ -1800,8 +1800,6 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VANDNPSZrr,        X86::VANDNPSZrm,          0 },
     { X86::VANDPDZrr,         X86::VANDPDZrm,           0 },
     { X86::VANDPSZrr,         X86::VANDPSZrm,           0 },
-    { X86::VBROADCASTSSZrkz,  X86::VBROADCASTSSZmkz,    TB_NO_REVERSE },
-    { X86::VBROADCASTSDZrkz,  X86::VBROADCASTSDZmkz,    TB_NO_REVERSE },
     { X86::VCMPPDZrri,        X86::VCMPPDZrmi,          0 },
     { X86::VCMPPSZrri,        X86::VCMPPSZrmi,          0 },
     { X86::VCMPSDZrr,         X86::VCMPSDZrm,           0 },
@@ -1957,9 +1955,6 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VANDPDZ256rr,      X86::VANDPDZ256rm,        0 },
     { X86::VANDPSZ128rr,      X86::VANDPSZ128rm,        0 },
     { X86::VANDPSZ256rr,      X86::VANDPSZ256rm,        0 },
-    { X86::VBROADCASTSSZ128rkz,  X86::VBROADCASTSSZ128mkz,      TB_NO_REVERSE },
-    { X86::VBROADCASTSSZ256rkz,  X86::VBROADCASTSSZ256mkz,      TB_NO_REVERSE },
-    { X86::VBROADCASTSDZ256rkz,  X86::VBROADCASTSDZ256mkz,      TB_NO_REVERSE },
     { X86::VCMPPDZ128rri,     X86::VCMPPDZ128rmi,       0 },
     { X86::VCMPPDZ256rri,     X86::VCMPPDZ256rmi,       0 },
     { X86::VCMPPSZ128rri,     X86::VCMPPSZ128rmi,       0 },
@@ -2130,6 +2125,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VXORPSZ256rr,      X86::VXORPSZ256rm,        0 },
 
     // AVX-512 masked foldable instructions
+    { X86::VBROADCASTSSZrkz,  X86::VBROADCASTSSZmkz,    TB_NO_REVERSE },
+    { X86::VBROADCASTSDZrkz,  X86::VBROADCASTSDZmkz,    TB_NO_REVERSE },
     { X86::VPERMILPDZrikz,    X86::VPERMILPDZmikz,      0 },
     { X86::VPERMILPSZrikz,    X86::VPERMILPSZmikz,      0 },
     { X86::VPERMPDZrikz,      X86::VPERMPDZmikz,        0 },
@@ -2151,6 +2148,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFLWZrikz,     X86::VPSHUFLWZmikz,       0 },
 
     // AVX-512VL 256-bit masked foldable instructions
+    { X86::VBROADCASTSDZ256rkz,  X86::VBROADCASTSDZ256mkz,      TB_NO_REVERSE },
+    { X86::VBROADCASTSSZ256rkz,  X86::VBROADCASTSSZ256mkz,      TB_NO_REVERSE },
     { X86::VPERMILPDZ256rikz, X86::VPERMILPDZ256mikz,   0 },
     { X86::VPERMILPSZ256rikz, X86::VPERMILPSZ256mikz,   0 },
     { X86::VPERMPDZ256rikz,   X86::VPERMPDZ256mikz,     0 },
@@ -2172,6 +2171,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFLWZ256rikz,  X86::VPSHUFLWZ256mikz,    0 },
 
     // AVX-512VL 128-bit masked foldable instructions
+    { X86::VBROADCASTSSZ128rkz,  X86::VBROADCASTSSZ128mkz,      TB_NO_REVERSE },
     { X86::VPERMILPDZ128rikz, X86::VPERMILPDZ128mikz,   0 },
     { X86::VPERMILPSZ128rikz, X86::VPERMILPSZ128mikz,   0 },
     { X86::VPMOVSXBDZ128rrkz, X86::VPMOVSXBDZ128rmkz,   TB_NO_REVERSE },
@@ -2274,11 +2274,6 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VBLENDMPSZrr,          X86::VBLENDMPSZrm,          0 },
     { X86::VPBLENDMDZrr,          X86::VPBLENDMDZrm,          0 },
     { X86::VPBLENDMQZrr,          X86::VPBLENDMQZrm,          0 },
-    { X86::VBROADCASTSSZrk,       X86::VBROADCASTSSZmk,       TB_NO_REVERSE },
-    { X86::VBROADCASTSDZrk,       X86::VBROADCASTSDZmk,       TB_NO_REVERSE },
-    { X86::VBROADCASTSSZ256rk,    X86::VBROADCASTSSZ256mk,    TB_NO_REVERSE },
-    { X86::VBROADCASTSDZ256rk,    X86::VBROADCASTSDZ256mk,    TB_NO_REVERSE },
-    { X86::VBROADCASTSSZ128rk,    X86::VBROADCASTSSZ128mk,    TB_NO_REVERSE },
     { X86::VPERMI2Brr,            X86::VPERMI2Brm,            0 },
     { X86::VPERMI2Drr,            X86::VPERMI2Drm,            0 },
     { X86::VPERMI2PSrr,           X86::VPERMI2PSrm,           0 },
@@ -2563,6 +2558,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VXORPSZ128rrkz,        X86::VXORPSZ128rmkz,        0 },
 
     // AVX-512 masked foldable instructions
+    { X86::VBROADCASTSSZrk,       X86::VBROADCASTSSZmk,       TB_NO_REVERSE },
+    { X86::VBROADCASTSDZrk,       X86::VBROADCASTSDZmk,       TB_NO_REVERSE },
     { X86::VPERMILPDZrik,         X86::VPERMILPDZmik,         0 },
     { X86::VPERMILPSZrik,         X86::VPERMILPSZmik,         0 },
     { X86::VPERMPDZrik,           X86::VPERMPDZmik,           0 },
@@ -2584,6 +2581,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFLWZrik,          X86::VPSHUFLWZmik,          0 },
 
     // AVX-512VL 256-bit masked foldable instructions
+    { X86::VBROADCASTSSZ256rk,    X86::VBROADCASTSSZ256mk,    TB_NO_REVERSE },
+    { X86::VBROADCASTSDZ256rk,    X86::VBROADCASTSDZ256mk,    TB_NO_REVERSE },
     { X86::VPERMILPDZ256rik,      X86::VPERMILPDZ256mik,      0 },
     { X86::VPERMILPSZ256rik,      X86::VPERMILPSZ256mik,      0 },
     { X86::VPERMPDZ256rik,        X86::VPERMPDZ256mik,        0 },
@@ -2605,6 +2604,7 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFLWZ256rik,       X86::VPSHUFLWZ256mik,       0 },
 
     // AVX-512VL 128-bit masked foldable instructions
+    { X86::VBROADCASTSSZ128rk,    X86::VBROADCASTSSZ128mk,    TB_NO_REVERSE },
     { X86::VPERMILPDZ128rik,      X86::VPERMILPDZ128mik,      0 },
     { X86::VPERMILPSZ128rik,      X86::VPERMILPSZ128mik,      0 },
     { X86::VPMOVSXBDZ128rrk,      X86::VPMOVSXBDZ128rmk,      TB_NO_REVERSE },
