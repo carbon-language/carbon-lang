@@ -8307,6 +8307,11 @@ static SDValue lowerVectorShuffleAsBitBlend(const SDLoc &DL, MVT VT, SDValue V1,
   return DAG.getNode(ISD::OR, DL, VT, V1, V2);
 }
 
+static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
+                                    SDValue PreservedSrc,
+                                    const X86Subtarget &Subtarget,
+                                    SelectionDAG &DAG);
+
 /// \brief Try to emit a blend instruction for a shuffle.
 ///
 /// This doesn't do any checks for the availability of instructions for blending
@@ -8427,6 +8432,13 @@ static SDValue lowerVectorShuffleAsBlend(const SDLoc &DL, MVT VT, SDValue V1,
   case MVT::v32i8: {
     assert((VT.is128BitVector() || Subtarget.hasAVX2()) &&
            "256-bit byte-blends require AVX2 support!");
+		   
+    if (Subtarget.hasBWI() && Subtarget.hasVLX()) {
+      MVT IntegerType =
+          MVT::getIntegerVT(std::max((int)VT.getVectorNumElements(), 8));
+      SDValue MaskNode = DAG.getConstant(BlendMask, DL, IntegerType);
+      return getVectorMaskingNode(V1, MaskNode, V2, Subtarget, DAG);
+    }
 
     // Attempt to lower to a bitmask if we can. VPAND is faster than VPBLENDVB.
     if (SDValue Masked =
@@ -8465,7 +8477,17 @@ static SDValue lowerVectorShuffleAsBlend(const SDLoc &DL, MVT VT, SDValue V1,
         VT, DAG.getNode(ISD::VSELECT, DL, BlendVT,
                         DAG.getBuildVector(BlendVT, DL, VSELECTMask), V1, V2));
   }
-
+  case MVT::v16f32:
+  case MVT::v8f64:
+  case MVT::v8i64:
+  case MVT::v16i32:
+  case MVT::v32i16:
+  case MVT::v64i8: {
+    MVT IntegerType =
+        MVT::getIntegerVT(std::max((int)VT.getVectorNumElements(), 8));
+    SDValue MaskNode = DAG.getConstant(BlendMask, DL, IntegerType);
+    return getVectorMaskingNode(V1, MaskNode, V2, Subtarget, DAG);
+  }
   default:
     llvm_unreachable("Not a supported integer vector type!");
   }
@@ -12891,6 +12913,10 @@ static SDValue lowerV8F64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                              V2, DAG, Subtarget))
     return V;
 
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8f64, V1, V2, Mask,
+                                                Zeroable, Subtarget, DAG))
+    return Blend;
+
   return lowerVectorShuffleWithPERMV(DL, MVT::v8f64, Mask, V1, V2, DAG);
 }
 
@@ -12924,6 +12950,10 @@ static SDValue lowerV16F32VectorShuffle(SDLoc DL, ArrayRef<int> Mask,
     if (SDValue Unpck =
             lowerVectorShuffleWithUNPCK(DL, MVT::v16f32, Mask, V1, V2, DAG))
       return Unpck;
+
+    if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v16f32, V1, V2, Mask,
+                                                  Zeroable, Subtarget, DAG))
+      return Blend;
 
     // Otherwise, fall back to a SHUFPS sequence.
     return lowerVectorShuffleWithSHUFPS(DL, MVT::v16f32, RepeatedMask, V1, V2, DAG);
@@ -12994,6 +13024,10 @@ static SDValue lowerV8I64VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                              V2, DAG, Subtarget))
     return V;
 
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v8i64, V1, V2, Mask,
+                                                Zeroable, Subtarget, DAG))
+    return Blend;
+
   return lowerVectorShuffleWithPERMV(DL, MVT::v8i64, Mask, V1, V2, DAG);
 }
 
@@ -13062,6 +13096,9 @@ static SDValue lowerV16I32VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
                                              V1, V2, DAG, Subtarget))
     return V;
 
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v16i32, V1, V2, Mask,
+                                                Zeroable, Subtarget, DAG))
+    return Blend;
   return lowerVectorShuffleWithPERMV(DL, MVT::v16i32, Mask, V1, V2, DAG);
 }
 
@@ -13108,6 +13145,10 @@ static SDValue lowerV32I16VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
           DL, MVT::v32i16, V1, RepeatedMask, Subtarget, DAG);
     }
   }
+
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v32i16, V1, V2, Mask,
+                                                Zeroable, Subtarget, DAG))
+    return Blend;
 
   return lowerVectorShuffleWithPERMV(DL, MVT::v32i16, Mask, V1, V2, DAG);
 }
@@ -13158,6 +13199,10 @@ static SDValue lowerV64I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (SDValue V = lowerShuffleAsRepeatedMaskAndLanePermute(
           DL, MVT::v64i8, V1, V2, Mask, Subtarget, DAG))
     return V;
+
+  if (SDValue Blend = lowerVectorShuffleAsBlend(DL, MVT::v64i8, V1, V2, Mask,
+                                                Zeroable, Subtarget, DAG))
+    return Blend;
 
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v64i8, V1, V2, Mask, DAG);
