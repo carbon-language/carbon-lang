@@ -8413,11 +8413,11 @@ static void emitPostLd(MachineBasicBlock *BB, MachineBasicBlock::iterator Pos,
         .addReg(AddrIn)
         .addImm(0)
         .add(predOps(ARMCC::AL));
-    MachineInstrBuilder MIB =
-        BuildMI(*BB, Pos, dl, TII->get(ARM::tADDi8), AddrOut);
-    MIB = AddDefaultT1CC(MIB);
-    MIB.addReg(AddrIn).addImm(LdSize);
-    MIB.add(predOps(ARMCC::AL));
+    BuildMI(*BB, Pos, dl, TII->get(ARM::tADDi8), AddrOut)
+        .add(t1CondCodeOp())
+        .addReg(AddrIn)
+        .addImm(LdSize)
+        .add(predOps(ARMCC::AL));
   } else if (IsThumb2) {
     BuildMI(*BB, Pos, dl, TII->get(LdOpc), Data)
         .addReg(AddrOut, RegState::Define)
@@ -8455,11 +8455,11 @@ static void emitPostSt(MachineBasicBlock *BB, MachineBasicBlock::iterator Pos,
         .addReg(AddrIn)
         .addImm(0)
         .add(predOps(ARMCC::AL));
-    MachineInstrBuilder MIB =
-        BuildMI(*BB, Pos, dl, TII->get(ARM::tADDi8), AddrOut);
-    MIB = AddDefaultT1CC(MIB);
-    MIB.addReg(AddrIn).addImm(StSize);
-    MIB.add(predOps(ARMCC::AL));
+    BuildMI(*BB, Pos, dl, TII->get(ARM::tADDi8), AddrOut)
+        .add(t1CondCodeOp())
+        .addReg(AddrIn)
+        .addImm(StSize)
+        .add(predOps(ARMCC::AL));
   } else if (IsThumb2) {
     BuildMI(*BB, Pos, dl, TII->get(StOpc), AddrOut)
         .addReg(Data)
@@ -8670,11 +8670,11 @@ ARMTargetLowering::EmitStructByval(MachineInstr &MI,
 
   // Decrement loop variable by UnitSize.
   if (IsThumb1) {
-    MachineInstrBuilder MIB =
-        BuildMI(*BB, BB->end(), dl, TII->get(ARM::tSUBi8), varLoop);
-    MIB = AddDefaultT1CC(MIB);
-    MIB.addReg(varPhi).addImm(UnitSize);
-    MIB.add(predOps(ARMCC::AL));
+    BuildMI(*BB, BB->end(), dl, TII->get(ARM::tSUBi8), varLoop)
+        .add(t1CondCodeOp())
+        .addReg(varPhi)
+        .addImm(UnitSize)
+        .add(predOps(ARMCC::AL));
   } else {
     MachineInstrBuilder MIB =
         BuildMI(*BB, BB->end(), dl,

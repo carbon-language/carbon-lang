@@ -517,8 +517,12 @@ void ARMLoadStoreOpt::UpdateBaseRegUses(MachineBasicBlock &MBB,
 
     if (InsertSub) {
       // An instruction above couldn't be updated, so insert a sub.
-      AddDefaultT1CC(BuildMI(MBB, MBBI, DL, TII->get(ARM::tSUBi8), Base), true)
-        .addReg(Base).addImm(WordOffset * 4).addImm(Pred).addReg(PredReg);
+      BuildMI(MBB, MBBI, DL, TII->get(ARM::tSUBi8), Base)
+          .add(t1CondCodeOp(true))
+          .addReg(Base)
+          .addImm(WordOffset * 4)
+          .addImm(Pred)
+          .addReg(PredReg);
       return;
     }
 
@@ -534,9 +538,12 @@ void ARMLoadStoreOpt::UpdateBaseRegUses(MachineBasicBlock &MBB,
     // information and *always* have to reset at the end of a block.
     // See PR21029.
     if (MBBI != MBB.end()) --MBBI;
-    AddDefaultT1CC(
-      BuildMI(MBB, MBBI, DL, TII->get(ARM::tSUBi8), Base), true)
-      .addReg(Base).addImm(WordOffset * 4).addImm(Pred).addReg(PredReg);
+    BuildMI(MBB, MBBI, DL, TII->get(ARM::tSUBi8), Base)
+        .add(t1CondCodeOp(true))
+        .addReg(Base)
+        .addImm(WordOffset * 4)
+        .addImm(Pred)
+        .addReg(PredReg);
   }
 }
 
@@ -713,10 +720,12 @@ MachineInstr *ARMLoadStoreOpt::CreateLoadStoreMulti(
           .addReg(Base, getKillRegState(KillOldBase)).addImm(Offset/4)
           .addImm(Pred).addReg(PredReg);
       } else
-        AddDefaultT1CC(
-          BuildMI(MBB, InsertBefore, DL, TII->get(BaseOpc), NewBase), true)
-          .addReg(Base, getKillRegState(KillOldBase)).addImm(Offset)
-          .addImm(Pred).addReg(PredReg);
+        BuildMI(MBB, InsertBefore, DL, TII->get(BaseOpc), NewBase)
+            .add(t1CondCodeOp(true))
+            .addReg(Base, getKillRegState(KillOldBase))
+            .addImm(Offset)
+            .addImm(Pred)
+            .addReg(PredReg);
     } else {
       BuildMI(MBB, InsertBefore, DL, TII->get(BaseOpc), NewBase)
         .addReg(Base, getKillRegState(KillOldBase)).addImm(Offset)

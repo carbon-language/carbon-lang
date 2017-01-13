@@ -787,12 +787,8 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MBB, MI, dl, NewMCID);
   MIB.add(MI->getOperand(0));
-  if (NewMCID.hasOptionalDef()) {
-    if (HasCC)
-      AddDefaultT1CC(MIB, CCDead);
-    else
-      AddNoT1CC(MIB);
-  }
+  if (NewMCID.hasOptionalDef())
+    MIB.add(HasCC ? t1CondCodeOp(CCDead) : condCodeOp());
 
   // Transfer the rest of operands.
   unsigned NumOps = MCID.getNumOperands();
@@ -882,12 +878,8 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MBB, MI, dl, NewMCID);
   MIB.add(MI->getOperand(0));
-  if (NewMCID.hasOptionalDef()) {
-    if (HasCC)
-      AddDefaultT1CC(MIB, CCDead);
-    else
-      AddNoT1CC(MIB);
-  }
+  if (NewMCID.hasOptionalDef())
+    MIB.add(HasCC ? t1CondCodeOp(CCDead) : condCodeOp());
 
   // Transfer the rest of operands.
   unsigned NumOps = MCID.getNumOperands();

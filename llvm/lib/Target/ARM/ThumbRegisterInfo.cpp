@@ -145,14 +145,17 @@ static void emitThumbRegPlusImmInReg(
     LdReg = MF.getRegInfo().createVirtualRegister(&ARM::tGPRRegClass);
 
   if (NumBytes <= 255 && NumBytes >= 0 && CanChangeCC) {
-    AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
+    BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg)
+        .add(t1CondCodeOp())
         .addImm(NumBytes)
         .setMIFlags(MIFlags);
   } else if (NumBytes < 0 && NumBytes >= -255 && CanChangeCC) {
-    AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg))
+    BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVi8), LdReg)
+        .add(t1CondCodeOp())
         .addImm(NumBytes)
         .setMIFlags(MIFlags);
-    AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII.get(ARM::tRSB), LdReg))
+    BuildMI(MBB, MBBI, dl, TII.get(ARM::tRSB), LdReg)
+        .add(t1CondCodeOp())
         .addReg(LdReg, RegState::Kill)
         .setMIFlags(MIFlags);
   } else if (ST.genExecuteOnly()) {
@@ -167,7 +170,7 @@ static void emitThumbRegPlusImmInReg(
                     : ((isHigh || !CanChangeCC) ? ARM::tADDhirr : ARM::tADDrr);
   MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opc), DestReg);
   if (Opc != ARM::tADDhirr)
-    MIB = AddDefaultT1CC(MIB);
+    MIB = MIB.add(t1CondCodeOp());
   if (DestReg == ARM::SP || isSub)
     MIB.addReg(BaseReg).addReg(LdReg, RegState::Kill);
   else
@@ -307,7 +310,7 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
 
     MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(CopyOpc), DestReg);
     if (CopyNeedsCC)
-      MIB = AddDefaultT1CC(MIB);
+      MIB = MIB.add(t1CondCodeOp());
     MIB.addReg(BaseReg, RegState::Kill);
     if (CopyOpc != ARM::tMOVr) {
       MIB.addImm(CopyImm);
@@ -324,7 +327,7 @@ void llvm::emitThumbRegPlusImmediate(MachineBasicBlock &MBB,
 
     MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(ExtraOpc), DestReg);
     if (ExtraNeedsCC)
-      MIB = AddDefaultT1CC(MIB);
+      MIB = MIB.add(t1CondCodeOp());
     MIB.addReg(BaseReg)
        .addImm(ExtraImm)
        .add(predOps(ARMCC::AL))
