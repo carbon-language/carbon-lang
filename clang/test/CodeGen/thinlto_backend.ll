@@ -8,10 +8,6 @@
 ; RUN: not %clang_cc1 -O2 -o %t1.o -x c %s -c -fthinlto-index=%t.thinlto.bc 2>&1 | FileCheck %s -check-prefix=CHECK-WARNING
 ; CHECK-WARNING: error: invalid argument '-fthinlto-index={{.*}}' only allowed with '-x ir'
 
-; Ensure sample profile pass are passed to backend
-; RUN: %clang_cc1 -emit-obj -O2 -o %t5.o -x ir %t1.o -fthinlto-index=%t.thinlto.bc -fprofile-sample-use=%S/Inputs/pgo-sample.prof -mllvm -debug-pass=Structure 2>&1 | FileCheck %s -check-prefix=CHECK-SAMPLEPGO
-; CHECK-SAMPLEPGO: Sample profile pass
-
 ; Ensure we get expected error for missing index file
 ; RUN: %clang -O2 -o %t4.o -x ir %t1.o -c -fthinlto-index=bad.thinlto.bc 2>&1 | FileCheck %s -check-prefix=CHECK-ERROR1
 ; CHECK-ERROR1: Error loading index file 'bad.thinlto.bc'
