@@ -3,6 +3,16 @@
 // RUN: %clang_cc1 -std=c++14 %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 // RUN: %clang_cc1 -std=c++1z %s -verify -fexceptions -fcxx-exceptions -pedantic-errors
 
+__extension__ typedef __SIZE_TYPE__ size_t;
+
+namespace std {
+  template<typename T> struct initializer_list {
+    const T *ptr;
+    size_t n;
+    initializer_list(const T*, size_t);
+  };
+}
+
 namespace dr1315 { // dr1315: partial
   template <int I, int J> struct A {};
   template <int I> // expected-note {{non-deducible template parameter 'I'}}
@@ -156,6 +166,15 @@ namespace dr1346 { // dr1346: 3.5
     [e({1, 2})] {} (); // expected-error {{parenthesized initializer list}} expected-error 0-1{{extension}}
 #endif
   }
+#endif
+}
+
+namespace dr1347 { // dr1347: yes
+  auto x = 5, *y = &x; // expected-error 0-1{{extension}}
+  auto z = y, *q = y; // expected-error {{'auto' deduced as 'int *' in declaration of 'z' and deduced as 'int' in declaration of 'q'}} expected-error 0-1{{extension}}
+#if __cplusplus >= 201103L
+  auto a = 5, b = {1, 2}; // expected-error {{'auto' deduced as 'int' in declaration of 'a' and deduced as 'std::initializer_list<int>' in declaration of 'b'}}
+  auto (*fp)(int) -> int, i = 0; // expected-error {{declaration with trailing return type must be the only declaration in its group}}
 #endif
 }
 
