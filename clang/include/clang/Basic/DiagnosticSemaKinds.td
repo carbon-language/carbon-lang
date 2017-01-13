@@ -316,6 +316,9 @@ def warn_unneeded_member_function : Warning<
   InGroup<UnneededMemberFunction>, DefaultIgnore;
 def warn_unused_private_field: Warning<"private field %0 is not used">,
   InGroup<UnusedPrivateField>, DefaultIgnore;
+def warn_unused_lambda_capture: Warning<"lambda capture %0 is not "
+  "%select{used|required to be captured for use in an unevaluated context}1">,
+  InGroup<UnusedLambdaCapture>, DefaultIgnore;
 
 def warn_parameter_size: Warning<
   "%0 is a large (%1 bytes) pass-by-value argument; "

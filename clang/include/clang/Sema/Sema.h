@@ -5323,6 +5323,9 @@ public:
   ExprResult ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                              Scope *CurScope);
 
+  /// \brief Diagnose if an explicit lambda capture is unused.
+  void DiagnoseUnusedLambdaCapture(const sema::LambdaScopeInfo::Capture &From);
+
   /// \brief Complete a lambda-expression having processed and attached the
   /// lambda body.
   ExprResult BuildLambdaExpr(SourceLocation StartLoc, SourceLocation EndLoc,
