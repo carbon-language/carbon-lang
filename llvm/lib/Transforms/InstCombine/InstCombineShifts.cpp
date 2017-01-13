@@ -723,8 +723,9 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
   if (Instruction *V = commonShiftTransforms(I))
     return V;
 
-  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-    unsigned ShAmt = Op1C->getZExtValue();
+  const APInt *ShAmtAPInt;
+  if (match(Op1, m_APInt(ShAmtAPInt))) {
+    unsigned ShAmt = ShAmtAPInt->getZExtValue();
 
     // Turn:
     //  %zext = zext i32 %V to i64
@@ -748,7 +749,8 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
     // If the shifted-out value is known-zero, then this is a NUW shift.
     if (!I.hasNoUnsignedWrap() &&
         MaskedValueIsZero(
-            Op0, APInt::getHighBitsSet(Op1C->getBitWidth(), ShAmt), 0, &I)) {
+            Op0, APInt::getHighBitsSet(ShAmtAPInt->getBitWidth(), ShAmt), 0,
+            &I)) {
       I.setHasNoUnsignedWrap();
       return &I;
     }

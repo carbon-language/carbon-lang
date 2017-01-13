@@ -455,7 +455,7 @@ define i32 @test25(i32 %tmp.2, i32 %AA) {
 define <2 x i32> @test25_vector(<2 x i32> %tmp.2, <2 x i32> %AA) {
 ; CHECK-LABEL: @test25_vector(
 ; CHECK-NEXT:    [[TMP_3:%.*]] = lshr <2 x i32> %tmp.2, <i32 17, i32 17>
-; CHECK-NEXT:    [[TMP_51:%.*]] = shl <2 x i32> [[TMP_3]], <i32 17, i32 17>
+; CHECK-NEXT:    [[TMP_51:%.*]] = shl nuw <2 x i32> [[TMP_3]], <i32 17, i32 17>
 ; CHECK-NEXT:    [[X2:%.*]] = add <2 x i32> [[TMP_51]], %AA
 ; CHECK-NEXT:    [[TMP_6:%.*]] = and <2 x i32> [[X2]], <i32 -131072, i32 -131072>
 ; CHECK-NEXT:    ret <2 x i32> [[TMP_6]]
@@ -671,7 +671,7 @@ define i64 @test37(i128 %A, i32 %B) {
 define <2 x i32> @shl_nuw_nsw_splat_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @shl_nuw_nsw_splat_vec(
 ; CHECK-NEXT:    [[T2:%.*]] = zext <2 x i8> %x to <2 x i32>
-; CHECK-NEXT:    [[T3:%.*]] = shl <2 x i32> [[T2]], <i32 17, i32 17>
+; CHECK-NEXT:    [[T3:%.*]] = shl nuw nsw <2 x i32> [[T2]], <i32 17, i32 17>
 ; CHECK-NEXT:    ret <2 x i32> [[T3]]
 ;
   %t2 = zext <2 x i8> %x to <2 x i32>
@@ -1070,8 +1070,8 @@ define i64 @test_64(i32 %t) {
 define <2 x i64> @test_64_splat_vec(<2 x i32> %t) {
 ; CHECK-LABEL: @test_64_splat_vec(
 ; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> %t, <i32 16777215, i32 16777215>
-; CHECK-NEXT:    [[EXT:%.*]] = zext <2 x i32> [[AND]] to <2 x i64>
-; CHECK-NEXT:    [[SHL:%.*]] = shl <2 x i64> [[EXT]], <i64 8, i64 8>
+; CHECK-NEXT:    [[TMP1:%.*]] = shl nuw <2 x i32> [[AND]], <i32 8, i32 8>
+; CHECK-NEXT:    [[SHL:%.*]] = zext <2 x i32> [[TMP1]] to <2 x i64>
 ; CHECK-NEXT:    ret <2 x i64> [[SHL]]
 ;
   %and = and <2 x i32> %t, <i32 16777215, i32 16777215>
