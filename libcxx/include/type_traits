@@ -4715,15 +4715,6 @@ struct __can_extract_map_key<_ValTy, _Key, _Key, _RawValTy>
 
 #endif
 
-template <class _Comp, class _ValueType, class = void>
-struct __is_const_comparable : false_type {};
-
-template <class _Comp, class _ValueType>
-struct __is_const_comparable<_Comp, _ValueType, typename __void_t<
-    decltype(_VSTD::declval<_Comp const&>()(_VSTD::declval<_ValueType const&>(),
-                                            _VSTD::declval<_ValueType const&>()))
-  >::type> : true_type {};
-
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_TYPE_TRAITS

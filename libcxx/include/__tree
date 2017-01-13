@@ -963,7 +963,7 @@ private:
 template <class _Tp, class _Compare, class _Allocator>
 struct __diagnose_tree_helper {
   static constexpr bool __trigger_diagnostics()
-      _LIBCPP_DIAGNOSE_WARNING(!__is_const_comparable<_Compare, _Tp>::value,
+      _LIBCPP_DIAGNOSE_WARNING(!__invokable<_Compare const&, _Tp const&, _Tp const&>::value,
             "the specified comparator type does not provide a const call operator")
   { return true; }
 };
@@ -973,15 +973,10 @@ struct __diagnose_tree_helper<
     __value_type<_Key, _Value>,
     __map_value_compare<_Key, __value_type<_Key, _Value>, _KeyComp>,
     _Alloc
->
+> : __diagnose_tree_helper<_Key, _KeyComp, _Alloc>
 {
-  static constexpr bool __trigger_diagnostics()
-      _LIBCPP_DIAGNOSE_WARNING(!__is_const_comparable<_KeyComp, _Key>::value,
-            "the specified comparator type does not provide a const call operator")
-  { return true; }
 };
-
-#endif
+#endif // !_LIBCPP_CXX03_LANG
 
 template <class _Tp, class _Compare, class _Allocator>
 class __tree
