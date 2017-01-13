@@ -172,7 +172,8 @@ addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
 
     // Pass to reset the MachineFunction if the ISel failed.
     PM.add(createResetMachineFunctionPass(
-        PassConfig->reportDiagnosticWhenGlobalISelFallback()));
+        PassConfig->reportDiagnosticWhenGlobalISelFallback(),
+        PassConfig->isGlobalISelAbortEnabled()));
 
     // Provide a fallback path when we do not want to abort on
     // not-yet-supported input.
