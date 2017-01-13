@@ -89,43 +89,32 @@ StringRef ARMAttributeParser::ParseString(const uint8_t *Data,
 
 void ARMAttributeParser::IntegerAttribute(AttrType Tag, const uint8_t *Data,
                                           uint32_t &Offset) {
-
-  uint64_t Value = ParseInteger(Data, Offset);
-  Attributes.insert(std::make_pair(Tag, Value));
-
-  if (SW)
-    SW->printNumber(ARMBuildAttrs::AttrTypeAsString(Tag), Value);
+  SW.printNumber(ARMBuildAttrs::AttrTypeAsString(Tag),
+                 ParseInteger(Data, Offset));
 }
 
 void ARMAttributeParser::StringAttribute(AttrType Tag, const uint8_t *Data,
                                          uint32_t &Offset) {
   StringRef TagName = ARMBuildAttrs::AttrTypeAsString(Tag, /*TagPrefix*/false);
-  StringRef ValueDesc = ParseString(Data, Offset);
 
-  if (SW) {
-    DictScope AS(*SW, "Attribute");
-    SW->printNumber("Tag", Tag);
-    if (!TagName.empty())
-      SW->printString("TagName", TagName);
-    SW->printString("Value", ValueDesc);
-  }
+  DictScope AS(SW, "Attribute");
+  SW.printNumber("Tag", Tag);
+  if (!TagName.empty())
+    SW.printString("TagName", TagName);
+  SW.printString("Value", ParseString(Data, Offset));
 }
 
 void ARMAttributeParser::PrintAttribute(unsigned Tag, unsigned Value,
                                         StringRef ValueDesc) {
-  Attributes.insert(std::make_pair(Tag, Value));
+  StringRef TagName = ARMBuildAttrs::AttrTypeAsString(Tag, /*TagPrefix*/false);
 
-  if (SW) {
-    StringRef TagName = ARMBuildAttrs::AttrTypeAsString(Tag,
-                                                        /*TagPrefix*/false);
-    DictScope AS(*SW, "Attribute");
-    SW->printNumber("Tag", Tag);
-    SW->printNumber("Value", Value);
-    if (!TagName.empty())
-      SW->printString("TagName", TagName);
-    if (!ValueDesc.empty())
-      SW->printString("Description", ValueDesc);
-  }
+  DictScope AS(SW, "Attribute");
+  SW.printNumber("Tag", Tag);
+  SW.printNumber("Value", Value);
+  if (!TagName.empty())
+    SW.printString("TagName", TagName);
+  if (!ValueDesc.empty())
+    SW.printString("Description", ValueDesc);
 }
 
 void ARMAttributeParser::CPU_arch(AttrType Tag, const uint8_t *Data,
@@ -460,22 +449,20 @@ void ARMAttributeParser::compatibility(AttrType Tag, const uint8_t *Data,
   uint64_t Integer = ParseInteger(Data, Offset);
   StringRef String = ParseString(Data, Offset);
 
-  if (SW) {
-    DictScope AS(*SW, "Attribute");
-    SW->printNumber("Tag", Tag);
-    SW->startLine() << "Value: " << Integer << ", " << String << '\n';
-    SW->printString("TagName", AttrTypeAsString(Tag, /*TagPrefix*/false));
-    switch (Integer) {
-    case 0:
-      SW->printString("Description", StringRef("No Specific Requirements"));
-      break;
-    case 1:
-      SW->printString("Description", StringRef("AEABI Conformant"));
-      break;
-    default:
-      SW->printString("Description", StringRef("AEABI Non-Conformant"));
-      break;
-    }
+  DictScope AS(SW, "Attribute");
+  SW.printNumber("Tag", Tag);
+  SW.startLine() << "Value: " << Integer << ", " << String << '\n';
+  SW.printString("TagName", AttrTypeAsString(Tag, /*TagPrefix*/false));
+  switch (Integer) {
+  case 0:
+    SW.printString("Description", StringRef("No Specific Requirements"));
+    break;
+  case 1:
+    SW.printString("Description", StringRef("AEABI Conformant"));
+    break;
+  default:
+    SW.printString("Description", StringRef("AEABI Non-Conformant"));
+    break;
   }
 }
 
@@ -617,32 +604,26 @@ void ARMAttributeParser::ParseAttributeList(const uint8_t *Data,
 void ARMAttributeParser::ParseSubsection(const uint8_t *Data, uint32_t Length) {
   uint32_t Offset = sizeof(uint32_t); /* SectionLength */
 
+  SW.printNumber("SectionLength", Length);
+
   const char *VendorName = reinterpret_cast<const char*>(Data + Offset);
   size_t VendorNameLength = std::strlen(VendorName);
+  SW.printString("Vendor", StringRef(VendorName, VendorNameLength));
   Offset = Offset + VendorNameLength + 1;
 
-  if (SW) {
-    SW->printNumber("SectionLength", Length);
-    SW->printString("Vendor", StringRef(VendorName, VendorNameLength));
-  }
-
-  if (StringRef(VendorName, VendorNameLength).lower() != "aeabi") {
+  if (StringRef(VendorName, VendorNameLength).lower() != "aeabi")
     return;
-  }
 
   while (Offset < Length) {
     /// Tag_File | Tag_Section | Tag_Symbol   uleb128:byte-size
     uint8_t Tag = Data[Offset];
+    SW.printEnum("Tag", Tag, makeArrayRef(TagNames));
     Offset = Offset + sizeof(Tag);
 
     uint32_t Size =
       *reinterpret_cast<const support::ulittle32_t*>(Data + Offset);
+    SW.printNumber("Size", Size);
     Offset = Offset + sizeof(Size);
-
-    if (SW) {
-      SW->printEnum("Tag", Tag, makeArrayRef(TagNames));
-      SW->printNumber("Size", Size);
-    }
 
     if (Size > Length) {
       errs() << "subsection length greater than section length\n";
@@ -670,37 +651,31 @@ void ARMAttributeParser::ParseSubsection(const uint8_t *Data, uint32_t Length) {
       return;
     }
 
-    if (SW) {
-      DictScope ASS(*SW, ScopeName);
-      if (!Indicies.empty())
-        SW->printList(IndexName, Indicies);
-    }
+    DictScope ASS(SW, ScopeName);
+
+    if (!Indicies.empty())
+      SW.printList(IndexName, Indicies);
 
     ParseAttributeList(Data, Offset, Length);
   }
 }
 
-void ARMAttributeParser::Parse(ArrayRef<uint8_t> Section, bool isLittle) {
+void ARMAttributeParser::Parse(ArrayRef<uint8_t> Section) {
   size_t Offset = 1;
   unsigned SectionNumber = 0;
 
   while (Offset < Section.size()) {
     uint32_t SectionLength =
-        isLittle ? support::endian::read32le(Section.data() + Offset)
-                 : support::endian::read32be(Section.data() + Offset);
+      *reinterpret_cast<const support::ulittle32_t*>(Section.data() + Offset);
 
-    if (SW) {
-      SW->startLine() << "Section " << ++SectionNumber << " {\n";
-      SW->indent();
-    }
+    SW.startLine() << "Section " << ++SectionNumber << " {\n";
+    SW.indent();
 
     ParseSubsection(Section.data() + Offset, SectionLength);
     Offset = Offset + SectionLength;
 
-    if (SW) {
-      SW->unindent();
-      SW->startLine() << "}\n";
-    }
+    SW.unindent();
+    SW.startLine() << "}\n";
   }
 }
 }

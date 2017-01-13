@@ -13,15 +13,11 @@
 #include "ARMBuildAttributes.h"
 #include "ScopedPrinter.h"
 
-#include <map>
-
 namespace llvm {
 class StringRef;
 
 class ARMAttributeParser {
-  ScopedPrinter *SW;
-
-  std::map<unsigned, unsigned> Attributes;
+  ScopedPrinter &SW;
 
   struct DisplayHandler {
     ARMBuildAttrs::AttrType Attribute;
@@ -119,19 +115,9 @@ class ARMAttributeParser {
                       SmallVectorImpl<uint8_t> &IndexList);
   void ParseSubsection(const uint8_t *Data, uint32_t Length);
 public:
-  ARMAttributeParser(ScopedPrinter *SW) : SW(SW) {}
+  ARMAttributeParser(ScopedPrinter &SW) : SW(SW) {}
 
-  ARMAttributeParser() : SW(nullptr) { }
-
-  void Parse(ArrayRef<uint8_t> Section, bool isLittle);
-
-  bool hasAttribute(unsigned Tag) const {
-    return Attributes.count(Tag);
-  }
-
-  unsigned getAttributeValue(unsigned Tag) const {
-    return Attributes.find(Tag)->second;
-  }
+  void Parse(ArrayRef<uint8_t> Section);
 };
 
 }
