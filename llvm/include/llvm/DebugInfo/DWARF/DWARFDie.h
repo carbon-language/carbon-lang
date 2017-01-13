@@ -287,10 +287,11 @@ public:
   getInlinedChainForAddress(const uint64_t Address,
                             SmallVectorImpl<DWARFDie> &InlinedChain) const;
 
+  class attribute_iterator;
+
   /// Get an iterator range to all attributes in the current DIE only.
   ///
   /// \returns an iterator range for the attributes of the current DIE.
-  class attribute_iterator;
   iterator_range<attribute_iterator> attributes() const;
   
   class iterator;
