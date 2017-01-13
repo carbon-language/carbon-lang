@@ -3565,7 +3565,7 @@ void X86InstrInfo::reMaterialize(MachineBasicBlock &MBB,
 
     const DebugLoc &DL = Orig.getDebugLoc();
     BuildMI(MBB, I, DL, get(X86::MOV32ri))
-        .addOperand(Orig.getOperand(0))
+        .add(Orig.getOperand(0))
         .addImm(Value);
   } else {
     MachineInstr *MI = MBB.getParent()->CloneMachineInstr(&Orig);
@@ -3650,10 +3650,10 @@ bool X86InstrInfo::classifyLEAReg(MachineInstr &MI, const MachineOperand &Src,
     // Virtual register of the wrong class, we have to create a temporary 64-bit
     // vreg to feed into the LEA.
     NewSrc = MF.getRegInfo().createVirtualRegister(RC);
-    MachineInstr *Copy = BuildMI(*MI.getParent(), MI, MI.getDebugLoc(),
-                                 get(TargetOpcode::COPY))
-        .addReg(NewSrc, RegState::Define | RegState::Undef, X86::sub_32bit)
-        .addOperand(Src);
+    MachineInstr *Copy =
+        BuildMI(*MI.getParent(), MI, MI.getDebugLoc(), get(TargetOpcode::COPY))
+            .addReg(NewSrc, RegState::Define | RegState::Undef, X86::sub_32bit)
+            .add(Src);
 
     // Which is obviously going to be dead after we're done with it.
     isKill = true;
@@ -3819,10 +3819,10 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return nullptr;
 
     NewMI = BuildMI(MF, MI.getDebugLoc(), get(X86::LEA64r))
-                .addOperand(Dest)
+                .add(Dest)
                 .addReg(0)
                 .addImm(1ULL << ShAmt)
-                .addOperand(Src)
+                .add(Src)
                 .addImm(0)
                 .addReg(0);
     break;
@@ -3844,14 +3844,14 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
     MachineInstrBuilder MIB =
         BuildMI(MF, MI.getDebugLoc(), get(Opc))
-            .addOperand(Dest)
+            .add(Dest)
             .addReg(0)
             .addImm(1ULL << ShAmt)
             .addReg(SrcReg, getKillRegState(isKill) | getUndefRegState(isUndef))
             .addImm(0)
             .addReg(0);
     if (ImplicitOp.getReg() != 0)
-      MIB.addOperand(ImplicitOp);
+      MIB.add(ImplicitOp);
     NewMI = MIB;
 
     break;
@@ -3865,10 +3865,10 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MI, LV)
                      : nullptr;
     NewMI = BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r))
-                .addOperand(Dest)
+                .add(Dest)
                 .addReg(0)
                 .addImm(1ULL << ShAmt)
-                .addOperand(Src)
+                .add(Src)
                 .addImm(0)
                 .addReg(0);
     break;
@@ -3887,11 +3887,11 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 
     MachineInstrBuilder MIB =
         BuildMI(MF, MI.getDebugLoc(), get(Opc))
-            .addOperand(Dest)
+            .add(Dest)
             .addReg(SrcReg,
                     getKillRegState(isKill) | getUndefRegState(isUndef));
     if (ImplicitOp.getReg() != 0)
-      MIB.addOperand(ImplicitOp);
+      MIB.add(ImplicitOp);
 
     NewMI = addOffset(MIB, 1);
     break;
@@ -3901,10 +3901,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MI, LV)
                      : nullptr;
     assert(MI.getNumOperands() >= 2 && "Unknown inc instruction!");
-    NewMI = addOffset(BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r))
-                          .addOperand(Dest)
-                          .addOperand(Src),
-                      1);
+    NewMI = addOffset(
+        BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r)).add(Dest).add(Src), 1);
     break;
   case X86::DEC64r:
   case X86::DEC32r: {
@@ -3920,11 +3918,11 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return nullptr;
 
     MachineInstrBuilder MIB = BuildMI(MF, MI.getDebugLoc(), get(Opc))
-                                  .addOperand(Dest)
+                                  .add(Dest)
                                   .addReg(SrcReg, getUndefRegState(isUndef) |
                                                       getKillRegState(isKill));
     if (ImplicitOp.getReg() != 0)
-      MIB.addOperand(ImplicitOp);
+      MIB.add(ImplicitOp);
 
     NewMI = addOffset(MIB, -1);
 
@@ -3935,10 +3933,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MI, LV)
                      : nullptr;
     assert(MI.getNumOperands() >= 2 && "Unknown dec instruction!");
-    NewMI = addOffset(BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r))
-                          .addOperand(Dest)
-                          .addOperand(Src),
-                      -1);
+    NewMI = addOffset(
+        BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r)).add(Dest).add(Src), -1);
     break;
   case X86::ADD64rr:
   case X86::ADD64rr_DB:
@@ -3966,12 +3962,11 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                         SrcReg2, isKill2, isUndef2, ImplicitOp2, LV))
       return nullptr;
 
-    MachineInstrBuilder MIB =
-        BuildMI(MF, MI.getDebugLoc(), get(Opc)).addOperand(Dest);
+    MachineInstrBuilder MIB = BuildMI(MF, MI.getDebugLoc(), get(Opc)).add(Dest);
     if (ImplicitOp.getReg() != 0)
-      MIB.addOperand(ImplicitOp);
+      MIB.add(ImplicitOp);
     if (ImplicitOp2.getReg() != 0)
-      MIB.addOperand(ImplicitOp2);
+      MIB.add(ImplicitOp2);
 
     NewMI = addRegReg(MIB, SrcReg, isKill, SrcReg2, isKill2);
 
@@ -3991,9 +3986,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     assert(MI.getNumOperands() >= 3 && "Unknown add instruction!");
     unsigned Src2 = MI.getOperand(2).getReg();
     bool isKill2 = MI.getOperand(2).isKill();
-    NewMI = addRegReg(
-        BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r)).addOperand(Dest),
-        Src.getReg(), Src.isKill(), Src2, isKill2);
+    NewMI = addRegReg(BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r)).add(Dest),
+                      Src.getReg(), Src.isKill(), Src2, isKill2);
 
     // Preserve undefness of the operands.
     bool isUndef = MI.getOperand(1).isUndef();
@@ -4010,10 +4004,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   case X86::ADD64ri32_DB:
   case X86::ADD64ri8_DB:
     assert(MI.getNumOperands() >= 3 && "Unknown add instruction!");
-    NewMI = addOffset(BuildMI(MF, MI.getDebugLoc(), get(X86::LEA64r))
-                          .addOperand(Dest)
-                          .addOperand(Src),
-                      MI.getOperand(2));
+    NewMI = addOffset(
+        BuildMI(MF, MI.getDebugLoc(), get(X86::LEA64r)).add(Dest).add(Src),
+        MI.getOperand(2));
     break;
   case X86::ADD32ri:
   case X86::ADD32ri8:
@@ -4030,11 +4023,11 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return nullptr;
 
     MachineInstrBuilder MIB = BuildMI(MF, MI.getDebugLoc(), get(Opc))
-                                  .addOperand(Dest)
+                                  .add(Dest)
                                   .addReg(SrcReg, getUndefRegState(isUndef) |
                                                       getKillRegState(isKill));
     if (ImplicitOp.getReg() != 0)
-      MIB.addOperand(ImplicitOp);
+      MIB.add(ImplicitOp);
 
     NewMI = addOffset(MIB, MI.getOperand(2));
     break;
@@ -4047,10 +4040,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return is64Bit ? convertToThreeAddressWithLEA(MIOpc, MFI, MI, LV)
                      : nullptr;
     assert(MI.getNumOperands() >= 3 && "Unknown add instruction!");
-    NewMI = addOffset(BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r))
-                          .addOperand(Dest)
-                          .addOperand(Src),
-                      MI.getOperand(2));
+    NewMI = addOffset(
+        BuildMI(MF, MI.getDebugLoc(), get(X86::LEA16r)).add(Dest).add(Src),
+        MI.getOperand(2));
     break;
   }
 
@@ -6040,7 +6032,7 @@ void X86InstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   DebugLoc DL;
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
+    MIB.add(Addr[i]);
   MIB.addReg(SrcReg, getKillRegState(isKill));
   (*MIB).setMemRefs(MMOBegin, MMOEnd);
   NewMIs.push_back(MIB);
@@ -6075,7 +6067,7 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   DebugLoc DL;
   MachineInstrBuilder MIB = BuildMI(MF, DL, get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB.addOperand(Addr[i]);
+    MIB.add(Addr[i]);
   (*MIB).setMemRefs(MMOBegin, MMOEnd);
   NewMIs.push_back(MIB);
 }
@@ -6935,7 +6927,7 @@ static void addOperands(MachineInstrBuilder &MIB, ArrayRef<MachineOperand> MOs,
   if (NumAddrOps < 4) {
     // FrameIndex only - add an immediate offset (whether its zero or not).
     for (unsigned i = 0; i != NumAddrOps; ++i)
-      MIB.addOperand(MOs[i]);
+      MIB.add(MOs[i]);
     addOffset(MIB, PtrOffset);
   } else {
     // General Memory Addressing - we need to add any offset to an existing
@@ -6946,7 +6938,7 @@ static void addOperands(MachineInstrBuilder &MIB, ArrayRef<MachineOperand> MOs,
       if (i == 3 && PtrOffset != 0) {
         MIB.addDisp(MO, PtrOffset);
       } else {
-        MIB.addOperand(MO);
+        MIB.add(MO);
       }
     }
   }
@@ -6968,11 +6960,11 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
   unsigned NumOps = MI.getDesc().getNumOperands() - 2;
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI.getOperand(i + 2);
-    MIB.addOperand(MO);
+    MIB.add(MO);
   }
   for (unsigned i = NumOps + 2, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
-    MIB.addOperand(MO);
+    MIB.add(MO);
   }
 
   MachineBasicBlock *MBB = InsertPt->getParent();
@@ -6997,7 +6989,7 @@ static MachineInstr *FuseInst(MachineFunction &MF, unsigned Opcode,
       assert(MO.isReg() && "Expected to fold into reg operand!");
       addOperands(MIB, MOs, PtrOffset);
     } else {
-      MIB.addOperand(MO);
+      MIB.add(MO);
     }
   }
 
@@ -7875,11 +7867,11 @@ bool X86InstrInfo::unfoldMemoryOperand(
   if (FoldedStore)
     MIB.addReg(Reg, RegState::Define);
   for (MachineOperand &BeforeOp : BeforeOps)
-    MIB.addOperand(BeforeOp);
+    MIB.add(BeforeOp);
   if (FoldedLoad)
     MIB.addReg(Reg);
   for (MachineOperand &AfterOp : AfterOps)
-    MIB.addOperand(AfterOp);
+    MIB.add(AfterOp);
   for (MachineOperand &ImpOp : ImpOps) {
     MIB.addReg(ImpOp.getReg(),
                getDefRegState(ImpOp.isDef()) |

@@ -97,9 +97,9 @@ void ARMExpandPseudo::TransferImpOps(MachineInstr &OldMI,
     const MachineOperand &MO = OldMI.getOperand(i);
     assert(MO.isReg() && MO.getReg());
     if (MO.isUse())
-      UseMI.addOperand(MO);
+      UseMI.add(MO);
     else
-      DefMI.addOperand(MO);
+      DefMI.add(MO);
   }
 }
 
@@ -415,14 +415,14 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI) {
     MIB.addReg(D3, RegState::Define | getDeadRegState(DstIsDead));
 
   if (TableEntry->isUpdating)
-    MIB.addOperand(MI.getOperand(OpIdx++));
+    MIB.add(MI.getOperand(OpIdx++));
 
   // Copy the addrmode6 operands.
-  MIB.addOperand(MI.getOperand(OpIdx++));
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
   // Copy the am6offset operand.
   if (TableEntry->hasWritebackOperand)
-    MIB.addOperand(MI.getOperand(OpIdx++));
+    MIB.add(MI.getOperand(OpIdx++));
 
   // For an instruction writing double-spaced subregs, the pseudo instruction
   // has an extra operand that is a use of the super-register.  Record the
@@ -432,15 +432,15 @@ void ARMExpandPseudo::ExpandVLD(MachineBasicBlock::iterator &MBBI) {
     SrcOpIdx = OpIdx++;
 
   // Copy the predicate operands.
-  MIB.addOperand(MI.getOperand(OpIdx++));
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
 
   // Copy the super-register source operand used for double-spaced subregs over
   // to the new instruction as an implicit operand.
   if (SrcOpIdx != 0) {
     MachineOperand MO = MI.getOperand(SrcOpIdx);
     MO.setImplicit(true);
-    MIB.addOperand(MO);
+    MIB.add(MO);
   }
   // Add an implicit def for the super-register.
   MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
@@ -467,14 +467,14 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
                                     TII->get(TableEntry->RealOpc));
   unsigned OpIdx = 0;
   if (TableEntry->isUpdating)
-    MIB.addOperand(MI.getOperand(OpIdx++));
+    MIB.add(MI.getOperand(OpIdx++));
 
   // Copy the addrmode6 operands.
-  MIB.addOperand(MI.getOperand(OpIdx++));
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
   // Copy the am6offset operand.
   if (TableEntry->hasWritebackOperand)
-    MIB.addOperand(MI.getOperand(OpIdx++));
+    MIB.add(MI.getOperand(OpIdx++));
 
   bool SrcIsKill = MI.getOperand(OpIdx).isKill();
   bool SrcIsUndef = MI.getOperand(OpIdx).isUndef();
@@ -490,8 +490,8 @@ void ARMExpandPseudo::ExpandVST(MachineBasicBlock::iterator &MBBI) {
     MIB.addReg(D3, getUndefRegState(SrcIsUndef));
 
   // Copy the predicate operands.
-  MIB.addOperand(MI.getOperand(OpIdx++));
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
 
   if (SrcIsKill && !SrcIsUndef) // Add an implicit kill for the super-reg.
     MIB->addRegisterKilled(SrcReg, TRI, true);
@@ -549,14 +549,14 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
   }
 
   if (TableEntry->isUpdating)
-    MIB.addOperand(MI.getOperand(OpIdx++));
+    MIB.add(MI.getOperand(OpIdx++));
 
   // Copy the addrmode6 operands.
-  MIB.addOperand(MI.getOperand(OpIdx++));
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
   // Copy the am6offset operand.
   if (TableEntry->hasWritebackOperand)
-    MIB.addOperand(MI.getOperand(OpIdx++));
+    MIB.add(MI.getOperand(OpIdx++));
 
   // Grab the super-register source.
   MachineOperand MO = MI.getOperand(OpIdx++);
@@ -579,12 +579,12 @@ void ARMExpandPseudo::ExpandLaneOp(MachineBasicBlock::iterator &MBBI) {
   OpIdx += 1;
 
   // Copy the predicate operands.
-  MIB.addOperand(MI.getOperand(OpIdx++));
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
 
   // Copy the super-register source to be an implicit source.
   MO.setImplicit(true);
-  MIB.addOperand(MO);
+  MIB.add(MO);
   if (TableEntry->IsLoad)
     // Add an implicit def for the super-register.
     MIB.addReg(DstReg, RegState::ImplicitDefine | getDeadRegState(DstIsDead));
@@ -605,9 +605,9 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   unsigned OpIdx = 0;
 
   // Transfer the destination register operand.
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
   if (IsExt)
-    MIB.addOperand(MI.getOperand(OpIdx++));
+    MIB.add(MI.getOperand(OpIdx++));
 
   bool SrcIsKill = MI.getOperand(OpIdx).isKill();
   unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
@@ -616,11 +616,11 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   MIB.addReg(D0);
 
   // Copy the other source register operand.
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
 
   // Copy the predicate operands.
-  MIB.addOperand(MI.getOperand(OpIdx++));
-  MIB.addOperand(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
+  MIB.add(MI.getOperand(OpIdx++));
 
   // Add an implicit kill and use for the super-reg.
   MIB.addReg(SrcReg, RegState::Implicit | getKillRegState(SrcIsKill));
@@ -819,7 +819,7 @@ bool ARMExpandPseudo::ExpandCMP_SWAP(MachineBasicBlock &MBB,
   unsigned CMPrr = IsThumb ? ARM::tCMPhir : ARM::CMPrr;
   BuildMI(LoadCmpBB, DL, TII->get(CMPrr))
       .addReg(Dest.getReg(), getKillRegState(Dest.isDead()))
-      .addOperand(Desired)
+      .add(Desired)
       .add(predOps(ARMCC::AL));
   unsigned Bcc = IsThumb ? ARM::tBcc : ARM::Bcc;
   BuildMI(LoadCmpBB, DL, TII->get(Bcc))
@@ -839,8 +839,8 @@ bool ARMExpandPseudo::ExpandCMP_SWAP(MachineBasicBlock &MBB,
 
 
   MIB = BuildMI(StoreBB, DL, TII->get(StrexOp), StatusReg);
-  MIB.addOperand(New);
-  MIB.addOperand(Addr);
+  MIB.add(New);
+  MIB.add(Addr);
   if (StrexOp == ARM::t2STREX)
     MIB.addImm(0); // a 32-bit Thumb strex (only) allows an offset.
   MIB.add(predOps(ARMCC::AL));
@@ -961,7 +961,7 @@ bool ARMExpandPseudo::ExpandCMP_SWAP_64(MachineBasicBlock &MBB,
   unsigned STREXD = IsThumb ? ARM::t2STREXD : ARM::STREXD;
   MIB = BuildMI(StoreBB, DL, TII->get(STREXD), StatusReg);
   addExclusiveRegPair(MIB, New, 0, IsThumb, TRI);
-  MIB.addOperand(Addr).add(predOps(ARMCC::AL));
+  MIB.add(Addr).add(predOps(ARMCC::AL));
 
   unsigned CMPri = IsThumb ? ARM::t2CMPri : ARM::CMPri;
   BuildMI(StoreBB, DL, TII->get(CMPri))
@@ -1049,9 +1049,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned newOpc = Opcode == ARM::VMOVScc ? ARM::VMOVS : ARM::VMOVD;
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(newOpc),
               MI.getOperand(1).getReg())
-        .addOperand(MI.getOperand(2))
-        .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addOperand(MI.getOperand(4));
+          .add(MI.getOperand(2))
+          .addImm(MI.getOperand(3).getImm()) // 'pred'
+          .add(MI.getOperand(4));
 
       MI.eraseFromParent();
       return true;
@@ -1061,10 +1061,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned Opc = AFI->isThumbFunction() ? ARM::t2MOVr : ARM::MOVr;
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc),
               MI.getOperand(1).getReg())
-        .addOperand(MI.getOperand(2))
-        .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addOperand(MI.getOperand(4))
-        .addReg(0); // 's' bit
+          .add(MI.getOperand(2))
+          .addImm(MI.getOperand(3).getImm()) // 'pred'
+          .add(MI.getOperand(4))
+          .addReg(0); // 's' bit
 
       MI.eraseFromParent();
       return true;
@@ -1072,11 +1072,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::MOVCCsi: {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
               (MI.getOperand(1).getReg()))
-        .addOperand(MI.getOperand(2))
-        .addImm(MI.getOperand(3).getImm())
-        .addImm(MI.getOperand(4).getImm()) // 'pred'
-        .addOperand(MI.getOperand(5))
-        .addReg(0); // 's' bit
+          .add(MI.getOperand(2))
+          .addImm(MI.getOperand(3).getImm())
+          .addImm(MI.getOperand(4).getImm()) // 'pred'
+          .add(MI.getOperand(5))
+          .addReg(0); // 's' bit
 
       MI.eraseFromParent();
       return true;
@@ -1084,12 +1084,12 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     case ARM::MOVCCsr: {
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsr),
               (MI.getOperand(1).getReg()))
-        .addOperand(MI.getOperand(2))
-        .addOperand(MI.getOperand(3))
-        .addImm(MI.getOperand(4).getImm())
-        .addImm(MI.getOperand(5).getImm()) // 'pred'
-        .addOperand(MI.getOperand(6))
-        .addReg(0); // 's' bit
+          .add(MI.getOperand(2))
+          .add(MI.getOperand(3))
+          .addImm(MI.getOperand(4).getImm())
+          .addImm(MI.getOperand(5).getImm()) // 'pred'
+          .add(MI.getOperand(6))
+          .addReg(0); // 's' bit
 
       MI.eraseFromParent();
       return true;
@@ -1099,9 +1099,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned NewOpc = AFI->isThumbFunction() ? ARM::t2MOVi16 : ARM::MOVi16;
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc),
               MI.getOperand(1).getReg())
-        .addImm(MI.getOperand(2).getImm())
-        .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addOperand(MI.getOperand(4));
+          .addImm(MI.getOperand(2).getImm())
+          .addImm(MI.getOperand(3).getImm()) // 'pred'
+          .add(MI.getOperand(4));
       MI.eraseFromParent();
       return true;
     }
@@ -1110,10 +1110,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned Opc = AFI->isThumbFunction() ? ARM::t2MOVi : ARM::MOVi;
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc),
               MI.getOperand(1).getReg())
-        .addImm(MI.getOperand(2).getImm())
-        .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addOperand(MI.getOperand(4))
-        .addReg(0); // 's' bit
+          .addImm(MI.getOperand(2).getImm())
+          .addImm(MI.getOperand(3).getImm()) // 'pred'
+          .add(MI.getOperand(4))
+          .addReg(0); // 's' bit
 
       MI.eraseFromParent();
       return true;
@@ -1123,10 +1123,10 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned Opc = AFI->isThumbFunction() ? ARM::t2MVNi : ARM::MVNi;
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(Opc),
               MI.getOperand(1).getReg())
-        .addImm(MI.getOperand(2).getImm())
-        .addImm(MI.getOperand(3).getImm()) // 'pred'
-        .addOperand(MI.getOperand(4))
-        .addReg(0); // 's' bit
+          .addImm(MI.getOperand(2).getImm())
+          .addImm(MI.getOperand(3).getImm()) // 'pred'
+          .add(MI.getOperand(4))
+          .addReg(0); // 's' bit
 
       MI.eraseFromParent();
       return true;
@@ -1145,11 +1145,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       }
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewOpc),
               MI.getOperand(1).getReg())
-        .addOperand(MI.getOperand(2))
-        .addImm(MI.getOperand(3).getImm())
-        .addImm(MI.getOperand(4).getImm()) // 'pred'
-        .addOperand(MI.getOperand(5))
-        .addReg(0); // 's' bit
+          .add(MI.getOperand(2))
+          .addImm(MI.getOperand(3).getImm())
+          .addImm(MI.getOperand(4).getImm()) // 'pred'
+          .add(MI.getOperand(5))
+          .addReg(0); // 's' bit
       MI.eraseFromParent();
       return true;
     }
@@ -1206,7 +1206,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       // These are just fancy MOVs instructions.
       BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
               MI.getOperand(0).getReg())
-          .addOperand(MI.getOperand(1))
+          .add(MI.getOperand(1))
           .addImm(ARM_AM::getSORegOpc(
               (Opcode == ARM::MOVsrl_flag ? ARM_AM::lsr : ARM_AM::asr), 1))
           .add(predOps(ARMCC::AL))
@@ -1219,7 +1219,7 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MachineInstrBuilder MIB =
           BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVsi),
                   MI.getOperand(0).getReg())
-              .addOperand(MI.getOperand(1))
+              .add(MI.getOperand(1))
               .addImm(ARM_AM::getSORegOpc(ARM_AM::rrx, 0))
               .add(predOps(ARMCC::AL))
               .addReg(0);
@@ -1253,14 +1253,14 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       bool DstIsDead = MI.getOperand(0).isDead();
       MachineInstrBuilder MIB1 =
           BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(NewLdOpc), DstReg)
-              .addOperand(MI.getOperand(1))
+              .add(MI.getOperand(1))
               .add(predOps(ARMCC::AL));
       MIB1->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
-      MachineInstrBuilder MIB2 = BuildMI(MBB, MBBI, MI.getDebugLoc(),
-                                         TII->get(ARM::tPICADD))
-        .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
-        .addReg(DstReg)
-        .addOperand(MI.getOperand(2));
+      MachineInstrBuilder MIB2 =
+          BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::tPICADD))
+              .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
+              .addReg(DstReg)
+              .add(MI.getOperand(2));
       TransferImpOps(MI, MIB1, MIB2);
       MI.eraseFromParent();
       return true;
@@ -1372,9 +1372,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       MachineInstrBuilder MIB =
           BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::SUBri), ARM::PC)
               .addReg(ARM::LR)
-              .addOperand(MI.getOperand(0))
-              .addOperand(MI.getOperand(1))
-              .addOperand(MI.getOperand(2))
+              .add(MI.getOperand(0))
+              .add(MI.getOperand(1))
+              .add(MI.getOperand(2))
               .addReg(ARM::CPSR, RegState::Undef);
       TransferImpOps(MI, MIB, MIB);
       MI.eraseFromParent();
@@ -1391,11 +1391,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned DstReg = MI.getOperand(OpIdx++).getReg();
 
       // Copy the source register.
-      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.add(MI.getOperand(OpIdx++));
 
       // Copy the predicate operands.
-      MIB.addOperand(MI.getOperand(OpIdx++));
-      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.add(MI.getOperand(OpIdx++));
+      MIB.add(MI.getOperand(OpIdx++));
 
       // Add the destination operands (D subregs).
       unsigned D0 = TRI->getSubReg(DstReg, ARM::dsub_0);
@@ -1422,11 +1422,11 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       unsigned SrcReg = MI.getOperand(OpIdx++).getReg();
 
       // Copy the destination register.
-      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.add(MI.getOperand(OpIdx++));
 
       // Copy the predicate operands.
-      MIB.addOperand(MI.getOperand(OpIdx++));
-      MIB.addOperand(MI.getOperand(OpIdx++));
+      MIB.add(MI.getOperand(OpIdx++));
+      MIB.add(MI.getOperand(OpIdx++));
 
       // Add the source operands (D subregs).
       unsigned D0 = TRI->getSubReg(SrcReg, ARM::dsub_0);

@@ -501,7 +501,7 @@ bool Thumb1FrameLowering::emitPopSpecialFixUp(MachineBasicBlock &MBB,
     // Copy implicit ops and popped registers, if any.
     for (auto MO: MBBI->operands())
       if (MO.isReg() && (MO.isImplicit() || MO.isDef()))
-        MIB.addOperand(MO);
+        MIB.add(MO);
     MIB.addReg(ARM::PC, RegState::Define);
     // Erase the old instruction (tBX_RET or tPOP).
     MBB.erase(MBBI);
@@ -585,7 +585,7 @@ bool Thumb1FrameLowering::emitPopSpecialFixUp(MachineBasicBlock &MBB,
     for (auto MO: MBBI->operands())
       if (MO.isReg() && (MO.isImplicit() || MO.isDef()) &&
           MO.getReg() != ARM::PC) {
-        MIB.addOperand(MO);
+        MIB.add(MO);
         if (!MO.isImplicit())
           Popped = true;
       }

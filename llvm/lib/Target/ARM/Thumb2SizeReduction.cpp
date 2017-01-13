@@ -562,8 +562,8 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
     MIB.addReg(MI->getOperand(0).getReg(), RegState::Define | RegState::Dead);
 
   if (!isLdStMul) {
-    MIB.addOperand(MI->getOperand(0));
-    MIB.addOperand(MI->getOperand(1));
+    MIB.add(MI->getOperand(0));
+    MIB.add(MI->getOperand(1));
 
     if (HasImmOffset)
       MIB.addImm(OffsetImm / Scale);
@@ -577,7 +577,7 @@ Thumb2SizeReduce::ReduceLoadStore(MachineBasicBlock &MBB, MachineInstr *MI,
 
   // Transfer the rest of operands.
   for (unsigned e = MI->getNumOperands(); OpNum != e; ++OpNum)
-    MIB.addOperand(MI->getOperand(OpNum));
+    MIB.add(MI->getOperand(OpNum));
 
   // Transfer memoperands.
   MIB->setMemRefs(MI->memoperands_begin(), MI->memoperands_end());
@@ -624,8 +624,8 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
     MachineInstrBuilder MIB =
         BuildMI(MBB, MI, MI->getDebugLoc(),
                 TII->get(ARM::tADDrSPi))
-            .addOperand(MI->getOperand(0))
-            .addOperand(MI->getOperand(1))
+            .add(MI->getOperand(0))
+            .add(MI->getOperand(1))
             .addImm(Imm / 4) // The tADDrSPi has an implied scale by four.
             .add(predOps(ARMCC::AL));
 
@@ -786,7 +786,7 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
   // Add the 16-bit instruction.
   DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MBB, MI, dl, NewMCID);
-  MIB.addOperand(MI->getOperand(0));
+  MIB.add(MI->getOperand(0));
   if (NewMCID.hasOptionalDef()) {
     if (HasCC)
       AddDefaultT1CC(MIB, CCDead);
@@ -801,7 +801,7 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
       continue;
     if (SkipPred && MCID.OpInfo[i].isPredicate())
       continue;
-    MIB.addOperand(MI->getOperand(i));
+    MIB.add(MI->getOperand(i));
   }
 
   // Transfer MI flags.
@@ -881,7 +881,7 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
   // Add the 16-bit instruction.
   DebugLoc dl = MI->getDebugLoc();
   MachineInstrBuilder MIB = BuildMI(MBB, MI, dl, NewMCID);
-  MIB.addOperand(MI->getOperand(0));
+  MIB.add(MI->getOperand(0));
   if (NewMCID.hasOptionalDef()) {
     if (HasCC)
       AddDefaultT1CC(MIB, CCDead);
@@ -910,7 +910,7 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
       // Skip implicit def of CPSR. Either it's modeled as an optional
       // def now or it's already an implicit def on the new instruction.
       continue;
-    MIB.addOperand(MO);
+    MIB.add(MO);
   }
   if (!MCID.isPredicable() && NewMCID.isPredicable())
     MIB.add(predOps(ARMCC::AL));

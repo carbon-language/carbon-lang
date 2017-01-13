@@ -24347,7 +24347,7 @@ static MachineBasicBlock *emitPCMPSTRM(MachineInstr &MI, MachineBasicBlock *BB,
   for (unsigned i = 1; i < NumArgs; ++i) {
     MachineOperand &Op = MI.getOperand(i);
     if (!(Op.isReg() && Op.isImplicit()))
-      MIB.addOperand(Op);
+      MIB.add(Op);
   }
   if (MI.hasOneMemOperand())
     MIB->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
@@ -24383,7 +24383,7 @@ static MachineBasicBlock *emitPCMPSTRI(MachineInstr &MI, MachineBasicBlock *BB,
   for (unsigned i = 1; i < NumArgs; ++i) {
     MachineOperand &Op = MI.getOperand(i);
     if (!(Op.isReg() && Op.isImplicit()))
-      MIB.addOperand(Op);
+      MIB.add(Op);
   }
   if (MI.hasOneMemOperand())
     MIB->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
@@ -24443,7 +24443,7 @@ static MachineBasicBlock *emitMonitor(MachineInstr &MI, MachineBasicBlock *BB,
   unsigned MemReg = Subtarget.is64Bit() ? X86::RAX : X86::EAX;
   MachineInstrBuilder MIB = BuildMI(*BB, MI, dl, TII->get(MemOpc), MemReg);
   for (int i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.addOperand(MI.getOperand(i));
+    MIB.add(MI.getOperand(i));
 
   unsigned ValOps = X86::AddrNumOperands;
   BuildMI(*BB, MI, dl, TII->get(TargetOpcode::COPY), X86::ECX)
@@ -24581,12 +24581,12 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr &MI,
     // Load the offset value into a register
     OffsetReg = MRI.createVirtualRegister(OffsetRegClass);
     BuildMI(thisMBB, DL, TII->get(X86::MOV32rm), OffsetReg)
-      .addOperand(Base)
-      .addOperand(Scale)
-      .addOperand(Index)
-      .addDisp(Disp, UseFPOffset ? 4 : 0)
-      .addOperand(Segment)
-      .setMemRefs(MMOBegin, MMOEnd);
+        .add(Base)
+        .add(Scale)
+        .add(Index)
+        .addDisp(Disp, UseFPOffset ? 4 : 0)
+        .add(Segment)
+        .setMemRefs(MMOBegin, MMOEnd);
 
     // Check if there is enough room left to pull this argument.
     BuildMI(thisMBB, DL, TII->get(X86::CMP32ri))
@@ -24606,12 +24606,12 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr &MI,
     // Read the reg_save_area address.
     unsigned RegSaveReg = MRI.createVirtualRegister(AddrRegClass);
     BuildMI(offsetMBB, DL, TII->get(X86::MOV64rm), RegSaveReg)
-      .addOperand(Base)
-      .addOperand(Scale)
-      .addOperand(Index)
-      .addDisp(Disp, 16)
-      .addOperand(Segment)
-      .setMemRefs(MMOBegin, MMOEnd);
+        .add(Base)
+        .add(Scale)
+        .add(Index)
+        .addDisp(Disp, 16)
+        .add(Segment)
+        .setMemRefs(MMOBegin, MMOEnd);
 
     // Zero-extend the offset
     unsigned OffsetReg64 = MRI.createVirtualRegister(AddrRegClass);
@@ -24633,13 +24633,13 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr &MI,
 
     // Store it back into the va_list.
     BuildMI(offsetMBB, DL, TII->get(X86::MOV32mr))
-      .addOperand(Base)
-      .addOperand(Scale)
-      .addOperand(Index)
-      .addDisp(Disp, UseFPOffset ? 4 : 0)
-      .addOperand(Segment)
-      .addReg(NextOffsetReg)
-      .setMemRefs(MMOBegin, MMOEnd);
+        .add(Base)
+        .add(Scale)
+        .add(Index)
+        .addDisp(Disp, UseFPOffset ? 4 : 0)
+        .add(Segment)
+        .addReg(NextOffsetReg)
+        .setMemRefs(MMOBegin, MMOEnd);
 
     // Jump to endMBB
     BuildMI(offsetMBB, DL, TII->get(X86::JMP_1))
@@ -24653,12 +24653,12 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr &MI,
   // Load the overflow_area address into a register.
   unsigned OverflowAddrReg = MRI.createVirtualRegister(AddrRegClass);
   BuildMI(overflowMBB, DL, TII->get(X86::MOV64rm), OverflowAddrReg)
-    .addOperand(Base)
-    .addOperand(Scale)
-    .addOperand(Index)
-    .addDisp(Disp, 8)
-    .addOperand(Segment)
-    .setMemRefs(MMOBegin, MMOEnd);
+      .add(Base)
+      .add(Scale)
+      .add(Index)
+      .addDisp(Disp, 8)
+      .add(Segment)
+      .setMemRefs(MMOBegin, MMOEnd);
 
   // If we need to align it, do so. Otherwise, just copy the address
   // to OverflowDestReg.
@@ -24689,13 +24689,13 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(MachineInstr &MI,
 
   // Store the new overflow address.
   BuildMI(overflowMBB, DL, TII->get(X86::MOV64mr))
-    .addOperand(Base)
-    .addOperand(Scale)
-    .addOperand(Index)
-    .addDisp(Disp, 8)
-    .addOperand(Segment)
-    .addReg(NextAddrReg)
-    .setMemRefs(MMOBegin, MMOEnd);
+      .add(Base)
+      .add(Scale)
+      .add(Index)
+      .addDisp(Disp, 8)
+      .add(Segment)
+      .addReg(NextAddrReg)
+      .setMemRefs(MMOBegin, MMOEnd);
 
   // If we branched, emit the PHI to the front of endMBB.
   if (offsetMBB) {
@@ -25168,12 +25168,12 @@ X86TargetLowering::EmitLoweredAtomicFP(MachineInstr &MI,
     // instruction using the same address operands.
     if (Operand.isReg())
       Operand.setIsKill(false);
-    MIB.addOperand(Operand);
+    MIB.add(Operand);
   }
   MachineInstr *FOpMI = MIB;
   MIB = BuildMI(*BB, MI, DL, TII->get(MOp));
   for (int i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.addOperand(MI.getOperand(i));
+    MIB.add(MI.getOperand(i));
   MIB.addReg(FOpMI->getOperand(0).getReg(), RegState::Kill);
   MI.eraseFromParent(); // The pseudo instruction is gone now.
   return BB;
@@ -25553,7 +25553,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
     if (i == X86::AddrDisp)
       MIB.addDisp(MI.getOperand(MemOpndSlot + i), LabelOffset);
     else
-      MIB.addOperand(MI.getOperand(MemOpndSlot + i));
+      MIB.add(MI.getOperand(MemOpndSlot + i));
   }
   if (!UseImmLabel)
     MIB.addReg(LabelReg);
@@ -25636,7 +25636,7 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr &MI,
   // Reload FP
   MIB = BuildMI(*MBB, MI, DL, TII->get(PtrLoadOpc), FP);
   for (unsigned i = 0; i < X86::AddrNumOperands; ++i)
-    MIB.addOperand(MI.getOperand(i));
+    MIB.add(MI.getOperand(i));
   MIB.setMemRefs(MMOBegin, MMOEnd);
   // Reload IP
   MIB = BuildMI(*MBB, MI, DL, TII->get(PtrLoadOpc), Tmp);
@@ -25644,7 +25644,7 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr &MI,
     if (i == X86::AddrDisp)
       MIB.addDisp(MI.getOperand(i), LabelOffset);
     else
-      MIB.addOperand(MI.getOperand(i));
+      MIB.add(MI.getOperand(i));
   }
   MIB.setMemRefs(MMOBegin, MMOEnd);
   // Reload SP
@@ -25653,7 +25653,7 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr &MI,
     if (i == X86::AddrDisp)
       MIB.addDisp(MI.getOperand(i), SPOffset);
     else
-      MIB.addOperand(MI.getOperand(i));
+      MIB.add(MI.getOperand(i));
   }
   MIB.setMemRefs(MMOBegin, MMOEnd);
   // Jump
