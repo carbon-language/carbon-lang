@@ -219,7 +219,7 @@ class Configuration(object):
         # FIXME: don't hardcode the target
         flags = ['--target=i686-pc-windows']
         compile_flags = []
-        link_flags = ['-fuse-ld=lld']
+        link_flags = []
         if 'INCLUDE' in os.environ:
             compile_flags += ['-isystem %s' % p.strip()
                               for p in os.environ['INCLUDE'].split(';')
