@@ -667,7 +667,7 @@ class Configuration(object):
             self.cxx.link_flags += ['-lcxxrt']
         elif cxx_abi == 'none' or cxx_abi == 'default':
             if self.is_windows:
-                self.cxx.link_flags += ['-lmsvcrtd']
+                self.cxx.link_flags += ['-lmsvcrt']
         else:
             self.lit_config.fatal(
                 'C++ ABI setting %s unsupported for tests' % cxx_abi)

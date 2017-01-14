@@ -39,6 +39,12 @@ MACRO_ENSURE_OUT_OF_SOURCE_BUILD(
  build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
  )
 
+if (MSVC)
+  set(LIBCXX_TARGETING_MSVC ON)
+else()
+  set(LIBCXX_TARGETING_MSVC OFF)
+endif()
+
 #===============================================================================
 # Setup CMake Options
 #===============================================================================
@@ -377,6 +383,11 @@ if (NOT LIBCXX_STANDALONE_BUILD)
 endif()
 remove_flags(-stdlib=libc++ -stdlib=libstdc++)
 
+# FIXME: Remove all debug flags and flags that change which Windows
+# default libraries are linked. Currently we only support linking the
+# non-debug DLLs
+remove_flags("/D_DEBUG" "/MTd" "/MDd" "/MT" "/Md" "/RTC1")
+
 # FIXME(EricWF): See the FIXME on LIBCXX_ENABLE_PEDANTIC.
 # Remove the -pedantic flag and -Wno-pedantic and -pedantic-errors
 # so they don't get transformed into -Wno and -errors respectivly.
@@ -476,7 +487,7 @@ define_if(LIBCXX_ENABLE_ASSERTIONS -UNDEBUG)
 define_if_not(LIBCXX_ENABLE_ASSERTIONS -DNDEBUG)
 if (LIBCXX_ENABLE_ASSERTIONS)
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
-  define_if_not(MSVC -D_DEBUG)
+  define_if_not(LIBCXX_TARGETING_MSVC -D_DEBUG)
 endif()
 
 # Modules flags ===============================================================
