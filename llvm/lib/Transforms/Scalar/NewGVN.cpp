@@ -1076,13 +1076,12 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I,
   // dominator tree, or the new class leader should dominate the new member
   // instruction.  We simply check that the member instruction does not properly
   // dominate the new class leader.
-  assert(
-      !isa<Instruction>(NewClass->RepLeader) || !NewClass->RepLeader ||
-      I == NewClass->RepLeader ||
-      !DT->properlyDominates(
-          I->getParent(),
-          cast<Instruction>(NewClass->RepLeader)->getParent()) &&
-          "New class for instruction should not be dominated by instruction");
+  assert((!isa<Instruction>(NewClass->RepLeader) || !NewClass->RepLeader ||
+          I == NewClass->RepLeader ||
+          !DT->properlyDominates(
+              I->getParent(),
+              cast<Instruction>(NewClass->RepLeader)->getParent())) &&
+         "New class for instruction should not be dominated by instruction");
 
   if (NewClass->RepLeader != I) {
     auto DFSNum = InstrDFS.lookup(I);
