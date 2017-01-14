@@ -14,8 +14,9 @@
 
 namespace llvm {
 
-class Value;
+class Constant;
 class Function;
+class Value;
 
 /// It is safe to destroy a constant iff it is only used by constants itself.
 /// Note that constants cannot be cyclic, so this test is pretty easy to
