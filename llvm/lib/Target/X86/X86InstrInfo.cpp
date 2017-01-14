@@ -6831,14 +6831,33 @@ bool X86InstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
     assert(HasAVX && "AVX not supported");
     return Expand2AddrUndef(MIB, get(X86::VXORPSYrr));
   case X86::AVX512_128_SET0:
-    return Expand2AddrUndef(MIB, get(X86::VPXORDZ128rr));
-  case X86::AVX512_256_SET0:
-    return Expand2AddrUndef(MIB, get(X86::VPXORDZ256rr));
+  case X86::AVX512_FsFLD0SS:
+  case X86::AVX512_FsFLD0SD: {
+    bool HasVLX = Subtarget.hasVLX();
+    unsigned SrcReg = MIB->getOperand(0).getReg();
+    const TargetRegisterInfo *TRI = &getRegisterInfo();
+    if (HasVLX || TRI->getEncodingValue(SrcReg) < 16)
+      return Expand2AddrUndef(MIB,
+                              get(HasVLX ? X86::VPXORDZ128rr : X86::VXORPSrr));
+    // Extended register without VLX. Use a larger XOR.
+    SrcReg = TRI->getMatchingSuperReg(SrcReg, X86::sub_xmm, &X86::VR512RegClass);
+    MIB->getOperand(0).setReg(SrcReg);
+    return Expand2AddrUndef(MIB, get(X86::VPXORDZrr));
+  }
+  case X86::AVX512_256_SET0: {
+    bool HasVLX = Subtarget.hasVLX();
+    unsigned SrcReg = MIB->getOperand(0).getReg();
+    const TargetRegisterInfo *TRI = &getRegisterInfo();
+    if (HasVLX || TRI->getEncodingValue(SrcReg) < 16)
+      return Expand2AddrUndef(MIB,
+                              get(HasVLX ? X86::VPXORDZ256rr : X86::VXORPSYrr));
+    // Extended register without VLX. Use a larger XOR.
+    SrcReg = TRI->getMatchingSuperReg(SrcReg, X86::sub_ymm, &X86::VR512RegClass);
+    MIB->getOperand(0).setReg(SrcReg);
+    return Expand2AddrUndef(MIB, get(X86::VPXORDZrr));
+  }
   case X86::AVX512_512_SET0:
     return Expand2AddrUndef(MIB, get(X86::VPXORDZrr));
-  case X86::AVX512_FsFLD0SS:
-  case X86::AVX512_FsFLD0SD:
-    return Expand2AddrUndef(MIB, get(X86::VXORPSZ128rr));
   case X86::V_SETALLONES:
     return Expand2AddrUndef(MIB, get(HasAVX ? X86::VPCMPEQDrr : X86::PCMPEQDrr));
   case X86::AVX2_SETALLONES:
