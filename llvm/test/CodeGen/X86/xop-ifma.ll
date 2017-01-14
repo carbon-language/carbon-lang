@@ -67,18 +67,16 @@ define <8 x i32> @test_mul_v8i32_add_v8i32(<8 x i32> %a0, <8 x i32> %a1, <8 x i3
 define <4 x i64> @test_mulx_v4i32_add_v4i64(<4 x i32> %a0, <4 x i32> %a1, <4 x i64> %a2) {
 ; XOP-AVX1-LABEL: test_mulx_v4i32_add_v4i64:
 ; XOP-AVX1:       # BB#0:
-; XOP-AVX1-NEXT:    vpshufd {{.*#+}} xmm3 = xmm0[2,3,0,1]
-; XOP-AVX1-NEXT:    vpmovsxdq %xmm3, %xmm3
+; XOP-AVX1-NEXT:    vpmovsxdq %xmm0, %xmm3
+; XOP-AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
 ; XOP-AVX1-NEXT:    vpmovsxdq %xmm0, %xmm0
-; XOP-AVX1-NEXT:    vpshufd {{.*#+}} xmm4 = xmm1[2,3,0,1]
-; XOP-AVX1-NEXT:    vpmovsxdq %xmm4, %xmm4
+; XOP-AVX1-NEXT:    vpmovsxdq %xmm1, %xmm4
+; XOP-AVX1-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[2,3,0,1]
 ; XOP-AVX1-NEXT:    vpmovsxdq %xmm1, %xmm1
-; XOP-AVX1-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0
-; XOP-AVX1-NEXT:    vpmuldq %xmm4, %xmm3, %xmm1
-; XOP-AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm3
-; XOP-AVX1-NEXT:    vpaddq %xmm3, %xmm1, %xmm1
-; XOP-AVX1-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
-; XOP-AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; XOP-AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm5
+; XOP-AVX1-NEXT:    vpmacsdql %xmm5, %xmm1, %xmm0, %xmm0
+; XOP-AVX1-NEXT:    vpmacsdql %xmm2, %xmm4, %xmm3, %xmm1
+; XOP-AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; XOP-AVX1-NEXT:    retq
 ;
 ; XOP-AVX2-LABEL: test_mulx_v4i32_add_v4i64:
@@ -98,8 +96,7 @@ define <4 x i64> @test_mulx_v4i32_add_v4i64(<4 x i32> %a0, <4 x i32> %a1, <4 x i
 define <2 x i64> @test_pmuldq_lo_v4i32_add_v2i64(<4 x i32> %a0, <4 x i32> %a1, <2 x i64> %a2) {
 ; XOP-LABEL: test_pmuldq_lo_v4i32_add_v2i64:
 ; XOP:       # BB#0:
-; XOP-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0
-; XOP-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
+; XOP-NEXT:    vpmacsdql %xmm2, %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
   %1 = call <2 x i64> @llvm.x86.sse41.pmuldq(<4 x i32> %a0, <4 x i32> %a1)
   %2 = add <2 x i64> %1, %a2
@@ -109,10 +106,7 @@ define <2 x i64> @test_pmuldq_lo_v4i32_add_v2i64(<4 x i32> %a0, <4 x i32> %a1, <
 define <2 x i64> @test_pmuldq_hi_v4i32_add_v2i64(<4 x i32> %a0, <4 x i32> %a1, <2 x i64> %a2) {
 ; XOP-LABEL: test_pmuldq_hi_v4i32_add_v2i64:
 ; XOP:       # BB#0:
-; XOP-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[1,1,3,3]
-; XOP-NEXT:    vpshufd {{.*#+}} xmm1 = xmm1[1,1,3,3]
-; XOP-NEXT:    vpmuldq %xmm1, %xmm0, %xmm0
-; XOP-NEXT:    vpaddq %xmm2, %xmm0, %xmm0
+; XOP-NEXT:    vpmacsdqh %xmm2, %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
   %1 = shufflevector <4 x i32> %a0, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 3, i32 undef>
   %2 = shufflevector <4 x i32> %a1, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 3, i32 undef>
