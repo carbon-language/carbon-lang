@@ -102,7 +102,7 @@ _LIBCPP_THREAD_ABI_VISIBILITY
 int __libcpp_recursive_mutex_lock(__libcpp_recursive_mutex_t *__m);
 
 _LIBCPP_THREAD_ABI_VISIBILITY
-int __libcpp_recursive_mutex_trylock(__libcpp_recursive_mutex_t *__m);
+bool __libcpp_recursive_mutex_trylock(__libcpp_recursive_mutex_t *__m);
 
 _LIBCPP_THREAD_ABI_VISIBILITY
 int __libcpp_recursive_mutex_unlock(__libcpp_recursive_mutex_t *__m);
@@ -114,7 +114,7 @@ _LIBCPP_THREAD_ABI_VISIBILITY
 int __libcpp_mutex_lock(__libcpp_mutex_t *__m);
 
 _LIBCPP_THREAD_ABI_VISIBILITY
-int __libcpp_mutex_trylock(__libcpp_mutex_t *__m);
+bool __libcpp_mutex_trylock(__libcpp_mutex_t *__m);
 
 _LIBCPP_THREAD_ABI_VISIBILITY
 int __libcpp_mutex_unlock(__libcpp_mutex_t *__m);
@@ -221,9 +221,9 @@ int __libcpp_recursive_mutex_lock(__libcpp_recursive_mutex_t *__m)
   return pthread_mutex_lock(__m);
 }
 
-int __libcpp_recursive_mutex_trylock(__libcpp_recursive_mutex_t *__m)
+bool __libcpp_recursive_mutex_trylock(__libcpp_recursive_mutex_t *__m)
 {
-  return pthread_mutex_trylock(__m);
+  return pthread_mutex_trylock(__m) == 0;
 }
 
 int __libcpp_recursive_mutex_unlock(__libcpp_mutex_t *__m)
@@ -241,9 +241,9 @@ int __libcpp_mutex_lock(__libcpp_mutex_t *__m)
   return pthread_mutex_lock(__m);
 }
 
-int __libcpp_mutex_trylock(__libcpp_mutex_t *__m)
+bool __libcpp_mutex_trylock(__libcpp_mutex_t *__m)
 {
-  return pthread_mutex_trylock(__m);
+  return pthread_mutex_trylock(__m) == 0;
 }
 
 int __libcpp_mutex_unlock(__libcpp_mutex_t *__m)
@@ -371,10 +371,9 @@ int __libcpp_recursive_mutex_lock(__libcpp_recursive_mutex_t *__m)
   return 0;
 }
 
-int __libcpp_recursive_mutex_trylock(__libcpp_recursive_mutex_t *__m)
+bool __libcpp_recursive_mutex_trylock(__libcpp_recursive_mutex_t *__m)
 {
-  TryEnterCriticalSection(__m);
-  return 0;
+  return TryEnterCriticalSection(__m) != 0;
 }
 
 int __libcpp_recursive_mutex_unlock(__libcpp_recursive_mutex_t *__m)
@@ -395,10 +394,9 @@ int __libcpp_mutex_lock(__libcpp_mutex_t *__m)
   return 0;
 }
 
-int __libcpp_mutex_trylock(__libcpp_mutex_t *__m)
+bool __libcpp_mutex_trylock(__libcpp_mutex_t *__m)
 {
-  TryAcquireSRWLockExclusive(__m);
-  return 0;
+  return TryAcquireSRWLockExclusive(__m) != 0;
 }
 
 int __libcpp_mutex_unlock(__libcpp_mutex_t *__m)
