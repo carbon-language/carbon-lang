@@ -3796,11 +3796,13 @@ def err_template_decl_ref : Error<
 
 // C++ Template Argument Lists
 def err_template_missing_args : Error<
-  "use of class template %0 requires template arguments">;
+  "use of "
+  "%select{class template|function template|variable template|alias template|"
+  "template template parameter|template}0 %1 requires template arguments">;
 def err_template_arg_list_different_arity : Error<
   "%select{too few|too many}0 template arguments for "
-  "%select{class template|function template|template template parameter"
-  "|template}1 %2">;
+  "%select{class template|function template|variable template|alias template|"
+  "template template parameter|template}1 %2">;
 def note_template_decl_here : Note<"template is declared here">;
 def err_template_arg_must_be_type : Error<
   "template argument for template type parameter must be a type">;
