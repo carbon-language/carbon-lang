@@ -1455,7 +1455,7 @@ void NewGVN::updateProcessedCount(Value *V) {
   if (ProcessedCount.count(V) == 0) {
     ProcessedCount.insert({V, 1});
   } else {
-    ProcessedCount[V] += 1;
+    ++ProcessedCount[V];
     assert(ProcessedCount[V] < 100 &&
            "Seem to have processed the same Value a lot");
   }
