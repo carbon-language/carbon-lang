@@ -62,49 +62,57 @@ static void writeSymbolLine(raw_fd_ostream &OS, int Width, uint64_t Address,
 }
 
 template <class ELFT>
+static void writeInputSection(raw_fd_ostream &OS, const InputSection<ELFT> *IS,
+                              StringRef &PrevName) {
+  int Width = ELFT::Is64Bits ? 16 : 8;
+  StringRef Name = IS->Name;
+  if (Name != PrevName) {
+    writeInSecLine(OS, Width, IS->OutSec->Addr + IS->OutSecOff, IS->getSize(),
+                   IS->Alignment, Name);
+    OS << '\n';
+    PrevName = Name;
+  }
+
+  elf::ObjectFile<ELFT> *File = IS->getFile();
+  if (!File)
+    return;
+  writeFileLine(OS, Width, IS->OutSec->Addr + IS->OutSecOff, IS->getSize(),
+                IS->Alignment, toString(File));
+  OS << '\n';
+
+  for (SymbolBody *Sym : File->getSymbols()) {
+    auto *DR = dyn_cast<DefinedRegular<ELFT>>(Sym);
+    if (!DR)
+      continue;
+    if (DR->Section != IS)
+      continue;
+    if (DR->isSection())
+      continue;
+    writeSymbolLine(OS, Width, Sym->getVA<ELFT>(), Sym->getSize<ELFT>(),
+                    toString(*Sym));
+    OS << '\n';
+  }
+}
+
+template <class ELFT>
 static void writeMapFile2(int FD,
                           ArrayRef<OutputSectionBase *> OutputSections) {
-  typedef typename ELFT::uint uintX_t;
   raw_fd_ostream OS(FD, true);
   int Width = ELFT::Is64Bits ? 16 : 8;
+
   OS << left_justify("Address", Width) << ' ' << left_justify("Size", Width)
      << ' ' << left_justify("Align", 5) << ' ' << left_justify("Out", 7) << ' '
      << left_justify("In", 7) << ' ' << left_justify("File", 7) << " Symbol\n";
+
   for (OutputSectionBase *Sec : OutputSections) {
-    uintX_t VA = Sec->Addr;
-    writeOutSecLine(OS, Width, VA, Sec->Size, Sec->Addralign, Sec->getName());
+    writeOutSecLine(OS, Width, Sec->Addr, Sec->Size, Sec->Addralign,
+                    Sec->getName());
     OS << '\n';
+
     StringRef PrevName = "";
     Sec->forEachInputSection([&](InputSectionData *S) {
-      const auto *IS = dyn_cast<InputSection<ELFT>>(S);
-      if (!IS)
-        return;
-      StringRef Name = IS->Name;
-      if (Name != PrevName) {
-        writeInSecLine(OS, Width, VA + IS->OutSecOff, IS->getSize(),
-                       IS->Alignment, Name);
-        OS << '\n';
-        PrevName = Name;
-      }
-      elf::ObjectFile<ELFT> *File = IS->getFile();
-      if (!File)
-        return;
-      writeFileLine(OS, Width, VA + IS->OutSecOff, IS->getSize(), IS->Alignment,
-                    toString(File));
-      OS << '\n';
-      ArrayRef<SymbolBody *> Syms = File->getSymbols();
-      for (SymbolBody *Sym : Syms) {
-        auto *DR = dyn_cast<DefinedRegular<ELFT>>(Sym);
-        if (!DR)
-          continue;
-        if (DR->Section != IS)
-          continue;
-        if (DR->isSection())
-          continue;
-        writeSymbolLine(OS, Width, Sym->getVA<ELFT>(), Sym->getSize<ELFT>(),
-                        toString(*Sym));
-        OS << '\n';
-      }
+      if (const auto *IS = dyn_cast<InputSection<ELFT>>(S))
+        writeInputSection(OS, IS, PrevName);
     });
   }
 }
