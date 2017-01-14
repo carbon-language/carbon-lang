@@ -238,7 +238,6 @@ class NewGVN : public FunctionPass {
 #endif
 
   // DFS info.
-  DenseMap<const BasicBlock *, std::pair<int, int>> DFSDomMap;
   DenseMap<const Value *, unsigned> InstrDFS;
   SmallVector<Value *, 32> DFSToInstr;
 
@@ -1422,7 +1421,6 @@ void NewGVN::cleanupTables() {
 #ifndef NDEBUG
   ProcessedCount.clear();
 #endif
-  DFSDomMap.clear();
   InstrDFS.clear();
   InstructionsToErase.clear();
 
@@ -1887,10 +1885,9 @@ void NewGVN::convertDenseToDFSOrdered(
     assert(BB && "Should have figured out a basic block for value");
     ValueDFS VD;
 
-    std::pair<int, int> DFSPair = DFSDomMap[BB];
-    assert(DFSPair.first != -1 && DFSPair.second != -1 && "Invalid DFS Pair");
-    VD.DFSIn = DFSPair.first;
-    VD.DFSOut = DFSPair.second;
+    DomTreeNode *DomNode = DT->getNode(BB);
+    VD.DFSIn = DomNode->getDFSNumIn();
+    VD.DFSOut = DomNode->getDFSNumOut();
     VD.Val = D;
     // If it's an instruction, use the real local dfs number.
     if (auto *I = dyn_cast<Instruction>(D))
@@ -1900,7 +1897,7 @@ void NewGVN::convertDenseToDFSOrdered(
 
     DFSOrderedSet.emplace_back(VD);
 
-    // Now add the users.
+    // Now add the uses.
     for (auto &U : D->uses()) {
       if (auto *I = dyn_cast<Instruction>(U.getUser())) {
         ValueDFS VD;
@@ -1915,9 +1912,9 @@ void NewGVN::convertDenseToDFSOrdered(
           IBlock = I->getParent();
           VD.LocalNum = InstrDFS[I];
         }
-        std::pair<int, int> DFSPair = DFSDomMap[IBlock];
-        VD.DFSIn = DFSPair.first;
-        VD.DFSOut = DFSPair.second;
+        DomTreeNode *DomNode = DT->getNode(IBlock);
+        VD.DFSIn = DomNode->getDFSNumIn();
+        VD.DFSOut = DomNode->getDFSNumOut();
         VD.U = &U;
         DFSOrderedSet.emplace_back(VD);
       }
@@ -2081,9 +2078,6 @@ bool NewGVN::eliminateInstructions(Function &F) {
         }
       }
     }
-    DomTreeNode *Node = DT->getNode(&B);
-    if (Node)
-      DFSDomMap[&B] = {Node->getDFSNumIn(), Node->getDFSNumOut()};
   }
 
   for (CongruenceClass *CC : CongruenceClasses) {
