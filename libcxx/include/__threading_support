@@ -495,7 +495,7 @@ struct __libcpp_beginthreadex_thunk_data
   void *__arg;
 };
 
-static inline _LIBCPP_ALWAYS_INLINE DWORD WINAPI
+static inline _LIBCPP_ALWAYS_INLINE unsigned WINAPI
 __libcpp_beginthreadex_thunk(void *__raw_data)
 {
   auto *__data =
@@ -503,7 +503,7 @@ __libcpp_beginthreadex_thunk(void *__raw_data)
   auto *__func = __data->__func;
   void *__arg = __data->__arg;
   delete __data;
-  return static_cast<DWORD>(reinterpret_cast<uintptr_t>(__func(__arg)));
+  return static_cast<unsigned>(reinterpret_cast<uintptr_t>(__func(__arg)));
 }
 
 int __libcpp_thread_create(__libcpp_thread_t *__t, void *(*__func)(void *),
@@ -513,13 +513,10 @@ int __libcpp_thread_create(__libcpp_thread_t *__t, void *(*__func)(void *),
   __data->__func = __func;
   __data->__arg = __arg;
 
-  *__t = CreateThread(
-    nullptr, // default security attributes
-    0, // default stack size
-    __libcpp_beginthreadex_thunk, __data,
-    0, // default creation flags
-    nullptr // output for thread ID
-  );
+  *__t = reinterpret_cast<HANDLE>(_beginthreadex(nullptr, 0,
+                                                 __libcpp_beginthreadex_thunk,
+                                                 __data, 0, nullptr));
+
   if (*__t)
     return 0;
   return GetLastError();
