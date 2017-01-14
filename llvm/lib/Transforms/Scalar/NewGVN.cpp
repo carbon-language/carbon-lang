@@ -1558,7 +1558,8 @@ bool NewGVN::singleReachablePHIPath(const MemoryAccess *First,
 
 // Verify the that the memory equivalence table makes sense relative to the
 // congruence classes.  Note that this checking is not perfect, and is currently
-// subject to very rare false negatives. It is only useful for testing/debugging.
+// subject to very rare false negatives. It is only useful for
+// testing/debugging.
 void NewGVN::verifyMemoryCongruency() const {
   // Anything equivalent in the memory access table should be in the same
   // congruence class.
@@ -1587,11 +1588,11 @@ void NewGVN::verifyMemoryCongruency() const {
       auto *SecondMUD = dyn_cast<MemoryUseOrDef>(KV.second);
       if (FirstMUD && SecondMUD)
         assert((singleReachablePHIPath(FirstMUD, SecondMUD) ||
-               ValueToClass.lookup(FirstMUD->getMemoryInst()) ==
-                       ValueToClass.lookup(SecondMUD->getMemoryInst())) &&
-                   "The instructions for these memory operations should have "
-                   "been in the same congruence class or reachable through"
-                   "a single argument phi");
+                ValueToClass.lookup(FirstMUD->getMemoryInst()) ==
+                    ValueToClass.lookup(SecondMUD->getMemoryInst())) &&
+               "The instructions for these memory operations should have "
+               "been in the same congruence class or reachable through"
+               "a single argument phi");
     } else if (auto *FirstMP = dyn_cast<MemoryPhi>(KV.first)) {
 
       // We can only sanely verify that MemoryDefs in the operand list all have
