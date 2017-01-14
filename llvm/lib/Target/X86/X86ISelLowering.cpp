@@ -8368,8 +8368,7 @@ static SDValue lowerVectorShuffleAsBlend(const SDLoc &DL, MVT VT, SDValue V1,
     uint64_t ScaledMask = 0;
     for (int i = 0; i != Size; ++i)
       if (BlendMask & (1ull << i))
-        for (int j = 0; j != Scale; ++j)
-          ScaledMask |= 1ull << (i * Scale + j);
+        ScaledMask |= ((1ull << Scale) - 1) << (i * Scale);
     return ScaledMask;
   };
 
