@@ -5,8 +5,7 @@
 define <8 x i16> @test_mul_v8i16_add_v8i16(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> %a2) {
 ; XOP-LABEL: test_mul_v8i16_add_v8i16:
 ; XOP:       # BB#0:
-; XOP-NEXT:    vpmullw %xmm1, %xmm0, %xmm0
-; XOP-NEXT:    vpaddw %xmm2, %xmm0, %xmm0
+; XOP-NEXT:    vpmacsww %xmm2, %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
   %1 = mul <8 x i16> %a0, %a1
   %2 = add <8 x i16> %1, %a2
@@ -16,14 +15,12 @@ define <8 x i16> @test_mul_v8i16_add_v8i16(<8 x i16> %a0, <8 x i16> %a1, <8 x i1
 define <16 x i16> @test_mul_v16i16_add_v16i16(<16 x i16> %a0, <16 x i16> %a1, <16 x i16> %a2) {
 ; XOP-AVX1-LABEL: test_mul_v16i16_add_v16i16:
 ; XOP-AVX1:       # BB#0:
-; XOP-AVX1-NEXT:    vpmullw %xmm1, %xmm0, %xmm3
-; XOP-AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; XOP-AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; XOP-AVX1-NEXT:    vpmullw %xmm1, %xmm0, %xmm0
-; XOP-AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm1
-; XOP-AVX1-NEXT:    vpaddw %xmm0, %xmm1, %xmm0
-; XOP-AVX1-NEXT:    vpaddw %xmm3, %xmm2, %xmm1
-; XOP-AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; XOP-AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm3
+; XOP-AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm4
+; XOP-AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm5
+; XOP-AVX1-NEXT:    vpmacsww %xmm5, %xmm3, %xmm4, %xmm3
+; XOP-AVX1-NEXT:    vpmacsww %xmm2, %xmm1, %xmm0, %xmm0
+; XOP-AVX1-NEXT:    vinsertf128 $1, %xmm3, %ymm0, %ymm0
 ; XOP-AVX1-NEXT:    retq
 ;
 ; XOP-AVX2-LABEL: test_mul_v16i16_add_v16i16:
@@ -39,8 +36,7 @@ define <16 x i16> @test_mul_v16i16_add_v16i16(<16 x i16> %a0, <16 x i16> %a1, <1
 define <4 x i32> @test_mul_v4i32_add_v4i32(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> %a2) {
 ; XOP-LABEL: test_mul_v4i32_add_v4i32:
 ; XOP:       # BB#0:
-; XOP-NEXT:    vpmulld %xmm1, %xmm0, %xmm0
-; XOP-NEXT:    vpaddd %xmm2, %xmm0, %xmm0
+; XOP-NEXT:    vpmacsdd %xmm2, %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
   %1 = mul <4 x i32> %a0, %a1
   %2 = add <4 x i32> %1, %a2
@@ -50,14 +46,12 @@ define <4 x i32> @test_mul_v4i32_add_v4i32(<4 x i32> %a0, <4 x i32> %a1, <4 x i3
 define <8 x i32> @test_mul_v8i32_add_v8i32(<8 x i32> %a0, <8 x i32> %a1, <8 x i32> %a2) {
 ; XOP-AVX1-LABEL: test_mul_v8i32_add_v8i32:
 ; XOP-AVX1:       # BB#0:
-; XOP-AVX1-NEXT:    vpmulld %xmm1, %xmm0, %xmm3
-; XOP-AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm1
-; XOP-AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; XOP-AVX1-NEXT:    vpmulld %xmm1, %xmm0, %xmm0
-; XOP-AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm1
-; XOP-AVX1-NEXT:    vpaddd %xmm0, %xmm1, %xmm0
-; XOP-AVX1-NEXT:    vpaddd %xmm3, %xmm2, %xmm1
-; XOP-AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; XOP-AVX1-NEXT:    vextractf128 $1, %ymm1, %xmm3
+; XOP-AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm4
+; XOP-AVX1-NEXT:    vextractf128 $1, %ymm2, %xmm5
+; XOP-AVX1-NEXT:    vpmacsdd %xmm5, %xmm3, %xmm4, %xmm3
+; XOP-AVX1-NEXT:    vpmacsdd %xmm2, %xmm1, %xmm0, %xmm0
+; XOP-AVX1-NEXT:    vinsertf128 $1, %xmm3, %ymm0, %ymm0
 ; XOP-AVX1-NEXT:    retq
 ;
 ; XOP-AVX2-LABEL: test_mul_v8i32_add_v8i32:
