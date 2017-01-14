@@ -369,6 +369,11 @@ if (LIBCXX_GENERATE_COVERAGE)
 endif()
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if (uppercase_CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+  set(LIBCXX_DEBUG_BUILD ON)
+else()
+  set(LIBCXX_DEBUG_BUILD OFF)
+endif()
 
 #===============================================================================
 # Setup Compiler Flags
@@ -386,7 +391,7 @@ remove_flags(-stdlib=libc++ -stdlib=libstdc++)
 # FIXME: Remove all debug flags and flags that change which Windows
 # default libraries are linked. Currently we only support linking the
 # non-debug DLLs
-remove_flags("/D_DEBUG" "/MTd" "/MDd" "/MT" "/Md" "/RTC1")
+remove_flags("/D_DEBUG" "/MTd" "/MDd" "/MT" "/Md")
 
 # FIXME(EricWF): See the FIXME on LIBCXX_ENABLE_PEDANTIC.
 # Remove the -pedantic flag and -Wno-pedantic and -pedantic-errors
@@ -485,7 +490,8 @@ endif()
 # Assertion flags =============================================================
 define_if(LIBCXX_ENABLE_ASSERTIONS -UNDEBUG)
 define_if_not(LIBCXX_ENABLE_ASSERTIONS -DNDEBUG)
-if (LIBCXX_ENABLE_ASSERTIONS)
+define_if(LIBCXX_DEBUG_BUILD -D_DEBUG)
+if (LIBCXX_ENABLE_ASSERTIONS AND NOT LIBCXX_DEBUG_BUILD)
   # MSVC doesn't like _DEBUG on release builds. See PR 4379.
   define_if_not(LIBCXX_TARGETING_MSVC -D_DEBUG)
 endif()

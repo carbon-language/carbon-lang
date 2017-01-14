@@ -68,6 +68,7 @@ class Configuration(object):
         self.cxx_runtime_root = None
         self.abi_library_root = None
         self.link_shared = self.get_lit_bool('enable_shared', default=True)
+        self.debug_build = self.get_lit_bool('debug_build',   default=False)
         self.exec_env = {}
         self.use_target = False
         self.use_system_cxx_lib = False
@@ -148,6 +149,7 @@ class Configuration(object):
         self.lit_config.note('Using available_features: %s' %
                              list(self.config.available_features))
         self.lit_config.note('Using environment: %r' % self.exec_env)
+        sys.stderr.flush()  # Force flushing to avoid broken output on Windows
 
     def get_test_format(self):
         return LibcxxTestFormat(
@@ -438,13 +440,20 @@ class Configuration(object):
                     ['-target', self.config.target_triple]):
                 self.lit_config.warning('use_target is true but -target is '\
                         'not supported by the compiler')
+        if self.is_windows and self.debug_build:
+            self.cxx.compile_flags += ['-D_DEBUG']
 
     def configure_compile_flags_header_includes(self):
-        support_path = os.path.join(self.libcxx_src_root, 'test/support')
+        support_path = os.path.join(self.libcxx_src_root, 'test', 'support')
         if self.cxx_stdlib_under_test != 'libstdc++' and \
            not self.is_windows:
             self.cxx.compile_flags += [
                 '-include', os.path.join(support_path, 'nasty_macros.hpp')]
+        if self.is_windows and self.debug_build:
+            self.cxx.compile_flags += [
+                '-include', os.path.join(support_path,
+                                         'set_windows_crt_report_mode.h')
+            ]
         self.configure_config_site_header()
         cxx_headers = self.get_lit_conf('cxx_headers')
         if cxx_headers == '' or (cxx_headers is None
@@ -667,7 +676,8 @@ class Configuration(object):
             self.cxx.link_flags += ['-lcxxrt']
         elif cxx_abi == 'none' or cxx_abi == 'default':
             if self.is_windows:
-                self.cxx.link_flags += ['-lmsvcrt']
+                debug_suffix = 'd' if self.debug_build else ''
+                self.cxx.link_flags += ['-lmsvcrt%s' % debug_suffix]
         else:
             self.lit_config.fatal(
                 'C++ ABI setting %s unsupported for tests' % cxx_abi)
