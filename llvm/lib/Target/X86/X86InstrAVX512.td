@@ -2738,7 +2738,7 @@ multiclass avx512_load<bits<8> opc, string OpcodeStr, X86VectorVTInfo _,
                     [(set _.RC:$dst, (_.VT (bitconvert (ld_frag addr:$src))))],
                     _.ExeDomain>, EVEX;
 
-  let Constraints = "$src0 = $dst" in {
+  let Constraints = "$src0 = $dst", isConvertibleToThreeAddress = 1 in {
   def rrk : AVX512PI<opc, MRMSrcReg, (outs _.RC:$dst),
                     (ins _.RC:$src0, _.KRCWM:$mask, _.RC:$src1),
                     !strconcat(OpcodeStr, "\t{$src1, ${dst} {${mask}}|",
