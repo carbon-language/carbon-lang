@@ -118,8 +118,7 @@ define <2 x i64> @test_pmuldq_hi_v4i32_add_v2i64(<4 x i32> %a0, <4 x i32> %a1, <
 define <4 x i32> @test_pmaddwd_v8i16_add_v4i32(<8 x i16> %a0, <8 x i16> %a1, <4 x i32> %a2) {
 ; XOP-LABEL: test_pmaddwd_v8i16_add_v4i32:
 ; XOP:       # BB#0:
-; XOP-NEXT:    vpmaddwd %xmm1, %xmm0, %xmm0
-; XOP-NEXT:    vpaddd %xmm2, %xmm0, %xmm0
+; XOP-NEXT:    vpmadcswd %xmm2, %xmm1, %xmm0, %xmm0
 ; XOP-NEXT:    retq
   %1 = call <4 x i32> @llvm.x86.sse2.pmadd.wd(<8 x i16> %a0, <8 x i16> %a1)
   %2 = add <4 x i32> %1, %a2

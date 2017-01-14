@@ -199,6 +199,9 @@ let Predicates = [HasXOP] in {
   def : Pat<(v2i64 (add (X86pmuldq (v4i32 VR128:$src1), (v4i32 VR128:$src2)),
                         (v2i64 VR128:$src3))),
             (VPMACSDQLrr VR128:$src1, VR128:$src2, VR128:$src3)>;
+  def : Pat<(v4i32 (add (X86vpmaddwd (v8i16 VR128:$src1), (v8i16 VR128:$src2)),
+                        (v4i32 VR128:$src3))),
+            (VPMADCSWDrr VR128:$src1, VR128:$src2, VR128:$src3)>;
 }
 
 // Instruction where second source can be memory, third must be imm8
