@@ -1038,16 +1038,16 @@ void NewGVN::markUsersTouched(Value *V) {
   // Now mark the users as touched.
   for (auto *User : V->users()) {
     assert(isa<Instruction>(User) && "Use of value not within an instruction?");
-    TouchedInstructions.set(InstrDFS[User]);
+    TouchedInstructions.set(InstrDFS.lookup(User));
   }
 }
 
 void NewGVN::markMemoryUsersTouched(MemoryAccess *MA) {
   for (auto U : MA->users()) {
     if (auto *MUD = dyn_cast<MemoryUseOrDef>(U))
-      TouchedInstructions.set(InstrDFS[MUD->getMemoryInst()]);
+      TouchedInstructions.set(InstrDFS.lookup(MUD->getMemoryInst()));
     else
-      TouchedInstructions.set(InstrDFS[U]);
+      TouchedInstructions.set(InstrDFS.lookup(U));
   }
 }
 
@@ -1056,7 +1056,7 @@ void NewGVN::markMemoryUsersTouched(MemoryAccess *MA) {
 void NewGVN::markLeaderChangeTouched(CongruenceClass *CC) {
   for (auto M : CC->Members) {
     if (auto *I = dyn_cast<Instruction>(M))
-      TouchedInstructions.set(InstrDFS[I]);
+      TouchedInstructions.set(InstrDFS.lookup(I));
     LeaderChanges.insert(M);
   }
 }
@@ -1260,11 +1260,11 @@ void NewGVN::updateReachableEdge(BasicBlock *From, BasicBlock *To) {
       // they are the only thing that depend on new edges. Anything using their
       // values will get propagated to if necessary.
       if (MemoryAccess *MemPhi = MSSA->getMemoryAccess(To))
-        TouchedInstructions.set(InstrDFS[MemPhi]);
+        TouchedInstructions.set(InstrDFS.lookup(MemPhi));
 
       auto BI = To->begin();
       while (isa<PHINode>(BI)) {
-        TouchedInstructions.set(InstrDFS[&*BI]);
+        TouchedInstructions.set(InstrDFS.lookup(&*BI));
         ++BI;
       }
     }
@@ -1891,7 +1891,7 @@ void NewGVN::convertDenseToDFSOrdered(
     VD.Val = D;
     // If it's an instruction, use the real local dfs number.
     if (auto *I = dyn_cast<Instruction>(D))
-      VD.LocalNum = InstrDFS[I];
+      VD.LocalNum = InstrDFS.lookup(I);
     else
       llvm_unreachable("Should have been an instruction");
 
@@ -1910,7 +1910,7 @@ void NewGVN::convertDenseToDFSOrdered(
           VD.LocalNum = InstrDFS.size() + 1;
         } else {
           IBlock = I->getParent();
-          VD.LocalNum = InstrDFS[I];
+          VD.LocalNum = InstrDFS.lookup(I);
         }
         DomTreeNode *DomNode = DT->getNode(IBlock);
         VD.DFSIn = DomNode->getDFSNumIn();
