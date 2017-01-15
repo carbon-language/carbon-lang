@@ -731,10 +731,8 @@ void LoopInfoWrapperPass::verifyAnalysis() const {
   // checking by default, LoopPass has been taught to call verifyLoop manually
   // during loop pass sequences.
   if (VerifyLoopInfo) {
-    if (auto *Analysis = getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {
-      auto &DT = Analysis->getDomTree();
-      LI.verify(DT);
-    }
+    auto &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+    LI.verify(DT);
   }
 }
 
