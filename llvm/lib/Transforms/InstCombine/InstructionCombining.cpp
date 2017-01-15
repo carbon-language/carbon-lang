@@ -3179,7 +3179,6 @@ PreservedAnalyses InstCombinePass::run(Function &F,
   // FIXME: This should also 'preserve the CFG'.
   PreservedAnalyses PA;
   PA.preserve<AAManager>();
-  PA.preserve<AssumptionAnalysis>();
   PA.preserve<DominatorTreeAnalysis>();
   PA.preserve<GlobalsAA>();
   return PA;
