@@ -45,6 +45,8 @@ def color_diagnostics: F<"color-diagnostics">,
 def color_diagnostics_eq: J<"color-diagnostics=">,
   HelpText<"Use colors in diagnostics">;
 
+def demangle: F<"demangle">, HelpText<"Demangle symbol names">;
+
 def disable_new_dtags: F<"disable-new-dtags">,
   HelpText<"Disable new dynamic tags">;
 
@@ -331,7 +333,6 @@ def plugin_opt_eq: J<"plugin-opt=">;
 def allow_shlib_undefined: F<"allow-shlib-undefined">;
 def cref: Flag<["--"], "cref">;
 def define_common: F<"define-common">;
-def demangle: F<"demangle">;
 def detect_odr_violations: F<"detect-odr-violations">;
 def g: Flag<["-"], "g">;
 def no_add_needed: F<"no-add-needed">;
