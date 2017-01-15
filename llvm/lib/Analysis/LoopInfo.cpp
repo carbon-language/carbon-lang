@@ -610,6 +610,15 @@ LoopInfo::LoopInfo(const DominatorTreeBase<BasicBlock> &DomTree) {
   analyze(DomTree);
 }
 
+bool LoopInfo::invalidate(Function &F, const PreservedAnalyses &PA,
+                          FunctionAnalysisManager::Invalidator &) {
+  // Check whether the analysis, all analyses on functions, or the function's
+  // CFG have been preserved.
+  auto PAC = PA.getChecker<LoopAnalysis>();
+  return !(PAC.preserved() || PAC.preservedSet<AllAnalysesOn<Function>>() ||
+           PAC.preservedSet<CFGAnalyses>());
+}
+
 void LoopInfo::markAsRemoved(Loop *Unloop) {
   assert(!Unloop->isInvalid() && "Loop has already been removed");
   Unloop->invalidate();

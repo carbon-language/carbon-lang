@@ -3645,9 +3645,9 @@ PreservedAnalyses SLPVectorizerPass::run(Function &F, FunctionAnalysisManager &A
   bool Changed = runImpl(F, SE, TTI, TLI, AA, LI, DT, AC, DB);
   if (!Changed)
     return PreservedAnalyses::all();
+
   PreservedAnalyses PA;
-  PA.preserve<LoopAnalysis>();
-  PA.preserve<DominatorTreeAnalysis>();
+  PA.preserveSet<CFGAnalyses>();
   PA.preserve<AAManager>();
   PA.preserve<GlobalsAA>();
   return PA;
