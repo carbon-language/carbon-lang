@@ -121,7 +121,7 @@ def lto_O: J<"lto-O">, MetaVarName<"<opt-level>">,
 
 def m: JoinedOrSeparate<["-"], "m">, HelpText<"Set target emulation">;
 
-def Map: JS<"Map">;
+def Map: JS<"Map">, HelpText<"Print a link map to the specified file">;
 
 def nostdlib: F<"nostdlib">,
   HelpText<"Only search directories specified on the command line">;
