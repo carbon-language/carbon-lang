@@ -35,8 +35,7 @@ using namespace lld::elf;
 
 static void writeOutSecLine(raw_fd_ostream &OS, int Width, uint64_t Address,
                             uint64_t Size, uint64_t Align, StringRef Name) {
-  OS << format_hex_no_prefix(Address, Width) << ' '
-     << format_hex_no_prefix(Size, Width) << ' ' << format("%5x ", Align)
+  OS << format("%0*x %0*x %5x ", Width, Address, Width, Size, Align)
      << left_justify(Name, 7);
 }
 
@@ -100,8 +99,7 @@ static void writeMapFile2(raw_fd_ostream &OS,
   int Width = ELFT::Is64Bits ? 16 : 8;
 
   OS << left_justify("Address", Width) << ' ' << left_justify("Size", Width)
-     << ' ' << left_justify("Align", 5) << ' ' << left_justify("Out", 7) << ' '
-     << left_justify("In", 7) << ' ' << left_justify("File", 7) << " Symbol\n";
+     << " Align Out     In      File    Symbol\n";
 
   for (OutputSectionBase *Sec : OutputSections) {
     writeOutSecLine(OS, Width, Sec->Addr, Sec->Size, Sec->Addralign,

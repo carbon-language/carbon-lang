@@ -36,9 +36,7 @@ using namespace lld::coff;
 
 static void writeOutSecLine(raw_fd_ostream &OS, uint64_t Address, uint64_t Size,
                             uint64_t Align, StringRef Name) {
-  OS << format_hex_no_prefix(Address, 8) << ' '
-     << format_hex_no_prefix(Size, 8) << ' ' << format("%5x ", Align)
-     << left_justify(Name, 7);
+  OS << format("%08x %08x %5x ", Address, Size, Align) << left_justify(Name, 7);
 }
 
 static void writeInSecLine(raw_fd_ostream &OS, uint64_t Address, uint64_t Size,
@@ -89,9 +87,7 @@ static void writeSectionChunk(raw_fd_ostream &OS, const SectionChunk *SC,
 
 static void writeMapFile2(raw_fd_ostream &OS,
                           ArrayRef<OutputSection *> OutputSections) {
-  OS << left_justify("Address", 8) << ' ' << left_justify("Size", 8)
-     << ' ' << left_justify("Align", 5) << ' ' << left_justify("Out", 7) << ' '
-     << left_justify("In", 7) << ' ' << left_justify("File", 7) << " Symbol\n";
+  OS << "Address  Size     Align Out     In      File    Symbol\n";
 
   for (OutputSection *Sec : OutputSections) {
     uint32_t VA = Sec->getRVA();
