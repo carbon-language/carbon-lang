@@ -174,6 +174,9 @@ def pie: F<"pie">, HelpText<"Create a position independent executable">;
 def print_gc_sections: F<"print-gc-sections">,
   HelpText<"List removed unused sections">;
 
+def print_map: F<"print-map">,
+  HelpText<"Print a link map to the standard output">;
+
 def reproduce: S<"reproduce">,
   HelpText<"Dump linker invocation and input files for debugging">;
 
@@ -276,6 +279,7 @@ def alias_omagic: Flag<["-"], "N">, Alias<omagic>;
 def alias_o_output: Joined<["--"], "output=">, Alias<o>;
 def alias_o_output2 : Separate<["--"], "output">, Alias<o>;
 def alias_pie_pic_executable: F<"pic-executable">, Alias<pie>;
+def alias_print_map_M: Flag<["-"], "M">, Alias<print_map>;
 def alias_relocatable_r: Flag<["-"], "r">, Alias<relocatable>;
 def alias_retain_symbols_file: S<"retain-symbols-file">, Alias<retain_symbols_file>;
 def alias_rpath_R: JoinedOrSeparate<["-"], "R">, Alias<rpath>;
@@ -327,7 +331,6 @@ def define_common: F<"define-common">;
 def demangle: F<"demangle">;
 def detect_odr_violations: F<"detect-odr-violations">;
 def g: Flag<["-"], "g">;
-def M: Flag<["-"], "M">;
 def no_add_needed: F<"no-add-needed">;
 def no_allow_shlib_undefined: F<"no-allow-shlib-undefined">;
 def no_copy_dt_needed_entries: F<"no-copy-dt-needed-entries">,
