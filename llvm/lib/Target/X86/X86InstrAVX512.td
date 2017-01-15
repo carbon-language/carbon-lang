@@ -1310,6 +1310,13 @@ defm VBROADCASTI32X2  : avx512_common_broadcast_i32x2<0x59, "vbroadcasti32x2",
 defm VBROADCASTF32X2  : avx512_common_broadcast_32x2<0x19, "vbroadcastf32x2",
                                           avx512vl_f32_info, avx512vl_f64_info>;
 
+let Predicates = [HasVLX] in {
+def : Pat<(v8f32 (X86VBroadcast (v8f32 VR256X:$src))),
+          (VBROADCASTSSZ256r (EXTRACT_SUBREG (v8f32 VR256X:$src), sub_xmm))>;
+def : Pat<(v4f64 (X86VBroadcast (v4f64 VR256X:$src))),
+          (VBROADCASTSDZ256r (EXTRACT_SUBREG (v4f64 VR256X:$src), sub_xmm))>;
+}
+
 def : Pat<(v16f32 (X86VBroadcast (v16f32 VR512:$src))),
           (VBROADCASTSSZr (EXTRACT_SUBREG (v16f32 VR512:$src), sub_xmm))>;
 def : Pat<(v16f32 (X86VBroadcast (v8f32 VR256X:$src))),

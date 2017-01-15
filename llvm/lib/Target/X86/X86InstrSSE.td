@@ -8279,7 +8279,7 @@ let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
             (VPBROADCASTWYrm addr:$src)>;
 }
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2, NoVLX] in {
   // Provide aliases for broadcast from the same register class that
   // automatically does the extract.
   def : Pat<(v8f32 (X86VBroadcast (v8f32 VR256:$src))),
