@@ -814,11 +814,12 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
     return R;
 
   unsigned BitWidth = I.getType()->getScalarSizeInBits();
-  if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-    unsigned ShAmt = Op1C->getZExtValue();
+  const APInt *ShAmtAPInt;
+  if (match(Op1, m_APInt(ShAmtAPInt))) {
+    unsigned ShAmt = ShAmtAPInt->getZExtValue();
 
     // If the shift amount equals the difference in width of the destination
-    // and source types:
+    // and source scalar types:
     // ashr (shl (zext X), C), C --> sext X
     Value *X;
     if (match(Op0, m_Shl(m_ZExt(m_Value(X)), m_Specific(Op1))) &&

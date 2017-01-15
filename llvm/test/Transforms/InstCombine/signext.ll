@@ -76,13 +76,11 @@ define i32 @test6(i16 %P) {
   ret i32 %tmp.5
 }
 
-; FIXME: Vectors should get the same fold as above.
+; Vectors should get the same fold as above.
 
 define <2 x i32> @test6_splat_vec(<2 x i12> %P) {
 ; CHECK-LABEL: @test6_splat_vec(
-; CHECK-NEXT:    [[Z:%.*]] = zext <2 x i12> %P to <2 x i32>
-; CHECK-NEXT:    [[SHL:%.*]] = shl nuw <2 x i32> [[Z]], <i32 20, i32 20>
-; CHECK-NEXT:    [[ASHR:%.*]] = ashr <2 x i32> [[SHL]], <i32 20, i32 20>
+; CHECK-NEXT:    [[ASHR:%.*]] = sext <2 x i12> %P to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[ASHR]]
 ;
   %z = zext <2 x i12> %P to <2 x i32>

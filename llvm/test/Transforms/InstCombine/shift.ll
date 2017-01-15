@@ -1046,7 +1046,7 @@ define <2 x i65> @test_63(<2 x i64> %t) {
 ; CHECK-LABEL: @test_63(
 ; CHECK-NEXT:    [[A:%.*]] = zext <2 x i64> %t to <2 x i65>
 ; CHECK-NEXT:    [[SEXT:%.*]] = shl <2 x i65> [[A]], <i65 33, i65 33>
-; CHECK-NEXT:    [[B:%.*]] = ashr <2 x i65> [[SEXT]], <i65 33, i65 33>
+; CHECK-NEXT:    [[B:%.*]] = ashr exact <2 x i65> [[SEXT]], <i65 33, i65 33>
 ; CHECK-NEXT:    ret <2 x i65> [[B]]
 ;
   %a = zext <2 x i64> %t to <2 x i65>
