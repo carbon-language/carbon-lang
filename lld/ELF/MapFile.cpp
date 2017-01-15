@@ -25,7 +25,7 @@
 #include "InputFiles.h"
 #include "Strings.h"
 
-#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -95,9 +95,8 @@ static void writeInputSection(raw_fd_ostream &OS, const InputSection<ELFT> *IS,
 }
 
 template <class ELFT>
-static void writeMapFile2(int FD,
+static void writeMapFile2(raw_fd_ostream &OS,
                           ArrayRef<OutputSectionBase *> OutputSections) {
-  raw_fd_ostream OS(FD, true);
   int Width = ELFT::Is64Bits ? 16 : 8;
 
   OS << left_justify("Address", Width) << ' ' << left_justify("Size", Width)
@@ -119,22 +118,14 @@ static void writeMapFile2(int FD,
 
 template <class ELFT>
 void elf::writeMapFile(ArrayRef<OutputSectionBase *> OutputSections) {
-  StringRef MapFile = Config->MapFile;
-  if (MapFile.empty())
+  if (Config->MapFile.empty())
     return;
 
-  // Create new file in same directory but with random name.
-  SmallString<128> TempPath;
-  int FD;
-  std::error_code EC =
-      sys::fs::createUniqueFile(Twine(MapFile) + ".tmp%%%%%%%", FD, TempPath);
+  std::error_code EC;
+  raw_fd_ostream OS(Config->MapFile, EC, sys::fs::F_None);
   if (EC)
-    fatal(EC.message());
-  FileRemover RAII(TempPath);
-  writeMapFile2<ELFT>(FD, OutputSections);
-  EC = sys::fs::rename(TempPath, MapFile);
-  if (EC)
-    fatal(EC.message());
+    fatal("cannot open " + Config->MapFile + ": " + EC.message());
+  writeMapFile2<ELFT>(OS, OutputSections);
 }
 
 template void elf::writeMapFile<ELF32LE>(ArrayRef<OutputSectionBase *>);

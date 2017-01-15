@@ -26,7 +26,7 @@
 #include "Symbols.h"
 #include "Writer.h"
 
-#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -87,12 +87,12 @@ static void writeSectionChunk(raw_fd_ostream &OS, const SectionChunk *SC,
   }
 }
 
-static void writeMapFile2(int FD,
+static void writeMapFile2(raw_fd_ostream &OS,
                           ArrayRef<OutputSection *> OutputSections) {
-  raw_fd_ostream OS(FD, true);
   OS << left_justify("Address", 8) << ' ' << left_justify("Size", 8)
      << ' ' << left_justify("Align", 5) << ' ' << left_justify("Out", 7) << ' '
      << left_justify("In", 7) << ' ' << left_justify("File", 7) << " Symbol\n";
+
   for (OutputSection *Sec : OutputSections) {
     uint32_t VA = Sec->getRVA();
     writeOutSecLine(OS, VA, Sec->getVirtualSize(), /*Align=*/PageSize,
@@ -106,20 +106,12 @@ static void writeMapFile2(int FD,
 }
 
 void coff::writeMapFile(ArrayRef<OutputSection *> OutputSections) {
-  StringRef MapFile = Config->MapFile;
-  if (MapFile.empty())
+  if (Config->MapFile.empty())
     return;
 
-  // Create new file in same directory but with random name.
-  SmallString<128> TempPath;
-  int FD;
-  std::error_code EC =
-      sys::fs::createUniqueFile(Twine(MapFile) + ".tmp%%%%%%%", FD, TempPath);
+  std::error_code EC;
+  raw_fd_ostream OS(Config->MapFile, EC, sys::fs::F_None);
   if (EC)
-    fatal(EC.message());
-  FileRemover RAII(TempPath);
-  writeMapFile2(FD, OutputSections);
-  EC = sys::fs::rename(TempPath, MapFile);
-  if (EC)
-    fatal(EC.message());
+    fatal("cannot open " + Config->MapFile + ": " + EC.message());
+  writeMapFile2(OS, OutputSections);
 }
