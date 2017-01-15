@@ -52,7 +52,6 @@ TEST(LoopInfoTest, LoopWithSingleLatch) {
   LoopInfo LI;
   LI.analyze(DT);
 
-
   Function &F = *M->begin();
   Function::iterator FI = F.begin();
   FI++; // First basic block is entry - skip it.
