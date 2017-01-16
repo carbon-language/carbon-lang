@@ -342,9 +342,9 @@ static CommandRegistration Unused(&Graph, []() -> Error {
 
   if (!TraceOrErr) {
     return joinErrors(
-        make_error<StringError>(
-            Twine("Failed loading input file '") + GraphInput + "'",
-            std::make_error_code(std::errc::protocol_error)),
+        make_error<StringError>(Twine("Failed loading input file '") +
+                                    GraphInput + "'",
+                                make_error_code(llvm::errc::invalid_argument)),
         std::move(Err));
   }
 
@@ -356,7 +356,7 @@ static CommandRegistration Unused(&Graph, []() -> Error {
       return make_error<StringError>(
           Twine("Failed accounting function calls in file '") + GraphInput +
               "'.",
-          std::make_error_code(std::errc::bad_message));
+          make_error_code(llvm::errc::invalid_argument));
     }
   }
 
