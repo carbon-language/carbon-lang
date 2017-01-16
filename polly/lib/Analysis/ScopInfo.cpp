@@ -2168,8 +2168,9 @@ static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
   isl_union_set *Locations = isl_union_map_range(Accesses);
   Locations = isl_union_set_coalesce(Locations);
   Locations = isl_union_set_detect_equalities(Locations);
-  bool Valid = (0 == isl_union_set_foreach_set(Locations, buildMinMaxAccess,
-                                               &MinMaxAccesses));
+  bool Valid = (0 ==
+                isl_union_set_foreach_set(Locations, buildMinMaxAccess,
+                                          &MinMaxAccesses));
   isl_union_set_free(Locations);
   return Valid;
 }
@@ -3055,8 +3056,9 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     // Bail out if the number of values we need to compare is too large.
     // This is important as the number of comparisons grows quadratically with
     // the number of values we need to compare.
-    if (!Valid || (MinMaxAccessesNonReadOnly.size() + ReadOnlyPairs.size() >
-                   RunTimeChecksMaxArraysPerGroup))
+    if (!Valid ||
+        (MinMaxAccessesNonReadOnly.size() + ReadOnlyPairs.size() >
+         RunTimeChecksMaxArraysPerGroup))
       return false;
 
     // Calculate minimal and maximal accesses for read only accesses.
