@@ -2160,9 +2160,16 @@ static __isl_give isl_set *getAccessDomain(MemoryAccess *MA) {
 }
 
 /// Wrapper function to calculate minimal/maximal accesses to each array.
-static bool calculateMinMaxAccess(__isl_take isl_union_map *Accesses,
-                                  __isl_take isl_union_set *Domains,
+static bool calculateMinMaxAccess(Scop::AliasGroupTy AliasGroup, Scop &S,
                                   Scop::MinMaxVectorTy &MinMaxAccesses) {
+
+  MinMaxAccesses.reserve(AliasGroup.size());
+
+  isl_union_set *Domains = S.getDomains();
+  isl_union_map *Accesses = isl_union_map_empty(S.getParamSpace());
+
+  for (MemoryAccess *MA : AliasGroup)
+    Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
 
   Accesses = isl_union_map_intersect_domain(Accesses, Domains);
   isl_union_set *Locations = isl_union_map_range(Accesses);
@@ -2979,24 +2986,24 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   auto &F = getFunction();
   for (AliasGroupTy &AG : AliasGroups) {
     AliasGroupTy ReadOnlyAccesses;
+    AliasGroupTy ReadWriteAccesses;
     SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
 
     if (AG.size() < 2)
       continue;
 
-    for (auto II = AG.begin(); II != AG.end();) {
+    for (MemoryAccess *Access : AG) {
       emitOptimizationRemarkAnalysis(
           F.getContext(), DEBUG_TYPE, F,
-          (*II)->getAccessInstruction()->getDebugLoc(),
+          Access->getAccessInstruction()->getDebugLoc(),
           "Possibly aliasing pointer, use restrict keyword.");
 
-      Value *BaseAddr = (*II)->getBaseAddr();
+      Value *BaseAddr = Access->getBaseAddr();
       if (HasWriteAccess.count(BaseAddr)) {
         NonReadOnlyBaseValues.insert(BaseAddr);
-        II++;
+        ReadWriteAccesses.push_back(Access);
       } else {
-        ReadOnlyAccesses.push_back(*II);
-        II = AG.erase(II);
+        ReadOnlyAccesses.push_back(Access);
       }
     }
 
@@ -3020,49 +3027,28 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
         addRequiredInvariantLoad(
             cast<LoadInst>(BasePtrMA->getAccessInstruction()));
     }
-    for (MemoryAccess *MA : ReadOnlyAccesses) {
-      if (!MA->isAffine()) {
-        invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
-        return false;
-      }
-      if (MemoryAccess *BasePtrMA = lookupBasePtrAccess(MA))
-        addRequiredInvariantLoad(
-            cast<LoadInst>(BasePtrMA->getAccessInstruction()));
-    }
 
-    // Calculate minimal and maximal accesses for non read only accesses.
     MinMaxAliasGroups.emplace_back();
     MinMaxVectorPairTy &pair = MinMaxAliasGroups.back();
     MinMaxVectorTy &MinMaxAccessesNonReadOnly = pair.first;
     MinMaxVectorTy &MinMaxAccessesReadOnly = pair.second;
-    MinMaxAccessesNonReadOnly.reserve(AG.size());
 
-    isl_union_map *Accesses = isl_union_map_empty(getParamSpace());
+    bool Valid;
+    Valid = calculateMinMaxAccess(ReadWriteAccesses, *this,
+                                  MinMaxAccessesNonReadOnly);
 
-    // AG contains only non read only accesses.
-    for (MemoryAccess *MA : AG)
-      Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
-
-    bool Valid = calculateMinMaxAccess(Accesses, getDomains(),
-                                       MinMaxAccessesNonReadOnly);
+    if (!Valid)
+      return false;
 
     // Bail out if the number of values we need to compare is too large.
     // This is important as the number of comparisons grows quadratically with
     // the number of values we need to compare.
-    if (!Valid ||
-        (MinMaxAccessesNonReadOnly.size() + ReadOnlyAccesses.size() >
-         RunTimeChecksMaxArraysPerGroup))
+    if (MinMaxAccessesNonReadOnly.size() + ReadOnlyAccesses.size() >
+        RunTimeChecksMaxArraysPerGroup)
       return false;
 
-    // Calculate minimal and maximal accesses for read only accesses.
-    MinMaxAccessesReadOnly.reserve(ReadOnlyAccesses.size());
-    Accesses = isl_union_map_empty(getParamSpace());
-
-    for (MemoryAccess *MA : ReadOnlyAccesses)
-      Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
-
     Valid =
-        calculateMinMaxAccess(Accesses, getDomains(), MinMaxAccessesReadOnly);
+        calculateMinMaxAccess(ReadOnlyAccesses, *this, MinMaxAccessesReadOnly);
 
     if (!Valid)
       return false;
