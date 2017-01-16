@@ -1758,7 +1758,14 @@ static int readOperands(struct InternalInstruction* insn) {
       // VSIB can use the V2 bit so check only the other bits.
       if (needVVVV)
         needVVVV = hasVVVV & ((insn->vvvv & 0xf) != 0);
-      // fallthrough
+      if (readModRM(insn))
+        return -1;
+      if (fixupReg(insn, &Op))
+        return -1;
+      // Apply the AVX512 compressed displacement scaling factor.
+      if (Op.encoding != ENCODING_REG && insn->eaDisplacement == EA_DISP_8)
+        insn->displacement *= 1 << (Op.encoding - ENCODING_VSIB);
+      break;
     case ENCODING_REG:
     CASE_ENCODING_RM:
       if (readModRM(insn))

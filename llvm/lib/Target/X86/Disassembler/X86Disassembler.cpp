@@ -767,7 +767,27 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
                        Opcode == X86::VPGATHERDQYrm ||
                        Opcode == X86::VPGATHERQQrm ||
                        Opcode == X86::VPGATHERDDrm ||
-                       Opcode == X86::VPGATHERQDrm);
+                       Opcode == X86::VPGATHERQDrm ||
+                       Opcode == X86::VGATHERDPDZ128rm ||
+                       Opcode == X86::VGATHERDPDZ256rm ||
+                       Opcode == X86::VGATHERDPSZ128rm ||
+                       Opcode == X86::VGATHERQPDZ128rm ||
+                       Opcode == X86::VGATHERQPSZ128rm ||
+                       Opcode == X86::VPGATHERDDZ128rm ||
+                       Opcode == X86::VPGATHERDQZ128rm ||
+                       Opcode == X86::VPGATHERDQZ256rm ||
+                       Opcode == X86::VPGATHERQDZ128rm ||
+                       Opcode == X86::VPGATHERQQZ128rm ||
+                       Opcode == X86::VSCATTERDPDZ128mr ||
+                       Opcode == X86::VSCATTERDPDZ256mr ||
+                       Opcode == X86::VSCATTERDPSZ128mr ||
+                       Opcode == X86::VSCATTERQPDZ128mr ||
+                       Opcode == X86::VSCATTERQPSZ128mr ||
+                       Opcode == X86::VPSCATTERDDZ128mr ||
+                       Opcode == X86::VPSCATTERDQZ128mr ||
+                       Opcode == X86::VPSCATTERDQZ256mr ||
+                       Opcode == X86::VPSCATTERQDZ128mr ||
+                       Opcode == X86::VPSCATTERQQZ128mr);
     bool IndexIs256 = (Opcode == X86::VGATHERQPDYrm ||
                        Opcode == X86::VGATHERDPSYrm ||
                        Opcode == X86::VGATHERQPSYrm ||
@@ -775,13 +795,49 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
                        Opcode == X86::VPGATHERDQZrm ||
                        Opcode == X86::VPGATHERQQYrm ||
                        Opcode == X86::VPGATHERDDYrm ||
-                       Opcode == X86::VPGATHERQDYrm);
+                       Opcode == X86::VPGATHERQDYrm ||
+                       Opcode == X86::VGATHERDPSZ256rm ||
+                       Opcode == X86::VGATHERQPDZ256rm ||
+                       Opcode == X86::VGATHERQPSZ256rm ||
+                       Opcode == X86::VPGATHERDDZ256rm ||
+                       Opcode == X86::VPGATHERQQZ256rm ||
+                       Opcode == X86::VPGATHERQDZ256rm ||
+                       Opcode == X86::VSCATTERDPDZmr ||
+                       Opcode == X86::VPSCATTERDQZmr ||
+                       Opcode == X86::VSCATTERDPSZ256mr ||
+                       Opcode == X86::VSCATTERQPDZ256mr ||
+                       Opcode == X86::VSCATTERQPSZ256mr ||
+                       Opcode == X86::VPSCATTERDDZ256mr ||
+                       Opcode == X86::VPSCATTERQQZ256mr ||
+                       Opcode == X86::VPSCATTERQDZ256mr ||
+                       Opcode == X86::VGATHERPF0DPDm ||
+                       Opcode == X86::VGATHERPF1DPDm ||
+                       Opcode == X86::VSCATTERPF0DPDm ||
+                       Opcode == X86::VSCATTERPF1DPDm);
     bool IndexIs512 = (Opcode == X86::VGATHERQPDZrm ||
                        Opcode == X86::VGATHERDPSZrm ||
                        Opcode == X86::VGATHERQPSZrm ||
                        Opcode == X86::VPGATHERQQZrm ||
                        Opcode == X86::VPGATHERDDZrm ||
-                       Opcode == X86::VPGATHERQDZrm);
+                       Opcode == X86::VPGATHERQDZrm ||
+                       Opcode == X86::VSCATTERQPDZmr ||
+                       Opcode == X86::VSCATTERDPSZmr ||
+                       Opcode == X86::VSCATTERQPSZmr ||
+                       Opcode == X86::VPSCATTERQQZmr ||
+                       Opcode == X86::VPSCATTERDDZmr ||
+                       Opcode == X86::VPSCATTERQDZmr ||
+                       Opcode == X86::VGATHERPF0DPSm ||
+                       Opcode == X86::VGATHERPF0QPDm ||
+                       Opcode == X86::VGATHERPF0QPSm ||
+                       Opcode == X86::VGATHERPF1DPSm ||
+                       Opcode == X86::VGATHERPF1QPDm ||
+                       Opcode == X86::VGATHERPF1QPSm ||
+                       Opcode == X86::VSCATTERPF0DPSm ||
+                       Opcode == X86::VSCATTERPF0QPDm ||
+                       Opcode == X86::VSCATTERPF0QPSm ||
+                       Opcode == X86::VSCATTERPF1DPSm ||
+                       Opcode == X86::VSCATTERPF1QPDm ||
+                       Opcode == X86::VSCATTERPF1QPSm);
     if (IndexIs128 || IndexIs256 || IndexIs512) {
       unsigned IndexOffset = insn.sibIndex -
                          (insn.addressSize == 8 ? SIB_INDEX_RAX:SIB_INDEX_EAX);
