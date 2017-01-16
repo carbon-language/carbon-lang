@@ -2299,6 +2299,15 @@ public:
   std::tuple<AliasGroupVectorTy, DenseSet<Value *>>
   buildAliasGroupsForAccesses(AliasAnalysis &AA);
 
+  ///  Split alias groups by iteration domains.
+  ///
+  ///  We split each group based on the domains of the minimal/maximal accesses.
+  ///  That means two minimal/maximal accesses are only in a group if their
+  ///  access domains intersect. Otherwise, they are in different groups.
+  ///
+  ///  @param AliasGroups The alias groups to split
+  void splitAliasGroupsByDomain(AliasGroupVectorTy &AliasGroups);
+
   /// Return all alias groups for this SCoP.
   const MinMaxVectorPairVectorTy &getAliasGroups() const {
     return MinMaxAliasGroups;
