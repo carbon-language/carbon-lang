@@ -2978,7 +2978,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
   auto &F = getFunction();
   for (AliasGroupTy &AG : AliasGroups) {
-    MapVector<const Value *, SmallSetVector<MemoryAccess *, 8>> ReadOnlyPairs;
+    AliasGroupTy ReadOnlyAccesses;
     SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
 
     if (AG.size() < 2)
@@ -2995,14 +2995,14 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
         NonReadOnlyBaseValues.insert(BaseAddr);
         II++;
       } else {
-        ReadOnlyPairs[BaseAddr].insert(*II);
+        ReadOnlyAccesses.push_back(*II);
         II = AG.erase(II);
       }
     }
 
     // If we don't have read only pointers check if there are at least two
     // non read only pointers, otherwise clear the alias group.
-    if (ReadOnlyPairs.empty() && NonReadOnlyBaseValues.size() <= 1)
+    if (ReadOnlyAccesses.empty() && NonReadOnlyBaseValues.size() <= 1)
       continue;
 
     // If we don't have non read only pointers clear the alias group.
@@ -3011,25 +3011,24 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
     // Check if we have non-affine accesses left, if so bail out as we cannot
     // generate a good access range yet.
-    for (auto *MA : AG) {
+    for (MemoryAccess *MA : AG) {
       if (!MA->isAffine()) {
         invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
         return false;
       }
-      if (auto *BasePtrMA = lookupBasePtrAccess(MA))
+      if (MemoryAccess *BasePtrMA = lookupBasePtrAccess(MA))
         addRequiredInvariantLoad(
             cast<LoadInst>(BasePtrMA->getAccessInstruction()));
     }
-    for (auto &ReadOnlyPair : ReadOnlyPairs)
-      for (auto *MA : ReadOnlyPair.second) {
-        if (!MA->isAffine()) {
-          invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
-          return false;
-        }
-        if (auto *BasePtrMA = lookupBasePtrAccess(MA))
-          addRequiredInvariantLoad(
-              cast<LoadInst>(BasePtrMA->getAccessInstruction()));
+    for (MemoryAccess *MA : ReadOnlyAccesses) {
+      if (!MA->isAffine()) {
+        invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
+        return false;
       }
+      if (MemoryAccess *BasePtrMA = lookupBasePtrAccess(MA))
+        addRequiredInvariantLoad(
+            cast<LoadInst>(BasePtrMA->getAccessInstruction()));
+    }
 
     // Calculate minimal and maximal accesses for non read only accesses.
     MinMaxAliasGroups.emplace_back();
@@ -3051,17 +3050,16 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     // This is important as the number of comparisons grows quadratically with
     // the number of values we need to compare.
     if (!Valid ||
-        (MinMaxAccessesNonReadOnly.size() + ReadOnlyPairs.size() >
+        (MinMaxAccessesNonReadOnly.size() + ReadOnlyAccesses.size() >
          RunTimeChecksMaxArraysPerGroup))
       return false;
 
     // Calculate minimal and maximal accesses for read only accesses.
-    MinMaxAccessesReadOnly.reserve(ReadOnlyPairs.size());
+    MinMaxAccessesReadOnly.reserve(ReadOnlyAccesses.size());
     Accesses = isl_union_map_empty(getParamSpace());
 
-    for (const auto &ReadOnlyPair : ReadOnlyPairs)
-      for (MemoryAccess *MA : ReadOnlyPair.second)
-        Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
+    for (MemoryAccess *MA : ReadOnlyAccesses)
+      Accesses = isl_union_map_add_map(Accesses, MA->getAccessRelation());
 
     Valid =
         calculateMinMaxAccess(Accesses, getDomains(), MinMaxAccessesReadOnly);
