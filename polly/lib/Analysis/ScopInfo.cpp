@@ -2996,7 +2996,7 @@ bool Scop::buildAliasGroup(Scop::AliasGroupTy &AliasGroup,
                            DenseSet<Value *> HasWriteAccess) {
   AliasGroupTy ReadOnlyAccesses;
   AliasGroupTy ReadWriteAccesses;
-  SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
+  SmallPtrSet<const Value *, 4> ReadWriteBaseValues;
 
   auto &F = getFunction();
 
@@ -3011,24 +3011,24 @@ bool Scop::buildAliasGroup(Scop::AliasGroupTy &AliasGroup,
 
     Value *BaseAddr = Access->getBaseAddr();
     if (HasWriteAccess.count(BaseAddr)) {
-      NonReadOnlyBaseValues.insert(BaseAddr);
+      ReadWriteBaseValues.insert(BaseAddr);
       ReadWriteAccesses.push_back(Access);
     } else {
       ReadOnlyAccesses.push_back(Access);
     }
   }
 
-  // If we don't have read only pointers check if there are at least two
-  // non read only pointers, otherwise clear the alias group.
-  if (ReadOnlyAccesses.empty() && NonReadOnlyBaseValues.size() <= 1)
+  // If there are no read-only pointers, and less than two read-write pointers,
+  // no alias check is needed.
+  if (ReadOnlyAccesses.empty() && ReadWriteBaseValues.size() <= 1)
     return true;
 
-  // If we don't have non read only pointers clear the alias group.
-  if (NonReadOnlyBaseValues.empty())
+  // If there is no read-write pointer, no alias check is needed.
+  if (ReadWriteBaseValues.empty())
     return true;
 
-  // Check if we have non-affine accesses left, if so bail out as we cannot
-  // generate a good access range yet.
+  // For non-affine accesses, no alias check can be generated as we cannot
+  // compute a sufficiently tight lower and upper bound: bail out.
   for (MemoryAccess *MA : AliasGroup) {
     if (!MA->isAffine()) {
       invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
