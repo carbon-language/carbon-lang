@@ -2976,11 +2976,9 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   splitAliasGroupsByDomain(AliasGroups);
 
   auto &F = getFunction();
-  MapVector<const Value *, SmallSetVector<MemoryAccess *, 8>> ReadOnlyPairs;
-  SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
   for (AliasGroupTy &AG : AliasGroups) {
-    NonReadOnlyBaseValues.clear();
-    ReadOnlyPairs.clear();
+    MapVector<const Value *, SmallSetVector<MemoryAccess *, 8>> ReadOnlyPairs;
+    SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
 
     if (AG.size() < 2) {
       AG.clear();
