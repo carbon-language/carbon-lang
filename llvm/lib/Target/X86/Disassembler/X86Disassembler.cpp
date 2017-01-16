@@ -368,26 +368,44 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
 
   bool isBranch = false;
   uint64_t pcrel = 0;
-  if (type == TYPE_RELv) {
+  if (type == TYPE_REL) {
     isBranch = true;
     pcrel = insn.startLocation +
             insn.immediateOffset + insn.immediateSize;
-    switch (insn.displacementSize) {
+    switch (operand.encoding) {
     default:
       break;
-    case 1:
+    case ENCODING_Iv:
+      switch (insn.displacementSize) {
+      default:
+        break;
+      case 1:
+        if(immediate & 0x80)
+          immediate |= ~(0xffull);
+        break;
+      case 2:
+        if(immediate & 0x8000)
+          immediate |= ~(0xffffull);
+        break;
+      case 4:
+        if(immediate & 0x80000000)
+          immediate |= ~(0xffffffffull);
+        break;
+      case 8:
+        break;
+      }
+      break;
+    case ENCODING_IB:
       if(immediate & 0x80)
         immediate |= ~(0xffull);
       break;
-    case 2:
+    case ENCODING_IW:
       if(immediate & 0x8000)
         immediate |= ~(0xffffull);
       break;
-    case 4:
+    case ENCODING_ID:
       if(immediate & 0x80000000)
         immediate |= ~(0xffffffffull);
-      break;
-    case 8:
       break;
     }
   }
@@ -630,25 +648,6 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
     return;
   case TYPE_BNDR:
     mcInst.addOperand(MCOperand::createReg(X86::BND0 + (immediate >> 4)));
-  case TYPE_REL8:
-    isBranch = true;
-    pcrel = insn.startLocation + insn.immediateOffset + insn.immediateSize;
-    if (immediate & 0x80)
-      immediate |= ~(0xffull);
-    break;
-  case TYPE_REL16:
-    isBranch = true;
-    pcrel = insn.startLocation + insn.immediateOffset + insn.immediateSize;
-    if (immediate & 0x8000)
-      immediate |= ~(0xffffull);
-    break;
-  case TYPE_REL32:
-  case TYPE_REL64:
-    isBranch = true;
-    pcrel = insn.startLocation + insn.immediateOffset + insn.immediateSize;
-    if(immediate & 0x80000000)
-      immediate |= ~(0xffffffffull);
-    break;
   default:
     // operand is 64 bits wide.  Do nothing.
     break;

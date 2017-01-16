@@ -399,10 +399,7 @@ enum OperandEncoding {
 // Semantic interpretations of instruction operands.
 #define TYPES                                                                  \
   ENUM_ENTRY(TYPE_NONE,       "")                                              \
-  ENUM_ENTRY(TYPE_REL8,       "1-byte immediate address")                      \
-  ENUM_ENTRY(TYPE_REL16,      "2-byte")                                        \
-  ENUM_ENTRY(TYPE_REL32,      "4-byte")                                        \
-  ENUM_ENTRY(TYPE_REL64,      "8-byte")                                        \
+  ENUM_ENTRY(TYPE_REL,        "immediate address")                             \
   ENUM_ENTRY(TYPE_R8,         "1-byte register operand")                       \
   ENUM_ENTRY(TYPE_R16,        "2-byte")                                        \
   ENUM_ENTRY(TYPE_R32,        "4-byte")                                        \
