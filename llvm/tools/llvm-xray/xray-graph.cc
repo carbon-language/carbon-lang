@@ -19,6 +19,7 @@
 #include "xray-extract.h"
 #include "xray-graph.h"
 #include "xray-registry.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/XRay/Trace.h"
