@@ -55,9 +55,7 @@ const uint32_t GPRCoverageData[] = {
     0,
 };
 
-// FIXME: The 200 will be replaced by the number of register classes when this is
-//        tablegenerated.
-RegisterBank GPRRegBank(ARM::GPRRegBankID, "GPRB", 32, ARM::GPRCoverageData, 200);
+RegisterBank GPRRegBank(ARM::GPRRegBankID, "GPRB", 32, ARM::GPRCoverageData);
 RegisterBank *RegBanks[] = {&GPRRegBank};
 
 RegisterBankInfo::PartialMapping GPRPartialMapping{0, 32, GPRRegBank};
