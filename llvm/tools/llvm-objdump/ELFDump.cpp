@@ -36,6 +36,9 @@ template <class ELFT> void printProgramHeaders(const ELFFile<ELFT> *o) {
     case ELF::PT_GNU_EH_FRAME:
       outs() << "EH_FRAME ";
       break;
+    case ELF::PT_GNU_RELRO:
+      outs() << "   RELRO ";
+      break;
     case ELF::PT_GNU_STACK:
       outs() << "   STACK ";
       break;
