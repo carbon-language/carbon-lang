@@ -2893,33 +2893,19 @@ bool Scop::buildAliasChecks(AliasAnalysis &AA) {
   return false;
 }
 
-bool Scop::buildAliasGroups(AliasAnalysis &AA) {
-  // To create sound alias checks we perform the following steps:
-  //   o) Use the alias analysis and an alias set tracker to build alias sets
-  //      for all memory accesses inside the SCoP.
-  //   o) For each alias set we then map the aliasing pointers back to the
-  //      memory accesses we know, thus obtain groups of memory accesses which
-  //      might alias.
-  //   o) We divide each group based on the domains of the minimal/maximal
-  //      accesses. That means two minimal/maximal accesses are only in a group
-  //      if their access domains intersect, otherwise they are in different
-  //      ones.
-  //   o) We partition each group into read only and non read only accesses.
-  //   o) For each group with more than one base pointer we then compute minimal
-  //      and maximal accesses to each array of a group in read only and non
-  //      read only partitions separately.
-  using AliasGroupTy = SmallVector<MemoryAccess *, 4>;
-
+std::tuple<Scop::AliasGroupVectorTy, DenseSet<Value *>>
+Scop::buildAliasGroupsForAccesses(AliasAnalysis &AA) {
   AliasSetTracker AST(AA);
 
   DenseMap<Value *, MemoryAccess *> PtrToAcc;
   DenseSet<Value *> HasWriteAccess;
   for (ScopStmt &Stmt : *this) {
 
-    // Skip statements with an empty domain as they will never be executed.
     isl_set *StmtDomain = Stmt.getDomain();
     bool StmtDomainEmpty = isl_set_is_empty(StmtDomain);
     isl_set_free(StmtDomain);
+
+    // Statements with an empty domain will never be executed.
     if (StmtDomainEmpty)
       continue;
 
@@ -2937,7 +2923,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     }
   }
 
-  SmallVector<AliasGroupTy, 4> AliasGroups;
+  AliasGroupVectorTy AliasGroups;
   for (AliasSet &AS : AST) {
     if (AS.isMustAlias() || AS.isForwardingAliasSet())
       continue;
@@ -2948,6 +2934,24 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
       continue;
     AliasGroups.push_back(std::move(AG));
   }
+
+  return std::make_tuple(AliasGroups, HasWriteAccess);
+}
+
+bool Scop::buildAliasGroups(AliasAnalysis &AA) {
+  // To create sound alias checks we perform the following steps:
+  //   o) We divide each group based on the domains of the minimal/maximal
+  //      accesses. That means two minimal/maximal accesses are only in a group
+  //      if their access domains intersect, otherwise they are in different
+  //      ones.
+  //   o) We partition each group into read only and non read only accesses.
+  //   o) For each group with more than one base pointer we then compute minimal
+  //      and maximal accesses to each array of a group in read only and non
+  //      read only partitions separately.
+  AliasGroupVectorTy AliasGroups;
+  DenseSet<Value *> HasWriteAccess;
+
+  std::tie(AliasGroups, HasWriteAccess) = buildAliasGroupsForAccesses(AA);
 
   // Split the alias groups based on their domain.
   for (unsigned u = 0; u < AliasGroups.size(); u++) {
