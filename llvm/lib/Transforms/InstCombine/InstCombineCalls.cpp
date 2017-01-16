@@ -2315,10 +2315,20 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
   case Intrinsic::x86_ssse3_pshuf_b_128:
   case Intrinsic::x86_avx2_pshuf_b:
-  case Intrinsic::x86_avx512_pshuf_b_512:
+  case Intrinsic::x86_avx512_pshuf_b_512: {
     if (Value *V = simplifyX86pshufb(*II, *Builder))
       return replaceInstUsesWith(*II, V);
+
+    unsigned VWidth = II->getType()->getVectorNumElements();
+    APInt UndefElts(VWidth, 0);
+    APInt DemandedElts = APInt::getAllOnesValue(VWidth);
+    if (Value *V = SimplifyDemandedVectorElts(II, DemandedElts, UndefElts)) {
+      if (V != II)
+        return replaceInstUsesWith(*II, V);
+      return II;
+    }
     break;
+  }
 
   case Intrinsic::x86_avx_vpermilvar_ps:
   case Intrinsic::x86_avx_vpermilvar_ps_256:
