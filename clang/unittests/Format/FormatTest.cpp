@@ -3353,9 +3353,10 @@ TEST_F(FormatTest, PreventConfusingIndents) {
       "    aaaaaaaaaaaaaaaaaaaaaaaa<\n"
       "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>,\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaa>;");
-  verifyFormat("int a = bbbb && ccc && fffff(\n"
+  verifyFormat("int a = bbbb && ccc &&\n"
+               "        fffff(\n"
                "#define A Just forcing a new line\n"
-               "                           ddd);");
+               "            ddd);");
 }
 
 TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
@@ -4050,8 +4051,9 @@ TEST_F(FormatTest, BreaksDesireably) {
                "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
 
   verifyFormat(
-      "aaaaaaaa(aaaaaaaaaaaaa, aaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-      "                            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)),\n"
+      "aaaaaaaa(aaaaaaaaaaaaa,\n"
+      "         aaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)),\n"
       "         aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));");
 
@@ -4067,8 +4069,9 @@ TEST_F(FormatTest, BreaksDesireably) {
       "aaaaaa(new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
   verifyFormat(
-      "aaaaaa(aaa, new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-      "                aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
+      "aaaaaa(aaa,\n"
+      "       new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "           aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
   verifyFormat("aaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
                "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "                  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
@@ -4626,10 +4629,9 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "                                            aaaaaaaaaaaaaaaaaaaaa\n"
       "                                      : aaaaaaaaaa;");
   verifyFormat(
-      "aaaaaa = aaaaaaaaaaaa\n"
-      "             ? aaaaaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
-      "                          : aaaaaaaaaaaaaaaaaaaaaa\n"
-      "             : aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+      "aaaaaa = aaaaaaaaaaaa ? aaaaaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "                                   : aaaaaaaaaaaaaaaaaaaaaa\n"
+      "                      : aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
 
   FormatStyle NoBinPacking = getLLVMStyle();
   NoBinPacking.BinPackArguments = false;
@@ -4826,10 +4828,11 @@ TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("someFunction(\"Always break between multi-line\"\n"
                "             \" string literals\",\n"
                "             and, other, parameters);");
-  EXPECT_EQ("fun + \"1243\" /* comment */\n"
-            "      \"5678\";",
+  EXPECT_EQ("fun +\n"
+            "    \"1243\" /* comment */\n"
+            "    \"5678\";",
             format("fun + \"1243\" /* comment */\n"
-                   "      \"5678\";",
+                   "    \"5678\";",
                    getLLVMStyleWithColumns(28)));
   EXPECT_EQ(
       "aaaaaa = \"aaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaa \"\n"
@@ -4839,11 +4842,13 @@ TEST_F(FormatTest, AlignsStringLiterals) {
              "\"aaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaa "
              "aaaaaaaaaaaaaaaaaaaaa\" "
              "\"aaaaaaaaaaaaaaaa\";"));
-  verifyFormat("a = a + \"a\"\n"
-               "        \"a\"\n"
-               "        \"a\";");
-  verifyFormat("f(\"a\", \"b\"\n"
-               "       \"c\");");
+  verifyFormat("a = a +\n"
+               "    \"a\"\n"
+               "    \"a\"\n"
+               "    \"a\";");
+  verifyFormat("f(\"a\",\n"
+               "  \"b\"\n"
+               "  \"c\");");
 
   verifyFormat(
       "#define LL_FORMAT \"ll\"\n"
@@ -5028,8 +5033,9 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
                "    \"bbbb\"\n"
                "    \"cccc\");",
                Break);
-  verifyFormat("aaaa(qqq, \"bbbb\"\n"
-               "          \"cccc\");",
+  verifyFormat("aaaa(qqq,\n"
+               "     \"bbbb\"\n"
+               "     \"cccc\");",
                NoBreak);
   verifyFormat("aaaa(qqq,\n"
                "     \"bbbb\"\n"
@@ -5039,8 +5045,9 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
                "     L\"bbbb\"\n"
                "     L\"cccc\");",
                Break);
-  verifyFormat("aaaaa(aaaaaa, aaaaaaa(\"aaaa\"\n"
-               "                      \"bbbb\"));",
+  verifyFormat("aaaaa(aaaaaa,\n"
+               "      aaaaaaa(\"aaaa\"\n"
+               "              \"bbbb\"));",
                Break);
   verifyFormat("string s = someFunction(\n"
                "    \"abc\"\n"
@@ -5456,8 +5463,9 @@ TEST_F(FormatTest, WrapsAtNestedNameSpecifiers) {
       "    aaaaaaaaaaaaaaaaaaaaaaa);");
 
   verifyFormat(
-      "aaaaaaaaaaaaaaaaaa(aaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa::\n"
-      "                                 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "aaaaaaaaaaaaaaaaaa(aaaaaaaa,\n"
+      "                   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa::\n"
+      "                       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
       "                   aaaaaaaaaaaaaaaaaaaaa);",
       getLLVMStyleWithColumns(74));
 
