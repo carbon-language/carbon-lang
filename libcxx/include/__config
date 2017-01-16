@@ -583,6 +583,7 @@ namespace std {
 
 #define _LIBCPP_TYPE_VIS            _LIBCPP_DLL_VIS
 #define _LIBCPP_FUNC_VIS            _LIBCPP_DLL_VIS
+#define _LIBCPP_EXTERN_VIS          _LIBCPP_DLL_VIS
 #define _LIBCPP_EXCEPTION_ABI       _LIBCPP_DLL_VIS
 #define _LIBCPP_HIDDEN
 #define _LIBCPP_TEMPLATE_VIS
@@ -634,6 +635,10 @@ namespace std {
 
 #ifndef _LIBCPP_FUNC_VIS_ONLY
 # define _LIBCPP_FUNC_VIS_ONLY _LIBCPP_FUNC_VIS
+#endif
+
+#ifndef _LIBCPP_EXTERN_VIS
+# define _LIBCPP_EXTERN_VIS
 #endif
 
 #ifndef _LIBCPP_OVERRIDABLE_FUNC_VIS
