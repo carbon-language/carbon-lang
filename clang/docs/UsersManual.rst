@@ -1097,6 +1097,13 @@ are listed below.
    the behavior of sanitizers in the ``cfi`` group to allow checking
    of cross-DSO virtual and indirect calls.
 
+
+.. option:: -fstrict-vtable-pointers
+   Enable optimizations based on the strict rules for overwriting polymorphic
+   C++ objects, i.e. the vptr is invariant during an object's lifetime.
+   This enables better devirtualization. Turned off by default, because it is
+   still experimental.
+
 .. option:: -ffast-math
 
    Enable fast-math mode. This defines the ``__FAST_MATH__`` preprocessor
