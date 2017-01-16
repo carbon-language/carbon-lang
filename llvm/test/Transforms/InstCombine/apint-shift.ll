@@ -113,17 +113,92 @@ define i19 @test10(i19 %X) {
   ret i19 %sh2
 }
 
-; FIXME: Same as above with vectors.
+; FIXME: Two right shifts in the same direction:
+; lshr (lshr X, C1), C2 --> lshr X, C1 + C2
 
-define <2 x i19> @test10_splat_vec(<2 x i19> %X) {
-; CHECK-LABEL: @test10_splat_vec(
-; CHECK-NEXT:    [[SH1:%.*]] = lshr <2 x i19> %X, <i19 18, i19 18>
-; CHECK-NEXT:    [[SH2:%.*]] = shl nuw <2 x i19> [[SH1]], <i19 18, i19 18>
+define <2 x i19> @lshr_lshr_splat_vec(<2 x i19> %X) {
+; CHECK-LABEL: @lshr_lshr_splat_vec(
+; CHECK-NEXT:    [[SH1:%.*]] = lshr <2 x i19> %X, <i19 3, i19 3>
+; CHECK-NEXT:    [[SH2:%.*]] = lshr <2 x i19> [[SH1]], <i19 2, i19 2>
 ; CHECK-NEXT:    ret <2 x i19> [[SH2]]
 ;
-  %sh1 = lshr <2 x i19> %X, <i19 18, i19 18>
-  %sh2 = shl <2 x i19> %sh1, <i19 18, i19 18>
+  %sh1 = lshr <2 x i19> %X, <i19 3, i19 3>
+  %sh2 = lshr <2 x i19> %sh1, <i19 2, i19 2>
   ret <2 x i19> %sh2
+}
+
+; FIXME: Two left shifts in the same direction:
+; shl (shl X, C1), C2 -->  shl X, C1 + C2
+
+define <2 x i19> @shl_shl_splat_vec(<2 x i19> %X) {
+; CHECK-LABEL: @shl_shl_splat_vec(
+; CHECK-NEXT:    [[SH1:%.*]] = shl <2 x i19> %X, <i19 3, i19 3>
+; CHECK-NEXT:    [[SH2:%.*]] = shl <2 x i19> [[SH1]], <i19 2, i19 2>
+; CHECK-NEXT:    ret <2 x i19> [[SH2]]
+;
+  %sh1 = shl <2 x i19> %X, <i19 3, i19 3>
+  %sh2 = shl <2 x i19> %sh1, <i19 2, i19 2>
+  ret <2 x i19> %sh2
+}
+
+; FIXME: Equal shift amounts in opposite directions become bitwise 'and':
+; lshr (shl X, C), C --> and X, C'
+
+define <2 x i19> @eq_shl_lshr_splat_vec(<2 x i19> %X) {
+; CHECK-LABEL: @eq_shl_lshr_splat_vec(
+; CHECK-NEXT:    [[SH1:%.*]] = shl <2 x i19> %X, <i19 3, i19 3>
+; CHECK-NEXT:    [[SH2:%.*]] = lshr exact <2 x i19> [[SH1]], <i19 3, i19 3>
+; CHECK-NEXT:    ret <2 x i19> [[SH2]]
+;
+  %sh1 = shl <2 x i19> %X, <i19 3, i19 3>
+  %sh2 = lshr <2 x i19> %sh1, <i19 3, i19 3>
+  ret <2 x i19> %sh2
+}
+
+; FIXME: Equal shift amounts in opposite directions become bitwise 'and':
+; shl (lshr X, C), C --> and X, C'
+
+define <2 x i19> @eq_lshr_shl_splat_vec(<2 x i19> %X) {
+; CHECK-LABEL: @eq_lshr_shl_splat_vec(
+; CHECK-NEXT:    [[SH1:%.*]] = lshr <2 x i19> %X, <i19 3, i19 3>
+; CHECK-NEXT:    [[SH2:%.*]] = shl nuw <2 x i19> [[SH1]], <i19 3, i19 3>
+; CHECK-NEXT:    ret <2 x i19> [[SH2]]
+;
+  %sh1 = lshr <2 x i19> %X, <i19 3, i19 3>
+  %sh2 = shl <2 x i19> %sh1, <i19 3, i19 3>
+  ret <2 x i19> %sh2
+}
+
+; FIXME: In general, we would need an 'and' for this transform, but the masked-off bits are known zero.
+; shl (lshr X, C1), C2 --> lshr X, C1 - C2
+
+define <2 x i7> @lshr_shl_splat_vec(<2 x i7> %X) {
+; CHECK-LABEL: @lshr_shl_splat_vec(
+; CHECK-NEXT:    [[MUL:%.*]] = mul <2 x i7> %X, <i7 -8, i7 -8>
+; CHECK-NEXT:    [[SH1:%.*]] = lshr exact <2 x i7> [[MUL]], <i7 3, i7 3>
+; CHECK-NEXT:    [[SH2:%.*]] = shl nuw nsw <2 x i7> [[SH1]], <i7 2, i7 2>
+; CHECK-NEXT:    ret <2 x i7> [[SH2]]
+;
+  %mul = mul <2 x i7> %X, <i7 -8, i7 -8>
+  %sh1 = lshr exact <2 x i7> %mul, <i7 3, i7 3>
+  %sh2 = shl nuw nsw <2 x i7> %sh1, <i7 2, i7 2>
+  ret <2 x i7> %sh2
+}
+
+; FIXME: In general, we would need an 'and' for this transform, but the masked-off bits are known zero.
+; lshr (shl X, C1), C2 -->  shl X, C1 - C2
+
+define <2 x i7> @shl_lshr_splat_vec(<2 x i7> %X) {
+; CHECK-LABEL: @shl_lshr_splat_vec(
+; CHECK-NEXT:    [[DIV:%.*]] = udiv <2 x i7> %X, <i7 9, i7 9>
+; CHECK-NEXT:    [[SH1:%.*]] = shl nuw <2 x i7> [[DIV]], <i7 3, i7 3>
+; CHECK-NEXT:    [[SH2:%.*]] = lshr exact <2 x i7> [[SH1]], <i7 2, i7 2>
+; CHECK-NEXT:    ret <2 x i7> [[SH2]]
+;
+  %div = udiv <2 x i7> %X, <i7 9, i7 9>
+  %sh1 = shl nuw <2 x i7> %div, <i7 3, i7 3>
+  %sh2 = lshr exact <2 x i7> %sh1, <i7 2, i7 2>
+  ret <2 x i7> %sh2
 }
 
 ; Don't hide the shl from scalar evolution. DAGCombine will get it.
