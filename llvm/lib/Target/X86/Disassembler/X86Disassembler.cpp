@@ -392,8 +392,7 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
     }
   }
   // By default sign-extend all X86 immediates based on their encoding.
-  else if (type == TYPE_IMM8 || type == TYPE_IMM16 || type == TYPE_IMM32 ||
-           type == TYPE_IMM64 || type == TYPE_IMMv) {
+  else if (type == TYPE_IMM) {
     switch (operand.encoding) {
     default:
       break;
@@ -620,15 +619,13 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   }
 
   switch (type) {
-  case TYPE_XMM32:
-  case TYPE_XMM64:
-  case TYPE_XMM128:
+  case TYPE_XMM:
     mcInst.addOperand(MCOperand::createReg(X86::XMM0 + (immediate >> 4)));
     return;
-  case TYPE_XMM256:
+  case TYPE_YMM:
     mcInst.addOperand(MCOperand::createReg(X86::YMM0 + (immediate >> 4)));
     return;
-  case TYPE_XMM512:
+  case TYPE_ZMM:
     mcInst.addOperand(MCOperand::createReg(X86::ZMM0 + (immediate >> 4)));
     return;
   case TYPE_BNDR:
@@ -662,8 +659,7 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
                                mcInst, Dis))
     mcInst.addOperand(MCOperand::createImm(immediate));
 
-  if (type == TYPE_MOFFS8 || type == TYPE_MOFFS16 ||
-      type == TYPE_MOFFS32 || type == TYPE_MOFFS64) {
+  if (type == TYPE_MOFFS) {
     MCOperand segmentReg;
     segmentReg = MCOperand::createReg(segmentRegnums[insn.segmentOverride]);
     mcInst.addOperand(segmentReg);
@@ -965,38 +961,15 @@ static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
   case TYPE_R64:
   case TYPE_Rv:
   case TYPE_MM64:
-  case TYPE_XMM32:
-  case TYPE_XMM64:
-  case TYPE_XMM128:
-  case TYPE_XMM256:
-  case TYPE_XMM512:
-  case TYPE_VK1:
-  case TYPE_VK2:
-  case TYPE_VK4:
-  case TYPE_VK8:
-  case TYPE_VK16:
-  case TYPE_VK32:
-  case TYPE_VK64:
+  case TYPE_XMM:
+  case TYPE_YMM:
+  case TYPE_ZMM:
+  case TYPE_VK:
   case TYPE_DEBUGREG:
   case TYPE_CONTROLREG:
   case TYPE_BNDR:
     return translateRMRegister(mcInst, insn);
   case TYPE_M:
-  case TYPE_M8:
-  case TYPE_M16:
-  case TYPE_M32:
-  case TYPE_M64:
-  case TYPE_M128:
-  case TYPE_M256:
-  case TYPE_M512:
-  case TYPE_Mv:
-  case TYPE_M32FP:
-  case TYPE_M64FP:
-  case TYPE_M80FP:
-  case TYPE_M1616:
-  case TYPE_M1632:
-  case TYPE_M1664:
-  case TYPE_LEA:
     return translateRMMemory(mcInst, insn, Dis);
   }
 }
