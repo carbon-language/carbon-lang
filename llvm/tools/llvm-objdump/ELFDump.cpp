@@ -45,6 +45,15 @@ template <class ELFT> void printProgramHeaders(const ELFFile<ELFT> *o) {
     case ELF::PT_LOAD:
       outs() << "    LOAD ";
       break;
+    case ELF::PT_OPENBSD_BOOTDATA:
+      outs() << "    OPENBSD_BOOTDATA ";
+      break;
+    case ELF::PT_OPENBSD_RANDOMIZE:
+      outs() << "    OPENBSD_RANDOMIZE ";
+      break;
+    case ELF::PT_OPENBSD_WXNEEDED:
+      outs() << "    OPENBSD_WXNEEDED ";
+      break;
     case ELF::PT_PHDR:
       outs() << "    PHDR ";
       break;
