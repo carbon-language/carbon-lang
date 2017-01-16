@@ -65,44 +65,43 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
 }
 
 /// Return true if we can simplify two logical (either left or right) shifts
-/// that have constant shift amounts.
-static bool canEvaluateShiftedShift(unsigned FirstShiftAmt,
-                                    bool IsFirstShiftLeft,
-                                    Instruction *SecondShift, InstCombiner &IC,
+/// that have constant shift amounts: OuterShift (InnerShift X, C1), C2.
+static bool canEvaluateShiftedShift(unsigned OuterShAmt, bool IsOuterShl,
+                                    Instruction *InnerShift, InstCombiner &IC,
                                     Instruction *CxtI) {
-  assert(SecondShift->isLogicalShift() && "Unexpected instruction type");
+  assert(InnerShift->isLogicalShift() && "Unexpected instruction type");
 
   // We need constant scalar or constant splat shifts.
-  const APInt *SecondShiftConst;
-  if (!match(SecondShift->getOperand(1), m_APInt(SecondShiftConst)))
+  const APInt *InnerShiftConst;
+  if (!match(InnerShift->getOperand(1), m_APInt(InnerShiftConst)))
     return false;
 
-  unsigned SecondShiftAmt = SecondShiftConst->getZExtValue();
-  bool IsSecondShiftLeft = SecondShift->getOpcode() == Instruction::Shl;
-
-  // We can always fold  shl(c1) +  shl(c2) ->  shl(c1+c2).
-  // We can always fold lshr(c1) + lshr(c2) -> lshr(c1+c2).
-  if (IsFirstShiftLeft == IsSecondShiftLeft)
+  // Two logical shifts in the same direction:
+  // shl (shl X, C1), C2 -->  shl X, C1 + C2
+  // lshr (lshr X, C1), C2 --> lshr X, C1 + C2
+  bool IsInnerShl = InnerShift->getOpcode() == Instruction::Shl;
+  if (IsInnerShl == IsOuterShl)
     return true;
 
-  // We can always fold lshr(c) +  shl(c) -> and(c2).
-  // We can always fold  shl(c) + lshr(c) -> and(c2).
-  if (FirstShiftAmt == SecondShiftAmt)
+  // Equal shift amounts in opposite directions become bitwise 'and':
+  // lshr (shl X, C), C --> and X, C'
+  // shl (lshr X, C), C --> and X, C'
+  unsigned InnerShAmt = InnerShiftConst->getZExtValue();
+  if (InnerShAmt == OuterShAmt)
     return true;
-
-  unsigned TypeWidth = SecondShift->getType()->getScalarSizeInBits();
 
   // If the 2nd shift is bigger than the 1st, we can fold:
-  //   lshr(c1) +  shl(c2) ->  shl(c3) + and(c4) or
-  //   shl(c1)  + lshr(c2) -> lshr(c3) + and(c4),
+  // lshr (shl X, C1), C2 -->  and (shl X, C1 - C2), C3
+  // shl (lshr X, C1), C2 --> and (lshr X, C1 - C2), C3
   // but it isn't profitable unless we know the and'd out bits are already zero.
-  // Also check that the 2nd shift is valid (less than the type width) or we'll
-  // crash trying to produce the bit mask for the 'and'.
-  if (SecondShiftAmt > FirstShiftAmt && SecondShiftAmt < TypeWidth) {
-    unsigned MaskShift = IsSecondShiftLeft ? TypeWidth - SecondShiftAmt
-                                           : SecondShiftAmt - FirstShiftAmt;
-    APInt Mask = APInt::getLowBitsSet(TypeWidth, FirstShiftAmt) << MaskShift;
-    if (IC.MaskedValueIsZero(SecondShift->getOperand(0), Mask, 0, CxtI))
+  // Also, check that the inner shift is valid (less than the type width) or
+  // we'll crash trying to produce the bit mask for the 'and'.
+  unsigned TypeWidth = InnerShift->getType()->getScalarSizeInBits();
+  if (InnerShAmt > OuterShAmt && InnerShAmt < TypeWidth) {
+    unsigned MaskShift =
+        IsInnerShl ? TypeWidth - InnerShAmt : InnerShAmt - OuterShAmt;
+    APInt Mask = APInt::getLowBitsSet(TypeWidth, OuterShAmt) << MaskShift;
+    if (IC.MaskedValueIsZero(InnerShift->getOperand(0), Mask, 0, CxtI))
       return true;
   }
 
