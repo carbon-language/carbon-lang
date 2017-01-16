@@ -3034,6 +3034,11 @@ bool Scop::buildAliasGroup(Scop::AliasGroupTy &AliasGroup,
       invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
       return false;
     }
+  }
+
+  // Ensure that for all memory accesses for which we generate alias checks,
+  // their base pointers are available.
+  for (MemoryAccess *MA : AliasGroup) {
     if (MemoryAccess *BasePtrMA = lookupBasePtrAccess(MA))
       addRequiredInvariantLoad(
           cast<LoadInst>(BasePtrMA->getAccessInstruction()));
