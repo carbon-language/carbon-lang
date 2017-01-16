@@ -92,7 +92,6 @@ extern "C" void LLVMInitializePowerPCTarget() {
 
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializePPCBoolRetToIntPass(PR);
-  initializePPCExpandISELPass(PR);
 }
 
 /// Return the datalayout string of a subtarget.
@@ -431,8 +430,6 @@ void PPCPassConfig::addPreSched2() {
 }
 
 void PPCPassConfig::addPreEmitPass() {
-  addPass(createPPCExpandISELPass());
-
   if (getOptLevel() != CodeGenOpt::None)
     addPass(createPPCEarlyReturnPass(), false);
   // Must run branch selection immediately preceding the asm printer.
