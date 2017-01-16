@@ -72,9 +72,9 @@ static bool canEvaluateShiftedShift(unsigned FirstShiftAmt,
                                     Instruction *CxtI) {
   assert(SecondShift->isLogicalShift() && "Unexpected instruction type");
 
-  // We need constant shifts.
-  auto *SecondShiftConst = dyn_cast<ConstantInt>(SecondShift->getOperand(1));
-  if (!SecondShiftConst)
+  // We need constant scalar or constant splat shifts.
+  const APInt *SecondShiftConst;
+  if (!match(SecondShift->getOperand(1), m_APInt(SecondShiftConst)))
     return false;
 
   unsigned SecondShiftAmt = SecondShiftConst->getZExtValue();
@@ -200,7 +200,8 @@ static Value *foldShiftedShift(BinaryOperator *InnerShift, unsigned OuterShAmt,
   unsigned TypeWidth = ShType->getScalarSizeInBits();
 
   // We only accept shifts-by-a-constant in canEvaluateShifted().
-  ConstantInt *C1 = cast<ConstantInt>(InnerShift->getOperand(1));
+  const APInt *C1;
+  match(InnerShift->getOperand(1), m_APInt(C1));
   unsigned InnerShAmt = C1->getZExtValue();
 
   // Change the shift amount and clear the appropriate IR flags.
