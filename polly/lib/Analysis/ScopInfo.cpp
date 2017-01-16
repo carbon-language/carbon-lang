@@ -2983,76 +2983,87 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
   splitAliasGroupsByDomain(AliasGroups);
 
-  auto &F = getFunction();
   for (AliasGroupTy &AG : AliasGroups) {
-    AliasGroupTy ReadOnlyAccesses;
-    AliasGroupTy ReadWriteAccesses;
-    SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
-
-    if (AG.size() < 2)
-      continue;
-
-    for (MemoryAccess *Access : AG) {
-      emitOptimizationRemarkAnalysis(
-          F.getContext(), DEBUG_TYPE, F,
-          Access->getAccessInstruction()->getDebugLoc(),
-          "Possibly aliasing pointer, use restrict keyword.");
-
-      Value *BaseAddr = Access->getBaseAddr();
-      if (HasWriteAccess.count(BaseAddr)) {
-        NonReadOnlyBaseValues.insert(BaseAddr);
-        ReadWriteAccesses.push_back(Access);
-      } else {
-        ReadOnlyAccesses.push_back(Access);
-      }
-    }
-
-    // If we don't have read only pointers check if there are at least two
-    // non read only pointers, otherwise clear the alias group.
-    if (ReadOnlyAccesses.empty() && NonReadOnlyBaseValues.size() <= 1)
-      continue;
-
-    // If we don't have non read only pointers clear the alias group.
-    if (NonReadOnlyBaseValues.empty())
-      continue;
-
-    // Check if we have non-affine accesses left, if so bail out as we cannot
-    // generate a good access range yet.
-    for (MemoryAccess *MA : AG) {
-      if (!MA->isAffine()) {
-        invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
-        return false;
-      }
-      if (MemoryAccess *BasePtrMA = lookupBasePtrAccess(MA))
-        addRequiredInvariantLoad(
-            cast<LoadInst>(BasePtrMA->getAccessInstruction()));
-    }
-
-    MinMaxAliasGroups.emplace_back();
-    MinMaxVectorPairTy &pair = MinMaxAliasGroups.back();
-    MinMaxVectorTy &MinMaxAccessesNonReadOnly = pair.first;
-    MinMaxVectorTy &MinMaxAccessesReadOnly = pair.second;
-
-    bool Valid;
-    Valid = calculateMinMaxAccess(ReadWriteAccesses, *this,
-                                  MinMaxAccessesNonReadOnly);
-
-    if (!Valid)
-      return false;
-
-    // Bail out if the number of values we need to compare is too large.
-    // This is important as the number of comparisons grows quadratically with
-    // the number of values we need to compare.
-    if (MinMaxAccessesNonReadOnly.size() + ReadOnlyAccesses.size() >
-        RunTimeChecksMaxArraysPerGroup)
-      return false;
-
-    Valid =
-        calculateMinMaxAccess(ReadOnlyAccesses, *this, MinMaxAccessesReadOnly);
-
+    bool Valid = buildAliasGroup(AG, HasWriteAccess);
     if (!Valid)
       return false;
   }
+
+  return true;
+}
+
+bool Scop::buildAliasGroup(Scop::AliasGroupTy &AliasGroup,
+                           DenseSet<Value *> HasWriteAccess) {
+  AliasGroupTy ReadOnlyAccesses;
+  AliasGroupTy ReadWriteAccesses;
+  SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
+
+  auto &F = getFunction();
+
+  if (AliasGroup.size() < 2)
+    return true;
+
+  for (MemoryAccess *Access : AliasGroup) {
+    emitOptimizationRemarkAnalysis(
+        F.getContext(), DEBUG_TYPE, F,
+        Access->getAccessInstruction()->getDebugLoc(),
+        "Possibly aliasing pointer, use restrict keyword.");
+
+    Value *BaseAddr = Access->getBaseAddr();
+    if (HasWriteAccess.count(BaseAddr)) {
+      NonReadOnlyBaseValues.insert(BaseAddr);
+      ReadWriteAccesses.push_back(Access);
+    } else {
+      ReadOnlyAccesses.push_back(Access);
+    }
+  }
+
+  // If we don't have read only pointers check if there are at least two
+  // non read only pointers, otherwise clear the alias group.
+  if (ReadOnlyAccesses.empty() && NonReadOnlyBaseValues.size() <= 1)
+    return true;
+
+  // If we don't have non read only pointers clear the alias group.
+  if (NonReadOnlyBaseValues.empty())
+    return true;
+
+  // Check if we have non-affine accesses left, if so bail out as we cannot
+  // generate a good access range yet.
+  for (MemoryAccess *MA : AliasGroup) {
+    if (!MA->isAffine()) {
+      invalidate(ALIASING, MA->getAccessInstruction()->getDebugLoc());
+      return false;
+    }
+    if (MemoryAccess *BasePtrMA = lookupBasePtrAccess(MA))
+      addRequiredInvariantLoad(
+          cast<LoadInst>(BasePtrMA->getAccessInstruction()));
+  }
+
+  MinMaxAliasGroups.emplace_back();
+  MinMaxVectorPairTy &pair = MinMaxAliasGroups.back();
+  MinMaxVectorTy &MinMaxAccessesReadWrite = pair.first;
+  MinMaxVectorTy &MinMaxAccessesReadOnly = pair.second;
+
+  bool Valid;
+
+  Valid =
+      calculateMinMaxAccess(ReadWriteAccesses, *this, MinMaxAccessesReadWrite);
+
+  if (!Valid)
+    return false;
+
+  // Bail out if the number of values we need to compare is too large.
+  // This is important as the number of comparisons grows quadratically with
+  // the number of values we need to compare.
+  if (MinMaxAccessesReadWrite.size() + ReadOnlyAccesses.size() >
+      RunTimeChecksMaxArraysPerGroup)
+    return false;
+
+  Valid =
+      calculateMinMaxAccess(ReadOnlyAccesses, *this, MinMaxAccessesReadOnly);
+
+  if (!Valid)
+    return false;
 
   return true;
 }
