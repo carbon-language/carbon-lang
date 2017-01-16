@@ -2981,10 +2981,8 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
     MapVector<const Value *, SmallSetVector<MemoryAccess *, 8>> ReadOnlyPairs;
     SmallPtrSet<const Value *, 4> NonReadOnlyBaseValues;
 
-    if (AG.size() < 2) {
-      AG.clear();
+    if (AG.size() < 2)
       continue;
-    }
 
     for (auto II = AG.begin(); II != AG.end();) {
       emitOptimizationRemarkAnalysis(
@@ -3004,16 +3002,12 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 
     // If we don't have read only pointers check if there are at least two
     // non read only pointers, otherwise clear the alias group.
-    if (ReadOnlyPairs.empty() && NonReadOnlyBaseValues.size() <= 1) {
-      AG.clear();
+    if (ReadOnlyPairs.empty() && NonReadOnlyBaseValues.size() <= 1)
       continue;
-    }
 
     // If we don't have non read only pointers clear the alias group.
-    if (NonReadOnlyBaseValues.empty()) {
-      AG.clear();
+    if (NonReadOnlyBaseValues.empty())
       continue;
-    }
 
     // Check if we have non-affine accesses left, if so bail out as we cannot
     // generate a good access range yet.
