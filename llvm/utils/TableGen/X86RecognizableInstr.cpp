@@ -457,10 +457,12 @@ void RecognizableInstr::adjustOperandEncoding(OperandEncoding &encoding) {
   // The scaling factor for AVX512 compressed displacement encoding is an
   // instruction attribute.  Adjust the ModRM encoding type to include the
   // scale for compressed displacement.
-  if (encoding != ENCODING_RM || CD8_Scale == 0)
+  if ((encoding != ENCODING_RM && encoding != ENCODING_VSIB) ||CD8_Scale == 0)
     return;
   encoding = (OperandEncoding)(encoding + Log2_32(CD8_Scale));
-  assert(encoding <= ENCODING_RM_CD64 && "Invalid CDisp scaling");
+  assert(((encoding >= ENCODING_RM && encoding <= ENCODING_RM_CD64) ||
+          (encoding >= ENCODING_VSIB && encoding <= ENCODING_VSIB_CD64)) &&
+         "Invalid CDisp scaling");
 }
 
 void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
@@ -1243,19 +1245,19 @@ RecognizableInstr::memoryEncodingFromString(const std::string &s,
   ENCODING("opaque48mem",     ENCODING_RM)
   ENCODING("opaque80mem",     ENCODING_RM)
   ENCODING("opaque512mem",    ENCODING_RM)
-  ENCODING("vx64mem",         ENCODING_RM)
-  ENCODING("vx128mem",        ENCODING_RM)
-  ENCODING("vx256mem",        ENCODING_RM)
-  ENCODING("vy128mem",        ENCODING_RM)
-  ENCODING("vy256mem",        ENCODING_RM)
-  ENCODING("vx64xmem",        ENCODING_RM)
-  ENCODING("vx128xmem",       ENCODING_RM)
-  ENCODING("vx256xmem",       ENCODING_RM)
-  ENCODING("vy128xmem",       ENCODING_RM)
-  ENCODING("vy256xmem",       ENCODING_RM)
-  ENCODING("vy512mem",        ENCODING_RM)
-  ENCODING("vz256xmem",       ENCODING_RM)
-  ENCODING("vz512mem",        ENCODING_RM)
+  ENCODING("vx64mem",         ENCODING_VSIB)
+  ENCODING("vx128mem",        ENCODING_VSIB)
+  ENCODING("vx256mem",        ENCODING_VSIB)
+  ENCODING("vy128mem",        ENCODING_VSIB)
+  ENCODING("vy256mem",        ENCODING_VSIB)
+  ENCODING("vx64xmem",        ENCODING_VSIB)
+  ENCODING("vx128xmem",       ENCODING_VSIB)
+  ENCODING("vx256xmem",       ENCODING_VSIB)
+  ENCODING("vy128xmem",       ENCODING_VSIB)
+  ENCODING("vy256xmem",       ENCODING_VSIB)
+  ENCODING("vy512mem",        ENCODING_VSIB)
+  ENCODING("vz256xmem",       ENCODING_VSIB)
+  ENCODING("vz512mem",        ENCODING_VSIB)
   errs() << "Unhandled memory encoding " << s << "\n";
   llvm_unreachable("Unhandled memory encoding");
 }

@@ -1562,6 +1562,7 @@ static int fixupReg(struct InternalInstruction *insn,
       return -1;
     break;
   CASE_ENCODING_RM:
+  CASE_ENCODING_VSIB:
     if (insn->eaBase >= insn->eaRegBase) {
       insn->eaBase = (EABase)fixupRMValue(insn,
                                           (OperandType)op->type,
@@ -1753,6 +1754,11 @@ static int readOperands(struct InternalInstruction* insn) {
     case ENCODING_SI:
     case ENCODING_DI:
       break;
+    CASE_ENCODING_VSIB:
+      // VSIB can use the V2 bit so check only the other bits.
+      if (needVVVV)
+        needVVVV = hasVVVV & ((insn->vvvv & 0xf) != 0);
+      // fallthrough
     case ENCODING_REG:
     CASE_ENCODING_RM:
       if (readModRM(insn))

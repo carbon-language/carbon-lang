@@ -992,6 +992,7 @@ static bool translateOperand(MCInst &mcInst, const OperandSpecifier &operand,
   case ENCODING_WRITEMASK:
     return translateMaskRegister(mcInst, insn.writemask);
   CASE_ENCODING_RM:
+  CASE_ENCODING_VSIB:
     return translateRM(mcInst, operand, insn, Dis);
   case ENCODING_IB:
   case ENCODING_IW:

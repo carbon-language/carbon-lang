@@ -339,6 +339,15 @@ enum ModRMDecisionType {
     case ENCODING_RM_CD32:   \
     case ENCODING_RM_CD64
 
+#define CASE_ENCODING_VSIB   \
+    case ENCODING_VSIB:      \
+    case ENCODING_VSIB_CD2:  \
+    case ENCODING_VSIB_CD4:  \
+    case ENCODING_VSIB_CD8:  \
+    case ENCODING_VSIB_CD16: \
+    case ENCODING_VSIB_CD32: \
+    case ENCODING_VSIB_CD64
+
 // Physical encodings of instruction operands.
 #define ENCODINGS                                                              \
   ENUM_ENTRY(ENCODING_NONE,   "")                                              \
@@ -350,6 +359,13 @@ enum ModRMDecisionType {
   ENUM_ENTRY(ENCODING_RM_CD16,"R/M operand with CDisp scaling of 16")          \
   ENUM_ENTRY(ENCODING_RM_CD32,"R/M operand with CDisp scaling of 32")          \
   ENUM_ENTRY(ENCODING_RM_CD64,"R/M operand with CDisp scaling of 64")          \
+  ENUM_ENTRY(ENCODING_VSIB,     "VSIB operand in ModR/M byte.")                \
+  ENUM_ENTRY(ENCODING_VSIB_CD2, "VSIB operand with CDisp scaling of 2")        \
+  ENUM_ENTRY(ENCODING_VSIB_CD4, "VSIB operand with CDisp scaling of 4")        \
+  ENUM_ENTRY(ENCODING_VSIB_CD8, "VSIB operand with CDisp scaling of 8")        \
+  ENUM_ENTRY(ENCODING_VSIB_CD16,"VSIB operand with CDisp scaling of 16")       \
+  ENUM_ENTRY(ENCODING_VSIB_CD32,"VSIB operand with CDisp scaling of 32")       \
+  ENUM_ENTRY(ENCODING_VSIB_CD64,"VSIB operand with CDisp scaling of 64")       \
   ENUM_ENTRY(ENCODING_VVVV,   "Register operand in VEX.vvvv byte.")            \
   ENUM_ENTRY(ENCODING_WRITEMASK, "Register operand in EVEX.aaa byte.")         \
   ENUM_ENTRY(ENCODING_IB,     "1-byte immediate")                              \
