@@ -100,6 +100,9 @@
 #ifndef __is_identifier
 #define __is_identifier(__x) 1
 #endif
+#ifndef __has_declspec_attribute
+#define __has_declspec_attribute(__x) 0
+#endif
 
 #define __has_keyword(__x) !(__is_identifier(__x))
 
@@ -1021,6 +1024,13 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #else
 # define _LIBCPP_DIAGNOSE_WARNING(...)
 # define _LIBCPP_DIAGNOSE_ERROR(...)
+#endif
+
+#if defined(_LIBCPP_ABI_MICROSOFT) && \
+   (defined(_LIBCPP_COMPILER_MSVC) || __has_declspec_attribute(empty_bases))
+# define _LIBCPP_DECLSPEC_EMPTY_BASES __declspec(empty_bases)
+#else
+# define _LIBCPP_DECLSPEC_EMPTY_BASES
 #endif
 
 #endif // __cplusplus
