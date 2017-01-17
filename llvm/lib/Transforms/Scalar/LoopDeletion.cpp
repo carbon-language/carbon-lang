@@ -126,17 +126,13 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
   SmallVector<BasicBlock *, 4> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
-  SmallVector<BasicBlock *, 4> ExitBlocks;
-  L->getUniqueExitBlocks(ExitBlocks);
-
   // We require that the loop only have a single exit block.  Otherwise, we'd
   // be in the situation of needing to be able to solve statically which exit
   // block will be branched to, or trying to preserve the branching logic in
   // a loop invariant manner.
-  if (ExitBlocks.size() != 1)
+  BasicBlock *ExitBlock = L->getUniqueExitBlock();
+  if (!ExitBlock)
     return false;
-
-  BasicBlock *ExitBlock = ExitBlocks[0];
 
   // Finally, we have to check that the loop really is dead.
   bool Changed = false;
