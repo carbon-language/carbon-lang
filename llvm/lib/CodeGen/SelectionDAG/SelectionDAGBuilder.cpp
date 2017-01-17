@@ -5976,16 +5976,7 @@ void SelectionDAGBuilder::processIntegerCallValue(const Instruction &I,
 /// If so, return true and lower it, otherwise return false and it will be
 /// lowered like a normal call.
 bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
-  // Verify that the prototype makes sense.  int memcmp(void*,void*,size_t)
-  if (I.getNumArgOperands() != 3)
-    return false;
-
   const Value *LHS = I.getArgOperand(0), *RHS = I.getArgOperand(1);
-  if (!LHS->getType()->isPointerTy() || !RHS->getType()->isPointerTy() ||
-      !I.getArgOperand(2)->getType()->isIntegerTy() ||
-      !I.getType()->isIntegerTy())
-    return false;
-
   const Value *Size = I.getArgOperand(2);
   const ConstantInt *CSize = dyn_cast<ConstantInt>(Size);
   if (CSize && CSize->getZExtValue() == 0) {
@@ -6079,18 +6070,9 @@ bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
 /// form.  If so, return true and lower it, otherwise return false and it
 /// will be lowered like a normal call.
 bool SelectionDAGBuilder::visitMemChrCall(const CallInst &I) {
-  // Verify that the prototype makes sense.  void *memchr(void *, int, size_t)
-  if (I.getNumArgOperands() != 3)
-    return false;
-
   const Value *Src = I.getArgOperand(0);
   const Value *Char = I.getArgOperand(1);
   const Value *Length = I.getArgOperand(2);
-  if (!Src->getType()->isPointerTy() ||
-      !Char->getType()->isIntegerTy() ||
-      !Length->getType()->isIntegerTy() ||
-      !I.getType()->isPointerTy())
-    return false;
 
   const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
   std::pair<SDValue, SDValue> Res =
@@ -6110,11 +6092,6 @@ bool SelectionDAGBuilder::visitMemChrCall(const CallInst &I) {
 /// visitMemPCpyCall -- lower a mempcpy call as a memcpy followed by code to
 /// to adjust the dst pointer by the size of the copied memory.
 bool SelectionDAGBuilder::visitMemPCpyCall(const CallInst &I) {
-
-  // Verify argument count: void *mempcpy(void *, const void *, size_t)
-  if (I.getNumArgOperands() != 3)
-    return false;
-
   SDValue Dst = getValue(I.getArgOperand(0));
   SDValue Src = getValue(I.getArgOperand(1));
   SDValue Size = getValue(I.getArgOperand(2));
@@ -6153,15 +6130,7 @@ bool SelectionDAGBuilder::visitMemPCpyCall(const CallInst &I) {
 /// optimized form.  If so, return true and lower it, otherwise return false
 /// and it will be lowered like a normal call.
 bool SelectionDAGBuilder::visitStrCpyCall(const CallInst &I, bool isStpcpy) {
-  // Verify that the prototype makes sense.  char *strcpy(char *, char *)
-  if (I.getNumArgOperands() != 2)
-    return false;
-
   const Value *Arg0 = I.getArgOperand(0), *Arg1 = I.getArgOperand(1);
-  if (!Arg0->getType()->isPointerTy() ||
-      !Arg1->getType()->isPointerTy() ||
-      !I.getType()->isPointerTy())
-    return false;
 
   const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
   std::pair<SDValue, SDValue> Res =
@@ -6182,15 +6151,7 @@ bool SelectionDAGBuilder::visitStrCpyCall(const CallInst &I, bool isStpcpy) {
 /// If so, return true and lower it, otherwise return false and it will be
 /// lowered like a normal call.
 bool SelectionDAGBuilder::visitStrCmpCall(const CallInst &I) {
-  // Verify that the prototype makes sense.  int strcmp(void*,void*)
-  if (I.getNumArgOperands() != 2)
-    return false;
-
   const Value *Arg0 = I.getArgOperand(0), *Arg1 = I.getArgOperand(1);
-  if (!Arg0->getType()->isPointerTy() ||
-      !Arg1->getType()->isPointerTy() ||
-      !I.getType()->isIntegerTy())
-    return false;
 
   const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
   std::pair<SDValue, SDValue> Res =
@@ -6211,13 +6172,7 @@ bool SelectionDAGBuilder::visitStrCmpCall(const CallInst &I) {
 /// form.  If so, return true and lower it, otherwise return false and it
 /// will be lowered like a normal call.
 bool SelectionDAGBuilder::visitStrLenCall(const CallInst &I) {
-  // Verify that the prototype makes sense.  size_t strlen(char *)
-  if (I.getNumArgOperands() != 1)
-    return false;
-
   const Value *Arg0 = I.getArgOperand(0);
-  if (!Arg0->getType()->isPointerTy() || !I.getType()->isIntegerTy())
-    return false;
 
   const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
   std::pair<SDValue, SDValue> Res =
@@ -6236,15 +6191,7 @@ bool SelectionDAGBuilder::visitStrLenCall(const CallInst &I) {
 /// form.  If so, return true and lower it, otherwise return false and it
 /// will be lowered like a normal call.
 bool SelectionDAGBuilder::visitStrNLenCall(const CallInst &I) {
-  // Verify that the prototype makes sense.  size_t strnlen(char *, size_t)
-  if (I.getNumArgOperands() != 2)
-    return false;
-
   const Value *Arg0 = I.getArgOperand(0), *Arg1 = I.getArgOperand(1);
-  if (!Arg0->getType()->isPointerTy() ||
-      !Arg1->getType()->isIntegerTy() ||
-      !I.getType()->isIntegerTy())
-    return false;
 
   const SelectionDAGTargetInfo &TSI = DAG.getSelectionDAGInfo();
   std::pair<SDValue, SDValue> Res =
@@ -6265,11 +6212,8 @@ bool SelectionDAGBuilder::visitStrNLenCall(const CallInst &I) {
 /// and return true.
 bool SelectionDAGBuilder::visitUnaryFloatCall(const CallInst &I,
                                               unsigned Opcode) {
-  // Sanity check that it really is a unary floating-point call.
-  if (I.getNumArgOperands() != 1 ||
-      !I.getArgOperand(0)->getType()->isFloatingPointTy() ||
-      I.getType() != I.getArgOperand(0)->getType() ||
-      !I.onlyReadsMemory())
+  // We already checked this call's prototype; verify it doesn't modify errno.
+  if (!I.onlyReadsMemory())
     return false;
 
   SDValue Tmp = getValue(I.getArgOperand(0));
@@ -6282,12 +6226,8 @@ bool SelectionDAGBuilder::visitUnaryFloatCall(const CallInst &I,
 /// and return true.
 bool SelectionDAGBuilder::visitBinaryFloatCall(const CallInst &I,
                                                unsigned Opcode) {
-  // Sanity check that it really is a binary floating-point call.
-  if (I.getNumArgOperands() != 2 ||
-      !I.getArgOperand(0)->getType()->isFloatingPointTy() ||
-      I.getType() != I.getArgOperand(0)->getType() ||
-      I.getType() != I.getArgOperand(1)->getType() ||
-      !I.onlyReadsMemory())
+  // We already checked this call's prototype; verify it doesn't modify errno.
+  if (!I.onlyReadsMemory())
     return false;
 
   SDValue Tmp0 = getValue(I.getArgOperand(0));
@@ -6329,18 +6269,16 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
     // some reason.
     LibFunc::Func Func;
     if (!I.isNoBuiltin() && !F->hasLocalLinkage() && F->hasName() &&
-        LibInfo->getLibFunc(F->getName(), Func) &&
+        LibInfo->getLibFunc(*F, Func) &&
         LibInfo->hasOptimizedCodeGen(Func)) {
       switch (Func) {
       default: break;
       case LibFunc::copysign:
       case LibFunc::copysignf:
       case LibFunc::copysignl:
-        if (I.getNumArgOperands() == 2 &&   // Basic sanity checks.
-            I.getArgOperand(0)->getType()->isFloatingPointTy() &&
-            I.getType() == I.getArgOperand(0)->getType() &&
-            I.getType() == I.getArgOperand(1)->getType() &&
-            I.onlyReadsMemory()) {
+        // We already checked this call's prototype; verify it doesn't modify
+        // errno.
+        if (I.onlyReadsMemory()) {
           SDValue LHS = getValue(I.getArgOperand(0));
           SDValue RHS = getValue(I.getArgOperand(1));
           setValue(&I, DAG.getNode(ISD::FCOPYSIGN, getCurSDLoc(),
