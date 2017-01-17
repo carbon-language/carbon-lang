@@ -553,6 +553,13 @@ static void computeKnownBitsFromAssume(const Value *V, APInt &KnownZero,
       KnownOne.setAllBits();
       return;
     }
+    if (match(Arg, m_Not(m_Specific(V))) &&
+        isValidAssumeForContext(I, Q.CxtI, Q.DT)) {
+      assert(BitWidth == 1 && "assume operand is not i1?");
+      KnownZero.setAllBits();
+      KnownOne.clearAllBits();
+      return;
+    }
 
     // The remaining tests are all recursive, so bail out if we hit the limit.
     if (Depth == MaxDepth)
