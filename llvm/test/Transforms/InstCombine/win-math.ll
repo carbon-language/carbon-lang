@@ -279,9 +279,12 @@ define float @float_powsqrt(float %x) nounwind readnone {
 ; WIN32-LABEL: @float_powsqrt(
 ; WIN32-NOT: float @sqrtf
 ; WIN32: float @powf
+
 ; WIN64-LABEL: @float_powsqrt(
-; WIN64-NOT: float @sqrtf
-; WIN64: float @powf
+; WIN64: float @sqrtf
+; WIN64: float @llvm.fabs.f32(
+; WIN64-NOT: float @powf
+
 ; MINGW32-LABEL: @float_powsqrt(
 ; MINGW32: float @sqrtf
 ; MINGW32: float @llvm.fabs.f32

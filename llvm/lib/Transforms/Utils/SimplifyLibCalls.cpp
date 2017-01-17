@@ -1094,9 +1094,7 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
 
   if (Op2C->isExactlyValue(0.5) &&
       hasUnaryFloatFn(TLI, Op2->getType(), LibFunc::sqrt, LibFunc::sqrtf,
-                      LibFunc::sqrtl) &&
-      hasUnaryFloatFn(TLI, Op2->getType(), LibFunc::fabs, LibFunc::fabsf,
-                      LibFunc::fabsl)) {
+                      LibFunc::sqrtl)) {
 
     // In -ffast-math, pow(x, 0.5) -> sqrt(x).
     if (CI->hasUnsafeAlgebra()) {
@@ -1116,8 +1114,12 @@ Value *LibCallSimplifier::optimizePow(CallInst *CI, IRBuilder<> &B) {
     Value *Inf = ConstantFP::getInfinity(CI->getType());
     Value *NegInf = ConstantFP::getInfinity(CI->getType(), true);
     Value *Sqrt = emitUnaryFloatFnCall(Op1, "sqrt", B, Callee->getAttributes());
-    Value *FAbs =
-        emitUnaryFloatFnCall(Sqrt, "fabs", B, Callee->getAttributes());
+
+    Module *M = Callee->getParent();
+    Function *FabsF = Intrinsic::getDeclaration(M, Intrinsic::fabs,
+                                                CI->getType());
+    Value *FAbs = B.CreateCall(FabsF, Sqrt);
+
     Value *FCmp = B.CreateFCmpOEQ(Op1, NegInf);
     Value *Sel = B.CreateSelect(FCmp, Inf, FAbs);
     return Sel;
