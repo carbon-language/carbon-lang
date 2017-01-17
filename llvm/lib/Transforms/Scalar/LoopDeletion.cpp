@@ -110,8 +110,8 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 
   // We can only remove the loop if there is a preheader that we can
   // branch from after removing it.
-  BasicBlock *preheader = L->getLoopPreheader();
-  if (!preheader)
+  BasicBlock *Preheader = L->getLoopPreheader();
+  if (!Preheader)
     return false;
 
   // If LoopSimplify form is not available, stay out of trouble.
@@ -140,7 +140,7 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 
   // Finally, we have to check that the loop really is dead.
   bool Changed = false;
-  if (!isLoopDead(L, SE, ExitingBlocks, ExitBlock, Changed, preheader))
+  if (!isLoopDead(L, SE, ExitingBlocks, ExitBlock, Changed, Preheader))
     return Changed;
 
   // Don't remove loops for which we can't solve the trip count.
@@ -161,7 +161,7 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
   SE.forgetLoop(L);
 
   // Connect the preheader directly to the exit block.
-  TerminatorInst *TI = preheader->getTerminator();
+  TerminatorInst *TI = Preheader->getTerminator();
   TI->replaceUsesOfWith(L->getHeader(), ExitBlock);
 
   // Rewrite phis in the exit block to get their inputs from
@@ -171,7 +171,7 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
   while (PHINode *P = dyn_cast<PHINode>(BI)) {
     int j = P->getBasicBlockIndex(exitingBlock);
     assert(j >= 0 && "Can't find exiting block in exit block's phi node!");
-    P->setIncomingBlock(j, preheader);
+    P->setIncomingBlock(j, Preheader);
     for (unsigned i = 1; i < ExitingBlocks.size(); ++i)
       P->removeIncomingValue(ExitingBlocks[i]);
     ++BI;
@@ -182,11 +182,11 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
   SmallVector<DomTreeNode*, 8> ChildNodes;
   for (Loop::block_iterator LI = L->block_begin(), LE = L->block_end();
        LI != LE; ++LI) {
-    // Move all of the block's children to be children of the preheader, which
+    // Move all of the block's children to be children of the Preheader, which
     // allows us to remove the domtree entry for the block.
     ChildNodes.insert(ChildNodes.begin(), DT[*LI]->begin(), DT[*LI]->end());
     for (DomTreeNode *ChildNode : ChildNodes) {
-      DT.changeImmediateDominator(ChildNode, DT[preheader]);
+      DT.changeImmediateDominator(ChildNode, DT[Preheader]);
     }
 
     ChildNodes.clear();
