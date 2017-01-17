@@ -153,8 +153,7 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
   // branch from the preheader to go to the single exit block.
   //
   // Because we're deleting a large chunk of code at once, the sequence in which
-  // we remove things is very important to avoid invalidation issues.  Don't
-  // mess with this unless you have good reason and know what you're doing.
+  // we remove things is very important to avoid invalidation issues.
 
   // Tell ScalarEvolution that the loop is deleted. Do this before
   // deleting the loop so that ScalarEvolution can look at the loop
