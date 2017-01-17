@@ -38,11 +38,13 @@ class DataReader;
 
 /// Section information for mapping and re-writing.
 struct SectionInfo {
-  uint64_t AllocAddress;      /// Current location of the section in memory.
-  uint64_t Size;              /// Section size.
-  unsigned Alignment;         /// Alignment of the section.
+  uint64_t AllocAddress{0};   /// Current location of the section in memory.
+  uint64_t Size{0};           /// Section size.
+  unsigned Alignment{0};      /// Alignment of the section.
   bool     IsCode{false};     /// Does this section contain code?
   bool     IsReadOnly{false}; /// Is the section read-only?
+  bool     IsLocal{false};    /// Is this section local to a function, and
+                              /// should only be emitted with the function?
   uint64_t FileAddress{0};    /// Address for the output file (final address).
   uint64_t FileOffset{0};     /// Offset in the output file.
   uint64_t ShName{0};         /// Name offset in section header string table.
@@ -58,14 +60,36 @@ struct SectionInfo {
   /// Pending relocations for the section.
   std::vector<Reloc> PendingRelocs;
 
-  SectionInfo(uint64_t Address = 0, uint64_t Size = 0, unsigned Alignment = 0,
-              bool IsCode = false, bool IsReadOnly = false,
-              uint64_t FileAddress = 0, uint64_t FileOffset = 0,
-              unsigned SectionID = 0)
+  SectionInfo(uint64_t Address, uint64_t Size, unsigned Alignment,
+              bool IsCode, bool IsReadOnly,
+              bool IsLocal, uint64_t FileAddress = 0,
+              uint64_t FileOffset = 0, unsigned SectionID = 0)
     : AllocAddress(Address), Size(Size), Alignment(Alignment), IsCode(IsCode),
-      IsReadOnly(IsReadOnly), FileAddress(FileAddress), FileOffset(FileOffset),
-      SectionID(SectionID) {}
+      IsReadOnly(IsReadOnly), IsLocal(IsLocal), FileAddress(FileAddress),
+      FileOffset(FileOffset), SectionID(SectionID) {}
+
+  SectionInfo() {}
 };
+
+struct SegmentInfo {
+  uint64_t Address;           /// Address of the segment in memory.
+  uint64_t Size;              /// Size of the segment in memory.
+  uint64_t FileOffset;        /// Offset in the file.
+  uint64_t FileSize;          /// Size in file.
+
+  void print(raw_ostream &OS) const {
+    OS << "SegmentInfo { Address: 0x"
+       << Twine::utohexstr(Address) << ", Size: 0x"
+       << Twine::utohexstr(Size) << ", FileOffset: 0x"
+       << Twine::utohexstr(FileOffset) << ", FileSize: 0x"
+       << Twine::utohexstr(FileSize) << "}";
+  };
+};
+
+inline raw_ostream &operator<<(raw_ostream &OS, const SegmentInfo &SegInfo) {
+  SegInfo.print(OS);
+  return OS;
+}
 
 /// Class responsible for allocating and managing code and data sections.
 class ExecutableFileMemoryManager : public SectionMemoryManager {
@@ -81,6 +105,9 @@ public:
 
   /// Keep [section name] -> [section info] map for later remapping.
   std::map<std::string, SectionInfo> SectionMapInfo;
+
+  /// [start memory address] -> [segment info] mapping.
+  std::map<uint64_t, SegmentInfo> SegmentMapInfo;
 
   /// Information about non-allocatable sections.
   std::map<std::string, SectionInfo> NoteSectionInfo;
@@ -328,6 +355,11 @@ private:
     return Address - NewTextSegmentAddress + NewTextSegmentOffset;
   }
 
+  /// Return file offset corresponding to a virtual \p Address.
+  /// Return 0 if the address has no mapping in the file, including being
+  /// part of .bss section.
+  uint64_t getFileOffsetForAddress(uint64_t Address) const;
+
   /// Return true if we should overwrite contents of the section instead
   /// of appending contents to it.
   bool shouldOverwriteSection(StringRef SectionName);
@@ -351,10 +383,12 @@ private:
 
   std::unique_ptr<BinaryContext> BC;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;
-  /// Our in-memory intermediary object file where we hold final code for
-  /// rewritten functions.
-  std::unique_ptr<ExecutableFileMemoryManager> SectionMM;
-  /// Our output file where we mix original code from the input binary and
+
+  /// Memory manager for sections and segments. Used to communicate with ORC
+  /// among other things.
+  std::unique_ptr<ExecutableFileMemoryManager> EFMM;
+
+  /// Output file where we mix original code from the input binary and
   /// optimized code for selected functions.
   std::unique_ptr<tool_output_file> Out;
 

@@ -71,20 +71,25 @@ DynoStatsScale("dyno-stats-scale",
                cl::Optional,
                cl::init(1));
 
-cl::opt<BinaryFunction::JumpTableSupportLevel>
+cl::opt<JumpTableSupportLevel>
 JumpTables("jump-tables",
-           cl::desc("jump tables support"),
-           cl::init(BinaryFunction::JTS_BASIC),
-           cl::values(clEnumValN(BinaryFunction::JTS_NONE, "0",
-                                 "do not optimize functions with jump tables"),
-                      clEnumValN(BinaryFunction::JTS_BASIC, "1",
-                                 "optimize functions with jump tables"),
-                      clEnumValN(BinaryFunction::JTS_SPLIT, "2",
-                                 "split jump tables into hot and cold"),
-                      clEnumValN(BinaryFunction::JTS_AGGRESSIVE, "3",
-                                 "aggressively split jump tables (unsafe)"),
-                      clEnumValEnd),
-           cl::ZeroOrMore);
+  cl::desc("jump tables support (default=basic)"),
+  cl::init(JTS_BASIC),
+  cl::values(
+      clEnumValN(JTS_NONE, "none",
+                 "do not optimize functions with jump tables"),
+      clEnumValN(JTS_BASIC, "basic",
+                 "optimize functions with jump tables"),
+      clEnumValN(JTS_MOVE, "move",
+                 "move jump tables to a separate section"),
+      clEnumValN(JTS_SPLIT, "split",
+                 "split jump tables section into hot and cold based on "
+                 "function execution frequency"),
+      clEnumValN(JTS_AGGRESSIVE, "aggressive",
+                 "aggressively split jump tables section based on usage "
+                 "of the tables"),
+      clEnumValEnd),
+  cl::ZeroOrMore);
 
 static cl::opt<bool>
 PrintJumpTables("print-jump-tables",
@@ -1217,7 +1222,8 @@ void BinaryFunction::postProcessJumpTables() {
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
 
       // Ignore relocations for jump tables.
-      BC.IgnoredRelocations.emplace(JT->Address + EntryOffset);
+      if (opts::Relocs)
+        BC.IgnoredRelocations.emplace(JT->Address + EntryOffset);
 
       EntryOffset += JT->EntrySize;
 
@@ -3299,23 +3305,46 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
     auto &JT = JTI.second;
     if (opts::PrintJumpTables)
       JT.print(outs());
-    JT.emit(Streamer,
-            BC.MOFI->getReadOnlySection(),
-            BC.MOFI->getReadOnlyColdSection());
+    if (opts::JumpTables == JTS_BASIC && opts::Relocs) {
+      JT.updateOriginal(BC);
+    } else {
+      MCSection *HotSection, *ColdSection;
+      if (opts::JumpTables == JTS_BASIC) {
+        JT.SectionName =
+                  ".local.JUMP_TABLEat0x" + Twine::utohexstr(JT.Address).str();
+        HotSection = BC.Ctx->getELFSection(JT.SectionName,
+                                           ELF::SHT_PROGBITS,
+                                           ELF::SHF_ALLOC);
+        ColdSection = HotSection;
+      } else {
+        HotSection = BC.MOFI->getReadOnlySection();
+        ColdSection = BC.MOFI->getReadOnlyColdSection();
+      }
+      JT.emit(Streamer, HotSection, ColdSection);
+    }
   }
 }
 
 void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {
-  if (opts::Relocs && (Type == JTT_NORMAL))
-    return;
+  // In non-relocation mode we have to emit jump tables in local sections.
+  // This way we only overwrite them when a corresponding function is
+  // overwritten.
+  assert(opts::Relocs && "relocation mode expected");
   auto SectionOrError = BC.getSectionForAddress(Address);
   assert(SectionOrError && "section not found for jump table");
   auto Section = SectionOrError.get();
   uint64_t Offset = Address - Section.getAddress();
+  StringRef SectionName;
+  Section.getName(SectionName);
   for (auto *Entry : Entries) {
     const auto RelType = (Type == JTT_NORMAL) ? ELF::R_X86_64_64
                                               : ELF::R_X86_64_PC32;
-    const uint64_t RelAddend = (Type == JTT_NORMAL) ? 0 : Offset - Address;
+    const uint64_t RelAddend = (Type == JTT_NORMAL)
+        ? 0 : Offset - (Address - Section.getAddress());
+    DEBUG(dbgs() << "adding relocation to section " << SectionName
+                 << " at offset " << Twine::utohexstr(Offset) << " for symbol "
+                 << Entry->getName() << " with addend "
+                 << Twine::utohexstr(RelAddend) << '\n');
     BC.addSectionRelocation(Section, Offset, Entry, RelType, RelAddend);
     Offset += EntrySize;
   }

@@ -349,7 +349,7 @@ void RewriteInstance::updateLineTableOffsets() {
     Offset += Label->getOffset() - CurrentOffset;
     CurrentOffset = Label->getOffset();
 
-    auto &SI = SectionMM->NoteSectionInfo[".debug_info"];
+    auto &SI = EFMM->NoteSectionInfo[".debug_info"];
     SI.PendingRelocs.emplace_back(
         SectionInfo::Reloc{LTOffset, 4, 0, Offset});
 
@@ -415,16 +415,17 @@ void RewriteInstance::generateDebugRanges() {
     }
     const auto &DebugRangesContents = OS.str();
 
-    // Free'd by SectionMM.
+    // Free'd by ExecutableFileMemoryManager.
     uint8_t *SectionData = new uint8_t[DebugRangesContents.size()];
     memcpy(SectionData, DebugRangesContents.data(), DebugRangesContents.size());
 
-    SectionMM->NoteSectionInfo[SectionName] = SectionInfo(
+    EFMM->NoteSectionInfo[SectionName] = SectionInfo(
         reinterpret_cast<uint64_t>(SectionData),
         DebugRangesContents.size(),
         /*Alignment=*/0,
         /*IsCode=*/false,
-        /*IsReadOnly=*/true);
+        /*IsReadOnly=*/true,
+        /*IsLocal=*/false);
   }
 }
 
@@ -445,16 +446,17 @@ void RewriteInstance::updateLocationLists() {
 
   const auto &DebugLocContents = OS.str();
 
-  // Free'd by SectionMM.
+  // Free'd by ExecutableFileMemoryManager.
   uint8_t *SectionData = new uint8_t[DebugLocContents.size()];
   memcpy(SectionData, DebugLocContents.data(), DebugLocContents.size());
 
-  SectionMM->NoteSectionInfo[".debug_loc"] = SectionInfo(
+  EFMM->NoteSectionInfo[".debug_loc"] = SectionInfo(
       reinterpret_cast<uint64_t>(SectionData),
       DebugLocContents.size(),
       /*Alignment=*/0,
       /*IsCode=*/false,
-      /*IsReadOnly=*/true);
+      /*IsReadOnly=*/true,
+      /*IsLocal=*/false);
 
   // For each CU, update pointers into .debug_loc.
   for (const auto &CU : BC->DwCtx->compile_units()) {

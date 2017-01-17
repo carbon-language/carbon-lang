@@ -66,7 +66,7 @@ using namespace bolt;
 
 namespace opts {
 
-extern cl::opt<BinaryFunction::JumpTableSupportLevel> JumpTables;
+extern cl::opt<JumpTableSupportLevel> JumpTables;
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("<output file>"), cl::Required);
@@ -362,7 +362,11 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                                     IsReadOnly);
   }
 
-  DEBUG(dbgs() << "BOLT: allocating "
+  bool IsLocal = false;
+  if (SectionName.startswith(".local."))
+    IsLocal = true;
+
+  DEBUG(dbgs() << "BOLT: allocating " << (IsLocal ? "local " : "")
                << (IsCode ? "code" : (IsReadOnly ? "read-only data" : "data"))
                << " section : " << SectionName
                << " with size " << Size << ", alignment " << Alignment
@@ -373,6 +377,7 @@ uint8_t *ExecutableFileMemoryManager::allocateSection(intptr_t Size,
                                             Alignment,
                                             IsCode,
                                             IsReadOnly,
+                                            IsLocal,
                                             0,
                                             0,
                                             SectionID);
@@ -402,7 +407,8 @@ uint8_t *ExecutableFileMemoryManager::recordNoteSection(
                   Size,
                   Alignment,
                   /*IsCode=*/false,
-                  /*IsReadOnly*/true,
+                  /*IsReadOnly=*/true,
+                  /*IsLocal=*/false,
                   0,
                   0,
                   SectionID);
@@ -556,7 +562,7 @@ void RewriteInstance::reset() {
            std::unique_ptr<DWARFContext>(
              new DWARFContextInMemory(*InputFile, nullptr, true)));
   CFIRdWrt.reset(nullptr);
-  SectionMM.reset(nullptr);
+  EFMM.reset(nullptr);
   Out.reset(nullptr);
   EHFrame = nullptr;
   FailedAddresses.clear();
@@ -565,6 +571,9 @@ void RewriteInstance::reset() {
 }
 
 void RewriteInstance::discoverStorage() {
+
+  EFMM.reset(new ExecutableFileMemoryManager());
+
   auto ELF64LEFile = dyn_cast<ELF64LEObjectFile>(InputFile);
   if (!ELF64LEFile) {
     errs() << "BOLT-ERROR: only 64-bit LE ELF binaries are supported\n";
@@ -587,6 +596,11 @@ void RewriteInstance::discoverStorage() {
                                       Phdr.p_vaddr + Phdr.p_memsz);
       NextAvailableOffset = std::max(NextAvailableOffset,
                                      Phdr.p_offset + Phdr.p_filesz);
+
+      EFMM->SegmentMapInfo[Phdr.p_vaddr] = SegmentInfo{Phdr.p_vaddr,
+                                                       Phdr.p_memsz,
+                                                       Phdr.p_offset,
+                                                       Phdr.p_filesz};
     }
   }
 
@@ -1716,13 +1730,11 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     Section = BC.MOFI->getTextSection();
   } else {
     // Each fuction is emmitted into its own section.
-    Section = EmitColdPart
-            ? BC.Ctx->getELFSection(
-                  Function.getCodeSectionName().str().append(".cold"),
-                  ELF::SHT_PROGBITS, ELF::SHF_EXECINSTR | ELF::SHF_ALLOC)
-            : BC.Ctx->getELFSection(Function.getCodeSectionName(),
-                                    ELF::SHT_PROGBITS,
-                                    ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
+    Section =
+        BC.Ctx->getELFSection(EmitColdPart ? Function.getColdCodeSectionName()
+                                           : Function.getCodeSectionName(),
+                              ELF::SHT_PROGBITS,
+                              ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
   }
 
   Section->setHasInstructions(true);
@@ -1817,7 +1829,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   // Exception handling info for the function.
   Function.emitLSDA(&Streamer, EmitColdPart);
 
-  if (!EmitColdPart && opts::JumpTables > BinaryFunction::JTS_NONE)
+  if (!EmitColdPart && opts::JumpTables > JTS_NONE)
     Function.emitJumpTables(&Streamer);
 }
 
@@ -1962,6 +1974,7 @@ void RewriteInstance::emitFunctions() {
     emitDataSections(Streamer.get());
   }
 
+
   if (opts::UpdateDebugSections)
     updateDebugLineInfoForNonSimpleFunctions();
 
@@ -1976,9 +1989,6 @@ void RewriteInstance::emitFunctions() {
   //////////////////////////////////////////////////////////////////////////////
   // Assign addresses to new functions/sections.
   //////////////////////////////////////////////////////////////////////////////
-
-  auto EFMM = new ExecutableFileMemoryManager();
-  SectionMM.reset(EFMM);
 
   if (opts::UpdateDebugSections) {
     // Compute offsets of tables in .debug_line for each compile unit.
@@ -2010,7 +2020,7 @@ void RewriteInstance::emitFunctions() {
 
   auto ObjectsHandle = OLT.addObjectSet(
         singletonSet(std::move(ObjOrErr.get())),
-        SectionMM.get(),
+        EFMM.get(),
         std::move(Resolver),
         /* ProcessAllSections = */true);
 
@@ -2054,8 +2064,8 @@ void RewriteInstance::mapFileSections(
     orc::ObjectLinkingLayer<>::ObjSetHandleT &ObjectsHandle) {
   NewTextSectionStartAddress = NextAvailableAddress;
   if (opts::Relocs) {
-    auto SMII = SectionMM->SectionMapInfo.find(".text");
-    assert(SMII != SectionMM->SectionMapInfo.end() &&
+    auto SMII = EFMM->SectionMapInfo.find(".text");
+    assert(SMII != EFMM->SectionMapInfo.end() &&
            ".text not found in output");
     auto &SI = SMII->second;
 
@@ -2080,7 +2090,7 @@ void RewriteInstance::mapFileSections(
       auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);
       NextAvailableAddress += Padding;
       NewTextSectionStartAddress = NextAvailableAddress;
-      NewTextSectionOffset = getFileOffsetFor(NextAvailableAddress);
+      NewTextSectionOffset = getFileOffsetForAddress(NextAvailableAddress);
       NextAvailableAddress += Padding + SI.Size;
     }
     SI.FileAddress = NewTextSectionStartAddress;
@@ -2100,8 +2110,8 @@ void RewriteInstance::mapFileSections(
         continue;
 
       auto TooLarge = false;
-      auto SMII = SectionMM->SectionMapInfo.find(Function.getCodeSectionName());
-      assert(SMII != SectionMM->SectionMapInfo.end() &&
+      auto SMII = EFMM->SectionMapInfo.find(Function.getCodeSectionName());
+      assert(SMII != EFMM->SectionMapInfo.end() &&
              "cannot find section for function");
       DEBUG(dbgs() << "BOLT: mapping 0x"
                    << Twine::utohexstr(SMII->second.AllocAddress)
@@ -2117,52 +2127,72 @@ void RewriteInstance::mapFileSections(
         FailedAddresses.emplace_back(Function.getAddress());
       }
 
+      // Map jump tables if updating in-place.
+      if (opts::JumpTables == JTS_BASIC) {
+        for (auto &JTI : Function.JumpTables) {
+          auto &JT = JTI.second;
+          auto SMII = EFMM->SectionMapInfo.find(JT.SectionName);
+          assert(SMII != EFMM->SectionMapInfo.end() &&
+                 "cannot find section for jump table");
+          JT.SecInfo = &SMII->second;
+          JT.SecInfo->FileAddress = JT.Address;
+          DEBUG(dbgs() << "BOLT-DEBUG: mapping " << JT.SectionName << " to 0x"
+                       << Twine::utohexstr(JT.Address) << '\n');
+          OLT.mapSectionAddress(ObjectsHandle,
+                                JT.SecInfo->SectionID,
+                                JT.Address);
+        }
+      }
+
       if (!Function.isSplit())
         continue;
 
-      SMII = SectionMM->SectionMapInfo.find(
-          Function.getCodeSectionName().str().append(".cold"));
-      assert(SMII != SectionMM->SectionMapInfo.end() &&
+      SMII = EFMM->SectionMapInfo.find(Function.getColdCodeSectionName());
+      assert(SMII != EFMM->SectionMapInfo.end() &&
              "cannot find section for cold part");
       // Cold fragments are aligned at 16 bytes.
       NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress, 16);
+      auto &ColdPart = Function.cold();
       if (TooLarge) {
         // The corresponding FDE will refer to address 0.
-        Function.cold().setAddress(0);
-        Function.cold().setImageAddress(0);
-        Function.cold().setImageSize(0);
-        Function.cold().setFileOffset(0);
+        ColdPart.setAddress(0);
+        ColdPart.setImageAddress(0);
+        ColdPart.setImageSize(0);
+        ColdPart.setFileOffset(0);
       } else {
-        Function.cold().setAddress(NextAvailableAddress);
-        Function.cold().setImageAddress(SMII->second.AllocAddress);
-        Function.cold().setImageSize(SMII->second.Size);
-        Function.cold().setFileOffset(getFileOffsetFor(NextAvailableAddress));
+        ColdPart.setAddress(NextAvailableAddress);
+        ColdPart.setImageAddress(SMII->second.AllocAddress);
+        ColdPart.setImageSize(SMII->second.Size);
+        ColdPart.setFileOffset(getFileOffsetForAddress(NextAvailableAddress));
       }
 
       DEBUG(dbgs() << "BOLT: mapping cold fragment 0x"
-                   << Twine::utohexstr(Function.cold().getImageAddress())
+                   << Twine::utohexstr(ColdPart.getImageAddress())
                    << " to 0x"
-                   << Twine::utohexstr(Function.cold().getAddress())
+                   << Twine::utohexstr(ColdPart.getAddress())
                    << " with size "
-                   << Twine::utohexstr(Function.cold().getImageSize()) << '\n');
+                   << Twine::utohexstr(ColdPart.getImageSize()) << '\n');
       OLT.mapSectionAddress(ObjectsHandle,
                             SMII->second.SectionID,
-                            Function.cold().getAddress());
+                            ColdPart.getAddress());
 
-      NextAvailableAddress += Function.cold().getImageSize();
+      NextAvailableAddress += ColdPart.getImageSize();
     }
 
     // Add the new text section aggregating all existing code sections.
+    // This is pseudo-section that serves a purpose of creating a corresponding
+    // entry in section header table.
     auto NewTextSectionSize = NextAvailableAddress - NewTextSectionStartAddress;
     if (NewTextSectionSize) {
-      SectionMM->SectionMapInfo[".bolt.text"] =
+      EFMM->SectionMapInfo[".bolt.text"] =
           SectionInfo(0,
                       NewTextSectionSize,
                       16,
                       true /*IsCode*/,
                       true /*IsReadOnly*/,
+                      true /*IsLocal*/,
                       NewTextSectionStartAddress,
-                      getFileOffsetFor(NewTextSectionStartAddress));
+                      getFileOffsetForAddress(NewTextSectionStartAddress));
     }
   }
 
@@ -2173,8 +2203,8 @@ void RewriteInstance::mapFileSections(
                                         ".gcc_except_table",
                                         ".rodata", ".rodata.cold" };
   for (auto &SectionName : Sections) {
-    auto SMII = SectionMM->SectionMapInfo.find(SectionName);
-    if (SMII == SectionMM->SectionMapInfo.end())
+    auto SMII = EFMM->SectionMapInfo.find(SectionName);
+    if (SMII == EFMM->SectionMapInfo.end())
       continue;
     SectionInfo &SI = SMII->second;
     NextAvailableAddress = RoundUpToAlignment(NextAvailableAddress,
@@ -2188,7 +2218,7 @@ void RewriteInstance::mapFileSections(
                           SI.SectionID,
                           NextAvailableAddress);
     SI.FileAddress = NextAvailableAddress;
-    SI.FileOffset = getFileOffsetFor(NextAvailableAddress);
+    SI.FileOffset = getFileOffsetForAddress(NextAvailableAddress);
 
     NextAvailableAddress += SI.Size;
   }
@@ -2198,9 +2228,9 @@ void RewriteInstance::mapFileSections(
     auto &Section = SRI.first;
     StringRef SectionName;
     Section.getName(SectionName);
-    auto SMII = SectionMM->SectionMapInfo.find(std::string(".org") +
-                                                 std::string(SectionName));
-    if (SMII == SectionMM->SectionMapInfo.end())
+    auto SMII = EFMM->SectionMapInfo.find(std::string(".org") +
+                                          std::string(SectionName));
+    if (SMII == EFMM->SectionMapInfo.end())
       continue;
     SectionInfo &SI = SMII->second;
 
@@ -2224,7 +2254,6 @@ void RewriteInstance::mapFileSections(
     Section.getContents(SectionContents);
     SI.FileOffset = SectionContents.data() - InputFile->getData().data();
   }
-
 }
 
 void RewriteInstance::emitDataSection(MCStreamer *Streamer, SectionRef Section,
@@ -2351,8 +2380,8 @@ void RewriteInstance::patchELFPHDRTable() {
       NewPhdr.p_filesz = sizeof(NewPhdr) * Phnum;
       NewPhdr.p_memsz = sizeof(NewPhdr) * Phnum;
     } else if (Phdr.p_type == ELF::PT_GNU_EH_FRAME) {
-      auto SMII = SectionMM->SectionMapInfo.find(".eh_frame_hdr");
-      if (SMII != SectionMM->SectionMapInfo.end()) {
+      auto SMII = EFMM->SectionMapInfo.find(".eh_frame_hdr");
+      if (SMII != EFMM->SectionMapInfo.end()) {
         auto &EHFrameHdrSecInfo = SMII->second;
         NewPhdr.p_offset = EHFrameHdrSecInfo.FileOffset;
         NewPhdr.p_vaddr = EHFrameHdrSecInfo.FileAddress;
@@ -2411,7 +2440,7 @@ void RewriteInstance::rewriteNoteSections() {
   auto Obj = ELF64LEFile->getELFFile();
   auto &OS = Out->os();
 
-  uint64_t NextAvailableOffset = getFileOffsetFor(NextAvailableAddress);
+  uint64_t NextAvailableOffset = getFileOffsetForAddress(NextAvailableAddress);
   assert(NextAvailableOffset >= FirstNonAllocatableOffset &&
          "next available offset calculation failure");
   OS.seek(NextAvailableOffset);
@@ -2463,8 +2492,8 @@ void RewriteInstance::rewriteNoteSections() {
 
     // Perform section post-processing.
 
-    auto SII = SectionMM->NoteSectionInfo.find(*SectionName);
-    if (SII != SectionMM->NoteSectionInfo.end()) {
+    auto SII = EFMM->NoteSectionInfo.find(*SectionName);
+    if (SII != EFMM->NoteSectionInfo.end()) {
       auto &SI = SII->second;
       assert(SI.Alignment <= Section.sh_addralign &&
              "alignment exceeds value in file");
@@ -2498,12 +2527,13 @@ void RewriteInstance::rewriteNoteSections() {
     }
 
     // Set/modify section info.
-    SectionMM->NoteSectionInfo[*SectionName] =
+    EFMM->NoteSectionInfo[*SectionName] =
       SectionInfo(Address,
                   Size,
                   Section.sh_addralign,
                   /*IsCode=*/false,
                   /*IsReadOnly=*/false,
+                  /*IsLocal=*/false,
                   /*FileAddress=*/0,
                   NextAvailableOffset);
 
@@ -2563,8 +2593,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
       NewSection.sh_offset = NewTextSegmentOffset;
     }
 
-    auto SMII = SectionMM->SectionMapInfo.find(*SectionName);
-    if (SMII != SectionMM->SectionMapInfo.end()) {
+    auto SMII = EFMM->SectionMapInfo.find(*SectionName);
+    if (SMII != EFMM->SectionMapInfo.end()) {
       auto &SecInfo = SMII->second;
       SecInfo.ShName = Section.sh_name;
       NewSection.sh_name = 0;
@@ -2585,7 +2615,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   //
   // Skip the section we overwrite in-place (like data sections).
   std::vector<Elf_Shdr> SectionsToRewrite;
-  for (auto &SMII : SectionMM->SectionMapInfo) {
+  for (auto &SMII : EFMM->SectionMapInfo) {
     SectionInfo &SI = SMII.second;
     // Ignore function sections.
     if (SI.FileAddress < NewTextSegmentAddress) {
@@ -2646,8 +2676,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
       continue;
     }
 
-    auto SII = SectionMM->NoteSectionInfo.find(*SectionName);
-    assert(SII != SectionMM->NoteSectionInfo.end() &&
+    auto SII = EFMM->NoteSectionInfo.find(*SectionName);
+    assert(SII != EFMM->NoteSectionInfo.end() &&
            "missing section info for non-allocatable section");
 
     auto NewSection = Section;
@@ -2921,8 +2951,8 @@ void RewriteInstance::rewriteFile() {
 
   // Make sure output stream has enough reserved space, otherwise
   // pwrite() will fail.
-  auto Offset = OS.seek(getFileOffsetFor(NextAvailableAddress));
-  assert(Offset == getFileOffsetFor(NextAvailableAddress) &&
+  auto Offset = OS.seek(getFileOffsetForAddress(NextAvailableAddress));
+  assert(Offset == getFileOffsetForAddress(NextAvailableAddress) &&
          "error resizing output file");
 
   if (!opts::Relocs) {
@@ -2956,15 +2986,29 @@ void RewriteInstance::rewriteFile() {
       if (opts::Verbosity >= 2) {
         outs() << "BOLT: rewriting function \"" << Function << "\"\n";
       }
-      Out->os().pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
+      OS.pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
                        Function.getImageSize(), Function.getFileOffset());
 
       // Write nops at the end of the function.
-      auto Pos = Out->os().tell();
-      Out->os().seek(Function.getFileOffset() + Function.getImageSize());
+      auto Pos = OS.tell();
+      OS.seek(Function.getFileOffset() + Function.getImageSize());
       MAB->writeNopData(Function.getMaxSize() - Function.getImageSize(),
                         &Writer);
-      Out->os().seek(Pos);
+      OS.seek(Pos);
+
+      // Write jump tables if updating in-place.
+      if (opts::JumpTables == JTS_BASIC) {
+        for (auto &JTI : Function.JumpTables) {
+          auto &JT = JTI.second;
+          assert(JT.SecInfo && "section info for jump table expected");
+          JT.SecInfo->FileOffset =
+            getFileOffsetForAddress(JT.Address);
+          assert(JT.SecInfo->FileOffset && "no matching offset in file");
+          Out->os().pwrite(reinterpret_cast<char *>(JT.SecInfo->AllocAddress),
+                           JT.SecInfo->Size,
+                           JT.SecInfo->FileOffset);
+        }
+      }
 
       if (!Function.isSplit()) {
         ++CountOverwrittenFunctions;
@@ -2981,7 +3025,7 @@ void RewriteInstance::rewriteFile() {
         outs() << "BOLT: rewriting function \"" << Function
                << "\" (cold part)\n";
       }
-      Out->os().pwrite(reinterpret_cast<char*>
+      OS.pwrite(reinterpret_cast<char*>
                                             (Function.cold().getImageAddress()),
                        Function.cold().getImageSize(),
                        Function.cold().getFileOffset());
@@ -3009,36 +3053,39 @@ void RewriteInstance::rewriteFile() {
   }
 
   if (opts::Relocs && opts::TrapOldCode) {
-    auto SavedPos = Out->os().tell();
+    auto SavedPos = OS.tell();
     // Overwrite function body to make sure we never execute these instructions.
     for (auto &BFI : BinaryFunctions) {
       auto &BF = BFI.second;
       if (!BF.getFileOffset())
         continue;
-      Out->os().seek(BF.getFileOffset());
+      OS.seek(BF.getFileOffset());
       for (unsigned I = 0; I < BF.getMaxSize(); ++I)
-        Out->os().write((unsigned char)
+        OS.write((unsigned char)
             Streamer->getContext().getAsmInfo()->getTrapFillValue());
     }
-    Out->os().seek(SavedPos);
+    OS.seek(SavedPos);
   }
 
-  // Write all non-code sections.
-  for (auto &SMII : SectionMM->SectionMapInfo) {
+  // Write all non-local sections, i.e. those not emitted with the function.
+  for (auto &SMII : EFMM->SectionMapInfo) {
     SectionInfo &SI = SMII.second;
-    if (!opts::Relocs && SI.IsCode)
+    if (SI.IsLocal)
       continue;
     if (opts::Verbosity >= 1) {
       outs() << "BOLT: writing new section " << SMII.first << '\n';
+      outs() << " data at 0x" << Twine::utohexstr(SI.AllocAddress) << '\n';
+      outs() << " of size " << SI.Size << '\n';
+      outs() << " at offset " << SI.FileOffset << '\n';
     }
-    Out->os().pwrite(reinterpret_cast<const char *>(SI.AllocAddress),
+    OS.pwrite(reinterpret_cast<const char *>(SI.AllocAddress),
                      SI.Size,
                      SI.FileOffset);
   }
 
   // If .eh_frame is present create .eh_frame_hdr.
-  auto SMII = SectionMM->SectionMapInfo.find(".eh_frame");
-  if (SMII != SectionMM->SectionMapInfo.end()) {
+  auto SMII = EFMM->SectionMapInfo.find(".eh_frame");
+  if (SMII != EFMM->SectionMapInfo.end()) {
     writeEHFrameHeader(SMII->second);
   }
 
@@ -3048,18 +3095,21 @@ void RewriteInstance::rewriteFile() {
   // Copy non-allocatable sections once allocatable part is finished.
   rewriteNoteSections();
 
-  // Patch dynamic section/segment.
-  patchELFDynamic();
+  if (opts::Relocs) {
+    // Patch dynamic section/segment.
+    patchELFDynamic();
 
-  patchELFRelaPLT();
+    patchELFRelaPLT();
 
-  patchELFGOT();
+    patchELFGOT();
+  }
 
   // Update ELF book-keeping info.
   patchELFSectionHeaderTable();
 
   // Update symbol tables.
-  patchELFSymTabs();
+  if (opts::Relocs)
+    patchELFSymTabs();
 
   // TODO: we should find a way to mark the binary as optimized by us.
   Out->keep();
@@ -3095,8 +3145,8 @@ void RewriteInstance::writeEHFrameHeader(SectionInfo &EHFrameSecInfo) {
     exit(1);
   }
 
-  auto OldSMII = SectionMM->SectionMapInfo.find(".eh_frame_old");
-  assert(OldSMII != SectionMM->SectionMapInfo.end() &&
+  auto OldSMII = EFMM->SectionMapInfo.find(".eh_frame_old");
+  assert(OldSMII != EFMM->SectionMapInfo.end() &&
          "expected .eh_frame_old to be present");
   auto &OldEHFrameSecInfo = OldSMII->second;
   DWARFFrame OldEHFrame(OldEHFrameSecInfo.FileAddress);
@@ -3120,7 +3170,7 @@ void RewriteInstance::writeEHFrameHeader(SectionInfo &EHFrameSecInfo) {
 
   SectionInfo EHFrameHdrSecInfo;
   EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;
-  EHFrameHdrSecInfo.FileOffset = getFileOffsetFor(NextAvailableAddress);
+  EHFrameHdrSecInfo.FileOffset = getFileOffsetForAddress(NextAvailableAddress);
 
   auto NewEHFrameHdr =
       CFIRdWrt->generateEHFrameHeader(OldEHFrame,
@@ -3134,16 +3184,35 @@ void RewriteInstance::writeEHFrameHeader(SectionInfo &EHFrameSecInfo) {
          "offset mismatch");
   Out->os().write(NewEHFrameHdr.data(), EHFrameHdrSecInfo.Size);
 
-  SectionMM->SectionMapInfo[".eh_frame_hdr"] = EHFrameHdrSecInfo;
+  EFMM->SectionMapInfo[".eh_frame_hdr"] = EHFrameHdrSecInfo;
 
   NextAvailableAddress += EHFrameHdrSecInfo.Size;
 
   // Merge .eh_frame and .eh_frame_old so that gdb can locate all FDEs.
   EHFrameSecInfo.Size = OldEHFrameSecInfo.FileAddress + OldEHFrameSecInfo.Size
                         - EHFrameSecInfo.FileAddress;
-  SectionMM->SectionMapInfo.erase(OldSMII);
+  EFMM->SectionMapInfo.erase(OldSMII);
   DEBUG(dbgs() << "BOLT-DEBUG: size of .eh_frame after merge is "
                << EHFrameSecInfo.Size << '\n');
+}
+
+uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {
+  // Check if it's possibly part of the new segment.
+  if (Address >= NewTextSegmentAddress) {
+    return Address - NewTextSegmentAddress + NewTextSegmentOffset;
+  }
+
+  // Find an existing segment that matches the address.
+  const auto SegmentInfoI = EFMM->SegmentMapInfo.upper_bound(Address);
+  if (SegmentInfoI == EFMM->SegmentMapInfo.begin())
+    return 0;
+
+  const auto &SegmentInfo = std::prev(SegmentInfoI)->second;
+  if (Address < SegmentInfo.Address ||
+      Address >= SegmentInfo.Address + SegmentInfo.FileSize)
+    return 0;
+
+  return  SegmentInfo.FileOffset + Address - SegmentInfo.Address;
 }
 
 bool RewriteInstance::shouldOverwriteSection(StringRef SectionName) {

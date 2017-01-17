@@ -50,6 +50,8 @@ class DWARFDebugInfoEntryMinimal;
 
 namespace bolt {
 
+struct SectionInfo;
+
 using DWARFUnitLineTable = std::pair<DWARFCompileUnit *,
                                      const DWARFDebugLine::LineTable *>;
 
@@ -143,6 +145,14 @@ inline raw_ostream &operator<<(raw_ostream &OS, const DynoStats &Stats) {
 
 DynoStats operator+(const DynoStats &A, const DynoStats &B);
 
+enum JumpTableSupportLevel : char {
+  JTS_NONE = 0,       /// Disable jump tables support.
+  JTS_BASIC = 1,      /// Enable basic jump tables support (in-place).
+  JTS_MOVE = 2,       /// Move jump tables to a separate section.
+  JTS_SPLIT = 3,      /// Enable hot/cold splitting of jump tables.
+  JTS_AGGRESSIVE = 4, /// Aggressive splitting of jump tables.
+};
+
 /// BinaryFunction is a representation of machine-level function.
 ///
 /// We use the term "Binary" as "Machine" was already taken.
@@ -184,13 +194,6 @@ public:
     LT_OPTIMIZE_CACHE,
     /// Create clusters and use random order for them.
     LT_OPTIMIZE_SHUFFLE,
-  };
-
-  enum JumpTableSupportLevel : char {
-    JTS_NONE = 0,       /// Disable jump tables support
-    JTS_BASIC = 1,      /// Enable basic jump tables support
-    JTS_SPLIT = 2,      /// Enable hot/cold splitting of jump tables
-    JTS_AGGRESSIVE = 3, /// Aggressive splitting of jump tables
   };
 
   static constexpr uint64_t COUNT_NO_PROFILE =
@@ -265,6 +268,9 @@ private:
 
   /// Name for the section this function code should reside in.
   std::string CodeSectionName;
+
+  /// Name for the corresponding cold code section.
+  std::string ColdCodeSectionName;
 
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
@@ -503,6 +509,12 @@ private:
     /// is the main label for the jump table.
     std::map<unsigned, MCSymbol *> Labels;
 
+    /// Corresponding section if any.
+    SectionInfo *SecInfo{nullptr};
+
+    /// Corresponding section name if any.
+    std::string SectionName;
+
     /// Return the size of the jump table.
     uint64_t getSize() const {
       return std::max(OffsetEntries.size(), Entries.size()) * EntrySize;
@@ -700,7 +712,9 @@ private:
                  uint64_t Size, BinaryContext &BC, bool IsSimple) :
       Names({Name}), Section(Section), Address(Address),
       Size(Size), BC(BC), IsSimple(IsSimple),
-      CodeSectionName(".text." + Name), FunctionNumber(++Count) {
+      CodeSectionName(".local.text." + Name),
+      ColdCodeSectionName(".local.cold.text." + Name),
+      FunctionNumber(++Count) {
     OutputSymbol = BC.Ctx->getOrCreateSymbol(Name);
   }
 
@@ -994,8 +1008,12 @@ public:
 
   /// Return internal section name for this function.
   StringRef getCodeSectionName() const {
-    assert(!CodeSectionName.empty() && "no section name for function");
     return StringRef(CodeSectionName);
+  }
+
+  /// Return cold code section name for the function.
+  StringRef getColdCodeSectionName() const {
+    return StringRef(ColdCodeSectionName);
   }
 
   /// Return true if the function could be correctly processed.
