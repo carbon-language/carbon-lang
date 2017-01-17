@@ -2,6 +2,7 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+sse4.2 | FileCheck %s --check-prefix=SSE
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx | FileCheck %s --check-prefix=AVX --check-prefix=AVX1
 ; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx2 | FileCheck %s --check-prefix=AVX --check-prefix=AVX2
+; RUN: llc < %s -mtriple=x86_64-unknown -mattr=+avx512f,+avx512bw,+avx512vl | FileCheck %s --check-prefix=AVX512
 
 define i64 @test_v2f64(<2 x double> %a0, <2 x double> %a1) {
 ; SSE-LABEL: test_v2f64:
@@ -19,6 +20,16 @@ define i64 @test_v2f64(<2 x double> %a0, <2 x double> %a1) {
 ; AVX-NEXT:    vorpd %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vmovq %xmm0, %rax
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v2f64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltpd %xmm0, %xmm1, %k1
+; AVX512-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    vmovdqa64 %xmm0, %xmm0 {%k1} {z}
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovq %xmm0, %rax
+; AVX512-NEXT:    retq
   %c = fcmp ogt <2 x double> %a0, %a1
   %s = sext <2 x i1> %c to <2 x i64>
   %1 = shufflevector <2 x i64> %s, <2 x i64> undef, <2 x i32> <i32 1, i32 undef>
@@ -59,6 +70,18 @@ define i64 @test_v4f64(<4 x double> %a0, <4 x double> %a1) {
 ; AVX2-NEXT:    vmovq %xmm0, %rax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v4f64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltpd %ymm0, %ymm1, %k1
+; AVX512-NEXT:    vpcmpeqd %ymm0, %ymm0, %ymm0
+; AVX512-NEXT:    vmovdqa64 %ymm0, %ymm0 {%k1} {z}
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vmovq %xmm0, %rax
+; AVX512-NEXT:    retq
   %c = fcmp ogt <4 x double> %a0, %a1
   %s = sext <4 x i1> %c to <4 x i64>
   %1 = shufflevector <4 x i64> %s, <4 x i64> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
@@ -96,6 +119,19 @@ define i64 @test_v4f64_legal(<4 x double> %a0, <4 x double> %a1) {
 ; AVX-NEXT:    cltq
 ; AVX-NEXT:    vzeroupper
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v4f64_legal:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltpd %ymm0, %ymm1, %k1
+; AVX512-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    vmovdqa32 %xmm0, %xmm0 {%k1} {z}
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    cltq
+; AVX512-NEXT:    retq
   %c = fcmp ogt <4 x double> %a0, %a1
   %s = sext <4 x i1> %c to <4 x i32>
   %1 = shufflevector <4 x i32> %s, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
@@ -127,6 +163,18 @@ define i32 @test_v4f32(<4 x float> %a0, <4 x float> %a1) {
 ; AVX-NEXT:    vpor %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vmovd %xmm0, %eax
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v4f32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltps %xmm0, %xmm1, %k1
+; AVX512-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    vmovdqa32 %xmm0, %xmm0 {%k1} {z}
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    retq
   %c = fcmp ogt <4 x float> %a0, %a1
   %s = sext <4 x i1> %c to <4 x i32>
   %1 = shufflevector <4 x i32> %s, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
@@ -175,6 +223,20 @@ define i32 @test_v8f32(<8 x float> %a0, <8 x float> %a1) {
 ; AVX2-NEXT:    vmovd %xmm0, %eax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v8f32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltps %ymm0, %ymm1, %k1
+; AVX512-NEXT:    vpcmpeqd %ymm0, %ymm0, %ymm0
+; AVX512-NEXT:    vmovdqa32 %ymm0, %ymm0 {%k1} {z}
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    retq
   %c = fcmp ogt <8 x float> %a0, %a1
   %s = sext <8 x i1> %c to <8 x i32>
   %1 = shufflevector <8 x i32> %s, <8 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -219,6 +281,20 @@ define i32 @test_v8f32_legal(<8 x float> %a0, <8 x float> %a1) {
 ; AVX-NEXT:    cwtl
 ; AVX-NEXT:    vzeroupper
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v8f32_legal:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vcmpltps %ymm0, %ymm1, %k0
+; AVX512-NEXT:    vpmovm2w %k0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpsrld $16, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    cwtl
+; AVX512-NEXT:    retq
   %c = fcmp ogt <8 x float> %a0, %a1
   %s = sext <8 x i1> %c to <8 x i16>
   %1 = shufflevector <8 x i16> %s, <8 x i16> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -248,6 +324,16 @@ define i64 @test_v2i64(<2 x i64> %a0, <2 x i64> %a1) {
 ; AVX-NEXT:    vpor %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vmovq %xmm0, %rax
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v2i64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtq %xmm1, %xmm0, %k1
+; AVX512-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    vmovdqa64 %xmm0, %xmm0 {%k1} {z}
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovq %xmm0, %rax
+; AVX512-NEXT:    retq
   %c = icmp sgt <2 x i64> %a0, %a1
   %s = sext <2 x i1> %c to <2 x i64>
   %1 = shufflevector <2 x i64> %s, <2 x i64> undef, <2 x i32> <i32 1, i32 undef>
@@ -291,6 +377,18 @@ define i64 @test_v4i64(<4 x i64> %a0, <4 x i64> %a1) {
 ; AVX2-NEXT:    vmovq %xmm0, %rax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v4i64:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtq %ymm1, %ymm0, %k1
+; AVX512-NEXT:    vpcmpeqd %ymm0, %ymm0, %ymm0
+; AVX512-NEXT:    vmovdqa64 %ymm0, %ymm0 {%k1} {z}
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vmovq %xmm0, %rax
+; AVX512-NEXT:    retq
   %c = icmp sgt <4 x i64> %a0, %a1
   %s = sext <4 x i1> %c to <4 x i64>
   %1 = shufflevector <4 x i64> %s, <4 x i64> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
@@ -344,6 +442,19 @@ define i64 @test_v4i64_legal(<4 x i64> %a0, <4 x i64> %a1) {
 ; AVX2-NEXT:    cltq
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v4i64_legal:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtq %ymm1, %ymm0, %k1
+; AVX512-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    vmovdqa32 %xmm0, %xmm0 {%k1} {z}
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    cltq
+; AVX512-NEXT:    retq
   %c = icmp sgt <4 x i64> %a0, %a1
   %s = sext <4 x i1> %c to <4 x i32>
   %1 = shufflevector <4 x i32> %s, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
@@ -375,6 +486,18 @@ define i32 @test_v4i32(<4 x i32> %a0, <4 x i32> %a1) {
 ; AVX-NEXT:    vpor %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    vmovd %xmm0, %eax
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v4i32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtd %xmm1, %xmm0, %k1
+; AVX512-NEXT:    vpcmpeqd %xmm0, %xmm0, %xmm0
+; AVX512-NEXT:    vmovdqa32 %xmm0, %xmm0 {%k1} {z}
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    retq
   %c = icmp sgt <4 x i32> %a0, %a1
   %s = sext <4 x i1> %c to <4 x i32>
   %1 = shufflevector <4 x i32> %s, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
@@ -426,6 +549,20 @@ define i32 @test_v8i32(<8 x i32> %a0, <8 x i32> %a1) {
 ; AVX2-NEXT:    vmovd %xmm0, %eax
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v8i32:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtd %ymm1, %ymm0, %k1
+; AVX512-NEXT:    vpcmpeqd %ymm0, %ymm0, %ymm0
+; AVX512-NEXT:    vmovdqa32 %ymm0, %ymm0 {%k1} {z}
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    retq
   %c = icmp sgt <8 x i32> %a0, %a1
   %s = sext <8 x i1> %c to <8 x i32>
   %1 = shufflevector <8 x i32> %s, <8 x i32> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -488,6 +625,20 @@ define i32 @test_v8i32_legal(<8 x i32> %a0, <8 x i32> %a1) {
 ; AVX2-NEXT:    cwtl
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v8i32_legal:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtd %ymm1, %ymm0, %k0
+; AVX512-NEXT:    vpmovm2w %k0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpsrld $16, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    cwtl
+; AVX512-NEXT:    retq
   %c = icmp sgt <8 x i32> %a0, %a1
   %s = sext <8 x i1> %c to <8 x i16>
   %1 = shufflevector <8 x i16> %s, <8 x i16> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -528,6 +679,20 @@ define i16 @test_v8i16(<8 x i16> %a0, <8 x i16> %a1) {
 ; AVX-NEXT:    vmovd %xmm0, %eax
 ; AVX-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v8i16:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtw %xmm1, %xmm0, %k0
+; AVX512-NEXT:    vpmovm2w %k0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpsrld $16, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
+; AVX512-NEXT:    retq
   %c = icmp sgt <8 x i16> %a0, %a1
   %s = sext <8 x i1> %c to <8 x i16>
   %1 = shufflevector <8 x i16> %s, <8 x i16> undef, <8 x i32> <i32 4, i32 5, i32 6, i32 7, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -591,6 +756,22 @@ define i16 @test_v16i16(<16 x i16> %a0, <16 x i16> %a1) {
 ; AVX2-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v16i16:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtw %ymm1, %ymm0, %k0
+; AVX512-NEXT:    vpmovm2w %k0, %ymm0
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpsrld $16, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vmovd %xmm0, %eax
+; AVX512-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
+; AVX512-NEXT:    retq
   %c = icmp sgt <16 x i16> %a0, %a1
   %s = sext <16 x i1> %c to <16 x i16>
   %1 = shufflevector <16 x i16> %s, <16 x i16> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -665,6 +846,23 @@ define i16 @test_v16i16_legal(<16 x i16> %a0, <16 x i16> %a1) {
 ; AVX2-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v16i16_legal:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtw %ymm1, %ymm0, %k0
+; AVX512-NEXT:    vpmovm2b %k0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpsrld $16, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpsrlw $8, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpextrb $0, %xmm0, %eax
+; AVX512-NEXT:    movsbl %al, %eax
+; AVX512-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
+; AVX512-NEXT:    retq
   %c  = icmp sgt <16 x i16> %a0, %a1
   %s  = sext <16 x i1> %c to <16 x i8>
   %1  = shufflevector <16 x i8> %s, <16 x i8> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -712,6 +910,22 @@ define i8 @test_v16i8(<16 x i8> %a0, <16 x i8> %a1) {
 ; AVX-NEXT:    vpextrb $0, %xmm0, %eax
 ; AVX-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
 ; AVX-NEXT:    retq
+;
+; AVX512-LABEL: test_v16i8:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtb %xmm1, %xmm0, %k0
+; AVX512-NEXT:    vpmovm2b %k0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpsrld $16, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpsrlw $8, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %xmm1, %xmm0, %xmm0
+; AVX512-NEXT:    vpextrb $0, %xmm0, %eax
+; AVX512-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
+; AVX512-NEXT:    retq
   %c = icmp sgt <16 x i8> %a0, %a1
   %s = sext <16 x i1> %c to <16 x i8>
   %1 = shufflevector <16 x i8> %s, <16 x i8> undef, <16 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
@@ -784,6 +998,24 @@ define i8 @test_v32i8(<32 x i8> %a0, <32 x i8> %a1) {
 ; AVX2-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
 ; AVX2-NEXT:    vzeroupper
 ; AVX2-NEXT:    retq
+;
+; AVX512-LABEL: test_v32i8:
+; AVX512:       # BB#0:
+; AVX512-NEXT:    vpcmpgtb %ymm1, %ymm0, %k0
+; AVX512-NEXT:    vpmovm2b %k0, %ymm0
+; AVX512-NEXT:    vextracti128 $1, %ymm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpshufd {{.*#+}} xmm1 = xmm0[1,1,2,3]
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpsrld $16, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpsrlw $8, %xmm0, %xmm1
+; AVX512-NEXT:    vpor %ymm1, %ymm0, %ymm0
+; AVX512-NEXT:    vpextrb $0, %xmm0, %eax
+; AVX512-NEXT:    # kill: %AL<def> %AL<kill> %EAX<kill>
+; AVX512-NEXT:    retq
   %c  = icmp sgt <32 x i8> %a0, %a1
   %s  = sext <32 x i1> %c to <32 x i8>
   %1  = shufflevector <32 x i8> %s, <32 x i8> undef, <32 x i32> <i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22, i32 23, i32 24, i32 25, i32 26, i32 27, i32 28, i32 29, i32 30, i32 31, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
