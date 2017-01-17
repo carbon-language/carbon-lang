@@ -3751,8 +3751,8 @@ public:
         : __shared_owners_(__refs) {}
 
 #ifdef _LIBCPP_BUILDING_MEMORY
-    _LIBCPP_FUNC_VIS void __add_shared() _NOEXCEPT;
-    _LIBCPP_FUNC_VIS bool __release_shared() _NOEXCEPT;
+    void __add_shared() _NOEXCEPT;
+    bool __release_shared() _NOEXCEPT;
 #else
     _LIBCPP_INLINE_VISIBILITY
     void __add_shared() _NOEXCEPT {
@@ -3788,9 +3788,9 @@ protected:
 
 public:
 #ifdef _LIBCPP_BUILDING_MEMORY
-    _LIBCPP_FUNC_VIS void __add_shared() _NOEXCEPT;
-    _LIBCPP_FUNC_VIS void __add_weak() _NOEXCEPT;
-    _LIBCPP_FUNC_VIS void __release_shared() _NOEXCEPT;
+    void __add_shared() _NOEXCEPT;
+    void __add_weak() _NOEXCEPT;
+    void __release_shared() _NOEXCEPT;
 #else
     _LIBCPP_INLINE_VISIBILITY
     void __add_shared() _NOEXCEPT {
