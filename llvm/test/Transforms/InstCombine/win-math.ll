@@ -284,11 +284,11 @@ define float @float_powsqrt(float %x) nounwind readnone {
 ; WIN64: float @powf
 ; MINGW32-LABEL: @float_powsqrt(
 ; MINGW32: float @sqrtf
-; MINGW32: float @fabsf
+; MINGW32: float @llvm.fabs.f32
 ; MINGW32-NOT: float @powf
 ; MINGW64-LABEL: @float_powsqrt(
 ; MINGW64: float @sqrtf
-; MINGW64: float @fabsf
+; MINGW64: float @llvm.fabs.f32(
 ; MINGW64-NOT: float @powf
     %1 = call float @powf(float %x, float 0.5)
     ret float %1

@@ -1631,6 +1631,18 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return SelectInst::Create(Cond, Call0, Call1);
     }
 
+    Value *ExtSrc;
+    if (match(II->getArgOperand(0), m_FPExt(m_Value(ExtSrc))) &&
+        II->getArgOperand(0)->hasOneUse()) {
+      // fabs (fpext x) -> fpext (fabs x)
+      Value *F = Intrinsic::getDeclaration(II->getModule(), Intrinsic::fabs,
+                                           { ExtSrc->getType() });
+      CallInst *NewFabs = Builder->CreateCall(F, ExtSrc);
+      NewFabs->copyFastMathFlags(II);
+      NewFabs->takeName(II);
+      return new FPExtInst(NewFabs, II->getType());
+    }
+
     break;
   }
   case Intrinsic::cos:

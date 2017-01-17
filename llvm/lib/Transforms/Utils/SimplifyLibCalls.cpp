@@ -1210,11 +1210,15 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
 
 Value *LibCallSimplifier::optimizeFabs(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
-  StringRef Name = Callee->getName();
-  if (Name == "fabs" && hasFloatVersion(Name))
-    return optimizeUnaryDoubleFP(CI, B, false);
+  IRBuilder<>::FastMathFlagGuard Guard(B);
+  B.setFastMathFlags(CI->getFastMathFlags());
 
-  return nullptr;
+  // fabs/fabsf -> llvm.fabs.*
+  Value *F = Intrinsic::getDeclaration(Callee->getParent(), Intrinsic::fabs,
+                                       CI->getType());
+  Value *NewCall = B.CreateCall(F, { CI->getArgOperand(0) });
+  NewCall->takeName(CI);
+  return NewCall;
 }
 
 Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
@@ -2029,8 +2033,6 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
       return optimizePow(CI, Builder);
     case Intrinsic::exp2:
       return optimizeExp2(CI, Builder);
-    case Intrinsic::fabs:
-      return optimizeFabs(CI, Builder);
     case Intrinsic::log:
       return optimizeLog(CI, Builder);
     case Intrinsic::sqrt:
