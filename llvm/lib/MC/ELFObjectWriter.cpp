@@ -32,7 +32,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
-#include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/StringSaver.h"
 #include <vector>
@@ -1038,10 +1037,10 @@ void ELFObjectWriter::writeSectionData(const MCAssembler &Asm, MCSection &Sec,
   setStream(OldStream);
 
   SmallVector<char, 128> CompressedContents;
-  if (Error E = zlib::compress(
-          StringRef(UncompressedData.data(), UncompressedData.size()),
-          CompressedContents)) {
-    consumeError(std::move(E));
+  zlib::Status Success = zlib::compress(
+      StringRef(UncompressedData.data(), UncompressedData.size()),
+      CompressedContents);
+  if (Success != zlib::StatusOK) {
     getStream() << UncompressedData;
     return;
   }

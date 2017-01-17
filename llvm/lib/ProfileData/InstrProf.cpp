@@ -271,12 +271,12 @@ Error collectPGOFuncNameStrings(const std::vector<std::string> &NameStrs,
   }
 
   SmallString<128> CompressedNameStrings;
-  Error E = zlib::compress(StringRef(UncompressedNameStrings),
-                           CompressedNameStrings, zlib::BestSizeCompression);
-  if (E) {
-    consumeError(std::move(E));
+  zlib::Status Success =
+      zlib::compress(StringRef(UncompressedNameStrings), CompressedNameStrings,
+                     zlib::BestSizeCompression);
+
+  if (Success != zlib::StatusOK)
     return make_error<InstrProfError>(instrprof_error::compress_failed);
-  }
 
   return WriteStringToResult(CompressedNameStrings.size(),
                              CompressedNameStrings);
@@ -315,12 +315,9 @@ Error readPGOFuncNameStrings(StringRef NameStrings, InstrProfSymtab &Symtab) {
     if (isCompressed) {
       StringRef CompressedNameStrings(reinterpret_cast<const char *>(P),
                                       CompressedSize);
-      if (Error E =
-              zlib::uncompress(CompressedNameStrings, UncompressedNameStrings,
-                               UncompressedSize)) {
-        consumeError(std::move(E));
+      if (zlib::uncompress(CompressedNameStrings, UncompressedNameStrings,
+                           UncompressedSize) != zlib::StatusOK)
         return make_error<InstrProfError>(instrprof_error::uncompress_failed);
-      }
       P += CompressedSize;
       NameStrings = StringRef(UncompressedNameStrings.data(),
                               UncompressedNameStrings.size());

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Compression.h"
-#include "llvm/Support/Error.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Config/config.h"
@@ -27,21 +26,15 @@ namespace {
 void TestZlibCompression(StringRef Input, zlib::CompressionLevel Level) {
   SmallString<32> Compressed;
   SmallString<32> Uncompressed;
-
-  Error E = zlib::compress(Input, Compressed, Level);
-  EXPECT_FALSE(E);
-  consumeError(std::move(E));
-
+  EXPECT_EQ(zlib::StatusOK, zlib::compress(Input, Compressed, Level));
   // Check that uncompressed buffer is the same as original.
-  E = zlib::uncompress(Compressed, Uncompressed, Input.size());
-  EXPECT_FALSE(E);
-  consumeError(std::move(E));
-
+  EXPECT_EQ(zlib::StatusOK,
+            zlib::uncompress(Compressed, Uncompressed, Input.size()));
   EXPECT_EQ(Input, Uncompressed);
   if (Input.size() > 0) {
     // Uncompression fails if expected length is too short.
-    E = zlib::uncompress(Compressed, Uncompressed, Input.size() - 1);
-    EXPECT_EQ("zlib error: Z_BUF_ERROR", llvm::toString(std::move(E)));
+    EXPECT_EQ(zlib::StatusBufferTooShort,
+              zlib::uncompress(Compressed, Uncompressed, Input.size() - 1));
   }
 }
 
