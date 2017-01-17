@@ -29,13 +29,14 @@ using namespace llvm;
 
 STATISTIC(NumDeleted, "Number of loops deleted");
 
-/// isLoopDead - Determined if a loop is dead.  This assumes that we've already
-/// checked for unique exit and exiting blocks, and that the code is in LCSSA
-/// form.
-bool LoopDeletionPass::isLoopDead(Loop *L, ScalarEvolution &SE,
-                                  SmallVectorImpl<BasicBlock *> &ExitingBlocks,
-                                  BasicBlock *ExitBlock, bool &Changed,
-                                  BasicBlock *Preheader) {
+/// Determines if a loop is dead.
+///
+/// This assumes that we've already checked for unique exit and exiting blocks,
+/// and that the code is in LCSSA form.
+static bool isLoopDead(Loop *L, ScalarEvolution &SE,
+                       SmallVectorImpl<BasicBlock *> &ExitingBlocks,
+                       BasicBlock *ExitBlock, bool &Changed,
+                       BasicBlock *Preheader) {
   // Make sure that all PHI entries coming from the loop are loop invariant.
   // Because the code is in LCSSA form, any values used outside of the loop
   // must pass through a PHI in the exit block, meaning that this check is
@@ -89,14 +90,22 @@ bool LoopDeletionPass::isLoopDead(Loop *L, ScalarEvolution &SE,
   return true;
 }
 
-/// Remove dead loops, by which we mean loops that do not impact the observable
-/// behavior of the program other than finite running time.  Note we do ensure
-/// that this never remove a loop that might be infinite, as doing so could
-/// change the halting/non-halting nature of a program. NOTE: This entire
-/// process relies pretty heavily on LoopSimplify and LCSSA in order to make
-/// various safety checks work.
-bool LoopDeletionPass::runImpl(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
-                               LoopInfo &LI) {
+/// Remove a loop if it is dead.
+///
+/// A loop is considered dead if it does not impact the observable behavior of
+/// the program other than finite running time. This never removes a loop that
+/// might be infinite, as doing so could change the halting/non-halting nature
+/// of a program.
+///
+/// This entire process relies pretty heavily on LoopSimplify form and LCSSA in
+/// order to make various safety checks work.
+///
+/// \returns true if any changes are made, even if the loop is not deleted.
+///
+/// This also updates the relevant analysis information in \p DT, \p SE, and \p
+/// LI.
+static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
+                             LoopInfo &LI) {
   assert(L->isLCSSAForm(DT) && "Expected LCSSA!");
 
   // We can only remove the loop if there is a preheader that we can
@@ -217,7 +226,7 @@ bool LoopDeletionPass::runImpl(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 PreservedAnalyses LoopDeletionPass::run(Loop &L, LoopAnalysisManager &AM,
                                         LoopStandardAnalysisResults &AR,
                                         LPMUpdater &) {
-  bool Changed = runImpl(&L, AR.DT, AR.SE, AR.LI);
+  bool Changed = deleteLoopIfDead(&L, AR.DT, AR.SE, AR.LI);
   if (!Changed)
     return PreservedAnalyses::all();
 
@@ -258,6 +267,5 @@ bool LoopDeletionLegacyPass::runOnLoop(Loop *L, LPPassManager &) {
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 
-  LoopDeletionPass Impl;
-  return Impl.runImpl(L, DT, SE, LI);
+  return deleteLoopIfDead(L, DT, SE, LI);
 }

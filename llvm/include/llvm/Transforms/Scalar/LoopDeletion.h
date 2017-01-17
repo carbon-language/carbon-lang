@@ -26,13 +26,6 @@ public:
   LoopDeletionPass() {}
   PreservedAnalyses run(Loop &L, LoopAnalysisManager &AM,
                         LoopStandardAnalysisResults &AR, LPMUpdater &U);
-
-  bool runImpl(Loop *L, DominatorTree &DT, ScalarEvolution &SE, LoopInfo &LI);
-
-private:
-  bool isLoopDead(Loop *L, ScalarEvolution &SE,
-                  SmallVectorImpl<BasicBlock *> &ExitingBlocks,
-                  BasicBlock *ExitBlock, bool &Changed, BasicBlock *Preheader);
 };
 }
 
