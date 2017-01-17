@@ -34,10 +34,8 @@ STATISTIC(NumDeleted, "Number of loops deleted");
 /// form.
 bool LoopDeletionPass::isLoopDead(Loop *L, ScalarEvolution &SE,
                                   SmallVectorImpl<BasicBlock *> &ExitingBlocks,
-                                  SmallVectorImpl<BasicBlock *> &ExitBlocks,
-                                  bool &Changed, BasicBlock *Preheader) {
-  BasicBlock *ExitBlock = ExitBlocks[0];
-
+                                  BasicBlock *ExitBlock, bool &Changed,
+                                  BasicBlock *Preheader) {
   // Make sure that all PHI entries coming from the loop are loop invariant.
   // Because the code is in LCSSA form, any values used outside of the loop
   // must pass through a PHI in the exit block, meaning that this check is
@@ -129,9 +127,11 @@ bool LoopDeletionPass::runImpl(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
   if (ExitBlocks.size() != 1)
     return false;
 
+  BasicBlock *ExitBlock = ExitBlocks[0];
+
   // Finally, we have to check that the loop really is dead.
   bool Changed = false;
-  if (!isLoopDead(L, SE, ExitingBlocks, ExitBlocks, Changed, preheader))
+  if (!isLoopDead(L, SE, ExitingBlocks, ExitBlock, Changed, preheader))
     return Changed;
 
   // Don't remove loops for which we can't solve the trip count.
@@ -142,8 +142,7 @@ bool LoopDeletionPass::runImpl(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 
   // Now that we know the removal is safe, remove the loop by changing the
   // branch from the preheader to go to the single exit block.
-  BasicBlock *ExitBlock = ExitBlocks[0];
-
+  //
   // Because we're deleting a large chunk of code at once, the sequence in which
   // we remove things is very important to avoid invalidation issues.  Don't
   // mess with this unless you have good reason and know what you're doing.

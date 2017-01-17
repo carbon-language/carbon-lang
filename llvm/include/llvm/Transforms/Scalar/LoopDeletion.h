@@ -32,8 +32,7 @@ public:
 private:
   bool isLoopDead(Loop *L, ScalarEvolution &SE,
                   SmallVectorImpl<BasicBlock *> &ExitingBlocks,
-                  SmallVectorImpl<BasicBlock *> &ExitBlocks, bool &Changed,
-                  BasicBlock *Preheader);
+                  BasicBlock *ExitBlock, bool &Changed, BasicBlock *Preheader);
 };
 }
 
