@@ -274,7 +274,9 @@ define float @float_round(float %x) nounwind readnone {
 }
 
 declare float @powf(float, float)
-; win32 lacks sqrtf&fabsf, win64 lacks fabsf
+
+; win32 lacks sqrtf&fabsf, win64 lacks fabsf, but
+; calls to the intrinsics can be emitted instead.
 define float @float_powsqrt(float %x) nounwind readnone {
 ; WIN32-LABEL: @float_powsqrt(
 ; WIN32-NOT: float @sqrtf
