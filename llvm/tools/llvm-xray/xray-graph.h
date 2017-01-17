@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Program.h"
 #include "llvm/XRay/Trace.h"
 #include "llvm/XRay/XRayRecord.h"
 
@@ -78,7 +79,8 @@ private:
   /// graph.
   ///
   /// FIXME: Perhaps we can Build this into LatencyAccountant? or vise versa?
-  DenseMap<pid_t, SmallVector<FunctionAttr, 4>> PerThreadFunctionStack;
+  DenseMap<llvm::sys::ProcessInfo::ProcessId, SmallVector<FunctionAttr, 4>>
+      PerThreadFunctionStack;
 
   /// Usefull object for getting human readable Symbol Names.
   FuncIdConversionHelper &FuncIdHelper;
