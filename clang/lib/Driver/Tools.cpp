@@ -4996,6 +4996,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       switch (Triple.getArch()) {
       case llvm::Triple::x86_64:
       case llvm::Triple::arm:
+      case llvm::Triple::thumb:
       case llvm::Triple::aarch64:
         // Supported.
         break;
