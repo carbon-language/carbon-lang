@@ -313,6 +313,13 @@ def main_with_tmp(builtinParameters):
 
     isWindows = platform.system() == 'Windows'
 
+    parallelism_groups = {}
+    if platform.system() == 'Darwin':
+      # Only run up to 3 64-bit sanitized processes simultaneously on Darwin.
+      # Using more scales badly and hogs the system due to inefficient handling
+      # of large mmap'd regions (terabytes) by the kernel.
+      parallelism_groups["darwin-64bit-sanitizer"] = 3
+
     # Create the global config object.
     litConfig = lit.LitConfig.LitConfig(
         progname = os.path.basename(sys.argv[0]),
@@ -327,7 +334,8 @@ def main_with_tmp(builtinParameters):
         params = userParams,
         config_prefix = opts.configPrefix,
         maxIndividualTestTime = maxIndividualTestTime,
-        maxFailures = opts.maxFailures)
+        maxFailures = opts.maxFailures,
+        parallelism_groups = parallelism_groups)
 
     # Perform test discovery.
     run = lit.run.Run(litConfig,

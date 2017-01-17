@@ -175,9 +175,14 @@ class Run(object):
     def __init__(self, lit_config, tests):
         self.lit_config = lit_config
         self.tests = tests
+        self.parallelism_semaphores = ""
 
     def execute_test(self, test):
+        pg = test.config.parallelism_group
+        if callable(pg): pg = pg(test)
+
         result = None
+        if pg: self.parallelism_semaphores[pg].acquire()
         start_time = time.time()
         try:
             result = test.config.test_format.execute(test, self.lit_config)
@@ -189,6 +194,8 @@ class Run(object):
                 result = lit.Test.Result(code, output)
             elif not isinstance(result, lit.Test.Result):
                 raise ValueError("unexpected result from test execution")
+
+            result.elapsed = time.time() - start_time
         except KeyboardInterrupt:
             raise
         except:
@@ -198,7 +205,8 @@ class Run(object):
             output += traceback.format_exc()
             output += '\n'
             result = lit.Test.Result(lit.Test.UNRESOLVED, output)
-        result.elapsed = time.time() - start_time
+        finally:
+            if pg: self.parallelism_semaphores[pg].release()
 
         test.setResult(result)
 
@@ -231,6 +239,7 @@ class Run(object):
             try:
                 task_impl = multiprocessing.Process
                 queue_impl = multiprocessing.Queue
+                sem_impl = multiprocessing.Semaphore
                 canceled_flag =  multiprocessing.Value('i', 0)
                 consumer = MultiprocessResultsConsumer(self, display, jobs)
             except:
@@ -242,8 +251,12 @@ class Run(object):
         if not consumer:
             task_impl = threading.Thread
             queue_impl = queue.Queue
+            sem_impl = threading.Semaphore
             canceled_flag = LockedValue(0)
             consumer = ThreadResultsConsumer(display)
+
+        self.parallelism_semaphores = {k: sem_impl(v)
+            for k, v in self.lit_config.parallelism_groups.items()}
 
         # Create the test provider.
         provider = TestProvider(queue_impl, canceled_flag)
