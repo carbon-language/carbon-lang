@@ -212,38 +212,27 @@ void TracePC::DumpCoverage() {
 
 ATTRIBUTE_NO_SANITIZE_MEMORY
 void TracePC::AddValueForMemcmp(void *caller_pc, const void *s1, const void *s2,
-                              size_t n) {
+                                size_t n, bool StopAtZero) {
   if (!n) return;
-  size_t Len = std::min(n, (size_t)32);
+  size_t Len = std::min(n, Word::GetMaxSize());
   const uint8_t *A1 = reinterpret_cast<const uint8_t *>(s1);
   const uint8_t *A2 = reinterpret_cast<const uint8_t *>(s2);
+  uint8_t B1[Word::kMaxSize];
+  uint8_t B2[Word::kMaxSize];
+  // Copy the data into locals in this non-msan-instrumented function
+  // to avoid msan complaining further.
+  for (size_t i = 0; i < Len; i++) {
+    B1[i] = A1[i];
+    B2[i] = A2[i];
+  }
   size_t I = 0;
   for (; I < Len; I++)
-    if (A1[I] != A2[I])
+    if (B1[I] != B2[I] || (StopAtZero && B1[I] == 0))
       break;
   size_t PC = reinterpret_cast<size_t>(caller_pc);
-  size_t Idx = I;
-  // if (I < Len)
-  //  Idx += __builtin_popcountl((A1[I] ^ A2[I])) - 1;
-  TPC.HandleValueProfile((PC & 4095) | (Idx << 12));
-}
-
-ATTRIBUTE_NO_SANITIZE_MEMORY
-void TracePC::AddValueForStrcmp(void *caller_pc, const char *s1, const char *s2,
-                              size_t n) {
-  if (!n) return;
-  size_t Len = std::min(n, (size_t)32);
-  const uint8_t *A1 = reinterpret_cast<const uint8_t *>(s1);
-  const uint8_t *A2 = reinterpret_cast<const uint8_t *>(s2);
-  size_t I = 0;
-  for (; I < Len; I++)
-    if (A1[I] != A2[I] || A1[I] == 0)
-      break;
-  size_t PC = reinterpret_cast<size_t>(caller_pc);
-  size_t Idx = I;
-  // if (I < Len && A1[I])
-  //  Idx += __builtin_popcountl((A1[I] ^ A2[I])) - 1;
-  TPC.HandleValueProfile((PC & 4095) | (Idx << 12));
+  size_t Idx = (PC & 4095) | (I << 12);
+  TPC.HandleValueProfile(Idx);
+  TORCW.Insert(Idx, Word(B1, Len), Word(B2, Len));
 }
 
 template <class T>

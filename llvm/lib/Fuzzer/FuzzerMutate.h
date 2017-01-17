@@ -114,6 +114,13 @@ private:
   template <class T>
   DictionaryEntry MakeDictionaryEntryFromCMP(T Arg1, T Arg2,
                                              const uint8_t *Data, size_t Size);
+  DictionaryEntry MakeDictionaryEntryFromCMP(const Word &Arg1, const Word &Arg2,
+                                             const uint8_t *Data, size_t Size);
+  DictionaryEntry MakeDictionaryEntryFromCMP(const void *Arg1, const void *Arg2,
+                                             const void *Arg1Mutation,
+                                             const void *Arg2Mutation,
+                                             size_t ArgSize,
+                                             const uint8_t *Data, size_t Size);
 
   Random &Rand;
   const FuzzingOptions Options;

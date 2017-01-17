@@ -50,7 +50,7 @@ public:
                           const uint8_t *DesiredData, size_t DataSize);
 
   void StartTraceRecording() {
-    if (!Options.UseMemcmp)
+    if (!Options.UseMemcmp && !Options.UseMemmem)
       return;
     RecordingMemcmp = Options.UseMemcmp;
     RecordingMemmem = Options.UseMemmem;
@@ -60,7 +60,7 @@ public:
   }
 
   void StopTraceRecording() {
-    if (!RecordingMemcmp)
+    if (!RecordingMemcmp && !RecordingMemmem)
       return;
     RecordingMemcmp = false;
     for (size_t i = 0; i < NumMutations; i++) {
@@ -192,7 +192,7 @@ void Fuzzer::StopTraceRecording() {
 }
 
 void Fuzzer::InitializeTraceState() {
-  if (!Options.UseMemcmp) return;
+  if (!Options.UseMemcmp && !Options.UseMemmem) return;
   TS = new TraceState(MD, Options, this);
 }
 
@@ -217,37 +217,37 @@ extern "C" {
 #if LLVM_FUZZER_DEFINES_SANITIZER_WEAK_HOOOKS
 void __sanitizer_weak_hook_memcmp(void *caller_pc, const void *s1,
                                   const void *s2, size_t n, int result) {
-  fuzzer::TPC.AddValueForMemcmp(caller_pc, s1, s2, n);
-  if (!RecordingMemcmp) return;
   if (result == 0) return;  // No reason to mutate.
   if (n <= 1) return;  // Not interesting.
+  fuzzer::TPC.AddValueForMemcmp(caller_pc, s1, s2, n, /*StopAtZero*/false);
+  if (!RecordingMemcmp) return;
   TS->TraceMemcmpCallback(n, reinterpret_cast<const uint8_t *>(s1),
                           reinterpret_cast<const uint8_t *>(s2));
 }
 
 void __sanitizer_weak_hook_strncmp(void *caller_pc, const char *s1,
                                    const char *s2, size_t n, int result) {
-  fuzzer::TPC.AddValueForStrcmp(caller_pc, s1, s2, n);
-  if (!RecordingMemcmp) return;
   if (result == 0) return;  // No reason to mutate.
   size_t Len1 = fuzzer::InternalStrnlen(s1, n);
   size_t Len2 = fuzzer::InternalStrnlen(s2, n);
   n = std::min(n, Len1);
   n = std::min(n, Len2);
   if (n <= 1) return;  // Not interesting.
+  fuzzer::TPC.AddValueForMemcmp(caller_pc, s1, s2, n, /*StopAtZero*/true);
+  if (!RecordingMemcmp) return;
   TS->TraceMemcmpCallback(n, reinterpret_cast<const uint8_t *>(s1),
                           reinterpret_cast<const uint8_t *>(s2));
 }
 
 void __sanitizer_weak_hook_strcmp(void *caller_pc, const char *s1,
                                    const char *s2, int result) {
-  fuzzer::TPC.AddValueForStrcmp(caller_pc, s1, s2, 64);
-  if (!RecordingMemcmp) return;
   if (result == 0) return;  // No reason to mutate.
   size_t Len1 = strlen(s1);
   size_t Len2 = strlen(s2);
   size_t N = std::min(Len1, Len2);
   if (N <= 1) return;  // Not interesting.
+  fuzzer::TPC.AddValueForMemcmp(caller_pc, s1, s2, N, /*StopAtZero*/true);
+  if (!RecordingMemcmp) return;
   TS->TraceMemcmpCallback(N, reinterpret_cast<const uint8_t *>(s1),
                           reinterpret_cast<const uint8_t *>(s2));
 }
