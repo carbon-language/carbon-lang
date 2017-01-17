@@ -439,11 +439,6 @@ def : Pat <
 >;
 
 def : Pat <
-  (f16 (fpround f64:$src)),
-  (V_CVT_F16_F32_e32 (V_CVT_F32_F64_e32 $src))
->;
-
-def : Pat <
   (i32 (fp_to_sint f16:$src)),
   (V_CVT_I32_F32_e32 (V_CVT_F32_F16_e32 $src))
 >;
