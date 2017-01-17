@@ -650,9 +650,6 @@ void ClangMoveTool::run(const ast_matchers::MatchFinder::MatchResult &Result) {
         MovedDecls.push_back(FWD);
     }
   } else if (const auto *ND =
-                 Result.Nodes.getNodeAs<clang::NamedDecl>("static_decls")) {
-    MovedDecls.push_back(ND);
-  } else if (const auto *ND =
                  Result.Nodes.getNodeAs<clang::NamedDecl>("helper_decls")) {
     MovedDecls.push_back(ND);
     HelperDeclarations.push_back(ND);
