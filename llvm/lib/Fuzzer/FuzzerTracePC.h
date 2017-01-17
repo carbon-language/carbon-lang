@@ -52,7 +52,7 @@ class TracePC {
   void HandleInit(uint32_t *start, uint32_t *stop);
   void HandleCallerCallee(uintptr_t Caller, uintptr_t Callee);
   void HandleValueProfile(size_t Value) { ValueProfileMap.AddValue(Value); }
-  template <class T> void HandleCmp(void *PC, T Arg1, T Arg2);
+  template <class T> void HandleCmp(uintptr_t PC, T Arg1, T Arg2);
   size_t GetTotalPCCoverage();
   void SetUseCounters(bool UC) { UseCounters = UC; }
   void SetUseValueProfile(bool VP) { UseValueProfile = VP; }
