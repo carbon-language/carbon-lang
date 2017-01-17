@@ -217,6 +217,9 @@ template <class ELFT> void Writer<ELFT>::run() {
     fixAbsoluteSymbols();
   }
 
+  // It does not make sense try to open the file if we have error already.
+  if (ErrorCount)
+    return;
   // Write the result down to a file.
   openFile();
   if (ErrorCount)
