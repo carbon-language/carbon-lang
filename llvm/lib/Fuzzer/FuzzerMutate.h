@@ -14,6 +14,7 @@
 
 #include "FuzzerDefs.h"
 #include "FuzzerDictionary.h"
+#include "FuzzerOptions.h"
 #include "FuzzerRandom.h"
 
 namespace fuzzer {
@@ -115,7 +116,7 @@ private:
                                              const uint8_t *Data, size_t Size);
 
   Random &Rand;
-  const FuzzingOptions &Options;
+  const FuzzingOptions Options;
 
   // Dictionary provided by the user via -dict=DICT_FILE.
   Dictionary ManualDictionary;
