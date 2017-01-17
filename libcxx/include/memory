@@ -3750,7 +3750,8 @@ public:
     explicit __shared_count(long __refs = 0) _NOEXCEPT
         : __shared_owners_(__refs) {}
 
-#ifdef _LIBCPP_BUILDING_MEMORY
+#if defined(_LIBCPP_BUILDING_MEMORY) && \
+    defined(_LIBCPP_DEPRECATED_ABI_LEGACY_LIBRARY_DEFINITIONS_FOR_INLINE_FUNCTIONS)
     void __add_shared() _NOEXCEPT;
     bool __release_shared() _NOEXCEPT;
 #else
@@ -3787,7 +3788,8 @@ protected:
     virtual ~__shared_weak_count();
 
 public:
-#ifdef _LIBCPP_BUILDING_MEMORY
+#if defined(_LIBCPP_BUILDING_MEMORY) && \
+    defined(_LIBCPP_DEPRECATED_ABI_LEGACY_LIBRARY_DEFINITIONS_FOR_INLINE_FUNCTIONS)
     void __add_shared() _NOEXCEPT;
     void __add_weak() _NOEXCEPT;
     void __release_shared() _NOEXCEPT;

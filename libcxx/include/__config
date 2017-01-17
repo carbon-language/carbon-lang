@@ -59,8 +59,9 @@
 #define _LIBCPP_ABI_POINTER_SAFETY_ENUM_TYPE
 #elif _LIBCPP_ABI_VERSION == 1
 #if !defined(_WIN32)
-// Enable compiling a definition of error_category() into the libc++ dylib.
-#define _LIBCPP_DEPRECATED_ABI_EXTERNAL_ERROR_CATEGORY_CONSTRUCTOR
+// Enable compiling copies of now inline methods into the dylib to support
+// applications compiled against older libraries.
+#define _LIBCPP_DEPRECATED_ABI_LEGACY_LIBRARY_DEFINITIONS_FOR_INLINE_FUNCTIONS
 #endif
 // Feature macros for disabling pre ABI v1 features. All of these options
 // are deprecated.

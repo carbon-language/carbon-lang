@@ -35,6 +35,7 @@ __shared_weak_count::~__shared_weak_count()
 {
 }
 
+#if defined(_LIBCPP_DEPRECATED_ABI_LEGACY_LIBRARY_DEFINITIONS_FOR_INLINE_FUNCTIONS)
 void
 __shared_count::__add_shared() _NOEXCEPT
 {
@@ -70,6 +71,8 @@ __shared_weak_count::__release_shared() _NOEXCEPT
     if (__shared_count::__release_shared())
         __release_weak();
 }
+
+#endif // _LIBCPP_DEPRECATED_ABI_LEGACY_LIBRARY_DEFINITIONS_FOR_INLINE_FUNCTIONS
 
 void
 __shared_weak_count::__release_weak() _NOEXCEPT
