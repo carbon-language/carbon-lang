@@ -76,6 +76,7 @@
 #include <clc/math/log10.h>
 #include <clc/math/log1p.h>
 #include <clc/math/log2.h>
+#include <clc/math/logb.h>
 #include <clc/math/mad.h>
 #include <clc/math/modf.h>
 #include <clc/math/nextafter.h>

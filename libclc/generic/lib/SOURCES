@@ -104,6 +104,7 @@ math/log.cl
 math/log10.cl
 math/log1p.cl
 math/log2.cl
+math/logb.cl
 math/mad.cl
 math/modf.cl
 math/native_log.cl
