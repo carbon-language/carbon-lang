@@ -85,31 +85,20 @@ class Configuration(object):
                 val = default
         return val
 
-    def get_lit_bool(self, name, default=None, env_var=None):
-        def check_value(value, var_name):
-            if value is None:
-                return default
-            if isinstance(value, bool):
-                return value
-            if not isinstance(value, str):
-                raise TypeError('expected bool or string')
-            if value.lower() in ('1', 'true'):
-                return True
-            if value.lower() in ('', '0', 'false'):
-                return False
-            self.lit_config.fatal(
-                "parameter '{}' should be true or false".format(var_name))
-
-        conf_val = self.get_lit_conf(name)
-        if env_var is not None and env_var in os.environ and \
-                os.environ[env_var] is not None:
-            val = os.environ[env_var]
-            if conf_val is not None:
-                self.lit_config.warning(
-                    'Environment variable %s=%s is overriding explicit '
-                    '--param=%s=%s' % (env_var, val, name, conf_val))
-            return check_value(val, env_var)
-        return check_value(conf_val, name)
+    def get_lit_bool(self, name, default=None):
+        conf = self.get_lit_conf(name)
+        if conf is None:
+            return default
+        if isinstance(conf, bool):
+            return conf
+        if not isinstance(conf, str):
+            raise TypeError('expected bool or string')
+        if conf.lower() in ('1', 'true'):
+            return True
+        if conf.lower() in ('', '0', 'false'):
+            return False
+        self.lit_config.fatal(
+            "parameter '{}' should be true or false".format(name))
 
     def make_static_lib_name(self, name):
         """Return the full filename for the specified library name"""
@@ -856,9 +845,10 @@ class Configuration(object):
         if platform.system() != 'Darwin':
             modules_flags += ['-Xclang', '-fmodules-local-submodule-visibility']
         supports_modules = self.cxx.hasCompileFlag(modules_flags)
+        enable_modules_default = supports_modules and \
+            os.environ.get('LIBCXX_USE_MODULES') is not None
         enable_modules = self.get_lit_bool('enable_modules',
-                                           default=supports_modules,
-                                           env_var='LIBCXX_ENABLE_MODULES')
+                                           enable_modules_default)
         if enable_modules and not supports_modules:
             self.lit_config.fatal(
                 '-fmodules is enabled but not supported by the compiler')
