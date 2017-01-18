@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_BASIC_OPENMPKINDS_H
 #define LLVM_CLANG_BASIC_OPENMPKINDS_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
@@ -234,6 +235,10 @@ bool isOpenMPTaskingDirective(OpenMPDirectiveKind Kind);
 /// directives that need loop bound sharing across loops outlined in nested
 /// functions
 bool isOpenMPLoopBoundSharingDirective(OpenMPDirectiveKind Kind);
+
+/// Return the captured regions of an OpenMP directive.
+llvm::ArrayRef<OpenMPDirectiveKind>
+getOpenMPCaptureRegions(OpenMPDirectiveKind DKind);
 }
 
 #endif

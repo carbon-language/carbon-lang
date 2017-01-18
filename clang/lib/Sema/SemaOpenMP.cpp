@@ -1608,6 +1608,26 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
                              Params);
     break;
   }
+  case OMPD_target_parallel: {
+    Sema::CapturedParamNameType ParamsTarget[] = {
+        std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    // Start a captured region for 'target' with no implicit parameters.
+    ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
+                             ParamsTarget);
+    QualType KmpInt32Ty = Context.getIntTypeForBitwidth(32, 1);
+    QualType KmpInt32PtrTy =
+        Context.getPointerType(KmpInt32Ty).withConst().withRestrict();
+    Sema::CapturedParamNameType ParamsParallel[] = {
+        std::make_pair(".global_tid.", KmpInt32PtrTy),
+        std::make_pair(".bound_tid.", KmpInt32PtrTy),
+        std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    // Start a captured region for 'parallel'.
+    ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
+                             ParamsParallel);
+    break;
+  }
   case OMPD_simd:
   case OMPD_for:
   case OMPD_for_simd:
@@ -1622,7 +1642,6 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
   case OMPD_atomic:
   case OMPD_target_data:
   case OMPD_target:
-  case OMPD_target_parallel:
   case OMPD_target_parallel_for:
   case OMPD_target_parallel_for_simd:
   case OMPD_target_simd: {
@@ -1737,6 +1756,10 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
   }
 }
 
+int Sema::getOpenMPCaptureLevels(OpenMPDirectiveKind DKind) {
+  return getOpenMPCaptureRegions(DKind).size();
+}
+
 static OMPCapturedExprDecl *buildCaptureDecl(Sema &S, IdentifierInfo *Id,
                                              Expr *CaptureExpr, bool WithInit,
                                              bool AsExpression) {
@@ -1796,10 +1819,42 @@ static ExprResult buildCapture(Sema &S, Expr *CaptureExpr, DeclRefExpr *&Ref) {
   return CaptureExpr->isGLValue() ? Res : S.DefaultLvalueConversion(Res.get());
 }
 
+namespace {
+// OpenMP directives parsed in this section are represented as a
+// CapturedStatement with an associated statement.  If a syntax error
+// is detected during the parsing of the associated statement, the
+// compiler must abort processing and close the CapturedStatement.
+//
+// Combined directives such as 'target parallel' have more than one
+// nested CapturedStatements.  This RAII ensures that we unwind out
+// of all the nested CapturedStatements when an error is found.
+class CaptureRegionUnwinderRAII {
+private:
+  Sema &S;
+  bool &ErrorFound;
+  OpenMPDirectiveKind DKind;
+
+public:
+  CaptureRegionUnwinderRAII(Sema &S, bool &ErrorFound,
+                            OpenMPDirectiveKind DKind)
+      : S(S), ErrorFound(ErrorFound), DKind(DKind) {}
+  ~CaptureRegionUnwinderRAII() {
+    if (ErrorFound) {
+      int ThisCaptureLevel = S.getOpenMPCaptureLevels(DKind);
+      while (--ThisCaptureLevel >= 0)
+        S.ActOnCapturedRegionError();
+    }
+  }
+};
+} // namespace
+
 StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
                                       ArrayRef<OMPClause *> Clauses) {
+  bool ErrorFound = false;
+  CaptureRegionUnwinderRAII CaptureRegionUnwinder(
+      *this, ErrorFound, DSAStack->getCurrentDirective());
   if (!S.isUsable()) {
-    ActOnCapturedRegionError();
+    ErrorFound = true;
     return StmtError();
   }
 
@@ -1843,7 +1898,6 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
     else if (Clause->getClauseKind() == OMPC_linear)
       LCs.push_back(cast<OMPLinearClause>(Clause));
   }
-  bool ErrorFound = false;
   // OpenMP, 2.7.1 Loop Construct, Restrictions
   // The nonmonotonic modifier cannot be specified if an ordered clause is
   // specified.
@@ -1874,10 +1928,14 @@ StmtResult Sema::ActOnOpenMPRegionEnd(StmtResult S,
     ErrorFound = true;
   }
   if (ErrorFound) {
-    ActOnCapturedRegionError();
     return StmtError();
   }
-  return ActOnCapturedRegionEnd(S.get());
+  StmtResult SR = S;
+  int ThisCaptureLevel =
+      getOpenMPCaptureLevels(DSAStack->getCurrentDirective());
+  while (--ThisCaptureLevel >= 0)
+    SR = ActOnCapturedRegionEnd(SR.get());
+  return SR;
 }
 
 static bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,

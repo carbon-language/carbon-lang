@@ -863,3 +863,101 @@ bool clang::isOpenMPLoopBoundSharingDirective(OpenMPDirectiveKind Kind) {
          Kind == OMPD_target_teams_distribute_parallel_for_simd ||
          Kind == OMPD_target_teams_distribute_simd;
 }
+
+ArrayRef<OpenMPDirectiveKind>
+clang::getOpenMPCaptureRegions(OpenMPDirectiveKind DKind) {
+  assert(DKind <= OMPD_unknown);
+  switch (DKind) {
+  case OMPD_parallel:
+  case OMPD_parallel_for:
+  case OMPD_parallel_for_simd:
+  case OMPD_parallel_sections:
+    return {OMPD_parallel};
+  case OMPD_teams:
+    return {OMPD_teams};
+  case OMPD_target_teams:
+    return {OMPD_target_teams};
+  case OMPD_simd:
+    return {OMPD_simd};
+  case OMPD_for:
+    return {OMPD_for};
+  case OMPD_for_simd:
+    return {OMPD_for_simd};
+  case OMPD_sections:
+    return {OMPD_sections};
+  case OMPD_section:
+    return {OMPD_section};
+  case OMPD_single:
+    return {OMPD_single};
+  case OMPD_master:
+    return {OMPD_master};
+  case OMPD_critical:
+    return {OMPD_critical};
+  case OMPD_taskgroup:
+    return {OMPD_taskgroup};
+  case OMPD_distribute:
+    return {OMPD_distribute};
+  case OMPD_ordered:
+    return {OMPD_ordered};
+  case OMPD_atomic:
+    return {OMPD_atomic};
+  case OMPD_target_data:
+    return {OMPD_target_data};
+  case OMPD_target:
+    return {OMPD_target};
+  case OMPD_target_parallel_for:
+    return {OMPD_target_parallel_for};
+  case OMPD_target_parallel_for_simd:
+    return {OMPD_target_parallel_for_simd};
+  case OMPD_target_simd:
+    return {OMPD_target_simd};
+  case OMPD_task:
+    return {OMPD_task};
+  case OMPD_taskloop:
+    return {OMPD_taskloop};
+  case OMPD_taskloop_simd:
+    return {OMPD_taskloop_simd};
+  case OMPD_distribute_parallel_for_simd:
+    return {OMPD_distribute_parallel_for_simd};
+  case OMPD_distribute_simd:
+    return {OMPD_distribute_simd};
+  case OMPD_distribute_parallel_for:
+    return {OMPD_distribute_parallel_for};
+  case OMPD_teams_distribute:
+    return {OMPD_teams_distribute};
+  case OMPD_teams_distribute_simd:
+    return {OMPD_teams_distribute_simd};
+  case OMPD_teams_distribute_parallel_for_simd:
+    return {OMPD_teams_distribute_parallel_for_simd};
+  case OMPD_teams_distribute_parallel_for:
+    return {OMPD_teams_distribute_parallel_for};
+  case OMPD_target_teams_distribute:
+    return {OMPD_target_teams_distribute};
+  case OMPD_target_teams_distribute_parallel_for:
+    return {OMPD_target_teams_distribute_parallel_for};
+  case OMPD_target_teams_distribute_parallel_for_simd:
+    return {OMPD_target_teams_distribute_parallel_for_simd};
+  case OMPD_target_teams_distribute_simd:
+    return {OMPD_target_teams_distribute_simd};
+  case OMPD_target_parallel:
+    return {OMPD_target, OMPD_parallel};
+  case OMPD_threadprivate:
+  case OMPD_taskyield:
+  case OMPD_barrier:
+  case OMPD_taskwait:
+  case OMPD_cancellation_point:
+  case OMPD_cancel:
+  case OMPD_flush:
+  case OMPD_target_enter_data:
+  case OMPD_target_exit_data:
+  case OMPD_declare_reduction:
+  case OMPD_declare_simd:
+  case OMPD_declare_target:
+  case OMPD_end_declare_target:
+  case OMPD_target_update:
+    llvm_unreachable("OpenMP Directive is not allowed");
+  case OMPD_unknown:
+    llvm_unreachable("Unknown OpenMP directive");
+  }
+  return {OMPD_unknown};
+}
