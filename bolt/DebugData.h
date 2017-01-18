@@ -22,6 +22,8 @@
 #include <utility>
 #include <vector>
 
+#include "BinaryBasicBlock.h"
+
 namespace llvm {
 
 class DWARFCompileUnit;
@@ -107,6 +109,12 @@ private:
     uint16_t RangeEndOffset;
     /// Binary data associated with this range.
     const BinaryData *Data;
+
+    void print(raw_ostream &OS) const {
+      OS << "  BasicBlock : " << BasicBlock->getName() << '\n';
+      OS << "  StartOffset: " << RangeBeginOffset << '\n';
+      OS << "  EndOffset:   " << RangeEndOffset << '\n';
+    }
   };
 
   std::vector<BBAddressRange> AddressRanges;

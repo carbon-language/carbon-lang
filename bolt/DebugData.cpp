@@ -18,6 +18,9 @@
 #include <algorithm>
 #include <cassert>
 
+#undef  DEBUG_TYPE
+#define DEBUG_TYPE "bolt-debug-info"
+
 namespace opts {
 extern llvm::cl::opt<unsigned> Verbosity;
 }
@@ -31,11 +34,18 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
                                              uint64_t BeginAddress,
                                              uint64_t EndAddress,
                                              const BinaryData *Data) {
-  auto BBRange = Function.getBasicBlockRangeFromOffsetToEnd(
-    BeginAddress - Function.getAddress());
+  if (Function.getState() != BinaryFunction::State::CFG)
+    return;
+
+  const auto BBRange = Function.getBasicBlockRangeFromOffsetToEnd(
+                                          BeginAddress - Function.getAddress());
+
+  DEBUG(dbgs() << "adding range [0x" << Twine::utohexstr(BeginAddress) << ", 0x"
+               << Twine::utohexstr(EndAddress) << ") to function " << Function
+               << '\n');
 
   if (BBRange.begin() == BBRange.end()) {
-    if (opts::Verbosity >= 2) {
+    if (opts::Verbosity >= 1) {
       errs() << "BOLT-WARNING: no basic blocks in function "
              << Function << " intersect with debug range [0x"
              << Twine::utohexstr(BeginAddress) << ", 0x"
@@ -45,19 +55,21 @@ void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
   }
 
   for (auto &BB : BBRange) {
-    uint64_t BBAddress = Function.getBasicBlockOriginalAddress(&BB);
-    // Note the special handling for [a, a) address range.
-    if (BBAddress >= EndAddress && BeginAddress != EndAddress)
+    const auto BBAddress = Function.getBasicBlockOriginalAddress(&BB);
+
+    // Some ranges could be of the form [BBAddress, BBAddress).
+    if (BBAddress > EndAddress ||
+        (BBAddress == EndAddress && EndAddress != BeginAddress))
       break;
 
-    uint64_t InternalAddressRangeBegin = std::max(BBAddress, BeginAddress);
-    assert(BB.getFunction() == &Function &&
-           "Mismatching functions.\n");
-    uint64_t InternalAddressRangeEnd =
+    const auto InternalAddressRangeBegin = std::max(BBAddress, BeginAddress);
+    assert(BB.getFunction() == &Function && "mismatching functions\n");
+    const auto InternalAddressRangeEnd =
       std::min(BBAddress + Function.getBasicBlockOriginalSize(&BB),
                EndAddress);
 
-    assert(BB.isValid() && "Attempting to record debug info for a deleted BB.");
+    assert(BB.isValid() && "attempting to record debug info for a deleted BB.");
+
     AddressRanges.emplace_back(
         BBAddressRange{
             &BB,
