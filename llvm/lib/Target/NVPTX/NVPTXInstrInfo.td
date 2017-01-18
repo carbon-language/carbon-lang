@@ -2822,15 +2822,19 @@ let hasSideEffects = 0 in {
 // 32-bit has a direct PTX instruction
 def : Pat<(ctpop Int32Regs:$a), (POPCr32 Int32Regs:$a)>;
 
-// For 64-bit, the result in PTX is actually 32-bit so we zero-extend
-// to 64-bit to match the LLVM semantics
+// For 64-bit, the result in PTX is actually 32-bit so we zero-extend to 64-bit
+// to match the LLVM semantics.  Just as with ctlz.i64, we provide a second
+// pattern that avoids the type conversion if we're truncating the result to
+// i32 anyway.
 def : Pat<(ctpop Int64Regs:$a), (CVT_u64_u32 (POPCr64 Int64Regs:$a), CvtNONE)>;
+def : Pat<(i32 (trunc (ctpop Int64Regs:$a))), (POPCr64 Int64Regs:$a)>;
 
-// For 16-bit, we zero-extend to 32-bit, then trunc the result back
-// to 16-bits (ctpop of a 16-bit value is guaranteed to require less
-// than 16 bits to store)
+// For 16-bit, we zero-extend to 32-bit, then trunc the result back to 16-bits.
+// If we know that we're storing into an i32, we can avoid the final trunc.
 def : Pat<(ctpop Int16Regs:$a),
           (CVT_u16_u32 (POPCr32 (CVT_u32_u16 Int16Regs:$a, CvtNONE)), CvtNONE)>;
+def : Pat<(i32 (zext (ctpop Int16Regs:$a))),
+          (POPCr32 (CVT_u32_u16 Int16Regs:$a, CvtNONE))>;
 
 // fpround f32 -> f16
 def : Pat<(f16 (fpround Float32Regs:$a)),
