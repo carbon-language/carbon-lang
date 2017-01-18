@@ -4238,8 +4238,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     if (JA.getType() == types::TY_LLVM_BC)
       CmdArgs.push_back("-emit-llvm-uselists");
 
-    if (D.isUsingLTO())
+    if (D.isUsingLTO()) {
       Args.AddLastArg(CmdArgs, options::OPT_flto, options::OPT_flto_EQ);
+
+      // The Darwin linker currently uses the legacy LTO API, which does not
+      // support LTO unit features (CFI, whole program vtable opt) under
+      // ThinLTO.
+      if (!getToolChain().getTriple().isOSDarwin() ||
+          D.getLTOMode() == LTOK_Full)
+        CmdArgs.push_back("-flto-unit");
+    }
   }
 
   if (const Arg *A = Args.getLastArg(options::OPT_fthinlto_index_EQ)) {

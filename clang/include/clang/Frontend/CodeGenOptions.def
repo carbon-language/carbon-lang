@@ -89,6 +89,8 @@ CODEGENOPT(PrepareForLTO     , 1, 0) ///< Set when -flto is enabled on the
                                      ///< compile step.
 CODEGENOPT(EmitSummaryIndex, 1, 0)   ///< Set when -flto=thin is enabled on the
                                      ///< compile step.
+CODEGENOPT(LTOUnit, 1, 0) ///< Emit IR to support LTO unit features (CFI, whole
+                          ///< program vtable opt).
 CODEGENOPT(IncrementalLinkerCompatible, 1, 0) ///< Emit an object file which can
                                               ///< be used with an incremental
                                               ///< linker.
