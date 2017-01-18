@@ -1138,6 +1138,16 @@ defm SHL : SHIFT<"shl.b", shl>;
 defm SRA : SHIFT<"shr.s", sra>;
 defm SRL : SHIFT<"shr.u", srl>;
 
+// Bit-reverse
+def BREV32 :
+  NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$a),
+             "brev.b32 \t$dst, $a;",
+             [(set Int32Regs:$dst, (bitreverse Int32Regs:$a))]>;
+def BREV64 :
+  NVPTXInst<(outs Int64Regs:$dst), (ins Int64Regs:$a),
+             "brev.b64 \t$dst, $a;",
+             [(set Int64Regs:$dst, (bitreverse Int64Regs:$a))]>;
+
 //
 // Rotate: Use ptx shf instruction if available.
 //
