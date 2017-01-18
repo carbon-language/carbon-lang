@@ -1344,5 +1344,4 @@ include "llvm/Target/TargetSelectionDAG.td"
 //===----------------------------------------------------------------------===//
 // Pull in the common support for Global ISel generation.
 //
-include "llvm/Target/GlobalISel/RegisterBank.td"
 include "llvm/Target/TargetGlobalISel.td"
