@@ -233,7 +233,6 @@ bool RecurrenceDescriptor::AddReductionVar(PHINode *Phi, RecurrenceKind Kind,
   //  - By instructions outside of the loop (safe).
   //      * One value may have several outside users, but all outside
   //        uses must be of the same value.
-  //  - By further instructions outside of the loop (not safe).
   //  - By an instruction that is not part of the reduction (not safe).
   //    This is either:
   //      * An instruction type other than PHI or the reduction operation.
