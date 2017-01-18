@@ -274,7 +274,7 @@ class Configuration(object):
         self.cxx_stdlib_under_test = self.get_lit_conf(
             'cxx_stdlib_under_test', 'libc++')
         if self.cxx_stdlib_under_test not in \
-                ['libc++', 'libstdc++', 'cxx_default']:
+                ['libc++', 'libstdc++', 'msvc', 'cxx_default']:
             self.lit_config.fatal(
                 'unsupported value for "cxx_stdlib_under_test": %s'
                 % self.cxx_stdlib_under_test)
@@ -609,6 +609,9 @@ class Configuration(object):
                     self.config.available_features.add('c++experimental')
                     self.cxx.link_flags += ['-lstdc++fs']
                 self.cxx.link_flags += ['-lm', '-pthread']
+            elif self.cxx_stdlib_under_test == 'msvc':
+                # FIXME: Correctly setup debug/release flags here.
+                pass
             elif self.cxx_stdlib_under_test == 'cxx_default':
                 self.cxx.link_flags += ['-pthread']
             else:
