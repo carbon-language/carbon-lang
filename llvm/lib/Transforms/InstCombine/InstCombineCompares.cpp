@@ -1939,8 +1939,6 @@ Instruction *InstCombiner::foldICmpShlConstant(ICmpInst &Cmp,
 
   if (Cmp.isEquality()) {
     Constant *LShrC = ConstantInt::get(ShType, C->lshr(*ShiftAmt));
-    if (Shl->hasNoUnsignedWrap())
-      return new ICmpInst(Pred, X, LShrC);
 
     // If the shift is NSW and we compare to 0, then it is just shifting out
     // sign bits, no need for an AND either.
