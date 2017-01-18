@@ -122,4 +122,71 @@ SubtargetFeatures ELFObjectFileBase::getFeatures() const {
   }
 }
 
+// FIXME Encode from a tablegen description or target parser.
+void ELFObjectFileBase::setARMSubArch(Triple &TheTriple) const {
+  if (TheTriple.getSubArch() != Triple::NoSubArch)
+    return;
+
+  ARMAttributeParser Attributes;
+  std::error_code EC = getBuildAttributes(Attributes);
+  if (EC)
+    return;
+
+  std::string Triple;
+  // Default to ARM, but use the triple if it's been set.
+  if (TheTriple.getArch() == Triple::thumb ||
+      TheTriple.getArch() == Triple::thumbeb)
+    Triple = "thumb";
+  else
+    Triple = "arm";
+
+  if (Attributes.hasAttribute(ARMBuildAttrs::CPU_arch)) {
+    switch(Attributes.getAttributeValue(ARMBuildAttrs::CPU_arch)) {
+    case ARMBuildAttrs::v4:
+      Triple += "v4";
+      break;
+    case ARMBuildAttrs::v4T:
+      Triple += "v4t";
+      break;
+    case ARMBuildAttrs::v5T:
+      Triple += "v5t";
+      break;
+    case ARMBuildAttrs::v5TE:
+      Triple += "v5te";
+      break;
+    case ARMBuildAttrs::v5TEJ:
+      Triple += "v5tej";
+      break;
+    case ARMBuildAttrs::v6:
+      Triple += "v6";
+      break;
+    case ARMBuildAttrs::v6KZ:
+      Triple += "v6kz";
+      break;
+    case ARMBuildAttrs::v6T2:
+      Triple += "v6t2";
+      break;
+    case ARMBuildAttrs::v6K:
+      Triple += "v6k";
+      break;
+    case ARMBuildAttrs::v7:
+      Triple += "v7";
+      break;
+    case ARMBuildAttrs::v6_M:
+      Triple += "v6m";
+      break;
+    case ARMBuildAttrs::v6S_M:
+      Triple += "v6sm";
+      break;
+    case ARMBuildAttrs::v7E_M:
+      Triple += "v7em";
+      break;
+    }
+  }
+  if (!isLittleEndian())
+    Triple += "eb";
+
+  TheTriple.setArchName(Triple);
+}
+
 } // end namespace llvm
