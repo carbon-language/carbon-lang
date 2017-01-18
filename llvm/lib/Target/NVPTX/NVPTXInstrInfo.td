@@ -1954,8 +1954,7 @@ def RETURNNode :
 let mayLoad = 1 in {
   class LoadParamMemInst<NVPTXRegClass regclass, string opstr> :
         NVPTXInst<(outs regclass:$dst), (ins i32imm:$b),
-                  !strconcat(!strconcat("ld.param", opstr),
-                             "\t$dst, [retval0+$b];"),
+                  !strconcat("ld.param", opstr, " \t$dst, [retval0+$b];"),
                   []>;
 
   class LoadParamV2MemInst<NVPTXRegClass regclass, string opstr> :

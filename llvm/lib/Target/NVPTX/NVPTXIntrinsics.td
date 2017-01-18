@@ -38,28 +38,28 @@ def INT_BARRIER0 : NVPTXInst<(outs), (ins),
       [(int_nvvm_barrier0)]>;
 def INT_BARRIER0_POPC : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$pred),
   !strconcat("{{ \n\t",
-      !strconcat(".reg .pred \t%p1; \n\t",
-      !strconcat("setp.ne.u32 \t%p1, $pred, 0; \n\t",
-      !strconcat("bar.red.popc.u32 \t$dst, 0, %p1; \n\t",
-        !strconcat("}}", ""))))),
+             ".reg .pred \t%p1; \n\t",
+             "setp.ne.u32 \t%p1, $pred, 0; \n\t",
+             "bar.red.popc.u32 \t$dst, 0, %p1; \n\t",
+             "}}"),
       [(set Int32Regs:$dst, (int_nvvm_barrier0_popc Int32Regs:$pred))]>;
 def INT_BARRIER0_AND : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$pred),
   !strconcat("{{ \n\t",
-      !strconcat(".reg .pred \t%p1; \n\t",
-      !strconcat(".reg .pred \t%p2; \n\t",
-      !strconcat("setp.ne.u32 \t%p1, $pred, 0; \n\t",
-      !strconcat("bar.red.and.pred \t%p2, 0, %p1; \n\t",
-      !strconcat("selp.u32 \t$dst, 1, 0, %p2; \n\t",
-        !strconcat("}}", ""))))))),
+             ".reg .pred \t%p1; \n\t",
+             ".reg .pred \t%p2; \n\t",
+             "setp.ne.u32 \t%p1, $pred, 0; \n\t",
+             "bar.red.and.pred \t%p2, 0, %p1; \n\t",
+             "selp.u32 \t$dst, 1, 0, %p2; \n\t",
+             "}}"),
       [(set Int32Regs:$dst, (int_nvvm_barrier0_and Int32Regs:$pred))]>;
 def INT_BARRIER0_OR : NVPTXInst<(outs Int32Regs:$dst), (ins Int32Regs:$pred),
   !strconcat("{{ \n\t",
-      !strconcat(".reg .pred \t%p1; \n\t",
-      !strconcat(".reg .pred \t%p2; \n\t",
-      !strconcat("setp.ne.u32 \t%p1, $pred, 0; \n\t",
-      !strconcat("bar.red.or.pred \t%p2, 0, %p1; \n\t",
-      !strconcat("selp.u32 \t$dst, 1, 0, %p2; \n\t",
-        !strconcat("}}", ""))))))),
+             ".reg .pred \t%p1; \n\t",
+             ".reg .pred \t%p2; \n\t",
+             "setp.ne.u32 \t%p1, $pred, 0; \n\t",
+             "bar.red.or.pred \t%p2, 0, %p1; \n\t",
+             "selp.u32 \t$dst, 1, 0, %p2; \n\t",
+             "}}"),
       [(set Int32Regs:$dst, (int_nvvm_barrier0_or Int32Regs:$pred))]>;
 
 def INT_BAR_SYNC : NVPTXInst<(outs), (ins i32imm:$i), "bar.sync\t$i;",
@@ -703,16 +703,18 @@ def : Pat<(int_nvvm_ui2f_rp Int32Regs:$a),
 def INT_NVVM_LOHI_I2D : F_MATH_2<"mov.b64 \t$dst, {{$src0, $src1}};",
   Float64Regs, Int32Regs, Int32Regs, int_nvvm_lohi_i2d>;
 
-def INT_NVVM_D2I_LO : F_MATH_1<!strconcat("{{\n\t",
-                       !strconcat(".reg .b32 %temp; \n\t",
-             !strconcat("mov.b64 \t{$dst, %temp}, $src0;\n\t",
-               "}}"))),
-             Int32Regs, Float64Regs, int_nvvm_d2i_lo>;
-def INT_NVVM_D2I_HI : F_MATH_1<!strconcat("{{\n\t",
-                       !strconcat(".reg .b32 %temp; \n\t",
-                         !strconcat("mov.b64 \t{%temp, $dst}, $src0;\n\t",
-                           "}}"))),
-             Int32Regs, Float64Regs, int_nvvm_d2i_hi>;
+def INT_NVVM_D2I_LO : F_MATH_1<
+  !strconcat("{{\n\t",
+             ".reg .b32 %temp; \n\t",
+             "mov.b64 \t{$dst, %temp}, $src0;\n\t",
+             "}}"),
+  Int32Regs, Float64Regs, int_nvvm_d2i_lo>;
+def INT_NVVM_D2I_HI : F_MATH_1<
+  !strconcat("{{\n\t",
+             ".reg .b32 %temp; \n\t",
+             "mov.b64 \t{%temp, $dst}, $src0;\n\t",
+             "}}"),
+  Int32Regs, Float64Regs, int_nvvm_d2i_hi>;
 
 def : Pat<(int_nvvm_f2ll_rn_ftz Float32Regs:$a),
           (CVT_s64_f32 Float32Regs:$a, CvtRNI_FTZ)>;
@@ -846,20 +848,12 @@ multiclass F_ATOMIC_2_imp<NVPTXRegClass ptrclass, NVPTXRegClass regclass,
   string SpaceStr, string TypeStr, string OpcStr, PatFrag IntOp,
   Operand IMMType, SDNode IMM, Predicate Pred> {
   def reg : NVPTXInst<(outs regclass:$dst), (ins ptrclass:$addr, regclass:$b),
-               !strconcat("atom",
-         !strconcat(SpaceStr,
-         !strconcat(OpcStr,
-         !strconcat(TypeStr,
-         !strconcat(" \t$dst, [$addr], $b;", ""))))),
-         [(set regclass:$dst, (IntOp ptrclass:$addr, regclass:$b))]>,
+    !strconcat("atom", SpaceStr, OpcStr, TypeStr, " \t$dst, [$addr], $b;"),
+    [(set regclass:$dst, (IntOp ptrclass:$addr, regclass:$b))]>,
   Requires<[Pred]>;
   def imm : NVPTXInst<(outs regclass:$dst), (ins ptrclass:$addr, IMMType:$b),
-               !strconcat("atom",
-         !strconcat(SpaceStr,
-         !strconcat(OpcStr,
-         !strconcat(TypeStr,
-         !strconcat(" \t$dst, [$addr], $b;", ""))))),
-         [(set regclass:$dst, (IntOp ptrclass:$addr, IMM:$b))]>,
+    !strconcat("atom", SpaceStr, OpcStr, TypeStr, " \t$dst, [$addr], $b;", ""),
+    [(set regclass:$dst, (IntOp ptrclass:$addr, IMM:$b))]>,
   Requires<[Pred]>;
 }
 multiclass F_ATOMIC_2<NVPTXRegClass regclass, string SpaceStr, string TypeStr,
@@ -875,21 +869,13 @@ multiclass F_ATOMIC_2_NEG_imp<NVPTXRegClass ptrclass, NVPTXRegClass regclass,
   string SpaceStr, string TypeStr, string OpcStr, PatFrag IntOp,
   Operand IMMType, Predicate Pred> {
   def reg : NVPTXInst<(outs regclass:$dst), (ins ptrclass:$addr, regclass:$b),
-    !strconcat("{{ \n\t",
-         !strconcat(".reg \t.s",
-         !strconcat(TypeStr,
-         !strconcat(" temp; \n\t",
-         !strconcat("neg.s",
-         !strconcat(TypeStr,
-         !strconcat(" \ttemp, $b; \n\t",
-               !strconcat("atom",
-         !strconcat(SpaceStr,
-         !strconcat(OpcStr,
-         !strconcat(".u",
-         !strconcat(TypeStr,
-         !strconcat(" \t$dst, [$addr], temp; \n\t",
-           !strconcat("}}", "")))))))))))))),
-         [(set regclass:$dst, (IntOp ptrclass:$addr, regclass:$b))]>,
+    !strconcat(
+      "{{ \n\t",
+      ".reg \t.s", TypeStr, " temp; \n\t",
+      "neg.s", TypeStr, " \ttemp, $b; \n\t",
+      "atom", SpaceStr, OpcStr, ".u", TypeStr, " \t$dst, [$addr], temp; \n\t",
+      "}}"),
+    [(set regclass:$dst, (IntOp ptrclass:$addr, regclass:$b))]>,
   Requires<[Pred]>;
 }
 multiclass F_ATOMIC_2_NEG<NVPTXRegClass regclass, string SpaceStr,
@@ -907,40 +893,26 @@ multiclass F_ATOMIC_3_imp<NVPTXRegClass ptrclass, NVPTXRegClass regclass,
   Operand IMMType, Predicate Pred> {
   def reg : NVPTXInst<(outs regclass:$dst),
     (ins ptrclass:$addr, regclass:$b, regclass:$c),
-               !strconcat("atom",
-         !strconcat(SpaceStr,
-         !strconcat(OpcStr,
-         !strconcat(TypeStr,
-         !strconcat(" \t$dst, [$addr], $b, $c;", ""))))),
-         [(set regclass:$dst,
-           (IntOp ptrclass:$addr, regclass:$b, regclass:$c))]>,
-         Requires<[Pred]>;
+    !strconcat("atom", SpaceStr, OpcStr, TypeStr, " \t$dst, [$addr], $b, $c;"),
+    [(set regclass:$dst, (IntOp ptrclass:$addr, regclass:$b, regclass:$c))]>,
+  Requires<[Pred]>;
+
   def imm1 : NVPTXInst<(outs regclass:$dst),
     (ins ptrclass:$addr, IMMType:$b, regclass:$c),
-               !strconcat("atom",
-         !strconcat(SpaceStr,
-         !strconcat(OpcStr,
-         !strconcat(TypeStr,
-         !strconcat(" \t$dst, [$addr], $b, $c;", ""))))),
-         [(set regclass:$dst, (IntOp ptrclass:$addr, imm:$b, regclass:$c))]>,
+    !strconcat("atom", SpaceStr, OpcStr, TypeStr, " \t$dst, [$addr], $b, $c;"),
+    [(set regclass:$dst, (IntOp ptrclass:$addr, imm:$b, regclass:$c))]>,
   Requires<[Pred]>;
+
   def imm2 : NVPTXInst<(outs regclass:$dst),
     (ins ptrclass:$addr, regclass:$b, IMMType:$c),
-               !strconcat("atom",
-         !strconcat(SpaceStr,
-         !strconcat(OpcStr,
-         !strconcat(TypeStr,
-         !strconcat(" \t$dst, [$addr], $b, $c;", ""))))),
-         [(set regclass:$dst, (IntOp ptrclass:$addr, regclass:$b, imm:$c))]>,
+    !strconcat("atom", SpaceStr, OpcStr, TypeStr, " \t$dst, [$addr], $b, $c;", ""),
+    [(set regclass:$dst, (IntOp ptrclass:$addr, regclass:$b, imm:$c))]>,
   Requires<[Pred]>;
+
   def imm3 : NVPTXInst<(outs regclass:$dst),
     (ins ptrclass:$addr, IMMType:$b, IMMType:$c),
-               !strconcat("atom",
-         !strconcat(SpaceStr,
-         !strconcat(OpcStr,
-         !strconcat(TypeStr,
-         !strconcat(" \t$dst, [$addr], $b, $c;", ""))))),
-         [(set regclass:$dst, (IntOp ptrclass:$addr, imm:$b, imm:$c))]>,
+    !strconcat("atom", SpaceStr, OpcStr, TypeStr, " \t$dst, [$addr], $b, $c;"),
+    [(set regclass:$dst, (IntOp ptrclass:$addr, imm:$b, imm:$c))]>,
   Requires<[Pred]>;
 }
 multiclass F_ATOMIC_3<NVPTXRegClass regclass, string SpaceStr, string TypeStr,
@@ -1747,11 +1719,11 @@ defm INT_PTX_LDG_G_v4f32_ELE
 
 multiclass NG_TO_G<string Str, Intrinsic Intrin> {
    def _yes : NVPTXInst<(outs Int32Regs:$result), (ins Int32Regs:$src),
-          !strconcat("cvta.", !strconcat(Str, ".u32 \t$result, $src;")),
+          !strconcat("cvta.", Str, ".u32 \t$result, $src;"),
       [(set Int32Regs:$result, (Intrin Int32Regs:$src))]>,
    Requires<[hasGenericLdSt]>;
    def _yes_64 : NVPTXInst<(outs Int64Regs:$result), (ins Int64Regs:$src),
-          !strconcat("cvta.", !strconcat(Str, ".u64 \t$result, $src;")),
+          !strconcat("cvta.", Str, ".u64 \t$result, $src;"),
       [(set Int64Regs:$result, (Intrin Int64Regs:$src))]>,
    Requires<[hasGenericLdSt]>;
 
@@ -1785,11 +1757,11 @@ multiclass NG_TO_G<string Str, Intrinsic Intrin> {
 
 multiclass G_TO_NG<string Str, Intrinsic Intrin> {
    def _yes : NVPTXInst<(outs Int32Regs:$result), (ins Int32Regs:$src),
-          !strconcat("cvta.to.", !strconcat(Str, ".u32 \t$result, $src;")),
+          !strconcat("cvta.to.", Str, ".u32 \t$result, $src;"),
       [(set Int32Regs:$result, (Intrin Int32Regs:$src))]>,
    Requires<[hasGenericLdSt]>;
    def _yes_64 : NVPTXInst<(outs Int64Regs:$result), (ins Int64Regs:$src),
-          !strconcat("cvta.to.", !strconcat(Str, ".u64 \t$result, $src;")),
+          !strconcat("cvta.to.", Str, ".u64 \t$result, $src;"),
       [(set Int64Regs:$result, (Intrin Int64Regs:$src))]>,
    Requires<[hasGenericLdSt]>;
    def _no : NVPTXInst<(outs Int32Regs:$result), (ins Int32Regs:$src),
@@ -2010,20 +1982,18 @@ def : Pat<(int_nvvm_rotate_b32 Int32Regs:$src, Int32Regs:$amt),
       Requires<[noHWROT32]> ;
 
 let hasSideEffects = 0 in {
-  def GET_LO_INT64
-    : NVPTXInst<(outs Int32Regs:$dst), (ins Int64Regs:$src),
-                !strconcat("{{\n\t",
-                !strconcat(".reg .b32 %dummy;\n\t",
-                !strconcat("mov.b64 \t{$dst,%dummy}, $src;\n\t",
-          !strconcat("}}", "")))),
+  def GET_LO_INT64 : NVPTXInst<(outs Int32Regs:$dst), (ins Int64Regs:$src),
+    !strconcat("{{\n\t",
+               ".reg .b32 %dummy;\n\t",
+               "mov.b64 \t{$dst,%dummy}, $src;\n\t",
+               "}}"),
           []> ;
 
-  def GET_HI_INT64
-    : NVPTXInst<(outs Int32Regs:$dst), (ins Int64Regs:$src),
-                !strconcat("{{\n\t",
-                !strconcat(".reg .b32 %dummy;\n\t",
-                !strconcat("mov.b64 \t{%dummy,$dst}, $src;\n\t",
-          !strconcat("}}", "")))),
+  def GET_HI_INT64 : NVPTXInst<(outs Int32Regs:$dst), (ins Int64Regs:$src),
+    !strconcat("{{\n\t",
+               ".reg .b32 %dummy;\n\t",
+               "mov.b64 \t{%dummy,$dst}, $src;\n\t",
+               "}}"),
           []> ;
 }
 
@@ -7136,12 +7106,12 @@ def : Pat<(int_nvvm_sust_p_3d_v4i32_trap
 
 class PTX_READ_SREG_R64<string regname, Intrinsic intop>
   : NVPTXInst<(outs Int64Regs:$d), (ins),
-              !strconcat(!strconcat("mov.u64\t$d, %", regname), ";"),
+              !strconcat("mov.u64 \t$d, %", regname, ";"),
               [(set Int64Regs:$d, (intop))]>;
 
 class PTX_READ_SREG_R32<string regname, Intrinsic intop>
   : NVPTXInst<(outs Int32Regs:$d), (ins),
-              !strconcat(!strconcat("mov.u32\t$d, %", regname), ";"),
+              !strconcat("mov.u32 \t$d, %", regname, ";"),
               [(set Int32Regs:$d, (intop))]>;
 
 // TODO Add read vector-version of special registers
