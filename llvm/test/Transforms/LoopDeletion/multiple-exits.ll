@@ -5,6 +5,9 @@
 ;
 ; RUN: opt < %s -loop-simplify -lcssa -S | FileCheck %s --check-prefixes=CHECK,BEFORE
 ; RUN: opt < %s -loop-deletion -S | FileCheck %s --check-prefixes=CHECK,AFTER
+;
+; RUN: opt < %s -passes=no-op-loop -S | FileCheck %s --check-prefixes=CHECK,BEFORE
+; RUN: opt < %s -passes=loop-deletion -S | FileCheck %s --check-prefixes=CHECK,AFTER
 
 
 define void @foo(i64 %n, i64 %m) nounwind {

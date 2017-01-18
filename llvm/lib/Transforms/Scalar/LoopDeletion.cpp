@@ -100,12 +100,16 @@ static bool isLoopDead(Loop *L, ScalarEvolution &SE,
 /// This entire process relies pretty heavily on LoopSimplify form and LCSSA in
 /// order to make various safety checks work.
 ///
-/// \returns true if any changes are made, even if the loop is not deleted.
+/// \returns true if the loop is deleted.
+///
+/// This also sets the \p Changed output parameter to `true` if any changes
+/// were made. This may mutate the loop even if it is unable to delete it due
+/// to hoisting trivially loop invariant instructions out of the loop.
 ///
 /// This also updates the relevant analysis information in \p DT, \p SE, and \p
 /// LI.
 static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
-                             LoopInfo &LI) {
+                             LoopInfo &LI, bool &Changed) {
   assert(L->isLCSSAForm(DT) && "Expected LCSSA!");
 
   // We can only remove the loop if there is a preheader that we can
@@ -135,15 +139,14 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
     return false;
 
   // Finally, we have to check that the loop really is dead.
-  bool Changed = false;
   if (!isLoopDead(L, SE, ExitingBlocks, ExitBlock, Changed, Preheader))
-    return Changed;
+    return false;
 
   // Don't remove loops for which we can't solve the trip count.
   // They could be infinite, in which case we'd be changing program behavior.
   const SCEV *S = SE.getMaxBackedgeTakenCount(L);
   if (isa<SCEVCouldNotCompute>(S))
-    return Changed;
+    return false;
 
   // Now that we know the removal is safe, remove the loop by changing the
   // branch from the preheader to go to the single exit block.
@@ -215,15 +218,21 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 
   ++NumDeleted;
 
-  return Changed;
+  return true;
 }
 
 PreservedAnalyses LoopDeletionPass::run(Loop &L, LoopAnalysisManager &AM,
                                         LoopStandardAnalysisResults &AR,
-                                        LPMUpdater &) {
-  bool Changed = deleteLoopIfDead(&L, AR.DT, AR.SE, AR.LI);
-  if (!Changed)
+                                        LPMUpdater &Updater) {
+  bool Changed = false;
+
+  if (deleteLoopIfDead(&L, AR.DT, AR.SE, AR.LI, Changed)) {
+    assert(Changed && "Cannot delete a loop without changing something!");
+    // Need to update the LPM about this loop going away.
+    Updater.markLoopAsDeleted(L);
+  } else if (!Changed) {
     return PreservedAnalyses::all();
+  }
 
   return getLoopPassPreservedAnalyses();
 }
@@ -262,5 +271,6 @@ bool LoopDeletionLegacyPass::runOnLoop(Loop *L, LPPassManager &) {
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 
-  return deleteLoopIfDead(L, DT, SE, LI);
+  bool Changed = false;
+  return deleteLoopIfDead(L, DT, SE, LI, Changed) || Changed;
 }
