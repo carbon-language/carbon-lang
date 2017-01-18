@@ -165,10 +165,10 @@ static bool deleteLoopIfDead(Loop *L, DominatorTree &DT, ScalarEvolution &SE,
 
   // Rewrite phis in the exit block to get their inputs from
   // the preheader instead of the exiting block.
-  BasicBlock *exitingBlock = ExitingBlocks[0];
+  BasicBlock *ExitingBlock = ExitingBlocks[0];
   BasicBlock::iterator BI = ExitBlock->begin();
   while (PHINode *P = dyn_cast<PHINode>(BI)) {
-    int j = P->getBasicBlockIndex(exitingBlock);
+    int j = P->getBasicBlockIndex(ExitingBlock);
     assert(j >= 0 && "Can't find exiting block in exit block's phi node!");
     P->setIncomingBlock(j, Preheader);
     for (unsigned i = 1; i < ExitingBlocks.size(); ++i)
