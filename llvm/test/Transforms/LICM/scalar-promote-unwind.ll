@@ -61,8 +61,6 @@ for.inc:
   br i1 %exitcond, label %for.cond.cleanup, label %for.body
 
 for.cond.cleanup:
-  ret void
-
 ; CHECK: define void @test2
 ; CHECK: store i32
 ; CHECK-NEXT: ret void
