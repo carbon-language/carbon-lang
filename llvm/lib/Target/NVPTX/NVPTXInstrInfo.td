@@ -2774,18 +2774,32 @@ let hasSideEffects = 0 in {
 // 32-bit has a direct PTX instruction
 def : Pat<(ctlz Int32Regs:$a), (CLZr32 Int32Regs:$a)>;
 
-// For 64-bit, the result in PTX is actually 32-bit so we zero-extend
-// to 64-bit to match the LLVM semantics
+// The return type of the ctlz ISD node is the same as its input, but the PTX
+// ctz instruction always returns a 32-bit value.  For ctlz.i64, convert the
+// ptx value to 64 bits to match the ISD node's semantics, unless we know we're
+// truncating back down to 32 bits.
 def : Pat<(ctlz Int64Regs:$a), (CVT_u64_u32 (CLZr64 Int64Regs:$a), CvtNONE)>;
+def : Pat<(i32 (trunc (ctlz Int64Regs:$a))), (CLZr64 Int64Regs:$a)>;
 
-// For 16-bit, we zero-extend to 32-bit, then trunc the result back
-// to 16-bits (ctlz of a 16-bit value is guaranteed to require less
-// than 16 bits to store). We also need to subtract 16 because the
-// high-order 16 zeros were counted.
+// For 16-bit ctlz, we zero-extend to 32-bit, perform the count, then trunc the
+// result back to 16-bits if necessary.  We also need to subtract 16 because
+// the high-order 16 zeros were counted.
+//
+// TODO: NVPTX has a mov.b32 b32reg, {imm, b16reg} instruction, which we could
+// use to save one SASS instruction (on sm_35 anyway):
+//
+//   mov.b32 $tmp, {0xffff, $a}
+//   ctlz.b32 $result, $tmp
+//
+// That is, instead of zero-extending the input to 32 bits, we'd "one-extend"
+// and then ctlz that value.  This way we don't have to subtract 16 from the
+// result.  Unfortunately today we don't have a way to generate
+// "mov b32reg, {b16imm, b16reg}", so we don't do this optimization.
 def : Pat<(ctlz Int16Regs:$a),
-          (SUBi16ri (CVT_u16_u32 (CLZr32
-            (CVT_u32_u16 Int16Regs:$a, CvtNONE)),
-           CvtNONE), 16)>;
+          (SUBi16ri (CVT_u16_u32
+           (CLZr32 (CVT_u32_u16 Int16Regs:$a, CvtNONE)), CvtNONE), 16)>;
+def : Pat<(i32 (zext (ctlz Int16Regs:$a))),
+          (SUBi32ri (CLZr32 (CVT_u32_u16 Int16Regs:$a, CvtNONE)), 16)>;
 
 // Population count
 let hasSideEffects = 0 in {
