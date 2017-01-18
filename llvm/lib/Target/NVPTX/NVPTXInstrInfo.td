@@ -529,6 +529,12 @@ defm ABS_16 : ABS<Int16Regs, 15, ".s16">;
 defm ABS_32 : ABS<Int32Regs, 31, ".s32">;
 defm ABS_64 : ABS<Int64Regs, 63, ".s64">;
 
+// Integer min/max.
+defm SMAX : I3<"max.s", smax>;
+defm UMAX : I3<"max.u", umax>;
+defm SMIN : I3<"min.s", smin>;
+defm UMIN : I3<"min.u", umin>;
+
 //
 // Wide multiplication
 //
