@@ -9,8 +9,8 @@ declare i64 @llvm.ctlz.i64(i64, i1) readnone
 ; There should be no difference between llvm.ctlz.i32(%a, true) and
 ; llvm.ctlz.i32(%a, false), as ptx's clz(0) is defined to return 0.
 
-; CHECK-LABEL: myctpop(
-define i32 @myctpop(i32 %a) {
+; CHECK-LABEL: myctlz(
+define i32 @myctlz(i32 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: clz.b32
 ; CHECK-NEXT: st.param.
@@ -18,8 +18,8 @@ define i32 @myctpop(i32 %a) {
   %val = call i32 @llvm.ctlz.i32(i32 %a, i1 false) readnone
   ret i32 %val
 }
-; CHECK-LABEL: myctpop_2(
-define i32 @myctpop_2(i32 %a) {
+; CHECK-LABEL: myctlz_2(
+define i32 @myctlz_2(i32 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: clz.b32
 ; CHECK-NEXT: st.param.
@@ -30,8 +30,8 @@ define i32 @myctpop_2(i32 %a) {
 
 ; PTX's clz.b64 returns a 32-bit value, but LLVM's intrinsic returns a 64-bit
 ; value, so here we have to zero-extend it.
-; CHECK-LABEL: myctpop64(
-define i64 @myctpop64(i64 %a) {
+; CHECK-LABEL: myctlz64(
+define i64 @myctlz64(i64 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: clz.b64
 ; CHECK-NEXT: cvt.u64.u32
@@ -40,8 +40,8 @@ define i64 @myctpop64(i64 %a) {
   %val = call i64 @llvm.ctlz.i64(i64 %a, i1 false) readnone
   ret i64 %val
 }
-; CHECK-LABEL: myctpop64_2(
-define i64 @myctpop64_2(i64 %a) {
+; CHECK-LABEL: myctlz64_2(
+define i64 @myctlz64_2(i64 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: clz.b64
 ; CHECK-NEXT: cvt.u64.u32
@@ -54,8 +54,8 @@ define i64 @myctpop64_2(i64 %a) {
 ; Here we truncate the 64-bit value of LLVM's ctlz intrinsic to 32 bits, the
 ; natural return width of ptx's clz.b64 instruction.  No conversions should be
 ; necessary in the PTX.
-; CHECK-LABEL: myctpop64_as_32(
-define i32 @myctpop64_as_32(i64 %a) {
+; CHECK-LABEL: myctlz64_as_32(
+define i32 @myctlz64_as_32(i64 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: clz.b64
 ; CHECK-NEXT: st.param.
@@ -64,8 +64,8 @@ define i32 @myctpop64_as_32(i64 %a) {
   %trunc = trunc i64 %val to i32
   ret i32 %trunc
 }
-; CHECK-LABEL: myctpop64_as_32_2(
-define i32 @myctpop64_as_32_2(i64 %a) {
+; CHECK-LABEL: myctlz64_as_32_2(
+define i32 @myctlz64_as_32_2(i64 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: clz.b64
 ; CHECK-NEXT: st.param.
@@ -79,8 +79,8 @@ define i32 @myctpop64_as_32_2(i64 %a) {
 ; and then truncating the result back down to i16.  But the NVPTX ABI
 ; zero-extends i16 return values to i32, so the final truncation doesn't appear
 ; in this function.
-; CHECK-LABEL: myctpop_ret16(
-define i16 @myctpop_ret16(i16 %a) {
+; CHECK-LABEL: myctlz_ret16(
+define i16 @myctlz_ret16(i16 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: cvt.u32.u16
 ; CHECK-NEXT: clz.b32
@@ -90,8 +90,8 @@ define i16 @myctpop_ret16(i16 %a) {
   %val = call i16 @llvm.ctlz.i16(i16 %a, i1 false) readnone
   ret i16 %val
 }
-; CHECK-LABEL: myctpop_ret16_2(
-define i16 @myctpop_ret16_2(i16 %a) {
+; CHECK-LABEL: myctlz_ret16_2(
+define i16 @myctlz_ret16_2(i16 %a) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: cvt.u32.u16
 ; CHECK-NEXT: clz.b32
@@ -104,8 +104,8 @@ define i16 @myctpop_ret16_2(i16 %a) {
 
 ; Here we store the result of ctlz.16 into an i16 pointer, so the trunc should
 ; remain.
-; CHECK-LABEL: myctpop_store16(
-define void @myctpop_store16(i16 %a, i16* %b) {
+; CHECK-LABEL: myctlz_store16(
+define void @myctlz_store16(i16 %a, i16* %b) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: cvt.u32.u16
 ; CHECK-NET: clz.b32
@@ -117,8 +117,8 @@ define void @myctpop_store16(i16 %a, i16* %b) {
   store i16 %val, i16* %b
   ret void
 }
-; CHECK-LABEL: myctpop_store16_2(
-define void @myctpop_store16_2(i16 %a, i16* %b) {
+; CHECK-LABEL: myctlz_store16_2(
+define void @myctlz_store16_2(i16 %a, i16* %b) {
 ; CHECK: ld.param.
 ; CHECK-NEXT: cvt.u32.u16
 ; CHECK-NET: clz.b32
