@@ -25369,7 +25369,7 @@ X86TargetLowering::EmitLoweredTLSAddr(MachineInstr &MI,
   // inside MC, therefore without the two markers shrink-wrapping
   // may push the prologue/epilogue pass them.
   const TargetInstrInfo &TII = *Subtarget.getInstrInfo();
-  const DebugLoc &DL = MI.getDebugLoc();
+  DebugLoc DL = MI.getDebugLoc();
   MachineFunction &MF = *BB->getParent();
 
   // Emit CALLSEQ_START right before the instruction.
@@ -34624,7 +34624,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     int64_t Offset = 0;
 
     // Match either (GA), (GA+C), (GA+C1+C2), etc.
-    while (true) {
+    while (1) {
       if ((GA = dyn_cast<GlobalAddressSDNode>(Op))) {
         Offset += GA->getOffset();
         break;

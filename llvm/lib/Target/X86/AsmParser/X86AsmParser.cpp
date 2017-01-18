@@ -138,7 +138,7 @@ private:
       // The operator on the top of the stack has higher precedence than the
       // new operator.
       unsigned ParenCount = 0;
-      while (true) {
+      while (1) {
         // Nothing to process.
         if (InfixOperatorStack.empty())
           break;
@@ -1823,7 +1823,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
     return ParseIntelBracExpression(/*SegReg=*/0, Start, /*ImmDisp=*/0, false,
                                     Size);
 
-  const AsmToken &StartTok = Tok;
+  AsmToken StartTok = Tok;
   IntelExprStateMachine SM(/*Imm=*/0, /*StopOnLBrac=*/true,
                            /*AddImmPrefix=*/false);
   if (ParseIntelExpression(SM, End))
@@ -2374,7 +2374,7 @@ bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       Operands.push_back(X86Operand::CreateToken("*", consumeToken()));
 
     // Read the operands.
-    while (true) {
+    while(1) {
       if (std::unique_ptr<X86Operand> Op = ParseOperand()) {
         Operands.push_back(std::move(Op));
         if (HandleAVX512Operand(Operands, *Operands.back()))
