@@ -138,7 +138,7 @@ public:
                           const Expr *ThreadLimit, SourceLocation Loc) override;
 
   /// \brief Emits inlined function for the specified OpenMP parallel
-  //  directive.
+  //  directive but an inlined function for teams.
   /// \a D. This outlined function has type void(*)(kmp_int32 *ThreadID,
   /// kmp_int32 BoundID, struct context_vars*).
   /// \param D OpenMP directive.
@@ -147,25 +147,10 @@ public:
   /// is a directive itself, for combined - its innermost directive).
   /// \param CodeGen Code generation sequence for the \a D directive.
   llvm::Value *
-  emitParallelOutlinedFunction(const OMPExecutableDirective &D,
-                               const VarDecl *ThreadIDVar,
-                               OpenMPDirectiveKind InnermostKind,
-                               const RegionCodeGenTy &CodeGen) override;
-
-  /// \brief Emits inlined function for the specified OpenMP teams
-  //  directive.
-  /// \a D. This outlined function has type void(*)(kmp_int32 *ThreadID,
-  /// kmp_int32 BoundID, struct context_vars*).
-  /// \param D OpenMP directive.
-  /// \param ThreadIDVar Variable for thread id in the current OpenMP region.
-  /// \param InnermostKind Kind of innermost directive (for simple directives it
-  /// is a directive itself, for combined - its innermost directive).
-  /// \param CodeGen Code generation sequence for the \a D directive.
-  llvm::Value *
-  emitTeamsOutlinedFunction(const OMPExecutableDirective &D,
-                            const VarDecl *ThreadIDVar,
-                            OpenMPDirectiveKind InnermostKind,
-                            const RegionCodeGenTy &CodeGen) override;
+  emitParallelOrTeamsOutlinedFunction(const OMPExecutableDirective &D,
+                                      const VarDecl *ThreadIDVar,
+                                      OpenMPDirectiveKind InnermostKind,
+                                      const RegionCodeGenTy &CodeGen) override;
 
   /// \brief Emits code for teams call of the \a OutlinedFn with
   /// variables captured in a record which address is stored in \a

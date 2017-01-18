@@ -8340,9 +8340,6 @@ public:
     return IsInOpenMPDeclareTargetContext;
   }
 
-  /// Return the number of captured regions created for an OpenMP directive.
-  static int getOpenMPCaptureLevels(OpenMPDirectiveKind Kind);
-
   /// \brief Initialization of captured region for OpenMP region.
   void ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope);
   /// \brief End of OpenMP region.

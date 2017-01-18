@@ -478,22 +478,24 @@ void CGOpenMPRuntimeNVPTX::emitNumTeamsClause(CodeGenFunction &CGF,
                                               const Expr *ThreadLimit,
                                               SourceLocation Loc) {}
 
-llvm::Value *CGOpenMPRuntimeNVPTX::emitParallelOutlinedFunction(
-    const OMPExecutableDirective &D, const VarDecl *ThreadIDVar,
-    OpenMPDirectiveKind InnermostKind, const RegionCodeGenTy &CodeGen) {
-  return CGOpenMPRuntime::emitParallelOutlinedFunction(D, ThreadIDVar,
-                                                       InnermostKind, CodeGen);
-}
-
-llvm::Value *CGOpenMPRuntimeNVPTX::emitTeamsOutlinedFunction(
+llvm::Value *CGOpenMPRuntimeNVPTX::emitParallelOrTeamsOutlinedFunction(
     const OMPExecutableDirective &D, const VarDecl *ThreadIDVar,
     OpenMPDirectiveKind InnermostKind, const RegionCodeGenTy &CodeGen) {
 
-  llvm::Value *OutlinedFunVal = CGOpenMPRuntime::emitTeamsOutlinedFunction(
-      D, ThreadIDVar, InnermostKind, CodeGen);
-  llvm::Function *OutlinedFun = cast<llvm::Function>(OutlinedFunVal);
-  OutlinedFun->removeFnAttr(llvm::Attribute::NoInline);
-  OutlinedFun->addFnAttr(llvm::Attribute::AlwaysInline);
+  llvm::Function *OutlinedFun = nullptr;
+  if (isa<OMPTeamsDirective>(D)) {
+    llvm::Value *OutlinedFunVal =
+        CGOpenMPRuntime::emitParallelOrTeamsOutlinedFunction(
+            D, ThreadIDVar, InnermostKind, CodeGen);
+    OutlinedFun = cast<llvm::Function>(OutlinedFunVal);
+    OutlinedFun->removeFnAttr(llvm::Attribute::NoInline);
+    OutlinedFun->addFnAttr(llvm::Attribute::AlwaysInline);
+  } else {
+    llvm::Value *OutlinedFunVal =
+        CGOpenMPRuntime::emitParallelOrTeamsOutlinedFunction(
+            D, ThreadIDVar, InnermostKind, CodeGen);
+    OutlinedFun = cast<llvm::Function>(OutlinedFunVal);
+  }
 
   return OutlinedFun;
 }
