@@ -32350,9 +32350,14 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
 
   auto IsRepeatedOpOrFreeTruncation = [VT](SDValue Op0, SDValue Op1) {
     unsigned TruncSizeInBits = VT.getScalarSizeInBits();
+
+    // Repeated operand, so we are only trading one output truncation for
+    // one input truncation.
     if (Op0 == Op1)
       return true;
 
+    // See if either operand has been extended from a smaller/equal size to
+    // the truncation size, allowing a truncation to combine with the extend.
     unsigned Opcode0 = Op0.getOpcode();
     if ((Opcode0 == ISD::ANY_EXTEND || Opcode0 == ISD::SIGN_EXTEND ||
          Opcode0 == ISD::ZERO_EXTEND) &&
@@ -32365,6 +32370,8 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
         Op1.getOperand(0).getScalarValueSizeInBits() <= TruncSizeInBits)
       return true;
 
+    // See if either operand is a single use constant which can be constant
+    // folded.
     SDValue BC0 = peekThroughOneUseBitcasts(Op0);
     SDValue BC1 = peekThroughOneUseBitcasts(Op1);
     return ISD::isBuildVectorOfConstantSDNodes(BC0.getNode()) ||
