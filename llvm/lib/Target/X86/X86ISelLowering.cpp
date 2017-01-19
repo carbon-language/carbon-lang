@@ -20846,17 +20846,7 @@ static SDValue Lower512IntArith(SDValue Op, SelectionDAG &DAG) {
                      DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, RHS2));
 }
 
-static SDValue LowerADD(SDValue Op, SelectionDAG &DAG) {
-  if (Op.getValueType() == MVT::i1)
-    return DAG.getNode(ISD::XOR, SDLoc(Op), Op.getValueType(),
-                       Op.getOperand(0), Op.getOperand(1));
-  assert(Op.getSimpleValueType().is256BitVector() &&
-         Op.getSimpleValueType().isInteger() &&
-         "Only handle AVX 256-bit vector integer operation");
-  return Lower256IntArith(Op, DAG);
-}
-
-static SDValue LowerSUB(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerADD_SUB(SDValue Op, SelectionDAG &DAG) {
   if (Op.getValueType() == MVT::i1)
     return DAG.getNode(ISD::XOR, SDLoc(Op), Op.getValueType(),
                        Op.getOperand(0), Op.getOperand(1));
@@ -23404,8 +23394,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADDE:
   case ISD::SUBC:
   case ISD::SUBE:               return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
-  case ISD::ADD:                return LowerADD(Op, DAG);
-  case ISD::SUB:                return LowerSUB(Op, DAG);
+  case ISD::ADD:
+  case ISD::SUB:                return LowerADD_SUB(Op, DAG);
   case ISD::SMAX:
   case ISD::SMIN:
   case ISD::UMAX:
