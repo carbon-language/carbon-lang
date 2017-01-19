@@ -1357,12 +1357,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::UMIN,               MVT::v16i32, Legal);
     setOperationAction(ISD::UMIN,               MVT::v8i64, Legal);
 
-    setOperationAction(ISD::ADD,                MVT::v8i1,  Expand);
-    setOperationAction(ISD::ADD,                MVT::v16i1, Expand);
-    setOperationAction(ISD::SUB,                MVT::v8i1,  Expand);
-    setOperationAction(ISD::SUB,                MVT::v16i1, Expand);
-    setOperationAction(ISD::MUL,                MVT::v8i1,  Expand);
-    setOperationAction(ISD::MUL,                MVT::v16i1, Expand);
+    setOperationAction(ISD::ADD,                MVT::v8i1,  Custom);
+    setOperationAction(ISD::ADD,                MVT::v16i1, Custom);
+    setOperationAction(ISD::SUB,                MVT::v8i1,  Custom);
+    setOperationAction(ISD::SUB,                MVT::v16i1, Custom);
+    setOperationAction(ISD::MUL,                MVT::v8i1,  Custom);
+    setOperationAction(ISD::MUL,                MVT::v16i1, Custom);
 
     setOperationAction(ISD::MUL,                MVT::v16i32, Legal);
 
@@ -1460,12 +1460,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::v32i1,  &X86::VK32RegClass);
     addRegisterClass(MVT::v64i1,  &X86::VK64RegClass);
 
-    setOperationAction(ISD::ADD,                MVT::v32i1, Expand);
-    setOperationAction(ISD::ADD,                MVT::v64i1, Expand);
-    setOperationAction(ISD::SUB,                MVT::v32i1, Expand);
-    setOperationAction(ISD::SUB,                MVT::v64i1, Expand);
-    setOperationAction(ISD::MUL,                MVT::v32i1, Expand);
-    setOperationAction(ISD::MUL,                MVT::v64i1, Expand);
+    setOperationAction(ISD::ADD,                MVT::v32i1, Custom);
+    setOperationAction(ISD::ADD,                MVT::v64i1, Custom);
+    setOperationAction(ISD::SUB,                MVT::v32i1, Custom);
+    setOperationAction(ISD::SUB,                MVT::v64i1, Custom);
+    setOperationAction(ISD::MUL,                MVT::v32i1, Custom);
+    setOperationAction(ISD::MUL,                MVT::v64i1, Custom);
 
     setOperationAction(ISD::SETCC,              MVT::v32i1, Custom);
     setOperationAction(ISD::SETCC,              MVT::v64i1, Custom);
@@ -1574,9 +1574,9 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     addRegisterClass(MVT::v2i1,   &X86::VK2RegClass);
 
     for (auto VT : { MVT::v2i1, MVT::v4i1 }) {
-      setOperationAction(ISD::ADD,                VT, Expand);
-      setOperationAction(ISD::SUB,                VT, Expand);
-      setOperationAction(ISD::MUL,                VT, Expand);
+      setOperationAction(ISD::ADD,                VT, Custom);
+      setOperationAction(ISD::SUB,                VT, Custom);
+      setOperationAction(ISD::MUL,                VT, Custom);
       setOperationAction(ISD::VSELECT,            VT, Expand);
 
       setOperationAction(ISD::TRUNCATE,           VT, Custom);
@@ -20847,8 +20847,9 @@ static SDValue Lower512IntArith(SDValue Op, SelectionDAG &DAG) {
 }
 
 static SDValue LowerADD_SUB(SDValue Op, SelectionDAG &DAG) {
-  if (Op.getValueType() == MVT::i1)
-    return DAG.getNode(ISD::XOR, SDLoc(Op), Op.getValueType(),
+  MVT VT = Op.getSimpleValueType();
+  if (VT.getScalarType() == MVT::i1)
+    return DAG.getNode(ISD::XOR, SDLoc(Op), VT,
                        Op.getOperand(0), Op.getOperand(1));
   assert(Op.getSimpleValueType().is256BitVector() &&
          Op.getSimpleValueType().isInteger() &&
@@ -20868,7 +20869,7 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget &Subtarget,
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
 
-  if (VT == MVT::i1)
+  if (VT.getScalarType() == MVT::i1)
     return DAG.getNode(ISD::AND, dl, VT, Op.getOperand(0), Op.getOperand(1));
 
   // Decompose 256-bit ops into smaller 128-bit ops.
