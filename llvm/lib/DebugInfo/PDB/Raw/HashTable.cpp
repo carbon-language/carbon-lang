@@ -181,7 +181,7 @@ void HashTable::grow() {
   uint32_t S = size();
   if (S < maxLoad(capacity()))
     return;
-  assert(capacity() != UINT32_MAX, "Can't grow Hash table!");
+  assert(capacity() != UINT32_MAX && "Can't grow Hash table!");
 
   uint32_t NewCapacity =
       (capacity() <= INT32_MAX) ? capacity() * 2 : UINT32_MAX;
