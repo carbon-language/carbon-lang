@@ -5615,6 +5615,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
+  if (Args.hasFlag(options::OPT_fdebug_info_for_profiling,
+                   options::OPT_fno_debug_info_for_profiling, false))
+    CmdArgs.push_back("-fdebug-info-for-profiling");
+
   // -fbuiltin is default unless -mkernel is used.
   bool UseBuiltins =
       Args.hasFlag(options::OPT_fbuiltin, options::OPT_fno_builtin,

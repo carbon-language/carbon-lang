@@ -258,6 +258,9 @@ CODEGENOPT(PIECopyRelocations, 1, 0)
 /// paths that reach the end of a function without executing a required return.
 CODEGENOPT(StrictReturn, 1, 1)
 
+/// Whether emit extra debug info for sample pgo profile collection.
+CODEGENOPT(DebugInfoForProfiling, 1, 0)
+
 #undef CODEGENOPT
 #undef ENUM_CODEGENOPT
 #undef VALUE_CODEGENOPT
