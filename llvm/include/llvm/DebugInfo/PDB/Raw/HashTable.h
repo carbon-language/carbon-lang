@@ -27,6 +27,8 @@
 namespace llvm {
 namespace pdb {
 
+class HashTableIterator;
+
 class HashTable {
   friend class HashTableIterator;
   struct Header {

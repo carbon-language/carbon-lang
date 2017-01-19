@@ -13,6 +13,8 @@
 #include "llvm/ADT/SparseBitVector.h"
 #include "llvm/DebugInfo/PDB/Raw/RawError.h"
 
+#include <assert.h>
+
 using namespace llvm;
 using namespace llvm::pdb;
 
