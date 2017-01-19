@@ -72,6 +72,8 @@ set(Tests
   CustomMutatorTest
   DivTest
   EmptyTest
+  EquivalenceATest
+  EquivalenceBTest
   FourIndependentBranchesTest
   FullCoverageSetTest
   InitializeTest
