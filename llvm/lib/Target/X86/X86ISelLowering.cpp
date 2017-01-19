@@ -32348,11 +32348,21 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
   EVT SrcVT = Src.getValueType();
 
-  auto IsRepeatedOpOrOneUseConstant = [](SDValue Op0, SDValue Op1) {
-    // TODO: Add extra cases where we can truncate both inputs for the
-    // cost of one (or none).
-    // e.g. TRUNC( BINOP( EXT( X ), EXT( Y ) ) ) --> BINOP( X, Y )
+  auto IsRepeatedOpOrFreeTruncation = [VT](SDValue Op0, SDValue Op1) {
+    unsigned TruncSizeInBits = VT.getScalarSizeInBits();
     if (Op0 == Op1)
+      return true;
+
+    unsigned Opcode0 = Op0.getOpcode();
+    if ((Opcode0 == ISD::ANY_EXTEND || Opcode0 == ISD::SIGN_EXTEND ||
+         Opcode0 == ISD::ZERO_EXTEND) &&
+        Op0.getOperand(0).getScalarValueSizeInBits() <= TruncSizeInBits)
+      return true;
+
+    unsigned Opcode1 = Op1.getOpcode();
+    if ((Opcode1 == ISD::ANY_EXTEND || Opcode1 == ISD::SIGN_EXTEND ||
+         Opcode1 == ISD::ZERO_EXTEND) &&
+        Op1.getOperand(0).getScalarValueSizeInBits() <= TruncSizeInBits)
       return true;
 
     SDValue BC0 = peekThroughOneUseBitcasts(Op0);
@@ -32386,7 +32396,7 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
     SDValue Op0 = Src.getOperand(0);
     SDValue Op1 = Src.getOperand(1);
     if (TLI.isOperationLegalOrPromote(Opcode, VT) &&
-        IsRepeatedOpOrOneUseConstant(Op0, Op1))
+        IsRepeatedOpOrFreeTruncation(Op0, Op1))
       return TruncateArithmetic(Op0, Op1);
     break;
   }
@@ -32402,7 +32412,7 @@ static SDValue combineTruncatedArithmetic(SDNode *N, SelectionDAG &DAG,
     SDValue Op0 = Src.getOperand(0);
     SDValue Op1 = Src.getOperand(1);
     if (TLI.isOperationLegal(Opcode, VT) &&
-        IsRepeatedOpOrOneUseConstant(Op0, Op1))
+        IsRepeatedOpOrFreeTruncation(Op0, Op1))
       return TruncateArithmetic(Op0, Op1);
     break;
   }
