@@ -94,6 +94,7 @@ set(Tests
   SimpleHashTest
   SimpleTest
   SimpleThreadedTest
+  SingleByteInputTest
   SingleMemcmpTest
   SingleStrcmpTest
   SingleStrncmpTest

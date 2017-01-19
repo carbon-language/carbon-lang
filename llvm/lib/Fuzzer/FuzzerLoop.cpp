@@ -792,7 +792,7 @@ void Fuzzer::Loop() {
 }
 
 void Fuzzer::MinimizeCrashLoop(const Unit &U) {
-  if (U.size() <= 2) return;
+  if (U.size() <= 1) return;
   while (!TimedOut() && TotalNumberOfRuns < Options.MaxNumberOfRuns) {
     MD.StartMutationSequence();
     memcpy(CurrentUnitData, U.data(), U.size());
