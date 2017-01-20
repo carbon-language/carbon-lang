@@ -32,7 +32,7 @@ void InfoStreamBuilder::setAge(uint32_t A) { Age = A; }
 
 void InfoStreamBuilder::setGuid(PDB_UniqueId G) { Guid = G; }
 
-NameMapBuilder &InfoStreamBuilder::getNamedStreamsBuilder() {
+NamedStreamMapBuilder &InfoStreamBuilder::getNamedStreamsBuilder() {
   return NamedStreams;
 }
 

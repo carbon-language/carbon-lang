@@ -1,4 +1,4 @@
-//===- NameMapBuilder.cpp - PDB Name Map Builder ----------------*- C++ -*-===//
+//===- NamedStreamMapBuilder.cpp - PDB Named Stream Map Builder -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/DebugInfo/PDB/Raw/NamedStreamMapBuilder.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/MSF/StreamWriter.h"
-#include "llvm/DebugInfo/PDB/Raw/NameMap.h"
-#include "llvm/DebugInfo/PDB/Raw/NameMapBuilder.h"
+#include "llvm/DebugInfo/PDB/Raw/NamedStreamMap.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include <algorithm>
@@ -19,15 +19,15 @@
 using namespace llvm;
 using namespace llvm::pdb;
 
-NameMapBuilder::NameMapBuilder() = default;
+NamedStreamMapBuilder::NamedStreamMapBuilder() = default;
 
-void NameMapBuilder::addMapping(StringRef Name, uint32_t Mapping) {
+void NamedStreamMapBuilder::addMapping(StringRef Name, uint32_t Mapping) {
   Strings.push_back(Name);
   Map.set(Offset, Mapping);
   Offset += Name.size() + 1;
 }
 
-uint32_t NameMapBuilder::calculateSerializedLength() const {
+uint32_t NamedStreamMapBuilder::calculateSerializedLength() const {
   uint32_t TotalLength = 0;
 
   // Number of bytes of string data.
@@ -40,7 +40,7 @@ uint32_t NameMapBuilder::calculateSerializedLength() const {
   return TotalLength;
 }
 
-Error NameMapBuilder::commit(msf::StreamWriter &Writer) const {
+Error NamedStreamMapBuilder::commit(msf::StreamWriter &Writer) const {
   // The first field is the number of bytes of string data.  We've already been
   // keeping a running total of this in `Offset`.
   if (auto EC = Writer.writeInteger(Offset)) // Number of bytes of string data

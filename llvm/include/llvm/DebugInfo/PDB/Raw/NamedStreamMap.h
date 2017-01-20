@@ -1,4 +1,4 @@
-//===- NameMap.h - PDB Name Map ---------------------------------*- C++ -*-===//
+//===- NamedStreamMap.h - PDB Named Stream Map ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_PDB_RAW_PDBNAMEMAP_H
-#define LLVM_DEBUGINFO_PDB_RAW_PDBNAMEMAP_H
+#ifndef LLVM_DEBUGINFO_PDB_RAW_PDBNAMEDSTREAMMAP_H
+#define LLVM_DEBUGINFO_PDB_RAW_PDBNAMEDSTREAMMAP_H
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
@@ -21,12 +21,12 @@ class StreamReader;
 class StreamWriter;
 }
 namespace pdb {
-class NameMapBuilder;
-class NameMap {
-  friend NameMapBuilder;
+class NamedStreamMapBuilder;
+class NamedStreamMap {
+  friend NamedStreamMapBuilder;
 
 public:
-  NameMap();
+  NamedStreamMap();
 
   Error load(msf::StreamReader &Stream);
 
@@ -41,4 +41,4 @@ private:
 } // end namespace pdb
 } // end namespace llvm
 
-#endif // LLVM_DEBUGINFO_PDB_RAW_PDBNAMEMAP_H
+#endif // LLVM_DEBUGINFO_PDB_RAW_PDBNAMEDSTREAMMAP_H

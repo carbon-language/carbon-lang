@@ -1,4 +1,4 @@
-//===- NameMap.cpp - PDB Name Map -------------------------------*- C++ -*-===//
+//===- NamedStreamMap.cpp - PDB Named Stream Map ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/PDB/Raw/NameMap.h"
+#include "llvm/DebugInfo/PDB/Raw/NamedStreamMap.h"
 
 #include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/StringMap.h"
@@ -24,9 +24,9 @@ using namespace llvm;
 using namespace llvm::msf;
 using namespace llvm::pdb;
 
-NameMap::NameMap() = default;
+NamedStreamMap::NamedStreamMap() = default;
 
-Error NameMap::load(StreamReader &Stream) {
+Error NamedStreamMap::load(StreamReader &Stream) {
   uint32_t StringBufferSize;
   if (auto EC = Stream.readInteger(StringBufferSize))
     return joinErrors(std::move(EC),
@@ -63,12 +63,13 @@ Error NameMap::load(StreamReader &Stream) {
   return Error::success();
 }
 
-iterator_range<StringMapConstIterator<uint32_t>> NameMap::entries() const {
+iterator_range<StringMapConstIterator<uint32_t>>
+NamedStreamMap::entries() const {
   return make_range<StringMapConstIterator<uint32_t>>(Mapping.begin(),
                                                       Mapping.end());
 }
 
-bool NameMap::tryGetValue(StringRef Name, uint32_t &Value) const {
+bool NamedStreamMap::tryGetValue(StringRef Name, uint32_t &Value) const {
   auto Iter = Mapping.find(Name);
   if (Iter == Mapping.end())
     return false;

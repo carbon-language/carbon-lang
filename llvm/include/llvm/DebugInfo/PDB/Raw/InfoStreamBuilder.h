@@ -14,7 +14,7 @@
 #include "llvm/Support/Error.h"
 
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
-#include "llvm/DebugInfo/PDB/Raw/NameMapBuilder.h"
+#include "llvm/DebugInfo/PDB/Raw/NamedStreamMapBuilder.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 
@@ -37,7 +37,7 @@ public:
   void setAge(uint32_t A);
   void setGuid(PDB_UniqueId G);
 
-  NameMapBuilder &getNamedStreamsBuilder();
+  NamedStreamMapBuilder &getNamedStreamsBuilder();
 
   uint32_t calculateSerializedLength() const;
 
@@ -54,7 +54,7 @@ private:
   uint32_t Age;
   PDB_UniqueId Guid;
 
-  NameMapBuilder NamedStreams;
+  NamedStreamMapBuilder NamedStreams;
 };
 }
 }

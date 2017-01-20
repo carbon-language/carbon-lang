@@ -1,4 +1,4 @@
-//===- NameMapBuilder.h - PDB Name Map Builder ------------------*- C++ -*-===//
+//===- NamedStreamMapBuilder.h - PDB Named Stream Map Builder ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_PDB_RAW_PDBNAMEMAPBUILDER_H
-#define LLVM_DEBUGINFO_PDB_RAW_PDBNAMEMAPBUILDER_H
+#ifndef LLVM_DEBUGINFO_PDB_RAW_PDBNAMEDSTREAMMAPBUILDER_H
+#define LLVM_DEBUGINFO_PDB_RAW_PDBNAMEDSTREAMMAPBUILDER_H
 
 #include "llvm/DebugInfo/PDB/Raw/HashTable.h"
 #include "llvm/Support/Error.h"
@@ -22,11 +22,10 @@ namespace msf {
 class StreamWriter;
 }
 namespace pdb {
-class NameMap;
 
-class NameMapBuilder {
+class NamedStreamMapBuilder {
 public:
-  NameMapBuilder();
+  NamedStreamMapBuilder();
 
   void addMapping(StringRef Name, uint32_t Mapping);
 

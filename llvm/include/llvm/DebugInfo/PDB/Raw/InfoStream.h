@@ -13,7 +13,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
-#include "llvm/DebugInfo/PDB/Raw/NameMap.h"
+#include "llvm/DebugInfo/PDB/Raw/NamedStreamMap.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 
 #include "llvm/Support/Endian.h"
@@ -61,7 +61,7 @@ private:
   // universally unique.
   PDB_UniqueId Guid;
 
-  NameMap NamedStreams;
+  NamedStreamMap NamedStreams;
 };
 }
 }

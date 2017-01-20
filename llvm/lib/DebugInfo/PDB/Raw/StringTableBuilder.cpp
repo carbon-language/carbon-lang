@@ -1,4 +1,4 @@
-//===- NameHashTable.cpp - PDB Name Hash Table ------------------*- C++ -*-===//
+//===- StringTableBuilder.cpp - PDB String Table ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/PDB/Raw/NameHashTableBuilder.h"
+#include "llvm/DebugInfo/PDB/Raw/StringTableBuilder.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/DebugInfo/MSF/StreamWriter.h"
 #include "llvm/DebugInfo/PDB/Raw/Hash.h"
@@ -19,7 +19,7 @@ using namespace llvm::support;
 using namespace llvm::support::endian;
 using namespace llvm::pdb;
 
-uint32_t NameHashTableBuilder::insert(StringRef S) {
+uint32_t StringTableBuilder::insert(StringRef S) {
   auto P = Strings.insert({S, StringSize});
 
   // If a given string didn't exist in the string table, we want to increment
@@ -38,9 +38,9 @@ static uint32_t computeBucketCount(uint32_t NumStrings) {
   return (NumStrings + 1) * 1.25;
 }
 
-uint32_t NameHashTableBuilder::calculateSerializedLength() const {
+uint32_t StringTableBuilder::calculateSerializedLength() const {
   uint32_t Size = 0;
-  Size += sizeof(NameHashTableHeader);
+  Size += sizeof(StringTableHeader);
   Size += StringSize;
   Size += 4; // Hash table begins with 4-byte size field.
 
@@ -51,10 +51,10 @@ uint32_t NameHashTableBuilder::calculateSerializedLength() const {
   return Size;
 }
 
-Error NameHashTableBuilder::commit(msf::StreamWriter &Writer) const {
+Error StringTableBuilder::commit(msf::StreamWriter &Writer) const {
   // Write a header
-  NameHashTableHeader H;
-  H.Signature = NameHashTableSignature;
+  StringTableHeader H;
+  H.Signature = StringTableSignature;
   H.HashVersion = 1;
   H.ByteSize = StringSize;
   if (auto EC = Writer.writeObject(H))
