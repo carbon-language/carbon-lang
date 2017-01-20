@@ -280,9 +280,6 @@ class LowerTypeTestsModule {
     /// covering members of this type identifier as a multiple of 2^AlignLog2.
     Constant *SizeM1;
 
-    /// ByteArray, Inline, AllOnes: range of SizeM1 expressed as a bit width.
-    unsigned SizeM1BitWidth;
-
     /// ByteArray: the byte array to test the address against.
     Constant *TheByteArray;
 
@@ -720,7 +717,12 @@ void LowerTypeTestsModule::exportTypeId(StringRef TypeId,
       TIL.TheKind == TypeTestResolution::AllOnes) {
     ExportGlobal("align", ConstantExpr::getIntToPtr(TIL.AlignLog2, Int8PtrTy));
     ExportGlobal("size_m1", ConstantExpr::getIntToPtr(TIL.SizeM1, Int8PtrTy));
-    TTRes.SizeM1BitWidth = TIL.SizeM1BitWidth;
+
+    uint64_t BitSize = cast<ConstantInt>(TIL.SizeM1)->getZExtValue() + 1;
+    if (TIL.TheKind == TypeTestResolution::Inline)
+      TTRes.SizeM1BitWidth = (BitSize <= 32) ? 5 : 6;
+    else
+      TTRes.SizeM1BitWidth = (BitSize <= 128) ? 7 : 32;
   }
 
   if (TIL.TheKind == TypeTestResolution::ByteArray) {
@@ -757,12 +759,10 @@ void LowerTypeTestsModule::lowerTypeTestCalls(
     if (BSI.isAllOnes()) {
       TIL.TheKind = (BSI.BitSize == 1) ? TypeTestResolution::Single
                                        : TypeTestResolution::AllOnes;
-      TIL.SizeM1BitWidth = (BSI.BitSize <= 128) ? 7 : 32;
       TIL.SizeM1 = ConstantInt::get((BSI.BitSize <= 128) ? Int8Ty : Int32Ty,
                                     BSI.BitSize - 1);
     } else if (BSI.BitSize <= 64) {
       TIL.TheKind = TypeTestResolution::Inline;
-      TIL.SizeM1BitWidth = (BSI.BitSize <= 32) ? 5 : 6;
       TIL.SizeM1 = ConstantInt::get(Int8Ty, BSI.BitSize - 1);
       uint64_t InlineBits = 0;
       for (auto Bit : BSI.Bits)
@@ -774,7 +774,6 @@ void LowerTypeTestsModule::lowerTypeTestCalls(
             (BSI.BitSize <= 32) ? Int32Ty : Int64Ty, InlineBits);
     } else {
       TIL.TheKind = TypeTestResolution::ByteArray;
-      TIL.SizeM1BitWidth = (BSI.BitSize <= 128) ? 7 : 32;
       TIL.SizeM1 = ConstantInt::get((BSI.BitSize <= 128) ? Int8Ty : Int32Ty,
                                     BSI.BitSize - 1);
       ++NumByteArraysCreated;
