@@ -1796,7 +1796,7 @@ the following functions from the C standard library ``<strings.h>`` header:
 * ``wmemcmp``
 
 In each case, the builtin form has the name of the C library function prefixed
-by ``__builtin``. Example:
+by ``__builtin_``. Example:
 
 .. code-block:: c
 
