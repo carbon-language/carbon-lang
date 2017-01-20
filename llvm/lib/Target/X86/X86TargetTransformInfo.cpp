@@ -611,7 +611,6 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::SHL,  MVT::v16i8,    26 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v8i16,    32 }, // cmpgtb sequence.
     { ISD::SHL,  MVT::v4i32,   2*5 }, // We optimized this using mul.
-    { ISD::SHL,  MVT::v8i32, 2*2*5 }, // We optimized this using mul.
     { ISD::SHL,  MVT::v2i64,     4 }, // splat+shuffle sequence.
     { ISD::SHL,  MVT::v4i64,   2*4 }, // splat+shuffle sequence.
 
