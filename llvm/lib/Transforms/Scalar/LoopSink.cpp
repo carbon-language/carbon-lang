@@ -1,4 +1,4 @@
-//===-- LoopSink.cpp - Loop Sink Pass ------------------------===//
+//===-- LoopSink.cpp - Loop Sink Pass -------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -28,6 +28,7 @@
 //       InsertBBs = UseBBs - DomBBs + BB
 //   For BB in InsertBBs:
 //     Insert I at BB's beginning
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/Statistic.h"
