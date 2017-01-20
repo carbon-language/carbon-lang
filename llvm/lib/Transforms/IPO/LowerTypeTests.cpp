@@ -295,6 +295,8 @@ class LowerTypeTestsModule {
   Function *WeakInitializerFn = nullptr;
 
   void exportTypeId(StringRef TypeId, const TypeIdLowering &TIL);
+  TypeIdLowering importTypeId(StringRef TypeId);
+  void importTypeTest(CallInst *CI);
 
   BitSetInfo
   buildBitSet(Metadata *TypeId,
@@ -499,10 +501,12 @@ Value *LowerTypeTestsModule::createBitSetTest(IRBuilder<> &B,
     return createMaskedBitTest(B, TIL.InlineBits, BitOffset);
   } else {
     Constant *ByteArray = TIL.TheByteArray;
-    if (!LinkerSubsectionsViaSymbols && AvoidReuse) {
+    if (!LinkerSubsectionsViaSymbols && AvoidReuse &&
+        Action != SummaryAction::Import) {
       // Each use of the byte array uses a different alias. This makes the
       // backend less likely to reuse previously computed byte array addresses,
       // improving the security of the CFI mechanism based on this pass.
+      // This won't work when importing because TheByteArray is external.
       ByteArray = GlobalAlias::create(Int8Ty, 0, GlobalValue::PrivateLinkage,
                                       "bits_use", ByteArray, &M);
     }
@@ -598,7 +602,7 @@ Value *LowerTypeTestsModule::lowerTypeTestCall(Metadata *TypeId, CallInst *CI,
                      IntPtrTy));
   Value *BitOffset = B.CreateOr(OffsetSHR, OffsetSHL);
 
-  Constant *BitSizeConst = ConstantExpr::getZExt(TIL.SizeM1, IntPtrTy);
+  Constant *BitSizeConst = ConstantExpr::getZExtOrBitCast(TIL.SizeM1, IntPtrTy);
   Value *OffsetInRange = B.CreateICmpULE(BitOffset, BitSizeConst);
 
   // If the bit set is all ones, testing against it is unnecessary.
@@ -733,6 +737,78 @@ void LowerTypeTestsModule::exportTypeId(StringRef TypeId,
   if (TIL.TheKind == TypeTestResolution::Inline)
     ExportGlobal("inline_bits",
                  ConstantExpr::getIntToPtr(TIL.InlineBits, Int8PtrTy));
+}
+
+LowerTypeTestsModule::TypeIdLowering
+LowerTypeTestsModule::importTypeId(StringRef TypeId) {
+  TypeTestResolution &TTRes = Summary->getTypeIdSummary(TypeId).TTRes;
+
+  TypeIdLowering TIL;
+  TIL.TheKind = TTRes.TheKind;
+
+  auto ImportGlobal = [&](StringRef Name, unsigned AbsWidth) {
+    unsigned PtrWidth = IntPtrTy->getBitWidth();
+    Constant *C =
+        M.getOrInsertGlobal(("__typeid_" + TypeId + "_" + Name).str(), Int8Ty);
+    auto *GV = dyn_cast<GlobalVariable>(C);
+    // We only need to set metadata if the global is newly created, in which
+    // case it would not have hidden visibility.
+    if (!GV || GV->getVisibility() == GlobalValue::HiddenVisibility)
+      return C;
+
+    GV->setVisibility(GlobalValue::HiddenVisibility);
+    auto SetAbsRange = [&](uint64_t Min, uint64_t Max) {
+      auto *T = IntegerType::get(M.getContext(), PtrWidth);
+      auto *MinC = ConstantAsMetadata::get(ConstantInt::get(T, Min));
+      auto *MaxC = ConstantAsMetadata::get(ConstantInt::get(T, Max));
+      GV->setMetadata(LLVMContext::MD_absolute_symbol,
+                      MDNode::get(M.getContext(), {MinC, MaxC}));
+    };
+    if (AbsWidth == PtrWidth)
+      SetAbsRange(~0ull, ~0ull); // Full set.
+    else if (AbsWidth)
+      SetAbsRange(0, 1ull << AbsWidth);
+    return C;
+  };
+
+  if (TIL.TheKind != TypeTestResolution::Unsat)
+    TIL.OffsetedGlobal = ImportGlobal("global_addr", 0);
+
+  if (TIL.TheKind == TypeTestResolution::ByteArray ||
+      TIL.TheKind == TypeTestResolution::Inline ||
+      TIL.TheKind == TypeTestResolution::AllOnes) {
+    TIL.AlignLog2 = ConstantExpr::getPtrToInt(ImportGlobal("align", 8), Int8Ty);
+    TIL.SizeM1 = ConstantExpr::getPtrToInt(
+        ImportGlobal("size_m1", TTRes.SizeM1BitWidth), IntPtrTy);
+  }
+
+  if (TIL.TheKind == TypeTestResolution::ByteArray) {
+    TIL.TheByteArray = ImportGlobal("byte_array", 0);
+    TIL.BitMask = ImportGlobal("bit_mask", 8);
+  }
+
+  if (TIL.TheKind == TypeTestResolution::Inline)
+    TIL.InlineBits = ConstantExpr::getPtrToInt(
+        ImportGlobal("inline_bits", 1 << TTRes.SizeM1BitWidth),
+        TTRes.SizeM1BitWidth <= 5 ? Int32Ty : Int64Ty);
+
+  return TIL;
+}
+
+void LowerTypeTestsModule::importTypeTest(CallInst *CI) {
+  auto TypeIdMDVal = dyn_cast<MetadataAsValue>(CI->getArgOperand(1));
+  if (!TypeIdMDVal)
+    report_fatal_error("Second argument of llvm.type.test must be metadata");
+
+  auto TypeIdStr = dyn_cast<MDString>(TypeIdMDVal->getMetadata());
+  if (!TypeIdStr)
+    report_fatal_error(
+        "Second argument of llvm.type.test must be a metadata string");
+
+  TypeIdLowering TIL = importTypeId(TypeIdStr->getString());
+  Value *Lowered = lowerTypeTestCall(TypeIdStr, CI, TIL);
+  CI->replaceAllUsesWith(Lowered);
+  CI->eraseFromParent();
 }
 
 void LowerTypeTestsModule::lowerTypeTestCalls(
@@ -1271,6 +1347,12 @@ bool LowerTypeTestsModule::lower() {
   if ((!TypeTestFunc || TypeTestFunc->use_empty()) &&
       Action != SummaryAction::Export)
     return false;
+
+  if (Action == SummaryAction::Import) {
+    for (const Use &U : TypeTestFunc->uses())
+      importTypeTest(cast<CallInst>(U.getUser()));
+    return true;
+  }
 
   // Equivalence class set containing type identifiers and the globals that
   // reference them. This is used to partition the set of type identifiers in
