@@ -25,10 +25,11 @@ class StreamWriter;
 }
 namespace pdb {
 class PDBFile;
+class NamedStreamMap;
 
 class InfoStreamBuilder {
 public:
-  InfoStreamBuilder(msf::MSFBuilder &Msf);
+  InfoStreamBuilder(msf::MSFBuilder &Msf, NamedStreamMap &NamedStreams);
   InfoStreamBuilder(const InfoStreamBuilder &) = delete;
   InfoStreamBuilder &operator=(const InfoStreamBuilder &) = delete;
 
@@ -36,8 +37,6 @@ public:
   void setSignature(uint32_t S);
   void setAge(uint32_t A);
   void setGuid(PDB_UniqueId G);
-
-  NamedStreamMap &getNamedStreamsBuilder();
 
   uint32_t finalize();
 
@@ -54,7 +53,7 @@ private:
   uint32_t Age;
   PDB_UniqueId Guid;
 
-  NamedStreamMap NamedStreams;
+  NamedStreamMap &NamedStreams;
 };
 }
 }

@@ -37,6 +37,8 @@ public:
   uint32_t getAge() const;
   PDB_UniqueId getGuid() const;
 
+  const NamedStreamMap &getNamedStreams() const;
+
   uint32_t getNamedStreamIndex(llvm::StringRef Name) const;
   iterator_range<StringMapConstIterator<uint32_t>> named_streams() const;
 

@@ -31,7 +31,7 @@ public:
   // Returns the ID for S.
   uint32_t insert(StringRef S);
 
-  uint32_t calculateSerializedLength() const;
+  uint32_t finalize();
   Error commit(msf::StreamWriter &Writer) const;
 
 private:

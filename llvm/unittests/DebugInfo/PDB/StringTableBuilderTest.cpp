@@ -32,7 +32,7 @@ TEST_F(StringTableBuilderTest, Simple) {
   EXPECT_EQ(1U, Builder.insert("foo"));
   EXPECT_EQ(9U, Builder.insert("baz"));
 
-  std::vector<uint8_t> Buffer(Builder.calculateSerializedLength());
+  std::vector<uint8_t> Buffer(Builder.finalize());
   msf::MutableByteStream OutStream(Buffer);
   msf::StreamWriter Writer(OutStream);
   EXPECT_NO_ERROR(Builder.commit(Writer));

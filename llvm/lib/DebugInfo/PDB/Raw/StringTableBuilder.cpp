@@ -38,16 +38,17 @@ static uint32_t computeBucketCount(uint32_t NumStrings) {
   return (NumStrings + 1) * 1.25;
 }
 
-uint32_t StringTableBuilder::calculateSerializedLength() const {
+uint32_t StringTableBuilder::finalize() {
   uint32_t Size = 0;
   Size += sizeof(StringTableHeader);
   Size += StringSize;
-  Size += 4; // Hash table begins with 4-byte size field.
+  Size += sizeof(uint32_t); // Hash table begins with 4-byte size field.
 
   uint32_t BucketCount = computeBucketCount(Strings.size());
-  Size += BucketCount * 4;
+  Size += BucketCount * sizeof(uint32_t);
 
-  Size += 4; // The /names stream ends with the number of strings.
+  Size +=
+      sizeof(uint32_t); // The /names stream ends with the number of strings.
   return Size;
 }
 
