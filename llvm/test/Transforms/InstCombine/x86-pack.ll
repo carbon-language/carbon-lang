@@ -2,6 +2,82 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
 ;
+; UNDEF Elts
+;
+
+define <8 x i16> @undef_packssdw_128() {
+; CHECK-LABEL: @undef_packssdw_128(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <8 x i16> @llvm.x86.sse2.packssdw.128(<4 x i32> undef, <4 x i32> undef)
+; CHECK-NEXT:    ret <8 x i16> [[TMP1]]
+;
+  %1 = call <8 x i16> @llvm.x86.sse2.packssdw.128(<4 x i32> undef, <4 x i32> undef)
+  ret <8 x i16> %1
+}
+
+define <8 x i16> @undef_packusdw_128() {
+; CHECK-LABEL: @undef_packusdw_128(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <8 x i16> @llvm.x86.sse41.packusdw(<4 x i32> undef, <4 x i32> undef)
+; CHECK-NEXT:    ret <8 x i16> [[TMP1]]
+;
+  %1 = call <8 x i16> @llvm.x86.sse41.packusdw(<4 x i32> undef, <4 x i32> undef)
+  ret <8 x i16> %1
+}
+
+define <16 x i8> @undef_packsswb_128() {
+; CHECK-LABEL: @undef_packsswb_128(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <16 x i8> @llvm.x86.sse2.packsswb.128(<8 x i16> undef, <8 x i16> undef)
+; CHECK-NEXT:    ret <16 x i8> [[TMP1]]
+;
+  %1 = call <16 x i8> @llvm.x86.sse2.packsswb.128(<8 x i16> undef, <8 x i16> undef)
+  ret <16 x i8> %1
+}
+
+define <16 x i8> @undef_packuswb_128() {
+; CHECK-LABEL: @undef_packuswb_128(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <16 x i8> @llvm.x86.sse2.packuswb.128(<8 x i16> undef, <8 x i16> undef)
+; CHECK-NEXT:    ret <16 x i8> [[TMP1]]
+;
+  %1 = call <16 x i8> @llvm.x86.sse2.packuswb.128(<8 x i16> undef, <8 x i16> undef)
+  ret <16 x i8> %1
+}
+
+define <16 x i16> @undef_packssdw_256() {
+; CHECK-LABEL: @undef_packssdw_256(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <16 x i16> @llvm.x86.avx2.packssdw(<8 x i32> undef, <8 x i32> undef)
+; CHECK-NEXT:    ret <16 x i16> [[TMP1]]
+;
+  %1 = call <16 x i16> @llvm.x86.avx2.packssdw(<8 x i32> undef, <8 x i32> undef)
+  ret <16 x i16> %1
+}
+
+define <16 x i16> @undef_packusdw_256() {
+; CHECK-LABEL: @undef_packusdw_256(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <16 x i16> @llvm.x86.avx2.packusdw(<8 x i32> undef, <8 x i32> undef)
+; CHECK-NEXT:    ret <16 x i16> [[TMP1]]
+;
+  %1 = call <16 x i16> @llvm.x86.avx2.packusdw(<8 x i32> undef, <8 x i32> undef)
+  ret <16 x i16> %1
+}
+
+define <32 x i8> @undef_packsswb_256() {
+; CHECK-LABEL: @undef_packsswb_256(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <32 x i8> @llvm.x86.avx2.packsswb(<16 x i16> undef, <16 x i16> undef)
+; CHECK-NEXT:    ret <32 x i8> [[TMP1]]
+;
+  %1 = call <32 x i8> @llvm.x86.avx2.packsswb(<16 x i16> undef, <16 x i16> undef)
+  ret <32 x i8> %1
+}
+
+define <32 x i8> @undef_packuswb_256() {
+; CHECK-LABEL: @undef_packuswb_256(
+; CHECK-NEXT:    [[TMP1:%.*]] = call <32 x i8> @llvm.x86.avx2.packuswb(<16 x i16> undef, <16 x i16> undef)
+; CHECK-NEXT:    ret <32 x i8> [[TMP1]]
+;
+  %1 = call <32 x i8> @llvm.x86.avx2.packuswb(<16 x i16> undef, <16 x i16> undef)
+  ret <32 x i8> %1
+}
+
+;
 ; Demanded Elts
 ;
 
