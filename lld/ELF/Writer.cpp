@@ -765,14 +765,9 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   auto Define = [this](StringRef S, DefinedRegular<ELFT> *&Sym1,
                        DefinedRegular<ELFT> *&Sym2) {
     Sym1 = Symtab<ELFT>::X->addIgnored(S, STV_DEFAULT);
-
-    // The name without the underscore is not a reserved name,
-    // so it is defined only when there is a reference against it.
     assert(S.startswith("_"));
     S = S.substr(1);
-    if (SymbolBody *B = Symtab<ELFT>::X->find(S))
-      if (!B->isInCurrentDSO())
-        Sym2 = Symtab<ELFT>::X->addAbsolute(S, STV_DEFAULT);
+    Sym2 = Symtab<ELFT>::X->addIgnored(S, STV_DEFAULT);
   };
 
   Define("_end", ElfSym<ELFT>::End, ElfSym<ELFT>::End2);
