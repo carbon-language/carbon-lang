@@ -27,7 +27,7 @@
 ; RUN:     | FileCheck %s --check-prefix=CHECK-O --check-prefix=CHECK-O2
 
 ;CHECK-O: Starting llvm::Module pass manager run.
-;CHECK-O-NEXT: Running pass: PassManager<llvm::Module>
+;CHECK-O-NEXT: Running pass: PassManager<{{.*}}Module{{.*}}>
 ;CHECK-O-NEXT: Starting llvm::Module pass manager run.
 ;CHECK-O-NEXT: Running pass: ForceFunctionAttrsPass
 ;CHECK-O-NEXT: Running pass: InferFunctionAttrsPass
