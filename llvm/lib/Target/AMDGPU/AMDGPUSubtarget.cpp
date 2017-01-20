@@ -109,6 +109,8 @@ AMDGPUSubtarget::AMDGPUSubtarget(const Triple &TT, StringRef GPU, StringRef FS,
     HasMovrel(false),
     HasVGPRIndexMode(false),
     HasScalarStores(false),
+    HasSDWA(false),
+    HasDPP(false),
     HasInv2PiInlineImm(false),
     FlatAddressSpace(false),
 
