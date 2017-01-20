@@ -601,7 +601,7 @@ Error LTO::runRegularLTO(AddStreamFn AddStream) {
       return Error::success();
   }
   return backend(Conf, AddStream, RegularLTO.ParallelCodeGenParallelismLevel,
-                 std::move(RegularLTO.CombinedModule));
+                 std::move(RegularLTO.CombinedModule), ThinLTO.CombinedIndex);
 }
 
 /// This class defines the interface to the ThinLTO backend.
