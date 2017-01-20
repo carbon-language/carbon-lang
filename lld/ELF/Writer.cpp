@@ -1330,7 +1330,7 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
 }
 
 template <class ELFT>
-bool elf::allocateHeaders(MutableArrayRef<PhdrEntry> Phdrs,
+bool elf::allocateHeaders(std::vector<PhdrEntry> &Phdrs,
                           ArrayRef<OutputSectionBase *> OutputSections,
                           uint64_t Min) {
   auto FirstPTLoad =
@@ -1340,8 +1340,14 @@ bool elf::allocateHeaders(MutableArrayRef<PhdrEntry> Phdrs,
     return false;
 
   uint64_t HeaderSize = getHeaderSize<ELFT>();
-  if (HeaderSize > Min)
+  if (HeaderSize > Min) {
+    auto PhdrI =
+        std::find_if(Phdrs.begin(), Phdrs.end(),
+                     [](const PhdrEntry &E) { return E.p_type == PT_PHDR; });
+    if (PhdrI != Phdrs.end())
+      Phdrs.erase(PhdrI);
     return false;
+  }
   Min = alignDown(Min - HeaderSize, Config->MaxPageSize);
 
   if (!ScriptConfig->HasSections)
@@ -1744,16 +1750,16 @@ template void elf::writeResult<ELF32BE>();
 template void elf::writeResult<ELF64LE>();
 template void elf::writeResult<ELF64BE>();
 
-template bool elf::allocateHeaders<ELF32LE>(MutableArrayRef<PhdrEntry>,
+template bool elf::allocateHeaders<ELF32LE>(std::vector<PhdrEntry> &,
                                             ArrayRef<OutputSectionBase *>,
                                             uint64_t);
-template bool elf::allocateHeaders<ELF32BE>(MutableArrayRef<PhdrEntry>,
+template bool elf::allocateHeaders<ELF32BE>(std::vector<PhdrEntry> &,
                                             ArrayRef<OutputSectionBase *>,
                                             uint64_t);
-template bool elf::allocateHeaders<ELF64LE>(MutableArrayRef<PhdrEntry>,
+template bool elf::allocateHeaders<ELF64LE>(std::vector<PhdrEntry> &,
                                             ArrayRef<OutputSectionBase *>,
                                             uint64_t);
-template bool elf::allocateHeaders<ELF64BE>(MutableArrayRef<PhdrEntry>,
+template bool elf::allocateHeaders<ELF64BE>(std::vector<PhdrEntry> &,
                                             ArrayRef<OutputSectionBase *>,
                                             uint64_t);
 

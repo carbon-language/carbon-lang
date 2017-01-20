@@ -50,7 +50,7 @@ struct PhdrEntry {
 llvm::StringRef getOutputSectionName(llvm::StringRef Name);
 
 template <class ELFT>
-bool allocateHeaders(llvm::MutableArrayRef<PhdrEntry>,
+bool allocateHeaders(std::vector<PhdrEntry> &,
                      llvm::ArrayRef<OutputSectionBase *>, uint64_t Min);
 template <class ELFT> void reportDiscarded(InputSectionBase<ELFT> *IS);
 
