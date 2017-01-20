@@ -358,12 +358,15 @@ int MinimizeCrashInputInternalStep(Fuzzer *F, InputCorpus *Corpus) {
 int FuzzerDriver(int *argc, char ***argv, UserCallback Callback) {
   using namespace fuzzer;
   assert(argc && argv && "Argument pointers cannot be nullptr");
+  std::string Argv0((*argv)[0]);
   EF = new ExternalFunctions();
   if (EF->LLVMFuzzerInitialize)
     EF->LLVMFuzzerInitialize(argc, argv);
   const std::vector<std::string> Args(*argv, *argv + *argc);
   assert(!Args.empty());
   ProgName = new std::string(Args[0]);
+  assert(Argv0 == *ProgName &&
+         "argv[0] has been modified in LLVMFuzzerInitialize");
   ParseFlags(Args);
   if (Flags.help) {
     PrintHelp();
