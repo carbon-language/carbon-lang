@@ -27,6 +27,10 @@ using namespace llvm::pdb;
 NamedStreamMap::NamedStreamMap() = default;
 
 Error NamedStreamMap::load(StreamReader &Stream) {
+  Mapping.clear();
+  FinalizedHashTable.clear();
+  FinalizedInfo.reset();
+
   uint32_t StringBufferSize;
   if (auto EC = Stream.readInteger(StringBufferSize))
     return joinErrors(std::move(EC),
@@ -63,16 +67,69 @@ Error NamedStreamMap::load(StreamReader &Stream) {
   return Error::success();
 }
 
+Error NamedStreamMap::commit(msf::StreamWriter &Writer) const {
+  assert(FinalizedInfo.hasValue());
+
+  // The first field is the number of bytes of string data.
+  if (auto EC = Writer.writeInteger(
+          FinalizedInfo->StringDataBytes)) // Number of bytes of string data
+    return EC;
+
+  // Now all of the string data itself.
+  for (const auto &Item : Mapping) {
+    if (auto EC = Writer.writeZeroString(Item.getKey()))
+      return EC;
+  }
+
+  // And finally the Offset Index map.
+  if (auto EC = FinalizedHashTable.commit(Writer))
+    return EC;
+
+  return Error::success();
+}
+
+uint32_t NamedStreamMap::finalize() {
+  if (FinalizedInfo.hasValue())
+    return FinalizedInfo->SerializedLength;
+
+  // Build the finalized hash table.
+  FinalizedHashTable.clear();
+  FinalizedInfo.emplace();
+  for (const auto &Item : Mapping) {
+    FinalizedHashTable.set(FinalizedInfo->StringDataBytes, Item.getValue());
+    FinalizedInfo->StringDataBytes += Item.getKeyLength() + 1;
+  }
+
+  // Number of bytes of string data.
+  FinalizedInfo->SerializedLength += sizeof(support::ulittle32_t);
+  // Followed by that many actual bytes of string data.
+  FinalizedInfo->SerializedLength += FinalizedInfo->StringDataBytes;
+  // Followed by the mapping from Offset to Index.
+  FinalizedInfo->SerializedLength +=
+      FinalizedHashTable.calculateSerializedLength();
+  return FinalizedInfo->SerializedLength;
+}
+
 iterator_range<StringMapConstIterator<uint32_t>>
 NamedStreamMap::entries() const {
   return make_range<StringMapConstIterator<uint32_t>>(Mapping.begin(),
                                                       Mapping.end());
 }
 
-bool NamedStreamMap::tryGetValue(StringRef Name, uint32_t &Value) const {
-  auto Iter = Mapping.find(Name);
+bool NamedStreamMap::get(StringRef Stream, uint32_t &StreamNo) const {
+  auto Iter = Mapping.find(Stream);
   if (Iter == Mapping.end())
     return false;
-  Value = Iter->second;
+  StreamNo = Iter->second;
   return true;
+}
+
+void NamedStreamMap::set(StringRef Stream, uint32_t StreamNo) {
+  FinalizedInfo.reset();
+  Mapping[Stream] = StreamNo;
+}
+
+void NamedStreamMap::remove(StringRef Stream) {
+  FinalizedInfo.reset();
+  Mapping.erase(Stream);
 }

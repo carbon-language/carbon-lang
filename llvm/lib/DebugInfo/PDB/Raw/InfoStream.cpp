@@ -56,7 +56,7 @@ Error InfoStream::reload() {
 
 uint32_t InfoStream::getNamedStreamIndex(llvm::StringRef Name) const {
   uint32_t Result;
-  if (!NamedStreams.tryGetValue(Name, Result))
+  if (!NamedStreams.get(Name, Result))
     return 0;
   return Result;
 }

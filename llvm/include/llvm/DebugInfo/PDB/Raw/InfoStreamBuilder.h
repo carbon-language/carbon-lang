@@ -14,7 +14,7 @@
 #include "llvm/Support/Error.h"
 
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
-#include "llvm/DebugInfo/PDB/Raw/NamedStreamMapBuilder.h"
+#include "llvm/DebugInfo/PDB/Raw/NamedStreamMap.h"
 #include "llvm/DebugInfo/PDB/Raw/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 
@@ -37,9 +37,9 @@ public:
   void setAge(uint32_t A);
   void setGuid(PDB_UniqueId G);
 
-  NamedStreamMapBuilder &getNamedStreamsBuilder();
+  NamedStreamMap &getNamedStreamsBuilder();
 
-  uint32_t calculateSerializedLength() const;
+  uint32_t finalize();
 
   Error finalizeMsfLayout();
 
@@ -54,7 +54,7 @@ private:
   uint32_t Age;
   PDB_UniqueId Guid;
 
-  NamedStreamMapBuilder NamedStreams;
+  NamedStreamMap NamedStreams;
 };
 }
 }

@@ -32,16 +32,12 @@ void InfoStreamBuilder::setAge(uint32_t A) { Age = A; }
 
 void InfoStreamBuilder::setGuid(PDB_UniqueId G) { Guid = G; }
 
-NamedStreamMapBuilder &InfoStreamBuilder::getNamedStreamsBuilder() {
+NamedStreamMap &InfoStreamBuilder::getNamedStreamsBuilder() {
   return NamedStreams;
 }
 
-uint32_t InfoStreamBuilder::calculateSerializedLength() const {
-  return sizeof(InfoStreamHeader) + NamedStreams.calculateSerializedLength();
-}
-
 Error InfoStreamBuilder::finalizeMsfLayout() {
-  uint32_t Length = calculateSerializedLength();
+  uint32_t Length = sizeof(InfoStreamHeader) + NamedStreams.finalize();
   if (auto EC = Msf.setStreamSize(StreamPDB, Length))
     return EC;
   return Error::success();

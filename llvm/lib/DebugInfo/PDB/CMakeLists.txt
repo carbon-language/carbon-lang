@@ -40,7 +40,6 @@ add_pdb_impl_folder(Raw
   Raw/ModInfo.cpp
   Raw/ModStream.cpp
   Raw/NamedStreamMap.cpp
-  Raw/NamedStreamMapBuilder.cpp
   Raw/PDBFile.cpp
   Raw/PDBFileBuilder.cpp
   Raw/PublicsStream.cpp
