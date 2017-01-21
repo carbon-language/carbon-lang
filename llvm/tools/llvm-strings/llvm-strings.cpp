@@ -57,7 +57,6 @@ static void strings(raw_ostream &OS, StringRef FileName, StringRef Contents) {
     if (PrintFileName)
       OS << FileName << ":";
     switch (Radix) {
-    default:
     case none:
       break;
     case octal:
