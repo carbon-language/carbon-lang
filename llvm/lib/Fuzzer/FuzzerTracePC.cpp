@@ -20,7 +20,6 @@
 #include "FuzzerTracePC.h"
 #include "FuzzerValueBitMap.h"
 #include <map>
-#include <sanitizer/coverage_interface.h>
 #include <set>
 #include <sstream>
 
