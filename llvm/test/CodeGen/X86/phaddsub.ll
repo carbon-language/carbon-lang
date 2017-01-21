@@ -225,3 +225,36 @@ define <4 x i32> @phsubd4(<4 x i32> %x) {
   %r = sub <4 x i32> %a, %b
   ret <4 x i32> %r
 }
+
+define <8 x i16> @phsubw1_reverse(<8 x i16> %x, <8 x i16> %y) {
+; SSSE3-LABEL: phsubw1_reverse:
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    phsubw %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; AVX-LABEL: phsubw1_reverse:
+; AVX:       # BB#0:
+; AVX-NEXT:    vphsubw %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %a = shufflevector <8 x i16> %x, <8 x i16> %y, <8 x i32> <i32 1, i32 3, i32 5, i32 7, i32 9, i32 11, i32 13, i32 15>
+  %b = shufflevector <8 x i16> %x, <8 x i16> %y, <8 x i32> <i32 0, i32 2, i32 4, i32 6, i32 8, i32 10, i32 12, i32 14>
+  %r = sub <8 x i16> %a, %b
+  ret <8 x i16> %r
+}
+
+define <4 x i32> @phsubd1_reverse(<4 x i32> %x, <4 x i32> %y) {
+; SSSE3-LABEL: phsubd1_reverse:
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    phsubd %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+;
+; AVX-LABEL: phsubd1_reverse:
+; AVX:       # BB#0:
+; AVX-NEXT:    vphsubd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %a = shufflevector <4 x i32> %x, <4 x i32> %y, <4 x i32> <i32 1, i32 3, i32 5, i32 7>
+  %b = shufflevector <4 x i32> %x, <4 x i32> %y, <4 x i32> <i32 0, i32 2, i32 4, i32 6>
+  %r = sub <4 x i32> %a, %b
+  ret <4 x i32> %r
+}
+
