@@ -674,7 +674,7 @@ bool CFI_Parser<A>::parseInstructions(A &addressSpace, pint_t instructions,
         reg = operand;
         results->savedRegisters[reg] = initialState.savedRegisters[reg];
         _LIBUNWIND_TRACE_DWARF("DW_CFA_restore(reg=%" PRIu64 ")\n",
-                               static_cast<long>(operand));
+                               static_cast<uint64_t>(operand));
         break;
       default:
         _LIBUNWIND_TRACE_DWARF("unknown CFA opcode 0x%02X\n", opcode);
