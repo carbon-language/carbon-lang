@@ -30,7 +30,9 @@ int main()
     static_assert((std::is_same<typename H::argument_type, std::type_index>::value), "" );
     static_assert((std::is_same<typename H::result_type, std::size_t>::value), "" );
   }
+#if TEST_STD_VER >= 11
   {
     test_hash_enabled_for_type<std::type_index>(std::type_index(typeid(int)));
   }
+#endif
 }
