@@ -139,13 +139,11 @@ define i32 @ashr_overshift(i32 %x) {
   ret i32 %sh2
 }
 
-; FIXME:
 ; (X >>s C1) >>s C2 --> X >>s (C1 + C2)
 
 define <2 x i32> @ashr_ashr_splat_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @ashr_ashr_splat_vec(
-; CHECK-NEXT:    [[SH1:%.*]] = ashr <2 x i32> %x, <i32 5, i32 5>
-; CHECK-NEXT:    [[SH2:%.*]] = ashr <2 x i32> [[SH1]], <i32 7, i32 7>
+; CHECK-NEXT:    [[SH2:%.*]] = ashr <2 x i32> %x, <i32 12, i32 12>
 ; CHECK-NEXT:    ret <2 x i32> [[SH2]]
 ;
   %sh1 = ashr <2 x i32> %x, <i32 5, i32 5>
@@ -153,13 +151,11 @@ define <2 x i32> @ashr_ashr_splat_vec(<2 x i32> %x) {
   ret <2 x i32> %sh2
 }
 
-; FIXME:
 ; (X >>s C1) >>s C2 --> X >>s (Bitwidth - 1)
 
 define <2 x i32> @ashr_overshift_splat_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @ashr_overshift_splat_vec(
-; CHECK-NEXT:    [[SH1:%.*]] = ashr <2 x i32> %x, <i32 15, i32 15>
-; CHECK-NEXT:    [[SH2:%.*]] = ashr <2 x i32> [[SH1]], <i32 17, i32 17>
+; CHECK-NEXT:    [[SH2:%.*]] = ashr <2 x i32> %x, <i32 31, i32 31>
 ; CHECK-NEXT:    ret <2 x i32> [[SH2]]
 ;
   %sh1 = ashr <2 x i32> %x, <i32 15, i32 15>
