@@ -66,18 +66,6 @@ void TracePC::HandleCallerCallee(uintptr_t Caller, uintptr_t Callee) {
   HandleValueProfile(Idx);
 }
 
-static bool IsInterestingCoverageFile(std::string &File) {
-  if (File.find("compiler-rt/lib/") != std::string::npos)
-    return false; // sanitizer internal.
-  if (File.find("/usr/lib/") != std::string::npos)
-    return false;
-  if (File.find("/usr/include/") != std::string::npos)
-    return false;
-  if (File == "<null>")
-    return false;
-  return true;
-}
-
 void TracePC::InitializePrintNewPCs() {
   if (!DoPrintNewPCs) return;
   assert(!PrintedPCs);

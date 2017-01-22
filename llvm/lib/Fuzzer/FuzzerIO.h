@@ -40,6 +40,8 @@ std::string DirName(const std::string &FileName);
 // Returns path to a TmpDir.
 std::string TmpDir();
 
+bool IsInterestingCoverageFile(const std::string &FileName);
+
 void DupAndCloseStderr();
 
 void CloseStdout();

@@ -279,6 +279,16 @@ std::string DirName(const std::string &FileName) {
 
 std::string TmpDir() { return "TODO: implement TmpDir"; }
 
+bool IsInterestingCoverageFile(const std::string &FileName) {
+  if (FileName.find("Program Files") != std::string::npos)
+    return false;
+  if (FileName.find("compiler-rt\\lib\\") != std::string::npos)
+    return false; // sanitizer internal.
+  if (FileName == "<null>")
+    return false;
+  return true;
+}
+
 }  // namespace fuzzer
 
 #endif // LIBFUZZER_WINDOWS

@@ -89,6 +89,18 @@ std::string TmpDir() {
   return "/tmp";
 }
 
+bool IsInterestingCoverageFile(const std::string &FileName) {
+  if (FileName.find("compiler-rt/lib/") != std::string::npos)
+    return false; // sanitizer internal.
+  if (FileName.find("/usr/lib/") != std::string::npos)
+    return false;
+  if (FileName.find("/usr/include/") != std::string::npos)
+    return false;
+  if (FileName == "<null>")
+    return false;
+  return true;
+}
+
 }  // namespace fuzzer
 
 #endif // LIBFUZZER_POSIX
