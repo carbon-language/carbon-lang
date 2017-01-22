@@ -18,6 +18,7 @@
 #include "FuzzerExtFunctions.h"
 #include "FuzzerIO.h"
 #include "FuzzerTracePC.h"
+#include "FuzzerUtil.h"
 #include "FuzzerValueBitMap.h"
 #include <map>
 #include <set>
@@ -141,8 +142,8 @@ void TracePC::PrintCoverage() {
     Printf("MODULE_WITH_COVERAGE: %s\n", ModuleName.c_str());
     // sancov does not yet fully support DSOs.
     // std::string Cmd = "sancov -print-coverage-pcs " + ModuleName;
-    std::string Cmd = "objdump -d " + ModuleName +
-        " | grep 'call.*__sanitizer_cov_trace_pc_guard' | awk -F: '{print $1}'";
+    std::string Cmd = DisassembleCmd(ModuleName) + " | " +
+        SearchRegexCmd("call.*__sanitizer_cov_trace_pc_guard");
     std::string SanCovOutput;
     if (!ExecuteCommandAndReadOutput(Cmd, &SanCovOutput)) {
       Printf("INFO: Command failed: %s\n", Cmd.c_str());
@@ -151,6 +152,10 @@ void TracePC::PrintCoverage() {
     std::istringstream ISS(SanCovOutput);
     std::string S;
     while (std::getline(ISS, S, '\n')) {
+      size_t PcOffsetEnd = S.find(':');
+      if (PcOffsetEnd == std::string::npos)
+        continue;
+      S.resize(PcOffsetEnd);
       uintptr_t PcOffset = std::stol(S, 0, 16);
       if (!std::binary_search(CoveredOffsets.begin(), CoveredOffsets.end(),
                               PcOffset)) {
