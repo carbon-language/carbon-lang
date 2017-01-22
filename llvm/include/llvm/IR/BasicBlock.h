@@ -111,7 +111,7 @@ public:
 
   /// \brief Returns the terminator instruction if the block is well formed or
   /// null if the block is not well formed.
-  TerminatorInst *getTerminator();
+  TerminatorInst *getTerminator() LLVM_READONLY;
   const TerminatorInst *getTerminator() const {
     return const_cast<BasicBlock *>(this)->getTerminator();
   }
