@@ -5686,6 +5686,15 @@ static bool setTargetShuffleZeroElements(SDValue N,
       continue;
     }
 
+    // SCALAR_TO_VECTOR - only the first element is defined, and the rest UNDEF.
+    if (V.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+        (Size % V.getValueType().getVectorNumElements()) == 0) {
+      int Scale = Size / V.getValueType().getVectorNumElements();
+      if (((M / Scale) == 0) && X86::isZeroNode(V.getOperand(0)))
+        Mask[i] = SM_SentinelZero;
+      continue;
+    }
+
     // Currently we can only search BUILD_VECTOR for UNDEF/ZERO elements.
     if (V.getOpcode() != ISD::BUILD_VECTOR)
       continue;
