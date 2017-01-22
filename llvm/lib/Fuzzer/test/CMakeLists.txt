@@ -11,17 +11,7 @@ set(variables_to_filter
   LIBFUZZER_FLAGS_BASE
   )
 foreach (VARNAME ${variables_to_filter})
-  string(REPLACE " " ";" BUILD_FLAGS_AS_LIST "${${VARNAME}}")
-  set(new_flags "")
-  foreach (flag ${BUILD_FLAGS_AS_LIST})
-    # NOTE: Use of XX here is to avoid a CMake warning due to CMP0054
-    if (NOT ("XX${flag}" MATCHES "XX-O[0123s]"))
-      set(new_flags "${new_flags} ${flag}")
-    else()
-      set(new_flags "${new_flags} -O0")
-    endif()
-  endforeach()
-  set(${VARNAME} "${new_flags}")
+  string(REGEX REPLACE "([-/]O)[123s]" "\\10" ${VARNAME} "${${VARNAME}}")
 endforeach()
 
 # Enable the coverage instrumentation (it is disabled for the Fuzzer lib).
