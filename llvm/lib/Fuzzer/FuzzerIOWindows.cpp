@@ -89,8 +89,10 @@ void ListFilesInDirRecursive(const std::string &Dir, long *Epoch,
   HANDLE FindHandle(FindFirstFileA(Path.c_str(), &FindInfo));
   if (FindHandle == INVALID_HANDLE_VALUE)
   {
-    Printf("No file found in: %s.\n", Dir.c_str());
-    return;
+    if (GetLastError() == ERROR_FILE_NOT_FOUND)
+      return;
+    Printf("No such directory: %s; exiting\n", Dir.c_str());
+    exit(1);
   }
 
   do {
