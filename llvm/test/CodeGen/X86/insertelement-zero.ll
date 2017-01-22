@@ -440,8 +440,8 @@ define <16 x i16> @insert_v16i16_z12345z789ABZDEz(<16 x i16> %a) {
   ret <16 x i16> %3
 }
 
-define <16 x i8> @insert_v16i8_z123456789ABZDEz(<16 x i8> %a) {
-; SSE2-LABEL: insert_v16i8_z123456789ABZDEz:
+define <16 x i8> @insert_v16i8_z123456789ABCDEz(<16 x i8> %a) {
+; SSE2-LABEL: insert_v16i8_z123456789ABCDEz:
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    movdqa {{.*#+}} xmm1 = [0,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255]
 ; SSE2-NEXT:    pand %xmm1, %xmm0
@@ -456,7 +456,7 @@ define <16 x i8> @insert_v16i8_z123456789ABZDEz(<16 x i8> %a) {
 ; SSE2-NEXT:    por %xmm1, %xmm0
 ; SSE2-NEXT:    retq
 ;
-; SSE3-LABEL: insert_v16i8_z123456789ABZDEz:
+; SSE3-LABEL: insert_v16i8_z123456789ABCDEz:
 ; SSE3:       # BB#0:
 ; SSE3-NEXT:    movdqa {{.*#+}} xmm1 = [0,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255]
 ; SSE3-NEXT:    pand %xmm1, %xmm0
@@ -471,7 +471,7 @@ define <16 x i8> @insert_v16i8_z123456789ABZDEz(<16 x i8> %a) {
 ; SSE3-NEXT:    por %xmm1, %xmm0
 ; SSE3-NEXT:    retq
 ;
-; SSSE3-LABEL: insert_v16i8_z123456789ABZDEz:
+; SSSE3-LABEL: insert_v16i8_z123456789ABCDEz:
 ; SSSE3:       # BB#0:
 ; SSSE3-NEXT:    pshufb {{.*#+}} xmm0 = zero,xmm0[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
 ; SSSE3-NEXT:    xorl %eax, %eax
@@ -484,14 +484,14 @@ define <16 x i8> @insert_v16i8_z123456789ABZDEz(<16 x i8> %a) {
 ; SSSE3-NEXT:    por %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
 ;
-; SSE41-LABEL: insert_v16i8_z123456789ABZDEz:
+; SSE41-LABEL: insert_v16i8_z123456789ABCDEz:
 ; SSE41:       # BB#0:
 ; SSE41-NEXT:    xorl %eax, %eax
 ; SSE41-NEXT:    pinsrb $0, %eax, %xmm0
 ; SSE41-NEXT:    pinsrb $15, %eax, %xmm0
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: insert_v16i8_z123456789ABZDEz:
+; AVX-LABEL: insert_v16i8_z123456789ABCDEz:
 ; AVX:       # BB#0:
 ; AVX-NEXT:    xorl %eax, %eax
 ; AVX-NEXT:    vpinsrb $0, %eax, %xmm0, %xmm0
