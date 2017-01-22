@@ -121,10 +121,10 @@ set(Tests
   TraceMallocTest
   )
 
-if(APPLE)
-  # LeakSanitizer is not supported on OSX right now
+if(APPLE OR MSVC)
+  # LeakSanitizer is not supported on OSX and Windows right now
   set(HAS_LSAN 0)
-  message(WARNING "LeakSanitizer is not supported on Apple platforms."
+  message(WARNING "LeakSanitizer is not supported."
     " Building and running LibFuzzer LeakSanitizer tests is disabled."
     )
 else()
