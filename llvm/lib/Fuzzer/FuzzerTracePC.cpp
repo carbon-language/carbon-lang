@@ -257,45 +257,48 @@ inline ALWAYS_INLINE uintptr_t GetPreviousInstructionPc(void* pc) {
 } // namespace fuzzer
 
 extern "C" {
-__attribute__((visibility("default")))
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_pc_guard(uint32_t *Guard) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleTrace(Guard, PC);
 }
 
-__attribute__((visibility("default")))
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_pc_guard_init(uint32_t *Start, uint32_t *Stop) {
   fuzzer::TPC.HandleInit(Start, Stop);
 }
 
-__attribute__((visibility("default")))
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_pc_indir(uintptr_t Callee) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCallerCallee(PC, Callee);
 }
 
-__attribute__((visibility("default")))
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_cmp8(uint64_t Arg1, uint64_t Arg2) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCmp(PC, Arg1, Arg2);
 }
-__attribute__((visibility("default")))
+
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_cmp4(uint32_t Arg1, uint32_t Arg2) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCmp(PC, Arg1, Arg2);
 }
-__attribute__((visibility("default")))
+
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_cmp2(uint16_t Arg1, uint16_t Arg2) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCmp(PC, Arg1, Arg2);
 }
-__attribute__((visibility("default")))
+
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_cmp1(uint8_t Arg1, uint8_t Arg2) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCmp(PC, Arg1, Arg2);
 }
 
-__attribute__((visibility("default")))
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_switch(uint64_t Val, uint64_t *Cases) {
   uint64_t N = Cases[0];
   uint64_t ValSizeInBits = Cases[1];
@@ -320,20 +323,21 @@ void __sanitizer_cov_trace_switch(uint64_t Val, uint64_t *Cases) {
     fuzzer::TPC.HandleCmp(PC + i, Token, (uint64_t)(0));
 }
 
-__attribute__((visibility("default")))
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_div4(uint32_t Val) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCmp(PC, Val, (uint32_t)0);
 }
-__attribute__((visibility("default")))
+
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_div8(uint64_t Val) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCmp(PC, Val, (uint64_t)0);
 }
-__attribute__((visibility("default")))
+
+ATTRIBUTE_INTERFACE
 void __sanitizer_cov_trace_gep(uintptr_t Idx) {
   uintptr_t PC = fuzzer::GetPreviousInstructionPc(__builtin_return_address(0));
   fuzzer::TPC.HandleCmp(PC, Idx, (uintptr_t)0);
 }
-
 }  // extern "C"
