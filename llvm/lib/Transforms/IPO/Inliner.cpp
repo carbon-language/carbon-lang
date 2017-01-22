@@ -814,6 +814,8 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
     if (F.hasFnAttribute(Attribute::OptimizeNone))
       continue;
 
+    DEBUG(dbgs() << "Inlining calls in: " << F.getName() << "\n");
+
     // Get the remarks emission analysis for the caller.
     auto &ORE = FAM.getResult<OptimizationRemarkEmitterAnalysis>(F);
 
@@ -916,6 +918,7 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
     // re-use the exact same logic for updating the call graph to reflect the
     // change..
     C = &updateCGAndAnalysisManagerForFunctionPass(CG, *C, N, AM, UR);
+    DEBUG(dbgs() << "Updated inlining SCC: " << *C << "\n");
     RC = &C->getOuterRefSCC();
   } while (!Nodes.empty());
 
