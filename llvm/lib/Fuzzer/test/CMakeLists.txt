@@ -195,10 +195,20 @@ target_link_libraries(LLVMFuzzer-DSOTest
 
 set_target_properties(LLVMFuzzer-DSOTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY
   "${CMAKE_BINARY_DIR}/lib/Fuzzer/test")
-set_target_properties(LLVMFuzzer-DSO1 PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-  "${CMAKE_BINARY_DIR}/lib/Fuzzer/lib")
-set_target_properties(LLVMFuzzer-DSO2 PROPERTIES LIBRARY_OUTPUT_DIRECTORY
-  "${CMAKE_BINARY_DIR}/lib/Fuzzer/lib")
+
+if(MSVC)
+  set_output_directory(LLVMFuzzer-DSO1
+    BINARY_DIR "${CMAKE_BINARY_DIR}/lib/Fuzzer/test"
+    LIBRARY_DIR "${CMAKE_BINARY_DIR}/lib/Fuzzer/test")
+  set_output_directory(LLVMFuzzer-DSO2
+    BINARY_DIR "${CMAKE_BINARY_DIR}/lib/Fuzzer/test"
+    LIBRARY_DIR "${CMAKE_BINARY_DIR}/lib/Fuzzer/test")
+else(MSVC)
+  set_output_directory(LLVMFuzzer-DSO1
+    LIBRARY_DIR "${CMAKE_BINARY_DIR}/lib/Fuzzer/lib")
+  set_output_directory(LLVMFuzzer-DSO2
+    LIBRARY_DIR "${CMAKE_BINARY_DIR}/lib/Fuzzer/lib")
+endif()
 
 set(TestBinaries ${TestBinaries} LLVMFuzzer-DSOTest)
 
