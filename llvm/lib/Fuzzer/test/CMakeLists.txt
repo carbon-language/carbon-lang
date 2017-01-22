@@ -18,6 +18,13 @@ endforeach()
 set(CMAKE_CXX_FLAGS "${LIBFUZZER_FLAGS_BASE} -fsanitize-coverage=trace-pc-guard,indirect-calls,trace-cmp,trace-div,trace-gep -gline-tables-only")
 
 if(MSVC)
+  # For tests use the CRT specified for release build
+  # (asan doesn't support MDd and MTd)
+  if ("${LLVM_USE_CRT_RELEASE}" STREQUAL "")
+    set(CRT_FLAG " /MD ")
+  else()
+    set(CRT_FLAG " /${LLVM_USE_CRT_RELEASE} ")
+  endif()
   # In order to use the sanitizers in Windows, we need to link against many
   # runtime libraries which will depend on the target being created
   # (executable or dll) and the c runtime library used (MT/MD).
@@ -28,8 +35,8 @@ if(MSVC)
   # the rules for linking executables and shared libraries, using the compiler
   # instead of link.exe. Clang will consider the sanitizer flags, and
   # automatically provide the required libraries to the linker.
-  set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> ${CMAKE_CXX_FLAGS} <OBJECTS> -o <TARGET> <LINK_LIBRARIES> /link <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS>")
-  set(CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> ${CMAKE_CXX_FLAGS} /LD <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG> <TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES> /link <LINK_FLAGS>")
+  set(CMAKE_CXX_LINK_EXECUTABLE "<CMAKE_CXX_COMPILER> <FLAGS> ${CMAKE_CXX_FLAGS} ${CRT_FLAG} <OBJECTS> -o <TARGET> <LINK_LIBRARIES> /link <CMAKE_CXX_LINK_FLAGS> <LINK_FLAGS>")
+  set(CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> ${CMAKE_CXX_FLAGS} ${CRT_FLAG} /LD <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <CMAKE_SHARED_LIBRARY_SONAME_CXX_FLAG> <TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES> /link <LINK_FLAGS>")
 endif()
 
 # add_libfuzzer_test(<name>
