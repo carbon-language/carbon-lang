@@ -75,6 +75,14 @@ void RemoveFile(const std::string &Path) {
   unlink(Path.c_str());
 }
 
+void DiscardOutput(int Fd) {
+  FILE* Temp = fopen("/dev/null", "w");
+  if (!Temp)
+    return;
+  dup2(fileno(Temp), Fd);
+  fclose(Temp);
+}
+
 std::string DirName(const std::string &FileName) {
   char *Tmp = new char[FileName.size() + 1];
   memcpy(Tmp, FileName.c_str(), FileName.size() + 1);

@@ -141,6 +141,14 @@ void RemoveFile(const std::string &Path) {
   _unlink(Path.c_str());
 }
 
+void DiscardOutput(int Fd) {
+  FILE* Temp = fopen("nul", "w");
+  if (!Temp)
+    return;
+  _dup2(_fileno(Temp), Fd);
+  fclose(Temp);
+}
+
 static bool IsSeparator(char C) {
   return C == '\\' || C == '/';
 }

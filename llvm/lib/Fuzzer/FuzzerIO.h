@@ -64,6 +64,8 @@ int DuplicateFile(int Fd);
 
 void RemoveFile(const std::string &Path);
 
+void DiscardOutput(int Fd);
+
 }  // namespace fuzzer
 
 #endif  // LLVM_FUZZER_IO_H
