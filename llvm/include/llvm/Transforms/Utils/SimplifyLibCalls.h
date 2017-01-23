@@ -56,8 +56,8 @@ private:
   Value *optimizeMemSetChk(CallInst *CI, IRBuilder<> &B);
 
   // Str/Stp cpy are similar enough to be handled in the same functions.
-  Value *optimizeStrpCpyChk(CallInst *CI, IRBuilder<> &B, LibFunc::Func Func);
-  Value *optimizeStrpNCpyChk(CallInst *CI, IRBuilder<> &B, LibFunc::Func Func);
+  Value *optimizeStrpCpyChk(CallInst *CI, IRBuilder<> &B, LibFunc Func);
+  Value *optimizeStrpNCpyChk(CallInst *CI, IRBuilder<> &B, LibFunc Func);
 
   /// \brief Checks whether the call \p CI to a fortified libcall is foldable
   /// to the non-fortified version.
