@@ -948,6 +948,20 @@ static Value *optimizeUnaryDoubleFP(CallInst *CI, IRBuilder<> &B,
   return B.CreateFPExt(V, B.getDoubleTy());
 }
 
+// Replace a libcall \p CI with a call to intrinsic \p IID
+static Value *replaceUnaryCall(CallInst *CI, IRBuilder<> &B, Intrinsic::ID IID) {
+  // Propagate fast-math flags from the existing call to the new call.
+  IRBuilder<>::FastMathFlagGuard Guard(B);
+  B.setFastMathFlags(CI->getFastMathFlags());
+
+  Module *M = CI->getModule();
+  Value *V = CI->getArgOperand(0);
+  Function *F = Intrinsic::getDeclaration(M, IID, CI->getType());
+  CallInst *NewCall = B.CreateCall(F, V);
+  NewCall->takeName(CI);
+  return NewCall;
+}
+
 /// Shrink double -> float for binary functions like 'fmin/fmax'.
 static Value *optimizeBinaryDoubleFP(CallInst *CI, IRBuilder<> &B) {
   Function *Callee = CI->getCalledFunction();
@@ -1208,19 +1222,6 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
     }
   }
   return Ret;
-}
-
-Value *LibCallSimplifier::optimizeFabs(CallInst *CI, IRBuilder<> &B) {
-  Function *Callee = CI->getCalledFunction();
-  IRBuilder<>::FastMathFlagGuard Guard(B);
-  B.setFastMathFlags(CI->getFastMathFlags());
-
-  // fabs/fabsf -> llvm.fabs.*
-  Value *F = Intrinsic::getDeclaration(Callee->getParent(), Intrinsic::fabs,
-                                       CI->getType());
-  Value *NewCall = B.CreateCall(F, { CI->getArgOperand(0) });
-  NewCall->takeName(CI);
-  return NewCall;
 }
 
 Value *LibCallSimplifier::optimizeFMinFMax(CallInst *CI, IRBuilder<> &B) {
@@ -2091,7 +2092,7 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     case LibFunc_fabsf:
     case LibFunc_fabs:
     case LibFunc_fabsl:
-      return optimizeFabs(CI, Builder);
+      return replaceUnaryCall(CI, Builder, Intrinsic::fabs);
     case LibFunc_sqrtf:
     case LibFunc_sqrt:
     case LibFunc_sqrtl:
@@ -2144,14 +2145,16 @@ Value *LibCallSimplifier::optimizeCall(CallInst *CI) {
     case LibFunc_fputc:
       return optimizeErrorReporting(CI, Builder, 1);
     case LibFunc_ceil:
+      return replaceUnaryCall(CI, Builder, Intrinsic::ceil);
     case LibFunc_floor:
-    case LibFunc_rint:
+      return replaceUnaryCall(CI, Builder, Intrinsic::floor);
     case LibFunc_round:
+      return replaceUnaryCall(CI, Builder, Intrinsic::round);
     case LibFunc_nearbyint:
+    case LibFunc_rint:
+      return replaceUnaryCall(CI, Builder, Intrinsic::nearbyint);
     case LibFunc_trunc:
-      if (hasFloatVersion(FuncName))
-        return optimizeUnaryDoubleFP(CI, Builder, false);
-      return nullptr;
+      return replaceUnaryCall(CI, Builder, Intrinsic::trunc);
     case LibFunc_acos:
     case LibFunc_acosh:
     case LibFunc_asin:
@@ -2215,15 +2218,9 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) {
 //   * log(exp10(y)) -> y*log(10)
 //   * log(sqrt(x))  -> 0.5*log(x)
 //
-// lround, lroundf, lroundl:
-//   * lround(cnst) -> cnst'
-//
 // pow, powf, powl:
 //   * pow(sqrt(x),y) -> pow(x,y*0.5)
 //   * pow(pow(x,y),z)-> pow(x,y*z)
-//
-// round, roundf, roundl:
-//   * round(cnst) -> cnst'
 //
 // signbit:
 //   * signbit(cnst) -> cnst'
@@ -2233,10 +2230,6 @@ void LibCallSimplifier::replaceAllUsesWith(Instruction *I, Value *With) {
 //   * sqrt(expN(x))  -> expN(x*0.5)
 //   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
 //   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
-//
-// trunc, truncf, truncl:
-//   * trunc(cnst) -> cnst'
-//
 //
 
 //===----------------------------------------------------------------------===//
