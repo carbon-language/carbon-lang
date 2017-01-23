@@ -31,6 +31,7 @@ int main()
         assert(i == 42);
         assert(s == "C++");
     }
+#if TEST_STD_VER > 11
     {
         static constexpr int i = 42;
         static constexpr double f = 1.1;
@@ -38,4 +39,5 @@ int main()
         static_assert ( std::get<0>(t) == 42, "" );
         static_assert ( std::get<1>(t) == 1.1, "" );
     }
+#endif
 }
