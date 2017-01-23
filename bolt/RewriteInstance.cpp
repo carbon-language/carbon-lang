@@ -1654,17 +1654,19 @@ void RewriteInstance::disassembleFunctions() {
       ++NumStaleProfileFunctions;
   }
 
+  const auto NumAllProfiledFunctions =
+                            ProfiledFunctions.size() + NumStaleProfileFunctions;
   outs() << "BOLT-INFO: "
-         << ProfiledFunctions.size() + NumStaleProfileFunctions
+         << NumAllProfiledFunctions
          << " functions out of " << NumSimpleFunctions << " simple functions ("
-         << format("%.1f",
-                   (ProfiledFunctions.size() + NumStaleProfileFunctions) /
-                   (float) NumSimpleFunctions * 100.0f)
+         << format("%.1f", NumAllProfiledFunctions /
+                                            (float) NumSimpleFunctions * 100.0f)
          << "%) have non-empty execution profile.\n";
   if (NumStaleProfileFunctions) {
     outs() << "BOLT-INFO: " << NumStaleProfileFunctions
-           << format(" (%.1f%) ", NumStaleProfileFunctions /
-                                  (float) NumSimpleFunctions * 100.0f)
+           << format(" (%.1f%% of all profiled)",
+                     NumStaleProfileFunctions /
+                                      (float) NumAllProfiledFunctions * 100.0f)
            << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
            << " have invalid (possibly stale) profile.\n";
   }
