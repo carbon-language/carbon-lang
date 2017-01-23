@@ -20,6 +20,10 @@ g:
 # R_AARCH64_MOVW_UABS_G0_NC
         movk    x0, #:abs_g0_nc:f
 l:
+# R_AARCH64_LDST8_ABS_LO12_NC
+        ldrsb x4, [x5, :lo12:a+1]
+# R_AARCH64_LDST16_ABS_LO12_NC
+        ldrh w4, [x5, :lo12:a+2]
 # R_AARCH64_LDST32_ABS_LO12_NC
         ldr s4, [x5, :lo12:a]
 # R_AARCH64_LDST64_ABS_LO12_NC
@@ -57,9 +61,11 @@ r:
 # rtdyld-check: *{4}(g + 8) = 0xf2b13560
 # rtdyld-check: *{4}(g + 12) = 0xf299bde0
 
-## Check LDST32_ABS_LO12_NC and LDST64_ABS_LO12_NC
-# rtdyld-check: (*{4}l)[21:10] = a[11:2]
-# rtdyld-check: (*{4}(l+4))[21:10] = a[11:3]
+## Check LDSTXX_ABS_LO12_NC
+# rtdyld-check: (*{4}l)[21:10] = (a+1)[11:0]
+# rtdyld-check: (*{4}(l+4))[21:10] = (a+2)[11:1]
+# rtdyld-check: (*{4}(l+8))[21:10] = a[11:2]
+# rtdyld-check: (*{4}(l+12))[21:10] = a[11:3]
 
 ## Check ADR_PREL_PG_HI21. Low order bits of immediate value
 ## go to bits 30:29. High order bits go to bits 23:5
