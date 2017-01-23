@@ -245,6 +245,13 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v16i32, Expand);
   setOperationAction(ISD::VECTOR_SHUFFLE, MVT::v16f32, Expand);
 
+  // Avoid stack access for these.
+  // TODO: Generalize to more vector types.
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v2i16, Custom);
+  setOperationAction(ISD::INSERT_VECTOR_ELT, MVT::v2f16, Custom);
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i16, Custom);
+  setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f16, Custom);
+
   // BUFFER/FLAT_ATOMIC_CMP_SWAP on GCN GPUs needs input marshalling,
   // and output demarshalling
   setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i32, Custom);
@@ -1938,11 +1945,34 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::INTRINSIC_W_CHAIN: return LowerINTRINSIC_W_CHAIN(Op, DAG);
   case ISD::INTRINSIC_VOID: return LowerINTRINSIC_VOID(Op, DAG);
   case ISD::ADDRSPACECAST: return lowerADDRSPACECAST(Op, DAG);
+  case ISD::INSERT_VECTOR_ELT:
+    return lowerINSERT_VECTOR_ELT(Op, DAG);
+  case ISD::EXTRACT_VECTOR_ELT:
+    return lowerEXTRACT_VECTOR_ELT(Op, DAG);
   case ISD::TRAP: return lowerTRAP(Op, DAG);
   case ISD::FP_ROUND:
     return lowerFP_ROUND(Op, DAG);
   }
   return SDValue();
+}
+
+void SITargetLowering::ReplaceNodeResults(SDNode *N,
+                                          SmallVectorImpl<SDValue> &Results,
+                                          SelectionDAG &DAG) const {
+  switch (N->getOpcode()) {
+  case ISD::INSERT_VECTOR_ELT: {
+    if (SDValue Res = lowerINSERT_VECTOR_ELT(SDValue(N, 0), DAG))
+      Results.push_back(Res);
+    return;
+  }
+  case ISD::EXTRACT_VECTOR_ELT: {
+    if (SDValue Res = lowerEXTRACT_VECTOR_ELT(SDValue(N, 0), DAG))
+      Results.push_back(Res);
+    return;
+  }
+  default:
+    break;
+  }
 }
 
 /// \brief Helper function for LowerBRCOND
@@ -2237,6 +2267,76 @@ SDValue SITargetLowering::lowerADDRSPACECAST(SDValue Op,
   DAG.getContext()->diagnose(InvalidAddrSpaceCast);
 
   return DAG.getUNDEF(ASC->getValueType(0));
+}
+
+SDValue SITargetLowering::lowerINSERT_VECTOR_ELT(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  SDValue Idx = Op.getOperand(2);
+  if (isa<ConstantSDNode>(Idx))
+    return SDValue();
+
+  // Avoid stack access for dynamic indexing.
+  SDLoc SL(Op);
+  SDValue Vec = Op.getOperand(0);
+  SDValue Val = DAG.getNode(ISD::BITCAST, SL, MVT::i16, Op.getOperand(1));
+
+  // v_bfi_b32 (v_bfm_b32 16, (shl idx, 16)), val, vec
+  SDValue ExtVal = DAG.getNode(ISD::ZERO_EXTEND, SL, MVT::i32, Val);
+
+  // Convert vector index to bit-index.
+  SDValue ScaledIdx = DAG.getNode(ISD::SHL, SL, MVT::i32, Idx,
+                                  DAG.getConstant(16, SL, MVT::i32));
+
+  SDValue BCVec = DAG.getNode(ISD::BITCAST, SL, MVT::i32, Vec);
+
+  SDValue BFM = DAG.getNode(ISD::SHL, SL, MVT::i32,
+                            DAG.getConstant(0xffff, SL, MVT::i32),
+                            ScaledIdx);
+
+  SDValue LHS = DAG.getNode(ISD::AND, SL, MVT::i32, BFM, ExtVal);
+  SDValue RHS = DAG.getNode(ISD::AND, SL, MVT::i32,
+                            DAG.getNOT(SL, BFM, MVT::i32), BCVec);
+
+  SDValue BFI = DAG.getNode(ISD::OR, SL, MVT::i32, LHS, RHS);
+  return DAG.getNode(ISD::BITCAST, SL, Op.getValueType(), BFI);
+}
+
+SDValue SITargetLowering::lowerEXTRACT_VECTOR_ELT(SDValue Op,
+                                                  SelectionDAG &DAG) const {
+  SDLoc SL(Op);
+
+  EVT ResultVT = Op.getValueType();
+  SDValue Vec = Op.getOperand(0);
+  SDValue Idx = Op.getOperand(1);
+
+  if (const ConstantSDNode *CIdx = dyn_cast<ConstantSDNode>(Idx)) {
+    SDValue Result = DAG.getNode(ISD::BITCAST, SL, MVT::i32, Vec);
+
+    if (CIdx->getZExtValue() == 1) {
+      Result = DAG.getNode(ISD::SRL, SL, MVT::i32, Result,
+                           DAG.getConstant(16, SL, MVT::i32));
+    } else {
+      assert(CIdx->getZExtValue() == 0);
+    }
+
+    if (ResultVT.bitsLT(MVT::i32))
+      Result = DAG.getNode(ISD::TRUNCATE, SL, MVT::i16, Result);
+    return DAG.getNode(ISD::BITCAST, SL, ResultVT, Result);
+  }
+
+  SDValue Sixteen = DAG.getConstant(16, SL, MVT::i32);
+
+  // Convert vector index to bit-index.
+  SDValue ScaledIdx = DAG.getNode(ISD::SHL, SL, MVT::i32, Idx, Sixteen);
+
+  SDValue BC = DAG.getNode(ISD::BITCAST, SL, MVT::i32, Vec);
+  SDValue Elt = DAG.getNode(ISD::SRL, SL, MVT::i32, BC, ScaledIdx);
+
+  SDValue Result = Elt;
+  if (ResultVT.bitsLT(MVT::i32))
+    Result = DAG.getNode(ISD::TRUNCATE, SL, MVT::i16, Result);
+
+  return DAG.getNode(ISD::BITCAST, SL, ResultVT, Result);
 }
 
 bool
