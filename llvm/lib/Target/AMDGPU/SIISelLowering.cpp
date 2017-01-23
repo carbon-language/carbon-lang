@@ -1888,9 +1888,6 @@ MVT SITargetLowering::getScalarShiftAmountTy(const DataLayout &, EVT VT) const {
 bool SITargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   VT = VT.getScalarType();
 
-  if (!VT.isSimple())
-    return false;
-
   switch (VT.getSimpleVT().SimpleTy) {
   case MVT::f32:
     // This is as fast on some subtargets. However, we always have full rate f32
