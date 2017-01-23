@@ -28,6 +28,8 @@ l:
         ldr s4, [x5, :lo12:a]
 # R_AARCH64_LDST64_ABS_LO12_NC
         ldr x4, [x5, :lo12:a]
+# R_AARCH64_LDST128_ABS_LO12_NC
+        ldr q4, [x5, :lo12:a]
 p:
 # R_AARCH64_ADR_PREL_PG_HI21
 # Test both low and high immediate values
@@ -66,6 +68,7 @@ r:
 # rtdyld-check: (*{4}(l+4))[21:10] = (a+2)[11:1]
 # rtdyld-check: (*{4}(l+8))[21:10] = a[11:2]
 # rtdyld-check: (*{4}(l+12))[21:10] = a[11:3]
+# rtdyld-check: (*{4}(l+16))[21:10] = a[11:4]
 
 ## Check ADR_PREL_PG_HI21. Low order bits of immediate value
 ## go to bits 30:29. High order bits go to bits 23:5
