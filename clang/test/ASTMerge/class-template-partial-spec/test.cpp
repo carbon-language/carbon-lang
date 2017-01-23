@@ -9,17 +9,17 @@ static_assert(sizeof(Z0Source.member) == sizeof(char));
 static_assert(sizeof(Dst::Z0Dst.member) == sizeof(double));
 static_assert(sizeof(One::Child1<double, One::Two::Three::Parent<double>>::member) == sizeof(double));
 
-// CHECK: Inputs/class-template-partial-spec2.cpp:21:32: error: external variable 'X1' declared with incompatible types in different translation units ('TwoOptionTemplate<int, double>' vs. 'TwoOptionTemplate<int, float>')
-// CHECK: Inputs/class-template-partial-spec1.cpp:21:31: note: declared here with type 'TwoOptionTemplate<int, float>'
+// CHECK: class-template-partial-spec2.cpp:21:32: error: external variable 'X1' declared with incompatible types in different translation units ('TwoOptionTemplate<int, double>' vs. 'TwoOptionTemplate<int, float>')
+// CHECK: class-template-partial-spec1.cpp:21:31: note: declared here with type 'TwoOptionTemplate<int, float>'
 
-// CHECK: Inputs/class-template-partial-spec2.cpp:24:29: error: external variable 'X4' declared with incompatible types in different translation units ('TwoOptionTemplate<int, int>' vs. 'TwoOptionTemplate<float, float>')
-// CHECK: Inputs/class-template-partial-spec1.cpp:24:33: note: declared here with type 'TwoOptionTemplate<float, float>'
+// CHECK: class-template-partial-spec2.cpp:24:29: error: external variable 'X4' declared with incompatible types in different translation units ('TwoOptionTemplate<int, int>' vs. 'TwoOptionTemplate<float, float>')
+// CHECK: class-template-partial-spec1.cpp:24:33: note: declared here with type 'TwoOptionTemplate<float, float>'
 
-// CHECK: Inputs/class-template-partial-spec1.cpp:38:8: warning: type 'IntTemplateSpec<5, void *>' has incompatible definitions in different translation units
-// CHECK: Inputs/class-template-partial-spec1.cpp:39:7: note: field 'member' has type 'int' here
-// CHECK: Inputs/class-template-partial-spec2.cpp:39:10: note: field 'member' has type 'double' here
+// CHECK: class-template-partial-spec1.cpp:38:8: warning: type 'IntTemplateSpec<5, void *>' has incompatible definitions in different translation units
+// CHECK: class-template-partial-spec1.cpp:39:7: note: field 'member' has type 'int' here
+// CHECK: class-template-partial-spec2.cpp:39:10: note: field 'member' has type 'double' here
 
-// CHECK: Inputs/class-template-partial-spec2.cpp:52:25: error: external variable 'Y3' declared with incompatible types in different translation units ('IntTemplateSpec<2, int>' vs. 'IntTemplateSpec<3, int>')
-// CHECK: Inputs/class-template-partial-spec1.cpp:52:25: note: declared here with type 'IntTemplateSpec<3, int>'
+// CHECK: class-template-partial-spec2.cpp:52:25: error: external variable 'Y3' declared with incompatible types in different translation units ('IntTemplateSpec<2, int>' vs. 'IntTemplateSpec<3, int>')
+// CHECK: class-template-partial-spec1.cpp:52:25: note: declared here with type 'IntTemplateSpec<3, int>'
 
 // CHECK-NOT: static_assert
