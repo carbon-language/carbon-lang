@@ -7,7 +7,7 @@
 
 define <2 x i64> @undef_pmuludq_128(<4 x i32> %a0, <4 x i32> %a1) {
 ; CHECK-LABEL: @undef_pmuludq_128(
-; CHECK-NEXT:    ret <2 x i64> undef
+; CHECK-NEXT:    ret <2 x i64> zeroinitializer
 ;
   %1 = call <2 x i64> @llvm.x86.sse2.pmulu.dq(<4 x i32> undef, <4 x i32> undef)
   ret <2 x i64> %1
@@ -15,7 +15,7 @@ define <2 x i64> @undef_pmuludq_128(<4 x i32> %a0, <4 x i32> %a1) {
 
 define <4 x i64> @undef_pmuludq_256(<8 x i32> %a0, <8 x i32> %a1) {
 ; CHECK-LABEL: @undef_pmuludq_256(
-; CHECK-NEXT:    ret <4 x i64> undef
+; CHECK-NEXT:    ret <4 x i64> zeroinitializer
 ;
   %1 = call <4 x i64> @llvm.x86.avx2.pmulu.dq(<8 x i32> undef, <8 x i32> undef)
   ret <4 x i64> %1
@@ -23,7 +23,7 @@ define <4 x i64> @undef_pmuludq_256(<8 x i32> %a0, <8 x i32> %a1) {
 
 define <8 x i64> @undef_pmuludq_512(<16 x i32> %a0, <16 x i32> %a1) {
 ; CHECK-LABEL: @undef_pmuludq_512(
-; CHECK-NEXT:    ret <8 x i64> undef
+; CHECK-NEXT:    ret <8 x i64> zeroinitializer
 ;
   %1 = call <8 x i64> @llvm.x86.avx512.pmulu.dq.512(<16 x i32> undef, <16 x i32> undef)
   ret <8 x i64> %1
@@ -31,7 +31,7 @@ define <8 x i64> @undef_pmuludq_512(<16 x i32> %a0, <16 x i32> %a1) {
 
 define <2 x i64> @undef_pmuldq_128(<4 x i32> %a0, <4 x i32> %a1) {
 ; CHECK-LABEL: @undef_pmuldq_128(
-; CHECK-NEXT:    ret <2 x i64> undef
+; CHECK-NEXT:    ret <2 x i64> zeroinitializer
 ;
   %1 = call <2 x i64> @llvm.x86.sse41.pmuldq(<4 x i32> undef, <4 x i32> undef)
   ret <2 x i64> %1
@@ -39,7 +39,7 @@ define <2 x i64> @undef_pmuldq_128(<4 x i32> %a0, <4 x i32> %a1) {
 
 define <4 x i64> @undef_pmuldq_256(<8 x i32> %a0, <8 x i32> %a1) {
 ; CHECK-LABEL: @undef_pmuldq_256(
-; CHECK-NEXT:    ret <4 x i64> undef
+; CHECK-NEXT:    ret <4 x i64> zeroinitializer
 ;
   %1 = call <4 x i64> @llvm.x86.avx2.pmul.dq(<8 x i32> undef, <8 x i32> undef)
   ret <4 x i64> %1
@@ -47,7 +47,7 @@ define <4 x i64> @undef_pmuldq_256(<8 x i32> %a0, <8 x i32> %a1) {
 
 define <8 x i64> @undef_pmuldq_512(<16 x i32> %a0, <16 x i32> %a1) {
 ; CHECK-LABEL: @undef_pmuldq_512(
-; CHECK-NEXT:    ret <8 x i64> undef
+; CHECK-NEXT:    ret <8 x i64> zeroinitializer
 ;
   %1 = call <8 x i64> @llvm.x86.avx512.pmul.dq.512(<16 x i32> undef, <16 x i32> undef)
   ret <8 x i64> %1
