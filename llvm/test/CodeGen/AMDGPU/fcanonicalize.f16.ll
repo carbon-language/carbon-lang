@@ -69,10 +69,10 @@ define void @test_fold_canonicalize_literal_f16(half addrspace(1)* %out) #1 {
   ret void
 }
 
-; GCN-LABEL: {{^}}test_no_denormals_fold_canonicalize_denormal0_f16:
-; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0{{$}}
+; GCN-LABEL: {{^}}test_default_denormals_fold_canonicalize_denormal0_f16:
+; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0x3ff{{$}}
 ; GCN: buffer_store_short [[REG]]
-define void @test_no_denormals_fold_canonicalize_denormal0_f16(half addrspace(1)* %out) #1 {
+define void @test_default_denormals_fold_canonicalize_denormal0_f16(half addrspace(1)* %out) #1 {
   %canonicalized = call half @llvm.canonicalize.f16(half 0xH03FF)
   store half %canonicalized, half addrspace(1)* %out
   ret void
@@ -87,10 +87,10 @@ define void @test_denormals_fold_canonicalize_denormal0_f16(half addrspace(1)* %
   ret void
 }
 
-; GCN-LABEL: {{^}}test_no_denormals_fold_canonicalize_denormal1_f16:
-; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0{{$}}
+; GCN-LABEL: {{^}}test_default_denormals_fold_canonicalize_denormal1_f16:
+; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0xffff83ff{{$}}
 ; GCN: buffer_store_short [[REG]]
-define void @test_no_denormals_fold_canonicalize_denormal1_f16(half addrspace(1)* %out) #1 {
+define void @test_default_denormals_fold_canonicalize_denormal1_f16(half addrspace(1)* %out) #1 {
   %canonicalized = call half @llvm.canonicalize.f16(half 0xH83FF)
   store half %canonicalized, half addrspace(1)* %out
   ret void
@@ -282,7 +282,7 @@ define void @test_fold_canonicalize_literal_v2f16(<2 x half> addrspace(1)* %out)
 }
 
 ; GCN-LABEL: {{^}}test_no_denormals_fold_canonicalize_denormal0_v2f16:
-; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0{{$}}
+; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0x3ff03ff{{$}}
 ; GCN: buffer_store_dword [[REG]]
 define void @test_no_denormals_fold_canonicalize_denormal0_v2f16(<2 x half> addrspace(1)* %out) #1 {
   %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> <half 0xH03FF, half 0xH03FF>)
@@ -300,7 +300,7 @@ define void @test_denormals_fold_canonicalize_denormal0_v2f16(<2 x half> addrspa
 }
 
 ; GCN-LABEL: {{^}}test_no_denormals_fold_canonicalize_denormal1_v2f16:
-; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0{{$}}
+; GCN: v_mov_b32_e32 [[REG:v[0-9]+]], 0x83ff83ff{{$}}
 ; GCN: buffer_store_dword [[REG]]
 define void @test_no_denormals_fold_canonicalize_denormal1_v2f16(<2 x half> addrspace(1)* %out) #1 {
   %canonicalized = call <2 x half> @llvm.canonicalize.v2f16(<2 x half> <half 0xH83FF, half 0xH83FF>)
@@ -382,5 +382,5 @@ define void @test_fold_canonicalize_snan3_value_v2f16(<2 x half> addrspace(1)* %
 
 attributes #0 = { nounwind readnone }
 attributes #1 = { nounwind }
-attributes #2 = { nounwind "target-features"="-fp16-denormals,-fp16-denormals" }
-attributes #3 = { nounwind "target-features"="+fp16-denormals,+fp64-denormals" }
+attributes #2 = { nounwind "target-features"="-fp64-fp16-denormals" }
+attributes #3 = { nounwind "target-features"="+fp64-fp16-denormals" }
