@@ -1,3 +1,0 @@
-# REQUIRES-ANY is no longer supported. Test should not run.
-REQUIRES-ANY: true, a-present-feature
-RUN: false
