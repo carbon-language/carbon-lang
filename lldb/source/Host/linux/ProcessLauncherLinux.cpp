@@ -16,7 +16,11 @@
 #include "lldb/Target/ProcessLaunchInfo.h"
 
 #include <limits.h>
+#ifndef __ANDROID__
 #include <sys/personality.h>
+#else
+#include <linux/personality.h>
+#endif
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
