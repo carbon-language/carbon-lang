@@ -3895,6 +3895,7 @@ DoubleAPFloat &DoubleAPFloat::operator=(const DoubleAPFloat &RHS) {
   return *this;
 }
 
+// Implement addition, subtraction, multiplication and division based on:
 // "Software for Doubled-Precision Floating-Point Computations",
 // by Seppo Linnainmaa, ACM TOMS vol 7 no 3, September 1981, pages 272-283.
 APFloat::opStatus DoubleAPFloat::addImpl(const APFloat &a, const APFloat &aa,
@@ -4037,12 +4038,88 @@ APFloat::opStatus DoubleAPFloat::subtract(const DoubleAPFloat &RHS,
 
 APFloat::opStatus DoubleAPFloat::multiply(const DoubleAPFloat &RHS,
                                           APFloat::roundingMode RM) {
-  assert(Semantics == &semPPCDoubleDouble && "Unexpected Semantics");
-  APFloat Tmp(semPPCDoubleDoubleLegacy, bitcastToAPInt());
-  auto Ret =
-      Tmp.multiply(APFloat(semPPCDoubleDoubleLegacy, RHS.bitcastToAPInt()), RM);
-  *this = DoubleAPFloat(semPPCDoubleDouble, Tmp.bitcastToAPInt());
-  return Ret;
+  const auto &LHS = *this;
+  auto &Out = *this;
+  /* Interesting observation: For special categories, finding the lowest
+     common ancestor of the following layered graph gives the correct
+     return category:
+
+        NaN
+       /   \
+     Zero  Inf
+       \   /
+       Normal
+
+     e.g. NaN * NaN = NaN
+          Zero * Inf = NaN
+          Normal * Zero = Zero
+          Normal * Inf = Inf
+  */
+  if (LHS.getCategory() == fcNaN) {
+    Out = LHS;
+    return opOK;
+  }
+  if (RHS.getCategory() == fcNaN) {
+    Out = RHS;
+    return opOK;
+  }
+  if ((LHS.getCategory() == fcZero && RHS.getCategory() == fcInfinity) ||
+      (LHS.getCategory() == fcInfinity && RHS.getCategory() == fcZero)) {
+    Out.makeNaN(false, false, nullptr);
+    return opOK;
+  }
+  if (LHS.getCategory() == fcZero || LHS.getCategory() == fcInfinity) {
+    Out = LHS;
+    return opOK;
+  }
+  if (RHS.getCategory() == fcZero || RHS.getCategory() == fcInfinity) {
+    Out = RHS;
+    return opOK;
+  }
+  assert(LHS.getCategory() == fcNormal && RHS.getCategory() == fcNormal &&
+         "Special cases not handled exhaustively");
+
+  int Status = opOK;
+  APFloat A = Floats[0], B = Floats[1], C = RHS.Floats[0], D = RHS.Floats[1];
+  // t = a * c
+  APFloat T = A;
+  Status |= T.multiply(C, RM);
+  if (!T.isFiniteNonZero()) {
+    Floats[0] = T;
+    Floats[1].makeZero(false);
+    return (opStatus)Status;
+  }
+
+  // tau = fmsub(a, c, t), that is -fmadd(-a, c, t).
+  APFloat Tau = A;
+  T.changeSign();
+  Status |= Tau.fusedMultiplyAdd(C, T, RM);
+  T.changeSign();
+  {
+    // v = a * d
+    APFloat V = A;
+    Status |= V.multiply(D, RM);
+    // w = b * c
+    APFloat W = B;
+    Status |= W.multiply(C, RM);
+    Status |= V.add(W, RM);
+    // tau += v + w
+    Status |= Tau.add(V, RM);
+  }
+  // u = t + tau
+  APFloat U = T;
+  Status |= U.add(Tau, RM);
+
+  Floats[0] = U;
+  if (!U.isFinite()) {
+    Floats[1].makeZero(false);
+  } else {
+    // Floats[1] = (t - u) + tau
+    Status |= T.subtract(U, RM);
+    Status |= T.add(Tau, RM);
+    Floats[1] = T;
+  }
+  return (opStatus)Status;
 }
 
 APFloat::opStatus DoubleAPFloat::divide(const DoubleAPFloat &RHS,
