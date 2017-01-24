@@ -1669,21 +1669,24 @@ static const char *parse_type(const char *first, const char *last, C &db) {
           db.subs.emplace_back();
           for (size_t k = k0; k < k1; ++k) {
             if (is_function) {
-              size_t p = db.names[k].second.size();
-              if (db.names[k].second[p - 2] == '&')
+              auto &name = db.names[k].second;
+              size_t p = name.size();
+
+              if (name[p - 2] == '&' && name[p - 1] == '&')
                 p -= 2;
-              else if (db.names[k].second.back() == '&')
+              else if (name.back() == '&')
                 p -= 1;
+
               if (cv & CV_const) {
-                db.names[k].second.insert(p, " const");
+                name.insert(p, " const");
                 p += 6;
               }
               if (cv & CV_volatile) {
-                db.names[k].second.insert(p, " volatile");
+                name.insert(p, " volatile");
                 p += 9;
               }
               if (cv & CV_restrict)
-                db.names[k].second.insert(p, " restrict");
+                name.insert(p, " restrict");
             } else {
               if (cv & CV_const)
                 db.names[k].first.append(" const");
