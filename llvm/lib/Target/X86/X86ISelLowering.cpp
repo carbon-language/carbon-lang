@@ -30478,11 +30478,12 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
   // Out of range logical bit shifts are guaranteed to be zero.
   // Out of range arithmetic bit shifts splat the sign bit.
   APInt ShiftVal = cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
-  if (ShiftVal.zextOrTrunc(8).uge(NumBitsPerElt))
+  if (ShiftVal.zextOrTrunc(8).uge(NumBitsPerElt)) {
     if (LogicalShift)
       return getZeroVector(VT.getSimpleVT(), Subtarget, DAG, SDLoc(N));
     else
       ShiftVal = NumBitsPerElt - 1;
+  }
 
   SDValue N0 = N->getOperand(0);
 
