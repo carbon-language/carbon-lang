@@ -3611,15 +3611,10 @@ rnb_err_t RNBRemote::HandlePacket_qSupported(const char *p) {
   snprintf(buf, sizeof(buf), "qXfer:features:read+;PacketSize=%x;qEcho+",
            max_packet_size);
 
-  // By default, don't enable compression.  It's only worth doing when we are
-  // working
-  // with a low speed communication channel.
   bool enable_compression = false;
   (void)enable_compression;
 
-// Enable compression when debugserver is running on a watchOS device where
-// communication may be over Bluetooth.
-#if defined(TARGET_OS_WATCH) && TARGET_OS_WATCH == 1
+#if defined (TARGET_OS_WATCH) || defined (TARGET_OS_IOS) || defined (TARGET_OS_TVOS)
   enable_compression = true;
 #endif
 
