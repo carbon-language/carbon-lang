@@ -3614,7 +3614,7 @@ rnb_err_t RNBRemote::HandlePacket_qSupported(const char *p) {
   bool enable_compression = false;
   (void)enable_compression;
 
-#if defined (TARGET_OS_WATCH) || defined (TARGET_OS_IOS) || defined (TARGET_OS_TVOS)
+#if (defined (TARGET_OS_WATCH) && TARGET_OS_WATCHOS == 1) || (defined (TARGET_OS_IOS) && TARGET_OS_IOS == 1) || (defined (TARGET_OS_TVOS) && TARGET_OS_TVOS == 1)
   enable_compression = true;
 #endif
 
