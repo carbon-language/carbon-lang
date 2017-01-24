@@ -46,11 +46,18 @@
 
 # CHECK: UNRESOLVED: shtest-format :: no-test-line.txt
 # CHECK: PASS: shtest-format :: pass.txt
-# CHECK: UNSUPPORTED: shtest-format :: requires-any-missing.txt
-# CHECK: PASS: shtest-format :: requires-any-present.txt
+# CHECK: UNRESOLVED: shtest-format :: requires-any.txt
+# CHECK: ValueError: `REQUIRES-ANY: a, b, c` not supported
 # CHECK: UNSUPPORTED: shtest-format :: requires-missing.txt
 # CHECK: PASS: shtest-format :: requires-present.txt
+# CHECK: UNRESOLVED: shtest-format :: requires-star.txt
+# CHECK: UNSUPPORTED: shtest-format :: requires-triple.txt
+# CHECK: PASS: shtest-format :: unsupported-expr-false.txt
+# CHECK: UNSUPPORTED: shtest-format :: unsupported-expr-true.txt
+# CHECK: UNRESOLVED: shtest-format :: unsupported-star.txt
 # CHECK: UNSUPPORTED: shtest-format :: unsupported_dir/some-test.txt
+# CHECK: PASS: shtest-format :: xfail-expr-false.txt
+# CHECK: XFAIL: shtest-format :: xfail-expr-true.txt
 # CHECK: XFAIL: shtest-format :: xfail-feature.txt
 # CHECK: XFAIL: shtest-format :: xfail-target.txt
 # CHECK: XFAIL: shtest-format :: xfail.txt
@@ -70,9 +77,9 @@
 # CHECK: shtest-format :: external_shell/fail_with_bad_encoding.txt
 # CHECK: shtest-format :: fail.txt
 
-# CHECK: Expected Passes    : 5
-# CHECK: Expected Failures  : 3
-# CHECK: Unsupported Tests  : 3
-# CHECK: Unresolved Tests   : 1
+# CHECK: Expected Passes    : 6
+# CHECK: Expected Failures  : 4
+# CHECK: Unsupported Tests  : 4
+# CHECK: Unresolved Tests   : 4
 # CHECK: Unexpected Passes  : 1
 # CHECK: Unexpected Failures: 3
