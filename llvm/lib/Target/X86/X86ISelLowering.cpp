@@ -30469,7 +30469,6 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
          "Unexpected shift opcode");
   bool LogicalShift = X86ISD::VSHLI == Opcode || X86ISD::VSRLI == Opcode;
   EVT VT = N->getValueType(0);
-  unsigned NumElts = VT.getVectorNumElements();
   unsigned NumBitsPerElt = VT.getScalarSizeInBits();
 
   // This fails for mask register (vXi1) shifts.
@@ -30511,7 +30510,8 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
   SmallVector<APInt, 32> EltBits;
   if (N->isOnlyUserOf(N0.getNode()) &&
       getTargetConstantBitsFromNode(N0, NumBitsPerElt, UndefElts, EltBits)) {
-    assert(EltBits.size() == NumElts && "Unexpected shift value type");
+    assert(EltBits.size() == VT.getVectorNumElements() &&
+           "Unexpected shift value type");
     unsigned ShiftImm = ShiftVal.getZExtValue();
     for (APInt &Elt : EltBits) {
       if (X86ISD::VSHLI == Opcode)
