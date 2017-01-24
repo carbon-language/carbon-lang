@@ -16,15 +16,20 @@
 #include "lldb/Target/ProcessLaunchInfo.h"
 
 #include <limits.h>
-#ifndef __ANDROID__
-#include <sys/personality.h>
-#else
-#include <linux/personality.h>
-#endif
 #include <sys/ptrace.h>
 #include <sys/wait.h>
 
 #include <sstream>
+
+#ifdef __ANDROID__
+#include <android/api-level.h>
+#endif
+
+#if defined(__ANDROID_API__) && __ANDROID_API__ < 21
+#include <linux/personality.h>
+#else
+#include <sys/personality.h>
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
