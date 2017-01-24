@@ -78,8 +78,13 @@ typedef Test<my_class *> another;
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
 // CHECK-FIXES: using another = Test<my_class *>;
 
+typedef int* PInt;
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
+// CHECK-FIXES: using PInt = int *;
+
 typedef int bla1, bla2, bla3;
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
+// CHECK-FIXES: typedef int bla1, bla2, bla3;
 
 #define CODE typedef int INT
 
@@ -131,8 +136,15 @@ int typedef Bax;
 // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
 // CHECK-FIXES: using Bax = int;
 
-// FIXME: Avoid incorrect fixes in these cases.
-//typedef struct Q1 { int a; } S1;
-//typedef struct { int b; } S2;
-//struct Q2 { int c; } typedef S3;
-//struct { int d; } typedef S4;
+typedef struct Q1 { int a; } S1;
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
+// CHECK-FIXES: typedef struct Q1 { int a; } S1;
+typedef struct { int b; } S2;
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
+// CHECK-FIXES: typedef struct { int b; } S2;
+struct Q2 { int c; } typedef S3;
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
+// CHECK-FIXES: struct Q2 { int c; } typedef S3;
+struct { int d; } typedef S4;
+// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use 'using' instead of 'typedef'
+// CHECK-FIXES: struct { int d; } typedef S4;
