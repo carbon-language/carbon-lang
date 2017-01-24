@@ -1927,7 +1927,8 @@ parse_type(const char* first, const char* last, C& db)
                             if (is_function)
                             {
                                 size_t p = db.names[k].second.size();
-                                if (db.names[k].second[p-2] == '&')
+                                if (db.names[k].second[p - 2] == '&' &&
+                                    db.names[k].second[p - 1] == '&')
                                     p -= 2;
                                 else if (db.names[k].second.back() == '&')
                                     p -= 1;
