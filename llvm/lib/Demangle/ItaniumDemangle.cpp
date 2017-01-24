@@ -1665,9 +1665,9 @@ static const char *parse_type(const char *first, const char *last, C &db) {
             if (is_function) {
               size_t p = db.names[k].second.size();
               if (db.names[k].second[p - 2] == '&')
-                p -= 3;
-              else if (db.names[k].second.back() == '&')
                 p -= 2;
+              else if (db.names[k].second.back() == '&')
+                p -= 1;
               if (cv & 1) {
                 db.names[k].second.insert(p, " const");
                 p += 6;
