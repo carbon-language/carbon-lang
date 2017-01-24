@@ -272,7 +272,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
 
   // On SI this is s_memtime and s_memrealtime on VI.
   setOperationAction(ISD::READCYCLECOUNTER, MVT::i64, Legal);
-  setOperationAction(ISD::TRAP, MVT::Other, Custom);
+  setOperationAction(ISD::TRAP, MVT::Other, Legal);
 
   setOperationAction(ISD::FMINNUM, MVT::f64, Legal);
   setOperationAction(ISD::FMAXNUM, MVT::f64, Legal);
@@ -1780,6 +1780,29 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
   }
 
   switch (MI.getOpcode()) {
+   case AMDGPU::S_TRAP_PSEUDO: {
+	DebugLoc DL = MI.getDebugLoc();
+	BuildMI(*BB, MI, DL, TII->get(AMDGPU::V_MOV_B32_e32), AMDGPU::VGPR0)
+     .addImm(1);
+
+    MachineFunction *MF = BB->getParent();
+    SIMachineFunctionInfo *Info = MF->getInfo<SIMachineFunctionInfo>();
+    unsigned UserSGPR = Info->getQueuePtrUserSGPR();
+    assert(UserSGPR != AMDGPU::NoRegister);
+
+    if (!BB->isLiveIn(UserSGPR))
+      BB->addLiveIn(UserSGPR);
+
+    BuildMI(*BB, MI, DL, TII->get(AMDGPU::COPY), AMDGPU::SGPR0_SGPR1)
+     .addReg(UserSGPR);
+    BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_TRAP)).addImm(0x1)
+     .addReg(AMDGPU::VGPR0, RegState::Implicit)
+     .addReg(AMDGPU::SGPR0_SGPR1, RegState::Implicit);
+
+    MI.eraseFromParent();
+    return BB;
+  }
+
   case AMDGPU::SI_INIT_M0:
     BuildMI(*BB, MI.getIterator(), MI.getDebugLoc(),
             TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
@@ -1949,7 +1972,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     return lowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT:
     return lowerEXTRACT_VECTOR_ELT(Op, DAG);
-  case ISD::TRAP: return lowerTRAP(Op, DAG);
   case ISD::FP_ROUND:
     return lowerFP_ROUND(Op, DAG);
   }
@@ -2421,23 +2443,6 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
   return DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), GOTAddr, PtrInfo, Align,
                      MachineMemOperand::MODereferenceable |
                          MachineMemOperand::MOInvariant);
-}
-
-SDValue SITargetLowering::lowerTRAP(SDValue Op,
-                                    SelectionDAG &DAG) const {
-  const MachineFunction &MF = DAG.getMachineFunction();
-  DiagnosticInfoUnsupported NoTrap(*MF.getFunction(),
-                                   "trap handler not supported",
-                                   Op.getDebugLoc(),
-                                   DS_Warning);
-  DAG.getContext()->diagnose(NoTrap);
-
-  // Emit s_endpgm.
-
-  // FIXME: This should really be selected to s_trap, but that requires
-  // setting up the trap handler for it o do anything.
-  return DAG.getNode(AMDGPUISD::ENDPGM, SDLoc(Op), MVT::Other,
-                     Op.getOperand(0));
 }
 
 SDValue SITargetLowering::copyToM0(SelectionDAG &DAG, SDValue Chain,
