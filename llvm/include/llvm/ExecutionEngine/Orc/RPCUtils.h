@@ -762,6 +762,12 @@ public:
         LaunchPolicy());
   }
 
+
+  /// Negotiate a function id for Func with the other end of the channel.
+  template <typename Func> Error negotiateFunction(bool Retry = false) {
+    return getRemoteFunctionId<Func>(true, Retry).takeError();
+  }
+
   /// Append a call Func, does not call send on the channel.
   /// The first argument specifies a user-defined handler to be run when the
   /// function returns. The handler should take an Expected<Func::ReturnType>,
@@ -777,7 +783,7 @@ public:
 
     // Look up the function ID.
     FunctionIdT FnId;
-    if (auto FnIdOrErr = getRemoteFunctionId<Func>())
+    if (auto FnIdOrErr = getRemoteFunctionId<Func>(LazyAutoNegotiation, false))
       FnId = *FnIdOrErr;
     else {
       // This isn't a channel error so we don't want to abandon other pending
@@ -969,41 +975,39 @@ protected:
     return I->second;
   }
 
-  // Find the remote FunctionId for the given function, which must be in the
-  // RemoteFunctionIds map.
-  template <typename Func> Expected<FunctionIdT> getRemoteFunctionId() {
-    // Try to find the id for the given function.
+  // Find the remote FunctionId for the given function.
+  template <typename Func>
+  Expected<FunctionIdT> getRemoteFunctionId(bool NegotiateIfNotInMap,
+                                            bool NegotiateIfInvalid) {
+    bool DoNegotiate;
+
+    // Check if we already have a function id...
     auto I = RemoteFunctionIds.find(Func::getPrototype());
+    if (I != RemoteFunctionIds.end()) {
+      // If it's valid there's nothing left to do.
+      if (I->second != getInvalidFunctionId())
+        return I->second;
+      DoNegotiate = NegotiateIfInvalid;
+    } else
+      DoNegotiate = NegotiateIfNotInMap;
 
-    // If we have it in the map, return it.
-    if (I != RemoteFunctionIds.end())
-      return I->second;
-
-    // Otherwise, if we have auto-negotiation enabled, try to negotiate it.
-    if (LazyAutoNegotiation) {
+    // We don't have a function id for Func yet, but we're allowed to try to
+    // negotiate one.
+    if (DoNegotiate) {
       auto &Impl = static_cast<ImplT &>(*this);
       if (auto RemoteIdOrErr =
-              Impl.template callB<OrcRPCNegotiate>(Func::getPrototype())) {
-        auto &RemoteId = *RemoteIdOrErr;
-
-        // If autonegotiation indicates that the remote end doesn't support this
-        // function, return an unknown function error.
-        if (RemoteId == getInvalidFunctionId())
-          return orcError(OrcErrorCode::UnknownRPCFunction);
-
-        // Autonegotiation succeeded and returned a valid id. Update the map and
-        // return the id.
-        RemoteFunctionIds[Func::getPrototype()] = RemoteId;
-        return RemoteId;
-      } else {
-        // Autonegotiation failed. Return the error.
+          Impl.template callB<OrcRPCNegotiate>(Func::getPrototype())) {
+        RemoteFunctionIds[Func::getPrototype()] = *RemoteIdOrErr;
+        if (*RemoteIdOrErr == getInvalidFunctionId())
+          return make_error<RPCFunctionNotSupported>(Func::getPrototype());
+        return *RemoteIdOrErr;
+      } else
         return RemoteIdOrErr.takeError();
-      }
     }
 
-    // No key was available in the map and autonegotiation wasn't enabled.
-    // Return an unknown function error.
-    return orcError(OrcErrorCode::UnknownRPCFunction);
+    // No key was available in the map and we weren't allowed to try to
+    // negotiate one, so return an unknown function error.
+    return make_error<RPCFunctionNotSupported>(Func::getPrototype());
   }
 
   using WrappedHandlerFn = std::function<Error(ChannelT &, SequenceNumberT)>;
@@ -1122,32 +1126,6 @@ public:
       Launch);
   }
 
-  /// Negotiate a function id for Func with the other end of the channel.
-  template <typename Func> Error negotiateFunction(bool Retry = false) {
-    using OrcRPCNegotiate = typename BaseClass::OrcRPCNegotiate;
-
-    // Check if we already have a function id...
-    auto I = this->RemoteFunctionIds.find(Func::getPrototype());
-    if (I != this->RemoteFunctionIds.end()) {
-      // If it's valid there's nothing left to do.
-      if (I->second != this->getInvalidFunctionId())
-        return Error::success();
-      // If it's invalid and we can't re-attempt negotiation, throw an error.
-      if (!Retry)
-        return make_error<RPCFunctionNotSupported>(Func::getPrototype());
-    }
-
-    // We don't have a function id for Func yet, call the remote to try to
-    // negotiate one.
-    if (auto RemoteIdOrErr = callB<OrcRPCNegotiate>(Func::getPrototype())) {
-      this->RemoteFunctionIds[Func::getPrototype()] = *RemoteIdOrErr;
-      if (*RemoteIdOrErr == this->getInvalidFunctionId())
-        return make_error<RPCFunctionNotSupported>(Func::getPrototype());
-      return Error::success();
-    } else
-      return RemoteIdOrErr.takeError();
-  }
-
   /// Return type for non-blocking call primitives.
   template <typename Func>
   using NonBlockingCallResult = typename detail::ResultTraits<
@@ -1258,32 +1236,6 @@ public:
   void addHandler(ClassT &Object, RetT (ClassT::*Method)(ArgTs...)) {
     addHandler<Func>(
         detail::MemberFnWrapper<ClassT, RetT, ArgTs...>(Object, Method));
-  }
-
-  /// Negotiate a function id for Func with the other end of the channel.
-  template <typename Func> Error negotiateFunction(bool Retry = false) {
-    using OrcRPCNegotiate = typename BaseClass::OrcRPCNegotiate;
-
-    // Check if we already have a function id...
-    auto I = this->RemoteFunctionIds.find(Func::getPrototype());
-    if (I != this->RemoteFunctionIds.end()) {
-      // If it's valid there's nothing left to do.
-      if (I->second != this->getInvalidFunctionId())
-        return Error::success();
-      // If it's invalid and we can't re-attempt negotiation, throw an error.
-      if (!Retry)
-        return make_error<RPCFunctionNotSupported>(Func::getPrototype());
-    }
-
-    // We don't have a function id for Func yet, call the remote to try to
-    // negotiate one.
-    if (auto RemoteIdOrErr = callB<OrcRPCNegotiate>(Func::getPrototype())) {
-      this->RemoteFunctionIds[Func::getPrototype()] = *RemoteIdOrErr;
-      if (*RemoteIdOrErr == this->getInvalidFunctionId())
-        return make_error<RPCFunctionNotSupported>(Func::getPrototype());
-      return Error::success();
-    } else
-      return RemoteIdOrErr.takeError();
   }
 
   template <typename Func, typename... ArgTs,
