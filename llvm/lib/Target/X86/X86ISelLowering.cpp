@@ -30624,8 +30624,6 @@ static SDValue combineANDXORWithAllOnesIntoANDNP(SDNode *N, SelectionDAG &DAG) {
   SDValue N00 = N0->getOperand(0);
   SDValue N01 = N0->getOperand(1);
 
-  N01 = peekThroughBitcasts(N01);
-
   if (!ISD::isBuildVectorAllOnes(N01.getNode()))
     return SDValue();
 
