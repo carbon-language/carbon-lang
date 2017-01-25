@@ -132,7 +132,7 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
         I.getOperand(0).setReg(AndResult);
 
         auto InsertBefore = std::next(I.getIterator());
-        auto &SubI =
+        auto SubI =
             BuildMI(MBB, InsertBefore, I.getDebugLoc(), TII.get(ARM::RSBri))
                 .addDef(SExtResult)
                 .addUse(AndResult)
