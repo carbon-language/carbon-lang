@@ -3,15 +3,15 @@
 # RUN: echo "bar" > %t_retain.txt
 # RUN: echo "foo" >> %t_retain.txt
 # RUN: ld.lld -shared --retain-symbols-file=%t_retain.txt %t -o %t2
-# RUN: llvm-readobj -t %t2 | FileCheck %s
+# RUN: llvm-readobj --dyn-symbols %t2 | FileCheck %s
 
 ## Check separate form.
 # RUN: ld.lld -shared --retain-symbols-file %t_retain.txt %t -o %t2
-# RUN: llvm-readobj -t %t2 | FileCheck %s
+# RUN: llvm-readobj --dyn-symbols %t2 | FileCheck %s
 
-# CHECK:      Symbols [
+# CHECK:      DynamicSymbols [
 # CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name:  (0)
+# CHECK-NEXT:     Name: @
 # CHECK-NEXT:     Value:
 # CHECK-NEXT:     Size:
 # CHECK-NEXT:     Binding:
@@ -36,6 +36,15 @@
 # CHECK-NEXT:     Type:
 # CHECK-NEXT:     Other:
 # CHECK-NEXT:     Section: .text
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: und
+# CHECK-NEXT:     Value:
+# CHECK-NEXT:     Size:
+# CHECK-NEXT:     Binding: Global
+# CHECK-NEXT:     Type:
+# CHECK-NEXT:     Other:
+# CHECK-NEXT:     Section: Undefined
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 

@@ -614,10 +614,11 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   // If --retain-symbol-file is used, we'll retail only the symbols listed in
   // the file and discard all others.
   if (auto *Arg = Args.getLastArg(OPT_retain_symbols_file)) {
-    Config->Discard = DiscardPolicy::RetainFile;
+    Config->DefaultSymbolVersion = VER_NDX_LOCAL;
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
       for (StringRef S : getLines(*Buffer))
-        Config->RetainSymbolsFile.insert(S);
+        Config->VersionScriptGlobals.push_back(
+            {S, /*IsExternCpp*/ false, /*HasWildcard*/ false});
   }
 
   for (auto *Arg : Args.filtered(OPT_export_dynamic_symbol))
