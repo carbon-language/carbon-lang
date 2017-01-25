@@ -635,7 +635,8 @@ static char isNegatibleForFree(SDValue Op, bool LegalOperations,
                               Depth + 1);
   case ISD::FSUB:
     // We can't turn -(A-B) into B-A when we honor signed zeros.
-    if (!Options->UnsafeFPMath && !Op.getNode()->getFlags()->hasNoSignedZeros())
+    if (!Options->NoSignedZerosFPMath &&
+        !Op.getNode()->getFlags()->hasNoSignedZeros())
       return 0;
 
     // fold (fneg (fsub A, B)) -> (fsub B, A)
