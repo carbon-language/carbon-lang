@@ -38,7 +38,7 @@ static bool isSupportedType(const DataLayout &DL, const ARMTargetLowering &TLI,
     return false;
 
   unsigned VTSize = VT.getSimpleVT().getSizeInBits();
-  return VTSize == 8 || VTSize == 16 || VTSize == 32;
+  return VTSize == 1 || VTSize == 8 || VTSize == 16 || VTSize == 32;
 }
 
 namespace {

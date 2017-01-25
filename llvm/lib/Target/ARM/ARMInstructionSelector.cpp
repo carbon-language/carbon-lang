@@ -101,10 +101,13 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
   }
 
   MachineInstrBuilder MIB{MF, I};
+  bool isSExt = false;
 
   using namespace TargetOpcode;
   switch (I.getOpcode()) {
   case G_SEXT:
+    isSExt = true;
+    LLVM_FALLTHROUGH;
   case G_ZEXT: {
     LLT DstTy = MRI.getType(I.getOperand(0).getReg());
     // FIXME: Smaller destination sizes coming soon!
@@ -116,6 +119,31 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
     LLT SrcTy = MRI.getType(I.getOperand(1).getReg());
     unsigned SrcSize = SrcTy.getSizeInBits();
     switch (SrcSize) {
+    case 1: {
+      // ZExt boils down to & 0x1; for SExt we also subtract that from 0
+      I.setDesc(TII.get(ARM::ANDri));
+      MIB.addImm(1).add(predOps(ARMCC::AL)).add(condCodeOp());
+
+      if (isSExt) {
+        unsigned SExtResult = I.getOperand(0).getReg();
+
+        // Use a new virtual register for the result of the AND
+        unsigned AndResult = MRI.createVirtualRegister(&ARM::GPRRegClass);
+        I.getOperand(0).setReg(AndResult);
+
+        auto InsertBefore = std::next(I.getIterator());
+        auto &SubI =
+            BuildMI(MBB, InsertBefore, I.getDebugLoc(), TII.get(ARM::RSBri))
+                .addDef(SExtResult)
+                .addUse(AndResult)
+                .addImm(0)
+                .add(predOps(ARMCC::AL))
+                .add(condCodeOp());
+        if (!constrainSelectedInstRegOperands(*SubI, TII, TRI, RBI))
+          return false;
+      }
+      break;
+    }
     case 8:
     case 16: {
       unsigned NewOpc = selectSimpleExtOpc(I.getOpcode(), SrcSize);

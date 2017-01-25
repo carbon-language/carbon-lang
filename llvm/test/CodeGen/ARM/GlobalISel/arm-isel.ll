@@ -7,6 +7,23 @@ entry:
   ret void
 }
 
+define zeroext i1 @test_zext_i1(i1 %x) {
+; CHECK-LABEL: test_zext_i1
+; CHECK: and r0, r0, #1
+; CHECK: bx lr
+entry:
+  ret i1 %x
+}
+
+define signext i1 @test_sext_i1(i1 %x) {
+; CHECK-LABEL: test_sext_i1
+; CHECK: and r0, r0, #1
+; CHECK: rsb r0, r0, #0
+; CHECK: bx lr
+entry:
+  ret i1 %x
+}
+
 define zeroext i8 @test_ext_i8(i8 %x) {
 ; CHECK-LABEL: test_ext_i8:
 ; CHECK: uxtb r0, r0

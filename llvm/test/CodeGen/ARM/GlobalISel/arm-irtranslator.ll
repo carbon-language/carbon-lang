@@ -7,6 +7,20 @@ entry:
   ret void
 }
 
+define signext i1 @test_add_i1(i1 %x, i1 %y) {
+; CHECK-LABEL: name: test_add_i1
+; CHECK: liveins: %r0, %r1
+; CHECK-DAG: [[VREGX:%[0-9]+]](s1) = COPY %r0
+; CHECK-DAG: [[VREGY:%[0-9]+]](s1) = COPY %r1
+; CHECK: [[SUM:%[0-9]+]](s1) = G_ADD [[VREGX]], [[VREGY]]
+; CHECK: [[EXT:%[0-9]+]](s32) = G_SEXT [[SUM]]
+; CHECK: %r0 = COPY [[EXT]](s32)
+; CHECK: BX_RET 14, _, implicit %r0
+entry:
+  %sum = add i1 %x, %y
+  ret i1 %sum
+}
+
 define i8 @test_add_i8(i8 %x, i8 %y) {
 ; CHECK-LABEL: name: test_add_i8
 ; CHECK: liveins: %r0, %r1
