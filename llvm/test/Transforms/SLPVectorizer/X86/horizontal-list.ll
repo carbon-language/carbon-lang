@@ -1012,7 +1012,8 @@ define float @extra_args_no_replace(float* nocapture readonly %x, i32 %a, i32 %b
 ; CHECK-NEXT:    [[MUL:%.*]] = mul nsw i32 [[B:%.*]], [[A:%.*]]
 ; CHECK-NEXT:    [[CONV:%.*]] = sitofp i32 [[MUL]] to float
 ; CHECK-NEXT:    [[TMP0:%.*]] = load float, float* [[X:%.*]], align 4
-; CHECK-NEXT:    [[ADD:%.*]] = fadd fast float [[CONV]], 3.000000e+00
+; CHECK-NEXT:    [[ADDC:%.*]] = fadd fast float [[CONV]], 3.000000e+00
+; CHECK-NEXT:    [[ADD:%.*]] = fadd fast float [[CONV]], [[ADDC]]
 ; CHECK-NEXT:    [[ADD1:%.*]] = fadd fast float [[TMP0]], [[ADD]]
 ; CHECK-NEXT:    [[ARRAYIDX3:%.*]] = getelementptr inbounds float, float* [[X]], i64 1
 ; CHECK-NEXT:    [[TMP1:%.*]] = load float, float* [[ARRAYIDX3]], align 4
@@ -1039,7 +1040,8 @@ define float @extra_args_no_replace(float* nocapture readonly %x, i32 %a, i32 %b
   %mul = mul nsw i32 %b, %a
   %conv = sitofp i32 %mul to float
   %0 = load float, float* %x, align 4
-  %add = fadd fast float %conv, 3.000000e+00
+  %addc = fadd fast float %conv, 3.000000e+00
+  %add = fadd fast float %conv, %addc
   %add1 = fadd fast float %0, %add
   %arrayidx3 = getelementptr inbounds float, float* %x, i64 1
   %1 = load float, float* %arrayidx3, align 4
