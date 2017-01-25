@@ -4416,6 +4416,7 @@ const Optional<ByteProvider> calculateByteProvider(SDValue Op, unsigned Index,
     return None;
   unsigned ByteWidth = BitWidth / 8;
   assert(Index < ByteWidth && "invalid index requested");
+  (void) ByteWidth;
 
   switch (Op.getOpcode()) {
   case ISD::OR: {
@@ -4522,8 +4523,10 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
   if (LegalOperations && !TLI.isOperationLegal(ISD::LOAD, VT))
     return SDValue();
 
-  auto LittleEndianByteAt = [](unsigned BW, unsigned i) { return i; };
-  auto BigEndianByteAt = [](unsigned BW, unsigned i) { return BW - i - 1; };
+  std::function<unsigned(unsigned, unsigned)> LittleEndianByteAt = [](
+    unsigned BW, unsigned i) { return i; };
+  std::function<unsigned(unsigned, unsigned)> BigEndianByteAt = [](
+    unsigned BW, unsigned i) { return BW - i - 1; };
 
   Optional<BaseIndexOffset> Base;
   SDValue Chain;
