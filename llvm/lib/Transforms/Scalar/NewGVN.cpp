@@ -430,12 +430,10 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
   E->setType(I->getType());
   E->setOpcode(I->getOpcode());
 
-  auto ReachablePhiArg = [&](const Use &U) {
+  // Filter out unreachable phi operands.
+  auto Filtered = make_filter_range(PN->operands(), [&](const Use &U) {
     return ReachableBlocks.count(PN->getIncomingBlock(U));
-  };
-
-  // Filter out unreachable operands
-  auto Filtered = make_filter_range(PN->operands(), ReachablePhiArg);
+  });
 
   std::transform(Filtered.begin(), Filtered.end(), op_inserter(E),
                  [&](const Use &U) -> Value * {
