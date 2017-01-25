@@ -13,6 +13,7 @@
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/MSF/StreamArray.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
+#include "llvm/DebugInfo/PDB/Raw/HashTable.h"
 #include "llvm/DebugInfo/PDB/Raw/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Raw/RawTypes.h"
 #include "llvm/Support/raw_ostream.h"
@@ -47,7 +48,7 @@ public:
   uint32_t NumHashBuckets() const;
   msf::FixedStreamArray<support::ulittle32_t> getHashValues() const;
   msf::FixedStreamArray<TypeIndexOffset> getTypeIndexOffsets() const;
-  msf::FixedStreamArray<TypeIndexOffset> getHashAdjustments() const;
+  HashTable &getHashAdjusters();
 
   iterator_range<codeview::CVTypeArray::Iterator> types(bool *HadError) const;
 
@@ -64,7 +65,7 @@ private:
   std::unique_ptr<msf::ReadableStream> HashStream;
   msf::FixedStreamArray<support::ulittle32_t> HashValues;
   msf::FixedStreamArray<TypeIndexOffset> TypeIndexOffsets;
-  msf::FixedStreamArray<TypeIndexOffset> HashAdjustments;
+  HashTable HashAdjusters;
 
   const TpiStreamHeader *Header;
 };

@@ -113,11 +113,11 @@ Error TpiStream::reload() {
     if (auto EC = HSR.readArray(TypeIndexOffsets, NumTypeIndexOffsets))
       return EC;
 
-    HSR.setOffset(Header->HashAdjBuffer.Off);
-    uint32_t NumHashAdjustments =
-        Header->HashAdjBuffer.Length / sizeof(TypeIndexOffset);
-    if (auto EC = HSR.readArray(HashAdjustments, NumHashAdjustments))
-      return EC;
+    if (Header->HashAdjBuffer.Length > 0) {
+      HSR.setOffset(Header->HashAdjBuffer.Off);
+      if (auto EC = HashAdjusters.load(HSR))
+        return EC;
+    }
 
     HashStream = std::move(HS);
 
@@ -164,10 +164,7 @@ TpiStream::getTypeIndexOffsets() const {
   return TypeIndexOffsets;
 }
 
-FixedStreamArray<TypeIndexOffset>
-TpiStream::getHashAdjustments() const {
-  return HashAdjustments;
-}
+HashTable &TpiStream::getHashAdjusters() { return HashAdjusters; }
 
 iterator_range<CVTypeArray::Iterator>
 TpiStream::types(bool *HadError) const {
