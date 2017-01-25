@@ -2989,6 +2989,18 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       GuardB->setCallingConv(CC);
       return eraseInstFromFunction(*II);
     }
+
+    // guard(!(a || b)) -> guard(!a); guard(!b);
+    if (match(IIOperand, m_Not(m_Or(m_Value(A), m_Value(B))))) {
+      CallInst *GuardA = Builder->CreateCall(
+          GuardIntrinsic, Builder->CreateNot(A), {DeoptOB}, II->getName());
+      CallInst *GuardB = Builder->CreateCall(
+          GuardIntrinsic, Builder->CreateNot(B), {DeoptOB}, II->getName());
+      auto CC = II->getCallingConv();
+      GuardA->setCallingConv(CC);
+      GuardB->setCallingConv(CC);
+      return eraseInstFromFunction(*II);
+    }
     break;
   }
   }
