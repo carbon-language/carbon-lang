@@ -2300,6 +2300,7 @@ void OMPClauseReader::VisitOMPMapClause(OMPMapClause *C) {
 }
 
 void OMPClauseReader::VisitOMPNumTeamsClause(OMPNumTeamsClause *C) {
+  VisitOMPClauseWithPreInit(C);
   C->setNumTeams(Reader->Record.readSubExpr());
   C->setLParenLoc(Reader->ReadSourceLocation());
 }
