@@ -611,7 +611,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
       Config->SymbolOrderingFile = getLines(*Buffer);
 
-  // If --retain-symbol-file is used, we'll retail only the symbols listed in
+  // If --retain-symbol-file is used, we'll keep only the symbols listed in
   // the file and discard all others.
   if (auto *Arg = Args.getLastArg(OPT_retain_symbols_file)) {
     Config->DefaultSymbolVersion = VER_NDX_LOCAL;
