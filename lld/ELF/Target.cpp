@@ -223,6 +223,8 @@ public:
   void writePltHeader(uint8_t *Buf) const override;
   void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
+  void addPltSymbols(InputSectionData *IS, uint64_t Off) const override;
+  void addPltHeaderSymbols(InputSectionData *ISD) const override;
   RelExpr getThunkExpr(RelExpr Expr, uint32_t RelocType, const InputFile *File,
                        const SymbolBody &S) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -1731,6 +1733,12 @@ void ARMTargetInfo::writePltHeader(uint8_t *Buf) const {
   write32le(Buf + 16, GotPlt - L1 - 8);
 }
 
+void ARMTargetInfo::addPltHeaderSymbols(InputSectionData *ISD) const {
+  auto *IS = cast<InputSection<ELF32LE>>(ISD);
+  addSyntheticLocal("$a", STT_NOTYPE, 0, 0, IS);
+  addSyntheticLocal("$d", STT_NOTYPE, 16, 0, IS);
+}
+
 void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
                              uint64_t PltEntryAddr, int32_t Index,
                              unsigned RelOff) const {
@@ -1746,6 +1754,12 @@ void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   memcpy(Buf, PltData, sizeof(PltData));
   uint64_t L1 = PltEntryAddr + 4;
   write32le(Buf + 12, GotEntryAddr - L1 - 8);
+}
+
+void ARMTargetInfo::addPltSymbols(InputSectionData *ISD, uint64_t Off) const {
+  auto *IS = cast<InputSection<ELF32LE>>(ISD);
+  addSyntheticLocal("$a", STT_NOTYPE, Off, 0, IS);
+  addSyntheticLocal("$d", STT_NOTYPE, Off + 12, 0, IS);
 }
 
 RelExpr ARMTargetInfo::getThunkExpr(RelExpr Expr, uint32_t RelocType,

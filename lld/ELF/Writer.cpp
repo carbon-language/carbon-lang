@@ -1028,6 +1028,11 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // we can correctly decide if a dynamic relocation is needed.
   forEachRelSec(scanRelocations<ELFT>);
 
+  if (In<ELFT>::Plt && !In<ELFT>::Plt->empty())
+    In<ELFT>::Plt->addSymbols();
+  if (In<ELFT>::Iplt && !In<ELFT>::Iplt->empty())
+    In<ELFT>::Iplt->addSymbols();
+
   // Now that we have defined all possible symbols including linker-
   // synthesized ones. Visit all symbols to give the finishing touches.
   for (Symbol *S : Symtab<ELFT>::X->getSymbols()) {
