@@ -2870,6 +2870,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // TODO: relocate((gep p, C, C2, ...)) -> gep(relocate(p), C, C2, ...)
     break;
   }
+
+  case Intrinsic::experimental_guard: {
+    Value *IIOperand = II->getArgOperand(0);
+
+    // Remove a guard if it is immediately followed by an identical guard.
+    if (match(II->getNextNode(),
+              m_Intrinsic<Intrinsic::experimental_guard>(m_Specific(IIOperand))))
+      return eraseInstFromFunction(*II);
+    break;
+  }
   }
 
   return visitCallSite(II);
