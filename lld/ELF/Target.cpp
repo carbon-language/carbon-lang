@@ -45,7 +45,10 @@ using namespace llvm::support::endian;
 using namespace llvm::ELF;
 
 std::string lld::toString(uint32_t Type) {
-  return getELFRelocationTypeName(elf::Config->EMachine, Type);
+  StringRef S = getELFRelocationTypeName(elf::Config->EMachine, Type);
+  if (S == "Unknown")
+    return ("Unknown (" + Twine(Type) + ")").str();
+  return S;
 }
 
 namespace lld {
@@ -390,8 +393,7 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_386_NONE:
     return R_HINT;
   default:
-    error("do not know how to handle relocation '" + toString(Type) + "' (" +
-          Twine(Type) + ")");
+    error("unknown relocation type: " + toString(Type));
     return R_HINT;
   }
 }
@@ -672,8 +674,7 @@ RelExpr X86_64TargetInfo<ELFT>::getRelExpr(uint32_t Type,
   case R_X86_64_NONE:
     return R_HINT;
   default:
-    error("do not know how to handle relocation '" + toString(Type) + "' (" +
-          Twine(Type) + ")");
+    error("unknown relocation type: " + toString(Type));
     return R_HINT;
   }
 }
@@ -1626,7 +1627,8 @@ RelExpr AMDGPUTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_AMDGPU_GOTPCREL32_HI:
     return R_GOT_PC;
   default:
-    fatal("do not know how to handle relocation " + Twine(Type));
+    error("unknown relocation type: " + toString(Type));
+    return R_HINT;
   }
 }
 
