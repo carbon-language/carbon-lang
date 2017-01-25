@@ -512,17 +512,15 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                 uint64_t Val) const {
   checkInt<32>(Loc, Val, Type);
 
-  // R_386_PC16/R_386_16/R_386_PC8/R_386_8 are not part of the current i386
-  // psABI. They are used by 16-bit x86 objects, like boot loaders.
-  if (Type == R_386_8 || Type == R_386_PC8) {
-    *Loc = (uint8_t)Val;
-    return;
-  }
-  if (Type == R_386_16 || Type == R_386_PC16) {
+  // R_386_{PC,}{8,16} are not part of the i386 psABI, but they are
+  // being used for some 16-bit programs such as boot loaders, so
+  // we want to support them.
+  if (Type == R_386_8 || Type == R_386_PC8)
+    *Loc = Val;
+  else if (Type == R_386_16 || Type == R_386_PC16)
     write16le(Loc, Val);
-    return;
-  }
-  write32le(Loc, Val);
+  else
+    write32le(Loc, Val);
 }
 
 void X86TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
