@@ -35,7 +35,7 @@
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..
 
-// TEMPORARILY_DISABLED: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
+// RUN: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
 
 
 // RUN: %clangxx_asan -fsanitize-coverage=edge -DSHARED %s -shared -o %dynamiclib -fPIC
@@ -54,7 +54,7 @@
 // RUN: %sancov print *.sancov >out.txt
 // RUN: cd ../..
 
-// TEMPORARILY_DISABLED: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
+// RUN: diff -u coverage-direct/normal/out.txt coverage-direct/direct/out.txt
 
 // XFAIL: android
 
