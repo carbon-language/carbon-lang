@@ -607,10 +607,16 @@ static char isNegatibleForFree(SDValue Op, bool LegalOperations,
 
   switch (Op.getOpcode()) {
   default: return false;
-  case ISD::ConstantFP:
-    // Don't invert constant FP values after legalize.  The negated constant
-    // isn't necessarily legal.
-    return LegalOperations ? 0 : 1;
+  case ISD::ConstantFP: {
+    if (!LegalOperations)
+      return 1;
+
+    // Don't invert constant FP values after legalization unless the target says
+    // the negated constant is legal.
+    EVT VT = Op.getValueType();
+    return TLI.isOperationLegal(ISD::ConstantFP, VT) ||
+      TLI.isFPImmLegal(neg(cast<ConstantFPSDNode>(Op)->getValueAPF()), VT);
+  }
   case ISD::FADD:
     // FIXME: determine better conditions for this xform.
     if (!Options->UnsafeFPMath) return 0;
