@@ -2073,6 +2073,7 @@ void OMPClauseWriter::VisitOMPNumTeamsClause(OMPNumTeamsClause *C) {
 }
 
 void OMPClauseWriter::VisitOMPThreadLimitClause(OMPThreadLimitClause *C) {
+  VisitOMPClauseWithPreInit(C);
   Record.AddStmt(C->getThreadLimit());
   Record.AddSourceLocation(C->getLParenLoc());
 }

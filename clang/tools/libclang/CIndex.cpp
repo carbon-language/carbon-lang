@@ -2174,6 +2174,7 @@ void OMPClauseEnqueue::VisitOMPNumTeamsClause(const OMPNumTeamsClause *C) {
 }
 
 void OMPClauseEnqueue::VisitOMPThreadLimitClause(const OMPThreadLimitClause *C) {
+  VisitOMPClauseWithPreInit(C);
   Visitor->AddStmt(C->getThreadLimit());
 }
 
