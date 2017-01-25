@@ -6018,7 +6018,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                      options::OPT_fno_objc_arc_exceptions,
                      /*default*/ types::isCXX(InputType)))
       CmdArgs.push_back("-fobjc-arc-exceptions");
+  }
 
+  // Silence warning for full exception code emission options when explicitly
+  // set to use no ARC.
+  if (Args.hasArg(options::OPT_fno_objc_arc)) {
+    Args.ClaimAllArgs(options::OPT_fobjc_arc_exceptions);
+    Args.ClaimAllArgs(options::OPT_fno_objc_arc_exceptions);
   }
 
   // -fobjc-infer-related-result-type is the default, except in the Objective-C
