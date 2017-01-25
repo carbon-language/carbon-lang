@@ -358,6 +358,7 @@ X86TargetInfo::X86TargetInfo() {
 
 RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   switch (Type) {
+  case R_386_8:
   case R_386_16:
   case R_386_32:
   case R_386_TLS_LDO_32:
@@ -368,6 +369,7 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
     return R_TLSLD;
   case R_386_PLT32:
     return R_PLT_PC;
+  case R_386_PC8:
   case R_386_PC16:
   case R_386_PC32:
     return R_PC;
@@ -488,6 +490,9 @@ uint64_t X86TargetInfo::getImplicitAddend(const uint8_t *Buf,
   switch (Type) {
   default:
     return 0;
+  case R_386_8:
+  case R_386_PC8:
+    return *Buf;
   case R_386_16:
   case R_386_PC16:
     return read16le(Buf);
@@ -507,8 +512,12 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
                                 uint64_t Val) const {
   checkInt<32>(Loc, Val, Type);
 
-  // R_386_PC16 and R_386_16 are not part of the current i386 psABI. They are
-  // used by 16-bit x86 objects, like boot loaders.
+  // R_386_PC16/R_386_16/R_386_PC8/R_386_8 are not part of the current i386
+  // psABI. They are used by 16-bit x86 objects, like boot loaders.
+  if (Type == R_386_8 || Type == R_386_PC8) {
+    *Loc = (uint8_t)Val;
+    return;
+  }
   if (Type == R_386_16 || Type == R_386_PC16) {
     write16le(Loc, Val);
     return;
