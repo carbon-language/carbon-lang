@@ -526,6 +526,11 @@ public:
     this->GISel.reset(&GISel);
   }
 
+  // XXX - Why is this here if it isn't in the default pass set?
+  bool enableEarlyIfConversion() const override {
+    return true;
+  }
+
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            unsigned NumRegionInstrs) const override;
 
