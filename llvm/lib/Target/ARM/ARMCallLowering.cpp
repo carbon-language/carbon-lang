@@ -17,6 +17,7 @@
 
 #include "ARMBaseInstrInfo.h"
 #include "ARMISelLowering.h"
+#include "ARMSubtarget.h"
 
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -173,6 +174,9 @@ bool ARMCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
 
   auto DL = MIRBuilder.getMF().getDataLayout();
   auto &TLI = *getTLI<ARMTargetLowering>();
+
+  if (TLI.getSubtarget()->isThumb())
+    return false;
 
   auto &Args = F.getArgumentList();
   unsigned ArgIdx = 0;
