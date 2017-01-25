@@ -22,7 +22,8 @@ llvm_canonicalize_cmake_booleans(
   CLANG_BUILD_EXAMPLES
   CLANG_ENABLE_ARCMT
   CLANG_ENABLE_STATIC_ANALYZER
-  ENABLE_BACKTRACES)
+  ENABLE_BACKTRACES
+  HAVE_LIBZ)
 
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
