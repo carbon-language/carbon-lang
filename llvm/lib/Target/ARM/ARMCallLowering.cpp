@@ -60,11 +60,8 @@ struct FuncReturnHandler : public CallLowering::ValueHandler {
     assert(VA.getValVT().getSizeInBits() <= 32 && "Unsupported value size");
     assert(VA.getLocVT().getSizeInBits() == 32 && "Unsupported location size");
 
-    assert(VA.getLocInfo() != CCValAssign::SExt &&
-           VA.getLocInfo() != CCValAssign::ZExt &&
-           "ABI extensions not supported yet");
-
-    MIRBuilder.buildCopy(PhysReg, ValVReg);
+    unsigned ExtReg = extendRegister(ValVReg, VA);
+    MIRBuilder.buildCopy(PhysReg, ExtReg);
     MIB.addUse(PhysReg, RegState::Implicit);
   }
 
@@ -156,6 +153,7 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
     assert(VA.getValVT().getSizeInBits() <= 32 && "Unsupported value size");
     assert(VA.getLocVT().getSizeInBits() == 32 && "Unsupported location size");
 
+    // The caller should handle all necesary extensions.
     MIRBuilder.getMBB().addLiveIn(PhysReg);
     MIRBuilder.buildCopy(ValVReg, PhysReg);
   }

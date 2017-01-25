@@ -20,6 +20,17 @@ entry:
   ret i8 %sum
 }
 
+define signext i8 @test_return_sext_i8(i8 %x) {
+; CHECK-LABEL: name: test_return_sext_i8
+; CHECK: liveins: %r0
+; CHECK: [[VREG:%[0-9]+]](s8) = COPY %r0
+; CHECK: [[VREGEXT:%[0-9]+]](s32) = G_SEXT [[VREG]]
+; CHECK: %r0 = COPY [[VREGEXT]](s32)
+; CHECK: BX_RET 14, _, implicit %r0
+entry:
+  ret i8 %x
+}
+
 define i16 @test_add_i16(i16 %x, i16 %y) {
 ; CHECK-LABEL: name: test_add_i16
 ; CHECK: liveins: %r0, %r1
@@ -31,6 +42,17 @@ define i16 @test_add_i16(i16 %x, i16 %y) {
 entry:
   %sum = add i16 %x, %y
   ret i16 %sum
+}
+
+define zeroext i16 @test_return_zext_i16(i16 %x) {
+; CHECK-LABEL: name: test_return_zext_i16
+; CHECK: liveins: %r0
+; CHECK: [[VREG:%[0-9]+]](s16) = COPY %r0
+; CHECK: [[VREGEXT:%[0-9]+]](s32) = G_ZEXT [[VREG]]
+; CHECK: %r0 = COPY [[VREGEXT]](s32)
+; CHECK: BX_RET 14, _, implicit %r0
+entry:
+  ret i16 %x
 }
 
 define i32 @test_add_i32(i32 %x, i32 %y) {

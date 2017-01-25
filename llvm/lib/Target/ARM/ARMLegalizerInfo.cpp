@@ -40,5 +40,11 @@ ARMLegalizerInfo::ARMLegalizerInfo() {
   for (auto Ty : {s8, s16, s32})
     setAction({G_ADD, Ty}, Legal);
 
+  for (auto Op : {G_SEXT, G_ZEXT}) {
+    setAction({Op, s32}, Legal);
+    for (auto Ty : {s8, s16})
+      setAction({Op, 1, Ty}, Legal);
+  }
+
   computeTables();
 }
