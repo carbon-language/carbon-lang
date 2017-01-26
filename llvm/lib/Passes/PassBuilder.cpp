@@ -318,19 +318,18 @@ PassBuilder::buildFunctionSimplificationPipeline(OptimizationLevel Level,
   // the other we have is `LoopInstSimplify`.
   LoopPassManager LPM1(DebugLogging), LPM2(DebugLogging);
 
-  // FIXME: Enable these when the loop pass manager can support enforcing loop
-  // simplified and LCSSA form as well as updating the loop nest after
-  // transformations and we finsih porting the loop passes.
-#if 0
   // Rotate Loop - disable header duplication at -Oz
   LPM1.addPass(LoopRotatePass(Level != Oz));
   LPM1.addPass(LICMPass());
+#if 0
+  // The LoopUnswitch pass isn't yet ported to the new pass manager.
   LPM1.addPass(LoopUnswitchPass(/* OptimizeForSize */ Level != O3));
-  LPM2.addPass(IndVarSimplifyPass());
-  LPM2.addPass(LoopIdiomPass());
-  LPM2.addPass(LoopDeletionPass());
-  LPM2.addPass(SimpleLoopUnrollPass());
 #endif
+  LPM2.addPass(IndVarSimplifyPass());
+  LPM2.addPass(LoopIdiomRecognizePass());
+  LPM2.addPass(LoopDeletionPass());
+  LPM2.addPass(LoopUnrollPass::createFull());
+
   FPM.addPass(createFunctionToLoopPassAdaptor(std::move(LPM1)));
   FPM.addPass(SimplifyCFGPass());
   FPM.addPass(InstCombinePass());
@@ -365,12 +364,7 @@ PassBuilder::buildFunctionSimplificationPipeline(OptimizationLevel Level,
   FPM.addPass(JumpThreadingPass());
   FPM.addPass(CorrelatedValuePropagationPass());
   FPM.addPass(DSEPass());
-  // FIXME: Enable this when the loop pass manager can support enforcing loop
-  // simplified and LCSSA form as well as updating the loop nest after
-  // transformations and we finsih porting the loop passes.
-#if 0
   FPM.addPass(createFunctionToLoopPassAdaptor(LICMPass()));
-#endif
 
   // Finally, do an expensive DCE pass to catch all the dead code exposed by
   // the simplifications and basic cleanup after all the simplifications.
