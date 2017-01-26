@@ -29096,7 +29096,7 @@ static bool combineBitcastForMaskedOp(SDValue OrigOp, SelectionDAG &DAG,
     DCI.AddToWorklist(Op1.getNode());
     DCI.CombineTo(OrigOp.getNode(),
                   DAG.getNode(Opcode, DL, VT, Op0, Op1,
-                              DAG.getConstant(Imm, DL, MVT::i8)));
+                              DAG.getIntPtrConstant(Imm, DL)));
     return true;
   }
   case ISD::EXTRACT_SUBVECTOR: {
@@ -29117,7 +29117,7 @@ static bool combineBitcastForMaskedOp(SDValue OrigOp, SelectionDAG &DAG,
     DCI.AddToWorklist(Op0.getNode());
     DCI.CombineTo(OrigOp.getNode(),
                   DAG.getNode(Opcode, DL, VT, Op0,
-                              DAG.getConstant(Imm, DL, MVT::i8)));
+                              DAG.getIntPtrConstant(Imm, DL)));
     return true;
   }
   case X86ISD::SUBV_BROADCAST: {
