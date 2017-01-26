@@ -1160,7 +1160,8 @@ PreservedAnalyses LoopUnrollPass::run(Loop &L, LoopAnalysisManager &AM,
 #endif
 
   // Unrolling can do several things to introduce new loops into a loop nest:
-  // - Partial unrolling clones child loops within the current loop.
+  // - Partial unrolling clones child loops within the current loop. If it
+  //   uses a remainder, then it can also create any number of sibling loops.
   // - Full unrolling clones child loops within the current loop but then
   //   removes the current loop making all of the children appear to be new
   //   sibling loops.
