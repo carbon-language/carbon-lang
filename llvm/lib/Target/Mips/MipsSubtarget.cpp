@@ -117,6 +117,9 @@ MipsSubtarget::MipsSubtarget(const Triple &TT, const std::string &CPU,
   if (NoABICalls && TM.isPositionIndependent())
     report_fatal_error("position-independent code requires '-mabicalls'");
 
+  if (isABI_N64() && !TM.isPositionIndependent() && !hasSym32())
+    NoABICalls = true;
+
   // Set UseSmallSection.
   UseSmallSection = GPOpt;
   if (!NoABICalls && GPOpt) {
