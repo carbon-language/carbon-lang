@@ -11,7 +11,7 @@ void foo() throw();
 template <typename T>
 void foo() throw();
 void footest() { foo<int>(); foo<double>(); }
-// CHECK-MESSAGES: :[[@LINE-2]:12: warning: dynamic exception specification 'throw()' is deprecated; consider using 'noexcept' instead [modernize-use-noexcept]
+// CHECK-MESSAGES: :[[@LINE-2]]:12: warning: dynamic exception specification 'throw()' is deprecated; consider using 'noexcept' instead [modernize-use-noexcept]
 // CHECK-FIXES: void foo() noexcept;
 
 void bar() throw(...);
