@@ -1,3 +1,5 @@
+; REQUIRES: x86-registered-target
+
 ; RUN: opt -module-summary -o %t1.o %s
 ; RUN: llvm-lto -thinlto -o %t %t1.o
 
