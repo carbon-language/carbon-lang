@@ -32,12 +32,12 @@ ATTRIBUTE_NO_SANITIZE_ALL
 void TracePC::HandleTrace(uint32_t *Guard, uintptr_t PC) {
   uint32_t Idx = *Guard;
   PCs[Idx] = PC;
-  Counters[Idx % kNumCounters]++;
+  Counters[Idx]++;
 }
 
 size_t TracePC::GetTotalPCCoverage() {
   size_t Res = 0;
-  for (size_t i = 1; i < GetNumPCs(); i++)
+  for (size_t i = 1, N = GetNumPCs(); i < N; i++)
     if (PCs[i])
       Res++;
   return Res;
