@@ -1667,6 +1667,45 @@ TEST_F(ChangeNamespaceTest, ShortenNamespaceSpecifier) {
   EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
 }
 
+TEST_F(ChangeNamespaceTest, ShortenNamespaceSpecifierInAnonymousNamespace) {
+  OldNamespace = "nx";
+  NewNamespace = "ny::na";
+  std::string Code = "class G {};\n"
+                     "namespace ny {\n"
+                     "class Y {};\n"
+                     "namespace na {\n"
+                     "class A {};\n"
+                     "namespace nc { class C {}; } // namespace nc\n"
+                     "}\n // namespace na\n"
+                     "}\n // namespace ny\n"
+                     "namespace nx {\n"
+                     "namespace {\n"
+                     "class X {\n"
+                     " G g; ::ny::Y y; ::ny::na::A a; ::ny::na::nc::C c;\n"
+                     "};\n"
+                     "} // namespace\n"
+                     "} // namespace nx\n";
+  std::string Expected = "class G {};\n"
+                         "namespace ny {\n"
+                         "class Y {};\n"
+                         "namespace na {\n"
+                         "class A {};\n"
+                         "namespace nc { class C {}; } // namespace nc\n"
+                         "}\n // namespace na\n"
+                         "}\n // namespace ny\n"
+                         "\n"
+                         "namespace ny {\n"
+                         "namespace na {\n"
+                         "namespace {\n"
+                         "class X {\n"
+                         " G g; Y y; A a; nc::C c;\n"
+                         "};\n"
+                         "} // namespace\n"
+                         "} // namespace na\n"
+                         "} // namespace ny\n";
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
 } // anonymous namespace
 } // namespace change_namespace
 } // namespace clang

@@ -703,9 +703,6 @@ void ChangeNamespaceTool::replaceQualifiedSymbolInDeclContext(
           Result.SourceManager->getSpellingLoc(Start),
           Result.SourceManager->getSpellingLoc(End)),
       *Result.SourceManager, Result.Context->getLangOpts());
-  // If the symbol is already fully qualified, no change needs to be make.
-  if (NestedName.startswith("::"))
-    return;
   std::string FromDeclName = FromDecl->getQualifiedNameAsString();
   std::string ReplaceName =
       getShortestQualifiedNameInNamespace(FromDeclName, NewNs);
@@ -774,7 +771,8 @@ void ChangeNamespaceTool::replaceQualifiedSymbolInDeclContext(
   }
   // If the new nested name in the new namespace is the same as it was in the
   // old namespace, we don't create replacement.
-  if (NestedName == ReplaceName)
+  if (NestedName == ReplaceName ||
+      (NestedName.startswith("::") && NestedName.drop_front(2) == ReplaceName))
     return;
   // If the reference need to be fully-qualified, add a leading "::" unless
   // NewNamespace is the global namespace.
