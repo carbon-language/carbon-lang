@@ -549,6 +549,10 @@ std::string ReportEntry::getMessage() const {
   return "Region containing entry block of function is invalid!";
 }
 
+std::string ReportEntry::getEndUserMessage() const {
+  return "Scop contains function entry (not yet supported).";
+}
+
 const DebugLoc &ReportEntry::getDebugLoc() const {
   return BB->getTerminator()->getDebugLoc();
 }
