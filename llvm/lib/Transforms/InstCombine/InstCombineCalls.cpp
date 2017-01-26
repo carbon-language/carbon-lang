@@ -3010,35 +3010,6 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (match(II->getNextNode(),
               m_Intrinsic<Intrinsic::experimental_guard>(m_Specific(IIOperand))))
       return eraseInstFromFunction(*II);
-
-    // Canonicalize guard(a && b) -> guard(a); guard(b);
-    // Note: New guard intrinsics created here are registered by
-    // the InstCombineIRInserter object.
-    Function *GuardIntrinsic = II->getCalledFunction();
-    Value *A, *B;
-    OperandBundleDef DeoptOB(*II->getOperandBundle(LLVMContext::OB_deopt));
-    if (match(IIOperand, m_And(m_Value(A), m_Value(B)))) {
-      CallInst *GuardA =
-          Builder->CreateCall(GuardIntrinsic, A, {DeoptOB}, II->getName());
-      CallInst *GuardB =
-          Builder->CreateCall(GuardIntrinsic, B, {DeoptOB}, II->getName());
-      auto CC = II->getCallingConv();
-      GuardA->setCallingConv(CC);
-      GuardB->setCallingConv(CC);
-      return eraseInstFromFunction(*II);
-    }
-
-    // guard(!(a || b)) -> guard(!a); guard(!b);
-    if (match(IIOperand, m_Not(m_Or(m_Value(A), m_Value(B))))) {
-      CallInst *GuardA = Builder->CreateCall(
-          GuardIntrinsic, Builder->CreateNot(A), {DeoptOB}, II->getName());
-      CallInst *GuardB = Builder->CreateCall(
-          GuardIntrinsic, Builder->CreateNot(B), {DeoptOB}, II->getName());
-      auto CC = II->getCallingConv();
-      GuardA->setCallingConv(CC);
-      GuardB->setCallingConv(CC);
-      return eraseInstFromFunction(*II);
-    }
     break;
   }
   }
