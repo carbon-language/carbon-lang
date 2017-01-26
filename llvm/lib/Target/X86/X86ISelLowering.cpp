@@ -29505,7 +29505,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
   // Look for vselects with LHS/RHS being bitcasted from an operation that
   // can be executed on another type. Push the bitcast to the inputs of
   // the operation. This exposes opportunities for using masking instructions.
-  if (N->getOpcode() == ISD::VSELECT && !DCI.isBeforeLegalizeOps() &&
+  if (N->getOpcode() == ISD::VSELECT && DCI.isAfterLegalizeVectorOps() &&
       CondVT.getVectorElementType() == MVT::i1) {
     if (combineBitcastForMaskedOp(LHS, DAG, DCI))
       return SDValue(N, 0);
