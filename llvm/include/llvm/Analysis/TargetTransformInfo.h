@@ -942,11 +942,12 @@ public:
   bool shouldBuildLookupTablesForConstant(Constant *C) override {
     return Impl.shouldBuildLookupTablesForConstant(C);
   }
-  unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) {
+  unsigned getScalarizationOverhead(Type *Ty, bool Insert,
+                                    bool Extract) override {
     return Impl.getScalarizationOverhead(Ty, Insert, Extract);
   }
   unsigned getOperandsScalarizationOverhead(ArrayRef<const Value *> Args,
-                                            unsigned VF) {
+                                            unsigned VF) override {
     return Impl.getOperandsScalarizationOverhead(Args, VF);
   }
 
