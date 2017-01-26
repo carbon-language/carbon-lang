@@ -96,7 +96,6 @@ entry:
   ret void
  ; CHECK-LABEL: smallStruct_1b1i:
  ; CHECK-NOT: dsll
- ; CHECK: lui
 }
 
 define void @smallStruct_1b1s1b(%struct.SmallStruct_1b1s1b* %ss) #0 {
@@ -130,7 +129,6 @@ entry:
   ret void
  ; CHECK-LABEL: smallStruct_1s1i:
  ; CHECK-NOT: dsll
- ; CHECK: lui
 }
 
 define void @smallStruct_3b1s(%struct.SmallStruct_3b1s* %ss) #0 {

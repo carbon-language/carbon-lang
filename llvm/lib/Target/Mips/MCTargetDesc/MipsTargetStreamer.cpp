@@ -721,6 +721,10 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   if (Features[Mips::FeatureNaN2008])
     EFlags |= ELF::EF_MIPS_NAN2008;
 
+  // -mabicalls and -mplt are not implemented but we should act as if they were
+  // given.
+  EFlags |= ELF::EF_MIPS_CPIC;
+
   MCA.setELFHeaderEFlags(EFlags);
 }
 
@@ -791,14 +795,10 @@ void MipsTargetELFStreamer::finish() {
   } else if (Features[Mips::FeatureMips64r2] || Features[Mips::FeatureMips64])
     EFlags |= ELF::EF_MIPS_32BITMODE;
 
-  // -mplt is not implemented but we should act as if it was
-  // given.
-  if ((!Features[Mips::FeatureNoABICalls] && !getABI().IsN64()) ||
-      (getABI().IsN64() && Features[Mips::FeatureSym32]))
-    EFlags |= ELF::EF_MIPS_CPIC;
-
-  if (Pic)
-    EFlags |= ELF::EF_MIPS_PIC | ELF::EF_MIPS_CPIC;
+  // If we've set the cpic eflag and we're n64, go ahead and set the pic
+  // one as well.
+  if (EFlags & ELF::EF_MIPS_CPIC && getABI().IsN64())
+    EFlags |= ELF::EF_MIPS_PIC;
 
   MCA.setELFHeaderEFlags(EFlags);
 
