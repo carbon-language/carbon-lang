@@ -7522,8 +7522,6 @@ bool LoopVectorizePass::processLoop(Loop *L) {
     DEBUG(dbgs() << "LV: Interleave Count is " << IC << '\n');
   }
 
-  formLCSSARecursively(*L, *DT, LI, SE);
-
   using namespace ore;
   if (!VectorizeLoop) {
     assert(IC > 1 && "interleave count should not be 1 or 0");
@@ -7620,8 +7618,15 @@ bool LoopVectorizePass::runImpl(
   LoopsAnalyzed += Worklist.size();
 
   // Now walk the identified inner loops.
-  while (!Worklist.empty())
-    Changed |= processLoop(Worklist.pop_back_val());
+  while (!Worklist.empty()) {
+    Loop *L = Worklist.pop_back_val();
+
+    // For the inner loops we actually process, form LCSSA to simplify the
+    // transform.
+    Changed |= formLCSSARecursively(*L, *DT, LI, SE);
+
+    Changed |= processLoop(L);
+  }
 
   // Process each loop nest in the function.
   return Changed;
