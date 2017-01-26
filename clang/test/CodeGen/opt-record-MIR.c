@@ -20,7 +20,7 @@ void foo(float *p, int i) {
 // YAML: --- !Missed
 // YAML: Pass:            regalloc
 // YAML: Name:            LoopSpillReload
-// YAML: DebugLoc:        { File: /Users/adam/proj/org/llvm/tools/clang/test/CodeGen/opt-record-MIR.c,
+// YAML: DebugLoc:        { File: {{.*}}opt-record-MIR.c,
 // YAML:                    Line: 9, Column: 11 }
 // YAML: Function:        foo
 // YAML: Args:
