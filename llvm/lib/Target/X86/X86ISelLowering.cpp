@@ -5808,6 +5808,25 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
   return false;
 }
 
+/// Removes unused shuffle source ops and adjusts the shuffle mask accordingly.
+static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Ops,
+                                              SmallVectorImpl<int> &Mask) {
+  int MaskWidth = Mask.size();
+  SmallVector<SDValue, 8> UsedOps;
+  for (int i = 0, e = Ops.size(); i < e; ++i) {
+    int lo = UsedOps.size() * MaskWidth;
+    int hi = lo + MaskWidth;
+    if (any_of(Mask, [lo, hi](int i) { return (lo <= i) && (i < hi); })) {
+      UsedOps.push_back(Ops[i]);
+      continue;
+    }
+    for (int &M : Mask)
+      if (lo <= M)
+        M -= MaskWidth;
+  }
+  Ops = UsedOps;
+}
+
 /// Calls setTargetShuffleZeroElements to resolve a target shuffle mask's inputs
 /// and set the SM_SentinelUndef and SM_SentinelZero values. Then check the
 /// remaining input indices in case we now have a unary shuffle and adjust the
@@ -27490,20 +27509,8 @@ static bool combineX86ShufflesRecursively(ArrayRef<SDValue> SrcOps,
   }
 
   // Remove unused shuffle source ops.
-  SmallVector<SDValue, 8> UsedOps;
-  for (int i = 0, e = Ops.size(); i < e; ++i) {
-    int lo = UsedOps.size() * MaskWidth;
-    int hi = lo + MaskWidth;
-    if (any_of(Mask, [lo, hi](int i) { return (lo <= i) && (i < hi); })) {
-      UsedOps.push_back(Ops[i]);
-      continue;
-    }
-    for (int &M : Mask)
-      if (lo <= M)
-        M -= MaskWidth;
-  }
-  assert(!UsedOps.empty() && "Shuffle with no inputs detected");
-  Ops = UsedOps;
+  resolveTargetShuffleInputsAndMask(Ops, Mask);
+  assert(!Ops.empty() && "Shuffle with no inputs detected");
 
   HasVariableMask |= isTargetShuffleVariableMask(Op.getOpcode());
 
