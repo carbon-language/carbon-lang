@@ -1936,6 +1936,12 @@ void NewGVN::convertDenseToDFSOrdered(
           IBlock = I->getParent();
           VD.LocalNum = InstrDFS.lookup(I);
         }
+
+        // Skip uses in unreachable blocks, as we're going
+        // to delete them.
+        if (ReachableBlocks.count(IBlock) == 0)
+          continue;
+
         DomTreeNode *DomNode = DT->getNode(IBlock);
         VD.DFSIn = DomNode->getDFSNumIn();
         VD.DFSOut = DomNode->getDFSNumOut();
