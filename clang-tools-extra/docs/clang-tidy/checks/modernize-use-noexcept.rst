@@ -29,11 +29,10 @@ Options
 
 .. option:: ReplacementString
 
-Users can use :option:`ReplacementString` to specify a macro to use
-instead of ``noexcept``.  This is useful when maintaining source code
-that uses custom exception specification marking other than
-``noexcept``.  Fixit hints will only be generated for non-throwing
-specifications.
+Users can use :option:`ReplacementString` to specify a macro to use instead of
+``noexcept``.  This is useful when maintaining source code that uses custom
+exception specification marking other than ``noexcept``.  Fix-it hints will only
+be generated for non-throwing specifications.
 
 Example
 ^^^^^^^
@@ -47,18 +46,17 @@ transforms to:
 
 .. code-block:: c++
 
-  void bar() throw(int);  // No Fixit generated.
+  void bar() throw(int);  // No fix-it generated.
   void foo() NOEXCEPT;
 
 if the :option:`ReplacementString` option is set to `NOEXCEPT`.
 
 .. option:: UseNoexceptFalse
 
-Enabled by default, disabling will generate Fixit hints that remove
-throwing dynamic exception specs, e.g., ``throw(<something>)``,
-completely without providing a replacement text, except for
-destructors and delete operators that are ``noexcept(true)`` by
-default.
+Enabled by default, disabling will generate fix-it hints that remove throwing
+dynamic exception specs, e.g., ``throw(<something>)``, completely without
+providing a replacement text, except for destructors and delete operators that
+are ``noexcept(true)`` by default.
 
 Example
 ^^^^^^^
