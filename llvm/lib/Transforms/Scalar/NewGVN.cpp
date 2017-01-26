@@ -17,6 +17,27 @@
 /// "A Sparse Algorithm for Predicated Global Value Numbering" from
 /// Karthik Gargi.
 ///
+/// A brief overview of the algorithm: The algorithm is essentially the same as
+/// the standard RPO value numbering algorithm (a good reference is the paper
+/// "SCC based value numbering" by L. Taylor Simpson) with one major difference:
+/// The RPO algorithm proceeds, on every iteration, to process every reachable
+/// block and every instruction in that block.  This is because the standard RPO
+/// algorithm does not track what things have the same value number, it only
+/// tracks what the value number of a given operation is (the mapping is
+/// operation -> value number).  Thus, when a value number of an operation
+/// changes, it must reprocess everything to ensure all uses of a value number
+/// get updated properly.  In constrast, the sparse algorithm we use *also*
+/// tracks what operations have a given value number (IE it also tracks the
+/// reverse mapping from value number -> operations with that value number), so
+/// that it only needs to reprocess the instructions that are affected when
+/// something's value number changes.  The rest of the algorithm is devoted to
+/// performing symbolic evaluation, forward propagation, and simplification of
+/// operations based on the value numbers deduced so far.
+///
+/// We also do not perform elimination by using any published algorithm.  All
+/// published algorithms are O(Instructions). Instead, we use a technique that
+/// is O(number of operations with the same value number), enabling us to skip
+/// trying to eliminate things that have unique value numbers.
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar/NewGVN.h"
