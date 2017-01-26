@@ -3,7 +3,7 @@
 
 target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
 
-define void @patatino(i8* %blah, i32 %choice) {
+define i1 @patatino(i8* %blah, i32 %choice) {
 ; CHECK-LABEL: @patatino(
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br label [[WHILE_COND:%.*]]
@@ -20,8 +20,9 @@ define void @patatino(i8* %blah, i32 %choice) {
 ; CHECK:       while.end:
 ; CHECK-NEXT:    store i8 0, i8* [[FOO]], align 1
 ; CHECK-NEXT:    [[TMP0:%.*]] = load i8, i8* [[BLAH]], align 1
+; CHECK-NEXT:    [[LOADED:%.*]] = icmp eq i8 [[TMP0]], 0
 ; CHECK-NEXT:    store i8 0, i8* [[BLAH]], align 1
-; CHECK-NEXT:    ret void
+; CHECK-NEXT:    ret i1 [[LOADED]]
 ;
 entry:
   br label %while.cond
@@ -49,7 +50,7 @@ while.end:
   %0 = load i8, i8* %blah, align 1
   %loaded = icmp eq i8 %0, 0
   store i8 0, i8* %blah, align 1
-  ret void
+  ret i1 %loaded
 }
 
 
