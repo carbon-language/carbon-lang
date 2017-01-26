@@ -2054,18 +2054,20 @@ std::pair<uint32_t, uint32_t> ScriptParser::readMemoryAttributes() {
   uint32_t Flags = 0;
   uint32_t NotFlags = 0;
   bool Invert = false;
-  for (char C : next()) {
+
+  for (char C : next().lower()) {
     uint32_t Flag = 0;
     if (C == '!')
       Invert = !Invert;
-    else if (tolower(C) == 'w')
+    else if (C == 'w')
       Flag = SHF_WRITE;
-    else if (tolower(C) == 'x')
+    else if (C == 'x')
       Flag = SHF_EXECINSTR;
-    else if (tolower(C) == 'a')
+    else if (C == 'a')
       Flag = SHF_ALLOC;
-    else if (tolower(C) != 'r')
+    else if (C != 'r')
       setError("invalid memory region attribute");
+
     if (Invert)
       NotFlags |= Flag;
     else
