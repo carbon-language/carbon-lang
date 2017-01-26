@@ -357,6 +357,13 @@ static UnresolvedPolicy getUnresolvedSymbolOption(opt::InputArgList &Args) {
   if (Config->Relocatable)
     return UnresolvedPolicy::Ignore;
 
+  if (auto *Arg = Args.getLastArg(OPT_warn_undef, OPT_error_undef)) {
+    if (Arg->getOption().getID() == OPT_warn_undef)
+      return UnresolvedPolicy::Warn;
+
+    return UnresolvedPolicy::ReportError;
+  }
+
   if (auto *Arg = Args.getLastArg(OPT_unresolved_symbols)) {
     StringRef S = Arg->getValue();
     if (S == "ignore-all" || S == "ignore-in-object-files")
