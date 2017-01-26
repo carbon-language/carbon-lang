@@ -28,10 +28,10 @@ namespace fuzzer {
 
 TracePC TPC;
 
+ATTRIBUTE_NO_SANITIZE_ALL
 void TracePC::HandleTrace(uint32_t *Guard, uintptr_t PC) {
   uint32_t Idx = *Guard;
-  if (!Idx) return;
-  PCs[Idx % kNumPCs] = PC;
+  PCs[Idx] = PC;
   Counters[Idx % kNumCounters]++;
 }
 
@@ -46,8 +46,16 @@ size_t TracePC::GetTotalPCCoverage() {
 void TracePC::HandleInit(uint32_t *Start, uint32_t *Stop) {
   if (Start == Stop || *Start) return;
   assert(NumModules < sizeof(Modules) / sizeof(Modules[0]));
-  for (uint32_t *P = Start; P < Stop; P++)
-    *P = ++NumGuards;
+  for (uint32_t *P = Start; P < Stop; P++) {
+    NumGuards++;
+    if (NumGuards == kNumPCs) {
+      RawPrint(
+          "WARNING: The binary has too many instrumented PCs.\n"
+          "         You may want to reduce the size of the binary\n"
+          "         for more efficient fuzzing and precise coverage data\n");
+    }
+    *P = NumGuards % kNumPCs;
+  }
   Modules[NumModules].Start = Start;
   Modules[NumModules].Stop = Stop;
   NumModules++;
@@ -258,6 +266,7 @@ void TracePC::HandleCmp(uintptr_t PC, T Arg1, T Arg2) {
 
 extern "C" {
 ATTRIBUTE_INTERFACE
+ATTRIBUTE_NO_SANITIZE_ALL
 void __sanitizer_cov_trace_pc_guard(uint32_t *Guard) {
   uintptr_t PC = reinterpret_cast<uintptr_t>(__builtin_return_address(0));
   fuzzer::TPC.HandleTrace(Guard, PC);
