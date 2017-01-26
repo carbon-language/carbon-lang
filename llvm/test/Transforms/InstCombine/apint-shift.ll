@@ -444,12 +444,12 @@ define i44 @shl_lshr_eq_amt_multi_use(i44 %A) {
   ret i44 %D
 }
 
-; FIXME: Fold vector lshr (shl X, C), C -> and X, C' regardless of the number of uses of the shl.
+; Fold vector lshr (shl X, C), C -> and X, C' regardless of the number of uses of the shl.
 
 define <2 x i44> @shl_lshr_eq_amt_multi_use_splat_vec(<2 x i44> %A) {
 ; CHECK-LABEL: @shl_lshr_eq_amt_multi_use_splat_vec(
 ; CHECK-NEXT:    [[B:%.*]] = shl <2 x i44> %A, <i44 33, i44 33>
-; CHECK-NEXT:    [[C:%.*]] = lshr exact <2 x i44> [[B]], <i44 33, i44 33>
+; CHECK-NEXT:    [[C:%.*]] = and <2 x i44> %A, <i44 2047, i44 2047>
 ; CHECK-NEXT:    [[D:%.*]] = or <2 x i44> [[B]], [[C]]
 ; CHECK-NEXT:    ret <2 x i44> [[D]]
 ;
