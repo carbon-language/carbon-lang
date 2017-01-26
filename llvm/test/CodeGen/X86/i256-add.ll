@@ -2,17 +2,17 @@
 ; RUN: grep adcl %t | count 7
 ; RUN: grep sbbl %t | count 7
 
-define void @add(i256* %p, i256* %q) nounwind {
+define void @add(i256* %p, i256* %q, i256* %r) nounwind {
   %a = load i256, i256* %p
   %b = load i256, i256* %q
   %c = add i256 %a, %b
-  store i256 %c, i256* %p
+  store i256 %c, i256* %r
   ret void
 }
-define void @sub(i256* %p, i256* %q) nounwind {
+define void @sub(i256* %p, i256* %q, i256* %r) nounwind {
   %a = load i256, i256* %p
   %b = load i256, i256* %q
   %c = sub i256 %a, %b
-  store i256 %c, i256* %p
+  store i256 %c, i256* %r
   ret void
 }

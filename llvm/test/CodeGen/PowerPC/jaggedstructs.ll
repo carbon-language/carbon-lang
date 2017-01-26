@@ -18,14 +18,14 @@ entry:
   ret void
 }
 
-; CHECK: std 6, 184(1)
-; CHECK: std 5, 176(1)
-; CHECK: std 4, 168(1)
-; CHECK: std 3, 160(1)
-; CHECK: lbz {{[0-9]+}}, 167(1)
-; CHECK: lhz {{[0-9]+}}, 165(1)
-; CHECK: stb {{[0-9]+}}, 55(1)
-; CHECK: sth {{[0-9]+}}, 53(1)
+; CHECK-DAG: std 3, 160(1)
+; CHECK-DAG: std 6, 184(1)
+; CHECK-DAG: std 5, 176(1)
+; CHECK-DAG: std 4, 168(1)
+; CHECK-DAG: lbz {{[0-9]+}}, 167(1)
+; CHECK-DAG: lhz {{[0-9]+}}, 165(1)
+; CHECK-DAG: stb {{[0-9]+}}, 55(1)
+; CHECK-DAG: sth {{[0-9]+}}, 53(1)
 ; CHECK: lbz {{[0-9]+}}, 175(1)
 ; CHECK: lwz {{[0-9]+}}, 171(1)
 ; CHECK: stb {{[0-9]+}}, 63(1)
