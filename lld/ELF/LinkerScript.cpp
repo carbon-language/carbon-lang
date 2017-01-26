@@ -547,7 +547,7 @@ MemoryRegion *LinkerScript<ELFT>::findMemoryRegion(OutputSectionCommand *Cmd,
   // See if a region can be found by matching section flags.
   for (auto &MRI : Opt.MemoryRegions) {
     MemoryRegion &MR = MRI.second;
-    if ((MR.Flags & Sec->Flags) != 0 && (MR.NotFlags & Sec->Flags) == 0)
+    if ((MR.Flags & Sec->Flags) != 0 && (MR.NegFlags & Sec->Flags) == 0)
       return &MR;
   }
 
@@ -2027,9 +2027,9 @@ void ScriptParser::readMemory() {
     StringRef Name = next();
 
     uint32_t Flags = 0;
-    uint32_t NotFlags = 0;
+    uint32_t NegFlags = 0;
     if (consume("(")) {
-      std::tie(Flags, NotFlags) = readMemoryAttributes();
+      std::tie(Flags, NegFlags) = readMemoryAttributes();
       expect(")");
     }
     expect(":");
@@ -2043,7 +2043,7 @@ void ScriptParser::readMemory() {
     if (It != Opt.MemoryRegions.end())
       setError("region '" + Name + "' already defined");
     else
-      Opt.MemoryRegions[Name] = {Name, Origin, Length, Origin, Flags, NotFlags};
+      Opt.MemoryRegions[Name] = {Name, Origin, Length, Origin, Flags, NegFlags};
   }
 }
 
@@ -2052,7 +2052,7 @@ void ScriptParser::readMemory() {
 // are only used when an explicit memory region name is not used.
 std::pair<uint32_t, uint32_t> ScriptParser::readMemoryAttributes() {
   uint32_t Flags = 0;
-  uint32_t NotFlags = 0;
+  uint32_t NegFlags = 0;
   bool Invert = false;
 
   for (char C : next().lower()) {
@@ -2069,11 +2069,11 @@ std::pair<uint32_t, uint32_t> ScriptParser::readMemoryAttributes() {
       setError("invalid memory region attribute");
 
     if (Invert)
-      NotFlags |= Flag;
+      NegFlags |= Flag;
     else
       Flags |= Flag;
   }
-  return {Flags, NotFlags};
+  return {Flags, NegFlags};
 }
 
 void elf::readLinkerScript(MemoryBufferRef MB) {
