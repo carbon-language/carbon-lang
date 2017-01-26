@@ -134,6 +134,9 @@ void emitRejectionRemarks(const BBPair &P, const RejectLog &Log) {
     if (const DebugLoc &Loc = RR->getDebugLoc())
       emitOptimizationRemarkMissed(Ctx, DEBUG_TYPE, F, Loc,
                                    RR->getEndUserMessage());
+    else
+      emitOptimizationRemarkMissed(Ctx, DEBUG_TYPE, F, Begin,
+                                   RR->getEndUserMessage());
   }
 
   emitOptimizationRemarkMissed(Ctx, DEBUG_TYPE, F, End,
