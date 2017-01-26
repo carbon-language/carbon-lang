@@ -360,21 +360,8 @@ foldShiftByConstOfShiftByConst(BinaryOperator &I, const APInt *COp1,
   if (ShiftAmt1 == 0)
     return nullptr; // Will be simplified in the future.
 
-  if (ShiftAmt1 == ShiftAmt2) {
-    // FIXME: This repeats a fold that exists in foldShiftedShift(), but we're
-    // not handling the related fold here:
-    // (X >>u C) << C --> X & (-1 << C).
-    // foldShiftedShift() is always called before this, but it is restricted to
-    // only handle cases where the ShiftOp has one use. We don't have that
-    // restriction here.
-    if (I.getOpcode() != Instruction::LShr ||
-        ShiftOp->getOpcode() != Instruction::Shl)
-      return nullptr;
-
-    // (X << C) >>u C --> X & (-1 >>u C).
-    APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt1));
-    return BinaryOperator::CreateAnd(X, ConstantInt::get(I.getType(), Mask));
-  }
+  if (ShiftAmt1 == ShiftAmt2)
+    return nullptr;
 
   // FIXME: Everything under here should be extended to work with vector types.
 
@@ -714,6 +701,7 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
   const APInt *ShAmtAPInt;
   if (match(Op1, m_APInt(ShAmtAPInt))) {
     unsigned ShAmt = ShAmtAPInt->getZExtValue();
+    unsigned BitWidth = I.getType()->getScalarSizeInBits();
 
     // shl (zext X), ShAmt --> zext (shl X, ShAmt)
     // This is only valid if X would have zeros shifted out.
@@ -725,11 +713,15 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
         return new ZExtInst(Builder->CreateShl(X, ShAmt), I.getType());
     }
 
+    // (X >>u C) << C --> X & (-1 << C)
+    if (match(Op0, m_LShr(m_Value(X), m_Specific(Op1)))) {
+      APInt Mask(APInt::getHighBitsSet(BitWidth, BitWidth - ShAmt));
+      return BinaryOperator::CreateAnd(X, ConstantInt::get(I.getType(), Mask));
+    }
+
     // If the shifted-out value is known-zero, then this is a NUW shift.
     if (!I.hasNoUnsignedWrap() &&
-        MaskedValueIsZero(
-            Op0, APInt::getHighBitsSet(ShAmtAPInt->getBitWidth(), ShAmt), 0,
-            &I)) {
+        MaskedValueIsZero(Op0, APInt::getHighBitsSet(BitWidth, ShAmt), 0, &I)) {
       I.setHasNoUnsignedWrap();
       return &I;
     }
@@ -778,6 +770,13 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
       Constant *RHS = ConstantInt::getSigned(Op0->getType(), IsPop ? -1 : 0);
       Value *Cmp = Builder->CreateICmpEQ(II->getArgOperand(0), RHS);
       return new ZExtInst(Cmp, II->getType());
+    }
+
+    // (X << C) >>u C --> X & (-1 >>u C)
+    Value *X;
+    if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1)))) {
+      APInt Mask(APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt));
+      return BinaryOperator::CreateAnd(X, ConstantInt::get(I.getType(), Mask));
     }
 
     // If the shifted-out value is known-zero, then this is an exact shift.

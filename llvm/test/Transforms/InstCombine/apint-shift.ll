@@ -459,12 +459,12 @@ define <2 x i44> @shl_lshr_eq_amt_multi_use_splat_vec(<2 x i44> %A) {
   ret <2 x i44> %D
 }
 
-; FIXME: Fold shl (lshr X, C), C -> and X, C' regardless of the number of uses of the lshr.
+; Fold shl (lshr X, C), C -> and X, C' regardless of the number of uses of the lshr.
 
 define i43 @lshr_shl_eq_amt_multi_use(i43 %A) {
 ; CHECK-LABEL: @lshr_shl_eq_amt_multi_use(
 ; CHECK-NEXT:    [[B:%.*]] = lshr i43 %A, 23
-; CHECK-NEXT:    [[C:%.*]] = shl nuw i43 [[B]], 23
+; CHECK-NEXT:    [[C:%.*]] = and i43 %A, -8388608
 ; CHECK-NEXT:    [[D:%.*]] = mul i43 [[B]], [[C]]
 ; CHECK-NEXT:    ret i43 [[D]]
 ;
@@ -474,12 +474,12 @@ define i43 @lshr_shl_eq_amt_multi_use(i43 %A) {
   ret i43 %D
 }
 
-; FIXME: Fold vector shl (lshr X, C), C -> and X, C' regardless of the number of uses of the lshr.
+; Fold vector shl (lshr X, C), C -> and X, C' regardless of the number of uses of the lshr.
 
 define <2 x i43> @lshr_shl_eq_amt_multi_use_splat_vec(<2 x i43> %A) {
 ; CHECK-LABEL: @lshr_shl_eq_amt_multi_use_splat_vec(
 ; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i43> %A, <i43 23, i43 23>
-; CHECK-NEXT:    [[C:%.*]] = shl nuw <2 x i43> [[B]], <i43 23, i43 23>
+; CHECK-NEXT:    [[C:%.*]] = and <2 x i43> %A, <i43 -8388608, i43 -8388608>
 ; CHECK-NEXT:    [[D:%.*]] = mul <2 x i43> [[B]], [[C]]
 ; CHECK-NEXT:    ret <2 x i43> [[D]]
 ;
