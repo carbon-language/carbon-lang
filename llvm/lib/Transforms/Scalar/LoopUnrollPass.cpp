@@ -1146,10 +1146,17 @@ PreservedAnalyses LoopUnrollPass::run(Loop &L, LoopAnalysisManager &AM,
   else
     OldLoops.insert(AR.LI.begin(), AR.LI.end());
 
+  // The API here is quite complex to call, but there are only two interesting
+  // states we support: partial and full (or "simple") unrolling. However, to
+  // enable these things we actually pass "None" in for the optional to avoid
+  // providing an explicit choice.
+  Optional<bool> AllowPartialParam, RuntimeParam, UpperBoundParam;
+  if (!AllowPartialUnrolling)
+    AllowPartialParam = RuntimeParam = UpperBoundParam = false;
   bool Changed = tryToUnrollLoop(&L, AR.DT, &AR.LI, &AR.SE, AR.TTI, AR.AC, *ORE,
-                                 /*PreserveLCSSA*/ true, ProvidedCount,
-                                 ProvidedThreshold, ProvidedAllowPartial,
-                                 ProvidedRuntime, ProvidedUpperBound);
+                                 /*PreserveLCSSA*/ true, /*Count*/ None,
+                                 /*Threshold*/ None, AllowPartialParam,
+                                 RuntimeParam, UpperBoundParam);
   if (!Changed)
     return PreservedAnalyses::all();
 
