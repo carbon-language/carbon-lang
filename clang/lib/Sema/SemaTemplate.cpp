@@ -4439,6 +4439,11 @@ bool UnnamedLocalNoLinkageFinder::VisitAutoType(const AutoType *T) {
   return Visit(T->getDeducedType());
 }
 
+bool UnnamedLocalNoLinkageFinder::VisitDeducedTemplateSpecializationType(
+    const DeducedTemplateSpecializationType *T) {
+  return Visit(T->getDeducedType());
+}
+
 bool UnnamedLocalNoLinkageFinder::VisitRecordType(const RecordType* T) {
   return VisitTagDecl(T->getDecl());
 }
@@ -8785,6 +8790,9 @@ Sema::CheckTypenameType(ElaboratedTypeKeyword Keyword,
                                        QualifierLoc.getNestedNameSpecifier(),
                                        Context.getTypeDeclType(Type));
     }
+
+    // FIXME: Form a deduced template specialization type if we get a template
+    // declaration here.
 
     DiagID = diag::err_typename_nested_not_type;
     Referenced = Result.getFoundDecl();
