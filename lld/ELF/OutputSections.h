@@ -238,10 +238,10 @@ template <class ELFT> class OutputSectionFactory {
 public:
   OutputSectionFactory();
   ~OutputSectionFactory();
-  std::pair<OutputSectionBase *, bool>
-  create(InputSectionBase<ELFT> *C, StringRef OutsecName, bool IsScripted);
-  std::pair<OutputSectionBase *, bool>
-  create(const SectionKey &Key, InputSectionBase<ELFT> *C, bool IsScripted);
+  std::pair<OutputSectionBase *, bool> create(InputSectionBase<ELFT> *C,
+                                              StringRef OutsecName);
+  std::pair<OutputSectionBase *, bool> create(const SectionKey &Key,
+                                              InputSectionBase<ELFT> *C);
 
 private:
   llvm::SmallDenseMap<SectionKey, OutputSectionBase *> Map;
