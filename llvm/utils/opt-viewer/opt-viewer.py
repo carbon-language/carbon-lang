@@ -40,21 +40,24 @@ def demangle(name):
         p.stdin.write(name + '\n')
         return p.stdout.readline().rstrip()
 
+# This allows passing the global context to the child processes.
+class Context:
+    def __init__(self, max_hotness = 0, caller_loc = dict()):
+       self.max_hotness = max_hotness
 
-class Remark(yaml.YAMLObject):
-    max_hotness = 0
+       # Map function names to their source location for function where inlining happened
+       self.caller_loc = caller_loc
 
-    # Work-around for http://pyyaml.org/ticket/154.
-    yaml_loader = Loader
-
-    @classmethod
-    def should_display_hotness(cls):
+    def should_display_hotness(self):
         # If max_hotness is 0 at the end, we assume hotness information is
         # missing and no relative hotness information is displayed
-        return cls.max_hotness != 0
+        return self.max_hotness != 0
 
-    # Map function names to their source location for function where inlining happened
-    caller_loc = dict()
+context = Context()
+
+class Remark(yaml.YAMLObject):
+    # Work-around for http://pyyaml.org/ticket/154.
+    yaml_loader = Loader
 
     def __getattr__(self, name):
         # If hotness is missing, assume 0
@@ -116,8 +119,8 @@ class Remark(yaml.YAMLObject):
 
     @property
     def RelativeHotness(self):
-        if Remark.should_display_hotness():
-            return "{}%".format(int(round(self.Hotness * 100 / Remark.max_hotness)))
+        if context.should_display_hotness():
+            return "{}%".format(int(round(self.Hotness * 100 / context.max_hotness)))
         else:
             return ''
 
@@ -194,7 +197,8 @@ class SourceFileRenderer:
 
     def render_inline_remarks(self, r, line):
         inlining_context = r.DemangledFunctionName
-        dl = Remark.caller_loc.get(r.Function)
+        print
+        dl = context.caller_loc.get(r.Function)
         if dl:
             link = Remark.make_link(dl['File'], dl['Line'] - 2)
             inlining_context = "<a href={link}>{r.DemangledFunctionName}</a>".format(**locals())
@@ -302,7 +306,9 @@ def get_remarks(input_file):
     return max_hotness, all_remarks, file_remarks
 
 
-def _render_file(source_dir, output_dir, entry):
+def _render_file(source_dir, output_dir, ctx, entry):
+    global context
+    context = ctx
     filename, remarks = entry
     SourceFileRenderer(source_dir, output_dir, filename).render(remarks)
 
@@ -323,7 +329,7 @@ def gather_results(pool, filenames):
         merge_file_remarks(file_remarks_job, all_remarks, file_remarks)
         all_remarks.update(all_remarks_job)
 
-    Remark.max_hotness = max(entry[0] for entry in remarks)
+    context.max_hotness = max(entry[0] for entry in remarks)
 
     return all_remarks, file_remarks
 
@@ -336,7 +342,7 @@ def map_remarks(all_remarks):
             for arg in remark.Args:
                 caller = arg.get('Caller')
                 if caller:
-                    Remark.caller_loc[caller] = arg['DebugLoc']
+                    context.caller_loc[caller] = arg['DebugLoc']
 
 
 def generate_report(pool, all_remarks, file_remarks, source_dir, output_dir):
@@ -348,10 +354,10 @@ def generate_report(pool, all_remarks, file_remarks, source_dir, output_dir):
         else:
             raise
 
-    _render_file_bound = functools.partial(_render_file, source_dir, output_dir)
+    _render_file_bound = functools.partial(_render_file, source_dir, output_dir, context)
     pool.map(_render_file_bound, file_remarks.items())
 
-    if Remark.should_display_hotness():
+    if context.should_display_hotness():
         sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.Hotness, r.__dict__), reverse=True)
     else:
         sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.File, r.Line, r.Column, r.__dict__))
