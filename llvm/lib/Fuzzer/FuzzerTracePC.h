@@ -47,7 +47,6 @@ struct TableOfRecentCompares {
 
 class TracePC {
  public:
-  static const size_t kFeatureSetSize = ValueBitMap::kNumberOfItems;
 
   void HandleTrace(uint32_t *guard, uintptr_t PC);
   void HandleInit(uint32_t *start, uint32_t *stop);
@@ -58,9 +57,6 @@ class TracePC {
   void SetUseValueProfile(bool VP) { UseValueProfile = VP; }
   void SetPrintNewPCs(bool P) { DoPrintNewPCs = P; }
   template <class Callback> size_t CollectFeatures(Callback CB);
-  bool UpdateValueProfileMap(ValueBitMap *MaxValueProfileMap) {
-    return UseValueProfile && MaxValueProfileMap->MergeFrom(ValueProfileMap);
-  }
 
   void ResetMaps() {
     ValueProfileMap.Reset();

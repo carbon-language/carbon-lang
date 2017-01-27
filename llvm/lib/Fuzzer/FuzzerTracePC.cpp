@@ -73,7 +73,7 @@ void TracePC::HandleCallerCallee(uintptr_t Caller, uintptr_t Callee) {
   const uintptr_t kBits = 12;
   const uintptr_t kMask = (1 << kBits) - 1;
   uintptr_t Idx = (Caller & kMask) | ((Callee & kMask) << kBits);
-  ValueProfileMap.AddValue(Idx);
+  ValueProfileMap.AddValueModPrime(Idx);
 }
 
 void TracePC::InitializePrintNewPCs() {
