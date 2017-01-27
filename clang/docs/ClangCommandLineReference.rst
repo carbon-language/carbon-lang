@@ -18,29 +18,13 @@ GCC-compatible ``clang`` and ``clang++`` drivers.
 
 
 .. program:: clang
-.. option:: -A<arg>, --assert <arg>, --assert=<arg>
+.. option:: -B<dir>, --prefix <arg>, --prefix=<arg>
 
-.. option:: -B<arg>, --prefix <arg>, --prefix=<arg>
-
-.. option:: -C, --comments
-
-.. option:: -CC, --comments-in-macros
+Add <dir> to search path for binaries and object files used implicitly
 
 .. option:: -F<arg>
 
 Add directory to framework include search path
-
-.. option:: -G<arg>
-
-.. program:: clang1
-.. option:: -G=<arg>
-.. program:: clang
-
-.. option:: -H, --trace-includes
-
-Show header includes and nesting depth
-
-.. option:: -Mach
 
 .. option:: -ObjC
 
@@ -52,14 +36,6 @@ Treat source input files as Objective-C inputs
 
 Treat source input files as Objective-C++ inputs
 
-.. option:: -P, --no-line-commands
-
-Disable linemarker output in -E mode
-
-.. option:: -Q
-
-.. option:: -Qn
-
 .. option:: -Qunused-arguments
 
 Don't emit warning for unused driver arguments
@@ -70,25 +46,7 @@ Pass the comma separated arguments in <arg> to the assembler
 
 .. option:: -Wlarge-by-value-copy=<arg>
 
-.. option:: -Wp,<arg>,<arg2>...
-
-Pass the comma separated arguments in <arg> to the preprocessor
-
-.. option:: -X<arg>
-
-.. program:: clang1
-.. option:: -X
-.. program:: clang
-
-.. option:: -Xanalyzer <arg>
-
-Pass <arg> to the static analyzer
-
 .. option:: -Xarch\_<arg1> <arg2>
-
-.. option:: -Xassembler <arg>
-
-Pass <arg> to the assembler
 
 .. option:: -Xcuda-fatbinary <arg>
 
@@ -97,10 +55,6 @@ Pass <arg> to fatbinary invocation
 .. option:: -Xcuda-ptxas <arg>
 
 Pass <arg> to the ptxas assembler
-
-.. option:: -Xpreprocessor <arg>
-
-Pass <arg> to the preprocessor
 
 .. option:: -Z<arg>
 
@@ -149,10 +103,6 @@ Output path for the plist report
 .. program:: clang1
 .. option:: -bundle\_loader <arg>
 .. program:: clang
-
-.. option:: -c, --compile
-
-Only run preprocess, compile, and assemble steps
 
 .. option:: -client\_name<arg>
 
@@ -650,6 +600,10 @@ Only run the preprocessor
 
 Only run preprocess and compilation steps
 
+.. option:: -c, --compile
+
+Only run preprocess, compile, and assemble steps
+
 .. option:: -emit-llvm
 
 Use the LLVM representation for assembler and object files
@@ -678,9 +632,9 @@ Compilation flags
 Flags controlling the behavior of Clang during compilation. These flags have
 no effect during actions that do not perform compilation.
 
-.. option:: -D<arg>, --define-macro <arg>, --define-macro=<arg>
+.. option:: -Xassembler <arg>
 
-.. option:: -U<arg>, --undefine-macro <arg>, --undefine-macro=<arg>
+Pass <arg> to the assembler
 
 .. option:: -Xclang <arg>
 
@@ -810,16 +764,55 @@ Turn on runtime checks for various forms of undefined or suspicious behavior. Se
 
 Language standard to compile for
 
+Preprocessor flags
+~~~~~~~~~~~~~~~~~~
+
+Flags controlling the behavior of the Clang preprocessor.
+
+.. option:: -C, --comments
+
+Include comments in preprocessed output
+
+.. option:: -CC, --comments-in-macros
+
+Include comments from within macros in preprocessed output
+
+.. option:: -D<macro>=<value>, --define-macro <arg>, --define-macro=<arg>
+
+Define <macro> to <value> (or 1 if <value> omitted)
+
+.. option:: -H, --trace-includes
+
+Show header includes and nesting depth
+
+.. option:: -P, --no-line-commands
+
+Disable linemarker output in -E mode
+
+.. option:: -U<macro>, --undefine-macro <arg>, --undefine-macro=<arg>
+
+Undefine macro <macro>
+
+.. option:: -Wp,<arg>,<arg2>...
+
+Pass the comma separated arguments in <arg> to the preprocessor
+
+.. option:: -Xpreprocessor <arg>
+
+Pass <arg> to the preprocessor
+
 Include path management
-~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------
 
 Flags controlling how ``#include``\s are resolved to files.
 
-.. option:: -I<arg>, --include-directory <arg>, --include-directory=<arg>
+.. option:: -I<dir>, --include-directory <arg>, --include-directory=<arg>
 
 Add directory to include search path
 
 .. option:: -I-, --include-barrier
+
+Restrict all prior -I flags to double-quoted inclusion and remove current directory from include path
 
 .. option:: --cuda-path=<arg>
 
@@ -936,7 +929,7 @@ Path to ptxas (used for compiling CUDA code)
 Treat all #include paths starting with <prefix> as including a system header.
 
 Dependency file generation
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Flags controlling generation of a dependency file for ``make``-like build
 systems.
@@ -986,7 +979,7 @@ Specify name of main file output in depfile
 Use NMake/Jom format for the depfile
 
 Dumping preprocessor state
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 Flags allowing the state of the preprocessor to be dumped in various ways.
 
@@ -1036,17 +1029,11 @@ Report transformations performed by optimization passes whose name matches the g
 
 Enable the specified warning
 
-.. option:: -WCL4
-
-.. option:: -Wall, --all-warnings
-
 .. option:: -Wdeprecated, -Wno-deprecated
 
-.. option:: -Wextra
+Enable warnings for deprecated constructs and define \_\_DEPRECATED
 
 .. option:: -Wnonportable-cfstrings<arg>, -Wno-nonportable-cfstrings<arg>
-
-.. option:: -Wwrite-strings, -Wno-write-strings
 
 Target-independent compilation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1852,6 +1839,10 @@ OpenCL only. Allow unsafe floating-point optimizations.  Also implies -cl-no-sig
 
 Target-dependent compilation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. option:: -G<size>, -G=<arg>, -msmall-data-threshold=<arg>
+
+Put objects of at most <size> bytes into small data section (MIPS / Hexagon)
+
 .. option:: -m16
 
 .. option:: -m32
@@ -1997,8 +1988,6 @@ Enable hexagon-qdsp6 backward compatibility
 Make StdCall calling convention the default
 
 .. option:: -msingle-float
-
-.. option:: -msmall-data-threshold=<arg>
 
 .. option:: -msoft-float, -mno-soft-float
 
@@ -2245,10 +2234,6 @@ Flags controlling how much optimization should be performed.
 
 .. option:: -O<arg>, -O (equivalent to -O2), --optimize, --optimize=<arg>
 
-.. option:: -O0
-
-.. option:: -O4
-
 .. option:: -Ofast<arg>
 
 Debug information generation
@@ -2329,63 +2314,22 @@ Debug information flags
 
 .. option:: -gstrict-dwarf, -gno-strict-dwarf
 
-Linker flags
-============
-Flags that are passed on to the linker
+Static analyzer flags
+=====================
 
-.. option:: -L<arg>, --library-directory <arg>, --library-directory=<arg>
+Flags controlling the behavior of the Clang Static Analyzer.
 
-.. option:: -T<arg>
+.. option:: -Xanalyzer <arg>
 
-.. option:: -Tbss<arg>
-
-.. option:: -Tdata<arg>
-
-.. option:: -Ttext<arg>
-
-.. option:: -Wl,<arg>,<arg2>...
-
-Pass the comma separated arguments in <arg> to the linker
-
-.. option:: -Xlinker <arg>, --for-linker <arg>, --for-linker=<arg>
-
-Pass <arg> to the linker
-
-.. program:: clang1
-.. option:: -Z
-.. program:: clang
-
-.. option:: -e<arg>, --entry
-
-.. option:: -filelist <arg>
-
-.. option:: -l<arg>
-
-.. option:: -r
-
-.. option:: -rpath <arg>
-
-.. option:: -s
-
-.. option:: -t
-
-.. option:: -u<arg>, --force-link <arg>, --force-link=<arg>
-
-.. option:: -undef
-
-undef all system defines
-
-.. option:: -undefined<arg>, --no-undefined
-
-.. option:: -z <arg>
-
-Pass -z <arg> to the linker
+Pass <arg> to the static analyzer
 
 Fortran compilation flags
 =========================
 
 Flags that will be passed onto the ``gfortran`` compiler when Clang is given
 a Fortran input.
+
+.. option:: -A<arg>, --assert <arg>, --assert=<arg>
 
 .. option:: -A-<arg>
 
@@ -2520,4 +2464,70 @@ a Fortran input.
 .. option:: -nocpp
 
 .. option:: -static-libgfortran
+
+Linker flags
+============
+Flags that are passed on to the linker
+
+.. option:: -L<dir>, --library-directory <arg>, --library-directory=<arg>
+
+Add directory to library search path
+
+.. option:: -Mach
+
+.. option:: -T<script>
+
+Specify <script> as linker script
+
+.. option:: -Tbss<addr
+
+Set starting address of BSS to <addr>
+
+.. option:: -Tdata<addr
+
+Set starting address of BSS to <addr>
+
+.. option:: -Ttext<addr
+
+Set starting address of BSS to <addr>
+
+.. option:: -Wl,<arg>,<arg2>...
+
+Pass the comma separated arguments in <arg> to the linker
+
+.. option:: -X
+
+.. option:: -Xlinker <arg>, --for-linker <arg>, --for-linker=<arg>
+
+Pass <arg> to the linker
+
+.. program:: clang1
+.. option:: -Z
+.. program:: clang
+
+.. option:: -e<arg>, --entry
+
+.. option:: -filelist <arg>
+
+.. option:: -l<arg>
+
+.. option:: -r
+
+.. option:: -rpath <arg>
+
+.. option:: -s
+
+.. option:: -t
+
+.. option:: -u<arg>, --force-link <arg>, --force-link=<arg>
+
+.. option:: -undef
+
+undef all system defines
+
+.. option:: -undefined<arg>, --no-undefined
+
+.. option:: -z <arg>
+
+Pass -z <arg> to the linker
 
