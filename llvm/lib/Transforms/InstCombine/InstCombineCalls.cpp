@@ -1743,6 +1743,7 @@ static Instruction *SimplifyNVVMIntrinsic(IntrinsicInst *II, InstCombiner &IC) {
         Instruction::FDiv, ConstantFP::get(II->getArgOperand(0)->getType(), 1),
         II->getArgOperand(0), II->getName());
   }
+  llvm_unreachable("All SpecialCase enumerators should be handled in switch.");
 }
 
 Instruction *InstCombiner::visitVAStartInst(VAStartInst &I) {
