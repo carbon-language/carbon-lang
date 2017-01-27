@@ -1159,6 +1159,9 @@ static void toggleBundleKillFlag(MachineInstr *MI, unsigned Reg,
 }
 
 void ScheduleDAGInstrs::toggleKillFlag(MachineInstr &MI, MachineOperand &MO) {
+  if (MO.isDebug())
+    return;
+
   // Setting kill flag...
   if (!MO.isKill()) {
     MO.setIsKill(true);
