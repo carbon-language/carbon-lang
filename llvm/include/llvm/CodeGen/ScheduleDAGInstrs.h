@@ -328,7 +328,7 @@ namespace llvm {
     ///
     /// Other adjustments may be made to the instruction if necessary. Return
     /// true if the operand has been deleted, false if not.
-    bool toggleKillFlag(MachineInstr *MI, MachineOperand &MO);
+    void toggleKillFlag(MachineInstr &MI, MachineOperand &MO);
 
     /// Returns a mask for which lanes get read/written by the given (register)
     /// machine operand.

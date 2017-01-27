@@ -1154,32 +1154,32 @@ static void toggleBundleKillFlag(MachineInstr *MI, unsigned Reg,
       if ((--End)->addRegisterKilled(Reg, TRI, /* addIfNotFound= */ false))
          return;
     } else
-        (--End)->clearRegisterKills(Reg, TRI);
+      (--End)->clearRegisterKills(Reg, TRI);
   }
 }
 
-bool ScheduleDAGInstrs::toggleKillFlag(MachineInstr *MI, MachineOperand &MO) {
+void ScheduleDAGInstrs::toggleKillFlag(MachineInstr &MI, MachineOperand &MO) {
   // Setting kill flag...
   if (!MO.isKill()) {
     MO.setIsKill(true);
-    toggleBundleKillFlag(MI, MO.getReg(), true, TRI);
-    return false;
+    toggleBundleKillFlag(&MI, MO.getReg(), true, TRI);
+    return;
   }
 
   // If MO itself is live, clear the kill flag...
   if (LiveRegs.test(MO.getReg())) {
     MO.setIsKill(false);
-    toggleBundleKillFlag(MI, MO.getReg(), false, TRI);
-    return false;
+    toggleBundleKillFlag(&MI, MO.getReg(), false, TRI);
+    return;
   }
 
   // If any subreg of MO is live, then create an imp-def for that
   // subreg and keep MO marked as killed.
   MO.setIsKill(false);
-  toggleBundleKillFlag(MI, MO.getReg(), false, TRI);
+  toggleBundleKillFlag(&MI, MO.getReg(), false, TRI);
   bool AllDead = true;
   const unsigned SuperReg = MO.getReg();
-  MachineInstrBuilder MIB(MF, MI);
+  MachineInstrBuilder MIB(MF, &MI);
   for (MCSubRegIterator SubRegs(SuperReg, TRI); SubRegs.isValid(); ++SubRegs) {
     if (LiveRegs.test(*SubRegs)) {
       MIB.addReg(*SubRegs, RegState::ImplicitDefine);
@@ -1189,9 +1189,8 @@ bool ScheduleDAGInstrs::toggleKillFlag(MachineInstr *MI, MachineOperand &MO) {
 
   if(AllDead) {
     MO.setIsKill(true);
-    toggleBundleKillFlag(MI, MO.getReg(), true, TRI);
+    toggleBundleKillFlag(&MI, MO.getReg(), true, TRI);
   }
-  return false;
 }
 
 void ScheduleDAGInstrs::fixupKills(MachineBasicBlock *MBB) {
@@ -1265,7 +1264,7 @@ void ScheduleDAGInstrs::fixupKills(MachineBasicBlock *MBB) {
 
       if (MO.isKill() != kill) {
         DEBUG(dbgs() << "Fixing " << MO << " in ");
-        toggleKillFlag(&MI, MO);
+        toggleKillFlag(MI, MO);
         DEBUG(MI.dump());
         DEBUG({
           if (MI.getOpcode() == TargetOpcode::BUNDLE) {
