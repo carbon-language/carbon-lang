@@ -123,7 +123,7 @@ class Remark(yaml.YAMLObject):
 
     @property
     def key(self):
-        return (self.__class__, self.Pass, self.Name, self.File, self.Line, self.Column, self.Function, self.message)
+        return (self.__class__, self.Pass, self.Name, self.File, self.Line, self.Column, self.Function)
 
 
 class Analysis(Remark):
