@@ -134,6 +134,8 @@
 ; CHECK-O-NEXT: Running pass: LoopVectorizePass
 ; CHECK-O-NEXT: Running analysis: BlockFrequencyAnalysis
 ; CHECK-O-NEXT: Running analysis: BranchProbabilityAnalysis
+; CHECK-O-NEXT: Running pass: LoopLoadEliminationPass
+; CHECK-O-NEXT: Running analysis: LoopAccessAnalysis
 ; CHECK-O-NEXT: Running pass: InstCombinePass
 ; CHECK-O-NEXT: Running pass: SLPVectorizerPass
 ; CHECK-O-NEXT: Running pass: SimplifyCFGPass

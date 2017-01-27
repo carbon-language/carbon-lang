@@ -104,6 +104,7 @@
 #include "llvm/Transforms/Scalar/LoopDistribute.h"
 #include "llvm/Transforms/Scalar/LoopIdiomRecognize.h"
 #include "llvm/Transforms/Scalar/LoopInstSimplify.h"
+#include "llvm/Transforms/Scalar/LoopLoadElimination.h"
 #include "llvm/Transforms/Scalar/LoopPassManager.h"
 #include "llvm/Transforms/Scalar/LoopPredication.h"
 #include "llvm/Transforms/Scalar/LoopRotation.h"
@@ -504,7 +505,9 @@ PassBuilder::buildPerModuleDefaultPipeline(OptimizationLevel Level,
   // Now run the core loop vectorizer.
   OptimizePM.addPass(LoopVectorizePass());
 
-  // FIXME: Need to port Loop Load Elimination and add it here.
+  // Eliminate loads by forwarding stores from the previous iteration to loads
+  // of the current iteration.
+  OptimizePM.addPass(LoopLoadEliminationPass());
 
   // Cleanup after the loop optimization passes.
   OptimizePM.addPass(InstCombinePass());
