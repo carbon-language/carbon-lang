@@ -288,7 +288,7 @@ void LinkerScript<ELFT>::addSection(OutputSectionFactory<ELFT> &Factory,
                                     StringRef Name) {
   OutputSectionBase *OutSec;
   bool IsNew;
-  std::tie(OutSec, IsNew) = Factory.create(Sec, Name);
+  std::tie(OutSec, IsNew) = Factory.create(Sec, Name, true);
   if (IsNew)
     OutputSections->push_back(OutSec);
   OutSec->addSection(Sec);

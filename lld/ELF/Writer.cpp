@@ -840,7 +840,7 @@ void Writer<ELFT>::addInputSec(InputSectionBase<ELFT> *IS) {
   OutputSectionBase *Sec;
   bool IsNew;
   StringRef OutsecName = getOutputSectionName(IS->Name);
-  std::tie(Sec, IsNew) = Factory.create(IS, OutsecName);
+  std::tie(Sec, IsNew) = Factory.create(IS, OutsecName, false);
   if (IsNew)
     OutputSections.push_back(Sec);
   Sec->addSection(IS);

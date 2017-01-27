@@ -631,9 +631,9 @@ template <class ELFT> OutputSectionFactory<ELFT>::~OutputSectionFactory() {}
 template <class ELFT>
 std::pair<OutputSectionBase *, bool>
 OutputSectionFactory<ELFT>::create(InputSectionBase<ELFT> *C,
-                                   StringRef OutsecName) {
+                                   StringRef OutsecName, bool IsScripted) {
   SectionKey Key = createKey(C, OutsecName);
-  return create(Key, C);
+  return create(Key, C, IsScripted);
 }
 
 static uint64_t getIncompatibleFlags(uint64_t Flags) {
@@ -643,18 +643,19 @@ static uint64_t getIncompatibleFlags(uint64_t Flags) {
 template <class ELFT>
 std::pair<OutputSectionBase *, bool>
 OutputSectionFactory<ELFT>::create(const SectionKey &Key,
-                                   InputSectionBase<ELFT> *C) {
+                                   InputSectionBase<ELFT> *C, bool IsScripted) {
   uintX_t Flags = getOutFlags(C);
   OutputSectionBase *&Sec = Map[Key];
   if (Sec) {
     if (getIncompatibleFlags(Sec->Flags) != getIncompatibleFlags(C->Flags))
       error("Section has flags incompatible with others with the same name " +
             toString(C));
-    // Convert notbits to progbits if they are mixed. This happens is some
-    // linker scripts.
-    if (Sec->Type == SHT_NOBITS && C->Type == SHT_PROGBITS)
-      Sec->Type = SHT_PROGBITS;
-    if (Sec->Type != C->Type &&
+
+     // Convert notbits to progbits if they are mixed. This happens is some
+     // linker scripts.
+     if (Sec->Type == SHT_NOBITS && C->Type == SHT_PROGBITS)
+       Sec->Type = SHT_PROGBITS;
+    if (!IsScripted && Sec->Type != C->Type &&
         !(Sec->Type == SHT_PROGBITS && C->Type == SHT_NOBITS))
       error("Section has different type from others with the same name " +
             toString(C));
