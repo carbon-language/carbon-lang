@@ -414,7 +414,7 @@ endif()
 
 if ((CMAKE_SYSTEM_NAME MATCHES "Android") AND LLVM_BUILD_STATIC AND
     ((ANDROID_ABI MATCHES "armeabi") OR (ANDROID_ABI MATCHES "mips")))
-  add_definitions(-DANDROID_BUILD_STATIC)
+  add_definitions(-DANDROID_USE_ACCEPT_WORKAROUND)
 endif()
 
 find_package(Backtrace)

@@ -422,7 +422,7 @@ NativeSocket Socket::AcceptSocket(NativeSocket sockfd, struct sockaddr *addr,
                                   socklen_t *addrlen,
                                   bool child_processes_inherit, Error &error) {
   error.Clear();
-#if defined(ANDROID_BUILD_STATIC)
+#if defined(ANDROID_USE_ACCEPT_WORKAROUND)
   // Hack:
   // This enables static linking lldb-server to an API 21 libc, but still having
   // it run on older devices. It is necessary because API 21 libc's
