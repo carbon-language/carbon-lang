@@ -491,32 +491,60 @@ PassBuilder::buildPerModuleDefaultPipeline(OptimizationLevel Level,
   // Optimize the loop execution. These passes operate on entire loop nests
   // rather than on each loop in an inside-out manner, and so they are actually
   // function passes.
+
+  // First rotate loops that may have been un-rotated by prior passes.
+  OptimizePM.addPass(createFunctionToLoopPassAdaptor(LoopRotatePass()));
+
+  // Distribute loops to allow partial vectorization.  I.e. isolate dependences
+  // into separate loop that would otherwise inhibit vectorization.  This is
+  // currently only performed for loops marked with the metadata
+  // llvm.loop.distribute=true or when -enable-loop-distribute is specified.
   OptimizePM.addPass(LoopDistributePass());
+
+  // Now run the core loop vectorizer.
   OptimizePM.addPass(LoopVectorizePass());
+
   // FIXME: Need to port Loop Load Elimination and add it here.
+
+  // Cleanup after the loop optimization passes.
   OptimizePM.addPass(InstCombinePass());
+
+
+  // Now that we've formed fast to execute loop structures, we do further
+  // optimizations. These are run afterward as they might block doing complex
+  // analyses and transforms such as what are needed for loop vectorization.
 
   // Optimize parallel scalar instruction chains into SIMD instructions.
   OptimizePM.addPass(SLPVectorizerPass());
 
-  // Cleanup after vectorizers.
+  // Cleanup after all of the vectorizers.
   OptimizePM.addPass(SimplifyCFGPass());
   OptimizePM.addPass(InstCombinePass());
 
   // Unroll small loops to hide loop backedge latency and saturate any parallel
-  // execution resources of an out-of-order processor.
-  // FIXME: Need to add once loop pass pipeline is available.
-
-  // FIXME: Add the loop sink pass when ported.
-
-  // FIXME: Add cleanup from the loop pass manager when we're forming LCSSA
-  // here.
+  // execution resources of an out-of-order processor. We also then need to
+  // clean up redundancies and loop invariant code.
+  // FIXME: It would be really good to use a loop-integrated instruction
+  // combiner for cleanup here so that the unrolling and LICM can be pipelined
+  // across the loop nests.
+  OptimizePM.addPass(createFunctionToLoopPassAdaptor(LoopUnrollPass::create()));
+  OptimizePM.addPass(InstCombinePass());
+  OptimizePM.addPass(createFunctionToLoopPassAdaptor(LICMPass()));
 
   // Now that we've vectorized and unrolled loops, we may have more refined
   // alignment information, try to re-derive it here.
   OptimizePM.addPass(AlignmentFromAssumptionsPass());
 
-  // ADd the core optimizing pipeline.
+  // LoopSink pass sinks instructions hoisted by LICM, which serves as a
+  // canonicalization pass that enables other optimizations. As a result,
+  // LoopSink pass needs to be a very late IR pass to avoid undoing LICM
+  // result too early.
+  OptimizePM.addPass(LoopSinkPass());
+
+  // And finally clean up LCSSA form before generating code.
+  OptimizePM.addPass(InstSimplifierPass());
+
+  // Add the core optimizing pipeline.
   MPM.addPass(createModuleToFunctionPassAdaptor(std::move(OptimizePM)));
 
   // Now we need to do some global optimization transforms.
