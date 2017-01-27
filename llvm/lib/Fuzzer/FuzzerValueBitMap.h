@@ -19,7 +19,7 @@ namespace fuzzer {
 // A bit map containing kMapSizeInWords bits.
 struct ValueBitMap {
   static const size_t kMapSizeInBits = 65371;        // Prime.
-  static const size_t kMapSizeInBitsAligned = 65536; // 2^16
+  static const size_t kMapSizeInBitsAligned = 1 << 16; // 2^16
   static const size_t kBitsInWord = (sizeof(uintptr_t) * 8);
   static const size_t kMapSizeInWords = kMapSizeInBitsAligned / kBitsInWord;
  public:
@@ -29,6 +29,7 @@ struct ValueBitMap {
 
   // Computes a hash function of Value and sets the corresponding bit.
   // Returns true if the bit was changed from 0 to 1.
+  ATTRIBUTE_NO_SANITIZE_ALL
   inline bool AddValue(uintptr_t Value) {
     uintptr_t Idx = Value < kMapSizeInBits ? Value : Value % kMapSizeInBits;
     uintptr_t WordIdx = Idx / kBitsInWord;
@@ -69,6 +70,7 @@ struct ValueBitMap {
   }
 
   template <class Callback>
+  ATTRIBUTE_NO_SANITIZE_ALL
   void ForEach(Callback CB) {
     for (size_t i = 0; i < kMapSizeInWords; i++)
       if (uintptr_t M = Map[i])
