@@ -365,9 +365,9 @@ def generate_report(pool, all_remarks, file_remarks, source_dir, output_dir):
     pool.map(_render_file_bound, file_remarks.items())
 
     if Remark.should_display_hotness():
-        sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: r.Hotness, reverse=True)
+        sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.Hotness, r.__dict__), reverse=True)
     else:
-        sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.File, r.Line, r.Column))
+        sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.File, r.Line, r.Column, r.__dict__))
     IndexRenderer(args.output_dir).render(sorted_remarks)
 
     shutil.copy(os.path.join(os.path.dirname(os.path.realpath(__file__)),
