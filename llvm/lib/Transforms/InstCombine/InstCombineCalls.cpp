@@ -1717,7 +1717,7 @@ static Instruction *SimplifyNVVMIntrinsic(IntrinsicInst *II, InstCombiner &IC) {
     SmallVector<Value *, 4> Args(II->arg_operands());
     // All the target-generic intrinsics currently of interest to us have one
     // type argument, equal to that of the nvvm intrinsic's argument.
-    ArrayRef<Type *> Tys = {II->getArgOperand(0)->getType()};
+    Type *Tys[] = {II->getArgOperand(0)->getType()};
     return CallInst::Create(
         Intrinsic::getDeclaration(II->getModule(), *Action.IID, Tys), Args);
   }
