@@ -308,33 +308,20 @@ def _render_file(source_dir, output_dir, entry):
 
 
 def gather_results(pool, filenames):
-    all_remarks = dict()
     remarks = pool.map(get_remarks, filenames)
 
-    def merge_dicts(dicts):
-        ''' Takes an iterable of dicts and merges them into
-            a single dict.  Nested dicts are merged as well.
-        >>> merge_dicts([ {'a': [3], }, {'a': [4], }, {'b': [6] }])
-        {'a': [3,4,], 'b': [6]}
-        >>> merge_dicts([ {'a': {'q': [6,3], 'f': [30],}, }, {'a': {'f': [4,10]}, }, {'b': [6] }])
-        {'a': [{'q': [6,3]}, {'f': [4,10,30]}], 'b': [6]}
+    def merge_file_remarks(file_remarks_job, all_remarks, merged):
+        for filename, d in file_remarks_job.iteritems():
+            for line, remarks in d.iteritems():
+                for remark in remarks:
+                    if remark.key not in all_remarks:
+                        merged[filename][line].append(remark)
 
-        '''
-        merged = defaultdict(functools.partial(defaultdict, list))
-
-        for k, v in itertools.chain(*[d.iteritems() for d in dicts]):
-            for k_, v_ in v.items():
-                merged[k][k_] += v_
-
-        return merged
-
-    file_remark_dicts = [entry[2] for entry in remarks]
-    # merge the list of remarks at each line of each file
-    file_remarks = merge_dicts(file_remark_dicts)
-
-    # merge individual 'all_remark' results:
-    for _, all_rem, _ in remarks:
-        all_remarks.update(all_rem)
+    all_remarks = dict()
+    file_remarks = defaultdict(functools.partial(defaultdict, list))
+    for _, all_remarks_job, file_remarks_job in remarks:
+        merge_file_remarks(file_remarks_job, all_remarks, file_remarks)
+        all_remarks.update(all_remarks_job)
 
     Remark.max_hotness = max(entry[0] for entry in remarks)
 
