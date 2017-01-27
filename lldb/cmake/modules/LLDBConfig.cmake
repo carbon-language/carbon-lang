@@ -412,4 +412,8 @@ if(LLDB_USE_BUILTIN_DEMANGLER)
     add_definitions(-DLLDB_USE_BUILTIN_DEMANGLER)
 endif()
 
+if ((CMAKE_SYSTEM_NAME MATCHES "Android") AND LLVM_BUILD_STATIC)
+  add_definitions(-DANDROID_BUILD_STATIC)
+endif()
+
 find_package(Backtrace)
