@@ -2402,6 +2402,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
           continue;
         assert(!EliminationStack.empty());
         Instruction *Leader = cast<Instruction>(EliminationStack.back());
+        (void)Leader;
         assert(DT->dominates(Leader->getParent(), Member->getParent()));
         // Member is dominater by Leader, and thus dead
         DEBUG(dbgs() << "Marking dead store " << *Member
