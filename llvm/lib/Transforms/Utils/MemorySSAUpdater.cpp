@@ -349,8 +349,9 @@ void MemorySSAUpdater::fixupDefs(const SmallVectorImpl<MemoryAccess *> &Vars) {
 }
 
 // Move What before Where in the MemorySSA IR.
+template <class WhereType>
 void MemorySSAUpdater::moveTo(MemoryUseOrDef *What, BasicBlock *BB,
-                              MemorySSA::AccessList::iterator Where) {
+                              WhereType Where) {
   // Replace all our users with our defining access.
   What->replaceAllUsesWith(What->getDefiningAccess());
 
@@ -363,6 +364,7 @@ void MemorySSAUpdater::moveTo(MemoryUseOrDef *What, BasicBlock *BB,
   else
     insertUse(cast<MemoryUse>(What));
 }
+
 // Move What before Where in the MemorySSA IR.
 void MemorySSAUpdater::moveBefore(MemoryUseOrDef *What, MemoryUseOrDef *Where) {
   moveTo(What, Where->getBlock(), Where->getIterator());
@@ -373,4 +375,8 @@ void MemorySSAUpdater::moveAfter(MemoryUseOrDef *What, MemoryUseOrDef *Where) {
   moveTo(What, Where->getBlock(), ++Where->getIterator());
 }
 
+void MemorySSAUpdater::moveToPlace(MemoryUseOrDef *What, BasicBlock *BB,
+                                   MemorySSA::InsertionPlace Where) {
+  return moveTo(What, BB, Where);
+}
 } // namespace llvm
