@@ -1888,10 +1888,11 @@ void MemorySSA::print(raw_ostream &OS) const {
   F.print(OS, &Writer);
 }
 
-void MemorySSA::dump() const {
-  MemorySSAAnnotatedWriter Writer(this);
-  F.print(dbgs(), &Writer);
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+LLVM_DUMP_METHOD void MemorySSA::dump() const {
+  print(dbgs());
 }
+#endif
 
 void MemorySSA::verifyMemorySSA() const {
   verifyDefUses(F);
@@ -2161,8 +2162,11 @@ void MemoryUse::print(raw_ostream &OS) const {
 }
 
 void MemoryAccess::dump() const {
+  // Cannot completely remove virtual function even in release mode.
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   print(dbgs());
   dbgs() << "\n";
+#endif
 }
 
 char MemorySSAPrinterLegacyPass::ID = 0;
