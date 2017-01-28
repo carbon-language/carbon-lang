@@ -1656,8 +1656,6 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
     FunctionTemplate->setLexicalDeclContext(LexicalDC);
 
     if (isFriend && D->isThisDeclarationADefinition()) {
-      // TODO: should we remember this connection regardless of whether
-      // the friend declaration provided a body?
       FunctionTemplate->setInstantiatedFromMemberTemplate(
                                            D->getDescribedFunctionTemplate());
     }
@@ -1668,13 +1666,10 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                             TemplateArgumentList::CreateCopy(SemaRef.Context,
                                                              Innermost),
                                                 /*InsertPos=*/nullptr);
-  } else if (isFriend) {
-    // Note, we need this connection even if the friend doesn't have a body.
-    // Its body may exist but not have been attached yet due to deferred
-    // parsing.
-    // FIXME: It might be cleaner to set this when attaching the body to the
-    // friend function declaration, however that would require finding all the
-    // instantiations and modifying them.
+  } else if (isFriend && D->isThisDeclarationADefinition()) {
+    // Do not connect the friend to the template unless it's actually a
+    // definition. We don't want non-template functions to be marked as being
+    // template instantiations.
     Function->setInstantiationOfMemberFunction(D, TSK_ImplicitInstantiation);
   }
 
@@ -3726,12 +3721,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
       PendingInstantiations.push_back(
         std::make_pair(Function, PointOfInstantiation));
     } else if (TSK == TSK_ImplicitInstantiation) {
-      if (AtEndOfTU && !getDiagnostics().hasErrorOccurred() &&
-          // A non-template function that is only lexically in a dependent
-          // context, such as a friend function in a class template, should
-          // not produce a warning.
-          (PatternDecl->getDescribedFunctionTemplate() ||
-           PatternDecl->getDeclContext()->isDependentContext())) {
+      if (AtEndOfTU && !getDiagnostics().hasErrorOccurred()) {
         Diag(PointOfInstantiation, diag::warn_func_template_missing)
           << Function;
         Diag(PatternDecl->getLocation(), diag::note_forward_template_decl);
