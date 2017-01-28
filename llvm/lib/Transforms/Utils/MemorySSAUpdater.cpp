@@ -243,13 +243,17 @@ void MemorySSAUpdater::insertDef(MemoryDef *MD) {
   // of that thing with us, since we are in the way of whatever was there
   // before.
   // We now define that def's memorydefs and memoryphis
-  for (auto UI = DefBefore->use_begin(), UE = DefBefore->use_end(); UI != UE;) {
-    Use &U = *UI++;
-    // Leave the uses alone
-    if (isa<MemoryUse>(U.getUser()))
-      continue;
-    U.set(MD);
+  if (DefBeforeSameBlock) {
+    for (auto UI = DefBefore->use_begin(), UE = DefBefore->use_end();
+         UI != UE;) {
+      Use &U = *UI++;
+      // Leave the uses alone
+      if (isa<MemoryUse>(U.getUser()))
+        continue;
+      U.set(MD);
+    }
   }
+
   // and that def is now our defining access.
   // We change them in this order otherwise we will appear in the use list
   // above and reset ourselves.
