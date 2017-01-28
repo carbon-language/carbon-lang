@@ -15,6 +15,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Transforms/Utils/MemorySSAUpdater.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

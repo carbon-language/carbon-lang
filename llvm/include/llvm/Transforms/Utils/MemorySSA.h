@@ -752,51 +752,6 @@ private:
   unsigned NextID;
 };
 
-// An automatic updater for MemorySSA that handles arbitrary insertion,
-// deletion, and moves.  It performs phi insertion where necessary, and
-// automatically updates the MemorySSA IR to be correct.
-// While updating loads or removing instructions is often easy enough to not
-// need this, updating stores should generally not be attemped outside this
-// API.
-//
-// Basic API usage:
-// Create the memory access you want for the instruction (this is mainly so
-// we know where it is, without having to duplicate the entire set of create
-// functions MemorySSA supports).
-// Call insertDef or insertUse depending on whether it's a MemoryUse or a
-// MemoryDef.
-// That's it.
-//
-// For moving, first, move the instruction itself using the normal SSA
-// instruction moving API, then just call moveBefore or moveAfter with the right
-// arguments.
-//
-class MemorySSAUpdater {
-private:
-  MemorySSA *MSSA;
-  SmallVector<MemoryPhi *, 8> InsertedPHIs;
-  SmallPtrSet<BasicBlock *, 8> VisitedBlocks;
-
-public:
-  MemorySSAUpdater(MemorySSA *MSSA) : MSSA(MSSA) {}
-  void insertDef(MemoryDef *Def);
-  void insertUse(MemoryUse *Use);
-  void moveBefore(MemoryUseOrDef *What, MemoryUseOrDef *Where);
-  void moveAfter(MemoryUseOrDef *What, MemoryUseOrDef *Where);
-
-private:
-  void moveTo(MemoryUseOrDef *What, BasicBlock *BB,
-              MemorySSA::AccessList::iterator Where);
-  MemoryAccess *getPreviousDef(MemoryAccess *);
-  MemoryAccess *getPreviousDefInBlock(MemoryAccess *);
-  MemoryAccess *getPreviousDefFromEnd(BasicBlock *);
-  MemoryAccess *getPreviousDefRecursive(BasicBlock *);
-  MemoryAccess *recursePhi(MemoryAccess *Phi);
-  template <class RangeType>
-  MemoryAccess *tryRemoveTrivialPhi(MemoryPhi *Phi, RangeType &Operands);
-  void fixupDefs(const SmallVectorImpl<MemoryAccess *> &);
-};
-
 // This pass does eager building and then printing of MemorySSA. It is used by
 // the tests to be able to build, dump, and verify Memory SSA.
 class MemorySSAPrinterLegacyPass : public FunctionPass {
