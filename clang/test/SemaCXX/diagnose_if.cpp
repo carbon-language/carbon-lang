@@ -2,7 +2,7 @@
 
 #define _diagnose_if(...) __attribute__((diagnose_if(__VA_ARGS__)))
 
-using size_t = unsigned long;
+using size_t = decltype(sizeof(int));
 
 namespace type_dependent {
 template <typename T>
