@@ -2988,6 +2988,9 @@ Parser::DeclGroupPtrTy Parser::ParseCXXClassMemberDeclarationWithPragmas(
   case tok::annot_pragma_ms_vtordisp:
     HandlePragmaMSVtorDisp();
     return nullptr;
+  case tok::annot_pragma_dump:
+    HandlePragmaDump();
+    return nullptr;
 
   case tok::kw_namespace:
     // If we see a namespace here, a close brace was missing somewhere.
