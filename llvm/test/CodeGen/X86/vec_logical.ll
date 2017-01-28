@@ -89,18 +89,14 @@ entry:
 define <2 x i64> @andn_double_xor(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c) {
 ; SSE-LABEL: andn_double_xor:
 ; SSE:       # BB#0:
-; SSE-NEXT:    pcmpeqd %xmm3, %xmm3
-; SSE-NEXT:    pxor %xmm3, %xmm0
-; SSE-NEXT:    pxor %xmm2, %xmm1
-; SSE-NEXT:    pand %xmm1, %xmm0
+; SSE-NEXT:    xorps %xmm2, %xmm1
+; SSE-NEXT:    andnps %xmm1, %xmm0
 ; SSE-NEXT:    retl
 ;
 ; AVX-LABEL: andn_double_xor:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpcmpeqd %xmm3, %xmm3, %xmm3
-; AVX-NEXT:    vpxor %xmm3, %xmm0, %xmm0
-; AVX-NEXT:    vpxor %xmm2, %xmm1, %xmm1
-; AVX-NEXT:    vpand %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vxorps %xmm2, %xmm1, %xmm1
+; AVX-NEXT:    vandnps %xmm1, %xmm0, %xmm0
 ; AVX-NEXT:    retl
   %1 = xor <2 x i64> %a, <i64 -1, i64 -1>
   %2 = xor <2 x i64> %b, %c
