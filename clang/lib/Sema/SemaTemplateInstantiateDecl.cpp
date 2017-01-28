@@ -3726,7 +3726,12 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
       PendingInstantiations.push_back(
         std::make_pair(Function, PointOfInstantiation));
     } else if (TSK == TSK_ImplicitInstantiation) {
-      if (AtEndOfTU && !getDiagnostics().hasErrorOccurred()) {
+      if (AtEndOfTU && !getDiagnostics().hasErrorOccurred() &&
+          // A non-template function that is only lexically in a dependent
+          // context, such as a friend function in a class template, should
+          // not produce a warning.
+          (PatternDecl->getDescribedFunctionTemplate() ||
+           PatternDecl->getDeclContext()->isDependentContext())) {
         Diag(PointOfInstantiation, diag::warn_func_template_missing)
           << Function;
         Diag(PatternDecl->getLocation(), diag::note_forward_template_decl);
