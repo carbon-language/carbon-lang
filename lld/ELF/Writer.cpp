@@ -756,8 +756,8 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   ElfSym<ELFT>::EhdrStart =
       addOptionalSynthetic<ELFT>("__ehdr_start", Out<ELFT>::ProgramHeaders, 0);
 
-  auto Define = [this](StringRef S, DefinedSynthetic *&Sym1,
-                       DefinedSynthetic *&Sym2) {
+  auto Define = [](StringRef S, DefinedSynthetic *&Sym1,
+                   DefinedSynthetic *&Sym2) {
     Sym1 = addOptionalSynthetic<ELFT>(S, nullptr, 0, STV_DEFAULT);
     assert(S.startswith("_"));
     S = S.substr(1);
