@@ -2986,8 +2986,10 @@ void LSRInstance::CollectFixupsAndInitialFormulae() {
     User::op_iterator UseI =
         find(UserInst->operands(), U.getOperandValToReplace());
     assert(UseI != UserInst->op_end() && "cannot find IV operand");
-    if (IVIncSet.count(UseI))
+    if (IVIncSet.count(UseI)) {
+      DEBUG(dbgs() << "Use is in profitable chain: " << **UseI << '\n');
       continue;
+    }
 
     LSRUse::KindType Kind = LSRUse::Basic;
     MemAccessTy AccessTy;
