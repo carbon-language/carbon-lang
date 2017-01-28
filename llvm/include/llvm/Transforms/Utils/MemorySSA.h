@@ -73,7 +73,6 @@
 #define LLVM_TRANSFORMS_UTILS_MEMORYSSA_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -110,7 +109,6 @@ class MemoryAccess;
 class LLVMContext;
 class raw_ostream;
 namespace MSSAHelpers {
-
 struct AllAccessTag {};
 struct DefsOnlyTag {};
 }
@@ -204,6 +202,10 @@ protected:
   friend class MemoryDef;
   friend class MemoryPhi;
 
+  /// \brief Used by MemorySSA to change the block of a MemoryAccess when it is
+  /// moved.
+  void setBlock(BasicBlock *BB) { Block = BB; }
+
   /// \brief Used for debugging and tracking things about MemoryAccesses.
   /// Guaranteed unique among MemoryAccesses, no guarantees otherwise.
   virtual unsigned getID() const = 0;
@@ -248,7 +250,7 @@ public:
 
 protected:
   friend class MemorySSA;
-
+  friend class MemorySSAUpdater;
   MemoryUseOrDef(LLVMContext &C, MemoryAccess *DMA, unsigned Vty,
                  Instruction *MI, BasicBlock *BB)
       : MemoryAccess(C, Vty, BB, 1), MemoryInst(MI) {
@@ -626,8 +628,8 @@ public:
   /// Returns the new MemoryAccess.
   /// This should be called when a memory instruction is created that is being
   /// used to replace an existing memory instruction. It will *not* create PHI
-  /// nodes, or verify the clobbering definition.  The clobbering definition
-  /// must be non-null.
+  /// nodes, or verify the clobbering definition.
+  ///
   /// Note: If a MemoryAccess already exists for I, this function will make it
   /// inaccessible and it *must* have removeMemoryAccess called on it.
   MemoryUseOrDef *createMemoryAccessBefore(Instruction *I,
@@ -636,15 +638,6 @@ public:
   MemoryUseOrDef *createMemoryAccessAfter(Instruction *I,
                                           MemoryAccess *Definition,
                                           MemoryAccess *InsertPt);
-
-  // \brief Splice \p What to just before \p Where.
-  //
-  // In order to be efficient, the following conditions must be met:
-  //   - \p Where  dominates \p What,
-  //   - All memory accesses in [\p Where, \p What) are no-alias with \p What.
-  //
-  // TODO: relax the MemoryDef requirement on Where.
-  void spliceMemoryAccessAbove(MemoryDef *Where, MemoryUseOrDef *What);
 
   /// \brief Remove a MemoryAccess from MemorySSA, including updating all
   /// definitions and uses.
@@ -674,6 +667,7 @@ protected:
   // Used by Memory SSA annotater, dumpers, and wrapper pass
   friend class MemorySSAAnnotatedWriter;
   friend class MemorySSAPrinterLegacyPass;
+  friend class MemorySSAUpdater;
 
   void verifyDefUses(Function &F) const;
   void verifyDomination(Function &F) const;
@@ -690,6 +684,11 @@ protected:
     auto It = PerBlockDefs.find(BB);
     return It == PerBlockDefs.end() ? nullptr : It->second.get();
   }
+
+  // This is used by the updater to perform the internal memoryssa machinations
+  // for moves.  It does not always leave the IR in a correct state, and relies
+  // on the updater to fixup what it breaks, so it is not public.
+  void moveTo(MemoryUseOrDef *What, BasicBlock *BB, AccessList::iterator Where);
 
 private:
   class CachingWalker;
@@ -712,6 +711,7 @@ private:
   MemoryUseOrDef *createDefinedAccess(Instruction *, MemoryAccess *);
   MemoryAccess *findDominatingDef(BasicBlock *, enum InsertionPlace);
   void removeFromLookups(MemoryAccess *);
+  void removeFromLists(MemoryAccess *, bool ShouldDelete = true);
 
   void placePHINodes(const SmallPtrSetImpl<BasicBlock *> &,
                      const DenseMap<const BasicBlock *, unsigned int> &);
@@ -750,6 +750,51 @@ private:
   // Memory SSA building info
   std::unique_ptr<CachingWalker> Walker;
   unsigned NextID;
+};
+
+// An automatic updater for MemorySSA that handles arbitrary insertion,
+// deletion, and moves.  It performs phi insertion where necessary, and
+// automatically updates the MemorySSA IR to be correct.
+// While updating loads or removing instructions is often easy enough to not
+// need this, updating stores should generally not be attemped outside this
+// API.
+//
+// Basic API usage:
+// Create the memory access you want for the instruction (this is mainly so
+// we know where it is, without having to duplicate the entire set of create
+// functions MemorySSA supports).
+// Call insertDef or insertUse depending on whether it's a MemoryUse or a
+// MemoryDef.
+// That's it.
+//
+// For moving, first, move the instruction itself using the normal SSA
+// instruction moving API, then just call moveBefore or moveAfter with the right
+// arguments.
+//
+class MemorySSAUpdater {
+private:
+  MemorySSA *MSSA;
+  SmallVector<MemoryPhi *, 8> InsertedPHIs;
+  SmallPtrSet<BasicBlock *, 8> VisitedBlocks;
+
+public:
+  MemorySSAUpdater(MemorySSA *MSSA) : MSSA(MSSA) {}
+  void insertDef(MemoryDef *Def);
+  void insertUse(MemoryUse *Use);
+  void moveBefore(MemoryUseOrDef *What, MemoryUseOrDef *Where);
+  void moveAfter(MemoryUseOrDef *What, MemoryUseOrDef *Where);
+
+private:
+  void moveTo(MemoryUseOrDef *What, BasicBlock *BB,
+              MemorySSA::AccessList::iterator Where);
+  MemoryAccess *getPreviousDef(MemoryAccess *);
+  MemoryAccess *getPreviousDefInBlock(MemoryAccess *);
+  MemoryAccess *getPreviousDefFromEnd(BasicBlock *);
+  MemoryAccess *getPreviousDefRecursive(BasicBlock *);
+  MemoryAccess *recursePhi(MemoryAccess *Phi);
+  template <class RangeType>
+  MemoryAccess *tryRemoveTrivialPhi(MemoryPhi *Phi, RangeType &Operands);
+  void fixupDefs(const SmallVectorImpl<MemoryAccess *> &);
 };
 
 // This pass does eager building and then printing of MemorySSA. It is used by
