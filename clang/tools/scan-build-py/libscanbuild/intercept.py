@@ -102,11 +102,8 @@ def capture(args, bin_dir):
         exec_traces = itertools.chain.from_iterable(
             parse_exec_trace(os.path.join(tmp_dir, filename))
             for filename in sorted(glob.iglob(os.path.join(tmp_dir, '*.cmd'))))
-        # do post processing only if that was requested
-        if 'raw_entries' not in args or not args.raw_entries:
-            entries = post_processing(exec_traces)
-        else:
-            entries = exec_traces
+        # do post processing
+        entries = post_processing(exec_traces)
         # dump the compilation database
         with open(args.cdb, 'w+') as handle:
             json.dump(list(entries), handle, sort_keys=True, indent=4)
@@ -293,13 +290,6 @@ def create_parser():
         '--append',
         action='store_true',
         help="""Append new entries to existing compilation database.""")
-    group.add_argument(
-        '--disable-filter', '-n',
-        dest='raw_entries',
-        action='store_true',
-        help="""Intercepted child process creation calls (exec calls) are all
-                logged to the output. The output is not a compilation database.
-                This flag is for debug purposes.""")
 
     advanced = parser.add_argument_group('advanced options')
     advanced.add_argument(
