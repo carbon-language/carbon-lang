@@ -258,11 +258,10 @@ void LLVMSetTarget(LLVMModuleRef M, const char *Triple) {
   unwrap(M)->setTargetTriple(Triple);
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-LLVM_DUMP_METHOD void LLVMDumpModule(LLVMModuleRef M) {
-  unwrap(M)->dump();
+void LLVMDumpModule(LLVMModuleRef M) {
+  unwrap(M)->print(errs(), nullptr,
+                   /*ShouldPreserveUseListOrder=*/false, /*IsForDebug=*/true);
 }
-#endif
 
 LLVMBool LLVMPrintModuleToFile(LLVMModuleRef M, const char *Filename,
                                char **ErrorMessage) {
