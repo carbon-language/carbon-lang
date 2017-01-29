@@ -888,8 +888,8 @@ bool NewGVN::setMemoryAccessEquivTo(MemoryAccess *From, CongruenceClass *To) {
     DEBUG(dbgs() << *To->RepMemoryAccess);
   } else {
     DEBUG(dbgs() << " equivalent to itself");
-    DEBUG(dbgs() << "\n");
   }
+  DEBUG(dbgs() << "\n");
 
   auto LookupResult = MemoryAccessToClass.find(From);
   bool Changed = false;
