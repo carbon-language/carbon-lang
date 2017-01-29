@@ -14543,8 +14543,8 @@ SDValue DAGCombiner::visitINSERT_SUBVECTOR(SDNode *N) {
   // If the input vector is a concatenation, and the insert replaces
   // one of the halves, we can optimize into a single concat_vectors.
   if (N0.getOpcode() == ISD::CONCAT_VECTORS && N0->getNumOperands() == 2 &&
-      N2.getOpcode() == ISD::Constant) {
-    APInt InsIdx = cast<ConstantSDNode>(N2)->getAPIntValue();
+      isa<ConstantSDNode>(N2)) {
+    unsigned InsIdx = cast<ConstantSDNode>(N2)->getZExtValue();
 
     // Lower half: fold (insert_subvector (concat_vectors X, Y), Z) ->
     // (concat_vectors Z, Y)
