@@ -1155,7 +1155,6 @@ public:
               return Error::success();
             },
             Args...)) {
-      this->abandonPendingResponses();
       RTraits::consumeAbandoned(FutureResult.get());
       return std::move(Err);
     }
@@ -1188,12 +1187,6 @@ public:
   typename detail::ResultTraits<AltRetT>::ErrorReturnType
   callB(const ArgTs &... Args) {
     if (auto FutureResOrErr = callNB<Func>(Args...)) {
-      if (auto Err = this->C.send()) {
-        this->abandonPendingResponses();
-        detail::ResultTraits<typename Func::ReturnType>::consumeAbandoned(
-            std::move(FutureResOrErr->get()));
-        return std::move(Err);
-      }
       return FutureResOrErr->get();
     } else
       return FutureResOrErr.takeError();
