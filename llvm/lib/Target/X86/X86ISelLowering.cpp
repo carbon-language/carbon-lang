@@ -7791,7 +7791,7 @@ static SDValue LowerCONCAT_VECTORSvXi1(SDValue Op,
 
   SDValue IdxVal = DAG.getIntPtrConstant(NumElems/2, dl);
   if (V1.isUndef())
-    V2 = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, Undef, V2, IdxVal);
+    return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, Undef, V2, IdxVal);
 
   if (IsZeroV1)
     return DAG.getNode(ISD::INSERT_SUBVECTOR, dl, ResVT, ZeroVec, V2, IdxVal);
