@@ -12,19 +12,6 @@ inline error_code capture_errno() {
 }
 
 template <class ...Args>
-inline bool capture_error_or_throw(std::error_code* user_ec,
-                                   const char* msg, Args&&... args)
-{
-    std::error_code my_ec = capture_errno();
-    if (user_ec) {
-        *user_ec = my_ec;
-        return true;
-    }
-    __throw_filesystem_error(msg, std::forward<Args>(args)..., my_ec);
-    return false;
-}
-
-template <class ...Args>
 inline bool set_or_throw(std::error_code& my_ec,
                                std::error_code* user_ec,
                                const char* msg, Args&&... args)
