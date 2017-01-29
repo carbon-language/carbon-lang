@@ -86,7 +86,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/MemorySSA.h"
-#include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <unordered_map>
 #include <utility>
 #include <vector>
