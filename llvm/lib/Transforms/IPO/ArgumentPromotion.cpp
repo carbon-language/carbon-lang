@@ -68,7 +68,7 @@ typedef std::vector<uint64_t> IndicesVector;
 /// arguments, and returns the new function.  At this point, we know that it's
 /// safe to do so.
 static CallGraphNode *
-DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
+doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
             SmallPtrSetImpl<Argument *> &ByValArgsToTransform, CallGraph &CG) {
 
   // Start by computing a new prototype for the function, which is the same as
@@ -479,7 +479,7 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
 
 /// AllCallersPassInValidPointerForArgument - Return true if we can prove that
 /// all callees pass in a valid pointer for the specified function argument.
-static bool AllCallersPassInValidPointerForArgument(Argument *Arg) {
+static bool allCallersPassInValidPointerForArgument(Argument *Arg) {
   Function *Callee = Arg->getParent();
   const DataLayout &DL = Callee->getParent()->getDataLayout();
 
@@ -502,14 +502,14 @@ static bool AllCallersPassInValidPointerForArgument(Argument *Arg) {
 /// elements in Prefix is the same as the corresponding elements in Longer.
 ///
 /// This means it also returns true when Prefix and Longer are equal!
-static bool IsPrefix(const IndicesVector &Prefix, const IndicesVector &Longer) {
+static bool isPrefix(const IndicesVector &Prefix, const IndicesVector &Longer) {
   if (Prefix.size() > Longer.size())
     return false;
   return std::equal(Prefix.begin(), Prefix.end(), Longer.begin());
 }
 
 /// Checks if Indices, or a prefix of Indices, is in Set.
-static bool PrefixIn(const IndicesVector &Indices,
+static bool prefixIn(const IndicesVector &Indices,
                      std::set<IndicesVector> &Set) {
   std::set<IndicesVector>::iterator Low;
   Low = Set.upper_bound(Indices);
@@ -520,7 +520,7 @@ static bool PrefixIn(const IndicesVector &Indices,
   // prefix exists.
   //
   // This load is safe if any prefix of its operands is safe to load.
-  return Low != Set.end() && IsPrefix(*Low, Indices);
+  return Low != Set.end() && isPrefix(*Low, Indices);
 }
 
 /// Mark the given indices (ToMark) as safe in the given set of indices
@@ -528,7 +528,7 @@ static bool PrefixIn(const IndicesVector &Indices,
 /// is already a prefix of Indices in Safe, Indices are implicitely marked safe
 /// already. Furthermore, any indices that Indices is itself a prefix of, are
 /// removed from Safe (since they are implicitely safe because of Indices now).
-static void MarkIndicesSafe(const IndicesVector &ToMark,
+static void markIndicesSafe(const IndicesVector &ToMark,
                             std::set<IndicesVector> &Safe) {
   std::set<IndicesVector>::iterator Low;
   Low = Safe.upper_bound(ToMark);
@@ -539,7 +539,7 @@ static void MarkIndicesSafe(const IndicesVector &ToMark,
   // means it points to a prefix of Indices (possibly Indices itself), if
   // such prefix exists.
   if (Low != Safe.end()) {
-    if (IsPrefix(*Low, ToMark))
+    if (isPrefix(*Low, ToMark))
       // If there is already a prefix of these indices (or exactly these
       // indices) marked a safe, don't bother adding these indices
       return;
@@ -552,7 +552,7 @@ static void MarkIndicesSafe(const IndicesVector &ToMark,
   ++Low;
   // If there we're a prefix of longer index list(s), remove those
   std::set<IndicesVector>::iterator End = Safe.end();
-  while (Low != End && IsPrefix(ToMark, *Low)) {
+  while (Low != End && isPrefix(ToMark, *Low)) {
     std::set<IndicesVector>::iterator Remove = Low;
     ++Low;
     Safe.erase(Remove);
@@ -597,7 +597,7 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
   GEPIndicesSet ToPromote;
 
   // If the pointer is always valid, any load with first index 0 is valid.
-  if (isByValOrInAlloca || AllCallersPassInValidPointerForArgument(Arg))
+  if (isByValOrInAlloca || allCallersPassInValidPointerForArgument(Arg))
     SafeToUnconditionallyLoad.insert(IndicesVector(1, 0));
 
   // First, iterate the entry block and mark loads of (geps of) arguments as
@@ -623,12 +623,12 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
               return false;
 
           // Indices checked out, mark them as safe
-          MarkIndicesSafe(Indices, SafeToUnconditionallyLoad);
+          markIndicesSafe(Indices, SafeToUnconditionallyLoad);
           Indices.clear();
         }
       } else if (V == Arg) {
         // Direct loads are equivalent to a GEP with a single 0 index.
-        MarkIndicesSafe(IndicesVector(1, 0), SafeToUnconditionallyLoad);
+        markIndicesSafe(IndicesVector(1, 0), SafeToUnconditionallyLoad);
       }
     }
 
@@ -683,7 +683,7 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
 
     // Now, see if it is safe to promote this load / loads of this GEP. Loading
     // is safe if Operands, or a prefix of Operands, is marked as safe.
-    if (!PrefixIn(Operands, SafeToUnconditionallyLoad))
+    if (!prefixIn(Operands, SafeToUnconditionallyLoad))
       return false;
 
     // See if we are already promoting a load with these indices. If not, check
@@ -819,7 +819,7 @@ static bool canPaddingBeAccessed(Argument *arg) {
 /// calls the DoPromotion method.
 ///
 static CallGraphNode *
-PromoteArguments(CallGraphNode *CGN, CallGraph &CG,
+promoteArguments(CallGraphNode *CGN, CallGraph &CG,
                  function_ref<AAResults &(Function &F)> AARGetter,
                  unsigned MaxElements) {
   Function *F = CGN->getFunction();
@@ -950,7 +950,7 @@ PromoteArguments(CallGraphNode *CGN, CallGraph &CG,
   if (ArgsToPromote.empty() && ByValArgsToTransform.empty())
     return nullptr;
 
-  return DoPromotion(F, ArgsToPromote, ByValArgsToTransform, CG);
+  return doPromotion(F, ArgsToPromote, ByValArgsToTransform, CG);
 }
 
 namespace {
@@ -1020,7 +1020,7 @@ bool ArgPromotion::runOnSCC(CallGraphSCC &SCC) {
     // Attempt to promote arguments from all functions in this SCC.
     for (CallGraphNode *OldNode : SCC) {
       if (CallGraphNode *NewNode =
-              PromoteArguments(OldNode, CG, AARGetter, MaxElements)) {
+              promoteArguments(OldNode, CG, AARGetter, MaxElements)) {
         LocalChange = true;
         SCC.ReplaceNode(OldNode, NewNode);
       }
