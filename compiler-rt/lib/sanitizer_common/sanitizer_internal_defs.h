@@ -21,7 +21,11 @@
 
 // Only use SANITIZER_*ATTRIBUTE* before the function return type!
 #if SANITIZER_WINDOWS
+#if SANITIZER_IMPORT_INTERFACE
+# define SANITIZER_INTERFACE_ATTRIBUTE __declspec(dllimport)
+#else
 # define SANITIZER_INTERFACE_ATTRIBUTE __declspec(dllexport)
+#endif
 # define SANITIZER_WEAK_ATTRIBUTE
 #elif SANITIZER_GO
 # define SANITIZER_INTERFACE_ATTRIBUTE
