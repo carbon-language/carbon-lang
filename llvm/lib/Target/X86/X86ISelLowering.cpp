@@ -31382,21 +31382,6 @@ static bool isSATValidOnAVX512Subtarget(EVT SrcVT, EVT DstVT,
   return false;
 }
 
-/// Return true if VPACK* instruction can be used for the given types
-/// and it is avalable on \p Subtarget.
-static bool
-isSATValidOnSSESubtarget(EVT SrcVT, EVT DstVT, const X86Subtarget &Subtarget) {
-  if (Subtarget.hasSSE2())
-    // v16i16 -> v16i8
-    if (SrcVT == MVT::v16i16 && DstVT == MVT::v16i8)
-      return true;
-  if (Subtarget.hasSSE41())
-    // v8i32 -> v8i16
-    if (SrcVT == MVT::v8i32 && DstVT == MVT::v8i16)
-      return true;
-  return false;
-}
-
 /// Detect a pattern of truncation with saturation:
 /// (truncate (umin (x, unsigned_max_of_dest_type)) to dest_type).
 /// Return the source value to be truncated or SDValue() if the pattern was not
@@ -31437,16 +31422,9 @@ combineTruncateWithUSat(SDValue In, EVT VT, SDLoc &DL, SelectionDAG &DAG,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!TLI.isTypeLegal(In.getValueType()) || !TLI.isTypeLegal(VT))
     return SDValue();
-  SDValue USatVal = detectUSatPattern(In, VT);
-  if (USatVal) {
+  if (auto USatVal = detectUSatPattern(In, VT))
     if (isSATValidOnAVX512Subtarget(In.getValueType(), VT, Subtarget))
       return DAG.getNode(X86ISD::VTRUNCUS, DL, VT, USatVal);
-    if (isSATValidOnSSESubtarget(In.getValueType(), VT, Subtarget)) {
-      SDValue Lo, Hi;
-      std::tie(Lo, Hi) = DAG.SplitVector(USatVal, DL);
-      return DAG.getNode(X86ISD::PACKUS, DL, VT, Lo, Hi);
-    }
-  }
   return SDValue();
 }
 
