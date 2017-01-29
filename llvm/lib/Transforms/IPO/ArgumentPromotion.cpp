@@ -29,7 +29,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -51,15 +50,16 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/IPO.h"
 #include <set>
 using namespace llvm;
 
 #define DEBUG_TYPE "argpromotion"
 
-STATISTIC(NumArgumentsPromoted , "Number of pointer arguments promoted");
+STATISTIC(NumArgumentsPromoted, "Number of pointer arguments promoted");
 STATISTIC(NumAggregatesPromoted, "Number of aggregate arguments promoted");
-STATISTIC(NumByValArgsPromoted , "Number of byval arguments promoted");
-STATISTIC(NumArgumentsDead     , "Number of dead pointer args eliminated");
+STATISTIC(NumByValArgsPromoted, "Number of byval arguments promoted");
+STATISTIC(NumArgumentsDead, "Number of dead pointer args eliminated");
 
 /// A vector used to hold the indices of a single GEP instruction
 typedef std::vector<uint64_t> IndicesVector;
@@ -74,7 +74,7 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.
   FunctionType *FTy = F->getFunctionType();
-  std::vector<Type*> Params;
+  std::vector<Type *> Params;
 
   typedef std::set<std::pair<Type *, IndicesVector>> ScalarizeTable;
 
@@ -85,14 +85,14 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   // Arguments that are directly loaded will have a zero element value here, to
   // handle cases where there are both a direct load and GEP accesses.
   //
-  std::map<Argument*, ScalarizeTable> ScalarizedElements;
+  std::map<Argument *, ScalarizeTable> ScalarizedElements;
 
   // OriginalLoads - Keep track of a representative load instruction from the
   // original function so that we can tell the alias analysis implementation
   // what the new GEP/Load instructions we are inserting look like.
   // We need to keep the original loads for each argument and the elements
   // of the argument that are accessed.
-  std::map<std::pair<Argument*, IndicesVector>, LoadInst*> OriginalLoads;
+  std::map<std::pair<Argument *, IndicesVector>, LoadInst *> OriginalLoads;
 
   // Attribute - Keep track of the parameter attributes for the arguments
   // that we are *not* promoting. For the ones that we do promote, the parameter
@@ -102,8 +102,8 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
 
   // Add any return attributes.
   if (PAL.hasAttributes(AttributeSet::ReturnIndex))
-    AttributesVec.push_back(AttributeSet::get(F->getContext(),
-                                              PAL.getRetAttributes()));
+    AttributesVec.push_back(
+        AttributeSet::get(F->getContext(), PAL.getRetAttributes()));
 
   // First, determine the new argument list
   unsigned ArgIndex = 1;
@@ -121,8 +121,8 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
       AttributeSet attrs = PAL.getParamAttributes(ArgIndex);
       if (attrs.hasAttributes(ArgIndex)) {
         AttrBuilder B(attrs, ArgIndex);
-        AttributesVec.
-          push_back(AttributeSet::get(F->getContext(), Params.size(), B));
+        AttributesVec.push_back(
+            AttributeSet::get(F->getContext(), Params.size(), B));
       }
     } else if (I->use_empty()) {
       // Dead argument (which are always marked as promotable)
@@ -180,8 +180,8 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
 
   // Add any function attributes.
   if (PAL.hasAttributes(AttributeSet::FunctionIndex))
-    AttributesVec.push_back(AttributeSet::get(FTy->getContext(),
-                                              PAL.getFnAttributes()));
+    AttributesVec.push_back(
+        AttributeSet::get(FTy->getContext(), PAL.getFnAttributes()));
 
   Type *RetTy = FTy->getReturnType();
 
@@ -197,8 +197,8 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   F->setSubprogram(nullptr);
 
   DEBUG(dbgs() << "ARG PROMOTION:  Promoting to:" << *NF << "\n"
-        << "From: " << *F);
-  
+               << "From: " << *F);
+
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
   NF->setAttributes(AttributeSet::get(F->getContext(), AttributesVec));
@@ -213,7 +213,7 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in the loaded pointers.
   //
-  SmallVector<Value*, 16> Args;
+  SmallVector<Value *, 16> Args;
   while (!F->use_empty()) {
     CallSite CS(F->user_back());
     assert(CS.getCalledFunction() == F);
@@ -222,42 +222,42 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
 
     // Add any return attributes.
     if (CallPAL.hasAttributes(AttributeSet::ReturnIndex))
-      AttributesVec.push_back(AttributeSet::get(F->getContext(),
-                                                CallPAL.getRetAttributes()));
+      AttributesVec.push_back(
+          AttributeSet::get(F->getContext(), CallPAL.getRetAttributes()));
 
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
     CallSite::arg_iterator AI = CS.arg_begin();
     ArgIndex = 1;
-    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
-         I != E; ++I, ++AI, ++ArgIndex)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
+         ++I, ++AI, ++ArgIndex)
       if (!ArgsToPromote.count(&*I) && !ByValArgsToTransform.count(&*I)) {
-        Args.push_back(*AI);          // Unmodified argument
+        Args.push_back(*AI); // Unmodified argument
 
         if (CallPAL.hasAttributes(ArgIndex)) {
           AttrBuilder B(CallPAL, ArgIndex);
-          AttributesVec.
-            push_back(AttributeSet::get(F->getContext(), Args.size(), B));
+          AttributesVec.push_back(
+              AttributeSet::get(F->getContext(), Args.size(), B));
         }
       } else if (ByValArgsToTransform.count(&*I)) {
         // Emit a GEP and load for each element of the struct.
         Type *AgTy = cast<PointerType>(I->getType())->getElementType();
         StructType *STy = cast<StructType>(AgTy);
         Value *Idxs[2] = {
-              ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), nullptr };
+            ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), nullptr};
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           Idxs[1] = ConstantInt::get(Type::getInt32Ty(F->getContext()), i);
           Value *Idx = GetElementPtrInst::Create(
               STy, *AI, Idxs, (*AI)->getName() + "." + Twine(i), Call);
           // TODO: Tell AA about the new values?
-          Args.push_back(new LoadInst(Idx, Idx->getName()+".val", Call));
+          Args.push_back(new LoadInst(Idx, Idx->getName() + ".val", Call));
         }
       } else if (!I->use_empty()) {
         // Non-dead argument: insert GEPs and loads as appropriate.
         ScalarizeTable &ArgIndices = ScalarizedElements[&*I];
         // Store the Value* version of the indices in here, but declare it now
         // for reuse.
-        std::vector<Value*> Ops;
+        std::vector<Value *> Ops;
         for (const auto &ArgIndex : ArgIndices) {
           Value *V = *AI;
           LoadInst *OrigLoad =
@@ -268,9 +268,9 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
             for (unsigned long II : ArgIndex.second) {
               // Use i32 to index structs, and i64 for others (pointers/arrays).
               // This satisfies GEP constraints.
-              Type *IdxTy = (ElTy->isStructTy() ?
-                    Type::getInt32Ty(F->getContext()) : 
-                    Type::getInt64Ty(F->getContext()));
+              Type *IdxTy =
+                  (ElTy->isStructTy() ? Type::getInt32Ty(F->getContext())
+                                      : Type::getInt64Ty(F->getContext()));
               Ops.push_back(ConstantInt::get(IdxTy, II));
               // Keep track of the type we're currently indexing.
               if (auto *ElPTy = dyn_cast<PointerType>(ElTy))
@@ -285,7 +285,7 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
           }
           // Since we're replacing a load make sure we take the alignment
           // of the previous load.
-          LoadInst *newLoad = new LoadInst(V, V->getName()+".val", Call);
+          LoadInst *newLoad = new LoadInst(V, V->getName() + ".val", Call);
           newLoad->setAlignment(OrigLoad->getAlignment());
           // Transfer the AA info too.
           AAMDNodes AAInfo;
@@ -301,15 +301,15 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
       Args.push_back(*AI);
       if (CallPAL.hasAttributes(ArgIndex)) {
         AttrBuilder B(CallPAL, ArgIndex);
-        AttributesVec.
-          push_back(AttributeSet::get(F->getContext(), Args.size(), B));
+        AttributesVec.push_back(
+            AttributeSet::get(F->getContext(), Args.size(), B));
       }
     }
 
     // Add any function attributes.
     if (CallPAL.hasAttributes(AttributeSet::FunctionIndex))
-      AttributesVec.push_back(AttributeSet::get(Call->getContext(),
-                                                CallPAL.getFnAttributes()));
+      AttributesVec.push_back(
+          AttributeSet::get(Call->getContext(), CallPAL.getFnAttributes()));
 
     SmallVector<OperandBundleDef, 1> OpBundles;
     CS.getOperandBundlesAsDefs(OpBundles);
@@ -319,13 +319,13 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
       New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
                                Args, OpBundles, "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setAttributes(AttributeSet::get(II->getContext(),
-                                                            AttributesVec));
+      cast<InvokeInst>(New)->setAttributes(
+          AttributeSet::get(II->getContext(), AttributesVec));
     } else {
       New = CallInst::Create(NF, Args, OpBundles, "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setAttributes(AttributeSet::get(New->getContext(),
-                                                          AttributesVec));
+      cast<CallInst>(New)->setAttributes(
+          AttributeSet::get(New->getContext(), AttributesVec));
       cast<CallInst>(New)->setTailCallKind(
           cast<CallInst>(Call)->getTailCallKind());
     }
@@ -356,7 +356,8 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   // the new arguments, also transferring over the names as well.
   //
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
-       I2 = NF->arg_begin(); I != E; ++I) {
+                              I2 = NF->arg_begin();
+       I != E; ++I) {
     if (!ArgsToPromote.count(&*I) && !ByValArgsToTransform.count(&*I)) {
       // If this is an unmodified argument, move the name and users over to the
       // new version.
@@ -375,15 +376,15 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
       Type *AgTy = cast<PointerType>(I->getType())->getElementType();
       Value *TheAlloca = new AllocaInst(AgTy, nullptr, "", InsertPt);
       StructType *STy = cast<StructType>(AgTy);
-      Value *Idxs[2] = {
-            ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), nullptr };
+      Value *Idxs[2] = {ConstantInt::get(Type::getInt32Ty(F->getContext()), 0),
+                        nullptr};
 
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
         Idxs[1] = ConstantInt::get(Type::getInt32Ty(F->getContext()), i);
         Value *Idx = GetElementPtrInst::Create(
             AgTy, TheAlloca, Idxs, TheAlloca->getName() + "." + Twine(i),
             InsertPt);
-        I2->setName(I->getName()+"."+Twine(i));
+        I2->setName(I->getName() + "." + Twine(i));
         new StoreInst(&*I2++, Idx, InsertPt);
       }
 
@@ -414,11 +415,11 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
       if (LoadInst *LI = dyn_cast<LoadInst>(I->user_back())) {
         assert(ArgIndices.begin()->second.empty() &&
                "Load element should sort to front!");
-        I2->setName(I->getName()+".val");
+        I2->setName(I->getName() + ".val");
         LI->replaceAllUsesWith(&*I2);
         LI->eraseFromParent();
         DEBUG(dbgs() << "*** Promoted load of argument '" << I->getName()
-              << "' in function '" << F->getName() << "'\n");
+                     << "' in function '" << F->getName() << "'\n");
       } else {
         GetElementPtrInst *GEP = cast<GetElementPtrInst>(I->user_back());
         IndicesVector Operands;
@@ -439,13 +440,13 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
 
         std::string NewName = I->getName();
         for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-            NewName += "." + utostr(Operands[i]);
+          NewName += "." + utostr(Operands[i]);
         }
         NewName += ".val";
         TheArg->setName(NewName);
 
         DEBUG(dbgs() << "*** Promoted agg argument '" << TheArg->getName()
-              << "' of function '" << NF->getName() << "'\n");
+                     << "' of function '" << NF->getName() << "'\n");
 
         // All of the uses must be load instructions.  Replace them all with
         // the argument specified by ArgNo.
@@ -463,7 +464,7 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
   }
 
   NF_CGN->stealCalledFunctionsFrom(CG[F]);
-  
+
   // Now that the old function is dead, delete it.  If there is a dangling
   // reference to the CallgraphNode, just leave the dead function around for
   // someone else to nuke.
@@ -472,10 +473,9 @@ DoPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
     delete CG.removeFunctionFromModule(CGN);
   else
     F->setLinkage(Function::ExternalLinkage);
-  
+
   return NF_CGN;
 }
-
 
 /// AllCallersPassInValidPointerForArgument - Return true if we can prove that
 /// all callees pass in a valid pointer for the specified function argument.
@@ -508,20 +508,19 @@ static bool IsPrefix(const IndicesVector &Prefix, const IndicesVector &Longer) {
   return std::equal(Prefix.begin(), Prefix.end(), Longer.begin());
 }
 
-
 /// Checks if Indices, or a prefix of Indices, is in Set.
 static bool PrefixIn(const IndicesVector &Indices,
                      std::set<IndicesVector> &Set) {
-    std::set<IndicesVector>::iterator Low;
-    Low = Set.upper_bound(Indices);
-    if (Low != Set.begin())
-      Low--;
-    // Low is now the last element smaller than or equal to Indices. This means
-    // it points to a prefix of Indices (possibly Indices itself), if such
-    // prefix exists.
-    //
-    // This load is safe if any prefix of its operands is safe to load.
-    return Low != Set.end() && IsPrefix(*Low, Indices);
+  std::set<IndicesVector>::iterator Low;
+  Low = Set.upper_bound(Indices);
+  if (Low != Set.begin())
+    Low--;
+  // Low is now the last element smaller than or equal to Indices. This means
+  // it points to a prefix of Indices (possibly Indices itself), if such
+  // prefix exists.
+  //
+  // This load is safe if any prefix of its operands is safe to load.
+  return Low != Set.end() && IsPrefix(*Low, Indices);
 }
 
 /// Mark the given indices (ToMark) as safe in the given set of indices
@@ -635,14 +634,15 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
 
   // Now, iterate all uses of the argument to see if there are any uses that are
   // not (GEP+)loads, or any (GEP+)loads that are not safe to promote.
-  SmallVector<LoadInst*, 16> Loads;
+  SmallVector<LoadInst *, 16> Loads;
   IndicesVector Operands;
   for (Use &U : Arg->uses()) {
     User *UR = U.getUser();
     Operands.clear();
     if (LoadInst *LI = dyn_cast<LoadInst>(UR)) {
       // Don't hack volatile/atomic loads
-      if (!LI->isSimple()) return false;
+      if (!LI->isSimple())
+        return false;
       Loads.push_back(LI);
       // Direct loads are equivalent to a GEP with a zero index and then a load.
       Operands.push_back(0);
@@ -659,25 +659,26 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
       }
 
       // Ensure that all of the indices are constants.
-      for (User::op_iterator i = GEP->idx_begin(), e = GEP->idx_end();
-        i != e; ++i)
+      for (User::op_iterator i = GEP->idx_begin(), e = GEP->idx_end(); i != e;
+           ++i)
         if (ConstantInt *C = dyn_cast<ConstantInt>(*i))
           Operands.push_back(C->getSExtValue());
         else
-          return false;  // Not a constant operand GEP!
+          return false; // Not a constant operand GEP!
 
       // Ensure that the only users of the GEP are load instructions.
       for (User *GEPU : GEP->users())
         if (LoadInst *LI = dyn_cast<LoadInst>(GEPU)) {
           // Don't hack volatile/atomic loads
-          if (!LI->isSimple()) return false;
+          if (!LI->isSimple())
+            return false;
           Loads.push_back(LI);
         } else {
           // Other uses than load?
           return false;
         }
     } else {
-      return false;  // Not a load or a GEP.
+      return false; // Not a load or a GEP.
     }
 
     // Now, see if it is safe to promote this load / loads of this GEP. Loading
@@ -691,8 +692,10 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
     if (ToPromote.find(Operands) == ToPromote.end()) {
       if (MaxElements > 0 && ToPromote.size() == MaxElements) {
         DEBUG(dbgs() << "argpromotion not promoting argument '"
-              << Arg->getName() << "' because it would require adding more "
-              << "than " << MaxElements << " arguments to the function.\n");
+                     << Arg->getName()
+                     << "' because it would require adding more "
+                     << "than " << MaxElements
+                     << " arguments to the function.\n");
         // We limit aggregate promotion to only promoting up to a fixed number
         // of elements of the aggregate.
         return false;
@@ -701,7 +704,8 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
     }
   }
 
-  if (Loads.empty()) return true;  // No users, this is a dead argument.
+  if (Loads.empty())
+    return true; // No users, this is a dead argument.
 
   // Okay, now we know that the argument is only used by load instructions and
   // it is safe to unconditionally perform all of them. Use alias analysis to
@@ -710,7 +714,7 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
 
   // Because there could be several/many load instructions, remember which
   // blocks we know to be transparent to the load.
-  df_iterator_default_set<BasicBlock*, 16> TranspBlocks;
+  df_iterator_default_set<BasicBlock *, 16> TranspBlocks;
 
   for (LoadInst *Load : Loads) {
     // Check to see if the load is invalidated from the start of the block to
@@ -719,7 +723,7 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
 
     MemoryLocation Loc = MemoryLocation::get(Load);
     if (AAR.canInstructionRangeModRef(BB->front(), *Load, Loc, MRI_Mod))
-      return false;  // Pointer is invalidated!
+      return false; // Pointer is invalidated!
 
     // Now check every path from the entry block to the load for transparency.
     // To do this, we perform a depth first search on the inverse CFG from the
@@ -736,7 +740,6 @@ static bool isSafeToPromoteArgument(Argument *Arg, bool isByValOrInAlloca,
   // transformation!
   return true;
 }
-
 
 /// \brief Checks if a type could have padding bytes.
 static bool isDenselyPacked(Type *type, const DataLayout &DL) {
@@ -802,7 +805,7 @@ static bool canPaddingBeAccessed(Argument *arg) {
     }
   }
 
-// Check to make sure the pointers aren't captured
+  // Check to make sure the pointers aren't captured
   for (StoreInst *Store : Stores)
     if (PtrValues.count(Store->getValueOperand()))
       return true;
@@ -822,21 +825,24 @@ PromoteArguments(CallGraphNode *CGN, CallGraph &CG,
   Function *F = CGN->getFunction();
 
   // Make sure that it is local to this module.
-  if (!F || !F->hasLocalLinkage()) return nullptr;
+  if (!F || !F->hasLocalLinkage())
+    return nullptr;
 
   // Don't promote arguments for variadic functions. Adding, removing, or
   // changing non-pack parameters can change the classification of pack
   // parameters. Frontends encode that classification at the call site in the
   // IR, while in the callee the classification is determined dynamically based
   // on the number of registers consumed so far.
-  if (F->isVarArg()) return nullptr;
+  if (F->isVarArg())
+    return nullptr;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
-  SmallVector<Argument*, 16> PointerArgs;
+  SmallVector<Argument *, 16> PointerArgs;
   for (Argument &I : F->args())
     if (I.getType()->isPointerTy())
       PointerArgs.push_back(&I);
-  if (PointerArgs.empty()) return nullptr;
+  if (PointerArgs.empty())
+    return nullptr;
 
   // Second check: make sure that all callers are direct callers.  We can't
   // transform functions that have indirect callers.  Also see if the function
@@ -845,20 +851,21 @@ PromoteArguments(CallGraphNode *CGN, CallGraph &CG,
   for (Use &U : F->uses()) {
     CallSite CS(U.getUser());
     // Must be a direct call.
-    if (CS.getInstruction() == nullptr || !CS.isCallee(&U)) return nullptr;
-    
+    if (CS.getInstruction() == nullptr || !CS.isCallee(&U))
+      return nullptr;
+
     if (CS.getInstruction()->getParent()->getParent() == F)
       isSelfRecursive = true;
   }
-  
+
   const DataLayout &DL = F->getParent()->getDataLayout();
 
   AAResults &AAR = AARGetter(*F);
 
   // Check to see which arguments are promotable.  If an argument is promotable,
   // add it to ArgsToPromote.
-  SmallPtrSet<Argument*, 8> ArgsToPromote;
-  SmallPtrSet<Argument*, 8> ByValArgsToTransform;
+  SmallPtrSet<Argument *, 8> ArgsToPromote;
+  SmallPtrSet<Argument *, 8> ByValArgsToTransform;
   for (Argument *PtrArg : PointerArgs) {
     Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
 
@@ -891,11 +898,13 @@ PromoteArguments(CallGraphNode *CGN, CallGraph &CG,
       if (StructType *STy = dyn_cast<StructType>(AgTy)) {
         if (MaxElements > 0 && STy->getNumElements() > MaxElements) {
           DEBUG(dbgs() << "argpromotion disable promoting argument '"
-                << PtrArg->getName() << "' because it would require adding more"
-                << " than " << MaxElements << " arguments to the function.\n");
+                       << PtrArg->getName()
+                       << "' because it would require adding more"
+                       << " than " << MaxElements
+                       << " arguments to the function.\n");
           continue;
         }
-        
+
         // If all the elements are single-value types, we can promote it.
         bool AllSimple = true;
         for (const auto *EltTy : STy->elements()) {
@@ -930,7 +939,7 @@ PromoteArguments(CallGraphNode *CGN, CallGraph &CG,
           continue;
       }
     }
-    
+
     // Otherwise, see if we can promote the pointer to its value.
     if (isSafeToPromoteArgument(PtrArg, PtrArg->hasByValOrInAllocaAttr(), AAR,
                                 MaxElements))
@@ -938,47 +947,47 @@ PromoteArguments(CallGraphNode *CGN, CallGraph &CG,
   }
 
   // No promotable pointer arguments.
-  if (ArgsToPromote.empty() && ByValArgsToTransform.empty()) 
+  if (ArgsToPromote.empty() && ByValArgsToTransform.empty())
     return nullptr;
 
   return DoPromotion(F, ArgsToPromote, ByValArgsToTransform, CG);
 }
 
 namespace {
-  /// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
-  ///
-  struct ArgPromotion : public CallGraphSCCPass {
-    void getAnalysisUsage(AnalysisUsage &AU) const override {
-      AU.addRequired<AssumptionCacheTracker>();
-      AU.addRequired<TargetLibraryInfoWrapperPass>();
-      getAAResultsAnalysisUsage(AU);
-      CallGraphSCCPass::getAnalysisUsage(AU);
-    }
+/// ArgPromotion - The 'by reference' to 'by value' argument promotion pass.
+///
+struct ArgPromotion : public CallGraphSCCPass {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.addRequired<AssumptionCacheTracker>();
+    AU.addRequired<TargetLibraryInfoWrapperPass>();
+    getAAResultsAnalysisUsage(AU);
+    CallGraphSCCPass::getAnalysisUsage(AU);
+  }
 
-    bool runOnSCC(CallGraphSCC &SCC) override;
-    static char ID; // Pass identification, replacement for typeid
-    explicit ArgPromotion(unsigned MaxElements = 3)
-        : CallGraphSCCPass(ID), MaxElements(MaxElements) {
-      initializeArgPromotionPass(*PassRegistry::getPassRegistry());
-    }
+  bool runOnSCC(CallGraphSCC &SCC) override;
+  static char ID; // Pass identification, replacement for typeid
+  explicit ArgPromotion(unsigned MaxElements = 3)
+      : CallGraphSCCPass(ID), MaxElements(MaxElements) {
+    initializeArgPromotionPass(*PassRegistry::getPassRegistry());
+  }
 
-  private:
-
-    using llvm::Pass::doInitialization;
-    bool doInitialization(CallGraph &CG) override;
-    /// The maximum number of elements to expand, or 0 for unlimited.
-    unsigned MaxElements;
-  };
+private:
+  using llvm::Pass::doInitialization;
+  bool doInitialization(CallGraph &CG) override;
+  /// The maximum number of elements to expand, or 0 for unlimited.
+  unsigned MaxElements;
+};
 }
 
 char ArgPromotion::ID = 0;
 INITIALIZE_PASS_BEGIN(ArgPromotion, "argpromotion",
-                "Promote 'by reference' arguments to scalars", false, false)
+                      "Promote 'by reference' arguments to scalars", false,
+                      false)
 INITIALIZE_PASS_DEPENDENCY(AssumptionCacheTracker)
 INITIALIZE_PASS_DEPENDENCY(CallGraphWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfoWrapperPass)
 INITIALIZE_PASS_END(ArgPromotion, "argpromotion",
-                "Promote 'by reference' arguments to scalars", false, false)
+                    "Promote 'by reference' arguments to scalars", false, false)
 
 Pass *llvm::createArgumentPromotionPass(unsigned MaxElements) {
   return new ArgPromotion(MaxElements);
