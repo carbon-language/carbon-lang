@@ -1186,9 +1186,9 @@ public:
             typename AltRetT = typename Func::ReturnType>
   typename detail::ResultTraits<AltRetT>::ErrorReturnType
   callB(const ArgTs &... Args) {
-    if (auto FutureResOrErr = callNB<Func>(Args...)) {
+    if (auto FutureResOrErr = callNB<Func>(Args...))
       return FutureResOrErr->get();
-    } else
+    else
       return FutureResOrErr.takeError();
   }
 
