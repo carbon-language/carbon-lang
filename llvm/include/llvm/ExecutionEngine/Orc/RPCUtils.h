@@ -845,8 +845,10 @@ public:
   Error handleOne() {
     FunctionIdT FnId;
     SequenceNumberT SeqNo;
-    if (auto Err = C.startReceiveMessage(FnId, SeqNo))
+    if (auto Err = C.startReceiveMessage(FnId, SeqNo)) {
+      abandonPendingResponses();
       return Err;
+    }
     if (FnId == ResponseId)
       return handleResponse(SeqNo);
     auto I = Handlers.find(FnId);
@@ -1250,7 +1252,6 @@ public:
               return Error::success();
             },
             Args...)) {
-      this->abandonPendingResponses();
       detail::ResultTraits<typename Func::ReturnType>::consumeAbandoned(
           std::move(Result));
       return std::move(Err);
@@ -1258,7 +1259,6 @@ public:
 
     while (!ReceivedResponse) {
       if (auto Err = this->handleOne()) {
-        this->abandonPendingResponses();
         detail::ResultTraits<typename Func::ReturnType>::consumeAbandoned(
             std::move(Result));
         return std::move(Err);
