@@ -773,7 +773,7 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
           return NewLShr;
         }
         // (X << C1) >>u C2  --> (X >>u (C2 - C1)) & (-1 >> C2)
-        Value *NewLShr = Builder->CreateLShr(X, ShiftDiff);
+        Value *NewLShr = Builder->CreateLShr(X, ShiftDiff, "", I.isExact());
         APInt Mask(APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt));
         return BinaryOperator::CreateAnd(NewLShr, ConstantInt::get(Ty, Mask));
       }

@@ -937,7 +937,7 @@ define <2 x i32> @test51_splat_vec(<2 x i32> %x) {
 
 define i32 @test51_no_nuw(i32 %x) {
 ; CHECK-LABEL: @test51_no_nuw(
-; CHECK-NEXT:    [[TMP1:%.*]] = lshr i32 %x, 2
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr exact i32 %x, 2
 ; CHECK-NEXT:    [[B:%.*]] = and i32 [[TMP1]], 536870911
 ; CHECK-NEXT:    ret i32 [[B]]
 ;
