@@ -373,24 +373,6 @@ foldShiftByConstOfShiftByConst(BinaryOperator &I, const APInt *COp1,
   if (ShiftAmt1 < ShiftAmt2) {
     uint32_t ShiftDiff = ShiftAmt2 - ShiftAmt1;
 
-    // (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
-    if (I.getOpcode() == Instruction::LShr &&
-        ShiftOp->getOpcode() == Instruction::Shl) {
-      ConstantInt *ShiftDiffCst = ConstantInt::get(Ty, ShiftDiff);
-      // (X <<nuw C1) >>u C2 --> X >>u (C2-C1)
-      if (ShiftOp->hasNoUnsignedWrap()) {
-        BinaryOperator *NewLShr =
-            BinaryOperator::Create(Instruction::LShr, X, ShiftDiffCst);
-        NewLShr->setIsExact(I.isExact());
-        return NewLShr;
-      }
-      Value *Shift = Builder->CreateLShr(X, ShiftDiffCst);
-
-      APInt Mask(APInt::getLowBitsSet(TypeBits, TypeBits - ShiftAmt2));
-      return BinaryOperator::CreateAnd(Shift,
-                                       ConstantInt::get(I.getContext(), Mask));
-    }
-
     // We can't handle (X << C1) >>s C2, it shifts arbitrary bits in. However,
     // we can handle (X <<nsw C1) >>s C2 since it only shifts in sign bits.
     if (I.getOpcode() == Instruction::AShr &&
@@ -754,10 +736,11 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
   if (Instruction *R = commonShiftTransforms(I))
     return R;
 
+  Type *Ty = I.getType();
   const APInt *ShAmtAPInt;
   if (match(Op1, m_APInt(ShAmtAPInt))) {
     unsigned ShAmt = ShAmtAPInt->getZExtValue();
-    unsigned BitWidth = Op0->getType()->getScalarSizeInBits();
+    unsigned BitWidth = Ty->getScalarSizeInBits();
     auto *II = dyn_cast<IntrinsicInst>(Op0);
     if (II && isPowerOf2_32(BitWidth) && Log2_32(BitWidth) == ShAmt &&
         (II->getIntrinsicID() == Intrinsic::ctlz ||
@@ -767,16 +750,33 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
       // cttz.i32(x)>>5  --> zext(x == 0)
       // ctpop.i32(x)>>5 --> zext(x == -1)
       bool IsPop = II->getIntrinsicID() == Intrinsic::ctpop;
-      Constant *RHS = ConstantInt::getSigned(Op0->getType(), IsPop ? -1 : 0);
+      Constant *RHS = ConstantInt::getSigned(Ty, IsPop ? -1 : 0);
       Value *Cmp = Builder->CreateICmpEQ(II->getArgOperand(0), RHS);
-      return new ZExtInst(Cmp, II->getType());
+      return new ZExtInst(Cmp, Ty);
     }
 
-    // (X << C) >>u C --> X & (-1 >>u C)
     Value *X;
-    if (match(Op0, m_Shl(m_Value(X), m_Specific(Op1)))) {
-      APInt Mask(APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt));
-      return BinaryOperator::CreateAnd(X, ConstantInt::get(I.getType(), Mask));
+    const APInt *ShlAmtAPInt;
+    if (match(Op0, m_Shl(m_Value(X), m_APInt(ShlAmtAPInt)))) {
+      unsigned ShlAmt = ShlAmtAPInt->getZExtValue();
+      if (ShlAmt == ShAmt) {
+        // (X << C) >>u C --> X & (-1 >>u C)
+        APInt Mask(APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt));
+        return BinaryOperator::CreateAnd(X, ConstantInt::get(Ty, Mask));
+      }
+      if (ShlAmt < ShAmt) {
+        Constant *ShiftDiff = ConstantInt::get(Ty, ShAmt - ShlAmt);
+        if (cast<BinaryOperator>(Op0)->hasNoUnsignedWrap()) {
+          // (X <<nuw C1) >>u C2 --> X >>u (C2 - C1)
+          BinaryOperator *NewLShr = BinaryOperator::CreateLShr(X, ShiftDiff);
+          NewLShr->setIsExact(I.isExact());
+          return NewLShr;
+        }
+        // (X << C1) >>u C2  --> (X >>u (C2 - C1)) & (-1 >> C2)
+        Value *NewLShr = Builder->CreateLShr(X, ShiftDiff);
+        APInt Mask(APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt));
+        return BinaryOperator::CreateAnd(NewLShr, ConstantInt::get(Ty, Mask));
+      }
     }
 
     // If the shifted-out value is known-zero, then this is an exact shift.

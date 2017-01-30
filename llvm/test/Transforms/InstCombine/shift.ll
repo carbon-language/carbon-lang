@@ -924,8 +924,7 @@ define i32 @test51(i32 %x) {
 
 define <2 x i32> @test51_splat_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test51_splat_vec(
-; CHECK-NEXT:    [[A:%.*]] = shl nuw <2 x i32> %x, <i32 1, i32 1>
-; CHECK-NEXT:    [[B:%.*]] = lshr exact <2 x i32> [[A]], <i32 3, i32 3>
+; CHECK-NEXT:    [[B:%.*]] = lshr exact <2 x i32> %x, <i32 2, i32 2>
 ; CHECK-NEXT:    ret <2 x i32> [[B]]
 ;
   %A = shl nuw <2 x i32> %x, <i32 1, i32 1>
@@ -950,8 +949,8 @@ define i32 @test51_no_nuw(i32 %x) {
 
 define <2 x i32> @test51_no_nuw_splat_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test51_no_nuw_splat_vec(
-; CHECK-NEXT:    [[A:%.*]] = shl <2 x i32> %x, <i32 1, i32 1>
-; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i32> [[A]], <i32 3, i32 3>
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr <2 x i32> %x, <i32 2, i32 2>
+; CHECK-NEXT:    [[B:%.*]] = and <2 x i32> [[TMP1]], <i32 536870911, i32 536870911>
 ; CHECK-NEXT:    ret <2 x i32> [[B]]
 ;
   %A = shl <2 x i32> %x, <i32 1, i32 1>
