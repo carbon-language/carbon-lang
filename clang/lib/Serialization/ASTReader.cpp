@@ -2607,7 +2607,8 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         break;
 
       case SUBMODULE_BLOCK_ID:
-        if (ASTReadResult Result = ReadSubmoduleBlock(F, ClientLoadCapabilities))
+        if (ASTReadResult Result =
+                ReadSubmoduleBlock(F, ClientLoadCapabilities))
           return Result;
         break;
 
@@ -2770,6 +2771,14 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       // about "interesting" decls (for instance, if we're building a module).
       for (unsigned I = 0, N = Record.size(); I != N; ++I)
         EagerlyDeserializedDecls.push_back(getGlobalDeclID(F, Record[I]));
+      break;
+
+    case MODULAR_CODEGEN_DECLS:
+      // FIXME: Skip reading this record if our ASTConsumer doesn't care about
+      // them (ie: if we're not codegenerating this module).
+      if (F.Kind == MK_MainFile)
+        for (unsigned I = 0, N = Record.size(); I != N; ++I)
+          EagerlyDeserializedDecls.push_back(getGlobalDeclID(F, Record[I]));
       break;
 
     case SPECIAL_TYPES:
@@ -4628,6 +4637,7 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       bool InferExplicitSubmodules = Record[Idx++];
       bool InferExportWildcard = Record[Idx++];
       bool ConfigMacrosExhaustive = Record[Idx++];
+      bool WithCodegen = Record[Idx++];
 
       Module *ParentModule = nullptr;
       if (Parent)
@@ -4635,8 +4645,9 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
 
       // Retrieve this (sub)module from the module map, creating it if
       // necessary.
-      CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, IsFramework,
-                                                IsExplicit).first;
+      CurrentModule =
+          ModMap.findOrCreateModule(Name, ParentModule, IsFramework, IsExplicit)
+              .first;
 
       // FIXME: set the definition loc for CurrentModule, or call
       // ModMap.setInferredModuleAllowedBy()
@@ -4672,6 +4683,7 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       CurrentModule->InferExplicitSubmodules = InferExplicitSubmodules;
       CurrentModule->InferExportWildcard = InferExportWildcard;
       CurrentModule->ConfigMacrosExhaustive = ConfigMacrosExhaustive;
+      CurrentModule->WithCodegen = WithCodegen;
       if (DeserializationListener)
         DeserializationListener->ModuleRead(GlobalID, CurrentModule);
 
@@ -7893,6 +7905,18 @@ ASTReader::getSourceDescriptor(unsigned ID) {
                                           MF.Signature);
   }
   return None;
+}
+
+ExternalASTSource::ExtKind ASTReader::hasExternalDefinitions(unsigned ID) {
+  const Module *M = getSubmodule(ID);
+  if (!M || !M->WithCodegen)
+    return EK_ReplyHazy;
+
+  ModuleFile *MF = ModuleMgr.lookup(M->getASTFile());
+  assert(MF); // ?
+  if (MF->Kind == ModuleKind::MK_MainFile)
+    return EK_Never;
+  return EK_Always;
 }
 
 Selector ASTReader::getLocalSelector(ModuleFile &M, unsigned LocalID) {
