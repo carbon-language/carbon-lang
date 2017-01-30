@@ -987,6 +987,8 @@ define <2 x i32> @test51_no_nuw_splat_vec(<2 x i32> %x) {
   ret <2 x i32> %B
 }
 
+; (X <<nsw C1) >>s C2 --> X <<nsw (C1 - C2)
+
 define i32 @test52(i32 %x) {
 ; CHECK-LABEL: @test52(
 ; CHECK-NEXT:    [[B:%.*]] = shl nsw i32 %x, 2
@@ -995,6 +997,19 @@ define i32 @test52(i32 %x) {
   %A = shl nsw i32 %x, 3
   %B = ashr i32 %A, 1
   ret i32 %B
+}
+
+; (X <<nsw C1) >>s C2 --> X <<nsw (C1 - C2)
+
+define <2 x i32> @test52_splat_vec(<2 x i32> %x) {
+; CHECK-LABEL: @test52_splat_vec(
+; CHECK-NEXT:    [[A:%.*]] = shl nsw <2 x i32> %x, <i32 3, i32 3>
+; CHECK-NEXT:    [[B:%.*]] = ashr exact <2 x i32> [[A]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[B]]
+;
+  %A = shl nsw <2 x i32> %x, <i32 3, i32 3>
+  %B = ashr <2 x i32> %A, <i32 1, i32 1>
+  ret <2 x i32> %B
 }
 
 ; (X <<nuw C1) >>u C2 --> X <<nuw (C1 - C2)
