@@ -790,6 +790,8 @@ define i32 @test45(i32 %a) nounwind {
   ret i32 %z
 }
 
+; (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
+
 define i32 @test46(i32 %a) {
 ; CHECK-LABEL: @test46(
 ; CHECK-NEXT:    [[Z:%.*]] = ashr exact i32 %a, 2
@@ -800,14 +802,42 @@ define i32 @test46(i32 %a) {
   ret i32 %z
 }
 
-define i32 @test47(i32 %a) {
-; CHECK-LABEL: @test47(
-; CHECK-NEXT:    [[Z:%.*]] = lshr exact i32 %a, 2
-; CHECK-NEXT:    ret i32 [[Z]]
+; (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
+
+define <2 x i32> @test46_splat_vec(<2 x i32> %a) {
+; CHECK-LABEL: @test46_splat_vec(
+; CHECK-NEXT:    [[Y:%.*]] = ashr exact <2 x i32> %a, <i32 3, i32 3>
+; CHECK-NEXT:    [[Z:%.*]] = shl nsw <2 x i32> [[Y]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[Z]]
 ;
-  %y = lshr exact i32 %a, 3
-  %z = shl i32 %y, 1
-  ret i32 %z
+  %y = ashr exact <2 x i32> %a, <i32 3, i32 3>
+  %z = shl <2 x i32> %y, <i32 1, i32 1>
+  ret <2 x i32> %z
+}
+
+; (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
+
+define i8 @test47(i8 %a) {
+; CHECK-LABEL: @test47(
+; CHECK-NEXT:    [[Z:%.*]] = lshr exact i8 %a, 2
+; CHECK-NEXT:    ret i8 [[Z]]
+;
+  %y = lshr exact i8 %a, 3
+  %z = shl i8 %y, 1
+  ret i8 %z
+}
+
+; (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
+
+define <2 x i8> @test47_splat_vec(<2 x i8> %a) {
+; CHECK-LABEL: @test47_splat_vec(
+; CHECK-NEXT:    [[Y:%.*]] = lshr exact <2 x i8> %a, <i8 3, i8 3>
+; CHECK-NEXT:    [[Z:%.*]] = shl nuw nsw <2 x i8> [[Y]], <i8 1, i8 1>
+; CHECK-NEXT:    ret <2 x i8> [[Z]]
+;
+  %y = lshr exact <2 x i8> %a, <i8 3, i8 3>
+  %z = shl <2 x i8> %y, <i8 1, i8 1>
+  ret <2 x i8> %z
 }
 
 ; (X >>u,exact C1) << C2 --> X << (C2-C1) when C2 > C1
