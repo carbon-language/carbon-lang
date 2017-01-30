@@ -16,18 +16,18 @@
 #include "AMDGPUTargetMachine.h"
 #include "AMDGPU.h"
 #include "AMDGPUCallLowering.h"
+#include "AMDGPUInstructionSelector.h"
+#include "AMDGPULegalizerInfo.h"
+#include "AMDGPURegisterBankInfo.h"
 #include "AMDGPUTargetObjectFile.h"
 #include "AMDGPUTargetTransformInfo.h"
 #include "GCNSchedStrategy.h"
 #include "R600MachineScheduler.h"
 #include "SIMachineScheduler.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/Triple.h"
-#include "llvm/CodeGen/GlobalISel/GISelAccessor.h"
+#include "llvm/CodeGen/GlobalISel/InstructionSelect.h"
 #include "llvm/CodeGen/GlobalISel/IRTranslator.h"
-#include "llvm/CodeGen/MachineScheduler.h"
+#include "llvm/CodeGen/GlobalISel/Legalizer.h"
+#include "llvm/CodeGen/GlobalISel/RegBankSelect.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/TargetPassConfig.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -256,8 +256,20 @@ namespace {
 
 struct SIGISelActualAccessor : public GISelAccessor {
   std::unique_ptr<AMDGPUCallLowering> CallLoweringInfo;
+  std::unique_ptr<InstructionSelector> InstSelector;
+  std::unique_ptr<LegalizerInfo> Legalizer;
+  std::unique_ptr<RegisterBankInfo> RegBankInfo;
   const AMDGPUCallLowering *getCallLowering() const override {
     return CallLoweringInfo.get();
+  }
+  const InstructionSelector *getInstructionSelector() const override {
+    return InstSelector.get();
+  }
+  const LegalizerInfo *getLegalizerInfo() const override {
+    return Legalizer.get();
+  }
+  const RegisterBankInfo *getRegBankInfo() const override {
+    return RegBankInfo.get();
   }
 };
 
@@ -292,6 +304,11 @@ const SISubtarget *GCNTargetMachine::getSubtargetImpl(const Function &F) const {
     SIGISelActualAccessor *GISel = new SIGISelActualAccessor();
     GISel->CallLoweringInfo.reset(
       new AMDGPUCallLowering(*I->getTargetLowering()));
+    GISel->Legalizer.reset(new AMDGPULegalizerInfo());
+
+    GISel->RegBankInfo.reset(new AMDGPURegisterBankInfo(*I->getRegisterInfo()));
+    GISel->InstSelector.reset(new AMDGPUInstructionSelector(*I,
+				*static_cast<AMDGPURegisterBankInfo*>(GISel->RegBankInfo.get())));
 #endif
 
     I->setGISelAccessor(*GISel);
@@ -592,16 +609,20 @@ bool GCNPassConfig::addIRTranslator() {
 }
 
 bool GCNPassConfig::addLegalizeMachineIR() {
+  addPass(new Legalizer());
   return false;
 }
 
 bool GCNPassConfig::addRegBankSelect() {
+  addPass(new RegBankSelect());
   return false;
 }
 
 bool GCNPassConfig::addGlobalInstructionSelect() {
+  addPass(new InstructionSelect());
   return false;
 }
+
 #endif
 
 void GCNPassConfig::addPreRegAlloc() {
