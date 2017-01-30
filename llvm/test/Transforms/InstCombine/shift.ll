@@ -933,6 +933,7 @@ define <2 x i32> @test51_splat_vec(<2 x i32> %x) {
 }
 
 ; (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
+; Also, check that exact is propagated.
 
 define i32 @test51_no_nuw(i32 %x) {
 ; CHECK-LABEL: @test51_no_nuw(
@@ -941,7 +942,7 @@ define i32 @test51_no_nuw(i32 %x) {
 ; CHECK-NEXT:    ret i32 [[B]]
 ;
   %A = shl i32 %x, 1
-  %B = lshr i32 %A, 3
+  %B = lshr exact i32 %A, 3
   ret i32 %B
 }
 
