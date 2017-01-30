@@ -997,6 +997,8 @@ define i32 @test52(i32 %x) {
   ret i32 %B
 }
 
+; (X <<nuw C1) >>u C2 --> X <<nuw (C1 - C2)
+
 define i32 @test53(i32 %x) {
 ; CHECK-LABEL: @test53(
 ; CHECK-NEXT:    [[B:%.*]] = shl nuw i32 %x, 2
@@ -1007,16 +1009,19 @@ define i32 @test53(i32 %x) {
   ret i32 %B
 }
 
+; (X <<nuw C1) >>u C2 --> X <<nuw (C1 - C2)
+
 define <2 x i32> @test53_splat_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test53_splat_vec(
-; CHECK-NEXT:    [[A:%.*]] = shl nuw <2 x i32> %x, <i32 3, i32 3>
-; CHECK-NEXT:    [[B:%.*]] = lshr exact <2 x i32> [[A]], <i32 1, i32 1>
+; CHECK-NEXT:    [[B:%.*]] = shl nuw <2 x i32> %x, <i32 2, i32 2>
 ; CHECK-NEXT:    ret <2 x i32> [[B]]
 ;
   %A = shl nuw <2 x i32> %x, <i32 3, i32 3>
   %B = lshr <2 x i32> %A, <i32 1, i32 1>
   ret <2 x i32> %B
 }
+
+; (X << C1) >>u C2  --> X << (C1 - C2) & (-1 >> C2)
 
 define i8 @test53_no_nuw(i8 %x) {
 ; CHECK-LABEL: @test53_no_nuw(
@@ -1029,10 +1034,13 @@ define i8 @test53_no_nuw(i8 %x) {
   ret i8 %B
 }
 
+; (X << C1) >>u C2  --> X << (C1 - C2) & (-1 >> C2)
+; FIXME: Demanded bits should change the mask constant as it does for the scalar case.
+
 define <2 x i8> @test53_no_nuw_splat_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @test53_no_nuw_splat_vec(
-; CHECK-NEXT:    [[A:%.*]] = shl <2 x i8> %x, <i8 3, i8 3>
-; CHECK-NEXT:    [[B:%.*]] = lshr exact <2 x i8> [[A]], <i8 1, i8 1>
+; CHECK-NEXT:    [[TMP1:%.*]] = shl <2 x i8> %x, <i8 2, i8 2>
+; CHECK-NEXT:    [[B:%.*]] = and <2 x i8> [[TMP1]], <i8 127, i8 127>
 ; CHECK-NEXT:    ret <2 x i8> [[B]]
 ;
   %A = shl <2 x i8> %x, <i8 3, i8 3>
