@@ -8,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "experimental/filesystem"
-#if defined(_WIN32)
+#include "__config"
+#if defined(_LIBCPP_WIN32API)
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #else
@@ -20,7 +21,7 @@ _LIBCPP_BEGIN_NAMESPACE_EXPERIMENTAL_FILESYSTEM
 
 namespace { namespace detail {
 
-#if !defined(_WIN32)
+#if !defined(_LIBCPP_WIN32API)
 inline error_code capture_errno() {
     _LIBCPP_ASSERT(errno, "Expected errno to be non-zero");
     return error_code{errno, std::generic_category()};
@@ -40,7 +41,7 @@ inline bool set_or_throw(std::error_code& my_ec,
     return false;
 }
 
-#if !defined(_WIN32)
+#if !defined(_LIBCPP_WIN32API)
 inline path::string_type posix_readdir(DIR *dir_stream, error_code& ec) {
     struct dirent* dir_entry_ptr = nullptr;
     errno = 0; // zero errno in order to detect errors
@@ -58,7 +59,7 @@ inline path::string_type posix_readdir(DIR *dir_stream, error_code& ec) {
 
 using detail::set_or_throw;
 
-#if defined(_WIN32)
+#if defined(_LIBCPP_WIN32API)
 class __dir_stream {
 public:
   __dir_stream() = delete;
@@ -67,7 +68,7 @@ public:
   __dir_stream(__dir_stream&& __ds) noexcept
       : __stream_(__ds.__stream_), __root_(std::move(__ds.__root_)),
         __entry_(std::move(__ds.__entry_)) {
-    ds.__stream_ = INVALID_HANDLE_VALUE;
+    __ds.__stream_ = INVALID_HANDLE_VALUE;
   }
 
   __dir_stream(const path& root, directory_options opts, error_code& ec)
