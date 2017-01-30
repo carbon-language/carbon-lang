@@ -45,9 +45,11 @@ AMDGPURegisterBankInfo::AMDGPURegisterBankInfo(const TargetRegisterInfo &TRI)
   AlreadyInit = true;
 
   const RegisterBank &RBSGPR = getRegBank(AMDGPU::SGPRRegBankID);
+  (void)RBSGPR;
   assert(&RBSGPR == &AMDGPU::SGPRRegBank);
 
   const RegisterBank &RBVGPR = getRegBank(AMDGPU::VGPRRegBankID);
+  (void)RBVGPR;
   assert(&RBVGPR == &AMDGPU::VGPRRegBank);
 
 }

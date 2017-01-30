@@ -144,7 +144,6 @@ bool AMDGPUCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   Function::const_arg_iterator CurOrigArg = F.arg_begin();
   const AMDGPUTargetLowering &TLI = *getTLI<AMDGPUTargetLowering>();
   for (unsigned i = 0; i != NumArgs; ++i, ++CurOrigArg) {
-    CurOrigArg->getType()->dump();
     MVT ValVT = TLI.getValueType(DL, CurOrigArg->getType()).getSimpleVT();
     ISD::ArgFlagsTy Flags;
     Flags.setOrigAlign(DL.getABITypeAlignment(CurOrigArg->getType()));
