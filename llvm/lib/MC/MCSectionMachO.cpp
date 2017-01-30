@@ -16,11 +16,11 @@ using namespace llvm;
 /// SectionTypeDescriptors - These are strings that describe the various section
 /// types.  This *must* be kept in order with and stay synchronized with the
 /// section type list.
-static const struct {
-  StringRef AssemblerName, EnumName;
+static constexpr struct {
+  StringLiteral AssemblerName, EnumName;
 } SectionTypeDescriptors[MachO::LAST_KNOWN_SECTION_TYPE+1] = {
   { "regular",                  "S_REGULAR" },                    // 0x00
-  { StringRef(),                "S_ZEROFILL" },                   // 0x01
+  { "",                         "S_ZEROFILL" },                   // 0x01
   { "cstring_literals",         "S_CSTRING_LITERALS" },           // 0x02
   { "4byte_literals",           "S_4BYTE_LITERALS" },             // 0x03
   { "8byte_literals",           "S_8BYTE_LITERALS" },             // 0x04
@@ -31,11 +31,11 @@ static const struct {
   { "mod_init_funcs",           "S_MOD_INIT_FUNC_POINTERS" },     // 0x09
   { "mod_term_funcs",           "S_MOD_TERM_FUNC_POINTERS" },     // 0x0A
   { "coalesced",                "S_COALESCED" },                  // 0x0B
-  { StringRef(), /*FIXME??*/    "S_GB_ZEROFILL" },                // 0x0C
+  { "", /*FIXME??*/             "S_GB_ZEROFILL" },                // 0x0C
   { "interposing",              "S_INTERPOSING" },                // 0x0D
   { "16byte_literals",          "S_16BYTE_LITERALS" },            // 0x0E
-  { StringRef(), /*FIXME??*/    "S_DTRACE_DOF" },                 // 0x0F
-  { StringRef(), /*FIXME??*/    "S_LAZY_DYLIB_SYMBOL_POINTERS" }, // 0x10
+  { "", /*FIXME??*/             "S_DTRACE_DOF" },                 // 0x0F
+  { "", /*FIXME??*/             "S_LAZY_DYLIB_SYMBOL_POINTERS" }, // 0x10
   { "thread_local_regular",     "S_THREAD_LOCAL_REGULAR" },       // 0x11
   { "thread_local_zerofill",    "S_THREAD_LOCAL_ZEROFILL" },      // 0x12
   { "thread_local_variables",   "S_THREAD_LOCAL_VARIABLES" },     // 0x13
@@ -49,9 +49,9 @@ static const struct {
 /// SectionAttrDescriptors - This is an array of descriptors for section
 /// attributes.  Unlike the SectionTypeDescriptors, this is not directly indexed
 /// by attribute, instead it is searched.
-static const struct {
+static constexpr struct {
   unsigned AttrFlag;
-  StringRef AssemblerName, EnumName;
+  StringLiteral AssemblerName, EnumName;
 } SectionAttrDescriptors[] = {
 #define ENTRY(ASMNAME, ENUM) \
   { MachO::ENUM, ASMNAME, #ENUM },
@@ -62,11 +62,11 @@ ENTRY("no_dead_strip",       S_ATTR_NO_DEAD_STRIP)
 ENTRY("live_support",        S_ATTR_LIVE_SUPPORT)
 ENTRY("self_modifying_code", S_ATTR_SELF_MODIFYING_CODE)
 ENTRY("debug",               S_ATTR_DEBUG)
-ENTRY(StringRef() /*FIXME*/, S_ATTR_SOME_INSTRUCTIONS)
-ENTRY(StringRef() /*FIXME*/, S_ATTR_EXT_RELOC)
-ENTRY(StringRef() /*FIXME*/, S_ATTR_LOC_RELOC)
+ENTRY("" /*FIXME*/,          S_ATTR_SOME_INSTRUCTIONS)
+ENTRY("" /*FIXME*/,          S_ATTR_EXT_RELOC)
+ENTRY("" /*FIXME*/,          S_ATTR_LOC_RELOC)
 #undef ENTRY
-  { 0, "none", StringRef() }, // used if section has no attributes but has a stub size
+  { 0, "none", "" }, // used if section has no attributes but has a stub size
 };
 
 MCSectionMachO::MCSectionMachO(StringRef Segment, StringRef Section,
