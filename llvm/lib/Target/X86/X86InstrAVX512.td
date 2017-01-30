@@ -2536,8 +2536,8 @@ multiclass avx512_mask_shiftop_w<bits<8> opc1, bits<8> opc2, string OpcodeStr,
   }
 }
 
-defm KSHIFTL : avx512_mask_shiftop_w<0x32, 0x33, "kshiftl", X86vshli>;
-defm KSHIFTR : avx512_mask_shiftop_w<0x30, 0x31, "kshiftr", X86vsrli>;
+defm KSHIFTL : avx512_mask_shiftop_w<0x32, 0x33, "kshiftl", X86kshiftl>;
+defm KSHIFTR : avx512_mask_shiftop_w<0x30, 0x31, "kshiftr", X86kshiftr>;
 
 // Mask setting all 0s or 1s
 multiclass avx512_mask_setop<RegisterClass KRC, ValueType VT, PatFrag Val> {
@@ -2618,12 +2618,12 @@ def : Pat<(v32i1 (extract_subvector (v64i1 VK64:$src), (iPTR 32))),
 
 // Patterns for kmask shift
 multiclass mask_shift_lowering<RegisterClass RC, ValueType VT> {
-  def : Pat<(VT (X86vshli RC:$src, (i8 imm:$imm))),
+  def : Pat<(VT (X86kshiftl RC:$src, (i8 imm:$imm))),
             (VT (COPY_TO_REGCLASS
                    (KSHIFTLWri (COPY_TO_REGCLASS RC:$src, VK16),
                                (I8Imm $imm)),
                    RC))>;
-  def : Pat<(VT (X86vsrli RC:$src, (i8 imm:$imm))),
+  def : Pat<(VT (X86kshiftr RC:$src, (i8 imm:$imm))),
             (VT (COPY_TO_REGCLASS
                    (KSHIFTRWri (COPY_TO_REGCLASS RC:$src, VK16),
                                (I8Imm $imm)),
