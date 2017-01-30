@@ -157,6 +157,7 @@ private:
                                  SDValue &Omod) const;
 
   void SelectADD_SUB_I64(SDNode *N);
+  void SelectUADDO_USUBO(SDNode *N);
   void SelectDIV_SCALE(SDNode *N);
   void SelectFMA_W_CHAIN(SDNode *N);
   void SelectFMUL_W_CHAIN(SDNode *N);
@@ -317,6 +318,11 @@ void AMDGPUDAGToDAGISel::Select(SDNode *N) {
       break;
 
     SelectADD_SUB_I64(N);
+    return;
+  }
+  case ISD::UADDO:
+  case ISD::USUBO: {
+    SelectUADDO_USUBO(N);
     return;
   }
   case AMDGPUISD::FMUL_W_CHAIN: {
@@ -687,6 +693,17 @@ void AMDGPUDAGToDAGISel::SelectADD_SUB_I64(SDNode *N) {
   // Replace the remaining uses.
   CurDAG->ReplaceAllUsesWith(N, RegSequence);
   CurDAG->RemoveDeadNode(N);
+}
+
+void AMDGPUDAGToDAGISel::SelectUADDO_USUBO(SDNode *N) {
+  // The name of the opcodes are misleading. v_add_i32/v_sub_i32 have unsigned
+  // carry out despite the _i32 name. These were renamed in VI to _U32.
+  // FIXME: We should probably rename the opcodes here.
+  unsigned Opc = N->getOpcode() == ISD::UADDO ?
+    AMDGPU::V_ADD_I32_e64 : AMDGPU::V_SUB_I32_e64;
+
+  CurDAG->SelectNodeTo(N, Opc, N->getVTList(),
+                       { N->getOperand(0), N->getOperand(1) });
 }
 
 void AMDGPUDAGToDAGISel::SelectFMA_W_CHAIN(SDNode *N) {
