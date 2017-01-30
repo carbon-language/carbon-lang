@@ -806,8 +806,7 @@ define i32 @test46(i32 %a) {
 
 define <2 x i32> @test46_splat_vec(<2 x i32> %a) {
 ; CHECK-LABEL: @test46_splat_vec(
-; CHECK-NEXT:    [[Y:%.*]] = ashr exact <2 x i32> %a, <i32 3, i32 3>
-; CHECK-NEXT:    [[Z:%.*]] = shl nsw <2 x i32> [[Y]], <i32 1, i32 1>
+; CHECK-NEXT:    [[Z:%.*]] = ashr exact <2 x i32> %a, <i32 2, i32 2>
 ; CHECK-NEXT:    ret <2 x i32> [[Z]]
 ;
   %y = ashr exact <2 x i32> %a, <i32 3, i32 3>
@@ -831,8 +830,7 @@ define i8 @test47(i8 %a) {
 
 define <2 x i8> @test47_splat_vec(<2 x i8> %a) {
 ; CHECK-LABEL: @test47_splat_vec(
-; CHECK-NEXT:    [[Y:%.*]] = lshr exact <2 x i8> %a, <i8 3, i8 3>
-; CHECK-NEXT:    [[Z:%.*]] = shl nuw nsw <2 x i8> [[Y]], <i8 1, i8 1>
+; CHECK-NEXT:    [[Z:%.*]] = lshr exact <2 x i8> %a, <i8 2, i8 2>
 ; CHECK-NEXT:    ret <2 x i8> [[Z]]
 ;
   %y = lshr exact <2 x i8> %a, <i8 3, i8 3>
