@@ -136,7 +136,7 @@ directory_iterator& directory_iterator::__increment(error_code *ec)
 
 }
 
-directory_entry const& directory_iterator::__deref() const {
+directory_entry const& directory_iterator::__dereference() const {
     _LIBCPP_ASSERT(__imp_, "Attempting to dereference an invalid iterator");
     return __imp_->__entry_;
 }
@@ -182,7 +182,7 @@ int recursive_directory_iterator::depth() const {
     return __imp_->__stack_.size() - 1;
 }
 
-const directory_entry& recursive_directory_iterator::__deref() const {
+const directory_entry& recursive_directory_iterator::__dereference() const {
     return __imp_->__stack_.top().__entry_;
 }
 
