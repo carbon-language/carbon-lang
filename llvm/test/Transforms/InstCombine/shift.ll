@@ -1003,8 +1003,7 @@ define i32 @test52(i32 %x) {
 
 define <2 x i32> @test52_splat_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test52_splat_vec(
-; CHECK-NEXT:    [[A:%.*]] = shl nsw <2 x i32> %x, <i32 3, i32 3>
-; CHECK-NEXT:    [[B:%.*]] = ashr exact <2 x i32> [[A]], <i32 1, i32 1>
+; CHECK-NEXT:    [[B:%.*]] = shl nsw <2 x i32> %x, <i32 2, i32 2>
 ; CHECK-NEXT:    ret <2 x i32> [[B]]
 ;
   %A = shl nsw <2 x i32> %x, <i32 3, i32 3>
