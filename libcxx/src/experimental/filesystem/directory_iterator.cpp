@@ -1,3 +1,12 @@
+//===------------------ directory_iterator.cpp ----------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is dual licensed under the MIT and the University of Illinois Open
+// Source Licenses. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 #include "experimental/filesystem"
 #include <dirent.h>
 #include <errno.h>
