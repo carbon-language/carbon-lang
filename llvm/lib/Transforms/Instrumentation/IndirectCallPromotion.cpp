@@ -216,7 +216,7 @@ bool llvm::isLegalToPromote(Instruction *Inst, Function *F,
       continue;
     if (!CastInst::castIsValid(Instruction::BitCast, CS.getArgument(I), PTy)) {
       if (Reason)
-        return "Argument Type mismatch";
+        *Reason = "Argument type mismatch";
       return false;
     }
   }
