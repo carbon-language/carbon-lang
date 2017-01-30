@@ -133,11 +133,11 @@ void IntrinsicEmitter::EmitTargetInfo(const CodeGenIntrinsicTable &Ints,
   OS << "// Target mapping\n";
   OS << "#ifdef GET_INTRINSIC_TARGET_DATA\n";
   OS << "struct IntrinsicTargetInfo {\n"
-     << "  StringRef Name;\n"
+     << "  StringLiteral Name;\n"
      << "  size_t Offset;\n"
      << "  size_t Count;\n"
      << "};\n";
-  OS << "static const IntrinsicTargetInfo TargetInfos[] = {\n";
+  OS << "static constexpr IntrinsicTargetInfo TargetInfos[] = {\n";
   for (auto Target : Ints.Targets)
     OS << "  {\"" << Target.Name << "\", " << Target.Offset << ", "
        << Target.Count << "},\n";
