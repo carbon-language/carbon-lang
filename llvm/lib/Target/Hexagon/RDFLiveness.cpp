@@ -684,9 +684,7 @@ void Liveness::computeLiveIns() {
   traverse(&MF.front(), LiveIn);
 
   // Add function live-ins to the live-in set of the function entry block.
-  auto &EntryIn = LiveMap[&MF.front()];
-  for (auto I = MRI.livein_begin(), E = MRI.livein_end(); I != E; ++I)
-    EntryIn.insert(RegisterRef(I->first));
+  LiveMap[&MF.front()].insert(DFG.getLiveIns());
 
   if (Trace) {
     // Dump the liveness map

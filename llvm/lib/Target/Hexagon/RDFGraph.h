@@ -763,6 +763,7 @@ namespace rdf {
     const TargetRegisterInfo &getTRI() const { return TRI; }
     const MachineDominatorTree &getDT() const { return MDT; }
     const MachineDominanceFrontier &getDF() const { return MDF; }
+    const RegisterAggr &getLiveIns() const { return LiveIns; }
 
     struct DefStack {
       DefStack() = default;
@@ -957,19 +958,20 @@ namespace rdf {
       return BlockNodes[BB];
     }
 
-    NodeAddr<FuncNode*> Func;
-    NodeAllocator Memory;
-    // Local map:  MachineBasicBlock -> NodeAddr<BlockNode*>
-    std::map<MachineBasicBlock*,NodeAddr<BlockNode*>> BlockNodes;
-    // Lane mask map.
-    LaneMaskIndex LMI;
-
     MachineFunction &MF;
     const TargetInstrInfo &TII;
     const TargetRegisterInfo &TRI;
     const MachineDominatorTree &MDT;
     const MachineDominanceFrontier &MDF;
     const TargetOperandInfo &TOI;
+
+    RegisterAggr LiveIns;
+    NodeAddr<FuncNode*> Func;
+    NodeAllocator Memory;
+    // Local map:  MachineBasicBlock -> NodeAddr<BlockNode*>
+    std::map<MachineBasicBlock*,NodeAddr<BlockNode*>> BlockNodes;
+    // Lane mask map.
+    LaneMaskIndex LMI;
   };  // struct DataFlowGraph
 
   template <typename Predicate>

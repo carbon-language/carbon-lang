@@ -764,7 +764,7 @@ void RegisterAggr::print(raw_ostream &OS) const {
 DataFlowGraph::DataFlowGraph(MachineFunction &mf, const TargetInstrInfo &tii,
       const TargetRegisterInfo &tri, const MachineDominatorTree &mdt,
       const MachineDominanceFrontier &mdf, const TargetOperandInfo &toi)
-    : MF(mf), TII(tii), TRI(tri), MDT(mdt), MDF(mdf), TOI(toi) {
+    : MF(mf), TII(tii), TRI(tri), MDT(mdt), MDF(mdf), TOI(toi), LiveIns(TRI) {
 }
 
 // The implementation of the definition stack.
@@ -1010,12 +1010,20 @@ void DataFlowGraph::build(unsigned Options) {
   BlockRefsMap RefM;
   buildBlockRefs(EA, RefM);
 
-  // Add function-entry phi nodes.
+  // Collect function live-ins and entry block live-ins.
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  for (auto I = MRI.livein_begin(), E = MRI.livein_end(); I != E; ++I) {
+  MachineBasicBlock &EntryB = *EA.Addr->getCode();
+  assert(EntryB.pred_empty() && "Function entry block has predecessors");
+  for (auto I = MRI.livein_begin(), E = MRI.livein_end(); I != E; ++I)
+    LiveIns.insert(RegisterRef(I->first));
+  for (auto I : EntryB.liveins())
+    LiveIns.insert(RegisterRef(I.PhysReg, I.LaneMask));
+
+  // Add function-entry phi nodes for the live-in registers.
+  for (std::pair<RegisterId,LaneBitmask> P : LiveIns) {
     NodeAddr<PhiNode*> PA = newPhi(EA);
-    RegisterRef RR = RegisterRef(I->first);
     uint16_t PhiFlags = NodeAttrs::PhiRef | NodeAttrs::Preserving;
+    RegisterRef RR(P.first, P.second);
     NodeAddr<DefNode*> DA = newDef(PA, RR, PhiFlags);
     PA.Addr->addMember(DA, *this);
   }
