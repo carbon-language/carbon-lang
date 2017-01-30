@@ -643,11 +643,9 @@ void LLVMSetValueName(LLVMValueRef Val, const char *Name) {
   unwrap(Val)->setName(Name);
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void LLVMDumpValue(LLVMValueRef Val) {
-  unwrap(Val)->dump();
+  unwrap(Val)->print(errs(), /*IsForDebug=*/true);
 }
-#endif
 
 char* LLVMPrintValueToString(LLVMValueRef Val) {
   std::string buf;
