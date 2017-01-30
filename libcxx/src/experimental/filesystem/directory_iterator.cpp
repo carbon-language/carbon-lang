@@ -24,10 +24,7 @@ inline bool set_or_throw(std::error_code& my_ec,
     return false;
 }
 
-typedef path::string_type string_type;
-
-
-inline string_type posix_readdir(DIR *dir_stream, error_code& ec) {
+inline path::string_type posix_readdir(DIR *dir_stream, error_code& ec) {
     struct dirent* dir_entry_ptr = nullptr;
     errno = 0; // zero errno in order to detect errors
     if ((dir_entry_ptr = ::readdir(dir_stream)) == nullptr) {
