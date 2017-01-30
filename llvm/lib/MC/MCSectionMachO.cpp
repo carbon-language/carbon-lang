@@ -89,7 +89,7 @@ MCSectionMachO::MCSectionMachO(StringRef Segment, StringRef Section,
   }
 }
 
-void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI,
+void MCSectionMachO::PrintSwitchToSection(const MCAsmInfo &MAI, const Triple &T,
                                           raw_ostream &OS,
                                           const MCExpr *Subsection) const {
   OS << "\t.section\t" << getSegmentName() << ',' << getSectionName();
