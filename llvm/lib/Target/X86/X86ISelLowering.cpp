@@ -5775,14 +5775,14 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     SDValue InVec = N.getOperand(0);
     SDValue InScl = N.getOperand(1);
     uint64_t InIdx = N.getConstantOperandVal(2);
-    assert(0 <= InIdx && InIdx < NumElts && "Illegal insertion index");
+    assert(InIdx < NumElts && "Illegal insertion index");
     if (InScl.getOpcode() != ISD::AssertZext ||
         InScl.getOperand(0).getOpcode() != X86ISD::PEXTRW)
       return false;
 
     SDValue ExVec = InScl.getOperand(0).getOperand(0);
     uint64_t ExIdx = InScl.getOperand(0).getConstantOperandVal(1);
-    assert(0 <= ExIdx && ExIdx < NumElts && "Illegal extraction index");
+    assert(ExIdx < NumElts && "Illegal extraction index");
     Ops.push_back(InVec);
     Ops.push_back(ExVec);
     for (unsigned i = 0; i != NumElts; ++i)
