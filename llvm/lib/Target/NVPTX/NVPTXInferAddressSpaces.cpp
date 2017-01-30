@@ -89,8 +89,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "nvptx-infer-addrspace"
-
 #include "NVPTX.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"
@@ -105,10 +103,12 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
+#define DEBUG_TYPE "nvptx-infer-addrspace"
+
 using namespace llvm;
 
 namespace {
-const unsigned ADDRESS_SPACE_UNINITIALIZED = (unsigned)-1;
+static const unsigned UnknownAddressSpace = ~0u;
 
 using ValueToAddrSpaceMapTy = DenseMap<const Value *, unsigned>;
 
@@ -141,9 +141,9 @@ private:
   void inferAddressSpaces(const std::vector<Value *> &Postorder,
                           ValueToAddrSpaceMapTy *InferredAddrSpace) const;
 
-  // Changes the generic address expressions in function F to point to specific
+  // Changes the flat address expressions in function F to point to specific
   // address spaces if InferredAddrSpace says so. Postorder is the postorder of
-  // all generic address expressions in the use-def graph of function F.
+  // all flat expressions in the use-def graph of function F.
   bool
   rewriteWithNewAddressSpaces(const std::vector<Value *> &Postorder,
                               const ValueToAddrSpaceMapTy &InferredAddrSpace,
@@ -297,7 +297,7 @@ static Value *cloneInstructionWithNewAddressSpace(
 
   if (I->getOpcode() == Instruction::AddrSpaceCast) {
     Value *Src = I->getOperand(0);
-    // Because `I` is generic, the source address space must be specific.
+    // Because `I` is flat, the source address space must be specific.
     // Therefore, the inferred address space must be the source space, according
     // to our algorithm.
     assert(Src->getType()->getPointerAddressSpace() == NewAddrSpace);
@@ -353,7 +353,7 @@ static Value *cloneConstantExprWithNewAddressSpace(
       CE->getType()->getPointerElementType()->getPointerTo(NewAddrSpace);
 
   if (CE->getOpcode() == Instruction::AddrSpaceCast) {
-    // Because CE is generic, the source address space must be specific.
+    // Because CE is flat, the source address space must be specific.
     // Therefore, the inferred address space must be the source space according
     // to our algorithm.
     assert(CE->getOperand(0)->getType()->getPointerAddressSpace() ==
@@ -390,7 +390,7 @@ static Value *cloneConstantExprWithNewAddressSpace(
 }
 
 // Returns a clone of the value `V`, with its operands replaced as specified in
-// ValueWithNewAddrSpace. This function is called on every generic address
+// ValueWithNewAddrSpace. This function is called on every flat address
 // expression whose address space needs to be modified, in postorder.
 //
 // See cloneInstructionWithNewAddressSpace for the meaning of UndefUsesToFix.
@@ -398,7 +398,7 @@ Value *NVPTXInferAddressSpaces::cloneValueWithNewAddressSpace(
   Value *V, unsigned NewAddrSpace,
   const ValueToValueMapTy &ValueWithNewAddrSpace,
   SmallVectorImpl<const Use *> *UndefUsesToFix) const {
-  // All values in Postorder are generic address expressions.
+  // All values in Postorder are flat address expressions.
   assert(isAddressExpression(*V) &&
          V->getType()->getPointerAddressSpace() == FlatAddrSpace);
 
@@ -425,12 +425,12 @@ unsigned NVPTXInferAddressSpaces::joinAddressSpaces(unsigned AS1,
   if (AS1 == FlatAddrSpace || AS2 == FlatAddrSpace)
     return FlatAddrSpace;
 
-  if (AS1 == ADDRESS_SPACE_UNINITIALIZED)
+  if (AS1 == UnknownAddressSpace)
     return AS2;
-  if (AS2 == ADDRESS_SPACE_UNINITIALIZED)
+  if (AS2 == UnknownAddressSpace)
     return AS1;
 
-  // The join of two different specific address spaces is generic.
+  // The join of two different specific address spaces is flat.
   return (AS1 == AS2) ? AS1 : FlatAddrSpace;
 }
 
@@ -440,10 +440,10 @@ bool NVPTXInferAddressSpaces::runOnFunction(Function &F) {
 
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   FlatAddrSpace = TTI.getFlatAddressSpace();
-  if (FlatAddrSpace == ADDRESS_SPACE_UNINITIALIZED)
+  if (FlatAddrSpace == UnknownAddressSpace)
     return false;
 
-  // Collects all generic address expressions in postorder.
+  // Collects all flat address expressions in postorder.
   std::vector<Value *> Postorder = collectFlatAddressExpressions(F);
 
   // Runs a data-flow analysis to refine the address spaces of every expression
@@ -451,8 +451,8 @@ bool NVPTXInferAddressSpaces::runOnFunction(Function &F) {
   ValueToAddrSpaceMapTy InferredAddrSpace;
   inferAddressSpaces(Postorder, &InferredAddrSpace);
 
-  // Changes the address spaces of the generic address expressions who are
-  // inferred to point to a specific address space.
+  // Changes the address spaces of the flat address expressions who are inferred
+  // to point to a specific address space.
   return rewriteWithNewAddressSpaces(Postorder, InferredAddrSpace, &F);
 }
 
@@ -462,21 +462,20 @@ void NVPTXInferAddressSpaces::inferAddressSpaces(
   SetVector<Value *> Worklist(Postorder.begin(), Postorder.end());
   // Initially, all expressions are in the uninitialized address space.
   for (Value *V : Postorder)
-    (*InferredAddrSpace)[V] = ADDRESS_SPACE_UNINITIALIZED;
+    (*InferredAddrSpace)[V] = UnknownAddressSpace;
 
   while (!Worklist.empty()) {
     Value* V = Worklist.pop_back_val();
 
     // Tries to update the address space of the stack top according to the
     // address spaces of its operands.
-    DEBUG(dbgs() << "Updating the address space of\n"
-                 << "  " << *V << "\n");
+    DEBUG(dbgs() << "Updating the address space of\n  " << *V << '\n');
     Optional<unsigned> NewAS = updateAddressSpace(*V, *InferredAddrSpace);
     if (!NewAS.hasValue())
       continue;
     // If any updates are made, grabs its users to the worklist because
     // their address spaces can also be possibly updated.
-    DEBUG(dbgs() << "  to " << NewAS.getValue() << "\n");
+    DEBUG(dbgs() << "  to " << NewAS.getValue() << '\n');
     (*InferredAddrSpace)[V] = NewAS.getValue();
 
     for (Value *User : V->users()) {
@@ -485,14 +484,14 @@ void NVPTXInferAddressSpaces::inferAddressSpaces(
         continue;
 
       auto Pos = InferredAddrSpace->find(User);
-      // Our algorithm only updates the address spaces of generic address
+      // Our algorithm only updates the address spaces of flat address
       // expressions, which are those in InferredAddrSpace.
       if (Pos == InferredAddrSpace->end())
         continue;
 
       // Function updateAddressSpace moves the address space down a lattice
-      // path. Therefore, nothing to do if User is already inferred as
-      // generic (the bottom element in the lattice).
+      // path. Therefore, nothing to do if User is already inferred as flat
+      // (the bottom element in the lattice).
       if (Pos->second == FlatAddrSpace)
         continue;
 
@@ -507,7 +506,7 @@ Optional<unsigned> NVPTXInferAddressSpaces::updateAddressSpace(
 
   // The new inferred address space equals the join of the address spaces
   // of all its pointer operands.
-  unsigned NewAS = ADDRESS_SPACE_UNINITIALIZED;
+  unsigned NewAS = UnknownAddressSpace;
   for (Value *PtrOperand : getPointerOperands(V)) {
     unsigned OperandAS;
     if (InferredAddrSpace.count(PtrOperand))
@@ -515,7 +514,7 @@ Optional<unsigned> NVPTXInferAddressSpaces::updateAddressSpace(
     else
       OperandAS = PtrOperand->getType()->getPointerAddressSpace();
     NewAS = joinAddressSpaces(NewAS, OperandAS);
-    // join(generic, *) = generic. So we can break if NewAS is already generic.
+    // join(flat, *) = flat. So we can break if NewAS is already generic.
     if (NewAS == FlatAddrSpace)
       break;
   }
@@ -565,11 +564,14 @@ bool NVPTXInferAddressSpaces::rewriteWithNewAddressSpaces(
     SmallVector<Use *, 4> Uses;
     for (Use &U : V->uses())
       Uses.push_back(&U);
-    DEBUG(dbgs() << "Replacing the uses of " << *V << "\n  to\n  " << *NewV
-                 << "\n");
+
+    DEBUG(dbgs() << "Replacing the uses of " << *V
+                 << "\n  with\n  " << *NewV << '\n');
+
     for (Use *U : Uses) {
       if (isa<LoadInst>(U->getUser()) ||
-          (isa<StoreInst>(U->getUser()) && U->getOperandNo() == 1)) {
+          (isa<StoreInst>(U->getUser()) &&
+           U->getOperandNo() == StoreInst::getPointerOperandIndex())) {
         // If V is used as the pointer operand of a load/store, sets the pointer
         // operand to NewV. This replacement does not change the element type,
         // so the resultant load/store is still valid.
