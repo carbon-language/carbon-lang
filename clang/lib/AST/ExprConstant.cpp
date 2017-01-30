@@ -1460,9 +1460,17 @@ static bool EvaluateIgnoredValue(EvalInfo &Info, const Expr *E) {
 
 /// Sign- or zero-extend a value to 64 bits. If it's already 64 bits, just
 /// return its existing value.
-static int64_t getExtValue(const APSInt &Value) {
-  return Value.isSigned() ? Value.getSExtValue()
-                          : static_cast<int64_t>(Value.getZExtValue());
+static bool getExtValue(EvalInfo &Info, const Expr *E, const APSInt &Value,
+                        int64_t &Result) {
+  if (Value.isSigned() ? Value.getMinSignedBits() > 64
+                       : Value.getActiveBits() > 64) {
+    Info.FFDiag(E);
+    return false;
+  }
+
+  Result = Value.isSigned() ? Value.getSExtValue()
+                            : static_cast<int64_t>(Value.getZExtValue());
+  return true;
 }
 
 /// Should this call expression be treated as a string literal?
@@ -3184,7 +3192,9 @@ struct CompoundAssignSubobjectHandler {
       return false;
     }
 
-    int64_t Offset = getExtValue(RHS.getInt());
+    int64_t Offset;
+    if (!getExtValue(Info, E, RHS.getInt(), Offset))
+      return false;
     if (Opcode == BO_Sub)
       Offset = -Offset;
 
@@ -5148,8 +5158,10 @@ bool LValueExprEvaluator::VisitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   if (!EvaluateInteger(E->getIdx(), Index, Info))
     return false;
 
-  return HandleLValueArrayAdjustment(Info, E, Result, E->getType(),
-                                     getExtValue(Index));
+  int64_t Offset;
+  if (!getExtValue(Info, E, Index, Offset))
+    return false;
+  return HandleLValueArrayAdjustment(Info, E, Result, E->getType(), Offset);
 }
 
 bool LValueExprEvaluator::VisitUnaryDeref(const UnaryOperator *E) {
@@ -5415,7 +5427,9 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (!EvaluateInteger(IExp, Offset, Info) || !EvalPtrOK)
     return false;
 
-  int64_t AdditionalOffset = getExtValue(Offset);
+  int64_t AdditionalOffset;
+  if (!getExtValue(Info, E, Offset, AdditionalOffset))
+    return false;
   if (E->getOpcode() == BO_Sub)
     AdditionalOffset = -AdditionalOffset;
 
@@ -5614,14 +5628,14 @@ bool PointerExprEvaluator::VisitBuiltinCallExpr(const CallExpr *E,
     APSInt Alignment;
     if (!EvaluateInteger(E->getArg(1), Alignment, Info))
       return false;
-    CharUnits Align = CharUnits::fromQuantity(getExtValue(Alignment));
+    CharUnits Align = CharUnits::fromQuantity(Alignment.getZExtValue());
 
     if (E->getNumArgs() > 2) {
       APSInt Offset;
       if (!EvaluateInteger(E->getArg(2), Offset, Info))
         return false;
 
-      int64_t AdditionalOffset = -getExtValue(Offset);
+      int64_t AdditionalOffset = -Offset.getZExtValue();
       OffsetResult.Offset += CharUnits::fromQuantity(AdditionalOffset);
     }
 
@@ -5638,12 +5652,11 @@ bool PointerExprEvaluator::VisitBuiltinCallExpr(const CallExpr *E,
 
       if (BaseAlignment < Align) {
         Result.Designator.setInvalid();
-        // FIXME: Quantities here cast to integers because the plural modifier
-        // does not work on APSInts yet.
+        // FIXME: Add support to Diagnostic for long / long long.
         CCEDiag(E->getArg(0),
                 diag::note_constexpr_baa_insufficient_alignment) << 0
-          << (int) BaseAlignment.getQuantity()
-          << (unsigned) getExtValue(Alignment);
+          << (unsigned)BaseAlignment.getQuantity()
+          << (unsigned)Align.getQuantity();
         return false;
       }
     }
@@ -5651,18 +5664,14 @@ bool PointerExprEvaluator::VisitBuiltinCallExpr(const CallExpr *E,
     // The offset must also have the correct alignment.
     if (OffsetResult.Offset.alignTo(Align) != OffsetResult.Offset) {
       Result.Designator.setInvalid();
-      APSInt Offset(64, false);
-      Offset = OffsetResult.Offset.getQuantity();
 
-      if (OffsetResult.Base)
-        CCEDiag(E->getArg(0),
-                diag::note_constexpr_baa_insufficient_alignment) << 1
-          << (int) getExtValue(Offset) << (unsigned) getExtValue(Alignment);
-      else
-        CCEDiag(E->getArg(0),
-                diag::note_constexpr_baa_value_insufficient_alignment)
-          << Offset << (unsigned) getExtValue(Alignment);
-
+      (OffsetResult.Base
+           ? CCEDiag(E->getArg(0),
+                     diag::note_constexpr_baa_insufficient_alignment) << 1
+           : CCEDiag(E->getArg(0),
+                     diag::note_constexpr_baa_value_insufficient_alignment))
+        << (int)OffsetResult.Offset.getQuantity()
+        << (unsigned)Align.getQuantity();
       return false;
     }
 
@@ -7968,12 +7977,13 @@ bool DataRecursiveIntBinOpEvaluator::
   // Handle cases like (unsigned long)&a + 4.
   if (E->isAdditiveOp() && LHSVal.isLValue() && RHSVal.isInt()) {
     Result = LHSVal;
-    CharUnits AdditionalOffset =
-        CharUnits::fromQuantity(RHSVal.getInt().getZExtValue());
+    int64_t Offset;
+    if (!getExtValue(Info, E, RHSVal.getInt(), Offset))
+      return false;
     if (E->getOpcode() == BO_Add)
-      Result.getLValueOffset() += AdditionalOffset;
+      Result.getLValueOffset() += CharUnits::fromQuantity(Offset);
     else
-      Result.getLValueOffset() -= AdditionalOffset;
+      Result.getLValueOffset() -= CharUnits::fromQuantity(Offset);
     return true;
   }
   
@@ -7981,8 +7991,10 @@ bool DataRecursiveIntBinOpEvaluator::
   if (E->getOpcode() == BO_Add &&
       RHSVal.isLValue() && LHSVal.isInt()) {
     Result = RHSVal;
-    Result.getLValueOffset() +=
-        CharUnits::fromQuantity(LHSVal.getInt().getZExtValue());
+    int64_t Offset;
+    if (!getExtValue(Info, E, LHSVal.getInt(), Offset))
+      return false;
+    Result.getLValueOffset() += CharUnits::fromQuantity(Offset);
     return true;
   }
   
