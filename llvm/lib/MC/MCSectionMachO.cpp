@@ -18,33 +18,45 @@ using namespace llvm;
 /// section type list.
 static constexpr struct {
   StringLiteral AssemblerName, EnumName;
-} SectionTypeDescriptors[MachO::LAST_KNOWN_SECTION_TYPE+1] = {
-  { "regular",                  "S_REGULAR" },                    // 0x00
-  { "",                         "S_ZEROFILL" },                   // 0x01
-  { "cstring_literals",         "S_CSTRING_LITERALS" },           // 0x02
-  { "4byte_literals",           "S_4BYTE_LITERALS" },             // 0x03
-  { "8byte_literals",           "S_8BYTE_LITERALS" },             // 0x04
-  { "literal_pointers",         "S_LITERAL_POINTERS" },           // 0x05
-  { "non_lazy_symbol_pointers", "S_NON_LAZY_SYMBOL_POINTERS" },   // 0x06
-  { "lazy_symbol_pointers",     "S_LAZY_SYMBOL_POINTERS" },       // 0x07
-  { "symbol_stubs",             "S_SYMBOL_STUBS" },               // 0x08
-  { "mod_init_funcs",           "S_MOD_INIT_FUNC_POINTERS" },     // 0x09
-  { "mod_term_funcs",           "S_MOD_TERM_FUNC_POINTERS" },     // 0x0A
-  { "coalesced",                "S_COALESCED" },                  // 0x0B
-  { "", /*FIXME??*/             "S_GB_ZEROFILL" },                // 0x0C
-  { "interposing",              "S_INTERPOSING" },                // 0x0D
-  { "16byte_literals",          "S_16BYTE_LITERALS" },            // 0x0E
-  { "", /*FIXME??*/             "S_DTRACE_DOF" },                 // 0x0F
-  { "", /*FIXME??*/             "S_LAZY_DYLIB_SYMBOL_POINTERS" }, // 0x10
-  { "thread_local_regular",     "S_THREAD_LOCAL_REGULAR" },       // 0x11
-  { "thread_local_zerofill",    "S_THREAD_LOCAL_ZEROFILL" },      // 0x12
-  { "thread_local_variables",   "S_THREAD_LOCAL_VARIABLES" },     // 0x13
-  { "thread_local_variable_pointers",
-    "S_THREAD_LOCAL_VARIABLE_POINTERS" },                         // 0x14
-  { "thread_local_init_function_pointers",
-    "S_THREAD_LOCAL_INIT_FUNCTION_POINTERS"},                     // 0x15
+} SectionTypeDescriptors[MachO::LAST_KNOWN_SECTION_TYPE + 1] = {
+    {StringLiteral("regular"), StringLiteral("S_REGULAR")}, // 0x00
+    {StringLiteral(""), StringLiteral("S_ZEROFILL")},       // 0x01
+    {StringLiteral("cstring_literals"),
+     StringLiteral("S_CSTRING_LITERALS")}, // 0x02
+    {StringLiteral("4byte_literals"),
+     StringLiteral("S_4BYTE_LITERALS")}, // 0x03
+    {StringLiteral("8byte_literals"),
+     StringLiteral("S_8BYTE_LITERALS")}, // 0x04
+    {StringLiteral("literal_pointers"),
+     StringLiteral("S_LITERAL_POINTERS")}, // 0x05
+    {StringLiteral("non_lazy_symbol_pointers"),
+     StringLiteral("S_NON_LAZY_SYMBOL_POINTERS")}, // 0x06
+    {StringLiteral("lazy_symbol_pointers"),
+     StringLiteral("S_LAZY_SYMBOL_POINTERS")},                        // 0x07
+    {StringLiteral("symbol_stubs"), StringLiteral("S_SYMBOL_STUBS")}, // 0x08
+    {StringLiteral("mod_init_funcs"),
+     StringLiteral("S_MOD_INIT_FUNC_POINTERS")}, // 0x09
+    {StringLiteral("mod_term_funcs"),
+     StringLiteral("S_MOD_TERM_FUNC_POINTERS")},                     // 0x0A
+    {StringLiteral("coalesced"), StringLiteral("S_COALESCED")},      // 0x0B
+    {StringLiteral("") /*FIXME??*/, StringLiteral("S_GB_ZEROFILL")}, // 0x0C
+    {StringLiteral("interposing"), StringLiteral("S_INTERPOSING")},  // 0x0D
+    {StringLiteral("16byte_literals"),
+     StringLiteral("S_16BYTE_LITERALS")},                           // 0x0E
+    {StringLiteral("") /*FIXME??*/, StringLiteral("S_DTRACE_DOF")}, // 0x0F
+    {StringLiteral("") /*FIXME??*/,
+     StringLiteral("S_LAZY_DYLIB_SYMBOL_POINTERS")}, // 0x10
+    {StringLiteral("thread_local_regular"),
+     StringLiteral("S_THREAD_LOCAL_REGULAR")}, // 0x11
+    {StringLiteral("thread_local_zerofill"),
+     StringLiteral("S_THREAD_LOCAL_ZEROFILL")}, // 0x12
+    {StringLiteral("thread_local_variables"),
+     StringLiteral("S_THREAD_LOCAL_VARIABLES")}, // 0x13
+    {StringLiteral("thread_local_variable_pointers"),
+     StringLiteral("S_THREAD_LOCAL_VARIABLE_POINTERS")}, // 0x14
+    {StringLiteral("thread_local_init_function_pointers"),
+     StringLiteral("S_THREAD_LOCAL_INIT_FUNCTION_POINTERS")}, // 0x15
 };
-
 
 /// SectionAttrDescriptors - This is an array of descriptors for section
 /// attributes.  Unlike the SectionTypeDescriptors, this is not directly indexed
@@ -54,7 +66,7 @@ static constexpr struct {
   StringLiteral AssemblerName, EnumName;
 } SectionAttrDescriptors[] = {
 #define ENTRY(ASMNAME, ENUM) \
-  { MachO::ENUM, ASMNAME, #ENUM },
+  { MachO::ENUM, StringLiteral(ASMNAME), StringLiteral(#ENUM) },
 ENTRY("pure_instructions",   S_ATTR_PURE_INSTRUCTIONS)
 ENTRY("no_toc",              S_ATTR_NO_TOC)
 ENTRY("strip_static_syms",   S_ATTR_STRIP_STATIC_SYMS)
@@ -66,7 +78,7 @@ ENTRY("" /*FIXME*/,          S_ATTR_SOME_INSTRUCTIONS)
 ENTRY("" /*FIXME*/,          S_ATTR_EXT_RELOC)
 ENTRY("" /*FIXME*/,          S_ATTR_LOC_RELOC)
 #undef ENTRY
-  { 0, "none", "" }, // used if section has no attributes but has a stub size
+  { 0, StringLiteral("none"), StringLiteral("") }, // used if section has no attributes but has a stub size
 };
 
 MCSectionMachO::MCSectionMachO(StringRef Segment, StringRef Section,

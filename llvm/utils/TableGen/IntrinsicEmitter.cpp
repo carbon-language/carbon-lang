@@ -139,8 +139,8 @@ void IntrinsicEmitter::EmitTargetInfo(const CodeGenIntrinsicTable &Ints,
      << "};\n";
   OS << "static constexpr IntrinsicTargetInfo TargetInfos[] = {\n";
   for (auto Target : Ints.Targets)
-    OS << "  {\"" << Target.Name << "\", " << Target.Offset << ", "
-       << Target.Count << "},\n";
+    OS << "  {StringLiteral(\"" << Target.Name << "\"), " << Target.Offset
+       << ", " << Target.Count << "},\n";
   OS << "};\n";
   OS << "#endif\n\n";
 }
