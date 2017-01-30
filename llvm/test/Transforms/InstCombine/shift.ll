@@ -1007,6 +1007,39 @@ define i32 @test53(i32 %x) {
   ret i32 %B
 }
 
+define <2 x i32> @test53_splat_vec(<2 x i32> %x) {
+; CHECK-LABEL: @test53_splat_vec(
+; CHECK-NEXT:    [[A:%.*]] = shl nuw <2 x i32> %x, <i32 3, i32 3>
+; CHECK-NEXT:    [[B:%.*]] = lshr exact <2 x i32> [[A]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[B]]
+;
+  %A = shl nuw <2 x i32> %x, <i32 3, i32 3>
+  %B = lshr <2 x i32> %A, <i32 1, i32 1>
+  ret <2 x i32> %B
+}
+
+define i8 @test53_no_nuw(i8 %x) {
+; CHECK-LABEL: @test53_no_nuw(
+; CHECK-NEXT:    [[TMP1:%.*]] = shl i8 %x, 2
+; CHECK-NEXT:    [[B:%.*]] = and i8 [[TMP1]], 124
+; CHECK-NEXT:    ret i8 [[B]]
+;
+  %A = shl i8 %x, 3
+  %B = lshr i8 %A, 1
+  ret i8 %B
+}
+
+define <2 x i8> @test53_no_nuw_splat_vec(<2 x i8> %x) {
+; CHECK-LABEL: @test53_no_nuw_splat_vec(
+; CHECK-NEXT:    [[A:%.*]] = shl <2 x i8> %x, <i8 3, i8 3>
+; CHECK-NEXT:    [[B:%.*]] = lshr exact <2 x i8> [[A]], <i8 1, i8 1>
+; CHECK-NEXT:    ret <2 x i8> [[B]]
+;
+  %A = shl <2 x i8> %x, <i8 3, i8 3>
+  %B = lshr <2 x i8> %A, <i8 1, i8 1>
+  ret <2 x i8> %B
+}
+
 define i32 @test54(i32 %x) {
 ; CHECK-LABEL: @test54(
 ; CHECK-NEXT:    [[TMP1:%.*]] = shl i32 %x, 3
