@@ -1943,9 +1943,8 @@ void MemorySSA::verifyOrdering(Function &F) const {
     assert(AL->size() == ActualAccesses.size() &&
            "We don't have the same number of accesses in the block as on the "
            "access list");
-    assert(DL ||
-           ActualDefs.size() == 0 &&
-               "Either we should have a defs list, or we should have no defs");
+    assert((DL || ActualDefs.size() == 0) &&
+           "Either we should have a defs list, or we should have no defs");
     assert((!DL || DL->size() == ActualDefs.size()) &&
            "We don't have the same number of defs in the block as on the "
            "def list");
