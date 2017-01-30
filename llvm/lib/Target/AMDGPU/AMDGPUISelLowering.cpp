@@ -15,7 +15,6 @@
 
 #include "AMDGPUISelLowering.h"
 #include "AMDGPU.h"
-#include "AMDGPUCallLowering.h"
 #include "AMDGPUFrameLowering.h"
 #include "AMDGPUIntrinsicInfo.h"
 #include "AMDGPURegisterInfo.h"
@@ -670,11 +669,6 @@ bool AMDGPUTargetLowering::isNarrowingProfitable(EVT SrcVT, EVT DestVT) const {
 //===---------------------------------------------------------------------===//
 // TargetLowering Callbacks
 //===---------------------------------------------------------------------===//
-
-CCAssignFn *AMDGPUCallLowering::CCAssignFnForCall(CallingConv::ID CC,
-                                                  bool IsVarArg) const {
-  return CC_AMDGPU;
-}
 
 /// The SelectionDAGBuilder will automatically promote function arguments
 /// with illegal types.  However, this does not work for the AMDGPU targets
