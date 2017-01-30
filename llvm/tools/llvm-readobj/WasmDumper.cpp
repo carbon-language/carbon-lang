@@ -59,7 +59,7 @@ public:
       DictScope SectionD(W, "Section");
       const char *Type = wasmSectionTypeToString(WasmSec->Type);
       W.printHex("Type", Type, WasmSec->Type);
-      W.printNumber("Size", WasmSec->Content.size());
+      W.printNumber("Size", (uint64_t)WasmSec->Content.size());
       W.printNumber("Offset", WasmSec->Offset);
       if (WasmSec->Type == wasm::WASM_SEC_CUSTOM) {
         W.printString("Name", WasmSec->Name);
