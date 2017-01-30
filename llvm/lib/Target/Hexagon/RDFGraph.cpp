@@ -424,7 +424,7 @@ RegisterRef RefNode::getRegRef(const DataFlowGraph &G) const {
   if (NodeAttrs::flags(Attrs) & NodeAttrs::PhiRef)
     return G.unpack(Ref.PR);
   assert(Ref.Op != nullptr);
-  return G.makeRegRef(Ref.Op->getReg(), Ref.Op->getSubReg());
+  return G.makeRegRef(*Ref.Op);
 }
 
 // Set the register reference in the reference node directly (for references
@@ -755,17 +755,6 @@ unsigned DataFlowGraph::DefStack::nextDown(unsigned P) const {
 
 // Register information.
 
-// Get the list of references aliased to RR. Lane masks are ignored.
-RegisterSet DataFlowGraph::getAliasSet(RegisterId Reg) const {
-  // Do not include RR in the alias set.
-  RegisterSet AS;
-  assert(TargetRegisterInfo::isPhysicalRegister(Reg));
-
-  for (MCRegAliasIterator AI(Reg, &TRI, false); AI.isValid(); ++AI)
-    AS.insert(RegisterRef(*AI));
-  return AS;
-}
-
 RegisterSet DataFlowGraph::getLandingPadLiveIns() const {
   RegisterSet LR;
   const Function &F = *MF.getFunction();
@@ -977,26 +966,34 @@ void DataFlowGraph::build(unsigned Options) {
 }
 
 RegisterRef DataFlowGraph::makeRegRef(unsigned Reg, unsigned Sub) const {
-  assert(TargetRegisterInfo::isPhysicalRegister(Reg));
+  assert(PhysicalRegisterInfo::isRegMaskId(Reg) ||
+         TargetRegisterInfo::isPhysicalRegister(Reg));
+  assert(Reg != 0);
   if (Sub != 0)
     Reg = TRI.getSubReg(Reg, Sub);
   return RegisterRef(Reg);
 }
 
+RegisterRef DataFlowGraph::makeRegRef(const MachineOperand &Op) const {
+  assert(Op.isReg() || Op.isRegMask());
+  if (Op.isReg())
+    return makeRegRef(Op.getReg(), Op.getSubReg());
+  return RegisterRef(PRI.getRegMaskId(Op.getRegMask()), LaneBitmask::getAll());
+}
+
 RegisterRef DataFlowGraph::normalizeRef(RegisterRef RR) const {
   // FIXME copied from RegisterAggr
-  RegisterId SuperReg = RR.Reg;
-  while (true) {
-    MCSuperRegIterator SR(SuperReg, &TRI, false);
-    if (!SR.isValid())
-      break;
-    SuperReg = *SR;
-  }
+  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg))
+    return RR;
+  const TargetRegisterClass *RC = PRI.RegInfos[RR.Reg].RegClass;
+  LaneBitmask RCMask = RC != nullptr ? RC->LaneMask : LaneBitmask(0x00000001);
+  LaneBitmask Common = RR.Mask & RCMask;
 
-  uint32_t Sub = TRI.getSubRegIndex(SuperReg, RR.Reg);
-  const TargetRegisterClass &RC = *TRI.getMinimalPhysRegClass(RR.Reg);
-  LaneBitmask SuperMask = RR.Mask &
-                          TRI.composeSubRegIndexLaneMask(Sub, RC.LaneMask);
+  RegisterId SuperReg = PRI.RegInfos[RR.Reg].MaxSuper;
+// Ex: IP/EIP/RIP
+//  assert(RC != nullptr || RR.Reg == SuperReg);
+  uint32_t Sub = PRI.getTRI().getSubRegIndex(SuperReg, RR.Reg);
+  LaneBitmask SuperMask = PRI.getTRI().composeSubRegIndexLaneMask(Sub, Common);
   return RegisterRef(SuperReg, SuperMask);
 }
 
@@ -1012,7 +1009,7 @@ RegisterRef DataFlowGraph::restrictRef(RegisterRef AR, RegisterRef BR) const {
 #endif
   // This isn't strictly correct, because the overlap may happen in the
   // part masked out.
-  if (TRI.regsOverlap(AR.Reg, BR.Reg))
+  if (PRI.alias(AR, BR))
     return AR;
   return RegisterRef();
 }
@@ -1083,10 +1080,10 @@ void DataFlowGraph::pushDefs(NodeAddr<InstrNode*> IA, DefStackMap &DefM) {
     // Push the definition on the stack for the register and all aliases.
     // The def stack traversal in linkNodeUp will check the exact aliasing.
     DefM[RR.Reg].push(DA);
-    for (RegisterRef A : getAliasSet(RR.Reg /*FIXME? use RegisterRef*/)) {
+    for (RegisterId A : PRI.getAliasSet(RR.Reg)) {
       // Check that we don't push the same def twice.
-      assert(A != RR);
-      DefM[A.Reg].push(DA);
+      assert(A != RR.Reg);
+      DefM[A].push(DA);
     }
     // Mark all the related defs as visited.
     for (NodeAddr<NodeBase*> T : Rel)
@@ -1223,20 +1220,26 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     if (In.isCall())
       return true;
     // Is tail call?
-    if (In.isBranch())
+    if (In.isBranch()) {
       for (const MachineOperand &Op : In.operands())
         if (Op.isGlobal() || Op.isSymbol())
           return true;
+      // Assume indirect branches are calls. This is for the purpose of
+      // keeping implicit operands, and so it won't hurt on intra-function
+      // indirect branches.
+      if (In.isIndirectBranch())
+        return true;
+    }
     return false;
   };
 
   auto isDefUndef = [this] (const MachineInstr &In, RegisterRef DR) -> bool {
     // This instruction defines DR. Check if there is a use operand that
     // would make DR live on entry to the instruction.
-    for (const MachineOperand &UseOp : In.operands()) {
-      if (!UseOp.isReg() || !UseOp.isUse() || UseOp.isUndef())
+    for (const MachineOperand &Op : In.operands()) {
+      if (!Op.isReg() || Op.getReg() == 0 || !Op.isUse() || Op.isUndef())
         continue;
-      RegisterRef UR = makeRegRef(UseOp.getReg(), UseOp.getSubReg());
+      RegisterRef UR = makeRegRef(Op);
       if (PRI.alias(DR, UR))
         return false;
     }
@@ -1263,18 +1266,20 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
   // defs that define registers that overlap, but it is not clear how to
   // interpret that in the absence of explicit defs. Overlapping explicit
   // defs are likely illegal already.
-  RegisterSet DoneDefs;
+  BitVector DoneDefs(TRI.getNumRegs());
   // Process explicit defs first.
   for (unsigned OpN = 0; OpN < NumOps; ++OpN) {
     MachineOperand &Op = In.getOperand(OpN);
     if (!Op.isReg() || !Op.isDef() || Op.isImplicit())
       continue;
-    RegisterRef RR = makeRegRef(Op.getReg(), Op.getSubReg());
+    unsigned R = Op.getReg();
+    if (!R || !TargetRegisterInfo::isPhysicalRegister(R))
+      continue;
     uint16_t Flags = NodeAttrs::None;
     if (TOI.isPreserving(In, OpN)) {
       Flags |= NodeAttrs::Preserving;
       // If the def is preserving, check if it is also undefined.
-      if (isDefUndef(In, RR))
+      if (isDefUndef(In, makeRegRef(Op)))
         Flags |= NodeAttrs::Undef;
     }
     if (TOI.isClobbering(In, OpN))
@@ -1285,7 +1290,25 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
       Flags |= NodeAttrs::Dead;
     NodeAddr<DefNode*> DA = newDef(SA, Op, Flags);
     SA.Addr->addMember(DA, *this);
-    DoneDefs.insert(RR);
+    assert(!DoneDefs.test(R));
+    DoneDefs.set(R);
+  }
+
+  // Process reg-masks (as clobbers).
+  BitVector DoneClobbers(TRI.getNumRegs());
+  for (unsigned OpN = 0; OpN < NumOps; ++OpN) {
+    MachineOperand &Op = In.getOperand(OpN);
+    if (!Op.isRegMask())
+      continue;
+    uint16_t Flags = NodeAttrs::Clobbering | NodeAttrs::Fixed |
+                     NodeAttrs::Dead;
+    NodeAddr<DefNode*> DA = newDef(SA, Op, Flags);
+    SA.Addr->addMember(DA, *this);
+    // Record all clobbered registers in DoneDefs.
+    const uint32_t *RM = Op.getRegMask();
+    for (unsigned i = 1, e = TRI.getNumRegs(); i != e; ++i)
+      if (!(RM[i/32] & (1u << (i%32))))
+        DoneClobbers.set(i);
   }
 
   // Process implicit defs, skipping those that have already been added
@@ -1294,10 +1317,11 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
     MachineOperand &Op = In.getOperand(OpN);
     if (!Op.isReg() || !Op.isDef() || !Op.isImplicit())
       continue;
-    RegisterRef RR = makeRegRef(Op.getReg(), Op.getSubReg());
-    if (!NeedsImplicit && !ImpDefs.count(RR))
+    unsigned R = Op.getReg();
+    if (!R || !TargetRegisterInfo::isPhysicalRegister(R) || DoneDefs.test(R))
       continue;
-    if (DoneDefs.count(RR))
+    RegisterRef RR = makeRegRef(Op);
+    if (!NeedsImplicit && !ImpDefs.count(RR))
       continue;
     uint16_t Flags = NodeAttrs::None;
     if (TOI.isPreserving(In, OpN)) {
@@ -1310,18 +1334,24 @@ void DataFlowGraph::buildStmt(NodeAddr<BlockNode*> BA, MachineInstr &In) {
       Flags |= NodeAttrs::Clobbering;
     if (TOI.isFixedReg(In, OpN))
       Flags |= NodeAttrs::Fixed;
-    if (IsCall && Op.isDead())
+    if (IsCall && Op.isDead()) {
+      if (DoneClobbers.test(R))
+        continue;
       Flags |= NodeAttrs::Dead;
+    }
     NodeAddr<DefNode*> DA = newDef(SA, Op, Flags);
     SA.Addr->addMember(DA, *this);
-    DoneDefs.insert(RR);
+    DoneDefs.set(R);
   }
 
   for (unsigned OpN = 0; OpN < NumOps; ++OpN) {
     MachineOperand &Op = In.getOperand(OpN);
     if (!Op.isReg() || !Op.isUse())
       continue;
-    RegisterRef RR = makeRegRef(Op.getReg(), Op.getSubReg());
+    unsigned R = Op.getReg();
+    if (!R || !TargetRegisterInfo::isPhysicalRegister(R))
+      continue;
+    RegisterRef RR = makeRegRef(Op);
     // Add implicit uses on return and call instructions, and on predicated
     // instructions regardless of whether or not they appear in the instruction
     // descriptor's list.

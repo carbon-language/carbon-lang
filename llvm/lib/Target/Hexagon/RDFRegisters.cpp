@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RDFRegisters.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 using namespace llvm;
@@ -38,9 +39,38 @@ PhysicalRegisterInfo::PhysicalRegisterInfo(const TargetRegisterInfo &tri,
       SuperR = *S;
     RegInfos[R].MaxSuper = SuperR;
   }
+
+  for (const uint32_t *RM : TRI.getRegMasks())
+    RegMasks.insert(RM);
+  for (const MachineBasicBlock &B : mf)
+    for (const MachineInstr &In : B)
+      for (const MachineOperand &Op : In.operands())
+        if (Op.isRegMask())
+          RegMasks.insert(Op.getRegMask());
 }
 
-bool PhysicalRegisterInfo::alias(RegisterRef RA, RegisterRef RB) const {
+std::set<RegisterId> PhysicalRegisterInfo::getAliasSet(RegisterId Reg) const {
+  // Do not include RR in the alias set.
+  std::set<RegisterId> AS;
+  assert(isRegMaskId(Reg) || TargetRegisterInfo::isPhysicalRegister(Reg));
+  if (isRegMaskId(Reg)) {
+    // XXX SLOW
+    // XXX Add other regmasks to the set.
+    const uint32_t *MB = getRegMaskBits(Reg);
+    for (unsigned i = 1, e = TRI.getNumRegs(); i != e; ++i) {
+      if (MB[i/32] & (1u << (i%32)))
+        continue;
+      AS.insert(i);
+    }
+    return AS;
+  }
+
+  for (MCRegAliasIterator AI(Reg, &TRI, false); AI.isValid(); ++AI)
+    AS.insert(*AI);
+  return AS;
+}
+
+bool PhysicalRegisterInfo::aliasRR(RegisterRef RA, RegisterRef RB) const {
   assert(TargetRegisterInfo::isPhysicalRegister(RA.Reg));
   assert(TargetRegisterInfo::isPhysicalRegister(RB.Reg));
   MCRegUnitMaskIterator UMA(RA.Reg, &TRI);
@@ -92,7 +122,73 @@ bool PhysicalRegisterInfo::alias(RegisterRef RA, RegisterRef RB) const {
   return false;
 }
 
+bool PhysicalRegisterInfo::aliasRM(RegisterRef RR, RegisterRef RM) const {
+  assert(TargetRegisterInfo::isPhysicalRegister(RR.Reg) && isRegMaskId(RM.Reg));
+  const uint32_t *MB = getRegMaskBits(RM.Reg);
+  bool Preserved = MB[RR.Reg/32] & (1u << (RR.Reg%32));
+  // If the lane mask information is "full", e.g. when the given lane mask
+  // is a superset of the lane mask from the register class, check the regmask
+  // bit directly.
+  if (RR.Mask == LaneBitmask::getAll())
+    return Preserved;
+  const TargetRegisterClass *RC = RegInfos[RR.Reg].RegClass;
+  if (RC != nullptr && (RR.Mask & RC->LaneMask) == RC->LaneMask)
+    return Preserved;
+
+  // Otherwise, check all subregisters whose lane mask overlaps the given
+  // mask. For each such register, if it is preserved by the regmask, then
+  // clear the corresponding bits in the given mask. If at the end, all
+  // bits have been cleared, the register does not alias the regmask (i.e.
+  // is it preserved by it).
+  LaneBitmask M = RR.Mask;
+  for (MCSubRegIndexIterator SI(RR.Reg, &TRI); SI.isValid(); ++SI) {
+    LaneBitmask SM = TRI.getSubRegIndexLaneMask(SI.getSubRegIndex());
+    if ((SM & RR.Mask).none())
+      continue;
+    unsigned SR = SI.getSubReg();
+    if (!(MB[SR/32] & (1u << (SR%32))))
+      continue;
+    // The subregister SR is preserved.
+    M &= ~SM;
+    if (M.none())
+      return false;
+  }
+
+  return true;
+}
+
+bool PhysicalRegisterInfo::aliasMM(RegisterRef RM, RegisterRef RN) const {
+  assert(isRegMaskId(RM.Reg) && isRegMaskId(RN.Reg));
+  unsigned NumRegs = TRI.getNumRegs();
+  const uint32_t *BM = getRegMaskBits(RM.Reg);
+  const uint32_t *BN = getRegMaskBits(RN.Reg);
+
+  for (unsigned w = 0, nw = NumRegs/32; w != nw; ++w) {
+    // Intersect the negations of both words. Disregard reg=0,
+    // i.e. 0th bit in the 0th word.
+    uint32_t C = ~BM[w] & ~BN[w];
+    if (w == 0)
+      C &= ~1;
+    if (C)
+      return true;
+  }
+
+  // Check the remaining registers in the last word.
+  unsigned TailRegs = NumRegs % 32;
+  if (TailRegs == 0)
+    return false;
+  unsigned TW = NumRegs / 32;
+  uint32_t TailMask = (1u << TailRegs) - 1;
+  if (~BM[TW] & ~BN[TW] & TailMask)
+    return true;
+
+  return false;
+}
+
+
 RegisterRef RegisterAggr::normalize(RegisterRef RR) const {
+  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg))
+    return RR;
   const TargetRegisterClass *RC = PRI.RegInfos[RR.Reg].RegClass;
   LaneBitmask RCMask = RC != nullptr ? RC->LaneMask : LaneBitmask(0x00000001);
   LaneBitmask Common = RR.Mask & RCMask;
@@ -106,6 +202,17 @@ RegisterRef RegisterAggr::normalize(RegisterRef RR) const {
 }
 
 bool RegisterAggr::hasAliasOf(RegisterRef RR) const {
+  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg)) {
+    // XXX SLOW
+    const uint32_t *MB = PRI.getRegMaskBits(RR.Reg);
+    for (unsigned i = 1, e = PRI.getTRI().getNumRegs(); i != e; ++i) {
+      if (MB[i/32] & (1u << (i%32)))
+        continue;
+      if (hasAliasOf(RegisterRef(i, LaneBitmask::getAll())))
+        return true;
+    }
+  }
+
   RegisterRef NR = normalize(RR);
   auto F = Masks.find(NR.Reg);
   if (F != Masks.end()) {
@@ -121,6 +228,18 @@ bool RegisterAggr::hasAliasOf(RegisterRef RR) const {
 }
 
 bool RegisterAggr::hasCoverOf(RegisterRef RR) const {
+  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg)) {
+    // XXX SLOW
+    const uint32_t *MB = PRI.getRegMaskBits(RR.Reg);
+    for (unsigned i = 1, e = PRI.getTRI().getNumRegs(); i != e; ++i) {
+      if (MB[i/32] & (1u << (i%32)))
+        continue;
+      if (!hasCoverOf(RegisterRef(i, LaneBitmask::getAll())))
+        return false;
+    }
+    return true;
+  }
+
   // Always have a cover for empty lane mask.
   RegisterRef NR = normalize(RR);
   if (NR.Mask.none())
@@ -132,6 +251,17 @@ bool RegisterAggr::hasCoverOf(RegisterRef RR) const {
 }
 
 RegisterAggr &RegisterAggr::insert(RegisterRef RR) {
+  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg)) {
+    // XXX SLOW
+    const uint32_t *MB = PRI.getRegMaskBits(RR.Reg);
+    for (unsigned i = 1, e = PRI.getTRI().getNumRegs(); i != e; ++i) {
+      if (MB[i/32] & (1u << (i%32)))
+        continue;
+      insert(RegisterRef(i, LaneBitmask::getAll()));
+    }
+    return *this;
+  }
+
   RegisterRef NR = normalize(RR);
   auto F = Masks.find(NR.Reg);
   if (F == Masks.end())
@@ -160,6 +290,17 @@ RegisterAggr &RegisterAggr::insert(const RegisterAggr &RG) {
 }
 
 RegisterAggr &RegisterAggr::clear(RegisterRef RR) {
+  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg)) {
+    // XXX SLOW
+    const uint32_t *MB = PRI.getRegMaskBits(RR.Reg);
+    for (unsigned i = 1, e = PRI.getTRI().getNumRegs(); i != e; ++i) {
+      if (MB[i/32] & (1u << (i%32)))
+        continue;
+      clear(RegisterRef(i, LaneBitmask::getAll()));
+    }
+    return *this;
+  }
+
   RegisterRef NR = normalize(RR);
   auto F = Masks.find(NR.Reg);
   if (F == Masks.end())

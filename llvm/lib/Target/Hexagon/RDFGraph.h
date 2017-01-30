@@ -431,39 +431,6 @@ namespace rdf {
     uint32_t MaskId;
   };
 
-  // Template class for a map translating uint32_t into arbitrary types.
-  // The map will act like an indexed set: upon insertion of a new object,
-  // it will automatically assign a new index to it. Index of 0 is treated
-  // as invalid and is never allocated.
-  template <typename T, unsigned N = 32>
-  struct IndexedSet {
-    IndexedSet() : Map() { Map.reserve(N); }
-
-    T get(uint32_t Idx) const {
-      // Index Idx corresponds to Map[Idx-1].
-      assert(Idx != 0 && !Map.empty() && Idx-1 < Map.size());
-      return Map[Idx-1];
-    }
-
-    uint32_t insert(T Val) {
-      // Linear search.
-      auto F = llvm::find(Map, Val);
-      if (F != Map.end())
-        return F - Map.begin() + 1;
-      Map.push_back(Val);
-      return Map.size();  // Return actual_index + 1.
-    }
-
-    uint32_t find(T Val) const {
-      auto F = llvm::find(Map, Val);
-      assert(F != Map.end());
-      return F - Map.begin();
-    }
-
-  private:
-    std::vector<T> Map;
-  };
-
   struct LaneMaskIndex : private IndexedSet<LaneBitmask> {
     LaneMaskIndex() = default;
 
@@ -777,6 +744,7 @@ namespace rdf {
     }
 
     RegisterRef makeRegRef(unsigned Reg, unsigned Sub) const;
+    RegisterRef makeRegRef(const MachineOperand &Op) const;
     RegisterRef normalizeRef(RegisterRef RR) const;
     RegisterRef restrictRef(RegisterRef AR, RegisterRef BR) const;
 
@@ -842,7 +810,6 @@ namespace rdf {
   private:
     void reset();
 
-    RegisterSet getAliasSet(RegisterId Reg) const;
     RegisterSet getLandingPadLiveIns() const;
 
     NodeAddr<NodeBase*> newNode(uint16_t Attrs);

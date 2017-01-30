@@ -13,6 +13,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -20,6 +21,39 @@ namespace llvm {
 namespace rdf {
 
   typedef uint32_t RegisterId;
+
+  // Template class for a map translating uint32_t into arbitrary types.
+  // The map will act like an indexed set: upon insertion of a new object,
+  // it will automatically assign a new index to it. Index of 0 is treated
+  // as invalid and is never allocated.
+  template <typename T, unsigned N = 32>
+  struct IndexedSet {
+    IndexedSet() : Map() { Map.reserve(N); }
+
+    T get(uint32_t Idx) const {
+      // Index Idx corresponds to Map[Idx-1].
+      assert(Idx != 0 && !Map.empty() && Idx-1 < Map.size());
+      return Map[Idx-1];
+    }
+
+    uint32_t insert(T Val) {
+      // Linear search.
+      auto F = llvm::find(Map, Val);
+      if (F != Map.end())
+        return F - Map.begin() + 1;
+      Map.push_back(Val);
+      return Map.size();  // Return actual_index + 1.
+    }
+
+    uint32_t find(T Val) const {
+      auto F = llvm::find(Map, Val);
+      assert(F != Map.end());
+      return F - Map.begin() + 1;
+    }
+
+  private:
+    std::vector<T> Map;
+  };
 
   struct RegisterRef {
     RegisterId Reg = 0;
@@ -48,7 +82,22 @@ namespace rdf {
     PhysicalRegisterInfo(const TargetRegisterInfo &tri,
                          const MachineFunction &mf);
 
-    bool alias(RegisterRef RA, RegisterRef RB) const;
+    static bool isRegMaskId(RegisterId R) {
+      return TargetRegisterInfo::isStackSlot(R);
+    }
+    RegisterId getRegMaskId(const uint32_t *RM) const {
+      return TargetRegisterInfo::index2StackSlot(RegMasks.find(RM));
+    }
+    const uint32_t *getRegMaskBits(RegisterId R) const {
+      return RegMasks.get(TargetRegisterInfo::stackSlot2Index(R));
+    }
+
+    bool alias(RegisterRef RA, RegisterRef RB) const {
+      if (!isRegMaskId(RA.Reg))
+        return !isRegMaskId(RB.Reg) ? aliasRR(RA, RB) : aliasRM(RA, RB);
+      return !isRegMaskId(RB.Reg) ? aliasRM(RB, RA) : aliasMM(RA, RB);
+    }
+    std::set<RegisterId> getAliasSet(RegisterId Reg) const;
 
     const TargetRegisterInfo &getTRI() const { return TRI; }
 
@@ -60,6 +109,11 @@ namespace rdf {
 
     const TargetRegisterInfo &TRI;
     std::vector<RegInfo> RegInfos;
+    IndexedSet<const uint32_t*> RegMasks;
+
+    bool aliasRR(RegisterRef RA, RegisterRef RB) const;
+    bool aliasRM(RegisterRef RR, RegisterRef RM) const;
+    bool aliasMM(RegisterRef RM, RegisterRef RN) const;
   };
 
 
@@ -100,6 +154,7 @@ namespace rdf {
     bool CheckUnits = false;
     const PhysicalRegisterInfo &PRI;
   };
+
 
   // Optionally print the lane mask, if it is not ~0.
   struct PrintLaneMaskOpt {
