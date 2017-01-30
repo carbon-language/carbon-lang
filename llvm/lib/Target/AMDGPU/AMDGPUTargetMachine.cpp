@@ -84,6 +84,13 @@ static cl::opt<bool> ScalarizeGlobal(
   cl::init(false),
   cl::Hidden);
 
+// Option to run internalize pass.
+static cl::opt<bool> InternalizeSymbols(
+  "amdgpu-internalize-symbols",
+  cl::desc("Enable elimination of non-kernel functions and unused globals"),
+  cl::init(false),
+  cl::Hidden);
+
 extern "C" void LLVMInitializeAMDGPUTarget() {
   // Register the target
   RegisterTargetMachine<R600TargetMachine> X(getTheAMDGPUTarget());
@@ -207,11 +214,35 @@ StringRef AMDGPUTargetMachine::getFeatureString(const Function &F) const {
 }
 
 void AMDGPUTargetMachine::adjustPassManager(PassManagerBuilder &Builder) {
+  bool Internalize = InternalizeSymbols &&
+                     (getOptLevel() > CodeGenOpt::None) &&
+                     (getTargetTriple().getArch() == Triple::amdgcn);
   Builder.addExtension(
     PassManagerBuilder::EP_ModuleOptimizerEarly,
-    [&](const PassManagerBuilder &, legacy::PassManagerBase &PM) {
+    [Internalize](const PassManagerBuilder &, legacy::PassManagerBase &PM) {
       PM.add(createAMDGPUUnifyMetadataPass());
-    });
+      if (Internalize) {
+        PM.add(createInternalizePass([=](const GlobalValue &GV) -> bool {
+          if (const Function *F = dyn_cast<Function>(&GV)) {
+            if (F->isDeclaration())
+                return true;
+            switch (F->getCallingConv()) {
+            default:
+              return false;
+            case CallingConv::AMDGPU_VS:
+            case CallingConv::AMDGPU_GS:
+            case CallingConv::AMDGPU_PS:
+            case CallingConv::AMDGPU_CS:
+            case CallingConv::AMDGPU_KERNEL:
+            case CallingConv::SPIR_KERNEL:
+              return true;
+            }
+          }
+          return !GV.use_empty();
+        }));
+        PM.add(createGlobalDCEPass());
+      }
+  });
 }
 
 //===----------------------------------------------------------------------===//
