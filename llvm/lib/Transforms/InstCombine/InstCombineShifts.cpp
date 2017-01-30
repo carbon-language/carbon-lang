@@ -678,7 +678,7 @@ Instruction *InstCombiner::visitShl(BinaryOperator &I) {
       // The inexact version is deferred to DAGCombine, so we don't hide shl
       // behind a bit mask.
       Constant *ShiftDiffCst = ConstantInt::get(Ty, *ShAmtAPInt - *ShrAmt);
-      auto *NewShl = BinaryOperator::Create(Instruction::Shl, X, ShiftDiffCst);
+      auto *NewShl = BinaryOperator::CreateShl(X, ShiftDiffCst);
       NewShl->setHasNoUnsignedWrap(I.hasNoUnsignedWrap());
       NewShl->setHasNoSignedWrap(I.hasNoSignedWrap());
       return NewShl;
@@ -751,7 +751,7 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
         Constant *ShiftDiff = ConstantInt::get(Ty, ShAmt - ShlAmt);
         if (cast<BinaryOperator>(Op0)->hasNoUnsignedWrap()) {
           // (X <<nuw C1) >>u C2 --> X >>u (C2 - C1)
-          BinaryOperator *NewLShr = BinaryOperator::CreateLShr(X, ShiftDiff);
+          auto *NewLShr = BinaryOperator::CreateLShr(X, ShiftDiff);
           NewLShr->setIsExact(I.isExact());
           return NewLShr;
         }
@@ -804,7 +804,7 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
         ShlAmtAPInt->ult(*ShAmtAPInt)) {
       // (X <<nsw C1) >>s C2 --> X >>s (C2 - C1)
       Constant *ShiftDiff = ConstantInt::get(Ty, *ShAmtAPInt - *ShlAmtAPInt);
-      BinaryOperator *NewAShr = BinaryOperator::CreateAShr(X, ShiftDiff);
+      auto *NewAShr = BinaryOperator::CreateAShr(X, ShiftDiff);
       NewAShr->setIsExact(I.isExact());
       return NewAShr;
     }
