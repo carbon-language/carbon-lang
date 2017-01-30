@@ -2548,7 +2548,6 @@ multiclass avx512_mask_setop<RegisterClass KRC, ValueType VT, PatFrag Val> {
 }
 
 multiclass avx512_mask_setop_w<PatFrag Val> {
-  defm B : avx512_mask_setop<VK8,   v8i1, Val>;
   defm W : avx512_mask_setop<VK16, v16i1, Val>;
   defm D : avx512_mask_setop<VK32,  v32i1, Val>;
   defm Q : avx512_mask_setop<VK64, v64i1, Val>;
