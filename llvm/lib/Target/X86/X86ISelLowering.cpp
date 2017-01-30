@@ -5860,31 +5860,13 @@ static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Ops,
 /// remaining input indices in case we now have a unary shuffle and adjust the
 /// Op0/Op1 inputs accordingly.
 /// Returns true if the target shuffle mask was decoded.
-static bool resolveTargetShuffleInputs(SDValue Op, SDValue &Op0, SDValue &Op1,
+static bool resolveTargetShuffleInputs(SDValue Op, SmallVectorImpl<SDValue> &Ops,
                                        SmallVectorImpl<int> &Mask) {
-  SmallVector<SDValue, 2> Ops;
   if (!setTargetShuffleZeroElements(Op, Mask, Ops))
     if (!getFauxShuffleMask(Op, Mask, Ops))
       return false;
 
-  int NumElts = Mask.size();
-  bool Op0InUse = any_of(Mask, [NumElts](int Idx) {
-    return 0 <= Idx && Idx < NumElts;
-  });
-  bool Op1InUse = any_of(Mask, [NumElts](int Idx) { return NumElts <= Idx; });
-
-  Op0 = Op0InUse ? Ops[0] : SDValue();
-  Op1 = Op1InUse ? Ops[1] : SDValue();
-
-  // We're only using Op1 - commute the mask and inputs.
-  if (!Op0InUse && Op1InUse) {
-    for (int &M : Mask)
-      if (NumElts <= M)
-        M -= NumElts;
-    Op0 = Op1;
-    Op1 = SDValue();
-  }
-
+  resolveTargetShuffleInputsAndMask(Ops, Mask);
   return true;
 }
 
@@ -27484,10 +27466,14 @@ static bool combineX86ShufflesRecursively(ArrayRef<SDValue> SrcOps,
          "Can only combine shuffles of the same vector register size.");
 
   // Extract target shuffle mask and resolve sentinels and inputs.
-  SDValue Input0, Input1;
   SmallVector<int, 16> OpMask;
-  if (!resolveTargetShuffleInputs(Op, Input0, Input1, OpMask))
+  SmallVector<SDValue, 2> OpInputs;
+  if (!resolveTargetShuffleInputs(Op, OpInputs, OpMask))
     return false;
+
+  assert(OpInputs.size() <= 2 && "Too many shuffle inputs");
+  SDValue Input0 = (OpInputs.size() > 0 ? OpInputs[0] : SDValue());
+  SDValue Input1 = (OpInputs.size() > 1 ? OpInputs[1] : SDValue());
 
   // Add the inputs to the Ops list, avoiding duplicates.
   SmallVector<SDValue, 8> Ops(SrcOps.begin(), SrcOps.end());
