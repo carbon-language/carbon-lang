@@ -882,6 +882,8 @@ define <2 x i32> @test49_splat_vec(<2 x i32> %x) {
   ret <2 x i32> %B
 }
 
+; (X <<nsw C1) >>s C2 --> X >>s (C2-C1)
+
 define i32 @test50(i32 %x) {
 ; CHECK-LABEL: @test50(
 ; CHECK-NEXT:    [[B:%.*]] = ashr i32 %x, 2
@@ -892,6 +894,21 @@ define i32 @test50(i32 %x) {
   ret i32 %B
 }
 
+; (X <<nsw C1) >>s C2 --> X >>s (C2-C1)
+
+define <2 x i32> @test50_splat_vec(<2 x i32> %x) {
+; CHECK-LABEL: @test50_splat_vec(
+; CHECK-NEXT:    [[A:%.*]] = shl nsw <2 x i32> %x, <i32 1, i32 1>
+; CHECK-NEXT:    [[B:%.*]] = ashr <2 x i32> [[A]], <i32 3, i32 3>
+; CHECK-NEXT:    ret <2 x i32> [[B]]
+;
+  %A = shl nsw <2 x i32> %x, <i32 1, i32 1>
+  %B = ashr <2 x i32> %A, <i32 3, i32 3>
+  ret <2 x i32> %B
+}
+
+; (X <<nuw C1) >>u C2 --> X >>u (C2-C1)
+
 define i32 @test51(i32 %x) {
 ; CHECK-LABEL: @test51(
 ; CHECK-NEXT:    [[B:%.*]] = lshr i32 %x, 2
@@ -900,6 +917,46 @@ define i32 @test51(i32 %x) {
   %A = shl nuw i32 %x, 1
   %B = lshr i32 %A, 3
   ret i32 %B
+}
+
+; (X <<nuw C1) >>u C2 --> X >>u (C2-C1) with splats
+; Also, check that exact is propagated.
+
+define <2 x i32> @test51_splat_vec(<2 x i32> %x) {
+; CHECK-LABEL: @test51_splat_vec(
+; CHECK-NEXT:    [[A:%.*]] = shl nuw <2 x i32> %x, <i32 1, i32 1>
+; CHECK-NEXT:    [[B:%.*]] = lshr exact <2 x i32> [[A]], <i32 3, i32 3>
+; CHECK-NEXT:    ret <2 x i32> [[B]]
+;
+  %A = shl nuw <2 x i32> %x, <i32 1, i32 1>
+  %B = lshr exact <2 x i32> %A, <i32 3, i32 3>
+  ret <2 x i32> %B
+}
+
+; (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
+
+define i32 @test51_no_nuw(i32 %x) {
+; CHECK-LABEL: @test51_no_nuw(
+; CHECK-NEXT:    [[TMP1:%.*]] = lshr i32 %x, 2
+; CHECK-NEXT:    [[B:%.*]] = and i32 [[TMP1]], 536870911
+; CHECK-NEXT:    ret i32 [[B]]
+;
+  %A = shl i32 %x, 1
+  %B = lshr i32 %A, 3
+  ret i32 %B
+}
+
+; (X << C1) >>u C2  --> X >>u (C2-C1) & (-1 >> C2)
+
+define <2 x i32> @test51_no_nuw_splat_vec(<2 x i32> %x) {
+; CHECK-LABEL: @test51_no_nuw_splat_vec(
+; CHECK-NEXT:    [[A:%.*]] = shl <2 x i32> %x, <i32 1, i32 1>
+; CHECK-NEXT:    [[B:%.*]] = lshr <2 x i32> [[A]], <i32 3, i32 3>
+; CHECK-NEXT:    ret <2 x i32> [[B]]
+;
+  %A = shl <2 x i32> %x, <i32 1, i32 1>
+  %B = lshr <2 x i32> %A, <i32 3, i32 3>
+  ret <2 x i32> %B
 }
 
 define i32 @test52(i32 %x) {
