@@ -1386,6 +1386,18 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
       "#define XXX // q w e r\n"
       "            // t y u i",
       format("#define XXX //q w e r t y u i", getLLVMStyleWithColumns(22)));
+  EXPECT_EQ("{\n"
+            "  //\n"
+            "  //\\\n"
+            "  // long 1 2 3 4\n"
+            "  // 5\n"
+            "}",
+            format("{\n"
+                   "  //\n"
+                   "  //\\\n"
+                   "  // long 1 2 3 4 5\n"
+                   "}",
+                   getLLVMStyleWithColumns(20)));
 }
 
 TEST_F(FormatTest, PreservesHangingIndentInCxxComments) {
