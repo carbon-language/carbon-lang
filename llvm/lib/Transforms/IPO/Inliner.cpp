@@ -261,8 +261,8 @@ static bool InlineCallIfPossible(
 /// Return true if inlining of CS can block the caller from being
 /// inlined which is proved to be more beneficial. \p IC is the
 /// estimated inline cost associated with callsite \p CS.
-/// \p TotalAltCost will be set to the estimated cost of inlining the caller
-/// if \p CS is suppressed for inlining.
+/// \p TotalSecondaryCost will be set to the estimated cost of inlining the
+/// caller if \p CS is suppressed for inlining.
 static bool
 shouldBeDeferred(Function *Caller, CallSite CS, InlineCost IC,
                  int &TotalSecondaryCost,
