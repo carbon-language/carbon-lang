@@ -942,15 +942,15 @@ public:
     std::u32string generic_u32string() const { return string<char32_t>(); }
 
 private:
-    _LIBCPP_FUNC_VIS int __compare(__string_view) const;
-    _LIBCPP_FUNC_VIS __string_view __root_name() const;
-    _LIBCPP_FUNC_VIS __string_view __root_directory() const;
-    _LIBCPP_FUNC_VIS __string_view __root_path_raw() const;
-    _LIBCPP_FUNC_VIS __string_view __relative_path() const;
-    _LIBCPP_FUNC_VIS __string_view __parent_path() const;
-    _LIBCPP_FUNC_VIS __string_view __filename() const;
-    _LIBCPP_FUNC_VIS __string_view __stem() const;
-    _LIBCPP_FUNC_VIS __string_view __extension() const;
+    int __compare(__string_view) const;
+    __string_view __root_name() const;
+    __string_view __root_directory() const;
+    __string_view __root_path_raw() const;
+    __string_view __relative_path() const;
+    __string_view __parent_path() const;
+    __string_view __filename() const;
+    __string_view __stem() const;
+    __string_view __extension() const;
 
 public:
     // compare
@@ -988,8 +988,8 @@ public:
     class _LIBCPP_TYPE_VIS iterator;
     typedef iterator const_iterator;
 
-    _LIBCPP_FUNC_VIS iterator begin() const;
-    _LIBCPP_FUNC_VIS iterator end() const;
+    iterator begin() const;
+    iterator end() const;
 
 private:
     inline _LIBCPP_INLINE_VISIBILITY
@@ -1154,8 +1154,8 @@ private:
     inline _LIBCPP_INLINE_VISIBILITY
     friend bool operator==(const iterator&, const iterator&);
 
-    _LIBCPP_FUNC_VIS iterator& __increment();
-    _LIBCPP_FUNC_VIS iterator& __decrement();
+    iterator& __increment();
+    iterator& __decrement();
 
     path __stashed_elem_;
     const path* __path_ptr_;
@@ -1206,7 +1206,6 @@ public:
         return __paths_->second;
     }
 
-    _LIBCPP_FUNC_VIS
     ~filesystem_error() override; // key function
 
     // TODO(ericwf): Create a custom error message.
