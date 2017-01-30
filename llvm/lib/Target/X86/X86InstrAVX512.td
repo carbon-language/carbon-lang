@@ -846,32 +846,20 @@ def VEXTRACTPSZmr : AVX512AIi8<0x17, MRMDestMem, (outs),
 // broadcast with a scalar argument.
 multiclass avx512_broadcast_scalar<bits<8> opc, string OpcodeStr,
                             X86VectorVTInfo DestInfo, X86VectorVTInfo SrcInfo> {
-
-  let isCodeGenOnly = 1 in {
-  def r_s : I< opc, MRMSrcReg, (outs DestInfo.RC:$dst),
-               (ins SrcInfo.FRC:$src), OpcodeStr#"\t{$src, $dst|$dst, $src}",
-               [(set DestInfo.RC:$dst, (DestInfo.VT (X86VBroadcast SrcInfo.FRC:$src)))]>,
-               Requires<[HasAVX512]>, T8PD, EVEX;
-
-  let Constraints = "$src0 = $dst" in
-  def rk_s : I< opc, MRMSrcReg, (outs DestInfo.RC:$dst),
-                (ins DestInfo.RC:$src0, DestInfo.KRCWM:$mask, SrcInfo.FRC:$src),
-                OpcodeStr#"\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
-                [(set DestInfo.RC:$dst,
-                     (vselect DestInfo.KRCWM:$mask,
-                              (DestInfo.VT (X86VBroadcast SrcInfo.FRC:$src)),
-                              DestInfo.RC:$src0))]>,
-              Requires<[HasAVX512]>, T8PD, EVEX, EVEX_K;
-
-  def rkz_s : I< opc, MRMSrcReg, (outs DestInfo.RC:$dst),
-                (ins DestInfo.KRCWM:$mask, SrcInfo.FRC:$src),
-                OpcodeStr#"\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}",
-                [(set DestInfo.RC:$dst,
-                     (vselect DestInfo.KRCWM:$mask,
-                              (DestInfo.VT (X86VBroadcast SrcInfo.FRC:$src)),
-                              DestInfo.ImmAllZerosV))]>,
-                Requires<[HasAVX512]>, T8PD, EVEX, EVEX_KZ;
-  } // let isCodeGenOnly = 1 in
+  def : Pat<(DestInfo.VT (X86VBroadcast SrcInfo.FRC:$src)),
+            (!cast<Instruction>(NAME#DestInfo.ZSuffix#r)
+             (COPY_TO_REGCLASS SrcInfo.FRC:$src, SrcInfo.RC))>;
+  def : Pat<(DestInfo.VT (vselect DestInfo.KRCWM:$mask,
+                                  (X86VBroadcast SrcInfo.FRC:$src),
+                                  DestInfo.RC:$src0)),
+            (!cast<Instruction>(NAME#DestInfo.ZSuffix#rk)
+             DestInfo.RC:$src0, DestInfo.KRCWM:$mask,
+             (COPY_TO_REGCLASS SrcInfo.FRC:$src, SrcInfo.RC))>;
+  def : Pat<(DestInfo.VT (vselect DestInfo.KRCWM:$mask,
+                                  (X86VBroadcast SrcInfo.FRC:$src),
+                                  DestInfo.ImmAllZerosV)),
+            (!cast<Instruction>(NAME#DestInfo.ZSuffix#rkz)
+             DestInfo.KRCWM:$mask, (COPY_TO_REGCLASS SrcInfo.FRC:$src, SrcInfo.RC))>;
 }
 
 multiclass avx512_broadcast_rm<bits<8> opc, string OpcodeStr,
