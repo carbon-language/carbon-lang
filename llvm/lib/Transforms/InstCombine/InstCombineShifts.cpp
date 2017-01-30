@@ -370,24 +370,7 @@ foldShiftByConstOfShiftByConst(BinaryOperator &I, const APInt *COp1,
     return nullptr;
 
   IntegerType *Ty = cast<IntegerType>(I.getType());
-  if (ShiftAmt1 < ShiftAmt2) {
-    uint32_t ShiftDiff = ShiftAmt2 - ShiftAmt1;
-
-    // We can't handle (X << C1) >>s C2, it shifts arbitrary bits in. However,
-    // we can handle (X <<nsw C1) >>s C2 since it only shifts in sign bits.
-    if (I.getOpcode() == Instruction::AShr &&
-        ShiftOp->getOpcode() == Instruction::Shl) {
-      if (ShiftOp->hasNoSignedWrap()) {
-        // (X <<nsw C1) >>s C2 --> X >>s (C2-C1)
-        ConstantInt *ShiftDiffCst = ConstantInt::get(Ty, ShiftDiff);
-        BinaryOperator *NewAShr =
-            BinaryOperator::Create(Instruction::AShr, X, ShiftDiffCst);
-        NewAShr->setIsExact(I.isExact());
-        return NewAShr;
-      }
-    }
-  } else {
-    assert(ShiftAmt2 < ShiftAmt1);
+  if (ShiftAmt2 < ShiftAmt1) {
     uint32_t ShiftDiff = ShiftAmt1 - ShiftAmt2;
 
     // (X >>?exact C1) << C2 --> X >>?exact (C1-C2)
@@ -800,7 +783,8 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
   if (Instruction *R = commonShiftTransforms(I))
     return R;
 
-  unsigned BitWidth = I.getType()->getScalarSizeInBits();
+  Type *Ty = I.getType();
+  unsigned BitWidth = Ty->getScalarSizeInBits();
   const APInt *ShAmtAPInt;
   if (match(Op1, m_APInt(ShAmtAPInt))) {
     unsigned ShAmt = ShAmtAPInt->getZExtValue();
@@ -811,7 +795,19 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
     Value *X;
     if (match(Op0, m_Shl(m_ZExt(m_Value(X)), m_Specific(Op1))) &&
         ShAmt == BitWidth - X->getType()->getScalarSizeInBits())
-      return new SExtInst(X, I.getType());
+      return new SExtInst(X, Ty);
+
+    // We can't handle (X << C1) >>s C2. It shifts arbitrary bits in. However,
+    // we can handle (X <<nsw C1) >>s C2 since it only shifts in sign bits.
+    const APInt *ShlAmtAPInt;
+    if (match(Op0, m_NSWShl(m_Value(X), m_APInt(ShlAmtAPInt))) &&
+        ShlAmtAPInt->ult(*ShAmtAPInt)) {
+      // (X <<nsw C1) >>s C2 --> X >>s (C2 - C1)
+      Constant *ShiftDiff = ConstantInt::get(Ty, *ShAmtAPInt - *ShlAmtAPInt);
+      BinaryOperator *NewAShr = BinaryOperator::CreateAShr(X, ShiftDiff);
+      NewAShr->setIsExact(I.isExact());
+      return NewAShr;
+    }
 
     // If the shifted-out value is known-zero, then this is an exact shift.
     if (!I.isExact() &&

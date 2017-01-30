@@ -895,15 +895,15 @@ define i32 @test50(i32 %x) {
 }
 
 ; (X <<nsw C1) >>s C2 --> X >>s (C2-C1)
+; Also, check that exact is propagated.
 
 define <2 x i32> @test50_splat_vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test50_splat_vec(
-; CHECK-NEXT:    [[A:%.*]] = shl nsw <2 x i32> %x, <i32 1, i32 1>
-; CHECK-NEXT:    [[B:%.*]] = ashr <2 x i32> [[A]], <i32 3, i32 3>
+; CHECK-NEXT:    [[B:%.*]] = ashr exact <2 x i32> %x, <i32 2, i32 2>
 ; CHECK-NEXT:    ret <2 x i32> [[B]]
 ;
   %A = shl nsw <2 x i32> %x, <i32 1, i32 1>
-  %B = ashr <2 x i32> %A, <i32 3, i32 3>
+  %B = ashr exact <2 x i32> %A, <i32 3, i32 3>
   ret <2 x i32> %B
 }
 
