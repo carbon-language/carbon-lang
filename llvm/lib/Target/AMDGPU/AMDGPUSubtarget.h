@@ -517,6 +517,21 @@ public:
     return GISel->getCallLowering();
   }
 
+  const InstructionSelector *getInstructionSelector() const override {
+    assert(GISel && "Access to GlobalISel APIs not set");
+    return GISel->getInstructionSelector();
+  }
+
+  const LegalizerInfo *getLegalizerInfo() const override {
+    assert(GISel && "Access to GlobalISel APIs not set");
+    return GISel->getLegalizerInfo();
+  }
+
+  const RegisterBankInfo *getRegBankInfo() const override {
+    assert(GISel && "Access to GlobalISel APIs not set");
+    return GISel->getRegBankInfo();
+  }
+
   const SIRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
