@@ -367,7 +367,6 @@ public:
   ScheduleDAGInstrs *
   createMachineScheduler(MachineSchedContext *C) const override;
 
-  void addIRPasses() override;
   bool addPreISel() override;
   void addMachineSSAOptimization() override;
   bool addILPOpts() override;
@@ -433,10 +432,18 @@ void AMDGPUPassConfig::addIRPasses() {
   // without ever running any passes on the second.
   addPass(createBarrierNoopPass());
 
+  const AMDGPUTargetMachine &TM = getAMDGPUTargetMachine();
+
+  if (TM.getTargetTriple().getArch() == Triple::amdgcn) {
+    // TODO: May want to move later or split into an early and late one.
+
+    addPass(createAMDGPUCodeGenPreparePass(
+              static_cast<const GCNTargetMachine *>(&TM)));
+  }
+
   // Handle uses of OpenCL image2d_t, image3d_t and sampler_t arguments.
   addPass(createAMDGPUOpenCLImageTypeLoweringPass());
 
-  const AMDGPUTargetMachine &TM = getAMDGPUTargetMachine();
   if (TM.getOptLevel() > CodeGenOpt::None) {
     addPass(createAMDGPUPromoteAlloca(&TM));
 
@@ -569,13 +576,6 @@ bool GCNPassConfig::addILPOpts() {
 
   TargetPassConfig::addILPOpts();
   return false;
-}
-
-void GCNPassConfig::addIRPasses() {
-  // TODO: May want to move later or split into an early and late one.
-  addPass(createAMDGPUCodeGenPreparePass(&getGCNTargetMachine()));
-
-  AMDGPUPassConfig::addIRPasses();
 }
 
 bool GCNPassConfig::addInstSelector() {
