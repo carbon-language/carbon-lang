@@ -2106,10 +2106,6 @@ void NewGVN::deleteInstructionsInBlock(BasicBlock *BB) {
   DEBUG(dbgs() << "  BasicBlock Dead:" << *BB);
   ++NumGVNBlocksDeleted;
 
-  // Check to see if there are non-terminating instructions to delete.
-  if (isa<TerminatorInst>(BB->begin()))
-    return;
-
   // Delete the instructions backwards, as it has a reduced likelihood of having
   // to update as many def-use and use-def chains. Start after the terminator.
   auto StartPoint = BB->rbegin();
@@ -2126,6 +2122,11 @@ void NewGVN::deleteInstructionsInBlock(BasicBlock *BB) {
     Inst.eraseFromParent();
     ++NumGVNInstrDeleted;
   }
+  // Now insert something that simplifycfg will turn into an unreachable.
+  Type *Int8Ty = Type::getInt8Ty(BB->getContext());
+  new StoreInst(UndefValue::get(Int8Ty),
+                Constant::getNullValue(Int8Ty->getPointerTo()),
+                BB->getTerminator());
 }
 
 void NewGVN::markInstructionForDeletion(Instruction *I) {
