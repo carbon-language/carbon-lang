@@ -350,36 +350,48 @@ namespace {
       MostDerivedArraySize = 2;
       MostDerivedPathLength = Entries.size();
     }
-    void diagnosePointerArithmetic(EvalInfo &Info, const Expr *E, uint64_t N);
+    void diagnosePointerArithmetic(EvalInfo &Info, const Expr *E, APSInt N);
     /// Add N to the address of this subobject.
-    void adjustIndex(EvalInfo &Info, const Expr *E, uint64_t N) {
-      if (Invalid) return;
+    void adjustIndex(EvalInfo &Info, const Expr *E, APSInt N) {
+      if (Invalid || !N) return;
+      uint64_t TruncatedN = N.extOrTrunc(64).getZExtValue();
       if (isMostDerivedAnUnsizedArray()) {
         // Can't verify -- trust that the user is doing the right thing (or if
         // not, trust that the caller will catch the bad behavior).
-        Entries.back().ArrayIndex += N;
+        // FIXME: Should we reject if this overflows, at least?
+        Entries.back().ArrayIndex += TruncatedN;
         return;
       }
-      if (MostDerivedPathLength == Entries.size() &&
-          MostDerivedIsArrayElement) {
-        Entries.back().ArrayIndex += N;
-        if (Entries.back().ArrayIndex > getMostDerivedArraySize()) {
-          diagnosePointerArithmetic(Info, E, Entries.back().ArrayIndex);
-          setInvalid();
-        }
-        return;
-      }
+
       // [expr.add]p4: For the purposes of these operators, a pointer to a
       // nonarray object behaves the same as a pointer to the first element of
       // an array of length one with the type of the object as its element type.
-      if (IsOnePastTheEnd && N == (uint64_t)-1)
-        IsOnePastTheEnd = false;
-      else if (!IsOnePastTheEnd && N == 1)
-        IsOnePastTheEnd = true;
-      else if (N != 0) {
-        diagnosePointerArithmetic(Info, E, uint64_t(IsOnePastTheEnd) + N);
+      bool IsArray = MostDerivedPathLength == Entries.size() &&
+                     MostDerivedIsArrayElement;
+      uint64_t ArrayIndex =
+          IsArray ? Entries.back().ArrayIndex : (uint64_t)IsOnePastTheEnd;
+      uint64_t ArraySize =
+          IsArray ? getMostDerivedArraySize() : (uint64_t)1;
+
+      if (N < -(int64_t)ArrayIndex || N > ArraySize - ArrayIndex) {
+        // Calculate the actual index in a wide enough type, so we can include
+        // it in the note.
+        N = N.extend(std::max<unsigned>(N.getBitWidth() + 1, 65));
+        (llvm::APInt&)N += ArrayIndex;
+        assert(N.ugt(ArraySize) && "bounds check failed for in-bounds index");
+        diagnosePointerArithmetic(Info, E, N);
         setInvalid();
+        return;
       }
+
+      ArrayIndex += TruncatedN;
+      assert(ArrayIndex <= ArraySize &&
+             "bounds check succeeded for out-of-bounds index");
+
+      if (IsArray)
+        Entries.back().ArrayIndex = ArrayIndex;
+      else
+        IsOnePastTheEnd = (ArrayIndex != 0);
     }
   };
 
@@ -1050,16 +1062,16 @@ bool SubobjectDesignator::checkSubobject(EvalInfo &Info, const Expr *E,
 }
 
 void SubobjectDesignator::diagnosePointerArithmetic(EvalInfo &Info,
-                                                    const Expr *E, uint64_t N) {
+                                                    const Expr *E, APSInt N) {
   // If we're complaining, we must be able to statically determine the size of
   // the most derived array.
   if (MostDerivedPathLength == Entries.size() && MostDerivedIsArrayElement)
     Info.CCEDiag(E, diag::note_constexpr_array_index)
-      << static_cast<int>(N) << /*array*/ 0
+      << N << /*array*/ 0
       << static_cast<unsigned>(getMostDerivedArraySize());
   else
     Info.CCEDiag(E, diag::note_constexpr_array_index)
-      << static_cast<int>(N) << /*non-array*/ 1;
+      << N << /*non-array*/ 1;
   setInvalid();
 }
 
@@ -1275,14 +1287,24 @@ namespace {
     void clearIsNullPointer() {
       IsNullPtr = false;
     }
-    void adjustOffsetAndIndex(EvalInfo &Info, const Expr *E, uint64_t Index,
+    void adjustOffsetAndIndex(EvalInfo &Info, const Expr *E, APSInt Index,
                               CharUnits ElementSize) {
-      // Compute the new offset in the appropriate width.
-      Offset += Index * ElementSize;
-      if (Index && checkNullPointer(Info, E, CSK_ArrayIndex))
+      // An index of 0 has no effect. (In C, adding 0 to a null pointer is UB,
+      // but we're not required to diagnose it and it's valid in C++.)
+      if (!Index)
+        return;
+
+      // Compute the new offset in the appropriate width, wrapping at 64 bits.
+      // FIXME: When compiling for a 32-bit target, we should use 32-bit
+      // offsets.
+      uint64_t Offset64 = Offset.getQuantity();
+      uint64_t ElemSize64 = ElementSize.getQuantity();
+      uint64_t Index64 = Index.extOrTrunc(64).getZExtValue();
+      Offset = CharUnits::fromQuantity(Offset64 + ElemSize64 * Index64);
+
+      if (checkNullPointer(Info, E, CSK_ArrayIndex))
         Designator.adjustIndex(Info, E, Index);
-      if (Index)
-        clearIsNullPointer();
+      clearIsNullPointer();
     }
     void adjustOffset(CharUnits N) {
       Offset += N;
@@ -1411,6 +1433,16 @@ static bool EvaluateAsRValue(EvalInfo &Info, const Expr *E, APValue &Result);
 // Misc utilities
 //===----------------------------------------------------------------------===//
 
+/// Negate an APSInt in place, converting it to a signed form if necessary, and
+/// preserving its value (by extending by up to one bit as needed).
+static void negateAsSigned(APSInt &Int) {
+  if (Int.isUnsigned() || Int.isMinSignedValue()) {
+    Int = Int.extend(Int.getBitWidth() + 1);
+    Int.setIsSigned(true);
+  }
+  Int = -Int;
+}
+
 /// Produce a string describing the given constexpr call.
 static void describeCall(CallStackFrame *Frame, raw_ostream &Out) {
   unsigned ArgIndex = 0;
@@ -1455,21 +1487,6 @@ static bool EvaluateIgnoredValue(EvalInfo &Info, const Expr *E) {
   if (!Evaluate(Scratch, Info, E))
     // We don't need the value, but we might have skipped a side effect here.
     return Info.noteSideEffect();
-  return true;
-}
-
-/// Sign- or zero-extend a value to 64 bits. If it's already 64 bits, just
-/// return its existing value.
-static bool getExtValue(EvalInfo &Info, const Expr *E, const APSInt &Value,
-                        int64_t &Result) {
-  if (Value.isSigned() ? Value.getMinSignedBits() > 64
-                       : Value.getActiveBits() > 64) {
-    Info.FFDiag(E);
-    return false;
-  }
-
-  Result = Value.isSigned() ? Value.getSExtValue()
-                            : static_cast<int64_t>(Value.getZExtValue());
   return true;
 }
 
@@ -2228,13 +2245,20 @@ static bool HandleSizeof(EvalInfo &Info, SourceLocation Loc,
 /// \param Adjustment - The adjustment, in objects of type EltTy, to add.
 static bool HandleLValueArrayAdjustment(EvalInfo &Info, const Expr *E,
                                         LValue &LVal, QualType EltTy,
-                                        int64_t Adjustment) {
+                                        APSInt Adjustment) {
   CharUnits SizeOfPointee;
   if (!HandleSizeof(Info, E->getExprLoc(), EltTy, SizeOfPointee))
     return false;
 
   LVal.adjustOffsetAndIndex(Info, E, Adjustment, SizeOfPointee);
   return true;
+}
+
+static bool HandleLValueArrayAdjustment(EvalInfo &Info, const Expr *E,
+                                        LValue &LVal, QualType EltTy,
+                                        int64_t Adjustment) {
+  return HandleLValueArrayAdjustment(Info, E, LVal, EltTy,
+                                     APSInt::get(Adjustment));
 }
 
 /// Update an lvalue to refer to a component of a complex number.
@@ -3192,11 +3216,9 @@ struct CompoundAssignSubobjectHandler {
       return false;
     }
 
-    int64_t Offset;
-    if (!getExtValue(Info, E, RHS.getInt(), Offset))
-      return false;
+    APSInt Offset = RHS.getInt();
     if (Opcode == BO_Sub)
-      Offset = -Offset;
+      negateAsSigned(Offset);
 
     LValue LVal;
     LVal.setFrom(Info.Ctx, Subobj);
@@ -5158,10 +5180,7 @@ bool LValueExprEvaluator::VisitArraySubscriptExpr(const ArraySubscriptExpr *E) {
   if (!EvaluateInteger(E->getIdx(), Index, Info))
     return false;
 
-  int64_t Offset;
-  if (!getExtValue(Info, E, Index, Offset))
-    return false;
-  return HandleLValueArrayAdjustment(Info, E, Result, E->getType(), Offset);
+  return HandleLValueArrayAdjustment(Info, E, Result, E->getType(), Index);
 }
 
 bool LValueExprEvaluator::VisitUnaryDeref(const UnaryOperator *E) {
@@ -5427,15 +5446,11 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (!EvaluateInteger(IExp, Offset, Info) || !EvalPtrOK)
     return false;
 
-  int64_t AdditionalOffset;
-  if (!getExtValue(Info, E, Offset, AdditionalOffset))
-    return false;
   if (E->getOpcode() == BO_Sub)
-    AdditionalOffset = -AdditionalOffset;
+    negateAsSigned(Offset);
 
   QualType Pointee = PExp->getType()->castAs<PointerType>()->getPointeeType();
-  return HandleLValueArrayAdjustment(Info, E, Result, Pointee,
-                                     AdditionalOffset);
+  return HandleLValueArrayAdjustment(Info, E, Result, Pointee, Offset);
 }
 
 bool PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
@@ -7931,6 +7946,18 @@ bool DataRecursiveIntBinOpEvaluator::
   return true;
 }
 
+static void addOrSubLValueAsInteger(APValue &LVal, APSInt Index, bool IsSub) {
+  // Compute the new offset in the appropriate width, wrapping at 64 bits.
+  // FIXME: When compiling for a 32-bit target, we should use 32-bit
+  // offsets.
+  assert(!LVal.hasLValuePath() && "have designator for integer lvalue");
+  CharUnits &Offset = LVal.getLValueOffset();
+  uint64_t Offset64 = Offset.getQuantity();
+  uint64_t Index64 = Index.extOrTrunc(64).getZExtValue();
+  Offset = CharUnits::fromQuantity(IsSub ? Offset64 - Index64
+                                         : Offset64 + Index64);
+}
+
 bool DataRecursiveIntBinOpEvaluator::
        VisitBinOp(const EvalResult &LHSResult, const EvalResult &RHSResult,
                   const BinaryOperator *E, APValue &Result) {
@@ -7977,13 +8004,7 @@ bool DataRecursiveIntBinOpEvaluator::
   // Handle cases like (unsigned long)&a + 4.
   if (E->isAdditiveOp() && LHSVal.isLValue() && RHSVal.isInt()) {
     Result = LHSVal;
-    int64_t Offset;
-    if (!getExtValue(Info, E, RHSVal.getInt(), Offset))
-      return false;
-    if (E->getOpcode() == BO_Add)
-      Result.getLValueOffset() += CharUnits::fromQuantity(Offset);
-    else
-      Result.getLValueOffset() -= CharUnits::fromQuantity(Offset);
+    addOrSubLValueAsInteger(Result, RHSVal.getInt(), E->getOpcode() == BO_Sub);
     return true;
   }
   
@@ -7991,10 +8012,7 @@ bool DataRecursiveIntBinOpEvaluator::
   if (E->getOpcode() == BO_Add &&
       RHSVal.isLValue() && LHSVal.isInt()) {
     Result = RHSVal;
-    int64_t Offset;
-    if (!getExtValue(Info, E, LHSVal.getInt(), Offset))
-      return false;
-    Result.getLValueOffset() += CharUnits::fromQuantity(Offset);
+    addOrSubLValueAsInteger(Result, LHSVal.getInt(), /*IsSub*/false);
     return true;
   }
   

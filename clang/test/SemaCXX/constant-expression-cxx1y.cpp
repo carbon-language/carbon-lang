@@ -980,5 +980,5 @@ constexpr int S = sum(Cs); // expected-error{{must be initialized by a constant 
 
 constexpr void PR28739(int n) { // expected-error {{never produces a constant}}
   int *p = &n;
-  p += (__int128)(unsigned long)-1; // expected-note {{subexpression}}
+  p += (__int128)(unsigned long)-1; // expected-note {{cannot refer to element 18446744073709551615 of non-array object in a constant expression}}
 }

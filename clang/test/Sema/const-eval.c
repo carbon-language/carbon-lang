@@ -138,14 +138,9 @@ void PR24622();
 struct PR24622 {} pr24622;
 EVAL_EXPR(52, &pr24622 == (void *)&PR24622); // expected-error {{must have a constant size}}
 
-// Reject cases that would require more than 64 bits of pointer offset to
-// represent.
-// FIXME: We don't check for all offset overflow, just immediate adjustments
-// that don't fit in 64 bits. We should consistently either check all offset
-// adjustments or truncate to 64 bits everywhere.
-void *PR28739a = (__int128)(unsigned long)-1 + &PR28739a; // expected-error {{not a compile-time constant}}
-void *PR28739b = &PR28739b + (__int128)(unsigned long)-1; // expected-error {{not a compile-time constant}}
-__int128 PR28739c = (&PR28739c + (__int128)(unsigned long)-1) - &PR28739c; // expected-error {{not a compile-time constant}}
-void *PR28739d = &(&PR28739d)[(__int128)(unsigned long)-1]; // expected-error {{not a compile-time constant}}
-__int128 PR28739e = (__int128)(unsigned long)-1 + (long)&PR28739e; // expected-error {{not a compile-time constant}}
-__int128 PR28739f = (long)&PR28739f + (__int128)(unsigned long)-1; // expected-error {{not a compile-time constant}}
+// We evaluate these by providing 2s' complement semantics in constant
+// expressions, like we do for integers.
+void *PR28739a = (__int128)(unsigned long)-1 + &PR28739a;
+void *PR28739b = &PR28739b + (__int128)(unsigned long)-1;
+__int128 PR28739c = (&PR28739c + (__int128)(unsigned long)-1) - &PR28739c;
+void *PR28739d = &(&PR28739d)[(__int128)(unsigned long)-1];
