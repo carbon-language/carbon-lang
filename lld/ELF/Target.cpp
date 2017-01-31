@@ -393,7 +393,7 @@ RelExpr X86TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_386_NONE:
     return R_HINT;
   default:
-    error("unknown relocation type: " + toString(Type));
+    error(toString(S.File) + ": unknown relocation type: " + toString(Type));
     return R_HINT;
   }
 }
@@ -674,7 +674,7 @@ RelExpr X86_64TargetInfo<ELFT>::getRelExpr(uint32_t Type,
   case R_X86_64_NONE:
     return R_HINT;
   default:
-    error("unknown relocation type: " + toString(Type));
+    error(toString(S.File) + ": unknown relocation type: " + toString(Type));
     return R_HINT;
   }
 }
@@ -1627,7 +1627,7 @@ RelExpr AMDGPUTargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   case R_AMDGPU_GOTPCREL32_HI:
     return R_GOT_PC;
   default:
-    error("unknown relocation type: " + toString(Type));
+    error(toString(S.File) + ": unknown relocation type: " + toString(Type));
     return R_HINT;
   }
 }
