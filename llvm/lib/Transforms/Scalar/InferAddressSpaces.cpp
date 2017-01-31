@@ -141,6 +141,9 @@ private:
   void inferAddressSpaces(const std::vector<Value *> &Postorder,
                           ValueToAddrSpaceMapTy *InferredAddrSpace) const;
 
+  bool handleComplexPtrUse(User &U, Value *OldV, Value *NewV) const;
+  bool isSafeToCastConstAddrSpace(Constant *C, unsigned NewAS) const;
+
   // Changes the flat address expressions in function F to point to specific
   // address spaces if InferredAddrSpace says so. Postorder is the postorder of
   // all flat expressions in the use-def graph of function F.
@@ -307,6 +310,13 @@ InferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
        PushPtrOperand(MTI->getRawSource());
     } else if (auto *II = dyn_cast<IntrinsicInst>(&I))
       collectRewritableIntrinsicOperands(II, &PostorderStack, &Visited);
+    else if (ICmpInst *Cmp = dyn_cast<ICmpInst>(&I)) {
+      // FIXME: Handle vectors of pointers
+      if (Cmp->getOperand(0)->getType()->isPointerTy()) {
+        PushPtrOperand(Cmp->getOperand(0));
+        PushPtrOperand(Cmp->getOperand(1));
+      }
+    }
   }
 
   std::vector<Value *> Postorder; // The resultant postorder.
@@ -662,6 +672,29 @@ static bool handleMemIntrinsicPtrUse(MemIntrinsic *MI,
   return true;
 }
 
+// \p returns true if it is OK to change the address space of constant \p C with
+// a ConstantExpr addrspacecast.
+bool InferAddressSpaces::isSafeToCastConstAddrSpace(Constant *C, unsigned NewAS) const {
+  if (C->getType()->getPointerAddressSpace() == NewAS)
+    return true;
+
+  if (isa<UndefValue>(C) || isa<ConstantPointerNull>(C))
+    return true;
+
+  if (auto *Op = dyn_cast<Operator>(C)) {
+    // If we already have a constant addrspacecast, it should be safe to cast it
+    // off.
+    if (Op->getOpcode() == Instruction::AddrSpaceCast)
+      return isSafeToCastConstAddrSpace(cast<Constant>(Op->getOperand(0)), NewAS);
+
+    if (Op->getOpcode() == Instruction::IntToPtr &&
+        Op->getType()->getPointerAddressSpace() == FlatAddrSpace)
+      return true;
+  }
+
+  return false;
+}
+
 static Value::use_iterator skipToNextUser(Value::use_iterator I,
                                           Value::use_iterator End) {
   User *CurUser = I->getUser();
@@ -740,15 +773,38 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
       }
 
       if (isa<Instruction>(CurUser)) {
+        if (ICmpInst *Cmp = dyn_cast<ICmpInst>(CurUser)) {
+          // If we can infer that both pointers are in the same addrspace,
+          // transform e.g.
+          //   %cmp = icmp eq float* %p, %q
+          // into
+          //   %cmp = icmp eq float addrspace(3)* %new_p, %new_q
+
+          unsigned NewAS = NewV->getType()->getPointerAddressSpace();
+          int SrcIdx = U.getOperandNo();
+          int OtherIdx = (SrcIdx == 0) ? 1 : 0;
+          Value *OtherSrc = Cmp->getOperand(OtherIdx);
+
+          if (Value *OtherNewV = ValueWithNewAddrSpace.lookup(OtherSrc)) {
+            if (OtherNewV->getType()->getPointerAddressSpace() == NewAS) {
+              Cmp->setOperand(OtherIdx, OtherNewV);
+              Cmp->setOperand(SrcIdx, NewV);
+              continue;
+            }
+          }
+
+          // Even if the type mismatches, we can cast the constant.
+          if (auto *KOtherSrc = dyn_cast<Constant>(OtherSrc)) {
+            if (isSafeToCastConstAddrSpace(KOtherSrc, NewAS)) {
+              Cmp->setOperand(SrcIdx, NewV);
+              Cmp->setOperand(OtherIdx,
+                ConstantExpr::getAddrSpaceCast(KOtherSrc, NewV->getType()));
+              continue;
+            }
+          }
+        }
+
         // Otherwise, replaces the use with flat(NewV).
-        // TODO: Some optimization opportunities are missed. For example, in
-        //   %0 = icmp eq float* %p, %q
-        // if both p and q are inferred to be shared, we can rewrite %0 as
-        //   %0 = icmp eq float addrspace(3)* %new_p, %new_q
-        // instead of currently
-        //   %flat_p = addrspacecast float addrspace(3)* %new_p to float*
-        //   %flat_q = addrspacecast float addrspace(3)* %new_q to float*
-        //   %0 = icmp eq float* %flat_p, %flat_q
         if (Instruction *I = dyn_cast<Instruction>(V)) {
           BasicBlock::iterator InsertPos = std::next(I->getIterator());
           while (isa<PHINode>(InsertPos))

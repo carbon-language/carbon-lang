@@ -106,8 +106,7 @@ bb:
 ; CHECK-LABEL: @loop(
 
 ; CHECK: %p = bitcast [10 x float] addrspace(3)* @array to float addrspace(3)*
-; CHECK: %0 = addrspacecast float addrspace(3)* %p to float addrspace(4)*
-; CHECK: %end = getelementptr float, float addrspace(4)* %0, i64 10
+; CHECK: %end = getelementptr float, float addrspace(3)* %p, i64 10
 ; CHECK: br label %loop
 
 ; CHECK: loop:                                             ; preds = %loop, %entry
@@ -115,8 +114,8 @@ bb:
 ; CHECK: %v = load float, float addrspace(3)* %i
 ; CHECK: call void @use(float %v)
 ; CHECK: %i2 = getelementptr float, float addrspace(3)* %i, i64 1
-; CHECK: %1 = addrspacecast float addrspace(3)* %i2 to float addrspace(4)*
-; CHECK: %exit_cond = icmp eq float addrspace(4)* %1, %end
+; CHECK: %exit_cond = icmp eq float addrspace(3)* %i2, %end
+
 ; CHECK: br i1 %exit_cond, label %exit, label %loop
 define void @loop() #0 {
 entry:
