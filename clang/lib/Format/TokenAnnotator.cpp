@@ -1454,7 +1454,9 @@ public:
 
       // Consume scopes: (), [], <> and {}
       if (Current->opensScope()) {
-        while (Current && !Current->closesScope()) {
+        // In fragment of a JavaScript template string can look like '}..${' and
+        // thus close a scope and open a new one at the same time.
+        while (Current && (!Current->closesScope() || Current->opensScope())) {
           next();
           parse();
         }
