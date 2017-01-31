@@ -94,7 +94,8 @@ define <8 x i16> @_clearupper8xi16a(<8 x i16>) nounwind {
 ;
 ; AVX-LABEL: _clearupper8xi16a:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vandps {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5,6,7]
+; AVX-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %x0 = extractelement <8 x i16> %0, i32 0
   %x1 = extractelement <8 x i16> %0, i32 1
@@ -317,11 +318,7 @@ define <2 x i64> @_clearupper2xi64b(<2 x i64>) nounwind {
 define <4 x i32> @_clearupper4xi32b(<4 x i32>) nounwind {
 ; SSE-LABEL: _clearupper4xi32b:
 ; SSE:       # BB#0:
-; SSE-NEXT:    xorl %eax, %eax
-; SSE-NEXT:    pinsrw $1, %eax, %xmm0
-; SSE-NEXT:    pinsrw $3, %eax, %xmm0
-; SSE-NEXT:    pinsrw $5, %eax, %xmm0
-; SSE-NEXT:    pinsrw $7, %eax, %xmm0
+; SSE-NEXT:    andps {{.*}}(%rip), %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: _clearupper4xi32b:

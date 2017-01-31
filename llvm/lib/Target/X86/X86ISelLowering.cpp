@@ -5770,12 +5770,21 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     return true;
   }
   case X86ISD::PINSRW: {
-    // Attempt to recognise a PINSRW(ASSERTZEXT(PEXTRW)) shuffle pattern.
-    // TODO: Expand this to support PINSRB/INSERT_VECTOR_ELT/etc.
     SDValue InVec = N.getOperand(0);
     SDValue InScl = N.getOperand(1);
     uint64_t InIdx = N.getConstantOperandVal(2);
     assert(InIdx < NumElts && "Illegal insertion index");
+
+    // Attempt to recognise a PINSRW(VEC, 0, Idx) shuffle pattern.
+    if (X86::isZeroNode(InScl)) {
+      Ops.push_back(InVec);
+      for (unsigned i = 0; i != NumElts; ++i)
+        Mask.push_back(i == InIdx ? SM_SentinelZero : i);
+      return true;
+    }
+
+    // Attempt to recognise a PINSRW(ASSERTZEXT(PEXTRW)) shuffle pattern.
+    // TODO: Expand this to support PINSRB/INSERT_VECTOR_ELT/etc.
     if (InScl.getOpcode() != ISD::AssertZext ||
         InScl.getOperand(0).getOpcode() != X86ISD::PEXTRW)
       return false;
@@ -30597,6 +30606,24 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue combineVectorInsert(SDNode *N, SelectionDAG &DAG,
+                                   TargetLowering::DAGCombinerInfo &DCI,
+                                   const X86Subtarget &Subtarget) {
+  unsigned Opcode = N->getOpcode();
+  assert(((X86ISD::PINSRB == Opcode && N->getValueType(0) ==MVT::v16i8) ||
+          (X86ISD::PINSRW == Opcode && N->getValueType(0) ==MVT::v8i16)) &&
+         "Unexpected vector insertion");
+
+  // Attempt to combine PINSRB/PINSRW patterns to a shuffle.
+  SDValue Op(N, 0);
+  SmallVector<int, 1> NonceMask; // Just a placeholder.
+  NonceMask.push_back(0);
+  combineX86ShufflesRecursively({Op}, 0, Op, NonceMask,
+                                /*Depth*/ 1, /*HasVarMask*/ false, DAG,
+                                DCI, Subtarget);
+  return SDValue();
+}
+
 /// Recognize the distinctive (AND (setcc ...) (setcc ..)) where both setccs
 /// reference the same FP CMP, and rewrite for CMPEQSS and friends. Likewise for
 /// OR -> CMPNEQSS.
@@ -34159,6 +34186,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VSRLI:       return combineVectorShift(N, DAG, DCI, Subtarget);
   case X86ISD::VSEXT:
   case X86ISD::VZEXT:       return combineVSZext(N, DAG, DCI, Subtarget);
+  case X86ISD::PINSRB:
+  case X86ISD::PINSRW:      return combineVectorInsert(N, DAG, DCI, Subtarget);
   case X86ISD::SHUFP:       // Handle all target specific shuffles
   case X86ISD::INSERTPS:
   case X86ISD::PALIGNR:
