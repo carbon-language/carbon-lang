@@ -5397,6 +5397,7 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT, bool AllowSentinelZero,
   case X86ISD::BLENDI:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeBLENDMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
     break;
   case X86ISD::SHUFP:
     ImmN = N->getOperand(N->getNumOperands()-1);

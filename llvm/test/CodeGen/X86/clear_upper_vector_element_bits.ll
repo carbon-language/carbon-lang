@@ -94,8 +94,7 @@ define <8 x i16> @_clearupper8xi16a(<8 x i16>) nounwind {
 ;
 ; AVX-LABEL: _clearupper8xi16a:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1,2,3,4,5,6,7]
-; AVX-NEXT:    vpand {{.*}}(%rip), %xmm0, %xmm0
+; AVX-NEXT:    vandps {{.*}}(%rip), %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %x0 = extractelement <8 x i16> %0, i32 0
   %x1 = extractelement <8 x i16> %0, i32 1
