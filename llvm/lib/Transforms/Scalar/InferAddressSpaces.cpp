@@ -570,8 +570,11 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
                  << "\n  with\n  " << *NewV << '\n');
 
     for (Use *U : Uses) {
-      if (isa<LoadInst>(U->getUser()) ||
-          (isa<StoreInst>(U->getUser()) &&
+      LoadInst *LI = dyn_cast<LoadInst>(U->getUser());
+      StoreInst *SI = dyn_cast<StoreInst>(U->getUser());
+
+      if ((LI && !LI->isVolatile()) ||
+          (SI && !SI->isVolatile() &&
            U->getOperandNo() == StoreInst::getPointerOperandIndex())) {
         // If V is used as the pointer operand of a load/store, sets the pointer
         // operand to NewV. This replacement does not change the element type,
