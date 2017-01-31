@@ -1960,6 +1960,23 @@ TEST_F(FormatTest, ReflowsComments) {
                    " * longg */",
                    getLLVMStyleWithColumns(20)));
 
+  // Reflow lines with leading whitespace.
+  EXPECT_EQ("{\n"
+            "  /*\n"
+            "   * long long long\n"
+            "   * long long long\n"
+            "   * long long long\n"
+            "   */\n"
+            "}",
+            format("{\n"
+                   "/*\n"
+                   " * long long long long\n"
+                   " *   long\n"
+                   " * long long long long\n"
+                   " */\n"
+                   "}",
+                   getLLVMStyleWithColumns(20)));
+
   // Break single line block comments that are first in the line with ' *'
   // decoration.
   EXPECT_EQ("/* long long long\n"

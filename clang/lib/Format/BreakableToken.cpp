@@ -521,10 +521,15 @@ unsigned BreakableBlockComment::getLineLengthAfterSplitBefore(
     unsigned PreviousEndColumn,
     unsigned ColumnLimit,
     Split SplitBefore) const {
-    if (SplitBefore.first == StringRef::npos ||
-        SplitBefore.first + SplitBefore.second < Content[LineIndex].size()) {
-      // A piece of line, not the whole, gets reflown.
-      return getLineLengthAfterSplit(LineIndex, TailOffset, StringRef::npos);
+  if (SplitBefore.first == StringRef::npos ||
+      // Block comment line contents contain the trailing whitespace after the
+      // decoration, so the need of left trim. Note that this behavior is
+      // consistent with the breaking of block comments where the indentation of
+      // a broken line is uniform across all the lines of the block comment.
+      SplitBefore.first + SplitBefore.second <
+          Content[LineIndex].ltrim().size()) {
+    // A piece of line, not the whole, gets reflown.
+    return getLineLengthAfterSplit(LineIndex, TailOffset, StringRef::npos);
   } else {
     // The whole line gets reflown, need to check if we need to insert a break
     // for the postfix or not.
