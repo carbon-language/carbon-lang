@@ -595,24 +595,19 @@ const Expression *NewGVN::createExpression(Instruction *I,
     }
     E->setOpcode((CI->getOpcode() << 8) | Predicate);
     // TODO: 25% of our time is spent in SimplifyCmpInst with pointer operands
-    // TODO: Since we noop bitcasts, we may need to check types before
-    // simplifying, so that we don't end up simplifying based on a wrong
-    // type assumption. We should clean this up so we can use constants of the
-    // wrong type
-
     assert(I->getOperand(0)->getType() == I->getOperand(1)->getType() &&
            "Wrong types on cmp instruction");
-    if ((E->getOperand(0)->getType() == I->getOperand(0)->getType() &&
-         E->getOperand(1)->getType() == I->getOperand(1)->getType())) {
-      Value *V = SimplifyCmpInst(Predicate, E->getOperand(0), E->getOperand(1),
+    assert ((E->getOperand(0)->getType() == I->getOperand(0)->getType() &&
+             E->getOperand(1)->getType() == I->getOperand(1)->getType()));
+    Value *V = SimplifyCmpInst(Predicate, E->getOperand(0), E->getOperand(1),
                                  *DL, TLI, DT, AC);
-      if (const Expression *SimplifiedE = checkSimplificationResults(E, I, V))
-        return SimplifiedE;
-    }
+    if (const Expression *SimplifiedE = checkSimplificationResults(E, I, V))
+      return SimplifiedE;
   } else if (isa<SelectInst>(I)) {
     if (isa<Constant>(E->getOperand(0)) ||
-        (E->getOperand(1)->getType() == I->getOperand(1)->getType() &&
-         E->getOperand(2)->getType() == I->getOperand(2)->getType())) {
+        E->getOperand(0) == E->getOperand(1)){ 
+      assert (E->getOperand(1)->getType() == I->getOperand(1)->getType() &&
+              E->getOperand(2)->getType() == I->getOperand(2)->getType());
       Value *V = SimplifySelectInst(E->getOperand(0), E->getOperand(1),
                                     E->getOperand(2), *DL, TLI, DT, AC);
       if (const Expression *SimplifiedE = checkSimplificationResults(E, I, V))
