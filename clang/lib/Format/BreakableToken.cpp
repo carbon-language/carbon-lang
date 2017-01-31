@@ -304,7 +304,9 @@ static bool mayReflowContent(StringRef Content) {
   // Simple heuristic for what to reflow: content should contain at least two
   // characters and either the first or second character must be
   // non-punctuation.
-  return Content.size() >= 2 && !Content.endswith("\\") &&
+  return Content.size() >= 2 &&
+         // Lines starting with '@' commonly have special meaning.
+         !Content.startswith("@") && !Content.endswith("\\") &&
          // Note that this is UTF-8 safe, since if isPunctuation(Content[0]) is
          // true, then the first code point must be 1 byte long.
          (!isPunctuation(Content[0]) || !isPunctuation(Content[1]));

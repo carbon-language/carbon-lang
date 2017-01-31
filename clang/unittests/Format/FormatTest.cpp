@@ -2244,6 +2244,15 @@ TEST_F(FormatTest, ReflowsComments) {
                 "// long long long long\n"
                 "// ... --- ...",
                 getLLVMStyleWithColumns(20)));
+
+  // Don't reflow lines starting with '@'.
+  EXPECT_EQ("// long long long\n"
+            "// long\n"
+            "// @param arg",
+            format("// long long long long\n"
+                   "// @param arg",
+                   getLLVMStyleWithColumns(20)));
+
   // Reflow lines that have a non-punctuation character among their first 2
   // characters.
   EXPECT_EQ("// long long long\n"
