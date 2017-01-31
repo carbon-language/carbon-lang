@@ -153,7 +153,15 @@ private:
     Value *V, std::vector<std::pair<Value *, bool>> *PostorderStack,
     DenseSet<Value *> *Visited) const;
 
+  bool rewriteIntrinsicOperands(IntrinsicInst *II,
+                                Value *OldV, Value *NewV) const;
+  void collectRewritableIntrinsicOperands(
+    IntrinsicInst *II,
+    std::vector<std::pair<Value *, bool>> *PostorderStack,
+    DenseSet<Value *> *Visited) const;
+
   std::vector<Value *> collectFlatAddressExpressions(Function &F) const;
+
   Value *cloneValueWithNewAddressSpace(
     Value *V, unsigned NewAddrSpace,
     const ValueToValueMapTy &ValueWithNewAddrSpace,
@@ -210,6 +218,47 @@ static SmallVector<Value *, 2> getPointerOperands(const Value &V) {
   }
 }
 
+// TODO: Move logic to TTI?
+bool InferAddressSpaces::rewriteIntrinsicOperands(IntrinsicInst *II,
+                                                  Value *OldV,
+                                                  Value *NewV) const {
+  Module *M = II->getParent()->getParent()->getParent();
+
+  switch (II->getIntrinsicID()) {
+  case Intrinsic::objectsize:
+  case Intrinsic::amdgcn_atomic_inc:
+  case Intrinsic::amdgcn_atomic_dec: {
+    Type *DestTy = II->getType();
+    Type *SrcTy = NewV->getType();
+    Function *NewDecl
+      = Intrinsic::getDeclaration(M, II->getIntrinsicID(), { DestTy, SrcTy });
+    II->setArgOperand(0, NewV);
+    II->setCalledFunction(NewDecl);
+    return true;
+  }
+  default:
+    return false;
+  }
+}
+
+// TODO: Move logic to TTI?
+void InferAddressSpaces::collectRewritableIntrinsicOperands(
+  IntrinsicInst *II,
+  std::vector<std::pair<Value *, bool>> *PostorderStack,
+  DenseSet<Value *> *Visited) const {
+  switch (II->getIntrinsicID()) {
+  case Intrinsic::objectsize:
+  case Intrinsic::amdgcn_atomic_inc:
+  case Intrinsic::amdgcn_atomic_dec:
+    appendsFlatAddressExpressionToPostorderStack(
+      II->getArgOperand(0), PostorderStack, Visited);
+    break;
+  default:
+    break;
+  }
+}
+
+// Returns all flat address expressions in function F. The elements are
 // If V is an unvisited flat address expression, appends V to PostorderStack
 // and marks it as visited.
 void InferAddressSpaces::appendsFlatAddressExpressionToPostorderStack(
@@ -224,7 +273,7 @@ void InferAddressSpaces::appendsFlatAddressExpressionToPostorderStack(
 }
 
 // Returns all flat address expressions in function F. The elements are ordered
-// in postorder.
+// ordered in postorder.
 std::vector<Value *>
 InferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
   // This function implements a non-recursive postorder traversal of a partial
@@ -249,8 +298,15 @@ InferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
       PushPtrOperand(RMW->getPointerOperand());
     else if (auto *CmpX = dyn_cast<AtomicCmpXchgInst>(&I))
       PushPtrOperand(CmpX->getPointerOperand());
+    else if (auto *MI = dyn_cast<MemIntrinsic>(&I)) {
+      // For memset/memcpy/memmove, any pointer operand can be replaced.
+      PushPtrOperand(MI->getRawDest());
 
-    // TODO: Support intrinsics
+      // Handle 2nd operand for memcpy/memmove.
+      if (auto *MTI = dyn_cast<MemTransferInst>(MI))
+       PushPtrOperand(MTI->getRawSource());
+    } else if (auto *II = dyn_cast<IntrinsicInst>(&I))
+      collectRewritableIntrinsicOperands(II, &PostorderStack, &Visited);
   }
 
   std::vector<Value *> Postorder; // The resultant postorder.
@@ -560,6 +616,63 @@ static bool isSimplePointerUseValidToReplace(Use &U) {
   return false;
 }
 
+/// Update memory intrinsic uses that require more complex processing than
+/// simple memory instructions. Thse require re-mangling and may have multiple
+/// pointer operands.
+static bool handleMemIntrinsicPtrUse(MemIntrinsic *MI,
+                                     Value *OldV, Value *NewV) {
+  IRBuilder<> B(MI);
+  MDNode *TBAA = MI->getMetadata(LLVMContext::MD_tbaa);
+  MDNode *ScopeMD = MI->getMetadata(LLVMContext::MD_alias_scope);
+  MDNode *NoAliasMD = MI->getMetadata(LLVMContext::MD_noalias);
+
+  if (auto *MSI = dyn_cast<MemSetInst>(MI)) {
+    B.CreateMemSet(NewV, MSI->getValue(),
+                   MSI->getLength(), MSI->getAlignment(),
+                   false, // isVolatile
+                   TBAA, ScopeMD, NoAliasMD);
+  } else if (auto *MTI = dyn_cast<MemTransferInst>(MI)) {
+    Value *Src = MTI->getRawSource();
+    Value *Dest = MTI->getRawDest();
+
+    // Be careful in case this is a self-to-self copy.
+    if (Src == OldV)
+      Src = NewV;
+
+    if (Dest == OldV)
+      Dest = NewV;
+
+    if (isa<MemCpyInst>(MTI)) {
+      MDNode *TBAAStruct = MTI->getMetadata(LLVMContext::MD_tbaa_struct);
+      B.CreateMemCpy(Dest, Src, MTI->getLength(),
+                     MTI->getAlignment(),
+                     false, // isVolatile
+                     TBAA, TBAAStruct, ScopeMD, NoAliasMD);
+    } else {
+      assert(isa<MemMoveInst>(MTI));
+      B.CreateMemMove(Dest, Src, MTI->getLength(),
+                      MTI->getAlignment(),
+                      false, // isVolatile
+                      TBAA, ScopeMD, NoAliasMD);
+    }
+  } else
+    llvm_unreachable("unhandled MemIntrinsic");
+
+  MI->eraseFromParent();
+  return true;
+}
+
+static Value::use_iterator skipToNextUser(Value::use_iterator I,
+                                          Value::use_iterator End) {
+  User *CurUser = I->getUser();
+  ++I;
+
+  while (I != End && I->getUser() == CurUser)
+    ++I;
+
+  return I;
+}
+
 bool InferAddressSpaces::rewriteWithNewAddressSpaces(
   const std::vector<Value *> &Postorder,
   const ValueToAddrSpaceMapTy &InferredAddrSpace, Function *F) const {
@@ -595,20 +708,38 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
     if (NewV == nullptr)
       continue;
 
-    SmallVector<Use *, 4> Uses;
-    for (Use &U : V->uses())
-      Uses.push_back(&U);
-
     DEBUG(dbgs() << "Replacing the uses of " << *V
                  << "\n  with\n  " << *NewV << '\n');
 
-    for (Use *U : Uses) {
-      if (isSimplePointerUseValidToReplace(*U)) {
+    Value::use_iterator I, E, Next;
+    for (I = V->use_begin(), E = V->use_end(); I != E; ) {
+      Use &U = *I;
+
+      // Some users may see the same pointer operand in multiple operands. Skip
+      // to the next instruction.
+      I = skipToNextUser(I, E);
+
+      if (isSimplePointerUseValidToReplace(U)) {
         // If V is used as the pointer operand of a compatible memory operation,
         // sets the pointer operand to NewV. This replacement does not change
         // the element type, so the resultant load/store is still valid.
-        U->set(NewV);
-      } else if (isa<Instruction>(U->getUser())) {
+        U.set(NewV);
+        continue;
+      }
+
+      User *CurUser = U.getUser();
+      // Handle more complex cases like intrinsic that need to be remangled.
+      if (auto *MI = dyn_cast<MemIntrinsic>(CurUser)) {
+        if (!MI->isVolatile() && handleMemIntrinsicPtrUse(MI, V, NewV))
+          continue;
+      }
+
+      if (auto *II = dyn_cast<IntrinsicInst>(CurUser)) {
+        if (rewriteIntrinsicOperands(II, V, NewV))
+          continue;
+      }
+
+      if (isa<Instruction>(CurUser)) {
         // Otherwise, replaces the use with flat(NewV).
         // TODO: Some optimization opportunities are missed. For example, in
         //   %0 = icmp eq float* %p, %q
@@ -622,13 +753,14 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
           BasicBlock::iterator InsertPos = std::next(I->getIterator());
           while (isa<PHINode>(InsertPos))
             ++InsertPos;
-          U->set(new AddrSpaceCastInst(NewV, V->getType(), "", &*InsertPos));
+          U.set(new AddrSpaceCastInst(NewV, V->getType(), "", &*InsertPos));
         } else {
-          U->set(ConstantExpr::getAddrSpaceCast(cast<Constant>(NewV),
-                                                V->getType()));
+          U.set(ConstantExpr::getAddrSpaceCast(cast<Constant>(NewV),
+                                               V->getType()));
         }
       }
     }
+
     if (V->use_empty())
       RecursivelyDeleteTriviallyDeadInstructions(V);
   }
