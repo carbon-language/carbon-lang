@@ -347,6 +347,8 @@ private:
                                                  const BasicBlock *);
   const Expression *performSymbolicAggrValueEvaluation(Instruction *,
                                                        const BasicBlock *);
+  const Expression *performSymbolicCmpEvaluation(Instruction *,
+                                                 const BasicBlock *);
 
   // Congruence finding.
   Value *lookupOperandLeader(Value *) const;
@@ -1002,6 +1004,20 @@ NewGVN::performSymbolicAggrValueEvaluation(Instruction *I,
 
   return createAggregateValueExpression(I, B);
 }
+const Expression *NewGVN::performSymbolicCmpEvaluation(Instruction *I,
+                                                       const BasicBlock *B) {
+  CmpInst *CI = dyn_cast<CmpInst>(I);
+  // See if our operands are equal and that implies something.
+  auto Op0 = lookupOperandLeader(CI->getOperand(0));
+  auto Op1 = lookupOperandLeader(CI->getOperand(1));
+  if (Op0 == Op1) {
+    if (CI->isTrueWhenEqual())
+      return createConstantExpression(ConstantInt::getTrue(CI->getType()));
+    else if (CI->isFalseWhenEqual())
+      return createConstantExpression(ConstantInt::getFalse(CI->getType()));
+  }
+  return createExpression(I, B);
+}
 
 // Substitute and symbolize the value before value numbering.
 const Expression *NewGVN::performSymbolicEvaluation(Value *V,
@@ -1036,7 +1052,10 @@ const Expression *NewGVN::performSymbolicEvaluation(Value *V,
     case Instruction::BitCast: {
       E = createExpression(I, B);
     } break;
-
+    case Instruction::ICmp:
+    case Instruction::FCmp: {
+      E = performSymbolicCmpEvaluation(I, B);
+    } break;
     case Instruction::Add:
     case Instruction::FAdd:
     case Instruction::Sub:
@@ -1055,8 +1074,6 @@ const Expression *NewGVN::performSymbolicEvaluation(Value *V,
     case Instruction::And:
     case Instruction::Or:
     case Instruction::Xor:
-    case Instruction::ICmp:
-    case Instruction::FCmp:
     case Instruction::Trunc:
     case Instruction::ZExt:
     case Instruction::SExt:
