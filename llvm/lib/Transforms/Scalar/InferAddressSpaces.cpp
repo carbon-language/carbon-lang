@@ -583,14 +583,12 @@ Optional<unsigned> InferAddressSpaces::updateAddressSpace(
   // of all its pointer operands.
   unsigned NewAS = UninitializedAddressSpace;
   for (Value *PtrOperand : getPointerOperands(V)) {
-    unsigned OperandAS;
-    if (InferredAddrSpace.count(PtrOperand))
-      OperandAS = InferredAddrSpace.lookup(PtrOperand);
-    else
-      OperandAS = PtrOperand->getType()->getPointerAddressSpace();
-    NewAS = joinAddressSpaces(NewAS, OperandAS);
+    auto I = InferredAddrSpace.find(PtrOperand);
+    unsigned OperandAS = I != InferredAddrSpace.end() ?
+      I->second : PtrOperand->getType()->getPointerAddressSpace();
 
     // join(flat, *) = flat. So we can break if NewAS is already flat.
+    NewAS = joinAddressSpaces(NewAS, OperandAS);
     if (NewAS == FlatAddrSpace)
       break;
   }
