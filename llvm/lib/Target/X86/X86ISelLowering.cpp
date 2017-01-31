@@ -30610,10 +30610,11 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
 static SDValue combineVectorInsert(SDNode *N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget &Subtarget) {
-  unsigned Opcode = N->getOpcode();
-  assert(((X86ISD::PINSRB == Opcode && N->getValueType(0) ==MVT::v16i8) ||
-          (X86ISD::PINSRW == Opcode && N->getValueType(0) ==MVT::v8i16)) &&
-         "Unexpected vector insertion");
+  assert(
+      ((N->getOpcode() == X86ISD::PINSRB && N->getValueType(0) == MVT::v16i8) ||
+       (N->getOpcode() == X86ISD::PINSRW &&
+        N->getValueType(0) == MVT::v8i16)) &&
+      "Unexpected vector insertion");
 
   // Attempt to combine PINSRB/PINSRW patterns to a shuffle.
   SDValue Op(N, 0);
