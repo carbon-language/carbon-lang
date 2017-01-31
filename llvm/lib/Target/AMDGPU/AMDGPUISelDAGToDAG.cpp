@@ -80,6 +80,7 @@ public:
 
 private:
   SDValue foldFrameIndex(SDValue N) const;
+  bool isNoNanSrc(SDValue N) const;
   bool isInlineImmediate(const SDNode *N) const;
   bool FoldOperand(SDValue &Src, SDValue &Sel, SDValue &Neg, SDValue &Abs,
                    const R600InstrInfo *TII);
@@ -143,6 +144,8 @@ private:
   bool SelectSMRDBufferImm32(SDValue Addr, SDValue &Offset) const;
   bool SelectSMRDBufferSgpr(SDValue Addr, SDValue &Offset) const;
   bool SelectMOVRELOffset(SDValue Index, SDValue &Base, SDValue &Offset) const;
+
+  bool SelectVOP3Mods_NNaN(SDValue In, SDValue &Src, SDValue &SrcMods) const;
   bool SelectVOP3Mods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
   bool SelectVOP3NoMods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
   bool SelectVOP3Mods0(SDValue In, SDValue &Src, SDValue &SrcMods,
@@ -186,6 +189,17 @@ FunctionPass *llvm::createAMDGPUISelDag(TargetMachine &TM,
 bool AMDGPUDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   Subtarget = &MF.getSubtarget<AMDGPUSubtarget>();
   return SelectionDAGISel::runOnMachineFunction(MF);
+}
+
+bool AMDGPUDAGToDAGISel::isNoNanSrc(SDValue N) const {
+  if (TM.Options.NoNaNsFPMath)
+    return true;
+
+  // TODO: Move into isKnownNeverNaN
+  if (const auto *BO = dyn_cast<BinaryWithFlagsSDNode>(N))
+    return BO->Flags.hasNoNaNs();
+
+  return CurDAG->isKnownNeverNaN(N);
 }
 
 bool AMDGPUDAGToDAGISel::isInlineImmediate(const SDNode *N) const {
@@ -1567,6 +1581,12 @@ bool AMDGPUDAGToDAGISel::SelectVOP3Mods(SDValue In, SDValue &Src,
   SrcMods = CurDAG->getTargetConstant(Mods, SDLoc(In), MVT::i32);
 
   return true;
+}
+
+bool AMDGPUDAGToDAGISel::SelectVOP3Mods_NNaN(SDValue In, SDValue &Src,
+                                             SDValue &SrcMods) const {
+  SelectVOP3Mods(In, Src, SrcMods);
+  return isNoNanSrc(Src);
 }
 
 bool AMDGPUDAGToDAGISel::SelectVOP3NoMods(SDValue In, SDValue &Src,

@@ -2795,6 +2795,9 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     return DAG.getNode(AMDGPUISD::SETCC, DL, VT, Op.getOperand(1),
                        Op.getOperand(2), DAG.getCondCode(CCOpcode));
   }
+  case Intrinsic::amdgcn_fmed3:
+    return DAG.getNode(AMDGPUISD::FMED3, DL, VT,
+                       Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
   case Intrinsic::amdgcn_fmul_legacy:
     return DAG.getNode(AMDGPUISD::FMUL_LEGACY, DL, VT,
                        Op.getOperand(1), Op.getOperand(2));
