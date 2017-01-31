@@ -44,7 +44,7 @@ struct poca_alloc {
 
     alloc_imp<T> *imp;
 
-    poca_alloc(alloc_imp<T> *imp) : imp (imp) {}
+    poca_alloc(alloc_imp<T> *ximp) : imp (ximp) {}
 
     template <class U>
     poca_alloc(const poca_alloc<U>& other) : imp(other.imp) {}
