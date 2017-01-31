@@ -10622,7 +10622,7 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
   };
   if ((NumLToL == 3 && NumHToL == 1) || (NumLToL == 1 && NumHToL == 3))
     return balanceSides(LToLInputs, HToLInputs, HToHInputs, LToHInputs, 0, 4);
-  else if ((NumHToH == 3 && NumLToH == 1) || (NumHToH == 1 && NumLToH == 3))
+  if ((NumHToH == 3 && NumLToH == 1) || (NumHToH == 1 && NumLToH == 3))
     return balanceSides(HToHInputs, LToHInputs, LToLInputs, HToLInputs, 4, 0);
 
   // At this point there are at most two inputs to the low and high halves from
