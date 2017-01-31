@@ -8006,23 +8006,6 @@ let ExeDomain = SSEPackedDouble in {
                                loadv4i64, v4f64, v4i64>, VEX_L;
 }
 
-let Predicates = [HasAVX, NoVLX] in {
-def : Pat<(v8i32 (X86VPermilpi VR256:$src1, (i8 imm:$imm))),
-          (VPERMILPSYri VR256:$src1, imm:$imm)>;
-def : Pat<(v4i64 (X86VPermilpi VR256:$src1, (i8 imm:$imm))),
-          (VPERMILPDYri VR256:$src1, imm:$imm)>;
-def : Pat<(v8i32 (X86VPermilpi (bc_v8i32 (loadv4i64 addr:$src1)),
-                               (i8 imm:$imm))),
-          (VPERMILPSYmi addr:$src1, imm:$imm)>;
-def : Pat<(v4i64 (X86VPermilpi (loadv4i64 addr:$src1), (i8 imm:$imm))),
-          (VPERMILPDYmi addr:$src1, imm:$imm)>;
-
-def : Pat<(v2i64 (X86VPermilpi VR128:$src1, (i8 imm:$imm))),
-          (VPERMILPDri VR128:$src1, imm:$imm)>;
-def : Pat<(v2i64 (X86VPermilpi (loadv2i64 addr:$src1), (i8 imm:$imm))),
-          (VPERMILPDmi addr:$src1, imm:$imm)>;
-}
-
 //===----------------------------------------------------------------------===//
 // VPERM2F128 - Permute Floating-Point Values in 128-bit chunks
 //
