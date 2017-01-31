@@ -128,4 +128,46 @@ define void @store_addrspacecast_ptr_value(i32 addrspace(1)* nocapture %input, i
   ret void
 }
 
+; CHECK-LABEL: @atomicrmw_add_global_to_flat(
+; CHECK-NEXT: %ret = atomicrmw add i32 addrspace(1)* %global.ptr, i32 %y seq_cst
+define i32 @atomicrmw_add_global_to_flat(i32 addrspace(1)* %global.ptr, i32 %y) #0 {
+  %cast = addrspacecast i32 addrspace(1)* %global.ptr to i32 addrspace(4)*
+  %ret = atomicrmw add i32 addrspace(4)* %cast, i32 %y seq_cst
+  ret i32 %ret
+}
+
+; CHECK-LABEL: @atomicrmw_add_group_to_flat(
+; CHECK-NEXT: %ret = atomicrmw add i32 addrspace(3)* %group.ptr, i32 %y seq_cst
+define i32 @atomicrmw_add_group_to_flat(i32 addrspace(3)* %group.ptr, i32 %y) #0 {
+  %cast = addrspacecast i32 addrspace(3)* %group.ptr to i32 addrspace(4)*
+  %ret = atomicrmw add i32 addrspace(4)* %cast, i32 %y seq_cst
+  ret i32 %ret
+}
+
+; CHECK-LABEL: @cmpxchg_global_to_flat(
+; CHECK: %ret = cmpxchg i32 addrspace(1)* %global.ptr, i32 %cmp, i32 %val seq_cst monotonic
+define { i32, i1 } @cmpxchg_global_to_flat(i32 addrspace(1)* %global.ptr, i32 %cmp, i32 %val) #0 {
+  %cast = addrspacecast i32 addrspace(1)* %global.ptr to i32 addrspace(4)*
+  %ret = cmpxchg i32 addrspace(4)* %cast, i32 %cmp, i32 %val seq_cst monotonic
+  ret { i32, i1 } %ret
+}
+
+; CHECK-LABEL: @cmpxchg_group_to_flat(
+; CHECK: %ret = cmpxchg i32 addrspace(3)* %group.ptr, i32 %cmp, i32 %val seq_cst monotonic
+define { i32, i1 } @cmpxchg_group_to_flat(i32 addrspace(3)* %group.ptr, i32 %cmp, i32 %val) #0 {
+  %cast = addrspacecast i32 addrspace(3)* %group.ptr to i32 addrspace(4)*
+  %ret = cmpxchg i32 addrspace(4)* %cast, i32 %cmp, i32 %val seq_cst monotonic
+  ret { i32, i1 } %ret
+}
+
+; Not pointer operand
+; CHECK-LABEL: @cmpxchg_group_to_flat_wrong_operand(
+; CHECK: %cast.cmp = addrspacecast i32 addrspace(3)* %cmp.ptr to i32 addrspace(4)*
+; CHECK: %ret = cmpxchg i32 addrspace(4)* addrspace(3)* %cas.ptr, i32 addrspace(4)* %cast.cmp, i32 addrspace(4)* %val seq_cst monotonic
+define { i32 addrspace(4)*, i1 } @cmpxchg_group_to_flat_wrong_operand(i32 addrspace(4)* addrspace(3)* %cas.ptr, i32 addrspace(3)* %cmp.ptr, i32 addrspace(4)* %val) #0 {
+  %cast.cmp = addrspacecast i32 addrspace(3)* %cmp.ptr to i32 addrspace(4)*
+  %ret = cmpxchg i32 addrspace(4)* addrspace(3)* %cas.ptr, i32 addrspace(4)* %cast.cmp, i32 addrspace(4)* %val seq_cst monotonic
+  ret { i32 addrspace(4)*, i1 } %ret
+}
+
 attributes #0 = { nounwind }

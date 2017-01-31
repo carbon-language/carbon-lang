@@ -232,16 +232,25 @@ InferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
   std::vector<std::pair<Value*, bool>> PostorderStack;
   // The set of visited expressions.
   DenseSet<Value*> Visited;
+
+  auto PushPtrOperand = [&](Value *Ptr) {
+    appendsFlatAddressExpressionToPostorderStack(
+      Ptr, &PostorderStack, &Visited);
+  };
+
   // We only explore address expressions that are reachable from loads and
   // stores for now because we aim at generating faster loads and stores.
   for (Instruction &I : instructions(F)) {
-    if (isa<LoadInst>(I)) {
-      appendsFlatAddressExpressionToPostorderStack(
-        I.getOperand(0), &PostorderStack, &Visited);
-    } else if (isa<StoreInst>(I)) {
-      appendsFlatAddressExpressionToPostorderStack(
-        I.getOperand(1), &PostorderStack, &Visited);
-    }
+    if (auto *LI = dyn_cast<LoadInst>(&I))
+      PushPtrOperand(LI->getPointerOperand());
+    else if (auto *SI = dyn_cast<StoreInst>(&I))
+      PushPtrOperand(SI->getPointerOperand());
+    else if (auto *RMW = dyn_cast<AtomicRMWInst>(&I))
+      PushPtrOperand(RMW->getPointerOperand());
+    else if (auto *CmpX = dyn_cast<AtomicCmpXchgInst>(&I))
+      PushPtrOperand(CmpX->getPointerOperand());
+
+    // TODO: Support intrinsics
   }
 
   std::vector<Value *> Postorder; // The resultant postorder.
@@ -527,6 +536,30 @@ Optional<unsigned> InferAddressSpaces::updateAddressSpace(
   return NewAS;
 }
 
+/// \p returns true if \p U is the pointer operand of a memory instruction with
+/// a single pointer operand that can have its address space changed by simply
+/// mutating the use to a new value.
+static bool isSimplePointerUseValidToReplace(Use &U) {
+  User *Inst = U.getUser();
+  unsigned OpNo = U.getOperandNo();
+
+  if (auto *LI = dyn_cast<LoadInst>(Inst))
+    return OpNo == LoadInst::getPointerOperandIndex() && !LI->isVolatile();
+
+  if (auto *SI = dyn_cast<StoreInst>(Inst))
+    return OpNo == StoreInst::getPointerOperandIndex() && !SI->isVolatile();
+
+  if (auto *RMW = dyn_cast<AtomicRMWInst>(Inst))
+    return OpNo == AtomicRMWInst::getPointerOperandIndex() && !RMW->isVolatile();
+
+  if (auto *CmpX = dyn_cast<AtomicCmpXchgInst>(Inst)) {
+    return OpNo == AtomicCmpXchgInst::getPointerOperandIndex() &&
+           !CmpX->isVolatile();
+  }
+
+  return false;
+}
+
 bool InferAddressSpaces::rewriteWithNewAddressSpaces(
   const std::vector<Value *> &Postorder,
   const ValueToAddrSpaceMapTy &InferredAddrSpace, Function *F) const {
@@ -570,15 +603,10 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
                  << "\n  with\n  " << *NewV << '\n');
 
     for (Use *U : Uses) {
-      LoadInst *LI = dyn_cast<LoadInst>(U->getUser());
-      StoreInst *SI = dyn_cast<StoreInst>(U->getUser());
-
-      if ((LI && !LI->isVolatile()) ||
-          (SI && !SI->isVolatile() &&
-           U->getOperandNo() == StoreInst::getPointerOperandIndex())) {
-        // If V is used as the pointer operand of a load/store, sets the pointer
-        // operand to NewV. This replacement does not change the element type,
-        // so the resultant load/store is still valid.
+      if (isSimplePointerUseValidToReplace(*U)) {
+        // If V is used as the pointer operand of a compatible memory operation,
+        // sets the pointer operand to NewV. This replacement does not change
+        // the element type, so the resultant load/store is still valid.
         U->set(NewV);
       } else if (isa<Instruction>(U->getUser())) {
         // Otherwise, replaces the use with flat(NewV).

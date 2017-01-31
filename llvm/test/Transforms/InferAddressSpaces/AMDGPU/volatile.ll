@@ -79,4 +79,40 @@ define void @volatile_store_flat_to_private(i32* nocapture %input, i32* nocaptur
   ret void
 }
 
+; CHECK-LABEL: @volatile_atomicrmw_add_group_to_flat(
+; CHECK: addrspacecast i32 addrspace(3)* %group.ptr to i32 addrspace(4)*
+; CHECK: atomicrmw volatile add i32 addrspace(4)*
+define i32 @volatile_atomicrmw_add_group_to_flat(i32 addrspace(3)* %group.ptr, i32 %y) #0 {
+  %cast = addrspacecast i32 addrspace(3)* %group.ptr to i32 addrspace(4)*
+  %ret = atomicrmw volatile add i32 addrspace(4)* %cast, i32 %y seq_cst
+  ret i32 %ret
+}
+
+; CHECK-LABEL: @volatile_atomicrmw_add_global_to_flat(
+; CHECK: addrspacecast i32 addrspace(1)* %global.ptr to i32 addrspace(4)*
+; CHECK: %ret = atomicrmw volatile add i32 addrspace(4)*
+define i32 @volatile_atomicrmw_add_global_to_flat(i32 addrspace(1)* %global.ptr, i32 %y) #0 {
+  %cast = addrspacecast i32 addrspace(1)* %global.ptr to i32 addrspace(4)*
+  %ret = atomicrmw volatile add i32 addrspace(4)* %cast, i32 %y seq_cst
+  ret i32 %ret
+}
+
+; CHECK-LABEL: @volatile_cmpxchg_global_to_flat(
+; CHECK: addrspacecast i32 addrspace(1)* %global.ptr to i32 addrspace(4)*
+; CHECK: cmpxchg volatile i32 addrspace(4)*
+define { i32, i1 } @volatile_cmpxchg_global_to_flat(i32 addrspace(1)* %global.ptr, i32 %cmp, i32 %val) #0 {
+  %cast = addrspacecast i32 addrspace(1)* %global.ptr to i32 addrspace(4)*
+  %ret = cmpxchg volatile i32 addrspace(4)* %cast, i32 %cmp, i32 %val seq_cst monotonic
+  ret { i32, i1 } %ret
+}
+
+; CHECK-LABEL: @volatile_cmpxchg_group_to_flat(
+; CHECK: addrspacecast i32 addrspace(3)* %group.ptr to i32 addrspace(4)*
+; CHECK: cmpxchg volatile i32 addrspace(4)*
+define { i32, i1 } @volatile_cmpxchg_group_to_flat(i32 addrspace(3)* %group.ptr, i32 %cmp, i32 %val) #0 {
+  %cast = addrspacecast i32 addrspace(3)* %group.ptr to i32 addrspace(4)*
+  %ret = cmpxchg volatile i32 addrspace(4)* %cast, i32 %cmp, i32 %val seq_cst monotonic
+  ret { i32, i1 } %ret
+}
+
 attributes #0 = { nounwind }
