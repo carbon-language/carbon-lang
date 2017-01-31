@@ -349,9 +349,7 @@ private:
                                                        const BasicBlock *);
 
   // Congruence finding.
-  // Templated to allow them to work both on BB's and BB-edges.
-  template <class T>
-  Value *lookupOperandLeader(Value *, const User *, const T &) const;
+  Value *lookupOperandLeader(Value *) const;
   void performCongruenceFinding(Instruction *, const Expression *);
   void moveValueToNewCongruenceClass(Instruction *, CongruenceClass *,
                                      CongruenceClass *);
@@ -462,8 +460,7 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
                    // Don't try to transform self-defined phis.
                    if (U == PN)
                      return PN;
-                   const BasicBlockEdge BBE(PN->getIncomingBlock(U), PHIBlock);
-                   return lookupOperandLeader(U, I, BBE);
+                   return lookupOperandLeader(U);
                  });
   return E;
 }
@@ -483,7 +480,7 @@ bool NewGVN::setBasicExpressionInfo(Instruction *I, BasicExpression *E,
   // Transform the operand array into an operand leader array, and keep track of
   // whether all members are constant.
   std::transform(I->op_begin(), I->op_end(), op_inserter(E), [&](Value *O) {
-    auto Operand = lookupOperandLeader(O, I, B);
+    auto Operand = lookupOperandLeader(O);
     AllConstant &= isa<Constant>(Operand);
     return Operand;
   });
@@ -507,8 +504,8 @@ const Expression *NewGVN::createBinaryExpression(unsigned Opcode, Type *T,
     if (Arg1 > Arg2)
       std::swap(Arg1, Arg2);
   }
-  E->op_push_back(lookupOperandLeader(Arg1, nullptr, B));
-  E->op_push_back(lookupOperandLeader(Arg2, nullptr, B));
+  E->op_push_back(lookupOperandLeader(Arg1));
+  E->op_push_back(lookupOperandLeader(Arg2));
 
   Value *V = SimplifyBinOp(Opcode, E->getOperand(0), E->getOperand(1), *DL, TLI,
                            DT, AC);
@@ -681,7 +678,7 @@ const VariableExpression *NewGVN::createVariableExpression(Value *V) {
 
 const Expression *NewGVN::createVariableOrConstant(Value *V,
                                                    const BasicBlock *B) {
-  auto Leader = lookupOperandLeader(V, nullptr, B);
+  auto Leader = lookupOperandLeader(V);
   if (auto *C = dyn_cast<Constant>(Leader))
     return createConstantExpression(C);
   return createVariableExpression(Leader);
@@ -711,8 +708,7 @@ const CallExpression *NewGVN::createCallExpression(CallInst *CI,
 
 // See if we have a congruence class and leader for this operand, and if so,
 // return it. Otherwise, return the operand itself.
-template <class T>
-Value *NewGVN::lookupOperandLeader(Value *V, const User *U, const T &B) const {
+Value *NewGVN::lookupOperandLeader(Value *V) const {
   CongruenceClass *CC = ValueToClass.lookup(V);
   if (CC && (CC != InitialClass))
     return CC->RepStoredValue ? CC->RepStoredValue : CC->RepLeader;
@@ -747,7 +743,7 @@ LoadExpression *NewGVN::createLoadExpression(Type *LoadType, Value *PointerOp,
 
   // Give store and loads same opcode so they value number together.
   E->setOpcode(0);
-  E->op_push_back(lookupOperandLeader(PointerOp, LI, B));
+  E->op_push_back(lookupOperandLeader(PointerOp));
   if (LI)
     E->setAlignment(LI->getAlignment());
 
@@ -760,7 +756,7 @@ LoadExpression *NewGVN::createLoadExpression(Type *LoadType, Value *PointerOp,
 const StoreExpression *NewGVN::createStoreExpression(StoreInst *SI,
                                                      MemoryAccess *DA,
                                                      const BasicBlock *B) {
-  auto *StoredValueLeader = lookupOperandLeader(SI->getValueOperand(), SI, B);
+  auto *StoredValueLeader = lookupOperandLeader(SI->getValueOperand());
   auto *E = new (ExpressionAllocator)
       StoreExpression(SI->getNumOperands(), SI, StoredValueLeader, DA);
   E->allocateOperands(ArgRecycler, ExpressionAllocator);
@@ -768,7 +764,7 @@ const StoreExpression *NewGVN::createStoreExpression(StoreInst *SI,
 
   // Give store and loads same opcode so they value number together.
   E->setOpcode(0);
-  E->op_push_back(lookupOperandLeader(SI->getPointerOperand(), SI, B));
+  E->op_push_back(lookupOperandLeader(SI->getPointerOperand()));
 
   // TODO: Value number heap versions. We may be able to discover
   // things alias analysis can't on it's own (IE that a store and a
@@ -810,15 +806,15 @@ const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I,
     // The RepStoredValue gets nulled if all the stores disappear in a class, so
     // we don't need to check if the class contains a store besides us.
     if (CC &&
-        CC->RepStoredValue == lookupOperandLeader(SI->getValueOperand(), SI, B))
+        CC->RepStoredValue == lookupOperandLeader(SI->getValueOperand()))
       return createStoreExpression(SI, StoreRHS, B);
     // Also check if our value operand is defined by a load of the same memory
     // location, and the memory state is the same as it was then
     // (otherwise, it could have been overwritten later. See test32 in
     // transforms/DeadStoreElimination/simple.ll)
     if (LoadInst *LI = dyn_cast<LoadInst>(SI->getValueOperand())) {
-      if ((lookupOperandLeader(LI->getPointerOperand(), LI, LI->getParent()) ==
-           lookupOperandLeader(SI->getPointerOperand(), SI, B)) &&
+      if ((lookupOperandLeader(LI->getPointerOperand()) ==
+           lookupOperandLeader(SI->getPointerOperand())) &&
           (lookupMemoryAccessEquiv(
                MSSA->getMemoryAccess(LI)->getDefiningAccess()) == StoreRHS))
         return createVariableExpression(LI);
@@ -836,7 +832,7 @@ const Expression *NewGVN::performSymbolicLoadEvaluation(Instruction *I,
   if (!LI->isSimple())
     return nullptr;
 
-  Value *LoadAddressLeader = lookupOperandLeader(LI->getPointerOperand(), I, B);
+  Value *LoadAddressLeader = lookupOperandLeader(LI->getPointerOperand());
   // Load of undef is undef.
   if (isa<UndefValue>(LoadAddressLeader))
     return createConstantExpression(UndefValue::get(LI->getType()));
@@ -1283,7 +1279,7 @@ void NewGVN::performCongruenceFinding(Instruction *I, const Expression *E) {
         StoreInst *SI = SE->getStoreInst();
         NewClass->RepLeader = SI;
         NewClass->RepStoredValue =
-            lookupOperandLeader(SI->getValueOperand(), SI, SI->getParent());
+            lookupOperandLeader(SI->getValueOperand());
         // The RepMemoryAccess field will be filled in properly by the
         // moveValueToNewCongruenceClass call.
       } else {
@@ -1360,7 +1356,7 @@ void NewGVN::updateReachableEdge(BasicBlock *From, BasicBlock *To) {
 // Given a predicate condition (from a switch, cmp, or whatever) and a block,
 // see if we know some constant value for it already.
 Value *NewGVN::findConditionEquivalence(Value *Cond, BasicBlock *B) const {
-  auto Result = lookupOperandLeader(Cond, nullptr, B);
+  auto Result = lookupOperandLeader(Cond);
   if (isa<Constant>(Result))
     return Result;
   return nullptr;
@@ -1994,7 +1990,7 @@ void NewGVN::convertDenseToDFSOrdered(
     // If it's a store, use the leader of the value operand.
     if (auto *SI = dyn_cast<StoreInst>(D)) {
       auto Leader =
-          lookupOperandLeader(SI->getValueOperand(), SI, SI->getParent());
+          lookupOperandLeader(SI->getValueOperand());
       VD.Val = alwaysAvailable(Leader) ? Leader : SI->getValueOperand();
     } else {
       VD.Val = D;
