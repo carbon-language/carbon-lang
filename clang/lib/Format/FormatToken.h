@@ -220,6 +220,9 @@ struct FormatToken {
   /// [], {} or <>.
   unsigned NestingLevel = 0;
 
+  /// \brief The indent level of this token. Copied from the surrounding line.
+  unsigned IndentLevel = 0;
+
   /// \brief Penalty for inserting a line break before this token.
   unsigned SplitPenalty = 0;
 
