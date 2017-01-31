@@ -675,10 +675,15 @@ static bool handleMemIntrinsicPtrUse(MemIntrinsic *MI,
 // \p returns true if it is OK to change the address space of constant \p C with
 // a ConstantExpr addrspacecast.
 bool InferAddressSpaces::isSafeToCastConstAddrSpace(Constant *C, unsigned NewAS) const {
-  if (C->getType()->getPointerAddressSpace() == NewAS)
+  unsigned SrcAS = C->getType()->getPointerAddressSpace();
+  if (SrcAS == NewAS || isa<UndefValue>(C))
     return true;
 
-  if (isa<UndefValue>(C) || isa<ConstantPointerNull>(C))
+  // Prevent illegal casts between different non-flat address spaces.
+  if (SrcAS != FlatAddrSpace && NewAS != FlatAddrSpace)
+    return false;
+
+  if (isa<ConstantPointerNull>(C))
     return true;
 
   if (auto *Op = dyn_cast<Operator>(C)) {
