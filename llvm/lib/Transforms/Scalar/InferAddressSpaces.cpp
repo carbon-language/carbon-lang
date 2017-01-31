@@ -108,7 +108,7 @@
 using namespace llvm;
 
 namespace {
-static const unsigned UnknownAddressSpace = ~0u;
+static const unsigned UninitializedAddressSpace = ~0u;
 
 using ValueToAddrSpaceMapTy = DenseMap<const Value *, unsigned>;
 
@@ -500,9 +500,9 @@ unsigned InferAddressSpaces::joinAddressSpaces(unsigned AS1,
   if (AS1 == FlatAddrSpace || AS2 == FlatAddrSpace)
     return FlatAddrSpace;
 
-  if (AS1 == UnknownAddressSpace)
+  if (AS1 == UninitializedAddressSpace)
     return AS2;
-  if (AS2 == UnknownAddressSpace)
+  if (AS2 == UninitializedAddressSpace)
     return AS1;
 
   // The join of two different specific address spaces is flat.
@@ -515,7 +515,7 @@ bool InferAddressSpaces::runOnFunction(Function &F) {
 
   const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfoWrapperPass>().getTTI(F);
   FlatAddrSpace = TTI.getFlatAddressSpace();
-  if (FlatAddrSpace == UnknownAddressSpace)
+  if (FlatAddrSpace == UninitializedAddressSpace)
     return false;
 
   // Collects all flat address expressions in postorder.
@@ -537,7 +537,7 @@ void InferAddressSpaces::inferAddressSpaces(
   SetVector<Value *> Worklist(Postorder.begin(), Postorder.end());
   // Initially, all expressions are in the uninitialized address space.
   for (Value *V : Postorder)
-    (*InferredAddrSpace)[V] = UnknownAddressSpace;
+    (*InferredAddrSpace)[V] = UninitializedAddressSpace;
 
   while (!Worklist.empty()) {
     Value* V = Worklist.pop_back_val();
@@ -581,7 +581,7 @@ Optional<unsigned> InferAddressSpaces::updateAddressSpace(
 
   // The new inferred address space equals the join of the address spaces
   // of all its pointer operands.
-  unsigned NewAS = UnknownAddressSpace;
+  unsigned NewAS = UninitializedAddressSpace;
   for (Value *PtrOperand : getPointerOperands(V)) {
     unsigned OperandAS;
     if (InferredAddrSpace.count(PtrOperand))
