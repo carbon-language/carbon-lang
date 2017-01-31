@@ -681,6 +681,23 @@ BreakableLineCommentSection::BreakableLineCommentSection(
       Content[i] = Content[i].substr(0, EndOfLine);
     }
     LineTok = CurrentTok->Next;
+    if (CurrentTok->Next && CurrentTok->Next->NewlinesBefore > 1) {
+      // A line comment section needs to broken by a line comment that is
+      // preceded by at least two newlines. Note that we put this break here
+      // instead of breaking at a previous stage during parsing, since that
+      // would split the contents of the enum into two unwrapped lines in this
+      // example, which is undesirable:
+      // enum A {
+      //   a, // comment about a
+      //
+      //   // comment about b
+      //   b
+      // };
+      //
+      // FIXME: Consider putting separate line comment sections as children to
+      // the unwrapped line instead.
+      break;
+    }
   }
 }
 
