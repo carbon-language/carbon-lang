@@ -89,7 +89,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NVPTX.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SetVector.h"
@@ -103,7 +103,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 
-#define DEBUG_TYPE "nvptx-infer-addrspace"
+#define DEBUG_TYPE "infer-address-spaces"
 
 using namespace llvm;
 
@@ -112,8 +112,8 @@ static const unsigned UnknownAddressSpace = ~0u;
 
 using ValueToAddrSpaceMapTy = DenseMap<const Value *, unsigned>;
 
-/// \brief NVPTXInferAddressSpaces
-class NVPTXInferAddressSpaces: public FunctionPass {
+/// \brief InferAddressSpaces
+class InferAddressSpaces: public FunctionPass {
   /// Target specific address space which uses of should be replaced if
   /// possible.
   unsigned FlatAddrSpace;
@@ -121,7 +121,7 @@ class NVPTXInferAddressSpaces: public FunctionPass {
 public:
   static char ID;
 
-  NVPTXInferAddressSpaces() : FunctionPass(ID) {}
+  InferAddressSpaces() : FunctionPass(ID) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
@@ -162,13 +162,13 @@ private:
 };
 } // end anonymous namespace
 
-char NVPTXInferAddressSpaces::ID = 0;
+char InferAddressSpaces::ID = 0;
 
 namespace llvm {
-void initializeNVPTXInferAddressSpacesPass(PassRegistry &);
+void initializeInferAddressSpacesPass(PassRegistry &);
 }
-INITIALIZE_PASS(NVPTXInferAddressSpaces, "nvptx-infer-addrspace",
-                "Infer address spaces",
+
+INITIALIZE_PASS(InferAddressSpaces, DEBUG_TYPE, "Infer address spaces",
                 false, false)
 
 // Returns true if V is an address expression.
@@ -212,9 +212,9 @@ static SmallVector<Value *, 2> getPointerOperands(const Value &V) {
 
 // If V is an unvisited flat address expression, appends V to PostorderStack
 // and marks it as visited.
-void NVPTXInferAddressSpaces::appendsFlatAddressExpressionToPostorderStack(
-    Value *V, std::vector<std::pair<Value *, bool>> *PostorderStack,
-    DenseSet<Value *> *Visited) const {
+void InferAddressSpaces::appendsFlatAddressExpressionToPostorderStack(
+  Value *V, std::vector<std::pair<Value *, bool>> *PostorderStack,
+  DenseSet<Value *> *Visited) const {
   assert(V->getType()->isPointerTy());
   if (isAddressExpression(*V) &&
       V->getType()->getPointerAddressSpace() == FlatAddrSpace) {
@@ -226,7 +226,7 @@ void NVPTXInferAddressSpaces::appendsFlatAddressExpressionToPostorderStack(
 // Returns all flat address expressions in function F. The elements are ordered
 // in postorder.
 std::vector<Value *>
-NVPTXInferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
+InferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
   // This function implements a non-recursive postorder traversal of a partial
   // use-def graph of function F.
   std::vector<std::pair<Value*, bool>> PostorderStack;
@@ -237,10 +237,10 @@ NVPTXInferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
   for (Instruction &I : instructions(F)) {
     if (isa<LoadInst>(I)) {
       appendsFlatAddressExpressionToPostorderStack(
-          I.getOperand(0), &PostorderStack, &Visited);
+        I.getOperand(0), &PostorderStack, &Visited);
     } else if (isa<StoreInst>(I)) {
       appendsFlatAddressExpressionToPostorderStack(
-          I.getOperand(1), &PostorderStack, &Visited);
+        I.getOperand(1), &PostorderStack, &Visited);
     }
   }
 
@@ -257,7 +257,7 @@ NVPTXInferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
     PostorderStack.back().second = true;
     for (Value *PtrOperand : getPointerOperands(*PostorderStack.back().first)) {
       appendsFlatAddressExpressionToPostorderStack(
-          PtrOperand, &PostorderStack, &Visited);
+        PtrOperand, &PostorderStack, &Visited);
     }
   }
   return Postorder;
@@ -267,16 +267,16 @@ NVPTXInferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
 // of OperandUse.get() in the new address space. If the clone is not ready yet,
 // returns an undef in the new address space as a placeholder.
 static Value *operandWithNewAddressSpaceOrCreateUndef(
-    const Use &OperandUse, unsigned NewAddrSpace,
-    const ValueToValueMapTy &ValueWithNewAddrSpace,
-    SmallVectorImpl<const Use *> *UndefUsesToFix) {
+  const Use &OperandUse, unsigned NewAddrSpace,
+  const ValueToValueMapTy &ValueWithNewAddrSpace,
+  SmallVectorImpl<const Use *> *UndefUsesToFix) {
   Value *Operand = OperandUse.get();
   if (Value *NewOperand = ValueWithNewAddrSpace.lookup(Operand))
     return NewOperand;
 
   UndefUsesToFix->push_back(&OperandUse);
   return UndefValue::get(
-      Operand->getType()->getPointerElementType()->getPointerTo(NewAddrSpace));
+    Operand->getType()->getPointerElementType()->getPointerTo(NewAddrSpace));
 }
 
 // Returns a clone of `I` with its operands converted to those specified in
@@ -289,11 +289,11 @@ static Value *operandWithNewAddressSpaceOrCreateUndef(
 // from a pointer whose type already matches. Therefore, this function returns a
 // Value* instead of an Instruction*.
 static Value *cloneInstructionWithNewAddressSpace(
-    Instruction *I, unsigned NewAddrSpace,
-    const ValueToValueMapTy &ValueWithNewAddrSpace,
-    SmallVectorImpl<const Use *> *UndefUsesToFix) {
+  Instruction *I, unsigned NewAddrSpace,
+  const ValueToValueMapTy &ValueWithNewAddrSpace,
+  SmallVectorImpl<const Use *> *UndefUsesToFix) {
   Type *NewPtrType =
-      I->getType()->getPointerElementType()->getPointerTo(NewAddrSpace);
+    I->getType()->getPointerElementType()->getPointerTo(NewAddrSpace);
 
   if (I->getOpcode() == Instruction::AddrSpaceCast) {
     Value *Src = I->getOperand(0);
@@ -313,7 +313,7 @@ static Value *cloneInstructionWithNewAddressSpace(
       NewPointerOperands.push_back(nullptr);
     else
       NewPointerOperands.push_back(operandWithNewAddressSpaceOrCreateUndef(
-          OperandUse, NewAddrSpace, ValueWithNewAddrSpace, UndefUsesToFix));
+                                     OperandUse, NewAddrSpace, ValueWithNewAddrSpace, UndefUsesToFix));
   }
 
   switch (I->getOpcode()) {
@@ -333,8 +333,8 @@ static Value *cloneInstructionWithNewAddressSpace(
   case Instruction::GetElementPtr: {
     GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
     GetElementPtrInst *NewGEP = GetElementPtrInst::Create(
-        GEP->getSourceElementType(), NewPointerOperands[0],
-        SmallVector<Value *, 4>(GEP->idx_begin(), GEP->idx_end()));
+      GEP->getSourceElementType(), NewPointerOperands[0],
+      SmallVector<Value *, 4>(GEP->idx_begin(), GEP->idx_end()));
     NewGEP->setIsInBounds(GEP->isInBounds());
     return NewGEP;
   }
@@ -347,10 +347,10 @@ static Value *cloneInstructionWithNewAddressSpace(
 // constant expression `CE` with its operands replaced as specified in
 // ValueWithNewAddrSpace.
 static Value *cloneConstantExprWithNewAddressSpace(
-    ConstantExpr *CE, unsigned NewAddrSpace,
-    const ValueToValueMapTy &ValueWithNewAddrSpace) {
+  ConstantExpr *CE, unsigned NewAddrSpace,
+  const ValueToValueMapTy &ValueWithNewAddrSpace) {
   Type *TargetType =
-      CE->getType()->getPointerElementType()->getPointerTo(NewAddrSpace);
+    CE->getType()->getPointerElementType()->getPointerTo(NewAddrSpace);
 
   if (CE->getOpcode() == Instruction::AddrSpaceCast) {
     // Because CE is flat, the source address space must be specific.
@@ -382,8 +382,8 @@ static Value *cloneConstantExprWithNewAddressSpace(
     // Needs to specify the source type while constructing a getelementptr
     // constant expression.
     return CE->getWithOperands(
-        NewOperands, TargetType, /*OnlyIfReduced=*/false,
-        NewOperands[0]->getType()->getPointerElementType());
+      NewOperands, TargetType, /*OnlyIfReduced=*/false,
+      NewOperands[0]->getType()->getPointerElementType());
   }
 
   return CE->getWithOperands(NewOperands, TargetType);
@@ -394,7 +394,7 @@ static Value *cloneConstantExprWithNewAddressSpace(
 // expression whose address space needs to be modified, in postorder.
 //
 // See cloneInstructionWithNewAddressSpace for the meaning of UndefUsesToFix.
-Value *NVPTXInferAddressSpaces::cloneValueWithNewAddressSpace(
+Value *InferAddressSpaces::cloneValueWithNewAddressSpace(
   Value *V, unsigned NewAddrSpace,
   const ValueToValueMapTy &ValueWithNewAddrSpace,
   SmallVectorImpl<const Use *> *UndefUsesToFix) const {
@@ -404,7 +404,7 @@ Value *NVPTXInferAddressSpaces::cloneValueWithNewAddressSpace(
 
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     Value *NewV = cloneInstructionWithNewAddressSpace(
-        I, NewAddrSpace, ValueWithNewAddrSpace, UndefUsesToFix);
+      I, NewAddrSpace, ValueWithNewAddrSpace, UndefUsesToFix);
     if (Instruction *NewI = dyn_cast<Instruction>(NewV)) {
       if (NewI->getParent() == nullptr) {
         NewI->insertBefore(I);
@@ -415,13 +415,13 @@ Value *NVPTXInferAddressSpaces::cloneValueWithNewAddressSpace(
   }
 
   return cloneConstantExprWithNewAddressSpace(
-      cast<ConstantExpr>(V), NewAddrSpace, ValueWithNewAddrSpace);
+    cast<ConstantExpr>(V), NewAddrSpace, ValueWithNewAddrSpace);
 }
 
 // Defines the join operation on the address space lattice (see the file header
 // comments).
-unsigned NVPTXInferAddressSpaces::joinAddressSpaces(unsigned AS1,
-                                                    unsigned AS2) const {
+unsigned InferAddressSpaces::joinAddressSpaces(unsigned AS1,
+                                               unsigned AS2) const {
   if (AS1 == FlatAddrSpace || AS2 == FlatAddrSpace)
     return FlatAddrSpace;
 
@@ -434,7 +434,7 @@ unsigned NVPTXInferAddressSpaces::joinAddressSpaces(unsigned AS1,
   return (AS1 == AS2) ? AS1 : FlatAddrSpace;
 }
 
-bool NVPTXInferAddressSpaces::runOnFunction(Function &F) {
+bool InferAddressSpaces::runOnFunction(Function &F) {
   if (skipFunction(F))
     return false;
 
@@ -456,9 +456,9 @@ bool NVPTXInferAddressSpaces::runOnFunction(Function &F) {
   return rewriteWithNewAddressSpaces(Postorder, InferredAddrSpace, &F);
 }
 
-void NVPTXInferAddressSpaces::inferAddressSpaces(
-    const std::vector<Value *> &Postorder,
-    ValueToAddrSpaceMapTy *InferredAddrSpace) const {
+void InferAddressSpaces::inferAddressSpaces(
+  const std::vector<Value *> &Postorder,
+  ValueToAddrSpaceMapTy *InferredAddrSpace) const {
   SetVector<Value *> Worklist(Postorder.begin(), Postorder.end());
   // Initially, all expressions are in the uninitialized address space.
   for (Value *V : Postorder)
@@ -490,8 +490,8 @@ void NVPTXInferAddressSpaces::inferAddressSpaces(
         continue;
 
       // Function updateAddressSpace moves the address space down a lattice
-      // path. Therefore, nothing to do if User is already inferred as flat
-      // (the bottom element in the lattice).
+      // path. Therefore, nothing to do if User is already inferred as flat (the
+      // bottom element in the lattice).
       if (Pos->second == FlatAddrSpace)
         continue;
 
@@ -500,8 +500,8 @@ void NVPTXInferAddressSpaces::inferAddressSpaces(
   }
 }
 
-Optional<unsigned> NVPTXInferAddressSpaces::updateAddressSpace(
-    const Value &V, const ValueToAddrSpaceMapTy &InferredAddrSpace) const {
+Optional<unsigned> InferAddressSpaces::updateAddressSpace(
+  const Value &V, const ValueToAddrSpaceMapTy &InferredAddrSpace) const {
   assert(InferredAddrSpace.count(&V));
 
   // The new inferred address space equals the join of the address spaces
@@ -514,7 +514,8 @@ Optional<unsigned> NVPTXInferAddressSpaces::updateAddressSpace(
     else
       OperandAS = PtrOperand->getType()->getPointerAddressSpace();
     NewAS = joinAddressSpaces(NewAS, OperandAS);
-    // join(flat, *) = flat. So we can break if NewAS is already generic.
+
+    // join(flat, *) = flat. So we can break if NewAS is already flat.
     if (NewAS == FlatAddrSpace)
       break;
   }
@@ -526,9 +527,9 @@ Optional<unsigned> NVPTXInferAddressSpaces::updateAddressSpace(
   return NewAS;
 }
 
-bool NVPTXInferAddressSpaces::rewriteWithNewAddressSpaces(
-    const std::vector<Value *> &Postorder,
-    const ValueToAddrSpaceMapTy &InferredAddrSpace, Function *F) const {
+bool InferAddressSpaces::rewriteWithNewAddressSpaces(
+  const std::vector<Value *> &Postorder,
+  const ValueToAddrSpaceMapTy &InferredAddrSpace, Function *F) const {
   // For each address expression to be modified, creates a clone of it with its
   // pointer operands converted to the new address space. Since the pointer
   // operands are converted, the clone is naturally in the new address space by
@@ -539,7 +540,7 @@ bool NVPTXInferAddressSpaces::rewriteWithNewAddressSpaces(
     unsigned NewAddrSpace = InferredAddrSpace.lookup(V);
     if (V->getType()->getPointerAddressSpace() != NewAddrSpace) {
       ValueWithNewAddrSpace[V] = cloneValueWithNewAddressSpace(
-          V, NewAddrSpace, ValueWithNewAddrSpace, &UndefUsesToFix);
+        V, NewAddrSpace, ValueWithNewAddrSpace, &UndefUsesToFix);
     }
   }
 
@@ -577,15 +578,15 @@ bool NVPTXInferAddressSpaces::rewriteWithNewAddressSpaces(
         // so the resultant load/store is still valid.
         U->set(NewV);
       } else if (isa<Instruction>(U->getUser())) {
-        // Otherwise, replaces the use with generic(NewV).
+        // Otherwise, replaces the use with flat(NewV).
         // TODO: Some optimization opportunities are missed. For example, in
         //   %0 = icmp eq float* %p, %q
         // if both p and q are inferred to be shared, we can rewrite %0 as
         //   %0 = icmp eq float addrspace(3)* %new_p, %new_q
         // instead of currently
-        //   %generic_p = addrspacecast float addrspace(3)* %new_p to float*
-        //   %generic_q = addrspacecast float addrspace(3)* %new_q to float*
-        //   %0 = icmp eq float* %generic_p, %generic_q
+        //   %flat_p = addrspacecast float addrspace(3)* %new_p to float*
+        //   %flat_q = addrspacecast float addrspace(3)* %new_q to float*
+        //   %0 = icmp eq float* %flat_p, %flat_q
         if (Instruction *I = dyn_cast<Instruction>(V)) {
           BasicBlock::iterator InsertPos = std::next(I->getIterator());
           while (isa<PHINode>(InsertPos))
@@ -604,6 +605,6 @@ bool NVPTXInferAddressSpaces::rewriteWithNewAddressSpaces(
   return true;
 }
 
-FunctionPass *llvm::createNVPTXInferAddressSpacesPass() {
-  return new NVPTXInferAddressSpaces();
+FunctionPass *llvm::createInferAddressSpacesPass() {
+  return new InferAddressSpaces();
 }
