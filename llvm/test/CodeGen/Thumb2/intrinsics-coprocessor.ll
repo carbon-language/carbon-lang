@@ -1,5 +1,4 @@
-; RUN: llc < %s -mtriple=armv7-eabi -mcpu=cortex-a8 | FileCheck %s
-
+; RUN: llc < %s -march=thumb -mtriple=thumbv7-eabi -mcpu=cortex-a8 -show-mc-encoding | FileCheck %s
 define void @coproc(i8* %i) nounwind {
 entry:
   ; CHECK: mrc p7, #1, r{{[0-9]+}}, c1, c1, #4
@@ -38,6 +37,22 @@ entry:
   %2 = tail call { i32, i32 } @llvm.arm.mrrc(i32 1, i32 2, i32 3) nounwind
   ; CHECK: mrrc2 p1, #2, r{{[0-9]+}}, r{{[0-9]+}}, c3
   %3 = tail call { i32, i32 } @llvm.arm.mrrc2(i32 1, i32 2, i32 3) nounwind
+  ret void
+}
+
+define hidden void @cond_cdp(i32 %a) {
+; CHECK-LABEL: cond_cdp:
+entry:
+  %tobool = icmp eq i32 %a, 0
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:
+; CHECK: it ne
+; CHECK: cdpne   p15, #0, c0, c0, c0, #0 @ encoding: [0x00,0xee,0x00,0x0f]
+  tail call void @llvm.arm.cdp(i32 15, i32 0, i32 0, i32 0, i32 0, i32 0)
+  br label %if.end
+
+if.end:
   ret void
 }
 
