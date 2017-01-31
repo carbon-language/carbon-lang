@@ -4256,20 +4256,6 @@ defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, v16i16, X86PShufhw,
 defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, v16i16, X86PShuflw,
                              NoVLX_Or_NoBWI>, XD;
 
-let Predicates = [HasAVX] in {
-  def : Pat<(v4f32 (X86PShufd (loadv4f32 addr:$src1), (i8 imm:$imm))),
-            (VPSHUFDmi addr:$src1, imm:$imm)>;
-  def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-            (VPSHUFDri VR128:$src1, imm:$imm)>;
-}
-
-let Predicates = [UseSSE2] in {
-  def : Pat<(v4f32 (X86PShufd (memopv4f32 addr:$src1), (i8 imm:$imm))),
-            (PSHUFDmi addr:$src1, imm:$imm)>;
-  def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-            (PSHUFDri VR128:$src1, imm:$imm)>;
-}
-
 //===---------------------------------------------------------------------===//
 // Packed Integer Pack Instructions (SSE & AVX)
 //===---------------------------------------------------------------------===//
