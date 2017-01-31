@@ -49,7 +49,7 @@ define <4 x i64> @A2(i64* %ptr, i64* %ptr2) nounwind uwtable readnone ssp {
 ; X64-NEXT:    movq (%rdi), %rax
 ; X64-NEXT:    vmovq %rax, %xmm0
 ; X64-NEXT:    movq %rax, (%rsi)
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; X64-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
 ; X64-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X64-NEXT:    retq
 entry:
@@ -114,7 +114,7 @@ define <8 x i32> @B3(i32* %ptr, i32* %ptr2) nounwind uwtable readnone ssp {
 ; X32-NEXT:    movl (%ecx), %ecx
 ; X32-NEXT:    vmovd %ecx, %xmm0
 ; X32-NEXT:    movl %ecx, (%eax)
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; X32-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; X32-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X32-NEXT:    retl
 ;
@@ -123,7 +123,7 @@ define <8 x i32> @B3(i32* %ptr, i32* %ptr2) nounwind uwtable readnone ssp {
 ; X64-NEXT:    movl (%rdi), %eax
 ; X64-NEXT:    vmovd %eax, %xmm0
 ; X64-NEXT:    movl %eax, (%rsi)
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; X64-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; X64-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X64-NEXT:    retq
 entry:
@@ -167,7 +167,7 @@ define <4 x double> @C2(double* %ptr, double* %ptr2) nounwind uwtable readnone s
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; X32-NEXT:    vmovsd %xmm0, (%eax)
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; X32-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
 ; X32-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X32-NEXT:    retl
 ;
@@ -175,7 +175,7 @@ define <4 x double> @C2(double* %ptr, double* %ptr2) nounwind uwtable readnone s
 ; X64:       ## BB#0: ## %entry
 ; X64-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
 ; X64-NEXT:    vmovsd %xmm0, (%rsi)
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,1,0,1]
+; X64-NEXT:    vmovddup {{.*#+}} xmm0 = xmm0[0,0]
 ; X64-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X64-NEXT:    retq
 entry:
@@ -237,17 +237,17 @@ define <8 x float> @D3(float* %ptr, float* %ptr2) nounwind uwtable readnone ssp 
 ; X32:       ## BB#0: ## %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X32-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; X32-NEXT:    vmovd %xmm0, (%eax)
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; X32-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32-NEXT:    vmovss %xmm0, (%eax)
+; X32-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; X32-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: D3:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; X64-NEXT:    vmovd %xmm0, (%rsi)
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; X64-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X64-NEXT:    vmovss %xmm0, (%rsi)
+; X64-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; X64-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
 ; X64-NEXT:    retq
 entry:
@@ -291,16 +291,16 @@ define <4 x float> @e2(float* %ptr, float* %ptr2) nounwind uwtable readnone ssp 
 ; X32:       ## BB#0: ## %entry
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X32-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; X32-NEXT:    vmovd %xmm0, (%eax)
-; X32-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; X32-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X32-NEXT:    vmovss %xmm0, (%eax)
+; X32-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: e2:
 ; X64:       ## BB#0: ## %entry
-; X64-NEXT:    vmovd {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; X64-NEXT:    vmovd %xmm0, (%rsi)
-; X64-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[0,0,0,0]
+; X64-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; X64-NEXT:    vmovss %xmm0, (%rsi)
+; X64-NEXT:    vpermilps {{.*#+}} xmm0 = xmm0[0,0,0,0]
 ; X64-NEXT:    retq
 entry:
   %q = load float, float* %ptr, align 4

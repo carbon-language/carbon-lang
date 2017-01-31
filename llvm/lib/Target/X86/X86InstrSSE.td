@@ -8314,15 +8314,15 @@ let Predicates = [HasAVX, NoVLX] in {
 
 let Predicates = [HasAVX1Only] in {
   def : Pat<(v4f32 (X86VBroadcast FR32:$src)),
-            (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0)>;
+            (VPERMILPSri (COPY_TO_REGCLASS FR32:$src, VR128), 0)>;
   def : Pat<(v8f32 (X86VBroadcast FR32:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v8f32 (IMPLICIT_DEF)),
-              (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0), sub_xmm),
-              (VPSHUFDri (COPY_TO_REGCLASS FR32:$src, VR128), 0), 1)>;
+              (VPERMILPSri (COPY_TO_REGCLASS FR32:$src, VR128), 0), sub_xmm),
+              (VPERMILPSri (COPY_TO_REGCLASS FR32:$src, VR128), 0), 1)>;
   def : Pat<(v4f64 (X86VBroadcast FR64:$src)),
             (VINSERTF128rr (INSERT_SUBREG (v4f64 (IMPLICIT_DEF)),
-              (VPSHUFDri (COPY_TO_REGCLASS FR64:$src, VR128), 0x44), sub_xmm),
-              (VPSHUFDri (COPY_TO_REGCLASS FR64:$src, VR128), 0x44), 1)>;
+              (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128)), sub_xmm),
+              (VMOVDDUPrr (COPY_TO_REGCLASS FR64:$src, VR128)), 1)>;
 
   def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
             (VPSHUFDri (COPY_TO_REGCLASS GR32:$src, VR128), 0)>;
@@ -8336,7 +8336,7 @@ let Predicates = [HasAVX1Only] in {
               (VPSHUFDri (COPY_TO_REGCLASS GR64:$src, VR128), 0x44), 1)>;
 
   def : Pat<(v2i64 (X86VBroadcast i64:$src)),
-              (VMOVDDUPrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
+            (VPSHUFDri (COPY_TO_REGCLASS GR64:$src, VR128), 0x44)>;
 }
 
 //===----------------------------------------------------------------------===//
