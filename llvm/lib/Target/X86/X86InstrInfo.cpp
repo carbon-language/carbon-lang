@@ -8977,14 +8977,17 @@ X86InstrInfo::getExecutionDomain(const MachineInstr &MI) const {
       validDomains = Subtarget.hasAVX2() ? 0xe : 0x6;
     } else if (lookupAVX512(opcode, domain, ReplaceableInstrsAVX512)) {
       validDomains = 0xe;
-    } else if (lookupAVX512(opcode, domain, ReplaceableInstrsAVX512DQ)) {
-      validDomains = Subtarget.hasDQI() ? 0xe : 0x8;
-    } else if (const uint16_t *table = lookupAVX512(opcode, domain,
+    } else if (Subtarget.hasDQI() && lookupAVX512(opcode, domain,
+                                                  ReplaceableInstrsAVX512DQ)) {
+      validDomains = 0xe;
+    } else if (Subtarget.hasDQI()) {
+      if (const uint16_t *table = lookupAVX512(opcode, domain,
                                              ReplaceableInstrsAVX512DQMasked)) {
-      if (domain == 1 || (domain == 3 && table[3] == opcode))
-        validDomains = Subtarget.hasDQI() ? 0xa : 0x8;
-      else
-        validDomains = Subtarget.hasDQI() ? 0xc : 0x8;
+        if (domain == 1 || (domain == 3 && table[3] == opcode))
+          validDomains = 0xa;
+        else
+          validDomains = 0xc;
+      }
     }
   }
   return std::make_pair(domain, validDomains);
