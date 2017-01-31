@@ -1388,6 +1388,10 @@ TEST_F(FormatTestJS, TemplateStrings) {
                "var y;");
   // Escaped dollar.
   verifyFormat("var x = ` \\${foo}`;\n");
+
+  // The token stream can contain two string_literals in sequence, but that
+  // doesn't mean that they are implicitly concatenated in JavaScript.
+  verifyFormat("var f = `aaaa ${a ? 'a' : 'b'}`;");
 }
 
 TEST_F(FormatTestJS, TemplateStringASI) {
