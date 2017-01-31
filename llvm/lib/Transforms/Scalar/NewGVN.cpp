@@ -805,8 +805,7 @@ const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I,
     // ensuring the store has the same memory state as us already.
     // The RepStoredValue gets nulled if all the stores disappear in a class, so
     // we don't need to check if the class contains a store besides us.
-    if (CC &&
-        CC->RepStoredValue == lookupOperandLeader(SI->getValueOperand()))
+    if (CC && CC->RepStoredValue == lookupOperandLeader(SI->getValueOperand()))
       return createStoreExpression(SI, StoreRHS, B);
     // Also check if our value operand is defined by a load of the same memory
     // location, and the memory state is the same as it was then
@@ -1278,8 +1277,7 @@ void NewGVN::performCongruenceFinding(Instruction *I, const Expression *E) {
       } else if (const auto *SE = dyn_cast<StoreExpression>(E)) {
         StoreInst *SI = SE->getStoreInst();
         NewClass->RepLeader = SI;
-        NewClass->RepStoredValue =
-            lookupOperandLeader(SI->getValueOperand());
+        NewClass->RepStoredValue = lookupOperandLeader(SI->getValueOperand());
         // The RepMemoryAccess field will be filled in properly by the
         // moveValueToNewCongruenceClass call.
       } else {
@@ -1989,8 +1987,7 @@ void NewGVN::convertDenseToDFSOrdered(
     VD.DFSOut = DomNode->getDFSNumOut();
     // If it's a store, use the leader of the value operand.
     if (auto *SI = dyn_cast<StoreInst>(D)) {
-      auto Leader =
-          lookupOperandLeader(SI->getValueOperand());
+      auto Leader = lookupOperandLeader(SI->getValueOperand());
       VD.Val = alwaysAvailable(Leader) ? Leader : SI->getValueOperand();
     } else {
       VD.Val = D;
