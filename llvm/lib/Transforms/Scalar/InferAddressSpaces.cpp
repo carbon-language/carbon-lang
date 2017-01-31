@@ -141,7 +141,6 @@ private:
   void inferAddressSpaces(const std::vector<Value *> &Postorder,
                           ValueToAddrSpaceMapTy *InferredAddrSpace) const;
 
-  bool handleComplexPtrUse(User &U, Value *OldV, Value *NewV) const;
   bool isSafeToCastConstAddrSpace(Constant *C, unsigned NewAS) const;
 
   // Changes the flat address expressions in function F to point to specific
