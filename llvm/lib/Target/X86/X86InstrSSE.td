@@ -8334,18 +8334,13 @@ let Predicates = [HasAVX2, NoVLX_Or_NoBWI] in {
 }
 let Predicates = [HasAVX2, NoVLX] in {
   def : Pat<(v4i32 (X86VBroadcast GR32:$src)),
-            (VBROADCASTSSrr (COPY_TO_REGCLASS GR32:$src, VR128))>;
+            (VPBROADCASTDrr (COPY_TO_REGCLASS GR32:$src, VR128))>;
   def : Pat<(v8i32 (X86VBroadcast GR32:$src)),
-            (VBROADCASTSSYrr (COPY_TO_REGCLASS GR32:$src, VR128))>;
-  def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
-            (VBROADCASTSDYrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
-
-  // The patterns for VPBROADCASTD are not needed because they would match
-  // the exact same thing as VBROADCASTSS patterns.
-
+            (VPBROADCASTDYrr (COPY_TO_REGCLASS GR32:$src, VR128))>;
   def : Pat<(v2i64 (X86VBroadcast GR64:$src)),
-        (VPBROADCASTQrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
-  // The v4i64 pattern is not needed because VBROADCASTSDYrr already match.
+            (VPBROADCASTQrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
+  def : Pat<(v4i64 (X86VBroadcast GR64:$src)),
+            (VPBROADCASTQYrr (COPY_TO_REGCLASS GR64:$src, VR128))>;
 }
 
 // AVX1 broadcast patterns
