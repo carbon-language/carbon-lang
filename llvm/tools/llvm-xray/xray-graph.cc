@@ -575,7 +575,7 @@ static CommandRegistration Unused(&Graph, []() -> Error {
     if (!GraphKeepGoing)
       return joinErrors(make_error<StringError>(
                             "Error encountered generating the call graph.",
-                            std::make_error_code(std::errc::bad_message)),
+                            std::make_error_code(std::errc::invalid_argument)),
                         std::move(E));
 
     handleAllErrors(std::move(E),
