@@ -14,6 +14,7 @@
 #include "AArch64CallLowering.h"
 #include "AArch64InstructionSelector.h"
 #include "AArch64LegalizerInfo.h"
+#include "AArch64MacroFusion.h"
 #ifdef LLVM_BUILD_GLOBAL_ISEL
 #include "AArch64RegisterBankInfo.h"
 #endif
@@ -325,7 +326,7 @@ public:
     ScheduleDAGMILive *DAG = createGenericSchedLive(C);
     DAG->addMutation(createLoadClusterDAGMutation(DAG->TII, DAG->TRI));
     DAG->addMutation(createStoreClusterDAGMutation(DAG->TII, DAG->TRI));
-    DAG->addMutation(createMacroFusionDAGMutation(DAG->TII));
+    DAG->addMutation(createAArch64MacroFusionDAGMutation());
     return DAG;
   }
 
