@@ -85,6 +85,7 @@ protected:
   bool HasArithmeticBccFusion = false;
   bool HasArithmeticCbzFusion = false;
   bool HasFuseAES = false;
+  bool HasFuseLiterals = false;
   bool DisableLatencySchedHeuristic = false;
   bool UseRSqrt = false;
   uint8_t MaxInterleaveFactor = 2;
@@ -199,6 +200,7 @@ public:
   bool hasArithmeticBccFusion() const { return HasArithmeticBccFusion; }
   bool hasArithmeticCbzFusion() const { return HasArithmeticCbzFusion; }
   bool hasFuseAES() const { return HasFuseAES; }
+  bool hasFuseLiterals() const { return HasFuseLiterals; }
   bool useRSqrt() const { return UseRSqrt; }
   unsigned getMaxInterleaveFactor() const { return MaxInterleaveFactor; }
   unsigned getVectorInsertExtractBaseCost() const {

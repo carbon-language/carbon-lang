@@ -129,6 +129,31 @@ static bool shouldScheduleAdjacent(const AArch64InstrInfo &TII,
              SecondOpcode == AArch64::INSTRUCTION_LIST_END;
     }
 
+  if (ST.hasFuseLiterals())
+    // Fuse literal generation operations.
+    switch (FirstOpcode) {
+    // PC relative address.
+    case AArch64::ADRP:
+      return SecondOpcode == AArch64::ADDXri ||
+             SecondOpcode == AArch64::INSTRUCTION_LIST_END;
+    // 32 bit immediate.
+    case AArch64::MOVZWi:
+      return (SecondOpcode == AArch64::MOVKWi &&
+              Second->getOperand(3).getImm() == 16) ||
+             SecondOpcode == AArch64::INSTRUCTION_LIST_END;
+    // Lower half of 64 bit immediate.
+    case AArch64::MOVZXi:
+      return (SecondOpcode == AArch64::MOVKXi &&
+              Second->getOperand(3).getImm() == 16) ||
+             SecondOpcode == AArch64::INSTRUCTION_LIST_END;
+    // Upper half of 64 bit immediate.
+    case AArch64::MOVKXi:
+      return First->getOperand(3).getImm() == 32 &&
+             ((SecondOpcode == AArch64::MOVKXi &&
+               Second->getOperand(3).getImm() == 48) ||
+              SecondOpcode == AArch64::INSTRUCTION_LIST_END);
+    }
+
   return false;
 }
 

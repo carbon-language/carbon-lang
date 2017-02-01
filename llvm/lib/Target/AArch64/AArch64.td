@@ -107,6 +107,10 @@ def FeatureFuseAES : SubtargetFeature<
     "fuse-aes", "HasFuseAES", "true",
     "CPU fuses AES crypto operations">;
 
+def FeatureFuseLiterals : SubtargetFeature<
+    "fuse-literals", "HasFuseLiterals", "true",
+    "CPU fuses literal generation operations">;
+
 def FeatureDisableLatencySchedHeuristic : SubtargetFeature<
     "disable-latency-sched-heuristic", "DisableLatencySchedHeuristic", "true",
     "Disable latency scheduling heuristic">;
@@ -189,6 +193,7 @@ def ProcA57     : SubtargetFeature<"a57", "ARMProcFamily", "CortexA57",
                                    FeatureCustomCheapAsMoveHandling,
                                    FeatureFPARMv8,
                                    FeatureFuseAES,
+                                   FeatureFuseLiterals,
                                    FeatureNEON,
                                    FeaturePerfMon,
                                    FeaturePostRAScheduler,
