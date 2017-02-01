@@ -2238,7 +2238,7 @@ TEST_F(FormatTest, ReflowsComments) {
   EXPECT_EQ("int i; // This long\n"
             "       // line gets\n"
             "       // broken.\n"
-            "       //  \n"
+            "       //\n"
             "       // keep.\n",
             format("int i; // This long line gets broken.\n"
                    "       //  \n"
@@ -11741,7 +11741,7 @@ TEST_F(ReplacementTest, SortIncludesAfterReplacement) {
   EXPECT_EQ(Expected, *Result);
 }
 
-TEST_F(FormatTest, AllignTrailingComments) {
+TEST_F(FormatTest, AlignTrailingComments) {
   EXPECT_EQ("#define MACRO(V)                       \\\n"
             "  V(Rt2) /* one more char */           \\\n"
             "  V(Rs)  /* than here  */              \\\n"
@@ -11750,6 +11750,15 @@ TEST_F(FormatTest, AllignTrailingComments) {
                    "V(Rt2)  /* one more char */ \\\n"
                    "V(Rs) /* than here  */    \\\n"
                    "/* comment 3 */         \\\n",
+                   getLLVMStyleWithColumns(40)));
+  EXPECT_EQ("int i = f(abc, // line 1\n"
+            "          d,   // line 2\n"
+            "               // line 3\n"
+            "          b);",
+            format("int i = f(abc, // line 1\n"
+                   "          d, // line 2\n"
+                   "             // line 3\n"
+                   "          b);",
                    getLLVMStyleWithColumns(40)));
 }
 } // end namespace
