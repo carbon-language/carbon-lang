@@ -208,15 +208,15 @@ body:             |
 
   bb.2.ret_200:
     %eax = MOV32ri 200
-    RET 0, %eax
+    RETQ %eax
 
   bb.3.is_null:
     %eax = MOV32ri 42
-    RET 0, %eax
+    RETQ %eax
 
   bb.4.ret_100:
     %eax = MOV32ri 100
-    RET 0, %eax
+    RETQ %eax
 
 ...
 ---
@@ -258,11 +258,11 @@ body:             |
   bb.3.is_null:
     liveins: %eax, %ah, %al, %ax, %bh, %bl, %bp, %bpl, %bx, %eax, %ebp, %ebx, %rax, %rbp, %rbx, %r12, %r13, %r14, %r15, %r12b, %r13b, %r14b, %r15b, %r12d, %r13d, %r14d, %r15d, %r12w, %r13w, %r14w, %r15w
 
-    RET 0, %eax
+    RETQ %eax
 
   bb.4.ret_100:
     %eax = MOV32ri 100
-    RET 0, %eax
+    RETQ %eax
 
 ...
 ---
@@ -297,15 +297,15 @@ body:             |
 
   bb.2.ret_200:
     %eax = MOV32ri 200
-    RET 0, %eax
+    RETQ %eax
 
   bb.3.is_null:
     %eax = MOV32ri 42
-    RET 0, %eax
+    RETQ %eax
 
   bb.4.ret_100:
     %eax = MOV32ri 100
-    RET 0, %eax
+    RETQ %eax
 
 ...
 ---
@@ -339,15 +339,15 @@ body:             |
 
   bb.2.ret_200:
     %eax = MOV32ri 200
-    RET 0, %eax
+    RETQ %eax
 
   bb.3.is_null:
     %eax = MOV32ri 42
-    RET 0, %eax
+    RETQ %eax
 
   bb.4.ret_100:
     %eax = MOV32ri 100
-    RET 0, %eax
+    RETQ %eax
 
 ...
 ---
@@ -382,15 +382,15 @@ body:             |
 
   bb.2.ret_200:
     %eax = MOV32ri 200
-    RET 0, %eax
+    RETQ %eax
 
   bb.3.is_null:
     %eax = MOV32ri 42
-    RET 0, %eax
+    RETQ %eax
 
   bb.4.ret_100:
     %eax = MOV32ri 100
-    RET 0, %eax
+    RETQ %eax
 
 ...
 ---
