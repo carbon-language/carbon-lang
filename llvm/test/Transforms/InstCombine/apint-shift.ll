@@ -126,8 +126,8 @@ define <2 x i19> @lshr_lshr_splat_vec(<2 x i19> %X) {
   ret <2 x i19> %sh2
 }
 
-define i9 @multituse_lshr_lshr(i9 %x) {
-; CHECK-LABEL: @multituse_lshr_lshr(
+define i9 @multiuse_lshr_lshr(i9 %x) {
+; CHECK-LABEL: @multiuse_lshr_lshr(
 ; CHECK-NEXT:    [[SH1:%.*]] = lshr i9 %x, 2
 ; CHECK-NEXT:    [[SH2:%.*]] = lshr i9 %x, 5
 ; CHECK-NEXT:    [[MUL:%.*]] = mul i9 [[SH1]], [[SH2]]
@@ -178,8 +178,8 @@ define i42 @multiuse_shl_shl(i42 %x) {
   ret i42 %mul
 }
 
-define <2 x i42> @mulituse_shl_shl_splat(<2 x i42> %x) {
-; CHECK-LABEL: @mulituse_shl_shl_splat(
+define <2 x i42> @multiuse_shl_shl_splat(<2 x i42> %x) {
+; CHECK-LABEL: @multiuse_shl_shl_splat(
 ; CHECK-NEXT:    [[SH1:%.*]] = shl <2 x i42> %x, <i42 8, i42 8>
 ; CHECK-NEXT:    [[SH2:%.*]] = shl <2 x i42> %x, <i42 17, i42 17>
 ; CHECK-NEXT:    [[MUL:%.*]] = mul <2 x i42> [[SH1]], [[SH2]]
