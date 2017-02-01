@@ -4060,9 +4060,14 @@ TEST_F(FormatTest, ExpressionIndentation) {
                "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
                "        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {\n}");
   verifyFormat("if () {\n"
+               "} else if (aaaaa && bbbbb > // break\n"
+               "                        ccccc) {\n"
+               "}");
+  verifyFormat("if () {\n"
                "} else if (aaaaa &&\n"
                "           bbbbb > // break\n"
-               "               ccccc) {\n"
+               "               ccccc &&\n"
+               "           ddddd) {\n"
                "}");
 
   // Presence of a trailing comment used to change indentation of b.
@@ -4167,7 +4172,7 @@ TEST_F(FormatTest, NoOperandAlignment) {
                Style);
   verifyFormat("int a = aa\n"
                "    + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
-               "        * cccccccccccccccccccccccccccccccccccc;",
+               "        * cccccccccccccccccccccccccccccccccccc;\n",
                Style);
 
   Style.AlignAfterOpenBracket = FormatStyle::BAS_DontAlign;
@@ -4659,9 +4664,13 @@ TEST_F(FormatTest, BreaksDesireably) {
       "aaaaaa(new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
   verifyFormat(
+      "aaaaaa(aaa, new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "                aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
+  verifyFormat(
       "aaaaaa(aaa,\n"
       "       new Aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
-      "           aaaaaaaaaaaaaaaaaaaaaaaaaaaaa));");
+      "           aaaaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
+      "       aaaa);");
   verifyFormat("aaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
                "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "                  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
@@ -5140,11 +5149,18 @@ TEST_F(FormatTest, ParenthesesAndOperandAlignment) {
 
 TEST_F(FormatTest, BreaksConditionalExpressions) {
   verifyFormat(
-      "aaaa(aaaaaaaaaaaaaaaaaaaa,\n"
+      "aaaa(aaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "                               ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "                               : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat(
+      "aaaa(aaaaaaaaaa, aaaaaaaa,\n"
       "     aaaaaaaaaaaaaaaaaaaaaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "                                : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat(
-      "aaaa(aaaaaaaaaaaaaaaaaaaa,\n"
+      "aaaa(aaaaaaaaaaaaaaaaaaaa, aaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "                                   : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat(
+      "aaaa(aaaaaaaaa, aaaaaaaaa,\n"
       "     aaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
       "             : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat(
@@ -5275,12 +5291,21 @@ TEST_F(FormatTest, BreaksConditionalExpressionsAfterOperator) {
   Style.BreakBeforeTernaryOperators = false;
   Style.ColumnLimit = 70;
   verifyFormat(
-      "aaaa(aaaaaaaaaaaaaaaaaaaa,\n"
+      "aaaa(aaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaa ?\n"
+      "                               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :\n"
+      "                               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
+      Style);
+  verifyFormat(
+      "aaaa(aaaaaaaaaa, aaaaaaaa,\n"
       "     aaaaaaaaaaaaaaaaaaaaaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :\n"
       "                                  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
       Style);
   verifyFormat(
-      "aaaa(aaaaaaaaaaaaaaaaaaaa,\n"
+      "aaaa(aaaaaaaaaaaaaaaaaaaa, aaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :\n"
+      "                                     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
+      Style);
+  verifyFormat(
+      "aaaa(aaaaaaaa, aaaaaaaaaa,\n"
       "     aaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :\n"
       "               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
       Style);
@@ -5418,9 +5443,8 @@ TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("someFunction(\"Always break between multi-line\"\n"
                "             \" string literals\",\n"
                "             and, other, parameters);");
-  EXPECT_EQ("fun +\n"
-            "    \"1243\" /* comment */\n"
-            "    \"5678\";",
+  EXPECT_EQ("fun + \"1243\" /* comment */\n"
+            "      \"5678\";",
             format("fun + \"1243\" /* comment */\n"
                    "    \"5678\";",
                    getLLVMStyleWithColumns(28)));
@@ -5432,13 +5456,11 @@ TEST_F(FormatTest, AlignsStringLiterals) {
              "\"aaaaaaaaaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaa "
              "aaaaaaaaaaaaaaaaaaaaa\" "
              "\"aaaaaaaaaaaaaaaa\";"));
-  verifyFormat("a = a +\n"
-               "    \"a\"\n"
-               "    \"a\"\n"
-               "    \"a\";");
-  verifyFormat("f(\"a\",\n"
-               "  \"b\"\n"
-               "  \"c\");");
+  verifyFormat("a = a + \"a\"\n"
+               "        \"a\"\n"
+               "        \"a\";");
+  verifyFormat("f(\"a\", \"b\"\n"
+               "       \"c\");");
 
   verifyFormat(
       "#define LL_FORMAT \"ll\"\n"
@@ -5623,9 +5645,8 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
                "    \"bbbb\"\n"
                "    \"cccc\");",
                Break);
-  verifyFormat("aaaa(qqq,\n"
-               "     \"bbbb\"\n"
-               "     \"cccc\");",
+  verifyFormat("aaaa(qqq, \"bbbb\"\n"
+               "          \"cccc\");",
                NoBreak);
   verifyFormat("aaaa(qqq,\n"
                "     \"bbbb\"\n"
@@ -5635,9 +5656,8 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
                "     L\"bbbb\"\n"
                "     L\"cccc\");",
                Break);
-  verifyFormat("aaaaa(aaaaaa,\n"
-               "      aaaaaaa(\"aaaa\"\n"
-               "              \"bbbb\"));",
+  verifyFormat("aaaaa(aaaaaa, aaaaaaa(\"aaaa\"\n"
+               "                      \"bbbb\"));",
                Break);
   verifyFormat("string s = someFunction(\n"
                "    \"abc\"\n"
@@ -6497,10 +6517,17 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("foo<b & 1>();");
   verifyFormat("decltype(*::std::declval<const T &>()) void F();");
   verifyFormat(
+      "template <class T, class = typename std::enable_if<\n"
+      "                       std::is_integral<T>::value &&\n"
+      "                       (sizeof(T) > 1 || sizeof(T) < 8)>::type>\n"
+      "void F();",
+      getLLVMStyleWithColumns(70));
+  verifyFormat(
       "template <class T,\n"
       "          class = typename std::enable_if<\n"
       "              std::is_integral<T>::value &&\n"
-      "              (sizeof(T) > 1 || sizeof(T) < 8)>::type>\n"
+      "              (sizeof(T) > 1 || sizeof(T) < 8)>::type,\n"
+      "          class U>\n"
       "void F();",
       getLLVMStyleWithColumns(70));
   verifyFormat(
@@ -7422,7 +7449,10 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
                "};");
 
   // Don't create hanging lists.
-  verifyFormat("someFunction(Param,\n"
+  verifyFormat("someFunction(Param, {List1, List2,\n"
+               "                     List3});",
+               getLLVMStyleWithColumns(35));
+  verifyFormat("someFunction(Param, Param,\n"
                "             {List1, List2,\n"
                "              List3});",
                getLLVMStyleWithColumns(35));
