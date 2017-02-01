@@ -193,6 +193,7 @@ static bool isAddressExpression(const Value &V) {
   case Instruction::BitCast:
   case Instruction::AddrSpaceCast:
   case Instruction::GetElementPtr:
+  case Instruction::Select:
     return true;
   default:
     return false;
@@ -215,6 +216,8 @@ static SmallVector<Value *, 2> getPointerOperands(const Value &V) {
   case Instruction::AddrSpaceCast:
   case Instruction::GetElementPtr:
     return {Op.getOperand(0)};
+  case Instruction::Select:
+    return {Op.getOperand(1), Op.getOperand(2)};
   default:
     llvm_unreachable("Unexpected instruction type.");
   }
@@ -411,6 +414,11 @@ static Value *cloneInstructionWithNewAddressSpace(
       SmallVector<Value *, 4>(GEP->idx_begin(), GEP->idx_end()));
     NewGEP->setIsInBounds(GEP->isInBounds());
     return NewGEP;
+  }
+  case Instruction::Select: {
+    assert(I->getType()->isPointerTy());
+    return SelectInst::Create(I->getOperand(0), NewPointerOperands[1],
+                              NewPointerOperands[2], "", nullptr, I);
   }
   default:
     llvm_unreachable("Unexpected opcode");
