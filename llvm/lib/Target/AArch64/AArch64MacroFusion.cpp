@@ -116,6 +116,19 @@ static bool shouldScheduleAdjacent(const AArch64InstrInfo &TII,
         return true;
       }
 
+  if (ST.hasFuseAES())
+    // Fuse AES crypto operations.
+    switch(FirstOpcode) {
+    // AES encode.
+    case AArch64::AESErr:
+      return SecondOpcode == AArch64::AESMCrr ||
+             SecondOpcode == AArch64::INSTRUCTION_LIST_END;
+    // AES decode.
+    case AArch64::AESDrr:
+      return SecondOpcode == AArch64::AESIMCrr ||
+             SecondOpcode == AArch64::INSTRUCTION_LIST_END;
+    }
+
   return false;
 }
 
