@@ -1494,8 +1494,7 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
   while (!Error && !consume("}")) {
     StringRef Tok = next();
     if (Tok == ";") {
-      // Commands may contain excessive additional semicolons around.
-      // We should be able to parse it.
+      // Empty commands are allowed. Do nothing here.
     } else if (SymbolAssignment *Assignment = readProvideOrAssignment(Tok)) {
       Cmd->Commands.emplace_back(Assignment);
     } else if (BytesDataCommand *Data = readBytesDataCommand(Tok)) {
