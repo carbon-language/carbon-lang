@@ -2440,7 +2440,7 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
     //   qualified-id denotes a type, forming an
     //   elaborated-type-specifier (7.1.5.3).
     if (!LookupCtx && isDependentScopeSpecifier(SS)) {
-      Diag(TemplateIILoc, diag::err_typename_missing_template)
+      Diag(SS.getBeginLoc(), diag::err_typename_missing_template)
         << SS.getScopeRep() << TemplateII->getName();
       // Recover as if 'typename' were specified.
       // FIXME: This is not quite correct recovery as we don't transform SS

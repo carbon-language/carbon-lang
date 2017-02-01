@@ -12,7 +12,8 @@ struct X {
   };
 };
 
-template<typename T> A<T>::B<T> f1(); // expected-error {{missing 'typename' prior to dependent type template name 'A<T>::B'}}
+template<typename T> A // expected-error {{missing 'typename' prior to dependent type template name 'A<T>::B'}}
+                      <T>::B<T> f1();
 template<typename T> A<T>::C<T> f2(); // expected-error {{missing 'typename' prior to dependent type template name 'A<T>::C'}}
 
 // FIXME: Should these cases really be valid? There doesn't appear to be a rule prohibiting them...
