@@ -25,6 +25,7 @@
 #include "llvm/LTO/Config.h"
 #include "llvm/Linker/IRMover.h"
 #include "llvm/Object/IRObjectFile.h"
+#include "llvm/Support/Error.h"
 #include "llvm/Support/thread.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/IPO/FunctionImport.h"
@@ -225,6 +226,9 @@ public:
         symbol_iterator(SymTab.symbols().begin(), SymTab, this),
         symbol_iterator(SymTab.symbols().end(), SymTab, this));
   }
+
+  /// Returns linker options specified in the input file.
+  Expected<std::string> getLinkerOpts();
 
   /// Returns the path to the InputFile.
   StringRef getName() const;
