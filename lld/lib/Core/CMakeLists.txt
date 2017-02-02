@@ -7,6 +7,7 @@ add_lld_library(lldCore
   Reproduce.cpp
   Resolver.cpp
   SymbolTable.cpp
+  TargetOptionsCommandFlags.cpp
   Writer.cpp
 
   ADDITIONAL_HEADER_DIRS
