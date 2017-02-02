@@ -1257,11 +1257,8 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
 
   // PT_GNU_STACK is a special section to tell the loader to make the
   // pages for the stack non-executable.
-  if (!Config->ZExecstack) {
-    PhdrEntry *Hdr = AddHdr(PT_GNU_STACK, PF_R | PF_W);
-    if (Config->ZStackSize != uint64_t(-1))
-      Hdr->p_memsz = Config->ZStackSize;
-  }
+  if (!Config->ZExecstack)
+    AddHdr(PT_GNU_STACK, PF_R | PF_W)->p_memsz = Config->ZStackSize;
 
   // PT_OPENBSD_WXNEEDED is a OpenBSD-specific header to mark the executable
   // is expected to perform W^X violations, such as calling mprotect(2) or
