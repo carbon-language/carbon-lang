@@ -27613,8 +27613,7 @@ static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
 /// altering anything.
 static SDValue
 combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
-                             SelectionDAG &DAG,
-                             TargetLowering::DAGCombinerInfo &DCI) {
+                             SelectionDAG &DAG) {
   assert(N.getOpcode() == X86ISD::PSHUFD &&
          "Called with something other than an x86 128-bit half shuffle!");
   SDLoc DL(N);
@@ -28077,7 +28076,7 @@ static SDValue combineTargetShuffle(SDValue N, SelectionDAG &DAG,
     break;
 
   case X86ISD::PSHUFD:
-    if (SDValue NewN = combineRedundantDWordShuffle(N, Mask, DAG, DCI))
+    if (SDValue NewN = combineRedundantDWordShuffle(N, Mask, DAG))
       return NewN;
 
     break;
@@ -33546,7 +33545,6 @@ static SDValue MaterializeSETB(const SDLoc &DL, SDValue EFLAGS,
 
 // Optimize  RES = X86ISD::SETCC CONDCODE, EFLAG_INPUT
 static SDValue combineX86SetCC(SDNode *N, SelectionDAG &DAG,
-                               TargetLowering::DAGCombinerInfo &DCI,
                                const X86Subtarget &Subtarget) {
   SDLoc DL(N);
   X86::CondCode CC = X86::CondCode(N->getConstantOperandVal(0));
@@ -33585,7 +33583,6 @@ static SDValue combineX86SetCC(SDNode *N, SelectionDAG &DAG,
 
 /// Optimize branch condition evaluation.
 static SDValue combineBrCond(SDNode *N, SelectionDAG &DAG,
-                             TargetLowering::DAGCombinerInfo &DCI,
                              const X86Subtarget &Subtarget) {
   SDLoc DL(N);
   SDValue EFLAGS = N->getOperand(3);
@@ -34191,8 +34188,8 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SIGN_EXTEND:    return combineSext(N, DAG, DCI, Subtarget);
   case ISD::SIGN_EXTEND_INREG: return combineSignExtendInReg(N, DAG, Subtarget);
   case ISD::SETCC:          return combineSetCC(N, DAG, Subtarget);
-  case X86ISD::SETCC:       return combineX86SetCC(N, DAG, DCI, Subtarget);
-  case X86ISD::BRCOND:      return combineBrCond(N, DAG, DCI, Subtarget);
+  case X86ISD::SETCC:       return combineX86SetCC(N, DAG, Subtarget);
+  case X86ISD::BRCOND:      return combineBrCond(N, DAG, Subtarget);
   case X86ISD::VSHLI:
   case X86ISD::VSRAI:
   case X86ISD::VSRLI:       return combineVectorShift(N, DAG, DCI, Subtarget);
