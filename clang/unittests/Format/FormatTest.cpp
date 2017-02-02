@@ -4163,6 +4163,10 @@ TEST_F(FormatTest, EnforcedOperatorWraps) {
 TEST_F(FormatTest, NoOperandAlignment) {
   FormatStyle Style = getLLVMStyle();
   Style.AlignOperands = false;
+  verifyFormat("aaaaaaaaaaaaaa(aaaaaaaaaaaa,\n"
+               "               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
+               "                   aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);",
+               Style);
   Style.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
   verifyFormat("bool value = aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
                "            + aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
