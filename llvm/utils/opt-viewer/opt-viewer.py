@@ -253,12 +253,12 @@ class IndexRenderer:
     def __init__(self, output_dir):
         self.stream = open(os.path.join(output_dir, 'index.html'), 'w')
 
-    def render_entry(self, r):
+    def render_entry(self, r, odd):
         print('''
 <tr>
-<td><a href={r.Link}>{r.DebugLocString}</a></td>
-<td>{r.RelativeHotness}</td>
-<td>{r.DemangledFunctionName}</td>
+<td class=\"column-entry-{odd}\"><a href={r.Link}>{r.DebugLocString}</a></td>
+<td class=\"column-entry-{odd}\">{r.RelativeHotness}</td>
+<td class=\"column-entry-{odd}\">{r.DemangledFunctionName}</td>
 <td class=\"column-entry-{r.color}\">{r.Pass}</td>
 </tr>'''.format(**locals()), file=self.stream)
 
@@ -277,8 +277,8 @@ class IndexRenderer:
 <td>Function</td>
 <td>Pass</td>
 </tr>''', file=self.stream)
-        for remark in all_remarks:
-            self.render_entry(remark)
+        for i, remark in enumerate(all_remarks):
+            self.render_entry(remark, i % 2)
         print('''
 </table>
 </body>
