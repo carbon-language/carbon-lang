@@ -1,8 +1,4 @@
 ; REQUIRES: object-emission
-; RUN: %llc_dwarf -O0 -filetype=obj < %S/gmlt.ll | llvm-dwarfdump - | FileCheck %S/gmlt.ll
-
-; There's a darwin specific test in X86/gmlt, so it's okay to XFAIL this here.
-; XFAIL: darwin
 
 ; Generated from the following source compiled with clang++ -gmlt:
 ; void f1() {}
