@@ -455,20 +455,29 @@ Error LTO::addRegularLTO(BitcodeModule BM, const SymbolResolution *&ResI,
     SymbolResolution Res = *ResI++;
     addSymbolToGlobalRes(Used, Sym, Res, 0);
 
-    if (Sym.getFlags() & object::BasicSymbolRef::SF_Undefined)
-      continue;
-    if (Res.Prevailing && Sym.isGV()) {
+    if (Sym.isGV()) {
       GlobalValue *GV = Sym.getGV();
-      Keep.push_back(GV);
-      switch (GV->getLinkage()) {
-      default:
-        break;
-      case GlobalValue::LinkOnceAnyLinkage:
-        GV->setLinkage(GlobalValue::WeakAnyLinkage);
-        break;
-      case GlobalValue::LinkOnceODRLinkage:
-        GV->setLinkage(GlobalValue::WeakODRLinkage);
-        break;
+      if (Res.Prevailing) {
+        if (Sym.getFlags() & object::BasicSymbolRef::SF_Undefined)
+          continue;
+        Keep.push_back(GV);
+        switch (GV->getLinkage()) {
+        default:
+          break;
+        case GlobalValue::LinkOnceAnyLinkage:
+          GV->setLinkage(GlobalValue::WeakAnyLinkage);
+          break;
+        case GlobalValue::LinkOnceODRLinkage:
+          GV->setLinkage(GlobalValue::WeakODRLinkage);
+          break;
+        }
+      } else if (GV->hasAvailableExternallyLinkage()) {
+        // We can link available_externally symbols even if they are
+        // non-prevailing.
+        GlobalValue *CombinedGV =
+            RegularLTO.CombinedModule->getNamedValue(GV->getName());
+        if (!CombinedGV || CombinedGV->isDeclaration())
+          Keep.push_back(GV);
       }
     }
     // Common resolution: collect the maximum size/alignment over all commons.
