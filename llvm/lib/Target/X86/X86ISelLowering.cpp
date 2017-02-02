@@ -2783,12 +2783,14 @@ static ArrayRef<MCPhysReg> get64BitArgumentXMMs(MachineFunction &MF,
   return makeArrayRef(std::begin(XMMArgRegs64Bit), std::end(XMMArgRegs64Bit));
 }
 
+#ifndef NDEBUG
 static bool isSortedByValueNo(const SmallVectorImpl<CCValAssign> &ArgLocs) {
   return std::is_sorted(ArgLocs.begin(), ArgLocs.end(),
                         [](const CCValAssign &A, const CCValAssign &B) -> bool {
                           return A.getValNo() < B.getValNo();
                         });
 }
+#endif
 
 SDValue X86TargetLowering::LowerFormalArguments(
     SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
@@ -2838,8 +2840,8 @@ SDValue X86TargetLowering::LowerFormalArguments(
 
   // The next loop assumes that the locations are in the same order of the
   // input arguments.
-  if (!isSortedByValueNo(ArgLocs))
-    llvm_unreachable("Argument Location list must be sorted before lowering");
+  assert(isSortedByValueNo(ArgLocs) &&
+         "Argument Location list must be sorted before lowering");
 
   SDValue ArgValue;
   for (unsigned I = 0, InsIndex = 0, E = ArgLocs.size(); I != E;
@@ -3350,8 +3352,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // The next loop assumes that the locations are in the same order of the
   // input arguments.
-  if (!isSortedByValueNo(ArgLocs))
-    llvm_unreachable("Argument Location list must be sorted before lowering");
+  assert(isSortedByValueNo(ArgLocs) &&
+         "Argument Location list must be sorted before lowering");
 
   // Walk the register/memloc assignments, inserting copies/loads.  In the case
   // of tail call optimization arguments are handle later.
