@@ -42,13 +42,6 @@ class T_Immext<Operand ImmType>
   }
 
 def A4_ext : T_Immext<u26_6Imm>;
-let isCodeGenOnly = 1 in {
-  let isBranch = 1 in
-    def A4_ext_b : T_Immext<brtarget>;
-  let isCall = 1 in
-    def A4_ext_c : T_Immext<calltarget>;
-  def A4_ext_g : T_Immext<globaladdress>;
-}
 
 // Hexagon V4 Architecture spec defines 8 instruction classes:
 // LD ST ALU32 XTYPE J JR MEMOP NV CR SYSTEM(system is not implemented in the
