@@ -1255,7 +1255,7 @@ TEST_F(ChangeNamespaceTest, UsingDeclInMovedNamespaceMultiNested) {
   EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
 }
 
-TEST_F(ChangeNamespaceTest, UsingDeclInTheParentOfOldNamespace) {
+TEST_F(ChangeNamespaceTest, UsingShadowDeclInTheParentOfOldNamespace) {
   OldNamespace = "nb::nc";
   NewNamespace = "nb::nd";
   std::string Code = "namespace na { class A {}; }\n"
@@ -1274,6 +1274,74 @@ TEST_F(ChangeNamespaceTest, UsingDeclInTheParentOfOldNamespace) {
                          "void d() { A a; }\n"
                          "} // namespace nd\n"
                          "} // nb\n";
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, UsingShadowDeclInOldNamespace) {
+  OldNamespace = "nb";
+  NewNamespace = "nc";
+  std::string Code = "namespace na { class A {}; }\n"
+                     "namespace nb {\n"
+                     "using na::A;\n"
+                     "void d() { A a; }\n"
+                     "struct X { A a; };\n"
+                     "} // nb\n";
+
+  std::string Expected = "namespace na { class A {}; }\n"
+                         "\n"
+                         "namespace nc {\n"
+                         "using ::na::A;\n"
+                         "void d() { A a; }\n"
+                         "struct X { A a; };\n"
+                         "} // namespace nc\n";
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, UsingShadowDeclOfTemplateClass) {
+  OldNamespace = "nb";
+  NewNamespace = "nc";
+  std::string Code = "namespace na {\n"
+                     "template <typename T>\n"
+                     "class A { T t; };\n"
+                     "} // namespace na\n"
+                     "namespace nb {\n"
+                     "using na::A;\n"
+                     "void d() { A<int> a; }\n"
+                     "} // nb\n";
+
+  std::string Expected = "namespace na {\n"
+                         "template <typename T>\n"
+                         "class A { T t; };\n"
+                         "} // namespace na\n"
+                         "\n"
+                         "namespace nc {\n"
+                         "using ::na::A;\n"
+                         "void d() { A<int> a; }\n"
+                         "} // namespace nc\n";
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, UsingShadowDeclOfTemplateFunction) {
+  OldNamespace = "nb";
+  NewNamespace = "nc";
+  std::string Code = "namespace na {\n"
+                     "template <typename T>\n"
+                     "void f() { T t; };\n"
+                     "} // namespace na\n"
+                     "namespace nb {\n"
+                     "using na::f;\n"
+                     "void d() { f<int>(); }\n"
+                     "} // nb\n";
+
+  std::string Expected = "namespace na {\n"
+                         "template <typename T>\n"
+                         "void f() { T t; };\n"
+                         "} // namespace na\n"
+                         "\n"
+                         "namespace nc {\n"
+                         "using ::na::f;\n"
+                         "void d() { f<int>(); }\n"
+                         "} // namespace nc\n";
   EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
 }
 
