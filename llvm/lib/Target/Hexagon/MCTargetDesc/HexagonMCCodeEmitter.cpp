@@ -126,7 +126,7 @@ void HexagonMCCodeEmitter::EncodeSingleInstruction(
                   " `" << HexagonMCInstrInfo::getName(MCII, HMB) << "'"
                                                                     "\n");
 
-  if (llvm::HexagonMCInstrInfo::getType(MCII, HMB) == HexagonII::TypeCOMPOUND) {
+  if (llvm::HexagonMCInstrInfo::getType(MCII, HMB) == HexagonII::TypeCJ) {
     for (unsigned i = 0; i < HMB.getNumOperands(); ++i)
       if (HMB.getOperand(i).isReg()) {
         unsigned Reg =
