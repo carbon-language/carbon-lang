@@ -205,14 +205,22 @@ else()
     endif()
 
     if (WIN32)
+      add_compiler_rt_object_libraries(AsanDllThunk
+        ${SANITIZER_COMMON_SUPPORTED_OS}
+        ARCHS ${ASAN_SUPPORTED_ARCH}
+        SOURCES asan_globals_win.cc
+                asan_win_dll_thunk.cc
+        CFLAGS ${ASAN_CFLAGS} -DSANITIZER_DLL_THUNK
+        DEFS ${ASAN_COMMON_DEFINITIONS})
+
       add_compiler_rt_runtime(clang_rt.asan_dll_thunk
         STATIC
         ARCHS ${arch}
-        SOURCES asan_win_dll_thunk.cc
-                asan_globals_win.cc
-                $<TARGET_OBJECTS:RTInterception.${arch}>
-        CFLAGS ${ASAN_CFLAGS} -DASAN_DLL_THUNK
-        DEFS ${ASAN_COMMON_DEFINITIONS}
+        OBJECT_LIBS AsanDllThunk
+                    UbsanDllThunk
+                    SancovDllThunk
+                    SanitizerCommonDllThunk
+        SOURCES $<TARGET_OBJECTS:RTInterception.${arch}>
         PARENT_TARGET asan)
 
       set(DYNAMIC_RUNTIME_THUNK_CFLAGS "-DASAN_DYNAMIC_RUNTIME_THUNK")

@@ -128,6 +128,8 @@ set(SANITIZER_HEADERS
   sanitizer_syscall_linux_aarch64.inc
   sanitizer_thread_registry.h)
 
+include_directories(..)
+
 set(SANITIZER_COMMON_DEFINITIONS)
 
 include(CheckIncludeFile)
@@ -183,6 +185,21 @@ add_compiler_rt_object_libraries(RTSanitizerCommonLibc
   SOURCES ${SANITIZER_LIBCDEP_SOURCES}
   CFLAGS ${SANITIZER_CFLAGS}
   DEFS ${SANITIZER_COMMON_DEFINITIONS})
+
+if(MSVC)
+  add_compiler_rt_object_libraries(SanitizerCommonDllThunk
+    ${SANITIZER_COMMON_SUPPORTED_OS}
+    ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES sanitizer_win_dll_thunk.cc
+    CFLAGS ${SANITIZER_CFLAGS} -DSANITIZER_DLL_THUNK
+    DEFS ${SANITIZER_COMMON_DEFINITIONS})
+  add_compiler_rt_object_libraries(SancovDllThunk
+    ${SANITIZER_COMMON_SUPPORTED_OS}
+    ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES sanitizer_coverage_win_dll_thunk.cc
+    CFLAGS ${SANITIZER_CFLAGS} -DSANITIZER_DLL_THUNK
+    DEFS ${SANITIZER_COMMON_DEFINITIONS})
+endif()
 
 # Unit tests for common sanitizer runtime.
 if(COMPILER_RT_INCLUDE_TESTS)
