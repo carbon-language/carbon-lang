@@ -27,6 +27,7 @@
 #include "asan_mapping.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_mutex.h"
+#include "sanitizer_common/sanitizer_win.h"
 #include "sanitizer_common/sanitizer_win_defs.h"
 
 using namespace __asan;  // NOLINT
@@ -236,33 +237,6 @@ void InitializePlatformExceptionHandlers() {
 
 static LPTOP_LEVEL_EXCEPTION_FILTER default_seh_handler;
 
-// Check based on flags if we should report this exception.
-static bool ShouldReportDeadlyException(unsigned code) {
-  switch (code) {
-    case EXCEPTION_ACCESS_VIOLATION:
-    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-    case EXCEPTION_STACK_OVERFLOW:
-    case EXCEPTION_DATATYPE_MISALIGNMENT:
-    case EXCEPTION_IN_PAGE_ERROR:
-      return common_flags()->handle_segv;
-    case EXCEPTION_ILLEGAL_INSTRUCTION:
-    case EXCEPTION_PRIV_INSTRUCTION:
-    case EXCEPTION_BREAKPOINT:
-      return common_flags()->handle_sigill;
-    case EXCEPTION_FLT_DENORMAL_OPERAND:
-    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-    case EXCEPTION_FLT_INEXACT_RESULT:
-    case EXCEPTION_FLT_INVALID_OPERATION:
-    case EXCEPTION_FLT_OVERFLOW:
-    case EXCEPTION_FLT_STACK_CHECK:
-    case EXCEPTION_FLT_UNDERFLOW:
-    case EXCEPTION_INT_DIVIDE_BY_ZERO:
-    case EXCEPTION_INT_OVERFLOW:
-      return common_flags()->handle_sigfpe;
-  }
-  return false;
-}
-
 // Return the textual name for this exception.
 const char *DescribeSignalOrException(int signo) {
   unsigned code = signo;
@@ -296,7 +270,7 @@ long __asan_unhandled_exception_filter(EXCEPTION_POINTERS *info) {
   CONTEXT *context = info->ContextRecord;
 
   // Continue the search if the signal wasn't deadly.
-  if (!ShouldReportDeadlyException(exception_record->ExceptionCode))
+  if (!IsHandledDeadlyException(exception_record->ExceptionCode))
     return EXCEPTION_CONTINUE_SEARCH;
   // FIXME: Handle EXCEPTION_STACK_OVERFLOW here.
 

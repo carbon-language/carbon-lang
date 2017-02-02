@@ -836,6 +836,33 @@ bool IsHandledDeadlySignal(int signum) {
   return false;
 }
 
+// Check based on flags if we should handle this exception.
+bool IsHandledDeadlyException(DWORD exceptionCode) {
+  switch (exceptionCode) {
+    case EXCEPTION_ACCESS_VIOLATION:
+    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
+    case EXCEPTION_STACK_OVERFLOW:
+    case EXCEPTION_DATATYPE_MISALIGNMENT:
+    case EXCEPTION_IN_PAGE_ERROR:
+      return common_flags()->handle_segv;
+    case EXCEPTION_ILLEGAL_INSTRUCTION:
+    case EXCEPTION_PRIV_INSTRUCTION:
+    case EXCEPTION_BREAKPOINT:
+      return common_flags()->handle_sigill;
+    case EXCEPTION_FLT_DENORMAL_OPERAND:
+    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
+    case EXCEPTION_FLT_INEXACT_RESULT:
+    case EXCEPTION_FLT_INVALID_OPERATION:
+    case EXCEPTION_FLT_OVERFLOW:
+    case EXCEPTION_FLT_STACK_CHECK:
+    case EXCEPTION_FLT_UNDERFLOW:
+    case EXCEPTION_INT_DIVIDE_BY_ZERO:
+    case EXCEPTION_INT_OVERFLOW:
+      return common_flags()->handle_sigfpe;
+  }
+  return false;
+}
+
 bool IsAccessibleMemoryRange(uptr beg, uptr size) {
   SYSTEM_INFO si;
   GetNativeSystemInfo(&si);

@@ -126,7 +126,8 @@ set(SANITIZER_HEADERS
   sanitizer_syscall_generic.inc
   sanitizer_syscall_linux_x86_64.inc
   sanitizer_syscall_linux_aarch64.inc
-  sanitizer_thread_registry.h)
+  sanitizer_thread_registry.h
+  sanitizer_win.h)
 
 include_directories(..)
 
