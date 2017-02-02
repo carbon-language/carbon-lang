@@ -33,7 +33,7 @@ ARMCallLowering::ARMCallLowering(const ARMTargetLowering &TLI)
 
 static bool isSupportedType(const DataLayout &DL, const ARMTargetLowering &TLI,
                             Type *T) {
-  EVT VT = TLI.getValueType(DL, T);
+  EVT VT = TLI.getValueType(DL, T, true);
   if (!VT.isSimple() || !VT.isInteger() || VT.isVector())
     return false;
 
