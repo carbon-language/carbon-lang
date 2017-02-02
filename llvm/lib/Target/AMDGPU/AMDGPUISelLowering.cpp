@@ -486,6 +486,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(const TargetMachine &TM,
 // Target Information
 //===----------------------------------------------------------------------===//
 
+LLVM_READNONE
 static bool fnegFoldsIntoOp(unsigned Opc) {
   switch (Opc) {
   case ISD::FADD:
@@ -505,6 +506,59 @@ static bool fnegFoldsIntoOp(unsigned Opc) {
   default:
     return false;
   }
+}
+
+/// \p returns true if the operation will definitely need to use a 64-bit
+/// encoding, and thus will use a VOP3 encoding regardless of the source
+/// modifiers.
+LLVM_READONLY
+static bool opMustUseVOP3Encoding(const SDNode *N, MVT VT) {
+  return N->getNumOperands() > 2 || VT == MVT::f64;
+}
+
+// Most FP instructions support source modifiers, but this could be refined
+// slightly.
+LLVM_READONLY
+static bool hasSourceMods(const SDNode *N) {
+  if (isa<MemSDNode>(N))
+    return false;
+
+  switch (N->getOpcode()) {
+  case ISD::CopyToReg:
+  case ISD::SELECT:
+  case ISD::FDIV:
+  case ISD::FREM:
+  case ISD::INLINEASM:
+  case AMDGPUISD::INTERP_P1:
+  case AMDGPUISD::INTERP_P2:
+  case AMDGPUISD::DIV_SCALE:
+    return false;
+  default:
+    return true;
+  }
+}
+
+static bool allUsesHaveSourceMods(const SDNode *N, unsigned CostThreshold = 4) {
+  // Some users (such as 3-operand FMA/MAD) must use a VOP3 encoding, and thus
+  // it is truly free to use a source modifier in all cases. If there are
+  // multiple users but for each one will necessitate using VOP3, there will be
+  // a code size increase. Try to avoid increasing code size unless we know it
+  // will save on the instruction count.
+  unsigned NumMayIncreaseSize = 0;
+  MVT VT = N->getValueType(0).getScalarType().getSimpleVT();
+
+  // XXX - Should this limit number of uses to check?
+  for (const SDNode *U : N->uses()) {
+    if (!hasSourceMods(U))
+      return false;
+
+    if (!opMustUseVOP3Encoding(U, VT)) {
+      if (++NumMayIncreaseSize > CostThreshold)
+        return false;
+    }
+  }
+
+  return true;
 }
 
 MVT AMDGPUTargetLowering::getVectorIdxTy(const DataLayout &) const {
@@ -2854,10 +2908,16 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
   // the other uses cannot, give up. This both prevents unprofitable
   // transformations and infinite loops: we won't repeatedly try to fold around
   // a negate that has no 'good' form.
-  //
-  // TODO: Check users can fold
-  if (fnegFoldsIntoOp(Opc) && !N0.hasOneUse())
-    return SDValue();
+  if (N0.hasOneUse()) {
+    // This may be able to fold into the source, but at a code size cost. Don't
+    // fold if the fold into the user is free.
+    if (allUsesHaveSourceMods(N, 0))
+      return SDValue();
+  } else {
+    if (fnegFoldsIntoOp(Opc) &&
+        (allUsesHaveSourceMods(N) || !allUsesHaveSourceMods(N0.getNode())))
+      return SDValue();
+  }
 
   SDLoc SL(N);
   switch (Opc) {
