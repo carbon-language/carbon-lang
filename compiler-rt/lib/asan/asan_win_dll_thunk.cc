@@ -24,7 +24,7 @@
 
 // ASan own interface functions.
 #define INTERFACE_FUNCTION(Name) INTERCEPT_SANITIZER_FUNCTION(Name)
-#define INTERFACE_WEAK_FUNCTION(Name)
+#define INTERFACE_WEAK_FUNCTION(Name) INTERCEPT_SANITIZER_WEAK_FUNCTION(Name)
 #include "asan_interface.inc"
 
 // Memory allocation functions.

@@ -19,6 +19,9 @@ namespace __sanitizer {
 uptr dllThunkGetRealAddrOrDie(const char *name);
 
 int dllThunkIntercept(const char* main_function, uptr dll_function);
+
+int dllThunkInterceptWhenPossible(const char* main_function,
+    const char* default_function, uptr dll_function);
 }
 
 extern "C" int __dll_thunk_init();
@@ -34,6 +37,17 @@ extern "C" int __dll_thunk_init();
   __declspec(allocate(".DLLTH$M")) int (*__dll_thunk_##dll_function)() =       \
     intercept_##dll_function;
 
+// Try to override dll_function with main_function from main executable.
+// If main_function is not present, override dll_function with default_function.
+#define INTERCEPT_WHEN_POSSIBLE(main_function, default_function, dll_function) \
+  static int intercept_##dll_function() {                                      \
+    return __sanitizer::dllThunkInterceptWhenPossible(main_function,           \
+        default_function, (__sanitizer::uptr)dll_function);                    \
+  }                                                                            \
+  __pragma(section(".DLLTH$M", long, read))                                    \
+  __declspec(allocate(".DLLTH$M")) int (*__dll_thunk_##dll_function)() =       \
+    intercept_##dll_function;
+
 // -------------------- Function interception macros ------------------------ //
 // Special case of hooks -- ASan own interface functions.  Those are only called
 // after __asan_init, thus an empty implementation is sufficient.
@@ -43,6 +57,17 @@ extern "C" int __dll_thunk_init();
     __debugbreak();                                                            \
   }                                                                            \
   INTERCEPT_OR_DIE(#name, name)
+
+// Special case of hooks -- Weak functions, could be redefined in the main
+// executable, but that is not necessary, so we shouldn't die if we can not find
+// a reference. Instead, when the function is not present in the main executable
+// we consider the default impl provided by asan library.
+#define INTERCEPT_SANITIZER_WEAK_FUNCTION(name)                                \
+  extern "C" __declspec(noinline) void name() {                                \
+    volatile int prevent_icf = (__LINE__ << 8); (void)prevent_icf;             \
+    __debugbreak();                                                            \
+  }                                                                            \
+  INTERCEPT_WHEN_POSSIBLE(#name, STRINGIFY(WEAK_EXPORT_NAME(name)), name)
 
 // We can't define our own version of strlen etc. because that would lead to
 // link-time or even type mismatch errors.  Instead, we can declare a function

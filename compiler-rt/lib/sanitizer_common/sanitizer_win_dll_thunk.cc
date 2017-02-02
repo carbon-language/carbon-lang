@@ -37,11 +37,22 @@ int dllThunkIntercept(const char* main_function, uptr dll_function) {
     abort();
   return 0;
 }
+
+int dllThunkInterceptWhenPossible(const char* main_function,
+    const char* default_function, uptr dll_function) {
+  uptr wrapper = __interception::InternalGetProcAddress(
+    (void *)GetModuleHandleA(0), main_function);
+  if (!wrapper)
+    wrapper = dllThunkGetRealAddrOrDie(default_function);
+  if (!__interception::OverrideFunction(dll_function, wrapper, 0))
+    abort();
+  return 0;
+}
 } // namespace __sanitizer
 
 // Include Sanitizer Common interface.
 #define INTERFACE_FUNCTION(Name) INTERCEPT_SANITIZER_FUNCTION(Name)
-#define INTERFACE_WEAK_FUNCTION(Name)
+#define INTERFACE_WEAK_FUNCTION(Name) INTERCEPT_SANITIZER_WEAK_FUNCTION(Name)
 #include "sanitizer_common_interface.inc"
 
 #pragma section(".DLLTH$A", read)  // NOLINT
