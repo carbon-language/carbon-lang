@@ -951,7 +951,46 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                    "  c\n"
                    "};",
                    getLLVMStyleWithColumns(20)));
-
+  EXPECT_EQ("enum A {\n"
+            "  a, // line 1\n"
+            "  // line 2\n"
+            "};",
+            format("enum A {\n"
+                   "  a, // line 1\n"
+                   "  // line 2\n"
+                   "};",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("enum A {\n"
+            "  a, // line 1\n"
+            "     // line 2\n"
+            "};",
+            format("enum A {\n"
+                   "  a, // line 1\n"
+                   "   // line 2\n"
+                   "};",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("enum A {\n"
+            "  a, // line 1\n"
+            "  // line 2\n"
+            "  b\n"
+            "};",
+            format("enum A {\n"
+                   "  a, // line 1\n"
+                   "  // line 2\n"
+                   "  b\n"
+                   "};",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("enum A {\n"
+            "  a, // line 1\n"
+            "     // line 2\n"
+            "  b\n"
+            "};",
+            format("enum A {\n"
+                   "  a, // line 1\n"
+                   "   // line 2\n"
+                   "  b\n"
+                   "};",
+                   getLLVMStyleWithColumns(20)));
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
       "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb; // Trailing comment");

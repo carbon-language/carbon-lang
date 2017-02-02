@@ -695,7 +695,7 @@ BreakableLineCommentSection::BreakableLineCommentSection(
       Content[i] = Content[i].substr(0, EndOfLine);
     }
     LineTok = CurrentTok->Next;
-    if (CurrentTok->Next && CurrentTok->Next->NewlinesBefore > 1) {
+    if (CurrentTok->Next && !CurrentTok->Next->ContinuesLineCommentSection) {
       // A line comment section needs to broken by a line comment that is
       // preceded by at least two newlines. Note that we put this break here
       // instead of breaking at a previous stage during parsing, since that

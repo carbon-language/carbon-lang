@@ -2066,31 +2066,58 @@ static bool continuesLineComment(const FormatToken &FormatTok,
   // original start column of the min column token of the line.
   //
   // For example, the second line comment continues the first in these cases:
+  //
   // // first line
   // // second line
+  //
   // and:
+  //
   // // first line
   //  // second line
+  //
   // and:
+  //
   // int i; // first line
   //  // second line
+  //
   // and:
+  //
   // do { // first line
   //      // second line
   //   int i;
   // } while (true);
   //
+  // and:
+  //
+  // enum {
+  //   a, // first line
+  //    // second line
+  //   b
+  // };
+  //
   // The second line comment doesn't continue the first in these cases:
+  //
   //   // first line
   //  // second line
+  //
   // and:
+  //
   // int i; // first line
   // // second line
+  //
   // and:
+  //
   // do { // first line
   //   // second line
   //   int i;
   // } while (true);
+  //
+  // and:
+  //
+  // enum {
+  //   a, // first line
+  //   // second line
+  // };
   const FormatToken *MinColumnToken = Line.Tokens.front().Tok;
 
   // Scan for '{//'. If found, use the column of '{' as a min column for line
@@ -2103,6 +2130,11 @@ static bool continuesLineComment(const FormatToken &FormatTok,
       break;
     }
     PreviousToken = Node.Tok;
+
+    // Grab the last newline preceding a token in this unwrapped line.
+    if (Node.Tok->NewlinesBefore > 0) {
+      MinColumnToken = Node.Tok;
+    }
   }
   if (PreviousToken && PreviousToken->is(tok::l_brace)) {
     MinColumnToken = PreviousToken;
@@ -2130,7 +2162,8 @@ void UnwrappedLineParser::flushComments(bool NewlineBeforeNext) {
     //
     // FIXME: Consider putting separate line comment sections as children to the
     // unwrapped line instead.
-    if (isOnNewLine(**I) && JustComments && !continuesLineComment(**I, *Line))
+    (*I)->ContinuesLineCommentSection = continuesLineComment(**I, *Line);
+    if (isOnNewLine(**I) && JustComments && !(*I)->ContinuesLineCommentSection)
       addUnwrappedLine();
     pushToken(*I);
   }
@@ -2196,7 +2229,9 @@ void UnwrappedLineParser::readToken() {
 
     if (!FormatTok->Tok.is(tok::comment))
       return;
-    if (!continuesLineComment(*FormatTok, *Line) &&
+    FormatTok->ContinuesLineCommentSection =
+        continuesLineComment(*FormatTok, *Line);
+    if (!FormatTok->ContinuesLineCommentSection &&
         (isOnNewLine(*FormatTok) || FormatTok->IsFirst)) {
       CommentsInCurrentLine = false;
     }
