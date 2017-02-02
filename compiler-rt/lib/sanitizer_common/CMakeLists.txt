@@ -188,6 +188,19 @@ add_compiler_rt_object_libraries(RTSanitizerCommonLibc
   DEFS ${SANITIZER_COMMON_DEFINITIONS})
 
 if(MSVC)
+  add_compiler_rt_object_libraries(SanitizerCommonWeakInterception
+    ${SANITIZER_COMMON_SUPPORTED_OS}
+    ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES sanitizer_win_weak_interception.cc
+    CFLAGS ${SANITIZER_CFLAGS} -DSANITIZER_DYNAMIC
+    DEFS ${SANITIZER_COMMON_DEFINITIONS})
+  add_compiler_rt_object_libraries(SancovWeakInterception
+    ${SANITIZER_COMMON_SUPPORTED_OS}
+    ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES sanitizer_coverage_win_weak_interception.cc
+    CFLAGS ${SANITIZER_CFLAGS} -DSANITIZER_DYNAMIC
+    DEFS ${SANITIZER_COMMON_DEFINITIONS})
+
   add_compiler_rt_object_libraries(SanitizerCommonDllThunk
     ${SANITIZER_COMMON_SUPPORTED_OS}
     ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}

@@ -176,6 +176,21 @@ else()
       set(VERSION_SCRIPT_FLAG)
     endif()
 
+    set(ASAN_DYNAMIC_WEAK_INTERCEPTION)
+    if (MSVC)
+      add_compiler_rt_object_libraries(AsanWeakInterception
+        ${SANITIZER_COMMON_SUPPORTED_OS}
+        ARCHS ${ASAN_SUPPORTED_ARCH}
+        SOURCES asan_win_weak_interception.cc
+        CFLAGS ${ASAN_CFLAGS} -DSANITIZER_DYNAMIC
+        DEFS ${ASAN_COMMON_DEFINITIONS})
+      set(ASAN_DYNAMIC_WEAK_INTERCEPTION
+          AsanWeakInterception
+          UbsanWeakInterception
+          SancovWeakInterception
+          SanitizerCommonWeakInterception)
+    endif()
+
     add_compiler_rt_runtime(clang_rt.asan
       SHARED
       ARCHS ${arch}
@@ -187,6 +202,7 @@ else()
               # add_dependencies(clang_rt.asan-dynamic-${arch} clang_rt.asan-dynamic-${arch}-version-list)
               RTAsan_dynamic_version_script_dummy
               RTUbsan_cxx
+              ${ASAN_DYNAMIC_WEAK_INTERCEPTION}
       CFLAGS ${ASAN_DYNAMIC_CFLAGS}
       LINK_FLAGS ${ASAN_DYNAMIC_LINK_FLAGS}
                 ${VERSION_SCRIPT_FLAG}
