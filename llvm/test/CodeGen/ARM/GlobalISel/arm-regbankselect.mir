@@ -123,6 +123,7 @@ selected:        false
 # CHECK: - { id: 2, class: gprb }
 # CHECK: - { id: 3, class: gprb }
 # CHECK: - { id: 4, class: gprb }
+# CHECK: - { id: 5, class: gprb }
 
 registers:
   - { id: 0, class: _ }
@@ -130,6 +131,7 @@ registers:
   - { id: 2, class: _ }
   - { id: 3, class: _ }
   - { id: 4, class: _ }
+  - { id: 5, class: _ }
 body:             |
   bb.0:
     liveins: %r0
@@ -138,6 +140,7 @@ body:             |
     %2(s16) = G_LOAD %0
     %3(s8)  = G_LOAD %0
     %4(s1)  = G_LOAD %0
+    %5(p0)  = G_LOAD %0
     BX_RET 14, _, implicit %r0
 
 ...
