@@ -10888,19 +10888,12 @@ void dragonfly::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 // making sure that whatever executable that's found is not a same-named exe
 // from clang itself to prevent clang from falling back to itself.
 static std::string FindVisualStudioExecutable(const ToolChain &TC,
-                                              const char *Exe,
-                                              const char *ClangProgramPath) {
+                                              const char *Exe) {
   const auto &MSVC = static_cast<const toolchains::MSVCToolChain &>(TC);
-  std::string visualStudioBinDir;
-  if (MSVC.getVisualStudioBinariesFolder(ClangProgramPath,
-                                         visualStudioBinDir)) {
-    SmallString<128> FilePath(visualStudioBinDir);
-    llvm::sys::path::append(FilePath, Exe);
-    if (llvm::sys::fs::can_execute(FilePath.c_str()))
-      return FilePath.str();
-  }
-
-  return Exe;
+  SmallString<128> FilePath(MSVC.getSubDirectoryPath(toolchains::MSVCToolChain
+                                                     ::SubDirectoryType::Bin));
+  llvm::sys::path::append(FilePath, Exe);
+  return (llvm::sys::fs::can_execute(FilePath) ? FilePath.str() : Exe);
 }
 
 void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
@@ -10909,7 +10902,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                         const ArgList &Args,
                                         const char *LinkingOutput) const {
   ArgStringList CmdArgs;
-  const ToolChain &TC = getToolChain();
+  auto &TC = static_cast<const toolchains::MSVCToolChain &>(getToolChain());
 
   assert((Output.isFilename() || Output.isNothing()) && "invalid output");
   if (Output.isFilename())
@@ -10925,37 +10918,20 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     // did not run vcvarsall), try to build a consistent link environment.  If
     // the environment variable is set however, assume the user knows what
     // they're doing.
-    std::string VisualStudioDir;
-    const auto &MSVC = static_cast<const toolchains::MSVCToolChain &>(TC);
-    if (MSVC.getVisualStudioInstallDir(VisualStudioDir)) {
-      SmallString<128> LibDir(VisualStudioDir);
-      llvm::sys::path::append(LibDir, "VC", "lib");
-      switch (MSVC.getArch()) {
-      case llvm::Triple::x86:
-        // x86 just puts the libraries directly in lib
-        break;
-      case llvm::Triple::x86_64:
-        llvm::sys::path::append(LibDir, "amd64");
-        break;
-      case llvm::Triple::arm:
-        llvm::sys::path::append(LibDir, "arm");
-        break;
-      default:
-        break;
-      }
-      CmdArgs.push_back(
-          Args.MakeArgString(std::string("-libpath:") + LibDir.c_str()));
+    CmdArgs.push_back(Args.MakeArgString(
+                          std::string("-libpath:")
+                          + TC.getSubDirectoryPath(toolchains::MSVCToolChain
+                                                   ::SubDirectoryType::Lib)));
 
-      if (MSVC.useUniversalCRT(VisualStudioDir)) {
-        std::string UniversalCRTLibPath;
-        if (MSVC.getUniversalCRTLibraryPath(UniversalCRTLibPath))
-          CmdArgs.push_back(Args.MakeArgString(std::string("-libpath:") +
-                                               UniversalCRTLibPath));
-      }
+    if (TC.useUniversalCRT()) {
+      std::string UniversalCRTLibPath;
+      if (TC.getUniversalCRTLibraryPath(UniversalCRTLibPath))
+        CmdArgs.push_back(Args.MakeArgString(std::string("-libpath:")
+                                             + UniversalCRTLibPath));
     }
 
     std::string WindowsSdkLibPath;
-    if (MSVC.getWindowsSDKLibraryPath(WindowsSdkLibPath))
+    if (TC.getWindowsSDKLibraryPath(WindowsSdkLibPath))
       CmdArgs.push_back(
           Args.MakeArgString(std::string("-libpath:") + WindowsSdkLibPath));
   }
@@ -11079,8 +11055,7 @@ void visualstudio::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     // If we're using the MSVC linker, it's not sufficient to just use link
     // from the program PATH, because other environments like GnuWin32 install
     // their own link.exe which may come first.
-    linkPath = FindVisualStudioExecutable(TC, "link.exe",
-                                          C.getDriver().getClangProgramPath());
+    linkPath = FindVisualStudioExecutable(TC, "link.exe");
   } else {
     linkPath = Linker;
     llvm::sys::path::replace_extension(linkPath, "exe");
@@ -11213,9 +11188,7 @@ std::unique_ptr<Command> visualstudio::Compiler::GetCommand(
       Args.MakeArgString(std::string("/Fo") + Output.getFilename());
   CmdArgs.push_back(Fo);
 
-  const Driver &D = getToolChain().getDriver();
-  std::string Exec = FindVisualStudioExecutable(getToolChain(), "cl.exe",
-                                                D.getClangProgramPath());
+  std::string Exec = FindVisualStudioExecutable(getToolChain(), "cl.exe");
   return llvm::make_unique<Command>(JA, *this, Args.MakeArgString(Exec),
                                     CmdArgs, Inputs);
 }

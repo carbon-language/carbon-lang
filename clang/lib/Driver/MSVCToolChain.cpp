@@ -23,16 +23,23 @@
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include <cstdio>
 
-// Include the necessary headers to interface with the Windows registry and
-// environment.
 #if defined(LLVM_ON_WIN32)
-#define USE_WIN32
+  #define USE_WIN32
+
+  // FIXME: Make this configurable with cmake when the final version of the API
+  //        has been released.
+  #if 0
+    #define USE_VS_SETUP_CONFIG
+  #endif
 #endif
 
+// Include the necessary headers to interface with the Windows registry and
+// environment.
 #ifdef USE_WIN32
   #define WIN32_LEAN_AND_MEAN
   #define NOGDI
@@ -42,20 +49,265 @@
   #include <windows.h>
 #endif
 
+// Include the headers needed for the setup config COM stuff and define
+// smart pointers for the interfaces we need.
+#ifdef USE_VS_SETUP_CONFIG
+  #include "clang/Basic/VirtualFileSystem.h"
+  #include "llvm/Support/COM.h"
+  #include <comdef.h>
+  #include <Setup.Configuration.h>
+  _COM_SMARTPTR_TYPEDEF(ISetupConfiguration,  __uuidof(ISetupConfiguration));
+  _COM_SMARTPTR_TYPEDEF(ISetupConfiguration2, __uuidof(ISetupConfiguration2));
+  _COM_SMARTPTR_TYPEDEF(ISetupHelper,         __uuidof(ISetupHelper));
+  _COM_SMARTPTR_TYPEDEF(IEnumSetupInstances,  __uuidof(IEnumSetupInstances));
+  _COM_SMARTPTR_TYPEDEF(ISetupInstance,       __uuidof(ISetupInstance));
+  _COM_SMARTPTR_TYPEDEF(ISetupInstance2,      __uuidof(ISetupInstance2));
+#endif
+
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
 using namespace clang;
 using namespace llvm::opt;
 
-MSVCToolChain::MSVCToolChain(const Driver &D, const llvm::Triple &Triple,
+// Defined below.
+// Forward declare this so there aren't too many things above the constructor.
+static bool getSystemRegistryString(const char *keyPath, const char *valueName,
+                                    std::string &value, std::string *phValue);
+
+// Check various environment variables to try and find a toolchain.
+static bool findVCToolChainViaEnvironment(std::string &Path,
+                                          bool &IsVS2017OrNewer) {
+  // These variables are typically set by vcvarsall.bat
+  // when launching a developer command prompt.
+  if (llvm::Optional<std::string> VCToolsInstallDir =
+          llvm::sys::Process::GetEnv("VCToolsInstallDir")) {
+    // This is only set by newer Visual Studios, and it leads straight to
+    // the toolchain directory.
+    Path = std::move(*VCToolsInstallDir);
+    IsVS2017OrNewer = true;
+    return true;
+  }
+  if (llvm::Optional<std::string> VCInstallDir =
+          llvm::sys::Process::GetEnv("VCINSTALLDIR")) {
+    // If the previous variable isn't set but this one is, then we've found
+    // an older Visual Studio. This variable is set by newer Visual Studios too,
+    // so this check has to appear second.
+    // In older Visual Studios, the VC directory is the toolchain.
+    Path = std::move(*VCInstallDir);
+    IsVS2017OrNewer = false;
+    return true;
+  }
+
+  // We couldn't find any VC environment variables. Let's walk through PATH and
+  // see if it leads us to a VC toolchain bin directory. If it does, pick the
+  // first one that we find.
+  if (llvm::Optional<std::string> PathEnv =
+          llvm::sys::Process::GetEnv("PATH")) {
+    llvm::SmallVector<llvm::StringRef, 8> PathEntries;
+    llvm::StringRef(*PathEnv).split(PathEntries, llvm::sys::EnvPathSeparator);
+    for (llvm::StringRef PathEntry : PathEntries) {
+      if (PathEntry.empty())
+        continue;
+
+      llvm::SmallString<256> ExeTestPath;
+
+      // If cl.exe doesn't exist, then this definitely isn't a VC toolchain.
+      ExeTestPath = PathEntry;
+      llvm::sys::path::append(ExeTestPath, "cl.exe");
+      if (!llvm::sys::fs::exists(ExeTestPath))
+        continue;
+
+      // cl.exe existing isn't a conclusive test for a VC toolchain; clang also
+      // has a cl.exe. So let's check for link.exe too.
+      ExeTestPath = PathEntry;
+      llvm::sys::path::append(ExeTestPath, "link.exe");
+      if (!llvm::sys::fs::exists(ExeTestPath))
+        continue;
+
+      // whatever/VC/bin --> old toolchain, VC dir is toolchain dir.
+      if (llvm::sys::path::filename(PathEntry) == "bin") {
+        llvm::StringRef ParentPath = llvm::sys::path::parent_path(PathEntry);
+        if (llvm::sys::path::filename(ParentPath) == "VC") {
+          Path = ParentPath;
+          IsVS2017OrNewer = false;
+          return true;
+        }
+      } else {
+        // This could be a new (>=VS2017) toolchain. If it is, we should find
+        // path components with these prefixes when walking backwards through
+        // the path.
+        // Note: empty strings match anything.
+        llvm::StringRef ExpectedPrefixes[] =
+        { "", "Host", "bin", "", "MSVC", "Tools", "VC" };
+
+        llvm::sys::path::reverse_iterator
+            It = llvm::sys::path::rbegin(PathEntry),
+            End = llvm::sys::path::rend(PathEntry);
+        for (llvm::StringRef Prefix : ExpectedPrefixes) {
+          if (It == End) goto NotAToolChain;
+          if (!It->startswith(Prefix)) goto NotAToolChain;
+          ++It;
+        }
+
+        // We've found a new toolchain!
+        // Back up 3 times (/bin/Host/arch) to get the root path.
+        llvm::StringRef ToolChainPath(PathEntry);
+        for (int i = 0; i < 3; ++i)
+          ToolChainPath = llvm::sys::path::parent_path(ToolChainPath);
+
+        Path = ToolChainPath;
+        IsVS2017OrNewer = true;
+        return true;
+      }
+
+    NotAToolChain:
+      continue;
+    }
+  }
+  return false;
+}
+
+// Query the Setup Config server for installs, then pick the newest version
+// and find its default VC toolchain.
+// This is the preferred way to discover new Visual Studios, as they're no
+// longer listed in the registry.
+static bool findVCToolChainViaSetupConfig(std::string &Path,
+                                          bool &IsVS2017OrNewer) {
+#ifndef USE_VS_SETUP_CONFIG
+  return false;
+#else
+  llvm::sys::InitializeCOMRAII COM(llvm::sys::COMThreadingMode::SingleThreaded);
+  HRESULT HR;
+
+  // _com_ptr_t will throw a _com_error if a COM calls fail.
+  // The LLVM coding standards forbid exception handling, so we'll have to
+  // stop them from being thrown in the first place.
+  // The destructor will put the regular error handler back when we leave
+  // this scope.
+  struct SuppressCOMErrorsRAII {
+    SuppressCOMErrorsRAII() {
+      _set_com_error_handler([](HRESULT, IErrorInfo *) { });
+    }
+    ~SuppressCOMErrorsRAII() {
+      _set_com_error_handler(_com_raise_error);
+    }
+  } COMErrorSuppressor;
+
+  ISetupConfigurationPtr Query;
+  HR = Query.CreateInstance(__uuidof(SetupConfiguration));
+  if (FAILED(HR)) return false;
+
+  IEnumSetupInstancesPtr EnumInstances;
+  HR = ISetupConfiguration2Ptr(Query)->EnumAllInstances(&EnumInstances);
+  if (FAILED(HR)) return false;
+
+  ISetupInstancePtr Instance;
+  HR = EnumInstances->Next(1, &Instance, nullptr);
+  if (HR != S_OK) return false;
+
+  ISetupInstancePtr NewestInstance(Instance);
+  uint64_t NewestVersionNum;
+  {
+    bstr_t VersionString;
+    HR = NewestInstance->GetInstallationVersion(VersionString.GetAddress());
+    if (FAILED(HR)) return false;
+    HR = ISetupHelperPtr(Query)->ParseVersion(VersionString,
+                                              &NewestVersionNum);
+    if (FAILED(HR)) return false;
+  }
+
+  while ((HR = EnumInstances->Next(1, &Instance, nullptr)) == S_OK) {
+    bstr_t VersionString;
+    uint64_t VersionNum;
+    HR = Instance->GetInstallationVersion(VersionString.GetAddress());
+    if (FAILED(HR)) continue;
+    HR = ISetupHelperPtr(Query)->ParseVersion(VersionString,
+                                              &VersionNum);
+    if (FAILED(HR)) continue;
+    if (VersionNum > NewestVersionNum) {
+      NewestInstance = Instance;
+      NewestVersionNum = VersionNum;
+    }
+  }
+
+  bstr_t VCPathWide;
+  HR = NewestInstance->ResolvePath(L"VC",
+                                   VCPathWide.GetAddress());
+  if (FAILED(HR)) return false;
+
+  std::string VCRootPath;
+  llvm::convertWideToUTF8(std::wstring(VCPathWide), VCRootPath);
+
+  llvm::SmallString<256> ToolsVersionFilePath(VCRootPath);
+  llvm::sys::path::append(ToolsVersionFilePath,
+                          "Auxiliary",
+                          "Build",
+                          "Microsoft.VCToolsVersion.default.txt");
+
+  auto ToolsVersionFile =
+      clang::vfs::getRealFileSystem()->getBufferForFile(ToolsVersionFilePath);
+  if (!ToolsVersionFile)
+    return false;
+
+  llvm::SmallString<256> ToolchainPath(VCRootPath);
+  llvm::sys::path::append(ToolchainPath,
+                          "Tools",
+                          "MSVC",
+                          ToolsVersionFile->get()->getBuffer().rtrim());
+  if (!llvm::sys::fs::is_directory(ToolchainPath))
+    return false;
+
+  Path = ToolchainPath.str();
+  IsVS2017OrNewer = true;
+  return true;
+#endif /*USE_VS_SETUP_CONFIG*/
+}
+
+// Look in the registry for Visual Studio installs, and use that to get
+// a toolchain path. VS2017 and newer don't get added to the registry.
+// So if we find something here, we know that it's an older version.
+static bool findVCToolChainViaRegistry(std::string &Path,
+                                       bool &IsVS2017OrNewer) {
+  std::string VSInstallPath;
+  if (getSystemRegistryString(R"(SOFTWARE\Microsoft\VisualStudio\$VERSION)",
+                              "InstallDir", VSInstallPath, nullptr) ||
+      getSystemRegistryString(R"(SOFTWARE\Microsoft\VCExpress\$VERSION)",
+                              "InstallDir", VSInstallPath, nullptr)) {
+    if (!VSInstallPath.empty()) {
+      llvm::SmallString<256>
+          VCPath(llvm::StringRef(VSInstallPath.c_str(),
+                                 VSInstallPath.find(R"(\Common7\IDE)")));
+      llvm::sys::path::append(VCPath, "VC");
+
+      Path = VCPath.str();
+      IsVS2017OrNewer = false;
+      return true;
+    }
+  }
+  return false;
+}
+
+MSVCToolChain::MSVCToolChain(const Driver &D, const llvm::Triple& Triple,
                              const ArgList &Args)
     : ToolChain(D, Triple, Args), CudaInstallation(D, Triple, Args) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
+
+  // Check the environment first, since that's probably the user telling us
+  // what they want to use.
+  // Failing that, just try to find the newest Visual Studio version we can
+  // and use its default VC toolchain.
+  findVCToolChainViaEnvironment(VCToolChainPath, IsVS2017OrNewer)
+    || findVCToolChainViaSetupConfig(VCToolChainPath, IsVS2017OrNewer)
+         || findVCToolChainViaRegistry(VCToolChainPath, IsVS2017OrNewer);
 }
 
 Tool *MSVCToolChain::buildLinker() const {
+  if (VCToolChainPath.empty()) {
+    getDriver().Diag(clang::diag::err_drv_msvc_not_found);
+    return nullptr;
+  }
   return new tools::visualstudio::Linker(*this);
 }
 
@@ -101,6 +353,77 @@ void MSVCToolChain::AddCudaIncludeArgs(const ArgList &DriverArgs,
 
 void MSVCToolChain::printVerboseInfo(raw_ostream &OS) const {
   CudaInstallation.print(OS);
+}
+
+// Windows SDKs and VC Toolchains group their contents into subdirectories based
+// on the target architecture. This function converts an llvm::Triple::ArchType
+// to the corresponding subdirectory name.
+static const char *llvmArchToWindowsSDKArch(llvm::Triple::ArchType Arch) {
+  using ArchType = llvm::Triple::ArchType;
+  switch (Arch) {
+  case ArchType::x86:
+    return "x86";
+  case ArchType::x86_64:
+    return "x64";
+  case ArchType::arm:
+    return "arm";
+  default:
+    return "";
+  }
+}
+
+// Similar to the above function, but for Visual Studios before VS2017.
+static const char *llvmArchToLegacyVCArch(llvm::Triple::ArchType Arch) {
+  using ArchType = llvm::Triple::ArchType;
+  switch (Arch) {
+  case ArchType::x86:
+    // x86 is default in legacy VC toolchains.
+    // e.g. x86 libs are directly in /lib as opposed to /lib/x86.
+    return "";
+  case ArchType::x86_64:
+    return "amd64";
+  case ArchType::arm:
+    return "arm";
+  default:
+    return "";
+  }
+}
+
+// Get the path to a specific subdirectory in the current toolchain for
+// a given target architecture.
+// VS2017 changed the VC toolchain layout, so this should be used instead
+// of hardcoding paths.
+std::string
+    MSVCToolChain::getSubDirectoryPath(SubDirectoryType Type,
+                                       llvm::Triple::ArchType TargetArch) const {
+  llvm::SmallString<256> Path(VCToolChainPath);
+  switch (Type) {
+  case SubDirectoryType::Bin:
+    if (IsVS2017OrNewer) {
+      bool HostIsX64 = llvm::Triple(llvm::sys::getProcessTriple()).isArch64Bit();
+      llvm::sys::path::append(Path,
+        "bin",
+        (HostIsX64 ? "HostX64" : "HostX86"),
+        llvmArchToWindowsSDKArch(TargetArch));
+    }
+    else {
+      llvm::sys::path::append(Path,
+        "bin",
+        llvmArchToLegacyVCArch(TargetArch));
+    }
+    break;
+  case SubDirectoryType::Include:
+    llvm::sys::path::append(Path, "include");
+    break;
+  case SubDirectoryType::Lib:
+    llvm::sys::path::append(Path,
+      "lib",
+      IsVS2017OrNewer
+        ? llvmArchToWindowsSDKArch(TargetArch)
+        : llvmArchToLegacyVCArch(TargetArch));
+    break;
+  }
+  return Path.str();
 }
 
 #ifdef USE_WIN32
@@ -232,27 +555,12 @@ static bool getSystemRegistryString(const char *keyPath, const char *valueName,
 #endif // USE_WIN32
 }
 
-// Convert LLVM's ArchType
-// to the corresponding name of Windows SDK libraries subfolder
-static StringRef getWindowsSDKArch(llvm::Triple::ArchType Arch) {
-  switch (Arch) {
-  case llvm::Triple::x86:
-    return "x86";
-  case llvm::Triple::x86_64:
-    return "x64";
-  case llvm::Triple::arm:
-    return "arm";
-  default:
-    return "";
-  }
-}
-
 // Find the most recent version of Universal CRT or Windows 10 SDK.
 // vcvarsqueryregistry.bat from Visual Studio 2015 sorts entries in the include
 // directory by name and uses the last one of the list.
 // So we compare entry names lexicographically to find the greatest one.
-static bool getWindows10SDKVersion(const std::string &SDKPath,
-                                   std::string &SDKVersion) {
+static bool getWindows10SDKVersionFromPath(const std::string &SDKPath,
+                                           std::string &SDKVersion) {
   SDKVersion.clear();
 
   std::error_code EC;
@@ -276,9 +584,9 @@ static bool getWindows10SDKVersion(const std::string &SDKPath,
 }
 
 /// \brief Get Windows SDK installation directory.
-bool MSVCToolChain::getWindowsSDKDir(std::string &Path, int &Major,
-                                     std::string &WindowsSDKIncludeVersion,
-                                     std::string &WindowsSDKLibVersion) const {
+static bool getWindowsSDKDir(std::string &Path, int &Major,
+                             std::string &WindowsSDKIncludeVersion,
+                             std::string &WindowsSDKLibVersion) {
   std::string RegistrySDKVersion;
   // Try the Windows registry.
   if (!getSystemRegistryString(
@@ -310,7 +618,7 @@ bool MSVCToolChain::getWindowsSDKDir(std::string &Path, int &Major,
     return !WindowsSDKLibVersion.empty();
   }
   if (Major == 10) {
-    if (!getWindows10SDKVersion(Path, WindowsSDKIncludeVersion))
+    if (!getWindows10SDKVersionFromPath(Path, WindowsSDKIncludeVersion))
       return false;
     WindowsSDKLibVersion = WindowsSDKIncludeVersion;
     return true;
@@ -333,9 +641,14 @@ bool MSVCToolChain::getWindowsSDKLibraryPath(std::string &path) const {
 
   llvm::SmallString<128> libPath(sdkPath);
   llvm::sys::path::append(libPath, "Lib");
-  if (sdkMajor <= 7) {
+  if (sdkMajor >= 8) {
+    llvm::sys::path::append(libPath,
+      windowsSDKLibVersion,
+      "um",
+      llvmArchToWindowsSDKArch(getArch()));
+  } else {
     switch (getArch()) {
-    // In Windows SDK 7.x, x86 libraries are directly in the Lib folder.
+      // In Windows SDK 7.x, x86 libraries are directly in the Lib folder.
     case llvm::Triple::x86:
       break;
     case llvm::Triple::x86_64:
@@ -347,11 +660,6 @@ bool MSVCToolChain::getWindowsSDKLibraryPath(std::string &path) const {
     default:
       return false;
     }
-  } else {
-    const StringRef archName = getWindowsSDKArch(getArch());
-    if (archName.empty())
-      return false;
-    llvm::sys::path::append(libPath, windowsSDKLibVersion, "um", archName);
   }
 
   path = libPath.str();
@@ -360,24 +668,22 @@ bool MSVCToolChain::getWindowsSDKLibraryPath(std::string &path) const {
 
 // Check if the Include path of a specified version of Visual Studio contains
 // specific header files. If not, they are probably shipped with Universal CRT.
-bool clang::driver::toolchains::MSVCToolChain::useUniversalCRT(
-    std::string &VisualStudioDir) const {
-  llvm::SmallString<128> TestPath(VisualStudioDir);
-  llvm::sys::path::append(TestPath, "VC\\include\\stdlib.h");
-
+bool MSVCToolChain::useUniversalCRT() const {
+  llvm::SmallString<128> TestPath(getSubDirectoryPath(SubDirectoryType::Include));
+  llvm::sys::path::append(TestPath, "stdlib.h");
   return !llvm::sys::fs::exists(TestPath);
 }
 
-bool MSVCToolChain::getUniversalCRTSdkDir(std::string &Path,
-                                          std::string &UCRTVersion) const {
+static bool getUniversalCRTSdkDir(std::string &Path,
+                                  std::string &UCRTVersion) {
   // vcvarsqueryregistry.bat for Visual Studio 2015 queries the registry
   // for the specific key "KitsRoot10". So do we.
   if (!getSystemRegistryString(
-          "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots", "KitsRoot10",
-          Path, nullptr))
+          "SOFTWARE\\Microsoft\\Windows Kits\\Installed Roots",
+          "KitsRoot10", Path, nullptr))
     return false;
 
-  return getWindows10SDKVersion(Path, UCRTVersion);
+  return getWindows10SDKVersionFromPath(Path, UCRTVersion);
 }
 
 bool MSVCToolChain::getUniversalCRTLibraryPath(std::string &Path) const {
@@ -388,7 +694,7 @@ bool MSVCToolChain::getUniversalCRTLibraryPath(std::string &Path) const {
   if (!getUniversalCRTSdkDir(UniversalCRTSdkPath, UCRTVersion))
     return false;
 
-  StringRef ArchName = getWindowsSDKArch(getArch());
+  StringRef ArchName = llvmArchToWindowsSDKArch(getArch());
   if (ArchName.empty())
     return false;
 
@@ -399,104 +705,18 @@ bool MSVCToolChain::getUniversalCRTLibraryPath(std::string &Path) const {
   return true;
 }
 
-// Get the location to use for Visual Studio binaries.  The location priority
-// is: %VCINSTALLDIR% > %PATH% > newest copy of Visual Studio installed on
-// system (as reported by the registry).
-bool MSVCToolChain::getVisualStudioBinariesFolder(const char *clangProgramPath,
-                                                  std::string &path) const {
-  path.clear();
-
-  SmallString<128> BinDir;
-
-  // First check the environment variables that vsvars32.bat sets.
-  llvm::Optional<std::string> VcInstallDir =
-      llvm::sys::Process::GetEnv("VCINSTALLDIR");
-  if (VcInstallDir.hasValue()) {
-    BinDir = VcInstallDir.getValue();
-    llvm::sys::path::append(BinDir, "bin");
-  } else {
-    // Next walk the PATH, trying to find a cl.exe in the path.  If we find one,
-    // use that.  However, make sure it's not clang's cl.exe.
-    llvm::Optional<std::string> OptPath = llvm::sys::Process::GetEnv("PATH");
-    if (OptPath.hasValue()) {
-      const char EnvPathSeparatorStr[] = {llvm::sys::EnvPathSeparator, '\0'};
-      SmallVector<StringRef, 8> PathSegments;
-      llvm::SplitString(OptPath.getValue(), PathSegments, EnvPathSeparatorStr);
-
-      for (StringRef PathSegment : PathSegments) {
-        if (PathSegment.empty())
-          continue;
-
-        SmallString<128> FilePath(PathSegment);
-        llvm::sys::path::append(FilePath, "cl.exe");
-        // Checking if cl.exe exists is a small optimization over calling
-        // can_execute, which really only checks for existence but will also do
-        // extra checks for cl.exe.exe.  These add up when walking a long path.
-        if (llvm::sys::fs::exists(FilePath.c_str()) &&
-            !llvm::sys::fs::equivalent(FilePath.c_str(), clangProgramPath)) {
-          // If we found it on the PATH, use it exactly as is with no
-          // modifications.
-          path = PathSegment;
-          return true;
-        }
-      }
-    }
-
-    std::string installDir;
-    // With no VCINSTALLDIR and nothing on the PATH, if we can't find it in the
-    // registry then we have no choice but to fail.
-    if (!getVisualStudioInstallDir(installDir))
-      return false;
-
-    // Regardless of what binary we're ultimately trying to find, we make sure
-    // that this is a Visual Studio directory by checking for cl.exe.  We use
-    // cl.exe instead of other binaries like link.exe because programs such as
-    // GnuWin32 also have a utility called link.exe, so cl.exe is the least
-    // ambiguous.
-    BinDir = installDir;
-    llvm::sys::path::append(BinDir, "VC", "bin");
-    SmallString<128> ClPath(BinDir);
-    llvm::sys::path::append(ClPath, "cl.exe");
-
-    if (!llvm::sys::fs::can_execute(ClPath.c_str()))
-      return false;
-  }
-
-  if (BinDir.empty())
-    return false;
-
-  switch (getArch()) {
-  case llvm::Triple::x86:
-    break;
-  case llvm::Triple::x86_64:
-    llvm::sys::path::append(BinDir, "amd64");
-    break;
-  case llvm::Triple::arm:
-    llvm::sys::path::append(BinDir, "arm");
-    break;
-  default:
-    // Whatever this is, Visual Studio doesn't have a toolchain for it.
-    return false;
-  }
-  path = BinDir.str();
-  return true;
-}
-
-VersionTuple MSVCToolChain::getMSVCVersionFromTriple() const {
+static VersionTuple getMSVCVersionFromTriple(const llvm::Triple &Triple) {
   unsigned Major, Minor, Micro;
-  getTriple().getEnvironmentVersion(Major, Minor, Micro);
+  Triple.getEnvironmentVersion(Major, Minor, Micro);
   if (Major || Minor || Micro)
     return VersionTuple(Major, Minor, Micro);
   return VersionTuple();
 }
 
-VersionTuple MSVCToolChain::getMSVCVersionFromExe() const {
+static VersionTuple getMSVCVersionFromExe(const std::string &BinDir) {
   VersionTuple Version;
 #ifdef USE_WIN32
-  std::string BinPath;
-  if (!getVisualStudioBinariesFolder("", BinPath))
-    return Version;
-  SmallString<128> ClExe(BinPath);
+  SmallString<128> ClExe(BinDir);
   llvm::sys::path::append(ClExe, "cl.exe");
 
   std::wstring ClExeWide;
@@ -527,62 +747,6 @@ VersionTuple MSVCToolChain::getMSVCVersionFromExe() const {
   Version = VersionTuple(Major, Minor, Micro);
 #endif
   return Version;
-}
-
-// Get Visual Studio installation directory.
-bool MSVCToolChain::getVisualStudioInstallDir(std::string &path) const {
-  // First check the environment variables that vsvars32.bat sets.
-  if (llvm::Optional<std::string> VcInstallDir =
-          llvm::sys::Process::GetEnv("VCINSTALLDIR")) {
-    path = std::move(*VcInstallDir);
-    path = path.substr(0, path.find("\\VC"));
-    return true;
-  }
-
-  std::string vsIDEInstallDir;
-  std::string vsExpressIDEInstallDir;
-  // Then try the windows registry.
-  bool hasVCDir =
-      getSystemRegistryString("SOFTWARE\\Microsoft\\VisualStudio\\$VERSION",
-                              "InstallDir", vsIDEInstallDir, nullptr);
-  if (hasVCDir && !vsIDEInstallDir.empty()) {
-    path = vsIDEInstallDir.substr(0, vsIDEInstallDir.find("\\Common7\\IDE"));
-    return true;
-  }
-
-  bool hasVCExpressDir =
-      getSystemRegistryString("SOFTWARE\\Microsoft\\VCExpress\\$VERSION",
-                              "InstallDir", vsExpressIDEInstallDir, nullptr);
-  if (hasVCExpressDir && !vsExpressIDEInstallDir.empty()) {
-    path = vsExpressIDEInstallDir.substr(
-        0, vsIDEInstallDir.find("\\Common7\\IDE"));
-    return true;
-  }
-
-  // Try the environment.
-  std::string vcomntools;
-  if (llvm::Optional<std::string> vs120comntools =
-          llvm::sys::Process::GetEnv("VS120COMNTOOLS"))
-    vcomntools = std::move(*vs120comntools);
-  else if (llvm::Optional<std::string> vs100comntools =
-               llvm::sys::Process::GetEnv("VS100COMNTOOLS"))
-    vcomntools = std::move(*vs100comntools);
-  else if (llvm::Optional<std::string> vs90comntools =
-               llvm::sys::Process::GetEnv("VS90COMNTOOLS"))
-    vcomntools = std::move(*vs90comntools);
-  else if (llvm::Optional<std::string> vs80comntools =
-               llvm::sys::Process::GetEnv("VS80COMNTOOLS"))
-    vcomntools = std::move(*vs80comntools);
-
-  // Find any version we can.
-  if (!vcomntools.empty()) {
-    size_t p = vcomntools.find("\\Common7\\Tools");
-    if (p != std::string::npos)
-      vcomntools.resize(p);
-    path = std::move(vcomntools);
-    return true;
-  }
-  return false;
 }
 
 void MSVCToolChain::AddSystemIncludeWithSubfolder(
@@ -623,14 +787,14 @@ void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
       return;
   }
 
-  std::string VSDir;
-
   // When built with access to the proper Windows APIs, try to actually find
   // the correct include paths first.
-  if (getVisualStudioInstallDir(VSDir)) {
-    AddSystemIncludeWithSubfolder(DriverArgs, CC1Args, VSDir, "VC\\include");
+  if (!VCToolChainPath.empty()) {
+    addSystemInclude(DriverArgs,
+                     CC1Args,
+                     getSubDirectoryPath(SubDirectoryType::Include));
 
-    if (useUniversalCRT(VSDir)) {
+    if (useUniversalCRT()) {
       std::string UniversalCRTSdkPath;
       std::string UCRTVersion;
       if (getUniversalCRTSdkDir(UniversalCRTSdkPath, UCRTVersion)) {
@@ -661,9 +825,8 @@ void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
         AddSystemIncludeWithSubfolder(DriverArgs, CC1Args, WindowsSDKDir,
                                       "include");
       }
-    } else {
-      addSystemInclude(DriverArgs, CC1Args, VSDir);
     }
+
     return;
   }
 
@@ -690,8 +853,10 @@ VersionTuple MSVCToolChain::computeMSVCVersion(const Driver *D,
                                                const ArgList &Args) const {
   bool IsWindowsMSVC = getTriple().isWindowsMSVCEnvironment();
   VersionTuple MSVT = ToolChain::computeMSVCVersion(D, Args);
-  if (MSVT.empty()) MSVT = getMSVCVersionFromTriple();
-  if (MSVT.empty() && IsWindowsMSVC) MSVT = getMSVCVersionFromExe();
+  if (MSVT.empty())
+    MSVT = getMSVCVersionFromTriple(getTriple());
+  if (MSVT.empty() && IsWindowsMSVC)
+    MSVT = getMSVCVersionFromExe(getSubDirectoryPath(SubDirectoryType::Bin));
   if (MSVT.empty() &&
       Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
                    IsWindowsMSVC)) {
