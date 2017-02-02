@@ -253,14 +253,16 @@ Hexagon::Fixups HexagonMCCodeEmitter::getFixupNoBits(
       return Hexagon::fixup_Hexagon_B32_PCREL_X;
     case MCSymbolRefExpr::VK_None: {
       auto Insts = HexagonMCInstrInfo::bundleInstructions(**CurrentBundle);
-      for (auto I = Insts.begin(), N = Insts.end(); I != N; ++I)
+      for (auto I = Insts.begin(), N = Insts.end(); I != N; ++I) {
         if (I->getInst() == &MI) {
-          if (HexagonMCInstrInfo::getDesc(MCII, *(I + 1)->getInst()).isBranch() ||
-            (HexagonMCInstrInfo::getType(MCII, *(I + 1)->getInst()) == HexagonII::TypeCR))
+          const MCInst &NextI = *(I+1)->getInst();
+          const MCInstrDesc &D = HexagonMCInstrInfo::getDesc(MCII, NextI);
+          if (D.isBranch() || D.isCall() ||
+              HexagonMCInstrInfo::getType(MCII, NextI) == HexagonII::TypeCR)
             return Hexagon::fixup_Hexagon_B32_PCREL_X;
-          else
-            return Hexagon::fixup_Hexagon_32_6_X;
+          return Hexagon::fixup_Hexagon_32_6_X;
         }
+      }
       raise_relocation_error(0, kind);
     }
     default:
