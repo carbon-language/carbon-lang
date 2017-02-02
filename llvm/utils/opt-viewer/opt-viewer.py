@@ -30,6 +30,7 @@ import shutil
 from pygments import highlight
 from pygments.lexers.c_cpp import CppLexer
 from pygments.formatters import HtmlFormatter
+import cgi
 
 p = subprocess.Popen(['c++filt', '-n'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 p_lock = Lock()
@@ -103,7 +104,7 @@ class Remark(yaml.YAMLObject):
         (key, value) = mapping.items()[0]
 
         if key == 'Caller' or key == 'Callee':
-            value = demangle(value)
+            value = cgi.escape(demangle(value))
 
         if dl and key != 'Caller':
             return "<a href={}>{}</a>".format(
@@ -207,6 +208,7 @@ class SourceFileRenderer:
         # replace everything else with spaces.
         indent = line[:r.Column - 1]
         indent = re.sub('\S', ' ', indent)
+
         print('''
 <tr>
 <td></td>
@@ -254,11 +256,12 @@ class IndexRenderer:
         self.stream = open(os.path.join(output_dir, 'index.html'), 'w')
 
     def render_entry(self, r, odd):
+        escaped_name = cgi.escape(r.DemangledFunctionName)
         print('''
 <tr>
 <td class=\"column-entry-{odd}\"><a href={r.Link}>{r.DebugLocString}</a></td>
 <td class=\"column-entry-{odd}\">{r.RelativeHotness}</td>
-<td class=\"column-entry-{odd}\">{r.DemangledFunctionName}</td>
+<td class=\"column-entry-{odd}\">{escaped_name}</td>
 <td class=\"column-entry-{r.color}\">{r.Pass}</td>
 </tr>'''.format(**locals()), file=self.stream)
 
