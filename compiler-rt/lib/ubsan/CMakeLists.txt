@@ -97,6 +97,19 @@ else()
       SOURCES ubsan_win_dll_thunk.cc
       CFLAGS ${UBSAN_CFLAGS} -DSANITIZER_DLL_THUNK
       DEFS ${UBSAN_COMMON_DEFINITIONS})
+
+    set(DYNAMIC_RUNTIME_THUNK_CFLAGS "-DSANITIZER_DYNAMIC_RUNTIME_THUNK")
+    if(MSVC)
+      list(APPEND DYNAMIC_RUNTIME_THUNK_CFLAGS "-Zl")
+    elseif(CMAKE_C_COMPILER_ID MATCHES Clang)
+      list(APPEND DYNAMIC_RUNTIME_THUNK_CFLAGS "-nodefaultlibs")
+    endif()
+    add_compiler_rt_object_libraries(UbsanDynamicRuntimeThunk
+      ${SANITIZER_COMMON_SUPPORTED_OS}
+      ARCHS ${UBSAN_SUPPORTED_ARCH}
+      SOURCES ubsan_win_dynamic_runtime_thunk.cc
+      CFLAGS ${UBSAN_CFLAGS} ${DYNAMIC_RUNTIME_THUNK_CFLAGS}
+      DEFS ${UBSAN_COMMON_DEFINITIONS})
   endif()
 
   if(COMPILER_RT_HAS_UBSAN)

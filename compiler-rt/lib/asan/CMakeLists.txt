@@ -223,18 +223,28 @@ else()
         SOURCES $<TARGET_OBJECTS:RTInterception.${arch}>
         PARENT_TARGET asan)
 
-      set(DYNAMIC_RUNTIME_THUNK_CFLAGS "-DASAN_DYNAMIC_RUNTIME_THUNK")
+      set(DYNAMIC_RUNTIME_THUNK_CFLAGS "-DSANITIZER_DYNAMIC_RUNTIME_THUNK")
       if(MSVC)
         list(APPEND DYNAMIC_RUNTIME_THUNK_CFLAGS "-Zl")
       elseif(CMAKE_C_COMPILER_ID MATCHES Clang)
         list(APPEND DYNAMIC_RUNTIME_THUNK_CFLAGS "-nodefaultlibs")
       endif()
 
+      add_compiler_rt_object_libraries(AsanDynamicRuntimeThunk
+        ${SANITIZER_COMMON_SUPPORTED_OS}
+        ARCHS ${ASAN_SUPPORTED_ARCH}
+        SOURCES asan_globals_win.cc
+                asan_win_dynamic_runtime_thunk.cc
+        CFLAGS ${ASAN_CFLAGS} ${DYNAMIC_RUNTIME_THUNK_CFLAGS}
+        DEFS ${ASAN_COMMON_DEFINITIONS})
+
       add_compiler_rt_runtime(clang_rt.asan_dynamic_runtime_thunk
         STATIC
         ARCHS ${arch}
-        SOURCES asan_win_dynamic_runtime_thunk.cc
-                asan_globals_win.cc
+        OBJECT_LIBS AsanDynamicRuntimeThunk
+                    UbsanDynamicRuntimeThunk
+                    SancovDynamicRuntimeThunk
+                    SanitizerCommonDynamicRuntimeThunk
         CFLAGS ${ASAN_CFLAGS} ${DYNAMIC_RUNTIME_THUNK_CFLAGS}
         DEFS ${ASAN_COMMON_DEFINITIONS}
         PARENT_TARGET asan)
