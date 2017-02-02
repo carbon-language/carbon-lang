@@ -202,7 +202,8 @@ UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          ArrayRef<FormatToken *> Tokens,
                                          UnwrappedLineConsumer &Callback)
     : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
-      CurrentLines(&Lines), Style(Style), Keywords(Keywords), Tokens(nullptr),
+      CurrentLines(&Lines), Style(Style), Keywords(Keywords),
+      CommentPragmasRegex(Style.CommentPragmas), Tokens(nullptr),
       Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1) {}
 
 void UnwrappedLineParser::reset() {
@@ -2048,8 +2049,16 @@ static bool isLineComment(const FormatToken &FormatTok) {
 // Checks if \p FormatTok is a line comment that continues the line comment
 // section on \p Line.
 static bool continuesLineComment(const FormatToken &FormatTok,
-                                 const UnwrappedLine &Line) {
+                                 const UnwrappedLine &Line,
+                                 llvm::Regex &CommentPragmasRegex) {
   if (Line.Tokens.empty())
+    return false;
+
+  StringRef IndentContent = FormatTok.TokenText;
+  if (FormatTok.TokenText.startswith("//") ||
+      FormatTok.TokenText.startswith("/*"))
+    IndentContent = FormatTok.TokenText.substr(2);
+  if (CommentPragmasRegex.match(IndentContent))
     return false;
 
   // If Line starts with a line comment, then FormatTok continues the comment
@@ -2162,7 +2171,8 @@ void UnwrappedLineParser::flushComments(bool NewlineBeforeNext) {
     //
     // FIXME: Consider putting separate line comment sections as children to the
     // unwrapped line instead.
-    (*I)->ContinuesLineCommentSection = continuesLineComment(**I, *Line);
+    (*I)->ContinuesLineCommentSection =
+        continuesLineComment(**I, *Line, CommentPragmasRegex);
     if (isOnNewLine(**I) && JustComments && !(*I)->ContinuesLineCommentSection)
       addUnwrappedLine();
     pushToken(*I);
@@ -2230,7 +2240,7 @@ void UnwrappedLineParser::readToken() {
     if (!FormatTok->Tok.is(tok::comment))
       return;
     FormatTok->ContinuesLineCommentSection =
-        continuesLineComment(*FormatTok, *Line);
+        continuesLineComment(*FormatTok, *Line, CommentPragmasRegex);
     if (!FormatTok->ContinuesLineCommentSection &&
         (isOnNewLine(*FormatTok) || FormatTok->IsFirst)) {
       CommentsInCurrentLine = false;

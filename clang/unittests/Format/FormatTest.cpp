@@ -2370,6 +2370,22 @@ TEST_F(FormatTest, ReflowsComments) {
                    "// XXX: long",
                    getLLVMStyleWithColumns(20)));
 
+  // Don't reflow comment pragmas.
+  EXPECT_EQ("// long long long\n"
+            "// long\n"
+            "// IWYU pragma:",
+            format("// long long long long\n"
+                   "// IWYU pragma:",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("/* long long long\n"
+            " * long\n"
+            " * IWYU pragma:\n"
+            " */",
+            format("/* long long long long\n"
+                   " * IWYU pragma:\n"
+                   " */",
+                   getLLVMStyleWithColumns(20)));
+
   // Reflow lines that have a non-punctuation character among their first 2
   // characters.
   EXPECT_EQ("// long long long\n"
