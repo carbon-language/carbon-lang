@@ -56,6 +56,7 @@ set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_coverage_libcdep.cc
   sanitizer_coverage_libcdep_new.cc
   sanitizer_coverage_mapping_libcdep.cc
+  sanitizer_coverage_win_sections.cc
   sanitizer_linux_libcdep.cc
   sanitizer_posix_libcdep.cc
   sanitizer_stacktrace_libcdep.cc
@@ -211,6 +212,7 @@ if(MSVC)
     ${SANITIZER_COMMON_SUPPORTED_OS}
     ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
     SOURCES sanitizer_coverage_win_dll_thunk.cc
+            sanitizer_coverage_win_sections.cc
     CFLAGS ${SANITIZER_CFLAGS} -DSANITIZER_DLL_THUNK
     DEFS ${SANITIZER_COMMON_DEFINITIONS})
 
@@ -230,6 +232,7 @@ if(MSVC)
     ${SANITIZER_COMMON_SUPPORTED_OS}
     ARCHS ${SANITIZER_COMMON_SUPPORTED_ARCH}
     SOURCES sanitizer_coverage_win_dynamic_runtime_thunk.cc
+            sanitizer_coverage_win_sections.cc
     CFLAGS ${SANITIZER_CFLAGS} ${DYNAMIC_RUNTIME_THUNK_CFLAGS}
     DEFS ${SANITIZER_COMMON_DEFINITIONS})
 endif()
