@@ -152,6 +152,22 @@ public:
       skip();
     }
 
+    /// For COFF weak externals, returns the name of the symbol that is used
+    /// as a fallback if the weak external remains undefined.
+    std::string getCOFFWeakExternalFallback() const {
+      assert((Flags & object::BasicSymbolRef::SF_Weak) &&
+             (Flags & object::BasicSymbolRef::SF_Indirect) &&
+             "symbol is not a weak external");
+      std::string Name;
+      raw_string_ostream OS(Name);
+      SymTab.printSymbolName(
+          OS,
+          cast<GlobalValue>(
+              cast<GlobalAlias>(getGV())->getAliasee()->stripPointerCasts()));
+      OS.flush();
+      return Name;
+    }
+
     /// Returns the mangled name of the global.
     StringRef getName() const { return Name; }
 
