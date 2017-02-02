@@ -1774,6 +1774,207 @@ TEST_F(ChangeNamespaceTest, ShortenNamespaceSpecifierInAnonymousNamespace) {
   EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
 }
 
+TEST_F(ChangeNamespaceTest, SimpleMoveEnum) {
+  std::string Code = "namespace na {\n"
+                     "namespace nb {\n"
+                     "enum class X { X1, X2 };\n"
+                     "enum Y { Y1, Y2 };\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "\n\nnamespace x {\n"
+                         "namespace y {\n"
+                         "enum class X { X1, X2 };\n"
+                         "enum Y { Y1, Y2 };\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, ReferencesToEnums) {
+  std::string Code = "enum Glob { G1, G2 };\n"
+                     "namespace na {\n"
+                     "enum class X { X1 };\n"
+                     "enum Y { Y1, Y2 };\n"
+                     "namespace nb {\n"
+                     "void f() {\n"
+                     "  Glob g1 = Glob::G1;\n"
+                     "  Glob g2 = G2;\n"
+                     "  X x1 = X::X1;\n"
+                     "  Y y1 = Y::Y1;\n"
+                     "  Y y2 = Y2;\n"
+                     "}\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "enum Glob { G1, G2 };\n"
+                         "namespace na {\n"
+                         "enum class X { X1 };\n"
+                         "enum Y { Y1, Y2 };\n"
+                         "\n"
+                         "} // namespace na\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "void f() {\n"
+                         "  Glob g1 = Glob::G1;\n"
+                         "  Glob g2 = G2;\n"
+                         "  ::na::X x1 = ::na::X::X1;\n"
+                         "  ::na::Y y1 = ::na::Y::Y1;\n"
+                         "  ::na::Y y2 = ::na::Y::Y2;\n"
+                         "}\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, NoRedundantEnumUpdate) {
+  std::string Code = "namespace ns {\n"
+                     "enum class X { X1 };\n"
+                     "enum Y { Y1, Y2 };\n"
+                     "} // namespace ns\n"
+                     "namespace na {\n"
+                     "namespace nb {\n"
+                     "void f() {\n"
+                     "  ns::X x1 = ns::X::X1;\n"
+                     "  ns::Y y1 = ns::Y::Y1;\n"
+                     "  ns::Y y2 = ns::Y2;\n"
+                     "}\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "namespace ns {\n"
+                         "enum class X { X1 };\n"
+                         "enum Y { Y1, Y2 };\n"
+                         "} // namespace ns\n"
+                         "\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "void f() {\n"
+                         "  ns::X x1 = ns::X::X1;\n"
+                         "  ns::Y y1 = ns::Y::Y1;\n"
+                         // FIXME: this is redundant
+                         "  ns::Y y2 = ::ns::Y::Y2;\n"
+                         "}\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+  ;
+
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, EnumsAndUsingShadows) {
+  std::string Code = "namespace ns {\n"
+                     "enum class X { X1 };\n"
+                     "enum Y { Y1, Y2, Y3 };\n"
+                     "} // namespace ns\n"
+                     "using ns::X;\n"
+                     "using ns::Y;\n"
+                     "using ns::Y::Y2;\n"
+                     "using ns::Y::Y3;\n"
+                     "namespace na {\n"
+                     "namespace nb {\n"
+                     "void f() {\n"
+                     "  X x1 = X::X1;\n"
+                     "  Y y1 = Y::Y1;\n"
+                     "  Y y2 = Y2;\n"
+                     "  Y y3 = Y3;\n"
+                     "}\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "namespace ns {\n"
+                         "enum class X { X1 };\n"
+                         "enum Y { Y1, Y2, Y3 };\n"
+                         "} // namespace ns\n"
+                         "using ns::X;\n"
+                         "using ns::Y;\n"
+                         "using ns::Y::Y2;\n"
+                         "using ns::Y::Y3;\n"
+                         "\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "void f() {\n"
+                         "  X x1 = X::X1;\n"
+                         "  Y y1 = Y::Y1;\n"
+                         "  Y y2 = Y2;\n"
+                         "  Y y3 = Y3;\n"
+                         "}\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, EnumsAndAliases) {
+  std::string Code = "namespace ns {\n"
+                     "enum class X { X1 };\n"
+                     "enum Y { Y1, Y2, Y3 };\n"
+                     "} // namespace ns\n"
+                     "typedef ns::X TX;\n"
+                     "typedef ns::Y TY;\n"
+                     "using UX = ns::X;\n"
+                     "using UY = ns::Y;\n"
+                     "namespace na {\n"
+                     "namespace nb {\n"
+                     "void f() {\n"
+                     "  ns::X x1 = ns::X::X1;\n"
+                     "  TX tx1 = TX::X1;\n"
+                     "  UX ux1 = UX::X1;\n"
+                     "  ns::Y y1 = ns::Y::Y1;\n"
+                     "  TY ty1 = TY::Y1;\n"
+                     "  UY uy1 = UY::Y1;\n"
+                     "}\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "namespace ns {\n"
+                         "enum class X { X1 };\n"
+                         "enum Y { Y1, Y2, Y3 };\n"
+                         "} // namespace ns\n"
+                         "typedef ns::X TX;\n"
+                         "typedef ns::Y TY;\n"
+                         "using UX = ns::X;\n"
+                         "using UY = ns::Y;\n"
+                         "\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "void f() {\n"
+                         "  ns::X x1 = ns::X::X1;\n"
+                         "  TX tx1 = TX::X1;\n"
+                         "  UX ux1 = UX::X1;\n"
+                         "  ns::Y y1 = ns::Y::Y1;\n"
+                         "  TY ty1 = TY::Y1;\n"
+                         "  UY uy1 = UY::Y1;\n"
+                         "}\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
+TEST_F(ChangeNamespaceTest, EnumInClass) {
+  std::string Code = "namespace na {\n"
+                     "struct X { enum E { E1 }; };\n"
+                     "namespace nb {\n"
+                     "void f() {\n"
+                     "  X::E e = X::E1;\n"
+                     "  X::E ee = X::E::E1;\n"
+                     "}\n"
+                     "} // namespace nb\n"
+                     "} // namespace na\n";
+  std::string Expected = "namespace na {\n"
+                         "struct X { enum E { E1 }; };\n"
+                         "\n"
+                         "} // namespace na\n"
+                         "namespace x {\n"
+                         "namespace y {\n"
+                         "void f() {\n"
+                         "  ::na::X::E e = ::na::X::E1;\n"
+                         "  ::na::X::E ee = ::na::X::E::E1;\n"
+                         "}\n"
+                         "} // namespace y\n"
+                         "} // namespace x\n";
+
+  EXPECT_EQ(format(Expected), runChangeNamespaceOnCode(Code));
+}
+
 } // anonymous namespace
 } // namespace change_namespace
 } // namespace clang
