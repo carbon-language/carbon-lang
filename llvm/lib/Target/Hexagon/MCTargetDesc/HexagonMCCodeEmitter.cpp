@@ -521,7 +521,31 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
         if (HexagonMCInstrInfo::s23_2_reloc(*MO.getExpr()))
           FixupKind = Hexagon::fixup_Hexagon_23_REG;
         else
-          raise_relocation_error(bits, kind);
+          if (MCID.mayStore() || MCID.mayLoad()) {
+            for (const MCPhysReg *ImpUses = MCID.getImplicitUses(); *ImpUses;
+              ++ImpUses) {
+              if (*ImpUses != Hexagon::GP)
+                continue;
+              switch (HexagonMCInstrInfo::getAccessSize(MCII, MI)) {
+              case HexagonII::MemAccessSize::ByteAccess:
+                FixupKind = fixup_Hexagon_GPREL16_0;
+                break;
+              case HexagonII::MemAccessSize::HalfWordAccess:
+                FixupKind = fixup_Hexagon_GPREL16_1;
+                break;
+              case HexagonII::MemAccessSize::WordAccess:
+                FixupKind = fixup_Hexagon_GPREL16_2;
+                break;
+              case HexagonII::MemAccessSize::DoubleWordAccess:
+                FixupKind = fixup_Hexagon_GPREL16_3;
+                break;
+              default:
+                raise_relocation_error(bits, kind);
+              }
+            }
+          }
+          else
+            raise_relocation_error(bits, kind);
         break;
       }
       case MCSymbolRefExpr::VK_DTPREL:
