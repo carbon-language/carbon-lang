@@ -494,6 +494,8 @@ static bool fnegFoldsIntoOp(unsigned Opc) {
   case ISD::FMUL:
   case ISD::FMA:
   case ISD::FMAD:
+  case ISD::FMINNUM:
+  case ISD::FMAXNUM:
   case ISD::FSIN:
   case ISD::FTRUNC:
   case ISD::FRINT:
@@ -2896,6 +2898,12 @@ SDValue AMDGPUTargetLowering::performSelectCombine(SDNode *N,
   return performCtlzCombine(SDLoc(N), Cond, True, False, DCI);
 }
 
+static bool isConstantFPZero(SDValue N) {
+  if (const ConstantFPSDNode *C = isConstOrConstSplatFP(N))
+    return C->isZero() && !C->isNegative();
+  return false;
+}
+
 SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
                                                  DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -2986,6 +2994,28 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
       RHS = RHS.getOperand(0);
 
     SDValue Res = DAG.getNode(Opc, SL, VT, LHS, MHS, RHS);
+    if (!N0.hasOneUse())
+      DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
+    return Res;
+  }
+  case ISD::FMAXNUM:
+  case ISD::FMINNUM: {
+    // fneg (fmaxnum x, y) -> fminnum (fneg x), (fneg y)
+    // fneg (fminnum x, y) -> fmaxnum (fneg x), (fneg y)
+    SDValue LHS = N0.getOperand(0);
+    SDValue RHS = N0.getOperand(1);
+
+    // 0 doesn't have a negated inline immediate.
+    // TODO: Shouldn't fold 1/2pi either, and should be generalized to other
+    // operations.
+    if (isConstantFPZero(RHS))
+      return SDValue();
+
+    SDValue NegLHS = DAG.getNode(ISD::FNEG, SL, VT, LHS);
+    SDValue NegRHS = DAG.getNode(ISD::FNEG, SL, VT, RHS);
+    unsigned Opposite = (Opc == ISD::FMAXNUM) ? ISD::FMINNUM : ISD::FMAXNUM;
+
+    SDValue Res = DAG.getNode(Opposite, SL, VT, NegLHS, NegRHS, N0->getFlags());
     if (!N0.hasOneUse())
       DAG.ReplaceAllUsesWith(N0, DAG.getNode(ISD::FNEG, SL, VT, Res));
     return Res;

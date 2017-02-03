@@ -386,6 +386,268 @@ define void @v_fneg_mul_multi_use_fneg_x_f32(float addrspace(1)* %out, float add
 }
 
 ; --------------------------------------------------------------------------------
+; fminnum tests
+; --------------------------------------------------------------------------------
+
+; GCN-LABEL: {{^}}v_fneg_minnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: {{buffer|flat}}_load_dword [[B:v[0-9]+]]
+; GCN: v_max_f32_e64 [[RESULT:v[0-9]+]], -[[A]], -[[B]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr, float addrspace(1)* %b.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %b.gep = getelementptr inbounds float, float addrspace(1)* %b.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %b = load volatile float, float addrspace(1)* %b.gep
+  %min = call float @llvm.minnum.f32(float %a, float %b)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_self_minnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_max_f32_e64 [[RESULT:v[0-9]+]], -[[A]], -[[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_self_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.minnum.f32(float %a, float %a)
+  %min.fneg = fsub float -0.0, %min
+  store float %min.fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_posk_minnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_max_f32_e64 [[RESULT:v[0-9]+]], -[[A]], -4.0
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_posk_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.minnum.f32(float 4.0, float %a)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_negk_minnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_max_f32_e64 [[RESULT:v[0-9]+]], -[[A]], 4.0
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_negk_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.minnum.f32(float -4.0, float %a)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_0_minnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_min_f32_e32 [[RESULT:v[0-9]+]], 0, [[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_0_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.minnum.f32(float 0.0, float %a)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_0_minnum_foldable_use_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: {{buffer|flat}}_load_dword [[B:v[0-9]+]]
+; GCN: v_min_f32_e32 [[MIN:v[0-9]+]], 0, [[A]]
+; GCN: v_mul_f32_e64 [[RESULT:v[0-9]+]], -[[MIN]], [[B]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_0_minnum_foldable_use_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr, float addrspace(1)* %b.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %b.gep = getelementptr inbounds float, float addrspace(1)* %b.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %b = load volatile float, float addrspace(1)* %b.gep
+  %min = call float @llvm.minnum.f32(float 0.0, float %a)
+  %fneg = fsub float -0.000000e+00, %min
+  %mul = fmul float %fneg, %b
+  store float %mul, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_minnum_multi_use_minnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: {{buffer|flat}}_load_dword [[B:v[0-9]+]]
+; GCN: v_max_f32_e64 [[MAX0:v[0-9]+]], -[[A]], -[[B]]
+; GCN-NEXT: v_mul_f32_e32 [[MUL1:v[0-9]+]], -4.0, [[MUL0]]
+; GCN-NEXT: buffer_store_dword [[MAX0]]
+; GCN-NEXT: buffer_store_dword [[MUL1]]
+define void @v_fneg_minnum_multi_use_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr, float addrspace(1)* %b.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %b.gep = getelementptr inbounds float, float addrspace(1)* %b.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %b = load volatile float, float addrspace(1)* %b.gep
+  %min = call float @llvm.minnum.f32(float %a, float %b)
+  %fneg = fsub float -0.000000e+00, %min
+  %use1 = fmul float %min, 4.0
+  store volatile float %fneg, float addrspace(1)* %out
+  store volatile float %use1, float addrspace(1)* %out
+  ret void
+}
+
+; --------------------------------------------------------------------------------
+; fmaxnum tests
+; --------------------------------------------------------------------------------
+
+; GCN-LABEL: {{^}}v_fneg_maxnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: {{buffer|flat}}_load_dword [[B:v[0-9]+]]
+; GCN: v_min_f32_e64 [[RESULT:v[0-9]+]], -[[A]], -[[B]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr, float addrspace(1)* %b.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %b.gep = getelementptr inbounds float, float addrspace(1)* %b.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %b = load volatile float, float addrspace(1)* %b.gep
+  %min = call float @llvm.maxnum.f32(float %a, float %b)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_self_maxnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_min_f32_e64 [[RESULT:v[0-9]+]], -[[A]], -[[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_self_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.maxnum.f32(float %a, float %a)
+  %min.fneg = fsub float -0.0, %min
+  store float %min.fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_posk_maxnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_min_f32_e64 [[RESULT:v[0-9]+]], -[[A]], -4.0
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_posk_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.maxnum.f32(float 4.0, float %a)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_negk_maxnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_min_f32_e64 [[RESULT:v[0-9]+]], -[[A]], 4.0
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_negk_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.maxnum.f32(float -4.0, float %a)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_0_maxnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_max_f32_e32 [[RESULT:v[0-9]+]], 0, [[A]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_0_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %max = call float @llvm.maxnum.f32(float 0.0, float %a)
+  %fneg = fsub float -0.000000e+00, %max
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_0_maxnum_foldable_use_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: {{buffer|flat}}_load_dword [[B:v[0-9]+]]
+; GCN: v_max_f32_e32 [[MAX:v[0-9]+]], 0, [[A]]
+; GCN: v_mul_f32_e64 [[RESULT:v[0-9]+]], -[[MAX]], [[B]]
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_0_maxnum_foldable_use_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr, float addrspace(1)* %b.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %b.gep = getelementptr inbounds float, float addrspace(1)* %b.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %b = load volatile float, float addrspace(1)* %b.gep
+  %max = call float @llvm.maxnum.f32(float 0.0, float %a)
+  %fneg = fsub float -0.000000e+00, %max
+  %mul = fmul float %fneg, %b
+  store float %mul, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_maxnum_multi_use_maxnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: {{buffer|flat}}_load_dword [[B:v[0-9]+]]
+; GCN: v_min_f32_e64 [[MAX0:v[0-9]+]], -[[A]], -[[B]]
+; GCN-NEXT: v_mul_f32_e32 [[MUL1:v[0-9]+]], -4.0, [[MUL0]]
+; GCN-NEXT: buffer_store_dword [[MAX0]]
+; GCN-NEXT: buffer_store_dword [[MUL1]]
+define void @v_fneg_maxnum_multi_use_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr, float addrspace(1)* %b.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %b.gep = getelementptr inbounds float, float addrspace(1)* %b.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %b = load volatile float, float addrspace(1)* %b.gep
+  %min = call float @llvm.maxnum.f32(float %a, float %b)
+  %fneg = fsub float -0.000000e+00, %min
+  %use1 = fmul float %min, 4.0
+  store volatile float %fneg, float addrspace(1)* %out
+  store volatile float %use1, float addrspace(1)* %out
+  ret void
+}
+
+; --------------------------------------------------------------------------------
 ; fma tests
 ; --------------------------------------------------------------------------------
 
@@ -1825,6 +2087,8 @@ declare float @llvm.trunc.f32(float) #1
 declare float @llvm.round.f32(float) #1
 declare float @llvm.rint.f32(float) #1
 declare float @llvm.nearbyint.f32(float) #1
+declare float @llvm.minnum.f32(float, float) #1
+declare float @llvm.maxnum.f32(float, float) #1
 
 declare double @llvm.fma.f64(double, double, double) #1
 
