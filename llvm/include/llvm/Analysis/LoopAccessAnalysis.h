@@ -690,8 +690,14 @@ int64_t getPtrStride(PredicatedScalarEvolution &PSE, Value *Ptr, const Loop *Lp,
                      const ValueToValueMap &StridesMap = ValueToValueMap(),
                      bool Assume = false, bool ShouldCheckWrap = true);
 
-/// \brief Saves the sorted memory accesses in vector argument 'Sorted' after
-/// sorting the jumbled memory accesses.
+/// \brief Try to sort an array of loads / stores.
+///
+/// If all pointers refer to the same object, and the differences between all
+/// pointer operands are known to be constant, the array is sorted by offset,
+/// and returned in \p Sorted.
+/// 
+/// If those conditions do not hold, the output array is an arbitrary
+/// permutation of the input.
 void sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
                      ScalarEvolution &SE, SmallVectorImpl<Value *> &Sorted);
 
