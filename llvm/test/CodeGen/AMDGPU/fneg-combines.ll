@@ -472,6 +472,22 @@ define void @v_fneg_0_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %
   ret void
 }
 
+; GCN-LABEL: {{^}}v_fneg_neg0_minnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_max_f32_e64 [[RESULT:v[0-9]+]], -[[A]], 0
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_neg0_minnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %min = call float @llvm.minnum.f32(float -0.0, float %a)
+  %fneg = fsub float -0.000000e+00, %min
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
 ; GCN-LABEL: {{^}}v_fneg_0_minnum_foldable_use_f32:
 ; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
 ; GCN: {{buffer|flat}}_load_dword [[B:v[0-9]+]]
@@ -598,6 +614,22 @@ define void @v_fneg_0_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %
   %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
   %a = load volatile float, float addrspace(1)* %a.gep
   %max = call float @llvm.maxnum.f32(float 0.0, float %a)
+  %fneg = fsub float -0.000000e+00, %max
+  store float %fneg, float addrspace(1)* %out.gep
+  ret void
+}
+
+; GCN-LABEL: {{^}}v_fneg_neg0_maxnum_f32:
+; GCN: {{buffer|flat}}_load_dword [[A:v[0-9]+]]
+; GCN: v_min_f32_e64 [[RESULT:v[0-9]+]], -[[A]], 0
+; GCN: buffer_store_dword [[RESULT]]
+define void @v_fneg_neg0_maxnum_f32(float addrspace(1)* %out, float addrspace(1)* %a.ptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %tid.ext = sext i32 %tid to i64
+  %a.gep = getelementptr inbounds float, float addrspace(1)* %a.ptr, i64 %tid.ext
+  %out.gep = getelementptr inbounds float, float addrspace(1)* %out, i64 %tid.ext
+  %a = load volatile float, float addrspace(1)* %a.gep
+  %max = call float @llvm.maxnum.f32(float -0.0, float %a)
   %fneg = fsub float -0.000000e+00, %max
   store float %fneg, float addrspace(1)* %out.gep
   ret void

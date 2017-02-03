@@ -504,6 +504,8 @@ static bool fnegFoldsIntoOp(unsigned Opc) {
   case AMDGPUISD::RCP_LEGACY:
   case AMDGPUISD::SIN_HW:
   case AMDGPUISD::FMUL_LEGACY:
+  case AMDGPUISD::FMIN_LEGACY:
+  case AMDGPUISD::FMAX_LEGACY:
     return true;
   default:
     return false;
@@ -2904,6 +2906,21 @@ static bool isConstantFPZero(SDValue N) {
   return false;
 }
 
+static unsigned inverseMinMax(unsigned Opc) {
+  switch (Opc) {
+  case ISD::FMAXNUM:
+    return ISD::FMINNUM;
+  case ISD::FMINNUM:
+    return ISD::FMAXNUM;
+  case AMDGPUISD::FMAX_LEGACY:
+    return AMDGPUISD::FMIN_LEGACY;
+  case AMDGPUISD::FMIN_LEGACY:
+    return  AMDGPUISD::FMAX_LEGACY;
+  default:
+    llvm_unreachable("invalid min/max opcode");
+  }
+}
+
 SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
                                                  DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -2999,9 +3016,14 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
     return Res;
   }
   case ISD::FMAXNUM:
-  case ISD::FMINNUM: {
+  case ISD::FMINNUM:
+  case AMDGPUISD::FMAX_LEGACY:
+  case AMDGPUISD::FMIN_LEGACY: {
     // fneg (fmaxnum x, y) -> fminnum (fneg x), (fneg y)
     // fneg (fminnum x, y) -> fmaxnum (fneg x), (fneg y)
+    // fneg (fmax_legacy x, y) -> fmin_legacy (fneg x), (fneg y)
+    // fneg (fmin_legacy x, y) -> fmax_legacy (fneg x), (fneg y)
+
     SDValue LHS = N0.getOperand(0);
     SDValue RHS = N0.getOperand(1);
 
@@ -3013,7 +3035,7 @@ SDValue AMDGPUTargetLowering::performFNegCombine(SDNode *N,
 
     SDValue NegLHS = DAG.getNode(ISD::FNEG, SL, VT, LHS);
     SDValue NegRHS = DAG.getNode(ISD::FNEG, SL, VT, RHS);
-    unsigned Opposite = (Opc == ISD::FMAXNUM) ? ISD::FMINNUM : ISD::FMAXNUM;
+    unsigned Opposite = inverseMinMax(Opc);
 
     SDValue Res = DAG.getNode(Opposite, SL, VT, NegLHS, NegRHS, N0->getFlags());
     if (!N0.hasOneUse())
