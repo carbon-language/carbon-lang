@@ -774,7 +774,7 @@ Expected<bool> FunctionImporter::importFunctions(
 
     if (Mover.move(std::move(SrcModule), GlobalsToImport.getArrayRef(),
                    [](GlobalValue &, IRMover::ValueAdder) {},
-                   /*LinkModuleInlineAsm=*/false, /*IsPerformingImport=*/true))
+                   /*IsPerformingImport=*/true))
       report_fatal_error("Function Import: link error");
 
     ImportedCount += GlobalsToImport.size();

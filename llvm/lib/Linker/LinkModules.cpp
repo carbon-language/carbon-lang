@@ -538,7 +538,6 @@ bool ModuleLinker::run() {
                            [this](GlobalValue &GV, IRMover::ValueAdder Add) {
                              addLazyFor(GV, Add);
                            },
-                           /* LinkModuleInlineAsm */ true,
                            /* IsPerformingImport */ false)) {
     handleAllErrors(std::move(E), [&](ErrorInfoBase &EIB) {
       DstM.getContext().diagnose(LinkDiagnosticInfo(DS_Error, EIB.message()));
