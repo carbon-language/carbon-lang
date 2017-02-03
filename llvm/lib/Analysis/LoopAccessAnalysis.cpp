@@ -1058,9 +1058,9 @@ static unsigned getAddressSpaceOperand(Value *I) {
   return -1;
 }
 
-void llvm::sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
-                         ScalarEvolution &SE,
-                         SmallVectorImpl<Value *> &Sorted) {
+bool llvm::sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
+                           ScalarEvolution &SE,
+                           SmallVectorImpl<Value *> &Sorted) {
   SmallVector<std::pair<int64_t, Value *>, 4> OffValPairs;
   OffValPairs.reserve(VL.size());
   Sorted.reserve(VL.size());
@@ -1077,10 +1077,8 @@ void llvm::sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
     // If a pointer refers to a different underlying object, bail - the
     // pointers are by definition incomparable.
     Value *CurrObj = GetUnderlyingObject(Ptr, DL);
-    if (CurrObj != Obj0) {
-      Sorted.append(VL.begin(), VL.end());
-      return;
-    }
+    if (CurrObj != Obj0)
+      return false;
 
     const SCEVConstant *Diff =
         dyn_cast<SCEVConstant>(SE.getMinusSCEV(SE.getSCEV(Ptr), Scev0));
@@ -1088,10 +1086,8 @@ void llvm::sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
     // The pointers may not have a constant offset from each other, or SCEV
     // may just not be smart enough to figure out they do. Regardless,
     // there's nothing we can do.
-    if (!Diff) {
-      Sorted.append(VL.begin(), VL.end());
-      return;
-    }
+    if (!Diff)
+      return false;
 
     OffValPairs.emplace_back(Diff->getAPInt().getSExtValue(), Val);
   }
@@ -1102,8 +1098,10 @@ void llvm::sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
               return Left.first < Right.first;
             });
 
-  for (auto& it : OffValPairs)
+  for (auto &it : OffValPairs)
     Sorted.push_back(it.second);
+
+  return true;
 }
 
 /// Returns true if the memory operations \p A and \p B are consecutive.

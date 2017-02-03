@@ -692,13 +692,12 @@ int64_t getPtrStride(PredicatedScalarEvolution &PSE, Value *Ptr, const Loop *Lp,
 
 /// \brief Try to sort an array of loads / stores.
 ///
-/// If all pointers refer to the same object, and the differences between all
-/// pointer operands are known to be constant, the array is sorted by offset,
-/// and returned in \p Sorted.
-/// 
-/// If those conditions do not hold, the output array is an arbitrary
-/// permutation of the input.
-void sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
+/// An array of loads / stores can only be sorted if all pointer operands
+/// refer to the same object, and the differences between these pointers 
+/// are known to be constant. If that is the case, this returns true, and the
+/// sorted array is returned in \p Sorted. Otherwise, this returns false, and
+/// \p Sorted is invalid.
+bool sortMemAccesses(ArrayRef<Value *> VL, const DataLayout &DL,
                      ScalarEvolution &SE, SmallVectorImpl<Value *> &Sorted);
 
 /// \brief Returns true if the memory operations \p A and \p B are consecutive.
