@@ -129,8 +129,7 @@ public:
 bool ModuleLinker::doImportAsDefinition(const GlobalValue *SGV) {
   if (!isPerformingImport())
     return false;
-  return FunctionImportGlobalProcessing::doImportAsDefinition(SGV,
-                                                              GlobalsToImport);
+  report_fatal_error("ModuleLinker does not support importing");
 }
 
 static GlobalValue::VisibilityTypes
