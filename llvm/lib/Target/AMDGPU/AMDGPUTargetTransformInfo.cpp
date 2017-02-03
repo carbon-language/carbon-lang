@@ -54,7 +54,7 @@ void AMDGPUTTIImpl::getUnrollingPreferences(Loop *L,
       const Value *Ptr = GEP->getPointerOperand();
       const AllocaInst *Alloca =
           dyn_cast<AllocaInst>(GetUnderlyingObject(Ptr, DL));
-      if (Alloca) {
+      if (Alloca && Alloca->isStaticAlloca()) {
         Type *Ty = Alloca->getAllocatedType();
         unsigned AllocaSize = Ty->isSized() ? DL.getTypeAllocSize(Ty) : 0;
         if (AllocaSize > MaxAlloca)
