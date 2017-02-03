@@ -32,7 +32,7 @@ using namespace llvm;
 static cl::opt<unsigned> UnrollThresholdPrivate(
   "amdgpu-unroll-threshold-private",
   cl::desc("Unroll threshold for AMDGPU if private memory used in a loop"),
-  cl::init(800), cl::Hidden);
+  cl::init(2000), cl::Hidden);
 
 void AMDGPUTTIImpl::getUnrollingPreferences(Loop *L,
                                             TTI::UnrollingPreferences &UP) {
