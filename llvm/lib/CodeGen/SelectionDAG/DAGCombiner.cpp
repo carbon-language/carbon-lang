@@ -12777,10 +12777,6 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
 
   EVT VT = InVec.getValueType();
 
-  // If we can't generate a legal BUILD_VECTOR, exit
-  if (LegalOperations && !TLI.isOperationLegal(ISD::BUILD_VECTOR, VT))
-    return SDValue();
-
   // Check that we know which element is being inserted
   if (!isa<ConstantSDNode>(EltNo))
     return SDValue();
@@ -12806,6 +12802,10 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
                          VT, NewOp, InVec.getOperand(1), InVec.getOperand(2));
     }
   }
+
+  // If we can't generate a legal BUILD_VECTOR, exit
+  if (LegalOperations && !TLI.isOperationLegal(ISD::BUILD_VECTOR, VT))
+    return SDValue();
 
   // Check that the operand is a BUILD_VECTOR (or UNDEF, which can essentially
   // be converted to a BUILD_VECTOR).  Fill in the Ops vector with the
