@@ -741,4 +741,70 @@ TEST(DeLICM, computeReachingWrite) {
                            false, true));
 }
 
+TEST(DeLICM, computeArrayUnused) {
+  std::unique_ptr<isl_ctx, decltype(&isl_ctx_free)> Ctx(isl_ctx_alloc(),
+                                                        &isl_ctx_free);
+
+  // The ReadEltInSameInst parameter doesn't matter in simple cases. To also
+  // cover the parameter without duplicating the tests, this loops runs over
+  // other in both settings.
+  for (bool ReadEltInSameInst = false, Done = false; !Done;
+       Done = ReadEltInSameInst, ReadEltInSameInst = true) {
+    // Basic usage: one read, one write
+    EXPECT_EQ(UMAP("{ Elt[] -> [i] : 0 < i < 10 }"),
+              computeArrayUnused(UMAP("{ Read[] -> [0]; Write[] -> [10] }"),
+                                 UMAP("{ Write[] -> Elt[] }"),
+                                 UMAP("{ Read[] -> Elt[] }"), ReadEltInSameInst,
+                                 false, false));
+    EXPECT_EQ(UMAP("{ Elt[] -> [i] : 0 < i <= 10 }"),
+              computeArrayUnused(UMAP("{ Read[] -> [0]; Write[] -> [10] }"),
+                                 UMAP("{ Write[] -> Elt[] }"),
+                                 UMAP("{ Read[] -> Elt[] }"), ReadEltInSameInst,
+                                 false, true));
+    EXPECT_EQ(UMAP("{ Elt[] -> [i] : 0 <= i < 10 }"),
+              computeArrayUnused(UMAP("{ Read[] -> [0]; Write[] -> [10] }"),
+                                 UMAP("{ Write[] -> Elt[] }"),
+                                 UMAP("{ Read[] -> Elt[] }"), ReadEltInSameInst,
+                                 true, false));
+    EXPECT_EQ(UMAP("{ Elt[] -> [i] : 0 <= i <= 10 }"),
+              computeArrayUnused(UMAP("{ Read[] -> [0]; Write[] -> [10] }"),
+                                 UMAP("{ Write[] -> Elt[] }"),
+                                 UMAP("{ Read[] -> Elt[] }"), ReadEltInSameInst,
+                                 true, true));
+
+    // Two reads
+    EXPECT_EQ(UMAP("{ Elt[] -> [i] : 0 < i <= 10 }"),
+              computeArrayUnused(
+                  UMAP("{ Read[0] -> [-10]; Read[1] -> [0]; Write[] -> [10] }"),
+                  UMAP("{ Write[] -> Elt[] }"), UMAP("{ Read[i] -> Elt[] }"),
+                  ReadEltInSameInst, false, true));
+
+    // Corner case: no writes
+    EXPECT_EQ(UMAP("{}"),
+              computeArrayUnused(UMAP("{ Read[] -> [0] }"), UMAP("{}"),
+                                 UMAP("{ Read[] -> Elt[] }"), ReadEltInSameInst,
+                                 false, false));
+
+    // Corner case: no reads
+    EXPECT_EQ(UMAP("{ Elt[] -> [i] : i <= 0 }"),
+              computeArrayUnused(UMAP("{ Write[] -> [0] }"),
+                                 UMAP("{ Write[] -> Elt[] }"), UMAP("{}"),
+                                 ReadEltInSameInst, false, true));
+  }
+
+  // Read and write in same statement
+  EXPECT_EQ(UMAP("{ Elt[] -> [i] : i < 0 }"),
+            computeArrayUnused(UMAP("{ RW[] -> [0] }"),
+                               UMAP("{ RW[] -> Elt[] }"),
+                               UMAP("{ RW[] -> Elt[] }"), true, false, false));
+  EXPECT_EQ(UMAP("{ Elt[] -> [i] : i <= 0 }"),
+            computeArrayUnused(UMAP("{ RW[] -> [0] }"),
+                               UMAP("{ RW[] -> Elt[] }"),
+                               UMAP("{ RW[] -> Elt[] }"), true, false, true));
+  EXPECT_EQ(UMAP("{ Elt[] -> [0] }"),
+            computeArrayUnused(UMAP("{ RW[] -> [0] }"),
+                               UMAP("{ RW[] -> Elt[] }"),
+                               UMAP("{ RW[] -> Elt[] }"), false, true, true));
+}
+
 } // anonymous namespace

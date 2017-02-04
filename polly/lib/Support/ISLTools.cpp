@@ -320,3 +320,50 @@ polly::computeReachingWrite(IslPtr<isl_union_map> Schedule,
 
   return ReachableWriteDomain;
 }
+
+IslPtr<isl_union_map> polly::computeArrayUnused(IslPtr<isl_union_map> Schedule,
+                                                IslPtr<isl_union_map> Writes,
+                                                IslPtr<isl_union_map> Reads,
+                                                bool ReadEltInSameInst,
+                                                bool IncludeLastRead,
+                                                bool IncludeWrite) {
+  // { Element[] -> Scatter[] }
+  auto ReadActions =
+      give(isl_union_map_apply_domain(Schedule.copy(), Reads.take()));
+  auto WriteActions =
+      give(isl_union_map_apply_domain(Schedule.copy(), Writes.copy()));
+
+  // { [Element[] -> Scatter[] }
+  auto AfterReads = afterScatter(ReadActions, ReadEltInSameInst);
+  auto WritesBeforeAnyReads =
+      give(isl_union_map_subtract(WriteActions.take(), AfterReads.take()));
+  auto BeforeWritesBeforeAnyReads =
+      beforeScatter(WritesBeforeAnyReads, !IncludeWrite);
+
+  // { [Element[] -> DomainWrite[]] -> Scatter[] }
+  auto EltDomWrites = give(isl_union_map_apply_range(
+      isl_union_map_range_map(isl_union_map_reverse(Writes.copy())),
+      Schedule.copy()));
+
+  // { [Element[] -> Scatter[]] -> DomainWrite[] }
+  auto ReachingOverwrite = computeReachingWrite(
+      Schedule, Writes, true, ReadEltInSameInst, !ReadEltInSameInst);
+
+  // { [Element[] -> Scatter[]] -> DomainWrite[] }
+  auto ReadsOverwritten = give(isl_union_map_intersect_domain(
+      ReachingOverwrite.take(), isl_union_map_wrap(ReadActions.take())));
+
+  // { [Element[] -> DomainWrite[]] -> Scatter[] }
+  auto ReadsOverwrittenRotated = give(isl_union_map_reverse(
+      isl_union_map_curry(reverseDomain(ReadsOverwritten).take())));
+  auto LastOverwrittenRead =
+      give(isl_union_map_lexmax(ReadsOverwrittenRotated.take()));
+
+  // { [Element[] -> DomainWrite[]] -> Scatter[] }
+  auto BetweenLastReadOverwrite = betweenScatter(
+      LastOverwrittenRead, EltDomWrites, IncludeLastRead, IncludeWrite);
+
+  return give(isl_union_map_union(
+      BeforeWritesBeforeAnyReads.take(),
+      isl_union_map_domain_factor_domain(BetweenLastReadOverwrite.take())));
+}

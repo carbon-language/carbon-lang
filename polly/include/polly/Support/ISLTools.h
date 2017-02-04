@@ -233,6 +233,72 @@ IslPtr<isl_union_map> computeReachingWrite(IslPtr<isl_union_map> Schedule,
                                            bool Reverse, bool InclPrevDef,
                                            bool InclNextDef);
 
+/// Compute the timepoints where the contents of an array element are not used.
+///
+/// An element is unused at a timepoint when the element is overwritten in
+/// the future, but it is not read in between. Another way to express this: the
+/// time from when the element is written, to the most recent read before it, or
+/// infinitely into the past if there is no read before. Such unused elements
+/// can be overwritten by any value without changing the scop's semantics. An
+/// example:
+///
+/// Schedule := { Read[] -> [0]; Write[] -> [10]; Def[] -> [20] }
+/// Writes := { Write[] -> A[5]; Def[] -> A[6] }
+/// Reads := { Read[] -> A[5] }
+///
+/// The result is:
+///
+/// { A[5] -> [i] : 0 < i < 10;
+///   A[6] -> [i] : i < 20 }
+///
+/// That is, A[5] is unused between timepoint 0 (the read) and timepoint 10 (the
+/// write). A[6] is unused before timepoint 20, but might be used after the
+/// scop's execution (A[5] and any other A[i] as well). Use InclLastRead=false
+/// and InclWrite=true to interpret the result as zone.
+///
+/// @param Schedule          { Domain[] -> Scatter[] }
+///                          The schedule of (at least) all statement instances
+///                          occurring in @p Writes or @p Reads. All other
+///                          instances are ignored.
+/// @param Writes            { DomainWrite[] -> Element[] }
+///                          Elements written to by the statement instances.
+/// @param Reads             { DomainRead[] -> Element[] }
+///                          Elements read from by the statement instances.
+/// @param ReadEltInSameInst Whether a load reads the value from a write
+///                          that is scheduled at the same timepoint (Writes
+///                          happen before reads). Otherwise, loads use the
+///                          value of an element that it had before the
+///                          timepoint (Reads before writes). For example:
+///                          { Read[] -> [0]; Write[] -> [0] }
+///                          With ReadEltInSameInst=false it is assumed that the
+///                          read happens before the write, such that the
+///                          element is never unused, or just at timepoint 0,
+///                          depending on InclLastRead/InclWrite.
+///                          With ReadEltInSameInst=false it assumes that the
+///                          value just written is used. Anything before
+///                          timepoint 0 is considered unused.
+/// @param InclLastRead      Whether a timepoint where an element is last read
+///                          counts as unused (the read happens at the beginning
+///                          of its timepoint, and nothing (else) can use it
+///                          during the timepoint). In the example, this option
+///                          adds { A[5] -> [0] } to the result.
+/// @param InclWrite         Whether the timepoint where an element is written
+///                          itself counts as unused (the write happens at the
+///                          end of its timepoint; no (other) operations uses
+///                          the element during the timepoint). In this example,
+///                          this adds
+///                          { A[5] -> [10]; A[6] -> [20] } to the result.
+///
+/// @return { Element[] -> Scatter[] }
+///         The unused timepoints as defined above, or nullptr if either @p
+///         Schedule, @p Writes are @p Reads is nullptr, or the ISL max
+///         operations count is exceeded.
+IslPtr<isl_union_map> computeArrayUnused(IslPtr<isl_union_map> Schedule,
+                                         IslPtr<isl_union_map> Writes,
+                                         IslPtr<isl_union_map> Reads,
+                                         bool ReadEltInSameInst,
+                                         bool InclLastRead, bool InclWrite);
+
 } // namespace polly
 
 #endif /* POLLY_ISLTOOLS_H */
