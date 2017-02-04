@@ -34123,32 +34123,21 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
   // we are not recursing on that node by checking for undef here.
   if (IdxVal == 0 && OpVT.is256BitVector() && SubVecVT.is128BitVector() &&
       !Vec.isUndef()) {
-    SDValue ZeroIndex = DAG.getIntPtrConstant(0, dl);
-    SDValue Undef = DAG.getUNDEF(OpVT);
-    SDValue Vec256 = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT, Undef,
-                                 SubVec, ZeroIndex);
+    SDValue Vec256 = DAG.getNode(ISD::INSERT_SUBVECTOR, dl, OpVT,
+                                 DAG.getUNDEF(OpVT), SubVec, N->getOperand(2));
 
-    // The blend instruction, and therefore its mask, depend on the data type.
-    MVT ScalarType = OpVT.getVectorElementType();
-    if (ScalarType.isFloatingPoint()) {
-      // Choose either vblendps (float) or vblendpd (double).
-      unsigned ScalarSize = ScalarType.getSizeInBits();
-      assert((ScalarSize == 64 || ScalarSize == 32) && "Unknown float type");
-      unsigned MaskVal = (ScalarSize == 64) ? 0x03 : 0x0f;
-      SDValue Mask = DAG.getConstant(MaskVal, dl, MVT::i8);
-      return DAG.getNode(X86ISD::BLENDI, dl, OpVT, Vec, Vec256, Mask);
-    }
-
-    // AVX2 is needed for 256-bit integer blend support.
     // Integers must be cast to 32-bit because there is only vpblendd;
     // vpblendw can't be used for this because it has a handicapped mask.
-
     // If we don't have AVX2, then cast to float. Using a wrong domain blend
     // is still more efficient than using the wrong domain vinsertf128 that
     // will be created by InsertSubVector().
-    MVT CastVT = Subtarget.hasAVX2() ? MVT::v8i32 : MVT::v8f32;
+    MVT CastVT = OpVT;
+    if (OpVT.isInteger())
+      CastVT = Subtarget.hasAVX2() ? MVT::v8i32 : MVT::v8f32;
 
-    SDValue Mask = DAG.getConstant(0x0f, dl, MVT::i8);
+    // The blend instruction, and therefore its mask, depend on the data type.
+    unsigned MaskVal = CastVT.getScalarSizeInBits() == 64 ? 0x03 : 0x0f;
+    SDValue Mask = DAG.getConstant(MaskVal, dl, MVT::i8);
     Vec = DAG.getBitcast(CastVT, Vec);
     Vec256 = DAG.getBitcast(CastVT, Vec256);
     Vec256 = DAG.getNode(X86ISD::BLENDI, dl, CastVT, Vec, Vec256, Mask);
