@@ -2215,13 +2215,13 @@ bool MachineBlockPlacement::maybeTailDuplicateBlock(
     BlockChain &Chain, BlockFilterSet *BlockFilter,
     MachineFunction::iterator &PrevUnplacedBlockIt,
     bool &DuplicatedToLPred) {
-
   DuplicatedToLPred = false;
+  if (!shouldTailDuplicate(BB))
+    return false;
+
   DEBUG(dbgs() << "Redoing tail duplication for Succ#"
         << BB->getNumber() << "\n");
 
-  if (!shouldTailDuplicate(BB))
-    return false;
   // This has to be a callback because none of it can be done after
   // BB is deleted.
   bool Removed = false;
