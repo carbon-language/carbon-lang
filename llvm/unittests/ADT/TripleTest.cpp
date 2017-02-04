@@ -775,6 +775,22 @@ TEST(TripleTest, EndianArchVariants) {
   T.setArch(Triple::lanai);
   EXPECT_EQ(Triple::lanai, T.getBigEndianArchVariant().getArch());
   EXPECT_EQ(Triple::UnknownArch, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::tcele);
+  EXPECT_EQ(Triple::tce, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::tcele, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::tce);
+  EXPECT_EQ(Triple::tce, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::tcele, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::le32);
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::le32, T.getLittleEndianArchVariant().getArch());
+
+  T.setArch(Triple::le64);
+  EXPECT_EQ(Triple::UnknownArch, T.getBigEndianArchVariant().getArch());
+  EXPECT_EQ(Triple::le64, T.getLittleEndianArchVariant().getArch());
 }
 
 TEST(TripleTest, getOSVersion) {
