@@ -12828,11 +12828,7 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
     // All the operands of BUILD_VECTOR must have the same type;
     // we enforce that here.
     EVT OpVT = Ops[0].getValueType();
-    if (InVal.getValueType() != OpVT)
-      InVal = OpVT.bitsGT(InVal.getValueType()) ?
-                DAG.getNode(ISD::ANY_EXTEND, DL, OpVT, InVal) :
-                DAG.getNode(ISD::TRUNCATE, DL, OpVT, InVal);
-    Ops[Elt] = InVal;
+    Ops[Elt] = OpVT.isInteger() ? DAG.getAnyExtOrTrunc(InVal, DL, OpVT) : InVal;
   }
 
   // Return the new vector
