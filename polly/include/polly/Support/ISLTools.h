@@ -175,6 +175,64 @@ void simplify(IslPtr<isl_map> &Map);
 /// Simplify a union map inplace.
 void simplify(IslPtr<isl_union_map> &UMap);
 
+/// Compute the reaching definition statement or the next overwrite for each
+/// definition of an array element.
+///
+/// The reaching definition of an array element at a specific timepoint is the
+/// statement instance that has written the current element's content.
+/// Alternatively, this function determines for each timepoint and element which
+/// write is going to overwrite an element at a future timepoint. This can be
+/// seen as "reaching definition in reverse" where definitions are found in the
+/// past.
+///
+/// For example:
+///
+/// Schedule := { Write[] -> [0]; Overwrite[] -> [10] }
+/// Defs := { Write[] -> A[5]; Overwrite[] -> A[5] }
+///
+/// If index 5 of array A is written at timepoint 0 and 10, the resulting
+/// reaching definitions are:
+///
+/// { [A[5] -> [i]] -> Write[] : 0 < i < 10;
+///   [A[5] -> [i]] -> Overwrite[] : 10 < i }
+///
+/// Between timepoint 0 (Write[]) and timepoint 10 (Overwrite[]), the
+/// content of A[5] is written by statement instance Write[] and after
+/// timepoint 10 by Overwrite[]. Values not defined in the map have no known
+/// definition. This includes the statement instance timepoints themselves,
+/// because reads at those timepoints could either read the old or the new
+/// value, defined only by the statement itself. But this can be changed by @p
+/// InclPrevDef and @p InclNextDef. InclPrevDef=false and InclNextDef=true
+/// returns a zone. Unless @p InclPrevDef and @p InclNextDef are both true,
+/// there is only one unique definition per element and timepoint.
+///
+/// @param Schedule    { DomainWrite[] -> Scatter[] }
+///                    Schedule of (at least) all array writes. Instances not in
+///                    @p Writes are ignored.
+/// @param Writes      { DomainWrite[] -> Element[] }
+///                    Elements written to by the statement instances.
+/// @param Reverse     If true, look for definitions in the future. That is,
+///                    find the write that is overwrites the current value.
+/// @param InclPrevDef Include the definition's timepoint to the set of
+///                    well-defined elements (any load at that timepoint happen
+///                    at the writes). In the example, enabling this option adds
+///                    {[A[5] -> [0]] -> Write[]; [A[5] -> [10]] -> Overwrite[]}
+///                    to the result.
+/// @param InclNextDef Whether to assume that at the timepoint where an element
+///                    is overwritten, it still contains the old value (any load
+///                    at that timepoint would happen before the overwrite). In
+///                    this example, enabling this adds
+///                    { [A[] -> [10]] -> Write[] } to the result.
+///
+/// @return { [Element[] -> Scatter[]] -> DomainWrite[] }
+///         The reaching definitions or future overwrite as described above, or
+///         nullptr if either @p Schedule or @p Writes is nullptr, or the isl
+///         max operations count has exceeded.
+IslPtr<isl_union_map> computeReachingWrite(IslPtr<isl_union_map> Schedule,
+                                           IslPtr<isl_union_map> Writes,
+                                           bool Reverse, bool InclPrevDef,
+                                           bool InclNextDef);
+
 } // namespace polly
 
 #endif /* POLLY_ISLTOOLS_H */

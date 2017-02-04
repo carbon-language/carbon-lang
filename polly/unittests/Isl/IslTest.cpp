@@ -637,4 +637,108 @@ TEST(ISLTools, shiftDim) {
   EXPECT_EQ(USET("[n] -> { [n+1] }"), shiftDim(USET("[n] -> { [n] }"), 0, 1));
 }
 
+TEST(DeLICM, computeReachingWrite) {
+  std::unique_ptr<isl_ctx, decltype(&isl_ctx_free)> Ctx(isl_ctx_alloc(),
+                                                        &isl_ctx_free);
+
+  // Basic usage
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] : 0 < i }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), false, false,
+                                 false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] : 0 < i }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), false, false,
+                                 true));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] : 0 <= i }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), false, true,
+                                 false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] : 0 <= i }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), false, true,
+                                 false));
+
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] : i < 0 }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), true, false,
+                                 false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] :  i <= 0 }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), true, false,
+                                 true));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] : i < 0 }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), true, true,
+                                 false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[] : i <= 0 }"),
+            computeReachingWrite(UMAP("{ Dom[] -> [0] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), true, true, true));
+
+  // Two writes
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom1[] : 0 < i < 10; [Elt[] -> [i]] -> "
+                 "Dom2[] : 10 < i }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 false, false, false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom1[] : 0 <= i < 10; [Elt[] -> [i]] -> "
+                 "Dom2[] : 10 <= i }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 false, true, false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom1[] : 0 < i <= 10; [Elt[] -> [i]] -> "
+                 "Dom2[] : 10 < i }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 false, false, true));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom1[] : 0 <= i <= 10; [Elt[] -> [i]] -> "
+                 "Dom2[] : 10 <= i }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 false, true, true));
+
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom2[] : 0 < i < 10; [Elt[] -> [i]] -> "
+                 "Dom1[] : i < 0 }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 true, false, false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom2[] : 0 <= i < 10; [Elt[] -> [i]] -> "
+                 "Dom1[] : i < 0 }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 true, true, false));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom2[] : 0 < i <= 10; [Elt[] -> [i]] -> "
+                 "Dom1[] : i <= 0 }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 true, false, true));
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom2[] : 0 <= i <= 10; [Elt[] -> [i]] -> "
+                 "Dom1[] : i <= 0 }"),
+            computeReachingWrite(UMAP("{ Dom1[] -> [0]; Dom2[] -> [10] }"),
+                                 UMAP("{ Dom1[] -> Elt[]; Dom2[] -> Elt[] }"),
+                                 true, true, true));
+
+  // Domain in same space
+  EXPECT_EQ(UMAP("{ [Elt[] -> [i]] -> Dom[1] : 0 < i <= 10; [Elt[] -> [i]] -> "
+                 "Dom[2] : 10 < i }"),
+            computeReachingWrite(UMAP("{ Dom[i] -> [10i - 10] }"),
+                                 UMAP("{ Dom[1] -> Elt[]; Dom[2] -> Elt[] }"),
+                                 false, false, true));
+
+  // Parametric
+  EXPECT_EQ(UMAP("[p] -> { [Elt[] -> [i]] -> Dom[] : p < i }"),
+            computeReachingWrite(UMAP("[p] -> { Dom[] -> [p] }"),
+                                 UMAP("{ Dom[] -> Elt[] }"), false, false,
+                                 false));
+
+  // More realistic example (from reduction_embedded.ll)
+  EXPECT_EQ(
+      UMAP("{ [Elt[] -> [i]] -> Dom[0] : 0 < i <= 3; [Elt[] -> [i]] -> Dom[1] "
+           ": 3 < i <= 6; [Elt[] -> [i]] -> Dom[2] : 6 < i <= 9; [Elt[] -> "
+           "[i]] -> Dom[3] : 9 < i <= 12; [Elt[] -> [i]] -> Dom[4] : 12 < i }"),
+      computeReachingWrite(UMAP("{ Dom[i] -> [3i] : 0 <= i <= 4 }"),
+                           UMAP("{ Dom[i] -> Elt[] : 0 <= i <= 4 }"), false,
+                           false, true));
+}
+
 } // anonymous namespace

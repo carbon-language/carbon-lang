@@ -260,3 +260,63 @@ void polly::simplify(IslPtr<isl_union_map> &UMap) {
   UMap = give(isl_union_map_detect_equalities(UMap.take()));
   UMap = give(isl_union_map_coalesce(UMap.take()));
 }
+
+IslPtr<isl_union_map>
+polly::computeReachingWrite(IslPtr<isl_union_map> Schedule,
+                            IslPtr<isl_union_map> Writes, bool Reverse,
+                            bool InclPrevDef, bool InclNextDef) {
+
+  // { Scatter[] }
+  auto ScatterSpace = getScatterSpace(Schedule);
+
+  // { ScatterRead[] -> ScatterWrite[] }
+  IslPtr<isl_map> Relation;
+  if (Reverse)
+    Relation = give(InclPrevDef ? isl_map_lex_lt(ScatterSpace.take())
+                                : isl_map_lex_le(ScatterSpace.take()));
+  else
+    Relation = give(InclNextDef ? isl_map_lex_gt(ScatterSpace.take())
+                                : isl_map_lex_ge(ScatterSpace.take()));
+
+  // { ScatterWrite[] -> [ScatterRead[] -> ScatterWrite[]] }
+  auto RelationMap = give(isl_map_reverse(isl_map_range_map(Relation.take())));
+
+  // { Element[] -> ScatterWrite[] }
+  auto WriteAction =
+      give(isl_union_map_apply_domain(Schedule.copy(), Writes.take()));
+
+  // { ScatterWrite[] -> Element[] }
+  auto WriteActionRev = give(isl_union_map_reverse(WriteAction.copy()));
+
+  // { Element[] -> [ScatterUse[] -> ScatterWrite[]] }
+  auto DefSchedRelation = give(isl_union_map_apply_domain(
+      isl_union_map_from_map(RelationMap.take()), WriteActionRev.take()));
+
+  // For each element, at every point in time, map to the times of previous
+  // definitions. { [Element[] -> ScatterRead[]] -> ScatterWrite[] }
+  auto ReachableWrites = give(isl_union_map_uncurry(DefSchedRelation.take()));
+  if (Reverse)
+    ReachableWrites = give(isl_union_map_lexmin(ReachableWrites.copy()));
+  else
+    ReachableWrites = give(isl_union_map_lexmax(ReachableWrites.copy()));
+
+  // { [Element[] -> ScatterWrite[]] -> ScatterWrite[] }
+  auto SelfUse = give(isl_union_map_range_map(WriteAction.take()));
+
+  if (InclPrevDef && InclNextDef) {
+    // Add the Def itself to the solution.
+    ReachableWrites =
+        give(isl_union_map_union(ReachableWrites.take(), SelfUse.take()));
+    ReachableWrites = give(isl_union_map_coalesce(ReachableWrites.take()));
+  } else if (!InclPrevDef && !InclNextDef) {
+    // Remove Def itself from the solution.
+    ReachableWrites =
+        give(isl_union_map_subtract(ReachableWrites.take(), SelfUse.take()));
+  }
+
+  // { [Element[] -> ScatterRead[]] -> Domain[] }
+  auto ReachableWriteDomain = give(isl_union_map_apply_range(
+      ReachableWrites.take(), isl_union_map_reverse(Schedule.take())));
+
+  return ReachableWriteDomain;
+}
