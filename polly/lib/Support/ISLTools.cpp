@@ -367,3 +367,19 @@ IslPtr<isl_union_map> polly::computeArrayUnused(IslPtr<isl_union_map> Schedule,
       BeforeWritesBeforeAnyReads.take(),
       isl_union_map_domain_factor_domain(BetweenLastReadOverwrite.take())));
 }
+
+IslPtr<isl_union_set> polly::convertZoneToTimepoints(IslPtr<isl_union_set> Zone,
+                                                     bool InclStart,
+                                                     bool InclEnd) {
+  if (!InclStart && InclEnd)
+    return Zone;
+
+  auto ShiftedZone = shiftDim(Zone, -1, -1);
+  if (InclStart && !InclEnd)
+    return ShiftedZone;
+  else if (!InclStart && !InclEnd)
+    return give(isl_union_set_intersect(Zone.take(), ShiftedZone.take()));
+
+  assert(InclStart && InclEnd);
+  return give(isl_union_set_union(Zone.take(), ShiftedZone.take()));
+}

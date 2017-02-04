@@ -299,6 +299,53 @@ IslPtr<isl_union_map> computeArrayUnused(IslPtr<isl_union_map> Schedule,
                                          bool ReadEltInSameInst,
                                          bool InclLastRead, bool InclWrite);
 
+/// Convert a zone (range between timepoints) to timepoints.
+///
+/// A zone represents the time between (integer) timepoints, but not the
+/// timepoints themselves. This function can be used to determine whether a
+/// timepoint lies within a zone.
+///
+/// For instance, the range (1,3), representing the time between 1 and 3, is
+/// represented by the zone
+///
+/// { [i] : 1 < i <= 3 }
+///
+/// The set of timepoints that lie completely within this range is
+///
+/// { [i] : 1 < i < 3 }
+///
+/// A typical use-case is the range in which a value written by a store is
+/// available until it is overwritten by another value. If the write is at
+/// timepoint 1 and its value is overwritten by another value at timepoint 3,
+/// the value is available between those timepoints: timepoint 2 in this
+/// example.
+///
+///
+/// When InclStart is true, the range is interpreted left-inclusive, i.e. adds
+/// the timepoint 1 to the result:
+///
+/// { [i] : 1 <= i < 3 }
+///
+/// In the use-case mentioned above that means that the value written at
+/// timepoint 1 is already available in timepoint 1 (write takes place before
+/// any read of it even if executed at the same timepoint)
+///
+/// When InclEnd is true, the range is interpreted right-inclusive, i.e. adds
+/// the timepoint 3 to the result:
+///
+/// { [i] : 1 < i <= 3 }
+///
+/// In the use-case mentioned above that means that although the value is
+/// overwritten in timepoint 3, the old value is still available at timepoint 3
+/// (write takes place after any read even if executed at the same timepoint)
+///
+/// @param Zone      { Zone[] }
+/// @param InclStart Include timepoints adjacent to the beginning of a zone.
+/// @param InclEnd   Include timepoints adjacent to the ending of a zone.
+///
+/// @return { Scatter[] }
+IslPtr<isl_union_set> convertZoneToTimepoints(IslPtr<isl_union_set> Zone,
+                                              bool InclStart, bool InclEnd);
 } // namespace polly
 
 #endif /* POLLY_ISLTOOLS_H */

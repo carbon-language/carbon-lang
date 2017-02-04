@@ -807,4 +807,57 @@ TEST(DeLICM, computeArrayUnused) {
                                UMAP("{ RW[] -> Elt[] }"), false, true, true));
 }
 
+TEST(DeLICM, convertZoneToTimepoints) {
+  std::unique_ptr<isl_ctx, decltype(&isl_ctx_free)> Ctx(isl_ctx_alloc(),
+                                                        &isl_ctx_free);
+
+  // Corner case: empty set
+  EXPECT_EQ(USET("{}"), convertZoneToTimepoints(USET("{}"), false, false));
+  EXPECT_EQ(USET("{}"), convertZoneToTimepoints(USET("{}"), true, false));
+  EXPECT_EQ(USET("{}"), convertZoneToTimepoints(USET("{}"), false, true));
+  EXPECT_EQ(USET("{}"), convertZoneToTimepoints(USET("{}"), true, true));
+
+  // Basic usage
+  EXPECT_EQ(USET("{}"), convertZoneToTimepoints(USET("{ [1] }"), false, false));
+  EXPECT_EQ(USET("{ [0] }"),
+            convertZoneToTimepoints(USET("{ [1] }"), true, false));
+  EXPECT_EQ(USET("{ [1] }"),
+            convertZoneToTimepoints(USET("{ [1] }"), false, true));
+  EXPECT_EQ(USET("{ [0]; [1] }"),
+            convertZoneToTimepoints(USET("{ [1] }"), true, true));
+
+  // Non-adjacent ranges
+  EXPECT_EQ(USET("{}"),
+            convertZoneToTimepoints(USET("{ [1]; [11] }"), false, false));
+  EXPECT_EQ(USET("{ [0]; [10] }"),
+            convertZoneToTimepoints(USET("{ [1]; [11] }"), true, false));
+  EXPECT_EQ(USET("{ [1]; [11] }"),
+            convertZoneToTimepoints(USET("{ [1]; [11] }"), false, true));
+  EXPECT_EQ(USET("{ [0]; [1]; [10]; [11] }"),
+            convertZoneToTimepoints(USET("{ [1]; [11] }"), true, true));
+
+  // Adjacent unit ranges
+  EXPECT_EQ(
+      USET("{ [i] : 0 < i < 10 }"),
+      convertZoneToTimepoints(USET("{ [i] : 0 < i <= 10 }"), false, false));
+  EXPECT_EQ(
+      USET("{ [i] : 0 <= i < 10 }"),
+      convertZoneToTimepoints(USET("{ [i] : 0 < i <= 10 }"), true, false));
+  EXPECT_EQ(
+      USET("{ [i] : 0 < i <= 10 }"),
+      convertZoneToTimepoints(USET("{ [i] : 0 < i <= 10 }"), false, true));
+  EXPECT_EQ(USET("{ [i] : 0 <= i <= 10 }"),
+            convertZoneToTimepoints(USET("{ [i] : 0 < i <= 10 }"), true, true));
+
+  // More than one dimension
+  EXPECT_EQ(USET("{}"),
+            convertZoneToTimepoints(USET("{ [0,1] }"), false, false));
+  EXPECT_EQ(USET("{ [0,0] }"),
+            convertZoneToTimepoints(USET("{ [0,1] }"), true, false));
+  EXPECT_EQ(USET("{ [0,1] }"),
+            convertZoneToTimepoints(USET("{ [0,1] }"), false, true));
+  EXPECT_EQ(USET("{ [0,0]; [0,1] }"),
+            convertZoneToTimepoints(USET("{ [0,1] }"), true, true));
+}
+
 } // anonymous namespace
