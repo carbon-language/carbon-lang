@@ -4839,6 +4839,114 @@ define <4 x float>@test_int_x86_avx512_mask3_vfmadd_ss(<4 x float> %x0, <4 x flo
   ret <4 x float> %res6
 }
 
+define void @fmadd_ss_mask_memfold(float* %a, float* %b, i8 %c) {
+; CHECK-LABEL: fmadd_ss_mask_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; CHECK-NEXT:    andl $1, %edx
+; CHECK-NEXT:    kmovw %edx, %k1
+; CHECK-NEXT:    vfmadd213ss %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
+  %a.val = load float, float* %a
+  %av0 = insertelement <4 x float> undef, float %a.val, i32 0
+  %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
+  %av2 = insertelement <4 x float> %av1, float 0.000000e+00, i32 2
+  %av  = insertelement <4 x float> %av2, float 0.000000e+00, i32 3
+
+  %b.val = load float, float* %b
+  %bv0 = insertelement <4 x float> undef, float %b.val, i32 0
+  %bv1 = insertelement <4 x float> %bv0, float 0.000000e+00, i32 1
+  %bv2 = insertelement <4 x float> %bv1, float 0.000000e+00, i32 2
+  %bv  = insertelement <4 x float> %bv2, float 0.000000e+00, i32 3
+
+  %vr = call <4 x float> @llvm.x86.avx512.mask.vfmadd.ss(<4 x float> %av, <4 x float> %bv, <4 x float> %av, i8 %c, i32 4)
+
+  %sr = extractelement <4 x float> %vr, i32 0
+  store float %sr, float* %a
+  ret void
+}
+
+define void @fmadd_ss_maskz_memfold(float* %a, float* %b, i8 %c) {
+; CHECK-LABEL: fmadd_ss_maskz_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; CHECK-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
+; CHECK-NEXT:    andl $1, %edx
+; CHECK-NEXT:    kmovw %edx, %k1
+; CHECK-NEXT:    vfmadd213ss %xmm0, %xmm1, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vmovss %xmm0, (%rdi)
+; CHECK-NEXT:    retq
+  %a.val = load float, float* %a
+  %av0 = insertelement <4 x float> undef, float %a.val, i32 0
+  %av1 = insertelement <4 x float> %av0, float 0.000000e+00, i32 1
+  %av2 = insertelement <4 x float> %av1, float 0.000000e+00, i32 2
+  %av  = insertelement <4 x float> %av2, float 0.000000e+00, i32 3
+
+  %b.val = load float, float* %b
+  %bv0 = insertelement <4 x float> undef, float %b.val, i32 0
+  %bv1 = insertelement <4 x float> %bv0, float 0.000000e+00, i32 1
+  %bv2 = insertelement <4 x float> %bv1, float 0.000000e+00, i32 2
+  %bv  = insertelement <4 x float> %bv2, float 0.000000e+00, i32 3
+
+  %vr = call <4 x float> @llvm.x86.avx512.maskz.vfmadd.ss(<4 x float> %av, <4 x float> %bv, <4 x float> %av, i8 %c, i32 4)
+
+  %sr = extractelement <4 x float> %vr, i32 0
+  store float %sr, float* %a
+  ret void
+}
+
+define void @fmadd_sd_mask_memfold(double* %a, double* %b, i8 %c) {
+; CHECK-LABEL: fmadd_sd_mask_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
+; CHECK-NEXT:    andl $1, %edx
+; CHECK-NEXT:    kmovw %edx, %k1
+; CHECK-NEXT:    vfmadd213sd %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vmovlps %xmm0, (%rdi)
+; CHECK-NEXT:    retq
+  %a.val = load double, double* %a
+  %av0 = insertelement <2 x double> undef, double %a.val, i32 0
+  %av = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
+
+  %b.val = load double, double* %b
+  %bv0 = insertelement <2 x double> undef, double %b.val, i32 0
+  %bv = insertelement <2 x double> %bv0, double 0.000000e+00, i32 1
+
+  %vr = call <2 x double> @llvm.x86.avx512.mask.vfmadd.sd(<2 x double> %av, <2 x double> %bv, <2 x double> %av, i8 %c, i32 4)
+
+  %sr = extractelement <2 x double> %vr, i32 0
+  store double %sr, double* %a
+  ret void
+}
+
+define void @fmadd_sd_maskz_memfold(double* %a, double* %b, i8 %c) {
+; CHECK-LABEL: fmadd_sd_maskz_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; CHECK-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
+; CHECK-NEXT:    andl $1, %edx
+; CHECK-NEXT:    kmovw %edx, %k1
+; CHECK-NEXT:    vfmadd213sd %xmm0, %xmm1, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vmovlps %xmm0, (%rdi)
+; CHECK-NEXT:    retq
+  %a.val = load double, double* %a
+  %av0 = insertelement <2 x double> undef, double %a.val, i32 0
+  %av = insertelement <2 x double> %av0, double 0.000000e+00, i32 1
+
+  %b.val = load double, double* %b
+  %bv0 = insertelement <2 x double> undef, double %b.val, i32 0
+  %bv = insertelement <2 x double> %bv0, double 0.000000e+00, i32 1
+
+  %vr = call <2 x double> @llvm.x86.avx512.maskz.vfmadd.sd(<2 x double> %av, <2 x double> %bv, <2 x double> %av, i8 %c, i32 4)
+
+  %sr = extractelement <2 x double> %vr, i32 0
+  store double %sr, double* %a
+  ret void
+}
+
 declare <2 x double> @llvm.x86.avx512.mask3.vfmsub.sd(<2 x double>, <2 x double>, <2 x double>, i8, i32)
 
 define <2 x double>@test_int_x86_avx512_mask3_vfmsub_sd(<2 x double> %x0, <2 x double> %x1, <2 x double> %x2, i8 %x3,i32 %x4 ){
