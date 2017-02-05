@@ -7740,6 +7740,18 @@ static bool isNonFoldablePartialRegisterLoad(const MachineInstr &LoadMI,
     case X86::VFMSUB132SSZr_Int: case X86::VFNMSUB132SSZr_Int:
     case X86::VFMSUB213SSZr_Int: case X86::VFNMSUB213SSZr_Int:
     case X86::VFMSUB231SSZr_Int: case X86::VFNMSUB231SSZr_Int:
+    case X86::VFMADD132SSZr_Intk: case X86::VFNMADD132SSZr_Intk:
+    case X86::VFMADD213SSZr_Intk: case X86::VFNMADD213SSZr_Intk:
+    case X86::VFMADD231SSZr_Intk: case X86::VFNMADD231SSZr_Intk:
+    case X86::VFMSUB132SSZr_Intk: case X86::VFNMSUB132SSZr_Intk:
+    case X86::VFMSUB213SSZr_Intk: case X86::VFNMSUB213SSZr_Intk:
+    case X86::VFMSUB231SSZr_Intk: case X86::VFNMSUB231SSZr_Intk:
+    case X86::VFMADD132SSZr_Intkz: case X86::VFNMADD132SSZr_Intkz:
+    case X86::VFMADD213SSZr_Intkz: case X86::VFNMADD213SSZr_Intkz:
+    case X86::VFMADD231SSZr_Intkz: case X86::VFNMADD231SSZr_Intkz:
+    case X86::VFMSUB132SSZr_Intkz: case X86::VFNMSUB132SSZr_Intkz:
+    case X86::VFMSUB213SSZr_Intkz: case X86::VFNMSUB213SSZr_Intkz:
+    case X86::VFMSUB231SSZr_Intkz: case X86::VFNMSUB231SSZr_Intkz:
       return false;
     default:
       return true;
@@ -7773,6 +7785,18 @@ static bool isNonFoldablePartialRegisterLoad(const MachineInstr &LoadMI,
     case X86::VFMSUB132SDZr_Int: case X86::VFNMSUB132SDZr_Int:
     case X86::VFMSUB213SDZr_Int: case X86::VFNMSUB213SDZr_Int:
     case X86::VFMSUB231SDZr_Int: case X86::VFNMSUB231SDZr_Int:
+    case X86::VFMADD132SDZr_Intk: case X86::VFNMADD132SDZr_Intk:
+    case X86::VFMADD213SDZr_Intk: case X86::VFNMADD213SDZr_Intk:
+    case X86::VFMADD231SDZr_Intk: case X86::VFNMADD231SDZr_Intk:
+    case X86::VFMSUB132SDZr_Intk: case X86::VFNMSUB132SDZr_Intk:
+    case X86::VFMSUB213SDZr_Intk: case X86::VFNMSUB213SDZr_Intk:
+    case X86::VFMSUB231SDZr_Intk: case X86::VFNMSUB231SDZr_Intk:
+    case X86::VFMADD132SDZr_Intkz: case X86::VFNMADD132SDZr_Intkz:
+    case X86::VFMADD213SDZr_Intkz: case X86::VFNMADD213SDZr_Intkz:
+    case X86::VFMADD231SDZr_Intkz: case X86::VFNMADD231SDZr_Intkz:
+    case X86::VFMSUB132SDZr_Intkz: case X86::VFNMSUB132SDZr_Intkz:
+    case X86::VFMSUB213SDZr_Intkz: case X86::VFNMSUB213SDZr_Intkz:
+    case X86::VFMSUB231SDZr_Intkz: case X86::VFNMSUB231SDZr_Intkz:
       return false;
     default:
       return true;

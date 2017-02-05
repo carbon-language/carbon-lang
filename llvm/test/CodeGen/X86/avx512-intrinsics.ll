@@ -4843,10 +4843,9 @@ define void @fmadd_ss_mask_memfold(float* %a, float* %b, i8 %c) {
 ; CHECK-LABEL: fmadd_ss_mask_memfold:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; CHECK-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; CHECK-NEXT:    andl $1, %edx
 ; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vfmadd213ss %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vfmadd132ss (%rsi), %xmm0, %xmm0 {%k1}
 ; CHECK-NEXT:    vmovss %xmm0, (%rdi)
 ; CHECK-NEXT:    retq
   %a.val = load float, float* %a
@@ -4872,10 +4871,9 @@ define void @fmadd_ss_maskz_memfold(float* %a, float* %b, i8 %c) {
 ; CHECK-LABEL: fmadd_ss_maskz_memfold:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; CHECK-NEXT:    vmovss {{.*#+}} xmm1 = mem[0],zero,zero,zero
 ; CHECK-NEXT:    andl $1, %edx
 ; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vfmadd213ss %xmm0, %xmm1, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vfmadd132ss (%rsi), %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    vmovss %xmm0, (%rdi)
 ; CHECK-NEXT:    retq
   %a.val = load float, float* %a
@@ -4901,10 +4899,9 @@ define void @fmadd_sd_mask_memfold(double* %a, double* %b, i8 %c) {
 ; CHECK-LABEL: fmadd_sd_mask_memfold:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; CHECK-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
 ; CHECK-NEXT:    andl $1, %edx
 ; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vfmadd213sd %xmm0, %xmm1, %xmm0 {%k1}
+; CHECK-NEXT:    vfmadd132sd (%rsi), %xmm0, %xmm0 {%k1}
 ; CHECK-NEXT:    vmovlps %xmm0, (%rdi)
 ; CHECK-NEXT:    retq
   %a.val = load double, double* %a
@@ -4926,10 +4923,9 @@ define void @fmadd_sd_maskz_memfold(double* %a, double* %b, i8 %c) {
 ; CHECK-LABEL: fmadd_sd_maskz_memfold:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; CHECK-NEXT:    vmovsd {{.*#+}} xmm1 = mem[0],zero
 ; CHECK-NEXT:    andl $1, %edx
 ; CHECK-NEXT:    kmovw %edx, %k1
-; CHECK-NEXT:    vfmadd213sd %xmm0, %xmm1, %xmm0 {%k1} {z}
+; CHECK-NEXT:    vfmadd132sd (%rsi), %xmm0, %xmm0 {%k1} {z}
 ; CHECK-NEXT:    vmovlps %xmm0, (%rdi)
 ; CHECK-NEXT:    retq
   %a.val = load double, double* %a
