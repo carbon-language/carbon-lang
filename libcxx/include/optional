@@ -164,7 +164,7 @@ class _LIBCPP_EXCEPTION_ABI bad_optional_access
 {
 public:
     // Get the key function ~bad_optional_access() into the dylib
-    virtual ~bad_optional_access();
+    virtual ~bad_optional_access() _NOEXCEPT;
     virtual const char* what() const _NOEXCEPT;
 };
 
