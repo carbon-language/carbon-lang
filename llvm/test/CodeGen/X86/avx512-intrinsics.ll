@@ -2301,6 +2301,39 @@ define <4 x float> @test_add_ss_rn(<4 x float> %a0, <4 x float> %a1) {
   ret <4 x float> %res
 }
 
+define <4 x float> @test_mask_add_ss_current_memfold(<4 x float> %a0, float* %a1, <4 x float> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_ss_current_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    andl $1, %esi
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vaddss (%rdi), %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovaps %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %a1.val = load float, float* %a1
+  %a1v0 = insertelement <4 x float> undef, float %a1.val, i32 0
+  %a1v1 = insertelement <4 x float> %a1v0, float 0.000000e+00, i32 1
+  %a1v2 = insertelement <4 x float> %a1v1, float 0.000000e+00, i32 2
+  %a1v  = insertelement <4 x float> %a1v2, float 0.000000e+00, i32 3
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1v, <4 x float> %a2, i8 %mask, i32 4)
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_maskz_add_ss_current_memfold(<4 x float> %a0, float* %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_add_ss_current_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    andl $1, %esi
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vaddss (%rdi), %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    retq
+  %a1.val = load float, float* %a1
+  %a1v0 = insertelement <4 x float> undef, float %a1.val, i32 0
+  %a1v1 = insertelement <4 x float> %a1v0, float 0.000000e+00, i32 1
+  %a1v2 = insertelement <4 x float> %a1v1, float 0.000000e+00, i32 2
+  %a1v  = insertelement <4 x float> %a1v2, float 0.000000e+00, i32 3
+  %res = call <4 x float> @llvm.x86.avx512.mask.add.ss.round(<4 x float>%a0, <4 x float> %a1v, <4 x float> zeroinitializer, i8 %mask, i32 4)
+  ret <4 x float> %res
+}
+
 declare <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>, <2 x double>, <2 x double>, i8, i32) nounwind readnone
 
 define <2 x double> @test_mask_add_sd_rn(<2 x double> %a0, <2 x double> %a1, <2 x double> %a2, i8 %mask) {
@@ -2380,6 +2413,35 @@ define <2 x double> @test_add_sd_rn(<2 x double> %a0, <2 x double> %a1) {
 ; CHECK-NEXT:    vaddsd {rn-sae}, %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 -1, i32 0)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_mask_add_sd_current_memfold(<2 x double> %a0, double* %a1, <2 x double> %a2, i8 %mask) {
+; CHECK-LABEL: test_mask_add_sd_current_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    andl $1, %esi
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vaddsd (%rdi), %xmm0, %xmm1 {%k1}
+; CHECK-NEXT:    vmovapd %xmm1, %xmm0
+; CHECK-NEXT:    retq
+  %a1.val = load double, double* %a1
+  %a1v0 = insertelement <2 x double> undef, double %a1.val, i32 0
+  %a1v = insertelement <2 x double> %a1v0, double 0.000000e+00, i32 1
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1v, <2 x double> %a2, i8 %mask, i32 4)
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_maskz_add_sd_current_memfold(<2 x double> %a0, double* %a1, i8 %mask) {
+; CHECK-LABEL: test_maskz_add_sd_current_memfold:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    andl $1, %esi
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vaddsd (%rdi), %xmm0, %xmm0 {%k1} {z}
+; CHECK-NEXT:    retq
+  %a1.val = load double, double* %a1
+  %a1v0 = insertelement <2 x double> undef, double %a1.val, i32 0
+  %a1v = insertelement <2 x double> %a1v0, double 0.000000e+00, i32 1
+  %res = call <2 x double> @llvm.x86.avx512.mask.add.sd.round(<2 x double>%a0, <2 x double> %a1v, <2 x double> zeroinitializer, i8 %mask, i32 4)
   ret <2 x double> %res
 }
 
