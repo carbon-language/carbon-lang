@@ -7129,14 +7129,14 @@ let Uses = [XMM0], Constraints = "$src1 = $dst" in {
     def rr0 : SS48I<opc, MRMSrcReg, (outs VR128:$dst),
                     (ins VR128:$src1, VR128:$src2),
                     !strconcat(OpcodeStr,
-                     "\t{$src2, $dst|$dst, $src2}"),
+                     "\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}"),
                     [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2, XMM0))],
                     itins.rr>, Sched<[itins.Sched]>;
 
     def rm0 : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
                     (ins VR128:$src1, x86memop:$src2),
                     !strconcat(OpcodeStr,
-                     "\t{$src2, $dst|$dst, $src2}"),
+                     "\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}"),
                     [(set VR128:$dst,
                       (IntId VR128:$src1,
                        (bitconvert (mem_frag addr:$src2)), XMM0))],
@@ -7157,18 +7157,18 @@ defm PBLENDVB : SS41I_ternary_int<0x10, "pblendvb", memopv2i64, i128mem,
                                   DEFAULT_ITINS_VARBLENDSCHED>;
 
 // Aliases with the implicit xmm0 argument
-def : InstAlias<"blendvpd\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
-                (BLENDVPDrr0 VR128:$dst, VR128:$src2)>;
-def : InstAlias<"blendvpd\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
-                (BLENDVPDrm0 VR128:$dst, f128mem:$src2)>;
-def : InstAlias<"blendvps\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
-                (BLENDVPSrr0 VR128:$dst, VR128:$src2)>;
-def : InstAlias<"blendvps\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
-                (BLENDVPSrm0 VR128:$dst, f128mem:$src2)>;
-def : InstAlias<"pblendvb\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
-                (PBLENDVBrr0 VR128:$dst, VR128:$src2)>;
-def : InstAlias<"pblendvb\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
-                (PBLENDVBrm0 VR128:$dst, i128mem:$src2)>;
+def : InstAlias<"blendvpd\t{$src2, $dst|$dst, $src2}",
+                (BLENDVPDrr0 VR128:$dst, VR128:$src2), 0>;
+def : InstAlias<"blendvpd\t{$src2, $dst|$dst, $src2}",
+                (BLENDVPDrm0 VR128:$dst, f128mem:$src2), 0>;
+def : InstAlias<"blendvps\t{$src2, $dst|$dst, $src2}",
+                (BLENDVPSrr0 VR128:$dst, VR128:$src2), 0>;
+def : InstAlias<"blendvps\t{$src2, $dst|$dst, $src2}",
+                (BLENDVPSrm0 VR128:$dst, f128mem:$src2), 0>;
+def : InstAlias<"pblendvb\t{$src2, $dst|$dst, $src2}",
+                (PBLENDVBrr0 VR128:$dst, VR128:$src2), 0>;
+def : InstAlias<"pblendvb\t{$src2, $dst|$dst, $src2}",
+                (PBLENDVBrm0 VR128:$dst, i128mem:$src2), 0>;
 
 let Predicates = [UseSSE41] in {
   def : Pat<(v16i8 (vselect (v16i8 XMM0), (v16i8 VR128:$src1),
