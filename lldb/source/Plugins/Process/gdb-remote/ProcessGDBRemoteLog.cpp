@@ -97,8 +97,6 @@ void ProcessGDBRemoteLog::DisableLog(const char **categories,
           flag_bits &= ~GDBR_LOG_STEP;
         else if (::strcasecmp(arg, "thread") == 0)
           flag_bits &= ~GDBR_LOG_THREAD;
-        else if (::strcasecmp(arg, "verbose") == 0)
-          flag_bits &= ~GDBR_LOG_VERBOSE;
         else if (::strncasecmp(arg, "watch", 5) == 0)
           flag_bits &= ~GDBR_LOG_WATCHPOINTS;
         else {
@@ -165,8 +163,6 @@ Log *ProcessGDBRemoteLog::EnableLog(StreamSP &log_stream_sp,
         flag_bits |= GDBR_LOG_STEP;
       else if (::strcasecmp(arg, "thread") == 0)
         flag_bits |= GDBR_LOG_THREAD;
-      else if (::strcasecmp(arg, "verbose") == 0)
-        flag_bits |= GDBR_LOG_VERBOSE;
       else if (::strncasecmp(arg, "watch", 5) == 0)
         flag_bits |= GDBR_LOG_WATCHPOINTS;
       else {
