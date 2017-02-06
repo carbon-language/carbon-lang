@@ -643,7 +643,9 @@ bool SampleProfileLoader::inlineHotFunctions(Function &F) {
           // result, we do not have profile info for the branch probability.
           // We set the probability to 80% taken to indicate that the static
           // call is likely taken.
-          DI = promoteIndirectCall(I, CalledFunction, 80, 100);
+          DI = dyn_cast<Instruction>(
+              promoteIndirectCall(I, CalledFunction, 80, 100)
+                  ->stripPointerCasts());
           PromotedInsns.insert(I);
         } else {
           DEBUG(dbgs() << "\nFailed to promote indirect call to "
