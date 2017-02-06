@@ -634,7 +634,8 @@ bool SampleProfileLoader::inlineHotFunctions(Function &F) {
       InlineFunctionInfo IFI(nullptr, ACT ? &GetAssumptionCache : nullptr);
       Function *CalledFunction = CallSite(I).getCalledFunction();
       Instruction *DI = I;
-      if (!CalledFunction && !PromotedInsns.count(I)) {
+      if (!CalledFunction && !PromotedInsns.count(I) &&
+          CallSite(I).isIndirectCall()) {
         auto CalleeFunctionName = findCalleeFunctionSamples(*I)->getName();
         const char *Reason = "Callee function not available";
         CalledFunction = F.getParent()->getFunction(CalleeFunctionName);

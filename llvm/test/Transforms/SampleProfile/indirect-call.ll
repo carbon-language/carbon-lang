@@ -47,6 +47,21 @@ define i32 @foo_noinline(i32 %x) !dbg !3 {
   ret i32 %x
 }
 
+define void @foo_direct() !dbg !3 {
+  ret void
+}
+
+; CHECK-LABEL: @test_direct
+; We should not promote a direct call.
+define void @test_direct() !dbg !3 {
+; CHECK-NOT: icmp
+; CHECK: call
+  call void @foo_alias(), !dbg !5
+  ret void
+}
+
+@foo_alias = alias void (), void ()* @foo_direct
+
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!2}
 
