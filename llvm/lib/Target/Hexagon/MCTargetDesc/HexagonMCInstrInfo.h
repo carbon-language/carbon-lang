@@ -256,7 +256,7 @@ bool mustExtend(MCExpr const &Expr);
 bool mustNotExtend(MCExpr const &Expr);
 
 // Pad the bundle with nops to satisfy endloop requirements
-void padEndloop(MCInst &MCI, MCContext &Context);
+void padEndloop(MCInst &MCI);
 bool prefersSlot3(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Replace the instructions inside MCB, represented by Candidate

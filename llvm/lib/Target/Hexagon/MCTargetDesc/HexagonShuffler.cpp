@@ -80,19 +80,15 @@ public:
 unsigned HexagonResource::setWeight(unsigned s) {
   const unsigned SlotWeight = 8;
   const unsigned MaskWeight = SlotWeight - 1;
-  unsigned Units = getUnits();
-  unsigned Key = ((1u << s) & Units) != 0;
+  bool Key = (1 << s) & getUnits();
 
   // Calculate relative weight of the insn for the given slot, weighing it the
   // heavier the more restrictive the insn is and the lowest the slots that the
   // insn may be executed in.
-  if (Key == 0 || Units == 0 || (SlotWeight*s > 32))
-    return 0;
-
   Weight =
-      (1u << (SlotWeight * s)) * ((MaskWeight - countPopulation(getUnits()))
+      (Key << (SlotWeight * s)) * ((MaskWeight - countPopulation(getUnits()))
                                    << countTrailingZeros(getUnits()));
-  return Weight;
+  return (Weight);
 }
 
 void HexagonCVIResource::SetupTUL(TypeUnitsAndLanes *TUL, StringRef CPU) {
