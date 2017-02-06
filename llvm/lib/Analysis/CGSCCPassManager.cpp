@@ -117,6 +117,7 @@ bool CGSCCAnalysisManagerModuleProxy::Result::invalidate(
       PA.allAnalysesInSetPreserved<AllAnalysesOn<LazyCallGraph::SCC>>();
 
   // Ok, we have a graph, so we can propagate the invalidation down into it.
+  G->buildRefSCCs();
   for (auto &RC : G->postorder_ref_sccs())
     for (auto &C : RC) {
       Optional<PreservedAnalyses> InnerPA;

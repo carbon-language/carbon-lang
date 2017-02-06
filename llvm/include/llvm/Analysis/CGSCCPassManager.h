@@ -334,6 +334,7 @@ public:
                             InvalidSCCSet, nullptr,   nullptr};
 
     PreservedAnalyses PA = PreservedAnalyses::all();
+    CG.buildRefSCCs();
     for (auto RCI = CG.postorder_ref_scc_begin(),
               RCE = CG.postorder_ref_scc_end();
          RCI != RCE;) {
