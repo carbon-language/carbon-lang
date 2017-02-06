@@ -863,7 +863,7 @@ Error Host::LaunchProcessPosixSpawn(const char *exe_path,
                error, result_pid, exe_path, &attr, argv, envp);
       if (log) {
         for (int ii = 0; argv[ii]; ++ii)
-          LLDB_LOG("argv[{0}] = '{1}'", ii, argv[ii]);
+          LLDB_LOG(log, "argv[{0}] = '{1}'", ii, argv[ii]);
       }
     }
   }
