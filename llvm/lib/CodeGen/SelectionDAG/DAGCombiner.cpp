@@ -4463,6 +4463,9 @@ const Optional<ByteProvider> calculateByteProvider(SDValue Op, unsigned Index,
                ? ByteProvider::getConstantZero()
                : calculateByteProvider(NarrowOp, Index, Depth + 1);
   }
+  case ISD::BSWAP:
+    return calculateByteProvider(Op->getOperand(0), ByteWidth - Index - 1,
+                                 Depth + 1);
   case ISD::LOAD: {
     auto L = cast<LoadSDNode>(Op.getNode());
 
