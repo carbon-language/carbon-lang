@@ -904,6 +904,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFDZri,       X86::VPSHUFDZmi,         0 },
     { X86::VPSHUFHWZri,      X86::VPSHUFHWZmi,        0 },
     { X86::VPSHUFLWZri,      X86::VPSHUFLWZmi,        0 },
+    { X86::VPSLLDQZ512rr,    X86::VPSLLDQZ512rm,      0 },
+    { X86::VPSRLDQZ512rr,    X86::VPSRLDQZ512rm,      0 },
 
     // AVX-512 foldable instructions (256-bit versions)
     { X86::VBROADCASTSSZ256r,    X86::VBROADCASTSSZ256m,    TB_NO_REVERSE },
@@ -941,6 +943,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFDZ256ri,        X86::VPSHUFDZ256mi,        0 },
     { X86::VPSHUFHWZ256ri,       X86::VPSHUFHWZ256mi,       0 },
     { X86::VPSHUFLWZ256ri,       X86::VPSHUFLWZ256mi,       0 },
+    { X86::VPSLLDQZ256rr,        X86::VPSLLDQZ256rm,        0 },
+    { X86::VPSRLDQZ256rr,        X86::VPSRLDQZ256rm,        0 },
 
     // AVX-512 foldable instructions (128-bit versions)
     { X86::VBROADCASTSSZ128r,    X86::VBROADCASTSSZ128m,    TB_NO_REVERSE },
@@ -975,6 +979,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPSHUFDZ128ri,        X86::VPSHUFDZ128mi,        0 },
     { X86::VPSHUFHWZ128ri,       X86::VPSHUFHWZ128mi,       0 },
     { X86::VPSHUFLWZ128ri,       X86::VPSHUFLWZ128mi,       0 },
+    { X86::VPSLLDQZ128rr,        X86::VPSLLDQZ128rm,        0 },
+    { X86::VPSRLDQZ128rr,        X86::VPSRLDQZ128rm,        0 },
 
     // F16C foldable instructions
     { X86::VCVTPH2PSrr,        X86::VCVTPH2PSrm,            0 },
