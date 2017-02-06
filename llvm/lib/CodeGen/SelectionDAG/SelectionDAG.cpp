@@ -2506,6 +2506,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     LLVM_FALLTHROUGH;
   }
   case ISD::ADD:
+  case ISD::ADDC:
   case ISD::ADDE: {
     // Output known-0 bits are known if clear or set in both the low clear bits
     // common to both LHS & RHS.  For example, 8+(X<<3) is known to have the
@@ -2526,7 +2527,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     KnownZeroLow = std::min(KnownZeroLow,
                             KnownZero2.countTrailingOnes());
 
-    if (Opcode == ISD::ADD) {
+    if (Opcode == ISD::ADD || Opcode == ISD::ADDC) {
       KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroLow);
       if (KnownZeroHigh > 1)
         KnownZero |= APInt::getHighBitsSet(BitWidth, KnownZeroHigh - 1);
@@ -2945,6 +2946,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
     }
     break;
   case ISD::ADD:
+  case ISD::ADDC:
     // Add can have at most one carry bit.  Thus we know that the output
     // is, at worst, one more bit than the inputs.
     Tmp = ComputeNumSignBits(Op.getOperand(0), Depth+1);
