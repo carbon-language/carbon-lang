@@ -795,14 +795,14 @@ Error Host::LaunchProcessPosixSpawn(const char *exe_path,
 #else
     if (::getcwd(current_dir, sizeof(current_dir)) == NULL) {
       error.SetError(errno, eErrorTypePOSIX);
-      error.LogIfError(log, "unable to save the current directory");
+      LLDB_LOG(log, "error: {0}, unable to save the current directory", error);
       return error;
     }
 
     if (::chdir(working_dir.GetCString()) == -1) {
       error.SetError(errno, eErrorTypePOSIX);
-      error.LogIfError(log, "unable to change working directory to %s",
-                       working_dir.GetCString());
+      LLDB_LOG(log, "error: {0}, unable to change working directory to {1}",
+               error, working_dir);
       return error;
     }
 #endif
@@ -876,8 +876,9 @@ Error Host::LaunchProcessPosixSpawn(const char *exe_path,
 #else
     if (::chdir(current_dir) == -1 && error.Success()) {
       error.SetError(errno, eErrorTypePOSIX);
-      error.LogIfError(log, "unable to change current directory back to %s",
-                       current_dir);
+      LLDB_LOG(log,
+               "error: {0}, unable to change current directory back to {1}",
+               error, current_dir);
     }
 #endif
   }
