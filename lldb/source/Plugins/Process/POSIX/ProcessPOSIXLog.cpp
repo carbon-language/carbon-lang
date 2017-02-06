@@ -84,8 +84,6 @@ static uint32_t GetFlagBits(const char *arg) {
     return POSIX_LOG_STEP;
   else if (::strcasecmp(arg, "thread") == 0)
     return POSIX_LOG_THREAD;
-  else if (::strcasecmp(arg, "verbose") == 0)
-    return POSIX_LOG_VERBOSE;
   else if (::strncasecmp(arg, "watch", 5) == 0)
     return POSIX_LOG_WATCHPOINTS;
   return 0;
