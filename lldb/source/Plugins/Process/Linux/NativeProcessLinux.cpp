@@ -32,6 +32,8 @@
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Host/common/NativeBreakpoint.h"
 #include "lldb/Host/common/NativeRegisterContext.h"
+#include "lldb/Host/linux/Ptrace.h"
+#include "lldb/Host/linux/Uio.h"
 #include "lldb/Host/posix/ProcessLauncherPosixFork.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
@@ -47,19 +49,14 @@
 #include "ProcFileReader.h"
 #include "Procfs.h"
 
-// System includes - They have to be included after framework includes because
-// they define some
-// macros which collide with variable names in other modules
+#include "llvm/Support/Threading.h"
+
 #include <linux/unistd.h>
 #include <sys/socket.h>
-
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/user.h>
 #include <sys/wait.h>
-
-#include "lldb/Host/linux/Ptrace.h"
-#include "lldb/Host/linux/Uio.h"
 
 // Support hardware breakpoints in case it has not been defined
 #ifndef TRAP_HWBKPT
