@@ -1811,7 +1811,9 @@ void LazyCallGraph::buildRefSCCs() {
         (void)Inserted;
         assert(Inserted && "Cannot already have this RefSCC in the index map!");
         PostOrderRefSCCs.push_back(NewRC);
+#ifndef NDEBUG
         NewRC->verify();
+#endif
       });
 }
 
