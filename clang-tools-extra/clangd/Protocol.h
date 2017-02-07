@@ -24,6 +24,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/YAMLParser.h"
 #include <string>
+#include <vector>
 
 namespace clang {
 namespace clangd {
