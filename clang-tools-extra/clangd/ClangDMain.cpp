@@ -68,18 +68,17 @@ int main(int argc, char *argv[]) {
 
     // Now read the JSON. Insert a trailing null byte as required by the YAML
     // parser.
-    std::vector<char> JSON(Len + 1);
+    std::vector<char> JSON(Len + 1, '\0');
     std::cin.read(JSON.data(), Len);
 
     if (Len > 0) {
+      llvm::StringRef JSONRef(JSON.data(), Len);
       // Log the message.
-      Logs << "<-- ";
-      Logs.write(JSON.data(), JSON.size());
-      Logs << '\n';
+      Logs << "<-- " << JSONRef << '\n';
       Logs.flush();
 
       // Finally, execute the action for this JSON message.
-      if (!Dispatcher.call(llvm::StringRef(JSON.data(), JSON.size() - 1)))
+      if (!Dispatcher.call(JSONRef))
         Logs << "JSON dispatch failed!\n";
     }
   }
