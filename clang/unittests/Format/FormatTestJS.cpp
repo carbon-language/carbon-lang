@@ -240,6 +240,18 @@ TEST_F(FormatTestJS, ContainerLiterals) {
                "};");
   verifyFormat("var x = {y: (a) => a};");
 
+  // Methods in object literals.
+  verifyFormat("var x = {\n"
+               "  y(a: string): number {\n"
+               "    return a;\n"
+               "  }\n"
+               "};");
+  verifyFormat("var x = {\n"
+               "  y(a: string) {\n"
+               "    return a;\n"
+               "  }\n"
+               "};");
+
   // Computed keys.
   verifyFormat("var x = {[a]: 1, b: 2, [c]: 3};");
   verifyFormat("var x = {\n"

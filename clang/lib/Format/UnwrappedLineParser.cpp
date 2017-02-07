@@ -335,8 +335,11 @@ void UnwrappedLineParser::calculateBraceTypes(bool ExpectClassBody) {
     case tok::l_brace:
       if (Style.Language == FormatStyle::LK_JavaScript && PrevTok &&
           PrevTok->is(tok::colon))
-        // In TypeScript's TypeMemberLists, there can be semicolons between the
-        // individual members.
+        // A colon indicates this code is in a type, or a braced list following
+        // a label in an object literal ({a: {b: 1}}).
+        // The code below could be confused by semicolons between the individual
+        // members in a type member list, which would normally trigger BK_Block.
+        // In both cases, this must be parsed as an inline braced init.
         Tok->BlockKind = BK_BracedInit;
       else
         Tok->BlockKind = BK_Unknown;
@@ -1298,6 +1301,12 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
           continue;
         }
       }
+      if (FormatTok->is(tok::l_brace)) {
+        // Could be a method inside of a braced list `{a() { return 1; }}`.
+        if (tryToParseBracedList())
+          continue;
+        parseChildBlock();
+      }
     }
     switch (FormatTok->Tok.getKind()) {
     case tok::caret:
@@ -1309,12 +1318,6 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
     case tok::l_square:
       tryToParseLambda();
       break;
-    case tok::l_brace:
-      // Assume there are no blocks inside a braced init list apart
-      // from the ones we explicitly parse out (like lambdas).
-      FormatTok->BlockKind = BK_BracedInit;
-      parseBracedList();
-      break;
     case tok::l_paren:
       parseParens();
       // JavaScript can just have free standing methods and getters/setters in
@@ -1324,6 +1327,12 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
           parseChildBlock();
         break;
       }
+      break;
+    case tok::l_brace:
+      // Assume there are no blocks inside a braced init list apart
+      // from the ones we explicitly parse out (like lambdas).
+      FormatTok->BlockKind = BK_BracedInit;
+      parseBracedList();
       break;
     case tok::r_brace:
       nextToken();
