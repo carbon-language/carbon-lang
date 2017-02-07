@@ -62,6 +62,7 @@ class T_ALU32_3op<string mnemonic, bits<3> MajOp, bits<3> MinOp, bit OpsRev,
   let isCommutable = IsComm;
   let BaseOpcode = mnemonic#_rr;
   let CextOpcode = mnemonic;
+  let Type = TypeALU32_3op;
 
   bits<5> Rs;
   bits<5> Rt;
@@ -88,6 +89,7 @@ class T_ALU32_3op_pred<string mnemonic, bits<3> MajOp, bits<3> MinOp,
   let isPredicatedNew = PredNew;
   let BaseOpcode = mnemonic#_rr;
   let CextOpcode = mnemonic;
+  let Type = TypeALU32_3op;
 
   bits<2> Pu;
   bits<5> Rs;
@@ -183,6 +185,7 @@ class T_ALU32_3op_cmp<string mnemonic, bits<2> MinOp, bit IsNeg, bit IsComm>
              [], "", ALU32_3op_tc_1_SLOT0123>, ImmRegRel {
   let CextOpcode = mnemonic;
   let isCommutable = IsComm;
+  let Type = TypeALU32_3op;
   bits<5> Rs;
   bits<5> Rt;
   bits<2> Pd;
@@ -216,6 +219,7 @@ def C2_mux: ALU32_rr<(outs IntRegs:$Rd),
   let InputType = "reg";
   let hasSideEffects = 0;
   let IClass = 0b1111;
+  let Type = TypeALU32_3op;
 
   let Inst{27-24} = 0b0100;
   let Inst{20-16} = Rs;
@@ -280,6 +284,7 @@ class T_Addri <Operand immOp>
   : ALU32_ri <(outs IntRegs:$Rd),
               (ins IntRegs:$Rs, immOp:$s16),
   "$Rd = add($Rs, #$s16)", [], "", ALU32_ADDI_tc_1_SLOT0123> {
+    let Type = TypeALU32_ADDI;
     bits<5> Rd;
     bits<5> Rs;
     bits<16> s16;
