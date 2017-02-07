@@ -56,6 +56,11 @@ int main(int argc, char *argv[]) {
     if (LineRef.trim().empty())
       continue;
 
+    // We allow YAML-style comments. Technically this isn't part of the
+    // LSP specification, but makes writing tests easier.
+    if (LineRef.startswith("#"))
+      continue;
+
     unsigned long long Len = 0;
     // FIXME: Content-Type is a specified header, but does nothing.
     // Content-Length is a mandatory header. It specifies the length of the

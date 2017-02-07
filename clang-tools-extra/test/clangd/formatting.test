@@ -1,5 +1,5 @@
-# REQUIRES: shell
-# RUN: sed -e '/^#/d' -e 's/\r*$/\r/' %s | clangd | FileCheck %s
+# RUN: clangd < %s | FileCheck %s
+# It is absolutely vital that this file has CRLF line endings.
 #
 Content-Length: 125
 
