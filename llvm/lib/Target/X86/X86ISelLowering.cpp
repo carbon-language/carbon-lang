@@ -29477,8 +29477,8 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
 
   // If this is a *dynamic* select (non-constant condition) and we can match
   // this node with one of the variable blend instructions, restructure the
-  // condition so that the blends can use the high bit of each element and use
-  // SimplifyDemandedBits to simplify the condition operand.
+  // condition so that blends can use the high (sign) bit of each element and
+  // use SimplifyDemandedBits to simplify the condition operand.
   if (N->getOpcode() == ISD::VSELECT && DCI.isBeforeLegalizeOps() &&
       !DCI.isBeforeLegalize() &&
       !ISD::isBuildVectorOfConstantSDNodes(Cond.getNode())) {
@@ -29513,8 +29513,7 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
       return SDValue();
 
     assert(BitWidth >= 8 && BitWidth <= 64 && "Invalid mask size");
-    APInt DemandedMask = APInt::getHighBitsSet(BitWidth, 1);
-
+    APInt DemandedMask(APInt::getSignBit(BitWidth));
     APInt KnownZero, KnownOne;
     TargetLowering::TargetLoweringOpt TLO(DAG, DCI.isBeforeLegalize(),
                                           DCI.isBeforeLegalizeOps());
