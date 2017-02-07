@@ -1381,6 +1381,12 @@ void UnwrappedLineParser::parseParens() {
       if (FormatTok->Tok.is(tok::l_brace))
         parseBracedList();
       break;
+    case tok::kw_class:
+      if (Style.Language == FormatStyle::LK_JavaScript)
+        parseRecord(/*ParseAsExpr=*/true);
+      else
+        nextToken();
+      break;
     case tok::identifier:
       if (Style.Language == FormatStyle::LK_JavaScript &&
           (FormatTok->is(Keywords.kw_function) ||
@@ -1819,7 +1825,7 @@ void UnwrappedLineParser::parseJavaEnumBody() {
   addUnwrappedLine();
 }
 
-void UnwrappedLineParser::parseRecord() {
+void UnwrappedLineParser::parseRecord(bool ParseAsExpr) {
   const FormatToken &InitialToken = *FormatTok;
   nextToken();
 
@@ -1863,11 +1869,15 @@ void UnwrappedLineParser::parseRecord() {
     }
   }
   if (FormatTok->Tok.is(tok::l_brace)) {
-    if (ShouldBreakBeforeBrace(Style, InitialToken))
-      addUnwrappedLine();
+    if (ParseAsExpr) {
+      parseChildBlock();
+    } else {
+      if (ShouldBreakBeforeBrace(Style, InitialToken))
+        addUnwrappedLine();
 
-    parseBlock(/*MustBeDeclaration=*/true, /*AddLevel=*/true,
-               /*MunchSemi=*/false);
+      parseBlock(/*MustBeDeclaration=*/true, /*AddLevel=*/true,
+                 /*MunchSemi=*/false);
+    }
   }
   // There is no addUnwrappedLine() here so that we fall through to parsing a
   // structural element afterwards. Thus, in "class A {} n, m;",
