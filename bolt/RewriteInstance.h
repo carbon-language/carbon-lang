@@ -19,6 +19,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ExecutionEngine/Orc/ObjectLinkingLayer.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
+#include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include <map>
@@ -47,7 +48,6 @@ struct SectionInfo {
                               /// should only be emitted with the function?
   uint64_t FileAddress{0};    /// Address for the output file (final address).
   uint64_t FileOffset{0};     /// Offset in the output file.
-  uint64_t ShName{0};         /// Name offset in section header string table.
   unsigned SectionID{0};      /// Unique ID used for address mapping.
 
   struct Reloc {
@@ -102,12 +102,11 @@ private:
                            bool IsReadOnly);
 
 public:
+  /// [start memory address] -> [segment info] mapping.
+  std::map<uint64_t, SegmentInfo> SegmentMapInfo;
 
   /// Keep [section name] -> [section info] map for later remapping.
   std::map<std::string, SectionInfo> SectionMapInfo;
-
-  /// [start memory address] -> [segment info] mapping.
-  std::map<uint64_t, SegmentInfo> SegmentMapInfo;
 
   /// Information about non-allocatable sections.
   std::map<std::string, SectionInfo> NoteSectionInfo;
@@ -297,6 +296,9 @@ private:
   /// Patch .rela.plt section.
   ELF_FUNCTION(patchELFRelaPLT);
 
+  /// Write .shstrtab.
+  ELF_FUNCTION(writeStringTable);
+
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.
   void updateLineTableOffsets();
@@ -360,10 +362,16 @@ private:
   /// part of .bss section.
   uint64_t getFileOffsetForAddress(uint64_t Address) const;
 
-  /// Return true if we should overwrite contents of the section instead
+  /// Return true if we will overwrite contents of the section instead
   /// of appending contents to it.
-  bool shouldOverwriteSection(StringRef SectionName);
+  bool willOverwriteSection(StringRef SectionName);
 
+  /// Construct BinaryFunction object and add it to internal maps.
+  BinaryFunction *createBinaryFunction(const std::string &Name,
+                                       object::SectionRef Section,
+                                       uint64_t Address,
+                                       uint64_t Size,
+                                       bool IsSimple);
 private:
 
   /// If we are updating debug info, these are the section we need to overwrite.
@@ -458,12 +466,10 @@ private:
   /// Total hotness score according to profiling data for this binary.
   uint64_t TotalScore{0};
 
-  /// Construct BinaryFunction object and add it to internal maps.
-  BinaryFunction *createBinaryFunction(const std::string &Name,
-                                       object::SectionRef Section,
-                                       uint64_t Address,
-                                       uint64_t Size,
-                                       bool IsSimple);
+  /// Section header string table.
+  StringTableBuilder SHStrTab;
+
+  static const std::string OrgSecPrefix;
 };
 
 } // namespace bolt
