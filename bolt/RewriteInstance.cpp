@@ -783,11 +783,17 @@ void RewriteInstance::discoverFileObjects() {
   };
   std::unordered_map<SymbolRef, StringRef, SymbolRefHash> SymbolToFileName;
   for (const auto &Symbol : InputFile->symbols()) {
+    ErrorOr<StringRef> NameOrError = Symbol.getName();
+    if (NameOrError && NameOrError->startswith("__asan_init")) {
+      errs() << "BOLT-ERROR: input file was compiled or linked with sanitizer "
+                "support. Cannot optimize.\n";
+      exit(1);
+    }
+
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
 
     if (Symbol.getType() == SymbolRef::ST_File) {
-      ErrorOr<StringRef> NameOrError = Symbol.getName();
       check_error(NameOrError.getError(), "cannot get symbol name for file");
       FileSymbolName = *NameOrError;
       SeenFileName = true;
