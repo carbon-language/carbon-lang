@@ -113,7 +113,7 @@ def UnpackOneFile(path):
       if len(header) < 12:
         break
       pid, module_length, blob_size = struct.unpack('iII', header)
-      module = f.read(module_length)
+      module = f.read(module_length).decode('utf-8')
       blob = f.read(blob_size)
       assert(len(module) == module_length)
       assert(len(blob) == blob_size)
