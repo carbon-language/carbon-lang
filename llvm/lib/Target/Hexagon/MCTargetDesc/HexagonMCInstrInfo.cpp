@@ -78,7 +78,7 @@ bool HexagonMCInstrInfo::canonicalizePacket(MCInstrInfo const &MCII,
   }
   // Examines packet and pad the packet, if needed, when an
   // end-loop is in the bundle.
-  HexagonMCInstrInfo::padEndloop(MCB);
+  HexagonMCInstrInfo::padEndloop(MCB, Context);
   // If compounding and duplexing didn't reduce the size below
   // 4 or less we have a packet that is too big.
   if (HexagonMCInstrInfo::bundleSize(MCB) > HEXAGON_PACKET_SIZE)
@@ -273,9 +273,8 @@ int HexagonMCInstrInfo::getMaxValue(MCInstrInfo const &MCII,
          HexagonMCInstrInfo::isExtended(MCII, MCI));
 
   if (S) // if value is signed
-    return ~(-1 << (HexagonMCInstrInfo::getExtentBits(MCII, MCI) - 1));
-  else
-    return ~(-1 << HexagonMCInstrInfo::getExtentBits(MCII, MCI));
+    return (1 << (HexagonMCInstrInfo::getExtentBits(MCII, MCI) - 1)) - 1;
+  return (1 << HexagonMCInstrInfo::getExtentBits(MCII, MCI)) - 1;
 }
 
 /// Return the minimum value of an extendable operand.
@@ -288,9 +287,8 @@ int HexagonMCInstrInfo::getMinValue(MCInstrInfo const &MCII,
          HexagonMCInstrInfo::isExtended(MCII, MCI));
 
   if (S) // if value is signed
-    return -1 << (HexagonMCInstrInfo::getExtentBits(MCII, MCI) - 1);
-  else
-    return 0;
+    return -(1 << (HexagonMCInstrInfo::getExtentBits(MCII, MCI) - 1));
+  return 0;
 }
 
 StringRef HexagonMCInstrInfo::getName(MCInstrInfo const &MCII,
@@ -747,7 +745,7 @@ bool HexagonMCInstrInfo::s23_2_reloc(MCExpr const &Expr) {
   return HExpr->s23_2_reloc();
 }
 
-void HexagonMCInstrInfo::padEndloop(MCInst &MCB) {
+void HexagonMCInstrInfo::padEndloop(MCInst &MCB, MCContext &Context) {
   MCInst Nop;
   Nop.setOpcode(Hexagon::A2_nop);
   assert(isBundle(MCB));
@@ -755,7 +753,7 @@ void HexagonMCInstrInfo::padEndloop(MCInst &MCB) {
           (HexagonMCInstrInfo::bundleSize(MCB) < HEXAGON_PACKET_INNER_SIZE)) ||
          ((HexagonMCInstrInfo::isOuterLoop(MCB) &&
            (HexagonMCInstrInfo::bundleSize(MCB) < HEXAGON_PACKET_OUTER_SIZE))))
-    MCB.addOperand(MCOperand::createInst(new MCInst(Nop)));
+    MCB.addOperand(MCOperand::createInst(new (Context) MCInst(Nop)));
 }
 
 bool HexagonMCInstrInfo::prefersSlot3(MCInstrInfo const &MCII,
