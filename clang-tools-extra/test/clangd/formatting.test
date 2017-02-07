@@ -1,3 +1,4 @@
+# REQUIRES: shell
 # RUN: sed -e '/^#/d' -e 's/\r*$/\r/' %s | clangd | FileCheck %s
 #
 Content-Length: 125
