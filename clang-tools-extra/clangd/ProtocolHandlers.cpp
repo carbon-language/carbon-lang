@@ -63,6 +63,9 @@ static std::string formatCode(StringRef Code, StringRef Filename,
   // Call clang-format.
   // FIXME: Don't ignore style.
   format::FormatStyle Style = format::getLLVMStyle();
+  // On windows FileManager doesn't like file://. Just strip it, clang-format
+  // doesn't need it.
+  Filename.consume_front("file://");
   tooling::Replacements Replacements =
       format::reformat(Style, Code, Ranges, Filename);
 
