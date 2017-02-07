@@ -94,3 +94,275 @@ define <4 x float> @test_buildvector_v4f32_partial_load(float %f0, float %f1, fl
   %ins3 = insertelement <4 x float> %ins2, float %f3, i32 3
   ret <4 x float> %ins3
 }
+
+define <4 x i32> @test_buildvector_v4i32_register(i32 %a0, i32 %a1, i32 %a2, i32 %a3) {
+; CHECK-LABEL: test_buildvector_v4i32_register:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movd %edi, %xmm0
+; CHECK-NEXT:    pinsrd $1, %esi, %xmm0
+; CHECK-NEXT:    pinsrd $2, %edx, %xmm0
+; CHECK-NEXT:    pinsrd $3, %ecx, %xmm0
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <4 x i32> undef, i32 %a0, i32 0
+  %ins1 = insertelement <4 x i32> %ins0, i32 %a1, i32 1
+  %ins2 = insertelement <4 x i32> %ins1, i32 %a2, i32 2
+  %ins3 = insertelement <4 x i32> %ins2, i32 %a3, i32 3
+  ret <4 x i32> %ins3
+}
+
+define <4 x i32> @test_buildvector_v4i32_partial(i32 %a0, i32 %a3) {
+; CHECK-LABEL: test_buildvector_v4i32_partial:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movd %edi, %xmm0
+; CHECK-NEXT:    pinsrd $3, %esi, %xmm0
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <4 x i32> undef, i32   %a0, i32 0
+  %ins1 = insertelement <4 x i32> %ins0, i32 undef, i32 1
+  %ins2 = insertelement <4 x i32> %ins1, i32 undef, i32 2
+  %ins3 = insertelement <4 x i32> %ins2, i32   %a3, i32 3
+  ret <4 x i32> %ins3
+}
+
+define <4 x i32> @test_buildvector_v4i32_register_zero(i32 %a0, i32 %a2, i32 %a3) {
+; CHECK-LABEL: test_buildvector_v4i32_register_zero:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movd %edx, %xmm0
+; CHECK-NEXT:    movd %esi, %xmm1
+; CHECK-NEXT:    punpckldq {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
+; CHECK-NEXT:    movd %edi, %xmm0
+; CHECK-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <4 x i32> undef, i32 %a0, i32 0
+  %ins1 = insertelement <4 x i32> %ins0, i32   0, i32 1
+  %ins2 = insertelement <4 x i32> %ins1, i32 %a2, i32 2
+  %ins3 = insertelement <4 x i32> %ins2, i32 %a3, i32 3
+  ret <4 x i32> %ins3
+}
+
+define <4 x i32> @test_buildvector_v4i32_register_zero_2(i32 %a1, i32 %a2, i32 %a3) {
+; CHECK-LABEL: test_buildvector_v4i32_register_zero_2:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movd %edx, %xmm0
+; CHECK-NEXT:    movd %esi, %xmm1
+; CHECK-NEXT:    punpckldq {{.*#+}} xmm1 = xmm1[0],xmm0[0],xmm1[1],xmm0[1]
+; CHECK-NEXT:    movd %edi, %xmm0
+; CHECK-NEXT:    shufps {{.*#+}} xmm0 = xmm0[1,0],xmm1[0,1]
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <4 x i32> undef, i32   0, i32 0
+  %ins1 = insertelement <4 x i32> %ins0, i32 %a1, i32 1
+  %ins2 = insertelement <4 x i32> %ins1, i32 %a2, i32 2
+  %ins3 = insertelement <4 x i32> %ins2, i32 %a3, i32 3
+  ret <4 x i32> %ins3
+}
+
+define <8 x i16> @test_buildvector_v8i16_register(i16 %a0, i16 %a1, i16 %a2, i16 %a3, i16 %a4, i16 %a5, i16 %a6, i16 %a7) {
+; CHECK-LABEL: test_buildvector_v8i16_register:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movd %edi, %xmm0
+; CHECK-NEXT:    pinsrw $1, %esi, %xmm0
+; CHECK-NEXT:    pinsrw $2, %edx, %xmm0
+; CHECK-NEXT:    pinsrw $3, %ecx, %xmm0
+; CHECK-NEXT:    pinsrw $4, %r8d, %xmm0
+; CHECK-NEXT:    pinsrw $5, %r9d, %xmm0
+; CHECK-NEXT:    pinsrw $6, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrw $7, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <8 x i16> undef, i16 %a0, i32 0
+  %ins1 = insertelement <8 x i16> %ins0, i16 %a1, i32 1
+  %ins2 = insertelement <8 x i16> %ins1, i16 %a2, i32 2
+  %ins3 = insertelement <8 x i16> %ins2, i16 %a3, i32 3
+  %ins4 = insertelement <8 x i16> %ins3, i16 %a4, i32 4
+  %ins5 = insertelement <8 x i16> %ins4, i16 %a5, i32 5
+  %ins6 = insertelement <8 x i16> %ins5, i16 %a6, i32 6
+  %ins7 = insertelement <8 x i16> %ins6, i16 %a7, i32 7
+  ret <8 x i16> %ins7
+}
+
+define <8 x i16> @test_buildvector_v8i16_partial(i16 %a1, i16 %a3, i16 %a4, i16 %a5) {
+; CHECK-LABEL: test_buildvector_v8i16_partial:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pinsrw $1, %edi, %xmm0
+; CHECK-NEXT:    pinsrw $3, %esi, %xmm0
+; CHECK-NEXT:    pinsrw $4, %edx, %xmm0
+; CHECK-NEXT:    pinsrw $5, %ecx, %xmm0
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <8 x i16> undef, i16 undef, i32 0
+  %ins1 = insertelement <8 x i16> %ins0, i16   %a1, i32 1
+  %ins2 = insertelement <8 x i16> %ins1, i16 undef, i32 2
+  %ins3 = insertelement <8 x i16> %ins2, i16   %a3, i32 3
+  %ins4 = insertelement <8 x i16> %ins3, i16   %a4, i32 4
+  %ins5 = insertelement <8 x i16> %ins4, i16   %a5, i32 5
+  %ins6 = insertelement <8 x i16> %ins5, i16 undef, i32 6
+  %ins7 = insertelement <8 x i16> %ins6, i16 undef, i32 7
+  ret <8 x i16> %ins7
+}
+
+define <8 x i16> @test_buildvector_v8i16_register_zero(i16 %a0, i16 %a3, i16 %a4, i16 %a5) {
+; CHECK-LABEL: test_buildvector_v8i16_register_zero:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pxor %xmm0, %xmm0
+; CHECK-NEXT:    pinsrw $0, %edi, %xmm0
+; CHECK-NEXT:    pinsrw $3, %esi, %xmm0
+; CHECK-NEXT:    pinsrw $4, %edx, %xmm0
+; CHECK-NEXT:    pinsrw $5, %ecx, %xmm0
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <8 x i16> undef, i16   %a0, i32 0
+  %ins1 = insertelement <8 x i16> %ins0, i16     0, i32 1
+  %ins2 = insertelement <8 x i16> %ins1, i16     0, i32 2
+  %ins3 = insertelement <8 x i16> %ins2, i16   %a3, i32 3
+  %ins4 = insertelement <8 x i16> %ins3, i16   %a4, i32 4
+  %ins5 = insertelement <8 x i16> %ins4, i16   %a5, i32 5
+  %ins6 = insertelement <8 x i16> %ins5, i16     0, i32 6
+  %ins7 = insertelement <8 x i16> %ins6, i16     0, i32 7
+  ret <8 x i16> %ins7
+}
+
+define <8 x i16> @test_buildvector_v8i16_register_zero_2(i16 %a1, i16 %a3, i16 %a4, i16 %a5) {
+; CHECK-LABEL: test_buildvector_v8i16_register_zero_2:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pxor %xmm0, %xmm0
+; CHECK-NEXT:    pinsrw $1, %edi, %xmm0
+; CHECK-NEXT:    pinsrw $3, %esi, %xmm0
+; CHECK-NEXT:    pinsrw $4, %edx, %xmm0
+; CHECK-NEXT:    pinsrw $5, %ecx, %xmm0
+; CHECK-NEXT:    retq
+  %ins0 = insertelement <8 x i16> undef, i16     0, i32 0
+  %ins1 = insertelement <8 x i16> %ins0, i16   %a1, i32 1
+  %ins2 = insertelement <8 x i16> %ins1, i16     0, i32 2
+  %ins3 = insertelement <8 x i16> %ins2, i16   %a3, i32 3
+  %ins4 = insertelement <8 x i16> %ins3, i16   %a4, i32 4
+  %ins5 = insertelement <8 x i16> %ins4, i16   %a5, i32 5
+  %ins6 = insertelement <8 x i16> %ins5, i16     0, i32 6
+  %ins7 = insertelement <8 x i16> %ins6, i16     0, i32 7
+  ret <8 x i16> %ins7
+}
+
+define <16 x i8> @test_buildvector_v16i8_register(i8 %a0, i8 %a1, i8 %a2, i8 %a3, i8 %a4, i8 %a5, i8 %a6, i8 %a7, i8 %a8, i8 %a9, i8 %a10, i8 %a11, i8 %a12, i8 %a13, i8 %a14, i8 %a15) {
+; CHECK-LABEL: test_buildvector_v16i8_register:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movd %edi, %xmm0
+; CHECK-NEXT:    pinsrb $1, %esi, %xmm0
+; CHECK-NEXT:    pinsrb $2, %edx, %xmm0
+; CHECK-NEXT:    pinsrb $3, %ecx, %xmm0
+; CHECK-NEXT:    pinsrb $4, %r8d, %xmm0
+; CHECK-NEXT:    pinsrb $5, %r9d, %xmm0
+; CHECK-NEXT:    pinsrb $6, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $7, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $8, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $9, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $10, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $11, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $12, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $13, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $14, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    pinsrb $15, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    retq
+  %ins0  = insertelement <16 x i8> undef,  i8 %a0,  i32 0
+  %ins1  = insertelement <16 x i8> %ins0,  i8 %a1,  i32 1
+  %ins2  = insertelement <16 x i8> %ins1,  i8 %a2,  i32 2
+  %ins3  = insertelement <16 x i8> %ins2,  i8 %a3,  i32 3
+  %ins4  = insertelement <16 x i8> %ins3,  i8 %a4,  i32 4
+  %ins5  = insertelement <16 x i8> %ins4,  i8 %a5,  i32 5
+  %ins6  = insertelement <16 x i8> %ins5,  i8 %a6,  i32 6
+  %ins7  = insertelement <16 x i8> %ins6,  i8 %a7,  i32 7
+  %ins8  = insertelement <16 x i8> %ins7,  i8 %a8,  i32 8
+  %ins9  = insertelement <16 x i8> %ins8,  i8 %a9,  i32 9
+  %ins10 = insertelement <16 x i8> %ins9,  i8 %a10, i32 10
+  %ins11 = insertelement <16 x i8> %ins10, i8 %a11, i32 11
+  %ins12 = insertelement <16 x i8> %ins11, i8 %a12, i32 12
+  %ins13 = insertelement <16 x i8> %ins12, i8 %a13, i32 13
+  %ins14 = insertelement <16 x i8> %ins13, i8 %a14, i32 14
+  %ins15 = insertelement <16 x i8> %ins14, i8 %a15, i32 15
+  ret <16 x i8> %ins15
+}
+
+define <16 x i8> @test_buildvector_v16i8_partial(i8 %a2, i8 %a6, i8 %a8, i8 %a11, i8 %a12, i8 %a15) {
+; CHECK-LABEL: test_buildvector_v16i8_partial:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pinsrb $2, %edi, %xmm0
+; CHECK-NEXT:    pinsrb $6, %esi, %xmm0
+; CHECK-NEXT:    pinsrb $8, %edx, %xmm0
+; CHECK-NEXT:    pinsrb $11, %ecx, %xmm0
+; CHECK-NEXT:    pinsrb $12, %r8d, %xmm0
+; CHECK-NEXT:    pinsrb $15, %r9d, %xmm0
+; CHECK-NEXT:    retq
+  %ins0  = insertelement <16 x i8> undef,  i8 undef, i32 0
+  %ins1  = insertelement <16 x i8> %ins0,  i8 undef, i32 1
+  %ins2  = insertelement <16 x i8> %ins1,  i8   %a2, i32 2
+  %ins3  = insertelement <16 x i8> %ins2,  i8 undef, i32 3
+  %ins4  = insertelement <16 x i8> %ins3,  i8 undef, i32 4
+  %ins5  = insertelement <16 x i8> %ins4,  i8 undef, i32 5
+  %ins6  = insertelement <16 x i8> %ins5,  i8   %a6, i32 6
+  %ins7  = insertelement <16 x i8> %ins6,  i8 undef, i32 7
+  %ins8  = insertelement <16 x i8> %ins7,  i8   %a8, i32 8
+  %ins9  = insertelement <16 x i8> %ins8,  i8 undef, i32 9
+  %ins10 = insertelement <16 x i8> %ins9,  i8 undef, i32 10
+  %ins11 = insertelement <16 x i8> %ins10, i8  %a11, i32 11
+  %ins12 = insertelement <16 x i8> %ins11, i8  %a12, i32 12
+  %ins13 = insertelement <16 x i8> %ins12, i8 undef, i32 13
+  %ins14 = insertelement <16 x i8> %ins13, i8 undef, i32 14
+  %ins15 = insertelement <16 x i8> %ins14, i8  %a15, i32 15
+  ret <16 x i8> %ins15
+}
+
+define <16 x i8> @test_buildvector_v16i8_register_zero(i8 %a0, i8 %a4, i8 %a6, i8 %a8, i8 %a11, i8 %a12, i8 %a15) {
+; CHECK-LABEL: test_buildvector_v16i8_register_zero:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pxor %xmm0, %xmm0
+; CHECK-NEXT:    pinsrb $0, %edi, %xmm0
+; CHECK-NEXT:    pinsrb $4, %esi, %xmm0
+; CHECK-NEXT:    pinsrb $6, %edx, %xmm0
+; CHECK-NEXT:    pinsrb $8, %ecx, %xmm0
+; CHECK-NEXT:    pinsrb $11, %r8d, %xmm0
+; CHECK-NEXT:    pinsrb $12, %r9d, %xmm0
+; CHECK-NEXT:    pinsrb $15, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    retq
+  %ins0  = insertelement <16 x i8> undef,  i8   %a0, i32 0
+  %ins1  = insertelement <16 x i8> %ins0,  i8     0, i32 1
+  %ins2  = insertelement <16 x i8> %ins1,  i8     0, i32 2
+  %ins3  = insertelement <16 x i8> %ins2,  i8     0, i32 3
+  %ins4  = insertelement <16 x i8> %ins3,  i8   %a4, i32 4
+  %ins5  = insertelement <16 x i8> %ins4,  i8     0, i32 5
+  %ins6  = insertelement <16 x i8> %ins5,  i8   %a6, i32 6
+  %ins7  = insertelement <16 x i8> %ins6,  i8     0, i32 7
+  %ins8  = insertelement <16 x i8> %ins7,  i8   %a8, i32 8
+  %ins9  = insertelement <16 x i8> %ins8,  i8     0, i32 9
+  %ins10 = insertelement <16 x i8> %ins9,  i8     0, i32 10
+  %ins11 = insertelement <16 x i8> %ins10, i8  %a11, i32 11
+  %ins12 = insertelement <16 x i8> %ins11, i8  %a12, i32 12
+  %ins13 = insertelement <16 x i8> %ins12, i8     0, i32 13
+  %ins14 = insertelement <16 x i8> %ins13, i8     0, i32 14
+  %ins15 = insertelement <16 x i8> %ins14, i8  %a15, i32 15
+  ret <16 x i8> %ins15
+}
+
+define <16 x i8> @test_buildvector_v16i8_register_zero_2(i8 %a2, i8 %a3, i8 %a6, i8 %a8, i8 %a11, i8 %a12, i8 %a15) {
+; CHECK-LABEL: test_buildvector_v16i8_register_zero_2:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    pxor %xmm0, %xmm0
+; CHECK-NEXT:    pinsrb $2, %edi, %xmm0
+; CHECK-NEXT:    pinsrb $3, %esi, %xmm0
+; CHECK-NEXT:    pinsrb $6, %edx, %xmm0
+; CHECK-NEXT:    pinsrb $8, %ecx, %xmm0
+; CHECK-NEXT:    pinsrb $11, %r8d, %xmm0
+; CHECK-NEXT:    pinsrb $12, %r9d, %xmm0
+; CHECK-NEXT:    pinsrb $15, {{[0-9]+}}(%rsp), %xmm0
+; CHECK-NEXT:    retq
+  %ins0  = insertelement <16 x i8> undef,  i8     0, i32 0
+  %ins1  = insertelement <16 x i8> %ins0,  i8     0, i32 1
+  %ins2  = insertelement <16 x i8> %ins1,  i8   %a2, i32 2
+  %ins3  = insertelement <16 x i8> %ins2,  i8   %a3, i32 3
+  %ins4  = insertelement <16 x i8> %ins3,  i8     0, i32 4
+  %ins5  = insertelement <16 x i8> %ins4,  i8     0, i32 5
+  %ins6  = insertelement <16 x i8> %ins5,  i8   %a6, i32 6
+  %ins7  = insertelement <16 x i8> %ins6,  i8     0, i32 7
+  %ins8  = insertelement <16 x i8> %ins7,  i8   %a8, i32 8
+  %ins9  = insertelement <16 x i8> %ins8,  i8     0, i32 9
+  %ins10 = insertelement <16 x i8> %ins9,  i8     0, i32 10
+  %ins11 = insertelement <16 x i8> %ins10, i8  %a11, i32 11
+  %ins12 = insertelement <16 x i8> %ins11, i8  %a12, i32 12
+  %ins13 = insertelement <16 x i8> %ins12, i8     0, i32 13
+  %ins14 = insertelement <16 x i8> %ins13, i8     0, i32 14
+  %ins15 = insertelement <16 x i8> %ins14, i8  %a15, i32 15
+  ret <16 x i8> %ins15
+}
