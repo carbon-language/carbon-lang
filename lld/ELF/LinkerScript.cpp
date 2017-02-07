@@ -557,6 +557,10 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
   if (!Sec)
     return;
 
+  // Handle align (e.g. ".foo : ALIGN(16) { ... }").
+  if (Cmd->AlignExpr)
+    Sec->updateAlignment(Cmd->AlignExpr(0));
+
   // Try and find an appropriate memory region to assign offsets in.
   CurMemRegion = findMemoryRegion(Cmd, Sec);
   if (CurMemRegion)
