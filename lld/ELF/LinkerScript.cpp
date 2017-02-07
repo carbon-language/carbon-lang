@@ -101,8 +101,12 @@ static void assignSymbol(SymbolAssignment *Cmd, typename ELFT::uint Dot = 0) {
 
   if (auto *Body = dyn_cast<DefinedSynthetic>(Cmd->Sym)) {
     Body->Section = Cmd->Expression.Section();
-    if (Body->Section)
-      Body->Value = Cmd->Expression(Dot) - Body->Section->Addr;
+    if (Body->Section) {
+      uint64_t VA = 0;
+      if (Body->Section->Flags & SHF_ALLOC)
+        VA = Body->Section->Addr;
+      Body->Value = Cmd->Expression(Dot) - VA;
+    }
     return;
   }
 
