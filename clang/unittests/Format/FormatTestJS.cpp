@@ -941,6 +941,7 @@ TEST_F(FormatTestJS, RegexLiteralClassification) {
   verifyFormat("var x = a ? /abc/ : /abc/;");
   verifyFormat("for (var i = 0; /abc/.test(s[i]); i++) {\n}");
   verifyFormat("var x = !/abc/.test(y);");
+  verifyFormat("var x = foo()! / 10;");
   verifyFormat("var x = a && /abc/.test(y);");
   verifyFormat("var x = a || /abc/.test(y);");
   verifyFormat("var x = a + /abc/.search(y);");
