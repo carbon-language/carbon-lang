@@ -29530,21 +29530,19 @@ static SDValue combineSelect(SDNode *N, SelectionDAG &DAG,
         // Check all uses of that condition operand to check whether it will be
         // consumed by non-BLEND instructions, which may depend on all bits are
         // set properly.
-        for (SDNode::use_iterator I = Cond->use_begin(), E = Cond->use_end();
-             I != E; ++I)
-          if (I->getOpcode() != ISD::VSELECT)
+        for (SDNode *U : Cond->uses())
+          if (U->getOpcode() != ISD::VSELECT)
             // TODO: Add other opcodes eventually lowered into BLEND.
             return SDValue();
 
         // Update all the users of the condition, before committing the change,
         // so that the VSELECT optimizations that expect the correct vector
         // boolean value will not be triggered.
-        for (SDNode::use_iterator I = Cond->use_begin(), E = Cond->use_end();
-             I != E; ++I)
+        for (SDNode *U : Cond->uses())
           DAG.ReplaceAllUsesOfValueWith(
-              SDValue(*I, 0),
-              DAG.getNode(X86ISD::SHRUNKBLEND, SDLoc(*I), I->getValueType(0),
-                          Cond, I->getOperand(1), I->getOperand(2)));
+              SDValue(U, 0),
+              DAG.getNode(X86ISD::SHRUNKBLEND, SDLoc(U), U->getValueType(0),
+                          Cond, U->getOperand(1), U->getOperand(2)));
         DCI.CommitTargetLoweringOpt(TLO);
         return SDValue();
       }
