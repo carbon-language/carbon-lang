@@ -11,6 +11,7 @@
 #include "JSONRPCDispatcher.h"
 #include "ProtocolHandlers.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Program.h"
 #include <iostream>
 #include <string>
 using namespace clang::clangd;
@@ -18,6 +19,9 @@ using namespace clang::clangd;
 int main(int argc, char *argv[]) {
   llvm::raw_ostream &Outs = llvm::outs();
   llvm::raw_ostream &Logs = llvm::errs();
+
+  // Change stdin to binary to not lose \r\n on windows.
+  llvm::sys::ChangeStdinToBinary();
 
   // Set up a document store and intialize all the method handlers for JSONRPC
   // dispatching.
