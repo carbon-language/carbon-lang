@@ -26,7 +26,10 @@ public:
   /// Delete a document from the store.
   void removeDocument(StringRef Uri) { Docs.erase(Uri); }
   /// Retrieve a document from the store. Empty string if it's unknown.
-  StringRef getDocument(StringRef Uri) const { return Docs.lookup(Uri); }
+  StringRef getDocument(StringRef Uri) const {
+    auto I = Docs.find(Uri);
+    return I == Docs.end() ? StringRef("") : StringRef(I->second);
+  }
 
 private:
   llvm::StringMap<std::string> Docs;
