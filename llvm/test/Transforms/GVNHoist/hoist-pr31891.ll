@@ -39,12 +39,13 @@ if.end:                                           ; preds = %if.else, %if.then
   ret void, !dbg !21
 }
 
-; CHECK-LABEL: define void @hoistit({{.*}}) {{.*}} !dbg ![[sp_hoistit:[0-9]+]]
+; CHECK-LABEL: define void @hoistit
+; CHECK-SAME: 		!dbg ![[sp_hoistit:[0-9]+]]
 ; CHECK: call float @fabsf(float %f) {{.*}} !dbg ![[dbgloc:[0-9]+]]
 ; CHECK: br i1 %tobool, label %if.then, label %if.else
 
-; CHECK: ![[sp_hoistit]] = !DISubprogram(name: "hoistit", {{.*}})
-; CHECK: ![[dbgloc]] = !DILocation({{.*}}, scope: !13)
+; CHECK: ![[sp_hoistit]] = distinct !DISubprogram(name: "hoistit", {{.*}})
+; CHECK: ![[dbgloc]] = !DILocation({{.*}}, scope: ![[sp_hoistit]])
 
 declare void @useit1(float)
 
