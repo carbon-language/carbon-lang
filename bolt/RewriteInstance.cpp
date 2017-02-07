@@ -344,6 +344,8 @@ constexpr const char *RewriteInstance::DebugSectionsToOverwrite[];
 
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
+const std::string RewriteInstance::BOLTSecPrefix = ".bolt";
+
 static void report_error(StringRef Message, std::error_code EC) {
   assert(EC);
   errs() << "BOLT-ERROR: '" << Message << "': " << EC.message() << ".\n";
@@ -624,7 +626,13 @@ void RewriteInstance::discoverStorage() {
       OldTextSectionSize = Section.getSize();
       OldTextSectionOffset =
         SectionContents.data() - InputFile->getData().data();
-      break;
+    }
+
+    if (SectionName.startswith(OrgSecPrefix) ||
+        SectionName.startswith(BOLTSecPrefix)) {
+      errs() << "BOLT-ERROR: input file was processed by BOLT. "
+                "Cannot re-optimize.\n";
+      exit(1);
     }
   }
 
@@ -2193,7 +2201,7 @@ void RewriteInstance::mapFileSections(
     // entry in section header table.
     auto NewTextSectionSize = NextAvailableAddress - NewTextSectionStartAddress;
     if (NewTextSectionSize) {
-      EFMM->SectionMapInfo[".bolt.text"] =
+      EFMM->SectionMapInfo[BOLTSecPrefix + ".text"] =
           SectionInfo(0,
                       NewTextSectionSize,
                       16,

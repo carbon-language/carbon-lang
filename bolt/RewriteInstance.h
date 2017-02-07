@@ -470,6 +470,8 @@ private:
   StringTableBuilder SHStrTab;
 
   static const std::string OrgSecPrefix;
+
+  static const std::string BOLTSecPrefix;
 };
 
 } // namespace bolt
