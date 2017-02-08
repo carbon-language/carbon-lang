@@ -323,53 +323,6 @@ unsigned SISubtarget::getOccupancyWithNumVGPRs(unsigned VGPRs) const {
   return 1;
 }
 
-unsigned SISubtarget::getMinNumSGPRs(unsigned WavesPerEU) const {
-  if (getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
-    switch (WavesPerEU) {
-      case 0:  return 0;
-      case 10: return 0;
-      case 9:  return 0;
-      case 8:  return 81;
-      default: return 97;
-    }
-  } else {
-    switch (WavesPerEU) {
-      case 0:  return 0;
-      case 10: return 0;
-      case 9:  return 49;
-      case 8:  return 57;
-      case 7:  return 65;
-      case 6:  return 73;
-      case 5:  return 81;
-      default: return 97;
-    }
-  }
-}
-
-unsigned SISubtarget::getMaxNumSGPRs(unsigned WavesPerEU,
-                                     bool Addressable) const {
-  if (getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS) {
-    switch (WavesPerEU) {
-      case 0:  return 80;
-      case 10: return 80;
-      case 9:  return 80;
-      case 8:  return 96;
-      default: return Addressable ? getAddressableNumSGPRs() : 112;
-    }
-  } else {
-    switch (WavesPerEU) {
-      case 0:  return 48;
-      case 10: return 48;
-      case 9:  return 56;
-      case 8:  return 64;
-      case 7:  return 72;
-      case 6:  return 80;
-      case 5:  return 96;
-      default: return getAddressableNumSGPRs();
-    }
-  }
-}
-
 unsigned SISubtarget::getReservedNumSGPRs(const MachineFunction &MF) const {
   const SIMachineFunctionInfo &MFI = *MF.getInfo<SIMachineFunctionInfo>();
   if (MFI.hasFlatScratchInit()) {
@@ -428,42 +381,10 @@ unsigned SISubtarget::getMaxNumSGPRs(const MachineFunction &MF) const {
   }
 
   if (hasSGPRInitBug())
-    MaxNumSGPRs = SISubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
+    MaxNumSGPRs = AMDGPU::IsaInfo::FIXED_NUM_SGPRS_FOR_INIT_BUG;
 
   return std::min(MaxNumSGPRs - getReservedNumSGPRs(MF),
                   MaxAddressableNumSGPRs);
-}
-
-unsigned SISubtarget::getMinNumVGPRs(unsigned WavesPerEU) const {
-  switch (WavesPerEU) {
-    case 0:  return 0;
-    case 10: return 0;
-    case 9:  return 25;
-    case 8:  return 29;
-    case 7:  return 33;
-    case 6:  return 37;
-    case 5:  return 41;
-    case 4:  return 49;
-    case 3:  return 65;
-    case 2:  return 85;
-    default: return 129;
-  }
-}
-
-unsigned SISubtarget::getMaxNumVGPRs(unsigned WavesPerEU) const {
-  switch (WavesPerEU) {
-    case 0:  return 24;
-    case 10: return 24;
-    case 9:  return 28;
-    case 8:  return 32;
-    case 7:  return 36;
-    case 6:  return 40;
-    case 5:  return 48;
-    case 4:  return 64;
-    case 3:  return 84;
-    case 2:  return 128;
-    default: return getTotalNumVGPRs();
-  }
 }
 
 unsigned SISubtarget::getMaxNumVGPRs(const MachineFunction &MF) const {

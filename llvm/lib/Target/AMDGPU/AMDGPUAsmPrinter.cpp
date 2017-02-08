@@ -109,12 +109,13 @@ void AMDGPUAsmPrinter::EmitStartOfAsmFile(Module &M) {
   TS->EmitDirectiveHSACodeObjectVersion(2, 1);
 
   const MCSubtargetInfo *STI = TM.getMCSubtargetInfo();
-  AMDGPU::IsaVersion ISA = AMDGPU::getIsaVersion(STI->getFeatureBits());
+  AMDGPU::IsaInfo::IsaVersion ISA =
+      AMDGPU::IsaInfo::getIsaVersion(STI->getFeatureBits());
   TS->EmitDirectiveHSACodeObjectISA(ISA.Major, ISA.Minor, ISA.Stepping,
                                     "AMD", "AMDGPU");
 
   // Emit runtime metadata.
-  TS->EmitRuntimeMetadata(M);
+  TS->EmitRuntimeMetadata(STI->getFeatureBits(), M);
 }
 
 bool AMDGPUAsmPrinter::isBlockOnlyReachableByFallthrough(
@@ -485,7 +486,8 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
       DiagnosticInfoResourceLimit Diag(*MF.getFunction(),
                                        "addressable scalar registers",
                                        MaxSGPR + 1, DS_Error,
-                                       DK_ResourceLimit, MaxAddressableNumSGPRs);
+                                       DK_ResourceLimit,
+                                       MaxAddressableNumSGPRs);
       Ctx.diagnose(Diag);
       MaxSGPR = MaxAddressableNumSGPRs - 1;
     }
@@ -509,25 +511,27 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
 
   if (STM.getGeneration() <= AMDGPUSubtarget::SEA_ISLANDS ||
       STM.hasSGPRInitBug()) {
-    unsigned MaxNumSGPRs = STM.getAddressableNumSGPRs();
-    if (ProgInfo.NumSGPR > MaxNumSGPRs) {
-      // This can happen due to a compiler bug or when using inline asm to use the
-      // registers which are usually reserved for vcc etc.
-
+    unsigned MaxAddressableNumSGPRs = STM.getAddressableNumSGPRs();
+    if (ProgInfo.NumSGPR > MaxAddressableNumSGPRs) {
+      // This can happen due to a compiler bug or when using inline asm to use
+      // the registers which are usually reserved for vcc etc.
       LLVMContext &Ctx = MF.getFunction()->getContext();
       DiagnosticInfoResourceLimit Diag(*MF.getFunction(),
                                        "scalar registers",
                                        ProgInfo.NumSGPR, DS_Error,
-                                       DK_ResourceLimit, MaxNumSGPRs);
+                                       DK_ResourceLimit,
+                                       MaxAddressableNumSGPRs);
       Ctx.diagnose(Diag);
-      ProgInfo.NumSGPR = MaxNumSGPRs;
-      ProgInfo.NumSGPRsForWavesPerEU = MaxNumSGPRs;
+      ProgInfo.NumSGPR = MaxAddressableNumSGPRs;
+      ProgInfo.NumSGPRsForWavesPerEU = MaxAddressableNumSGPRs;
     }
   }
 
   if (STM.hasSGPRInitBug()) {
-    ProgInfo.NumSGPR = SISubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
-    ProgInfo.NumSGPRsForWavesPerEU = SISubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
+    ProgInfo.NumSGPR =
+        AMDGPU::IsaInfo::FIXED_NUM_SGPRS_FOR_INIT_BUG;
+    ProgInfo.NumSGPRsForWavesPerEU =
+        AMDGPU::IsaInfo::FIXED_NUM_SGPRS_FOR_INIT_BUG;
   }
 
   if (MFI->NumUserSGPRs > STM.getMaxNumUserSGPRs()) {
@@ -554,9 +558,7 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
                                 STM.getVGPREncodingGranule());
   ProgInfo.VGPRBlocks = ProgInfo.VGPRBlocks / STM.getVGPREncodingGranule() - 1;
 
-  // Record first reserved register and reserved register count fields, and
-  // update max register counts if "amdgpu-debugger-reserve-regs" attribute was
-  // requested.
+  // Record first reserved VGPR and number of reserved VGPRs.
   ProgInfo.ReservedVGPRFirst = STM.debuggerReserveRegs() ? MaxVGPR + 1 : 0;
   ProgInfo.ReservedVGPRCount = STM.getReservedNumVGPRs(MF);
 
