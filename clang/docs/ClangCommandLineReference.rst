@@ -2181,6 +2181,8 @@ X86
 
 .. option:: -mmmx, -mno-mmx
 
+.. option:: -mmpx, -mno-mpx
+
 .. option:: -mmwaitx, -mno-mwaitx
 
 .. option:: -mpclmul, -mno-pclmul

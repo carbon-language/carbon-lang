@@ -656,6 +656,7 @@
 // CHECK_SKL_M32: #define __FMA__ 1
 // CHECK_SKL_M32: #define __LZCNT__ 1
 // CHECK_SKL_M32: #define __MMX__ 1
+// CHECK_SKL_M32: #define __MPX__ 1
 // CHECK_SKL_M32: #define __PCLMUL__ 1
 // CHECK_SKL_M32: #define __POPCNT__ 1
 // CHECK_SKL_M32: #define __RDRND__ 1
@@ -687,6 +688,7 @@
 // CHECK_SKL_M64: #define __FMA__ 1
 // CHECK_SKL_M64: #define __LZCNT__ 1
 // CHECK_SKL_M64: #define __MMX__ 1
+// CHECK_SKL_M64: #define __MPX__ 1
 // CHECK_SKL_M64: #define __PCLMUL__ 1
 // CHECK_SKL_M64: #define __POPCNT__ 1
 // CHECK_SKL_M64: #define __RDRND__ 1
@@ -801,6 +803,7 @@
 // CHECK_SKX_M32: #define __FMA__ 1
 // CHECK_SKX_M32: #define __LZCNT__ 1
 // CHECK_SKX_M32: #define __MMX__ 1
+// CHECK_SKX_M32: #define __MPX__ 1
 // CHECK_SKX_M32: #define __PCLMUL__ 1
 // CHECK_SKX_M32: #define __POPCNT__ 1
 // CHECK_SKX_M32: #define __RDRND__ 1
@@ -841,6 +844,7 @@
 // CHECK_SKX_M64: #define __FMA__ 1
 // CHECK_SKX_M64: #define __LZCNT__ 1
 // CHECK_SKX_M64: #define __MMX__ 1
+// CHECK_SKX_M64: #define __MPX__ 1
 // CHECK_SKX_M64: #define __PCLMUL__ 1
 // CHECK_SKX_M64: #define __POPCNT__ 1
 // CHECK_SKX_M64: #define __RDRND__ 1
@@ -885,6 +889,7 @@
 // CHECK_CNL_M32: #define __FMA__ 1
 // CHECK_CNL_M32: #define __LZCNT__ 1
 // CHECK_CNL_M32: #define __MMX__ 1
+// CHECK_CNL_M32: #define __MPX__ 1
 // CHECK_CNL_M32: #define __PCLMUL__ 1
 // CHECK_CNL_M32: #define __POPCNT__ 1
 // CHECK_CNL_M32: #define __RDRND__ 1
@@ -924,6 +929,7 @@
 // CHECK_CNL_M64: #define __FMA__ 1
 // CHECK_CNL_M64: #define __LZCNT__ 1
 // CHECK_CNL_M64: #define __MMX__ 1
+// CHECK_CNL_M64: #define __MPX__ 1
 // CHECK_CNL_M64: #define __PCLMUL__ 1
 // CHECK_CNL_M64: #define __POPCNT__ 1
 // CHECK_CNL_M64: #define __RDRND__ 1
