@@ -259,7 +259,7 @@ public:
 
 /// \brief Create an MCAsmParser instance.
 MCAsmParser *createMCAsmParser(SourceMgr &, MCContext &, MCStreamer &,
-                               const MCAsmInfo &, unsigned CB = 0);
+                               const MCAsmInfo &);
 
 } // end namespace llvm
 
