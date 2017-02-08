@@ -2491,7 +2491,6 @@ class X86TargetInfo : public TargetInfo {
   bool HasMWAITX = false;
   bool HasPKU = false;
   bool HasCLFLUSHOPT = false;
-  bool HasPCOMMIT = false;
   bool HasCLWB = false;
   bool HasUMIP = false;
   bool HasMOVBE = false;
@@ -3076,7 +3075,6 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "avx512bw", true);
     setFeatureEnabledImpl(Features, "avx512vl", true);
     setFeatureEnabledImpl(Features, "pku", true);
-    setFeatureEnabledImpl(Features, "pcommit", true);
     setFeatureEnabledImpl(Features, "clwb", true);
     // FALLTHROUGH
   case CK_SkylakeClient:
@@ -3560,8 +3558,6 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasPKU = true;
     } else if (Feature == "+clflushopt") {
       HasCLFLUSHOPT = true;
-    } else if (Feature == "+pcommit") {
-      HasPCOMMIT = true;
     } else if (Feature == "+clwb") {
       HasCLWB = true;
     } else if (Feature == "+umip") {
@@ -3984,7 +3980,6 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("movbe", HasMOVBE)
       .Case("mpx", HasMPX)
       .Case("pclmul", HasPCLMUL)
-      .Case("pcommit", HasPCOMMIT)
       .Case("pku", HasPKU)
       .Case("popcnt", HasPOPCNT)
       .Case("prefetchwt1", HasPREFETCHWT1)
