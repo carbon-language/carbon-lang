@@ -382,7 +382,9 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
           {IRB.CreatePointerCast(SecStart, Int32PtrTy),
             IRB.CreatePointerCast(SecEnd, Int32PtrTy)});
 
-      appendToGlobalCtors(M, CtorFunc, SanCtorAndDtorPriority);
+      // Use comdat to dedup CtorFunc.
+      CtorFunc->setComdat(M.getOrInsertComdat(SanCovModuleCtorName));
+      appendToGlobalCtors(M, CtorFunc, SanCtorAndDtorPriority, CtorFunc);
     }
   } else if (!Options.TracePC) {
     Function *CtorFunc;

@@ -7,7 +7,7 @@
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=3 -sanitizer-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK3
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -S | FileCheck %s --check-prefix=CHECK4
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -sanitizer-coverage-trace-pc  -S | FileCheck %s --check-prefix=CHECK_TRACE_PC
-; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -sanitizer-coverage-trace-pc-guard  -S | FileCheck %s --check-prefix=CHECK_TRACE_PC
+; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -sanitizer-coverage-trace-pc-guard  -S | FileCheck %s --check-prefix=CHECK_TRACE_PC_GUARD
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=3 -sanitizer-coverage-8bit-counters=1  -S | FileCheck %s --check-prefix=CHECK-8BIT
 
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=10 \
@@ -130,6 +130,18 @@ entry:
 ; CHECK_TRACE_PC: call void @__sanitizer_cov_trace_pc_indir
 ; CHECK_TRACE_PC: call void @__sanitizer_cov_trace_pc_indir
 ; CHECK_TRACE_PC: ret void
+
+; CHECK_TRACE_PC_GUARD-LABEL: define void @foo
+; CHECK_TRACE_PC_GUARD: call void @__sanitizer_cov_trace_pc
+; CHECK_TRACE_PC_GUARD: call void asm sideeffect "", ""()
+; CHECK_TRACE_PC_GUARD: ret void
+
+; CHECK_TRACE_PC_GUARD-LABEL: define void @CallViaVptr
+; CHECK_TRACE_PC_GUARD: call void @__sanitizer_cov_trace_pc_indir
+; CHECK_TRACE_PC_GUARD: call void @__sanitizer_cov_trace_pc_indir
+; CHECK_TRACE_PC_GUARD: ret void
+
+; CHECK_TRACE_PC_GUARD-LABEL: define internal void @sancov.module_ctor() comdat
 
 define void @call_unreachable() uwtable sanitize_address {
 entry:
