@@ -644,6 +644,13 @@ public:
 
   /// \returns SGPR allocation granularity supported by the subtarget.
   unsigned getSGPRAllocGranule() const {
+    if (getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+      return 16;
+    return 8;
+  }
+
+  /// \returns SGPR encoding granularity supported by the subtarget.
+  unsigned getSGPREncodingGranule() const {
     return 8;
   }
 
@@ -687,6 +694,11 @@ public:
   /// \returns VGPR allocation granularity supported by the subtarget.
   unsigned getVGPRAllocGranule() const {
     return 4;
+  }
+
+  /// \returns VGPR encoding granularity supported by the subtarget.
+  unsigned getVGPREncodingGranule() const {
+    return getVGPRAllocGranule();
   }
 
   /// \returns Total number of VGPRs supported by the subtarget.

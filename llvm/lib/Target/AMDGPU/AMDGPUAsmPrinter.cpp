@@ -546,13 +546,13 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
 
   // SGPRBlocks is actual number of SGPR blocks minus 1.
   ProgInfo.SGPRBlocks = alignTo(ProgInfo.NumSGPRsForWavesPerEU,
-                                STM.getSGPRAllocGranule());
-  ProgInfo.SGPRBlocks = ProgInfo.SGPRBlocks / STM.getSGPRAllocGranule() - 1;
+                                STM.getSGPREncodingGranule());
+  ProgInfo.SGPRBlocks = ProgInfo.SGPRBlocks / STM.getSGPREncodingGranule() - 1;
 
   // VGPRBlocks is actual number of VGPR blocks minus 1.
   ProgInfo.VGPRBlocks = alignTo(ProgInfo.NumVGPRsForWavesPerEU,
-                                STM.getVGPRAllocGranule());
-  ProgInfo.VGPRBlocks = ProgInfo.VGPRBlocks / STM.getVGPRAllocGranule() - 1;
+                                STM.getVGPREncodingGranule());
+  ProgInfo.VGPRBlocks = ProgInfo.VGPRBlocks / STM.getVGPREncodingGranule() - 1;
 
   // Record first reserved register and reserved register count fields, and
   // update max register counts if "amdgpu-debugger-reserve-regs" attribute was
