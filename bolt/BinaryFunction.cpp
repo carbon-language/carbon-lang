@@ -976,12 +976,24 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                    AbsoluteInstrAddr,
                                    nulls(),
                                    nulls())) {
-      // Ignore this function. Skip to the next one in non-relocs mode.
-      errs() << "BOLT-ERROR: unable to disassemble instruction at offset 0x"
-             << Twine::utohexstr(Offset) << " (address 0x"
-             << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
-             << *this << '\n';
-      IsSimple = false;
+      // Functions with "soft" boundaries, e.g. coming from assembly source,
+      // can have 0-byte padding at the end.
+      bool IsZeroPadding = true;
+      for (auto I = Offset; I < getSize(); ++I) {
+        if (FunctionData[I] != 0) {
+          IsZeroPadding = false;
+          break;
+        }
+      }
+
+      if (!IsZeroPadding) {
+        // Ignore this function. Skip to the next one in non-relocs mode.
+        errs() << "BOLT-ERROR: unable to disassemble instruction at offset 0x"
+               << Twine::utohexstr(Offset) << " (address 0x"
+               << Twine::utohexstr(AbsoluteInstrAddr) << ") in function "
+               << *this << '\n';
+        IsSimple = false;
+      }
       break;
     }
 
