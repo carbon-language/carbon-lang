@@ -1835,6 +1835,12 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     if (Changed) return II;
   }
 
+  if (auto *AMI = dyn_cast<ElementAtomicMemCpyInst>(II)) {
+    if (Constant *C = dyn_cast<Constant>(AMI->getNumElements()))
+      if (C->isNullValue())
+        return eraseInstFromFunction(*AMI);
+  }
+
   if (Instruction *I = SimplifyNVVMIntrinsic(II, *this))
     return I;
 
