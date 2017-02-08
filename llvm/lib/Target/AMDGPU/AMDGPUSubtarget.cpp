@@ -269,7 +269,7 @@ bool SISubtarget::isVGPRSpillingEnabled(const Function& F) const {
 }
 
 unsigned SISubtarget::getKernArgSegmentSize(const MachineFunction &MF,
-					    unsigned ExplicitArgBytes) const {
+                                            unsigned ExplicitArgBytes) const {
   unsigned ImplicitBytes = getImplicitArgNumBytes(MF);
   if (ImplicitBytes == 0)
     return ExplicitArgBytes;
