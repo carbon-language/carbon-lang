@@ -77,11 +77,11 @@ const volatile static constexpr inline A(int(&)[29]) -> A<int>; // expected-erro
 
 A(int(&)[30]) const -> A<int>; // expected-error {{deduction guide cannot have 'const' qualifier}}
 
-// FIXME: No definition is allowed.
-A(int(&)[40]) -> A<int> {}
-A(int(&)[41]) -> A<int> = default; // expected-error {{only special member functions may be defaulted}}
-A(int(&)[42]) -> A<int> = delete;
-A(int(&)[43]) -> A<int> try {} catch (...) {}
+// No definition is allowed.
+A(int(&)[40]) -> A<int> {} // expected-error {{deduction guide cannot have a function definition}}
+A(int(&)[41]) -> A<int> = default; // expected-error {{deduction guide cannot have a function definition}} expected-error {{only special member functions may be defaulted}}
+A(int(&)[42]) -> A<int> = delete; // expected-error {{deduction guide cannot have a function definition}}
+A(int(&)[43]) -> A<int> try {} catch (...) {} // expected-error {{deduction guide cannot have a function definition}}
 
 #ifdef CLASS
 };

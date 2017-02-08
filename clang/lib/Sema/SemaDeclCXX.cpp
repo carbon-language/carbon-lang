@@ -8129,6 +8129,9 @@ void Sema::CheckDeductionGuideDeclarator(Declarator &D, QualType &R,
 
   // FIXME: Check that the return type can instantiate to a specialization of
   // the template specified as the deduction-guide's name.
+
+  if (D.isFunctionDefinition())
+    Diag(D.getIdentifierLoc(), diag::err_deduction_guide_defines_function);
 }
 
 //===----------------------------------------------------------------------===//
