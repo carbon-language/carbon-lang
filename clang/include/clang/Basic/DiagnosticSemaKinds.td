@@ -1966,6 +1966,8 @@ def err_deduction_guide_no_trailing_return_type : Error<
 def err_deduction_guide_with_complex_decl : Error<
   "cannot specify any part of a return type in the "
   "declaration of a deduction guide">;
+def err_deduction_guide_invalid_specifier : Error<
+  "deduction guide cannot be declared '%0'">;
 def err_deduction_guide_name_not_class_template : Error<
   "cannot specify deduction guide for "
   "%select{<error>|function template|variable template|alias template|"
@@ -5775,8 +5777,8 @@ def err_this_static_member_func : Error<
 def err_invalid_member_use_in_static_method : Error<
   "invalid use of member %0 in static member function">;
 def err_invalid_qualified_function_type : Error<
-  "%select{static |non-}0member function %select{of type %2 |}1"
-  "cannot have '%3' qualifier">;
+  "%select{non-member function|static member function|deduction guide}0 "
+  "%select{of type %2 |}1cannot have '%3' qualifier">;
 def err_compound_qualified_function_type : Error<
   "%select{block pointer|pointer|reference}0 to function type %select{%2 |}1"
   "cannot have '%3' qualifier">;
