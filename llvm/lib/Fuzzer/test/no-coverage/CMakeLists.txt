@@ -5,7 +5,7 @@ set(CMAKE_CXX_FLAGS
   "${LIBFUZZER_FLAGS_BASE} -fno-sanitize-coverage=edge,trace-cmp,indirect-calls,8bit-counters,trace-pc-guard")
 
 set(NoCoverageTests
-  UninstrumentedTest
+  NotinstrumentedTest
   )
 
 foreach(Test ${NoCoverageTests})
