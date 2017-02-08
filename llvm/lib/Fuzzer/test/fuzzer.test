@@ -11,7 +11,7 @@ MaxTotalTime: Done {{.*}} runs in {{.}} second(s)
 
 RUN: not LLVMFuzzer-NullDerefTest                  2>&1 | FileCheck %s --check-prefix=NullDerefTest
 RUN: not LLVMFuzzer-NullDerefTest -close_fd_mask=3 2>&1 | FileCheck %s --check-prefix=NullDerefTest
-NullDerefTest: ERROR: AddressSanitizer: SEGV on unknown address
+NullDerefTest: ERROR: AddressSanitizer: {{SEGV|access-violation}} on unknown address
 NullDerefTest: Test unit written to ./crash-
 RUN: not LLVMFuzzer-NullDerefTest  -artifact_prefix=ZZZ 2>&1 | FileCheck %s --check-prefix=NullDerefTestPrefix
 NullDerefTestPrefix: Test unit written to ZZZcrash-
