@@ -2492,7 +2492,6 @@ class X86TargetInfo : public TargetInfo {
   bool HasPKU = false;
   bool HasCLFLUSHOPT = false;
   bool HasCLWB = false;
-  bool HasUMIP = false;
   bool HasMOVBE = false;
   bool HasPREFETCHWT1 = false;
 
@@ -3066,7 +3065,6 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "avx512ifma", true);
     setFeatureEnabledImpl(Features, "avx512vbmi", true);
     setFeatureEnabledImpl(Features, "sha", true);
-    setFeatureEnabledImpl(Features, "umip", true);
     LLVM_FALLTHROUGH;
   case CK_SkylakeServer:
     setFeatureEnabledImpl(Features, "avx512f", true);
@@ -3560,8 +3558,6 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
       HasCLFLUSHOPT = true;
     } else if (Feature == "+clwb") {
       HasCLWB = true;
-    } else if (Feature == "+umip") {
-      HasUMIP = true;
     } else if (Feature == "+prefetchwt1") {
       HasPREFETCHWT1 = true;
     }
@@ -3999,7 +3995,6 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("sse4.2", SSELevel >= SSE42)
       .Case("sse4a", XOPLevel >= SSE4A)
       .Case("tbm", HasTBM)
-      .Case("umip", HasUMIP)
       .Case("x86", true)
       .Case("x86_32", getTriple().getArch() == llvm::Triple::x86)
       .Case("x86_64", getTriple().getArch() == llvm::Triple::x86_64)
