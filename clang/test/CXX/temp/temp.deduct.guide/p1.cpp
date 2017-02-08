@@ -31,7 +31,7 @@ A(int(&)[5])[3] -> A<int>;
 
 // (Pending DR) attributes and parens around the declarator-id are OK.
 [[deprecated]] A(int(&)[6]) [[]] -> A<int> [[]];
-A [[]] (int(&)[7]) -> A<int>; // FIXME: expected-error 2{{expected}} expected-note {{to match}}
+A [[]] (int(&)[7]) -> A<int>;
 (A)(int(&)[8]) -> A<int>;
 
 // ... but the trailing-return-type is part of the function-declarator as normal
