@@ -410,22 +410,19 @@ std::string llvm::getRuntimeMDYAMLString(const FeatureBitset &Features,
   Program::Metadata Prog;
   Prog.MDVersionSeq.push_back(MDVersion);
   Prog.MDVersionSeq.push_back(MDRevision);
-  Prog.IsaInfo.WavefrontSize = AMDGPU::IsaInfo::getWavefrontSize(Features);
-  Prog.IsaInfo.LocalMemorySize = AMDGPU::IsaInfo::getLocalMemorySize(Features);
-  Prog.IsaInfo.EUsPerCU = AMDGPU::IsaInfo::getEUsPerCU(Features);
-  Prog.IsaInfo.MaxWavesPerEU = AMDGPU::IsaInfo::getMaxWavesPerEU(Features);
-  Prog.IsaInfo.MaxFlatWorkGroupSize =
-      AMDGPU::IsaInfo::getMaxFlatWorkGroupSize(Features);
-  Prog.IsaInfo.SGPRAllocGranule =
-      AMDGPU::IsaInfo::getSGPRAllocGranule(Features);
-  Prog.IsaInfo.TotalNumSGPRs = AMDGPU::IsaInfo::getTotalNumSGPRs(Features);
-  Prog.IsaInfo.AddressableNumSGPRs =
-      AMDGPU::IsaInfo::getAddressableNumSGPRs(Features);
-  Prog.IsaInfo.VGPRAllocGranule =
-      AMDGPU::IsaInfo::getVGPRAllocGranule(Features);
-  Prog.IsaInfo.TotalNumVGPRs = AMDGPU::IsaInfo::getTotalNumVGPRs(Features);
-  Prog.IsaInfo.AddressableNumVGPRs =
-      AMDGPU::IsaInfo::getAddressableNumVGPRs(Features);
+
+  IsaInfo::Metadata &IIM = Prog.IsaInfo;
+  IIM.WavefrontSize = AMDGPU::IsaInfo::getWavefrontSize(Features);
+  IIM.LocalMemorySize = AMDGPU::IsaInfo::getLocalMemorySize(Features);
+  IIM.EUsPerCU = AMDGPU::IsaInfo::getEUsPerCU(Features);
+  IIM.MaxWavesPerEU = AMDGPU::IsaInfo::getMaxWavesPerEU(Features);
+  IIM.MaxFlatWorkGroupSize = AMDGPU::IsaInfo::getMaxFlatWorkGroupSize(Features);
+  IIM.SGPRAllocGranule = AMDGPU::IsaInfo::getSGPRAllocGranule(Features);
+  IIM.TotalNumSGPRs = AMDGPU::IsaInfo::getTotalNumSGPRs(Features);
+  IIM.AddressableNumSGPRs = AMDGPU::IsaInfo::getAddressableNumSGPRs(Features);
+  IIM.VGPRAllocGranule = AMDGPU::IsaInfo::getVGPRAllocGranule(Features);
+  IIM.TotalNumVGPRs = AMDGPU::IsaInfo::getTotalNumVGPRs(Features);
+  IIM.AddressableNumVGPRs = AMDGPU::IsaInfo::getAddressableNumVGPRs(Features);
 
   // Set PrintfInfo.
   if (auto MD = M.getNamedMetadata("llvm.printf.fmts")) {
