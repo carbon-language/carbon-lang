@@ -3879,6 +3879,8 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16");
   if (HasCLFLUSHOPT)
     Builder.defineMacro("__CLFLUSHOPT__");
+  if (HasCLWB)
+    Builder.defineMacro("__CLWB__");
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {

@@ -55,6 +55,11 @@
 // CLFLUSHOPT: "-target-feature" "+clflushopt"
 // NO-CLFLUSHOPT: "-target-feature" "-clflushopt"
 
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mclwb %s -### -o %t.o 2>&1 | FileCheck -check-prefix=CLWB %s
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-clwb %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-CLWB %s
+// CLWB: "-target-feature" "+clwb"
+// NO-CLWB: "-target-feature" "-clwb"
+
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mmovbe %s -### -o %t.o 2>&1 | FileCheck -check-prefix=MOVBE %s
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-movbe %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-MOVBE %s
 // MOVBE: "-target-feature" "+movbe"
