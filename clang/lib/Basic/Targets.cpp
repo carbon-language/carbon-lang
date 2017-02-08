@@ -3067,7 +3067,7 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "avx512vbmi", true);
     setFeatureEnabledImpl(Features, "sha", true);
     setFeatureEnabledImpl(Features, "umip", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_SkylakeServer:
     setFeatureEnabledImpl(Features, "avx512f", true);
     setFeatureEnabledImpl(Features, "avx512cd", true);
@@ -3076,18 +3076,18 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "avx512vl", true);
     setFeatureEnabledImpl(Features, "pku", true);
     setFeatureEnabledImpl(Features, "clwb", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_SkylakeClient:
     setFeatureEnabledImpl(Features, "xsavec", true);
     setFeatureEnabledImpl(Features, "xsaves", true);
     setFeatureEnabledImpl(Features, "mpx", true);
     setFeatureEnabledImpl(Features, "sgx", true);
     setFeatureEnabledImpl(Features, "clflushopt", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_Broadwell:
     setFeatureEnabledImpl(Features, "rdseed", true);
     setFeatureEnabledImpl(Features, "adx", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_Haswell:
     setFeatureEnabledImpl(Features, "avx2", true);
     setFeatureEnabledImpl(Features, "lzcnt", true);
@@ -3096,22 +3096,22 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "rtm", true);
     setFeatureEnabledImpl(Features, "fma", true);
     setFeatureEnabledImpl(Features, "movbe", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_IvyBridge:
     setFeatureEnabledImpl(Features, "rdrnd", true);
     setFeatureEnabledImpl(Features, "f16c", true);
     setFeatureEnabledImpl(Features, "fsgsbase", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_SandyBridge:
     setFeatureEnabledImpl(Features, "avx", true);
     setFeatureEnabledImpl(Features, "xsave", true);
     setFeatureEnabledImpl(Features, "xsaveopt", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_Westmere:
   case CK_Silvermont:
     setFeatureEnabledImpl(Features, "aes", true);
     setFeatureEnabledImpl(Features, "pclmul", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_Nehalem:
     setFeatureEnabledImpl(Features, "sse4.2", true);
     setFeatureEnabledImpl(Features, "fxsr", true);
@@ -3171,7 +3171,7 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "sse4a", true);
     setFeatureEnabledImpl(Features, "lzcnt", true);
     setFeatureEnabledImpl(Features, "popcnt", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_K8SSE3:
   case CK_OpteronSSE3:
   case CK_Athlon64SSE3:
@@ -3186,7 +3186,7 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "f16c", true);
     setFeatureEnabledImpl(Features, "xsaveopt", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_BTVER1:
     setFeatureEnabledImpl(Features, "ssse3", true);
     setFeatureEnabledImpl(Features, "sse4a", true);
@@ -3227,17 +3227,17 @@ bool X86TargetInfo::initFeatureMap(
     setFeatureEnabledImpl(Features, "avx2", true);
     setFeatureEnabledImpl(Features, "bmi2", true);
     setFeatureEnabledImpl(Features, "mwaitx", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_BDVER3:
     setFeatureEnabledImpl(Features, "fsgsbase", true);
     setFeatureEnabledImpl(Features, "xsaveopt", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_BDVER2:
     setFeatureEnabledImpl(Features, "bmi", true);
     setFeatureEnabledImpl(Features, "fma", true);
     setFeatureEnabledImpl(Features, "f16c", true);
     setFeatureEnabledImpl(Features, "tbm", true);
-    // FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case CK_BDVER1:
     // xop implies avx, sse4a and fma4.
     setFeatureEnabledImpl(Features, "xop", true);
