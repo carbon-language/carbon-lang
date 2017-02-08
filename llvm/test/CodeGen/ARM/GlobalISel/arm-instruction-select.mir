@@ -13,7 +13,7 @@
 
   define void @test_load_from_stack() { ret void }
 
-  attributes #0 = { "target-features"="+vfp2" }
+  attributes #0 = { "target-features"="+vfp2,-neonfp" }
 ...
 ---
 name:            test_zext_s1
