@@ -69,3 +69,8 @@
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-mpx %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-MPX %s
 // MPX: "-target-feature" "+mpx"
 // NO-MPX: "-target-feature" "-mpx"
+
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -msgx %s -### -o %t.o 2>&1 | FileCheck -check-prefix=SGX %s
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-sgx %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-SGX %s
+// SGX: "-target-feature" "+sgx"
+// NO-SGX: "-target-feature" "-sgx"

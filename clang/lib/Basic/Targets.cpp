@@ -3883,6 +3883,8 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__CLWB__");
   if (HasMPX)
     Builder.defineMacro("__MPX__");
+  if (HasSGX)
+    Builder.defineMacro("__SGX__");
 
   // Each case falls through to the previous one here.
   switch (SSELevel) {

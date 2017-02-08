@@ -2203,6 +2203,8 @@ X86
 
 .. option:: -mrtm, -mno-rtm
 
+.. option:: -msgx, -mno-sgx
+
 .. option:: -msha, -mno-sha
 
 .. option:: -msse, -mno-sse
