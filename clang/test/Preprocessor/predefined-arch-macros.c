@@ -731,6 +731,7 @@
 // CHECK_KNL_M32: #define __MMX__ 1
 // CHECK_KNL_M32: #define __PCLMUL__ 1
 // CHECK_KNL_M32: #define __POPCNT__ 1
+// CHECK_KNL_M32: #define __PREFETCHWT1__ 1
 // CHECK_KNL_M32: #define __RDRND__ 1
 // CHECK_KNL_M32: #define __RTM__ 1
 // CHECK_KNL_M32: #define __SSE2__ 1
@@ -766,6 +767,7 @@
 // CHECK_KNL_M64: #define __MMX__ 1
 // CHECK_KNL_M64: #define __PCLMUL__ 1
 // CHECK_KNL_M64: #define __POPCNT__ 1
+// CHECK_KNL_M64: #define __PREFETCHWT1__ 1
 // CHECK_KNL_M64: #define __RDRND__ 1
 // CHECK_KNL_M64: #define __RTM__ 1
 // CHECK_KNL_M64: #define __SSE2_MATH__ 1

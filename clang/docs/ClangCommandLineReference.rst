@@ -2195,6 +2195,8 @@ X86
 
 .. option:: -mpopcnt, -mno-popcnt
 
+.. option:: -mprefetchwt1, -mno-prefetchwt1
+
 .. option:: -mprfchw, -mno-prfchw
 
 .. option:: -mrdrnd, -mno-rdrnd

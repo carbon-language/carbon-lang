@@ -74,3 +74,8 @@
 // RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-sgx %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-SGX %s
 // SGX: "-target-feature" "+sgx"
 // NO-SGX: "-target-feature" "-sgx"
+
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mprefetchwt1 %s -### -o %t.o 2>&1 | FileCheck -check-prefix=PREFETCHWT1 %s
+// RUN: %clang -target i386-unknown-linux-gnu -march=i386 -mno-prefetchwt1 %s -### -o %t.o 2>&1 | FileCheck -check-prefix=NO-PREFETCHWT1 %s
+// PREFETCHWT1: "-target-feature" "+prefetchwt1"
+// NO-PREFETCHWT1: "-target-feature" "-prefetchwt1"
