@@ -217,8 +217,6 @@ def FeaturePadShortFunctions : SubtargetFeature<"pad-short-functions",
                                      "Pad short functions">;
 def FeatureINVPCID : SubtargetFeature<"invpcid", "HasInvPCId", "true",
                                       "Invalidate Process-Context Identifier">;
-def FeatureVMFUNC  : SubtargetFeature<"vmfunc", "HasVMFUNC", "true",
-                                      "VM Functions">;
 def FeatureSMAP    : SubtargetFeature<"smap", "HasSMAP", "true",
                                       "Supervisor Mode Access Protection">;
 def FeatureSGX     : SubtargetFeature<"sgx", "HasSGX", "true",
@@ -497,7 +495,6 @@ def HSWFeatures : ProcessorFeatures<IVBFeatures.Value, [
   FeatureLZCNT,
   FeatureMOVBE,
   FeatureINVPCID,
-  FeatureVMFUNC,
   FeatureRTM,
   FeatureHLE,
   FeatureSlowIncDec

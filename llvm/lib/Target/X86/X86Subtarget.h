@@ -274,9 +274,6 @@ protected:
   /// Processor supports Invalidate Process-Context Identifier
   bool HasInvPCId;
 
-  /// Processor has VM Functions
-  bool HasVMFUNC;
-
   /// Processor has Supervisor Mode Access Protection
   bool HasSMAP;
 
