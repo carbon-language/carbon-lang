@@ -25,6 +25,5 @@ if(NOT MSVC)
       "${CMAKE_BINARY_DIR}/lib/Fuzzer/test"
       )
 
-  # Propagate value into parent directory
-  set(TestBinaries ${TestBinaries} AFLDriverTest PARENT_SCOPE)
+  add_dependencies(TestBinaries AFLDriverTest)
 endif()
