@@ -286,9 +286,6 @@ protected:
   /// Processor supports Flush Cache Line instruction
   bool HasCLFLUSHOPT;
 
-  /// Processor has Persistent Commit feature
-  bool HasPCOMMIT;
-
   /// Processor supports Cache Line Write Back instruction
   bool HasCLWB;
 
