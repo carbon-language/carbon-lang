@@ -487,6 +487,7 @@ public:
   bool hasVLX() const { return HasVLX; }
   bool hasPKU() const { return HasPKU; }
   bool hasMPX() const { return HasMPX; }
+  bool hasCLFLUSHOPT() const { return HasCLFLUSHOPT; }
 
   bool isXRaySupported() const override { return is64Bit(); }
 
