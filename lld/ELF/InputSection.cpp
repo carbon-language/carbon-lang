@@ -214,9 +214,9 @@ InputSectionBase<ELFT> *InputSection<ELFT>::getRelocatedSection() {
   return Sections[this->Info];
 }
 
-// This is used for -r and --emit-relocs. We can't use memcpy to copy
-// relocations because we need to update symbol table offset and section index
-// for each relocation. So we copy relocations one by one.
+// This is used for -r. We can't use memcpy to copy relocations because we need
+// to update symbol table offset and section index for each relocation. So we
+// copy relocations one by one.
 template <class ELFT>
 template <class RelTy>
 void InputSection<ELFT>::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
@@ -235,11 +235,7 @@ void InputSection<ELFT>::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
 
     if (Config->Rela)
       P->r_addend = getAddend<ELFT>(Rel);
-
-    // Output section VA is zero for -r, so r_offset is an offset within the
-    // section, but for --emit-relocs it is an virtual address.
-    P->r_offset = RelocatedSection->OutSec->Addr +
-                  RelocatedSection->getOffset(Rel.r_offset);
+    P->r_offset = RelocatedSection->getOffset(Rel.r_offset);
     P->setSymbolAndType(In<ELFT>::SymTab->getSymbolIndex(&Body), Type,
                         Config->Mips64EL);
   }
@@ -518,8 +514,7 @@ template <class ELFT> void InputSection<ELFT>::writeTo(uint8_t *Buf) {
     return;
   }
 
-  // If -r or --emit-relocs is given, then an InputSection
-  // may be a relocation section.
+  // If -r is given, then an InputSection may be a relocation section.
   if (this->Type == SHT_RELA) {
     copyRelocations(Buf + OutSecOff, this->template getDataAs<Elf_Rela>());
     return;
