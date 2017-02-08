@@ -481,11 +481,12 @@ static Constant *getConstantAt(Value *V, Instruction *At, LazyValueInfo *LVI) {
 static bool runImpl(Function &F, LazyValueInfo *LVI) {
   bool FnChanged = false;
 
-  // Visiting in an inverse depth first traversal maximizes reuse of the LVI
-  // cache, as it currently iterates in depth first order upwards, caching
-  // overdefined info as it goes.
-
-  for (BasicBlock *BB : inverse_depth_first(&F.getEntryBlock())) {
+  // Visiting in a pre-order depth-first traversal causes us to simplify early
+  // blocks before querying later blocks (which require us to analyze early
+  // blocks).  Eagerly simplifying shallow blocks means there is strictly less
+  // work to do for deep blocks.  This also means we don't visit unreachable
+  // blocks. 
+  for (BasicBlock *BB : depth_first(&F.getEntryBlock())) {
     bool BBChanged = false;
     for (BasicBlock::iterator BI = BB->begin(), BE = BB->end(); BI != BE;) {
       Instruction *II = &*BI++;
