@@ -2163,6 +2163,8 @@ X86
 
 .. option:: -mbmi2, -mno-bmi2
 
+.. option:: -mclflushopt, -mno-clflushopt
+
 .. option:: -mcx16, -mno-cx16
 
 .. option:: -mf16c, -mno-f16c

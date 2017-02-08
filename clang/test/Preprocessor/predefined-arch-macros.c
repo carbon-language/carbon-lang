@@ -651,6 +651,7 @@
 // CHECK_SKL_M32: #define __AVX__ 1
 // CHECK_SKL_M32: #define __BMI2__ 1
 // CHECK_SKL_M32: #define __BMI__ 1
+// CHECK_SKL_M32: #define __CLFLUSHOPT__ 1
 // CHECK_SKL_M32: #define __F16C__ 1
 // CHECK_SKL_M32: #define __FMA__ 1
 // CHECK_SKL_M32: #define __LZCNT__ 1
@@ -681,6 +682,7 @@
 // CHECK_SKL_M64: #define __AVX__ 1
 // CHECK_SKL_M64: #define __BMI2__ 1
 // CHECK_SKL_M64: #define __BMI__ 1
+// CHECK_SKL_M64: #define __CLFLUSHOPT__ 1
 // CHECK_SKL_M64: #define __F16C__ 1
 // CHECK_SKL_M64: #define __FMA__ 1
 // CHECK_SKL_M64: #define __LZCNT__ 1
@@ -793,6 +795,7 @@
 // CHECK_SKX_M32: #define __AVX__ 1
 // CHECK_SKX_M32: #define __BMI2__ 1
 // CHECK_SKX_M32: #define __BMI__ 1
+// CHECK_SKX_M32: #define __CLFLUSHOPT__ 1
 // CHECK_SKX_M32: #define __F16C__ 1
 // CHECK_SKX_M32: #define __FMA__ 1
 // CHECK_SKX_M32: #define __LZCNT__ 1
@@ -831,6 +834,7 @@
 // CHECK_SKX_M64: #define __AVX__ 1
 // CHECK_SKX_M64: #define __BMI2__ 1
 // CHECK_SKX_M64: #define __BMI__ 1
+// CHECK_SKX_M64: #define __CLFLUSHOPT__ 1
 // CHECK_SKX_M64: #define __F16C__ 1
 // CHECK_SKX_M64: #define __FMA__ 1
 // CHECK_SKX_M64: #define __LZCNT__ 1
@@ -874,6 +878,7 @@
 // CHECK_CNL_M32: #define __AVX__ 1
 // CHECK_CNL_M32: #define __BMI2__ 1
 // CHECK_CNL_M32: #define __BMI__ 1
+// CHECK_CNL_M32: #define __CLFLUSHOPT__ 1
 // CHECK_CNL_M32: #define __F16C__ 1
 // CHECK_CNL_M32: #define __FMA__ 1
 // CHECK_CNL_M32: #define __LZCNT__ 1
@@ -912,6 +917,7 @@
 // CHECK_CNL_M64: #define __AVX__ 1
 // CHECK_CNL_M64: #define __BMI2__ 1
 // CHECK_CNL_M64: #define __BMI__ 1
+// CHECK_CNL_M64: #define __CLFLUSHOPT__ 1
 // CHECK_CNL_M64: #define __F16C__ 1
 // CHECK_CNL_M64: #define __FMA__ 1
 // CHECK_CNL_M64: #define __LZCNT__ 1
@@ -1860,6 +1866,7 @@
 // CHECK_ZNVER1_M32: #define __AVX__ 1
 // CHECK_ZNVER1_M32: #define __BMI2__ 1
 // CHECK_ZNVER1_M32: #define __BMI__ 1
+// CHECK_ZNVER1_M32: #define __CLFLUSHOPT__ 1
 // CHECK_ZNVER1_M32: #define __F16C__ 1
 // CHECK_ZNVER1_M32: #define __FMA__ 1
 // CHECK_ZNVER1_M32: #define __FSGSBASE__ 1
@@ -1900,6 +1907,7 @@
 // CHECK_ZNVER1_M64: #define __AVX__ 1
 // CHECK_ZNVER1_M64: #define __BMI2__ 1
 // CHECK_ZNVER1_M64: #define __BMI__ 1
+// CHECK_ZNVER1_M64: #define __CLFLUSHOPT__ 1
 // CHECK_ZNVER1_M64: #define __F16C__ 1
 // CHECK_ZNVER1_M64: #define __FMA__ 1
 // CHECK_ZNVER1_M64: #define __FSGSBASE__ 1
