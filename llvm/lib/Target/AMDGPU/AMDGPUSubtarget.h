@@ -642,7 +642,85 @@ public:
     return true;
   }
 
-  unsigned getMaxNumSGPRs() const;
+  /// \returns SGPR allocation granularity supported by the subtarget.
+  unsigned getSGPRAllocGranule() const {
+    return 8;
+  }
+
+  /// \returns Total number of SGPRs supported by the subtarget.
+  unsigned getTotalNumSGPRs() const {
+    if (getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+      return 800;
+    return 512;
+  }
+
+  /// \returns Addressable number of SGPRs supported by the subtarget.
+  unsigned getAddressableNumSGPRs() const {
+    if (hasSGPRInitBug())
+      return SISubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
+    if (getGeneration() >= VOLCANIC_ISLANDS)
+      return 102;
+    return 104;
+  }
+
+  /// \returns Minimum number of SGPRs that meets the given number of waves per
+  /// execution unit requirement supported by the subtarget.
+  unsigned getMinNumSGPRs(unsigned WavesPerEU) const;
+
+  /// \returns Maximum number of SGPRs that meets the given number of waves per
+  /// execution unit requirement supported by the subtarget.
+  unsigned getMaxNumSGPRs(unsigned WavesPerEU, bool Addressable) const;
+
+  /// \returns Reserved number of SGPRs for given function \p MF.
+  unsigned getReservedNumSGPRs(const MachineFunction &MF) const;
+
+  /// \returns Maximum number of SGPRs that meets number of waves per execution
+  /// unit requirement for function \p MF, or number of SGPRs explicitly
+  /// requested using "amdgpu-num-sgpr" attribute attached to function \p MF.
+  ///
+  /// \returns Value that meets number of waves per execution unit requirement
+  /// if explicitly requested value cannot be converted to integer, violates
+  /// subtarget's specifications, or does not meet number of waves per execution
+  /// unit requirement.
+  unsigned getMaxNumSGPRs(const MachineFunction &MF) const;
+
+  /// \returns VGPR allocation granularity supported by the subtarget.
+  unsigned getVGPRAllocGranule() const {
+    return 4;
+  }
+
+  /// \returns Total number of VGPRs supported by the subtarget.
+  unsigned getTotalNumVGPRs() const {
+    return 256;
+  }
+
+  /// \returns Addressable number of VGPRs supported by the subtarget.
+  unsigned getAddressableNumVGPRs() const {
+    return getTotalNumVGPRs();
+  }
+
+  /// \returns Minimum number of VGPRs that meets given number of waves per
+  /// execution unit requirement supported by the subtarget.
+  unsigned getMinNumVGPRs(unsigned WavesPerEU) const;
+
+  /// \returns Maximum number of VGPRs that meets given number of waves per
+  /// execution unit requirement supported by the subtarget.
+  unsigned getMaxNumVGPRs(unsigned WavesPerEU) const;
+
+  /// \returns Reserved number of VGPRs for given function \p MF.
+  unsigned getReservedNumVGPRs(const MachineFunction &MF) const {
+    return debuggerReserveRegs() ? 4 : 0;
+  }
+
+  /// \returns Maximum number of VGPRs that meets number of waves per execution
+  /// unit requirement for function \p MF, or number of VGPRs explicitly
+  /// requested using "amdgpu-num-vgpr" attribute attached to function \p MF.
+  ///
+  /// \returns Value that meets number of waves per execution unit requirement
+  /// if explicitly requested value cannot be converted to integer, violates
+  /// subtarget's specifications, or does not meet number of waves per execution
+  /// unit requirement.
+  unsigned getMaxNumVGPRs(const MachineFunction &MF) const;
 };
 
 } // end namespace llvm
