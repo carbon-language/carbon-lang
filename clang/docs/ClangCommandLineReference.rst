@@ -2165,6 +2165,8 @@ X86
 
 .. option:: -mclflushopt, -mno-clflushopt
 
+.. option:: -mclwb, -mno-clwb
+
 .. option:: -mcx16, -mno-cx16
 
 .. option:: -mf16c, -mno-f16c
@@ -2180,6 +2182,8 @@ X86
 .. option:: -mlzcnt, -mno-lzcnt
 
 .. option:: -mmmx, -mno-mmx
+
+.. option:: -mmovbe, -mno-movbe
 
 .. option:: -mmpx, -mno-mpx
 
