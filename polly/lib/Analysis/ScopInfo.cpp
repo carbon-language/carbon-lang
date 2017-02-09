@@ -3327,20 +3327,22 @@ Scop::~Scop() {
 void Scop::updateAccessDimensionality() {
   // Check all array accesses for each base pointer and find a (virtual) element
   // size for the base pointer that divides all access functions.
-  for (auto &Stmt : *this)
-    for (auto *Access : Stmt) {
+  for (ScopStmt &Stmt : *this)
+    for (MemoryAccess *Access : Stmt) {
       if (!Access->isArrayKind())
         continue;
-      auto &SAI = ScopArrayInfoMap[std::make_pair(Access->getBaseAddr(),
-                                                  MemoryKind::Array)];
-      if (SAI->getNumberOfDimensions() != 1)
+      ScopArrayInfo *Array =
+          ScopArrayInfoMap[std::make_pair(Access->getBaseAddr(),
+                                          MemoryKind::Array)]
+              .get();
+      if (Array->getNumberOfDimensions() != 1)
         continue;
-      unsigned DivisibleSize = SAI->getElemSizeInBytes();
-      auto *Subscript = Access->getSubscript(0);
+      unsigned DivisibleSize = Array->getElemSizeInBytes();
+      const SCEV *Subscript = Access->getSubscript(0);
       while (!isDivisible(Subscript, DivisibleSize, *SE))
         DivisibleSize /= 2;
       auto *Ty = IntegerType::get(SE->getContext(), DivisibleSize * 8);
-      SAI->updateElementType(Ty);
+      Array->updateElementType(Ty);
     }
 
   for (auto &Stmt : *this)
