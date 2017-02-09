@@ -932,7 +932,7 @@ class Configuration(object):
         # Configure run shortcut
         sub.append(('%run', exec_str + ' %t.exe'))
         # Configure not program substitutions
-        not_py = os.path.join(self.libcxx_src_root, 'utils', 'not', 'not.py')
+        not_py = os.path.join(self.libcxx_src_root, 'utils', 'not.py')
         not_str = '%s %s ' % (sys.executable, not_py)
         sub.append(('not ', not_str))
 

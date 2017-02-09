@@ -152,9 +152,9 @@ def is_library_file(filename):
 
 
 def extract_or_load(filename):
-    import sym_check.extract
+    import libcxx.sym_check.extract
     if is_library_file(filename):
-        return sym_check.extract.extract_symbols(filename)
+        return libcxx.sym_check.extract.extract_symbols(filename)
     return read_syms_from_file(filename)
 
 def adjust_mangled_name(name):

@@ -14,7 +14,7 @@ import distutils.spawn
 import sys
 import re
 
-from sym_check import util
+from libcxx.sym_check import util
 
 extract_ignore_names = ['_init', '_fini']
 
