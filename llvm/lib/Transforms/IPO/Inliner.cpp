@@ -900,8 +900,8 @@ PreservedAnalyses InlinerPass::run(LazyCallGraph::SCC &InitialC,
     // below.
     for (Function *InlinedCallee : InlinedCallees) {
       LazyCallGraph::Node &CalleeN = *CG.lookup(*InlinedCallee);
-      for (LazyCallGraph::Edge &E : CalleeN)
-        RC->insertTrivialRefEdge(N, *E.getNode());
+      for (LazyCallGraph::Edge &E : *CalleeN)
+        RC->insertTrivialRefEdge(N, E.getNode());
     }
     InlinedCallees.clear();
 
