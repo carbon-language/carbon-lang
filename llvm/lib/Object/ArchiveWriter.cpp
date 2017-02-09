@@ -316,6 +316,8 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
   if (HeaderStartOffset == 0)
     return 0;
 
+  // ld64 prefers the cctools type archive which pads its string table to a
+  // boundary of sizeof(int32_t).
   if (Kind == object::Archive::K_BSD)
     for (unsigned P = OffsetToAlignment(NameOS.tell(), sizeof(int32_t)); P--;)
       NameOS << '\0';
