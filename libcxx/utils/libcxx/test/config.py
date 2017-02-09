@@ -17,10 +17,6 @@ import shlex
 import shutil
 import sys
 
-import lit.Test  # pylint: disable=import-error,no-name-in-module
-import lit.util  # pylint: disable=import-error,no-name-in-module
-
-from libcxx.test.format import LibcxxTestFormat
 from libcxx.compiler import CXXCompiler
 from libcxx.test.target_info import make_target_info
 from libcxx.test.executor import *
@@ -164,6 +160,7 @@ class Configuration(object):
         sys.stderr.flush()  # Force flushing to avoid broken output on Windows
 
     def get_test_format(self):
+        from libcxx.test.format import LibcxxTestFormat
         return LibcxxTestFormat(
             self.cxx,
             self.use_clang_verify,
@@ -200,7 +197,7 @@ class Configuration(object):
         # If no specific cxx_under_test was given, attempt to infer it as
         # clang++.
         if cxx is None or self.cxx_is_clang_cl:
-            clangxx = lit.util.which('clang++',
+            clangxx = libcxx.util.which('clang++',
                                      self.config.environment['PATH'])
             if clangxx:
                 cxx = clangxx
@@ -799,13 +796,13 @@ class Configuration(object):
             # Search for llvm-symbolizer along the compiler path first
             # and then along the PATH env variable.
             symbolizer_search_paths = os.environ.get('PATH', '')
-            cxx_path = lit.util.which(self.cxx.path)
+            cxx_path = libcxx.util.which(self.cxx.path)
             if cxx_path is not None:
                 symbolizer_search_paths = (
                     os.path.dirname(cxx_path) +
                     os.pathsep + symbolizer_search_paths)
-            llvm_symbolizer = lit.util.which('llvm-symbolizer',
-                                             symbolizer_search_paths)
+            llvm_symbolizer = libcxx.util.which('llvm-symbolizer',
+                                                symbolizer_search_paths)
 
             def add_ubsan():
                 self.cxx.flags += ['-fsanitize=undefined',
