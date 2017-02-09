@@ -362,6 +362,15 @@ void BuildIdSection<ELFT>::computeHash(
 }
 
 template <class ELFT>
+CopyRelSection<ELFT>::CopyRelSection(bool ReadOnly, uintX_t AddrAlign, size_t S)
+    : SyntheticSection<ELFT>(SHF_ALLOC, SHT_NOBITS, AddrAlign,
+                             ReadOnly ? ".bss.rel.ro" : ".bss"),
+      Size(S) {
+  if (!ReadOnly)
+    this->Flags |= SHF_WRITE;
+}
+
+template <class ELFT>
 void BuildIdSection<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
   switch (Config->BuildId) {
   case BuildIdKind::Fast:
@@ -965,8 +974,6 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 typename ELFT::uint DynamicReloc<ELFT>::getOffset() const {
-  if (OutputSec)
-    return OutputSec->Addr + OffsetInSec;
   return InputSec->OutSec->Addr + InputSec->getOffset(OffsetInSec);
 }
 
@@ -1228,7 +1235,7 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(*Sym);
     if (SS.needsCopy())
-      return SS.getBssSectionForCopy();
+      return SS.getBssSectionForCopy()->OutSec;
     break;
   }
   case SymbolBody::UndefinedKind:
@@ -2050,6 +2057,11 @@ template class elf::BuildIdSection<ELF32LE>;
 template class elf::BuildIdSection<ELF32BE>;
 template class elf::BuildIdSection<ELF64LE>;
 template class elf::BuildIdSection<ELF64BE>;
+
+template class elf::CopyRelSection<ELF32LE>;
+template class elf::CopyRelSection<ELF32BE>;
+template class elf::CopyRelSection<ELF64LE>;
+template class elf::CopyRelSection<ELF64BE>;
 
 template class elf::GotSection<ELF32LE>;
 template class elf::GotSection<ELF32BE>;

@@ -107,6 +107,18 @@ private:
   uint8_t *HashBuf;
 };
 
+// SHT_NOBITS section created for a copyReloc
+template <class ELFT>
+class CopyRelSection final : public SyntheticSection<ELFT> {
+  typedef typename ELFT::uint uintX_t;
+
+public:
+  CopyRelSection(bool ReadOnly, uintX_t AddrAlign, size_t Size);
+  void writeTo(uint8_t *) override {}
+  size_t getSize() const override { return Size; }
+  size_t Size;
+};
+
 template <class ELFT>
 class MipsGotSection final : public SyntheticSection<ELFT> {
   typedef typename ELFT::uint uintX_t;
@@ -271,16 +283,9 @@ public:
       : Type(Type), Sym(Sym), InputSec(InputSec), OffsetInSec(OffsetInSec),
         UseSymVA(UseSymVA), Addend(Addend) {}
 
-  DynamicReloc(uint32_t Type, const OutputSectionBase *OutputSec,
-               uintX_t OffsetInSec, bool UseSymVA, SymbolBody *Sym,
-               uintX_t Addend)
-      : Type(Type), Sym(Sym), OutputSec(OutputSec), OffsetInSec(OffsetInSec),
-        UseSymVA(UseSymVA), Addend(Addend) {}
-
   uintX_t getOffset() const;
   uintX_t getAddend() const;
   uint32_t getSymIndex() const;
-  const OutputSectionBase *getOutputSec() const { return OutputSec; }
   const InputSectionBase<ELFT> *getInputSec() const { return InputSec; }
 
   uint32_t Type;
@@ -288,7 +293,6 @@ public:
 private:
   SymbolBody *Sym;
   const InputSectionBase<ELFT> *InputSec = nullptr;
-  const OutputSectionBase *OutputSec = nullptr;
   uintX_t OffsetInSec;
   bool UseSymVA;
   uintX_t Addend;
