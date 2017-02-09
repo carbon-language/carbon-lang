@@ -1607,7 +1607,14 @@ void LazyCallGraph::removeDeadFunction(Function &F) {
   // Validate these properties first.
   assert(C.size() == 1 && "Dead functions must be in a singular SCC");
   assert(RC.size() == 1 && "Dead functions must be in a singular RefSCC");
-  assert(RC.Parents.empty() && "Cannot have parents of a dead RefSCC!");
+
+  // Clean up any remaining reference edges. Note that we walk an unordered set
+  // here but are just removing and so the order doesn't matter.
+  for (RefSCC &ParentRC : RC.parents())
+    for (SCC &ParentC : ParentRC)
+      for (Node &ParentN : ParentC)
+        if (ParentN)
+          ParentN->removeEdgeInternal(N);
 
   // Now remove this RefSCC from any parents sets and the leaf list.
   for (Edge &E : *N)

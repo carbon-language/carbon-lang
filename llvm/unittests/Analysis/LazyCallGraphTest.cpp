@@ -1979,4 +1979,85 @@ TEST(LazyCallGraphTest, ReplaceNodeFunction) {
   EXPECT_EQ(&DN, &(*CN)[DN].getNode());
   EXPECT_EQ(&DN, &(*BN)[DN].getNode());
 }
+
+TEST(LazyCallGraphTest, RemoveFunctionWithSpurriousRef) {
+  LLVMContext Context;
+  // A graph with a couple of RefSCCs.
+  std::unique_ptr<Module> M =
+      parseAssembly(Context,
+                    "define void @a(i8** %ptr) {\n"
+                    "entry:\n"
+                    "  store i8* bitcast (void(i8**)* @d to i8*), i8** %ptr\n"
+                    "  ret void\n"
+                    "}\n"
+                    "define void @b(i8** %ptr) {\n"
+                    "entry:\n"
+                    "  store i8* bitcast (void(i8**)* @c to i8*), i8** %ptr\n"
+                    "  ret void\n"
+                    "}\n"
+                    "define void @c(i8** %ptr) {\n"
+                    "entry:\n"
+                    "  call void @d(i8** %ptr)"
+                    "  ret void\n"
+                    "}\n"
+                    "define void @d(i8** %ptr) {\n"
+                    "entry:\n"
+                    "  call void @c(i8** %ptr)"
+                    "  store i8* bitcast (void(i8**)* @b to i8*), i8** %ptr\n"
+                    "  ret void\n"
+                    "}\n"
+                    "define void @dead() {\n"
+                    "entry:\n"
+                    "  ret void\n"
+                    "}\n");
+  LazyCallGraph CG(*M);
+
+  // Insert spurious ref edges.
+  LazyCallGraph::Node &AN = CG.get(lookupFunction(*M, "a"));
+  LazyCallGraph::Node &BN = CG.get(lookupFunction(*M, "b"));
+  LazyCallGraph::Node &CN = CG.get(lookupFunction(*M, "c"));
+  LazyCallGraph::Node &DN = CG.get(lookupFunction(*M, "d"));
+  LazyCallGraph::Node &DeadN = CG.get(lookupFunction(*M, "dead"));
+  AN.populate();
+  BN.populate();
+  CN.populate();
+  DN.populate();
+  DeadN.populate();
+  CG.insertEdge(AN, DeadN, LazyCallGraph::Edge::Ref);
+  CG.insertEdge(BN, DeadN, LazyCallGraph::Edge::Ref);
+  CG.insertEdge(CN, DeadN, LazyCallGraph::Edge::Ref);
+  CG.insertEdge(DN, DeadN, LazyCallGraph::Edge::Ref);
+
+  // Force the graph to be fully expanded.
+  CG.buildRefSCCs();
+  auto I = CG.postorder_ref_scc_begin();
+  LazyCallGraph::RefSCC &DeadRC = *I++;
+  LazyCallGraph::RefSCC &RC1 = *I++;
+  LazyCallGraph::RefSCC &RC2 = *I++;
+  EXPECT_EQ(CG.postorder_ref_scc_end(), I);
+
+  ASSERT_EQ(2u, RC1.size());
+  LazyCallGraph::SCC &C1 = RC1[0];
+  LazyCallGraph::SCC &C2 = RC1[1];
+
+  EXPECT_EQ(&DeadRC, CG.lookupRefSCC(DeadN));
+  EXPECT_EQ(&C1, CG.lookupSCC(DN));
+  EXPECT_EQ(&C1, CG.lookupSCC(CN));
+  EXPECT_EQ(&C2, CG.lookupSCC(BN));
+  EXPECT_EQ(&RC1, CG.lookupRefSCC(DN));
+  EXPECT_EQ(&RC1, CG.lookupRefSCC(CN));
+  EXPECT_EQ(&RC1, CG.lookupRefSCC(BN));
+  EXPECT_EQ(&RC2, CG.lookupRefSCC(AN));
+
+  // Now delete 'dead'. There are no uses of this function but there are
+  // spurious references.
+  CG.removeDeadFunction(DeadN.getFunction());
+
+  // The only observable change should be that the RefSCC is gone from the
+  // postorder sequence.
+  I = CG.postorder_ref_scc_begin();
+  EXPECT_EQ(&RC1, &*I++);
+  EXPECT_EQ(&RC2, &*I++);
+  EXPECT_EQ(CG.postorder_ref_scc_end(), I);
+}
 }
