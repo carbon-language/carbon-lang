@@ -16,7 +16,7 @@
 ; RUN: -polly-target-1st-cache-level-size=32768 \
 ; RUN: -polly-target-vector-register-bitwidth=256 \
 ; RUN: -polly-target-2nd-cache-level-size=262144 -gvn -licm -slp-vectorizer \
-; RUN: -stats -S < %s 2>&1 | FileCheck %s --check-prefix=AUTO-VECTORIZATION
+; RUN: -mcpu=corei7 -stats -S < %s 2>&1 | FileCheck %s --check-prefix=AUTO-VECTORIZATION
 ;
 ;
 ;    /* We isolate a set of partial tile prefixes, which contains only partial
