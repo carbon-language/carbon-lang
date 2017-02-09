@@ -31166,7 +31166,7 @@ static SDValue combineOrCmpEqZeroToCtlzSrl(SDNode *N, SelectionDAG &DAG,
     return N->getOpcode() == X86ISD::SETCC && N->hasOneUse() &&
            X86::CondCode(N->getConstantOperandVal(0)) == X86::COND_E &&
            N->getOperand(1).getOpcode() == X86ISD::CMP &&
-           N->getOperand(1).getConstantOperandVal(1) == 0 &&
+           isNullConstant(N->getOperand(1).getOperand(1)) &&
            N->getOperand(1).getValueType().bitsGE(MVT::i32);
   };
 
