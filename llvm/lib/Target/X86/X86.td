@@ -187,8 +187,6 @@ def FeatureBMI2    : SubtargetFeature<"bmi2", "HasBMI2", "true",
                                       "Support BMI2 instructions">;
 def FeatureRTM     : SubtargetFeature<"rtm", "HasRTM", "true",
                                       "Support RTM instructions">;
-def FeatureHLE     : SubtargetFeature<"hle", "HasHLE", "true",
-                                      "Support HLE">;
 def FeatureADX     : SubtargetFeature<"adx", "HasADX", "true",
                                       "Support ADX instructions">;
 def FeatureSHA     : SubtargetFeature<"sha", "HasSHA", "true",
@@ -493,7 +491,6 @@ def HSWFeatures : ProcessorFeatures<IVBFeatures.Value, [
   FeatureLZCNT,
   FeatureMOVBE,
   FeatureRTM,
-  FeatureHLE,
   FeatureSlowIncDec
 ]>;
 

@@ -1366,7 +1366,6 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
   Features["fsgsbase"] = HasLeaf7 && ((EBX >> 0) & 1);
   Features["sgx"] = HasLeaf7 && ((EBX >> 2) & 1);
   Features["bmi"] = HasLeaf7 && ((EBX >> 3) & 1);
-  Features["hle"] = HasLeaf7 && ((EBX >> 4) & 1);
   Features["bmi2"] = HasLeaf7 && ((EBX >> 8) & 1);
   Features["rtm"] = HasLeaf7 && ((EBX >> 11) & 1);
   Features["rdseed"] = HasLeaf7 && ((EBX >> 18) & 1);
