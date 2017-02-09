@@ -6701,6 +6701,7 @@ static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
 
     SDValue ExtractedFromVec = Op.getOperand(i).getOperand(0);
     SDValue ExtIdx = Op.getOperand(i).getOperand(1);
+
     // Quit if non-constant index.
     if (!isa<ConstantSDNode>(ExtIdx))
       return SDValue();
@@ -6731,11 +6732,10 @@ static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
 
   VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
   SDValue NV = DAG.getVectorShuffle(VT, DL, VecIn1, VecIn2, Mask);
-  for (unsigned i = 0, e = InsertIndices.size(); i != e; ++i) {
-    unsigned Idx = InsertIndices[i];
+
+  for (unsigned Idx : InsertIndices)
     NV = DAG.getNode(ISD::INSERT_VECTOR_ELT, DL, VT, NV, Op.getOperand(Idx),
                      DAG.getIntPtrConstant(Idx, DL));
-  }
 
   return NV;
 }
