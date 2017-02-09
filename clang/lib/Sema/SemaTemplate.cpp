@@ -8187,6 +8187,14 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
     return true;
   }
 
+  // A deduction guide is not on the list of entities that can be explicitly
+  // instantiated.
+  if (Name.getNameKind() == DeclarationName::CXXDeductionGuideName) {
+    Diag(D.getDeclSpec().getLocStart(), diag::err_deduction_guide_specialized)
+      << /*explicit instantiation*/ 0;
+    return true;
+  }
+
   // C++0x [temp.explicit]p2:
   //   There are two forms of explicit instantiation: an explicit instantiation
   //   definition and an explicit instantiation declaration. An explicit

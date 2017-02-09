@@ -7657,8 +7657,9 @@ static FunctionDecl* CreateNewFunctionDecl(Sema &SemaRef, Declarator &D,
   } else if (Name.getNameKind() == DeclarationName::CXXDeductionGuideName) {
     SemaRef.CheckDeductionGuideDeclarator(D, R, SC);
 
-    // We don't need to store any extra information for a deduction guide, so
+    // We don't need to store much extra information for a deduction guide, so
     // just model it as a plain FunctionDecl.
+    // FIXME: Store IsExplicit!
     return FunctionDecl::Create(SemaRef.Context, DC,
                                 D.getLocStart(),
                                 NameInfo, R, TInfo, SC, isInline,
@@ -9149,6 +9150,13 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     } else if (CXXConversionDecl *Conversion
                = dyn_cast<CXXConversionDecl>(NewFD)) {
       ActOnConversionDeclarator(Conversion);
+    } else if (NewFD->isDeductionGuide() &&
+               NewFD->getTemplateSpecializationKind() ==
+                   TSK_ExplicitSpecialization) {
+      // A deduction guide is not on the list of entities that can be
+      // explicitly specialized.
+      Diag(NewFD->getLocStart(), diag::err_deduction_guide_specialized)
+        << /*explicit specialization*/ 1;
     }
 
     // Find any virtual functions that this function overrides.

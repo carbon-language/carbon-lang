@@ -1991,6 +1991,8 @@ def err_deduction_guide_name_not_class_template : Error<
   "template template parameter|dependent template name}0 %1">;
 def err_deduction_guide_defines_function : Error<
   "deduction guide cannot have a function definition">;
+def err_deduction_guide_specialized : Error<"deduction guide cannot be "
+  "%select{explicitly instantiated|explicitly specialized}0">;
 
 // C++1y deduced return types
 def err_auto_fn_deduction_failure : Error<
