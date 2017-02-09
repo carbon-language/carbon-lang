@@ -274,12 +274,6 @@ protected:
   /// Processor supports MPX - Memory Protection Extensions
   bool HasMPX;
 
-  /// Processor supports Invalidate Process-Context Identifier
-  bool HasInvPCId;
-
-  /// Processor has Supervisor Mode Access Protection
-  bool HasSMAP;
-
   /// Processor has Software Guard Extensions
   bool HasSGX;
 
