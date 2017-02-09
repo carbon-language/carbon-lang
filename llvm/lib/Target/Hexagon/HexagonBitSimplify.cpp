@@ -260,7 +260,7 @@ bool HexagonBitSimplify::visitBlock(MachineBasicBlock &B, Transformation &T,
   RegisterSet NewAVs = AVs;
   NewAVs.insert(Defs);
 
-  for (auto *DTN : graph_children<MachineDomTreeNode*>(MDT->getNode(&B)))
+  for (auto *DTN : children<MachineDomTreeNode*>(MDT->getNode(&B)))
     Changed |= visitBlock(*(DTN->getBlock()), T, NewAVs);
 
   if (!T.TopDown)
@@ -982,7 +982,7 @@ bool DeadCodeElimination::isDead(unsigned R) const {
 bool DeadCodeElimination::runOnNode(MachineDomTreeNode *N) {
   bool Changed = false;
 
-  for (auto *DTN : graph_children<MachineDomTreeNode*>(N))
+  for (auto *DTN : children<MachineDomTreeNode*>(N))
     Changed |= runOnNode(DTN);
 
   MachineBasicBlock *B = N->getBlock();

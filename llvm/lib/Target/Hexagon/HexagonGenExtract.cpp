@@ -221,7 +221,7 @@ bool HexagonGenExtract::convert(Instruction *In) {
 
 bool HexagonGenExtract::visitBlock(BasicBlock *B) {
   // Depth-first, bottom-up traversal.
-  for (auto *DTN : graph_children<DomTreeNode*>(DT->getNode(B)))
+  for (auto *DTN : children<DomTreeNode*>(DT->getNode(B)))
     visitBlock(DTN->getBlock());
 
   // Allow limiting the number of generated extracts for debugging purposes.

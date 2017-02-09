@@ -200,7 +200,7 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
 
     // initialize the semi dominator to point to the parent node
     WInfo.Semi = WInfo.Parent;
-    for (const auto &N : inverse_graph_children<NodeT>(W))
+    for (const auto &N : inverse_children<NodeT>(W))
       if (DT.Info.count(N)) { // Only if this predecessor is reachable!
         unsigned SemiU = DT.Info[Eval<GraphT>(DT, N, i + 1)].Semi;
         if (SemiU < WInfo.Semi)

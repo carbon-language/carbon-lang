@@ -91,27 +91,27 @@ template <class T> struct GraphTraits<Inverse<Inverse<T>>> : GraphTraits<T> {};
 // Provide iterator ranges for the graph traits nodes and children
 template <class GraphType>
 iterator_range<typename GraphTraits<GraphType>::nodes_iterator>
-graph_nodes(const GraphType &G) {
+nodes(const GraphType &G) {
   return make_range(GraphTraits<GraphType>::nodes_begin(G),
                     GraphTraits<GraphType>::nodes_end(G));
 }
 template <class GraphType>
 iterator_range<typename GraphTraits<Inverse<GraphType>>::nodes_iterator>
-inverse_graph_nodes(const GraphType &G) {
+inverse_nodes(const GraphType &G) {
   return make_range(GraphTraits<Inverse<GraphType>>::nodes_begin(G),
                     GraphTraits<Inverse<GraphType>>::nodes_end(G));
 }
 
 template <class GraphType>
 iterator_range<typename GraphTraits<GraphType>::ChildIteratorType>
-graph_children(const typename GraphTraits<GraphType>::NodeRef &G) {
+children(const typename GraphTraits<GraphType>::NodeRef &G) {
   return make_range(GraphTraits<GraphType>::child_begin(G),
                     GraphTraits<GraphType>::child_end(G));
 }
 
 template <class GraphType>
 iterator_range<typename GraphTraits<Inverse<GraphType>>::ChildIteratorType>
-inverse_graph_children(const typename GraphTraits<GraphType>::NodeRef &G) {
+inverse_children(const typename GraphTraits<GraphType>::NodeRef &G) {
   return make_range(GraphTraits<Inverse<GraphType>>::child_begin(G),
                     GraphTraits<Inverse<GraphType>>::child_end(G));
 }

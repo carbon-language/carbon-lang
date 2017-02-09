@@ -947,7 +947,7 @@ void HexagonGenInsert::collectInBlock(MachineBasicBlock *B,
     BlockDefs.insert(InsDefs);
   }
 
-  for (auto *DTN : graph_children<MachineDomTreeNode*>(MDT->getNode(B))) {
+  for (auto *DTN : children<MachineDomTreeNode*>(MDT->getNode(B))) {
     MachineBasicBlock *SB = DTN->getBlock();
     collectInBlock(SB, AVs);
   }
@@ -1420,7 +1420,7 @@ bool HexagonGenInsert::generateInserts() {
 bool HexagonGenInsert::removeDeadCode(MachineDomTreeNode *N) {
   bool Changed = false;
 
-  for (auto *DTN : graph_children<MachineDomTreeNode*>(N))
+  for (auto *DTN : children<MachineDomTreeNode*>(N))
     Changed |= removeDeadCode(DTN);
 
   MachineBasicBlock *B = N->getBlock();

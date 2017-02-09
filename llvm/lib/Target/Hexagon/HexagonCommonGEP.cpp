@@ -315,7 +315,7 @@ void HexagonCommonGEP::getBlockTraversalOrder(BasicBlock *Root,
   // visited".
 
   Order.push_back(Root);
-  for (auto *DTN : graph_children<DomTreeNode*>(DT->getNode(Root)))
+  for (auto *DTN : children<DomTreeNode*>(DT->getNode(Root)))
     getBlockTraversalOrder(DTN->getBlock(), Order);
 }
 
@@ -1232,7 +1232,7 @@ void HexagonCommonGEP::removeDeadCode() {
 
   for (unsigned i = 0; i < BO.size(); ++i) {
     BasicBlock *B = cast<BasicBlock>(BO[i]);
-    for (auto DTN : graph_children<DomTreeNode*>(DT->getNode(B)))
+    for (auto DTN : children<DomTreeNode*>(DT->getNode(B)))
       BO.push_back(DTN->getBlock());
   }
 

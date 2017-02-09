@@ -64,7 +64,7 @@ void IDFCalculator<NodeTy>::calculate(
       BasicBlock *BB = Node->getBlock();
       // Succ is the successor in the direction we are calculating IDF, so it is
       // successor for IDF, and predecessor for Reverse IDF.
-      for (auto *Succ : graph_children<NodeTy>(BB)) {
+      for (auto *Succ : children<NodeTy>(BB)) {
         DomTreeNode *SuccNode = DT.getNode(Succ);
 
         // Quickly skip all CFG edges that are also dominator tree edges instead

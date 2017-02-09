@@ -782,7 +782,7 @@ public:
       Calculate<FT, NodeT *>(*this, F);
     } else {
       // Initialize the roots list
-      for (auto *Node : graph_nodes(&F))
+      for (auto *Node : nodes(&F))
         if (TraitsTy::child_begin(Node) == TraitsTy::child_end(Node))
           addRoot(Node);
 

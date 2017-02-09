@@ -912,7 +912,7 @@ void AMDGPUCFGStructurizer::orderBlocks(MachineFunction *MF) {
   }
 
   // walk through all the block in func to check for unreachable
-  for (auto *MBB : graph_nodes(MF)) {
+  for (auto *MBB : nodes(MF)) {
     SccNum = getSCCNum(MBB);
     if (SccNum == INVALIDSCCNUM)
       dbgs() << "unreachable block BB" << MBB->getNumber() << "\n";
@@ -1078,7 +1078,7 @@ int AMDGPUCFGStructurizer::mergeLoop(MachineLoop *LoopRep) {
   MachineBasicBlock *ExitBlk = *ExitBlks.begin();
   assert(ExitBlk && "Loop has several exit block");
   MBBVector LatchBlks;
-  for (auto *LB : inverse_graph_children<MachineBasicBlock*>(LoopHeader))
+  for (auto *LB : inverse_children<MachineBasicBlock*>(LoopHeader))
     if (LoopRep->contains(LB))
       LatchBlks.push_back(LB);
 
