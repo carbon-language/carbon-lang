@@ -2892,12 +2892,12 @@ bool Scop::buildAliasChecks(AliasAnalysis &AA) {
   return false;
 }
 
-std::tuple<Scop::AliasGroupVectorTy, DenseSet<Value *>>
+std::tuple<Scop::AliasGroupVectorTy, DenseSet<const ScopArrayInfo *>>
 Scop::buildAliasGroupsForAccesses(AliasAnalysis &AA) {
   AliasSetTracker AST(AA);
 
   DenseMap<Value *, MemoryAccess *> PtrToAcc;
-  DenseSet<Value *> HasWriteAccess;
+  DenseSet<const ScopArrayInfo *> HasWriteAccess;
   for (ScopStmt &Stmt : *this) {
 
     isl_set *StmtDomain = Stmt.getDomain();
@@ -2912,7 +2912,7 @@ Scop::buildAliasGroupsForAccesses(AliasAnalysis &AA) {
       if (MA->isScalarKind())
         continue;
       if (!MA->isRead())
-        HasWriteAccess.insert(MA->getBaseAddr());
+        HasWriteAccess.insert(MA->getScopArrayInfo());
       MemAccInst Acc(MA->getAccessInstruction());
       if (MA->isRead() && isa<MemTransferInst>(Acc))
         PtrToAcc[cast<MemTransferInst>(Acc)->getRawSource()] = MA;
@@ -2968,7 +2968,7 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   //      and maximal accesses to each array of a group in read only and non
   //      read only partitions separately.
   AliasGroupVectorTy AliasGroups;
-  DenseSet<Value *> HasWriteAccess;
+  DenseSet<const ScopArrayInfo *> HasWriteAccess;
 
   std::tie(AliasGroups, HasWriteAccess) = buildAliasGroupsForAccesses(AA);
 
@@ -2984,10 +2984,10 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
 }
 
 bool Scop::buildAliasGroup(Scop::AliasGroupTy &AliasGroup,
-                           DenseSet<Value *> HasWriteAccess) {
+                           DenseSet<const ScopArrayInfo *> HasWriteAccess) {
   AliasGroupTy ReadOnlyAccesses;
   AliasGroupTy ReadWriteAccesses;
-  SmallPtrSet<const Value *, 4> ReadWriteBaseValues;
+  SmallPtrSet<const ScopArrayInfo *, 4> ReadWriteArrays;
 
   auto &F = getFunction();
 
@@ -3000,9 +3000,9 @@ bool Scop::buildAliasGroup(Scop::AliasGroupTy &AliasGroup,
         Access->getAccessInstruction()->getDebugLoc(),
         "Possibly aliasing pointer, use restrict keyword.");
 
-    Value *BaseAddr = Access->getBaseAddr();
-    if (HasWriteAccess.count(BaseAddr)) {
-      ReadWriteBaseValues.insert(BaseAddr);
+    const ScopArrayInfo *Array = Access->getScopArrayInfo();
+    if (HasWriteAccess.count(Array)) {
+      ReadWriteArrays.insert(Array);
       ReadWriteAccesses.push_back(Access);
     } else {
       ReadOnlyAccesses.push_back(Access);
@@ -3011,11 +3011,11 @@ bool Scop::buildAliasGroup(Scop::AliasGroupTy &AliasGroup,
 
   // If there are no read-only pointers, and less than two read-write pointers,
   // no alias check is needed.
-  if (ReadOnlyAccesses.empty() && ReadWriteBaseValues.size() <= 1)
+  if (ReadOnlyAccesses.empty() && ReadWriteArrays.size() <= 1)
     return true;
 
   // If there is no read-write pointer, no alias check is needed.
-  if (ReadWriteBaseValues.empty())
+  if (ReadWriteArrays.empty())
     return true;
 
   // For non-affine accesses, no alias check can be generated as we cannot
