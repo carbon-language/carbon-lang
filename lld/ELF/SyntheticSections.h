@@ -234,7 +234,7 @@ private:
   std::vector<const SymbolBody *> Entries;
 };
 
-// The IgotPltSection is a Got associated with the IpltSection for GNU Ifunc
+// The IgotPltSection is a Got associated with the PltSection for GNU Ifunc
 // Symbols that will be relocated by Target->IRelativeRel.
 // On most Targets the IgotPltSection will immediately follow the GotPltSection
 // on ARM the IgotPltSection will immediately follow the GotSection.
@@ -461,9 +461,13 @@ private:
   size_t Size = 0;
 };
 
-template <class ELFT> class PltSection final : public SyntheticSection<ELFT> {
+// The PltSection is used for both the Plt and Iplt. The former always has a
+// header as its first entry that is used at run-time to resolve lazy binding.
+// The latter is used for GNU Ifunc symbols, that will be subject to a
+// Target->IRelativeRel.
+template <class ELFT> class PltSection : public SyntheticSection<ELFT> {
 public:
-  PltSection();
+  PltSection(size_t HeaderSize);
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override;
   void addEntry(SymbolBody &Sym);
@@ -471,23 +475,12 @@ public:
   void addSymbols();
 
 private:
+  void writeHeader(uint8_t *Buf){};
+  void addHeaderSymbols(){};
+  unsigned getPltRelocOff() const;
   std::vector<std::pair<const SymbolBody *, unsigned>> Entries;
-};
-
-// The IpltSection is a variant of Plt for recording entries for GNU Ifunc
-// symbols that will be subject to a Target->IRelativeRel
-// The IpltSection immediately follows the Plt section in the Output Section
-template <class ELFT> class IpltSection final : public SyntheticSection<ELFT> {
-public:
-  IpltSection();
-  void writeTo(uint8_t *Buf) override;
-  size_t getSize() const override;
-  void addEntry(SymbolBody &Sym);
-  bool empty() const override { return Entries.empty(); }
-  void addSymbols();
-
-private:
-  std::vector<std::pair<const SymbolBody *, unsigned>> Entries;
+  // Iplt always has HeaderSize of 0, the Plt HeaderSize is always non-zero
+  size_t HeaderSize;
 };
 
 template <class ELFT>
@@ -777,7 +770,7 @@ template <class ELFT> struct In {
   static InputSection<ELFT> *Interp;
   static MipsRldMapSection<ELFT> *MipsRldMap;
   static PltSection<ELFT> *Plt;
-  static IpltSection<ELFT> *Iplt;
+  static PltSection<ELFT> *Iplt;
   static RelocationSection<ELFT> *RelaDyn;
   static RelocationSection<ELFT> *RelaPlt;
   static RelocationSection<ELFT> *RelaIplt;
@@ -806,7 +799,7 @@ template <class ELFT> HashTableSection<ELFT> *In<ELFT>::HashTab;
 template <class ELFT> InputSection<ELFT> *In<ELFT>::Interp;
 template <class ELFT> MipsRldMapSection<ELFT> *In<ELFT>::MipsRldMap;
 template <class ELFT> PltSection<ELFT> *In<ELFT>::Plt;
-template <class ELFT> IpltSection<ELFT> *In<ELFT>::Iplt;
+template <class ELFT> PltSection<ELFT> *In<ELFT>::Iplt;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaDyn;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaPlt;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaIplt;
