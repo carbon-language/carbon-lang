@@ -3332,9 +3332,8 @@ void Scop::updateAccessDimensionality() {
       if (!Access->isArrayKind())
         continue;
       ScopArrayInfo *Array =
-          ScopArrayInfoMap[std::make_pair(Access->getBaseAddr(),
-                                          MemoryKind::Array)]
-              .get();
+          const_cast<ScopArrayInfo *>(Access->getScopArrayInfo());
+
       if (Array->getNumberOfDimensions() != 1)
         continue;
       unsigned DivisibleSize = Array->getElemSizeInBytes();
