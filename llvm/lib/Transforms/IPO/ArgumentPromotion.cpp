@@ -1001,16 +1001,7 @@ bool ArgPromotion::runOnSCC(CallGraphSCC &SCC) {
   // changes.
   CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
 
-  // We compute dedicated AA results for each function in the SCC as needed. We
-  // use a lambda referencing external objects so that they live long enough to
-  // be queried, but we re-use them each time.
-  Optional<BasicAAResult> BAR;
-  Optional<AAResults> AAR;
-  auto AARGetter = [&](Function &F) -> AAResults & {
-    BAR.emplace(createLegacyPMBasicAAResult(*this, F));
-    AAR.emplace(createLegacyPMAAResults(*this, F, *BAR));
-    return *AAR;
-  };
+  LegacyAARGetter AARGetter(*this);
 
   bool Changed = false, LocalChange;
 
