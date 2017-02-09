@@ -2836,12 +2836,9 @@ bool Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
 }
 
 MemoryAccess *Scop::lookupBasePtrAccess(MemoryAccess *MA) {
-  auto *BaseAddr = SE->getSCEV(MA->getBaseAddr());
-  auto *PointerBase = dyn_cast<SCEVUnknown>(SE->getPointerBase(BaseAddr));
-  if (!PointerBase)
-    return nullptr;
+  Value *PointerBase = MA->getBaseAddr();
 
-  auto *PointerBaseInst = dyn_cast<Instruction>(PointerBase->getValue());
+  auto *PointerBaseInst = dyn_cast<Instruction>(PointerBase);
   if (!PointerBaseInst)
     return nullptr;
 
@@ -2861,9 +2858,8 @@ bool Scop::hasNonHoistableBasePtrInScop(MemoryAccess *MA,
     return !Hoistable;
   }
 
-  auto *BaseAddr = SE->getSCEV(MA->getBaseAddr());
-  auto *PointerBase = dyn_cast<SCEVUnknown>(SE->getPointerBase(BaseAddr));
-  if (auto *BasePtrInst = dyn_cast<Instruction>(PointerBase->getValue()))
+  Value *BaseAddr = MA->getBaseAddr();
+  if (auto *BasePtrInst = dyn_cast<Instruction>(BaseAddr))
     if (!isa<LoadInst>(BasePtrInst))
       return contains(BasePtrInst);
 
