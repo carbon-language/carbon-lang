@@ -1188,7 +1188,7 @@ void ScopStmt::addAccess(MemoryAccess *Access) {
 
     ValueReads[AccessVal] = Access;
   } else if (Access->isAnyPHIKind() && Access->isWrite()) {
-    PHINode *PHI = cast<PHINode>(Access->getBaseAddr());
+    PHINode *PHI = cast<PHINode>(Access->getOriginalBaseAddr());
     assert(!PHIWrites.lookup(PHI));
 
     PHIWrites[PHI] = Access;
@@ -2836,7 +2836,7 @@ bool Scop::addLoopBoundsToHeaderDomain(Loop *L, LoopInfo &LI) {
 }
 
 MemoryAccess *Scop::lookupBasePtrAccess(MemoryAccess *MA) {
-  Value *PointerBase = MA->getBaseAddr();
+  Value *PointerBase = MA->getOriginalBaseAddr();
 
   auto *PointerBaseInst = dyn_cast<Instruction>(PointerBase);
   if (!PointerBaseInst)
@@ -2858,7 +2858,7 @@ bool Scop::hasNonHoistableBasePtrInScop(MemoryAccess *MA,
     return !Hoistable;
   }
 
-  Value *BaseAddr = MA->getBaseAddr();
+  Value *BaseAddr = MA->getOriginalBaseAddr();
   if (auto *BasePtrInst = dyn_cast<Instruction>(BaseAddr))
     if (!isa<LoadInst>(BasePtrInst))
       return contains(BasePtrInst);
