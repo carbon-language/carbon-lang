@@ -7659,11 +7659,12 @@ static FunctionDecl* CreateNewFunctionDecl(Sema &SemaRef, Declarator &D,
 
     // We don't need to store much extra information for a deduction guide, so
     // just model it as a plain FunctionDecl.
-    // FIXME: Store IsExplicit!
-    return FunctionDecl::Create(SemaRef.Context, DC,
-                                D.getLocStart(),
-                                NameInfo, R, TInfo, SC, isInline,
-                                true/*HasPrototype*/, isConstexpr);
+    auto *FD = FunctionDecl::Create(SemaRef.Context, DC, D.getLocStart(),
+                                    NameInfo, R, TInfo, SC, isInline,
+                                    true /*HasPrototype*/, isConstexpr);
+    if (isExplicit)
+      FD->setExplicitSpecified();
+    return FD;
   } else if (DC->isRecord()) {
     // If the name of the function is the same as the name of the record,
     // then this must be an invalid constructor that has a return type.
