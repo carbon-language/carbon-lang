@@ -1923,8 +1923,9 @@ def err_auto_var_deduction_failure_from_init_list : Error<
 def err_auto_new_deduction_failure : Error<
   "new expression for type %0 has incompatible constructor argument of type %1">;
 def err_auto_different_deductions : Error<
-  "'%select{auto|decltype(auto)|__auto_type}0' deduced as %1 in declaration "
-  "of %2 and deduced as %3 in declaration of %4">;
+  "%select{'auto'|'decltype(auto)'|'__auto_type'|template arguments}0 "
+  "deduced as %1 in declaration of %2 and "
+  "deduced as %3 in declaration of %4">;
 def err_auto_non_deduced_not_alone : Error<
   "%select{function with deduced return type|"
   "declaration with trailing return type}0 "

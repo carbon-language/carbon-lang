@@ -11262,18 +11262,19 @@ Sema::BuildDeclaratorGroup(MutableArrayRef<Decl *> Group) {
       VarDecl *D = dyn_cast<VarDecl>(Group[i]);
       if (!D || D->isInvalidDecl())
         break;
-      AutoType *AT = D->getType()->getContainedAutoType();
-      if (!AT || AT->getDeducedType().isNull())
+      DeducedType *DT = D->getType()->getContainedDeducedType();
+      if (!DT || DT->getDeducedType().isNull())
         continue;
       if (Deduced.isNull()) {
-        Deduced = AT->getDeducedType();
+        Deduced = DT->getDeducedType();
         DeducedDecl = D;
-      } else if (!Context.hasSameType(AT->getDeducedType(), Deduced)) {
+      } else if (!Context.hasSameType(DT->getDeducedType(), Deduced)) {
+        auto *AT = dyn_cast<AutoType>(DT);
         Diag(D->getTypeSourceInfo()->getTypeLoc().getBeginLoc(),
              diag::err_auto_different_deductions)
-          << (unsigned)AT->getKeyword()
+          << (AT ? (unsigned)AT->getKeyword() : 3)
           << Deduced << DeducedDecl->getDeclName()
-          << AT->getDeducedType() << D->getDeclName()
+          << DT->getDeducedType() << D->getDeclName()
           << DeducedDecl->getInit()->getSourceRange()
           << D->getInit()->getSourceRange();
         D->setInvalidDecl();
