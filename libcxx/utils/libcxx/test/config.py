@@ -891,8 +891,9 @@ class Configuration(object):
 
     def configure_substitutions(self):
         sub = self.config.substitutions
+        cxx_path = pipes.quote(self.cxx.path)
         # Configure compiler substitutions
-        sub.append(('%cxx', pipes.quote(self.cxx.path)))
+        sub.append(('%cxx', cxx_path))
         # Configure flags substitutions
         flags_str = ' '.join([pipes.quote(f) for f in self.cxx.flags])
         compile_flags_str = ' '.join([pipes.quote(f) for f in self.cxx.compile_flags])
@@ -906,12 +907,12 @@ class Configuration(object):
             verify_str = ' ' + ' '.join(self.cxx.verify_flags) + ' '
             sub.append(('%verify', verify_str))
         # Add compile and link shortcuts
-        compile_str = (self.cxx.path + ' -o %t.o %s -c ' + flags_str
+        compile_str = (cxx_path + ' -o %t.o %s -c ' + flags_str
                        + ' ' + compile_flags_str)
-        link_str = (self.cxx.path + ' -o %t.exe %t.o ' + flags_str + ' '
+        link_str = (cxx_path + ' -o %t.exe %t.o ' + flags_str + ' '
                     + link_flags_str)
         assert type(link_str) is str
-        build_str = self.cxx.path + ' -o %t.exe %s ' + all_flags
+        build_str = cxx_path + ' -o %t.exe %s ' + all_flags
         if self.cxx.use_modules:
             sub.append(('%compile_module', compile_str))
             sub.append(('%build_module', build_str))
@@ -937,7 +938,7 @@ class Configuration(object):
         sub.append(('%run', exec_str + ' %t.exe'))
         # Configure not program substitutions
         not_py = os.path.join(self.libcxx_src_root, 'utils', 'not.py')
-        not_str = '%s %s ' % (sys.executable, not_py)
+        not_str = '%s %s ' % (pipes.quote(sys.executable), pipes.quote(not_py))
         sub.append(('not ', not_str))
 
     def configure_triple(self):
