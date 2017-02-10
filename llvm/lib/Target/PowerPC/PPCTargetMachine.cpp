@@ -120,11 +120,6 @@ static std::string getDataLayoutString(const Triple &T) {
   else
     Ret += "-f64:32:64";
 
-  // 128 bit integers are always aligned to 128 bits, but only 64-bit matters,
-  // because __int128 is only supoprted on 64-bit targets.
-  if (is64Bit && T.isOSLinux())
-    Ret += "-i128:128";
-
   // PPC64 has 32 and 64 bit registers, PPC32 has only 32 bit ones.
   if (is64Bit)
     Ret += "-n32:64";

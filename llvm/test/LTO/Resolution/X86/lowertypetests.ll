@@ -6,7 +6,7 @@
 ; MERGED: R __typeid_foo_global_addr
 ; CHECK: U __typeid_foo_global_addr
 
-target datalayout = "e-m:e-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 @foo = global i32 0, !type !0
