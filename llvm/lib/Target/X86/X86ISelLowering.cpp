@@ -26759,6 +26759,8 @@ static bool matchBinaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
       (MaskVT == MVT::v16f32 && Subtarget.hasAVX512())) {
     SmallVector<int, 4> RepeatedMask;
     if (isRepeatedTargetShuffleMask(128, MaskVT, Mask, RepeatedMask)) {
+      // Match each half of the repeated mask, to determine if its just
+      // referencing one of the vectors, is zeroable or entirely undef.
       auto MatchHalf = [&](unsigned Offset, int &S0, int &S1) {
         int M0 = RepeatedMask[Offset];
         int M1 = RepeatedMask[Offset + 1];
