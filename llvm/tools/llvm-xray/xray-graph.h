@@ -24,7 +24,6 @@
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/XRay/Graph.h"
 #include "llvm/XRay/Trace.h"
 #include "llvm/XRay/XRayRecord.h"
 
@@ -50,22 +49,21 @@ public:
     std::string getAsString(StatType T) const;
     double compare(StatType T, const TimeStat &Other) const;
   };
-  typedef uint64_t TimestampT;
 
   /// An inner struct for storing edge attributes for our graph. Here the
   /// attributes are mainly function call statistics.
   ///
   /// FIXME: expand to contain more information eg call latencies.
-  struct CallStats {
+  struct EdgeAttribute {
     TimeStat S;
-    std::vector<TimestampT> Timings;
+    std::vector<uint64_t> Timings;
   };
 
   /// An Inner Struct for storing vertex attributes, at the moment just
   /// SymbolNames, however in future we could store bulk function statistics.
   ///
   /// FIXME: Store more attributes based on instrumentation map.
-  struct FunctionStats {
+  struct VertexAttribute {
     std::string SymbolName;
     TimeStat S;
   };
@@ -80,15 +78,17 @@ public:
   typedef DenseMap<llvm::sys::ProcessInfo::ProcessId, FunctionStack>
       PerThreadFunctionStackMap;
 
-  class GraphT : public Graph<FunctionStats, CallStats, int32_t> {
-  public:
-    TimeStat GraphEdgeMax = {};
-    TimeStat GraphVertexMax = {};
-  };
+private:
+  /// The Graph stored in an edge-list like format, with the edges also having
+  /// An attached set of attributes.
+  DenseMap<int32_t, DenseMap<int32_t, EdgeAttribute>> Graph;
 
-  GraphT G;
-  typedef typename decltype(G)::VertexIdentifier VertexIdentifier;
-  typedef typename decltype(G)::EdgeIdentifier EdgeIdentifier;
+  /// Graph Vertex Attributes. These are presently stored seperate from the
+  /// main graph.
+  DenseMap<int32_t, VertexAttribute> VertexAttrs;
+
+  TimeStat GraphEdgeMax;
+  TimeStat GraphVertexMax;
 
   /// Use a Map to store the Function stack for each thread whilst building the
   /// graph.
@@ -99,7 +99,7 @@ public:
   /// Usefull object for getting human readable Symbol Names.
   FuncIdConversionHelper &FuncIdHelper;
   bool DeduceSiblingCalls = false;
-  TimestampT CurrentMaxTSC = 0;
+  uint64_t CurrentMaxTSC = 0;
 
   /// A private function to help implement the statistic generation functions;
   template <typename U>
@@ -121,9 +121,7 @@ public:
   /// Takes in a reference to a FuncIdHelper in order to have ready access to
   /// Symbol names.
   explicit GraphRenderer(FuncIdConversionHelper &FuncIdHelper, bool DSC)
-      : FuncIdHelper(FuncIdHelper), DeduceSiblingCalls(DSC) {
-    G[0] = {};
-  }
+      : FuncIdHelper(FuncIdHelper), DeduceSiblingCalls(DSC) {}
 
   /// Process an Xray record and expand the graph.
   ///
@@ -134,7 +132,7 @@ public:
   /// FIXME: Make this more robust against small irregularities.
   Error accountRecord(const XRayRecord &Record);
 
-  const PerThreadFunctionStackMap &getPerThreadFunctionStack() const {
+  const PerThreadFunctionStackMap getPerThreadFunctionStack() const {
     return PerThreadFunctionStack;
   }
 
@@ -145,13 +143,6 @@ public:
                         StatType EdgeColor = StatType::NONE,
                         StatType VertexLabel = StatType::NONE,
                         StatType VertexColor = StatType::NONE);
-
-  /// Get a reference to the internal graph.
-  const GraphT &getGraph() {
-    calculateEdgeStatistics();
-    calculateVertexStatistics();
-    return G;
-  }
 };
 }
 }
