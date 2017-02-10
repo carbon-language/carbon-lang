@@ -132,7 +132,7 @@ int main()
 
 //  LWG#2792
     {
-        auto res = std::gcd((int64_t)1234, (int32_t)-2147483648);
+        auto res = std::experimental::gcd((int64_t)1234, (int32_t)-2147483648);
         static_assert( std::is_same<decltype(res), std::common_type<int64_t, int32_t>::type>::value, "");
         assert(res == 2);
     }
