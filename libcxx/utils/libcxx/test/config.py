@@ -462,13 +462,17 @@ class Configuration(object):
         gcc_toolchain = self.get_lit_conf('gcc_toolchain')
         if gcc_toolchain:
             self.cxx.flags += ['-gcc-toolchain', gcc_toolchain]
+        # NOTE: the _DEBUG definition must preceed the triple check because for
+        # the Windows build of libc++, the forced inclusion of a header requires
+        # that _DEBUG is defined.  Incorrect ordering will result in -target
+        # being elided.
+        if self.is_windows and self.debug_build:
+            self.cxx.compile_flags += ['-D_DEBUG']
         if self.use_target:
             if not self.cxx.addFlagIfSupported(
                     ['-target', self.config.target_triple]):
                 self.lit_config.warning('use_target is true but -target is '\
                         'not supported by the compiler')
-        if self.is_windows and self.debug_build:
-            self.cxx.compile_flags += ['-D_DEBUG']
 
     def configure_compile_flags_header_includes(self):
         support_path = os.path.join(self.libcxx_src_root, 'test', 'support')
