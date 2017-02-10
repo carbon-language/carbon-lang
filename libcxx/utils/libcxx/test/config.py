@@ -198,8 +198,10 @@ class Configuration(object):
         # If no specific cxx_under_test was given, attempt to infer it as
         # clang++.
         if cxx is None or self.cxx_is_clang_cl:
-            clangxx = libcxx.util.which('clang++',
-                                     self.config.environment['PATH'])
+            search_paths = self.config.environment['PATH']
+            if cxx is not None and os.path.isabs(cxx):
+                search_paths = os.path.dirname(cxx)
+            clangxx = libcxx.util.which('clang++', search_paths)
             if clangxx:
                 cxx = clangxx
                 self.lit_config.note(
