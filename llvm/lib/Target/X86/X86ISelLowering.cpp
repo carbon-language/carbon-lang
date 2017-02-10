@@ -28826,13 +28826,11 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(X86ISD::MMX_MOVD2W, dl, MVT::i32, MMXSrc);
   }
 
-  if (VT == MVT::i1 && isa<ConstantSDNode>(N->getOperand(1)) &&
-      InputVector.getOpcode() == ISD::BITCAST &&
+  if (VT == MVT::i1 && InputVector.getOpcode() == ISD::BITCAST &&
+      isa<ConstantSDNode>(N->getOperand(1)) &&
       isa<ConstantSDNode>(InputVector.getOperand(0))) {
-    uint64_t ExtractedElt =
-        cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
-    uint64_t InputValue =
-        cast<ConstantSDNode>(InputVector.getOperand(0))->getZExtValue();
+    uint64_t ExtractedElt = N->getConstantOperandVal(1);
+    uint64_t InputValue = InputVector.getConstantOperandVal(0);
     uint64_t Res = (InputValue >> ExtractedElt) & 1;
     return DAG.getConstant(Res, dl, MVT::i1);
   }
@@ -28877,9 +28875,7 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
       return SDValue();
 
     // Record which element was extracted.
-    ExtractedElements |=
-      1 << cast<ConstantSDNode>(Extract->getOperand(1))->getZExtValue();
-
+    ExtractedElements |= 1 << Extract->getConstantOperandVal(1);
     Uses.push_back(Extract);
   }
 
@@ -28939,8 +28935,7 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
     UE = Uses.end(); UI != UE; ++UI) {
     SDNode *Extract = *UI;
 
-    SDValue Idx = Extract->getOperand(1);
-    uint64_t IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+    uint64_t IdxVal = Extract->getConstantOperandVal(1);
     DAG.ReplaceAllUsesOfValueWith(SDValue(Extract, 0), Vals[IdxVal]);
   }
 
