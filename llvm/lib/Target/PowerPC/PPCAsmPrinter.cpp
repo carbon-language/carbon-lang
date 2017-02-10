@@ -1105,8 +1105,7 @@ void PPCLinuxAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // of instructions change.
     const MachineInstr *Next = [&] {
       MachineBasicBlock::const_iterator It(MI);
-      const MachineBasicBlock *MBB = MI->getParent();
-      assert(It != MBB->end());
+      assert(It != MI->getParent()->end());
       ++It;
       assert(It->isReturn());
       return &*It;
