@@ -1673,15 +1673,35 @@ public:
     IntMaxType = SignedLong;
     Int64Type = SignedLong;
 
-    if ((Triple.getArch() == llvm::Triple::ppc64le)) {
-      resetDataLayout("e-m:e-i64:64-n32:64");
-      ABI = "elfv2";
-    } else {
-      resetDataLayout("E-m:e-i64:64-n32:64");
-      ABI = "elfv1";
-    }
+    std::string Layout;
 
-    switch (getTriple().getOS()) {
+    // PPC64LE is little endian.
+    if (Triple.getArch() == llvm::Triple::ppc64le)
+      Layout = "e";
+    else
+      Layout = "E";
+
+    Layout += llvm::DataLayout::getManglingComponent(Triple);
+
+    Layout += "-i64:64";
+
+    // 128 bit integers are always aligned to 128 bits, but only 64-bit matters,
+    // because __int128 is only supoprted on 64-bit targets.
+    // FIXME: See if this is valid on other 64-bit ppc oses.
+    if (Triple.isOSLinux())
+      Layout += "-i128:128";
+
+    Layout += "-n32:64";
+
+    resetDataLayout(Layout);
+
+    // PPC64LE started a new ABI.
+    if (Triple.getArch() == llvm::Triple::ppc64le)
+      ABI = "elfv2";
+    else
+      ABI = "elfv1";
+
+    switch (Triple.getOS()) {
     case llvm::Triple::FreeBSD:
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble();
@@ -4581,11 +4601,21 @@ public:
     Int64Type   = IsX32 ? SignedLongLong   : SignedLong;
     RegParmMax = 6;
 
+    // Use 128-bit alignment for 128-bit integers in linux.
+    // FIXME: Figure out if we should change this for other oses.
     // Pointers are 32-bit in x32.
-    resetDataLayout(IsX32
-                        ? "e-m:e-p:32:32-i64:64-f80:128-n8:16:32:64-S128"
-                        : IsWinCOFF ? "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
-                                    : "e-m:e-i64:64-f80:128-n8:16:32:64-S128");
+    if (IsX32) {
+      if (Triple.isOSLinux())
+        resetDataLayout(
+            "e-m:e-p:32:32-i64:64-i128:128-f80:128-n8:16:32:64-S128");
+      else
+	resetDataLayout("e-m:e-p:32:32-i64:64-f80:128-n8:16:32:64-S128");
+    } else if (IsWinCOFF)
+      resetDataLayout("e-m:w-i64:64-f80:128-n8:16:32:64-S128");
+    else if (Triple.isOSLinux())
+      resetDataLayout("e-m:e-i64:64-i128:128-f80:128-n8:16:32:64-S128");
+    else
+      resetDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
 
     // Use fpret only for long double.
     RealTypeUsesObjCFPRet = (1 << TargetInfo::LongDouble);
