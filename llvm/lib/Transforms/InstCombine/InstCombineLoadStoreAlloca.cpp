@@ -225,6 +225,7 @@ static Instruction *simplifyAllocaArraySize(InstCombiner &IC, AllocaInst &AI) {
   return nullptr;
 }
 
+namespace {
 // If I and V are pointers in different address space, it is not allowed to
 // use replaceAllUsesWith since I and V have different types. A
 // non-target-specific transformation should not use addrspacecast on V since
@@ -249,6 +250,7 @@ private:
   MapVector<Value *, Value *> WorkMap;
   InstCombiner &IC;
 };
+} // end anonymous namespace
 
 void PointerReplacer::findLoadAndReplace(Instruction &I) {
   for (auto U : I.users()) {
