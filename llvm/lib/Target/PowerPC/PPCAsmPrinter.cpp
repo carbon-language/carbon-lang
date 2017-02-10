@@ -1136,8 +1136,8 @@ void PPCLinuxAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // PPC's tail call instruction, e.g. PPC::TCRETURNdi8, doesn't really
     // lower to a PPC::B instruction. The PPC::B instruction is generated
     // before it, and handled by the normal case.
-    llvm_unreachable("Tail call is handled in the normal case. See comments
-                     around this assert.");
+    llvm_unreachable("Tail call is handled in the normal case. See comments"
+                     "around this assert.");
   }
 }
 
