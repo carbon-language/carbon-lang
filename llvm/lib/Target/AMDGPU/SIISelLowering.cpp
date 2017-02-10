@@ -1782,7 +1782,7 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
   switch (MI.getOpcode()) {
   case AMDGPU::S_TRAP_PSEUDO: {
     const DebugLoc &DL = MI.getDebugLoc();
-    const int TrapType = MI.getOperand(0).getImm(); 
+    const int TrapType = MI.getOperand(0).getImm();
 
     if (Subtarget->getTrapHandlerAbi() == SISubtarget::TrapHandlerAbiHsa &&
         Subtarget->isTrapHandlerEnabled()) {
@@ -1798,11 +1798,11 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
       BuildMI(*BB, MI, DL, TII->get(AMDGPU::COPY), AMDGPU::SGPR0_SGPR1)
         .addReg(UserSGPR);
       BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_TRAP))
-	      .addImm(TrapType)
+        .addImm(TrapType)
         .addReg(AMDGPU::SGPR0_SGPR1, RegState::Implicit);
     } else {
-      switch (TrapType) {  	
-      case SISubtarget::TrapCodeLLVMTrap: 
+      switch (TrapType) {
+      case SISubtarget::TrapCodeLLVMTrap:
         BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_ENDPGM));
         break;
       case SISubtarget::TrapCodeLLVMDebugTrap: {
@@ -1810,7 +1810,7 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
                                          "debugtrap handler not supported",
                                          DL,
                                          DS_Warning);
-        LLVMContext &C = MF->getFunction()->getContext();	   
+        LLVMContext &C = MF->getFunction()->getContext();
         C.diagnose(NoTrap);
         BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_NOP))
           .addImm(0);
@@ -1824,7 +1824,6 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
     MI.eraseFromParent();
     return BB;
   }
-
   case AMDGPU::SI_INIT_M0:
     BuildMI(*BB, MI.getIterator(), MI.getDebugLoc(),
             TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
