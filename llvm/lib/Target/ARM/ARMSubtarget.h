@@ -62,9 +62,9 @@ protected:
     CortexR5,
     CortexR52,
     CortexR7,
-    ExynosM1
+    ExynosM1,
     Krait,
-    Swift,
+    Swift
   };
   enum ARMProcClassEnum {
     None,
