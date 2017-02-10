@@ -5212,6 +5212,23 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     return false;
   };
 
+  // Extract constant bits from build vector.
+  if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode())) {
+    unsigned SrcEltSizeInBits = VT.getScalarSizeInBits();
+    for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
+      const SDValue &Src = Op.getOperand(i);
+      if (Src.isUndef()) {
+        APInt Undefs = APInt::getLowBitsSet(SizeInBits, SrcEltSizeInBits);
+        UndefBits |= Undefs.shl(i * SrcEltSizeInBits);
+        continue;
+      }
+      auto *Cst = cast<ConstantSDNode>(Src);
+      APInt Bits = Cst->getAPIntValue().zextOrTrunc(SrcEltSizeInBits);
+      MaskBits |= Bits.zext(SizeInBits).shl(i * SrcEltSizeInBits);
+    }
+    return SplitBitData();
+  }
+
   // Extract constant bits from constant pool vector.
   if (auto *Cst = getTargetConstantFromNode(Op)) {
     Type *CstTy = Cst->getType();
