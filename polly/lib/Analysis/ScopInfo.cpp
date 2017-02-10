@@ -1188,7 +1188,7 @@ void ScopStmt::addAccess(MemoryAccess *Access) {
 
     ValueReads[AccessVal] = Access;
   } else if (Access->isAnyPHIKind() && Access->isWrite()) {
-    PHINode *PHI = cast<PHINode>(Access->getOriginalBaseAddr());
+    PHINode *PHI = cast<PHINode>(Access->getAccessValue());
     assert(!PHIWrites.lookup(PHI));
 
     PHIWrites[PHI] = Access;
