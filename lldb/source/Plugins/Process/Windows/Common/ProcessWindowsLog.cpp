@@ -109,8 +109,9 @@ void ProcessWindowsLog::DisableLog(const char **args, Stream *feedback_strm) {
   return;
 }
 
-Log *ProcessWindowsLog::EnableLog(StreamSP &log_stream_sp, uint32_t log_options,
-                                  const char **args, Stream *feedback_strm) {
+Log *ProcessWindowsLog::EnableLog(
+    std::shared_ptr<llvm::raw_ostream> &log_stream_sp, uint32_t log_options,
+    const char **args, Stream *feedback_strm) {
   // Try see if there already is a log - that way we can reuse its settings.
   // We could reuse the log in toto, but we don't know that the stream is the
   // same.
