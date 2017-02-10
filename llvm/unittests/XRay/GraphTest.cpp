@@ -17,13 +17,13 @@ using namespace llvm;
 using namespace xray;
 
 namespace {
-struct VA {
+struct VAttr {
   unsigned VA;
 };
-struct EA {
+struct EAttr {
   unsigned EA;
 };
-typedef Graph<VA, EA, unsigned> GraphT;
+typedef Graph<VAttr, EAttr, unsigned> GraphT;
 typedef typename GraphT::VertexIdentifier VI;
 typedef typename GraphT::EdgeIdentifier EI;
 
@@ -36,20 +36,20 @@ private:
   static T getTestGraph() {
     using std::make_pair;
     typename std::remove_const<T>::type G;
-    G.insert(make_pair(1u, VA({3u})));
-    G.insert(make_pair(2u, VA({5u})));
-    G.insert(make_pair(3u, VA({7u})));
-    G.insert(make_pair(4u, VA({11u})));
-    G.insert(make_pair(5u, VA({13u})));
-    G.insert(make_pair(6u, VA({17u})));
+    G.insert(make_pair(1u, VAttr({3u})));
+    G.insert(make_pair(2u, VAttr({5u})));
+    G.insert(make_pair(3u, VAttr({7u})));
+    G.insert(make_pair(4u, VAttr({11u})));
+    G.insert(make_pair(5u, VAttr({13u})));
+    G.insert(make_pair(6u, VAttr({17u})));
 
-    G.insert(std::make_pair(EI(1u, 2u), EA({3u * 5u})));
-    G.insert(std::make_pair(EI(2u, 3u), EA({5u * 7u})));
-    G.insert(std::make_pair(EI(6u, 3u), EA({2u * 7u * 17u})));
-    G.insert(std::make_pair(EI(4u, 6u), EA({11u * 17u})));
-    G.insert(std::make_pair(EI(2u, 4u), EA({5u * 11u})));
-    G.insert(std::make_pair(EI(2u, 5u), EA({5u * 13u})));
-    G.insert(std::make_pair(EI(4u, 5u), EA({11u * 13u})));
+    G.insert(std::make_pair(EI(1u, 2u), EAttr({3u * 5u})));
+    G.insert(std::make_pair(EI(2u, 3u), EAttr({5u * 7u})));
+    G.insert(std::make_pair(EI(6u, 3u), EAttr({2u * 7u * 17u})));
+    G.insert(std::make_pair(EI(4u, 6u), EAttr({11u * 17u})));
+    G.insert(std::make_pair(EI(2u, 4u), EAttr({5u * 11u})));
+    G.insert(std::make_pair(EI(2u, 5u), EAttr({5u * 13u})));
+    G.insert(std::make_pair(EI(4u, 5u), EAttr({11u * 13u})));
 
     return G;
   }
