@@ -1,6 +1,6 @@
 ; ModuleID = 'debuginfo-compositetype-import2.c'
 source_filename = "debuginfo-compositetype-import2.c"
-target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+target datalayout = "e-m:e-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: nounwind uwtable

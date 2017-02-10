@@ -109,6 +109,11 @@ static std::string computeDataLayout(const Triple &TT) {
   else
     Ret += "-f64:32:64";
 
+  // 128 bit integers are always aligned to 128 bits, but only 64-bit matters,
+  // because __int128 is only supoprted on 64-bit targets.
+  if (TT.isArch64Bit() && TT.isOSLinux())
+    Ret += "-i128:128";
+
   // Some ABIs align long double to 128 bits, others to 32.
   if (TT.isOSNaCl() || TT.isOSIAMCU())
     ; // No f80

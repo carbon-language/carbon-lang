@@ -24,7 +24,7 @@
 ; Check that we imported a ref (and not def) to baz.clone
 ; NM2: U baz.clone
 
-target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
+target datalayout = "e-m:e-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-grtev4-linux-gnu"
 
 $baz.clone = comdat any
