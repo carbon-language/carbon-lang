@@ -2287,6 +2287,9 @@ def err_concept_specialized : Error<
   "%select{function|variable}0 concept cannot be "
   "%select{explicitly instantiated|explicitly specialized|partially specialized}1">;
 
+def err_template_different_associated_constraints : Error<
+  "associated constraints differ in template redeclaration">;
+
 // C++11 char16_t/char32_t
 def warn_cxx98_compat_unicode_type : Warning<
   "'%0' type specifier is incompatible with C++98">,
