@@ -9,9 +9,9 @@ void f() {
 }
 
 void g() {
-  auto a; // expected-error{{declaration of variable 'a' with type 'auto' requires an initializer}}
+  auto a; // expected-error{{declaration of variable 'a' with deduced type 'auto' requires an initializer}}
   
-  auto *b; // expected-error{{declaration of variable 'b' with type 'auto *' requires an initializer}}
+  auto *b; // expected-error{{declaration of variable 'b' with deduced type 'auto *' requires an initializer}}
 
   if (auto b) {} // expected-error {{must have an initializer}}
   for (;auto b;) {} // expected-error {{must have an initializer}}

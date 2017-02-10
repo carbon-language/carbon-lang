@@ -1893,7 +1893,7 @@ def err_dependent_deduced_tst : Error<
 def err_auto_not_allowed_var_inst : Error<
   "'auto' variable template instantiation is not allowed">;
 def err_auto_var_requires_init : Error<
-  "declaration of variable %0 with type %1 requires an initializer">;
+  "declaration of variable %0 with deduced type %1 requires an initializer">;
 def err_auto_new_requires_ctor_arg : Error<
   "new expression for type %0 requires a constructor argument">;
 def err_auto_new_list_init : Error<

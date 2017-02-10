@@ -9816,7 +9816,15 @@ QualType Sema::deduceVarTypeFromInitializer(VarDecl *VDecl,
   DeducedType *Deduced = Type->getContainedDeducedType();
   assert(Deduced && "deduceVarTypeFromInitializer for non-deduced type");
 
-  ArrayRef<Expr*> DeduceInits = Init ? ArrayRef<Expr*>(Init) : None;
+  // C++11 [dcl.spec.auto]p3
+  if (!Init) {
+    assert(VDecl && "no init for init capture deduction?");
+    Diag(VDecl->getLocation(), diag::err_auto_var_requires_init)
+      << VDecl->getDeclName() << Type;
+    return QualType();
+  }
+
+  ArrayRef<Expr*> DeduceInits = Init;
   if (DirectInit) {
     if (auto *PL = dyn_cast_or_null<ParenListExpr>(Init))
       DeduceInits = PL->exprs();
@@ -9831,14 +9839,6 @@ QualType Sema::deduceVarTypeFromInitializer(VarDecl *VDecl,
     SmallVector<Expr*, 8> InitsCopy(DeduceInits.begin(), DeduceInits.end());
     return DeduceTemplateSpecializationFromInitializer(TSI, Entity, Kind,
                                                        InitsCopy);
-  }
-
-  // C++11 [dcl.spec.auto]p3
-  if (!Init) {
-    assert(VDecl && "no init for init capture deduction?");
-    Diag(VDecl->getLocation(), diag::err_auto_var_requires_init)
-      << VDecl->getDeclName() << Type;
-    return QualType();
   }
 
   if (DirectInit) {
