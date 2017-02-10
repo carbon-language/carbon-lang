@@ -21,6 +21,7 @@ from libcxx.compiler import CXXCompiler
 from libcxx.test.target_info import make_target_info
 from libcxx.test.executor import *
 from libcxx.test.tracing import *
+import libcxx.util
 
 def loadSiteConfig(lit_config, config, param_name, env_name):
     # We haven't loaded the site specific configuration (the user is
