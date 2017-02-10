@@ -892,7 +892,7 @@ class Configuration(object):
     def configure_substitutions(self):
         sub = self.config.substitutions
         # Configure compiler substitutions
-        sub.append(('%cxx', self.cxx.path))
+        sub.append(('%cxx', pipes.quote(self.cxx.path)))
         # Configure flags substitutions
         flags_str = ' '.join([pipes.quote(f) for f in self.cxx.flags])
         compile_flags_str = ' '.join([pipes.quote(f) for f in self.cxx.compile_flags])
