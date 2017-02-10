@@ -6120,7 +6120,7 @@ NamedDecl *Sema::ActOnVariableDeclarator(
                             D.getIdentifierLoc(), II,
                             R, TInfo, SC);
 
-    if (D.getDeclSpec().containsPlaceholderType() && R->getContainedAutoType())
+    if (R->getContainedDeducedType())
       ParsingInitForAutoVars.insert(NewVD);
 
     if (D.isInvalidType())
@@ -6256,7 +6256,7 @@ NamedDecl *Sema::ActOnVariableDeclarator(
 
     // If this decl has an auto type in need of deduction, make a note of the
     // Decl so we can diagnose uses of it in its own initializer.
-    if (D.getDeclSpec().containsPlaceholderType() && R->getContainedAutoType())
+    if (R->getContainedDeducedType())
       ParsingInitForAutoVars.insert(NewVD);
 
     if (D.isInvalidType() || Invalid) {
@@ -11202,7 +11202,7 @@ Sema::DeclGroupPtrTy Sema::FinalizeDeclaratorGroup(Scope *S, const DeclSpec &DS,
           FirstDeclaratorInGroup = DD;
         if (!FirstDecompDeclaratorInGroup)
           FirstDecompDeclaratorInGroup = dyn_cast<DecompositionDecl>(D);
-        if (!FirstNonDeducedAutoInGroup && DS.containsPlaceholderType() &&
+        if (!FirstNonDeducedAutoInGroup && DS.hasAutoTypeSpec() &&
             !hasDeducedAuto(DD))
           FirstNonDeducedAutoInGroup = DD;
 
@@ -11935,7 +11935,7 @@ bool Sema::canDelayFunctionBody(const Declarator &D) {
 
   // We can't delay parsing the body of a function template with a deduced
   // return type (yet).
-  if (D.getDeclSpec().containsPlaceholderType()) {
+  if (D.getDeclSpec().hasAutoTypeSpec()) {
     // If the placeholder introduces a non-deduced trailing return type,
     // we can still delay parsing it.
     if (D.getNumTypeObjects()) {

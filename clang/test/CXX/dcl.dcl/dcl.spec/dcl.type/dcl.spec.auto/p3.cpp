@@ -1,11 +1,11 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++11
 // RUN: %clang_cc1 -fsyntax-only -verify %s -std=c++98 -Wno-c++11-extensions -Wc++11-compat 
 void f() {
-  auto a = a; // expected-error{{variable 'a' declared with 'auto' type cannot appear in its own initializer}}
-  auto *b = b; // expected-error{{variable 'b' declared with 'auto' type cannot appear in its own initializer}}
-  const auto c = c; // expected-error{{variable 'c' declared with 'auto' type cannot appear in its own initializer}}
-  if (auto d = d) {} // expected-error {{variable 'd' declared with 'auto' type cannot appear in its own initializer}}
-  auto e = ({ auto f = e; 0; }); // expected-error {{variable 'e' declared with 'auto' type cannot appear in its own initializer}}
+  auto a = a; // expected-error{{variable 'a' declared with deduced type 'auto' cannot appear in its own initializer}}
+  auto *b = b; // expected-error{{variable 'b' declared with deduced type 'auto *' cannot appear in its own initializer}}
+  const auto c = c; // expected-error{{variable 'c' declared with deduced type 'const auto' cannot appear in its own initializer}}
+  if (auto d = d) {} // expected-error {{variable 'd' declared with deduced type 'auto' cannot appear in its own initializer}}
+  auto e = ({ auto f = e; 0; }); // expected-error {{variable 'e' declared with deduced type 'auto' cannot appear in its own initializer}}
 }
 
 void g() {

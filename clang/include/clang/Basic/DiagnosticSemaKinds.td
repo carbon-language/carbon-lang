@@ -1861,8 +1861,8 @@ def warn_cxx98_compat_auto_type_specifier : Warning<
   "'auto' type specifier is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_auto_variable_cannot_appear_in_own_initializer : Error<
-  "variable %0 declared with %select{'auto'|'decltype(auto)'|'__auto_type'}1 "
-  "type cannot appear in its own initializer">;
+  "variable %0 declared with deduced type %1 "
+  "cannot appear in its own initializer">;
 def err_binding_cannot_appear_in_own_initializer : Error<
   "binding %0 cannot appear in the initializer of its own "
   "decomposition declaration">;
