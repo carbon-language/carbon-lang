@@ -60,7 +60,7 @@ add_llvm_target(HexagonCodeGen
   RDFGraph.cpp
   RDFLiveness.cpp
   RDFRegisters.cpp
-  )
+)
 
 add_subdirectory(AsmParser)
 add_subdirectory(TargetInfo)
