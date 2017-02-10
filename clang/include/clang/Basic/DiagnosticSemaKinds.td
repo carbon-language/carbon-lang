@@ -1993,6 +1993,8 @@ def err_deduction_guide_name_not_class_template : Error<
   "cannot specify deduction guide for "
   "%select{<error>|function template|variable template|alias template|"
   "template template parameter|dependent template name}0 %1">;
+def err_deduction_guide_wrong_scope : Error<
+  "deduction guide must be declared in the same scope as template %q0">;
 def err_deduction_guide_defines_function : Error<
   "deduction guide cannot have a function definition">;
 def err_deduction_guide_explicit_mismatch : Error<
