@@ -31,7 +31,7 @@
 ; RUN: %clang -target x86_64-unknown-linux-gnu -O2 -o %t3.o -x ir %t1.o -c -fthinlto-index=%t.thinlto.bc 2>&1 | FileCheck %s -check-prefix=CHECK-ERROR2
 ; CHECK-ERROR2: Error loading imported file '{{.*}}': Could not find module summary
 
-target datalayout = "e-m:e-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
 declare void @f2()
