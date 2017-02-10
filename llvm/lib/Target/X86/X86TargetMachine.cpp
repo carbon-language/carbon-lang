@@ -15,7 +15,9 @@
 #include "X86.h"
 #include "X86CallLowering.h"
 #include "X86LegalizerInfo.h"
+#ifdef LLVM_BUILD_GLOBAL_ISEL
 #include "X86RegisterBankInfo.h"
+#endif
 #include "X86MacroFusion.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
