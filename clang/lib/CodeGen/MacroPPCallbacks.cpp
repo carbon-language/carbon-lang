@@ -122,8 +122,6 @@ void MacroPPCallbacks::updateStatusToNextScope() {
 void MacroPPCallbacks::FileEntered(SourceLocation Loc) {
   SourceLocation LineLoc = getCorrectLocation(LastHashLoc);
   switch (Status) {
-  default:
-    llvm_unreachable("Do not expect to enter a file from current scope");
   case NoScope:
     updateStatusToNextScope();
     break;
