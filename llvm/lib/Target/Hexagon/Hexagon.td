@@ -241,7 +241,6 @@ def getRealHWInstr : InstrMapping {
 //===----------------------------------------------------------------------===//
 include "HexagonSchedule.td"
 include "HexagonRegisterInfo.td"
-include "HexagonCallingConv.td"
 include "HexagonOperands.td"
 include "HexagonDepOperands.td"
 include "HexagonDepITypes.td"
