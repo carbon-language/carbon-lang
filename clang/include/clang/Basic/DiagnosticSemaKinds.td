@@ -1981,6 +1981,9 @@ def err_deduced_class_template_explicit : Error<
   "%select{constructor|deduction guide}1 for copy-list-initialization">;
 def err_deduction_guide_no_trailing_return_type : Error<
   "deduction guide declaration without trailing return type">;
+def err_deduction_guide_bad_trailing_return_type : Error<
+  "deduced type %1 of deduction guide is not %select{|written as }2"
+  "a specialization of template %0">;
 def err_deduction_guide_with_complex_decl : Error<
   "cannot specify any part of a return type in the "
   "declaration of a deduction guide">;
