@@ -1450,11 +1450,13 @@ void NewGVN::initializeCongruenceClasses(Function &F) {
       MemoryAccessToClass[MP] = InitialClass;
 
     for (auto &I : B) {
-      // Don't insert void terminators into the class
-      if (!isa<TerminatorInst>(I) || !I.getType()->isVoidTy()) {
-        InitialValues.insert(&I);
-        ValueToClass[&I] = InitialClass;
-      }
+      // Don't insert void terminators into the class. We don't value number
+      // them, and they just end up sitting in INITIAL.
+      if (isa<TerminatorInst>(I) && I.getType()->isVoidTy())
+        continue;
+      InitialValues.insert(&I);
+      ValueToClass[&I] = InitialClass;
+
       // All memory accesses are equivalent to live on entry to start. They must
       // be initialized to something so that initial changes are noticed. For
       // the maximal answer, we initialize them all to be the same as
