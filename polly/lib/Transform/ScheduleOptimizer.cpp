@@ -783,6 +783,8 @@ static bool containsOnlyMatMulDep(__isl_keep isl_map *Schedule,
     }
     isl_val_free(Val);
   }
+  if (DeltasDimNum == 0 || Pos < 0)
+    return false;
   return true;
 }
 
