@@ -212,6 +212,9 @@ class NewGVN : public FunctionPass {
   BumpPtrAllocator ExpressionAllocator;
   ArrayRecycler<Value *> ArgRecycler;
 
+  // Number of function arguments, used by ranking
+  unsigned int NumFuncArgs;
+
   // Congruence class info.
 
   // This class is called INITIAL in the paper. It is the class everything
@@ -352,6 +355,10 @@ private:
   bool setMemoryAccessEquivTo(MemoryAccess *From, CongruenceClass *To);
   MemoryAccess *lookupMemoryAccessEquiv(MemoryAccess *) const;
   bool isMemoryAccessTop(const MemoryAccess *) const;
+
+  // Ranking
+  unsigned int getRank(const Value *) const;
+  bool shouldSwapOperands(const Value *, const Value *) const;
 
   // Reachability handling.
   void updateReachableEdge(BasicBlock *, BasicBlock *);
@@ -496,7 +503,7 @@ const Expression *NewGVN::createBinaryExpression(unsigned Opcode, Type *T,
     // of their operands get the same value number by sorting the operand value
     // numbers.  Since all commutative instructions have two operands it is more
     // efficient to sort by hand rather than using, say, std::sort.
-    if (Arg1 > Arg2)
+    if (shouldSwapOperands(Arg1, Arg2))
       std::swap(Arg1, Arg2);
   }
   E->op_push_back(lookupOperandLeader(Arg1));
@@ -580,7 +587,7 @@ const Expression *NewGVN::createExpression(Instruction *I) {
     // Sort the operand value numbers so x<y and y>x get the same value
     // number.
     CmpInst::Predicate Predicate = CI->getPredicate();
-    if (E->getOperand(0) > E->getOperand(1)) {
+    if (shouldSwapOperands(E->getOperand(0), E->getOperand(1))) {
       E->swapOperands(0, 1);
       Predicate = CmpInst::getSwappedPredicate(Predicate);
     }
@@ -2407,4 +2414,35 @@ bool NewGVN::eliminateInstructions(Function &F) {
   }
 
   return AnythingReplaced;
+}
+
+// This function provides global ranking of operations so that we can place them
+// in a canonical order.  Note that rank alone is not necessarily enough for a
+// complete ordering, as constants all have the same rank.  However, generally,
+// we will simplify an operation with all constants so that it doesn't matter
+// what order they appear in.
+unsigned int NewGVN::getRank(const Value *V) const {
+  if (isa<Constant>(V))
+    return 0;
+  else if (auto *A = dyn_cast<Argument>(V))
+    return 1 + A->getArgNo();
+
+  // Need to shift the instruction DFS by number of arguments + 2 to account for
+  // the constant and argument ranking above.
+  unsigned Result = InstrDFS.lookup(V);
+  if (Result > 0)
+    return 2 + NumFuncArgs + Result;
+  // Unreachable or something else, just return a really large number.
+  return ~0;
+}
+
+// This is a function that says whether two commutative operations should
+// have their order swapped when canonicalizing.
+bool NewGVN::shouldSwapOperands(const Value *A, const Value *B) const {
+  // Because we only care about a total ordering, and don't rewrite expressions
+  // in this order, we order by rank, which will give a strict weak ordering to
+  // everything but constants, and then we order by pointer address.  This is
+  // not deterministic for constants, but it should not matter because any
+  // operation with only constants will be folded (except, usually, for undef).
+  return std::make_pair(getRank(B), B) > std::make_pair(getRank(A), A);
 }
