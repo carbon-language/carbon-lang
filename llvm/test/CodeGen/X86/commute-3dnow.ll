@@ -31,7 +31,6 @@ define void @commute_m_pfadd(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind 
 }
 declare x86_mmx @llvm.x86.3dnow.pfadd(x86_mmx, x86_mmx)
 
-; FIXME - missed PFSUB commutation.
 define void @commute_m_pfsub(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind {
 ; X32-LABEL: commute_m_pfsub:
 ; X32:       # BB#0:
@@ -39,19 +38,17 @@ define void @commute_m_pfsub(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind 
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
 ; X32-NEXT:    movq (%edx), %mm0
-; X32-NEXT:    movq (%ecx), %mm1
 ; X32-NEXT:    pfsub (%eax), %mm0
-; X32-NEXT:    pfsub %mm0, %mm1
-; X32-NEXT:    movq %mm1, (%ecx)
+; X32-NEXT:    pfsubr (%ecx), %mm0
+; X32-NEXT:    movq %mm0, (%ecx)
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: commute_m_pfsub:
 ; X64:       # BB#0:
 ; X64-NEXT:    movq (%rdi), %mm0
-; X64-NEXT:    movq (%rdx), %mm1
 ; X64-NEXT:    pfsub (%rsi), %mm0
-; X64-NEXT:    pfsub %mm0, %mm1
-; X64-NEXT:    movq %mm1, (%rdx)
+; X64-NEXT:    pfsubr (%rdx), %mm0
+; X64-NEXT:    movq %mm0, (%rdx)
 ; X64-NEXT:    retq
   %1 = load x86_mmx, x86_mmx* %a0
   %2 = load x86_mmx, x86_mmx* %a1
@@ -63,7 +60,6 @@ define void @commute_m_pfsub(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind 
 }
 declare x86_mmx @llvm.x86.3dnow.pfsub(x86_mmx, x86_mmx)
 
-; FIXME - missed PFSUBR commutation.
 define void @commute_m_pfsubr(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind {
 ; X32-LABEL: commute_m_pfsubr:
 ; X32:       # BB#0:
@@ -71,19 +67,17 @@ define void @commute_m_pfsubr(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
 ; X32-NEXT:    movq (%edx), %mm0
-; X32-NEXT:    movq (%ecx), %mm1
 ; X32-NEXT:    pfsubr (%eax), %mm0
-; X32-NEXT:    pfsubr %mm0, %mm1
-; X32-NEXT:    movq %mm1, (%ecx)
+; X32-NEXT:    pfsub (%ecx), %mm0
+; X32-NEXT:    movq %mm0, (%ecx)
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: commute_m_pfsubr:
 ; X64:       # BB#0:
 ; X64-NEXT:    movq (%rdi), %mm0
-; X64-NEXT:    movq (%rdx), %mm1
 ; X64-NEXT:    pfsubr (%rsi), %mm0
-; X64-NEXT:    pfsubr %mm0, %mm1
-; X64-NEXT:    movq %mm1, (%rdx)
+; X64-NEXT:    pfsub (%rdx), %mm0
+; X64-NEXT:    movq %mm0, (%rdx)
 ; X64-NEXT:    retq
   %1 = load x86_mmx, x86_mmx* %a0
   %2 = load x86_mmx, x86_mmx* %a1

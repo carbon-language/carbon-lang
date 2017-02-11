@@ -4813,6 +4813,18 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }
+  case X86::PFSUBrr:
+  case X86::PFSUBRrr: {
+    // PFSUB  x, y: x = x - y
+    // PFSUBR x, y: x = y - x
+    unsigned Opc =
+        (X86::PFSUBRrr == MI.getOpcode() ? X86::PFSUBrr : X86::PFSUBRrr);
+    auto &WorkingMI = cloneIfNew(MI);
+    WorkingMI.setDesc(get(Opc));
+    return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
+                                                   OpIdx1, OpIdx2);
+    break;
+  }
   case X86::BLENDPDrri:
   case X86::BLENDPSrri:
   case X86::PBLENDWrri:

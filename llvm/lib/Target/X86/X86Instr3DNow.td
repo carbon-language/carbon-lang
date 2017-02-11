@@ -80,8 +80,8 @@ defm PFRCPIT1 : I3DNow_binop_rm_int<0xA6, "pfrcpit1">;
 defm PFRCPIT2 : I3DNow_binop_rm_int<0xB6, "pfrcpit2">;
 defm PFRSQIT1 : I3DNow_binop_rm_int<0xA7, "pfrsqit1">;
 defm PFRSQRT  : I3DNow_conv_rm_int<0x97, "pfrsqrt">;
-defm PFSUB    : I3DNow_binop_rm_int<0x9A, "pfsub">;
-defm PFSUBR   : I3DNow_binop_rm_int<0xAA, "pfsubr">;
+defm PFSUB    : I3DNow_binop_rm_int<0x9A, "pfsub", 1>;
+defm PFSUBR   : I3DNow_binop_rm_int<0xAA, "pfsubr", 1>;
 defm PI2FD    : I3DNow_conv_rm_int<0x0D, "pi2fd">;
 defm PMULHRW  : I3DNow_binop_rm_int<0xB7, "pmulhrw", 1>;
 
