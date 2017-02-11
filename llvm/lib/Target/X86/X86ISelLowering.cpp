@@ -33996,30 +33996,37 @@ static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
 static SDValue combineVSZext(SDNode *N, SelectionDAG &DAG,
                              TargetLowering::DAGCombinerInfo &DCI,
                              const X86Subtarget &Subtarget) {
+  if (DCI.isBeforeLegalize())
+    return SDValue();
+
   SDLoc DL(N);
   unsigned Opcode = N->getOpcode();
   MVT VT = N->getSimpleValueType(0);
   MVT SVT = VT.getVectorElementType();
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned EltSizeInBits = SVT.getSizeInBits();
+
   SDValue Op = N->getOperand(0);
   MVT OpVT = Op.getSimpleValueType();
   MVT OpEltVT = OpVT.getVectorElementType();
-  unsigned InputBits = OpEltVT.getSizeInBits() * VT.getVectorNumElements();
+  unsigned OpEltSizeInBits = OpEltVT.getSizeInBits();
+  unsigned InputBits = OpEltSizeInBits * NumElts;
 
   // Perform any constant folding.
   // FIXME: Reduce constant pool usage and don't fold when OptSize is enabled.
-  if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode())) {
-    unsigned NumDstElts = VT.getVectorNumElements();
-    SmallBitVector Undefs(NumDstElts, false);
-    SmallVector<APInt, 4> Vals(NumDstElts, APInt(SVT.getSizeInBits(), 0));
-    for (unsigned i = 0; i != NumDstElts; ++i) {
-      SDValue OpElt = Op.getOperand(i);
-      if (OpElt.getOpcode() == ISD::UNDEF) {
+  SmallBitVector UndefElts;
+  SmallVector<APInt, 64> EltBits;
+  if (getTargetConstantBitsFromNode(Op, OpEltSizeInBits, UndefElts, EltBits)) {
+    SmallBitVector Undefs(NumElts, false);
+    SmallVector<APInt, 4> Vals(NumElts, APInt(EltSizeInBits, 0));
+    bool IsZEXT = (Opcode == X86ISD::VZEXT);
+    for (unsigned i = 0; i != NumElts; ++i) {
+      if (UndefElts[i]) {
         Undefs[i] = true;
         continue;
       }
-      APInt Cst = cast<ConstantSDNode>(OpElt.getNode())->getAPIntValue();
-      Vals[i] = Opcode == X86ISD::VZEXT ? Cst.zextOrTrunc(SVT.getSizeInBits())
-                                        : Cst.sextOrTrunc(SVT.getSizeInBits());
+      Vals[i] = IsZEXT ? EltBits[i].zextOrTrunc(EltSizeInBits)
+                       : EltBits[i].sextOrTrunc(EltSizeInBits);
     }
     return getConstVector(Vals, Undefs, VT, DAG, DL);
   }
