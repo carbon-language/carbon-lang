@@ -765,12 +765,15 @@ static bool containsOnlyMatMulDep(__isl_keep isl_map *Schedule,
     return false;
   }
   isl_union_map_free(WAR);
-  auto *RAW = D->getDependences(Dependences::TYPE_RAW);
+  auto *Dep = D->getDependences(Dependences::TYPE_RAW);
+  auto *Red = D->getDependences(Dependences::TYPE_RED);
+  if (Red)
+    Dep = isl_union_map_union(Dep, Red);
   auto *DomainSpace = isl_space_domain(isl_map_get_space(Schedule));
   auto *Space = isl_space_map_from_domain_and_range(isl_space_copy(DomainSpace),
                                                     DomainSpace);
-  auto *Deltas = isl_map_deltas(isl_union_map_extract_map(RAW, Space));
-  isl_union_map_free(RAW);
+  auto *Deltas = isl_map_deltas(isl_union_map_extract_map(Dep, Space));
+  isl_union_map_free(Dep);
   int DeltasDimNum = isl_set_dim(Deltas, isl_dim_set);
   isl_set_free(Deltas);
   for (int i = 0; i < DeltasDimNum; i++) {
