@@ -263,8 +263,6 @@ define void @tf_bug(i8* %ptr) nounwind {
 ; PIC-NEXT:    popl %edi
 ; PIC-NEXT:    popl %ebx
 ; PIC-NEXT:    retl
-; PIC-NEXT:  
-; PIC-NEXT:  .zerofill __DATA,__bss,_id,8,3 ## @id
   %tmp1 = atomicrmw add i64* @id, i64 1 seq_cst
   %tmp2 = add i64 %tmp1, 1
   %tmp3 = bitcast i8* %ptr to i64*
