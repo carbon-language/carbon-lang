@@ -22070,10 +22070,10 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
     // A subtract of one will be selected as a INC. Note that INC doesn't
     // set CF, so we can't do this for UADDO.
     if (isOneConstant(RHS)) {
-        BaseOp = X86ISD::INC;
-        Cond = X86::COND_O;
-        break;
-      }
+      BaseOp = X86ISD::INC;
+      Cond = X86::COND_O;
+      break;
+    }
     BaseOp = X86ISD::ADD;
     Cond = X86::COND_O;
     break;
@@ -22085,10 +22085,10 @@ static SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) {
     // A subtract of one will be selected as a DEC. Note that DEC doesn't
     // set CF, so we can't do this for USUBO.
     if (isOneConstant(RHS)) {
-        BaseOp = X86ISD::DEC;
-        Cond = X86::COND_O;
-        break;
-      }
+      BaseOp = X86ISD::DEC;
+      Cond = X86::COND_O;
+      break;
+    }
     BaseOp = X86ISD::SUB;
     Cond = X86::COND_O;
     break;
