@@ -26684,10 +26684,11 @@ static bool matchBinaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
         int M = Mask[i];
         if (M == SM_SentinelUndef)
           continue;
-        else if (M == SM_SentinelZero)
+        if ((M == SM_SentinelZero) ||
+            ((M != i) && (M != (i + (int)NumMaskElts)))) {
           MatchBlend = false;
-        else if ((M != i) && (M != (i + (int)NumMaskElts)))
-          MatchBlend = false;
+          break;
+        }
       }
 
       if (MatchBlend) {
