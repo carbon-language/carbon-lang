@@ -5162,6 +5162,9 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   assert((SizeInBits % EltSizeInBits) == 0 && "Can't split constant!");
   unsigned NumElts = SizeInBits / EltSizeInBits;
 
+  unsigned SrcEltSizeInBits = VT.getScalarSizeInBits();
+  unsigned NumSrcElts = SizeInBits / SrcEltSizeInBits;
+
   // Extract all the undef/constant element data and pack into single bitsets.
   APInt UndefBits(SizeInBits, 0);
   APInt MaskBits(SizeInBits, 0);
@@ -5214,7 +5217,6 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
 
   // Extract constant bits from build vector.
   if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode())) {
-    unsigned SrcEltSizeInBits = VT.getScalarSizeInBits();
     for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
       const SDValue &Src = Op.getOperand(i);
       if (Src.isUndef()) {
@@ -5249,15 +5251,13 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
 
   // Extract constant bits from a broadcasted constant pool scalar.
   if (Op.getOpcode() == X86ISD::VBROADCAST &&
-      EltSizeInBits <= Op.getScalarValueSizeInBits()) {
+      EltSizeInBits <= SrcEltSizeInBits) {
     if (auto *Broadcast = getTargetConstantFromNode(Op.getOperand(0))) {
       APInt Bits, Undefs;
       if (ExtractConstantBits(Broadcast, Bits, Undefs)) {
-        unsigned NumBroadcastBits = Op.getScalarValueSizeInBits();
-        unsigned NumBroadcastElts = SizeInBits / NumBroadcastBits;
-        for (unsigned i = 0; i != NumBroadcastElts; ++i) {
-          MaskBits |= Bits.shl(i * NumBroadcastBits);
-          UndefBits |= Undefs.shl(i * NumBroadcastBits);
+        for (unsigned i = 0; i != NumSrcElts; ++i) {
+          MaskBits |= Bits.shl(i * SrcEltSizeInBits);
+          UndefBits |= Undefs.shl(i * SrcEltSizeInBits);
         }
         return SplitBitData();
       }
