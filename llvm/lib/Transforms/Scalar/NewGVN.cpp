@@ -1710,6 +1710,7 @@ bool NewGVN::runGVN(Function &F, DominatorTree *_DT, AssumptionCache *_AC,
                     TargetLibraryInfo *_TLI, AliasAnalysis *_AA,
                     MemorySSA *_MSSA) {
   bool Changed = false;
+  NumFuncArgs = F.arg_size();
   DT = _DT;
   AC = _AC;
   TLI = _TLI;
