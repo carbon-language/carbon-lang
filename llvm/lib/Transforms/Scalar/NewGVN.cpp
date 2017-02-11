@@ -213,6 +213,11 @@ class NewGVN : public FunctionPass {
   ArrayRecycler<Value *> ArgRecycler;
 
   // Congruence class info.
+
+  // This class is called INITIAL in the paper. It is the class everything
+  // startsout in, and represents any value. Being an optimistic analysis,
+  // anything in the INITIAL class has the value TOP, which is indeterminate and
+  // equivalent to everything.
   CongruenceClass *InitialClass;
   std::vector<CongruenceClass *> CongruenceClasses;
   unsigned NextCongruenceNum;
@@ -691,8 +696,15 @@ const CallExpression *NewGVN::createCallExpression(CallInst *CI,
 // return it. Otherwise, return the operand itself.
 Value *NewGVN::lookupOperandLeader(Value *V) const {
   CongruenceClass *CC = ValueToClass.lookup(V);
-  if (CC && (CC != InitialClass))
+  if (CC) {
+    // Everything in INITIAL is represneted by undef, as it can be any value.
+    // We do have to make sure we get the type right though, so we can't set the
+    // RepLeader to undef.
+    if (CC == InitialClass)
+      return UndefValue::get(V->getType());
     return CC->RepStoredValue ? CC->RepStoredValue : CC->RepLeader;
+  }
+
   return V;
 }
 
@@ -957,9 +969,8 @@ const Expression *NewGVN::performSymbolicAggrValueEvaluation(Instruction *I) {
         // expression.
         assert(II->getNumArgOperands() == 2 &&
                "Expect two args for recognised intrinsics.");
-        return createBinaryExpression(Opcode, EI->getType(),
-                                      II->getArgOperand(0),
-                                      II->getArgOperand(1));
+        return createBinaryExpression(
+            Opcode, EI->getType(), II->getArgOperand(0), II->getArgOperand(1));
       }
     }
   }
@@ -1200,7 +1211,7 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I,
     }
 
     // We don't need to sort members if there is only 1, and we don't care about
-    // sorting the initial class because everything either gets out of it or is
+    // sorting the INITIAL class because everything either gets out of it or is
     // unreachable.
     if (OldClass->Members.size() == 1 || OldClass == InitialClass) {
       OldClass->RepLeader = *(OldClass->Members.begin());
@@ -1229,7 +1240,7 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I,
 void NewGVN::performCongruenceFinding(Instruction *I, const Expression *E) {
   ValueToExpression[I] = E;
   // This is guaranteed to return something, since it will at least find
-  // INITIAL.
+  // TOP.
 
   CongruenceClass *IClass = ValueToClass[I];
   assert(IClass && "Should have found a IClass");
@@ -1418,8 +1429,7 @@ void NewGVN::processOutgoingEdges(TerminatorInst *TI, BasicBlock *B) {
 }
 
 // The algorithm initially places the values of the routine in the INITIAL
-// congruence
-// class. The leader of INITIAL is the undetermined value `TOP`.
+// congruence class. The leader of INITIAL is the undetermined value `TOP`.
 // When the algorithm has finished, values still in INITIAL are unreachable.
 void NewGVN::initializeCongruenceClasses(Function &F) {
   // FIXME now i can't remember why this is 2
@@ -1433,8 +1443,11 @@ void NewGVN::initializeCongruenceClasses(Function &F) {
       MemoryAccessToClass[MP] = InitialClass;
 
     for (auto &I : B) {
-      InitialValues.insert(&I);
-      ValueToClass[&I] = InitialClass;
+      // Don't insert void terminators into the class
+      if (!isa<TerminatorInst>(I) || !I.getType()->isVoidTy()) {
+        InitialValues.insert(&I);
+        ValueToClass[&I] = InitialClass;
+      }
       // All memory accesses are equivalent to live on entry to start. They must
       // be initialized to something so that initial changes are noticed. For
       // the maximal answer, we initialize them all to be the same as
@@ -1585,7 +1598,8 @@ void NewGVN::valueNumberInstruction(Instruction *I) {
     performCongruenceFinding(I, Symbolized);
   } else {
     // Handle terminators that return values. All of them produce values we
-    // don't currently understand.
+    // don't currently understand.  We don't place non-value producing
+    // terminators in a class.
     if (!I->getType()->isVoidTy()) {
       auto *Symbolized = createUnknownExpression(I);
       performCongruenceFinding(I, Symbolized);
@@ -2198,12 +2212,20 @@ bool NewGVN::eliminateInstructions(Function &F) {
     // dead store elimination.
     SmallVector<ValueDFS, 8> PossibleDeadStores;
 
-    // FIXME: We should eventually be able to replace everything still
-    // in the initial class with undef, as they should be unreachable.
-    // Right now, initial still contains some things we skip value
-    // numbering of (UNREACHABLE's, for example).
-    if (CC == InitialClass || CC->Dead)
+    if (CC->Dead)
       continue;
+    // Everything still in the INITIAL class is unreachable or dead.
+    if (CC == InitialClass) {
+#ifndef NDEBUG
+      for (auto M : CC->Members)
+        assert((!ReachableBlocks.count(cast<Instruction>(M)->getParent()) ||
+                InstructionsToErase.count(cast<Instruction>(M))) &&
+               "Everything in INITIAL should be unreachable or dead at this "
+               "point");
+#endif
+      continue;
+    }
+
     assert(CC->RepLeader && "We should have had a leader");
 
     // If this is a leader that is always available, and it's a
