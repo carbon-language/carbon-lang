@@ -21,9 +21,9 @@
 ;   incq %rax
 
 ; CHECK:      LBB0_1:
-; CHECK-NEXT:   movl 4096(%{{...}},[[REG:%...]]
-; CHECK-NEXT:   addl 4096(%{{...}},[[REG]]
-; CHECK-NEXT:   movl %{{...}}, 4096(%{{...}},[[REG]]
+; CHECK-NEXT:   movl 4096(%{{.+}},[[REG:%[0-9a-z]+]]
+; CHECK-NEXT:   addl 4096(%{{.+}},[[REG]]
+; CHECK-NEXT:   movl %{{.+}}, 4096(%{{.+}},[[REG]]
 ; CHECK-NOT:    cmp
 ; CHECK:        jne
 
