@@ -770,6 +770,7 @@ static bool containsOnlyMatMulDep(__isl_keep isl_map *Schedule,
   auto *Space = isl_space_map_from_domain_and_range(isl_space_copy(DomainSpace),
                                                     DomainSpace);
   auto *Deltas = isl_map_deltas(isl_union_map_extract_map(RAW, Space));
+  isl_union_map_free(RAW);
   int DeltasDimNum = isl_set_dim(Deltas, isl_dim_set);
   isl_set_free(Deltas);
   for (int i = 0; i < DeltasDimNum; i++) {
@@ -778,12 +779,10 @@ static bool containsOnlyMatMulDep(__isl_keep isl_map *Schedule,
     if (isl_val_is_nan(Val) ||
         !(isl_val_is_zero(Val) || (i == Pos && isl_val_is_one(Val)))) {
       isl_val_free(Val);
-      isl_union_map_free(RAW);
       return false;
     }
     isl_val_free(Val);
   }
-  isl_union_map_free(RAW);
   return true;
 }
 
