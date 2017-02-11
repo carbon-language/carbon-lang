@@ -118,6 +118,70 @@ define void @commute_m_pfmul(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind 
 }
 declare x86_mmx @llvm.x86.3dnow.pfmul(x86_mmx, x86_mmx)
 
+; PFMAX can't commute without fast-math.
+define void @commute_m_pfmax(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind {
+; X32-LABEL: commute_m_pfmax:
+; X32:       # BB#0:
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X32-NEXT:    movq (%edx), %mm0
+; X32-NEXT:    movq (%ecx), %mm1
+; X32-NEXT:    pfmax (%eax), %mm0
+; X32-NEXT:    pfmax %mm0, %mm1
+; X32-NEXT:    movq %mm1, (%ecx)
+; X32-NEXT:    retl
+;
+; X64-LABEL: commute_m_pfmax:
+; X64:       # BB#0:
+; X64-NEXT:    movq (%rdi), %mm0
+; X64-NEXT:    movq (%rdx), %mm1
+; X64-NEXT:    pfmax (%rsi), %mm0
+; X64-NEXT:    pfmax %mm0, %mm1
+; X64-NEXT:    movq %mm1, (%rdx)
+; X64-NEXT:    retq
+  %1 = load x86_mmx, x86_mmx* %a0
+  %2 = load x86_mmx, x86_mmx* %a1
+  %3 = load x86_mmx, x86_mmx* %a2
+  %4 = tail call x86_mmx @llvm.x86.3dnow.pfmax(x86_mmx %1, x86_mmx %2)
+  %5 = tail call x86_mmx @llvm.x86.3dnow.pfmax(x86_mmx %3, x86_mmx %4)
+  store x86_mmx %5, x86_mmx* %a2
+  ret void
+}
+declare x86_mmx @llvm.x86.3dnow.pfmax(x86_mmx, x86_mmx)
+
+; PFMIN can't commute without fast-math.
+define void @commute_m_pfmin(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind {
+; X32-LABEL: commute_m_pfmin:
+; X32:       # BB#0:
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X32-NEXT:    movq (%edx), %mm0
+; X32-NEXT:    movq (%ecx), %mm1
+; X32-NEXT:    pfmin (%eax), %mm0
+; X32-NEXT:    pfmin %mm0, %mm1
+; X32-NEXT:    movq %mm1, (%ecx)
+; X32-NEXT:    retl
+;
+; X64-LABEL: commute_m_pfmin:
+; X64:       # BB#0:
+; X64-NEXT:    movq (%rdi), %mm0
+; X64-NEXT:    movq (%rdx), %mm1
+; X64-NEXT:    pfmin (%rsi), %mm0
+; X64-NEXT:    pfmin %mm0, %mm1
+; X64-NEXT:    movq %mm1, (%rdx)
+; X64-NEXT:    retq
+  %1 = load x86_mmx, x86_mmx* %a0
+  %2 = load x86_mmx, x86_mmx* %a1
+  %3 = load x86_mmx, x86_mmx* %a2
+  %4 = tail call x86_mmx @llvm.x86.3dnow.pfmin(x86_mmx %1, x86_mmx %2)
+  %5 = tail call x86_mmx @llvm.x86.3dnow.pfmin(x86_mmx %3, x86_mmx %4)
+  store x86_mmx %5, x86_mmx* %a2
+  ret void
+}
+declare x86_mmx @llvm.x86.3dnow.pfmin(x86_mmx, x86_mmx)
+
 define void @commute_m_pfcmpeq(x86_mmx *%a0, x86_mmx *%a1, x86_mmx *%a2) nounwind {
 ; X32-LABEL: commute_m_pfcmpeq:
 ; X32:       # BB#0:
