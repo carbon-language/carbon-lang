@@ -94,6 +94,11 @@ static cl::opt<std::string>
     OptRemarksOutput("pass-remarks-output",
                      cl::desc("YAML output file for optimization remarks"));
 
+static cl::opt<bool> OptRemarksWithsHotness(
+    "pass-remarks-with-hotness",
+    cl::desc("Whether to include hotness informations in the remarks.\n"
+             "Has effect only if -pass-remarks-output is specified."));
+
 static void check(Error E, std::string Msg) {
   if (!E)
     return;
@@ -182,6 +187,7 @@ int main(int argc, char **argv) {
 
   // Optimization remarks.
   Conf.RemarksFilename = OptRemarksOutput;
+  Conf.RemarksWithHotness = OptRemarksWithsHotness;
 
   // Run a custom pipeline, if asked for.
   Conf.OptPipeline = OptPipeline;
