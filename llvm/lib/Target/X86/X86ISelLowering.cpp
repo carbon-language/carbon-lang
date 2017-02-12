@@ -14010,12 +14010,14 @@ static SDValue LowerEXTRACT_SUBVECTOR(SDValue Op, const X86Subtarget &Subtarget,
           In.getSimpleValueType().is512BitVector()) &&
          "Can only extract from 256-bit or 512-bit vectors");
 
-  if (ResVT.is128BitVector())
-    return extract128BitVector(In, IdxVal, DAG, dl);
-  if (ResVT.is256BitVector())
-    return extract256BitVector(In, IdxVal, DAG, dl);
+  // If the input is a buildvector just emit a smaller one.
+  unsigned ElemsPerChunk = ResVT.getVectorNumElements();
+  if (In.getOpcode() == ISD::BUILD_VECTOR)
+    return DAG.getNode(ISD::BUILD_VECTOR, dl, ResVT,
+                       makeArrayRef(In->op_begin() + IdxVal, ElemsPerChunk));
 
-  llvm_unreachable("Unimplemented!");
+  // Everything else is legal.
+  return Op;
 }
 
 static bool areOnlyUsersOf(SDNode *N, ArrayRef<SDValue> ValidUsers) {
