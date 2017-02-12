@@ -43,7 +43,7 @@ void DeleteNullPointerCheck::registerMatchers(MatchFinder *Finder) {
       ifStmt(hasCondition(anyOf(PointerCondition, BinaryPointerCheckCondition)),
              hasThen(anyOf(
                  DeleteExpr, DeleteMemberExpr,
-                 compoundStmt(has(anyOf(DeleteExpr, DeleteMemberExpr)),
+                 compoundStmt(anyOf(has(DeleteExpr), has(DeleteMemberExpr)),
                               statementCountIs(1))
                      .bind("compound"))))
           .bind("ifWithDelete"),
