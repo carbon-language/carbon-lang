@@ -147,6 +147,9 @@
 
 using namespace llvm;
 
+static cl::opt<unsigned> MaxDevirtIterations("pm-max-devirt-iterations",
+                                             cl::ReallyHidden, cl::init(4));
+
 static Regex DefaultAliasRegex("^(default|lto-pre-link|lto)<(O[0123sz])>$");
 
 static bool isOptimizingForSize(PassBuilder::OptimizationLevel Level) {
@@ -465,8 +468,14 @@ PassBuilder::buildPerModuleDefaultPipeline(OptimizationLevel Level,
   MainCGPipeline.addPass(createCGSCCToFunctionPassAdaptor(
       buildFunctionSimplificationPipeline(Level, DebugLogging)));
 
+  // We wrap the CGSCC pipeline in a devirtualization repeater. This will try
+  // to detect when we devirtualize indirect calls and iterate the SCC passes
+  // in that case to try and catch knock-on inlining or function attrs
+  // opportunities. Then we add it to the module pipeline by walking the SCCs
+  // in postorder (or bottom-up).
   MPM.addPass(
-      createModuleToPostOrderCGSCCPassAdaptor(std::move(MainCGPipeline)));
+      createModuleToPostOrderCGSCCPassAdaptor(createDevirtSCCRepeatedPass(
+          std::move(MainCGPipeline), MaxDevirtIterations, DebugLogging)));
 
   // This ends the canonicalization and simplification phase of the pipeline.
   // At this point, we expect to have canonical and simple IR which we begin
