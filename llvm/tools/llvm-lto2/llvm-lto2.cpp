@@ -90,6 +90,10 @@ static cl::opt<std::string> DefaultTriple(
     cl::desc(
         "Replace unspecified target triples in input files with this triple"));
 
+static cl::opt<std::string>
+    OptRemarksOutput("pass-remarks-output",
+                     cl::desc("YAML output file for optimization remarks"));
+
 static void check(Error E, std::string Msg) {
   if (!E)
     return;
@@ -175,6 +179,9 @@ int main(int argc, char **argv) {
   if (SaveTemps)
     check(Conf.addSaveTemps(OutputFilename + "."),
           "Config::addSaveTemps failed");
+
+  // Optimization remarks.
+  Conf.RemarksFilename = OptRemarksOutput;
 
   // Run a custom pipeline, if asked for.
   Conf.OptPipeline = OptPipeline;
