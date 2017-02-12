@@ -571,7 +571,7 @@ const Expression *NewGVN::createExpression(Instruction *I) {
     // numbers.  Since all commutative instructions have two operands it is more
     // efficient to sort by hand rather than using, say, std::sort.
     assert(I->getNumOperands() == 2 && "Unsupported commutative instruction!");
-    if (E->getOperand(0) > E->getOperand(1))
+    if (shouldSwapOperands(E->getOperand(0), E->getOperand(1)))
       E->swapOperands(0, 1);
   }
 
