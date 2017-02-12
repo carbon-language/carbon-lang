@@ -4,7 +4,7 @@
 ; RUN: llvm-lto2 -pass-remarks-output=%t.yaml \
 ; RUN:           -r %t.bc,tinkywinky,p \
 ; RUN:           -r %t.bc,patatino,px \
-; RUN:           -r %t.bc,main,px -o %t.o %t.bc 2>&1
+; RUN:           -r %t.bc,main,px -o %t.o %t.bc
 ; RUN: cat %t.yaml | FileCheck %s -check-prefix=YAML
 
 ; YAML:      --- !Passed
