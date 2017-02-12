@@ -431,10 +431,9 @@ PassBuilder::buildPerModuleDefaultPipeline(OptimizationLevel Level,
   GlobalCleanupPM.addPass(SimplifyCFGPass());
   MPM.addPass(createModuleToFunctionPassAdaptor(std::move(GlobalCleanupPM)));
 
-  // FIXME: Enable this when cross-IR-unit analysis invalidation is working.
-#if 0
-  MPM.addPass(RequireAnalysisPass<GlobalsAA>());
-#endif
+  // Require the GlobalsAA analysis for the module so we can query it within
+  // the CGSCC pipeline.
+  MPM.addPass(RequireAnalysisPass<GlobalsAA, Module>());
 
   // Now begin the main postorder CGSCC pipeline.
   // FIXME: The current CGSCC pipeline has its origins in the legacy pass
@@ -482,17 +481,14 @@ PassBuilder::buildPerModuleDefaultPipeline(OptimizationLevel Level,
   // FIXME: Is this really an optimization rather than a canonicalization?
   MPM.addPass(ReversePostOrderFunctionAttrsPass());
 
-  // Recompute GloblasAA here prior to function passes. This is particularly
+  // Re-require GloblasAA here prior to function passes. This is particularly
   // useful as the above will have inlined, DCE'ed, and function-attr
   // propagated everything. We should at this point have a reasonably minimal
   // and richly annotated call graph. By computing aliasing and mod/ref
   // information for all local globals here, the late loop passes and notably
   // the vectorizer will be able to use them to help recognize vectorizable
   // memory operations.
-  // FIXME: Enable this once analysis invalidation is fully supported.
-#if 0
-  MPM.addPass(Require<GlobalsAA>());
-#endif
+  MPM.addPass(RequireAnalysisPass<GlobalsAA, Module>());
 
   FunctionPassManager OptimizePM(DebugLogging);
   OptimizePM.addPass(Float2IntPass());
@@ -766,12 +762,8 @@ AAManager PassBuilder::buildDefaultAAPipeline() {
   // Add support for querying global aliasing information when available.
   // Because the `AAManager` is a function analysis and `GlobalsAA` is a module
   // analysis, all that the `AAManager` can do is query for any *cached*
-  // results from `GlobalsAA` through a readonly proxy..
-#if 0
-  // FIXME: Enable once the invalidation logic supports this. Currently, the
-  // `AAManager` will hold stale references to the module analyses.
+  // results from `GlobalsAA` through a readonly proxy.
   AA.registerModuleAnalysis<GlobalsAA>();
-#endif
 
   return AA;
 }
