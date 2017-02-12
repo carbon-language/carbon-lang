@@ -2425,7 +2425,6 @@ bool NewGVN::eliminateInstructions(Function &F) {
 // we will simplify an operation with all constants so that it doesn't matter
 // what order they appear in.
 unsigned int NewGVN::getRank(const Value *V) const {
-  assert(V && "What?");
   if (isa<Constant>(V))
     return 0;
   else if (auto *A = dyn_cast<Argument>(V))
