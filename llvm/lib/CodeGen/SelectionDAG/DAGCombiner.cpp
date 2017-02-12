@@ -13933,13 +13933,12 @@ SDValue DAGCombiner::visitEXTRACT_SUBVECTOR(SDNode* N) {
 
   if (V->getOpcode() == ISD::INSERT_SUBVECTOR) {
     // Handle only simple case where vector being inserted and vector
-    // being extracted are of same type, and are half size of larger vectors.
-    EVT BigVT = V->getOperand(0).getValueType();
+    // being extracted are of same size.
     EVT SmallVT = V->getOperand(1).getValueType();
-    if (!NVT.bitsEq(SmallVT) || NVT.getSizeInBits()*2 != BigVT.getSizeInBits())
+    if (!NVT.bitsEq(SmallVT))
       return SDValue();
 
-    // Only handle cases where both indexes are constants with the same type.
+    // Only handle cases where both indexes are constants.
     ConstantSDNode *ExtIdx = dyn_cast<ConstantSDNode>(N->getOperand(1));
     ConstantSDNode *InsIdx = dyn_cast<ConstantSDNode>(V->getOperand(2));
 
