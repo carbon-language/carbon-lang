@@ -8189,7 +8189,7 @@ static SDValue getMaskNode(SDValue Mask, MVT MaskVT,
 // Function convertBitVectorToUnsigned - The function gets SmallBitVector
 // as argument and convert him to unsigned.
 // The output of the function is not(zeroable)
-static unsigned convertBitVectorToUnsiged(const SmallBitVector &Zeroable) {
+static unsigned convertBitVectorToUnsigned(const SmallBitVector &Zeroable) {
   unsigned convertBit = 0;
   for (int i = 0, e = Zeroable.size(); i < e; i++)
     convertBit |= !(Zeroable[i]) << i;
@@ -8206,7 +8206,7 @@ static SDValue lowerVectorShuffleToEXPAND(const SDLoc &DL, MVT VT,
   if (!isNonZeroElementsInOrder(Zeroable, Mask, V1.getValueType(),
                                 IsLeftZeroSide))
     return SDValue();
-  unsigned VEXPANDMask = convertBitVectorToUnsiged(Zeroable);
+  unsigned VEXPANDMask = convertBitVectorToUnsigned(Zeroable);
   MVT IntegerType =
       MVT::getIntegerVT(std::max((int)VT.getVectorNumElements(), 8));
   SDValue MaskNode = DAG.getConstant(VEXPANDMask, DL, IntegerType);
