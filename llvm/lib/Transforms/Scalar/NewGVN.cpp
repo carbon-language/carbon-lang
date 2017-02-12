@@ -2059,7 +2059,7 @@ void NewGVN::convertDenseToLoadsAndStores(
 }
 
 static void patchReplacementInstruction(Instruction *I, Value *Repl) {
-    auto *ReplInst = dyn_cast<Instruction>(Repl);
+  auto *ReplInst = dyn_cast<Instruction>(Repl);
   if (!ReplInst)
     return;
 
@@ -2220,7 +2220,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
     }
   }
 
-  for (CongruenceClass *CC : CongruenceClasses) {
+  for (CongruenceClass *CC : reverse(CongruenceClasses)) {
     // Track the equivalent store info so we can decide whether to try
     // dead store elimination.
     SmallVector<ValueDFS, 8> PossibleDeadStores;
