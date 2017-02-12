@@ -98,7 +98,7 @@ static void check(Error E, std::string Msg) {
   if (!E)
     return;
   handleAllErrors(std::move(E), [&](ErrorInfoBase &EIB) {
-    errs() << "llvm-lto: " << Msg << ": " << EIB.message().c_str() << '\n';
+    errs() << "llvm-lto2: " << Msg << ": " << EIB.message().c_str() << '\n';
   });
   exit(1);
 }
