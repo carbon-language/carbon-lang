@@ -1017,7 +1017,7 @@ copysign(_A1 __lcpp_x, _A2 __lcpp_y) _NOEXCEPT
     return ::copysign((__result_type)__lcpp_x, (__result_type)__lcpp_y);
 }
 
-#ifndef _LIBCPP_MSVCRT
+#if !defined(_LIBCPP_MSVCRT) || ((_VC_CRT_MAJOR_VERSION-0) >= 14)
 
 // erf
 
@@ -1401,7 +1401,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename std::enable_if<std::is_integral<_A1>::value, double>::type
 trunc(_A1 __lcpp_x) _NOEXCEPT {return ::trunc((double)__lcpp_x);}
 
-#endif // !_LIBCPP_MSVCRT
+#endif // !defined(_LIBCPP_MSVCRT) || ((_VC_CRT_MAJOR_VERSION-0) >= 14)
 
 } // extern "C++"
 
