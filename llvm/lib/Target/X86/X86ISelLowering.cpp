@@ -5791,37 +5791,38 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
   return false;
 }
 
-/// Removes unused shuffle source ops and adjusts the shuffle mask accordingly.
-static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Ops,
+/// Removes unused shuffle source inputs and adjusts the shuffle mask accordingly.
+static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Inputs,
                                               SmallVectorImpl<int> &Mask) {
   int MaskWidth = Mask.size();
-  SmallVector<SDValue, 8> UsedOps;
-  for (int i = 0, e = Ops.size(); i < e; ++i) {
-    int lo = UsedOps.size() * MaskWidth;
+  SmallVector<SDValue, 8> UsedInputs;
+  for (int i = 0, e = Inputs.size(); i < e; ++i) {
+    int lo = UsedInputs.size() * MaskWidth;
     int hi = lo + MaskWidth;
     if (any_of(Mask, [lo, hi](int i) { return (lo <= i) && (i < hi); })) {
-      UsedOps.push_back(Ops[i]);
+      UsedInputs.push_back(Inputs[i]);
       continue;
     }
     for (int &M : Mask)
       if (lo <= M)
         M -= MaskWidth;
   }
-  Ops = UsedOps;
+  Inputs = UsedInputs;
 }
 
 /// Calls setTargetShuffleZeroElements to resolve a target shuffle mask's inputs
 /// and set the SM_SentinelUndef and SM_SentinelZero values. Then check the
 /// remaining input indices in case we now have a unary shuffle and adjust the
-/// Op0/Op1 inputs accordingly.
+/// inputs accordingly.
 /// Returns true if the target shuffle mask was decoded.
-static bool resolveTargetShuffleInputs(SDValue Op, SmallVectorImpl<SDValue> &Ops,
+static bool resolveTargetShuffleInputs(SDValue Op,
+                                       SmallVectorImpl<SDValue> &Inputs,
                                        SmallVectorImpl<int> &Mask) {
-  if (!setTargetShuffleZeroElements(Op, Mask, Ops))
-    if (!getFauxShuffleMask(Op, Mask, Ops))
+  if (!setTargetShuffleZeroElements(Op, Mask, Inputs))
+    if (!getFauxShuffleMask(Op, Mask, Inputs))
       return false;
 
-  resolveTargetShuffleInputsAndMask(Ops, Mask);
+  resolveTargetShuffleInputsAndMask(Inputs, Mask);
   return true;
 }
 
