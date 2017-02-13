@@ -96,8 +96,8 @@
 # CHECK-TRAP: move $4, $4                 # encoding: [0x00,0x80,0x20,0x25]
 
   ddiv $4,-1
-# CHECK-NOTRAP: dsub $4, $zero, $4        # encoding: [0x00,0x04,0x20,0x2e]
-# CHECK-TRAP: dsub $4, $zero, $4          # encoding: [0x00,0x04,0x20,0x2e]
+# CHECK-NOTRAP: dneg $4, $4               # encoding: [0x00,0x04,0x20,0x2e]
+# CHECK-TRAP: dneg $4, $4                 # encoding: [0x00,0x04,0x20,0x2e]
 
   ddiv $4,2
 # CHECK-NOTRAP: addiu $1, $zero, 2        # encoding: [0x24,0x01,0x00,0x02]
@@ -252,8 +252,8 @@
 # CHECK-TRAP: move     $4, $5             # encoding: [0x00,0xa0,0x20,0x25]
 
   ddiv $4,$5,-1
-# CHECK-NOTRAP: dsub $4, $zero, $5        # encoding: [0x00,0x05,0x20,0x2e]
-# CHECK-TRAP: dsub    $4, $zero, $5       # encoding: [0x00,0x05,0x20,0x2e]
+# CHECK-NOTRAP: dneg $4, $5               # encoding: [0x00,0x05,0x20,0x2e]
+# CHECK-TRAP: dneg    $4, $5              # encoding: [0x00,0x05,0x20,0x2e]
 
   ddiv $4,$5,2
 # CHECK-NOTRAP: addiu $1, $zero, 2        # encoding: [0x24,0x01,0x00,0x02]
