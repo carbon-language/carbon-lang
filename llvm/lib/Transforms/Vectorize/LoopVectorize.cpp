@@ -4879,15 +4879,12 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       // induction variable. Notice that we can only optimize the 'trunc' case
       // because (a) FP conversions lose precision, (b) sext/zext may wrap, and
       // (c) other casts depend on pointer size.
-      if (auto *Trunc = dyn_cast<TruncInst>(CI))
-        if (auto *Phi = dyn_cast<PHINode>(Trunc->getOperand(0))) {
-          auto II = Legal->getInductionVars()->find(Phi);
-          if (II != Legal->getInductionVars()->end())
-            if (II->second.getConstIntStepValue()) {
-              widenIntInduction(Phi, Trunc);
-              break;
-            }
-        }
+      auto ID = Legal->getInductionVars()->lookup(OldInduction);
+      if (isa<TruncInst>(CI) && CI->getOperand(0) == OldInduction &&
+          ID.getConstIntStepValue()) {
+        widenIntInduction(OldInduction, cast<TruncInst>(CI));
+        break;
+      }
 
       /// Vectorize casts.
       Type *DestTy =
@@ -7227,17 +7224,12 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
   case Instruction::Trunc:
   case Instruction::FPTrunc:
   case Instruction::BitCast: {
-    // We optimize the truncation of induction variables having constant
-    // integer steps. The cost of these truncations is the same as the scalar
-    // operation.
-    if (auto *Trunc = dyn_cast<TruncInst>(I))
-      if (auto *Phi = dyn_cast<PHINode>(Trunc->getOperand(0))) {
-        auto II = Legal->getInductionVars()->find(Phi);
-        if (II != Legal->getInductionVars()->end())
-          if (II->second.getConstIntStepValue())
-            return TTI.getCastInstrCost(Instruction::Trunc, Trunc->getDestTy(),
-                                        Trunc->getSrcTy());
-      }
+    // We optimize the truncation of induction variable.
+    // The cost of these is the same as the scalar operation.
+    if (I->getOpcode() == Instruction::Trunc &&
+        Legal->isInductionVariable(I->getOperand(0)))
+      return TTI.getCastInstrCost(I->getOpcode(), I->getType(),
+                                  I->getOperand(0)->getType());
 
     Type *SrcScalarTy = I->getOperand(0)->getType();
     Type *SrcVecTy = ToVectorTy(SrcScalarTy, VF);
