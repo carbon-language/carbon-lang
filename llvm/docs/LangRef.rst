@@ -1474,8 +1474,10 @@ example:
     any mutable state (e.g. memory, control registers, etc) visible to
     caller functions. It does not write through any pointer arguments
     (including ``byval`` arguments) and never changes any state visible
-    to callers. This means that it cannot unwind exceptions by calling
-    the ``C++`` exception throwing methods.
+    to callers. This means while it cannot unwind exceptions by calling
+    the ``C++`` exception throwing methods (since they write to memory), there may
+    be non-``C++`` mechanisms that throw exceptions without writing to LLVM
+    visible memory.
 
     On an argument, this attribute indicates that the function does not
     dereference that pointer argument, even though it may read or write the
@@ -1487,9 +1489,10 @@ example:
     caller functions. It may dereference pointer arguments and read
     state that may be set in the caller. A readonly function always
     returns the same value (or unwinds an exception identically) when
-    called with the same set of arguments and global state. It cannot
-    unwind an exception by calling the ``C++`` exception throwing
-    methods.
+    called with the same set of arguments and global state.  This means while it
+    cannot unwind exceptions by calling the ``C++`` exception throwing methods
+    (since they write to memory), there may be non-``C++`` mechanisms that throw
+    exceptions without writing to LLVM visible memory.
 
     On an argument, this attribute indicates that the function does not write
     through this pointer argument, even though it may write to the memory that
