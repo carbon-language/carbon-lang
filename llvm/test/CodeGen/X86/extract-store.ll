@@ -359,6 +359,127 @@ define void @extract_i64_1(i64* nocapture %dst, <2 x i64> %foo) nounwind {
   ret void
 }
 
+define void @extract_f32_0(float* nocapture %dst, <4 x float> %foo) nounwind {
+; SSE-X32-LABEL: extract_f32_0:
+; SSE-X32:       # BB#0:
+; SSE-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE-X32-NEXT:    movss %xmm0, (%eax)
+; SSE-X32-NEXT:    retl
+;
+; SSE-X64-LABEL: extract_f32_0:
+; SSE-X64:       # BB#0:
+; SSE-X64-NEXT:    movss %xmm0, (%rdi)
+; SSE-X64-NEXT:    retq
+;
+; AVX-X32-LABEL: extract_f32_0:
+; AVX-X32:       # BB#0:
+; AVX-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; AVX-X32-NEXT:    vmovss %xmm0, (%eax)
+; AVX-X32-NEXT:    retl
+;
+; AVX-X64-LABEL: extract_f32_0:
+; AVX-X64:       # BB#0:
+; AVX-X64-NEXT:    vmovss %xmm0, (%rdi)
+; AVX-X64-NEXT:    retq
+  %vecext = extractelement <4 x float> %foo, i32 0
+  store float %vecext, float* %dst, align 1
+  ret void
+}
+
+define void @extract_f32_3(float* nocapture %dst, <4 x float> %foo) nounwind {
+; SSE2-X32-LABEL: extract_f32_3:
+; SSE2-X32:       # BB#0:
+; SSE2-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE2-X32-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; SSE2-X32-NEXT:    movss %xmm0, (%eax)
+; SSE2-X32-NEXT:    retl
+;
+; SSE2-X64-LABEL: extract_f32_3:
+; SSE2-X64:       # BB#0:
+; SSE2-X64-NEXT:    shufps {{.*#+}} xmm0 = xmm0[3,1,2,3]
+; SSE2-X64-NEXT:    movss %xmm0, (%rdi)
+; SSE2-X64-NEXT:    retq
+;
+; SSE41-X32-LABEL: extract_f32_3:
+; SSE41-X32:       # BB#0:
+; SSE41-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE41-X32-NEXT:    extractps $3, %xmm0, (%eax)
+; SSE41-X32-NEXT:    retl
+;
+; SSE41-X64-LABEL: extract_f32_3:
+; SSE41-X64:       # BB#0:
+; SSE41-X64-NEXT:    extractps $3, %xmm0, (%rdi)
+; SSE41-X64-NEXT:    retq
+;
+; AVX-X32-LABEL: extract_f32_3:
+; AVX-X32:       # BB#0:
+; AVX-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; AVX-X32-NEXT:    vextractps $3, %xmm0, (%eax)
+; AVX-X32-NEXT:    retl
+;
+; AVX-X64-LABEL: extract_f32_3:
+; AVX-X64:       # BB#0:
+; AVX-X64-NEXT:    vextractps $3, %xmm0, (%rdi)
+; AVX-X64-NEXT:    retq
+  %vecext = extractelement <4 x float> %foo, i32 3
+  store float %vecext, float* %dst, align 1
+  ret void
+}
+
+define void @extract_f64_0(double* nocapture %dst, <2 x double> %foo) nounwind {
+; SSE-X32-LABEL: extract_f64_0:
+; SSE-X32:       # BB#0:
+; SSE-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE-X32-NEXT:    movlps %xmm0, (%eax)
+; SSE-X32-NEXT:    retl
+;
+; SSE-X64-LABEL: extract_f64_0:
+; SSE-X64:       # BB#0:
+; SSE-X64-NEXT:    movlps %xmm0, (%rdi)
+; SSE-X64-NEXT:    retq
+;
+; AVX-X32-LABEL: extract_f64_0:
+; AVX-X32:       # BB#0:
+; AVX-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; AVX-X32-NEXT:    vmovlps %xmm0, (%eax)
+; AVX-X32-NEXT:    retl
+;
+; AVX-X64-LABEL: extract_f64_0:
+; AVX-X64:       # BB#0:
+; AVX-X64-NEXT:    vmovlps %xmm0, (%rdi)
+; AVX-X64-NEXT:    retq
+  %vecext = extractelement <2 x double> %foo, i32 0
+  store double %vecext, double* %dst, align 1
+  ret void
+}
+
+define void @extract_f64_1(double* nocapture %dst, <2 x double> %foo) nounwind {
+; SSE-X32-LABEL: extract_f64_1:
+; SSE-X32:       # BB#0:
+; SSE-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; SSE-X32-NEXT:    movhpd %xmm0, (%eax)
+; SSE-X32-NEXT:    retl
+;
+; SSE-X64-LABEL: extract_f64_1:
+; SSE-X64:       # BB#0:
+; SSE-X64-NEXT:    movhpd %xmm0, (%rdi)
+; SSE-X64-NEXT:    retq
+;
+; AVX-X32-LABEL: extract_f64_1:
+; AVX-X32:       # BB#0:
+; AVX-X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; AVX-X32-NEXT:    vmovhpd %xmm0, (%eax)
+; AVX-X32-NEXT:    retl
+;
+; AVX-X64-LABEL: extract_f64_1:
+; AVX-X64:       # BB#0:
+; AVX-X64-NEXT:    vmovhpd %xmm0, (%rdi)
+; AVX-X64-NEXT:    retq
+  %vecext = extractelement <2 x double> %foo, i32 1
+  store double %vecext, double* %dst, align 1
+  ret void
+}
+
 define void @extract_i8_undef(i8* nocapture %dst, <16 x i8> %foo) nounwind {
 ; X32-LABEL: extract_i8_undef:
 ; X32:       # BB#0:
@@ -408,5 +529,31 @@ define void @extract_i64_undef(i64* nocapture %dst, <2 x i64> %foo) nounwind {
 ; X64-NEXT:    retq
   %vecext = extractelement <2 x i64> %foo, i32 2 ; undef
   store i64 %vecext, i64* %dst, align 1
+  ret void
+}
+
+define void @extract_f32_undef(float* nocapture %dst, <4 x float> %foo) nounwind {
+; X32-LABEL: extract_f32_undef:
+; X32:       # BB#0:
+; X32-NEXT:    retl
+;
+; X64-LABEL: extract_f32_undef:
+; X64:       # BB#0:
+; X64-NEXT:    retq
+  %vecext = extractelement <4 x float> %foo, i32 6 ; undef
+  store float %vecext, float* %dst, align 1
+  ret void
+}
+
+define void @extract_f64_undef(double* nocapture %dst, <2 x double> %foo) nounwind {
+; X32-LABEL: extract_f64_undef:
+; X32:       # BB#0:
+; X32-NEXT:    retl
+;
+; X64-LABEL: extract_f64_undef:
+; X64:       # BB#0:
+; X64-NEXT:    retq
+  %vecext = extractelement <2 x double> %foo, i32 2 ; undef
+  store double %vecext, double* %dst, align 1
   ret void
 }
