@@ -146,13 +146,13 @@ private:
 
 
 void freeVoidBool(bool B) {
-};
+}
 
 TEST(DummyRPC, TestFreeFunctionHandler) {
   Queue Q1, Q2;
   DummyRPCEndpoint Server(Q2, Q1);
   Server.addHandler<DummyRPCAPI::VoidBool>(freeVoidBool);
-};
+}
 
 TEST(DummyRPC, TestAsyncVoidBool) {
   Queue Q1, Q2;
