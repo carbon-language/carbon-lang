@@ -56,6 +56,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "arm-cp-islands"
 
+#define ARM_CP_ISLANDS_OPT_NAME \
+  "ARM constant island placement and branch shortening pass"
 STATISTIC(NumCPEs,       "Number of constpool entries");
 STATISTIC(NumSplit,      "Number of uncond branches inserted");
 STATISTIC(NumCBrFixed,   "Number of cond branches fixed");
@@ -230,7 +232,7 @@ namespace {
     }
 
     StringRef getPassName() const override {
-      return "ARM constant island placement and branch shortening pass";
+      return ARM_CP_ISLANDS_OPT_NAME;
     }
 
   private:
@@ -2283,3 +2285,6 @@ adjustJTTargetBlockForward(MachineBasicBlock *BB, MachineBasicBlock *JTBB) {
 FunctionPass *llvm::createARMConstantIslandPass() {
   return new ARMConstantIslands();
 }
+
+INITIALIZE_PASS(ARMConstantIslands, "arm-cp-islands", ARM_CP_ISLANDS_OPT_NAME,
+                false, false)
