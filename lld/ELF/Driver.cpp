@@ -643,7 +643,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   for (auto *Arg : Args.filtered(OPT_undefined))
     Config->Undefined.push_back(Arg->getValue());
 
-  if (auto *Arg = Args.getLastArg(OPT_dynamic_list))
+  for (auto *Arg : Args.filtered(OPT_dynamic_list))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
       readDynamicList(*Buffer);
 
