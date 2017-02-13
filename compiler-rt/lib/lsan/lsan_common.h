@@ -127,6 +127,7 @@ enum IgnoreObjectResult {
 // Functions called from the parent tool.
 void InitCommonLsan();
 void DoLeakCheck();
+void DisableCounterUnderflow();
 bool DisabledInThisThread();
 
 // Used to implement __lsan::ScopedDisabler.
