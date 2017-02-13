@@ -34160,28 +34160,25 @@ static SDValue combineInsertSubvector(SDNode *N, SelectionDAG &DAG,
   MVT OpVT = N->getSimpleValueType(0);
   MVT SubVecVT = SubVec.getSimpleValueType();
 
-  // If we're inserting into the upper half of a 256-bit vector with a vector
-  // that was extracted from the upper half of a 256-bit vector, we should
-  // use a blend instead.
-  if (SubVec.getOpcode() == ISD::EXTRACT_SUBVECTOR && OpVT.is256BitVector() &&
+  // If this is an insert of an extract, combine to a shuffle. Don't do this
+  // if the insert or extract can be represented with a subvector operation.
+  if (SubVec.getOpcode() == ISD::EXTRACT_SUBVECTOR &&
       SubVec.getOperand(0).getSimpleValueType() == OpVT &&
-      Idx == SubVec.getOperand(1) && IdxVal == OpVT.getVectorNumElements()/2) {
+      (IdxVal != 0 || !Vec.isUndef())) {
+    int ExtIdxVal = cast<ConstantSDNode>(SubVec.getOperand(1))->getZExtValue();
+    if (ExtIdxVal != 0) {
+      int VecNumElts = OpVT.getVectorNumElements();
+      int SubVecNumElts = SubVecVT.getVectorNumElements();
+      SmallVector<int, 64> Mask(VecNumElts);
+      // First create an identity shuffle mask.
+      for (int i = 0; i != VecNumElts; ++i)
+        Mask[i] = i;
+      // Now insert the extracted portion.
+      for (int i = 0; i != SubVecNumElts; ++i)
+        Mask[i + IdxVal] = i + ExtIdxVal + VecNumElts;
 
-    // Integers must be cast to 32-bit because there is only vpblendd;
-    // vpblendw can't be used for this because it has a handicapped mask.
-    // If we don't have AVX2, then cast to float. Using a wrong domain blend
-    // is still more efficient than using the wrong domain vinsertf128 that
-    // will be created by InsertSubVector().
-    MVT CastVT = OpVT;
-    if (OpVT.isInteger())
-      CastVT = Subtarget.hasAVX2() ? MVT::v8i32 : MVT::v8f32;
-
-    // The blend instruction, and therefore its mask, depend on the data type.
-    unsigned MaskVal = CastVT.getScalarSizeInBits() == 64 ? 0x0c : 0xf0;
-    SDValue Mask = DAG.getConstant(MaskVal, dl, MVT::i8);
-    Vec = DAG.getNode(X86ISD::BLENDI, dl, CastVT, DAG.getBitcast(CastVT, Vec),
-                      DAG.getBitcast(CastVT, SubVec.getOperand(0)), Mask);
-    return DAG.getBitcast(OpVT, Vec);
+      return DAG.getVectorShuffle(OpVT, dl, Vec, SubVec.getOperand(0), Mask);
+    }
   }
 
   // Fold two 16-byte or 32-byte subvector loads into one 32-byte or 64-byte

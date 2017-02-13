@@ -46,7 +46,7 @@ define <4 x i64> @_clearupper4xi64a(<4 x i64>) nounwind {
 ;
 ; AVX1-LABEL: _clearupper4xi64a:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0,1,2,3,4,5,6,7]
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1,2,3]
 ; AVX1-NEXT:    vxorps %ymm1, %ymm1, %ymm1
 ; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7]
 ; AVX1-NEXT:    retq
@@ -118,8 +118,8 @@ define <8 x i32> @_clearupper8xi32a(<8 x i32>) nounwind {
 ;
 ; AVX1-LABEL: _clearupper8xi32a:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0,1,2,3,4,5,6,7]
-; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1,2,3]
+; AVX1-NEXT:    vandpd {{.*}}(%rip), %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: _clearupper8xi32a:
@@ -292,8 +292,8 @@ define <16 x i16> @_clearupper16xi16a(<16 x i16>) nounwind {
 ;
 ; AVX1-LABEL: _clearupper16xi16a:
 ; AVX1:       # BB#0:
-; AVX1-NEXT:    vblendps {{.*#+}} ymm0 = ymm0[0,1,2,3,4,5,6,7]
-; AVX1-NEXT:    vandps {{.*}}(%rip), %ymm0, %ymm0
+; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0,1,2,3]
+; AVX1-NEXT:    vandpd {{.*}}(%rip), %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: _clearupper16xi16a:
