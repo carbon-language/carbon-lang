@@ -14554,6 +14554,12 @@ SDValue DAGCombiner::visitINSERT_SUBVECTOR(SDNode *N) {
   if (N1.isUndef())
     return N0;
 
+  // If this is an insert of an extracted vector into an undef vector, we can
+  // just use the input to the extract.
+  if (N0.isUndef() && N1.getOpcode() == ISD::EXTRACT_SUBVECTOR &&
+      N1.getOperand(1) == N2 && N1.getOperand(0).getValueType() == VT)
+    return N1.getOperand(0);
+
   // Combine INSERT_SUBVECTORs where we are inserting to the same index.
   // INSERT_SUBVECTOR( INSERT_SUBVECTOR( Vec, SubOld, Idx ), SubNew, Idx )
   // --> INSERT_SUBVECTOR( Vec, SubNew, Idx )
