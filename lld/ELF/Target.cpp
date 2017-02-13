@@ -517,11 +517,17 @@ void X86TargetInfo::relocateOne(uint8_t *Loc, uint32_t Type,
   // we want to support them.
   switch (Type) {
   case R_386_8:
+    checkUInt<8>(Loc, Val, Type);
+    *Loc = Val;
+    break;
   case R_386_PC8:
     checkInt<8>(Loc, Val, Type);
     *Loc = Val;
     break;
   case R_386_16:
+    checkUInt<16>(Loc, Val, Type);
+    write16le(Loc, Val);
+    break;
   case R_386_PC16:
     checkInt<16>(Loc, Val, Type);
     write16le(Loc, Val);
