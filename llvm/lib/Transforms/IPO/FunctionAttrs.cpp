@@ -49,6 +49,14 @@ STATISTIC(NumNoAlias, "Number of function returns marked noalias");
 STATISTIC(NumNonNullReturn, "Number of function returns marked nonnull");
 STATISTIC(NumNoRecurse, "Number of functions marked as norecurse");
 
+// FIXME: This is disabled by default to avoid exposing security vulnerabilities
+// in C/C++ code compiled by clang:
+// http://lists.llvm.org/pipermail/cfe-dev/2017-January/052066.html
+static cl::opt<bool> EnableNonnullArgPropagation(
+    "enable-nonnull-arg-prop", cl::Hidden,
+    cl::desc("Try to propagate nonnull argument attributes from callsites to "
+             "caller functions."));
+
 namespace {
 typedef SmallSetVector<Function *, 8> SCCNodeSet;
 }
@@ -531,6 +539,49 @@ static bool addArgumentReturnedAttrs(const SCCNodeSet &SCCNodes) {
   return Changed;
 }
 
+/// If a callsite has arguments that are also arguments to the parent function,
+/// try to propagate attributes from the callsite's arguments to the parent's
+/// arguments. This may be important because inlining can cause information loss
+/// when attribute knowledge disappears with the inlined call.
+static bool addArgumentAttrsFromCallsites(Function &F) {
+  if (!EnableNonnullArgPropagation)
+    return false;
+
+  bool Changed = false;
+
+  // For an argument attribute to transfer from a callsite to the parent, the
+  // call must be guaranteed to execute every time the parent is called.
+  // Conservatively, just check for calls in the entry block that are guaranteed
+  // to execute.
+  // TODO: This could be enhanced by testing if the callsite post-dominates the
+  // entry block or by doing simple forward walks or backward walks to the
+  // callsite.
+  BasicBlock &Entry = F.getEntryBlock();
+  for (Instruction &I : Entry) {
+    if (auto CS = CallSite(&I)) {
+      if (auto *CalledFunc = CS.getCalledFunction()) {
+        for (auto &CSArg : CalledFunc->args()) {
+          if (!CSArg.hasNonNullAttr())
+            continue;
+
+          // If the non-null callsite argument operand is an argument to 'F'
+          // (the caller) and the call is guaranteed to execute, then the value
+          // must be non-null throughout 'F'.
+          auto *FArg = dyn_cast<Argument>(CS.getArgOperand(CSArg.getArgNo()));
+          if (FArg && !FArg->hasNonNullAttr()) {
+            FArg->addAttr(Attribute::NonNull);
+            Changed = true;
+          }
+        }
+      }
+    }
+    if (!isGuaranteedToTransferExecutionToSuccessor(&I))
+      break;
+  }
+  
+  return Changed;
+}
+
 /// Deduce nocapture attributes for the SCC.
 static bool addArgumentAttrs(const SCCNodeSet &SCCNodes) {
   bool Changed = false;
@@ -548,6 +599,8 @@ static bool addArgumentAttrs(const SCCNodeSet &SCCNodes) {
     // For more details, see GlobalValue::mayBeDerefined.
     if (!F->hasExactDefinition())
       continue;
+
+    Changed |= addArgumentAttrsFromCallsites(*F);
 
     // Functions that are readonly (or readnone) and nounwind and don't return
     // a value can't capture arguments. Don't analyze them.
