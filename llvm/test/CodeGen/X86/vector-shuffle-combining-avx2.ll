@@ -665,12 +665,10 @@ define <32 x i8> @combine_pshufb_not_as_pshufw(<32 x i8> %a0) {
 define <32 x i8> @combine_pshufb_as_unpacklo_undef(<32 x i8> %a0) {
 ; X32-LABEL: combine_pshufb_as_unpacklo_undef:
 ; X32:       # BB#0:
-; X32-NEXT:    vpunpcklbw {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23]
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: combine_pshufb_as_unpacklo_undef:
 ; X64:       # BB#0:
-; X64-NEXT:    vpunpcklbw {{.*#+}} ymm0 = ymm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23]
 ; X64-NEXT:    retq
   %1 = tail call <32 x i8> @llvm.x86.avx2.pshuf.b(<32 x i8> %a0, <32 x i8> <i8 undef, i8 0, i8 undef, i8 1, i8 undef, i8 2, i8 undef, i8 3, i8 undef, i8 4, i8 undef, i8 5, i8 undef, i8 6, i8 undef, i8 7, i8 undef, i8 16, i8 undef, i8 17, i8 undef, i8 18, i8 undef, i8 19, i8 undef, i8 20, i8 undef, i8 21, i8 undef, i8 22, i8 undef, i8 23>)
   %2 = shufflevector <32 x i8> %1, <32 x i8> undef, <32 x i32> <i32 0, i32 0, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6, i32 8, i32 8, i32 10, i32 10, i32 12, i32 12, i32 14, i32 14, i32 16, i32 16, i32 18, i32 18, i32 20, i32 20, i32 22, i32 22, i32 24, i32 24, i32 26, i32 26, i32 28, i32 28, i32 30, i32 30>
