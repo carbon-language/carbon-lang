@@ -20,7 +20,8 @@ import argparse
 import logging
 import subprocess
 import multiprocessing
-from libscanbuild import initialize_logging, tempdir, command_entry_point
+from libscanbuild import initialize_logging, tempdir, command_entry_point, \
+    run_build
 from libscanbuild.runner import run
 from libscanbuild.intercept import capture
 from libscanbuild.report import report_directory, document
@@ -70,9 +71,7 @@ def analyze_build_main(bin_dir, from_build_command):
             # run the build command with compiler wrappers which
             # execute the analyzer too. (interposition)
             environment = setup_environment(args, target_dir, bin_dir)
-            logging.debug('run build in environment: %s', environment)
-            exit_code = subprocess.call(args.build, env=environment)
-            logging.debug('build finished with exit code: %d', exit_code)
+            exit_code = run_build(args.build, env=environment)
             # cover report generation and bug counting
             number_of_bugs = document(args, target_dir, False)
             # set exit status as it was requested
