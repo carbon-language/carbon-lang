@@ -8230,12 +8230,14 @@ static bool matchVectorShuffleWithUNPCK(MVT VT, SDValue &V1, SDValue &V2,
   createUnpackShuffleMask(VT, Unpckl, /* Lo = */ true, IsUnary);
   if (isTargetShuffleEquivalent(TargetMask, Unpckl)) {
     UnpackOpcode = X86ISD::UNPCKL;
+    V2 = IsUnary ? V1 : V2;
     return true;
   }
 
   createUnpackShuffleMask(VT, Unpckh, /* Lo = */ false, IsUnary);
   if (isTargetShuffleEquivalent(TargetMask, Unpckh)) {
     UnpackOpcode = X86ISD::UNPCKH;
+    V2 = IsUnary ? V1 : V2;
     return true;
   }
 
@@ -26608,8 +26610,7 @@ static bool matchBinaryVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
       (MaskVT.is256BitVector() && 32 <= EltSizeInBits && Subtarget.hasAVX()) ||
       (MaskVT.is256BitVector() && Subtarget.hasAVX2()) ||
       (MaskVT.is512BitVector() && Subtarget.hasAVX512())) {
-    if (matchVectorShuffleWithUNPCK(MaskVT, V1, IsUnary ? V1 : V2, Shuffle,
-                                    IsUnary, Mask)) {
+    if (matchVectorShuffleWithUNPCK(MaskVT, V1, V2, Shuffle, IsUnary, Mask)) {
       ShuffleVT = MaskVT;
       if (ShuffleVT.is256BitVector() && !Subtarget.hasAVX2())
         ShuffleVT = (32 == EltSizeInBits ? MVT::v8f32 : MVT::v4f64);
