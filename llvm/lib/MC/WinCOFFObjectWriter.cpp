@@ -230,13 +230,10 @@ COFFSymbol *WinCOFFObjectWriter::createSymbol(StringRef Name) {
 }
 
 COFFSymbol *WinCOFFObjectWriter::GetOrCreateCOFFSymbol(const MCSymbol *Symbol) {
-  symbol_map::iterator i = SymbolMap.find(Symbol);
-  if (i != SymbolMap.end())
-    return i->second;
-  COFFSymbol *RetSymbol =
-      createCOFFEntity<COFFSymbol>(Symbol->getName(), Symbols);
-  SymbolMap[Symbol] = RetSymbol;
-  return RetSymbol;
+  COFFSymbol *&Ret = SymbolMap[Symbol];
+  if (!Ret)
+    Ret = createCOFFEntity<COFFSymbol>(Symbol->getName(), Symbols);
+  return Ret;
 }
 
 COFFSection *WinCOFFObjectWriter::createSection(StringRef Name) {
