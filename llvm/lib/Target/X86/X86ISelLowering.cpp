@@ -8227,7 +8227,6 @@ static bool matchVectorShuffleWithUNPCK(MVT VT, SDValue &V1, SDValue &V2,
                                         ArrayRef<int> TargetMask,
                                         SelectionDAG &DAG) {
   int NumElts = VT.getVectorNumElements();
-  int NumEltsInLane = 128 / VT.getScalarSizeInBits();
 
   bool Undef1 = true, Undef2 = true;
   for (int i = 0; (i != NumElts) && (Undef1 || Undef2); i += 2) {
