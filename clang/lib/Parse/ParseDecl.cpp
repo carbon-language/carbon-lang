@@ -2978,7 +2978,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         // attribute declaration and continue.
         if (NextToken().is(tok::l_paren)) {
           // Consume the __declspec identifier.
-          SourceLocation Loc = ConsumeToken();
+          ConsumeToken();
 
           // Eat the parens and everything between them.
           BalancedDelimiterTracker T(*this, tok::l_paren);
