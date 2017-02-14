@@ -1,4 +1,4 @@
-//===- ScriptParser.cpp ---------------------------------------------------===//
+//===- ScriptLexer.cpp ----------------------------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ScriptParser.h"
+#include "ScriptLexer.h"
 #include "Error.h"
 #include "llvm/ADT/Twine.h"
 
@@ -21,7 +21,7 @@ using namespace lld;
 using namespace lld::elf;
 
 // Returns a whole line containing the current token.
-StringRef ScriptParserBase::getLine() {
+StringRef ScriptLexer::getLine() {
   StringRef S = getCurrentMB().getBuffer();
   StringRef Tok = Tokens[Pos - 1];
 
@@ -32,29 +32,29 @@ StringRef ScriptParserBase::getLine() {
 }
 
 // Returns 1-based line number of the current token.
-size_t ScriptParserBase::getLineNumber() {
+size_t ScriptLexer::getLineNumber() {
   StringRef S = getCurrentMB().getBuffer();
   StringRef Tok = Tokens[Pos - 1];
   return S.substr(0, Tok.data() - S.data()).count('\n') + 1;
 }
 
 // Returns 0-based column number of the current token.
-size_t ScriptParserBase::getColumnNumber() {
+size_t ScriptLexer::getColumnNumber() {
   StringRef Tok = Tokens[Pos - 1];
   return Tok.data() - getLine().data();
 }
 
-std::string ScriptParserBase::getCurrentLocation() {
+std::string ScriptLexer::getCurrentLocation() {
   std::string Filename = getCurrentMB().getBufferIdentifier();
   if (!Pos)
     return Filename;
   return (Filename + ":" + Twine(getLineNumber())).str();
 }
 
-ScriptParserBase::ScriptParserBase(MemoryBufferRef MB) { tokenize(MB); }
+ScriptLexer::ScriptLexer(MemoryBufferRef MB) { tokenize(MB); }
 
 // We don't want to record cascading errors. Keep only the first one.
-void ScriptParserBase::setError(const Twine &Msg) {
+void ScriptLexer::setError(const Twine &Msg) {
   if (Error)
     return;
   Error = true;
@@ -71,7 +71,7 @@ void ScriptParserBase::setError(const Twine &Msg) {
 }
 
 // Split S into linker script tokens.
-void ScriptParserBase::tokenize(MemoryBufferRef MB) {
+void ScriptLexer::tokenize(MemoryBufferRef MB) {
   std::vector<StringRef> Vec;
   MBs.push_back(MB);
   StringRef S = MB.getBuffer();
@@ -118,7 +118,7 @@ void ScriptParserBase::tokenize(MemoryBufferRef MB) {
 }
 
 // Skip leading whitespace characters or comments.
-StringRef ScriptParserBase::skipSpace(StringRef S) {
+StringRef ScriptLexer::skipSpace(StringRef S) {
   for (;;) {
     if (S.startswith("/*")) {
       size_t E = S.find("*/", 2);
@@ -144,9 +144,9 @@ StringRef ScriptParserBase::skipSpace(StringRef S) {
 }
 
 // An erroneous token is handled as if it were the last token before EOF.
-bool ScriptParserBase::atEOF() { return Error || Tokens.size() == Pos; }
+bool ScriptLexer::atEOF() { return Error || Tokens.size() == Pos; }
 
-StringRef ScriptParserBase::next() {
+StringRef ScriptLexer::next() {
   if (Error)
     return "";
   if (atEOF()) {
@@ -156,7 +156,7 @@ StringRef ScriptParserBase::next() {
   return Tokens[Pos++];
 }
 
-StringRef ScriptParserBase::peek(unsigned N) {
+StringRef ScriptLexer::peek(unsigned N) {
   StringRef Tok;
   for (unsigned I = 0; I <= N; ++I) {
     Tok = next();
@@ -167,7 +167,7 @@ StringRef ScriptParserBase::peek(unsigned N) {
   return Tok;
 }
 
-bool ScriptParserBase::consume(StringRef Tok) {
+bool ScriptLexer::consume(StringRef Tok) {
   if (peek() == Tok) {
     skip();
     return true;
@@ -175,9 +175,9 @@ bool ScriptParserBase::consume(StringRef Tok) {
   return false;
 }
 
-void ScriptParserBase::skip() { (void)next(); }
+void ScriptLexer::skip() { (void)next(); }
 
-void ScriptParserBase::expect(StringRef Expect) {
+void ScriptLexer::expect(StringRef Expect) {
   if (Error)
     return;
   StringRef Tok = next();
@@ -190,7 +190,7 @@ static bool encloses(StringRef S, StringRef T) {
   return S.bytes_begin() <= T.bytes_begin() && T.bytes_end() <= S.bytes_end();
 }
 
-MemoryBufferRef ScriptParserBase::getCurrentMB() {
+MemoryBufferRef ScriptLexer::getCurrentMB() {
   // Find input buffer containing the current token.
   assert(!MBs.empty());
   if (!Pos)
