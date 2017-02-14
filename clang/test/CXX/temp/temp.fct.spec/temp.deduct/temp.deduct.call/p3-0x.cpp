@@ -73,4 +73,21 @@ namespace std_example {
   int n1 = f(i);
   int n2 = f(0);
   int n3 = g(i); // expected-error{{no matching function for call to 'g'}}
+
+#if __cplusplus > 201402L
+  template<class T> struct A { // expected-note {{candidate}}
+    template<class U>
+    A(T &&, U &&, int *); // expected-note {{[with T = int, U = int] not viable: no known conversion from 'int' to 'int &&'}}
+    A(T &&, int *);       // expected-note {{requires 2}}
+  };
+  template<class T> A(T &&, int *) -> A<T>; // expected-note {{requires 2}}
+
+  int *ip;
+  A a{i, 0, ip};  // expected-error {{no viable constructor or deduction guide}}
+  A a0{0, 0, ip};
+  A a2{i, ip};
+
+  A<int> &a0r = a0;
+  A<int&> &a2r = a2;
+#endif
 }

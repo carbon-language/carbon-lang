@@ -117,3 +117,23 @@ namespace dependent {
     g("foo"); // expected-note {{instantiation of}}
   }
 }
+
+namespace look_into_current_instantiation {
+  template<typename U> struct Q {};
+  template<typename T> struct A {
+    using U = T;
+    template<typename> using V = Q<A<T>::U>;
+    template<typename W = int> A(V<W>);
+  };
+  A a = Q<float>(); // ok, can look through class-scope typedefs and alias
+                    // templates, and members of the current instantiation
+  A<float> &r = a;
+
+  template<typename T> struct B { // expected-note {{could not match 'B<T>' against 'int'}}
+    struct X {
+      typedef T type;
+    };
+    B(typename X::type); // expected-note {{couldn't infer template argument 'T'}}
+  };
+  B b = 0; // expected-error {{no viable}}
+}
