@@ -473,6 +473,65 @@ define <16 x i8> @combine_pshufb_as_unary_unpckhwd(<16 x i8> %a0) {
   ret <16 x i8> %1
 }
 
+define <8 x i16> @combine_pshufb_as_unpacklo_undef(<16 x i8> %a0) {
+; SSE-LABEL: combine_pshufb_as_unpacklo_undef:
+; SSE:       # BB#0:
+; SSE-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_pshufb_as_unpacklo_undef:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpunpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; AVX-NEXT:    retq
+  %1 = call <16 x i8> @llvm.x86.ssse3.pshuf.b.128(<16 x i8> %a0, <16 x i8> <i8 undef, i8 undef, i8 0, i8 1, i8 undef, i8 undef, i8 2, i8 3, i8 undef, i8 undef, i8 4, i8 5, i8 undef, i8 undef, i8 6, i8 7>)
+  %2 = bitcast <16 x i8> %1 to <8 x i16>
+  %3 = shufflevector <8 x i16> %2, <8 x i16> undef, <8 x i32> <i32 0, i32 0, i32 2, i32 2, i32 4, i32 4, i32 6, i32 6>
+  ret <8 x i16> %3
+}
+
+define <16 x i8> @combine_pshufb_as_unpackhi_undef(<16 x i8> %a0) {
+; SSE-LABEL: combine_pshufb_as_unpackhi_undef:
+; SSE:       # BB#0:
+; SSE-NEXT:    punpckhbw {{.*#+}} xmm0 = xmm0[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_pshufb_as_unpackhi_undef:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpunpckhbw {{.*#+}} xmm0 = xmm0[8,8,9,9,10,10,11,11,12,12,13,13,14,14,15,15]
+; AVX-NEXT:    retq
+  %1 = call <16 x i8> @llvm.x86.ssse3.pshuf.b.128(<16 x i8> %a0, <16 x i8> <i8 8, i8 undef, i8 9, i8 undef, i8 10, i8 undef, i8 11, i8 undef, i8 12, i8 undef, i8 13, i8 undef, i8 14, i8 undef, i8 15, i8 undef>)
+  %2 = shufflevector <16 x i8> %1, <16 x i8> undef, <16 x i32> <i32 1, i32 1, i32 3, i32 3, i32 5, i32 5, i32 7, i32 7, i32 9, i32 9, i32 11, i32 11, i32 13, i32 13, i32 15, i32 15>
+  ret <16 x i8> %2
+}
+
+define <16 x i8> @combine_pshufb_as_unpacklo_zero(<16 x i8> %a0) {
+; SSE-LABEL: combine_pshufb_as_unpacklo_zero:
+; SSE:       # BB#0:
+; SSE-NEXT:    pshufb {{.*#+}} xmm0 = zero,zero,zero,zero,xmm0[0,1,2,3],zero,zero,zero,zero,xmm0[4,5,6,7]
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_pshufb_as_unpacklo_zero:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = zero,zero,zero,zero,xmm0[0,1,2,3],zero,zero,zero,zero,xmm0[4,5,6,7]
+; AVX-NEXT:    retq
+  %1 = call <16 x i8> @llvm.x86.ssse3.pshuf.b.128(<16 x i8> %a0, <16 x i8> <i8 -1, i8 -1, i8 -1, i8 -1, i8 0, i8 1, i8 2, i8 3, i8 -1, i8 -1, i8 -1, i8 -1, i8 4, i8 5, i8 6, i8 7>)
+  ret <16 x i8> %1
+}
+
+define <16 x i8> @combine_pshufb_as_unpackhi_zero(<16 x i8> %a0) {
+; SSE-LABEL: combine_pshufb_as_unpackhi_zero:
+; SSE:       # BB#0:
+; SSE-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[8],zero,xmm0[9],zero,xmm0[10],zero,xmm0[11],zero,xmm0[12],zero,xmm0[13],zero,xmm0[14],zero,xmm0[15],zero
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: combine_pshufb_as_unpackhi_zero:
+; AVX:       # BB#0:
+; AVX-NEXT:    vpshufb {{.*#+}} xmm0 = xmm0[8],zero,xmm0[9],zero,xmm0[10],zero,xmm0[11],zero,xmm0[12],zero,xmm0[13],zero,xmm0[14],zero,xmm0[15],zero
+; AVX-NEXT:    retq
+  %1 = call <16 x i8> @llvm.x86.ssse3.pshuf.b.128(<16 x i8> %a0, <16 x i8> <i8 8, i8 -1, i8 9, i8 -1, i8 10, i8 -1, i8 11, i8 -1, i8 12, i8 -1, i8 13, i8 -1, i8 14, i8 -1, i8 15, i8 -1>)
+  ret <16 x i8> %1
+}
+
 define <16 x i8> @combine_psrlw_pshufb(<8 x i16> %a0) {
 ; SSE-LABEL: combine_psrlw_pshufb:
 ; SSE:       # BB#0:
