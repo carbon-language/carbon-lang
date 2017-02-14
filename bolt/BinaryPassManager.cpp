@@ -93,6 +93,11 @@ PrintAfterFixup("print-after-fixup",
                 cl::Hidden);
 
 static cl::opt<bool>
+PrintAfterLowering("print-after-lowering",
+    cl::desc("print function after instruction lowering"),
+    cl::Hidden);
+
+static cl::opt<bool>
 PrintUCE("print-uce",
          cl::desc("print functions after unreachable code elimination"),
          cl::ZeroOrMore,
@@ -269,6 +274,9 @@ void BinaryFunctionPassManager::runAllPasses(
     opts::EliminateUnreachable);
 
   Manager.registerPass(llvm::make_unique<FixupFunctions>(PrintAfterFixup));
+
+  Manager.registerPass(
+    llvm::make_unique<InstructionLowering>(PrintAfterLowering));
 
   Manager.runPasses();
 }

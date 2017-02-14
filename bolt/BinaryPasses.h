@@ -543,6 +543,22 @@ class IndirectCallPromotion : public BinaryFunctionPass {
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Pass for lowering any instructions that we have raised and that have
+/// to be lowered.
+class InstructionLowering : public BinaryFunctionPass {
+public:
+  explicit InstructionLowering(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) {}
+
+  const char *getName() const override {
+    return "inst-lowering";
+  }
+
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 

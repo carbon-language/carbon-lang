@@ -2135,13 +2135,27 @@ void IndirectCallPromotion::runOnFunctions(
          << "BOLT-INFO: ICP percentage of calls that are indirect = "
          << format("%.1f", (100.0 * TotalIndirectCalls) / TotalCalls)
          << "%\n"
-         << "BOLT-INFO: ICP percentage of indirect calls that can be optimized = "
+         << "BOLT-INFO: ICP percentage of indirect calls that can be "
+            "optimized = "
          << format("%.1f", (100.0 * TotalNumFrequentCalls) / TotalIndirectCalls)
          << "%\n"
          << "BOLT-INFO: ICP percentage of indirect calls that are optimized = "
          << format("%.1f", (100.0 * TotalOptimizedIndirectCallsites) /
                    TotalIndirectCallsites)
          << "%\n";
+}
+
+void InstructionLowering::runOnFunctions(
+    BinaryContext &BC,
+    std::map<uint64_t, BinaryFunction> &BFs,
+    std::set<uint64_t> &LargeFunctions) {
+  for (auto &BFI : BFs) {
+    for (auto &BB : BFI.second) {
+      for (auto &Instruction : BB) {
+        BC.MIA->lowerTailCall(Instruction);
+      }
+    }
+  }
 }
 
 } // namespace bolt
