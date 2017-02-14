@@ -1702,8 +1702,8 @@ static bool IsInputCompatibleWithStandard(InputKind IK,
       return true;
     break;
   default:
-    llvm_unreachable("Cannot decide whether language standard and "
-        "input file kind are compatible!");
+    // For other inputs, accept (and ignore) all -std= values.
+    return true;
   }
   return false;
 }
