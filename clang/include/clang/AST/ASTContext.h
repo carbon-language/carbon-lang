@@ -1357,6 +1357,8 @@ public:
       ElaboratedTypeKeyword Keyword, NestedNameSpecifier *NNS,
       const IdentifierInfo *Name, ArrayRef<TemplateArgument> Args) const;
 
+  TemplateArgument getInjectedTemplateArg(NamedDecl *ParamDecl);
+
   /// Get a template argument list with one argument per template parameter
   /// in a template parameter list, such as for the injected class name of
   /// a class template.

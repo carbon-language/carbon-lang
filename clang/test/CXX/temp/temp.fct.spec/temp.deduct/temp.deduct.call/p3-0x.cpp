@@ -1,9 +1,39 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++1z -fsyntax-only -verify %s
 
+// A forwarding reference is an rvalue reference to a cv-unqualified template
+// parameter that does not represent a template parameter of a class template.
+#if __cplusplus > 201402L
+namespace ClassTemplateParamNotForwardingRef {
+  // This is not a forwarding reference.
+  template<typename T> struct A { // expected-note {{candidate}}
+    A(T&&); // expected-note {{no known conversion from 'int' to 'int &&'}}
+  };
+  int n;
+  A a = n; // expected-error {{no viable constructor or deduction guide}}
 
-// If P is an rvalue reference to a cv-unqualified template parameter
-// and the argument is an lvalue, the type "lvalue reference to A" is
-// used in place of A for type deduction.
+  A b = 0;
+  A<int> *pb = &b;
+
+  // This is a forwarding reference.
+  template<typename T> A(T&&) -> A<T>;
+  A c = n;
+  A<int&> *pc = &c;
+
+  A d = 0;
+  A<int> *pd = &d;
+
+  template<typename T = void> struct B {
+    // This is a forwarding reference.
+    template<typename U> B(U &&);
+  };
+  B e = n;
+  B<void> *pe = &e;
+}
+#endif
+
+// If P is a forwarding reference and the argument is an lvalue, the type
+// "lvalue reference to A" is used in place of A for type deduction.
 template<typename T> struct X { };
 
 template<typename T> X<T> f0(T&&);

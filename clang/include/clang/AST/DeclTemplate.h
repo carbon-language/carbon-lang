@@ -1482,6 +1482,7 @@ public:
   
   using TemplateParmPosition::getDepth;
   using TemplateParmPosition::getPosition;
+  using TemplateParmPosition::setPosition;
   using TemplateParmPosition::getIndex;
 
   /// \brief Whether this template template parameter is a template
