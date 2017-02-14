@@ -161,9 +161,6 @@ public:
   COFFSymbol *GetOrCreateCOFFSymbol(const MCSymbol *Symbol);
   COFFSection *createSection(StringRef Name);
 
-  template <typename object_t, typename list_t>
-  object_t *createCOFFEntity(StringRef Name, list_t &List);
-
   void defineSection(MCSectionCOFF const &Sec);
 
   COFFSymbol *getLinkedSymbol(const MCSymbol &Symbol);
@@ -226,27 +223,20 @@ WinCOFFObjectWriter::WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
 }
 
 COFFSymbol *WinCOFFObjectWriter::createSymbol(StringRef Name) {
-  return createCOFFEntity<COFFSymbol>(Name, Symbols);
+  Symbols.push_back(make_unique<COFFSymbol>(Name));
+  return Symbols.back().get();
 }
 
 COFFSymbol *WinCOFFObjectWriter::GetOrCreateCOFFSymbol(const MCSymbol *Symbol) {
   COFFSymbol *&Ret = SymbolMap[Symbol];
   if (!Ret)
-    Ret = createCOFFEntity<COFFSymbol>(Symbol->getName(), Symbols);
+    Ret = createSymbol(Symbol->getName());
   return Ret;
 }
 
 COFFSection *WinCOFFObjectWriter::createSection(StringRef Name) {
-  return createCOFFEntity<COFFSection>(Name, Sections);
-}
-
-/// A template used to lookup or create a symbol/section, and initialize it if
-/// needed.
-template <typename object_t, typename list_t>
-object_t *WinCOFFObjectWriter::createCOFFEntity(StringRef Name, list_t &List) {
-  List.push_back(make_unique<object_t>(Name));
-
-  return List.back().get();
+  Sections.emplace_back(make_unique<COFFSection>(Name));
+  return Sections.back().get();
 }
 
 /// This function takes a section data object from the assembler
