@@ -7,8 +7,37 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the base parser class for linker script and dynamic
-// list.
+// This file defines a lexer for the linker script.
+//
+// The linker script's grammar is not complex but ambiguous due to the
+// lack of the formal specification of the language. What we are trying to
+// do in this and other files in LLD is to make a "reasonable" linker
+// script processor.
+//
+// Among simplicity, compatibility and efficiency, we put the most
+// emphasis on simplicity when we wrote this lexer. Compatibility with the
+// GNU linkers is important, but we did not try to clone every tiny corner
+// case of their lexers, as even ld.bfd and ld.gold are subtly different
+// in various corner cases. We do not care much about efficiency because
+// the time spent in parsing linker scripts is usually negligible.
+//
+// Our grammar of the linker script is LL(2), meaning that it needs at
+// most two-token lookahead to parse. The only place we need two-token
+// lookahead is labels in version scripts, where we need to parse "local :"
+// as if "local:".
+//
+// Overall, this lexer works fine for most linker scripts. There's room
+// for improving compatibility, but that's probably not at the top of our
+// todo list.
+//
+// A caveat: This lexer splits an input string into tokens ahead of time,
+// so the lexer is not context aware. There's one known corner case. Let's
+// say the next string is "val*3" (without quotes). In the context where
+// the parser is expecting an expression, that should be tokenizes to
+// "val", "*" and "3". In other context, it should be just a single
+// token. (If it is in a filename context, it'll be interpeted as a glob
+// pattern, for example.)  We want to fix this, but it probably needs a
+// redesign of this lexer.
 //
 //===----------------------------------------------------------------------===//
 
