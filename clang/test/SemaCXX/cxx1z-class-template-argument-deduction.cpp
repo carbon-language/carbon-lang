@@ -136,4 +136,17 @@ namespace look_into_current_instantiation {
     B(typename X::type); // expected-note {{couldn't infer template argument 'T'}}
   };
   B b = 0; // expected-error {{no viable}}
+
+  // We should have a substitution failure in the immediate context of
+  // deduction when using the C(T, U) constructor (probably; core wording
+  // unclear).
+  template<typename T> struct C {
+    using U = typename T::type;
+    C(T, U);
+  };
+
+  struct R { R(int); typedef R type; };
+  C(...) -> C<R>;
+
+  C c = {1, 2};
 }

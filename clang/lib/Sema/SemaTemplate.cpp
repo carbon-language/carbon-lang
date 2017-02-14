@@ -1585,12 +1585,7 @@ private:
 
     //    -- The types of the function parameters are those of the constructor.
     for (auto *OldParam : TL.getParams()) {
-      // If we're transforming a non-template constructor, just reuse its
-      // parameters as the parameters of the deduction guide. Otherwise, we
-      // need to transform their references to constructor template parameters.
-      ParmVarDecl *NewParam = Args.getNumLevels()
-                                  ? transformFunctionTypeParam(OldParam, Args)
-                                  : OldParam;
+      ParmVarDecl *NewParam = transformFunctionTypeParam(OldParam, Args);
       if (!NewParam)
         return QualType();
       ParamTypes.push_back(NewParam->getType());
@@ -1636,16 +1631,31 @@ private:
   transformFunctionTypeParam(ParmVarDecl *OldParam,
                              MultiLevelTemplateArgumentList &Args) {
     TypeSourceInfo *OldDI = OldParam->getTypeSourceInfo();
-    TypeSourceInfo *NewDI = SemaRef.SubstType(
-        OldDI, Args, OldParam->getLocation(), OldParam->getDeclName());
+    TypeSourceInfo *NewDI =
+        Args.getNumLevels()
+            ? SemaRef.SubstType(OldDI, Args, OldParam->getLocation(),
+                                OldParam->getDeclName())
+            : OldDI;
     if (!NewDI)
       return nullptr;
+
+    // Canonicalize the type. This (for instance) replaces references to
+    // typedef members of the current instantiations with the definitions of
+    // those typedefs, avoiding triggering instantiation of the deduced type
+    // during deduction.
+    // FIXME: It would be preferable to retain type sugar and source
+    // information here (and handle this in substitution instead).
+    NewDI = SemaRef.Context.getTrivialTypeSourceInfo(
+        SemaRef.Context.getCanonicalType(NewDI->getType()),
+        OldParam->getLocation());
 
     // Resolving a wording defect, we also inherit default arguments from the
     // constructor.
     ExprResult NewDefArg;
     if (OldParam->hasDefaultArg()) {
-      NewDefArg = SemaRef.SubstExpr(OldParam->getDefaultArg(), Args);
+      NewDefArg = Args.getNumLevels()
+                      ? SemaRef.SubstExpr(OldParam->getDefaultArg(), Args)
+                      : OldParam->getDefaultArg();
       if (NewDefArg.isInvalid())
         return nullptr;
     }
