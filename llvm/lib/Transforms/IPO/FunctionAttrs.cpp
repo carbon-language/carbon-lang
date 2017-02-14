@@ -61,27 +61,23 @@ namespace {
 typedef SmallSetVector<Function *, 8> SCCNodeSet;
 }
 
-namespace {
-/// The three kinds of memory access relevant to 'readonly' and
-/// 'readnone' attributes.
-enum MemoryAccessKind {
-  MAK_ReadNone = 0,
-  MAK_ReadOnly = 1,
-  MAK_MayWrite = 2
-};
-}
-
-static MemoryAccessKind checkFunctionMemoryAccess(Function &F, AAResults &AAR,
+/// Returns the memory access attribute for function F using AAR for AA results,
+/// where SCCNodes is the current SCC.
+///
+/// If ThisBody is true, this function may examine the function body and will
+/// return a result pertaining to this copy of the function. If it is false, the
+/// result will be based only on AA results for the function declaration; it
+/// will be assumed that some other (perhaps less optimized) version of the
+/// function may be selected at link time.
+static MemoryAccessKind checkFunctionMemoryAccess(Function &F, bool ThisBody,
+                                                  AAResults &AAR,
                                                   const SCCNodeSet &SCCNodes) {
   FunctionModRefBehavior MRB = AAR.getModRefBehavior(&F);
   if (MRB == FMRB_DoesNotAccessMemory)
     // Already perfect!
     return MAK_ReadNone;
 
-  // Non-exact function definitions may not be selected at link time, and an
-  // alternative version that writes to memory may be selected.  See the comment
-  // on GlobalValue::isDefinitionExact for more details.
-  if (!F.hasExactDefinition()) {
+  if (!ThisBody) {
     if (AliasAnalysis::onlyReadsMemory(MRB))
       return MAK_ReadOnly;
 
@@ -180,6 +176,11 @@ static MemoryAccessKind checkFunctionMemoryAccess(Function &F, AAResults &AAR,
   return ReadsMemory ? MAK_ReadOnly : MAK_ReadNone;
 }
 
+MemoryAccessKind llvm::computeFunctionBodyMemoryAccess(Function &F,
+                                                       AAResults &AAR) {
+  return checkFunctionMemoryAccess(F, /*ThisBody=*/true, AAR, {});
+}
+
 /// Deduce readonly/readnone attributes for the SCC.
 template <typename AARGetterT>
 static bool addReadAttrs(const SCCNodeSet &SCCNodes, AARGetterT &&AARGetter) {
@@ -190,7 +191,11 @@ static bool addReadAttrs(const SCCNodeSet &SCCNodes, AARGetterT &&AARGetter) {
     // Call the callable parameter to look up AA results for this function.
     AAResults &AAR = AARGetter(*F);
 
-    switch (checkFunctionMemoryAccess(*F, AAR, SCCNodes)) {
+    // Non-exact function definitions may not be selected at link time, and an
+    // alternative version that writes to memory may be selected.  See the
+    // comment on GlobalValue::isDefinitionExact for more details.
+    switch (checkFunctionMemoryAccess(*F, F->hasExactDefinition(),
+                                      AAR, SCCNodes)) {
     case MAK_MayWrite:
       return false;
     case MAK_ReadOnly:
