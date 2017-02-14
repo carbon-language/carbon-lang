@@ -48,6 +48,7 @@
 #include <vector>
 
 using namespace llvm;
+using llvm::support::endian::write32le;
 
 #define DEBUG_TYPE "WinCOFFObjectWriter"
 
@@ -204,11 +205,6 @@ public:
 
 } // end anonymous namespace
 
-static inline void write_uint32_le(void *Data, uint32_t Value) {
-  support::endian::write<uint32_t, support::little, support::unaligned>(Data,
-                                                                        Value);
-}
-
 //------------------------------------------------------------------------------
 // Symbol class implementation
 
@@ -216,8 +212,8 @@ static inline void write_uint32_le(void *Data, uint32_t Value) {
 // into the string table is stored in the last 4 bytes instead, leaving
 // the first 4 bytes as 0.
 void COFFSymbol::set_name_offset(uint32_t Offset) {
-  write_uint32_le(Data.Name + 0, 0);
-  write_uint32_le(Data.Name + 4, Offset);
+  write32le(Data.Name + 0, 0);
+  write32le(Data.Name + 4, Offset);
 }
 
 //------------------------------------------------------------------------------
