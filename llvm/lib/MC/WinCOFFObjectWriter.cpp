@@ -72,7 +72,7 @@ class COFFSection;
 
 class COFFSymbol {
 public:
-  COFF::symbol Data;
+  COFF::symbol Data = {};
 
   typedef SmallVector<AuxSymbol, 1> AuxiliarySymbols;
 
@@ -84,7 +84,7 @@ public:
   int Relocations = 0;
   const MCSymbol *MC = nullptr;
 
-  COFFSymbol(StringRef name);
+  COFFSymbol(StringRef Name) : Name(Name) {}
 
   void set_name_offset(uint32_t Offset);
 
@@ -110,7 +110,7 @@ typedef std::vector<COFFRelocation> relocations;
 
 class COFFSection {
 public:
-  COFF::section Header;
+  COFF::section Header = {};
 
   std::string Name;
   int Number;
@@ -118,7 +118,7 @@ public:
   COFFSymbol *Symbol = nullptr;
   relocations Relocations;
 
-  COFFSection(StringRef name);
+  COFFSection(StringRef Name) : Name(Name) {}
 };
 
 class WinCOFFObjectWriter : public MCObjectWriter {
@@ -132,7 +132,7 @@ public:
   std::unique_ptr<MCWinCOFFObjectTargetWriter> TargetObjectWriter;
 
   // Root level file contents.
-  COFF::header Header;
+  COFF::header Header = {};
   sections Sections;
   symbols Symbols;
   StringTableBuilder Strings{StringTableBuilder::WinCOFF};
@@ -212,10 +212,6 @@ static inline void write_uint32_le(void *Data, uint32_t Value) {
 //------------------------------------------------------------------------------
 // Symbol class implementation
 
-COFFSymbol::COFFSymbol(StringRef name) : Name(name.begin(), name.end()) {
-  memset(&Data, 0, sizeof(Data));
-}
-
 // In the case that the name does not fit within 8 bytes, the offset
 // into the string table is stored in the last 4 bytes instead, leaving
 // the first 4 bytes as 0.
@@ -225,20 +221,11 @@ void COFFSymbol::set_name_offset(uint32_t Offset) {
 }
 
 //------------------------------------------------------------------------------
-// Section class implementation
-
-COFFSection::COFFSection(StringRef name) : Name(name) {
-  memset(&Header, 0, sizeof(Header));
-}
-
-//------------------------------------------------------------------------------
 // WinCOFFObjectWriter class implementation
 
 WinCOFFObjectWriter::WinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
                                          raw_pwrite_stream &OS)
     : MCObjectWriter(OS, true), TargetObjectWriter(MOTW) {
-  memset(&Header, 0, sizeof(Header));
-
   Header.Machine = TargetObjectWriter->getMachine();
 }
 
