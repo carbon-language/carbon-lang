@@ -333,6 +333,7 @@ struct DevirtModule {
   IntegerType *Int8Ty;
   PointerType *Int8PtrTy;
   IntegerType *Int32Ty;
+  IntegerType *Int64Ty;
 
   bool RemarksEnabled;
 
@@ -353,6 +354,7 @@ struct DevirtModule {
         Int8Ty(Type::getInt8Ty(M.getContext())),
         Int8PtrTy(Type::getInt8PtrTy(M.getContext())),
         Int32Ty(Type::getInt32Ty(M.getContext())),
+        Int64Ty(Type::getInt64Ty(M.getContext())),
         RemarksEnabled(areRemarksEnabled()) {}
 
   bool areRemarksEnabled();
@@ -368,16 +370,28 @@ struct DevirtModule {
   tryFindVirtualCallTargets(std::vector<VirtualCallTarget> &TargetsForSlot,
                             const std::set<TypeMemberInfo> &TypeMemberInfos,
                             uint64_t ByteOffset);
+
+  void applySingleImplDevirt(VTableSlotInfo &SlotInfo, Constant *TheFn);
   bool trySingleImplDevirt(MutableArrayRef<VirtualCallTarget> TargetsForSlot,
                            VTableSlotInfo &SlotInfo);
+
   bool tryEvaluateFunctionsWithArgs(
       MutableArrayRef<VirtualCallTarget> TargetsForSlot,
       ArrayRef<uint64_t> Args);
+
+  void applyUniformRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
+                             uint64_t TheRetVal);
   bool tryUniformRetValOpt(MutableArrayRef<VirtualCallTarget> TargetsForSlot,
                            CallSiteInfo &CSInfo);
+
+  void applyUniqueRetValOpt(CallSiteInfo &CSInfo, StringRef FnName, bool IsOne,
+                            Constant *UniqueMemberAddr);
   bool tryUniqueRetValOpt(unsigned BitWidth,
                           MutableArrayRef<VirtualCallTarget> TargetsForSlot,
                           CallSiteInfo &CSInfo);
+
+  void applyVirtualConstProp(CallSiteInfo &CSInfo, StringRef FnName,
+                             Constant *Byte, Constant *Bit);
   bool tryVirtualConstProp(MutableArrayRef<VirtualCallTarget> TargetsForSlot,
                            VTableSlotInfo &SlotInfo);
 
@@ -560,19 +574,8 @@ bool DevirtModule::tryFindVirtualCallTargets(
   return !TargetsForSlot.empty();
 }
 
-bool DevirtModule::trySingleImplDevirt(
-    MutableArrayRef<VirtualCallTarget> TargetsForSlot,
-    VTableSlotInfo &SlotInfo) {
-  // See if the program contains a single implementation of this virtual
-  // function.
-  Function *TheFn = TargetsForSlot[0].Fn;
-  for (auto &&Target : TargetsForSlot)
-    if (TheFn != Target.Fn)
-      return false;
-
-  if (RemarksEnabled)
-    TargetsForSlot[0].WasDevirt = true;
-  // If so, update each call site to call that implementation directly.
+void DevirtModule::applySingleImplDevirt(VTableSlotInfo &SlotInfo,
+                                         Constant *TheFn) {
   auto Apply = [&](CallSiteInfo &CSInfo) {
     for (auto &&VCallSite : CSInfo.CallSites) {
       if (RemarksEnabled)
@@ -587,6 +590,22 @@ bool DevirtModule::trySingleImplDevirt(
   Apply(SlotInfo.CSInfo);
   for (auto &P : SlotInfo.ConstCSInfo)
     Apply(P.second);
+}
+
+bool DevirtModule::trySingleImplDevirt(
+    MutableArrayRef<VirtualCallTarget> TargetsForSlot,
+    VTableSlotInfo &SlotInfo) {
+  // See if the program contains a single implementation of this virtual
+  // function.
+  Function *TheFn = TargetsForSlot[0].Fn;
+  for (auto &&Target : TargetsForSlot)
+    if (TheFn != Target.Fn)
+      return false;
+
+  // If so, update each call site to call that implementation directly.
+  if (RemarksEnabled)
+    TargetsForSlot[0].WasDevirt = true;
+  applySingleImplDevirt(SlotInfo, TheFn);
   return true;
 }
 
@@ -620,6 +639,14 @@ bool DevirtModule::tryEvaluateFunctionsWithArgs(
   return true;
 }
 
+void DevirtModule::applyUniformRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
+                                         uint64_t TheRetVal) {
+  for (auto Call : CSInfo.CallSites)
+    Call.replaceAndErase(
+        "uniform-ret-val", FnName, RemarksEnabled,
+        ConstantInt::get(cast<IntegerType>(Call.CS.getType()), TheRetVal));
+}
+
 bool DevirtModule::tryUniformRetValOpt(
     MutableArrayRef<VirtualCallTarget> TargetsForSlot, CallSiteInfo &CSInfo) {
   // Uniform return value optimization. If all functions return the same
@@ -629,14 +656,23 @@ bool DevirtModule::tryUniformRetValOpt(
     if (Target.RetVal != TheRetVal)
       return false;
 
-  for (auto Call : CSInfo.CallSites)
-    Call.replaceAndErase("uniform-ret-val", TargetsForSlot[0].Fn->getName(),
-                         RemarksEnabled,
-                         ConstantInt::get(Call.CS->getType(), TheRetVal));
+  applyUniformRetValOpt(CSInfo, TargetsForSlot[0].Fn->getName(), TheRetVal);
   if (RemarksEnabled)
     for (auto &&Target : TargetsForSlot)
       Target.WasDevirt = true;
   return true;
+}
+
+void DevirtModule::applyUniqueRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
+                                        bool IsOne,
+                                        Constant *UniqueMemberAddr) {
+  for (auto &&Call : CSInfo.CallSites) {
+    IRBuilder<> B(Call.CS.getInstruction());
+    Value *Cmp = B.CreateICmp(IsOne ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE,
+                              Call.VTable, UniqueMemberAddr);
+    Cmp = B.CreateZExt(Cmp, Call.CS->getType());
+    Call.replaceAndErase("unique-ret-val", FnName, RemarksEnabled, Cmp);
+  }
 }
 
 bool DevirtModule::tryUniqueRetValOpt(
@@ -658,16 +694,15 @@ bool DevirtModule::tryUniqueRetValOpt(
     assert(UniqueMember);
 
     // Replace each call with the comparison.
-    for (auto &&Call : CSInfo.CallSites) {
-      IRBuilder<> B(Call.CS.getInstruction());
-      Value *OneAddr = B.CreateBitCast(UniqueMember->Bits->GV, Int8PtrTy);
-      OneAddr = B.CreateConstGEP1_64(OneAddr, UniqueMember->Offset);
-      Value *Cmp = B.CreateICmp(IsOne ? ICmpInst::ICMP_EQ : ICmpInst::ICMP_NE,
-                                Call.VTable, OneAddr);
-      Cmp = B.CreateZExt(Cmp, Call.CS->getType());
-      Call.replaceAndErase("unique-ret-val", TargetsForSlot[0].Fn->getName(),
-                           RemarksEnabled, Cmp);
-    }
+    Constant *UniqueMemberAddr =
+        ConstantExpr::getBitCast(UniqueMember->Bits->GV, Int8PtrTy);
+    UniqueMemberAddr = ConstantExpr::getGetElementPtr(
+        Int8Ty, UniqueMemberAddr,
+        ConstantInt::get(Int64Ty, UniqueMember->Offset));
+
+    applyUniqueRetValOpt(CSInfo, TargetsForSlot[0].Fn->getName(), IsOne,
+                         UniqueMemberAddr);
+
     // Update devirtualization statistics for targets.
     if (RemarksEnabled)
       for (auto &&Target : TargetsForSlot)
@@ -683,6 +718,26 @@ bool DevirtModule::tryUniqueRetValOpt(
       return true;
   }
   return false;
+}
+
+void DevirtModule::applyVirtualConstProp(CallSiteInfo &CSInfo, StringRef FnName,
+                                         Constant *Byte, Constant *Bit) {
+  for (auto Call : CSInfo.CallSites) {
+    auto *RetType = cast<IntegerType>(Call.CS.getType());
+    IRBuilder<> B(Call.CS.getInstruction());
+    Value *Addr = B.CreateGEP(Int8Ty, Call.VTable, Byte);
+    if (RetType->getBitWidth() == 1) {
+      Value *Bits = B.CreateLoad(Addr);
+      Value *BitsAndBit = B.CreateAnd(Bits, Bit);
+      auto IsBitSet = B.CreateICmpNE(BitsAndBit, ConstantInt::get(Int8Ty, 0));
+      Call.replaceAndErase("virtual-const-prop-1-bit", FnName, RemarksEnabled,
+                           IsBitSet);
+    } else {
+      Value *ValAddr = B.CreateBitCast(Addr, RetType->getPointerTo());
+      Value *Val = B.CreateLoad(RetType, ValAddr);
+      Call.replaceAndErase("virtual-const-prop", FnName, RemarksEnabled, Val);
+    }
+  }
 }
 
 bool DevirtModule::tryVirtualConstProp(
@@ -754,27 +809,10 @@ bool DevirtModule::tryVirtualConstProp(
         Target.WasDevirt = true;
 
     // Rewrite each call to a load from OffsetByte/OffsetBit.
-    for (auto Call : CSByConstantArg.second.CallSites) {
-      auto *CSRetType = cast<IntegerType>(Call.CS.getType());
-      IRBuilder<> B(Call.CS.getInstruction());
-      Value *Addr = B.CreateConstGEP1_64(Call.VTable, OffsetByte);
-      if (CSRetType->getBitWidth() == 1) {
-        Value *Bits = B.CreateLoad(Addr);
-        Value *Bit = ConstantInt::get(Int8Ty, 1ULL << OffsetBit);
-        Value *BitsAndBit = B.CreateAnd(Bits, Bit);
-        Value *IsBitSet =
-            B.CreateICmpNE(BitsAndBit, ConstantInt::get(Int8Ty, 0));
-        Call.replaceAndErase("virtual-const-prop-1-bit",
-                             TargetsForSlot[0].Fn->getName(),
-                             RemarksEnabled, IsBitSet);
-      } else {
-        Value *ValAddr = B.CreateBitCast(Addr, CSRetType->getPointerTo());
-        Value *Val = B.CreateLoad(CSRetType, ValAddr);
-        Call.replaceAndErase("virtual-const-prop",
-                             TargetsForSlot[0].Fn->getName(),
-                             RemarksEnabled, Val);
-      }
-    }
+    Constant *ByteConst = ConstantInt::get(Int64Ty, OffsetByte);
+    Constant *BitConst = ConstantInt::get(Int8Ty, 1ULL << OffsetBit);
+    applyVirtualConstProp(CSByConstantArg.second,
+                          TargetsForSlot[0].Fn->getName(), ByteConst, BitConst);
   }
   return true;
 }
