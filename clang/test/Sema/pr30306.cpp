@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x c++ -emit-llvm < %s | FileCheck %s
+// RUN: %clang_cc1 -x c++ -triple x86_64-pc-linux-gnu -emit-llvm < %s | FileCheck %s
 
 struct A { A(int); ~A(); };
 int f(const A &);
