@@ -358,7 +358,7 @@ __declspec(dllimport) inline int *ReferencingImportedDelete() { delete (int*)nul
 USE(ReferencingImportedNew)
 USE(ReferencingImportedDelete)
 struct ClassWithDtor { ~ClassWithDtor() {} };
-struct __declspec(dllimport) ClassWithNonDllImportField { ClassWithDtor t; };
+struct __declspec(dllimport) ClassWithNonDllImportField { using X = ClassWithDtor; X t[2]; };
 struct __declspec(dllimport) ClassWithNonDllImportBase : public ClassWithDtor { };
 USECLASS(ClassWithNonDllImportField);
 USECLASS(ClassWithNonDllImportBase);

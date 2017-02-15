@@ -1795,7 +1795,7 @@ CodeGenModule::isTriviallyRecursive(const FunctionDecl *FD) {
 
 // Check if T is a class type with a destructor that's not dllimport.
 static bool HasNonDllImportDtor(QualType T) {
-  if (const RecordType *RT = dyn_cast<RecordType>(T))
+  if (const auto *RT = T->getBaseElementTypeUnsafe()->getAs<RecordType>())
     if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
       if (RD->getDestructor() && !RD->getDestructor()->hasAttr<DLLImportAttr>())
         return true;
