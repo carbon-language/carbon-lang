@@ -3834,6 +3834,8 @@ size_t Relocation::getSizeForType(uint64_t Type) {
   case ELF::R_X86_64_GOTPCREL:
   case ELF::R_X86_64_GOTTPOFF:
   case ELF::R_X86_64_TPOFF32:
+  case ELF::R_X86_64_GOTPCRELX:
+  case ELF::R_X86_64_REX_GOTPCRELX:
     return 4;
   case ELF::R_X86_64_PC64:
   case ELF::R_X86_64_64:
@@ -3857,6 +3859,8 @@ bool Relocation::isPCRelative(uint64_t Type) {
   case ELF::R_X86_64_GOTPCREL:
   case ELF::R_X86_64_PLT32:
   case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_X86_64_GOTPCRELX:
+  case ELF::R_X86_64_REX_GOTPCRELX:
     return true;
   }
 }

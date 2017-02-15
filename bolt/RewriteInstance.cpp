@@ -1398,10 +1398,12 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     } else {
       Address = SymbolAddress + Addend;
     }
+    bool SymbolIsSection = false;
     if (SymbolIter != InputFile->symbol_end()) {
       SymbolName = (*(*SymbolIter).getName());
       if (SymbolIter->getType() == SymbolRef::ST_Debug) {
         // Weird stuff - section symbols are marked as ST_Debug.
+        SymbolIsSection = true;
         auto SymbolSection = SymbolIter->getSection();
         if (SymbolSection && *SymbolSection != InputFile->section_end()) {
           StringRef SymbolSectionName;
@@ -1416,6 +1418,23 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     if (opts::HotText &&
         (SymbolName == "__hot_start" || SymbolName == "__hot_end")) {
       ForceRelocation = true;
+    }
+
+    if (!IsPCRelative && Addend != 0 && IsFromCode && !SymbolIsSection) {
+      auto RefSection = BC->getSectionForAddress(SymbolAddress);
+      if (RefSection && RefSection->isText()) {
+        errs() << "BOLT-WARNING: detected absolute reference from code into a "
+               << "middle of a function:\n"
+               << " offset = 0x" << Twine::utohexstr(Rel.getOffset())
+               << "; symbol = " << SymbolName
+               << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
+               << "; addend = 0x" << Twine::utohexstr(Addend)
+               << "; address = 0x" << Twine::utohexstr(Address)
+               << "; type = " << Rel.getType()
+               << "; type name = " << TypeName
+               << '\n';
+        assert(ExtractedValue == SymbolAddress + Addend && "value mismatch");
+      }
     }
 
     if (Addend < 0 && IsPCRelative) {
