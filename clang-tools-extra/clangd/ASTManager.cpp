@@ -150,7 +150,7 @@ ASTManager::getOrCreateCompilationDatabaseForFile(StringRef Uri) {
 
   std::string Error;
   I = tooling::CompilationDatabase::autoDetectFromSource(Uri, Error);
-  Output.logs() << "Failed to load compilation database: " << Error << '\n';
+  Output.log("Failed to load compilation database: " + Twine(Error) + "\n");
   return I.get();
 }
 
