@@ -300,9 +300,7 @@ void WinCOFFObjectWriter::defineSection(const MCSectionCOFF &Sec) {
   coff_symbol->Aux[0].Aux.SectionDefinition.Selection = Sec.getSelection();
 
   coff_section->Header.Characteristics = Sec.getCharacteristics();
-
-  uint32_t &Characteristics = coff_section->Header.Characteristics;
-  Characteristics |= getAlignment(Sec);
+  coff_section->Header.Characteristics |= getAlignment(Sec);
 
   // Bind internal COFF section to MC section.
   coff_section->MCSection = &Sec;
