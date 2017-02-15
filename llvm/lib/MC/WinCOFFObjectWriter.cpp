@@ -427,24 +427,25 @@ static void encodeBase64StringEntry(char *Buffer, uint64_t Value) {
 }
 
 void WinCOFFObjectWriter::SetSectionName(COFFSection &S) {
-  if (S.Name.size() > COFF::NameSize) {
-    uint64_t StringTableEntry = Strings.getOffset(S.Name);
-
-    if (StringTableEntry <= Max7DecimalOffset) {
-      SmallVector<char, COFF::NameSize> Buffer;
-      Twine('/').concat(Twine(StringTableEntry)).toVector(Buffer);
-      assert(Buffer.size() <= COFF::NameSize && Buffer.size() >= 2);
-
-      std::memcpy(S.Header.Name, Buffer.data(), Buffer.size());
-    } else if (StringTableEntry <= MaxBase64Offset) {
-      // Starting with 10,000,000, offsets are encoded as base64.
-      encodeBase64StringEntry(S.Header.Name, StringTableEntry);
-    } else {
-      report_fatal_error("COFF string table is greater than 64 GB.");
-    }
-  } else {
+  if (S.Name.size() <= COFF::NameSize) {
     std::memcpy(S.Header.Name, S.Name.c_str(), S.Name.size());
+    return;
   }
+
+  uint64_t StringTableEntry = Strings.getOffset(S.Name);
+  if (StringTableEntry <= Max7DecimalOffset) {
+    SmallVector<char, COFF::NameSize> Buffer;
+    Twine('/').concat(Twine(StringTableEntry)).toVector(Buffer);
+    assert(Buffer.size() <= COFF::NameSize && Buffer.size() >= 2);
+    std::memcpy(S.Header.Name, Buffer.data(), Buffer.size());
+    return;
+  }
+  if (StringTableEntry <= MaxBase64Offset) {
+    // Starting with 10,000,000, offsets are encoded as base64.
+    encodeBase64StringEntry(S.Header.Name, StringTableEntry);
+    return;
+  }
+  report_fatal_error("COFF string table is greater than 64 GB.");
 }
 
 void WinCOFFObjectWriter::SetSymbolName(COFFSymbol &S) {
