@@ -5618,10 +5618,16 @@ static bool setTargetShuffleZeroElements(SDValue N,
     }
 
     // SCALAR_TO_VECTOR - only the first element is defined, and the rest UNDEF.
+    // TODO: We currently only set UNDEF for integer types - floats use the same
+    // registers as vectors and many of the scalar folded loads rely on the
+    // SCALAR_TO_VECTOR pattern.
     if (V.getOpcode() == ISD::SCALAR_TO_VECTOR &&
         (Size % V.getValueType().getVectorNumElements()) == 0) {
       int Scale = Size / V.getValueType().getVectorNumElements();
-      if (((M / Scale) == 0) && X86::isZeroNode(V.getOperand(0)))
+      int Idx = M / Scale;
+      if (Idx != 0 && !VT.isFloatingPoint())
+        Mask[i] = SM_SentinelUndef;
+      else if (Idx == 0 && X86::isZeroNode(V.getOperand(0)))
         Mask[i] = SM_SentinelZero;
       continue;
     }
