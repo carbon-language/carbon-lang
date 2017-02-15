@@ -2757,10 +2757,11 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
     {"gcc-cross/" + CandidateTriple.str(), "../..", true},
 
     // The Freescale PPC SDK has the gcc libraries in
-    // <sysroot>/usr/lib/<triple>/x.y.z so have a look there as well.
-    // FIXME: Only do this on Freescale triples, since some systems put a *lot*
-    // of files in that location, not just GCC installation data.
-    {CandidateTriple.str(), "..", true},
+    // <sysroot>/usr/lib/<triple>/x.y.z so have a look there as well. Only do
+    // this on Freescale triples, though, since some systems put a *lot* of
+    // files in that location, not just GCC installation data.
+    {CandidateTriple.str(), "..",
+      TargetTriple.getVendor() == llvm::Triple::Freescale},
 
     // Natively multiarch systems sometimes put the GCC triple-specific
     // directory within their multiarch lib directory, resulting in the
