@@ -236,6 +236,13 @@ void InputSection<ELFT>::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
     if (Config->Rela)
       P->r_addend = getAddend<ELFT>(Rel);
 
+    // Output section VA is zero for -r, so r_offset is an offset within the
+    // section, but for --emit-relocs it is an virtual address.
+    P->r_offset = RelocatedSection->OutSec->Addr +
+                  RelocatedSection->getOffset(Rel.r_offset);
+    P->setSymbolAndType(In<ELFT>::SymTab->getSymbolIndex(&Body), Type,
+                        Config->Mips64EL);
+
     if (Body.Type == STT_SECTION) {
       // We combine multiple section symbols into only one per
       // section. This means we have to update the addend. That is
@@ -263,12 +270,6 @@ void InputSection<ELFT>::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
       }
     }
 
-    // Output section VA is zero for -r, so r_offset is an offset within the
-    // section, but for --emit-relocs it is an virtual address.
-    P->r_offset = RelocatedSection->OutSec->Addr +
-                  RelocatedSection->getOffset(Rel.r_offset);
-    P->setSymbolAndType(In<ELFT>::SymTab->getSymbolIndex(&Body), Type,
-                        Config->Mips64EL);
   }
 }
 
