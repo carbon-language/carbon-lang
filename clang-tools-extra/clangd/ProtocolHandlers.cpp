@@ -113,7 +113,7 @@ void TextDocumentFormattingHandler::handleMethod(
   }
 
   // Format everything.
-  StringRef Code = Store.getDocument(DFP->textDocument.uri);
+  std::string Code = Store.getDocument(DFP->textDocument.uri);
   writeMessage(formatCode(Code, DFP->textDocument.uri,
                           {clang::tooling::Range(0, Code.size())}, ID));
 }
