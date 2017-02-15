@@ -227,15 +227,25 @@ protected:
       return false;
     }
 
+    Log::Callbacks log_callbacks;
+
     const std::string channel = args[0].ref;
     args.Shift(); // Shift off the channel
-    if (channel == "all") {
-      Log::DisableAllLogChannels(&result.GetErrorStream());
+    if (Log::GetLogChannelCallbacks(ConstString(channel), log_callbacks)) {
+      log_callbacks.disable(args.GetConstArgumentVector(),
+                            &result.GetErrorStream());
       result.SetStatus(eReturnStatusSuccessFinishNoResult);
+    } else if (channel == "all") {
+      Log::DisableAllLogChannels(&result.GetErrorStream());
     } else {
-      if (Log::DisableLogChannel(channel, args.GetConstArgumentVector(),
-                                 result.GetErrorStream()))
+      LogChannelSP log_channel_sp(LogChannel::FindPlugin(channel.data()));
+      if (log_channel_sp) {
+        log_channel_sp->Disable(args.GetConstArgumentVector(),
+                                &result.GetErrorStream());
         result.SetStatus(eReturnStatusSuccessFinishNoResult);
+      } else
+        result.AppendErrorWithFormat("Invalid log channel '%s'.\n",
+                                     channel.data());
     }
     return result.Succeeded();
   }
@@ -274,12 +284,26 @@ protected:
       Log::ListAllLogChannels(&result.GetOutputStream());
       result.SetStatus(eReturnStatusSuccessFinishResult);
     } else {
-      bool success = true;
-      for (const auto &entry : args.entries())
-        success = success && Log::ListChannelCategories(
-                                 entry.ref, result.GetOutputStream());
-      if (success)
-        result.SetStatus(eReturnStatusSuccessFinishResult);
+      for (auto &entry : args.entries()) {
+        Log::Callbacks log_callbacks;
+
+        if (Log::GetLogChannelCallbacks(ConstString(entry.ref),
+                                        log_callbacks)) {
+          log_callbacks.list_categories(&result.GetOutputStream());
+          result.SetStatus(eReturnStatusSuccessFinishResult);
+        } else if (entry.ref == "all") {
+          Log::ListAllLogChannels(&result.GetOutputStream());
+          result.SetStatus(eReturnStatusSuccessFinishResult);
+        } else {
+          LogChannelSP log_channel_sp(LogChannel::FindPlugin(entry.c_str()));
+          if (log_channel_sp) {
+            log_channel_sp->ListCategories(&result.GetOutputStream());
+            result.SetStatus(eReturnStatusSuccessFinishNoResult);
+          } else
+            result.AppendErrorWithFormat("Invalid log channel '%s'.\n",
+                                         entry.c_str());
+        }
+      }
     }
     return result.Succeeded();
   }

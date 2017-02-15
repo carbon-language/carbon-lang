@@ -223,7 +223,7 @@ void SymbolFileDWARF::DebuggerInitialize(Debugger &debugger) {
 
 void SymbolFileDWARF::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
-  LogChannelDWARF::Terminate();
+  LogChannelDWARF::Initialize();
 }
 
 lldb_private::ConstString SymbolFileDWARF::GetPluginNameStatic() {
