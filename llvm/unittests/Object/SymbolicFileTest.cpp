@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/SymbolicFile.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 #include <sstream>
@@ -23,9 +24,18 @@ TEST(Object, DataRefImplOstream) {
                     sizeof Data.p == sizeof(uint32_t),
                 "Test expected pointer type to be 32 or 64-bit.");
 
-  char const *Expected = sizeof Data.p == sizeof(uint64_t)
+  char const *Expected;
+
+  if (llvm::sys::IsLittleEndianHost) {
+    Expected = sizeof Data.p == sizeof(uint64_t)
                              ? "(0xffffeeee0000 (0xeeee0000, 0x0000ffff))"
                              : "(0xeeee0000 (0xeeee0000, 0x0000ffff))";
+  }
+  else {
+    Expected = sizeof Data.p == sizeof(uint64_t)
+                             ? "(0xeeee00000000ffff (0xeeee0000, 0x0000ffff))"
+                             : "(0x0000ffff (0xeeee0000, 0x0000ffff))";
+  }
 
   OS << Data;
   OS.flush();
