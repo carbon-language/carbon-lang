@@ -336,25 +336,25 @@ COFFSymbol *WinCOFFObjectWriter::getLinkedSymbol(const MCSymbol &Symbol) {
 
 /// This function takes a symbol data object from the assembler
 /// and creates the associated COFF symbol staging object.
-void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
+void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &MCSym,
                                        MCAssembler &Assembler,
                                        const MCAsmLayout &Layout) {
-  COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&Symbol);
-  const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
+  COFFSymbol *Sym = GetOrCreateCOFFSymbol(&MCSym);
+  const MCSymbol *Base = Layout.getBaseSymbol(MCSym);
   COFFSection *Sec = nullptr;
   if (Base && Base->getFragment()) {
     Sec = SectionMap[Base->getFragment()->getParent()];
-    if (coff_symbol->Section && coff_symbol->Section != Sec)
+    if (Sym->Section && Sym->Section != Sec)
       report_fatal_error("conflicting sections for symbol");
   }
 
   COFFSymbol *Local = nullptr;
-  if (cast<MCSymbolCOFF>(Symbol).isWeakExternal()) {
-    coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
+  if (cast<MCSymbolCOFF>(MCSym).isWeakExternal()) {
+    Sym->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
 
-    COFFSymbol *WeakDefault = getLinkedSymbol(Symbol);
+    COFFSymbol *WeakDefault = getLinkedSymbol(MCSym);
     if (!WeakDefault) {
-      std::string WeakName = (".weak." + Symbol.getName() + ".default").str();
+      std::string WeakName = (".weak." + MCSym.getName() + ".default").str();
       WeakDefault = createSymbol(WeakName);
       if (!Sec)
         WeakDefault->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
@@ -363,41 +363,41 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
       Local = WeakDefault;
     }
 
-    coff_symbol->Other = WeakDefault;
+    Sym->Other = WeakDefault;
 
     // Setup the Weak External auxiliary symbol.
-    coff_symbol->Aux.resize(1);
-    memset(&coff_symbol->Aux[0], 0, sizeof(coff_symbol->Aux[0]));
-    coff_symbol->Aux[0].AuxType = ATWeakExternal;
-    coff_symbol->Aux[0].Aux.WeakExternal.TagIndex = 0;
-    coff_symbol->Aux[0].Aux.WeakExternal.Characteristics =
+    Sym->Aux.resize(1);
+    memset(&Sym->Aux[0], 0, sizeof(Sym->Aux[0]));
+    Sym->Aux[0].AuxType = ATWeakExternal;
+    Sym->Aux[0].Aux.WeakExternal.TagIndex = 0;
+    Sym->Aux[0].Aux.WeakExternal.Characteristics =
         COFF::IMAGE_WEAK_EXTERN_SEARCH_LIBRARY;
   } else {
     if (!Base)
-      coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
+      Sym->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
     else
-      coff_symbol->Section = Sec;
-    Local = coff_symbol;
+      Sym->Section = Sec;
+    Local = Sym;
   }
 
   if (Local) {
-    Local->Data.Value = getSymbolValue(Symbol, Layout);
+    Local->Data.Value = getSymbolValue(MCSym, Layout);
 
-    const MCSymbolCOFF &SymbolCOFF = cast<MCSymbolCOFF>(Symbol);
+    const MCSymbolCOFF &SymbolCOFF = cast<MCSymbolCOFF>(MCSym);
     Local->Data.Type = SymbolCOFF.getType();
     Local->Data.StorageClass = SymbolCOFF.getClass();
 
     // If no storage class was specified in the streamer, define it here.
     if (Local->Data.StorageClass == COFF::IMAGE_SYM_CLASS_NULL) {
-      bool IsExternal = Symbol.isExternal() ||
-                        (!Symbol.getFragment() && !Symbol.isVariable());
+      bool IsExternal = MCSym.isExternal() ||
+                        (!MCSym.getFragment() && !MCSym.isVariable());
 
       Local->Data.StorageClass = IsExternal ? COFF::IMAGE_SYM_CLASS_EXTERNAL
                                             : COFF::IMAGE_SYM_CLASS_STATIC;
     }
   }
 
-  coff_symbol->MC = &Symbol;
+  Sym->MC = &MCSym;
 }
 
 // Maximum offsets for different string table entry encodings.
