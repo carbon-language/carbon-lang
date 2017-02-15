@@ -68,7 +68,7 @@ Improvements to clang-tidy
   Finds uses of inline assembler.
 
 - New `modernize-return-braced-init-list
-    <http://clang.llvm.org/extra/clang-tidy/checks/modernize-return-braced-init-list.html>`_ check
+  <http://clang.llvm.org/extra/clang-tidy/checks/modernize-return-braced-init-list.html>`_ check
 
   Finds and replaces explicit calls to the constructor in a return statement by
   a braced initializer list so that the return type is not needlessly repeated.
