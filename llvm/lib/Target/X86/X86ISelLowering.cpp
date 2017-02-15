@@ -28360,11 +28360,18 @@ static SDValue combineShuffle(SDNode *N, SelectionDAG &DAG,
   // load4, <0, 1, 2, 3> into a 128-bit load if the load addresses are
   // consecutive, non-overlapping, and in the right order.
   SmallVector<SDValue, 16> Elts;
-  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
-    Elts.push_back(getShuffleScalarElt(N, i, DAG, 0));
+  for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i) {
+    if (SDValue Elt = getShuffleScalarElt(N, i, DAG, 0)) {
+      Elts.push_back(Elt);
+      continue;
+    }
+    Elts.clear();
+    break;
+  }
 
-  if (SDValue LD = EltsFromConsecutiveLoads(VT, Elts, dl, DAG, true))
-    return LD;
+  if (Elts.size() == VT.getVectorNumElements())
+    if (SDValue LD = EltsFromConsecutiveLoads(VT, Elts, dl, DAG, true))
+      return LD;
 
   // For AVX2, we sometimes want to combine
   // (vector_shuffle <mask> (concat_vectors t1, undef)
