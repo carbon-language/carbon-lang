@@ -1112,8 +1112,7 @@ static void AddAlignmentAssumptions(CallSite CS, InlineFunctionInfo &IFI) {
     unsigned Align = Arg.getType()->isPointerTy() ? Arg.getParamAlignment() : 0;
     if (Align && !Arg.hasByValOrInAllocaAttr() && !Arg.hasNUses(0)) {
       if (!DTCalculated) {
-        DT.recalculate(const_cast<Function&>(*CS.getInstruction()->getParent()
-                                               ->getParent()));
+        DT.recalculate(*CS.getCaller());
         DTCalculated = true;
       }
 
@@ -1139,7 +1138,7 @@ static void UpdateCallGraphAfterInlining(CallSite CS,
                                          ValueToValueMapTy &VMap,
                                          InlineFunctionInfo &IFI) {
   CallGraph &CG = *IFI.CG;
-  const Function *Caller = CS.getInstruction()->getParent()->getParent();
+  const Function *Caller = CS.getCaller();
   const Function *Callee = CS.getCalledFunction();
   CallGraphNode *CalleeNode = CG[Callee];
   CallGraphNode *CallerNode = CG[Caller];
