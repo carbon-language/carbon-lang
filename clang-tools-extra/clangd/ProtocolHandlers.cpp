@@ -95,7 +95,7 @@ void TextDocumentRangeFormattingHandler::handleMethod(
     return;
   }
 
-  StringRef Code = Store.getDocument(DRFP->textDocument.uri);
+  std::string Code = Store.getDocument(DRFP->textDocument.uri);
 
   size_t Begin = positionToOffset(Code, DRFP->range.start);
   size_t Len = positionToOffset(Code, DRFP->range.end) - Begin;
