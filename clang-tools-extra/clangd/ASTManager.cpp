@@ -51,6 +51,7 @@ static int getSeverity(DiagnosticsEngine::Level L) {
   case DiagnosticsEngine::Ignored:
     return 0;
   }
+  llvm_unreachable("Unknown diagnostic level!");
 }
 
 ASTManager::ASTManager(JSONOutput &Output, DocumentStore &Store)
