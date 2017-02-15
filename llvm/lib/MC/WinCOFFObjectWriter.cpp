@@ -434,10 +434,8 @@ void WinCOFFObjectWriter::SetSectionName(COFFSection &S) {
 
   uint64_t StringTableEntry = Strings.getOffset(S.Name);
   if (StringTableEntry <= Max7DecimalOffset) {
-    SmallVector<char, COFF::NameSize> Buffer;
-    Twine('/').concat(Twine(StringTableEntry)).toVector(Buffer);
-    assert(Buffer.size() <= COFF::NameSize && Buffer.size() >= 2);
-    std::memcpy(S.Header.Name, Buffer.data(), Buffer.size());
+    snprintf(S.Header.Name, sizeof(S.Header.Name), "/%" PRIu64,
+             StringTableEntry);
     return;
   }
   if (StringTableEntry <= MaxBase64Offset) {
