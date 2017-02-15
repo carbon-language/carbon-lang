@@ -275,36 +275,36 @@ static uint32_t getAlignment(const MCSectionCOFF &Sec) {
 
 /// This function takes a section data object from the assembler
 /// and creates the associated COFF section staging object.
-void WinCOFFObjectWriter::defineSection(const MCSectionCOFF &Sec) {
-  COFFSection *coff_section = createSection(Sec.getSectionName());
-  COFFSymbol *coff_symbol = createSymbol(Sec.getSectionName());
+void WinCOFFObjectWriter::defineSection(const MCSectionCOFF &MCSec) {
+  COFFSection *Section = createSection(MCSec.getSectionName());
+  COFFSymbol *Symbol = createSymbol(MCSec.getSectionName());
+  Section->Symbol = Symbol;
+  Symbol->Section = Section;
+  Symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_STATIC;
 
   // Create a COMDAT symbol if needed.
-  if (Sec.getSelection() != COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
-    if (const MCSymbol *S = Sec.getCOMDATSymbol()) {
+  if (MCSec.getSelection() != COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+    if (const MCSymbol *S = MCSec.getCOMDATSymbol()) {
       COFFSymbol *COMDATSymbol = GetOrCreateCOFFSymbol(S);
       if (COMDATSymbol->Section)
         report_fatal_error("two sections have the same comdat");
-      COMDATSymbol->Section = coff_section;
+      COMDATSymbol->Section = Section;
     }
   }
 
-  coff_section->Symbol = coff_symbol;
-  coff_symbol->Section = coff_section;
-  coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_STATIC;
-
   // In this case the auxiliary symbol is a Section Definition.
-  coff_symbol->Aux.resize(1);
-  memset(&coff_symbol->Aux[0], 0, sizeof(coff_symbol->Aux[0]));
-  coff_symbol->Aux[0].AuxType = ATSectionDefinition;
-  coff_symbol->Aux[0].Aux.SectionDefinition.Selection = Sec.getSelection();
+  Symbol->Aux.resize(1);
+  Symbol->Aux[0] = {};
+  Symbol->Aux[0].AuxType = ATSectionDefinition;
+  Symbol->Aux[0].Aux.SectionDefinition.Selection = MCSec.getSelection();
 
-  coff_section->Header.Characteristics = Sec.getCharacteristics();
-  coff_section->Header.Characteristics |= getAlignment(Sec);
+  // Set section alignment.
+  Section->Header.Characteristics = MCSec.getCharacteristics();
+  Section->Header.Characteristics |= getAlignment(MCSec);
 
   // Bind internal COFF section to MC section.
-  coff_section->MCSection = &Sec;
-  SectionMap[&Sec] = coff_section;
+  Section->MCSection = &MCSec;
+  SectionMap[&MCSec] = Section;
 }
 
 static uint64_t getSymbolValue(const MCSymbol &Symbol,
