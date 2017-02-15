@@ -5,6 +5,7 @@
 # RUN:  minus = 5 - 1; \
 # RUN:  div = 6 / 2; \
 # RUN:  mul = 1 + 2 * 3; \
+# RUN:  nospace = 1+2*6/3; \
 # RUN:  braces = 1 + (2 + 3) * 4; \
 # RUN:  and = 0xbb & 0xee; \
 # RUN:  ternary1 = 1 ? 1 : 2; \
@@ -32,6 +33,7 @@
 # CHECK: 00000000000004 *ABS* 00000000 minus
 # CHECK: 00000000000003 *ABS* 00000000 div
 # CHECK: 00000000000007 *ABS* 00000000 mul
+# CHECK: 00000000000005 *ABS* 00000000 nospace
 # CHECK: 00000000000015 *ABS* 00000000 braces
 # CHECK: 000000000000aa *ABS* 00000000 and
 # CHECK: 00000000000001 *ABS* 00000000 ternary1
