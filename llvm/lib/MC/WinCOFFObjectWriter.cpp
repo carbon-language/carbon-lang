@@ -239,11 +239,47 @@ COFFSection *WinCOFFObjectWriter::createSection(StringRef Name) {
   return Sections.back().get();
 }
 
+static uint32_t getAlignment(const MCSectionCOFF &Sec) {
+  switch (Sec.getAlignment()) {
+  case 1:
+    return COFF::IMAGE_SCN_ALIGN_1BYTES;
+  case 2:
+    return COFF::IMAGE_SCN_ALIGN_2BYTES;
+  case 4:
+    return COFF::IMAGE_SCN_ALIGN_4BYTES;
+  case 8:
+    return COFF::IMAGE_SCN_ALIGN_8BYTES;
+  case 16:
+    return COFF::IMAGE_SCN_ALIGN_16BYTES;
+  case 32:
+    return COFF::IMAGE_SCN_ALIGN_32BYTES;
+  case 64:
+    return COFF::IMAGE_SCN_ALIGN_64BYTES;
+  case 128:
+    return COFF::IMAGE_SCN_ALIGN_128BYTES;
+  case 256:
+    return COFF::IMAGE_SCN_ALIGN_256BYTES;
+  case 512:
+    return COFF::IMAGE_SCN_ALIGN_512BYTES;
+  case 1024:
+    return COFF::IMAGE_SCN_ALIGN_1024BYTES;
+  case 2048:
+    return COFF::IMAGE_SCN_ALIGN_2048BYTES;
+  case 4096:
+    return COFF::IMAGE_SCN_ALIGN_4096BYTES;
+  case 8192:
+    return COFF::IMAGE_SCN_ALIGN_8192BYTES;
+  }
+  llvm_unreachable("unsupported section alignment");
+}
+
 /// This function takes a section data object from the assembler
 /// and creates the associated COFF section staging object.
-void WinCOFFObjectWriter::defineSection(MCSectionCOFF const &Sec) {
+void WinCOFFObjectWriter::defineSection(const MCSectionCOFF &Sec) {
   COFFSection *coff_section = createSection(Sec.getSectionName());
   COFFSymbol *coff_symbol = createSymbol(Sec.getSectionName());
+
+  // Create a COMDAT symbol if needed.
   if (Sec.getSelection() != COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
     if (const MCSymbol *S = Sec.getCOMDATSymbol()) {
       COFFSymbol *COMDATSymbol = GetOrCreateCOFFSymbol(S);
@@ -266,52 +302,7 @@ void WinCOFFObjectWriter::defineSection(MCSectionCOFF const &Sec) {
   coff_section->Header.Characteristics = Sec.getCharacteristics();
 
   uint32_t &Characteristics = coff_section->Header.Characteristics;
-  switch (Sec.getAlignment()) {
-  case 1:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_1BYTES;
-    break;
-  case 2:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_2BYTES;
-    break;
-  case 4:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_4BYTES;
-    break;
-  case 8:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_8BYTES;
-    break;
-  case 16:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_16BYTES;
-    break;
-  case 32:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_32BYTES;
-    break;
-  case 64:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_64BYTES;
-    break;
-  case 128:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_128BYTES;
-    break;
-  case 256:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_256BYTES;
-    break;
-  case 512:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_512BYTES;
-    break;
-  case 1024:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_1024BYTES;
-    break;
-  case 2048:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_2048BYTES;
-    break;
-  case 4096:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_4096BYTES;
-    break;
-  case 8192:
-    Characteristics |= COFF::IMAGE_SCN_ALIGN_8192BYTES;
-    break;
-  default:
-    llvm_unreachable("unsupported section alignment");
-  }
+  Characteristics |= getAlignment(Sec);
 
   // Bind internal COFF section to MC section.
   coff_section->MCSection = &Sec;
