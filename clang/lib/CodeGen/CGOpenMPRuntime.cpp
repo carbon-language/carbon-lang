@@ -4257,10 +4257,12 @@ static void emitReductionCombiner(CodeGenFunction &CGF,
   CGF.EmitIgnoredExpr(ReductionOp);
 }
 
-llvm::Value *CGOpenMPRuntime::emitReductionFunction(
-    CodeGenModule &CGM, llvm::Type *ArgsType, ArrayRef<const Expr *> Privates,
-    ArrayRef<const Expr *> LHSExprs, ArrayRef<const Expr *> RHSExprs,
-    ArrayRef<const Expr *> ReductionOps) {
+static llvm::Value *emitReductionFunction(CodeGenModule &CGM,
+                                          llvm::Type *ArgsType,
+                                          ArrayRef<const Expr *> Privates,
+                                          ArrayRef<const Expr *> LHSExprs,
+                                          ArrayRef<const Expr *> RHSExprs,
+                                          ArrayRef<const Expr *> ReductionOps) {
   auto &C = CGM.getContext();
 
   // void reduction_func(void *LHSArg, void *RHSArg);
@@ -4343,11 +4345,11 @@ llvm::Value *CGOpenMPRuntime::emitReductionFunction(
   return Fn;
 }
 
-void CGOpenMPRuntime::emitSingleReductionCombiner(CodeGenFunction &CGF,
-                                                  const Expr *ReductionOp,
-                                                  const Expr *PrivateRef,
-                                                  const DeclRefExpr *LHS,
-                                                  const DeclRefExpr *RHS) {
+static void emitSingleReductionCombiner(CodeGenFunction &CGF,
+                                        const Expr *ReductionOp,
+                                        const Expr *PrivateRef,
+                                        const DeclRefExpr *LHS,
+                                        const DeclRefExpr *RHS) {
   if (PrivateRef->getType()->isArrayType()) {
     // Emit reduction for array section.
     auto *LHSVar = cast<VarDecl>(LHS->getDecl());
@@ -4367,13 +4369,9 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
                                     ArrayRef<const Expr *> LHSExprs,
                                     ArrayRef<const Expr *> RHSExprs,
                                     ArrayRef<const Expr *> ReductionOps,
-                                    ReductionOptionsTy Options) {
+                                    bool WithNowait, bool SimpleReduction) {
   if (!CGF.HaveInsertPoint())
     return;
-
-  bool WithNowait = Options.WithNowait;
-  bool SimpleReduction = Options.SimpleReduction;
-
   // Next code should be emitted for reduction:
   //
   // static kmp_critical_name lock = { 0 };
@@ -4515,13 +4513,12 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
   };
   auto &&CodeGen = [&Privates, &LHSExprs, &RHSExprs, &ReductionOps](
       CodeGenFunction &CGF, PrePostActionTy &Action) {
-    auto &RT = CGF.CGM.getOpenMPRuntime();
     auto IPriv = Privates.begin();
     auto ILHS = LHSExprs.begin();
     auto IRHS = RHSExprs.begin();
     for (auto *E : ReductionOps) {
-      RT.emitSingleReductionCombiner(CGF, E, *IPriv, cast<DeclRefExpr>(*ILHS),
-                                     cast<DeclRefExpr>(*IRHS));
+      emitSingleReductionCombiner(CGF, E, *IPriv, cast<DeclRefExpr>(*ILHS),
+                                  cast<DeclRefExpr>(*IRHS));
       ++IPriv;
       ++ILHS;
       ++IRHS;
