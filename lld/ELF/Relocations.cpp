@@ -413,10 +413,30 @@ template <class ELFT> static bool isReadOnly(SharedSymbol<ELFT> *SS) {
   return false;
 }
 
+// Returns symbols at the same offset as a given symbol.
+//
+// If two or more symbols are at the same offset, and at least one of
+// them are copied by a copy relocation, all of them need to be copied.
+// Otherwise, they would refer different places at runtime.
+template <class ELFT>
+static std::vector<SharedSymbol<ELFT> *> getAliases(SharedSymbol<ELFT> *SS) {
+  typedef typename ELFT::Sym Elf_Sym;
+
+  std::vector<SharedSymbol<ELFT> *> Ret;
+  for (const Elf_Sym &S : SS->file()->getGlobalSymbols()) {
+    if (S.st_shndx != SS->Sym.st_shndx || S.st_value != SS->Sym.st_value)
+      continue;
+    StringRef Name = check(S.getName(SS->file()->getStringTable()));
+    SymbolBody *Sym = Symtab<ELFT>::X->find(Name);
+    if (auto *Alias = dyn_cast_or_null<SharedSymbol<ELFT>>(Sym))
+      Ret.push_back(Alias);
+  }
+  return Ret;
+}
+
 // Reserve space in .bss or .bss.rel.ro for copy relocation.
 template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   typedef typename ELFT::uint uintX_t;
-  typedef typename ELFT::Sym Elf_Sym;
 
   // Copy relocation against zero-sized symbol doesn't make sense.
   uintX_t SymSize = SS->template getSize<ELFT>();
@@ -436,17 +456,12 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   // Look through the DSO's dynamic symbol table for aliases and create a
   // dynamic symbol for each one. This causes the copy relocation to correctly
   // interpose any aliases.
-  for (const Elf_Sym &S : SS->file()->getGlobalSymbols()) {
-    if (S.st_shndx != SS->Sym.st_shndx || S.st_value != SS->Sym.st_value)
-      continue;
-    auto *Alias = dyn_cast_or_null<SharedSymbol<ELFT>>(
-        Symtab<ELFT>::X->find(check(S.getName(SS->file()->getStringTable()))));
-    if (!Alias)
-      continue;
+  for (SharedSymbol<ELFT> *Alias : getAliases(SS)) {
     Alias->CopySection = ISec;
     Alias->NeedsCopyOrPltAddr = true;
     Alias->symbol()->IsUsedInRegularObj = true;
   }
+
   In<ELFT>::RelaDyn->addReloc({Target->CopyRel, ISec, 0, false, SS, 0});
 }
 
