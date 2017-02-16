@@ -183,11 +183,6 @@ let TargetPrefix = "SI", isTarget = 1 in {
   def int_SI_image_load : Image;
   def int_SI_image_load_mip : Image;
   def int_SI_getresinfo : Image;
-
-  /* Interpolation Intrinsics */
-
-  def int_SI_fs_constant : Intrinsic <[llvm_float_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [IntrNoMem]>;
-  def int_SI_fs_interp : Intrinsic <[llvm_float_ty], [llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_v2i32_ty], [IntrNoMem]>;
 } // End TargetPrefix = "SI", isTarget = 1
 
 let TargetPrefix = "amdgcn", isTarget = 1 in {
