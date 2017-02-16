@@ -111,7 +111,7 @@ static unsigned handleNoRelaxTlsRelocation(GOT *Got, uint32_t Type,
           {Target->TlsModuleIndexRel, Got, Off, false, Dest, 0});
     }
   };
-  if (Expr == R_MIPS_TLSLD || Expr == R_TLSLD_PC) {
+  if (isRelExprOneOf<R_MIPS_TLSLD, R_TLSLD_PC>(Expr)) {
     if (Got->addTlsIndex() && (Config->pic() || Config->EMachine == EM_ARM))
       addModuleReloc(Body, Got, Got->getTlsIndexOff(), true);
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
@@ -154,7 +154,7 @@ handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase<ELFT> &C,
                                             Offset, Addend, Expr);
 
   bool IsPreemptible = isPreemptible(Body, Type);
-  if ((Expr == R_TLSDESC || Expr == R_TLSDESC_PAGE || Expr == R_TLSDESC_CALL) &&
+  if (isRelExprOneOf<R_TLSDESC, R_TLSDESC_PAGE, R_TLSDESC_CALL>(Expr) &&
       Config->Shared) {
     if (In<ELFT>::Got->addDynTlsEntry(Body)) {
       uintX_t Off = In<ELFT>::Got->getGlobalDynOffset(Body);
@@ -166,7 +166,7 @@ handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase<ELFT> &C,
     return 1;
   }
 
-  if (Expr == R_TLSLD_PC || Expr == R_TLSLD) {
+  if (isRelExprOneOf<R_TLSLD_PC, R_TLSLD>(Expr)) {
     // Local-Dynamic relocs can be relaxed to Local-Exec.
     if (!Config->Shared) {
       C.Relocations.push_back(
@@ -188,7 +188,7 @@ handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase<ELFT> &C,
     return 1;
   }
 
-  if (Expr == R_TLSDESC_PAGE || Expr == R_TLSDESC || Expr == R_TLSDESC_CALL ||
+  if (isRelExprOneOf<R_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL>(Expr) ||
       Target->isTlsGlobalDynamicRel(Type)) {
     if (Config->Shared) {
       if (In<ELFT>::Got->addDynTlsEntry(Body)) {
@@ -675,8 +675,8 @@ static void scanRelocs(InputSectionBase<ELFT> &C, ArrayRef<RelTy> Rels) {
 
     // This relocation does not require got entry, but it is relative to got and
     // needs it to be created. Here we request for that.
-    if (Expr == R_GOTONLY_PC || Expr == R_GOTONLY_PC_FROM_END ||
-        Expr == R_GOTREL || Expr == R_GOTREL_FROM_END || Expr == R_PPC_TOC)
+    if (isRelExprOneOf<R_GOTONLY_PC, R_GOTONLY_PC_FROM_END, R_GOTREL,
+                       R_GOTREL_FROM_END, R_PPC_TOC>(Expr))
       In<ELFT>::Got->HasGotOffRel = true;
 
     int64_t Addend = computeAddend(*File, Buf, E, RI, Expr, Body);
