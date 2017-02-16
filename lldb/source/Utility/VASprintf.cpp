@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Utility/VASprintf.h"
+#include "lldb/Utility/VASPrintf.h"
 
 #include "llvm/ADT/SmallString.h"
 
