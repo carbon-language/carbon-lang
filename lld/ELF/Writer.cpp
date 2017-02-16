@@ -1184,12 +1184,16 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 }
 
 template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
-  if (Out<ELFT>::Bss->Size > 0)
-    OutputSections.push_back(Out<ELFT>::Bss);
-  if (Out<ELFT>::BssRelRo->Size > 0)
-    OutputSections.push_back(Out<ELFT>::BssRelRo);
+  auto Add = [=](OutputSection<ELFT> *Sec) {
+    if (!Sec->Sections.empty()) {
+      Sec->assignOffsets();
+      OutputSections.push_back(Sec);
+    }
+  };
+  Add(Out<ELFT>::Bss);
+  Add(Out<ELFT>::BssRelRo);
 
-  auto OS = dyn_cast_or_null<OutputSection<ELFT>>(findSection(".ARM.exidx"));
+  auto *OS = dyn_cast_or_null<OutputSection<ELFT>>(findSection(".ARM.exidx"));
   if (OS && !OS->Sections.empty() && !Config->Relocatable)
     OS->addSection(make<ARMExidxSentinelSection<ELFT>>());
 }

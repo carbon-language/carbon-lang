@@ -426,37 +426,28 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   // See if this symbol is in a read-only segment. If so, preserve the symbol's
   // memory protection by reserving space in the .bss.rel.ro section.
   bool IsReadOnly = isReadOnly(SS);
-  OutputSection<ELFT> *CopySec =
-      IsReadOnly ? Out<ELFT>::BssRelRo : Out<ELFT>::Bss;
+  OutputSection<ELFT> *OSec = IsReadOnly ? Out<ELFT>::BssRelRo : Out<ELFT>::Bss;
 
-  uintX_t Alignment = getAlignment(SS);
-  uintX_t Off = alignTo(CopySec->Size, Alignment);
-  CopySec->Size = Off + SymSize;
-  CopySec->updateAlignment(Alignment);
-  uintX_t Shndx = SS->Sym.st_shndx;
-  uintX_t Value = SS->Sym.st_value;
-
-  // Create a SyntheticSection in CopySec to hold the .bss and the Copy Reloc
-  auto *CopyISec = make<CopyRelSection<ELFT>>(IsReadOnly, Alignment, SymSize);
-  CopyISec->OutSecOff = Off;
-  CopyISec->OutSec = CopySec;
-  CopySec->Sections.push_back(CopyISec);
+  // Create a SyntheticSection in Out to hold the .bss and the Copy Reloc.
+  auto *ISec =
+      make<CopyRelSection<ELFT>>(IsReadOnly, getAlignment(SS), SymSize);
+  OSec->addSection(ISec);
 
   // Look through the DSO's dynamic symbol table for aliases and create a
   // dynamic symbol for each one. This causes the copy relocation to correctly
   // interpose any aliases.
   for (const Elf_Sym &S : SS->file()->getGlobalSymbols()) {
-    if (S.st_shndx != Shndx || S.st_value != Value)
+    if (S.st_shndx != SS->Sym.st_shndx || S.st_value != SS->Sym.st_value)
       continue;
     auto *Alias = dyn_cast_or_null<SharedSymbol<ELFT>>(
         Symtab<ELFT>::X->find(check(S.getName(SS->file()->getStringTable()))));
     if (!Alias)
       continue;
-    Alias->CopySection = CopyISec;
+    Alias->CopySection = ISec;
     Alias->NeedsCopyOrPltAddr = true;
     Alias->symbol()->IsUsedInRegularObj = true;
   }
-  In<ELFT>::RelaDyn->addReloc({Target->CopyRel, CopyISec, 0, false, SS, 0});
+  In<ELFT>::RelaDyn->addReloc({Target->CopyRel, ISec, 0, false, SS, 0});
 }
 
 template <class ELFT>
