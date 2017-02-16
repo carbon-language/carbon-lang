@@ -15,7 +15,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_BINARY_FUNCTION_PASS_MANAGER_H
 
 #include "BinaryFunction.h"
-#include "BinaryPasses.h"
+#include "Passes/BinaryPasses.h"
 #include "llvm/Support/Options.h"
 #include "llvm/Support/CommandLine.h"
 #include <map>

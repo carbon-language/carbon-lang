@@ -12,8 +12,8 @@
 
 #include "BinaryBasicBlock.h"
 #include "BinaryFunction.h"
-#include "ReorderAlgorithm.h"
 #include "DataReader.h"
+#include "Passes/ReorderAlgorithm.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/MC/MCAsmInfo.h"

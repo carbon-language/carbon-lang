@@ -1,7 +1,9 @@
 add_subdirectory(merge-fdata)
+add_subdirectory(Passes)
 
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
+  BOLTPasses
   CodeGen
   Core
   DebugInfoDWARF
@@ -18,13 +20,10 @@ add_llvm_tool(llvm-bolt
   BinaryBasicBlock.cpp
   BinaryContext.cpp
   BinaryFunction.cpp
-  BinaryPasses.cpp
   BinaryPassManager.cpp
   DataReader.cpp
   DebugData.cpp
   Exceptions.cpp
-  FrameOptimizerPass.cpp
   RewriteInstance.cpp
-  ReorderAlgorithm.cpp
   DWARFRewriter.cpp
   )

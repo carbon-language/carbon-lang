@@ -1,4 +1,4 @@
-//===--- FrameOptimizerPass.h ---------------------------------------------===//
+//===--- Passes/FrameOptimizer.h ------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,8 +9,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef FRAMEOPTIMIZERPASS_H
-#define FRAMEOPTIMIZERPASS_H
+#ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEOPTIMIZER_H
+#define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEOPTIMIZER_H
 
 #include "BinaryPasses.h"
 

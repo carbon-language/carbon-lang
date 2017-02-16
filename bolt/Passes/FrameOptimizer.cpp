@@ -1,4 +1,4 @@
-//===--- FrameOptimizerPass.cpp -------------------------------------------===//
+//===--- Passes/FrameOptimizer.cpp ----------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,7 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "FrameOptimizerPass.h"
+#include "FrameOptimizer.h"
 #include <queue>
 #include <unordered_map>
 

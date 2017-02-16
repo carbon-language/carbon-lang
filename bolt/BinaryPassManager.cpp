@@ -10,7 +10,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPassManager.h"
-#include "FrameOptimizerPass.h"
+#include "Passes/FrameOptimizer.h"
+#include "Passes/Inliner.h"
 #include "llvm/Support/Timer.h"
 
 using namespace llvm;
