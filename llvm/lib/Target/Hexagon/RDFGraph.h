@@ -729,7 +729,7 @@ namespace rdf {
     typedef std::unordered_map<RegisterId,DefStack> DefStackMap;
 
     void build(unsigned Options = BuildOptions::None);
-    void pushDefs(NodeAddr<InstrNode*> IA, DefStackMap &DM);
+    void pushAllDefs(NodeAddr<InstrNode*> IA, DefStackMap &DM);
     void markBlock(NodeId B, DefStackMap &DefM);
     void releaseBlock(NodeId B, DefStackMap &DefM);
 
@@ -844,9 +844,12 @@ namespace rdf {
         NodeAddr<BlockNode*> BA);
     void removeUnusedPhis();
 
+    void pushClobbers(NodeAddr<InstrNode*> IA, DefStackMap &DM);
+    void pushDefs(NodeAddr<InstrNode*> IA, DefStackMap &DM);
     template <typename T> void linkRefUp(NodeAddr<InstrNode*> IA,
         NodeAddr<T> TA, DefStack &DS);
-    void linkStmtRefs(DefStackMap &DefM, NodeAddr<StmtNode*> SA);
+    template <typename Predicate> void linkStmtRefs(DefStackMap &DefM,
+        NodeAddr<StmtNode*> SA, Predicate P);
     void linkBlockRefs(DefStackMap &DefM, NodeAddr<BlockNode*> BA);
 
     void unlinkUseDF(NodeAddr<UseNode*> UA);

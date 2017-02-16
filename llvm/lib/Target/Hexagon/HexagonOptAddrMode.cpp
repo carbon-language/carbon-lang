@@ -617,7 +617,7 @@ bool HexagonOptAddrMode::constructDefMap(MachineBasicBlock *B) {
 
   for (NodeAddr<InstrNode *> IA : BA.Addr->members(*DFG)) {
     updateMap(IA);
-    DFG->pushDefs(IA, DefM);
+    DFG->pushAllDefs(IA, DefM);
   }
 
   MachineDomTreeNode *N = MDT->getNode(B);
