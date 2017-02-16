@@ -108,7 +108,7 @@ void TextDocumentOnTypeFormattingHandler::handleMethod(
     llvm::yaml::MappingNode *Params, StringRef ID) {
   auto DOTFP = DocumentOnTypeFormattingParams::parse(Params);
   if (!DOTFP) {
-    Output.logs() << "Failed to decode DocumentOnTypeFormattingParams!\n";
+    Output.log("Failed to decode DocumentOnTypeFormattingParams!\n");
     return;
   }
 
