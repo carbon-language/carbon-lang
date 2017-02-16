@@ -274,10 +274,8 @@ public:
   // This field is a pointer to the symbol's version definition.
   const Elf_Verdef *Verdef;
 
-  // CopySection is significant only when NeedsCopy is true.
-  InputSection<ELFT> *CopySection = nullptr;
-
-  InputSection<ELFT> *getBssSectionForCopy() const;
+  // Section is significant only when NeedsCopy is true.
+  InputSection<ELFT> *Section = nullptr;
 };
 
 // This class represents a symbol defined in an archive file. It is

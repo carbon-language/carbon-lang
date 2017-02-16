@@ -1244,7 +1244,7 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(*Sym);
     if (SS.NeedsCopy)
-      return SS.getBssSectionForCopy()->OutSec;
+      return SS.Section->OutSec;
     break;
   }
   case SymbolBody::UndefinedKind:

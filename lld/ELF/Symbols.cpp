@@ -79,10 +79,8 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
            cast<DefinedCommon>(Body).Offset;
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(Body);
-    if (SS.NeedsCopy) {
-      InputSection<ELFT> *ISec = SS.getBssSectionForCopy();
-      return ISec->OutSec->Addr + ISec->OutSecOff;
-    }
+    if (SS.NeedsCopy)
+      return SS.Section->OutSec->Addr + SS.Section->OutSecOff;
     if (SS.NeedsPltAddr)
       return Body.getPltVA<ELFT>();
     return 0;
@@ -228,13 +226,6 @@ Undefined::Undefined(StringRefZ Name, bool IsLocal, uint8_t StOther,
                      uint8_t Type, InputFile *File)
     : SymbolBody(SymbolBody::UndefinedKind, Name, IsLocal, StOther, Type) {
   this->File = File;
-}
-
-template <typename ELFT>
-InputSection<ELFT> *SharedSymbol<ELFT>::getBssSectionForCopy() const {
-  assert(NeedsCopy);
-  assert(CopySection);
-  return CopySection;
 }
 
 DefinedCommon::DefinedCommon(StringRef Name, uint64_t Size, uint64_t Alignment,

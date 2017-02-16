@@ -457,8 +457,8 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   // dynamic symbol for each one. This causes the copy relocation to correctly
   // interpose any aliases.
   for (SharedSymbol<ELFT> *Alias : getAliases(SS)) {
-    Alias->CopySection = ISec;
     Alias->NeedsCopy = true;
+    Alias->Section = ISec;
     Alias->symbol()->IsUsedInRegularObj = true;
   }
 
