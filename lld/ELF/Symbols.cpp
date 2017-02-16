@@ -79,12 +79,13 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
            cast<DefinedCommon>(Body).Offset;
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol<ELFT>>(Body);
-    if (!SS.NeedsCopyOrPltAddr)
-      return 0;
-    if (SS.isFunc())
+    if (SS.NeedsCopy) {
+      InputSection<ELFT> *ISec = SS.getBssSectionForCopy();
+      return ISec->OutSec->Addr + ISec->OutSecOff;
+    }
+    if (SS.NeedsPltAddr)
       return Body.getPltVA<ELFT>();
-    InputSection<ELFT> *CopyISec = SS.getBssSectionForCopy();
-    return CopyISec->OutSec->Addr + CopyISec->OutSecOff;
+    return 0;
   }
   case SymbolBody::UndefinedKind:
     return 0;
@@ -98,10 +99,9 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
 
 SymbolBody::SymbolBody(Kind K, StringRefZ Name, bool IsLocal, uint8_t StOther,
                        uint8_t Type)
-    : SymbolKind(K), NeedsCopyOrPltAddr(false), IsLocal(IsLocal),
+    : SymbolKind(K), NeedsCopy(false), NeedsPltAddr(false), IsLocal(IsLocal),
       IsInGlobalMipsGot(false), Is32BitMipsGot(false), IsInIplt(false),
-      IsInIgot(false), Type(Type), StOther(StOther),
-      Name(Name) {}
+      IsInIgot(false), Type(Type), StOther(StOther), Name(Name) {}
 
 // Returns true if a symbol can be replaced at load-time by a symbol
 // with the same name defined in other ELF executable or DSO.
@@ -113,7 +113,7 @@ bool SymbolBody::isPreemptible() const {
   // symbols with copy relocations (which resolve to .bss) or preempt plt
   // entries (which resolve to that plt entry).
   if (isShared())
-    return !NeedsCopyOrPltAddr;
+    return !NeedsCopy && !NeedsPltAddr;
 
   // That's all that can be preempted in a non-DSO.
   if (!Config->Shared)
@@ -232,7 +232,7 @@ Undefined::Undefined(StringRefZ Name, bool IsLocal, uint8_t StOther,
 
 template <typename ELFT>
 InputSection<ELFT> *SharedSymbol<ELFT>::getBssSectionForCopy() const {
-  assert(needsCopy());
+  assert(NeedsCopy);
   assert(CopySection);
   return CopySection;
 }

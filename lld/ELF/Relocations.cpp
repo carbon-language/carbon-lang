@@ -458,7 +458,7 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   // interpose any aliases.
   for (SharedSymbol<ELFT> *Alias : getAliases(SS)) {
     Alias->CopySection = ISec;
-    Alias->NeedsCopyOrPltAddr = true;
+    Alias->NeedsCopy = true;
     Alias->symbol()->IsUsedInRegularObj = true;
   }
 
@@ -502,7 +502,7 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
   if (Body.isObject()) {
     // Produce a copy relocation.
     auto *B = cast<SharedSymbol<ELFT>>(&Body);
-    if (!B->needsCopy())
+    if (!B->NeedsCopy)
       addCopyRelSymbol(B);
     return Expr;
   }
@@ -527,7 +527,7 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
     // that points to the real function is a dedicated got entry used by the
     // plt. That is identified by special relocation types (R_X86_64_JUMP_SLOT,
     // R_386_JMP_SLOT, etc).
-    Body.NeedsCopyOrPltAddr = true;
+    Body.NeedsPltAddr = true;
     return toPlt(Expr);
   }
   error("symbol '" + toString(Body) + "' defined in " + toString(Body.File) +
