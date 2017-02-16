@@ -212,12 +212,13 @@ template <class ELFT> class OutputSectionFactory {
   typedef typename ELFT::uint uintX_t;
 
 public:
-  OutputSectionFactory();
+  OutputSectionFactory(std::vector<OutputSectionBase *> &OutputSections);
   ~OutputSectionFactory();
-  std::pair<OutputSectionBase *, bool> create(InputSectionBase<ELFT> *C,
-                                              StringRef OutsecName);
+  void addInputSec(InputSectionBase<ELFT> *IS, StringRef OutsecName);
+
 private:
   llvm::SmallDenseMap<SectionKey, OutputSectionBase *> Map;
+  std::vector<OutputSectionBase *> &OutputSections;
 };
 
 template <class ELFT> uint64_t getHeaderSize() {
