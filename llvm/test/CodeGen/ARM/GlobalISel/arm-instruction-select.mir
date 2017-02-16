@@ -10,6 +10,7 @@
   define void @test_add_s32() { ret void }
 
   define void @test_fadd_s32() #0 { ret void }
+  define void @test_fadd_s64() #0 { ret void }
 
   define void @test_load_from_stack() { ret void }
 
@@ -252,6 +253,39 @@ body:             |
 
     BX_RET 14, _, implicit %s0
     ; CHECK: BX_RET 14, _, implicit %s0
+...
+---
+name:            test_fadd_s64
+# CHECK-LABEL: name: test_fadd_s64
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: fprb }
+  - { id: 1, class: fprb }
+  - { id: 2, class: fprb }
+# CHECK: id: 0, class: dpr
+# CHECK: id: 1, class: dpr
+# CHECK: id: 2, class: dpr
+body:             |
+  bb.0:
+    liveins: %d0, %d1
+
+    %0(s64) = COPY %d0
+    ; CHECK: [[VREGX:%[0-9]+]] = COPY %d0
+
+    %1(s64) = COPY %d1
+    ; CHECK: [[VREGY:%[0-9]+]] = COPY %d1
+
+    %2(s64) = G_FADD %0, %1
+    ; CHECK: [[VREGSUM:%[0-9]+]] = VADDD [[VREGX]], [[VREGY]], 14, _
+
+    %d0 = COPY %2(s64)
+    ; CHECK: %d0 = COPY [[VREGSUM]]
+
+    BX_RET 14, _, implicit %d0
+    ; CHECK: BX_RET 14, _, implicit %d0
 ...
 ---
 name:            test_load_from_stack

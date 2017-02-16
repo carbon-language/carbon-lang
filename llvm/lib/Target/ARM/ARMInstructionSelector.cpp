@@ -61,8 +61,12 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
   const TargetRegisterClass *RC = &ARM::GPRRegClass;
 
   if (RegBank->getID() == ARM::FPRRegBankID) {
-    assert(DstSize == 32 && "Only 32-bit FP values are supported");
-    RC = &ARM::SPRRegClass;
+    if (DstSize == 32)
+      RC = &ARM::SPRRegClass;
+    else if (DstSize == 64)
+      RC = &ARM::DPRRegClass;
+    else
+      llvm_unreachable("Unsupported destination size");
   }
 
   // No need to constrain SrcReg. It will get constrained when
@@ -73,6 +77,28 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
                  << " operand\n");
     return false;
   }
+  return true;
+}
+
+static bool selectFAdd(MachineInstrBuilder &MIB, const ARMBaseInstrInfo &TII,
+                       MachineRegisterInfo &MRI) {
+  assert(TII.getSubtarget().hasVFP2() && "Can't select fp add without vfp");
+
+  LLT Ty = MRI.getType(MIB->getOperand(0).getReg());
+  unsigned ValSize = Ty.getSizeInBits();
+
+  if (ValSize == 32) {
+    if (TII.getSubtarget().useNEONForSinglePrecisionFP())
+      return false;
+    MIB->setDesc(TII.get(ARM::VADDS));
+  } else {
+    assert(ValSize == 64 && "Unsupported size for floating point value");
+    if (TII.getSubtarget().isFPOnlySP())
+      return false;
+    MIB->setDesc(TII.get(ARM::VADDD));
+  }
+  MIB.add(predOps(ARMCC::AL));
+
   return true;
 }
 
@@ -186,11 +212,8 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
     MIB.add(predOps(ARMCC::AL)).add(condCodeOp());
     break;
   case G_FADD:
-    if (!TII.getSubtarget().hasVFP2() ||
-        TII.getSubtarget().useNEONForSinglePrecisionFP())
+    if (!selectFAdd(MIB, TII, MRI))
       return false;
-    I.setDesc(TII.get(ARM::VADDS));
-    MIB.add(predOps(ARMCC::AL));
     break;
   case G_FRAME_INDEX:
     // Add 0 to the given frame index and hope it will eventually be folded into
