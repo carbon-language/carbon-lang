@@ -9396,7 +9396,8 @@ void ASTReader::diagnoseOdrViolations() {
             break;
           }
 
-          if (FirstParam->getType() != SecondParam->getType()) {
+          if (!Context.hasSameType(FirstParam->getType(),
+                                   SecondParam->getType())) {
             ODRDiagError(FirstParam->getLocation(),
                          FirstParam->getSourceRange(), MethodParamType)
                 << SecondMD << i + 1 << FirstParam->getType();
@@ -9460,7 +9461,8 @@ void ASTReader::diagnoseOdrViolations() {
         }
 
         // This case is handled elsewhere.
-        if (FirstField->getType() != SecondField->getType()) {
+        if (!Context.hasSameType(FirstField->getType(),
+                                 SecondField->getType())) {
           break;
         }
 
