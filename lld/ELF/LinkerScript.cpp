@@ -277,6 +277,11 @@ void LinkerScript<ELFT>::discard(ArrayRef<InputSectionBase<ELFT> *> V) {
   for (InputSectionBase<ELFT> *S : V) {
     S->Live = false;
     reportDiscarded(S);
+
+    InputSection<ELFT> *IS = dyn_cast<InputSection<ELFT>>(S);
+    if (!IS || IS->DependentSections.empty())
+      continue;
+    discard(IS->DependentSections);
   }
 }
 
