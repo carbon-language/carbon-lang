@@ -54,7 +54,7 @@ namespace dr401 { // dr401: yes
   void g(B b) { f(b); }
 #if __cplusplus < 201103L
   // expected-error@-3 0-1{{extension}} expected-error@-3 {{protected}} expected-note@-3 {{instantiation}}
-  // expected-note@-3 {{substituting}}
+  // expected-note@-3 {{substituting}} expected-note@-33 {{declared protected here}}
 #else
   // expected-error@-5 {{no matching}} expected-note@-6 {{protected}}
 #endif

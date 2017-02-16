@@ -328,3 +328,23 @@ namespace Nested {
   void g(int, int);
   using Int = A<int>::B<&g>::param2;
 }
+
+namespace nondependent_default_arg_ordering {
+  int n, m;
+  template<typename A, A B = &n> struct X {};
+  template<typename A> void f(X<A>); // #1, expected-note {{candidate}}
+  template<typename A> void f(X<A, &m>); // #2, expected-note {{candidate}}
+  template<typename A, A B> void f(X<A, B>); // #3, expected-note 2{{candidate}}
+  template<template<typename U, U> class T, typename A, int *B> void f(T<A, B>); // #4, expected-note 2{{candidate}}
+  void g() {
+    // These become ill-formed in C++1z because we can now deduce the
+    // type A in #3 and #4 in two ways during partial ordering:
+    //  * we can deduce #3's A = #1's A from the template-id
+    //  * we can deduce #3's A = 'int *' from the type of the value
+    //    deduced as #3's B
+    // FIXME: It seems unfortunate that we have to reject this; #1 and #2 are
+    // obviously more specialized than #3 and #4.
+    X<int *, &n> x; f(x); // expected-error {{ambiguous}}
+    X<int *, &m> y; f(y); // expected-error {{ambiguous}}
+  }
+}
