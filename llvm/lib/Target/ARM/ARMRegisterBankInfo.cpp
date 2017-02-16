@@ -13,6 +13,7 @@
 
 #include "ARMRegisterBankInfo.h"
 #include "ARMInstrInfo.h" // For the register classes
+#include "ARMSubtarget.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBank.h"
 #include "llvm/CodeGen/GlobalISel/RegisterBankInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -172,6 +173,17 @@ ARMRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   default:
     return InstructionMapping{};
   }
+
+#ifndef NDEBUG
+  for (unsigned i = 0; i < NumOperands; i++) {
+    for (const auto &Mapping : OperandsMapping[i]) {
+      assert(
+          (Mapping.RegBank->getID() != ARM::FPRRegBankID ||
+           MF.getSubtarget<ARMSubtarget>().hasVFP2()) &&
+          "Trying to use floating point register bank on target without vfp");
+    }
+  }
+#endif
 
   return InstructionMapping{DefaultMappingID, /*Cost=*/1, OperandsMapping,
                             NumOperands};

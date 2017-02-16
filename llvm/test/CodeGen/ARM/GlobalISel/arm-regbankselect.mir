@@ -5,12 +5,14 @@
   define void @test_add_s8() { ret void }
   define void @test_add_s1() { ret void }
 
-  define void @test_loads() { ret void }
+  define void @test_loads() #0 { ret void }
 
-  define void @test_fadd_s32() { ret void }
-  define void @test_fadd_s64() { ret void }
+  define void @test_fadd_s32() #0 { ret void }
+  define void @test_fadd_s64() #0 { ret void }
 
-  define void @test_soft_fp_s64() { ret void }
+  define void @test_soft_fp_s64() #0 { ret void }
+
+  attributes #0 = { "target-features"="+vfp2"}
 ...
 ---
 name:            test_add_s32
