@@ -7210,16 +7210,13 @@ public:
     unsigned PrevSFINAEErrors;
     bool PrevInNonInstantiationSFINAEContext;
     bool PrevAccessCheckingSFINAE;
-    bool PrevLastDiagnosticIgnored;
 
   public:
     explicit SFINAETrap(Sema &SemaRef, bool AccessCheckingSFINAE = false)
       : SemaRef(SemaRef), PrevSFINAEErrors(SemaRef.NumSFINAEErrors),
         PrevInNonInstantiationSFINAEContext(
                                       SemaRef.InNonInstantiationSFINAEContext),
-        PrevAccessCheckingSFINAE(SemaRef.AccessCheckingSFINAE),
-        PrevLastDiagnosticIgnored(
-            SemaRef.getDiagnostics().isLastDiagnosticIgnored())
+        PrevAccessCheckingSFINAE(SemaRef.AccessCheckingSFINAE)
     {
       if (!SemaRef.isSFINAEContext())
         SemaRef.InNonInstantiationSFINAEContext = true;
@@ -7231,8 +7228,6 @@ public:
       SemaRef.InNonInstantiationSFINAEContext
         = PrevInNonInstantiationSFINAEContext;
       SemaRef.AccessCheckingSFINAE = PrevAccessCheckingSFINAE;
-      SemaRef.getDiagnostics().setLastDiagnosticIgnored(
-          PrevLastDiagnosticIgnored);
     }
 
     /// \brief Determine whether any SFINAE errors have been trapped.

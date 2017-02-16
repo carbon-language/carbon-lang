@@ -127,12 +127,12 @@ namespace test1 {
 namespace test2 {
   template<typename T> struct Const { typedef void const type; };
 
-  template<typename T> void f(T, typename Const<T>::type*); // expected-note {{candidate}}
-  template<typename T> void f(T, void const *); // expected-note {{candidate}}
+  template<typename T> void f(T, typename Const<T>::type*);
+  template<typename T> void f(T, void const *);
 
   void test() {
     void *p = 0;
-    f(0, p); // expected-error {{ambiguous}}
+    f(0, p);
   }
 }
 
