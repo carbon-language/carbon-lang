@@ -2911,10 +2911,9 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
     return DAG.getNode(Opc, DL, Op->getVTList(), Ops);
   }
   case Intrinsic::amdgcn_s_sendmsg:
-  case Intrinsic::amdgcn_s_sendmsghalt:
-  case AMDGPUIntrinsic::SI_sendmsg: {
-    unsigned NodeOp = (IntrinsicID == Intrinsic::amdgcn_s_sendmsghalt) ?
-      AMDGPUISD::SENDMSGHALT : AMDGPUISD::SENDMSG;
+  case Intrinsic::amdgcn_s_sendmsghalt: {
+    unsigned NodeOp = (IntrinsicID == Intrinsic::amdgcn_s_sendmsg) ?
+      AMDGPUISD::SENDMSG : AMDGPUISD::SENDMSGHALT;
     Chain = copyToM0(DAG, Chain, DL, Op.getOperand(3));
     SDValue Glue = Chain.getValue(1);
     return DAG.getNode(NodeOp, DL, MVT::Other, Chain,

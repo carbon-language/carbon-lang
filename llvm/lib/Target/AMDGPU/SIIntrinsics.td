@@ -64,8 +64,6 @@ let TargetPrefix = "SI", isTarget = 1 in {
      llvm_i32_ty],    // tfe(imm)
     [IntrReadMem, IntrArgMemOnly]>;
 
-  def int_SI_sendmsg : Intrinsic <[], [llvm_i32_ty, llvm_i32_ty], []>;
-
   // Fully-flexible SAMPLE instruction.
   class SampleRaw : Intrinsic <
     [llvm_v4f32_ty],    // vdata(VGPR)
