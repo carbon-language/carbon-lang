@@ -102,6 +102,74 @@ static bool selectFAdd(MachineInstrBuilder &MIB, const ARMBaseInstrInfo &TII,
   return true;
 }
 
+static bool selectSequence(MachineInstrBuilder &MIB,
+                           const ARMBaseInstrInfo &TII,
+                           MachineRegisterInfo &MRI,
+                           const TargetRegisterInfo &TRI,
+                           const RegisterBankInfo &RBI) {
+  assert(TII.getSubtarget().hasVFP2() && "Can't select sequence without VFP");
+
+  // We only support G_SEQUENCE as a way to stick together two scalar GPRs
+  // into one DPR.
+  unsigned VReg0 = MIB->getOperand(0).getReg();
+  (void)VReg0;
+  assert(MRI.getType(VReg0).getSizeInBits() == 64 &&
+         RBI.getRegBank(VReg0, MRI, TRI)->getID() == ARM::FPRRegBankID &&
+         "Unsupported operand for G_SEQUENCE");
+  unsigned VReg1 = MIB->getOperand(1).getReg();
+  (void)VReg1;
+  assert(MRI.getType(VReg1).getSizeInBits() == 32 &&
+         RBI.getRegBank(VReg1, MRI, TRI)->getID() == ARM::GPRRegBankID &&
+         "Unsupported operand for G_SEQUENCE");
+  unsigned VReg2 = MIB->getOperand(3).getReg();
+  (void)VReg2;
+  assert(MRI.getType(VReg2).getSizeInBits() == 32 &&
+         RBI.getRegBank(VReg2, MRI, TRI)->getID() == ARM::GPRRegBankID &&
+         "Unsupported operand for G_SEQUENCE");
+
+  // Remove the operands corresponding to the offsets.
+  MIB->RemoveOperand(4);
+  MIB->RemoveOperand(2);
+
+  MIB->setDesc(TII.get(ARM::VMOVDRR));
+  MIB.add(predOps(ARMCC::AL));
+
+  return true;
+}
+
+static bool selectExtract(MachineInstrBuilder &MIB, const ARMBaseInstrInfo &TII,
+                          MachineRegisterInfo &MRI,
+                          const TargetRegisterInfo &TRI,
+                          const RegisterBankInfo &RBI) {
+  assert(TII.getSubtarget().hasVFP2() && "Can't select extract without VFP");
+
+  // We only support G_EXTRACT as a way to break up one DPR into two GPRs.
+  unsigned VReg0 = MIB->getOperand(0).getReg();
+  (void)VReg0;
+  assert(MRI.getType(VReg0).getSizeInBits() == 32 &&
+         RBI.getRegBank(VReg0, MRI, TRI)->getID() == ARM::GPRRegBankID &&
+         "Unsupported operand for G_SEQUENCE");
+  unsigned VReg1 = MIB->getOperand(1).getReg();
+  (void)VReg1;
+  assert(MRI.getType(VReg1).getSizeInBits() == 32 &&
+         RBI.getRegBank(VReg1, MRI, TRI)->getID() == ARM::GPRRegBankID &&
+         "Unsupported operand for G_SEQUENCE");
+  unsigned VReg2 = MIB->getOperand(2).getReg();
+  (void)VReg2;
+  assert(MRI.getType(VReg2).getSizeInBits() == 64 &&
+         RBI.getRegBank(VReg2, MRI, TRI)->getID() == ARM::FPRRegBankID &&
+         "Unsupported operand for G_SEQUENCE");
+
+  // Remove the operands corresponding to the offsets.
+  MIB->RemoveOperand(4);
+  MIB->RemoveOperand(3);
+
+  MIB->setDesc(TII.get(ARM::VMOVRRD));
+  MIB.add(predOps(ARMCC::AL));
+
+  return true;
+}
+
 /// Select the opcode for simple extensions (that translate to a single SXT/UXT
 /// instruction). Extension operations more complicated than that should not
 /// invoke this.
@@ -235,6 +303,16 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
       // LDRH has a funny addressing mode (there's already a FIXME for it).
       MIB.addReg(0);
     MIB.addImm(0).add(predOps(ARMCC::AL));
+    break;
+  }
+  case G_SEQUENCE: {
+    if (!selectSequence(MIB, TII, MRI, TRI, RBI))
+      return false;
+    break;
+  }
+  case G_EXTRACT: {
+    if (!selectExtract(MIB, TII, MRI, TRI, RBI))
+      return false;
     break;
   }
   default:
