@@ -143,6 +143,32 @@ ARMRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   case G_FRAME_INDEX:
     OperandsMapping = getOperandsMapping({&ARM::ValueMappings[0], nullptr});
     break;
+  case G_SEQUENCE: {
+    // We only support G_SEQUENCE for creating a double precision floating point
+    // value out of two GPRs.
+    LLT Ty1 = MRI.getType(MI.getOperand(1).getReg());
+    LLT Ty2 = MRI.getType(MI.getOperand(3).getReg());
+    if (Ty.getSizeInBits() != 64 || Ty1.getSizeInBits() != 32 ||
+        Ty2.getSizeInBits() != 32)
+      return InstructionMapping{};
+    OperandsMapping =
+        getOperandsMapping({&ARM::ValueMappings[6], &ARM::ValueMappings[0],
+                            nullptr, &ARM::ValueMappings[0], nullptr});
+    break;
+  }
+  case G_EXTRACT: {
+    // We only support G_EXTRACT for splitting a double precision floating point
+    // value into two GPRs.
+    LLT Ty1 = MRI.getType(MI.getOperand(1).getReg());
+    LLT Ty2 = MRI.getType(MI.getOperand(2).getReg());
+    if (Ty.getSizeInBits() != 32 || Ty1.getSizeInBits() != 32 ||
+        Ty2.getSizeInBits() != 64)
+      return InstructionMapping{};
+    OperandsMapping =
+        getOperandsMapping({&ARM::ValueMappings[0], &ARM::ValueMappings[0],
+                            &ARM::ValueMappings[6], nullptr, nullptr});
+    break;
+  }
   default:
     return InstructionMapping{};
   }
