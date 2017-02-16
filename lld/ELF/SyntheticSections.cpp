@@ -461,7 +461,7 @@ MipsGotSection<ELFT>::MipsGotSection()
                              SHT_PROGBITS, 16, ".got") {}
 
 template <class ELFT>
-void MipsGotSection<ELFT>::addEntry(SymbolBody &Sym, uintX_t Addend,
+void MipsGotSection<ELFT>::addEntry(SymbolBody &Sym, int64_t Addend,
                                     RelExpr Expr) {
   // For "true" local symbols which can be referenced from the same module
   // only compiler creates two instructions for address loading:
@@ -563,7 +563,7 @@ static uint64_t getMipsPageCount(uint64_t Size) {
 template <class ELFT>
 typename MipsGotSection<ELFT>::uintX_t
 MipsGotSection<ELFT>::getPageEntryOffset(const SymbolBody &B,
-                                         uintX_t Addend) const {
+                                         int64_t Addend) const {
   const OutputSectionBase *OutSec =
       cast<DefinedRegular<ELFT>>(&B)->Section->getOutputSection();
   uintX_t SecAddr = getMipsPageAddr(OutSec->Addr);
@@ -576,7 +576,7 @@ MipsGotSection<ELFT>::getPageEntryOffset(const SymbolBody &B,
 template <class ELFT>
 typename MipsGotSection<ELFT>::uintX_t
 MipsGotSection<ELFT>::getBodyEntryOffset(const SymbolBody &B,
-                                         uintX_t Addend) const {
+                                         int64_t Addend) const {
   // Calculate offset of the GOT entries block: TLS, global, local.
   uintX_t Index = HeaderEntriesNum + PageEntriesNum;
   if (B.isTls())
@@ -979,8 +979,7 @@ typename ELFT::uint DynamicReloc<ELFT>::getOffset() const {
   return InputSec->OutSec->Addr + InputSec->getOffset(OffsetInSec);
 }
 
-template <class ELFT>
-typename ELFT::uint DynamicReloc<ELFT>::getAddend() const {
+template <class ELFT> int64_t DynamicReloc<ELFT>::getAddend() const {
   if (UseSymVA)
     return Sym->getVA<ELFT>(Addend);
   return Addend;
