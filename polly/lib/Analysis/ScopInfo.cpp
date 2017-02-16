@@ -79,6 +79,11 @@ STATISTIC(AssumptionsDelinearization,
 // are also unlikely to result in good code
 static int const MaxDisjunctionsInDomain = 20;
 
+// The number of disjunct in the context after which we stop to add more
+// disjuncts. This parameter is there to avoid exponential growth in the
+// number of disjunct when adding non-convex sets to the context.
+static int const MaxDisjunctsInContext = 4;
+
 static cl::opt<bool> PollyRemarksMinimal(
     "polly-remarks-minimal",
     cl::desc("Do not emit remarks about assumptions that are known"),
@@ -154,6 +159,9 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
   S = isl_set_upper_bound_val(S, type, dim, V);
 
   if (Range.isFullSet())
+    return S;
+
+  if (isl_set_n_basic_set(S) > MaxDisjunctsInContext)
     return S;
 
   // In case of signed wrapping, we can refine the set of valid values by
