@@ -179,6 +179,8 @@ public:
   void WriteAuxiliarySymbols(const COFFSymbol::AuxiliarySymbols &S);
   void writeSectionHeader(const COFF::section &S);
   void WriteRelocation(const COFF::relocation &R);
+  uint32_t writeSectionContents(MCAssembler &Asm, const MCAsmLayout &Layout,
+                                const MCSection &MCSec);
   void writeSection(MCAssembler &Asm, const MCAsmLayout &Layout,
                     const COFFSection &Sec, const MCSection &MCSec);
 
@@ -578,6 +580,36 @@ void WinCOFFObjectWriter::WriteRelocation(const COFF::relocation &R) {
   writeLE16(R.Type);
 }
 
+// Write MCSec's contents. What this function does is essentially
+// "Asm.writeSectionData(&MCSec, Layout)", but it's a bit complicated
+// because it needs to compute a CRC.
+uint32_t WinCOFFObjectWriter::writeSectionContents(MCAssembler &Asm,
+                                                   const MCAsmLayout &Layout,
+                                                   const MCSection &MCSec) {
+  // Save the contents of the section to a temporary buffer, we need this
+  // to CRC the data before we dump it into the object file.
+  SmallVector<char, 128> Buf;
+  raw_svector_ostream VecOS(Buf);
+  raw_pwrite_stream &OldStream = getStream();
+
+  // Redirect the output stream to our buffer and fill our buffer with
+  // the section data.
+  setStream(VecOS);
+  Asm.writeSectionData(&MCSec, Layout);
+
+  // Reset the stream back to what it was before.
+  setStream(OldStream);
+
+  // Write the section contents to the object file.
+  getStream() << Buf;
+
+  // Calculate our CRC with an initial value of '0', this is not how
+  // JamCRC is specified but it aligns with the expected output.
+  JamCRC JC(/*Init=*/0);
+  JC.update(Buf);
+  return JC.getCRC();
+}
+
 void WinCOFFObjectWriter::writeSection(MCAssembler &Asm,
                                        const MCAsmLayout &Layout,
                                        const COFFSection &Sec,
@@ -585,48 +617,27 @@ void WinCOFFObjectWriter::writeSection(MCAssembler &Asm,
   if (Sec.Number == -1)
     return;
 
+  // Write the section contents.
   if (Sec.Header.PointerToRawData != 0) {
     assert(getStream().tell() <= Sec.Header.PointerToRawData &&
            "Section::PointerToRawData is insane!");
 
-    unsigned SectionDataPadding =
-        Sec.Header.PointerToRawData - getStream().tell();
-    assert(SectionDataPadding < 4 &&
+    unsigned PaddingSize = Sec.Header.PointerToRawData - getStream().tell();
+    assert(PaddingSize < 4 &&
            "Should only need at most three bytes of padding!");
+    WriteZeros(PaddingSize);
 
-    WriteZeros(SectionDataPadding);
-
-    // Save the contents of the section to a temporary buffer, we need this
-    // to CRC the data before we dump it into the object file.
-    SmallVector<char, 128> Buf;
-    raw_svector_ostream VecOS(Buf);
-    raw_pwrite_stream &OldStream = getStream();
-
-    // Redirect the output stream to our buffer.
-    setStream(VecOS);
-
-    // Fill our buffer with the section data.
-    Asm.writeSectionData(&MCSec, Layout);
-
-    // Reset the stream back to what it was before.
-    setStream(OldStream);
-
-    // Calculate our CRC with an initial value of '0', this is not how
-    // JamCRC is specified but it aligns with the expected output.
-    JamCRC JC(/*Init=*/0);
-    JC.update(Buf);
-
-    // Write the section contents to the object file.
-    getStream() << Buf;
+    uint32_t CRC = writeSectionContents(Asm, Layout, MCSec);
 
     // Update the section definition auxiliary symbol to record the CRC.
     COFFSection *Sec = SectionMap[&MCSec];
     COFFSymbol::AuxiliarySymbols &AuxSyms = Sec->Symbol->Aux;
     assert(AuxSyms.size() == 1 && AuxSyms[0].AuxType == ATSectionDefinition);
     AuxSymbol &SecDef = AuxSyms[0];
-    SecDef.Aux.SectionDefinition.CheckSum = JC.getCRC();
+    SecDef.Aux.SectionDefinition.CheckSum = CRC;
   }
 
+  // Write relocations for this section.
   if (Sec.Relocations.empty()) {
     assert(Sec.Header.PointerToRelocations == 0 &&
            "Section::PointerToRelocations is insane!");
