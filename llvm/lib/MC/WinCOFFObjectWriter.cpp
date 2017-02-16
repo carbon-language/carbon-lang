@@ -777,15 +777,13 @@ static std::time_t getTime() {
 
 void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
-  size_t SectionsSize = Sections.size();
-  if (SectionsSize > static_cast<size_t>(INT32_MAX))
+  if (Sections.size() > INT32_MAX)
     report_fatal_error(
         "PE COFF object files can't have more than 2147483647 sections");
 
-  // Assign symbol and section indexes and offsets.
-  int32_t NumberOfSections = static_cast<int32_t>(SectionsSize);
-
-  UseBigObj = NumberOfSections > COFF::MaxNumberOfSections16;
+  UseBigObj = Sections.size() > COFF::MaxNumberOfSections16;
+  Header.NumberOfSections = Sections.size();
+  Header.NumberOfSymbols = 0;
 
   // Assign section numbers.
   size_t Number = 1;
@@ -795,9 +793,6 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
     Section->Symbol->Aux[0].Aux.SectionDefinition.Number = Number;
     ++Number;
   }
-
-  Header.NumberOfSections = NumberOfSections;
-  Header.NumberOfSymbols = 0;
 
   for (const std::string &Name : Asm.getFileNames()) {
     // round up to calculate the number of auxiliary symbols required
