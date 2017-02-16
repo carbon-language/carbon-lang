@@ -143,14 +143,14 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
                                                int dim,
                                                enum isl_dim_type type) {
   isl_val *V;
-  isl_ctx *ctx = isl_set_get_ctx(S);
+  isl_ctx *Ctx = isl_set_get_ctx(S);
 
   // The upper and lower bound for a parameter value is derived either from
   // the data type of the parameter or from the - possibly more restrictive -
   // range metadata.
-  V = isl_valFromAPInt(ctx, Range.getSignedMin(), true);
+  V = isl_valFromAPInt(Ctx, Range.getSignedMin(), true);
   S = isl_set_lower_bound_val(S, type, dim, V);
-  V = isl_valFromAPInt(ctx, Range.getSignedMax(), true);
+  V = isl_valFromAPInt(Ctx, Range.getSignedMax(), true);
   S = isl_set_upper_bound_val(S, type, dim, V);
 
   if (Range.isFullSet())
@@ -159,10 +159,10 @@ static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
   // In case of signed wrapping, we can refine the set of valid values by
   // excluding the part not covered by the wrapping range.
   if (Range.isSignWrappedSet()) {
-    V = isl_valFromAPInt(ctx, Range.getLower(), true);
+    V = isl_valFromAPInt(Ctx, Range.getLower(), true);
     isl_set *SLB = isl_set_lower_bound_val(isl_set_copy(S), type, dim, V);
 
-    V = isl_valFromAPInt(ctx, Range.getUpper(), true);
+    V = isl_valFromAPInt(Ctx, Range.getUpper(), true);
     V = isl_val_sub_ui(V, 1);
     isl_set *SUB = isl_set_upper_bound_val(S, type, dim, V);
     S = isl_set_union(SLB, SUB);
