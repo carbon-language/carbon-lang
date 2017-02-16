@@ -981,30 +981,14 @@ RegisterRef DataFlowGraph::makeRegRef(const MachineOperand &Op) const {
   return RegisterRef(PRI.getRegMaskId(Op.getRegMask()), LaneBitmask::getAll());
 }
 
-RegisterRef DataFlowGraph::normalizeRef(RegisterRef RR) const {
-  // FIXME copied from RegisterAggr
-  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg))
-    return RR;
-  const TargetRegisterClass *RC = PRI.RegInfos[RR.Reg].RegClass;
-  LaneBitmask RCMask = RC != nullptr ? RC->LaneMask : LaneBitmask(0x00000001);
-  LaneBitmask Common = RR.Mask & RCMask;
-
-  RegisterId SuperReg = PRI.RegInfos[RR.Reg].MaxSuper;
-// Ex: IP/EIP/RIP
-//  assert(RC != nullptr || RR.Reg == SuperReg);
-  uint32_t Sub = PRI.getTRI().getSubRegIndex(SuperReg, RR.Reg);
-  LaneBitmask SuperMask = PRI.getTRI().composeSubRegIndexLaneMask(Sub, Common);
-  return RegisterRef(SuperReg, SuperMask);
-}
-
 RegisterRef DataFlowGraph::restrictRef(RegisterRef AR, RegisterRef BR) const {
   if (AR.Reg == BR.Reg) {
     LaneBitmask M = AR.Mask & BR.Mask;
     return M.any() ? RegisterRef(AR.Reg, M) : RegisterRef();
   }
 #ifndef NDEBUG
-  RegisterRef NAR = normalizeRef(AR);
-  RegisterRef NBR = normalizeRef(BR);
+  RegisterRef NAR = PRI.normalize(AR);
+  RegisterRef NBR = PRI.normalize(BR);
   assert(NAR.Reg != NBR.Reg);
 #endif
   // This isn't strictly correct, because the overlap may happen in the

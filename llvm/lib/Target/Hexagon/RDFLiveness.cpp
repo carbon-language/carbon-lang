@@ -377,7 +377,7 @@ void Liveness::computePhiInfo() {
         NodeAddr<UseNode*> A = DFG.addr<UseNode*>(UN);
         uint16_t F = A.Addr->getFlags();
         if ((F & (NodeAttrs::Undef | NodeAttrs::PhiRef)) == 0) {
-          RegisterRef R = DFG.normalizeRef(getRestrictedRegRef(A));
+          RegisterRef R = PRI.normalize(getRestrictedRegRef(A));
           RealUses[R.Reg].insert({A.Id,R.Mask});
         }
         UN = A.Addr->getSibling();
@@ -522,7 +522,7 @@ void Liveness::computePhiInfo() {
 
     for (NodeAddr<UseNode*> UA : PUs) {
       std::map<NodeId,RegisterAggr> &PUM = PhiUp[UA.Id];
-      RegisterRef UR = DFG.normalizeRef(getRestrictedRegRef(UA));
+      RegisterRef UR = PRI.normalize(getRestrictedRegRef(UA));
       for (const std::pair<NodeId,RegisterAggr> &P : PUM) {
         bool Changed = false;
         const RegisterAggr &MidDefs = P.second;
@@ -656,7 +656,7 @@ void Liveness::computeLiveIns() {
         auto PrA = DFG.addr<BlockNode*>(PUA.Addr->getPredecessor());
         RefMap &LOX = PhiLOX[PrA.Addr->getCode()];
 
-        RegisterRef UR = DFG.normalizeRef(getRestrictedRegRef(PUA));
+        RegisterRef UR = PRI.normalize(getRestrictedRegRef(PUA));
         for (const std::pair<RegisterId,NodeRefSet> &T : RUs) {
           // Check if T.first aliases UR?
           LaneBitmask M;
@@ -980,7 +980,7 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
     for (NodeAddr<UseNode*> UA : IA.Addr->members_if(DFG.IsUse, DFG)) {
       if (UA.Addr->getFlags() & NodeAttrs::Undef)
         continue;
-      RegisterRef RR = DFG.normalizeRef(UA.Addr->getRegRef(DFG));
+      RegisterRef RR = PRI.normalize(UA.Addr->getRegRef(DFG));
       for (NodeAddr<DefNode*> D : getAllReachingDefs(UA))
         if (getBlockWithRef(D.Id) != B)
           LiveIn[RR.Reg].insert({D.Id,RR.Mask});
