@@ -1704,10 +1704,10 @@ void DataFlowGraph::linkBlockRefs(DefStackMap &DefM, NodeAddr<BlockNode*> BA) {
   // Push block delimiters.
   markBlock(BA.Id, DefM);
 
-  auto IsClobber = [this] (NodeAddr<RefNode*> RA) -> bool {
+  auto IsClobber = [] (NodeAddr<RefNode*> RA) -> bool {
     return IsDef(RA) && (RA.Addr->getFlags() & NodeAttrs::Clobbering);
   };
-  auto IsNoClobber = [this] (NodeAddr<RefNode*> RA) -> bool {
+  auto IsNoClobber = [] (NodeAddr<RefNode*> RA) -> bool {
     return IsDef(RA) && !(RA.Addr->getFlags() & NodeAttrs::Clobbering);
   };
 
