@@ -13,6 +13,8 @@
   define void @test_fadd_s64() #0 { ret void }
 
   define void @test_load_from_stack() { ret void }
+  define void @test_load_f32() #0 { ret void }
+  define void @test_load_f64() #0 { ret void }
 
   define void @test_soft_fp_double() #0 { ret void }
 
@@ -329,6 +331,60 @@ body:             |
 
     BX_RET 14, _
     ; CHECK: BX_RET 14, _
+...
+---
+name:            test_load_f32
+# CHECK-LABEL: name: test_load_f32
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+  - { id: 1, class: fprb }
+# CHECK-DAG: id: [[P:[0-9]+]], class: gpr
+# CHECK-DAG: id: [[V:[0-9]+]], class: spr
+body:             |
+  bb.0:
+    liveins: %r0, %r1, %r2, %r3
+
+    %0(p0) = COPY %r0
+
+    %1(s32) = G_LOAD %0(p0)
+    ; CHECK: %[[V]] = VLDRS %[[P]], 0, 14, _
+
+    %s0 = COPY %1
+    ; CHECK: %s0 = COPY %[[V]]
+
+    BX_RET 14, _, implicit %s0
+    ; CHECK: BX_RET 14, _, implicit %s0
+...
+---
+name:            test_load_f64
+# CHECK-LABEL: name: test_load_f64
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+  - { id: 1, class: fprb }
+# CHECK-DAG: id: [[P:[0-9]+]], class: gpr
+# CHECK-DAG: id: [[V:[0-9]+]], class: dpr
+body:             |
+  bb.0:
+    liveins: %r0, %r1, %r2, %r3
+
+    %0(p0) = COPY %r0
+
+    %1(s64) = G_LOAD %0(p0)
+    ; CHECK: %[[V]] = VLDRD %[[P]], 0, 14, _
+
+    %d0 = COPY %1
+    ; CHECK: %d0 = COPY %[[V]]
+
+    BX_RET 14, _, implicit %d0
+    ; CHECK: BX_RET 14, _, implicit %d0
 ...
 ---
 name:            test_soft_fp_double
