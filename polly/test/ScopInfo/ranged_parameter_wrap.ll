@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; Check that the contstraints on the paramater derived from the
+; Check that the constraints on the parameter derived from the
 ; __wrapping__ range metadata (see bottom of the file) are present:
 ;
 ; CHECK: Context:
