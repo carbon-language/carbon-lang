@@ -637,13 +637,13 @@ void WinCOFFObjectWriter::recordRelocation(
     return;
   }
 
-  MCSection *Section = Fragment->getParent();
+  MCSection *MCSec = Fragment->getParent();
 
   // Mark this symbol as requiring an entry in the symbol table.
-  assert(SectionMap.find(Section) != SectionMap.end() &&
+  assert(SectionMap.find(MCSec) != SectionMap.end() &&
          "Section must already have been defined in executePostLayoutBinding!");
 
-  COFFSection *coff_section = SectionMap[Section];
+  COFFSection *Sec = SectionMap[MCSec];
   const MCSymbolRefExpr *SymB = Target.getSymB();
   bool CrossSection = false;
 
@@ -765,7 +765,14 @@ void WinCOFFObjectWriter::recordRelocation(
     FixedValue = 0;
 
   if (TargetObjectWriter->recordRelocation(Fixup))
-    coff_section->Relocations.push_back(Reloc);
+    Sec->Relocations.push_back(Reloc);
+}
+
+static std::time_t getTime() {
+  std::time_t Now = time(nullptr);
+  if (Now < 0 || !isUInt<32>(Now))
+    return UINT32_MAX;
+  return Now;
 }
 
 void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
@@ -883,13 +890,13 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
 
   // Assign file offsets to COFF object file structures.
 
-  unsigned offset = getInitialOffset();
+  unsigned Offset = getInitialOffset();
 
   if (UseBigObj)
-    offset += COFF::Header32Size;
+    Offset += COFF::Header32Size;
   else
-    offset += COFF::Header16Size;
-  offset += COFF::SectionSize * Header.NumberOfSections;
+    Offset += COFF::Header16Size;
+  Offset += COFF::SectionSize * Header.NumberOfSections;
 
   for (const auto &Section : Asm) {
     COFFSection *Sec = SectionMap[&Section];
@@ -901,10 +908,10 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
 
     if (IsPhysicalSection(Sec)) {
       // Align the section data to a four byte boundary.
-      offset = alignTo(offset, 4);
-      Sec->Header.PointerToRawData = offset;
+      Offset = alignTo(Offset, 4);
+      Sec->Header.PointerToRawData = Offset;
 
-      offset += Sec->Header.SizeOfRawData;
+      Offset += Sec->Header.SizeOfRawData;
     }
 
     if (!Sec->Relocations.empty()) {
@@ -917,14 +924,14 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
       } else {
         Sec->Header.NumberOfRelocations = Sec->Relocations.size();
       }
-      Sec->Header.PointerToRelocations = offset;
+      Sec->Header.PointerToRelocations = Offset;
 
       if (RelocationsOverflow) {
         // Reloc #0 will contain actual count, so make room for it.
-        offset += COFF::RelocationSize;
+        Offset += COFF::RelocationSize;
       }
 
-      offset += COFF::RelocationSize * Sec->Relocations.size();
+      Offset += COFF::RelocationSize * Sec->Relocations.size();
 
       for (auto &Relocation : Sec->Relocations) {
         assert(Relocation.Symb->getIndex() != -1);
@@ -944,15 +951,12 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
         Sec->Header.NumberOfLineNumbers;
   }
 
-  Header.PointerToSymbolTable = offset;
+  Header.PointerToSymbolTable = Offset;
 
   // MS LINK expects to be able to use this timestamp to implement their
   // /INCREMENTAL feature.
   if (Asm.isIncrementalLinkerCompatible()) {
-    std::time_t Now = time(nullptr);
-    if (Now < 0 || !isUInt<32>(Now))
-      Now = UINT32_MAX;
-    Header.TimeDateStamp = Now;
+    Header.TimeDateStamp = getTime();
   } else {
     // Have deterministic output if /INCREMENTAL isn't needed. Also matches GNU.
     Header.TimeDateStamp = 0;
@@ -961,86 +965,85 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
   // Write it all to disk...
   WriteFileHeader(Header);
 
-  {
-    sections::iterator i, ie;
-    MCAssembler::iterator j, je;
+  for (auto &Section : Sections) {
+    if (Section->Number != -1) {
+      if (Section->Relocations.size() >= 0xffff)
+        Section->Header.Characteristics |= COFF::IMAGE_SCN_LNK_NRELOC_OVFL;
+      writeSectionHeader(Section->Header);
+    }
+  }
 
-    for (auto &Section : Sections) {
-      if (Section->Number != -1) {
-        if (Section->Relocations.size() >= 0xffff)
-          Section->Header.Characteristics |= COFF::IMAGE_SCN_LNK_NRELOC_OVFL;
-        writeSectionHeader(Section->Header);
-      }
+  SmallVector<char, 128> Buf;
+
+  sections::iterator I, IE;
+  MCAssembler::iterator J, JE;
+  for (I = Sections.begin(), IE = Sections.end(), J = Asm.begin(),
+      JE = Asm.end();
+       I != IE && J != JE; ++I, ++J) {
+    COFFSection &Sec = *I->get();
+    MCSection &MCSec = *J;
+
+    if (Sec.Number == -1)
+      continue;
+
+    if (Sec.Header.PointerToRawData != 0) {
+      assert(getStream().tell() <= Sec.Header.PointerToRawData &&
+             "Section::PointerToRawData is insane!");
+
+      unsigned SectionDataPadding =
+          Sec.Header.PointerToRawData - getStream().tell();
+      assert(SectionDataPadding < 4 &&
+             "Should only need at most three bytes of padding!");
+
+      WriteZeros(SectionDataPadding);
+
+      // Save the contents of the section to a temporary buffer, we need this
+      // to CRC the data before we dump it into the object file.
+      Buf.clear();
+      raw_svector_ostream VecOS(Buf);
+      raw_pwrite_stream &OldStream = getStream();
+      // Redirect the output stream to our buffer.
+      setStream(VecOS);
+      // Fill our buffer with the section data.
+      Asm.writeSectionData(&MCSec, Layout);
+      // Reset the stream back to what it was before.
+      setStream(OldStream);
+
+      // Calculate our CRC with an initial value of '0', this is not how
+      // JamCRC is specified but it aligns with the expected output.
+      JamCRC JC(/*Init=*/0x00000000U);
+      JC.update(Buf);
+
+      // Write the section contents to the object file.
+      getStream() << Buf;
+
+      // Update the section definition auxiliary symbol to record the CRC.
+      COFFSection *Sec = SectionMap[&MCSec];
+      COFFSymbol::AuxiliarySymbols &AuxSyms = Sec->Symbol->Aux;
+      assert(AuxSyms.size() == 1 && AuxSyms[0].AuxType == ATSectionDefinition);
+      AuxSymbol &SecDef = AuxSyms[0];
+      SecDef.Aux.SectionDefinition.CheckSum = JC.getCRC();
     }
 
-    SmallVector<char, 128> SectionContents;
-    for (i = Sections.begin(), ie = Sections.end(), j = Asm.begin(),
-        je = Asm.end();
-         (i != ie) && (j != je); ++i, ++j) {
+    if (!Sec.Relocations.empty()) {
+      assert(getStream().tell() == Sec.Header.PointerToRelocations &&
+             "Section::PointerToRelocations is insane!");
 
-      if ((*i)->Number == -1)
-        continue;
-
-      if ((*i)->Header.PointerToRawData != 0) {
-        assert(getStream().tell() <= (*i)->Header.PointerToRawData &&
-               "Section::PointerToRawData is insane!");
-
-        unsigned SectionDataPadding =
-            (*i)->Header.PointerToRawData - getStream().tell();
-        assert(SectionDataPadding < 4 &&
-               "Should only need at most three bytes of padding!");
-
-        WriteZeros(SectionDataPadding);
-
-        // Save the contents of the section to a temporary buffer, we need this
-        // to CRC the data before we dump it into the object file.
-        SectionContents.clear();
-        raw_svector_ostream VecOS(SectionContents);
-        raw_pwrite_stream &OldStream = getStream();
-        // Redirect the output stream to our buffer.
-        setStream(VecOS);
-        // Fill our buffer with the section data.
-        Asm.writeSectionData(&*j, Layout);
-        // Reset the stream back to what it was before.
-        setStream(OldStream);
-
-        // Calculate our CRC with an initial value of '0', this is not how
-        // JamCRC is specified but it aligns with the expected output.
-        JamCRC JC(/*Init=*/0x00000000U);
-        JC.update(SectionContents);
-
-        // Write the section contents to the object file.
-        getStream() << SectionContents;
-
-        // Update the section definition auxiliary symbol to record the CRC.
-        COFFSection *Sec = SectionMap[&*j];
-        COFFSymbol::AuxiliarySymbols &AuxSyms = Sec->Symbol->Aux;
-        assert(AuxSyms.size() == 1 &&
-               AuxSyms[0].AuxType == ATSectionDefinition);
-        AuxSymbol &SecDef = AuxSyms[0];
-        SecDef.Aux.SectionDefinition.CheckSum = JC.getCRC();
+      if (Sec.Relocations.size() >= 0xffff) {
+        // In case of overflow, write actual relocation count as first
+        // relocation. Including the synthetic reloc itself (+ 1).
+        COFF::relocation R;
+        R.VirtualAddress = Sec.Relocations.size() + 1;
+        R.SymbolTableIndex = 0;
+        R.Type = 0;
+        WriteRelocation(R);
       }
 
-      if (!(*i)->Relocations.empty()) {
-        assert(getStream().tell() == (*i)->Header.PointerToRelocations &&
-               "Section::PointerToRelocations is insane!");
-
-        if ((*i)->Relocations.size() >= 0xffff) {
-          // In case of overflow, write actual relocation count as first
-          // relocation. Including the synthetic reloc itself (+ 1).
-          COFF::relocation r;
-          r.VirtualAddress = (*i)->Relocations.size() + 1;
-          r.SymbolTableIndex = 0;
-          r.Type = 0;
-          WriteRelocation(r);
-        }
-
-        for (const auto &Relocation : (*i)->Relocations)
-          WriteRelocation(Relocation.Data);
-      } else
-        assert((*i)->Header.PointerToRelocations == 0 &&
-               "Section::PointerToRelocations is insane!");
-    }
+      for (const auto &Relocation : Sec.Relocations)
+        WriteRelocation(Relocation.Data);
+    } else
+      assert(Sec.Header.PointerToRelocations == 0 &&
+             "Section::PointerToRelocations is insane!");
   }
 
   assert(getStream().tell() == Header.PointerToSymbolTable &&
