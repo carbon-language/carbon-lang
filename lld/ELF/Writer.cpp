@@ -1184,6 +1184,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 }
 
 template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
+  // Add BSS sections.
   auto Add = [=](OutputSection<ELFT> *Sec) {
     if (!Sec->Sections.empty()) {
       Sec->assignOffsets();
@@ -1193,6 +1194,8 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   Add(Out<ELFT>::Bss);
   Add(Out<ELFT>::BssRelRo);
 
+  // ARM ABI requires .ARM.exidx to be terminated by some piece of data.
+  // We have the terminater synthetic section class. Add that at the end.
   auto *OS = dyn_cast_or_null<OutputSection<ELFT>>(findSection(".ARM.exidx"));
   if (OS && !OS->Sections.empty() && !Config->Relocatable)
     OS->addSection(make<ARMExidxSentinelSection<ELFT>>());
