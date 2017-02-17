@@ -134,8 +134,8 @@ Version 4.0
   Symbol added: _ZTSSt12bad_any_cast
   Symbol added: _ZTVSt12bad_any_cast
 
-* rTBD - Remove basic_string::insert and basic_string::replace template methods
-         which should be inline.
+* r295398 - Remove basic_string::insert and basic_string::replace template methods
+    which should be inline.
 
   These functions should never have had visible definitions in the dylib but
   since they were previously not specified with 'inline' they accidentally
