@@ -838,7 +838,7 @@ bool DevirtModule::tryVirtualConstProp(
         Target.WasDevirt = true;
 
     // Rewrite each call to a load from OffsetByte/OffsetBit.
-    Constant *ByteConst = ConstantInt::get(Int64Ty, OffsetByte);
+    Constant *ByteConst = ConstantInt::get(Int32Ty, OffsetByte);
     Constant *BitConst = ConstantInt::get(Int8Ty, 1ULL << OffsetBit);
     applyVirtualConstProp(CSByConstantArg.second,
                           TargetsForSlot[0].Fn->getName(), ByteConst, BitConst);
