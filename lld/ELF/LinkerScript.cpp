@@ -252,7 +252,7 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
     size_t SizeBefore = I->Sections.size();
 
     for (InputSectionBase<ELFT> *S : Symtab<ELFT>::X->Sections) {
-      if (!S->Live || S->Assigned)
+      if (S->Assigned)
         continue;
       // For -emit-relocs we have to ignore entries like
       //   .rela.dyn : { *(.rela.data) }
