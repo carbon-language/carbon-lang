@@ -34,10 +34,10 @@ using namespace llvm;
 
 static void rename(GlobalValue *GV) { GV->setName(GV->getName() + ".old"); }
 
-// Upgrade the declarations of the SSE4.1 functions whose arguments have
+// Upgrade the declarations of the SSE4.1 ptest intrinsics whose arguments have
 // changed their type from v4f32 to v2i64.
-static bool UpgradeSSE41Function(Function* F, Intrinsic::ID IID,
-                                 Function *&NewFn) {
+static bool UpgradePTESTIntrinsic(Function* F, Intrinsic::ID IID,
+                                  Function *&NewFn) {
   // Check whether this is an old version of the function, which received
   // v4f32 arguments.
   Type *Arg0Type = F->getFunctionType()->getParamType(0);
@@ -247,11 +247,11 @@ static bool UpgradeX86IntrinsicFunction(Function *F, StringRef Name,
   // SSE4.1 ptest functions may have an old signature.
   if (Name.startswith("sse41.ptest")) { // Added in 3.2
     if (Name.substr(11) == "c")
-      return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestc, NewFn);
+      return UpgradePTESTIntrinsic(F, Intrinsic::x86_sse41_ptestc, NewFn);
     if (Name.substr(11) == "z")
-      return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestz, NewFn);
+      return UpgradePTESTIntrinsic(F, Intrinsic::x86_sse41_ptestz, NewFn);
     if (Name.substr(11) == "nzc")
-      return UpgradeSSE41Function(F, Intrinsic::x86_sse41_ptestnzc, NewFn);
+      return UpgradePTESTIntrinsic(F, Intrinsic::x86_sse41_ptestnzc, NewFn);
   }
   // Several blend and other instructions with masks used the wrong number of
   // bits.
