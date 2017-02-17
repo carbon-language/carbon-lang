@@ -91,24 +91,27 @@ static bool isUnderSysroot(StringRef Path) {
   return false;
 }
 
+template <class ELFT> void LinkerScript<ELFT>::setDot(Expr E, bool InSec) {
+  uintX_t Val = E(Dot);
+  if (Val < Dot) {
+    if (InSec)
+      error("unable to move location counter backward for: " + CurOutSec->Name);
+    else
+      error("unable to move location counter backward");
+  }
+  Dot = Val;
+  // Update to location counter means update to section size.
+  if (InSec)
+    CurOutSec->Size = Dot - CurOutSec->Addr;
+}
+
 // Sets value of a symbol. Two kinds of symbols are processed: synthetic
 // symbols, whose value is an offset from beginning of section and regular
 // symbols whose value is absolute.
 template <class ELFT>
 void LinkerScript<ELFT>::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   if (Cmd->Name == ".") {
-    uintX_t Val = Cmd->Expression(Dot);
-    if (Val < Dot) {
-      if (InSec)
-        error("unable to move location counter backward for: " +
-              CurOutSec->Name);
-      else
-        error("unable to move location counter backward");
-    }
-    Dot = Val;
-    // Update to location counter means update to section size.
-    if (InSec)
-      CurOutSec->Size = Dot - CurOutSec->Addr;
+    setDot(Cmd->Expression, InSec);
     return;
   }
 
@@ -566,6 +569,9 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
   if (!Sec)
     return;
 
+  if (Cmd->AddrExpr && Sec->Flags & SHF_ALLOC)
+    setDot(Cmd->AddrExpr);
+
   // Handle align (e.g. ".foo : ALIGN(16) { ... }").
   if (Cmd->AlignExpr)
     Sec->updateAlignment(Cmd->AlignExpr(0));
@@ -801,8 +807,6 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
     }
 
     auto *Cmd = cast<OutputSectionCommand>(Base.get());
-    if (Cmd->AddrExpr)
-      Dot = Cmd->AddrExpr(Dot);
     assignOffsets(Cmd);
   }
 
