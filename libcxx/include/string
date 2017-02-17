@@ -988,7 +988,7 @@ public:
 #endif
     basic_string& assign(const basic_string& __str, size_type __pos, size_type __n=npos);
     template <class _Tp>
-        typename enable_if
+    inline typename enable_if
         <
             __can_be_converted_to_string_view<_CharT, _Traits, _Tp>::value,
             basic_string&
@@ -998,7 +998,7 @@ public:
     basic_string& assign(const value_type* __s);
     basic_string& assign(size_type __n, value_type __c);
     template<class _InputIterator>
-        inline typename enable_if
+    inline typename enable_if
         <
            __is_exactly_input_iterator<_InputIterator>::value
                 || !__libcpp_string_gets_noexcept_iterator<_InputIterator>::value,
@@ -1006,7 +1006,7 @@ public:
         >::type
         assign(_InputIterator __first, _InputIterator __last);
     template<class _ForwardIterator>
-      inline typename enable_if
+    inline typename enable_if
         <
             __is_forward_iterator<_ForwardIterator>::value
                  && __libcpp_string_gets_noexcept_iterator<_ForwardIterator>::value,
@@ -1023,7 +1023,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     basic_string& insert(size_type __pos1, __self_view __sv) { return insert(__pos1, __sv.data(), __sv.size()); }
     template <class _Tp>
-        typename enable_if
+    inline typename enable_if
         <
             __can_be_converted_to_string_view<_CharT, _Traits, _Tp>::value,
             basic_string&
@@ -1037,7 +1037,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     iterator      insert(const_iterator __pos, size_type __n, value_type __c);
     template<class _InputIterator>
-        typename enable_if
+    inline typename enable_if
         <
            __is_exactly_input_iterator<_InputIterator>::value
                 || !__libcpp_string_gets_noexcept_iterator<_InputIterator>::value,
@@ -1045,7 +1045,7 @@ public:
         >::type
         insert(const_iterator __pos, _InputIterator __first, _InputIterator __last);
     template<class _ForwardIterator>
-        typename enable_if
+    inline typename enable_if
         <
             __is_forward_iterator<_ForwardIterator>::value
                  && __libcpp_string_gets_noexcept_iterator<_ForwardIterator>::value,
@@ -1070,7 +1070,7 @@ public:
     basic_string& replace(size_type __pos1, size_type __n1, __self_view __sv) { return replace(__pos1, __n1, __sv.data(), __sv.size()); }
     basic_string& replace(size_type __pos1, size_type __n1, const basic_string& __str, size_type __pos2, size_type __n2=npos);
     template <class _Tp>
-        typename enable_if
+    inline typename enable_if
         <
             __can_be_converted_to_string_view<_CharT, _Traits, _Tp>::value,
             basic_string&
@@ -1090,7 +1090,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     basic_string& replace(const_iterator __i1, const_iterator __i2, size_type __n, value_type __c);
     template<class _InputIterator>
-        typename enable_if
+    inline typename enable_if
         <
             __is_input_iterator<_InputIterator>::value,
             basic_string&
