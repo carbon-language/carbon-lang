@@ -95,7 +95,23 @@ static bool isUnderSysroot(StringRef Path) {
 // symbols, whose value is an offset from beginning of section and regular
 // symbols whose value is absolute.
 template <class ELFT>
-static void assignSymbol(SymbolAssignment *Cmd, typename ELFT::uint Dot = 0) {
+void LinkerScript<ELFT>::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
+  if (Cmd->Name == ".") {
+    uintX_t Val = Cmd->Expression(Dot);
+    if (Val < Dot) {
+      if (InSec)
+        error("unable to move location counter backward for: " +
+              CurOutSec->Name);
+      else
+        error("unable to move location counter backward");
+    }
+    Dot = Val;
+    // Update to location counter means update to section size.
+    if (InSec)
+      CurOutSec->Size = Dot - CurOutSec->Addr;
+    return;
+  }
+
   if (!Cmd->Sym)
     return;
 
@@ -113,7 +129,8 @@ static void assignSymbol(SymbolAssignment *Cmd, typename ELFT::uint Dot = 0) {
   cast<DefinedRegular<ELFT>>(Cmd->Sym)->Value = Cmd->Expression(Dot);
 }
 
-template <class ELFT> static void addSymbol(SymbolAssignment *Cmd) {
+template <class ELFT>
+void LinkerScript<ELFT>::addSymbol(SymbolAssignment *Cmd) {
   if (Cmd->Name == ".")
     return;
 
@@ -133,7 +150,7 @@ template <class ELFT> static void addSymbol(SymbolAssignment *Cmd) {
   // If there are sections, then let the value be assigned later in
   // `assignAddresses`.
   if (!ScriptConfig->HasSections)
-    assignSymbol<ELFT>(Cmd);
+    assignSymbol(Cmd);
 }
 
 bool SymbolAssignment::classof(const BaseCommand *C) {
@@ -310,7 +327,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
 
     // Handle symbol assignments outside of any output section.
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1.get())) {
-      addSymbol<ELFT>(Cmd);
+      addSymbol(Cmd);
       continue;
     }
 
@@ -352,7 +369,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
       // ".foo : { ...; bar = .; }". Handle them.
       for (const std::unique_ptr<BaseCommand> &Base : Cmd->Commands)
         if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base.get()))
-          addSymbol<ELFT>(OutCmd);
+          addSymbol(OutCmd);
 
       // Handle subalign (e.g. ".foo : SUBALIGN(32) { ... }"). If subalign
       // is given, input sections are aligned to that value, whether the
@@ -451,17 +468,7 @@ void LinkerScript<ELFT>::switchTo(OutputSectionBase *Sec) {
 template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
   // This handles the assignments to symbol or to a location counter (.)
   if (auto *AssignCmd = dyn_cast<SymbolAssignment>(&Base)) {
-    if (AssignCmd->Name == ".") {
-      // Update to location counter means update to section size.
-      uintX_t Val = AssignCmd->Expression(Dot);
-      if (Val < Dot)
-        error("unable to move location counter backward for: " +
-              CurOutSec->Name);
-      Dot = Val;
-      CurOutSec->Size = Dot - CurOutSec->Addr;
-      return;
-    }
-    assignSymbol<ELFT>(AssignCmd, Dot);
+    assignSymbol(AssignCmd, true);
     return;
   }
 
@@ -784,11 +791,7 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
 
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
-      if (Cmd->Name == ".") {
-        Dot = Cmd->Expression(Dot);
-      } else if (Cmd->Sym) {
-        assignSymbol<ELFT>(Cmd, Dot);
-      }
+      assignSymbol(Cmd);
       continue;
     }
 
