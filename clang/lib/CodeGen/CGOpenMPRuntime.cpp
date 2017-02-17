@@ -4724,7 +4724,6 @@ void CGOpenMPRuntime::emitCancellationPointCall(
       auto *Result = CGF.EmitRuntimeCall(
           createRuntimeFunction(OMPRTL__kmpc_cancellationpoint), Args);
       // if (__kmpc_cancellationpoint()) {
-      //  __kmpc_cancel_barrier();
       //   exit from construct;
       // }
       auto *ExitBB = CGF.createBasicBlock(".cancel.exit");
@@ -4732,8 +4731,6 @@ void CGOpenMPRuntime::emitCancellationPointCall(
       auto *Cmp = CGF.Builder.CreateIsNotNull(Result);
       CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
       CGF.EmitBlock(ExitBB);
-      // __kmpc_cancel_barrier();
-      emitBarrierCall(CGF, Loc, OMPD_unknown, /*EmitChecks=*/false);
       // exit from construct;
       auto CancelDest =
           CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
@@ -4762,7 +4759,6 @@ void CGOpenMPRuntime::emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
       auto *Result = CGF.EmitRuntimeCall(
           RT.createRuntimeFunction(OMPRTL__kmpc_cancel), Args);
       // if (__kmpc_cancel()) {
-      //  __kmpc_cancel_barrier();
       //   exit from construct;
       // }
       auto *ExitBB = CGF.createBasicBlock(".cancel.exit");
@@ -4770,8 +4766,6 @@ void CGOpenMPRuntime::emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
       auto *Cmp = CGF.Builder.CreateIsNotNull(Result);
       CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
       CGF.EmitBlock(ExitBB);
-      // __kmpc_cancel_barrier();
-      RT.emitBarrierCall(CGF, Loc, OMPD_unknown, /*EmitChecks=*/false);
       // exit from construct;
       auto CancelDest =
           CGF.getOMPCancelDestination(OMPRegionInfo->getDirectiveKind());
