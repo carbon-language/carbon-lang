@@ -23,7 +23,6 @@
 #include <cassert>
 
 #include "test_macros.h"
-#include "test_allocator.h"
 #include "constexpr_char_traits.hpp"
 
 // Overloads
@@ -34,7 +33,6 @@
 // (4)  basic_string_view(const CharT*)
 int main()
 {
-  using TestSizeT = test_allocator<char>::size_type;
   { // Testing (1)
     // Nothing TODO. Cannot deduce without any arguments.
   }
