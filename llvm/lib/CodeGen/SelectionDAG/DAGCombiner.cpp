@@ -5609,7 +5609,6 @@ static SDValue combineMinNumMaxNum(const SDLoc &DL, EVT VT, SDValue LHS,
   }
 }
 
-// TODO: We should handle other cases of selecting between {-1,0,1} here.
 SDValue DAGCombiner::foldSelectOfConstants(SDNode *N) {
   SDValue Cond = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -5617,6 +5616,24 @@ SDValue DAGCombiner::foldSelectOfConstants(SDNode *N) {
   EVT VT = N->getValueType(0);
   EVT CondVT = Cond.getValueType();
   SDLoc DL(N);
+
+  if (!VT.isInteger())
+    return SDValue();
+
+  if (!isa<ConstantSDNode>(N1) || !isa<ConstantSDNode>(N2))
+    return SDValue();
+
+  // TODO: We should handle other cases of selecting between {-1,0,1} here.
+  if (CondVT == MVT::i1) {
+    if (isNullConstant(N1) && isOneConstant(N2)) {
+      // select Cond, 0, 1 --> zext (!Cond)
+      SDValue NotCond = DAG.getNOT(DL, Cond, MVT::i1);
+      if (VT != MVT::i1)
+        NotCond = DAG.getNode(ISD::ZERO_EXTEND, DL, VT, NotCond);
+      return NotCond;
+    }
+    return SDValue();
+  }
 
   // fold (select Cond, 0, 1) -> (xor Cond, 1)
   // We can't do this reliably if integer based booleans have different contents
@@ -5627,15 +5644,14 @@ SDValue DAGCombiner::foldSelectOfConstants(SDNode *N) {
   // undiscoverable (or not reasonably discoverable). For example, it could be
   // in another basic block or it could require searching a complicated
   // expression.
-  if (VT.isInteger() &&
-      (CondVT == MVT::i1 || (CondVT.isInteger() &&
-                             TLI.getBooleanContents(false, true) ==
-                                 TargetLowering::ZeroOrOneBooleanContent &&
-                             TLI.getBooleanContents(false, false) ==
-                                 TargetLowering::ZeroOrOneBooleanContent)) &&
+  if (CondVT.isInteger() &&
+      TLI.getBooleanContents(false, true) ==
+          TargetLowering::ZeroOrOneBooleanContent &&
+      TLI.getBooleanContents(false, false) ==
+          TargetLowering::ZeroOrOneBooleanContent &&
       isNullConstant(N1) && isOneConstant(N2)) {
-    SDValue NotCond = DAG.getNode(ISD::XOR, DL, CondVT, Cond,
-                                  DAG.getConstant(1, DL, CondVT));
+    SDValue NotCond =
+        DAG.getNode(ISD::XOR, DL, CondVT, Cond, DAG.getConstant(1, DL, CondVT));
     if (VT.bitsEq(CondVT))
       return NotCond;
     return DAG.getZExtOrTrunc(NotCond, DL, VT);
