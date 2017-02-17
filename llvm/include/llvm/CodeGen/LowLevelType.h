@@ -55,7 +55,7 @@ public:
            "invalid number of vector elements");
   }
 
-  explicit LLT() = default;
+  LLT() = default;
 
   /// Construct a low-level type based on an LLVM type.
   explicit LLT(Type &Ty, const DataLayout &DL);
