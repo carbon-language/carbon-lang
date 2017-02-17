@@ -308,7 +308,6 @@ private:
   PHIExpression *createPHIExpression(Instruction *);
   const VariableExpression *createVariableExpression(Value *);
   const ConstantExpression *createConstantExpression(Constant *);
-  const Expression *createVariableOrConstant(Value *V);
   const UnknownExpression *createUnknownExpression(Instruction *);
   const StoreExpression *createStoreExpression(StoreInst *, MemoryAccess *);
   LoadExpression *createLoadExpression(Type *, Value *, LoadInst *,
@@ -669,13 +668,6 @@ const VariableExpression *NewGVN::createVariableExpression(Value *V) {
   auto *E = new (ExpressionAllocator) VariableExpression(V);
   E->setOpcode(V->getValueID());
   return E;
-}
-
-const Expression *NewGVN::createVariableOrConstant(Value *V) {
-  auto Leader = lookupOperandLeader(V);
-  if (auto *C = dyn_cast<Constant>(Leader))
-    return createConstantExpression(C);
-  return createVariableExpression(Leader);
 }
 
 const ConstantExpression *NewGVN::createConstantExpression(Constant *C) {
