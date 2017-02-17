@@ -98,6 +98,15 @@ StringRef elf::getOutputSectionName(StringRef Name) {
   if (Config->Relocatable)
     return Name;
 
+  if (Config->EmitRelocs) {
+    for (StringRef V : {".rel.", ".rela."}) {
+      if (Name.startswith(V)) {
+        StringRef Inner = getOutputSectionName(Name.substr(V.size() - 1));
+        return Saver.save(Twine(V.drop_back()) + Inner);
+      }
+    }
+  }
+
   for (StringRef V :
        {".text.", ".rodata.", ".data.rel.ro.", ".data.", ".bss.",
         ".init_array.", ".fini_array.", ".ctors.", ".dtors.", ".tbss.",
