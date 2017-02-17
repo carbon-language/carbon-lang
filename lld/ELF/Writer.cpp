@@ -98,6 +98,9 @@ StringRef elf::getOutputSectionName(StringRef Name) {
   if (Config->Relocatable)
     return Name;
 
+  // If -emit-relocs is given (which is rare), we need to copy
+  // relocation sections to the output. If input section .foo is
+  // output as .bar, we want to rename .rel.foo .rel.bar as well.
   if (Config->EmitRelocs) {
     for (StringRef V : {".rel.", ".rela."}) {
       if (Name.startswith(V)) {
