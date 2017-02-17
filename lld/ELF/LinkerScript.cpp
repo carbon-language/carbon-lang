@@ -298,11 +298,7 @@ void LinkerScript<ELFT>::discard(ArrayRef<InputSectionBase<ELFT> *> V) {
     S->Live = false;
     if (S == In<ELFT>::ShStrTab)
       error("discarding .shstrtab section is not allowed");
-
-    InputSection<ELFT> *IS = dyn_cast<InputSection<ELFT>>(S);
-    if (!IS || IS->DependentSections.empty())
-      continue;
-    discard(IS->DependentSections);
+    discard(S->DependentSections);
   }
 }
 
