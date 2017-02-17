@@ -1,4 +1,4 @@
-//== llvm/CodeGen/GlobalISel/LowLevelType.h -------------------- -*- C++ -*-==//
+//===- llvm/CodeGen/GlobalISel/LowLevelType.h -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,25 +27,40 @@
 #ifndef LLVM_CODEGEN_GLOBALISEL_LOWLEVELTYPE_H
 #define LLVM_CODEGEN_GLOBALISEL_LOWLEVELTYPE_H
 
-#include <cassert>
 #include "llvm/ADT/DenseMapInfo.h"
-#include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/CodeGen/MachineValueType.h"
+#include <cassert>
+#include <cstdint>
 
 namespace llvm {
 
 class DataLayout;
-class LLVMContext;
-class Type;
 class raw_ostream;
+class Type;
 
 class LLT {
 public:
+  friend struct DenseMapInfo<LLT>;
+
   enum TypeKind : uint16_t {
     Invalid,
     Scalar,
     Pointer,
     Vector,
   };
+
+  explicit LLT(TypeKind Kind, uint16_t NumElements, unsigned SizeInBits)
+    : SizeInBits(SizeInBits), ElementsOrAddrSpace(NumElements), Kind(Kind) {
+    assert((Kind != Vector || ElementsOrAddrSpace > 1) &&
+           "invalid number of vector elements");
+  }
+
+  explicit LLT() = default;
+
+  /// Construct a low-level type based on an LLVM type.
+  explicit LLT(Type &Ty, const DataLayout &DL);
+
+  explicit LLT(MVT VT);
 
   /// Get a low-level scalar or aggregate "bag of bits".
   static LLT scalar(unsigned SizeInBits) {
@@ -71,19 +86,6 @@ public:
     assert(ScalarTy.isScalar() && "invalid vector element type");
     return LLT{Vector, NumElements, ScalarTy.getSizeInBits()};
   }
-
-  explicit LLT(TypeKind Kind, uint16_t NumElements, unsigned SizeInBits)
-    : SizeInBits(SizeInBits), ElementsOrAddrSpace(NumElements), Kind(Kind) {
-    assert((Kind != Vector || ElementsOrAddrSpace > 1) &&
-           "invalid number of vector elements");
-  }
-
-  explicit LLT() : SizeInBits(0), ElementsOrAddrSpace(0), Kind(Invalid) {}
-
-  /// Construct a low-level type based on an LLVM type.
-  explicit LLT(Type &Ty, const DataLayout &DL);
-
-  explicit LLT(MVT VT);
 
   bool isValid() const { return Kind != Invalid; }
 
@@ -172,11 +174,10 @@ public:
 
   bool operator!=(const LLT &RHS) const { return !(*this == RHS); }
 
-  friend struct DenseMapInfo<LLT>;
 private:
-  unsigned SizeInBits;
-  uint16_t ElementsOrAddrSpace;
-  TypeKind Kind;
+  unsigned SizeInBits = 0;
+  uint16_t ElementsOrAddrSpace = 0;
+  TypeKind Kind = Invalid;
 };
 
 inline raw_ostream& operator<<(raw_ostream &OS, const LLT &Ty) {
@@ -188,19 +189,22 @@ template<> struct DenseMapInfo<LLT> {
   static inline LLT getEmptyKey() {
     return LLT{LLT::Invalid, 0, -1u};
   }
+
   static inline LLT getTombstoneKey() {
     return LLT{LLT::Invalid, 0, -2u};
   }
+
   static inline unsigned getHashValue(const LLT &Ty) {
     uint64_t Val = ((uint64_t)Ty.SizeInBits << 32) |
                    ((uint64_t)Ty.ElementsOrAddrSpace << 16) | (uint64_t)Ty.Kind;
     return DenseMapInfo<uint64_t>::getHashValue(Val);
   }
+
   static bool isEqual(const LLT &LHS, const LLT &RHS) {
     return LHS == RHS;
   }
 };
 
-}
+} // end namespace llvm
 
-#endif
+#endif // LLVM_CODEGEN_GLOBALISEL_LOWLEVELTYPE_H
