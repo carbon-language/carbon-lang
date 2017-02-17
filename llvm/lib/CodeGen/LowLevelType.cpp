@@ -1,4 +1,4 @@
-//===- llvm/CodeGen/GlobalISel/LowLevelType.cpp ---------------------------===//
+//===-- llvm/CodeGen/GlobalISel/LowLevelType.cpp --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,15 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LowLevelType.h"
-#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Type.h"
-#include "llvm/Support/Casting.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include <cassert>
-
 using namespace llvm;
 
 LLT::LLT(Type &Ty, const DataLayout &DL) {
