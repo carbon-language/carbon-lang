@@ -1145,7 +1145,7 @@ ScopDetection::countBeneficialSubLoops(Loop *L, ScalarEvolution &SE,
   for (auto &SubLoop : *L) {
     LoopStats Stats = countBeneficialSubLoops(SubLoop, SE, MinProfitableTrips);
     NumLoops += Stats.NumLoops;
-    MaxLoopDepth += std::max(MaxLoopDepth, Stats.MaxDepth + 1);
+    MaxLoopDepth = std::max(MaxLoopDepth, Stats.MaxDepth + 1);
   }
 
   return {NumLoops, MaxLoopDepth};
