@@ -14229,7 +14229,7 @@ SDValue combineShuffleToVectorExtend(ShuffleVectorSDNode *SVN,
     for (unsigned i = 0; i != NumElts; ++i) {
       if (Mask[i] < 0)
         continue;
-      if ((i % Scale) == 0 && Mask[i] == (i / Scale))
+      if ((i % Scale) == 0 && Mask[i] == (int)(i / Scale))
         continue;
       return false;
     }
@@ -14289,7 +14289,7 @@ SDValue combineTruncationShuffle(ShuffleVectorSDNode *SVN, SelectionDAG &DAG) {
     for (unsigned i = 0; i != NumElts; ++i) {
       if (Mask[i] < 0)
         continue;
-      if ((i * Scale) < NumElts && Mask[i] == (i * Scale))
+      if ((i * Scale) < NumElts && Mask[i] == (int)(i * Scale))
         continue;
       return false;
     }
