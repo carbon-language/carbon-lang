@@ -18,5 +18,9 @@
 #error _LIBCPP_ENABLE_CXX17_REMOVED_UNEXPECTED_FUNCTIONS must be defined
 #endif
 
+#ifndef _LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR
+#error _LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR must be defined
+#endif
+
 int main() {
 }

@@ -188,5 +188,7 @@ C++17 Specific Configuration Macros
 
 **_LIBCPP_ENABLE_CXX17_REMOVED_UNEXPECTED_FUNCTIONS**:
   This macro is used to re-enable the `set_unexpected`, `get_unexpected`, and
-  `unexpected` functions, which were removed in C++17. Unless this macro is
-  define those names will not be available in C++17.
+  `unexpected` functions, which were removed in C++17.
+
+**_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR**:
+  This macro is used to re-enable `std::auto_ptr` in C++17.
