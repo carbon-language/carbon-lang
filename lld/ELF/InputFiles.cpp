@@ -406,8 +406,12 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
     // from the output, so returning `nullptr` for the normal case.
     // However, if -emit-relocs is given, we need to leave them in the output.
     // (Some post link analysis tools need this information.)
-    if (Config->EmitRelocs)
-      return make<InputSection<ELFT>>(this, &Sec, Name);
+    if (Config->EmitRelocs) {
+      InputSection<ELFT> *RelocSec = make<InputSection<ELFT>>(this, &Sec, Name);
+      // We will not emit relocation section if target was discarded.
+      Target->DependentSections.push_back(RelocSec);
+      return RelocSec;
+    }
     return nullptr;
   }
   }
