@@ -289,9 +289,8 @@ static bool UpgradeX86IntrinsicFunction(Function *F, StringRef Name,
   }
   // Upgrade any XOP PERMIL2 index operand still using a float/double vector.
   if (Name.startswith("xop.vpermil2")) { // Added in 3.9
-    auto Params = F->getFunctionType()->params();
-    auto Idx = Params[2];
-    if (Idx->getScalarType()->isFloatingPointTy()) {
+    auto Idx = F->getFunctionType()->getParamType(2);
+    if (Idx->isFPOrFPVectorTy()) {
       rename(F);
       unsigned IdxSize = Idx->getPrimitiveSizeInBits();
       unsigned EltSize = Idx->getScalarSizeInBits();
