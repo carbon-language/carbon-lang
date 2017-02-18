@@ -244,7 +244,9 @@ define i32 @test19(i1 %C) {
   ret i32 %V
 }
 
-; Add of sign bit -> xor of sign bit.
+; This is an InstSimplify fold, but test it here to make sure that
+; InstCombine does not prevent the fold.
+; With NSW, add of sign bit -> or of sign bit.
 
 define i32 @test20(i32 %x) {
 ; CHECK-LABEL: @test20(

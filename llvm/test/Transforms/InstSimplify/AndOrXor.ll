@@ -5,9 +5,7 @@
 
 define <2 x i32> @add_nsw_signbit(<2 x i32> %x) {
 ; CHECK-LABEL: @add_nsw_signbit(
-; CHECK-NEXT:    [[Y:%.*]] = xor <2 x i32> %x, <i32 -2147483648, i32 -2147483648>
-; CHECK-NEXT:    [[Z:%.*]] = add nsw <2 x i32> [[Y]], <i32 -2147483648, i32 -2147483648>
-; CHECK-NEXT:    ret <2 x i32> [[Z]]
+; CHECK-NEXT:    ret <2 x i32> %x
 ;
   %y = xor <2 x i32> %x, <i32 -2147483648, i32 -2147483648>
   %z = add nsw <2 x i32> %y, <i32 -2147483648, i32 -2147483648>
@@ -18,9 +16,7 @@ define <2 x i32> @add_nsw_signbit(<2 x i32> %x) {
 
 define <2 x i5> @add_nuw_signbit(<2 x i5> %x) {
 ; CHECK-LABEL: @add_nuw_signbit(
-; CHECK-NEXT:    [[Y:%.*]] = xor <2 x i5> %x, <i5 -16, i5 -16>
-; CHECK-NEXT:    [[Z:%.*]] = add nuw <2 x i5> [[Y]], <i5 -16, i5 -16>
-; CHECK-NEXT:    ret <2 x i5> [[Z]]
+; CHECK-NEXT:    ret <2 x i5> %x
 ;
   %y = xor <2 x i5> %x, <i5 -16, i5 -16>
   %z = add nuw <2 x i5> %y, <i5 -16, i5 -16>
