@@ -112,7 +112,7 @@ define i64 @t5(i32 %x) nounwind readnone ssp {
   ret i64 %t1
 }
 
-; FIXME: sext (xor Bool, -1) --> sub (zext Bool), 1
+; sext (xor Bool, -1) --> sub (zext Bool), 1
 
 define i32 @select_0_or_1s(i1 %cond) {
 ; X32-LABEL: select_0_or_1s:
@@ -133,7 +133,7 @@ define i32 @select_0_or_1s(i1 %cond) {
   ret i32 %sext
 }
 
-; FIXME: sext (xor Bool, -1) --> sub (zext Bool), 1
+; sext (xor Bool, -1) --> sub (zext Bool), 1
 
 define i32 @select_0_or_1s_zeroext(i1 zeroext %cond) {
 ; X32-LABEL: select_0_or_1s_zeroext:
@@ -152,7 +152,7 @@ define i32 @select_0_or_1s_zeroext(i1 zeroext %cond) {
   ret i32 %sext
 }
 
-; FIXME: sext (xor Bool, -1) --> sub (zext Bool), 1
+; sext (xor Bool, -1) --> sub (zext Bool), 1
 
 define i32 @select_0_or_1s_signext(i1 signext %cond) {
 ; X32-LABEL: select_0_or_1s_signext:
