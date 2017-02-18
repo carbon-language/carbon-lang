@@ -239,6 +239,7 @@ def X86vpermil2 : SDNode<"X86ISD::VPERMIL2",
                                              SDTCisSameAs<0,2>,
                                              SDTCisSameSizeAs<0,3>,
                                              SDTCisSameNumEltsAs<0, 3>,
+                                             SDTCisFP<0>, SDTCisInt<3>,
                                              SDTCisVT<4, i8>]>>;
 def X86vpperm : SDNode<"X86ISD::VPPERM",
                         SDTypeProfile<1, 3, [SDTCisVT<0, v16i8>, SDTCisSameAs<0,1>,
