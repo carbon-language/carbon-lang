@@ -127,6 +127,7 @@ protected:
   bool GCN1Encoding;
   bool GCN3Encoding;
   bool CIInsts;
+  bool GFX9Insts;
   bool SGPRInitBug;
   bool HasSMemRealTime;
   bool Has16BitInsts;

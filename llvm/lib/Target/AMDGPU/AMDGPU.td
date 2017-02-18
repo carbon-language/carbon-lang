@@ -166,6 +166,12 @@ def FeatureCIInsts : SubtargetFeature<"ci-insts",
   "Additional intstructions for CI+"
 >;
 
+def FeatureGFX9Insts : SubtargetFeature<"gfx9-insts",
+  "GFX9Insts",
+  "true",
+  "Additional intstructions for GFX9+"
+>;
+
 def FeatureSMemRealTime : SubtargetFeature<"s-memrealtime",
   "HasSMemRealTime",
   "true",
@@ -388,7 +394,7 @@ def FeatureGFX9 : SubtargetFeatureGeneration<"GFX9",
    FeatureWavefrontSize64, FeatureFlatAddressSpace, FeatureGCN,
    FeatureGCN3Encoding, FeatureCIInsts, Feature16BitInsts,
    FeatureSMemRealTime, FeatureScalarStores, FeatureInv2PiInlineImm,
-   FeatureApertureRegs
+   FeatureApertureRegs, FeatureGFX9Insts
   ]
 >;
 
@@ -551,6 +557,10 @@ def isSICI : Predicate<
 def isVI : Predicate <
   "Subtarget->getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS">,
   AssemblerPredicate<"FeatureGCN3Encoding">;
+
+def isGFX9 : Predicate <
+  "Subtarget->getGeneration() >= AMDGPUSubtarget::GFX9">,
+  AssemblerPredicate<"FeatureGFX9Insts">;
 
 // TODO: Either the name to be changed or we simply use IsCI!
 def isCIVI : Predicate <
