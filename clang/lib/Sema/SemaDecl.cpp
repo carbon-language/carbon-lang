@@ -11786,6 +11786,18 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D,
   else
     FD = cast<FunctionDecl>(D);
 
+  // Check for defining attributes before the check for redefinition.
+  if (const auto *Attr = FD->getAttr<AliasAttr>()) {
+    Diag(Attr->getLocation(), diag::err_alias_is_definition) << FD << 0;
+    FD->dropAttr<AliasAttr>();
+    FD->setInvalidDecl();
+  }
+  if (const auto *Attr = FD->getAttr<IFuncAttr>()) {
+    Diag(Attr->getLocation(), diag::err_alias_is_definition) << FD << 1;
+    FD->dropAttr<IFuncAttr>();
+    FD->setInvalidDecl();
+  }
+
   // See if this is a redefinition.
   if (!FD->isLateTemplateParsed()) {
     CheckForFunctionRedefinition(FD, nullptr, SkipBody);
