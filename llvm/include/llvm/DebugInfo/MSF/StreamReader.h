@@ -29,28 +29,42 @@ public:
 
   Error readLongestContiguousChunk(ArrayRef<uint8_t> &Buffer);
   Error readBytes(ArrayRef<uint8_t> &Buffer, uint32_t Size);
-  Error readInteger(uint8_t &Dest);
-  Error readInteger(uint16_t &Dest);
-  Error readInteger(uint32_t &Dest);
-  Error readInteger(uint64_t &Dest);
-  Error readInteger(int8_t &Dest);
-  Error readInteger(int16_t &Dest);
-  Error readInteger(int32_t &Dest);
-  Error readInteger(int64_t &Dest);
+
+  template <typename T>
+  Error readInteger(T &Dest,
+                    llvm::support::endianness Endian = llvm::support::native) {
+    static_assert(std::is_integral<T>::value,
+                  "Cannot call readInteger with non-integral value!");
+
+    ArrayRef<uint8_t> Bytes;
+    if (auto EC = readBytes(Bytes, sizeof(T)))
+      return EC;
+
+    Dest = llvm::support::endian::read<T, llvm::support::unaligned>(
+        Bytes.data(), Endian);
+    return Error::success();
+  }
+
   Error readZeroString(StringRef &Dest);
   Error readFixedString(StringRef &Dest, uint32_t Length);
   Error readStreamRef(ReadableStreamRef &Ref);
   Error readStreamRef(ReadableStreamRef &Ref, uint32_t Length);
 
-  template <typename T> Error readEnum(T &Dest) {
+  template <typename T>
+  Error readEnum(T &Dest,
+                 llvm::support::endianness Endian = llvm::support::native) {
+    static_assert(std::is_enum<T>::value,
+                  "Cannot call readEnum with non-enum value!");
     typename std::underlying_type<T>::type N;
-    if (auto EC = readInteger(N))
+    if (auto EC = readInteger(N, Endian))
       return EC;
     Dest = static_cast<T>(N);
     return Error::success();
   }
 
   template <typename T> Error readObject(const T *&Dest) {
+    static_assert(std::is_trivially_copyable<T>::value,
+                  "Can only read trivially copyable object types!");
     ArrayRef<uint8_t> Buffer;
     if (auto EC = readBytes(Buffer, sizeof(T)))
       return EC;
@@ -60,6 +74,8 @@ public:
 
   template <typename T>
   Error readArray(ArrayRef<T> &Array, uint32_t NumElements) {
+    static_assert(std::is_trivially_copyable<T>::value,
+                  "Can only read trivially copyable object types!");
     ArrayRef<uint8_t> Bytes;
     if (NumElements == 0) {
       Array = ArrayRef<T>();
@@ -86,6 +102,8 @@ public:
 
   template <typename T>
   Error readArray(FixedStreamArray<T> &Array, uint32_t NumItems) {
+    static_assert(std::is_trivially_copyable<T>::value,
+                  "Can only read trivially copyable object types!");
     if (NumItems == 0) {
       Array = FixedStreamArray<T>();
       return Error::success();
