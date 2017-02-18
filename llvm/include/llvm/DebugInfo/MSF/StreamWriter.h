@@ -17,7 +17,6 @@
 #include "llvm/DebugInfo/MSF/StreamRef.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/type_traits.h"
 #include <cstdint>
 #include <type_traits>
 
@@ -62,15 +61,11 @@ public:
                   "writeObject should not be used with pointers, to write "
                   "the pointed-to value dereference the pointer before calling "
                   "writeObject");
-    static_assert(isPodLike<T>::value,
-                  "Can only serialize trivially copyable object types");
     return writeBytes(
         ArrayRef<uint8_t>(reinterpret_cast<const uint8_t *>(&Obj), sizeof(T)));
   }
 
   template <typename T> Error writeArray(ArrayRef<T> Array) {
-    static_assert(isPodLike<T>::value,
-                  "Can only serialize trivially copyable object types");
     if (Array.empty())
       return Error::success();
 
@@ -88,8 +83,6 @@ public:
   }
 
   template <typename T> Error writeArray(FixedStreamArray<T> Array) {
-    static_assert(isPodLike<T>::value,
-                  "Can only serialize trivially copyable object types");
     return writeStreamRef(Array.getUnderlyingStream());
   }
 

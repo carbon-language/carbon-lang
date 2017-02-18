@@ -65,8 +65,6 @@ public:
   }
 
   template <typename T> Error readObject(const T *&Dest) {
-    static_assert(isPodLike<T>::value,
-                  "Can only read trivially copyable object types!");
     ArrayRef<uint8_t> Buffer;
     if (auto EC = readBytes(Buffer, sizeof(T)))
       return EC;
@@ -76,8 +74,6 @@ public:
 
   template <typename T>
   Error readArray(ArrayRef<T> &Array, uint32_t NumElements) {
-    static_assert(isPodLike<T>::value,
-                  "Can only read trivially copyable object types!");
     ArrayRef<uint8_t> Bytes;
     if (NumElements == 0) {
       Array = ArrayRef<T>();
@@ -104,8 +100,6 @@ public:
 
   template <typename T>
   Error readArray(FixedStreamArray<T> &Array, uint32_t NumItems) {
-    static_assert(isPodLike<T>::value,
-                  "Can only read trivially copyable object types!");
     if (NumItems == 0) {
       Array = FixedStreamArray<T>();
       return Error::success();
