@@ -5738,7 +5738,7 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
     // Attempt to recognise a PINSR*(VEC, 0, Idx) shuffle pattern.
     if (X86::isZeroNode(InScl)) {
       Ops.push_back(InVec);
-      for (unsigned i = 0; i != NumElts; ++i)
+      for (int i = 0; i != (int)NumElts; ++i)
         Mask.push_back(i == InIdx ? SM_SentinelZero : i);
       return true;
     }
