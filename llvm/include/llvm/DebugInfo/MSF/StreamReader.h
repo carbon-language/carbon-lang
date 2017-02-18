@@ -17,8 +17,10 @@
 #include "llvm/DebugInfo/MSF/StreamRef.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/type_traits.h"
 
 #include <string>
+#include <type_traits>
 
 namespace llvm {
 namespace msf {
@@ -63,7 +65,7 @@ public:
   }
 
   template <typename T> Error readObject(const T *&Dest) {
-    static_assert(std::is_trivially_copyable<T>::value,
+    static_assert(isPodLike<T>::value,
                   "Can only read trivially copyable object types!");
     ArrayRef<uint8_t> Buffer;
     if (auto EC = readBytes(Buffer, sizeof(T)))
@@ -74,7 +76,7 @@ public:
 
   template <typename T>
   Error readArray(ArrayRef<T> &Array, uint32_t NumElements) {
-    static_assert(std::is_trivially_copyable<T>::value,
+    static_assert(isPodLike<T>::value,
                   "Can only read trivially copyable object types!");
     ArrayRef<uint8_t> Bytes;
     if (NumElements == 0) {
@@ -102,7 +104,7 @@ public:
 
   template <typename T>
   Error readArray(FixedStreamArray<T> &Array, uint32_t NumItems) {
-    static_assert(std::is_trivially_copyable<T>::value,
+    static_assert(isPodLike<T>::value,
                   "Can only read trivially copyable object types!");
     if (NumItems == 0) {
       Array = FixedStreamArray<T>();
