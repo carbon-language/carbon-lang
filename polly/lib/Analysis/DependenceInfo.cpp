@@ -320,9 +320,10 @@ void Dependences::calculateDependences(Scop &S) {
         dbgs() << "AccessSchedule: " << AccessSchedule << '\n';
         dbgs() << "StmtSchedule: " << StmtSchedule << '\n';);
 
+  Schedule = S.getScheduleTree();
+
   if (!HasReductions) {
     isl_union_map_free(AccessSchedule);
-    Schedule = S.getScheduleTree();
     // Tag the schedule tree if we want fine-grain dependence info
     if (Level > AL_Statement) {
       auto TaggedDom = isl_union_map_domain((isl_union_map_copy(StmtSchedule)));
@@ -334,8 +335,6 @@ void Dependences::calculateDependences(Scop &S) {
     isl_union_set *ReductionDom, *IdentityDom;
     isl_union_map *ReductionMap, *IdentityMap;
     isl_union_pw_multi_aff *ReductionTags, *IdentityTags, *Tags;
-
-    Schedule = S.getScheduleTree();
 
     // Extract reduction tags from the access schedule. The result is a map that
     // maps each tagged element in the domain to the memory location it
