@@ -267,24 +267,22 @@ define i32 @xor_sign_bit(i32 %x) {
   ret i32 %add
 }
 
-; Lose no-wrap info by converting to xor? %x is known non-negative
-; here, but not after converting to xor.
+; No-wrap info allows converting the add to 'or'.
 
 define i8 @add_nsw_signbit(i8 %x) {
 ; CHECK-LABEL: @add_nsw_signbit(
-; CHECK-NEXT:    [[Y:%.*]] = xor i8 %x, -128
+; CHECK-NEXT:    [[Y:%.*]] = or i8 %x, -128
 ; CHECK-NEXT:    ret i8 [[Y]]
 ;
   %y = add nsw i8 %x, -128
   ret i8 %y
 }
 
-; Lose no-wrap info by converting to xor? %x is known non-negative
-; (x < 128 unsigned), but not after converting to xor.
+; No-wrap info allows converting the add to 'or'.
 
 define i8 @add_nuw_signbit(i8 %x) {
 ; CHECK-LABEL: @add_nuw_signbit(
-; CHECK-NEXT:    [[Y:%.*]] = xor i8 %x, -128
+; CHECK-NEXT:    [[Y:%.*]] = or i8 %x, -128
 ; CHECK-NEXT:    ret i8 [[Y]]
 ;
   %y = add nuw i8 %x, 128
