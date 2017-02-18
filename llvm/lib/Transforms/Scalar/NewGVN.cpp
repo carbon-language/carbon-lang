@@ -2402,16 +2402,19 @@ bool NewGVN::eliminateInstructions(Function &F) {
 // we will simplify an operation with all constants so that it doesn't matter
 // what order they appear in.
 unsigned int NewGVN::getRank(const Value *V) const {
-  if (isa<Constant>(V))
+  // Prefer undef to anything else
+  if (isa<UndefValue>(V))
     return 0;
+  if (isa<Constant>(V))
+    return 1;
   else if (auto *A = dyn_cast<Argument>(V))
-    return 1 + A->getArgNo();
+    return 2 + A->getArgNo();
 
-  // Need to shift the instruction DFS by number of arguments + 2 to account for
+  // Need to shift the instruction DFS by number of arguments + 3 to account for
   // the constant and argument ranking above.
   unsigned Result = InstrDFS.lookup(V);
   if (Result > 0)
-    return 2 + NumFuncArgs + Result;
+    return 3 + NumFuncArgs + Result;
   // Unreachable or something else, just return a really large number.
   return ~0;
 }
@@ -2421,8 +2424,6 @@ unsigned int NewGVN::getRank(const Value *V) const {
 bool NewGVN::shouldSwapOperands(const Value *A, const Value *B) const {
   // Because we only care about a total ordering, and don't rewrite expressions
   // in this order, we order by rank, which will give a strict weak ordering to
-  // everything but constants, and then we order by pointer address.  This is
-  // not deterministic for constants, but it should not matter because any
-  // operation with only constants will be folded (except, usually, for undef).
-  return std::make_pair(getRank(B), B) > std::make_pair(getRank(A), A);
+  // everything but constants, and then we order by pointer address.
+    return std::make_pair(getRank(A), A) > std::make_pair(getRank(B), B);
 }
