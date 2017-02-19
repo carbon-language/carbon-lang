@@ -28433,18 +28433,13 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
 
   EVT OriginalVT = InVec.getValueType();
 
-  if (InVec.getOpcode() == ISD::BITCAST) {
-    // Don't duplicate a load with other uses.
-    if (!InVec.hasOneUse())
-      return SDValue();
-    EVT BCVT = InVec.getOperand(0).getValueType();
-    if (!BCVT.isVector() ||
-        BCVT.getVectorNumElements() != OriginalVT.getVectorNumElements())
-      return SDValue();
-    InVec = InVec.getOperand(0);
-  }
+  // Peek through bitcasts, don't duplicate a load with other uses.
+  InVec = peekThroughOneUseBitcasts(InVec);
 
   EVT CurrentVT = InVec.getValueType();
+  if (!CurrentVT.isVector() ||
+      CurrentVT.getVectorNumElements() != OriginalVT.getVectorNumElements())
+    return SDValue();
 
   if (!isTargetShuffle(InVec.getOpcode()))
     return SDValue();
