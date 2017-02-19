@@ -435,6 +435,32 @@ static std::vector<SharedSymbol<ELFT> *> getSymbolsAt(SharedSymbol<ELFT> *SS) {
 }
 
 // Reserve space in .bss or .bss.rel.ro for copy relocation.
+//
+// The copy relocation is pretty much a hack. If you use a copy relocation
+// in your program, not only the symbol name but the symbol's size, RW/RO
+// bit and alignment become part of the ABI. In addition to that, if the
+// symbol has aliases, the aliases become part of the ABI. That's subtle,
+// but if you violate that implicit ABI, that can cause very counter-
+// intuitive consequences.
+//
+// So, what is the copy relocation? It's for linking non-position
+// independent code to DSOs. In an ideal world, all references to data
+// exported by DSOs should go indirectly through GOT. But if object files
+// are compiled as non-PIC, all data references are direct. There is no
+// way for the linker to transform the code to use GOT, as machine
+// instructions are already set in stone in object files. This is where
+// the copy relocation takes a role.
+//
+// A copy relocation instructs the dynamic linker to copy data from a DSO
+// to a specified address (which is usually in .bss) at load-time. If the
+// static linker (that's us) finds a direct data reference to a DSO
+// symbol, it creates a copy relocation, so that the symbol can be
+// resolved as if it were in .bss rather than in a DSO.
+//
+// As you can see in this function, we create a copy relocation for the
+// dynamic linker, and the relocation contains not only symbol name but
+// various other informtion about the symbol. So, such attributes become a
+// part of the ABI.
 template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   typedef typename ELFT::uint uintX_t;
 
