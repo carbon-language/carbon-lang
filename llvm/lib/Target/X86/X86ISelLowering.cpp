@@ -26971,9 +26971,9 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
   unsigned Shuffle, PermuteImm;
 
   // Which shuffle domains are permitted?
-  // TODO - Allow either domain after a threshold depth.
-  bool AllowFloatDomain = FloatDomain;
-  bool AllowIntDomain = !FloatDomain;
+  // Permit domain crossing at higher combine depths.
+  bool AllowFloatDomain = FloatDomain || (Depth > 3);
+  bool AllowIntDomain = !FloatDomain || (Depth > 3);
 
   if (UnaryShuffle) {
     // If we are shuffling a X86ISD::VZEXT_LOAD then we can use the load
