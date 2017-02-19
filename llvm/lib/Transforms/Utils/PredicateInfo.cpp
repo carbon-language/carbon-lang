@@ -317,9 +317,9 @@ void PredicateInfo::processAssume(IntrinsicInst *II, BasicBlock *AssumeBB,
     } else if (auto *BinOp = dyn_cast<BinaryOperator>(Cond)) {
       // Otherwise, it should be an AND.
       assert(BinOp->getOpcode() == Instruction::And &&
-             "Should have been an and");
-      auto *PA = new PredicateAssume(Cond, II, Cond);
-      addInfoFor(OpsToRename, Cond, PA);
+             "Should have been an AND");
+      auto *PA = new PredicateAssume(BinOp, II, BinOp);
+      addInfoFor(OpsToRename, BinOp, PA);
     } else {
       llvm_unreachable("Unknown type of condition");
     }
@@ -389,7 +389,7 @@ void PredicateInfo::processBranch(BranchInst *BI, BasicBlock *BranchBB,
              "Should have been an AND or an OR");
       // The actual value of the binop is not subject to the same restrictions
       // as the comparison. It's either true or false on the true/false branch.
-      InsertHelper(Cond, false, false, Cond);
+      InsertHelper(BinOp, false, false, BinOp);
     } else {
       llvm_unreachable("Unknown type of condition");
     }
