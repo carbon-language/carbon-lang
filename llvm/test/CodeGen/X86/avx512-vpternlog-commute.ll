@@ -189,9 +189,9 @@ define <16 x i32> @vpternlog_v16i32_210_mask(<16 x i32> %x0, <16 x i32> %x1, <16
 define <16 x i32> @vpternlog_v16i32_012_mask1(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i16 %mask) {
 ; CHECK-LABEL: vpternlog_v16i32_012_mask1:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpternlogd $33, %zmm2, %zmm1, %zmm0
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vpblendmd %zmm0, %zmm1, %zmm0 {%k1}
+; CHECK-NEXT:    vpternlogd $9, %zmm2, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa64 %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 33, i16 -1)
   %mask.cast = bitcast i16 %mask to <16 x i1>
@@ -202,9 +202,9 @@ define <16 x i32> @vpternlog_v16i32_012_mask1(<16 x i32> %x0, <16 x i32> %x1, <1
 define <16 x i32> @vpternlog_v16i32_012_mask2(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i16 %mask) {
 ; CHECK-LABEL: vpternlog_v16i32_012_mask2:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpternlogd $33, %zmm2, %zmm1, %zmm0
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vpblendmd %zmm0, %zmm2, %zmm0 {%k1}
+; CHECK-NEXT:    vpternlogd $33, %zmm0, %zmm1, %zmm2 {%k1}
+; CHECK-NEXT:    vmovdqa64 %zmm2, %zmm0
 ; CHECK-NEXT:    retq
   %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 33, i16 -1)
   %mask.cast = bitcast i16 %mask to <16 x i1>

@@ -8891,6 +8891,31 @@ multiclass avx512_psadbw_packed_all<bits<8> opc, SDNode OpNode,
 defm VPSADBW : avx512_psadbw_packed_all<0xf6, X86psadbw, "vpsadbw",
                                        HasBWI>, EVEX_4V;
 
+// Transforms to swizzle an immediate to enable better matching when
+// memory operand isn't in the right place.
+def VPTERNLOG321_imm8 : SDNodeXForm<imm, [{
+  // Convert a VPTERNLOG immediate by swapping operand 0 and operand 2.
+  uint8_t Imm = N->getZExtValue();
+  // Swap bits 1/4 and 3/6.
+  uint8_t NewImm = Imm & 0xa5;
+  if (Imm & 0x02) NewImm |= 0x10;
+  if (Imm & 0x10) NewImm |= 0x02;
+  if (Imm & 0x08) NewImm |= 0x40;
+  if (Imm & 0x40) NewImm |= 0x08;
+  return getI8Imm(NewImm, SDLoc(N));
+}]>;
+def VPTERNLOG213_imm8 : SDNodeXForm<imm, [{
+  // Convert a VPTERNLOG immediate by swapping operand 1 and operand 2.
+  uint8_t Imm = N->getZExtValue();
+  // Swap bits 2/4 and 3/5.
+  uint8_t NewImm = Imm & 0xc3;
+  if (Imm & 0x02) NewImm |= 0x10;
+  if (Imm & 0x10) NewImm |= 0x02;
+  if (Imm & 0x08) NewImm |= 0x20;
+  if (Imm & 0x20) NewImm |= 0x08;
+  return getI8Imm(NewImm, SDLoc(N));
+}]>;
+
 multiclass avx512_ternlog<bits<8> opc, string OpcodeStr, SDNode OpNode,
                           X86VectorVTInfo _>{
   let Constraints = "$src1 = $dst", ExeDomain = _.ExeDomain in {
@@ -8919,6 +8944,20 @@ multiclass avx512_ternlog<bits<8> opc, string OpcodeStr, SDNode OpNode,
                             (i8 imm:$src4)), 1, 0>, EVEX_B,
                     AVX512AIi8Base, EVEX_4V, EVEX_CD8<_.EltSize, CD8VF>;
   }// Constraints = "$src1 = $dst"
+
+  // Additional patterns for matching passthru operand in other positions.
+  let AddedComplexity = 20 in {
+  def : Pat<(_.VT (vselect _.KRCWM:$mask,
+                   (OpNode _.RC:$src3, _.RC:$src2, _.RC:$src1, (i8 imm:$src4)),
+                   _.RC:$src1)),
+            (!cast<Instruction>(NAME#_.ZSuffix#rrik) _.RC:$src1, _.KRCWM:$mask,
+             _.RC:$src2, _.RC:$src3, (VPTERNLOG321_imm8 imm:$src4))>;
+  def : Pat<(_.VT (vselect _.KRCWM:$mask,
+                   (OpNode _.RC:$src2, _.RC:$src1, _.RC:$src3, (i8 imm:$src4)),
+                   _.RC:$src1)),
+            (!cast<Instruction>(NAME#_.ZSuffix#rrik) _.RC:$src1, _.KRCWM:$mask,
+             _.RC:$src2, _.RC:$src3, (VPTERNLOG213_imm8 imm:$src4))>;
+  }
 }
 
 multiclass avx512_common_ternlog<string OpcodeStr, AVX512VLVectorVTInfo _>{
