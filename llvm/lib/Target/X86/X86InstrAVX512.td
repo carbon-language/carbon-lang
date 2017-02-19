@@ -8915,6 +8915,17 @@ def VPTERNLOG213_imm8 : SDNodeXForm<imm, [{
   if (Imm & 0x20) NewImm |= 0x08;
   return getI8Imm(NewImm, SDLoc(N));
 }]>;
+def VPTERNLOG132_imm8 : SDNodeXForm<imm, [{
+  // Convert a VPTERNLOG immediate by swapping operand 1 and operand 2.
+  uint8_t Imm = N->getZExtValue();
+  // Swap bits 1/2 and 5/6.
+  uint8_t NewImm = Imm & 0x99;
+  if (Imm & 0x02) NewImm |= 0x04;
+  if (Imm & 0x04) NewImm |= 0x02;
+  if (Imm & 0x20) NewImm |= 0x40;
+  if (Imm & 0x40) NewImm |= 0x20;
+  return getI8Imm(NewImm, SDLoc(N));
+}]>;
 
 multiclass avx512_ternlog<bits<8> opc, string OpcodeStr, SDNode OpNode,
                           X86VectorVTInfo _>{
@@ -8957,6 +8968,45 @@ multiclass avx512_ternlog<bits<8> opc, string OpcodeStr, SDNode OpNode,
                    _.RC:$src1)),
             (!cast<Instruction>(NAME#_.ZSuffix#rrik) _.RC:$src1, _.KRCWM:$mask,
              _.RC:$src2, _.RC:$src3, (VPTERNLOG213_imm8 imm:$src4))>;
+  }
+
+  // Additional patterns for matching loads in other positions.
+  def : Pat<(_.VT (OpNode (bitconvert (_.LdFrag addr:$src3)),
+                          _.RC:$src2, _.RC:$src1, (i8 imm:$src4))),
+            (!cast<Instruction>(NAME#_.ZSuffix#rmi) _.RC:$src1, _.RC:$src2,
+                                   addr:$src3, (VPTERNLOG321_imm8 imm:$src4))>;
+  def : Pat<(_.VT (OpNode _.RC:$src1,
+                          (bitconvert (_.LdFrag addr:$src3)),
+                          _.RC:$src2, (i8 imm:$src4))),
+            (!cast<Instruction>(NAME#_.ZSuffix#rmi) _.RC:$src1, _.RC:$src2,
+                                   addr:$src3, (VPTERNLOG132_imm8 imm:$src4))>;
+
+  // Additional patterns for matching zero masking with loads in other
+  // positions.
+  let AddedComplexity = 30 in {
+  def : Pat<(_.VT (vselect _.KRCWM:$mask,
+                   (OpNode (bitconvert (_.LdFrag addr:$src3)),
+                    _.RC:$src2, _.RC:$src1, (i8 imm:$src4)),
+                   _.ImmAllZerosV)),
+            (!cast<Instruction>(NAME#_.ZSuffix#rmikz) _.RC:$src1, _.KRCWM:$mask,
+             _.RC:$src2, addr:$src3, (VPTERNLOG321_imm8 imm:$src4))>;
+  def : Pat<(_.VT (vselect _.KRCWM:$mask,
+                   (OpNode _.RC:$src1, (bitconvert (_.LdFrag addr:$src3)),
+                    _.RC:$src2, (i8 imm:$src4)),
+                   _.ImmAllZerosV)),
+            (!cast<Instruction>(NAME#_.ZSuffix#rmikz) _.RC:$src1, _.KRCWM:$mask,
+             _.RC:$src2, addr:$src3, (VPTERNLOG132_imm8 imm:$src4))>;
+  }
+
+  // Additional patterns for matching masked loads with different
+  // operand orders.
+  let AddedComplexity = 20 in {
+  def : Pat<(_.VT (vselect _.KRCWM:$mask,
+                   (OpNode _.RC:$src1, (bitconvert (_.LdFrag addr:$src3)),
+                    _.RC:$src2, (i8 imm:$src4)),
+                   _.RC:$src1)),
+            (!cast<Instruction>(NAME#_.ZSuffix#rmik) _.RC:$src1, _.KRCWM:$mask,
+             _.RC:$src2, addr:$src3, (VPTERNLOG132_imm8 imm:$src4))>;
   }
 }
 
