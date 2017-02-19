@@ -5154,7 +5154,8 @@ static const Constant *getTargetConstantFromNode(SDValue Op) {
 static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
                                           SmallBitVector &UndefElts,
                                           SmallVectorImpl<APInt> &EltBits,
-                                          bool AllowUndefs = true) {
+                                          bool AllowWholeUndefs = true,
+                                          bool AllowPartialUndefs = true) {
   assert(UndefElts.empty() && "Expected an empty UndefElts vector");
   assert(EltBits.empty() && "Expected an empty EltBits vector");
 
@@ -5175,6 +5176,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   // Split the undef/constant single bitset data into the target elements.
   auto SplitBitData = [&]() {
     // Don't split if we don't allow undef bits.
+    bool AllowUndefs = AllowWholeUndefs || AllowPartialUndefs;
     if (UndefBits.getBoolValue() && !AllowUndefs)
       return false;
 
@@ -5185,12 +5187,18 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
       APInt UndefEltBits = UndefBits.lshr(i * EltSizeInBits);
       UndefEltBits = UndefEltBits.zextOrTrunc(EltSizeInBits);
 
-      // Only treat an element as UNDEF if all bits are UNDEF, otherwise
-      // treat it as zero.
+      // Only treat an element as UNDEF if all bits are UNDEF.
       if (UndefEltBits.isAllOnesValue()) {
+        if (!AllowWholeUndefs)
+          return false;
         UndefElts[i] = true;
         continue;
       }
+
+      // If only some bits are UNDEF then treat them as zero (or bail if not
+      // supported).
+      if (UndefEltBits.getBoolValue() && !AllowPartialUndefs)
+        return false;
 
       APInt Bits = MaskBits.lshr(i * EltSizeInBits);
       Bits = Bits.zextOrTrunc(EltSizeInBits);
@@ -5293,7 +5301,8 @@ static bool getTargetShuffleMaskIndices(SDValue MaskNode,
   // Extract the raw target constant bits.
   // FIXME: We currently don't support UNDEF bits or mask entries.
   if (!getTargetConstantBitsFromNode(MaskNode, MaskEltSizeInBits, UndefElts,
-                                     EltBits, /* AllowUndefs */ false))
+                                     EltBits, /* AllowWholeUndefs */ false,
+                                     /* AllowPartialUndefs */ false))
     return false;
 
   // Insert the extracted elements into the mask.
@@ -5600,6 +5609,19 @@ static bool setTargetShuffleZeroElements(SDValue N,
   V1 = peekThroughBitcasts(V1);
   V2 = peekThroughBitcasts(V2);
 
+  assert((VT.getSizeInBits() % Mask.size()) == 0 &&
+         "Illegal split of shuffle value type");
+  unsigned EltSizeInBits = VT.getSizeInBits() / Mask.size();
+
+  // Extract known constant input data.
+  SmallBitVector UndefSrcElts[2];
+  SmallVector<APInt, 32> SrcEltBits[2];
+  bool IsSrcConstant[2] = {
+      getTargetConstantBitsFromNode(V1, EltSizeInBits, UndefSrcElts[0],
+                                    SrcEltBits[0], true, false),
+      getTargetConstantBitsFromNode(V2, EltSizeInBits, UndefSrcElts[1],
+                                    SrcEltBits[1], true, false)};
+
   for (int i = 0, Size = Mask.size(); i < Size; ++i) {
     int M = Mask[i];
 
@@ -5608,6 +5630,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
       continue;
 
     // Determine shuffle input and normalize the mask.
+    unsigned SrcIdx = M / Size;
     SDValue V = M < Size ? V1 : V2;
     M %= Size;
 
@@ -5632,39 +5655,12 @@ static bool setTargetShuffleZeroElements(SDValue N,
       continue;
     }
 
-    // Currently we can only search BUILD_VECTOR for UNDEF/ZERO elements.
-    if (V.getOpcode() != ISD::BUILD_VECTOR)
-      continue;
-
-    // If the BUILD_VECTOR has fewer elements then the (larger) source
-    // element must be UNDEF/ZERO.
-    // TODO: Is it worth testing the individual bits of a constant?
-    if ((Size % V.getNumOperands()) == 0) {
-      int Scale = Size / V->getNumOperands();
-      SDValue Op = V.getOperand(M / Scale);
-      if (Op.isUndef())
+    // Attempt to extract from the source's constant bits.
+    if (IsSrcConstant[SrcIdx]) {
+      if (UndefSrcElts[SrcIdx][M])
         Mask[i] = SM_SentinelUndef;
-      else if (X86::isZeroNode(Op))
+      else if (SrcEltBits[SrcIdx][M] == 0)
         Mask[i] = SM_SentinelZero;
-      continue;
-    }
-
-    // If the BUILD_VECTOR has more elements then all the (smaller) source
-    // elements must be all UNDEF or all ZERO.
-    if ((V.getNumOperands() % Size) == 0) {
-      int Scale = V->getNumOperands() / Size;
-      bool AllUndef = true;
-      bool AllZero = true;
-      for (int j = 0; j < Scale; ++j) {
-        SDValue Op = V.getOperand((M * Scale) + j);
-        AllUndef &= Op.isUndef();
-        AllZero &= X86::isZeroNode(Op);
-      }
-      if (AllUndef)
-        Mask[i] = SM_SentinelUndef;
-      else if (AllZero)
-        Mask[i] = SM_SentinelZero;
-      continue;
     }
   }
 
