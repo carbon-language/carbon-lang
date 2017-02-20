@@ -461,6 +461,21 @@ static std::vector<SharedSymbol<ELFT> *> getSymbolsAt(SharedSymbol<ELFT> *SS) {
 // dynamic linker, and the relocation contains not only symbol name but
 // various other informtion about the symbol. So, such attributes become a
 // part of the ABI.
+//
+// Note for application developers: I can give you a piece of advice if
+// you are writing a shared library. You probably should export only
+// functions from your library. You shouldn't export variables.
+//
+// As an example what can happen when you export variables without knowing
+// the semantics of copy relocations, assume that you have an exported
+// variable of type T. It is an ABI-breaking change to add new members at
+// end of T even though doing that doesn't change the layout of the
+// existing members. That's because the space for the new members are not
+// reserved in .bss unless you recompile the main program. That means they
+// are likely to overlap with other data that happens to be laid out next
+// to the variable in .bss. This kind of issue is sometimes very hard to
+// debug. What's a solution? Instead of exporting a varaible V from a DSO,
+// define an accessor getV().
 template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   typedef typename ELFT::uint uintX_t;
 
@@ -482,10 +497,10 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol<ELFT> *SS) {
   // Look through the DSO's dynamic symbol table for aliases and create a
   // dynamic symbol for each one. This causes the copy relocation to correctly
   // interpose any aliases.
-  for (SharedSymbol<ELFT> *Alias : getSymbolsAt(SS)) {
-    Alias->NeedsCopy = true;
-    Alias->Section = ISec;
-    Alias->symbol()->IsUsedInRegularObj = true;
+  for (SharedSymbol<ELFT> *Sym : getSymbolsAt(SS)) {
+    Sym->NeedsCopy = true;
+    Sym->Section = ISec;
+    Sym->symbol()->IsUsedInRegularObj = true;
   }
 
   In<ELFT>::RelaDyn->addReloc({Target->CopyRel, ISec, 0, false, SS, 0});
