@@ -541,3 +541,86 @@ define i8 @rotr1_8(i8 %A) nounwind {
 	%D = or i8 %B, %C
 	ret i8 %D
 }
+
+define void @rotr1_64_mem(i64* %Aptr) nounwind {
+; 32-LABEL: rotr1_64_mem:
+; 32:       # BB#0:
+; 32-NEXT:    pushl %esi
+; 32-NEXT:    movl 8(%esp), %eax
+; 32-NEXT:    movl (%eax), %ecx
+; 32-NEXT:    movl 4(%eax), %edx
+; 32-NEXT:    movl %edx, %esi
+; 32-NEXT:    shldl $31, %ecx, %esi
+; 32-NEXT:    shldl $31, %edx, %ecx
+; 32-NEXT:    movl %ecx, 4(%eax)
+; 32-NEXT:    movl %esi, (%eax)
+; 32-NEXT:    popl %esi
+
+; 64-LABEL: rotr1_64_mem:
+; 64:       # BB#0:
+; 64-NEXT:    rolq $63, (%rdi)
+; 64-NEXT:    retq
+  %A = load i64, i64 *%Aptr
+  %B = shl i64 %A, 63
+  %C = lshr i64 %A, 1
+  %D = or i64 %B, %C
+  store i64 %D, i64* %Aptr
+  ret void
+}
+
+define void @rotr1_32_mem(i32* %Aptr) nounwind {
+; 32-LABEL: rotr1_32_mem:
+; 32:       # BB#0:
+; 32-NEXT:    movl 4(%esp), %eax
+; 32-NEXT:    roll $31, (%eax)
+; 32-NEXT:    retl
+;
+; 64-LABEL: rotr1_32_mem:
+; 64:       # BB#0:
+; 64-NEXT:    roll $31, (%rdi)
+; 64-NEXT:    retq
+  %A = load i32, i32 *%Aptr
+  %B = shl i32 %A, 31
+  %C = lshr i32 %A, 1
+  %D = or i32 %B, %C
+  store i32 %D, i32* %Aptr
+  ret void
+}
+
+define void @rotr1_16_mem(i16* %Aptr) nounwind {
+; 32-LABEL: rotr1_16_mem:
+; 32:       # BB#0:
+; 32-NEXT:    movl 4(%esp), %eax
+; 32-NEXT:    rolw $15, (%eax)
+; 32-NEXT:    retl
+;
+; 64-LABEL: rotr1_16_mem:
+; 64:       # BB#0:
+; 64-NEXT:    rolw $15, (%rdi)
+; 64-NEXT:    retq
+  %A = load i16, i16 *%Aptr
+  %B = shl i16 %A, 15
+  %C = lshr i16 %A, 1
+  %D = or i16 %B, %C
+  store i16 %D, i16* %Aptr
+  ret void
+}
+
+define void @rotr1_8_mem(i8* %Aptr) nounwind {
+; 32-LABEL: rotr1_8_mem:
+; 32:       # BB#0:
+; 32-NEXT:    movl 4(%esp), %eax
+; 32-NEXT:    rolb $7, (%eax)
+; 32-NEXT:    retl
+;
+; 64-LABEL: rotr1_8_mem:
+; 64:       # BB#0:
+; 64-NEXT:    rolb $7, (%rdi)
+; 64-NEXT:    retq
+  %A = load i8, i8 *%Aptr
+  %B = shl i8 %A, 7
+  %C = lshr i8 %A, 1
+  %D = or i8 %B, %C
+  store i8 %D, i8* %Aptr
+  ret void
+}
