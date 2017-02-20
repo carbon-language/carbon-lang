@@ -190,7 +190,7 @@ define <16 x i32> @vpternlog_v16i32_012_mask1(<16 x i32> %x0, <16 x i32> %x1, <1
 ; CHECK-LABEL: vpternlog_v16i32_012_mask1:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vpternlogd $90, %zmm2, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vpternlogd $78, %zmm2, %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovdqa64 %zmm1, %zmm0
 ; CHECK-NEXT:    retq
   %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 114, i16 -1)

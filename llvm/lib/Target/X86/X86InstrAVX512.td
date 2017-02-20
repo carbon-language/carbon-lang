@@ -8899,8 +8899,8 @@ def VPTERNLOG213_imm8 : SDNodeXForm<imm, [{
   uint8_t Imm = N->getZExtValue();
   // Swap bits 2/4 and 3/5.
   uint8_t NewImm = Imm & 0xc3;
-  if (Imm & 0x02) NewImm |= 0x10;
-  if (Imm & 0x10) NewImm |= 0x02;
+  if (Imm & 0x04) NewImm |= 0x10;
+  if (Imm & 0x10) NewImm |= 0x04;
   if (Imm & 0x08) NewImm |= 0x20;
   if (Imm & 0x20) NewImm |= 0x08;
   return getI8Imm(NewImm, SDLoc(N));
