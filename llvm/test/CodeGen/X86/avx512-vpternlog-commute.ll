@@ -225,6 +225,35 @@ define <16 x i32> @vpternlog_v16i32_012_load0_mask(<16 x i32>* %x0ptr, <16 x i32
   ret <16 x i32> %res
 }
 
+define <16 x i32> @vpternlog_v16i32_012_load0_mask1(<16 x i32>* %x0ptr, <16 x i32> %x1, <16 x i32> %x2, i16 %mask) {
+; CHECK-LABEL: vpternlog_v16i32_012_load0_mask1:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovdqa32 (%rdi), %zmm2
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vpternlogd $9, %zmm1, %zmm2, %zmm0 {%k1}
+; CHECK-NEXT:    retq
+  %x0 = load <16 x i32>, <16 x i32>* %x0ptr
+  %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 33, i16 -1)
+  %mask.cast = bitcast i16 %mask to <16 x i1>
+  %res2 = select <16 x i1> %mask.cast, <16 x i32> %res, <16 x i32> %x1
+  ret <16 x i32> %res2
+}
+
+define <16 x i32> @vpternlog_v16i32_012_load0_mask2(<16 x i32>* %x0ptr, <16 x i32> %x1, <16 x i32> %x2, i16 %mask) {
+; CHECK-LABEL: vpternlog_v16i32_012_load0_mask2:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovdqa32 (%rdi), %zmm2
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vpternlogd $33, %zmm2, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa64 %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %x0 = load <16 x i32>, <16 x i32>* %x0ptr
+  %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 33, i16 -1)
+  %mask.cast = bitcast i16 %mask to <16 x i1>
+  %res2 = select <16 x i1> %mask.cast, <16 x i32> %res, <16 x i32> %x2
+  ret <16 x i32> %res2
+}
+
 define <16 x i32> @vpternlog_v16i32_012_load1_mask(<16 x i32> %x0, <16 x i32>* %x1ptr, <16 x i32> %x2, i16 %mask) {
 ; CHECK-LABEL: vpternlog_v16i32_012_load1_mask:
 ; CHECK:       ## BB#0:
@@ -236,6 +265,21 @@ define <16 x i32> @vpternlog_v16i32_012_load1_mask(<16 x i32> %x0, <16 x i32>* %
   ret <16 x i32> %res
 }
 
+define <16 x i32> @vpternlog_v16i32_012_load1_mask2(<16 x i32> %x0, <16 x i32>* %x1ptr, <16 x i32> %x2, i16 %mask) {
+; CHECK-LABEL: vpternlog_v16i32_012_load1_mask2:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovdqa32 (%rdi), %zmm2
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vpternlogd $33, %zmm0, %zmm2, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa64 %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %x1 = load <16 x i32>, <16 x i32>* %x1ptr
+  %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 33, i16 -1)
+  %mask.cast = bitcast i16 %mask to <16 x i1>
+  %res2 = select <16 x i1> %mask.cast, <16 x i32> %res, <16 x i32> %x2
+  ret <16 x i32> %res2
+}
+
 define <16 x i32> @vpternlog_v16i32_012_load2_mask(<16 x i32> %x0, <16 x i32> %x1, <16 x i32>* %x2ptr, i16 %mask) {
 ; CHECK-LABEL: vpternlog_v16i32_012_load2_mask:
 ; CHECK:       ## BB#0:
@@ -245,6 +289,21 @@ define <16 x i32> @vpternlog_v16i32_012_load2_mask(<16 x i32> %x0, <16 x i32> %x
   %x2 = load <16 x i32>, <16 x i32>* %x2ptr
   %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 114, i16 %mask)
   ret <16 x i32> %res
+}
+
+define <16 x i32> @vpternlog_v16i32_012_load2_mask1(<16 x i32> %x0, <16 x i32> %x1, <16 x i32>* %x2ptr, i16 %mask) {
+; CHECK-LABEL: vpternlog_v16i32_012_load2_mask1:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vmovdqa32 (%rdi), %zmm2
+; CHECK-NEXT:    kmovw %esi, %k1
+; CHECK-NEXT:    vpternlogd $9, %zmm2, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovdqa64 %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %x2 = load <16 x i32>, <16 x i32>* %x2ptr
+  %res = call <16 x i32> @llvm.x86.avx512.mask.pternlog.d.512(<16 x i32> %x0, <16 x i32> %x1, <16 x i32> %x2, i32 33, i16 -1)
+  %mask.cast = bitcast i16 %mask to <16 x i1>
+  %res2 = select <16 x i1> %mask.cast, <16 x i32> %res, <16 x i32> %x1
+  ret <16 x i32> %res2
 }
 
 define <16 x i32> @vpternlog_v16i32_102_load0_mask(<16 x i32>* %x0ptr, <16 x i32> %x1, <16 x i32> %x2, i16 %mask) {
