@@ -4798,6 +4798,33 @@ defm VPSLL : avx512_shift_types<0xF2, 0xF3, 0xF1, "vpsll", X86vshl>;
 defm VPSRA : avx512_shift_types<0xE2, 0xE2, 0xE1, "vpsra", X86vsra>;
 defm VPSRL : avx512_shift_types<0xD2, 0xD3, 0xD1, "vpsrl", X86vsrl>;
 
+// Use 512bit VPSRA/VPSRAI version to implement v2i64/v4i64 in case NoVLX.
+let Predicates = [HasAVX512, NoVLX] in {
+  def : Pat<(v4i64 (X86vsra (v4i64 VR256X:$src1), (v2i64 VR128X:$src2))),
+            (EXTRACT_SUBREG (v8i64
+              (VPSRAQZrr
+                (v8i64 (INSERT_SUBREG (IMPLICIT_DEF), VR256X:$src1, sub_ymm)),
+                 VR128X:$src2)), sub_ymm)>;
+
+  def : Pat<(v2i64 (X86vsra (v2i64 VR128X:$src1), (v2i64 VR128X:$src2))),
+            (EXTRACT_SUBREG (v8i64
+              (VPSRAQZrr
+                (v8i64 (INSERT_SUBREG (IMPLICIT_DEF), VR128X:$src1, sub_xmm)),
+                 VR128X:$src2)), sub_xmm)>;
+
+  def : Pat<(v4i64 (X86vsrai (v4i64 VR256X:$src1), (i8 imm:$src2))),
+            (EXTRACT_SUBREG (v8i64
+              (VPSRAQZri
+                (v8i64 (INSERT_SUBREG (IMPLICIT_DEF), VR256X:$src1, sub_ymm)),
+                 imm:$src2)), sub_ymm)>;
+
+  def : Pat<(v2i64 (X86vsrai (v2i64 VR128X:$src1), (i8 imm:$src2))),
+            (EXTRACT_SUBREG (v8i64
+              (VPSRAQZri
+                (v8i64 (INSERT_SUBREG (IMPLICIT_DEF), VR128X:$src1, sub_xmm)),
+                 imm:$src2)), sub_xmm)>;
+}
+
 //===-------------------------------------------------------------------===//
 // Variable Bit Shifts
 //===-------------------------------------------------------------------===//
