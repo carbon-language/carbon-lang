@@ -3580,19 +3580,6 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v8i64 (X86vzload addr:$src)),
             (SUBREG_TO_REG (i64 0), (VMOVQI2PQIZrm addr:$src), sub_xmm)>;
 }
-
-def : Pat<(v16i32 (X86Vinsert (v16i32 immAllZerosV), GR32:$src2, (iPTR 0))),
-        (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrr GR32:$src2), sub_xmm)>;
-
-def : Pat<(v8i64 (X86Vinsert (bc_v8i64 (v16i32 immAllZerosV)), GR64:$src2, (iPTR 0))),
-        (SUBREG_TO_REG (i32 0), (VMOV64toPQIZrr GR64:$src2), sub_xmm)>;
-
-def : Pat<(v16i32 (X86Vinsert undef, GR32:$src2, (iPTR 0))),
-        (SUBREG_TO_REG (i32 0), (VMOVDI2PDIZrr GR32:$src2), sub_xmm)>;
-
-def : Pat<(v8i64 (X86Vinsert undef, GR64:$src2, (iPTR 0))),
-        (SUBREG_TO_REG (i32 0), (VMOV64toPQIZrr GR64:$src2), sub_xmm)>;
-
 //===----------------------------------------------------------------------===//
 // AVX-512 - Non-temporals
 //===----------------------------------------------------------------------===//
