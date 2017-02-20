@@ -59,8 +59,10 @@ entry:
 
 define i32 @xfoop(i32* %p) nounwind readnone {
 entry:
+; CHECK-LABEL: xfoop:
+; CHECK: roll $7
 ; BMI2-LABEL: xfoop:
-; BMI2: rorxl $25, ({{.+}}), %{{.+}}
+; BMI2: rorxl $25
 	%x = load i32, i32* %p
 	%a = lshr i32 %x, 25
 	%b = shl i32 %x, 7
