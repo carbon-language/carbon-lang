@@ -785,7 +785,9 @@ Instruction *InstCombiner::foldSPFofSPF(Instruction *Inner,
   // This transform is performance neutral if we can elide at least one xor from
   // the set of three operands, since we'll be tacking on an xor at the very
   // end.
-  if (IsFreeOrProfitableToInvert(A, NotA, ElidesXor) &&
+  if (SelectPatternResult::isMinOrMax(SPF1) &&
+      SelectPatternResult::isMinOrMax(SPF2) &&
+      IsFreeOrProfitableToInvert(A, NotA, ElidesXor) &&
       IsFreeOrProfitableToInvert(B, NotB, ElidesXor) &&
       IsFreeOrProfitableToInvert(C, NotC, ElidesXor) && ElidesXor) {
     if (!NotA)
