@@ -1013,17 +1013,6 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   switch (IntrinsicID) {
   default: return Op;
-  case AMDGPUIntrinsic::AMDGPU_clamp: {
-    // Deprecated in favor of emitting min/max combo or fmed3.
-    ConstantFPSDNode *CSrc1 = dyn_cast<ConstantFPSDNode>(Op.getOperand(2));
-    ConstantFPSDNode *CSrc2 = dyn_cast<ConstantFPSDNode>(Op.getOperand(3));
-    if (CSrc1 && CSrc2 && CSrc1->isZero() && CSrc2->isExactlyValue(1.0))
-      return DAG.getNode(AMDGPUISD::CLAMP, DL, VT, Op.getOperand(1));
-
-    SDValue Max = DAG.getNode(ISD::FMAXNUM, DL, VT, Op.getOperand(1),
-                              Op.getOperand(2));
-    return DAG.getNode(ISD::FMINNUM, DL, VT, Max, Op.getOperand(3));
-  }
   case AMDGPUIntrinsic::AMDGPU_bfe_i32:
     return DAG.getNode(AMDGPUISD::BFE_I32, DL, VT,
                        Op.getOperand(1),
