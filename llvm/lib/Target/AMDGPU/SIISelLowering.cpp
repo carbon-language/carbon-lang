@@ -4673,6 +4673,8 @@ SITargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         return std::make_pair(0U, &AMDGPU::SReg_128RegClass);
       case 256:
         return std::make_pair(0U, &AMDGPU::SReg_256RegClass);
+      case 512:
+        return std::make_pair(0U, &AMDGPU::SReg_512RegClass);
       }
 
     case 'v':
