@@ -503,6 +503,8 @@ template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
         continue;
 
     auto *IB = static_cast<InputSectionBase<ELFT> *>(ID);
+    if (!IB->Live)
+      continue;
     switchTo(IB->OutSec);
     if (auto *I = dyn_cast<InputSection<ELFT>>(IB))
       output(I);
