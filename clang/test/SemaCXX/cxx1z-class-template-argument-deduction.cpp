@@ -194,11 +194,9 @@ namespace transform_params {
   A a(qn, qn); // expected-error {{no matching constructor for initialization of 'transform_params::A<int, 12, Q, &transform_params::n>'}}
   static_assert(a.v == 12);
 
-  // FIXME: This causes a crash right now (not class template deduction related).
-#if 0
-  template<typename ...T> struct B {
-    template<T ...V> B(T (&...p)[V]);
+  // FIXME: This should be accepted.
+  template<typename ...T> struct B { // expected-note {{candidate}}
+    template<T ...V> B(const T (&...p)[V]); // expected-note {{substitution failure}}
   };
-  B b({1, 2, 3}, {"foo", "bar"}, {'x', 'y', 'z', 'w'});
-#endif
+  B b({1, 2, 3}, {"foo", "bar"}, {'x', 'y', 'z', 'w'}); // expected-error {{no viable constructor or deduction guide}}
 }
