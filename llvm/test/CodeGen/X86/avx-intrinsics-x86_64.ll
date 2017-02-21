@@ -35,38 +35,6 @@ define i64 @test_x86_sse2_cvttsd2si64(<2 x double> %a0) {
 declare i64 @llvm.x86.sse2.cvttsd2si64(<2 x double>) nounwind readnone
 
 
-define i64 @test_x86_sse_cvtss2si64(<4 x float> %a0) {
-; CHECK-LABEL: test_x86_sse_cvtss2si64:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vcvtss2si %xmm0, %rax
-; CHECK-NEXT:    retq
-  %res = call i64 @llvm.x86.sse.cvtss2si64(<4 x float> %a0) ; <i64> [#uses=1]
-  ret i64 %res
-}
-declare i64 @llvm.x86.sse.cvtss2si64(<4 x float>) nounwind readnone
-
-
-define <4 x float> @test_x86_sse_cvtsi642ss(<4 x float> %a0, i64 %a1) {
-; CHECK-LABEL: test_x86_sse_cvtsi642ss:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vcvtsi2ssq %rdi, %xmm0, %xmm0
-; CHECK-NEXT:    retq
-  %res = call <4 x float> @llvm.x86.sse.cvtsi642ss(<4 x float> %a0, i64 %a1) ; <<4 x float>> [#uses=1]
-  ret <4 x float> %res
-}
-declare <4 x float> @llvm.x86.sse.cvtsi642ss(<4 x float>, i64) nounwind readnone
-
-
-define i64 @test_x86_sse_cvttss2si64(<4 x float> %a0) {
-; CHECK-LABEL: test_x86_sse_cvttss2si64:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vcvttss2si %xmm0, %rax
-; CHECK-NEXT:    retq
-  %res = call i64 @llvm.x86.sse.cvttss2si64(<4 x float> %a0) ; <i64> [#uses=1]
-  ret i64 %res
-}
-declare i64 @llvm.x86.sse.cvttss2si64(<4 x float>) nounwind readnone
-
 define <4 x double> @test_x86_avx_vzeroall(<4 x double> %a, <4 x double> %b) {
 ; AVX-LABEL: test_x86_avx_vzeroall:
 ; AVX:       ## BB#0:
