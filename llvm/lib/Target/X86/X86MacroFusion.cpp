@@ -14,10 +14,13 @@
 
 #include "X86MacroFusion.h"
 #include "X86Subtarget.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 #define DEBUG_TYPE "misched"
+
+STATISTIC(NumFused, "Number of instr pairs fused");
 
 using namespace llvm;
 
@@ -245,6 +248,7 @@ void X86MacroFusion::apply(ScheduleDAGInstrs *DAGInstrs) {
       if (SuccDep.getSUnit() == &ExitSU)
         SuccDep.setLatency(0);
 
+    ++NumFused;
     DEBUG(dbgs() << "Macro fuse ";
           SU.print(dbgs(), DAG);
           dbgs() << " - ExitSU" << '\n');

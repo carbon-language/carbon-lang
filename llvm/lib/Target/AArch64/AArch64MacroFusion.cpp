@@ -14,10 +14,13 @@
 
 #include "AArch64MacroFusion.h"
 #include "AArch64Subtarget.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 #define DEBUG_TYPE "misched"
+
+STATISTIC(NumFused, "Number of instr pairs fused");
 
 using namespace llvm;
 
@@ -205,6 +208,7 @@ static bool scheduleAdjacentImpl(ScheduleDAGMI *DAG, SUnit *ASU,
       if (Dep.getSUnit() == ASU)
         Dep.setLatency(0);
 
+    ++NumFused;
     DEBUG(dbgs() << "Macro fuse ";
           Preds ? BSU->print(dbgs(), DAG) : ASU->print(dbgs(), DAG);
           dbgs() << " - ";
