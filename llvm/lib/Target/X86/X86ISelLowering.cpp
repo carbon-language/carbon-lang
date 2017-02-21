@@ -10529,13 +10529,11 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
   MutableArrayRef<int> HiMask = Mask.slice(4, 4);
 
   SmallVector<int, 4> LoInputs;
-  std::copy_if(LoMask.begin(), LoMask.end(), std::back_inserter(LoInputs),
-               [](int M) { return M >= 0; });
+  copy_if(LoMask, std::back_inserter(LoInputs), [](int M) { return M >= 0; });
   std::sort(LoInputs.begin(), LoInputs.end());
   LoInputs.erase(std::unique(LoInputs.begin(), LoInputs.end()), LoInputs.end());
   SmallVector<int, 4> HiInputs;
-  std::copy_if(HiMask.begin(), HiMask.end(), std::back_inserter(HiInputs),
-               [](int M) { return M >= 0; });
+  copy_if(HiMask, std::back_inserter(HiInputs), [](int M) { return M >= 0; });
   std::sort(HiInputs.begin(), HiInputs.end());
   HiInputs.erase(std::unique(HiInputs.begin(), HiInputs.end()), HiInputs.end());
   int NumLToL =
@@ -11272,14 +11270,13 @@ static SDValue lowerV16I8VectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
       if (!canWidenViaDuplication(Mask))
         return SDValue();
       SmallVector<int, 4> LoInputs;
-      std::copy_if(Mask.begin(), Mask.end(), std::back_inserter(LoInputs),
-                   [](int M) { return M >= 0 && M < 8; });
+      copy_if(Mask, std::back_inserter(LoInputs),
+              [](int M) { return M >= 0 && M < 8; });
       std::sort(LoInputs.begin(), LoInputs.end());
       LoInputs.erase(std::unique(LoInputs.begin(), LoInputs.end()),
                      LoInputs.end());
       SmallVector<int, 4> HiInputs;
-      std::copy_if(Mask.begin(), Mask.end(), std::back_inserter(HiInputs),
-                   [](int M) { return M >= 8; });
+      copy_if(Mask, std::back_inserter(HiInputs), [](int M) { return M >= 8; });
       std::sort(HiInputs.begin(), HiInputs.end());
       HiInputs.erase(std::unique(HiInputs.begin(), HiInputs.end()),
                      HiInputs.end());
