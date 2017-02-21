@@ -1631,7 +1631,7 @@ void RewriteInstance::disassembleFunctions() {
 
     // Post-process inter-procedural references ASAP as it may affect
     // functions we are about to disassemble next.
-    for (auto Addr : BC->InterproceduralReferences) {
+    for (const auto Addr : BC->InterproceduralReferences) {
       auto *ContainingFunction = getBinaryFunctionContainingAddress(Addr);
       if (ContainingFunction && ContainingFunction->getAddress() != Addr) {
         ContainingFunction->addEntryPoint(Addr);
@@ -1642,6 +1642,40 @@ void RewriteInstance::disassembleFunctions() {
                    << " in another function. Skipping the function.\n";
           }
           ContainingFunction->setSimple(false);
+        }
+      } else if (!ContainingFunction && Addr) {
+        // Check if address falls in function padding space - this could be
+        // unmarked data in code. In this case adjust the padding space size.
+        auto Section = BC->getSectionForAddress(Addr);
+        assert(Section && "cannot get section for referenced address");
+
+        if (!Section->isText())
+          continue;
+
+        // PLT requires special handling and could be ignored in this context.
+        StringRef SectionName;
+        Section->getName(SectionName);
+        if (SectionName == ".plt")
+          continue;
+
+        if (opts::Relocs) {
+          errs() << "BOLT-ERROR: cannot process binaries with unmarked "
+                 << "object in code at address 0x"
+                 << Twine::utohexstr(Addr) << " belonging to section "
+                 << SectionName << " in relocation mode.\n";
+          exit(1);
+        }
+
+        ContainingFunction =
+          getBinaryFunctionContainingAddress(Addr,
+                                             /*CheckPastEnd=*/false,
+                                             /*UseMaxSize=*/true);
+        if (ContainingFunction) {
+          errs() << "BOLT-WARNING: function " << *ContainingFunction
+                 << " has an object detected in a padding region at address 0x"
+                 << Twine::utohexstr(Addr) << '\n';
+          ContainingFunction->setMaxSize(
+              Addr - ContainingFunction->getAddress());
         }
       }
     }
@@ -3295,12 +3329,17 @@ bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
 
 BinaryFunction *
 RewriteInstance::getBinaryFunctionContainingAddress(uint64_t Address,
-                                                    bool CheckPastEnd) {
+                                                    bool CheckPastEnd,
+                                                    bool UseMaxSize) {
   auto FI = BinaryFunctions.upper_bound(Address);
   if (FI == BinaryFunctions.begin())
     return nullptr;
   --FI;
-  if (Address >= FI->first + FI->second.getSize() + CheckPastEnd)
+
+  const auto UsedSize = UseMaxSize ? FI->second.getMaxSize()
+                                   : FI->second.getSize();
+
+  if (Address >= FI->first + UsedSize + (CheckPastEnd ? 1 : 0))
     return nullptr;
   return &FI->second;
 }

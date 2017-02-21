@@ -1061,7 +1061,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             TargetSymbol = getSymbol();
           } else {
             // Possibly an old-style PIC code
-            errs() << "BOLT-ERROR: internal call detected at 0x"
+            errs() << "BOLT-WARNING: internal call detected at 0x"
                    << Twine::utohexstr(AbsoluteInstrAddr)
                    << " in function " << *this << ". Skipping.\n";
             IsSimple = false;
