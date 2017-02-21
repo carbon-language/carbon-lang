@@ -464,7 +464,9 @@ void LinkerScript<ELFT>::switchTo(OutputSectionBase *Sec) {
   // will set the LMA such that the difference between VMA and LMA for the
   // section is the same as the preceding output section in the same region
   // https://sourceware.org/binutils/docs-2.20/ld/Output-Section-LMA.html
-  CurOutSec->setLMAOffset(LMAOffset);
+  Expr LMAExpr = CurLMA.first;
+  if (LMAExpr)
+    CurOutSec->setLMAOffset(LMAExpr(CurLMA.second) - CurLMA.second);
 }
 
 template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
@@ -563,7 +565,7 @@ MemoryRegion *LinkerScript<ELFT>::findMemoryRegion(OutputSectionCommand *Cmd,
 template <class ELFT>
 void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
   if (Cmd->LMAExpr)
-    LMAOffset = Cmd->LMAExpr(Dot) - Dot;
+    CurLMA = {Cmd->LMAExpr, Dot};
   OutputSectionBase *Sec = findSection<ELFT>(Cmd->Name, *OutputSections);
   if (!Sec)
     return;
