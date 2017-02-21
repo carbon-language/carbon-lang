@@ -2,222 +2,6 @@
 ; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=avx,pclmul -show-mc-encoding | FileCheck %s --check-prefix=CHECK --check-prefix=AVX
 ; RUN: llc < %s -mtriple=i686-apple-darwin -mcpu=skx -show-mc-encoding | FileCheck %s --check-prefix=CHECK --check-prefix=AVX512VL
 
-define <16 x i8> @test_x86_ssse3_pabs_b_128(<16 x i8> %a0) {
-; AVX-LABEL: test_x86_ssse3_pabs_b_128:
-; AVX:       ## BB#0:
-; AVX-NEXT:    vpabsb %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x1c,0xc0]
-; AVX-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX512VL-LABEL: test_x86_ssse3_pabs_b_128:
-; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vpabsb %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x1c,0xc0]
-; AVX512VL-NEXT:    retl ## encoding: [0xc3]
-  %res = call <16 x i8> @llvm.x86.ssse3.pabs.b.128(<16 x i8> %a0) ; <<16 x i8>> [#uses=1]
-  ret <16 x i8> %res
-}
-declare <16 x i8> @llvm.x86.ssse3.pabs.b.128(<16 x i8>) nounwind readnone
-
-
-define <4 x i32> @test_x86_ssse3_pabs_d_128(<4 x i32> %a0) {
-; AVX-LABEL: test_x86_ssse3_pabs_d_128:
-; AVX:       ## BB#0:
-; AVX-NEXT:    vpabsd %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x1e,0xc0]
-; AVX-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX512VL-LABEL: test_x86_ssse3_pabs_d_128:
-; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vpabsd %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x1e,0xc0]
-; AVX512VL-NEXT:    retl ## encoding: [0xc3]
-  %res = call <4 x i32> @llvm.x86.ssse3.pabs.d.128(<4 x i32> %a0) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
-}
-declare <4 x i32> @llvm.x86.ssse3.pabs.d.128(<4 x i32>) nounwind readnone
-
-
-define <8 x i16> @test_x86_ssse3_pabs_w_128(<8 x i16> %a0) {
-; AVX-LABEL: test_x86_ssse3_pabs_w_128:
-; AVX:       ## BB#0:
-; AVX-NEXT:    vpabsw %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x1d,0xc0]
-; AVX-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX512VL-LABEL: test_x86_ssse3_pabs_w_128:
-; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vpabsw %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x1d,0xc0]
-; AVX512VL-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.pabs.w.128(<8 x i16> %a0) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.pabs.w.128(<8 x i16>) nounwind readnone
-
-
-define <4 x i32> @test_x86_ssse3_phadd_d_128(<4 x i32> %a0, <4 x i32> %a1) {
-; CHECK-LABEL: test_x86_ssse3_phadd_d_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vphaddd %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x02,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <4 x i32> @llvm.x86.ssse3.phadd.d.128(<4 x i32> %a0, <4 x i32> %a1) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
-}
-declare <4 x i32> @llvm.x86.ssse3.phadd.d.128(<4 x i32>, <4 x i32>) nounwind readnone
-
-
-define <8 x i16> @test_x86_ssse3_phadd_sw_128(<8 x i16> %a0, <8 x i16> %a1) {
-; CHECK-LABEL: test_x86_ssse3_phadd_sw_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vphaddsw %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x03,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.phadd.sw.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.phadd.sw.128(<8 x i16>, <8 x i16>) nounwind readnone
-
-
-define <8 x i16> @test_x86_ssse3_phadd_w_128(<8 x i16> %a0, <8 x i16> %a1) {
-; CHECK-LABEL: test_x86_ssse3_phadd_w_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vphaddw %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x01,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.phadd.w.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.phadd.w.128(<8 x i16>, <8 x i16>) nounwind readnone
-
-
-define <4 x i32> @test_x86_ssse3_phsub_d_128(<4 x i32> %a0, <4 x i32> %a1) {
-; CHECK-LABEL: test_x86_ssse3_phsub_d_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vphsubd %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x06,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <4 x i32> @llvm.x86.ssse3.phsub.d.128(<4 x i32> %a0, <4 x i32> %a1) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
-}
-declare <4 x i32> @llvm.x86.ssse3.phsub.d.128(<4 x i32>, <4 x i32>) nounwind readnone
-
-
-define <8 x i16> @test_x86_ssse3_phsub_sw_128(<8 x i16> %a0, <8 x i16> %a1) {
-; CHECK-LABEL: test_x86_ssse3_phsub_sw_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vphsubsw %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x07,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.phsub.sw.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.phsub.sw.128(<8 x i16>, <8 x i16>) nounwind readnone
-
-
-define <8 x i16> @test_x86_ssse3_phsub_w_128(<8 x i16> %a0, <8 x i16> %a1) {
-; CHECK-LABEL: test_x86_ssse3_phsub_w_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vphsubw %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x05,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.phsub.w.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.phsub.w.128(<8 x i16>, <8 x i16>) nounwind readnone
-
-
-define <8 x i16> @test_x86_ssse3_pmadd_ub_sw_128(<16 x i8> %a0, <16 x i8> %a1) {
-; AVX-LABEL: test_x86_ssse3_pmadd_ub_sw_128:
-; AVX:       ## BB#0:
-; AVX-NEXT:    vpmaddubsw %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x04,0xc1]
-; AVX-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX512VL-LABEL: test_x86_ssse3_pmadd_ub_sw_128:
-; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vpmaddubsw %xmm1, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x04,0xc1]
-; AVX512VL-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.pmadd.ub.sw.128(<16 x i8> %a0, <16 x i8> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.pmadd.ub.sw.128(<16 x i8>, <16 x i8>) nounwind readnone
-
-
-; Make sure we don't commute this operation.
-define <8 x i16> @test_x86_ssse3_pmadd_ub_sw_128_load_op0(<16 x i8>* %ptr, <16 x i8> %a1) {
-; AVX-LABEL: test_x86_ssse3_pmadd_ub_sw_128_load_op0:
-; AVX:       ## BB#0:
-; AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX-NEXT:    vmovdqa (%eax), %xmm1 ## encoding: [0xc5,0xf9,0x6f,0x08]
-; AVX-NEXT:    vpmaddubsw %xmm0, %xmm1, %xmm0 ## encoding: [0xc4,0xe2,0x71,0x04,0xc0]
-; AVX-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX512VL-LABEL: test_x86_ssse3_pmadd_ub_sw_128_load_op0:
-; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX512VL-NEXT:    vmovdqu (%eax), %xmm1 ## EVEX TO VEX Compression encoding: [0xc5,0xfa,0x6f,0x08]
-; AVX512VL-NEXT:    vpmaddubsw %xmm0, %xmm1, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x71,0x04,0xc0]
-; AVX512VL-NEXT:    retl ## encoding: [0xc3]
-  %a0 = load <16 x i8>, <16 x i8>* %ptr
-  %res = call <8 x i16> @llvm.x86.ssse3.pmadd.ub.sw.128(<16 x i8> %a0, <16 x i8> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-
-
-define <8 x i16> @test_x86_ssse3_pmul_hr_sw_128(<8 x i16> %a0, <8 x i16> %a1) {
-; AVX-LABEL: test_x86_ssse3_pmul_hr_sw_128:
-; AVX:       ## BB#0:
-; AVX-NEXT:    vpmulhrsw %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x0b,0xc1]
-; AVX-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX512VL-LABEL: test_x86_ssse3_pmul_hr_sw_128:
-; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vpmulhrsw %xmm1, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x0b,0xc1]
-; AVX512VL-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.pmul.hr.sw.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.pmul.hr.sw.128(<8 x i16>, <8 x i16>) nounwind readnone
-
-
-define <16 x i8> @test_x86_ssse3_pshuf_b_128(<16 x i8> %a0, <16 x i8> %a1) {
-; AVX-LABEL: test_x86_ssse3_pshuf_b_128:
-; AVX:       ## BB#0:
-; AVX-NEXT:    vpshufb %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x00,0xc1]
-; AVX-NEXT:    retl ## encoding: [0xc3]
-;
-; AVX512VL-LABEL: test_x86_ssse3_pshuf_b_128:
-; AVX512VL:       ## BB#0:
-; AVX512VL-NEXT:    vpshufb %xmm1, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x79,0x00,0xc1]
-; AVX512VL-NEXT:    retl ## encoding: [0xc3]
-  %res = call <16 x i8> @llvm.x86.ssse3.pshuf.b.128(<16 x i8> %a0, <16 x i8> %a1) ; <<16 x i8>> [#uses=1]
-  ret <16 x i8> %res
-}
-declare <16 x i8> @llvm.x86.ssse3.pshuf.b.128(<16 x i8>, <16 x i8>) nounwind readnone
-
-
-define <16 x i8> @test_x86_ssse3_psign_b_128(<16 x i8> %a0, <16 x i8> %a1) {
-; CHECK-LABEL: test_x86_ssse3_psign_b_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpsignb %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x08,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <16 x i8> @llvm.x86.ssse3.psign.b.128(<16 x i8> %a0, <16 x i8> %a1) ; <<16 x i8>> [#uses=1]
-  ret <16 x i8> %res
-}
-declare <16 x i8> @llvm.x86.ssse3.psign.b.128(<16 x i8>, <16 x i8>) nounwind readnone
-
-
-define <4 x i32> @test_x86_ssse3_psign_d_128(<4 x i32> %a0, <4 x i32> %a1) {
-; CHECK-LABEL: test_x86_ssse3_psign_d_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpsignd %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x0a,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <4 x i32> @llvm.x86.ssse3.psign.d.128(<4 x i32> %a0, <4 x i32> %a1) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
-}
-declare <4 x i32> @llvm.x86.ssse3.psign.d.128(<4 x i32>, <4 x i32>) nounwind readnone
-
-
-define <8 x i16> @test_x86_ssse3_psign_w_128(<8 x i16> %a0, <8 x i16> %a1) {
-; CHECK-LABEL: test_x86_ssse3_psign_w_128:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpsignw %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0x09,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <8 x i16> @llvm.x86.ssse3.psign.w.128(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.ssse3.psign.w.128(<8 x i16>, <8 x i16>) nounwind readnone
-
-
 define <4 x double> @test_x86_avx_addsub_pd_256(<4 x double> %a0, <4 x double> %a1) {
 ; CHECK-LABEL: test_x86_avx_addsub_pd_256:
 ; CHECK:       ## BB#0:
@@ -1228,8 +1012,8 @@ define void @movnt_dq(i8* %p, <2 x i64> %a1) nounwind {
 ; AVX-LABEL: movnt_dq:
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX-NEXT:    vpaddq LCPI81_0, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
-; AVX-NEXT:    ## fixup A - offset: 4, value: LCPI81_0, kind: FK_Data_4
+; AVX-NEXT:    vpaddq LCPI65_0, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
+; AVX-NEXT:    ## fixup A - offset: 4, value: LCPI65_0, kind: FK_Data_4
 ; AVX-NEXT:    vmovntdq %ymm0, (%eax) ## encoding: [0xc5,0xfd,0xe7,0x00]
 ; AVX-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
 ; AVX-NEXT:    retl ## encoding: [0xc3]
@@ -1237,8 +1021,8 @@ define void @movnt_dq(i8* %p, <2 x i64> %a1) nounwind {
 ; AVX512VL-LABEL: movnt_dq:
 ; AVX512VL:       ## BB#0:
 ; AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX512VL-NEXT:    vpaddq LCPI81_0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
-; AVX512VL-NEXT:    ## fixup A - offset: 4, value: LCPI81_0, kind: FK_Data_4
+; AVX512VL-NEXT:    vpaddq LCPI65_0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
+; AVX512VL-NEXT:    ## fixup A - offset: 4, value: LCPI65_0, kind: FK_Data_4
 ; AVX512VL-NEXT:    vmovntdq %ymm0, (%eax) ## EVEX TO VEX Compression encoding: [0xc5,0xfd,0xe7,0x00]
 ; AVX512VL-NEXT:    retl ## encoding: [0xc3]
   %a2 = add <2 x i64> %a1, <i64 1, i64 1>
