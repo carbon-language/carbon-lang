@@ -1533,11 +1533,12 @@ static bool setM0ToIndexFromSGPR(const SIInstrInfo *TII,
   }
 
   if (Offset == 0) {
-    BuildMI(*MBB, I, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0).add(*Idx);
+    BuildMI(*MBB, I, DL, TII->get(AMDGPU::S_MOV_B32), AMDGPU::M0)
+      .add(*Idx);
   } else {
     BuildMI(*MBB, I, DL, TII->get(AMDGPU::S_ADD_I32), AMDGPU::M0)
-        .add(*Idx)
-        .addImm(Offset);
+      .add(*Idx)
+      .addImm(Offset);
   }
 
   return true;
@@ -2872,7 +2873,7 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
   unsigned IntrinsicID = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
 
   switch (IntrinsicID) {
-      case Intrinsic::amdgcn_exp: {
+  case Intrinsic::amdgcn_exp: {
     const ConstantSDNode *Tgt = cast<ConstantSDNode>(Op.getOperand(2));
     const ConstantSDNode *En = cast<ConstantSDNode>(Op.getOperand(3));
     const ConstantSDNode *Done = cast<ConstantSDNode>(Op.getOperand(8));
