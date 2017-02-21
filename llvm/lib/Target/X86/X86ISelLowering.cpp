@@ -6231,7 +6231,7 @@ static SDValue LowerAsSplatVectorLoad(SDValue SrcOp, MVT VT, const SDLoc &dl,
 ///
 /// Example: <load i32 *a, load i32 *a+4, zero, undef> -> zextload a
 static SDValue EltsFromConsecutiveLoads(EVT VT, ArrayRef<SDValue> Elts,
-                                        SDLoc &DL, SelectionDAG &DAG,
+                                        const SDLoc &DL, SelectionDAG &DAG,
                                         bool isAfterLegalize) {
   unsigned NumElems = Elts.size();
 
