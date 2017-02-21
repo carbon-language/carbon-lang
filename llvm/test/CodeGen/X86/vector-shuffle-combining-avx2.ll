@@ -774,6 +774,42 @@ define <32 x i8> @combine_unpack_unpack_pshufb(<32 x i8> %a0) {
   ret <32 x i8> %6
 }
 
+define <16 x i8> @combine_broadcast_pshufb_insertion_v2i64(i64 %a0) {
+; X32-LABEL: combine_broadcast_pshufb_insertion_v2i64:
+; X32:       # BB#0:
+; X32-NEXT:    vmovq {{.*#+}} xmm0 = mem[0],zero
+; X32-NEXT:    vpbroadcastq %xmm0, %xmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: combine_broadcast_pshufb_insertion_v2i64:
+; X64:       # BB#0:
+; X64-NEXT:    vmovq %rdi, %xmm0
+; X64-NEXT:    vpbroadcastq %xmm0, %xmm0
+; X64-NEXT:    retq
+  %1 = insertelement <2 x i64> undef, i64 %a0, i32 0
+  %2 = bitcast <2 x i64> %1 to <16 x i8>
+  %3 = call <16 x i8> @llvm.x86.ssse3.pshuf.b.128(<16 x i8> %2, <16 x i8> <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7>)
+  ret <16 x i8> %3
+}
+
+define <8 x i32> @combine_broadcast_permd_insertion_v4i64(i64 %a0) {
+; X32-LABEL: combine_broadcast_permd_insertion_v4i64:
+; X32:       # BB#0:
+; X32-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
+; X32-NEXT:    vbroadcastsd %xmm0, %ymm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: combine_broadcast_permd_insertion_v4i64:
+; X64:       # BB#0:
+; X64-NEXT:    vmovq %rdi, %xmm0
+; X64-NEXT:    vpbroadcastq %xmm0, %ymm0
+; X64-NEXT:    retq
+  %1 = insertelement <4 x i64> undef, i64 %a0, i32 0
+  %2 = bitcast <4 x i64> %1 to <8 x i32>
+  %3 = tail call <8 x i32> @llvm.x86.avx2.permd(<8 x i32> %2, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 0, i32 1, i32 0, i32 1>)
+  ret <8 x i32> %3
+}
+
 define <8 x i32> @constant_fold_permd() {
 ; X32-LABEL: constant_fold_permd:
 ; X32:       # BB#0:

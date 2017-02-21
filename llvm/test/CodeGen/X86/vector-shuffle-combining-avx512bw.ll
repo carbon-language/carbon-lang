@@ -1133,3 +1133,21 @@ define <16 x float> @combine_vpermi2var_vpermvar_16f32_as_vperm2_zero(<16 x floa
   ret <16 x float> %res1
 }
 
+define <8 x i64> @combine_broadcast_vpermvar_insertion_v8i64(i64 %a0) {
+; X32-LABEL: combine_broadcast_vpermvar_insertion_v8i64:
+; X32:       # BB#0:
+; X32-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero
+; X32-NEXT:    vpxord %zmm0, %zmm0, %zmm0
+; X32-NEXT:    vpermi2q %zmm0, %zmm1, %zmm0
+; X32-NEXT:    retl
+;
+; X64-LABEL: combine_broadcast_vpermvar_insertion_v8i64:
+; X64:       # BB#0:
+; X64-NEXT:    vmovq %rdi, %xmm1
+; X64-NEXT:    vpxord %zmm0, %zmm0, %zmm0
+; X64-NEXT:    vpermi2q %zmm0, %zmm1, %zmm0
+; X64-NEXT:    retq
+  %1 = insertelement <8 x i64> undef, i64 %a0, i32 0
+  %2 = tail call <8 x i64> @llvm.x86.avx512.mask.vpermi2var.q.512(<8 x i64> %1, <8 x i64> zeroinitializer, <8 x i64> undef, i8 -1)
+  ret <8 x i64> %2
+}
