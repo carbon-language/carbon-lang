@@ -536,22 +536,6 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
 
   int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
   int prot = (Mode == readonly) ? PROT_READ : (PROT_READ | PROT_WRITE);
-#if defined(__APPLE__)
-//----------------------------------------------------------------------
-// Newer versions of MacOSX have a flag that will allow us to read from
-// binaries whose code signature is invalid without crashing by using
-// the MAP_RESILIENT_CODESIGN flag. Also if a file from removable media
-// is mapped we can avoid crashing and return zeroes to any pages we try
-// to read if the media becomes unavailable by using the
-// MAP_RESILIENT_MEDIA flag.
-//----------------------------------------------------------------------
-#if defined(MAP_RESILIENT_CODESIGN)
-  flags |= MAP_RESILIENT_CODESIGN;
-#endif
-#if defined(MAP_RESILIENT_MEDIA)
-  flags |= MAP_RESILIENT_MEDIA;
-#endif
-#endif // #if defined (__APPLE__)
 
   Mapping = ::mmap(nullptr, Size, prot, flags, FD, Offset);
   if (Mapping == MAP_FAILED)
