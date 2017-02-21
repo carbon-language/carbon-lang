@@ -65,23 +65,32 @@
 #endif
 
 #include <sys/types.h>
-#if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__ANDROID__)
+#if !defined(__APPLE__) && !defined(__OpenBSD__) && !defined(__FreeBSD__) &&   \
+    !defined(__linux__)
 #include <sys/statvfs.h>
 #define STATVFS statvfs
+#define FSTATVFS fstatvfs
 #define STATVFS_F_FRSIZE(vfs) vfs.f_frsize
 #else
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__FreeBSD__)
 #include <sys/param.h>
 #include <sys/mount.h>
-#elif defined(__ANDROID__)
+#elif defined(__linux__)
+#include <linux/magic.h>
 #include <sys/vfs.h>
 #else
 #include <sys/mount.h>
 #endif
 #define STATVFS statfs
+#define FSTATVFS fstatfs
 #define STATVFS_F_FRSIZE(vfs) static_cast<uint64_t>(vfs.f_bsize)
 #endif
 
+#if defined(__NetBSD__)
+#define STATVFS_F_FLAG(vfs) (vfs).f_flag
+#else
+#define STATVFS_F_FLAG(vfs) (vfs).f_flags
+#endif
 
 using namespace llvm;
 
@@ -335,6 +344,40 @@ std::error_code remove(const Twine &path, bool IgnoreNonExisting) {
   return std::error_code();
 }
 
+static bool is_local_impl(struct STATVFS &Vfs) {
+#if defined(__linux__)
+  constexpr uint32_t CIFS_MAGIC_NUMBER = 0xFF534D42;
+  switch ((uint32_t)Vfs.f_type) {
+  case NFS_SUPER_MAGIC:
+  case SMB_SUPER_MAGIC:
+  case CIFS_MAGIC_NUMBER:
+    return false;
+  default:
+    return true;
+  }
+#else
+  return !!(STATVFS_F_FLAG(Vfs) & MNT_LOCAL);
+#endif
+}
+
+std::error_code is_local(const Twine &Path, bool &Result) {
+  struct STATVFS Vfs;
+  if (::STATVFS(Path.str().c_str(), &Vfs))
+    return std::error_code(errno, std::generic_category());
+
+  Result = is_local_impl(Vfs);
+  return std::error_code();
+}
+
+std::error_code is_local(int FD, bool &Result) {
+  struct STATVFS Vfs;
+  if (::FSTATVFS(FD, &Vfs))
+    return std::error_code(errno, std::generic_category());
+
+  Result = is_local_impl(Vfs);
+  return std::error_code();
+}
+
 std::error_code rename(const Twine &from, const Twine &to) {
   // Get arguments.
   SmallString<128> from_storage;
@@ -491,6 +534,23 @@ std::error_code mapped_file_region::init(int FD, uint64_t Offset,
 
   int flags = (Mode == readwrite) ? MAP_SHARED : MAP_PRIVATE;
   int prot = (Mode == readonly) ? PROT_READ : (PROT_READ | PROT_WRITE);
+#if defined(__APPLE__)
+//----------------------------------------------------------------------
+// Newer versions of MacOSX have a flag that will allow us to read from
+// binaries whose code signature is invalid without crashing by using
+// the MAP_RESILIENT_CODESIGN flag. Also if a file from removable media
+// is mapped we can avoid crashing and return zeroes to any pages we try
+// to read if the media becomes unavailable by using the
+// MAP_RESILIENT_MEDIA flag.
+//----------------------------------------------------------------------
+#if defined(MAP_RESILIENT_CODESIGN)
+  flags |= MAP_RESILIENT_CODESIGN;
+#endif
+#if defined(MAP_RESILIENT_MEDIA)
+  flags |= MAP_RESILIENT_MEDIA;
+#endif
+#endif // #if defined (__APPLE__)
+
   Mapping = ::mmap(nullptr, Size, prot, flags, FD, Offset);
   if (Mapping == MAP_FAILED)
     return std::error_code(errno, std::generic_category());
