@@ -91,13 +91,15 @@ static bool isUnderSysroot(StringRef Path) {
   return false;
 }
 
-template <class ELFT> void LinkerScript<ELFT>::setDot(Expr E, bool InSec) {
+template <class ELFT>
+void LinkerScript<ELFT>::setDot(Expr E, const Twine &Loc, bool InSec) {
   uintX_t Val = E(Dot);
   if (Val < Dot) {
     if (InSec)
-      error("unable to move location counter backward for: " + CurOutSec->Name);
+      error(Loc + ": unable to move location counter backward for: " +
+            CurOutSec->Name);
     else
-      error("unable to move location counter backward");
+      error(Loc + ": unable to move location counter backward");
   }
   Dot = Val;
   // Update to location counter means update to section size.
@@ -111,7 +113,7 @@ template <class ELFT> void LinkerScript<ELFT>::setDot(Expr E, bool InSec) {
 template <class ELFT>
 void LinkerScript<ELFT>::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   if (Cmd->Name == ".") {
-    setDot(Cmd->Expression, InSec);
+    setDot(Cmd->Expression, Cmd->Location, InSec);
     return;
   }
 
@@ -567,7 +569,7 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
     return;
 
   if (Cmd->AddrExpr && Sec->Flags & SHF_ALLOC)
-    setDot(Cmd->AddrExpr);
+    setDot(Cmd->AddrExpr, Cmd->Location);
 
   // Handle align (e.g. ".foo : ALIGN(16) { ... }").
   if (Cmd->AlignExpr)
@@ -1622,7 +1624,7 @@ SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
       return getSymbolValue(Loc, Name, Dot) + E(Dot);
     };
   }
-  return new SymbolAssignment(Name, E);
+  return new SymbolAssignment(Name, E, getCurrentLocation());
 }
 
 // This is an operator-precedence parser to parse a linker
