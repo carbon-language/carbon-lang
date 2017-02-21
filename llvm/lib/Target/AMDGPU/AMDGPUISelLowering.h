@@ -70,6 +70,7 @@ protected:
   bool shouldCombineMemoryType(EVT VT) const;
   SDValue performLoadCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   SDValue performStoreCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue performClampCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
   SDValue splitBinaryBitConstantOpImpl(DAGCombinerInfo &DCI, const SDLoc &SL,
                                        unsigned Opc, SDValue LHS,
@@ -238,7 +239,11 @@ enum NodeType : unsigned {
   RETURN,
   DWORDADDR,
   FRACT,
+
+  /// CLAMP value between 0.0 and 1.0. NaN clamped to 0, following clamp output
+  /// modifier behavior with dx10_enable.
   CLAMP,
+
   // This is SETCC with the full mask result which is used for a compare with a
   // result bit per item in the wavefront.
   SETCC,

@@ -92,7 +92,7 @@ def AMDGPUfmul_legacy : SDNode<"AMDGPUISD::FMUL_LEGACY", SDTFPBinOp,
   [SDNPCommutative, SDNPAssociative]
 >;
 
-def AMDGPUclamp : SDNode<"AMDGPUISD::CLAMP", SDTFPTernaryOp, []>;
+def AMDGPUclamp : SDNode<"AMDGPUISD::CLAMP", SDTFPUnaryOp>;
 
 // out = min(a, b) a and b are floats, where a nan comparison fails.
 def AMDGPUfmin_legacy : SDNode<"AMDGPUISD::FMIN_LEGACY", SDTFPBinOp,

@@ -625,6 +625,7 @@ def SRCMODS {
 
 def DSTCLAMP {
   int NONE = 0;
+  int ENABLE = 1;
 }
 
 def DSTOMOD {
