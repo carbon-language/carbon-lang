@@ -1133,15 +1133,15 @@ define <16 x float> @combine_vpermi2var_vpermvar_16f32_as_vperm2_zero(<16 x floa
   ret <16 x float> %res1
 }
 
-define <8 x i64> @combine_broadcast_vpermvar_insertion_v8i64(i64 %a0) {
-; X32-LABEL: combine_broadcast_vpermvar_insertion_v8i64:
+define <8 x i64> @combine_vpermvar_insertion_as_broadcast_v8i64(i64 %a0) {
+; X32-LABEL: combine_vpermvar_insertion_as_broadcast_v8i64:
 ; X32:       # BB#0:
 ; X32-NEXT:    vmovq {{.*#+}} xmm1 = mem[0],zero
 ; X32-NEXT:    vpxord %zmm0, %zmm0, %zmm0
 ; X32-NEXT:    vpermi2q %zmm0, %zmm1, %zmm0
 ; X32-NEXT:    retl
 ;
-; X64-LABEL: combine_broadcast_vpermvar_insertion_v8i64:
+; X64-LABEL: combine_vpermvar_insertion_as_broadcast_v8i64:
 ; X64:       # BB#0:
 ; X64-NEXT:    vmovq %rdi, %xmm1
 ; X64-NEXT:    vpxord %zmm0, %zmm0, %zmm0

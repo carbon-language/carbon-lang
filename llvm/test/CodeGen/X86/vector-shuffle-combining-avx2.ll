@@ -800,13 +800,13 @@ define <32 x i8> @combine_unpack_unpack_pshufb(<32 x i8> %a0) {
   ret <32 x i8> %6
 }
 
-define <16 x i8> @combine_broadcast_pshufb_insertion_v2i64(i64 %a0) {
-; X32-LABEL: combine_broadcast_pshufb_insertion_v2i64:
+define <16 x i8> @combine_pshufb_insertion_as_broadcast_v2i64(i64 %a0) {
+; X32-LABEL: combine_pshufb_insertion_as_broadcast_v2i64:
 ; X32:       # BB#0:
 ; X32-NEXT:    vpbroadcastq {{[0-9]+}}(%esp), %xmm0
 ; X32-NEXT:    retl
 ;
-; X64-LABEL: combine_broadcast_pshufb_insertion_v2i64:
+; X64-LABEL: combine_pshufb_insertion_as_broadcast_v2i64:
 ; X64:       # BB#0:
 ; X64-NEXT:    vmovq %rdi, %xmm0
 ; X64-NEXT:    vpbroadcastq %xmm0, %xmm0
@@ -817,13 +817,13 @@ define <16 x i8> @combine_broadcast_pshufb_insertion_v2i64(i64 %a0) {
   ret <16 x i8> %3
 }
 
-define <8 x i32> @combine_broadcast_permd_insertion_v4i64(i64 %a0) {
-; X32-LABEL: combine_broadcast_permd_insertion_v4i64:
+define <8 x i32> @combine_permd_insertion_as_broadcast_v4i64(i64 %a0) {
+; X32-LABEL: combine_permd_insertion_as_broadcast_v4i64:
 ; X32:       # BB#0:
 ; X32-NEXT:    vbroadcastsd {{[0-9]+}}(%esp), %ymm0
 ; X32-NEXT:    retl
 ;
-; X64-LABEL: combine_broadcast_permd_insertion_v4i64:
+; X64-LABEL: combine_permd_insertion_as_broadcast_v4i64:
 ; X64:       # BB#0:
 ; X64-NEXT:    vmovq %rdi, %xmm0
 ; X64-NEXT:    vpbroadcastq %xmm0, %ymm0
