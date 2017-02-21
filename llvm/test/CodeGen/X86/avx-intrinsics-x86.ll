@@ -2,73 +2,6 @@
 ; RUN: llc < %s -mtriple=i686-apple-darwin -mattr=avx,aes,pclmul -show-mc-encoding | FileCheck %s --check-prefix=CHECK --check-prefix=AVX
 ; RUN: llc < %s -mtriple=i686-apple-darwin -mcpu=skx -show-mc-encoding | FileCheck %s --check-prefix=CHECK --check-prefix=AVX512VL
 
-define <2 x i64> @test_x86_aesni_aesdec(<2 x i64> %a0, <2 x i64> %a1) {
-; CHECK-LABEL: test_x86_aesni_aesdec:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vaesdec %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0xde,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <2 x i64> @llvm.x86.aesni.aesdec(<2 x i64> %a0, <2 x i64> %a1) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.aesni.aesdec(<2 x i64>, <2 x i64>) nounwind readnone
-
-
-define <2 x i64> @test_x86_aesni_aesdeclast(<2 x i64> %a0, <2 x i64> %a1) {
-; CHECK-LABEL: test_x86_aesni_aesdeclast:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vaesdeclast %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0xdf,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <2 x i64> @llvm.x86.aesni.aesdeclast(<2 x i64> %a0, <2 x i64> %a1) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.aesni.aesdeclast(<2 x i64>, <2 x i64>) nounwind readnone
-
-
-define <2 x i64> @test_x86_aesni_aesenc(<2 x i64> %a0, <2 x i64> %a1) {
-; CHECK-LABEL: test_x86_aesni_aesenc:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vaesenc %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0xdc,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <2 x i64> @llvm.x86.aesni.aesenc(<2 x i64> %a0, <2 x i64> %a1) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.aesni.aesenc(<2 x i64>, <2 x i64>) nounwind readnone
-
-
-define <2 x i64> @test_x86_aesni_aesenclast(<2 x i64> %a0, <2 x i64> %a1) {
-; CHECK-LABEL: test_x86_aesni_aesenclast:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vaesenclast %xmm1, %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0xdd,0xc1]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <2 x i64> @llvm.x86.aesni.aesenclast(<2 x i64> %a0, <2 x i64> %a1) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.aesni.aesenclast(<2 x i64>, <2 x i64>) nounwind readnone
-
-
-define <2 x i64> @test_x86_aesni_aesimc(<2 x i64> %a0) {
-; CHECK-LABEL: test_x86_aesni_aesimc:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vaesimc %xmm0, %xmm0 ## encoding: [0xc4,0xe2,0x79,0xdb,0xc0]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <2 x i64> @llvm.x86.aesni.aesimc(<2 x i64> %a0) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.aesni.aesimc(<2 x i64>) nounwind readnone
-
-
-define <2 x i64> @test_x86_aesni_aeskeygenassist(<2 x i64> %a0) {
-; CHECK-LABEL: test_x86_aesni_aeskeygenassist:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vaeskeygenassist $7, %xmm0, %xmm0 ## encoding: [0xc4,0xe3,0x79,0xdf,0xc0,0x07]
-; CHECK-NEXT:    retl ## encoding: [0xc3]
-  %res = call <2 x i64> @llvm.x86.aesni.aeskeygenassist(<2 x i64> %a0, i8 7) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.aesni.aeskeygenassist(<2 x i64>, i8) nounwind readnone
-
-
-
 define <2 x double> @test_x86_sse3_addsub_pd(<2 x double> %a0, <2 x double> %a1) {
 ; CHECK-LABEL: test_x86_sse3_addsub_pd:
 ; CHECK:       ## BB#0:
@@ -2055,8 +1988,8 @@ define void @movnt_dq(i8* %p, <2 x i64> %a1) nounwind {
 ; AVX-LABEL: movnt_dq:
 ; AVX:       ## BB#0:
 ; AVX-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX-NEXT:    vpaddq LCPI142_0, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
-; AVX-NEXT:    ## fixup A - offset: 4, value: LCPI142_0, kind: FK_Data_4
+; AVX-NEXT:    vpaddq LCPI136_0, %xmm0, %xmm0 ## encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
+; AVX-NEXT:    ## fixup A - offset: 4, value: LCPI136_0, kind: FK_Data_4
 ; AVX-NEXT:    vmovntdq %ymm0, (%eax) ## encoding: [0xc5,0xfd,0xe7,0x00]
 ; AVX-NEXT:    vzeroupper ## encoding: [0xc5,0xf8,0x77]
 ; AVX-NEXT:    retl ## encoding: [0xc3]
@@ -2064,8 +1997,8 @@ define void @movnt_dq(i8* %p, <2 x i64> %a1) nounwind {
 ; AVX512VL-LABEL: movnt_dq:
 ; AVX512VL:       ## BB#0:
 ; AVX512VL-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX512VL-NEXT:    vpaddq LCPI142_0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
-; AVX512VL-NEXT:    ## fixup A - offset: 4, value: LCPI142_0, kind: FK_Data_4
+; AVX512VL-NEXT:    vpaddq LCPI136_0, %xmm0, %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0xd4,0x05,A,A,A,A]
+; AVX512VL-NEXT:    ## fixup A - offset: 4, value: LCPI136_0, kind: FK_Data_4
 ; AVX512VL-NEXT:    vmovntdq %ymm0, (%eax) ## EVEX TO VEX Compression encoding: [0xc5,0xfd,0xe7,0x00]
 ; AVX512VL-NEXT:    retl ## encoding: [0xc3]
   %a2 = add <2 x i64> %a1, <i64 1, i64 1>
