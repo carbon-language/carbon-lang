@@ -34,12 +34,13 @@ static bool shouldScheduleAdjacent(const AArch64InstrInfo &TII,
                                    const AArch64Subtarget &ST,
                                    const MachineInstr *First,
                                    const MachineInstr *Second) {
+  assert((First || Second) && "At least one instr must be specified");
   unsigned FirstOpcode =
-      First ? First->getOpcode()
-            : static_cast<unsigned>(AArch64::INSTRUCTION_LIST_END);
+    First ? First->getOpcode()
+	  : static_cast<unsigned>(AArch64::INSTRUCTION_LIST_END);
   unsigned SecondOpcode =
-      Second ? Second->getOpcode()
-             : static_cast<unsigned>(AArch64::INSTRUCTION_LIST_END);
+    Second ? Second->getOpcode()
+           : static_cast<unsigned>(AArch64::INSTRUCTION_LIST_END);
 
   if (ST.hasArithmeticBccFusion())
     // Fuse CMN, CMP, TST followed by Bcc.
