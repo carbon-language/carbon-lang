@@ -140,7 +140,7 @@ using namespace llvm;
 
 namespace {
 
-cl::opt<unsigned long>
+cl::opt<int>
     DelicmMaxOps("polly-delicm-max-ops",
                  cl::desc("Maximum number of isl operations to invest for "
                           "lifetime analysis; 0=no limit"),
