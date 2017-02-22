@@ -1593,6 +1593,11 @@ public:
 
   /// Dump the internal information about a performed DeLICM to @p OS.
   void print(llvm::raw_ostream &OS, int indent = 0) {
+    if (!Zone.isUsable()) {
+      OS << "Zone not computed\n";
+      return;
+    }
+
     printAccesses(OS, indent);
   }
 };
