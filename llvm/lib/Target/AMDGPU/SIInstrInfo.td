@@ -1086,6 +1086,7 @@ class VOPProfile <list<ValueType> _ArgVT> {
   field bit HasOMod = HasModifiers;
   field bit HasClamp = HasModifiers;
   field bit HasSDWAClamp = HasSrc0;
+  field bit HasFPClamp = BitAnd<isFloatType<DstVT>.ret, HasClamp>.ret;
 
   field bit HasExt = getHasExt<NumSrcArgs, DstVT, Src0VT, Src1VT>.ret;
 
