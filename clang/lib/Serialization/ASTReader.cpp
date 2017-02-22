@@ -8987,7 +8987,8 @@ void ASTReader::diagnoseOdrViolations() {
       // SecondDiffType will not be Other and FirstDecl and SecondDecl will be
       // filled in if not EndOfClass.
       while (FirstIt != FirstHashes.end() || SecondIt != SecondHashes.end()) {
-        if (FirstIt->second == SecondIt->second) {
+        if (FirstIt != FirstHashes.end() && SecondIt != SecondHashes.end() &&
+            FirstIt->second == SecondIt->second) {
           ++FirstIt;
           ++SecondIt;
           continue;
