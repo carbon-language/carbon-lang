@@ -18991,6 +18991,14 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
       SDValue Src2 = Op.getOperand(2);
       SDValue passThru = Op.getOperand(3);
       SDValue Mask = Op.getOperand(4);
+      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
+      if (IntrWithRoundingModeOpcode != 0) {
+        SDValue Rnd = Op.getOperand(5);
+        if (!isRoundModeCurDirection(Rnd))
+          return getScalarMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
+                                                  dl, VT, Src1, Src2, Rnd),
+                                      Mask, passThru, Subtarget, DAG);
+      }
       return getScalarMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src1, Src2),
                                   Mask, passThru, Subtarget, DAG);
     }
@@ -23910,8 +23918,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::ABS:                return "X86ISD::ABS";
   case X86ISD::CONFLICT:           return "X86ISD::CONFLICT";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
+  case X86ISD::FMAXS:              return "X86ISD::FMAXS";
   case X86ISD::FMAX_RND:           return "X86ISD::FMAX_RND";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
+  case X86ISD::FMINS:              return "X86ISD::FMINS";
   case X86ISD::FMIN_RND:           return "X86ISD::FMIN_RND";
   case X86ISD::FMAXC:              return "X86ISD::FMAXC";
   case X86ISD::FMINC:              return "X86ISD::FMINC";
