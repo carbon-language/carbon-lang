@@ -732,10 +732,10 @@ IF67:                                             ; preds = %LOOP65
   %tmp579 = fmul float %tmp574, %tmp45
   %tmp580 = fadd float %tmp579, %tmp556
   %tmp581 = call i32 @llvm.SI.packf16(float %tmp576, float %tmp578)
-  %tmp582 = bitcast i32 %tmp581 to float
+  %tmp582 = bitcast i32 %tmp581 to <2 x half>
   %tmp583 = call i32 @llvm.SI.packf16(float %tmp580, float %tmp282)
-  %tmp584 = bitcast i32 %tmp583 to float
-  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %tmp582, float %tmp584, float %tmp582, float %tmp584)
+  %tmp584 = bitcast i32 %tmp583 to <2 x half>
+  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp582, <2 x half> %tmp584, i1 true, i1 true) #0
   ret void
 
 ENDIF66:                                          ; preds = %LOOP65
@@ -1814,10 +1814,10 @@ ENDIF209:                                         ; preds = %ELSE214, %ELSE211, 
   %max.0.i1 = call float @llvm.maxnum.f32(float %tmp774, float 0.000000e+00)
   %clamp.i2 = call float @llvm.minnum.f32(float %max.0.i1, float 1.000000e+00)
   %tmp776 = call i32 @llvm.SI.packf16(float %tmp768, float %tmp770)
-  %tmp777 = bitcast i32 %tmp776 to float
+  %tmp777 = bitcast i32 %tmp776 to <2 x half>
   %tmp778 = call i32 @llvm.SI.packf16(float %tmp772, float %clamp.i2)
-  %tmp779 = bitcast i32 %tmp778 to float
-  call void @llvm.SI.export(i32 15, i32 1, i32 1, i32 0, i32 1, float %tmp777, float %tmp779, float %tmp777, float %tmp779)
+  %tmp779 = bitcast i32 %tmp778 to <2 x half>
+  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp777, <2 x half> %tmp779, i1 true, i1 true) #0
   ret void
 
 ELSE214:                                          ; preds = %ELSE211
@@ -1835,11 +1835,11 @@ ELSE214:                                          ; preds = %ELSE211
 
 declare float @llvm.exp2.f32(float) #1
 declare float @llvm.ceil.f32(float) #1
-declare float @llvm.amdgcn.rsq.f32(float) #1
 declare float @llvm.fabs.f32(float) #1
 declare float @llvm.pow.f32(float, float) #1
 declare float @llvm.minnum.f32(float, float) #1
 declare float @llvm.maxnum.f32(float, float) #1
+declare float @llvm.amdgcn.rsq.f32(float) #1
 declare float @llvm.amdgcn.cubeid(float, float, float) #1
 declare float @llvm.amdgcn.cubesc(float, float, float) #1
 declare float @llvm.amdgcn.cubetc(float, float, float) #1
@@ -1848,13 +1848,14 @@ declare float @llvm.amdgcn.interp.p1(float, i32, i32, i32) #1
 declare float @llvm.amdgcn.interp.p2(float, float, i32, i32, i32) #1
 declare i32 @llvm.amdgcn.mbcnt.lo(i32, i32) #1
 declare i32 @llvm.amdgcn.mbcnt.hi(i32, i32) #1
+declare void @llvm.amdgcn.exp.compr.v2f16(i32, i32, <2 x half>, <2 x half>, i1, i1) #0
+
 declare <4 x float> @llvm.SI.image.sample.v2i32(<2 x i32>, <8 x i32>, <4 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
 declare <4 x float> @llvm.SI.image.sample.l.v4i32(<4 x i32>, <8 x i32>, <4 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
 declare <4 x float> @llvm.SI.image.sample.d.v8i32(<8 x i32>, <8 x i32>, <4 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
 declare <4 x float> @llvm.SI.image.sample.v4i32(<4 x i32>, <8 x i32>, <4 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
 declare float @llvm.SI.load.const(<16 x i8>, i32) #1
 declare i32 @llvm.SI.packf16(float, float) #1
-declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }
