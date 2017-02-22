@@ -20,6 +20,11 @@
   "Clang-based include fixer."
   :group 'tools)
 
+(defvar clang-include-fixer-add-include-hook nil
+  "A hook that will be called for every added include.
+The first argument is the filename of the include, the second argument is
+non-nil if the include is a system-header.")
+
 (defcustom clang-include-fixer-executable
   "clang-include-fixer"
   "Location of the clang-include-fixer executable.
@@ -67,8 +72,15 @@ This string is passed as -input argument to
   (let ((symbol (clang-include-fixer--symbol-at-point)))
     (unless symbol
       (user-error "No symbol at current location"))
-    (clang-include-fixer--start #'clang-include-fixer--add-header
-                                (format "-query-symbol=%s" symbol))))
+    (clang-include-fixer-from-symbol symbol)))
+
+(defun clang-include-fixer-from-symbol (symbol)
+  "Invoke the Clang include fixer for the SYMBOL.
+When called interactively, prompts the user for a symbol."
+  (interactive
+   (list (read-string "Symbol: " (clang-include-fixer--symbol-at-point))))
+  (clang-include-fixer--start #'clang-include-fixer--add-header
+                              (format "-query-symbol=%s" symbol)))
 
 (defun clang-include-fixer--start (callback &rest args)
   "Asynchronously start clang-include-fixer with parameters ARGS.
@@ -250,7 +262,12 @@ clang-include-fixer to insert the selected header."
                ;; Replacing the buffer now would undo the user’s changes.
                (user-error (concat "The buffer has been changed "
                                    "before the header could be inserted")))
-             (clang-include-fixer--replace-buffer stdout)))
+             (clang-include-fixer--replace-buffer stdout)
+             (let-alist context
+               (let-alist (car .HeaderInfos)
+                 (run-hook-with-args 'clang-include-fixer-add-include-hook
+                                     (substring .Header 1 -1)
+                                     (string= (substring .Header 0 1) "<"))))))
          (format "-insert-header=%s"
                  (clang-include-fixer--encode-json context)))))))
   nil)
