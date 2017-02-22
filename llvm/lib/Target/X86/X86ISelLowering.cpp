@@ -5239,14 +5239,15 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
   if (ISD::isBuildVectorOfConstantSDNodes(Op.getNode())) {
     for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
       const SDValue &Src = Op.getOperand(i);
+      unsigned BitOffset = i * SrcEltSizeInBits;
       if (Src.isUndef()) {
-        APInt Undefs = APInt::getLowBitsSet(SizeInBits, SrcEltSizeInBits);
-        UndefBits |= Undefs.shl(i * SrcEltSizeInBits);
+        unsigned HiBits = BitOffset + SrcEltSizeInBits;
+        UndefBits |= APInt::getBitsSet(SizeInBits, BitOffset, HiBits);
         continue;
       }
       auto *Cst = cast<ConstantSDNode>(Src);
       APInt Bits = Cst->getAPIntValue().zextOrTrunc(SrcEltSizeInBits);
-      MaskBits |= Bits.zext(SizeInBits).shl(i * SrcEltSizeInBits);
+      MaskBits |= Bits.zext(SizeInBits).shl(BitOffset);
     }
     return SplitBitData();
   }
