@@ -1261,9 +1261,9 @@ void BinaryFunction::postProcessJumpTables() {
       if (TargetOffset < getSize())
         TakenBranches.emplace_back(JTSiteOffset, TargetOffset);
 
-      // Ignore relocations for jump tables.
+      // Take ownership of jump table relocations.
       if (opts::Relocs)
-        BC.IgnoredRelocations.emplace(JT->Address + EntryOffset);
+        BC.removeRelocationAt(JT->Address + EntryOffset);
 
       EntryOffset += JT->EntrySize;
 
@@ -3819,72 +3819,6 @@ void DynoStats::operator+=(const DynoStats &Other) {
        ++Stat) {
     Stats[Stat] += Other[Stat];
   }
-}
-
-size_t Relocation::getSizeForType(uint64_t Type) {
-  switch (Type) {
-  default:
-    llvm_unreachable("unsupported relocation type");
-  case ELF::R_X86_64_PC8:
-    return 1;
-  case ELF::R_X86_64_PLT32:
-  case ELF::R_X86_64_PC32:
-  case ELF::R_X86_64_32S:
-  case ELF::R_X86_64_32:
-  case ELF::R_X86_64_GOTPCREL:
-  case ELF::R_X86_64_GOTTPOFF:
-  case ELF::R_X86_64_TPOFF32:
-  case ELF::R_X86_64_GOTPCRELX:
-  case ELF::R_X86_64_REX_GOTPCRELX:
-    return 4;
-  case ELF::R_X86_64_PC64:
-  case ELF::R_X86_64_64:
-    return 8;
-  }
-}
-
-bool Relocation::isPCRelative(uint64_t Type) {
-  switch (Type) {
-  default:
-    llvm_unreachable("Unknown relocation type");
-
-  case ELF::R_X86_64_64:
-  case ELF::R_X86_64_32:
-  case ELF::R_X86_64_32S:
-  case ELF::R_X86_64_TPOFF32:
-    return false;
-
-  case ELF::R_X86_64_PC8:
-  case ELF::R_X86_64_PC32:
-  case ELF::R_X86_64_GOTPCREL:
-  case ELF::R_X86_64_PLT32:
-  case ELF::R_X86_64_GOTTPOFF:
-  case ELF::R_X86_64_GOTPCRELX:
-  case ELF::R_X86_64_REX_GOTPCRELX:
-    return true;
-  }
-}
-
-size_t Relocation::emit(MCStreamer *Streamer) {
-  const auto Size = getSizeForType(Type);
-  auto &Ctx = Streamer->getContext();
-  if (isPCRelative(Type)) {
-    auto *TempLabel = Ctx.createTempSymbol();
-    Streamer->EmitLabel(TempLabel);
-    auto Value =
-      MCBinaryExpr::createSub(MCSymbolRefExpr::create(Symbol, Ctx),
-                              MCSymbolRefExpr::create(TempLabel, Ctx),
-                              Ctx);
-    if (Addend) {
-      Value = MCBinaryExpr::createAdd(Value,
-                                      MCConstantExpr::create(Addend, Ctx),
-                                      Ctx);
-    }
-    Streamer->EmitValue(Value, Size);
-  } else {
-    Streamer->EmitSymbolValue(Symbol, Size);
-  }
-  return Size;
 }
 
 } // namespace bolt

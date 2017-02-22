@@ -14,6 +14,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/DebugInfo/DWARF/DWARFUnit.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -415,14 +416,107 @@ ErrorOr<SectionRef> BinaryContext::getSectionForAddress(uint64_t Address) const{
   return std::make_error_code(std::errc::bad_address);
 }
 
-void BinaryContext::addSectionRelocation(SectionRef Section, uint64_t Address,
+void BinaryContext::addSectionRelocation(SectionRef Section, uint64_t Offset,
                                          MCSymbol *Symbol, uint64_t Type,
                                          uint64_t Addend) {
   auto RI = SectionRelocations.find(Section);
   if (RI == SectionRelocations.end()) {
     auto Result =
-      SectionRelocations.emplace(Section, std::vector<Relocation>());
+      SectionRelocations.emplace(Section, std::set<Relocation>());
     RI = Result.first;
   }
-  RI->second.emplace_back(Relocation{Address, Symbol, Type, Addend});
+  RI->second.emplace(Relocation{Offset, Symbol, Type, Addend});
+}
+
+void BinaryContext::addRelocation(uint64_t Address, MCSymbol *Symbol,
+                                  uint64_t Type, uint64_t Addend) {
+  auto ContainingSection = getSectionForAddress(Address);
+  assert(ContainingSection && "cannot find section for address");
+  addSectionRelocation(*ContainingSection,
+                       Address - ContainingSection->getAddress(),
+                       Symbol,
+                       Type,
+                       Addend);
+}
+
+void BinaryContext::removeRelocationAt(uint64_t Address) {
+  auto ContainingSection = getSectionForAddress(Address);
+  assert(ContainingSection && "cannot find section for address");
+  auto RI = SectionRelocations.find(*ContainingSection);
+  if (RI == SectionRelocations.end())
+    return;
+
+  auto &Relocations = RI->second;
+  auto RelocI = Relocations.find(
+            Relocation{Address - ContainingSection->getAddress(), 0, 0, 0, 0});
+  if (RelocI == Relocations.end())
+    return;
+
+  Relocations.erase(RelocI);
+}
+
+size_t Relocation::getSizeForType(uint64_t Type) {
+  switch (Type) {
+  default:
+    llvm_unreachable("unsupported relocation type");
+  case ELF::R_X86_64_PC8:
+    return 1;
+  case ELF::R_X86_64_PLT32:
+  case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_32S:
+  case ELF::R_X86_64_32:
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_X86_64_TPOFF32:
+  case ELF::R_X86_64_GOTPCRELX:
+  case ELF::R_X86_64_REX_GOTPCRELX:
+    return 4;
+  case ELF::R_X86_64_PC64:
+  case ELF::R_X86_64_64:
+    return 8;
+  }
+}
+
+bool Relocation::isPCRelative(uint64_t Type) {
+  switch (Type) {
+  default:
+    llvm_unreachable("Unknown relocation type");
+
+  case ELF::R_X86_64_64:
+  case ELF::R_X86_64_32:
+  case ELF::R_X86_64_32S:
+  case ELF::R_X86_64_TPOFF32:
+    return false;
+
+  case ELF::R_X86_64_PC8:
+  case ELF::R_X86_64_PC32:
+  case ELF::R_X86_64_GOTPCREL:
+  case ELF::R_X86_64_PLT32:
+  case ELF::R_X86_64_GOTTPOFF:
+  case ELF::R_X86_64_GOTPCRELX:
+  case ELF::R_X86_64_REX_GOTPCRELX:
+    return true;
+  }
+}
+
+size_t Relocation::emit(MCStreamer *Streamer) const {
+  const auto Size = getSizeForType(Type);
+  auto &Ctx = Streamer->getContext();
+  if (isPCRelative(Type)) {
+    auto *TempLabel = Ctx.createTempSymbol();
+    Streamer->EmitLabel(TempLabel);
+    auto Value =
+      MCBinaryExpr::createSub(MCSymbolRefExpr::create(Symbol, Ctx),
+                              MCSymbolRefExpr::create(TempLabel, Ctx),
+                              Ctx);
+    if (Addend) {
+      Value = MCBinaryExpr::createAdd(Value,
+                                      MCConstantExpr::create(Addend, Ctx),
+                                      Ctx);
+    }
+    Streamer->EmitValue(Value, Size);
+  } else {
+    Streamer->EmitSymbolValue(Symbol, Size);
+  }
+  return Size;
 }

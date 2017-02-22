@@ -1494,8 +1494,6 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       // from linker data alone.
       if (IsFromCode) {
         ContainingBF->addPCRelativeRelocationAddress(Rel.getOffset());
-      } else {
-        BC->PCRelativeDataRelocations.emplace(Rel.getOffset());
       }
       DEBUG(dbgs() << "BOLT-DEBUG: not creating PC-relative relocation\n");
       continue;
@@ -1551,14 +1549,8 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from code to data\n");
       }
     } else if (ToCode) {
-      auto ContainingSection = BC->getSectionForAddress(Rel.getOffset());
-      assert(ContainingSection && "cannot find section for address");
       assert(Addend == 0 && "did not expect addend");
-      BC->addSectionRelocation(*ContainingSection,
-                               Rel.getOffset()- ContainingSection->getAddress(),
-                               ReferencedSymbol,
-                               Rel.getType());
-
+      BC->addRelocation(Rel.getOffset(), ReferencedSymbol, Rel.getType());
     } else {
       DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from data to data\n");
     }
@@ -1998,21 +1990,6 @@ void RewriteInstance::emitFunctions() {
   }
 
   if (opts::Relocs) {
-    // Make sure all original PC-relative relocations from data are ignored.
-    std::vector<uint64_t> MissedAddresses;
-    std::set_difference(BC->PCRelativeDataRelocations.begin(),
-                        BC->PCRelativeDataRelocations.end(),
-                        BC->IgnoredRelocations.begin(),
-                        BC->IgnoredRelocations.end(),
-                        std::back_inserter(MissedAddresses));
-
-    if (!MissedAddresses.empty()) {
-      errs() << "BOLT-ERROR: " << MissedAddresses.size()
-             << " missed addresses:\n";
-      for (auto Address : MissedAddresses)
-        errs() << "\t0x" << Twine::utohexstr(Address) << '\n';
-    }
-
     emitDataSections(Streamer.get());
   }
 
@@ -2324,12 +2301,7 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer, SectionRef Section,
 
   auto &Relocations = SRI->second;
   uint64_t SectionOffset = 0;
-  std::sort(Relocations.begin(), Relocations.end());
   for (auto &Relocation : Relocations) {
-    auto RelocationAddress = Section.getAddress() + Relocation.Offset;
-    if (BC->IgnoredRelocations.count(RelocationAddress)) {
-      continue;
-    }
     assert(Relocation.Offset < Section.getSize() && "overflow detected");
     if (SectionOffset < Relocation.Offset) {
       Streamer->EmitBytes(

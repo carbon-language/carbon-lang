@@ -56,7 +56,7 @@ class DataReader;
 /// Relocation class.
 struct Relocation {
   uint64_t Offset;
-  MCSymbol *Symbol;
+  mutable MCSymbol *Symbol; /// mutable to allow modification by emitter.
   uint64_t Type;
   uint64_t Addend;
   uint64_t Value;
@@ -69,7 +69,7 @@ struct Relocation {
 
   /// Emit relocation at a current \p Streamer' position. The caller is
   /// responsible for setting the position correctly.
-  size_t emit(MCStreamer *Streamer);
+  size_t emit(MCStreamer *Streamer) const;
 };
 
 /// Relocation ordering by offset.
@@ -109,14 +109,8 @@ public:
   /// List of DWARF location lists in .debug_loc.
   std::vector<LocationList> LocationLists;
 
-  /// List of relocation offsets where relocations should be ignored.
-  std::set<uint64_t> IgnoredRelocations;
-
-  /// List of PC-relative relocations from data to code.
-  std::set<uint64_t> PCRelativeDataRelocations;
-
   /// Section relocations.
-  std::map<SectionRef, std::vector<Relocation>> SectionRelocations;
+  std::map<SectionRef, std::set<Relocation>> SectionRelocations;
 
   /// List of DWARF entries in .debug_info that have address ranges to be
   /// updated. These include lexical blocks (DW_TAG_lexical_block) and concrete
@@ -231,10 +225,17 @@ public:
                     BinaryFunction &ParentBF,
                     std::map<uint64_t, BinaryFunction> &BFs);
 
-  /// Add section relocation.
-  void addSectionRelocation(SectionRef Section, uint64_t Address,
+  /// Add relocation for \p Section at a given \p Offset.
+  void addSectionRelocation(SectionRef Section, uint64_t Offset,
                             MCSymbol *Symbol, uint64_t Type,
                             uint64_t Addend = 0);
+
+  /// Add a relocation at a given \p Address.
+  void addRelocation(uint64_t Address, MCSymbol *Symbol, uint64_t Type,
+                     uint64_t Addend = 0);
+
+  /// Remove registered relocation at a given \p Address.
+  void removeRelocationAt(uint64_t Address);
 
   const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
     auto BFI = SymbolToFunctionMap.find(Symbol);
