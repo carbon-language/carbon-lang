@@ -723,7 +723,7 @@ private:
           give(isl_union_map_from_map(getAccessRelationFor(MA).take()));
 
       if (MA->isRead()) {
-        // Reject store after load to same location.
+        // Reject load after store to same location.
         if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep()))
           return false;
 
