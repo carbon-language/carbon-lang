@@ -641,6 +641,17 @@ public:
   }
 };
 
+std::string printIntruction(Instruction *Instr, bool IsForDebug = false) {
+  std::string Result;
+  raw_string_ostream OS(Result);
+  Instr->print(OS, IsForDebug);
+  OS.flush();
+  size_t i = 0;
+  while (i < Result.size() && Result[i] == ' ')
+    i += 1;
+  return Result.substr(i);
+}
+
 /// Base class for algorithms based on zones, like DeLICM.
 class ZoneAlgorithm {
 protected:
@@ -724,8 +735,15 @@ private:
 
       if (MA->isRead()) {
         // Reject load after store to same location.
-        if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep()))
+        if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep())) {
+          OptimizationRemarkMissed R(DEBUG_TYPE, "LoadAfterStore",
+                                     MA->getAccessInstruction());
+          R << "load after store of same element in same statement";
+          R << " (previous stores: " << Stores;
+          R << ", loading: " << AccRel << ")";
+          S->getFunction().getContext().diagnose(R);
           return false;
+        }
 
         Loads = give(isl_union_map_union(Loads.take(), AccRel.take()));
 
@@ -734,18 +752,35 @@ private:
 
       if (!isa<StoreInst>(MA->getAccessInstruction())) {
         DEBUG(dbgs() << "WRITE that is not a StoreInst not supported\n");
+        OptimizationRemarkMissed R(DEBUG_TYPE, "UnusualStore",
+                                   MA->getAccessInstruction());
+        R << "encountered write that is not a StoreInst: "
+          << printIntruction(MA->getAccessInstruction());
+        S->getFunction().getContext().diagnose(R);
         return false;
       }
 
       // In region statements the order is less clear, eg. the load and store
       // might be in a boxed loop.
       if (Stmt->isRegionStmt() &&
-          !isl_union_map_is_disjoint(Loads.keep(), AccRel.keep()))
+          !isl_union_map_is_disjoint(Loads.keep(), AccRel.keep())) {
+        OptimizationRemarkMissed R(DEBUG_TYPE, "StoreInSubregion",
+                                   MA->getAccessInstruction());
+        R << "store is in a non-affine subregion";
+        S->getFunction().getContext().diagnose(R);
         return false;
+      }
 
       // Do not allow more than one store to the same location.
-      if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep()))
+      if (!isl_union_map_is_disjoint(Stores.keep(), AccRel.keep())) {
+        OptimizationRemarkMissed R(DEBUG_TYPE, "StoreAfterStore",
+                                   MA->getAccessInstruction());
+        R << "store after store of same element in same statement";
+        R << " (previous stores: " << Stores;
+        R << ", storing: " << AccRel << ")";
+        S->getFunction().getContext().diagnose(R);
         return false;
+      }
 
       Stores = give(isl_union_map_union(Stores.take(), AccRel.take()));
     }
@@ -1537,6 +1572,12 @@ public:
     if (isl_ctx_last_error(IslCtx.get()) == isl_error_quota) {
       DeLICMOutOfQuota++;
       DEBUG(dbgs() << "DeLICM analysis exceeded max_operations\n");
+      DebugLoc Begin, End;
+      getDebugLocations(getBBPairForRegion(&S->getRegion()), Begin, End);
+      OptimizationRemarkAnalysis R(DEBUG_TYPE, "OutOfQuota", Begin,
+                                   S->getEntry());
+      R << "maximal number of operations exceeded during zone analysis";
+      S->getFunction().getContext().diagnose(R);
     }
 
     DeLICMAnalyzed++;
