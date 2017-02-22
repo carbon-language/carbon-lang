@@ -3589,7 +3589,7 @@ def VMOVNTPDmr : VPDI<0x2B, MRMDestMem, (outs),
 
 let ExeDomain = SSEPackedInt in
 def VMOVNTDQmr    : VPDI<0xE7, MRMDestMem, (outs),
-                         (ins f128mem:$dst, VR128:$src),
+                         (ins i128mem:$dst, VR128:$src),
                          "movntdq\t{$src, $dst|$dst, $src}",
                          [(alignednontemporalstore (v2i64 VR128:$src),
                                                    addr:$dst)],
@@ -3609,7 +3609,7 @@ def VMOVNTPDYmr : VPDI<0x2B, MRMDestMem, (outs),
                                                IIC_SSE_MOVNT>, VEX, VEX_L, VEX_WIG;
 let ExeDomain = SSEPackedInt in
 def VMOVNTDQYmr : VPDI<0xE7, MRMDestMem, (outs),
-                    (ins f256mem:$dst, VR256:$src),
+                    (ins i256mem:$dst, VR256:$src),
                     "movntdq\t{$src, $dst|$dst, $src}",
                     [(alignednontemporalstore (v4i64 VR256:$src),
                                               addr:$dst)],
@@ -8383,7 +8383,8 @@ let Predicates = [HasAVX1Only] in {
 //
 
 multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
-                     ValueType OpVT, X86FoldableSchedWrite Sched> {
+                     ValueType OpVT, X86FoldableSchedWrite Sched,
+                     X86MemOperand memOp> {
   let Predicates = [HasAVX2, NoVLX] in {
     def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
                      (ins VR256:$src1, VR256:$src2),
@@ -8393,7 +8394,7 @@ multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                        (OpVT (X86VPermv VR256:$src1, VR256:$src2)))]>,
                      Sched<[Sched]>, VEX_4V, VEX_L;
     def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
-                     (ins VR256:$src1, i256mem:$src2),
+                     (ins VR256:$src1, memOp:$src2),
                      !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                      [(set VR256:$dst,
@@ -8403,12 +8404,15 @@ multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
   }
 }
 
-defm VPERMD : avx2_perm<0x36, "vpermd", loadv4i64, v8i32, WriteShuffle256>;
+defm VPERMD : avx2_perm<0x36, "vpermd", loadv4i64, v8i32, WriteShuffle256,
+                        i256mem>;
 let ExeDomain = SSEPackedSingle in
-defm VPERMPS : avx2_perm<0x16, "vpermps", loadv8f32, v8f32, WriteFShuffle256>;
+defm VPERMPS : avx2_perm<0x16, "vpermps", loadv8f32, v8f32, WriteFShuffle256,
+                        f256mem>;
 
 multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
-                         ValueType OpVT, X86FoldableSchedWrite Sched> {
+                         ValueType OpVT, X86FoldableSchedWrite Sched,
+                         X86MemOperand memOp> {
   let Predicates = [HasAVX2, NoVLX] in {
     def Yri : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
                        (ins VR256:$src1, u8imm:$src2),
@@ -8418,7 +8422,7 @@ multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                          (OpVT (X86VPermi VR256:$src1, (i8 imm:$src2))))]>,
                        Sched<[Sched]>, VEX, VEX_L;
     def Ymi : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
-                       (ins i256mem:$src1, u8imm:$src2),
+                       (ins memOp:$src1, u8imm:$src2),
                        !strconcat(OpcodeStr,
                            "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                        [(set VR256:$dst,
@@ -8429,10 +8433,10 @@ multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
 }
 
 defm VPERMQ : avx2_perm_imm<0x00, "vpermq", loadv4i64, v4i64,
-                            WriteShuffle256>, VEX_W;
+                            WriteShuffle256, i256mem>, VEX_W;
 let ExeDomain = SSEPackedDouble in
 defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", loadv4f64, v4f64,
-                             WriteFShuffle256>, VEX_W;
+                             WriteFShuffle256, f256mem>, VEX_W;
 
 //===----------------------------------------------------------------------===//
 // VPERM2I128 - Permute Floating-Point Values in 128-bit chunks
