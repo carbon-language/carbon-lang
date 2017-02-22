@@ -1804,7 +1804,7 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
         .addReg(AMDGPU::SGPR0_SGPR1, RegState::Implicit);
     } else {
       switch (TrapType) {
-      case SISubtarget::TrapIDLLVMTrap:
+      case SISubtarget::TrapCodeLLVMTrap:
         BuildMI(*BB, MI, DL, TII->get(AMDGPU::S_ENDPGM));
         break;
       case SISubtarget::TrapCodeLLVMDebugTrap: {

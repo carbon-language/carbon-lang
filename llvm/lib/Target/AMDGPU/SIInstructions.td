@@ -391,12 +391,12 @@ def SI_PC_ADD_REL_OFFSET : SPseudoInstSI <
 let Predicates = [isGCN] in {
 def : Pat<
   (trap),
-  (S_TRAP_PSEUDO TRAPID.LLVM_TRAP)
+  (S_TRAP_PSEUDO TRAPTYPE.LLVM_TRAP)
 >;
 
 def : Pat<
   (debugtrap),
-  (S_TRAP_PSEUDO TRAPID.LLVM_DEBUG_TRAP)
+  (S_TRAP_PSEUDO TRAPTYPE.LLVM_DEBUG_TRAP)
 >;
 
 def : Pat<
