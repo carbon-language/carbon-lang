@@ -37,10 +37,9 @@ using namespace llvm;
 
 #include "X86GenGlobalISel.inc"
 
-X86InstructionSelector::X86InstructionSelector(const X86TargetMachine &TM,
-                                               const X86Subtarget &STI,
+X86InstructionSelector::X86InstructionSelector(const X86Subtarget &STI,
                                                const X86RegisterBankInfo &RBI)
-    : InstructionSelector(), TM(TM), STI(STI), TII(*STI.getInstrInfo()),
+    : InstructionSelector(), TII(*STI.getInstrInfo()),
       TRI(*STI.getRegisterInfo()), RBI(RBI) {}
 
 // FIXME: This should be target-independent, inferred from the types declared
@@ -70,6 +69,7 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
 
   const RegisterBank &RegBank = *RBI.getRegBank(DstReg, MRI, TRI);
   const unsigned DstSize = MRI.getType(DstReg).getSizeInBits();
+  (void)DstSize;
   unsigned SrcReg = I.getOperand(1).getReg();
   const unsigned SrcSize = RBI.getSizeInBits(SrcReg, MRI, TRI);
   (void)SrcSize;
@@ -124,10 +124,8 @@ bool X86InstructionSelector::select(MachineInstr &I) const {
     return true;
   }
 
-  if (I.getNumOperands() != I.getNumExplicitOperands()) {
-    assert("Generic instruction has unexpected implicit operands\n");
-    return false;
-  }
+  assert(I.getNumOperands() == I.getNumExplicitOperands() &&
+         "Generic instruction has unexpected implicit operands\n");
 
   return selectImpl(I);
 }

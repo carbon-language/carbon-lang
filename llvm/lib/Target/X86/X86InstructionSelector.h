@@ -25,7 +25,7 @@ class X86TargetMachine;
 
 class X86InstructionSelector : public InstructionSelector {
 public:
-  X86InstructionSelector(const X86TargetMachine &TM, const X86Subtarget &STI,
+  X86InstructionSelector(const X86Subtarget &STI,
                          const X86RegisterBankInfo &RBI);
 
   bool select(MachineInstr &I) const override;
@@ -35,8 +35,6 @@ private:
   /// the patterns that don't require complex C++.
   bool selectImpl(MachineInstr &I) const;
 
-  const X86TargetMachine &TM;
-  const X86Subtarget &STI;
   const X86InstrInfo &TII;
   const X86RegisterInfo &TRI;
   const X86RegisterBankInfo &RBI;
