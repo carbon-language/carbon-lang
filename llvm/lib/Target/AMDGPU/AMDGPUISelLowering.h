@@ -318,6 +318,11 @@ enum NodeType : unsigned {
   CVT_F32_UBYTE1,
   CVT_F32_UBYTE2,
   CVT_F32_UBYTE3,
+
+  // Convert two float 32 numbers into a single register holding two packed f16
+  // with round to zero.
+  CVT_PKRTZ_F16_F32,
+
   /// This node is for VLIW targets and it is used to represent a vector
   /// that is stored in consecutive registers with the same channel.
   /// For example:

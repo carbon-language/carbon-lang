@@ -31,6 +31,10 @@ def AMDGPUFPClassOp : SDTypeProfile<1, 2,
   [SDTCisInt<0>, SDTCisFP<1>, SDTCisInt<2>]
 >;
 
+def AMDGPUFPPackOp : SDTypeProfile<1, 2,
+  [SDTCisFP<1>, SDTCisSameAs<1, 2>]
+>;
+
 def AMDGPUDivScaleOp : SDTypeProfile<2, 3,
   [SDTCisFP<0>, SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, SDTCisSameAs<0, 4>]
 >;
@@ -77,6 +81,8 @@ def AMDGPUrsq_legacy : SDNode<"AMDGPUISD::RSQ_LEGACY", SDTFPUnaryOp>;
 def AMDGPUrsq_clamp : SDNode<"AMDGPUISD::RSQ_CLAMP", SDTFPUnaryOp>;
 
 def AMDGPUldexp : SDNode<"AMDGPUISD::LDEXP", AMDGPULdExpOp>;
+
+def AMDGPUpkrtz_f16_f32 : SDNode<"AMDGPUISD::CVT_PKRTZ_F16_F32", AMDGPUFPPackOp>;
 
 def AMDGPUfp_class : SDNode<"AMDGPUISD::FP_CLASS", AMDGPUFPClassOp>;
 

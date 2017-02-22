@@ -15,13 +15,13 @@ bb:
   %tmp5 = and i32 %tmp2, %tmp4
   %tmp6 = icmp eq i32 %tmp5, 0
   %tmp7 = select i1 %tmp6, float 0.000000e+00, float %arg1
-  %tmp8 = call i32 @llvm.SI.packf16(float undef, float %tmp7)
-  %tmp9 = bitcast i32 %tmp8 to float
+  %tmp8 = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float undef, float %tmp7)
+  %tmp9 = bitcast <2 x half> %tmp8 to float
   ret float %tmp9
 }
 
 declare <4 x float> @llvm.SI.image.load.v4i32(<4 x i32>, <8 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
-declare i32 @llvm.SI.packf16(float, float) #1
+declare <2 x half> @llvm.amdgcn.cvt.pkrtz(float, float) #1
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }

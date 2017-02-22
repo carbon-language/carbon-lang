@@ -45,11 +45,9 @@ main_body:
   %tmp33 = extractelement <4 x float> %tmp31, i32 1
   %tmp34 = extractelement <4 x float> %tmp31, i32 2
   %tmp35 = extractelement <4 x float> %tmp31, i32 3
-  %tmp36 = call i32 @llvm.SI.packf16(float %tmp32, float %tmp33)
-  %tmp37 = bitcast i32 %tmp36 to <2 x half>
-  %tmp38 = call i32 @llvm.SI.packf16(float %tmp34, float %tmp35)
-  %tmp39 = bitcast i32 %tmp38 to <2 x half>
-  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp37, <2 x half> %tmp39, i1 true, i1 false) #0
+  %tmp36 = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float %tmp32, float %tmp33)
+  %tmp38 = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float %tmp34, float %tmp35)
+  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp36, <2 x half> %tmp38, i1 true, i1 false) #0
   ret void
 }
 
@@ -58,7 +56,7 @@ declare float @llvm.amdgcn.interp.p2(float, float, i32, i32, i32) #1
 declare void @llvm.amdgcn.exp.compr.v2f16(i32, i32, <2 x half>, <2 x half>, i1, i1) #0
 
 declare <4 x float> @llvm.SI.image.sample.v2i32(<2 x i32>, <8 x i32>, <4 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
-declare i32 @llvm.SI.packf16(float, float) #1
+declare <2 x half> @llvm.amdgcn.cvt.pkrtz(float, float) #1
 
 attributes #0 = { nounwind }
 attributes #1 = { nounwind readnone }

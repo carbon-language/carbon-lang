@@ -188,6 +188,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_VOID, MVT::v2i16, Custom);
   setOperationAction(ISD::INTRINSIC_VOID, MVT::v2f16, Custom);
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v2f16, Custom);
 
   setOperationAction(ISD::BRCOND, MVT::Other, Custom);
   setOperationAction(ISD::BR_CC, MVT::i1, Expand);
@@ -2014,6 +2015,23 @@ void SITargetLowering::ReplaceNodeResults(SDNode *N,
       Results.push_back(Res);
     return;
   }
+  case ISD::INTRINSIC_WO_CHAIN: {
+    unsigned IID = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+    switch (IID) {
+    case Intrinsic::amdgcn_cvt_pkrtz: {
+      SDValue Src0 = N->getOperand(1);
+      SDValue Src1 = N->getOperand(2);
+      SDLoc SL(N);
+      SDValue Cvt = DAG.getNode(AMDGPUISD::CVT_PKRTZ_F16_F32, SL, MVT::i32,
+                                Src0, Src1);
+
+      Results.push_back(DAG.getNode(ISD::BITCAST, SL, MVT::v2f16, Cvt));
+      return;
+    }
+    default:
+      break;
+    }
+  }
   default:
     break;
   }
@@ -2691,10 +2709,6 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                        Op.getOperand(1),
                        Op.getOperand(2),
                        Op.getOperand(3));
-  case AMDGPUIntrinsic::SI_packf16:
-    if (Op.getOperand(1).isUndef() && Op.getOperand(2).isUndef())
-      return DAG.getUNDEF(MVT::i32);
-    return Op;
   case Intrinsic::amdgcn_interp_mov: {
     SDValue M0 = copyToM0(DAG, DAG.getEntryNode(), DL, Op.getOperand(4));
     SDValue Glue = M0.getValue(1);
@@ -2811,6 +2825,18 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                        Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::amdgcn_sffbh:
     return DAG.getNode(AMDGPUISD::FFBH_I32, DL, VT, Op.getOperand(1));
+  case Intrinsic::amdgcn_cvt_pkrtz: {
+    // FIXME: Stop adding cast if v2f16 legal.
+    EVT VT = Op.getValueType();
+    SDValue Node = DAG.getNode(AMDGPUISD::CVT_PKRTZ_F16_F32, DL, MVT::i32,
+                               Op.getOperand(1), Op.getOperand(2));
+    return DAG.getNode(ISD::BITCAST, DL, VT, Node);
+  }
+  case AMDGPUIntrinsic::SI_packf16: { // Legacy name
+    EVT VT = Op.getValueType();
+    return DAG.getNode(AMDGPUISD::CVT_PKRTZ_F16_F32, DL, VT,
+                       Op.getOperand(1), Op.getOperand(2));
+  }
   default:
     return AMDGPUTargetLowering::LowerOperation(Op, DAG);
   }
@@ -4154,6 +4180,15 @@ SDValue SITargetLowering::performFMed3Combine(SDNode *N,
   return SDValue();
 }
 
+SDValue SITargetLowering::performCvtPkRTZCombine(SDNode *N,
+                                                 DAGCombinerInfo &DCI) const {
+  SDValue Src0 = N->getOperand(0);
+  SDValue Src1 = N->getOperand(1);
+  if (Src0.isUndef() && Src1.isUndef())
+    return DCI.DAG.getUNDEF(N->getValueType(0));
+  return SDValue();
+}
+
 unsigned SITargetLowering::getFusedOpcode(const SelectionDAG &DAG,
                                           const SDNode *N0,
                                           const SDNode *N1) const {
@@ -4422,6 +4457,8 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     return performCvtF32UByteNCombine(N, DCI);
   case AMDGPUISD::FMED3:
     return performFMed3Combine(N, DCI);
+  case AMDGPUISD::CVT_PKRTZ_F16_F32:
+    return performCvtPkRTZCombine(N, DCI);
   }
   return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
 }

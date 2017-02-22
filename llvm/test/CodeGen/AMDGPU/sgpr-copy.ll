@@ -164,11 +164,9 @@ ENDIF24:                                          ; preds = %IF25, %ENDIF
   %tmp110 = fmul float %tmp109, %tmp106
   %tmp111 = fsub float -0.000000e+00, %tmp105
   %tmp112 = fmul float %tmp111, %tmp106
-  %tmp113 = call i32 @llvm.SI.packf16(float %tmp108, float %tmp110)
-  %tmp114 = bitcast i32 %tmp113 to <2 x half>
-  %tmp115 = call i32 @llvm.SI.packf16(float %tmp112, float 1.000000e+00)
-  %tmp116 = bitcast i32 %tmp115 to <2 x half>
-  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp114, <2 x half> %tmp116, i1 true, i1 true) #0
+  %tmp113 = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float %tmp108, float %tmp110)
+  %tmp115 = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float %tmp112, float 1.000000e+00)
+  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp113, <2 x half> %tmp115, i1 true, i1 true) #0
   ret void
 }
 
@@ -388,9 +386,8 @@ bb:
   %tmp8 = load <8 x i32>, <8 x i32> addrspace(2)* %tmp7, align 32, !tbaa !0
   %tmp9 = call <4 x float> @llvm.SI.image.sample.v2i32(<2 x i32> <i32 1061158912, i32 1048576000>, <8 x i32> %tmp8, <4 x i32> undef, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
   %tmp10 = extractelement <4 x float> %tmp9, i32 0
-  %tmp12 = call i32 @llvm.SI.packf16(float undef, float %tmp10)
-  %tmp13 = bitcast i32 %tmp12 to <2 x half>
-  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp13, <2 x half> undef, i1 true, i1 true) #0
+  %tmp12 = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float undef, float %tmp10)
+  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp12, <2 x half> undef, i1 true, i1 true) #0
   ret void
 }
 
@@ -404,9 +401,8 @@ bb:
   %tmp8 = load <4 x i32>, <4 x i32> addrspace(2)* %tmp7, align 16, !tbaa !0
   %tmp9 = call <4 x float> @llvm.SI.image.sample.v2i32(<2 x i32> <i32 1061158912, i32 1048576000>, <8 x i32> undef, <4 x i32> %tmp8, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
   %tmp10 = extractelement <4 x float> %tmp9, i32 0
-  %tmp12 = call i32 @llvm.SI.packf16(float %tmp10, float undef)
-  %tmp13 = bitcast i32 %tmp12 to <2 x half>
-  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp13, <2 x half> undef, i1 true, i1 true) #0
+  %tmp12 = call <2 x half> @llvm.amdgcn.cvt.pkrtz(float %tmp10, float undef)
+  call void @llvm.amdgcn.exp.compr.v2f16(i32 0, i32 15, <2 x half> %tmp12, <2 x half> undef, i1 true, i1 true) #0
   ret void
 }
 
@@ -419,8 +415,8 @@ declare float @llvm.amdgcn.interp.p1(float, i32, i32, i32) #1
 declare float @llvm.amdgcn.interp.p2(float, float, i32, i32, i32) #1
 declare void @llvm.amdgcn.exp.f32(i32, i32, float, float, float, float, i1, i1) #0
 declare void @llvm.amdgcn.exp.compr.v2f16(i32, i32, <2 x half>, <2 x half>, i1, i1) #0
+declare <2 x half> @llvm.amdgcn.cvt.pkrtz(float, float) #1
 
-declare i32 @llvm.SI.packf16(float, float) #1
 declare <4 x float> @llvm.SI.image.sample.v2i32(<2 x i32>, <8 x i32>, <4 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
 declare float @llvm.SI.load.const(<16 x i8>, i32) #1
 
