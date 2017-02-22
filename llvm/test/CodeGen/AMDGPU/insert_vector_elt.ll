@@ -1,5 +1,5 @@
-; RUN: llc -verify-machineinstrs -march=amdgcn -mattr=+max-private-element-size-16 < %s | FileCheck -check-prefix=GCN -check-prefix=SI -check-prefix=GCN-NO-TONGA %s
-; RUN: llc -verify-machineinstrs -march=amdgcn -mcpu=tonga -mattr=-flat-for-global -mattr=+max-private-element-size-16 < %s | FileCheck -check-prefix=GCN -check-prefix=SI -check-prefix=GCN-TONGA %s
+; RUN: llc -verify-machineinstrs -march=amdgcn -mattr=+max-private-element-size-16 < %s | FileCheck -check-prefix=GCN -check-prefix=SI %s
+; RUN: llc -verify-machineinstrs -march=amdgcn -mcpu=tonga -mattr=-flat-for-global -mattr=+max-private-element-size-16 < %s | FileCheck -check-prefix=GCN -check-prefix=SI %s
 
 ; FIXME: Broken on evergreen
 ; FIXME: For some reason the 8 and 16 vectors are being stored as
@@ -219,7 +219,10 @@ define void @dynamic_insertelement_v3i16(<3 x i16> addrspace(1)* %out, <3 x i16>
 
 ; GCN: s_waitcnt
 
-; GCN: buffer_load_dwordx2
+; GCN: buffer_load_ushort
+; GCN: buffer_load_ushort
+; GCN: buffer_load_ushort
+; GCN: buffer_load_ushort
 
 ; GCN: buffer_store_dwordx2 v{{\[[0-9]+:[0-9]+\]}}, off
 define void @dynamic_insertelement_v4i16(<4 x i16> addrspace(1)* %out, <4 x i16> %a, i32 %b) nounwind {
@@ -237,9 +240,8 @@ define void @dynamic_insertelement_v4i16(<4 x i16> addrspace(1)* %out, <4 x i16>
 
 ; GCN: buffer_store_byte v{{[0-9]+}}, v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, s{{[0-9]+}} offen{{$}}
 
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-TONGA: buffer_load_ushort
+; GCN: buffer_load_ubyte
+; GCN: buffer_load_ubyte
 
 ; GCN: buffer_store_short v{{[0-9]+}}, off
 define void @dynamic_insertelement_v2i8(<2 x i8> addrspace(1)* %out, <2 x i8> %a, i32 %b) nounwind {
@@ -259,11 +261,9 @@ define void @dynamic_insertelement_v2i8(<2 x i8> addrspace(1)* %out, <2 x i8> %a
 
 ; GCN: buffer_store_byte v{{[0-9]+}}, v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, s{{[0-9]+}} offen{{$}}
 
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-TONGA: buffer_load_ushort
-; GCN-TONGA: buffer_load_ubyte
+; GCN: buffer_load_ubyte
+; GCN: buffer_load_ubyte
+; GCN: buffer_load_ubyte
 
 ; GCN-DAG: buffer_store_byte v{{[0-9]+}}, off
 ; GCN-DAG: buffer_store_short v{{[0-9]+}}, off
@@ -286,11 +286,10 @@ define void @dynamic_insertelement_v3i8(<3 x i8> addrspace(1)* %out, <3 x i8> %a
 
 ; GCN: buffer_store_byte v{{[0-9]+}}, v{{[0-9]+}}, s{{\[[0-9]+:[0-9]+\]}}, s{{[0-9]+}} offen{{$}}
 
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-NO-TONGA: buffer_load_ubyte
-; GCN-TONGA: buffer_load_dword
+; GCN: buffer_load_ubyte
+; GCN: buffer_load_ubyte
+; GCN: buffer_load_ubyte
+; GCN: buffer_load_ubyte
 
 ; GCN: buffer_store_dword v{{[0-9]+}}, off
 define void @dynamic_insertelement_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> %a, i32 %b) nounwind {
