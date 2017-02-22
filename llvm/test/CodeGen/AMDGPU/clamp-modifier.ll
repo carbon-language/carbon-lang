@@ -153,6 +153,21 @@ define amdgpu_kernel void @v_clamp_add_src_v2f32(<2 x float> addrspace(1)* %out,
   ret void
 }
 
+; GCN-LABEL: {{^}}v_clamp_add_src_f64:
+; GCN: {{buffer|flat}}_load_dwordx2 [[A:v\[[0-9]+:[0-9]+\]]]
+; GCN: v_add_f64 v{{\[[0-9]+:[0-9]+\]}}, [[A]], 1.0 clamp{{$}}
+define amdgpu_kernel void @v_clamp_add_src_f64(double addrspace(1)* %out, double addrspace(1)* %aptr) #0 {
+  %tid = call i32 @llvm.amdgcn.workitem.id.x()
+  %gep0 = getelementptr double, double addrspace(1)* %aptr, i32 %tid
+  %out.gep = getelementptr double, double addrspace(1)* %out, i32 %tid
+  %a = load double, double addrspace(1)* %gep0
+  %add = fadd double %a, 1.0
+  %max = call double @llvm.maxnum.f64(double %add, double 0.0)
+  %clamp = call double @llvm.minnum.f64(double %max, double 1.0)
+  store double %clamp, double addrspace(1)* %out.gep
+  ret void
+}
+
 declare i32 @llvm.amdgcn.workitem.id.x() #1
 declare float @llvm.fabs.f32(float) #1
 declare float @llvm.floor.f32(float) #1

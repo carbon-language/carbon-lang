@@ -694,7 +694,8 @@ const MachineOperand *SIFoldOperands::isClamp(const MachineInstr &MI) const {
   unsigned Op = MI.getOpcode();
   switch (Op) {
   case AMDGPU::V_MAX_F32_e64:
-  case AMDGPU::V_MAX_F16_e64: {
+  case AMDGPU::V_MAX_F16_e64:
+  case AMDGPU::V_MAX_F64: {
     if (!TII->getNamedOperand(MI, AMDGPU::OpName::clamp)->getImm())
       return nullptr;
 
