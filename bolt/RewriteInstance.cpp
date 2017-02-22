@@ -133,7 +133,7 @@ TopCalledLimit("top-called-limit",
                cl::init(100),
                cl::ZeroOrMore,
                cl::Hidden);
-               
+
 cl::opt<bool>
 HotText("hot-text",
         cl::desc("hot text symbols support"),
@@ -1776,6 +1776,9 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
 
   Streamer.SwitchSection(Section);
 
+  if (!opts::Relocs)
+    Streamer.setCodeSkew(EmitColdPart ? 0 : Function.getAddress());
+
   if (opts::Relocs) {
     // We have to use at least 2-byte alignment because of C++ ABI.
     Streamer.EmitCodeAlignment(2);
@@ -2747,7 +2750,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   //
 
   // New section header string table goes last.
-  
+
 
   // Fix ELF header.
   auto NewEhdr = *Obj->getHeader();
