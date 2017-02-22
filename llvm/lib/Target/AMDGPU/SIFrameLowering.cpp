@@ -391,11 +391,25 @@ void SIFrameLowering::processFunctionBeforeFrameFinalized(
   if (!MFI.hasStackObjects())
     return;
 
-  assert(RS && "RegScavenger required if spilling");
-  int ScavengeFI = MFI.CreateStackObject(
-    AMDGPU::SGPR_32RegClass.getSize(),
-    AMDGPU::SGPR_32RegClass.getAlignment(), false);
-  RS->addScavengingFrameIndex(ScavengeFI);
+  bool MayNeedScavengingEmergencySlot = MFI.hasStackObjects();
+  if (MayNeedScavengingEmergencySlot) {
+    // We force this to be at offset 0 so no user object ever has 0 as an
+    // address, so we may use 0 as an invalid pointer value. This is because
+    // LLVM assumes 0 is an invalid pointer in address space 0. Because alloca
+    // is required to be address space 0, we are forced to accept this for
+    // now. Ideally we could have the stack in another address space with 0 as a
+    // valid pointer, and -1 as the null value.
+    //
+    // This will also waste additional space when user stack objects require > 4
+    // byte alignment.
+    //
+    // The main cost here is losing the offset for addressing modes. However
+    // this also ensures we shouldn't need a register for the offset when
+    // emergency scavenging.
+    int ScavengeFI = MFI.CreateFixedObject(
+      AMDGPU::SGPR_32RegClass.getSize(), 0, false);
+    RS->addScavengingFrameIndex(ScavengeFI);
+  }
 
   const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
   const SIInstrInfo *TII = ST.getInstrInfo();
