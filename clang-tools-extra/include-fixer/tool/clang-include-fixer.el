@@ -251,25 +251,28 @@ clang-include-fixer to insert the selected header."
         (message "Couldn't find header for '%s'"
                  (let-alist (car .QuerySymbolInfos) .RawIdentifier)))
        (t
-        ;; Replace the HeaderInfos list by a single header selected by
-        ;; the user.
-        (clang-include-fixer--select-header context)
-        ;; Call clang-include-fixer again to insert the selected header.
-        (clang-include-fixer--start
-         (let ((old-tick (buffer-chars-modified-tick)))
-           (lambda (stdout)
-             (when (/= old-tick (buffer-chars-modified-tick))
-               ;; Replacing the buffer now would undo the user’s changes.
-               (user-error (concat "The buffer has been changed "
-                                   "before the header could be inserted")))
-             (clang-include-fixer--replace-buffer stdout)
-             (let-alist context
-               (let-alist (car .HeaderInfos)
-                 (run-hook-with-args 'clang-include-fixer-add-include-hook
-                                     (substring .Header 1 -1)
-                                     (string= (substring .Header 0 1) "<"))))))
-         (format "-insert-header=%s"
-                 (clang-include-fixer--encode-json context)))))))
+        ;; Users may C-g in prompts, make sure the process sentinel
+        ;; behaves correctly.
+        (with-local-quit
+          ;; Replace the HeaderInfos list by a single header selected by
+          ;; the user.
+          (clang-include-fixer--select-header context)
+          ;; Call clang-include-fixer again to insert the selected header.
+          (clang-include-fixer--start
+           (let ((old-tick (buffer-chars-modified-tick)))
+             (lambda (stdout)
+               (when (/= old-tick (buffer-chars-modified-tick))
+                 ;; Replacing the buffer now would undo the user’s changes.
+                 (user-error (concat "The buffer has been changed "
+                                     "before the header could be inserted")))
+               (clang-include-fixer--replace-buffer stdout)
+               (let-alist context
+                 (let-alist (car .HeaderInfos)
+                   (run-hook-with-args 'clang-include-fixer-add-include-hook
+                                       (substring .Header 1 -1)
+                                       (string= (substring .Header 0 1) "<"))))))
+           (format "-insert-header=%s"
+                   (clang-include-fixer--encode-json context))))))))
   nil)
 
 (defun clang-include-fixer--select-header (context)
@@ -305,13 +308,13 @@ They are replaced by the single element selected by the user."
             (goto-char (clang-include-fixer--closest-overlay overlays))
             (cl-flet ((header (info) (let-alist info .Header)))
               ;; The header-infos is already sorted by include-fixer.
-              (let* ((header (ido-completing-read
+              (let* ((header (completing-read
                               (clang-include-fixer--format-message
                                "Select include for '%s': " symbol)
                               (mapcar #'header .HeaderInfos)
                               nil :require-match nil
                               'clang-include-fixer--history))
-                     (info (cl-find header .HeaderInfos :key #'header)))
+                     (info (cl-find header .HeaderInfos :key #'header :test #'string=)))
                 (cl-assert info)
                 (setcar .HeaderInfos info)
                 (setcdr .HeaderInfos nil))))
