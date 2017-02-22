@@ -1,6 +1,7 @@
 ; RUN: opt < %s  -loop-vectorize -force-vector-interleave=1 -force-vector-width=4 -dce -instcombine -S | FileCheck --check-prefix VEC4_INTERL1 %s
 ; RUN: opt < %s  -loop-vectorize -force-vector-interleave=2 -force-vector-width=4 -dce -instcombine -S | FileCheck --check-prefix VEC4_INTERL2 %s
 ; RUN: opt < %s  -loop-vectorize -force-vector-interleave=2 -force-vector-width=1 -dce -instcombine -S | FileCheck --check-prefix VEC1_INTERL2 %s
+; RUN: opt < %s  -loop-vectorize -force-vector-interleave=1 -force-vector-width=2 -dce -simplifycfg -instcombine -S | FileCheck --check-prefix VEC2_INTERL1_PRED_STORE %s
 
 ; VEC4_INTERL1-LABEL: @fp_iv_loop1(
 ; VEC4_INTERL1:       %[[FP_INC:.*]] = load float, float* @fp_inc
@@ -214,5 +215,62 @@ for.end.loopexit:                                 ; preds = %for.body
   br label %for.end
 
 for.end:                                          ; preds = %for.end.loopexit, %entry
+  ret void
+}
+
+; VEC2_INTERL1_PRED_STORE-LABEL: @non_primary_iv_float_scalar(
+; VEC2_INTERL1_PRED_STORE:       vector.body:
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[INDEX:%.*]] = phi i64 [ [[INDEX_NEXT:%.*]], %[[PRED_STORE_CONTINUE7:.*]] ], [ 0, %min.iters.checked ]
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP1:%.*]] = sitofp i64 [[INDEX]] to float
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[BROADCAST_SPLATINSERT3:%.*]] = insertelement <2 x float> undef, float [[TMP1]], i32 0
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[BROADCAST_SPLAT4:%.*]] = shufflevector <2 x float> [[BROADCAST_SPLATINSERT3]], <2 x float> undef, <2 x i32> zeroinitializer
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[INDUCTION5:%.*]] = fadd fast <2 x float> [[BROADCAST_SPLAT4]], <float 0.000000e+00, float 1.000000e+00>
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP2:%.*]] = getelementptr inbounds float, float* %A, i64 [[INDEX]]
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP3:%.*]] = bitcast float* [[TMP2]] to <2 x float>*
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[WIDE_LOAD:%.*]] = load <2 x float>, <2 x float>* [[TMP3]], align 4
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP4:%.*]] = fcmp fast oeq <2 x float> [[WIDE_LOAD]], zeroinitializer
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP5:%.*]] = extractelement <2 x i1> [[TMP4]], i32 0
+; VEC2_INTERL1_PRED_STORE-NEXT:    br i1 [[TMP5]], label %[[PRED_STORE_IF:.*]], label %[[PRED_STORE_CONTINUE:.*]]
+; VEC2_INTERL1_PRED_STORE:       [[PRED_STORE_IF]]:
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP6:%.*]] = extractelement <2 x float> [[INDUCTION5]], i32 0
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP7:%.*]] = getelementptr inbounds float, float* %A, i64 [[INDEX]]
+; VEC2_INTERL1_PRED_STORE-NEXT:    store float [[TMP6]], float* [[TMP7]], align 4
+; VEC2_INTERL1_PRED_STORE-NEXT:    br label %[[PRED_STORE_CONTINUE]]
+; VEC2_INTERL1_PRED_STORE:       [[PRED_STORE_CONTINUE]]:
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP8:%.*]] = extractelement <2 x i1> [[TMP4]], i32 1
+; VEC2_INTERL1_PRED_STORE-NEXT:    br i1 [[TMP8]], label %[[PRED_STORE_IF6:.*]], label %[[PRED_STORE_CONTINUE7]]
+; VEC2_INTERL1_PRED_STORE:       [[PRED_STORE_IF6]]:
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP9:%.*]] = extractelement <2 x float> [[INDUCTION5]], i32 1
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP10:%.*]] = or i64 [[INDEX]], 1
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[TMP11:%.*]] = getelementptr inbounds float, float* %A, i64 [[TMP10]]
+; VEC2_INTERL1_PRED_STORE-NEXT:    store float [[TMP9]], float* [[TMP11]], align 4
+; VEC2_INTERL1_PRED_STORE-NEXT:    br label %[[PRED_STORE_CONTINUE7]]
+; VEC2_INTERL1_PRED_STORE:       [[PRED_STORE_CONTINUE7]]:
+; VEC2_INTERL1_PRED_STORE-NEXT:    [[INDEX_NEXT]] = add i64 [[INDEX]], 2
+; VEC2_INTERL1_PRED_STORE:         br i1 {{.*}}, label %middle.block, label %vector.body
+
+define void @non_primary_iv_float_scalar(float* %A, i64 %N) {
+entry:
+  br label %for.body
+
+for.body:
+  %i = phi i64 [ %i.next, %for.inc ], [ 0, %entry ]
+  %j = phi float [ %j.next, %for.inc ], [ 0.0, %entry ]
+  %tmp0 = getelementptr inbounds float, float* %A, i64 %i
+  %tmp1 = load float, float* %tmp0, align 4
+  %tmp2 = fcmp fast oeq float %tmp1, 0.0
+  br i1 %tmp2, label %if.pred, label %for.inc
+
+if.pred:
+  store float %j, float* %tmp0, align 4
+  br label %for.inc
+
+for.inc:
+  %i.next = add nuw nsw i64 %i, 1
+  %j.next = fadd fast float %j, 1.0
+  %cond = icmp slt i64 %i.next, %N
+  br i1 %cond, label %for.body, label %for.end
+
+for.end:
   ret void
 }
