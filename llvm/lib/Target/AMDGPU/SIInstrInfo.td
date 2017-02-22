@@ -632,9 +632,9 @@ def DSTOMOD {
   int NONE = 0;
 }
 
-def TRAPTYPE {
-  int LLVM_TRAP = 1;
-  int LLVM_DEBUG_TRAP = 2;
+def TRAPID{
+  int LLVM_TRAP = 2;
+  int LLVM_DEBUG_TRAP = 3;
 }
 
 //===----------------------------------------------------------------------===//
