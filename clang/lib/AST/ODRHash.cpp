@@ -74,11 +74,10 @@ unsigned ODRHash::CalculateHash() {
 class ODRDeclVisitor : public ConstDeclVisitor<ODRDeclVisitor> {
   typedef ConstDeclVisitor<ODRDeclVisitor> Inherited;
   llvm::FoldingSetNodeID &ID;
-  ODRHash &Hash;
 
 public:
-  ODRDeclVisitor(llvm::FoldingSetNodeID &ID, ODRHash &Hash)
-      : ID(ID), Hash(Hash) {}
+  ODRDeclVisitor(llvm::FoldingSetNodeID &ID)
+      : ID(ID) {}
 
   void Visit(const Decl *D) {
     ID.AddInteger(D->getKind());
@@ -109,7 +108,7 @@ void ODRHash::AddSubDecl(const Decl *D) {
   assert(D && "Expecting non-null pointer.");
   AddDecl(D);
 
-  ODRDeclVisitor(ID, *this).Visit(D);
+  ODRDeclVisitor(ID).Visit(D);
 }
 
 void ODRHash::AddCXXRecordDecl(const CXXRecordDecl *Record) {
