@@ -8973,8 +8973,9 @@ void ASTReader::diagnoseOdrViolations() {
           case AS_protected:
             return ProtectedSpecifer;
           case AS_none:
-            llvm_unreachable("Invalid access specifier");
+            break;
           }
+          llvm_unreachable("Invalid access specifier");
         }
       };
 
