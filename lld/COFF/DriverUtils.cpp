@@ -50,8 +50,6 @@ public:
   void add(const char *S) { Args.push_back(Saver.save(S)); }
 
   void run() {
-    log(Prog + " " + llvm::join(Args.begin(), Args.end(), " "));
-
     ErrorOr<std::string> ExeOrErr = sys::findProgramByName(Prog);
     if (auto EC = ExeOrErr.getError())
       fatal(EC, "unable to find " + Prog + " in PATH: ");
