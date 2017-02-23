@@ -86,14 +86,13 @@ OutputSection<ELFT>::OutputSection(StringRef Name, uint32_t Type, uintX_t Flags)
 }
 
 template <typename ELFT>
-static bool compareByFilePosition(InputSection<ELFT> *A,
-                                  InputSection<ELFT> *B) {
+static bool compareByFilePosition(InputSection *A, InputSection *B) {
   // Synthetic doesn't have link order dependecy, stable_sort will keep it last
   if (A->kind() == InputSectionBase::Synthetic ||
       B->kind() == InputSectionBase::Synthetic)
     return false;
-  auto *LA = cast<InputSection<ELFT>>(A->template getLinkOrderDep<ELFT>());
-  auto *LB = cast<InputSection<ELFT>>(B->template getLinkOrderDep<ELFT>());
+  auto *LA = cast<InputSection>(A->template getLinkOrderDep<ELFT>());
+  auto *LB = cast<InputSection>(B->template getLinkOrderDep<ELFT>());
   OutputSectionBase *AOut = LA->OutSec;
   OutputSectionBase *BOut = LB->OutSec;
   if (AOut != BOut)
@@ -119,21 +118,21 @@ template <class ELFT> void OutputSection<ELFT>::finalize() {
   if (!Config->copyRelocs() || (Type != SHT_RELA && Type != SHT_REL))
     return;
 
-  InputSection<ELFT> *First = Sections[0];
+  InputSection *First = Sections[0];
   if (isa<SyntheticSection<ELFT>>(First))
     return;
 
   this->Link = In<ELFT>::SymTab->OutSec->SectionIndex;
   // sh_info for SHT_REL[A] sections should contain the section header index of
   // the section to which the relocation applies.
-  InputSectionBase *S = First->getRelocatedSection();
+  InputSectionBase *S = First->getRelocatedSection<ELFT>();
   this->Info = S->OutSec->SectionIndex;
 }
 
 template <class ELFT>
 void OutputSection<ELFT>::addSection(InputSectionBase *C) {
   assert(C->Live);
-  auto *S = cast<InputSection<ELFT>>(C);
+  auto *S = cast<InputSection>(C);
   Sections.push_back(S);
   S->OutSec = this;
   this->updateAlignment(S->Alignment);
@@ -146,7 +145,7 @@ void OutputSection<ELFT>::addSection(InputSectionBase *C) {
 template <class ELFT>
 void OutputSection<ELFT>::forEachInputSection(
     std::function<void(InputSectionBase *)> F) {
-  for (InputSection<ELFT> *S : Sections)
+  for (InputSection *S : Sections)
     F(S);
 }
 
@@ -154,7 +153,7 @@ void OutputSection<ELFT>::forEachInputSection(
 // and scan relocations to setup sections' offsets.
 template <class ELFT> void OutputSection<ELFT>::assignOffsets() {
   uintX_t Off = this->Size;
-  for (InputSection<ELFT> *S : Sections) {
+  for (InputSection *S : Sections) {
     Off = alignTo(Off, S->Alignment);
     S->OutSecOff = Off;
     Off += S->template getSize<ELFT>();
@@ -164,11 +163,11 @@ template <class ELFT> void OutputSection<ELFT>::assignOffsets() {
 
 template <class ELFT>
 void OutputSection<ELFT>::sort(std::function<int(InputSectionBase *S)> Order) {
-  typedef std::pair<unsigned, InputSection<ELFT> *> Pair;
+  typedef std::pair<unsigned, InputSection *> Pair;
   auto Comp = [](const Pair &A, const Pair &B) { return A.first < B.first; };
 
   std::vector<Pair> V;
-  for (InputSection<ELFT> *S : Sections)
+  for (InputSection *S : Sections)
     V.push_back({Order(S), S});
   std::stable_sort(V.begin(), V.end(), Comp);
   Sections.clear();
@@ -219,8 +218,7 @@ static bool isCrtend(StringRef S) { return isCrtBeginEnd(S, "crtend"); }
 // are too many real-world use cases of .ctors, so we had no choice to
 // support that with this rather ad-hoc semantics.
 template <class ELFT>
-static bool compCtors(const InputSection<ELFT> *A,
-                      const InputSection<ELFT> *B) {
+static bool compCtors(const InputSection *A, const InputSection *B) {
   bool BeginA = isCrtbegin(A->template getFile<ELFT>()->getName());
   bool BeginB = isCrtbegin(B->template getFile<ELFT>()->getName());
   if (BeginA != BeginB)
@@ -263,7 +261,7 @@ template <class ELFT> void OutputSection<ELFT>::writeTo(uint8_t *Buf) {
   if (uint32_t Filler = Script<ELFT>::X->getFiller(this->Name))
     fill(Buf, this->Size, Filler);
 
-  auto Fn = [=](InputSection<ELFT> *IS) { IS->writeTo(Buf); };
+  auto Fn = [=](InputSection *IS) { IS->writeTo<ELFT>(Buf); };
   forEach(Sections.begin(), Sections.end(), Fn);
 
   // Linker scripts may have BYTE()-family commands with which you

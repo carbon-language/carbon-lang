@@ -348,7 +348,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(In<ELFT>::BuildId);
   }
 
-  InputSection<ELFT> *Common = createCommonSection<ELFT>();
+  InputSection *Common = createCommonSection<ELFT>();
   if (!Common->Data.empty()) {
     In<ELFT>::Common = Common;
     Add(Common);
@@ -458,7 +458,7 @@ static bool shouldKeepInSymtab(InputSectionBase *Sec, StringRef SymName,
     return false;
 
   // If sym references a section in a discarded group, don't keep it.
-  if (Sec == &InputSection<ELFT>::Discarded)
+  if (Sec == &InputSection::Discarded)
     return false;
 
   if (Config->Discard == DiscardPolicy::None)
@@ -531,7 +531,7 @@ template <class ELFT> void Writer<ELFT>::addSectionSymbols() {
       if (!First)
         First = D;
     });
-    auto *IS = dyn_cast_or_null<InputSection<ELFT>>(First);
+    auto *IS = dyn_cast_or_null<InputSection>(First);
     if (!IS || isa<SyntheticSection<ELFT>>(IS) || IS->Type == SHT_REL ||
         IS->Type == SHT_RELA)
       continue;
@@ -914,7 +914,7 @@ void Writer<ELFT>::forEachRelSec(std::function<void(InputSectionBase &)> Fn) {
     // processed by InputSection::relocateNonAlloc.
     if (!(IS->Flags & SHF_ALLOC))
       continue;
-    if (isa<InputSection<ELFT>>(IS) || isa<EhInputSection<ELFT>>(IS))
+    if (isa<InputSection>(IS) || isa<EhInputSection<ELFT>>(IS))
       Fn(*IS);
   }
 }

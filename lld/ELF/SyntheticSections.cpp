@@ -54,9 +54,9 @@ template <class ELFT> static std::vector<DefinedCommon *> getCommonSymbols() {
 }
 
 // Find all common symbols and allocate space for them.
-template <class ELFT> InputSection<ELFT> *elf::createCommonSection() {
-  auto *Ret = make<InputSection<ELFT>>(SHF_ALLOC | SHF_WRITE, SHT_NOBITS, 1,
-                                       ArrayRef<uint8_t>(), "COMMON");
+template <class ELFT> InputSection *elf::createCommonSection() {
+  auto *Ret = make<InputSection>(SHF_ALLOC | SHF_WRITE, SHT_NOBITS, 1,
+                                 ArrayRef<uint8_t>(), "COMMON");
   Ret->Live = true;
 
   if (!Config->DefineCommon)
@@ -278,9 +278,9 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
   return nullptr;
 }
 
-template <class ELFT> InputSection<ELFT> *elf::createInterpSection() {
-  auto *Ret = make<InputSection<ELFT>>(SHF_ALLOC, SHT_PROGBITS, 1,
-                                       ArrayRef<uint8_t>(), ".interp");
+template <class ELFT> InputSection *elf::createInterpSection() {
+  auto *Ret = make<InputSection>(SHF_ALLOC, SHT_PROGBITS, 1,
+                                 ArrayRef<uint8_t>(), ".interp");
   Ret->Live = true;
 
   // StringSaver guarantees that the returned string ends with '\0'.
@@ -1515,7 +1515,7 @@ GdbIndexSection<ELFT>::GdbIndexSection()
 
 template <class ELFT> void GdbIndexSection<ELFT>::parseDebugSections() {
   for (InputSectionBase *S : Symtab<ELFT>::X->Sections)
-    if (InputSection<ELFT> *IS = dyn_cast<InputSection<ELFT>>(S))
+    if (InputSection *IS = dyn_cast<InputSection>(S))
       if (IS->OutSec && IS->Name == ".debug_info")
         readDwarf(IS);
 }
@@ -1530,8 +1530,7 @@ static uint32_t hash(StringRef Str) {
   return R;
 }
 
-template <class ELFT>
-void GdbIndexSection<ELFT>::readDwarf(InputSection<ELFT> *I) {
+template <class ELFT> void GdbIndexSection<ELFT>::readDwarf(InputSection *I) {
   GdbIndexBuilder<ELFT> Builder(I);
   if (ErrorCount)
     return;
@@ -1971,9 +1970,8 @@ template <class ELFT>
 void ARMExidxSentinelSection<ELFT>::writeTo(uint8_t *Buf) {
   // Get the InputSection before us, we are by definition last
   auto RI = cast<OutputSection<ELFT>>(this->OutSec)->Sections.rbegin();
-  InputSection<ELFT> *LE = *(++RI);
-  InputSection<ELFT> *LC =
-      cast<InputSection<ELFT>>(LE->template getLinkOrderDep<ELFT>());
+  InputSection *LE = *(++RI);
+  InputSection *LC = cast<InputSection>(LE->template getLinkOrderDep<ELFT>());
   uint64_t S = LC->OutSec->Addr +
                LC->template getOffset<ELFT>(LC->template getSize<ELFT>());
   uint64_t P = this->getVA();
@@ -2003,20 +2001,20 @@ template <class ELFT> void ThunkSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT>
-InputSection<ELFT> *ThunkSection<ELFT>::getTargetInputSection() const {
+InputSection *ThunkSection<ELFT>::getTargetInputSection() const {
   const Thunk<ELFT> *T = Thunks.front();
   return T->getTargetInputSection();
 }
 
-template InputSection<ELF32LE> *elf::createCommonSection();
-template InputSection<ELF32BE> *elf::createCommonSection();
-template InputSection<ELF64LE> *elf::createCommonSection();
-template InputSection<ELF64BE> *elf::createCommonSection();
+template InputSection *elf::createCommonSection<ELF32LE>();
+template InputSection *elf::createCommonSection<ELF32BE>();
+template InputSection *elf::createCommonSection<ELF64LE>();
+template InputSection *elf::createCommonSection<ELF64BE>();
 
-template InputSection<ELF32LE> *elf::createInterpSection();
-template InputSection<ELF32BE> *elf::createInterpSection();
-template InputSection<ELF64LE> *elf::createInterpSection();
-template InputSection<ELF64BE> *elf::createInterpSection();
+template InputSection *elf::createInterpSection<ELF32LE>();
+template InputSection *elf::createInterpSection<ELF32BE>();
+template InputSection *elf::createInterpSection<ELF64LE>();
+template InputSection *elf::createInterpSection<ELF64BE>();
 
 template MergeInputSection<ELF32LE> *elf::createCommentSection();
 template MergeInputSection<ELF32BE> *elf::createCommentSection();

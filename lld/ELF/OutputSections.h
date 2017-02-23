@@ -24,7 +24,7 @@ struct PhdrEntry;
 class SymbolBody;
 struct EhSectionPiece;
 template <class ELFT> class EhInputSection;
-template <class ELFT> class InputSection;
+class InputSection;
 class InputSectionBase;
 template <class ELFT> class MergeInputSection;
 template <class ELFT> class OutputSection;
@@ -123,7 +123,7 @@ public:
   static bool classof(const OutputSectionBase *B) {
     return B->getKind() == Regular;
   }
-  std::vector<InputSection<ELFT> *> Sections;
+  std::vector<InputSection *> Sections;
 
   // Location in the output buffer.
   uint8_t *Loc = nullptr;

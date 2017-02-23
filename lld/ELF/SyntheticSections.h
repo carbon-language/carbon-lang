@@ -33,14 +33,14 @@
 namespace lld {
 namespace elf {
 
-template <class ELFT> class SyntheticSection : public InputSection<ELFT> {
+template <class ELFT> class SyntheticSection : public InputSection {
   typedef typename ELFT::uint uintX_t;
 
 public:
   SyntheticSection(uintX_t Flags, uint32_t Type, uintX_t Addralign,
                    StringRef Name)
-      : InputSection<ELFT>(Flags, Type, Addralign, {}, Name,
-                           InputSectionBase::Synthetic) {
+      : InputSection(Flags, Type, Addralign, {}, Name,
+                     InputSectionBase::Synthetic) {
     this->Live = true;
   }
 
@@ -315,14 +315,14 @@ class DynamicSection final : public SyntheticSection<ELFT> {
     int32_t Tag;
     union {
       OutputSectionBase *OutSec;
-      InputSection<ELFT> *InSec;
+      InputSection *InSec;
       uint64_t Val;
       const SymbolBody *Sym;
     };
     enum KindT { SecAddr, SecSize, SymAddr, PlainInt, InSecAddr } Kind;
     Entry(int32_t Tag, OutputSectionBase *OutSec, KindT Kind = SecAddr)
         : Tag(Tag), OutSec(OutSec), Kind(Kind) {}
-    Entry(int32_t Tag, InputSection<ELFT> *Sec)
+    Entry(int32_t Tag, InputSection *Sec)
         : Tag(Tag), InSec(Sec), Kind(InSecAddr) {}
     Entry(int32_t Tag, uint64_t Val) : Tag(Tag), Val(Val), Kind(PlainInt) {}
     Entry(int32_t Tag, const SymbolBody *Sym)
@@ -514,7 +514,7 @@ public:
 
 private:
   void parseDebugSections();
-  void readDwarf(InputSection<ELFT> *I);
+  void readDwarf(InputSection *I);
 
   uint32_t CuTypesOffset;
   uint32_t SymTabOffset;
@@ -736,15 +736,15 @@ public:
   void addThunk(Thunk<ELFT> *T);
   size_t getSize() const override { return Size; }
   void writeTo(uint8_t *Buf) override;
-  InputSection<ELFT> *getTargetInputSection() const;
+  InputSection *getTargetInputSection() const;
 
 private:
   std::vector<const Thunk<ELFT> *> Thunks;
   size_t Size = 0;
 };
 
-template <class ELFT> InputSection<ELFT> *createCommonSection();
-template <class ELFT> InputSection<ELFT> *createInterpSection();
+template <class ELFT> InputSection *createCommonSection();
+template <class ELFT> InputSection *createInterpSection();
 template <class ELFT> MergeInputSection<ELFT> *createCommentSection();
 template <class ELFT>
 SymbolBody *addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
@@ -752,9 +752,9 @@ SymbolBody *addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
 
 // Linker generated sections which can be used as inputs.
 template <class ELFT> struct In {
-  static InputSection<ELFT> *ARMAttributes;
+  static InputSection *ARMAttributes;
   static BuildIdSection<ELFT> *BuildId;
-  static InputSection<ELFT> *Common;
+  static InputSection *Common;
   static DynamicSection<ELFT> *Dynamic;
   static StringTableSection<ELFT> *DynStrTab;
   static SymbolTableSection<ELFT> *DynSymTab;
@@ -766,7 +766,7 @@ template <class ELFT> struct In {
   static GotPltSection<ELFT> *GotPlt;
   static IgotPltSection<ELFT> *IgotPlt;
   static HashTableSection<ELFT> *HashTab;
-  static InputSection<ELFT> *Interp;
+  static InputSection *Interp;
   static MipsRldMapSection<ELFT> *MipsRldMap;
   static PltSection<ELFT> *Plt;
   static PltSection<ELFT> *Iplt;
@@ -781,9 +781,9 @@ template <class ELFT> struct In {
   static VersionNeedSection<ELFT> *VerNeed;
 };
 
-template <class ELFT> InputSection<ELFT> *In<ELFT>::ARMAttributes;
+template <class ELFT> InputSection *In<ELFT>::ARMAttributes;
 template <class ELFT> BuildIdSection<ELFT> *In<ELFT>::BuildId;
-template <class ELFT> InputSection<ELFT> *In<ELFT>::Common;
+template <class ELFT> InputSection *In<ELFT>::Common;
 template <class ELFT> DynamicSection<ELFT> *In<ELFT>::Dynamic;
 template <class ELFT> StringTableSection<ELFT> *In<ELFT>::DynStrTab;
 template <class ELFT> SymbolTableSection<ELFT> *In<ELFT>::DynSymTab;
@@ -795,7 +795,7 @@ template <class ELFT> MipsGotSection<ELFT> *In<ELFT>::MipsGot;
 template <class ELFT> GotPltSection<ELFT> *In<ELFT>::GotPlt;
 template <class ELFT> IgotPltSection<ELFT> *In<ELFT>::IgotPlt;
 template <class ELFT> HashTableSection<ELFT> *In<ELFT>::HashTab;
-template <class ELFT> InputSection<ELFT> *In<ELFT>::Interp;
+template <class ELFT> InputSection *In<ELFT>::Interp;
 template <class ELFT> MipsRldMapSection<ELFT> *In<ELFT>::MipsRldMap;
 template <class ELFT> PltSection<ELFT> *In<ELFT>::Plt;
 template <class ELFT> PltSection<ELFT> *In<ELFT>::Iplt;
