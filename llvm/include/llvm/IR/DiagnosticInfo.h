@@ -559,10 +559,8 @@ public:
   DiagnosticInfoIROptimization(enum DiagnosticKind Kind,
                                enum DiagnosticSeverity Severity,
                                const char *PassName, const Function &Fn,
-                               const DiagnosticLocation &Loc, const Twine &Msg,
-                               Optional<uint64_t> Hotness = None)
+                               const DiagnosticLocation &Loc, const Twine &Msg)
       : DiagnosticInfoOptimizationBase(Kind, Severity, PassName, "", Fn, Loc) {
-    setHotness(Hotness);
     *this << Msg.str();
   }
 
@@ -614,10 +612,9 @@ private:
   /// Note that this class does not copy this message, so this reference
   /// must be valid for the whole life time of the diagnostic.
   OptimizationRemark(const char *PassName, const Function &Fn,
-                     const DiagnosticLocation &Loc, const Twine &Msg,
-                     Optional<uint64_t> Hotness = None)
+                     const DiagnosticLocation &Loc, const Twine &Msg)
       : DiagnosticInfoIROptimization(DK_OptimizationRemark, DS_Remark, PassName,
-                                     Fn, Loc, Msg, Hotness) {}
+                                     Fn, Loc, Msg) {}
 
   friend void emitOptimizationRemark(LLVMContext &Ctx, const char *PassName,
                                      const Function &Fn,
@@ -662,10 +659,9 @@ private:
   /// Note that this class does not copy this message, so this reference
   /// must be valid for the whole life time of the diagnostic.
   OptimizationRemarkMissed(const char *PassName, const Function &Fn,
-                           const DiagnosticLocation &Loc, const Twine &Msg,
-                           Optional<uint64_t> Hotness = None)
+                           const DiagnosticLocation &Loc, const Twine &Msg)
       : DiagnosticInfoIROptimization(DK_OptimizationRemarkMissed, DS_Remark,
-                                     PassName, Fn, Loc, Msg, Hotness) {}
+                                     PassName, Fn, Loc, Msg) {}
 
   friend void emitOptimizationRemarkMissed(LLVMContext &Ctx,
                                            const char *PassName,
@@ -720,9 +716,8 @@ public:
 protected:
   OptimizationRemarkAnalysis(enum DiagnosticKind Kind, const char *PassName,
                              const Function &Fn, const DiagnosticLocation &Loc,
-                             const Twine &Msg, Optional<uint64_t> Hotness)
-      : DiagnosticInfoIROptimization(Kind, DS_Remark, PassName, Fn, Loc, Msg,
-                                     Hotness) {}
+                             const Twine &Msg)
+      : DiagnosticInfoIROptimization(Kind, DS_Remark, PassName, Fn, Loc, Msg) {}
 
   OptimizationRemarkAnalysis(enum DiagnosticKind Kind, const char *PassName,
                              StringRef RemarkName,
@@ -740,10 +735,9 @@ private:
   /// this class does not copy this message, so this reference must be valid for
   /// the whole life time of the diagnostic.
   OptimizationRemarkAnalysis(const char *PassName, const Function &Fn,
-                             const DiagnosticLocation &Loc, const Twine &Msg,
-                             Optional<uint64_t> Hotness = None)
+                             const DiagnosticLocation &Loc, const Twine &Msg)
       : DiagnosticInfoIROptimization(DK_OptimizationRemarkAnalysis, DS_Remark,
-                                     PassName, Fn, Loc, Msg, Hotness) {}
+                                     PassName, Fn, Loc, Msg) {}
 
   friend void emitOptimizationRemarkAnalysis(LLVMContext &Ctx,
                                              const char *PassName,
@@ -788,10 +782,9 @@ private:
   /// diagnostic.
   OptimizationRemarkAnalysisFPCommute(const char *PassName, const Function &Fn,
                                       const DiagnosticLocation &Loc,
-                                      const Twine &Msg,
-                                      Optional<uint64_t> Hotness = None)
+                                      const Twine &Msg)
       : OptimizationRemarkAnalysis(DK_OptimizationRemarkAnalysisFPCommute,
-                                   PassName, Fn, Loc, Msg, Hotness) {}
+                                   PassName, Fn, Loc, Msg) {}
   friend void emitOptimizationRemarkAnalysisFPCommute(
       LLVMContext &Ctx, const char *PassName, const Function &Fn,
       const DiagnosticLocation &Loc, const Twine &Msg);
@@ -832,10 +825,9 @@ private:
   /// diagnostic.
   OptimizationRemarkAnalysisAliasing(const char *PassName, const Function &Fn,
                                      const DiagnosticLocation &Loc,
-                                     const Twine &Msg,
-                                     Optional<uint64_t> Hotness = None)
+                                     const Twine &Msg)
       : OptimizationRemarkAnalysis(DK_OptimizationRemarkAnalysisAliasing,
-                                   PassName, Fn, Loc, Msg, Hotness) {}
+                                   PassName, Fn, Loc, Msg) {}
 
   friend void emitOptimizationRemarkAnalysisAliasing(
       LLVMContext &Ctx, const char *PassName, const Function &Fn,
