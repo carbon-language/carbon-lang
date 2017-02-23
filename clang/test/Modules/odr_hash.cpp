@@ -148,6 +148,20 @@ S2 s2;
 // expected-error@second.h:* {{'Field::S2' has different definitions in different modules; first difference is definition in module 'SecondModule' found field 'y'}}
 // expected-note@first.h:* {{but in 'FirstModule' found field 'x'}}
 #endif
+
+#if defined(FIRST)
+struct S3 {
+  double x;
+};
+#elif defined(SECOND)
+struct S3 {
+  int x;
+};
+#else
+S3 s3;
+// expected-error@first.h:* {{'Field::S3::x' from module 'FirstModule' is not present in definition of 'Field::S3' in module 'SecondModule'}}
+// expected-note@second.h:* {{declaration of 'x' does not match}}
+#endif
 }  // namespace Field
 
 // Naive parsing of AST can lead to cycles in processing.  Ensure
