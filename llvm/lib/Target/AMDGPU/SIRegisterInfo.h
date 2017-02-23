@@ -228,6 +228,10 @@ public:
 
   const int *getRegUnitPressureSets(unsigned RegUnit) const override;
 
+  unsigned getRegUnitWeight(const MachineRegisterInfo &MRI,
+                            unsigned RegUnit,
+                            LaneBitmask LaneMask) const override;
+
 private:
   void buildSpillLoadStore(MachineBasicBlock::iterator MI,
                            unsigned LoadStoreOp,
