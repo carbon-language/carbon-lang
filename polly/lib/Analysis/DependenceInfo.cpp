@@ -111,16 +111,16 @@ static __isl_give isl_map *tag(__isl_take isl_map *Relation, MemoryAccess *MA,
 }
 
 /// Collect information about the SCoP @p S.
-static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
-                        isl_union_map **MayWrite,
-                        isl_union_map **ReductionTagMap,
-                        isl_union_set **TaggedStmtDomain,
+static void collectInfo(Scop &S, isl_union_map *&Read, isl_union_map *&Write,
+                        isl_union_map *&MayWrite,
+                        isl_union_map *&ReductionTagMap,
+                        isl_union_set *&TaggedStmtDomain,
                         Dependences::AnalysisLevel Level) {
   isl_space *Space = S.getParamSpace();
-  *Read = isl_union_map_empty(isl_space_copy(Space));
-  *Write = isl_union_map_empty(isl_space_copy(Space));
-  *MayWrite = isl_union_map_empty(isl_space_copy(Space));
-  *ReductionTagMap = isl_union_map_empty(isl_space_copy(Space));
+  Read = isl_union_map_empty(isl_space_copy(Space));
+  Write = isl_union_map_empty(isl_space_copy(Space));
+  MayWrite = isl_union_map_empty(isl_space_copy(Space));
+  ReductionTagMap = isl_union_map_empty(isl_space_copy(Space));
   isl_union_map *StmtSchedule = isl_union_map_empty(Space);
 
   SmallPtrSet<const ScopArrayInfo *, 8> ReductionArrays;
@@ -149,8 +149,8 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
         // This is used in Dependences::calculateDependences to create
         // a tagged Schedule tree.
 
-        *ReductionTagMap =
-            isl_union_map_add_map(*ReductionTagMap, isl_map_copy(accdom));
+        ReductionTagMap =
+            isl_union_map_add_map(ReductionTagMap, isl_map_copy(accdom));
         accdom = isl_map_range_map(accdom);
       } else {
         accdom = tag(accdom, MA, Level);
@@ -165,9 +165,9 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
       }
 
       if (MA->isRead())
-        *Read = isl_union_map_add_map(*Read, accdom);
+        Read = isl_union_map_add_map(Read, accdom);
       else
-        *Write = isl_union_map_add_map(*Write, accdom);
+        Write = isl_union_map_add_map(Write, accdom);
     }
 
     if (!ReductionArrays.empty() && Level == Dependences::AL_Statement)
@@ -176,12 +176,12 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
 
   StmtSchedule =
       isl_union_map_intersect_params(StmtSchedule, S.getAssumedContext());
-  *TaggedStmtDomain = isl_union_map_domain(StmtSchedule);
+  TaggedStmtDomain = isl_union_map_domain(StmtSchedule);
 
-  *ReductionTagMap = isl_union_map_coalesce(*ReductionTagMap);
-  *Read = isl_union_map_coalesce(*Read);
-  *Write = isl_union_map_coalesce(*Write);
-  *MayWrite = isl_union_map_coalesce(*MayWrite);
+  ReductionTagMap = isl_union_map_coalesce(ReductionTagMap);
+  Read = isl_union_map_coalesce(Read);
+  Write = isl_union_map_coalesce(Write);
+  MayWrite = isl_union_map_coalesce(MayWrite);
 }
 
 /// Fix all dimension of @p Zero to 0 and add it to @p user
@@ -304,7 +304,7 @@ void Dependences::calculateDependences(Scop &S) {
 
   DEBUG(dbgs() << "Scop: \n" << S << "\n");
 
-  collectInfo(S, &Read, &Write, &MayWrite, &ReductionTagMap, &TaggedStmtDomain,
+  collectInfo(S, Read, Write, MayWrite, ReductionTagMap, TaggedStmtDomain,
               Level);
 
   bool HasReductions = !isl_union_map_is_empty(ReductionTagMap);
