@@ -819,6 +819,11 @@ InputSectionBase::getOffset(const DefinedRegular<ELF64LE> &Sym) const;
 template uint64_t
 InputSectionBase::getOffset(const DefinedRegular<ELF64BE> &Sym) const;
 
+template uint64_t InputSectionBase::getOffset<ELF32LE>(uint64_t Offset) const;
+template uint64_t InputSectionBase::getOffset<ELF32BE>(uint64_t Offset) const;
+template uint64_t InputSectionBase::getOffset<ELF64LE>(uint64_t Offset) const;
+template uint64_t InputSectionBase::getOffset<ELF64BE>(uint64_t Offset) const;
+
 template size_t InputSectionBase::getSize<ELF32LE>() const;
 template size_t InputSectionBase::getSize<ELF32BE>() const;
 template size_t InputSectionBase::getSize<ELF64LE>() const;
