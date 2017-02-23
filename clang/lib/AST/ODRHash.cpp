@@ -26,7 +26,12 @@ void ODRHash::AddStmt(const Stmt *S) {
   assert(S && "Expecting non-null pointer.");
   S->ProcessODRHash(ID, *this);
 }
-void ODRHash::AddIdentifierInfo(const IdentifierInfo *II) {}
+
+void ODRHash::AddIdentifierInfo(const IdentifierInfo *II) {
+  assert(II && "Expecting non-null pointer.");
+  ID.AddString(II->getName());
+}
+
 void ODRHash::AddNestedNameSpecifier(const NestedNameSpecifier *NNS) {}
 void ODRHash::AddTemplateName(TemplateName Name) {}
 void ODRHash::AddDeclarationName(DeclarationName Name) {}
@@ -90,9 +95,21 @@ public:
     }
   }
 
+  void AddIdentifierInfo(const IdentifierInfo *II) {
+    Hash.AddBoolean(II);
+    if (II) {
+      Hash.AddIdentifierInfo(II);
+    }
+  }
+
   void Visit(const Decl *D) {
     ID.AddInteger(D->getKind());
     Inherited::Visit(D);
+  }
+
+  void VisitNamedDecl(const NamedDecl *D) {
+    AddIdentifierInfo(D->getIdentifier());
+    Inherited::VisitNamedDecl(D);
   }
 
   void VisitAccessSpecDecl(const AccessSpecDecl *D) {
@@ -106,6 +123,10 @@ public:
 
     Inherited::VisitStaticAssertDecl(D);
   }
+
+  void VisitFieldDecl(const FieldDecl *D) {
+    Inherited::VisitFieldDecl(D);
+  }
 };
 
 // Only allow a small portion of Decl's to be processed.  Remove this once
@@ -118,6 +139,7 @@ bool ODRHash::isWhitelistedDecl(const Decl *D, const CXXRecordDecl *Parent) {
     default:
       return false;
     case Decl::AccessSpec:
+    case Decl::Field:
     case Decl::StaticAssert:
       return true;
   }
