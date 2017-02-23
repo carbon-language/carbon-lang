@@ -114,7 +114,7 @@ static __isl_give isl_map *tag(__isl_take isl_map *Relation, MemoryAccess *MA,
 static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
                         isl_union_map **MayWrite,
                         isl_union_map **ReductionTagMap,
-                        isl_union_set **StmtScheduleDomain,
+                        isl_union_set **TaggedStmtDomain,
                         Dependences::AnalysisLevel Level) {
   isl_space *Space = S.getParamSpace();
   *Read = isl_union_map_empty(isl_space_copy(Space));
@@ -176,7 +176,7 @@ static void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
 
   StmtSchedule =
       isl_union_map_intersect_params(StmtSchedule, S.getAssumedContext());
-  *StmtScheduleDomain = isl_union_map_domain(StmtSchedule);
+  *TaggedStmtDomain = isl_union_map_domain(StmtSchedule);
 
   *ReductionTagMap = isl_union_map_coalesce(*ReductionTagMap);
   *Read = isl_union_map_coalesce(*Read);
@@ -300,12 +300,12 @@ static __isl_give isl_union_flow *buildFlow(__isl_keep isl_union_map *Snk,
 void Dependences::calculateDependences(Scop &S) {
   isl_union_map *Read, *Write, *MayWrite, *ReductionTagMap;
   isl_schedule *Schedule;
-  isl_union_set *StmtScheduleDomain;
+  isl_union_set *TaggedStmtDomain;
 
   DEBUG(dbgs() << "Scop: \n" << S << "\n");
 
-  collectInfo(S, &Read, &Write, &MayWrite, &ReductionTagMap,
-              &StmtScheduleDomain, Level);
+  collectInfo(S, &Read, &Write, &MayWrite, &ReductionTagMap, &TaggedStmtDomain,
+              Level);
 
   bool HasReductions = !isl_union_map_is_empty(ReductionTagMap);
 
@@ -313,7 +313,7 @@ void Dependences::calculateDependences(Scop &S) {
         dbgs() << "Write: " << Write << '\n';
         dbgs() << "MayWrite: " << MayWrite << '\n';
         dbgs() << "ReductionTagMap: " << ReductionTagMap << '\n';
-        dbgs() << "StmtScheduleDomain: " << StmtScheduleDomain << '\n';);
+        dbgs() << "TaggedStmtDomain: " << TaggedStmtDomain << '\n';);
 
   Schedule = S.getScheduleTree();
 
@@ -322,7 +322,7 @@ void Dependences::calculateDependences(Scop &S) {
     // Tag the schedule tree if we want fine-grain dependence info
     if (Level > AL_Statement) {
       auto TaggedMap =
-          isl_union_set_unwrap(isl_union_set_copy(StmtScheduleDomain));
+          isl_union_set_unwrap(isl_union_set_copy(TaggedStmtDomain));
       auto Tags = isl_union_map_domain_map_union_pw_multi_aff(TaggedMap);
       Schedule = isl_schedule_pullback_union_pw_multi_aff(Schedule, Tags);
     }
@@ -340,8 +340,7 @@ void Dependences::calculateDependences(Scop &S) {
 
     // Compute an identity map from each statement in domain to itself.
     // IdentityTags = { [Stmt[i] -> Stmt[i] }
-    IdentityMap =
-        isl_union_set_identity(isl_union_set_copy(StmtScheduleDomain));
+    IdentityMap = isl_union_set_identity(isl_union_set_copy(TaggedStmtDomain));
     IdentityTags = isl_union_pw_multi_aff_from_union_map(IdentityMap);
 
     Tags = isl_union_pw_multi_aff_union_add(ReductionTags, IdentityTags);
@@ -429,18 +428,18 @@ void Dependences::calculateDependences(Scop &S) {
   // reduction dependences or dependences that are finer than statement
   // level dependences.
   if (!HasReductions && Level == AL_Statement) {
-    TC_RED = isl_union_map_empty(isl_union_set_get_space(StmtScheduleDomain));
-    isl_union_set_free(StmtScheduleDomain);
+    TC_RED = isl_union_map_empty(isl_union_set_get_space(TaggedStmtDomain));
+    isl_union_set_free(TaggedStmtDomain);
     return;
   }
 
   isl_union_map *STMT_RAW, *STMT_WAW, *STMT_WAR;
   STMT_RAW = isl_union_map_intersect_domain(
-      isl_union_map_copy(RAW), isl_union_set_copy(StmtScheduleDomain));
+      isl_union_map_copy(RAW), isl_union_set_copy(TaggedStmtDomain));
   STMT_WAW = isl_union_map_intersect_domain(
-      isl_union_map_copy(WAW), isl_union_set_copy(StmtScheduleDomain));
-  STMT_WAR = isl_union_map_intersect_domain(isl_union_map_copy(WAR),
-                                            StmtScheduleDomain);
+      isl_union_map_copy(WAW), isl_union_set_copy(TaggedStmtDomain));
+  STMT_WAR =
+      isl_union_map_intersect_domain(isl_union_map_copy(WAR), TaggedStmtDomain);
   DEBUG({
     dbgs() << "Wrapped Dependences:\n";
     dump();
