@@ -962,6 +962,7 @@ private:
   /// transformations.
   Knowledge Zone;
 
+  /// For getting the MemoryAccesses that write or read a given scalar.
   ScalarDefUseChains DefUse;
 
   /// Determine whether two knowledges are conflicting with each other.
