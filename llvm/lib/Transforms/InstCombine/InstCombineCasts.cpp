@@ -1167,18 +1167,16 @@ Instruction *InstCombiner::visitSExt(SExtInst &CI) {
                                       ShAmt);
   }
 
-  // If this input is a trunc from our destination, then turn sext(trunc(x))
+  // If the input is a trunc from the destination type, then turn sext(trunc(x))
   // into shifts.
-  if (TruncInst *TI = dyn_cast<TruncInst>(Src))
-    if (TI->hasOneUse() && TI->getOperand(0)->getType() == DestTy) {
-      uint32_t SrcBitSize = SrcTy->getScalarSizeInBits();
-      uint32_t DestBitSize = DestTy->getScalarSizeInBits();
-
-      // We need to emit a shl + ashr to do the sign extend.
-      Value *ShAmt = ConstantInt::get(DestTy, DestBitSize-SrcBitSize);
-      Value *Res = Builder->CreateShl(TI->getOperand(0), ShAmt, "sext");
-      return BinaryOperator::CreateAShr(Res, ShAmt);
-    }
+  Value *X;
+  if (match(Src, m_OneUse(m_Trunc(m_Value(X)))) && X->getType() == DestTy) {
+    // sext(trunc(X)) --> ashr(shl(X, C), C)
+    unsigned SrcBitSize = SrcTy->getScalarSizeInBits();
+    unsigned DestBitSize = DestTy->getScalarSizeInBits();
+    Constant *ShAmt = ConstantInt::get(DestTy, DestBitSize - SrcBitSize);
+    return BinaryOperator::CreateAShr(Builder->CreateShl(X, ShAmt), ShAmt);
+  }
 
   if (ICmpInst *ICI = dyn_cast<ICmpInst>(Src))
     return transformSExtICmp(ICI, CI);
