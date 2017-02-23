@@ -327,7 +327,6 @@ void Dependences::calculateDependences(Scop &S) {
       Schedule = isl_schedule_pullback_union_pw_multi_aff(Schedule, Tags);
     }
   } else {
-    isl_union_set *IdentityDom;
     isl_union_map *IdentityMap;
     isl_union_pw_multi_aff *ReductionTags, *IdentityTags, *Tags;
 
