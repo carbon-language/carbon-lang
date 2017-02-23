@@ -473,8 +473,8 @@ void InputSection<ELFT>::relocateNonAlloc(uint8_t *Buf, ArrayRef<RelTy> Rels) {
   }
 }
 
-template <class ELFT> ObjectFile<ELFT> *InputSectionBase::getFile() const {
-  return cast_or_null<ObjectFile<ELFT>>(File);
+template <class ELFT> elf::ObjectFile<ELFT> *InputSectionBase::getFile() const {
+  return cast_or_null<elf::ObjectFile<ELFT>>(File);
 }
 
 template <class ELFT>
