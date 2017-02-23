@@ -6922,39 +6922,6 @@ public:
     /// \brief Determines whether this template is an actual instantiation
     /// that should be counted toward the maximum instantiation depth.
     bool isInstantiationRecord() const;
-
-    friend bool operator==(const CodeSynthesisContext &X,
-                           const CodeSynthesisContext &Y) {
-      if (X.Kind != Y.Kind)
-        return false;
-
-      if (X.Entity != Y.Entity)
-        return false;
-
-      switch (X.Kind) {
-      case TemplateInstantiation:
-      case ExceptionSpecInstantiation:
-        return true;
-
-      case PriorTemplateArgumentSubstitution:
-      case DefaultTemplateArgumentChecking:
-        return X.Template == Y.Template && X.TemplateArgs == Y.TemplateArgs;
-
-      case DefaultTemplateArgumentInstantiation:
-      case ExplicitTemplateArgumentSubstitution:
-      case DeducedTemplateArgumentSubstitution:
-      case DefaultFunctionArgumentInstantiation:
-        return X.TemplateArgs == Y.TemplateArgs;
-
-      }
-
-      llvm_unreachable("Invalid InstantiationKind!");
-    }
-
-    friend bool operator!=(const CodeSynthesisContext &X,
-                           const CodeSynthesisContext &Y) {
-      return !(X == Y);
-    }
   };
 
   /// \brief List of active code synthesis contexts.
@@ -7004,14 +6971,13 @@ public:
   // FIXME: Should we have a similar limit for other forms of synthesis?
   unsigned NonInstantiationEntries;
 
-  /// \brief The last template from which a template instantiation
+  /// \brief The depth of the context stack at the point when the most recent
   /// error or warning was produced.
   ///
-  /// This value is used to suppress printing of redundant template
-  /// instantiation backtraces when there are multiple errors in the
-  /// same instantiation. FIXME: Does this belong in Sema? It's tough
-  /// to implement it anywhere else.
-  CodeSynthesisContext LastTemplateInstantiationErrorContext;
+  /// This value is used to suppress printing of redundant context stacks
+  /// when there are multiple errors or warnings in the same instantiation.
+  // FIXME: Does this belong in Sema? It's tough to implement it anywhere else.
+  unsigned LastEmittedCodeSynthesisContextDepth = 0;
 
   /// \brief The current index into pack expansion arguments that will be
   /// used for substitution of parameter packs.
@@ -7192,11 +7158,9 @@ public:
 
   void PrintContextStack() {
     if (!CodeSynthesisContexts.empty() &&
-        CodeSynthesisContexts.back() !=
-            LastTemplateInstantiationErrorContext) {
+        CodeSynthesisContexts.size() != LastEmittedCodeSynthesisContextDepth) {
       PrintInstantiationStack();
-      LastTemplateInstantiationErrorContext =
-          CodeSynthesisContexts.back();
+      LastEmittedCodeSynthesisContextDepth = CodeSynthesisContexts.size();
     }
   }
   void PrintInstantiationStack();

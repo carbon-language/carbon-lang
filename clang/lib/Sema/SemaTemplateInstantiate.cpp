@@ -369,6 +369,12 @@ void Sema::InstantiatingTemplate::Clear() {
       SemaRef.CodeSynthesisContextLookupModules.pop_back();
     }
 
+    // If we've left the code synthesis context for the current context stack,
+    // stop remembering that we've emitted that stack.
+    if (SemaRef.CodeSynthesisContexts.size() ==
+        SemaRef.LastEmittedCodeSynthesisContextDepth)
+      SemaRef.LastEmittedCodeSynthesisContextDepth = 0;
+
     if (!AlreadyInstantiating)
       SemaRef.InstantiatingSpecializations.erase(
           std::make_pair(Active.Entity, Active.Kind));
