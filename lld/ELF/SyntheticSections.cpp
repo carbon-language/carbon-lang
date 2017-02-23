@@ -290,9 +290,8 @@ template <class ELFT> InputSection<ELFT> *elf::createInterpSection() {
 }
 
 template <class ELFT>
-SymbolBody *
-elf::addSyntheticLocal(StringRef Name, uint8_t Type, typename ELFT::uint Value,
-                       typename ELFT::uint Size, InputSectionBase *Section) {
+SymbolBody *elf::addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
+                                   uint64_t Size, InputSectionBase *Section) {
   auto *S = make<DefinedRegular<ELFT>>(Name, /*IsLocal*/ true, STV_DEFAULT,
                                        Type, Value, Size, Section, nullptr);
   if (In<ELFT>::SymTab)
@@ -2025,20 +2024,16 @@ template MergeInputSection<ELF64LE> *elf::createCommentSection();
 template MergeInputSection<ELF64BE> *elf::createCommentSection();
 
 template SymbolBody *elf::addSyntheticLocal<ELF32LE>(StringRef, uint8_t,
-                                                     ELF32LE::uint,
-                                                     ELF32LE::uint,
+                                                     uint64_t, uint64_t,
                                                      InputSectionBase *);
 template SymbolBody *elf::addSyntheticLocal<ELF32BE>(StringRef, uint8_t,
-                                                     ELF32BE::uint,
-                                                     ELF32BE::uint,
+                                                     uint64_t, uint64_t,
                                                      InputSectionBase *);
 template SymbolBody *elf::addSyntheticLocal<ELF64LE>(StringRef, uint8_t,
-                                                     ELF64LE::uint,
-                                                     ELF64LE::uint,
+                                                     uint64_t, uint64_t,
                                                      InputSectionBase *);
 template SymbolBody *elf::addSyntheticLocal<ELF64BE>(StringRef, uint8_t,
-                                                     ELF64BE::uint,
-                                                     ELF64BE::uint,
+                                                     uint64_t, uint64_t,
                                                      InputSectionBase *);
 
 template class elf::MipsAbiFlagsSection<ELF32LE>;

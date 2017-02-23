@@ -747,9 +747,8 @@ template <class ELFT> InputSection<ELFT> *createCommonSection();
 template <class ELFT> InputSection<ELFT> *createInterpSection();
 template <class ELFT> MergeInputSection<ELFT> *createCommentSection();
 template <class ELFT>
-SymbolBody *
-addSyntheticLocal(StringRef Name, uint8_t Type, typename ELFT::uint Value,
-                  typename ELFT::uint Size, InputSectionBase *Section);
+SymbolBody *addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
+                              uint64_t Size, InputSectionBase *Section);
 
 // Linker generated sections which can be used as inputs.
 template <class ELFT> struct In {
