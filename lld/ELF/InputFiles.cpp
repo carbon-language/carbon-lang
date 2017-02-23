@@ -435,7 +435,8 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
   // Only GNU gold supports that. We don't. For the details about that,
   // see https://gcc.gnu.org/wiki/SplitStacks
   if (Name == ".note.GNU-split-stack") {
-    error("objects using splitstacks are not supported");
+    error(toString(this) +
+          ": object file compiled with -fsplit-stack is not supported");
     return &InputSection<ELFT>::Discarded;
   }
 
