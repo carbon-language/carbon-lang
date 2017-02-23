@@ -25,7 +25,7 @@ struct VirtualBase2 {
 // emit the construction code inline.
 struct WithVirtualBaseMid : virtual VirtualBase2 {
   // Ensure we only pass in `this` and a vtable. Otherwise this test is useless.
-  // ITANIUM: define {{.*}} void @_ZN18WithVirtualBaseMidCI212VirtualBase2EP11objc_objectPv({{.*}}, {{.*}})
+  // ITANIUM: define {{.*}} void @_ZN18WithVirtualBaseMidCI212VirtualBase2EP11objc_objectPv({{[^,]*}}, {{[^,]*}})
   using VirtualBase2::VirtualBase2;
 };
 struct WithVirtualBaseLast : WithVirtualBaseMid {
