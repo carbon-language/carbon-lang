@@ -175,9 +175,11 @@ bool ARMCallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
 }
 
 namespace {
-struct FormalArgHandler : public CallLowering::ValueHandler {
-  FormalArgHandler(MachineIRBuilder &MIRBuilder, MachineRegisterInfo &MRI,
-                   CCAssignFn AssignFn)
+/// Helper class for values coming in through an ABI boundary (used for handling
+/// formal arguments and call return values).
+struct IncomingValueHandler : public CallLowering::ValueHandler {
+  IncomingValueHandler(MachineIRBuilder &MIRBuilder, MachineRegisterInfo &MRI,
+                       CCAssignFn AssignFn)
       : ValueHandler(MIRBuilder, MRI, AssignFn) {}
 
   unsigned getStackAddress(uint64_t Size, int64_t Offset,
@@ -204,8 +206,8 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
 
     if (VA.getLocInfo() == CCValAssign::SExt ||
         VA.getLocInfo() == CCValAssign::ZExt) {
-      // If the argument is zero- or sign-extended by the caller, its size
-      // becomes 4 bytes, so that's what we should load.
+      // If the value is zero- or sign-extended, its size becomes 4 bytes, so
+      // that's what we should load.
       Size = 4;
       assert(MRI.getType(ValVReg).isScalar() && "Only scalars supported atm");
       MRI.setType(ValVReg, LLT::scalar(32));
@@ -224,8 +226,9 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
     assert(VA.getValVT().getSizeInBits() <= 64 && "Unsupported value size");
     assert(VA.getLocVT().getSizeInBits() <= 64 && "Unsupported location size");
 
-    // The caller should handle all necesary extensions.
-    MIRBuilder.getMBB().addLiveIn(PhysReg);
+    // The necesary extensions are handled on the other side of the ABI
+    // boundary.
+    markPhysRegUsed(PhysReg);
     MIRBuilder.buildCopy(ValVReg, PhysReg);
   }
 
@@ -258,6 +261,21 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
     MIRBuilder.buildSequence(Arg.Reg, NewRegs, {0, 32});
 
     return 1;
+  }
+
+  /// Marking a physical register as used is different between formal
+  /// parameters, where it's a basic block live-in, and call returns, where it's
+  /// an implicit-def of the call instruction.
+  virtual void markPhysRegUsed(unsigned PhysReg) = 0;
+};
+
+struct FormalArgHandler : public IncomingValueHandler {
+  FormalArgHandler(MachineIRBuilder &MIRBuilder, MachineRegisterInfo &MRI,
+                   CCAssignFn AssignFn)
+      : IncomingValueHandler(MIRBuilder, MRI, AssignFn) {}
+
+  void markPhysRegUsed(unsigned PhysReg) override {
+    MIRBuilder.getMBB().addLiveIn(PhysReg);
   }
 };
 } // End anonymous namespace
@@ -307,6 +325,20 @@ bool ARMCallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   return handleAssignments(MIRBuilder, ArgInfos, ArgHandler);
 }
 
+namespace {
+struct CallReturnHandler : public IncomingValueHandler {
+  CallReturnHandler(MachineIRBuilder &MIRBuilder, MachineRegisterInfo &MRI,
+                    MachineInstrBuilder MIB, CCAssignFn *AssignFn)
+      : IncomingValueHandler(MIRBuilder, MRI, AssignFn), MIB(MIB) {}
+
+  void markPhysRegUsed(unsigned PhysReg) override {
+    MIB.addDef(PhysReg, RegState::Implicit);
+  }
+
+  MachineInstrBuilder MIB;
+};
+} // End anonymous namespace.
+
 bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
                                 const MachineOperand &Callee,
                                 const ArgInfo &OrigRet,
@@ -318,10 +350,6 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
   if (MF.getSubtarget<ARMSubtarget>().genLongCalls())
-    return false;
-
-  // FIXME: Support calling functions with return types.
-  if (!OrigRet.Ty->isVoidTy())
     return false;
 
   MIRBuilder.buildInstr(ARM::ADJCALLSTACKDOWN)
@@ -355,6 +383,19 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
 
   // Now we can add the actual call instruction to the correct basic block.
   MIRBuilder.insertInstr(MIB);
+
+  if (!OrigRet.Ty->isVoidTy()) {
+    if (!isSupportedType(DL, TLI, OrigRet.Ty))
+      return false;
+
+    ArgInfos.clear();
+    splitToValueTypes(OrigRet, ArgInfos, DL, MRI);
+
+    auto RetAssignFn = TLI.CCAssignFnForReturn(CallConv, /*IsVarArg=*/false);
+    CallReturnHandler RetHandler(MIRBuilder, MRI, MIB, RetAssignFn);
+    if (!handleAssignments(MIRBuilder, ArgInfos, RetHandler))
+      return false;
+  }
 
   MIRBuilder.buildInstr(ARM::ADJCALLSTACKUP)
       .addImm(0)
