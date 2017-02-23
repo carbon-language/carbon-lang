@@ -430,6 +430,10 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
   if (Name == ".note.GNU-stack")
     return &InputSection<ELFT>::Discarded;
 
+  // Split stacks is a feature to support a discontiguous stack. At least
+  // as of 2017, it seems that the feature is not being used widely.
+  // Only GNU gold supports that. We don't. For the details about that,
+  // see https://gcc.gnu.org/wiki/SplitStacks
   if (Name == ".note.GNU-split-stack") {
     error("objects using splitstacks are not supported");
     return &InputSection<ELFT>::Discarded;
