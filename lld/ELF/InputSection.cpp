@@ -121,6 +121,8 @@ template <class ELFT>
 OutputSectionBase *InputSectionBase::getOutputSection() const {
   if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(this))
     return MS->MergeSec ? MS->MergeSec->OutSec : nullptr;
+  if (auto *EH = dyn_cast<EhInputSection<ELFT>>(this))
+    return EH->EHSec->OutSec;
   return OutSec;
 }
 
@@ -499,7 +501,7 @@ void InputSectionBase::relocate(uint8_t *Buf, uint8_t *BufEnd) {
     uint8_t *BufLoc = Buf + Offset;
     uint32_t Type = Rel.Type;
 
-    uintX_t AddrLoc = OutSec->Addr + Offset;
+    uintX_t AddrLoc = getOutputSection<ELFT>()->Addr + Offset;
     RelExpr Expr = Rel.Expr;
     uint64_t TargetVA = SignExtend64<Bits>(
         getRelocTargetVA<ELFT>(Type, Rel.Addend, AddrLoc, *Rel.Sym, Expr));

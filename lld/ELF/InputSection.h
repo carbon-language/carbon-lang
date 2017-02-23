@@ -28,6 +28,7 @@ class SymbolBody;
 struct SectionPiece;
 
 template <class ELFT> class DefinedRegular;
+template <class ELFT> class EhFrameSection;
 template <class ELFT> class MergeSyntheticSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class OutputSection;
@@ -244,6 +245,7 @@ public:
   // Splittable sections are handled as a sequence of data
   // rather than a single large blob of data.
   std::vector<EhSectionPiece> Pieces;
+  EhFrameSection<ELFT> *EHSec = nullptr;
 };
 
 // This corresponds to a non SHF_MERGE section of an input file.

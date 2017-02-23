@@ -318,7 +318,6 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
                                                   SHF_ALLOC | SHF_WRITE);
   In<ELFT>::DynStrTab = make<StringTableSection<ELFT>>(".dynstr", true);
   In<ELFT>::Dynamic = make<DynamicSection<ELFT>>();
-  Out<ELFT>::EhFrame = make<EhOutputSection<ELFT>>();
   In<ELFT>::RelaDyn = make<RelocationSection<ELFT>>(
       Config->Rela ? ".rela.dyn" : ".rel.dyn", Config->ZCombreloc);
   In<ELFT>::ShStrTab = make<StringTableSection<ELFT>>(".shstrtab", false);
@@ -442,6 +441,11 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   if (Config->EhFrameHdr) {
     In<ELFT>::EhFrameHdr = make<EhFrameHeader<ELFT>>();
     Add(In<ELFT>::EhFrameHdr);
+  }
+
+  if (!Config->Relocatable) {
+    In<ELFT>::EhFrame = make<EhFrameSection<ELFT>>();
+    Add(In<ELFT>::EhFrame);
   }
 
   if (In<ELFT>::SymTab)
@@ -1088,10 +1092,10 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // Define __rel[a]_iplt_{start,end} symbols if needed.
   addRelIpltSymbols();
 
-  if (!Out<ELFT>::EhFrame->empty()) {
-    OutputSections.push_back(Out<ELFT>::EhFrame);
-    Out<ELFT>::EhFrame->finalize();
-  }
+  // This responsible for splitting up .eh_frame section into
+  // pieces. The relocation scan uses those peaces, so this has to be
+  // earlier.
+  finalizeSynthetic<ELFT>({In<ELFT>::EhFrame});
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
@@ -1323,7 +1327,7 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
     Ret.push_back(std::move(RelRo));
 
   // PT_GNU_EH_FRAME is a special section pointing on .eh_frame_hdr.
-  if (!Out<ELFT>::EhFrame->empty() && In<ELFT>::EhFrameHdr)
+  if (!In<ELFT>::EhFrame->empty() && In<ELFT>::EhFrameHdr)
     AddHdr(PT_GNU_EH_FRAME, In<ELFT>::EhFrameHdr->OutSec->getPhdrFlags())
         ->add(In<ELFT>::EhFrameHdr->OutSec);
 
@@ -1827,7 +1831,7 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 
   // The .eh_frame_hdr depends on .eh_frame section contents, therefore
   // it should be written after .eh_frame is written.
-  if (!Out<ELFT>::EhFrame->empty() && EhFrameHdr)
+  if (EhFrameHdr)
     EhFrameHdr->writeTo(Buf + EhFrameHdr->Offset);
 }
 

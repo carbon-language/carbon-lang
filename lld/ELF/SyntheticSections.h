@@ -25,6 +25,7 @@
 #ifndef LLD_ELF_SYNTHETIC_SECTION_H
 #define LLD_ELF_SYNTHETIC_SECTION_H
 
+#include "EhFrame.h"
 #include "GdbIndex.h"
 #include "InputSection.h"
 #include "llvm/ADT/MapVector.h"
@@ -57,6 +58,55 @@ public:
   static bool classof(const InputSectionBase *D) {
     return D->kind() == InputSectionBase::Synthetic;
   }
+};
+
+struct CieRecord {
+  EhSectionPiece *Piece = nullptr;
+  std::vector<EhSectionPiece *> FdePieces;
+};
+
+// Section for .eh_frame.
+template <class ELFT>
+class EhFrameSection final : public SyntheticSection<ELFT> {
+  typedef typename ELFT::uint uintX_t;
+  typedef typename ELFT::Shdr Elf_Shdr;
+  typedef typename ELFT::Rel Elf_Rel;
+  typedef typename ELFT::Rela Elf_Rela;
+
+  void updateAlignment(uint64_t Val) {
+    if (Val > this->Alignment)
+      this->Alignment = Val;
+  }
+
+public:
+  EhFrameSection();
+  void writeTo(uint8_t *Buf) override;
+  void finalize() override;
+  bool empty() const override { return Sections.empty(); }
+  size_t getSize() const override { return Size; }
+
+  void addSection(InputSectionBase *S);
+
+  size_t NumFdes = 0;
+
+private:
+  uint64_t Size = 0;
+  template <class RelTy>
+  void addSectionAux(EhInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
+
+  template <class RelTy>
+  CieRecord *addCie(EhSectionPiece &Piece, ArrayRef<RelTy> Rels);
+
+  template <class RelTy>
+  bool isFdeLive(EhSectionPiece &Piece, ArrayRef<RelTy> Rels);
+
+  uintX_t getFdePc(uint8_t *Buf, size_t Off, uint8_t Enc);
+
+  std::vector<EhInputSection<ELFT> *> Sections;
+  std::vector<CieRecord *> Cies;
+
+  // CIE records are uniquified by their contents and personality functions.
+  llvm::DenseMap<std::pair<ArrayRef<uint8_t>, SymbolBody *>, CieRecord> CieMap;
 };
 
 template <class ELFT> class GotSection final : public SyntheticSection<ELFT> {
@@ -762,6 +812,7 @@ template <class ELFT> struct In {
   static GnuHashTableSection<ELFT> *GnuHashTab;
   static GdbIndexSection<ELFT> *GdbIndex;
   static GotSection<ELFT> *Got;
+  static EhFrameSection<ELFT> *EhFrame;
   static MipsGotSection<ELFT> *MipsGot;
   static GotPltSection<ELFT> *GotPlt;
   static IgotPltSection<ELFT> *IgotPlt;
@@ -791,6 +842,7 @@ template <class ELFT> EhFrameHeader<ELFT> *In<ELFT>::EhFrameHdr;
 template <class ELFT> GdbIndexSection<ELFT> *In<ELFT>::GdbIndex;
 template <class ELFT> GnuHashTableSection<ELFT> *In<ELFT>::GnuHashTab;
 template <class ELFT> GotSection<ELFT> *In<ELFT>::Got;
+template <class ELFT> EhFrameSection<ELFT> *In<ELFT>::EhFrame;
 template <class ELFT> MipsGotSection<ELFT> *In<ELFT>::MipsGot;
 template <class ELFT> GotPltSection<ELFT> *In<ELFT>::GotPlt;
 template <class ELFT> IgotPltSection<ELFT> *In<ELFT>::IgotPlt;

@@ -15,7 +15,6 @@
 namespace lld {
 namespace elf {
 class SymbolBody;
-class InputSectionData;
 class InputSection;
 class InputSectionBase;
 class OutputSectionBase;
