@@ -66,8 +66,8 @@ template <class ELFT> static std::string getErrorLoc(uint8_t *Loc) {
       continue;
 
     uint8_t *ISLoc = cast<OutputSection<ELFT>>(IS->OutSec)->Loc + IS->OutSecOff;
-    if (ISLoc <= Loc && Loc < ISLoc + IS->getSize())
-      return IS->getLocation(Loc - ISLoc) + ": ";
+    if (ISLoc <= Loc && Loc < ISLoc + IS->template getSize<ELFT>())
+      return IS->template getLocation<ELFT>(Loc - ISLoc) + ": ";
   }
   return "";
 }
@@ -1760,8 +1760,8 @@ void ARMTargetInfo::writePltHeader(uint8_t *Buf) const {
 
 void ARMTargetInfo::addPltHeaderSymbols(InputSectionData *ISD) const {
   auto *IS = cast<InputSection<ELF32LE>>(ISD);
-  addSyntheticLocal("$a", STT_NOTYPE, 0, 0, IS);
-  addSyntheticLocal("$d", STT_NOTYPE, 16, 0, IS);
+  addSyntheticLocal<ELF32LE>("$a", STT_NOTYPE, 0, 0, IS);
+  addSyntheticLocal<ELF32LE>("$d", STT_NOTYPE, 16, 0, IS);
 }
 
 void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
@@ -1783,8 +1783,8 @@ void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
 
 void ARMTargetInfo::addPltSymbols(InputSectionData *ISD, uint64_t Off) const {
   auto *IS = cast<InputSection<ELF32LE>>(ISD);
-  addSyntheticLocal("$a", STT_NOTYPE, Off, 0, IS);
-  addSyntheticLocal("$d", STT_NOTYPE, Off + 12, 0, IS);
+  addSyntheticLocal<ELF32LE>("$a", STT_NOTYPE, Off, 0, IS);
+  addSyntheticLocal<ELF32LE>("$d", STT_NOTYPE, Off + 12, 0, IS);
 }
 
 bool ARMTargetInfo::needsThunk(RelExpr Expr, uint32_t RelocType,

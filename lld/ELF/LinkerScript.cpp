@@ -181,14 +181,13 @@ bool BytesDataCommand::classof(const BaseCommand *C) {
 template <class ELFT> LinkerScript<ELFT>::LinkerScript() = default;
 template <class ELFT> LinkerScript<ELFT>::~LinkerScript() = default;
 
-template <class ELFT> static StringRef basename(InputSectionBase<ELFT> *S) {
-  if (S->getFile())
-    return sys::path::filename(S->getFile()->getName());
+static StringRef basename(InputSectionBase *S) {
+  if (S->File)
+    return sys::path::filename(S->File->getName());
   return "";
 }
 
-template <class ELFT>
-bool LinkerScript<ELFT>::shouldKeep(InputSectionBase<ELFT> *S) {
+template <class ELFT> bool LinkerScript<ELFT>::shouldKeep(InputSectionBase *S) {
   for (InputSectionDescription *ID : Opt.KeptSections)
     if (ID->FilePat.match(basename(S)))
       for (SectionPattern &P : ID->SectionPatterns)
@@ -227,12 +226,12 @@ getComparator(SortSectionPolicy K) {
 }
 
 template <class ELFT>
-static bool matchConstraints(ArrayRef<InputSectionBase<ELFT> *> Sections,
+static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
                              ConstraintKind Kind) {
   if (Kind == ConstraintKind::NoConstraint)
     return true;
   bool IsRW = llvm::any_of(Sections, [=](InputSectionData *Sec2) {
-    auto *Sec = static_cast<InputSectionBase<ELFT> *>(Sec2);
+    auto *Sec = static_cast<InputSectionBase *>(Sec2);
     return Sec->Flags & SHF_WRITE;
   });
   return (IsRW && Kind == ConstraintKind::ReadWrite) ||
@@ -253,7 +252,7 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
   for (SectionPattern &Pat : I->SectionPatterns) {
     size_t SizeBefore = I->Sections.size();
 
-    for (InputSectionBase<ELFT> *S : Symtab<ELFT>::X->Sections) {
+    for (InputSectionBase *S : Symtab<ELFT>::X->Sections) {
       if (S->Assigned)
         continue;
       // For -emit-relocs we have to ignore entries like
@@ -295,8 +294,8 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
 }
 
 template <class ELFT>
-void LinkerScript<ELFT>::discard(ArrayRef<InputSectionBase<ELFT> *> V) {
-  for (InputSectionBase<ELFT> *S : V) {
+void LinkerScript<ELFT>::discard(ArrayRef<InputSectionBase *> V) {
+  for (InputSectionBase *S : V) {
     S->Live = false;
     if (S == In<ELFT>::ShStrTab)
       error("discarding .shstrtab section is not allowed");
@@ -305,9 +304,9 @@ void LinkerScript<ELFT>::discard(ArrayRef<InputSectionBase<ELFT> *> V) {
 }
 
 template <class ELFT>
-std::vector<InputSectionBase<ELFT> *>
+std::vector<InputSectionBase *>
 LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
-  std::vector<InputSectionBase<ELFT> *> Ret;
+  std::vector<InputSectionBase *> Ret;
 
   for (const std::unique_ptr<BaseCommand> &Base : OutCmd.Commands) {
     auto *Cmd = dyn_cast<InputSectionDescription>(Base.get());
@@ -315,7 +314,7 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
       continue;
     computeInputSections(Cmd);
     for (InputSectionData *S : Cmd->Sections)
-      Ret.push_back(static_cast<InputSectionBase<ELFT> *>(S));
+      Ret.push_back(static_cast<InputSectionBase *>(S));
   }
 
   return Ret;
@@ -343,7 +342,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
     }
 
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base1.get())) {
-      std::vector<InputSectionBase<ELFT> *> V = createInputSectionList(*Cmd);
+      std::vector<InputSectionBase *> V = createInputSectionList(*Cmd);
 
       // The output section name `/DISCARD/' is special.
       // Any input section assigned to it is discarded.
@@ -360,7 +359,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
       // Because we'll iterate over Commands many more times, the easiest
       // way to "make it as if it wasn't present" is to just remove it.
       if (!matchConstraints<ELFT>(V, Cmd->Constraint)) {
-        for (InputSectionBase<ELFT> *S : V)
+        for (InputSectionBase *S : V)
           S->Assigned = false;
         Opt.Commands.erase(Iter);
         --I;
@@ -378,12 +377,12 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
       // given value is larger or smaller than the original section alignment.
       if (Cmd->SubalignExpr) {
         uint32_t Subalign = Cmd->SubalignExpr(0);
-        for (InputSectionBase<ELFT> *S : V)
+        for (InputSectionBase *S : V)
           S->Alignment = Subalign;
       }
 
       // Add input sections to an output section.
-      for (InputSectionBase<ELFT> *S : V)
+      for (InputSectionBase *S : V)
         Factory.addInputSec(S, Cmd->Name);
     }
   }
@@ -393,7 +392,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
 template <class ELFT>
 void LinkerScript<ELFT>::addOrphanSections(
     OutputSectionFactory<ELFT> &Factory) {
-  for (InputSectionBase<ELFT> *S : Symtab<ELFT>::X->Sections)
+  for (InputSectionBase *S : Symtab<ELFT>::X->Sections)
     if (S->Live && !S->OutSec)
       Factory.addInputSec(S, getOutputSectionName(S->Name));
 }
@@ -410,7 +409,7 @@ template <class ELFT> void LinkerScript<ELFT>::output(InputSection<ELFT> *S) {
   uintX_t Pos = IsTbss ? Dot + ThreadBssOffset : Dot;
   Pos = alignTo(Pos, S->Alignment);
   S->OutSecOff = Pos - CurOutSec->Addr;
-  Pos += S->getSize();
+  Pos += S->template getSize<ELFT>();
 
   // Update output section size after adding each section. This is so that
   // SIZEOF works correctly in the case below:
@@ -502,7 +501,7 @@ template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
       if (Sec->empty())
         continue;
 
-    auto *IB = static_cast<InputSectionBase<ELFT> *>(ID);
+    auto *IB = static_cast<InputSectionBase *>(ID);
     if (!IB->Live)
       continue;
     switchTo(IB->OutSec);

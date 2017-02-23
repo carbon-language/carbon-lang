@@ -25,7 +25,7 @@ class SymbolBody;
 struct EhSectionPiece;
 template <class ELFT> class EhInputSection;
 template <class ELFT> class InputSection;
-template <class ELFT> class InputSectionBase;
+class InputSectionBase;
 template <class ELFT> class MergeInputSection;
 template <class ELFT> class OutputSection;
 template <class ELFT> class ObjectFile;
@@ -227,7 +227,7 @@ template <class ELFT> class OutputSectionFactory {
 public:
   OutputSectionFactory(std::vector<OutputSectionBase *> &OutputSections);
   ~OutputSectionFactory();
-  void addInputSec(InputSectionBase<ELFT> *IS, StringRef OutsecName);
+  void addInputSec(InputSectionBase *IS, StringRef OutsecName);
 
 private:
   llvm::SmallDenseMap<SectionKey, OutputSectionBase *> Map;
