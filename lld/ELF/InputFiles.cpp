@@ -418,11 +418,12 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
   // that the code in the object file does not expect that the stack is
   // executable (in terms of NX bit). If all input files have the marker,
   // the GNU linker adds a PT_GNU_STACK segment to tells the loader to
-  // make the stack non-executable.
+  // make the stack non-executable. Most object files have this section as
+  // of 2017.
   //
   // But making the stack non-executable is a norm today for security
-  // reasons (as of 2017). Failure to do so may result in a serious
-  // security issue. Therefore, LLD always adds PT_GNU_STACK unless it is
+  // reasons. Failure to do so may result in a serious security issue.
+  // Therefore, we make LLD always add PT_GNU_STACK unless it is
   // explicitly told to do otherwise (by -z execstack). Because the stack
   // executable-ness is controlled solely by command line options,
   // .note.GNU-stack sections are simply ignored.
