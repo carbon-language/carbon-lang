@@ -26,6 +26,8 @@ class SISubtarget;
 class SIMachineFunctionInfo;
 
 class SIRegisterInfo final : public AMDGPURegisterInfo {
+  using AMDGPUGenRegisterInfo::getRegUnitWeight;
+
 private:
   unsigned SGPRSetID;
   unsigned VGPRSetID;
