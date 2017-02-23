@@ -48,10 +48,12 @@ static bool isSupportedType(const DataLayout &DL, const ARMTargetLowering &TLI,
 }
 
 namespace {
-struct FuncReturnHandler : public CallLowering::ValueHandler {
-  FuncReturnHandler(MachineIRBuilder &MIRBuilder, MachineRegisterInfo &MRI,
-                    MachineInstrBuilder &MIB, CCAssignFn *AssignFn)
-    : ValueHandler(MIRBuilder, MRI, AssignFn), MIB(MIB) {}
+/// Helper class for values going out through an ABI boundary (used for handling
+/// function return values and call parameters).
+struct OutgoingValueHandler : public CallLowering::ValueHandler {
+  OutgoingValueHandler(MachineIRBuilder &MIRBuilder, MachineRegisterInfo &MRI,
+                       MachineInstrBuilder &MIB, CCAssignFn *AssignFn)
+      : ValueHandler(MIRBuilder, MRI, AssignFn), MIB(MIB) {}
 
   unsigned getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO) override {
@@ -155,7 +157,7 @@ bool ARMCallLowering::lowerReturnVal(MachineIRBuilder &MIRBuilder,
   CCAssignFn *AssignFn =
       TLI.CCAssignFnForReturn(F.getCallingConv(), F.isVarArg());
 
-  FuncReturnHandler RetHandler(MIRBuilder, MF.getRegInfo(), Ret, AssignFn);
+  OutgoingValueHandler RetHandler(MIRBuilder, MF.getRegInfo(), Ret, AssignFn);
   return handleAssignments(MIRBuilder, SplitVTs, RetHandler);
 }
 
@@ -227,7 +229,7 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
     MIRBuilder.buildCopy(ValVReg, PhysReg);
   }
 
-  unsigned assignCustomValue(const llvm::ARMCallLowering::ArgInfo &Arg,
+  unsigned assignCustomValue(const ARMCallLowering::ArgInfo &Arg,
                              ArrayRef<CCValAssign> VAs) override {
     CCValAssign VA = VAs[0];
     assert(VA.needsCustom() && "Value doesn't need custom handling");
@@ -309,14 +311,13 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
                                 const MachineOperand &Callee,
                                 const ArgInfo &OrigRet,
                                 ArrayRef<ArgInfo> OrigArgs) const {
-  const MachineFunction &MF = MIRBuilder.getMF();
+  MachineFunction &MF = MIRBuilder.getMF();
+  const auto &TLI = *getTLI<ARMTargetLowering>();
+  const auto &DL = MF.getDataLayout();
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
+  MachineRegisterInfo &MRI = MF.getRegInfo();
 
   if (MF.getSubtarget<ARMSubtarget>().genLongCalls())
-    return false;
-
-  // FIXME: Support calling functions with arguments.
-  if (OrigArgs.size() > 0)
     return false;
 
   // FIXME: Support calling functions with return types.
@@ -327,10 +328,33 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       .addImm(0)
       .add(predOps(ARMCC::AL));
 
-  MIRBuilder.buildInstr(ARM::BLX)
-      .add(Callee)
-      // FIXME: Don't hardcode the calling conv here...
-      .addRegMask(TRI->getCallPreservedMask(MF, CallingConv::ARM_AAPCS));
+  // FIXME: This is the calling convention of the caller - we should use the
+  // calling convention of the callee instead.
+  auto CallConv = MF.getFunction()->getCallingConv();
+
+  // Create the call instruction so we can add the implicit uses of arg
+  // registers, but don't insert it yet.
+  auto MIB = MIRBuilder.buildInstrNoInsert(ARM::BLX).add(Callee).addRegMask(
+      TRI->getCallPreservedMask(MF, CallConv));
+
+  SmallVector<ArgInfo, 8> ArgInfos;
+  for (auto Arg : OrigArgs) {
+    if (!isSupportedType(DL, TLI, Arg.Ty))
+      return false;
+
+    if (!Arg.IsFixed)
+      return false;
+
+    splitToValueTypes(Arg, ArgInfos, DL, MRI);
+  }
+
+  auto ArgAssignFn = TLI.CCAssignFnForCall(CallConv, /*IsVarArg=*/false);
+  OutgoingValueHandler ArgHandler(MIRBuilder, MRI, MIB, ArgAssignFn);
+  if (!handleAssignments(MIRBuilder, ArgInfos, ArgHandler))
+    return false;
+
+  // Now we can add the actual call instruction to the correct basic block.
+  MIRBuilder.insertInstr(MIB);
 
   MIRBuilder.buildInstr(ARM::ADJCALLSTACKUP)
       .addImm(0)
