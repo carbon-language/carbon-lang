@@ -53,10 +53,10 @@ InputSectionBase::InputSectionBase(InputFile *File, uint64_t Flags,
                                    uint32_t Link, uint32_t Info,
                                    uint64_t Addralign, ArrayRef<uint8_t> Data,
                                    StringRef Name, Kind SectionKind)
-    : InputSectionData(SectionKind, Name, Data,
-                       !Config->GcSections || !(Flags & SHF_ALLOC)),
-      File(File), Flags(Flags), Entsize(Entsize), Type(Type), Link(Link),
-      Info(Info), Repl(this) {
+    : File(File), Data(Data), Name(Name), SectionKind(SectionKind),
+      Live(!Config->GcSections || !(Flags & SHF_ALLOC)), Assigned(false),
+      Flags(Flags), Entsize(Entsize), Type(Type), Link(Link), Info(Info),
+      Repl(this) {
   NumRelocations = 0;
   AreRelocsRela = false;
 
@@ -198,7 +198,7 @@ InputSection<ELFT>::InputSection(elf::ObjectFile<ELFT> *F,
     : InputSectionBase(F, Header, Name, InputSectionBase::Regular) {}
 
 template <class ELFT>
-bool InputSection<ELFT>::classof(const InputSectionData *S) {
+bool InputSection<ELFT>::classof(const InputSectionBase *S) {
   return S->kind() == InputSectionBase::Regular ||
          S->kind() == InputSectionBase::Synthetic;
 }
@@ -583,7 +583,7 @@ EhInputSection<ELFT>::EhInputSection(elf::ObjectFile<ELFT> *F,
 }
 
 template <class ELFT>
-bool EhInputSection<ELFT>::classof(const InputSectionData *S) {
+bool EhInputSection<ELFT>::classof(const InputSectionBase *S) {
   return S->kind() == InputSectionBase::EHFrame;
 }
 
@@ -711,7 +711,7 @@ template <class ELFT> void MergeInputSection<ELFT>::splitIntoPieces() {
 }
 
 template <class ELFT>
-bool MergeInputSection<ELFT>::classof(const InputSectionData *S) {
+bool MergeInputSection<ELFT>::classof(const InputSectionBase *S) {
   return S->kind() == InputSectionBase::Merge;
 }
 

@@ -89,8 +89,8 @@ template <typename ELFT>
 static bool compareByFilePosition(InputSection<ELFT> *A,
                                   InputSection<ELFT> *B) {
   // Synthetic doesn't have link order dependecy, stable_sort will keep it last
-  if (A->kind() == InputSectionData::Synthetic ||
-      B->kind() == InputSectionData::Synthetic)
+  if (A->kind() == InputSectionBase::Synthetic ||
+      B->kind() == InputSectionBase::Synthetic)
     return false;
   auto *LA = cast<InputSection<ELFT>>(A->template getLinkOrderDep<ELFT>());
   auto *LB = cast<InputSection<ELFT>>(B->template getLinkOrderDep<ELFT>());
@@ -131,7 +131,7 @@ template <class ELFT> void OutputSection<ELFT>::finalize() {
 }
 
 template <class ELFT>
-void OutputSection<ELFT>::addSection(InputSectionData *C) {
+void OutputSection<ELFT>::addSection(InputSectionBase *C) {
   assert(C->Live);
   auto *S = cast<InputSection<ELFT>>(C);
   Sections.push_back(S);
@@ -145,7 +145,7 @@ void OutputSection<ELFT>::addSection(InputSectionData *C) {
 
 template <class ELFT>
 void OutputSection<ELFT>::forEachInputSection(
-    std::function<void(InputSectionData *)> F) {
+    std::function<void(InputSectionBase *)> F) {
   for (InputSection<ELFT> *S : Sections)
     F(S);
 }
@@ -163,7 +163,7 @@ template <class ELFT> void OutputSection<ELFT>::assignOffsets() {
 }
 
 template <class ELFT>
-void OutputSection<ELFT>::sort(std::function<int(InputSectionData *S)> Order) {
+void OutputSection<ELFT>::sort(std::function<int(InputSectionBase *S)> Order) {
   typedef std::pair<unsigned, InputSection<ELFT> *> Pair;
   auto Comp = [](const Pair &A, const Pair &B) { return A.first < B.first; };
 
@@ -184,7 +184,7 @@ void OutputSection<ELFT>::sort(std::function<int(InputSectionData *S)> Order) {
 // For more detail, read the section of the GCC's manual about init_priority.
 template <class ELFT> void OutputSection<ELFT>::sortInitFini() {
   // Sort sections by priority.
-  sort([](InputSectionData *S) { return getPriority(S->Name); });
+  sort([](InputSectionBase *S) { return getPriority(S->Name); });
 }
 
 // Returns true if S matches /Filename.?\.o$/.
@@ -277,7 +277,7 @@ EhOutputSection<ELFT>::EhOutputSection()
 
 template <class ELFT>
 void EhOutputSection<ELFT>::forEachInputSection(
-    std::function<void(InputSectionData *)> F) {
+    std::function<void(InputSectionBase *)> F) {
   for (EhInputSection<ELFT> *S : Sections)
     F(S);
 }
@@ -366,7 +366,7 @@ void EhOutputSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
 }
 
 template <class ELFT>
-void EhOutputSection<ELFT>::addSection(InputSectionData *C) {
+void EhOutputSection<ELFT>::addSection(InputSectionBase *C) {
   auto *Sec = cast<EhInputSection<ELFT>>(C);
   Sec->OutSec = this;
   this->updateAlignment(Sec->Alignment);

@@ -526,8 +526,8 @@ template <class ELFT> void Writer<ELFT>::addSectionSymbols() {
   // Create one STT_SECTION symbol for each output section we might
   // have a relocation with.
   for (OutputSectionBase *Sec : OutputSections) {
-    InputSectionData *First = nullptr;
-    Sec->forEachInputSection([&](InputSectionData *D) {
+    InputSectionBase *First = nullptr;
+    Sec->forEachInputSection([&](InputSectionBase *D) {
       if (!First)
         First = D;
     });
@@ -885,7 +885,7 @@ static void sortBySymbolsOrder(ArrayRef<OutputSectionBase *> OutputSections) {
     SymbolOrder.insert({S, Priority++});
 
   // Build a map from sections to their priorities.
-  DenseMap<InputSectionData *, int> SectionOrder;
+  DenseMap<InputSectionBase *, int> SectionOrder;
   for (elf::ObjectFile<ELFT> *File : Symtab<ELFT>::X->getObjectFiles()) {
     for (SymbolBody *Body : File->getSymbols()) {
       auto *D = dyn_cast<DefinedRegular<ELFT>>(Body);
@@ -899,7 +899,7 @@ static void sortBySymbolsOrder(ArrayRef<OutputSectionBase *> OutputSections) {
   // Sort sections by priority.
   for (OutputSectionBase *Base : OutputSections)
     if (auto *Sec = dyn_cast<OutputSection<ELFT>>(Base))
-      Sec->sort([&](InputSectionData *S) { return SectionOrder.lookup(S); });
+      Sec->sort([&](InputSectionBase *S) { return SectionOrder.lookup(S); });
 }
 
 template <class ELFT>

@@ -35,7 +35,7 @@ class InputSectionBase;
 template <class ELFT> class InputSection;
 class OutputSectionBase;
 template <class ELFT> class OutputSectionFactory;
-class InputSectionData;
+class InputSectionBase;
 
 // This represents an expression in the linker script.
 // ScriptParser::readExpr reads an expression and returns an Expr.
@@ -159,7 +159,7 @@ struct InputSectionDescription : BaseCommand {
   // will be associated with this InputSectionDescription.
   std::vector<SectionPattern> SectionPatterns;
 
-  std::vector<InputSectionData *> Sections;
+  std::vector<InputSectionBase *> Sections;
 };
 
 // Represents an ASSERT().
@@ -307,7 +307,7 @@ private:
   void output(InputSection<ELFT> *Sec);
   void process(BaseCommand &Base);
   llvm::DenseSet<OutputSectionBase *> AlreadyOutputOS;
-  llvm::DenseSet<InputSectionData *> AlreadyOutputIS;
+  llvm::DenseSet<InputSectionBase *> AlreadyOutputIS;
 };
 
 // Variable template is a C++14 feature, so we can't template

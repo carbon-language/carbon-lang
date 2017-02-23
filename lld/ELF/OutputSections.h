@@ -53,7 +53,7 @@ public:
   template <typename ELFT> void writeHeaderTo(typename ELFT::Shdr *SHdr);
   StringRef getName() const { return Name; }
 
-  virtual void addSection(InputSectionData *C) {}
+  virtual void addSection(InputSectionBase *C) {}
   virtual Kind getKind() const { return Base; }
   static bool classof(const OutputSectionBase *B) {
     return B->getKind() == Base;
@@ -81,7 +81,7 @@ public:
   OutputSectionBase *FirstInPtLoad = nullptr;
 
   virtual void finalize() {}
-  virtual void forEachInputSection(std::function<void(InputSectionData *)> F) {}
+  virtual void forEachInputSection(std::function<void(InputSectionBase *)> F) {}
   virtual void assignOffsets() {}
   virtual void writeTo(uint8_t *Buf) {}
   virtual ~OutputSectionBase() = default;
@@ -111,13 +111,13 @@ public:
   typedef typename ELFT::Rela Elf_Rela;
   typedef typename ELFT::uint uintX_t;
   OutputSection(StringRef Name, uint32_t Type, uintX_t Flags);
-  void addSection(InputSectionData *C) override;
-  void sort(std::function<int(InputSectionData *S)> Order);
+  void addSection(InputSectionBase *C) override;
+  void sort(std::function<int(InputSectionBase *S)> Order);
   void sortInitFini();
   void sortCtorsDtors();
   void writeTo(uint8_t *Buf) override;
   void finalize() override;
-  void forEachInputSection(std::function<void(InputSectionData *)> F) override;
+  void forEachInputSection(std::function<void(InputSectionBase *)> F) override;
   void assignOffsets() override;
   Kind getKind() const override { return Regular; }
   static bool classof(const OutputSectionBase *B) {
@@ -146,9 +146,9 @@ public:
   void writeTo(uint8_t *Buf) override;
   void finalize() override;
   bool empty() const { return Sections.empty(); }
-  void forEachInputSection(std::function<void(InputSectionData *)> F) override;
+  void forEachInputSection(std::function<void(InputSectionBase *)> F) override;
 
-  void addSection(InputSectionData *S) override;
+  void addSection(InputSectionBase *S) override;
   Kind getKind() const override { return EHFrame; }
   static bool classof(const OutputSectionBase *B) {
     return B->getKind() == EHFrame;

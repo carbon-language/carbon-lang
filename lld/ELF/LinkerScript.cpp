@@ -196,22 +196,22 @@ template <class ELFT> bool LinkerScript<ELFT>::shouldKeep(InputSectionBase *S) {
   return false;
 }
 
-static bool comparePriority(InputSectionData *A, InputSectionData *B) {
+static bool comparePriority(InputSectionBase *A, InputSectionBase *B) {
   return getPriority(A->Name) < getPriority(B->Name);
 }
 
-static bool compareName(InputSectionData *A, InputSectionData *B) {
+static bool compareName(InputSectionBase *A, InputSectionBase *B) {
   return A->Name < B->Name;
 }
 
-static bool compareAlignment(InputSectionData *A, InputSectionData *B) {
+static bool compareAlignment(InputSectionBase *A, InputSectionBase *B) {
   // ">" is not a mistake. Larger alignments are placed before smaller
   // alignments in order to reduce the amount of padding necessary.
   // This is compatible with GNU.
   return A->Alignment > B->Alignment;
 }
 
-static std::function<bool(InputSectionData *, InputSectionData *)>
+static std::function<bool(InputSectionBase *, InputSectionBase *)>
 getComparator(SortSectionPolicy K) {
   switch (K) {
   case SortSectionPolicy::Alignment:
@@ -230,7 +230,7 @@ static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
                              ConstraintKind Kind) {
   if (Kind == ConstraintKind::NoConstraint)
     return true;
-  bool IsRW = llvm::any_of(Sections, [=](InputSectionData *Sec2) {
+  bool IsRW = llvm::any_of(Sections, [=](InputSectionBase *Sec2) {
     auto *Sec = static_cast<InputSectionBase *>(Sec2);
     return Sec->Flags & SHF_WRITE;
   });
@@ -238,7 +238,7 @@ static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
          (!IsRW && Kind == ConstraintKind::ReadOnly);
 }
 
-static void sortSections(InputSectionData **Begin, InputSectionData **End,
+static void sortSections(InputSectionBase **Begin, InputSectionBase **End,
                          SortSectionPolicy K) {
   if (K != SortSectionPolicy::Default && K != SortSectionPolicy::None)
     std::stable_sort(Begin, End, getComparator(K));
@@ -281,8 +281,8 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
     //    --sort-section is handled as an inner SORT command.
     // 3. If one SORT command is given, and if it is SORT_NONE, don't sort.
     // 4. If no SORT command is given, sort according to --sort-section.
-    InputSectionData **Begin = I->Sections.data() + SizeBefore;
-    InputSectionData **End = I->Sections.data() + I->Sections.size();
+    InputSectionBase **Begin = I->Sections.data() + SizeBefore;
+    InputSectionBase **End = I->Sections.data() + I->Sections.size();
     if (Pat.SortOuter != SortSectionPolicy::None) {
       if (Pat.SortInner == SortSectionPolicy::Default)
         sortSections(Begin, End, Config->SortSection);
@@ -313,7 +313,7 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
     if (!Cmd)
       continue;
     computeInputSections(Cmd);
-    for (InputSectionData *S : Cmd->Sections)
+    for (InputSectionBase *S : Cmd->Sections)
       Ret.push_back(static_cast<InputSectionBase *>(S));
   }
 
@@ -492,7 +492,7 @@ template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
   // calculates and assigns the offsets for each section and also
   // updates the output section size.
   auto &ICmd = cast<InputSectionDescription>(Base);
-  for (InputSectionData *ID : ICmd.Sections) {
+  for (InputSectionBase *ID : ICmd.Sections) {
     // We tentatively added all synthetic sections at the beginning and removed
     // empty ones afterwards (because there is no way to know whether they were
     // going be empty or not other than actually running linker scripts.)

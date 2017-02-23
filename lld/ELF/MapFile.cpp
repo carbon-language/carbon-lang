@@ -107,7 +107,7 @@ static void writeMapFile2(raw_fd_ostream &OS,
     OS << '\n';
 
     StringRef PrevName = "";
-    Sec->forEachInputSection([&](InputSectionData *S) {
+    Sec->forEachInputSection([&](InputSectionBase *S) {
       if (const auto *IS = dyn_cast<InputSection<ELFT>>(S))
         writeInputSection(OS, IS, PrevName);
     });

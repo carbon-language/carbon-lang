@@ -848,7 +848,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
       if (S && S != &InputSection<ELFT>::Discarded)
         Symtab.Sections.push_back(S);
   for (BinaryFile *F : Symtab.getBinaryFiles())
-    for (InputSectionData *S : F->getSections())
+    for (InputSectionBase *S : F->getSections())
       Symtab.Sections.push_back(cast<InputSection<ELFT>>(S));
 
   // Do size optimizations: garbage collection and identical code folding.

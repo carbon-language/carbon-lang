@@ -322,10 +322,10 @@ public:
   explicit BinaryFile(MemoryBufferRef M) : InputFile(BinaryKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == BinaryKind; }
   template <class ELFT> void parse();
-  ArrayRef<InputSectionData *> getSections() const { return Sections; }
+  ArrayRef<InputSectionBase *> getSections() const { return Sections; }
 
 private:
-  std::vector<InputSectionData *> Sections;
+  std::vector<InputSectionBase *> Sections;
 };
 
 InputFile *createObjectFile(MemoryBufferRef MB, StringRef ArchiveName = "",

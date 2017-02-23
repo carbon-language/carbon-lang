@@ -40,7 +40,7 @@ public:
   SyntheticSection(uintX_t Flags, uint32_t Type, uintX_t Addralign,
                    StringRef Name)
       : InputSection<ELFT>(Flags, Type, Addralign, {}, Name,
-                           InputSectionData::Synthetic) {
+                           InputSectionBase::Synthetic) {
     this->Live = true;
   }
 
@@ -54,8 +54,8 @@ public:
     return this->OutSec ? this->OutSec->Addr + this->OutSecOff : 0;
   }
 
-  static bool classof(const InputSectionData *D) {
-    return D->kind() == InputSectionData::Synthetic;
+  static bool classof(const InputSectionBase *D) {
+    return D->kind() == InputSectionBase::Synthetic;
   }
 };
 
