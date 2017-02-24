@@ -5826,7 +5826,7 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
 static void resolveTargetShuffleInputsAndMask(SmallVectorImpl<SDValue> &Inputs,
                                               SmallVectorImpl<int> &Mask) {
   int MaskWidth = Mask.size();
-  SmallVector<SDValue, 8> UsedInputs;
+  SmallVector<SDValue, 16> UsedInputs;
   for (int i = 0, e = Inputs.size(); i < e; ++i) {
     int lo = UsedInputs.size() * MaskWidth;
     int hi = lo + MaskWidth;
@@ -27394,8 +27394,8 @@ static bool combineX86ShufflesConstants(const SmallVectorImpl<SDValue> &Ops,
 
   // Extract constant bits from each source op.
   bool OneUseConstantOp = false;
-  SmallVector<SmallBitVector, 4> UndefEltsOps(NumOps);
-  SmallVector<SmallVector<APInt, 8>, 4> RawBitsOps(NumOps);
+  SmallVector<SmallBitVector, 16> UndefEltsOps(NumOps);
+  SmallVector<SmallVector<APInt, 16>, 16> RawBitsOps(NumOps);
   for (unsigned i = 0; i != NumOps; ++i) {
     SDValue SrcOp = Ops[i];
     OneUseConstantOp |= SrcOp.hasOneUse();
@@ -27530,7 +27530,7 @@ static bool combineX86ShufflesRecursively(ArrayRef<SDValue> SrcOps,
   SDValue Input1 = (OpInputs.size() > 1 ? OpInputs[1] : SDValue());
 
   // Add the inputs to the Ops list, avoiding duplicates.
-  SmallVector<SDValue, 8> Ops(SrcOps.begin(), SrcOps.end());
+  SmallVector<SDValue, 16> Ops(SrcOps.begin(), SrcOps.end());
 
   int InputIdx0 = -1, InputIdx1 = -1;
   for (int i = 0, e = Ops.size(); i < e; ++i) {
@@ -27634,8 +27634,8 @@ static bool combineX86ShufflesRecursively(ArrayRef<SDValue> SrcOps,
   HasVariableMask |= isTargetShuffleVariableMask(Op.getOpcode());
 
   // Update the list of shuffle nodes that have been combined so far.
-  SmallVector<const SDNode *, 8> CombinedNodes(SrcNodes.begin(),
-                                               SrcNodes.end());
+  SmallVector<const SDNode *, 16> CombinedNodes(SrcNodes.begin(),
+                                                SrcNodes.end());
   CombinedNodes.push_back(Op.getNode());
 
   // See if we can recurse into each shuffle source op (if it's a target
