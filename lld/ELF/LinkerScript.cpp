@@ -464,7 +464,7 @@ void LinkerScript<ELFT>::switchTo(OutputSectionBase *Sec) {
   // section is the same as the preceding output section in the same region
   // https://sourceware.org/binutils/docs-2.20/ld/Output-Section-LMA.html
   if (LMAOffset)
-    CurOutSec->setLMAOffset(LMAOffset());
+    CurOutSec->LMAOffset = LMAOffset();
 }
 
 template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {

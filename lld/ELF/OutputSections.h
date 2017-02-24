@@ -46,7 +46,6 @@ public:
   };
 
   OutputSectionBase(StringRef Name, uint32_t Type, uint64_t Flags);
-  void setLMAOffset(uint64_t LMAOff) { LMAOffset = LMAOff; }
   uint64_t getLMA() const { return Addr + LMAOffset; }
   template <typename ELFT> void writeHeaderTo(typename ELFT::Shdr *SHdr);
 
