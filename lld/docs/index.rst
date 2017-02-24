@@ -135,3 +135,9 @@ Internals
 For the internals of the linker, please read :doc:`NewLLD`. It is a bit
 outdated but the fundamental concepts remain valid. We'll update the
 document soon.
+
+.. toctree::
+   :maxdepth: 1
+
+   NewLLD
+   AtomLLD
