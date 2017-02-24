@@ -62,22 +62,20 @@ define <16 x i32> @test_lzcnt_d(<16 x i32> %a) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vplzcntd %zmm0, %zmm0
 ; CHECK-NEXT:    retq
-  %res = call <16 x i32> @llvm.x86.avx512.mask.lzcnt.d.512(<16 x i32> %a, <16 x i32> zeroinitializer, i16 -1)
-  ret <16 x i32> %res
+  %1 = call <16 x i32> @llvm.ctlz.v16i32(<16 x i32> %a, i1 false)
+  ret <16 x i32> %1
 }
-
-declare <16 x i32> @llvm.x86.avx512.mask.lzcnt.d.512(<16 x i32>, <16 x i32>, i16) nounwind readonly
+declare <16 x i32> @llvm.ctlz.v16i32(<16 x i32>, i1) #0
 
 define <8 x i64> @test_lzcnt_q(<8 x i64> %a) {
 ; CHECK-LABEL: test_lzcnt_q:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vplzcntq %zmm0, %zmm0
 ; CHECK-NEXT:    retq
-  %res = call <8 x i64> @llvm.x86.avx512.mask.lzcnt.q.512(<8 x i64> %a, <8 x i64> zeroinitializer, i8 -1)
-  ret <8 x i64> %res
+  %1 = call <8 x i64> @llvm.ctlz.v8i64(<8 x i64> %a, i1 false)
+  ret <8 x i64> %1
 }
-
-declare <8 x i64> @llvm.x86.avx512.mask.lzcnt.q.512(<8 x i64>, <8 x i64>, i8) nounwind readonly
+declare <8 x i64> @llvm.ctlz.v8i64(<8 x i64>, i1) #0
 
 define <16 x i32> @test_mask_lzcnt_d(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
 ; CHECK-LABEL: test_mask_lzcnt_d:
@@ -86,8 +84,10 @@ define <16 x i32> @test_mask_lzcnt_d(<16 x i32> %a, <16 x i32> %b, i16 %mask) {
 ; CHECK-NEXT:    vplzcntd %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovdqa64 %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %res = call <16 x i32> @llvm.x86.avx512.mask.lzcnt.d.512(<16 x i32> %a, <16 x i32> %b, i16 %mask)
-  ret <16 x i32> %res
+  %1 = call <16 x i32> @llvm.ctlz.v16i32(<16 x i32> %a, i1 false)
+  %2 = bitcast i16 %mask to <16 x i1>
+  %3 = select <16 x i1> %2, <16 x i32> %1, <16 x i32> %b
+  ret <16 x i32> %3
 }
 
 define <8 x i64> @test_mask_lzcnt_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
@@ -97,6 +97,8 @@ define <8 x i64> @test_mask_lzcnt_q(<8 x i64> %a, <8 x i64> %b, i8 %mask) {
 ; CHECK-NEXT:    vplzcntq %zmm0, %zmm1 {%k1}
 ; CHECK-NEXT:    vmovdqa64 %zmm1, %zmm0
 ; CHECK-NEXT:    retq
-  %res = call <8 x i64> @llvm.x86.avx512.mask.lzcnt.q.512(<8 x i64> %a, <8 x i64> %b, i8 %mask)
-  ret <8 x i64> %res
+  %1 = call <8 x i64> @llvm.ctlz.v8i64(<8 x i64> %a, i1 false)
+  %2 = bitcast i8 %mask to <8 x i1>
+  %3 = select <8 x i1> %2, <8 x i64> %1, <8 x i64> %b
+  ret <8 x i64> %3
 }

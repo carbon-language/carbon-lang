@@ -641,15 +641,6 @@ define <8 x double> @test_x86_vbroadcast_sd_512(i8* %a0) {
 }
 declare <8 x double> @llvm.x86.avx512.vbroadcast.sd.512(i8*) nounwind readonly
 
-define <16 x i32> @test_conflict_d(<16 x i32> %a) {
-; CHECK-LABEL: test_conflict_d:
-; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpconflictd %zmm0, %zmm0
-; CHECK-NEXT:    retq
-  %res = call <16 x i32> @llvm.x86.avx512.mask.conflict.d.512(<16 x i32> %a, <16 x i32> zeroinitializer, i16 -1)
-  ret <16 x i32> %res
-}
-
  define i16 @test_cmpps(<16 x float> %a, <16 x float> %b) {
 ; CHECK-LABEL: test_cmpps:
 ; CHECK:       ## BB#0:
