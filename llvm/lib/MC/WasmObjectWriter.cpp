@@ -504,6 +504,7 @@ static void WriteRelocations(
 
 void WasmObjectWriter::writeObject(MCAssembler &Asm,
                                    const MCAsmLayout &Layout) {
+  MCContext &Ctx = Asm.getContext();
   unsigned PtrType = is64Bit() ? wasm::WASM_TYPE_I64 : wasm::WASM_TYPE_I32;
 
   // Collect information from the available symbols.
@@ -582,6 +583,29 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
       }
 
       Imports.push_back(Import);
+    }
+  }
+
+  // In the special .global_variables section, we've encoded global
+  // variables used by the function. Translate them into the Globals
+  // list.
+  MCSectionWasm *GlobalVars = Ctx.getWasmSection(".global_variables", 0, 0);
+  if (!GlobalVars->getFragmentList().empty()) {
+    if (GlobalVars->getFragmentList().size() != 1)
+      report_fatal_error("only one .global_variables fragment supported");
+    const MCFragment &Frag = *GlobalVars->begin();
+    if (Frag.hasInstructions() || Frag.getKind() != MCFragment::FT_Data)
+      report_fatal_error("only data supported in .global_variables");
+    const MCDataFragment &DataFrag = cast<MCDataFragment>(Frag);
+    if (!DataFrag.getFixups().empty())
+      report_fatal_error("fixups not supported in .global_variables");
+    const SmallVectorImpl<char> &Contents = DataFrag.getContents();
+    for (char p : Contents) {
+      WasmGlobal G;
+      G.Type = uint8_t(p);
+      G.IsMutable = true;
+      G.InitialValue = 0;
+      Globals.push_back(G);
     }
   }
 

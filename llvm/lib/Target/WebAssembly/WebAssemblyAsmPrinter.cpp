@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCContext.h"
@@ -91,6 +92,11 @@ void WebAssemblyAsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer->emitELFSize(getSymbol(&G),
                                MCConstantExpr::create(Size, OutContext));
     }
+  }
+
+  if (!TM.getTargetTriple().isOSBinFormatELF()) {
+    MachineModuleInfoWasm &MMIW = MMI->getObjFileInfo<MachineModuleInfoWasm>();
+    getTargetStreamer()->emitGlobal(MMIW.getGlobals());
   }
 }
 

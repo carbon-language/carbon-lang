@@ -36,6 +36,8 @@ public:
   virtual void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) = 0;
   /// .local
   virtual void emitLocal(ArrayRef<MVT> Types) = 0;
+  /// .globalvar
+  virtual void emitGlobal(ArrayRef<MVT> Types) = 0;
   /// .endfunc
   virtual void emitEndFunc() = 0;
   /// .functype
@@ -60,6 +62,7 @@ public:
   void emitParam(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitLocal(ArrayRef<MVT> Types) override;
+  void emitGlobal(ArrayRef<MVT> Types) override;
   void emitEndFunc() override;
   void emitIndirectFunctionType(StringRef name,
                                 SmallVectorImpl<MVT> &Params,
@@ -76,6 +79,7 @@ public:
   void emitParam(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitLocal(ArrayRef<MVT> Types) override;
+  void emitGlobal(ArrayRef<MVT> Types) override;
   void emitEndFunc() override;
   void emitIndirectFunctionType(StringRef name,
                                 SmallVectorImpl<MVT> &Params,
@@ -92,6 +96,7 @@ public:
   void emitParam(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitLocal(ArrayRef<MVT> Types) override;
+  void emitGlobal(ArrayRef<MVT> Types) override;
   void emitEndFunc() override;
   void emitIndirectFunctionType(StringRef name,
                                 SmallVectorImpl<MVT> &Params,
