@@ -190,6 +190,9 @@ public:
     if (IsBitfield) {
       AddStmt(D->getBitWidth());
     }
+
+    Hash.AddBoolean(D->isMutable());
+    AddStmt(D->getInClassInitializer());
   }
 };
 
