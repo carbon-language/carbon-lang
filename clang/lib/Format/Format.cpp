@@ -656,7 +656,6 @@ FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
     if (Language == FormatStyle::LK_ObjC)
       ChromiumStyle.ColumnLimit = 80;
   }
-  ChromiumStyle.SortIncludes = false;
   return ChromiumStyle;
 }
 
