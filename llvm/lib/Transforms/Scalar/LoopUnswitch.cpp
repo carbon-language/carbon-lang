@@ -1231,7 +1231,13 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
         // This in-loop instruction has been simplified w.r.t. its context,
         // i.e. LIC != Val, make sure we propagate its replacement value to
         // all its users.
-        ReplaceUsesOfWith(UI, Replacement, Worklist, L, LPM);
+        //  
+        // We can not yet delete UI, the LIC user, yet, because that would invalidate
+        // the LIC->users() iterator !. However, we can make this instruction
+        // dead by replacing all its users and push it onto the worklist so that
+        // it can be properly deleted and its operands simplified. 
+        UI->replaceAllUsesWith(Replacement);
+        Worklist.push_back(UI);
         continue;
       }
     }
