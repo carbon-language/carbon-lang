@@ -24,6 +24,7 @@
 #include "WebAssemblyMachineFunctionInfo.h"
 #include "WebAssemblySubtarget.h"
 #include "WebAssemblyTargetMachine.h"
+#include "WebAssemblyUtilities.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -151,6 +152,8 @@ void WebAssemblyFrameLowering::emitPrologue(MachineFunction &MF,
   auto &MRI = MF.getRegInfo();
 
   auto InsertPt = MBB.begin();
+  while (InsertPt != MBB.end() && WebAssembly::isArgument(*InsertPt))
+    ++InsertPt;
   DebugLoc DL;
 
   const TargetRegisterClass *PtrRC =

@@ -31,9 +31,9 @@ public:
   explicit WebAssemblyTargetStreamer(MCStreamer &S);
 
   /// .param
-  virtual void emitParam(ArrayRef<MVT> Types) = 0;
+  virtual void emitParam(MCSymbol *Symbol, ArrayRef<MVT> Types) = 0;
   /// .result
-  virtual void emitResult(ArrayRef<MVT> Types) = 0;
+  virtual void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) = 0;
   /// .local
   virtual void emitLocal(ArrayRef<MVT> Types) = 0;
   /// .endfunc
@@ -57,8 +57,8 @@ class WebAssemblyTargetAsmStreamer final : public WebAssemblyTargetStreamer {
 public:
   WebAssemblyTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
 
-  void emitParam(ArrayRef<MVT> Types) override;
-  void emitResult(ArrayRef<MVT> Types) override;
+  void emitParam(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
+  void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitLocal(ArrayRef<MVT> Types) override;
   void emitEndFunc() override;
   void emitIndirectFunctionType(StringRef name,
@@ -73,8 +73,8 @@ class WebAssemblyTargetELFStreamer final : public WebAssemblyTargetStreamer {
 public:
   explicit WebAssemblyTargetELFStreamer(MCStreamer &S);
 
-  void emitParam(ArrayRef<MVT> Types) override;
-  void emitResult(ArrayRef<MVT> Types) override;
+  void emitParam(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
+  void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitLocal(ArrayRef<MVT> Types) override;
   void emitEndFunc() override;
   void emitIndirectFunctionType(StringRef name,
@@ -89,8 +89,8 @@ class WebAssemblyTargetWasmStreamer final : public WebAssemblyTargetStreamer {
 public:
   explicit WebAssemblyTargetWasmStreamer(MCStreamer &S);
 
-  void emitParam(ArrayRef<MVT> Types) override;
-  void emitResult(ArrayRef<MVT> Types) override;
+  void emitParam(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
+  void emitResult(MCSymbol *Symbol, ArrayRef<MVT> Types) override;
   void emitLocal(ArrayRef<MVT> Types) override;
   void emitEndFunc() override;
   void emitIndirectFunctionType(StringRef name,
