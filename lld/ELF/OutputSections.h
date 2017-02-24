@@ -42,8 +42,6 @@ class OutputSectionBase {
 public:
   enum Kind {
     Base,
-    EHFrame,
-    Merge,
     Regular,
   };
 
