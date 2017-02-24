@@ -5236,8 +5236,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
       return false;
     unsigned CstSizeInBits = Cst->getType()->getPrimitiveSizeInBits();
     if (isa<UndefValue>(Cst)) {
-      unsigned HiBits = BitOffset + CstSizeInBits;
-      Undefs |= APInt::getBitsSet(SizeInBits, BitOffset, HiBits);
+      Undefs.setBits(BitOffset, BitOffset + CstSizeInBits);
       return true;
     }
     if (auto *CInt = dyn_cast<ConstantInt>(Cst)) {
@@ -5258,8 +5257,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
       const SDValue &Src = Op.getOperand(i);
       unsigned BitOffset = i * SrcEltSizeInBits;
       if (Src.isUndef()) {
-        unsigned HiBits = BitOffset + SrcEltSizeInBits;
-        UndefBits |= APInt::getBitsSet(SizeInBits, BitOffset, HiBits);
+        UndefBits.setBits(BitOffset, BitOffset + SrcEltSizeInBits);
         continue;
       }
       auto *Cst = cast<ConstantSDNode>(Src);
@@ -26353,11 +26351,11 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
       break;
     LLVM_FALLTHROUGH;
   case X86ISD::SETCC:
-    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
+    KnownZero.setBits(1, BitWidth);
     break;
   case X86ISD::MOVMSK: {
     unsigned NumLoBits = Op.getOperand(0).getValueType().getVectorNumElements();
-    KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - NumLoBits);
+    KnownZero.setBits(NumLoBits, BitWidth);
     break;
   }
   case X86ISD::VZEXT: {
@@ -26374,7 +26372,7 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
     DAG.computeKnownBits(N0, KnownZero, KnownOne, DemandedSrcElts, Depth + 1);
     KnownOne = KnownOne.zext(BitWidth);
     KnownZero = KnownZero.zext(BitWidth);
-    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - InBitWidth);
+    KnownZero.setBits(InBitWidth, BitWidth);
     break;
   }
   }
