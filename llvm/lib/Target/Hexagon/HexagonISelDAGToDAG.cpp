@@ -932,55 +932,21 @@ void HexagonDAGToDAGISel::SelectBitcast(SDNode *N) {
 
 
 void HexagonDAGToDAGISel::Select(SDNode *N) {
-  if (N->isMachineOpcode()) {
-    N->setNodeId(-1);
-    return;   // Already selected.
-  }
+  if (N->isMachineOpcode())
+    return N->setNodeId(-1);  // Already selected.
 
   switch (N->getOpcode()) {
-  case ISD::Constant:
-    SelectConstant(N);
-    return;
-
-  case ISD::ConstantFP:
-    SelectConstantFP(N);
-    return;
-
-  case ISD::FrameIndex:
-    SelectFrameIndex(N);
-    return;
-
-  case ISD::BITCAST:
-    SelectBitcast(N);
-    return;
-
-  case ISD::SHL:
-    SelectSHL(N);
-    return;
-
-  case ISD::LOAD:
-    SelectLoad(N);
-    return;
-
-  case ISD::STORE:
-    SelectStore(N);
-    return;
-
-  case ISD::MUL:
-    SelectMul(N);
-    return;
-
-  case ISD::ZERO_EXTEND:
-    SelectZeroExtend(N);
-    return;
-
-  case ISD::INTRINSIC_W_CHAIN:
-    SelectIntrinsicWChain(N);
-    return;
-
-  case ISD::INTRINSIC_WO_CHAIN:
-    SelectIntrinsicWOChain(N);
-    return;
+  case ISD::Constant:             return SelectConstant(N);
+  case ISD::ConstantFP:           return SelectConstantFP(N);
+  case ISD::FrameIndex:           return SelectFrameIndex(N);
+  case ISD::BITCAST:              return SelectBitcast(N);
+  case ISD::SHL:                  return SelectSHL(N);
+  case ISD::LOAD:                 return SelectLoad(N);
+  case ISD::STORE:                return SelectStore(N);
+  case ISD::MUL:                  return SelectMul(N);
+  case ISD::ZERO_EXTEND:          return SelectZeroExtend(N);
+  case ISD::INTRINSIC_W_CHAIN:    return SelectIntrinsicWChain(N);
+  case ISD::INTRINSIC_WO_CHAIN:   return SelectIntrinsicWOChain(N);
   }
 
   SelectCode(N);
