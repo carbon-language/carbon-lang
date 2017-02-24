@@ -8376,8 +8376,7 @@ static SDValue lowerVectorShuffleAsBitMask(const SDLoc &DL, MVT VT, SDValue V1,
   assert(!VT.isFloatingPoint() && "Floating point types are not supported");
   MVT EltVT = VT.getVectorElementType();
   SDValue Zero = DAG.getConstant(0, DL, EltVT);
-  SDValue AllOnes =
-      DAG.getConstant(APInt::getAllOnesValue(EltVT.getSizeInBits()), DL, EltVT);
+  SDValue AllOnes = DAG.getAllOnesConstant(DL, EltVT);
   SmallVector<SDValue, 16> VMaskOps(Mask.size(), Zero);
   SDValue V;
   for (int i = 0, Size = Mask.size(); i < Size; ++i) {
@@ -8409,10 +8408,8 @@ static SDValue lowerVectorShuffleAsBitBlend(const SDLoc &DL, MVT VT, SDValue V1,
                                             SelectionDAG &DAG) {
   assert(VT.isInteger() && "Only supports integer vector types!");
   MVT EltVT = VT.getVectorElementType();
-  int NumEltBits = EltVT.getSizeInBits();
   SDValue Zero = DAG.getConstant(0, DL, EltVT);
-  SDValue AllOnes = DAG.getConstant(APInt::getAllOnesValue(NumEltBits), DL,
-                                    EltVT);
+  SDValue AllOnes = DAG.getAllOnesConstant(DL, EltVT);
   SmallVector<SDValue, 16> MaskOps;
   for (int i = 0, Size = Mask.size(); i < Size; ++i) {
     if (Mask[i] >= 0 && Mask[i] != i && Mask[i] != i + Size)
@@ -28811,16 +28808,14 @@ static SDValue combineHorizontalPredicateResult(SDNode *Extract,
     // Perform the select as i32/i64 and then truncate to avoid partial register
     // stalls.
     unsigned ResWidth = std::max(BitWidth, 32u);
-    APInt ResOnes = APInt::getAllOnesValue(ResWidth);
-    APInt ResZero = APInt::getNullValue(ResWidth);
     EVT ResVT = EVT::getIntegerVT(*DAG.getContext(), ResWidth);
-
     SDLoc DL(Extract);
+    SDValue Zero = DAG.getConstant(0, DL, ResVT);
+    SDValue Ones = DAG.getAllOnesConstant(DL, ResVT);
     SDValue Res = DAG.getBitcast(MaskVT, Match);
     Res = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Res);
     Res = DAG.getSelectCC(DL, Res, DAG.getConstant(CompareBits, DL, MVT::i32),
-                          DAG.getConstant(ResOnes, DL, ResVT),
-                          DAG.getConstant(ResZero, DL, ResVT), CondCode);
+                          Ones, Zero, CondCode);
     return DAG.getSExtOrTrunc(Res, DL, ExtractVT);
   }
 
@@ -29062,12 +29057,11 @@ combineVSelectWithAllOnesOrZeros(SDNode *N, SelectionDAG &DAG,
   // This situation only applies to avx512.
   if (FValIsAllZeros  && Subtarget.hasAVX512() && Cond.hasOneUse() &&
       CondVT.getVectorElementType() == MVT::i1) {
-      //Invert the cond to not(cond) : xor(op,allones)=not(op)
-      SDValue CondNew = DAG.getNode(ISD::XOR, DL, Cond.getValueType(), Cond,
-        DAG.getConstant(APInt::getAllOnesValue(CondVT.getScalarSizeInBits()),
-                        DL, CondVT));
-      //Vselect cond, op1, op2 = Vselect not(cond), op2, op1
-      return DAG.getNode(ISD::VSELECT, DL, VT, CondNew, RHS, LHS);
+    // Invert the cond to not(cond) : xor(op,allones)=not(op)
+    SDValue CondNew = DAG.getNode(ISD::XOR, DL, Cond.getValueType(), Cond,
+                                  DAG.getAllOnesConstant(DL, CondVT));
+    // Vselect cond, op1, op2 = Vselect not(cond), op2, op1
+    return DAG.getNode(ISD::VSELECT, DL, VT, CondNew, RHS, LHS);
   }
 
   // To use the condition operand as a bitwise mask, it must have elements that
@@ -33492,8 +33486,7 @@ static SDValue combineSext(SDNode *N, SelectionDAG &DAG,
   if (!DCI.isBeforeLegalizeOps()) {
     if (InVT == MVT::i1) {
       SDValue Zero = DAG.getConstant(0, DL, VT);
-      SDValue AllOnes =
-          DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), DL, VT);
+      SDValue AllOnes = DAG.getAllOnesConstant(DL, VT);
       return DAG.getNode(ISD::SELECT, DL, VT, N0, AllOnes, Zero);
     }
     return SDValue();
