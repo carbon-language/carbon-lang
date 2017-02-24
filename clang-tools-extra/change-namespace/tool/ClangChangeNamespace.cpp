@@ -80,15 +80,16 @@ cl::opt<std::string> WhiteListFile(
     cl::init(""), cl::cat(ChangeNamespaceCategory));
 
 llvm::ErrorOr<std::vector<std::string>> GetWhiteListedSymbolPatterns() {
+  if (WhiteListFile.empty())
+    return std::vector<std::string>();
+
   llvm::SmallVector<StringRef, 8> Lines;
-  if (!WhiteListFile.empty()) {
-    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
-        llvm::MemoryBuffer::getFile(WhiteListFile);
-    if (!File)
-      return File.getError();
-    llvm::StringRef Content = File.get()->getBuffer();
-    Content.split(Lines, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
-  }
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
+      llvm::MemoryBuffer::getFile(WhiteListFile);
+  if (!File)
+    return File.getError();
+  llvm::StringRef Content = File.get()->getBuffer();
+  Content.split(Lines, '\n', /*MaxSplit=*/-1, /*KeepEmpty=*/false);
   return std::vector<std::string>(Lines.begin(), Lines.end());
 }
 
