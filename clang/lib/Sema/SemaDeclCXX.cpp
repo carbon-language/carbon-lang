@@ -5852,7 +5852,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
 /// \param ConstRHS True if this is a copy operation with a const object
 ///        on its RHS, that is, if the argument to the outer special member
 ///        function is 'const' and this is not a field marked 'mutable'.
-static Sema::SpecialMemberOverloadResult *lookupCallFromSpecialMember(
+static Sema::SpecialMemberOverloadResult lookupCallFromSpecialMember(
     Sema &S, CXXRecordDecl *Class, Sema::CXXSpecialMember CSM,
     unsigned FieldQuals, bool ConstRHS) {
   unsigned LHSQuals = 0;
@@ -5975,13 +5975,13 @@ specialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
   if (CSM == Sema::CXXDefaultConstructor)
     return ClassDecl->hasConstexprDefaultConstructor();
 
-  Sema::SpecialMemberOverloadResult *SMOR =
+  Sema::SpecialMemberOverloadResult SMOR =
       lookupCallFromSpecialMember(S, ClassDecl, CSM, Quals, ConstRHS);
-  if (!SMOR || !SMOR->getMethod())
+  if (!SMOR.getMethod())
     // A constructor we wouldn't select can't be "involved in initializing"
     // anything.
     return true;
-  return SMOR->getMethod()->isConstexpr();
+  return SMOR.getMethod()->isConstexpr();
 }
 
 /// Determine whether the specified special member function would be constexpr
@@ -6362,15 +6362,54 @@ void Sema::CheckDelayedMemberExceptionSpecs() {
 }
 
 namespace {
-struct SpecialMemberDeletionInfo {
+/// CRTP base class for visiting operations performed by a special member
+/// function (or inherited constructor).
+template<typename Derived>
+struct SpecialMemberVisitor {
   Sema &S;
   CXXMethodDecl *MD;
   Sema::CXXSpecialMember CSM;
   Sema::InheritedConstructorInfo *ICI;
+
+  bool ConstArg = false;
+
+  SpecialMemberVisitor(Sema &S, CXXMethodDecl *MD, Sema::CXXSpecialMember CSM,
+                       Sema::InheritedConstructorInfo *ICI)
+      : S(S), MD(MD), CSM(CSM), ICI(ICI) {
+    if (MD->getNumParams()) {
+      if (const ReferenceType *RT =
+              MD->getParamDecl(0)->getType()->getAs<ReferenceType>())
+        ConstArg = RT->getPointeeType().isConstQualified();
+    }
+  }
+
+  /// Look up the corresponding special member in the given class.
+  Sema::SpecialMemberOverloadResult lookupIn(CXXRecordDecl *Class,
+                                             unsigned Quals, bool IsMutable) {
+    return lookupCallFromSpecialMember(S, Class, CSM, Quals,
+                                       ConstArg && !IsMutable);
+  }
+
+  /// A base or member subobject.
+  typedef llvm::PointerUnion<CXXBaseSpecifier*, FieldDecl*> Subobject;
+
+  static SourceLocation getSubobjectLoc(Subobject Subobj) {
+    if (auto *B = Subobj.dyn_cast<CXXBaseSpecifier*>())
+      return B->getBaseTypeLoc();
+    else
+      return Subobj.get<FieldDecl*>()->getLocation();
+  }
+
+};
+}
+
+namespace {
+struct SpecialMemberDeletionInfo
+    : SpecialMemberVisitor<SpecialMemberDeletionInfo> {
   bool Diagnose;
 
   // Properties of the special member, computed for convenience.
-  bool IsConstructor, IsAssignment, IsMove, ConstArg;
+  bool IsConstructor, IsAssignment, IsMove;
   SourceLocation Loc;
 
   bool AllFieldsAreConst;
@@ -6378,9 +6417,9 @@ struct SpecialMemberDeletionInfo {
   SpecialMemberDeletionInfo(Sema &S, CXXMethodDecl *MD,
                             Sema::CXXSpecialMember CSM,
                             Sema::InheritedConstructorInfo *ICI, bool Diagnose)
-      : S(S), MD(MD), CSM(CSM), ICI(ICI), Diagnose(Diagnose),
+      : SpecialMemberVisitor(S, MD, CSM, ICI), Diagnose(Diagnose),
         IsConstructor(false), IsAssignment(false), IsMove(false),
-        ConstArg(false), Loc(MD->getLocation()), AllFieldsAreConst(true) {
+        Loc(MD->getLocation()), AllFieldsAreConst(true) {
     switch (CSM) {
       case Sema::CXXDefaultConstructor:
       case Sema::CXXCopyConstructor:
@@ -6402,12 +6441,6 @@ struct SpecialMemberDeletionInfo {
       case Sema::CXXInvalid:
         llvm_unreachable("invalid special member kind");
     }
-
-    if (MD->getNumParams()) {
-      if (const ReferenceType *RT =
-              MD->getParamDecl(0)->getType()->getAs<ReferenceType>())
-        ConstArg = RT->getPointeeType().isConstQualified();
-    }
   }
 
   bool inUnion() const { return MD->getParent()->isUnion(); }
@@ -6416,15 +6449,6 @@ struct SpecialMemberDeletionInfo {
     return ICI ? Sema::CXXInvalid : CSM;
   }
 
-  /// Look up the corresponding special member in the given class.
-  Sema::SpecialMemberOverloadResult *lookupIn(CXXRecordDecl *Class,
-                                              unsigned Quals, bool IsMutable) {
-    return lookupCallFromSpecialMember(S, Class, CSM, Quals,
-                                       ConstArg && !IsMutable);
-  }
-
-  typedef llvm::PointerUnion<CXXBaseSpecifier*, FieldDecl*> Subobject;
-
   bool shouldDeleteForBase(CXXBaseSpecifier *Base);
   bool shouldDeleteForField(FieldDecl *FD);
   bool shouldDeleteForAllConstMembers();
@@ -6432,7 +6456,7 @@ struct SpecialMemberDeletionInfo {
   bool shouldDeleteForClassSubobject(CXXRecordDecl *Class, Subobject Subobj,
                                      unsigned Quals);
   bool shouldDeleteForSubobjectCall(Subobject Subobj,
-                                    Sema::SpecialMemberOverloadResult *SMOR,
+                                    Sema::SpecialMemberOverloadResult SMOR,
                                     bool IsDtorCallInCtor);
 
   bool isAccessible(Subobject Subobj, CXXMethodDecl *D);
@@ -6462,16 +6486,16 @@ bool SpecialMemberDeletionInfo::isAccessible(Subobject Subobj,
 /// Check whether we should delete a special member due to the implicit
 /// definition containing a call to a special member of a subobject.
 bool SpecialMemberDeletionInfo::shouldDeleteForSubobjectCall(
-    Subobject Subobj, Sema::SpecialMemberOverloadResult *SMOR,
+    Subobject Subobj, Sema::SpecialMemberOverloadResult SMOR,
     bool IsDtorCallInCtor) {
-  CXXMethodDecl *Decl = SMOR->getMethod();
+  CXXMethodDecl *Decl = SMOR.getMethod();
   FieldDecl *Field = Subobj.dyn_cast<FieldDecl*>();
 
   int DiagKind = -1;
 
-  if (SMOR->getKind() == Sema::SpecialMemberOverloadResult::NoMemberOrDeleted)
+  if (SMOR.getKind() == Sema::SpecialMemberOverloadResult::NoMemberOrDeleted)
     DiagKind = !Decl ? 0 : 1;
-  else if (SMOR->getKind() == Sema::SpecialMemberOverloadResult::Ambiguous)
+  else if (SMOR.getKind() == Sema::SpecialMemberOverloadResult::Ambiguous)
     DiagKind = 2;
   else if (!isAccessible(Subobj, Decl))
     DiagKind = 3;
@@ -6541,7 +6565,7 @@ bool SpecialMemberDeletionInfo::shouldDeleteForClassSubobject(
   // -- any direct or virtual base class or non-static data member has a
   //    type with a destructor that is deleted or inaccessible
   if (IsConstructor) {
-    Sema::SpecialMemberOverloadResult *SMOR =
+    Sema::SpecialMemberOverloadResult SMOR =
         S.LookupSpecialMember(Class, Sema::CXXDestructor,
                               false, false, false, false, false);
     if (shouldDeleteForSubobjectCall(Subobj, SMOR, true))
@@ -6936,18 +6960,18 @@ static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
   case Sema::CXXMoveConstructor:
   case Sema::CXXMoveAssignment:
   NeedOverloadResolution:
-    Sema::SpecialMemberOverloadResult *SMOR =
+    Sema::SpecialMemberOverloadResult SMOR =
         lookupCallFromSpecialMember(S, RD, CSM, Quals, ConstRHS);
 
     // The standard doesn't describe how to behave if the lookup is ambiguous.
     // We treat it as not making the member non-trivial, just like the standard
     // mandates for the default constructor. This should rarely matter, because
     // the member will also be deleted.
-    if (SMOR->getKind() == Sema::SpecialMemberOverloadResult::Ambiguous)
+    if (SMOR.getKind() == Sema::SpecialMemberOverloadResult::Ambiguous)
       return true;
 
-    if (!SMOR->getMethod()) {
-      assert(SMOR->getKind() ==
+    if (!SMOR.getMethod()) {
+      assert(SMOR.getKind() ==
              Sema::SpecialMemberOverloadResult::NoMemberOrDeleted);
       return false;
     }
@@ -6955,8 +6979,8 @@ static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
     // We deliberately don't check if we found a deleted special member. We're
     // not supposed to!
     if (Selected)
-      *Selected = SMOR->getMethod();
-    return SMOR->getMethod()->isTrivial();
+      *Selected = SMOR.getMethod();
+    return SMOR.getMethod()->isTrivial();
   }
 
   llvm_unreachable("unknown special method kind");
@@ -10033,42 +10057,16 @@ Decl *Sema::ActOnNamespaceAliasDef(Scope *S, SourceLocation NamespaceLoc,
 }
 
 namespace {
-struct SpecialMemberExceptionSpecInfo {
-  Sema &S;
-  CXXMethodDecl *MD;
-  Sema::CXXSpecialMember CSM;
-  Sema::InheritedConstructorInfo *ICI;
-
+struct SpecialMemberExceptionSpecInfo
+    : SpecialMemberVisitor<SpecialMemberExceptionSpecInfo> {
   SourceLocation Loc;
   Sema::ImplicitExceptionSpecification ExceptSpec;
-
-  bool ConstArg = false;
 
   SpecialMemberExceptionSpecInfo(Sema &S, CXXMethodDecl *MD,
                                  Sema::CXXSpecialMember CSM,
                                  Sema::InheritedConstructorInfo *ICI,
                                  SourceLocation Loc)
-      : S(S), MD(MD), CSM(CSM), ICI(ICI), Loc(Loc), ExceptSpec(S) {
-    if (MD->getNumParams()) {
-      if (const ReferenceType *RT =
-              MD->getParamDecl(0)->getType()->getAs<ReferenceType>())
-        ConstArg = RT->getPointeeType().isConstQualified();
-    }
-  }
-
-  typedef llvm::PointerUnion<CXXBaseSpecifier*, FieldDecl*> Subobject;
-  static SourceLocation getSubobjectLoc(Subobject Subobj) {
-    if (auto *B = Subobj.dyn_cast<CXXBaseSpecifier*>())
-      return B->getBaseTypeLoc();
-    else
-      return Subobj.get<FieldDecl*>()->getLocation();
-  }
-
-  Sema::SpecialMemberOverloadResult *lookupIn(CXXRecordDecl *Class,
-                                              unsigned Quals, bool IsMutable) {
-    return lookupCallFromSpecialMember(S, Class, CSM, Quals,
-                                       ConstArg && !IsMutable);
-  }
+      : SpecialMemberVisitor(S, MD, CSM, ICI), Loc(Loc), ExceptSpec(S) {}
 
   void visitBase(CXXBaseSpecifier *Base);
   void visitField(FieldDecl *FD);
@@ -10077,8 +10075,7 @@ struct SpecialMemberExceptionSpecInfo {
                            unsigned Quals);
 
   void visitSubobjectCall(Subobject Subobj,
-                          Sema::SpecialMemberOverloadResult *SMOR);
-  void visitSubobjectCall(Subobject Subobj, CXXMethodDecl *MD);
+                          Sema::SpecialMemberOverloadResult SMOR);
 };
 }
 
@@ -10129,16 +10126,11 @@ void SpecialMemberExceptionSpecInfo::visitClassSubobject(CXXRecordDecl *Class,
 }
 
 void SpecialMemberExceptionSpecInfo::visitSubobjectCall(
-    Subobject Subobj, Sema::SpecialMemberOverloadResult *SMOR) {
+    Subobject Subobj, Sema::SpecialMemberOverloadResult SMOR) {
   // Note, if lookup fails, it doesn't matter what exception specification we
   // choose because the special member will be deleted.
-  if (CXXMethodDecl *MD = SMOR->getMethod())
-    visitSubobjectCall(Subobj, MD);
-}
-
-void SpecialMemberExceptionSpecInfo::visitSubobjectCall(Subobject Subobj,
-                                                        CXXMethodDecl *MD) {
-  ExceptSpec.CalledDecl(getSubobjectLoc(Subobj), MD);
+  if (CXXMethodDecl *MD = SMOR.getMethod())
+    ExceptSpec.CalledDecl(getSubobjectLoc(Subobj), MD);
 }
 
 static Sema::ImplicitExceptionSpecification
@@ -11552,13 +11544,13 @@ static void checkMoveAssignmentForRepeatedMove(Sema &S, CXXRecordDecl *Class,
 
       // If we're not actually going to call a move assignment for this base,
       // or the selected move assignment is trivial, skip it.
-      Sema::SpecialMemberOverloadResult *SMOR =
+      Sema::SpecialMemberOverloadResult SMOR =
         S.LookupSpecialMember(Base, Sema::CXXMoveAssignment,
                               /*ConstArg*/false, /*VolatileArg*/false,
                               /*RValueThis*/true, /*ConstThis*/false,
                               /*VolatileThis*/false);
-      if (!SMOR->getMethod() || SMOR->getMethod()->isTrivial() ||
-          !SMOR->getMethod()->isMoveAssignmentOperator())
+      if (!SMOR.getMethod() || SMOR.getMethod()->isTrivial() ||
+          !SMOR.getMethod()->isMoveAssignmentOperator())
         continue;
 
       if (BaseSpec->isVirtual()) {
@@ -11589,7 +11581,7 @@ static void checkMoveAssignmentForRepeatedMove(Sema &S, CXXRecordDecl *Class,
         // Only walk over bases that have defaulted move assignment operators.
         // We assume that any user-provided move assignment operator handles
         // the multiple-moves-of-vbase case itself somehow.
-        if (!SMOR->getMethod()->isDefaulted())
+        if (!SMOR.getMethod()->isDefaulted())
           continue;
 
         // We're going to move the base classes of Base. Add them to the list.
