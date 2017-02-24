@@ -49,7 +49,6 @@ public:
   void setLMAOffset(uint64_t LMAOff) { LMAOffset = LMAOff; }
   uint64_t getLMA() const { return Addr + LMAOffset; }
   template <typename ELFT> void writeHeaderTo(typename ELFT::Shdr *SHdr);
-  StringRef getName() const { return Name; }
 
   virtual void addSection(InputSectionBase *C) {}
   virtual Kind getKind() const { return Base; }
