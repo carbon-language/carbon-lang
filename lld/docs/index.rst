@@ -11,7 +11,7 @@ different linkers. The ELF port is the one that will be described in
 this document. The PE/COFF port is almost complete except the lack of
 the Windows debug info (PDB) support. The Mach-O port is built based
 on a different architecture than the ELF or COFF ports. For the
-details about Mach-O, please read AtomLLD_.
+details about Mach-O, please read :doc:`AtomLLD`.
 
 Features
 --------
@@ -132,6 +132,6 @@ Here is a brief project history of the ELF and COFF ports.
 Internals
 ---------
 
-For the internals of the linker, please read NewLLD_. It is a bit
+For the internals of the linker, please read :doc:`NewLLD`. It is a bit
 outdated but the fundamental concepts remain valid. We'll update the
 document soon.
