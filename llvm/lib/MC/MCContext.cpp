@@ -320,6 +320,11 @@ MCSectionELF *MCContext::createELFSectionImpl(StringRef Section, unsigned Type,
                                               const MCSectionELF *Associated) {
   MCSymbolELF *R;
   MCSymbol *&Sym = Symbols[Section];
+  // A section symbol can not redefine regular symbols. There may be multiple
+  // sections with the same name, in which case the first such section wins.
+  if (Sym && Sym->isDefined() &&
+      (!Sym->isInSection() || Sym->getSection().getBeginSymbol() != Sym))
+    reportError(SMLoc(), "invalid symbol redefinition");
   if (Sym && Sym->isUndefined()) {
     R = cast<MCSymbolELF>(Sym);
   } else {
@@ -330,7 +335,6 @@ MCSectionELF *MCContext::createELFSectionImpl(StringRef Section, unsigned Type,
   }
   R->setBinding(ELF::STB_LOCAL);
   R->setType(ELF::STT_SECTION);
-  R->setRedefinable(true);
 
   auto *Ret = new (ELFAllocator.Allocate()) MCSectionELF(
       Section, Type, Flags, K, EntrySize, Group, UniqueID, R, Associated);
