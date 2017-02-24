@@ -6097,20 +6097,9 @@ ComputeDefaultedSpecialMemberExceptionSpec(
 
 static Sema::ImplicitExceptionSpecification
 computeImplicitExceptionSpec(Sema &S, SourceLocation Loc, CXXMethodDecl *MD) {
-  switch (auto CSM = S.getSpecialMember(MD)) {
-  case Sema::CXXDefaultConstructor:
-    return ComputeDefaultedSpecialMemberExceptionSpec(
-        S, Loc, MD, Sema::CXXDefaultConstructor, nullptr);
-  case Sema::CXXCopyConstructor:
-  case Sema::CXXCopyAssignment:
-  case Sema::CXXMoveConstructor:
-  case Sema::CXXMoveAssignment:
-  case Sema::CXXDestructor:
-    return ComputeDefaultedSpecialMemberExceptionSpec(
-        S, MD->getLocation(), MD, CSM, nullptr);
-  case Sema::CXXInvalid:
-    break;
-  }
+  auto CSM = S.getSpecialMember(MD);
+  if (CSM != Sema::CXXInvalid)
+    return ComputeDefaultedSpecialMemberExceptionSpec(S, Loc, MD, CSM, nullptr);
 
   auto *CD = cast<CXXConstructorDecl>(MD);
   assert(CD->getInheritedConstructor() &&
