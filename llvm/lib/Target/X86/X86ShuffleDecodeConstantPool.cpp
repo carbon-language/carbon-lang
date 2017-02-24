@@ -77,8 +77,8 @@ static bool extractConstantMask(const Constant *C, unsigned MaskEltSizeInBits,
   RawMask.resize(NumMaskElts, 0);
 
   for (unsigned i = 0; i != NumMaskElts; ++i) {
-    unsigned BitOffset = i * MaskEltSizeInBits;
-    APInt EltUndef = UndefBits.extractBits(MaskEltSizeInBits, BitOffset);
+    APInt EltUndef = UndefBits.lshr(i * MaskEltSizeInBits);
+    EltUndef = EltUndef.zextOrTrunc(MaskEltSizeInBits);
 
     // Only treat the element as UNDEF if all bits are UNDEF, otherwise
     // treat it as zero.
@@ -88,7 +88,8 @@ static bool extractConstantMask(const Constant *C, unsigned MaskEltSizeInBits,
       continue;
     }
 
-    APInt EltBits = MaskBits.extractBits(MaskEltSizeInBits, BitOffset);
+    APInt EltBits = MaskBits.lshr(i * MaskEltSizeInBits);
+    EltBits = EltBits.zextOrTrunc(MaskEltSizeInBits);
     RawMask[i] = EltBits.getZExtValue();
   }
 

@@ -1434,18 +1434,6 @@ TEST(APIntTest, isMask) {
   }
 }
 
-TEST(APIntTest, extractBits) {
-  APInt i32(32, 0x1234567);
-  EXPECT_EQ(0x3456, i32.extractBits(16, 4));
-
-  APInt i256(256, -16776961 /* 0xFFFFFFFFFFFFFFFFFFFFFFFFFF0000FF */, true);
-  EXPECT_EQ(255, i256.extractBits(16, 0));
-  EXPECT_EQ(127, i256.extractBits(16, 1));
-  EXPECT_EQ(-1, i256.extractBits(32, 64).getSExtValue());
-  EXPECT_EQ(-1, i256.extractBits(128, 128).getSExtValue());
-  EXPECT_EQ(-8388481, i256.extractBits(128, 1).getSExtValue());
-}
-
 #if defined(__clang__)
 // Disable the pragma warning from versions of Clang without -Wself-move
 #pragma clang diagnostic push

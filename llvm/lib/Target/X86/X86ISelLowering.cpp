@@ -5207,8 +5207,8 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     EltBits.resize(NumElts, APInt(EltSizeInBits, 0));
 
     for (unsigned i = 0; i != NumElts; ++i) {
-      unsigned BitOffset = i * EltSizeInBits;
-      APInt UndefEltBits = UndefBits.extractBits(EltSizeInBits, BitOffset);
+      APInt UndefEltBits = UndefBits.lshr(i * EltSizeInBits);
+      UndefEltBits = UndefEltBits.zextOrTrunc(EltSizeInBits);
 
       // Only treat an element as UNDEF if all bits are UNDEF.
       if (UndefEltBits.isAllOnesValue()) {
@@ -5223,7 +5223,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
       if (UndefEltBits.getBoolValue() && !AllowPartialUndefs)
         return false;
 
-      APInt Bits = MaskBits.extractBits(EltSizeInBits, BitOffset);
+      APInt Bits = MaskBits.lshr(i * EltSizeInBits).zextOrTrunc(EltSizeInBits);
       EltBits[i] = Bits.getZExtValue();
     }
     return true;
@@ -6421,7 +6421,7 @@ static Constant *getConstantVector(MVT VT, const APInt &SplatValue,
 
   SmallVector<Constant *, 32> ConstantVec;
   for (unsigned i = 0; i < NumElm; i++) {
-    APInt Val = SplatValue.extractBits(ScalarSize, ScalarSize * i);
+    APInt Val = SplatValue.lshr(ScalarSize * i).trunc(ScalarSize);
     Constant *Const;
     if (VT.isFloatingPoint()) {
       assert((ScalarSize == 32 || ScalarSize == 64) &&

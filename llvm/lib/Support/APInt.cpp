@@ -618,38 +618,6 @@ void APInt::flipBit(unsigned bitPosition) {
   else setBit(bitPosition);
 }
 
-APInt APInt::extractBits(unsigned numBits, unsigned bitPosition) const {
-  assert(0 < numBits && "Can't extract zero bits");
-  assert(bitPosition < BitWidth && (numBits + bitPosition) <= BitWidth &&
-    "Illegal bit extraction");
-
-  unsigned loBit = whichBit(bitPosition);
-  if (isSingleWord())
-    return APInt(numBits, VAL >> loBit);
-
-  unsigned loWord = whichWord(bitPosition);
-  unsigned hiWord = whichWord(bitPosition + numBits - 1);
-
-  // Single word result extracting bits from a single word source.
-  if (loWord == hiWord)
-    return APInt(numBits, pVal[loWord] >> loBit);
-
-  // Extracting bits that start on a source word boundary can be done
-  // as a fast memory copy.
-  if (loBit == 0)
-    return APInt(numBits, makeArrayRef(pVal + loWord, 1 + hiWord - loWord));
-
-  // General case - shift + copy source words into place.
-  APInt Result(numBits, 0);
-  uint64_t *pDst = Result.pVal;
-  for (unsigned word = loWord; word < hiWord; ++word, ++pDst) {
-    uint64_t w0 = pVal[word + 0];
-    uint64_t w1 = pVal[word + 1];
-    *pDst = (w0 >> loBit) | (w1 << (APINT_BITS_PER_WORD - loBit));
-  }
-  return Result.clearUnusedBits();
-}
-
 unsigned APInt::getBitsNeeded(StringRef str, uint8_t radix) {
   assert(!str.empty() && "Invalid string length");
   assert((radix == 10 || radix == 8 || radix == 16 || radix == 2 ||
