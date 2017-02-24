@@ -35,7 +35,7 @@ __attribute__((visibility("hidden"), noreturn))
 void abort_message(const char* format, ...)
 {
     // write message to stderr
-#if !defined(NDEBUG) && !defined(LIBCXXABI_BAREMETAL)
+#if !defined(NDEBUG) || !LIBCXXABI_BAREMETAL
 #ifdef __APPLE__
     fprintf(stderr, "libc++abi.dylib: ");
 #endif
