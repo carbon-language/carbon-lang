@@ -23936,9 +23936,11 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMAXS:              return "X86ISD::FMAXS";
   case X86ISD::FMAX_RND:           return "X86ISD::FMAX_RND";
+  case X86ISD::FMAXS_RND:          return "X86ISD::FMAX_RND";
   case X86ISD::FMIN:               return "X86ISD::FMIN";
   case X86ISD::FMINS:              return "X86ISD::FMINS";
   case X86ISD::FMIN_RND:           return "X86ISD::FMIN_RND";
+  case X86ISD::FMINS_RND:          return "X86ISD::FMINS_RND";
   case X86ISD::FMAXC:              return "X86ISD::FMAXC";
   case X86ISD::FMINC:              return "X86ISD::FMINC";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
@@ -24131,9 +24133,13 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RSQRT28:            return "X86ISD::RSQRT28";
   case X86ISD::RSQRT28S:           return "X86ISD::RSQRT28S";
   case X86ISD::FADD_RND:           return "X86ISD::FADD_RND";
+  case X86ISD::FADDS_RND:          return "X86ISD::FADDS_RND";
   case X86ISD::FSUB_RND:           return "X86ISD::FSUB_RND";
+  case X86ISD::FSUBS_RND:          return "X86ISD::FSUBS_RND";
   case X86ISD::FMUL_RND:           return "X86ISD::FMUL_RND";
+  case X86ISD::FMULS_RND:          return "X86ISD::FMULS_RND";
   case X86ISD::FDIV_RND:           return "X86ISD::FDIV_RND";
+  case X86ISD::FDIVS_RND:          return "X86ISD::FDIVS_RND";
   case X86ISD::FSQRT_RND:          return "X86ISD::FSQRT_RND";
   case X86ISD::FSQRTS_RND:         return "X86ISD::FSQRTS_RND";
   case X86ISD::FGETEXP_RND:        return "X86ISD::FGETEXP_RND";
