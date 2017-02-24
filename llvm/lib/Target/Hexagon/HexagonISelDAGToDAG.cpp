@@ -1023,8 +1023,8 @@ void HexagonDAGToDAGISel::PreprocessISelDAG() {
     }
   }
 
-  // Transform: (store ch addr (add x (add (shl y c) e)))
-  //        to: (store ch addr (add x (shl (add y d) c))),
+  // Transform: (store ch val (add x (add (shl y c) e)))
+  //        to: (store ch val (add x (shl (add y d) c))),
   // where e = (shl d c) for some integer d.
   // The purpose of this is to enable generation of loads/stores with
   // shifted addressing mode, i.e. mem(x+y<<#c). For that, the shift
@@ -1033,7 +1033,7 @@ void HexagonDAGToDAGISel::PreprocessISelDAG() {
     if (I->getOpcode() != ISD::STORE)
       continue;
 
-    // I matched: (store ch addr Off)
+    // I matched: (store ch val Off)
     SDValue Off = I->getOperand(2);
     // Off needs to match: (add x (add (shl y c) (shl d c))))
     if (Off.getOpcode() != ISD::ADD)
@@ -1073,6 +1073,78 @@ void HexagonDAGToDAGISel::PreprocessISelDAG() {
     SDValue NewAdd = DAG.getNode(ISD::ADD, DL, VT, T1.getOperand(0), D);
     // NewShl = (shl NewAdd c)
     SDValue NewShl = DAG.getNode(ISD::SHL, DL, VT, NewAdd, C);
+    ReplaceNode(T0.getNode(), NewShl.getNode());
+  }
+
+  // Transform (load ch (add x (and (srl y c) Mask)))
+  //       to: (load ch (add x (shl (srl y d) d-c)))
+  // where
+  // Mask = 00..0 111..1 0.0
+  //          |     |     +-- d-c 0s, and d-c is 0, 1 or 2.
+  //          |     +-------- 1s
+  //          +-------------- at most c 0s
+  // Motivating example:
+  // DAG combiner optimizes (add x (shl (srl y 5) 2))
+  //                     to (add x (and (srl y 3) 1FFFFFFC))
+  // which results in a constant-extended and(##...,lsr). This transformation
+  // undoes this simplification for cases where the shl can be folded into
+  // an addressing mode.
+  for (SDNode *N : Nodes) {
+    unsigned Opc = N->getOpcode();
+    if (Opc != ISD::LOAD && Opc != ISD::STORE)
+      continue;
+    SDValue Addr = Opc == ISD::LOAD ? N->getOperand(1) : N->getOperand(2);
+    // Addr must match: (add x T0)
+    if (Addr.getOpcode() != ISD::ADD)
+      continue;
+    SDValue T0 = Addr.getOperand(1);
+    // T0 must match: (and T1 Mask)
+    if (T0.getOpcode() != ISD::AND)
+      continue;
+
+    // We have an AND.
+    //
+    // Check the first operand. It must be: (srl y c).
+    SDValue S = T0.getOperand(0);
+    if (S.getOpcode() != ISD::SRL)
+      continue;
+    ConstantSDNode *SN = dyn_cast<ConstantSDNode>(S.getOperand(1).getNode());
+    if (SN == nullptr)
+      continue;
+    if (SN->getAPIntValue().getBitWidth() != 32)
+      continue;
+    uint32_t CV = SN->getZExtValue();
+
+    // Check the second operand: the supposed mask.
+    ConstantSDNode *MN = dyn_cast<ConstantSDNode>(T0.getOperand(1).getNode());
+    if (MN == nullptr)
+      continue;
+    if (MN->getAPIntValue().getBitWidth() != 32)
+      continue;
+    uint32_t Mask = MN->getZExtValue();
+    // Examine the mask.
+    uint32_t TZ = countTrailingZeros(Mask);
+    uint32_t M1 = countTrailingOnes(Mask >> TZ);
+    uint32_t LZ = countLeadingZeros(Mask);
+    // Trailing zeros + middle ones + leading zeros must equal the width.
+    if (TZ + M1 + LZ != 32)
+      continue;
+    // The number of trailing zeros will be encoded in the addressing mode.
+    if (TZ > 2)
+      continue;
+    // The number of leading zeros must be at most c.
+    if (LZ > CV)
+      continue;
+
+    // All looks good.
+    SDValue Y = S.getOperand(0);
+    EVT VT = Addr.getValueType();
+    SDLoc dl(S);
+    // TZ = D-C, so D = TZ+C.
+    SDValue D = DAG.getConstant(TZ+CV, dl, VT);
+    SDValue DC = DAG.getConstant(TZ, dl, VT);
+    SDValue NewSrl = DAG.getNode(ISD::SRL, dl, VT, Y, D);
+    SDValue NewShl = DAG.getNode(ISD::SHL, dl, VT, NewSrl, DC);
     ReplaceNode(T0.getNode(), NewShl.getNode());
   }
 
