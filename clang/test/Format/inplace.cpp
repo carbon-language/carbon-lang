@@ -1,6 +1,6 @@
 // Regression test to check that clang-format does not leave behind temporary
 // files on Windows when doing in-place formatting.
-// RUN: rm %T/*
+// RUN: rm %T/inplace*
 // RUN: cp %s %T/inplace.cpp
 // RUN: clang-format -style=LLVM -i %T/inplace.cpp
 // RUN: ls %T > %T/files.txt
