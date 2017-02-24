@@ -17,13 +17,16 @@ Features
 --------
 
 - LLD is a drop-in replacement for the GNU linkers. That accepts the
-  same command line arguments and linker scripts as GNU. Although our
-  linker is relatively new and still in active development, that is
-  already able to link the entire FreeBSD/amd64 base system including
-  the kernel. We are currently working closely with the FreeBSD
-  project to make LLD default system linker in future versions of the
-  operating system, so we are serious about addressing compatibility
-  issues.
+  same command line arguments and linker scripts as GNU.
+
+  We are currently working closely with the FreeBSD project to make
+  LLD default system linker in future versions of the operating
+  system, so we are serious about addressing compatibility issues. As
+  of February 2017, LLD is able to link the entire FreeBSD/amd64 base
+  system including the kernel. With a few work-in-progress patches it
+  can link approximately 95% of the ports collection on AMD64. For the
+  details, see `FreeBSD quarterly status report
+  <https://www.freebsd.org/news/status/report-2016-10-2016-12.html#Using-LLVM%27s-LLD-Linker-as-FreeBSD%27s-System-Linker>`.
 
 - LLD is very fast. When you link a large program on a multicore
   machine, you can expect that LLD runs more than twice as fast as GNU
@@ -127,7 +130,8 @@ Here is a brief project history of the ELF and COFF ports.
 - July 2016: Started working on improving the linker script support.
 
 - December 2016: Succeeded to build the entire FreeBSD base system
-  including the kernel. We had widen the gap against the GNU linkers.
+  including the kernel. We had widen the performance gap against the
+  GNU linkers.
 
 Internals
 ---------
