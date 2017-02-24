@@ -221,7 +221,7 @@ void OptimizeBodylessFunctions::analyze(
   if (BF.size() != 1 || BF.front().getNumNonPseudos() != 1)
     return;
 
-  const auto *FirstInstr = BF.front().getFirstNonPseudo();
+  const auto *FirstInstr = BF.front().getFirstNonPseudoInstr();
   if (!FirstInstr)
     return;
   if (!BC.MIA->isTailCall(*FirstInstr))
@@ -461,7 +461,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     if (BB->getNumNonPseudos() != 1)
       continue;
 
-    auto *Instr = BB->getFirstNonPseudo();
+    auto *Instr = BB->getFirstNonPseudoInstr();
     if (!MIA->isTailCall(*Instr))
       continue;
 
@@ -621,7 +621,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
       } else {
         // Succ will be null in the tail call case.  In this case we
         // need to explicitly add a tail call instruction.
-        auto *Branch = Pred->getLastNonPseudo();
+        auto *Branch = Pred->getLastNonPseudoInstr();
         if (Branch && BC.MIA->isUnconditionalBranch(*Branch)) {
           Pred->removeSuccessor(&BB);
           Pred->eraseInstruction(Branch);
@@ -641,7 +641,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
     if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
       continue;
 
-    auto *Inst = BB.getFirstNonPseudo();
+    auto *Inst = BB.getFirstNonPseudoInstr();
     const bool IsTailCall = BC.MIA->isTailCall(*Inst);
 
     if (!BC.MIA->isUnconditionalBranch(*Inst) && !IsTailCall)
@@ -671,7 +671,7 @@ void Peepholes::fixDoubleJumps(BinaryContext &BC,
 void Peepholes::addTailcallTraps(BinaryContext &BC,
                                  BinaryFunction &Function) {
   for (auto &BB : Function) {
-    auto *Inst = BB.getLastNonPseudo();
+    auto *Inst = BB.getLastNonPseudoInstr();
     if (Inst && BC.MIA->isTailCall(*Inst) && BC.MIA->isIndirectBranch(*Inst)) {
       MCInst Trap;
       if (BC.MIA->createTrap(Trap)) {
@@ -1574,6 +1574,38 @@ void InstructionLowering::runOnFunctions(
         BC.MIA->lowerTailCall(Instruction);
       }
     }
+  }
+}
+
+void StripRepRet::runOnFunctions(
+    BinaryContext &BC,
+    std::map<uint64_t, BinaryFunction> &BFs,
+    std::set<uint64_t> &LargeFunctions) {
+  uint64_t NumPrefixesRemoved = 0;
+  uint64_t NumBytesSaved = 0;
+  for (auto &BFI : BFs) {
+    for (auto &BB : BFI.second) {
+      auto LastInstRIter = BB.getLastNonPseudo();
+      if (LastInstRIter == BB.rend() ||
+          !BC.MIA->isReturn(*LastInstRIter))
+        continue;
+
+      auto NextToLastInstRIter = std::next(LastInstRIter);
+      if (NextToLastInstRIter == BB.rend() ||
+          !BC.MIA->isPrefix(*NextToLastInstRIter))
+        continue;
+
+      BB.eraseInstruction(std::next(NextToLastInstRIter).base());
+
+      NumPrefixesRemoved += BB.getKnownExecutionCount();
+      ++NumBytesSaved;
+    }
+  }
+
+  if (NumBytesSaved) {
+    outs() << "BOLT-INFO: removed " << NumBytesSaved << " 'repz' prefixes"
+              " with estimated execution count of " << NumPrefixesRemoved
+           << " times.\n";
   }
 }
 

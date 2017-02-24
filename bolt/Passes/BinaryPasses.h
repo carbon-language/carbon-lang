@@ -484,6 +484,21 @@ public:
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+/// Pass for stripping 'repz' from 'repz retq' sequence of instructions.
+class StripRepRet : public BinaryFunctionPass {
+public:
+  explicit StripRepRet(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) {}
+
+  const char *getName() const override {
+    return "strip-rep-ret";
+  }
+
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
 } // namespace bolt
 } // namespace llvm
 

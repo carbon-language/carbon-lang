@@ -68,6 +68,12 @@ SimplifyRODataLoads("simplify-rodata-loads",
                              "section"),
                     cl::ZeroOrMore);
 
+static cl::opt<bool>
+StripRepRet("strip-rep-ret",
+    cl::desc("strip 'repz' prefix from 'repz retq' sequence (on by default)"),
+    cl::init(true),
+    cl::ZeroOrMore);
+
 static cl::opt<bool> OptimizeFrameAccesses(
     "frame-opt", cl::desc("optimize stack frame accesses"), cl::ZeroOrMore);
 
@@ -219,6 +225,9 @@ void BinaryFunctionPassManager::runAllPasses(
 
   // Run this pass first to use stats for the original functions.
   Manager.registerPass(llvm::make_unique<PrintSortedBy>(NeverPrint));
+
+  Manager.registerPass(llvm::make_unique<StripRepRet>(NeverPrint),
+                       opts::StripRepRet);
 
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF));
 

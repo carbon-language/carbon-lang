@@ -35,22 +35,23 @@ void BinaryBasicBlock::adjustNumPseudos(const MCInst &Inst, int Sign) {
     NumPseudos += Sign;
 }
 
-MCInst *BinaryBasicBlock::getFirstNonPseudo() {
-  auto &BC = Function->getBinaryContext();
-  for (auto &Inst : Instructions) {
-    if (!BC.MII->get(Inst.getOpcode()).isPseudo())
-      return &Inst;
+BinaryBasicBlock::iterator BinaryBasicBlock::getFirstNonPseudo() {
+  const auto &BC = Function->getBinaryContext();
+  for (auto II = Instructions.begin(), E = Instructions.end(); II != E; ++II) {
+    if (!BC.MII->get(II->getOpcode()).isPseudo())
+      return II;
   }
-  return nullptr;
+  return end();
 }
 
-MCInst *BinaryBasicBlock::getLastNonPseudo() {
-  auto &BC = Function->getBinaryContext();
-  for (auto Itr = Instructions.rbegin(); Itr != Instructions.rend(); ++Itr) {
-    if (!BC.MII->get(Itr->getOpcode()).isPseudo())
-      return &*Itr;
+BinaryBasicBlock::reverse_iterator BinaryBasicBlock::getLastNonPseudo() {
+  const auto &BC = Function->getBinaryContext();
+  for (auto RII = Instructions.rbegin(), E = Instructions.rend();
+       RII != E; ++RII) {
+    if (!BC.MII->get(RII->getOpcode()).isPseudo())
+      return RII;
   }
-  return nullptr;
+  return rend();
 }
 
 bool BinaryBasicBlock::validateSuccessorInvariants() {

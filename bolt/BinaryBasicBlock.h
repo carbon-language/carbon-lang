@@ -412,13 +412,27 @@ public:
     return size() - getNumPseudos();
   }
 
+  /// Return iterator to the first non-pseudo instruction or end()
+  /// if no such instruction was found.
+  iterator getFirstNonPseudo();
+
   /// Return a pointer to the first non-pseudo instruction in this basic
   /// block.  Returns nullptr if none exists.
-  MCInst *getFirstNonPseudo();
+  MCInst *getFirstNonPseudoInstr() {
+    auto II = getFirstNonPseudo();
+    return II == Instructions.end() ? nullptr : &*II;
+  }
+
+  /// Return reverse iterator to the last non-pseudo instruction or rend()
+  /// if no such instruction was found.
+  reverse_iterator getLastNonPseudo();
 
   /// Return a pointer to the last non-pseudo instruction in this basic
   /// block.  Returns nullptr if none exists.
-  MCInst *getLastNonPseudo();
+  MCInst *getLastNonPseudoInstr() {
+    auto RII = getLastNonPseudo();
+    return RII == Instructions.rend() ? nullptr : &*RII;
+  }
 
   /// Set minimum alignment for the basic block.
   void setAlignment(uint64_t Align) {
@@ -551,6 +565,11 @@ public:
   /// Warning: this will invalidate succeeding instruction pointers.
   bool eraseInstruction(MCInst *Inst) {
     return replaceInstruction(Inst, std::vector<MCInst>());
+  }
+
+  /// Erase non-pseudo instruction at a given iterator \p II.
+  iterator eraseInstruction(iterator II) {
+    return Instructions.erase(II);
   }
 
   /// Replace an instruction with a sequence of instructions. Returns true

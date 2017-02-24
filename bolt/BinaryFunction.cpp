@@ -1617,7 +1617,7 @@ bool BinaryFunction::buildCFG() {
         const BranchInfo &BInfo = BranchInfoOrErr.get();
         FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
         // Populate profile counts for the jump table.
-        auto *LastInstr = FromBB->getLastNonPseudo();
+        auto *LastInstr = FromBB->getLastNonPseudoInstr();
         if (!LastInstr)
           continue;
         auto JTAddress = BC.MIA->getJumpTable(*LastInstr);
@@ -2711,7 +2711,7 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                                            CondBranch,
                                            UncondBranch);
 
-    const auto *LastInstr = BB->getLastNonPseudo();
+    const auto *LastInstr = BB->getLastNonPseudoInstr();
     const bool IsJumpTable = LastInstr && BC.MIA->getJumpTable(*LastInstr);
 
     auto BI = BB->branch_info_begin();
@@ -3717,7 +3717,7 @@ DynoStats BinaryFunction::getDynoStats() const {
     Stats[DynoStats::INSTRUCTIONS] += BB->getNumNonPseudos() * BBExecutionCount;
 
     // Jump tables.
-    const auto *LastInstr = BB->getLastNonPseudo();
+    const auto *LastInstr = BB->getLastNonPseudoInstr();
     if (BC.MIA->getJumpTable(*LastInstr)) {
       Stats[DynoStats::JUMP_TABLE_BRANCHES] += BBExecutionCount;
       DEBUG(
