@@ -1437,17 +1437,6 @@ MachineBasicBlock *MipsTargetLowering::emitAtomicCmpSwapPartword(
   unsigned AtomicOp = MI.getOpcode() == Mips::ATOMIC_CMP_SWAP_I8_PSEUDO
                           ? Mips::ATOMIC_CMP_SWAP_I8_FRAG
                           : Mips::ATOMIC_CMP_SWAP_I16_FRAG;
-  unsigned LL, SC;
-
-  if (isMicroMips) {
-    LL = Mips::LL_MM;
-    SC = Mips::SC_MM;
-  } else {
-    LL = Subtarget.hasMips32r6() ? (ArePtrs64bit ? Mips::LL64_R6 : Mips::LL_R6)
-                                 : (ArePtrs64bit ? Mips::LL64 : Mips::LL);
-    SC = Subtarget.hasMips32r6() ? (ArePtrs64bit ? Mips::SC64_R6 : Mips::SC_R6)
-                                 : (ArePtrs64bit ? Mips::SC64 : Mips::SC);
-  }
 
   // insert new blocks after the current block
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
