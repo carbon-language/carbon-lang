@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DebugInfo/CodeView/ModuleSubstreamVisitor.h"
-#include "llvm/DebugInfo/MSF/StreamReader.h"
-#include "llvm/DebugInfo/MSF/StreamRef.h"
+#include "llvm/DebugInfo/MSF/BinaryStreamReader.h"
+#include "llvm/DebugInfo/MSF/BinaryStreamRef.h"
 
 using namespace llvm;
 using namespace llvm::codeview;

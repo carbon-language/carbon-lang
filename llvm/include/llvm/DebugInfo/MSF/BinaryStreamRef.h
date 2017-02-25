@@ -11,8 +11,8 @@
 #define LLVM_DEBUGINFO_MSF_STREAMREF_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/DebugInfo/MSF/BinaryStream.h"
 #include "llvm/DebugInfo/MSF/MSFError.h"
-#include "llvm/DebugInfo/MSF/StreamInterface.h"
 #include "llvm/Support/Error.h"
 #include <algorithm>
 #include <cstdint>

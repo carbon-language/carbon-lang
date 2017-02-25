@@ -9,7 +9,7 @@
 
 #include "llvm/DebugInfo/PDB/Native/StringTableBuilder.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/DebugInfo/MSF/StreamWriter.h"
+#include "llvm/DebugInfo/MSF/BinaryStreamWriter.h"
 #include "llvm/DebugInfo/PDB/Native/Hash.h"
 #include "llvm/DebugInfo/PDB/Native/RawTypes.h"
 #include "llvm/Support/Endian.h"
