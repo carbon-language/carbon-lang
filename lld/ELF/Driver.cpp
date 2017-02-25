@@ -548,7 +548,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->NoUndefinedVersion = Args.hasArg(OPT_no_undefined_version);
   Config->Nostdlib = Args.hasArg(OPT_nostdlib);
   Config->OFormatBinary = isOutputFormatBinary(Args);
-  Config->OMagic = Args.hasArg(OPT_omagic);
+  Config->Omagic = Args.hasArg(OPT_omagic);
   Config->OptRemarksFilename = getString(Args, OPT_opt_remarks_filename);
   Config->OptRemarksWithHotness = Args.hasArg(OPT_opt_remarks_with_hotness);
   Config->Optimize = getInteger(Args, OPT_O, 1);
@@ -606,7 +606,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   // .text segments are writable. Today, the option is still in use to
   // create special-purpose programs such as boot loaders. It doesn't
   // make sense to create PT_GNU_RELRO for such executables.
-  if (Config->OMagic)
+  if (Config->Omagic)
     Config->ZRelro = false;
 
   if (!Config->Relocatable)

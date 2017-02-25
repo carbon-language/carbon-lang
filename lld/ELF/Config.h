@@ -117,7 +117,7 @@ struct Configuration {
   bool NoUndefinedVersion;
   bool Nostdlib;
   bool OFormatBinary;
-  bool OMagic;
+  bool Omagic;
   bool OptRemarksWithHotness;
   bool Pie;
   bool PrintGcSections;
