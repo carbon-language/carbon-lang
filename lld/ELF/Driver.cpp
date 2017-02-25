@@ -502,6 +502,17 @@ static SortSectionPolicy getSortKind(opt::InputArgList &Args) {
   return SortSectionPolicy::Default;
 }
 
+static std::pair<bool, bool> getHashStyle(opt::InputArgList &Args) {
+  StringRef S = getString(Args, OPT_hash_style, "sysv");
+  if (S == "sysv")
+    return {true, false};
+  if (S == "gnu")
+    return {false, true};
+  if (S != "both")
+    error("unknown -hash-style: " + S);
+  return {true, true};
+}
+
 static std::vector<StringRef> getLines(MemoryBufferRef MB) {
   SmallVector<StringRef, 0> Arr;
   MB.getBuffer().split(Arr, '\n');
@@ -612,16 +623,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   if (!Config->Relocatable)
     Config->Strip = getStripOption(Args);
 
-  if (auto *Arg = Args.getLastArg(OPT_hash_style)) {
-    StringRef S = Arg->getValue();
-    if (S == "gnu") {
-      Config->GnuHash = true;
-      Config->SysvHash = false;
-    } else if (S == "both") {
-      Config->GnuHash = true;
-    } else if (S != "sysv")
-      error("unknown hash style: " + S);
-  }
+  std::tie(Config->SysvHash, Config->GnuHash) = getHashStyle(Args);
 
   // Parse --build-id or --build-id=<style>.
   if (Args.hasArg(OPT_build_id))

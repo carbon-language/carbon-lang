@@ -109,7 +109,7 @@ struct Configuration {
   bool FatalWarnings;
   bool GcSections;
   bool GdbIndex;
-  bool GnuHash = false;
+  bool GnuHash;
   bool ICF;
   bool Mips64EL = false;
   bool MipsN32Abi = false;
@@ -127,7 +127,7 @@ struct Configuration {
   bool SingleRoRx;
   bool Shared;
   bool Static = false;
-  bool SysvHash = true;
+  bool SysvHash;
   bool Target1Rel;
   bool Threads;
   bool Trace;
