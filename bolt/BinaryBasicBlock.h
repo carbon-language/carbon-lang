@@ -95,6 +95,9 @@ private:
   /// Number of pseudo instructions in this block.
   uint32_t NumPseudos{0};
 
+  /// CFI state at the entry to this basic block.
+  int32_t CFIState{-1};
+
   /// True if this basic block is (potentially) an external entry point into
   /// the function.
   bool IsEntryPoint{false};
@@ -432,6 +435,31 @@ public:
   MCInst *getLastNonPseudoInstr() {
     auto RII = getLastNonPseudo();
     return RII == Instructions.rend() ? nullptr : &*RII;
+  }
+
+  /// Set CFI state at entry to this basic block.
+  void setCFIState(int32_t NewCFIState) {
+    assert((CFIState == -1 || NewCFIState == CFIState) &&
+           "unexpected change of CFI state for basic block");
+    CFIState = NewCFIState;
+  }
+
+  /// Return CFI state (expected) at entry of this basic block.
+  int32_t getCFIState() const {
+    assert(CFIState >= 0 && "unknown CFI state");
+    return CFIState;
+  }
+
+  /// Calculate and return CFI state right before instruction \p Instr in
+  /// this basic block. If \p Instr is nullptr then return the state at
+  /// the end of the basic block.
+  int32_t getCFIStateAtInstr(const MCInst *Instr) const;
+
+  /// Calculate and return CFI state after execution of this basic block.
+  /// The state depends on CFI state at entry and CFI instructions inside the
+  /// basic block.
+  int32_t getCFIStateAtExit() const {
+    return getCFIStateAtInstr(nullptr);
   }
 
   /// Set minimum alignment for the basic block.

@@ -378,7 +378,7 @@ void FixupBranches::runOnFunctions(
   }
 }
 
-void FixupFunctions::runOnFunctions(
+void FinalizeFunctions::runOnFunctions(
   BinaryContext &BC,
   std::map<uint64_t, BinaryFunction> &BFs,
   std::set<uint64_t> &
@@ -394,16 +394,14 @@ void FixupFunctions::runOnFunctions(
     if (shouldOptimize(Function) && !Function.fixCFIState()) {
       if (opts::Relocs) {
         errs() << "BOLT-ERROR: unable to fix CFI state for function "
-               << Function << ". Aborting.\n";
-        abort();
-      }
-      if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: unable to fix CFI state for function "
-               << Function << ". Skipping.\n";
+               << Function << ". Exiting.\n";
+        exit(1);
       }
       Function.setSimple(false);
       continue;
     }
+
+    Function.setFinalized();
 
     // Update exception handling information.
     Function.updateEHRanges();
@@ -592,7 +590,7 @@ void Peepholes::shortenInstructions(BinaryContext &BC,
 void debugDump(BinaryFunction *BF) {
   BF->dump();
 }
-  
+
 // This peephole fixes jump instructions that jump to another basic
 // block with a single jump instruction, e.g.
 //
@@ -1396,7 +1394,7 @@ IndirectCallPromotion::printCallsiteInfo(const BinaryBasicBlock *BB,
     BC.printInstruction(dbgs(), Inst, Targets[0].From.Offset, nullptr, true);
   });
 }
-  
+
 void IndirectCallPromotion::runOnFunctions(
   BinaryContext &BC,
   std::map<uint64_t, BinaryFunction> &BFs,

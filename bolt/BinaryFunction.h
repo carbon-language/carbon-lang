@@ -159,10 +159,11 @@ enum JumpTableSupportLevel : char {
 class BinaryFunction : public AddressRangesOwner {
 public:
   enum class State : char {
-    Empty = 0,        /// Function body is empty
-    Disassembled,     /// Function have been disassembled
-    CFG,              /// Control flow graph have been built
-    Assembled,        /// Function has been assembled in memory
+    Empty = 0,        /// Function body is empty.
+    Disassembled,     /// Function have been disassembled.
+    CFG,              /// Control flow graph have been built.
+    CFG_Finalized,    /// CFG is finalized. No optimizations allowed.
+    Assembled,        /// Function has been assembled in memory.
   };
 
   /// Settings for splitting function bodies into hot/cold partitions.
@@ -336,6 +337,11 @@ private:
   /// Update the indices of all the basic blocks starting at StartIndex.
   void updateBBIndices(const unsigned StartIndex);
 
+  /// Annotate each basic block entry with its current CFI state. This is
+  /// run right after the construction of CFG while basic blocks are in their
+  /// original order.
+  void annotateCFIState();
+
   /// Helper function that compares an instruction of this function to the
   /// given instruction of the given function. The functions should have
   /// identical CFG.
@@ -450,6 +456,28 @@ private:
   using CFIInstrMapType = std::vector<MCCFIInstruction>;
   using cfi_iterator       = CFIInstrMapType::iterator;
   using const_cfi_iterator = CFIInstrMapType::const_iterator;
+
+  /// We don't decode Call Frame Info encoded in DWARF program state
+  /// machine. Instead we define a "CFI State" - a frame information that
+  /// is a result of executing FDE CFI program up to a given point. The
+  /// program consists of opaque Call Frame Instructions:
+  ///
+  ///   CFI #0
+  ///   CFI #1
+  ///   ....
+  ///   CFI #N
+  ///
+  /// When we refer to "CFI State K" - it corresponds to a row in an abstract
+  /// Call Frame Info table. This row is reached right before executing CFI #K.
+  ///
+  /// At any point of execution in a function we are in any one of (N + 2)
+  /// states described in the original FDE program. We can't have more states
+  /// without intelligent processing of CFIs.
+  ///
+  /// When the final layout of basic blocks is known, and we finalize CFG,
+  /// we modify the original program to make sure the same state could be
+  /// reached even when basic blocks containing CFI instructions are executed
+  /// in a different order.
   CFIInstrMapType FrameInstructions;
 
   /// Exception handling ranges.
@@ -614,13 +642,6 @@ private:
     }
   };
   std::vector<BasicBlockOffset> BasicBlockOffsets;
-
-  // At each basic block entry we attach a CFI state to detect if reordering
-  // corrupts the CFI state for a block. The CFI state is simply the index in
-  // FrameInstructions for the CFI responsible for creating this state.
-  // This vector is indexed by BB index.
-  using CFIStateVector = std::vector<uint32_t>;
-  CFIStateVector BBCFIState;
 
   /// Symbol in the output.
   ///
@@ -895,8 +916,16 @@ public:
     return Names;
   }
 
+  /// Return a state the function is in (see BinaryFunction::State definition
+  /// for description).
   State getState() const {
     return CurrentState;
+  }
+
+  /// Return true if function has a control flow graph available.
+  bool hasCFG() const {
+    return getState() == State::CFG ||
+           getState() == State::CFG_Finalized;
   }
 
   /// Return containing file section.
@@ -1511,14 +1540,9 @@ public:
   /// and size.
   uint64_t getFunctionScore();
 
-  /// Annotate each basic block entry with its current CFI state. This is used
-  /// to detect when reordering changes the CFI state seen by a basic block and
-  /// fix this.
-  /// The CFI state is simply the index in FrameInstructions for the
-  /// MCCFIInstruction object responsible for this state.
-  /// If Stop is not null, the annotation will exit early once the scan finishes
-  /// with the Stop instruction.
-  CFIStateVector annotateCFIState(const MCInst *Stop = nullptr);
+  const CFIInstrMapType &getFDEProgram() const {
+    return FrameInstructions;
+  }
 
   /// After reordering, this function checks the state of CFI and fixes it if it
   /// is corrupted. If it is unable to fix it, it returns false.
@@ -1544,6 +1568,11 @@ public:
   ///
   /// When we reverse the branch condition, the CFG is updated accordingly.
   void fixBranches();
+
+  /// Mark function as finalized. No further optimizations are permitted.
+  void setFinalized() {
+    CurrentState = State::CFG_Finalized;
+  }
 
   /// Split function in two: a part with warm or hot BBs and a part with never
   /// executed BBs. The cold part is moved to a new BinaryFunction.
@@ -1712,6 +1741,7 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   case BinaryFunction::State::Empty:        OS << "empty";  break;
   case BinaryFunction::State::Disassembled: OS << "disassembled";  break;
   case BinaryFunction::State::CFG:          OS << "CFG constructed";  break;
+  case BinaryFunction::State::CFG_Finalized:OS << "CFG finalized";  break;
   case BinaryFunction::State::Assembled:    OS << "assembled";  break;
   }
 

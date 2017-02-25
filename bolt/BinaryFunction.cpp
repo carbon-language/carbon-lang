@@ -203,7 +203,7 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
 
 size_t
 BinaryFunction::getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const {
-  if (CurrentState != State::CFG)
+  if (!hasCFG())
     return 0;
 
   auto Index = getIndex(BB);
@@ -276,8 +276,6 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
   if (Count > 0) {
     updateBBIndices(0);
     recomputeLandingPads(0, BasicBlocks.size());
-    BBCFIState = annotateCFIState();
-    fixCFIState();
   }
 
   return std::make_pair(Count, Bytes);
@@ -331,7 +329,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
      << "\n  IsSplit     : "   << IsSplit
      << "\n  BB Count    : "   << BasicBlocksLayout.size();
 
-  if (CurrentState == State::CFG) {
+  if (hasCFG()) {
     OS << "\n  Hash        : "   << Twine::utohexstr(hash());
   }
   if (FrameInstructions.size()) {
@@ -400,8 +398,8 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     if (hasValidProfile()) {
       OS << "  Exec Count : " << BBExecCount << "\n";
     }
-    if (!BBCFIState.empty()) {
-      OS << "  CFI State : " << BBCFIState[getIndex(BB)] << '\n';
+    if (BB->getCFIState() >= 0) {
+      OS << "  CFI State : " << BB->getCFIState() << '\n';
     }
     if (!BB->pred_empty()) {
       OS << "  Predecessors: ";
@@ -459,6 +457,13 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
         Sep = ", ";
       }
       OS << '\n';
+    }
+
+    // In CFG_Finalized state we can miscalculate CFI state at exit.
+    if (CurrentState == State::CFG) {
+      const auto CFIStateAtExit = BB->getCFIStateAtExit();
+      if (CFIStateAtExit >= 0)
+        OS << "  CFI State: " << CFIStateAtExit << '\n';
     }
 
     OS << '\n';
@@ -1768,8 +1773,8 @@ bool BinaryFunction::buildCFG() {
   else
     clearProfile();
 
-  // Update CFI information for each BB
-  BBCFIState = annotateCFIState();
+  // Assign CFI information to each BB entry.
+  annotateCFIState();
 
   // Convert conditional tail call branches to conditional branches that jump
   // to a tail call.
@@ -1790,10 +1795,6 @@ bool BinaryFunction::buildCFG() {
     // optimizing it.
     setSimple(false);
   }
-
-  // Fix the possibly corrupted CFI state. CFI state may have been corrupted
-  // because of the CFG modifications while removing conditional tail calls.
-  fixCFIState();
 
   // Clean-up memory taken by instructions and labels.
   //
@@ -2146,7 +2147,7 @@ void BinaryFunction::removeConditionalTailCalls() {
       TailCallBB = BasicBlocks[InsertIdx];
 
       // Add the correct CFI state for the new block.
-      BBCFIState.insert(BBCFIState.begin() + InsertIdx, TCInfo.CFIStateBefore);
+      TailCallBB->setCFIState(TCInfo.CFIStateBefore);
     } else {
       // Forward jump: we will create a new basic block at the end of the
       // function containing the unconditional tail call and change the target
@@ -2158,15 +2159,15 @@ void BinaryFunction::removeConditionalTailCalls() {
       // the end of the code as a result of __builtin_unreachable().
       const BinaryBasicBlock *LastBB = BasicBlocks.back();
       uint64_t NewBlockOffset =
-        LastBB->getOffset() + BC.computeCodeSize(LastBB->begin(), LastBB->end()) + 1;
+        LastBB->getOffset()
+          + BC.computeCodeSize(LastBB->begin(), LastBB->end()) + 1;
       TailCallBB = addBasicBlock(NewBlockOffset, TCLabel);
       TailCallBB->addInstruction(TailCallInst);
 
       // Add the correct CFI state for the new block. It has to be inserted in
       // the one before last position (the last position holds the CFI state
       // after the last block).
-      BBCFIState.insert(BBCFIState.begin() + BBCFIState.size() - 1,
-                        TCInfo.CFIStateBefore);
+      TailCallBB->setCFIState(TCInfo.CFIStateBefore);
 
       // Replace the target of the conditional tail call with the label of the
       // new basic block.
@@ -2201,64 +2202,62 @@ uint64_t BinaryFunction::getFunctionScore() {
   return FunctionScore;
 }
 
-BinaryFunction::CFIStateVector
-BinaryFunction::annotateCFIState(const MCInst *Stop) {
+void BinaryFunction::annotateCFIState() {
+  assert(CurrentState == State::Disassembled && "unexpected function state");
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
 
-  uint32_t State = 0;
-  uint32_t HighestState = 0;
-  std::stack<uint32_t> StateStack;
-  CFIStateVector CFIState;
+  // This is an index of the last processed CFI in FDE CFI program.
+  int32_t State = 0;
 
-  for (auto CI = BasicBlocks.begin(), CE = BasicBlocks.end(); CI != CE; ++CI) {
-    BinaryBasicBlock *CurBB = *CI;
-    // Annotate this BB entry
-    CFIState.emplace_back(State);
+  // This is an index of RememberState CFI reflecting effective state right
+  // after execution of RestoreState CFI.
+  //
+  // It differs from State iff the CFI at (State-1)
+  // was RestoreState (modulo GNU_args_size CFIs, which are ignored).
+  //
+  // This allows us to generate shorter replay sequences when producing new
+  // CFI programs.
+  int32_t EffectiveState = 0;
+
+  // For tracking RememberState/RestoreState sequences.
+  std::stack<int32_t> StateStack;
+
+  for (auto *BB : BasicBlocks) {
+    BB->setCFIState(EffectiveState);
 
     // While building the CFG, we want to save the CFI state before a tail call
-    // instruction, so that we can correctly remove condtional tail calls
-    auto TCI = TailCallTerminatedBlocks.find(CurBB);
+    // instruction, so that we can correctly remove conditional tail calls.
+    auto TCI = TailCallTerminatedBlocks.find(BB);
     bool SaveState = TCI != TailCallTerminatedBlocks.end();
 
-    // Advance state
-    uint32_t Idx = 0;
-    for (const auto &Instr : *CurBB) {
-      auto *CFI = getCFIFor(Instr);
-      if (CFI == nullptr) {
-        if (SaveState && Idx == TCI->second.Index)
-          TCI->second.CFIStateBefore = State;
-        ++Idx;
-        if (&Instr == Stop) {
-          CFIState.emplace_back(State);
-          return CFIState;
-        }
-        continue;
+    uint32_t Idx = 0; // instruction index in a current basic block
+    for (const auto &Instr : *BB) {
+      ++Idx;
+      if (SaveState && Idx == TCI->second.Index) {
+        TCI->second.CFIStateBefore = EffectiveState;
+        SaveState = false;
       }
-      ++HighestState;
+
+      const auto *CFI = getCFIFor(Instr);
+      if (!CFI)
+        continue;
+
+      ++State;
+
       if (CFI->getOperation() == MCCFIInstruction::OpRememberState) {
-        StateStack.push(State);
+        StateStack.push(EffectiveState);
       } else if (CFI->getOperation() == MCCFIInstruction::OpRestoreState) {
-        assert(!StateStack.empty() && "Corrupt CFI stack");
-        State = StateStack.top();
+        assert(!StateStack.empty() && "corrupt CFI stack");
+        EffectiveState = StateStack.top();
         StateStack.pop();
       } else if (CFI->getOperation() != MCCFIInstruction::OpGnuArgsSize) {
-        State = HighestState;
-      }
-      assert(State <= FrameInstructions.size());
-      ++Idx;
-      if (&Instr == Stop) {
-        CFIState.emplace_back(State);
-        return CFIState;
+        // OpGnuArgsSize CFIs do not affect the CFI state.
+        EffectiveState = State;
       }
     }
   }
 
-  // Store the state after the last BB
-  CFIState.emplace_back(State);
-
-  assert(StateStack.empty() && "Corrupt CFI stack");
-
-  return CFIState;
+  assert(StateStack.empty() && "corrupt CFI stack");
 }
 
 bool BinaryFunction::fixCFIState() {
@@ -2268,74 +2267,72 @@ bool BinaryFunction::fixCFIState() {
                << ": ");
 
   auto replayCFIInstrs =
-      [this](uint32_t FromState, uint32_t ToState, BinaryBasicBlock *InBB,
-             BinaryBasicBlock::iterator InsertIt) -> bool {
-        if (FromState == ToState)
-          return true;
-        assert(FromState < ToState);
+      [this](int32_t FromState, int32_t ToState, BinaryBasicBlock *InBB,
+         BinaryBasicBlock::iterator InsertIt) -> bool {
+    if (FromState == ToState)
+      return true;
+    assert(FromState < ToState && "can only replay CFIs forward");
 
-        std::vector<uint32_t> NewCFIs;
-        uint32_t NestedLevel = 0;
-        for (uint32_t CurState = FromState; CurState < ToState; ++CurState) {
-          assert(CurState < FrameInstructions.size());
-          MCCFIInstruction *Instr = &FrameInstructions[CurState];
-          if (Instr->getOperation() == MCCFIInstruction::OpRememberState)
-            ++NestedLevel;
-          if (!NestedLevel)
-            NewCFIs.push_back(CurState);
-          if (Instr->getOperation() == MCCFIInstruction::OpRestoreState)
-            --NestedLevel;
-        }
+    std::vector<uint32_t> NewCFIs;
+    uint32_t NestedLevel = 0;
+    for (auto CurState = FromState; CurState < ToState; ++CurState) {
+      MCCFIInstruction *Instr = &FrameInstructions[CurState];
+      if (Instr->getOperation() == MCCFIInstruction::OpRememberState)
+        ++NestedLevel;
+      if (!NestedLevel)
+        NewCFIs.push_back(CurState);
+      if (Instr->getOperation() == MCCFIInstruction::OpRestoreState)
+        --NestedLevel;
+    }
 
-        // TODO: If in replaying the CFI instructions to reach this state we
-        // have state stack instructions, we could still work out the logic
-        // to extract only the necessary instructions to reach this state
-        // without using the state stack. Not sure if it is worth the effort
-        // because this happens rarely.
-        if (NestedLevel != 0) {
-          if (opts::Verbosity >= 1) {
-            errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state"
-                   << " while replaying CFI instructions for BB "
-                   << InBB->getName() << " in function " << *this << '\n';
-          }
-          return false;
-        }
+    // TODO: If in replaying the CFI instructions to reach this state we
+    // have state stack instructions, we could still work out the logic
+    // to extract only the necessary instructions to reach this state
+    // without using the state stack. Not sure if it is worth the effort
+    // because this happens rarely.
+    if (NestedLevel != 0) {
+      errs() << "BOLT-WARNING: CFI rewriter detected nested CFI state"
+             << " while replaying CFI instructions for BB "
+             << InBB->getName() << " in function " << *this << '\n';
+      return false;
+    }
 
-        for (auto CFI : NewCFIs) {
-          // Ignore GNU_args_size instructions.
-          if (FrameInstructions[CFI].getOperation() !=
-              MCCFIInstruction::OpGnuArgsSize) {
-            InsertIt = addCFIPseudo(InBB, InsertIt, CFI);
-            ++InsertIt;
-          }
-        }
+    for (auto CFI : NewCFIs) {
+      // Ignore GNU_args_size instructions.
+      if (FrameInstructions[CFI].getOperation() !=
+          MCCFIInstruction::OpGnuArgsSize) {
+        InsertIt = addCFIPseudo(InBB, InsertIt, CFI);
+        ++InsertIt;
+      }
+    }
 
-        return true;
-      };
+    return true;
+  };
 
-  uint32_t State = 0;
+  int32_t State = 0;
   auto *FDEStartBB = BasicBlocksLayout[0];
-  for (uint32_t I = 0, E = BasicBlocksLayout.size(); I != E; ++I) {
-    auto *BB = BasicBlocksLayout[I];
-    uint32_t BBIndex = getIndex(BB);
+  bool SeenCold = false;
+  for (auto *BB : BasicBlocksLayout) {
+    const auto CFIStateAtExit = BB->getCFIStateAtExit();
 
     // Hot-cold border: check if this is the first BB to be allocated in a cold
-    // region (a different FDE). If yes, we need to reset the CFI state and
-    // the FDEStartBB that is used to insert remember_state CFIs (t12863876).
-    if (I != 0 && BB->isCold() != BasicBlocksLayout[I - 1]->isCold()) {
+    // region (with a different FDE). If yes, we need to reset the CFI state and
+    // the FDEStartBB that is used to insert remember_state CFIs.
+    if (!SeenCold && BB->isCold()) {
       State = 0;
       FDEStartBB = BB;
+      SeenCold = true;
     }
 
     // We need to recover the correct state if it doesn't match expected
     // state at BB entry point.
-    if (BBCFIState[BBIndex] < State) {
+    if (BB->getCFIState() < State) {
       // In this case, State is currently higher than what this BB expect it
       // to be. To solve this, we need to insert a CFI instruction to remember
       // the old state at function entry, then another CFI instruction to
       // restore it at the entry of this BB and replay CFI instructions to
       // reach the desired state.
-      uint32_t OldState = BBCFIState[BBIndex];
+      int32_t OldState = BB->getCFIState();
       // Remember state at function entry point (our reference state).
       auto InsertIt = FDEStartBB->begin();
       while (InsertIt != FDEStartBB->end() && BC.MIA->isCFI(*InsertIt))
@@ -2375,25 +2372,22 @@ bool BinaryFunction::fixCFIState() {
       }
 
       if (StackOffset != 0) {
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: not possible to remember/recover state"
-                 << " without corrupting CFI state stack in function "
-                 << *this << " @ " << BB->getName() << "\n";
-        }
+        errs() << "BOLT-WARNING: not possible to remember/recover state"
+               << " without corrupting CFI state stack in function "
+               << *this << " @ " << BB->getName() << "\n";
         return false;
       }
-    } else if (BBCFIState[BBIndex] > State) {
-      // If BBCFIState[BBIndex] > State, it means we are behind in the
+    } else if (BB->getCFIState() > State) {
+      // If BB's CFI state is greater than State, it means we are behind in the
       // state. Just emit all instructions to reach this state at the
       // beginning of this BB. If this sequence of instructions involve
       // remember state or restore state, bail out.
-      if (!replayCFIInstrs(State, BBCFIState[BBIndex], BB, BB->begin()))
+      if (!replayCFIInstrs(State, BB->getCFIState(), BB, BB->begin()))
         return false;
     }
 
-    State = BBCFIState[BBIndex + 1];
-    DEBUG(dbgs() << Sep << State);
-    DEBUG(Sep = ", ");
+    State = CFIStateAtExit;
+    DEBUG(dbgs() << Sep << State; Sep = ", ");
   }
   DEBUG(dbgs() << "\n");
   return true;
@@ -2543,9 +2537,6 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       // Emit GNU_args_size CFIs as necessary.
       if (usesGnuArgsSize() && BC.MIA->isInvoke(Instr)) {
         auto NewGnuArgsSize = BC.MIA->getGnuArgsSize(Instr);
-        if (NewGnuArgsSize < 0) {
-          errs() << "XXX: in function " << *this << '\n';
-        }
         assert(NewGnuArgsSize >= 0 && "expected non-negative GNU_args_size");
         if (NewGnuArgsSize != CurrentGnuArgsSize) {
           CurrentGnuArgsSize = NewGnuArgsSize;
@@ -2688,7 +2679,7 @@ void BinaryFunction::dumpGraph(raw_ostream& OS) const {
                  BB->getOffset(),
                  getIndex(BB),
                  Layout,
-                 BBCFIState[getIndex(BB)]);
+                 BB->getCFIState());
     OS << format("\"%s\" [shape=box]\n", BB->getName().data());
     if (opts::DotToolTipCode) {
       std::string Str;
@@ -3095,7 +3086,7 @@ __attribute__((noinline)) BinaryFunction::BasicBlockOrderType BinaryFunction::df
 bool BinaryFunction::isIdenticalWith(const BinaryFunction &OtherBF,
                                      bool IgnoreSymbols,
                                      bool UseDFS) const {
-  assert(CurrentState == State::CFG && OtherBF.CurrentState == State::CFG);
+  assert(hasCFG() && OtherBF.hasCFG() && "both functions should have CFG");
 
   // Compare the two functions, one basic block at a time.
   // Currently we require two identical basic blocks to have identical
@@ -3261,7 +3252,7 @@ bool BinaryFunction::equalJumpTables(const JumpTable *JumpTableA,
 }
 
 std::size_t BinaryFunction::hash(bool Recompute, bool UseDFS) const {
-  assert(CurrentState == State::CFG);
+  assert(hasCFG() && "function is expected to have CFG");
 
   if (!Recompute)
     return Hash;
@@ -3343,13 +3334,11 @@ void BinaryFunction::updateBBIndices(const unsigned StartIndex) {
 void BinaryFunction::updateCFIState(BinaryBasicBlock *Start,
                                     const unsigned NumNewBlocks) {
   assert(TailCallTerminatedBlocks.empty());
-  auto PartialCFIState = annotateCFIState(&(*Start->rbegin()));
-  const auto StartIndex = getIndex(Start);
-  BBCFIState.insert(BBCFIState.begin() + StartIndex + 1,
-                    NumNewBlocks,
-                    PartialCFIState.back());
-  assert(BBCFIState.size() == BasicBlocks.size() + 1);
-  fixCFIState();
+  const auto CFIState = Start->getCFIStateAtExit();
+  const auto StartIndex = getIndex(Start) + 1;
+  for (unsigned I = 0; I < NumNewBlocks; ++I) {
+    BasicBlocks[StartIndex + I]->setCFIState(CFIState);
+  }
 }
 
 void BinaryFunction::updateLayout(BinaryBasicBlock* Start,

@@ -95,8 +95,8 @@ PrintAfterBranchFixup("print-after-branch-fixup",
                       cl::Hidden);
 
 static cl::opt<bool>
-PrintAfterFixup("print-after-fixup",
-                cl::desc("print function after fixup"),
+PrintFinalized("print-finalized",
+                cl::desc("print function after CFG is finalized"),
                 cl::Hidden);
 
 static cl::opt<bool>
@@ -140,7 +140,7 @@ PrintICP("print-icp",
          cl::desc("print functions after indirect call promotion"),
          cl::ZeroOrMore,
          cl::Hidden);
-  
+
 static cl::opt<bool>
 PrintInline("print-inline",
             cl::desc("print functions after inlining optimization"),
@@ -283,7 +283,7 @@ void BinaryFunctionPassManager::runAllPasses(
     llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
     opts::EliminateUnreachable);
 
-  Manager.registerPass(llvm::make_unique<FixupFunctions>(PrintAfterFixup));
+  Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));
 
   Manager.registerPass(
     llvm::make_unique<InstructionLowering>(PrintAfterLowering));

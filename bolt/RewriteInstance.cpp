@@ -2751,7 +2751,6 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
 
   // New section header string table goes last.
 
-
   // Fix ELF header.
   auto NewEhdr = *Obj->getHeader();
   NewEhdr.e_entry = EntryPoint;

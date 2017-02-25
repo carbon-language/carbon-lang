@@ -81,7 +81,7 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
   }
   return true;
 }
-  
+
 BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {
   if (!Label && succ_size() == 1)
     return *succ_begin();
@@ -101,6 +101,76 @@ BinaryBasicBlock *BinaryBasicBlock::getLandingPad(const MCSymbol *Label) const {
   }
 
   return nullptr;
+}
+
+int32_t BinaryBasicBlock::getCFIStateAtInstr(const MCInst *Instr) const {
+  assert(getFunction()->getState() == BinaryFunction::State::CFG &&
+         "can only calculate CFI state when function is in active CFG state");
+
+  const auto &FDEProgram = getFunction()->getFDEProgram();
+
+  // Find the last CFI preceding Instr in this basic block.
+  const MCInst *LastCFI = nullptr;
+  bool InstrSeen = (Instr == nullptr);
+  for (auto RII = Instructions.rbegin(), E = Instructions.rend();
+       RII != E; ++RII) {
+    if (!InstrSeen) {
+      InstrSeen = (&*RII == Instr);
+      continue;
+    }
+    if (Function->getBinaryContext().MIA->isCFI(*RII)) {
+      LastCFI = &*RII;
+      break;
+    }
+  }
+
+  assert(InstrSeen && "instruction expected in basic block");
+
+  // CFI state is the same as at basic block entry point.
+  if (!LastCFI)
+    return getCFIState();
+
+  // Fold all RememberState/RestoreState sequences, such as for:
+  //
+  //   [ CFI #(K-1) ]
+  //   RememberState (#K)
+  //     ....
+  //   RestoreState
+  //   RememberState
+  //     ....
+  //   RestoreState
+  //   [ GNU_args_size ]
+  //   RememberState
+  //     ....
+  //   RestoreState   <- LastCFI
+  //
+  // we return K - the most efficient state to (re-)generate.
+  int64_t State = LastCFI->getOperand(0).getImm();
+  while (State >= 0 &&
+         FDEProgram[State].getOperation() == MCCFIInstruction::OpRestoreState) {
+    int32_t Depth = 1;
+    --State;
+    assert(State >= 0 && "first CFI cannot be RestoreState");
+    while (Depth && State >= 0) {
+      const auto &CFIInstr = FDEProgram[State];
+      if (CFIInstr.getOperation() == MCCFIInstruction::OpRestoreState) {
+        ++Depth;
+      } else if (CFIInstr.getOperation() == MCCFIInstruction::OpRememberState) {
+        --Depth;
+      }
+      --State;
+    }
+    assert(Depth == 0 && "unbalanced RememberState/RestoreState stack");
+
+    // Skip any GNU_args_size.
+    while (State >= 0 &&
+           FDEProgram[State].getOperation() == MCCFIInstruction::OpGnuArgsSize){
+      --State;
+    }
+  }
+
+  assert((State + 1 >= 0) && "miscalculated CFI state");
+  return State + 1;
 }
 
 void BinaryBasicBlock::addSuccessor(BinaryBasicBlock *Succ,

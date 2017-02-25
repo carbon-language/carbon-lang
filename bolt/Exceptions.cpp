@@ -302,7 +302,7 @@ void BinaryFunction::updateEHRanges() {
   if (getSize() == 0)
     return;
 
-  assert(CurrentState == State::CFG && "unexpected state");
+  assert(CurrentState == State::CFG_Finalized && "unexpected state");
 
   // Build call sites table.
   struct EHInfo {

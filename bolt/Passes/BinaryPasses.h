@@ -139,13 +139,13 @@ class FixupBranches : public BinaryFunctionPass {
 
 /// Fix the CFI state and exception handling information after all other
 /// passes have completed.
-class FixupFunctions : public BinaryFunctionPass {
+class FinalizeFunctions : public BinaryFunctionPass {
  public:
-  explicit FixupFunctions(const cl::opt<bool> &PrintPass)
+  explicit FinalizeFunctions(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 
   const char *getName() const override {
-    return "fixup-functions";
+    return "finalize-functions";
   }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
