@@ -354,6 +354,20 @@ static bool getArg(opt::InputArgList &Args, unsigned K1, unsigned K2,
   return Default;
 }
 
+static std::vector<StringRef> getSearchPaths(opt::InputArgList &Args) {
+  std::vector<StringRef> V;
+  for (auto *Arg : Args.filtered(OPT_L))
+    V.push_back(Arg->getValue());
+  return V;
+}
+
+static std::string getRPath(opt::InputArgList &Args) {
+  std::vector<StringRef> V;
+  for (auto *Arg : Args.filtered(OPT_rpath))
+    V.push_back(Arg->getValue());
+  return llvm::join(V.begin(), V.end(), ":");
+}
+
 // Determines what we should do if there are remaining unresolved
 // symbols after the name resolution.
 static UnresolvedPolicy getUnresolvedSymbolPolicy(opt::InputArgList &Args) {
@@ -541,8 +555,10 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->OutputFile = getString(Args, OPT_o);
   Config->Pie = getArg(Args, OPT_pie, OPT_nopie, false);
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
+  Config->RPath = getRPath(Args);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
+  Config->SearchPaths = getSearchPaths(Args);
   Config->SectionStartMap = getSectionStartMap(Args);
   Config->Shared = Args.hasArg(OPT_shared);
   Config->SingleRoRx = Args.hasArg(OPT_no_rosegment);
@@ -573,15 +589,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     error("--lto-partitions: number of threads must be > 0");
   if (Config->ThinLTOJobs == 0)
     error("--thinlto-jobs: number of threads must be > 0");
-
-  for (auto *Arg : Args.filtered(OPT_L))
-    Config->SearchPaths.push_back(Arg->getValue());
-
-  std::vector<StringRef> RPaths;
-  for (auto *Arg : Args.filtered(OPT_rpath))
-    RPaths.push_back(Arg->getValue());
-  if (!RPaths.empty())
-    Config->RPath = llvm::join(RPaths.begin(), RPaths.end(), ":");
 
   if (auto *Arg = Args.getLastArg(OPT_m)) {
     // Parse ELF{32,64}{LE,BE} and CPU type.
