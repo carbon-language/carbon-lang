@@ -410,7 +410,7 @@ static UnresolvedPolicy getUnresolvedSymbolPolicy(opt::InputArgList &Args) {
   return ErrorOrWarn;
 }
 
-static Target2Policy getTarget2Option(opt::InputArgList &Args) {
+static Target2Policy getTarget2(opt::InputArgList &Args) {
   if (auto *Arg = Args.getLastArg(OPT_target2)) {
     StringRef S = Arg->getValue();
     if (S == "rel")
@@ -434,7 +434,7 @@ static bool isOutputFormatBinary(opt::InputArgList &Args) {
   return false;
 }
 
-static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
+static DiscardPolicy getDiscard(opt::InputArgList &Args) {
   if (Args.hasArg(OPT_relocatable))
     return DiscardPolicy::None;
 
@@ -449,14 +449,14 @@ static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
   return DiscardPolicy::None;
 }
 
-static StringRef getDynamicLinkerOption(opt::InputArgList &Args) {
+static StringRef getDynamicLinker(opt::InputArgList &Args) {
   auto *Arg = Args.getLastArg(OPT_dynamic_linker, OPT_no_dynamic_linker);
   if (!Arg || Arg->getOption().getID() == OPT_no_dynamic_linker)
     return "";
   return Arg->getValue();
 }
 
-static StripPolicy getStripOption(opt::InputArgList &Args) {
+static StripPolicy getStrip(opt::InputArgList &Args) {
   if (Args.hasArg(OPT_relocatable))
     return StripPolicy::None;
 
@@ -495,7 +495,7 @@ static StringMap<uint64_t> getSectionStartMap(opt::InputArgList &Args) {
   return Ret;
 }
 
-static SortSectionPolicy getSortKind(opt::InputArgList &Args) {
+static SortSectionPolicy getSortSection(opt::InputArgList &Args) {
   StringRef S = getString(Args, OPT_sort_section);
   if (S == "alignment")
     return SortSectionPolicy::Alignment;
@@ -539,8 +539,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
                                 !Args.hasArg(OPT_relocatable));
   Config->Demangle = getArg(Args, OPT_demangle, OPT_no_demangle, true);
   Config->DisableVerify = Args.hasArg(OPT_disable_verify);
-  Config->Discard = getDiscardOption(Args);
-  Config->DynamicLinker = getDynamicLinkerOption(Args);
+  Config->Discard = getDiscard(Args);
+  Config->DynamicLinker = getDynamicLinker(Args);
   Config->EhFrameHdr = Args.hasArg(OPT_eh_frame_hdr);
   Config->EmitRelocs = Args.hasArg(OPT_emit_relocs);
   Config->EnableNewDtags = !Args.hasArg(OPT_disable_new_dtags);
@@ -578,11 +578,11 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->Shared = Args.hasArg(OPT_shared);
   Config->SingleRoRx = Args.hasArg(OPT_no_rosegment);
   Config->SoName = getString(Args, OPT_soname);
-  Config->SortSection = getSortKind(Args);
-  Config->Strip = getStripOption(Args);
+  Config->SortSection = getSortSection(Args);
+  Config->Strip = getStrip(Args);
   Config->Sysroot = getString(Args, OPT_sysroot);
   Config->Target1Rel = getArg(Args, OPT_target1_rel, OPT_target1_abs, false);
-  Config->Target2 = getTarget2Option(Args);
+  Config->Target2 = getTarget2(Args);
   Config->ThinLTOJobs = getInteger(Args, OPT_thinlto_jobs, -1u);
   Config->Threads = getArg(Args, OPT_threads, OPT_no_threads, true);
   Config->Trace = Args.hasArg(OPT_trace);
