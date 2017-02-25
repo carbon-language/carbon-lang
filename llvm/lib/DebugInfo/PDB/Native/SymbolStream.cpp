@@ -17,6 +17,7 @@
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
 
+#include "llvm/DebugInfo/MSF/BinaryStreamReader.h"
 #include "llvm/Support/Endian.h"
 
 using namespace llvm;
@@ -30,7 +31,7 @@ SymbolStream::SymbolStream(std::unique_ptr<MappedBlockStream> Stream)
 SymbolStream::~SymbolStream() {}
 
 Error SymbolStream::reload() {
-  StreamReader Reader(*Stream);
+  BinaryStreamReader Reader(*Stream);
 
   if (auto EC = Reader.readArray(SymbolRecords, Stream->getLength()))
     return EC;

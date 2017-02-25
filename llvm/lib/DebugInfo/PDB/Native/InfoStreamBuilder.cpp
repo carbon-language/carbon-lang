@@ -10,6 +10,7 @@
 #include "llvm/DebugInfo/PDB/Native/InfoStreamBuilder.h"
 
 #include "llvm/DebugInfo/MSF/BinaryStreamWriter.h"
+#include "llvm/DebugInfo/MSF/BinaryStreamWriter.h"
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
@@ -44,10 +45,10 @@ Error InfoStreamBuilder::finalizeMsfLayout() {
 }
 
 Error InfoStreamBuilder::commit(const msf::MSFLayout &Layout,
-                                const msf::WritableStream &Buffer) const {
+                                WritableBinaryStreamRef Buffer) const {
   auto InfoS =
       WritableMappedBlockStream::createIndexedStream(Layout, Buffer, StreamPDB);
-  StreamWriter Writer(*InfoS);
+  BinaryStreamWriter Writer(*InfoS);
 
   InfoStreamHeader H;
   H.Age = Age;

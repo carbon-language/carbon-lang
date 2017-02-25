@@ -20,6 +20,8 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/DebugInfo/MSF/BinaryByteStream.h"
+#include "llvm/DebugInfo/MSF/BinaryStreamWriter.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Error.h"
 
@@ -28,7 +30,7 @@ namespace codeview {
 
 class SymbolSerializer : public SymbolVisitorCallbacks {
   uint32_t RecordStart = 0;
-  msf::StreamWriter &Writer;
+  BinaryStreamWriter &Writer;
   SymbolRecordMapping Mapping;
   Optional<SymbolKind> CurrentSymbol;
 
@@ -42,7 +44,7 @@ class SymbolSerializer : public SymbolVisitorCallbacks {
   }
 
 public:
-  explicit SymbolSerializer(msf::StreamWriter &Writer)
+  explicit SymbolSerializer(BinaryStreamWriter &Writer)
       : Writer(Writer), Mapping(Writer) {}
 
   virtual Error visitSymbolBegin(CVSymbol &Record) override {
