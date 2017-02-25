@@ -354,17 +354,15 @@ static bool getArg(opt::InputArgList &Args, unsigned K1, unsigned K2,
   return Default;
 }
 
-static std::vector<StringRef> getSearchPaths(opt::InputArgList &Args) {
+static std::vector<StringRef> getArgs(opt::InputArgList &Args, int Id) {
   std::vector<StringRef> V;
-  for (auto *Arg : Args.filtered(OPT_L))
+  for (auto *Arg : Args.filtered(Id))
     V.push_back(Arg->getValue());
   return V;
 }
 
 static std::string getRPath(opt::InputArgList &Args) {
-  std::vector<StringRef> V;
-  for (auto *Arg : Args.filtered(OPT_rpath))
-    V.push_back(Arg->getValue());
+  std::vector<StringRef> V = getArgs(Args, OPT_rpath);
   return llvm::join(V.begin(), V.end(), ":");
 }
 
@@ -533,6 +531,7 @@ static std::vector<StringRef> getLines(MemoryBufferRef MB) {
 // Initializes Config members by the command line options.
 void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->AllowMultipleDefinition = Args.hasArg(OPT_allow_multiple_definition);
+  Config->AuxiliaryList = getArgs(Args, OPT_auxiliary);
   Config->Bsymbolic = Args.hasArg(OPT_Bsymbolic);
   Config->BsymbolicFunctions = Args.hasArg(OPT_Bsymbolic_functions);
   Config->DefineCommon = getArg(Args, OPT_define_common, OPT_no_define_common,
@@ -573,7 +572,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->RPath = getRPath(Args);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
-  Config->SearchPaths = getSearchPaths(Args);
+  Config->SearchPaths = getArgs(Args, OPT_L);
   Config->SectionStartMap = getSectionStartMap(Args);
   Config->Shared = Args.hasArg(OPT_shared);
   Config->SingleRoRx = Args.hasArg(OPT_no_rosegment);
@@ -586,6 +585,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->ThinLTOJobs = getInteger(Args, OPT_thinlto_jobs, -1u);
   Config->Threads = getArg(Args, OPT_threads, OPT_no_threads, true);
   Config->Trace = Args.hasArg(OPT_trace);
+  Config->Undefined = getArgs(Args, OPT_undefined);
   Config->UnresolvedSymbols = getUnresolvedSymbolPolicy(Args);
   Config->Verbose = Args.hasArg(OPT_verbose);
   Config->WarnCommon = Args.hasArg(OPT_warn_common);
@@ -648,13 +648,8 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
     }
   }
 
-  for (auto *Arg : Args.filtered(OPT_auxiliary))
-    Config->AuxiliaryList.push_back(Arg->getValue());
   if (!Config->Shared && !Config->AuxiliaryList.empty())
     error("-f may not be used without -shared");
-
-  for (auto *Arg : Args.filtered(OPT_undefined))
-    Config->Undefined.push_back(Arg->getValue());
 
   for (auto *Arg : Args.filtered(OPT_dynamic_list))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
