@@ -1723,10 +1723,6 @@ bool ObjCARCOpt::PerformCodePlacement(
       MoveCalls(Arg, RetainsToMove, ReleasesToMove,
                 Retains, Releases, DeadInsts, M);
     }
-
-    // Clean up state for next retain.
-    RetainsToMove.clear();
-    ReleasesToMove.clear();
   }
 
   // Now that we're done moving everything, we can delete the newly dead
