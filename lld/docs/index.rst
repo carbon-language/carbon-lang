@@ -26,7 +26,7 @@ Features
   system including the kernel. With a few work-in-progress patches it
   can link approximately 95% of the ports collection on AMD64. For the
   details, see `FreeBSD quarterly status report
-  <https://www.freebsd.org/news/status/report-2016-10-2016-12.html#Using-LLVM%27s-LLD-Linker-as-FreeBSD%27s-System-Linker>`.
+  <https://www.freebsd.org/news/status/report-2016-10-2016-12.html#Using-LLVM%27s-LLD-Linker-as-FreeBSD%27s-System-Linker>`_.
 
 - LLD is very fast. When you link a large program on a multicore
   machine, you can expect that LLD runs more than twice as fast as GNU
