@@ -158,7 +158,7 @@ define <2 x double> @test_rsqrt28_sd_mask(<2 x double> %a0, <2 x double> %b0, <2
 ; CHECK-NEXT:    kxnorw %k0, %k0, %k0 # encoding: [0xc5,0xfc,0x46,0xc0]
 ; CHECK-NEXT:    kshiftrw $15, %k0, %k1 # encoding: [0xc4,0xe3,0xf9,0x30,0xc8,0x0f]
 ; CHECK-NEXT:    vrsqrt28sd {sae}, %xmm1, %xmm0, %xmm2 {%k1} # encoding: [0x62,0xf2,0xfd,0x19,0xcd,0xd1]
-; CHECK-NEXT:    vmovaps %xmm2, %xmm0 # encoding: [0xc5,0xf8,0x28,0xc2]
+; CHECK-NEXT:    vmovapd %xmm2, %xmm0 # encoding: [0xc5,0xf9,0x28,0xc2]
 ; CHECK-NEXT:    retq # encoding: [0xc3]
   %res = call <2 x double> @llvm.x86.avx512.rsqrt28.sd(<2 x double> %a0, <2 x double> %b0, <2 x double> %c0, i8 7, i32 8) ;
   ret <2 x double> %res

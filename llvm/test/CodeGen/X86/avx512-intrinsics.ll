@@ -223,7 +223,7 @@ define <2 x double> @test_sqrt_sd(<2 x double> %a0, <2 x double> %a1, <2 x doubl
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    andl $1, %edi
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovaps %xmm2, %xmm3
+; CHECK-NEXT:    vmovapd %xmm2, %xmm3
 ; CHECK-NEXT:    vsqrtsd %xmm1, %xmm0, %xmm3 {%k1}
 ; CHECK-NEXT:    vsqrtsd {rd-sae}, %xmm1, %xmm0, %xmm2 {%k1}
 ; CHECK-NEXT:    vsqrtsd {ru-sae}, %xmm1, %xmm0, %xmm4 {%k1} {z}
@@ -3602,7 +3602,7 @@ define <2 x double> @test_getexp_sd(<2 x double> %a0, <2 x double> %a1, <2 x dou
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    andl $1, %edi
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovaps %xmm2, %xmm3
+; CHECK-NEXT:    vmovapd %xmm2, %xmm3
 ; CHECK-NEXT:    vgetexpsd %xmm1, %xmm0, %xmm3 {%k1}
 ; CHECK-NEXT:    vgetexpsd %xmm1, %xmm0, %xmm4
 ; CHECK-NEXT:    vgetexpsd {sae}, %xmm1, %xmm0, %xmm2 {%k1}
