@@ -256,5 +256,5 @@ TEST(ValueTracking, ComputeNumSignBits_PR32045) {
 
   auto *RVal =
       cast<ReturnInst>(F->getEntryBlock().getTerminator())->getOperand(0);
-  EXPECT_EQ(ComputeNumSignBits(RVal, M->getDataLayout()), 1);
+  EXPECT_EQ(ComputeNumSignBits(RVal, M->getDataLayout()), 1u);
 }
