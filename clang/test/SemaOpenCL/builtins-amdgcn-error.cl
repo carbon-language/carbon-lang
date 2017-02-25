@@ -18,6 +18,11 @@ void test_s_sleep(int x)
   __builtin_amdgcn_s_sleep(x); // expected-error {{argument to '__builtin_amdgcn_s_sleep' must be a constant integer}}
 }
 
+void test_s_waitcnt(int x)
+{
+  __builtin_amdgcn_s_waitcnt(x); // expected-error {{argument to '__builtin_amdgcn_s_waitcnt' must be a constant integer}}
+}
+
 void test_s_incperflevel(int x)
 {
   __builtin_amdgcn_s_incperflevel(x); // expected-error {{argument to '__builtin_amdgcn_s_incperflevel' must be a constant integer}}
