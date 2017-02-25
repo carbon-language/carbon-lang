@@ -147,7 +147,7 @@ struct Configuration {
   SortSectionPolicy SortSection;
   StripPolicy Strip;
   UnresolvedPolicy UnresolvedSymbols;
-  Target2Policy Target2 = Target2Policy::GotRel;
+  Target2Policy Target2;
   BuildIdKind BuildId = BuildIdKind::None;
   ELFKind EKind = ELFNoneKind;
   uint16_t DefaultSymbolVersion = llvm::ELF::VER_NDX_GLOBAL;
