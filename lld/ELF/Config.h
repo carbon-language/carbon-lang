@@ -145,7 +145,7 @@ struct Configuration {
   bool ZWxneeded;
   DiscardPolicy Discard;
   SortSectionPolicy SortSection;
-  StripPolicy Strip = StripPolicy::None;
+  StripPolicy Strip;
   UnresolvedPolicy UnresolvedSymbols;
   Target2Policy Target2 = Target2Policy::GotRel;
   BuildIdKind BuildId = BuildIdKind::None;

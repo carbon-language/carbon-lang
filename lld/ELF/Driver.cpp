@@ -437,6 +437,7 @@ static bool isOutputFormatBinary(opt::InputArgList &Args) {
 static DiscardPolicy getDiscardOption(opt::InputArgList &Args) {
   if (Args.hasArg(OPT_relocatable))
     return DiscardPolicy::None;
+
   auto *Arg =
       Args.getLastArg(OPT_discard_all, OPT_discard_locals, OPT_discard_none);
   if (!Arg)
@@ -456,12 +457,15 @@ static StringRef getDynamicLinkerOption(opt::InputArgList &Args) {
 }
 
 static StripPolicy getStripOption(opt::InputArgList &Args) {
-  if (auto *Arg = Args.getLastArg(OPT_strip_all, OPT_strip_debug)) {
-    if (Arg->getOption().getID() == OPT_strip_all)
-      return StripPolicy::All;
-    return StripPolicy::Debug;
-  }
-  return StripPolicy::None;
+  if (Args.hasArg(OPT_relocatable))
+    return StripPolicy::None;
+
+  auto *Arg = Args.getLastArg(OPT_strip_all, OPT_strip_debug);
+  if (!Arg)
+    return StripPolicy::None;
+  if (Arg->getOption().getID() == OPT_strip_all)
+    return StripPolicy::All;
+  return StripPolicy::Debug;
 }
 
 static uint64_t parseSectionAddress(StringRef S, opt::Arg *Arg) {
@@ -575,6 +579,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->SingleRoRx = Args.hasArg(OPT_no_rosegment);
   Config->SoName = getString(Args, OPT_soname);
   Config->SortSection = getSortKind(Args);
+  Config->Strip = getStripOption(Args);
   Config->Sysroot = getString(Args, OPT_sysroot);
   Config->Target1Rel = getArg(Args, OPT_target1_rel, OPT_target1_abs, false);
   Config->Target2 = getTarget2Option(Args);
@@ -619,9 +624,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   // make sense to create PT_GNU_RELRO for such executables.
   if (Config->Omagic)
     Config->ZRelro = false;
-
-  if (!Config->Relocatable)
-    Config->Strip = getStripOption(Args);
 
   std::tie(Config->SysvHash, Config->GnuHash) = getHashStyle(Args);
 
