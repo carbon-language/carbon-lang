@@ -81,13 +81,13 @@ Note that this is just a benchmark result of our environment.
 Depending on number of available cores, available amount of memory or
 disk latency/throughput, your results may vary.
 
-============  ===========  ======  ========  ======
-Program       Output size  GNU ld  GNU gold  LLD
-ffmpeg dbg    91 MiB       1.59s   1.15s     0.78s
-mysqld dbg    157 MiB      7.09s   2.49s     1.31s
-clang dbg     1.45 GiB     86.76s  21.93s    8.38s
-chromium dbg  1.52 GiB     N/A     40.86s    12.69s
-============  ===========  ======  ========  ======
+============  ===========  =======  ========  ======
+Program       Output size  GNU ld   GNU gold  LLD
+ffmpeg dbg    91 MiB       1.59s    1.15s     0.78s
+mysqld dbg    157 MiB      7.09s    2.49s     1.31s
+clang dbg     1.45 GiB     86.76s   21.93s    8.38s
+chromium dbg  1.52 GiB     142.30s  40.86s    12.69s
+============  ===========  =======  ========  ======
 
 Build
 -----
