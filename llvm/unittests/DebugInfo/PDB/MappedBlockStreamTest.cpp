@@ -37,7 +37,7 @@ public:
   uint32_t block_size() const { return 1; }
   uint32_t block_count() const { return Blocks.size(); }
 
-  endianness getEndian() const { return little; }
+  endianness getEndian() const override { return little; }
 
   Error readBytes(uint32_t Offset, uint32_t Size,
                   ArrayRef<uint8_t> &Buffer) override {

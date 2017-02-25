@@ -443,39 +443,33 @@ TEST_F(BinaryStreamTest, StreamReaderEnum) {
   }
 }
 
-//TEST_F(BinaryStreamTest, StreamReaderObject) {
-//  struct Foo {
-//    int X;
-//    double Y;
-//    char Z;
-//  };
-//
-//  std::vector<Foo> Foos;
-//  Foos.push_back({-42, 42.42, 42});
-//  Foos.push_back({100, 3.1415, -89});
-//
-//  std::vector<uint8_t> Bytes;
-//  Bytes.resize(2 * sizeof(Foo));
-//  Foo *FPtr = reinterpret_cast<Foo *>(&Bytes[0]);
-//  Foo *GPtr = FPtr + 1;
-//
-//  ::memcpy(FPtr, &Foos[0], sizeof(Foo));
-//  ::memcpy(GPtr + sizeof(Foo), &Foos[1], sizeof(Foo));
-//
-//  initialize(Bytes, 0);
-//
-//  for (auto IS : InputStreams) {
-//    // 1. Reading object pointers.
-//    BinaryStreamReader Reader(*IS);
-//    const Foo *FPtrOut = nullptr;
-//    const Foo *GPtrOut = nullptr;
-//    ASSERT_NO_ERROR(Reader.readObject(FPtrOut));
-//    ASSERT_NO_ERROR(Reader.readObject(GPtrOut));
-//    EXPECT_EQ(0U, Reader.bytesRemaining());
-//    EXPECT_EQ(0, ::memcmp(FPtr, FPtrOut, sizeof(Foo)));
-//    EXPECT_EQ(0, ::memcmp(GPtr, GPtrOut, sizeof(Foo)));
-//  }
-//}
+TEST_F(BinaryStreamTest, StreamReaderObject) {
+  struct Foo {
+    int X;
+    double Y;
+    char Z;
+  };
+
+  std::vector<Foo> Foos;
+  Foos.push_back({-42, 42.42, 42});
+  Foos.push_back({100, 3.1415, -89});
+
+  const uint8_t *Bytes = reinterpret_cast<const uint8_t *>(&Foos[0]);
+
+  initialize(makeArrayRef(Bytes, 2 * sizeof(Foo)), 0);
+
+  for (auto IS : InputStreams) {
+    // 1. Reading object pointers.
+    BinaryStreamReader Reader(*IS);
+    const Foo *FPtrOut = nullptr;
+    const Foo *GPtrOut = nullptr;
+    ASSERT_NO_ERROR(Reader.readObject(FPtrOut));
+    ASSERT_NO_ERROR(Reader.readObject(GPtrOut));
+    EXPECT_EQ(0U, Reader.bytesRemaining());
+    EXPECT_EQ(0, ::memcmp(&Foos[0], FPtrOut, sizeof(Foo)));
+    EXPECT_EQ(0, ::memcmp(&Foos[1], GPtrOut, sizeof(Foo)));
+  }
+}
 
 TEST_F(BinaryStreamTest, StreamReaderStrings) {
   std::vector<uint8_t> Bytes = {'O',  'n', 'e', '\0', 'T', 'w', 'o',
