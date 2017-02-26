@@ -965,6 +965,7 @@ def : Pat<(int_x86_avx512_vbroadcast_sd_512 addr:$src),
 multiclass avx512_int_broadcast_reg<bits<8> opc, X86VectorVTInfo _,
                                     SDPatternOperator OpNode,
                                     RegisterClass SrcRC> {
+  let ExeDomain = _.ExeDomain in
   defm r : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
                          (ins SrcRC:$src),
                          "vpbroadcast"##_.Suffix, "$src", "$src",
