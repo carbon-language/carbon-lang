@@ -1512,21 +1512,21 @@ define <2 x double> @test_x86_sse2_sqrt_sd_vec_load(<2 x double>* %a0) {
 ; SSE-LABEL: test_x86_sse2_sqrt_sd_vec_load:
 ; SSE:       ## BB#0:
 ; SSE-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; SSE-NEXT:    movaps (%eax), %xmm0 ## encoding: [0x0f,0x28,0x00]
+; SSE-NEXT:    movapd (%eax), %xmm0 ## encoding: [0x66,0x0f,0x28,0x00]
 ; SSE-NEXT:    sqrtsd %xmm0, %xmm0 ## encoding: [0xf2,0x0f,0x51,0xc0]
 ; SSE-NEXT:    retl ## encoding: [0xc3]
 ;
 ; AVX2-LABEL: test_x86_sse2_sqrt_sd_vec_load:
 ; AVX2:       ## BB#0:
 ; AVX2-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; AVX2-NEXT:    vmovaps (%eax), %xmm0 ## encoding: [0xc5,0xf8,0x28,0x00]
+; AVX2-NEXT:    vmovapd (%eax), %xmm0 ## encoding: [0xc5,0xf9,0x28,0x00]
 ; AVX2-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 ## encoding: [0xc5,0xfb,0x51,0xc0]
 ; AVX2-NEXT:    retl ## encoding: [0xc3]
 ;
 ; SKX-LABEL: test_x86_sse2_sqrt_sd_vec_load:
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    movl {{[0-9]+}}(%esp), %eax ## encoding: [0x8b,0x44,0x24,0x04]
-; SKX-NEXT:    vmovaps (%eax), %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf8,0x28,0x00]
+; SKX-NEXT:    vmovapd (%eax), %xmm0 ## EVEX TO VEX Compression encoding: [0xc5,0xf9,0x28,0x00]
 ; SKX-NEXT:    vsqrtsd %xmm0, %xmm0, %xmm0 ## encoding: [0xc5,0xfb,0x51,0xc0]
 ; SKX-NEXT:    retl ## encoding: [0xc3]
   %a1 = load <2 x double>, <2 x double>* %a0, align 16
