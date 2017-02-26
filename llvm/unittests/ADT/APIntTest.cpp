@@ -1531,3 +1531,13 @@ TEST(APIntTest, getLowBitsSet) {
   EXPECT_EQ(64u, i128lo64.countTrailingOnes());
   EXPECT_EQ(64u, i128lo64.countPopulation());
 }
+
+TEST(APIntTest, getHighBitsSet) {
+  APInt i64hi32 = APInt::getHighBitsSet(64, 32);
+  EXPECT_EQ(32u, i64hi32.countLeadingOnes());
+  EXPECT_EQ(0u, i64hi32.countLeadingZeros());
+  EXPECT_EQ(64u, i64hi32.getActiveBits());
+  EXPECT_EQ(32u, i64hi32.countTrailingZeros());
+  EXPECT_EQ(0u, i64hi32.countTrailingOnes());
+  EXPECT_EQ(32u, i64hi32.countPopulation());
+}
