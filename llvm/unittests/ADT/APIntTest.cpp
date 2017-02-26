@@ -1521,3 +1521,13 @@ TEST(APIntTest, extractBits) {
   EXPECT_EQ(static_cast<int64_t>(0xFFFFFFFFFF80007Full),
             i257.extractBits(129, 1).getSExtValue());
 }
+
+TEST(APIntTest, getLowBitsSet) {
+  APInt i128lo64 = APInt::getLowBitsSet(128, 64);
+  EXPECT_EQ(0u, i128lo64.countLeadingOnes());
+  EXPECT_EQ(64u, i128lo64.countLeadingZeros());
+  EXPECT_EQ(64u, i128lo64.getActiveBits());
+  EXPECT_EQ(0u, i128lo64.countTrailingZeros());
+  EXPECT_EQ(64u, i128lo64.countTrailingOnes());
+  EXPECT_EQ(64u, i128lo64.countPopulation());
+}
