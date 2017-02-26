@@ -668,7 +668,7 @@ class VersionNeedSection final : public SyntheticSection<ELFT> {
 
 public:
   VersionNeedSection();
-  void addSymbol(SharedSymbol<ELFT> *SS);
+  void addSymbol(SharedSymbol *SS);
   void finalize() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override;

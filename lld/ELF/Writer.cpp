@@ -1112,8 +1112,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
     if (In<ELFT>::DynSymTab && S->includeInDynsym()) {
       In<ELFT>::DynSymTab->addGlobal(Body);
-      if (auto *SS = dyn_cast<SharedSymbol<ELFT>>(Body))
-        if (SS->file()->isNeeded())
+      if (auto *SS = dyn_cast<SharedSymbol>(Body))
+        if (cast<SharedFile<ELFT>>(SS->File)->isNeeded())
           In<ELFT>::VerNeed->addSymbol(SS);
     }
   }

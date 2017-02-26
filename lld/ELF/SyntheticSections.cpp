@@ -1455,7 +1455,7 @@ SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
       return nullptr;
     return In<ELFT>::Common->OutSec;
   case SymbolBody::SharedKind: {
-    auto &SS = cast<SharedSymbol<ELFT>>(*Sym);
+    auto &SS = cast<SharedSymbol>(*Sym);
     if (SS.NeedsCopy)
       return SS.Section->OutSec;
     break;
@@ -2003,24 +2003,27 @@ VersionNeedSection<ELFT>::VersionNeedSection()
 }
 
 template <class ELFT>
-void VersionNeedSection<ELFT>::addSymbol(SharedSymbol<ELFT> *SS) {
-  if (!SS->Verdef) {
+void VersionNeedSection<ELFT>::addSymbol(SharedSymbol *SS) {
+  auto *Ver = reinterpret_cast<const typename ELFT::Verdef *>(SS->Verdef);
+  if (!Ver) {
     SS->symbol()->VersionId = VER_NDX_GLOBAL;
     return;
   }
-  SharedFile<ELFT> *F = SS->file();
+
+  auto *File = cast<SharedFile<ELFT>>(SS->File);
+
   // If we don't already know that we need an Elf_Verneed for this DSO, prepare
   // to create one by adding it to our needed list and creating a dynstr entry
   // for the soname.
-  if (F->VerdefMap.empty())
-    Needed.push_back({F, In<ELFT>::DynStrTab->addString(F->getSoName())});
-  typename SharedFile<ELFT>::NeededVer &NV = F->VerdefMap[SS->Verdef];
+  if (File->VerdefMap.empty())
+    Needed.push_back({File, In<ELFT>::DynStrTab->addString(File->getSoName())});
+  typename SharedFile<ELFT>::NeededVer &NV = File->VerdefMap[Ver];
   // If we don't already know that we need an Elf_Vernaux for this Elf_Verdef,
   // prepare to create one by allocating a version identifier and creating a
   // dynstr entry for the version name.
   if (NV.Index == 0) {
-    NV.StrTab = In<ELFT>::DynStrTab->addString(
-        SS->file()->getStringTable().data() + SS->Verdef->getAux()->vda_name);
+    NV.StrTab = In<ELFT>::DynStrTab->addString(File->getStringTable().data() +
+                                               Ver->getAux()->vda_name);
     NV.Index = NextIndex++;
   }
   SS->symbol()->VersionId = NV.Index;

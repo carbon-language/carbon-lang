@@ -30,7 +30,7 @@ template <class ELFT> class MergeInputSection;
 class OutputSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class SharedFile;
-template <class ELFT> class SharedSymbol;
+class SharedSymbol;
 template <class ELFT> class DefinedRegular;
 
 // This represents a section in an output file.
