@@ -7,9 +7,9 @@ define <8 x i64>@test_int_x86_avx512_mask_vpmadd52h_uq_512(<8 x i64> %x0, <8 x i
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpmadd52h_uq_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovaps %zmm0, %zmm3
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm3
 ; CHECK-NEXT:    vpmadd52huq %zmm2, %zmm1, %zmm3 {%k1}
-; CHECK-NEXT:    vmovaps %zmm0, %zmm4
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm4
 ; CHECK-NEXT:    vpmadd52huq %zmm2, %zmm1, %zmm4
 ; CHECK-NEXT:    vpxord %zmm2, %zmm2, %zmm2
 ; CHECK-NEXT:    vpmadd52huq %zmm2, %zmm1, %zmm0 {%k1}
@@ -35,9 +35,9 @@ define <8 x i64>@test_int_x86_avx512_maskz_vpmadd52h_uq_512(<8 x i64> %x0, <8 x 
 ; CHECK-LABEL: test_int_x86_avx512_maskz_vpmadd52h_uq_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovaps %zmm0, %zmm3
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm3
 ; CHECK-NEXT:    vpmadd52huq %zmm2, %zmm1, %zmm3 {%k1} {z}
-; CHECK-NEXT:    vmovaps %zmm0, %zmm4
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm4
 ; CHECK-NEXT:    vpmadd52huq %zmm2, %zmm1, %zmm4
 ; CHECK-NEXT:    vpxord %zmm2, %zmm2, %zmm2
 ; CHECK-NEXT:    vpmadd52huq %zmm2, %zmm1, %zmm0 {%k1} {z}
@@ -63,9 +63,9 @@ define <8 x i64>@test_int_x86_avx512_mask_vpmadd52l_uq_512(<8 x i64> %x0, <8 x i
 ; CHECK-LABEL: test_int_x86_avx512_mask_vpmadd52l_uq_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovaps %zmm0, %zmm3
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm3
 ; CHECK-NEXT:    vpmadd52luq %zmm2, %zmm1, %zmm3 {%k1}
-; CHECK-NEXT:    vmovaps %zmm0, %zmm4
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm4
 ; CHECK-NEXT:    vpmadd52luq %zmm2, %zmm1, %zmm4
 ; CHECK-NEXT:    vpxord %zmm2, %zmm2, %zmm2
 ; CHECK-NEXT:    vpmadd52luq %zmm2, %zmm1, %zmm0 {%k1}
@@ -91,9 +91,9 @@ define <8 x i64>@test_int_x86_avx512_maskz_vpmadd52l_uq_512(<8 x i64> %x0, <8 x 
 ; CHECK-LABEL: test_int_x86_avx512_maskz_vpmadd52l_uq_512:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1
-; CHECK-NEXT:    vmovaps %zmm0, %zmm3
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm3
 ; CHECK-NEXT:    vpmadd52luq %zmm2, %zmm1, %zmm3 {%k1} {z}
-; CHECK-NEXT:    vmovaps %zmm0, %zmm4
+; CHECK-NEXT:    vmovdqa64 %zmm0, %zmm4
 ; CHECK-NEXT:    vpmadd52luq %zmm2, %zmm1, %zmm4
 ; CHECK-NEXT:    vpxord %zmm2, %zmm2, %zmm2
 ; CHECK-NEXT:    vpmadd52luq %zmm2, %zmm1, %zmm0 {%k1} {z}
