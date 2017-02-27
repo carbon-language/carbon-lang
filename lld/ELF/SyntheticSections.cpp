@@ -1283,14 +1283,14 @@ SymbolTableSection<ELFT>::SymbolTableSection(
 // See "Global Offset Table" in Chapter 5 in the following document
 // for detailed description:
 // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-static bool sortMipsSymbols(const SymbolBody *L, const SymbolBody *R) {
+static bool sortMipsSymbols(const SymbolTableEntry &L, const SymbolTableEntry &R) {
   // Sort entries related to non-local preemptible symbols by GOT indexes.
   // All other entries go to the first part of GOT in arbitrary order.
-  bool LIsInLocalGot = !L->IsInGlobalMipsGot;
-  bool RIsInLocalGot = !R->IsInGlobalMipsGot;
+  bool LIsInLocalGot = !L.Symbol->IsInGlobalMipsGot;
+  bool RIsInLocalGot = !R.Symbol->IsInGlobalMipsGot;
   if (LIsInLocalGot || RIsInLocalGot)
     return !RIsInLocalGot;
-  return L->GotIndex < R->GotIndex;
+  return L.Symbol->GotIndex < R.Symbol->GotIndex;
 }
 
 // Finalize a symbol table. The ELF spec requires that all local
@@ -1314,9 +1314,9 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
     return;
 
   if (!StrTabSec.isDynamic()) {
-    auto GlobBegin = Symbols.begin() + NumLocals;
+    auto GlobalBegin = Symbols.begin() + NumLocals;
     auto It = std::stable_partition(
-        GlobBegin, Symbols.end(), [](const SymbolTableEntry &S) {
+        GlobalBegin, Symbols.end(), [](const SymbolTableEntry &S) {
           return S.Symbol->symbol()->computeBinding() == STB_LOCAL;
         });
     // update sh_info with number of Global symbols output with computed
@@ -1329,10 +1329,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
     // NB: It also sorts Symbols to meet the GNU hash table requirements.
     In<ELFT>::GnuHashTab->addSymbols(Symbols);
   } else if (Config->EMachine == EM_MIPS) {
-    std::stable_sort(Symbols.begin(), Symbols.end(),
-                     [](const SymbolTableEntry &L, const SymbolTableEntry &R) {
-                       return sortMipsSymbols(L.Symbol, R.Symbol);
-                     });
+    std::stable_sort(Symbols.begin(), Symbols.end(), sortMipsSymbols);
   }
 
   size_t I = 0;
