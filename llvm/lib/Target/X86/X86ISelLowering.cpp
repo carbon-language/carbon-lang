@@ -28884,6 +28884,87 @@ static SDValue combineBasicSADPattern(SDNode *Extract, SelectionDAG &DAG,
                      Extract->getOperand(1));
 }
 
+// Attempt to peek through a target shuffle and extract the scalar from the
+// source.
+static SDValue combineExtractWithShuffle(SDNode *N, SelectionDAG &DAG,
+                                         TargetLowering::DAGCombinerInfo &DCI,
+                                         const X86Subtarget &Subtarget) {
+  if (DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  SDValue Src = N->getOperand(0);
+  SDValue Idx = N->getOperand(1);
+
+  EVT SrcVT = Src.getValueType();
+  EVT SrcSVT = SrcVT.getVectorElementType();
+  EVT VT = N->getValueType(0);
+
+  // Don't attempt this for boolean mask vectors or unknown extraction indices.
+  if (SrcSVT == MVT::i1 || !isa<ConstantSDNode>(Idx))
+    return SDValue();
+
+  // Resolve the target shuffle inputs and mask.
+  SmallVector<int, 16> Mask;
+  SmallVector<SDValue, 2> Ops;
+  if (!resolveTargetShuffleInputs(peekThroughBitcasts(Src), Ops, Mask))
+    return SDValue();
+
+  // At the moment we can only narrow a shuffle mask to handle extractions
+  // of smaller scalars.
+  // TODO - investigate support for wider shuffle masks with known upper
+  // undef/zero elements for implicit zero-extension.
+  unsigned NumMaskElts = Mask.size();
+  if ((SrcVT.getVectorNumElements() % NumMaskElts) != 0)
+    return SDValue();
+
+  int Scale = SrcVT.getVectorNumElements() / NumMaskElts;
+  if (Scale != 1) {
+    SmallVector<int, 16> ScaledMask;
+    scaleShuffleMask(Scale, Mask, ScaledMask);
+    Mask = ScaledMask;
+  }
+
+  int SrcIdx = Mask[N->getConstantOperandVal(1)];
+  SDLoc dl(N);
+
+  // If the shuffle source element is undef/zero then we can just accept it.
+  if (SrcIdx == SM_SentinelUndef)
+    return DAG.getUNDEF(VT);
+
+  if (SrcIdx == SM_SentinelZero)
+    return VT.isFloatingPoint() ? DAG.getConstantFP(0.0, dl, VT)
+                                : DAG.getConstant(0, dl, VT);
+
+  SDValue SrcOp = Ops[SrcIdx / Mask.size()];
+  SrcOp = DAG.getBitcast(SrcVT, SrcOp);
+  SrcIdx = SrcIdx % Mask.size();
+
+  // We can only extract other elements from 128-bit vectors and in certain
+  // circumstances, depending on SSE-level.
+  // TODO: Investigate using extract_subvector for larger vectors.
+  // TODO: Investigate float/double extraction if it will be just stored.
+  if ((SrcVT == MVT::v4i32 || SrcVT == MVT::v2i64) &&
+      ((SrcIdx == 0 && Subtarget.hasSSE2()) || Subtarget.hasSSE41())) {
+    assert(SrcSVT == VT && "Unexpected extraction type");
+    return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SrcSVT, SrcOp,
+                       DAG.getIntPtrConstant(SrcIdx, dl));
+  }
+
+  if ((SrcVT == MVT::v8i16 && Subtarget.hasSSE2()) ||
+      (SrcVT == MVT::v16i8 && Subtarget.hasSSE41())) {
+    assert(VT.getSizeInBits() >= SrcSVT.getSizeInBits() &&
+           "Unexpected extraction type");
+    unsigned OpCode = (SrcVT == MVT::v8i16 ? X86ISD::PEXTRW : X86ISD::PEXTRB);
+    SDValue ExtOp = DAG.getNode(OpCode, dl, MVT::i32, SrcOp,
+                                DAG.getIntPtrConstant(SrcIdx, dl));
+    SDValue Assert = DAG.getNode(ISD::AssertZext, dl, MVT::i32, ExtOp,
+                                 DAG.getValueType(SrcSVT));
+    return DAG.getZExtOrTrunc(Assert, dl, VT);
+  }
+
+  return SDValue();
+}
+
 /// Detect vector gather/scatter index generation and convert it from being a
 /// bunch of shuffles and extracts into a somewhat faster sequence.
 /// For i686, the best sequence is apparently storing the value and loading
@@ -28892,6 +28973,9 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
                                        TargetLowering::DAGCombinerInfo &DCI,
                                        const X86Subtarget &Subtarget) {
   if (SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI))
+    return NewOp;
+
+  if (SDValue NewOp = combineExtractWithShuffle(N, DAG, DCI, Subtarget))
     return NewOp;
 
   SDValue InputVector = N->getOperand(0);
@@ -29026,6 +29110,16 @@ static SDValue combineExtractVectorElt(SDNode *N, SelectionDAG &DAG,
 
   // The replacement was made in place; don't return anything.
   return SDValue();
+}
+
+// TODO - merge with combineExtractVectorElt once it can handle the implicit
+// zero-extension of X86ISD::PINSRW/X86ISD::PINSRB in:
+// XFormVExtractWithShuffleIntoLoad, combineHorizontalPredicateResult and
+// combineBasicSADPattern.
+static SDValue combineExtractVectorElt_SSE(SDNode *N, SelectionDAG &DAG,
+                                           TargetLowering::DAGCombinerInfo &DCI,
+                                           const X86Subtarget &Subtarget) {
+  return combineExtractWithShuffle(N, DAG, DCI, Subtarget);
 }
 
 /// If a vector select has an operand that is -1 or 0, try to simplify the
@@ -34368,6 +34462,9 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   default: break;
   case ISD::EXTRACT_VECTOR_ELT:
     return combineExtractVectorElt(N, DAG, DCI, Subtarget);
+  case X86ISD::PEXTRW:
+  case X86ISD::PEXTRB:
+    return combineExtractVectorElt_SSE(N, DAG, DCI, Subtarget);
   case ISD::INSERT_SUBVECTOR:
     return combineInsertSubvector(N, DAG, DCI, Subtarget);
   case ISD::VSELECT:
