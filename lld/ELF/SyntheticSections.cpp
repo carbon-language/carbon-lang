@@ -1377,7 +1377,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   // .dynsym only contains global symbols.
   if (Config->Discard != DiscardPolicy::All && !StrTabSec.isDynamic())
     writeLocalSymbols(Buf);
-
   writeGlobalSymbols(Buf);
 }
 
@@ -1386,22 +1385,23 @@ void SymbolTableSection<ELFT>::writeLocalSymbols(uint8_t *&Buf) {
   // Iterate over all input object files to copy their local symbols
   // to the output symbol table pointed by Buf.
 
-  for (auto I = Symbols.begin(); I != Symbols.begin() + NumLocals; ++I) {
-    const DefinedRegular<ELFT> &Body = *cast<DefinedRegular<ELFT>>(I->Symbol);
-    InputSectionBase *Section = Body.Section;
+  for (auto It = Symbols.begin(), End = Symbols.begin() + NumLocals;
+       It != End; ++It) {
+    auto *Body = cast<DefinedRegular<ELFT>>(It->Symbol);
+    InputSectionBase *Section = Body->Section;
     auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
 
     if (!Section) {
       ESym->st_shndx = SHN_ABS;
-      ESym->st_value = Body.Value;
+      ESym->st_value = Body->Value;
     } else {
       const OutputSection *OutSec = Section->getOutputSection<ELFT>();
       ESym->st_shndx = OutSec->SectionIndex;
-      ESym->st_value = OutSec->Addr + Section->getOffset(Body);
+      ESym->st_value = OutSec->Addr + Section->getOffset(*Body);
     }
-    ESym->st_name = I->StrTabOffset;
-    ESym->st_size = Body.template getSize<ELFT>();
-    ESym->setBindingAndType(STB_LOCAL, Body.Type);
+    ESym->st_name = It->StrTabOffset;
+    ESym->st_size = Body->template getSize<ELFT>();
+    ESym->setBindingAndType(STB_LOCAL, Body->Type);
     Buf += sizeof(*ESym);
   }
 }
@@ -1412,17 +1412,13 @@ void SymbolTableSection<ELFT>::writeGlobalSymbols(uint8_t *Buf) {
   // pointed by Buf.
   auto *ESym = reinterpret_cast<Elf_Sym *>(Buf);
 
-  for (auto I = Symbols.begin() + NumLocals; I != Symbols.end(); ++I) {
-    const SymbolTableEntry &S = *I;
-    SymbolBody *Body = S.Symbol;
-    size_t StrOff = S.StrTabOffset;
+  for (auto It = Symbols.begin() + NumLocals, End = Symbols.end();
+       It != End; ++It) {
+    SymbolBody *Body = It->Symbol;
 
-    uint8_t Type = Body->Type;
-    uintX_t Size = Body->getSize<ELFT>();
-
-    ESym->setBindingAndType(Body->symbol()->computeBinding(), Type);
-    ESym->st_size = Size;
-    ESym->st_name = StrOff;
+    ESym->setBindingAndType(Body->symbol()->computeBinding(), Body->Type);
+    ESym->st_size = Body->getSize<ELFT>();
+    ESym->st_name = It->StrTabOffset;
     ESym->setVisibility(Body->symbol()->Visibility);
     ESym->st_value = Body->getVA<ELFT>();
 
