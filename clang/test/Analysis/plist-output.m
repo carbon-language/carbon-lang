@@ -1,4 +1,4 @@
-// RUN: %clang --analyze %s -Xanalyzer -analyzer-checker=osx.cocoa.RetainCount -Xanalyzer -analyzer-config -Xanalyzer path-diagnostics-alternate=false -Xanalyzer -analyzer-config -Xanalyzer path-diagnostics-alternate=false -o %t.plist
+// RUN: %clang_analyze_cc1 %s -analyzer-checker=osx.cocoa.RetainCount -analyzer-config path-diagnostics-alternate=false -o %t.plist
 // RUN: FileCheck --input-file=%t.plist %s
 
 void test_null_init(void) {
@@ -24,7 +24,7 @@ void test_null_cond(int *p) {
     *p = 0xDEADBEEF;
   }
 }
-  
+
 void test_null_cond_transitive(int *q) {
   if (!q) {
     int *p = q;
@@ -51,7 +51,7 @@ void test_assumptions(int a, int b)
 }
 
 int *bar_cond_assign();
-int test_cond_assign() { 
+int test_cond_assign() {
   int *p;
   if (p = bar_cond_assign())
     return 1;
@@ -138,7 +138,7 @@ void test_loop_diagnostics() {
 
 void test_loop_diagnostics_2() {
   int *p = 0;
-  for (int i = 0; i < 2; ) { 
+  for (int i = 0; i < 2; ) {
     ++i;
     p = 0;
   }
@@ -166,9 +166,9 @@ void test_loop_fast_enumeration(id arr) {
 @interface RDar12114812 { char *p; }
 @end
 
-@implementation RDar12114812 
+@implementation RDar12114812
 - (void)test {
-  p = 0;        
+  p = 0;
   *p = 1;
 }
 @end
