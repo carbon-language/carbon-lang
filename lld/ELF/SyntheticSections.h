@@ -451,7 +451,7 @@ public:
   GnuHashTableSection();
   void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
-  size_t getSize() const override { return this->Size; }
+  size_t getSize() const override { return Size; }
 
   // Adds symbols to the hash table.
   // Sorts the input to satisfy GNU hash section requirements.
@@ -486,7 +486,7 @@ public:
   HashTableSection();
   void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
-  size_t getSize() const override { return this->Size; }
+  size_t getSize() const override { return Size; }
 
 private:
   size_t Size = 0;
