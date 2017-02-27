@@ -89,9 +89,10 @@ static uint32_t GetFlags(Stream &stream, const ChannelMap::value_type &entry,
 
 void Log::Channel::Enable(Log &log,
                           const std::shared_ptr<llvm::raw_ostream> &stream_sp,
-                          uint32_t flags) {
+                          uint32_t options, uint32_t flags) {
   log.GetMask().Set(flags);
   if (log.GetMask().Get()) {
+    log.GetOptions().Set(options);
     log.SetStream(stream_sp);
     log_ptr.store(&log, std::memory_order_release);
   }
@@ -283,7 +284,8 @@ bool Log::EnableLogChannel(
   uint32_t flags = categories && categories[0]
                        ? GetFlags(error_stream, *iter, categories)
                        : iter->second.channel.default_flags;
-  iter->second.channel.Enable(iter->second.log, log_stream_sp, flags);
+  iter->second.channel.Enable(iter->second.log, log_stream_sp, log_options,
+                              flags);
   return true;
 }
 

@@ -86,7 +86,7 @@ public:
 
     // Calls to Enable and disable need to be serialized externally.
     void Enable(Log &log, const std::shared_ptr<llvm::raw_ostream> &stream_sp,
-                uint32_t flags);
+                uint32_t options, uint32_t flags);
 
     // Calls to Enable and disable need to be serialized externally.
     void Disable(uint32_t flags);
