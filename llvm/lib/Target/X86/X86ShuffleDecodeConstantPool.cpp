@@ -104,7 +104,7 @@ void DecodePSHUFBMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask) {
 
   // The shuffle mask requires a byte vector.
   APInt UndefElts;
-  SmallVector<uint64_t, 32> RawMask;
+  SmallVector<uint64_t, 64> RawMask;
   if (!extractConstantMask(C, 8, UndefElts, RawMask))
     return;
 
@@ -145,7 +145,7 @@ void DecodeVPERMILPMask(const Constant *C, unsigned ElSize,
 
   // The shuffle mask requires elements the same size as the target.
   APInt UndefElts;
-  SmallVector<uint64_t, 8> RawMask;
+  SmallVector<uint64_t, 16> RawMask;
   if (!extractConstantMask(C, ElSize, UndefElts, RawMask))
     return;
 
@@ -231,7 +231,7 @@ void DecodeVPPERMMask(const Constant *C, SmallVectorImpl<int> &ShuffleMask) {
 
   // The shuffle mask requires a byte vector.
   APInt UndefElts;
-  SmallVector<uint64_t, 32> RawMask;
+  SmallVector<uint64_t, 16> RawMask;
   if (!extractConstantMask(C, 8, UndefElts, RawMask))
     return;
 
@@ -286,7 +286,7 @@ void DecodeVPERMVMask(const Constant *C, unsigned ElSize,
 
   // The shuffle mask requires elements the same size as the target.
   APInt UndefElts;
-  SmallVector<uint64_t, 8> RawMask;
+  SmallVector<uint64_t, 64> RawMask;
   if (!extractConstantMask(C, ElSize, UndefElts, RawMask))
     return;
 
@@ -314,7 +314,7 @@ void DecodeVPERMV3Mask(const Constant *C, unsigned ElSize,
 
   // The shuffle mask requires elements the same size as the target.
   APInt UndefElts;
-  SmallVector<uint64_t, 8> RawMask;
+  SmallVector<uint64_t, 64> RawMask;
   if (!extractConstantMask(C, ElSize, UndefElts, RawMask))
     return;
 
