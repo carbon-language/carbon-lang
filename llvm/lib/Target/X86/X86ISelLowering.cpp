@@ -4800,9 +4800,10 @@ static SDValue getConstVector(ArrayRef<int> Values, MVT VT, SelectionDAG &DAG,
   return ConstsNode;
 }
 
-static SDValue getConstVector(ArrayRef<APInt> Bits, SmallBitVector &Undefs,
+static SDValue getConstVector(ArrayRef<APInt> Bits, APInt &Undefs,
                               MVT VT, SelectionDAG &DAG, const SDLoc &dl) {
-  assert(Bits.size() == Undefs.size() && "Unequal constant and undef arrays");
+  assert(Bits.size() == Undefs.getBitWidth() &&
+         "Unequal constant and undef arrays");
   SmallVector<SDValue, 32> Ops;
   bool Split = false;
 
@@ -5175,11 +5176,10 @@ static const Constant *getTargetConstantFromNode(SDValue Op) {
 
 // Extract raw constant bits from constant pools.
 static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
-                                          SmallBitVector &UndefElts,
+                                          APInt &UndefElts,
                                           SmallVectorImpl<APInt> &EltBits,
                                           bool AllowWholeUndefs = true,
                                           bool AllowPartialUndefs = true) {
-  assert(UndefElts.empty() && "Expected an empty UndefElts vector");
   assert(EltBits.empty() && "Expected an empty EltBits vector");
 
   Op = peekThroughBitcasts(Op);
@@ -5203,7 +5203,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
     if (UndefBits.getBoolValue() && !AllowUndefs)
       return false;
 
-    UndefElts = SmallBitVector(NumElts, false);
+    UndefElts = APInt(NumElts, 0);
     EltBits.resize(NumElts, APInt(EltSizeInBits, 0));
 
     for (unsigned i = 0; i != NumElts; ++i) {
@@ -5214,7 +5214,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
       if (UndefEltBits.isAllOnesValue()) {
         if (!AllowWholeUndefs)
           return false;
-        UndefElts[i] = true;
+        UndefElts.setBit(i);
         continue;
       }
 
@@ -5314,7 +5314,7 @@ static bool getTargetConstantBitsFromNode(SDValue Op, unsigned EltSizeInBits,
 static bool getTargetShuffleMaskIndices(SDValue MaskNode,
                                         unsigned MaskEltSizeInBits,
                                         SmallVectorImpl<uint64_t> &RawMask) {
-  SmallBitVector UndefElts;
+  APInt UndefElts;
   SmallVector<APInt, 64> EltBits;
 
   // Extract the raw target constant bits.
@@ -5633,7 +5633,7 @@ static bool setTargetShuffleZeroElements(SDValue N,
   unsigned EltSizeInBits = VT.getSizeInBits() / Mask.size();
 
   // Extract known constant input data.
-  SmallBitVector UndefSrcElts[2];
+  APInt UndefSrcElts[2];
   SmallVector<APInt, 32> SrcEltBits[2];
   bool IsSrcConstant[2] = {
       getTargetConstantBitsFromNode(V1, EltSizeInBits, UndefSrcElts[0],
@@ -5708,7 +5708,7 @@ static bool getFauxShuffleMask(SDValue N, SmallVectorImpl<int> &Mask,
   case ISD::AND:
   case X86ISD::ANDNP: {
     // Attempt to decode as a per-byte mask.
-    SmallBitVector UndefElts;
+    APInt UndefElts;
     SmallVector<APInt, 32> EltBits;
     SDValue N0 = N.getOperand(0);
     SDValue N1 = N.getOperand(1);
@@ -27200,12 +27200,12 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
       DAG.getTargetLoweringInfo().isTypeLegal(MaskVT)) {
     APInt Zero = APInt::getNullValue(MaskEltSizeInBits);
     APInt AllOnes = APInt::getAllOnesValue(MaskEltSizeInBits);
-    SmallBitVector UndefElts(NumMaskElts, false);
+    APInt UndefElts(NumMaskElts, 0);
     SmallVector<APInt, 64> EltBits(NumMaskElts, Zero);
     for (unsigned i = 0; i != NumMaskElts; ++i) {
       int M = Mask[i];
       if (M == SM_SentinelUndef) {
-        UndefElts[i] = true;
+        UndefElts.setBit(i);
         continue;
       }
       if (M == SM_SentinelZero)
@@ -27389,7 +27389,7 @@ static bool combineX86ShufflesConstants(const SmallVectorImpl<SDValue> &Ops,
 
   // Extract constant bits from each source op.
   bool OneUseConstantOp = false;
-  SmallVector<SmallBitVector, 16> UndefEltsOps(NumOps);
+  SmallVector<APInt, 16> UndefEltsOps(NumOps);
   SmallVector<SmallVector<APInt, 16>, 16> RawBitsOps(NumOps);
   for (unsigned i = 0; i != NumOps; ++i) {
     SDValue SrcOp = Ops[i];
@@ -27406,18 +27406,18 @@ static bool combineX86ShufflesConstants(const SmallVectorImpl<SDValue> &Ops,
     return false;
 
   // Shuffle the constant bits according to the mask.
-  SmallBitVector UndefElts(NumMaskElts, false);
-  SmallBitVector ZeroElts(NumMaskElts, false);
-  SmallBitVector ConstantElts(NumMaskElts, false);
+  APInt UndefElts(NumMaskElts, 0);
+  APInt ZeroElts(NumMaskElts, 0);
+  APInt ConstantElts(NumMaskElts, 0);
   SmallVector<APInt, 8> ConstantBitData(NumMaskElts,
                                         APInt::getNullValue(MaskSizeInBits));
   for (unsigned i = 0; i != NumMaskElts; ++i) {
     int M = Mask[i];
     if (M == SM_SentinelUndef) {
-      UndefElts[i] = true;
+      UndefElts.setBit(i);
       continue;
     } else if (M == SM_SentinelZero) {
-      ZeroElts[i] = true;
+      ZeroElts.setBit(i);
       continue;
     }
     assert(0 <= M && M < (int)(NumMaskElts * NumOps));
@@ -27427,21 +27427,21 @@ static bool combineX86ShufflesConstants(const SmallVectorImpl<SDValue> &Ops,
 
     auto &SrcUndefElts = UndefEltsOps[SrcOpIdx];
     if (SrcUndefElts[SrcMaskIdx]) {
-      UndefElts[i] = true;
+      UndefElts.setBit(i);
       continue;
     }
 
     auto &SrcEltBits = RawBitsOps[SrcOpIdx];
     APInt &Bits = SrcEltBits[SrcMaskIdx];
     if (!Bits) {
-      ZeroElts[i] = true;
+      ZeroElts.setBit(i);
       continue;
     }
 
-    ConstantElts[i] = true;
+    ConstantElts.setBit(i);
     ConstantBitData[i] = Bits;
   }
-  assert((UndefElts | ZeroElts | ConstantElts).count() == NumMaskElts);
+  assert((UndefElts | ZeroElts | ConstantElts).isAllOnesValue());
 
   // Create the constant data.
   MVT MaskSVT;
@@ -30706,7 +30706,7 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
   }
 
   // Constant Folding.
-  SmallBitVector UndefElts;
+  APInt UndefElts;
   SmallVector<APInt, 32> EltBits;
   if (N->isOnlyUserOf(N0.getNode()) &&
       getTargetConstantBitsFromNode(N0, NumBitsPerElt, UndefElts, EltBits)) {
@@ -34147,16 +34147,16 @@ static SDValue combineVSZext(SDNode *N, SelectionDAG &DAG,
 
   // Perform any constant folding.
   // FIXME: Reduce constant pool usage and don't fold when OptSize is enabled.
-  SmallBitVector UndefElts;
+  APInt UndefElts;
   SmallVector<APInt, 64> EltBits;
   if (getTargetConstantBitsFromNode(Op, OpEltSizeInBits, UndefElts, EltBits)) {
-    SmallBitVector Undefs(NumElts, false);
+    APInt Undefs(NumElts, 0);
     SmallVector<APInt, 4> Vals(NumElts, APInt(EltSizeInBits, 0));
     bool IsZEXT =
         (Opcode == X86ISD::VZEXT) || (Opcode == ISD::ZERO_EXTEND_VECTOR_INREG);
     for (unsigned i = 0; i != NumElts; ++i) {
       if (UndefElts[i]) {
-        Undefs[i] = true;
+        Undefs.setBit(i);
         continue;
       }
       Vals[i] = IsZEXT ? EltBits[i].zextOrTrunc(EltSizeInBits)
