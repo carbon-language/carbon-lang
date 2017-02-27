@@ -1293,6 +1293,10 @@ static bool sortMipsSymbols(const SymbolBody *L, const SymbolBody *R) {
   return L->GotIndex < R->GotIndex;
 }
 
+// Finalize a symbol table. The ELF spec requires that all local
+// symbols precede global symbols, so we sort symbol entries in this
+// function. (For .dynsym, we don't do that because symbols for
+// dynamic linking are inherently all globals.)
 template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
   this->OutSec->Link = this->Link = StrTabSec.OutSec->SectionIndex;
   this->OutSec->Entsize = this->Entsize;
@@ -1321,14 +1325,16 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
     return;
   }
 
-  if (In<ELFT>::GnuHashTab)
+  if (In<ELFT>::GnuHashTab) {
     // NB: It also sorts Symbols to meet the GNU hash table requirements.
     In<ELFT>::GnuHashTab->addSymbols(Symbols);
-  else if (Config->EMachine == EM_MIPS)
+  } else if (Config->EMachine == EM_MIPS) {
     std::stable_sort(Symbols.begin(), Symbols.end(),
                      [](const SymbolTableEntry &L, const SymbolTableEntry &R) {
                        return sortMipsSymbols(L.Symbol, R.Symbol);
                      });
+  }
+
   size_t I = 0;
   for (const SymbolTableEntry &S : Symbols)
     S.Symbol->DynsymIndex = ++I;
