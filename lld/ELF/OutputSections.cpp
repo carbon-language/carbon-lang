@@ -30,6 +30,19 @@ using namespace llvm::ELF;
 using namespace lld;
 using namespace lld::elf;
 
+uint8_t Out::First;
+OutputSection *Out::Bss;
+OutputSection *Out::BssRelRo;
+OutputSection *Out::Opd;
+uint8_t *Out::OpdBuf;
+PhdrEntry *Out::TlsPhdr;
+OutputSection *Out::DebugInfo;
+OutputSection *Out::ElfHeader;
+OutputSection *Out::ProgramHeaders;
+OutputSection *Out::PreinitArray;
+OutputSection *Out::InitArray;
+OutputSection *Out::FiniArray;
+
 uint32_t OutputSection::getPhdrFlags() const {
   uint32_t Ret = PF_R;
   if (Flags & SHF_WRITE)

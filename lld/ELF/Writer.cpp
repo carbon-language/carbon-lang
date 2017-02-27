@@ -301,20 +301,19 @@ template <class ELFT> void Writer<ELFT>::run() {
     exitLld(0);
 }
 
-// Initialize Out<ELFT> members.
+// Initialize Out members.
 template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   // Initialize all pointers with NULL. This is needed because
   // you can call lld::elf::main more than once as a library.
-  memset(&Out<ELFT>::First, 0, sizeof(Out<ELFT>));
+  memset(&Out::First, 0, sizeof(Out));
 
   auto Add = [](InputSectionBase *Sec) {
     Symtab<ELFT>::X->Sections.push_back(Sec);
   };
 
   // Create singleton output sections.
-  Out<ELFT>::Bss =
-      make<OutputSection>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
-  Out<ELFT>::BssRelRo =
+  Out::Bss = make<OutputSection>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
+  Out::BssRelRo =
       make<OutputSection>(".bss.rel.ro", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
   In<ELFT>::DynStrTab = make<StringTableSection<ELFT>>(".dynstr", true);
   In<ELFT>::Dynamic = make<DynamicSection<ELFT>>();
@@ -322,10 +321,10 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
       Config->Rela ? ".rela.dyn" : ".rel.dyn", Config->ZCombreloc);
   In<ELFT>::ShStrTab = make<StringTableSection<ELFT>>(".shstrtab", false);
 
-  Out<ELFT>::ElfHeader = make<OutputSection>("", 0, SHF_ALLOC);
-  Out<ELFT>::ElfHeader->Size = sizeof(Elf_Ehdr);
-  Out<ELFT>::ProgramHeaders = make<OutputSection>("", 0, SHF_ALLOC);
-  Out<ELFT>::ProgramHeaders->updateAlignment(sizeof(uintX_t));
+  Out::ElfHeader = make<OutputSection>("", 0, SHF_ALLOC);
+  Out::ElfHeader->Size = sizeof(Elf_Ehdr);
+  Out::ProgramHeaders = make<OutputSection>("", 0, SHF_ALLOC);
+  Out::ProgramHeaders->updateAlignment(sizeof(uintX_t));
 
   if (needsInterpSection<ELFT>()) {
     In<ELFT>::Interp = createInterpSection<ELFT>();
@@ -597,7 +596,7 @@ template <class ELFT> bool elf::isRelroSection(const OutputSection *Sec) {
     return true;
   if (In<ELFT>::Got && Sec == In<ELFT>::Got->OutSec)
     return true;
-  if (Sec == Out<ELFT>::BssRelRo)
+  if (Sec == Out::BssRelRo)
     return true;
 
   StringRef S = Sec->Name;
@@ -841,7 +840,7 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
 
   // __ehdr_start is the location of ELF file headers.
   ElfSym<ELFT>::EhdrStart =
-      addOptionalSynthetic<ELFT>("__ehdr_start", Out<ELFT>::ElfHeader, 0);
+      addOptionalSynthetic<ELFT>("__ehdr_start", Out::ElfHeader, 0);
 
   auto Define = [](StringRef S, DefinedSynthetic *&Sym1,
                    DefinedSynthetic *&Sym2) {
@@ -1062,10 +1061,10 @@ static void removeUnusedSyntheticSections(std::vector<OutputSection *> &V) {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::finalizeSections() {
-  Out<ELFT>::DebugInfo = findSection(".debug_info");
-  Out<ELFT>::PreinitArray = findSection(".preinit_array");
-  Out<ELFT>::InitArray = findSection(".init_array");
-  Out<ELFT>::FiniArray = findSection(".fini_array");
+  Out::DebugInfo = findSection(".debug_info");
+  Out::PreinitArray = findSection(".preinit_array");
+  Out::InitArray = findSection(".init_array");
+  Out::FiniArray = findSection(".fini_array");
 
   // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
   // symbols for sections, so that the runtime can get the start and end
@@ -1123,7 +1122,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     return;
 
   // So far we have added sections from input object files.
-  // This function adds linker-created Out<ELFT>::* sections.
+  // This function adds linker-created Out::* sections.
   addPredefinedSections();
   removeUnusedSyntheticSections<ELFT>(OutputSections);
 
@@ -1132,7 +1131,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // This is a bit of a hack. A value of 0 means undef, so we set it
   // to 1 t make __ehdr_start defined. The section number is not
   // particularly relevant.
-  Out<ELFT>::ElfHeader->SectionIndex = 1;
+  Out::ElfHeader->SectionIndex = 1;
 
   unsigned I = 1;
   for (OutputSection *Sec : OutputSections) {
@@ -1183,8 +1182,8 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
       OutputSections.push_back(Sec);
     }
   };
-  Add(Out<ELFT>::Bss);
-  Add(Out<ELFT>::BssRelRo);
+  Add(Out::Bss);
+  Add(Out::BssRelRo);
 
   // ARM ABI requires .ARM.exidx to be terminated by some piece of data.
   // We have the terminater synthetic section class. Add that at the end.
@@ -1203,10 +1202,9 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
     addOptionalSynthetic<ELFT>(End, OS, OS ? -1 : 0);
   };
 
-  Define("__preinit_array_start", "__preinit_array_end",
-         Out<ELFT>::PreinitArray);
-  Define("__init_array_start", "__init_array_end", Out<ELFT>::InitArray);
-  Define("__fini_array_start", "__fini_array_end", Out<ELFT>::FiniArray);
+  Define("__preinit_array_start", "__preinit_array_end", Out::PreinitArray);
+  Define("__init_array_start", "__init_array_end", Out::InitArray);
+  Define("__fini_array_start", "__fini_array_end", Out::FiniArray);
 
   if (OutputSection *Sec = findSection(".ARM.exidx"))
     Define("__exidx_start", "__exidx_end", Sec);
@@ -1268,7 +1266,7 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
   };
 
   // The first phdr entry is PT_PHDR which describes the program header itself.
-  AddHdr(PT_PHDR, PF_R)->add(Out<ELFT>::ProgramHeaders);
+  AddHdr(PT_PHDR, PF_R)->add(Out::ProgramHeaders);
 
   // PT_INTERP must be the second entry if exists.
   if (OutputSection *Sec = findSection(".interp"))
@@ -1427,8 +1425,8 @@ bool elf::allocateHeaders(std::vector<PhdrEntry> &Phdrs,
   if (!ScriptConfig->HasSections)
     Config->ImageBase = Min = std::min(Min, Config->ImageBase);
 
-  Out<ELFT>::ElfHeader->Addr = Min;
-  Out<ELFT>::ProgramHeaders->Addr = Min + Out<ELFT>::ElfHeader->Size;
+  Out::ElfHeader->Addr = Min;
+  Out::ProgramHeaders->Addr = Min + Out::ElfHeader->Size;
 
   if (Script<ELFT>::X->hasPhdrsCommands())
     return true;
@@ -1436,10 +1434,10 @@ bool elf::allocateHeaders(std::vector<PhdrEntry> &Phdrs,
   if (FirstPTLoad->First)
     for (OutputSection *Sec : OutputSections)
       if (Sec->FirstInPtLoad == FirstPTLoad->First)
-        Sec->FirstInPtLoad = Out<ELFT>::ElfHeader;
-  FirstPTLoad->First = Out<ELFT>::ElfHeader;
+        Sec->FirstInPtLoad = Out::ElfHeader;
+  FirstPTLoad->First = Out::ElfHeader;
   if (!FirstPTLoad->Last)
-    FirstPTLoad->Last = Out<ELFT>::ProgramHeaders;
+    FirstPTLoad->Last = Out::ProgramHeaders;
   return true;
 }
 
@@ -1447,7 +1445,7 @@ bool elf::allocateHeaders(std::vector<PhdrEntry> &Phdrs,
 // sections. These are special, we do not include them into output sections
 // list, but have them to simplify the code.
 template <class ELFT> void Writer<ELFT>::fixHeaders() {
-  Out<ELFT>::ProgramHeaders->Size = sizeof(Elf_Phdr) * Phdrs.size();
+  Out::ProgramHeaders->Size = sizeof(Elf_Phdr) * Phdrs.size();
   // If the script has SECTIONS, assignAddresses will compute the values.
   if (ScriptConfig->HasSections)
     return;
@@ -1535,8 +1533,8 @@ template <class ELFT> void Writer<ELFT>::assignFileOffsetsBinary() {
 // Assign file offsets to output sections.
 template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
   uintX_t Off = 0;
-  Off = setOffset<ELFT>(Out<ELFT>::ElfHeader, Off);
-  Off = setOffset<ELFT>(Out<ELFT>::ProgramHeaders, Off);
+  Off = setOffset<ELFT>(Out::ElfHeader, Off);
+  Off = setOffset<ELFT>(Out::ProgramHeaders, Off);
 
   for (OutputSection *Sec : OutputSections)
     Off = setOffset<ELFT>(Sec, Off);
@@ -1574,7 +1572,7 @@ template <class ELFT> void Writer<ELFT>::setPhdrs() {
     // The TLS pointer goes after PT_TLS. At least glibc will align it,
     // so round up the size to make sure the offsets are correct.
     if (P.p_type == PT_TLS) {
-      Out<ELFT>::TlsPhdr = &P;
+      Out::TlsPhdr = &P;
       if (P.p_memsz)
         P.p_memsz = alignTo(P.p_memsz, P.p_align);
     }
@@ -1801,10 +1799,10 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 
   // PPC64 needs to process relocations in the .opd section
   // before processing relocations in code-containing sections.
-  Out<ELFT>::Opd = findSection(".opd");
-  if (Out<ELFT>::Opd) {
-    Out<ELFT>::OpdBuf = Buf + Out<ELFT>::Opd->Offset;
-    Out<ELFT>::Opd->template writeTo<ELFT>(Buf + Out<ELFT>::Opd->Offset);
+  Out::Opd = findSection(".opd");
+  if (Out::Opd) {
+    Out::OpdBuf = Buf + Out::Opd->Offset;
+    Out::Opd->template writeTo<ELFT>(Buf + Out::Opd->Offset);
   }
 
   OutputSection *EhFrameHdr =
@@ -1818,7 +1816,7 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
       Sec->writeTo<ELFT>(Buf + Sec->Offset);
 
   for (OutputSection *Sec : OutputSections)
-    if (Sec != Out<ELFT>::Opd && Sec != EhFrameHdr && Sec->Type != SHT_REL &&
+    if (Sec != Out::Opd && Sec != EhFrameHdr && Sec->Type != SHT_REL &&
         Sec->Type != SHT_RELA)
       Sec->writeTo<ELFT>(Buf + Sec->Offset);
 

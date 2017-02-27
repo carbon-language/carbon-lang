@@ -829,9 +829,9 @@ template <class ELFT> std::vector<PhdrEntry> LinkerScript<ELFT>::createPhdrs() {
     PhdrEntry &Phdr = Ret.back();
 
     if (Cmd.HasFilehdr)
-      Phdr.add(Out<ELFT>::ElfHeader);
+      Phdr.add(Out::ElfHeader);
     if (Cmd.HasPhdrs)
-      Phdr.add(Out<ELFT>::ProgramHeaders);
+      Phdr.add(Out::ProgramHeaders);
 
     if (Cmd.LMAExpr) {
       Phdr.p_paddr = Cmd.LMAExpr(0);

@@ -479,7 +479,7 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol *SS) {
   // See if this symbol is in a read-only segment. If so, preserve the symbol's
   // memory protection by reserving space in the .bss.rel.ro section.
   bool IsReadOnly = isReadOnly<ELFT>(SS);
-  OutputSection *OSec = IsReadOnly ? Out<ELFT>::BssRelRo : Out<ELFT>::Bss;
+  OutputSection *OSec = IsReadOnly ? Out::BssRelRo : Out::Bss;
 
   // Create a SyntheticSection in Out to hold the .bss and the Copy Reloc.
   auto *ISec =

@@ -1102,17 +1102,17 @@ template <class ELFT> void DynamicSection<ELFT>::finalize() {
   if (In<ELFT>::HashTab)
     add({DT_HASH, In<ELFT>::HashTab});
 
-  if (Out<ELFT>::PreinitArray) {
-    add({DT_PREINIT_ARRAY, Out<ELFT>::PreinitArray});
-    add({DT_PREINIT_ARRAYSZ, Out<ELFT>::PreinitArray, Entry::SecSize});
+  if (Out::PreinitArray) {
+    add({DT_PREINIT_ARRAY, Out::PreinitArray});
+    add({DT_PREINIT_ARRAYSZ, Out::PreinitArray, Entry::SecSize});
   }
-  if (Out<ELFT>::InitArray) {
-    add({DT_INIT_ARRAY, Out<ELFT>::InitArray});
-    add({DT_INIT_ARRAYSZ, Out<ELFT>::InitArray, Entry::SecSize});
+  if (Out::InitArray) {
+    add({DT_INIT_ARRAY, Out::InitArray});
+    add({DT_INIT_ARRAYSZ, Out::InitArray, Entry::SecSize});
   }
-  if (Out<ELFT>::FiniArray) {
-    add({DT_FINI_ARRAY, Out<ELFT>::FiniArray});
-    add({DT_FINI_ARRAYSZ, Out<ELFT>::FiniArray, Entry::SecSize});
+  if (Out::FiniArray) {
+    add({DT_FINI_ARRAY, Out::FiniArray});
+    add({DT_FINI_ARRAYSZ, Out::FiniArray, Entry::SecSize});
   }
 
   if (SymbolBody *B = Symtab<ELFT>::X->findInCurrentDSO(Config->Init))
@@ -1853,7 +1853,7 @@ template <class ELFT> void GdbIndexSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT> bool GdbIndexSection<ELFT>::empty() const {
-  return !Out<ELFT>::DebugInfo;
+  return !Out::DebugInfo;
 }
 
 template <class ELFT>
