@@ -607,6 +607,7 @@ public:
 
   bool hasModifiersSet(const MachineInstr &MI,
                        unsigned OpName) const;
+  bool hasAnyModifiersSet(const MachineInstr &MI) const;
 
   bool verifyInstruction(const MachineInstr &MI,
                          StringRef &ErrInfo) const override;
