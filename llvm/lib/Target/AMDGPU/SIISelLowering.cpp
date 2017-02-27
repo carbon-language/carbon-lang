@@ -402,6 +402,10 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
       }
     }
 
+    // XXX - Do these do anything? Vector constants turn into build_vector.
+    setOperationAction(ISD::Constant, MVT::v2i16, Legal);
+    setOperationAction(ISD::ConstantFP, MVT::v2f16, Legal);
+
     setOperationAction(ISD::STORE, MVT::v2i16, Promote);
     AddPromotedToType(ISD::STORE, MVT::v2i16, MVT::i32);
     setOperationAction(ISD::STORE, MVT::v2f16, Promote);
@@ -411,6 +415,46 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
     AddPromotedToType(ISD::LOAD, MVT::v2i16, MVT::i32);
     setOperationAction(ISD::LOAD, MVT::v2f16, Promote);
     AddPromotedToType(ISD::LOAD, MVT::v2f16, MVT::i32);
+
+    setOperationAction(ISD::AND, MVT::v2i16, Promote);
+    AddPromotedToType(ISD::AND, MVT::v2i16, MVT::i32);
+    setOperationAction(ISD::OR, MVT::v2i16, Promote);
+    AddPromotedToType(ISD::OR, MVT::v2i16, MVT::i32);
+    setOperationAction(ISD::XOR, MVT::v2i16, Promote);
+    AddPromotedToType(ISD::XOR, MVT::v2i16, MVT::i32);
+    setOperationAction(ISD::SELECT, MVT::v2i16, Promote);
+    AddPromotedToType(ISD::SELECT, MVT::v2i16, MVT::i32);
+    setOperationAction(ISD::SELECT, MVT::v2f16, Promote);
+    AddPromotedToType(ISD::SELECT, MVT::v2f16, MVT::i32);
+
+    setOperationAction(ISD::ADD, MVT::v2i16, Legal);
+    setOperationAction(ISD::SUB, MVT::v2i16, Legal);
+    setOperationAction(ISD::MUL, MVT::v2i16, Legal);
+    setOperationAction(ISD::SHL, MVT::v2i16, Legal);
+    setOperationAction(ISD::SRL, MVT::v2i16, Legal);
+    setOperationAction(ISD::SRA, MVT::v2i16, Legal);
+    setOperationAction(ISD::SMIN, MVT::v2i16, Legal);
+    setOperationAction(ISD::UMIN, MVT::v2i16, Legal);
+    setOperationAction(ISD::SMAX, MVT::v2i16, Legal);
+    setOperationAction(ISD::UMAX, MVT::v2i16, Legal);
+
+    setOperationAction(ISD::FADD, MVT::v2f16, Legal);
+    setOperationAction(ISD::FNEG, MVT::v2f16, Legal);
+    setOperationAction(ISD::FMUL, MVT::v2f16, Legal);
+    setOperationAction(ISD::FMA, MVT::v2f16, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::v2f16, Legal);
+    setOperationAction(ISD::FMAXNUM, MVT::v2f16, Legal);
+
+    // This isn't really legal, but this avoids the legalizer unrolling it (and
+    // allows matching fneg (fabs x) patterns)
+    setOperationAction(ISD::FABS, MVT::v2f16, Legal);
+
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i16, Custom);
+    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f16, Custom);
+
+    setOperationAction(ISD::ZERO_EXTEND, MVT::v2i32, Expand);
+    setOperationAction(ISD::SIGN_EXTEND, MVT::v2i32, Expand);
+    setOperationAction(ISD::FP_EXTEND, MVT::v2f32, Expand);
   }
 
   setTargetDAGCombine(ISD::FADD);
@@ -428,6 +472,7 @@ SITargetLowering::SITargetLowering(const TargetMachine &TM,
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::UINT_TO_FP);
   setTargetDAGCombine(ISD::FCANONICALIZE);
+  setTargetDAGCombine(ISD::SCALAR_TO_VECTOR);
 
   // All memory operations. Some folding on the pointer operand is done to help
   // matching the constant offsets in the addressing modes.
@@ -3965,7 +4010,7 @@ SDValue SITargetLowering::performClassCombine(SDNode *N,
 SDValue SITargetLowering::performFCanonicalizeCombine(
   SDNode *N,
   DAGCombinerInfo &DCI) const {
-  ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0));
+  ConstantFPSDNode *CFP = isConstOrConstSplatFP(N->getOperand(0));
   if (!CFP)
     return SDValue();
 
@@ -3975,13 +4020,14 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
   // Flush denormals to 0 if not enabled.
   if (C.isDenormal()) {
     EVT VT = N->getValueType(0);
-    if (VT == MVT::f32 && !Subtarget->hasFP32Denormals())
+    EVT SVT = VT.getScalarType();
+    if (SVT == MVT::f32 && !Subtarget->hasFP32Denormals())
       return DAG.getConstantFP(0.0, SDLoc(N), VT);
 
-    if (VT == MVT::f64 && !Subtarget->hasFP64Denormals())
+    if (SVT == MVT::f64 && !Subtarget->hasFP64Denormals())
       return DAG.getConstantFP(0.0, SDLoc(N), VT);
 
-    if (VT == MVT::f16 && !Subtarget->hasFP16Denormals())
+    if (SVT == MVT::f16 && !Subtarget->hasFP16Denormals())
       return DAG.getConstantFP(0.0, SDLoc(N), VT);
   }
 
@@ -4001,7 +4047,7 @@ SDValue SITargetLowering::performFCanonicalizeCombine(
       return DAG.getConstantFP(CanonicalQNaN, SDLoc(N), VT);
   }
 
-  return SDValue(CFP, 0);
+  return N->getOperand(0);
 }
 
 static unsigned minMaxOpcToMin3Max3Opc(unsigned Opc) {
@@ -4270,7 +4316,6 @@ SDValue SITargetLowering::performFAddCombine(SDNode *N,
 
   SelectionDAG &DAG = DCI.DAG;
   EVT VT = N->getValueType(0);
-  assert(!VT.isVector());
 
   SDLoc SL(N);
   SDValue LHS = N->getOperand(0);
@@ -4509,6 +4554,24 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     return performFMed3Combine(N, DCI);
   case AMDGPUISD::CVT_PKRTZ_F16_F32:
     return performCvtPkRTZCombine(N, DCI);
+  case ISD::SCALAR_TO_VECTOR: {
+    SelectionDAG &DAG = DCI.DAG;
+    EVT VT = N->getValueType(0);
+
+    // v2i16 (scalar_to_vector i16:x) -> v2i16 (bitcast (any_extend i16:x))
+    if (VT == MVT::v2i16 || VT == MVT::v2f16) {
+      SDLoc SL(N);
+      SDValue Src = N->getOperand(0);
+      EVT EltVT = Src.getValueType();
+      if (EltVT == MVT::f16)
+        Src = DAG.getNode(ISD::BITCAST, SL, MVT::i16, Src);
+
+      SDValue Ext = DAG.getNode(ISD::ANY_EXTEND, SL, MVT::i32, Src);
+      return DAG.getNode(ISD::BITCAST, SL, VT, Ext);
+    }
+
+    break;
+  }
   }
   return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
 }
