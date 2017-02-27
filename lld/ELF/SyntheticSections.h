@@ -9,11 +9,7 @@
 //
 // Synthetic sections represent chunks of linker-created data. If you
 // need to create a chunk of data that to be included in some section
-// in the result, you probably want to create it as a synthetic section.
-//
-// In reality, there are a few linker-synthesized chunks that are not
-// of synthetic sections, such as thunks. But we are rewriting them so
-// that eventually they are represented as synthetic sections.
+// in the result, you probably want to create that as a synthetic section.
 //
 // Synthetic sections are designed as input sections as opposed to
 // output sections because we want to allow them to be manipulated
