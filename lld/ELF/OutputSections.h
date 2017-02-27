@@ -134,13 +134,12 @@ namespace elf {
 // input section. Output section type is determined by various
 // factors, including input section's sh_flags, sh_type and
 // linker scripts.
-template <class ELFT> class OutputSectionFactory {
-  typedef typename ELFT::Shdr Elf_Shdr;
-  typedef typename ELFT::uint uintX_t;
-
+class OutputSectionFactory {
 public:
   OutputSectionFactory(std::vector<OutputSection *> &OutputSections);
   ~OutputSectionFactory();
+
+  template <class ELFT>
   void addInputSec(InputSectionBase *IS, StringRef OutsecName);
 
 private:

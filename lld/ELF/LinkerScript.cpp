@@ -321,7 +321,7 @@ LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
 }
 
 template <class ELFT>
-void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
+void LinkerScript<ELFT>::processCommands(OutputSectionFactory &Factory) {
   for (unsigned I = 0; I < Opt.Commands.size(); ++I) {
     auto Iter = Opt.Commands.begin() + I;
     const std::unique_ptr<BaseCommand> &Base1 = *Iter;
@@ -383,18 +383,17 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory<ELFT> &Factory) {
 
       // Add input sections to an output section.
       for (InputSectionBase *S : V)
-        Factory.addInputSec(S, Cmd->Name);
+        Factory.addInputSec<ELFT>(S, Cmd->Name);
     }
   }
 }
 
 // Add sections that didn't match any sections command.
 template <class ELFT>
-void LinkerScript<ELFT>::addOrphanSections(
-    OutputSectionFactory<ELFT> &Factory) {
+void LinkerScript<ELFT>::addOrphanSections(OutputSectionFactory &Factory) {
   for (InputSectionBase *S : Symtab<ELFT>::X->Sections)
     if (S->Live && !S->OutSec)
-      Factory.addInputSec(S, getOutputSectionName(S->Name));
+      Factory.addInputSec<ELFT>(S, getOutputSectionName(S->Name));
 }
 
 template <class ELFT> static bool isTbss(OutputSection *Sec) {

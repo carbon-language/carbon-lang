@@ -78,7 +78,7 @@ private:
   std::unique_ptr<FileOutputBuffer> Buffer;
 
   std::vector<OutputSection *> OutputSections;
-  OutputSectionFactory<ELFT> Factory{OutputSections};
+  OutputSectionFactory Factory{OutputSections};
 
   void addRelIpltSymbols();
   void addStartEndSymbols();
@@ -920,7 +920,7 @@ void Writer<ELFT>::forEachRelSec(std::function<void(InputSectionBase &)> Fn) {
 template <class ELFT> void Writer<ELFT>::createSections() {
   for (InputSectionBase *IS : Symtab<ELFT>::X->Sections)
     if (IS)
-      Factory.addInputSec(IS, getOutputSectionName(IS->Name));
+      Factory.addInputSec<ELFT>(IS, getOutputSectionName(IS->Name));
 
   sortBySymbolsOrder<ELFT>(OutputSections);
   sortInitFini<ELFT>(findSection(".init_array"));
