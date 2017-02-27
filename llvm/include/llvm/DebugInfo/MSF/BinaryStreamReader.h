@@ -152,7 +152,7 @@ public:
     }
 
     if (NumElements > UINT32_MAX / sizeof(T))
-      return make_error<MSFError>(msf_error_code::insufficient_buffer);
+      return make_error<msf::MSFError>(msf::msf_error_code::insufficient_buffer);
 
     if (auto EC = readBytes(Bytes, NumElements * sizeof(T)))
       return EC;
