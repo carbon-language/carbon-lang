@@ -252,7 +252,7 @@ void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
   for (SectionPattern &Pat : I->SectionPatterns) {
     size_t SizeBefore = I->Sections.size();
 
-    for (InputSectionBase *S : Symtab<ELFT>::X->Sections) {
+    for (InputSectionBase *S : InputSections) {
       if (S->Assigned)
         continue;
       // For -emit-relocs we have to ignore entries like
@@ -391,7 +391,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory &Factory) {
 // Add sections that didn't match any sections command.
 template <class ELFT>
 void LinkerScript<ELFT>::addOrphanSections(OutputSectionFactory &Factory) {
-  for (InputSectionBase *S : Symtab<ELFT>::X->Sections)
+  for (InputSectionBase *S : InputSections)
     if (S->Live && !S->OutSec)
       Factory.addInputSec<ELFT>(S, getOutputSectionName(S->Name));
 }

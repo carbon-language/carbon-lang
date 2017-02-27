@@ -164,7 +164,7 @@ template <class ELFT> static void combineMergableSections() {
   typedef typename ELFT::uint uintX_t;
 
   std::vector<MergeSyntheticSection<ELFT> *> MergeSections;
-  for (InputSectionBase *&S : Symtab<ELFT>::X->Sections) {
+  for (InputSectionBase *&S : InputSections) {
     MergeInputSection<ELFT> *MS = dyn_cast<MergeInputSection<ELFT>>(S);
     if (!MS)
       continue;
@@ -195,7 +195,7 @@ template <class ELFT> static void combineMergableSections() {
     (*I)->addSection(MS);
   }
 
-  std::vector<InputSectionBase *> &V = Symtab<ELFT>::X->Sections;
+  std::vector<InputSectionBase *> &V = InputSections;
   V.erase(std::remove(V.begin(), V.end(), nullptr), V.end());
 }
 
@@ -307,9 +307,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   // you can call lld::elf::main more than once as a library.
   memset(&Out::First, 0, sizeof(Out));
 
-  auto Add = [](InputSectionBase *Sec) {
-    Symtab<ELFT>::X->Sections.push_back(Sec);
-  };
+  auto Add = [](InputSectionBase *Sec) { InputSections.push_back(Sec); };
 
   // Create singleton output sections.
   Out::Bss = make<OutputSection>(".bss", SHT_NOBITS, SHF_ALLOC | SHF_WRITE);
@@ -902,7 +900,7 @@ static void sortBySymbolsOrder(ArrayRef<OutputSection *> OutputSections) {
 
 template <class ELFT>
 void Writer<ELFT>::forEachRelSec(std::function<void(InputSectionBase &)> Fn) {
-  for (InputSectionBase *IS : Symtab<ELFT>::X->Sections) {
+  for (InputSectionBase *IS : InputSections) {
     if (!IS->Live)
       continue;
     // Scan all relocations. Each relocation goes through a series
@@ -918,7 +916,7 @@ void Writer<ELFT>::forEachRelSec(std::function<void(InputSectionBase &)> Fn) {
 }
 
 template <class ELFT> void Writer<ELFT>::createSections() {
-  for (InputSectionBase *IS : Symtab<ELFT>::X->Sections)
+  for (InputSectionBase *IS : InputSections)
     if (IS)
       Factory.addInputSec<ELFT>(IS, getOutputSectionName(IS->Name));
 
@@ -1043,7 +1041,7 @@ static void removeUnusedSyntheticSections(std::vector<OutputSection *> &V) {
   // All input synthetic sections that can be empty are placed after
   // all regular ones. We iterate over them all and exit at first
   // non-synthetic.
-  for (InputSectionBase *S : llvm::reverse(Symtab<ELFT>::X->Sections)) {
+  for (InputSectionBase *S : llvm::reverse(InputSections)) {
     SyntheticSection<ELFT> *SS = dyn_cast<SyntheticSection<ELFT>>(S);
     if (!SS)
       return;

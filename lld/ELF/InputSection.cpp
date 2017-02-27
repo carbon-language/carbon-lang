@@ -33,6 +33,8 @@ using namespace llvm::support::endian;
 using namespace lld;
 using namespace lld::elf;
 
+std::vector<InputSectionBase *> elf::InputSections;
+
 // Returns a string to construct an error message.
 std::string lld::toString(const InputSectionBase *Sec) {
   // File can be absent if section is synthetic.

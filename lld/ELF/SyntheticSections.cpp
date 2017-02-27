@@ -130,7 +130,7 @@ MipsAbiFlagsSection<ELFT> *MipsAbiFlagsSection<ELFT>::create() {
   Elf_Mips_ABIFlags Flags = {};
   bool Create = false;
 
-  for (InputSectionBase *Sec : Symtab<ELFT>::X->Sections) {
+  for (InputSectionBase *Sec : InputSections) {
     if (!Sec->Live || Sec->Type != SHT_MIPS_ABIFLAGS)
       continue;
     Sec->Live = false;
@@ -197,7 +197,7 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
   Elf_Mips_RegInfo Reginfo = {};
   bool Create = false;
 
-  for (InputSectionBase *Sec : Symtab<ELFT>::X->Sections) {
+  for (InputSectionBase *Sec : InputSections) {
     if (!Sec->Live || Sec->Type != SHT_MIPS_OPTIONS)
       continue;
     Sec->Live = false;
@@ -253,7 +253,7 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
   Elf_Mips_RegInfo Reginfo = {};
   bool Create = false;
 
-  for (InputSectionBase *Sec : Symtab<ELFT>::X->Sections) {
+  for (InputSectionBase *Sec : InputSections) {
     if (!Sec->Live || Sec->Type != SHT_MIPS_REGINFO)
       continue;
     Sec->Live = false;
@@ -1718,7 +1718,7 @@ GdbIndexSection<ELFT>::GdbIndexSection()
       StringPool(llvm::StringTableBuilder::ELF) {}
 
 template <class ELFT> void GdbIndexSection<ELFT>::parseDebugSections() {
-  for (InputSectionBase *S : Symtab<ELFT>::X->Sections)
+  for (InputSectionBase *S : InputSections)
     if (InputSection *IS = dyn_cast<InputSection>(S))
       if (IS->OutSec && IS->Name == ".debug_info")
         readDwarf(IS);
