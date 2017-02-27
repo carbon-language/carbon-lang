@@ -419,7 +419,6 @@ public:
   size_t getSize() const override { return getNumSymbols() * sizeof(Elf_Sym); }
   void addGlobal(SymbolBody *Body);
   void addLocal(SymbolBody *Body);
-  StringTableSection<ELFT> &getStrTabSec() const { return StrTabSec; }
   unsigned getNumSymbols() const { return Symbols.size() + 1; }
   size_t getSymbolIndex(SymbolBody *Body);
 
