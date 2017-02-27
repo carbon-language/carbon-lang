@@ -1,8 +1,8 @@
 ==============================================================================
-libc++abi License
+libunwind License
 ==============================================================================
 
-The libc++abi library is dual licensed under both the University of Illinois
+The libunwind library is dual licensed under both the University of Illinois
 "BSD-Like" license and the MIT license.  As a user of this code you may choose
 to use it under either license.  As a contributor, you agree to allow your code
 to be used under both.
