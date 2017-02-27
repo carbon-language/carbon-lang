@@ -29,6 +29,26 @@ class getVOP3ModPat<VOPProfile P, SDPatternOperator node> {
                   ret1));
 }
 
+class getVOP3PModPat<VOPProfile P, SDPatternOperator node> {
+  list<dag> ret3 = [(set P.DstVT:$vdst,
+    (node (P.Src0VT !if(P.HasClamp, (VOP3PMods0 P.Src0VT:$src0, i32:$src0_modifiers, i1:$clamp),
+                                    (VOP3PMods P.Src0VT:$src0, i32:$src0_modifiers))),
+          (P.Src1VT (VOP3PMods P.Src1VT:$src1, i32:$src1_modifiers)),
+          (P.Src2VT (VOP3PMods P.Src2VT:$src2, i32:$src2_modifiers))))];
+
+  list<dag> ret2 = [(set P.DstVT:$vdst,
+    (node !if(P.HasClamp, (P.Src0VT (VOP3PMods0 P.Src0VT:$src0, i32:$src0_modifiers, i1:$clamp)),
+                          (P.Src0VT (VOP3PMods P.Src0VT:$src0, i32:$src0_modifiers))),
+          (P.Src1VT (VOP3PMods P.Src1VT:$src1, i32:$src1_modifiers))))];
+
+  list<dag> ret1 = [(set P.DstVT:$vdst,
+    (node (P.Src0VT (VOP3PMods0 P.Src0VT:$src0, i32:$src0_modifiers, i1:$clamp))))];
+
+  list<dag> ret = !if(!eq(P.NumSrcArgs, 3), ret3,
+                  !if(!eq(P.NumSrcArgs, 2), ret2,
+                  ret1));
+}
+
 class getVOP3Pat<VOPProfile P, SDPatternOperator node> {
   list<dag> ret3 = [(set P.DstVT:$vdst, (node P.Src0VT:$src0, P.Src1VT:$src1, P.Src2VT:$src2))];
   list<dag> ret2 = [(set P.DstVT:$vdst, (node P.Src0VT:$src0, P.Src1VT:$src1))];
@@ -263,6 +283,10 @@ defm: Tenary_i16_Pats<mul, add, V_MAD_I16, sext>;
 
 } // End Predicates = [isVI]
 
+let SubtargetPredicate = isGFX9 in {
+def V_PACK_B32_F16 : VOP3Inst <"v_pack_b32_f16", VOP3_Profile<VOP_B32_F16_F16>>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Target
@@ -449,3 +473,5 @@ defm V_LSHLREV_B64      : VOP3_Real_vi <0x28f>;
 defm V_LSHRREV_B64      : VOP3_Real_vi <0x290>;
 defm V_ASHRREV_I64      : VOP3_Real_vi <0x291>;
 defm V_TRIG_PREOP_F64   : VOP3_Real_vi <0x292>;
+
+defm V_PACK_B32_F16 : VOP3_Real_vi <0x2a0>;

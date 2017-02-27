@@ -440,6 +440,14 @@ public:
     return get(Opcode).TSFlags & SIInstrFlags::DPP;
   }
 
+  static bool isVOP3P(const MachineInstr &MI) {
+    return MI.getDesc().TSFlags & SIInstrFlags::VOP3P;
+  }
+
+  bool isVOP3P(uint16_t Opcode) const {
+    return get(Opcode).TSFlags & SIInstrFlags::VOP3P;
+  }
+
   static bool isScalarUnit(const MachineInstr &MI) {
     return MI.getDesc().TSFlags & (SIInstrFlags::SALU | SIInstrFlags::SMRD);
   }
