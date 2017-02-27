@@ -4593,6 +4593,10 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
   assert((BigEndian != LittleEndian) && "should be either or");
   assert(FirstByteProvider && "must be set");
 
+  // Ensure that the first byte is loaded from zero offset of the first load.
+  // So the combined value can be loaded from the first load address.
+  if (MemoryByteOffset(*FirstByteProvider) != 0)
+    return SDValue();
   LoadSDNode *FirstLoad = FirstByteProvider->Load;
 
   // The node we are looking at matches with the pattern, check if we can
