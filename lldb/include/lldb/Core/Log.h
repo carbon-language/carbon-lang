@@ -12,7 +12,6 @@
 
 // Project includes
 #include "lldb/Core/Logging.h"
-#include "lldb/Utility/ConstString.h"
 #include "lldb/Utility/Flags.h"
 #include "lldb/lldb-private.h"
 
@@ -93,34 +92,10 @@ public:
   };
 
   //------------------------------------------------------------------
-  // Callback definitions for abstracted plug-in log access.
-  //------------------------------------------------------------------
-  typedef void (*DisableCallback)(const char **categories,
-                                  Stream *feedback_strm);
-  typedef Log *(*EnableCallback)(
-      const std::shared_ptr<llvm::raw_ostream> &log_stream_sp,
-      uint32_t log_options, const char **categories, Stream *feedback_strm);
-  typedef void (*ListCategoriesCallback)(Stream *strm);
-
-  struct Callbacks {
-    DisableCallback disable;
-    EnableCallback enable;
-    ListCategoriesCallback list_categories;
-  };
-
-  //------------------------------------------------------------------
   // Static accessors for logging channels
   //------------------------------------------------------------------
   static void Register(llvm::StringRef name, Channel &channel);
   static void Unregister(llvm::StringRef name);
-
-  static void RegisterLogChannel(const ConstString &channel,
-                                 const Log::Callbacks &log_callbacks);
-
-  static bool UnregisterLogChannel(const ConstString &channel);
-
-  static bool GetLogChannelCallbacks(const ConstString &channel,
-                                     Log::Callbacks &log_callbacks);
 
   static bool
   EnableLogChannel(const std::shared_ptr<llvm::raw_ostream> &log_stream_sp,
