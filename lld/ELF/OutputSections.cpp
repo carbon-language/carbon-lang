@@ -137,7 +137,7 @@ template <class ELFT> void OutputSection::finalize() {
     return;
 
   InputSection *First = Sections[0];
-  if (isa<SyntheticSection<ELFT>>(First))
+  if (isa<SyntheticSection>(First))
     return;
 
   this->Link = In<ELFT>::SymTab->OutSec->SectionIndex;

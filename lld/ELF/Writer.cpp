@@ -530,7 +530,7 @@ template <class ELFT> void Writer<ELFT>::addSectionSymbols() {
     InputSection *IS = nullptr;
     if (!Sec->Sections.empty())
       IS = Sec->Sections[0];
-    if (!IS || isa<SyntheticSection<ELFT>>(IS) || IS->Type == SHT_REL ||
+    if (!IS || isa<SyntheticSection>(IS) || IS->Type == SHT_REL ||
         IS->Type == SHT_RELA)
       continue;
     auto *B = new (BAlloc)
@@ -1022,9 +1022,8 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
 }
 
 template <class ELFT>
-static void
-finalizeSynthetic(const std::vector<SyntheticSection<ELFT> *> &Sections) {
-  for (SyntheticSection<ELFT> *SS : Sections)
+static void finalizeSynthetic(const std::vector<SyntheticSection *> &Sections) {
+  for (SyntheticSection *SS : Sections)
     if (SS && SS->OutSec && !SS->empty()) {
       SS->finalize();
       SS->OutSec->Size = 0;
@@ -1042,7 +1041,7 @@ static void removeUnusedSyntheticSections(std::vector<OutputSection *> &V) {
   // all regular ones. We iterate over them all and exit at first
   // non-synthetic.
   for (InputSectionBase *S : llvm::reverse(InputSections)) {
-    SyntheticSection<ELFT> *SS = dyn_cast<SyntheticSection<ELFT>>(S);
+    SyntheticSection *SS = dyn_cast<SyntheticSection>(S);
     if (!SS)
       return;
     if (!SS->empty() || !SS->OutSec)

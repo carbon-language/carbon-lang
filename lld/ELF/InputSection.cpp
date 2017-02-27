@@ -88,7 +88,7 @@ InputSectionBase::InputSectionBase(elf::ObjectFile<ELFT> *File,
 }
 
 template <class ELFT> size_t InputSectionBase::getSize() const {
-  if (auto *S = dyn_cast<SyntheticSection<ELFT>>(this))
+  if (auto *S = dyn_cast<SyntheticSection>(this))
     return S->getSize();
 
   return Data.size();
@@ -545,7 +545,7 @@ template <class ELFT> void InputSection::writeTo(uint8_t *Buf) {
   if (this->Type == SHT_NOBITS)
     return;
 
-  if (auto *S = dyn_cast<SyntheticSection<ELFT>>(this)) {
+  if (auto *S = dyn_cast<SyntheticSection>(this)) {
     S->writeTo(Buf + OutSecOff);
     return;
   }

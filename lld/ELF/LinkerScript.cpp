@@ -490,7 +490,7 @@ template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
     // empty ones afterwards (because there is no way to know whether they were
     // going be empty or not other than actually running linker scripts.)
     // We need to ignore remains of empty sections.
-    if (auto *Sec = dyn_cast<SyntheticSection<ELFT>>(ID))
+    if (auto *Sec = dyn_cast<SyntheticSection>(ID))
       if (Sec->empty())
         continue;
 
