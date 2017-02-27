@@ -285,6 +285,12 @@ defm: Tenary_i16_Pats<mul, add, V_MAD_I16, sext>;
 
 let SubtargetPredicate = isGFX9 in {
 def V_PACK_B32_F16 : VOP3Inst <"v_pack_b32_f16", VOP3_Profile<VOP_B32_F16_F16>>;
+def V_LSHL_ADD_U32 : VOP3Inst <"v_lshl_add_u32", VOP3_Profile<VOP_I32_I32_I32_I32>>;
+def V_ADD_LSHL_U32 : VOP3Inst <"v_add_lshl_u32", VOP3_Profile<VOP_I32_I32_I32_I32>>;
+def V_ADD3_U32 : VOP3Inst <"v_add3_u32", VOP3_Profile<VOP_I32_I32_I32_I32>>;
+def V_LSHL_OR_B32 : VOP3Inst <"v_lshl_or_b32", VOP3_Profile<VOP_I32_I32_I32_I32>>;
+def V_AND_OR_B32 : VOP3Inst <"v_and_or_b32", VOP3_Profile<VOP_I32_I32_I32_I32>>;
+def V_OR3_B32 : VOP3Inst <"v_or3_b32", VOP3_Profile<VOP_I32_I32_I32_I32>>;
 }
 
 
@@ -474,4 +480,10 @@ defm V_LSHRREV_B64      : VOP3_Real_vi <0x290>;
 defm V_ASHRREV_I64      : VOP3_Real_vi <0x291>;
 defm V_TRIG_PREOP_F64   : VOP3_Real_vi <0x292>;
 
+defm V_LSHL_ADD_U32 : VOP3_Real_vi <0x1fd>;
+defm V_ADD_LSHL_U32 : VOP3_Real_vi <0x1fe>;
+defm V_ADD3_U32 : VOP3_Real_vi <0x1ff>;
+defm V_LSHL_OR_B32 : VOP3_Real_vi <0x200>;
+defm V_AND_OR_B32 : VOP3_Real_vi <0x201>;
+defm V_OR3_B32 : VOP3_Real_vi <0x202>;
 defm V_PACK_B32_F16 : VOP3_Real_vi <0x2a0>;
