@@ -1025,7 +1025,7 @@ template <class ELFT>
 static void finalizeSynthetic(const std::vector<SyntheticSection *> &Sections) {
   for (SyntheticSection *SS : Sections)
     if (SS && SS->OutSec && !SS->empty()) {
-      SS->finalize();
+      SS->finalizeContents();
       SS->OutSec->Size = 0;
       SS->OutSec->template assignOffsets<ELFT>();
     }

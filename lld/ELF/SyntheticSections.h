@@ -42,7 +42,7 @@ public:
   virtual ~SyntheticSection() = default;
   virtual void writeTo(uint8_t *Buf) = 0;
   virtual size_t getSize() const = 0;
-  virtual void finalize() {}
+  virtual void finalizeContents() {}
   virtual bool empty() const { return false; }
   uint64_t getVA() const;
 
@@ -71,7 +71,7 @@ template <class ELFT> class EhFrameSection final : public SyntheticSection {
 public:
   EhFrameSection();
   void writeTo(uint8_t *Buf) override;
-  void finalize() override;
+  void finalizeContents() override;
   bool empty() const override { return Sections.empty(); }
   size_t getSize() const override { return Size; }
 
@@ -106,7 +106,7 @@ public:
   GotSection();
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override { return Size; }
-  void finalize() override;
+  void finalizeContents() override;
   bool empty() const override;
 
   void addEntry(SymbolBody &Sym);
@@ -166,7 +166,7 @@ public:
   MipsGotSection();
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override { return Size; }
-  void finalize() override;
+  void finalizeContents() override;
   bool empty() const override;
   void addEntry(SymbolBody &Sym, int64_t Addend, RelExpr Expr);
   bool addDynTlsEntry(SymbolBody &Sym);
@@ -363,14 +363,14 @@ template <class ELFT> class DynamicSection final : public SyntheticSection {
         : Tag(Tag), Sym(Sym), Kind(SymAddr) {}
   };
 
-  // finalize() fills this vector with the section contents. finalize()
-  // cannot directly create final section contents because when the
-  // function is called, symbol or section addresses are not fixed yet.
+  // finalizeContents() fills this vector with the section contents.
+  // finalizeContents()cannot directly create final section contents because
+  // when the function is called, symbol or section addresses are not fixed yet.
   std::vector<Entry> Entries;
 
 public:
   DynamicSection();
-  void finalize() override;
+  void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override { return Size; }
 
@@ -389,7 +389,7 @@ public:
   RelocationSection(StringRef Name, bool Sort);
   void addReloc(const DynamicReloc<ELFT> &Reloc);
   unsigned getRelocOffset();
-  void finalize() override;
+  void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
   bool empty() const override { return Relocs.empty(); }
   size_t getSize() const override { return Relocs.size() * this->Entsize; }
@@ -414,7 +414,7 @@ public:
   typedef typename ELFT::uint uintX_t;
   SymbolTableSection(StringTableSection<ELFT> &StrTabSec);
 
-  void finalize() override;
+  void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override { return getNumSymbols() * sizeof(Elf_Sym); }
   void addGlobal(SymbolBody *Body);
@@ -449,7 +449,7 @@ class GnuHashTableSection final : public SyntheticSection {
 
 public:
   GnuHashTableSection();
-  void finalize() override;
+  void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override { return this->Size; }
 
@@ -484,7 +484,7 @@ template <class ELFT> class HashTableSection final : public SyntheticSection {
 
 public:
   HashTableSection();
-  void finalize() override;
+  void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override { return this->Size; }
 
@@ -525,7 +525,7 @@ template <class ELFT> class GdbIndexSection final : public SyntheticSection {
 
 public:
   GdbIndexSection();
-  void finalize() override;
+  void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override;
   bool empty() const override;
@@ -600,7 +600,7 @@ class VersionDefinitionSection final : public SyntheticSection {
 
 public:
   VersionDefinitionSection();
-  void finalize() override;
+  void finalizeContents() override;
   size_t getSize() const override;
   void writeTo(uint8_t *Buf) override;
 
@@ -622,7 +622,7 @@ class VersionTableSection final : public SyntheticSection {
 
 public:
   VersionTableSection();
-  void finalize() override;
+  void finalizeContents() override;
   size_t getSize() const override;
   void writeTo(uint8_t *Buf) override;
   bool empty() const override;
@@ -647,7 +647,7 @@ template <class ELFT> class VersionNeedSection final : public SyntheticSection {
 public:
   VersionNeedSection();
   void addSymbol(SharedSymbol *SS);
-  void finalize() override;
+  void finalizeContents() override;
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override;
   size_t getNeedNum() const { return Needed.size(); }
@@ -667,7 +667,7 @@ public:
                         uintX_t Alignment);
   void addSection(MergeInputSection<ELFT> *MS);
   void writeTo(uint8_t *Buf) override;
-  void finalize() override;
+  void finalizeContents() override;
   bool shouldTailMerge() const;
   size_t getSize() const override;
 

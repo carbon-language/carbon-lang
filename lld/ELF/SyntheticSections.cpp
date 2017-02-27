@@ -526,7 +526,7 @@ static void writeCieFde(uint8_t *Buf, ArrayRef<uint8_t> D) {
   write32<E>(Buf, alignTo(D.size(), sizeof(typename ELFT::uint)) - 4);
 }
 
-template <class ELFT> void EhFrameSection<ELFT>::finalize() {
+template <class ELFT> void EhFrameSection<ELFT>::finalizeContents() {
   if (this->Size)
     return; // Already finalized.
 
@@ -651,7 +651,7 @@ GotSection<ELFT>::getGlobalDynOffset(const SymbolBody &B) const {
   return B.GlobalDynIndex * sizeof(uintX_t);
 }
 
-template <class ELFT> void GotSection<ELFT>::finalize() {
+template <class ELFT> void GotSection<ELFT>::finalizeContents() {
   Size = NumEntries * sizeof(uintX_t);
 }
 
@@ -831,7 +831,7 @@ unsigned MipsGotSection<ELFT>::getLocalEntriesNum() const {
          LocalEntries32.size();
 }
 
-template <class ELFT> void MipsGotSection<ELFT>::finalize() {
+template <class ELFT> void MipsGotSection<ELFT>::finalizeContents() {
   PageEntriesNum = 0;
   for (std::pair<const OutputSection *, size_t> &P : PageIndexMap) {
     // For each output section referenced by GOT page relocations calculate
@@ -1068,7 +1068,7 @@ template <class ELFT> void DynamicSection<ELFT>::addEntries() {
 }
 
 // Add remaining entries to complete .dynamic contents.
-template <class ELFT> void DynamicSection<ELFT>::finalize() {
+template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
   if (this->Size)
     return; // Already finalized.
 
@@ -1258,7 +1258,7 @@ template <class ELFT> unsigned RelocationSection<ELFT>::getRelocOffset() {
   return this->Entsize * Relocs.size();
 }
 
-template <class ELFT> void RelocationSection<ELFT>::finalize() {
+template <class ELFT> void RelocationSection<ELFT>::finalizeContents() {
   this->Link = In<ELFT>::DynSymTab ? In<ELFT>::DynSymTab->OutSec->SectionIndex
                                    : In<ELFT>::SymTab->OutSec->SectionIndex;
 
@@ -1293,7 +1293,7 @@ static bool sortMipsSymbols(const SymbolBody *L, const SymbolBody *R) {
   return L->GotIndex < R->GotIndex;
 }
 
-template <class ELFT> void SymbolTableSection<ELFT>::finalize() {
+template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
   this->OutSec->Link = this->Link = StrTabSec.OutSec->SectionIndex;
   this->OutSec->Entsize = this->Entsize;
 
@@ -1512,7 +1512,7 @@ unsigned GnuHashTableSection<ELFT>::calcMaskWords(unsigned NumHashed) {
   return NextPowerOf2((NumHashed - 1) / sizeof(Elf_Off));
 }
 
-template <class ELFT> void GnuHashTableSection<ELFT>::finalize() {
+template <class ELFT> void GnuHashTableSection<ELFT>::finalizeContents() {
   unsigned NumHashed = Symbols.size();
   NBuckets = calcNBuckets(NumHashed);
   MaskWords = calcMaskWords(NumHashed);
@@ -1625,7 +1625,7 @@ HashTableSection<ELFT>::HashTableSection()
   this->Entsize = sizeof(Elf_Word);
 }
 
-template <class ELFT> void HashTableSection<ELFT>::finalize() {
+template <class ELFT> void HashTableSection<ELFT>::finalizeContents() {
   this->OutSec->Link = this->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
   this->OutSec->Entsize = this->Entsize;
 
@@ -1770,7 +1770,7 @@ template <class ELFT> void GdbIndexSection<ELFT>::readDwarf(InputSection *I) {
   }
 }
 
-template <class ELFT> void GdbIndexSection<ELFT>::finalize() {
+template <class ELFT> void GdbIndexSection<ELFT>::finalizeContents() {
   if (Finalized)
     return;
   Finalized = true;
@@ -1795,7 +1795,7 @@ template <class ELFT> void GdbIndexSection<ELFT>::finalize() {
 }
 
 template <class ELFT> size_t GdbIndexSection<ELFT>::getSize() const {
-  const_cast<GdbIndexSection<ELFT> *>(this)->finalize();
+  const_cast<GdbIndexSection<ELFT> *>(this)->finalizeContents();
   return StringPoolOffset + StringPool.getSize();
 }
 
@@ -1918,7 +1918,7 @@ static StringRef getFileDefName() {
   return Config->OutputFile;
 }
 
-template <class ELFT> void VersionDefinitionSection<ELFT>::finalize() {
+template <class ELFT> void VersionDefinitionSection<ELFT>::finalizeContents() {
   FileDefNameOff = In<ELFT>::DynStrTab->addString(getFileDefName());
   for (VersionDefinition &V : Config->VersionDefinitions)
     V.NameOff = In<ELFT>::DynStrTab->addString(V.Name);
@@ -1971,7 +1971,7 @@ VersionTableSection<ELFT>::VersionTableSection()
     : SyntheticSection(SHF_ALLOC, SHT_GNU_versym, sizeof(uint16_t),
                        ".gnu.version") {}
 
-template <class ELFT> void VersionTableSection<ELFT>::finalize() {
+template <class ELFT> void VersionTableSection<ELFT>::finalizeContents() {
   this->OutSec->Entsize = this->Entsize = sizeof(Elf_Versym);
   // At the moment of june 2016 GNU docs does not mention that sh_link field
   // should be set, but Sun docs do. Also readelf relies on this field.
@@ -2066,7 +2066,7 @@ template <class ELFT> void VersionNeedSection<ELFT>::writeTo(uint8_t *Buf) {
   Verneed[-1].vn_next = 0;
 }
 
-template <class ELFT> void VersionNeedSection<ELFT>::finalize() {
+template <class ELFT> void VersionNeedSection<ELFT>::finalizeContents() {
   this->OutSec->Link = this->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
   this->OutSec->Info = this->Info = Needed.size();
 }
@@ -2138,7 +2138,7 @@ template <class ELFT> void MergeSyntheticSection<ELFT>::finalizeNoTailMerge() {
   Builder.finalizeInOrder();
 }
 
-template <class ELFT> void MergeSyntheticSection<ELFT>::finalize() {
+template <class ELFT> void MergeSyntheticSection<ELFT>::finalizeContents() {
   if (Finalized)
     return;
   Finalized = true;
@@ -2150,7 +2150,7 @@ template <class ELFT> void MergeSyntheticSection<ELFT>::finalize() {
 
 template <class ELFT> size_t MergeSyntheticSection<ELFT>::getSize() const {
   // We should finalize string builder to know the size.
-  const_cast<MergeSyntheticSection<ELFT> *>(this)->finalize();
+  const_cast<MergeSyntheticSection<ELFT> *>(this)->finalizeContents();
   return Builder.getSize();
 }
 
