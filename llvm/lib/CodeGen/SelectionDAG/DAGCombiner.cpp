@@ -4520,7 +4520,7 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
   SDValue Chain;
 
   SmallSet<LoadSDNode *, 8> Loads;
-  LoadSDNode *FirstLoad = nullptr;
+  Optional<ByteProvider> FirstByteProvider;
   int64_t FirstOffset = INT64_MAX;
 
   bool IsBigEndianTarget = DAG.getDataLayout().isBigEndian();
@@ -4565,7 +4565,7 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
 
     // Remember the first byte load
     if (ByteOffsetFromBase < FirstOffset) {
-      FirstLoad = L;
+      FirstByteProvider = P;
       FirstOffset = ByteOffsetFromBase;
     }
 
@@ -4587,7 +4587,9 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
       return SDValue();
   }
   assert((BigEndian != LittleEndian) && "should be either or");
-  assert(FirstLoad && "must be set");
+  assert(FirstByteProvider && "must be set");
+
+  LoadSDNode *FirstLoad = FirstByteProvider->Load;
 
   // The node we are looking at matches with the pattern, check if we can
   // replace it with a single load and bswap if needed.
