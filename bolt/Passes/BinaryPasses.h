@@ -326,13 +326,13 @@ class PrintSortedBy : public BinaryFunctionPass {
 /// from that callsite exceed the specified threshold (default 90%),
 /// the call is promoted. Otherwise, it is ignored. By default,
 /// only one target is considered at each callsite.
-/// 
+///
 /// When an candidate callsite is processed, we modify the callsite
 /// to test for the most common call targets before calling through
 /// the original generic call mechanism.
-/// 
+///
 /// The CFG and layout are modified by ICP.
-/// 
+///
 /// A few new command line options have been added:
 ///   -indirect-call-promotion
 ///   -indirect-call-promotion-threshold=<percentage>
@@ -346,7 +346,7 @@ class PrintSortedBy : public BinaryFunctionPass {
 /// any callsite where the branch predictor does a good enough job
 /// that ICP wouldn't help regardless of the frequency of the most
 /// common target.
-/// 
+///
 /// The topn option controls the number of targets to consider for
 /// each callsite, e.g. ICP is triggered if topn=2 and the total
 /// frequency of the top two call targets exceeds the threshold.
@@ -356,22 +356,22 @@ class PrintSortedBy : public BinaryFunctionPass {
 /// (callq $foo).
 ///
 /// Example of ICP:
-/// 
+///
 /// C++ code:
-/// 
+///
 ///   int B_count = 0;
 ///   int C_count = 0;
-/// 
+///
 ///   struct A { virtual void foo() = 0; }
 ///   struct B : public A { virtual void foo() { ++B_count; }; };
 ///   struct C : public A { virtual void foo() { ++C_count; }; };
-/// 
+///
 ///   A* a = ...
 ///   a->foo();
 ///   ...
-/// 
+///
 /// original assembly:
-/// 
+///
 ///   B0: 49 8b 07             mov    (%r15),%rax
 ///       4c 89 ff             mov    %r15,%rdi
 ///       ff 10                callq  *(%rax)
@@ -380,9 +380,9 @@ class PrintSortedBy : public BinaryFunctionPass {
 ///       4c 0f 44 f5          cmove  %rbp,%r14
 ///       4c 89 f7             mov    %r14,%rdi
 ///       ...
-/// 
+///
 /// after ICP:
-/// 
+///
 ///   B0: 49 8b 07             mov    (%r15),%rax
 ///       4c 89 ff             mov    %r15,%rdi
 ///       48 81 38 e0 0b 40 00 cmpq   $B::foo,(%rax)
@@ -393,7 +393,7 @@ class PrintSortedBy : public BinaryFunctionPass {
 ///       4c 0f 44 f5          cmove  %rbp,%r14
 ///       4c 89 f7             mov    %r14,%rdi
 ///       ...
-/// 
+///
 ///   B3: ff 10                callq  *(%rax)
 ///       eb d6                jmp    B2
 ///
@@ -457,7 +457,7 @@ class IndirectCallPromotion : public BinaryFunctionPass {
   explicit IndirectCallPromotion(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 
-  const char *getName() const {
+  const char *getName() const override {
     return "indirect-call-promotion";
   }
   bool shouldPrint(const BinaryFunction &BF) const override {

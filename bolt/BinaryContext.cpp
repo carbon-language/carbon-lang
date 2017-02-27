@@ -425,7 +425,7 @@ void BinaryContext::addSectionRelocation(SectionRef Section, uint64_t Offset,
       SectionRelocations.emplace(Section, std::set<Relocation>());
     RI = Result.first;
   }
-  RI->second.emplace(Relocation{Offset, Symbol, Type, Addend});
+  RI->second.emplace(Relocation{Offset, Symbol, Type, Addend, 0});
 }
 
 void BinaryContext::addRelocation(uint64_t Address, MCSymbol *Symbol,
