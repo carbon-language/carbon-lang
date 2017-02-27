@@ -325,7 +325,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   Out::ProgramHeaders->updateAlignment(sizeof(uintX_t));
 
   if (needsInterpSection<ELFT>()) {
-    In<ELFT>::Interp = createInterpSection<ELFT>();
+    In<ELFT>::Interp = createInterpSection();
     Add(In<ELFT>::Interp);
   } else {
     In<ELFT>::Interp = nullptr;

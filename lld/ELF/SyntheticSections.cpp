@@ -278,7 +278,7 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
   return nullptr;
 }
 
-template <class ELFT> InputSection *elf::createInterpSection() {
+InputSection *elf::createInterpSection() {
   auto *Ret = make<InputSection>(SHF_ALLOC, SHT_PROGBITS, 1,
                                  ArrayRef<uint8_t>(), ".interp");
   Ret->Live = true;
@@ -2217,11 +2217,6 @@ template InputSection *elf::createCommonSection<ELF32LE>();
 template InputSection *elf::createCommonSection<ELF32BE>();
 template InputSection *elf::createCommonSection<ELF64LE>();
 template InputSection *elf::createCommonSection<ELF64BE>();
-
-template InputSection *elf::createInterpSection<ELF32LE>();
-template InputSection *elf::createInterpSection<ELF32BE>();
-template InputSection *elf::createInterpSection<ELF64LE>();
-template InputSection *elf::createInterpSection<ELF64BE>();
 
 template MergeInputSection<ELF32LE> *elf::createCommentSection();
 template MergeInputSection<ELF32BE> *elf::createCommentSection();
