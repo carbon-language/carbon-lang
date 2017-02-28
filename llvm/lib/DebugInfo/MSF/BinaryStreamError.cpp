@@ -39,8 +39,6 @@ BinaryStreamError::BinaryStreamError(stream_error_code C, StringRef Context)
   case stream_error_code::filesystem_error:
     ErrMsg += "An I/O error occurred on the file system.";
     break;
-  default:
-    llvm_unreachable("Unreachable!");
   }
 
   if (!Context.empty()) {
