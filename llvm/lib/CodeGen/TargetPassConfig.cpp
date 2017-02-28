@@ -92,9 +92,6 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(false),
     cl::ZeroOrMore);
-static cl::opt<bool> EnableMachineOutliner("enable-machine-outliner",
-    cl::Hidden,
-    cl::desc("Enable machine outliner"));
 
 static cl::opt<std::string>
 PrintMachineInstrs("print-machineinstrs", cl::ValueOptional,
@@ -676,9 +673,6 @@ void TargetPassConfig::addMachinePasses() {
 
   addPass(&XRayInstrumentationID, false);
   addPass(&PatchableFunctionID, false);
-
-  if (EnableMachineOutliner)
-    PM->add(createMachineOutlinerPass());
 
   AddingMachinePasses = false;
 }

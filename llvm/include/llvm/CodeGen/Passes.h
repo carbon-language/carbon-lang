@@ -402,10 +402,6 @@ namespace llvm {
 
   /// This pass frees the memory occupied by the MachineFunction.
   FunctionPass *createFreeMachineFunctionPass();
-
-  /// This pass performs outlining on machine instructions directly before
-  /// printing assembly.
-  ModulePass *createMachineOutlinerPass();
 } // End llvm namespace
 
 /// Target machine pass initializer for passes with dependencies. Use with
