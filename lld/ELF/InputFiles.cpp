@@ -514,8 +514,8 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
       return new (BAlloc)
           Undefined(Name, /*IsLocal=*/true, StOther, Type, this);
 
-    return new (BAlloc) DefinedRegular<ELFT>(Name, /*IsLocal=*/true, StOther,
-                                             Type, Value, Size, Sec, this);
+    return new (BAlloc) DefinedRegular(Name, /*IsLocal=*/true, StOther, Type,
+                                       Value, Size, Sec, this);
   }
 
   StringRef Name = check(Sym->getName(this->StringTable));

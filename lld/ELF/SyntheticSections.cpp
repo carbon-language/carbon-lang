@@ -298,8 +298,8 @@ InputSection *elf::createInterpSection() {
 template <class ELFT>
 SymbolBody *elf::addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
                                    uint64_t Size, InputSectionBase *Section) {
-  auto *S = make<DefinedRegular<ELFT>>(Name, /*IsLocal*/ true, STV_DEFAULT,
-                                       Type, Value, Size, Section, nullptr);
+  auto *S = make<DefinedRegular>(Name, /*IsLocal*/ true, STV_DEFAULT, Type,
+                                 Value, Size, Section, nullptr);
   if (In<ELFT>::SymTab)
     In<ELFT>::SymTab->addSymbol(S);
   return S;
@@ -448,7 +448,7 @@ bool EhFrameSection<ELFT>::isFdeLive(EhSectionPiece &Piece,
     return false;
   const RelTy &Rel = Rels[FirstRelI];
   SymbolBody &B = Sec->template getFile<ELFT>()->getRelocTargetSym(Rel);
-  auto *D = dyn_cast<DefinedRegular<ELFT>>(&B);
+  auto *D = dyn_cast<DefinedRegular>(&B);
   if (!D || !D->Section)
     return false;
   InputSectionBase *Target = D->Section->Repl;
@@ -700,7 +700,7 @@ void MipsGotSection<ELFT>::addEntry(SymbolBody &Sym, int64_t Addend,
     // sections referenced by GOT relocations. Then later in the `finalize`
     // method calculate number of "pages" required to cover all saved output
     // section and allocate appropriate number of GOT entries.
-    auto *DefSym = cast<DefinedRegular<ELFT>>(&Sym);
+    auto *DefSym = cast<DefinedRegular>(&Sym);
     PageIndexMap.insert(
         {DefSym->Section->template getOutputSection<ELFT>(), 0});
     return;
@@ -773,8 +773,7 @@ typename MipsGotSection<ELFT>::uintX_t
 MipsGotSection<ELFT>::getPageEntryOffset(const SymbolBody &B,
                                          int64_t Addend) const {
   const OutputSection *OutSec =
-      cast<DefinedRegular<ELFT>>(&B)
-          ->Section->template getOutputSection<ELFT>();
+      cast<DefinedRegular>(&B)->Section->template getOutputSection<ELFT>();
   uintX_t SecAddr = getMipsPageAddr(OutSec->Addr);
   uintX_t SymAddr = getMipsPageAddr(B.getVA<ELFT>(Addend));
   uintX_t Index = PageIndexMap.lookup(OutSec) + (SymAddr - SecAddr) / 0xffff;
@@ -852,7 +851,7 @@ template <class ELFT> bool MipsGotSection<ELFT>::empty() const {
 
 template <class ELFT>
 typename MipsGotSection<ELFT>::uintX_t MipsGotSection<ELFT>::getGp() const {
-  return ElfSym<ELFT>::MipsGp->template getVA<ELFT>(0);
+  return ElfSym::MipsGp->template getVA<ELFT>(0);
 }
 
 template <class ELFT>
@@ -1344,8 +1343,8 @@ size_t SymbolTableSection<ELFT>::getSymbolIndex(SymbolBody *Body) {
     // This is used for -r, so we have to handle multiple section
     // symbols being combined.
     if (Body->Type == STT_SECTION && E.Symbol->Type == STT_SECTION)
-      return cast<DefinedRegular<ELFT>>(Body)->Section->OutSec ==
-             cast<DefinedRegular<ELFT>>(E.Symbol)->Section->OutSec;
+      return cast<DefinedRegular>(Body)->Section->OutSec ==
+             cast<DefinedRegular>(E.Symbol)->Section->OutSec;
     return false;
   });
   if (I == Symbols.end())
@@ -1377,7 +1376,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     // Set a section index.
     if (const OutputSection *OutSec = Body->getOutputSection<ELFT>())
       ESym->st_shndx = OutSec->SectionIndex;
-    else if (isa<DefinedRegular<ELFT>>(Body))
+    else if (isa<DefinedRegular>(Body))
       ESym->st_shndx = SHN_ABS;
     else if (isa<DefinedCommon>(Body))
       ESym->st_shndx = SHN_COMMON;
@@ -1406,8 +1405,8 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
         ESym->st_other |= STO_MIPS_PLT;
 
       if (Config->Relocatable)
-        if (auto *D = dyn_cast<DefinedRegular<ELFT>>(Body))
-          if (D->isMipsPIC())
+        if (auto *D = dyn_cast<DefinedRegular>(Body))
+          if (D->isMipsPIC<ELFT>())
             ESym->st_other |= STO_MIPS_PIC;
       ++ESym;
     }
