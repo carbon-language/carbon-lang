@@ -1413,6 +1413,37 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
+// .hash and .gnu.hash sections contain on-disk hash tables that map
+// symbol names to their dynamic symbol table indices. Their purpose
+// is to help the dynamic linker resolve symbols quickly. If ELF files
+// don't have them, the dynamic linker has to do linear search on all
+// dynamic symbols, which makes programs slower. Therefore, a .hash
+// section is added to a DSO by default. A .gnu.hash is added if you
+// give the -hash-style=gnu or -hash-style=both option.
+//
+// The Unix semantics of resolving dynamic symbols is somewhat expensive.
+// Each ELF file has a list of DSOs that the ELF file depends on and a
+// list of dynamic symbols that need to be resolved from any of the
+// DSOs. That means resolving all dynamic symbols takes O(m)*O(n)
+// where m is the number of DSOs and n is the number of dynamic
+// symbols. For modern large programs, both m and n are large.  So
+// making each step faster by using hash tables substiantially
+// improves time to load programs.
+//
+// (Note that this is not the only way to design the shared library.
+// For instance, the Windows DLL takes a different approach. On
+// Windows, each dynamic symbol has a name of DLL from which the symbol
+// has to be resolved. That makes the cost of symbol resolution O(n).
+// This disables some hacky techniques you can use on Unix such as
+// LD_PRELOAD, but this is arguably better semantics than the Unix ones.)
+//
+// Due to historical reasons, we have two different hash tables, .hash
+// and .gnu.hash. They are for the same purpose, and .gnu.hash is a new
+// and better version of .hash. .hash is just an on-disk hash table, but
+// .gnu.hash has a bloom filter in addition to a hash table to skip
+// DSOs very quickly. If you are sure that your dynamic linker knows
+// about .gnu.hash, you want to specify -hash-style=gnu. Otherwise, a
+// safe bet is to specify -hash-style=both for backward compatibilty.
 template <class ELFT>
 GnuHashTableSection<ELFT>::GnuHashTableSection()
     : SyntheticSection(SHF_ALLOC, SHT_GNU_HASH, sizeof(uintX_t), ".gnu.hash") {
