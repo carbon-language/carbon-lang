@@ -217,7 +217,7 @@ class SourceFileRenderer:
 
         # Column is the number of characters *including* tabs, keep those and
         # replace everything else with spaces.
-        indent = line[:r.Column - 1]
+        indent = line[:max(r.Column, 1) - 1]
         indent = re.sub('\S', ' ', indent)
 
         print('''
