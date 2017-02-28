@@ -3,10 +3,10 @@
 // RUN: not %run %t n 2>&1 | FileCheck %s -check-prefix=CHECK -check-prefix=NON_EXEC
 
 #include <assert.h>
-char array[42];
 
 typedef void void_f();
 int main(int argc, char **argv) {
+  char array[42];
   void_f *func;
   assert(argc > 1);
   if (argv[1][0] == '0') {
