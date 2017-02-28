@@ -219,6 +219,24 @@ class DS_1A_GDS <string opName> : DS_Pseudo<opName,
   let gdsValue    = 1;
 }
 
+class DS_VOID <string opName> : DS_Pseudo<opName,
+  (outs), (ins), ""> {
+  let mayLoad = 0;
+  let mayStore = 0;
+  let hasSideEffects = 1;
+  let UseNamedOperandTable = 0;
+  let AsmMatchConverter = "";
+
+  let has_vdst = 0;
+  let has_addr = 0;
+  let has_data0 = 0;
+  let has_data1 = 0;
+  let has_offset = 0;
+  let has_offset0 = 0;
+  let has_offset1 = 0;
+  let has_gds = 0;
+}
+
 class DS_1A1D_PERMUTE <string opName, SDPatternOperator node = null_frag>
 : DS_Pseudo<opName,
   (outs VGPR_32:$vdst),
@@ -440,7 +458,6 @@ def DS_ORDERED_COUNT : DS_1A_RET_GDS<"ds_ordered_count">;
 // Instruction definitions for CI and newer.
 //===----------------------------------------------------------------------===//
 // Remaining instructions:
-// DS_NOP
 // DS_GWS_SEMA_RELEASE_ALL
 // DS_WRAP_RTN_B32
 // DS_CNDXCHG32_RTN_B64
@@ -461,6 +478,7 @@ def DS_WRITE_B96 : DS_1A1D_NORET<"ds_write_b96", VReg_96>;
 def DS_WRITE_B128 : DS_1A1D_NORET<"ds_write_b128", VReg_128>;
 } // End mayLoad = 0
 
+def DS_NOP : DS_VOID<"ds_nop">;
 
 } // let SubtargetPredicate = isCIVI
 
@@ -631,6 +649,7 @@ def DS_CMPST_B32_si       : DS_Real_si<0x10, DS_CMPST_B32>;
 def DS_CMPST_F32_si       : DS_Real_si<0x11, DS_CMPST_F32>;
 def DS_MIN_F32_si         : DS_Real_si<0x12, DS_MIN_F32>;
 def DS_MAX_F32_si         : DS_Real_si<0x13, DS_MAX_F32>;
+def DS_NOP_si             : DS_Real_si<0x14, DS_NOP>;
 def DS_GWS_INIT_si        : DS_Real_si<0x19, DS_GWS_INIT>;
 def DS_GWS_SEMA_V_si      : DS_Real_si<0x1a, DS_GWS_SEMA_V>;
 def DS_GWS_SEMA_BR_si     : DS_Real_si<0x1b, DS_GWS_SEMA_BR>;
@@ -799,6 +818,7 @@ def DS_CMPST_B32_vi       : DS_Real_vi<0x10, DS_CMPST_B32>;
 def DS_CMPST_F32_vi       : DS_Real_vi<0x11, DS_CMPST_F32>;
 def DS_MIN_F32_vi         : DS_Real_vi<0x12, DS_MIN_F32>;
 def DS_MAX_F32_vi         : DS_Real_vi<0x13, DS_MAX_F32>;
+def DS_NOP_vi             : DS_Real_vi<0x14, DS_NOP>;
 def DS_ADD_F32_vi         : DS_Real_vi<0x15, DS_ADD_F32>;
 def DS_GWS_INIT_vi        : DS_Real_vi<0x19, DS_GWS_INIT>;
 def DS_GWS_SEMA_V_vi      : DS_Real_vi<0x1a, DS_GWS_SEMA_V>;
