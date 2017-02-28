@@ -1,4 +1,4 @@
-; RUN: llc %s -pass-remarks=stack-protector -o /dev/null 2>&1 | FileCheck %s
+; RUN: llc %s -mtriple=x86_64-unknown-unknown -pass-remarks=stack-protector -o /dev/null 2>&1 | FileCheck %s
 ; CHECK-NOT: nossp
 ; CHECK: function attribute_ssp
 ; CHECK-SAME: a function attribute or command-line switch
@@ -27,7 +27,7 @@
 ; CHECK-SAME: a call to alloca or use of a variable length array
 
 ; Check that no remark is emitted when the switch is not specified.
-; RUN: llc %s -o /dev/null 2>&1 | FileCheck %s -check-prefix=NOREMARK -allow-empty
+; RUN: llc %s -mtriple=x86_64-unknown-unknown -o /dev/null 2>&1 | FileCheck %s -check-prefix=NOREMARK -allow-empty
 ; NOREMARK-NOT: ssp
 
 define void @nossp() ssp {
