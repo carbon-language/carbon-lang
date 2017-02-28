@@ -408,10 +408,9 @@ struct SymbolTableEntry {
 
 template <class ELFT> class SymbolTableSection final : public SyntheticSection {
 public:
-  typedef typename ELFT::Shdr Elf_Shdr;
   typedef typename ELFT::Sym Elf_Sym;
-  typedef typename ELFT::SymRange Elf_Sym_Range;
   typedef typename ELFT::uint uintX_t;
+
   SymbolTableSection(StringTableSection<ELFT> &StrTabSec);
 
   void finalizeContents() override;
@@ -420,7 +419,6 @@ public:
   void addSymbol(SymbolBody *Body);
   unsigned getNumSymbols() const { return Symbols.size() + 1; }
   size_t getSymbolIndex(SymbolBody *Body);
-
   ArrayRef<SymbolTableEntry> getSymbols() const { return Symbols; }
 
 private:
