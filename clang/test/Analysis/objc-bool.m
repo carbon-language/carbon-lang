@@ -1,4 +1,4 @@
-// RUN: %clang_analyze_cc1 %s -o %t -verify
+// RUN: %clang --analyze %s -o %t -Xclang -verify
 // expected-no-diagnostics
 
 // Test handling of ObjC bool literals.

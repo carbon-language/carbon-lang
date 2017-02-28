@@ -1,4 +1,4 @@
-// RUN: %clang_analyze_cc1 -triple x86_64-unknown-linux %s
+// RUN: %clang -target x86_64-unknown-linux --analyze %s
 
 #include "Inputs/system-header-simulator.h"
 
