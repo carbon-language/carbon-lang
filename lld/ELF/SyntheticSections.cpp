@@ -1363,6 +1363,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
   for (SymbolTableEntry &Ent : Symbols) {
     SymbolBody *Body = Ent.Symbol;
 
+    // Set st_info and st_other.
     if (Body->isLocal()) {
       ESym->setBindingAndType(STB_LOCAL, Body->Type);
     } else {
@@ -1372,16 +1373,23 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     ESym->st_name = Ent.StrTabOffset;
     ESym->st_size = Body->getSize<ELFT>();
-    ESym->st_value = Body->getVA<ELFT>();
 
-    if (const OutputSection *OutSec = Body->getOutputSection<ELFT>()) {
+    // Set a section index.
+    if (const OutputSection *OutSec = Body->getOutputSection<ELFT>())
       ESym->st_shndx = OutSec->SectionIndex;
-    } else if (isa<DefinedRegular<ELFT>>(Body)) {
+    else if (isa<DefinedRegular<ELFT>>(Body))
       ESym->st_shndx = SHN_ABS;
-    } else if (isa<DefinedCommon>(Body)) {
+    else if (isa<DefinedCommon>(Body))
       ESym->st_shndx = SHN_COMMON;
+
+    // st_value is usually an address of a symbol, but that has a
+    // special meaining for uninstantiated common symbols (this can
+    // occur if -r is given).
+    if (!Config->DefineCommon && isa<DefinedCommon>(Body))
       ESym->st_value = cast<DefinedCommon>(Body)->Alignment;
-    }
+    else
+      ESym->st_value = Body->getVA<ELFT>();
+
     ++ESym;
   }
 
