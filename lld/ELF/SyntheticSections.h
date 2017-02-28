@@ -424,8 +424,6 @@ public:
 
   ArrayRef<SymbolTableEntry> getSymbols() const { return Symbols; }
 
-  static const OutputSection *getOutputSection(SymbolBody *Sym);
-
 private:
   // A vector of symbols and their string table offsets.
   std::vector<SymbolTableEntry> Symbols;

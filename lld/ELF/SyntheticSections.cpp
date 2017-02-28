@@ -1387,7 +1387,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     ESym->st_size = Body->getSize<ELFT>();
     ESym->st_value = Body->getVA<ELFT>();
 
-    if (const OutputSection *OutSec = getOutputSection(Body)) {
+    if (const OutputSection *OutSec = Body->getOutputSection<ELFT>()) {
       ESym->st_shndx = OutSec->SectionIndex;
 
       // This piece of code should go away as it doesn't make sense,
@@ -1425,36 +1425,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
       ++ESym;
     }
   }
-}
-
-template <class ELFT>
-const OutputSection *
-SymbolTableSection<ELFT>::getOutputSection(SymbolBody *Sym) {
-  switch (Sym->kind()) {
-  case SymbolBody::DefinedSyntheticKind:
-    return cast<DefinedSynthetic>(Sym)->Section;
-  case SymbolBody::DefinedRegularKind: {
-    auto &D = cast<DefinedRegular<ELFT>>(*Sym);
-    if (D.Section)
-      return D.Section->template getOutputSection<ELFT>();
-    break;
-  }
-  case SymbolBody::DefinedCommonKind:
-    if (!Config->DefineCommon)
-      return nullptr;
-    return In<ELFT>::Common->OutSec;
-  case SymbolBody::SharedKind: {
-    auto &SS = cast<SharedSymbol>(*Sym);
-    if (SS.NeedsCopy)
-      return SS.Section->OutSec;
-    break;
-  }
-  case SymbolBody::UndefinedKind:
-  case SymbolBody::LazyArchiveKind:
-  case SymbolBody::LazyObjectKind:
-    break;
-  }
-  return nullptr;
 }
 
 template <class ELFT>
