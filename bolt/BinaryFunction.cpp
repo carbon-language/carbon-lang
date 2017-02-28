@@ -1840,6 +1840,8 @@ bool BinaryFunction::buildCFG() {
   // Annotate invoke instructions with GNU_args_size data.
   propagateGnuArgsSizeInfo();
 
+  assert(validateCFG() && "Invalid CFG detected after disassembly");
+
   return true;
 }
 
@@ -2810,12 +2812,13 @@ void BinaryFunction::dumpGraphToFile(std::string Filename) const {
   dumpGraph(of);
 }
 
-bool BinaryFunction::validateCFG() {
+bool BinaryFunction::validateCFG() const {
   bool Valid = true;
   for (auto *BB : BasicBlocks) {
     Valid &= BB->validateSuccessorInvariants();
     if (!Valid) {
-      errs() << "BOLT-WARNING: CFG invalid @ " << BB->getName() << "\n";
+      errs() << "BOLT-WARNING: CFG invalid in " << *this << " @ "
+             << BB->getName() << "\n";
     }
   }
 
@@ -2827,14 +2830,16 @@ bool BinaryFunction::validateCFG() {
     for (auto *LPBlock : BB->LandingPads) {
       Valid &= Seen.count(LPBlock) == 0;
       if (!Valid) {
-        errs() << "Duplicate LP seen " << LPBlock->getName() << "\n";
+        errs() << "BOLT-WARNING: Duplicate LP seen " << LPBlock->getName()
+               << "in " << *this << "\n";
         break;
       }
       Seen.insert(LPBlock);
       auto count = LPBlock->Throwers.count(BB);
       Valid &= (count == 1);
       if (!Valid) {
-        errs() << "Inconsistent landing pad detected " << LPBlock->getName()
+        errs() << "BOLT-WARNING: Inconsistent landing pad detected in "
+               << *this << ": " << LPBlock->getName()
                << " is in LandingPads but not in " << BB->getName()
                << "->Throwers\n";
         break;
@@ -2896,7 +2901,7 @@ void BinaryFunction::fixBranches() {
     // terminator) or more than 2 (switch table) don't require branch
     // instruction adjustments.
   }
-  assert(validateCFG());
+  assert(validateCFG() && "Invalid CFG detected after fixing branches");
 }
 
 void BinaryFunction::splitFunction() {

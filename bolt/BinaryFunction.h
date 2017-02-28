@@ -888,7 +888,7 @@ public:
   }
 
   /// Attempt to validate CFG invariants.
-  bool validateCFG();
+  bool validateCFG() const;
 
   /// Return dynostats for the function.
   ///

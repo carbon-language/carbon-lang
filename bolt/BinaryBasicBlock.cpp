@@ -69,12 +69,12 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
     case 1:
       return !CondBranch;
     case 2:
-      if (CondBranch) {
-        return (TBB == getConditionalSuccessor(true)->getLabel() &&
-                ((!UncondBranch && !FBB) ||
-                 (UncondBranch && FBB == getConditionalSuccessor(false)->getLabel())));
-      }
-      return true;
+      return
+        (!CondBranch ||
+         (TBB == getConditionalSuccessor(true)->getLabel() &&
+          ((!UncondBranch && !FBB) ||
+           (UncondBranch &&
+            FBB == getConditionalSuccessor(false)->getLabel()))));
     default:
       return true;
     }

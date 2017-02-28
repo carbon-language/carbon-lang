@@ -26,6 +26,13 @@ llvm::cl::opt<bool> TimeOpts("time-opts",
                              cl::desc("print time spent in each optimization"),
                              cl::init(false), cl::ZeroOrMore);
 
+static llvm::cl::opt<bool>
+VerifyCFG("verify-cfg",
+          cl::desc("verify the CFG after every pass"),
+          cl::init(false),
+          cl::Hidden,
+          cl::ZeroOrMore);
+
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
                      cl::desc("eliminate unreachable code"),
@@ -199,6 +206,19 @@ void BinaryFunctionPassManager::runPasses() {
       Pass->getName(),
       opts::DynoStatsAll
     );
+
+    if (opts::VerifyCFG &&
+        !std::accumulate(
+           BFs.begin(), BFs.end(),
+           true,
+           [](const bool Valid,
+              const std::pair<const uint64_t, BinaryFunction> &It) {
+             return Valid && It.second.validateCFG();
+           })) {
+      errs() << "BOLT-ERROR: Invalid CFG detected after pass "
+             << Pass->getName() << "\n";
+      exit(1);
+    }
 
     if (!opts::PrintAll && !opts::DumpDotAll && !Pass->printPass())
       continue;
