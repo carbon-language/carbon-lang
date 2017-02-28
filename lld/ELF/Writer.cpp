@@ -533,11 +533,11 @@ template <class ELFT> void Writer<ELFT>::addSectionSymbols() {
     if (!IS || isa<SyntheticSection>(IS) || IS->Type == SHT_REL ||
         IS->Type == SHT_RELA)
       continue;
-    auto *B = new (BAlloc)
-        DefinedRegular("", /*IsLocal=*/true, /*StOther*/ 0, STT_SECTION,
-                       /*Value*/ 0, /*Size*/ 0, IS, nullptr);
 
-    In<ELFT>::SymTab->addSymbol(B);
+    auto *Sym =
+        make<DefinedRegular>("", /*IsLocal=*/true, /*StOther=*/0, STT_SECTION,
+                             /*Value=*/0, /*Size=*/0, IS, nullptr);
+    In<ELFT>::SymTab->addSymbol(Sym);
   }
 }
 

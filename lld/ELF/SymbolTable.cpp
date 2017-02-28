@@ -191,7 +191,7 @@ std::pair<Symbol *, bool> SymbolTable<ELFT>::insert(StringRef Name) {
 
   Symbol *Sym;
   if (IsNew) {
-    Sym = new (BAlloc) Symbol;
+    Sym = make<Symbol>();
     Sym->InVersionScript = false;
     Sym->Binding = STB_WEAK;
     Sym->Visibility = STV_DEFAULT;
