@@ -18,6 +18,7 @@
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
+#include "llvm/Support/MathExtras.h"
 
 #define DEBUG_TYPE "misched"
 
@@ -309,37 +310,41 @@ SUnit *GCNMaxOccupancySchedStrategy::pickNode(bool &IsTopNode) {
 }
 
 void GCNScheduleDAGMILive::schedule() {
-  const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo*>(TRI);
-
   std::vector<MachineInstr*> Unsched;
   Unsched.reserve(NumRegionInstrs);
   for (auto &I : *this)
     Unsched.push_back(&I);
 
+  std::pair<unsigned, unsigned> PressureBefore;
+  if (LIS) {
+    DEBUG(dbgs() << "Pressure before scheduling:\n");
+    discoverLiveIns();
+    PressureBefore = getRealRegPressure();
+  }
+
   ScheduleDAGMILive::schedule();
+  if (!LIS)
+    return;
 
   // Check the results of scheduling.
   GCNMaxOccupancySchedStrategy &S = (GCNMaxOccupancySchedStrategy&)*SchedImpl;
-  std::vector<unsigned> UnschedPressure = getRegPressure().MaxSetPressure;
-  unsigned MaxSGPRs = std::max(
-    getTopRPTracker().getPressure().MaxSetPressure[SRI->getSGPRPressureSet()],
-    getBotRPTracker().getPressure().MaxSetPressure[SRI->getSGPRPressureSet()]);
-  unsigned MaxVGPRs = std::max(
-    getTopRPTracker().getPressure().MaxSetPressure[SRI->getVGPRPressureSet()],
-    getBotRPTracker().getPressure().MaxSetPressure[SRI->getVGPRPressureSet()]);
-  DEBUG(dbgs() << "Pressure after scheduling:\nSGPR = " << MaxSGPRs
-               << "\nVGPR = " << MaxVGPRs << '\n');
-  if (MaxSGPRs <= S.SGPRCriticalLimit &&
-      MaxVGPRs <= S.VGPRCriticalLimit) {
+  DEBUG(dbgs() << "Pressure after scheduling:\n");
+  auto PressureAfter = getRealRegPressure();
+  LiveIns.clear();
+
+  if (PressureAfter.first <= S.SGPRCriticalLimit &&
+      PressureAfter.second <= S.VGPRCriticalLimit) {
     DEBUG(dbgs() << "Pressure in desired limits, done.\n");
     return;
   }
-  unsigned WavesAfter = getMaxWaves(MaxSGPRs, MaxVGPRs, MF);
-  unsigned WavesUnsched = getMaxWaves(UnschedPressure[SRI->getSGPRPressureSet()],
-                            UnschedPressure[SRI->getVGPRPressureSet()], MF);
-  DEBUG(dbgs() << "Occupancy before scheduling: " << WavesUnsched <<
-        ", after " << WavesAfter << ".\n");
-  if (WavesAfter >= WavesUnsched)
+  unsigned WavesAfter = getMaxWaves(PressureAfter.first,
+                                    PressureAfter.second, MF);
+  unsigned WavesBefore = getMaxWaves(PressureBefore.first,
+                                      PressureBefore.second, MF);
+  DEBUG(dbgs() << "Occupancy before scheduling: " << WavesBefore <<
+                  ", after " << WavesAfter << ".\n");
+
+  if (WavesAfter >= WavesBefore)
     return;
 
   DEBUG(dbgs() << "Attempting to revert scheduling.\n");
@@ -348,8 +353,7 @@ void GCNScheduleDAGMILive::schedule() {
     if (MI->getIterator() != RegionEnd) {
       BB->remove(MI);
       BB->insert(RegionEnd, MI);
-      if (LIS)
-        LIS->handleMove(*MI, true);
+      LIS->handleMove(*MI, true);
     }
     // Reset read-undef flags and update them later.
     for (auto &Op : MI->operands())
@@ -372,4 +376,114 @@ void GCNScheduleDAGMILive::schedule() {
   RegionBegin = Unsched.front()->getIterator();
 
   placeDebugValues();
+}
+
+static inline void setMask(const MachineRegisterInfo &MRI,
+                           const SIRegisterInfo *SRI, unsigned Reg,
+                           LaneBitmask &PrevMask, LaneBitmask NewMask,
+                           unsigned &SGPRs, unsigned &VGPRs) {
+  int NewRegs = countPopulation(NewMask.getAsInteger()) -
+                countPopulation(PrevMask.getAsInteger());
+  if (SRI->isSGPRReg(MRI, Reg))
+    SGPRs += NewRegs;
+  if (SRI->isVGPR(MRI, Reg))
+    VGPRs += NewRegs;
+  assert ((int)SGPRs >= 0 && (int)VGPRs >= 0);
+  PrevMask = NewMask;
+}
+
+void GCNScheduleDAGMILive::discoverLiveIns() {
+  unsigned SGPRs = 0;
+  unsigned VGPRs = 0;
+
+  const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo*>(TRI);
+  SlotIndex SI = LIS->getInstructionIndex(*begin()).getBaseIndex();
+  assert (SI.isValid());
+
+  DEBUG(dbgs() << "Region live-ins:");
+  for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
+    if (MRI.reg_nodbg_empty(Reg))
+      continue;
+    const LiveInterval &LI = LIS->getInterval(Reg);
+    LaneBitmask LaneMask = LaneBitmask::getNone();
+    if (LI.hasSubRanges()) {
+      for (const auto &S : LI.subranges())
+        if (S.liveAt(SI))
+          LaneMask |= S.LaneMask;
+    } else if (LI.liveAt(SI)) {
+      LaneMask = MRI.getMaxLaneMaskForVReg(Reg);
+    }
+
+    if (LaneMask.any()) {
+      setMask(MRI, SRI, Reg, LiveIns[Reg], LaneMask, SGPRs, VGPRs);
+
+      DEBUG(dbgs() << ' ' << PrintVRegOrUnit(Reg, SRI) << ':'
+                   << PrintLaneMask(LiveIns[Reg]));
+    }
+  }
+
+  LiveInPressure = std::make_pair(SGPRs, VGPRs);
+
+  DEBUG(dbgs() << "\nLive-in pressure:\nSGPR = " << SGPRs
+               << "\nVGPR = " << VGPRs << '\n');
+}
+
+std::pair<unsigned, unsigned>
+GCNScheduleDAGMILive::getRealRegPressure() const {
+  unsigned SGPRs, MaxSGPRs, VGPRs, MaxVGPRs;
+  SGPRs = MaxSGPRs = LiveInPressure.first;
+  VGPRs = MaxVGPRs = LiveInPressure.second;
+
+  const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo*>(TRI);
+  DenseMap<unsigned, LaneBitmask> LiveRegs(LiveIns);
+
+  for (const MachineInstr &MI : *this) {
+    if (MI.isDebugValue())
+      continue;
+    SlotIndex SI = LIS->getInstructionIndex(MI).getBaseIndex();
+    assert (SI.isValid());
+
+    // Remove dead registers or mask bits.
+    for (auto &It : LiveRegs) {
+      if (It.second.none())
+        continue;
+      const LiveInterval &LI = LIS->getInterval(It.first);
+      if (LI.hasSubRanges()) {
+        for (const auto &S : LI.subranges())
+          if (!S.liveAt(SI))
+            setMask(MRI, SRI, It.first, It.second, It.second & ~S.LaneMask,
+                    SGPRs, VGPRs);
+      } else if (!LI.liveAt(SI)) {
+        setMask(MRI, SRI, It.first, It.second, LaneBitmask::getNone(),
+                SGPRs, VGPRs);
+      }
+    }
+
+    // Add new registers or mask bits.
+    for (const auto &MO : MI.defs()) {
+      if (!MO.isReg())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (!TargetRegisterInfo::isVirtualRegister(Reg))
+        continue;
+      unsigned SubRegIdx = MO.getSubReg();
+      LaneBitmask LaneMask = SubRegIdx != 0
+                             ? TRI->getSubRegIndexLaneMask(SubRegIdx)
+                             : MRI.getMaxLaneMaskForVReg(Reg);
+      LaneBitmask &LM = LiveRegs[Reg];
+      setMask(MRI, SRI, Reg, LM, LM | LaneMask, SGPRs, VGPRs);
+    }
+    MaxSGPRs = std::max(MaxSGPRs, SGPRs);
+    MaxVGPRs = std::max(MaxVGPRs, VGPRs);
+  }
+
+  DEBUG(dbgs() << "Real region's register pressure:\nSGPR = " << MaxSGPRs
+               << "\nVGPR = " << MaxVGPRs << '\n');
+
+  return std::make_pair(MaxSGPRs, MaxVGPRs);
+}
+
+void GCNScheduleDAGMILive::finalizeSchedule() {
+  LiveIns.shrink_and_clear();
 }

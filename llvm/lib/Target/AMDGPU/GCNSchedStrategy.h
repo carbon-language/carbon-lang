@@ -52,12 +52,27 @@ public:
 };
 
 class GCNScheduleDAGMILive : public ScheduleDAGMILive {
+
+  // Region live-ins.
+  DenseMap<unsigned, LaneBitmask> LiveIns;
+
+  // Number of live-ins to the current region, first SGPR then VGPR.
+  std::pair<unsigned, unsigned> LiveInPressure;
+
+  // Collect current region live-ins.
+  void discoverLiveIns();
+
+  // Return current region pressure. First value is SGPR number, second is VGPR.
+  std::pair<unsigned, unsigned> getRealRegPressure() const;
+
 public:
   GCNScheduleDAGMILive(MachineSchedContext *C,
                        std::unique_ptr<MachineSchedStrategy> S) :
     ScheduleDAGMILive(C, std::move(S)) {}
 
   void schedule() override;
+
+  void finalizeSchedule() override;
 };
 
 } // End namespace llvm
