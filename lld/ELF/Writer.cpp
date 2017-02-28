@@ -527,10 +527,11 @@ template <class ELFT> void Writer<ELFT>::addSectionSymbols() {
   // Create one STT_SECTION symbol for each output section we might
   // have a relocation with.
   for (OutputSection *Sec : OutputSections) {
-    InputSection *IS = nullptr;
-    if (!Sec->Sections.empty())
-      IS = Sec->Sections[0];
-    if (!IS || isa<SyntheticSection>(IS) || IS->Type == SHT_REL ||
+    if (Sec->Sections.empty())
+      continue;
+
+    InputSection *IS = Sec->Sections[0];
+    if (isa<SyntheticSection>(IS) || IS->Type == SHT_REL ||
         IS->Type == SHT_RELA)
       continue;
 
