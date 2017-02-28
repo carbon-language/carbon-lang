@@ -1305,7 +1305,6 @@ static bool sortMipsSymbols(const SymbolTableEntry &L, const SymbolTableEntry &R
 // function. (For .dynsym, we don't do that because symbols for
 // dynamic linking are inherently all globals.)
 template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
-  this->Link = StrTabSec.OutSec->SectionIndex;
   this->OutSec->Link = StrTabSec.OutSec->SectionIndex;
   this->OutSec->Entsize = this->Entsize;
 
@@ -1314,7 +1313,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
   if (this->Type == SHT_DYNSYM) {
     // Section's Info field has the index of the first non-local symbol.
     // Because the first symbol entry is a null entry, 1 is the first.
-    this->Info = 1;
     this->OutSec->Info = 1;
 
     if (In<ELFT>::GnuHashTab) {
@@ -1337,7 +1335,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
                S.Symbol->symbol()->computeBinding() == STB_LOCAL;
       });
   size_t NumLocals = It - Symbols.begin();
-  this->Info = NumLocals + 1;
   this->OutSec->Info = NumLocals + 1;
 }
 
@@ -1475,7 +1472,7 @@ template <class ELFT> void GnuHashTableSection<ELFT>::finalizeContents() {
   Shift2 = ELFT::Is64Bits ? 6 : 5;
 
   this->OutSec->Entsize = this->Entsize;
-  this->OutSec->Link = this->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
+  this->OutSec->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
   this->Size = sizeof(Elf_Word) * 4            // Header
                + sizeof(Elf_Off) * MaskWords   // Bloom Filter
                + sizeof(Elf_Word) * NBuckets   // Hash Buckets
@@ -1581,7 +1578,7 @@ HashTableSection<ELFT>::HashTableSection()
 }
 
 template <class ELFT> void HashTableSection<ELFT>::finalizeContents() {
-  this->OutSec->Link = this->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
+  this->OutSec->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
   this->OutSec->Entsize = this->Entsize;
 
   unsigned NumEntries = 2;                            // nbucket and nchain.
@@ -1878,12 +1875,12 @@ template <class ELFT> void VersionDefinitionSection<ELFT>::finalizeContents() {
   for (VersionDefinition &V : Config->VersionDefinitions)
     V.NameOff = In<ELFT>::DynStrTab->addString(V.Name);
 
-  this->OutSec->Link = this->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
+  this->OutSec->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
 
   // sh_info should be set to the number of definitions. This fact is missed in
   // documentation, but confirmed by binutils community:
   // https://sourceware.org/ml/binutils/2014-11/msg00355.html
-  this->OutSec->Info = this->Info = getVerDefNum();
+  this->OutSec->Info = getVerDefNum();
 }
 
 template <class ELFT>
@@ -1930,7 +1927,7 @@ template <class ELFT> void VersionTableSection<ELFT>::finalizeContents() {
   this->OutSec->Entsize = this->Entsize = sizeof(Elf_Versym);
   // At the moment of june 2016 GNU docs does not mention that sh_link field
   // should be set, but Sun docs do. Also readelf relies on this field.
-  this->OutSec->Link = this->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
+  this->OutSec->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
 }
 
 template <class ELFT> size_t VersionTableSection<ELFT>::getSize() const {
@@ -2022,8 +2019,8 @@ template <class ELFT> void VersionNeedSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT> void VersionNeedSection<ELFT>::finalizeContents() {
-  this->OutSec->Link = this->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
-  this->OutSec->Info = this->Info = Needed.size();
+  this->OutSec->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
+  this->OutSec->Info = Needed.size();
 }
 
 template <class ELFT> size_t VersionNeedSection<ELFT>::getSize() const {
