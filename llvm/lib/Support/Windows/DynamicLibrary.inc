@@ -97,7 +97,7 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
 
 DynamicLibrary DynamicLibrary::addPermanentLibrary(void *handle) {
   SmartScopedLock<true> lock(*SymbolsMutex);
-  return addPermanentLibraryWithLock(handle, lock);
+  return addPermanentLibraryWithLock(handle, lock, false);
 }
 
 DynamicLibrary DynamicLibrary::addPermanentLibraryWithLock(void *handle,
@@ -150,7 +150,7 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
   }
 
   // Now search the libraries.
-  if (OpenedHandles) {
+  if (OpenedHandles.isConstructed()) {
     for (DenseSet<HMODULE>::iterator I = OpenedHandles->begin(),
          E = OpenedHandles->end(); I != E; ++I) {
       FARPROC ptr = GetProcAddress((HMODULE)*I, symbolName);
