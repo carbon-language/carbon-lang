@@ -1327,6 +1327,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
     size_t I = 0;
     for (const SymbolTableEntry &S : Symbols)
       S.Symbol->DynsymIndex = ++I;
+    return;
   }
 
   // If it is a .symtab, move all local symbols before global symbols.
