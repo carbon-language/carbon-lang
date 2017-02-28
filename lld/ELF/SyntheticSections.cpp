@@ -301,7 +301,7 @@ SymbolBody *elf::addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
   auto *S = make<DefinedRegular<ELFT>>(Name, /*IsLocal*/ true, STV_DEFAULT,
                                        Type, Value, Size, Section, nullptr);
   if (In<ELFT>::SymTab)
-    In<ELFT>::SymTab->addLocal(S);
+    In<ELFT>::SymTab->addSymbol(S);
   return S;
 }
 
@@ -1341,13 +1341,12 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
   this->OutSec->Info = NumLocals + 1;
 }
 
-template <class ELFT> void SymbolTableSection<ELFT>::addGlobal(SymbolBody *B) {
-  Symbols.push_back({B, StrTabSec.addString(B->getName(), false)});
-}
+template <class ELFT> void SymbolTableSection<ELFT>::addSymbol(SymbolBody *B) {
+  // Adding a local symbol to a .dynsym is a bug.
+  assert(this->Type != SHT_DYNSYM || !B->isLocal());
 
-template <class ELFT> void SymbolTableSection<ELFT>::addLocal(SymbolBody *B) {
-  assert(!StrTabSec.isDynamic());
-  Symbols.push_back({B, StrTabSec.addString(B->getName())});
+  bool HashIt = B->isLocal();
+  Symbols.push_back({B, StrTabSec.addString(B->getName(), HashIt)});
 }
 
 template <class ELFT>
