@@ -35,7 +35,8 @@ D: FreeBSD
 
 N: Jason Molenda
 E: jmolenda@apple.com
-D: ABI, Disassembler, Unwinding, iOS, debugserver, Platform
+D: ABI, Disassembler, Unwinding, iOS, debugserver, Platform, ObjectFile, SymbolFile, 
+D: SymbolVendor, DWARF, gdb-remote
 
 N: Hafiz Abid Qadeer
 E: abidh.haq@gmail.com
