@@ -1376,14 +1376,6 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
 
     if (const OutputSection *OutSec = Body->getOutputSection<ELFT>()) {
       ESym->st_shndx = OutSec->SectionIndex;
-
-      // This piece of code should go away as it doesn't make sense,
-      // but we want to keep it tentatively because some tests for TLS
-      // variable depends on this. We should fix the test and remove
-      // this code.
-      if (Body->isLocal())
-        if (auto *DS = dyn_cast<DefinedRegular<ELFT>>(Body))
-          ESym->st_value = OutSec->Addr + DS->Section->getOffset(*DS);
     } else if (isa<DefinedRegular<ELFT>>(Body)) {
       ESym->st_shndx = SHN_ABS;
     } else if (isa<DefinedCommon>(Body)) {
