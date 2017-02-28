@@ -1305,38 +1305,39 @@ static bool sortMipsSymbols(const SymbolTableEntry &L, const SymbolTableEntry &R
 // function. (For .dynsym, we don't do that because symbols for
 // dynamic linking are inherently all globals.)
 template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
-  this->OutSec->Link = this->Link = StrTabSec.OutSec->SectionIndex;
+  this->Link = StrTabSec.OutSec->SectionIndex;
+  this->OutSec->Link = StrTabSec.OutSec->SectionIndex;
   this->OutSec->Entsize = this->Entsize;
 
-  // Move all local symbols before global symbols.
-  size_t NumLocals = 0;
-  if (!StrTabSec.isDynamic()) {
-    auto It = std::stable_partition(
-        Symbols.begin(), Symbols.end(), [](const SymbolTableEntry &S) {
-          return S.Symbol->isLocal() ||
-                 S.Symbol->symbol()->computeBinding() == STB_LOCAL;
-        });
-    NumLocals = It - Symbols.begin();
+  // If it is a .dynsym, there should be no local symbols, but we need
+  // to do a few things for the dynamic linker.
+  if (this->Type == SHT_DYNSYM) {
+    // Section's Info field has the index of the first non-local symbol.
+    // Because the first symbol entry is a null entry, 1 is the first.
+    this->Info = 1;
+    this->OutSec->Info = 1;
+
+    if (In<ELFT>::GnuHashTab) {
+      // NB: It also sorts Symbols to meet the GNU hash table requirements.
+      In<ELFT>::GnuHashTab->addSymbols(Symbols);
+    } else if (Config->EMachine == EM_MIPS) {
+      std::stable_sort(Symbols.begin(), Symbols.end(), sortMipsSymbols);
+    }
+
+    size_t I = 0;
+    for (const SymbolTableEntry &S : Symbols)
+      S.Symbol->DynsymIndex = ++I;
   }
 
-  // Section's Info field has the index of the first non-local symbol.
-  // Because the first symbol entry is a null entry, +1 is needed.
+  // If it is a .symtab, move all local symbols before global symbols.
+  auto It = std::stable_partition(
+      Symbols.begin(), Symbols.end(), [](const SymbolTableEntry &S) {
+        return S.Symbol->isLocal() ||
+               S.Symbol->symbol()->computeBinding() == STB_LOCAL;
+      });
+  size_t NumLocals = It - Symbols.begin();
   this->Info = NumLocals + 1;
   this->OutSec->Info = NumLocals + 1;
-
-  if (Config->Relocatable || !StrTabSec.isDynamic())
-    return;
-
-  if (In<ELFT>::GnuHashTab) {
-    // NB: It also sorts Symbols to meet the GNU hash table requirements.
-    In<ELFT>::GnuHashTab->addSymbols(Symbols);
-  } else if (Config->EMachine == EM_MIPS) {
-    std::stable_sort(Symbols.begin(), Symbols.end(), sortMipsSymbols);
-  }
-
-  size_t I = 0;
-  for (const SymbolTableEntry &S : Symbols)
-    S.Symbol->DynsymIndex = ++I;
 }
 
 template <class ELFT> void SymbolTableSection<ELFT>::addGlobal(SymbolBody *B) {
