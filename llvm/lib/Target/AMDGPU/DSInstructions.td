@@ -444,16 +444,23 @@ def DS_ORDERED_COUNT : DS_1A_RET_GDS<"ds_ordered_count">;
 // DS_GWS_SEMA_RELEASE_ALL
 // DS_WRAP_RTN_B32
 // DS_CNDXCHG32_RTN_B64
-// DS_WRITE_B96
-// DS_WRITE_B128
 // DS_CONDXCHG32_RTN_B128
-// DS_READ_B96
-// DS_READ_B128
 
 let SubtargetPredicate = isCIVI in {
 
 def DS_WRAP_RTN_F32 : DS_1A1D_RET <"ds_wrap_rtn_f32">,
                       AtomicNoRet<"ds_wrap_f32", 1>;
+
+let mayStore = 0 in {
+def DS_READ_B96 : DS_1A_RET<"ds_read_b96", VReg_96>;
+def DS_READ_B128: DS_1A_RET<"ds_read_b128", VReg_128>;
+} // End mayStore = 0
+
+let mayLoad = 0 in {
+def DS_WRITE_B96 : DS_1A1D_NORET<"ds_write_b96", VReg_96>;
+def DS_WRITE_B128 : DS_1A1D_NORET<"ds_write_b128", VReg_128>;
+} // End mayLoad = 0
+
 
 } // let SubtargetPredicate = isCIVI
 
@@ -745,6 +752,10 @@ def DS_WRITE_SRC2_B64_si  : DS_Real_si<0xcd, DS_WRITE_SRC2_B64>;
 
 def DS_MIN_SRC2_F64_si    : DS_Real_si<0xd2, DS_MIN_SRC2_F64>;
 def DS_MAX_SRC2_F64_si    : DS_Real_si<0xd3, DS_MAX_SRC2_F64>;
+def DS_WRITE_B96_si       : DS_Real_si<0xde, DS_WRITE_B96>;
+def DS_WRITE_B128_si      : DS_Real_si<0xdf, DS_WRITE_B128>;
+def DS_READ_B96_si        : DS_Real_si<0xfe, DS_READ_B96>;
+def DS_READ_B128_si       : DS_Real_si<0xff, DS_READ_B128>;
 
 //===----------------------------------------------------------------------===//
 // VIInstructions.td
@@ -905,3 +916,7 @@ def DS_XOR_SRC2_B64_vi    : DS_Real_vi<0xcb, DS_XOR_SRC2_B64>;
 def DS_WRITE_SRC2_B64_vi  : DS_Real_vi<0xcd, DS_WRITE_SRC2_B64>;
 def DS_MIN_SRC2_F64_vi    : DS_Real_vi<0xd2, DS_MIN_SRC2_F64>;
 def DS_MAX_SRC2_F64_vi    : DS_Real_vi<0xd3, DS_MAX_SRC2_F64>;
+def DS_WRITE_B96_vi       : DS_Real_vi<0xde, DS_WRITE_B96>;
+def DS_WRITE_B128_vi      : DS_Real_vi<0xdf, DS_WRITE_B128>;
+def DS_READ_B96_vi        : DS_Real_vi<0xfe, DS_READ_B96>;
+def DS_READ_B128_vi       : DS_Real_vi<0xff, DS_READ_B128>;
