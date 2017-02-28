@@ -9,8 +9,6 @@
 //
 // This file provides the Win32 specific implementation of DynamicLibrary.
 //
-// FIXME: This file leaks OpenedHandles!
-//
 //===----------------------------------------------------------------------===//
 
 #include "WindowsSupport.h"
@@ -35,7 +33,7 @@ using namespace sys;
 
 typedef BOOL (WINAPI *fpEnumerateLoadedModules)(HANDLE,PENUMLOADED_MODULES_CALLBACK64,PVOID);
 static fpEnumerateLoadedModules fEnumerateLoadedModules;
-static DenseSet<HMODULE> *OpenedHandles;
+static llvm::ManagedStatic<DenseSet<HMODULE> > OpenedHandles;
 
 static bool loadDebugHelp(void) {
   HMODULE hLib = ::LoadLibraryW(L"Dbghelp.dll");
@@ -59,9 +57,6 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
 
   if (!filename) {
     // When no file is specified, enumerate all DLLs and EXEs in the process.
-    if (OpenedHandles == 0)
-      OpenedHandles = new DenseSet<HMODULE>();
-
     if (!fEnumerateLoadedModules) {
       if (!loadDebugHelp()) {
         assert(false && "These APIs should always be available");
@@ -81,7 +76,7 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
     MakeErrMsg(errMsg, std::string(filename) + ": Can't convert to UTF-16");
     return DynamicLibrary();
   }
-  
+
   HMODULE a_handle = LoadLibraryW(filenameUnicode.data());
 
   if (a_handle == 0) {
@@ -89,15 +84,33 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
     return DynamicLibrary();
   }
 
-  if (OpenedHandles == 0)
-    OpenedHandles = new DenseSet<HMODULE>();
-
+  DynamicLibrary dyLib = addPermanentLibraryWithLock(a_handle, lock, !filename);
   // If we've already loaded this library, FreeLibrary() the handle in order to
   // keep the internal refcount at +1.
-  if (!OpenedHandles->insert(a_handle).second)
+  if (!dyLib.isValid()) {
+    MakeErrMsg(errMsg, std::string(filename) + ": Already loaded");
     FreeLibrary(a_handle);
+  }
 
-  return DynamicLibrary(a_handle);
+  return dyLib;
+}
+
+DynamicLibrary DynamicLibrary::addPermanentLibrary(void *handle) {
+  SmartScopedLock<true> lock(*SymbolsMutex);
+  return addPermanentLibraryWithLock(handle, lock);
+}
+
+DynamicLibrary DynamicLibrary::addPermanentLibraryWithLock(void *handle,
+                                                   sys::SmartScopedLock<true> &,
+                                                           bool isMainExec) {
+  // If we've already loaded this library, tell the caller.
+  // FIXME: Note that multiple requests for adding the main executable is not
+  // considered as an error. If we don't want to treat the main executable as a
+  // special case we need to do a cleanup in the MCJIT tests and API.
+  if (!OpenedHandles->insert((const HMODULE)handle).second && !isMainExec)
+    return DynamicLibrary();
+
+  return DynamicLibrary((HMODULE)handle);
 }
 
 // Stack probing routines are in the support library (e.g. libgcc), but we don't

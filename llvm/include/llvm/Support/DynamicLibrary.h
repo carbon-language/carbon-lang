@@ -14,6 +14,8 @@
 #ifndef LLVM_SUPPORT_DYNAMICLIBRARY_H
 #define LLVM_SUPPORT_DYNAMICLIBRARY_H
 
+#include "llvm/Support/Mutex.h"
+
 #include <string>
 
 namespace llvm {
@@ -43,6 +45,11 @@ namespace sys {
     // Opaque data used to interface with OS-specific dynamic library handling.
     void *Data;
 
+    // Adds a opened library handle to the list of OpenedHandles.
+    static DynamicLibrary addPermanentLibraryWithLock(void *handle,
+                                                   sys::SmartScopedLock<true> &,
+                                                      bool isMainExec);
+
   public:
     explicit DynamicLibrary(void *data = &Invalid) : Data(data) {}
 
@@ -67,6 +74,14 @@ namespace sys {
     /// @brief Open a dynamic library permanently.
     static DynamicLibrary getPermanentLibrary(const char *filename,
                                               std::string *errMsg = nullptr);
+
+    /// Registers an externally loaded library. The library will be unloaded
+    /// when the program terminates.
+    ///
+    /// It is safe to call this function multiple times for the same library.
+    ///
+    /// \returns An empty \p DynamicLibrary on failure.
+    static DynamicLibrary addPermanentLibrary(void *handle);
 
     /// This function permanently loads the dynamic library at the given path.
     /// Use this instead of getPermanentLibrary() when you won't need to get

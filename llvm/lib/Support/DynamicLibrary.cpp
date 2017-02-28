@@ -68,10 +68,34 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
     handle = RTLD_DEFAULT;
 #endif
 
+  DynamicLibrary dyLib = addPermanentLibraryWithLock(handle, lock, !filename);
+
   // If we've already loaded this library, dlclose() the handle in order to
   // keep the internal refcount at +1.
-  if (!OpenedHandles->insert(handle).second)
+  if (!dyLib.isValid()) {
+    if (errMsg)
+      *errMsg = (filename) ? std::string(filename) : std::string() +
+        ": Library already loaded";
     dlclose(handle);
+  }
+
+  return dyLib;
+}
+
+DynamicLibrary DynamicLibrary::addPermanentLibrary(void *handle) {
+  SmartScopedLock<true> lock(*SymbolsMutex);
+  return addPermanentLibraryWithLock(handle, lock, false);
+}
+
+DynamicLibrary DynamicLibrary::addPermanentLibraryWithLock(void *handle,
+                                                   sys::SmartScopedLock<true> &,
+                                                           bool isMainExec) {
+  // If we've already loaded this library, tell the caller.
+  // FIXME: Note that multiple requests for adding the main executable is not
+  // considered as an error. If we don't want to treat the main executable as a
+  // special case we need to do a cleanup in the MCJIT tests and API.
+  if (!OpenedHandles->insert(handle).second && !isMainExec)
+    return DynamicLibrary();
 
   return DynamicLibrary(handle);
 }
