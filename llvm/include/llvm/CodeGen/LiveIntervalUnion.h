@@ -87,15 +87,9 @@ public:
 
   // Add a live virtual register to this union and merge its segments.
   void unify(LiveInterval &VirtReg, const LiveRange &Range);
-  void unify(LiveInterval &VirtReg) {
-    unify(VirtReg, VirtReg);
-  }
 
   // Remove a live virtual register's segments from this union.
   void extract(LiveInterval &VirtReg, const LiveRange &Range);
-  void extract(LiveInterval &VirtReg) {
-    extract(VirtReg, VirtReg);
-  }
 
   // Remove all inserted virtual registers.
   void clear() { Segments.clear(); ++Tag; }
