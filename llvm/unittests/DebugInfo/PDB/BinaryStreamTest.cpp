@@ -135,7 +135,7 @@ public:
   void SetUp() override {
     Streams.clear();
     Streams.resize(NumStreams);
-    for (int I = 0; I < NumStreams; ++I)
+    for (uint32_t I = 0; I < NumStreams; ++I)
       Streams[I].IsContiguous = (I % 2 == 0);
 
     InputData.clear();
