@@ -116,7 +116,7 @@ std::pair<bool, GdbSymbol *> GdbHashTab::add(uint32_t Hash, size_t Offset) {
 }
 
 void GdbHashTab::finalizeContents() {
-  Table.resize(std::max(1024UL, NextPowerOf2(Map.size() * 4 / 3)));
+  Table.resize(std::max<uint64_t>(1024, NextPowerOf2(Map.size() * 4 / 3)));
 
   for (auto &P : Map) {
     GdbSymbol *Sym = P.second;
