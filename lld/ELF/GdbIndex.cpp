@@ -79,15 +79,16 @@ class lld::elf::ObjInfoTy : public llvm::LoadedObjectInfo {
 };
 
 template <class ELFT>
-GdbIndexBuilder<ELFT>::GdbIndexBuilder(InputSection *DebugInfoSec)
-    : DebugInfoSec(DebugInfoSec), ObjInfo(new ObjInfoTy) {
-  if (Expected<std::unique_ptr<object::ObjectFile>> Obj =
-          object::ObjectFile::createObjectFile(
-              DebugInfoSec->template getFile<ELFT>()->MB))
+GdbIndexBuilder<ELFT>::GdbIndexBuilder(InputSection *Sec)
+    : DebugInfoSec(Sec), ObjInfo(new ObjInfoTy) {
+  elf::ObjectFile<ELFT> *File = Sec->template getFile<ELFT>();
+  Expected<std::unique_ptr<object::ObjectFile>> Obj =
+      object::ObjectFile::createObjectFile(File->MB);
+
+  if (Obj)
     Dwarf.reset(new DWARFContextInMemory(*Obj.get(), ObjInfo.get()));
   else
-    error(toString(DebugInfoSec->template getFile<ELFT>()) +
-          ": error creating DWARF context");
+    error(toString(File) + ": error creating DWARF context");
 }
 
 template <class ELFT> GdbIndexBuilder<ELFT>::~GdbIndexBuilder() {}
