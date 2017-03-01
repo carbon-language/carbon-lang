@@ -165,7 +165,7 @@ template <class ELFT>
 std::vector<AddressEntry<ELFT>>
 GdbIndexBuilder<ELFT>::readAddressArea(size_t CurrentCU) {
   std::vector<AddressEntry<ELFT>> Ret;
-  for (const auto &CU : Dwarf->compile_units()) {
+  for (std::unique_ptr<DWARFCompileUnit> &CU : Dwarf->compile_units()) {
     DWARFAddressRangesVector Ranges;
     CU->collectAddressRanges(Ranges);
 
