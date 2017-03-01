@@ -212,14 +212,14 @@ static unsigned getSameOpcode(ArrayRef<Value *> VL) {
 /// Flag set: NSW, NUW, exact, and all of fast-math.
 static void propagateIRFlags(Value *I, ArrayRef<Value *> VL) {
   if (auto *VecOp = dyn_cast<Instruction>(I)) {
-    if (auto *Intersection = dyn_cast<Instruction>(VL[0])) {
-      // Intersection is initialized to the 0th scalar,
-      // so start counting from index '1'.
+    if (auto *I0 = dyn_cast<Instruction>(VL[0])) {
+      // VecOVp is initialized to the 0th scalar, so start counting from index
+      // '1'.
+      VecOp->copyIRFlags(I0);
       for (int i = 1, e = VL.size(); i < e; ++i) {
         if (auto *Scalar = dyn_cast<Instruction>(VL[i]))
-          Intersection->andIRFlags(Scalar);
+          VecOp->andIRFlags(Scalar);
       }
-      VecOp->copyIRFlags(Intersection);
     }
   }
 }
@@ -304,7 +304,8 @@ public:
   typedef SmallVector<Instruction *, 16> InstrList;
   typedef SmallPtrSet<Value *, 16> ValueSet;
   typedef SmallVector<StoreInst *, 8> StoreList;
-  typedef MapVector<Value *, SmallVector<DebugLoc, 2>> ExtraValueToDebugLocsMap;
+  typedef MapVector<Value *, SmallVector<Instruction *, 2>>
+      ExtraValueToDebugLocsMap;
 
   BoUpSLP(Function *Func, ScalarEvolution *Se, TargetTransformInfo *Tti,
           TargetLibraryInfo *TLi, AliasAnalysis *Aa, LoopInfo *Li,
@@ -4430,7 +4431,7 @@ public:
     // The same extra argument may be used several time, so log each attempt
     // to use it.
     for (auto &Pair : ExtraArgs)
-      ExternallyUsedValues[Pair.second].push_back(Pair.first->getDebugLoc());
+      ExternallyUsedValues[Pair.second].push_back(Pair.first);
     while (i < NumReducedVals - ReduxWidth + 1 && ReduxWidth > 2) {
       auto VL = makeArrayRef(&ReducedVals[i], ReduxWidth);
       V.buildTree(VL, ExternallyUsedValues, ReductionOps);
@@ -4481,10 +4482,11 @@ public:
         assert(!Pair.second.empty() &&
                "At least one DebugLoc must be inserted");
         // Add each externally used value to the final reduction.
-        for (auto &DL : Pair.second) {
-          Builder.SetCurrentDebugLocation(DL);
+        for (auto *I : Pair.second) {
+          Builder.SetCurrentDebugLocation(I->getDebugLoc());
           VectorizedTree = Builder.CreateBinOp(ReductionOpcode, VectorizedTree,
                                                Pair.first, "bin.extra");
+          propagateIRFlags(VectorizedTree, I);
         }
       }
       // Update users.
