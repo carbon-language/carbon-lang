@@ -125,7 +125,9 @@ template <class ELFT> MergeInputSection<ELFT> *elf::createCommentSection() {
 template <class ELFT>
 MipsAbiFlagsSection<ELFT>::MipsAbiFlagsSection(Elf_Mips_ABIFlags Flags)
     : SyntheticSection(SHF_ALLOC, SHT_MIPS_ABIFLAGS, 8, ".MIPS.abiflags"),
-      Flags(Flags) {}
+      Flags(Flags) {
+  this->Entsize = sizeof(Elf_Mips_ABIFlags);
+}
 
 template <class ELFT> void MipsAbiFlagsSection<ELFT>::writeTo(uint8_t *Buf) {
   memcpy(Buf, &Flags, sizeof(Flags));
@@ -182,7 +184,9 @@ MipsAbiFlagsSection<ELFT> *MipsAbiFlagsSection<ELFT>::create() {
 template <class ELFT>
 MipsOptionsSection<ELFT>::MipsOptionsSection(Elf_Mips_RegInfo Reginfo)
     : SyntheticSection(SHF_ALLOC, SHT_MIPS_OPTIONS, 8, ".MIPS.options"),
-      Reginfo(Reginfo) {}
+      Reginfo(Reginfo) {
+  this->Entsize = sizeof(Elf_Mips_Options) + sizeof(Elf_Mips_RegInfo);
+}
 
 template <class ELFT> void MipsOptionsSection<ELFT>::writeTo(uint8_t *Buf) {
   auto *Options = reinterpret_cast<Elf_Mips_Options *>(Buf);
@@ -242,7 +246,9 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
 template <class ELFT>
 MipsReginfoSection<ELFT>::MipsReginfoSection(Elf_Mips_RegInfo Reginfo)
     : SyntheticSection(SHF_ALLOC, SHT_MIPS_REGINFO, 4, ".reginfo"),
-      Reginfo(Reginfo) {}
+      Reginfo(Reginfo) {
+  this->Entsize = sizeof(Elf_Mips_RegInfo);
+}
 
 template <class ELFT> void MipsReginfoSection<ELFT>::writeTo(uint8_t *Buf) {
   if (!Config->Relocatable)
@@ -1013,6 +1019,7 @@ DynamicSection<ELFT>::DynamicSection()
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_DYNAMIC, sizeof(uintX_t),
                        ".dynamic") {
   this->Entsize = ELFT::Is64Bits ? 16 : 8;
+
   // .dynamic section is not writable on MIPS.
   // See "Special Section" in Chapter 4 in the following document:
   // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
@@ -1147,7 +1154,6 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
       add({DT_MIPS_RLD_MAP, In<ELFT>::MipsRldMap});
   }
 
-  this->OutSec->Entsize = this->Entsize;
   this->OutSec->Link = this->Link;
 
   // +1 for DT_NULL
@@ -1260,7 +1266,6 @@ template <class ELFT> void RelocationSection<ELFT>::finalizeContents() {
 
   // Set required output section properties.
   this->OutSec->Link = this->Link;
-  this->OutSec->Entsize = this->Entsize;
 }
 
 template <class ELFT>
@@ -1295,7 +1300,6 @@ static bool sortMipsSymbols(const SymbolTableEntry &L, const SymbolTableEntry &R
 // dynamic linking are inherently all globals.)
 template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
   this->OutSec->Link = StrTabSec.OutSec->SectionIndex;
-  this->OutSec->Entsize = this->Entsize;
 
   // If it is a .dynsym, there should be no local symbols, but we need
   // to do a few things for the dynamic linker.
@@ -1451,7 +1455,6 @@ GnuHashTableSection<ELFT>::GnuHashTableSection()
 }
 
 template <class ELFT> void GnuHashTableSection<ELFT>::finalizeContents() {
-  this->OutSec->Entsize = this->Entsize;
   this->OutSec->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
 
   // Computes bloom filter size in word size. We want to allocate 8
@@ -1587,7 +1590,6 @@ HashTableSection<ELFT>::HashTableSection()
 
 template <class ELFT> void HashTableSection<ELFT>::finalizeContents() {
   this->OutSec->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
-  this->OutSec->Entsize = this->Entsize;
 
   unsigned NumEntries = 2;                            // nbucket and nchain.
   NumEntries += In<ELFT>::DynSymTab->getNumSymbols(); // The chain entries.
@@ -1933,10 +1935,11 @@ template <class ELFT> size_t VersionDefinitionSection<ELFT>::getSize() const {
 template <class ELFT>
 VersionTableSection<ELFT>::VersionTableSection()
     : SyntheticSection(SHF_ALLOC, SHT_GNU_versym, sizeof(uint16_t),
-                       ".gnu.version") {}
+                       ".gnu.version") {
+  this->Entsize = sizeof(Elf_Versym);
+}
 
 template <class ELFT> void VersionTableSection<ELFT>::finalizeContents() {
-  this->OutSec->Entsize = this->Entsize = sizeof(Elf_Versym);
   // At the moment of june 2016 GNU docs does not mention that sh_link field
   // should be set, but Sun docs do. Also readelf relies on this field.
   this->OutSec->Link = In<ELFT>::DynSymTab->OutSec->SectionIndex;
