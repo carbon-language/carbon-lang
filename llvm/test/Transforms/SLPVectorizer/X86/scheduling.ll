@@ -12,7 +12,7 @@ define i32 @foo(i32* nocapture readonly %diff) #0 {
 ; CHECK-NEXT:    [[RDX_SHUF1:%.*]] = shufflevector <4 x i32> [[BIN_RDX]], <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
 ; CHECK-NEXT:    [[BIN_RDX2:%.*]] = add <4 x i32> [[BIN_RDX]], [[RDX_SHUF1]]
 ; CHECK-NEXT:    [[TMP15:%.*]] = extractelement <4 x i32> [[BIN_RDX2]], i32 0
-; CHECK-NEXT:    [[ADD52:%.*]] = add nsw i32 [[TMP15]],
+; CHECK:         [[ADD52:%.*]] = add i32 [[TMP15]],
 ; CHECK:          ret i32 [[ADD52]]
 ;
 entry:

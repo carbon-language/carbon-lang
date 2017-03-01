@@ -4250,14 +4250,6 @@ class HorizontalReduction {
   MapVector<Instruction *, Value *> ExtraArgs;
 
   BinaryOperator *ReductionRoot = nullptr;
-  // After successfull horizontal reduction vectorization attempt for PHI node
-  // vectorizer tries to update root binary op by combining vectorized tree and
-  // the ReductionPHI node. But during vectorization this ReductionPHI can be
-  // vectorized itself and replaced by the undef value, while the instruction
-  // itself is marked for deletion. This 'marked for deletion' PHI node then can
-  // be used in new binary operation, causing "Use still stuck around after Def
-  // is destroyed" crash upon PHI node deletion.
-  WeakVH ReductionPHI;
 
   /// The opcode of the reduction.
   Instruction::BinaryOps ReductionOpcode = Instruction::BinaryOpsEnd;
@@ -4318,7 +4310,6 @@ public:
     ReductionOpcode = B->getOpcode();
     ReducedValueOpcode = 0;
     ReductionRoot = B;
-    ReductionPHI = Phi;
 
     // We currently only support adds.
     if ((ReductionOpcode != Instruction::Add &&
@@ -4406,9 +4397,9 @@ public:
           Stack.push_back(std::make_pair(I, 0));
           continue;
         }
-        // NextV is an extra argument for TreeN (its parent operation).
-        markExtraArg(Stack.back(), NextV);
       }
+      // NextV is an extra argument for TreeN (its parent operation).
+      markExtraArg(Stack.back(), NextV);
     }
     return true;
   }
@@ -4497,12 +4488,7 @@ public:
         }
       }
       // Update users.
-      if (ReductionPHI && !isa<UndefValue>(ReductionPHI)) {
-        assert(ReductionRoot && "Need a reduction operation");
-        ReductionRoot->setOperand(0, VectorizedTree);
-        ReductionRoot->setOperand(1, ReductionPHI);
-      } else
-        ReductionRoot->replaceAllUsesWith(VectorizedTree);
+      ReductionRoot->replaceAllUsesWith(VectorizedTree);
     }
     return VectorizedTree != nullptr;
   }
