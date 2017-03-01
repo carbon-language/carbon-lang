@@ -1,5 +1,5 @@
-@ RUN: not llvm-mc -triple armv7a--none-eabi < %s |& FileCheck %s
-@ RUN: not llvm-mc -triple thumbv7a--none-eabi < %s |& FileCheck %s
+@ RUN: not llvm-mc -triple armv7a--none-eabi < %s 2>&1 | FileCheck %s
+@ RUN: not llvm-mc -triple thumbv7a--none-eabi < %s 2>&1 | FileCheck %s
 
   msr apsr_c, r0
 @ CHECK: invalid operand for instruction
