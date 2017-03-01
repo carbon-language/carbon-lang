@@ -260,3 +260,38 @@ define i64 @select_2_or_inc(i64 %x) {
   ret i64 %retval.0
 }
 
+define <4 x i32> @sel_constants_add_constant_vec(i1 %cond) {
+; CHECK-LABEL: sel_constants_add_constant_vec:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    testb $1, %dil
+; CHECK-NEXT:    jne .LBB22_1
+; CHECK-NEXT:  # BB#2:
+; CHECK-NEXT:    movdqa {{.*#+}} xmm0 = [11,11,11,11]
+; CHECK-NEXT:    paddd {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    retq
+; CHECK-NEXT:  .LBB22_1:
+; CHECK-NEXT:    movdqa {{.*#+}} xmm0 = [4294967292,12,1,0]
+; CHECK-NEXT:    paddd {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    retq
+  %sel = select i1 %cond, <4 x i32> <i32 -4, i32 12, i32 1, i32 0>, <4 x i32> <i32 11, i32 11, i32 11, i32 11>
+  %bo = add <4 x i32> %sel, <i32 1, i32 2, i32 3, i32 4>
+  ret <4 x i32> %bo
+}
+
+define <2 x double> @sel_constants_fmul_constant_vec(i1 %cond) {
+; CHECK-LABEL: sel_constants_fmul_constant_vec:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    testb $1, %dil
+; CHECK-NEXT:    jne .LBB23_1
+; CHECK-NEXT:  # BB#2:
+; CHECK-NEXT:    movapd {{.*#+}} xmm0 = [2.330000e+01,1.100000e+01]
+; CHECK-NEXT:    mulpd {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    retq
+; CHECK-NEXT:  .LBB23_1:
+; CHECK-NEXT:    movapd {{.*#+}} xmm0 = [-4.000000e+00,1.200000e+01]
+; CHECK-NEXT:    mulpd {{.*}}(%rip), %xmm0
+; CHECK-NEXT:    retq
+  %sel = select i1 %cond, <2 x double> <double -4.0, double 12.0>, <2 x double> <double 23.3, double 11.0>
+  %bo = fmul <2 x double> %sel, <double 5.1, double 3.14>
+  ret <2 x double> %bo
+}
