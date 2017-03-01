@@ -20,7 +20,7 @@ using namespace lldb_private;
 
 enum { FOO = 1, BAR = 2 };
 static constexpr Log::Category test_categories[] = {
-    {"foo", "log foo", FOO}, {"bar", "log bar", BAR},
+    {{"foo"}, {"log foo"}, FOO}, {{"bar"}, {"log bar"}, BAR},
 };
 static constexpr uint32_t default_flags = FOO;
 
