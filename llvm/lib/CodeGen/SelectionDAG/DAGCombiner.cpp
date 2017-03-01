@@ -12622,11 +12622,10 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
             Value,
             APInt::getLowBitsSet(Value.getScalarValueSizeInBits(),
                                  ST->getMemoryVT().getScalarSizeInBits()))) {
-      // Re-visit the store if anything changed and the store hasn't
-      // been merged with another node (N is deleted);
-      // SimplifyDemandedBits will add Value's node back to the
-      // worklist if necessary, but we also need to re-visit the Store
-      // node itself.
+      // Re-visit the store if anything changed and the store hasn't been merged
+      // with another node (N is deleted) SimplifyDemandedBits will add Value's
+      // node back to the worklist if necessary, but we also need to re-visit
+      // the Store node itself.
       if (N->getOpcode() != ISD::DELETED_NODE)
         AddToWorklist(N);
       return SDValue(N, 0);
