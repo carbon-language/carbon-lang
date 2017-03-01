@@ -589,11 +589,12 @@ void UnwrappedLineParser::conditionalCompilationEnd() {
 }
 
 void UnwrappedLineParser::parsePPIf(bool IfDef) {
+  bool IfNDef = FormatTok->is(tok::pp_ifndef);
   nextToken();
   bool Unreachable = false;
   if (!IfDef && (FormatTok->is(tok::kw_false) || FormatTok->TokenText == "0"))
     Unreachable = true;
-  if (IfDef && FormatTok->TokenText == "SWIG")
+  if (IfDef && !IfNDef && FormatTok->TokenText == "SWIG")
     Unreachable = true;
   conditionalCompilationStart(Unreachable);
   parsePPUnknown();
