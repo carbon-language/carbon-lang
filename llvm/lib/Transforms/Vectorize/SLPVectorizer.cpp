@@ -4459,11 +4459,12 @@ public:
 
       // Emit a reduction.
       Value *ReducedSubTree =
-          emitReduction(VectorizedRoot, Builder, ReduxWidth);
+          emitReduction(VectorizedRoot, Builder, ReduxWidth, ReductionOps);
       if (VectorizedTree) {
         Builder.SetCurrentDebugLocation(Loc);
         VectorizedTree = Builder.CreateBinOp(ReductionOpcode, VectorizedTree,
                                              ReducedSubTree, "bin.rdx");
+        propagateIRFlags(VectorizedTree, ReductionOps);
       } else
         VectorizedTree = ReducedSubTree;
       i += ReduxWidth;
@@ -4477,6 +4478,7 @@ public:
         Builder.SetCurrentDebugLocation(I->getDebugLoc());
         VectorizedTree =
             Builder.CreateBinOp(ReductionOpcode, VectorizedTree, I);
+        propagateIRFlags(VectorizedTree, ReductionOps);
       }
       for (auto &Pair : ExternallyUsedValues) {
         assert(!Pair.second.empty() &&
@@ -4527,7 +4529,7 @@ private:
 
   /// \brief Emit a horizontal reduction of the vectorized value.
   Value *emitReduction(Value *VectorizedValue, IRBuilder<> &Builder,
-                       unsigned ReduxWidth) {
+                       unsigned ReduxWidth, ArrayRef<Value *> RedOps) {
     assert(VectorizedValue && "Need to have a vectorized tree node");
     assert(isPowerOf2_32(ReduxWidth) &&
            "We only handle power-of-two reductions for now");
@@ -4554,6 +4556,7 @@ private:
           TmpVec, UndefValue::get(TmpVec->getType()), UpperHalf, "rdx.shuf");
         TmpVec = Builder.CreateBinOp(ReductionOpcode, TmpVec, Shuf, "bin.rdx");
       }
+      propagateIRFlags(TmpVec, RedOps);
     }
 
     // The result is in the first element of the vector.
