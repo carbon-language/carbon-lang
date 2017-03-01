@@ -57,6 +57,9 @@ public:
   // to reach the current segment's containing virtual register.
   typedef LiveSegments::iterator SegmentIter;
 
+  /// Const version of SegmentIter.
+  typedef LiveSegments::const_iterator ConstSegmentIter;
+
   // LiveIntervalUnions share an external allocator.
   typedef LiveSegments::Allocator Allocator;
 
@@ -72,12 +75,16 @@ public:
   SegmentIter begin() { return Segments.begin(); }
   SegmentIter end() { return Segments.end(); }
   SegmentIter find(SlotIndex x) { return Segments.find(x); }
+  ConstSegmentIter begin() const { return Segments.begin(); }
+  ConstSegmentIter end() const { return Segments.end(); }
+  ConstSegmentIter find(SlotIndex x) const { return Segments.find(x); }
+
   bool empty() const { return Segments.empty(); }
   SlotIndex startIndex() const { return Segments.start(); }
 
   // Provide public access to the underlying map to allow overlap iteration.
   typedef LiveSegments Map;
-  const Map &getMap() { return Segments; }
+  const Map &getMap() const { return Segments; }
 
   /// getTag - Return an opaque tag representing the current state of the union.
   unsigned getTag() const { return Tag; }
@@ -105,45 +112,42 @@ public:
   /// Query interferences between a single live virtual register and a live
   /// interval union.
   class Query {
-    LiveIntervalUnion *LiveUnion = nullptr;
-    LiveInterval *VirtReg = nullptr;
-    LiveInterval::iterator VirtRegI; // current position in VirtReg
-    SegmentIter LiveUnionI;          // current position in LiveUnion
+    const LiveIntervalUnion *LiveUnion = nullptr;
+    const LiveRange *LR = nullptr;
+    LiveRange::const_iterator LRI;  ///< current position in LR
+    ConstSegmentIter LiveUnionI;    ///< current position in LiveUnion
     SmallVector<LiveInterval*,4> InterferingVRegs;
     bool CheckedFirstInterference = false;
     bool SeenAllInterferences = false;
     unsigned Tag = 0;
     unsigned UserTag = 0;
 
-  public:
-    Query() = default;
-    Query(LiveInterval *VReg, LiveIntervalUnion *LIU):
-      LiveUnion(LIU), VirtReg(VReg) {}
-    Query(const Query &) = delete;
-    Query &operator=(const Query &) = delete;
-
-    void clear() {
-      LiveUnion = nullptr;
-      VirtReg = nullptr;
+    void reset(unsigned NewUserTag, const LiveRange &NewLR,
+               const LiveIntervalUnion &NewLiveUnion) {
+      LiveUnion = &NewLiveUnion;
+      LR = &NewLR;
       InterferingVRegs.clear();
       CheckedFirstInterference = false;
       SeenAllInterferences = false;
-      Tag = 0;
-      UserTag = 0;
+      Tag = NewLiveUnion.getTag();
+      UserTag = NewUserTag;
     }
 
-    void init(unsigned UTag, LiveInterval *VReg, LiveIntervalUnion *LIU) {
-      assert(VReg && LIU && "Invalid arguments");
-      if (UserTag == UTag && VirtReg == VReg &&
-          LiveUnion == LIU && !LIU->changedSince(Tag)) {
+  public:
+    Query() = default;
+    Query(const LiveRange &LR, const LiveIntervalUnion &LIU):
+      LiveUnion(&LIU), LR(&LR) {}
+    Query(const Query &) = delete;
+    Query &operator=(const Query &) = delete;
+
+    void init(unsigned NewUserTag, const LiveRange &NewLR,
+              const LiveIntervalUnion &NewLiveUnion) {
+      if (UserTag == NewUserTag && LR == &NewLR && LiveUnion == &NewLiveUnion &&
+          !NewLiveUnion.changedSince(Tag)) {
         // Retain cached results, e.g. firstInterference.
         return;
       }
-      clear();
-      LiveUnion = LIU;
-      VirtReg = VReg;
-      Tag = LIU->getTag();
-      UserTag = UTag;
+      reset(NewUserTag, NewLR, NewLiveUnion);
     }
 
     // Does this live virtual register interfere with the union?
