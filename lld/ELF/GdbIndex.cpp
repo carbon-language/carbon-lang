@@ -122,10 +122,9 @@ GdbIndexBuilder<ELFT>::readPubNamesAndTypes() {
 }
 
 std::pair<bool, GdbSymbol *> GdbHashTab::add(uint32_t Hash, size_t Offset) {
-  GdbSymbol *&Sym = Map[{Hash, Offset}];
+  GdbSymbol *&Sym = Map[Offset];
   if (Sym)
     return {false, Sym};
-  ++Size;
   Sym = make<GdbSymbol>(Hash, Offset);
   return {true, Sym};
 }

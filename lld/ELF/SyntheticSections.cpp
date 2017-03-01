@@ -1730,9 +1730,7 @@ template <class ELFT> void GdbIndexSection<ELFT>::readDwarf(InputSection *Sec) {
       continue;
     }
 
-    std::vector<std::pair<uint32_t, uint8_t>> &CuVec =
-        CuVectors[Sym->CuVectorIndex];
-    CuVec.push_back({CuId, Pair.second});
+    CuVectors[Sym->CuVectorIndex].push_back({CuId, Pair.second});
   }
 }
 

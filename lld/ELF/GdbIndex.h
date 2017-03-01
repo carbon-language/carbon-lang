@@ -75,13 +75,8 @@ public:
   GdbSymbol *getSymbol(size_t I) { return Table[I]; }
 
 private:
-  GdbSymbol **findSlot(uint32_t Hash, size_t Offset);
-
-  llvm::DenseMap<std::pair<uint32_t, size_t>, GdbSymbol *> Map;
+  llvm::DenseMap<size_t, GdbSymbol *> Map;
   std::vector<GdbSymbol *> Table;
-
-  // Size keeps the amount of filled entries in Table.
-  size_t Size = 0;
 };
 
 } // namespace elf
