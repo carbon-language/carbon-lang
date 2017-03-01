@@ -99,8 +99,8 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
     break;
 
   // The languages below have valid values in all DWARF versions.
-  case dwarf::DW_LANG_C89:
   case dwarf::DW_LANG_C:
+  case dwarf::DW_LANG_C89:
   case dwarf::DW_LANG_C_plus_plus:
     return 0;
 
@@ -122,10 +122,10 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
     break;
 
   // Starting with DWARF v4, all defined languages have valid values.
+  case dwarf::DW_LANG_D:
   case dwarf::DW_LANG_Java:
   case dwarf::DW_LANG_Python:
   case dwarf::DW_LANG_UPC:
-  case dwarf::DW_LANG_D:
     if (DD->getDwarfVersion() >= 4)
       return 0;
     break;
@@ -142,27 +142,27 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
     break;
 
   // The languages below are new in DWARF v5.
-  case dwarf::DW_LANG_OpenCL:
-  case dwarf::DW_LANG_Go:
-  case dwarf::DW_LANG_Haskell:
+  case dwarf::DW_LANG_BLISS:
+  case dwarf::DW_LANG_C11:
   case dwarf::DW_LANG_C_plus_plus_03:
   case dwarf::DW_LANG_C_plus_plus_11:
-  case dwarf::DW_LANG_OCaml:
-  case dwarf::DW_LANG_Rust:
-  case dwarf::DW_LANG_C11:
-  case dwarf::DW_LANG_Swift:
-  case dwarf::DW_LANG_Dylan:
   case dwarf::DW_LANG_C_plus_plus_14:
-  case dwarf::DW_LANG_BLISS:
+  case dwarf::DW_LANG_Dylan:
+  case dwarf::DW_LANG_Go:
+  case dwarf::DW_LANG_Haskell:
+  case dwarf::DW_LANG_OCaml:
+  case dwarf::DW_LANG_OpenCL:
   case dwarf::DW_LANG_RenderScript:
+  case dwarf::DW_LANG_Rust:
+  case dwarf::DW_LANG_Swift:
     if (DD->getDwarfVersion() >= 5)
       return 0;
     break;
 
-  case dwarf::DW_LANG_Modula3:
-  case dwarf::DW_LANG_Julia:
   case dwarf::DW_LANG_Fortran03:
   case dwarf::DW_LANG_Fortran08:
+  case dwarf::DW_LANG_Julia:
+  case dwarf::DW_LANG_Modula3:
     if (DD->getDwarfVersion() >= 5)
       return 1;
     break;
