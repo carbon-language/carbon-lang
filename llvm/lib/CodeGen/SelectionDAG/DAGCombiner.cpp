@@ -129,6 +129,9 @@ namespace {
     /// Add to the worklist making sure its instance is at the back (next to be
     /// processed.)
     void AddToWorklist(SDNode *N) {
+      assert(N->getOpcode() != ISD::DELETED_NODE &&
+             "Deleted Node added to Worklist");
+
       // Skip handle nodes as they can't usefully be combined and confuse the
       // zero-use deletion strategy.
       if (N->getOpcode() == ISD::HANDLENODE)
@@ -12619,10 +12622,13 @@ SDValue DAGCombiner::visitSTORE(SDNode *N) {
             Value,
             APInt::getLowBitsSet(Value.getScalarValueSizeInBits(),
                                  ST->getMemoryVT().getScalarSizeInBits()))) {
-      // Re-visit the store if anything changed; SimplifyDemandedBits
-      // will add Value's node back to the worklist if necessary, but
-      // we also need to re-visit the Store node itself.
-      AddToWorklist(N);
+      // Re-visit the store if anything changed and the store hasn't
+      // been merged with another node (N is deleted);
+      // SimplifyDemandedBits will add Value's node back to the
+      // worklist if necessary, but we also need to re-visit the Store
+      // node itself.
+      if (N->getOpcode() != ISD::DELETED_NODE)
+        AddToWorklist(N);
       return SDValue(N, 0);
     }
   }
