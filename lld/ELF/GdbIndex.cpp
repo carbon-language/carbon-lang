@@ -67,17 +67,30 @@ using namespace llvm;
 using namespace llvm::object;
 using namespace lld::elf;
 
+class lld::elf::ObjInfoTy : public llvm::LoadedObjectInfo {
+  uint64_t getSectionLoadAddress(const object::SectionRef &Sec) const override {
+    auto &S = static_cast<const ELFSectionRef &>(Sec);
+    if (S.getFlags() & ELF::SHF_ALLOC)
+      return S.getOffset();
+    return 0;
+  }
+
+  std::unique_ptr<llvm::LoadedObjectInfo> clone() const override { return {}; }
+};
+
 template <class ELFT>
 GdbIndexBuilder<ELFT>::GdbIndexBuilder(InputSection *DebugInfoSec)
-    : DebugInfoSec(DebugInfoSec) {
+    : DebugInfoSec(DebugInfoSec), ObjInfo(new ObjInfoTy) {
   if (Expected<std::unique_ptr<object::ObjectFile>> Obj =
           object::ObjectFile::createObjectFile(
               DebugInfoSec->template getFile<ELFT>()->MB))
-    Dwarf.reset(new DWARFContextInMemory(*Obj.get(), this));
+    Dwarf.reset(new DWARFContextInMemory(*Obj.get(), ObjInfo.get()));
   else
     error(toString(DebugInfoSec->template getFile<ELFT>()) +
           ": error creating DWARF context");
 }
+
+template <class ELFT> GdbIndexBuilder<ELFT>::~GdbIndexBuilder() {}
 
 template <class ELFT>
 std::vector<std::pair<typename ELFT::uint, typename ELFT::uint>>
@@ -164,22 +177,6 @@ GdbIndexBuilder<ELFT>::readAddressArea(size_t CurrentCU) {
     ++CurrentCU;
   }
   return Ret;
-}
-
-// We return file offset as load address for allocatable sections. That is
-// currently used for collecting address ranges in readAddressArea(). We are
-// able then to find section index that range belongs to.
-template <class ELFT>
-uint64_t GdbIndexBuilder<ELFT>::getSectionLoadAddress(
-    const object::SectionRef &Sec) const {
-  if (static_cast<const ELFSectionRef &>(Sec).getFlags() & ELF::SHF_ALLOC)
-    return static_cast<const ELFSectionRef &>(Sec).getOffset();
-  return 0;
-}
-
-template <class ELFT>
-std::unique_ptr<LoadedObjectInfo> GdbIndexBuilder<ELFT>::clone() const {
-  return {};
 }
 
 namespace lld {
