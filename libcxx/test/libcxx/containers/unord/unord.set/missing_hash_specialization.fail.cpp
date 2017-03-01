@@ -7,8 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-// UNSUPPORTED: c++98, c++03
 // REQUIRES: diagnose-if-support
+// UNSUPPORTED: c++98, c++03
+
+// Libc++ only provides a defined primary template for std::hash in C++14 and
+// newer.
+// UNSUPPORTED: c++11
 
 // <unordered_set>
 
