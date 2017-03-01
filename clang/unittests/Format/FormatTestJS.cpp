@@ -1502,6 +1502,9 @@ TEST_F(FormatTestJS, CastSyntax) {
   verifyFormat("x = x as {a: string};");
   verifyFormat("x = x as (string);");
   verifyFormat("x = x! as (string);");
+  verifyFormat("var x = something.someFunction() as\n"
+               "    something;",
+               getGoogleJSStyleWithColumns(40));
 }
 
 TEST_F(FormatTestJS, TypeArguments) {
