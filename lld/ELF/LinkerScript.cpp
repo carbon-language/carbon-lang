@@ -495,7 +495,7 @@ template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
 
     if (!IB->Live)
       continue;
-    switchTo(IB->OutSec);
+    assert(CurOutSec == IB->OutSec || AlreadyOutputOS.count(IB->OutSec));
     output(cast<InputSection>(IB));
   }
 }
