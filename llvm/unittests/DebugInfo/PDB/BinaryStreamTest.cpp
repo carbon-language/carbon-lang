@@ -124,10 +124,11 @@ private:
   BumpPtrAllocator Allocator;
 };
 
+constexpr endianness Endians[] = { big, little, native };
+constexpr uint32_t NumEndians = llvm::array_lengthof(Endians);
+constexpr uint32_t NumStreams = 2 * NumEndians;
+
 class BinaryStreamTest : public testing::Test {
-  static constexpr endianness Endians[] = {big, little, native};
-  static constexpr uint32_t NumEndians = llvm::array_lengthof(Endians);
-  static constexpr uint32_t NumStreams = 2 * NumEndians;
 
 public:
   BinaryStreamTest() {}
