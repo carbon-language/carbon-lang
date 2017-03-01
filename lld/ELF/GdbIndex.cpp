@@ -65,6 +65,7 @@
 
 using namespace llvm;
 using namespace llvm::object;
+using namespace lld;
 using namespace lld::elf;
 
 class lld::elf::ObjInfoTy : public llvm::LoadedObjectInfo {
@@ -180,11 +181,7 @@ GdbIndexBuilder<ELFT>::readAddressArea(size_t CurrentCU) {
   return Ret;
 }
 
-namespace lld {
-namespace elf {
-template class GdbIndexBuilder<ELF32LE>;
-template class GdbIndexBuilder<ELF32BE>;
-template class GdbIndexBuilder<ELF64LE>;
-template class GdbIndexBuilder<ELF64BE>;
-}
-}
+template class elf::GdbIndexBuilder<ELF32LE>;
+template class elf::GdbIndexBuilder<ELF32BE>;
+template class elf::GdbIndexBuilder<ELF64LE>;
+template class elf::GdbIndexBuilder<ELF64BE>;
