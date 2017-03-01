@@ -56,7 +56,7 @@ public:
   Error readBytes(uint32_t Offset, uint32_t Size,
                   ArrayRef<uint8_t> &Buffer) override {
     if (Offset + Size > Data.size())
-      return errorCodeToError(make_error_code(std::errc::function_not_supported));
+      return errorCodeToError(make_error_code(std::errc::no_buffer_space));
     uint32_t S = startIndex(Offset);
     auto Ref = Data.drop_front(S);
     if (Ref.size() >= Size) {
@@ -75,7 +75,7 @@ public:
   Error readLongestContiguousChunk(uint32_t Offset,
                                    ArrayRef<uint8_t> &Buffer) override {
     if (Offset >= Data.size())
-      return errorCodeToError(make_error_code(std::errc::function_not_supported));
+      return errorCodeToError(make_error_code(std::errc::no_buffer_space));
     uint32_t S = startIndex(Offset);
     Buffer = Data.drop_front(S);
     return Error::success();
@@ -85,7 +85,7 @@ public:
 
   Error writeBytes(uint32_t Offset, ArrayRef<uint8_t> SrcData) override {
     if (Offset + SrcData.size() > Data.size())
-      return errorCodeToError(make_error_code(std::errc::function_not_supported));
+      return errorCodeToError(make_error_code(std::errc::no_buffer_space));
     if (SrcData.empty())
       return Error::success();
 
