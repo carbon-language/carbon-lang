@@ -146,11 +146,6 @@ public:
       UserTag = UTag;
     }
 
-    LiveInterval &virtReg() const {
-      assert(VirtReg && "uninitialized");
-      return *VirtReg;
-    }
-
     // Does this live virtual register interfere with the union?
     bool checkInterference() { return collectInterferingVRegs(1); }
 
