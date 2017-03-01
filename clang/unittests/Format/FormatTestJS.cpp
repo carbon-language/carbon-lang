@@ -278,6 +278,11 @@ TEST_F(FormatTestJS, ContainerLiterals) {
                "  aaa,\n"
                "  aaa,\n"
                "};");
+  verifyFormat("return {\n"
+               "  a,\n"
+               "  b: 'b',\n"
+               "  c,\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, MethodsInObjectLiterals) {
