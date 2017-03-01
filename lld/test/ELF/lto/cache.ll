@@ -1,3 +1,5 @@
+; REQUIRES: x86
+
 ; RUN: opt -module-hash -module-summary %s -o %t.o
 ; RUN: opt -module-hash -module-summary %p/Inputs/cache.ll -o %t2.o
 
