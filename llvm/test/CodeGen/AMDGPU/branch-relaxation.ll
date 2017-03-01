@@ -430,8 +430,16 @@ endif:
 ; GCN-NEXT: s_and_saveexec_b64 [[MASK:s\[[0-9]+:[0-9]+\]]], vcc
 ; GCN-NEXT: s_xor_b64 [[MASK]], exec, [[MASK]]
 ; GCN-NEXT: ; mask branch [[RET:BB[0-9]+_[0-9]+]]
+; GCN-NEXT: s_cbranch_execnz [[LOOP_BODY:BB[0-9]+_[0-9]+]]
 
-; GCN-NEXT: [[LOOP_BODY:BB[0-9]+_[0-9]+]]: ; %loop_body
+; GCN-NEXT: [[BRANCH_SKIP:BB[0-9]+_[0-9]+]]: ; %entry
+; GCN-NEXT: s_getpc_b64 vcc
+; GCN-NEXT: s_add_u32 vcc_lo, vcc_lo, [[RET]]-([[BRANCH_SKIP]]+4)
+; GCN-NEXT: s_addc_u32 vcc_hi, vcc_hi, 0
+; GCN-NEXT: s_setpc_b64 vcc
+
+; GCN-NEXT: [[LOOP_BODY]]: ; %loop_body
+
 ; GCN: ;;#ASMSTART
 ; GCN: v_nop_e64
 ; GCN: v_nop_e64
@@ -448,11 +456,8 @@ endif:
 ; GCN-NEXT: s_subb_u32 vcc_hi, vcc_hi, 0
 ; GCN-NEXT: s_setpc_b64 vcc
 
-; GCN-NEXT: [[RET]]: 
+; GCN-NEXT: BB{{[0-9]+_[0-9]+}}: ; %ret
 ; GCN-NEXT: s_or_b64 exec, exec, [[MASK]]
-; GCN-NEXT: s_mov_b32 s3, 0xf000
-; GCN-NEXT: s_mov_b32 s2, -1
-; GCN-NExt: v_mov_b32_e32 v0, 7
 ; GCN: buffer_store_dword
 ; GCN-NEXT: s_endpgm
 define void @analyze_mask_branch() #0 {
@@ -460,8 +465,14 @@ entry:
   %reg = call float asm sideeffect "v_mov_b32_e64 $0, 0", "=v"()
   %cmp0 = fcmp ogt float %reg, 0.000000e+00
   br i1 %cmp0, label %loop, label %ret
+
 loop:
   %phi = phi float [ 0.000000e+00, %loop_body ], [ 1.000000e+00, %entry ]
+  call void @llvm.amdgcn.s.sleep(i32 0)
+  call void @llvm.amdgcn.s.sleep(i32 0)
+  call void @llvm.amdgcn.s.sleep(i32 0)
+  call void @llvm.amdgcn.s.sleep(i32 0)
+  call void @llvm.amdgcn.s.sleep(i32 0)
   call void asm sideeffect
     "v_nop_e64
      v_nop_e64", ""() #0
