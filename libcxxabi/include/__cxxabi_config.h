@@ -56,4 +56,10 @@
  #endif
 #endif
 
+#if defined(_WIN32)
+#define _LIBCXXABI_WEAK
+#else
+#define _LIBCXXABI_WEAK __attribute__((__weak__))
+#endif
+
 #endif // ____CXXABI_CONFIG_H
