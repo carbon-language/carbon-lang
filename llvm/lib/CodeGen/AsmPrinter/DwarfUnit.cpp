@@ -98,25 +98,35 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
   default:
     break;
 
+  // The languages below have valid values in all DWARF versions.
   case dwarf::DW_LANG_C89:
-  case dwarf::DW_LANG_C99:
   case dwarf::DW_LANG_C:
   case dwarf::DW_LANG_C_plus_plus:
-  case dwarf::DW_LANG_ObjC:
-  case dwarf::DW_LANG_ObjC_plus_plus:
     return 0;
 
   case dwarf::DW_LANG_Fortran77:
   case dwarf::DW_LANG_Fortran90:
-  case dwarf::DW_LANG_Fortran95:
     return 1;
 
-  // The languages below have valid values only if the DWARF version >= 4.
+  // The languages below have valid values only if the DWARF version >= 3.
+  case dwarf::DW_LANG_C99:
+  case dwarf::DW_LANG_ObjC:
+  case dwarf::DW_LANG_ObjC_plus_plus:
+    if (DD->getDwarfVersion() >= 3)
+      return 0;
+    break;
+
+  case dwarf::DW_LANG_Fortran95:
+    if (DD->getDwarfVersion() >= 3)
+      return 1;
+    break;
+
+  // Starting with DWARF v4, all defined languages have valid values.
   case dwarf::DW_LANG_Java:
   case dwarf::DW_LANG_Python:
   case dwarf::DW_LANG_UPC:
   case dwarf::DW_LANG_D:
-    if (dwarf::DWARF_VERSION >= 4)
+    if (DD->getDwarfVersion() >= 4)
       return 0;
     break;
 
@@ -127,11 +137,11 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
   case dwarf::DW_LANG_Modula2:
   case dwarf::DW_LANG_Pascal83:
   case dwarf::DW_LANG_PLI:
-    if (dwarf::DWARF_VERSION >= 4)
+    if (DD->getDwarfVersion() >= 4)
       return 1;
     break;
 
-  // The languages below have valid values only if the DWARF version >= 5.
+  // The languages below are new in DWARF v5.
   case dwarf::DW_LANG_OpenCL:
   case dwarf::DW_LANG_Go:
   case dwarf::DW_LANG_Haskell:
@@ -143,7 +153,9 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
   case dwarf::DW_LANG_Swift:
   case dwarf::DW_LANG_Dylan:
   case dwarf::DW_LANG_C_plus_plus_14:
-    if (dwarf::DWARF_VERSION >= 5)
+  case dwarf::DW_LANG_BLISS:
+  case dwarf::DW_LANG_RenderScript:
+    if (DD->getDwarfVersion() >= 5)
       return 0;
     break;
 
@@ -151,7 +163,7 @@ int64_t DwarfUnit::getDefaultLowerBound() const {
   case dwarf::DW_LANG_Julia:
   case dwarf::DW_LANG_Fortran03:
   case dwarf::DW_LANG_Fortran08:
-    if (dwarf::DWARF_VERSION >= 5)
+    if (DD->getDwarfVersion() >= 5)
       return 1;
     break;
   }
