@@ -57,7 +57,8 @@ struct OutgoingValueHandler : public CallLowering::ValueHandler {
 
   unsigned getStackAddress(uint64_t Size, int64_t Offset,
                            MachinePointerInfo &MPO) override {
-    assert((Size == 1 || Size == 2 || Size == 4 || Size == 8) && "Unsupported size");
+    assert((Size == 1 || Size == 2 || Size == 4 || Size == 8) &&
+           "Unsupported size");
 
     LLT p0 = LLT::pointer(0, 32);
     LLT s32 = LLT::scalar(32);
@@ -131,13 +132,13 @@ struct OutgoingValueHandler : public CallLowering::ValueHandler {
   }
 
   bool assignArg(unsigned ValNo, MVT ValVT, MVT LocVT,
-                 CCValAssign::LocInfo LocInfo, const CallLowering::ArgInfo &Info,
-                 CCState &State) override {
+                 CCValAssign::LocInfo LocInfo,
+                 const CallLowering::ArgInfo &Info, CCState &State) override {
     if (AssignFn(ValNo, ValVT, LocVT, LocInfo, Info.Flags, State))
       return true;
 
-    StackSize = std::max(StackSize,
-                         static_cast<uint64_t>(State.getNextStackOffset()));
+    StackSize =
+        std::max(StackSize, static_cast<uint64_t>(State.getNextStackOffset()));
     return false;
   }
 
