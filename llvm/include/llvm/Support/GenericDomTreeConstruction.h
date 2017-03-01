@@ -171,7 +171,7 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
       }
     }
     // Accounting for the virtual exit, see if we had any unreachable nodes
-    if (Total + 1 != N ) {
+    if (Total + 1 != N) {
       // Make another DFS pass over all other nodes to find the unreachable
       // blocks, and find the furthest paths we'll be able to make.
       // Note that this looks N^2, but it's really 2N worst case, if every node
@@ -194,21 +194,20 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
           ConnectToExitBlock.insert(FurthestAway);
           N = ReverseDFSPass<GraphT>(DT, FurthestAway, N);
         }
-        // Finally, now everything should be visited, and anything with parent
-        // ==
-        // 0 should be connected to virtual exit.
-        for (auto *Node : ConnectToExitBlock) {
-          auto FindResult = DT.Info.find(Node);
-          assert(FindResult != DT.Info.end() &&
-                 "Everything should have been visited by now");
-          if (FindResult->second.Parent == 0) {
-            FindResult->second.Parent = 1;
-            DT.addRoot(Node);
-          }
+      // Finally, now everything should be visited, and anything with parent ==
+      // 0 should be connected to virtual exit.
+      for (auto *Node : ConnectToExitBlock) {
+        auto FindResult = DT.Info.find(Node);
+        assert(FindResult != DT.Info.end() &&
+               "Everything should have been visited by now");
+        if (FindResult->second.Parent == 0) {
+          FindResult->second.Parent = 1;
+          DT.addRoot(Node);
         }
       }
-    } else {
-      N = DFSPass<GraphT>(DT, GraphTraits<FuncT *>::getEntryNode(&F), N);
+    }
+  } else {
+    N = DFSPass<GraphT>(DT, GraphTraits<FuncT *>::getEntryNode(&F), N);
   }
 
   // When naively implemented, the Lengauer-Tarjan algorithm requires a separate
