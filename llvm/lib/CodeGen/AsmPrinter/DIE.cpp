@@ -42,6 +42,8 @@ void DIEAbbrevData::Profile(FoldingSetNodeID &ID) const {
   // overloads.  Otherwise MSVC 2010 thinks this call is ambiguous.
   ID.AddInteger(unsigned(Attribute));
   ID.AddInteger(unsigned(Form));
+  if (Form == dwarf::DW_FORM_implicit_const)
+    ID.AddInteger(Value);
 }
 
 //===----------------------------------------------------------------------===//
@@ -107,8 +109,12 @@ void DIEAbbrev::print(raw_ostream &O) {
     O << "  "
       << dwarf::AttributeString(Data[i].getAttribute())
       << "  "
-      << dwarf::FormEncodingString(Data[i].getForm())
-      << '\n';
+      << dwarf::FormEncodingString(Data[i].getForm());
+
+    if (Data[i].getForm() == dwarf::DW_FORM_implicit_const)
+      O << " " << Data[i].getValue();
+
+    O << '\n';
   }
 }
 
