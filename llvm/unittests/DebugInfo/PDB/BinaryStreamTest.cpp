@@ -504,7 +504,7 @@ TEST_F(BinaryStreamTest, StreamReaderEnum) {
   }
 }
 
-TEST_F(BinaryStreamTest, StreamReaderObject) {
+TEST_F(BinaryStreamTest, DISABLED_StreamReaderObject) {
   struct Foo {
     int X;
     double Y;
