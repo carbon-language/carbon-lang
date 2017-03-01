@@ -120,7 +120,7 @@ exception_cleanup_func(_Unwind_Reason_Code reason, _Unwind_Exception* unwind_exc
     __cxa_decrement_exception_refcount(unwind_exception + 1);
 }
 
-static LIBCXXABI_NORETURN void failed_throw(__cxa_exception* exception_header) {
+static _LIBCXXABI_NORETURN void failed_throw(__cxa_exception* exception_header) {
 //  Section 2.5.3 says:
 //      * For purposes of this ABI, several things are considered exception handlers:
 //      ** A terminate() call due to a throw.
@@ -202,7 +202,7 @@ handler, _Unwind_RaiseException may return. In that case, __cxa_throw
 will call terminate, assuming that there was no handler for the
 exception.
 */
-_LIBCXXABI_FUNC_VIS LIBCXXABI_NORETURN void
+_LIBCXXABI_FUNC_VIS _LIBCXXABI_NORETURN void
 __cxa_throw(void *thrown_object, std::type_info *tinfo, void (*dest)(void *)) {
     __cxa_eh_globals *globals = __cxa_get_globals();
     __cxa_exception* exception_header = cxa_exception_from_thrown_object(thrown_object);
@@ -237,7 +237,7 @@ The adjusted pointer is computed by the personality routine during phase 1
 */
 _LIBCXXABI_FUNC_VIS
 void *__cxa_get_exception_ptr(void *unwind_exception) throw() {
-#if LIBCXXABI_ARM_EHABI
+#if _LIBCXXABI_ARM_EHABI
     return reinterpret_cast<void*>(
         static_cast<_Unwind_Control_Block*>(unwind_exception)->barrier_cache.bitpattern[0]);
 #else
@@ -246,7 +246,7 @@ void *__cxa_get_exception_ptr(void *unwind_exception) throw() {
 #endif
 }
 
-#if LIBCXXABI_ARM_EHABI
+#if _LIBCXXABI_ARM_EHABI
 /*
 The routine to be called before the cleanup.  This will save __cxa_exception in
 __cxa_eh_globals, so that __cxa_end_cleanup() can recover later.
@@ -329,7 +329,7 @@ asm (
     "	bl	abort\n"
     "	.popsection"
 );
-#endif  // LIBCXXABI_ARM_EHABI
+#endif  // _LIBCXXABI_ARM_EHABI
     
 /*
 This routine can catch foreign or native exceptions.  If native, the exception
@@ -389,7 +389,7 @@ __cxa_begin_catch(void* unwind_arg) throw()
             globals->caughtExceptions = exception_header;
         }
         globals->uncaughtExceptions -= 1;   // Not atomically, since globals are thread-local
-#if LIBCXXABI_ARM_EHABI
+#if _LIBCXXABI_ARM_EHABI
         return reinterpret_cast<void*>(exception_header->unwindHeader.barrier_cache.bitpattern[0]);
 #else
         return exception_header->adjustedPtr;
@@ -525,7 +525,7 @@ If the exception is native:
   Note:  exception_header may be masquerading as a __cxa_dependent_exception
          and that's ok.
 */
-_LIBCXXABI_FUNC_VIS LIBCXXABI_NORETURN void __cxa_rethrow() {
+_LIBCXXABI_FUNC_VIS _LIBCXXABI_NORETURN void __cxa_rethrow() {
     __cxa_eh_globals* globals = __cxa_get_globals();
     __cxa_exception* exception_header = globals->caughtExceptions;
     if (NULL == exception_header)
