@@ -59,6 +59,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "GdbIndex.h"
+#include "Memory.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugPubTable.h"
 #include "llvm/Object/ELFObjectFile.h"
 
@@ -106,48 +107,32 @@ GdbIndexBuilder<ELFT>::readPubNamesAndTypes() {
 }
 
 std::pair<bool, GdbSymbol *> GdbHashTab::add(uint32_t Hash, size_t Offset) {
-  if (Size * 4 / 3 >= Table.size())
-    expand();
-
-  GdbSymbol **Slot = findSlot(Hash, Offset);
-  bool New = false;
-  if (*Slot == nullptr) {
-    ++Size;
-    *Slot = new (Alloc) GdbSymbol(Hash, Offset);
-    New = true;
-  }
-  return {New, *Slot};
+  GdbSymbol *&Sym = Map[{Hash, Offset}];
+  if (Sym)
+    return {false, Sym};
+  ++Size;
+  Sym = make<GdbSymbol>(Hash, Offset);
+  return {true, Sym};
 }
 
-void GdbHashTab::expand() {
-  if (Table.empty()) {
-    Table.resize(InitialSize);
-    return;
-  }
-  std::vector<GdbSymbol *> NewTable(Table.size() * 2);
-  NewTable.swap(Table);
+void GdbHashTab::finalizeContents() {
+  Table.resize(std::max(1024UL, NextPowerOf2(Map.size() * 4 / 3)));
 
-  for (GdbSymbol *Sym : NewTable) {
-    if (!Sym)
-      continue;
-    GdbSymbol **Slot = findSlot(Sym->NameHash, Sym->NameOffset);
-    *Slot = Sym;
-  }
-}
+  for (auto &P : Map) {
+    GdbSymbol *Sym = P.second;
 
-// Methods finds a slot for symbol with given hash. The step size used to find
-// the next candidate slot when handling a hash collision is specified in
-// .gdb_index section format. The hash value for a table entry is computed by
-// applying an iterative hash function to the symbol's name.
-GdbSymbol **GdbHashTab::findSlot(uint32_t Hash, size_t Offset) {
-  uint32_t Index = Hash & (Table.size() - 1);
-  uint32_t Step = ((Hash * 17) & (Table.size() - 1)) | 1;
+    uint32_t I = Sym->NameHash & (Table.size() - 1);
+    uint32_t Step = ((Sym->NameHash * 17) & (Table.size() - 1)) | 1;
 
-  for (;;) {
-    GdbSymbol *S = Table[Index];
-    if (!S || ((S->NameOffset == Offset) && (S->NameHash == Hash)))
-      return &Table[Index];
-    Index = (Index + Step) & (Table.size() - 1);
+    for (;;) {
+      if (Table[I]) {
+        I = (I + Step) & (Table.size() - 1);
+        continue;
+      }
+
+      Table[I] = Sym;
+      break;
+    }
   }
 }
 

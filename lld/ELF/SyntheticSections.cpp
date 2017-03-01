@@ -1749,6 +1749,7 @@ template <class ELFT> void GdbIndexSection<ELFT>::finalizeContents() {
   Finalized = true;
 
   parseDebugSections();
+  SymbolTable.finalizeContents();
 
   // GdbIndex header consist from version fields
   // and 5 more fields with different kinds of offsets.

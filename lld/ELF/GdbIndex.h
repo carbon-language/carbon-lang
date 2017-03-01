@@ -75,22 +75,18 @@ class GdbHashTab final {
 public:
   std::pair<bool, GdbSymbol *> add(uint32_t Hash, size_t Offset);
 
+  void finalizeContents();
   size_t getCapacity() { return Table.size(); }
   GdbSymbol *getSymbol(size_t I) { return Table[I]; }
 
 private:
-  void expand();
-
   GdbSymbol **findSlot(uint32_t Hash, size_t Offset);
 
-  llvm::BumpPtrAllocator Alloc;
+  llvm::DenseMap<std::pair<uint32_t, size_t>, GdbSymbol *> Map;
   std::vector<GdbSymbol *> Table;
 
   // Size keeps the amount of filled entries in Table.
   size_t Size = 0;
-
-  // Initial size must be a power of 2.
-  static const int32_t InitialSize = 1024;
 };
 
 } // namespace elf
