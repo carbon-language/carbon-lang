@@ -135,12 +135,16 @@ public:
   void SetUp() override {
     Streams.clear();
     Streams.resize(NumStreams);
+    for (int I = 0; I < NumStreams; ++I)
+      Streams[I].IsContiguous = (I % 2 == 0);
+
     InputData.clear();
     OutputData.clear();
   }
 
 protected:
   struct StreamPair {
+    bool IsContiguous;
     std::unique_ptr<BinaryStream> Input;
     std::unique_ptr<WritableBinaryStream> Output;
   };
@@ -210,7 +214,7 @@ protected:
 };
 
 // Tests that a we can read from a BinaryByteStream without a StreamReader.
-TEST_F(BinaryStreamTest, BinaryByteStreamProperties) {
+TEST_F(BinaryStreamTest, BinaryByteStreamBounds) {
   std::vector<uint8_t> InputData = {1, 2, 3, 4, 5};
   initializeInput(InputData);
 
@@ -229,8 +233,60 @@ TEST_F(BinaryStreamTest, BinaryByteStreamProperties) {
   }
 }
 
+TEST_F(BinaryStreamTest, StreamRefBounds) {
+  std::vector<uint8_t> InputData = {1, 2, 3, 4, 5};
+  initializeInput(InputData);
+
+  for (const auto &Stream : Streams) {
+    ArrayRef<uint8_t> Buffer;
+    BinaryStreamRef Ref(*Stream.Input);
+
+    // Read 1 byte from offset 2 should work
+    ASSERT_EQ(InputData.size(), Ref.getLength());
+    ASSERT_NO_ERROR(Ref.readBytes(2, 1, Buffer));
+    EXPECT_EQ(makeArrayRef(InputData).slice(2, 1), Buffer);
+
+    // Reading everything from offset 2 on.
+    ASSERT_NO_ERROR(Ref.readLongestContiguousChunk(2, Buffer));
+    if (Stream.IsContiguous)
+      EXPECT_EQ(makeArrayRef(InputData).slice(2), Buffer);
+    else
+      EXPECT_FALSE(Buffer.empty());
+
+    // Reading 6 bytes from offset 0 is too big.
+    EXPECT_ERROR(Ref.readBytes(0, 6, Buffer));
+    EXPECT_ERROR(Ref.readLongestContiguousChunk(6, Buffer));
+
+    // Reading 1 byte from offset 2 after dropping 1 byte is the same as reading
+    // 1 byte from offset 3.
+    Ref = Ref.drop_front(1);
+    ASSERT_NO_ERROR(Ref.readBytes(2, 1, Buffer));
+    if (Stream.IsContiguous)
+      EXPECT_EQ(makeArrayRef(InputData).slice(3, 1), Buffer);
+    else
+      EXPECT_FALSE(Buffer.empty());
+
+    // Reading everything from offset 2 on after dropping 1 byte.
+    ASSERT_NO_ERROR(Ref.readLongestContiguousChunk(2, Buffer));
+    if (Stream.IsContiguous)
+      EXPECT_EQ(makeArrayRef(InputData).slice(3), Buffer);
+    else
+      EXPECT_FALSE(Buffer.empty());
+
+    // Reading 2 bytes from offset 2 after dropping 2 bytes is the same as
+    // reading 2 bytes from offset 4, and should fail.
+    Ref = Ref.drop_front(1);
+    EXPECT_ERROR(Ref.readBytes(2, 2, Buffer));
+
+    // But if we read the longest contiguous chunk instead, we should still
+    // get the 1 byte at the end.
+    ASSERT_NO_ERROR(Ref.readLongestContiguousChunk(2, Buffer));
+    EXPECT_EQ(makeArrayRef(InputData).take_back(), Buffer);
+  }
+}
+
 // Test that we can write to a BinaryStream without a StreamWriter.
-TEST_F(BinaryStreamTest, MutableBinaryByteStreamProperties) {
+TEST_F(BinaryStreamTest, MutableBinaryByteStreamBounds) {
   std::vector<uint8_t> InputData = {'T', 'e', 's', 't', '\0'};
   initializeInput(InputData);
   initializeOutput(InputData.size());
