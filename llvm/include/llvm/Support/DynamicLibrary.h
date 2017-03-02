@@ -14,6 +14,8 @@
 #ifndef LLVM_SUPPORT_DYNAMICLIBRARY_H
 #define LLVM_SUPPORT_DYNAMICLIBRARY_H
 
+#include "llvm/Support/Mutex.h"
+
 #include <string>
 
 namespace llvm {
@@ -66,6 +68,15 @@ namespace sys {
     /// It is safe to call this function multiple times for the same library.
     /// @brief Open a dynamic library permanently.
     static DynamicLibrary getPermanentLibrary(const char *filename,
+                                              std::string *errMsg = nullptr);
+
+    /// Registers an externally loaded library. The library will be unloaded
+    /// when the program terminates.
+    ///
+    /// It is safe to call this function multiple times for the same library.
+    ///
+    /// \returns An empty \p DynamicLibrary if the library was already loaded.
+    static DynamicLibrary addPermanentLibrary(void *handle,
                                               std::string *errMsg = nullptr);
 
     /// This function permanently loads the dynamic library at the given path.

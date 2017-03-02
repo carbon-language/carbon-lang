@@ -92,6 +92,18 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
   return DynamicLibrary(a_handle);
 }
 
+DynamicLibrary DynamicLibrary::addPermanentLibrary(void *handle,
+                                                   std::string *errMsg) {
+  SmartScopedLock<true> lock(*SymbolsMutex);
+  // If we've already loaded this library, tell the caller.
+  if (!OpenedHandles->insert(handle).second) {
+    MakeErrMsg(errMsg, "Library already loaded");
+    return DynamicLibrary();
+  }
+
+  return DynamicLibrary(handle);
+}
+
 // Stack probing routines are in the support library (e.g. libgcc), but we don't
 // have dynamic linking on windows. Provide a hook.
 #define EXPLICIT_SYMBOL(SYM)                    \
