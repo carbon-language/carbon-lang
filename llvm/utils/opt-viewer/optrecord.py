@@ -40,11 +40,11 @@ class Remark(yaml.YAMLObject):
     # Work-around for http://pyyaml.org/ticket/154.
     yaml_loader = Loader
 
-    def __getattr__(self, name):
-        # If hotness is missing, assume 0
-        if name == 'Hotness':
-            return 0
-        raise AttributeError(name)
+    def initmissing(self):
+        if not hasattr(self, 'Hotness'):
+            self.Hotness = 0
+        if not hasattr(self, 'Args'):
+            self.Args = []
 
     @property
     def File(self):
@@ -146,6 +146,7 @@ def get_remarks(input_file):
     with open(input_file) as f:
         docs = yaml.load_all(f, Loader=Loader)
         for remark in docs:
+            remark.initmissing()
             # Avoid remarks withoug debug location or if they are duplicated
             if not hasattr(remark, 'DebugLoc') or remark.key in all_remarks:
                 continue
