@@ -34,13 +34,6 @@ template <unsigned Element> class SparseBitVector;
 typedef SparseBitVector<128> LiveVirtRegBitSet;
 #endif
 
-/// Compare a live virtual register segment to a LiveIntervalUnion segment.
-inline bool
-overlap(const LiveInterval::Segment &VRSeg,
-        const IntervalMap<SlotIndex, LiveInterval*>::const_iterator &LUSeg) {
-  return VRSeg.start < LUSeg.stop() && LUSeg.start() < VRSeg.end;
-}
-
 /// Union of live intervals that are strong candidates for coalescing into a
 /// single register (either physical or virtual depending on the context).  We
 /// expect the constituent live intervals to be disjoint, although we may
