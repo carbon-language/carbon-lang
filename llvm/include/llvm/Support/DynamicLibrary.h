@@ -14,8 +14,6 @@
 #ifndef LLVM_SUPPORT_DYNAMICLIBRARY_H
 #define LLVM_SUPPORT_DYNAMICLIBRARY_H
 
-#include "llvm/Support/Mutex.h"
-
 #include <string>
 
 namespace llvm {
