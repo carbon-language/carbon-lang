@@ -198,7 +198,7 @@
                                               SomeVectorLikeType that it gets from the synthetic children.
                                               </p>
                                             </li>
-                            
+
                                             <li>
                                               Recover thread information lazily
                                               <p>
@@ -222,6 +222,24 @@
                                               <p>
                                                 This would allow highly customizable, algorithmic breakpoint types, like "break on every 
                                                 use of some particular instruction, or instruction pattern, etc."
+                                              </p>
+                                            </li>
+                            
+                                            <li>
+                                              Make Python-backed commands first class citizens
+                                              <p>
+                                                As it stands, Python commands have no way to advertise their options.  They are
+                                                required to parse their arguments by hand.  That leads to inconsistency, and more
+                                                importantly means they can't take advantage of auto-generated help and command
+                                                completion.  This leaves python-backed commands feeling worse than built-in ones.
+                                              </p>
+                                              <p>
+                                                As part of this job, it would also be great to hook automatically hook the "type" of an option value
+                                                or argument (e.g. eArgTypeShlibName) to sensible default completers.  You need to be able to
+                                                over-ride this in more complicated scenarios (like in "break set" where the presence of
+                                                a "-s" option limits the search for completion of a "-n" option.)  But in common cases it is
+                                                unnecessary busy-work to have to supply the completer AND the type.  If this worked, then 
+                                                it would be easier for Python commands to also get correct completers.
                                               </p>
                                             </li>
 
