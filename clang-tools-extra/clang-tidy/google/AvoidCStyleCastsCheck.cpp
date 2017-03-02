@@ -75,12 +75,12 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
            T->isMemberFunctionPointerType();
   };
 
-  const QualType DestTypeAsWritten = CastExpr->getTypeAsWritten();
-  const QualType SourceTypeAsWritten = CastExpr->getSubExprAsWritten()->getType();
-  const QualType SourceType =
-      SourceTypeAsWritten.getCanonicalType().getUnqualifiedType();
-  const QualType DestType =
-      DestTypeAsWritten.getCanonicalType().getUnqualifiedType();
+  const QualType DestTypeAsWritten =
+      CastExpr->getTypeAsWritten().getUnqualifiedType();
+  const QualType SourceTypeAsWritten =
+      CastExpr->getSubExprAsWritten()->getType().getUnqualifiedType();
+  const QualType SourceType = SourceTypeAsWritten.getCanonicalType();
+  const QualType DestType = DestTypeAsWritten.getCanonicalType();
 
   bool FnToFnCast =
       isFunction(SourceTypeAsWritten) && isFunction(DestTypeAsWritten);

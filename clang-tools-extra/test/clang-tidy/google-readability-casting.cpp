@@ -103,6 +103,19 @@ void f(int a, double b, const char *cpc, const void *cpv, X *pX) {
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: {{.*}}; use static_cast [
   // CHECK-FIXES: Enum e = static_cast<Enum>(b1);
 
+  e = (Enum)Enum1;
+  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: redundant cast to the same type
+  // CHECK-FIXES: {{^}}  e = Enum1;
+
+  e = (Enum)e;
+  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: redundant cast to the same type
+  // CHECK-FIXES: {{^}}  e = e;
+
+  static const int kZero = 0;
+  (int)kZero;
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: redundant cast to the same type
+  // CHECK-FIXES: {{^}}  kZero;
+
   int b2 = int(b);
   int b3 = static_cast<double>(b);
   int b4 = b;
