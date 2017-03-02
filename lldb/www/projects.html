@@ -200,6 +200,24 @@
                                             </li>
                             
                                             <li>
+                                              Recover thread information lazily
+                                              <p>
+                                                LLDB stores all the user intentions for a thread in the ThreadPlans stored in 
+                                                the Thread class.  That allows us to reliably implement a very natural model for
+                                                users moving through a debug session.  For example, if step-over stops at a breakpoint
+                                                in an function in a younger region of the stack, continue will complete the step-over
+                                                rather than having to manually step out.  But that means that it is important that
+                                                the Thread objects live as long as the Threads they represent.  For programs with many
+                                                threads, but only one that you are debugging, that makes stepping less efficient,
+                                                since now you have to fetch the thread list on every step or stepping doesn't work
+                                                correctly.  This is especially an issue when the threads are provided by an
+                                                Operating System plugin, where it may take non-trivial work to reconstruct the 
+                                                thread list.  It would be better to fetch threads lazily but keep "unseen" threads in 
+                                                a holding area, and only retire them when we know we've fetched the whole thread list
+                                                and ensured they are no longer alive.
+                                              </p>
+                                            </li>
+                                            <li>
                                               Add an extension point in the breakpoint search machinery.
                                               <p>
                                                 This would allow highly customizable, algorithmic breakpoint types, like "break on every 
