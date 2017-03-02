@@ -96,7 +96,7 @@ DynamicLibrary DynamicLibrary::addPermanentLibrary(void *handle,
                                                    std::string *errMsg) {
   SmartScopedLock<true> lock(*SymbolsMutex);
   // If we've already loaded this library, tell the caller.
-  if (!OpenedHandles->insert(handle).second) {
+  if (!OpenedHandles->insert((HMODULE)handle).second) {
     MakeErrMsg(errMsg, "Library already loaded");
     return DynamicLibrary();
   }
