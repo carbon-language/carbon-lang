@@ -190,7 +190,7 @@ def generate_report(pmap, all_remarks, file_remarks, source_dir, output_dir, sho
     pmap(_render_file_bound, file_remarks.items())
 
     if should_display_hotness:
-        sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.Hotness, r.__dict__), reverse=True)
+        sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.Hotness, r.File, r.Line, r.Column, r.__dict__), reverse=True)
     else:
         sorted_remarks = sorted(all_remarks.itervalues(), key=lambda r: (r.File, r.Line, r.Column, r.__dict__))
     IndexRenderer(args.output_dir).render(sorted_remarks)
