@@ -1,4 +1,4 @@
-// RUN: %clang_analyze_cc1 %s -o %t
+// RUN: %clang --analyze %s -o %t
 
 // Tests that some specific checkers are enabled by default.
 
