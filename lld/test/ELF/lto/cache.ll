@@ -4,7 +4,7 @@
 ; RUN: opt -module-hash -module-summary %p/Inputs/cache.ll -o %t2.o
 
 ; RUN: rm -Rf %t.cache
-; RUN: ld.lld --thinlto-cache-dir=%t.cache -o %t3.o %t2.o %t.o
+; RUN: ld.lld --thinlto-cache-dir=%t.cache -o %t3 %t2.o %t.o
 
 ; RUN: ls %t.cache | count 2
 
