@@ -88,6 +88,18 @@ class Remark(yaml.YAMLObject):
         else:
             return value
 
+    def getDiffPrefix(self):
+        if hasattr(self, 'Added'):
+            if self.Added:
+                return '+'
+            else:
+                return '-'
+        return ''
+
+    @property
+    def PassWithDiffPrefix(self):
+        return self.getDiffPrefix() + self.Pass
+
     @property
     def message(self):
         # Args is a list of mappings (dictionaries)
@@ -103,7 +115,7 @@ class Remark(yaml.YAMLObject):
 
     @property
     def key(self):
-        k = (self.__class__, self.Pass, self.Name, self.File, self.Line, self.Column, self.Function)
+        k = (self.__class__, self.PassWithDiffPrefix, self.Name, self.File, self.Line, self.Column, self.Function)
         for arg in self.Args:
             for (key, value) in arg.iteritems():
                 if type(value) is dict:
@@ -169,6 +181,11 @@ def get_remarks(input_file):
 
             file_remarks[remark.File][remark.Line].append(remark)
 
+            # If we're reading a back a diff yaml file, max_hotness is already
+            # captured which may actually be less than the max hotness found
+            # in the file.
+            if hasattr(remark, 'max_hotness'):
+                max_hotness = remark.max_hotness
             max_hotness = max(max_hotness, remark.Hotness)
 
     return max_hotness, all_remarks, file_remarks
