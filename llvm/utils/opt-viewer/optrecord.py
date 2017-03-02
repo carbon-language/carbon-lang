@@ -103,7 +103,22 @@ class Remark(yaml.YAMLObject):
 
     @property
     def key(self):
-        return (self.__class__, self.Pass, self.Name, self.File, self.Line, self.Column, self.Function)
+        k = (self.__class__, self.Pass, self.Name, self.File, self.Line, self.Column, self.Function)
+        for arg in self.Args:
+            for (key, value) in arg.iteritems():
+                if type(value) is dict:
+                    value = tuple(value.items())
+                k += (key, value)
+        return k
+
+    def __hash__(self):
+        return hash(self.key)
+
+    def __eq__(self, other):
+        return self.key == other.key
+
+    def __repr__(self):
+        return str(self.key)
 
 
 class Analysis(Remark):
