@@ -628,18 +628,22 @@ namespace std {
 
 #ifndef _LIBCPP_TYPE_VIS
 #  if !defined(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
-#    if __has_attribute(__type_visibility__)
-#      define _LIBCPP_TYPE_VIS __attribute__ ((__type_visibility__("default")))
-#    else
-#      define _LIBCPP_TYPE_VIS __attribute__ ((__visibility__("default")))
-#    endif
+#    define _LIBCPP_TYPE_VIS __attribute__ ((__visibility__("default")))
 #  else
 #    define _LIBCPP_TYPE_VIS
 #  endif
 #endif
 
 #ifndef _LIBCPP_TEMPLATE_VIS
-# define _LIBCPP_TEMPLATE_VIS _LIBCPP_TYPE_VIS
+#  if !defined(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
+#    if __has_attribute(__type_visibility__)
+#      define _LIBCPP_TEMPLATE_VIS __attribute__ ((__type_visibility__("default")))
+#    else
+#      define _LIBCPP_TEMPLATE_VIS __attribute__ ((__visibility__("default")))
+#    endif
+#  else
+#    define _LIBCPP_TEMPLATE_VIS
+#  endif
 #endif
 
 #ifndef _LIBCPP_FUNC_VIS_ONLY

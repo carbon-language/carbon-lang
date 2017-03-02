@@ -47,17 +47,16 @@ Visibility Macros
   A synonym for `_LIBCPP_INLINE_VISIBILITY`
 
 **_LIBCPP_TYPE_VIS**
+  Mark a type's typeinfo, vtable and members as having default visibility.
+  This attribute cannot be used on class templates.
+
+**_LIBCPP_TEMPLATE_VIS**
   Mark a type's typeinfo and vtable as having default visibility.
-  `_LIBCPP_TYPE_VIS`. This macro has no effect on the visibility of the
-  type's member functions. This attribute cannot be used on class templates.
+  This macro has no effect on the visibility of the type's member functions.
 
   **GCC Behavior**: GCC does not support Clang's `type_visibility(...)`
   attribute. With GCC the `visibility(...)` attribute is used and member
   functions are affected.
-
-**_LIBCPP_TEMPLATE_VIS**
-  The same as `_LIBCPP_TYPE_VIS` except that it may be applied to class
-  templates.
 
   **Windows Behavior**: DLLs do not support dllimport/export on class templates.
   The macro has an empty definition on this platform.
