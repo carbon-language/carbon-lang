@@ -591,6 +591,7 @@ namespace std {
 #define _LIBCPP_EXTERN_VIS          _LIBCPP_DLL_VIS
 #define _LIBCPP_EXCEPTION_ABI       _LIBCPP_DLL_VIS
 #define _LIBCPP_HIDDEN
+#define _LIBCPP_METHOD_TEMPLATE_IMPLICIT_INSTANTIATION_VIS
 #define _LIBCPP_TEMPLATE_VIS
 #define _LIBCPP_FUNC_VIS_ONLY
 #define _LIBCPP_ENUM_VIS
@@ -613,6 +614,9 @@ namespace std {
 #define _LIBCPP_HIDDEN
 #endif
 #endif
+
+// The inline should be removed once PR32114 is resolved
+#define _LIBCPP_METHOD_TEMPLATE_IMPLICIT_INSTANTIATION_VIS inline _LIBCPP_HIDDEN
 
 #ifndef _LIBCPP_FUNC_VIS
 #if !defined(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS)
@@ -668,7 +672,7 @@ namespace std {
 
 #ifndef _LIBCPP_EXTERN_TEMPLATE_TYPE_VIS
 #  if !defined(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS) && __has_attribute(__type_visibility__)
-#    define _LIBCPP_EXTERN_TEMPLATE_TYPE_VIS __attribute__ ((__type_visibility__("default")))
+#    define _LIBCPP_EXTERN_TEMPLATE_TYPE_VIS __attribute__ ((__visibility__("default")))
 #  else
 #    define _LIBCPP_EXTERN_TEMPLATE_TYPE_VIS
 #  endif
