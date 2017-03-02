@@ -6523,12 +6523,6 @@ Decl *ASTReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
 }
 
-template<typename TemplateSpecializationDecl>
-static void completeRedeclChainForTemplateSpecialization(Decl *D) {
-  if (auto *TSD = dyn_cast<TemplateSpecializationDecl>(D))
-    TSD->getSpecializedTemplate()->LoadLazySpecializations();
-}
-
 void ASTReader::CompleteRedeclChain(const Decl *D) {
   if (NumCurrentElementsDeserializing) {
     // We arrange to not care about the complete redeclaration chain while we're
@@ -7151,7 +7145,7 @@ void ASTReader::PrintStats() {
 }
 
 template<typename Key, typename ModuleFile, unsigned InitialCapacity>
-static void
+LLVM_DUMP_METHOD static void
 dumpModuleIDMap(StringRef Name,
                 const ContinuousRangeMap<Key, ModuleFile *,
                                          InitialCapacity> &Map) {
