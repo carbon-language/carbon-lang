@@ -71,6 +71,31 @@ void llvm::computePeelCount(Loop *L, unsigned LoopSize,
   if (!L->empty())
     return;
 
+  // Try to find a Phi node that has the same loop invariant as an input from
+  // its only back edge. If there is such Phi, peeling 1 iteration from the
+  // loop is profitable, because starting from 2nd iteration we will have an
+  // invariant instead of this Phi.
+  if (auto *BackEdge = L->getLoopLatch()) {
+    BasicBlock *Header = L->getHeader();
+    // Iterate over Phis to find one with invariant input on back edge.
+    bool FoundCandidate = false;
+    PHINode *Phi;
+    for (auto BI = Header->begin(); Phi = dyn_cast<PHINode>(&*BI); ++BI) {
+      Value *Input = Phi->getIncomingValueForBlock(BackEdge);
+      if (L->isLoopInvariant(Input)) {
+        FoundCandidate = true;
+        break;
+      }
+    }
+    if (FoundCandidate) {
+      DEBUG(dbgs() << "Peel one iteration to get rid of " << *Phi
+                   << " because starting from 2nd iteration it is always"
+                   << " an invariant\n");
+      UP.PeelCount = 1;
+      return;
+    }
+  }
+
   // Bail if we know the statically calculated trip count.
   // In this case we rather prefer partial unrolling.
   if (TripCount)
