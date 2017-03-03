@@ -61,13 +61,19 @@ static bool canPeel(Loop *L) {
 
 // Return the number of iterations we want to peel off.
 void llvm::computePeelCount(Loop *L, unsigned LoopSize,
-                            TargetTransformInfo::UnrollingPreferences &UP) {
+                            TargetTransformInfo::UnrollingPreferences &UP,
+                            unsigned &TripCount) {
   UP.PeelCount = 0;
   if (!canPeel(L))
     return;
 
   // Only try to peel innermost loops.
   if (!L->empty())
+    return;
+
+  // Bail if we know the statically calculated trip count.
+  // In this case we rather prefer partial unrolling.
+  if (TripCount)
     return;
 
   // If the user provided a peel count, use that.
