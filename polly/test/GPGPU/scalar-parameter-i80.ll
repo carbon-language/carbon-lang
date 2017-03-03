@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-codegen-ppcg -polly-acc-dump-code %s
+; RUN: opt %loadPolly -polly-codegen-ppcg -polly-acc-dump-code -disable-output %s
 
 ; XFAIL: *
 
