@@ -15,7 +15,6 @@
 #include "llvm/Support/Threading.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/thread.h"
 
 #include <cassert>
 #include <errno.h>
@@ -56,10 +55,17 @@ void llvm::get_thread_name(SmallVectorImpl<char> &Name) { Name.clear(); }
 
 #else
 
+#include <thread>
 unsigned llvm::heavyweight_hardware_concurrency() {
+  // Since we can't get here unless LLVM_ENABLE_THREADS == 1, it is safe to use
+  // `std::thread` directly instead of `llvm::thread` (and indeed, doing so
+  // allows us to not define `thread` in the llvm namespace, which conflicts
+  // with some platforms such as FreeBSD whose headers also define a struct
+  // called `thread` in the global namespace which can cause ambiguity due to
+  // ADL.
   int NumPhysical = sys::getHostNumPhysicalCores();
   if (NumPhysical == -1)
-    return thread::hardware_concurrency();
+    return std::thread::hardware_concurrency();
   return NumPhysical;
 }
 
