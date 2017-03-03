@@ -80,7 +80,8 @@ void llvm::computePeelCount(Loop *L, unsigned LoopSize,
     // Iterate over Phis to find one with invariant input on back edge.
     bool FoundCandidate = false;
     PHINode *Phi;
-    for (auto BI = Header->begin(); Phi = dyn_cast<PHINode>(&*BI); ++BI) {
+    for (auto BI = Header->begin(); isa<PHINode>(&*BI); ++BI) {
+      Phi = cast<PHINode>(&*BI);
       Value *Input = Phi->getIncomingValueForBlock(BackEdge);
       if (L->isLoopInvariant(Input)) {
         FoundCandidate = true;
