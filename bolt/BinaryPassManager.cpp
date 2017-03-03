@@ -84,6 +84,12 @@ PrintReordered("print-reordered",
                cl::Hidden);
 
 static cl::opt<bool>
+PrintReorderedFunctions("print-reordered-functions",
+               cl::desc("print functions after clustering"),
+               cl::ZeroOrMore,
+               cl::Hidden);
+
+static cl::opt<bool>
 PrintOptimizeBodyless("print-optimize-bodyless",
             cl::desc("print functions after bodyless optimization"),
             cl::ZeroOrMore,
@@ -282,6 +288,9 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
     opts::EliminateUnreachable);
+
+  Manager.registerPass(
+    llvm::make_unique<ReorderFunctions>(PrintReorderedFunctions));
 
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));
 

@@ -16,6 +16,7 @@
 
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
+#include "HFSort.h"
 #include "llvm/Support/CommandLine.h"
 #include <map>
 #include <set>
@@ -494,6 +495,29 @@ public:
     return "strip-rep-ret";
   }
 
+  void runOnFunctions(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs,
+                      std::set<uint64_t> &LargeFunctions) override;
+};
+
+/// Modify function order for streaming based on hotness.
+class ReorderFunctions : public BinaryFunctionPass {
+  static constexpr uint32_t PageSize = 2 << 20;
+  std::vector<BinaryFunction *> Funcs;
+  std::unordered_map<const BinaryFunction *, TargetId> FuncToTargetId;
+  TargetGraph Cg;
+
+  void buildCallGraph(BinaryContext &BC,
+                      std::map<uint64_t, BinaryFunction> &BFs);
+  void reorder(std::vector<Cluster> &&Clusters,
+               std::map<uint64_t, BinaryFunction> &BFs);
+ public:
+  explicit ReorderFunctions(const cl::opt<bool> &PrintPass)
+    : BinaryFunctionPass(PrintPass) { }
+
+  const char *getName() const override {
+    return "reorder-functions";
+  }
   void runOnFunctions(BinaryContext &BC,
                       std::map<uint64_t, BinaryFunction> &BFs,
                       std::set<uint64_t> &LargeFunctions) override;

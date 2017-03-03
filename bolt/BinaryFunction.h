@@ -197,6 +197,23 @@ public:
     LT_OPTIMIZE_SHUFFLE,
   };
 
+  enum JumpTableSupportLevel : char {
+    JTS_NONE = 0,       /// Disable jump tables support
+    JTS_BASIC = 1,      /// Enable basic jump tables support
+    JTS_SPLIT = 2,      /// Enable hot/cold splitting of jump tables
+    JTS_AGGRESSIVE = 3, /// Aggressive splitting of jump tables
+  };
+
+  enum ReorderType : char {
+    RT_NONE = 0,
+    RT_EXEC_COUNT,
+    RT_HFSORT,
+    RT_HFSORT_PLUS,
+    RT_PETTIS_HANSEN,
+    RT_RANDOM,
+    RT_USER
+  };
+
   static constexpr uint64_t COUNT_NO_PROFILE =
     BinaryBasicBlock::COUNT_NO_PROFILE;
   // Function size, in number of BBs, above which we fallback to a heuristic
@@ -301,6 +318,9 @@ private:
   /// Last computed hash value.
   mutable uint64_t Hash{0};
 
+  /// Function order for streaming into the destination binary.
+  uint32_t Index{-1U};
+
   /// Get basic block index assuming it belongs to this function.
   unsigned getIndex(const BinaryBasicBlock *BB) const {
     assert(BB->getIndex() < BasicBlocks.size());
@@ -341,6 +361,13 @@ private:
   /// run right after the construction of CFG while basic blocks are in their
   /// original order.
   void annotateCFIState();
+
+  /// Associate DW_CFA_GNU_args_size info with invoke instructions
+  /// (call instructions with non-empty landing pad).
+  void propagateGnuArgsSizeInfo();
+
+  /// Synchronize branch instructions with CFG.
+  void postProcessBranches();
 
   /// Helper function that compares an instruction of this function to the
   /// given instruction of the given function. The functions should have
@@ -936,6 +963,22 @@ public:
   /// Return original address of the function (or offset from base for PIC).
   uint64_t getAddress() const {
     return Address;
+  }
+
+  /// Does this function have a valid streaming order index?
+  bool hasValidIndex() const {
+    return Index != -1U;
+  }
+
+  /// Get the streaming order index for this function.
+  uint32_t getIndex() const {
+    return Index;
+  }
+
+  /// Set the streaming order index for this function.
+  void setIndex(uint32_t Idx) {
+    assert(!hasValidIndex());
+    Index = Idx;
   }
 
   /// Get the original address for the given basic block within this function.
@@ -1548,10 +1591,6 @@ public:
   /// is corrupted. If it is unable to fix it, it returns false.
   bool fixCFIState();
 
-  /// Associate DW_CFA_GNU_args_size info with invoke instructions
-  /// (call instructions with non-empty landing pad).
-  void propagateGnuArgsSizeInfo();
-
   /// Adjust branch instructions to match the CFG.
   ///
   /// As it comes to internal branches, the CFG represents "the ultimate source
@@ -1655,9 +1694,17 @@ public:
   size_t estimateHotSize() const {
     size_t Estimate = 0;
     for (const auto *BB : BasicBlocksLayout) {
-      if (BB->getExecutionCount() != 0) {
+      if (BB->getKnownExecutionCount() != 0) {
         Estimate += BC.computeCodeSize(BB->begin(), BB->end());
       }
+    }
+    return Estimate;
+  }
+
+  size_t estimateSize() const {
+    size_t Estimate = 0;
+    for (const auto *BB : BasicBlocksLayout) {
+      Estimate += BC.computeCodeSize(BB->begin(), BB->end());
     }
     return Estimate;
   }

@@ -528,6 +528,11 @@ public:
     return Itr != Successors.end();
   }
 
+  /// Test if this BB has a valid execution count.
+  bool hasProfile() const {
+    return ExecutionCount != COUNT_NO_PROFILE;
+  }
+
   /// Return the information about the number of times this basic block was
   /// executed.
   ///
@@ -539,7 +544,7 @@ public:
   /// Return the execution count for blocks with known profile.
   /// Return 0 if the block has no profile.
   uint64_t getKnownExecutionCount() const {
-    return ExecutionCount == COUNT_NO_PROFILE ? 0 : ExecutionCount;
+    return !hasProfile() ? 0 : ExecutionCount;
   }
 
   /// Set the execution count for this block.

@@ -96,7 +96,7 @@ public:
   /// As we fold identical functions, multiple symbols can point
   /// to the same BinaryFunction.
   std::unordered_map<const MCSymbol *,
-                     const BinaryFunction *> SymbolToFunctionMap;
+                     BinaryFunction *> SymbolToFunctionMap;
 
   /// Map virtual address to a section.
   std::map<uint64_t, SectionRef> AllocatableSections;
@@ -238,6 +238,11 @@ public:
   void removeRelocationAt(uint64_t Address);
 
   const BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) const {
+    auto BFI = SymbolToFunctionMap.find(Symbol);
+    return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
+  }
+
+  BinaryFunction *getFunctionForSymbol(const MCSymbol *Symbol) {
     auto BFI = SymbolToFunctionMap.find(Symbol);
     return BFI == SymbolToFunctionMap.end() ? nullptr : BFI->second;
   }

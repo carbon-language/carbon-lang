@@ -970,9 +970,9 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
     return true;
   };
 
-  for (uint64_t Offset = 0; Offset < getSize(); ) {
+  uint64_t Size = 0;  // instruction size
+  for (uint64_t Offset = 0; Offset < getSize(); Offset += Size) {
     MCInst Instruction;
-    uint64_t Size;
     const uint64_t AbsoluteInstrAddr = getAddress() + Offset;
 
     if (!BC.DisAsm->getInstruction(Instruction,
@@ -1073,6 +1073,20 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           if (containsAddress(TargetAddress)) {
             TargetSymbol = getOrCreateLocalLabel(TargetAddress);
           } else {
+            if (TargetAddress == getAddress() + getSize() &&
+                TargetAddress < getAddress() + getMaxSize()) {
+              // Result of __builtin_unreachable().
+              DEBUG(dbgs() << "BOLT-DEBUG: jump past end detected at 0x"
+                           << Twine::utohexstr(AbsoluteInstrAddr)
+                           << " in function " << *this
+                           << " : replacing with nop.\n");
+              BC.MIA->createNoop(Instruction);
+              if (IsCondBranch) {
+                // Register FT branch for passing function profile validation.
+                FTBranches.emplace_back(Offset, Offset + Size);
+              }
+              goto add_instruction;
+            }
             BC.InterproceduralReferences.insert(TargetAddress);
             if (opts::Verbosity >= 2 && !IsCall && Size == 2 && !opts::Relocs) {
               errs() << "BOLT-WARNING: relaxed tail call detected at 0x"
@@ -1159,13 +1173,19 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                       MCSymbolRefExpr::VK_None,
                                       *Ctx)));
 
-        if (isIndirect && BranchDataOrErr) {
-          MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
-                             Offset);
+        if (BranchDataOrErr) {
+          if (IsCall) {
+            MIA->addAnnotation(Ctx.get(), Instruction, "EdgeCountData", Offset);
+          }
+          if (isIndirect) {
+            MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
+                               Offset);
+          }
         }
       } else {
         // Could not evaluate branch. Should be an indirect call or an
         // indirect branch. Bail out on the latter case.
+        bool MaybeEdgeCountData = false;
         if (MIA->isIndirectBranch(Instruction)) {
           auto Result = analyzeIndirectBranch(Instruction, Size, Offset);
           switch (Result) {
@@ -1185,10 +1205,12 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           case IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE:
             if (opts::JumpTables == JTS_NONE)
               IsSimple = false;
+            MaybeEdgeCountData = true;
             break;
           case IndirectBranchType::UNKNOWN:
             // Keep processing. We'll do more checks and fixes in
             // postProcessIndirectBranches().
+            MaybeEdgeCountData = true;
             if (BranchDataOrErr) {
               MIA->addAnnotation(Ctx.get(),
                                  Instruction,
@@ -1202,6 +1224,11 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
                                Offset);
           }
+        }
+        if (BranchDataOrErr) {
+          const char* AttrName =
+            MaybeEdgeCountData ? "MaybeEdgeCountData" : "EdgeCountData";
+          MIA->addAnnotation(Ctx.get(), Instruction, AttrName, Offset);
         }
         // Indirect call. We only need to fix it if the operand is RIP-relative
         if (IsSimple && MIA->hasRIPOperand(Instruction)) {
@@ -1224,14 +1251,13 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
       }
     }
 
+add_instruction:
     if (ULT.first && ULT.second) {
       Instruction.setLoc(
           findDebugLineInformationForInstructionAt(AbsoluteInstrAddr, ULT));
     }
 
     addInstruction(Offset, std::move(Instruction));
-
-    Offset += Size;
   }
 
   postProcessJumpTables();
@@ -1304,15 +1330,12 @@ bool BinaryFunction::postProcessIndirectBranches() {
       // it must be a tail call.
       if (layout_size() == 1) {
         BC.MIA->convertJmpToTailCall(Instr);
-
-        if (BC.MIA->hasAnnotation(Instr, "MaybeIndirectBranchData")) {
-          auto Offset =
-            BC.MIA->getAnnotationAs<uint64_t>(Instr, "MaybeIndirectBranchData");
-          BC.MIA->addAnnotation(BC.Ctx.get(),
-                                Instr,
-                                "IndirectBranchData",
-                                Offset);
-        }
+        BC.MIA->renameAnnotation(Instr,
+                                 "MaybeEdgeCountData",
+                                 "EdgeCountData");
+        BC.MIA->renameAnnotation(Instr,
+                                 "MaybeIndirectBranchData",
+                                 "IndirectBranchData");
         return true;
       }
 
@@ -1392,15 +1415,12 @@ bool BinaryFunction::postProcessIndirectBranches() {
         return false;
       }
       BC.MIA->convertJmpToTailCall(Instr);
-
-      if (BranchDataOrErr) {
-        auto Offset =
-          BC.MIA->getAnnotationAs<uint64_t>(Instr, "MaybeIndirectBranchData");
-        BC.MIA->addAnnotation(BC.Ctx.get(),
-                              Instr,
-                              "IndirectBranchData",
-                              Offset);
-      }
+      BC.MIA->renameAnnotation(Instr,
+                               "MaybeEdgeCountData",
+                               "EdgeCountData");
+      BC.MIA->renameAnnotation(Instr,
+                               "MaybeIndirectBranchData",
+                               "IndirectBranchData");
     }
   }
   return true;
@@ -1662,7 +1682,7 @@ bool BinaryFunction::buildCFG() {
     // Try to find the destination basic block. If the jump instruction was
     // followed by a no-op then the destination offset recorded in FTBranches
     // will point to that no-op but the destination basic block will start
-    // after the no-op due to ingoring no-ops when creating basic blocks.
+    // after the no-op due to ignoring no-ops when creating basic blocks.
     // So we have to skip any no-ops when trying to find the destination
     // basic block.
     auto *ToBB = getBasicBlockAtOffset(Branch.second);
@@ -1678,6 +1698,8 @@ bool BinaryFunction::buildCFG() {
         // We have a fall-through that does not point to another BB, ignore it
         // as it may happen in cases where we have a BB finished by two
         // branches.
+        // This can also happen when we delete a branch past the end of a
+        // function in case of a call to __builtin_unreachable().
         continue;
       }
     }
@@ -1795,6 +1817,9 @@ bool BinaryFunction::buildCFG() {
     // optimizing it.
     setSimple(false);
   }
+
+  // Eliminate inconsistencies between branch instructions and CFG.
+  postProcessBranches();
 
   // Clean-up memory taken by instructions and labels.
   //
@@ -2982,6 +3007,48 @@ void BinaryFunction::propagateGnuArgsSizeInfo() {
       ++II;
     }
   }
+}
+
+void BinaryFunction::postProcessBranches() {
+  if (!isSimple())
+    return;
+  for (auto *BB : BasicBlocksLayout) {
+    auto LastInstrRI = BB->getLastNonPseudo();
+    if (BB->succ_size() == 1) {
+      if (LastInstrRI != BB->rend() &&
+          BC.MIA->isConditionalBranch(*LastInstrRI)) {
+        // __builtin_unreachable() could create a conditional branch that
+        // falls-through into the next function - hence the block will have only
+        // one valid successor. Such behaviour is undefined and thus we remove
+        // the conditional branch while leaving a valid successor.
+        assert(BB == BasicBlocksLayout.back() && "last basic block expected");
+        BB->eraseInstruction(std::next(LastInstrRI.base()));
+        DEBUG(dbgs() << "BOLT-DEBUG: erasing conditional branch in "
+                     << BB->getName() << " in function " << *this << '\n');
+      }
+    } else if (BB->succ_size() == 0) {
+      // Ignore unreachable basic blocks.
+      if (BB->pred_size() == 0 || BB->isLandingPad())
+        continue;
+
+      // If it's the basic block that does not end up with a terminator - we
+      // insert a return instruction unless it's a call instruction.
+      if (LastInstrRI == BB->rend()) {
+        DEBUG(dbgs() << "BOLT-DEBUG: at least one instruction expected in BB "
+                     << BB->getName() << " in function " << *this << '\n');
+        continue;
+      }
+      if (!BC.MIA->isTerminator(*LastInstrRI) &&
+          !BC.MIA->isCall(*LastInstrRI)) {
+        DEBUG(dbgs() << "BOLT-DEBUG: adding return to basic block "
+                     << BB->getName() << " in function " << *this << '\n');
+        MCInst ReturnInstr;
+        BC.MIA->createReturn(ReturnInstr);
+        BB->addInstruction(ReturnInstr);
+      }
+    }
+  }
+  assert(validateCFG() && "invalid CFG");
 }
 
 void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {

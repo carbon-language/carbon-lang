@@ -29,7 +29,7 @@ namespace opts {
 static cl::opt<bool>
 PrintClusters("print-clusters", cl::desc("print clusters"), cl::ZeroOrMore);
 
-static cl::opt<uint32_t>
+cl::opt<uint32_t>
 RandomSeed("bolt-seed",
            cl::desc("seed for randomization"),
            cl::init(42),

@@ -23,7 +23,7 @@ add_llvm_tool(llvm-bolt
   BinaryPassManager.cpp
   DataReader.cpp
   DebugData.cpp
+  DWARFRewriter.cpp
   Exceptions.cpp
   RewriteInstance.cpp
-  DWARFRewriter.cpp
   )

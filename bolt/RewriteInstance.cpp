@@ -67,6 +67,7 @@ using namespace bolt;
 namespace opts {
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
+extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("<output file>"), cl::Required);
@@ -153,11 +154,6 @@ cl::opt<bool>
 Relocs("relocs",
        cl::desc("relocation support (experimental)"),
        cl::ZeroOrMore);
-
-cl::opt<bool>
-ReorderFunctions("reorder-functions",
-                 cl::desc("reorder function (works only with relocations)"),
-                 cl::ZeroOrMore);
 
 static cl::list<std::string>
 FunctionPadSpec("pad-funcs",
@@ -1923,22 +1919,38 @@ void RewriteInstance::emitFunctions() {
                    return &BFI.second;
                  });
 
-  if (opts::Relocs && opts::ReorderFunctions) {
+  if (opts::ReorderFunctions != BinaryFunction::RT_NONE) {
     std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
-        [&](const BinaryFunction *A, const BinaryFunction *B) {
-          const auto PadA = opts::padFunction(*A);
-          const auto PadB = opts::padFunction(*B);
-          if (!PadA || !PadB) {
-            if (PadA)
-              return true;
-            if (PadB)
-              return false;
-          }
-          return (A->getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE) &&
-                 ((B->getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE)||
-                 (A->getExecutionCount() > B->getExecutionCount()));
-        });
+                     [](const BinaryFunction *A, const BinaryFunction *B) {
+                       if (A->hasValidIndex() && B->hasValidIndex()) {
+                         return A->getIndex() < B->getIndex();
+                       } else {
+                         return A->hasValidIndex();
+                       }
+                     });
   }
+
+  DEBUG(
+    if (!opts::Relocs) {
+      auto SortedIt = SortedFunctions.begin();
+      for (auto &It : BinaryFunctions) {
+        assert(&It.second == *SortedIt);
+        ++SortedIt;
+      }
+    });
+
+  uint32_t LastHotIndex = -1u;
+  uint32_t CurrentIndex = 0;
+  for (auto *BF : SortedFunctions) {
+    if (!BF->hasValidIndex() && LastHotIndex == -1u) {
+      LastHotIndex = CurrentIndex;
+    }
+    assert(LastHotIndex == -1u || !BF->hasValidIndex());
+    assert(!BF->hasValidIndex() || CurrentIndex == BF->getIndex());
+    ++CurrentIndex;
+  }
+  CurrentIndex = 0;
+  DEBUG(dbgs() << "BOLT-DEBUG: LastHotIndex = " << LastHotIndex << "\n");
 
   bool ColdFunctionSeen = false;
 
@@ -1948,12 +1960,7 @@ void RewriteInstance::emitFunctions() {
 
     // Emit all cold function split parts at the border of hot and
     // cold functions.
-    //
-    // FIXME: this only works with reordered functions. What do we do
-    // if there's no functions reordering in place?
-    if (opts::Relocs &&
-        !ColdFunctionSeen &&
-        Function.getExecutionCount() == BinaryFunction::COUNT_NO_PROFILE) {
+    if (opts::Relocs && !ColdFunctionSeen && CurrentIndex >= LastHotIndex) {
       // Mark the end of "hot" stuff.
       if (opts::HotText) {
         Streamer->SwitchSection(BC->MOFI->getTextSection());
@@ -1974,6 +1981,7 @@ void RewriteInstance::emitFunctions() {
 
     if (!opts::Relocs &&
         (!Function.isSimple() || !opts::shouldProcess(Function))) {
+      ++CurrentIndex;
       continue;
     }
 
@@ -1985,6 +1993,8 @@ void RewriteInstance::emitFunctions() {
 
     if (!opts::Relocs && Function.isSplit())
       emitFunction(*Streamer, Function, *BC.get(), /*EmitColdPart=*/true);
+
+    ++CurrentIndex;
   }
 
   if (!ColdFunctionSeen && opts::HotText) {
@@ -2106,7 +2116,7 @@ void RewriteInstance::mapFileSections(
     } else {
       if (opts::UseOldText) {
         errs() << "BOLT-ERROR: original .text too small to fit the new code. "
-               << SI.Size << " byte needed, have " << OldTextSectionSize
+               << SI.Size << " bytes needed, have " << OldTextSectionSize
                << " bytes available.\n";
       }
       auto Padding = OffsetToAlignment(NewTextSectionStartAddress, PageAlign);

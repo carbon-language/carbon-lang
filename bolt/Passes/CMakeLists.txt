@@ -1,6 +1,8 @@
 add_llvm_library(LLVMBOLTPasses
   BinaryPasses.cpp
   FrameOptimizer.cpp
+  HFSort.cpp
+  HFSortPlus.cpp
   Inliner.cpp
   ReorderAlgorithm.cpp
   )

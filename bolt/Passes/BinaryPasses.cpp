@@ -10,7 +10,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPasses.h"
+#include "HFSort.h"
 #include "llvm/Support/Options.h"
+
+#include <fstream>
 
 #define DEBUG_TYPE "bolt"
 
@@ -47,9 +50,11 @@ const char* dynoStatsOptDesc(const bolt::DynoStats::Category C) {
 namespace opts {
 
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<uint32_t> RandomSeed;
 extern cl::opt<bool> Relocs;
-extern cl::opt<llvm::bolt::BinaryFunction::SplittingType> SplitFunctions;
+extern cl::opt<bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
+extern size_t padFunction(const bolt::BinaryFunction &Function);
 
 static cl::opt<unsigned>
 IndirectCallPromotionThreshold(
@@ -198,6 +203,53 @@ UseDFSForICF(
     cl::ReallyHidden,
     cl::ZeroOrMore);
 
+cl::opt<bolt::BinaryFunction::ReorderType>
+ReorderFunctions(
+    "reorder-functions",
+    cl::desc("reorder and cluster functions (works only with relocations)"),
+    cl::init(bolt::BinaryFunction::RT_NONE),
+    cl::values(clEnumValN(bolt::BinaryFunction::RT_NONE,
+                          "none",
+                          "do not reorder functions"),
+               clEnumValN(bolt::BinaryFunction::RT_EXEC_COUNT,
+                          "exec-count",
+                          "order by execution count"),
+               clEnumValN(bolt::BinaryFunction::RT_HFSORT,
+                          "hfsort",
+                          "use hfsort algorithm"),
+               clEnumValN(bolt::BinaryFunction::RT_HFSORT_PLUS,
+                          "hfsort+",
+                          "use hfsort+ algorithm"),
+               clEnumValN(bolt::BinaryFunction::RT_PETTIS_HANSEN,
+                          "pettis-hansen",
+                          "use Pettis-Hansen algorithm"),
+               clEnumValN(bolt::BinaryFunction::RT_RANDOM,
+                          "random",
+                          "reorder functions randomly"),
+               clEnumValN(bolt::BinaryFunction::RT_USER,
+                          "user",
+                          "use function order specified by -function-order"),
+               clEnumValEnd));
+
+static cl::opt<std::string>
+FunctionOrderFile("function-order",
+                  cl::desc("file containing an ordered list of functions to use"
+                           " for function reordering"));
+
+static cl::opt<bool>
+ReorderFunctionsUseHotSize(
+    "reorder-functions-use-hot-size",
+    cl::desc("use a function's hot size when doing clustering"),
+    cl::init(true),
+    cl::ZeroOrMore);
+
+static cl::opt<bool>
+UseEdgeCounts(
+    "use-edge-counts",
+    cl::desc("use edge count data when doing clustering"),
+    cl::init(true),
+    cl::ZeroOrMore);
+
 } // namespace opts
 
 namespace llvm {
@@ -257,9 +309,7 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
       if (Target == OriginalTarget)
         continue;
       DEBUG(dbgs() << "BOLT-DEBUG: Optimizing " << BB->getName()
-                   << " (executed " << (BB->getExecutionCount() ==
-                       BinaryFunction::COUNT_NO_PROFILE ?
-                        0 : BB->getExecutionCount())
+                   << " (executed " << BB->getKnownExecutionCount()
                    << " times) in " << BF
                    << ": replacing call to " << OriginalTarget->getName()
                    << " by call to " << Target->getName()
@@ -267,7 +317,7 @@ void OptimizeBodylessFunctions::optimizeCalls(BinaryFunction &BF,
       BC.MIA->replaceCallTargetOperand(Inst, Target, BC.Ctx.get());
 
       NumOptimizedCallSites += CallSites;
-      if (BB->getExecutionCount() != BinaryFunction::COUNT_NO_PROFILE) {
+      if (BB->hasProfile()) {
         NumEliminatedCalls += CallSites * BB->getExecutionCount();
       }
     }
@@ -757,12 +807,12 @@ bool SimplifyRODataLoads::simplifyRODataLoads(
       }
 
       ++NumLocalLoadsFound;
-      if (BB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE)
+      if (BB->hasProfile())
         NumDynamicLocalLoadsFound += BB->getExecutionCount();
 
       if (MIA->replaceMemOperandWithImm(Inst, ConstantData, Offset)) {
         ++NumLocalLoadsSimplified;
-        if (BB->getExecutionCount() != BinaryBasicBlock::COUNT_NO_PROFILE)
+        if (BB->hasProfile())
           NumDynamicLocalLoadsSimplified += BB->getExecutionCount();
       }
     }
@@ -1605,6 +1655,363 @@ void StripRepRet::runOnFunctions(
               " with estimated execution count of " << NumPrefixesRemoved
            << " times.\n";
   }
+}
+
+void ReorderFunctions::buildCallGraph(BinaryContext &BC,
+                                      std::map<uint64_t, BinaryFunction> &BFs) {
+  // Add call graph nodes.
+  auto lookupNode = [&](BinaryFunction *Function) {
+    auto It = FuncToTargetId.find(Function);
+    if (It == FuncToTargetId.end()) {
+      // It's ok to use the hot size here when the function is split.  This is
+      // because emitFunctions will emit the hot part first in the order that is
+      // computed by ReorderFunctions.  The cold part will be emitted with the
+      // rest of the cold functions and code.
+      const auto Size = opts::ReorderFunctionsUseHotSize && Function->isSplit()
+        ? Function->estimateHotSize()
+        : Function->estimateSize();
+      const auto Id = Cg.addTarget(Size);
+      assert(size_t(Id) == Funcs.size());
+      Funcs.push_back(Function);
+      FuncToTargetId[Function] = Id;
+      // NOTE: for functions without a profile, we set the number of samples
+      // to zero.  This will keep these functions from appearing in the hot
+      // section.  This is a little weird because we wouldn't be trying to
+      // create a node for a function unless it was the target of a call from
+      // a hot block.  The alternative would be to set the count to one or
+      // accumulate the number of calls from the callsite into the function
+      // samples.  Results from perfomance testing seem to favor the zero
+      // count though, so I'm leaving it this way for now.
+      Cg.Targets[Id].Samples = Function->hasProfile() ? Function->getExecutionCount() : 0;
+      assert(Funcs[Id] == Function);
+      return Id;
+    } else {
+      return It->second;
+    }
+  };
+
+  // Add call graph edges.
+  uint64_t NotFound = 0;
+  uint64_t TotalCalls = 0;
+  for (auto &It : BFs) {
+    auto *Function = &It.second;
+
+    if(!shouldOptimize(*Function) || !Function->hasProfile()) {
+      continue;
+    }
+
+    auto BranchDataOrErr = BC.DR.getFuncBranchData(Function->getNames());
+    const auto SrcId = lookupNode(Function);
+    uint64_t Offset = Function->getAddress();
+
+    auto recordCall = [&](const MCSymbol *DestSymbol, const uint64_t Count) {
+      if (auto *DstFunc = BC.getFunctionForSymbol(DestSymbol)) {
+        const auto DstId = lookupNode(DstFunc);
+        auto &A = Cg.incArcWeight(SrcId, DstId, Count);
+        if (!opts::UseEdgeCounts) {
+          A.AvgCallOffset += (Offset - DstFunc->getAddress());
+        }
+        DEBUG(dbgs() << "BOLT-DEBUG: Reorder functions: call " << *Function
+                     << " -> " << *DstFunc << " @ " << Offset << "\n");
+        return true;
+      }
+      return false;
+    };
+
+    for (auto *BB : Function->layout()) {
+      if (!BB->isCold()) {  // Don't count calls from cold blocks
+        for (auto &Inst : *BB) {
+          // Find call instructions and extract target symbols from each one.
+          bool Success = false;
+          if (BC.MIA->isCall(Inst))
+            ++TotalCalls;
+
+          if (const auto *DstSym = BC.MIA->getTargetSymbol(Inst)) {
+            // For direct calls, just use the BB execution count.
+            assert(BB->hasProfile());
+            const auto Count = opts::UseEdgeCounts ? BB->getExecutionCount() : 1;
+            Success = recordCall(DstSym, Count);
+          } else if (BC.MIA->hasAnnotation(Inst, "EdgeCountData")) {
+            // For indirect calls and jump tables, use branch data.
+            assert(BranchDataOrErr);
+            const FuncBranchData &BranchData = BranchDataOrErr.get();
+            const auto DataOffset =
+              BC.MIA->getAnnotationAs<uint64_t>(Inst, "EdgeCountData");
+
+            for (const auto &BI : BranchData.getBranchRange(DataOffset)) {
+              if (!BI.To.IsSymbol) {
+                continue;
+              }
+
+              auto Itr = BC.GlobalSymbols.find(BI.To.Name);
+              if (Itr == BC.GlobalSymbols.end()) {
+                continue;
+              }
+
+              const auto *DstSym =
+                BC.getOrCreateGlobalSymbol(Itr->second, "FUNCat");
+
+              assert(BI.Branches > 0);
+              Success = recordCall(DstSym, opts::UseEdgeCounts ? BI.Branches : 1);
+            }
+          }
+
+          if (!Success)
+            ++NotFound;
+
+          if (!opts::UseEdgeCounts) {
+            Offset += BC.computeCodeSize(&Inst, &Inst + 1);
+          }
+        }
+      }
+    }
+  }
+  outs() << "BOLT-INFO: ReorderFunctions: " << NotFound << " calls not "
+         << " processed out of " << TotalCalls << "\n";
+
+  // Normalize arc weights.
+  if (!opts::UseEdgeCounts) {
+    for (TargetId FuncId = 0; FuncId < Cg.Targets.size(); ++FuncId) {
+      auto& Func = Cg.Targets[FuncId];
+      for (auto Caller : Func.Preds) {
+        auto& A = *Cg.Arcs.find(Arc(Caller, FuncId));
+        A.NormalizedWeight = A.Weight / Func.Samples;
+        A.AvgCallOffset /= A.Weight;
+        assert(A.AvgCallOffset < Cg.Targets[Caller].Size);
+      }
+    }
+  } else {
+    for (TargetId FuncId = 0; FuncId < Cg.Targets.size(); ++FuncId) {
+      auto &Func = Cg.Targets[FuncId];
+      for (auto Caller : Func.Preds) {
+        auto& A = *Cg.Arcs.find(Arc(Caller, FuncId));
+        A.NormalizedWeight = A.Weight / Func.Samples;
+      }
+    }
+  }
+}
+
+void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
+                               std::map<uint64_t, BinaryFunction> &BFs) {
+  std::vector<uint64_t> FuncAddr(Cg.Targets.size());  // Just for computing stats
+  uint64_t TotalSize = 0;
+  uint32_t Index = 0;
+
+  // Set order of hot functions based on clusters.
+  for (const auto& Cluster : Clusters) {
+    for (const auto FuncId : Cluster.Targets) {
+      assert(Cg.Targets[FuncId].Samples > 0);
+      Funcs[FuncId]->setIndex(Index++);
+      FuncAddr[FuncId] = TotalSize;
+      TotalSize += Cg.Targets[FuncId].Size;
+    }
+  }
+
+  if (opts::Verbosity > 0 || (DebugFlag && isCurrentDebugType("hfsort"))) {
+    uint64_t TotalSize   = 0;
+    uint64_t CurPage     = 0;
+    uint64_t Hotfuncs    = 0;
+    double TotalDistance = 0;
+    double TotalCalls    = 0;
+    double TotalCalls64B = 0;
+    double TotalCalls4KB = 0;
+    double TotalCalls2MB = 0;
+    dbgs() << "============== page 0 ==============\n";
+    for (auto& Cluster : Clusters) {
+      dbgs() <<
+        format("-------- density = %.3lf (%u / %u) --------\n",
+               (double) Cluster.Samples / Cluster.Size,
+               Cluster.Samples, Cluster.Size);
+
+      for (auto FuncId : Cluster.Targets) {
+        if (Cg.Targets[FuncId].Samples > 0) {
+          Hotfuncs++;
+
+          dbgs() << "BOLT-INFO: hot func " << *Funcs[FuncId]
+                 << " (" << Cg.Targets[FuncId].Size << ")\n";
+
+          uint64_t Dist = 0;
+          uint64_t Calls = 0;
+          for (auto Dst : Cg.Targets[FuncId].Succs) {
+            auto& A = *Cg.Arcs.find(Arc(FuncId, Dst));
+            auto D =
+              std::abs(FuncAddr[A.Dst] - (FuncAddr[FuncId] + A.AvgCallOffset));
+            auto W = A.Weight;
+            Calls += W;
+            if (D < 64)        TotalCalls64B += W;
+            if (D < 4096)      TotalCalls4KB += W;
+            if (D < (2 << 20)) TotalCalls2MB += W;
+            Dist += A.Weight * D;
+            dbgs() << format("arc: %u [@%lu+%.1lf] -> %u [@%lu]: "
+                             "weight = %.0lf, callDist = %f\n",
+                             A.Src, FuncAddr[A.Src], A.AvgCallOffset,
+                             A.Dst, FuncAddr[A.Dst], A.Weight, D);
+          }
+          TotalCalls += Calls;
+          TotalDistance += Dist;
+          dbgs() << format("start = %6u : avgCallDist = %lu : %s\n",
+                           TotalSize,
+                           Calls ? Dist / Calls : 0,
+                           Funcs[FuncId]->getPrintName().c_str());
+          TotalSize += Cg.Targets[FuncId].Size;
+          auto NewPage = TotalSize / PageSize;
+          if (NewPage != CurPage) {
+            CurPage = NewPage;
+            dbgs() << format("============== page %u ==============\n", CurPage);
+          }
+        }
+      }
+    }
+    dbgs() << format("  Number of hot functions: %u\n"
+                     "  Number of clusters: %lu\n",
+                     Hotfuncs, Clusters.size())
+           << format("  Final average call distance = %.1lf (%.0lf / %.0lf)\n",
+                     TotalCalls ? TotalDistance / TotalCalls : 0,
+                     TotalDistance, TotalCalls)
+           << format("  Total Calls = %.0lf\n", TotalCalls);
+    if (TotalCalls) {
+      dbgs() << format("  Total Calls within 64B = %.0lf (%.2lf%%)\n",
+                       TotalCalls64B, 100 * TotalCalls64B / TotalCalls)
+             << format("  Total Calls within 4KB = %.0lf (%.2lf%%)\n",
+                       TotalCalls4KB, 100 * TotalCalls4KB / TotalCalls)
+             << format("  Total Calls within 2MB = %.0lf (%.2lf%%)\n",
+                       TotalCalls2MB, 100 * TotalCalls2MB / TotalCalls);
+    }
+  }
+}
+
+namespace {
+
+std::vector<std::string> readFunctionOrderFile() {
+  std::vector<std::string> FunctionNames;
+  std::ifstream FuncsFile(opts::FunctionOrderFile, std::ios::in);
+  if (!FuncsFile) {
+    errs() << "Ordered functions file \"" << opts::FunctionOrderFile
+           << "\" can't be opened.\n";
+    exit(1);
+  }
+  std::string FuncName;
+  while (std::getline(FuncsFile, FuncName)) {
+    FunctionNames.push_back(FuncName);
+  }
+  return FunctionNames;
+}
+
+}
+
+void ReorderFunctions::runOnFunctions(BinaryContext &BC,
+                                      std::map<uint64_t, BinaryFunction> &BFs,
+                                      std::set<uint64_t> &LargeFunctions) {
+  if (!opts::Relocs && opts::ReorderFunctions != BinaryFunction::RT_NONE) {
+    errs() << "BOLT-ERROR: Function reordering only works when "
+           << "relocs are enabled.\n";
+    exit(1);
+  }
+
+  if (opts::ReorderFunctions != BinaryFunction::RT_NONE &&
+      opts::ReorderFunctions != BinaryFunction::RT_EXEC_COUNT &&
+      opts::ReorderFunctions != BinaryFunction::RT_USER) {
+    buildCallGraph(BC, BFs);
+  }
+
+  std::vector<Cluster> Clusters;
+
+  switch(opts::ReorderFunctions) {
+  case BinaryFunction::RT_NONE:
+    break;
+  case BinaryFunction::RT_EXEC_COUNT:
+    {
+      std::vector<BinaryFunction *> SortedFunctions(BFs.size());
+      uint32_t Index = 0;
+      std::transform(BFs.begin(),
+                     BFs.end(),
+                     SortedFunctions.begin(),
+                     [](std::pair<const uint64_t, BinaryFunction> &BFI) {
+                       return &BFI.second;
+                     });
+      std::stable_sort(SortedFunctions.begin(), SortedFunctions.end(),
+                       [&](const BinaryFunction *A, const BinaryFunction *B) {
+                         if (!opts::shouldProcess(*A))
+                           return false;
+                         const auto PadA = opts::padFunction(*A);
+                         const auto PadB = opts::padFunction(*B);
+                         if (!PadA || !PadB) {
+                           if (PadA)
+                             return true;
+                           if (PadB)
+                             return false;
+                         }
+                         return !A->hasProfile() &&
+                           (B->hasProfile() ||
+                            (A->getExecutionCount() > B->getExecutionCount()));
+                       });
+      for (auto *BF : SortedFunctions) {
+        if (BF->hasProfile())
+          BF->setIndex(Index++);
+      }
+    }
+    break;
+  case BinaryFunction::RT_HFSORT:
+    Clusters = clusterize(Cg);
+    break;
+  case BinaryFunction::RT_HFSORT_PLUS:
+    Clusters = hfsortPlus(Cg);
+    break;
+  case BinaryFunction::RT_PETTIS_HANSEN:
+    Clusters = pettisAndHansen(Cg);
+    break;
+  case BinaryFunction::RT_RANDOM:
+    std::srand(opts::RandomSeed);
+    Clusters = randomClusters(Cg);
+    break;
+  case BinaryFunction::RT_USER:
+    {
+      uint32_t Index = 0;
+      for (const auto &Function : readFunctionOrderFile()) {
+        std::vector<uint64_t> FuncAddrs;
+
+        auto Itr = BC.GlobalSymbols.find(Function);
+        if (Itr == BC.GlobalSymbols.end()) {
+          uint32_t LocalID = 1;
+          while(1) {
+            // If we can't find the main symbol name, look for alternates.
+            Itr = BC.GlobalSymbols.find(Function + "/" + std::to_string(LocalID));
+            if (Itr != BC.GlobalSymbols.end())
+              FuncAddrs.push_back(Itr->second);
+            else
+              break;
+            LocalID++;
+          }
+        } else {
+          FuncAddrs.push_back(Itr->second);
+        }
+
+        if (FuncAddrs.empty()) {
+          errs() << "BOLT-WARNING: Reorder functions: can't find function for "
+                 << Function << "\n";
+          continue;
+        }
+
+        for (const auto FuncAddr : FuncAddrs) {
+          const auto *FuncSym = BC.getOrCreateGlobalSymbol(FuncAddr, "FUNCat");
+          assert(FuncSym);
+
+          auto *BF = BC.getFunctionForSymbol(FuncSym);
+          if (!BF) {
+            errs() << "BOLT-WARNING: Reorder functions: can't find function for "
+                   << Function << "\n";
+            break;
+          }
+          if (!BF->hasValidIndex()) {
+            BF->setIndex(Index++);
+          }
+        }
+      }
+    }
+    break;
+  }
+
+  reorder(std::move(Clusters), BFs);
 }
 
 } // namespace bolt
