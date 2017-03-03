@@ -7498,7 +7498,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     // a constant pool load than it is to do a movd + shuffle.
     if (ExtVT == MVT::i64 && !Subtarget.is64Bit() &&
         (!IsAllConstants || Idx == 0)) {
-      if (DAG.MaskedValueIsZero(Item, APInt::getBitsSet(64, 32, 64))) {
+      if (DAG.MaskedValueIsZero(Item, APInt::getHighBitsSet(64, 32))) {
         // Handle SSE only.
         assert(VT == MVT::v2i64 && "Expected an SSE value type!");
         MVT VecVT = MVT::v4i32;
