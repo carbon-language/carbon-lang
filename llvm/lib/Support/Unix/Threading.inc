@@ -22,16 +22,21 @@
 #include <pthread.h>
 
 #if defined(__FreeBSD__)
-#include <pthread_np.h>
+#include <pthread_np.h> // For pthread_getthreadid_np()
+#endif
+
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#include <errno.h>
+#include <unistd.h>
 #endif
 
 #if defined(__NetBSD__)
-#include <lwp.h>
+#include <lwp.h>  // For _lwp_self()
 #endif
 
 #if defined(__linux__)
-#include <unistd.h>
-#include <sys/syscall.h>
+#include <unistd.h> // For syscall()
+#include <sys/syscall.h>  // For syscall codes
 #endif
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
