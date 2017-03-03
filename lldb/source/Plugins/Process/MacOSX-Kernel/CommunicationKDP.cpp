@@ -19,6 +19,7 @@
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/DumpDataExtractor.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/FileSpec.h"
@@ -259,8 +260,7 @@ bool CommunicationKDP::CheckForPacket(const uint8_t *src, size_t src_len,
   if (src && src_len > 0) {
     if (log && log->GetVerbose()) {
       PacketStreamType log_strm;
-      DataExtractor::DumpHexBytes(&log_strm, src, src_len, UINT32_MAX,
-                                  LLDB_INVALID_ADDRESS);
+      DumpHexBytes(&log_strm, src, src_len, UINT32_MAX, LLDB_INVALID_ADDRESS);
       log->Printf("CommunicationKDP::%s adding %u bytes: %s", __FUNCTION__,
                   (uint32_t)src_len, log_strm.GetData());
     }
@@ -976,8 +976,7 @@ void CommunicationKDP::DumpPacket(Stream &s, const DataExtractor &packet) {
           const uint32_t size = packet.GetU32(&offset);
           s.Printf(" (addr = 0x%8.8x, size = %u, bytes = \n", addr, size);
           if (size > 0)
-            DataExtractor::DumpHexBytes(&s, packet.GetData(&offset, size), size,
-                                        32, addr);
+            DumpHexBytes(&s, packet.GetData(&offset, size), size, 32, addr);
         } break;
 
         case KDP_READMEM64: {
@@ -1002,8 +1001,7 @@ void CommunicationKDP::DumpPacket(Stream &s, const DataExtractor &packet) {
           s.Printf(" (addr = 0x%16.16" PRIx64 ", size = %u, bytes = \n", addr,
                    size);
           if (size > 0)
-            DataExtractor::DumpHexBytes(&s, packet.GetData(&offset, size), size,
-                                        32, addr);
+            DumpHexBytes(&s, packet.GetData(&offset, size), size, 32, addr);
         } break;
 
         case KDP_WRITEPHYSMEM64: {
@@ -1013,8 +1011,7 @@ void CommunicationKDP::DumpPacket(Stream &s, const DataExtractor &packet) {
           s.Printf(" (addr = 0x%16.16llx, size = %u, lcpu = %u, bytes = \n",
                    addr, size, lcpu);
           if (size > 0)
-            DataExtractor::DumpHexBytes(&s, packet.GetData(&offset, size), size,
-                                        32, addr);
+            DumpHexBytes(&s, packet.GetData(&offset, size), size, 32, addr);
         } break;
 
         case KDP_READREGS: {
