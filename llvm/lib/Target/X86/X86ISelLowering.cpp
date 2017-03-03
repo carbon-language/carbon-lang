@@ -16033,7 +16033,7 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget &Subtarget,
   for (unsigned i = 0, e = VecIns.size(); i < e; ++i)
     VecIns[i] = DAG.getBitcast(TestVT, VecIns[i]);
 
-  // If more than one full vectors are evaluated, OR them first before PTEST.
+  // If more than one full vector is evaluated, OR them first before PTEST.
   for (unsigned Slot = 0, e = VecIns.size(); e - Slot > 1; Slot += 2, e += 1) {
     // Each iteration will OR 2 nodes and append the result until there is only
     // 1 node left, i.e. the final OR'd value of all vectors.
@@ -16042,8 +16042,7 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget &Subtarget,
     VecIns.push_back(DAG.getNode(ISD::OR, DL, TestVT, LHS, RHS));
   }
 
-  return DAG.getNode(X86ISD::PTEST, DL, MVT::i32,
-                     VecIns.back(), VecIns.back());
+  return DAG.getNode(X86ISD::PTEST, DL, MVT::i32, VecIns.back(), VecIns.back());
 }
 
 /// \brief return true if \c Op has a use that doesn't just read flags.
