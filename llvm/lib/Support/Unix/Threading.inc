@@ -126,13 +126,8 @@ void llvm::get_thread_name(SmallVectorImpl<char> &Name) {
   Name.clear();
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-#if defined(__FreeBSD_kernel__)
-  auto pid = ::pthread_self();
-#else
-  auto pid = ::getpid();
-#endif
-
-  int tid = ::pthread_getthreadid_np();
+  int pid = ::getpid();
+  uint64_t tid = get_threadid();
 
   struct kinfo_proc *kp = nullptr, *nkp;
   size_t len = 0;
