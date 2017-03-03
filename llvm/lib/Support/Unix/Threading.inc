@@ -127,9 +127,9 @@ void llvm::get_thread_name(SmallVectorImpl<char> &Name) {
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
 #if defined(__FreeBSD_kernel__)
-  int pid = ::pthread_self();
+  auto pid = ::pthread_self();
 #else
-  int pid = ::getpid();
+  auto pid = ::getpid();
 #endif
 
   int tid = ::pthread_getthreadid_np();
