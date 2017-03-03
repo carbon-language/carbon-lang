@@ -15,6 +15,7 @@ add_lldb_library(lldbCore
   DataExtractor.cpp
   Debugger.cpp
   Disassembler.cpp
+  DumpDataExtractor.cpp
   DynamicLoader.cpp
   EmulateInstruction.cpp
   Event.cpp

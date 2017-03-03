@@ -14,6 +14,7 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Disassembler.h"
+#include "lldb/Core/DumpDataExtractor.h"
 #include "lldb/Core/FormatEntity.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Target/ExecutionContext.h"
@@ -408,7 +409,8 @@ size_t UnwindAssemblyInstEmulation::WriteMemory(
     StreamString strm;
 
     strm.PutCString("UnwindAssemblyInstEmulation::WriteMemory   (");
-    data.Dump(&strm, 0, eFormatBytes, 1, dst_len, UINT32_MAX, addr, 0, 0);
+    DumpDataExtractor(data, &strm, 0, eFormatBytes, 1, dst_len, UINT32_MAX,
+                      addr, 0, 0);
     strm.PutCString(", context = ");
     context.Dump(strm, instruction);
     log->PutString(strm.GetString());

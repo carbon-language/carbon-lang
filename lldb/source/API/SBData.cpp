@@ -15,6 +15,7 @@
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/DumpDataExtractor.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/Stream.h"
 
@@ -347,7 +348,7 @@ bool SBData::GetDescription(lldb::SBStream &description,
   Stream &strm = description.ref();
 
   if (m_opaque_sp) {
-    m_opaque_sp->Dump(&strm, 0, lldb::eFormatBytesWithASCII, 1,
+    DumpDataExtractor(*m_opaque_sp, &strm, 0, lldb::eFormatBytesWithASCII, 1,
                       m_opaque_sp->GetByteSize(), 16, base_addr, 0, 0);
   } else
     strm.PutCString("No value");
