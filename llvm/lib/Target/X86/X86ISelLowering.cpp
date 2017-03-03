@@ -34100,15 +34100,13 @@ static SDValue combineADC(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// fold (add Y, (sete  X, 0)) -> adc  0, Y
-///      (add Y, (setne X, 0)) -> sbb -1, Y
-///      (sub (sete  X, 0), Y) -> sbb  0, Y
-///      (sub (setne X, 0), Y) -> adc -1, Y
-static SDValue OptimizeConditionalInDecrement(SDNode *N, SelectionDAG &DAG) {
-  SDLoc DL(N);
-
+/// If this is an add or subtract where one operand is produced by a cmp+setcc,
+/// then try to convert it to an ADC or SBB. This replaces TEST+SET+{ADD/SUB}
+/// with CMP+{ADC, SBB}.
+static SDValue combineAddOrSubToADCOrSBB(SDNode *N, SelectionDAG &DAG) {
   // Look through ZExts.
-  SDValue Ext = N->getOperand(N->getOpcode() == ISD::SUB ? 1 : 0);
+  bool IsSub = N->getOpcode() == ISD::SUB;
+  SDValue Ext = N->getOperand(IsSub ? 1 : 0);
   if (Ext.getOpcode() != ISD::ZERO_EXTEND || !Ext.hasOneUse())
     return SDValue();
 
@@ -34126,19 +34124,25 @@ static SDValue OptimizeConditionalInDecrement(SDNode *N, SelectionDAG &DAG) {
       !Cmp.getOperand(0).getValueType().isInteger())
     return SDValue();
 
-  SDValue CmpOp0 = Cmp.getOperand(0);
-  SDValue NewCmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32, CmpOp0,
-                               DAG.getConstant(1, DL, CmpOp0.getValueType()));
+  // (cmp X, 1) sets the carry flag if X is 0.
+  SDLoc DL(N);
+  SDValue X = Cmp.getOperand(0);
+  SDValue NewCmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32, X,
+                               DAG.getConstant(1, DL, X.getValueType()));
 
-  SDValue OtherVal = N->getOperand(N->getOpcode() == ISD::SUB ? 0 : 1);
+  SDValue Y = N->getOperand(IsSub ? 0 : 1);
+  EVT VT = Y.getValueType();
+
+  // Y - (X != 0) --> sub Y, (zext(setne X, 0)) --> adc Y, -1, (cmp X, 1)
+  // (X != 0) + Y --> add (zext(setne X, 0)), Y --> sbb Y, -1, (cmp X, 1)
   if (CC == X86::COND_NE)
-    return DAG.getNode(N->getOpcode() == ISD::SUB ? X86ISD::ADC : X86ISD::SBB,
-                       DL, OtherVal.getValueType(), OtherVal,
-                       DAG.getConstant(-1ULL, DL, OtherVal.getValueType()),
-                       NewCmp);
-  return DAG.getNode(N->getOpcode() == ISD::SUB ? X86ISD::SBB : X86ISD::ADC,
-                     DL, OtherVal.getValueType(), OtherVal,
-                     DAG.getConstant(0, DL, OtherVal.getValueType()), NewCmp);
+    return DAG.getNode(IsSub ? X86ISD::ADC : X86ISD::SBB, DL, VT, Y,
+                       DAG.getConstant(-1ULL, DL, VT), NewCmp);
+
+  // Y - (X == 0) --> sub Y, (zext(sete  X, 0)) --> sbb Y, 0, (cmp X, 1)
+  // (X == 0) + Y --> add (zext(sete  X, 0)), Y --> adc Y, 0, (cmp X, 1)
+  return DAG.getNode(IsSub ? X86ISD::SBB : X86ISD::ADC, DL, VT, Y,
+                     DAG.getConstant(0, DL, VT), NewCmp);
 }
 
 static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
@@ -34229,7 +34233,7 @@ static SDValue combineAdd(SDNode *N, SelectionDAG &DAG,
       isHorizontalBinOp(Op0, Op1, true))
     return DAG.getNode(X86ISD::HADD, SDLoc(N), VT, Op0, Op1);
 
-  return OptimizeConditionalInDecrement(N, DAG);
+  return combineAddOrSubToADCOrSBB(N, DAG);
 }
 
 static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
@@ -34262,7 +34266,7 @@ static SDValue combineSub(SDNode *N, SelectionDAG &DAG,
       isHorizontalBinOp(Op0, Op1, false))
     return DAG.getNode(X86ISD::HSUB, SDLoc(N), VT, Op0, Op1);
 
-  return OptimizeConditionalInDecrement(N, DAG);
+  return combineAddOrSubToADCOrSBB(N, DAG);
 }
 
 static SDValue combineVSZext(SDNode *N, SelectionDAG &DAG,
