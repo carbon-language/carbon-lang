@@ -115,7 +115,9 @@ void llvm::set_thread_name(const Twine &Name) {
   StringRef NameStr = Name.toNullTerminatedStringRef(Storage);
 #if defined(__linux__)
 #if (defined(__GLIBC__) && defined(_GNU_SOURCE)) || defined(__ANDROID__)
+#if HAVE_PTHREAD_SETNAME_NP
   ::pthread_setname_np(::pthread_self(), NameStr.data());
+#endif
 #endif
 #elif defined(__FreeBSD__)
   ::pthread_set_name_np(::pthread_self(), NameStr.data());
@@ -173,10 +175,12 @@ void llvm::get_thread_name(SmallVectorImpl<char> &Name) {
   Name.append(buf, buf + strlen(buf));
 #elif defined(__linux__)
 #if (defined(__GLIBC__) && defined(_GNU_SOURCE)) || defined(__ANDROID__)
+#if HAVE_PTHREAD_GETNAME_NP
   constexpr int MAXNAMELEN = 16;
   char Buffer[MAXNAMELEN];
   if (0 == ::pthread_getname_np(::pthread_self(), Buffer, MAXNAMELEN))
     Name.append(Buffer, Buffer + strlen(Buffer));
+#endif
 #endif
 #endif
 }
