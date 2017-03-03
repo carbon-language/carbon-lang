@@ -30,6 +30,7 @@
 #endif
 
 #if defined(__linux__)
+#include <unistd.h>
 #include <sys/syscall.h>
 #endif
 
