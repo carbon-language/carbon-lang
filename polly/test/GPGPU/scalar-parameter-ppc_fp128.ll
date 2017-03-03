@@ -2,7 +2,7 @@
 
 ; XFAIL: *
 
-; REQUIRES: pollyacc
+; REQUIRES: pollyacc,nvptx
 
 ; This fails today with "type mismatch between callee prototype and arguments"
 

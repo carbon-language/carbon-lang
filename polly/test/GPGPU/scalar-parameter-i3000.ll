@@ -2,7 +2,7 @@
 
 ; XFAIL: *
 
-; REQUIRES: pollyacc
+; REQUIRES: pollyacc,nvptx
 
 ; This fails today with "LowerFormalArguments didn't emit the correct number of
 ;                        values!"
