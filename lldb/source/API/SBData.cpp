@@ -15,7 +15,7 @@
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
-#include "lldb/Core/Log.h"
+#include "lldb/Utility/Log.h"
 #include "lldb/Utility/Stream.h"
 
 using namespace lldb;

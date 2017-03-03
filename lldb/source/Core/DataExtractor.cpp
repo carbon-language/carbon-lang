@@ -31,7 +31,6 @@
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Disassembler.h"
-#include "lldb/Core/Log.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Core/dwarf.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -40,6 +39,7 @@
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/Endian.h"
+#include "lldb/Utility/Log.h"
 #include "lldb/Utility/Stream.h"
 #include "lldb/Utility/StreamString.h"
 

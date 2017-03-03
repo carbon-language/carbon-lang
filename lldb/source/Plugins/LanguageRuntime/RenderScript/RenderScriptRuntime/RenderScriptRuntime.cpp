@@ -18,7 +18,6 @@
 
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Debugger.h"
-#include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/DataFormatters/DumpValueObjectOptions.h"
@@ -40,6 +39,7 @@
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/ConstString.h"
 #include "lldb/Utility/Error.h"
+#include "lldb/Utility/Log.h"
 #include "lldb/Utility/RegularExpression.h"
 
 using namespace lldb;

@@ -15,13 +15,13 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/FormatEntity.h"
-#include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/Error.h"
+#include "lldb/Utility/Log.h"
 #include "lldb/Utility/StreamString.h"
 
 using namespace lldb;

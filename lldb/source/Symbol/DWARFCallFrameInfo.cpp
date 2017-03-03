@@ -12,7 +12,6 @@
 #include <list>
 
 #include "lldb/Core/ArchSpec.h"
-#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Core/Section.h"
@@ -23,6 +22,7 @@
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Utility/Log.h"
 
 using namespace lldb;
 using namespace lldb_private;

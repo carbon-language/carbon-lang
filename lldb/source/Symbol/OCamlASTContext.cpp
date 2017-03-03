@@ -9,7 +9,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Symbol/OCamlASTContext.h"
-#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
@@ -19,6 +18,7 @@
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/Log.h"
 
 #include "Plugins/SymbolFile/DWARF/DWARFASTParserOCaml.h"
 

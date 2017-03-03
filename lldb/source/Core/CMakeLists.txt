@@ -25,8 +25,6 @@ add_lldb_library(lldbCore
   History.cpp
   IOHandler.cpp
   Listener.cpp
-  Log.cpp
-  Logging.cpp
   Mangled.cpp
   Module.cpp
   ModuleChild.cpp
