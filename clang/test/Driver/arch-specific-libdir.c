@@ -1,6 +1,8 @@
 // Test that the driver adds an arch-specific subdirectory in
 // {RESOURCE_DIR}/lib/linux to the search path.
 //
+// REQUIRES: linux
+//
 // RUN: %clang %s -### 2>&1 -target i386-unknown-linux \
 // RUN:     -resource-dir=%S/Inputs/resource_dir_with_arch_subdir \
 // RUN:   | FileCheck --check-prefixes=FILEPATH,ARCHDIR-i386 %s
