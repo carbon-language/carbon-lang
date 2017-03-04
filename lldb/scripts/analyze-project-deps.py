@@ -35,6 +35,7 @@ for (base, dirs, files) in os.walk(inc_dir):
     relative = os.path.relpath(base, inc_dir)
     inc_files = filter(lambda x : os.path.splitext(x)[1] in [".h"], files)
     deps = set()
+    relative = relative.replace("\\", "/")
     for inc in inc_files:
         inc_path = os.path.join(base, inc)
         deps.update(scan_deps(relative, inc_path))
