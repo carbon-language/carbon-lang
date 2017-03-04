@@ -34106,7 +34106,15 @@ static SDValue combineADC(SDNode *N, SelectionDAG &DAG,
 static SDValue combineAddOrSubToADCOrSBB(SDNode *N, SelectionDAG &DAG) {
   // Look through ZExts.
   bool IsSub = N->getOpcode() == ISD::SUB;
-  SDValue Ext = N->getOperand(IsSub ? 1 : 0);
+  SDValue Y = N->getOperand(0);
+  SDValue Ext = N->getOperand(1);
+
+  // If this is an add, canonicalize a zext to the RHS.
+  // TODO: Incomplete? What if both sides are zexts?
+  if (!IsSub && Ext.getOpcode() != ISD::ZERO_EXTEND &&
+      Y.getOpcode() == ISD::ZERO_EXTEND)
+    std::swap(Ext, Y);
+
   if (Ext.getOpcode() != ISD::ZERO_EXTEND || !Ext.hasOneUse())
     return SDValue();
 
@@ -34130,17 +34138,16 @@ static SDValue combineAddOrSubToADCOrSBB(SDNode *N, SelectionDAG &DAG) {
   SDValue NewCmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32, X,
                                DAG.getConstant(1, DL, X.getValueType()));
 
-  SDValue Y = N->getOperand(IsSub ? 0 : 1);
   EVT VT = Y.getValueType();
 
   // Y - (X != 0) --> sub Y, (zext(setne X, 0)) --> adc Y, -1, (cmp X, 1)
-  // (X != 0) + Y --> add (zext(setne X, 0)), Y --> sbb Y, -1, (cmp X, 1)
+  // Y + (X != 0) --> add Y, (zext(setne X, 0)) --> sbb Y, -1, (cmp X, 1)
   if (CC == X86::COND_NE)
     return DAG.getNode(IsSub ? X86ISD::ADC : X86ISD::SBB, DL, VT, Y,
                        DAG.getConstant(-1ULL, DL, VT), NewCmp);
 
   // Y - (X == 0) --> sub Y, (zext(sete  X, 0)) --> sbb Y, 0, (cmp X, 1)
-  // (X == 0) + Y --> add (zext(sete  X, 0)), Y --> adc Y, 0, (cmp X, 1)
+  // Y + (X == 0) --> add Y, (zext(sete  X, 0)) --> adc Y, 0, (cmp X, 1)
   return DAG.getNode(IsSub ? X86ISD::SBB : X86ISD::ADC, DL, VT, Y,
                      DAG.getConstant(0, DL, VT), NewCmp);
 }
