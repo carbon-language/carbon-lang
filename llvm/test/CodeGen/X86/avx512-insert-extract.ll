@@ -1411,10 +1411,8 @@ define zeroext i8 @test_extractelement_v2i1(<2 x i64> %a, <2 x i64> %b) {
 ; KNL-NEXT:    vpxor %xmm2, %xmm1, %xmm1
 ; KNL-NEXT:    vpxor %xmm2, %xmm0, %xmm0
 ; KNL-NEXT:    vpcmpgtq %xmm1, %xmm0, %xmm0
-; KNL-NEXT:    vmovq %xmm0, %rax
-; KNL-NEXT:    testb $1, %al
-; KNL-NEXT:    sete %al
-; KNL-NEXT:    addb $3, %al
+; KNL-NEXT:    vpextrb $0, %xmm0, %eax
+; KNL-NEXT:    addb $4, %al
 ; KNL-NEXT:    movzbl %al, %eax
 ; KNL-NEXT:    retq
 ;
@@ -1527,9 +1525,7 @@ define zeroext i8 @test_extractelement_v64i1(<64 x i8> %a, <64 x i8> %b) {
 ; KNL-NEXT:    vpcmpgtb %ymm2, %ymm0, %ymm0
 ; KNL-NEXT:    vextracti128 $1, %ymm0, %xmm0
 ; KNL-NEXT:    vpextrb $15, %xmm0, %eax
-; KNL-NEXT:    testb $1, %al
-; KNL-NEXT:    sete %al
-; KNL-NEXT:    addb $3, %al
+; KNL-NEXT:    addb $4, %al
 ; KNL-NEXT:    movzbl %al, %eax
 ; KNL-NEXT:    retq
 ;
