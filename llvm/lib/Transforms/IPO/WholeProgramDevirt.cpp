@@ -428,7 +428,8 @@ struct DevirtModule {
   void applyUniformRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
                              uint64_t TheRetVal);
   bool tryUniformRetValOpt(MutableArrayRef<VirtualCallTarget> TargetsForSlot,
-                           CallSiteInfo &CSInfo);
+                           CallSiteInfo &CSInfo,
+                           WholeProgramDevirtResolution::ByArg *Res);
 
   void applyUniqueRetValOpt(CallSiteInfo &CSInfo, StringRef FnName, bool IsOne,
                             Constant *UniqueMemberAddr);
@@ -439,7 +440,8 @@ struct DevirtModule {
   void applyVirtualConstProp(CallSiteInfo &CSInfo, StringRef FnName,
                              Constant *Byte, Constant *Bit);
   bool tryVirtualConstProp(MutableArrayRef<VirtualCallTarget> TargetsForSlot,
-                           VTableSlotInfo &SlotInfo);
+                           VTableSlotInfo &SlotInfo,
+                           WholeProgramDevirtResolution *Res);
 
   void rebuildGlobal(VTableBits &B);
 
@@ -727,16 +729,23 @@ void DevirtModule::applyUniformRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
     Call.replaceAndErase(
         "uniform-ret-val", FnName, RemarksEnabled,
         ConstantInt::get(cast<IntegerType>(Call.CS.getType()), TheRetVal));
+  CSInfo.TypeCheckedLoadUsers.clear();
 }
 
 bool DevirtModule::tryUniformRetValOpt(
-    MutableArrayRef<VirtualCallTarget> TargetsForSlot, CallSiteInfo &CSInfo) {
+    MutableArrayRef<VirtualCallTarget> TargetsForSlot, CallSiteInfo &CSInfo,
+    WholeProgramDevirtResolution::ByArg *Res) {
   // Uniform return value optimization. If all functions return the same
   // constant, replace all calls with that constant.
   uint64_t TheRetVal = TargetsForSlot[0].RetVal;
   for (const VirtualCallTarget &Target : TargetsForSlot)
     if (Target.RetVal != TheRetVal)
       return false;
+
+  if (CSInfo.isExported()) {
+    Res->TheKind = WholeProgramDevirtResolution::ByArg::UniformRetVal;
+    Res->Info = TheRetVal;
+  }
 
   applyUniformRetValOpt(CSInfo, TargetsForSlot[0].Fn->getName(), TheRetVal);
   if (RemarksEnabled)
@@ -824,7 +833,7 @@ void DevirtModule::applyVirtualConstProp(CallSiteInfo &CSInfo, StringRef FnName,
 
 bool DevirtModule::tryVirtualConstProp(
     MutableArrayRef<VirtualCallTarget> TargetsForSlot,
-    VTableSlotInfo &SlotInfo) {
+    VTableSlotInfo &SlotInfo, WholeProgramDevirtResolution *Res) {
   // This only works if the function returns an integer.
   auto RetType = dyn_cast<IntegerType>(TargetsForSlot[0].Fn->getReturnType());
   if (!RetType)
@@ -856,7 +865,11 @@ bool DevirtModule::tryVirtualConstProp(
     if (!tryEvaluateFunctionsWithArgs(TargetsForSlot, CSByConstantArg.first))
       continue;
 
-    if (tryUniformRetValOpt(TargetsForSlot, CSByConstantArg.second))
+    WholeProgramDevirtResolution::ByArg *ResByArg = nullptr;
+    if (Res)
+      ResByArg = &Res->ResByArg[CSByConstantArg.first];
+
+    if (tryUniformRetValOpt(TargetsForSlot, CSByConstantArg.second, ResByArg))
       continue;
 
     if (tryUniqueRetValOpt(BitWidth, TargetsForSlot, CSByConstantArg.second))
@@ -1175,7 +1188,7 @@ bool DevirtModule::run() {
                  .WPDRes[S.first.ByteOffset];
 
       if (!trySingleImplDevirt(TargetsForSlot, S.second, Res) &&
-          tryVirtualConstProp(TargetsForSlot, S.second))
+          tryVirtualConstProp(TargetsForSlot, S.second, Res))
         DidVirtualConstProp = true;
 
       // Collect functions devirtualized at least for one call site for stats.
