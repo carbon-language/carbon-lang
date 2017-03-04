@@ -21,7 +21,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/DumpDataExtractor.h"
 #include "lldb/Core/State.h"
-#include "lldb/Core/UUID.h"
+#include "lldb/Utility/UUID.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"

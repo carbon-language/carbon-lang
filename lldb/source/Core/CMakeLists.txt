@@ -47,7 +47,6 @@ add_lldb_library(lldbCore
   Timer.cpp
   UserID.cpp
   UserSettingsController.cpp
-  UUID.cpp
   Value.cpp
   ValueObject.cpp
   ValueObjectCast.cpp

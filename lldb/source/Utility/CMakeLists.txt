@@ -17,6 +17,7 @@ add_lldb_library(lldbUtility
   StringLexer.cpp
   TaskPool.cpp
   UriParser.cpp
+  UUID.cpp
   VASprintf.cpp
 
   LINK_LIBS
