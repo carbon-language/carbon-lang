@@ -109,10 +109,35 @@ uint64_t llvm::get_threadid() {
 }
 
 
+constexpr uint32_t llvm::get_max_thread_name_length() {
+#if defined(__NetBSD__)
+	return PTHREAD_MAX_NAMELEN_NP;
+#elif defined(__APPLE__)
+	return 64;
+#elif defined(__linux__)
+#if HAVE_PTHREAD_SETNAME_NP
+	return 16;
+#else
+	return 0;
+#endif
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+  return 16;
+#else
+  return 0;
+#endif
+}
+
 void llvm::set_thread_name(const Twine &Name) {
   // Make sure the input is null terminated.
   SmallString<64> Storage;
   StringRef NameStr = Name.toNullTerminatedStringRef(Storage);
+
+  // Truncate from the beginning, not the end, if the specified name is too
+  // long.  For one, this ensures that the resulting string is still null
+  // terminated, but additionally the end of a long thread name will usually
+  // be more unique than the beginning, since a common pattern is for similar
+  // threads to share a common prefix.
+  NameStr = NameStr.take_back(get_max_thread_name_length());
   (void)NameStr;
 #if defined(__linux__)
 #if (defined(__GLIBC__) && defined(_GNU_SOURCE)) || defined(__ANDROID__)
@@ -170,15 +195,14 @@ void llvm::get_thread_name(SmallVectorImpl<char> &Name) {
   free(kp);
   return;
 #elif defined(__NetBSD__)
-  char buf[PTHREAD_MAX_NAMELEN_NP];
+  char buf[get_max_thread_name_length()];
   ::pthread_getname_np(::pthread_self(), buf, PTHREAD_MAX_NAMELEN_NP);
 
   Name.append(buf, buf + strlen(buf));
 #elif defined(__linux__)
 #if (defined(__GLIBC__) && defined(_GNU_SOURCE)) || defined(__ANDROID__)
 #if HAVE_PTHREAD_GETNAME_NP
-  constexpr int MAXNAMELEN = 16;
-  char Buffer[MAXNAMELEN];
+  char Buffer[get_max_thread_name_length()];
   if (0 == ::pthread_getname_np(::pthread_self(), Buffer, MAXNAMELEN))
     Name.append(Buffer, Buffer + strlen(Buffer));
 #endif
