@@ -729,7 +729,7 @@ void DevirtModule::applyUniformRetValOpt(CallSiteInfo &CSInfo, StringRef FnName,
     Call.replaceAndErase(
         "uniform-ret-val", FnName, RemarksEnabled,
         ConstantInt::get(cast<IntegerType>(Call.CS.getType()), TheRetVal));
-  CSInfo.TypeCheckedLoadUsers.clear();
+  CSInfo.SummaryTypeCheckedLoadUsers.clear();
 }
 
 bool DevirtModule::tryUniformRetValOpt(
