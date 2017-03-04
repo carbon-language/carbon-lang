@@ -19,12 +19,12 @@
 #include "lldb/Utility/Error.h"
 #include "lldb/Utility/Log.h"
 
-#include "lldb/Core/DataBufferHeap.h"
-#include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
+#include "lldb/Utility/DataBufferHeap.h"
+#include "lldb/Utility/DataExtractor.h"
 
 #include "llvm/Support/ConvertUTF.h"
 
