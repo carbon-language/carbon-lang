@@ -312,10 +312,12 @@ S2 s2;
 #if defined(FIRST)
 struct S3 {
   static void A() {}
+  void B() {}
 };
 #elif defined(SECOND)
 struct S3 {
   void A() {}
+  static void B() {}
 };
 #else
 S3 s3;
