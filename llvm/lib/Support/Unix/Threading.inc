@@ -26,6 +26,8 @@
 #endif
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
+#include <sys/sysctl.h>
+#include <sys/user.h>
 #include <errno.h>
 #include <unistd.h>
 #endif
@@ -37,11 +39,6 @@
 #if defined(__linux__)
 #include <unistd.h> // For syscall()
 #include <sys/syscall.h>  // For syscall codes
-#endif
-
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-#include <sys/sysctl.h>
-#include <sys/user.h>
 #endif
 
 namespace {
