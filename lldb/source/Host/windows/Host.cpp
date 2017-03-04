@@ -101,10 +101,6 @@ lldb::DataBufferSP Host::GetAuxvData(lldb_private::Process *process) {
   return 0;
 }
 
-lldb::tid_t Host::GetCurrentThreadID() {
-  return lldb::tid_t(::GetCurrentThreadId());
-}
-
 lldb::thread_t Host::GetCurrentThread() {
   return lldb::thread_t(::GetCurrentThread());
 }
