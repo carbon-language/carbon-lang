@@ -64,6 +64,8 @@ public:
   uint32_t Link;
   uint32_t Info;
 
+  static InputSectionBase Discarded;
+
   InputSectionBase()
       : SectionKind(Regular), Live(false), Assigned(false), Repl(this) {
     NumRelocations = 0;
@@ -250,14 +252,11 @@ public:
 // .eh_frame. It also includes the synthetic sections themselves.
 class InputSection : public InputSectionBase {
 public:
-  InputSection();
   InputSection(uint64_t Flags, uint32_t Type, uint64_t Addralign,
                ArrayRef<uint8_t> Data, StringRef Name, Kind K = Regular);
   template <class ELFT>
   InputSection(ObjectFile<ELFT> *F, const typename ELFT::Shdr *Header,
                StringRef Name);
-
-  static InputSection Discarded;
 
   // Write this section to a mmap'ed file, assuming Buf is pointing to
   // beginning of the output section.
