@@ -2463,6 +2463,9 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   // X / undef -> undef
   if (N1.isUndef())
     return N1;
+  // X / 0 --> undef (we don't need to preserve faults!)
+  if (N1C && N1C->isNullValue())
+    return DAG.getUNDEF(VT);
 
   return SDValue();
 }
@@ -2538,6 +2541,9 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
   // X / undef -> undef
   if (N1.isUndef())
     return N1;
+  // X / 0 --> undef (we don't need to preserve faults!)
+  if (N1C && N1C->isNullValue())
+    return DAG.getUNDEF(VT);
 
   return SDValue();
 }
@@ -2618,7 +2624,10 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
   // X % undef -> undef
   if (N1.isUndef())
     return N1;
-
+  // X % 0 --> undef (we don't need to preserve faults!)
+  if (N1C && N1C->isNullValue())
+    return DAG.getUNDEF(VT);
+  
   return SDValue();
 }
 
