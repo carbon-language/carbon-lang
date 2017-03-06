@@ -388,6 +388,24 @@ TEST_F(NamespaceEndCommentsFixerTest,
                                     "  int i;\n"
                                     "}\n"
                                     "}\n"));
+  EXPECT_EQ("namespace {\n"
+            "  int i;\n"
+            "  int j;\n"
+            "}// namespace\n"
+            "#if A\n"
+            "  int i;\n"
+            "#else\n"
+            "  int j;\n"
+            "#endif",
+            fixNamespaceEndComments("namespace {\n"
+                                    "  int i;\n"
+                                    "  int j;\n"
+                                    "}\n"
+                                    "#if A\n"
+                                    "  int i;\n"
+                                    "#else\n"
+                                    "  int j;\n"
+                                    "#endif"));
 }
 
 TEST_F(NamespaceEndCommentsFixerTest,
