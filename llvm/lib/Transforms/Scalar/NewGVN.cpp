@@ -1730,6 +1730,16 @@ std::pair<unsigned, unsigned> NewGVN::assignDFSNumbers(BasicBlock *B,
   }
 
   for (auto &I : *B) {
+    // There's no need to call isInstructionTriviallyDead more than once on
+    // an instruction. Therefore, once we know that an instruction is dead
+    // we change its DFS number so that it doesn't get value numbered.
+    if (isInstructionTriviallyDead(&I, TLI)) {
+      InstrDFS[&I] = 0;
+      DEBUG(dbgs() << "Skipping trivially dead instruction " << I << "\n");
+      markInstructionForDeletion(&I);
+      continue;
+    }
+
     InstrDFS[&I] = End++;
     DFSToInstr.emplace_back(&I);
   }
@@ -1800,15 +1810,6 @@ void NewGVN::valueNumberMemoryPhi(MemoryPhi *MP) {
 // congruence finding, and updating mappings.
 void NewGVN::valueNumberInstruction(Instruction *I) {
   DEBUG(dbgs() << "Processing instruction " << *I << "\n");
-  // There's no need to call isInstructionTriviallyDead more than once on
-  // an instruction. Therefore, once we know that an instruction is dead
-  // we change its DFS number so that it doesn't get numbered again.
-  if (InstrDFS[I] != 0 && isInstructionTriviallyDead(I, TLI)) {
-    InstrDFS[I] = 0;
-    DEBUG(dbgs() << "Skipping unused instruction\n");
-    markInstructionForDeletion(I);
-    return;
-  }
   if (!I->isTerminator()) {
     const Expression *Symbolized = nullptr;
     if (DebugCounter::shouldExecute(VNCounter)) {
