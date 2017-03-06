@@ -1031,7 +1031,7 @@ static Value *SimplifyDiv(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
   if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
-  // 0 / X -> 0, we don't need to preserve faults!
+  // 0 / X -> 0
   if (match(Op0, m_Zero()))
     return Op0;
 
@@ -1201,7 +1201,7 @@ static Value *SimplifyRem(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
   if (match(Op0, m_Undef()))
     return Constant::getNullValue(Op0->getType());
 
-  // 0 % X -> 0, we don't need to preserve faults!
+  // 0 % X -> 0
   if (match(Op0, m_Zero()))
     return Op0;
 
