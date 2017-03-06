@@ -4,7 +4,7 @@ declare i32 @external()
 
 define i32 @div1() {
 ; CHECK-LABEL: @div1(
-; CHECK:         [[CALL:%.*]] = call i32 @external(), !range !0
+; CHECK-NEXT:    [[CALL:%.*]] = call i32 @external(), !range !0
 ; CHECK-NEXT:    ret i32 0
 ;
   %call = call i32 @external(), !range !0
