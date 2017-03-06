@@ -97,10 +97,10 @@ extern "C" int cleanup_exit_scalar(bool b) {
   return v;
 }
 
-// CHECK-LABEL: define i32 @cleanup_exit_scalar({{.*}})
+// CHECK-LABEL: define{{.*}} i32 @cleanup_exit_scalar({{.*}})
 // CHECK: call {{.*}} @_ZN1AC1Ei
 //    Spill after bar.
-// CHECK: %[[v:[^ ]*]] = call i32 @_Z3bar1Ai({{.*}})
+// CHECK: %[[v:[^ ]*]] = call{{.*}} i32 @_Z3bar1Ai({{.*}})
 // CHECK-NEXT: store i32 %[[v]], i32* %[[tmp:[^, ]*]]
 //    Do cleanup.
 // CHECK: call {{.*}} @_ZN1AD1Ev
@@ -116,7 +116,7 @@ extern "C" int cleanup_exit_scalar_constant(bool b) {
   return v;
 }
 
-// CHECK-LABEL: define i32 @cleanup_exit_scalar_constant({{.*}})
+// CHECK-LABEL: define{{.*}} i32 @cleanup_exit_scalar_constant({{.*}})
 // CHECK: store i32 13, i32* %v
 
 // Check for the same bug for lvalue expression evaluation kind.
@@ -127,7 +127,7 @@ extern "C" int cleanup_exit_lvalue(bool cond) {
   int &r = (A(1), ({ if (cond) return 0; (void)0; }), getref());
   return r;
 }
-// CHECK-LABEL: define i32 @cleanup_exit_lvalue({{.*}})
+// CHECK-LABEL: define{{.*}} i32 @cleanup_exit_lvalue({{.*}})
 // CHECK: call {{.*}} @_ZN1AC1Ei
 //    Spill after bar.
 // CHECK: %[[v:[^ ]*]] = call dereferenceable(4) i32* @_Z6getrefv({{.*}})
@@ -148,7 +148,7 @@ extern "C" int cleanup_exit_complex(bool b) {
   return v;
 }
 
-// CHECK-LABEL: define i32 @cleanup_exit_complex({{.*}})
+// CHECK-LABEL: define{{.*}} i32 @cleanup_exit_complex({{.*}})
 // CHECK: call {{.*}} @_ZN1AC1Ei
 //    Spill after bar.
 // CHECK: call {{.*}} @_Z11bar_complex1Ai({{.*}})
