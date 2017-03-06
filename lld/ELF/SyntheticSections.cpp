@@ -2136,8 +2136,9 @@ template <class ELFT> bool VersionNeedSection<ELFT>::empty() const {
 
 template <class ELFT>
 MergeSyntheticSection<ELFT>::MergeSyntheticSection(StringRef Name,
-                                                   uint32_t Type, uintX_t Flags,
-                                                   uintX_t Alignment)
+                                                   uint32_t Type,
+                                                   uint64_t Flags,
+                                                   uint64_t Alignment)
     : SyntheticSection(Flags, Type, Alignment, Name),
       Builder(StringTableBuilder::RAW, Alignment) {}
 

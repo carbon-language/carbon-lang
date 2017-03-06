@@ -642,11 +642,9 @@ public:
 // attached to regular output sections.
 template <class ELFT>
 class MergeSyntheticSection final : public SyntheticSection {
-  typedef typename ELFT::uint uintX_t;
-
 public:
-  MergeSyntheticSection(StringRef Name, uint32_t Type, uintX_t Flags,
-                        uintX_t Alignment);
+  MergeSyntheticSection(StringRef Name, uint32_t Type, uint64_t Flags,
+                        uint64_t Alignment);
   void addSection(MergeInputSection<ELFT> *MS);
   void writeTo(uint8_t *Buf) override;
   void finalizeContents() override;
