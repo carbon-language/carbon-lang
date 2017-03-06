@@ -480,7 +480,7 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol *SS) {
   // memory protection by reserving space in the .bss.rel.ro section.
   bool IsReadOnly = isReadOnly<ELFT>(SS);
   BssRelSection<ELFT> *RelSec = IsReadOnly ? In<ELFT>::BssRelRo : In<ELFT>::Bss;
-  size_t Off = RelSec->addCopyRelocation(SS->getAlignment<ELFT>(), SymSize);
+  uintX_t Off = RelSec->addCopyRelocation(SS->getAlignment<ELFT>(), SymSize);
 
   // Look through the DSO's dynamic symbol table for aliases and create a
   // dynamic symbol for each one. This causes the copy relocation to correctly
