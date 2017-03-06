@@ -23,7 +23,7 @@ namespace elf {
 struct PhdrEntry;
 class SymbolBody;
 struct EhSectionPiece;
-template <class ELFT> class EhInputSection;
+class EhInputSection;
 class InputSection;
 class InputSectionBase;
 class MergeInputSection;

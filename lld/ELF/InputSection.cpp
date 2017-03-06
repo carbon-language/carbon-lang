@@ -123,7 +123,7 @@ template <class ELFT>
 OutputSection *InputSectionBase::getOutputSection() const {
   if (auto *MS = dyn_cast<MergeInputSection>(this))
     return MS->MergeSec ? MS->MergeSec->OutSec : nullptr;
-  if (auto *EH = dyn_cast<EhInputSection<ELFT>>(this))
+  if (auto *EH = dyn_cast<EhInputSection>(this))
     return EH->EHSec->OutSec;
   return OutSec;
 }
@@ -579,8 +579,9 @@ void InputSection::replace(InputSection *Other) {
 }
 
 template <class ELFT>
-EhInputSection<ELFT>::EhInputSection(elf::ObjectFile<ELFT> *F,
-                                     const Elf_Shdr *Header, StringRef Name)
+EhInputSection::EhInputSection(elf::ObjectFile<ELFT> *F,
+                               const typename ELFT::Shdr *Header,
+                               StringRef Name)
     : InputSectionBase(F, Header, Name, InputSectionBase::EHFrame) {
   // Mark .eh_frame sections as live by default because there are
   // usually no relocations that point to .eh_frames. Otherwise,
@@ -588,8 +589,7 @@ EhInputSection<ELFT>::EhInputSection(elf::ObjectFile<ELFT> *F,
   this->Live = true;
 }
 
-template <class ELFT>
-bool EhInputSection<ELFT>::classof(const InputSectionBase *S) {
+bool EhInputSection::classof(const InputSectionBase *S) {
   return S->kind() == InputSectionBase::EHFrame;
 }
 
@@ -614,24 +614,23 @@ static unsigned getReloc(IntTy Begin, IntTy Size, const ArrayRef<RelTy> &Rels,
 
 // .eh_frame is a sequence of CIE or FDE records.
 // This function splits an input section into records and returns them.
-template <class ELFT> void EhInputSection<ELFT>::split() {
+template <class ELFT> void EhInputSection::split() {
   // Early exit if already split.
   if (!this->Pieces.empty())
     return;
 
   if (this->NumRelocations) {
     if (this->AreRelocsRela)
-      split(this->relas<ELFT>());
+      split<ELFT>(this->relas<ELFT>());
     else
-      split(this->rels<ELFT>());
+      split<ELFT>(this->rels<ELFT>());
     return;
   }
-  split(makeArrayRef<typename ELFT::Rela>(nullptr, nullptr));
+  split<ELFT>(makeArrayRef<typename ELFT::Rela>(nullptr, nullptr));
 }
 
-template <class ELFT>
-template <class RelTy>
-void EhInputSection<ELFT>::split(ArrayRef<RelTy> Rels) {
+template <class ELFT, class RelTy>
+void EhInputSection::split(ArrayRef<RelTy> Rels) {
   ArrayRef<uint8_t> Data = this->Data;
   unsigned RelI = 0;
   for (size_t Off = 0, End = Data.size(); Off != End;) {
@@ -801,11 +800,6 @@ template void InputSection::writeTo<ELF32BE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF64LE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF64BE>(uint8_t *Buf);
 
-template class elf::EhInputSection<ELF32LE>;
-template class elf::EhInputSection<ELF32BE>;
-template class elf::EhInputSection<ELF64LE>;
-template class elf::EhInputSection<ELF64BE>;
-
 template void InputSectionBase::uncompress<ELF32LE>();
 template void InputSectionBase::uncompress<ELF32BE>();
 template void InputSectionBase::uncompress<ELF64LE>();
@@ -862,3 +856,21 @@ template MergeInputSection::MergeInputSection(elf::ObjectFile<ELF64LE> *F,
 template MergeInputSection::MergeInputSection(elf::ObjectFile<ELF64BE> *F,
                                               const ELF64BE::Shdr *Header,
                                               StringRef Name);
+
+template EhInputSection::EhInputSection(elf::ObjectFile<ELF32LE> *F,
+                                        const ELF32LE::Shdr *Header,
+                                        StringRef Name);
+template EhInputSection::EhInputSection(elf::ObjectFile<ELF32BE> *F,
+                                        const ELF32BE::Shdr *Header,
+                                        StringRef Name);
+template EhInputSection::EhInputSection(elf::ObjectFile<ELF64LE> *F,
+                                        const ELF64LE::Shdr *Header,
+                                        StringRef Name);
+template EhInputSection::EhInputSection(elf::ObjectFile<ELF64BE> *F,
+                                        const ELF64BE::Shdr *Header,
+                                        StringRef Name);
+
+template void EhInputSection::split<ELF32LE>();
+template void EhInputSection::split<ELF32BE>();
+template void EhInputSection::split<ELF64LE>();
+template void EhInputSection::split<ELF64BE>();

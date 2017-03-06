@@ -455,7 +455,7 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
   // .eh_frame_hdr section for runtime. So we handle them with a special
   // class. For relocatable outputs, they are just passed through.
   if (Name == ".eh_frame" && !Config->Relocatable)
-    return make<EhInputSection<ELFT>>(this, &Sec, Name);
+    return make<EhInputSection>(this, &Sec, Name);
 
   if (shouldMerge(Sec))
     return make<MergeInputSection>(this, &Sec, Name);

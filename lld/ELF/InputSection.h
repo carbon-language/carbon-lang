@@ -28,6 +28,7 @@ class SymbolBody;
 struct SectionPiece;
 
 class DefinedRegular;
+class SyntheticSection;
 template <class ELFT> class EhFrameSection;
 class MergeSyntheticSection;
 template <class ELFT> class ObjectFile;
@@ -228,19 +229,19 @@ struct EhSectionPiece : public SectionPiece {
 };
 
 // This corresponds to a .eh_frame section of an input file.
-template <class ELFT> class EhInputSection : public InputSectionBase {
+class EhInputSection : public InputSectionBase {
 public:
-  typedef typename ELFT::Shdr Elf_Shdr;
-  typedef typename ELFT::uint uintX_t;
-  EhInputSection(ObjectFile<ELFT> *F, const Elf_Shdr *Header, StringRef Name);
+  template <class ELFT>
+  EhInputSection(ObjectFile<ELFT> *F, const typename ELFT::Shdr *Header,
+                 StringRef Name);
   static bool classof(const InputSectionBase *S);
-  void split();
-  template <class RelTy> void split(ArrayRef<RelTy> Rels);
+  template <class ELFT> void split();
+  template <class ELFT, class RelTy> void split(ArrayRef<RelTy> Rels);
 
   // Splittable sections are handled as a sequence of data
   // rather than a single large blob of data.
   std::vector<EhSectionPiece> Pieces;
-  EhFrameSection<ELFT> *EHSec = nullptr;
+  SyntheticSection *EHSec = nullptr;
 };
 
 // This is a section that is added directly to an output section

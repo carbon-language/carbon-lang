@@ -82,7 +82,7 @@ public:
 private:
   uint64_t Size = 0;
   template <class RelTy>
-  void addSectionAux(EhInputSection<ELFT> *S, llvm::ArrayRef<RelTy> Rels);
+  void addSectionAux(EhInputSection *S, llvm::ArrayRef<RelTy> Rels);
 
   template <class RelTy>
   CieRecord *addCie(EhSectionPiece &Piece, ArrayRef<RelTy> Rels);
@@ -92,7 +92,7 @@ private:
 
   uintX_t getFdePc(uint8_t *Buf, size_t Off, uint8_t Enc);
 
-  std::vector<EhInputSection<ELFT> *> Sections;
+  std::vector<EhInputSection *> Sections;
   std::vector<CieRecord *> Cies;
 
   // CIE records are uniquified by their contents and personality functions.

@@ -910,7 +910,7 @@ void Writer<ELFT>::forEachRelSec(std::function<void(InputSectionBase &)> Fn) {
     // processed by InputSection::relocateNonAlloc.
     if (!(IS->Flags & SHF_ALLOC))
       continue;
-    if (isa<InputSection>(IS) || isa<EhInputSection<ELFT>>(IS))
+    if (isa<InputSection>(IS) || isa<EhInputSection>(IS))
       Fn(*IS);
   }
 }

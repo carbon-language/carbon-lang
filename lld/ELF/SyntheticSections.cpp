@@ -430,7 +430,7 @@ template <class ELFT>
 template <class RelTy>
 CieRecord *EhFrameSection<ELFT>::addCie(EhSectionPiece &Piece,
                                         ArrayRef<RelTy> Rels) {
-  auto *Sec = cast<EhInputSection<ELFT>>(Piece.ID);
+  auto *Sec = cast<EhInputSection>(Piece.ID);
   const endianness E = ELFT::TargetEndianness;
   if (read32<E>(Piece.data().data() + 4) != 0)
     fatal(toString(Sec) + ": CIE expected at beginning of .eh_frame");
@@ -458,7 +458,7 @@ template <class ELFT>
 template <class RelTy>
 bool EhFrameSection<ELFT>::isFdeLive(EhSectionPiece &Piece,
                                      ArrayRef<RelTy> Rels) {
-  auto *Sec = cast<EhInputSection<ELFT>>(Piece.ID);
+  auto *Sec = cast<EhInputSection>(Piece.ID);
   unsigned FirstRelI = Piece.FirstRelocation;
   if (FirstRelI == (unsigned)-1)
     return false;
@@ -477,7 +477,7 @@ bool EhFrameSection<ELFT>::isFdeLive(EhSectionPiece &Piece,
 // one and associates FDEs to the CIE.
 template <class ELFT>
 template <class RelTy>
-void EhFrameSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
+void EhFrameSection<ELFT>::addSectionAux(EhInputSection *Sec,
                                          ArrayRef<RelTy> Rels) {
   const endianness E = ELFT::TargetEndianness;
 
@@ -508,7 +508,7 @@ void EhFrameSection<ELFT>::addSectionAux(EhInputSection<ELFT> *Sec,
 
 template <class ELFT>
 void EhFrameSection<ELFT>::addSection(InputSectionBase *C) {
-  auto *Sec = cast<EhInputSection<ELFT>>(C);
+  auto *Sec = cast<EhInputSection>(C);
   Sec->EHSec = this;
   updateAlignment(Sec->Alignment);
   Sections.push_back(Sec);
@@ -516,7 +516,7 @@ void EhFrameSection<ELFT>::addSection(InputSectionBase *C) {
   // .eh_frame is a sequence of CIE or FDE records. This function
   // splits it into pieces so that we can call
   // SplitInputSection::getSectionPiece on the section.
-  Sec->split();
+  Sec->split<ELFT>();
   if (Sec->Pieces.empty())
     return;
 
@@ -605,7 +605,7 @@ template <class ELFT> void EhFrameSection<ELFT>::writeTo(uint8_t *Buf) {
     }
   }
 
-  for (EhInputSection<ELFT> *S : Sections)
+  for (EhInputSection *S : Sections)
     S->template relocate<ELFT>(Buf, nullptr);
 
   // Construct .eh_frame_hdr. .eh_frame_hdr is a binary search table
