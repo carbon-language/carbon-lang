@@ -210,7 +210,7 @@ template <class ELFT> void elf::markLive() {
     // Usually, a whole section is marked as live or dead, but in mergeable
     // (splittable) sections, each piece of data has independent liveness bit.
     // So we explicitly tell it which offset is in use.
-    if (auto *MS = dyn_cast<MergeInputSection<ELFT>>(R.Sec))
+    if (auto *MS = dyn_cast<MergeInputSection>(R.Sec))
       MS->markLiveAt(R.Offset);
 
     if (R.Sec->Live)

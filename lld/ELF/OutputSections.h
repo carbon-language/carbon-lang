@@ -26,7 +26,7 @@ struct EhSectionPiece;
 template <class ELFT> class EhInputSection;
 class InputSection;
 class InputSectionBase;
-template <class ELFT> class MergeInputSection;
+class MergeInputSection;
 class OutputSection;
 template <class ELFT> class ObjectFile;
 template <class ELFT> class SharedFile;

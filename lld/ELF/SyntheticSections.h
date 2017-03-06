@@ -640,12 +640,11 @@ public:
 // with different attributes in a single output sections. To do that
 // we put them into MergeSyntheticSection synthetic input sections which are
 // attached to regular output sections.
-template <class ELFT>
 class MergeSyntheticSection final : public SyntheticSection {
 public:
   MergeSyntheticSection(StringRef Name, uint32_t Type, uint64_t Flags,
                         uint64_t Alignment);
-  void addSection(MergeInputSection<ELFT> *MS);
+  void addSection(MergeInputSection *MS);
   void writeTo(uint8_t *Buf) override;
   void finalizeContents() override;
   bool shouldTailMerge() const;
@@ -657,7 +656,7 @@ private:
 
   bool Finalized = false;
   llvm::StringTableBuilder Builder;
-  std::vector<MergeInputSection<ELFT> *> Sections;
+  std::vector<MergeInputSection *> Sections;
 };
 
 // .MIPS.abiflags section.
@@ -751,7 +750,7 @@ private:
 
 template <class ELFT> InputSection *createCommonSection();
 InputSection *createInterpSection();
-template <class ELFT> MergeInputSection<ELFT> *createCommentSection();
+template <class ELFT> MergeInputSection *createCommentSection();
 template <class ELFT>
 SymbolBody *addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
                               uint64_t Size, InputSectionBase *Section);

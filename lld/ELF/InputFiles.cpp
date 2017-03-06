@@ -381,7 +381,7 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
     if (Target->FirstRelocation)
       fatal(toString(this) +
             ": multiple relocation sections to one section are not supported");
-    if (isa<MergeInputSection<ELFT>>(Target))
+    if (isa<MergeInputSection>(Target))
       fatal(toString(this) +
             ": relocations pointing to SHF_MERGE are not supported");
 
@@ -458,7 +458,7 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
     return make<EhInputSection<ELFT>>(this, &Sec, Name);
 
   if (shouldMerge(Sec))
-    return make<MergeInputSection<ELFT>>(this, &Sec, Name);
+    return make<MergeInputSection>(this, &Sec, Name);
   return make<InputSection>(this, &Sec, Name);
 }
 
