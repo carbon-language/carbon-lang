@@ -74,6 +74,8 @@ void DWARFYAML::EmitDebugAbbrev(raw_ostream &OS, const DWARFYAML::Data &DI) {
     for (auto Attr : AbbrevDecl.Attributes) {
       encodeULEB128(Attr.Attribute, OS);
       encodeULEB128(Attr.Form, OS);
+      if (Attr.Form == dwarf::DW_FORM_implicit_const)
+        encodeSLEB128(Attr.Value, OS);
     }
     encodeULEB128(0, OS);
     encodeULEB128(0, OS);
