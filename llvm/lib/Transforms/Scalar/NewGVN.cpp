@@ -289,8 +289,6 @@ class NewGVN : public FunctionPass {
   // Deletion info.
   SmallPtrSet<Instruction *, 8> InstructionsToErase;
 
-  // The set of things we gave unknown expressions to due to debug counting.
-  SmallPtrSet<Instruction *, 8> DebugUnknownExprs;
 public:
   static char ID; // Pass identification, replacement for typeid.
   NewGVN() : FunctionPass(ID) {
@@ -1718,7 +1716,6 @@ void NewGVN::cleanupTables() {
   DominatedInstRange.clear();
   MemoryAccessToClass.clear();
   PredicateToUsers.clear();
-  DebugUnknownExprs.clear();
 }
 
 std::pair<unsigned, unsigned> NewGVN::assignDFSNumbers(BasicBlock *B,
@@ -1815,9 +1812,8 @@ void NewGVN::valueNumberInstruction(Instruction *I) {
     if (DebugCounter::shouldExecute(VNCounter)) {
       Symbolized = performSymbolicEvaluation(I);
     } else {
-      // Used to track which we marked unknown so we can skip verification of
-      // comparisons.
-      DebugUnknownExprs.insert(I);
+      // Mark the instruction as unused so we don't value number it again.
+      InstrDFS[I] = 0;
     }
     // If we couldn't come up with a symbolic expression, use the unknown
     // expression
@@ -1934,7 +1930,7 @@ void NewGVN::verifyComparisons(Function &F) {
     if (!ReachableBlocks.count(&BB))
       continue;
     for (auto &I : BB) {
-      if (InstructionsToErase.count(&I) || DebugUnknownExprs.count(&I))
+      if (InstrDFS.lookup(&I) == 0)
         continue;
       if (isa<CmpInst>(&I)) {
         auto *CurrentVal = ValueToClass.lookup(&I);
