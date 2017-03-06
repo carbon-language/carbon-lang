@@ -24,18 +24,19 @@ using namespace sema;
 /// Look up the std::coroutine_traits<...>::promise_type for the given
 /// function type.
 static QualType lookupPromiseType(Sema &S, const FunctionProtoType *FnType,
-                                  SourceLocation Loc) {
+                                  SourceLocation KwLoc,
+                                  SourceLocation FuncLoc) {
   // FIXME: Cache std::coroutine_traits once we've found it.
   NamespaceDecl *StdExp = S.lookupStdExperimentalNamespace();
   if (!StdExp) {
-    S.Diag(Loc, diag::err_implied_std_coroutine_traits_not_found);
+    S.Diag(KwLoc, diag::err_implied_std_coroutine_traits_not_found);
     return QualType();
   }
 
   LookupResult Result(S, &S.PP.getIdentifierTable().get("coroutine_traits"),
-                      Loc, Sema::LookupOrdinaryName);
+                      FuncLoc, Sema::LookupOrdinaryName);
   if (!S.LookupQualifiedName(Result, StdExp)) {
-    S.Diag(Loc, diag::err_implied_std_coroutine_traits_not_found);
+    S.Diag(KwLoc, diag::err_implied_std_coroutine_traits_not_found);
     return QualType();
   }
 
@@ -49,52 +50,58 @@ static QualType lookupPromiseType(Sema &S, const FunctionProtoType *FnType,
   }
 
   // Form template argument list for coroutine_traits<R, P1, P2, ...>.
-  TemplateArgumentListInfo Args(Loc, Loc);
+  TemplateArgumentListInfo Args(KwLoc, KwLoc);
   Args.addArgument(TemplateArgumentLoc(
       TemplateArgument(FnType->getReturnType()),
-      S.Context.getTrivialTypeSourceInfo(FnType->getReturnType(), Loc)));
+      S.Context.getTrivialTypeSourceInfo(FnType->getReturnType(), KwLoc)));
   // FIXME: If the function is a non-static member function, add the type
   // of the implicit object parameter before the formal parameters.
   for (QualType T : FnType->getParamTypes())
     Args.addArgument(TemplateArgumentLoc(
-        TemplateArgument(T), S.Context.getTrivialTypeSourceInfo(T, Loc)));
+        TemplateArgument(T), S.Context.getTrivialTypeSourceInfo(T, KwLoc)));
 
   // Build the template-id.
   QualType CoroTrait =
-      S.CheckTemplateIdType(TemplateName(CoroTraits), Loc, Args);
+      S.CheckTemplateIdType(TemplateName(CoroTraits), KwLoc, Args);
   if (CoroTrait.isNull())
     return QualType();
-  if (S.RequireCompleteType(Loc, CoroTrait,
+  if (S.RequireCompleteType(KwLoc, CoroTrait,
                             diag::err_coroutine_traits_missing_specialization))
     return QualType();
 
-  CXXRecordDecl *RD = CoroTrait->getAsCXXRecordDecl();
+  auto *RD = CoroTrait->getAsCXXRecordDecl();
   assert(RD && "specialization of class template is not a class?");
 
   // Look up the ::promise_type member.
-  LookupResult R(S, &S.PP.getIdentifierTable().get("promise_type"), Loc,
+  LookupResult R(S, &S.PP.getIdentifierTable().get("promise_type"), KwLoc,
                  Sema::LookupOrdinaryName);
   S.LookupQualifiedName(R, RD);
   auto *Promise = R.getAsSingle<TypeDecl>();
   if (!Promise) {
-    S.Diag(Loc, diag::err_implied_std_coroutine_traits_promise_type_not_found)
+    S.Diag(FuncLoc,
+           diag::err_implied_std_coroutine_traits_promise_type_not_found)
         << RD;
     return QualType();
   }
-
   // The promise type is required to be a class type.
   QualType PromiseType = S.Context.getTypeDeclType(Promise);
-  if (!PromiseType->getAsCXXRecordDecl()) {
-    // Use the fully-qualified name of the type.
+
+  auto buildElaboratedType = [&]() {
     auto *NNS = NestedNameSpecifier::Create(S.Context, nullptr, StdExp);
     NNS = NestedNameSpecifier::Create(S.Context, NNS, false,
                                       CoroTrait.getTypePtr());
-    PromiseType = S.Context.getElaboratedType(ETK_None, NNS, PromiseType);
+    return S.Context.getElaboratedType(ETK_None, NNS, PromiseType);
+  };
 
-    S.Diag(Loc, diag::err_implied_std_coroutine_traits_promise_type_not_class)
-        << PromiseType;
+  if (!PromiseType->getAsCXXRecordDecl()) {
+    S.Diag(FuncLoc,
+           diag::err_implied_std_coroutine_traits_promise_type_not_class)
+        << buildElaboratedType();
     return QualType();
   }
+  if (S.RequireCompleteType(FuncLoc, buildElaboratedType(),
+                            diag::err_coroutine_promise_type_incomplete))
+    return QualType();
 
   return PromiseType;
 }
@@ -176,7 +183,8 @@ static FunctionScopeInfo *checkCoroutineContext(Sema &S, SourceLocation Loc,
     QualType T = FD->getType()->isDependentType()
                      ? S.Context.DependentTy
                      : lookupPromiseType(
-                           S, FD->getType()->castAs<FunctionProtoType>(), Loc);
+                           S, FD->getType()->castAs<FunctionProtoType>(),
+                           Loc, FD->getLocation());
     if (T.isNull())
       return nullptr;
 
