@@ -259,9 +259,6 @@ protected:
     unsigned : NumExprBits;
 
     unsigned IsImplicit : 1;
-
-    /// \brief The number of arguments to this type trait.
-    unsigned NumArgs : 32 - 1 - NumExprBits;
   };
 
   union {

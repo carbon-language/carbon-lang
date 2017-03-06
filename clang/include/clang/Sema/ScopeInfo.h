@@ -411,12 +411,12 @@ public:
       HasOMPDeclareReductionCombiner(false),
       HasFallthroughStmt(false),
       HasPotentialAvailabilityViolations(false),
-      NeedsCoroutineSuspends(true),
       ObjCShouldCallSuper(false),
       ObjCIsDesignatedInit(false),
       ObjCWarnForNoDesignatedInitChain(false),
       ObjCIsSecondaryInit(false),
       ObjCWarnForNoInitDelegation(false),
+      NeedsCoroutineSuspends(true),
       ErrorTrap(Diag) { }
 
   virtual ~FunctionScopeInfo();
