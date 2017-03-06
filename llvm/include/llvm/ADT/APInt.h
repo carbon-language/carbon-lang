@@ -1965,16 +1965,6 @@ inline APInt urem(const APInt &LHS, const APInt &RHS) { return LHS.urem(RHS); }
 /// Performs multiplication on APInt values.
 inline APInt mul(const APInt &LHS, const APInt &RHS) { return LHS * RHS; }
 
-/// \brief Function for addition operation.
-///
-/// Performs addition on APInt values.
-inline APInt add(const APInt &LHS, const APInt &RHS) { return LHS + RHS; }
-
-/// \brief Function for subtraction operation.
-///
-/// Performs subtraction on APInt values.
-inline APInt sub(const APInt &LHS, const APInt &RHS) { return LHS - RHS; }
-
 } // End of APIntOps namespace
 
 // See friend declaration above. This additional declaration is required in
