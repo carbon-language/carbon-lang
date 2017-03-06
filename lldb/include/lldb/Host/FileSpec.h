@@ -21,6 +21,7 @@
 #include "lldb/Utility/ConstString.h"
 #include "lldb/lldb-private.h"
 
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/FormatVariadic.h"
 
 namespace lldb_private {
@@ -84,7 +85,8 @@ public:
   explicit FileSpec(llvm::StringRef path, bool resolve_path,
                     PathSyntax syntax = ePathSyntaxHostNative);
 
-  explicit FileSpec(llvm::StringRef path, bool resolve_path, ArchSpec arch);
+  explicit FileSpec(llvm::StringRef path, bool resolve_path,
+                    const llvm::Triple &Triple);
 
   //------------------------------------------------------------------
   /// Copy constructor
@@ -520,7 +522,8 @@ public:
   void SetFile(llvm::StringRef path, bool resolve_path,
                PathSyntax syntax = ePathSyntaxHostNative);
 
-  void SetFile(llvm::StringRef path, bool resolve_path, ArchSpec arch);
+  void SetFile(llvm::StringRef path, bool resolve_path,
+               const llvm::Triple &Triple);
 
   bool IsResolved() const { return m_is_resolved; }
 

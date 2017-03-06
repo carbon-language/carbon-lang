@@ -25,7 +25,6 @@
 #include <pwd.h>
 #endif
 
-#include "lldb/Core/ArchSpec.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Utility/CleanUp.h"
@@ -284,10 +283,10 @@ FileSpec::FileSpec(llvm::StringRef path, bool resolve_path, PathSyntax syntax)
   SetFile(path, resolve_path, syntax);
 }
 
-FileSpec::FileSpec(llvm::StringRef path, bool resolve_path, ArchSpec arch)
-    : FileSpec{path, resolve_path, arch.GetTriple().isOSWindows()
-                                       ? ePathSyntaxWindows
-                                       : ePathSyntaxPosix} {}
+FileSpec::FileSpec(llvm::StringRef path, bool resolve_path,
+                   const llvm::Triple &Triple)
+    : FileSpec{path, resolve_path,
+               Triple.isOSWindows() ? ePathSyntaxWindows : ePathSyntaxPosix} {}
 
 //------------------------------------------------------------------
 // Copy constructor
@@ -374,10 +373,10 @@ void FileSpec::SetFile(llvm::StringRef pathname, bool resolve,
                            : resolve_path_ref.substr(filename_begin));
 }
 
-void FileSpec::SetFile(llvm::StringRef path, bool resolve, ArchSpec arch) {
-  return SetFile(path, resolve, arch.GetTriple().isOSWindows()
-                                    ? ePathSyntaxWindows
-                                    : ePathSyntaxPosix);
+void FileSpec::SetFile(llvm::StringRef path, bool resolve,
+                       const llvm::Triple &Triple) {
+  return SetFile(path, resolve,
+                 Triple.isOSWindows() ? ePathSyntaxWindows : ePathSyntaxPosix);
 }
 
 //----------------------------------------------------------------------
