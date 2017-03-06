@@ -2368,6 +2368,31 @@ SDValue DAGCombiner::useDivRem(SDNode *Node) {
   return combined;
 }
 
+static SDValue simplifyDivRem(SDNode *N, SelectionDAG &DAG) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N->getValueType(0);
+  SDLoc DL(N);
+
+  // X / undef -> undef
+  // X % undef -> undef
+  if (N1.isUndef())
+    return N1;
+
+  // X / 0 --> undef
+  // X % 0 --> undef
+  // We don't need to preserve faults!
+  if (isNullConstantOrNullSplatConstant(N1))
+    return DAG.getUNDEF(VT);
+
+  // undef / X -> 0
+  // undef % X -> 0
+  if (N0.isUndef())
+    return DAG.getConstant(0, DL, VT);
+
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitSDIV(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
@@ -2457,15 +2482,8 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     if (SDValue DivRem = useDivRem(N))
         return DivRem;
 
-  // undef / X -> 0
-  if (N0.isUndef())
-    return DAG.getConstant(0, DL, VT);
-  // X / undef -> undef
-  if (N1.isUndef())
-    return N1;
-  // X / 0 --> undef (we don't need to preserve faults!)
-  if (N1C && N1C->isNullValue())
-    return DAG.getUNDEF(VT);
+  if (SDValue V = simplifyDivRem(N, DAG))
+    return V;
 
   return SDValue();
 }
@@ -2535,15 +2553,8 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     if (SDValue DivRem = useDivRem(N))
         return DivRem;
 
-  // undef / X -> 0
-  if (N0.isUndef())
-    return DAG.getConstant(0, DL, VT);
-  // X / undef -> undef
-  if (N1.isUndef())
-    return N1;
-  // X / 0 --> undef (we don't need to preserve faults!)
-  if (N1C && N1C->isNullValue())
-    return DAG.getUNDEF(VT);
+  if (SDValue V = simplifyDivRem(N, DAG))
+    return V;
 
   return SDValue();
 }
@@ -2618,16 +2629,9 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
   if (SDValue DivRem = useDivRem(N))
     return DivRem.getValue(1);
 
-  // undef % X -> 0
-  if (N0.isUndef())
-    return DAG.getConstant(0, DL, VT);
-  // X % undef -> undef
-  if (N1.isUndef())
-    return N1;
-  // X % 0 --> undef (we don't need to preserve faults!)
-  if (N1C && N1C->isNullValue())
-    return DAG.getUNDEF(VT);
-  
+  if (SDValue V = simplifyDivRem(N, DAG))
+    return V;
+
   return SDValue();
 }
 
