@@ -105,18 +105,26 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
           case dwarf::DW_FORM_data1:
           case dwarf::DW_FORM_ref1:
           case dwarf::DW_FORM_flag:
+          case dwarf::DW_FORM_strx1:
+          case dwarf::DW_FORM_addrx1:
             onValue((uint8_t)FormVal->Value);
             break;
           case dwarf::DW_FORM_data2:
           case dwarf::DW_FORM_ref2:
+          case dwarf::DW_FORM_strx2:
+          case dwarf::DW_FORM_addrx2:
             onValue((uint16_t)FormVal->Value);
             break;
           case dwarf::DW_FORM_data4:
           case dwarf::DW_FORM_ref4:
+          case dwarf::DW_FORM_ref_sup4:
+          case dwarf::DW_FORM_strx4:
+          case dwarf::DW_FORM_addrx4:
             onValue((uint32_t)FormVal->Value);
             break;
           case dwarf::DW_FORM_data8:
           case dwarf::DW_FORM_ref8:
+          case dwarf::DW_FORM_ref_sup8:
             onValue((uint64_t)FormVal->Value);
             break;
           case dwarf::DW_FORM_sdata:
@@ -141,7 +149,6 @@ template <typename T> void DWARFYAML::VisitorImpl<T>::traverseDebugInfo() {
           case dwarf::DW_FORM_GNU_strp_alt:
           case dwarf::DW_FORM_line_strp:
           case dwarf::DW_FORM_strp_sup:
-          case dwarf::DW_FORM_ref_sup:
             onVariableSizeValue(FormVal->Value, getRefSize(Unit));
             break;
           case dwarf::DW_FORM_ref_sig8:
