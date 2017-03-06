@@ -25,6 +25,7 @@
 #include <pwd.h>
 #endif
 
+#include "lldb/Core/StringList.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Utility/CleanUp.h"
