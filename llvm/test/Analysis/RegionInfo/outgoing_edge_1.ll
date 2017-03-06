@@ -36,4 +36,4 @@ bb8:
 
 ; CHECK:    [0] bb => <Function Return>
 ; CHECK-NEXT: [1] bb1 => bb8
-; CHECK-NEXT: End Region tree
+; CHECK-NEXT: End region tree
