@@ -5326,8 +5326,8 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>>\n"
                "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
-  verifyFormat("template<typename T> // Templates on own line.\n"
-               "static int           // Some comment.\n"
+  verifyFormat("template <typename T> // Templates on own line.\n"
+               "static int            // Some comment.\n"
                "MyFunction(int a);",
                getLLVMStyle());
 }
