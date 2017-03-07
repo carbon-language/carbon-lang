@@ -738,9 +738,11 @@ void RewriteInstance::run() {
       auto FunctionIt = BinaryFunctions.find(Address);
       assert(FunctionIt != BinaryFunctions.end() &&
              "Invalid large function address.");
-      errs() << "BOLT-WARNING: Function " << FunctionIt->second
-             << " is larger than its orginal size: emitting again marking it "
-             << "as not simple.\n";
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: Function " << FunctionIt->second
+               << " is larger than its orginal size: emitting again marking it "
+               << "as not simple.\n";
+      }
       FunctionIt->second.setSimple(false);
     }
 
@@ -1670,7 +1672,9 @@ void RewriteInstance::disassembleFunctions() {
           getBinaryFunctionContainingAddress(Addr,
                                              /*CheckPastEnd=*/false,
                                              /*UseMaxSize=*/true);
-        if (ContainingFunction) {
+        // We are not going to overwrite non-simple functions, but for simple
+        // ones - adjust the padding size.
+        if (ContainingFunction && ContainingFunction->isSimple()) {
           errs() << "BOLT-WARNING: function " << *ContainingFunction
                  << " has an object detected in a padding region at address 0x"
                  << Twine::utohexstr(Addr) << '\n';
