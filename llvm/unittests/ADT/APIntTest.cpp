@@ -1556,7 +1556,7 @@ TEST(APIntTest, getLowBitsSet) {
   EXPECT_EQ(64u, i128lo64.countPopulation());
 }
 
-TEST(APIntTest, getHighBitsSet) {
+TEST(APIntTest, getBitsSet) {
   APInt i64hi1lo1 = APInt::getBitsSet(64, 63, 1);
   EXPECT_EQ(1u, i64hi1lo1.countLeadingOnes());
   EXPECT_EQ(0u, i64hi1lo1.countLeadingZeros());
@@ -1574,7 +1574,7 @@ TEST(APIntTest, getHighBitsSet) {
   EXPECT_EQ(2u, i127hi1lo1.countPopulation());
 }
 
-TEST(APIntTest, getBitsSet) {
+TEST(APIntTest, getHighBitsSet) {
   APInt i64hi32 = APInt::getHighBitsSet(64, 32);
   EXPECT_EQ(32u, i64hi32.countLeadingOnes());
   EXPECT_EQ(0u, i64hi32.countLeadingZeros());
