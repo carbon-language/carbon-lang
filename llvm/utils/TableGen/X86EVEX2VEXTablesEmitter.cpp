@@ -22,7 +22,6 @@ using namespace llvm;
 namespace {
 
 class X86EVEX2VEXTablesEmitter {
-  RecordKeeper &Records;
   CodeGenTarget Target;
 
   // Hold all non-masked & non-broadcasted EVEX encoded instructions
@@ -50,7 +49,7 @@ class X86EVEX2VEXTablesEmitter {
   };
 
 public:
-  X86EVEX2VEXTablesEmitter(RecordKeeper &R) : Records(R), Target(R) {}
+  X86EVEX2VEXTablesEmitter(RecordKeeper &R) : Target(R) {}
 
   // run - Output X86 EVEX2VEX tables.
   void run(raw_ostream &OS);
