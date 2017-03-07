@@ -2126,7 +2126,7 @@ void Verifier::visitFunction(const Function &F) {
 
   auto *N = F.getSubprogram();
   HasDebugInfo = (N != nullptr);
-  if (!N)
+  if (!HasDebugInfo)
     return;
 
   // Check that all !dbg attachments lead to back to N (or, at least, another
