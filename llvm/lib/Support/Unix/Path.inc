@@ -510,12 +510,12 @@ static std::error_code fillStatus(int StatRet, const struct stat &Status,
   return std::error_code();
 }
 
-std::error_code status(const Twine &Path, file_status &Result) {
+std::error_code status(const Twine &Path, file_status &Result, bool Follow) {
   SmallString<128> PathStorage;
   StringRef P = Path.toNullTerminatedStringRef(PathStorage);
 
   struct stat Status;
-  int StatRet = ::stat(P.begin(), &Status);
+  int StatRet = (Follow ? ::stat : ::lstat)(P.begin(), &Status);
   return fillStatus(StatRet, Status, Result);
 }
 
