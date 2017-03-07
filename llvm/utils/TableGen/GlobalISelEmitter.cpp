@@ -33,7 +33,6 @@
 #include "CodeGenDAGPatterns.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/CodeGen/LowLevelType.h"
 #include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Error.h"
@@ -59,38 +58,22 @@ static cl::opt<bool> WarnOnSkippedPatterns(
 
 //===- Helper functions ---------------------------------------------------===//
 
-/// This class stands in for LLT wherever we want to tablegen-erate an
-/// equivalent at compiler run-time.
-class LLTCodeGen {
-private:
-  LLT Ty;
-
-public:
-  LLTCodeGen(const LLT &Ty) : Ty(Ty) {}
-
-  void emitCxxConstructorCall(raw_ostream &OS) const {
-    if (Ty.isScalar()) {
-      OS << "LLT::scalar(" << Ty.getSizeInBits() << ")";
-      return;
-    }
-    if (Ty.isVector()) {
-      OS << "LLT::vector(" << Ty.getNumElements() << ", " << Ty.getSizeInBits()
-         << ")";
-      return;
-    }
-    llvm_unreachable("Unhandled LLT");
-  }
-};
-
 /// Convert an MVT to an equivalent LLT if possible, or the invalid LLT() for
 /// MVTs that don't map cleanly to an LLT (e.g., iPTR, *any, ...).
-static Optional<LLTCodeGen> MVTToLLT(MVT::SimpleValueType SVT) {
+static Optional<std::string> MVTToLLT(MVT::SimpleValueType SVT) {
+  std::string TyStr;
+  raw_string_ostream OS(TyStr);
   MVT VT(SVT);
-  if (VT.isVector() && VT.getVectorNumElements() != 1)
-    return LLTCodeGen(LLT::vector(VT.getVectorNumElements(), VT.getScalarSizeInBits()));
-  if (VT.isInteger() || VT.isFloatingPoint())
-    return LLTCodeGen(LLT::scalar(VT.getSizeInBits()));
-  return None;
+  if (VT.isVector() && VT.getVectorNumElements() != 1) {
+    OS << "LLT::vector(" << VT.getVectorNumElements() << ", "
+       << VT.getScalarSizeInBits() << ")";
+  } else if (VT.isInteger() || VT.isFloatingPoint()) {
+    OS << "LLT::scalar(" << VT.getSizeInBits() << ")";
+  } else {
+    return None;
+  }
+  OS.flush();
+  return TyStr;
 }
 
 static bool isTrivialOperatorNode(const TreePatternNode *N) {
@@ -184,10 +167,10 @@ public:
 /// Generates code to check that an operand is a particular LLT.
 class LLTOperandMatcher : public OperandPredicateMatcher {
 protected:
-  LLTCodeGen Ty;
+  std::string Ty;
 
 public:
-  LLTOperandMatcher(const LLTCodeGen &Ty)
+  LLTOperandMatcher(std::string Ty)
       : OperandPredicateMatcher(OPM_LLT), Ty(Ty) {}
 
   static bool classof(const OperandPredicateMatcher *P) {
@@ -196,9 +179,7 @@ public:
 
   void emitCxxPredicateExpr(raw_ostream &OS,
                             StringRef OperandExpr) const override {
-    OS << "MRI.getType(" << OperandExpr << ".getReg()) == (";
-    Ty.emitCxxConstructorCall(OS);
-    OS << ")";
+    OS << "MRI.getType(" << OperandExpr << ".getReg()) == (" << Ty << ")";
   }
 };
 
