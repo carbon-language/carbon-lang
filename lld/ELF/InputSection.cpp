@@ -228,7 +228,7 @@ void InputSection::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
     auto *P = reinterpret_cast<typename ELFT::Rela *>(Buf);
     Buf += sizeof(RelTy);
 
-    if (Config->Rela)
+    if (Config->isRela())
       P->r_addend = getAddend<ELFT>(Rel);
 
     // Output section VA is zero for -r, so r_offset is an offset within the
@@ -254,7 +254,7 @@ void InputSection::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
         continue;
       }
 
-      if (Config->Rela) {
+      if (Config->isRela()) {
         P->r_addend += Body.getVA<ELFT>() - Section->OutSec->Addr;
       } else if (Config->Relocatable) {
         const uint8_t *BufLoc = RelocatedSection->Data.begin() + Rel.r_offset;
