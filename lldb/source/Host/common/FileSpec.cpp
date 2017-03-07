@@ -905,13 +905,13 @@ FileSpec::ForEachItemInDirectory(llvm::StringRef dir_path,
           ft = file_type::fifo_file;
           break;
         case DT_CHR:
-          ft = file_type::character_device;
+          ft = file_type::character_file;
           break;
         case DT_DIR:
           ft = file_type::directory_file;
           break;
         case DT_BLK:
-          ft = file_type::block_device;
+          ft = file_type::block_file;
           break;
         case DT_REG:
           ft = file_type::regular_file;
