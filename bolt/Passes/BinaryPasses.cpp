@@ -1691,7 +1691,7 @@ void ReorderFunctions::buildCallGraph(BinaryContext &BC,
   };
 
   // Add call graph edges.
-  uint64_t NotFound = 0;
+  uint64_t NotProcessed = 0;
   uint64_t TotalCalls = 0;
   for (auto &It : BFs) {
     auto *Function = &It.second;
@@ -1719,18 +1719,20 @@ void ReorderFunctions::buildCallGraph(BinaryContext &BC,
     };
 
     for (auto *BB : Function->layout()) {
-      if (!BB->isCold()) {  // Don't count calls from cold blocks
-        for (auto &Inst : *BB) {
-          // Find call instructions and extract target symbols from each one.
-          bool Success = false;
-          if (BC.MIA->isCall(Inst))
-            ++TotalCalls;
+      // Don't count calls from cold blocks
+      if (BB->isCold())
+        continue;
 
+      for (auto &Inst : *BB) {
+        // Find call instructions and extract target symbols from each one.
+        if (BC.MIA->isCall(Inst)) {
+          ++TotalCalls;
           if (const auto *DstSym = BC.MIA->getTargetSymbol(Inst)) {
             // For direct calls, just use the BB execution count.
             assert(BB->hasProfile());
             const auto Count = opts::UseEdgeCounts ? BB->getExecutionCount() : 1;
-            Success = recordCall(DstSym, Count);
+            if (!recordCall(DstSym, Count))
+              ++NotProcessed;
           } else if (BC.MIA->hasAnnotation(Inst, "EdgeCountData")) {
             // For indirect calls and jump tables, use branch data.
             assert(BranchDataOrErr);
@@ -1739,35 +1741,37 @@ void ReorderFunctions::buildCallGraph(BinaryContext &BC,
               BC.MIA->getAnnotationAs<uint64_t>(Inst, "EdgeCountData");
 
             for (const auto &BI : BranchData.getBranchRange(DataOffset)) {
+              // Count each target as a separate call.
+              ++TotalCalls;
+
               if (!BI.To.IsSymbol) {
+                ++NotProcessed;
                 continue;
               }
 
               auto Itr = BC.GlobalSymbols.find(BI.To.Name);
               if (Itr == BC.GlobalSymbols.end()) {
+                ++NotProcessed;
                 continue;
               }
 
               const auto *DstSym =
                 BC.getOrCreateGlobalSymbol(Itr->second, "FUNCat");
 
-              assert(BI.Branches > 0);
-              Success = recordCall(DstSym, opts::UseEdgeCounts ? BI.Branches : 1);
+              if (!recordCall(DstSym, opts::UseEdgeCounts ? BI.Branches : 1))
+                ++NotProcessed;
             }
           }
+        }
 
-          if (!Success)
-            ++NotFound;
-
-          if (!opts::UseEdgeCounts) {
-            Offset += BC.computeCodeSize(&Inst, &Inst + 1);
-          }
+        if (!opts::UseEdgeCounts) {
+          Offset += BC.computeCodeSize(&Inst, &Inst + 1);
         }
       }
     }
   }
-  outs() << "BOLT-INFO: ReorderFunctions: " << NotFound << " calls not "
-         << " processed out of " << TotalCalls << "\n";
+  outs() << "BOLT-WARNING: ReorderFunctions: " << NotProcessed
+         << " callsites not processed out of " << TotalCalls << "\n";
 
   // Normalize arc weights.
   if (!opts::UseEdgeCounts) {
