@@ -113,7 +113,6 @@ struct Configuration {
   bool GdbIndex;
   bool GnuHash;
   bool ICF;
-  bool Mips64EL = false;
   bool MipsN32Abi = false;
   bool NoGnuUnique;
   bool NoUndefinedVersion;
@@ -170,6 +169,21 @@ struct Configuration {
 
   // Returns true if we are creating position-independent code.
   bool pic() const { return Pie || Shared; }
+
+  // Returns true if the target is the little-endian MIPS64. The reason
+  // why we have this function only for the MIPS is because we use this
+  // function often. Some ELF headers for MIPS64EL are in a mixed-endian
+  // (which is horrible and I'd say that's a serious spec bug), and we
+  // need to know whether we are reading MIPS ELF files or not in various
+  // places.
+  //
+  // (Note that MIPS64EL is not a typo for MIPS64LE. This is the official
+  // name whatever that means. A fun hypothesis is that "EL" is short for
+  // little-endian written in the little-endian order, but I don't know
+  // if that's true.)
+  bool isMips64EL() const {
+    return EMachine == llvm::ELF::EM_MIPS && EKind == ELF64LEKind;
+  }
 };
 
 // The only instance of Configuration struct.

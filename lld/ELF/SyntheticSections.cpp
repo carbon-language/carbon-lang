@@ -1230,12 +1230,12 @@ void RelocationSection<ELFT>::addReloc(const DynamicReloc<ELFT> &Reloc) {
 
 template <class ELFT, class RelTy>
 static bool compRelocations(const RelTy &A, const RelTy &B) {
-  bool AIsRel = A.getType(Config->Mips64EL) == Target->RelativeRel;
-  bool BIsRel = B.getType(Config->Mips64EL) == Target->RelativeRel;
+  bool AIsRel = A.getType(Config->isMips64EL()) == Target->RelativeRel;
+  bool BIsRel = B.getType(Config->isMips64EL()) == Target->RelativeRel;
   if (AIsRel != BIsRel)
     return AIsRel;
 
-  return A.getSymbol(Config->Mips64EL) < B.getSymbol(Config->Mips64EL);
+  return A.getSymbol(Config->isMips64EL()) < B.getSymbol(Config->isMips64EL());
 }
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
@@ -1252,7 +1252,7 @@ template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
       // allocated in the end of the GOT. We need to adjust the offset to take
       // in account 'local' and 'global' GOT entries.
       P->r_offset += In<ELFT>::MipsGot->getTlsOffset();
-    P->setSymbolAndType(Rel.getSymIndex(), Rel.Type, Config->Mips64EL);
+    P->setSymbolAndType(Rel.getSymIndex(), Rel.Type, Config->isMips64EL());
   }
 
   if (Sort) {
