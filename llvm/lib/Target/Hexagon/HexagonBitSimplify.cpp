@@ -2216,6 +2216,8 @@ bool BitSimplification::genBitSplit(MachineInstr *MI,
   for (unsigned S = AVs.find_first(); S; S = AVs.find_next(S)) {
     // The number of leading zeros here should be the number of trailing
     // non-zeros in RC.
+    if (!BT.has(S))
+      continue;
     const BitTracker::RegisterCell &SC = BT.lookup(S);
     if (SC.width() != W || ctlz(SC) != W-Z)
       continue;
@@ -2421,6 +2423,8 @@ bool BitSimplification::simplifyExtractLow(MachineInstr *MI,
   bool Changed = false;
 
   for (unsigned R = AVs.find_first(); R != 0; R = AVs.find_next(R)) {
+    if (!BT.has(R))
+      continue;
     const BitTracker::RegisterCell &SC = BT.lookup(R);
     unsigned SW = SC.width();
 
