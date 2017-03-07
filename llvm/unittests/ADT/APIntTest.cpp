@@ -1584,6 +1584,16 @@ TEST(APIntTest, getBitsSet) {
   EXPECT_EQ(32u, i64hi32.countPopulation());
 }
 
+TEST(APIntTest, getBitsSetFrom) {
+  APInt i64hi31 = APInt::getBitsSetFrom(64, 33);
+  EXPECT_EQ(31u, i64hi31.countLeadingOnes());
+  EXPECT_EQ(0u, i64hi31.countLeadingZeros());
+  EXPECT_EQ(64u, i64hi31.getActiveBits());
+  EXPECT_EQ(33u, i64hi31.countTrailingZeros());
+  EXPECT_EQ(0u, i64hi31.countTrailingOnes());
+  EXPECT_EQ(31u, i64hi31.countPopulation());
+}
+
 TEST(APIntTest, setLowBits) {
   APInt i64lo32(64, 0);
   i64lo32.setLowBits(32);
@@ -1703,4 +1713,15 @@ TEST(APIntTest, setHighBits) {
   EXPECT_EQ(16u, i32hi16.countTrailingZeros());
   EXPECT_EQ(0u, i32hi16.countTrailingOnes());
   EXPECT_EQ(16u, i32hi16.countPopulation());
+}
+
+TEST(APIntTest, setBitsFrom) {
+  APInt i64from63(64, 0);
+  i64from63.setBitsFrom(63);
+  EXPECT_EQ(1u, i64from63.countLeadingOnes());
+  EXPECT_EQ(0u, i64from63.countLeadingZeros());
+  EXPECT_EQ(64u, i64from63.getActiveBits());
+  EXPECT_EQ(63u, i64from63.countTrailingZeros());
+  EXPECT_EQ(0u, i64from63.countTrailingOnes());
+  EXPECT_EQ(1u, i64from63.countPopulation());
 }

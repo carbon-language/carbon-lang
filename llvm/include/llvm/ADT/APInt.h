@@ -510,6 +510,23 @@ public:
     return Res;
   }
 
+  /// \brief Get a value with upper bits starting at loBit set.
+  ///
+  /// Constructs an APInt value that has a contiguous range of bits set. The
+  /// bits from loBit (inclusive) to numBits (exclusive) will be set. All other
+  /// bits will be zero. For example, with parameters(32, 12) you would get
+  /// 0xFFFFF000.
+  ///
+  /// \param numBits the intended bit width of the result
+  /// \param loBit the index of the lowest bit to set.
+  ///
+  /// \returns An APInt value with the requested bits set.
+  static APInt getBitsSetFrom(unsigned numBits, unsigned loBit) {
+    APInt Res(numBits, 0);
+    Res.setBitsFrom(loBit);
+    return Res;
+  }
+
   /// \brief Get a value with high bits set
   ///
   /// Constructs an APInt value that has the top hiBitsSet bits set.
@@ -1220,6 +1237,11 @@ public:
     } else {
       setBitsSlowCase(loBit, hiBit);
     }
+  }
+
+  /// Set the top bits starting from loBit.
+  void setBitsFrom(unsigned loBit) {
+    return setBits(loBit, BitWidth);
   }
 
   /// Set the bottom loBits bits.
