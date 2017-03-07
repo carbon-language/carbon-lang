@@ -35,15 +35,11 @@ namespace libunwind {
 #include "Registers.hpp"
 
 #if _LIBUNWIND_ARM_EHABI
-struct EHTEntry {
-  uint32_t functionOffset;
-  uint32_t unwindOpcodes;
-};
 #if defined(_LIBUNWIND_IS_BAREMETAL)
 // When statically linked on bare-metal, the symbols for the EH table are looked
 // up without going through the dynamic loader.
-extern EHTEntry __exidx_start;
-extern EHTEntry __exidx_end;
+extern char __exidx_start;
+extern char __exidx_end;
 #else
 #include <link.h>
 #endif // !defined(_LIBUNWIND_IS_BAREMETAL)
@@ -437,8 +433,7 @@ inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
           } else if (phdr->p_type == PT_ARM_EXIDX) {
             uintptr_t exidx_start = pinfo->dlpi_addr + phdr->p_vaddr;
             cbdata->sects->arm_section = exidx_start;
-            cbdata->sects->arm_section_length = phdr->p_memsz /
-                                                sizeof(EHTEntry);
+            cbdata->sects->arm_section_length = phdr->p_memsz;
             found_hdr = true;
           }
         }
