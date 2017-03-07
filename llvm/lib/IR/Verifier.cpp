@@ -277,6 +277,9 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// already.
   bool SawFrameEscape;
 
+  /// Whether the current function has a DISubprogram attached to it.
+  bool HasDebugInfo = false;
+
   /// Stores the count of how many objects were passed to llvm.localescape for a
   /// given function and the largest index passed to llvm.localrecover.
   DenseMap<Function *, std::pair<unsigned, unsigned>> FrameEscapeInfo;
@@ -2122,6 +2125,7 @@ void Verifier::visitFunction(const Function &F) {
          "Function is marked as dllimport, but not external.", &F);
 
   auto *N = F.getSubprogram();
+  HasDebugInfo = (N != nullptr);
   if (!N)
     return;
 
@@ -4425,6 +4429,12 @@ void Verifier::verifyFragmentExpression(const DbgInfoIntrinsic &I) {
 }
 
 void Verifier::verifyFnArgs(const DbgInfoIntrinsic &I) {
+  // This function does not take the scope of noninlined function arguments into
+  // account. Don't run it if current function is nodebug, because it may
+  // contain inlined debug intrinsics.
+  if (!HasDebugInfo)
+    return;
+
   DILocalVariable *Var;
   if (auto *DV = dyn_cast<DbgValueInst>(&I)) {
     // For performance reasons only check non-inlined ones.
