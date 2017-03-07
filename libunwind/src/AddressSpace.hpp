@@ -34,32 +34,6 @@ namespace libunwind {
 #include "dwarf2.h"
 #include "Registers.hpp"
 
-#if _LIBUNWIND_ARM_EHABI
-#if defined(_LIBUNWIND_IS_BAREMETAL)
-// When statically linked on bare-metal, the symbols for the EH table are looked
-// up without going through the dynamic loader.
-extern char __exidx_start;
-extern char __exidx_end;
-#else
-#include <link.h>
-#endif // !defined(_LIBUNWIND_IS_BAREMETAL)
-#endif // _LIBUNWIND_ARM_EHABI
-
-#if defined(__CloudABI__) || defined(__FreeBSD__) || defined(__Fuchsia__) ||  \
-    defined(__linux__) || defined(__NetBSD__)
-#if _LIBUNWIND_SUPPORT_DWARF_UNWIND && _LIBUNWIND_SUPPORT_DWARF_INDEX
-#include <link.h>
-// Macro for machine-independent access to the ELF program headers. This
-// macro is not available on some systems (e.g., FreeBSD). On these
-// systems the data structures are just called Elf_XXX. Define ElfW()
-// locally.
-#if !defined(ElfW)
-#define ElfW(type) Elf_##type
-#endif
-#include "EHHeaderParser.hpp"
-#endif
-#endif
-
 namespace libunwind {
 
 /// Used by findUnwindSections() to return info about needed sections.
@@ -291,6 +265,7 @@ LocalAddressSpace::getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
 }
 
 #ifdef __APPLE__ 
+
   struct dyld_unwind_sections
   {
     const struct mach_header*   mh;
@@ -336,6 +311,30 @@ LocalAddressSpace::getEncodedP(pint_t &addr, pint_t end, uint8_t encoding,
       return true;
     }
   #endif
+
+#elif _LIBUNWIND_ARM_EHABI && defined(_LIBUNWIND_IS_BAREMETAL)
+
+// When statically linked on bare-metal, the symbols for the EH table are looked
+// up without going through the dynamic loader.
+extern char __exidx_start;
+extern char __exidx_end;
+
+#elif _LIBUNWIND_ARM_EHABI || _LIBUNWIND_SUPPORT_DWARF_UNWIND
+
+// ELF-based systems may use dl_iterate_phdr() to access sections
+// containing unwinding information. The ElfW() macro for pointer-size
+// independent ELF header traversal is not provided by <link.h> on some
+// systems (e.g., FreeBSD). On these systems the data structures are
+// just called Elf_XXX. Define ElfW() locally.
+#include <link.h>
+#if !defined(ElfW)
+#define ElfW(type) Elf_##type
+#endif
+
+#if _LIBUNWIND_SUPPORT_DWARF_UNWIND
+#include "EHHeaderParser.hpp"
+#endif
+
 #endif
 
 inline bool LocalAddressSpace::findUnwindSections(pint_t targetAddr,
