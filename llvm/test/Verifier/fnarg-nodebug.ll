@@ -1,11 +1,12 @@
 ; RUN: llvm-as < %s -o %t
 ; RUN: llvm-dis < %t -o - | FileCheck %s
+; Testcase from PR32042.
 ; Created at -02 from:
 ; bool alpha(int);
 ; bool bravo(int charlie) { return (alpha(charlie)); }
 ; static int delta(int charlie) { return charlie + 1; }
 ; __attribute__((nodebug)) bool echo(int foxtrot) {
-;   return (bravo(delta(foxtrot)));
+;   return bravo(delta(foxtrot));
 ; }
 
 source_filename = "t.c"
