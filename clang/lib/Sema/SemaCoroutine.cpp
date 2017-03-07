@@ -326,7 +326,6 @@ static FunctionScopeInfo *checkCoroutineContext(Sema &S, SourceLocation Loc,
     return nullptr;
 
   assert(isa<FunctionDecl>(S.CurContext) && "not in a function scope");
-  auto *FD = cast<FunctionDecl>(S.CurContext);
 
   auto *ScopeInfo = S.getCurFunction();
   assert(ScopeInfo && "missing function scope for function");
