@@ -223,6 +223,9 @@ class LLVM_NODISCARD APInt {
   /// out-of-line slow case for countPopulation
   unsigned countPopulationSlowCase() const;
 
+  /// out-of-line slow case for setBits.
+  void setBitsSlowCase(unsigned loBit, unsigned hiBit);
+
 public:
   /// \name Constructors
   /// @{
@@ -1211,7 +1214,32 @@ public:
   void setBit(unsigned bitPosition);
 
   /// Set the bits from loBit (inclusive) to hiBit (exclusive) to 1.
-  void setBits(unsigned loBit, unsigned hiBit);
+  void setBits(unsigned loBit, unsigned hiBit) {
+    assert(hiBit <= BitWidth && "hiBit out of range");
+    assert(loBit <= hiBit && "loBit out of range");
+    if (loBit == hiBit)
+      return;
+    if (loBit < APINT_BITS_PER_WORD && hiBit <= APINT_BITS_PER_WORD) {
+      uint64_t mask = UINT64_MAX >> (APINT_BITS_PER_WORD - (hiBit - loBit));
+      mask <<= loBit;
+      if (isSingleWord())
+        VAL |= mask;
+      else
+        pVal[0] |= mask;
+    } else {
+      setBitsSlowCase(loBit, hiBit);
+    }
+  }
+
+  /// Set the bottom loBits bits.
+  void setLowBits(unsigned loBits) {
+    return setBits(0, loBits);
+  }
+
+  /// Set the top hiBits bits.
+  void setHighBits(unsigned hiBits) {
+    return setBits(BitWidth - hiBits, BitWidth);
+  }
 
   /// \brief Set every bit to 0.
   void clearAllBits() {
