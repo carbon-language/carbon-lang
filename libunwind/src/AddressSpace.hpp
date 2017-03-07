@@ -32,6 +32,7 @@ namespace libunwind {
 #include "libunwind.h"
 #include "config.h"
 #include "dwarf2.h"
+#include "EHHeaderParser.hpp"
 #include "Registers.hpp"
 
 namespace libunwind {
@@ -329,10 +330,6 @@ extern char __exidx_end;
 #include <link.h>
 #if !defined(ElfW)
 #define ElfW(type) Elf_##type
-#endif
-
-#if _LIBUNWIND_SUPPORT_DWARF_UNWIND
-#include "EHHeaderParser.hpp"
 #endif
 
 #endif
