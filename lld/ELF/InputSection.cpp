@@ -86,7 +86,7 @@ InputSectionBase::InputSectionBase(elf::ObjectFile<ELFT> *File,
                        SectionKind) {
 }
 
-template <class ELFT> size_t InputSectionBase::getSize() const {
+size_t InputSectionBase::getSize() const {
   if (auto *S = dyn_cast<SyntheticSection>(this))
     return S->getSize();
 
@@ -108,7 +108,7 @@ uint64_t InputSectionBase::getOffset(uint64_t Offset) const {
     // For synthetic sections we treat offset -1 as the end of the section.
     // The same approach is used for synthetic symbols (DefinedSynthetic).
     return cast<InputSection>(this)->OutSecOff +
-           (Offset == uint64_t(-1) ? getSize<ELFT>() : Offset);
+           (Offset == uint64_t(-1) ? getSize() : Offset);
   case EHFrame:
     // The file crtbeginT.o has relocations pointing to the start of an empty
     // .eh_frame that is known to be the first in the link. It does that to
@@ -835,11 +835,6 @@ template uint64_t InputSectionBase::getOffset<ELF32LE>(uint64_t Offset) const;
 template uint64_t InputSectionBase::getOffset<ELF32BE>(uint64_t Offset) const;
 template uint64_t InputSectionBase::getOffset<ELF64LE>(uint64_t Offset) const;
 template uint64_t InputSectionBase::getOffset<ELF64BE>(uint64_t Offset) const;
-
-template size_t InputSectionBase::getSize<ELF32LE>() const;
-template size_t InputSectionBase::getSize<ELF32BE>() const;
-template size_t InputSectionBase::getSize<ELF64LE>() const;
-template size_t InputSectionBase::getSize<ELF64BE>() const;
 
 template elf::ObjectFile<ELF32LE> *InputSectionBase::getFile<ELF32LE>() const;
 template elf::ObjectFile<ELF32BE> *InputSectionBase::getFile<ELF32BE>() const;

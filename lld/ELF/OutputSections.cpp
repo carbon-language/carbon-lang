@@ -134,7 +134,7 @@ template <class ELFT> void OutputSection::assignOffsets() {
   for (InputSection *S : Sections) {
     Off = alignTo(Off, S->Alignment);
     S->OutSecOff = Off;
-    Off += S->template getSize<ELFT>();
+    Off += S->getSize();
   }
   this->Size = Off;
 }

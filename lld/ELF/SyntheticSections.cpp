@@ -1733,8 +1733,7 @@ static InputSectionBase *findSection(ArrayRef<InputSectionBase *> Arr,
                                      uint64_t Offset) {
   for (InputSectionBase *S : Arr)
     if (S && S != &InputSection::Discarded)
-      if (Offset >= S->getOffset() &&
-          Offset < S->getOffset() + S->getSize<ELFT>())
+      if (Offset >= S->getOffset() && Offset < S->getOffset() + S->getSize())
         return S;
   return nullptr;
 }
@@ -2237,8 +2236,7 @@ void ARMExidxSentinelSection<ELFT>::writeTo(uint8_t *Buf) {
   auto RI = cast<OutputSection>(this->OutSec)->Sections.rbegin();
   InputSection *LE = *(++RI);
   InputSection *LC = cast<InputSection>(LE->template getLinkOrderDep<ELFT>());
-  uint64_t S = LC->OutSec->Addr +
-               LC->template getOffset<ELFT>(LC->template getSize<ELFT>());
+  uint64_t S = LC->OutSec->Addr + LC->template getOffset<ELFT>(LC->getSize());
   uint64_t P = this->getVA();
   Target->relocateOne(Buf, R_ARM_PREL31, S - P);
   write32le(Buf + 4, 0x1);

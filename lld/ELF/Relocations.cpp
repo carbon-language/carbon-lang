@@ -928,7 +928,7 @@ bool createThunks(ArrayRef<OutputSection *> OutputSections) {
     if (TS == nullptr) {
       uint32_t Off = 0;
       for (auto *IS : OS->Sections) {
-        Off = IS->OutSecOff + IS->template getSize<ELFT>();
+        Off = IS->OutSecOff + IS->getSize();
         if ((IS->Flags & SHF_EXECINSTR) == 0)
           break;
       }

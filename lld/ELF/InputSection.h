@@ -111,7 +111,7 @@ public:
   llvm::TinyPtrVector<InputSectionBase *> DependentSections;
 
   // Returns the size of this section (even if this is a common or BSS.)
-  template <class ELFT> size_t getSize() const;
+  size_t getSize() const;
 
   template <class ELFT> OutputSection *getOutputSection() const;
 
