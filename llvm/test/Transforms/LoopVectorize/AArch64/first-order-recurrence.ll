@@ -327,3 +327,25 @@ scalar.body:
 for.end:
   ret void
 }
+
+; UNROLL-NO-IC-LABEL: @constant_folded_previous_value(
+; UNROLL-NO-IC:       vector.body:
+; UNROLL-NO-IC:         [[VECTOR_RECUR:%.*]] = phi <4 x i64> [ <i64 undef, i64 undef, i64 undef, i64 0>, %vector.ph ], [ <i64 1, i64 1, i64 1, i64 1>, %vector.body ]
+; UNROLL-NO-IC-NEXT:    [[TMP0:%.*]] = shufflevector <4 x i64> [[VECTOR_RECUR]], <4 x i64> <i64 1, i64 1, i64 1, i64 1>, <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL-NO-IC:         br i1 {{.*}}, label %middle.block, label %vector.body
+;
+define void @constant_folded_previous_value() {
+entry:
+  br label %scalar.body
+
+scalar.body:
+  %i = phi i64 [ 0, %entry ], [ %i.next, %scalar.body ]
+  %tmp2 = phi i64 [ 0, %entry ], [ %tmp3, %scalar.body ]
+  %tmp3 = add i64 0, 1
+  %i.next = add nuw nsw i64 %i, 1
+  %cond = icmp eq i64 %i.next, undef
+  br i1 %cond, label %for.end, label %scalar.body
+
+for.end:
+  ret void
+}
