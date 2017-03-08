@@ -63,7 +63,7 @@ public:
   uint32_t Link;
   uint32_t Info;
 
-  uint64_t getOffset() const;
+  uint64_t getOffsetInFile() const;
 
   static InputSectionBase Discarded;
 

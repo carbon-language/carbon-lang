@@ -93,7 +93,7 @@ size_t InputSectionBase::getSize() const {
   return Data.size();
 }
 
-uint64_t InputSectionBase::getOffset() const {
+uint64_t InputSectionBase::getOffsetInFile() const {
   const uint8_t *FileStart = (const uint8_t *)File->MB.getBufferStart();
   const uint8_t *SecStart = Data.begin();
   return SecStart - FileStart;
