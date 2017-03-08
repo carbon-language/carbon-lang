@@ -13,6 +13,7 @@
 #include "Passes/FrameOptimizer.h"
 #include "Passes/Inliner.h"
 #include "llvm/Support/Timer.h"
+#include <numeric>
 
 using namespace llvm;
 
