@@ -283,36 +283,45 @@ for.cond.cleanup3:
   br i1 %exitcond, label %for.cond.cleanup, label %for.cond1.preheader
 }
 
-; UNROLL-NO-IC-LABEL: @PR29559(
+; UNROLL-NO-IC-LABEL: @PR30183(
 ; UNROLL-NO-IC:       vector.ph:
-; UNROLL-NO-IC:         br label %vector.body
+; UNROLL-NO-IC-NEXT:    [[VECTOR_RECUR_INIT:%.*]] = insertelement <4 x i32> undef, i32 [[PRE_LOAD:%.*]], i32 3
+; UNROLL-NO-IC-NEXT:    br label %vector.body
 ; UNROLL-NO-IC:       vector.body:
-; UNROLL-NO-IC:         %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-; UNROLL-NO-IC:         %vector.recur = phi <4 x float*> [ undef, %vector.ph ], [ %[[I4:.+]], %vector.body ]
-; UNROLL-NO-IC:         %[[G1:.+]] = getelementptr inbounds [3 x float], [3 x float]* undef, i64 0, i64 0
-; UNROLL-NO-IC:         %[[I1:.+]] = insertelement <4 x float*> undef, float* %[[G1]], i32 0
-; UNROLL-NO-IC:         %[[I2:.+]] = insertelement <4 x float*> %[[I1]], float* %[[G1]], i32 1
-; UNROLL-NO-IC:         %[[I3:.+]] = insertelement <4 x float*> %[[I2]], float* %[[G1]], i32 2
-; UNROLL-NO-IC:         %[[I4]] = insertelement <4 x float*> %[[I3]], float* %[[G1]], i32 3
-; UNROLL-NO-IC:         {{.*}} = shufflevector <4 x float*> %vector.recur, <4 x float*> %[[I4]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-; UNROLL-NO-IC:         {{.*}} = shufflevector <4 x float*> %[[I4]], <4 x float*> %[[I4]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-; UNROLL-NO-IC:       middle.block:
-; UNROLL-NO-IC:         %vector.recur.extract = extractelement <4 x float*> %[[I4]], i32 3
-; UNROLL-NO-IC:       scalar.ph:
-; UNROLL-NO-IC:         %scalar.recur.init = phi float* [ %vector.recur.extract, %middle.block ], [ undef, %min.iters.checked ], [ undef, %entry ]
-; UNROLL-NO-IC:       scalar.body:
-; UNROLL-NO-IC:         %scalar.recur = phi float* [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
+; UNROLL-NO-IC-NEXT:    [[INDEX:%.*]] = phi i64 [ 0, %vector.ph ], [ [[INDEX_NEXT:%.*]], %vector.body ]
+; UNROLL-NO-IC-NEXT:    [[VECTOR_RECUR:%.*]] = phi <4 x i32> [ [[VECTOR_RECUR_INIT]], %vector.ph ], [ [[TMP42:%.*]], %vector.body ]
+; UNROLL-NO-IC:         [[TMP27:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP28:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP29:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP30:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP31:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP32:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP33:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP34:%.*]] = load i32, i32* {{.*}}
+; UNROLL-NO-IC-NEXT:    [[TMP35:%.*]] = insertelement <4 x i32> undef, i32 [[TMP27]], i32 0
+; UNROLL-NO-IC-NEXT:    [[TMP36:%.*]] = insertelement <4 x i32> [[TMP35]], i32 [[TMP28]], i32 1
+; UNROLL-NO-IC-NEXT:    [[TMP37:%.*]] = insertelement <4 x i32> [[TMP36]], i32 [[TMP29]], i32 2
+; UNROLL-NO-IC-NEXT:    [[TMP38:%.*]] = insertelement <4 x i32> [[TMP37]], i32 [[TMP30]], i32 3
+; UNROLL-NO-IC-NEXT:    [[TMP39:%.*]] = insertelement <4 x i32> undef, i32 [[TMP31]], i32 0
+; UNROLL-NO-IC-NEXT:    [[TMP40:%.*]] = insertelement <4 x i32> [[TMP39]], i32 [[TMP32]], i32 1
+; UNROLL-NO-IC-NEXT:    [[TMP41:%.*]] = insertelement <4 x i32> [[TMP40]], i32 [[TMP33]], i32 2
+; UNROLL-NO-IC-NEXT:    [[TMP42]] = insertelement <4 x i32> [[TMP41]], i32 [[TMP34]], i32 3
+; UNROLL-NO-IC-NEXT:    [[TMP43:%.*]] = shufflevector <4 x i32> [[VECTOR_RECUR]], <4 x i32> [[TMP38]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL-NO-IC-NEXT:    [[TMP44:%.*]] = shufflevector <4 x i32> [[TMP38]], <4 x i32> [[TMP42]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL-NO-IC-NEXT:    [[INDEX_NEXT]] = add i64 [[INDEX]], 8
+; UNROLL-NO-IC:         br i1 {{.*}}, label %middle.block, label %vector.body
 ;
-define void @PR29559() {
+define void @PR30183(i32 %pre_load, i32* %a, i32* %b, i64 %n) {
 entry:
   br label %scalar.body
 
 scalar.body:
   %i = phi i64 [ 0, %entry ], [ %i.next, %scalar.body ]
-  %tmp2 = phi float* [ undef, %entry ], [ %tmp3, %scalar.body ]
-  %tmp3 = getelementptr inbounds [3 x float], [3 x float]* undef, i64 0, i64 0
-  %i.next = add nuw nsw i64 %i, 1
-  %cond = icmp eq i64 %i.next, undef
+  %tmp0 = phi i32 [ %pre_load, %entry ], [ %tmp2, %scalar.body ]
+  %i.next = add nuw nsw i64 %i, 2
+  %tmp1 = getelementptr inbounds i32, i32* %a, i64 %i.next
+  %tmp2 = load i32, i32* %tmp1
+  %cond = icmp eq i64 %i.next,%n
   br i1 %cond, label %for.end, label %scalar.body
 
 for.end:
