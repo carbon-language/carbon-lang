@@ -4,39 +4,34 @@
 
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
 
-; CHECK-LABEL: @recurrence_1
-;
 ; void recurrence_1(int *a, int *b, int n) {
 ;   for(int i = 0; i < n; i++)
 ;     b[i] =  a[i] + a[i - 1]
 ; }
 ;
-; CHECK:  vector.ph:
-; CHECK:    %vector.recur.init = insertelement <4 x i32> undef, i32 %pre_load, i32 3
+; CHECK-LABEL: @recurrence_1(
+; CHECK:       vector.ph:
+; CHECK:         %vector.recur.init = insertelement <4 x i32> undef, i32 %pre_load, i32 3
+; CHECK:       vector.body:
+; CHECK:         %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L1:%[a-zA-Z0-9.]+]], %vector.body ]
+; CHECK:         [[L1]] = load <4 x i32>
+; CHECK:         {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; CHECK:       middle.block:
+; CHECK:         %vector.recur.extract = extractelement <4 x i32> [[L1]], i32 3
+; CHECK:       scalar.ph:
+; CHECK:         %scalar.recur.init = phi i32 [ %vector.recur.extract, %middle.block ], [ %pre_load, %vector.memcheck ], [ %pre_load, %min.iters.checked ], [ %pre_load, %for.preheader ]
+; CHECK:       scalar.body:
+; CHECK:         %scalar.recur = phi i32 [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
 ;
-; CHECK:  vector.body:
-; CHECK:    %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L1:%[a-zA-Z0-9.]+]], %vector.body ]
-; CHECK:    [[L1]] = load <4 x i32>
-; CHECK:    {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-;
-; CHECK:  middle.block:
-; CHECK:    %vector.recur.extract = extractelement <4 x i32> [[L1]], i32 3
-;
-; CHECK:  scalar.ph:
-; CHECK:    %scalar.recur.init = phi i32 [ %vector.recur.extract, %middle.block ], [ %pre_load, %vector.memcheck ], [ %pre_load, %min.iters.checked ], [ %pre_load, %for.preheader ]
-;
-; CHECK:  scalar.body:
-; CHECK:    %scalar.recur = phi i32 [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
-;
-; UNROLL: vector.body:
-; UNROLL:   %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L2:%[a-zA-Z0-9.]+]], %vector.body ]
-; UNROLL:   [[L1:%[a-zA-Z0-9.]+]] = load <4 x i32>
-; UNROLL:   [[L2]] = load <4 x i32>
-; UNROLL:   {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-; UNROLL:   {{.*}} = shufflevector <4 x i32> [[L1]], <4 x i32> [[L2]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-;
-; UNROLL: middle.block:
-; UNROLL:   %vector.recur.extract = extractelement <4 x i32> [[L2]], i32 3
+; UNROLL-LABEL: @recurrence_1(
+; UNROLL:       vector.body:
+; UNROLL:         %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L2:%[a-zA-Z0-9.]+]], %vector.body ]
+; UNROLL:         [[L1:%[a-zA-Z0-9.]+]] = load <4 x i32>
+; UNROLL:         [[L2]] = load <4 x i32>
+; UNROLL:         {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL:         {{.*}} = shufflevector <4 x i32> [[L1]], <4 x i32> [[L2]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL:       middle.block:
+; UNROLL:         %vector.recur.extract = extractelement <4 x i32> [[L2]], i32 3
 ;
 define void @recurrence_1(i32* nocapture readonly %a, i32* nocapture %b, i32 %n) {
 entry:
@@ -64,8 +59,6 @@ for.exit:
   ret void
 }
 
-; CHECK-LABEL: @recurrence_2
-;
 ; int recurrence_2(int *a, int n) {
 ;   int minmax;
 ;   for (int i = 0; i < n; ++i)
@@ -73,32 +66,29 @@ for.exit:
 ;   return minmax;
 ; }
 ;
-; CHECK:  vector.ph:
-; CHECK:    %vector.recur.init = insertelement <4 x i32> undef, i32 %.pre, i32 3
+; CHECK-LABEL: @recurrence_2(
+; CHECK:       vector.ph:
+; CHECK:         %vector.recur.init = insertelement <4 x i32> undef, i32 %.pre, i32 3
+; CHECK:       vector.body:
+; CHECK:         %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L1:%[a-zA-Z0-9.]+]], %vector.body ]
+; CHECK:         [[L1]] = load <4 x i32>
+; CHECK:         {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; CHECK:       middle.block:
+; CHECK:         %vector.recur.extract = extractelement <4 x i32> [[L1]], i32 3
+; CHECK:       scalar.ph:
+; CHECK:         %scalar.recur.init = phi i32 [ %vector.recur.extract, %middle.block ], [ %.pre, %min.iters.checked ], [ %.pre, %for.preheader ]
+; CHECK:       scalar.body:
+; CHECK:         %scalar.recur = phi i32 [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
 ;
-; CHECK:  vector.body:
-; CHECK:    %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L1:%[a-zA-Z0-9.]+]], %vector.body ]
-; CHECK:    [[L1]] = load <4 x i32>
-; CHECK:    {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-;
-; CHECK:  middle.block:
-; CHECK:    %vector.recur.extract = extractelement <4 x i32> [[L1]], i32 3
-;
-; CHECK:  scalar.ph:
-; CHECK:    %scalar.recur.init = phi i32 [ %vector.recur.extract, %middle.block ], [ %.pre, %min.iters.checked ], [ %.pre, %for.preheader ]
-;
-; CHECK:  scalar.body:
-; CHECK:    %scalar.recur = phi i32 [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
-;
-; UNROLL: vector.body:
-; UNROLL:   %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L2:%[a-zA-Z0-9.]+]], %vector.body ]
-; UNROLL:   [[L1:%[a-zA-Z0-9.]+]] = load <4 x i32>
-; UNROLL:   [[L2]] = load <4 x i32>
-; UNROLL:   {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-; UNROLL:   {{.*}} = shufflevector <4 x i32> [[L1]], <4 x i32> [[L2]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-;
-; UNROLL: middle.block:
-; UNROLL:   %vector.recur.extract = extractelement <4 x i32> [[L2]], i32 3
+; UNROLL-LABEL: @recurrence_2(
+; UNROLL:       vector.body:
+; UNROLL:         %vector.recur = phi <4 x i32> [ %vector.recur.init, %vector.ph ], [ [[L2:%[a-zA-Z0-9.]+]], %vector.body ]
+; UNROLL:         [[L1:%[a-zA-Z0-9.]+]] = load <4 x i32>
+; UNROLL:         [[L2]] = load <4 x i32>
+; UNROLL:         {{.*}} = shufflevector <4 x i32> %vector.recur, <4 x i32> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL:         {{.*}} = shufflevector <4 x i32> [[L1]], <4 x i32> [[L2]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL:       middle.block:
+; UNROLL:         %vector.recur.extract = extractelement <4 x i32> [[L2]], i32 3
 ;
 define i32 @recurrence_2(i32* nocapture readonly %a, i32 %n) {
 entry:
@@ -135,41 +125,35 @@ scalar.body:
   br i1 %exitcond, label %for.cond.cleanup.loopexit, label %scalar.body
 }
 
-; CHECK-LABEL: @recurrence_3
-;
 ; void recurrence_3(short *a, double *b, int n, float f, short p) {
 ;   b[0] = (double)a[0] - f * (double)p;
 ;   for (int i = 1; i < n; i++)
 ;     b[i] = (double)a[i] - f * (double)a[i - 1];
 ; }
 ;
+; CHECK-LABEL: @recurrence_3(
+; CHECK:       vector.ph:
+; CHECK:         %vector.recur.init = insertelement <4 x i16> undef, i16 %0, i32 3
+; CHECK:       vector.body:
+; CHECK:         %vector.recur = phi <4 x i16> [ %vector.recur.init, %vector.ph ], [ [[L1:%[a-zA-Z0-9.]+]], %vector.body ]
+; CHECK:         [[L1]] = load <4 x i16>
+; CHECK:         {{.*}} = shufflevector <4 x i16> %vector.recur, <4 x i16> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; CHECK:       middle.block:
+; CHECK:         %vector.recur.extract = extractelement <4 x i16> [[L1]], i32 3
+; CHECK:       scalar.ph:
+; CHECK:         %scalar.recur.init = phi i16 [ %vector.recur.extract, %middle.block ], [ %0, %vector.memcheck ], [ %0, %min.iters.checked ], [ %0, %for.preheader ]
+; CHECK:       scalar.body:
+; CHECK:         %scalar.recur = phi i16 [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
 ;
-; CHECK:  vector.ph:
-; CHECK:    %vector.recur.init = insertelement <4 x i16> undef, i16 %0, i32 3
-;
-; CHECK:  vector.body:
-; CHECK:    %vector.recur = phi <4 x i16> [ %vector.recur.init, %vector.ph ], [ [[L1:%[a-zA-Z0-9.]+]], %vector.body ]
-; CHECK:    [[L1]] = load <4 x i16>
-; CHECK:    {{.*}} = shufflevector <4 x i16> %vector.recur, <4 x i16> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-;
-; CHECK:  middle.block:
-; CHECK:    %vector.recur.extract = extractelement <4 x i16> [[L1]], i32 3
-;
-; CHECK:  scalar.ph:
-; CHECK:    %scalar.recur.init = phi i16 [ %vector.recur.extract, %middle.block ], [ %0, %vector.memcheck ], [ %0, %min.iters.checked ], [ %0, %for.preheader ]
-;
-; CHECK:  scalar.body:
-; CHECK:    %scalar.recur = phi i16 [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
-;
-; UNROLL: vector.body:
-; UNROLL:   %vector.recur = phi <4 x i16> [ %vector.recur.init, %vector.ph ], [ [[L2:%[a-zA-Z0-9.]+]], %vector.body ]
-; UNROLL:   [[L1:%[a-zA-Z0-9.]+]] = load <4 x i16>
-; UNROLL:   [[L2]] = load <4 x i16>
-; UNROLL:   {{.*}} = shufflevector <4 x i16> %vector.recur, <4 x i16> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-; UNROLL:   {{.*}} = shufflevector <4 x i16> [[L1]], <4 x i16> [[L2]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-;
-; UNROLL: middle.block:
-; UNROLL:   %vector.recur.extract = extractelement <4 x i16> [[L2]], i32 3
+; UNROLL-LABEL: @recurrence_3(
+; UNROLL:       vector.body:
+; UNROLL:         %vector.recur = phi <4 x i16> [ %vector.recur.init, %vector.ph ], [ [[L2:%[a-zA-Z0-9.]+]], %vector.body ]
+; UNROLL:         [[L1:%[a-zA-Z0-9.]+]] = load <4 x i16>
+; UNROLL:         [[L2]] = load <4 x i16>
+; UNROLL:         {{.*}} = shufflevector <4 x i16> %vector.recur, <4 x i16> [[L1]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL:         {{.*}} = shufflevector <4 x i16> [[L1]], <4 x i16> [[L2]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL:       middle.block:
+; UNROLL:         %vector.recur.extract = extractelement <4 x i16> [[L2]], i32 3
 ;
 define void @recurrence_3(i16* nocapture readonly %a, double* nocapture %b, i32 %n, float %f, i16 %p) {
 entry:
@@ -209,8 +193,6 @@ for.end:
   ret void
 }
 
-; CHECK-LABEL: @PR26734
-;
 ; void PR26734(short *a, int *b, int *c, int d, short *e) {
 ;   for (; d != 21; d++) {
 ;     *b &= *c;
@@ -219,7 +201,9 @@ for.end:
 ;   }
 ; }
 ;
-; CHECK-NOT: vector.ph:
+; CHECK-LABEL: @PR26734(
+; CHECK-NOT:   vector.ph:
+; CHECK:       }
 ;
 define void @PR26734(i16* %a, i32* %b, i32* %c, i32 %d, i16* %e) {
 entry:
@@ -258,8 +242,6 @@ for.end:
   ret void
 }
 
-; CHECK-LABEL: @PR27246
-;
 ; int PR27246() {
 ;   unsigned int e, n;
 ;   for (int i = 1; i < 49; ++i) {
@@ -270,7 +252,9 @@ for.end:
 ;   return n;
 ; }
 ;
-; CHECK-NOT: vector.ph:
+; CHECK-LABEL: @PR27246(
+; CHECK-NOT:   vector.ph:
+; CHECK:       }
 ;
 define i32 @PR27246() {
 entry:
@@ -299,30 +283,25 @@ for.cond.cleanup3:
   br i1 %exitcond, label %for.cond.cleanup, label %for.cond1.preheader
 }
 
-; CHECK-LABEL: @PR29559
-;
-; UNROLL-NO-IC: vector.ph:
-; UNROLL-NO-IC:   br label %vector.body
-;
-; UNROLL-NO-IC: vector.body:
-; UNROLL-NO-IC:   %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
-; UNROLL-NO-IC:   %vector.recur = phi <4 x float*> [ undef, %vector.ph ], [ %[[I4:.+]], %vector.body ]
-; UNROLL-NO-IC:   %[[G1:.+]] = getelementptr inbounds [3 x float], [3 x float]* undef, i64 0, i64 0
-; UNROLL-NO-IC:   %[[I1:.+]] = insertelement <4 x float*> undef, float* %[[G1]], i32 0
-; UNROLL-NO-IC:   %[[I2:.+]] = insertelement <4 x float*> %[[I1]], float* %[[G1]], i32 1
-; UNROLL-NO-IC:   %[[I3:.+]] = insertelement <4 x float*> %[[I2]], float* %[[G1]], i32 2
-; UNROLL-NO-IC:   %[[I4]] = insertelement <4 x float*> %[[I3]], float* %[[G1]], i32 3
-; UNROLL-NO-IC:   {{.*}} = shufflevector <4 x float*> %vector.recur, <4 x float*> %[[I4]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-; UNROLL-NO-IC:   {{.*}} = shufflevector <4 x float*> %[[I4]], <4 x float*> %[[I4]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
-;
-; UNROLL-NO-IC: middle.block:
-; UNROLL-NO-IC:   %vector.recur.extract = extractelement <4 x float*> %[[I4]], i32 3
-;
-; UNROLL-NO-IC: scalar.ph:
-; UNROLL-NO-IC:   %scalar.recur.init = phi float* [ %vector.recur.extract, %middle.block ], [ undef, %min.iters.checked ], [ undef, %entry ]
-;
-; UNROLL-NO-IC: scalar.body:
-; UNROLL-NO-IC:   %scalar.recur = phi float* [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
+; UNROLL-NO-IC-LABEL: @PR29559(
+; UNROLL-NO-IC:       vector.ph:
+; UNROLL-NO-IC:         br label %vector.body
+; UNROLL-NO-IC:       vector.body:
+; UNROLL-NO-IC:         %index = phi i64 [ 0, %vector.ph ], [ %index.next, %vector.body ]
+; UNROLL-NO-IC:         %vector.recur = phi <4 x float*> [ undef, %vector.ph ], [ %[[I4:.+]], %vector.body ]
+; UNROLL-NO-IC:         %[[G1:.+]] = getelementptr inbounds [3 x float], [3 x float]* undef, i64 0, i64 0
+; UNROLL-NO-IC:         %[[I1:.+]] = insertelement <4 x float*> undef, float* %[[G1]], i32 0
+; UNROLL-NO-IC:         %[[I2:.+]] = insertelement <4 x float*> %[[I1]], float* %[[G1]], i32 1
+; UNROLL-NO-IC:         %[[I3:.+]] = insertelement <4 x float*> %[[I2]], float* %[[G1]], i32 2
+; UNROLL-NO-IC:         %[[I4]] = insertelement <4 x float*> %[[I3]], float* %[[G1]], i32 3
+; UNROLL-NO-IC:         {{.*}} = shufflevector <4 x float*> %vector.recur, <4 x float*> %[[I4]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL-NO-IC:         {{.*}} = shufflevector <4 x float*> %[[I4]], <4 x float*> %[[I4]], <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+; UNROLL-NO-IC:       middle.block:
+; UNROLL-NO-IC:         %vector.recur.extract = extractelement <4 x float*> %[[I4]], i32 3
+; UNROLL-NO-IC:       scalar.ph:
+; UNROLL-NO-IC:         %scalar.recur.init = phi float* [ %vector.recur.extract, %middle.block ], [ undef, %min.iters.checked ], [ undef, %entry ]
+; UNROLL-NO-IC:       scalar.body:
+; UNROLL-NO-IC:         %scalar.recur = phi float* [ %scalar.recur.init, %scalar.ph ], [ {{.*}}, %scalar.body ]
 ;
 define void @PR29559() {
 entry:
