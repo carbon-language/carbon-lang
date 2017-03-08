@@ -1202,7 +1202,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
 
 template <class ELFT>
 typename ELFT::uint DynamicReloc<ELFT>::getOffset() const {
-  return InputSec->OutSec->Addr + InputSec->getOffset<ELFT>(OffsetInSec);
+  return InputSec->OutSec->Addr + InputSec->getOffset(OffsetInSec);
 }
 
 template <class ELFT> int64_t DynamicReloc<ELFT>::getAddend() const {
@@ -1878,8 +1878,7 @@ template <class ELFT> void GdbIndexSection<ELFT>::writeTo(uint8_t *Buf) {
 
   // Write the address area.
   for (AddressEntry &E : AddressArea) {
-    uintX_t BaseAddr =
-        E.Section->OutSec->Addr + E.Section->template getOffset<ELFT>(0);
+    uintX_t BaseAddr = E.Section->OutSec->Addr + E.Section->getOffset(0);
     write64le(Buf, BaseAddr + E.LowAddress);
     write64le(Buf + 8, BaseAddr + E.HighAddress);
     write32le(Buf + 16, E.CuIndex);
@@ -2237,7 +2236,7 @@ void ARMExidxSentinelSection<ELFT>::writeTo(uint8_t *Buf) {
   auto RI = cast<OutputSection>(this->OutSec)->Sections.rbegin();
   InputSection *LE = *(++RI);
   InputSection *LC = cast<InputSection>(LE->template getLinkOrderDep<ELFT>());
-  uint64_t S = LC->OutSec->Addr + LC->template getOffset<ELFT>(LC->getSize());
+  uint64_t S = LC->OutSec->Addr + LC->getOffset(LC->getSize());
   uint64_t P = this->getVA();
   Target->relocateOne(Buf, R_ARM_PREL31, S - P);
   write32le(Buf + 4, 0x1);

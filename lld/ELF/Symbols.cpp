@@ -97,7 +97,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
     // If you understand the data structures involved with this next
     // line (and how they get built), then you have a pretty good
     // understanding of the linker.
-    uint64_t VA = (OutSec ? OutSec->Addr : 0) + IS->getOffset<ELFT>(Offset);
+    uint64_t VA = (OutSec ? OutSec->Addr : 0) + IS->getOffset(Offset);
 
     if (D.isTls() && !Config->Relocatable) {
       if (!Out::TlsPhdr)

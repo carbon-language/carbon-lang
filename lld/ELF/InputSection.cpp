@@ -99,7 +99,6 @@ uint64_t InputSectionBase::getOffsetInFile() const {
   return SecStart - FileStart;
 }
 
-template <class ELFT>
 uint64_t InputSectionBase::getOffset(uint64_t Offset) const {
   switch (kind()) {
   case Regular:
@@ -153,9 +152,8 @@ template <class ELFT> void InputSectionBase::uncompress() {
   Data = ArrayRef<uint8_t>((uint8_t *)OutputBuf, Size);
 }
 
-template <class ELFT>
 uint64_t InputSectionBase::getOffset(const DefinedRegular &Sym) const {
-  return getOffset<ELFT>(Sym.Value);
+  return getOffset(Sym.Value);
 }
 
 template <class ELFT>
@@ -238,7 +236,7 @@ void InputSection::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
     // Output section VA is zero for -r, so r_offset is an offset within the
     // section, but for --emit-relocs it is an virtual address.
     P->r_offset = RelocatedSection->OutSec->Addr +
-                  RelocatedSection->getOffset<ELFT>(Rel.r_offset);
+                  RelocatedSection->getOffset(Rel.r_offset);
     P->setSymbolAndType(In<ELFT>::SymTab->getSymbolIndex(&Body), Type,
                         Config->isMips64EL());
 
@@ -456,7 +454,7 @@ void InputSection::relocateNonAlloc(uint8_t *Buf, ArrayRef<RelTy> Rels) {
   typedef typename ELFT::uint uintX_t;
   for (const RelTy &Rel : Rels) {
     uint32_t Type = Rel.getType(Config->isMips64EL());
-    uintX_t Offset = this->getOffset<ELFT>(Rel.r_offset);
+    uint64_t Offset = getOffset(Rel.r_offset);
     uint8_t *BufLoc = Buf + Offset;
     int64_t Addend = getAddend<ELFT>(Rel);
     if (!RelTy::IsRela)
@@ -501,7 +499,7 @@ void InputSectionBase::relocate(uint8_t *Buf, uint8_t *BufEnd) {
   typedef typename ELFT::uint uintX_t;
   const unsigned Bits = sizeof(uintX_t) * 8;
   for (const Relocation &Rel : Relocations) {
-    uintX_t Offset = getOffset<ELFT>(Rel.Offset);
+    uint64_t Offset = getOffset(Rel.Offset);
     uint8_t *BufLoc = Buf + Offset;
     uint32_t Type = Rel.Type;
 
@@ -821,20 +819,6 @@ template InputSectionBase *InputSection::getRelocatedSection<ELF32LE>();
 template InputSectionBase *InputSection::getRelocatedSection<ELF32BE>();
 template InputSectionBase *InputSection::getRelocatedSection<ELF64LE>();
 template InputSectionBase *InputSection::getRelocatedSection<ELF64BE>();
-
-template uint64_t
-InputSectionBase::getOffset<ELF32LE>(const DefinedRegular &Sym) const;
-template uint64_t
-InputSectionBase::getOffset<ELF32BE>(const DefinedRegular &Sym) const;
-template uint64_t
-InputSectionBase::getOffset<ELF64LE>(const DefinedRegular &Sym) const;
-template uint64_t
-InputSectionBase::getOffset<ELF64BE>(const DefinedRegular &Sym) const;
-
-template uint64_t InputSectionBase::getOffset<ELF32LE>(uint64_t Offset) const;
-template uint64_t InputSectionBase::getOffset<ELF32BE>(uint64_t Offset) const;
-template uint64_t InputSectionBase::getOffset<ELF64LE>(uint64_t Offset) const;
-template uint64_t InputSectionBase::getOffset<ELF64BE>(uint64_t Offset) const;
 
 template elf::ObjectFile<ELF32LE> *InputSectionBase::getFile<ELF32LE>() const;
 template elf::ObjectFile<ELF32BE> *InputSectionBase::getFile<ELF32BE>() const;

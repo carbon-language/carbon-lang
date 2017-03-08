@@ -121,12 +121,12 @@ public:
     return getFile<ELFT>()->getObj();
   }
 
-  template <class ELFT> uint64_t getOffset(const DefinedRegular &Sym) const;
+  uint64_t getOffset(const DefinedRegular &Sym) const;
 
   template <class ELFT> InputSectionBase *getLinkOrderDep() const;
   // Translate an offset in the input section to an offset in the output
   // section.
-  template <class ELFT> uint64_t getOffset(uint64_t Offset) const;
+  uint64_t getOffset(uint64_t Offset) const;
 
   template <class ELFT> void uncompress();
 
