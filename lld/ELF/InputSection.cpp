@@ -122,7 +122,6 @@ uint64_t InputSectionBase::getOffset(uint64_t Offset) const {
   llvm_unreachable("invalid section kind");
 }
 
-template <class ELFT>
 OutputSection *InputSectionBase::getOutputSection() const {
   if (auto *MS = dyn_cast<MergeInputSection>(this))
     return MS->MergeSec ? MS->MergeSec->OutSec : nullptr;
@@ -503,7 +502,7 @@ void InputSectionBase::relocate(uint8_t *Buf, uint8_t *BufEnd) {
     uint8_t *BufLoc = Buf + Offset;
     uint32_t Type = Rel.Type;
 
-    uintX_t AddrLoc = getOutputSection<ELFT>()->Addr + Offset;
+    uintX_t AddrLoc = getOutputSection()->Addr + Offset;
     RelExpr Expr = Rel.Expr;
     uint64_t TargetVA = SignExtend64<Bits>(
         getRelocTargetVA<ELFT>(Type, Rel.Addend, AddrLoc, *Rel.Sym, Expr));
@@ -809,11 +808,6 @@ template InputSectionBase *InputSectionBase::getLinkOrderDep<ELF32LE>() const;
 template InputSectionBase *InputSectionBase::getLinkOrderDep<ELF32BE>() const;
 template InputSectionBase *InputSectionBase::getLinkOrderDep<ELF64LE>() const;
 template InputSectionBase *InputSectionBase::getLinkOrderDep<ELF64BE>() const;
-
-template OutputSection *InputSectionBase::getOutputSection<ELF32LE>() const;
-template OutputSection *InputSectionBase::getOutputSection<ELF32BE>() const;
-template OutputSection *InputSectionBase::getOutputSection<ELF64LE>() const;
-template OutputSection *InputSectionBase::getOutputSection<ELF64BE>() const;
 
 template InputSectionBase *InputSection::getRelocatedSection<ELF32LE>();
 template InputSectionBase *InputSection::getRelocatedSection<ELF32BE>();

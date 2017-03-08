@@ -113,7 +113,7 @@ public:
   // Returns the size of this section (even if this is a common or BSS.)
   size_t getSize() const;
 
-  template <class ELFT> OutputSection *getOutputSection() const;
+  OutputSection *getOutputSection() const;
 
   template <class ELFT> ObjectFile<ELFT> *getFile() const;
 

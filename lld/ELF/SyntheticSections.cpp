@@ -717,8 +717,7 @@ void MipsGotSection<ELFT>::addEntry(SymbolBody &Sym, int64_t Addend,
     // method calculate number of "pages" required to cover all saved output
     // section and allocate appropriate number of GOT entries.
     auto *DefSym = cast<DefinedRegular>(&Sym);
-    PageIndexMap.insert(
-        {DefSym->Section->template getOutputSection<ELFT>(), 0});
+    PageIndexMap.insert({DefSym->Section->getOutputSection(), 0});
     return;
   }
   if (Sym.isTls()) {
@@ -789,7 +788,7 @@ typename MipsGotSection<ELFT>::uintX_t
 MipsGotSection<ELFT>::getPageEntryOffset(const SymbolBody &B,
                                          int64_t Addend) const {
   const OutputSection *OutSec =
-      cast<DefinedRegular>(&B)->Section->template getOutputSection<ELFT>();
+      cast<DefinedRegular>(&B)->Section->getOutputSection();
   uintX_t SecAddr = getMipsPageAddr(OutSec->Addr);
   uintX_t SymAddr = getMipsPageAddr(B.getVA<ELFT>(Addend));
   uintX_t Index = PageIndexMap.lookup(OutSec) + (SymAddr - SecAddr) / 0xffff;

@@ -85,7 +85,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
       Addend = 0;
     }
 
-    const OutputSection *OutSec = IS->getOutputSection<ELFT>();
+    const OutputSection *OutSec = IS->getOutputSection();
 
     // In the typical case, this is actually very simple and boils
     // down to adding together 3 numbers:
@@ -206,7 +206,7 @@ template <class ELFT>
 const OutputSection *SymbolBody::getOutputSection() const {
   if (auto *S = dyn_cast<DefinedRegular>(this)) {
     if (S->Section)
-      return S->Section->template getOutputSection<ELFT>();
+      return S->Section->getOutputSection();
     return nullptr;
   }
 
