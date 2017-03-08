@@ -101,7 +101,6 @@ uint64_t InputSectionBase::getOffset() const {
 
 template <class ELFT>
 uint64_t InputSectionBase::getOffset(uint64_t Offset) const {
-  typedef typename ELFT::uint uintX_t;
   switch (kind()) {
   case Regular:
     return cast<InputSection>(this)->OutSecOff + Offset;
@@ -109,7 +108,7 @@ uint64_t InputSectionBase::getOffset(uint64_t Offset) const {
     // For synthetic sections we treat offset -1 as the end of the section.
     // The same approach is used for synthetic symbols (DefinedSynthetic).
     return cast<InputSection>(this)->OutSecOff +
-           (Offset == uintX_t(-1) ? getSize<ELFT>() : Offset);
+           (Offset == uint64_t(-1) ? getSize<ELFT>() : Offset);
   case EHFrame:
     // The file crtbeginT.o has relocations pointing to the start of an empty
     // .eh_frame that is known to be the first in the link. It does that to

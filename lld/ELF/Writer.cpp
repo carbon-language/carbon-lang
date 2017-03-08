@@ -734,9 +734,9 @@ void PhdrEntry::add(OutputSection *Sec) {
 }
 
 template <class ELFT>
-static DefinedSynthetic *
-addOptionalSynthetic(StringRef Name, OutputSection *Sec,
-                     typename ELFT::uint Val, uint8_t StOther = STV_HIDDEN) {
+static DefinedSynthetic *addOptionalSynthetic(StringRef Name,
+                                              OutputSection *Sec, uint64_t Val,
+                                              uint8_t StOther = STV_HIDDEN) {
   if (SymbolBody *S = Symtab<ELFT>::X->find(Name))
     if (!S->isInCurrentDSO())
       return cast<DefinedSynthetic>(
@@ -756,7 +756,7 @@ static Symbol *addRegular(StringRef Name, InputSectionBase *Sec,
 
 template <class ELFT>
 static Symbol *addOptionalRegular(StringRef Name, InputSectionBase *IS,
-                                  typename ELFT::uint Value) {
+                                  uint64_t Value) {
   SymbolBody *S = Symtab<ELFT>::X->find(Name);
   if (!S)
     return nullptr;

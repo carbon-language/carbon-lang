@@ -42,15 +42,13 @@ DefinedRegular *ElfSym::MipsGp;
 
 template <class ELFT>
 static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
-  typedef typename ELFT::uint uintX_t;
-
   switch (Body.kind()) {
   case SymbolBody::DefinedSyntheticKind: {
     auto &D = cast<DefinedSynthetic>(Body);
     const OutputSection *Sec = D.Section;
     if (!Sec)
       return D.Value;
-    if (D.Value == uintX_t(-1))
+    if (D.Value == uint64_t(-1))
       return Sec->Addr + Sec->Size;
     return Sec->Addr + D.Value;
   }
@@ -99,7 +97,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
     // If you understand the data structures involved with this next
     // line (and how they get built), then you have a pretty good
     // understanding of the linker.
-    uintX_t VA = (OutSec ? OutSec->Addr : 0) + IS->getOffset<ELFT>(Offset);
+    uint64_t VA = (OutSec ? OutSec->Addr : 0) + IS->getOffset<ELFT>(Offset);
 
     if (D.isTls() && !Config->Relocatable) {
       if (!Out::TlsPhdr)
