@@ -1733,7 +1733,8 @@ static InputSectionBase *findSection(ArrayRef<InputSectionBase *> Arr,
                                      uint64_t Offset) {
   for (InputSectionBase *S : Arr)
     if (S && S != &InputSection::Discarded)
-      if (Offset >= S->Offset && Offset < S->Offset + S->getSize<ELFT>())
+      if (Offset >= S->getOffset() &&
+          Offset < S->getOffset() + S->getSize<ELFT>())
         return S;
   return nullptr;
 }
@@ -1752,8 +1753,8 @@ readAddressArea(DWARFContext &Dwarf, InputSection *Sec, size_t CurrentCU) {
 
     for (std::pair<uint64_t, uint64_t> &R : Ranges)
       if (InputSectionBase *S = findSection<ELFT>(Sections, R.first))
-        Ret.push_back(
-            {S, R.first - S->Offset, R.second - S->Offset, CurrentCU});
+        Ret.push_back({S, R.first - S->getOffset(), R.second - S->getOffset(),
+                       CurrentCU});
     ++CurrentCU;
   }
   return Ret;
