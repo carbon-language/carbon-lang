@@ -844,6 +844,10 @@ unsigned MipsGotSection<ELFT>::getLocalEntriesNum() const {
 }
 
 template <class ELFT> void MipsGotSection<ELFT>::finalizeContents() {
+  updateAllocSize();
+}
+
+template <class ELFT> void MipsGotSection<ELFT>::updateAllocSize() {
   PageEntriesNum = 0;
   for (std::pair<const OutputSection *, size_t> &P : PageIndexMap) {
     // For each output section referenced by GOT page relocations calculate
@@ -1330,8 +1334,12 @@ template <class ELFT> void SymbolTableSection<ELFT>::finalizeContents() {
       S.Symbol->DynsymIndex = ++I;
     return;
   }
+}
 
-  // If it is a .symtab, move all local symbols before global symbols.
+template <class ELFT> void SymbolTableSection<ELFT>::postThunkContents() {
+  if (this->Type == SHT_DYNSYM)
+    return;
+  // move all local symbols before global symbols.
   auto It = std::stable_partition(
       Symbols.begin(), Symbols.end(), [](const SymbolTableEntry &S) {
         return S.Symbol->isLocal() ||
