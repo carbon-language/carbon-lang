@@ -90,7 +90,8 @@ public:
   /// \p LineIndex, if previously broken at \p TailOffset. If possible, do not
   /// violate \p ColumnLimit.
   virtual Split getSplit(unsigned LineIndex, unsigned TailOffset,
-                         unsigned ColumnLimit) const = 0;
+                         unsigned ColumnLimit,
+                         llvm::Regex &CommentPragmasRegex) const = 0;
 
   /// \brief Emits the previously retrieved \p Split via \p Whitespaces.
   virtual void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
@@ -198,8 +199,8 @@ public:
                          bool InPPDirective, encoding::Encoding Encoding,
                          const FormatStyle &Style);
 
-  Split getSplit(unsigned LineIndex, unsigned TailOffset,
-                 unsigned ColumnLimit) const override;
+  Split getSplit(unsigned LineIndex, unsigned TailOffset, unsigned ColumnLimit,
+                 llvm::Regex &CommentPragmasRegex) const override;
   void insertBreak(unsigned LineIndex, unsigned TailOffset, Split Split,
                    WhitespaceManager &Whitespaces) override;
   void compressWhitespace(unsigned LineIndex, unsigned TailOffset, Split Split,
@@ -218,8 +219,8 @@ protected:
 
 public:
   unsigned getLineCount() const override;
-  Split getSplit(unsigned LineIndex, unsigned TailOffset,
-                 unsigned ColumnLimit) const override;
+  Split getSplit(unsigned LineIndex, unsigned TailOffset, unsigned ColumnLimit,
+                 llvm::Regex &CommentPragmasRegex) const override;
   void compressWhitespace(unsigned LineIndex, unsigned TailOffset, Split Split,
                           WhitespaceManager &Whitespaces) override;
 
