@@ -114,7 +114,7 @@ struct Out {
 struct SectionKey {
   StringRef Name;
   uint64_t Flags;
-  uint64_t Alignment;
+  uint32_t Alignment;
 };
 }
 }

@@ -176,7 +176,7 @@ template <class ELFT> static void combineMergableSections() {
 
     StringRef OutsecName = getOutputSectionName(MS->Name);
     uintX_t Flags = getOutFlags<ELFT>(MS);
-    uintX_t Alignment = std::max<uintX_t>(MS->Alignment, MS->Entsize);
+    uint32_t Alignment = std::max<uintX_t>(MS->Alignment, MS->Entsize);
 
     auto I =
         llvm::find_if(MergeSections, [=](MergeSyntheticSection *Sec) {
@@ -1477,7 +1477,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
     VA += getHeaderSize<ELFT>();
   uintX_t ThreadBssOffset = 0;
   for (OutputSection *Sec : OutputSections) {
-    uintX_t Alignment = Sec->Alignment;
+    uint32_t Alignment = Sec->Alignment;
     if (Sec->PageAlign)
       Alignment = std::max<uintX_t>(Alignment, Config->MaxPageSize);
 

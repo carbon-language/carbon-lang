@@ -299,7 +299,7 @@ static SectionKey createKey(InputSectionBase *C, StringRef OutsecName) {
 
   typedef typename ELFT::uint uintX_t;
 
-  uintX_t Alignment = 0;
+  uint32_t Alignment = 0;
   uintX_t Flags = 0;
   if (Config->Relocatable && (C->Flags & SHF_MERGE)) {
     Alignment = std::max<uintX_t>(C->Alignment, C->Entsize);

@@ -319,7 +319,7 @@ static int compareDefinedNonCommon(Symbol *S, bool WasInserted, uint8_t Binding,
 
 template <class ELFT>
 Symbol *SymbolTable<ELFT>::addCommon(StringRef N, uint64_t Size,
-                                     uint64_t Alignment, uint8_t Binding,
+                                     uint32_t Alignment, uint8_t Binding,
                                      uint8_t StOther, uint8_t Type,
                                      InputFile *File) {
   Symbol *S;

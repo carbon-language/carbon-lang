@@ -71,7 +71,7 @@ public:
   Symbol *addBitcode(StringRef Name, uint8_t Binding, uint8_t StOther,
                      uint8_t Type, bool CanOmitFromDynSym, BitcodeFile *File);
 
-  Symbol *addCommon(StringRef N, uint64_t Size, uint64_t Alignment,
+  Symbol *addCommon(StringRef N, uint64_t Size, uint32_t Alignment,
                     uint8_t Binding, uint8_t StOther, uint8_t Type,
                     InputFile *File);
 

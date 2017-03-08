@@ -289,7 +289,7 @@ Undefined::Undefined(StringRefZ Name, bool IsLocal, uint8_t StOther,
   this->File = File;
 }
 
-DefinedCommon::DefinedCommon(StringRef Name, uint64_t Size, uint64_t Alignment,
+DefinedCommon::DefinedCommon(StringRef Name, uint64_t Size, uint32_t Alignment,
                              uint8_t StOther, uint8_t Type, InputFile *File)
     : Defined(SymbolBody::DefinedCommonKind, Name, /*IsLocal=*/false, StOther,
               Type),
@@ -300,11 +300,11 @@ DefinedCommon::DefinedCommon(StringRef Name, uint64_t Size, uint64_t Alignment,
 // If a shared symbol is referred via a copy relocation, its alignment
 // becomes part of the ABI. This function returns a symbol alignment.
 // Because symbols don't have alignment attributes, we need to infer that.
-template <class ELFT> uint64_t SharedSymbol::getAlignment() const {
+template <class ELFT> uint32_t SharedSymbol::getAlignment() const {
   auto *File = cast<SharedFile<ELFT>>(this->File);
-  uint64_t SecAlign = File->getSection(getSym<ELFT>())->sh_addralign;
+  uint32_t SecAlign = File->getSection(getSym<ELFT>())->sh_addralign;
   uint64_t SymValue = getSym<ELFT>().st_value;
-  uint64_t SymAlign = uint64_t(1) << countTrailingZeros(SymValue);
+  uint32_t SymAlign = uint32_t(1) << countTrailingZeros(SymValue);
   return std::min(SecAlign, SymAlign);
 }
 
@@ -433,7 +433,7 @@ template bool DefinedRegular::template isMipsPIC<ELF32BE>() const;
 template bool DefinedRegular::template isMipsPIC<ELF64LE>() const;
 template bool DefinedRegular::template isMipsPIC<ELF64BE>() const;
 
-template uint64_t SharedSymbol::template getAlignment<ELF32LE>() const;
-template uint64_t SharedSymbol::template getAlignment<ELF32BE>() const;
-template uint64_t SharedSymbol::template getAlignment<ELF64LE>() const;
-template uint64_t SharedSymbol::template getAlignment<ELF64BE>() const;
+template uint32_t SharedSymbol::template getAlignment<ELF32LE>() const;
+template uint32_t SharedSymbol::template getAlignment<ELF32BE>() const;
+template uint32_t SharedSymbol::template getAlignment<ELF64LE>() const;
+template uint32_t SharedSymbol::template getAlignment<ELF64BE>() const;

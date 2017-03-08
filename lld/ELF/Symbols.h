@@ -156,7 +156,7 @@ public:
 
 class DefinedCommon : public Defined {
 public:
-  DefinedCommon(StringRef N, uint64_t Size, uint64_t Alignment, uint8_t StOther,
+  DefinedCommon(StringRef N, uint64_t Size, uint32_t Alignment, uint8_t StOther,
                 uint8_t Type, InputFile *File);
 
   static bool classof(const SymbolBody *S) {
@@ -168,7 +168,7 @@ public:
   uint64_t Offset;
 
   // The maximum alignment we have seen for this symbol.
-  uint64_t Alignment;
+  uint32_t Alignment;
 
   uint64_t Size;
 };
@@ -265,7 +265,7 @@ public:
     return getSym<ELFT>().st_size;
   }
 
-  template <class ELFT> uint64_t getAlignment() const;
+  template <class ELFT> uint32_t getAlignment() const;
 
   // This field is a pointer to the symbol's version definition.
   const void *Verdef;
