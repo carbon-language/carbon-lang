@@ -746,7 +746,7 @@ addOptionalSynthetic(StringRef Name, OutputSection *Sec,
 
 template <class ELFT>
 static Symbol *addRegular(StringRef Name, InputSectionBase *Sec,
-                          typename ELFT::uint Value) {
+                          uint64_t Value) {
   // The linker generated symbols are added as STB_WEAK to allow user defined
   // ones to override them.
   return Symtab<ELFT>::X->addRegular(Name, STV_HIDDEN, STT_NOTYPE, Value,

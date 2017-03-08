@@ -69,7 +69,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
     if (!IS)
       return D.Value;
 
-    uintX_t Offset = D.Value;
+    uint64_t Offset = D.Value;
 
     // An object in an SHF_MERGE section might be referenced via a
     // section symbol (as a hack for reducing the number of local
