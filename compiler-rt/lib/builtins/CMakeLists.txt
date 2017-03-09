@@ -132,7 +132,6 @@ set(GENERIC_SOURCES
   negvdi2.c
   negvsi2.c
   negvti2.c
-  os_version_check.c
   paritydi2.c
   paritysi2.c
   parityti2.c
