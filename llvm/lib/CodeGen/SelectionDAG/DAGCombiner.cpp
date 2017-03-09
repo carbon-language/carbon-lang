@@ -235,6 +235,7 @@ namespace {
     SDValue visitADDLike(SDValue N0, SDValue N1, SDNode *LocReference);
     SDValue visitSUB(SDNode *N);
     SDValue visitADDC(SDNode *N);
+    SDValue visitUADDO(SDNode *N);
     SDValue visitSUBC(SDNode *N);
     SDValue visitUSUBO(SDNode *N);
     SDValue visitADDE(SDNode *N);
@@ -1400,6 +1401,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::ADD:                return visitADD(N);
   case ISD::SUB:                return visitSUB(N);
   case ISD::ADDC:               return visitADDC(N);
+  case ISD::UADDO:              return visitUADDO(N);
   case ISD::SUBC:               return visitSUBC(N);
   case ISD::USUBO:              return visitUSUBO(N);
   case ISD::ADDE:               return visitADDE(N);
@@ -1924,6 +1926,39 @@ SDValue DAGCombiner::visitADDC(SDNode *N) {
   if (DAG.computeOverflowKind(N0, N1) == SelectionDAG::OFK_Never)
     return CombineTo(N, DAG.getNode(ISD::ADD, DL, VT, N0, N1),
                      DAG.getNode(ISD::CARRY_FALSE, DL, MVT::Glue));
+
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitUADDO(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N0.getValueType();
+  if (VT.isVector())
+    return SDValue();
+
+  EVT CarryVT = N->getValueType(1);
+  SDLoc DL(N);
+
+  // If the flag result is dead, turn this into an ADD.
+  if (!N->hasAnyUseOfValue(1))
+    return CombineTo(N, DAG.getNode(ISD::ADD, DL, VT, N0, N1),
+                     DAG.getUNDEF(CarryVT));
+
+  // canonicalize constant to RHS.
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::UADDO, DL, N->getVTList(), N1, N0);
+
+  // fold (uaddo x, 0) -> x + no carry out
+  if (isNullConstant(N1))
+    return CombineTo(N, N0, DAG.getConstant(0, DL, CarryVT));
+
+  // If it cannot overflow, transform into an add.
+  if (DAG.computeOverflowKind(N0, N1) == SelectionDAG::OFK_Never)
+    return CombineTo(N, DAG.getNode(ISD::ADD, DL, VT, N0, N1),
+                     DAG.getConstant(0, DL, CarryVT));
 
   return SDValue();
 }

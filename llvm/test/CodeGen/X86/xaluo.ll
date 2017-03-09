@@ -1345,7 +1345,7 @@ define {i64, i1} @uaddoovf(i64 %a, i64 %b) {
 ; SDAG-NEXT:    movzbl %dil, %ecx
 ; SDAG-NEXT:    movzbl %sil, %eax
 ; SDAG-NEXT:    addq %rcx, %rax
-; SDAG-NEXT:    setb %dl
+; SDAG-NEXT:    xorl %edx, %edx
 ; SDAG-NEXT:    retq
 ;
 ; FAST-LABEL: uaddoovf:
@@ -1353,7 +1353,7 @@ define {i64, i1} @uaddoovf(i64 %a, i64 %b) {
 ; FAST-NEXT:    movzbl %dil, %ecx
 ; FAST-NEXT:    movzbl %sil, %eax
 ; FAST-NEXT:    addq %rcx, %rax
-; FAST-NEXT:    setb %dl
+; FAST-NEXT:    xorl %edx, %edx
 ; FAST-NEXT:    retq
 ;
 ; KNL-LABEL: uaddoovf:
@@ -1361,7 +1361,7 @@ define {i64, i1} @uaddoovf(i64 %a, i64 %b) {
 ; KNL-NEXT:    movzbl %dil, %ecx
 ; KNL-NEXT:    movzbl %sil, %eax
 ; KNL-NEXT:    addq %rcx, %rax
-; KNL-NEXT:    setb %dl
+; KNL-NEXT:    xorl %edx, %edx
 ; KNL-NEXT:    retq
   %1 = and i64 %a, 255
   %2 = and i64 %b, 255
