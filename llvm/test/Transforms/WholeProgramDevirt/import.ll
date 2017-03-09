@@ -1,7 +1,11 @@
 ; RUN: opt -S -wholeprogramdevirt -wholeprogramdevirt-summary-action=import -wholeprogramdevirt-read-summary=%S/Inputs/import-single-impl.yaml < %s | FileCheck --check-prefixes=CHECK,SINGLE-IMPL %s
+; RUN: opt -S -wholeprogramdevirt -wholeprogramdevirt-summary-action=import -wholeprogramdevirt-read-summary=%S/Inputs/import-uniform-ret-val.yaml < %s | FileCheck --check-prefixes=CHECK,UNIFORM-RET-VAL %s
 
 target datalayout = "e-p:64:64"
 target triple = "x86_64-unknown-linux-gnu"
+
+; Test cases where the argument values are known and we can apply virtual
+; constant propagation.
 
 ; CHECK: define i32 @call1
 define i32 @call1(i8* %obj) {
@@ -15,8 +19,12 @@ define i32 @call1(i8* %obj) {
   %fptr_casted = bitcast i8* %fptr to i32 (i8*, i32)*
   ; SINGLE-IMPL: call i32 bitcast (void ()* @singleimpl1 to i32 (i8*, i32)*)
   %result = call i32 %fptr_casted(i8* %obj, i32 1)
+  ; UNIFORM-RET-VAL: ret i32 42
   ret i32 %result
 }
+
+; Test cases where the argument values are unknown, so we cannot apply virtual
+; constant propagation.
 
 ; CHECK: define i1 @call2
 define i1 @call2(i8* %obj) {
@@ -32,6 +40,7 @@ define i1 @call2(i8* %obj) {
 cont:
   %fptr_casted = bitcast i8* %fptr to i1 (i8*, i32)*
   ; SINGLE-IMPL: call i1 bitcast (void ()* @singleimpl2 to i1 (i8*, i32)*)
+  ; UNIFORM-RET-VAL: call i1 %
   %result = call i1 %fptr_casted(i8* %obj, i32 undef)
   ret i1 %result
 

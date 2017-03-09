@@ -1126,6 +1126,24 @@ void DevirtModule::importResolution(VTableSlot Slot, VTableSlotInfo &SlotInfo) {
     applySingleImplDevirt(SlotInfo, SingleImpl, IsExported);
     assert(!IsExported);
   }
+
+  for (auto &CSByConstantArg : SlotInfo.ConstCSInfo) {
+    auto I = Res.ResByArg.find(CSByConstantArg.first);
+    if (I == Res.ResByArg.end())
+      continue;
+    auto &ResByArg = I->second;
+    // FIXME: We should figure out what to do about the "function name" argument
+    // to the apply* functions, as the function names are unavailable during the
+    // importing phase. For now we just pass the empty string. This does not
+    // impact correctness because the function names are just used for remarks.
+    switch (ResByArg.TheKind) {
+    case WholeProgramDevirtResolution::ByArg::UniformRetVal:
+      applyUniformRetValOpt(CSByConstantArg.second, "", ResByArg.Info);
+      break;
+    default:
+      break;
+    }
+  }
 }
 
 void DevirtModule::removeRedundantTypeTests() {
