@@ -1717,12 +1717,12 @@ SDValue DAGCombiner::foldBinOpIntoSelect(SDNode *BO) {
   EVT VT = Sel.getValueType();
   SDLoc DL(Sel);
   SDValue NewCT = DAG.getNode(BinOpcode, DL, VT, CT, C1);
-  assert((isConstantOrConstantVector(NewCT) ||
+  assert((NewCT.isUndef() || isConstantOrConstantVector(NewCT) ||
           isConstantFPBuildVectorOrConstantFP(NewCT)) &&
          "Failed to constant fold a binop with constant operands");
 
   SDValue NewCF = DAG.getNode(BinOpcode, DL, VT, CF, C1);
-  assert((isConstantOrConstantVector(NewCF) ||
+  assert((NewCF.isUndef() || isConstantOrConstantVector(NewCF) ||
           isConstantFPBuildVectorOrConstantFP(NewCF)) &&
          "Failed to constant fold a binop with constant operands");
 
@@ -2417,6 +2417,9 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
   if (N1C && N1C->isAllOnesValue())
     return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT), N0);
 
+  if (SDValue V = simplifyDivRem(N, DAG))
+    return V;
+
   if (SDValue NewSel = foldBinOpIntoSelect(N))
     return NewSel;
 
@@ -2482,9 +2485,6 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     if (SDValue DivRem = useDivRem(N))
         return DivRem;
 
-  if (SDValue V = simplifyDivRem(N, DAG))
-    return V;
-
   return SDValue();
 }
 
@@ -2507,6 +2507,9 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     if (SDValue Folded = DAG.FoldConstantArithmetic(ISD::UDIV, DL, VT,
                                                     N0C, N1C))
       return Folded;
+
+  if (SDValue V = simplifyDivRem(N, DAG))
+    return V;
 
   if (SDValue NewSel = foldBinOpIntoSelect(N))
     return NewSel;
@@ -2553,9 +2556,6 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     if (SDValue DivRem = useDivRem(N))
         return DivRem;
 
-  if (SDValue V = simplifyDivRem(N, DAG))
-    return V;
-
   return SDValue();
 }
 
@@ -2574,6 +2574,9 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
   if (N0C && N1C)
     if (SDValue Folded = DAG.FoldConstantArithmetic(Opcode, DL, VT, N0C, N1C))
       return Folded;
+
+  if (SDValue V = simplifyDivRem(N, DAG))
+    return V;
 
   if (SDValue NewSel = foldBinOpIntoSelect(N))
     return NewSel;
@@ -2628,9 +2631,6 @@ SDValue DAGCombiner::visitREM(SDNode *N) {
   // sdiv, srem -> sdivrem
   if (SDValue DivRem = useDivRem(N))
     return DivRem.getValue(1);
-
-  if (SDValue V = simplifyDivRem(N, DAG))
-    return V;
 
   return SDValue();
 }
