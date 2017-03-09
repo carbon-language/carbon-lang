@@ -1052,9 +1052,9 @@ static Value *simplifyDivRem(Value *Op0, Value *Op1, bool IsDiv) {
 
   // X / 1 -> X
   // X % 1 -> 0
-  // If this is a boolean op (single-bit type), we can't have division-by-zero
-  // or remainder-by-zero, so assume the divisor is 1.
-  if (match(Op1, m_One()) || Ty->isIntegerTy(1))
+  // If this is a boolean op (single-bit element type), we can't have
+  // division-by-zero or remainder-by-zero, so assume the divisor is 1.
+  if (match(Op1, m_One()) || Ty->getScalarType()->isIntegerTy(1))
     return IsDiv ? Op0 : Constant::getNullValue(Ty);
 
   return nullptr;

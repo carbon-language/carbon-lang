@@ -34,14 +34,13 @@ define <2 x i8> @udiv_zero_elt_vec(<2 x i8> %x) {
   ret <2 x i8> %div
 }
 
-; FIXME: Division-by-zero is undef. UB in any vector lane means the whole op is undef.
+; Division-by-zero is undef. UB in any vector lane means the whole op is undef.
 ; Thus, we can simplify this: if any element of 'y' is 0, we can do anything.
 ; Therefore, assume that all elements of 'y' must be 1.
 
 define <2 x i1> @sdiv_bool_vec(<2 x i1> %x, <2 x i1> %y) {
 ; CHECK-LABEL: @sdiv_bool_vec(
-; CHECK-NEXT:    [[DIV:%.*]] = sdiv <2 x i1> %x, %y
-; CHECK-NEXT:    ret <2 x i1> [[DIV]]
+; CHECK-NEXT:    ret <2 x i1> %x
 ;
   %div = sdiv <2 x i1> %x, %y
   ret <2 x i1> %div
@@ -49,8 +48,7 @@ define <2 x i1> @sdiv_bool_vec(<2 x i1> %x, <2 x i1> %y) {
 
 define <2 x i1> @udiv_bool_vec(<2 x i1> %x, <2 x i1> %y) {
 ; CHECK-LABEL: @udiv_bool_vec(
-; CHECK-NEXT:    [[DIV:%.*]] = udiv <2 x i1> %x, %y
-; CHECK-NEXT:    ret <2 x i1> [[DIV]]
+; CHECK-NEXT:    ret <2 x i1> %x
 ;
   %div = udiv <2 x i1> %x, %y
   ret <2 x i1> %div
