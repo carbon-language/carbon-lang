@@ -1,11 +1,10 @@
 ; RUN: opt < %s -instsimplify -S | FileCheck %s
 
-; FIXME: Division-by-zero is undef. UB in any vector lane means the whole op is undef.
+; Division-by-zero is undef. UB in any vector lane means the whole op is undef.
 
 define <2 x i8> @sdiv_zero_elt_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @sdiv_zero_elt_vec(
-; CHECK-NEXT:    [[DIV:%.*]] = sdiv <2 x i8> %x, <i8 -42, i8 0>
-; CHECK-NEXT:    ret <2 x i8> [[DIV]]
+; CHECK-NEXT:    ret <2 x i8> undef
 ;
   %div = sdiv <2 x i8> %x, <i8 -42, i8 0>
   ret <2 x i8> %div
@@ -13,8 +12,7 @@ define <2 x i8> @sdiv_zero_elt_vec(<2 x i8> %x) {
 
 define <2 x i8> @udiv_zero_elt_vec(<2 x i8> %x) {
 ; CHECK-LABEL: @udiv_zero_elt_vec(
-; CHECK-NEXT:    [[DIV:%.*]] = udiv <2 x i8> %x, <i8 0, i8 42>
-; CHECK-NEXT:    ret <2 x i8> [[DIV]]
+; CHECK-NEXT:    ret <2 x i8> undef
 ;
   %div = udiv <2 x i8> %x, <i8 0, i8 42>
   ret <2 x i8> %div
