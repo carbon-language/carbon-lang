@@ -157,6 +157,13 @@ enum JumpTableSupportLevel : char {
   JTS_AGGRESSIVE = 4, /// Aggressive splitting of jump tables.
 };
 
+enum IndirectCallPromotionType : char {
+  ICP_NONE,        /// Don't perform ICP.
+  ICP_CALLS,       /// Perform ICP on indirect calls.
+  ICP_JUMP_TABLES, /// Perform ICP on jump tables.
+  ICP_ALL          /// Perform ICP on calls and jump tables.
+};
+
 /// BinaryFunction is a representation of machine-level function.
 ///
 /// We use the term "Binary" as "Machine" was already taken.
@@ -209,6 +216,12 @@ public:
     RT_PETTIS_HANSEN,
     RT_RANDOM,
     RT_USER
+  };
+
+  /// Branch statistics for jump table entries.
+  struct JumpInfo {
+    uint64_t Mispreds{0};
+    uint64_t Count{0};
   };
 
   static constexpr uint64_t COUNT_NO_PROFILE =
@@ -583,6 +596,10 @@ private:
       return std::max(OffsetEntries.size(), Entries.size()) * EntrySize;
     }
 
+    /// Get the indexes for symbol entries that correspond to the jump table
+    /// starting at (or containing) 'Addr'.
+    std::pair<size_t, size_t> getEntriesForAddress(const uint64_t Addr) const;
+
     /// Constructor.
     JumpTable(uint64_t Address,
               std::size_t EntrySize,
@@ -596,7 +613,7 @@ private:
     /// Dynamic number of times each entry in the table was referenced.
     /// Identical entries will have a shared count (identical for every
     /// entry in the set).
-    std::vector<uint64_t> Counts;
+    std::vector<JumpInfo> Counts;
 
     /// Total number of times this jump table was used.
     uint64_t Count{0};
@@ -740,6 +757,19 @@ private:
   bool hasEntryPointAtOffset(uint64_t Offset) {
     assert(!EntryOffsets.empty() && "entry points uninitialized or destroyed");
     return EntryOffsets.count(Offset);
+  }
+
+  void addInstruction(uint64_t Offset, MCInst &&Instruction) {
+    Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
+  }
+
+  /// Return instruction at a given offset in the function. Valid before
+  /// CFG is constructed.
+  MCInst *getInstructionAtOffset(uint64_t Offset) {
+    assert(CurrentState == State::Disassembled &&
+           "can only call function in Disassembled state");
+    auto II = Instructions.find(Offset);
+    return (II == Instructions.end()) ? nullptr : &II->second;
   }
 
   /// Different types of indirect branches encountered during disassembly.
@@ -898,6 +928,11 @@ public:
 
   /// Return BinaryContext for the function.
   const BinaryContext &getBinaryContext() const {
+    return BC;
+  }
+
+  /// Return BinaryContext for the function.
+  BinaryContext &getBinaryContext() {
     return BC;
   }
 
@@ -1164,6 +1199,11 @@ public:
     return JumpTables.size();
   }
 
+  const JumpTable *getJumpTable(const MCInst &Inst) const {
+    const auto Address = BC.MIA->getJumpTable(Inst);
+    return getJumpTableContainingAddress(Address);
+  }
+
   const MCSymbol *getPersonalityFunction() const {
     return PersonalityFunction;
   }
@@ -1322,24 +1362,11 @@ public:
 
   /// Dump function information to debug output. If \p PrintInstructions
   /// is true - include instruction disassembly.
-  void dump(std::string Annotation = "", bool PrintInstructions = true) const;
+  void dump(bool PrintInstructions = true) const;
 
   /// Print function information to the \p OS stream.
   void print(raw_ostream &OS, std::string Annotation = "",
              bool PrintInstructions = true) const;
-
-  void addInstruction(uint64_t Offset, MCInst &&Instruction) {
-    Instructions.emplace(Offset, std::forward<MCInst>(Instruction));
-  }
-
-  /// Return instruction at a given offset in the function. Valid before
-  /// CFG is constructed.
-  MCInst *getInstructionAtOffset(uint64_t Offset) {
-    assert(CurrentState == State::Disassembled &&
-           "can only call function in Disassembled state");
-    auto II = Instructions.find(Offset);
-    return (II == Instructions.end()) ? nullptr : &II->second;
-  }
 
   /// Return true if function has a profile, even if the profile does not
   /// match CFG 100%.

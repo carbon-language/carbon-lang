@@ -11,6 +11,7 @@
 
 #include "BinaryPassManager.h"
 #include "Passes/FrameOptimizer.h"
+#include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -37,12 +38,6 @@ static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
   cl::desc("eliminate unreachable code"),
   cl::init(true),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-IndirectCallPromotion("indirect-call-promotion",
-  cl::desc("indirect call promotion"),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -302,8 +297,7 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
                        opts::ICF);
 
-  Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP),
-                       opts::IndirectCallPromotion);
+  Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP));
 
   Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
                        opts::Peepholes);
@@ -361,8 +355,8 @@ void BinaryFunctionPassManager::runAllPasses(
   // This pass should always run last.*
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));
 
-  // *except for this pass.  TODO: figure out why moving this before function
-  // reordering breaks things badly.
+  // *except for this pass.  This pass turns tail calls into jumps which
+  // makes them invisible to function reordering.
   Manager.registerPass(
     llvm::make_unique<InstructionLowering>(PrintAfterLowering));
 

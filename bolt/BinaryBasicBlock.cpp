@@ -57,35 +57,73 @@ BinaryBasicBlock::reverse_iterator BinaryBasicBlock::getLastNonPseudo() {
 }
 
 bool BinaryBasicBlock::validateSuccessorInvariants() {
-  auto *Func = getFunction();
-  auto &BC = Func->getBinaryContext();
-  const MCSymbol *TBB = nullptr;
-  const MCSymbol *FBB = nullptr;
-  MCInst *CondBranch = nullptr;
-  MCInst *UncondBranch = nullptr;
+  const auto *Inst = getLastNonPseudoInstr();
+  const auto *JT = Inst ? Function->getJumpTable(*Inst) : nullptr;
+  auto &BC = Function->getBinaryContext();
+  bool Valid = true;
 
-  assert(getNumPseudos() == getNumPseudos());
+  if (JT) {
+    // Note: for now we assume that successors do not reference labels from
+    // any overlapping jump tables.  We only look at the entries for the jump
+    // table that is referenced at the last instruction.
+    const auto Range = JT->getEntriesForAddress(BC.MIA->getJumpTable(*Inst));
+    const std::vector<const MCSymbol *> Entries(&JT->Entries[Range.first],
+                                                &JT->Entries[Range.second]);
+    std::set<const MCSymbol *> UniqueSyms(Entries.begin(), Entries.end());
+    for (auto *Succ : Successors) {
+      auto Itr = UniqueSyms.find(Succ->getLabel());
+      if (Itr != UniqueSyms.end()) {
+        UniqueSyms.erase(Itr);
+      } else  {
+        // Work on the assumption that jump table blocks don't
+        // have a conditional successor.
+        Valid = false;
+      }
+    }
+    // If there are any leftover entries in the jump table, they
+    // must be one of the function end labels.
+    for (auto *Sym : UniqueSyms) {
+      Valid &= (Sym == Function->getFunctionEndLabel() ||
+                Sym == Function->getFunctionColdEndLabel());
+    }
+  } else {
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
 
-  if (analyzeBranch(TBB, FBB, CondBranch, UncondBranch)) {
-    switch (Successors.size()) {
-    case 0:
-      return !CondBranch && !UncondBranch;
-    case 1:
-      return !CondBranch ||
-        (CondBranch &&
-         !Func->getBasicBlockForLabel(BC.MIA->getTargetSymbol(*CondBranch)));
-    case 2:
-      return
-        (!CondBranch ||
-         (TBB == getConditionalSuccessor(true)->getLabel() &&
-          ((!UncondBranch && !FBB) ||
-           (UncondBranch &&
-            FBB == getConditionalSuccessor(false)->getLabel()))));
-    default:
-      return true;
+    if (analyzeBranch(TBB, FBB, CondBranch, UncondBranch)) {
+      switch (Successors.size()) {
+      case 0:
+        Valid = !CondBranch && !UncondBranch;
+        break;
+      case 1:
+        Valid = !CondBranch ||
+          (CondBranch &&
+           !Function->getBasicBlockForLabel(BC.MIA->getTargetSymbol(*CondBranch)));
+        break;
+      case 2:
+        Valid =
+          (!CondBranch ||
+           (TBB == getConditionalSuccessor(true)->getLabel() &&
+            ((!UncondBranch && !FBB) ||
+             (UncondBranch &&
+              FBB == getConditionalSuccessor(false)->getLabel()))));
+        break;
+      }
     }
   }
-  return true;
+  if (!Valid) {
+    errs() << "BOLT-WARNING: CFG invalid in " << *getFunction() << " @ "
+           << getName() << "\n";
+    if (JT) {
+      errs() << "Jump Table instruction addr = 0x"
+             << Twine::utohexstr(BC.MIA->getJumpTable(*Inst)) << "\n";
+      JT->print(errs());
+    }
+    dump();
+  }
+  return Valid;
 }
 
 BinaryBasicBlock *BinaryBasicBlock::getSuccessor(const MCSymbol *Label) const {

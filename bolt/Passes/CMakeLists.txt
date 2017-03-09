@@ -3,6 +3,7 @@ add_llvm_library(LLVMBOLTPasses
   FrameOptimizer.cpp
   HFSort.cpp
   HFSortPlus.cpp
+  IndirectCallPromotion.cpp
   Inliner.cpp
   ReorderAlgorithm.cpp
   )

@@ -37,7 +37,6 @@ ForceInlineFunctions("force-inline",
 
 }
 
-
 namespace llvm {
 namespace bolt {
 

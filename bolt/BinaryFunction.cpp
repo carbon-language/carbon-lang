@@ -51,6 +51,7 @@ extern bool shouldProcess(const BinaryFunction &);
 extern cl::opt<bool> PrintDynoStats;
 extern cl::opt<bool> Relocs;
 extern cl::opt<bool> UpdateDebugSections;
+extern cl::opt<IndirectCallPromotionType> IndirectCallPromotion;
 extern cl::opt<unsigned> Verbosity;
 
 static cl::opt<bool>
@@ -346,9 +347,8 @@ bool BinaryFunction::isForwardCall(const MCSymbol *CalleeSymbol) const {
   }
 }
 
-void BinaryFunction::dump(std::string Annotation,
-                          bool PrintInstructions) const {
-  print(dbgs(), Annotation, PrintInstructions);
+void BinaryFunction::dump(bool PrintInstructions) const {
+  print(dbgs(), "", PrintInstructions);
 }
 
 void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
@@ -1709,7 +1709,8 @@ bool BinaryFunction::buildCFG() {
         if (!JT)
           continue;
         JT->Count += BInfo.Branches;
-        if (opts::JumpTables < JTS_AGGRESSIVE)
+        if (opts::IndirectCallPromotion < ICP_JUMP_TABLES &&
+            opts::JumpTables < JTS_AGGRESSIVE)
           continue;
         if (JT->Counts.empty())
           JT->Counts.resize(JT->Entries.size());
@@ -1718,7 +1719,9 @@ bool BinaryFunction::buildCFG() {
         EI += Delta;
         while (EI != JT->Entries.end()) {
           if (ToBB->getLabel() == *EI) {
-            JT->Counts[Delta] += BInfo.Branches;
+            assert(Delta < JT->Counts.size());
+            JT->Counts[Delta].Mispreds += BInfo.Mispreds;
+            JT->Counts[Delta].Count += BInfo.Branches;
           }
           ++Delta;
           ++EI;
@@ -2821,10 +2824,6 @@ bool BinaryFunction::validateCFG() const {
   bool Valid = true;
   for (auto *BB : BasicBlocks) {
     Valid &= BB->validateSuccessorInvariants();
-    if (!Valid) {
-      errs() << "BOLT-WARNING: CFG invalid in " << *this << " @ "
-             << BB->getName() << "\n";
-    }
   }
 
   if (!Valid)
@@ -3549,6 +3548,34 @@ void BinaryFunction::emitJumpTables(MCStreamer *Streamer) {
   }
 }
 
+std::pair<size_t, size_t>
+BinaryFunction::JumpTable::getEntriesForAddress(const uint64_t Addr) const {
+  const uint64_t InstOffset = Addr - Address;
+  size_t StartIndex = 0, EndIndex = 0;
+  uint64_t Offset = 0;
+
+  for (size_t I = 0; I < Entries.size(); ++I) {
+    auto LI = Labels.find(Offset);
+    if (LI != Labels.end()) {
+      const auto NextLI = std::next(LI);
+      const auto NextOffset =
+        NextLI == Labels.end() ? getSize() : NextLI->first;
+      if (InstOffset >= LI->first && InstOffset < NextOffset) {
+        StartIndex = I;
+        EndIndex = I;
+        while (Offset < NextOffset) {
+          ++EndIndex;
+          Offset += EntrySize;
+        }
+        break;
+      }
+    }
+    Offset += EntrySize;
+  }
+
+  return std::make_pair(StartIndex, EndIndex);
+}
+
 void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {
   // In non-relocation mode we have to emit jump tables in local sections.
   // This way we only overwrite them when a corresponding function is
@@ -3591,7 +3618,7 @@ uint64_t BinaryFunction::JumpTable::emit(MCStreamer *Streamer,
         CurrentLabel = LI->second;
         CurrentLabelCount = 0;
       }
-      CurrentLabelCount += Counts[Index];
+      CurrentLabelCount += Counts[Index].Count;
     }
     LabelCounts[CurrentLabel] = CurrentLabelCount;
   } else {
@@ -3648,8 +3675,10 @@ void BinaryFunction::JumpTable::print(raw_ostream &OS) const {
       }
     }
     OS << format("  0x%04" PRIx64 " : ", Offset) << Entry->getName();
-    if (!Counts.empty())
-      OS << " : " << Counts[Offset / EntrySize];
+    if (!Counts.empty()) {
+      OS << " : " << Counts[Offset / EntrySize].Mispreds
+         << "/" << Counts[Offset / EntrySize].Count;
+    }
     OS << '\n';
     Offset += EntrySize;
   }
