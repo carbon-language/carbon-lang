@@ -976,6 +976,47 @@ SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
 }
 
 
+static bool isMemOPCandidate(SDNode *I, SDNode *U) {
+  // I is an operand of U. Check if U is an arithmetic (binary) operation
+  // usable in a memop, where the other operand is a loaded value, and the
+  // result of U is stored in the same location.
+
+  if (!U->hasOneUse())
+    return false;
+  unsigned Opc = U->getOpcode();
+  switch (Opc) {
+    case ISD::ADD:
+    case ISD::SUB:
+    case ISD::AND:
+    case ISD::OR:
+      break;
+    default:
+      return false;
+  }
+
+  SDValue S0 = U->getOperand(0);
+  SDValue S1 = U->getOperand(1);
+  SDValue SY = (S0.getNode() == I) ? S1 : S0;
+
+  SDNode *UUse = *U->use_begin();
+  if (UUse->getNumValues() != 1)
+    return false;
+
+  // Check if one of the inputs to U is a load instruction and the output
+  // is used by a store instruction. If so and they also have the same
+  // base pointer, then don't preoprocess this node sequence as it
+  // can be matched to a memop.
+  SDNode *SYNode = SY.getNode();
+  if (UUse->getOpcode() == ISD::STORE && SYNode->getOpcode() == ISD::LOAD) {
+    SDValue LDBasePtr = cast<MemSDNode>(SYNode)->getBasePtr();
+    SDValue STBasePtr = cast<MemSDNode>(UUse)->getBasePtr();
+    if (LDBasePtr == STBasePtr)
+      return true;
+  }
+  return false;
+}
+
+
 void HexagonDAGToDAGISel::PreprocessISelDAG() {
   SelectionDAG &DAG = *CurDAG;
   std::vector<SDNode*> Nodes;
@@ -1147,6 +1188,61 @@ void HexagonDAGToDAGISel::PreprocessISelDAG() {
     SDValue NewShl = DAG.getNode(ISD::SHL, dl, VT, NewSrl, DC);
     ReplaceNode(T0.getNode(), NewShl.getNode());
   }
+
+  // Transform (op (zext (i1 c) t)
+  //        to (select c (op 0 t) (op 1 t))
+  for (SDNode *N : Nodes) {
+    unsigned Opc = N->getOpcode();
+    if (Opc != ISD::ZERO_EXTEND)
+      continue;
+    SDValue OpI1 = N->getOperand(0);
+    EVT OpVT = OpI1.getValueType();
+    if (!OpVT.isSimple() || OpVT.getSimpleVT() != MVT::i1)
+      continue;
+    for (auto I = N->use_begin(), E = N->use_end(); I != E; ++I) {
+      SDNode *U = *I;
+      if (U->getNumValues() != 1)
+        continue;
+      EVT UVT = U->getValueType(0);
+      if (!UVT.isSimple() || !UVT.isInteger() || UVT.getSimpleVT() == MVT::i1)
+        continue;
+      if (isMemOPCandidate(N, U))
+        continue;
+
+      // Potentially simplifiable operation.
+      unsigned I1N = I.getOperandNo();
+      SmallVector<SDValue,2> Ops(U->getNumOperands());
+      for (unsigned i = 0, n = U->getNumOperands(); i != n; ++i)
+        Ops[i] = U->getOperand(i);
+      EVT BVT = Ops[I1N].getValueType();
+
+      SDLoc dl(U);
+      SDValue C0 = DAG.getConstant(0, dl, BVT);
+      SDValue C1 = DAG.getConstant(1, dl, BVT);
+      SDValue If0, If1;
+
+      if (isa<MachineSDNode>(U)) {
+        unsigned UseOpc = U->getMachineOpcode();
+        Ops[I1N] = C0;
+        If0 = SDValue(DAG.getMachineNode(UseOpc, dl, UVT, Ops), 0);
+        Ops[I1N] = C1;
+        If1 = SDValue(DAG.getMachineNode(UseOpc, dl, UVT, Ops), 0);
+      } else {
+        unsigned UseOpc = U->getOpcode();
+        Ops[I1N] = C0;
+        If0 = DAG.getNode(UseOpc, dl, UVT, Ops);
+        Ops[I1N] = C1;
+        If1 = DAG.getNode(UseOpc, dl, UVT, Ops);
+      }
+      SDValue Sel = DAG.getNode(ISD::SELECT, dl, UVT, OpI1, If1, If0);
+      DAG.ReplaceAllUsesWith(U, Sel.getNode());
+    }
+  }
+
+  DEBUG_WITH_TYPE("isel", {
+    dbgs() << "Preprocessed (Hexagon) selection DAG:";
+    CurDAG->dump();
+  });
 
   if (EnableAddressRebalancing) {
     rebalanceAddressTrees();
