@@ -260,8 +260,8 @@ bool BranchCoalescing::canCoalesceBranch(CoalescingCandidateInfo &Cand) {
 
   // For now only consider triangles (i.e, BranchTargetBlock is set,
   // FalseMBB is null, and BranchTargetBlock is a successor to BranchBlock)
-  if (!Cand.BranchTargetBlock || (Cand.BranchTargetBlock && FalseMBB)
-      || !Cand.BranchBlock->isSuccessor(Cand.BranchTargetBlock)) { 
+  if (!Cand.BranchTargetBlock || FalseMBB ||
+      !Cand.BranchBlock->isSuccessor(Cand.BranchTargetBlock)) {
     DEBUG(dbgs() << "Does not form a triangle - skip\n");
     return false;
   }
