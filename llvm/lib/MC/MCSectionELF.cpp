@@ -12,6 +12,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 
@@ -140,6 +141,9 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI, const Triple &T,
     OS << "progbits";
   else if (Type == ELF::SHT_X86_64_UNWIND)
     OS << "unwind";
+  else
+    report_fatal_error("unsupported type 0x" + Twine::utohexstr(Type) +
+                       " for section " + getSectionName());
 
   if (EntrySize) {
     assert(Flags & ELF::SHF_MERGE);
