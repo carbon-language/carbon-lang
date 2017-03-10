@@ -2164,10 +2164,9 @@ struct NewGVN::ValueDFS {
   int DFSIn = 0;
   int DFSOut = 0;
   int LocalNum = 0;
-  // Only one of these will be set.
-  Value *Val = nullptr;
+  // Only one of Def and U will be set.
+  Value *Def = nullptr;
   Use *U = nullptr;
-
   bool operator<(const ValueDFS &Other) const {
     // It's not enough that any given field be less than - we have sets
     // of fields that need to be evaluated together to give a proper ordering.
@@ -2207,14 +2206,15 @@ struct NewGVN::ValueDFS {
     // but .val  and .u.
     // It does not matter what order we replace these operands in.
     // You will always end up with the same IR, and this is guaranteed.
-    return std::tie(DFSIn, DFSOut, LocalNum, Val, U) <
-           std::tie(Other.DFSIn, Other.DFSOut, Other.LocalNum, Other.Val,
+    return std::tie(DFSIn, DFSOut, LocalNum, Def, U) <
+           std::tie(Other.DFSIn, Other.DFSOut, Other.LocalNum, Other.Def,
                     Other.U);
   }
 };
 
 // This function converts the set of members for a congruence class from values,
-// to sets of defs and uses with associated DFS info.
+// to sets of defs and uses with associated DFS info.  The total number of
+// reachable uses for each value is stored in UseCount.
 void NewGVN::convertDenseToDFSOrdered(
     const CongruenceClass::MemberSet &Dense,
     SmallVectorImpl<ValueDFS> &DFSOrderedSet) {
@@ -2224,39 +2224,36 @@ void NewGVN::convertDenseToDFSOrdered(
     // Constants are handled prior to ever calling this function, so
     // we should only be left with instructions as members.
     assert(BB && "Should have figured out a basic block for value");
-    ValueDFS VD;
+    ValueDFS VDDef;
     DomTreeNode *DomNode = DT->getNode(BB);
-    VD.DFSIn = DomNode->getDFSNumIn();
-    VD.DFSOut = DomNode->getDFSNumOut();
+    VDDef.DFSIn = DomNode->getDFSNumIn();
+    VDDef.DFSOut = DomNode->getDFSNumOut();
     // If it's a store, use the leader of the value operand.
     if (auto *SI = dyn_cast<StoreInst>(D)) {
       auto Leader = lookupOperandLeader(SI->getValueOperand());
-      VD.Val = alwaysAvailable(Leader) ? Leader : SI->getValueOperand();
+      VDDef.Def = alwaysAvailable(Leader) ? Leader : SI->getValueOperand();
     } else {
-      VD.Val = D;
+      VDDef.Def = D;
     }
+    assert(isa<Instruction>(D) &&
+           "The dense set member should always be an instruction");
+    VDDef.LocalNum = InstrDFS.lookup(D);
 
-    if (auto *I = dyn_cast<Instruction>(D))
-      VD.LocalNum = InstrDFS.lookup(I);
-    else
-      llvm_unreachable("Should have been an instruction");
-
-    DFSOrderedSet.emplace_back(VD);
-
+    DFSOrderedSet.emplace_back(VDDef);
     // Now add the uses.
     for (auto &U : D->uses()) {
       if (auto *I = dyn_cast<Instruction>(U.getUser())) {
-        ValueDFS VD;
+        ValueDFS VDUse;
         // Put the phi node uses in the incoming block.
         BasicBlock *IBlock;
         if (auto *P = dyn_cast<PHINode>(I)) {
           IBlock = P->getIncomingBlock(U);
           // Make phi node users appear last in the incoming block
           // they are from.
-          VD.LocalNum = InstrDFS.size() + 1;
+          VDUse.LocalNum = InstrDFS.size() + 1;
         } else {
           IBlock = I->getParent();
-          VD.LocalNum = InstrDFS.lookup(I);
+          VDUse.LocalNum = InstrDFS.lookup(I);
         }
 
         // Skip uses in unreachable blocks, as we're going
@@ -2265,10 +2262,10 @@ void NewGVN::convertDenseToDFSOrdered(
           continue;
 
         DomTreeNode *DomNode = DT->getNode(IBlock);
-        VD.DFSIn = DomNode->getDFSNumIn();
-        VD.DFSOut = DomNode->getDFSNumOut();
-        VD.U = &U;
-        DFSOrderedSet.emplace_back(VD);
+        VDUse.DFSIn = DomNode->getDFSNumIn();
+        VDUse.DFSOut = DomNode->getDFSNumOut();
+        VDUse.U = &U;
+        DFSOrderedSet.emplace_back(VDUse);
       }
     }
   }
@@ -2288,7 +2285,7 @@ void NewGVN::convertDenseToLoadsAndStores(
     DomTreeNode *DomNode = DT->getNode(BB);
     VD.DFSIn = DomNode->getDFSNumIn();
     VD.DFSOut = DomNode->getDFSNumOut();
-    VD.Val = D;
+    VD.Def = D;
 
     // If it's an instruction, use the real local dfs number.
     if (auto *I = dyn_cast<Instruction>(D))
@@ -2533,7 +2530,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
         for (auto &VD : DFSOrderedSet) {
           int MemberDFSIn = VD.DFSIn;
           int MemberDFSOut = VD.DFSOut;
-          Value *Member = VD.Val;
+          Value *Member = VD.Def;
           Use *MemberUse = VD.U;
 
           // We ignore void things because we can't get a value from them.
@@ -2576,6 +2573,16 @@ bool NewGVN::eliminateInstructions(Function &F) {
             }
           }
 
+          if (MemberUse) {
+            // Any def or use we hit at this point must be in an instruction.
+            // We assert so in convertDenseToDFSOrdered about defs, but assert
+            // it here too just make sure we are consistent.
+            assert(isa<Instruction>(MemberUse->get()) &&
+                   "Use should have been in an instruction");
+            assert(isa<Instruction>(MemberUse->getUser()) &&
+                   "Def should have been in an instruction");
+          }
+
           // If we get to this point, and the stack is empty we must have a use
           // with nothing we can use to eliminate it, just skip it.
           if (EliminationStack.empty())
@@ -2584,28 +2591,26 @@ bool NewGVN::eliminateInstructions(Function &F) {
           // Skip the Value's, we only want to eliminate on their uses.
           if (Member)
             continue;
-          Value *Result = EliminationStack.back();
+          Value *DominatingLeader = EliminationStack.back();
 
           // Don't replace our existing users with ourselves.
-          if (MemberUse->get() == Result)
+          if (MemberUse->get() == DominatingLeader)
             continue;
 
-          DEBUG(dbgs() << "Found replacement " << *Result << " for "
+          DEBUG(dbgs() << "Found replacement " << *DominatingLeader << " for "
                        << *MemberUse->get() << " in " << *(MemberUse->getUser())
                        << "\n");
 
           // If we replaced something in an instruction, handle the patching of
           // metadata.
-          if (auto *ReplacedInst = dyn_cast<Instruction>(MemberUse->get())) {
-            // Skip this if we are replacing predicateinfo with its original
-            // operand, as we already know we can just drop it.
-            auto *PI = PredInfo->getPredicateInfoFor(ReplacedInst);
-            if (!PI || Result != PI->OriginalOp)
-              patchReplacementInstruction(ReplacedInst, Result);
-          }
 
-          assert(isa<Instruction>(MemberUse->getUser()));
-          MemberUse->set(Result);
+          auto *ReplacedInst = cast<Instruction>(MemberUse->get());
+          // Skip this if we are replacing predicateinfo with its original
+          // operand, as we already know we can just drop it.
+          auto *PI = PredInfo->getPredicateInfoFor(ReplacedInst);
+          if (!PI || DominatingLeader != PI->OriginalOp)
+            patchReplacementInstruction(ReplacedInst, DominatingLeader);
+          MemberUse->set(DominatingLeader);
           AnythingReplaced = true;
         }
       }
@@ -2638,7 +2643,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
       for (auto &VD : PossibleDeadStores) {
         int MemberDFSIn = VD.DFSIn;
         int MemberDFSOut = VD.DFSOut;
-        Instruction *Member = cast<Instruction>(VD.Val);
+        Instruction *Member = cast<Instruction>(VD.Def);
         if (EliminationStack.empty() ||
             !EliminationStack.isInScope(MemberDFSIn, MemberDFSOut)) {
           // Sync to our current scope.
