@@ -376,9 +376,11 @@ private:
 
   // Elimination.
   struct ValueDFS;
-  void convertDenseToDFSOrdered(const CongruenceClass::MemberSet &,
-                                SmallVectorImpl<ValueDFS> &);
-  void convertDenseToLoadsAndStores(const CongruenceClass::MemberSet &,
+  void convertClassToDFSOrdered(const CongruenceClass::MemberSet &,
+                                SmallVectorImpl<ValueDFS> &,
+                                DenseMap<const Value *, unsigned int> &,
+                                SmallPtrSetImpl<Instruction *> &);
+  void convertClassToLoadsAndStores(const CongruenceClass::MemberSet &,
                                     SmallVectorImpl<ValueDFS> &);
 
   bool eliminateInstructions(Function &);
@@ -2214,10 +2216,14 @@ struct NewGVN::ValueDFS {
 
 // This function converts the set of members for a congruence class from values,
 // to sets of defs and uses with associated DFS info.  The total number of
-// reachable uses for each value is stored in UseCount.
-void NewGVN::convertDenseToDFSOrdered(
+// reachable uses for each value is stored in UseCount, and instructions that
+// seem
+// dead (have no non-dead uses) are stored in ProbablyDead.
+void NewGVN::convertClassToDFSOrdered(
     const CongruenceClass::MemberSet &Dense,
-    SmallVectorImpl<ValueDFS> &DFSOrderedSet) {
+    SmallVectorImpl<ValueDFS> &DFSOrderedSet,
+    DenseMap<const Value *, unsigned int> &UseCounts,
+    SmallPtrSetImpl<Instruction *> &ProbablyDead) {
   for (auto D : Dense) {
     // First add the value.
     BasicBlock *BB = getBlockForValue(D);
@@ -2238,11 +2244,15 @@ void NewGVN::convertDenseToDFSOrdered(
     assert(isa<Instruction>(D) &&
            "The dense set member should always be an instruction");
     VDDef.LocalNum = InstrDFS.lookup(D);
-
     DFSOrderedSet.emplace_back(VDDef);
+    Instruction *Def = cast<Instruction>(D);
+    unsigned int UseCount = 0;
     // Now add the uses.
-    for (auto &U : D->uses()) {
+    for (auto &U : Def->uses()) {
       if (auto *I = dyn_cast<Instruction>(U.getUser())) {
+        // Don't try to replace into dead uses
+        if (InstructionsToErase.count(I))
+          continue;
         ValueDFS VDUse;
         // Put the phi node uses in the incoming block.
         BasicBlock *IBlock;
@@ -2265,15 +2275,24 @@ void NewGVN::convertDenseToDFSOrdered(
         VDUse.DFSIn = DomNode->getDFSNumIn();
         VDUse.DFSOut = DomNode->getDFSNumOut();
         VDUse.U = &U;
+        ++UseCount;
         DFSOrderedSet.emplace_back(VDUse);
       }
     }
+
+    // If there are no uses, it's probably dead (but it may have side-effects,
+    // so not definitely dead. Otherwise, store the number of uses so we can
+    // track if it becomes dead later).
+    if (UseCount == 0)
+      ProbablyDead.insert(Def);
+    else
+      UseCounts[Def] = UseCount;
   }
 }
 
 // This function converts the set of members for a congruence class from values,
 // to the set of defs for loads and stores, with associated DFS info.
-void NewGVN::convertDenseToLoadsAndStores(
+void NewGVN::convertClassToLoadsAndStores(
     const CongruenceClass::MemberSet &Dense,
     SmallVectorImpl<ValueDFS> &LoadsAndStores) {
   for (auto D : Dense) {
@@ -2459,11 +2478,13 @@ bool NewGVN::eliminateInstructions(Function &F) {
     }
   }
 
+  // Map to store the use counts
+  DenseMap<const Value *, unsigned int> UseCounts;
   for (CongruenceClass *CC : reverse(CongruenceClasses)) {
     // Track the equivalent store info so we can decide whether to try
     // dead store elimination.
     SmallVector<ValueDFS, 8> PossibleDeadStores;
-
+    SmallPtrSet<Instruction *, 8> ProbablyDead;
     if (CC->Dead)
       continue;
     // Everything still in the INITIAL class is unreachable or dead.
@@ -2490,7 +2511,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
       for (auto M : CC->Members) {
         Value *Member = M;
         // Void things have no uses we can replace.
-        if (Member == CC->RepLeader || Member->getType()->isVoidTy()) {
+        if (Member == Leader || Member->getType()->isVoidTy()) {
           MembersLeft.insert(Member);
           continue;
         }
@@ -2503,7 +2524,6 @@ bool NewGVN::eliminateInstructions(Function &F) {
           assert(Leader != I && "About to accidentally remove our leader");
           replaceInstruction(I, Leader);
           AnythingReplaced = true;
-
           continue;
         } else {
           MembersLeft.insert(I);
@@ -2523,18 +2543,18 @@ bool NewGVN::eliminateInstructions(Function &F) {
 
         // Convert the members to DFS ordered sets and then merge them.
         SmallVector<ValueDFS, 8> DFSOrderedSet;
-        convertDenseToDFSOrdered(CC->Members, DFSOrderedSet);
+        convertClassToDFSOrdered(CC->Members, DFSOrderedSet, UseCounts,
+                                 ProbablyDead);
 
         // Sort the whole thing.
         std::sort(DFSOrderedSet.begin(), DFSOrderedSet.end());
         for (auto &VD : DFSOrderedSet) {
           int MemberDFSIn = VD.DFSIn;
           int MemberDFSOut = VD.DFSOut;
-          Value *Member = VD.Def;
-          Use *MemberUse = VD.U;
-
+          Value *Def = VD.Def;
+          Use *U = VD.U;
           // We ignore void things because we can't get a value from them.
-          if (Member && Member->getType()->isVoidTy())
+          if (Def && Def->getType()->isVoidTy())
             continue;
 
           if (EliminationStack.empty()) {
@@ -2560,61 +2580,94 @@ bool NewGVN::eliminateInstructions(Function &F) {
           // start using, we also push.
           // Otherwise, we walk along, processing members who are
           // dominated by this scope, and eliminate them.
-          bool ShouldPush = Member && EliminationStack.empty();
+          bool ShouldPush = Def && EliminationStack.empty();
           bool OutOfScope =
               !EliminationStack.isInScope(MemberDFSIn, MemberDFSOut);
 
           if (OutOfScope || ShouldPush) {
             // Sync to our current scope.
             EliminationStack.popUntilDFSScope(MemberDFSIn, MemberDFSOut);
-            bool ShouldPush = Member && EliminationStack.empty();
+            bool ShouldPush = Def && EliminationStack.empty();
             if (ShouldPush) {
-              EliminationStack.push_back(Member, MemberDFSIn, MemberDFSOut);
+              EliminationStack.push_back(Def, MemberDFSIn, MemberDFSOut);
             }
           }
 
-          if (MemberUse) {
-            // Any def or use we hit at this point must be in an instruction.
-            // We assert so in convertDenseToDFSOrdered about defs, but assert
-            // it here too just make sure we are consistent.
-            assert(isa<Instruction>(MemberUse->get()) &&
-                   "Use should have been in an instruction");
-            assert(isa<Instruction>(MemberUse->getUser()) &&
-                   "Def should have been in an instruction");
+          // Skip the Def's, we only want to eliminate on their uses.  But mark
+          // dominated defs as dead.
+          if (Def) {
+            // For anything in this case, what and how we value number
+            // guarantees that any side-effets that would have occurred (ie
+            // throwing, etc) can be proven to either still occur (because it's
+            // dominated by something that has the same side-effects), or never
+            // occur.  Otherwise, we would not have been able to prove it value
+            // equivalent to something else. For these things, we can just mark
+            // it all dead.  Note that this is different from the "ProbablyDead"
+            // set, which may not be dominated by anything, and thus, are only
+            // easy to prove dead if they are also side-effect free.
+            if (!EliminationStack.empty() && Def != EliminationStack.back() &&
+                isa<Instruction>(Def))
+              markInstructionForDeletion(cast<Instruction>(Def));
+            continue;
+          }
+          // At this point, we know it is a Use we are trying to possibly
+          // replace.
+
+          assert(isa<Instruction>(U->get()) &&
+                 "Current def should have been an instruction");
+          assert(isa<Instruction>(U->getUser()) &&
+                 "Current user should have been an instruction");
+
+          // If the thing we are replacing into is already marked to be dead,
+          // this use is dead.  Note that this is true regardless of whether
+          // we have anything dominating the use or not.  We do this here
+          // because we are already walking all the uses anyway.
+          Instruction *InstUse = cast<Instruction>(U->getUser());
+          if (InstructionsToErase.count(InstUse)) {
+            auto &UseCount = UseCounts[U->get()];
+            if (--UseCount == 0) {
+              ProbablyDead.insert(cast<Instruction>(U->get()));
+            }
           }
 
           // If we get to this point, and the stack is empty we must have a use
-          // with nothing we can use to eliminate it, just skip it.
+          // with nothing we can use to eliminate this use, so just skip it.
           if (EliminationStack.empty())
             continue;
 
-          // Skip the Value's, we only want to eliminate on their uses.
-          if (Member)
-            continue;
           Value *DominatingLeader = EliminationStack.back();
 
           // Don't replace our existing users with ourselves.
-          if (MemberUse->get() == DominatingLeader)
+          if (U->get() == DominatingLeader)
             continue;
-
           DEBUG(dbgs() << "Found replacement " << *DominatingLeader << " for "
-                       << *MemberUse->get() << " in " << *(MemberUse->getUser())
-                       << "\n");
+                       << *U->get() << " in " << *(U->getUser()) << "\n");
 
           // If we replaced something in an instruction, handle the patching of
-          // metadata.
-
-          auto *ReplacedInst = cast<Instruction>(MemberUse->get());
-          // Skip this if we are replacing predicateinfo with its original
-          // operand, as we already know we can just drop it.
+          // metadata.  Skip this if we are replacing predicateinfo with its
+          // original operand, as we already know we can just drop it.
+          auto *ReplacedInst = cast<Instruction>(U->get());
           auto *PI = PredInfo->getPredicateInfoFor(ReplacedInst);
           if (!PI || DominatingLeader != PI->OriginalOp)
             patchReplacementInstruction(ReplacedInst, DominatingLeader);
-          MemberUse->set(DominatingLeader);
+          U->set(DominatingLeader);
+          // This is now a use of the dominating leader, which means if the
+          // dominating leader was dead, it's now live!
+          auto &LeaderUseCount = UseCounts[DominatingLeader];
+          // It's about to be alive again.
+          if (LeaderUseCount == 0 && isa<Instruction>(DominatingLeader))
+            ProbablyDead.erase(cast<Instruction>(DominatingLeader));
+          ++LeaderUseCount;
           AnythingReplaced = true;
         }
       }
     }
+
+    // At this point, anything still in the ProbablyDead set is actually dead if
+    // would be trivially dead.
+    for (auto *I : ProbablyDead)
+      if (wouldInstructionBeTriviallyDead(I))
+        markInstructionForDeletion(I);
 
     // Cleanup the congruence class.
     SmallPtrSet<Value *, 4> MembersLeft;
@@ -2624,20 +2677,13 @@ bool NewGVN::eliminateInstructions(Function &F) {
         continue;
       }
 
-      if (auto *MemberInst = dyn_cast<Instruction>(Member)) {
-        if (isInstructionTriviallyDead(MemberInst)) {
-          // TODO: Don't mark loads of undefs.
-          markInstructionForDeletion(MemberInst);
-          continue;
-        }
-      }
       MembersLeft.insert(Member);
     }
     CC->Members.swap(MembersLeft);
 
     // If we have possible dead stores to look at, try to eliminate them.
     if (CC->StoreCount > 0) {
-      convertDenseToLoadsAndStores(CC->Members, PossibleDeadStores);
+      convertClassToLoadsAndStores(CC->Members, PossibleDeadStores);
       std::sort(PossibleDeadStores.begin(), PossibleDeadStores.end());
       ValueDFSStack EliminationStack;
       for (auto &VD : PossibleDeadStores) {
