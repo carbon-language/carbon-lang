@@ -214,6 +214,7 @@ public:
 
 void X86MacroFusion::apply(ScheduleDAGInstrs *DAGInstrs) {
   ScheduleDAGMI *DAG = static_cast<ScheduleDAGMI*>(DAGInstrs);
+  const TargetInstrInfo &TII = *DAG->TII;
   const X86Subtarget &ST = DAG->MF.getSubtarget<X86Subtarget>();
 
   // For now, assume targets can only fuse with the branch.
@@ -249,9 +250,12 @@ void X86MacroFusion::apply(ScheduleDAGInstrs *DAGInstrs) {
         SuccDep.setLatency(0);
 
     ++NumFused;
-    DEBUG(dbgs() << "Macro fuse ";
+    DEBUG(dbgs() << DAG->MF.getName() << "(): Macro fuse ";
           SU.print(dbgs(), DAG);
-          dbgs() << " - ExitSU" << '\n');
+          dbgs() << " - ExitSU" << " / " <<
+                    TII.getName(Pred.getOpcode()) << " - " <<
+                    TII.getName(Branch->getOpcode()) << '\n';
+);
 
     break;
   }
