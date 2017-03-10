@@ -104,9 +104,8 @@ bool ProfileSummaryInfo::isFunctionEntryHot(const Function *F) {
 bool ProfileSummaryInfo::isFunctionEntryCold(const Function *F) {
   if (!F)
     return false;
-  if (F->hasFnAttribute(Attribute::Cold)) {
+  if (F->hasFnAttribute(Attribute::Cold))
     return true;
-  }
   if (!computeSummary())
     return false;
   auto FunctionCount = F->getEntryCount();
