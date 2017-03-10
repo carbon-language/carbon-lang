@@ -30,6 +30,10 @@ N: Eric Christopher
 E: echristo@gmail.com
 D: Debug Information, inline assembly
 
+N: Andrey Churbanov
+E: andrey.churbanov@intel.com
+D: OpenMP runtime library
+
 N: Greg Clayton
 E: gclayton@apple.com
 D: LLDB
@@ -202,7 +206,3 @@ D: Release management (x.y.0 releases)
 N: whitequark
 E: whitequark@whitequark.org
 D: OCaml bindings
-
-N: Andrey Churbanov
-E: andrey.churbanov@intel.com
-D: OpenMP runtime library
