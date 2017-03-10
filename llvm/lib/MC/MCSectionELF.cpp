@@ -141,6 +141,10 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI, const Triple &T,
     OS << "progbits";
   else if (Type == ELF::SHT_X86_64_UNWIND)
     OS << "unwind";
+  else if (Type == ELF::SHT_MIPS_DWARF)
+    // Print hex value of the flag while we do not have
+    // any standard symbolic representation of the flag.
+    OS << "0x7000001e";
   else
     report_fatal_error("unsupported type 0x" + Twine::utohexstr(Type) +
                        " for section " + getSectionName());
