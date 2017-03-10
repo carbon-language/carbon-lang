@@ -5,14 +5,6 @@
 /// Presburger formula. On top of this, isl provides various tools for
 /// Polyhedral compilation ranging from dependence analysis over scheduling
 /// to AST generation.
-///
-///
-/// WARNING: Even though these bindings have been throughly tested and the
-///          design has been reviewed by various members of the isl community,
-///          we do not yet provide any stability guarantees for this interface.
-///          We do not expect any larger changes to the interface, but want to
-///          reserve the freedom to improve the bindings based on insights that
-///          only become visible after shipping these bindings with isl itself.
 
 #ifndef ISL_CPP_NOEXCEPTIONS
 #define ISL_CPP_NOEXCEPTIONS
