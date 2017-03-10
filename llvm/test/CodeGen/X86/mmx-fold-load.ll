@@ -562,3 +562,44 @@ entry:
   ret i64 %s
 }
 declare x86_mmx @llvm.x86.mmx.psrl.q(x86_mmx, x86_mmx)
+
+; FIXME: Show issue with storing i32 to stack and then reloading as x86_mmx
+; which will lead to garbage in the other 32-bits.
+define i64 @test_psrlq_by_volatile_shift_amount(x86_mmx %t) nounwind {
+; X86-LABEL: test_psrlq_by_volatile_shift_amount:
+; X86:       # BB#0: # %entry
+; X86-NEXT:    pushl %ebp
+; X86-NEXT:    movl %esp, %ebp
+; X86-NEXT:    andl $-8, %esp
+; X86-NEXT:    subl $16, %esp
+; X86-NEXT:    movl $1, {{[0-9]+}}(%esp)
+; X86-NEXT:    movd {{[0-9]+}}(%esp), %mm1
+; X86-NEXT:    psrlq %mm1, %mm0
+; X86-NEXT:    movq %mm0, {{[0-9]+}}(%esp)
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X86-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X86-NEXT:    movl %ebp, %esp
+; X86-NEXT:    popl %ebp
+; X86-NEXT:    retl
+;
+; X64-LABEL: test_psrlq_by_volatile_shift_amount:
+; X64:       # BB#0: # %entry
+; X64-NEXT:    movl $1, -{{[0-9]+}}(%rsp)
+; X64-NEXT:    movd -{{[0-9]+}}(%rsp), %mm1
+; X64-NEXT:    psrlq %mm1, %mm0
+; X64-NEXT:    movd %mm0, %rax
+; X64-NEXT:    retq
+entry:
+  %0 = alloca i32, align 4
+  %1 = bitcast i32* %0 to i8*
+  call void @llvm.lifetime.start(i64 4, i8* nonnull %1)
+  store volatile i32 1, i32* %0, align 4
+  %2 = load volatile i32, i32* %0, align 4
+  %3 = tail call x86_mmx @llvm.x86.mmx.psrli.q(x86_mmx %t, i32 %2)
+  %4 = bitcast x86_mmx %3 to i64
+  call void @llvm.lifetime.end(i64 4, i8* nonnull %1)
+  ret i64 %4
+}
+
+declare void @llvm.lifetime.start(i64, i8* nocapture)
+declare void @llvm.lifetime.end(i64, i8* nocapture)
