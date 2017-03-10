@@ -2297,8 +2297,6 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     KnownOne &= KnownOne2;
     KnownZero &= KnownZero2;
     break;
-  case ISD::SSUBO:
-  case ISD::USUBO:
   case ISD::SMULO:
   case ISD::UMULO:
     if (Op.getResNo() != 1)
@@ -2493,8 +2491,19 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     // All bits are zero except the low bit.
     KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     break;
-
-  case ISD::SUB: {
+  case ISD::USUBO:
+  case ISD::SSUBO:
+    if (Op.getResNo() == 1) {
+      // If we know the result of a setcc has the top bits zero, use this info.
+      if (TLI->getBooleanContents(Op.getOperand(0).getValueType()) ==
+              TargetLowering::ZeroOrOneBooleanContent &&
+          BitWidth > 1)
+        KnownZero.setBits(1, BitWidth);
+      break;
+    }
+    LLVM_FALLTHROUGH;
+  case ISD::SUB:
+  case ISD::SUBC: {
     if (ConstantSDNode *CLHS = isConstOrConstSplat(Op.getOperand(0))) {
       // We know that the top bits of C-X are clear if X contains less bits
       // than C (i.e. no wrap-around can happen).  For example, 20-X is
