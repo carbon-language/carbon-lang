@@ -189,6 +189,22 @@ static void computeCacheKey(
 
     AddUnsigned(S.TTRes.TheKind);
     AddUnsigned(S.TTRes.SizeM1BitWidth);
+
+    AddUint64(S.WPDRes.size());
+    for (auto &WPD : S.WPDRes) {
+      AddUnsigned(WPD.first);
+      AddUnsigned(WPD.second.TheKind);
+      AddString(WPD.second.SingleImplName);
+
+      AddUint64(WPD.second.ResByArg.size());
+      for (auto &ByArg : WPD.second.ResByArg) {
+        AddUint64(ByArg.first.size());
+        for (uint64_t Arg : ByArg.first)
+          AddUint64(Arg);
+        AddUnsigned(ByArg.second.TheKind);
+        AddUint64(ByArg.second.Info);
+      }
+    }
   };
 
   // Include the hash for all type identifiers used by this module.

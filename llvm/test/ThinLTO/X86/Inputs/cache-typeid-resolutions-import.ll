@@ -6,4 +6,10 @@ define i1 @importf1(i8* %p) {
   ret i1 %x
 }
 
+define i1 @importf2(i8* %p) {
+  %x = call i1 @f2(i8* %p)
+  ret i1 %x
+}
+
 declare i1 @f1(i8* %p)
+declare i1 @f2(i8* %p)
