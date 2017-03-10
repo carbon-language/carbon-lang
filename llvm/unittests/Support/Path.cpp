@@ -522,15 +522,14 @@ TEST_F(FileSystemTest, RealPath) {
   EXPECT_EQ(Expected, Actual);
 
   SmallString<64> HomeDir;
-  ASSERT_TRUE(llvm::sys::path::home_directory(HomeDir));
-  ASSERT_NO_ERROR(fs::real_path(HomeDir, Expected));
-  ASSERT_NO_ERROR(fs::real_path("~", Actual, true));
-  EXPECT_EQ(Expected, Actual);
-  ASSERT_NO_ERROR(fs::real_path("~/", Actual, true));
-  EXPECT_EQ(Expected, Actual);
-
-  fs::real_path(Twine(TestDirectory) + "/does_not_exist", Actual);
-  EXPECT_EQ("", Actual);
+  bool Result = llvm::sys::path::home_directory(HomeDir);
+  if (Result) {
+    ASSERT_NO_ERROR(fs::real_path(HomeDir, Expected));
+    ASSERT_NO_ERROR(fs::real_path("~", Actual, true));
+    EXPECT_EQ(Expected, Actual);
+    ASSERT_NO_ERROR(fs::real_path("~/", Actual, true));
+    EXPECT_EQ(Expected, Actual);
+  }
 
   ASSERT_NO_ERROR(fs::remove_directories(Twine(TestDirectory) + "/test1"));
 }
