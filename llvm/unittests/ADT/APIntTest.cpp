@@ -1668,8 +1668,8 @@ TEST(APIntTest, insertBits) {
   // Insert single word src into two words of dst.
   APInt i127(127, UINT64_MAX, true);
   i127.insertBits(iSrc, 48);
-  EXPECT_EQ(i127.extractBits(64, 0).getZExtValue(), 0x3456FFFFFFFFFFFF);
-  EXPECT_EQ(i127.extractBits(63, 64).getZExtValue(), 0x7FFFFFFFFFFF8012);
+  EXPECT_EQ(i127.extractBits(64, 0).getZExtValue(), 0x3456FFFFFFFFFFFFull);
+  EXPECT_EQ(i127.extractBits(63, 64).getZExtValue(), 0x7FFFFFFFFFFF8012ull);
 
   // Insert on word boundaries.
   APInt i128(128, 0);
@@ -1685,19 +1685,19 @@ TEST(APIntTest, insertBits) {
 
   APInt i257(257, 0);
   i257.insertBits(APInt(96, UINT64_MAX, true), 64);
-  EXPECT_EQ(i257.extractBits(64, 0).getZExtValue(), 0x0000000000000000);
-  EXPECT_EQ(i257.extractBits(64, 64).getZExtValue(), 0xFFFFFFFFFFFFFFFF);
-  EXPECT_EQ(i257.extractBits(64, 128).getZExtValue(), 0x00000000FFFFFFFF);
-  EXPECT_EQ(i257.extractBits(65, 192).getZExtValue(), 0x0000000000000000);
+  EXPECT_EQ(i257.extractBits(64, 0).getZExtValue(), 0x0000000000000000ull);
+  EXPECT_EQ(i257.extractBits(64, 64).getZExtValue(), 0xFFFFFFFFFFFFFFFFull);
+  EXPECT_EQ(i257.extractBits(64, 128).getZExtValue(), 0x00000000FFFFFFFFull);
+  EXPECT_EQ(i257.extractBits(65, 192).getZExtValue(), 0x0000000000000000ull);
 
   // General insertion.
   APInt i260(260, UINT64_MAX, true);
   i260.insertBits(APInt(129, 1ull << 48), 15);
-  EXPECT_EQ(i260.extractBits(64, 0).getZExtValue(), 0x8000000000007FFF);
-  EXPECT_EQ(i260.extractBits(64, 64).getZExtValue(), 0x0000000000000000);
-  EXPECT_EQ(i260.extractBits(64, 128).getZExtValue(), 0xFFFFFFFFFFFF0000);
-  EXPECT_EQ(i260.extractBits(64, 192).getZExtValue(), 0xFFFFFFFFFFFFFFFF);
-  EXPECT_EQ(i260.extractBits(4, 256).getZExtValue(), 0x000000000000000F);
+  EXPECT_EQ(i260.extractBits(64, 0).getZExtValue(), 0x8000000000007FFFull);
+  EXPECT_EQ(i260.extractBits(64, 64).getZExtValue(), 0x0000000000000000ull);
+  EXPECT_EQ(i260.extractBits(64, 128).getZExtValue(), 0xFFFFFFFFFFFF0000ull);
+  EXPECT_EQ(i260.extractBits(64, 192).getZExtValue(), 0xFFFFFFFFFFFFFFFFull);
+  EXPECT_EQ(i260.extractBits(4, 256).getZExtValue(), 0x000000000000000Full);
 }
 
 TEST(APIntTest, extractBits) {
