@@ -161,8 +161,8 @@ public:
   inline /* implicit */ aff();
   inline /* implicit */ aff(const aff &obj);
   inline /* implicit */ aff(std::nullptr_t);
-  inline explicit aff(local_space ls);
-  inline explicit aff(local_space ls, val val);
+  inline explicit aff(isl::local_space ls);
+  inline explicit aff(isl::local_space ls, isl::val val);
   inline explicit aff(ctx ctx, const std::string &str);
   inline aff &operator=(aff obj);
   inline ~aff();
@@ -176,10 +176,10 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline aff add(aff aff2) const;
-  inline val get_constant() const;
-  inline boolean is_cst() const;
-  inline aff pullback(multi_aff ma) const;
+  inline isl::aff add(isl::aff aff2) const;
+  inline isl::val get_constant() const;
+  inline isl::boolean is_cst() const;
+  inline isl::aff pullback(isl::multi_aff ma) const;
 };
 
 // declarations for isl::ast_build
@@ -210,14 +210,14 @@ public:
   inline explicit operator bool() const;
   inline ctx get_ctx() const;
   inline bool is_null() const;
-  inline ast_expr access_from(pw_multi_aff pma) const;
-  inline ast_expr access_from(multi_pw_aff mpa) const;
-  inline ast_expr call_from(pw_multi_aff pma) const;
-  inline ast_expr call_from(multi_pw_aff mpa) const;
-  inline ast_expr expr_from(set set) const;
-  inline ast_expr expr_from(pw_aff pa) const;
-  static inline ast_build from_context(set set);
-  inline ast_node node_from_schedule_map(union_map schedule) const;
+  inline isl::ast_expr access_from(isl::pw_multi_aff pma) const;
+  inline isl::ast_expr access_from(isl::multi_pw_aff mpa) const;
+  inline isl::ast_expr call_from(isl::pw_multi_aff pma) const;
+  inline isl::ast_expr call_from(isl::multi_pw_aff mpa) const;
+  inline isl::ast_expr expr_from(isl::set set) const;
+  inline isl::ast_expr expr_from(isl::pw_aff pa) const;
+  static inline isl::ast_build from_context(isl::set set);
+  inline isl::ast_node node_from_schedule_map(isl::union_map schedule) const;
 };
 
 // declarations for isl::ast_expr
@@ -311,30 +311,30 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline basic_map affine_hull() const;
-  inline basic_map apply_domain(basic_map bmap2) const;
-  inline basic_map apply_range(basic_map bmap2) const;
-  inline basic_set deltas() const;
-  inline basic_map detect_equalities() const;
-  inline basic_map fix_si(enum dim type, unsigned int pos, int value) const;
-  inline basic_map flatten() const;
-  inline basic_map flatten_domain() const;
-  inline basic_map flatten_range() const;
-  inline basic_map gist(basic_map context) const;
-  inline basic_map intersect(basic_map bmap2) const;
-  inline basic_map intersect_domain(basic_set bset) const;
-  inline basic_map intersect_range(basic_set bset) const;
-  inline boolean is_empty() const;
-  inline boolean is_equal(const basic_map &bmap2) const;
-  inline boolean is_subset(const basic_map &bmap2) const;
-  inline map lexmax() const;
-  inline map lexmin() const;
-  inline val plain_get_val_if_fixed(enum dim type, unsigned int pos) const;
-  inline basic_map project_out(enum dim type, unsigned int first, unsigned int n) const;
-  inline basic_map reverse() const;
-  inline basic_map sample() const;
-  inline map unite(basic_map bmap2) const;
-  static inline basic_map universe(space dim);
+  inline isl::basic_map affine_hull() const;
+  inline isl::basic_map apply_domain(isl::basic_map bmap2) const;
+  inline isl::basic_map apply_range(isl::basic_map bmap2) const;
+  inline isl::basic_set deltas() const;
+  inline isl::basic_map detect_equalities() const;
+  inline isl::basic_map fix_si(isl::dim type, unsigned int pos, int value) const;
+  inline isl::basic_map flatten() const;
+  inline isl::basic_map flatten_domain() const;
+  inline isl::basic_map flatten_range() const;
+  inline isl::basic_map gist(isl::basic_map context) const;
+  inline isl::basic_map intersect(isl::basic_map bmap2) const;
+  inline isl::basic_map intersect_domain(isl::basic_set bset) const;
+  inline isl::basic_map intersect_range(isl::basic_set bset) const;
+  inline isl::boolean is_empty() const;
+  inline isl::boolean is_equal(const isl::basic_map &bmap2) const;
+  inline isl::boolean is_subset(const isl::basic_map &bmap2) const;
+  inline isl::map lexmax() const;
+  inline isl::map lexmin() const;
+  inline isl::val plain_get_val_if_fixed(isl::dim type, unsigned int pos) const;
+  inline isl::basic_map project_out(isl::dim type, unsigned int first, unsigned int n) const;
+  inline isl::basic_map reverse() const;
+  inline isl::basic_map sample() const;
+  inline isl::map unite(isl::basic_map bmap2) const;
+  static inline isl::basic_map universe(isl::space dim);
 };
 
 // declarations for isl::basic_set
@@ -354,7 +354,7 @@ public:
   inline /* implicit */ basic_set(const basic_set &obj);
   inline /* implicit */ basic_set(std::nullptr_t);
   inline explicit basic_set(ctx ctx, const std::string &str);
-  inline /* implicit */ basic_set(point pnt);
+  inline /* implicit */ basic_set(isl::point pnt);
   inline basic_set &operator=(basic_set obj);
   inline ~basic_set();
   inline __isl_give isl_basic_set *copy() const &;
@@ -367,24 +367,24 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline basic_set affine_hull() const;
-  inline basic_set apply(basic_map bmap) const;
-  inline basic_set detect_equalities() const;
-  inline basic_set flatten() const;
-  inline basic_set gist(basic_set context) const;
-  inline basic_set intersect(basic_set bset2) const;
-  inline basic_set intersect_params(basic_set bset2) const;
-  inline boolean is_bounded() const;
-  inline boolean is_empty() const;
-  inline boolean is_equal(const basic_set &bset2) const;
-  inline boolean is_subset(const basic_set &bset2) const;
-  inline boolean is_wrapping() const;
-  inline set lexmax() const;
-  inline set lexmin() const;
-  inline basic_set project_out(enum dim type, unsigned int first, unsigned int n) const;
-  inline basic_set sample() const;
-  inline point sample_point() const;
-  inline set unite(basic_set bset2) const;
+  inline isl::basic_set affine_hull() const;
+  inline isl::basic_set apply(isl::basic_map bmap) const;
+  inline isl::basic_set detect_equalities() const;
+  inline isl::basic_set flatten() const;
+  inline isl::basic_set gist(isl::basic_set context) const;
+  inline isl::basic_set intersect(isl::basic_set bset2) const;
+  inline isl::basic_set intersect_params(isl::basic_set bset2) const;
+  inline isl::boolean is_bounded() const;
+  inline isl::boolean is_empty() const;
+  inline isl::boolean is_equal(const isl::basic_set &bset2) const;
+  inline isl::boolean is_subset(const isl::basic_set &bset2) const;
+  inline isl::boolean is_wrapping() const;
+  inline isl::set lexmax() const;
+  inline isl::set lexmin() const;
+  inline isl::basic_set project_out(isl::dim type, unsigned int first, unsigned int n) const;
+  inline isl::basic_set sample() const;
+  inline isl::point sample_point() const;
+  inline isl::set unite(isl::basic_set bset2) const;
 };
 
 // declarations for isl::id
@@ -433,7 +433,7 @@ public:
   inline /* implicit */ local_space();
   inline /* implicit */ local_space(const local_space &obj);
   inline /* implicit */ local_space(std::nullptr_t);
-  inline explicit local_space(space dim);
+  inline explicit local_space(isl::space dim);
   inline local_space &operator=(local_space obj);
   inline ~local_space();
   inline __isl_give isl_local_space *copy() const &;
@@ -464,7 +464,7 @@ public:
   inline /* implicit */ map(const map &obj);
   inline /* implicit */ map(std::nullptr_t);
   inline explicit map(ctx ctx, const std::string &str);
-  inline /* implicit */ map(basic_map bmap);
+  inline /* implicit */ map(isl::basic_map bmap);
   inline map &operator=(map obj);
   inline ~map();
   inline __isl_give isl_map *copy() const &;
@@ -477,44 +477,44 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline basic_map affine_hull() const;
-  inline map apply_domain(map map2) const;
-  inline map apply_range(map map2) const;
-  inline map coalesce() const;
-  inline map complement() const;
-  inline set deltas() const;
-  inline map detect_equalities() const;
-  inline unsigned int dim(enum dim type) const;
-  inline pw_aff dim_max(int pos) const;
-  inline pw_aff dim_min(int pos) const;
-  inline map flatten() const;
-  inline map flatten_domain() const;
-  inline map flatten_range() const;
-  inline stat foreach_basic_map(std::function<stat(basic_map)> &&fn) const;
-  static inline map from_range(set set);
-  inline map gist(map context) const;
-  inline map gist_domain(set context) const;
-  inline map intersect(map map2) const;
-  inline map intersect_domain(set set) const;
-  inline map intersect_params(set params) const;
-  inline map intersect_range(set set) const;
-  inline boolean is_bijective() const;
-  inline boolean is_disjoint(const map &map2) const;
-  inline boolean is_empty() const;
-  inline boolean is_equal(const map &map2) const;
-  inline boolean is_injective() const;
-  inline boolean is_single_valued() const;
-  inline boolean is_strict_subset(const map &map2) const;
-  inline boolean is_subset(const map &map2) const;
-  inline map lexmax() const;
-  inline map lexmin() const;
-  inline basic_map polyhedral_hull() const;
-  inline map project_out(enum dim type, unsigned int first, unsigned int n) const;
-  inline map reverse() const;
-  inline basic_map sample() const;
-  inline map subtract(map map2) const;
-  inline map unite(map map2) const;
-  inline basic_map unshifted_simple_hull() const;
+  inline isl::basic_map affine_hull() const;
+  inline isl::map apply_domain(isl::map map2) const;
+  inline isl::map apply_range(isl::map map2) const;
+  inline isl::map coalesce() const;
+  inline isl::map complement() const;
+  inline isl::set deltas() const;
+  inline isl::map detect_equalities() const;
+  inline unsigned int dim(isl::dim type) const;
+  inline isl::pw_aff dim_max(int pos) const;
+  inline isl::pw_aff dim_min(int pos) const;
+  inline isl::map flatten() const;
+  inline isl::map flatten_domain() const;
+  inline isl::map flatten_range() const;
+  inline isl::stat foreach_basic_map(std::function<isl::stat(isl::basic_map)> &&fn) const;
+  static inline isl::map from_range(isl::set set);
+  inline isl::map gist(isl::map context) const;
+  inline isl::map gist_domain(isl::set context) const;
+  inline isl::map intersect(isl::map map2) const;
+  inline isl::map intersect_domain(isl::set set) const;
+  inline isl::map intersect_params(isl::set params) const;
+  inline isl::map intersect_range(isl::set set) const;
+  inline isl::boolean is_bijective() const;
+  inline isl::boolean is_disjoint(const isl::map &map2) const;
+  inline isl::boolean is_empty() const;
+  inline isl::boolean is_equal(const isl::map &map2) const;
+  inline isl::boolean is_injective() const;
+  inline isl::boolean is_single_valued() const;
+  inline isl::boolean is_strict_subset(const isl::map &map2) const;
+  inline isl::boolean is_subset(const isl::map &map2) const;
+  inline isl::map lexmax() const;
+  inline isl::map lexmin() const;
+  inline isl::basic_map polyhedral_hull() const;
+  inline isl::map project_out(isl::dim type, unsigned int first, unsigned int n) const;
+  inline isl::map reverse() const;
+  inline isl::basic_map sample() const;
+  inline isl::map subtract(isl::map map2) const;
+  inline isl::map unite(isl::map map2) const;
+  inline isl::basic_map unshifted_simple_hull() const;
 };
 
 // declarations for isl::multi_aff
@@ -533,7 +533,7 @@ public:
   inline /* implicit */ multi_aff();
   inline /* implicit */ multi_aff(const multi_aff &obj);
   inline /* implicit */ multi_aff(std::nullptr_t);
-  inline /* implicit */ multi_aff(aff aff);
+  inline /* implicit */ multi_aff(isl::aff aff);
   inline explicit multi_aff(ctx ctx, const std::string &str);
   inline multi_aff &operator=(multi_aff obj);
   inline ~multi_aff();
@@ -547,12 +547,12 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline multi_aff add(multi_aff multi2) const;
-  inline multi_aff flat_range_product(multi_aff multi2) const;
-  inline aff get_aff(int pos) const;
-  inline multi_aff product(multi_aff multi2) const;
-  inline multi_aff pullback(multi_aff ma2) const;
-  inline multi_aff range_product(multi_aff multi2) const;
+  inline isl::multi_aff add(isl::multi_aff multi2) const;
+  inline isl::multi_aff flat_range_product(isl::multi_aff multi2) const;
+  inline isl::aff get_aff(int pos) const;
+  inline isl::multi_aff product(isl::multi_aff multi2) const;
+  inline isl::multi_aff pullback(isl::multi_aff ma2) const;
+  inline isl::multi_aff range_product(isl::multi_aff multi2) const;
 };
 
 // declarations for isl::multi_pw_aff
@@ -571,9 +571,9 @@ public:
   inline /* implicit */ multi_pw_aff();
   inline /* implicit */ multi_pw_aff(const multi_pw_aff &obj);
   inline /* implicit */ multi_pw_aff(std::nullptr_t);
-  inline /* implicit */ multi_pw_aff(multi_aff ma);
-  inline /* implicit */ multi_pw_aff(pw_aff pa);
-  inline /* implicit */ multi_pw_aff(pw_multi_aff pma);
+  inline /* implicit */ multi_pw_aff(isl::multi_aff ma);
+  inline /* implicit */ multi_pw_aff(isl::pw_aff pa);
+  inline /* implicit */ multi_pw_aff(isl::pw_multi_aff pma);
   inline explicit multi_pw_aff(ctx ctx, const std::string &str);
   inline multi_pw_aff &operator=(multi_pw_aff obj);
   inline ~multi_pw_aff();
@@ -587,14 +587,14 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline multi_pw_aff add(multi_pw_aff multi2) const;
-  inline multi_pw_aff flat_range_product(multi_pw_aff multi2) const;
-  inline pw_aff get_pw_aff(int pos) const;
-  inline multi_pw_aff product(multi_pw_aff multi2) const;
-  inline multi_pw_aff pullback(multi_aff ma) const;
-  inline multi_pw_aff pullback(pw_multi_aff pma) const;
-  inline multi_pw_aff pullback(multi_pw_aff mpa2) const;
-  inline multi_pw_aff range_product(multi_pw_aff multi2) const;
+  inline isl::multi_pw_aff add(isl::multi_pw_aff multi2) const;
+  inline isl::multi_pw_aff flat_range_product(isl::multi_pw_aff multi2) const;
+  inline isl::pw_aff get_pw_aff(int pos) const;
+  inline isl::multi_pw_aff product(isl::multi_pw_aff multi2) const;
+  inline isl::multi_pw_aff pullback(isl::multi_aff ma) const;
+  inline isl::multi_pw_aff pullback(isl::pw_multi_aff pma) const;
+  inline isl::multi_pw_aff pullback(isl::multi_pw_aff mpa2) const;
+  inline isl::multi_pw_aff range_product(isl::multi_pw_aff multi2) const;
 };
 
 // declarations for isl::multi_union_pw_aff
@@ -613,9 +613,9 @@ public:
   inline /* implicit */ multi_union_pw_aff();
   inline /* implicit */ multi_union_pw_aff(const multi_union_pw_aff &obj);
   inline /* implicit */ multi_union_pw_aff(std::nullptr_t);
-  inline /* implicit */ multi_union_pw_aff(union_pw_aff upa);
-  inline /* implicit */ multi_union_pw_aff(multi_pw_aff mpa);
-  inline explicit multi_union_pw_aff(union_pw_multi_aff upma);
+  inline /* implicit */ multi_union_pw_aff(isl::union_pw_aff upa);
+  inline /* implicit */ multi_union_pw_aff(isl::multi_pw_aff mpa);
+  inline explicit multi_union_pw_aff(isl::union_pw_multi_aff upma);
   inline explicit multi_union_pw_aff(ctx ctx, const std::string &str);
   inline multi_union_pw_aff &operator=(multi_union_pw_aff obj);
   inline ~multi_union_pw_aff();
@@ -629,12 +629,12 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline multi_union_pw_aff add(multi_union_pw_aff multi2) const;
-  inline multi_union_pw_aff flat_range_product(multi_union_pw_aff multi2) const;
-  inline union_pw_aff get_union_pw_aff(int pos) const;
-  inline multi_union_pw_aff pullback(union_pw_multi_aff upma) const;
-  inline multi_union_pw_aff range_product(multi_union_pw_aff multi2) const;
-  inline multi_union_pw_aff union_add(multi_union_pw_aff mupa2) const;
+  inline isl::multi_union_pw_aff add(isl::multi_union_pw_aff multi2) const;
+  inline isl::multi_union_pw_aff flat_range_product(isl::multi_union_pw_aff multi2) const;
+  inline isl::union_pw_aff get_union_pw_aff(int pos) const;
+  inline isl::multi_union_pw_aff pullback(isl::union_pw_multi_aff upma) const;
+  inline isl::multi_union_pw_aff range_product(isl::multi_union_pw_aff multi2) const;
+  inline isl::multi_union_pw_aff union_add(isl::multi_union_pw_aff mupa2) const;
 };
 
 // declarations for isl::multi_val
@@ -665,11 +665,11 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline multi_val add(multi_val multi2) const;
-  inline multi_val flat_range_product(multi_val multi2) const;
-  inline val get_val(int pos) const;
-  inline multi_val product(multi_val multi2) const;
-  inline multi_val range_product(multi_val multi2) const;
+  inline isl::multi_val add(isl::multi_val multi2) const;
+  inline isl::multi_val flat_range_product(isl::multi_val multi2) const;
+  inline isl::val get_val(int pos) const;
+  inline isl::multi_val product(isl::multi_val multi2) const;
+  inline isl::multi_val range_product(isl::multi_val multi2) const;
 };
 
 // declarations for isl::point
@@ -688,7 +688,7 @@ public:
   inline /* implicit */ point();
   inline /* implicit */ point(const point &obj);
   inline /* implicit */ point(std::nullptr_t);
-  inline explicit point(space dim);
+  inline explicit point(isl::space dim);
   inline point &operator=(point obj);
   inline ~point();
   inline __isl_give isl_point *copy() const &;
@@ -719,9 +719,9 @@ public:
   inline /* implicit */ pw_aff();
   inline /* implicit */ pw_aff(const pw_aff &obj);
   inline /* implicit */ pw_aff(std::nullptr_t);
-  inline /* implicit */ pw_aff(aff aff);
-  inline explicit pw_aff(local_space ls);
-  inline explicit pw_aff(set domain, val v);
+  inline /* implicit */ pw_aff(isl::aff aff);
+  inline explicit pw_aff(isl::local_space ls);
+  inline explicit pw_aff(isl::set domain, isl::val v);
   inline explicit pw_aff(ctx ctx, const std::string &str);
   inline pw_aff &operator=(pw_aff obj);
   inline ~pw_aff();
@@ -735,17 +735,17 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline pw_aff add(pw_aff pwaff2) const;
-  inline stat foreach_piece(std::function<stat(set, aff)> &&fn) const;
-  inline space get_space() const;
-  inline boolean is_cst() const;
-  inline pw_aff mul(pw_aff pwaff2) const;
-  inline pw_aff neg() const;
-  inline pw_aff pullback(multi_aff ma) const;
-  inline pw_aff pullback(pw_multi_aff pma) const;
-  inline pw_aff pullback(multi_pw_aff mpa) const;
-  inline pw_aff sub(pw_aff pwaff2) const;
-  inline pw_aff union_add(pw_aff pwaff2) const;
+  inline isl::pw_aff add(isl::pw_aff pwaff2) const;
+  inline isl::stat foreach_piece(std::function<isl::stat(isl::set, isl::aff)> &&fn) const;
+  inline isl::space get_space() const;
+  inline isl::boolean is_cst() const;
+  inline isl::pw_aff mul(isl::pw_aff pwaff2) const;
+  inline isl::pw_aff neg() const;
+  inline isl::pw_aff pullback(isl::multi_aff ma) const;
+  inline isl::pw_aff pullback(isl::pw_multi_aff pma) const;
+  inline isl::pw_aff pullback(isl::multi_pw_aff mpa) const;
+  inline isl::pw_aff sub(isl::pw_aff pwaff2) const;
+  inline isl::pw_aff union_add(isl::pw_aff pwaff2) const;
 };
 
 // declarations for isl::pw_multi_aff
@@ -765,8 +765,8 @@ public:
   inline /* implicit */ pw_multi_aff(const pw_multi_aff &obj);
   inline /* implicit */ pw_multi_aff(std::nullptr_t);
   inline explicit pw_multi_aff(ctx ctx, const std::string &str);
-  inline /* implicit */ pw_multi_aff(multi_aff ma);
-  inline /* implicit */ pw_multi_aff(pw_aff pa);
+  inline /* implicit */ pw_multi_aff(isl::multi_aff ma);
+  inline /* implicit */ pw_multi_aff(isl::pw_aff pa);
   inline pw_multi_aff &operator=(pw_multi_aff obj);
   inline ~pw_multi_aff();
   inline __isl_give isl_pw_multi_aff *copy() const &;
@@ -779,13 +779,13 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline pw_multi_aff add(pw_multi_aff pma2) const;
-  inline pw_multi_aff flat_range_product(pw_multi_aff pma2) const;
-  inline pw_multi_aff product(pw_multi_aff pma2) const;
-  inline pw_multi_aff pullback(multi_aff ma) const;
-  inline pw_multi_aff pullback(pw_multi_aff pma2) const;
-  inline pw_multi_aff range_product(pw_multi_aff pma2) const;
-  inline pw_multi_aff union_add(pw_multi_aff pma2) const;
+  inline isl::pw_multi_aff add(isl::pw_multi_aff pma2) const;
+  inline isl::pw_multi_aff flat_range_product(isl::pw_multi_aff pma2) const;
+  inline isl::pw_multi_aff product(isl::pw_multi_aff pma2) const;
+  inline isl::pw_multi_aff pullback(isl::multi_aff ma) const;
+  inline isl::pw_multi_aff pullback(isl::pw_multi_aff pma2) const;
+  inline isl::pw_multi_aff range_product(isl::pw_multi_aff pma2) const;
+  inline isl::pw_multi_aff union_add(isl::pw_multi_aff pma2) const;
 };
 
 // declarations for isl::schedule
@@ -817,9 +817,9 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_map get_map() const;
-  inline schedule_node get_root() const;
-  inline schedule pullback(union_pw_multi_aff upma) const;
+  inline isl::union_map get_map() const;
+  inline isl::schedule_node get_root() const;
+  inline isl::schedule pullback(isl::union_pw_multi_aff upma) const;
 };
 
 // declarations for isl::schedule_constraints
@@ -851,13 +851,13 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_map get_coincidence() const;
-  inline union_map get_conditional_validity() const;
-  inline union_map get_conditional_validity_condition() const;
-  inline set get_context() const;
-  inline union_set get_domain() const;
-  inline union_map get_proximity() const;
-  inline union_map get_validity() const;
+  inline isl::union_map get_coincidence() const;
+  inline isl::union_map get_conditional_validity() const;
+  inline isl::union_map get_conditional_validity_condition() const;
+  inline isl::set get_context() const;
+  inline isl::union_set get_domain() const;
+  inline isl::union_map get_proximity() const;
+  inline isl::union_map get_validity() const;
 };
 
 // declarations for isl::schedule_node
@@ -888,14 +888,14 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline boolean band_member_get_coincident(int pos) const;
-  inline schedule_node band_member_set_coincident(int pos, int coincident) const;
-  inline schedule_node child(int pos) const;
-  inline multi_union_pw_aff get_prefix_schedule_multi_union_pw_aff() const;
-  inline union_map get_prefix_schedule_union_map() const;
-  inline union_pw_multi_aff get_prefix_schedule_union_pw_multi_aff() const;
-  inline schedule get_schedule() const;
-  inline schedule_node parent() const;
+  inline isl::boolean band_member_get_coincident(int pos) const;
+  inline isl::schedule_node band_member_set_coincident(int pos, int coincident) const;
+  inline isl::schedule_node child(int pos) const;
+  inline isl::multi_union_pw_aff get_prefix_schedule_multi_union_pw_aff() const;
+  inline isl::union_map get_prefix_schedule_union_map() const;
+  inline isl::union_pw_multi_aff get_prefix_schedule_union_pw_multi_aff() const;
+  inline isl::schedule get_schedule() const;
+  inline isl::schedule_node parent() const;
 };
 
 // declarations for isl::set
@@ -914,10 +914,10 @@ public:
   inline /* implicit */ set();
   inline /* implicit */ set(const set &obj);
   inline /* implicit */ set(std::nullptr_t);
-  inline explicit set(union_set uset);
+  inline explicit set(isl::union_set uset);
   inline explicit set(ctx ctx, const std::string &str);
-  inline /* implicit */ set(basic_set bset);
-  inline /* implicit */ set(point pnt);
+  inline /* implicit */ set(isl::basic_set bset);
+  inline /* implicit */ set(isl::point pnt);
   inline set &operator=(set obj);
   inline ~set();
   inline __isl_give isl_set *copy() const &;
@@ -930,40 +930,40 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline set add_dims(enum dim type, unsigned int n) const;
-  inline basic_set affine_hull() const;
-  inline set apply(map map) const;
-  inline set coalesce() const;
-  inline set complement() const;
-  inline set detect_equalities() const;
-  inline unsigned int dim(enum dim type) const;
-  inline pw_aff dim_max(int pos) const;
-  inline pw_aff dim_min(int pos) const;
-  inline set flatten() const;
-  inline stat foreach_basic_set(std::function<stat(basic_set)> &&fn) const;
-  inline set gist(set context) const;
-  inline map identity() const;
-  inline set intersect(set set2) const;
-  inline set intersect_params(set params) const;
-  inline boolean is_bounded() const;
-  inline boolean is_disjoint(const set &set2) const;
-  inline boolean is_empty() const;
-  inline boolean is_equal(const set &set2) const;
-  inline boolean is_strict_subset(const set &set2) const;
-  inline boolean is_subset(const set &set2) const;
-  inline boolean is_wrapping() const;
-  inline set lexmax() const;
-  inline set lexmin() const;
-  inline val max_val(const aff &obj) const;
-  inline val min_val(const aff &obj) const;
-  inline basic_set polyhedral_hull() const;
-  inline set project_out(enum dim type, unsigned int first, unsigned int n) const;
-  inline basic_set sample() const;
-  inline point sample_point() const;
-  inline set subtract(set set2) const;
-  inline set unite(set set2) const;
-  static inline set universe(space dim);
-  inline basic_set unshifted_simple_hull() const;
+  inline isl::set add_dims(isl::dim type, unsigned int n) const;
+  inline isl::basic_set affine_hull() const;
+  inline isl::set apply(isl::map map) const;
+  inline isl::set coalesce() const;
+  inline isl::set complement() const;
+  inline isl::set detect_equalities() const;
+  inline unsigned int dim(isl::dim type) const;
+  inline isl::pw_aff dim_max(int pos) const;
+  inline isl::pw_aff dim_min(int pos) const;
+  inline isl::set flatten() const;
+  inline isl::stat foreach_basic_set(std::function<isl::stat(isl::basic_set)> &&fn) const;
+  inline isl::set gist(isl::set context) const;
+  inline isl::map identity() const;
+  inline isl::set intersect(isl::set set2) const;
+  inline isl::set intersect_params(isl::set params) const;
+  inline isl::boolean is_bounded() const;
+  inline isl::boolean is_disjoint(const isl::set &set2) const;
+  inline isl::boolean is_empty() const;
+  inline isl::boolean is_equal(const isl::set &set2) const;
+  inline isl::boolean is_strict_subset(const isl::set &set2) const;
+  inline isl::boolean is_subset(const isl::set &set2) const;
+  inline isl::boolean is_wrapping() const;
+  inline isl::set lexmax() const;
+  inline isl::set lexmin() const;
+  inline isl::val max_val(const isl::aff &obj) const;
+  inline isl::val min_val(const isl::aff &obj) const;
+  inline isl::basic_set polyhedral_hull() const;
+  inline isl::set project_out(isl::dim type, unsigned int first, unsigned int n) const;
+  inline isl::basic_set sample() const;
+  inline isl::point sample_point() const;
+  inline isl::set subtract(isl::set set2) const;
+  inline isl::set unite(isl::set set2) const;
+  static inline isl::set universe(isl::space dim);
+  inline isl::basic_set unshifted_simple_hull() const;
 };
 
 // declarations for isl::space
@@ -996,10 +996,10 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline space domain() const;
-  inline boolean is_equal(const space &space2) const;
-  inline space params() const;
-  inline space set_from_params() const;
+  inline isl::space domain() const;
+  inline isl::boolean is_equal(const isl::space &space2) const;
+  inline isl::space params() const;
+  inline isl::space set_from_params() const;
 };
 
 // declarations for isl::union_access_info
@@ -1018,7 +1018,7 @@ public:
   inline /* implicit */ union_access_info();
   inline /* implicit */ union_access_info(const union_access_info &obj);
   inline /* implicit */ union_access_info(std::nullptr_t);
-  inline explicit union_access_info(union_map sink);
+  inline explicit union_access_info(isl::union_map sink);
   inline union_access_info &operator=(union_access_info obj);
   inline ~union_access_info();
   inline __isl_give isl_union_access_info *copy() const &;
@@ -1031,11 +1031,11 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_flow compute_flow() const;
-  inline union_access_info set_may_source(union_map may_source) const;
-  inline union_access_info set_must_source(union_map must_source) const;
-  inline union_access_info set_schedule(schedule schedule) const;
-  inline union_access_info set_schedule_map(union_map schedule_map) const;
+  inline isl::union_flow compute_flow() const;
+  inline isl::union_access_info set_may_source(isl::union_map may_source) const;
+  inline isl::union_access_info set_must_source(isl::union_map must_source) const;
+  inline isl::union_access_info set_schedule(isl::schedule schedule) const;
+  inline isl::union_access_info set_schedule_map(isl::union_map schedule_map) const;
 };
 
 // declarations for isl::union_flow
@@ -1066,12 +1066,12 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_map get_full_may_dependence() const;
-  inline union_map get_full_must_dependence() const;
-  inline union_map get_may_dependence() const;
-  inline union_map get_may_no_source() const;
-  inline union_map get_must_dependence() const;
-  inline union_map get_must_no_source() const;
+  inline isl::union_map get_full_may_dependence() const;
+  inline isl::union_map get_full_must_dependence() const;
+  inline isl::union_map get_may_dependence() const;
+  inline isl::union_map get_may_no_source() const;
+  inline isl::union_map get_must_dependence() const;
+  inline isl::union_map get_must_no_source() const;
 };
 
 // declarations for isl::union_map
@@ -1090,9 +1090,9 @@ public:
   inline /* implicit */ union_map();
   inline /* implicit */ union_map(const union_map &obj);
   inline /* implicit */ union_map(std::nullptr_t);
-  inline explicit union_map(union_pw_aff upa);
-  inline /* implicit */ union_map(basic_map bmap);
-  inline /* implicit */ union_map(map map);
+  inline explicit union_map(isl::union_pw_aff upa);
+  inline /* implicit */ union_map(isl::basic_map bmap);
+  inline /* implicit */ union_map(isl::map map);
   inline explicit union_map(ctx ctx, const std::string &str);
   inline union_map &operator=(union_map obj);
   inline ~union_map();
@@ -1106,61 +1106,61 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_map add_map(map map) const;
-  inline union_map affine_hull() const;
-  inline union_map apply_domain(union_map umap2) const;
-  inline union_map apply_range(union_map umap2) const;
-  inline union_map coalesce() const;
-  inline union_map compute_divs() const;
-  inline union_set deltas() const;
-  inline union_map detect_equalities() const;
-  inline union_set domain() const;
-  inline union_map domain_factor_domain() const;
-  inline union_map domain_factor_range() const;
-  inline union_map domain_map() const;
-  inline union_pw_multi_aff domain_map_union_pw_multi_aff() const;
-  inline union_map domain_product(union_map umap2) const;
-  static inline union_map empty(space dim);
-  inline union_map factor_domain() const;
-  inline union_map factor_range() const;
-  inline union_map fixed_power(val exp) const;
-  inline union_map flat_range_product(union_map umap2) const;
-  inline stat foreach_map(std::function<stat(map)> &&fn) const;
-  static inline union_map from(union_pw_multi_aff upma);
-  static inline union_map from(multi_union_pw_aff mupa);
-  static inline union_map from_domain_and_range(union_set domain, union_set range);
-  inline space get_space() const;
-  inline union_map gist(union_map context) const;
-  inline union_map gist_domain(union_set uset) const;
-  inline union_map gist_params(set set) const;
-  inline union_map gist_range(union_set uset) const;
-  inline union_map intersect(union_map umap2) const;
-  inline union_map intersect_domain(union_set uset) const;
-  inline union_map intersect_params(set set) const;
-  inline union_map intersect_range(union_set uset) const;
-  inline boolean is_bijective() const;
-  inline boolean is_empty() const;
-  inline boolean is_equal(const union_map &umap2) const;
-  inline boolean is_injective() const;
-  inline boolean is_single_valued() const;
-  inline boolean is_strict_subset(const union_map &umap2) const;
-  inline boolean is_subset(const union_map &umap2) const;
-  inline union_map lexmax() const;
-  inline union_map lexmin() const;
-  inline union_map polyhedral_hull() const;
-  inline union_map product(union_map umap2) const;
-  inline union_set range() const;
-  inline union_map range_factor_domain() const;
-  inline union_map range_factor_range() const;
-  inline union_map range_map() const;
-  inline union_map range_product(union_map umap2) const;
-  inline union_map reverse() const;
-  inline union_map subtract(union_map umap2) const;
-  inline union_map subtract_domain(union_set dom) const;
-  inline union_map subtract_range(union_set dom) const;
-  inline union_map unite(union_map umap2) const;
-  inline union_set wrap() const;
-  inline union_map zip() const;
+  inline isl::union_map add_map(isl::map map) const;
+  inline isl::union_map affine_hull() const;
+  inline isl::union_map apply_domain(isl::union_map umap2) const;
+  inline isl::union_map apply_range(isl::union_map umap2) const;
+  inline isl::union_map coalesce() const;
+  inline isl::union_map compute_divs() const;
+  inline isl::union_set deltas() const;
+  inline isl::union_map detect_equalities() const;
+  inline isl::union_set domain() const;
+  inline isl::union_map domain_factor_domain() const;
+  inline isl::union_map domain_factor_range() const;
+  inline isl::union_map domain_map() const;
+  inline isl::union_pw_multi_aff domain_map_union_pw_multi_aff() const;
+  inline isl::union_map domain_product(isl::union_map umap2) const;
+  static inline isl::union_map empty(isl::space dim);
+  inline isl::union_map factor_domain() const;
+  inline isl::union_map factor_range() const;
+  inline isl::union_map fixed_power(isl::val exp) const;
+  inline isl::union_map flat_range_product(isl::union_map umap2) const;
+  inline isl::stat foreach_map(std::function<isl::stat(isl::map)> &&fn) const;
+  static inline isl::union_map from(isl::union_pw_multi_aff upma);
+  static inline isl::union_map from(isl::multi_union_pw_aff mupa);
+  static inline isl::union_map from_domain_and_range(isl::union_set domain, isl::union_set range);
+  inline isl::space get_space() const;
+  inline isl::union_map gist(isl::union_map context) const;
+  inline isl::union_map gist_domain(isl::union_set uset) const;
+  inline isl::union_map gist_params(isl::set set) const;
+  inline isl::union_map gist_range(isl::union_set uset) const;
+  inline isl::union_map intersect(isl::union_map umap2) const;
+  inline isl::union_map intersect_domain(isl::union_set uset) const;
+  inline isl::union_map intersect_params(isl::set set) const;
+  inline isl::union_map intersect_range(isl::union_set uset) const;
+  inline isl::boolean is_bijective() const;
+  inline isl::boolean is_empty() const;
+  inline isl::boolean is_equal(const isl::union_map &umap2) const;
+  inline isl::boolean is_injective() const;
+  inline isl::boolean is_single_valued() const;
+  inline isl::boolean is_strict_subset(const isl::union_map &umap2) const;
+  inline isl::boolean is_subset(const isl::union_map &umap2) const;
+  inline isl::union_map lexmax() const;
+  inline isl::union_map lexmin() const;
+  inline isl::union_map polyhedral_hull() const;
+  inline isl::union_map product(isl::union_map umap2) const;
+  inline isl::union_set range() const;
+  inline isl::union_map range_factor_domain() const;
+  inline isl::union_map range_factor_range() const;
+  inline isl::union_map range_map() const;
+  inline isl::union_map range_product(isl::union_map umap2) const;
+  inline isl::union_map reverse() const;
+  inline isl::union_map subtract(isl::union_map umap2) const;
+  inline isl::union_map subtract_domain(isl::union_set dom) const;
+  inline isl::union_map subtract_range(isl::union_set dom) const;
+  inline isl::union_map unite(isl::union_map umap2) const;
+  inline isl::union_set wrap() const;
+  inline isl::union_map zip() const;
 };
 
 // declarations for isl::union_pw_aff
@@ -1179,8 +1179,8 @@ public:
   inline /* implicit */ union_pw_aff();
   inline /* implicit */ union_pw_aff(const union_pw_aff &obj);
   inline /* implicit */ union_pw_aff(std::nullptr_t);
-  inline /* implicit */ union_pw_aff(pw_aff pa);
-  inline explicit union_pw_aff(union_set domain, val v);
+  inline /* implicit */ union_pw_aff(isl::pw_aff pa);
+  inline explicit union_pw_aff(isl::union_set domain, isl::val v);
   inline explicit union_pw_aff(ctx ctx, const std::string &str);
   inline union_pw_aff &operator=(union_pw_aff obj);
   inline ~union_pw_aff();
@@ -1194,13 +1194,13 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_pw_aff add(union_pw_aff upa2) const;
-  static inline union_pw_aff empty(space space);
-  inline stat foreach_pw_aff(std::function<stat(pw_aff)> &&fn) const;
-  inline space get_space() const;
-  inline union_pw_aff pullback(union_pw_multi_aff upma) const;
-  inline union_pw_aff sub(union_pw_aff upa2) const;
-  inline union_pw_aff union_add(union_pw_aff upa2) const;
+  inline isl::union_pw_aff add(isl::union_pw_aff upa2) const;
+  static inline isl::union_pw_aff empty(isl::space space);
+  inline isl::stat foreach_pw_aff(std::function<isl::stat(isl::pw_aff)> &&fn) const;
+  inline isl::space get_space() const;
+  inline isl::union_pw_aff pullback(isl::union_pw_multi_aff upma) const;
+  inline isl::union_pw_aff sub(isl::union_pw_aff upa2) const;
+  inline isl::union_pw_aff union_add(isl::union_pw_aff upa2) const;
 };
 
 // declarations for isl::union_pw_multi_aff
@@ -1219,11 +1219,11 @@ public:
   inline /* implicit */ union_pw_multi_aff();
   inline /* implicit */ union_pw_multi_aff(const union_pw_multi_aff &obj);
   inline /* implicit */ union_pw_multi_aff(std::nullptr_t);
-  inline /* implicit */ union_pw_multi_aff(pw_multi_aff pma);
-  inline explicit union_pw_multi_aff(union_set uset);
-  inline explicit union_pw_multi_aff(union_map umap);
+  inline /* implicit */ union_pw_multi_aff(isl::pw_multi_aff pma);
+  inline explicit union_pw_multi_aff(isl::union_set uset);
+  inline explicit union_pw_multi_aff(isl::union_map umap);
   inline explicit union_pw_multi_aff(ctx ctx, const std::string &str);
-  inline /* implicit */ union_pw_multi_aff(union_pw_aff upa);
+  inline /* implicit */ union_pw_multi_aff(isl::union_pw_aff upa);
   inline union_pw_multi_aff &operator=(union_pw_multi_aff obj);
   inline ~union_pw_multi_aff();
   inline __isl_give isl_union_pw_multi_aff *copy() const &;
@@ -1236,10 +1236,10 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_pw_multi_aff add(union_pw_multi_aff upma2) const;
-  inline union_pw_multi_aff flat_range_product(union_pw_multi_aff upma2) const;
-  inline union_pw_multi_aff pullback(union_pw_multi_aff upma2) const;
-  inline union_pw_multi_aff union_add(union_pw_multi_aff upma2) const;
+  inline isl::union_pw_multi_aff add(isl::union_pw_multi_aff upma2) const;
+  inline isl::union_pw_multi_aff flat_range_product(isl::union_pw_multi_aff upma2) const;
+  inline isl::union_pw_multi_aff pullback(isl::union_pw_multi_aff upma2) const;
+  inline isl::union_pw_multi_aff union_add(isl::union_pw_multi_aff upma2) const;
 };
 
 // declarations for isl::union_set
@@ -1258,9 +1258,9 @@ public:
   inline /* implicit */ union_set();
   inline /* implicit */ union_set(const union_set &obj);
   inline /* implicit */ union_set(std::nullptr_t);
-  inline /* implicit */ union_set(basic_set bset);
-  inline /* implicit */ union_set(set set);
-  inline /* implicit */ union_set(point pnt);
+  inline /* implicit */ union_set(isl::basic_set bset);
+  inline /* implicit */ union_set(isl::set set);
+  inline /* implicit */ union_set(isl::point pnt);
   inline explicit union_set(ctx ctx, const std::string &str);
   inline union_set &operator=(union_set obj);
   inline ~union_set();
@@ -1274,29 +1274,29 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline union_set affine_hull() const;
-  inline union_set apply(union_map umap) const;
-  inline union_set coalesce() const;
-  inline union_set compute_divs() const;
-  inline union_set detect_equalities() const;
-  inline stat foreach_point(std::function<stat(point)> &&fn) const;
-  inline stat foreach_set(std::function<stat(set)> &&fn) const;
-  inline union_set gist(union_set context) const;
-  inline union_set gist_params(set set) const;
-  inline union_map identity() const;
-  inline union_set intersect(union_set uset2) const;
-  inline union_set intersect_params(set set) const;
-  inline boolean is_empty() const;
-  inline boolean is_equal(const union_set &uset2) const;
-  inline boolean is_strict_subset(const union_set &uset2) const;
-  inline boolean is_subset(const union_set &uset2) const;
-  inline union_set lexmax() const;
-  inline union_set lexmin() const;
-  inline union_set polyhedral_hull() const;
-  inline point sample_point() const;
-  inline union_set subtract(union_set uset2) const;
-  inline union_set unite(union_set uset2) const;
-  inline union_map unwrap() const;
+  inline isl::union_set affine_hull() const;
+  inline isl::union_set apply(isl::union_map umap) const;
+  inline isl::union_set coalesce() const;
+  inline isl::union_set compute_divs() const;
+  inline isl::union_set detect_equalities() const;
+  inline isl::stat foreach_point(std::function<isl::stat(isl::point)> &&fn) const;
+  inline isl::stat foreach_set(std::function<isl::stat(isl::set)> &&fn) const;
+  inline isl::union_set gist(isl::union_set context) const;
+  inline isl::union_set gist_params(isl::set set) const;
+  inline isl::union_map identity() const;
+  inline isl::union_set intersect(isl::union_set uset2) const;
+  inline isl::union_set intersect_params(isl::set set) const;
+  inline isl::boolean is_empty() const;
+  inline isl::boolean is_equal(const isl::union_set &uset2) const;
+  inline isl::boolean is_strict_subset(const isl::union_set &uset2) const;
+  inline isl::boolean is_subset(const isl::union_set &uset2) const;
+  inline isl::union_set lexmax() const;
+  inline isl::union_set lexmin() const;
+  inline isl::union_set polyhedral_hull() const;
+  inline isl::point sample_point() const;
+  inline isl::union_set subtract(isl::union_set uset2) const;
+  inline isl::union_set unite(isl::union_set uset2) const;
+  inline isl::union_map unwrap() const;
 };
 
 // declarations for isl::val
@@ -1329,51 +1329,51 @@ public:
   inline ctx get_ctx() const;
   inline bool is_null() const;
   inline std::string to_str() const;
-  inline val two_exp() const;
-  inline val abs() const;
-  inline boolean abs_eq(const val &v2) const;
-  inline val add(val v2) const;
-  inline val add_ui(unsigned long v2) const;
-  inline val ceil() const;
+  inline isl::val two_exp() const;
+  inline isl::val abs() const;
+  inline isl::boolean abs_eq(const isl::val &v2) const;
+  inline isl::val add(isl::val v2) const;
+  inline isl::val add_ui(unsigned long v2) const;
+  inline isl::val ceil() const;
   inline int cmp_si(long i) const;
-  inline val div(val v2) const;
-  inline boolean eq(const val &v2) const;
-  inline val floor() const;
-  inline val gcd(val v2) const;
-  inline boolean ge(const val &v2) const;
-  inline boolean gt(const val &v2) const;
-  static inline val infty(ctx ctx);
-  inline val inv() const;
-  inline boolean is_divisible_by(const val &v2) const;
-  inline boolean is_infty() const;
-  inline boolean is_int() const;
-  inline boolean is_nan() const;
-  inline boolean is_neg() const;
-  inline boolean is_neginfty() const;
-  inline boolean is_negone() const;
-  inline boolean is_nonneg() const;
-  inline boolean is_nonpos() const;
-  inline boolean is_one() const;
-  inline boolean is_pos() const;
-  inline boolean is_rat() const;
-  inline boolean is_zero() const;
-  inline boolean le(const val &v2) const;
-  inline boolean lt(const val &v2) const;
-  inline val max(val v2) const;
-  inline val min(val v2) const;
-  inline val mod(val v2) const;
-  inline val mul(val v2) const;
-  static inline val nan(ctx ctx);
-  inline boolean ne(const val &v2) const;
-  inline val neg() const;
-  static inline val neginfty(ctx ctx);
-  static inline val negone(ctx ctx);
-  static inline val one(ctx ctx);
+  inline isl::val div(isl::val v2) const;
+  inline isl::boolean eq(const isl::val &v2) const;
+  inline isl::val floor() const;
+  inline isl::val gcd(isl::val v2) const;
+  inline isl::boolean ge(const isl::val &v2) const;
+  inline isl::boolean gt(const isl::val &v2) const;
+  static inline isl::val infty(ctx ctx);
+  inline isl::val inv() const;
+  inline isl::boolean is_divisible_by(const isl::val &v2) const;
+  inline isl::boolean is_infty() const;
+  inline isl::boolean is_int() const;
+  inline isl::boolean is_nan() const;
+  inline isl::boolean is_neg() const;
+  inline isl::boolean is_neginfty() const;
+  inline isl::boolean is_negone() const;
+  inline isl::boolean is_nonneg() const;
+  inline isl::boolean is_nonpos() const;
+  inline isl::boolean is_one() const;
+  inline isl::boolean is_pos() const;
+  inline isl::boolean is_rat() const;
+  inline isl::boolean is_zero() const;
+  inline isl::boolean le(const isl::val &v2) const;
+  inline isl::boolean lt(const isl::val &v2) const;
+  inline isl::val max(isl::val v2) const;
+  inline isl::val min(isl::val v2) const;
+  inline isl::val mod(isl::val v2) const;
+  inline isl::val mul(isl::val v2) const;
+  static inline isl::val nan(ctx ctx);
+  inline isl::boolean ne(const isl::val &v2) const;
+  inline isl::val neg() const;
+  static inline isl::val neginfty(ctx ctx);
+  static inline isl::val negone(ctx ctx);
+  static inline isl::val one(ctx ctx);
   inline int sgn() const;
-  inline val sub(val v2) const;
-  inline val sub_ui(unsigned long v2) const;
-  inline val trunc() const;
-  static inline val zero(ctx ctx);
+  inline isl::val sub(isl::val v2) const;
+  inline isl::val sub_ui(unsigned long v2) const;
+  inline isl::val trunc() const;
+  static inline isl::val zero(ctx ctx);
 };
 
 // implementations for isl::aff
@@ -1397,12 +1397,12 @@ aff::aff(std::nullptr_t)
 aff::aff(__isl_take isl_aff *ptr)
     : ptr(ptr) {}
 
-aff::aff(local_space ls) {
+aff::aff(isl::local_space ls) {
   auto res = isl_aff_zero_on_domain(ls.release());
   ptr = res;
 }
 
-aff::aff(local_space ls, val val) {
+aff::aff(isl::local_space ls, isl::val val) {
   auto res = isl_aff_val_on_domain(ls.release(), val.release());
   ptr = res;
 }
@@ -1471,22 +1471,22 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-aff aff::add(aff aff2) const {
+isl::aff aff::add(isl::aff aff2) const {
   auto res = isl_aff_add(copy(), aff2.release());
   return manage(res);
 }
 
-val aff::get_constant() const {
+isl::val aff::get_constant() const {
   auto res = isl_aff_get_constant_val(get());
   return manage(res);
 }
 
-boolean aff::is_cst() const {
+isl::boolean aff::is_cst() const {
   auto res = isl_aff_is_cst(get());
   return res;
 }
 
-aff aff::pullback(multi_aff ma) const {
+isl::aff aff::pullback(isl::multi_aff ma) const {
   auto res = isl_aff_pullback_multi_aff(copy(), ma.release());
   return manage(res);
 }
@@ -1561,42 +1561,42 @@ bool ast_build::is_null() const {
   return ptr == nullptr;
 }
 
-ast_expr ast_build::access_from(pw_multi_aff pma) const {
+isl::ast_expr ast_build::access_from(isl::pw_multi_aff pma) const {
   auto res = isl_ast_build_access_from_pw_multi_aff(get(), pma.release());
   return manage(res);
 }
 
-ast_expr ast_build::access_from(multi_pw_aff mpa) const {
+isl::ast_expr ast_build::access_from(isl::multi_pw_aff mpa) const {
   auto res = isl_ast_build_access_from_multi_pw_aff(get(), mpa.release());
   return manage(res);
 }
 
-ast_expr ast_build::call_from(pw_multi_aff pma) const {
+isl::ast_expr ast_build::call_from(isl::pw_multi_aff pma) const {
   auto res = isl_ast_build_call_from_pw_multi_aff(get(), pma.release());
   return manage(res);
 }
 
-ast_expr ast_build::call_from(multi_pw_aff mpa) const {
+isl::ast_expr ast_build::call_from(isl::multi_pw_aff mpa) const {
   auto res = isl_ast_build_call_from_multi_pw_aff(get(), mpa.release());
   return manage(res);
 }
 
-ast_expr ast_build::expr_from(set set) const {
+isl::ast_expr ast_build::expr_from(isl::set set) const {
   auto res = isl_ast_build_expr_from_set(get(), set.release());
   return manage(res);
 }
 
-ast_expr ast_build::expr_from(pw_aff pa) const {
+isl::ast_expr ast_build::expr_from(isl::pw_aff pa) const {
   auto res = isl_ast_build_expr_from_pw_aff(get(), pa.release());
   return manage(res);
 }
 
-ast_build ast_build::from_context(set set) {
+isl::ast_build ast_build::from_context(isl::set set) {
   auto res = isl_ast_build_from_context(set.release());
   return manage(res);
 }
 
-ast_node ast_build::node_from_schedule_map(union_map schedule) const {
+isl::ast_node ast_build::node_from_schedule_map(isl::union_map schedule) const {
   auto res = isl_ast_build_node_from_schedule_map(get(), schedule.release());
   return manage(res);
 }
@@ -1860,122 +1860,122 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-basic_map basic_map::affine_hull() const {
+isl::basic_map basic_map::affine_hull() const {
   auto res = isl_basic_map_affine_hull(copy());
   return manage(res);
 }
 
-basic_map basic_map::apply_domain(basic_map bmap2) const {
+isl::basic_map basic_map::apply_domain(isl::basic_map bmap2) const {
   auto res = isl_basic_map_apply_domain(copy(), bmap2.release());
   return manage(res);
 }
 
-basic_map basic_map::apply_range(basic_map bmap2) const {
+isl::basic_map basic_map::apply_range(isl::basic_map bmap2) const {
   auto res = isl_basic_map_apply_range(copy(), bmap2.release());
   return manage(res);
 }
 
-basic_set basic_map::deltas() const {
+isl::basic_set basic_map::deltas() const {
   auto res = isl_basic_map_deltas(copy());
   return manage(res);
 }
 
-basic_map basic_map::detect_equalities() const {
+isl::basic_map basic_map::detect_equalities() const {
   auto res = isl_basic_map_detect_equalities(copy());
   return manage(res);
 }
 
-basic_map basic_map::fix_si(enum dim type, unsigned int pos, int value) const {
+isl::basic_map basic_map::fix_si(isl::dim type, unsigned int pos, int value) const {
   auto res = isl_basic_map_fix_si(copy(), static_cast<enum isl_dim_type>(type), pos, value);
   return manage(res);
 }
 
-basic_map basic_map::flatten() const {
+isl::basic_map basic_map::flatten() const {
   auto res = isl_basic_map_flatten(copy());
   return manage(res);
 }
 
-basic_map basic_map::flatten_domain() const {
+isl::basic_map basic_map::flatten_domain() const {
   auto res = isl_basic_map_flatten_domain(copy());
   return manage(res);
 }
 
-basic_map basic_map::flatten_range() const {
+isl::basic_map basic_map::flatten_range() const {
   auto res = isl_basic_map_flatten_range(copy());
   return manage(res);
 }
 
-basic_map basic_map::gist(basic_map context) const {
+isl::basic_map basic_map::gist(isl::basic_map context) const {
   auto res = isl_basic_map_gist(copy(), context.release());
   return manage(res);
 }
 
-basic_map basic_map::intersect(basic_map bmap2) const {
+isl::basic_map basic_map::intersect(isl::basic_map bmap2) const {
   auto res = isl_basic_map_intersect(copy(), bmap2.release());
   return manage(res);
 }
 
-basic_map basic_map::intersect_domain(basic_set bset) const {
+isl::basic_map basic_map::intersect_domain(isl::basic_set bset) const {
   auto res = isl_basic_map_intersect_domain(copy(), bset.release());
   return manage(res);
 }
 
-basic_map basic_map::intersect_range(basic_set bset) const {
+isl::basic_map basic_map::intersect_range(isl::basic_set bset) const {
   auto res = isl_basic_map_intersect_range(copy(), bset.release());
   return manage(res);
 }
 
-boolean basic_map::is_empty() const {
+isl::boolean basic_map::is_empty() const {
   auto res = isl_basic_map_is_empty(get());
   return res;
 }
 
-boolean basic_map::is_equal(const basic_map &bmap2) const {
+isl::boolean basic_map::is_equal(const isl::basic_map &bmap2) const {
   auto res = isl_basic_map_is_equal(get(), bmap2.get());
   return res;
 }
 
-boolean basic_map::is_subset(const basic_map &bmap2) const {
+isl::boolean basic_map::is_subset(const isl::basic_map &bmap2) const {
   auto res = isl_basic_map_is_subset(get(), bmap2.get());
   return res;
 }
 
-map basic_map::lexmax() const {
+isl::map basic_map::lexmax() const {
   auto res = isl_basic_map_lexmax(copy());
   return manage(res);
 }
 
-map basic_map::lexmin() const {
+isl::map basic_map::lexmin() const {
   auto res = isl_basic_map_lexmin(copy());
   return manage(res);
 }
 
-val basic_map::plain_get_val_if_fixed(enum dim type, unsigned int pos) const {
+isl::val basic_map::plain_get_val_if_fixed(isl::dim type, unsigned int pos) const {
   auto res = isl_basic_map_plain_get_val_if_fixed(get(), static_cast<enum isl_dim_type>(type), pos);
   return manage(res);
 }
 
-basic_map basic_map::project_out(enum dim type, unsigned int first, unsigned int n) const {
+isl::basic_map basic_map::project_out(isl::dim type, unsigned int first, unsigned int n) const {
   auto res = isl_basic_map_project_out(copy(), static_cast<enum isl_dim_type>(type), first, n);
   return manage(res);
 }
 
-basic_map basic_map::reverse() const {
+isl::basic_map basic_map::reverse() const {
   auto res = isl_basic_map_reverse(copy());
   return manage(res);
 }
 
-basic_map basic_map::sample() const {
+isl::basic_map basic_map::sample() const {
   auto res = isl_basic_map_sample(copy());
   return manage(res);
 }
 
-map basic_map::unite(basic_map bmap2) const {
+isl::map basic_map::unite(isl::basic_map bmap2) const {
   auto res = isl_basic_map_union(copy(), bmap2.release());
   return manage(res);
 }
 
-basic_map basic_map::universe(space dim) {
+isl::basic_map basic_map::universe(isl::space dim) {
   auto res = isl_basic_map_universe(dim.release());
   return manage(res);
 }
@@ -2006,7 +2006,7 @@ basic_set::basic_set(ctx ctx, const std::string &str) {
   ptr = res;
 }
 
-basic_set::basic_set(point pnt) {
+basic_set::basic_set(isl::point pnt) {
   auto res = isl_basic_set_from_point(pnt.release());
   ptr = res;
 }
@@ -2070,92 +2070,92 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-basic_set basic_set::affine_hull() const {
+isl::basic_set basic_set::affine_hull() const {
   auto res = isl_basic_set_affine_hull(copy());
   return manage(res);
 }
 
-basic_set basic_set::apply(basic_map bmap) const {
+isl::basic_set basic_set::apply(isl::basic_map bmap) const {
   auto res = isl_basic_set_apply(copy(), bmap.release());
   return manage(res);
 }
 
-basic_set basic_set::detect_equalities() const {
+isl::basic_set basic_set::detect_equalities() const {
   auto res = isl_basic_set_detect_equalities(copy());
   return manage(res);
 }
 
-basic_set basic_set::flatten() const {
+isl::basic_set basic_set::flatten() const {
   auto res = isl_basic_set_flatten(copy());
   return manage(res);
 }
 
-basic_set basic_set::gist(basic_set context) const {
+isl::basic_set basic_set::gist(isl::basic_set context) const {
   auto res = isl_basic_set_gist(copy(), context.release());
   return manage(res);
 }
 
-basic_set basic_set::intersect(basic_set bset2) const {
+isl::basic_set basic_set::intersect(isl::basic_set bset2) const {
   auto res = isl_basic_set_intersect(copy(), bset2.release());
   return manage(res);
 }
 
-basic_set basic_set::intersect_params(basic_set bset2) const {
+isl::basic_set basic_set::intersect_params(isl::basic_set bset2) const {
   auto res = isl_basic_set_intersect_params(copy(), bset2.release());
   return manage(res);
 }
 
-boolean basic_set::is_bounded() const {
+isl::boolean basic_set::is_bounded() const {
   auto res = isl_basic_set_is_bounded(get());
   return res;
 }
 
-boolean basic_set::is_empty() const {
+isl::boolean basic_set::is_empty() const {
   auto res = isl_basic_set_is_empty(get());
   return res;
 }
 
-boolean basic_set::is_equal(const basic_set &bset2) const {
+isl::boolean basic_set::is_equal(const isl::basic_set &bset2) const {
   auto res = isl_basic_set_is_equal(get(), bset2.get());
   return res;
 }
 
-boolean basic_set::is_subset(const basic_set &bset2) const {
+isl::boolean basic_set::is_subset(const isl::basic_set &bset2) const {
   auto res = isl_basic_set_is_subset(get(), bset2.get());
   return res;
 }
 
-boolean basic_set::is_wrapping() const {
+isl::boolean basic_set::is_wrapping() const {
   auto res = isl_basic_set_is_wrapping(get());
   return res;
 }
 
-set basic_set::lexmax() const {
+isl::set basic_set::lexmax() const {
   auto res = isl_basic_set_lexmax(copy());
   return manage(res);
 }
 
-set basic_set::lexmin() const {
+isl::set basic_set::lexmin() const {
   auto res = isl_basic_set_lexmin(copy());
   return manage(res);
 }
 
-basic_set basic_set::project_out(enum dim type, unsigned int first, unsigned int n) const {
+isl::basic_set basic_set::project_out(isl::dim type, unsigned int first, unsigned int n) const {
   auto res = isl_basic_set_project_out(copy(), static_cast<enum isl_dim_type>(type), first, n);
   return manage(res);
 }
 
-basic_set basic_set::sample() const {
+isl::basic_set basic_set::sample() const {
   auto res = isl_basic_set_sample(copy());
   return manage(res);
 }
 
-point basic_set::sample_point() const {
+isl::point basic_set::sample_point() const {
   auto res = isl_basic_set_sample_point(copy());
   return manage(res);
 }
 
-set basic_set::unite(basic_set bset2) const {
+isl::set basic_set::unite(isl::basic_set bset2) const {
   auto res = isl_basic_set_union(copy(), bset2.release());
   return manage(res);
 }
@@ -2261,7 +2261,7 @@ local_space::local_space(std::nullptr_t)
 local_space::local_space(__isl_take isl_local_space *ptr)
     : ptr(ptr) {}
 
-local_space::local_space(space dim) {
+local_space::local_space(isl::space dim) {
   auto res = isl_local_space_from_space(dim.release());
   ptr = res;
 }
@@ -2336,7 +2336,7 @@ map::map(ctx ctx, const std::string &str) {
   ptr = res;
 }
 
-map::map(basic_map bmap) {
+map::map(isl::basic_map bmap) {
   auto res = isl_map_from_basic_map(bmap.release());
   ptr = res;
 }
@@ -2400,197 +2400,197 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-basic_map map::affine_hull() const {
+isl::basic_map map::affine_hull() const {
   auto res = isl_map_affine_hull(copy());
   return manage(res);
 }
 
-map map::apply_domain(map map2) const {
+isl::map map::apply_domain(isl::map map2) const {
   auto res = isl_map_apply_domain(copy(), map2.release());
   return manage(res);
 }
 
-map map::apply_range(map map2) const {
+isl::map map::apply_range(isl::map map2) const {
   auto res = isl_map_apply_range(copy(), map2.release());
   return manage(res);
 }
 
-map map::coalesce() const {
+isl::map map::coalesce() const {
   auto res = isl_map_coalesce(copy());
   return manage(res);
 }
 
-map map::complement() const {
+isl::map map::complement() const {
   auto res = isl_map_complement(copy());
   return manage(res);
 }
 
-set map::deltas() const {
+isl::set map::deltas() const {
   auto res = isl_map_deltas(copy());
   return manage(res);
 }
 
-map map::detect_equalities() const {
+isl::map map::detect_equalities() const {
   auto res = isl_map_detect_equalities(copy());
   return manage(res);
 }
 
-unsigned int map::dim(enum dim type) const {
+unsigned int map::dim(isl::dim type) const {
   auto res = isl_map_dim(get(), static_cast<enum isl_dim_type>(type));
   return res;
 }
 
-pw_aff map::dim_max(int pos) const {
+isl::pw_aff map::dim_max(int pos) const {
   auto res = isl_map_dim_max(copy(), pos);
   return manage(res);
 }
 
-pw_aff map::dim_min(int pos) const {
+isl::pw_aff map::dim_min(int pos) const {
   auto res = isl_map_dim_min(copy(), pos);
   return manage(res);
 }
 
-map map::flatten() const {
+isl::map map::flatten() const {
   auto res = isl_map_flatten(copy());
   return manage(res);
 }
 
-map map::flatten_domain() const {
+isl::map map::flatten_domain() const {
   auto res = isl_map_flatten_domain(copy());
   return manage(res);
 }
 
-map map::flatten_range() const {
+isl::map map::flatten_range() const {
   auto res = isl_map_flatten_range(copy());
   return manage(res);
 }
 
-stat map::foreach_basic_map(std::function<stat(basic_map)> &&fn) const {
+isl::stat map::foreach_basic_map(std::function<isl::stat(isl::basic_map)> &&fn) const {
   auto fn_lambda = [](isl_basic_map *arg_0, void *arg_1) -> isl_stat {
-    auto *func = (std::function<stat(basic_map)> *)arg_1;
+    auto *func = (std::function<isl::stat(isl::basic_map)> *)arg_1;
     stat ret = (*func)(isl::manage(arg_0));
     return isl_stat(ret);
   };
   auto res = isl_map_foreach_basic_map(get(), fn_lambda, &fn);
-  return stat(res);
+  return isl::stat(res);
 }
 
-map map::from_range(set set) {
+isl::map map::from_range(isl::set set) {
   auto res = isl_map_from_range(set.release());
   return manage(res);
 }
 
-map map::gist(map context) const {
+isl::map map::gist(isl::map context) const {
   auto res = isl_map_gist(copy(), context.release());
   return manage(res);
 }
 
-map map::gist_domain(set context) const {
+isl::map map::gist_domain(isl::set context) const {
   auto res = isl_map_gist_domain(copy(), context.release());
   return manage(res);
 }
 
-map map::intersect(map map2) const {
+isl::map map::intersect(isl::map map2) const {
   auto res = isl_map_intersect(copy(), map2.release());
   return manage(res);
 }
 
-map map::intersect_domain(set set) const {
+isl::map map::intersect_domain(isl::set set) const {
   auto res = isl_map_intersect_domain(copy(), set.release());
   return manage(res);
 }
 
-map map::intersect_params(set params) const {
+isl::map map::intersect_params(isl::set params) const {
   auto res = isl_map_intersect_params(copy(), params.release());
   return manage(res);
 }
 
-map map::intersect_range(set set) const {
+isl::map map::intersect_range(isl::set set) const {
   auto res = isl_map_intersect_range(copy(), set.release());
   return manage(res);
 }
 
-boolean map::is_bijective() const {
+isl::boolean map::is_bijective() const {
   auto res = isl_map_is_bijective(get());
   return res;
 }
 
-boolean map::is_disjoint(const map &map2) const {
+isl::boolean map::is_disjoint(const isl::map &map2) const {
   auto res = isl_map_is_disjoint(get(), map2.get());
   return res;
 }
 
-boolean map::is_empty() const {
+isl::boolean map::is_empty() const {
   auto res = isl_map_is_empty(get());
   return res;
 }
 
-boolean map::is_equal(const map &map2) const {
+isl::boolean map::is_equal(const isl::map &map2) const {
   auto res = isl_map_is_equal(get(), map2.get());
   return res;
 }
 
-boolean map::is_injective() const {
+isl::boolean map::is_injective() const {
   auto res = isl_map_is_injective(get());
   return res;
 }
 
-boolean map::is_single_valued() const {
+isl::boolean map::is_single_valued() const {
   auto res = isl_map_is_single_valued(get());
   return res;
 }
 
-boolean map::is_strict_subset(const map &map2) const {
+isl::boolean map::is_strict_subset(const isl::map &map2) const {
   auto res = isl_map_is_strict_subset(get(), map2.get());
   return res;
 }
 
-boolean map::is_subset(const map &map2) const {
+isl::boolean map::is_subset(const isl::map &map2) const {
   auto res = isl_map_is_subset(get(), map2.get());
   return res;
 }
 
-map map::lexmax() const {
+isl::map map::lexmax() const {
   auto res = isl_map_lexmax(copy());
   return manage(res);
 }
 
-map map::lexmin() const {
+isl::map map::lexmin() const {
   auto res = isl_map_lexmin(copy());
   return manage(res);
 }
 
-basic_map map::polyhedral_hull() const {
+isl::basic_map map::polyhedral_hull() const {
   auto res = isl_map_polyhedral_hull(copy());
   return manage(res);
 }
 
-map map::project_out(enum dim type, unsigned int first, unsigned int n) const {
+isl::map map::project_out(isl::dim type, unsigned int first, unsigned int n) const {
   auto res = isl_map_project_out(copy(), static_cast<enum isl_dim_type>(type), first, n);
   return manage(res);
 }
 
-map map::reverse() const {
+isl::map map::reverse() const {
   auto res = isl_map_reverse(copy());
   return manage(res);
 }
 
-basic_map map::sample() const {
+isl::basic_map map::sample() const {
   auto res = isl_map_sample(copy());
   return manage(res);
 }
 
-map map::subtract(map map2) const {
+isl::map map::subtract(isl::map map2) const {
   auto res = isl_map_subtract(copy(), map2.release());
   return manage(res);
 }
 
-map map::unite(map map2) const {
+isl::map map::unite(isl::map map2) const {
   auto res = isl_map_union(copy(), map2.release());
   return manage(res);
 }
 
-basic_map map::unshifted_simple_hull() const {
+isl::basic_map map::unshifted_simple_hull() const {
   auto res = isl_map_unshifted_simple_hull(copy());
   return manage(res);
 }
@@ -2616,7 +2616,7 @@ multi_aff::multi_aff(std::nullptr_t)
 multi_aff::multi_aff(__isl_take isl_multi_aff *ptr)
     : ptr(ptr) {}
 
-multi_aff::multi_aff(aff aff) {
+multi_aff::multi_aff(isl::aff aff) {
   auto res = isl_multi_aff_from_aff(aff.release());
   ptr = res;
 }
@@ -2685,32 +2685,32 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-multi_aff multi_aff::add(multi_aff multi2) const {
+isl::multi_aff multi_aff::add(isl::multi_aff multi2) const {
   auto res = isl_multi_aff_add(copy(), multi2.release());
   return manage(res);
 }
 
-multi_aff multi_aff::flat_range_product(multi_aff multi2) const {
+isl::multi_aff multi_aff::flat_range_product(isl::multi_aff multi2) const {
   auto res = isl_multi_aff_flat_range_product(copy(), multi2.release());
   return manage(res);
 }
 
-aff multi_aff::get_aff(int pos) const {
+isl::aff multi_aff::get_aff(int pos) const {
   auto res = isl_multi_aff_get_aff(get(), pos);
   return manage(res);
 }
 
-multi_aff multi_aff::product(multi_aff multi2) const {
+isl::multi_aff multi_aff::product(isl::multi_aff multi2) const {
   auto res = isl_multi_aff_product(copy(), multi2.release());
   return manage(res);
 }
 
-multi_aff multi_aff::pullback(multi_aff ma2) const {
+isl::multi_aff multi_aff::pullback(isl::multi_aff ma2) const {
   auto res = isl_multi_aff_pullback_multi_aff(copy(), ma2.release());
   return manage(res);
 }
 
-multi_aff multi_aff::range_product(multi_aff multi2) const {
+isl::multi_aff multi_aff::range_product(isl::multi_aff multi2) const {
   auto res = isl_multi_aff_range_product(copy(), multi2.release());
   return manage(res);
 }
@@ -2736,17 +2736,17 @@ multi_pw_aff::multi_pw_aff(std::nullptr_t)
 multi_pw_aff::multi_pw_aff(__isl_take isl_multi_pw_aff *ptr)
     : ptr(ptr) {}
 
-multi_pw_aff::multi_pw_aff(multi_aff ma) {
+multi_pw_aff::multi_pw_aff(isl::multi_aff ma) {
   auto res = isl_multi_pw_aff_from_multi_aff(ma.release());
   ptr = res;
 }
 
-multi_pw_aff::multi_pw_aff(pw_aff pa) {
+multi_pw_aff::multi_pw_aff(isl::pw_aff pa) {
   auto res = isl_multi_pw_aff_from_pw_aff(pa.release());
   ptr = res;
 }
 
-multi_pw_aff::multi_pw_aff(pw_multi_aff pma) {
+multi_pw_aff::multi_pw_aff(isl::pw_multi_aff pma) {
   auto res = isl_multi_pw_aff_from_pw_multi_aff(pma.release());
   ptr = res;
 }
@@ -2815,42 +2815,42 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-multi_pw_aff multi_pw_aff::add(multi_pw_aff multi2) const {
+isl::multi_pw_aff multi_pw_aff::add(isl::multi_pw_aff multi2) const {
   auto res = isl_multi_pw_aff_add(copy(), multi2.release());
   return manage(res);
 }
 
-multi_pw_aff multi_pw_aff::flat_range_product(multi_pw_aff multi2) const {
+isl::multi_pw_aff multi_pw_aff::flat_range_product(isl::multi_pw_aff multi2) const {
   auto res = isl_multi_pw_aff_flat_range_product(copy(), multi2.release());
   return manage(res);
 }
 
-pw_aff multi_pw_aff::get_pw_aff(int pos) const {
+isl::pw_aff multi_pw_aff::get_pw_aff(int pos) const {
   auto res = isl_multi_pw_aff_get_pw_aff(get(), pos);
   return manage(res);
 }
 
-multi_pw_aff multi_pw_aff::product(multi_pw_aff multi2) const {
+isl::multi_pw_aff multi_pw_aff::product(isl::multi_pw_aff multi2) const {
   auto res = isl_multi_pw_aff_product(copy(), multi2.release());
   return manage(res);
 }
 
-multi_pw_aff multi_pw_aff::pullback(multi_aff ma) const {
+isl::multi_pw_aff multi_pw_aff::pullback(isl::multi_aff ma) const {
   auto res = isl_multi_pw_aff_pullback_multi_aff(copy(), ma.release());
   return manage(res);
 }
 
-multi_pw_aff multi_pw_aff::pullback(pw_multi_aff pma) const {
+isl::multi_pw_aff multi_pw_aff::pullback(isl::pw_multi_aff pma) const {
   auto res = isl_multi_pw_aff_pullback_pw_multi_aff(copy(), pma.release());
   return manage(res);
 }
 
-multi_pw_aff multi_pw_aff::pullback(multi_pw_aff mpa2) const {
+isl::multi_pw_aff multi_pw_aff::pullback(isl::multi_pw_aff mpa2) const {
   auto res = isl_multi_pw_aff_pullback_multi_pw_aff(copy(), mpa2.release());
   return manage(res);
 }
 
-multi_pw_aff multi_pw_aff::range_product(multi_pw_aff multi2) const {
+isl::multi_pw_aff multi_pw_aff::range_product(isl::multi_pw_aff multi2) const {
   auto res = isl_multi_pw_aff_range_product(copy(), multi2.release());
   return manage(res);
 }
@@ -2876,17 +2876,17 @@ multi_union_pw_aff::multi_union_pw_aff(std::nullptr_t)
 multi_union_pw_aff::multi_union_pw_aff(__isl_take isl_multi_union_pw_aff *ptr)
     : ptr(ptr) {}
 
-multi_union_pw_aff::multi_union_pw_aff(union_pw_aff upa) {
+multi_union_pw_aff::multi_union_pw_aff(isl::union_pw_aff upa) {
   auto res = isl_multi_union_pw_aff_from_union_pw_aff(upa.release());
   ptr = res;
 }
 
-multi_union_pw_aff::multi_union_pw_aff(multi_pw_aff mpa) {
+multi_union_pw_aff::multi_union_pw_aff(isl::multi_pw_aff mpa) {
   auto res = isl_multi_union_pw_aff_from_multi_pw_aff(mpa.release());
   ptr = res;
 }
 
-multi_union_pw_aff::multi_union_pw_aff(union_pw_multi_aff upma) {
+multi_union_pw_aff::multi_union_pw_aff(isl::union_pw_multi_aff upma) {
   auto res = isl_multi_union_pw_aff_from_union_pw_multi_aff(upma.release());
   ptr = res;
 }
@@ -2955,32 +2955,32 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-multi_union_pw_aff multi_union_pw_aff::add(multi_union_pw_aff multi2) const {
+isl::multi_union_pw_aff multi_union_pw_aff::add(isl::multi_union_pw_aff multi2) const {
   auto res = isl_multi_union_pw_aff_add(copy(), multi2.release());
   return manage(res);
 }
 
-multi_union_pw_aff multi_union_pw_aff::flat_range_product(multi_union_pw_aff multi2) const {
+isl::multi_union_pw_aff multi_union_pw_aff::flat_range_product(isl::multi_union_pw_aff multi2) const {
   auto res = isl_multi_union_pw_aff_flat_range_product(copy(), multi2.release());
   return manage(res);
 }
 
-union_pw_aff multi_union_pw_aff::get_union_pw_aff(int pos) const {
+isl::union_pw_aff multi_union_pw_aff::get_union_pw_aff(int pos) const {
   auto res = isl_multi_union_pw_aff_get_union_pw_aff(get(), pos);
   return manage(res);
 }
 
-multi_union_pw_aff multi_union_pw_aff::pullback(union_pw_multi_aff upma) const {
+isl::multi_union_pw_aff multi_union_pw_aff::pullback(isl::union_pw_multi_aff upma) const {
   auto res = isl_multi_union_pw_aff_pullback_union_pw_multi_aff(copy(), upma.release());
   return manage(res);
 }
 
-multi_union_pw_aff multi_union_pw_aff::range_product(multi_union_pw_aff multi2) const {
+isl::multi_union_pw_aff multi_union_pw_aff::range_product(isl::multi_union_pw_aff multi2) const {
   auto res = isl_multi_union_pw_aff_range_product(copy(), multi2.release());
   return manage(res);
 }
 
-multi_union_pw_aff multi_union_pw_aff::union_add(multi_union_pw_aff mupa2) const {
+isl::multi_union_pw_aff multi_union_pw_aff::union_add(isl::multi_union_pw_aff mupa2) const {
   auto res = isl_multi_union_pw_aff_union_add(copy(), mupa2.release());
   return manage(res);
 }
@@ -3065,27 +3065,27 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-multi_val multi_val::add(multi_val multi2) const {
+isl::multi_val multi_val::add(isl::multi_val multi2) const {
   auto res = isl_multi_val_add(copy(), multi2.release());
   return manage(res);
 }
 
-multi_val multi_val::flat_range_product(multi_val multi2) const {
+isl::multi_val multi_val::flat_range_product(isl::multi_val multi2) const {
   auto res = isl_multi_val_flat_range_product(copy(), multi2.release());
   return manage(res);
 }
 
-val multi_val::get_val(int pos) const {
+isl::val multi_val::get_val(int pos) const {
   auto res = isl_multi_val_get_val(get(), pos);
   return manage(res);
 }
 
-multi_val multi_val::product(multi_val multi2) const {
+isl::multi_val multi_val::product(isl::multi_val multi2) const {
   auto res = isl_multi_val_product(copy(), multi2.release());
   return manage(res);
 }
 
-multi_val multi_val::range_product(multi_val multi2) const {
+isl::multi_val multi_val::range_product(isl::multi_val multi2) const {
   auto res = isl_multi_val_range_product(copy(), multi2.release());
   return manage(res);
 }
@@ -3111,7 +3111,7 @@ point::point(std::nullptr_t)
 point::point(__isl_take isl_point *ptr)
     : ptr(ptr) {}
 
-point::point(space dim) {
+point::point(isl::space dim) {
   auto res = isl_point_zero(dim.release());
   ptr = res;
 }
@@ -3196,17 +3196,17 @@ pw_aff::pw_aff(std::nullptr_t)
 pw_aff::pw_aff(__isl_take isl_pw_aff *ptr)
     : ptr(ptr) {}
 
-pw_aff::pw_aff(aff aff) {
+pw_aff::pw_aff(isl::aff aff) {
   auto res = isl_pw_aff_from_aff(aff.release());
   ptr = res;
 }
 
-pw_aff::pw_aff(local_space ls) {
+pw_aff::pw_aff(isl::local_space ls) {
   auto res = isl_pw_aff_zero_on_domain(ls.release());
   ptr = res;
 }
 
-pw_aff::pw_aff(set domain, val v) {
+pw_aff::pw_aff(isl::set domain, isl::val v) {
   auto res = isl_pw_aff_val_on_domain(domain.release(), v.release());
   ptr = res;
 }
@@ -3275,62 +3275,62 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-pw_aff pw_aff::add(pw_aff pwaff2) const {
+isl::pw_aff pw_aff::add(isl::pw_aff pwaff2) const {
   auto res = isl_pw_aff_add(copy(), pwaff2.release());
   return manage(res);
 }
 
-stat pw_aff::foreach_piece(std::function<stat(set, aff)> &&fn) const {
+isl::stat pw_aff::foreach_piece(std::function<isl::stat(isl::set, isl::aff)> &&fn) const {
   auto fn_lambda = [](isl_set *arg_0, isl_aff *arg_1, void *arg_2) -> isl_stat {
-    auto *func = (std::function<stat(set, aff)> *)arg_2;
+    auto *func = (std::function<isl::stat(isl::set, isl::aff)> *)arg_2;
     stat ret = (*func)(isl::manage(arg_0), isl::manage(arg_1));
     return isl_stat(ret);
   };
   auto res = isl_pw_aff_foreach_piece(get(), fn_lambda, &fn);
-  return stat(res);
+  return isl::stat(res);
 }
 
-space pw_aff::get_space() const {
+isl::space pw_aff::get_space() const {
   auto res = isl_pw_aff_get_space(get());
   return manage(res);
 }
 
-boolean pw_aff::is_cst() const {
+isl::boolean pw_aff::is_cst() const {
   auto res = isl_pw_aff_is_cst(get());
   return res;
 }
 
-pw_aff pw_aff::mul(pw_aff pwaff2) const {
+isl::pw_aff pw_aff::mul(isl::pw_aff pwaff2) const {
   auto res = isl_pw_aff_mul(copy(), pwaff2.release());
   return manage(res);
 }
 
-pw_aff pw_aff::neg() const {
+isl::pw_aff pw_aff::neg() const {
   auto res = isl_pw_aff_neg(copy());
   return manage(res);
 }
 
-pw_aff pw_aff::pullback(multi_aff ma) const {
+isl::pw_aff pw_aff::pullback(isl::multi_aff ma) const {
   auto res = isl_pw_aff_pullback_multi_aff(copy(), ma.release());
   return manage(res);
 }
 
-pw_aff pw_aff::pullback(pw_multi_aff pma) const {
+isl::pw_aff pw_aff::pullback(isl::pw_multi_aff pma) const {
   auto res = isl_pw_aff_pullback_pw_multi_aff(copy(), pma.release());
   return manage(res);
 }
 
-pw_aff pw_aff::pullback(multi_pw_aff mpa) const {
+isl::pw_aff pw_aff::pullback(isl::multi_pw_aff mpa) const {
   auto res = isl_pw_aff_pullback_multi_pw_aff(copy(), mpa.release());
   return manage(res);
 }
 
-pw_aff pw_aff::sub(pw_aff pwaff2) const {
+isl::pw_aff pw_aff::sub(isl::pw_aff pwaff2) const {
   auto res = isl_pw_aff_sub(copy(), pwaff2.release());
   return manage(res);
 }
 
-pw_aff pw_aff::union_add(pw_aff pwaff2) const {
+isl::pw_aff pw_aff::union_add(isl::pw_aff pwaff2) const {
   auto res = isl_pw_aff_union_add(copy(), pwaff2.release());
   return manage(res);
 }
@@ -3361,12 +3361,12 @@ pw_multi_aff::pw_multi_aff(ctx ctx, const std::string &str) {
   ptr = res;
 }
 
-pw_multi_aff::pw_multi_aff(multi_aff ma) {
+pw_multi_aff::pw_multi_aff(isl::multi_aff ma) {
   auto res = isl_pw_multi_aff_from_multi_aff(ma.release());
   ptr = res;
 }
 
-pw_multi_aff::pw_multi_aff(pw_aff pa) {
+pw_multi_aff::pw_multi_aff(isl::pw_aff pa) {
   auto res = isl_pw_multi_aff_from_pw_aff(pa.release());
   ptr = res;
 }
@@ -3430,37 +3430,37 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-pw_multi_aff pw_multi_aff::add(pw_multi_aff pma2) const {
+isl::pw_multi_aff pw_multi_aff::add(isl::pw_multi_aff pma2) const {
   auto res = isl_pw_multi_aff_add(copy(), pma2.release());
   return manage(res);
 }
 
-pw_multi_aff pw_multi_aff::flat_range_product(pw_multi_aff pma2) const {
+isl::pw_multi_aff pw_multi_aff::flat_range_product(isl::pw_multi_aff pma2) const {
   auto res = isl_pw_multi_aff_flat_range_product(copy(), pma2.release());
   return manage(res);
 }
 
-pw_multi_aff pw_multi_aff::product(pw_multi_aff pma2) const {
+isl::pw_multi_aff pw_multi_aff::product(isl::pw_multi_aff pma2) const {
   auto res = isl_pw_multi_aff_product(copy(), pma2.release());
   return manage(res);
 }
 
-pw_multi_aff pw_multi_aff::pullback(multi_aff ma) const {
+isl::pw_multi_aff pw_multi_aff::pullback(isl::multi_aff ma) const {
   auto res = isl_pw_multi_aff_pullback_multi_aff(copy(), ma.release());
   return manage(res);
 }
 
-pw_multi_aff pw_multi_aff::pullback(pw_multi_aff pma2) const {
+isl::pw_multi_aff pw_multi_aff::pullback(isl::pw_multi_aff pma2) const {
   auto res = isl_pw_multi_aff_pullback_pw_multi_aff(copy(), pma2.release());
   return manage(res);
 }
 
-pw_multi_aff pw_multi_aff::range_product(pw_multi_aff pma2) const {
+isl::pw_multi_aff pw_multi_aff::range_product(isl::pw_multi_aff pma2) const {
   auto res = isl_pw_multi_aff_range_product(copy(), pma2.release());
   return manage(res);
 }
 
-pw_multi_aff pw_multi_aff::union_add(pw_multi_aff pma2) const {
+isl::pw_multi_aff pw_multi_aff::union_add(isl::pw_multi_aff pma2) const {
   auto res = isl_pw_multi_aff_union_add(copy(), pma2.release());
   return manage(res);
 }
@@ -3550,17 +3550,17 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_map schedule::get_map() const {
+isl::union_map schedule::get_map() const {
   auto res = isl_schedule_get_map(get());
   return manage(res);
 }
 
-schedule_node schedule::get_root() const {
+isl::schedule_node schedule::get_root() const {
   auto res = isl_schedule_get_root(get());
   return manage(res);
 }
 
-schedule schedule::pullback(union_pw_multi_aff upma) const {
+isl::schedule schedule::pullback(isl::union_pw_multi_aff upma) const {
   auto res = isl_schedule_pullback_union_pw_multi_aff(copy(), upma.release());
   return manage(res);
 }
@@ -3650,37 +3650,37 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_map schedule_constraints::get_coincidence() const {
+isl::union_map schedule_constraints::get_coincidence() const {
   auto res = isl_schedule_constraints_get_coincidence(get());
   return manage(res);
 }
 
-union_map schedule_constraints::get_conditional_validity() const {
+isl::union_map schedule_constraints::get_conditional_validity() const {
   auto res = isl_schedule_constraints_get_conditional_validity(get());
   return manage(res);
 }
 
-union_map schedule_constraints::get_conditional_validity_condition() const {
+isl::union_map schedule_constraints::get_conditional_validity_condition() const {
   auto res = isl_schedule_constraints_get_conditional_validity_condition(get());
   return manage(res);
 }
 
-set schedule_constraints::get_context() const {
+isl::set schedule_constraints::get_context() const {
   auto res = isl_schedule_constraints_get_context(get());
   return manage(res);
 }
 
-union_set schedule_constraints::get_domain() const {
+isl::union_set schedule_constraints::get_domain() const {
   auto res = isl_schedule_constraints_get_domain(get());
   return manage(res);
 }
 
-union_map schedule_constraints::get_proximity() const {
+isl::union_map schedule_constraints::get_proximity() const {
   auto res = isl_schedule_constraints_get_proximity(get());
   return manage(res);
 }
 
-union_map schedule_constraints::get_validity() const {
+isl::union_map schedule_constraints::get_validity() const {
   auto res = isl_schedule_constraints_get_validity(get());
   return manage(res);
 }
@@ -3765,42 +3765,42 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-boolean schedule_node::band_member_get_coincident(int pos) const {
+isl::boolean schedule_node::band_member_get_coincident(int pos) const {
   auto res = isl_schedule_node_band_member_get_coincident(get(), pos);
   return res;
 }
 
-schedule_node schedule_node::band_member_set_coincident(int pos, int coincident) const {
+isl::schedule_node schedule_node::band_member_set_coincident(int pos, int coincident) const {
   auto res = isl_schedule_node_band_member_set_coincident(copy(), pos, coincident);
   return manage(res);
 }
 
-schedule_node schedule_node::child(int pos) const {
+isl::schedule_node schedule_node::child(int pos) const {
   auto res = isl_schedule_node_child(copy(), pos);
   return manage(res);
 }
 
-multi_union_pw_aff schedule_node::get_prefix_schedule_multi_union_pw_aff() const {
+isl::multi_union_pw_aff schedule_node::get_prefix_schedule_multi_union_pw_aff() const {
   auto res = isl_schedule_node_get_prefix_schedule_multi_union_pw_aff(get());
   return manage(res);
 }
 
-union_map schedule_node::get_prefix_schedule_union_map() const {
+isl::union_map schedule_node::get_prefix_schedule_union_map() const {
   auto res = isl_schedule_node_get_prefix_schedule_union_map(get());
   return manage(res);
 }
 
-union_pw_multi_aff schedule_node::get_prefix_schedule_union_pw_multi_aff() const {
+isl::union_pw_multi_aff schedule_node::get_prefix_schedule_union_pw_multi_aff() const {
   auto res = isl_schedule_node_get_prefix_schedule_union_pw_multi_aff(get());
   return manage(res);
 }
 
-schedule schedule_node::get_schedule() const {
+isl::schedule schedule_node::get_schedule() const {
   auto res = isl_schedule_node_get_schedule(get());
   return manage(res);
 }
 
-schedule_node schedule_node::parent() const {
+isl::schedule_node schedule_node::parent() const {
   auto res = isl_schedule_node_parent(copy());
   return manage(res);
 }
@@ -3826,7 +3826,7 @@ set::set(std::nullptr_t)
 set::set(__isl_take isl_set *ptr)
     : ptr(ptr) {}
 
-set::set(union_set uset) {
+set::set(isl::union_set uset) {
   auto res = isl_set_from_union_set(uset.release());
   ptr = res;
 }
@@ -3836,12 +3836,12 @@ set::set(ctx ctx, const std::string &str) {
   ptr = res;
 }
 
-set::set(basic_set bset) {
+set::set(isl::basic_set bset) {
   auto res = isl_set_from_basic_set(bset.release());
   ptr = res;
 }
 
-set::set(point pnt) {
+set::set(isl::point pnt) {
   auto res = isl_set_from_point(pnt.release());
   ptr = res;
 }
@@ -3905,177 +3905,177 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-set set::add_dims(enum dim type, unsigned int n) const {
+isl::set set::add_dims(isl::dim type, unsigned int n) const {
   auto res = isl_set_add_dims(copy(), static_cast<enum isl_dim_type>(type), n);
   return manage(res);
 }
 
-basic_set set::affine_hull() const {
+isl::basic_set set::affine_hull() const {
   auto res = isl_set_affine_hull(copy());
   return manage(res);
 }
 
-set set::apply(map map) const {
+isl::set set::apply(isl::map map) const {
   auto res = isl_set_apply(copy(), map.release());
   return manage(res);
 }
 
-set set::coalesce() const {
+isl::set set::coalesce() const {
   auto res = isl_set_coalesce(copy());
   return manage(res);
 }
 
-set set::complement() const {
+isl::set set::complement() const {
   auto res = isl_set_complement(copy());
   return manage(res);
 }
 
-set set::detect_equalities() const {
+isl::set set::detect_equalities() const {
   auto res = isl_set_detect_equalities(copy());
   return manage(res);
 }
 
-unsigned int set::dim(enum dim type) const {
+unsigned int set::dim(isl::dim type) const {
   auto res = isl_set_dim(get(), static_cast<enum isl_dim_type>(type));
   return res;
 }
 
-pw_aff set::dim_max(int pos) const {
+isl::pw_aff set::dim_max(int pos) const {
   auto res = isl_set_dim_max(copy(), pos);
   return manage(res);
 }
 
-pw_aff set::dim_min(int pos) const {
+isl::pw_aff set::dim_min(int pos) const {
   auto res = isl_set_dim_min(copy(), pos);
   return manage(res);
 }
 
-set set::flatten() const {
+isl::set set::flatten() const {
   auto res = isl_set_flatten(copy());
   return manage(res);
 }
 
-stat set::foreach_basic_set(std::function<stat(basic_set)> &&fn) const {
+isl::stat set::foreach_basic_set(std::function<isl::stat(isl::basic_set)> &&fn) const {
   auto fn_lambda = [](isl_basic_set *arg_0, void *arg_1) -> isl_stat {
-    auto *func = (std::function<stat(basic_set)> *)arg_1;
+    auto *func = (std::function<isl::stat(isl::basic_set)> *)arg_1;
     stat ret = (*func)(isl::manage(arg_0));
     return isl_stat(ret);
   };
   auto res = isl_set_foreach_basic_set(get(), fn_lambda, &fn);
-  return stat(res);
+  return isl::stat(res);
 }
 
-set set::gist(set context) const {
+isl::set set::gist(isl::set context) const {
   auto res = isl_set_gist(copy(), context.release());
   return manage(res);
 }
 
-map set::identity() const {
+isl::map set::identity() const {
   auto res = isl_set_identity(copy());
   return manage(res);
 }
 
-set set::intersect(set set2) const {
+isl::set set::intersect(isl::set set2) const {
   auto res = isl_set_intersect(copy(), set2.release());
   return manage(res);
 }
 
-set set::intersect_params(set params) const {
+isl::set set::intersect_params(isl::set params) const {
   auto res = isl_set_intersect_params(copy(), params.release());
   return manage(res);
 }
 
-boolean set::is_bounded() const {
+isl::boolean set::is_bounded() const {
   auto res = isl_set_is_bounded(get());
   return res;
 }
 
-boolean set::is_disjoint(const set &set2) const {
+isl::boolean set::is_disjoint(const isl::set &set2) const {
   auto res = isl_set_is_disjoint(get(), set2.get());
   return res;
 }
 
-boolean set::is_empty() const {
+isl::boolean set::is_empty() const {
   auto res = isl_set_is_empty(get());
   return res;
 }
 
-boolean set::is_equal(const set &set2) const {
+isl::boolean set::is_equal(const isl::set &set2) const {
   auto res = isl_set_is_equal(get(), set2.get());
   return res;
 }
 
-boolean set::is_strict_subset(const set &set2) const {
+isl::boolean set::is_strict_subset(const isl::set &set2) const {
   auto res = isl_set_is_strict_subset(get(), set2.get());
   return res;
 }
 
-boolean set::is_subset(const set &set2) const {
+isl::boolean set::is_subset(const isl::set &set2) const {
   auto res = isl_set_is_subset(get(), set2.get());
   return res;
 }
 
-boolean set::is_wrapping() const {
+isl::boolean set::is_wrapping() const {
   auto res = isl_set_is_wrapping(get());
   return res;
 }
 
-set set::lexmax() const {
+isl::set set::lexmax() const {
   auto res = isl_set_lexmax(copy());
   return manage(res);
 }
 
-set set::lexmin() const {
+isl::set set::lexmin() const {
   auto res = isl_set_lexmin(copy());
   return manage(res);
 }
 
-val set::max_val(const aff &obj) const {
+isl::val set::max_val(const isl::aff &obj) const {
   auto res = isl_set_max_val(get(), obj.get());
   return manage(res);
 }
 
-val set::min_val(const aff &obj) const {
+isl::val set::min_val(const isl::aff &obj) const {
   auto res = isl_set_min_val(get(), obj.get());
   return manage(res);
 }
 
-basic_set set::polyhedral_hull() const {
+isl::basic_set set::polyhedral_hull() const {
   auto res = isl_set_polyhedral_hull(copy());
   return manage(res);
 }
 
-set set::project_out(enum dim type, unsigned int first, unsigned int n) const {
+isl::set set::project_out(isl::dim type, unsigned int first, unsigned int n) const {
   auto res = isl_set_project_out(copy(), static_cast<enum isl_dim_type>(type), first, n);
   return manage(res);
 }
 
-basic_set set::sample() const {
+isl::basic_set set::sample() const {
   auto res = isl_set_sample(copy());
   return manage(res);
 }
 
-point set::sample_point() const {
+isl::point set::sample_point() const {
   auto res = isl_set_sample_point(copy());
   return manage(res);
 }
 
-set set::subtract(set set2) const {
+isl::set set::subtract(isl::set set2) const {
   auto res = isl_set_subtract(copy(), set2.release());
   return manage(res);
 }
 
-set set::unite(set set2) const {
+isl::set set::unite(isl::set set2) const {
   auto res = isl_set_union(copy(), set2.release());
   return manage(res);
 }
 
-set set::universe(space dim) {
+isl::set set::universe(isl::space dim) {
   auto res = isl_set_universe(dim.release());
   return manage(res);
 }
 
-basic_set set::unshifted_simple_hull() const {
+isl::basic_set set::unshifted_simple_hull() const {
   auto res = isl_set_unshifted_simple_hull(copy());
   return manage(res);
 }
@@ -4170,22 +4170,22 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-space space::domain() const {
+isl::space space::domain() const {
   auto res = isl_space_domain(copy());
   return manage(res);
 }
 
-boolean space::is_equal(const space &space2) const {
+isl::boolean space::is_equal(const isl::space &space2) const {
   auto res = isl_space_is_equal(get(), space2.get());
   return res;
 }
 
-space space::params() const {
+isl::space space::params() const {
   auto res = isl_space_params(copy());
   return manage(res);
 }
 
-space space::set_from_params() const {
+isl::space space::set_from_params() const {
   auto res = isl_space_set_from_params(copy());
   return manage(res);
 }
@@ -4211,7 +4211,7 @@ union_access_info::union_access_info(std::nullptr_t)
 union_access_info::union_access_info(__isl_take isl_union_access_info *ptr)
     : ptr(ptr) {}
 
-union_access_info::union_access_info(union_map sink) {
+union_access_info::union_access_info(isl::union_map sink) {
   auto res = isl_union_access_info_from_sink(sink.release());
   ptr = res;
 }
@@ -4275,27 +4275,27 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_flow union_access_info::compute_flow() const {
+isl::union_flow union_access_info::compute_flow() const {
   auto res = isl_union_access_info_compute_flow(copy());
   return manage(res);
 }
 
-union_access_info union_access_info::set_may_source(union_map may_source) const {
+isl::union_access_info union_access_info::set_may_source(isl::union_map may_source) const {
   auto res = isl_union_access_info_set_may_source(copy(), may_source.release());
   return manage(res);
 }
 
-union_access_info union_access_info::set_must_source(union_map must_source) const {
+isl::union_access_info union_access_info::set_must_source(isl::union_map must_source) const {
   auto res = isl_union_access_info_set_must_source(copy(), must_source.release());
   return manage(res);
 }
 
-union_access_info union_access_info::set_schedule(schedule schedule) const {
+isl::union_access_info union_access_info::set_schedule(isl::schedule schedule) const {
   auto res = isl_union_access_info_set_schedule(copy(), schedule.release());
   return manage(res);
 }
 
-union_access_info union_access_info::set_schedule_map(union_map schedule_map) const {
+isl::union_access_info union_access_info::set_schedule_map(isl::union_map schedule_map) const {
   auto res = isl_union_access_info_set_schedule_map(copy(), schedule_map.release());
   return manage(res);
 }
@@ -4380,32 +4380,32 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_map union_flow::get_full_may_dependence() const {
+isl::union_map union_flow::get_full_may_dependence() const {
   auto res = isl_union_flow_get_full_may_dependence(get());
   return manage(res);
 }
 
-union_map union_flow::get_full_must_dependence() const {
+isl::union_map union_flow::get_full_must_dependence() const {
   auto res = isl_union_flow_get_full_must_dependence(get());
   return manage(res);
 }
 
-union_map union_flow::get_may_dependence() const {
+isl::union_map union_flow::get_may_dependence() const {
   auto res = isl_union_flow_get_may_dependence(get());
   return manage(res);
 }
 
-union_map union_flow::get_may_no_source() const {
+isl::union_map union_flow::get_may_no_source() const {
   auto res = isl_union_flow_get_may_no_source(get());
   return manage(res);
 }
 
-union_map union_flow::get_must_dependence() const {
+isl::union_map union_flow::get_must_dependence() const {
   auto res = isl_union_flow_get_must_dependence(get());
   return manage(res);
 }
 
-union_map union_flow::get_must_no_source() const {
+isl::union_map union_flow::get_must_no_source() const {
   auto res = isl_union_flow_get_must_no_source(get());
   return manage(res);
 }
@@ -4431,17 +4431,17 @@ union_map::union_map(std::nullptr_t)
 union_map::union_map(__isl_take isl_union_map *ptr)
     : ptr(ptr) {}
 
-union_map::union_map(union_pw_aff upa) {
+union_map::union_map(isl::union_pw_aff upa) {
   auto res = isl_union_map_from_union_pw_aff(upa.release());
   ptr = res;
 }
 
-union_map::union_map(basic_map bmap) {
+union_map::union_map(isl::basic_map bmap) {
   auto res = isl_union_map_from_basic_map(bmap.release());
   ptr = res;
 }
 
-union_map::union_map(map map) {
+union_map::union_map(isl::map map) {
   auto res = isl_union_map_from_map(map.release());
   ptr = res;
 }
@@ -4510,282 +4510,282 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_map union_map::add_map(map map) const {
+isl::union_map union_map::add_map(isl::map map) const {
   auto res = isl_union_map_add_map(copy(), map.release());
   return manage(res);
 }
 
-union_map union_map::affine_hull() const {
+isl::union_map union_map::affine_hull() const {
   auto res = isl_union_map_affine_hull(copy());
   return manage(res);
 }
 
-union_map union_map::apply_domain(union_map umap2) const {
+isl::union_map union_map::apply_domain(isl::union_map umap2) const {
   auto res = isl_union_map_apply_domain(copy(), umap2.release());
   return manage(res);
 }
 
-union_map union_map::apply_range(union_map umap2) const {
+isl::union_map union_map::apply_range(isl::union_map umap2) const {
   auto res = isl_union_map_apply_range(copy(), umap2.release());
   return manage(res);
 }
 
-union_map union_map::coalesce() const {
+isl::union_map union_map::coalesce() const {
   auto res = isl_union_map_coalesce(copy());
   return manage(res);
 }
 
-union_map union_map::compute_divs() const {
+isl::union_map union_map::compute_divs() const {
   auto res = isl_union_map_compute_divs(copy());
   return manage(res);
 }
 
-union_set union_map::deltas() const {
+isl::union_set union_map::deltas() const {
   auto res = isl_union_map_deltas(copy());
   return manage(res);
 }
 
-union_map union_map::detect_equalities() const {
+isl::union_map union_map::detect_equalities() const {
   auto res = isl_union_map_detect_equalities(copy());
   return manage(res);
 }
 
-union_set union_map::domain() const {
+isl::union_set union_map::domain() const {
   auto res = isl_union_map_domain(copy());
   return manage(res);
 }
 
-union_map union_map::domain_factor_domain() const {
+isl::union_map union_map::domain_factor_domain() const {
   auto res = isl_union_map_domain_factor_domain(copy());
   return manage(res);
 }
 
-union_map union_map::domain_factor_range() const {
+isl::union_map union_map::domain_factor_range() const {
   auto res = isl_union_map_domain_factor_range(copy());
   return manage(res);
 }
 
-union_map union_map::domain_map() const {
+isl::union_map union_map::domain_map() const {
   auto res = isl_union_map_domain_map(copy());
   return manage(res);
 }
 
-union_pw_multi_aff union_map::domain_map_union_pw_multi_aff() const {
+isl::union_pw_multi_aff union_map::domain_map_union_pw_multi_aff() const {
   auto res = isl_union_map_domain_map_union_pw_multi_aff(copy());
   return manage(res);
 }
 
-union_map union_map::domain_product(union_map umap2) const {
+isl::union_map union_map::domain_product(isl::union_map umap2) const {
   auto res = isl_union_map_domain_product(copy(), umap2.release());
   return manage(res);
 }
 
-union_map union_map::empty(space dim) {
+isl::union_map union_map::empty(isl::space dim) {
   auto res = isl_union_map_empty(dim.release());
   return manage(res);
 }
 
-union_map union_map::factor_domain() const {
+isl::union_map union_map::factor_domain() const {
   auto res = isl_union_map_factor_domain(copy());
   return manage(res);
 }
 
-union_map union_map::factor_range() const {
+isl::union_map union_map::factor_range() const {
   auto res = isl_union_map_factor_range(copy());
   return manage(res);
 }
 
-union_map union_map::fixed_power(val exp) const {
+isl::union_map union_map::fixed_power(isl::val exp) const {
   auto res = isl_union_map_fixed_power_val(copy(), exp.release());
   return manage(res);
 }
 
-union_map union_map::flat_range_product(union_map umap2) const {
+isl::union_map union_map::flat_range_product(isl::union_map umap2) const {
   auto res = isl_union_map_flat_range_product(copy(), umap2.release());
   return manage(res);
 }
 
-stat union_map::foreach_map(std::function<stat(map)> &&fn) const {
+isl::stat union_map::foreach_map(std::function<isl::stat(isl::map)> &&fn) const {
   auto fn_lambda = [](isl_map *arg_0, void *arg_1) -> isl_stat {
-    auto *func = (std::function<stat(map)> *)arg_1;
+    auto *func = (std::function<isl::stat(isl::map)> *)arg_1;
     stat ret = (*func)(isl::manage(arg_0));
     return isl_stat(ret);
   };
   auto res = isl_union_map_foreach_map(get(), fn_lambda, &fn);
-  return stat(res);
+  return isl::stat(res);
 }
 
-union_map union_map::from(union_pw_multi_aff upma) {
+isl::union_map union_map::from(isl::union_pw_multi_aff upma) {
   auto res = isl_union_map_from_union_pw_multi_aff(upma.release());
   return manage(res);
 }
 
-union_map union_map::from(multi_union_pw_aff mupa) {
+isl::union_map union_map::from(isl::multi_union_pw_aff mupa) {
   auto res = isl_union_map_from_multi_union_pw_aff(mupa.release());
   return manage(res);
 }
 
-union_map union_map::from_domain_and_range(union_set domain, union_set range) {
+isl::union_map union_map::from_domain_and_range(isl::union_set domain, isl::union_set range) {
   auto res = isl_union_map_from_domain_and_range(domain.release(), range.release());
   return manage(res);
 }
 
-space union_map::get_space() const {
+isl::space union_map::get_space() const {
   auto res = isl_union_map_get_space(get());
   return manage(res);
 }
 
-union_map union_map::gist(union_map context) const {
+isl::union_map union_map::gist(isl::union_map context) const {
   auto res = isl_union_map_gist(copy(), context.release());
   return manage(res);
 }
 
-union_map union_map::gist_domain(union_set uset) const {
+isl::union_map union_map::gist_domain(isl::union_set uset) const {
   auto res = isl_union_map_gist_domain(copy(), uset.release());
   return manage(res);
 }
 
-union_map union_map::gist_params(set set) const {
+isl::union_map union_map::gist_params(isl::set set) const {
   auto res = isl_union_map_gist_params(copy(), set.release());
   return manage(res);
 }
 
-union_map union_map::gist_range(union_set uset) const {
+isl::union_map union_map::gist_range(isl::union_set uset) const {
   auto res = isl_union_map_gist_range(copy(), uset.release());
   return manage(res);
 }
 
-union_map union_map::intersect(union_map umap2) const {
+isl::union_map union_map::intersect(isl::union_map umap2) const {
   auto res = isl_union_map_intersect(copy(), umap2.release());
   return manage(res);
 }
 
-union_map union_map::intersect_domain(union_set uset) const {
+isl::union_map union_map::intersect_domain(isl::union_set uset) const {
   auto res = isl_union_map_intersect_domain(copy(), uset.release());
   return manage(res);
 }
 
-union_map union_map::intersect_params(set set) const {
+isl::union_map union_map::intersect_params(isl::set set) const {
   auto res = isl_union_map_intersect_params(copy(), set.release());
   return manage(res);
 }
 
-union_map union_map::intersect_range(union_set uset) const {
+isl::union_map union_map::intersect_range(isl::union_set uset) const {
   auto res = isl_union_map_intersect_range(copy(), uset.release());
   return manage(res);
 }
 
-boolean union_map::is_bijective() const {
+isl::boolean union_map::is_bijective() const {
   auto res = isl_union_map_is_bijective(get());
   return res;
 }
 
-boolean union_map::is_empty() const {
+isl::boolean union_map::is_empty() const {
   auto res = isl_union_map_is_empty(get());
   return res;
 }
 
-boolean union_map::is_equal(const union_map &umap2) const {
+isl::boolean union_map::is_equal(const isl::union_map &umap2) const {
   auto res = isl_union_map_is_equal(get(), umap2.get());
   return res;
 }
 
-boolean union_map::is_injective() const {
+isl::boolean union_map::is_injective() const {
   auto res = isl_union_map_is_injective(get());
   return res;
 }
 
-boolean union_map::is_single_valued() const {
+isl::boolean union_map::is_single_valued() const {
   auto res = isl_union_map_is_single_valued(get());
   return res;
 }
 
-boolean union_map::is_strict_subset(const union_map &umap2) const {
+isl::boolean union_map::is_strict_subset(const isl::union_map &umap2) const {
   auto res = isl_union_map_is_strict_subset(get(), umap2.get());
   return res;
 }
 
-boolean union_map::is_subset(const union_map &umap2) const {
+isl::boolean union_map::is_subset(const isl::union_map &umap2) const {
   auto res = isl_union_map_is_subset(get(), umap2.get());
   return res;
 }
 
-union_map union_map::lexmax() const {
+isl::union_map union_map::lexmax() const {
   auto res = isl_union_map_lexmax(copy());
   return manage(res);
 }
 
-union_map union_map::lexmin() const {
+isl::union_map union_map::lexmin() const {
   auto res = isl_union_map_lexmin(copy());
   return manage(res);
 }
 
-union_map union_map::polyhedral_hull() const {
+isl::union_map union_map::polyhedral_hull() const {
   auto res = isl_union_map_polyhedral_hull(copy());
   return manage(res);
 }
 
-union_map union_map::product(union_map umap2) const {
+isl::union_map union_map::product(isl::union_map umap2) const {
   auto res = isl_union_map_product(copy(), umap2.release());
   return manage(res);
 }
 
-union_set union_map::range() const {
+isl::union_set union_map::range() const {
   auto res = isl_union_map_range(copy());
   return manage(res);
 }
 
-union_map union_map::range_factor_domain() const {
+isl::union_map union_map::range_factor_domain() const {
   auto res = isl_union_map_range_factor_domain(copy());
   return manage(res);
 }
 
-union_map union_map::range_factor_range() const {
+isl::union_map union_map::range_factor_range() const {
   auto res = isl_union_map_range_factor_range(copy());
   return manage(res);
 }
 
-union_map union_map::range_map() const {
+isl::union_map union_map::range_map() const {
   auto res = isl_union_map_range_map(copy());
   return manage(res);
 }
 
-union_map union_map::range_product(union_map umap2) const {
+isl::union_map union_map::range_product(isl::union_map umap2) const {
   auto res = isl_union_map_range_product(copy(), umap2.release());
   return manage(res);
 }
 
-union_map union_map::reverse() const {
+isl::union_map union_map::reverse() const {
   auto res = isl_union_map_reverse(copy());
   return manage(res);
 }
 
-union_map union_map::subtract(union_map umap2) const {
+isl::union_map union_map::subtract(isl::union_map umap2) const {
   auto res = isl_union_map_subtract(copy(), umap2.release());
   return manage(res);
 }
 
-union_map union_map::subtract_domain(union_set dom) const {
+isl::union_map union_map::subtract_domain(isl::union_set dom) const {
   auto res = isl_union_map_subtract_domain(copy(), dom.release());
   return manage(res);
 }
 
-union_map union_map::subtract_range(union_set dom) const {
+isl::union_map union_map::subtract_range(isl::union_set dom) const {
   auto res = isl_union_map_subtract_range(copy(), dom.release());
   return manage(res);
 }
 
-union_map union_map::unite(union_map umap2) const {
+isl::union_map union_map::unite(isl::union_map umap2) const {
   auto res = isl_union_map_union(copy(), umap2.release());
   return manage(res);
 }
 
-union_set union_map::wrap() const {
+isl::union_set union_map::wrap() const {
   auto res = isl_union_map_wrap(copy());
   return manage(res);
 }
 
-union_map union_map::zip() const {
+isl::union_map union_map::zip() const {
   auto res = isl_union_map_zip(copy());
   return manage(res);
 }
@@ -4811,12 +4811,12 @@ union_pw_aff::union_pw_aff(std::nullptr_t)
 union_pw_aff::union_pw_aff(__isl_take isl_union_pw_aff *ptr)
     : ptr(ptr) {}
 
-union_pw_aff::union_pw_aff(pw_aff pa) {
+union_pw_aff::union_pw_aff(isl::pw_aff pa) {
   auto res = isl_union_pw_aff_from_pw_aff(pa.release());
   ptr = res;
 }
 
-union_pw_aff::union_pw_aff(union_set domain, val v) {
+union_pw_aff::union_pw_aff(isl::union_set domain, isl::val v) {
   auto res = isl_union_pw_aff_val_on_domain(domain.release(), v.release());
   ptr = res;
 }
@@ -4885,42 +4885,42 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_pw_aff union_pw_aff::add(union_pw_aff upa2) const {
+isl::union_pw_aff union_pw_aff::add(isl::union_pw_aff upa2) const {
   auto res = isl_union_pw_aff_add(copy(), upa2.release());
   return manage(res);
 }
 
-union_pw_aff union_pw_aff::empty(space space) {
+isl::union_pw_aff union_pw_aff::empty(isl::space space) {
   auto res = isl_union_pw_aff_empty(space.release());
   return manage(res);
 }
 
-stat union_pw_aff::foreach_pw_aff(std::function<stat(pw_aff)> &&fn) const {
+isl::stat union_pw_aff::foreach_pw_aff(std::function<isl::stat(isl::pw_aff)> &&fn) const {
   auto fn_lambda = [](isl_pw_aff *arg_0, void *arg_1) -> isl_stat {
-    auto *func = (std::function<stat(pw_aff)> *)arg_1;
+    auto *func = (std::function<isl::stat(isl::pw_aff)> *)arg_1;
     stat ret = (*func)(isl::manage(arg_0));
     return isl_stat(ret);
   };
   auto res = isl_union_pw_aff_foreach_pw_aff(get(), fn_lambda, &fn);
-  return stat(res);
+  return isl::stat(res);
 }
 
-space union_pw_aff::get_space() const {
+isl::space union_pw_aff::get_space() const {
   auto res = isl_union_pw_aff_get_space(get());
   return manage(res);
 }
 
-union_pw_aff union_pw_aff::pullback(union_pw_multi_aff upma) const {
+isl::union_pw_aff union_pw_aff::pullback(isl::union_pw_multi_aff upma) const {
   auto res = isl_union_pw_aff_pullback_union_pw_multi_aff(copy(), upma.release());
   return manage(res);
 }
 
-union_pw_aff union_pw_aff::sub(union_pw_aff upa2) const {
+isl::union_pw_aff union_pw_aff::sub(isl::union_pw_aff upa2) const {
   auto res = isl_union_pw_aff_sub(copy(), upa2.release());
   return manage(res);
 }
 
-union_pw_aff union_pw_aff::union_add(union_pw_aff upa2) const {
+isl::union_pw_aff union_pw_aff::union_add(isl::union_pw_aff upa2) const {
   auto res = isl_union_pw_aff_union_add(copy(), upa2.release());
   return manage(res);
 }
@@ -4946,17 +4946,17 @@ union_pw_multi_aff::union_pw_multi_aff(std::nullptr_t)
 union_pw_multi_aff::union_pw_multi_aff(__isl_take isl_union_pw_multi_aff *ptr)
     : ptr(ptr) {}
 
-union_pw_multi_aff::union_pw_multi_aff(pw_multi_aff pma) {
+union_pw_multi_aff::union_pw_multi_aff(isl::pw_multi_aff pma) {
   auto res = isl_union_pw_multi_aff_from_pw_multi_aff(pma.release());
   ptr = res;
 }
 
-union_pw_multi_aff::union_pw_multi_aff(union_set uset) {
+union_pw_multi_aff::union_pw_multi_aff(isl::union_set uset) {
   auto res = isl_union_pw_multi_aff_from_domain(uset.release());
   ptr = res;
 }
 
-union_pw_multi_aff::union_pw_multi_aff(union_map umap) {
+union_pw_multi_aff::union_pw_multi_aff(isl::union_map umap) {
   auto res = isl_union_pw_multi_aff_from_union_map(umap.release());
   ptr = res;
 }
@@ -4966,7 +4966,7 @@ union_pw_multi_aff::union_pw_multi_aff(ctx ctx, const std::string &str) {
   ptr = res;
 }
 
-union_pw_multi_aff::union_pw_multi_aff(union_pw_aff upa) {
+union_pw_multi_aff::union_pw_multi_aff(isl::union_pw_aff upa) {
   auto res = isl_union_pw_multi_aff_from_union_pw_aff(upa.release());
   ptr = res;
 }
@@ -5030,22 +5030,22 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_pw_multi_aff union_pw_multi_aff::add(union_pw_multi_aff upma2) const {
+isl::union_pw_multi_aff union_pw_multi_aff::add(isl::union_pw_multi_aff upma2) const {
   auto res = isl_union_pw_multi_aff_add(copy(), upma2.release());
   return manage(res);
 }
 
-union_pw_multi_aff union_pw_multi_aff::flat_range_product(union_pw_multi_aff upma2) const {
+isl::union_pw_multi_aff union_pw_multi_aff::flat_range_product(isl::union_pw_multi_aff upma2) const {
   auto res = isl_union_pw_multi_aff_flat_range_product(copy(), upma2.release());
   return manage(res);
 }
 
-union_pw_multi_aff union_pw_multi_aff::pullback(union_pw_multi_aff upma2) const {
+isl::union_pw_multi_aff union_pw_multi_aff::pullback(isl::union_pw_multi_aff upma2) const {
   auto res = isl_union_pw_multi_aff_pullback_union_pw_multi_aff(copy(), upma2.release());
   return manage(res);
 }
 
-union_pw_multi_aff union_pw_multi_aff::union_add(union_pw_multi_aff upma2) const {
+isl::union_pw_multi_aff union_pw_multi_aff::union_add(isl::union_pw_multi_aff upma2) const {
   auto res = isl_union_pw_multi_aff_union_add(copy(), upma2.release());
   return manage(res);
 }
@@ -5071,17 +5071,17 @@ union_set::union_set(std::nullptr_t)
 union_set::union_set(__isl_take isl_union_set *ptr)
     : ptr(ptr) {}
 
-union_set::union_set(basic_set bset) {
+union_set::union_set(isl::basic_set bset) {
   auto res = isl_union_set_from_basic_set(bset.release());
   ptr = res;
 }
 
-union_set::union_set(set set) {
+union_set::union_set(isl::set set) {
   auto res = isl_union_set_from_set(set.release());
   ptr = res;
 }
 
-union_set::union_set(point pnt) {
+union_set::union_set(isl::point pnt) {
   auto res = isl_union_set_from_point(pnt.release());
   ptr = res;
 }
@@ -5150,127 +5150,127 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-union_set union_set::affine_hull() const {
+isl::union_set union_set::affine_hull() const {
   auto res = isl_union_set_affine_hull(copy());
   return manage(res);
 }
 
-union_set union_set::apply(union_map umap) const {
+isl::union_set union_set::apply(isl::union_map umap) const {
   auto res = isl_union_set_apply(copy(), umap.release());
   return manage(res);
 }
 
-union_set union_set::coalesce() const {
+isl::union_set union_set::coalesce() const {
   auto res = isl_union_set_coalesce(copy());
   return manage(res);
 }
 
-union_set union_set::compute_divs() const {
+isl::union_set union_set::compute_divs() const {
   auto res = isl_union_set_compute_divs(copy());
   return manage(res);
 }
 
-union_set union_set::detect_equalities() const {
+isl::union_set union_set::detect_equalities() const {
   auto res = isl_union_set_detect_equalities(copy());
   return manage(res);
 }
 
-stat union_set::foreach_point(std::function<stat(point)> &&fn) const {
+isl::stat union_set::foreach_point(std::function<isl::stat(isl::point)> &&fn) const {
   auto fn_lambda = [](isl_point *arg_0, void *arg_1) -> isl_stat {
-    auto *func = (std::function<stat(point)> *)arg_1;
+    auto *func = (std::function<isl::stat(isl::point)> *)arg_1;
     stat ret = (*func)(isl::manage(arg_0));
     return isl_stat(ret);
   };
   auto res = isl_union_set_foreach_point(get(), fn_lambda, &fn);
-  return stat(res);
+  return isl::stat(res);
 }
 
-stat union_set::foreach_set(std::function<stat(set)> &&fn) const {
+isl::stat union_set::foreach_set(std::function<isl::stat(isl::set)> &&fn) const {
   auto fn_lambda = [](isl_set *arg_0, void *arg_1) -> isl_stat {
-    auto *func = (std::function<stat(set)> *)arg_1;
+    auto *func = (std::function<isl::stat(isl::set)> *)arg_1;
     stat ret = (*func)(isl::manage(arg_0));
     return isl_stat(ret);
   };
   auto res = isl_union_set_foreach_set(get(), fn_lambda, &fn);
-  return stat(res);
+  return isl::stat(res);
 }
 
-union_set union_set::gist(union_set context) const {
+isl::union_set union_set::gist(isl::union_set context) const {
   auto res = isl_union_set_gist(copy(), context.release());
   return manage(res);
 }
 
-union_set union_set::gist_params(set set) const {
+isl::union_set union_set::gist_params(isl::set set) const {
   auto res = isl_union_set_gist_params(copy(), set.release());
   return manage(res);
 }
 
-union_map union_set::identity() const {
+isl::union_map union_set::identity() const {
   auto res = isl_union_set_identity(copy());
   return manage(res);
 }
 
-union_set union_set::intersect(union_set uset2) const {
+isl::union_set union_set::intersect(isl::union_set uset2) const {
   auto res = isl_union_set_intersect(copy(), uset2.release());
   return manage(res);
 }
 
-union_set union_set::intersect_params(set set) const {
+isl::union_set union_set::intersect_params(isl::set set) const {
   auto res = isl_union_set_intersect_params(copy(), set.release());
   return manage(res);
 }
 
-boolean union_set::is_empty() const {
+isl::boolean union_set::is_empty() const {
   auto res = isl_union_set_is_empty(get());
   return res;
 }
 
-boolean union_set::is_equal(const union_set &uset2) const {
+isl::boolean union_set::is_equal(const isl::union_set &uset2) const {
   auto res = isl_union_set_is_equal(get(), uset2.get());
   return res;
 }
 
-boolean union_set::is_strict_subset(const union_set &uset2) const {
+isl::boolean union_set::is_strict_subset(const isl::union_set &uset2) const {
   auto res = isl_union_set_is_strict_subset(get(), uset2.get());
   return res;
 }
 
-boolean union_set::is_subset(const union_set &uset2) const {
+isl::boolean union_set::is_subset(const isl::union_set &uset2) const {
   auto res = isl_union_set_is_subset(get(), uset2.get());
   return res;
 }
 
-union_set union_set::lexmax() const {
+isl::union_set union_set::lexmax() const {
   auto res = isl_union_set_lexmax(copy());
   return manage(res);
 }
 
-union_set union_set::lexmin() const {
+isl::union_set union_set::lexmin() const {
   auto res = isl_union_set_lexmin(copy());
   return manage(res);
 }
 
-union_set union_set::polyhedral_hull() const {
+isl::union_set union_set::polyhedral_hull() const {
   auto res = isl_union_set_polyhedral_hull(copy());
   return manage(res);
 }
 
-point union_set::sample_point() const {
+isl::point union_set::sample_point() const {
   auto res = isl_union_set_sample_point(copy());
   return manage(res);
 }
 
-union_set union_set::subtract(union_set uset2) const {
+isl::union_set union_set::subtract(isl::union_set uset2) const {
   auto res = isl_union_set_subtract(copy(), uset2.release());
   return manage(res);
 }
 
-union_set union_set::unite(union_set uset2) const {
+isl::union_set union_set::unite(isl::union_set uset2) const {
   auto res = isl_union_set_union(copy(), uset2.release());
   return manage(res);
 }
 
-union_map union_set::unwrap() const {
+isl::union_map union_set::unwrap() const {
   auto res = isl_union_set_unwrap(copy());
   return manage(res);
 }
@@ -5365,32 +5365,32 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-val val::two_exp() const {
+isl::val val::two_exp() const {
   auto res = isl_val_2exp(copy());
   return manage(res);
 }
 
-val val::abs() const {
+isl::val val::abs() const {
   auto res = isl_val_abs(copy());
   return manage(res);
 }
 
-boolean val::abs_eq(const val &v2) const {
+isl::boolean val::abs_eq(const isl::val &v2) const {
   auto res = isl_val_abs_eq(get(), v2.get());
   return res;
 }
 
-val val::add(val v2) const {
+isl::val val::add(isl::val v2) const {
   auto res = isl_val_add(copy(), v2.release());
   return manage(res);
 }
 
-val val::add_ui(unsigned long v2) const {
+isl::val val::add_ui(unsigned long v2) const {
   auto res = isl_val_add_ui(copy(), v2);
   return manage(res);
 }
 
-val val::ceil() const {
+isl::val val::ceil() const {
   auto res = isl_val_ceil(copy());
   return manage(res);
 }
@@ -5400,167 +5400,167 @@ int val::cmp_si(long i) const {
   return res;
 }
 
-val val::div(val v2) const {
+isl::val val::div(isl::val v2) const {
   auto res = isl_val_div(copy(), v2.release());
   return manage(res);
 }
 
-boolean val::eq(const val &v2) const {
+isl::boolean val::eq(const isl::val &v2) const {
   auto res = isl_val_eq(get(), v2.get());
   return res;
 }
 
-val val::floor() const {
+isl::val val::floor() const {
   auto res = isl_val_floor(copy());
   return manage(res);
 }
 
-val val::gcd(val v2) const {
+isl::val val::gcd(isl::val v2) const {
   auto res = isl_val_gcd(copy(), v2.release());
   return manage(res);
 }
 
-boolean val::ge(const val &v2) const {
+isl::boolean val::ge(const isl::val &v2) const {
   auto res = isl_val_ge(get(), v2.get());
   return res;
 }
 
-boolean val::gt(const val &v2) const {
+isl::boolean val::gt(const isl::val &v2) const {
   auto res = isl_val_gt(get(), v2.get());
   return res;
 }
 
-val val::infty(ctx ctx) {
+isl::val val::infty(ctx ctx) {
   auto res = isl_val_infty(ctx.release());
   return manage(res);
 }
 
-val val::inv() const {
+isl::val val::inv() const {
   auto res = isl_val_inv(copy());
   return manage(res);
 }
 
-boolean val::is_divisible_by(const val &v2) const {
+isl::boolean val::is_divisible_by(const isl::val &v2) const {
   auto res = isl_val_is_divisible_by(get(), v2.get());
   return res;
 }
 
-boolean val::is_infty() const {
+isl::boolean val::is_infty() const {
   auto res = isl_val_is_infty(get());
   return res;
 }
 
-boolean val::is_int() const {
+isl::boolean val::is_int() const {
   auto res = isl_val_is_int(get());
   return res;
 }
 
-boolean val::is_nan() const {
+isl::boolean val::is_nan() const {
   auto res = isl_val_is_nan(get());
   return res;
 }
 
-boolean val::is_neg() const {
+isl::boolean val::is_neg() const {
   auto res = isl_val_is_neg(get());
   return res;
 }
 
-boolean val::is_neginfty() const {
+isl::boolean val::is_neginfty() const {
   auto res = isl_val_is_neginfty(get());
   return res;
 }
 
-boolean val::is_negone() const {
+isl::boolean val::is_negone() const {
   auto res = isl_val_is_negone(get());
   return res;
 }
 
-boolean val::is_nonneg() const {
+isl::boolean val::is_nonneg() const {
   auto res = isl_val_is_nonneg(get());
   return res;
 }
 
-boolean val::is_nonpos() const {
+isl::boolean val::is_nonpos() const {
   auto res = isl_val_is_nonpos(get());
   return res;
 }
 
-boolean val::is_one() const {
+isl::boolean val::is_one() const {
   auto res = isl_val_is_one(get());
   return res;
 }
 
-boolean val::is_pos() const {
+isl::boolean val::is_pos() const {
   auto res = isl_val_is_pos(get());
   return res;
 }
 
-boolean val::is_rat() const {
+isl::boolean val::is_rat() const {
   auto res = isl_val_is_rat(get());
   return res;
 }
 
-boolean val::is_zero() const {
+isl::boolean val::is_zero() const {
   auto res = isl_val_is_zero(get());
   return res;
 }
 
-boolean val::le(const val &v2) const {
+isl::boolean val::le(const isl::val &v2) const {
   auto res = isl_val_le(get(), v2.get());
   return res;
 }
 
-boolean val::lt(const val &v2) const {
+isl::boolean val::lt(const isl::val &v2) const {
   auto res = isl_val_lt(get(), v2.get());
   return res;
 }
 
-val val::max(val v2) const {
+isl::val val::max(isl::val v2) const {
   auto res = isl_val_max(copy(), v2.release());
   return manage(res);
 }
 
-val val::min(val v2) const {
+isl::val val::min(isl::val v2) const {
   auto res = isl_val_min(copy(), v2.release());
   return manage(res);
 }
 
-val val::mod(val v2) const {
+isl::val val::mod(isl::val v2) const {
   auto res = isl_val_mod(copy(), v2.release());
   return manage(res);
 }
 
-val val::mul(val v2) const {
+isl::val val::mul(isl::val v2) const {
   auto res = isl_val_mul(copy(), v2.release());
   return manage(res);
 }
 
-val val::nan(ctx ctx) {
+isl::val val::nan(ctx ctx) {
   auto res = isl_val_nan(ctx.release());
   return manage(res);
 }
 
-boolean val::ne(const val &v2) const {
+isl::boolean val::ne(const isl::val &v2) const {
   auto res = isl_val_ne(get(), v2.get());
   return res;
 }
 
-val val::neg() const {
+isl::val val::neg() const {
   auto res = isl_val_neg(copy());
   return manage(res);
 }
 
-val val::neginfty(ctx ctx) {
+isl::val val::neginfty(ctx ctx) {
   auto res = isl_val_neginfty(ctx.release());
   return manage(res);
 }
 
-val val::negone(ctx ctx) {
+isl::val val::negone(ctx ctx) {
   auto res = isl_val_negone(ctx.release());
   return manage(res);
 }
 
-val val::one(ctx ctx) {
+isl::val val::one(ctx ctx) {
   auto res = isl_val_one(ctx.release());
   return manage(res);
 }
@@ -5570,22 +5570,22 @@ int val::sgn() const {
   return res;
 }
 
-val val::sub(val v2) const {
+isl::val val::sub(isl::val v2) const {
   auto res = isl_val_sub(copy(), v2.release());
   return manage(res);
 }
 
-val val::sub_ui(unsigned long v2) const {
+isl::val val::sub_ui(unsigned long v2) const {
   auto res = isl_val_sub_ui(copy(), v2);
   return manage(res);
 }
 
-val val::trunc() const {
+isl::val val::trunc() const {
   auto res = isl_val_trunc(copy());
   return manage(res);
 }
 
-val val::zero(ctx ctx) {
+isl::val val::zero(ctx ctx) {
   auto res = isl_val_zero(ctx.release());
   return manage(res);
 }
