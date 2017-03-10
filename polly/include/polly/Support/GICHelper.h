@@ -70,6 +70,10 @@ namespace polly {
 /// @return The isl_val corresponding to @p Int.
 __isl_give isl_val *isl_valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int,
                                      bool IsSigned);
+inline isl::val valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int,
+                             bool IsSigned) {
+  return isl::manage(isl_valFromAPInt(Ctx, Int, IsSigned));
+}
 
 /// Translate isl_val to llvm::APInt.
 ///
@@ -99,6 +103,9 @@ __isl_give isl_val *isl_valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int,
 ///
 /// @return The APInt value corresponding to @p Val.
 llvm::APInt APIntFromVal(__isl_take isl_val *Val);
+inline llvm::APInt APIntFromVal(isl::val V) {
+  return APIntFromVal(V.release());
+}
 
 /// Get c++ string from Isl objects.
 //@{
