@@ -2297,8 +2297,6 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     KnownOne &= KnownOne2;
     KnownZero &= KnownZero2;
     break;
-  case ISD::SADDO:
-  case ISD::UADDO:
   case ISD::SSUBO:
   case ISD::USUBO:
   case ISD::SMULO:
@@ -2518,8 +2516,34 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
         }
       }
     }
-    LLVM_FALLTHROUGH;
+
+    // If low bits are know to be zero in both operands, then we know they are
+    // going to be 0 in the result. Both addition and complement operations
+    // preserve the low zero bits.
+    computeKnownBits(Op.getOperand(0), KnownZero2, KnownOne2, DemandedElts,
+                     Depth + 1);
+    unsigned KnownZeroLow = KnownZero2.countTrailingOnes();
+    if (KnownZeroLow == 0)
+      break;
+
+    computeKnownBits(Op.getOperand(1), KnownZero2, KnownOne2, DemandedElts,
+                     Depth + 1);
+    KnownZeroLow = std::min(KnownZeroLow,
+                            KnownZero2.countTrailingOnes());
+    KnownZero.setBits(0, KnownZeroLow);
+    break;
   }
+  case ISD::UADDO:
+  case ISD::SADDO:
+    if (Op.getResNo() == 1) {
+      // If we know the result of a setcc has the top bits zero, use this info.
+      if (TLI->getBooleanContents(Op.getOperand(0).getValueType()) ==
+              TargetLowering::ZeroOrOneBooleanContent &&
+          BitWidth > 1)
+        KnownZero.setBits(1, BitWidth);
+      break;
+    }
+    LLVM_FALLTHROUGH;
   case ISD::ADD:
   case ISD::ADDC:
   case ISD::ADDE: {
@@ -2542,19 +2566,19 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     KnownZeroLow = std::min(KnownZeroLow,
                             KnownZero2.countTrailingOnes());
 
-    if (Opcode == ISD::ADD || Opcode == ISD::ADDC) {
-      KnownZero |= APInt::getLowBitsSet(BitWidth, KnownZeroLow);
-      if (KnownZeroHigh > 1)
-        KnownZero |= APInt::getHighBitsSet(BitWidth, KnownZeroHigh - 1);
+    if (Opcode == ISD::ADDE) {
+      // With ADDE, a carry bit may be added in, so we can only use this
+      // information if we know (at least) that the low two bits are clear.
+      // We then return to the caller that the low bit is unknown but that
+      // other bits are known zero.
+      if (KnownZeroLow >= 2)
+        KnownZero.setBits(1, KnownZeroLow);
       break;
     }
 
-    // With ADDE, a carry bit may be added in, so we can only use this
-    // information if we know (at least) that the low two bits are clear.  We
-    // then return to the caller that the low bit is unknown but that other bits
-    // are known zero.
-    if (KnownZeroLow >= 2) // ADDE
-      KnownZero |= APInt::getBitsSet(BitWidth, 1, KnownZeroLow);
+    KnownZero.setLowBits(KnownZeroLow);
+    if (KnownZeroHigh > 1)
+      KnownZero.setHighBits(KnownZeroHigh - 1);
     break;
   }
   case ISD::SREM:
