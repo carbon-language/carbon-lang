@@ -857,12 +857,11 @@ std::error_code openFileForRead(const Twine &Name, int &ResultFD,
   }
 
   // Fetch the real name of the file, if the user asked
-  std::error_code EC;
   if (RealPath)
-    EC = realPathFromHandle(H, *RealPath);
+    realPathFromHandle(H, *RealPath);
 
   ResultFD = FD;
-  return EC;
+  return std::error_code();
 }
 
 std::error_code openFileForWrite(const Twine &Name, int &ResultFD,
