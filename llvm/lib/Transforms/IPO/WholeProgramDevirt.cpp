@@ -380,6 +380,7 @@ struct DevirtModule {
   PointerType *Int8PtrTy;
   IntegerType *Int32Ty;
   IntegerType *Int64Ty;
+  IntegerType *IntPtrTy;
 
   bool RemarksEnabled;
 
@@ -402,6 +403,7 @@ struct DevirtModule {
         Int8PtrTy(Type::getInt8PtrTy(M.getContext())),
         Int32Ty(Type::getInt32Ty(M.getContext())),
         Int64Ty(Type::getInt64Ty(M.getContext())),
+        IntPtrTy(M.getDataLayout().getIntPtrType(M.getContext(), 0)),
         RemarksEnabled(areRemarksEnabled()) {}
 
   bool areRemarksEnabled();
@@ -448,7 +450,7 @@ struct DevirtModule {
   // This function is called during the import phase to create a reference to
   // the symbol definition created during the export phase.
   Constant *importGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
-                         StringRef Name);
+                         StringRef Name, unsigned AbsWidth = 0);
 
   void applyUniqueRetValOpt(CallSiteInfo &CSInfo, StringRef FnName, bool IsOne,
                             Constant *UniqueMemberAddr);
@@ -802,12 +804,25 @@ void DevirtModule::exportGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
 }
 
 Constant *DevirtModule::importGlobal(VTableSlot Slot, ArrayRef<uint64_t> Args,
-                                     StringRef Name) {
+                                     StringRef Name, unsigned AbsWidth) {
   Constant *C = M.getOrInsertGlobal(getGlobalName(Slot, Args, Name), Int8Ty);
   auto *GV = dyn_cast<GlobalVariable>(C);
-  if (!GV)
+  // We only need to set metadata if the global is newly created, in which
+  // case it would not have hidden visibility.
+  if (!GV || GV->getVisibility() == GlobalValue::HiddenVisibility)
     return C;
+
   GV->setVisibility(GlobalValue::HiddenVisibility);
+  auto SetAbsRange = [&](uint64_t Min, uint64_t Max) {
+    auto *MinC = ConstantAsMetadata::get(ConstantInt::get(IntPtrTy, Min));
+    auto *MaxC = ConstantAsMetadata::get(ConstantInt::get(IntPtrTy, Max));
+    GV->setMetadata(LLVMContext::MD_absolute_symbol,
+                    MDNode::get(M.getContext(), {MinC, MaxC}));
+  };
+  if (AbsWidth == IntPtrTy->getBitWidth())
+    SetAbsRange(~0ull, ~0ull); // Full set.
+  else if (AbsWidth)
+    SetAbsRange(0, 1ull << AbsWidth);
   return GV;
 }
 
@@ -895,6 +910,7 @@ void DevirtModule::applyVirtualConstProp(CallSiteInfo &CSInfo, StringRef FnName,
       Call.replaceAndErase("virtual-const-prop", FnName, RemarksEnabled, Val);
     }
   }
+  CSInfo.markDevirt();
 }
 
 bool DevirtModule::tryVirtualConstProp(
@@ -979,9 +995,18 @@ bool DevirtModule::tryVirtualConstProp(
       for (auto &&Target : TargetsForSlot)
         Target.WasDevirt = true;
 
-    // Rewrite each call to a load from OffsetByte/OffsetBit.
     Constant *ByteConst = ConstantInt::get(Int32Ty, OffsetByte);
     Constant *BitConst = ConstantInt::get(Int8Ty, 1ULL << OffsetBit);
+
+    if (CSByConstantArg.second.isExported()) {
+      ResByArg->TheKind = WholeProgramDevirtResolution::ByArg::VirtualConstProp;
+      exportGlobal(Slot, CSByConstantArg.first, "byte",
+                   ConstantExpr::getIntToPtr(ByteConst, Int8PtrTy));
+      exportGlobal(Slot, CSByConstantArg.first, "bit",
+                   ConstantExpr::getIntToPtr(BitConst, Int8PtrTy));
+    }
+
+    // Rewrite each call to a load from OffsetByte/OffsetBit.
     applyVirtualConstProp(CSByConstantArg.second,
                           TargetsForSlot[0].Fn->getName(), ByteConst, BitConst);
   }
@@ -1206,6 +1231,13 @@ void DevirtModule::importResolution(VTableSlot Slot, VTableSlotInfo &SlotInfo) {
       applyUniqueRetValOpt(CSByConstantArg.second, "", ResByArg.Info,
                            UniqueMemberAddr);
       break;
+    }
+    case WholeProgramDevirtResolution::ByArg::VirtualConstProp: {
+      Constant *Byte = importGlobal(Slot, CSByConstantArg.first, "byte", 32);
+      Byte = ConstantExpr::getPtrToInt(Byte, Int32Ty);
+      Constant *Bit = importGlobal(Slot, CSByConstantArg.first, "bit", 8);
+      Bit = ConstantExpr::getPtrToInt(Bit, Int8Ty);
+      applyVirtualConstProp(CSByConstantArg.second, "", Byte, Bit);
     }
     default:
       break;
