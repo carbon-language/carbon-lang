@@ -2906,6 +2906,12 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
     return Val.getNumSignBits();
   }
 
+  case ISD::BUILD_VECTOR:
+    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth + 1);
+    for (unsigned i = 1, e = Op.getNumOperands(); (i < e) && (Tmp > 1); ++i)
+      Tmp = std::min(Tmp, ComputeNumSignBits(Op.getOperand(i), Depth + 1));
+    return Tmp;
+
   case ISD::SIGN_EXTEND:
   case ISD::SIGN_EXTEND_VECTOR_INREG:
     Tmp = VTBits - Op.getOperand(0).getScalarValueSizeInBits();

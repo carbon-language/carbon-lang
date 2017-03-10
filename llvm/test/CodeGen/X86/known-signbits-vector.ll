@@ -5,35 +5,15 @@
 define <2 x double> @signbits_sext_v2i64_sitofp_v2f64(i32 %a0, i32 %a1) nounwind {
 ; X32-LABEL: signbits_sext_v2i64_sitofp_v2f64:
 ; X32:       # BB#0:
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $32, %esp
-; X32-NEXT:    movl 8(%ebp), %eax
-; X32-NEXT:    movl 12(%ebp), %ecx
-; X32-NEXT:    vmovd %eax, %xmm0
-; X32-NEXT:    sarl $31, %eax
-; X32-NEXT:    vpinsrd $1, %eax, %xmm0, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    vmovd %ecx, %xmm0
-; X32-NEXT:    sarl $31, %ecx
-; X32-NEXT:    vpinsrd $1, %ecx, %xmm0, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstpl {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstpl (%esp)
 ; X32-NEXT:    vmovsd {{.*#+}} xmm0 = mem[0],zero
-; X32-NEXT:    vmovhpd {{.*#+}} xmm0 = xmm0[0],mem[0]
-; X32-NEXT:    movl %ebp, %esp
-; X32-NEXT:    popl %ebp
+; X32-NEXT:    vcvtdq2pd %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: signbits_sext_v2i64_sitofp_v2f64:
 ; X64:       # BB#0:
-; X64-NEXT:    vcvtsi2sdl %esi, %xmm0, %xmm0
-; X64-NEXT:    vcvtsi2sdl %edi, %xmm1, %xmm1
-; X64-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; X64-NEXT:    vmovd %edi, %xmm0
+; X64-NEXT:    vpinsrd $1, %esi, %xmm0, %xmm0
+; X64-NEXT:    vcvtdq2pd %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = sext i32 %a0 to i64
   %2 = sext i32 %a1 to i64
@@ -46,54 +26,39 @@ define <2 x double> @signbits_sext_v2i64_sitofp_v2f64(i32 %a0, i32 %a1) nounwind
 define <4 x float> @signbits_sext_v4i64_sitofp_v4f32(i8 signext %a0, i16 signext %a1, i32 %a2, i32 %a3) nounwind {
 ; X32-LABEL: signbits_sext_v4i64_sitofp_v4f32:
 ; X32:       # BB#0:
-; X32-NEXT:    pushl %ebp
-; X32-NEXT:    movl %esp, %ebp
-; X32-NEXT:    pushl %esi
-; X32-NEXT:    andl $-8, %esp
-; X32-NEXT:    subl $56, %esp
-; X32-NEXT:    movsbl 8(%ebp), %eax
-; X32-NEXT:    movswl 12(%ebp), %ecx
-; X32-NEXT:    movl 16(%ebp), %edx
-; X32-NEXT:    movl 20(%ebp), %esi
+; X32-NEXT:    movsbl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movswl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    vmovd %eax, %xmm0
 ; X32-NEXT:    sarl $31, %eax
 ; X32-NEXT:    vpinsrd $1, %eax, %xmm0, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    vmovd %ecx, %xmm0
+; X32-NEXT:    vpinsrd $2, %ecx, %xmm0, %xmm0
 ; X32-NEXT:    sarl $31, %ecx
-; X32-NEXT:    vpinsrd $1, %ecx, %xmm0, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    vmovd %edx, %xmm0
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movl {{[0-9]+}}(%esp), %edx
+; X32-NEXT:    vmovd %eax, %xmm1
+; X32-NEXT:    sarl $31, %eax
+; X32-NEXT:    vpinsrd $1, %eax, %xmm1, %xmm1
+; X32-NEXT:    vpinsrd $2, %edx, %xmm1, %xmm1
 ; X32-NEXT:    sarl $31, %edx
-; X32-NEXT:    vpinsrd $1, %edx, %xmm0, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    vmovd %esi, %xmm0
-; X32-NEXT:    sarl $31, %esi
-; X32-NEXT:    vpinsrd $1, %esi, %xmm0, %xmm0
-; X32-NEXT:    vmovq %xmm0, {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstps {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstps {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstps {{[0-9]+}}(%esp)
-; X32-NEXT:    fildll {{[0-9]+}}(%esp)
-; X32-NEXT:    fstps (%esp)
-; X32-NEXT:    vmovss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; X32-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0],mem[0],xmm0[2,3]
-; X32-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1],mem[0],xmm0[3]
-; X32-NEXT:    vinsertps {{.*#+}} xmm0 = xmm0[0,1,2],mem[0]
-; X32-NEXT:    leal -4(%ebp), %esp
-; X32-NEXT:    popl %esi
-; X32-NEXT:    popl %ebp
+; X32-NEXT:    vpinsrd $3, %edx, %xmm1, %xmm1
+; X32-NEXT:    vpinsrd $3, %ecx, %xmm0, %xmm0
+; X32-NEXT:    vshufps {{.*#+}} xmm0 = xmm0[0,2],xmm1[0,2]
+; X32-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; X32-NEXT:    retl
 ;
 ; X64-LABEL: signbits_sext_v4i64_sitofp_v4f32:
 ; X64:       # BB#0:
-; X64-NEXT:    vmovd %edi, %xmm0
-; X64-NEXT:    vpinsrd $1, %esi, %xmm0, %xmm0
-; X64-NEXT:    vpinsrd $2, %edx, %xmm0, %xmm0
-; X64-NEXT:    vpinsrd $3, %ecx, %xmm0, %xmm0
+; X64-NEXT:    movslq %edi, %rax
+; X64-NEXT:    movslq %esi, %rsi
+; X64-NEXT:    movslq %edx, %rdx
+; X64-NEXT:    movslq %ecx, %rcx
+; X64-NEXT:    vmovq %rcx, %xmm0
+; X64-NEXT:    vmovq %rdx, %xmm1
+; X64-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; X64-NEXT:    vmovq %rsi, %xmm1
+; X64-NEXT:    vmovq %rax, %xmm2
+; X64-NEXT:    vpunpcklqdq {{.*#+}} xmm1 = xmm2[0],xmm1[0]
+; X64-NEXT:    vshufps {{.*#+}} xmm0 = xmm1[0,2],xmm0[0,2]
 ; X64-NEXT:    vcvtdq2ps %xmm0, %xmm0
 ; X64-NEXT:    retq
   %1 = sext i8 %a0 to i64
