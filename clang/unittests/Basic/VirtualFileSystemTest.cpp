@@ -436,6 +436,7 @@ TEST(VirtualFileSystemTest, BrokenSymlinkRealFSRecursiveIteration) {
       EC = std::error_code();
       continue;
     } else if (EC) {
+      outs() << "BrokenSymlinkRealFSRecursiveIteration EC: " << EC.message();
       break;
     }
     Contents.push_back(I->getName());
