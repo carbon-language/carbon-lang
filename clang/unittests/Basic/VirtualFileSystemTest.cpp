@@ -305,22 +305,6 @@ struct ScopedDir {
   }
   operator StringRef() { return Path.str(); }
 };
-
-struct ScopedLink {
-  SmallString<128> Path;
-  ScopedLink(const Twine &To, const Twine &From) {
-    Path = From.str();
-    std::error_code EC = sys::fs::create_link(To, From);
-    if (EC)
-      Path = "";
-    EXPECT_FALSE(EC);
-  }
-  ~ScopedLink() {
-    if (Path != "")
-      EXPECT_FALSE(llvm::sys::fs::remove(Path.str()));
-  }
-  operator StringRef() { return Path.str(); }
-};
 } // end anonymous namespace
 
 TEST(VirtualFileSystemTest, BasicRealFSIteration) {
@@ -348,28 +332,6 @@ TEST(VirtualFileSystemTest, BasicRealFSIteration) {
   EXPECT_TRUE(I->getName().endswith("a") || I->getName().endswith("c"));
   I.increment(EC);
   EXPECT_EQ(vfs::directory_iterator(), I);
-}
-
-TEST(VirtualFileSystemTest, BrokenSymlinkRealFSIteration) {
-  ScopedDir TestDirectory("virtual-file-system-test", /*Unique*/ true);
-  IntrusiveRefCntPtr<vfs::FileSystem> FS = vfs::getRealFileSystem();
-
-  ScopedLink _a("no_such_file", TestDirectory + "/a");
-  ScopedDir _b(TestDirectory + "/b");
-  ScopedLink _c("no_such_file", TestDirectory + "/c");
-
-  std::error_code EC;
-  for (vfs::directory_iterator I = FS->dir_begin(Twine(TestDirectory), EC), E;
-       I != E; I.increment(EC)) {
-    // Skip broken symlinks.
-    if (EC == std::errc::no_such_file_or_directory) {
-      EC = std::error_code();
-      continue;
-    } else if (EC) {
-      break;
-    }
-    EXPECT_TRUE(I->getName() == _b);
-  }
 }
 
 TEST(VirtualFileSystemTest, BasicRealFSRecursiveIteration) {
@@ -409,43 +371,6 @@ TEST(VirtualFileSystemTest, BasicRealFSRecursiveIteration) {
   EXPECT_EQ(1, Counts[1]); // b
   EXPECT_EQ(1, Counts[2]); // c
   EXPECT_EQ(1, Counts[3]); // d
-}
-
-TEST(VirtualFileSystemTest, BrokenSymlinkRealFSRecursiveIteration) {
-  ScopedDir TestDirectory("virtual-file-system-test", /*Unique*/ true);
-  IntrusiveRefCntPtr<vfs::FileSystem> FS = vfs::getRealFileSystem();
-
-  ScopedLink _a("no_such_file", TestDirectory + "/a");
-  ScopedDir _b(TestDirectory + "/b");
-  ScopedLink _ba("no_such_file", TestDirectory + "/b/a");
-  ScopedDir _bb(TestDirectory + "/b/b");
-  ScopedLink _bc("no_such_file", TestDirectory + "/b/c");
-  ScopedLink _c("no_such_file", TestDirectory + "/c");
-  ScopedDir _d(TestDirectory + "/d");
-  ScopedDir _dd(TestDirectory + "/d/d");
-  ScopedDir _ddd(TestDirectory + "/d/d/d");
-  ScopedLink _e("no_such_file", TestDirectory + "/e");
-  std::vector<StringRef> Expected = {_b, _bb, _d, _dd, _ddd};
-
-  std::vector<std::string> Contents;
-  std::error_code EC;
-  for (vfs::recursive_directory_iterator I(*FS, Twine(TestDirectory), EC), E;
-       I != E; I.increment(EC)) {
-    // Skip broken symlinks.
-    if (EC == std::errc::no_such_file_or_directory) {
-      EC = std::error_code();
-      continue;
-    } else if (EC) {
-      outs() << "BrokenSymlinkRealFSRecursiveIteration EC: " << EC.message();
-      break;
-    }
-    Contents.push_back(I->getName());
-  }
-
-  // Check sorted contents.
-  std::sort(Contents.begin(), Contents.end());
-  EXPECT_EQ(Expected.size(), Contents.size());
-  EXPECT_TRUE(std::equal(Contents.begin(), Contents.end(), Expected.begin()));
 }
 
 template <typename DirIter>

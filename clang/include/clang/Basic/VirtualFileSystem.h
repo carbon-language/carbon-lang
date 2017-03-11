@@ -161,7 +161,7 @@ public:
   directory_iterator &increment(std::error_code &EC) {
     assert(Impl && "attempting to increment past end");
     EC = Impl->increment();
-    if (!Impl->CurrentEntry.isStatusKnown())
+    if (EC || !Impl->CurrentEntry.isStatusKnown())
       Impl.reset(); // Normalize the end iterator to Impl == nullptr.
     return *this;
   }
