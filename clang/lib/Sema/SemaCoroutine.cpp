@@ -312,8 +312,9 @@ static ExprResult buildCoroutineHandle(Sema &S, QualType PromiseType,
 }
 
 struct ReadySuspendResumeResult {
-  bool IsInvalid;
   Expr *Results[3];
+  OpaqueValueExpr *OpaqueValue;
+  bool IsInvalid;
 };
 
 static ExprResult buildMemberCall(Sema &S, Expr *Base, SourceLocation Loc,
@@ -336,8 +337,11 @@ static ExprResult buildMemberCall(Sema &S, Expr *Base, SourceLocation Loc,
 /// expression.
 static ReadySuspendResumeResult buildCoawaitCalls(Sema &S, VarDecl *CoroPromise,
                                                   SourceLocation Loc, Expr *E) {
+  OpaqueValueExpr *Operand = new (S.Context)
+      OpaqueValueExpr(Loc, E->getType(), VK_LValue, E->getObjectKind(), E);
+
   // Assume invalid until we see otherwise.
-  ReadySuspendResumeResult Calls = {true, {}};
+  ReadySuspendResumeResult Calls = {{}, Operand, /*IsInvalid=*/true};
 
   ExprResult CoroHandleRes = buildCoroutineHandle(S, CoroPromise->getType(), Loc);
   if (CoroHandleRes.isInvalid())
@@ -347,9 +351,6 @@ static ReadySuspendResumeResult buildCoawaitCalls(Sema &S, VarDecl *CoroPromise,
   const StringRef Funcs[] = {"await_ready", "await_suspend", "await_resume"};
   MultiExprArg Args[] = {None, CoroHandle, None};
   for (size_t I = 0, N = llvm::array_lengthof(Funcs); I != N; ++I) {
-    Expr *Operand = new (S.Context) OpaqueValueExpr(
-      Loc, E->getType(), VK_LValue, E->getObjectKind(), E);
-
     ExprResult Result = buildMemberCall(S, Operand, Loc, Funcs[I], Args[I]);
     if (Result.isInvalid())
       return Calls;
@@ -556,8 +557,9 @@ ExprResult Sema::BuildResolvedCoawaitExpr(SourceLocation Loc, Expr *E,
   if (RSS.IsInvalid)
     return ExprError();
 
-  Expr *Res = new (Context) CoawaitExpr(Loc, E, RSS.Results[0], RSS.Results[1],
-                                        RSS.Results[2], IsImplicit);
+  Expr *Res =
+      new (Context) CoawaitExpr(Loc, E, RSS.Results[0], RSS.Results[1],
+                                RSS.Results[2], RSS.OpaqueValue, IsImplicit);
   if (!IsImplicit)
     Coroutine->CoroutineStmts.push_back(Res);
   return Res;
@@ -611,7 +613,7 @@ ExprResult Sema::BuildCoyieldExpr(SourceLocation Loc, Expr *E) {
     return ExprError();
 
   Expr *Res = new (Context) CoyieldExpr(Loc, E, RSS.Results[0], RSS.Results[1],
-                                        RSS.Results[2]);
+                                        RSS.Results[2], RSS.OpaqueValue);
   Coroutine->CoroutineStmts.push_back(Res);
   return Res;
 }
