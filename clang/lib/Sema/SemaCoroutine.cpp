@@ -400,7 +400,8 @@ VarDecl *Sema::buildCoroutinePromise(SourceLocation Loc) {
 
 /// Check that this is a context in which a coroutine suspension can appear.
 static FunctionScopeInfo *checkCoroutineContext(Sema &S, SourceLocation Loc,
-                                                StringRef Keyword) {
+                                                StringRef Keyword,
+                                                bool IsImplicit = false) {
   if (!isValidCoroutineContext(S, Loc, Keyword))
     return nullptr;
 
@@ -408,6 +409,9 @@ static FunctionScopeInfo *checkCoroutineContext(Sema &S, SourceLocation Loc,
 
   auto *ScopeInfo = S.getCurFunction();
   assert(ScopeInfo && "missing function scope for function");
+
+  if (ScopeInfo->FirstCoroutineStmtLoc.isInvalid() && !IsImplicit)
+    ScopeInfo->setFirstCoroutineStmt(Loc, Keyword);
 
   if (ScopeInfo->CoroutinePromise)
     return ScopeInfo;
@@ -488,7 +492,7 @@ ExprResult Sema::ActOnCoawaitExpr(Scope *S, SourceLocation Loc, Expr *E) {
 }
 
 ExprResult Sema::BuildUnresolvedCoawaitExpr(SourceLocation Loc, Expr *E,
-                                           UnresolvedLookupExpr *Lookup) {
+                                            UnresolvedLookupExpr *Lookup) {
   auto *FSI = checkCoroutineContext(*this, Loc, "co_await");
   if (!FSI)
     return ExprError();
@@ -504,7 +508,6 @@ ExprResult Sema::BuildUnresolvedCoawaitExpr(SourceLocation Loc, Expr *E,
   if (Promise->getType()->isDependentType()) {
     Expr *Res =
         new (Context) DependentCoawaitExpr(Loc, Context.DependentTy, E, Lookup);
-    FSI->CoroutineStmts.push_back(Res);
     return Res;
   }
 
@@ -528,7 +531,7 @@ ExprResult Sema::BuildUnresolvedCoawaitExpr(SourceLocation Loc, Expr *E,
 
 ExprResult Sema::BuildResolvedCoawaitExpr(SourceLocation Loc, Expr *E,
                                   bool IsImplicit) {
-  auto *Coroutine = checkCoroutineContext(*this, Loc, "co_await");
+  auto *Coroutine = checkCoroutineContext(*this, Loc, "co_await", IsImplicit);
   if (!Coroutine)
     return ExprError();
 
@@ -541,8 +544,6 @@ ExprResult Sema::BuildResolvedCoawaitExpr(SourceLocation Loc, Expr *E,
   if (E->getType()->isDependentType()) {
     Expr *Res = new (Context)
         CoawaitExpr(Loc, Context.DependentTy, E, IsImplicit);
-    if (!IsImplicit)
-      Coroutine->CoroutineStmts.push_back(Res);
     return Res;
   }
 
@@ -560,8 +561,7 @@ ExprResult Sema::BuildResolvedCoawaitExpr(SourceLocation Loc, Expr *E,
   Expr *Res =
       new (Context) CoawaitExpr(Loc, E, RSS.Results[0], RSS.Results[1],
                                 RSS.Results[2], RSS.OpaqueValue, IsImplicit);
-  if (!IsImplicit)
-    Coroutine->CoroutineStmts.push_back(Res);
+
   return Res;
 }
 
@@ -597,7 +597,6 @@ ExprResult Sema::BuildCoyieldExpr(SourceLocation Loc, Expr *E) {
 
   if (E->getType()->isDependentType()) {
     Expr *Res = new (Context) CoyieldExpr(Loc, Context.DependentTy, E);
-    Coroutine->CoroutineStmts.push_back(Res);
     return Res;
   }
 
@@ -614,7 +613,7 @@ ExprResult Sema::BuildCoyieldExpr(SourceLocation Loc, Expr *E) {
 
   Expr *Res = new (Context) CoyieldExpr(Loc, E, RSS.Results[0], RSS.Results[1],
                                         RSS.Results[2], RSS.OpaqueValue);
-  Coroutine->CoroutineStmts.push_back(Res);
+
   return Res;
 }
 
@@ -628,7 +627,7 @@ StmtResult Sema::ActOnCoreturnStmt(Scope *S, SourceLocation Loc, Expr *E) {
 
 StmtResult Sema::BuildCoreturnStmt(SourceLocation Loc, Expr *E,
                                    bool IsImplicit) {
-  auto *FSI = checkCoroutineContext(*this, Loc, "co_return");
+  auto *FSI = checkCoroutineContext(*this, Loc, "co_return", IsImplicit);
   if (!FSI)
     return StmtError();
 
@@ -656,8 +655,6 @@ StmtResult Sema::BuildCoreturnStmt(SourceLocation Loc, Expr *E,
   Expr *PCE = ActOnFinishFullExpr(PC.get()).get();
 
   Stmt *Res = new (Context) CoreturnStmt(Loc, E, PCE, IsImplicit);
-  if (!IsImplicit)
-    FSI->CoroutineStmts.push_back(Res);
   return Res;
 }
 
@@ -774,15 +771,11 @@ void Sema::CheckCompletedCoroutineBody(FunctionDecl *FD, Stmt *&Body) {
   // Coroutines [stmt.return]p1:
   //   A return statement shall not appear in a coroutine.
   if (Fn->FirstReturnLoc.isValid()) {
+    assert(Fn->FirstCoroutineStmtLoc.isValid() &&
+                   "first coroutine location not set");
     Diag(Fn->FirstReturnLoc, diag::err_return_in_coroutine);
-    // FIXME: Every Coroutine statement may be invalid and therefore not added
-    // to CoroutineStmts. Find another way to provide location information.
-    if (!Fn->CoroutineStmts.empty()) {
-      auto *First = Fn->CoroutineStmts[0];
-      Diag(First->getLocStart(), diag::note_declared_coroutine_here)
-          << (isa<CoawaitExpr>(First) ? "co_await" :
-              isa<CoyieldExpr>(First) ? "co_yield" : "co_return");
-    }
+    Diag(Fn->FirstCoroutineStmtLoc, diag::note_declared_coroutine_here)
+            << Fn->getFirstCoroutineStmtKeyword();
   }
   SubStmtBuilder Builder(*this, *FD, *Fn, Body);
   if (Builder.isInvalid())
