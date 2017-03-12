@@ -20203,8 +20203,9 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget &Subtarget,
   case PREFETCH: {
     SDValue Hint = Op.getOperand(6);
     unsigned HintVal = cast<ConstantSDNode>(Hint)->getZExtValue();
-    assert(HintVal < 2 && "Wrong prefetch hint in intrinsic: should be 0 or 1");
-    unsigned Opcode = (HintVal ? IntrData->Opc1 : IntrData->Opc0);
+    assert((HintVal == 1 || HintVal == 2) &&
+           "Wrong prefetch hint in intrinsic: should be 1 or 2");
+    unsigned Opcode = (HintVal != 1 ? IntrData->Opc1 : IntrData->Opc0);
     SDValue Chain = Op.getOperand(0);
     SDValue Mask  = Op.getOperand(2);
     SDValue Index = Op.getOperand(3);
