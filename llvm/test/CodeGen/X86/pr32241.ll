@@ -4,9 +4,14 @@
 define i32 @_Z3foov() {
 ; CHECK-LABEL: _Z3foov:
 ; CHECK:       # BB#0: # %entry
-; CHECK-NEXT:    subl $24, %esp
+; CHECK-NEXT:    pushl %ebx
 ; CHECK-NEXT:  .Lcfi0:
-; CHECK-NEXT:    .cfi_def_cfa_offset 28
+; CHECK-NEXT:    .cfi_def_cfa_offset 8
+; CHECK-NEXT:    subl $24, %esp
+; CHECK-NEXT:  .Lcfi1:
+; CHECK-NEXT:    .cfi_def_cfa_offset 32
+; CHECK-NEXT:  .Lcfi2:
+; CHECK-NEXT:    .cfi_offset %ebx, -8
 ; CHECK-NEXT:    movb $1, %al
 ; CHECK-NEXT:    movw $10959, {{[0-9]+}}(%esp) # imm = 0x2ACF
 ; CHECK-NEXT:    movw $-15498, {{[0-9]+}}(%esp) # imm = 0xC376
@@ -35,9 +40,9 @@ define i32 @_Z3foov() {
 ; CHECK-NEXT:    movb %ah, %cl
 ; CHECK-NEXT:    andl $1, %ecx
 ; CHECK-NEXT:    kmovw %ecx, %k0
-; CHECK-NEXT:    kmovb %k0, %eax
-; CHECK-NEXT:    andb $1, %ah
-; CHECK-NEXT:    movzbl %ah, %ecx
+; CHECK-NEXT:    kmovb %k0, %ebx
+; CHECK-NEXT:    andb $1, %bl
+; CHECK-NEXT:    movzbl %bl, %ecx
 ; CHECK-NEXT:    xorl $-1, %ecx
 ; CHECK-NEXT:    cmpl $0, %ecx
 ; CHECK-NEXT:    kmovb %eax, %k0
@@ -58,6 +63,7 @@ define i32 @_Z3foov() {
 ; CHECK-NEXT:    movw %cx, {{[0-9]+}}(%esp)
 ; CHECK-NEXT:    movzwl {{[0-9]+}}(%esp), %eax
 ; CHECK-NEXT:    addl $24, %esp
+; CHECK-NEXT:    popl %ebx
 ; CHECK-NEXT:    retl
 entry:
   %aa = alloca i16, align 2
