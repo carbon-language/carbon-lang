@@ -1612,6 +1612,11 @@ bool BinaryFunction::buildCFG() {
     }
   }
 
+  if (BasicBlocks.empty()) {
+    setSimple(false);
+    return false;
+  }
+
   // Intermediate dump.
   DEBUG(print(dbgs(), "after creating basic blocks"));
 
