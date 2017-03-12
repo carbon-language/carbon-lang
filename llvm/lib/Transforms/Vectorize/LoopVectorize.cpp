@@ -6231,6 +6231,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     else {
       // If the trip count that we found modulo the vectorization factor is not
       // zero then we require a tail.
+      // FIXME: look for a smaller VF that does divide TC rather than give up.
       ORE->emit(createMissedAnalysis("NoTailLoopWithOptForSize")
                 << "cannot optimize for size and vectorize at the "
                    "same time. Enable vectorization of this loop "
