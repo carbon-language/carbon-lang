@@ -3167,11 +3167,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr,
         auto *NewOp = getScalarValue(Instr->getOperand(op), Part, Lane);
         Cloned->setOperand(op, NewOp);
       }
-      // FIXME: Limiting the versioning metadata to VF > 1 is incorrect. It was
-      // added as part of removing Unroller's specialized version of this
-      // method which was not setting versioning metadata.
-      if (VF > 1)
-        addNewMetadata(Cloned, Instr);
+      addNewMetadata(Cloned, Instr);
 
       // Place the cloned scalar in the new loop.
       Builder.Insert(Cloned);
