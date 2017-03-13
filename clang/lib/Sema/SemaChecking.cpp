@@ -11851,6 +11851,10 @@ void Sema::RefersToMemberWithReducedAlignment(
   if (!ME)
     return;
 
+  // No need to check expressions with an __unaligned-qualified type.
+  if (E->getType().getQualifiers().hasUnaligned())
+    return;
+
   // For a chain of MemberExpr like "a.b.c.d" this list
   // will keep FieldDecl's like [d, c, b].
   SmallVector<FieldDecl *, 4> ReverseMemberChain;
