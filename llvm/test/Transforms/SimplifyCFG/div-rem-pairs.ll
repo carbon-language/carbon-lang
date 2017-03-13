@@ -1,9 +1,6 @@
-; RUN: opt -S -codegenprepare < %s | FileCheck %s
+; RUN: opt -simplifycfg -S < %s | FileCheck %s
 
-target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-unknown"
-
-; FIXME: Hoist the sdiv because it's free for a target that has DIVREM instructions.
+; FIXME: Hoist the sdiv because it's safe and free.
 ; PR31028 - https://bugs.llvm.org/show_bug.cgi?id=31028
 
 define i32 @hoist_sdiv(i32 %a, i32 %b) {
@@ -33,7 +30,7 @@ end:
   ret i32 %ret
 }
 
-; FIXME: Hoist the udiv because it's free for a target that has DIVREM instructions.
+; FIXME: Hoist the udiv because it's safe and free.
 
 define i64 @hoist_udiv(i64 %a, i64 %b) {
 ; CHECK-LABEL: @hoist_udiv(
@@ -62,7 +59,7 @@ end:
   ret i64 %ret
 }
 
-; FIXME: Hoist the srem because it's free for a target that has DIVREM instructions.
+; FIXME: Hoist the srem because it's safe and likely free.
 
 define i16 @hoist_srem(i16 %a, i16 %b) {
 ; CHECK-LABEL: @hoist_srem(
@@ -91,7 +88,7 @@ end:
   ret i16 %ret
 }
 
-; FIXME: Hoist the urem because it's free for a target that has DIVREM instructions.
+; FIXME: Hoist the urem because it's safe and likely free.
 
 define i8 @hoist_urem(i8 %a, i8 %b) {
 ; CHECK-LABEL: @hoist_urem(
