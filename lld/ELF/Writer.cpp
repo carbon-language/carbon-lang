@@ -1443,7 +1443,7 @@ bool elf::allocateHeaders(std::vector<PhdrEntry> &Phdrs,
   if (FirstPTLoad == Phdrs.end())
     return false;
 
-  uint64_t HeaderSize = getHeaderSize<ELFT>();
+  uint64_t HeaderSize = getHeaderSize();
   if (HeaderSize > Min) {
     auto PhdrI =
         std::find_if(Phdrs.begin(), Phdrs.end(),
@@ -1496,7 +1496,7 @@ template <class ELFT> void Writer<ELFT>::fixHeaders() {
 template <class ELFT> void Writer<ELFT>::assignAddresses() {
   uintX_t VA = Config->ImageBase;
   if (AllocateHeader)
-    VA += getHeaderSize<ELFT>();
+    VA += getHeaderSize();
   uintX_t ThreadBssOffset = 0;
   for (OutputSection *Sec : OutputSections) {
     uint32_t Alignment = Sec->Alignment;
