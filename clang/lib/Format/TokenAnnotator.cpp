@@ -2526,11 +2526,10 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
       return true;
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
     const FormatToken *NonComment = Right.getPreviousNonComment();
-    if (Left.isOneOf(tok::kw_return, tok::kw_continue, tok::kw_break,
-                     tok::kw_throw) ||
-        (NonComment &&
-         NonComment->isOneOf(tok::kw_return, tok::kw_continue, tok::kw_break,
-                             tok::kw_throw)))
+    if (NonComment &&
+        NonComment->isOneOf(tok::kw_return, tok::kw_continue, tok::kw_break,
+                            tok::kw_throw, Keywords.kw_interface,
+                            Keywords.kw_type))
       return false; // Otherwise a semicolon is inserted.
     if (Left.is(TT_JsFatArrow) && Right.is(tok::l_brace))
       return false;

@@ -1228,6 +1228,20 @@ TEST_F(FormatTestJS, TypeAliases) {
                "class C {}");
 }
 
+TEST_F(FormatTestJS, TypeInterfaceLineWrapping) {
+  const FormatStyle &Style = getGoogleJSStyleWithColumns(20);
+  verifyFormat("type LongTypeIsReallyUnreasonablyLong =\n"
+               "    string;\n",
+               "type LongTypeIsReallyUnreasonablyLong = string;\n",
+               Style);
+  verifyFormat(
+      "interface AbstractStrategyFactoryProvider {\n"
+      "  a: number\n"
+      "}\n",
+      "interface AbstractStrategyFactoryProvider { a: number }\n",
+      Style);
+}
+
 TEST_F(FormatTestJS, Modules) {
   verifyFormat("import SomeThing from 'some/module.js';");
   verifyFormat("import {X, Y} from 'some/module.js';");
