@@ -799,15 +799,26 @@ static uint64_t getImageBase(opt::InputArgList &Args) {
   return V;
 }
 
-static void ensureWritable(StringRef Path) {
-  if (Path.empty())
-    return;
-
+// Returns true if a given file seems to be writable.
+//
+// Determining whether a file is writable or not is amazingly hard,
+// and after all the only reliable way of doing that is to actually
+// create a file. But we don't want to do that in this function
+// because LLD shouldn't update any file if it will end in a failure.
+// We also don't want to reimplement heuristics. So we'll let
+// FileOutputBuffer do the work.
+//
+// FileOutputBuffer doesn't touch a desitnation file until commit()
+// is called. We use that class without calling commit() to predict
+// if the given file is writable.
+static bool isWritable(StringRef Path) {
   ErrorOr<std::unique_ptr<FileOutputBuffer>> Err =
       FileOutputBuffer::create(Path, 1);
-  if (!Err)
-    error("cannot open output file " + Path + ": " +
-          Err.getError().message());
+  if (auto EC = Err.getError()) {
+    error("cannot open output file " + Path + ": " + EC.message());
+    return false;
+  }
+  return true;
 }
 
 // Do actual linking. Note that when this function is called,
@@ -825,6 +836,12 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   if (Config->OutputFile.empty())
     Config->OutputFile = "a.out";
 
+  // Fail early if the output file is not writable. If a user has a long link,
+  // e.g. due to a large LTO link, they do not wish to run it and find that it
+  // failed because there was a mistake in their command-line.
+  if (!isWritable(Config->OutputFile))
+    return;
+
   // Use default entry point name if no name was given via the command
   // line nor linker scripts. For some reason, MIPS entry point name is
   // different from others.
@@ -832,13 +849,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
       (!Config->Entry.empty() || (!Config->Shared && !Config->Relocatable));
   if (Config->Entry.empty() && !Config->Relocatable)
     Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
-
-  // Fail early if the output file is not writable. If a user has a long link,
-  // e.g. due to a large LTO link, they do not wish to run it and find that it
-  // failed because there was a mistake in their command-line.
-  ensureWritable(Config->OutputFile);
-  if (ErrorCount)
-    return;
 
   // Handle --trace-symbol.
   for (auto *Arg : Args.filtered(OPT_trace_symbol))
