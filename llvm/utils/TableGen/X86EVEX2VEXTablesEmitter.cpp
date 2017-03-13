@@ -72,8 +72,7 @@ private:
       "VPSRAQ",
       "VDBPSADBW",
       "VRNDSCALE",
-      "VSCALEFPS",
-      "VSCALEFSS",
+      "VSCALEFPS"
   };
 
   bool inExceptionList(const CodeGenInstruction *Inst) {
@@ -243,7 +242,7 @@ public:
         if (getRegOperandSize(OpRec1) != getRegOperandSize(OpRec2))
           return false;
       } else if (isMemoryOperand(OpRec1) && isMemoryOperand(OpRec2)) {
-        continue;
+        return false;
       } else if (isImmediateOperand(OpRec1) && isImmediateOperand(OpRec2)) {
         if (OpRec1->getValueAsDef("Type") != OpRec2->getValueAsDef("Type"))
           return false;
