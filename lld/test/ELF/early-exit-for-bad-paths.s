@@ -20,6 +20,9 @@
 # discovered we haven't bailed out early as expected.
 # CHECK-NOT: undefined_symbol
 
+# RUN: not ld.lld %t.o -o / 2>&1 | FileCheck %s -check-prefixes=ROOT
+# ROOT: error: cannot open output file /
+
   .globl _start
 _start:
   call undefined_symbol
