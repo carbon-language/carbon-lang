@@ -473,7 +473,7 @@ static int getFD(StringRef Filename, std::error_code &EC,
     // possible.
     if (!(Flags & sys::fs::F_Text))
       sys::ChangeStdoutToBinary();
-    return dup(STDOUT_FILENO);
+    return STDOUT_FILENO;
   }
 
   int FD;
