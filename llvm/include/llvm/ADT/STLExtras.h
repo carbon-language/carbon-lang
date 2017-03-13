@@ -1024,6 +1024,9 @@ class enumerator_iter
   using result_type = result_pair<R>;
 
 public:
+  explicit enumerator_iter(IterOfRange<R> EndIter)
+    : Result(std::numeric_limits<size_t>::max(), EndIter) { }
+
   enumerator_iter(std::size_t Index, IterOfRange<R> Iter)
       : Result(Index, Iter) {}
 
@@ -1031,7 +1034,7 @@ public:
   const result_type &operator*() const { return Result; }
 
   enumerator_iter<R> &operator++() {
-    assert(Result.Index != size_t(-1));
+    assert(Result.Index != std::numeric_limits<size_t>::max());
     ++Result.Iter;
     ++Result.Index;
     return *this;
@@ -1061,7 +1064,7 @@ public:
     return enumerator_iter<R>(0, std::begin(TheRange));
   }
   enumerator_iter<R> end() {
-    return enumerator_iter<R>(-1, std::end(TheRange));
+    return enumerator_iter<R>(std::end(TheRange));
   }
 
 private:
