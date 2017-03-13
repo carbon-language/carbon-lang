@@ -177,7 +177,7 @@ namespace clang {
           Err = Linker::linkModules(
               *getModule(), std::move(LM.Module), LM.LinkFlags,
               [](llvm::Module &M, const llvm::StringSet<> &GVS) {
-                internalizeModule(M, [&M, &GVS](const llvm::GlobalValue &GV) {
+                internalizeModule(M, [&GVS](const llvm::GlobalValue &GV) {
                   return !GV.hasName() || (GVS.count(GV.getName()) == 0);
                 });
               });
