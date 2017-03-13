@@ -1031,7 +1031,7 @@ public:
   const result_type &operator*() const { return Result; }
 
   enumerator_iter<R> &operator++() {
-    assert(Result.Index != -1);
+    assert(Result.Index != size_t(-1));
     ++Result.Iter;
     ++Result.Index;
     return *this;
