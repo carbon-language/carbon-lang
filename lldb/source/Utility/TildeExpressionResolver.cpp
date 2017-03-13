@@ -13,6 +13,10 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 
+#if !defined(LLVM_ON_WIN32)
+#include <pwd.h>
+#endif
+
 using namespace lldb_private;
 using namespace llvm;
 
@@ -46,7 +50,7 @@ bool StandardTildeExpressionResolver::ResolvePartial(StringRef Expr,
   if (Expr.empty())
     return false;
 
-  SmallString<32> Buffer = "~";
+  SmallString<32> Buffer("~");
   setpwent();
   struct passwd *user_entry;
   Expr = Expr.drop_front();

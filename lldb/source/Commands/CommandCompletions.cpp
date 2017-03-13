@@ -195,7 +195,7 @@ static int DiskFilesOrDirectories(const llvm::Twine &partial_name,
     // We have a match.
 
     fs::file_status st;
-    if (EC = Entry.status(st))
+    if ((EC = Entry.status(st)))
       continue;
 
     // If it's a symlink, then we treat it as a directory as long as the target
