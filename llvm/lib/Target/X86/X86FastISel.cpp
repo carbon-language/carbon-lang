@@ -1751,7 +1751,8 @@ bool X86FastISel::X86SelectBranch(const Instruction *I) {
   // In case OpReg is a K register, COPY to a GPR
   if (MRI.getRegClass(OpReg) == &X86::VK1RegClass) {
     unsigned KOpReg = OpReg;
-    OpReg = createResultReg(&X86::GR8RegClass);
+    OpReg = createResultReg(Subtarget->is64Bit() ? &X86::GR8RegClass
+                                                 : &X86::GR8_ABCD_LRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
             TII.get(TargetOpcode::COPY), OpReg)
         .addReg(KOpReg);
