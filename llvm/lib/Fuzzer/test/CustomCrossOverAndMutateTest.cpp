@@ -3,13 +3,13 @@
 
 // Test that libFuzzer does not crash when LLVMFuzzerMutate called from
 // LLVMFuzzerCustomCrossOver.
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <string>
 #include <string.h>
+#include <string>
 #include <vector>
-#include <algorithm>
 
 #include "FuzzerInterface.h"
 
