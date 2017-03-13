@@ -23,6 +23,7 @@
 #include <cstdlib> // for qsort
 #include <functional>
 #include <iterator>
+#include <limits>
 #include <memory>
 #include <tuple>
 #include <utility> // for std::pair
