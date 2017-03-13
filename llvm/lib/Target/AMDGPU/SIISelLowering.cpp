@@ -19,6 +19,7 @@
 
 #include "AMDGPU.h"
 #include "AMDGPUIntrinsicInfo.h"
+#include "AMDGPUTargetMachine.h"
 #include "AMDGPUSubtarget.h"
 #include "SIDefines.h"
 #include "SIISelLowering.h"
@@ -68,7 +69,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetCallingConv.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <cassert>
@@ -2374,11 +2374,6 @@ SDValue SITargetLowering::getSegmentAperture(unsigned AS,
                          MachineMemOperand::MOInvariant);
 }
 
-// FIXME: Really support non-0 null pointers.
-static int getSegmentNullPtrValue(unsigned AS) {
-  return AS == AMDGPUAS::LOCAL_ADDRESS ? -1 : 0;
-}
-
 SDValue SITargetLowering::lowerADDRSPACECAST(SDValue Op,
                                              SelectionDAG &DAG) const {
   SDLoc SL(Op);
@@ -2387,12 +2382,15 @@ SDValue SITargetLowering::lowerADDRSPACECAST(SDValue Op,
   SDValue Src = ASC->getOperand(0);
   SDValue FlatNullPtr = DAG.getConstant(0, SL, MVT::i64);
 
+  const AMDGPUTargetMachine &TM =
+    static_cast<const AMDGPUTargetMachine &>(getTargetMachine());
+
   // flat -> local/private
   if (ASC->getSrcAddressSpace() == AMDGPUAS::FLAT_ADDRESS) {
     unsigned DestAS = ASC->getDestAddressSpace();
     if (DestAS == AMDGPUAS::LOCAL_ADDRESS || DestAS == AMDGPUAS::PRIVATE_ADDRESS) {
-      SDValue SegmentNullPtr
-        = DAG.getConstant(getSegmentNullPtrValue(DestAS), SL, MVT::i32);
+      unsigned NullVal = TM.getNullPointerValue(DestAS);
+      SDValue SegmentNullPtr = DAG.getConstant(NullVal, SL, MVT::i32);
       SDValue NonNull = DAG.getSetCC(SL, MVT::i1, Src, FlatNullPtr, ISD::SETNE);
       SDValue Ptr = DAG.getNode(ISD::TRUNCATE, SL, MVT::i32, Src);
 
@@ -2405,8 +2403,8 @@ SDValue SITargetLowering::lowerADDRSPACECAST(SDValue Op,
   if (ASC->getDestAddressSpace() == AMDGPUAS::FLAT_ADDRESS) {
     unsigned SrcAS = ASC->getSrcAddressSpace();
     if (SrcAS == AMDGPUAS::LOCAL_ADDRESS || SrcAS == AMDGPUAS::PRIVATE_ADDRESS) {
-      SDValue SegmentNullPtr
-        = DAG.getConstant(getSegmentNullPtrValue(SrcAS), SL, MVT::i32);
+      unsigned NullVal = TM.getNullPointerValue(SrcAS);
+      SDValue SegmentNullPtr = DAG.getConstant(NullVal, SL, MVT::i32);
 
       SDValue NonNull
         = DAG.getSetCC(SL, MVT::i1, Src, SegmentNullPtr, ISD::SETNE);
