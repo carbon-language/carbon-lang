@@ -847,7 +847,7 @@ TEST_F(FileSystemTest, BrokenSymlinkDirectoryIteration) {
     ASSERT_NO_ERROR(ec);
     visited.push_back(path::filename(i->path()));
   }
-
+  std::sort(visited.begin(), visited.end());
   expected = {"a", "b", "ba", "bb", "bc", "c", "d", "da", "dd", "ddd", "e"};
   ASSERT_TRUE(visited.size() == expected.size());
   ASSERT_TRUE(std::equal(visited.begin(), visited.end(), expected.begin()));
