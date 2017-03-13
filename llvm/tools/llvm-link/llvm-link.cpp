@@ -318,7 +318,7 @@ static bool linkFiles(const char *argv0, LLVMContext &Context, Linker &L,
     if (InternalizeLinkedSymbols) {
       Err = L.linkInModule(
           std::move(M), ApplicableFlags, [](Module &M, const StringSet<> &GVS) {
-            internalizeModule(M, [&M, &GVS](const GlobalValue &GV) {
+            internalizeModule(M, [&GVS](const GlobalValue &GV) {
               return !GV.hasName() || (GVS.count(GV.getName()) == 0);
             });
           });
