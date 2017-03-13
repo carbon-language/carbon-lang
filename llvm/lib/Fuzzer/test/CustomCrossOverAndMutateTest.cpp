@@ -9,6 +9,7 @@
 #include <string>
 #include <string.h>
 #include <vector>
+#include <algorithm>
 
 #include "FuzzerInterface.h"
 
@@ -27,7 +28,7 @@ extern "C" size_t LLVMFuzzerCustomCrossOver(const uint8_t *Data1, size_t Size1,
                                             unsigned int Seed) {
   std::vector<uint8_t> Buffer(MaxOutSize * 10);
   LLVMFuzzerMutate(Buffer.data(), Buffer.size(), Buffer.size());
-  size_t Size = std::min<size_t>(Size1, MaxOutSize);
+  size_t Size = std::min(Size1, MaxOutSize);
   memcpy(Out, Data1, Size);
   return Size;
 }
