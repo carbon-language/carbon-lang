@@ -19854,6 +19854,28 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget &Subtarget
   }
 }
 
+static SDValue getAVX2GatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
+                                 SDValue Src, SDValue Mask, SDValue Base,
+                                 SDValue Index, SDValue ScaleOp, SDValue Chain,
+                                 const X86Subtarget &Subtarget) {
+  SDLoc dl(Op);
+  auto *C = cast<ConstantSDNode>(ScaleOp);
+  SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), dl, MVT::i8);
+  EVT MaskVT = Mask.getValueType();
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MaskVT, MVT::Other);
+  SDValue Disp = DAG.getTargetConstant(0, dl, MVT::i32);
+  SDValue Segment = DAG.getRegister(0, MVT::i32);
+  // If source is undef or we know it won't be used, use a zero vector
+  // to break register dependency.
+  // TODO: use undef instead and let ExeDepsFix deal with it?
+  if (Src.isUndef() || ISD::isBuildVectorAllOnes(Mask.getNode()))
+    Src = getZeroVector(Op.getSimpleValueType(), Subtarget, DAG, dl);
+  SDValue Ops[] = {Src, Base, Scale, Index, Disp, Segment, Mask, Chain};
+  SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
+  SDValue RetOps[] = { SDValue(Res, 0), SDValue(Res, 2) };
+  return DAG.getMergeValues(RetOps, dl);
+}
+
 static SDValue getGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
                               SDValue Src, SDValue Mask, SDValue Base,
                               SDValue Index, SDValue ScaleOp, SDValue Chain,
@@ -20180,6 +20202,16 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget &Subtarget,
     // Return { result, isValid, chain }.
     return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(), Result, isValid,
                        SDValue(Result.getNode(), 2));
+  }
+  case GATHER_AVX2: {
+    SDValue Chain = Op.getOperand(0);
+    SDValue Src   = Op.getOperand(2);
+    SDValue Base  = Op.getOperand(3);
+    SDValue Index = Op.getOperand(4);
+    SDValue Mask  = Op.getOperand(5);
+    SDValue Scale = Op.getOperand(6);
+    return getAVX2GatherNode(IntrData->Opc0, Op, DAG, Src, Mask, Base, Index,
+                             Scale, Chain, Subtarget);
   }
   case GATHER: {
   //gather(v1, mask, index, base, scale);
