@@ -42,6 +42,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Object/Decompressor.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TarWriter.h"
 #include "llvm/Support/TargetSelect.h"
@@ -796,6 +797,17 @@ static uint64_t getImageBase(opt::InputArgList &Args) {
   return V;
 }
 
+static void ensureWritable(StringRef Path) {
+  if (Path.empty())
+    return;
+
+  ErrorOr<std::unique_ptr<FileOutputBuffer>> Err =
+      FileOutputBuffer::create(Path, 1);
+  if (!Err)
+    error("cannot open output file " + Path + ": " +
+          Err.getError().message());
+}
+
 // Do actual linking. Note that when this function is called,
 // all linker scripts have already been parsed.
 template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
@@ -818,6 +830,13 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
       (!Config->Entry.empty() || (!Config->Shared && !Config->Relocatable));
   if (Config->Entry.empty() && !Config->Relocatable)
     Config->Entry = (Config->EMachine == EM_MIPS) ? "__start" : "_start";
+
+  // Fail early if the output file is not writable. If a user has a long link,
+  // e.g. due to a large LTO link, they do not wish to run it and find that it
+  // failed because there was a mistake in their command-line.
+  ensureWritable(Config->OutputFile);
+  if (ErrorCount)
+    return;
 
   // Handle --trace-symbol.
   for (auto *Arg : Args.filtered(OPT_trace_symbol))
