@@ -28,7 +28,6 @@ class BinaryStreamWriter;
 namespace codeview {
 
 class SymbolSerializer : public SymbolVisitorCallbacks {
-  uint32_t RecordStart = 0;
   BumpPtrAllocator &Storage;
   std::vector<uint8_t> RecordBuffer;
   MutableBinaryByteStream Stream;
