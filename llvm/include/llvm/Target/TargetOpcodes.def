@@ -392,14 +392,16 @@ HANDLE_TARGET_OPCODE(G_GEP)
 /// *down* to the given alignment.
 HANDLE_TARGET_OPCODE(G_PTR_MASK)
 
-/// Generic BRANCH instruction. This is an unconditional branch.
-HANDLE_TARGET_OPCODE(G_BR)
-
 /// Generic insertelement.
 HANDLE_TARGET_OPCODE(G_INSERT_VECTOR_ELT)
 
 /// Generic extractelement.
 HANDLE_TARGET_OPCODE(G_EXTRACT_VECTOR_ELT)
+
+/// Generic BRANCH instruction. This is an unconditional branch.
+HANDLE_TARGET_OPCODE(G_BR)
+// WARNING: make sure you update the PRE_ISEL_GENERIC_OPCODE_END if you put
+// anything after G_BR!!! Better yet, don't.
 
 // TODO: Add more generic opcodes as we move along.
 

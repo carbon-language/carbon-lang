@@ -138,3 +138,12 @@ broken:
 continue:
   ret void
 }
+
+; FALLBACK-WITH-REPORT-ERR: remark: <unknown>:0:0: unable to legalize instruction: {{.*}} G_EXTRACT_VECTOR
+; FALLBACK-WITH-REPORT-ERR: warning: Instruction selection used fallback path for unhandled_extract
+; FALLBACK-WITH-REPORT-OUT-LABEL: unhandled_extract:
+define i32 @unhandled_extract(<2 x i32> %in, i64 %elt) {
+  %tmp = extractelement <2 x i32> %in, i64 %elt
+  %res = add i32 %tmp, 1
+  ret i32 %res
+}
