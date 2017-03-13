@@ -631,7 +631,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   std::tie(Config->SysvHash, Config->GnuHash) = getHashStyle(Args);
 
-  // Parse --build-id or --build-id=<style>.
+  // Parse --build-id or --build-id=<style>. We handle "tree" as a
+  // synonym for "sha1" because all of our hash functions including
+  // -build-id=sha1 are tree hashes for performance reasons.
   if (Args.hasArg(OPT_build_id))
     Config->BuildId = BuildIdKind::Fast;
   if (auto *Arg = Args.getLastArg(OPT_build_id_eq)) {
