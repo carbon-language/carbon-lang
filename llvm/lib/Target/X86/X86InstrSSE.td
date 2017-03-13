@@ -1750,15 +1750,15 @@ def Int_VCVTSD2SSrr: I<0x5A, MRMSrcReg,
                        "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                        [(set VR128:$dst,
                          (int_x86_sse2_cvtsd2ss VR128:$src1, VR128:$src2))],
-                       IIC_SSE_CVT_Scalar_RR>, XD, VEX_4V, Requires<[HasAVX]>,
-                       Sched<[WriteCvtF2F]>;
+                       IIC_SSE_CVT_Scalar_RR>, XD, VEX_4V, VEX_WIG,
+                       Requires<[HasAVX]>, Sched<[WriteCvtF2F]>;
 def Int_VCVTSD2SSrm: I<0x5A, MRMSrcMem,
                        (outs VR128:$dst), (ins VR128:$src1, sdmem:$src2),
                        "vcvtsd2ss\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                        [(set VR128:$dst, (int_x86_sse2_cvtsd2ss
                                           VR128:$src1, sse_load_f64:$src2))],
-                       IIC_SSE_CVT_Scalar_RM>, XD, VEX_4V, Requires<[HasAVX]>,
-                       Sched<[WriteCvtF2FLd, ReadAfterLd]>;
+                       IIC_SSE_CVT_Scalar_RM>, XD, VEX_4V, VEX_WIG,
+                       Requires<[HasAVX]>, Sched<[WriteCvtF2FLd, ReadAfterLd]>;
 
 let Constraints = "$src1 = $dst" in {
 def Int_CVTSD2SSrr: I<0x5A, MRMSrcReg,
@@ -1835,15 +1835,15 @@ def Int_VCVTSS2SDrr: I<0x5A, MRMSrcReg,
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst,
                       (int_x86_sse2_cvtss2sd VR128:$src1, VR128:$src2))],
-                    IIC_SSE_CVT_Scalar_RR>, XS, VEX_4V, Requires<[HasAVX]>,
-                    Sched<[WriteCvtF2F]>;
+                    IIC_SSE_CVT_Scalar_RR>, XS, VEX_4V, VEX_WIG,
+                    Requires<[HasAVX]>, Sched<[WriteCvtF2F]>;
 def Int_VCVTSS2SDrm: I<0x5A, MRMSrcMem,
                       (outs VR128:$dst), (ins VR128:$src1, ssmem:$src2),
                     "vcvtss2sd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                     [(set VR128:$dst,
                       (int_x86_sse2_cvtss2sd VR128:$src1, sse_load_f32:$src2))],
-                    IIC_SSE_CVT_Scalar_RM>, XS, VEX_4V, Requires<[HasAVX]>,
-                    Sched<[WriteCvtF2FLd, ReadAfterLd]>;
+                    IIC_SSE_CVT_Scalar_RM>, XS, VEX_4V, VEX_WIG,
+                    Requires<[HasAVX]>, Sched<[WriteCvtF2FLd, ReadAfterLd]>;
 let Constraints = "$src1 = $dst" in { // SSE2 instructions with XS prefix
 def Int_CVTSS2SDrr: I<0x5A, MRMSrcReg,
                       (outs VR128:$dst), (ins VR128:$src1, VR128:$src2),
