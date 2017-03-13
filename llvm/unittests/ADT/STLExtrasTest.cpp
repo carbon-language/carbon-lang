@@ -258,7 +258,7 @@ TEST(STLExtrasTest, CountAdaptor) {
 TEST(STLExtrasTest, ToVector) {
   std::vector<char> v = {'a', 'b', 'c'};
   auto Enumerated = to_vector<4>(enumerate(v));
-  ASSERT_EQ(3, Enumerated.size());
+  ASSERT_EQ(3u, Enumerated.size());
   for (size_t I = 0; I < v.size(); ++I) {
     EXPECT_EQ(I, Enumerated[I].index());
     EXPECT_EQ(v[I], Enumerated[I].value());
