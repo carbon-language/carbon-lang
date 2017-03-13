@@ -1611,6 +1611,13 @@ TEST_F(FormatTestJS, JSDocAnnotations) {
                " * @param {this.is.a.long.path.to.a.Type}\n"
                " */",
                getGoogleJSStyleWithColumns(20));
+  verifyFormat("/**\n"
+               " * @see http://very/very/long/url/is/long\n"
+               " */",
+               "/**\n"
+               " * @see http://very/very/long/url/is/long\n"
+               " */",
+               getGoogleJSStyleWithColumns(20));
   verifyFormat(
       "/**\n"
       " * @param This is a\n"
