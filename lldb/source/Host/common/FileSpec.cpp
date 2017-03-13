@@ -218,7 +218,7 @@ void FileSpec::ResolveUsername(llvm::SmallVectorImpl<char> &path) {
 
 size_t FileSpec::ResolvePartialUsername(llvm::StringRef partial_name,
                                         StringList &matches) {
-#ifndef LLVM_ON_WIN32
+#if !defined(LLVM_ON_WIN32) || !defined(__ANDROID__)
   size_t extant_entries = matches.GetSize();
 
   setpwent();
