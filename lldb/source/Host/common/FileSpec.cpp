@@ -651,11 +651,8 @@ bool FileSpec::ResolvePath() {
   if (m_is_resolved)
     return true; // We have already resolved this path
 
-  char path_buf[PATH_MAX];
-  if (!GetPath(path_buf, PATH_MAX, false))
-    return false;
   // SetFile(...) will set m_is_resolved correctly if it can resolve the path
-  SetFile(path_buf, true);
+  SetFile(GetPath(false), true);
   return m_is_resolved;
 }
 
@@ -779,7 +776,7 @@ void FileSpec::EnumerateDirectory(llvm::StringRef dir_path,
   for (; Iter != End && !EC; Iter.increment(EC)) {
     const auto &Item = *Iter;
     fs::file_status Status;
-    if (EC = Item.status(Status))
+    if ((EC = Item.status(Status)))
       break;
     if (!find_files && fs::is_regular_file(Status))
       continue;

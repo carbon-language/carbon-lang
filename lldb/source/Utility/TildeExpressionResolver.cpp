@@ -62,7 +62,8 @@ bool StandardTildeExpressionResolver::ResolvePartial(StringRef Expr,
 
     Buffer.resize(1);
     Buffer.append(ThisName);
-    Buffer.append(path::get_separator()) Output.insert(Buffer);
+    Buffer.append(path::get_separator());
+    Output.insert(Buffer);
   }
 
   return true;
