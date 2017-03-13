@@ -727,11 +727,11 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
     CodeGenOptions::BitcodeFileToLink F;
     F.Filename = A->getValue();
     if (A->getOption().matches(OPT_mlink_cuda_bitcode)) {
-      F.LinkFlags = llvm::Linker::Flags::LinkOnlyNeeded |
-                    llvm::Linker::Flags::InternalizeLinkedSymbols;
+      F.LinkFlags = llvm::Linker::Flags::LinkOnlyNeeded;
       // When linking CUDA bitcode, propagate function attributes so that
       // e.g. libdevice gets fast-math attrs if we're building with fast-math.
       F.PropagateAttrs = true;
+      F.Internalize = true;
     }
     Opts.LinkBitcodeFiles.push_back(F);
   }
