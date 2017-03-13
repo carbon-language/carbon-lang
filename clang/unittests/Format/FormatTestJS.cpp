@@ -1714,6 +1714,12 @@ TEST_F(FormatTestJS, NonNullAssertionOperator) {
   verifyFormat("let x = (foo)!;\n");
   verifyFormat("let x = foo! - 1;\n");
   verifyFormat("let x = {foo: 1}!;\n");
+  verifyFormat(
+      "let x = hello.foo()!\n"
+      "            .foo()!\n"
+      "            .foo()!\n"
+      "            .foo()!;\n",
+      getGoogleJSStyleWithColumns(20));
 }
 
 TEST_F(FormatTestJS, Conditional) {
