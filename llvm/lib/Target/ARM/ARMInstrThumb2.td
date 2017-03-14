@@ -2603,8 +2603,12 @@ def t2MLS: T2FourRegMLA<0b0001, "mls",
 // Extra precision multiplies with low / high results
 let hasSideEffects = 0 in {
 let isCommutable = 1 in {
-def t2SMULL : T2MulLong<0b000, 0b0000, "smull", []>;
-def t2UMULL : T2MulLong<0b010, 0b0000, "umull", []>;
+def t2SMULL : T2MulLong<0b000, 0b0000, "smull",
+                        [(set rGPR:$RdLo, rGPR:$RdHi,
+                              (smullohi rGPR:$Rn, rGPR:$Rm))]>;
+def t2UMULL : T2MulLong<0b010, 0b0000, "umull",
+                        [(set rGPR:$RdLo, rGPR:$RdHi,
+                              (umullohi rGPR:$Rn, rGPR:$Rm))]>;
 } // isCommutable
 
 // Multiply + accumulate

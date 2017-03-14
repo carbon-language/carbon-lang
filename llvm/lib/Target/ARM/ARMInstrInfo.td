@@ -3956,27 +3956,35 @@ let hasSideEffects = 0 in {
 let isCommutable = 1 in {
 def SMULL : AsMul1I64<0b0000110, (outs GPR:$RdLo, GPR:$RdHi),
                                  (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
-                    "smull", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                    "smull", "\t$RdLo, $RdHi, $Rn, $Rm",
+                    [(set GPR:$RdLo, GPR:$RdHi,
+                          (smullohi GPR:$Rn, GPR:$Rm))]>,
                     Requires<[IsARM, HasV6]>,
            Sched<[WriteMUL64Lo, WriteMUL64Hi, ReadMUL, ReadMUL]>;
 
 def UMULL : AsMul1I64<0b0000100, (outs GPR:$RdLo, GPR:$RdHi),
                                  (ins GPR:$Rn, GPR:$Rm), IIC_iMUL64,
-                    "umull", "\t$RdLo, $RdHi, $Rn, $Rm", []>,
+                    "umull", "\t$RdLo, $RdHi, $Rn, $Rm",
+                    [(set GPR:$RdLo, GPR:$RdHi,
+                          (umullohi GPR:$Rn, GPR:$Rm))]>,
                     Requires<[IsARM, HasV6]>,
            Sched<[WriteMAC64Lo, WriteMAC64Hi, ReadMUL, ReadMUL]>;
 
 let Constraints = "@earlyclobber $RdLo,@earlyclobber $RdHi" in {
 def SMULLv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                             (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            4, IIC_iMUL64, [],
+                            4, IIC_iMUL64,
+                            [(set GPR:$RdLo, GPR:$RdHi,
+                                  (smullohi GPR:$Rn, GPR:$Rm))],
           (SMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                            Requires<[IsARM, NoV6]>,
               Sched<[WriteMUL64Lo, WriteMUL64Hi, ReadMUL, ReadMUL]>;
 
 def UMULLv5 : ARMPseudoExpand<(outs GPR:$RdLo, GPR:$RdHi),
                             (ins GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s),
-                            4, IIC_iMUL64, [],
+                            4, IIC_iMUL64,
+                            [(set GPR:$RdLo, GPR:$RdHi,
+                                  (umullohi GPR:$Rn, GPR:$Rm))],
           (UMULL GPR:$RdLo, GPR:$RdHi, GPR:$Rn, GPR:$Rm, pred:$p, cc_out:$s)>,
                            Requires<[IsARM, NoV6]>,
              Sched<[WriteMUL64Lo, WriteMUL64Hi, ReadMUL, ReadMUL]>;
