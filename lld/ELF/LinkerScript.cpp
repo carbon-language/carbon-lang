@@ -518,7 +518,6 @@ template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
   }
 }
 
-template <class ELFT>
 static OutputSection *
 findSection(StringRef Name, const std::vector<OutputSection *> &Sections) {
   auto End = Sections.end();
@@ -571,7 +570,7 @@ MemoryRegion *LinkerScript<ELFT>::findMemoryRegion(OutputSectionCommand *Cmd,
 // for a single sections command (e.g. ".text { *(.text); }").
 template <class ELFT>
 void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
-  OutputSection *Sec = findSection<ELFT>(Cmd->Name, *OutputSections);
+  OutputSection *Sec = findSection(Cmd->Name, *OutputSections);
   if (!Sec)
     return;
 
@@ -618,7 +617,7 @@ template <class ELFT> void LinkerScript<ELFT>::removeEmptyCommands() {
       Opt.Commands.begin(), Opt.Commands.end(),
       [&](const std::unique_ptr<BaseCommand> &Base) {
         if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
-          return !findSection<ELFT>(Cmd->Name, *OutputSections);
+          return !findSection(Cmd->Name, *OutputSections);
         return false;
       });
   Opt.Commands.erase(Pos, Opt.Commands.end());
@@ -642,7 +641,7 @@ template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
     if (!Cmd)
       continue;
-    if (OutputSection *Sec = findSection<ELFT>(Cmd->Name, *OutputSections)) {
+    if (OutputSection *Sec = findSection(Cmd->Name, *OutputSections)) {
       Flags = Sec->Flags;
       Type = Sec->Type;
       continue;
