@@ -133,7 +133,6 @@ Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
   assert(!F);
   F = this;
   TPC.ResetMaps();
-  ResetCoverage();
   IsMyThread = true;
   if (Options.DetectLeaks && EF->__sanitizer_install_malloc_and_free_hooks)
     EF->__sanitizer_install_malloc_and_free_hooks(MallocHook, FreeHook);
@@ -293,24 +292,18 @@ void Fuzzer::PrintStats(const char *Where, const char *End, size_t Units) {
       csvHeaderPrinted = true;
       Printf("runs,block_cov,bits,cc_cov,corpus,execs_per_sec,tbms,reason\n");
     }
-    Printf("%zd,%zd,%zd,%zd,%zd,%zd,%s\n", TotalNumberOfRuns,
-           MaxCoverage.BlockCoverage, MaxCoverage.CounterBitmapBits,
-           MaxCoverage.CallerCalleeCoverage, Corpus.size(), ExecPerSec, Where);
+    Printf("%zd,%zd,%zd,%zd,%s\n", TotalNumberOfRuns,
+           TPC.GetTotalPCCoverage(),
+           Corpus.size(), ExecPerSec, Where);
   }
 
   if (!Options.Verbosity)
     return;
   Printf("#%zd\t%s", TotalNumberOfRuns, Where);
-  if (MaxCoverage.BlockCoverage)
-    Printf(" cov: %zd", MaxCoverage.BlockCoverage);
   if (size_t N = TPC.GetTotalPCCoverage())
     Printf(" cov: %zd", N);
-  if (auto TB = MaxCoverage.CounterBitmapBits)
-    Printf(" bits: %zd", TB);
   if (size_t N = Corpus.NumFeatures())
     Printf( " ft: %zd", N);
-  if (MaxCoverage.CallerCalleeCoverage)
-    Printf(" indir: %zd", MaxCoverage.CallerCalleeCoverage);
   if (!Corpus.empty()) {
     Printf(" corp: %zd", Corpus.NumActiveUnits());
     if (size_t N = Corpus.SizeInBytes()) {
@@ -429,8 +422,6 @@ void Fuzzer::ShuffleAndMinimize(UnitVector *InitialCorpus) {
     if (size_t NumFeatures = RunOne(U)) {
       CheckExitOnSrcPosOrItem();
       Corpus.AddToCorpus(U, NumFeatures);
-      if (Options.Verbosity >= 2)
-        Printf("NEW0: %zd L %zd\n", MaxCoverage.BlockCoverage, U.size());
     }
     TryDetectingAMemoryLeak(U.data(), U.size(),
                             /*DuringInitialCorpusExecution*/ true);
@@ -557,7 +548,6 @@ UnitVector Fuzzer::FindExtraUnits(const UnitVector &Initial,
     ShuffleCorpus(&Res);
     TPC.ResetMaps();
     Corpus.ResetFeatureSet();
-    ResetCoverage();
 
     for (auto &U : Initial) {
       TPC.ResetMaps();
@@ -707,10 +697,6 @@ void Fuzzer::MutateAndTestOne() {
     TryDetectingAMemoryLeak(CurrentUnitData, Size,
                             /*DuringInitialCorpusExecution*/ false);
   }
-}
-
-void Fuzzer::ResetCoverage() {
-  MaxCoverage.Reset();
 }
 
 void Fuzzer::Loop() {

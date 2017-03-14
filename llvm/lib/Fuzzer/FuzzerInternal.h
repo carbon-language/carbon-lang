@@ -32,24 +32,6 @@ using namespace std::chrono;
 class Fuzzer {
 public:
 
-  // Aggregates all available coverage measurements.
-  struct Coverage {
-    Coverage() { Reset(); }
-
-    void Reset() {
-      BlockCoverage = 0;
-      CallerCalleeCoverage = 0;
-      CounterBitmapBits = 0;
-      CounterBitmap.clear();
-    }
-
-    size_t BlockCoverage;
-    size_t CallerCalleeCoverage;
-    // Precalculated number of bits in CounterBitmap.
-    size_t CounterBitmapBits;
-    std::vector<uint8_t> CounterBitmap;
-  };
-
   Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
          FuzzingOptions Options);
   ~Fuzzer();
@@ -97,9 +79,6 @@ public:
   void SetMaxInputLen(size_t MaxInputLen);
   void SetMaxMutationLen(size_t MaxMutationLen);
   void RssLimitCallback();
-
-  // Public for tests.
-  void ResetCoverage();
 
   bool InFuzzingThread() const { return IsMyThread; }
   size_t GetCurrentUnitInFuzzingThead(const uint8_t **Data) const;
@@ -159,9 +138,6 @@ private:
   system_clock::time_point UnitStartTime, UnitStopTime;
   long TimeOfLongestUnitInSeconds = 0;
   long EpochOfLastReadOfOutputCorpus = 0;
-
-  // Maximum recorded coverage.
-  Coverage MaxCoverage;
 
   size_t MaxInputLen = 0;
   size_t MaxMutationLen = 0;
