@@ -253,7 +253,6 @@ static uint64_t getOutFlags(InputSectionBase *S) {
   return S->Flags & ~SHF_GROUP & ~SHF_COMPRESSED;
 }
 
-template <class ELFT>
 static SectionKey createKey(InputSectionBase *C, StringRef OutsecName) {
   //  The ELF spec just says
   // ----------------------------------------------------------------
@@ -298,12 +297,10 @@ static SectionKey createKey(InputSectionBase *C, StringRef OutsecName) {
   // Given the above issues, we instead merge sections by name and error on
   // incompatible types and flags.
 
-  typedef typename ELFT::uint uintX_t;
-
   uint32_t Alignment = 0;
-  uintX_t Flags = 0;
+  uint64_t Flags = 0;
   if (Config->Relocatable && (C->Flags & SHF_MERGE)) {
-    Alignment = std::max<uintX_t>(C->Alignment, C->Entsize);
+    Alignment = std::max<uint64_t>(C->Alignment, C->Entsize);
     Flags = C->Flags & (SHF_MERGE | SHF_STRINGS);
   }
 
@@ -345,7 +342,7 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
     return;
   }
 
-  SectionKey Key = createKey<ELFT>(IS, OutsecName);
+  SectionKey Key = createKey(IS, OutsecName);
   uint64_t Flags = getOutFlags(IS);
   OutputSection *&Sec = Map[Key];
   if (Sec) {
