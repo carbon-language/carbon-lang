@@ -14,6 +14,7 @@
 #define LLVM_LIB_TARGET_X86_X86INSTRUCTIONSELECTOR_H
 
 #include "llvm/CodeGen/GlobalISel/InstructionSelector.h"
+#include "llvm/CodeGen/MachineOperand.h"
 
 namespace llvm {
 
@@ -49,6 +50,10 @@ private:
   const X86InstrInfo &TII;
   const X86RegisterInfo &TRI;
   const X86RegisterBankInfo &RBI;
+
+#define GET_GLOBALISEL_TEMPORARIES_DECL
+#include "X86GenGlobalISel.inc"
+#undef GET_GLOBALISEL_TEMPORARIES_DECL
 };
 
 } // end namespace llvm
