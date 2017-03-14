@@ -111,13 +111,10 @@ define void @test_mm_mask_store_ss(float* %__W, i8 zeroext %__U, <4 x float> %__
 ;
 ; CHECK32-LABEL: test_mm_mask_store_ss:
 ; CHECK32:       # BB#0: # %entry
-; CHECK32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
 ; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK32-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
-; CHECK32-NEXT:    andl $1, %ecx
 ; CHECK32-NEXT:    kmovw %ecx, %k1
-; CHECK32-NEXT:    vmovups %zmm0, (%eax) {%k1}
-; CHECK32-NEXT:    vzeroupper
+; CHECK32-NEXT:    vmovss %xmm0, (%eax) {%k1}
 ; CHECK32-NEXT:    retl
 entry:
   %0 = bitcast float* %__W to <16 x float>*
@@ -138,13 +135,10 @@ define void @test_mm_mask_store_sd(double* %__W, i8 zeroext %__U, <2 x double> %
 ;
 ; CHECK32-LABEL: test_mm_mask_store_sd:
 ; CHECK32:       # BB#0: # %entry
-; CHECK32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<def>
 ; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK32-NEXT:    movb {{[0-9]+}}(%esp), %cl
-; CHECK32-NEXT:    andb $1, %cl
 ; CHECK32-NEXT:    kmovw %ecx, %k1
-; CHECK32-NEXT:    vmovupd %zmm0, (%eax) {%k1}
-; CHECK32-NEXT:    vzeroupper
+; CHECK32-NEXT:    vmovsd %xmm0, (%eax) {%k1}
 ; CHECK32-NEXT:    retl
 entry:
   %0 = bitcast double* %__W to <8 x double>*
@@ -166,13 +160,8 @@ define <4 x float> @test_mm_mask_load_ss(<4 x float> %__A, i8 zeroext %__U, floa
 ; CHECK32:       # BB#0: # %entry
 ; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK32-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
-; CHECK32-NEXT:    vxorps %xmm1, %xmm1, %xmm1
-; CHECK32-NEXT:    vmovss {{.*#+}} xmm0 = xmm0[0],xmm1[1,2,3]
-; CHECK32-NEXT:    andl $1, %ecx
 ; CHECK32-NEXT:    kmovw %ecx, %k1
-; CHECK32-NEXT:    vmovups (%eax), %zmm0 {%k1}
-; CHECK32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
-; CHECK32-NEXT:    vzeroupper
+; CHECK32-NEXT:    vmovss (%eax), %xmm0 {%k1}
 ; CHECK32-NEXT:    retl
 entry:
   %shuffle.i = shufflevector <4 x float> %__A, <4 x float> <float 0.000000e+00, float undef, float undef, float undef>, <4 x i32> <i32 0, i32 4, i32 4, i32 4>
@@ -197,12 +186,8 @@ define <2 x double> @test_mm_mask_load_sd(<2 x double> %__A, i8 zeroext %__U, do
 ; CHECK32:       # BB#0: # %entry
 ; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK32-NEXT:    movb {{[0-9]+}}(%esp), %cl
-; CHECK32-NEXT:    vmovq {{.*#+}} xmm0 = xmm0[0],zero
-; CHECK32-NEXT:    andb $1, %cl
 ; CHECK32-NEXT:    kmovw %ecx, %k1
-; CHECK32-NEXT:    vmovupd (%eax), %zmm0 {%k1}
-; CHECK32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
-; CHECK32-NEXT:    vzeroupper
+; CHECK32-NEXT:    vmovsd (%eax), %xmm0 {%k1}
 ; CHECK32-NEXT:    retl
 entry:
   %shuffle5.i = insertelement <2 x double> %__A, double 0.000000e+00, i32 1
@@ -226,11 +211,8 @@ define <4 x float> @test_mm_maskz_load_ss(i8 zeroext %__U, float* %__W) local_un
 ; CHECK32:       # BB#0: # %entry
 ; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK32-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
-; CHECK32-NEXT:    andl $1, %ecx
 ; CHECK32-NEXT:    kmovw %ecx, %k1
-; CHECK32-NEXT:    vmovups (%eax), %zmm0 {%k1} {z}
-; CHECK32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
-; CHECK32-NEXT:    vzeroupper
+; CHECK32-NEXT:    vmovss (%eax), %xmm0 {%k1} {z}
 ; CHECK32-NEXT:    retl
 entry:
   %0 = bitcast float* %__W to <16 x float>*
@@ -253,11 +235,8 @@ define <2 x double> @test_mm_maskz_load_sd(i8 zeroext %__U, double* %__W) local_
 ; CHECK32:       # BB#0: # %entry
 ; CHECK32-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; CHECK32-NEXT:    movb {{[0-9]+}}(%esp), %cl
-; CHECK32-NEXT:    andb $1, %cl
 ; CHECK32-NEXT:    kmovw %ecx, %k1
-; CHECK32-NEXT:    vmovupd (%eax), %zmm0 {%k1} {z}
-; CHECK32-NEXT:    # kill: %XMM0<def> %XMM0<kill> %ZMM0<kill>
-; CHECK32-NEXT:    vzeroupper
+; CHECK32-NEXT:    vmovsd (%eax), %xmm0 {%k1} {z}
 ; CHECK32-NEXT:    retl
 entry:
   %0 = bitcast double* %__W to <8 x double>*
