@@ -81,7 +81,7 @@ static bool isUnderSysroot(StringRef Path) {
 
 template <class ELFT>
 void LinkerScript<ELFT>::setDot(Expr E, const Twine &Loc, bool InSec) {
-  uintX_t Val = E();
+  uint64_t Val = E();
   if (Val < Dot) {
     if (InSec)
       error(Loc + ": unable to move location counter backward for: " +
@@ -398,7 +398,7 @@ template <class ELFT> void LinkerScript<ELFT>::output(InputSection *S) {
     return;
   bool IsTbss = isTbss<ELFT>(CurOutSec);
 
-  uintX_t Pos = IsTbss ? Dot + ThreadBssOffset : Dot;
+  uint64_t Pos = IsTbss ? Dot + ThreadBssOffset : Dot;
   Pos = alignTo(Pos, S->Alignment);
   S->OutSecOff = Pos - CurOutSec->Addr;
   Pos += S->getSize();
@@ -555,7 +555,7 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
     setDot(Cmd->AddrExpr, Cmd->Location);
 
   if (Cmd->LMAExpr) {
-    uintX_t D = Dot;
+    uint64_t D = Dot;
     LMAOffset = [=] { return Cmd->LMAExpr() - D; };
   }
 
@@ -612,7 +612,7 @@ template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
   // corresponding output section. The bfd linker seems to only create them if
   // '.' is assigned to, but creating these section should not have any bad
   // consequeces and gives us a section to put the symbol in.
-  uintX_t Flags = SHF_ALLOC;
+  uint64_t Flags = SHF_ALLOC;
   uint32_t Type = SHT_NOBITS;
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
@@ -784,7 +784,7 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
     assignOffsets(Cmd);
   }
 
-  uintX_t MinVA = std::numeric_limits<uintX_t>::max();
+  uint64_t MinVA = std::numeric_limits<uint64_t>::max();
   for (OutputSection *Sec : *OutputSections) {
     if (Sec->Flags & SHF_ALLOC)
       MinVA = std::min<uint64_t>(MinVA, Sec->Addr);

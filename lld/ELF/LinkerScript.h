@@ -234,6 +234,9 @@ protected:
   // "ScriptConfig" is a bit too long, so define a short name for it.
   ScriptConfiguration &Opt = *ScriptConfig;
 
+  uint64_t Dot;
+  uint64_t ThreadBssOffset = 0;
+
 public:
   bool hasPhdrsCommands() { return !Opt.PhdrsCommands.empty(); }
 
@@ -248,8 +251,6 @@ public:
 
 // This is a runner of the linker script.
 template <class ELFT> class LinkerScript final : public LinkerScriptBase {
-  typedef typename ELFT::uint uintX_t;
-
 public:
   LinkerScript();
   ~LinkerScript();
@@ -297,11 +298,9 @@ private:
 
   MemoryRegion *findMemoryRegion(OutputSectionCommand *Cmd, OutputSection *Sec);
 
-  uintX_t Dot;
   std::function<uint64_t()> LMAOffset;
   OutputSection *CurOutSec = nullptr;
   MemoryRegion *CurMemRegion = nullptr;
-  uintX_t ThreadBssOffset = 0;
   void switchTo(OutputSection *Sec);
   void flush();
   void output(InputSection *Sec);
