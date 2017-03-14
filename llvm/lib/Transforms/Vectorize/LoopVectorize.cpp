@@ -50,6 +50,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -1853,16 +1854,26 @@ public:
       : TheLoop(L), PSE(PSE), LI(LI), Legal(Legal), TTI(TTI), TLI(TLI), DB(DB),
         AC(AC), ORE(ORE), TheFunction(F), Hints(Hints) {}
 
+  /// \return An upper bound for the vectorization factor, or None if
+  /// vectorization should be avoided up front.
+  Optional<unsigned> computeMaxVF(bool OptForSize);
+
   /// Information about vectorization costs
   struct VectorizationFactor {
     unsigned Width; // Vector width with best cost
     unsigned Cost;  // Cost of the loop with that width
   };
   /// \return The most profitable vectorization factor and the cost of that VF.
-  /// This method checks every power of two up to VF. If UserVF is not ZERO
+  /// This method checks every power of two up to MaxVF. If UserVF is not ZERO
   /// then this vectorization factor will be selected if vectorization is
   /// possible.
-  VectorizationFactor selectVectorizationFactor(bool OptForSize);
+  VectorizationFactor selectVectorizationFactor(unsigned MaxVF);
+
+  /// Setup cost-based decisions for user vectorization factor.
+  void selectUserVectorizationFactor(unsigned UserVF) {
+    collectUniformsAndScalars(UserVF);
+    collectInstsToScalarize(UserVF);
+  }
 
   /// \return The size (in bits) of the smallest and widest types in the code
   /// that needs to be vectorized. We ignore values that remain scalar such as
@@ -2027,6 +2038,10 @@ public:
   }
 
 private:
+  /// \return An upper bound for the vectorization factor, larger than zero.
+  /// One is returned if vectorization should best be avoided due to cost.
+  unsigned computeFeasibleMaxVF(bool OptForSize);
+
   /// The vectorization cost is a combination of the cost itself and a boolean
   /// indicating whether any of the contributing operations will actually
   /// operate on
@@ -2186,6 +2201,23 @@ public:
   SmallPtrSet<const Value *, 16> VecValuesToIgnore;
 };
 
+/// LoopVectorizationPlanner - drives the vectorization process after having
+/// passed Legality checks.
+class LoopVectorizationPlanner {
+public:
+  LoopVectorizationPlanner(LoopVectorizationCostModel &CM) : CM(CM) {}
+
+  ~LoopVectorizationPlanner() {}
+
+  /// Plan how to best vectorize, return the best VF and its cost.
+  LoopVectorizationCostModel::VectorizationFactor plan(bool OptForSize,
+                                                       unsigned UserVF);
+
+private:
+  /// The profitablity analysis.
+  LoopVectorizationCostModel &CM;
+};
+
 /// \brief This holds vectorization requirements that must be verified late in
 /// the process. The requirements are set by legalize and costmodel. Once
 /// vectorization has been determined to be possible and profitable the
@@ -2321,7 +2353,7 @@ struct LoopVectorize : public FunctionPass {
 
 //===----------------------------------------------------------------------===//
 // Implementation of LoopVectorizationLegality, InnerLoopVectorizer and
-// LoopVectorizationCostModel.
+// LoopVectorizationCostModel and LoopVectorizationPlanner.
 //===----------------------------------------------------------------------===//
 
 Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
@@ -6129,27 +6161,62 @@ void InterleavedAccessInfo::analyzeInterleaving(
   }
 }
 
-LoopVectorizationCostModel::VectorizationFactor
-LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
-  // Width 1 means no vectorize
-  VectorizationFactor Factor = {1U, 0U};
-  if (OptForSize && Legal->getRuntimePointerChecking()->Need) {
+Optional<unsigned> LoopVectorizationCostModel::computeMaxVF(bool OptForSize) {
+  if (!EnableCondStoresVectorization && Legal->getNumPredStores()) {
+    ORE->emit(createMissedAnalysis("ConditionalStore")
+              << "store that is conditionally executed prevents vectorization");
+    DEBUG(dbgs() << "LV: No vectorization. There are conditional stores.\n");
+    return None;
+  }
+
+  if (!OptForSize) // Remaining checks deal with scalar loop when OptForSize.
+    return computeFeasibleMaxVF(OptForSize);
+
+  if (Legal->getRuntimePointerChecking()->Need) {
     ORE->emit(createMissedAnalysis("CantVersionLoopWithOptForSize")
               << "runtime pointer checks needed. Enable vectorization of this "
                  "loop with '#pragma clang loop vectorize(enable)' when "
                  "compiling with -Os/-Oz");
     DEBUG(dbgs()
           << "LV: Aborting. Runtime ptr check is required with -Os/-Oz.\n");
-    return Factor;
+    return None;
   }
 
-  if (!EnableCondStoresVectorization && Legal->getNumPredStores()) {
-    ORE->emit(createMissedAnalysis("ConditionalStore")
-              << "store that is conditionally executed prevents vectorization");
-    DEBUG(dbgs() << "LV: No vectorization. There are conditional stores.\n");
-    return Factor;
+  // If we optimize the program for size, avoid creating the tail loop.
+  unsigned TC = PSE.getSE()->getSmallConstantTripCount(TheLoop);
+  DEBUG(dbgs() << "LV: Found trip count: " << TC << '\n');
+
+  // If we don't know the precise trip count, don't try to vectorize.
+  if (TC < 2) {
+    ORE->emit(
+        createMissedAnalysis("UnknownLoopCountComplexCFG")
+        << "unable to calculate the loop count due to complex control flow");
+    DEBUG(dbgs() << "LV: Aborting. A tail loop is required with -Os/-Oz.\n");
+    return None;
   }
 
+  unsigned MaxVF = computeFeasibleMaxVF(OptForSize);
+
+  if (TC % MaxVF != 0) {
+    // If the trip count that we found modulo the vectorization factor is not
+    // zero then we require a tail.
+    // FIXME: look for a smaller MaxVF that does divide TC rather than give up.
+    // FIXME: return None if loop requiresScalarEpilog(<MaxVF>), or look for a
+    //        smaller MaxVF that does not require a scalar epilog.
+
+    ORE->emit(createMissedAnalysis("NoTailLoopWithOptForSize")
+              << "cannot optimize for size and vectorize at the "
+                 "same time. Enable vectorization of this loop "
+                 "with '#pragma clang loop vectorize(enable)' "
+                 "when compiling with -Os/-Oz");
+    DEBUG(dbgs() << "LV: Aborting. A tail loop is required with -Os/-Oz.\n");
+    return None;
+  }
+
+  return MaxVF;
+}
+
+unsigned LoopVectorizationCostModel::computeFeasibleMaxVF(bool OptForSize) {
   MinBWs = computeMinimumValueSizes(TheLoop->getBlocks(), *DB, &TTI);
   unsigned SmallestType, WidestType;
   std::tie(SmallestType, WidestType) = getSmallestAndWidestTypes();
@@ -6183,7 +6250,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
   assert(MaxVectorSize <= 64 && "Did not expect to pack so many elements"
                                 " into one vector!");
 
-  unsigned VF = MaxVectorSize;
+  unsigned MaxVF = MaxVectorSize;
   if (MaximizeBandwidth && !OptForSize) {
     // Collect all viable vectorization factors.
     SmallVector<unsigned, 8> VFs;
@@ -6199,57 +6266,16 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
     unsigned TargetNumRegisters = TTI.getNumberOfRegisters(true);
     for (int i = RUs.size() - 1; i >= 0; --i) {
       if (RUs[i].MaxLocalUsers <= TargetNumRegisters) {
-        VF = VFs[i];
+        MaxVF = VFs[i];
         break;
       }
     }
   }
+  return MaxVF;
+}
 
-  // If we optimize the program for size, avoid creating the tail loop.
-  if (OptForSize) {
-    unsigned TC = PSE.getSE()->getSmallConstantTripCount(TheLoop);
-    DEBUG(dbgs() << "LV: Found trip count: " << TC << '\n');
-
-    // If we don't know the precise trip count, don't try to vectorize.
-    if (TC < 2) {
-      ORE->emit(
-          createMissedAnalysis("UnknownLoopCountComplexCFG")
-          << "unable to calculate the loop count due to complex control flow");
-      DEBUG(dbgs() << "LV: Aborting. A tail loop is required with -Os/-Oz.\n");
-      return Factor;
-    }
-
-    // Find the maximum SIMD width that can fit within the trip count.
-    VF = TC % MaxVectorSize;
-
-    if (VF == 0)
-      VF = MaxVectorSize;
-    else {
-      // If the trip count that we found modulo the vectorization factor is not
-      // zero then we require a tail.
-      // FIXME: look for a smaller VF that does divide TC rather than give up.
-      ORE->emit(createMissedAnalysis("NoTailLoopWithOptForSize")
-                << "cannot optimize for size and vectorize at the "
-                   "same time. Enable vectorization of this loop "
-                   "with '#pragma clang loop vectorize(enable)' "
-                   "when compiling with -Os/-Oz");
-      DEBUG(dbgs() << "LV: Aborting. A tail loop is required with -Os/-Oz.\n");
-      return Factor;
-    }
-  }
-
-  int UserVF = Hints->getWidth();
-  if (UserVF != 0) {
-    assert(isPowerOf2_32(UserVF) && "VF needs to be a power of two");
-    DEBUG(dbgs() << "LV: Using user VF " << UserVF << ".\n");
-
-    Factor.Width = UserVF;
-
-    collectUniformsAndScalars(UserVF);
-    collectInstsToScalarize(UserVF);
-    return Factor;
-  }
-
+LoopVectorizationCostModel::VectorizationFactor
+LoopVectorizationCostModel::selectVectorizationFactor(unsigned MaxVF) {
   float Cost = expectedCost(1).first;
 #ifndef NDEBUG
   const float ScalarCost = Cost;
@@ -6259,12 +6285,12 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
 
   bool ForceVectorization = Hints->getForce() == LoopVectorizeHints::FK_Enabled;
   // Ignore scalar width, because the user explicitly wants vectorization.
-  if (ForceVectorization && VF > 1) {
+  if (ForceVectorization && MaxVF > 1) {
     Width = 2;
     Cost = expectedCost(Width).first / (float)Width;
   }
 
-  for (unsigned i = 2; i <= VF; i *= 2) {
+  for (unsigned i = 2; i <= MaxVF; i *= 2) {
     // Notice that the vector loop needs to be executed less times, so
     // we need to divide the cost of the vector loops by the width of
     // the vector elements.
@@ -6288,8 +6314,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
         << "LV: Vectorization seems to be not beneficial, "
         << "but was forced by a user.\n");
   DEBUG(dbgs() << "LV: Selecting VF: " << Width << ".\n");
-  Factor.Width = Width;
-  Factor.Cost = Width * Cost;
+  VectorizationFactor Factor = {Width, (unsigned)(Width * Cost)};
   return Factor;
 }
 
@@ -7354,6 +7379,34 @@ void LoopVectorizationCostModel::collectValuesToIgnore() {
   }
 }
 
+LoopVectorizationCostModel::VectorizationFactor
+LoopVectorizationPlanner::plan(bool OptForSize, unsigned UserVF) {
+
+  // Width 1 means no vectorize, cost 0 means uncomputed cost.
+  const LoopVectorizationCostModel::VectorizationFactor NoVectorization = {1U,
+                                                                           0U};
+  Optional<unsigned> MaybeMaxVF = CM.computeMaxVF(OptForSize);
+  if (!MaybeMaxVF.hasValue()) // Cases considered too costly to vectorize.
+    return NoVectorization;
+
+  if (UserVF) {
+    DEBUG(dbgs() << "LV: Using user VF " << UserVF << ".\n");
+    assert(isPowerOf2_32(UserVF) && "VF needs to be a power of two");
+    // Collect the instructions (and their associated costs) that will be more
+    // profitable to scalarize.
+    CM.selectUserVectorizationFactor(UserVF);
+    return {UserVF, 0};
+  }
+
+  unsigned MaxVF = MaybeMaxVF.getValue();
+  assert(MaxVF != 0 && "MaxVF is zero.");
+  if (MaxVF == 1)
+    return NoVectorization;
+
+  // Select the optimal vectorization factor.
+  return CM.selectVectorizationFactor(MaxVF);
+}
+
 void InnerLoopUnroller::vectorizeMemoryInstruction(Instruction *Instr) {
   auto *SI = dyn_cast<StoreInst>(Instr);
   bool IfPredicateInstr = (SI && Legal->blockNeedsPredication(SI->getParent()));
@@ -7485,11 +7538,6 @@ bool LoopVectorizePass::processLoop(Loop *L) {
     return false;
   }
 
-  // Use the cost model.
-  LoopVectorizationCostModel CM(L, PSE, LI, &LVL, *TTI, TLI, DB, AC, ORE, F,
-                                &Hints);
-  CM.collectValuesToIgnore();
-
   // Check the function attributes to find out if this function should be
   // optimized for size.
   bool OptForSize =
@@ -7535,9 +7583,20 @@ bool LoopVectorizePass::processLoop(Loop *L) {
     return false;
   }
 
-  // Select the optimal vectorization factor.
-  const LoopVectorizationCostModel::VectorizationFactor VF =
-      CM.selectVectorizationFactor(OptForSize);
+  // Use the cost model.
+  LoopVectorizationCostModel CM(L, PSE, LI, &LVL, *TTI, TLI, DB, AC, ORE, F,
+                                &Hints);
+  CM.collectValuesToIgnore();
+
+  // Use the planner for vectorization.
+  LoopVectorizationPlanner LVP(CM);
+
+  // Get user vectorization factor.
+  unsigned UserVF = Hints.getWidth();
+
+  // Plan how to best vectorize, return the best VF and its cost.
+  LoopVectorizationCostModel::VectorizationFactor VF =
+      LVP.plan(OptForSize, UserVF);
 
   // Select the interleave count.
   unsigned IC = CM.selectInterleaveCount(OptForSize, VF.Width, VF.Cost);
