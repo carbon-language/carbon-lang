@@ -792,7 +792,7 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
       Sec->Addr = 0;
   }
 
-  allocateHeaders<ELFT>(Phdrs, *OutputSections, MinVA);
+  allocateHeaders(Phdrs, *OutputSections, MinVA);
 }
 
 // Creates program headers as instructed by PHDRS linker script command.
@@ -900,10 +900,6 @@ template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
       if (Cmd->Name == Name)
         return I;
   return INT_MAX;
-}
-
-template <class ELFT> bool LinkerScript<ELFT>::hasPhdrsCommands() {
-  return !Opt.PhdrsCommands.empty();
 }
 
 template <class ELFT>
