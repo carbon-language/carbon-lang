@@ -2524,15 +2524,7 @@ static SDValue simplifyDivRem(SDNode *N, SelectionDAG &DAG) {
   EVT VT = N->getValueType(0);
   SDLoc DL(N);
 
-  // X / undef -> undef
-  // X % undef -> undef
-  if (N1.isUndef())
-    return N1;
-
-  // X / 0 --> undef
-  // X % 0 --> undef
-  // We don't need to preserve faults!
-  if (isNullConstantOrNullSplatConstant(N1))
+  if (DAG.isUndef(N->getOpcode(), {N0, N1}))
     return DAG.getUNDEF(VT);
 
   // undef / X -> 0
