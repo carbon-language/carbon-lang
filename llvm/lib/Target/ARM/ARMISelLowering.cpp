@@ -1337,6 +1337,8 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::UMAAL:         return "ARMISD::UMAAL";
   case ARMISD::UMLAL:         return "ARMISD::UMLAL";
   case ARMISD::SMLAL:         return "ARMISD::SMLAL";
+  case ARMISD::SMULWB:        return "ARMISD::SMULWB";
+  case ARMISD::SMULWT:        return "ARMISD::SMULWT";
   case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
   case ARMISD::BFI:           return "ARMISD::BFI";
   case ARMISD::VORRIMM:       return "ARMISD::VORRIMM";
@@ -1445,6 +1447,40 @@ Sched::Preference ARMTargetLowering::getSchedulingPreference(SDNode *N) const {
 //===----------------------------------------------------------------------===//
 // Lowering Code
 //===----------------------------------------------------------------------===//
+
+static bool isSRL16(const SDValue &Op) {
+  if (Op.getOpcode() != ISD::SRL)
+    return false;
+  if (auto Const = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
+    return Const->getZExtValue() == 16;
+  return false;
+}
+
+static bool isSRA16(const SDValue &Op) {
+  if (Op.getOpcode() != ISD::SRA)
+    return false;
+  if (auto Const = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
+    return Const->getZExtValue() == 16;
+  return false;
+}
+
+static bool isSHL16(const SDValue &Op) {
+  if (Op.getOpcode() != ISD::SHL)
+    return false;
+  if (auto Const = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
+    return Const->getZExtValue() == 16;
+  return false;
+}
+
+// Check for a signed 16-bit value. We special case SRA because it makes it
+// more simple when also looking for SRAs that aren't sign extending a
+// smaller value. Without the check, we'd need to take extra care with
+// checking order for some operations.
+static bool isS16(const SDValue &Op, SelectionDAG &DAG) {
+  if (isSRA16(Op))
+    return isSHL16(Op.getOperand(0));
+  return DAG.ComputeNumSignBits(Op) == 17;
+}
 
 /// IntCCToARMCC - Convert a DAG integer condition code to an ARM CC
 static ARMCC::CondCodes IntCCToARMCC(ISD::CondCode CC) {
@@ -9945,6 +9981,67 @@ static SDValue PerformANDCombine(SDNode *N,
   return SDValue();
 }
 
+// Try combining OR nodes to SMULWB, SMULWT.
+static SDValue PerformORCombineToSMULWBT(SDNode *OR,
+                                         TargetLowering::DAGCombinerInfo &DCI,
+                                         const ARMSubtarget *Subtarget) {
+  if (!Subtarget->hasV6Ops() ||
+      (Subtarget->isThumb() &&
+       (!Subtarget->hasThumb2() || !Subtarget->hasDSP())))
+    return SDValue();
+
+  SDValue SRL = OR->getOperand(0);
+  SDValue SHL = OR->getOperand(1);
+
+  if (SRL.getOpcode() != ISD::SRL || SHL.getOpcode() != ISD::SHL) {
+    SRL = OR->getOperand(1);
+    SHL = OR->getOperand(0);
+  }
+  if (!isSRL16(SRL) || !isSHL16(SHL))
+    return SDValue();
+
+  // The first operands to the shifts need to be the two results from the
+  // same smul_lohi node.
+  if ((SRL.getOperand(0).getNode() != SHL.getOperand(0).getNode()) ||
+       SRL.getOperand(0).getOpcode() != ISD::SMUL_LOHI)
+    return SDValue();
+
+  SDNode *SMULLOHI = SRL.getOperand(0).getNode();
+  if (SRL.getOperand(0) != SDValue(SMULLOHI, 0) ||
+      SHL.getOperand(0) != SDValue(SMULLOHI, 1))
+    return SDValue();
+
+  // Now we have:
+  // (or (srl (smul_lohi ?, ?), 16), (shl (smul_lohi ?, ?), 16)))
+  // For SMUL[B|T] smul_lohi will take a 32-bit and a 16-bit arguments.
+  // For SMUWB the 16-bit value will signed extended somehow.
+  // For SMULWT only the SRA is required.
+  // Check both sides of SMUL_LOHI
+  SDValue OpS16 = SMULLOHI->getOperand(0);
+  SDValue OpS32 = SMULLOHI->getOperand(1);
+
+  SelectionDAG &DAG = DCI.DAG;
+  if (!isS16(OpS16, DAG) && !isSRA16(OpS16)) {
+    OpS16 = OpS32;
+    OpS32 = SMULLOHI->getOperand(0);
+  }
+
+  SDLoc dl(OR);
+  unsigned Opcode = 0;
+  if (isS16(OpS16, DAG))
+    Opcode = ARMISD::SMULWB;
+  else if (isSRA16(OpS16)) {
+    Opcode = ARMISD::SMULWT;
+    OpS16 = OpS16->getOperand(0);
+  }
+  else
+    return SDValue();
+
+  SDValue Res = DAG.getNode(Opcode, dl, MVT::i32, OpS32, OpS16);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(OR, 0), Res);
+  return SDValue(OR, 0);
+}
+
 /// PerformORCombine - Target-specific dag combine xforms for ISD::OR
 static SDValue PerformORCombine(SDNode *N,
                                 TargetLowering::DAGCombinerInfo &DCI,
@@ -9981,6 +10078,8 @@ static SDValue PerformORCombine(SDNode *N,
   if (!Subtarget->isThumb1Only()) {
     // fold (or (select cc, 0, c), x) -> (select cc, x, (or, x, c))
     if (SDValue Result = combineSelectAndUseCommutative(N, false, DCI))
+      return Result;
+    if (SDValue Result = PerformORCombineToSMULWBT(N, DCI, Subtarget))
       return Result;
   }
 
@@ -11781,6 +11880,20 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
     return PerformVLDCombine(N, DCI);
   case ARMISD::BUILD_VECTOR:
     return PerformARMBUILD_VECTORCombine(N, DCI);
+  case ARMISD::SMULWB: {
+    unsigned BitWidth = N->getValueType(0).getSizeInBits();
+    APInt DemandedMask = APInt::getLowBitsSet(BitWidth, 16);
+    if (SimplifyDemandedBits(N->getOperand(1), DemandedMask, DCI))
+      return SDValue();
+    break;
+  }
+  case ARMISD::SMULWT: {
+    unsigned BitWidth = N->getValueType(0).getSizeInBits();
+    APInt DemandedMask = APInt::getHighBitsSet(BitWidth, 16);
+    if (SimplifyDemandedBits(N->getOperand(1), DemandedMask, DCI))
+      return SDValue();
+    break;
+  }
   case ISD::INTRINSIC_VOID:
   case ISD::INTRINSIC_W_CHAIN:
     switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {

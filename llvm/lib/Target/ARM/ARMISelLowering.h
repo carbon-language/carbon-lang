@@ -175,6 +175,8 @@ class InstrItineraryData;
       VMULLs,       // ...signed
       VMULLu,       // ...unsigned
 
+      SMULWB,       // Signed multiply word by half word, bottom
+      SMULWT,       // Signed multiply word by half word, top
       UMLAL,        // 64bit Unsigned Accumulate Multiply
       SMLAL,        // 64bit Signed Accumulate Multiply
       UMAAL,        // 64-bit Unsigned Accumulate Accumulate Multiply

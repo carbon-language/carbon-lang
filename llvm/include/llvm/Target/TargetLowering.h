@@ -2379,6 +2379,10 @@ public:
                             unsigned Depth = 0,
                             bool AssumeSingleUse = false) const;
 
+  /// Helper wrapper around SimplifyDemandedBits
+  bool SimplifyDemandedBits(SDValue Op, APInt &DemandedMask,
+                            DAGCombinerInfo &DCI) const;
+
   /// Determine which of the bits specified in Mask are known to be either zero
   /// or one and return them in the KnownZero/KnownOne bitsets.
   virtual void computeKnownBitsForTargetNode(const SDValue Op,
