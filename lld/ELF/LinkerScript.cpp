@@ -104,8 +104,7 @@ uint64_t LinkerScriptBase::getOutputSectionSize(StringRef Name) {
   return 0;
 }
 
-template <class ELFT>
-void LinkerScript<ELFT>::setDot(Expr E, const Twine &Loc, bool InSec) {
+void LinkerScriptBase::setDot(Expr E, const Twine &Loc, bool InSec) {
   uint64_t Val = E();
   if (Val < Dot) {
     if (InSec)
@@ -123,8 +122,7 @@ void LinkerScript<ELFT>::setDot(Expr E, const Twine &Loc, bool InSec) {
 // Sets value of a symbol. Two kinds of symbols are processed: synthetic
 // symbols, whose value is an offset from beginning of section and regular
 // symbols whose value is absolute.
-template <class ELFT>
-void LinkerScript<ELFT>::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
+void LinkerScriptBase::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   if (Cmd->Name == ".") {
     setDot(Cmd->Expression, Cmd->Location, InSec);
     return;
@@ -191,7 +189,7 @@ static StringRef basename(InputSectionBase *S) {
   return "";
 }
 
-template <class ELFT> bool LinkerScript<ELFT>::shouldKeep(InputSectionBase *S) {
+bool LinkerScriptBase::shouldKeep(InputSectionBase *S) {
   for (InputSectionDescription *ID : Opt.KeptSections)
     if (ID->FilePat.match(basename(S)))
       for (SectionPattern &P : ID->SectionPatterns)
@@ -248,8 +246,7 @@ static void sortSections(InputSectionBase **Begin, InputSectionBase **End,
 }
 
 // Compute and remember which sections the InputSectionDescription matches.
-template <class ELFT>
-void LinkerScript<ELFT>::computeInputSections(InputSectionDescription *I) {
+void LinkerScriptBase::computeInputSections(InputSectionDescription *I) {
   // Collects all sections that satisfy constraints of I
   // and attach them to I.
   for (SectionPattern &Pat : I->SectionPatterns) {
@@ -306,9 +303,8 @@ void LinkerScript<ELFT>::discard(ArrayRef<InputSectionBase *> V) {
   }
 }
 
-template <class ELFT>
 std::vector<InputSectionBase *>
-LinkerScript<ELFT>::createInputSectionList(OutputSectionCommand &OutCmd) {
+LinkerScriptBase::createInputSectionList(OutputSectionCommand &OutCmd) {
   std::vector<InputSectionBase *> Ret;
 
   for (const std::unique_ptr<BaseCommand> &Base : OutCmd.Commands) {
@@ -406,8 +402,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory &Factory) {
 }
 
 // Add sections that didn't match any sections command.
-template <class ELFT>
-void LinkerScript<ELFT>::addOrphanSections(OutputSectionFactory &Factory) {
+void LinkerScriptBase::addOrphanSections(OutputSectionFactory &Factory) {
   for (InputSectionBase *S : InputSections)
     if (S->Live && !S->OutSec)
       Factory.addInputSec(S, getOutputSectionName(S->Name));
@@ -417,7 +412,7 @@ static bool isTbss(OutputSection *Sec) {
   return (Sec->Flags & SHF_TLS) && Sec->Type == SHT_NOBITS;
 }
 
-template <class ELFT> void LinkerScript<ELFT>::output(InputSection *S) {
+void LinkerScriptBase::output(InputSection *S) {
   if (!AlreadyOutputIS.insert(S).second)
     return;
   bool IsTbss = isTbss(CurOutSec);
@@ -451,7 +446,7 @@ template <class ELFT> void LinkerScript<ELFT>::output(InputSection *S) {
     Dot = Pos;
 }
 
-template <class ELFT> void LinkerScript<ELFT>::flush() {
+void LinkerScriptBase::flush() {
   assert(CurOutSec);
   if (!AlreadyOutputOS.insert(CurOutSec).second)
     return;
@@ -459,7 +454,7 @@ template <class ELFT> void LinkerScript<ELFT>::flush() {
     output(I);
 }
 
-template <class ELFT> void LinkerScript<ELFT>::switchTo(OutputSection *Sec) {
+void LinkerScriptBase::switchTo(OutputSection *Sec) {
   if (CurOutSec == Sec)
     return;
   if (AlreadyOutputOS.count(Sec))
@@ -478,7 +473,7 @@ template <class ELFT> void LinkerScript<ELFT>::switchTo(OutputSection *Sec) {
     CurOutSec->LMAOffset = LMAOffset();
 }
 
-template <class ELFT> void LinkerScript<ELFT>::process(BaseCommand &Base) {
+void LinkerScriptBase::process(BaseCommand &Base) {
   // This handles the assignments to symbol or to a location counter (.)
   if (auto *AssignCmd = dyn_cast<SymbolAssignment>(&Base)) {
     assignSymbol(AssignCmd, true);
@@ -533,9 +528,8 @@ findSection(StringRef Name, const std::vector<OutputSection *> &Sections) {
 // This function searches for a memory region to place the given output
 // section in. If found, a pointer to the appropriate memory region is
 // returned. Otherwise, a nullptr is returned.
-template <class ELFT>
-MemoryRegion *LinkerScript<ELFT>::findMemoryRegion(OutputSectionCommand *Cmd,
-                                                   OutputSection *Sec) {
+MemoryRegion *LinkerScriptBase::findMemoryRegion(OutputSectionCommand *Cmd,
+                                                 OutputSection *Sec) {
   // If a memory region name was specified in the output section command,
   // then try to find that region first.
   if (!Cmd->MemoryRegionName.empty()) {
@@ -568,8 +562,7 @@ MemoryRegion *LinkerScript<ELFT>::findMemoryRegion(OutputSectionCommand *Cmd,
 
 // This function assigns offsets to input sections and an output section
 // for a single sections command (e.g. ".text { *(.text); }").
-template <class ELFT>
-void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
+void LinkerScriptBase::assignOffsets(OutputSectionCommand *Cmd) {
   OutputSection *Sec = findSection(Cmd->Name, *OutputSections);
   if (!Sec)
     return;
@@ -606,7 +599,7 @@ void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
                 [this](std::unique_ptr<BaseCommand> &B) { process(*B.get()); });
 }
 
-template <class ELFT> void LinkerScript<ELFT>::removeEmptyCommands() {
+void LinkerScriptBase::removeEmptyCommands() {
   // It is common practice to use very generic linker scripts. So for any
   // given run some of the output sections in the script will be empty.
   // We could create corresponding empty output sections, but that would
@@ -630,7 +623,7 @@ static bool isAllSectionDescription(const OutputSectionCommand &Cmd) {
   return true;
 }
 
-template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
+void LinkerScriptBase::adjustSectionsBeforeSorting() {
   // If the output section contains only symbol assignments, create a
   // corresponding output section. The bfd linker seems to only create them if
   // '.' is assigned to, but creating these section should not have any bad
@@ -655,7 +648,7 @@ template <class ELFT> void LinkerScript<ELFT>::adjustSectionsBeforeSorting() {
   }
 }
 
-template <class ELFT> void LinkerScript<ELFT>::adjustSectionsAfterSorting() {
+void LinkerScriptBase::adjustSectionsAfterSorting() {
   placeOrphanSections();
 
   // If output section command doesn't specify any segments,
@@ -731,7 +724,7 @@ static bool shouldSkip(const BaseCommand &Cmd) {
 // determine whether a new output command should be added before or
 // after another commands. For the details, look at shouldSkip
 // function.
-template <class ELFT> void LinkerScript<ELFT>::placeOrphanSections() {
+void LinkerScriptBase::placeOrphanSections() {
   // The OutputSections are already in the correct order.
   // This loops creates or moves commands as needed so that they are in the
   // correct order.
@@ -786,8 +779,7 @@ template <class ELFT> void LinkerScript<ELFT>::placeOrphanSections() {
   }
 }
 
-template <class ELFT>
-void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
+void LinkerScriptBase::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
   Dot = 0;
   switchTo(Aether);
@@ -819,7 +811,7 @@ void LinkerScript<ELFT>::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
 }
 
 // Creates program headers as instructed by PHDRS linker script command.
-template <class ELFT> std::vector<PhdrEntry> LinkerScript<ELFT>::createPhdrs() {
+std::vector<PhdrEntry> LinkerScriptBase::createPhdrs() {
   std::vector<PhdrEntry> Ret;
 
   // Process PHDRS and FILEHDR keywords because they are not
@@ -854,7 +846,7 @@ template <class ELFT> std::vector<PhdrEntry> LinkerScript<ELFT>::createPhdrs() {
   return Ret;
 }
 
-template <class ELFT> bool LinkerScript<ELFT>::ignoreInterpSection() {
+bool LinkerScriptBase::ignoreInterpSection() {
   // Ignore .interp section in case we have PHDRS specification
   // and PT_INTERP isn't listed.
   return !Opt.PhdrsCommands.empty() &&
@@ -863,7 +855,7 @@ template <class ELFT> bool LinkerScript<ELFT>::ignoreInterpSection() {
          }) == Opt.PhdrsCommands.end();
 }
 
-template <class ELFT> uint32_t LinkerScript<ELFT>::getFiller(StringRef Name) {
+uint32_t LinkerScriptBase::getFiller(StringRef Name) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
       if (Cmd->Name == Name)
@@ -905,7 +897,7 @@ void LinkerScript<ELFT>::writeDataBytes(StringRef Name, uint8_t *Buf) {
       writeInt<ELFT>(Buf + Data->Offset, Data->Expression(), Data->Size);
 }
 
-template <class ELFT> bool LinkerScript<ELFT>::hasLMA(StringRef Name) {
+bool LinkerScriptBase::hasLMA(StringRef Name) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
       if (Cmd->LMAExpr && Cmd->Name == Name)
@@ -917,7 +909,7 @@ template <class ELFT> bool LinkerScript<ELFT>::hasLMA(StringRef Name) {
 // SECTIONS commands. Sections are laid out as the same order as they
 // were in the script. If a given name did not appear in the script,
 // it returns INT_MAX, so that it will be laid out at end of file.
-template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
+int LinkerScriptBase::getSectionIndex(StringRef Name) {
   for (int I = 0, E = Opt.Commands.size(); I != E; ++I)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I].get()))
       if (Cmd->Name == Name)
@@ -960,8 +952,7 @@ OutputSection *LinkerScript<ELFT>::getSymbolSection(StringRef S) {
 // Returns indices of ELF headers containing specific section, identified
 // by Name. Each index is a zero based number of ELF header listed within
 // PHDRS {} script block.
-template <class ELFT>
-std::vector<size_t> LinkerScript<ELFT>::getPhdrIndices(StringRef SectionName) {
+std::vector<size_t> LinkerScriptBase::getPhdrIndices(StringRef SectionName) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
     if (!Cmd || Cmd->Name != SectionName)
@@ -975,8 +966,7 @@ std::vector<size_t> LinkerScript<ELFT>::getPhdrIndices(StringRef SectionName) {
   return {};
 }
 
-template <class ELFT>
-size_t LinkerScript<ELFT>::getPhdrIndex(const Twine &Loc, StringRef PhdrName) {
+size_t LinkerScriptBase::getPhdrIndex(const Twine &Loc, StringRef PhdrName) {
   size_t I = 0;
   for (PhdrsCommand &Cmd : Opt.PhdrsCommands) {
     if (Cmd.Name == PhdrName)
