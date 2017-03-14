@@ -249,8 +249,7 @@ template <class ELFT> void OutputSection::writeTo(uint8_t *Buf) {
   Script<ELFT>::X->writeDataBytes(this->Name, Buf);
 }
 
-template <class ELFT>
-static typename ELFT::uint getOutFlags(InputSectionBase *S) {
+static uint64_t getOutFlags(InputSectionBase *S) {
   return S->Flags & ~SHF_GROUP & ~SHF_COMPRESSED;
 }
 
@@ -347,7 +346,7 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
   }
 
   SectionKey Key = createKey<ELFT>(IS, OutsecName);
-  uint64_t Flags = getOutFlags<ELFT>(IS);
+  uint64_t Flags = getOutFlags(IS);
   OutputSection *&Sec = Map[Key];
   if (Sec) {
     if (getIncompatibleFlags(Sec->Flags) != getIncompatibleFlags(IS->Flags))
