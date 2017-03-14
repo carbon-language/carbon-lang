@@ -239,9 +239,9 @@ protected:
 
 public:
   bool hasPhdrsCommands() { return !Opt.PhdrsCommands.empty(); }
+  uint64_t getDot() { return Dot; }
 
   virtual uint64_t getSymbolValue(const Twine &Loc, StringRef S) = 0;
-  uint64_t getDot() { return getSymbolValue("", "."); }
   virtual bool isDefined(StringRef S) = 0;
   virtual bool isAbsolute(StringRef S) = 0;
   virtual OutputSection *getSymbolSection(StringRef S) = 0;
