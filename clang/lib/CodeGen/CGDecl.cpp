@@ -687,7 +687,7 @@ void CodeGenFunction::EmitNullabilityCheck(LValue LHS, llvm::Value *RHS,
   llvm::Value *IsNotNull = Builder.CreateIsNotNull(RHS);
   llvm::Constant *StaticData[] = {
       EmitCheckSourceLocation(Loc), EmitCheckTypeDescriptor(LHS.getType()),
-      llvm::ConstantInt::get(Int8Ty, 0), //< The LogAlignment info is unused.
+      llvm::ConstantInt::get(Int8Ty, 0), // The LogAlignment info is unused.
       llvm::ConstantInt::get(Int8Ty, TCK_NonnullAssign)};
   EmitCheck({{IsNotNull, SanitizerKind::NullabilityAssign}},
             SanitizerHandler::TypeMismatch, StaticData, RHS);
