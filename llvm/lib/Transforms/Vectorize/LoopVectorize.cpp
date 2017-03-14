@@ -464,9 +464,16 @@ protected:
   /// Copy and widen the instructions from the old loop.
   virtual void vectorizeLoop();
 
+  /// Handle all cross-iteration phis in the header.
+  void fixCrossIterationPHIs();
+
   /// Fix a first-order recurrence. This is the second phase of vectorizing
   /// this phi node.
   void fixFirstOrderRecurrence(PHINode *Phi);
+
+  /// Fix a reduction cross-iteration phi. This is the second phase of
+  /// vectorizing this phi node.
+  void fixReduction(PHINode *Phi);
 
   /// \brief The Loop exit block may have single value PHI nodes where the
   /// incoming value is 'Undef'. While vectorizing we only handled real values
@@ -499,13 +506,12 @@ protected:
   VectorParts createEdgeMask(BasicBlock *Src, BasicBlock *Dst);
 
   /// A helper function to vectorize a single BB within the innermost loop.
-  void vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV);
+  void vectorizeBlockInLoop(BasicBlock *BB);
 
   /// Vectorize a single PHINode in a block. This method handles the induction
   /// variable canonicalization. It supports both VF = 1 for unrolled loops and
   /// arbitrary length vectors.
-  void widenPHIInstruction(Instruction *PN, unsigned UF, unsigned VF,
-                           PhiVector *PV);
+  void widenPHIInstruction(Instruction *PN, unsigned UF, unsigned VF);
 
   /// Insert the new loop to the loop hierarchy and pass manager
   /// and update the analysis passes.
@@ -3964,16 +3970,6 @@ void InnerLoopVectorizer::vectorizeLoop() {
   // the cost-model.
   //
   //===------------------------------------------------===//
-  Constant *Zero = Builder.getInt32(0);
-
-  // In order to support recurrences we need to be able to vectorize Phi nodes.
-  // Phi nodes have cycles, so we need to vectorize them in two stages. First,
-  // we create a new vector PHI node with no incoming edges. We use this value
-  // when we vectorize all of the instructions that use the PHI. Next, after
-  // all of the instructions in the block are complete we add the new incoming
-  // edges to the PHI. At this point all of the instructions in the basic block
-  // are vectorized, so we can use them to construct the PHI.
-  PhiVector PHIsToFix;
 
   // Collect instructions from the original loop that will become trivially
   // dead in the vectorized loop. We don't need to vectorize these
@@ -3987,7 +3983,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
 
   // Vectorize all of the blocks in the original loop.
   for (BasicBlock *BB : make_range(DFS.beginRPO(), DFS.endRPO()))
-    vectorizeBlockInLoop(BB, &PHIsToFix);
+    vectorizeBlockInLoop(BB);
 
   // Insert truncates and extends for any truncated instructions as hints to
   // InstCombine.
@@ -3995,221 +3991,10 @@ void InnerLoopVectorizer::vectorizeLoop() {
     truncateToMinimalBitwidths();
 
   // At this point every instruction in the original loop is widened to a
-  // vector form. Now we need to fix the recurrences in PHIsToFix. These PHI
+  // vector form. Now we need to fix the recurrences in the loop. These PHI
   // nodes are currently empty because we did not want to introduce cycles.
   // This is the second stage of vectorizing recurrences.
-  for (PHINode *Phi : PHIsToFix) {
-    assert(Phi && "Unable to recover vectorized PHI");
-
-    // Handle first-order recurrences that need to be fixed.
-    if (Legal->isFirstOrderRecurrence(Phi)) {
-      fixFirstOrderRecurrence(Phi);
-      continue;
-    }
-
-    // If the phi node is not a first-order recurrence, it must be a reduction.
-    // Get it's reduction variable descriptor.
-    assert(Legal->isReductionVariable(Phi) &&
-           "Unable to find the reduction variable");
-    RecurrenceDescriptor RdxDesc = (*Legal->getReductionVars())[Phi];
-
-    RecurrenceDescriptor::RecurrenceKind RK = RdxDesc.getRecurrenceKind();
-    TrackingVH<Value> ReductionStartValue = RdxDesc.getRecurrenceStartValue();
-    Instruction *LoopExitInst = RdxDesc.getLoopExitInstr();
-    RecurrenceDescriptor::MinMaxRecurrenceKind MinMaxKind =
-        RdxDesc.getMinMaxRecurrenceKind();
-    setDebugLocFromInst(Builder, ReductionStartValue);
-
-    // We need to generate a reduction vector from the incoming scalar.
-    // To do so, we need to generate the 'identity' vector and override
-    // one of the elements with the incoming scalar reduction. We need
-    // to do it in the vector-loop preheader.
-    Builder.SetInsertPoint(LoopBypassBlocks[1]->getTerminator());
-
-    // This is the vector-clone of the value that leaves the loop.
-    const VectorParts &VectorExit = getVectorValue(LoopExitInst);
-    Type *VecTy = VectorExit[0]->getType();
-
-    // Find the reduction identity variable. Zero for addition, or, xor,
-    // one for multiplication, -1 for And.
-    Value *Identity;
-    Value *VectorStart;
-    if (RK == RecurrenceDescriptor::RK_IntegerMinMax ||
-        RK == RecurrenceDescriptor::RK_FloatMinMax) {
-      // MinMax reduction have the start value as their identify.
-      if (VF == 1) {
-        VectorStart = Identity = ReductionStartValue;
-      } else {
-        VectorStart = Identity =
-            Builder.CreateVectorSplat(VF, ReductionStartValue, "minmax.ident");
-      }
-    } else {
-      // Handle other reduction kinds:
-      Constant *Iden = RecurrenceDescriptor::getRecurrenceIdentity(
-          RK, VecTy->getScalarType());
-      if (VF == 1) {
-        Identity = Iden;
-        // This vector is the Identity vector where the first element is the
-        // incoming scalar reduction.
-        VectorStart = ReductionStartValue;
-      } else {
-        Identity = ConstantVector::getSplat(VF, Iden);
-
-        // This vector is the Identity vector where the first element is the
-        // incoming scalar reduction.
-        VectorStart =
-            Builder.CreateInsertElement(Identity, ReductionStartValue, Zero);
-      }
-    }
-
-    // Fix the vector-loop phi.
-
-    // Reductions do not have to start at zero. They can start with
-    // any loop invariant values.
-    const VectorParts &VecRdxPhi = getVectorValue(Phi);
-    BasicBlock *Latch = OrigLoop->getLoopLatch();
-    Value *LoopVal = Phi->getIncomingValueForBlock(Latch);
-    const VectorParts &Val = getVectorValue(LoopVal);
-    for (unsigned part = 0; part < UF; ++part) {
-      // Make sure to add the reduction stat value only to the
-      // first unroll part.
-      Value *StartVal = (part == 0) ? VectorStart : Identity;
-      cast<PHINode>(VecRdxPhi[part])
-          ->addIncoming(StartVal, LoopVectorPreHeader);
-      cast<PHINode>(VecRdxPhi[part])
-          ->addIncoming(Val[part], LoopVectorBody);
-    }
-
-    // Before each round, move the insertion point right between
-    // the PHIs and the values we are going to write.
-    // This allows us to write both PHINodes and the extractelement
-    // instructions.
-    Builder.SetInsertPoint(&*LoopMiddleBlock->getFirstInsertionPt());
-
-    VectorParts &RdxParts = VectorLoopValueMap.getVector(LoopExitInst);
-    setDebugLocFromInst(Builder, LoopExitInst);
-
-    // If the vector reduction can be performed in a smaller type, we truncate
-    // then extend the loop exit value to enable InstCombine to evaluate the
-    // entire expression in the smaller type.
-    if (VF > 1 && Phi->getType() != RdxDesc.getRecurrenceType()) {
-      Type *RdxVecTy = VectorType::get(RdxDesc.getRecurrenceType(), VF);
-      Builder.SetInsertPoint(LoopVectorBody->getTerminator());
-      for (unsigned part = 0; part < UF; ++part) {
-        Value *Trunc = Builder.CreateTrunc(RdxParts[part], RdxVecTy);
-        Value *Extnd = RdxDesc.isSigned() ? Builder.CreateSExt(Trunc, VecTy)
-                                          : Builder.CreateZExt(Trunc, VecTy);
-        for (Value::user_iterator UI = RdxParts[part]->user_begin();
-             UI != RdxParts[part]->user_end();)
-          if (*UI != Trunc) {
-            (*UI++)->replaceUsesOfWith(RdxParts[part], Extnd);
-            RdxParts[part] = Extnd;
-          } else {
-            ++UI;
-          }
-      }
-      Builder.SetInsertPoint(&*LoopMiddleBlock->getFirstInsertionPt());
-      for (unsigned part = 0; part < UF; ++part)
-        RdxParts[part] = Builder.CreateTrunc(RdxParts[part], RdxVecTy);
-    }
-
-    // Reduce all of the unrolled parts into a single vector.
-    Value *ReducedPartRdx = RdxParts[0];
-    unsigned Op = RecurrenceDescriptor::getRecurrenceBinOp(RK);
-    setDebugLocFromInst(Builder, ReducedPartRdx);
-    for (unsigned part = 1; part < UF; ++part) {
-      if (Op != Instruction::ICmp && Op != Instruction::FCmp)
-        // Floating point operations had to be 'fast' to enable the reduction.
-        ReducedPartRdx = addFastMathFlag(
-            Builder.CreateBinOp((Instruction::BinaryOps)Op, RdxParts[part],
-                                ReducedPartRdx, "bin.rdx"));
-      else
-        ReducedPartRdx = RecurrenceDescriptor::createMinMaxOp(
-            Builder, MinMaxKind, ReducedPartRdx, RdxParts[part]);
-    }
-
-    if (VF > 1) {
-      // VF is a power of 2 so we can emit the reduction using log2(VF) shuffles
-      // and vector ops, reducing the set of values being computed by half each
-      // round.
-      assert(isPowerOf2_32(VF) &&
-             "Reduction emission only supported for pow2 vectors!");
-      Value *TmpVec = ReducedPartRdx;
-      SmallVector<Constant *, 32> ShuffleMask(VF, nullptr);
-      for (unsigned i = VF; i != 1; i >>= 1) {
-        // Move the upper half of the vector to the lower half.
-        for (unsigned j = 0; j != i / 2; ++j)
-          ShuffleMask[j] = Builder.getInt32(i / 2 + j);
-
-        // Fill the rest of the mask with undef.
-        std::fill(&ShuffleMask[i / 2], ShuffleMask.end(),
-                  UndefValue::get(Builder.getInt32Ty()));
-
-        Value *Shuf = Builder.CreateShuffleVector(
-            TmpVec, UndefValue::get(TmpVec->getType()),
-            ConstantVector::get(ShuffleMask), "rdx.shuf");
-
-        if (Op != Instruction::ICmp && Op != Instruction::FCmp)
-          // Floating point operations had to be 'fast' to enable the reduction.
-          TmpVec = addFastMathFlag(Builder.CreateBinOp(
-              (Instruction::BinaryOps)Op, TmpVec, Shuf, "bin.rdx"));
-        else
-          TmpVec = RecurrenceDescriptor::createMinMaxOp(Builder, MinMaxKind,
-                                                        TmpVec, Shuf);
-      }
-
-      // The result is in the first element of the vector.
-      ReducedPartRdx =
-          Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
-
-      // If the reduction can be performed in a smaller type, we need to extend
-      // the reduction to the wider type before we branch to the original loop.
-      if (Phi->getType() != RdxDesc.getRecurrenceType())
-        ReducedPartRdx =
-            RdxDesc.isSigned()
-                ? Builder.CreateSExt(ReducedPartRdx, Phi->getType())
-                : Builder.CreateZExt(ReducedPartRdx, Phi->getType());
-    }
-
-    // Create a phi node that merges control-flow from the backedge-taken check
-    // block and the middle block.
-    PHINode *BCBlockPhi = PHINode::Create(Phi->getType(), 2, "bc.merge.rdx",
-                                          LoopScalarPreHeader->getTerminator());
-    for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
-      BCBlockPhi->addIncoming(ReductionStartValue, LoopBypassBlocks[I]);
-    BCBlockPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
-
-    // Now, we need to fix the users of the reduction variable
-    // inside and outside of the scalar remainder loop.
-    // We know that the loop is in LCSSA form. We need to update the
-    // PHI nodes in the exit blocks.
-    for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
-                              LEE = LoopExitBlock->end();
-         LEI != LEE; ++LEI) {
-      PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
-      if (!LCSSAPhi)
-        break;
-
-      // All PHINodes need to have a single entry edge, or two if
-      // we already fixed them.
-      assert(LCSSAPhi->getNumIncomingValues() < 3 && "Invalid LCSSA PHI");
-
-      // We found a reduction value exit-PHI. Update it with the
-      // incoming bypass edge.
-      if (LCSSAPhi->getIncomingValue(0) == LoopExitInst)
-        LCSSAPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
-    } // end of the LCSSA phi scan.
-
-    // Fix the scalar loop reduction variable with the incoming reduction sum
-    // from the vector body and from the backedge value.
-    int IncomingEdgeBlockIdx =
-        Phi->getBasicBlockIndex(OrigLoop->getLoopLatch());
-    assert(IncomingEdgeBlockIdx >= 0 && "Invalid block index");
-    // Pick the other block.
-    int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1);
-    Phi->setIncomingValue(SelfEdgeBlockIdx, BCBlockPhi);
-    Phi->setIncomingValue(IncomingEdgeBlockIdx, LoopExitInst);
-  } // end of for each Phi in PHIsToFix.
+  fixCrossIterationPHIs();
 
   // Update the dominator tree.
   //
@@ -4232,6 +4017,25 @@ void InnerLoopVectorizer::vectorizeLoop() {
 
   // Remove redundant induction instructions.
   cse(LoopVectorBody);
+}
+
+void InnerLoopVectorizer::fixCrossIterationPHIs() {
+  // In order to support recurrences we need to be able to vectorize Phi nodes.
+  // Phi nodes have cycles, so we need to vectorize them in two stages. This is
+  // stage #2: We now need to fix the recurrences by adding incoming edges to
+  // the currently empty PHI nodes. At this point every instruction in the
+  // original loop is widened to a vector form so we can use them to construct
+  // the incoming edges.
+  for (Instruction &I : *OrigLoop->getHeader()) {
+    PHINode *Phi = dyn_cast<PHINode>(&I);
+    if (!Phi)
+      break;
+    // Handle first-order recurrences and reductions that need to be fixed.
+    if (Legal->isFirstOrderRecurrence(Phi))
+      fixFirstOrderRecurrence(Phi);
+    else if (Legal->isReductionVariable(Phi))
+      fixReduction(Phi);
+  }
 }
 
 void InnerLoopVectorizer::fixFirstOrderRecurrence(PHINode *Phi) {
@@ -4385,6 +4189,212 @@ void InnerLoopVectorizer::fixFirstOrderRecurrence(PHINode *Phi) {
       break;
     }
   }
+}
+
+void InnerLoopVectorizer::fixReduction(PHINode *Phi) {
+  Constant *Zero = Builder.getInt32(0);
+
+  // Get it's reduction variable descriptor.
+  assert(Legal->isReductionVariable(Phi) &&
+         "Unable to find the reduction variable");
+  RecurrenceDescriptor RdxDesc = (*Legal->getReductionVars())[Phi];
+
+  RecurrenceDescriptor::RecurrenceKind RK = RdxDesc.getRecurrenceKind();
+  TrackingVH<Value> ReductionStartValue = RdxDesc.getRecurrenceStartValue();
+  Instruction *LoopExitInst = RdxDesc.getLoopExitInstr();
+  RecurrenceDescriptor::MinMaxRecurrenceKind MinMaxKind =
+    RdxDesc.getMinMaxRecurrenceKind();
+  setDebugLocFromInst(Builder, ReductionStartValue);
+
+  // We need to generate a reduction vector from the incoming scalar.
+  // To do so, we need to generate the 'identity' vector and override
+  // one of the elements with the incoming scalar reduction. We need
+  // to do it in the vector-loop preheader.
+  Builder.SetInsertPoint(LoopBypassBlocks[1]->getTerminator());
+
+  // This is the vector-clone of the value that leaves the loop.
+  const VectorParts &VectorExit = getVectorValue(LoopExitInst);
+  Type *VecTy = VectorExit[0]->getType();
+
+  // Find the reduction identity variable. Zero for addition, or, xor,
+  // one for multiplication, -1 for And.
+  Value *Identity;
+  Value *VectorStart;
+  if (RK == RecurrenceDescriptor::RK_IntegerMinMax ||
+      RK == RecurrenceDescriptor::RK_FloatMinMax) {
+    // MinMax reduction have the start value as their identify.
+    if (VF == 1) {
+      VectorStart = Identity = ReductionStartValue;
+    } else {
+      VectorStart = Identity =
+        Builder.CreateVectorSplat(VF, ReductionStartValue, "minmax.ident");
+    }
+  } else {
+    // Handle other reduction kinds:
+    Constant *Iden = RecurrenceDescriptor::getRecurrenceIdentity(
+        RK, VecTy->getScalarType());
+    if (VF == 1) {
+      Identity = Iden;
+      // This vector is the Identity vector where the first element is the
+      // incoming scalar reduction.
+      VectorStart = ReductionStartValue;
+    } else {
+      Identity = ConstantVector::getSplat(VF, Iden);
+
+      // This vector is the Identity vector where the first element is the
+      // incoming scalar reduction.
+      VectorStart =
+        Builder.CreateInsertElement(Identity, ReductionStartValue, Zero);
+    }
+  }
+
+  // Fix the vector-loop phi.
+
+  // Reductions do not have to start at zero. They can start with
+  // any loop invariant values.
+  const VectorParts &VecRdxPhi = getVectorValue(Phi);
+  BasicBlock *Latch = OrigLoop->getLoopLatch();
+  Value *LoopVal = Phi->getIncomingValueForBlock(Latch);
+  const VectorParts &Val = getVectorValue(LoopVal);
+  for (unsigned part = 0; part < UF; ++part) {
+    // Make sure to add the reduction stat value only to the
+    // first unroll part.
+    Value *StartVal = (part == 0) ? VectorStart : Identity;
+    cast<PHINode>(VecRdxPhi[part])
+      ->addIncoming(StartVal, LoopVectorPreHeader);
+    cast<PHINode>(VecRdxPhi[part])
+      ->addIncoming(Val[part], LoopVectorBody);
+  }
+
+  // Before each round, move the insertion point right between
+  // the PHIs and the values we are going to write.
+  // This allows us to write both PHINodes and the extractelement
+  // instructions.
+  Builder.SetInsertPoint(&*LoopMiddleBlock->getFirstInsertionPt());
+
+  VectorParts &RdxParts = VectorLoopValueMap.getVector(LoopExitInst);
+  setDebugLocFromInst(Builder, LoopExitInst);
+
+  // If the vector reduction can be performed in a smaller type, we truncate
+  // then extend the loop exit value to enable InstCombine to evaluate the
+  // entire expression in the smaller type.
+  if (VF > 1 && Phi->getType() != RdxDesc.getRecurrenceType()) {
+    Type *RdxVecTy = VectorType::get(RdxDesc.getRecurrenceType(), VF);
+    Builder.SetInsertPoint(LoopVectorBody->getTerminator());
+    for (unsigned part = 0; part < UF; ++part) {
+      Value *Trunc = Builder.CreateTrunc(RdxParts[part], RdxVecTy);
+      Value *Extnd = RdxDesc.isSigned() ? Builder.CreateSExt(Trunc, VecTy)
+        : Builder.CreateZExt(Trunc, VecTy);
+      for (Value::user_iterator UI = RdxParts[part]->user_begin();
+           UI != RdxParts[part]->user_end();)
+        if (*UI != Trunc) {
+          (*UI++)->replaceUsesOfWith(RdxParts[part], Extnd);
+          RdxParts[part] = Extnd;
+        } else {
+          ++UI;
+        }
+    }
+    Builder.SetInsertPoint(&*LoopMiddleBlock->getFirstInsertionPt());
+    for (unsigned part = 0; part < UF; ++part)
+      RdxParts[part] = Builder.CreateTrunc(RdxParts[part], RdxVecTy);
+  }
+
+  // Reduce all of the unrolled parts into a single vector.
+  Value *ReducedPartRdx = RdxParts[0];
+  unsigned Op = RecurrenceDescriptor::getRecurrenceBinOp(RK);
+  setDebugLocFromInst(Builder, ReducedPartRdx);
+  for (unsigned part = 1; part < UF; ++part) {
+    if (Op != Instruction::ICmp && Op != Instruction::FCmp)
+      // Floating point operations had to be 'fast' to enable the reduction.
+      ReducedPartRdx = addFastMathFlag(
+          Builder.CreateBinOp((Instruction::BinaryOps)Op, RdxParts[part],
+                              ReducedPartRdx, "bin.rdx"));
+    else
+      ReducedPartRdx = RecurrenceDescriptor::createMinMaxOp(
+          Builder, MinMaxKind, ReducedPartRdx, RdxParts[part]);
+  }
+
+  if (VF > 1) {
+    // VF is a power of 2 so we can emit the reduction using log2(VF) shuffles
+    // and vector ops, reducing the set of values being computed by half each
+    // round.
+    assert(isPowerOf2_32(VF) &&
+           "Reduction emission only supported for pow2 vectors!");
+    Value *TmpVec = ReducedPartRdx;
+    SmallVector<Constant *, 32> ShuffleMask(VF, nullptr);
+    for (unsigned i = VF; i != 1; i >>= 1) {
+      // Move the upper half of the vector to the lower half.
+      for (unsigned j = 0; j != i / 2; ++j)
+        ShuffleMask[j] = Builder.getInt32(i / 2 + j);
+
+      // Fill the rest of the mask with undef.
+      std::fill(&ShuffleMask[i / 2], ShuffleMask.end(),
+                UndefValue::get(Builder.getInt32Ty()));
+
+      Value *Shuf = Builder.CreateShuffleVector(
+          TmpVec, UndefValue::get(TmpVec->getType()),
+          ConstantVector::get(ShuffleMask), "rdx.shuf");
+
+      if (Op != Instruction::ICmp && Op != Instruction::FCmp)
+        // Floating point operations had to be 'fast' to enable the reduction.
+        TmpVec = addFastMathFlag(Builder.CreateBinOp(
+                                     (Instruction::BinaryOps)Op, TmpVec, Shuf, "bin.rdx"));
+      else
+        TmpVec = RecurrenceDescriptor::createMinMaxOp(Builder, MinMaxKind,
+                                                      TmpVec, Shuf);
+    }
+
+    // The result is in the first element of the vector.
+    ReducedPartRdx =
+      Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
+
+    // If the reduction can be performed in a smaller type, we need to extend
+    // the reduction to the wider type before we branch to the original loop.
+    if (Phi->getType() != RdxDesc.getRecurrenceType())
+      ReducedPartRdx =
+        RdxDesc.isSigned()
+        ? Builder.CreateSExt(ReducedPartRdx, Phi->getType())
+        : Builder.CreateZExt(ReducedPartRdx, Phi->getType());
+  }
+
+  // Create a phi node that merges control-flow from the backedge-taken check
+  // block and the middle block.
+  PHINode *BCBlockPhi = PHINode::Create(Phi->getType(), 2, "bc.merge.rdx",
+                                        LoopScalarPreHeader->getTerminator());
+  for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+    BCBlockPhi->addIncoming(ReductionStartValue, LoopBypassBlocks[I]);
+  BCBlockPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
+
+  // Now, we need to fix the users of the reduction variable
+  // inside and outside of the scalar remainder loop.
+  // We know that the loop is in LCSSA form. We need to update the
+  // PHI nodes in the exit blocks.
+  for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
+         LEE = LoopExitBlock->end();
+       LEI != LEE; ++LEI) {
+    PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
+    if (!LCSSAPhi)
+      break;
+
+    // All PHINodes need to have a single entry edge, or two if
+    // we already fixed them.
+    assert(LCSSAPhi->getNumIncomingValues() < 3 && "Invalid LCSSA PHI");
+
+    // We found a reduction value exit-PHI. Update it with the
+    // incoming bypass edge.
+    if (LCSSAPhi->getIncomingValue(0) == LoopExitInst)
+      LCSSAPhi->addIncoming(ReducedPartRdx, LoopMiddleBlock);
+  } // end of the LCSSA phi scan.
+
+    // Fix the scalar loop reduction variable with the incoming reduction sum
+    // from the vector body and from the backedge value.
+  int IncomingEdgeBlockIdx =
+    Phi->getBasicBlockIndex(OrigLoop->getLoopLatch());
+  assert(IncomingEdgeBlockIdx >= 0 && "Invalid block index");
+  // Pick the other block.
+  int SelfEdgeBlockIdx = (IncomingEdgeBlockIdx ? 0 : 1);
+  Phi->setIncomingValue(SelfEdgeBlockIdx, BCBlockPhi);
+  Phi->setIncomingValue(IncomingEdgeBlockIdx, LoopExitInst);
 }
 
 void InnerLoopVectorizer::fixLCSSAPHIs() {
@@ -4665,9 +4675,12 @@ InnerLoopVectorizer::createBlockInMask(BasicBlock *BB) {
 }
 
 void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN, unsigned UF,
-                                              unsigned VF, PhiVector *PV) {
+                                              unsigned VF) {
   PHINode *P = cast<PHINode>(PN);
-  // Handle recurrences.
+  // In order to support recurrences we need to be able to vectorize Phi nodes.
+  // Phi nodes have cycles, so we need to vectorize them in two stages. This is
+  // stage #1: We create a new vector PHI node with no incoming edges. We'll use
+  // this value when we vectorize all of the instructions that use the PHI.
   if (Legal->isReductionVariable(P) || Legal->isFirstOrderRecurrence(P)) {
     VectorParts Entry(UF);
     for (unsigned part = 0; part < UF; ++part) {
@@ -4678,7 +4691,6 @@ void InnerLoopVectorizer::widenPHIInstruction(Instruction *PN, unsigned UF,
           VecTy, 2, "vec.phi", &*LoopVectorBody->getFirstInsertionPt());
     }
     VectorLoopValueMap.initVector(P, Entry);
-    PV->push_back(P);
     return;
   }
 
@@ -4782,7 +4794,7 @@ static bool mayDivideByZero(Instruction &I) {
   return !CInt || CInt->isZero();
 }
 
-void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
+void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB) {
   // For each instruction in the old loop.
   for (Instruction &I : *BB) {
 
@@ -4807,7 +4819,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       continue;
     case Instruction::PHI: {
       // Vectorize PHINodes.
-      widenPHIInstruction(&I, UF, VF, PV);
+      widenPHIInstruction(&I, UF, VF);
       continue;
     } // End of PHI.
 
