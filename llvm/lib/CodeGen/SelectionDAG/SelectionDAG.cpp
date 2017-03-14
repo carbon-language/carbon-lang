@@ -3336,6 +3336,9 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       if (VT == MVT::f128 && C->getValueType(0) == MVT::i128)
         return getConstantFP(APFloat(APFloat::IEEEquad(), Val), DL, VT);
       break;
+    case ISD::ABS:
+      return getConstant(Val.abs(), DL, VT, C->isTargetOpcode(),
+                         C->isOpaque());
     case ISD::BITREVERSE:
       return getConstant(Val.reverseBits(), DL, VT, C->isTargetOpcode(),
                          C->isOpaque());
@@ -3455,6 +3458,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
       case ISD::TRUNCATE:
       case ISD::UINT_TO_FP:
       case ISD::SINT_TO_FP:
+      case ISD::ABS:
       case ISD::BITREVERSE:
       case ISD::BSWAP:
       case ISD::CTLZ:
@@ -3570,6 +3574,12 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
         return getNode(ISD::TRUNCATE, DL, VT, Operand.getNode()->getOperand(0));
       return Operand.getNode()->getOperand(0);
     }
+    if (OpOpcode == ISD::UNDEF)
+      return getUNDEF(VT);
+      break;
+  case ISD::ABS:
+    assert(VT.isInteger() && VT == Operand.getValueType() &&
+           "Invalid ABS!");
     if (OpOpcode == ISD::UNDEF)
       return getUNDEF(VT);
     break;
