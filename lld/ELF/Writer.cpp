@@ -1355,7 +1355,8 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
     Ret.push_back(std::move(RelRo));
 
   // PT_GNU_EH_FRAME is a special section pointing on .eh_frame_hdr.
-  if (!In<ELFT>::EhFrame->empty() && In<ELFT>::EhFrameHdr)
+  if (!In<ELFT>::EhFrame->empty() && In<ELFT>::EhFrameHdr &&
+      In<ELFT>::EhFrame->OutSec && In<ELFT>::EhFrameHdr->OutSec)
     AddHdr(PT_GNU_EH_FRAME, In<ELFT>::EhFrameHdr->OutSec->getPhdrFlags())
         ->add(In<ELFT>::EhFrameHdr->OutSec);
 
