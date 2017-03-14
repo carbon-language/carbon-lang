@@ -2098,6 +2098,10 @@ def resource_dir_EQ : Joined<["-"], "resource-dir=">, Flags<[DriverOption, CoreO
 def rpath : Separate<["-"], "rpath">, Flags<[LinkerInput]>, Group<Link_Group>;
 def rtlib_EQ : Joined<["-", "--"], "rtlib=">,
   HelpText<"Compiler runtime library to use">;
+def frtlib_add_rpath: Flag<["-"], "frtlib-add-rpath">, Flags<[NoArgumentUnused]>,
+  HelpText<"Add -rpath with architecture-specific resource directory to the linker flags">;
+def fno_rtlib_add_rpath: Flag<["-"], "fno-rtlib-add-rpath">, Flags<[NoArgumentUnused]>,
+  HelpText<"Do not add -rpath with architecture-specific resource directory to the linker flags">;
 def r : Flag<["-"], "r">, Flags<[LinkerInput,NoArgumentUnused]>,
         Group<Link_Group>;
 def save_temps_EQ : Joined<["-", "--"], "save-temps=">, Flags<[DriverOption]>,
