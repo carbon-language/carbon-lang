@@ -79,6 +79,18 @@ static bool isUnderSysroot(StringRef Path) {
   return false;
 }
 
+OutputSection *LinkerScriptBase::getOutputSection(const Twine &Loc,
+                                                  StringRef Name) {
+  static OutputSection FakeSec("", 0, 0);
+
+  for (OutputSection *Sec : *OutputSections)
+    if (Sec->Name == Name)
+      return Sec;
+
+  error(Loc + ": undefined section " + Name);
+  return &FakeSec;
+}
+
 template <class ELFT>
 void LinkerScript<ELFT>::setDot(Expr E, const Twine &Loc, bool InSec) {
   uint64_t Val = E();
@@ -900,19 +912,6 @@ template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
       if (Cmd->Name == Name)
         return I;
   return INT_MAX;
-}
-
-template <class ELFT>
-OutputSection *LinkerScript<ELFT>::getOutputSection(const Twine &Loc,
-                                                    StringRef Name) {
-  static OutputSection FakeSec("", 0, 0);
-
-  for (OutputSection *Sec : *OutputSections)
-    if (Sec->Name == Name)
-      return Sec;
-
-  error(Loc + ": undefined section " + Name);
-  return &FakeSec;
 }
 
 // This function is essentially the same as getOutputSection(Name)->Size,

@@ -240,13 +240,15 @@ protected:
 public:
   bool hasPhdrsCommands() { return !Opt.PhdrsCommands.empty(); }
   uint64_t getDot() { return Dot; }
+  OutputSection *getOutputSection(const Twine &Loc, StringRef S);
 
   virtual uint64_t getSymbolValue(const Twine &Loc, StringRef S) = 0;
   virtual bool isDefined(StringRef S) = 0;
   virtual bool isAbsolute(StringRef S) = 0;
   virtual OutputSection *getSymbolSection(StringRef S) = 0;
-  virtual OutputSection *getOutputSection(const Twine &Loc, StringRef S) = 0;
   virtual uint64_t getOutputSectionSize(StringRef S) = 0;
+
+  std::vector<OutputSection *> *OutputSections;
 };
 
 // This is a runner of the linker script.
@@ -275,10 +277,7 @@ public:
   bool isDefined(StringRef S) override;
   bool isAbsolute(StringRef S) override;
   OutputSection *getSymbolSection(StringRef S) override;
-  OutputSection *getOutputSection(const Twine &Loc, StringRef S) override;
   uint64_t getOutputSectionSize(StringRef S) override;
-
-  std::vector<OutputSection *> *OutputSections;
 
   int getSectionIndex(StringRef Name);
 
