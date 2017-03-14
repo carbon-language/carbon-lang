@@ -10,6 +10,7 @@
 /// This file declares the targeting of the InstructionSelector class for X86.
 //===----------------------------------------------------------------------===//
 
+#ifdef LLVM_BUILD_GLOBAL_ISEL
 #ifndef LLVM_LIB_TARGET_X86_X86INSTRUCTIONSELECTOR_H
 #define LLVM_LIB_TARGET_X86_X86INSTRUCTIONSELECTOR_H
 
@@ -59,3 +60,4 @@ private:
 } // end namespace llvm
 
 #endif // LLVM_LIB_TARGET_X86_X86INSTRUCTIONSELECTOR_H
+#endif // LLVM_BUILD_GLOBAL_ISEL
