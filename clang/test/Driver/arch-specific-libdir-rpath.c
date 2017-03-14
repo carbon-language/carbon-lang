@@ -76,10 +76,10 @@
 // RUN:     -frtlib-add-rpath \
 // RUN:   | FileCheck --check-prefixes=RESDIR,NO-LIBPATH,NO-RPATH %s
 //
-// RESDIR: "-resource-dir" "[[RESDIR:[^ ]*]]"
-// LIBPATH-X86_64:  -L[[RESDIR]]/lib/linux/x86_64
-// RPATH-X86_64:    "-rpath" "[[RESDIR]]/lib/linux/x86_64"
-// LIBPATH-AArch64: -L[[RESDIR]]/lib/linux/aarch64
-// RPATH-AArch64:   "-rpath" "[[RESDIR]]/lib/linux/aarch64"
-// NO-LIBPATH-NOT:  -L{{.*}}Inputs/resource_dir
-// NO-RPATH-NOT:    "-rpath" {{.*}}/Inputs/resource_dir
+// RESDIR: "-resource-dir" "[[RESDIR:[^"]*]]"
+// LIBPATH-X86_64:  -L[[RESDIR]]{{(/|\\\\)lib(/|\\\\)linux(/|\\\\)x86_64}}
+// RPATH-X86_64:    "-rpath" "[[RESDIR]]{{(/|\\\\)lib(/|\\\\)linux(/|\\\\)x86_64}}"
+// LIBPATH-AArch64: -L[[RESDIR]]{{(/|\\\\)lib(/|\\\\)linux(/|\\\\)aarch64}}
+// RPATH-AArch64:   "-rpath" "[[RESDIR]]{{(/|\\\\)lib(/|\\\\)linux(/|\\\\)aarch64}}"
+// NO-LIBPATH-NOT:  -L{{.*Inputs(/|\\\\)resource_dir}}
+// NO-RPATH-NOT:    "-rpath" {{.*(/|\\\\)Inputs(/|\\\\)resource_dir}}
