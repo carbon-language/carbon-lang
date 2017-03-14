@@ -330,18 +330,18 @@ static bool canMergeToProgbits(unsigned Type) {
          Type == SHT_NOTE;
 }
 
-template <class ELFT> static void reportDiscarded(InputSectionBase *IS) {
+static void reportDiscarded(InputSectionBase *IS) {
   if (!Config->PrintGcSections)
     return;
   message("removing unused section from '" + IS->Name + "' in file '" +
-          IS->getFile<ELFT>()->getName());
+          IS->File->getName());
 }
 
 template <class ELFT>
 void OutputSectionFactory::addInputSec(InputSectionBase *IS,
                                        StringRef OutsecName) {
   if (!IS->Live) {
-    reportDiscarded<ELFT>(IS);
+    reportDiscarded(IS);
     return;
   }
 
