@@ -1,5 +1,147 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
 
+define i64 @rem_signed(i64 %x1, i64 %y2) {
+; CHECK-LABEL: @rem_signed(
+; CHECK-NEXT:    [[R:%.*]] = srem i64 %x1, %y2
+; CHECK-NEXT:    ret i64 [[R]]
+;
+  %r = sdiv i64 %x1, %y2
+  %r7 = mul i64 %r, %y2
+  %r8 = sub i64 %x1, %r7
+  ret i64 %r8
+}
+
+define <4 x i32> @rem_signed_vec(<4 x i32> %t, <4 x i32> %u) {
+; CHECK-LABEL: @rem_signed_vec(
+; CHECK-NEXT:    [[K:%.*]] = srem <4 x i32> %t, %u
+; CHECK-NEXT:    ret <4 x i32> [[K]]
+;
+  %k = sdiv <4 x i32> %t, %u
+  %l = mul <4 x i32> %k, %u
+  %m = sub <4 x i32> %t, %l
+  ret <4 x i32> %m
+}
+
+define i64 @rem_unsigned(i64 %x1, i64 %y2) {
+; CHECK-LABEL: @rem_unsigned(
+; CHECK-NEXT:    [[R:%.*]] = urem i64 %x1, %y2
+; CHECK-NEXT:    ret i64 [[R]]
+;
+  %r = udiv i64 %x1, %y2
+  %r7 = mul i64 %r, %y2
+  %r8 = sub i64 %x1, %r7
+  ret i64 %r8
+}
+
+; PR28672 - https://llvm.org/bugs/show_bug.cgi?id=28672
+
+define i8 @big_divisor(i8 %x) {
+; CHECK-LABEL: @big_divisor(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult i8 %x, -127
+; CHECK-NEXT:    [[TMP2:%.*]] = add i8 %x, 127
+; CHECK-NEXT:    [[REM:%.*]] = select i1 [[TMP1]], i8 %x, i8 [[TMP2]]
+; CHECK-NEXT:    ret i8 [[REM]]
+;
+  %rem = urem i8 %x, 129
+  ret i8 %rem
+}
+
+define i5 @biggest_divisor(i5 %x) {
+; CHECK-LABEL: @biggest_divisor(
+; CHECK-NEXT:    [[NOT_:%.*]] = icmp eq i5 %x, -1
+; CHECK-NEXT:    [[TMP1:%.*]] = zext i1 [[NOT_]] to i5
+; CHECK-NEXT:    [[REM:%.*]] = add i5 [[TMP1]], %x
+; CHECK-NEXT:    ret i5 [[REM]]
+;
+  %rem = urem i5 %x, -1
+  ret i5 %rem
+}
+
+; TODO: Should vector subtract of constant be canonicalized to add?
+define <2 x i4> @big_divisor_vec(<2 x i4> %x) {
+; CHECK-LABEL: @big_divisor_vec(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ult <2 x i4> %x, <i4 -3, i4 -3>
+; CHECK-NEXT:    [[TMP2:%.*]] = sub <2 x i4> %x, <i4 -3, i4 -3>
+; CHECK-NEXT:    [[REM:%.*]] = select <2 x i1> [[TMP1]], <2 x i4> %x, <2 x i4> [[TMP2]]
+; CHECK-NEXT:    ret <2 x i4> [[REM]]
+;
+  %rem = urem <2 x i4> %x, <i4 13, i4 13>
+  ret <2 x i4> %rem
+}
+
+define i8 @urem1(i8 %x, i8 %y) {
+; CHECK-LABEL: @urem1(
+; CHECK-NEXT:    [[A:%.*]] = urem i8 %x, %y
+; CHECK-NEXT:    ret i8 [[A]]
+;
+  %A = udiv i8 %x, %y
+  %B = mul i8 %A, %y
+  %C = sub i8 %x, %B
+  ret i8 %C
+}
+
+define i8 @srem1(i8 %x, i8 %y) {
+; CHECK-LABEL: @srem1(
+; CHECK-NEXT:    [[A:%.*]] = srem i8 %x, %y
+; CHECK-NEXT:    ret i8 [[A]]
+;
+  %A = sdiv i8 %x, %y
+  %B = mul i8 %A, %y
+  %C = sub i8 %x, %B
+  ret i8 %C
+}
+
+define i8 @urem2(i8 %x, i8 %y) {
+; CHECK-LABEL: @urem2(
+; CHECK-NEXT:    [[A:%.*]] = urem i8 %x, %y
+; CHECK-NEXT:    [[C:%.*]] = sub i8 0, [[A]]
+; CHECK-NEXT:    ret i8 [[C]]
+;
+  %A = udiv i8 %x, %y
+  %B = mul i8 %A, %y
+  %C = sub i8 %B, %x
+  ret i8 %C
+}
+
+define i8 @urem3(i8 %x) {
+; CHECK-LABEL: @urem3(
+; CHECK-NEXT:    [[A:%.*]] = urem i8 %x, 3
+; CHECK-NEXT:    [[B1:%.*]] = sub i8 %x, [[A]]
+; CHECK-NEXT:    [[C:%.*]] = add i8 [[B1]], %x
+; CHECK-NEXT:    ret i8 [[C]]
+;
+  %A = udiv i8 %x, 3
+  %B = mul i8 %A, -3
+  %C = sub i8 %x, %B
+  ret i8 %C
+}
+
+; (((X / Y) * Y) / Y) -> X / Y
+
+define i32 @sdiv_mul_sdiv(i32 %x, i32 %y) {
+; CHECK-LABEL: @sdiv_mul_sdiv(
+; CHECK-NEXT:    [[R:%.*]] = sdiv i32 %x, %y
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %div = sdiv i32 %x, %y
+  %mul = mul i32 %div, %y
+  %r = sdiv i32 %mul, %y
+  ret i32 %r
+}
+
+; (((X / Y) * Y) / Y) -> X / Y
+
+define i32 @udiv_mul_udiv(i32 %x, i32 %y) {
+; CHECK-LABEL: @udiv_mul_udiv(
+; CHECK-NEXT:    [[R:%.*]] = udiv i32 %x, %y
+; CHECK-NEXT:    ret i32 [[R]]
+;
+  %div = udiv i32 %x, %y
+  %mul = mul i32 %div, %y
+  %r = udiv i32 %mul, %y
+  ret i32 %r
+}
+
 define i32 @test1(i32 %A) {
 ; CHECK-LABEL: @test1(
 ; CHECK-NEXT:    ret i32 0
@@ -429,3 +571,4 @@ rem.is.safe:
 rem.is.unsafe:
   ret i32 0
 }
+
