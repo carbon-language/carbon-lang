@@ -2217,6 +2217,11 @@ X86TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
        ++I, ++OutsIndex) {
     CCValAssign &VA = RVLocs[I];
     assert(VA.isRegLoc() && "Can only return in registers!");
+
+    // Add the register to the CalleeSaveDisableRegs list.
+    if (CallConv == CallingConv::X86_RegCall)
+      MF.getRegInfo().disableCalleeSavedRegister(VA.getLocReg());
+
     SDValue ValToCopy = OutVals[OutsIndex];
     EVT ValVT = ValToCopy.getValueType();
 
@@ -2291,6 +2296,10 @@ X86TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
 
       assert(2 == RegsToPass.size() &&
              "Expecting two registers after Pass64BitArgInRegs");
+
+      // Add the second register to the CalleeSaveDisableRegs list.
+      if (CallConv == CallingConv::X86_RegCall)
+        MF.getRegInfo().disableCalleeSavedRegister(RVLocs[I].getLocReg());
     } else {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), ValToCopy));
     }
@@ -2347,6 +2356,10 @@ X86TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
     // RAX/EAX now acts like a return value.
     RetOps.push_back(
         DAG.getRegister(RetValReg, getPointerTy(DAG.getDataLayout())));
+
+    // Add the returned register to the CalleeSaveDisableRegs list.
+    if (CallConv == CallingConv::X86_RegCall)
+      MF.getRegInfo().disableCalleeSavedRegister(RetValReg);
   }
 
   const X86RegisterInfo *TRI = Subtarget.getRegisterInfo();
@@ -2526,8 +2539,10 @@ static SDValue lowerRegToMasks(const SDValue &ValArg, const EVT &ValVT,
 SDValue X86TargetLowering::LowerCallResult(
     SDValue Chain, SDValue InFlag, CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, const SDLoc &dl,
-    SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
+    SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals,
+    uint32_t *RegMask) const {
 
+  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   bool Is64Bit = Subtarget.is64Bit();
@@ -2540,6 +2555,14 @@ SDValue X86TargetLowering::LowerCallResult(
        ++I, ++InsIndex) {
     CCValAssign &VA = RVLocs[I];
     EVT CopyVT = VA.getLocVT();
+
+    // In some calling conventions we need to remove the used registers
+    // from the register mask.
+    if (RegMask && CallConv == CallingConv::X86_RegCall) {
+      for (MCSubRegIterator SubRegs(VA.getLocReg(), TRI, /*IncludeSelf=*/true);
+           SubRegs.isValid(); ++SubRegs)
+        RegMask[*SubRegs / 32] &= ~(1u << (*SubRegs % 32));
+    }
 
     // If this is x86-64, and we disabled SSE, we can't return FP values
     if ((CopyVT == MVT::f32 || CopyVT == MVT::f64 || CopyVT == MVT::f128) &&
@@ -3228,6 +3251,12 @@ SDValue X86TargetLowering::LowerFormalArguments(
     }
   }
 
+  if (CallConv == CallingConv::X86_RegCall) {
+    const MachineRegisterInfo &MRI = MF.getRegInfo();
+    for (const auto &Pair : make_range(MRI.livein_begin(), MRI.livein_end()))
+      MF.getRegInfo().disableCalleeSavedRegister(Pair.first);
+  }
+
   return Chain;
 }
 
@@ -3744,7 +3773,34 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       Mask = RegInfo->getNoPreservedMask();
   }
 
-  Ops.push_back(DAG.getRegisterMask(Mask));
+  // Define a new register mask from the existing mask.
+  uint32_t *RegMask = nullptr;
+
+  // In some calling conventions we need to remove the used physical registers
+  // from the reg mask.
+  if (CallConv == CallingConv::X86_RegCall) {
+    /// @todo Need to add support in MIPrinter and MIParser to represent
+    ///       the customed RegMask.
+    const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
+
+    // Allocate a new Reg Mask and copy Mask.
+    RegMask = MF.allocateRegisterMask(TRI->getNumRegs());
+    unsigned RegMaskSize = (TRI->getNumRegs() + 31) / 32;
+    memcpy(RegMask, Mask, sizeof(uint32_t) * RegMaskSize);
+
+    // Make sure all sub registers of the argument registers are reset
+    // in the RegMask.
+    for (auto const &RegPair : RegsToPass)
+      for (MCSubRegIterator SubRegs(RegPair.first, TRI, /*IncludeSelf=*/true);
+           SubRegs.isValid(); ++SubRegs)
+        RegMask[*SubRegs / 32] &= ~(1u << (*SubRegs % 32));
+
+    // Create the RegMask Operand according to our updated mask.
+    Ops.push_back(DAG.getRegisterMask(RegMask));
+  } else {
+    // Create the RegMask Operand according to the static mask.
+    Ops.push_back(DAG.getRegisterMask(Mask));
+  }
 
   if (InFlag.getNode())
     Ops.push_back(InFlag);
@@ -3797,8 +3853,8 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Handle result values, copying them out of physregs into vregs that we
   // return.
-  return LowerCallResult(Chain, InFlag, CallConv, isVarArg,
-                         Ins, dl, DAG, InVals);
+  return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG,
+                         InVals, RegMask);
 }
 
 //===----------------------------------------------------------------------===//
@@ -26104,8 +26160,7 @@ X86TargetLowering::EmitSjLjDispatchBlock(MachineInstr &MI,
 
   // N.B. the order the invoke BBs are processed in doesn't matter here.
   SmallVector<MachineBasicBlock *, 64> MBBLPads;
-  const MCPhysReg *SavedRegs =
-      Subtarget.getRegisterInfo()->getCalleeSavedRegs(MF);
+  const MCPhysReg *SavedRegs = MF->getRegInfo().getCalleeSavedRegs();
   for (MachineBasicBlock *MBB : InvokeBBs) {
     // Remove the landing pad successor from the invoke block and replace it
     // with the new dispatch block.
