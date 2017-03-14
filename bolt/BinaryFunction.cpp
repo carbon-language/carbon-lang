@@ -165,6 +165,13 @@ bool DynoStats::operator<(const DynoStats &Other) const {
   );
 }
 
+bool DynoStats::operator==(const DynoStats &Other) const {
+  return std::equal(
+    &Stats[FIRST_DYNO_STAT], &Stats[LAST_DYNO_STAT],
+    &Other.Stats[FIRST_DYNO_STAT]
+  );
+}
+
 bool DynoStats::lessThan(const DynoStats &Other,
                          ArrayRef<Category> Keys) const {
   return std::lexicographical_compare(
@@ -3865,9 +3872,13 @@ void DynoStats::print(raw_ostream &OS, const DynoStats *Other) const {
                                 uint64_t OtherStat) {
     OS << format("%'20lld : ", Stat * opts::DynoStatsScale) << Name;
     if (Other) {
+      if (Stat != OtherStat) {
        OS << format(" (%+.1f%%)",
                     ( (float) Stat - (float) OtherStat ) * 100.0 /
                       (float) (OtherStat + 1) );
+      } else {
+        OS << " (=)";
+      }
     }
     OS << '\n';
   };

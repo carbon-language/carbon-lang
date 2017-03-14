@@ -131,6 +131,8 @@ public:
 
   void operator+=(const DynoStats &Other);
   bool operator<(const DynoStats &Other) const;
+  bool operator==(const DynoStats &Other) const;
+  bool operator!=(const DynoStats &Other) const { return !operator==(Other); }
   bool lessThan(const DynoStats &Other, ArrayRef<Category> Keys) const;
 
   static const char* Description(const Category C) {
@@ -1758,20 +1760,22 @@ callWithDynoStats(FnType &&Func,
                   const FuncsType &Funcs,
                   StringRef Phase,
                   const bool Flag) {
-  DynoStats dynoStatsBefore;
+  DynoStats DynoStatsBefore;
   if (Flag) {
-    dynoStatsBefore = getDynoStats(Funcs);
-    outs() << "BOLT-INFO: program-wide dynostats before running "
-           << Phase << ":\n\n" << dynoStatsBefore << '\n';
+    DynoStatsBefore = getDynoStats(Funcs);
   }
 
   Func();
 
   if (Flag) {
-    auto dynoStatsAfter = getDynoStats(Funcs);
+    const auto DynoStatsAfter = getDynoStats(Funcs);
+    const auto Changed = (DynoStatsAfter != DynoStatsBefore);
     outs() << "BOLT-INFO: program-wide dynostats after running "
-           << Phase << ":\n\n" << dynoStatsBefore << '\n';
-    dynoStatsAfter.print(outs(), &dynoStatsBefore);
+           << Phase << (Changed ? "" : " (no change)") << ":\n\n"
+           << DynoStatsBefore << '\n';
+    if (Changed) {
+      DynoStatsAfter.print(outs(), &DynoStatsBefore);
+    }
     outs() << '\n';
   }
 }
