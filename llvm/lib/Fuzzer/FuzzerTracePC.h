@@ -75,8 +75,6 @@ class TracePC {
   void AddValueForMemcmp(void *caller_pc, const void *s1, const void *s2,
                          size_t n, bool StopAtZero);
 
-  bool UsingTracePcGuard() const {return NumModules; }
-
   TableOfRecentCompares<uint32_t, 32> TORC4;
   TableOfRecentCompares<uint64_t, 32> TORC8;
   TableOfRecentCompares<Word, 32> TORCW;
@@ -112,7 +110,6 @@ private:
 
 template <class Callback>
 size_t TracePC::CollectFeatures(Callback CB) const {
-  if (!UsingTracePcGuard()) return 0;
   size_t Res = 0;
   const size_t Step = 8;
   uint8_t *Counters = this->Counters();
