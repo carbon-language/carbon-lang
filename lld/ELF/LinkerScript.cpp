@@ -229,7 +229,6 @@ getComparator(SortSectionPolicy K) {
   }
 }
 
-template <class ELFT>
 static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
                              ConstraintKind Kind) {
   if (Kind == ConstraintKind::NoConstraint)
@@ -375,7 +374,7 @@ void LinkerScript<ELFT>::processCommands(OutputSectionFactory &Factory) {
       //
       // Because we'll iterate over Commands many more times, the easiest
       // way to "make it as if it wasn't present" is to just remove it.
-      if (!matchConstraints<ELFT>(V, Cmd->Constraint)) {
+      if (!matchConstraints(V, Cmd->Constraint)) {
         for (InputSectionBase *S : V)
           S->Assigned = false;
         Opt.Commands.erase(Iter);
@@ -414,14 +413,14 @@ void LinkerScript<ELFT>::addOrphanSections(OutputSectionFactory &Factory) {
       Factory.addInputSec(S, getOutputSectionName(S->Name));
 }
 
-template <class ELFT> static bool isTbss(OutputSection *Sec) {
+static bool isTbss(OutputSection *Sec) {
   return (Sec->Flags & SHF_TLS) && Sec->Type == SHT_NOBITS;
 }
 
 template <class ELFT> void LinkerScript<ELFT>::output(InputSection *S) {
   if (!AlreadyOutputIS.insert(S).second)
     return;
-  bool IsTbss = isTbss<ELFT>(CurOutSec);
+  bool IsTbss = isTbss(CurOutSec);
 
   uint64_t Pos = IsTbss ? Dot + ThreadBssOffset : Dot;
   Pos = alignTo(Pos, S->Alignment);
@@ -469,7 +468,7 @@ template <class ELFT> void LinkerScript<ELFT>::switchTo(OutputSection *Sec) {
   CurOutSec = Sec;
 
   Dot = alignTo(Dot, CurOutSec->Alignment);
-  CurOutSec->Addr = isTbss<ELFT>(CurOutSec) ? Dot + ThreadBssOffset : Dot;
+  CurOutSec->Addr = isTbss(CurOutSec) ? Dot + ThreadBssOffset : Dot;
 
   // If neither AT nor AT> is specified for an allocatable section, the linker
   // will set the LMA such that the difference between VMA and LMA for the
