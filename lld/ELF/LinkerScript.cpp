@@ -547,16 +547,17 @@ MemoryRegion *LinkerScript<ELFT>::findMemoryRegion(OutputSectionCommand *Cmd,
 // for a single sections command (e.g. ".text { *(.text); }").
 template <class ELFT>
 void LinkerScript<ELFT>::assignOffsets(OutputSectionCommand *Cmd) {
-  if (Cmd->LMAExpr) {
-    uintX_t D = Dot;
-    LMAOffset = [=] { return Cmd->LMAExpr() - D; };
-  }
   OutputSection *Sec = findSection<ELFT>(Cmd->Name, *OutputSections);
   if (!Sec)
     return;
 
   if (Cmd->AddrExpr && Sec->Flags & SHF_ALLOC)
     setDot(Cmd->AddrExpr, Cmd->Location);
+
+  if (Cmd->LMAExpr) {
+    uintX_t D = Dot;
+    LMAOffset = [=] { return Cmd->LMAExpr() - D; };
+  }
 
   // Handle align (e.g. ".foo : ALIGN(16) { ... }").
   if (Cmd->AlignExpr)
