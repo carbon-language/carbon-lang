@@ -334,7 +334,6 @@ static void reportDiscarded(InputSectionBase *IS) {
           IS->File->getName());
 }
 
-template <class ELFT>
 void OutputSectionFactory::addInputSec(InputSectionBase *IS,
                                        StringRef OutsecName) {
   if (!IS->Live) {
@@ -414,13 +413,5 @@ template void OutputSection::writeTo<ELF32BE>(uint8_t *Buf);
 template void OutputSection::writeTo<ELF64LE>(uint8_t *Buf);
 template void OutputSection::writeTo<ELF64BE>(uint8_t *Buf);
 
-template void OutputSectionFactory::addInputSec<ELF32LE>(InputSectionBase *,
-                                                         StringRef);
-template void OutputSectionFactory::addInputSec<ELF32BE>(InputSectionBase *,
-                                                         StringRef);
-template void OutputSectionFactory::addInputSec<ELF64LE>(InputSectionBase *,
-                                                         StringRef);
-template void OutputSectionFactory::addInputSec<ELF64BE>(InputSectionBase *,
-                                                         StringRef);
 }
 }
