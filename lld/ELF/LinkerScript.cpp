@@ -91,6 +91,19 @@ OutputSection *LinkerScriptBase::getOutputSection(const Twine &Loc,
   return &FakeSec;
 }
 
+// This function is essentially the same as getOutputSection(Name)->Size,
+// but it won't print out an error message if a given section is not found.
+//
+// Linker script does not create an output section if its content is empty.
+// We want to allow SIZEOF(.foo) where .foo is a section which happened to
+// be empty. That is why this function is different from getOutputSection().
+uint64_t LinkerScriptBase::getOutputSectionSize(StringRef Name) {
+  for (OutputSection *Sec : *OutputSections)
+    if (Sec->Name == Name)
+      return Sec->Size;
+  return 0;
+}
+
 template <class ELFT>
 void LinkerScript<ELFT>::setDot(Expr E, const Twine &Loc, bool InSec) {
   uint64_t Val = E();
@@ -912,20 +925,6 @@ template <class ELFT> int LinkerScript<ELFT>::getSectionIndex(StringRef Name) {
       if (Cmd->Name == Name)
         return I;
   return INT_MAX;
-}
-
-// This function is essentially the same as getOutputSection(Name)->Size,
-// but it won't print out an error message if a given section is not found.
-//
-// Linker script does not create an output section if its content is empty.
-// We want to allow SIZEOF(.foo) where .foo is a section which happened to
-// be empty. That is why this function is different from getOutputSection().
-template <class ELFT>
-uint64_t LinkerScript<ELFT>::getOutputSectionSize(StringRef Name) {
-  for (OutputSection *Sec : *OutputSections)
-    if (Sec->Name == Name)
-      return Sec->Size;
-  return 0;
 }
 
 template <class ELFT>

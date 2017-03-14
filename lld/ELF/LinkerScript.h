@@ -241,12 +241,12 @@ public:
   bool hasPhdrsCommands() { return !Opt.PhdrsCommands.empty(); }
   uint64_t getDot() { return Dot; }
   OutputSection *getOutputSection(const Twine &Loc, StringRef S);
+  uint64_t getOutputSectionSize(StringRef S);
 
   virtual uint64_t getSymbolValue(const Twine &Loc, StringRef S) = 0;
   virtual bool isDefined(StringRef S) = 0;
   virtual bool isAbsolute(StringRef S) = 0;
   virtual OutputSection *getSymbolSection(StringRef S) = 0;
-  virtual uint64_t getOutputSectionSize(StringRef S) = 0;
 
   std::vector<OutputSection *> *OutputSections;
 };
@@ -277,7 +277,6 @@ public:
   bool isDefined(StringRef S) override;
   bool isAbsolute(StringRef S) override;
   OutputSection *getSymbolSection(StringRef S) override;
-  uint64_t getOutputSectionSize(StringRef S) override;
 
   int getSectionIndex(StringRef Name);
 
