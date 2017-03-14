@@ -59,19 +59,19 @@
 // RUN:   | FileCheck --check-prefixes=RESDIR,LIBPATH-X86_64,RPATH-X86_64 %s
 //
 // Add LIBPATH but no RPATH for ubsan (or any other sanitizer)
-// RUN: %clang %s -### 2>&1 -fsanitize=undefined \
+// RUN: %clang %s -### 2>&1 -fsanitize=undefined -target x86_64-linux \
 // RUN:     -resource-dir=%S/Inputs/resource_dir_with_arch_subdir \
 // RUN:     -frtlib-add-rpath \
 // RUN:   | FileCheck --check-prefixes=RESDIR,LIBPATH-X86_64,NO-RPATH %s
 //
 // Add LIBPATH but no RPATH if no sanitizer or runtime is specified
-// RUN: %clang %s -### 2>&1 \
+// RUN: %clang %s -### 2>&1 -target x86_64-linux \
 // RUN:     -resource-dir=%S/Inputs/resource_dir_with_arch_subdir \
 // RUN:     -frtlib-add-rpath \
 // RUN:   | FileCheck --check-prefixes=RESDIR,LIBPATH-X86_64,NO-RPATH %s
 //
 // Do not add LIBPATH or RPATH if arch-specific subdir doesn't exist
-// RUN: %clang %s -### 2>&1 \
+// RUN: %clang %s -### 2>&1 -target x86_64-linux \
 // RUN:     -resource-dir=%S/Inputs/resource_dir \
 // RUN:     -frtlib-add-rpath \
 // RUN:   | FileCheck --check-prefixes=RESDIR,NO-LIBPATH,NO-RPATH %s
