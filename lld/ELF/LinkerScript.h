@@ -252,7 +252,6 @@ protected:
   // "ScriptConfig" is a bit too long, so define a short name for it.
   ScriptConfiguration &Opt = *ScriptConfig;
 
-  uint64_t Dot;
   uint64_t ThreadBssOffset = 0;
 
   std::function<uint64_t()> LMAOffset;
@@ -263,8 +262,10 @@ protected:
   llvm::DenseSet<InputSectionBase *> AlreadyOutputIS;
 
 public:
+  uint64_t Dot;
+  std::vector<OutputSection *> *OutputSections;
+
   bool hasPhdrsCommands() { return !Opt.PhdrsCommands.empty(); }
-  uint64_t getDot() { return Dot; }
   OutputSection *getOutputSection(const Twine &Loc, StringRef S);
   uint64_t getOutputSectionSize(StringRef S);
   void discard(ArrayRef<InputSectionBase *> V);
@@ -274,7 +275,6 @@ public:
   virtual bool isAbsolute(StringRef S) = 0;
   virtual OutputSection *getSymbolSection(StringRef S) = 0;
 
-  std::vector<OutputSection *> *OutputSections;
   void addOrphanSections(OutputSectionFactory &Factory);
   void removeEmptyCommands();
   void adjustSectionsBeforeSorting();
