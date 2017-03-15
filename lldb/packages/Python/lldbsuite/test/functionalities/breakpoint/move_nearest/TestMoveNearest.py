@@ -28,7 +28,8 @@ class TestMoveNearest(TestBase):
         self.assertTrue(target, VALID_TARGET)
 
         lldbutil.run_break_set_by_symbol(self, 'main', sym_exact=True)
-        process = target.LaunchSimple(None, None, self.get_process_working_directory())
+        environment = self.registerSharedLibrariesWithTarget(target, ["foo"])
+        process = target.LaunchSimple(None, environment, self.get_process_working_directory())
         self.assertEquals(process.GetState(), lldb.eStateStopped)
 
         # Regardless of the -m value the breakpoint should have exactly one
