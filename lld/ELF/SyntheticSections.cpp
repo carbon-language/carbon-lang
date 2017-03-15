@@ -79,9 +79,9 @@ template <class ELFT> InputSection *elf::createCommonSection() {
 
   // Assign offsets to symbols.
   size_t Size = 0;
-  size_t Alignment = 1;
+  uint32_t Alignment = 1;
   for (DefinedCommon *Sym : Syms) {
-    Alignment = std::max<size_t>(Alignment, Sym->Alignment);
+    Alignment = std::max(Alignment, Sym->Alignment);
     Size = alignTo(Size, Sym->Alignment);
 
     // Compute symbol offset relative to beginning of input section.
