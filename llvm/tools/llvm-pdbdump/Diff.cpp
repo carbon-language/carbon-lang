@@ -54,11 +54,12 @@ static void set_differences(Range &&R1, Range &&R2,
   }
 }
 
-template<typename Range>
-static void set_differences(Range &&R1, Range &&R2,
-  SmallVectorImpl<ValueOfRange<Range>> *OnlyLeft,
-  SmallVectorImpl<ValueOfRange<Range>> *OnlyRight,
-  SmallVectorImpl<ValueOfRange<Range>> *Intersection) {
+template <typename Range>
+static void
+set_differences(Range &&R1, Range &&R2,
+                SmallVectorImpl<ValueOfRange<Range>> *OnlyLeft,
+                SmallVectorImpl<ValueOfRange<Range>> *OnlyRight,
+                SmallVectorImpl<ValueOfRange<Range>> *Intersection = nullptr) {
   std::less<ValueOfRange<Range>> Comp;
   set_differences(std::forward<Range>(R1), std::forward<Range>(R2), OnlyLeft, OnlyRight, Intersection, Comp);
 }
@@ -338,7 +339,7 @@ Error DiffStyle::diffStringTable() {
     SmallVector<StringRef, 64> OnlyP;
     SmallVector<StringRef, 64> OnlyQ;
 
-    set_differences(Strings1, Strings2, &OnlyP, &OnlyQ, nullptr);
+    set_differences(Strings1, Strings2, &OnlyP, &OnlyQ);
 
     if (!OnlyP.empty()) {
       HasDiff = true;
