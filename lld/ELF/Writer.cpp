@@ -378,7 +378,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
       Config->ExportDynamic;
   if (Config->EMachine == EM_MIPS) {
     if (!Config->Shared && HasDynSymTab) {
-      In<ELFT>::MipsRldMap = make<MipsRldMapSection<ELFT>>();
+      In<ELFT>::MipsRldMap = make<MipsRldMapSection>();
       Add(In<ELFT>::MipsRldMap);
     }
     if (auto *Sec = MipsAbiFlagsSection<ELFT>::create())

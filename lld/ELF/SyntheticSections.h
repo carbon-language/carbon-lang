@@ -715,10 +715,10 @@ private:
 // of executable file which is pointed to by the DT_MIPS_RLD_MAP entry.
 // See "Dynamic section" in Chapter 5 in the following document:
 // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-template <class ELFT> class MipsRldMapSection : public SyntheticSection {
+class MipsRldMapSection : public SyntheticSection {
 public:
   MipsRldMapSection();
-  size_t getSize() const override { return sizeof(typename ELFT::uint); }
+  size_t getSize() const override { return Config->is64Bit() ? 8 : 4; }
   void writeTo(uint8_t *Buf) override;
 };
 
@@ -777,7 +777,7 @@ template <class ELFT> struct In {
   static IgotPltSection *IgotPlt;
   static HashTableSection<ELFT> *HashTab;
   static InputSection *Interp;
-  static MipsRldMapSection<ELFT> *MipsRldMap;
+  static MipsRldMapSection *MipsRldMap;
   static PltSection<ELFT> *Plt;
   static PltSection<ELFT> *Iplt;
   static RelocationSection<ELFT> *RelaDyn;
@@ -809,7 +809,7 @@ template <class ELFT> GotPltSection *In<ELFT>::GotPlt;
 template <class ELFT> IgotPltSection *In<ELFT>::IgotPlt;
 template <class ELFT> HashTableSection<ELFT> *In<ELFT>::HashTab;
 template <class ELFT> InputSection *In<ELFT>::Interp;
-template <class ELFT> MipsRldMapSection<ELFT> *In<ELFT>::MipsRldMap;
+template <class ELFT> MipsRldMapSection *In<ELFT>::MipsRldMap;
 template <class ELFT> PltSection<ELFT> *In<ELFT>::Plt;
 template <class ELFT> PltSection<ELFT> *In<ELFT>::Iplt;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaDyn;

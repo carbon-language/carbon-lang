@@ -2204,14 +2204,13 @@ size_t MergeSyntheticSection::getSize() const {
   return Builder.getSize();
 }
 
-template <class ELFT>
-MipsRldMapSection<ELFT>::MipsRldMapSection()
+MipsRldMapSection::MipsRldMapSection()
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
-                       sizeof(typename ELFT::uint), ".rld_map") {}
+                       Config->is64Bit() ? 8 : 4, ".rld_map") {}
 
-template <class ELFT> void MipsRldMapSection<ELFT>::writeTo(uint8_t *Buf) {
+void MipsRldMapSection::writeTo(uint8_t *Buf) {
   // Apply filler from linker script.
-  uint64_t Filler = Script<ELFT>::X->getFiller(this->Name);
+  uint64_t Filler = ScriptBase->getFiller(this->Name);
   Filler = (Filler << 32) | Filler;
   memcpy(Buf, &Filler, getSize());
 }
@@ -2371,11 +2370,6 @@ template class elf::VersionDefinitionSection<ELF32LE>;
 template class elf::VersionDefinitionSection<ELF32BE>;
 template class elf::VersionDefinitionSection<ELF64LE>;
 template class elf::VersionDefinitionSection<ELF64BE>;
-
-template class elf::MipsRldMapSection<ELF32LE>;
-template class elf::MipsRldMapSection<ELF32BE>;
-template class elf::MipsRldMapSection<ELF64LE>;
-template class elf::MipsRldMapSection<ELF64BE>;
 
 template class elf::ARMExidxSentinelSection<ELF32LE>;
 template class elf::ARMExidxSentinelSection<ELF32BE>;
