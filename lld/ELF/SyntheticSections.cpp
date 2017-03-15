@@ -2263,6 +2263,18 @@ InputSection *ThunkSection<ELFT>::getTargetInputSection() const {
   return T->getTargetInputSection();
 }
 
+InputSection *InX::ARMAttributes;
+BssSection *InX::Bss;
+BssSection *InX::BssRelRo;
+InputSection *InX::Common;
+StringTableSection *InX::DynStrTab;
+InputSection *InX::Interp;
+GotPltSection *InX::GotPlt;
+IgotPltSection *InX::IgotPlt;
+MipsRldMapSection *InX::MipsRldMap;
+StringTableSection *InX::ShStrTab;
+StringTableSection *InX::StrTab;
+
 template InputSection *elf::createCommonSection<ELF32LE>();
 template InputSection *elf::createCommonSection<ELF32BE>();
 template InputSection *elf::createCommonSection<ELF64LE>();
