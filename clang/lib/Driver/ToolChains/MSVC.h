@@ -130,7 +130,7 @@ protected:
   Tool *buildAssembler() const override;
 private:
   std::string VCToolChainPath;
-  bool IsVS2017OrNewer;
+  bool IsVS2017OrNewer = false;
   CudaInstallationDetector CudaInstallation;
 };
 
