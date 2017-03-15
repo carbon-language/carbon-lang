@@ -270,6 +270,7 @@ template <class ELFT> void Writer<ELFT>::run() {
     } else {
       fixSectionAlignments();
       assignAddresses();
+      Script<ELFT>::X->processNonSectionCommands();
     }
 
     // Remove empty PT_LOAD to avoid causing the dynamic linker to try to mmap a
