@@ -141,8 +141,6 @@ private:
 
   // Need to know our own thread.
   static thread_local bool IsMyThread;
-
-  bool InMergeMode = false;
 };
 
 }; // namespace fuzzer

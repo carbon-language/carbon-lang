@@ -150,23 +150,7 @@ void Fuzzer::StaticDeathCallback() {
   F->DeathCallback();
 }
 
-static void WarnOnUnsuccessfullMerge(bool DoWarn) {
-  if (!DoWarn) return;
-  Printf(
-   "***\n"
-   "***\n"
-   "***\n"
-   "*** NOTE: merge did not succeed due to a failure on one of the inputs.\n"
-   "*** You will need to filter out crashes from the corpus, e.g. like this:\n"
-   "***   for f in WITH_CRASHES/*; do ./fuzzer $f && cp $f NO_CRASHES; done\n"
-   "*** Future versions may have crash-resistant merge, stay tuned.\n"
-   "***\n"
-   "***\n"
-   "***\n");
-}
-
 void Fuzzer::DumpCurrentUnit(const char *Prefix) {
-  WarnOnUnsuccessfullMerge(InMergeMode);
   if (!CurrentUnitData) return;  // Happens when running individual inputs.
   MD.PrintMutationSequence();
   Printf("; base unit: %s\n", Sha1ToString(BaseSha1).c_str());
