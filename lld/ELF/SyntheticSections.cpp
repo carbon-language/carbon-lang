@@ -937,52 +937,50 @@ template <class ELFT> void MipsGotSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
-template <class ELFT>
-GotPltSection<ELFT>::GotPltSection()
+GotPltSection::GotPltSection()
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
                        Target->GotPltEntrySize, ".got.plt") {}
 
-template <class ELFT> void GotPltSection<ELFT>::addEntry(SymbolBody &Sym) {
+void GotPltSection::addEntry(SymbolBody &Sym) {
   Sym.GotPltIndex = Target->GotPltHeaderEntriesNum + Entries.size();
   Entries.push_back(&Sym);
 }
 
-template <class ELFT> size_t GotPltSection<ELFT>::getSize() const {
+size_t GotPltSection::getSize() const {
   return (Target->GotPltHeaderEntriesNum + Entries.size()) *
          Target->GotPltEntrySize;
 }
 
-template <class ELFT> void GotPltSection<ELFT>::writeTo(uint8_t *Buf) {
+void GotPltSection::writeTo(uint8_t *Buf) {
   Target->writeGotPltHeader(Buf);
   Buf += Target->GotPltHeaderEntriesNum * Target->GotPltEntrySize;
   for (const SymbolBody *B : Entries) {
     Target->writeGotPlt(Buf, *B);
-    Buf += sizeof(uintX_t);
+    Buf += Config->is64Bit() ? 8 : 4;
   }
 }
 
 // On ARM the IgotPltSection is part of the GotSection, on other Targets it is
 // part of the .got.plt
-template <class ELFT>
-IgotPltSection<ELFT>::IgotPltSection()
+IgotPltSection::IgotPltSection()
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
                        Target->GotPltEntrySize,
                        Config->EMachine == EM_ARM ? ".got" : ".got.plt") {}
 
-template <class ELFT> void IgotPltSection<ELFT>::addEntry(SymbolBody &Sym) {
+void IgotPltSection::addEntry(SymbolBody &Sym) {
   Sym.IsInIgot = true;
   Sym.GotPltIndex = Entries.size();
   Entries.push_back(&Sym);
 }
 
-template <class ELFT> size_t IgotPltSection<ELFT>::getSize() const {
+size_t IgotPltSection::getSize() const {
   return Entries.size() * Target->GotPltEntrySize;
 }
 
-template <class ELFT> void IgotPltSection<ELFT>::writeTo(uint8_t *Buf) {
+void IgotPltSection::writeTo(uint8_t *Buf) {
   for (const SymbolBody *B : Entries) {
     Target->writeIgotPlt(Buf, *B);
-    Buf += sizeof(uintX_t);
+    Buf += Config->is64Bit() ? 8 : 4;
   }
 }
 
@@ -2323,16 +2321,6 @@ template class elf::MipsGotSection<ELF32LE>;
 template class elf::MipsGotSection<ELF32BE>;
 template class elf::MipsGotSection<ELF64LE>;
 template class elf::MipsGotSection<ELF64BE>;
-
-template class elf::GotPltSection<ELF32LE>;
-template class elf::GotPltSection<ELF32BE>;
-template class elf::GotPltSection<ELF64LE>;
-template class elf::GotPltSection<ELF64BE>;
-
-template class elf::IgotPltSection<ELF32LE>;
-template class elf::IgotPltSection<ELF32BE>;
-template class elf::IgotPltSection<ELF64LE>;
-template class elf::IgotPltSection<ELF64BE>;
 
 template class elf::StringTableSection<ELF32LE>;
 template class elf::StringTableSection<ELF32BE>;

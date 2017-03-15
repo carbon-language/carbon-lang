@@ -428,9 +428,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(In<ELFT>::Got);
   }
 
-  In<ELFT>::GotPlt = make<GotPltSection<ELFT>>();
+  In<ELFT>::GotPlt = make<GotPltSection>();
   Add(In<ELFT>::GotPlt);
-  In<ELFT>::IgotPlt = make<IgotPltSection<ELFT>>();
+  In<ELFT>::IgotPlt = make<IgotPltSection>();
   Add(In<ELFT>::IgotPlt);
 
   if (Config->GdbIndex) {

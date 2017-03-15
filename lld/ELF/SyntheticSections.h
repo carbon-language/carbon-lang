@@ -265,9 +265,7 @@ private:
   uintX_t Size = 0;
 };
 
-template <class ELFT> class GotPltSection final : public SyntheticSection {
-  typedef typename ELFT::uint uintX_t;
-
+class GotPltSection final : public SyntheticSection {
 public:
   GotPltSection();
   void addEntry(SymbolBody &Sym);
@@ -283,9 +281,7 @@ private:
 // Symbols that will be relocated by Target->IRelativeRel.
 // On most Targets the IgotPltSection will immediately follow the GotPltSection
 // on ARM the IgotPltSection will immediately follow the GotSection.
-template <class ELFT> class IgotPltSection final : public SyntheticSection {
-  typedef typename ELFT::uint uintX_t;
-
+class IgotPltSection final : public SyntheticSection {
 public:
   IgotPltSection();
   void addEntry(SymbolBody &Sym);
@@ -773,8 +769,8 @@ template <class ELFT> struct In {
   static GotSection<ELFT> *Got;
   static EhFrameSection<ELFT> *EhFrame;
   static MipsGotSection<ELFT> *MipsGot;
-  static GotPltSection<ELFT> *GotPlt;
-  static IgotPltSection<ELFT> *IgotPlt;
+  static GotPltSection *GotPlt;
+  static IgotPltSection *IgotPlt;
   static HashTableSection<ELFT> *HashTab;
   static InputSection *Interp;
   static MipsRldMapSection<ELFT> *MipsRldMap;
@@ -803,8 +799,8 @@ template <class ELFT> GnuHashTableSection<ELFT> *In<ELFT>::GnuHashTab;
 template <class ELFT> GotSection<ELFT> *In<ELFT>::Got;
 template <class ELFT> EhFrameSection<ELFT> *In<ELFT>::EhFrame;
 template <class ELFT> MipsGotSection<ELFT> *In<ELFT>::MipsGot;
-template <class ELFT> GotPltSection<ELFT> *In<ELFT>::GotPlt;
-template <class ELFT> IgotPltSection<ELFT> *In<ELFT>::IgotPlt;
+template <class ELFT> GotPltSection *In<ELFT>::GotPlt;
+template <class ELFT> IgotPltSection *In<ELFT>::IgotPlt;
 template <class ELFT> HashTableSection<ELFT> *In<ELFT>::HashTab;
 template <class ELFT> InputSection *In<ELFT>::Interp;
 template <class ELFT> MipsRldMapSection<ELFT> *In<ELFT>::MipsRldMap;
