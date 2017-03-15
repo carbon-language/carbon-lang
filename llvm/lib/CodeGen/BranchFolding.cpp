@@ -125,8 +125,6 @@ BranchFolder::BranchFolder(bool defaultEnableTailMerge, bool CommonHoist,
   }
 }
 
-/// RemoveDeadBlock - Remove the specified dead machine basic block from the
-/// function, updating the CFG.
 void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
   assert(MBB->pred_empty() && "MBB must be dead!");
   DEBUG(dbgs() << "\nRemoving MBB: " << *MBB);
@@ -146,9 +144,6 @@ void BranchFolder::RemoveDeadBlock(MachineBasicBlock *MBB) {
     MLI->removeBlock(MBB);
 }
 
-/// OptimizeFunction - Perhaps branch folding, tail merging and other
-/// CFG optimizations on the given function.  Block placement changes the layout
-/// and may create new tail merging opportunities.
 bool BranchFolder::OptimizeFunction(MachineFunction &MF,
                                     const TargetInstrInfo *tii,
                                     const TargetRegisterInfo *tri,
@@ -350,8 +345,6 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   return TailLen;
 }
 
-/// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
-/// after it, replacing it with an unconditional branch to NewDest.
 void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
                                            MachineBasicBlock *NewDest) {
   TII->ReplaceTailWithBranchTo(OldInst, NewDest);
@@ -364,9 +357,6 @@ void BranchFolder::ReplaceTailWithBranchTo(MachineBasicBlock::iterator OldInst,
   ++NumTailMerge;
 }
 
-/// SplitMBBAt - Given a machine basic block and an iterator into it, split the
-/// MBB so that the part before the iterator falls into the part starting at the
-/// iterator.  This returns the new MBB.
 MachineBasicBlock *BranchFolder::SplitMBBAt(MachineBasicBlock &CurMBB,
                                             MachineBasicBlock::iterator BBI1,
                                             const BasicBlock *BB) {
@@ -635,16 +625,6 @@ ProfitableToMerge(MachineBasicBlock *MBB1, MachineBasicBlock *MBB2,
          (I1 == MBB1->begin() || I2 == MBB2->begin());
 }
 
-/// ComputeSameTails - Look through all the blocks in MergePotentials that have
-/// hash CurHash (guaranteed to match the last element).  Build the vector
-/// SameTails of all those that have the (same) largest number of instructions
-/// in common of any pair of these blocks.  SameTails entries contain an
-/// iterator into MergePotentials (from which the MachineBasicBlock can be
-/// found) and a MachineBasicBlock::iterator into that MBB indicating the
-/// instruction where the matching code sequence begins.
-/// Order of elements in SameTails is the reverse of the order in which
-/// those blocks appear in MergePotentials (where they are not necessarily
-/// consecutive).
 unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
                                         unsigned MinCommonTailLength,
                                         MachineBasicBlock *SuccBB,
@@ -681,8 +661,6 @@ unsigned BranchFolder::ComputeSameTails(unsigned CurHash,
   return maxCommonTailLength;
 }
 
-/// RemoveBlocksWithHash - Remove all blocks with hash CurHash from
-/// MergePotentials, restoring branches at ends of blocks as appropriate.
 void BranchFolder::RemoveBlocksWithHash(unsigned CurHash,
                                         MachineBasicBlock *SuccBB,
                                         MachineBasicBlock *PredBB) {
@@ -702,8 +680,6 @@ void BranchFolder::RemoveBlocksWithHash(unsigned CurHash,
   MergePotentials.erase(CurMPIter, MergePotentials.end());
 }
 
-/// CreateCommonTailOnlyBlock - None of the blocks to be tail-merged consist
-/// only of the common tail.  Create a block that does by splitting one.
 bool BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
                                              MachineBasicBlock *SuccBB,
                                              unsigned maxCommonTailLength,
@@ -754,8 +730,6 @@ bool BranchFolder::CreateCommonTailOnlyBlock(MachineBasicBlock *&PredBB,
   return true;
 }
 
-/// MergeCommonTailDebugLocs - Create merged DebugLocs of identical instructions
-/// across SameTails and assign it to the instruction in common tail.
 void BranchFolder::MergeCommonTailDebugLocs(unsigned commonTailIndex) {
   MachineBasicBlock *MBB = SameTails[commonTailIndex].getBlock();
 
@@ -945,7 +919,7 @@ bool BranchFolder::TryTailMergeBlocks(MachineBasicBlock *SuccBB,
     // Recompute common tail MBB's edge weights and block frequency.
     setCommonTailEdgeWeights(*MBB);
 
-    // Merge debug locations across identical instructions for common tail
+    // Merge debug locations across identical instructions for common tail.
     MergeCommonTailDebugLocs(commonTailIndex);
 
     // MBB is common tail.  Adjust all other BB's to jump to this one.
@@ -1261,8 +1235,6 @@ static DebugLoc getBranchDebugLoc(MachineBasicBlock &MBB) {
   return DebugLoc();
 }
 
-/// OptimizeBlock - Analyze and optimize control flow related to the specified
-/// block.  This is never called on the entry block.
 bool BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
   bool MadeChange = false;
   MachineFunction &MF = *MBB->getParent();
@@ -1703,8 +1675,6 @@ ReoptimizeBlock:
 //  Hoist Common Code
 //===----------------------------------------------------------------------===//
 
-/// HoistCommonCode - Hoist common instruction sequences at the start of basic
-/// blocks to their common predecessor.
 bool BranchFolder::HoistCommonCode(MachineFunction &MF) {
   bool MadeChange = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ) {
@@ -1838,9 +1808,6 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
   return PI;
 }
 
-/// HoistCommonCodeInSuccs - If the successors of MBB has common instruction
-/// sequence at the start of the function, move the instructions before MBB
-/// terminator if it's legal.
 bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
