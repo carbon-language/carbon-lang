@@ -153,6 +153,7 @@ namespace llvm {
                                    MachineBasicBlock *SuccBB,
                                    unsigned maxCommonTailLength,
                                    unsigned &commonTailIndex);
+    void MergeCommonTailDebugLocs(unsigned commonTailIndex);
 
     bool OptimizeBranches(MachineFunction &MF);
     bool OptimizeBlock(MachineBasicBlock *MBB);
