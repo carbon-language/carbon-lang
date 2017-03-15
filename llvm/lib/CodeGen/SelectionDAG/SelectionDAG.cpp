@@ -2906,9 +2906,20 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
   }
 
   case ISD::BUILD_VECTOR:
-    Tmp = ComputeNumSignBits(Op.getOperand(0), Depth + 1);
-    for (unsigned i = 1, e = Op.getNumOperands(); (i < e) && (Tmp > 1); ++i)
-      Tmp = std::min(Tmp, ComputeNumSignBits(Op.getOperand(i), Depth + 1));
+    Tmp = VTBits;
+    for (unsigned i = 0, e = Op.getNumOperands(); (i < e) && (Tmp > 1); ++i) {
+      SDValue SrcOp = Op.getOperand(i);
+      Tmp2 = ComputeNumSignBits(Op.getOperand(i), Depth + 1);
+
+      // BUILD_VECTOR can implicitly truncate sources, we must handle this.
+      if (SrcOp.getValueSizeInBits() != VTBits) {
+        assert(SrcOp.getValueSizeInBits() > VTBits &&
+               "Expected BUILD_VECTOR implicit truncation");
+        unsigned ExtraBits = SrcOp.getValueSizeInBits() - VTBits;
+        Tmp2 = (Tmp2 > ExtraBits ? Tmp2 - ExtraBits : 1);
+      }
+      Tmp = std::min(Tmp, Tmp2);
+    }
     return Tmp;
 
   case ISD::SIGN_EXTEND:
