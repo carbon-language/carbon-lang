@@ -1,5 +1,6 @@
 ; PR32278
 ; XFAIL: *
+; REQUIRES: asserts
 
 ; RUN: llc < %s
 
