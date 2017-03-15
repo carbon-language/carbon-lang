@@ -44,6 +44,11 @@
     #define NOMINMAX
   #endif
   #include <windows.h>
+#endif
+
+#ifdef _MSC_VER
+// Don't support SetupApi on MinGW.
+#define USE_MSVC_SETUP_API
 
 // Make sure this comes before MSVCSetupApi.h
 #include <comdef.h>
@@ -170,7 +175,7 @@ static bool findVCToolChainViaEnvironment(std::string &Path,
 // longer listed in the registry.
 static bool findVCToolChainViaSetupConfig(std::string &Path,
                                           bool &IsVS2017OrNewer) {
-#if !defined(USE_WIN32)
+#if !defined(USE_MSVC_SETUP_API)
   return false;
 #else
   // FIXME: This really should be done once in the top-level program's main
