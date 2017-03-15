@@ -330,11 +330,11 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
 
   auto Add = [](InputSectionBase *Sec) { InputSections.push_back(Sec); };
 
-  In<ELFT>::DynStrTab = make<StringTableSection<ELFT>>(".dynstr", true);
+  In<ELFT>::DynStrTab = make<StringTableSection>(".dynstr", true);
   In<ELFT>::Dynamic = make<DynamicSection<ELFT>>();
   In<ELFT>::RelaDyn = make<RelocationSection<ELFT>>(
       Config->isRela() ? ".rela.dyn" : ".rel.dyn", Config->ZCombreloc);
-  In<ELFT>::ShStrTab = make<StringTableSection<ELFT>>(".shstrtab", false);
+  In<ELFT>::ShStrTab = make<StringTableSection>(".shstrtab", false);
 
   Out::ElfHeader = make<OutputSection>("", 0, SHF_ALLOC);
   Out::ElfHeader->Size = sizeof(Elf_Ehdr);
@@ -352,7 +352,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(createCommentSection<ELFT>());
 
   if (Config->Strip != StripPolicy::All) {
-    In<ELFT>::StrTab = make<StringTableSection<ELFT>>(".strtab", false);
+    In<ELFT>::StrTab = make<StringTableSection>(".strtab", false);
     In<ELFT>::SymTab = make<SymbolTableSection<ELFT>>(*In<ELFT>::StrTab);
   }
 

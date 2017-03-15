@@ -987,9 +987,8 @@ void IgotPltSection::writeTo(uint8_t *Buf) {
   }
 }
 
-template <class ELFT>
-StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
-    : SyntheticSection(Dynamic ? (uintX_t)SHF_ALLOC : 0, SHT_STRTAB, 1, Name),
+StringTableSection::StringTableSection(StringRef Name, bool Dynamic)
+    : SyntheticSection(Dynamic ? (uint64_t)SHF_ALLOC : 0, SHT_STRTAB, 1, Name),
       Dynamic(Dynamic) {
   // ELF string tables start with a NUL byte.
   addString("");
@@ -999,8 +998,7 @@ StringTableSection<ELFT>::StringTableSection(StringRef Name, bool Dynamic)
 // duplicates. It is optional because the name of global symbols are already
 // uniqued and hashing them again has a big cost for a small value: uniquing
 // them with some other string that happens to be the same.
-template <class ELFT>
-unsigned StringTableSection<ELFT>::addString(StringRef S, bool HashIt) {
+unsigned StringTableSection::addString(StringRef S, bool HashIt) {
   if (HashIt) {
     auto R = StringMap.insert(std::make_pair(S, this->Size));
     if (!R.second)
@@ -1012,7 +1010,7 @@ unsigned StringTableSection<ELFT>::addString(StringRef S, bool HashIt) {
   return Ret;
 }
 
-template <class ELFT> void StringTableSection<ELFT>::writeTo(uint8_t *Buf) {
+void StringTableSection::writeTo(uint8_t *Buf) {
   for (StringRef S : Strings) {
     memcpy(Buf, S.data(), S.size());
     Buf += S.size() + 1;
@@ -1281,8 +1279,7 @@ template <class ELFT> void RelocationSection<ELFT>::finalizeContents() {
 }
 
 template <class ELFT>
-SymbolTableSection<ELFT>::SymbolTableSection(
-    StringTableSection<ELFT> &StrTabSec)
+SymbolTableSection<ELFT>::SymbolTableSection(StringTableSection &StrTabSec)
     : SyntheticSection(StrTabSec.isDynamic() ? (uintX_t)SHF_ALLOC : 0,
                        StrTabSec.isDynamic() ? SHT_DYNSYM : SHT_SYMTAB,
                        sizeof(uintX_t),
@@ -2319,11 +2316,6 @@ template class elf::MipsGotSection<ELF32LE>;
 template class elf::MipsGotSection<ELF32BE>;
 template class elf::MipsGotSection<ELF64LE>;
 template class elf::MipsGotSection<ELF64BE>;
-
-template class elf::StringTableSection<ELF32LE>;
-template class elf::StringTableSection<ELF32BE>;
-template class elf::StringTableSection<ELF64LE>;
-template class elf::StringTableSection<ELF64BE>;
 
 template class elf::DynamicSection<ELF32LE>;
 template class elf::DynamicSection<ELF32BE>;
