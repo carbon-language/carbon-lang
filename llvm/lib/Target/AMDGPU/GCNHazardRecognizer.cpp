@@ -72,8 +72,8 @@ static bool isRFE(unsigned Opcode) {
 }
 
 static bool isSMovRel(unsigned Opcode) {
-  return Opcode == AMDGPU::S_MOVRELS_B32 || Opcode == AMDGPU::S_MOVRELS_B64 ||
-         Opcode == AMDGPU::S_MOVRELD_B32 || Opcode == AMDGPU::S_MOVRELD_B64;
+  return Opcode == AMDGPU::S_MOVRELS_B32 || AMDGPU::S_MOVRELS_B64 ||
+         Opcode == AMDGPU::S_MOVRELD_B32 || AMDGPU::S_MOVRELD_B64;
 }
 
 static bool isVInterp(unsigned Opcode) {
