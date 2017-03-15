@@ -27,6 +27,10 @@ class TestMoveNearest(TestBase):
         target = self.dbg.CreateTarget("a.out")
         self.assertTrue(target, VALID_TARGET)
 
+        lldbutil.run_break_set_by_symbol(self, 'main', sym_exact=True)
+        process = target.LaunchSimple(None, None, self.get_process_working_directory())
+        self.assertEquals(process.GetState(), lldb.eStateStopped)
+
         # Regardless of the -m value the breakpoint should have exactly one
         # location on the foo functions
         self.runCmd("settings set target.move-to-nearest-code true")
