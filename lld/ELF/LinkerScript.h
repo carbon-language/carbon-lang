@@ -267,6 +267,7 @@ public:
   uint64_t getDot() { return Dot; }
   OutputSection *getOutputSection(const Twine &Loc, StringRef S);
   uint64_t getOutputSectionSize(StringRef S);
+  void discard(ArrayRef<InputSectionBase *> V);
 
   virtual uint64_t getSymbolValue(const Twine &Loc, StringRef S) = 0;
   virtual bool isDefined(StringRef S) = 0;
@@ -300,7 +301,6 @@ public:
 
   void writeDataBytes(StringRef Name, uint8_t *Buf);
   void addSymbol(SymbolAssignment *Cmd);
-  void discard(ArrayRef<InputSectionBase *> V);
   void processCommands(OutputSectionFactory &Factory);
 
   uint64_t getSymbolValue(const Twine &Loc, StringRef S) override;

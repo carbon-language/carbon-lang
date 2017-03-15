@@ -288,11 +288,10 @@ void LinkerScriptBase::computeInputSections(InputSectionDescription *I) {
   }
 }
 
-template <class ELFT>
-void LinkerScript<ELFT>::discard(ArrayRef<InputSectionBase *> V) {
+void LinkerScriptBase::discard(ArrayRef<InputSectionBase *> V) {
   for (InputSectionBase *S : V) {
     S->Live = false;
-    if (S == In<ELFT>::ShStrTab)
+    if (S == InX::ShStrTab)
       error("discarding .shstrtab section is not allowed");
     discard(S->DependentSections);
   }
