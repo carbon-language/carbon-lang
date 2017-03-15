@@ -9788,8 +9788,8 @@ static SDValue PerformAddcSubcCombine(SDNode *N, SelectionDAG &DAG,
   if (Subtarget->isThumb1Only()) {
     SDValue RHS = N->getOperand(1);
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHS)) {
-      int32_t imm = C->getSExtValue();
-      if (-imm > 0) {
+      int64_t imm = C->getSExtValue();
+      if (imm < 0) {
         SDLoc DL(N);
         RHS = DAG.getConstant(-imm, DL, MVT::i32);
         unsigned Opcode = (N->getOpcode() == ARMISD::ADDC) ? ARMISD::SUBC
@@ -9806,8 +9806,8 @@ static SDValue PerformAddeSubeCombine(SDNode *N, SelectionDAG &DAG,
   if (Subtarget->isThumb1Only()) {
     SDValue RHS = N->getOperand(1);
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHS)) {
-      int32_t imm = C->getSExtValue();
-      if (-imm > 0) {
+      int64_t imm = C->getSExtValue();
+      if (imm < 0) {
         SDLoc DL(N);
 
         // The with-carry-in form matches bitwise not instead of the negation.
