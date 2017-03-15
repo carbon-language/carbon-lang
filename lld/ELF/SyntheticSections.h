@@ -153,16 +153,19 @@ private:
   uint8_t *HashBuf;
 };
 
-// For each copy relocation, we create an instance of this class to
-// reserve space in .bss or .bss.rel.ro.
-template <class ELFT> class CopyRelSection final : public SyntheticSection {
-  typedef typename ELFT::uint uintX_t;
-
+// BssSection is used to reserve space for copy relocations. We create two
+// instances of this class for .bss and .bss.rel.ro. .bss is used for writable
+// symbols, and .bss.rel.ro is used for read-only symbols.
+class BssSection final : public SyntheticSection {
 public:
-  CopyRelSection(bool ReadOnly, uintX_t AddrAlign, size_t Size);
+  BssSection(StringRef Name);
   void writeTo(uint8_t *) override {}
+  bool empty() const override { return getSize() == 0; }
+  size_t reserveSpace(uint32_t Alignment, size_t Size);
   size_t getSize() const override { return Size; }
-  size_t Size;
+
+private:
+  size_t Size = 0;
 };
 
 template <class ELFT> class MipsGotSection final : public SyntheticSection {
@@ -759,6 +762,8 @@ SymbolBody *addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
 template <class ELFT> struct In {
   static InputSection *ARMAttributes;
   static BuildIdSection<ELFT> *BuildId;
+  static BssSection *Bss;
+  static BssSection *BssRelRo;
   static InputSection *Common;
   static DynamicSection<ELFT> *Dynamic;
   static StringTableSection<ELFT> *DynStrTab;
@@ -788,6 +793,8 @@ template <class ELFT> struct In {
 };
 
 template <class ELFT> InputSection *In<ELFT>::ARMAttributes;
+template <class ELFT> BssSection *In<ELFT>::Bss;
+template <class ELFT> BssSection *In<ELFT>::BssRelRo;
 template <class ELFT> BuildIdSection<ELFT> *In<ELFT>::BuildId;
 template <class ELFT> InputSection *In<ELFT>::Common;
 template <class ELFT> DynamicSection<ELFT> *In<ELFT>::Dynamic;
