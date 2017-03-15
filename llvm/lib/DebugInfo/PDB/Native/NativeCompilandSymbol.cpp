@@ -1,4 +1,4 @@
-//===- NativeCompilandSymbol.h - Native impl of PDBCompilandSymbol -C++ -*-===//
+//===- NativeCompilandSymbol.cpp - Native impl for compilands ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -26,9 +26,10 @@ bool NativeCompilandSymbol::isEditAndContinueEnabled() const {
 
 uint32_t NativeCompilandSymbol::getLexicalParentId() const { return 0; }
 
-// DIA, which this API was modeled after, uses counter-intuitive meanings for
-// IDiaSymbol::get_name and IDiaSymbol::get_libraryName, which is why these
-// methods may appear to be cross-mapped.
+// The usage of getObjFileName for getLibraryName and getModuleName for getName
+// may seem backwards, but it is consistent with DIA, which is what this API
+// was modeled after.  We may rename these methods later to try to eliminate
+// this potential confusion.
 
 std::string NativeCompilandSymbol::getLibraryName() const {
   return Module.Info.getObjFileName();
