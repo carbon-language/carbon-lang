@@ -45,19 +45,6 @@ thread_local bool Fuzzer::IsMyThread;
 
 SharedMemoryRegion SMR;
 
-static void MissingExternalApiFunction(const char *FnName) {
-  Printf("ERROR: %s is not defined. Exiting.\n"
-         "Did you use -fsanitize-coverage=... to build your code?\n",
-         FnName);
-  exit(1);
-}
-
-#define CHECK_EXTERNAL_FUNCTION(fn)                                            \
-  do {                                                                         \
-    if (!(EF->fn))                                                             \
-      MissingExternalApiFunction(#fn);                                         \
-  } while (false)
-
 // Only one Fuzzer per process.
 static Fuzzer *F;
 
@@ -128,7 +115,8 @@ void Fuzzer::HandleMalloc(size_t Size) {
 Fuzzer::Fuzzer(UserCallback CB, InputCorpus &Corpus, MutationDispatcher &MD,
                FuzzingOptions Options)
     : CB(CB), Corpus(Corpus), MD(MD), Options(Options) {
-  SetDeathCallback();
+  if (EF->__sanitizer_set_death_callback)
+    EF->__sanitizer_set_death_callback(StaticDeathCallback);
   InitializeTraceState();
   assert(!F);
   F = this;
@@ -155,11 +143,6 @@ Fuzzer::~Fuzzer() { }
 void Fuzzer::AllocateCurrentUnitData() {
   if (CurrentUnitData || MaxInputLen == 0) return;
   CurrentUnitData = new uint8_t[MaxInputLen];
-}
-
-void Fuzzer::SetDeathCallback() {
-  CHECK_EXTERNAL_FUNCTION(__sanitizer_set_death_callback);
-  EF->__sanitizer_set_death_callback(StaticDeathCallback);
 }
 
 void Fuzzer::StaticDeathCallback() {

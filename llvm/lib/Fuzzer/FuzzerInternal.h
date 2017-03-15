@@ -110,7 +110,6 @@ private:
   // Stop tracing.
   void StopTraceRecording();
 
-  void SetDeathCallback();
   static void StaticDeathCallback();
   void DumpCurrentUnit(const char *Prefix);
   void DeathCallback();
