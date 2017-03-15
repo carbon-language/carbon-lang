@@ -200,6 +200,7 @@ struct SelectInstVisitor : public InstVisitor<SelectInstVisitor> {
   SelectInstVisitor(Function &Func) : F(Func) {}
 
   void countSelects(Function &Func) {
+    NSIs = 0;
     Mode = VM_counting;
     visit(Func);
   }
@@ -229,6 +230,8 @@ struct SelectInstVisitor : public InstVisitor<SelectInstVisitor> {
   void annotateOneSelectInst(SelectInst &SI);
   // Visit \p SI instruction and perform tasks according to visit mode.
   void visitSelectInst(SelectInst &SI);
+  // Return the number of select instructions. This needs be called after
+  // countSelects().
   unsigned getNumOfSelectInsts() const { return NSIs; }
 };
 
@@ -1058,9 +1061,9 @@ void SelectInstVisitor::visitSelectInst(SelectInst &SI) {
   if (SI.getCondition()->getType()->isVectorTy())
     return;
 
-  NSIs++;
   switch (Mode) {
   case VM_counting:
+    NSIs++;
     return;
   case VM_instrument:
     instrumentOneSelectInst(SI);
