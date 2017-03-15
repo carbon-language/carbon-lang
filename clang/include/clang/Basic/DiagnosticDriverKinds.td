@@ -286,5 +286,5 @@ def err_drv_defsym_invalid_symval : Error<"Value is not an integer: %0">;
 def warn_drv_msvc_not_found : Warning<
   "unable to find a Visual Studio installation; "
   "try running Clang from a developer command prompt">,
-  InGroup<InvalidOrNonExistentDirectory>;
+  InGroup<DiagGroup<"msvc-not-found">>;
 }
