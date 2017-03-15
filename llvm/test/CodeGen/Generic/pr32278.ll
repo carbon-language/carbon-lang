@@ -1,5 +1,5 @@
 ; PR32278
-; XFAIL:
+; XFAIL: *
 
 ; RUN: llc < %s
 
