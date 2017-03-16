@@ -59,7 +59,7 @@ TEST(is_separator, Works) {
 #ifdef LLVM_ON_WIN32
   EXPECT_TRUE(path::is_separator('\\'));
 #else
-  EXPECT_FALSE(path::is_separator('\\', ));
+  EXPECT_FALSE(path::is_separator('\\'));
 #endif
 }
 
