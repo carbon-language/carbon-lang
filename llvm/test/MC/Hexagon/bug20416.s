@@ -1,5 +1,5 @@
-# RUN: not llvm-mc -mv60 -mhvx -filetype=asm %s 2>%t; FileCheck %s --check-prefix=CHECK-V60-ERROR <%t
-# RUN:     llvm-mc -mv62 -mhvx -filetype=asm %s | FileCheck %s
+# RUN: not llvm-mc -triple=hexagon -mv60 -mhvx -filetype=asm %s 2>%t; FileCheck %s --check-prefix=CHECK-V60-ERROR <%t
+# RUN:     llvm-mc -triple=hexagon -mv62 -mhvx -filetype=asm %s | FileCheck %s
 
 // for this a v60+/hvx instruction sequence, make sure fails with v60
 // but passes with v62.  this is because this instruction uses different
