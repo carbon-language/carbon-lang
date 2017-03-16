@@ -38,10 +38,8 @@ class Argument : public Value, public ilist_node<Argument> {
   void setParent(Function *parent);
 
 public:
-  /// If \p F is specified, the argument is inserted at the end of the argument
-  /// list for \p F.
-  explicit Argument(Type *Ty, const Twine &Name = "", Function *F = nullptr,
-                    unsigned ArgNo = 0);
+  /// Argument constructor.
+  explicit Argument(Type *Ty, const Twine &Name = "", unsigned ArgNo = 0);
 
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
