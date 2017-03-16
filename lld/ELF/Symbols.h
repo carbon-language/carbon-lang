@@ -238,9 +238,8 @@ public:
   // This field is a pointer to the symbol's version definition.
   const void *Verdef;
 
-  // CopyRelSec and CopyRelSecOff are significant only when NeedsCopy is true.
-  InputSection *CopyRelSec;
-  size_t CopyRelSecOff;
+  // Section is significant only when NeedsCopy is true.
+  InputSection *Section = nullptr;
 
 private:
   template <class ELFT> const typename ELFT::Sym &getSym() const {

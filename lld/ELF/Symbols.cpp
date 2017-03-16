@@ -106,8 +106,7 @@ static typename ELFT::uint getSymVA(const SymbolBody &Body, int64_t &Addend) {
   case SymbolBody::SharedKind: {
     auto &SS = cast<SharedSymbol>(Body);
     if (SS.NeedsCopy)
-      return SS.CopyRelSec->OutSec->Addr + SS.CopyRelSec->OutSecOff +
-             SS.CopyRelSecOff;
+      return SS.Section->OutSec->Addr + SS.Section->OutSecOff;
     if (SS.NeedsPltAddr)
       return Body.getPltVA<ELFT>();
     return 0;
@@ -208,7 +207,7 @@ template <class ELFT> OutputSection *SymbolBody::getOutputSection() const {
 
   if (auto *S = dyn_cast<SharedSymbol>(this)) {
     if (S->NeedsCopy)
-      return S->CopyRelSec->OutSec;
+      return S->Section->OutSec;
     return nullptr;
   }
 

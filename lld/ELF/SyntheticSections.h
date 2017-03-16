@@ -153,19 +153,15 @@ private:
   uint8_t *HashBuf;
 };
 
-// BssSection is used to reserve space for copy relocations. We create two
-// instances of this class for .bss and .bss.rel.ro. .bss is used for writable
-// symbols, and .bss.rel.ro is used for read-only symbols.
-class BssSection final : public SyntheticSection {
+// For each copy relocation, we create an instance of this class to
+// reserve space in .bss or .bss.rel.ro.
+template <class ELFT> class CopyRelSection final : public SyntheticSection {
 public:
-  BssSection(StringRef Name);
+  CopyRelSection(bool ReadOnly, uint32_t Alignment, size_t Size);
   void writeTo(uint8_t *) override {}
-  bool empty() const override { return getSize() == 0; }
-  size_t reserveSpace(uint32_t Alignment, size_t Size);
-  size_t getSize() const override { return Size; }
 
-private:
-  size_t Size = 0;
+  size_t getSize() const override { return Size; }
+  size_t Size;
 };
 
 template <class ELFT> class MipsGotSection final : public SyntheticSection {
@@ -760,8 +756,6 @@ SymbolBody *addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
 // Linker generated sections which can be used as inputs.
 struct InX {
   static InputSection *ARMAttributes;
-  static BssSection *Bss;
-  static BssSection *BssRelRo;
   static InputSection *Common;
   static StringTableSection *DynStrTab;
   static InputSection *Interp;
