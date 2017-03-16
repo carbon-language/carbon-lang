@@ -310,16 +310,14 @@ private:
 };
 
 template <class ELFT> class DynamicReloc {
-  typedef typename ELFT::uint uintX_t;
-
 public:
   DynamicReloc(uint32_t Type, const InputSectionBase *InputSec,
-               uintX_t OffsetInSec, bool UseSymVA, SymbolBody *Sym,
+               uint64_t OffsetInSec, bool UseSymVA, SymbolBody *Sym,
                int64_t Addend)
       : Type(Type), Sym(Sym), InputSec(InputSec), OffsetInSec(OffsetInSec),
         UseSymVA(UseSymVA), Addend(Addend) {}
 
-  uintX_t getOffset() const;
+  uint64_t getOffset() const;
   int64_t getAddend() const;
   uint32_t getSymIndex() const;
   const InputSectionBase *getInputSec() const { return InputSec; }
@@ -329,7 +327,7 @@ public:
 private:
   SymbolBody *Sym;
   const InputSectionBase *InputSec = nullptr;
-  uintX_t OffsetInSec;
+  uint64_t OffsetInSec;
   bool UseSymVA;
   int64_t Addend;
 };
