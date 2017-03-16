@@ -2121,10 +2121,13 @@ void RewriteInstance::emitFunctions() {
 
   OLT.emitAndFinalize(ObjectsHandle);
 
-  const auto *EntryFunction = getBinaryFunctionContainingAddress(EntryPoint);
-  assert(EntryFunction && "cannot find function for entry point");
-  auto JITS = OLT.findSymbol(EntryFunction->getSymbol()->getName(), false);
-  EntryPoint = JITS.getAddress();
+  if (opts::Relocs) {
+    const auto *EntryFunction = getBinaryFunctionContainingAddress(EntryPoint);
+    assert(EntryFunction && "cannot find function for entry point");
+    auto JITS = OLT.findSymbol(EntryFunction->getSymbol()->getName(), false);
+    EntryPoint = JITS.getAddress();
+    assert(EntryPoint && "entry point cannot be NULL");
+  }
 
   if (opts::KeepTmp)
     TempOut->keep();
