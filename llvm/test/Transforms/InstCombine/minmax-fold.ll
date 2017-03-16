@@ -529,15 +529,16 @@ define float @bitcast_scalar_umax(float %x, float %y) {
 }
 
 ; PR32306 - https://bugs.llvm.org/show_bug.cgi?id=32306
-; FIXME: The icmp/select form a canonical smin, so don't hide that by folding the final bitcast into the select.
+; The icmp/select form a canonical smin, so don't hide that by folding the final bitcast into the select.
 
 define <8 x float> @bitcast_vector_smin(<8 x float> %x, <8 x float> %y) {
 ; CHECK-LABEL: @bitcast_vector_smin(
 ; CHECK-NEXT:    [[BCX:%.*]] = bitcast <8 x float> %x to <8 x i32>
 ; CHECK-NEXT:    [[BCY:%.*]] = bitcast <8 x float> %y to <8 x i32>
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <8 x i32> [[BCX]], [[BCY]]
-; CHECK-NEXT:    [[SEL_V:%.*]] = select <8 x i1> [[CMP]], <8 x float> %x, <8 x float> %y
-; CHECK-NEXT:    ret <8 x float> [[SEL_V]]
+; CHECK-NEXT:    [[SEL:%.*]] = select <8 x i1> [[CMP]], <8 x i32> [[BCX]], <8 x i32> [[BCY]]
+; CHECK-NEXT:    [[BCS:%.*]] = bitcast <8 x i32> [[SEL]] to <8 x float>
+; CHECK-NEXT:    ret <8 x float> [[BCS]]
 ;
   %bcx = bitcast <8 x float> %x to <8 x i32>
   %bcy = bitcast <8 x float> %y to <8 x i32>
