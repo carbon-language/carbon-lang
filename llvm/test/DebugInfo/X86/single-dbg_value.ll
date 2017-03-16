@@ -8,8 +8,8 @@
 ; CHECK-NEXT:   DW_AT_location [DW_FORM_data4]
 ; CHECK-NEXT:   DW_AT_name{{.*}}"a"
 ; CHECK: .debug_loc contents:
-;                               rax
-; CHECK:  Location description: 50
+;                               rax, piece 0x00000004
+; CHECK:  Location description: 50 93 04
 ; SANITY: DBG_VALUE
 ; SANITY-NOT: DBG_VALUE
 ; ModuleID = 'test.ll'

@@ -99,9 +99,6 @@ protected:
     SubRegisterOffsetInBits = OffsetInBits;
   }
 
-  /// Add masking operations to stencil out a subregister.
-  void maskSubRegister();
-
 public:
   DwarfExpression(unsigned DwarfVersion) : DwarfVersion(DwarfVersion) {}
   virtual ~DwarfExpression() {};
@@ -129,10 +126,8 @@ public:
   /// is at the top of the DWARF stack.
   void AddOpPiece(unsigned SizeInBits, unsigned OffsetInBits = 0);
 
-  /// Emit a shift-right dwarf operation.
+  /// Emit a shift-right dwarf expression.
   void AddShr(unsigned ShiftBy);
-  /// Emit a bitwise and dwarf operation.
-  void AddAnd(unsigned Mask);
 
   /// Emit a DW_OP_stack_value, if supported.
   ///

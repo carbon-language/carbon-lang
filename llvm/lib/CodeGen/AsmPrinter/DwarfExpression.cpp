@@ -66,12 +66,6 @@ void DwarfExpression::AddShr(unsigned ShiftBy) {
   EmitOp(dwarf::DW_OP_shr);
 }
 
-void DwarfExpression::AddAnd(unsigned Mask) {
-  EmitOp(dwarf::DW_OP_constu);
-  EmitUnsigned(Mask);
-  EmitOp(dwarf::DW_OP_and);
-}
-
 bool DwarfExpression::AddMachineRegIndirect(const TargetRegisterInfo &TRI,
                                             unsigned MachineReg, int Offset) {
   if (isFrameRegister(TRI, MachineReg)) {
@@ -236,12 +230,6 @@ void DwarfExpression::AddExpression(DIExpressionCursor &&ExprCursor,
                                     unsigned FragmentOffsetInBits) {
   while (ExprCursor) {
     auto Op = ExprCursor.take();
-
-    // If we need to mask out a subregister, do it now, unless the next
-    // operation would emit an OpPiece anyway.
-    if (SubRegisterSizeInBits && Op->getOp() != dwarf::DW_OP_LLVM_fragment)
-      maskSubRegister();
-
     switch (Op->getOp()) {
     case dwarf::DW_OP_LLVM_fragment: {
       unsigned SizeInBits = Op->getArg(1);
@@ -297,24 +285,9 @@ void DwarfExpression::AddExpression(DIExpressionCursor &&ExprCursor,
   }
 }
 
-/// Add masking operations to stencil out a subregister.
-void DwarfExpression::maskSubRegister() {
-  assert(SubRegisterSizeInBits && "no subregister was registered");
-  if (SubRegisterOffsetInBits > 0)
-    AddShr(SubRegisterOffsetInBits);
-  uint64_t Mask = (1UL << SubRegisterSizeInBits) - 1;
-  AddAnd(Mask);
-}
-
-
 void DwarfExpression::finalize() {
-  // Emit any outstanding DW_OP_piece operations to mask out subregisters.
-  if (SubRegisterSizeInBits == 0)
-    return;
-  // Don't emit a DW_OP_piece for a subregister at offset 0.
-  if (SubRegisterOffsetInBits == 0)
-    return;
-  AddOpPiece(SubRegisterSizeInBits, SubRegisterOffsetInBits);
+  if (SubRegisterSizeInBits)
+    AddOpPiece(SubRegisterSizeInBits, SubRegisterOffsetInBits);
 }
 
 void DwarfExpression::addFragmentOffset(const DIExpression *Expr) {
