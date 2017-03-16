@@ -71,12 +71,12 @@ llvm::parseCachePruningPolicy(StringRef PolicyStr) {
     if (Key == "prune_interval") {
       auto DurationOrErr = parseDuration(Value);
       if (!DurationOrErr)
-        return std::move(DurationOrErr.takeError());
+        return DurationOrErr.takeError();
       Policy.Interval = *DurationOrErr;
     } else if (Key == "prune_after") {
       auto DurationOrErr = parseDuration(Value);
       if (!DurationOrErr)
-        return std::move(DurationOrErr.takeError());
+        return DurationOrErr.takeError();
       Policy.Expiration = *DurationOrErr;
     } else if (Key == "cache_size") {
       if (Value.back() != '%')
