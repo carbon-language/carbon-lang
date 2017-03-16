@@ -198,7 +198,7 @@ template <class ELFT> typename ELFT::uint SymbolBody::getSize() const {
   return 0;
 }
 
-template <class ELFT> OutputSection *SymbolBody::getOutputSection() const {
+OutputSection *SymbolBody::getOutputSection() const {
   if (auto *S = dyn_cast<DefinedRegular>(this)) {
     if (S->Section)
       return S->Section->getOutputSection();
@@ -213,7 +213,7 @@ template <class ELFT> OutputSection *SymbolBody::getOutputSection() const {
 
   if (isa<DefinedCommon>(this)) {
     if (Config->DefineCommon)
-      return In<ELFT>::Common->OutSec;
+      return InX::Common->OutSec;
     return nullptr;
   }
 
@@ -410,11 +410,6 @@ template uint32_t SymbolBody::template getSize<ELF32LE>() const;
 template uint32_t SymbolBody::template getSize<ELF32BE>() const;
 template uint64_t SymbolBody::template getSize<ELF64LE>() const;
 template uint64_t SymbolBody::template getSize<ELF64BE>() const;
-
-template OutputSection *SymbolBody::template getOutputSection<ELF32LE>() const;
-template OutputSection *SymbolBody::template getOutputSection<ELF32BE>() const;
-template OutputSection *SymbolBody::template getOutputSection<ELF64LE>() const;
-template OutputSection *SymbolBody::template getOutputSection<ELF64BE>() const;
 
 template bool DefinedRegular::template isMipsPIC<ELF32LE>() const;
 template bool DefinedRegular::template isMipsPIC<ELF32BE>() const;

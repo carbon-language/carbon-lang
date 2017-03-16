@@ -1389,7 +1389,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     ESym->st_size = Body->getSize<ELFT>();
 
     // Set a section index.
-    if (const OutputSection *OutSec = Body->getOutputSection<ELFT>())
+    if (const OutputSection *OutSec = Body->getOutputSection())
       ESym->st_shndx = OutSec->SectionIndex;
     else if (isa<DefinedRegular>(Body))
       ESym->st_shndx = SHN_ABS;
