@@ -56,6 +56,30 @@ Error InfoStream::reload() {
     return EC;
   uint32_t NewOffset = Reader.getOffset();
   NamedStreamMapByteSize = NewOffset - Offset;
+
+  bool Stop = false;
+  while (!Stop && !Reader.empty()) {
+    PdbRaw_FeatureSig Sig;
+    if (auto EC = Reader.readEnum(Sig))
+      return EC;
+    switch (Sig) {
+    case PdbRaw_FeatureSig::VC110:
+      // No other flags for VC110 PDB.
+      Stop = true;
+      LLVM_FALLTHROUGH;
+    case PdbRaw_FeatureSig::VC140:
+      Features |= PdbFeatureContainsIdStream;
+      break;
+    case PdbRaw_FeatureSig::NoTypeMerge:
+      Features |= PdbFeatureNoTypeMerging;
+      break;
+    case PdbRaw_FeatureSig::MinimalDebugInfo:
+      Features |= PdbFeatureMinimalDebugInfo;
+    default:
+      continue;
+    }
+    FeatureSignatures.push_back(Sig);
+  }
   return Error::success();
 }
 
@@ -85,6 +109,12 @@ PDB_UniqueId InfoStream::getGuid() const { return Guid; }
 
 uint32_t InfoStream::getNamedStreamMapByteSize() const {
   return NamedStreamMapByteSize;
+}
+
+PdbRaw_Features InfoStream::getFeatures() const { return Features; }
+
+ArrayRef<PdbRaw_FeatureSig> InfoStream::getFeatureSignatures() const {
+  return FeatureSignatures;
 }
 
 const NamedStreamMap &InfoStream::getNamedStreams() const {

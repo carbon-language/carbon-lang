@@ -19,10 +19,33 @@
 #include "llvm/DebugInfo/PDB/Native/StringTable.h"
 
 #include "llvm/Support/FormatAdapters.h"
+#include "llvm/Support/FormatProviders.h"
 #include "llvm/Support/FormatVariadic.h"
 
 using namespace llvm;
 using namespace llvm::pdb;
+
+namespace llvm {
+template <> struct format_provider<PdbRaw_FeatureSig> {
+  static void format(const PdbRaw_FeatureSig &Sig, raw_ostream &Stream,
+                     StringRef Style) {
+    switch (Sig) {
+    case PdbRaw_FeatureSig::MinimalDebugInfo:
+      Stream << "MinimalDebugInfo";
+      break;
+    case PdbRaw_FeatureSig::NoTypeMerge:
+      Stream << "NoTypeMerge";
+      break;
+    case PdbRaw_FeatureSig::VC110:
+      Stream << "VC110";
+      break;
+    case PdbRaw_FeatureSig::VC140:
+      Stream << "VC140";
+      break;
+    }
+  }
+};
+}
 
 template <typename R> using ValueOfRange = llvm::detail::ValueOfRange<R>;
 
@@ -124,6 +147,22 @@ static bool diffAndPrint(StringRef Label, PDBFile &File1, PDBFile &File2, T V1,
   outs().indent(2) << Label << "\n";
   outs().indent(4) << formatv("{0}: {1}\n", File1.getFilePath(), V1);
   outs().indent(4) << formatv("{0}: {1}\n", File2.getFilePath(), V2);
+  return true;
+}
+
+template <typename T>
+static bool diffAndPrint(StringRef Label, PDBFile &File1, PDBFile &File2,
+                         ArrayRef<T> V1, ArrayRef<T> V2) {
+  if (V1 == V2) {
+    outs() << formatv("  {0}: No differences detected!\n", Label);
+    return false;
+  }
+
+  outs().indent(2) << Label << "\n";
+  outs().indent(4) << formatv("{0}: {1}\n", File1.getFilePath(),
+                              make_range(V1.begin(), V1.end()));
+  outs().indent(4) << formatv("{0}: {1}\n", File2.getFilePath(),
+                              make_range(V2.begin(), V2.end()));
   return true;
 }
 
@@ -446,6 +485,8 @@ Error DiffStyle::diffInfoStream() {
                           IS2.getSignature());
   HasDiff |=
       diffAndPrint("Version", File1, File2, IS1.getVersion(), IS2.getVersion());
+  HasDiff |= diffAndPrint("Features", File1, File2, IS1.getFeatureSignatures(),
+                          IS2.getFeatureSignatures());
   HasDiff |= diffAndPrint("Named Stream Byte Size", File1, File2,
                           IS1.getNamedStreamMapByteSize(),
                           IS2.getNamedStreamMapByteSize());
