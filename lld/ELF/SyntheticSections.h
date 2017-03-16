@@ -727,7 +727,7 @@ public:
 
 // A container for one or more linker generated thunks. Instances of these
 // thunks including ARM interworking and Mips LA25 PI to non-PI thunks.
-template <class ELFT> class ThunkSection : public SyntheticSection {
+class ThunkSection : public SyntheticSection {
 public:
   // ThunkSection in OS, with desired OutSecOff of Off
   ThunkSection(OutputSection *OS, uint64_t Off);
@@ -736,13 +736,13 @@ public:
   // Thunk is given offset from start of this InputSection
   // Thunk defines a symbol in this InputSection that can be used as target
   // of a relocation
-  void addThunk(Thunk<ELFT> *T);
+  void addThunk(Thunk *T);
   size_t getSize() const override { return Size; }
   void writeTo(uint8_t *Buf) override;
   InputSection *getTargetInputSection() const;
 
 private:
-  std::vector<const Thunk<ELFT> *> Thunks;
+  std::vector<const Thunk *> Thunks;
   size_t Size = 0;
 };
 
