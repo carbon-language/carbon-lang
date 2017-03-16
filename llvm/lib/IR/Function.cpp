@@ -39,8 +39,8 @@ template class llvm::SymbolTableListTraits<BasicBlock>;
 
 void Argument::anchor() { }
 
-Argument::Argument(Type *Ty, const Twine &Name, Function *Par)
-  : Value(Ty, Value::ArgumentVal) {
+Argument::Argument(Type *Ty, const Twine &Name, Function *Par, unsigned ArgNo)
+  : Value(Ty, Value::ArgumentVal), ArgNo(ArgNo) {
   Parent = nullptr;
 
   if (Par)
@@ -50,18 +50,6 @@ Argument::Argument(Type *Ty, const Twine &Name, Function *Par)
 
 void Argument::setParent(Function *parent) {
   Parent = parent;
-}
-
-unsigned Argument::getArgNo() const {
-  const Function *F = getParent();
-  assert(F && "Argument is not in a function");
-
-  Function::const_arg_iterator AI = F->arg_begin();
-  unsigned ArgIdx = 0;
-  for (; &*AI != this; ++AI)
-    ++ArgIdx;
-
-  return ArgIdx;
 }
 
 bool Argument::hasNonNullAttr() const {
@@ -244,7 +232,8 @@ void Function::BuildLazyArguments() const {
   for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i) {
     assert(!FT->getParamType(i)->isVoidTy() &&
            "Cannot have void typed arguments!");
-    ArgumentList.push_back(new Argument(FT->getParamType(i)));
+    ArgumentList.push_back(
+        new Argument(FT->getParamType(i), "", nullptr, i));
   }
 
   // Clear the lazy arguments bit.
