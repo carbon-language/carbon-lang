@@ -1659,7 +1659,7 @@ template <class ELFT> void PltSection<ELFT>::writeTo(uint8_t *Buf) {
   for (auto &I : Entries) {
     const SymbolBody *B = I.first;
     unsigned RelOff = I.second + PltOff;
-    uint64_t Got = B->getGotPltVA<ELFT>();
+    uint64_t Got = B->getGotPltVA();
     uint64_t Plt = this->getVA() + Off;
     Target->writePlt(Buf + Off, Got, Plt, B->PltIndex, RelOff);
     Off += Target->PltEntrySize;
