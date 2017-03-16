@@ -470,7 +470,6 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(In<ELFT>::StrTab);
 }
 
-template <class ELFT>
 static bool shouldKeepInSymtab(SectionBase *Sec, StringRef SymName,
                                const SymbolBody &B) {
   if (B.isFile() || B.isSection())
@@ -497,7 +496,7 @@ static bool shouldKeepInSymtab(SectionBase *Sec, StringRef SymName,
   return !Sec || !(Sec->Flags & SHF_MERGE);
 }
 
-template <class ELFT> static bool includeInSymtab(const SymbolBody &B) {
+static bool includeInSymtab(const SymbolBody &B) {
   if (!B.isLocal() && !B.symbol()->IsUsedInRegularObj)
     return false;
 
@@ -535,11 +534,11 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
       // No reason to keep local undefined symbol in symtab.
       if (!DR)
         continue;
-      if (!includeInSymtab<ELFT>(*B))
+      if (!includeInSymtab(*B))
         continue;
 
       SectionBase *Sec = DR->Section;
-      if (!shouldKeepInSymtab<ELFT>(Sec, B->getName(), *B))
+      if (!shouldKeepInSymtab(Sec, B->getName(), *B))
         continue;
       In<ELFT>::SymTab->addSymbol(B);
     }
@@ -948,7 +947,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     Sec->assignOffsets();
 }
 
-template <class ELFT>
 static bool canSharePtLoad(const OutputSection &S1, const OutputSection &S2) {
   if (!(S1.Flags & SHF_ALLOC) || !(S2.Flags & SHF_ALLOC))
     return false;
@@ -1011,8 +1009,8 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
   while (NonScriptI != E) {
     auto BestPos = std::max_element(
         I, NonScriptI, [&](OutputSection *&A, OutputSection *&B) {
-          bool ACanSharePtLoad = canSharePtLoad<ELFT>(**NonScriptI, *A);
-          bool BCanSharePtLoad = canSharePtLoad<ELFT>(**NonScriptI, *B);
+          bool ACanSharePtLoad = canSharePtLoad(**NonScriptI, *A);
+          bool BCanSharePtLoad = canSharePtLoad(**NonScriptI, *B);
           if (ACanSharePtLoad != BCanSharePtLoad)
             return BCanSharePtLoad;
 
@@ -1052,7 +1050,6 @@ static void applySynthetic(const std::vector<SyntheticSection *> &Sections,
 // to make them visible from linkescript side. But not all sections are always
 // required to be in output. For example we don't need dynamic section content
 // sometimes. This function filters out such unused sections from output.
-template <class ELFT>
 static void removeUnusedSyntheticSections(std::vector<OutputSection *> &V) {
   // All input synthetic sections that can be empty are placed after
   // all regular ones. We iterate over them all and exit at first
@@ -1119,7 +1116,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   for (Symbol *S : Symtab<ELFT>::X->getSymbols()) {
     SymbolBody *Body = S->body();
 
-    if (!includeInSymtab<ELFT>(*Body))
+    if (!includeInSymtab(*Body))
       continue;
     if (In<ELFT>::SymTab)
       In<ELFT>::SymTab->addSymbol(Body);
@@ -1139,7 +1136,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // So far we have added sections from input object files.
   // This function adds linker-created Out::* sections.
   addPredefinedSections();
-  removeUnusedSyntheticSections<ELFT>(OutputSections);
+  removeUnusedSyntheticSections(OutputSections);
 
   sortSections();
 
@@ -1265,7 +1262,7 @@ template <class ELFT> OutputSection *Writer<ELFT>::findSection(StringRef Name) {
   return nullptr;
 }
 
-template <class ELFT> static bool needsPtLoad(OutputSection *Sec) {
+static bool needsPtLoad(OutputSection *Sec) {
   if (!(Sec->Flags & SHF_ALLOC))
     return false;
 
@@ -1312,7 +1309,7 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
   for (OutputSection *Sec : OutputSections) {
     if (!(Sec->Flags & SHF_ALLOC))
       break;
-    if (!needsPtLoad<ELFT>(Sec))
+    if (!needsPtLoad(Sec))
       continue;
 
     // Segments are contiguous memory regions that has the same attributes
@@ -1346,7 +1343,7 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
   // read-only by dynamic linker after proccessing relocations.
   PhdrEntry RelRo(PT_GNU_RELRO, PF_R);
   for (OutputSection *Sec : OutputSections)
-    if (needsPtLoad<ELFT>(Sec) && isRelroSection<ELFT>(Sec))
+    if (needsPtLoad(Sec) && isRelroSection<ELFT>(Sec))
       RelRo.add(Sec);
   if (RelRo.First)
     Ret.push_back(std::move(RelRo));
@@ -1431,7 +1428,7 @@ template <class ELFT> void Writer<ELFT>::fixSectionAlignments() {
     if (I == End || (I + 1) == End)
       continue;
     OutputSection *Sec = *(I + 1);
-    if (needsPtLoad<ELFT>(Sec))
+    if (needsPtLoad(Sec))
       Sec->PageAlign = true;
   }
 }
@@ -1510,7 +1507,7 @@ template <class ELFT> void Writer<ELFT>::assignAddresses() {
       VA = I->second;
 
     // We only assign VAs to allocated sections.
-    if (needsPtLoad<ELFT>(Sec)) {
+    if (needsPtLoad(Sec)) {
       VA = alignTo(VA, Alignment);
       Sec->Addr = VA;
       VA += Sec->Size;
