@@ -888,7 +888,7 @@ static void mergeThunks(OutputSection *OS,
   std::merge(OS->Sections.begin(), OS->Sections.end(), Thunks.begin(),
              Thunks.end(), std::back_inserter(Tmp), MergeCmp);
   OS->Sections = std::move(Tmp);
-  OS->assignOffsets<ELFT>();
+  OS->assignOffsets();
 }
 
 // Process all relocations from the InputSections that have been assigned

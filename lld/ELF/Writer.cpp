@@ -945,7 +945,7 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   sortCtorsDtors<ELFT>(findSection(".dtors"));
 
   for (OutputSection *Sec : OutputSections)
-    Sec->assignOffsets<ELFT>();
+    Sec->assignOffsets();
 }
 
 template <class ELFT>
@@ -1045,7 +1045,7 @@ static void applySynthetic(const std::vector<SyntheticSection *> &Sections,
   for (SyntheticSection *SS : Sections)
     if (SS && SS->OutSec && !SS->empty()) {
       Fn(SS);
-      SS->OutSec->template assignOffsets<ELFT>();
+      SS->OutSec->assignOffsets();
     }
 }
 
@@ -1207,7 +1207,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   // Add BSS sections.
   auto Add = [=](OutputSection *Sec) {
     if (!Sec->Sections.empty()) {
-      Sec->assignOffsets<ELFT>();
+      Sec->assignOffsets();
       OutputSections.push_back(Sec);
     }
   };
