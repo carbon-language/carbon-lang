@@ -32,10 +32,13 @@ public:
 
   Error reload();
 
+  uint32_t getStreamSize() const;
+
   PdbRaw_ImplVer getVersion() const;
   uint32_t getSignature() const;
   uint32_t getAge() const;
   PDB_UniqueId getGuid() const;
+  uint32_t getNamedStreamMapByteSize() const;
 
   const NamedStreamMap &getNamedStreams() const;
 
@@ -62,6 +65,8 @@ private:
   // signature present on VC70 and higher PDBs which is guaranteed to be
   // universally unique.
   PDB_UniqueId Guid;
+
+  uint32_t NamedStreamMapByteSize = 0;
 
   NamedStreamMap NamedStreams;
 };
