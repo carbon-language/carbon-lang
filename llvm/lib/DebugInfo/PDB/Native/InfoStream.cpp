@@ -62,18 +62,22 @@ Error InfoStream::reload() {
     PdbRaw_FeatureSig Sig;
     if (auto EC = Reader.readEnum(Sig))
       return EC;
-    switch (Sig) {
-    case PdbRaw_FeatureSig::VC110:
+    // Since this value comes from a file, it's possible we have some strange
+    // value which doesn't correspond to any value.  We don't want to warn on
+    // -Wcovered-switch-default in this case, so switch on the integral value
+    // instead of the enumeration value.
+    switch (uint32_t(Sig)) {
+    case uint32_t(PdbRaw_FeatureSig::VC110):
       // No other flags for VC110 PDB.
       Stop = true;
       LLVM_FALLTHROUGH;
-    case PdbRaw_FeatureSig::VC140:
+    case uint32_t(PdbRaw_FeatureSig::VC140):
       Features |= PdbFeatureContainsIdStream;
       break;
-    case PdbRaw_FeatureSig::NoTypeMerge:
+    case uint32_t(PdbRaw_FeatureSig::NoTypeMerge):
       Features |= PdbFeatureNoTypeMerging;
       break;
-    case PdbRaw_FeatureSig::MinimalDebugInfo:
+    case uint32_t(PdbRaw_FeatureSig::MinimalDebugInfo):
       Features |= PdbFeatureMinimalDebugInfo;
     default:
       continue;
