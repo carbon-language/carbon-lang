@@ -1039,7 +1039,6 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
   Script<ELFT>::X->adjustSectionsAfterSorting();
 }
 
-template <class ELFT>
 static void applySynthetic(const std::vector<SyntheticSection *> &Sections,
                            std::function<void(SyntheticSection *)> Fn) {
   for (SyntheticSection *SS : Sections)
@@ -1103,8 +1102,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // This responsible for splitting up .eh_frame section into
   // pieces. The relocation scan uses those pieces, so this has to be
   // earlier.
-  applySynthetic<ELFT>({In<ELFT>::EhFrame},
-                       [](SyntheticSection *SS) { SS->finalizeContents(); });
+  applySynthetic({In<ELFT>::EhFrame},
+                 [](SyntheticSection *SS) { SS->finalizeContents(); });
 
   // Scan relocations. This must be done after every symbol is declared so that
   // we can correctly decide if a dynamic relocation is needed.
@@ -1167,16 +1166,15 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
-  applySynthetic<ELFT>(
-      {In<ELFT>::DynSymTab, In<ELFT>::GnuHashTab, In<ELFT>::HashTab,
-       In<ELFT>::SymTab,    In<ELFT>::ShStrTab,   In<ELFT>::StrTab,
-       In<ELFT>::VerDef,    In<ELFT>::DynStrTab,  In<ELFT>::GdbIndex,
-       In<ELFT>::Got,       In<ELFT>::MipsGot,    In<ELFT>::IgotPlt,
-       In<ELFT>::GotPlt,    In<ELFT>::RelaDyn,    In<ELFT>::RelaIplt,
-       In<ELFT>::RelaPlt,   In<ELFT>::Plt,        In<ELFT>::Iplt,
-       In<ELFT>::Plt,       In<ELFT>::EhFrameHdr, In<ELFT>::VerSym,
-       In<ELFT>::VerNeed,   In<ELFT>::Dynamic},
-      [](SyntheticSection *SS) { SS->finalizeContents(); });
+  applySynthetic({In<ELFT>::DynSymTab, In<ELFT>::GnuHashTab, In<ELFT>::HashTab,
+                  In<ELFT>::SymTab,    In<ELFT>::ShStrTab,   In<ELFT>::StrTab,
+                  In<ELFT>::VerDef,    In<ELFT>::DynStrTab,  In<ELFT>::GdbIndex,
+                  In<ELFT>::Got,       In<ELFT>::MipsGot,    In<ELFT>::IgotPlt,
+                  In<ELFT>::GotPlt,    In<ELFT>::RelaDyn,    In<ELFT>::RelaIplt,
+                  In<ELFT>::RelaPlt,   In<ELFT>::Plt,        In<ELFT>::Iplt,
+                  In<ELFT>::Plt,       In<ELFT>::EhFrameHdr, In<ELFT>::VerSym,
+                  In<ELFT>::VerNeed,   In<ELFT>::Dynamic},
+                 [](SyntheticSection *SS) { SS->finalizeContents(); });
 
   // Some architectures use small displacements for jump instructions.
   // It is linker's responsibility to create thunks containing long
@@ -1189,8 +1187,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     // are out of range. This will need to turn into a loop that converges
     // when no more Thunks are added
     if (createThunks<ELFT>(OutputSections))
-      applySynthetic<ELFT>({In<ELFT>::MipsGot},
-                           [](SyntheticSection *SS) { SS->updateAllocSize(); });
+      applySynthetic({In<ELFT>::MipsGot},
+                     [](SyntheticSection *SS) { SS->updateAllocSize(); });
   }
   // Fill other section headers. The dynamic table is finalized
   // at the end because some tags like RELSZ depend on result
@@ -1199,8 +1197,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     Sec->finalize<ELFT>();
 
   // createThunks may have added local symbols to the static symbol table
-  applySynthetic<ELFT>({In<ELFT>::SymTab, In<ELFT>::ShStrTab, In<ELFT>::StrTab},
-                       [](SyntheticSection *SS) { SS->postThunkContents(); });
+  applySynthetic({In<ELFT>::SymTab, In<ELFT>::ShStrTab, In<ELFT>::StrTab},
+                 [](SyntheticSection *SS) { SS->postThunkContents(); });
 }
 
 template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
