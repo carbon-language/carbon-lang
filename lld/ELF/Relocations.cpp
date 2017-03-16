@@ -958,8 +958,7 @@ bool createThunks(ArrayRef<OutputSection *> OutputSections) {
     for (InputSection *IS : OS->Sections) {
       for (Relocation &Rel : IS->Relocations) {
         SymbolBody &Body = *Rel.Sym;
-        if (Target->needsThunk(Rel.Expr, Rel.Type, IS->template getFile<ELFT>(),
-                               Body)) {
+        if (Target->needsThunk(Rel.Expr, Rel.Type, IS->File, Body)) {
           Thunk *T;
           bool IsNew;
           std::tie(T, IsNew) = GetThunk(Body, Rel.Type);
