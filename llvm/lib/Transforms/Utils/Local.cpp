@@ -1358,14 +1358,14 @@ void llvm::salvageDebugInfo(Instruction &I) {
   };
   auto &M = *I.getModule();
   if (auto *BitCast = dyn_cast<BitCastInst>(&I))
-    findDbgValues(&I, [&](DbgValueInst &DVI) {
+    findDbgValues(BitCast, [&](DbgValueInst &DVI) {
       // Bitcasts are entirely irrelevant for debug info. Rewrite the dbg.value
       // to use the cast's source.
       DVI.setOperand(0, MDWrap(I.getOperand(0)));
       DEBUG(dbgs() << "SALVAGE: " << DVI << '\n');
     });
   else if (auto *GEP = dyn_cast<GetElementPtrInst>(&I))
-    findDbgValues(&I, [&](DbgValueInst &DVI) {
+    findDbgValues(GEP, [&](DbgValueInst &DVI) {
       unsigned BitWidth =
           M.getDataLayout().getPointerSizeInBits(GEP->getPointerAddressSpace());
       APInt Offset(BitWidth, 0);
@@ -1381,7 +1381,7 @@ void llvm::salvageDebugInfo(Instruction &I) {
       }
     });
   else if (auto *Load = dyn_cast<LoadInst>(&I))
-    findDbgValues(&I, [&](DbgValueInst &DVI) {
+    findDbgValues(Load, [&](DbgValueInst &DVI) {
       // Rewrite the load into DW_OP_deref.
       auto *DIExpr = DVI.getExpression();
       DIBuilder DIB(M, /*AllowUnresolved*/ false);
