@@ -1085,14 +1085,15 @@ static bool PhiHasDebugValue(DILocalVariable *DIVar,
   // Since we can't guarantee that the original dbg.declare instrinsic
   // is removed by LowerDbgDeclare(), we need to make sure that we are
   // not inserting the same dbg.value intrinsic over and over.
-  bool Found = false;
-  findDbgValues(APN, [&](DbgValueInst &DVI) {
-    assert(DVI.getValue() == APN);
-    assert(DVI.getOffset() == 0);
-    if ((DVI.getVariable() == DIVar) && (DVI.getExpression() == DIExpr))
-      Found = true;
-  });
-  return Found;
+  SmallVector<DbgValueInst *, 1> DbgValues;
+  findDbgValues(DbgValues, APN);
+  for (auto *DVI : DbgValues) {
+    assert(DVI->getValue() == APN);
+    assert(DVI->getOffset() == 0);
+    if ((DVI->getVariable() == DIVar) && (DVI->getExpression() == DIExpr))
+      return true;
+  }
+  return false;
 }
 
 /// Inserts a llvm.dbg.value intrinsic before a store to an alloca'd value
@@ -1250,40 +1251,44 @@ DbgDeclareInst *llvm::FindAllocaDbgDeclare(Value *V) {
   return nullptr;
 }
 
-void llvm::findDbgValues(Value *V, std::function<void(DbgValueInst &)> Action) {
+void llvm::findDbgValues(SmallVectorImpl<DbgValueInst *> &DbgValues, Value *V) {
   if (auto *L = LocalAsMetadata::getIfExists(V))
     if (auto *MDV = MetadataAsValue::getIfExists(V->getContext(), L))
       for (User *U : MDV->users())
         if (DbgValueInst *DVI = dyn_cast<DbgValueInst>(U))
-          Action(*DVI);
+          DbgValues.push_back(DVI);
 }
 
-static void appendOffset(SmallVectorImpl<uint64_t> &Ops, int64_t Offset) {
+static void DIExprAddDeref(SmallVectorImpl<uint64_t> &Expr) {
+  Expr.push_back(dwarf::DW_OP_deref);
+}
+
+static void DIExprAddOffset(SmallVectorImpl<uint64_t> &Expr, int Offset) {
   if (Offset > 0) {
-    Ops.push_back(dwarf::DW_OP_plus);
-    Ops.push_back(Offset);
+    Expr.push_back(dwarf::DW_OP_plus);
+    Expr.push_back(Offset);
   } else if (Offset < 0) {
-    Ops.push_back(dwarf::DW_OP_minus);
-    Ops.push_back(-Offset);
+    Expr.push_back(dwarf::DW_OP_minus);
+    Expr.push_back(-Offset);
   }
 }
 
-/// Prepend \p DIExpr with a deref and offset operation.
-static DIExpression *prependDIExpr(DIBuilder &Builder, DIExpression *DIExpr,
-                                   bool Deref, int64_t Offset) {
+static DIExpression *BuildReplacementDIExpr(DIBuilder &Builder,
+                                            DIExpression *DIExpr, bool Deref,
+                                            int Offset) {
   if (!Deref && !Offset)
     return DIExpr;
   // Create a copy of the original DIDescriptor for user variable, prepending
   // "deref" operation to a list of address elements, as new llvm.dbg.declare
   // will take a value storing address of the memory for variable, not
   // alloca itself.
-  SmallVector<uint64_t, 4> Ops;
+  SmallVector<uint64_t, 4> NewDIExpr;
   if (Deref)
-    Ops.push_back(dwarf::DW_OP_deref);
-  appendOffset(Ops, Offset);
+    DIExprAddDeref(NewDIExpr);
+  DIExprAddOffset(NewDIExpr, Offset);
   if (DIExpr)
-    Ops.append(DIExpr->elements_begin(), DIExpr->elements_end());
-  return Builder.createExpression(Ops);
+    NewDIExpr.append(DIExpr->elements_begin(), DIExpr->elements_end());
+  return Builder.createExpression(NewDIExpr);
 }
 
 bool llvm::replaceDbgDeclare(Value *Address, Value *NewAddress,
@@ -1297,7 +1302,7 @@ bool llvm::replaceDbgDeclare(Value *Address, Value *NewAddress,
   auto *DIExpr = DDI->getExpression();
   assert(DIVar && "Missing variable");
 
-  DIExpr = prependDIExpr(Builder, DIExpr, Deref, Offset);
+  DIExpr = BuildReplacementDIExpr(Builder, DIExpr, Deref, Offset);
 
   // Insert llvm.dbg.declare immediately after the original alloca, and remove
   // old llvm.dbg.declare.
@@ -1329,11 +1334,11 @@ static void replaceOneDbgValueForAlloca(DbgValueInst *DVI, Value *NewAddress,
   // Insert the offset immediately after the first deref.
   // We could just change the offset argument of dbg.value, but it's unsigned...
   if (Offset) {
-    SmallVector<uint64_t, 4> Ops;
-    Ops.push_back(dwarf::DW_OP_deref);
-    appendOffset(Ops, Offset);
-    Ops.append(DIExpr->elements_begin() + 1, DIExpr->elements_end());
-    DIExpr = Builder.createExpression(Ops);
+    SmallVector<uint64_t, 4> NewDIExpr;
+    DIExprAddDeref(NewDIExpr);
+    DIExprAddOffset(NewDIExpr, Offset);
+    NewDIExpr.append(DIExpr->elements_begin() + 1, DIExpr->elements_end());
+    DIExpr = Builder.createExpression(NewDIExpr);
   }
 
   Builder.insertDbgValueIntrinsic(NewAddress, DVI->getOffset(), DIVar, DIExpr,
@@ -1350,46 +1355,6 @@ void llvm::replaceDbgValueForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
         if (auto *DVI = dyn_cast<DbgValueInst>(U.getUser()))
           replaceOneDbgValueForAlloca(DVI, NewAllocaAddress, Builder, Offset);
       }
-}
-
-void llvm::salvageDebugInfo(Instruction &I) {
-  auto MDWrap = [&](Value *V) {
-    return MetadataAsValue::get(I.getContext(), ValueAsMetadata::get(V));
-  };
-  auto &M = *I.getModule();
-  if (auto *BitCast = dyn_cast<BitCastInst>(&I))
-    findDbgValues(BitCast, [&](DbgValueInst &DVI) {
-      // Bitcasts are entirely irrelevant for debug info. Rewrite the dbg.value
-      // to use the cast's source.
-      DVI.setOperand(0, MDWrap(I.getOperand(0)));
-      DEBUG(dbgs() << "SALVAGE: " << DVI << '\n');
-    });
-  else if (auto *GEP = dyn_cast<GetElementPtrInst>(&I))
-    findDbgValues(GEP, [&](DbgValueInst &DVI) {
-      unsigned BitWidth =
-          M.getDataLayout().getPointerSizeInBits(GEP->getPointerAddressSpace());
-      APInt Offset(BitWidth, 0);
-      // Rewrite a constant GEP into a DIExpression.
-      if (GEP->accumulateConstantOffset(M.getDataLayout(), Offset)) {
-        auto *DIExpr = DVI.getExpression();
-        DIBuilder DIB(M, /*AllowUnresolved*/ false);
-        // GEP offsets are i32 and thus alwaus fit into an int64_t.
-        DIExpr = prependDIExpr(DIB, DIExpr, NoDeref, Offset.getSExtValue());
-        DVI.setOperand(0, MDWrap(I.getOperand(0)));
-        DVI.setOperand(3, MetadataAsValue::get(I.getContext(), DIExpr));
-        DEBUG(dbgs() << "SALVAGE: " << DVI << '\n');
-      }
-    });
-  else if (auto *Load = dyn_cast<LoadInst>(&I))
-    findDbgValues(Load, [&](DbgValueInst &DVI) {
-      // Rewrite the load into DW_OP_deref.
-      auto *DIExpr = DVI.getExpression();
-      DIBuilder DIB(M, /*AllowUnresolved*/ false);
-      DIExpr = prependDIExpr(DIB, DIExpr, WithDeref, 0);
-      DVI.setOperand(0, MDWrap(I.getOperand(0)));
-      DVI.setOperand(3, MetadataAsValue::get(I.getContext(), DIExpr));
-      DEBUG(dbgs() << "SALVAGE:  " << DVI << '\n');
-    });
 }
 
 unsigned llvm::removeAllNonTerminatorAndEHPadInstructions(BasicBlock *BB) {
