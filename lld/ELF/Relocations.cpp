@@ -861,7 +861,6 @@ template <class ELFT> void scanRelocations(InputSectionBase &S) {
 // in the Sections vector, and recalculate the InputSection output section
 // offsets.
 // This may invalidate any output section offsets stored outside of InputSection
-template <class ELFT>
 static void mergeThunks(OutputSection *OS,
                         std::vector<ThunkSection *> &Thunks) {
   // Order Thunks in ascending OutSecOff
@@ -983,7 +982,7 @@ bool createThunks(ArrayRef<OutputSection *> OutputSections) {
 
   // Merge all created synthetic ThunkSections back into OutputSection
   for (auto &KV : ThunkSections)
-    mergeThunks<ELFT>(KV.first, KV.second);
+    mergeThunks(KV.first, KV.second);
   return !ThunkSections.empty();
 }
 
