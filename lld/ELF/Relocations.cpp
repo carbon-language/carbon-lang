@@ -654,7 +654,7 @@ static void scanRelocs(InputSectionBase &C, ArrayRef<RelTy> Rels) {
   if (!Config->ZText)
     IsWrite = true;
 
-  auto AddDyn = [=](const DynamicReloc<ELFT> &Reloc) {
+  auto AddDyn = [=](const DynamicReloc &Reloc) {
     In<ELFT>::RelaDyn->addReloc(Reloc);
   };
 

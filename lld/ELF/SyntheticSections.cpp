@@ -1197,18 +1197,17 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
-template <class ELFT>
-uint64_t DynamicReloc<ELFT>::getOffset() const {
+uint64_t DynamicReloc::getOffset() const {
   return InputSec->OutSec->Addr + InputSec->getOffset(OffsetInSec);
 }
 
-template <class ELFT> int64_t DynamicReloc<ELFT>::getAddend() const {
+int64_t DynamicReloc::getAddend() const {
   if (UseSymVA)
     return Sym->getVA(Addend);
   return Addend;
 }
 
-template <class ELFT> uint32_t DynamicReloc<ELFT>::getSymIndex() const {
+uint32_t DynamicReloc::getSymIndex() const {
   if (Sym && !UseSymVA)
     return Sym->DynsymIndex;
   return 0;
@@ -1223,7 +1222,7 @@ RelocationSection<ELFT>::RelocationSection(StringRef Name, bool Sort)
 }
 
 template <class ELFT>
-void RelocationSection<ELFT>::addReloc(const DynamicReloc<ELFT> &Reloc) {
+void RelocationSection<ELFT>::addReloc(const DynamicReloc &Reloc) {
   if (Reloc.Type == Target->RelativeRel)
     ++NumRelativeRelocs;
   Relocs.push_back(Reloc);
@@ -1241,7 +1240,7 @@ static bool compRelocations(const RelTy &A, const RelTy &B) {
 
 template <class ELFT> void RelocationSection<ELFT>::writeTo(uint8_t *Buf) {
   uint8_t *BufBegin = Buf;
-  for (const DynamicReloc<ELFT> &Rel : Relocs) {
+  for (const DynamicReloc &Rel : Relocs) {
     auto *P = reinterpret_cast<Elf_Rela *>(Buf);
     Buf += Config->isRela() ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
 
