@@ -147,6 +147,12 @@ static cl::opt<bool>
                         cl::desc("Do not take inbounds assumptions at all"),
                         cl::Hidden, cl::init(false), cl::cat(PollyCategory));
 
+static cl::opt<bool> PollyIgnoreParamBounds(
+    "polly-ignore-parameter-bounds",
+    cl::desc(
+        "Do not add parameter bounds and do no gist simplify sets accordingly"),
+    cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<bool> PollyPreciseFoldAccesses(
     "polly-precise-fold-accesses",
     cl::desc("Fold memory accesses to modele more possible delinearizations "
@@ -2103,6 +2109,9 @@ void Scop::addParameterBounds() {
 }
 
 void Scop::realignParams() {
+  if (PollyIgnoreParamBounds)
+    return;
+
   // Add all parameters into a common model.
   isl_space *Space = isl_space_params_alloc(getIslCtx(), ParameterIds.size());
 
