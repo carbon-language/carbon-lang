@@ -142,6 +142,11 @@ static cl::opt<bool> PollyPreciseInbounds(
     cl::desc("Take more precise inbounds assumptions (do not scale well)"),
     cl::Hidden, cl::init(false), cl::cat(PollyCategory));
 
+static cl::opt<bool>
+    PollyIgnoreInbounds("polly-ignore-inbounds",
+                        cl::desc("Do not take inbounds assumptions at all"),
+                        cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<bool> PollyPreciseFoldAccesses(
     "polly-precise-fold-accesses",
     cl::desc("Fold memory accesses to modele more possible delinearizations "
@@ -677,6 +682,8 @@ MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 // constraints is the set of constraints that needs to be assumed to ensure such
 // statement instances are never executed.
 void MemoryAccess::assumeNoOutOfBound() {
+  if (PollyIgnoreInbounds)
+    return;
   auto *SAI = getScopArrayInfo();
   isl_space *Space = isl_space_range(getOriginalAccessRelationSpace());
   isl_set *Outside = isl_set_empty(isl_space_copy(Space));
