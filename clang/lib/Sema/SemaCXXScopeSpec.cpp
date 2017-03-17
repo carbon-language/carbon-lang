@@ -596,8 +596,8 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S, NestedNameSpecInfo &IdInfo,
       }
       // Replacement '::' -> ':' is not allowed, just issue respective error.
       Diag(R.getNameLoc(), OnlyNamespace
-                               ? diag::err_expected_namespace_name
-                               : diag::err_expected_class_or_namespace)
+                               ? unsigned(diag::err_expected_namespace_name)
+                               : unsigned(diag::err_expected_class_or_namespace))
           << IdInfo.Identifier << getLangOpts().CPlusPlus;
       if (NamedDecl *ND = R.getAsSingle<NamedDecl>())
         Diag(ND->getLocation(), diag::note_entity_declared_at)
