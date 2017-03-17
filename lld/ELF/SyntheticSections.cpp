@@ -1712,7 +1712,6 @@ readCuList(DWARFContext &Dwarf, InputSection *Sec) {
   return Ret;
 }
 
-template <class ELFT>
 static InputSectionBase *findSection(ArrayRef<InputSectionBase *> Arr,
                                      uint64_t Offset) {
   for (InputSectionBase *S : Arr)
@@ -1736,7 +1735,7 @@ readAddressArea(DWARFContext &Dwarf, InputSection *Sec, size_t CurrentCU) {
         Sec->template getFile<ELFT>()->getSections();
 
     for (std::pair<uint64_t, uint64_t> &R : Ranges)
-      if (InputSectionBase *S = findSection<ELFT>(Sections, R.first))
+      if (InputSectionBase *S = findSection(Sections, R.first))
         Ret.push_back({S, R.first - S->getOffsetInFile(),
                        R.second - S->getOffsetInFile(), CurrentCU});
     ++CurrentCU;
