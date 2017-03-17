@@ -168,6 +168,12 @@ struct Configuration {
   // Returns true if target is 64 bit.
   bool is64() const { return EKind == ELF64LEKind || EKind == ELF64BEKind; }
 
+  // Returns true if the target is little endian.
+  bool isLE() const { return EKind == ELF32LEKind || EKind == ELF64LEKind; }
+
+  // Returns 4 or 8 for ELF32 or ELF64, respectively.
+  int wordsize() const { return is64() ? 8 : 4; }
+
   // The ELF spec defines two types of relocation table entries, RELA and
   // REL. RELA is a triplet of (offset, info, addend) while REL is a
   // tuple of (offset, info). Addends for REL are implicit and read from

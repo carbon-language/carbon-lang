@@ -127,7 +127,7 @@ template <class ELFT> static size_t getAugPSize(unsigned Enc) {
   switch (Enc & 0x0f) {
   case DW_EH_PE_absptr:
   case DW_EH_PE_signed:
-    return ELFT::Is64Bits ? 8 : 4;
+    return Config->wordsize();
   case DW_EH_PE_udata2:
   case DW_EH_PE_sdata2:
     return 2;

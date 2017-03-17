@@ -950,7 +950,7 @@ void GotPltSection::writeTo(uint8_t *Buf) {
   Buf += Target->GotPltHeaderEntriesNum * Target->GotPltEntrySize;
   for (const SymbolBody *B : Entries) {
     Target->writeGotPlt(Buf, *B);
-    Buf += Config->is64() ? 8 : 4;
+    Buf += Config->wordsize();
   }
 }
 
@@ -974,7 +974,7 @@ size_t IgotPltSection::getSize() const {
 void IgotPltSection::writeTo(uint8_t *Buf) {
   for (const SymbolBody *B : Entries) {
     Target->writeIgotPlt(Buf, *B);
-    Buf += Config->is64() ? 8 : 4;
+    Buf += Config->wordsize();
   }
 }
 
@@ -2194,7 +2194,7 @@ size_t MergeSyntheticSection::getSize() const {
 
 MipsRldMapSection::MipsRldMapSection()
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
-                       Config->is64() ? 8 : 4, ".rld_map") {}
+                       Config->wordsize(), ".rld_map") {}
 
 void MipsRldMapSection::writeTo(uint8_t *Buf) {
   // Apply filler from linker script.
@@ -2226,7 +2226,7 @@ void ARMExidxSentinelSection<ELFT>::writeTo(uint8_t *Buf) {
 
 ThunkSection::ThunkSection(OutputSection *OS, uint64_t Off)
     : SyntheticSection(SHF_ALLOC | SHF_EXECINSTR, SHT_PROGBITS,
-                       Config->is64() ? 8 : 4, ".text.thunk") {
+                       Config->wordsize(), ".text.thunk") {
   this->OutSec = OS;
   this->OutSecOff = Off;
 }
