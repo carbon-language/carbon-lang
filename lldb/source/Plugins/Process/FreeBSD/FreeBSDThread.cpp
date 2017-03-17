@@ -9,6 +9,8 @@
 
 // C Includes
 #include <errno.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 
 // C++ Includes
 // Other libraries and framework includes
@@ -141,7 +143,7 @@ const char *FreeBSDThread::GetName() {
     }
 
     for (size_t i = 0; i < len / sizeof(*kp); i++) {
-      if (kp[i].ki_tid == (lwpid_t)tid) {
+      if (kp[i].ki_tid == (lwpid_t)GetID()) {
         m_thread_name.append(kp[i].ki_tdname,
                              kp[i].ki_tdname + strlen(kp[i].ki_tdname));
         break;
