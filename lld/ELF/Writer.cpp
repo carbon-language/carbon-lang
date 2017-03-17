@@ -358,11 +358,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(In<ELFT>::BuildId);
   }
 
-  InputSection *Common = createCommonSection<ELFT>();
-  if (!Common->Data.empty()) {
-    In<ELFT>::Common = Common;
-    Add(Common);
-  }
+  In<ELFT>::Common = createCommonSection<ELFT>();
+  if (In<ELFT>::Common)
+    Add(InX::Common);
 
   In<ELFT>::Bss = make<BssSection>(".bss");
   Add(In<ELFT>::Bss);
