@@ -121,6 +121,13 @@ static cl::opt<unsigned> MaxNumAnnotations(
     cl::desc("Max number of annotations for a single indirect "
              "call callsite"));
 
+// Command line option to set the maximum number of value annotations
+// to write to the metadata for a single memop intrinsic.
+static cl::opt<unsigned> MaxNumMemOPAnnotations(
+    "memop-max-annotations", cl::init(4), cl::Hidden, cl::ZeroOrMore,
+    cl::desc("Max number of preicise value annotations for a single memop"
+             "intrinsic"));
+
 // Command line option to control appending FunctionHash to the name of a COMDAT
 // function. This is to avoid the hash mismatch caused by the preinliner.
 static cl::opt<bool> DoComdatRenaming(
@@ -250,6 +257,7 @@ struct MemIntrinsicVisitor : public InstVisitor<MemIntrinsicVisitor> {
   GlobalVariable *FuncNameVar = nullptr;
   uint64_t FuncHash = 0;
   PGOUseFunc *UseFunc = nullptr;
+  std::vector<Instruction *> Candidates;
 
   MemIntrinsicVisitor(Function &Func) : F(Func) {}
 
@@ -258,6 +266,7 @@ struct MemIntrinsicVisitor : public InstVisitor<MemIntrinsicVisitor> {
     Mode = VM_counting;
     visit(Func);
   }
+
   void instrumentMemIntrinsics(Function &Func, unsigned TotalNC,
                                GlobalVariable *FNV, uint64_t FHash) {
     Mode = VM_instrument;
@@ -265,6 +274,13 @@ struct MemIntrinsicVisitor : public InstVisitor<MemIntrinsicVisitor> {
     FuncHash = FHash;
     FuncNameVar = FNV;
     visit(Func);
+  }
+
+  std::vector<Instruction *> findMemIntrinsics(Function &Func) {
+    Candidates.clear();
+    Mode = VM_annotate;
+    visit(Func);
+    return Candidates;
   }
 
   // Visit the IR stream and annotate all mem intrinsic call instructions.
@@ -432,6 +448,7 @@ public:
     NumOfPGOSelectInsts += SIVisitor.getNumOfSelectInsts();
     NumOfPGOMemIntrinsics += MIVisitor.getNumOfMemIntrinsics();
     ValueSites[IPVK_IndirectCallTarget] = findIndirectCallSites(Func);
+    ValueSites[IPVK_MemOPSize] = MIVisitor.findMemIntrinsics(Func);
 
     FuncName = getPGOFuncName(F);
     computeCFGHash();
@@ -1153,7 +1170,8 @@ void MemIntrinsicVisitor::visitMemIntrinsic(MemIntrinsic &MI) {
     instrumentOneMemIntrinsic(MI);
     return;
   case VM_annotate:
-    break;
+    Candidates.push_back(&MI);
+    return;
   }
   llvm_unreachable("Unknown visiting mode");
 }
@@ -1167,9 +1185,7 @@ void PGOUseFunc::annotateValueSites() {
   createPGOFuncNameMetadata(F, FuncInfo.FuncName);
 
   for (uint32_t Kind = IPVK_First; Kind <= IPVK_Last; ++Kind)
-    // TBD: Only handle IPVK_IndirectCallTarget for now.
-    if (Kind == IPVK_IndirectCallTarget)
-      annotateValueSites(Kind);
+    annotateValueSites(Kind);
 }
 
 // Annotate the instructions for a specific value kind.
@@ -1193,7 +1209,8 @@ void PGOUseFunc::annotateValueSites(uint32_t Kind) {
                  << NumValueSites << "\n");
     annotateValueSite(*M, *I, ProfileRecord,
                       static_cast<InstrProfValueKind>(Kind), ValueSiteIndex,
-                      MaxNumAnnotations);
+                      Kind == IPVK_MemOPSize ? MaxNumMemOPAnnotations
+                                             : MaxNumAnnotations);
     ValueSiteIndex++;
   }
 }
