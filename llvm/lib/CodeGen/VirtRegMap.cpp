@@ -367,8 +367,8 @@ void VirtRegRewriter::handleIdentityCopy(MachineInstr &MI) const {
   }
 
   if (Indexes)
-    Indexes->removeMachineInstrFromMaps(MI);
-  MI.eraseFromParent();
+    Indexes->removeSingleMachineInstrFromMaps(MI);
+  MI.eraseFromBundle();
   DEBUG(dbgs() << "  deleted.\n");
 }
 
@@ -431,12 +431,14 @@ void VirtRegRewriter::rewrite() {
             }
           }
 
-          // The <def,undef> flag only makes sense for sub-register defs, and
-          // we are substituting a full physreg.  An <imp-use,kill> operand
-          // from the SuperKills list will represent the partial read of the
-          // super-register.
-          if (MO.isDef())
+          // The <def,undef> and <def,internal> flags only make sense for
+          // sub-register defs, and we are substituting a full physreg.  An
+          // <imp-use,kill> operand from the SuperKills list will represent the
+          // partial read of the super-register.
+          if (MO.isDef()) {
             MO.setIsUndef(false);
+            MO.setIsInternalRead(false);
+          }
 
           // PhysReg operands cannot have subregister indexes.
           PhysReg = TRI->getSubReg(PhysReg, SubReg);
