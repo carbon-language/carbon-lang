@@ -197,7 +197,7 @@ static cl::opt<bool>
 static cl::opt<bool> EnablePruneUnprofitable(
     "polly-enable-prune-unprofitable",
     cl::desc("Bail out on unprofitable SCoPs before rescheduling"), cl::Hidden,
-    cl::init(false), cl::cat(PollyCategory));
+    cl::init(true), cl::cat(PollyCategory));
 
 namespace polly {
 void initializePollyPasses(PassRegistry &Registry) {
