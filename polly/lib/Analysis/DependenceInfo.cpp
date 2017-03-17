@@ -368,8 +368,7 @@ void Dependences::calculateDependences(Scop &S) {
 
       Flow = buildFlow(Read, Write, MayWrite, Schedule);
 
-      RAW = isl_union_flow_get_must_dependence(Flow);
-      RAW = isl_union_map_union(RAW, isl_union_flow_get_may_dependence(Flow));
+      RAW = isl_union_flow_get_may_dependence(Flow);
       isl_union_flow_free(Flow);
 
       Flow = buildFlow(Write, Write, Read, Schedule);
