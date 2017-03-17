@@ -122,7 +122,6 @@ else()
       linux/LibcGlue.cpp
       linux/Support.cpp
       )
-    list(APPEND LLDB_PLUGINS lldbPluginProcessLinux)
     if (CMAKE_SYSTEM_NAME MATCHES "Android")
       add_host_subdirectory(android
         android/HostInfoAndroid.cpp
