@@ -218,8 +218,7 @@ handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase &C,
       if (!Body.isInGot()) {
         In<ELFT>::Got->addEntry(Body);
         In<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, In<ELFT>::Got,
-                                     Body.getGotOffset<ELFT>(), false, &Body,
-                                     0});
+                                     Body.getGotOffset(), false, &Body, 0});
       }
       return Target->TlsGdRelaxSkip;
     }
@@ -815,8 +814,8 @@ static void scanRelocs(InputSectionBase &C, ArrayRef<RelTy> Rels) {
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
         In<ELFT>::MipsGot->addEntry(Body, Addend, Expr);
         if (Body.isTls() && Body.isPreemptible())
-          AddDyn({Target->TlsGotRel, In<ELFT>::MipsGot,
-                  Body.getGotOffset<ELFT>(), false, &Body, 0});
+          AddDyn({Target->TlsGotRel, In<ELFT>::MipsGot, Body.getGotOffset(),
+                  false, &Body, 0});
         continue;
       }
 
@@ -824,7 +823,7 @@ static void scanRelocs(InputSectionBase &C, ArrayRef<RelTy> Rels) {
         continue;
 
       In<ELFT>::Got->addEntry(Body);
-      uintX_t Off = Body.getGotOffset<ELFT>();
+      uintX_t Off = Body.getGotOffset();
       uint32_t DynType;
       RelExpr GotRE = R_ABS;
       if (Body.isTls()) {
