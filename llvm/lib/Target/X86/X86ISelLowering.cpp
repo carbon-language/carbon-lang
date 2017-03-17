@@ -34266,12 +34266,16 @@ static SDValue combineAddOrSubToADCOrSBB(SDNode *N, SelectionDAG &DAG) {
     std::swap(X, Y);
 
   // Look through a one-use zext.
-  if (Y.getOpcode() == ISD::ZERO_EXTEND && Y.hasOneUse())
+  bool PeekedThroughZext = false;
+  if (Y.getOpcode() == ISD::ZERO_EXTEND && Y.hasOneUse()) {
     Y = Y.getOperand(0);
+    PeekedThroughZext = true;
+  }
 
   // If this is an add, canonicalize a setcc operand to the RHS.
   // TODO: Incomplete? What if both sides are setcc?
-  if (!IsSub && X.getOpcode() == X86ISD::SETCC &&
+  // TODO: Should we allow peeking through a zext of the other operand?
+  if (!IsSub && !PeekedThroughZext && X.getOpcode() == X86ISD::SETCC &&
       Y.getOpcode() != X86ISD::SETCC)
     std::swap(X, Y);
 
