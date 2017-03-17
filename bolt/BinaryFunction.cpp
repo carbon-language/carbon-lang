@@ -3772,12 +3772,7 @@ DynoStats BinaryFunction::getDynoStats() const {
     // frequencies. This may deviate from the sum of outgoing branches of the
     // basic block especially since the block may contain a function that
     // does not return or a function that throws an exception.
-    uint64_t BBExecutionCount = 0;
-    for (const auto &BI : BB->branch_info()) {
-      assert(BI.Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
-             "unexpected empty profile");
-      BBExecutionCount += BI.Count;
-    }
+    const uint64_t BBExecutionCount =  BB->getKnownExecutionCount();
 
     // Ignore empty blocks and blocks that were not executed.
     if (BB->getNumNonPseudos() == 0 || BBExecutionCount == 0)
@@ -3785,6 +3780,12 @@ DynoStats BinaryFunction::getDynoStats() const {
 
     // Count the number of calls by iterating through all instructions.
     for (const auto &Instr : *BB) {
+      if (BC.MIA->isStore(Instr)) {
+        Stats[DynoStats::STORES] += BBExecutionCount;
+      }
+      if (BC.MIA->isLoad(Instr)) {
+        Stats[DynoStats::LOADS] += BBExecutionCount;
+      }
       if (!BC.MIA->isCall(Instr))
         continue;
       Stats[DynoStats::FUNCTION_CALLS] += BBExecutionCount;
@@ -3867,9 +3868,6 @@ DynoStats BinaryFunction::getDynoStats() const {
       TakenCount = 0;
     if (NonTakenCount == COUNT_NO_PROFILE)
       NonTakenCount = 0;
-
-    assert(TakenCount + NonTakenCount == BBExecutionCount &&
-           "internal calculation error");
 
     if (IsForwardBranch) {
       Stats[DynoStats::FORWARD_COND_BRANCHES] += BBExecutionCount;

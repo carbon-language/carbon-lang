@@ -69,6 +69,8 @@ class DynoStats {
   D(INDIRECT_CALLS,               "indirect calls", Fn)\
   D(PLT_CALLS,                    "PLT calls", Fn)\
   D(INSTRUCTIONS,                 "executed instructions", Fn)\
+  D(LOADS,                        "executed load instructions", Fn)\
+  D(STORES,                       "executed store instructions", Fn)\
   D(JUMP_TABLE_BRANCHES,          "taken jump table branches", Fn)\
   D(ALL_BRANCHES,                 "total branches",\
       Fadd(ALL_CONDITIONAL, UNCOND_BRANCHES))\
