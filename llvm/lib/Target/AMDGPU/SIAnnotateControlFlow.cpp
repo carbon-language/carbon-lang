@@ -34,15 +34,6 @@ namespace {
 typedef std::pair<BasicBlock *, Value *> StackEntry;
 typedef SmallVector<StackEntry, 16> StackVector;
 
-// Intrinsic names the control flow is annotated with
-static const char *const IfIntrinsic = "llvm.amdgcn.if";
-static const char *const ElseIntrinsic = "llvm.amdgcn.else";
-static const char *const BreakIntrinsic = "llvm.amdgcn.break";
-static const char *const IfBreakIntrinsic = "llvm.amdgcn.if.break";
-static const char *const ElseBreakIntrinsic = "llvm.amdgcn.else.break";
-static const char *const LoopIntrinsic = "llvm.amdgcn.loop";
-static const char *const EndCfIntrinsic = "llvm.amdgcn.end.cf";
-
 class SIAnnotateControlFlow : public FunctionPass {
   DivergenceAnalysis *DA;
 
@@ -56,13 +47,13 @@ class SIAnnotateControlFlow : public FunctionPass {
   UndefValue *BoolUndef;
   Constant *Int64Zero;
 
-  Constant *If;
-  Constant *Else;
-  Constant *Break;
-  Constant *IfBreak;
-  Constant *ElseBreak;
-  Constant *Loop;
-  Constant *EndCf;
+  Function *If;
+  Function *Else;
+  Function *Break;
+  Function *IfBreak;
+  Function *ElseBreak;
+  Function *Loop;
+  Function *EndCf;
 
   DominatorTree *DT;
   StackVector Stack;
@@ -139,30 +130,13 @@ bool SIAnnotateControlFlow::doInitialization(Module &M) {
   BoolUndef = UndefValue::get(Boolean);
   Int64Zero = ConstantInt::get(Int64, 0);
 
-  If = M.getOrInsertFunction(
-    IfIntrinsic, ReturnStruct, Boolean, (Type *)nullptr);
-
-  Else = M.getOrInsertFunction(
-    ElseIntrinsic, ReturnStruct, Int64, (Type *)nullptr);
-
-  Break = M.getOrInsertFunction(
-    BreakIntrinsic, Int64, Int64, (Type *)nullptr);
-  cast<Function>(Break)->setDoesNotAccessMemory();
-
-  IfBreak = M.getOrInsertFunction(
-    IfBreakIntrinsic, Int64, Boolean, Int64, (Type *)nullptr);
-  cast<Function>(IfBreak)->setDoesNotAccessMemory();;
-
-  ElseBreak = M.getOrInsertFunction(
-    ElseBreakIntrinsic, Int64, Int64, Int64, (Type *)nullptr);
-  cast<Function>(ElseBreak)->setDoesNotAccessMemory();
-
-  Loop = M.getOrInsertFunction(
-    LoopIntrinsic, Boolean, Int64, (Type *)nullptr);
-
-  EndCf = M.getOrInsertFunction(
-    EndCfIntrinsic, Void, Int64, (Type *)nullptr);
-
+  If = Intrinsic::getDeclaration(&M, Intrinsic::amdgcn_if);
+  Else = Intrinsic::getDeclaration(&M, Intrinsic::amdgcn_else);
+  Break = Intrinsic::getDeclaration(&M, Intrinsic::amdgcn_break);
+  IfBreak = Intrinsic::getDeclaration(&M, Intrinsic::amdgcn_if_break);
+  ElseBreak = Intrinsic::getDeclaration(&M, Intrinsic::amdgcn_else_break);
+  Loop = Intrinsic::getDeclaration(&M, Intrinsic::amdgcn_loop);
+  EndCf = Intrinsic::getDeclaration(&M, Intrinsic::amdgcn_end_cf);
   return false;
 }
 
