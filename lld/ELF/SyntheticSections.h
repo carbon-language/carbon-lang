@@ -153,10 +153,9 @@ private:
   uint8_t *HashBuf;
 };
 
-// BssSection is used to reserve space for copy relocations and common symbols.
-// We create three instances of this class for .bss, .bss.rel.ro and "COMMON".
-// .bss is used for writable symbols, .bss.rel.ro is used for read-only symbols
-// and latter used for common symbols.
+// BssSection is used to reserve space for copy relocations. We create two
+// instances of this class for .bss and .bss.rel.ro. .bss is used for writable
+// symbols, and .bss.rel.ro is used for read-only symbols.
 class BssSection final : public SyntheticSection {
 public:
   BssSection(StringRef Name);
