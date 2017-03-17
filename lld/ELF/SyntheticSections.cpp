@@ -131,7 +131,7 @@ MipsAbiFlagsSection<ELFT> *MipsAbiFlagsSection<ELFT>::create() {
   bool Create = false;
 
   for (InputSectionBase *Sec : InputSections) {
-    if (!Sec->Live || Sec->Type != SHT_MIPS_ABIFLAGS)
+    if (Sec->Type != SHT_MIPS_ABIFLAGS)
       continue;
     Sec->Live = false;
     Create = true;
@@ -200,7 +200,7 @@ MipsOptionsSection<ELFT> *MipsOptionsSection<ELFT>::create() {
   bool Create = false;
 
   for (InputSectionBase *Sec : InputSections) {
-    if (!Sec->Live || Sec->Type != SHT_MIPS_OPTIONS)
+    if (Sec->Type != SHT_MIPS_OPTIONS)
       continue;
     Sec->Live = false;
     Create = true;
@@ -258,7 +258,7 @@ MipsReginfoSection<ELFT> *MipsReginfoSection<ELFT>::create() {
   bool Create = false;
 
   for (InputSectionBase *Sec : InputSections) {
-    if (!Sec->Live || Sec->Type != SHT_MIPS_REGINFO)
+    if (Sec->Type != SHT_MIPS_REGINFO)
       continue;
     Sec->Live = false;
     Create = true;
