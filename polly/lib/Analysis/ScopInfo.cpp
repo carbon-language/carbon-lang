@@ -3611,7 +3611,8 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
 
         if (isl_id *ParamId = getIdForParam(Parameter)) {
           int Dim = isl_set_find_dim_by_id(DomainCtx, isl_dim_param, ParamId);
-          DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
+          if (Dim >= 0)
+            DomainCtx = isl_set_eliminate(DomainCtx, isl_dim_param, Dim, 1);
           isl_id_free(ParamId);
         }
       }
