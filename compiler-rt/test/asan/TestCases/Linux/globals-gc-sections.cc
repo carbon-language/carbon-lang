@@ -2,6 +2,7 @@
 // RUN: %clangxx_asan %s -o %t -Wl,--gc-sections -fuse-ld=bfd -ffunction-sections -fdata-sections -mllvm -asan-globals=1
 
 // https://code.google.com/p/address-sanitizer/issues/detail?id=260
+// UNSUPPORTED: *
 
 int undefined();
 
