@@ -62,6 +62,8 @@ uint64_t ExprValue::getValue() const {
 static ExprValue add(ExprValue A, ExprValue B) {
   if (A.isAbsolute())
     std::swap(A, B);
+  if (!B.isAbsolute())
+    error("At least one side of the expression must be absolute");
   return {A.Sec, A.ForceAbsolute, A.Val + B.getValue()};
 }
 static ExprValue sub(ExprValue A, ExprValue B) {
