@@ -789,13 +789,13 @@ static void scanRelocs(InputSectionBase &C, ArrayRef<RelTy> Rels) {
         continue;
 
       if (Body.isGnuIFunc() && !Preemptible) {
-        In<ELFT>::Iplt->addEntry(Body);
+        In<ELFT>::Iplt->addEntry<ELFT>(Body);
         In<ELFT>::IgotPlt->addEntry(Body);
         In<ELFT>::RelaIplt->addReloc({Target->IRelativeRel, In<ELFT>::IgotPlt,
                                       Body.getGotPltOffset(), !Preemptible,
                                       &Body, 0});
       } else {
-        In<ELFT>::Plt->addEntry(Body);
+        In<ELFT>::Plt->addEntry<ELFT>(Body);
         In<ELFT>::GotPlt->addEntry(Body);
         In<ELFT>::RelaPlt->addReloc({Target->PltRel, In<ELFT>::GotPlt,
                                      Body.getGotPltOffset(), !Preemptible,

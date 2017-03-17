@@ -479,14 +479,15 @@ private:
 // header as its first entry that is used at run-time to resolve lazy binding.
 // The latter is used for GNU Ifunc symbols, that will be subject to a
 // Target->IRelativeRel.
-template <class ELFT> class PltSection : public SyntheticSection {
+class PltSection : public SyntheticSection {
 public:
   PltSection(size_t HeaderSize);
   void writeTo(uint8_t *Buf) override;
   size_t getSize() const override;
-  void addEntry(SymbolBody &Sym);
   bool empty() const override { return Entries.empty(); }
   void addSymbols();
+
+  template <class ELFT> void addEntry(SymbolBody &Sym);
 
 private:
   void writeHeader(uint8_t *Buf){};
@@ -766,6 +767,8 @@ struct InX {
   static GotPltSection *GotPlt;
   static IgotPltSection *IgotPlt;
   static MipsRldMapSection *MipsRldMap;
+  static PltSection *Plt;
+  static PltSection *Iplt;
   static StringTableSection *ShStrTab;
   static StringTableSection *StrTab;
 };
@@ -781,8 +784,6 @@ template <class ELFT> struct In : public InX {
   static EhFrameSection<ELFT> *EhFrame;
   static MipsGotSection<ELFT> *MipsGot;
   static HashTableSection<ELFT> *HashTab;
-  static PltSection<ELFT> *Plt;
-  static PltSection<ELFT> *Iplt;
   static RelocationSection<ELFT> *RelaDyn;
   static RelocationSection<ELFT> *RelaPlt;
   static RelocationSection<ELFT> *RelaIplt;
@@ -802,8 +803,6 @@ template <class ELFT> GotSection<ELFT> *In<ELFT>::Got;
 template <class ELFT> EhFrameSection<ELFT> *In<ELFT>::EhFrame;
 template <class ELFT> MipsGotSection<ELFT> *In<ELFT>::MipsGot;
 template <class ELFT> HashTableSection<ELFT> *In<ELFT>::HashTab;
-template <class ELFT> PltSection<ELFT> *In<ELFT>::Plt;
-template <class ELFT> PltSection<ELFT> *In<ELFT>::Iplt;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaDyn;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaPlt;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaIplt;

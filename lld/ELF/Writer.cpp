@@ -449,9 +449,9 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
       false /*Sort*/);
   Add(In<ELFT>::RelaIplt);
 
-  In<ELFT>::Plt = make<PltSection<ELFT>>(Target->PltHeaderSize);
+  In<ELFT>::Plt = make<PltSection>(Target->PltHeaderSize);
   Add(In<ELFT>::Plt);
-  In<ELFT>::Iplt = make<PltSection<ELFT>>(0);
+  In<ELFT>::Iplt = make<PltSection>(0);
   Add(In<ELFT>::Iplt);
 
   if (!Config->Relocatable) {
