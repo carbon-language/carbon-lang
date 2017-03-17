@@ -220,7 +220,7 @@ Value *SIAnnotateControlFlow::handleLoopCondition(Value *Cond, PHINode *Broken,
   if ((Phi = dyn_cast<PHINode>(Cond)) && L->contains(Phi)) {
 
     BasicBlock *Parent = Phi->getParent();
-    PHINode *NewPhi = PHINode::Create(Int64, 0, "", &Parent->front());
+    PHINode *NewPhi = PHINode::Create(Int64, 0, "loop.phi", &Parent->front());
     Value *Ret = NewPhi;
 
     // Handle all non-constant incoming values first
@@ -293,10 +293,13 @@ Value *SIAnnotateControlFlow::handleLoopCondition(Value *Cond, PHINode *Broken,
     return CallInst::Create(IfBreak, Args, "", Insert);
   }
 
-  // Insert IfBreak before TERM for constant COND.
-  if (isa<ConstantInt>(Cond)) {
+  // Insert IfBreak in the loop header TERM for constant COND other than true.
+  if (isa<Constant>(Cond)) {
+    Instruction *Insert = Cond == BoolTrue ?
+      Term : L->getHeader()->getTerminator();
+
     Value *Args[] = { Cond, Broken };
-    return CallInst::Create(IfBreak, Args, "", Term);
+    return CallInst::Create(IfBreak, Args, "", Insert);
   }
 
   llvm_unreachable("Unhandled loop condition!");
@@ -313,7 +316,7 @@ void SIAnnotateControlFlow::handleLoop(BranchInst *Term) {
     return;
 
   BasicBlock *Target = Term->getSuccessor(1);
-  PHINode *Broken = PHINode::Create(Int64, 0, "", &Target->front());
+  PHINode *Broken = PHINode::Create(Int64, 0, "phi.broken", &Target->front());
 
   Value *Cond = Term->getCondition();
   Term->setCondition(BoolTrue);
