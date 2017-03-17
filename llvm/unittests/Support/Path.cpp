@@ -1054,10 +1054,15 @@ TEST_F(FileSystemTest, FileMapping) {
 }
 
 TEST(Support, NormalizePath) {
-  using TestTuple = std::tuple<StringRef, StringRef, StringRef>;
-  TestTuple Tests[] = {{"a", "a", "a"},         {"a/b", "a\\b", "a/b"},
-                       {"a\\b", "a\\b", "a/b"}, {"a\\\\b", "a\\\\b", "a\\\\b"},
-                       {"\\a", "\\a", "/a"},    {"a\\", "a\\", "a/"}};
+  using TestTuple = std::tuple<const char *, const char *, const char *>;
+  std::vector<TestTuple> Tests;
+  Tests.emplace_back("a", "a", "a");
+  Tests.emplace_back("a/b", "a\\b", "a/b");
+  Tests.emplace_back("a\\b", "a\\b", "a/b");
+  Tests.emplace_back("a\\\\b", "a\\\\b", "a\\\\b");
+  Tests.emplace_back("\\a", "\\a", "/a");
+  Tests.emplace_back("a\\", "a\\", "a/");
+
   for (auto &T : Tests) {
     SmallString<64> Win = std::get<0>(T);
     SmallString<64> Posix = Win;
