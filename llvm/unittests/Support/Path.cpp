@@ -1064,8 +1064,8 @@ TEST(Support, NormalizePath) {
   Tests.emplace_back("a\\", "a\\", "a/");
 
   for (auto &T : Tests) {
-    SmallString<64> Win = std::get<0>(T);
-    SmallString<64> Posix = Win;
+    SmallString<64> Win(std::get<0>(T));
+    SmallString<64> Posix(Win);
     path::native(Win, path::Style::windows);
     path::native(Posix, path::Style::posix);
     EXPECT_EQ(std::get<1>(T), Win);
