@@ -610,10 +610,21 @@ static void reportUndefined(SymbolBody &Sym, InputSectionBase &S,
                     toString(Sym) + "'";
 
   if (Config->UnresolvedSymbols == UnresolvedPolicy::WarnAll ||
-      (Config->UnresolvedSymbols == UnresolvedPolicy::Warn && CanBeExternal))
+      (Config->UnresolvedSymbols == UnresolvedPolicy::Warn && CanBeExternal)) {
     warn(Msg);
-  else
+  } else {
     error(Msg);
+    if (Config->ArchiveWithoutSymbolsSeen) {
+      message("At least one archive listed no symbols in its index."
+              " This can happen when creating archives with a version"
+              " of ar that does not understand the object files in"
+              " the archive. For example, if you are using LLVM"
+              " bitcode objects (such as created by -flto), you may"
+              " need to use llvm-ar or GNU ar with a plugin.");
+      // Reset to false so that we print the message only once.
+      Config->ArchiveWithoutSymbolsSeen = false;
+    }
+  }
 }
 
 template <class RelTy>
