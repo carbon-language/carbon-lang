@@ -9,8 +9,12 @@
 
 // C Includes
 #include <errno.h>
+#include <pthread.h>
+#include <pthread_np.h>
+#include <stdlib.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>
+#include <sys/user.h>
 
 // C++ Includes
 // Other libraries and framework includes
