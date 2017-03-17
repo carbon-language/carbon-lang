@@ -5107,7 +5107,7 @@ Examples:
 See :doc:`TypeMetadata`.
 
 '``associated``' Metadata
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The ``associated`` metadata may be attached to a global object
 declaration with a single argument that references another global object.
@@ -5126,6 +5126,7 @@ It does not have any effect on non-ELF targets.
 Example:
 
 .. code-block:: llvm
+
     $a = comdat any
     @a = global i32 1, comdat $a
     @b = internal global i32 2, comdat $a, section "abc", !associated !0
