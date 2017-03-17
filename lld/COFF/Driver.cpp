@@ -475,9 +475,6 @@ filterBitcodeFiles(StringRef Path, std::vector<std::string> &TemporaryFiles) {
   if (!needsRebuilding(MBRef))
     return Path.str();
 
-  log("Creating a temporary archive for " + Path +
-      " to remove bitcode files");
-
   std::unique_ptr<Archive> File =
       check(Archive::create(MBRef),
             MBRef.getBufferIdentifier() + ": failed to parse archive");
@@ -486,6 +483,11 @@ filterBitcodeFiles(StringRef Path, std::vector<std::string> &TemporaryFiles) {
   for (MemoryBufferRef Member : getArchiveMembers(File.get()))
     if (identify_magic(Member.getBuffer()) != file_magic::bitcode)
       New.emplace_back(Member);
+
+  if (New.empty())
+    return None;
+
+  log("Creating a temporary archive for " + Path + " to remove bitcode files");
 
   SmallString<128> S;
   if (auto EC = sys::fs::createTemporaryFile("lld-" + sys::path::stem(Path),
