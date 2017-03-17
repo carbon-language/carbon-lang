@@ -119,7 +119,6 @@ else()
       linux/AbstractSocket.cpp
       linux/Host.cpp
       linux/HostInfoLinux.cpp
-      linux/HostThreadLinux.cpp
       linux/LibcGlue.cpp
       linux/Support.cpp
       )
@@ -134,14 +133,12 @@ else()
     add_host_subdirectory(freebsd
       freebsd/Host.cpp
       freebsd/HostInfoFreeBSD.cpp
-      freebsd/HostThreadFreeBSD.cpp
       )
 
   elseif (CMAKE_SYSTEM_NAME MATCHES "NetBSD")
     add_host_subdirectory(netbsd
       netbsd/Host.cpp
       netbsd/HostInfoNetBSD.cpp
-      netbsd/HostThreadNetBSD.cpp
       )
   endif()
 endif()
