@@ -4234,7 +4234,8 @@ __isl_give PWACtx Scop::getPwAff(const SCEV *E, BasicBlock *BB,
 }
 
 __isl_give isl_union_set *Scop::getDomains() const {
-  isl_union_set *Domain = isl_union_set_empty(getParamSpace());
+  isl_space *EmptySpace = isl_space_params_alloc(getIslCtx(), 0);
+  isl_union_set *Domain = isl_union_set_empty(EmptySpace);
 
   for (const ScopStmt &Stmt : *this)
     Domain = isl_union_set_add_set(Domain, Stmt.getDomain());
