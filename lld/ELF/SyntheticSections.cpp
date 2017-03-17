@@ -2249,15 +2249,6 @@ InputSection *ThunkSection::getTargetInputSection() const {
   return T->getTargetInputSection();
 }
 
-namespace lld {
-namespace elf {
-template void PltSection::addEntry<ELF32LE>(SymbolBody &Sym);
-template void PltSection::addEntry<ELF32BE>(SymbolBody &Sym);
-template void PltSection::addEntry<ELF64LE>(SymbolBody &Sym);
-template void PltSection::addEntry<ELF64BE>(SymbolBody &Sym);
-}
-}
-
 InputSection *InX::ARMAttributes;
 BssSection *InX::Bss;
 BssSection *InX::BssRelRo;
@@ -2271,6 +2262,11 @@ PltSection *InX::Plt;
 PltSection *InX::Iplt;
 StringTableSection *InX::ShStrTab;
 StringTableSection *InX::StrTab;
+
+template void PltSection::addEntry<ELF32LE>(SymbolBody &Sym);
+template void PltSection::addEntry<ELF32BE>(SymbolBody &Sym);
+template void PltSection::addEntry<ELF64LE>(SymbolBody &Sym);
+template void PltSection::addEntry<ELF64BE>(SymbolBody &Sym);
 
 template InputSection *elf::createCommonSection<ELF32LE>();
 template InputSection *elf::createCommonSection<ELF32BE>();
