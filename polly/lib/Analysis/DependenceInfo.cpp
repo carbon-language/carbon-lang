@@ -166,6 +166,8 @@ static void collectInfo(Scop &S, isl_union_map *&Read, isl_union_map *&Write,
 
       if (MA->isRead())
         Read = isl_union_map_add_map(Read, accdom);
+      else if (MA->isMayWrite())
+        MayWrite = isl_union_map_add_map(MayWrite, accdom);
       else
         Write = isl_union_map_add_map(Write, accdom);
     }
@@ -366,6 +368,7 @@ void Dependences::calculateDependences(Scop &S) {
       Flow = buildFlow(Read, Write, MayWrite, Schedule);
 
       RAW = isl_union_flow_get_must_dependence(Flow);
+      RAW = isl_union_map_union(RAW, isl_union_flow_get_may_dependence(Flow));
       isl_union_flow_free(Flow);
 
       Flow = buildFlow(Write, Write, Read, Schedule);
