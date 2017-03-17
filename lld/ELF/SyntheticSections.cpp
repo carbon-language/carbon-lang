@@ -790,7 +790,7 @@ MipsGotSection<ELFT>::getPageEntryOffset(const SymbolBody &B,
   const OutputSection *OutSec =
       cast<DefinedRegular>(&B)->Section->getOutputSection();
   uintX_t SecAddr = getMipsPageAddr(OutSec->Addr);
-  uintX_t SymAddr = getMipsPageAddr(B.getVA<ELFT>(Addend));
+  uintX_t SymAddr = getMipsPageAddr(B.getVA(Addend));
   uintX_t Index = PageIndexMap.lookup(OutSec) + (SymAddr - SecAddr) / 0xffff;
   assert(Index < PageEntriesNum);
   return (HeaderEntriesNum + Index) * sizeof(uintX_t);
@@ -870,7 +870,7 @@ template <class ELFT> bool MipsGotSection<ELFT>::empty() const {
 
 template <class ELFT>
 typename MipsGotSection<ELFT>::uintX_t MipsGotSection<ELFT>::getGp() const {
-  return ElfSym::MipsGp->template getVA<ELFT>(0);
+  return ElfSym::MipsGp->getVA(0);
 }
 
 template <class ELFT>
@@ -911,7 +911,7 @@ template <class ELFT> void MipsGotSection<ELFT>::writeTo(uint8_t *Buf) {
     uint8_t *Entry = Buf;
     Buf += sizeof(uintX_t);
     const SymbolBody *Body = SA.first;
-    uintX_t VA = Body->template getVA<ELFT>(SA.second);
+    uintX_t VA = Body->getVA(SA.second);
     writeUint<ELFT>(Entry, VA);
   };
   std::for_each(std::begin(LocalEntries), std::end(LocalEntries), AddEntry);
@@ -927,7 +927,7 @@ template <class ELFT> void MipsGotSection<ELFT>::writeTo(uint8_t *Buf) {
   for (const SymbolBody *B : TlsEntries) {
     if (!B || B->isPreemptible())
       continue;
-    uintX_t VA = B->getVA<ELFT>();
+    uintX_t VA = B->getVA();
     if (B->GotIndex != -1U) {
       uint8_t *Entry = Buf + B->GotIndex * sizeof(uintX_t);
       writeUint<ELFT>(Entry, VA - 0x7000);
@@ -1187,7 +1187,7 @@ template <class ELFT> void DynamicSection<ELFT>::writeTo(uint8_t *Buf) {
       P->d_un.d_val = E.OutSec->Size;
       break;
     case Entry::SymAddr:
-      P->d_un.d_ptr = E.Sym->template getVA<ELFT>();
+      P->d_un.d_ptr = E.Sym->getVA();
       break;
     case Entry::PlainInt:
       P->d_un.d_val = E.Val;
@@ -1204,7 +1204,7 @@ uint64_t DynamicReloc<ELFT>::getOffset() const {
 
 template <class ELFT> int64_t DynamicReloc<ELFT>::getAddend() const {
   if (UseSymVA)
-    return Sym->getVA<ELFT>(Addend);
+    return Sym->getVA(Addend);
   return Addend;
 }
 
@@ -1405,7 +1405,7 @@ template <class ELFT> void SymbolTableSection<ELFT>::writeTo(uint8_t *Buf) {
     if (!Config->DefineCommon && isa<DefinedCommon>(Body))
       ESym->st_value = cast<DefinedCommon>(Body)->Alignment;
     else
-      ESym->st_value = Body->getVA<ELFT>();
+      ESym->st_value = Body->getVA();
 
     ++ESym;
   }

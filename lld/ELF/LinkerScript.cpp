@@ -916,7 +916,7 @@ uint64_t LinkerScript<ELFT>::getSymbolValue(const Twine &Loc, StringRef S) {
   if (S == ".")
     return Dot;
   if (SymbolBody *B = Symtab<ELFT>::X->find(S))
-    return B->getVA<ELFT>();
+    return B->getVA();
   error(Loc + ": symbol not found: " + S);
   return 0;
 }

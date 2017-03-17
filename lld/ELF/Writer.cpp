@@ -1612,7 +1612,7 @@ template <class ELFT> typename ELFT::uint Writer<ELFT>::getEntryAddr() {
   // Case 1, 2 or 3. As a special case, if the symbol is actually
   // a number, we'll use that number as an address.
   if (SymbolBody *B = Symtab<ELFT>::X->find(Config->Entry))
-    return B->getVA<ELFT>();
+    return B->getVA();
   uint64_t Addr;
   if (!Config->Entry.getAsInteger(0, Addr))
     return Addr;
