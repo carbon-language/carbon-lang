@@ -98,6 +98,11 @@ int main()
     }
     else {
     }
+    if (cond1) {
+    } else if (cond2) {
+    } else if (!cond2) {
+    } else {
+    }
   }
   else if (cond2) {
   }
