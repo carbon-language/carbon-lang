@@ -358,8 +358,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(In<ELFT>::BuildId);
   }
 
-  if (In<ELFT>::Common = createCommonSection<ELFT>())
-    Add(In<ELFT>::Common);
+  if (auto *Sec = createCommonSection<ELFT>())
+    Add(Sec);
 
   In<ELFT>::Bss = make<BssSection>(".bss");
   Add(In<ELFT>::Bss);
