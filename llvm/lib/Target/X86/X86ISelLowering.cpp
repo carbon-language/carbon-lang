@@ -33954,8 +33954,6 @@ static SDValue combineZext(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-/// Optimize x == -y --> x+y == 0
-///          x != -y --> x+y != 0
 static SDValue combineSetCC(SDNode *N, SelectionDAG &DAG,
                             const X86Subtarget &Subtarget) {
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
@@ -33964,20 +33962,23 @@ static SDValue combineSetCC(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
   SDLoc DL(N);
 
-  if ((CC == ISD::SETNE || CC == ISD::SETEQ) && LHS.getOpcode() == ISD::SUB)
-    if (isNullConstant(LHS.getOperand(0)) && LHS.hasOneUse()) {
-      SDValue addV = DAG.getNode(ISD::ADD, DL, LHS.getValueType(), RHS,
-                                 LHS.getOperand(1));
-      return DAG.getSetCC(DL, N->getValueType(0), addV,
-                          DAG.getConstant(0, DL, addV.getValueType()), CC);
+  if (CC == ISD::SETNE || CC == ISD::SETEQ) {
+    EVT OpVT = LHS.getValueType();
+    // 0-x == y --> x+y == 0
+    // 0-x != y --> x+y != 0
+    if (LHS.getOpcode() == ISD::SUB && isNullConstant(LHS.getOperand(0)) &&
+        LHS.hasOneUse()) {
+      SDValue Add = DAG.getNode(ISD::ADD, DL, OpVT, RHS, LHS.getOperand(1));
+      return DAG.getSetCC(DL, VT, Add, DAG.getConstant(0, DL, OpVT), CC);
     }
-  if ((CC == ISD::SETNE || CC == ISD::SETEQ) && RHS.getOpcode() == ISD::SUB)
-    if (isNullConstant(RHS.getOperand(0)) && RHS.hasOneUse()) {
-      SDValue addV = DAG.getNode(ISD::ADD, DL, RHS.getValueType(), LHS,
-                                 RHS.getOperand(1));
-      return DAG.getSetCC(DL, N->getValueType(0), addV,
-                          DAG.getConstant(0, DL, addV.getValueType()), CC);
+    // x == 0-y --> x+y == 0
+    // x != 0-y --> x+y != 0
+    if (RHS.getOpcode() == ISD::SUB && isNullConstant(RHS.getOperand(0)) &&
+        RHS.hasOneUse()) {
+      SDValue Add = DAG.getNode(ISD::ADD, DL, OpVT, LHS, RHS.getOperand(1));
+      return DAG.getSetCC(DL, VT, Add, DAG.getConstant(0, DL, OpVT), CC);
     }
+  }
 
   if (VT.getScalarType() == MVT::i1 &&
       (CC == ISD::SETNE || CC == ISD::SETEQ || ISD::isSignedIntSetCC(CC))) {
