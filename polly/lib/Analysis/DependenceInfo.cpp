@@ -89,7 +89,8 @@ static cl::opt<Dependences::AnalysisLevel> OptAnalysisLevel(
 static __isl_give isl_map *tag(__isl_take isl_map *Relation,
                                __isl_take isl_id *TagId) {
   isl_space *Space = isl_map_get_space(Relation);
-  Space = isl_space_drop_dims(Space, isl_dim_out, 0, isl_map_n_out(Relation));
+  Space = isl_space_drop_dims(Space, isl_dim_out, 0,
+                              isl_map_dim(Relation, isl_dim_out));
   Space = isl_space_set_tuple_id(Space, isl_dim_out, TagId);
   isl_multi_aff *Tag = isl_multi_aff_domain_map(Space);
   Relation = isl_map_preimage_domain_multi_aff(Relation, Tag);
