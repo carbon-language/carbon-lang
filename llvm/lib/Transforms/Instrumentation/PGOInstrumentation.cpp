@@ -176,9 +176,11 @@ static cl::opt<bool>
                               "display to only one function, use "
                               "filtering option -view-bfi-func-name."));
 
-// Command line option to enable/disable memop intrinsic calls..
-static cl::opt<bool> PGOInstrMemOP("pgo-instr-memop", cl::init(true),
-                                   cl::Hidden);
+// Command line option to enable/disable memop intrinsic call.size profiling.
+static cl::opt<bool>
+    PGOInstrMemOP("pgo-instr-memop", cl::init(true), cl::Hidden,
+                  cl::desc("Use this option to turn on/off "
+                           "memory instrinsic size profiling."));
 
 // Command line option to turn on CFG dot dump after profile annotation.
 // Defined in Analysis/BlockFrequencyInfo.cpp:  -pgo-view-counts
