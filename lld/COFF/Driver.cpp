@@ -515,6 +515,7 @@ void LinkerDriver::invokeMSVC(opt::InputArgList &Args) {
     case OPT_linkrepro:
     case OPT_lldmap:
     case OPT_lldmap_file:
+    case OPT_lldsavetemps:
     case OPT_msvclto:
       // LLD-specific options are stripped.
       break;
