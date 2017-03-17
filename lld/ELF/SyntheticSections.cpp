@@ -63,33 +63,22 @@ template <class ELFT> static std::vector<DefinedCommon *> getCommonSymbols() {
 
 // Find all common symbols and allocate space for them.
 template <class ELFT> InputSection *elf::createCommonSection() {
-  auto *Ret = make<InputSection>(SHF_ALLOC | SHF_WRITE, SHT_NOBITS, 1,
-                                 ArrayRef<uint8_t>(), "COMMON");
-  Ret->Live = true;
-
   if (!Config->DefineCommon)
-    return Ret;
+    return nullptr;
 
   // Sort the common symbols by alignment as an heuristic to pack them better.
   std::vector<DefinedCommon *> Syms = getCommonSymbols<ELFT>();
+  if (Syms.empty())
+    return nullptr;
+
   std::stable_sort(Syms.begin(), Syms.end(),
                    [](const DefinedCommon *A, const DefinedCommon *B) {
                      return A->Alignment > B->Alignment;
                    });
+  BssSection *Ret = make<BssSection>("COMMON");
+  for (DefinedCommon *Sym : Syms)
+    Sym->Offset = Ret->reserveSpace(Sym->Alignment, Sym->Size);
 
-  // Assign offsets to symbols.
-  size_t Size = 0;
-  uint32_t Alignment = 1;
-  for (DefinedCommon *Sym : Syms) {
-    Alignment = std::max(Alignment, Sym->Alignment);
-    Size = alignTo(Size, Sym->Alignment);
-
-    // Compute symbol offset relative to beginning of input section.
-    Sym->Offset = Size;
-    Size += Sym->Size;
-  }
-  Ret->Alignment = Alignment;
-  Ret->Data = makeArrayRef<uint8_t>(nullptr, Size);
   return Ret;
 }
 
@@ -380,7 +369,8 @@ BssSection::BssSection(StringRef Name)
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_NOBITS, 0, Name) {}
 
 size_t BssSection::reserveSpace(uint32_t Alignment, size_t Size) {
-  OutSec->updateAlignment(Alignment);
+  if (OutSec)
+    OutSec->updateAlignment(Alignment);
   this->Size = alignTo(this->Size, Alignment) + Size;
   this->Alignment = std::max<uint32_t>(this->Alignment, Alignment);
   return this->Size - Size;
