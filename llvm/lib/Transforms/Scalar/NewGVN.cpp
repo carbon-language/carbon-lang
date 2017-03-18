@@ -444,7 +444,7 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
 
   // Filter out unreachable phi operands.
   auto Filtered = make_filter_range(PN->operands(), [&](const Use &U) {
-    return ReachableBlocks.count(PN->getIncomingBlock(U));
+    return ReachableEdges.count({PN->getIncomingBlock(U), PHIBlock});
   });
 
   std::transform(Filtered.begin(), Filtered.end(), op_inserter(E),
@@ -1740,10 +1740,11 @@ void NewGVN::valueNumberMemoryPhi(MemoryPhi *MP) {
   // If all the arguments are the same, the MemoryPhi has the same value as the
   // argument.
   // Filter out unreachable blocks and self phis from our operands.
+  const BasicBlock *PHIBlock = MP->getBlock();
   auto Filtered = make_filter_range(MP->operands(), [&](const Use &U) {
     return lookupMemoryAccessEquiv(cast<MemoryAccess>(U)) != MP &&
            !isMemoryAccessTop(cast<MemoryAccess>(U)) &&
-           ReachableBlocks.count(MP->getIncomingBlock(U));
+           ReachableEdges.count({MP->getIncomingBlock(U), PHIBlock});
   });
   // If all that is left is nothing, our memoryphi is undef. We keep it as
   // InitialClass.  Note: The only case this should happen is if we have at
@@ -1822,7 +1823,7 @@ bool NewGVN::singleReachablePHIPath(const MemoryAccess *First,
   } else {
     auto *MP = cast<MemoryPhi>(First);
     auto ReachableOperandPred = [&](const Use &U) {
-      return ReachableBlocks.count(MP->getIncomingBlock(U));
+      return ReachableEdges.count({MP->getIncomingBlock(U), MP->getBlock()});
     };
     auto FilteredPhiArgs =
         make_filter_range(MP->operands(), ReachableOperandPred);
@@ -1879,7 +1880,8 @@ void NewGVN::verifyMemoryCongruency() const {
       // We can only sanely verify that MemoryDefs in the operand list all have
       // the same class.
       auto ReachableOperandPred = [&](const Use &U) {
-        return ReachableBlocks.count(FirstMP->getIncomingBlock(U)) &&
+        return ReachableEdges.count(
+                   {FirstMP->getIncomingBlock(U), FirstMP->getBlock()}) &&
                isa<MemoryDef>(U);
 
       };
