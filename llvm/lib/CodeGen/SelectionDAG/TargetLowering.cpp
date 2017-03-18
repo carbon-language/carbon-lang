@@ -98,16 +98,16 @@ bool TargetLowering::parametersInCSRMatch(const MachineRegisterInfo &MRI,
 /// and called function attributes.
 void TargetLowering::ArgListEntry::setAttributes(ImmutableCallSite *CS,
                                                  unsigned AttrIdx) {
-  isSExt     = CS->paramHasAttr(AttrIdx, Attribute::SExt);
-  isZExt     = CS->paramHasAttr(AttrIdx, Attribute::ZExt);
-  isInReg    = CS->paramHasAttr(AttrIdx, Attribute::InReg);
-  isSRet     = CS->paramHasAttr(AttrIdx, Attribute::StructRet);
-  isNest     = CS->paramHasAttr(AttrIdx, Attribute::Nest);
-  isByVal    = CS->paramHasAttr(AttrIdx, Attribute::ByVal);
-  isInAlloca = CS->paramHasAttr(AttrIdx, Attribute::InAlloca);
-  isReturned = CS->paramHasAttr(AttrIdx, Attribute::Returned);
-  isSwiftSelf = CS->paramHasAttr(AttrIdx, Attribute::SwiftSelf);
-  isSwiftError = CS->paramHasAttr(AttrIdx, Attribute::SwiftError);
+  IsSExt = CS->paramHasAttr(AttrIdx, Attribute::SExt);
+  IsZExt = CS->paramHasAttr(AttrIdx, Attribute::ZExt);
+  IsInReg = CS->paramHasAttr(AttrIdx, Attribute::InReg);
+  IsSRet = CS->paramHasAttr(AttrIdx, Attribute::StructRet);
+  IsNest = CS->paramHasAttr(AttrIdx, Attribute::Nest);
+  IsByVal = CS->paramHasAttr(AttrIdx, Attribute::ByVal);
+  IsInAlloca = CS->paramHasAttr(AttrIdx, Attribute::InAlloca);
+  IsReturned = CS->paramHasAttr(AttrIdx, Attribute::Returned);
+  IsSwiftSelf = CS->paramHasAttr(AttrIdx, Attribute::SwiftSelf);
+  IsSwiftError = CS->paramHasAttr(AttrIdx, Attribute::SwiftError);
   Alignment  = CS->getParamAlignment(AttrIdx);
 }
 
@@ -125,8 +125,8 @@ TargetLowering::makeLibCall(SelectionDAG &DAG, RTLIB::Libcall LC, EVT RetVT,
   for (SDValue Op : Ops) {
     Entry.Node = Op;
     Entry.Ty = Entry.Node.getValueType().getTypeForEVT(*DAG.getContext());
-    Entry.isSExt = shouldSignExtendTypeInLibCall(Op.getValueType(), isSigned);
-    Entry.isZExt = !shouldSignExtendTypeInLibCall(Op.getValueType(), isSigned);
+    Entry.IsSExt = shouldSignExtendTypeInLibCall(Op.getValueType(), isSigned);
+    Entry.IsZExt = !shouldSignExtendTypeInLibCall(Op.getValueType(), isSigned);
     Args.push_back(Entry);
   }
 
