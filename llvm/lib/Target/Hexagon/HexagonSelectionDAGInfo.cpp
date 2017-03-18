@@ -51,7 +51,7 @@ SDValue HexagonSelectionDAGInfo::EmitTargetCodeForMemcpy(
   TargetLowering::CallLoweringInfo CLI(DAG);
   CLI.setDebugLoc(dl)
       .setChain(Chain)
-      .setCallee(
+      .setLibCallee(
           TLI.getLibcallCallingConv(RTLIB::MEMCPY),
           Type::getVoidTy(*DAG.getContext()),
           DAG.getTargetExternalSymbol(
