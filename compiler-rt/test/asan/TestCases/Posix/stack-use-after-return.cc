@@ -68,7 +68,12 @@ int main(int argc, char **argv) {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   if (kStackSize > 0) {
-    int ret = pthread_attr_setstacksize(&attr, kStackSize);
+    size_t desired_stack_size = kStackSize;
+    if (desired_stack_size < PTHREAD_STACK_MIN) {
+      desired_stack_size = PTHREAD_STACK_MIN;
+    }
+
+    int ret = pthread_attr_setstacksize(&attr, desired_stack_size);
     if (ret != 0) {
       fprintf(stderr, "pthread_attr_setstacksize returned %d\n", ret);
       abort();
@@ -81,9 +86,9 @@ int main(int argc, char **argv) {
       abort();
     }
 
-    if (stacksize_check != kStackSize) {
+    if (stacksize_check != desired_stack_size) {
       fprintf(stderr, "Unable to set stack size to %d, the stack size is %d.\n",
-              kStackSize, stacksize_check);
+              desired_stack_size, stacksize_check);
       abort(); 
     }
   }
