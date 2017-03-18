@@ -536,7 +536,7 @@ void ARMPassConfig::addPreSched2() {
     if (EnableARMLoadStoreOpt)
       addPass(createARMLoadStoreOptimizationPass());
 
-    addPass(createExecutionDependencyFixPass(&ARM::DPRRegClass));
+    addPass(createExecutionDepsFixPass(&ARM::DPRRegClass));
   }
 
   // Expand some pseudo instructions into multiple instructions to allow
