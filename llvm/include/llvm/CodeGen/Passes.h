@@ -323,12 +323,6 @@ namespace llvm {
   /// ExpandISelPseudos - This pass expands pseudo-instructions.
   extern char &ExpandISelPseudosID;
 
-  /// This pass fixes execution time problems with dependent instructions, such
-  /// as switching execution domains to match.
-  ///
-  /// The pass will examine instructions using and defining registers in RC.
-  FunctionPass *createExecutionDepsFixPass(const TargetRegisterClass *RC);
-
   /// UnpackMachineBundles - This pass unpack machine instruction bundles.
   extern char &UnpackMachineBundlesID;
 
