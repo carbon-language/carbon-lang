@@ -97,11 +97,31 @@ PrintJumpTables("print-jump-tables",
                 cl::ZeroOrMore,
                 cl::Hidden);
 
+static cl::list<std::string>
+PrintOnly("print-only",
+  cl::CommaSeparated,
+  cl::desc("list of functions to print"),
+  cl::value_desc("func1,func2,func3,..."),
+  cl::Hidden);
+
 static cl::opt<bool>
 SplitEH("split-eh",
         cl::desc("split C++ exception handling code (experimental)"),
         cl::ZeroOrMore,
         cl::Hidden);
+
+bool shouldPrint(const BinaryFunction &Function) {
+  if (PrintOnly.empty())
+    return true;
+
+  for (auto &Name : opts::PrintOnly) {
+    if (Function.hasName(Name)) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 } // namespace opts
 
@@ -309,7 +329,7 @@ void BinaryFunction::dump(std::string Annotation,
 void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
                            bool PrintInstructions) const {
   // FIXME: remove after #15075512 is done.
-  if (!opts::shouldProcess(*this))
+  if (!opts::shouldProcess(*this) || !opts::shouldPrint(*this))
     return;
 
   StringRef SectionName;
