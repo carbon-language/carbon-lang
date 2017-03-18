@@ -1092,6 +1092,14 @@ std::vector<BranchInfo> IndirectCallPromotion::getCallTargets(
               return A.Branches > B.Branches;
             });
 
+  // Remove non-symbol targets
+  auto Last = std::remove_if(Targets.begin(),
+                             Targets.end(),
+                             [](const BranchInfo &BI) {
+                               return !BI.To.IsSymbol;
+                             });
+  Targets.erase(Last, Targets.end());
+
   return Targets;
 }
 
@@ -1104,20 +1112,15 @@ IndirectCallPromotion::findCallTargetSymbols(
   std::vector<std::pair<MCSymbol *, uint64_t>> SymTargets;
 
   for (size_t I = 0; I < N; ++I) {
-    MCSymbol* Symbol = nullptr;
-    uint64_t Addr = 0;
-    if (Targets[I].To.IsSymbol) {
-      auto itr = BC.GlobalSymbols.find(Targets[I].To.Name);
-      if (itr == BC.GlobalSymbols.end()) {
-        // punt if we can't find a symbol.
-        break;
-      }
-      Symbol = BC.getOrCreateGlobalSymbol(itr->second, "FUNCat");
-      assert(Symbol);
-    } else {
-      Addr = Targets[I].To.Offset;
+    assert(Targets[I].To.IsSymbol && "All ICP targets must be symbols.");
+    auto Itr = BC.GlobalSymbols.find(Targets[I].To.Name);
+    if (Itr == BC.GlobalSymbols.end()) {
+      // punt if we can't find a symbol.
+      break;
     }
-    SymTargets.push_back(std::make_pair(Symbol, Addr));
+    MCSymbol* Symbol = BC.getOrCreateGlobalSymbol(Itr->second, "FUNCat");
+    assert(Symbol && "All ICP targets must be known symbols.");
+    SymTargets.push_back(std::make_pair(Symbol, 0));
   }
 
   return SymTargets;
