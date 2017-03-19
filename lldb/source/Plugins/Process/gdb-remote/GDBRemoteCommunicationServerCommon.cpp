@@ -809,11 +809,12 @@ GDBRemoteCommunicationServerCommon::Handle_qPlatform_chmod(
     StringExtractorGDBRemote &packet) {
   packet.SetFilePos(::strlen("qPlatform_chmod:"));
 
-  mode_t mode = packet.GetHexMaxU32(false, UINT32_MAX);
+  auto perms =
+      static_cast<llvm::sys::fs::perms>(packet.GetHexMaxU32(false, UINT32_MAX));
   if (packet.GetChar() == ',') {
     std::string path;
     packet.GetHexByteString(path);
-    Error error = FileSystem::SetFilePermissions(FileSpec{path, true}, mode);
+    Error error(llvm::sys::fs::setPermissions(path, perms));
 
     StreamGDBRemote response;
     response.Printf("F%u", error.GetError());

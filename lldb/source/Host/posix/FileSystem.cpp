@@ -40,28 +40,6 @@ FileSpec::PathSyntax FileSystem::GetNativePathSyntax() {
   return FileSpec::ePathSyntaxPosix;
 }
 
-Error FileSystem::GetFilePermissions(const FileSpec &file_spec,
-                                     uint32_t &file_permissions) {
-  Error error;
-  struct stat file_stats;
-  if (::stat(file_spec.GetCString(), &file_stats) == 0) {
-    // The bits in "st_mode" currently match the definitions
-    // for the file mode bits in unix.
-    file_permissions = file_stats.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
-  } else {
-    error.SetErrorToErrno();
-  }
-  return error;
-}
-
-Error FileSystem::SetFilePermissions(const FileSpec &file_spec,
-                                     uint32_t file_permissions) {
-  Error error;
-  if (::chmod(file_spec.GetCString(), file_permissions) != 0)
-    error.SetErrorToErrno();
-  return error;
-}
-
 lldb::user_id_t FileSystem::GetFileSize(const FileSpec &file_spec) {
   return file_spec.GetByteSize();
 }
