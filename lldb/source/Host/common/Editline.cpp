@@ -178,7 +178,7 @@ private:
     if (m_path.empty() && m_history && !m_prefix.empty()) {
       FileSpec parent_path{"~/.lldb", true};
       char history_path[PATH_MAX];
-      if (!llvm::sys::fs::create_directory(parent_path.GetPath()) {
+      if (!llvm::sys::fs::create_directory(parent_path.GetPath())) {
         snprintf(history_path, sizeof(history_path), "~/.lldb/%s-history",
                  m_prefix.c_str());
       } else {
