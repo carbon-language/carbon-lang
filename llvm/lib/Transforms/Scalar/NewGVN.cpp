@@ -1328,9 +1328,11 @@ void NewGVN::addPredicateUsers(const PredicateBase *PB, Instruction *I) {
 // Touch all the predicates that depend on this instruction.
 void NewGVN::markPredicateUsersTouched(Instruction *I) {
   const auto Result = PredicateToUsers.find(I);
-  if (Result != PredicateToUsers.end())
+  if (Result != PredicateToUsers.end()) {
     for (auto *User : Result->second)
       TouchedInstructions.set(InstrDFS.lookup(User));
+    PredicateToUsers.erase(Result);
+  }
 }
 
 // Touch the instructions that need to be updated after a congruence class has a
