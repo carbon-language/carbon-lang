@@ -794,7 +794,7 @@ GDBRemoteCommunicationServerCommon::Handle_qPlatform_mkdir(
   if (packet.GetChar() == ',') {
     std::string path;
     packet.GetHexByteString(path);
-    Error error = FileSystem::MakeDirectory(FileSpec{path, false}, mode);
+    Error error(llvm::sys::fs::create_directory(path, mode));
 
     StreamGDBRemote response;
     response.Printf("F%u", error.GetError());

@@ -30,21 +30,6 @@ FileSpec::PathSyntax FileSystem::GetNativePathSyntax() {
   return FileSpec::ePathSyntaxWindows;
 }
 
-Error FileSystem::MakeDirectory(const FileSpec &file_spec,
-                                uint32_t file_permissions) {
-  // On Win32, the mode parameter is ignored, as Windows files and directories
-  // support a
-  // different permission model than POSIX.
-  Error error;
-  const auto err_code =
-      llvm::sys::fs::create_directories(file_spec.GetPath(), true);
-  if (err_code) {
-    error.SetErrorString(err_code.message().c_str());
-  }
-
-  return error;
-}
-
 Error FileSystem::GetFilePermissions(const FileSpec &file_spec,
                                      uint32_t &file_permissions) {
   Error error;

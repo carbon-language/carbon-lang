@@ -761,7 +761,7 @@ bool Platform::SetWorkingDirectory(const FileSpec &file_spec) {
 
 Error Platform::MakeDirectory(const FileSpec &file_spec, uint32_t permissions) {
   if (IsHost())
-    return FileSystem::MakeDirectory(file_spec, permissions);
+    return llvm::sys::fs::create_directory(file_spec.GetPath(), permissions);
   else {
     Error error;
     error.SetErrorStringWithFormat("remote platform %s doesn't support %s",

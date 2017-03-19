@@ -40,39 +40,6 @@ FileSpec::PathSyntax FileSystem::GetNativePathSyntax() {
   return FileSpec::ePathSyntaxPosix;
 }
 
-Error FileSystem::MakeDirectory(const FileSpec &file_spec,
-                                uint32_t file_permissions) {
-  if (file_spec) {
-    Error error;
-    if (::mkdir(file_spec.GetCString(), file_permissions) == -1) {
-      error.SetErrorToErrno();
-      errno = 0;
-      switch (error.GetError()) {
-      case ENOENT: {
-        // Parent directory doesn't exist, so lets make it if we can
-        // Make the parent directory and try again
-        FileSpec parent_file_spec{file_spec.GetDirectory().GetCString(), false};
-        error = MakeDirectory(parent_file_spec, file_permissions);
-        if (error.Fail())
-          return error;
-        // Try and make the directory again now that the parent directory was
-        // made successfully
-        if (::mkdir(file_spec.GetCString(), file_permissions) == -1) {
-          error.SetErrorToErrno();
-        }
-        return error;
-      } break;
-      case EEXIST: {
-        if (llvm::sys::fs::is_directory(file_spec.GetPath()))
-          return Error(); // It is a directory and it already exists
-      } break;
-      }
-    }
-    return error;
-  }
-  return Error("empty path");
-}
-
 Error FileSystem::GetFilePermissions(const FileSpec &file_spec,
                                      uint32_t &file_permissions) {
   Error error;
