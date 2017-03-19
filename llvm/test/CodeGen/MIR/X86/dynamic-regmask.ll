@@ -1,4 +1,4 @@
-; RUN: llc -stop-after machine-sink %s -o %t.mir
+; RUN: llc -mtriple x86_64-windows-msvc -stop-after machine-sink %s -o %t.mir
 ; RUN: FileCheck %s < %t.mir
 ; RUN: llc %t.mir -run-pass machine-sink
 ; Check that callee saved registers are printed in a format that can then be parsed.
