@@ -962,10 +962,7 @@ uint32_t LinkerScriptBase::getFiller(StringRef Name) {
 }
 
 static void writeInt(uint8_t *Buf, uint64_t Data, uint64_t Size) {
-  const endianness E =
-      (Config->EKind == ELF32LEKind || Config->EKind == ELF64LEKind)
-          ? llvm::support::endianness::little
-          : llvm::support::endianness::big;
+  const endianness E = Config->IsLE ? endianness::little : endianness::big;
 
   switch (Size) {
   case 1:
