@@ -39,7 +39,6 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
-#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/LEB128.h"
@@ -1945,11 +1944,11 @@ uint64_t DwarfDebug::makeTypeSignature(StringRef Identifier) {
   MD5 Hash;
   Hash.update(Identifier);
   // ... take the least significant 8 bytes and return those. Our MD5
-  // implementation always returns its results in little endian, swap bytes
-  // appropriately.
+  // implementation always returns its results in little endian, so we actually
+  // need the "high" word.
   MD5::MD5Result Result;
   Hash.final(Result);
-  return support::endian::read64le(Result + 8);
+  return Result.high();
 }
 
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,

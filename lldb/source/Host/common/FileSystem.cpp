@@ -67,9 +67,7 @@ bool FileSystem::CalculateMD5(const FileSpec &file_spec, uint64_t offset,
   if (!CalcMD5(file_spec, offset, length, md5_result))
     return false;
 
-  const auto uint64_res = reinterpret_cast<const uint64_t *>(md5_result);
-  high = uint64_res[0];
-  low = uint64_res[1];
+  std::tie(high, low) = md5_result.words();
 
   return true;
 }

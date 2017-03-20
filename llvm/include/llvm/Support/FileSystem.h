@@ -33,6 +33,7 @@
 #include "llvm/Support/Chrono.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
+#include "llvm/Support/MD5.h"
 #include <cassert>
 #include <cstdint>
 #include <ctime>
@@ -398,6 +399,16 @@ std::error_code copy_file(const Twine &From, const Twine &To);
 /// @returns errc::success if \a path has been resized to \a size, otherwise a
 ///          platform-specific error_code.
 std::error_code resize_file(int FD, uint64_t Size);
+
+/// @brief Compute an MD5 hash of a file's contents.
+///
+/// @param FD Input file descriptor.
+/// @returns An MD5Result with the hash computed, if successful, otherwise a
+///          std::error_code.
+ErrorOr<MD5::MD5Result> md5_contents(int FD);
+
+/// @brief Version of compute_md5 that doesn't require an open file descriptor.
+ErrorOr<MD5::MD5Result> md5_contents(const Twine &Path);
 
 /// @}
 /// @name Physical Observers
