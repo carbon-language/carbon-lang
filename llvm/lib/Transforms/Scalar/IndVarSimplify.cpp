@@ -906,7 +906,7 @@ class WidenIV {
   SmallVector<NarrowIVDefUse, 8> NarrowIVUsers;
 
   enum ExtendKind { ZeroExtended, SignExtended, Unknown };
-  // A map tracking the kind of extension used to widen each narrow IV 
+  // A map tracking the kind of extension used to widen each narrow IV
   // and narrow IV user.
   // Key: pointer to a narrow IV or IV user.
   // Value: the kind of extension used to widen this Instruction.
@@ -1608,7 +1608,7 @@ void WidenIV::calculatePostIncRange(Instruction *NarrowDef,
       return;
 
     CmpInst::Predicate P =
-            TrueDest ? Pred : CmpInst::getInversePredicate(Pred);  
+            TrueDest ? Pred : CmpInst::getInversePredicate(Pred);
 
     auto CmpRHSRange = SE->getSignedRange(SE->getSCEV(CmpRHS));
     auto CmpConstrainedLHSRange =
@@ -1634,7 +1634,7 @@ void WidenIV::calculatePostIncRange(Instruction *NarrowDef,
   UpdateRangeFromGuards(NarrowUser);
 
   BasicBlock *NarrowUserBB = NarrowUser->getParent();
-  // If NarrowUserBB is statically unreachable asking dominator queries may 
+  // If NarrowUserBB is statically unreachable asking dominator queries may
   // yield surprising results. (e.g. the block may not have a dom tree node)
   if (!DT->isReachableFromEntry(NarrowUserBB))
     return;
