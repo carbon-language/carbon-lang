@@ -761,7 +761,7 @@ IEEEFloat &IEEEFloat::operator=(IEEEFloat &&rhs) {
 
 bool IEEEFloat::isDenormal() const {
   return isFiniteNonZero() && (exponent == semantics->minExponent) &&
-         (APInt::tcExtractBit(significandParts(), 
+         (APInt::tcExtractBit(significandParts(),
                               semantics->precision - 1) == 0);
 }
 
@@ -980,14 +980,14 @@ lostFraction IEEEFloat::multiplySignificand(const IEEEFloat &rhs,
   //     rhs = b23 . b22 ... b0 * 2^e2
   // the result of multiplication is:
   //   *this = c48 c47 c46 . c45 ... c0 * 2^(e1+e2)
-  // Note that there are three significant bits at the left-hand side of the 
+  // Note that there are three significant bits at the left-hand side of the
   // radix point: two for the multiplication, and an overflow bit for the
   // addition (that will always be zero at this point). Move the radix point
   // toward left by two bits, and adjust exponent accordingly.
   exponent += 2;
 
   if (addend && addend->isNonZero()) {
-    // The intermediate result of the multiplication has "2 * precision" 
+    // The intermediate result of the multiplication has "2 * precision"
     // signicant bit; adjust the addend to be consistent with mul result.
     //
     Significand savedSignificand = significand;
@@ -1039,7 +1039,7 @@ lostFraction IEEEFloat::multiplySignificand(const IEEEFloat &rhs,
   }
 
   // Convert the result having "2 * precision" significant-bits back to the one
-  // having "precision" significant-bits. First, move the radix point from 
+  // having "precision" significant-bits. First, move the radix point from
   // poision "2*precision - 1" to "precision - 1". The exponent need to be
   // adjusted by "2*precision - 1" - "precision - 1" = "precision".
   exponent -= precision + 1;
@@ -2472,7 +2472,7 @@ IEEEFloat::convertFromDecimalString(StringRef str, roundingMode rounding_mode) {
 
   // Test if we have a zero number allowing for strings with no null terminators
   // and zero decimals with non-zero exponents.
-  // 
+  //
   // We computed firstSigDigit by ignoring all zeros and dots. Thus if
   // D->firstSigDigit equals str.end(), every digit must be a zero and there can
   // be at most one dot. On the other hand, if we have a zero with a non-zero
