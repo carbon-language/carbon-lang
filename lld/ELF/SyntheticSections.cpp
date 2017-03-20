@@ -1771,12 +1771,10 @@ class ObjInfoTy : public llvm::LoadedObjectInfo {
 };
 
 template <class ELFT> void GdbIndexSection<ELFT>::readDwarf(InputSection *Sec) {
-  elf::ObjectFile<ELFT> *File = Sec->template getFile<ELFT>();
-
   Expected<std::unique_ptr<object::ObjectFile>> Obj =
-      object::ObjectFile::createObjectFile(File->MB);
+      object::ObjectFile::createObjectFile(Sec->File->MB);
   if (!Obj) {
-    error(toString(File) + ": error creating DWARF context");
+    error(toString(Sec->File) + ": error creating DWARF context");
     return;
   }
 
