@@ -415,7 +415,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   // Add .got. MIPS' .got is so different from the other archs,
   // it has its own class.
   if (Config->EMachine == EM_MIPS) {
-    In<ELFT>::MipsGot = make<MipsGotSection<ELFT>>();
+    In<ELFT>::MipsGot = make<MipsGotSection>();
     Add(In<ELFT>::MipsGot);
   } else {
     In<ELFT>::Got = make<GotSection<ELFT>>();
