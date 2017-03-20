@@ -2037,8 +2037,8 @@ std::vector<SymbolVersion> ScriptParser::readVersionExtern() {
   return Ret;
 }
 
-uint64_t ScriptParser::readMemoryAssignment(
-    StringRef S1, StringRef S2, StringRef S3) {
+uint64_t ScriptParser::readMemoryAssignment(StringRef S1, StringRef S2,
+                                            StringRef S3) {
   if (!(consume(S1) || consume(S2) || consume(S3))) {
     setError("expected one of: " + S1 + ", " + S2 + ", or " + S3);
     return 0;
@@ -2048,7 +2048,7 @@ uint64_t ScriptParser::readMemoryAssignment(
   // TODO: Fully support constant expressions.
   uint64_t Val;
   if (!readInteger(next(), Val))
-    setError("nonconstant expression for "+ S1);
+    setError("nonconstant expression for " + S1);
   return Val;
 }
 
