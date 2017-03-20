@@ -147,6 +147,7 @@ class file_status
 
   #if defined(LLVM_ON_UNIX)
   dev_t fs_st_dev = 0;
+  nlink_t fs_st_nlinks = 0;
   ino_t fs_st_ino = 0;
   time_t fs_st_atime = 0;
   time_t fs_st_mtime = 0;
@@ -154,6 +155,7 @@ class file_status
   gid_t fs_st_gid = 0;
   off_t fs_st_size = 0;
   #elif defined (LLVM_ON_WIN32)
+  uint32_t NumLinks = 0;
   uint32_t LastAccessedTimeHigh = 0;
   uint32_t LastAccessedTimeLow = 0;
   uint32_t LastWriteTimeHigh = 0;
@@ -173,22 +175,24 @@ public:
 
   file_status(file_type Type) : Type(Type) {}
 
-  file_status(file_type Type, perms Perms, dev_t Dev, ino_t Ino, time_t ATime,
-              time_t MTime, uid_t UID, gid_t GID, off_t Size)
-      : fs_st_dev(Dev), fs_st_ino(Ino), fs_st_atime(ATime), fs_st_mtime(MTime),
-        fs_st_uid(UID), fs_st_gid(GID), fs_st_size(Size), Type(Type),
-        Perms(Perms) {}
+  file_status(file_type Type, perms Perms, dev_t Dev, nlink_t Links, ino_t Ino,
+              time_t ATime, time_t MTime, uid_t UID, gid_t GID, off_t Size)
+      : fs_st_dev(Dev), fs_st_nlinks(Links), fs_st_ino(Ino), fs_st_atime(ATime),
+        fs_st_mtime(MTime), fs_st_uid(UID), fs_st_gid(GID), fs_st_size(Size),
+        Type(Type), Perms(Perms) {}
   #elif defined(LLVM_ON_WIN32)
   file_status() = default;
 
   file_status(file_type Type) : Type(Type) {}
 
-  file_status(file_type Type, perms Perms, uint32_t LastAccessTimeHigh,
-              uint32_t LastAccessTimeLow, uint32_t LastWriteTimeHigh,
-              uint32_t LastWriteTimeLow, uint32_t VolumeSerialNumber,
-              uint32_t FileSizeHigh, uint32_t FileSizeLow,
-              uint32_t FileIndexHigh, uint32_t FileIndexLow)
-      : LastAccessedTimeHigh(LastAccessTimeHigh), LastAccessedTimeLow(LastAccessTimeLow),
+  file_status(file_type Type, perms Perms, uint32_t LinkCount,
+              uint32_t LastAccessTimeHigh, uint32_t LastAccessTimeLow,
+              uint32_t LastWriteTimeHigh, uint32_t LastWriteTimeLow,
+              uint32_t VolumeSerialNumber, uint32_t FileSizeHigh,
+              uint32_t FileSizeLow, uint32_t FileIndexHigh,
+              uint32_t FileIndexLow)
+      : NumLinks(LinkCount), LastAccessedTimeHigh(LastAccessTimeHigh),
+        LastAccessedTimeLow(LastAccessTimeLow),
         LastWriteTimeHigh(LastWriteTimeHigh),
         LastWriteTimeLow(LastWriteTimeLow),
         VolumeSerialNumber(VolumeSerialNumber), FileSizeHigh(FileSizeHigh),
@@ -202,6 +206,7 @@ public:
   TimePoint<> getLastAccessedTime() const;
   TimePoint<> getLastModificationTime() const;
   UniqueID getUniqueID() const;
+  uint32_t getLinkCount() const;
 
   #if defined(LLVM_ON_UNIX)
   uint32_t getUser() const { return fs_st_uid; }
