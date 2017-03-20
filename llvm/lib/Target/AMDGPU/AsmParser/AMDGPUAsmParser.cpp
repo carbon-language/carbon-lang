@@ -951,9 +951,10 @@ public:
   OperandMatchResultTy parseStringWithPrefix(StringRef Prefix,
                                              StringRef &Value);
 
-  OperandMatchResultTy parseImm(OperandVector &Operands);
+  bool parseAbsoluteExpr(int64_t &Val, bool AbsMod = false);
+  OperandMatchResultTy parseImm(OperandVector &Operands, bool AbsMod = false);
   OperandMatchResultTy parseReg(OperandVector &Operands);
-  OperandMatchResultTy parseRegOrImm(OperandVector &Operands);
+  OperandMatchResultTy parseRegOrImm(OperandVector &Operands, bool AbsMod = false);
   OperandMatchResultTy parseRegOrImmWithFPInputMods(OperandVector &Operands, bool AllowImm = true);
   OperandMatchResultTy parseRegOrImmWithIntInputMods(OperandVector &Operands, bool AllowImm = true);
   OperandMatchResultTy parseRegWithFPInputMods(OperandVector &Operands);
@@ -1656,8 +1657,33 @@ std::unique_ptr<AMDGPUOperand> AMDGPUAsmParser::parseRegister() {
   return AMDGPUOperand::CreateReg(this, Reg, StartLoc, EndLoc, false);
 }
 
+bool
+AMDGPUAsmParser::parseAbsoluteExpr(int64_t &Val, bool AbsMod) {
+  if (AbsMod && getLexer().peekTok().is(AsmToken::Pipe) &&
+      (getLexer().getKind() == AsmToken::Integer ||
+       getLexer().getKind() == AsmToken::Real)) {
+
+    // This is a workaround for handling operands like these:
+    //     |1.0|
+    //     |-1|
+    // This syntax is not compatible with syntax of standard
+    // MC expressions (due to the trailing '|').
+
+    SMLoc EndLoc;
+    const MCExpr *Expr;
+
+    if (getParser().parsePrimaryExpr(Expr, EndLoc)) {
+      return true;
+    }
+
+    return !Expr->evaluateAsAbsolute(Val);
+  }
+
+  return getParser().parseAbsoluteExpression(Val);
+}
+
 OperandMatchResultTy
-AMDGPUAsmParser::parseImm(OperandVector &Operands) {
+AMDGPUAsmParser::parseImm(OperandVector &Operands, bool AbsMod) {
   // TODO: add syntactic sugar for 1/(2*PI)
   bool Minus = false;
   if (getLexer().getKind() == AsmToken::Minus) {
@@ -1669,7 +1695,7 @@ AMDGPUAsmParser::parseImm(OperandVector &Operands) {
   switch(getLexer().getKind()) {
   case AsmToken::Integer: {
     int64_t IntVal;
-    if (getParser().parseAbsoluteExpression(IntVal))
+    if (parseAbsoluteExpr(IntVal, AbsMod))
       return MatchOperand_ParseFail;
     if (Minus)
       IntVal *= -1;
@@ -1678,7 +1704,7 @@ AMDGPUAsmParser::parseImm(OperandVector &Operands) {
   }
   case AsmToken::Real: {
     int64_t IntVal;
-    if (getParser().parseAbsoluteExpression(IntVal))
+    if (parseAbsoluteExpr(IntVal, AbsMod))
       return MatchOperand_ParseFail;
 
     APFloat F(BitsToDouble(IntVal));
@@ -1706,8 +1732,8 @@ AMDGPUAsmParser::parseReg(OperandVector &Operands) {
 }
 
 OperandMatchResultTy
-AMDGPUAsmParser::parseRegOrImm(OperandVector &Operands) {
-  auto res = parseImm(Operands);
+AMDGPUAsmParser::parseRegOrImm(OperandVector &Operands, bool AbsMod) {
+  auto res = parseImm(Operands, AbsMod);
   if (res != MatchOperand_NoMatch) {
     return res;
   }
@@ -1780,7 +1806,7 @@ AMDGPUAsmParser::parseRegOrImmWithFPInputMods(OperandVector &Operands,
 
   OperandMatchResultTy Res;
   if (AllowImm) {
-    Res = parseRegOrImm(Operands);
+    Res = parseRegOrImm(Operands, Abs);
   } else {
     Res = parseReg(Operands);
   }
