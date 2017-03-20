@@ -107,6 +107,8 @@ bool checkIsConflictingNonsymmetric(Knowledge Existing, Knowledge Proposed) {
   // The space must contains at least one dimension to allow order
   // modifications.
   auto NewSpace = give(isl_space_set_alloc(Ctx.get(), 0, 1));
+  NewSpace =
+      give(isl_space_set_tuple_id(NewSpace.take(), isl_dim_set, NewId.copy()));
   auto NewSet = give(isl_set_universe(NewSpace.take()));
   Universe = give(isl_union_set_add_set(Universe.take(), NewSet.take()));
 
