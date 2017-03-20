@@ -2199,7 +2199,7 @@ MipsRldMapSection::MipsRldMapSection()
 
 void MipsRldMapSection::writeTo(uint8_t *Buf) {
   // Apply filler from linker script.
-  uint64_t Filler = ScriptBase->getFiller(this->Name);
+  uint64_t Filler = Script->getFiller(this->Name);
   Filler = (Filler << 32) | Filler;
   memcpy(Buf, &Filler, getSize());
 }
