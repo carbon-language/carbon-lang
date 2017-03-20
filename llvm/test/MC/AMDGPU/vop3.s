@@ -265,11 +265,11 @@ v_mac_f16_e64 v0, 0.5, flat_scratch_lo
 
 v_mac_f16_e64 v0, -4.0, flat_scratch_lo
 // NOSICI: error:
-// VI: v_mac_f16_e64 v0, -4.0, flat_scratch_lo ; encoding: [0x00,0x00,0x23,0xd1,0xf6,0xcc,0x00,0x20]
+// VI: v_mac_f16_e64 v0, -4.0, flat_scratch_lo ; encoding: [0x00,0x00,0x23,0xd1,0xf7,0xcc,0x00,0x00]
 
 v_mac_f16_e64 v0, flat_scratch_lo, -4.0
 // NOSICI: error:
-// VI: v_mac_f16_e64 v0, flat_scratch_lo, -4.0 ; encoding: [0x00,0x00,0x23,0xd1,0x66,0xec,0x01,0x40]
+// VI: v_mac_f16_e64 v0, flat_scratch_lo, -4.0 ; encoding: [0x00,0x00,0x23,0xd1,0x66,0xee,0x01,0x00]
 
 ///===---------------------------------------------------------------------===//
 // VOP3 Instructions
