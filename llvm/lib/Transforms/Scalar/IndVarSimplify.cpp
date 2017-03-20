@@ -231,8 +231,9 @@ static bool ConvertToSInt(const APFloat &APF, int64_t &IntVal) {
   bool isExact = false;
   // See if we can convert this to an int64_t
   uint64_t UIntVal;
-  if (APF.convertToInteger(&UIntVal, 64, true, APFloat::rmTowardZero,
-                           &isExact) != APFloat::opOK || !isExact)
+  if (APF.convertToInteger(makeMutableArrayRef(UIntVal), 64, true,
+                           APFloat::rmTowardZero, &isExact) != APFloat::opOK ||
+      !isExact)
     return false;
   IntVal = UIntVal;
   return true;

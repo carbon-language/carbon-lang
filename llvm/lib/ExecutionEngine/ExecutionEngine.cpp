@@ -727,7 +727,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         APFloat apf = APFloat(APFloat::x87DoubleExtended(), GV.IntVal);
         uint64_t v;
         bool ignored;
-        (void)apf.convertToInteger(&v, BitWidth,
+        (void)apf.convertToInteger(makeMutableArrayRef(v), BitWidth,
                                    CE->getOpcode()==Instruction::FPToSI,
                                    APFloat::rmTowardZero, &ignored);
         GV.IntVal = v; // endian?
