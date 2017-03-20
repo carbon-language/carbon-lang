@@ -353,7 +353,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   }
 
   if (Config->BuildId != BuildIdKind::None) {
-    In<ELFT>::BuildId = make<BuildIdSection<ELFT>>();
+    In<ELFT>::BuildId = make<BuildIdSection>();
     Add(In<ELFT>::BuildId);
   }
 

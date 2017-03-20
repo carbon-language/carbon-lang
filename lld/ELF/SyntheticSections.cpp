@@ -319,16 +319,15 @@ static size_t getHashSize() {
   }
 }
 
-template <class ELFT>
-BuildIdSection<ELFT>::BuildIdSection()
+BuildIdSection::BuildIdSection()
     : SyntheticSection(SHF_ALLOC, SHT_NOTE, 1, ".note.gnu.build-id"),
       HashSize(getHashSize()) {}
 
-template <class ELFT> void BuildIdSection<ELFT>::writeTo(uint8_t *Buf) {
-  const endianness E = ELFT::TargetEndianness;
-  write32<E>(Buf, 4);                   // Name size
-  write32<E>(Buf + 4, HashSize);        // Content size
-  write32<E>(Buf + 8, NT_GNU_BUILD_ID); // Type
+void BuildIdSection::writeTo(uint8_t *Buf) {
+  const endianness E = Config->IsLE ? endianness::little : endianness::big;
+  write32(Buf, 4, E);                   // Name size
+  write32(Buf + 4, HashSize, E);        // Content size
+  write32(Buf + 8, NT_GNU_BUILD_ID, E); // Type
   memcpy(Buf + 12, "GNU", 4);           // Name string
   HashBuf = Buf + 16;
 }
@@ -350,8 +349,7 @@ static std::vector<ArrayRef<uint8_t>> split(ArrayRef<uint8_t> Arr,
 // In order to utilize multiple cores, we first split data into 1MB
 // chunks, compute a hash for each chunk, and then compute a hash value
 // of the hash values.
-template <class ELFT>
-void BuildIdSection<ELFT>::computeHash(
+void BuildIdSection::computeHash(
     llvm::ArrayRef<uint8_t> Data,
     std::function<void(uint8_t *Dest, ArrayRef<uint8_t> Arr)> HashFn) {
   std::vector<ArrayRef<uint8_t>> Chunks = split(Data, 1024 * 1024);
@@ -376,8 +374,7 @@ size_t BssSection::reserveSpace(uint32_t Alignment, size_t Size) {
   return this->Size - Size;
 }
 
-template <class ELFT>
-void BuildIdSection<ELFT>::writeBuildId(ArrayRef<uint8_t> Buf) {
+void BuildIdSection::writeBuildId(ArrayRef<uint8_t> Buf) {
   switch (Config->BuildId) {
   case BuildIdKind::Fast:
     computeHash(Buf, [](uint8_t *Dest, ArrayRef<uint8_t> Arr) {
@@ -2251,6 +2248,7 @@ InputSection *ThunkSection::getTargetInputSection() const {
 InputSection *InX::ARMAttributes;
 BssSection *InX::Bss;
 BssSection *InX::BssRelRo;
+BuildIdSection *InX::BuildId;
 InputSection *InX::Common;
 StringTableSection *InX::DynStrTab;
 InputSection *InX::Interp;
@@ -2304,11 +2302,6 @@ template class elf::MipsReginfoSection<ELF32LE>;
 template class elf::MipsReginfoSection<ELF32BE>;
 template class elf::MipsReginfoSection<ELF64LE>;
 template class elf::MipsReginfoSection<ELF64BE>;
-
-template class elf::BuildIdSection<ELF32LE>;
-template class elf::BuildIdSection<ELF32BE>;
-template class elf::BuildIdSection<ELF64LE>;
-template class elf::BuildIdSection<ELF64BE>;
 
 template class elf::GotSection<ELF32LE>;
 template class elf::GotSection<ELF32BE>;

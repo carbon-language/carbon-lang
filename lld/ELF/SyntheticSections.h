@@ -135,7 +135,7 @@ private:
 };
 
 // .note.gnu.build-id section.
-template <class ELFT> class BuildIdSection : public SyntheticSection {
+class BuildIdSection : public SyntheticSection {
   // First 16 bytes are a header.
   static const unsigned HeaderSize = 16;
 
@@ -760,6 +760,7 @@ struct InX {
   static InputSection *ARMAttributes;
   static BssSection *Bss;
   static BssSection *BssRelRo;
+  static BuildIdSection *BuildId;
   static InputSection *Common;
   static StringTableSection *DynStrTab;
   static InputSection *Interp;
@@ -773,7 +774,6 @@ struct InX {
 };
 
 template <class ELFT> struct In : public InX {
-  static BuildIdSection<ELFT> *BuildId;
   static DynamicSection<ELFT> *Dynamic;
   static SymbolTableSection<ELFT> *DynSymTab;
   static EhFrameHeader<ELFT> *EhFrameHdr;
@@ -792,7 +792,6 @@ template <class ELFT> struct In : public InX {
   static VersionNeedSection<ELFT> *VerNeed;
 };
 
-template <class ELFT> BuildIdSection<ELFT> *In<ELFT>::BuildId;
 template <class ELFT> DynamicSection<ELFT> *In<ELFT>::Dynamic;
 template <class ELFT> SymbolTableSection<ELFT> *In<ELFT>::DynSymTab;
 template <class ELFT> EhFrameHeader<ELFT> *In<ELFT>::EhFrameHdr;
