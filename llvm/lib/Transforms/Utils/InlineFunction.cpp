@@ -1439,10 +1439,9 @@ static void updateCallProfile(Function *Callee, const ValueToValueMapTy &VMap,
                CalleeEntryCount.getValue());
 
   for (auto const &Entry : VMap)
-    if (isa<CallInst>(Entry.first) && &*Entry.second != nullptr &&
-        isa<CallInst>(Entry.second))
-      cast<CallInst>(Entry.second)
-          ->updateProfWeight(CallCount, CalleeEntryCount.getValue());
+    if (isa<CallInst>(Entry.first))
+      if (auto *CI = dyn_cast_or_null<CallInst>(Entry.second))
+        CI->updateProfWeight(CallCount, CalleeEntryCount.getValue());
   for (BasicBlock &BB : *Callee)
     // No need to update the callsite if it is pruned during inlining.
     if (VMap.count(&BB))
