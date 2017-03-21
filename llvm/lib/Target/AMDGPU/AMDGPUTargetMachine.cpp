@@ -94,6 +94,11 @@ static cl::opt<bool> InternalizeSymbols(
   cl::init(false),
   cl::Hidden);
 
+static cl::opt<bool> EnableSDWAPeephole(
+  "amdgpu-sdwa-peephole",
+  cl::desc("Enable SDWA peepholer"),
+  cl::init(false));
+
 // Enable address space based alias analysis
 static cl::opt<bool> EnableAMDGPUAliasAnalysis("enable-amdgpu-aa", cl::Hidden,
   cl::desc("Enable AMDGPU Alias Analysis"),
@@ -109,6 +114,7 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   initializeSIFixSGPRCopiesPass(*PR);
   initializeSIFixVGPRCopiesPass(*PR);
   initializeSIFoldOperandsPass(*PR);
+  initializeSIPeepholeSDWAPass(*PR);
   initializeSIShrinkInstructionsPass(*PR);
   initializeSIFixControlFlowLiveIntervalsPass(*PR);
   initializeSILoadStoreOptimizerPass(*PR);
@@ -683,6 +689,10 @@ bool GCNPassConfig::addGlobalInstructionSelect() {
 
 void GCNPassConfig::addPreRegAlloc() {
   addPass(createSIShrinkInstructionsPass());
+  if (EnableSDWAPeephole) {
+    addPass(&SIPeepholeSDWAID);
+    addPass(&DeadMachineInstructionElimID);
+  }
   addPass(createSIWholeQuadModePass());
 }
 
