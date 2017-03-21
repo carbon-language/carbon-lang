@@ -1958,7 +1958,7 @@ template <class _Tp>
 struct _LIBCPP_TEMPLATE_VIS common_type<_Tp, void, void>
 {
 public:
-    typedef typename decay<_Tp>::type type;
+    typedef typename common_type<_Tp, _Tp>::type type;
 };
 
 template <class _Tp, class _Up>
@@ -1981,7 +1981,7 @@ struct _LIBCPP_TEMPLATE_VIS common_type {};
 template <class _Tp>
 struct _LIBCPP_TEMPLATE_VIS common_type<_Tp>
 {
-    typedef typename decay<_Tp>::type type;
+    typedef typename common_type<_Tp, _Tp>::type type;
 };
 
 // bullet 3 - sizeof...(Tp) == 2

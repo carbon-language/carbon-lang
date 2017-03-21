@@ -11,10 +11,12 @@
 
 // duration
 
-// duration operator+() const;
+// constexpr common_type_t<duration> operator+() const;
 
 #include <chrono>
 #include <cassert>
+
+#include <test_macros.h>
 
 int main()
 {
@@ -23,7 +25,7 @@ int main()
     std::chrono::minutes m2 = +m;
     assert(m.count() == m2.count());
     }
-#ifndef _LIBCPP_HAS_NO_CONSTEXPR
+#if TEST_STD_VER >= 11
     {
     constexpr std::chrono::minutes m(3);
     constexpr std::chrono::minutes m2 = +m;
