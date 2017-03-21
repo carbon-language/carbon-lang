@@ -435,12 +435,9 @@ PlatformPOSIX::PutFile(const lldb_private::FileSpec &source,
 }
 
 lldb::user_id_t PlatformPOSIX::GetFileSize(const FileSpec &file_spec) {
-  if (IsHost()) {
-    uint64_t Size;
-    if (llvm::sys::fs::file_size(file_spec.GetPath(), Size))
-      return 0;
-    return Size;
-  } else if (m_remote_platform_sp)
+  if (IsHost())
+    return FileSystem::GetFileSize(file_spec);
+  else if (m_remote_platform_sp)
     return m_remote_platform_sp->GetFileSize(file_spec);
   else
     return Platform::GetFileSize(file_spec);
@@ -466,7 +463,7 @@ bool PlatformPOSIX::GetFileExists(const FileSpec &file_spec) {
 
 Error PlatformPOSIX::Unlink(const FileSpec &file_spec) {
   if (IsHost())
-    return llvm::sys::fs::remove(file_spec.GetPath());
+    return FileSystem::Unlink(file_spec);
   else if (m_remote_platform_sp)
     return m_remote_platform_sp->Unlink(file_spec);
   else

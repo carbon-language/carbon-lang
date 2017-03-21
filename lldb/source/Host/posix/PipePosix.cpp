@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/posix/PipePosix.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Utility/SelectHelper.h"
 #include "llvm/ADT/SmallString.h"
@@ -230,7 +231,7 @@ void PipePosix::Close() {
 }
 
 Error PipePosix::Delete(llvm::StringRef name) {
-  return llvm::sys::fs::remove(name);
+  return FileSystem::Unlink(FileSpec{name.data(), true});
 }
 
 bool PipePosix::CanRead() const {

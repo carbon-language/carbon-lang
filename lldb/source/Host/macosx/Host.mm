@@ -62,6 +62,7 @@
 #include "lldb/Core/StructuredData.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/ThreadLauncher.h"
 #include "lldb/Target/Platform.h"
@@ -529,7 +530,7 @@ LaunchInNewTerminalWithAppleScript(const char *exe_path,
     WaitForProcessToSIGSTOP(pid, 5);
   }
 
-  llvm::sys::fs::remove(unix_socket_name.GetPath());
+  FileSystem::Unlink(FileSpec{unix_socket_name, false});
   [applescript release];
   if (pid != LLDB_INVALID_PROCESS_ID)
     launch_info.SetProcessID(pid);

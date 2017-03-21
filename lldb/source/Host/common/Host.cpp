@@ -51,6 +51,7 @@
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/HostProcess.h"
@@ -597,7 +598,8 @@ Error Host::RunShellCommand(const Args &args, const FileSpec &working_dir,
     }
   }
 
-  llvm::sys::fs::remove(output_file_spec.GetPath());
+  if (FileSystem::GetFileExists(output_file_spec))
+    FileSystem::Unlink(output_file_spec);
   return error;
 }
 

@@ -9,7 +9,7 @@
 
 #include "lldb/Host/posix/DomainSocket.h"
 
-#include "llvm/Support/FileSystem.h"
+#include "lldb/Host/FileSystem.h"
 
 #include <stddef.h>
 #include <sys/socket.h>
@@ -116,5 +116,5 @@ Error DomainSocket::Accept(llvm::StringRef name, bool child_processes_inherit,
 size_t DomainSocket::GetNameOffset() const { return 0; }
 
 void DomainSocket::DeleteSocketFile(llvm::StringRef name) {
-  llvm::sys::fs::remove(name);
+  FileSystem::Unlink(FileSpec{name, true});
 }

@@ -13,6 +13,7 @@
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Host/File.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/LockFile.h"
 #include "lldb/Utility/Log.h"
 #include "llvm/Support/FileSystem.h"
@@ -100,12 +101,11 @@ void DeleteExistingModule(const FileSpec &root_dir_spec,
                   module_uuid.GetAsString().c_str(), error.AsCString());
   }
 
-  namespace fs = llvm::sys::fs;
-  fs::file_status st;
-  if (status(sysroot_module_path_spec.GetPath(), st))
+  auto link_count = FileSystem::GetHardlinkCount(sysroot_module_path_spec);
+  if (link_count == -1)
     return;
 
-  if (st.getLinkCount() > 2) // module is referred by other hosts.
+  if (link_count > 2) // module is referred by other hosts.
     return;
 
   const auto module_spec_dir = GetModuleDirectory(root_dir_spec, module_uuid);
@@ -119,10 +119,11 @@ void DecrementRefExistingModule(const FileSpec &root_dir_spec,
   DeleteExistingModule(root_dir_spec, sysroot_module_path_spec);
 
   // Remove sysroot link.
-  llvm::sys::fs::remove(sysroot_module_path_spec.GetPath());
+  FileSystem::Unlink(sysroot_module_path_spec);
 
   FileSpec symfile_spec = GetSymbolFileSpec(sysroot_module_path_spec);
-  llvm::sys::fs::remove(symfile_spec.GetPath());
+  if (symfile_spec.Exists()) // delete module's symbol file if exists.
+    FileSystem::Unlink(symfile_spec);
 }
 
 Error CreateHostSysRootModuleLink(const FileSpec &root_dir_spec,
@@ -145,8 +146,7 @@ Error CreateHostSysRootModuleLink(const FileSpec &root_dir_spec,
   if (error.Fail())
     return error;
 
-  return llvm::sys::fs::create_hard_link(local_module_spec.GetPath(),
-                                         sysroot_module_path_spec.GetPath());
+  return FileSystem::Hardlink(sysroot_module_path_spec, local_module_spec);
 }
 
 } // namespace
@@ -179,7 +179,7 @@ void ModuleLock::Delete() {
     return;
 
   m_file.Close();
-  llvm::sys::fs::remove(m_file_spec.GetPath());
+  FileSystem::Unlink(m_file_spec);
 }
 
 /////////////////////////////////////////////////////////////////////////
