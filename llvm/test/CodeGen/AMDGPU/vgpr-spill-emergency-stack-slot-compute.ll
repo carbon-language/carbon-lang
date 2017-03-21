@@ -45,7 +45,7 @@
 ; GCN: ScratchSize: 1536
 
 ; s[0:3] input user SGPRs. s4,s5,s6 = workgroup IDs. s8 scratch offset.
-define void @spill_vgpr_compute(<4 x float> %arg6, float addrspace(1)* %arg, i32 %arg1, i32 %arg2, float %arg3, float %arg4, float %arg5) #0 {
+define amdgpu_kernel void @spill_vgpr_compute(<4 x float> %arg6, float addrspace(1)* %arg, i32 %arg1, i32 %arg2, float %arg3, float %arg4, float %arg5) #0 {
 bb:
   %tmp = add i32 %arg1, %arg2
   %tmp7 = extractelement <4 x float> %arg6, i32 0

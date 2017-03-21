@@ -1,7 +1,7 @@
 # RUN: llc -o - %s -mtriple=amdgcn-- -mcpu=fiji -verify-machineinstrs -run-pass=greedy,virtregrewriter | FileCheck %s
 --- |
-  define void @func0() #0 { ret void }
-  define void @func1() #0 { ret void }
+  define amdgpu_kernel void @func0() #0 { ret void }
+  define amdgpu_kernel void @func1() #0 { ret void }
 
   attributes #0 = { "amdgpu-num-sgpr"="12" }
 ...

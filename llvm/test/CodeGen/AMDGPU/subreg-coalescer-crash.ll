@@ -2,7 +2,7 @@
 ; RUN: llc -march=amdgcn -mcpu=tonga -verify-machineinstrs -o - %s | FileCheck -check-prefix=GCN %s
 
 ; GCN-LABEL:{{^}}row_filter_C1_D0:
-define void @row_filter_C1_D0() #0 {
+define amdgpu_kernel void @row_filter_C1_D0() #0 {
 entry:
   br i1 undef, label %for.inc.1, label %do.body.preheader
 

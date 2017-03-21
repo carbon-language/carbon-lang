@@ -265,7 +265,7 @@ endif:                                            ; preds = %else, %if
 ; CHECK: buffer_load_dword
 ; CHECK: v_add
 ; CHECK: s_endpgm
-define void @copy1(float addrspace(1)* %out, float addrspace(1)* %in0) {
+define amdgpu_kernel void @copy1(float addrspace(1)* %out, float addrspace(1)* %in0) {
 entry:
   %tmp = load float, float addrspace(1)* %in0
   %tmp1 = fcmp oeq float %tmp, 0.000000e+00

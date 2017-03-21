@@ -8,7 +8,7 @@
 
 ; SDWA: v_add_i32_sdwa v{{[0-9]+}}, vcc, v{{[0-9]+}}, v{{[0-9]+}} dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:WORD_1
 
-define void @add_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
+define amdgpu_kernel void @add_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %a = load i32, i32 addrspace(1)* %in, align 4
   %shr = lshr i32 %a, 16
   %add = add i32 %a, %shr
@@ -23,7 +23,7 @@ define void @add_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 
 ; SDWA: v_subrev_i32_sdwa v{{[0-9]+}}, vcc, v{{[0-9]+}}, v{{[0-9]+}} dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:WORD_1
 
-define void @sub_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
+define amdgpu_kernel void @sub_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
   %a = load i32, i32 addrspace(1)* %in, align 4
   %shr = lshr i32 %a, 16
   %sub = sub i32 %shr, %a
@@ -39,7 +39,7 @@ define void @sub_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 
 ; SDWA: v_mul_u32_u24_sdwa v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:WORD_1 src1_sel:WORD_1
 
-define void @mul_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in1, i32 addrspace(1)* %in2) {
+define amdgpu_kernel void @mul_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in1, i32 addrspace(1)* %in2) {
   %a = load i32, i32 addrspace(1)* %in1, align 4
   %b = load i32, i32 addrspace(1)* %in2, align 4
   %shra = lshr i32 %a, 16
@@ -55,7 +55,7 @@ define void @mul_shr_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in1, i32 add
 ; SDWA: v_mul_lo_i32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 ; SDWA-NOT: v_mul_u32_u24_sdwa
 
-define void @mul_i16(i16 addrspace(1)* %out, i16 addrspace(1)* %ina, i16 addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_i16(i16 addrspace(1)* %out, i16 addrspace(1)* %ina, i16 addrspace(1)* %inb) {
 entry:
   %a = load i16, i16 addrspace(1)* %ina, align 4
   %b = load i16, i16 addrspace(1)* %inb, align 4
@@ -75,7 +75,7 @@ entry:
 ; SDWA: v_mul_u32_u24_sdwa v[[DST_MUL:[0-9]+]], v{{[0-9]+}}, v{{[0-9]+}} dst_sel:WORD_1 dst_unused:UNUSED_PAD src0_sel:WORD_1 src1_sel:WORD_1
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v[[DST_MUL]], v{{[0-9]+}}
 
-define void @mul_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %ina, <2 x i16> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %ina, <2 x i16> addrspace(1)* %inb) {
 entry:
   %a = load <2 x i16>, <2 x i16> addrspace(1)* %ina, align 4
   %b = load <2 x i16>, <2 x i16> addrspace(1)* %inb, align 4
@@ -97,7 +97,7 @@ entry:
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v[[DST_MUL1]], v{{[0-9]+}}
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v[[DST_MUL0]], v{{[0-9]+}}
 
-define void @mul_v4i16(<4 x i16> addrspace(1)* %out, <4 x i16> addrspace(1)* %ina, <4 x i16> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v4i16(<4 x i16> addrspace(1)* %out, <4 x i16> addrspace(1)* %ina, <4 x i16> addrspace(1)* %inb) {
 entry:
   %a = load <4 x i16>, <4 x i16> addrspace(1)* %ina, align 4
   %b = load <4 x i16>, <4 x i16> addrspace(1)* %inb, align 4
@@ -123,7 +123,7 @@ entry:
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v[[DST_MUL3]], v{{[0-9]+}}
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v[[DST_MUL2]], v{{[0-9]+}}
 
-define void @mul_v8i16(<8 x i16> addrspace(1)* %out, <8 x i16> addrspace(1)* %ina, <8 x i16> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v8i16(<8 x i16> addrspace(1)* %out, <8 x i16> addrspace(1)* %ina, <8 x i16> addrspace(1)* %inb) {
 entry:
   %a = load <8 x i16>, <8 x i16> addrspace(1)* %ina, align 4
   %b = load <8 x i16>, <8 x i16> addrspace(1)* %inb, align 4
@@ -138,7 +138,7 @@ entry:
 ; SDWA: v_mul_f16_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 ; SDWA-NOT: v_mul_f16_sdwa
 
-define void @mul_half(half addrspace(1)* %out, half addrspace(1)* %ina, half addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_half(half addrspace(1)* %out, half addrspace(1)* %ina, half addrspace(1)* %inb) {
 entry:
   %a = load half, half addrspace(1)* %ina, align 4
   %b = load half, half addrspace(1)* %inb, align 4
@@ -157,7 +157,7 @@ entry:
 
 ; SDWA: v_mul_f16_sdwa v[[DST_MUL:[0-9]+]], v{{[0-9]+}}, v{{[0-9]+}} dst_sel:WORD_1 dst_unused:UNUSED_PAD src0_sel:WORD_1 src1_sel:WORD_1
 
-define void @mul_v2half(<2 x half> addrspace(1)* %out, <2 x half> addrspace(1)* %ina, <2 x half> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v2half(<2 x half> addrspace(1)* %out, <2 x half> addrspace(1)* %ina, <2 x half> addrspace(1)* %inb) {
 entry:
   %a = load <2 x half>, <2 x half> addrspace(1)* %ina, align 4
   %b = load <2 x half>, <2 x half> addrspace(1)* %inb, align 4
@@ -178,7 +178,7 @@ entry:
 ; SDWA: v_mul_f16_sdwa v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} dst_sel:WORD_1 dst_unused:UNUSED_PAD src0_sel:WORD_1 src1_sel:WORD_1
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 
-define void @mul_v4half(<4 x half> addrspace(1)* %out, <4 x half> addrspace(1)* %ina, <4 x half> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v4half(<4 x half> addrspace(1)* %out, <4 x half> addrspace(1)* %ina, <4 x half> addrspace(1)* %inb) {
 entry:
   %a = load <4 x half>, <4 x half> addrspace(1)* %ina, align 4
   %b = load <4 x half>, <4 x half> addrspace(1)* %inb, align 4
@@ -204,7 +204,7 @@ entry:
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 ; SDWA: v_or_b32_e32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 
-define void @mul_v8half(<8 x half> addrspace(1)* %out, <8 x half> addrspace(1)* %ina, <8 x half> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v8half(<8 x half> addrspace(1)* %out, <8 x half> addrspace(1)* %ina, <8 x half> addrspace(1)* %inb) {
 entry:
   %a = load <8 x half>, <8 x half> addrspace(1)* %ina, align 4
   %b = load <8 x half>, <8 x half> addrspace(1)* %inb, align 4
@@ -219,7 +219,7 @@ entry:
 ; SDWA: v_mul_lo_i32 v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}}
 ; SDWA-NOT: v_mul_u32_u24_sdwa
 
-define void @mul_i8(i8 addrspace(1)* %out, i8 addrspace(1)* %ina, i8 addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_i8(i8 addrspace(1)* %out, i8 addrspace(1)* %ina, i8 addrspace(1)* %inb) {
 entry:
   %a = load i8, i8 addrspace(1)* %ina, align 4
   %b = load i8, i8 addrspace(1)* %inb, align 4
@@ -238,7 +238,7 @@ entry:
 
 ; SDWA: v_mul_u32_u24_sdwa v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} dst_sel:BYTE_1 dst_unused:UNUSED_PAD src0_sel:BYTE_1 src1_sel:BYTE_1
 
-define void @mul_v2i8(<2 x i8> addrspace(1)* %out, <2 x i8> addrspace(1)* %ina, <2 x i8> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v2i8(<2 x i8> addrspace(1)* %out, <2 x i8> addrspace(1)* %ina, <2 x i8> addrspace(1)* %inb) {
 entry:
   %a = load <2 x i8>, <2 x i8> addrspace(1)* %ina, align 4
   %b = load <2 x i8>, <2 x i8> addrspace(1)* %inb, align 4
@@ -259,7 +259,7 @@ entry:
 ; SDWA: v_mul_u32_u24_sdwa
 ; SDWA: v_mul_u32_u24_sdwa
 
-define void @mul_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> addrspace(1)* %ina, <4 x i8> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v4i8(<4 x i8> addrspace(1)* %out, <4 x i8> addrspace(1)* %ina, <4 x i8> addrspace(1)* %inb) {
 entry:
   %a = load <4 x i8>, <4 x i8> addrspace(1)* %ina, align 4
   %b = load <4 x i8>, <4 x i8> addrspace(1)* %inb, align 4
@@ -283,7 +283,7 @@ entry:
 ; SDWA: v_mul_u32_u24_sdwa
 ; SDWA: v_mul_u32_u24_sdwa
 
-define void @mul_v8i8(<8 x i8> addrspace(1)* %out, <8 x i8> addrspace(1)* %ina, <8 x i8> addrspace(1)* %inb) {
+define amdgpu_kernel void @mul_v8i8(<8 x i8> addrspace(1)* %out, <8 x i8> addrspace(1)* %ina, <8 x i8> addrspace(1)* %inb) {
 entry:
   %a = load <8 x i8>, <8 x i8> addrspace(1)* %ina, align 4
   %b = load <8 x i8>, <8 x i8> addrspace(1)* %inb, align 4
@@ -304,7 +304,7 @@ entry:
 ; SDWA: v_mac_f16_sdwa v[[DST_MAC:[0-9]+]], v{{[0-9]+}}, v{{[0-9]+}} dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:WORD_1 src1_sel:WORD_1
 ; SDWA: v_lshlrev_b32_e32 v[[DST_SHL:[0-9]+]], 16, v[[DST_MAC]]
 
-define void @mac_v2half(<2 x half> addrspace(1)* %out, <2 x half> addrspace(1)* %ina, <2 x half> addrspace(1)* %inb) {
+define amdgpu_kernel void @mac_v2half(<2 x half> addrspace(1)* %out, <2 x half> addrspace(1)* %ina, <2 x half> addrspace(1)* %inb) {
 entry:
   %a = load <2 x half>, <2 x half> addrspace(1)* %ina, align 4
   %b = load <2 x half>, <2 x half> addrspace(1)* %inb, align 4
@@ -318,7 +318,7 @@ entry:
 ; NOSDWA-NOT: v_mul_u32_u24_sdwa
 ; SDWA-NOT: v_mul_u32_u24_sdwa
 
-define void @immediate_mul_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %in) {
+define amdgpu_kernel void @immediate_mul_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %in) {
 entry:
   %a = load <2 x i16>, <2 x i16> addrspace(1)* %in, align 4
   %mul = mul <2 x i16> %a, <i16 123, i16 321>
@@ -337,7 +337,7 @@ entry:
 
 ; SDWA: v_mul_u32_u24_sdwa v{{[0-9]+}}, v{{[0-9]+}}, v{{[0-9]+}} dst_sel:DWORD dst_unused:UNUSED_PAD src0_sel:DWORD src1_sel:WORD_1
 
-define void @mulmul_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %ina, <2 x i16> addrspace(1)* %inb) {
+define amdgpu_kernel void @mulmul_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %ina, <2 x i16> addrspace(1)* %inb) {
 entry:
   %a = load <2 x i16>, <2 x i16> addrspace(1)* %ina, align 4
   %b = load <2 x i16>, <2 x i16> addrspace(1)* %inb, align 4
@@ -353,7 +353,7 @@ entry:
 ; SDWA-NOT: v_mul_u32_u24_sdwa
 ; SDWA-NOT: v_add_i32_sdwa
 
-define void @mul_add_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %ina, <2 x i16> addrspace(1)* %inb, i1 addrspace(1)* %incond) {
+define amdgpu_kernel void @mul_add_v2i16(<2 x i16> addrspace(1)* %out, <2 x i16> addrspace(1)* %ina, <2 x i16> addrspace(1)* %inb, i1 addrspace(1)* %incond) {
 entry:
   %a = load <2 x i16>, <2 x i16> addrspace(1)* %ina, align 4
   %b = load <2 x i16>, <2 x i16> addrspace(1)* %inb, align 4

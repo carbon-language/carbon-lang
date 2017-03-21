@@ -48,7 +48,7 @@
 
 ; Scratch size = alloca size + emergency stack slot
 ; ALL: ; ScratchSize: 32772
-define void @large_alloca_compute_shader(i32 %x, i32 %y) #0 {
+define amdgpu_kernel void @large_alloca_compute_shader(i32 %x, i32 %y) #0 {
   %large = alloca [8192 x i32], align 4
   %gep = getelementptr [8192 x i32], [8192 x i32]* %large, i32 0, i32 8191
   store volatile i32 %x, i32* %gep

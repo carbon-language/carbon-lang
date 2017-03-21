@@ -4,7 +4,7 @@
 
 
 ; CHECK-LABEL: {{^}}func:
-define void @func() #0 {
+define amdgpu_kernel void @func() #0 {
 B0:
   br i1 undef, label %B1, label %B2
 
@@ -72,7 +72,7 @@ bb11:                                             ; preds = %bb9
 ; CHECK: v_mov_b32_e32 v[[OUTPUT_LO]], v6
 
 ; CHECK: buffer_store_dwordx4 v{{\[}}[[OUTPUT_LO]]:[[OUTPUT_HI]]{{\]}}
-define void @partially_undef_copy() #0 {
+define amdgpu_kernel void @partially_undef_copy() #0 {
   %tmp0 = call i32 asm sideeffect "v_mov_b32_e32 v5, 5", "={VGPR5}"()
   %tmp1 = call i32 asm sideeffect "v_mov_b32_e32 v6, 6", "={VGPR6}"()
 

@@ -10,7 +10,7 @@
 ; VI: NumSgprs: {{[1-5][0-9]$}}
 ; VI: NumVgprs: {{[1-3][0-9]$}}
 
-define void @load_fma_store(float addrspace(3)* nocapture readonly %in_arg, float addrspace(1)* nocapture %out_arg) {
+define amdgpu_kernel void @load_fma_store(float addrspace(3)* nocapture readonly %in_arg, float addrspace(1)* nocapture %out_arg) {
 bb:
   %adr.a.0 = getelementptr inbounds float, float addrspace(3)* %in_arg, i32 20004
   %adr.b.0 = getelementptr inbounds float, float addrspace(3)* %in_arg, i32 20252
