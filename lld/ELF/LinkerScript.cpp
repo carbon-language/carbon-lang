@@ -1796,12 +1796,6 @@ Expr ScriptParser::readPrimary() {
       return {Script->getOutputSection(Location, Name), 0};
     };
   }
-  if (Tok == "LOADADDR") {
-    StringRef Name = readParenLiteral();
-    return [=] { return Script->getOutputSection(Location, Name)->getLMA(); };
-  }
-  if (Tok == "ASSERT")
-    return readAssert();
   if (Tok == "ALIGN") {
     expect("(");
     Expr E = readExpr();
@@ -1813,21 +1807,15 @@ Expr ScriptParser::readPrimary() {
     expect(")");
     return [=] { return alignTo(Script->getDot(), E().getValue()); };
   }
+  if (Tok == "ALIGNOF") {
+    StringRef Name = readParenLiteral();
+    return [=] { return Script->getOutputSection(Location, Name)->Alignment; };
+  }
+  if (Tok == "ASSERT")
+    return readAssert();
   if (Tok == "CONSTANT") {
     StringRef Name = readParenLiteral();
     return [=] { return getConstant(Name); };
-  }
-  if (Tok == "DEFINED") {
-    StringRef Name = readParenLiteral();
-    return [=] { return Script->isDefined(Name) ? 1 : 0; };
-  }
-  if (Tok == "SEGMENT_START") {
-    expect("(");
-    skip();
-    expect(",");
-    Expr E = readExpr();
-    expect(")");
-    return [=] { return E(); };
   }
   if (Tok == "DATA_SEGMENT_ALIGN") {
     expect("(");
@@ -1843,10 +1831,10 @@ Expr ScriptParser::readPrimary() {
     expect(")");
     return [] { return Script->getDot(); };
   }
-  // GNU linkers implements more complicated logic to handle
-  // DATA_SEGMENT_RELRO_END. We instead ignore the arguments and just align to
-  // the next page boundary for simplicity.
   if (Tok == "DATA_SEGMENT_RELRO_END") {
+    // GNU linkers implements more complicated logic to handle
+    // DATA_SEGMENT_RELRO_END. We instead ignore the arguments and
+    // just align to the next page boundary for simplicity.
     expect("(");
     readExpr();
     expect(",");
@@ -1854,13 +1842,25 @@ Expr ScriptParser::readPrimary() {
     expect(")");
     return [] { return alignTo(Script->getDot(), Target->PageSize); };
   }
+  if (Tok == "DEFINED") {
+    StringRef Name = readParenLiteral();
+    return [=] { return Script->isDefined(Name) ? 1 : 0; };
+  }
+  if (Tok == "LOADADDR") {
+    StringRef Name = readParenLiteral();
+    return [=] { return Script->getOutputSection(Location, Name)->getLMA(); };
+  }
+  if (Tok == "SEGMENT_START") {
+    expect("(");
+    skip();
+    expect(",");
+    Expr E = readExpr();
+    expect(")");
+    return [=] { return E(); };
+  }
   if (Tok == "SIZEOF") {
     StringRef Name = readParenLiteral();
     return [=] { return Script->getOutputSectionSize(Name); };
-  }
-  if (Tok == "ALIGNOF") {
-    StringRef Name = readParenLiteral();
-    return [=] { return Script->getOutputSection(Location, Name)->Alignment; };
   }
   if (Tok == "SIZEOF_HEADERS")
     return [=] { return elf::getHeaderSize(); };
