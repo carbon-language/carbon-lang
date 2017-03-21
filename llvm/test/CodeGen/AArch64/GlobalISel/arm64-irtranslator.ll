@@ -1415,9 +1415,9 @@ define float @test_different_call_conv_target(float %x) {
 define <2 x i32> @test_shufflevector_s32_v2s32(i32 %arg) {
 ; CHECK-LABEL: name: test_shufflevector_s32_v2s32
 ; CHECK: [[ARG:%[0-9]+]](s32) = COPY %w0
-; CHECK: [[UNDEF:%[0-9]+]](s32) = IMPLICIT_DEF
-; CHECK: [[C0:%[0-9]+]](s32) = G_CONSTANT i32 0
-; CHECK: [[MASK:%[0-9]+]](<2 x s32>) = G_MERGE_VALUES [[C0]](s32), [[C0]](s32)
+; CHECK-DAG: [[UNDEF:%[0-9]+]](s32) = IMPLICIT_DEF
+; CHECK-DAG: [[C0:%[0-9]+]](s32) = G_CONSTANT i32 0
+; CHECK-DAG: [[MASK:%[0-9]+]](<2 x s32>) = G_MERGE_VALUES [[C0]](s32), [[C0]](s32)
 ; CHECK: [[VEC:%[0-9]+]](<2 x s32>) = G_SHUFFLE_VECTOR [[ARG]](s32), [[UNDEF]], [[MASK]](<2 x s32>)
 ; CHECK: %d0 = COPY [[VEC]](<2 x s32>)
   %vec = insertelement <1 x i32> undef, i32 %arg, i32 0
@@ -1428,8 +1428,8 @@ define <2 x i32> @test_shufflevector_s32_v2s32(i32 %arg) {
 define i32 @test_shufflevector_v2s32_s32(<2 x i32> %arg) {
 ; CHECK-LABEL: name: test_shufflevector_v2s32_s32
 ; CHECK: [[ARG:%[0-9]+]](<2 x s32>) = COPY %d0
-; CHECK: [[UNDEF:%[0-9]+]](<2 x s32>) = IMPLICIT_DEF
-; CHECK: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
+; CHECK-DAG: [[UNDEF:%[0-9]+]](<2 x s32>) = IMPLICIT_DEF
+; CHECK-DAG: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
 ; CHECK: [[RES:%[0-9]+]](s32) = G_SHUFFLE_VECTOR [[ARG]](<2 x s32>), [[UNDEF]], [[C1]](s32)
 ; CHECK: %w0 = COPY [[RES]](s32)
   %vec = shufflevector <2 x i32> %arg, <2 x i32> undef, <1 x i32> <i32 1>
@@ -1440,10 +1440,10 @@ define i32 @test_shufflevector_v2s32_s32(<2 x i32> %arg) {
 define <2 x i32> @test_shufflevector_v2s32_v2s32(<2 x i32> %arg) {
 ; CHECK-LABEL: name: test_shufflevector_v2s32_v2s32
 ; CHECK: [[ARG:%[0-9]+]](<2 x s32>) = COPY %d0
-; CHECK: [[UNDEF:%[0-9]+]](<2 x s32>) = IMPLICIT_DEF
-; CHECK: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
-; CHECK: [[C0:%[0-9]+]](s32) = G_CONSTANT i32 0
-; CHECK: [[MASK:%[0-9]+]](<2 x s32>) = G_MERGE_VALUES [[C1]](s32), [[C0]](s32)
+; CHECK-DAG: [[UNDEF:%[0-9]+]](<2 x s32>) = IMPLICIT_DEF
+; CHECK-DAG: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
+; CHECK-DAG: [[C0:%[0-9]+]](s32) = G_CONSTANT i32 0
+; CHECK-DAG: [[MASK:%[0-9]+]](<2 x s32>) = G_MERGE_VALUES [[C1]](s32), [[C0]](s32)
 ; CHECK: [[VEC:%[0-9]+]](<2 x s32>) = G_SHUFFLE_VECTOR [[ARG]](<2 x s32>), [[UNDEF]], [[MASK]](<2 x s32>)
 ; CHECK: %d0 = COPY [[VEC]](<2 x s32>)
   %res = shufflevector <2 x i32> %arg, <2 x i32> undef, <2 x i32> <i32 1, i32 0>
@@ -1453,10 +1453,10 @@ define <2 x i32> @test_shufflevector_v2s32_v2s32(<2 x i32> %arg) {
 define i32 @test_shufflevector_v2s32_v3s32(<2 x i32> %arg) {
 ; CHECK-LABEL: name: test_shufflevector_v2s32_v3s32
 ; CHECK: [[ARG:%[0-9]+]](<2 x s32>) = COPY %d0
-; CHECK: [[UNDEF:%[0-9]+]](<2 x s32>) = IMPLICIT_DEF
-; CHECK: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
-; CHECK: [[C0:%[0-9]+]](s32) = G_CONSTANT i32 0
-; CHECK: [[MASK:%[0-9]+]](<3 x s32>) = G_MERGE_VALUES [[C1]](s32), [[C0]](s32), [[C1]](s32)
+; CHECK-DAG: [[UNDEF:%[0-9]+]](<2 x s32>) = IMPLICIT_DEF
+; CHECK-DAG: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
+; CHECK-DAG: [[C0:%[0-9]+]](s32) = G_CONSTANT i32 0
+; CHECK-DAG: [[MASK:%[0-9]+]](<3 x s32>) = G_MERGE_VALUES [[C1]](s32), [[C0]](s32), [[C1]](s32)
 ; CHECK: [[VEC:%[0-9]+]](<3 x s32>) = G_SHUFFLE_VECTOR [[ARG]](<2 x s32>), [[UNDEF]], [[MASK]](<3 x s32>)
 ; CHECK: G_EXTRACT_VECTOR_ELT [[VEC]](<3 x s32>)
   %vec = shufflevector <2 x i32> %arg, <2 x i32> undef, <3 x i32> <i32 1, i32 0, i32 1>
@@ -1482,10 +1482,10 @@ define <4 x i32> @test_shufflevector_v2s32_v4s32(<2 x i32> %arg1, <2 x i32> %arg
 define <2 x i32> @test_shufflevector_v4s32_v2s32(<4 x i32> %arg) {
 ; CHECK-LABEL: name: test_shufflevector_v4s32_v2s32
 ; CHECK: [[ARG:%[0-9]+]](<4 x s32>) = COPY %q0
-; CHECK: [[UNDEF:%[0-9]+]](<4 x s32>) = IMPLICIT_DEF
-; CHECK: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
-; CHECK: [[C3:%[0-9]+]](s32) = G_CONSTANT i32 3
-; CHECK: [[MASK:%[0-9]+]](<2 x s32>) = G_MERGE_VALUES [[C1]](s32), [[C3]](s32)
+; CHECK-DAG: [[UNDEF:%[0-9]+]](<4 x s32>) = IMPLICIT_DEF
+; CHECK-DAG: [[C1:%[0-9]+]](s32) = G_CONSTANT i32 1
+; CHECK-DAG: [[C3:%[0-9]+]](s32) = G_CONSTANT i32 3
+; CHECK-DAG: [[MASK:%[0-9]+]](<2 x s32>) = G_MERGE_VALUES [[C1]](s32), [[C3]](s32)
 ; CHECK: [[VEC:%[0-9]+]](<2 x s32>) = G_SHUFFLE_VECTOR [[ARG]](<4 x s32>), [[UNDEF]], [[MASK]](<2 x s32>)
 ; CHECK: %d0 = COPY [[VEC]](<2 x s32>)
   %res = shufflevector <4 x i32> %arg, <4 x i32> undef, <2 x i32> <i32 1, i32 3>
