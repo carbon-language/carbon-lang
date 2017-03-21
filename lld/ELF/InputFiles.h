@@ -74,8 +74,8 @@ public:
   StringRef getName() const { return MB.getBufferIdentifier(); }
   MemoryBufferRef MB;
 
-  // If it is a file that can have sections, like object file or binary file,
-  // then method returns them.
+  // Returns sections. It is a runtime error to call this function
+  // on files that don't have the notion of sections.
   ArrayRef<InputSectionBase *> getSections() const {
     assert(FileKind == ObjectKind || FileKind == BinaryKind);
     return Sections;
