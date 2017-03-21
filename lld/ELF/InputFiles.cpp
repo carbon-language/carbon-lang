@@ -318,7 +318,7 @@ void elf::ObjectFile<ELFT>::initializeSections(
     // .ARM.exidx sections have a reverse dependency on the InputSection they
     // have a SHF_LINK_ORDER dependency, this is identified by the sh_link.
     if (Sec.sh_flags & SHF_LINK_ORDER) {
-      if (Sec.sh_link >= Sections.size())
+      if (Sec.sh_link >= this->Sections.size())
         fatal(toString(this) + ": invalid sh_link index: " +
               Twine(Sec.sh_link));
       this->Sections[Sec.sh_link]->DependentSections.push_back(
