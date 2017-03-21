@@ -169,5 +169,5 @@ tracksRegLiveness: false
 body: |
   bb.0:
     S_STORE_DWORD_SGPR undef %sgpr2, undef %sgpr0_sgpr1, undef %m0, 0
-    SI_RETURN undef %vgpr0
+    SI_RETURN_TO_EPILOG undef %vgpr0
 ...
