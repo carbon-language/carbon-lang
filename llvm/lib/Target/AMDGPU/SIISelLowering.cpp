@@ -1667,7 +1667,7 @@ static MachineBasicBlock *emitIndirectSrc(MachineInstr &MI,
   std::tie(SubReg, Offset)
     = computeIndirectRegAndOffset(TRI, VecRC, SrcReg, Offset);
 
-  bool UseGPRIdxMode = ST.hasVGPRIndexMode() && EnableVGPRIndexMode;
+  bool UseGPRIdxMode = ST.useVGPRIndexMode(EnableVGPRIndexMode);
 
   if (setM0ToIndexFromSGPR(TII, MRI, MI, Offset, UseGPRIdxMode, true)) {
     MachineBasicBlock::iterator I(&MI);
@@ -1769,7 +1769,7 @@ static MachineBasicBlock *emitIndirectDst(MachineInstr &MI,
   std::tie(SubReg, Offset) = computeIndirectRegAndOffset(TRI, VecRC,
                                                          SrcVec->getReg(),
                                                          Offset);
-  bool UseGPRIdxMode = ST.hasVGPRIndexMode() && EnableVGPRIndexMode;
+  bool UseGPRIdxMode = ST.useVGPRIndexMode(EnableVGPRIndexMode);
 
   if (Idx->getReg() == AMDGPU::NoRegister) {
     MachineBasicBlock::iterator I(&MI);
