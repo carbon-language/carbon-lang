@@ -888,6 +888,7 @@ class PPCTargetInfo : public TargetInfo {
   std::string CPU;
 
   // Target cpu features.
+  bool HasAltivec;
   bool HasVSX;
   bool HasP8Vector;
   bool HasP8Crypto;
@@ -903,7 +904,7 @@ protected:
 
 public:
   PPCTargetInfo(const llvm::Triple &Triple, const TargetOptions &)
-    : TargetInfo(Triple), HasVSX(false), HasP8Vector(false),
+    : TargetInfo(Triple), HasAltivec(false), HasVSX(false), HasP8Vector(false),
       HasP8Crypto(false), HasDirectMove(false), HasQPX(false), HasHTM(false),
       HasBPERMD(false), HasExtDiv(false), HasP9Vector(false) {
     SimdDefaultAlign = 128;
@@ -1166,7 +1167,9 @@ const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
 bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
   for (const auto &Feature : Features) {
-    if (Feature == "+vsx") {
+    if (Feature == "+altivec") {
+      HasAltivec = true;
+    } else if (Feature == "+vsx") {
       HasVSX = true;
     } else if (Feature == "+bpermd") {
       HasBPERMD = true;
@@ -1238,11 +1241,6 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   if (ABI == "elfv2" ||
       (getTriple().getOS() == llvm::Triple::Darwin && PointerWidth == 64))
     Builder.defineMacro("__STRUCT_PARM_ALIGN__", "16");
-
-  if (Opts.AltiVec) {
-    Builder.defineMacro("__VEC__", "10206");
-    Builder.defineMacro("__ALTIVEC__");
-  }
 
   // CPU identification.
   ArchDefineTypes defs = (ArchDefineTypes)llvm::StringSwitch<int>(CPU)
@@ -1350,6 +1348,10 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__TOS_BGQ__");
   }
 
+  if (HasAltivec) {
+    Builder.defineMacro("__VEC__", "10206");
+    Builder.defineMacro("__ALTIVEC__");
+  }
   if (HasVSX)
     Builder.defineMacro("__VSX__");
   if (HasP8Vector)
@@ -1502,18 +1504,19 @@ bool PPCTargetInfo::initFeatureMap(
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
   return llvm::StringSwitch<bool>(Feature)
-    .Case("powerpc", true)
-    .Case("vsx", HasVSX)
-    .Case("power8-vector", HasP8Vector)
-    .Case("crypto", HasP8Crypto)
-    .Case("direct-move", HasDirectMove)
-    .Case("qpx", HasQPX)
-    .Case("htm", HasHTM)
-    .Case("bpermd", HasBPERMD)
-    .Case("extdiv", HasExtDiv)
-    .Case("float128", HasFloat128)
-    .Case("power9-vector", HasP9Vector)
-    .Default(false);
+      .Case("powerpc", true)
+      .Case("altivec", HasAltivec)
+      .Case("vsx", HasVSX)
+      .Case("power8-vector", HasP8Vector)
+      .Case("crypto", HasP8Crypto)
+      .Case("direct-move", HasDirectMove)
+      .Case("qpx", HasQPX)
+      .Case("htm", HasHTM)
+      .Case("bpermd", HasBPERMD)
+      .Case("extdiv", HasExtDiv)
+      .Case("float128", HasFloat128)
+      .Case("power9-vector", HasP9Vector)
+      .Default(false);
 }
 
 void PPCTargetInfo::setFeatureEnabled(llvm::StringMap<bool> &Features,
