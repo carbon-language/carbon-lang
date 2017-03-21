@@ -496,32 +496,38 @@ template <typename ValueTy>
 class StringMapConstIterator
     : public StringMapIterBase<StringMapConstIterator<ValueTy>,
                                const StringMapEntry<ValueTy>> {
+  using base = StringMapIterBase<StringMapConstIterator<ValueTy>,
+                                 const StringMapEntry<ValueTy>>;
+
 public:
   StringMapConstIterator() = default;
   explicit StringMapConstIterator(StringMapEntryBase **Bucket,
                                   bool NoAdvance = false)
-      : StringMapIterBase(Bucket, NoAdvance) {}
+      : base(Bucket, NoAdvance) {}
 
   const StringMapEntry<ValueTy> &operator*() const {
-    return *static_cast<const StringMapEntry<ValueTy> *>(*Ptr);
+    return *static_cast<const StringMapEntry<ValueTy> *>(*this->Ptr);
   }
 };
 
 template <typename ValueTy>
 class StringMapIterator : public StringMapIterBase<StringMapIterator<ValueTy>,
                                                    StringMapEntry<ValueTy>> {
+  using base =
+      StringMapIterBase<StringMapIterator<ValueTy>, StringMapEntry<ValueTy>>;
+
 public:
   StringMapIterator() = default;
   explicit StringMapIterator(StringMapEntryBase **Bucket,
                              bool NoAdvance = false)
-      : StringMapIterBase(Bucket, NoAdvance) {}
+      : base(Bucket, NoAdvance) {}
 
   StringMapEntry<ValueTy> &operator*() const {
-    return *static_cast<StringMapEntry<ValueTy> *>(*Ptr);
+    return *static_cast<StringMapEntry<ValueTy> *>(*this->Ptr);
   }
 
   operator StringMapConstIterator<ValueTy>() const {
-    return StringMapConstIterator<ValueTy>(Ptr, false);
+    return StringMapConstIterator<ValueTy>(this->Ptr, false);
   }
 };
 
@@ -530,14 +536,18 @@ class StringMapKeyIterator
     : public iterator_adaptor_base<StringMapKeyIterator<ValueTy>,
                                    StringMapConstIterator<ValueTy>,
                                    std::forward_iterator_tag, StringRef> {
+  using base = iterator_adaptor_base<StringMapKeyIterator<ValueTy>,
+                                     StringMapConstIterator<ValueTy>,
+                                     std::forward_iterator_tag, StringRef>;
+
 public:
   StringMapKeyIterator() = default;
 
   explicit StringMapKeyIterator(StringMapConstIterator<ValueTy> Iter)
-      : iterator_adaptor_base(std::move(Iter)) {}
+      : base(std::move(Iter)) {}
 
   StringRef &operator*() {
-    Key = wrapped()->getKey();
+    Key = this->wrapped()->getKey();
     return Key;
   }
 
