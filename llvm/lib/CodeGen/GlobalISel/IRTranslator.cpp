@@ -1005,6 +1005,16 @@ bool IRTranslator::translateExtractElement(const User &U,
   return true;
 }
 
+bool IRTranslator::translateShuffleVector(const User &U,
+                                          MachineIRBuilder &MIRBuilder) {
+  MIRBuilder.buildInstr(TargetOpcode::G_SHUFFLE_VECTOR)
+      .addDef(getOrCreateVReg(U))
+      .addUse(getOrCreateVReg(*U.getOperand(0)))
+      .addUse(getOrCreateVReg(*U.getOperand(1)))
+      .addUse(getOrCreateVReg(*U.getOperand(2)));
+  return true;
+}
+
 bool IRTranslator::translatePHI(const User &U, MachineIRBuilder &MIRBuilder) {
   const PHINode &PI = cast<PHINode>(U);
   auto MIB = MIRBuilder.buildInstr(TargetOpcode::PHI);
