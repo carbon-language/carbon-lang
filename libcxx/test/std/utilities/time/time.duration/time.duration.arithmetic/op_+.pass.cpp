@@ -32,4 +32,15 @@ int main()
     static_assert(m.count() == m2.count(), "");
     }
 #endif
+
+// P0548
+    {
+    typedef std::chrono::duration<int, std::ratio<10,10> > D10;
+    typedef std::chrono::duration<int, std::ratio< 1, 1> > D1;
+    D10 zero{0};
+    D10 one{1};
+    static_assert( (std::is_same< decltype(+one), decltype(zero-one) >::value), "");
+    static_assert( (std::is_same< decltype(zero+one), D1>::value), "");
+    static_assert( (std::is_same< decltype(+one),     D1>::value), "");
+    }
 }
