@@ -2196,7 +2196,7 @@ void ARMExidxSentinelSection<ELFT>::writeTo(uint8_t *Buf) {
   // Get the InputSection before us, we are by definition last
   auto RI = cast<OutputSection>(this->OutSec)->Sections.rbegin();
   InputSection *LE = *(++RI);
-  InputSection *LC = cast<InputSection>(LE->template getLinkOrderDep<ELFT>());
+  InputSection *LC = cast<InputSection>(LE->getLinkOrderDep());
   uint64_t S = LC->OutSec->Addr + LC->getOffset(LC->getSize());
   uint64_t P = this->getVA();
   Target->relocateOne(Buf, R_ARM_PREL31, S - P);
