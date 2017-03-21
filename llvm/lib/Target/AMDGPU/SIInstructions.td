@@ -277,7 +277,6 @@ def SI_RETURN_TO_EPILOG : SPseudoInstSI <
   let isTerminator = 1;
   let isBarrier = 1;
   let isReturn = 1;
-  let hasSideEffects = 1;
   let hasNoSchedulingInfo = 1;
   let DisableWQM = 1;
 }
