@@ -598,9 +598,9 @@ Value *CodeGenFunction::EmitMSVCBuiltinExpr(MSVCIntrin BuiltinID,
     llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, {Int32Ty}, false);
     llvm::InlineAsm *IA =
         llvm::InlineAsm::get(FTy, Asm, Constraints, /*SideEffects=*/true);
-    llvm::AttributeSet NoReturnAttr =
-        AttributeSet::get(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
-                          llvm::Attribute::NoReturn);
+    llvm::AttributeList NoReturnAttr = llvm::AttributeList::get(
+        getLLVMContext(), llvm::AttributeList::FunctionIndex,
+        llvm::Attribute::NoReturn);
     CallSite CS = Builder.CreateCall(IA, EmitScalarExpr(E->getArg(0)));
     CS.setAttributes(NoReturnAttr);
     return CS.getInstruction();
@@ -2258,9 +2258,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI_setjmpex: {
     if (getTarget().getTriple().isOSMSVCRT()) {
       llvm::Type *ArgTypes[] = {Int8PtrTy, Int8PtrTy};
-      llvm::AttributeSet ReturnsTwiceAttr =
-          AttributeSet::get(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
-                            llvm::Attribute::ReturnsTwice);
+      llvm::AttributeList ReturnsTwiceAttr = llvm::AttributeList::get(
+          getLLVMContext(), llvm::AttributeList::FunctionIndex,
+          llvm::Attribute::ReturnsTwice);
       llvm::Constant *SetJmpEx = CGM.CreateRuntimeFunction(
           llvm::FunctionType::get(IntTy, ArgTypes, /*isVarArg=*/false),
           "_setjmpex", ReturnsTwiceAttr, /*Local=*/true);
@@ -2278,9 +2278,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   }
   case Builtin::BI_setjmp: {
     if (getTarget().getTriple().isOSMSVCRT()) {
-      llvm::AttributeSet ReturnsTwiceAttr =
-          AttributeSet::get(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
-                            llvm::Attribute::ReturnsTwice);
+      llvm::AttributeList ReturnsTwiceAttr = llvm::AttributeList::get(
+          getLLVMContext(), llvm::AttributeList::FunctionIndex,
+          llvm::Attribute::ReturnsTwice);
       llvm::Value *Buf = Builder.CreateBitOrPointerCast(
           EmitScalarExpr(E->getArg(0)), Int8PtrTy);
       llvm::CallSite CS;
@@ -2559,8 +2559,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
       AttrBuilder B;
       B.addAttribute(Attribute::ByVal);
-      AttributeSet ByValAttrSet =
-          AttributeSet::get(CGM.getModule().getContext(), 3U, B);
+      llvm::AttributeList ByValAttrSet =
+          llvm::AttributeList::get(CGM.getModule().getContext(), 3U, B);
 
       auto RTCall =
           Builder.CreateCall(CGM.CreateRuntimeFunction(FTy, Name, ByValAttrSet),
@@ -7995,9 +7995,9 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
     llvm::InlineAsm *IA =
         llvm::InlineAsm::get(FTy, "int $$0x2c", "", /*SideEffects=*/true);
-    llvm::AttributeSet NoReturnAttr =
-        AttributeSet::get(getLLVMContext(), llvm::AttributeSet::FunctionIndex,
-                          llvm::Attribute::NoReturn);
+    llvm::AttributeList NoReturnAttr = llvm::AttributeList::get(
+        getLLVMContext(), llvm::AttributeList::FunctionIndex,
+        llvm::Attribute::NoReturn);
     CallSite CS = Builder.CreateCall(IA);
     CS.setAttributes(NoReturnAttr);
     return CS.getInstruction();
