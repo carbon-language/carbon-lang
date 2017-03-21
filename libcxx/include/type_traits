@@ -1947,6 +1947,13 @@ template <class _Tp> using make_unsigned_t = typename make_unsigned<_Tp>::type;
 
 #ifdef _LIBCPP_HAS_NO_VARIADICS
 
+template <>
+struct _LIBCPP_TEMPLATE_VIS common_type<void, void, void>
+{
+public:
+    typedef void type;
+};
+
 template <class _Tp, class _Up = void, class _Vp = void>
 struct _LIBCPP_TEMPLATE_VIS common_type
 {
