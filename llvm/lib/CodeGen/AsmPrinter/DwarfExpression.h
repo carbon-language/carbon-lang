@@ -84,6 +84,16 @@ public:
 /// entry.
 class DwarfExpression {
 protected:
+  /// Holds information about all subregisters comprising a register location.
+  struct Register {
+    int DwarfRegNo;
+    unsigned Size;
+    const char *Comment;
+  };
+
+  /// The register location, if any.
+  SmallVector<Register, 2> DwarfRegs;
+
   /// Current Fragment Offset in Bits.
   uint64_t OffsetInBits = 0;
   unsigned DwarfVersion;
