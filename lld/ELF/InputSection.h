@@ -300,7 +300,7 @@ public:
 
   static bool classof(const SectionBase *S);
 
-  template <class ELFT> InputSectionBase *getRelocatedSection();
+  InputSectionBase *getRelocatedSection();
 
   template <class ELFT, class RelTy>
   void relocateNonAlloc(uint8_t *Buf, llvm::ArrayRef<RelTy> Rels);

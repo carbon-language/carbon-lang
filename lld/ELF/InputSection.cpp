@@ -219,9 +219,9 @@ bool InputSectionBase::classof(const SectionBase *S) {
   return S->kind() != Output;
 }
 
-template <class ELFT> InputSectionBase *InputSection::getRelocatedSection() {
+InputSectionBase *InputSection::getRelocatedSection() {
   assert(this->Type == SHT_RELA || this->Type == SHT_REL);
-  ArrayRef<InputSectionBase *> Sections = this->getFile<ELFT>()->getSections();
+  ArrayRef<InputSectionBase *> Sections = this->File->getSections();
   return Sections[this->Info];
 }
 
@@ -230,7 +230,7 @@ template <class ELFT> InputSectionBase *InputSection::getRelocatedSection() {
 // for each relocation. So we copy relocations one by one.
 template <class ELFT, class RelTy>
 void InputSection::copyRelocations(uint8_t *Buf, ArrayRef<RelTy> Rels) {
-  InputSectionBase *RelocatedSection = getRelocatedSection<ELFT>();
+  InputSectionBase *RelocatedSection = getRelocatedSection();
 
   // Loop is slow and have complexity O(N*M), where N - amount of
   // relocations and M - amount of symbols in symbol table.
@@ -822,11 +822,6 @@ template void InputSection::writeTo<ELF32LE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF32BE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF64LE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF64BE>(uint8_t *Buf);
-
-template InputSectionBase *InputSection::getRelocatedSection<ELF32LE>();
-template InputSectionBase *InputSection::getRelocatedSection<ELF32BE>();
-template InputSectionBase *InputSection::getRelocatedSection<ELF64LE>();
-template InputSectionBase *InputSection::getRelocatedSection<ELF64BE>();
 
 template elf::ObjectFile<ELF32LE> *InputSectionBase::getFile<ELF32LE>() const;
 template elf::ObjectFile<ELF32BE> *InputSectionBase::getFile<ELF32BE>() const;
