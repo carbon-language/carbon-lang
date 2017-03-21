@@ -2182,17 +2182,15 @@ void MipsRldMapSection::writeTo(uint8_t *Buf) {
   memcpy(Buf, &Filler, getSize());
 }
 
-template <class ELFT>
-ARMExidxSentinelSection<ELFT>::ARMExidxSentinelSection()
+ARMExidxSentinelSection::ARMExidxSentinelSection()
     : SyntheticSection(SHF_ALLOC | SHF_LINK_ORDER, SHT_ARM_EXIDX,
-                       sizeof(typename ELFT::uint), ".ARM.exidx") {}
+                       Config->Wordsize, ".ARM.exidx") {}
 
 // Write a terminating sentinel entry to the end of the .ARM.exidx table.
 // This section will have been sorted last in the .ARM.exidx table.
 // This table entry will have the form:
 // | PREL31 upper bound of code that has exception tables | EXIDX_CANTUNWIND |
-template <class ELFT>
-void ARMExidxSentinelSection<ELFT>::writeTo(uint8_t *Buf) {
+void ARMExidxSentinelSection::writeTo(uint8_t *Buf) {
   // Get the InputSection before us, we are by definition last
   auto RI = cast<OutputSection>(this->OutSec)->Sections.rbegin();
   InputSection *LE = *(++RI);
@@ -2337,11 +2335,6 @@ template class elf::VersionDefinitionSection<ELF32LE>;
 template class elf::VersionDefinitionSection<ELF32BE>;
 template class elf::VersionDefinitionSection<ELF64LE>;
 template class elf::VersionDefinitionSection<ELF64BE>;
-
-template class elf::ARMExidxSentinelSection<ELF32LE>;
-template class elf::ARMExidxSentinelSection<ELF32BE>;
-template class elf::ARMExidxSentinelSection<ELF64LE>;
-template class elf::ARMExidxSentinelSection<ELF64BE>;
 
 template class elf::EhFrameSection<ELF32LE>;
 template class elf::EhFrameSection<ELF32BE>;

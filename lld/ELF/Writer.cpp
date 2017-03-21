@@ -1197,7 +1197,7 @@ template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   // We have the terminater synthetic section class. Add that at the end.
   auto *OS = dyn_cast_or_null<OutputSection>(findSection(".ARM.exidx"));
   if (OS && !OS->Sections.empty() && !Config->Relocatable)
-    OS->addSection(make<ARMExidxSentinelSection<ELFT>>());
+    OS->addSection(make<ARMExidxSentinelSection>());
 }
 
 // The linker is expected to define SECNAME_start and SECNAME_end
