@@ -39,7 +39,7 @@ convert any code which does treat them as a bit mask to use the new query
 methods on the Attribute class.
 
 ``AttributeList``
-================
+=================
 
 The ``AttributeList`` stores a collection of Attribute objects for each kind of
 object that may have an attribute associated with it: the function as a whole,
