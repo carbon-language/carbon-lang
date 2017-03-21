@@ -309,11 +309,11 @@ AMDGPUPromoteAlloca::getLocalSizeYZ(IRBuilder<> &Builder) {
     = Intrinsic::getDeclaration(Mod, Intrinsic::amdgcn_dispatch_ptr);
 
   CallInst *DispatchPtr = Builder.CreateCall(DispatchPtrFn, {});
-  DispatchPtr->addAttribute(AttributeSet::ReturnIndex, Attribute::NoAlias);
-  DispatchPtr->addAttribute(AttributeSet::ReturnIndex, Attribute::NonNull);
+  DispatchPtr->addAttribute(AttributeList::ReturnIndex, Attribute::NoAlias);
+  DispatchPtr->addAttribute(AttributeList::ReturnIndex, Attribute::NonNull);
 
   // Size of the dispatch packet struct.
-  DispatchPtr->addDereferenceableAttr(AttributeSet::ReturnIndex, 64);
+  DispatchPtr->addDereferenceableAttr(AttributeList::ReturnIndex, 64);
 
   Type *I32Ty = Type::getInt32Ty(Mod->getContext());
   Value *CastDispatchPtr = Builder.CreateBitCast(

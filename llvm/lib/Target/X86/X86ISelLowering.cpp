@@ -20781,7 +20781,7 @@ SDValue X86TargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
 
       // Check that ECX wasn't needed by an 'inreg' parameter.
       FunctionType *FTy = Func->getFunctionType();
-      const AttributeSet &Attrs = Func->getAttributes();
+      const AttributeList &Attrs = Func->getAttributes();
 
       if (!Attrs.isEmpty() && !Func->isVarArg()) {
         unsigned InRegCount = 0;
@@ -35801,7 +35801,7 @@ int X86TargetLowering::getScalingFactorCost(const DataLayout &DL,
   return -1;
 }
 
-bool X86TargetLowering::isIntDivCheap(EVT VT, AttributeSet Attr) const {
+bool X86TargetLowering::isIntDivCheap(EVT VT, AttributeList Attr) const {
   // Integer division on x86 is expensive. However, when aggressively optimizing
   // for code size, we prefer to use a div instruction, as it is usually smaller
   // than the alternative sequence.
@@ -35809,8 +35809,8 @@ bool X86TargetLowering::isIntDivCheap(EVT VT, AttributeSet Attr) const {
   // integer division, leaving the division as-is is a loss even in terms of
   // size, because it will have to be scalarized, while the alternative code
   // sequence can be performed in vector form.
-  bool OptSize = Attr.hasAttribute(AttributeSet::FunctionIndex,
-                                   Attribute::MinSize);
+  bool OptSize =
+      Attr.hasAttribute(AttributeList::FunctionIndex, Attribute::MinSize);
   return OptSize && !VT.isVector();
 }
 
