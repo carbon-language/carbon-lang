@@ -219,8 +219,6 @@ struct ScriptConfiguration {
   llvm::DenseMap<llvm::StringRef, MemoryRegion> MemoryRegions;
 };
 
-extern ScriptConfiguration *ScriptConfig;
-
 class LinkerScript {
 protected:
   void assignSymbol(SymbolAssignment *Cmd, bool InSec = false);
@@ -242,9 +240,6 @@ protected:
 
   OutputSection *Aether;
   bool ErrorOnMissingSection = false;
-
-  // "ScriptConfig" is a bit too long, so define a short name for it.
-  ScriptConfiguration &Opt = *ScriptConfig;
 
   uint64_t Dot;
   uint64_t ThreadBssOffset = 0;
@@ -287,6 +282,9 @@ public:
   void writeDataBytes(StringRef Name, uint8_t *Buf);
   void addSymbol(SymbolAssignment *Cmd);
   void processCommands(OutputSectionFactory &Factory);
+
+  // Parsed linker script configurations are set to this struct.
+  ScriptConfiguration Opt;
 };
 
 extern LinkerScript *Script;

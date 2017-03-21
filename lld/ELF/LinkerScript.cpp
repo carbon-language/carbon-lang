@@ -53,6 +53,8 @@ using namespace llvm::support::endian;
 using namespace lld;
 using namespace lld::elf;
 
+LinkerScript *elf::Script;
+
 uint64_t ExprValue::getValue() const {
   if (Sec)
     return Sec->getOffset(Val) + Sec->getOutputSection()->Addr;
@@ -108,9 +110,6 @@ static ExprValue bitOr(ExprValue A, ExprValue B) {
 }
 static ExprValue bitNot(ExprValue A) { return ~A.getValue(); }
 static ExprValue minus(ExprValue A) { return -A.getValue(); }
-
-LinkerScript *elf::Script;
-ScriptConfiguration *elf::ScriptConfig;
 
 template <class ELFT> static SymbolBody *addRegular(SymbolAssignment *Cmd) {
   Symbol *Sym;
@@ -1102,7 +1101,6 @@ private:
   std::pair<std::vector<SymbolVersion>, std::vector<SymbolVersion>>
   readSymbols();
 
-  ScriptConfiguration &Opt = *ScriptConfig;
   bool IsUnderSysroot;
 };
 
@@ -1150,7 +1148,7 @@ void ScriptParser::readLinkerScript() {
       continue;
 
     if (Tok == "ASSERT") {
-      Opt.Commands.emplace_back(new AssertCommand(readAssert()));
+      Script->Opt.Commands.emplace_back(new AssertCommand(readAssert()));
     } else if (Tok == "ENTRY") {
       readEntry();
     } else if (Tok == "EXTERN") {
@@ -1176,7 +1174,7 @@ void ScriptParser::readLinkerScript() {
     } else if (Tok == "VERSION") {
       readVersion();
     } else if (SymbolAssignment *Cmd = readProvideOrAssignment(Tok)) {
-      Opt.Commands.emplace_back(Cmd);
+      Script->Opt.Commands.emplace_back(Cmd);
     } else {
       setError("unknown directive: " + Tok);
     }
@@ -1303,9 +1301,9 @@ void ScriptParser::readPhdrs() {
   expect("{");
   while (!Error && !consume("}")) {
     StringRef Tok = next();
-    Opt.PhdrsCommands.push_back(
+    Script->Opt.PhdrsCommands.push_back(
         {Tok, PT_NULL, false, false, UINT_MAX, nullptr});
-    PhdrsCommand &PhdrCmd = Opt.PhdrsCommands.back();
+    PhdrsCommand &PhdrCmd = Script->Opt.PhdrsCommands.back();
 
     PhdrCmd.Type = readPhdrType();
     do {
@@ -1339,7 +1337,7 @@ void ScriptParser::readSearchDir() {
 }
 
 void ScriptParser::readSections() {
-  Opt.HasSections = true;
+  Script->Opt.HasSections = true;
   // -no-rosegment is used to avoid placing read only non-executable sections in
   // their own segment. We do the same if SECTIONS command is present in linker
   // script. See comment for computeFlags().
@@ -1355,7 +1353,7 @@ void ScriptParser::readSections() {
       else
         Cmd = readOutputSectionDescription(Tok);
     }
-    Opt.Commands.emplace_back(Cmd);
+    Script->Opt.Commands.emplace_back(Cmd);
   }
 }
 
@@ -1469,7 +1467,7 @@ ScriptParser::readInputSectionDescription(StringRef Tok) {
     StringRef FilePattern = next();
     InputSectionDescription *Cmd = readInputSectionRules(FilePattern);
     expect(")");
-    Opt.KeptSections.push_back(Cmd);
+    Script->Opt.KeptSections.push_back(Cmd);
     return Cmd;
   }
   return readInputSectionRules(Tok);
@@ -2072,11 +2070,12 @@ void ScriptParser::readMemory() {
     uint64_t Length = readMemoryAssignment("LENGTH", "len", "l");
 
     // Add the memory region to the region map (if it doesn't already exist).
-    auto It = Opt.MemoryRegions.find(Name);
-    if (It != Opt.MemoryRegions.end())
+    auto It = Script->Opt.MemoryRegions.find(Name);
+    if (It != Script->Opt.MemoryRegions.end())
       setError("region '" + Name + "' already defined");
     else
-      Opt.MemoryRegions[Name] = {Name, Origin, Length, Origin, Flags, NegFlags};
+      Script->Opt.MemoryRegions[Name] = {Name,   Origin, Length,
+                                         Origin, Flags,  NegFlags};
   }
 }
 

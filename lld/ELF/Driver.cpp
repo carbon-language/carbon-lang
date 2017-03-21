@@ -78,7 +78,7 @@ bool elf::link(ArrayRef<const char *> Args, bool CanExitEarly,
 
   Config = make<Configuration>();
   Driver = make<LinkerDriver>();
-  ScriptConfig = make<ScriptConfiguration>();
+  Script = make<LinkerScript>();
 
   Driver->main(Args, CanExitEarly);
   freeArena();
@@ -855,7 +855,6 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
   elf::Symtab<ELFT>::X = &Symtab;
   Target = createTarget();
-  Script = make<LinkerScript>();
 
   Config->MaxPageSize = getMaxPageSize(Args);
   Config->ImageBase = getImageBase(Args);
