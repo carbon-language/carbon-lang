@@ -9,8 +9,8 @@
 
 #include "gtest/gtest.h"
 
-#include "lldb/Core/StringList.h"
 #include "lldb/Interpreter/CommandCompletions.h"
+#include "lldb/Utility/StringList.h"
 #include "lldb/Utility/TildeExpressionResolver.h"
 
 #include "llvm/ADT/SmallString.h"

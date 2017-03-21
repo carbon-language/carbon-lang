@@ -16,12 +16,12 @@
 #include <pwd.h>
 #endif
 
-#include "lldb/Core/StringList.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Utility/CleanUp.h"
 #include "lldb/Utility/RegularExpression.h"
 #include "lldb/Utility/Stream.h"
 #include "lldb/Utility/StreamString.h"
+#include "lldb/Utility/StringList.h"
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
