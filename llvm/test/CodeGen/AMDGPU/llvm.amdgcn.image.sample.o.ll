@@ -181,6 +181,225 @@ main_body:
   ret void
 }
 
+; GCN-LABEL: {{^}}adjust_writemask_sample_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_d_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_d_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.d.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_d_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_d_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.d.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_l_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_l_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.l.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_b_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_b_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.b.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_b_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_b_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.b.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_lz_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_lz_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.lz.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_cd_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_cd_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.cd.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_cd_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_cd_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.cd.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_d_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_d_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.d.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_d_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_d_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.d.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_l_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_l_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.l.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_b_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_b_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.b.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_b_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_b_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.b.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_lz_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_lz_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.lz.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_cd_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_cd_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.cd.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}adjust_writemask_sample_c_cd_cl_o_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_sample_c_cd_cl_o_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.sample.c.cd.cl.o.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
 
 declare <4 x float> @llvm.amdgcn.image.sample.o.v4f32.v4f32.v8i32(<4 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #0
 declare <4 x float> @llvm.amdgcn.image.sample.cl.o.v4f32.v4f32.v8i32(<4 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #0

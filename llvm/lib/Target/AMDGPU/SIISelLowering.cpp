@@ -2988,6 +2988,64 @@ SDValue SITargetLowering::LowerINTRINSIC_W_CHAIN(SDValue Op,
 
     return DAG.getMemIntrinsicNode(Opc, DL, Op->getVTList(), Ops, IntVT, MMO);
   }
+  // Basic sample.
+  case Intrinsic::amdgcn_image_sample:
+  case Intrinsic::amdgcn_image_sample_cl:
+  case Intrinsic::amdgcn_image_sample_d:
+  case Intrinsic::amdgcn_image_sample_d_cl:
+  case Intrinsic::amdgcn_image_sample_l:
+  case Intrinsic::amdgcn_image_sample_b:
+  case Intrinsic::amdgcn_image_sample_b_cl:
+  case Intrinsic::amdgcn_image_sample_lz:
+  case Intrinsic::amdgcn_image_sample_cd:
+  case Intrinsic::amdgcn_image_sample_cd_cl:
+
+  // Sample with comparison.
+  case Intrinsic::amdgcn_image_sample_c:
+  case Intrinsic::amdgcn_image_sample_c_cl:
+  case Intrinsic::amdgcn_image_sample_c_d:
+  case Intrinsic::amdgcn_image_sample_c_d_cl:
+  case Intrinsic::amdgcn_image_sample_c_l:
+  case Intrinsic::amdgcn_image_sample_c_b:
+  case Intrinsic::amdgcn_image_sample_c_b_cl:
+  case Intrinsic::amdgcn_image_sample_c_lz:
+  case Intrinsic::amdgcn_image_sample_c_cd:
+  case Intrinsic::amdgcn_image_sample_c_cd_cl:
+
+  // Sample with offsets.
+  case Intrinsic::amdgcn_image_sample_o:
+  case Intrinsic::amdgcn_image_sample_cl_o:
+  case Intrinsic::amdgcn_image_sample_d_o:
+  case Intrinsic::amdgcn_image_sample_d_cl_o:
+  case Intrinsic::amdgcn_image_sample_l_o:
+  case Intrinsic::amdgcn_image_sample_b_o:
+  case Intrinsic::amdgcn_image_sample_b_cl_o:
+  case Intrinsic::amdgcn_image_sample_lz_o:
+  case Intrinsic::amdgcn_image_sample_cd_o:
+  case Intrinsic::amdgcn_image_sample_cd_cl_o:
+
+  // Sample with comparison and offsets.
+  case Intrinsic::amdgcn_image_sample_c_o:
+  case Intrinsic::amdgcn_image_sample_c_cl_o:
+  case Intrinsic::amdgcn_image_sample_c_d_o:
+  case Intrinsic::amdgcn_image_sample_c_d_cl_o:
+  case Intrinsic::amdgcn_image_sample_c_l_o:
+  case Intrinsic::amdgcn_image_sample_c_b_o:
+  case Intrinsic::amdgcn_image_sample_c_b_cl_o:
+  case Intrinsic::amdgcn_image_sample_c_lz_o:
+  case Intrinsic::amdgcn_image_sample_c_cd_o:
+  case Intrinsic::amdgcn_image_sample_c_cd_cl_o:
+
+  case Intrinsic::amdgcn_image_getlod: {
+    // Replace dmask with everything disabled with undef.
+    const ConstantSDNode *DMask = dyn_cast<ConstantSDNode>(Op.getOperand(5));
+    if (!DMask || DMask->isNullValue()) {
+      SDValue Undef = DAG.getUNDEF(Op.getValueType());
+      return DAG.getMergeValues({ Undef, Op.getOperand(0) }, SDLoc(Op));
+    }
+
+    return SDValue();
+  }
   default:
     return SDValue();
   }

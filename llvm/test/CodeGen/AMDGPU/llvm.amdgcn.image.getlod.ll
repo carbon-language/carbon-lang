@@ -28,6 +28,16 @@ main_body:
   ret void
 }
 
+; GCN-LABEL: {{^}}adjust_writemask_getlod_none_enabled:
+; GCN-NOT: image
+; GCN-NOT: store
+define void @adjust_writemask_getlod_none_enabled(float addrspace(1)* %out) {
+main_body:
+  %r = call <4 x float> @llvm.amdgcn.image.getlod.v4f32.v4f32.v8i32(<4 x float> undef, <8 x i32> undef, <4 x i32> undef, i32 0, i1 false, i1 false, i1 false, i1 false, i1 false)
+  %elt0 = extractelement <4 x float> %r, i32 0
+  store float %elt0, float addrspace(1)* %out
+  ret void
+}
 
 declare <4 x float> @llvm.amdgcn.image.getlod.v4f32.f32.v8i32(float, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #0
 declare <4 x float> @llvm.amdgcn.image.getlod.v4f32.v2f32.v8i32(<2 x float>, <8 x i32>, <4 x i32>, i32, i1, i1, i1, i1, i1) #0
