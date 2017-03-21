@@ -855,8 +855,8 @@ void AMDGPUPromoteAlloca::handleAlloca(AllocaInst &I) {
         { Intr->getType(), PointerType::get(SrcTy, AMDGPUAS::LOCAL_ADDRESS) }
       );
 
-      CallInst *NewCall
-        = Builder.CreateCall(ObjectSize, { Src, Intr->getOperand(1) });
+      CallInst *NewCall = Builder.CreateCall(
+          ObjectSize, {Src, Intr->getOperand(1), Intr->getOperand(2)});
       Intr->replaceAllUsesWith(NewCall);
       Intr->eraseFromParent();
       continue;
