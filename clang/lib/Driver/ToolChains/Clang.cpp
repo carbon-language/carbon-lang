@@ -3431,7 +3431,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Forward -f options with positive and negative forms; we translate
   // these by hand.
-  if (Arg *A = Args.getLastArg(options::OPT_fprofile_sample_use_EQ)) {
+  if (Arg *A = getLastProfileSampleUseArg(Args)) {
     StringRef fname = A->getValue();
     if (!llvm::sys::fs::exists(fname))
       D.Diag(diag::err_drv_no_such_file) << fname;
