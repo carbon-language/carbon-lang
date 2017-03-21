@@ -16,6 +16,7 @@
 #include "llvm/Support/CachePruning.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/Endian.h"
 
 #include <vector>
 
@@ -174,6 +175,9 @@ struct Configuration {
 
   // True if the target is little-endian. False if the target is big-endian.
   bool IsLE;
+
+  // endianness::little if IsLE is true. endianness::big otherwise.
+  llvm::support::endianness Endianness;
 
   // True if the target is the little-endian MIPS64.
   //

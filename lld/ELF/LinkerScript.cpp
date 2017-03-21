@@ -945,20 +945,18 @@ uint32_t LinkerScriptBase::getFiller(StringRef Name) {
 }
 
 static void writeInt(uint8_t *Buf, uint64_t Data, uint64_t Size) {
-  const endianness E = Config->IsLE ? endianness::little : endianness::big;
-
   switch (Size) {
   case 1:
     *Buf = (uint8_t)Data;
     break;
   case 2:
-    write16(Buf, Data, E);
+    write16(Buf, Data, Config->Endianness);
     break;
   case 4:
-    write32(Buf, Data, E);
+    write32(Buf, Data, Config->Endianness);
     break;
   case 8:
-    write64(Buf, Data, E);
+    write64(Buf, Data, Config->Endianness);
     break;
   default:
     llvm_unreachable("unsupported Size argument");

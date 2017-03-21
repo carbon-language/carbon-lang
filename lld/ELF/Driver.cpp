@@ -715,6 +715,8 @@ static void setConfigs() {
 
   Config->CopyRelocs = (Config->Relocatable || Config->EmitRelocs);
   Config->IsLE = (Kind == ELF32LEKind || Kind == ELF64LEKind);
+  Config->Endianness =
+      Config->IsLE ? support::endianness::little : support::endianness::big;
   Config->IsMips64EL = (Kind == ELF64LEKind && Machine == EM_MIPS);
   Config->IsRela = Is64 || IsX32 || Config->MipsN32Abi;
   Config->Pic = Config->Pie || Config->Shared;

@@ -324,7 +324,7 @@ BuildIdSection::BuildIdSection()
       HashSize(getHashSize()) {}
 
 void BuildIdSection::writeTo(uint8_t *Buf) {
-  const endianness E = Config->IsLE ? endianness::little : endianness::big;
+  endianness E = Config->Endianness;
   write32(Buf, 4, E);                   // Name size
   write32(Buf + 4, HashSize, E);        // Content size
   write32(Buf + 8, NT_GNU_BUILD_ID, E); // Type
@@ -846,12 +846,10 @@ uint64_t MipsGotSection::getGp() const {
 }
 
 static void writeUint(uint8_t *Buf, uint64_t Val) {
-  support::endianness E =
-      Config->IsLE ? support::endianness::little : support::endianness::big;
   if (Config->Wordsize == 8)
-    write64(Buf, Val, E);
+    write64(Buf, Val, Config->Endianness);
   else
-    write32(Buf, Val, E);
+    write32(Buf, Val, Config->Endianness);
 }
 
 void MipsGotSection::writeTo(uint8_t *Buf) {
