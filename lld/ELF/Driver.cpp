@@ -855,7 +855,7 @@ template <class ELFT> void LinkerDriver::link(opt::InputArgList &Args) {
   SymbolTable<ELFT> Symtab;
   elf::Symtab<ELFT>::X = &Symtab;
   Target = createTarget();
-  Script = make<LinkerScriptBase>();
+  Script = make<LinkerScript>();
 
   Config->MaxPageSize = getMaxPageSize(Args);
   Config->ImageBase = getImageBase(Args);

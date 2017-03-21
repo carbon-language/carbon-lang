@@ -109,7 +109,7 @@ static ExprValue bitOr(ExprValue A, ExprValue B) {
 static ExprValue bitNot(ExprValue A) { return ~A.getValue(); }
 static ExprValue minus(ExprValue A) { return -A.getValue(); }
 
-LinkerScriptBase *elf::Script;
+LinkerScript *elf::Script;
 ScriptConfiguration *elf::ScriptConfig;
 
 template <class ELFT> static SymbolBody *addRegular(SymbolAssignment *Cmd) {
@@ -135,8 +135,8 @@ static bool isUnderSysroot(StringRef Path) {
   return false;
 }
 
-OutputSection *LinkerScriptBase::getOutputSection(const Twine &Loc,
-                                                  StringRef Name) {
+OutputSection *LinkerScript::getOutputSection(const Twine &Loc,
+                                              StringRef Name) {
   static OutputSection FakeSec("", 0, 0);
 
   for (OutputSection *Sec : *OutputSections)
@@ -154,14 +154,14 @@ OutputSection *LinkerScriptBase::getOutputSection(const Twine &Loc,
 // Linker script does not create an output section if its content is empty.
 // We want to allow SIZEOF(.foo) where .foo is a section which happened to
 // be empty. That is why this function is different from getOutputSection().
-uint64_t LinkerScriptBase::getOutputSectionSize(StringRef Name) {
+uint64_t LinkerScript::getOutputSectionSize(StringRef Name) {
   for (OutputSection *Sec : *OutputSections)
     if (Sec->Name == Name)
       return Sec->Size;
   return 0;
 }
 
-void LinkerScriptBase::setDot(Expr E, const Twine &Loc, bool InSec) {
+void LinkerScript::setDot(Expr E, const Twine &Loc, bool InSec) {
   uint64_t Val = E().getValue();
   if (Val < Dot) {
     if (InSec)
@@ -179,7 +179,7 @@ void LinkerScriptBase::setDot(Expr E, const Twine &Loc, bool InSec) {
 // Sets value of a symbol. Two kinds of symbols are processed: synthetic
 // symbols, whose value is an offset from beginning of section and regular
 // symbols whose value is absolute.
-void LinkerScriptBase::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
+void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   if (Cmd->Name == ".") {
     setDot(Cmd->Expression, Cmd->Location, InSec);
     return;
@@ -231,7 +231,7 @@ static SymbolBody *addRegularSymbol(SymbolAssignment *Cmd) {
   }
 }
 
-void LinkerScriptBase::addSymbol(SymbolAssignment *Cmd) {
+void LinkerScript::addSymbol(SymbolAssignment *Cmd) {
   if (Cmd->Name == ".")
     return;
 
@@ -270,7 +270,7 @@ static StringRef basename(InputSectionBase *S) {
   return "";
 }
 
-bool LinkerScriptBase::shouldKeep(InputSectionBase *S) {
+bool LinkerScript::shouldKeep(InputSectionBase *S) {
   for (InputSectionDescription *ID : Opt.KeptSections)
     if (ID->FilePat.match(basename(S)))
       for (SectionPattern &P : ID->SectionPatterns)
@@ -327,7 +327,7 @@ static void sortSections(InputSectionBase **Begin, InputSectionBase **End,
 }
 
 // Compute and remember which sections the InputSectionDescription matches.
-void LinkerScriptBase::computeInputSections(InputSectionDescription *I) {
+void LinkerScript::computeInputSections(InputSectionDescription *I) {
   // Collects all sections that satisfy constraints of I
   // and attach them to I.
   for (SectionPattern &Pat : I->SectionPatterns) {
@@ -374,7 +374,7 @@ void LinkerScriptBase::computeInputSections(InputSectionDescription *I) {
   }
 }
 
-void LinkerScriptBase::discard(ArrayRef<InputSectionBase *> V) {
+void LinkerScript::discard(ArrayRef<InputSectionBase *> V) {
   for (InputSectionBase *S : V) {
     S->Live = false;
     if (S == InX::ShStrTab)
@@ -384,7 +384,7 @@ void LinkerScriptBase::discard(ArrayRef<InputSectionBase *> V) {
 }
 
 std::vector<InputSectionBase *>
-LinkerScriptBase::createInputSectionList(OutputSectionCommand &OutCmd) {
+LinkerScript::createInputSectionList(OutputSectionCommand &OutCmd) {
   std::vector<InputSectionBase *> Ret;
 
   for (const std::unique_ptr<BaseCommand> &Base : OutCmd.Commands) {
@@ -399,7 +399,7 @@ LinkerScriptBase::createInputSectionList(OutputSectionCommand &OutCmd) {
   return Ret;
 }
 
-void LinkerScriptBase::processCommands(OutputSectionFactory &Factory) {
+void LinkerScript::processCommands(OutputSectionFactory &Factory) {
   // A symbol can be assigned before any section is mentioned in the linker
   // script. In an DSO, the symbol values are addresses, so the only important
   // section values are:
@@ -473,7 +473,7 @@ void LinkerScriptBase::processCommands(OutputSectionFactory &Factory) {
 }
 
 // Add sections that didn't match any sections command.
-void LinkerScriptBase::addOrphanSections(OutputSectionFactory &Factory) {
+void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
   for (InputSectionBase *S : InputSections)
     if (S->Live && !S->OutSec)
       Factory.addInputSec(S, getOutputSectionName(S->Name));
@@ -483,7 +483,7 @@ static bool isTbss(OutputSection *Sec) {
   return (Sec->Flags & SHF_TLS) && Sec->Type == SHT_NOBITS;
 }
 
-void LinkerScriptBase::output(InputSection *S) {
+void LinkerScript::output(InputSection *S) {
   if (!AlreadyOutputIS.insert(S).second)
     return;
   bool IsTbss = isTbss(CurOutSec);
@@ -517,7 +517,7 @@ void LinkerScriptBase::output(InputSection *S) {
     Dot = Pos;
 }
 
-void LinkerScriptBase::flush() {
+void LinkerScript::flush() {
   assert(CurOutSec);
   if (!AlreadyOutputOS.insert(CurOutSec).second)
     return;
@@ -525,7 +525,7 @@ void LinkerScriptBase::flush() {
     output(I);
 }
 
-void LinkerScriptBase::switchTo(OutputSection *Sec) {
+void LinkerScript::switchTo(OutputSection *Sec) {
   if (CurOutSec == Sec)
     return;
   if (AlreadyOutputOS.count(Sec))
@@ -544,7 +544,7 @@ void LinkerScriptBase::switchTo(OutputSection *Sec) {
     CurOutSec->LMAOffset = LMAOffset();
 }
 
-void LinkerScriptBase::process(BaseCommand &Base) {
+void LinkerScript::process(BaseCommand &Base) {
   // This handles the assignments to symbol or to a location counter (.)
   if (auto *AssignCmd = dyn_cast<SymbolAssignment>(&Base)) {
     assignSymbol(AssignCmd, true);
@@ -599,8 +599,8 @@ findSection(StringRef Name, const std::vector<OutputSection *> &Sections) {
 // This function searches for a memory region to place the given output
 // section in. If found, a pointer to the appropriate memory region is
 // returned. Otherwise, a nullptr is returned.
-MemoryRegion *LinkerScriptBase::findMemoryRegion(OutputSectionCommand *Cmd,
-                                                 OutputSection *Sec) {
+MemoryRegion *LinkerScript::findMemoryRegion(OutputSectionCommand *Cmd,
+                                             OutputSection *Sec) {
   // If a memory region name was specified in the output section command,
   // then try to find that region first.
   if (!Cmd->MemoryRegionName.empty()) {
@@ -633,7 +633,7 @@ MemoryRegion *LinkerScriptBase::findMemoryRegion(OutputSectionCommand *Cmd,
 
 // This function assigns offsets to input sections and an output section
 // for a single sections command (e.g. ".text { *(.text); }").
-void LinkerScriptBase::assignOffsets(OutputSectionCommand *Cmd) {
+void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
   OutputSection *Sec = findSection(Cmd->Name, *OutputSections);
   if (!Sec)
     return;
@@ -670,7 +670,7 @@ void LinkerScriptBase::assignOffsets(OutputSectionCommand *Cmd) {
                 [this](std::unique_ptr<BaseCommand> &B) { process(*B.get()); });
 }
 
-void LinkerScriptBase::removeEmptyCommands() {
+void LinkerScript::removeEmptyCommands() {
   // It is common practice to use very generic linker scripts. So for any
   // given run some of the output sections in the script will be empty.
   // We could create corresponding empty output sections, but that would
@@ -694,7 +694,7 @@ static bool isAllSectionDescription(const OutputSectionCommand &Cmd) {
   return true;
 }
 
-void LinkerScriptBase::adjustSectionsBeforeSorting() {
+void LinkerScript::adjustSectionsBeforeSorting() {
   // If the output section contains only symbol assignments, create a
   // corresponding output section. The bfd linker seems to only create them if
   // '.' is assigned to, but creating these section should not have any bad
@@ -719,7 +719,7 @@ void LinkerScriptBase::adjustSectionsBeforeSorting() {
   }
 }
 
-void LinkerScriptBase::adjustSectionsAfterSorting() {
+void LinkerScript::adjustSectionsAfterSorting() {
   placeOrphanSections();
 
   // If output section command doesn't specify any segments,
@@ -795,7 +795,7 @@ static bool shouldSkip(const BaseCommand &Cmd) {
 // determine whether a new output command should be added before or
 // after another commands. For the details, look at shouldSkip
 // function.
-void LinkerScriptBase::placeOrphanSections() {
+void LinkerScript::placeOrphanSections() {
   // The OutputSections are already in the correct order.
   // This loops creates or moves commands as needed so that they are in the
   // correct order.
@@ -850,7 +850,7 @@ void LinkerScriptBase::placeOrphanSections() {
   }
 }
 
-void LinkerScriptBase::processNonSectionCommands() {
+void LinkerScript::processNonSectionCommands() {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get()))
       assignSymbol(Cmd);
@@ -859,7 +859,7 @@ void LinkerScriptBase::processNonSectionCommands() {
   }
 }
 
-void LinkerScriptBase::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
+void LinkerScript::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
   // Assign addresses as instructed by linker script SECTIONS sub-commands.
   Dot = 0;
   ErrorOnMissingSection = true;
@@ -892,7 +892,7 @@ void LinkerScriptBase::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
 }
 
 // Creates program headers as instructed by PHDRS linker script command.
-std::vector<PhdrEntry> LinkerScriptBase::createPhdrs() {
+std::vector<PhdrEntry> LinkerScript::createPhdrs() {
   std::vector<PhdrEntry> Ret;
 
   // Process PHDRS and FILEHDR keywords because they are not
@@ -927,7 +927,7 @@ std::vector<PhdrEntry> LinkerScriptBase::createPhdrs() {
   return Ret;
 }
 
-bool LinkerScriptBase::ignoreInterpSection() {
+bool LinkerScript::ignoreInterpSection() {
   // Ignore .interp section in case we have PHDRS specification
   // and PT_INTERP isn't listed.
   return !Opt.PhdrsCommands.empty() &&
@@ -936,7 +936,7 @@ bool LinkerScriptBase::ignoreInterpSection() {
          }) == Opt.PhdrsCommands.end();
 }
 
-uint32_t LinkerScriptBase::getFiller(StringRef Name) {
+uint32_t LinkerScript::getFiller(StringRef Name) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
       if (Cmd->Name == Name)
@@ -963,7 +963,7 @@ static void writeInt(uint8_t *Buf, uint64_t Data, uint64_t Size) {
   }
 }
 
-void LinkerScriptBase::writeDataBytes(StringRef Name, uint8_t *Buf) {
+void LinkerScript::writeDataBytes(StringRef Name, uint8_t *Buf) {
   int I = getSectionIndex(Name);
   if (I == INT_MAX)
     return;
@@ -974,7 +974,7 @@ void LinkerScriptBase::writeDataBytes(StringRef Name, uint8_t *Buf) {
       writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
 }
 
-bool LinkerScriptBase::hasLMA(StringRef Name) {
+bool LinkerScript::hasLMA(StringRef Name) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
       if (Cmd->LMAExpr && Cmd->Name == Name)
@@ -986,7 +986,7 @@ bool LinkerScriptBase::hasLMA(StringRef Name) {
 // SECTIONS commands. Sections are laid out as the same order as they
 // were in the script. If a given name did not appear in the script,
 // it returns INT_MAX, so that it will be laid out at end of file.
-int LinkerScriptBase::getSectionIndex(StringRef Name) {
+int LinkerScript::getSectionIndex(StringRef Name) {
   for (int I = 0, E = Opt.Commands.size(); I != E; ++I)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I].get()))
       if (Cmd->Name == Name)
@@ -994,7 +994,7 @@ int LinkerScriptBase::getSectionIndex(StringRef Name) {
   return INT_MAX;
 }
 
-ExprValue LinkerScriptBase::getSymbolValue(const Twine &Loc, StringRef S) {
+ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
   if (S == ".")
     return {CurOutSec, Dot - CurOutSec->Addr};
   if (SymbolBody *B = findSymbol(S)) {
@@ -1007,14 +1007,12 @@ ExprValue LinkerScriptBase::getSymbolValue(const Twine &Loc, StringRef S) {
   return 0;
 }
 
-bool LinkerScriptBase::isDefined(StringRef S) {
-  return findSymbol(S) != nullptr;
-}
+bool LinkerScript::isDefined(StringRef S) { return findSymbol(S) != nullptr; }
 
 // Returns indices of ELF headers containing specific section, identified
 // by Name. Each index is a zero based number of ELF header listed within
 // PHDRS {} script block.
-std::vector<size_t> LinkerScriptBase::getPhdrIndices(StringRef SectionName) {
+std::vector<size_t> LinkerScript::getPhdrIndices(StringRef SectionName) {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
     if (!Cmd || Cmd->Name != SectionName)
@@ -1028,7 +1026,7 @@ std::vector<size_t> LinkerScriptBase::getPhdrIndices(StringRef SectionName) {
   return {};
 }
 
-size_t LinkerScriptBase::getPhdrIndex(const Twine &Loc, StringRef PhdrName) {
+size_t LinkerScript::getPhdrIndex(const Twine &Loc, StringRef PhdrName) {
   size_t I = 0;
   for (PhdrsCommand &Cmd : Opt.PhdrsCommands) {
     if (Cmd.Name == PhdrName)

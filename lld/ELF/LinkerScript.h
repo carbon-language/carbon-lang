@@ -221,7 +221,7 @@ struct ScriptConfiguration {
 
 extern ScriptConfiguration *ScriptConfig;
 
-class LinkerScriptBase {
+class LinkerScript {
 protected:
   void assignSymbol(SymbolAssignment *Cmd, bool InSec = false);
   void computeInputSections(InputSectionDescription *);
@@ -289,7 +289,7 @@ public:
   void processCommands(OutputSectionFactory &Factory);
 };
 
-extern LinkerScriptBase *Script;
+extern LinkerScript *Script;
 
 } // end namespace elf
 } // end namespace lld
