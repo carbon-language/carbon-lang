@@ -139,10 +139,9 @@ OutputSection *SectionBase::getOutputSection() {
 
 // Uncompress section contents. Note that this function is called
 // from parallel_for_each, so it must be thread-safe.
-template <class ELFT> void InputSectionBase::uncompress() {
+void InputSectionBase::uncompress() {
   Decompressor Dec = check(Decompressor::create(
-      Name, toStringRef(Data), ELFT::TargetEndianness == llvm::support::little,
-      ELFT::Is64Bits));
+      Name, toStringRef(Data), Config->IsLE, Config->Wordsize == 8));
 
   size_t Size = Dec.getDecompressedSize();
   char *OutputBuf;
@@ -823,11 +822,6 @@ template void InputSection::writeTo<ELF32LE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF32BE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF64LE>(uint8_t *Buf);
 template void InputSection::writeTo<ELF64BE>(uint8_t *Buf);
-
-template void InputSectionBase::uncompress<ELF32LE>();
-template void InputSectionBase::uncompress<ELF32BE>();
-template void InputSectionBase::uncompress<ELF64LE>();
-template void InputSectionBase::uncompress<ELF64BE>();
 
 template InputSectionBase *InputSection::getRelocatedSection<ELF32LE>();
 template InputSectionBase *InputSection::getRelocatedSection<ELF32BE>();
