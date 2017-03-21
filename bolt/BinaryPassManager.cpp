@@ -13,6 +13,7 @@
 #include "Passes/FrameOptimizer.h"
 #include "Passes/Inliner.h"
 #include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
 #include <numeric>
 
 using namespace llvm;
@@ -21,9 +22,16 @@ namespace opts {
 
 extern cl::OptionCategory BoltOptCategory;
 
+extern cl::opt<unsigned> Verbosity;
 extern cl::opt<bool> PrintAll;
 extern cl::opt<bool> DumpDotAll;
 extern cl::opt<bool> DynoStatsAll;
+
+static cl::opt<bool>
+ICF("icf",
+  cl::desc("fold functions with identical code"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
@@ -223,6 +231,10 @@ void BinaryFunctionPassManager::runPasses() {
 
     auto &Pass = OptPassPair.second;
 
+    if (opts::Verbosity > 0) {
+      outs() << "BOLT-INFO: Starting pass: " << Pass->getName() << "\n";
+    }
+
     NamedRegionTimer T(Pass->getName(), TimerGroupName, TimeOpts);
 
     callWithDynoStats(
@@ -245,6 +257,10 @@ void BinaryFunctionPassManager::runPasses() {
       errs() << "BOLT-ERROR: Invalid CFG detected after pass "
              << Pass->getName() << "\n";
       exit(1);
+    }
+
+    if (opts::Verbosity > 0) {
+      outs() << "BOLT-INFO: Finished pass: " << Pass->getName() << "\n";
     }
 
     if (!opts::PrintAll && !opts::DumpDotAll && !Pass->printPass())
@@ -282,7 +298,8 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<StripRepRet>(NeverPrint),
                        opts::StripRepRet);
 
-  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF));
+  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
+                       opts::ICF);
 
   Manager.registerPass(llvm::make_unique<IndirectCallPromotion>(PrintICP),
                        opts::IndirectCallPromotion);
@@ -301,7 +318,8 @@ void BinaryFunctionPassManager::runAllPasses(
     llvm::make_unique<SimplifyRODataLoads>(PrintSimplifyROLoads),
     opts::SimplifyRODataLoads);
 
-  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF));
+  Manager.registerPass(llvm::make_unique<IdenticalCodeFolding>(PrintICF),
+                       opts::ICF);
 
   Manager.registerPass(llvm::make_unique<ReorderBasicBlocks>(PrintReordered));
 
@@ -320,27 +338,30 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(llvm::make_unique<FrameOptimizerPass>(PrintFOP),
                        OptimizeFrameAccesses);
 
+  // This pass should come close to last since it uses the estimated hot
+  // size of a function to determine the order.  It should definitely
+  // also happen after any changes to the call graph are made, e.g. inlining.
+  Manager.registerPass(
+    llvm::make_unique<ReorderFunctions>(PrintReorderedFunctions));
+
   // This pass introduces conditional jumps into external functions.
   // Between extending CFG to support this and isolating this pass we chose
-  // the latter. Thus this pass will do unreachable code elimination
-  // if necessary and wouldn't rely on UCE for this.
-  // More generally this pass should be the last optimization pass.
+  // the latter. Thus this pass will do double jump removal and unreachable
+  // code elimination if necessary and won't rely on peepholes/UCE for these
+  // optimizations.
+  // More generally this pass should be the last optimization pass that
+  // modifies branches/control flow.  This pass is run after function
+  // reordering so that it can tell whether calls are forward/backward
+  // accurately.
   Manager.registerPass(
     llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
     opts::SimplifyConditionalTailCalls);
 
-  Manager.registerPass(llvm::make_unique<Peepholes>(PrintPeepholes),
-                       opts::Peepholes);
-
-  Manager.registerPass(
-    llvm::make_unique<EliminateUnreachableBlocks>(PrintUCE),
-    opts::EliminateUnreachable);
-
-  Manager.registerPass(
-    llvm::make_unique<ReorderFunctions>(PrintReorderedFunctions));
-
+  // This pass should always run last.*
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));
 
+  // *except for this pass.  TODO: figure out why moving this before function
+  // reordering breaks things badly.
   Manager.registerPass(
     llvm::make_unique<InstructionLowering>(PrintAfterLowering));
 

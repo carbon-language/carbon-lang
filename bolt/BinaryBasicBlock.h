@@ -522,6 +522,17 @@ public:
     }
   }
 
+  /// Remove useless duplicate successors.  When the conditional
+  /// successor is the same as the unconditional successor, we can
+  /// remove the conditional successor and branch instruction.
+  void removeDuplicateConditionalSuccessor(MCInst *CondBranch);
+
+  /// Test if BB is a predecessor of this block.
+  bool isPredecessor(const BinaryBasicBlock *BB) const {
+    auto Itr = std::find(Predecessors.begin(), Predecessors.end(), BB);
+    return Itr != Predecessors.end();
+  }
+
   /// Test if BB is a successor of this block.
   bool isSuccessor(const BinaryBasicBlock *BB) const {
     auto Itr = std::find(Successors.begin(), Successors.end(), BB);

@@ -78,12 +78,6 @@ FunctionOrderFile("function-order",
   cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-ICF("icf",
-  cl::desc("fold functions with identical code"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
 ICFUseDFS("icf-dfs",
   cl::desc("use DFS ordering when using -icf option"),
   cl::ReallyHidden,
@@ -371,7 +365,7 @@ void EliminateUnreachableBlocks::runOnFunction(BinaryFunction& Function) {
     std::tie(Count, Bytes) = Function.eraseInvalidBBs();
     DeletedBlocks += Count;
     DeletedBytes += Bytes;
-    if (Count) {
+    if (Count && opts::Verbosity > 0) {
       Modified.insert(&Function);
       outs() << "BOLT-INFO: Removed " << Count
              << " dead basic block(s) accounting for " << Bytes
@@ -404,21 +398,22 @@ void ReorderBasicBlocks::runOnFunctions(
     BinaryContext &BC,
     std::map<uint64_t, BinaryFunction> &BFs,
     std::set<uint64_t> &LargeFunctions) {
+  if (opts::ReorderBlocks == BinaryFunction::LT_NONE)
+    return;
+
   for (auto &It : BFs) {
     auto &Function = It.second;
 
     if (!shouldOptimize(Function))
       continue;
 
-    if (opts::ReorderBlocks != BinaryFunction::LT_NONE) {
-      bool ShouldSplit =
-        (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
-        (opts::SplitFunctions == BinaryFunction::ST_EH &&
-         Function.hasEHRanges()) ||
-        (LargeFunctions.find(It.first) != LargeFunctions.end());
-      Function.modifyLayout(opts::ReorderBlocks, opts::MinBranchClusters,
-                            ShouldSplit);
-    }
+    const bool ShouldSplit =
+      (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
+      (opts::SplitFunctions == BinaryFunction::ST_EH &&
+       Function.hasEHRanges()) ||
+      (LargeFunctions.find(It.first) != LargeFunctions.end());
+    Function.modifyLayout(opts::ReorderBlocks, opts::MinBranchClusters,
+                          ShouldSplit);
   }
 }
 
@@ -441,13 +436,14 @@ void FinalizeFunctions::runOnFunctions(
 ) {
   for (auto &It : BFs) {
     auto &Function = It.second;
+    const auto ShouldOptimize = shouldOptimize(Function);
 
     // Always fix functions in relocation mode.
-    if (!opts::Relocs && !shouldOptimize(Function))
+    if (!opts::Relocs && !ShouldOptimize)
       continue;
 
     // Fix the CFI state.
-    if (shouldOptimize(Function) && !Function.fixCFIState()) {
+    if (ShouldOptimize && !Function.fixCFIState()) {
       if (opts::Relocs) {
         errs() << "BOLT-ERROR: unable to fix CFI state for function "
                << Function << ". Exiting.\n";
@@ -462,6 +458,111 @@ void FinalizeFunctions::runOnFunctions(
     // Update exception handling information.
     Function.updateEHRanges();
   }
+}
+
+namespace {
+
+// This peephole fixes jump instructions that jump to another basic
+// block with a single jump instruction, e.g.
+//
+// B0: ...
+//     jmp  B1   (or jcc B1)
+//
+// B1: jmp  B2
+//
+// ->
+//
+// B0: ...
+//     jmp  B2   (or jcc B2)
+//
+uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
+  uint64_t NumDoubleJumps = 0;
+
+  for (auto &BB : Function) {
+    auto checkAndPatch = [&](BinaryBasicBlock *Pred,
+                             BinaryBasicBlock *Succ,
+                             const MCSymbol *SuccSym) {
+      // Ignore infinite loop jumps or fallthrough tail jumps.
+      if (Pred == Succ || Succ == &BB)
+        return;
+
+      if (Succ) {
+        const MCSymbol *TBB = nullptr;
+        const MCSymbol *FBB = nullptr;
+        MCInst *CondBranch = nullptr;
+        MCInst *UncondBranch = nullptr;
+        auto Res = Pred->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
+        if(!Res) {
+          DEBUG(dbgs() << "analyzeBranch failed in peepholes in block:\n";
+                Pred->dump());
+          return;
+        }
+        Pred->replaceSuccessor(&BB, Succ);
+
+        // We must patch up any existing branch instructions to match up
+        // with the new successor.
+        auto *Ctx = BC.Ctx.get();
+        if (CondBranch &&
+            BC.MIA->getTargetSymbol(*CondBranch) == BB.getLabel()) {
+          BC.MIA->replaceBranchTarget(*CondBranch, Succ->getLabel(), Ctx);
+        } else if (UncondBranch &&
+                   BC.MIA->getTargetSymbol(*UncondBranch) == BB.getLabel()) {
+          BC.MIA->replaceBranchTarget(*UncondBranch, Succ->getLabel(), Ctx);
+        }
+      } else {
+        // Succ will be null in the tail call case.  In this case we
+        // need to explicitly add a tail call instruction.
+        auto *Branch = Pred->getLastNonPseudoInstr();
+        if (Branch && BC.MIA->isUnconditionalBranch(*Branch)) {
+          assert(BC.MIA->getTargetSymbol(*Branch) == BB.getLabel());
+          Pred->removeSuccessor(&BB);
+          Pred->eraseInstruction(Branch);
+          Pred->addTailCallInstruction(SuccSym);
+        } else {
+          return;
+        }
+      }
+
+      ++NumDoubleJumps;
+      DEBUG(dbgs() << "Removed double jump in " << Function << " from "
+                   << Pred->getName() << " -> " << BB.getName() << " to "
+                   << Pred->getName() << " -> " << SuccSym->getName()
+                   << (!Succ ? " (tail)\n" : "\n"));
+    };
+
+    if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
+      continue;
+
+    auto *Inst = BB.getFirstNonPseudoInstr();
+    const bool IsTailCall = BC.MIA->isTailCall(*Inst);
+
+    if (!BC.MIA->isUnconditionalBranch(*Inst) && !IsTailCall)
+      continue;
+
+    const auto *SuccSym = BC.MIA->getTargetSymbol(*Inst);
+    auto *Succ = BB.getSuccessor();
+
+    if ((!Succ || &BB == Succ) && !IsTailCall)
+      continue;
+
+    std::vector<BinaryBasicBlock *> Preds{BB.pred_begin(), BB.pred_end()};
+
+    for (auto *Pred : Preds) {
+      if (Pred->isLandingPad())
+        continue;
+
+      if (Pred->getSuccessor() == &BB ||
+          (Pred->getConditionalSuccessor(true) == &BB && !IsTailCall) ||
+          Pred->getConditionalSuccessor(false) == &BB) {
+        checkAndPatch(Pred, Succ, SuccSym);
+        assert(Function.validateCFG());
+      }
+    }
+  }
+
+  return NumDoubleJumps;
+}
+
 }
 
 bool
@@ -597,8 +698,11 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   }
 
   if (NumLocalCTCs > 0) {
+    NumDoubleJumps += fixDoubleJumps(BC, BF);
     // Clean-up unreachable tail-call blocks.
-    BF.eraseInvalidBBs();
+    const auto Stats = BF.eraseInvalidBBs();
+    DeletedBlocks += Stats.first;
+    DeletedBytes += Stats.second;
   }
 
   DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
@@ -631,7 +735,10 @@ void SimplifyConditionalTailCalls::runOnFunctions(
   outs() << "BOLT-INFO: SCTC: patched " << NumTailCallsPatched
          << " tail calls (" << NumOrigForwardBranches << " forward)"
          << " tail calls (" << NumOrigBackwardBranches << " backward)"
-         << " from a total of " << NumCandidateTailCalls << "\n";
+         << " from a total of " << NumCandidateTailCalls
+         << " while removing " << NumDoubleJumps << " double jumps"
+         << " and removing " << DeletedBlocks << " basic blocks"
+         << " totalling " << DeletedBytes << " bytes of code.\n";
 }
 
 void Peepholes::shortenInstructions(BinaryContext &BC,
@@ -639,85 +746,6 @@ void Peepholes::shortenInstructions(BinaryContext &BC,
   for (auto &BB : Function) {
     for (auto &Inst : BB) {
       BC.MIA->shortenInstruction(Inst);
-    }
-  }
-}
-
-void debugDump(BinaryFunction *BF) {
-  BF->dump();
-}
-
-// This peephole fixes jump instructions that jump to another basic
-// block with a single jump instruction, e.g.
-//
-// B0: ...
-//     jmp  B1   (or jcc B1)
-//
-// B1: jmp  B2
-//
-// ->
-//
-// B0: ...
-//     jmp  B2   (or jcc B2)
-//
-void Peepholes::fixDoubleJumps(BinaryContext &BC,
-                               BinaryFunction &Function) {
-  for (auto &BB : Function) {
-    auto checkAndPatch = [&](BinaryBasicBlock *Pred,
-                             BinaryBasicBlock *Succ,
-                             const MCSymbol *SuccSym) {
-      // Ignore infinite loop jumps or fallthrough tail jumps.
-      if (Pred == Succ || Succ == &BB)
-        return;
-
-      if (Succ) {
-        Pred->replaceSuccessor(&BB, Succ);
-      } else {
-        // Succ will be null in the tail call case.  In this case we
-        // need to explicitly add a tail call instruction.
-        auto *Branch = Pred->getLastNonPseudoInstr();
-        if (Branch && BC.MIA->isUnconditionalBranch(*Branch)) {
-          Pred->removeSuccessor(&BB);
-          Pred->eraseInstruction(Branch);
-          Pred->addTailCallInstruction(SuccSym);
-        } else {
-          return;
-        }
-      }
-
-      ++NumDoubleJumps;
-      DEBUG(dbgs() << "Removed double jump in " << Function << " from "
-                   << Pred->getName() << " -> " << BB.getName() << " to "
-                   << Pred->getName() << " -> " << SuccSym->getName()
-                   << (!Succ ? " (tail)\n" : "\n"));
-    };
-
-    if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
-      continue;
-
-    auto *Inst = BB.getFirstNonPseudoInstr();
-    const bool IsTailCall = BC.MIA->isTailCall(*Inst);
-
-    if (!BC.MIA->isUnconditionalBranch(*Inst) && !IsTailCall)
-      continue;
-
-    const auto *SuccSym = BC.MIA->getTargetSymbol(*Inst);
-    auto *Succ = BB.getSuccessor();
-
-    if ((!Succ || &BB == Succ) && !IsTailCall)
-      continue;
-
-    std::vector<BinaryBasicBlock *> Preds{BB.pred_begin(), BB.pred_end()};
-
-    for (auto *Pred : Preds) {
-      if (Pred->isLandingPad())
-        continue;
-
-      if (Pred->getSuccessor() == &BB ||
-          (Pred->getConditionalSuccessor(true) == &BB && !IsTailCall) ||
-          Pred->getConditionalSuccessor(false) == &BB) {
-        checkAndPatch(Pred, Succ, SuccSym);
-      }
     }
   }
 }
@@ -736,6 +764,37 @@ void Peepholes::addTailcallTraps(BinaryContext &BC,
   }
 }
 
+void Peepholes::removeUselessCondBranches(BinaryContext &BC,
+                                          BinaryFunction &Function) {
+  for (auto &BB : Function) {
+    if (BB.succ_size() != 2)
+      continue;
+
+    auto *CondBB = BB.getConditionalSuccessor(true);
+    auto *UncondBB = BB.getConditionalSuccessor(false);
+
+    if (CondBB == UncondBB) {
+      const MCSymbol *TBB = nullptr;
+      const MCSymbol *FBB = nullptr;
+      MCInst *CondBranch = nullptr;
+      MCInst *UncondBranch = nullptr;
+      auto Result = BB.analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
+
+      // analyzeBranch can fail due to unusual branch instructions, e.g. jrcxz
+      if (!Result) {
+        DEBUG(dbgs() << "analyzeBranch failed in peepholes in block:\n";
+              BB.dump());
+        continue;
+      }
+
+      if (CondBranch) {
+        BB.removeDuplicateConditionalSuccessor(CondBranch);
+        ++NumUselessCondBranches;
+      }
+    }
+  }
+}
+
 void Peepholes::runOnFunctions(BinaryContext &BC,
                                std::map<uint64_t, BinaryFunction> &BFs,
                                std::set<uint64_t> &LargeFunctions) {
@@ -743,12 +802,17 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
     auto &Function = It.second;
     if (shouldOptimize(Function)) {
       shortenInstructions(BC, Function);
-      fixDoubleJumps(BC, Function);
+      NumDoubleJumps += fixDoubleJumps(BC, Function);
       addTailcallTraps(BC, Function);
+      removeUselessCondBranches(BC, Function);
     }
   }
-  outs() << "BOLT-INFO: Peephole: " << NumDoubleJumps << " double jumps patched.\n";
-  outs() << "BOLT-INFO: Peephole: " << TailCallTraps << " tail call traps inserted.\n";
+  outs() << "BOLT-INFO: Peephole: " << NumDoubleJumps
+         << " double jumps patched.\n"
+         << "BOLT-INFO: Peephole: " << TailCallTraps
+         << " tail call traps inserted.\n"
+         << "BOLT-INFO: Peephole: " << NumUselessCondBranches
+         << " useless conditional branches removed.\n";
 }
 
 bool SimplifyRODataLoads::simplifyRODataLoads(
@@ -854,9 +918,6 @@ void SimplifyRODataLoads::runOnFunctions(
 void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
                                         std::map<uint64_t, BinaryFunction> &BFs,
                                         std::set<uint64_t> &) {
-  if (!opts::ICF)
-    return;
-
   const auto OriginalFunctionCount = BFs.size();
   uint64_t NumFunctionsFolded = 0;
   uint64_t NumJTFunctionsFolded = 0;
@@ -1820,7 +1881,9 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
     }
   }
 
-  if (opts::Verbosity > 0 || (DebugFlag && isCurrentDebugType("hfsort"))) {
+  if (opts::ReorderFunctions != BinaryFunction::RT_NONE &&
+      (opts::Verbosity > 0 ||
+       (DebugFlag && isCurrentDebugType("hfsort")))) {
     uint64_t TotalSize   = 0;
     uint64_t CurPage     = 0;
     uint64_t Hotfuncs    = 0;

@@ -55,6 +55,8 @@ BinaryBasicBlock::reverse_iterator BinaryBasicBlock::getLastNonPseudo() {
 }
 
 bool BinaryBasicBlock::validateSuccessorInvariants() {
+  auto *Func = getFunction();
+  auto &BC = Func->getBinaryContext();
   const MCSymbol *TBB = nullptr;
   const MCSymbol *FBB = nullptr;
   MCInst *CondBranch = nullptr;
@@ -67,7 +69,9 @@ bool BinaryBasicBlock::validateSuccessorInvariants() {
     case 0:
       return !CondBranch && !UncondBranch;
     case 1:
-      return !CondBranch;
+      return !CondBranch ||
+        (CondBranch &&
+         !Func->getBasicBlockForLabel(BC.MIA->getTargetSymbol(*CondBranch)));
     case 2:
       return
         (!CondBranch ||
@@ -185,6 +189,7 @@ void BinaryBasicBlock::replaceSuccessor(BinaryBasicBlock *Succ,
                                         BinaryBasicBlock *NewSucc,
                                         uint64_t Count,
                                         uint64_t MispredictedCount) {
+  Succ->removePredecessor(this);
   auto I = succ_begin();
   auto BI = BranchInfo.begin();
   for (; I != succ_end(); ++I) {
@@ -197,6 +202,7 @@ void BinaryBasicBlock::replaceSuccessor(BinaryBasicBlock *Succ,
 
   *I = NewSucc;
   *BI = BinaryBranchInfo{Count, MispredictedCount};
+  NewSucc->addPredecessor(this);
 }
 
 void BinaryBasicBlock::removeSuccessor(BinaryBasicBlock *Succ) {
@@ -223,6 +229,28 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
   auto I = std::find(pred_begin(), pred_end(), Pred);
   assert(I != pred_end() && "Pred is not a predecessor of this block!");
   Predecessors.erase(I);
+}
+
+void BinaryBasicBlock::removeDuplicateConditionalSuccessor(MCInst *CondBranch) {
+  assert(succ_size() == 2);
+
+  auto *Succ = Successors[0];
+  assert(Succ == Successors[1]);
+
+  const auto CondBI = BranchInfo[0];
+  const auto UncondBI = BranchInfo[1];
+
+  eraseInstruction(CondBranch);
+
+  Successors.clear();
+  BranchInfo.clear();
+
+  Successors.push_back(Succ);
+  BranchInfo.push_back({CondBI.Count + UncondBI.Count,
+                        CondBI.MispredictedCount + UncondBI.MispredictedCount});
+
+  assert(isSuccessor(Succ));
+  assert(Succ->isPredecessor(this));
 }
 
 void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {

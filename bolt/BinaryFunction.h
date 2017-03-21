@@ -337,11 +337,6 @@ private:
     return BB->getIndex();
   }
 
-  BinaryBasicBlock *getBasicBlockForLabel(const MCSymbol *Label) const {
-    auto I = LabelToBB.find(Label);
-    return I == LabelToBB.end() ? nullptr : I->second;
-  }
-
   /// Return basic block that originally contained offset \p Offset
   /// from the function start.
   BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
@@ -912,6 +907,16 @@ public:
   /// branch instructions stats. Thus it is better to call it after
   /// fixBranches().
   DynoStats getDynoStats() const;
+
+  BinaryBasicBlock *getBasicBlockForLabel(const MCSymbol *Label) {
+    auto I = LabelToBB.find(Label);
+    return I == LabelToBB.end() ? nullptr : I->second;
+  }
+
+  const BinaryBasicBlock *getBasicBlockForLabel(const MCSymbol *Label) const {
+    auto I = LabelToBB.find(Label);
+    return I == LabelToBB.end() ? nullptr : I->second;
+  }
 
   /// Returns the basic block after the given basic block in the layout or
   /// nullptr the last basic block is given.

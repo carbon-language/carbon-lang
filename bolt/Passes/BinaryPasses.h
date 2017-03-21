@@ -198,6 +198,9 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
   uint64_t NumTailCallsPatched{0};
   uint64_t NumOrigForwardBranches{0};
   uint64_t NumOrigBackwardBranches{0};
+  uint64_t NumDoubleJumps{0};
+  uint64_t DeletedBlocks{0};
+  uint64_t DeletedBytes{0};
   std::unordered_set<const BinaryFunction *> Modified;
 
   bool shouldRewriteBranch(const BinaryBasicBlock *PredBB,
@@ -225,20 +228,22 @@ class SimplifyConditionalTailCalls : public BinaryFunctionPass {
 class Peepholes : public BinaryFunctionPass {
   uint64_t NumDoubleJumps{0};
   uint64_t TailCallTraps{0};
+  uint64_t NumUselessCondBranches{0};
 
   /// Attempt to use the minimum operand width for arithmetic, branch and
   /// move instructions.
   void shortenInstructions(BinaryContext &BC, BinaryFunction &Function);
 
-  /// Replace double jumps with a jump directly to the target, i.e.
-  /// jmp/jcc L1; L1: jmp L2 -> jmp/jcc L2.
-  void fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function);
-
   /// Add trap instructions immediately after indirect tail calls to prevent
   /// the processor from decoding instructions immediate following the
   /// tailcall.
   void addTailcallTraps(BinaryContext &BC, BinaryFunction &Function);
- public:
+
+  /// Remove useless duplicate successors.  When the conditional
+  /// successor is the same as the unconditional successor, we can
+  /// remove the conditional successor and branch instruction.
+  void removeUselessCondBranches(BinaryContext &BC, BinaryFunction &Function);
+public:
   explicit Peepholes(const cl::opt<bool> &PrintPass)
     : BinaryFunctionPass(PrintPass) { }
 

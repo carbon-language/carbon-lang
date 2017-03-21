@@ -322,10 +322,22 @@ std::pair<unsigned, uint64_t> BinaryFunction::eraseInvalidBBs() {
 }
 
 bool BinaryFunction::isForwardCall(const MCSymbol *CalleeSymbol) const {
-  // TODO: Once we start reordering functions this has to change.  #15031238
+  // This function should work properly before and after function reordering.
+  // In order to accomplish this, we use the function index (if it is valid).
+  // If the function indices are not valid, we fall back to the original
+  // addresses.  This should be ok because the functions without valid indices
+  // should have been ordered with a stable sort.
   const auto *CalleeBF = BC.getFunctionForSymbol(CalleeSymbol);
   if (CalleeBF) {
-    return CalleeBF->getAddress() > getAddress();
+    if (hasValidIndex() && CalleeBF->hasValidIndex()) {
+      return getIndex() < CalleeBF->getIndex();
+    } else if (hasValidIndex() && !CalleeBF->hasValidIndex()) {
+      return true;
+    } else if (!hasValidIndex() && CalleeBF->hasValidIndex()) {
+      return false;
+    } else {
+      return getAddress() < CalleeBF->getAddress();
+    }
   } else {
     // Absolute symbol.
     auto const CalleeSI = BC.GlobalSymbols.find(CalleeSymbol->getName());
@@ -2887,6 +2899,9 @@ void BinaryFunction::fixBranches() {
         BB->swapConditionalSuccessors();
       } else {
         MIA->replaceBranchTarget(*CondBranch, TSuccessor->getLabel(), Ctx);
+      }
+      if (TSuccessor == FSuccessor) {
+        BB->removeDuplicateConditionalSuccessor(CondBranch);
       }
       if (!NextBB || (NextBB != TSuccessor && NextBB != FSuccessor)) {
         BB->addBranchInstruction(FSuccessor);
