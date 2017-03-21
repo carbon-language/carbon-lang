@@ -266,7 +266,7 @@ bool fixupRSAllocationStructByValCalls(llvm::Module &module) {
     // inspect all of the arguments in the call
     for (auto &arg : func->args()) {
       if (arg.hasByValAttr()) {
-        arg.removeAttr(llvm::Attribute::ByVal));
+        arg.removeAttr(llvm::Attribute::ByVal);
         changed = true;
       }
     }
