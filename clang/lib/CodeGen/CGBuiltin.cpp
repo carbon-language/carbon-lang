@@ -470,10 +470,13 @@ CodeGenFunction::emitBuiltinObjectSize(const Expr *E, unsigned Type,
   assert(Ptr->getType()->isPointerTy() &&
          "Non-pointer passed to __builtin_object_size?");
 
-  // LLVM only supports 0 and 2, make sure that we pass along that as a boolean.
-  auto *CI = ConstantInt::get(Builder.getInt1Ty(), (Type & 2) >> 1);
   Value *F = CGM.getIntrinsic(Intrinsic::objectsize, {ResType, Ptr->getType()});
-  return Builder.CreateCall(F, {Ptr, CI});
+
+  // LLVM only supports 0 and 2, make sure that we pass along that as a boolean.
+  Value *Min = Builder.getInt1((Type & 2) != 0);
+  // For GCC compatability, __builtin_object_size treat NULL as unknown size.
+  Value *NullIsUnknown = Builder.getTrue();
+  return Builder.CreateCall(F, {Ptr, Min, NullIsUnknown});
 }
 
 // Many of MSVC builtins are on both x64 and ARM; to avoid repeating code, we
