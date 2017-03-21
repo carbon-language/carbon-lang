@@ -15,6 +15,7 @@
 
 // C++ Includes
 #include <string>
+#include <vector>
 
 // Other libraries and framework includes
 #include "llvm/ADT/StringRef.h"
