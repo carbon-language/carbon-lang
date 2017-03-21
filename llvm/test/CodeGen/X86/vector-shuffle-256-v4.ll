@@ -519,22 +519,22 @@ define <4 x double> @shuffle_v4f64_3333(<4 x double> %a, <4 x double> %b) {
   ret <4 x double> %shuffle
 }
 
-define <4 x double> @shuffle_v4f64_1z3z(<4 x double> %a, <4 x double> %b) {
-; AVX1-LABEL: shuffle_v4f64_1z3z:
+define <4 x double> @shuffle_v4f64_0z3z(<4 x double> %a, <4 x double> %b) {
+; AVX1-LABEL: shuffle_v4f64_0z3z:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[0,0,3,2]
 ; AVX1-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
 ; AVX1-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3]
 ; AVX1-NEXT:    retq
 ;
-; AVX2-LABEL: shuffle_v4f64_1z3z:
+; AVX2-LABEL: shuffle_v4f64_0z3z:
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[0,0,3,2]
 ; AVX2-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
 ; AVX2-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3]
 ; AVX2-NEXT:    retq
 ;
-; AVX512VL-LABEL: shuffle_v4f64_1z3z:
+; AVX512VL-LABEL: shuffle_v4f64_0z3z:
 ; AVX512VL:       # BB#0:
 ; AVX512VL-NEXT:    vpermilpd {{.*#+}} ymm0 = ymm0[0,0,3,2]
 ; AVX512VL-NEXT:    vpxor %ymm1, %ymm1, %ymm1
