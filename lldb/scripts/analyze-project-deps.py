@@ -105,6 +105,7 @@ def expand(path_queue, path_lengths, cycles, src_map):
 
         next_len = path_lengths.pop(0) + 1
         last_component = cur_path[-1]
+
         for item in src_map[last_component]:
             if item.startswith("clang"):
                 continue
@@ -177,5 +178,18 @@ if args.discover_cycles:
         for cycle in cycles:
             cycle.append(cycle[0])
             print " -> ".join(cycle)
+
+    print "Analyzing islands..."
+    islands = []
+    for cycle in cycles:
+        this_cycle = set(cycle)
+        disjoints = [x for x in islands if this_cycle.isdisjoint(x)]
+        overlaps = [x for x in islands if not this_cycle.isdisjoint(x)]
+        islands = disjoints + [set.union(this_cycle, *overlaps)]
+    print "Found {} disjoint cycle islands...".format(len(islands))
+    for island in islands:
+        print "Island ({} elements)".format(len(island))
+        for node in island:
+            print "  {0}".format(node)
     sys.stdout.flush()
 pass
