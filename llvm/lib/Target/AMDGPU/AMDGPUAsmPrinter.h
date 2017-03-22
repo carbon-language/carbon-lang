@@ -15,6 +15,7 @@
 #ifndef LLVM_LIB_TARGET_AMDGPU_AMDGPUASMPRINTER_H
 #define LLVM_LIB_TARGET_AMDGPU_AMDGPUASMPRINTER_H
 
+#include "AMDKernelCodeT.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include <cstddef>
@@ -89,6 +90,8 @@ private:
   };
 
   void getSIProgramInfo(SIProgramInfo &Out, const MachineFunction &MF) const;
+  void getAmdKernelCode(amd_kernel_code_t &Out, const SIProgramInfo &KernelInfo,
+                        const MachineFunction &MF) const;
   void findNumUsedRegistersSI(const MachineFunction &MF,
                               unsigned &NumSGPR,
                               unsigned &NumVGPR) const;
@@ -97,8 +100,6 @@ private:
   /// can correctly setup the GPU state.
   void EmitProgramInfoR600(const MachineFunction &MF);
   void EmitProgramInfoSI(const MachineFunction &MF, const SIProgramInfo &KernelInfo);
-  void EmitAmdKernelCodeT(const MachineFunction &MF,
-                          const SIProgramInfo &KernelInfo) const;
 
 public:
   explicit AMDGPUAsmPrinter(TargetMachine &TM,

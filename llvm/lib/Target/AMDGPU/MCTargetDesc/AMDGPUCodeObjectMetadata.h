@@ -274,6 +274,81 @@ struct Metadata final {
 
 } // end namespace Arg
 
+//===----------------------------------------------------------------------===//
+// Kernel Code Properties Metadata.
+//===----------------------------------------------------------------------===//
+namespace CodeProps {
+
+namespace Key {
+/// \brief Key for Kernel::CodeProps::mKernargSegmentSize.
+constexpr char KernargSegmentSize[] = "KernargSegmentSize";
+/// \brief Key for Kernel::CodeProps::mWorkgroupGroupSegmentSize.
+constexpr char WorkgroupGroupSegmentSize[] = "WorkgroupGroupSegmentSize";
+/// \brief Key for Kernel::CodeProps::mWorkitemPrivateSegmentSize.
+constexpr char WorkitemPrivateSegmentSize[] = "WorkitemPrivateSegmentSize";
+/// \brief Key for Kernel::CodeProps::mWavefrontNumSGPRs.
+constexpr char WavefrontNumSGPRs[] = "WavefrontNumSGPRs";
+/// \brief Key for Kernel::CodeProps::mWorkitemNumVGPRs.
+constexpr char WorkitemNumVGPRs[] = "WorkitemNumVGPRs";
+/// \brief Key for Kernel::CodeProps::mKernargSegmentAlign.
+constexpr char KernargSegmentAlign[] = "KernargSegmentAlign";
+/// \brief Key for Kernel::CodeProps::mGroupSegmentAlign.
+constexpr char GroupSegmentAlign[] = "GroupSegmentAlign";
+/// \brief Key for Kernel::CodeProps::mPrivateSegmentAlign.
+constexpr char PrivateSegmentAlign[] = "PrivateSegmentAlign";
+/// \brief Key for Kernel::CodeProps::mWavefrontSize.
+constexpr char WavefrontSize[] = "WavefrontSize";
+} // end namespace Key
+
+/// \brief In-memory representation of kernel code properties metadata.
+struct Metadata final {
+  /// \brief Size in bytes of the kernarg segment memory. Kernarg segment memory
+  /// holds the values of the arguments to the kernel. Optional.
+  uint64_t mKernargSegmentSize = 0;
+  /// \brief Size in bytes of the group segment memory required by a workgroup.
+  /// This value does not include any dynamically allocated group segment memory
+  /// that may be added when the kernel is dispatched. Optional.
+  uint32_t mWorkgroupGroupSegmentSize = 0;
+  /// \brief Size in bytes of the private segment memory required by a workitem.
+  /// Private segment memory includes arg, spill and private segments. Optional.
+  uint32_t mWorkitemPrivateSegmentSize = 0;
+  /// \brief Total number of SGPRs used by a wavefront. Optional.
+  uint16_t mWavefrontNumSGPRs = 0;
+  /// \brief Total number of VGPRs used by a workitem. Optional.
+  uint16_t mWorkitemNumVGPRs = 0;
+  /// \brief Maximum byte alignment of variables used by the kernel in the
+  /// kernarg memory segment. Expressed as a power of two. Optional.
+  uint8_t mKernargSegmentAlign = 0;
+  /// \brief Maximum byte alignment of variables used by the kernel in the
+  /// group memory segment. Expressed as a power of two. Optional.
+  uint8_t mGroupSegmentAlign = 0;
+  /// \brief Maximum byte alignment of variables used by the kernel in the
+  /// private memory segment. Expressed as a power of two. Optional.
+  uint8_t mPrivateSegmentAlign = 0;
+  /// \brief Wavefront size. Expressed as a power of two. Optional.
+  uint8_t mWavefrontSize = 0;
+
+  /// \brief Default constructor.
+  Metadata() = default;
+
+  /// \returns True if kernel code properties metadata is empty, false
+  /// otherwise.
+  bool empty() const {
+    return !notEmpty();
+  }
+
+  /// \returns True if kernel code properties metadata is not empty, false
+  /// otherwise.
+  bool notEmpty() const {
+    return mKernargSegmentSize || mWorkgroupGroupSegmentSize ||
+           mWorkitemPrivateSegmentSize || mWavefrontNumSGPRs ||
+           mWorkitemNumVGPRs || mKernargSegmentAlign || mGroupSegmentAlign ||
+           mPrivateSegmentAlign || mWavefrontSize;
+  }
+};
+
+} // end namespace CodeProps
+
 namespace Key {
 /// \brief Key for Kernel::Metadata::mName.
 constexpr char Name[] = "Name";
@@ -285,6 +360,8 @@ constexpr char LanguageVersion[] = "LanguageVersion";
 constexpr char Attrs[] = "Attrs";
 /// \brief Key for Kernel::Metadata::mArgs.
 constexpr char Args[] = "Args";
+/// \brief Key for Kernel::Metadata::mCodeProps.
+constexpr char CodeProps[] = "CodeProps";
 } // end namespace Key
 
 /// \brief In-memory representation of kernel metadata.
@@ -299,6 +376,8 @@ struct Metadata final {
   Attrs::Metadata mAttrs = Attrs::Metadata();
   /// \brief Arguments metadata. Optional.
   std::vector<Arg::Metadata> mArgs = std::vector<Arg::Metadata>();
+  /// \brief Code properties metadata. Optional.
+  CodeProps::Metadata mCodeProps = CodeProps::Metadata();
 
   /// \brief Default constructor.
   Metadata() = default;

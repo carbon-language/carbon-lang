@@ -17,6 +17,7 @@
 #define LLVM_LIB_TARGET_AMDGPU_MCTARGETDESC_AMDGPUCODEOBJECTMETADATASTREAMER_H
 
 #include "AMDGPUCodeObjectMetadata.h"
+#include "AMDKernelCodeT.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorOr.h"
 
@@ -72,6 +73,9 @@ private:
                      StringRef TypeQual = "", StringRef BaseTypeName = "",
                      StringRef AccQual = "", StringRef Name = "",
                      StringRef TypeName = "");
+
+  void emitKernelCodeProps(const amd_kernel_code_t &KernelCode);
+
 public:
   MetadataStreamer() = default;
   ~MetadataStreamer() = default;
@@ -80,7 +84,7 @@ public:
 
   void end() {}
 
-  void emitKernel(const Function &Func);
+  void emitKernel(const Function &Func, const amd_kernel_code_t &KernelCode);
 
   ErrorOr<std::string> toYamlString();
 

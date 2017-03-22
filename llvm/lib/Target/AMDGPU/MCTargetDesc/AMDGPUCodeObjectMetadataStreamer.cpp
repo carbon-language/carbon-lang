@@ -154,6 +154,30 @@ struct MappingTraits<Kernel::Arg::Metadata> {
 };
 
 template <>
+struct MappingTraits<Kernel::CodeProps::Metadata> {
+  static void mapping(IO &YIO, Kernel::CodeProps::Metadata &MD) {
+    YIO.mapOptional(Kernel::CodeProps::Key::KernargSegmentSize,
+                    MD.mKernargSegmentSize, uint64_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::WorkgroupGroupSegmentSize,
+                    MD.mWorkgroupGroupSegmentSize, uint32_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::WorkitemPrivateSegmentSize,
+                    MD.mWorkitemPrivateSegmentSize, uint32_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::WavefrontNumSGPRs,
+                    MD.mWavefrontNumSGPRs, uint16_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::WorkitemNumVGPRs,
+                    MD.mWorkitemNumVGPRs, uint16_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::KernargSegmentAlign,
+                    MD.mKernargSegmentAlign, uint8_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::GroupSegmentAlign,
+                    MD.mGroupSegmentAlign, uint8_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::PrivateSegmentAlign,
+                    MD.mPrivateSegmentAlign, uint8_t(0));
+    YIO.mapOptional(Kernel::CodeProps::Key::WavefrontSize,
+                    MD.mWavefrontSize, uint8_t(0));
+  }
+};
+
+template <>
 struct MappingTraits<Kernel::Metadata> {
   static void mapping(IO &YIO, Kernel::Metadata &MD) {
     YIO.mapRequired(Kernel::Key::Name, MD.mName);
@@ -164,6 +188,8 @@ struct MappingTraits<Kernel::Metadata> {
       YIO.mapOptional(Kernel::Key::Attrs, MD.mAttrs);
     if (!MD.mArgs.empty() || !YIO.outputting())
       YIO.mapOptional(Kernel::Key::Args, MD.mArgs);
+    if (!MD.mCodeProps.empty() || !YIO.outputting())
+      YIO.mapOptional(Kernel::Key::CodeProps, MD.mCodeProps);
   }
 };
 
@@ -531,13 +557,31 @@ void MetadataStreamer::emitKernelArg(const DataLayout &DL, Type *Ty,
   Arg.mTypeName = TypeName;
 }
 
+void MetadataStreamer::emitKernelCodeProps(
+    const amd_kernel_code_t &KernelCode) {
+  auto &CodeProps = CodeObjectMetadata.mKernels.back().mCodeProps;
+
+  CodeProps.mKernargSegmentSize = KernelCode.kernarg_segment_byte_size;
+  CodeProps.mWorkgroupGroupSegmentSize =
+      KernelCode.workgroup_group_segment_byte_size;
+  CodeProps.mWorkitemPrivateSegmentSize =
+      KernelCode.workitem_private_segment_byte_size;
+  CodeProps.mWavefrontNumSGPRs = KernelCode.wavefront_sgpr_count;
+  CodeProps.mWorkitemNumVGPRs = KernelCode.workitem_vgpr_count;
+  CodeProps.mKernargSegmentAlign = KernelCode.kernarg_segment_alignment;
+  CodeProps.mGroupSegmentAlign = KernelCode.group_segment_alignment;
+  CodeProps.mPrivateSegmentAlign = KernelCode.private_segment_alignment;
+  CodeProps.mWavefrontSize = KernelCode.wavefront_size;
+}
+
 void MetadataStreamer::begin(const FeatureBitset &Features, const Module &Mod) {
   emitVersion();
   emitIsa(Features);
   emitPrintf(Mod);
 }
 
-void MetadataStreamer::emitKernel(const Function &Func) {
+void MetadataStreamer::emitKernel(const Function &Func,
+                                  const amd_kernel_code_t &KernelCode) {
   if (Func.getCallingConv() != CallingConv::AMDGPU_KERNEL)
     return;
 
@@ -548,6 +592,7 @@ void MetadataStreamer::emitKernel(const Function &Func) {
   emitKernelLanguage(Func);
   emitKernelAttrs(Func);
   emitKernelArgs(Func);
+  emitKernelCodeProps(KernelCode);
 }
 
 ErrorOr<std::string> MetadataStreamer::toYamlString() {

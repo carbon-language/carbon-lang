@@ -47,8 +47,9 @@ void AMDGPUTargetStreamer::EmitStartOfCodeObjectMetadata(
   CodeObjectMetadataStreamer.begin(Features, Mod);
 }
 
-void AMDGPUTargetStreamer::EmitKernelCodeObjectMetadata(const Function &Func) {
-  CodeObjectMetadataStreamer.emitKernel(Func);
+void AMDGPUTargetStreamer::EmitKernelCodeObjectMetadata(
+    const Function &Func, const amd_kernel_code_t &KernelCode) {
+  CodeObjectMetadataStreamer.emitKernel(Func, KernelCode);
 }
 
 void AMDGPUTargetStreamer::EmitEndOfCodeObjectMetadata(

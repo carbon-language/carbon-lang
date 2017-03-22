@@ -52,7 +52,8 @@ public:
   virtual void EmitStartOfCodeObjectMetadata(const FeatureBitset &Features,
                                              const Module &Mod);
 
-  virtual void EmitKernelCodeObjectMetadata(const Function &Func);
+  virtual void EmitKernelCodeObjectMetadata(
+      const Function &Func, const amd_kernel_code_t &KernelCode);
 
   virtual void EmitEndOfCodeObjectMetadata(const FeatureBitset &Features);
 
