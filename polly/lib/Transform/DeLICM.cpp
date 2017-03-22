@@ -509,12 +509,6 @@ public:
     checkConsistency();
   }
 
-  /// Alternative constructor taking isl_sets instead isl_union_sets.
-  Knowledge(isl::set Occupied, isl::set Unused, isl::set Written)
-      : Knowledge(give(isl_union_set_from_set(Occupied.take())),
-                  give(isl_union_set_from_set(Unused.take())),
-                  give(isl_union_set_from_set(Written.take()))) {}
-
   /// Return whether this object was not default-constructed.
   bool isUsable() const { return (Occupied || Unused) && Written; }
 
