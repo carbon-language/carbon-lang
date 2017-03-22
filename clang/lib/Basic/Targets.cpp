@@ -933,6 +933,13 @@ public:
     ArchDefineA2q   = 1 << 15
   } ArchDefineTypes;
 
+  // Set the language option for altivec based on our value.
+  void adjust(LangOptions &Opts) override {
+    if (HasAltivec)
+      Opts.AltiVec = 1;
+    TargetInfo::adjust(Opts);
+  }
+
   // Note: GCC recognizes the following additional cpus:
   //  401, 403, 405, 405fp, 440fp, 464, 464fp, 476, 476fp, 505, 740, 801,
   //  821, 823, 8540, 8548, e300c2, e300c3, e500mc64, e6500, 860, cell,

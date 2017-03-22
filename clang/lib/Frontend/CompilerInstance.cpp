@@ -916,12 +916,6 @@ bool CompilerInstance::ExecuteAction(FrontendAction &Act) {
   if (!hasTarget())
     return false;
 
-  // FIXME: Setting this here is less than ideal, but it is set based on a
-  // target option for compatibility and this is immediately after we construct
-  // a target.
-  if (getTarget().hasFeature("altivec"))
-    getLangOpts().AltiVec = 1;
-
   // Create TargetInfo for the other side of CUDA compilation.
   if (getLangOpts().CUDA && !getFrontendOpts().AuxTriple.empty()) {
     auto TO = std::make_shared<TargetOptions>();
