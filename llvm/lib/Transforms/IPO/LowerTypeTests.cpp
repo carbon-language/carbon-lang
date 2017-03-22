@@ -265,7 +265,7 @@ class LowerTypeTestsModule {
   /// regular LTO or the regular LTO phase of ThinLTO), or indirectly using type
   /// identifier summaries and external symbol references (in ThinLTO backends).
   struct TypeIdLowering {
-    TypeTestResolution::Kind TheKind;
+    TypeTestResolution::Kind TheKind = TypeTestResolution::Unsat;
 
     /// All except Unsat: the start address within the combined global.
     Constant *OffsetedGlobal;
@@ -700,7 +700,7 @@ void LowerTypeTestsModule::buildBitSetsFromGlobalVariables(
 /// information about the type identifier.
 void LowerTypeTestsModule::exportTypeId(StringRef TypeId,
                                         const TypeIdLowering &TIL) {
-  TypeTestResolution &TTRes = Summary->getTypeIdSummary(TypeId).TTRes;
+  TypeTestResolution &TTRes = Summary->getOrInsertTypeIdSummary(TypeId).TTRes;
   TTRes.TheKind = TIL.TheKind;
 
   auto ExportGlobal = [&](StringRef Name, Constant *C) {
@@ -738,7 +738,10 @@ void LowerTypeTestsModule::exportTypeId(StringRef TypeId,
 
 LowerTypeTestsModule::TypeIdLowering
 LowerTypeTestsModule::importTypeId(StringRef TypeId) {
-  TypeTestResolution &TTRes = Summary->getTypeIdSummary(TypeId).TTRes;
+  const TypeIdSummary *TidSummary = Summary->getTypeIdSummary(TypeId);
+  if (!TidSummary)
+    return {}; // Unsat: no globals match this type id.
+  const TypeTestResolution &TTRes = TidSummary->TTRes;
 
   TypeIdLowering TIL;
   TIL.TheKind = TTRes.TheKind;

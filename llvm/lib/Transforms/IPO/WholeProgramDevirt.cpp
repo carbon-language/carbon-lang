@@ -1196,9 +1196,14 @@ void DevirtModule::scanTypeCheckedLoadUsers(Function *TypeCheckedLoadFunc) {
 }
 
 void DevirtModule::importResolution(VTableSlot Slot, VTableSlotInfo &SlotInfo) {
-  const WholeProgramDevirtResolution &Res =
-      Summary->getTypeIdSummary(cast<MDString>(Slot.TypeID)->getString())
-          .WPDRes[Slot.ByteOffset];
+  const TypeIdSummary *TidSummary =
+      Summary->getTypeIdSummary(cast<MDString>(Slot.TypeID)->getString());
+  if (!TidSummary)
+    return;
+  auto ResI = TidSummary->WPDRes.find(Slot.ByteOffset);
+  if (ResI == TidSummary->WPDRes.end())
+    return;
+  const WholeProgramDevirtResolution &Res = ResI->second;
 
   if (Res.TheKind == WholeProgramDevirtResolution::SingleImpl) {
     // The type of the function in the declaration is irrelevant because every
@@ -1354,10 +1359,10 @@ bool DevirtModule::run() {
                                   S.first.ByteOffset)) {
       WholeProgramDevirtResolution *Res = nullptr;
       if (Action == PassSummaryAction::Export && isa<MDString>(S.first.TypeID))
-        Res =
-            &Summary
-                 ->getTypeIdSummary(cast<MDString>(S.first.TypeID)->getString())
-                 .WPDRes[S.first.ByteOffset];
+        Res = &Summary
+                   ->getOrInsertTypeIdSummary(
+                       cast<MDString>(S.first.TypeID)->getString())
+                   .WPDRes[S.first.ByteOffset];
 
       if (!trySingleImplDevirt(TargetsForSlot, S.second, Res) &&
           tryVirtualConstProp(TargetsForSlot, S.second, Res, S.first))
