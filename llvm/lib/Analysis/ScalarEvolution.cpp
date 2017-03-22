@@ -137,6 +137,11 @@ static cl::opt<unsigned> MaxSCEVCompareDepth(
     cl::desc("Maximum depth of recursive SCEV complexity comparisons"),
     cl::init(32));
 
+static cl::opt<unsigned> MaxSCEVOperationsImplicationDepth(
+    "scalar-evolution-max-scev-operations-implication-depth", cl::Hidden,
+    cl::desc("Maximum depth of recursive SCEV operations implication analysis"),
+    cl::init(4));
+
 static cl::opt<unsigned> MaxValueCompareDepth(
     "scalar-evolution-max-value-compare-depth", cl::Hidden,
     cl::desc("Maximum depth of recursive value complexity comparisons"),
@@ -3416,6 +3421,10 @@ Type *ScalarEvolution::getEffectiveSCEVType(Type *Ty) const {
   // The only other support type is pointer.
   assert(Ty->isPointerTy() && "Unexpected non-pointer non-integer type!");
   return getDataLayout().getIntPtrType(Ty);
+}
+
+Type *ScalarEvolution::getWiderType(Type *T1, Type *T2) const {
+  return  getTypeSizeInBits(T1) >= getTypeSizeInBits(T2) ? T1 : T2;
 }
 
 const SCEV *ScalarEvolution::getCouldNotCompute() {
@@ -8532,19 +8541,137 @@ static bool IsKnownPredicateViaMinOrMax(ScalarEvolution &SE,
   llvm_unreachable("covered switch fell through?!");
 }
 
+bool ScalarEvolution::isImpliedViaOperations(ICmpInst::Predicate Pred,
+                                             const SCEV *LHS, const SCEV *RHS,
+                                             const SCEV *FoundLHS,
+                                             const SCEV *FoundRHS,
+                                             unsigned Depth) {
+  // We want to avoid hurting the compile time with analysis of too big trees.
+  if (Depth > MaxSCEVOperationsImplicationDepth)
+    return false;
+  // We only want to work with ICMP_SGT comparison so far.
+  // TODO: Extend to ICMP_UGT?
+  if (Pred == ICmpInst::ICMP_SLT) {
+    Pred = ICmpInst::ICMP_SGT;
+    std::swap(LHS, RHS);
+    std::swap(FoundLHS, FoundRHS);
+  }
+  if (Pred != ICmpInst::ICMP_SGT)
+    return false;
+
+  auto GetOpFromSExt = [&](const SCEV *S) {
+    if (auto *Ext = dyn_cast<SCEVSignExtendExpr>(S))
+      return Ext->getOperand();
+    return S;
+  };
+
+  // Acquire values from extensions.
+  auto *OrigFoundLHS = FoundLHS;
+  LHS = GetOpFromSExt(LHS);
+  FoundLHS = GetOpFromSExt(FoundLHS);
+
+  // Is a predicate can be proved trivially or using the found context.
+  auto IsProvedViaContext = [&](ICmpInst::Predicate Pred,
+                                const SCEV *S1, const SCEV *S2) {
+    return isKnownViaSimpleReasoning(Pred, S1, S2) ||
+           isImpliedViaOperations(Pred, S1, S2, OrigFoundLHS, FoundRHS,
+                                  Depth + 1);
+  };
+
+  if (auto *LHSAddExpr = dyn_cast<SCEVAddExpr>(LHS)) {
+    // Should not overflow.
+    if (!LHSAddExpr->hasNoSignedWrap())
+      return false;
+    auto *LL = LHSAddExpr->getOperand(0);
+    auto *LR = LHSAddExpr->getOperand(1);
+
+    // Checks that S1 >= 0 && S2 > RHS, trivially or using the found context.
+    auto IsSumGreaterThanRHS = [&](const SCEV *S1, const SCEV *S2) {
+      return IsProvedViaContext(ICmpInst::ICMP_SGT, S2, RHS) &&
+             IsProvedViaContext(Pred, S1, getZero(RHS->getType()));
+    };
+    // Try to prove the following rule:
+    // (LHS = LL + LR) && (LL >= 0) && (LR > RHS) => (LHS > RHS).
+    // (LHS = LL + LR) && (LR >= 0) && (LL > RHS) => (LHS > RHS).
+    if (IsSumGreaterThanRHS(LL, LR) || IsSumGreaterThanRHS(LR, LL))
+      return true;
+  } else if (auto *LHSUnknownExpr = dyn_cast<SCEVUnknown>(LHS)) {
+    Value *LL, *LR;
+    // FIXME: Once we have SDiv implemented, we can get rid of this matching.
+    using namespace llvm::PatternMatch;
+    if (match(LHSUnknownExpr->getValue(), m_SDiv(m_Value(LL), m_Value(LR)))) {
+      // Rules for division.
+      // We are going to perform some comparisons with Denominator and its
+      // derivative expressions. In general case, creating a SCEV for it may
+      // lead to a complex analysis of the entire graph, and in particular it
+      // can request trip count recalculation for the same loop. This would
+      // cache as SCEVCouldNotCompute to avoid the infinite recursion. This is a
+      // sad thing. To avoid this, we only want to create SCEVs that are
+      // constants in this section. So we bail if Denominator is not a constant.
+      if (!isa<ConstantInt>(LR))
+        return false;
+
+      auto *Denominator = cast<SCEVConstant>(getSCEV(LR));
+
+      // We want to make sure that LHS = FoundLHS / Denominator. If it is so,
+      // then a SCEV for the numerator already exists and matches with FoundLHS.
+      auto *Numerator = getExistingSCEV(LL);
+
+      // Make sure that it exists and has the same type.
+      if (!Numerator || Numerator->getType() != FoundLHS->getType())
+        return false;
+
+      // Make sure that the numerator matches with FoundLHs and the denominator
+      // is positive.
+      if (!HasSameValue(Numerator, FoundLHS) || !isKnownPositive(Denominator))
+        return false;
+
+      // Given that:
+      // FoundLHS > FoundRHS, LHS = FoundLHS / Denominator, Denominator > 0.
+      auto *Ty2 = getWiderType(Denominator->getType(), FoundRHS->getType());
+      auto *DenominatorExt = getNoopOrSignExtend(Denominator, Ty2);
+      auto *FoundRHSExt = getNoopOrSignExtend(FoundRHS, Ty2);
+
+      // Try to prove the following rule:
+      // (Denominator - 1 <= FoundRHS) && (RHS <= 0) => (LHS > RHS).
+      // For example, given that FoundLHS > 2. It means that FoundLHS is at
+      // least 3. If we divide it by Denominator <= 3, we will have at least 1.
+      auto *DenomMinusOne = getMinusSCEV(DenominatorExt, getOne(Ty2));
+      if (isKnownNonPositive(RHS) &&
+          IsProvedViaContext(ICmpInst::ICMP_SLE, DenomMinusOne, FoundRHSExt))
+        return true;
+
+      // Try to prove the following rule:
+      // (-Denominator <= FoundRHS) && (RHS < 0) => (LHS > RHS).
+      // For example, given that FoundLHS > -3. Then FoundLHS is at least -2.
+      // If we divide it by Denominator >= 3, then:
+      // 1. If FoundLHS is negative, then the result is 0.
+      // 2. If FoundLHS is non-negative, then the result is non-negative.
+      // Anyways, the result is non-negative.
+      auto *NegDenominator = getNegativeSCEV(DenominatorExt);
+      if (isKnownNegative(RHS) &&
+          IsProvedViaContext(ICmpInst::ICMP_SLE, NegDenominator, FoundRHSExt))
+        return true;
+    }
+  }
+
+  return false;
+}
+
+bool
+ScalarEvolution::isKnownViaSimpleReasoning(ICmpInst::Predicate Pred,
+                                           const SCEV *LHS, const SCEV *RHS) {
+  return isKnownPredicateViaConstantRanges(Pred, LHS, RHS) ||
+         IsKnownPredicateViaMinOrMax(*this, Pred, LHS, RHS) ||
+         IsKnownPredicateViaAddRecStart(*this, Pred, LHS, RHS) ||
+         isKnownPredicateViaNoOverflow(Pred, LHS, RHS);
+}
+
 bool
 ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
                                              const SCEV *LHS, const SCEV *RHS,
                                              const SCEV *FoundLHS,
                                              const SCEV *FoundRHS) {
-  auto IsKnownPredicateFull =
-      [this](ICmpInst::Predicate Pred, const SCEV *LHS, const SCEV *RHS) {
-    return isKnownPredicateViaConstantRanges(Pred, LHS, RHS) ||
-           IsKnownPredicateViaMinOrMax(*this, Pred, LHS, RHS) ||
-           IsKnownPredicateViaAddRecStart(*this, Pred, LHS, RHS) ||
-           isKnownPredicateViaNoOverflow(Pred, LHS, RHS);
-  };
-
   switch (Pred) {
   default: llvm_unreachable("Unexpected ICmpInst::Predicate value!");
   case ICmpInst::ICMP_EQ:
@@ -8554,29 +8681,33 @@ ScalarEvolution::isImpliedCondOperandsHelper(ICmpInst::Predicate Pred,
     break;
   case ICmpInst::ICMP_SLT:
   case ICmpInst::ICMP_SLE:
-    if (IsKnownPredicateFull(ICmpInst::ICMP_SLE, LHS, FoundLHS) &&
-        IsKnownPredicateFull(ICmpInst::ICMP_SGE, RHS, FoundRHS))
+    if (isKnownViaSimpleReasoning(ICmpInst::ICMP_SLE, LHS, FoundLHS) &&
+        isKnownViaSimpleReasoning(ICmpInst::ICMP_SGE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_SGT:
   case ICmpInst::ICMP_SGE:
-    if (IsKnownPredicateFull(ICmpInst::ICMP_SGE, LHS, FoundLHS) &&
-        IsKnownPredicateFull(ICmpInst::ICMP_SLE, RHS, FoundRHS))
+    if (isKnownViaSimpleReasoning(ICmpInst::ICMP_SGE, LHS, FoundLHS) &&
+        isKnownViaSimpleReasoning(ICmpInst::ICMP_SLE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_ULE:
-    if (IsKnownPredicateFull(ICmpInst::ICMP_ULE, LHS, FoundLHS) &&
-        IsKnownPredicateFull(ICmpInst::ICMP_UGE, RHS, FoundRHS))
+    if (isKnownViaSimpleReasoning(ICmpInst::ICMP_ULE, LHS, FoundLHS) &&
+        isKnownViaSimpleReasoning(ICmpInst::ICMP_UGE, RHS, FoundRHS))
       return true;
     break;
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_UGE:
-    if (IsKnownPredicateFull(ICmpInst::ICMP_UGE, LHS, FoundLHS) &&
-        IsKnownPredicateFull(ICmpInst::ICMP_ULE, RHS, FoundRHS))
+    if (isKnownViaSimpleReasoning(ICmpInst::ICMP_UGE, LHS, FoundLHS) &&
+        isKnownViaSimpleReasoning(ICmpInst::ICMP_ULE, RHS, FoundRHS))
       return true;
     break;
   }
+
+  // Maybe it can be proved via operations?
+  if (isImpliedViaOperations(Pred, LHS, RHS, FoundLHS, FoundRHS))
+    return true;
 
   return false;
 }
