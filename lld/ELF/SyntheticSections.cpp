@@ -846,7 +846,7 @@ uint64_t MipsGotSection::getGp() const {
 }
 
 static void writeUint(uint8_t *Buf, uint64_t Val) {
-  if (Config->Wordsize == 8)
+  if (Config->Is64)
     write64(Buf, Val, Config->Endianness);
   else
     write32(Buf, Val, Config->Endianness);

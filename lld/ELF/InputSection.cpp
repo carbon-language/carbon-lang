@@ -140,8 +140,8 @@ OutputSection *SectionBase::getOutputSection() {
 // Uncompress section contents. Note that this function is called
 // from parallel_for_each, so it must be thread-safe.
 void InputSectionBase::uncompress() {
-  Decompressor Dec = check(Decompressor::create(
-      Name, toStringRef(Data), Config->IsLE, Config->Wordsize == 8));
+  Decompressor Dec = check(Decompressor::create(Name, toStringRef(Data),
+                                                Config->IsLE, Config->Is64));
 
   size_t Size = Dec.getDecompressedSize();
   char *OutputBuf;
