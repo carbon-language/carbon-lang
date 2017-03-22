@@ -6,19 +6,21 @@
 // CHECK:    Version: [ 1, 0 ]
 // CHECK:    Kernels:
 // CHECK:      - Name: test_kernel
-// CHECK:        CodeProps:
-// CHECK:          KernargSegmentSize:         24
-// CHECK:          WorkitemPrivateSegmentSize: 16
-// CHECK:          WavefrontNumSGPRs:          6
-// CHECK:          WorkitemNumVGPRs:           12
+// CHECK:        DebugProps:
+// CHECK:          DebuggerABIVersion:                [ 1, 0 ]
+// CHECK:          ReservedNumVGPRs:                  4
+// CHECK:          ReservedFirstVGPR:                 11
+// CHECK:          PrivateSegmentBufferSGPR:          0
+// CHECK:          WavefrontPrivateSegmentOffsetSGPR: 11
 .amdgpu_code_object_metadata
   Version: [ 1, 0 ]
   Printf: [ '1:1:4:%d\n', '2:1:8:%g\n' ]
   Kernels:
     - Name:            test_kernel
-      CodeProps:
-        KernargSegmentSize:         24
-        WorkitemPrivateSegmentSize: 16
-        WavefrontNumSGPRs:          6
-        WorkitemNumVGPRs:           12
+      DebugProps:
+        DebuggerABIVersion:                [ 1, 0 ]
+        ReservedNumVGPRs:                  4
+        ReservedFirstVGPR:                 11
+        PrivateSegmentBufferSGPR:          0
+        WavefrontPrivateSegmentOffsetSGPR: 11
 .end_amdgpu_code_object_metadata

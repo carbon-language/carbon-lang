@@ -178,6 +178,22 @@ struct MappingTraits<Kernel::CodeProps::Metadata> {
 };
 
 template <>
+struct MappingTraits<Kernel::DebugProps::Metadata> {
+  static void mapping(IO &YIO, Kernel::DebugProps::Metadata &MD) {
+    YIO.mapOptional(Kernel::DebugProps::Key::DebuggerABIVersion,
+                    MD.mDebuggerABIVersion, std::vector<uint32_t>());
+    YIO.mapOptional(Kernel::DebugProps::Key::ReservedNumVGPRs,
+                    MD.mReservedNumVGPRs, uint16_t(0));
+    YIO.mapOptional(Kernel::DebugProps::Key::ReservedFirstVGPR,
+                    MD.mReservedFirstVGPR, uint16_t(-1));
+    YIO.mapOptional(Kernel::DebugProps::Key::PrivateSegmentBufferSGPR,
+                    MD.mPrivateSegmentBufferSGPR, uint16_t(-1));
+    YIO.mapOptional(Kernel::DebugProps::Key::WavefrontPrivateSegmentOffsetSGPR,
+                    MD.mWavefrontPrivateSegmentOffsetSGPR, uint16_t(-1));
+  }
+};
+
+template <>
 struct MappingTraits<Kernel::Metadata> {
   static void mapping(IO &YIO, Kernel::Metadata &MD) {
     YIO.mapRequired(Kernel::Key::Name, MD.mName);
@@ -190,6 +206,8 @@ struct MappingTraits<Kernel::Metadata> {
       YIO.mapOptional(Kernel::Key::Args, MD.mArgs);
     if (!MD.mCodeProps.empty() || !YIO.outputting())
       YIO.mapOptional(Kernel::Key::CodeProps, MD.mCodeProps);
+    if (!MD.mDebugProps.empty() || !YIO.outputting())
+      YIO.mapOptional(Kernel::Key::DebugProps, MD.mDebugProps);
   }
 };
 
@@ -574,6 +592,25 @@ void MetadataStreamer::emitKernelCodeProps(
   CodeProps.mWavefrontSize = KernelCode.wavefront_size;
 }
 
+void MetadataStreamer::emitKernelDebugProps(
+    const amd_kernel_code_t &KernelCode) {
+  if (!(KernelCode.code_properties & AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED))
+    return;
+
+  auto &DebugProps = CodeObjectMetadata.mKernels.back().mDebugProps;
+
+  // FIXME: Need to pass down debugger ABI version through features. This is ok
+  // for now because we only have one version.
+  DebugProps.mDebuggerABIVersion.push_back(1);
+  DebugProps.mDebuggerABIVersion.push_back(0);
+  DebugProps.mReservedNumVGPRs = KernelCode.reserved_vgpr_count;
+  DebugProps.mReservedFirstVGPR = KernelCode.reserved_vgpr_first;
+  DebugProps.mPrivateSegmentBufferSGPR =
+      KernelCode.debug_private_segment_buffer_sgpr;
+  DebugProps.mWavefrontPrivateSegmentOffsetSGPR =
+      KernelCode.debug_wavefront_private_segment_offset_sgpr;
+}
+
 void MetadataStreamer::begin(const FeatureBitset &Features, const Module &Mod) {
   emitVersion();
   emitIsa(Features);
@@ -593,6 +630,7 @@ void MetadataStreamer::emitKernel(const Function &Func,
   emitKernelAttrs(Func);
   emitKernelArgs(Func);
   emitKernelCodeProps(KernelCode);
+  emitKernelDebugProps(KernelCode);
 }
 
 ErrorOr<std::string> MetadataStreamer::toYamlString() {

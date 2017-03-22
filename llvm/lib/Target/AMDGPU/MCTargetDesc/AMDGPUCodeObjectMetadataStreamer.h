@@ -76,6 +76,8 @@ private:
 
   void emitKernelCodeProps(const amd_kernel_code_t &KernelCode);
 
+  void emitKernelDebugProps(const amd_kernel_code_t &KernelCode);
+
 public:
   MetadataStreamer() = default;
   ~MetadataStreamer() = default;
