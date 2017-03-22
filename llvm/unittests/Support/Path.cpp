@@ -328,6 +328,26 @@ TEST(Support, HomeDirectory) {
   }
 }
 
+#ifndef LLVM_ON_WIN32
+TEST(Support, HomeDirectoryWithNoEnv) {
+  std::string Original;
+  char const *path = ::getenv("HOME");
+  // Don't try to test if we don't have something to compare against.
+  if (!path)
+    return;
+  Original = path;
+  ::unsetenv("HOME");
+
+  SmallString<128> HomeDir;
+  auto status = path::home_directory(HomeDir);
+  EXPECT_TRUE(status);
+  EXPECT_EQ(Original, HomeDir);
+
+  // Now put the original environment variable back
+  ::setenv("HOME", Original.c_str(), 1);
+}
+#endif
+
 TEST(Support, UserCacheDirectory) {
   SmallString<13> CacheDir;
   SmallString<20> CacheDir2;
