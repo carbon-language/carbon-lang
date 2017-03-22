@@ -1,6 +1,4 @@
 // RUN: %clang_cc1 %s -verify -fsyntax-only
-// RUN: %clang_cc1 %s -std=c99 -verify -fsyntax-only
-// RUN: %clang_cc1 %s -std=c89 -verify -fsyntax-only
 
 int f() __attribute__((deprecated)); // expected-note 2 {{'f' has been explicitly marked deprecated here}}
 void g() __attribute__((deprecated));// expected-note {{'g' has been explicitly marked deprecated here}}
@@ -123,12 +121,11 @@ struct test22 {
   __attribute((deprecated)) foo_dep e, f;
 };
 
-typedef int test23_ty __attribute((deprecated)); 
+typedef int test23_ty __attribute((deprecated)); // expected-note {{'test23_ty' has been explicitly marked deprecated here}}
 // Redefining a typedef is a C11 feature.
 #if __STDC_VERSION__ <= 199901L
 // expected-note@-3 {{'test23_ty' has been explicitly marked deprecated here}}
 #else
-// expected-note@-5 {{'test23_ty' has been explicitly marked deprecated here}}
 typedef int test23_ty; 
 #endif
 test23_ty test23_v; // expected-warning {{'test23_ty' is deprecated}}
