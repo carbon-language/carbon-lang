@@ -36,6 +36,10 @@
 .space 1
 .section .bss.foo
 .space 1
+.section .tbss
+.space 1
+.section .tbss.foo
+.space 1
 # CHECK:        Name: .nobits
 # CHECK-NEXT:   Type: SHT_PROGBITS
 # CHECK:        Name: .nobits2
@@ -71,4 +75,8 @@
 # CHECK:        Name: .bss
 # CHECK-NEXT:   Type: SHT_NOBITS
 # CHECK:        Name: .bss.foo
+# CHECK-NEXT:   Type: SHT_NOBITS
+# CHECK:        Name: .tbss
+# CHECK-NEXT:   Type: SHT_NOBITS
+# CHECK:        Name: .tbss.foo
 # CHECK-NEXT:   Type: SHT_NOBITS
