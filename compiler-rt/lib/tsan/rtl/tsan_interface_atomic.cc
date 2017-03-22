@@ -450,7 +450,7 @@ static void AtomicFence(ThreadState *thr, uptr pc, morder mo) {
 
 // C/C++
 
-static morder covert_morder(morder mo) {
+static morder convert_morder(morder mo) {
   if (flags()->force_seq_cst_atomics)
     return (morder)mo_seq_cst;
 
@@ -470,7 +470,7 @@ static morder covert_morder(morder mo) {
 #define SCOPED_ATOMIC(func, ...) \
     const uptr callpc = (uptr)__builtin_return_address(0); \
     uptr pc = StackTrace::GetCurrentPc(); \
-    mo = covert_morder(mo); \
+    mo = convert_morder(mo); \
     ThreadState *const thr = cur_thread(); \
     if (thr->ignore_interceptors) \
       return NoTsanAtomic##func(__VA_ARGS__); \
