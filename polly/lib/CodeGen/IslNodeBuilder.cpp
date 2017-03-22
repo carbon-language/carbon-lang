@@ -1211,6 +1211,9 @@ bool IslNodeBuilder::preloadInvariantEquivClass(
   auto *Alloca = new AllocaInst(AccInstTy, AccInst->getName() + ".preload.s2a");
   Alloca->insertBefore(&*EntryBB->getFirstInsertionPt());
   Builder.CreateStore(PreloadVal, Alloca);
+  ValueMapT PreloadedPointer;
+  PreloadedPointer[PreloadVal] = AccInst;
+  Annotator.addAlternativeAliasBases(PreloadedPointer);
 
   for (auto *DerivedSAI : SAI->getDerivedSAIs()) {
     Value *BasePtr = DerivedSAI->getBasePtr();
