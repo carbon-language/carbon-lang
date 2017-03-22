@@ -15,7 +15,6 @@
 
 #include "AMDGPU.h"
 #include "AMDGPUCodeObjectMetadataStreamer.h"
-#include "Utils/AMDGPUBaseInfo.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
@@ -23,7 +22,6 @@
 
 using namespace llvm::AMDGPU;
 using namespace llvm::AMDGPU::CodeObject;
-using namespace llvm::AMDGPU::IsaInfo;
 
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(uint32_t)
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(std::string)
@@ -99,23 +97,6 @@ struct ScalarEnumerationTraits<ValueType> {
     YIO.enumCase(EN, "I64", ValueType::I64);
     YIO.enumCase(EN, "U64", ValueType::U64);
     YIO.enumCase(EN, "F64", ValueType::F64);
-  }
-};
-
-template <>
-struct MappingTraits<Isa::Metadata> {
-  static void mapping(IO &YIO, Isa::Metadata &MD) {
-    YIO.mapRequired(Isa::Key::WavefrontSize, MD.mWavefrontSize);
-    YIO.mapRequired(Isa::Key::LocalMemorySize, MD.mLocalMemorySize);
-    YIO.mapRequired(Isa::Key::EUsPerCU, MD.mEUsPerCU);
-    YIO.mapRequired(Isa::Key::MaxWavesPerEU, MD.mMaxWavesPerEU);
-    YIO.mapRequired(Isa::Key::MaxFlatWorkGroupSize, MD.mMaxFlatWorkGroupSize);
-    YIO.mapRequired(Isa::Key::SGPRAllocGranule, MD.mSGPRAllocGranule);
-    YIO.mapRequired(Isa::Key::TotalNumSGPRs, MD.mTotalNumSGPRs);
-    YIO.mapRequired(Isa::Key::AddressableNumSGPRs, MD.mAddressableNumSGPRs);
-    YIO.mapRequired(Isa::Key::VGPRAllocGranule, MD.mVGPRAllocGranule);
-    YIO.mapRequired(Isa::Key::TotalNumVGPRs, MD.mTotalNumVGPRs);
-    YIO.mapRequired(Isa::Key::AddressableNumVGPRs, MD.mAddressableNumVGPRs);
   }
 };
 
@@ -215,7 +196,6 @@ template <>
 struct MappingTraits<CodeObject::Metadata> {
   static void mapping(IO &YIO, CodeObject::Metadata &MD) {
     YIO.mapRequired(Key::Version, MD.mVersion);
-    YIO.mapOptional(Key::Isa, MD.mIsa);
     YIO.mapOptional(Key::Printf, MD.mPrintf, std::vector<std::string>());
     if (!MD.mKernels.empty() || !YIO.outputting())
       YIO.mapOptional(Key::Kernels, MD.mKernels);
@@ -417,22 +397,6 @@ void MetadataStreamer::emitVersion() {
   Version.push_back(MetadataVersionMinor);
 }
 
-void MetadataStreamer::emitIsa(const FeatureBitset &Features) {
-  auto &Isa = CodeObjectMetadata.mIsa;
-
-  Isa.mWavefrontSize = getWavefrontSize(Features);
-  Isa.mLocalMemorySize = getLocalMemorySize(Features);
-  Isa.mEUsPerCU = getEUsPerCU(Features);
-  Isa.mMaxWavesPerEU = getMaxWavesPerEU(Features);
-  Isa.mMaxFlatWorkGroupSize = getMaxFlatWorkGroupSize(Features);
-  Isa.mSGPRAllocGranule = getSGPRAllocGranule(Features);
-  Isa.mTotalNumSGPRs = getTotalNumSGPRs(Features);
-  Isa.mAddressableNumSGPRs = getAddressableNumSGPRs(Features);
-  Isa.mVGPRAllocGranule = getVGPRAllocGranule(Features);
-  Isa.mTotalNumVGPRs = getTotalNumVGPRs(Features);
-  Isa.mAddressableNumVGPRs = getAddressableNumVGPRs(Features);
-}
-
 void MetadataStreamer::emitPrintf(const Module &Mod) {
   auto &Printf = CodeObjectMetadata.mPrintf;
 
@@ -611,9 +575,8 @@ void MetadataStreamer::emitKernelDebugProps(
       KernelCode.debug_wavefront_private_segment_offset_sgpr;
 }
 
-void MetadataStreamer::begin(const FeatureBitset &Features, const Module &Mod) {
+void MetadataStreamer::begin(const Module &Mod) {
   emitVersion();
-  emitIsa(Features);
   emitPrintf(Mod);
 }
 
@@ -646,12 +609,10 @@ ErrorOr<std::string> MetadataStreamer::toYamlString() {
   return YamlString;
 }
 
-ErrorOr<std::string> MetadataStreamer::toYamlString(
-    const FeatureBitset &Features, StringRef YamlString) {
+ErrorOr<std::string> MetadataStreamer::toYamlString(StringRef YamlString) {
   if (auto Error = Metadata::fromYamlString(YamlString, CodeObjectMetadata))
     return Error;
 
-  emitIsa(Features);
   return toYamlString();
 }
 

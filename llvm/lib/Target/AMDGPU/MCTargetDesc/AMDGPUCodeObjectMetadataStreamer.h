@@ -25,7 +25,6 @@ namespace llvm {
 
 class Argument;
 class DataLayout;
-class FeatureBitset;
 class Function;
 class MDNode;
 class Module;
@@ -57,8 +56,6 @@ private:
 
   void emitVersion();
 
-  void emitIsa(const FeatureBitset &Features);
-
   void emitPrintf(const Module &Mod);
 
   void emitKernelLanguage(const Function &Func);
@@ -82,7 +79,7 @@ public:
   MetadataStreamer() = default;
   ~MetadataStreamer() = default;
 
-  void begin(const FeatureBitset &Features, const Module &Mod);
+  void begin(const Module &Mod);
 
   void end() {}
 
@@ -90,8 +87,7 @@ public:
 
   ErrorOr<std::string> toYamlString();
 
-  ErrorOr<std::string> toYamlString(const FeatureBitset &Features,
-                                    StringRef YamlString);
+  ErrorOr<std::string> toYamlString(StringRef YamlString);
 };
 
 } // end namespace CodeObject

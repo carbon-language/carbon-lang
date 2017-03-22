@@ -99,67 +99,6 @@ enum class ValueType : uint8_t {
 };
 
 //===----------------------------------------------------------------------===//
-// Instruction Set Architecture Metadata (ISA).
-//===----------------------------------------------------------------------===//
-namespace Isa {
-
-namespace Key {
-/// \brief Key for Isa::Metadata::mWavefrontSize.
-constexpr char WavefrontSize[] = "WavefrontSize";
-/// \brief Key for Isa::Metadata::mLocalMemorySize.
-constexpr char LocalMemorySize[] = "LocalMemorySize";
-/// \brief Key for Isa::Metadata::mEUsPerCU.
-constexpr char EUsPerCU[] = "EUsPerCU";
-/// \brief Key for Isa::Metadata::mMaxWavesPerEU.
-constexpr char MaxWavesPerEU[] = "MaxWavesPerEU";
-/// \brief Key for Isa::Metadata::mMaxFlatWorkGroupSize.
-constexpr char MaxFlatWorkGroupSize[] = "MaxFlatWorkGroupSize";
-/// \brief Key for Isa::Metadata::mSGPRAllocGranule.
-constexpr char SGPRAllocGranule[] = "SGPRAllocGranule";
-/// \brief Key for Isa::Metadata::mTotalNumSGPRs.
-constexpr char TotalNumSGPRs[] = "TotalNumSGPRs";
-/// \brief Key for Isa::Metadata::mAddressableNumSGPRs.
-constexpr char AddressableNumSGPRs[] = "AddressableNumSGPRs";
-/// \brief Key for Isa::Metadata::mVGPRAllocGranule.
-constexpr char VGPRAllocGranule[] = "VGPRAllocGranule";
-/// \brief Key for Isa::Metadata::mTotalNumVGPRs.
-constexpr char TotalNumVGPRs[] = "TotalNumVGPRs";
-/// \brief Key for Isa::Metadata::mAddressableNumVGPRs.
-constexpr char AddressableNumVGPRs[] = "AddressableNumVGPRs";
-} // end namespace Key
-
-/// \brief In-memory representation of instruction set architecture metadata.
-struct Metadata final {
-  /// \brief Wavefront size. Required.
-  uint32_t mWavefrontSize = 0;
-  /// \brief Local memory size in bytes. Required.
-  uint32_t mLocalMemorySize = 0;
-  /// \brief Number of execution units per compute unit. Required.
-  uint32_t mEUsPerCU = 0;
-  /// \brief Maximum number of waves per execution unit. Required.
-  uint32_t mMaxWavesPerEU = 0;
-  /// \brief Maximum flat work group size. Required.
-  uint32_t mMaxFlatWorkGroupSize = 0;
-  /// \brief SGPR allocation granularity. Required.
-  uint32_t mSGPRAllocGranule = 0;
-  /// \brief Total number of SGPRs. Required.
-  uint32_t mTotalNumSGPRs = 0;
-  /// \brief Addressable number of SGPRs. Required.
-  uint32_t mAddressableNumSGPRs = 0;
-  /// \brief VGPR allocation granularity. Required.
-  uint32_t mVGPRAllocGranule = 0;
-  /// \brief Total number of VGPRs. Required.
-  uint32_t mTotalNumVGPRs = 0;
-  /// \brief Addressable number of VGPRs. Required.
-  uint32_t mAddressableNumVGPRs = 0;
-
-  /// \brief Default constructor.
-  Metadata() = default;
-};
-
-} // end namespace Isa
-
-//===----------------------------------------------------------------------===//
 // Kernel Metadata.
 //===----------------------------------------------------------------------===//
 namespace Kernel {
@@ -449,8 +388,6 @@ struct Metadata final {
 namespace Key {
 /// \brief Key for CodeObject::Metadata::mVersion.
 constexpr char Version[] = "Version";
-/// \brief Key for CodeObject::Metadata::mIsa.
-constexpr char Isa[] = "Isa";
 /// \brief Key for CodeObject::Metadata::mPrintf.
 constexpr char Printf[] = "Printf";
 /// \brief Key for CodeObject::Metadata::mKernels.
@@ -461,8 +398,6 @@ constexpr char Kernels[] = "Kernels";
 struct Metadata final {
   /// \brief Code object metadata version. Required.
   std::vector<uint32_t> mVersion = std::vector<uint32_t>();
-  /// \brief Instruction set architecture metadata. Optional.
-  Isa::Metadata mIsa = Isa::Metadata();
   /// \brief Printf metadata. Optional.
   std::vector<std::string> mPrintf = std::vector<std::string>();
   /// \brief Kernels metadata. Optional.
