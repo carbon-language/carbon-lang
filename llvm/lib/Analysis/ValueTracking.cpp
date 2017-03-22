@@ -1414,8 +1414,8 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
       default: break;
       case Intrinsic::bitreverse:
         computeKnownBits(I->getOperand(0), KnownZero2, KnownOne2, Depth + 1, Q);
-        KnownZero = KnownZero2.reverseBits();
-        KnownOne = KnownOne2.reverseBits();
+        KnownZero |= KnownZero2.reverseBits();
+        KnownOne |= KnownOne2.reverseBits();
         break;
       case Intrinsic::bswap:
         computeKnownBits(I->getOperand(0), KnownZero2, KnownOne2, Depth + 1, Q);
