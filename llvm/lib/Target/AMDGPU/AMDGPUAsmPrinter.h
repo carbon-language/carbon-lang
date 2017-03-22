@@ -26,6 +26,7 @@
 
 namespace llvm {
 
+class AMDGPUTargetStreamer;
 class MCOperand;
 
 class AMDGPUAsmPrinter final : public AsmPrinter {
@@ -103,9 +104,13 @@ public:
   explicit AMDGPUAsmPrinter(TargetMachine &TM,
                             std::unique_ptr<MCStreamer> Streamer);
 
-  bool runOnMachineFunction(MachineFunction &MF) override;
-
   StringRef getPassName() const override;
+
+  const MCSubtargetInfo* getSTI() const;
+
+  AMDGPUTargetStreamer& getTargetStreamer() const;
+
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
   /// \brief Wrapper for MCInstLowering.lowerOperand() for the tblgen'erated
   /// pseudo lowering.
@@ -131,6 +136,8 @@ public:
   void EmitGlobalVariable(const GlobalVariable *GV) override;
 
   void EmitStartOfAsmFile(Module &M) override;
+
+  void EmitEndOfAsmFile(Module &M) override;
 
   bool isBlockOnlyReachableByFallthrough(
     const MachineBasicBlock *MBB) const override;
