@@ -3,6 +3,7 @@ import itertools
 import os
 import re
 import sys
+from collections import defaultdict
 
 from use_lldb_suite import lldb_root
 
@@ -165,8 +166,8 @@ if args.discover_cycles:
     average = sum([len(x)+1 for x in cycles]) / len(cycles)
 
     print "Found {} cycles.  Average cycle length = {}.".format(len(cycles), average)
+    counted = list(iter_cycles(cycles))
     if args.show_counts:
-        counted = list(iter_cycles(cycles))
         counted.sort(lambda A, B: cmp(A[0], B[0]))
         for (total, smallest, cycle) in counted:
             sys.stdout.write("{} deps to break: ".format(total))
@@ -181,6 +182,12 @@ if args.discover_cycles:
 
     print "Analyzing islands..."
     islands = []
+    outgoing_counts = defaultdict(int)
+    incoming_counts = defaultdict(int)
+    for (total, smallest, cycle) in counted:
+        for (first, count, last) in cycle:
+            outgoing_counts[first] += count
+            incoming_counts[last] += count
     for cycle in cycles:
         this_cycle = set(cycle)
         disjoints = [x for x in islands if this_cycle.isdisjoint(x)]
@@ -189,7 +196,11 @@ if args.discover_cycles:
     print "Found {} disjoint cycle islands...".format(len(islands))
     for island in islands:
         print "Island ({} elements)".format(len(island))
+        sorted = []
         for node in island:
-            print "  {0}".format(node)
+            sorted.append((node, incoming_counts[node], outgoing_counts[node]))
+        sorted.sort(lambda x, y: cmp(x[1]+x[2], y[1]+y[2]))
+        for (node, inc, outg) in sorted:
+            print "  {} [{} in, {} out]".format(node, inc, outg)
     sys.stdout.flush()
 pass
