@@ -10,10 +10,10 @@
 #ifndef lldb_NativeRegisterContextNetBSD_h
 #define lldb_NativeRegisterContextNetBSD_h
 
-#include "lldb/Host/common/NativeRegisterContextRegisterInfo.h"
 #include "lldb/Host/common/NativeThreadProtocol.h"
 
 #include "Plugins/Process/NetBSD/NativeProcessNetBSD.h"
+#include "Plugins/Process/Utility/NativeRegisterContextRegisterInfo.h"
 
 namespace lldb_private {
 namespace process_netbsd {
