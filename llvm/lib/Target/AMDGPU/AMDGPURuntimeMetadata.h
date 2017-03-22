@@ -40,8 +40,8 @@ namespace AMDGPU {
 namespace RuntimeMD {
 
   // Version and revision of runtime metadata
-  const unsigned char MDVersion   = 2;
-  const unsigned char MDRevision  = 1;
+  const uint32_t MDVersion   = 2;
+  const uint32_t MDRevision  = 1;
 
   // Name of keys for runtime metadata.
   namespace KeyName {
@@ -215,7 +215,7 @@ namespace RuntimeMD {
     struct Metadata {
       std::string Name;
       std::string Language;
-      std::vector<uint8_t> LanguageVersion;
+      std::vector<uint32_t> LanguageVersion;
       std::vector<uint32_t> ReqdWorkGroupSize;
       std::vector<uint32_t> WorkGroupSizeHint;
       std::string VecTypeHint;
@@ -265,7 +265,7 @@ namespace RuntimeMD {
 
     // In-memory representation of program information.
     struct Metadata {
-      std::vector<uint8_t> MDVersionSeq;
+      std::vector<uint32_t> MDVersionSeq;
       IsaInfo::Metadata IsaInfo;
       std::vector<std::string> PrintfInfo;
       std::vector<Kernel::Metadata> Kernels;
