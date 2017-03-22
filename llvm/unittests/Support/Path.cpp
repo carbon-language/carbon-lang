@@ -28,6 +28,7 @@
 #endif
 
 #ifdef LLVM_ON_UNIX
+#include <pwd.h>
 #include <sys/stat.h>
 #endif
 
@@ -328,23 +329,33 @@ TEST(Support, HomeDirectory) {
   }
 }
 
-#ifndef LLVM_ON_WIN32
+#ifdef LLVM_ON_UNIX
 TEST(Support, HomeDirectoryWithNoEnv) {
-  std::string Original;
-  char const *path = ::getenv("HOME");
-  // Don't try to test if we don't have something to compare against.
-  if (!path)
-    return;
-  Original = path;
+  std::string OriginalStorage;
+  char const *OriginalEnv = ::getenv("HOME");
+  if (OriginalEnv) {
+    // We're going to unset it, so make a copy and save a pointer to the copy
+    // so that we can reset it at the end of the test.
+    OriginalStorage = OriginalEnv;
+    OriginalEnv = OriginalStorage.c_str();
+  }
+
+  // Don't run the test if we have nothing to compare against.
+  struct passwd *pw = getpwuid(getuid());
+  if (!pw || !pw->pw_dir) return;
+
   ::unsetenv("HOME");
+  EXPECT_EQ(nullptr, ::getenv("HOME"));
+  std::string PwDir = pw->pw_dir;
 
   SmallString<128> HomeDir;
   auto status = path::home_directory(HomeDir);
   EXPECT_TRUE(status);
-  EXPECT_EQ(Original, HomeDir);
+  EXPECT_EQ(PwDir, HomeDir);
 
-  // Now put the original environment variable back
-  ::setenv("HOME", Original.c_str(), 1);
+  // Now put the environment back to its original state (meaning that if it was
+  // unset before, we don't reset it).
+  if (OriginalEnv) ::setenv("HOME", OriginalEnv, 1);
 }
 #endif
 
