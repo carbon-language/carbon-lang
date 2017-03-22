@@ -571,6 +571,8 @@ EndStmt:
       Type = ELF::SHT_NOTE;
     else if (hasPrefix(SectionName, ".init_array."))
       Type = ELF::SHT_INIT_ARRAY;
+    else if (hasPrefix(SectionName, ".bss."))
+      Type = ELF::SHT_NOBITS;
     else if (SectionName == ".fini_array")
       Type = ELF::SHT_FINI_ARRAY;
     else if (SectionName == ".preinit_array")
