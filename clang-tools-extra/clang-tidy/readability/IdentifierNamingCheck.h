@@ -55,8 +55,7 @@ public:
   struct NamingStyle {
     NamingStyle() = default;
 
-    NamingStyle(llvm::Optional<CaseType> Case, 
-                const std::string &Prefix,
+    NamingStyle(llvm::Optional<CaseType> Case, const std::string &Prefix,
                 const std::string &Suffix)
         : Case(Case), Prefix(Prefix), Suffix(Suffix) {}
 
@@ -98,7 +97,7 @@ public:
   void expandMacro(const Token &MacroNameTok, const MacroInfo *MI);
 
 private:
-  std::vector<llvm::Optional<NamingStyle> > NamingStyles;
+  std::vector<llvm::Optional<NamingStyle>> NamingStyles;
   bool IgnoreFailedSplit;
   NamingCheckFailureMap NamingCheckFailures;
 };

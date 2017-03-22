@@ -158,7 +158,7 @@ IdentifierNamingCheck::IdentifierNamingCheck(StringRef Name,
                                              ClangTidyContext *Context)
     : ClangTidyCheck(Name, Context) {
   auto const fromString = [](StringRef Str) {
-    return llvm::StringSwitch<llvm::Optional<CaseType> >(Str)
+    return llvm::StringSwitch<llvm::Optional<CaseType>>(Str)
         .Case("aNy_CasE", CT_AnyCase)
         .Case("lower_case", CT_LowerCase)
         .Case("UPPER_CASE", CT_UpperCase)
@@ -262,8 +262,7 @@ static bool matchesStyle(StringRef Name,
   else
     Matches = false;
 
-  if (Style.Case &&
-      !Matchers[static_cast<size_t>(*Style.Case)].match(Name))
+  if (Style.Case && !Matchers[static_cast<size_t>(*Style.Case)].match(Name))
     Matches = false;
 
   return Matches;
@@ -365,8 +364,9 @@ static std::string fixupWithCase(StringRef Name,
   return Fixup;
 }
 
-static std::string fixupWithStyle(StringRef Name,
-                            const IdentifierNamingCheck::NamingStyle &Style) {
+static std::string
+fixupWithStyle(StringRef Name,
+               const IdentifierNamingCheck::NamingStyle &Style) {
   return Style.Prefix +
          fixupWithCase(Name, Style.Case.getValueOr(
                                  IdentifierNamingCheck::CaseType::CT_AnyCase)) +
@@ -450,16 +450,13 @@ static StyleKind findStyleKind(
         NamingStyles[SK_Constant])
       return SK_Constant;
 
-    if (Decl->getAccess() == AS_private &&
-        NamingStyles[SK_PrivateMember])
+    if (Decl->getAccess() == AS_private && NamingStyles[SK_PrivateMember])
       return SK_PrivateMember;
 
-    if (Decl->getAccess() == AS_protected &&
-        NamingStyles[SK_ProtectedMember])
+    if (Decl->getAccess() == AS_protected && NamingStyles[SK_ProtectedMember])
       return SK_ProtectedMember;
 
-    if (Decl->getAccess() == AS_public &&
-        NamingStyles[SK_PublicMember])
+    if (Decl->getAccess() == AS_public && NamingStyles[SK_PublicMember])
       return SK_PublicMember;
 
     if (NamingStyles[SK_Member])
@@ -514,8 +511,7 @@ static StyleKind findStyleKind(
       return SK_LocalConstant;
 
     if (!Type.isNull() && Type.isLocalConstQualified() &&
-        Decl->isFunctionOrMethodVarDecl() &&
-        NamingStyles[SK_LocalConstant])
+        Decl->isFunctionOrMethodVarDecl() && NamingStyles[SK_LocalConstant])
       return SK_LocalConstant;
 
     if (!Type.isNull() && Type.isLocalConstQualified() &&
@@ -534,8 +530,7 @@ static StyleKind findStyleKind(
     if (Decl->isLocalVarDecl() && NamingStyles[SK_LocalVariable])
       return SK_LocalVariable;
 
-    if (Decl->isFunctionOrMethodVarDecl() &&
-        NamingStyles[SK_LocalVariable])
+    if (Decl->isFunctionOrMethodVarDecl() && NamingStyles[SK_LocalVariable])
       return SK_LocalVariable;
 
     if (NamingStyles[SK_Variable])
@@ -563,16 +558,13 @@ static StyleKind findStyleKind(
     if (Decl->isVirtual() && NamingStyles[SK_VirtualMethod])
       return SK_VirtualMethod;
 
-    if (Decl->getAccess() == AS_private &&
-        NamingStyles[SK_PrivateMethod])
+    if (Decl->getAccess() == AS_private && NamingStyles[SK_PrivateMethod])
       return SK_PrivateMethod;
 
-    if (Decl->getAccess() == AS_protected &&
-        NamingStyles[SK_ProtectedMethod])
+    if (Decl->getAccess() == AS_protected && NamingStyles[SK_ProtectedMethod])
       return SK_ProtectedMethod;
 
-    if (Decl->getAccess() == AS_public &&
-        NamingStyles[SK_PublicMethod])
+    if (Decl->getAccess() == AS_public && NamingStyles[SK_PublicMethod])
       return SK_PublicMethod;
 
     if (NamingStyles[SK_Method])
