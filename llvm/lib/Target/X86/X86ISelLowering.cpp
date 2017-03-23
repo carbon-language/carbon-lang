@@ -29165,9 +29165,10 @@ static SDValue combineExtractWithShuffle(SDNode *N, SelectionDAG &DAG,
   SDValue Src = N->getOperand(0);
   SDValue Idx = N->getOperand(1);
 
+  EVT VT = N->getValueType(0);
   EVT SrcVT = Src.getValueType();
   EVT SrcSVT = SrcVT.getVectorElementType();
-  EVT VT = N->getValueType(0);
+  unsigned NumSrcElts = SrcVT.getVectorNumElements();
 
   // Don't attempt this for boolean mask vectors or unknown extraction indices.
   if (SrcSVT == MVT::i1 || !isa<ConstantSDNode>(Idx))
@@ -29179,20 +29180,26 @@ static SDValue combineExtractWithShuffle(SDNode *N, SelectionDAG &DAG,
   if (!resolveTargetShuffleInputs(peekThroughBitcasts(Src), Ops, Mask))
     return SDValue();
 
-  // At the moment we can only narrow a shuffle mask to handle extractions
-  // of smaller scalars.
-  // TODO - investigate support for wider shuffle masks with known upper
-  // undef/zero elements for implicit zero-extension.
-  unsigned NumMaskElts = Mask.size();
-  if ((SrcVT.getVectorNumElements() % NumMaskElts) != 0)
-    return SDValue();
-
-  int Scale = SrcVT.getVectorNumElements() / NumMaskElts;
-  if (Scale != 1) {
-    SmallVector<int, 16> ScaledMask;
-    scaleShuffleMask(Scale, Mask, ScaledMask);
-    Mask = ScaledMask;
+  // Attempt to narrow/widen the shuffle mask to the correct size.
+  if (Mask.size() != NumSrcElts) {
+    if ((NumSrcElts % Mask.size()) == 0) {
+      SmallVector<int, 16> ScaledMask;
+      int Scale = NumSrcElts / Mask.size();
+      scaleShuffleMask(Scale, Mask, ScaledMask);
+      Mask = std::move(ScaledMask);
+    } else if ((Mask.size() % NumSrcElts) == 0) {
+      SmallVector<int, 16> WidenedMask;
+      while (Mask.size() > NumSrcElts &&
+             canWidenShuffleElements(Mask, WidenedMask))
+        Mask = std::move(WidenedMask);
+      // TODO - investigate support for wider shuffle masks with known upper
+      // undef/zero elements for implicit zero-extension.
+    }
   }
+
+  // Check if narrowing/widening failed.
+  if (Mask.size() != NumSrcElts)
+    return SDValue();
 
   int SrcIdx = Mask[N->getConstantOperandVal(1)];
   SDLoc dl(N);
