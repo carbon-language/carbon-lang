@@ -1040,8 +1040,8 @@ MachineOutliner::buildCandidateList(std::vector<Candidate> &CandidateList,
   // Function for maximizing query in the suffix tree.
   // This allows us to define more fine-grained types of things to outline in
   // the target without putting target-specific info in the suffix tree.
-  auto BenefitFn = [&TII, &ST, &Mapper](const SuffixTreeNode &Curr,
-                                          size_t StringLen, unsigned EndVal) {
+  auto BenefitFn = [&TII, &Mapper](const SuffixTreeNode &Curr,
+                                   size_t StringLen, unsigned EndVal) {
 
     // The root represents the empty string.
     if (Curr.isRoot())
