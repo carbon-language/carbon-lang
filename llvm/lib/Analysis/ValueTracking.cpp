@@ -352,8 +352,9 @@ static void computeKnownBitsMul(const Value *Op0, const Value *Op1, bool NSW,
 
   TrailZ = std::min(TrailZ, BitWidth);
   LeadZ = std::min(LeadZ, BitWidth);
-  KnownZero = APInt::getLowBitsSet(BitWidth, TrailZ) |
-              APInt::getHighBitsSet(BitWidth, LeadZ);
+  KnownZero.clearAllBits();
+  KnownZero.setLowBits(TrailZ);
+  KnownZero.setHighBits(LeadZ);
 
   // Only make use of no-wrap flags if we failed to compute the sign bit
   // directly.  This matters if the multiplication always overflows, in
@@ -361,9 +362,9 @@ static void computeKnownBitsMul(const Value *Op0, const Value *Op1, bool NSW,
   // though as the program is invoking undefined behaviour we can choose
   // whatever we like here.
   if (isKnownNonNegative && !KnownOne.isNegative())
-    KnownZero.setBit(BitWidth - 1);
+    KnownZero.setSignBit();
   else if (isKnownNegative && !KnownZero.isNegative())
-    KnownOne.setBit(BitWidth - 1);
+    KnownOne.setSignBit();
 }
 
 void llvm::computeKnownBitsFromRangeMetadata(const MDNode &Ranges,
@@ -1094,21 +1095,20 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
   case Instruction::Shl: {
     // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
     bool NSW = cast<OverflowingBinaryOperator>(I)->hasNoSignedWrap();
-    auto KZF = [BitWidth, NSW](const APInt &KnownZero, unsigned ShiftAmt) {
-      APInt KZResult =
-          (KnownZero << ShiftAmt) |
-          APInt::getLowBitsSet(BitWidth, ShiftAmt); // Low bits known 0.
+    auto KZF = [NSW](const APInt &KnownZero, unsigned ShiftAmt) {
+      APInt KZResult = KnownZero << ShiftAmt;
+      KZResult.setLowBits(ShiftAmt); // Low bits known 0.
       // If this shift has "nsw" keyword, then the result is either a poison
       // value or has the same sign bit as the first operand.
       if (NSW && KnownZero.isNegative())
-        KZResult.setBit(BitWidth - 1);
+        KZResult.setSignBit();
       return KZResult;
     };
 
-    auto KOF = [BitWidth, NSW](const APInt &KnownOne, unsigned ShiftAmt) {
+    auto KOF = [NSW](const APInt &KnownOne, unsigned ShiftAmt) {
       APInt KOResult = KnownOne << ShiftAmt;
       if (NSW && KnownOne.isNegative())
-        KOResult.setBit(BitWidth - 1);
+        KOResult.setSignBit();
       return KOResult;
     };
 
@@ -1197,7 +1197,7 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
                        Q);
       // If it's known zero, our sign bit is also zero.
       if (LHSKnownZero.isNegative())
-        KnownZero.setBit(BitWidth - 1);
+        KnownZero.setSignBit();
     }
 
     break;
@@ -1221,7 +1221,8 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
     unsigned Leaders = std::max(KnownZero.countLeadingOnes(),
                                 KnownZero2.countLeadingOnes());
     KnownOne.clearAllBits();
-    KnownZero = APInt::getHighBitsSet(BitWidth, Leaders);
+    KnownZero.clearAllBits();
+    KnownZero.setHighBits(Leaders);
     break;
   }
 
@@ -1340,7 +1341,7 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
             // (add negative, negative) --> negative
             if (Opcode == Instruction::Add) {
               if (KnownZero2.isNegative() && KnownZero3.isNegative())
-                KnownZero.setBit(BitWidth - 1);
+                KnownZero.setSignBit();
               else if (KnownOne2.isNegative() && KnownOne3.isNegative())
                 KnownOne.setBit(BitWidth - 1);
             }
@@ -1349,15 +1350,15 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
             // (sub nsw negative, non-negative) --> negative
             else if (Opcode == Instruction::Sub && LL == I) {
               if (KnownZero2.isNegative() && KnownOne3.isNegative())
-                KnownZero.setBit(BitWidth - 1);
+                KnownZero.setSignBit();
               else if (KnownOne2.isNegative() && KnownZero3.isNegative())
-                KnownOne.setBit(BitWidth - 1);
+                KnownOne.setSignBit();
             }
 
             // (mul nsw non-negative, non-negative) --> non-negative
             else if (Opcode == Instruction::Mul && KnownZero2.isNegative() &&
                      KnownZero3.isNegative())
-              KnownZero.setBit(BitWidth - 1);
+              KnownZero.setSignBit();
           }
 
           break;
@@ -1376,8 +1377,8 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
       if (dyn_cast_or_null<UndefValue>(P->hasConstantValue()))
         break;
 
-      KnownZero = APInt::getAllOnesValue(BitWidth);
-      KnownOne = APInt::getAllOnesValue(BitWidth);
+      KnownZero.setAllBits();
+      KnownOne.setAllBits();
       for (Value *IncValue : P->incoming_values()) {
         // Skip direct self references.
         if (IncValue == P) continue;
@@ -1519,6 +1520,7 @@ void computeKnownBits(const Value *V, APInt &KnownZero, APInt &KnownOne,
          KnownZero.getBitWidth() == BitWidth &&
          KnownOne.getBitWidth() == BitWidth &&
          "V, KnownOne and KnownZero should have same BitWidth");
+  (void)BitWidth;
 
   const APInt *C;
   if (match(V, m_APInt(C))) {
@@ -1530,7 +1532,7 @@ void computeKnownBits(const Value *V, APInt &KnownZero, APInt &KnownOne,
   // Null and aggregate-zero are all-zeros.
   if (isa<ConstantPointerNull>(V) || isa<ConstantAggregateZero>(V)) {
     KnownOne.clearAllBits();
-    KnownZero = APInt::getAllOnesValue(BitWidth);
+    KnownZero.setAllBits();
     return;
   }
   // Handle a constant vector by taking the intersection of the known bits of
