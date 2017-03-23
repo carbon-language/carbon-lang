@@ -1250,6 +1250,8 @@ BinaryFunction *RewriteInstance::createBinaryFunction(
 }
 
 void RewriteInstance::readSpecialSections() {
+  bool HasTextRelocations = false;
+
   // Process special sections.
   for (const auto &Section : InputFile->sections()) {
     StringRef SectionName;
@@ -1268,6 +1270,8 @@ void RewriteInstance::readSpecialSections() {
       DebugLocSize = Section.getSize();
     } else if (SectionName == ".eh_frame") {
       EHFrameSection = Section;
+    } else if (SectionName == ".rela.text") {
+      HasTextRelocations = true;
     }
 
     // Ignore zero-size allocatable sections as they present no interest to us.
@@ -1276,6 +1280,12 @@ void RewriteInstance::readSpecialSections() {
       BC->AllocatableSections.emplace(std::make_pair(Section.getAddress(),
                                                      Section));
     }
+  }
+
+  if (opts::Relocs && !HasTextRelocations) {
+    errs() << "BOLT-ERROR: relocations against code are missing from the input "
+              "file. Cannot proceed in relocations mode (-relocs).\n";
+    exit(1);
   }
 
   // Process debug sections.
