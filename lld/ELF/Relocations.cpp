@@ -95,8 +95,7 @@ static unsigned
 handleNoRelaxTlsRelocation(GOT *Got, uint32_t Type, SymbolBody &Body,
                            InputSectionBase &C, typename ELFT::uint Offset,
                            int64_t Addend, RelExpr Expr) {
-  typedef typename ELFT::uint uintX_t;
-  auto addModuleReloc = [](SymbolBody &Body, GOT *Got, uintX_t Off, bool LD) {
+  auto addModuleReloc = [&](uint64_t Off, bool LD) {
     // The Dynamic TLS Module Index Relocation can be statically resolved to 1
     // if we know that we are linking an executable. For ARM we resolve the
     // relocation when writing the Got. MIPS has a custom Got implementation
@@ -110,25 +109,27 @@ handleNoRelaxTlsRelocation(GOT *Got, uint32_t Type, SymbolBody &Body,
           {Target->TlsModuleIndexRel, Got, Off, false, Dest, 0});
     }
   };
+
   if (isRelExprOneOf<R_MIPS_TLSLD, R_TLSLD_PC>(Expr)) {
     if (Got->addTlsIndex() && (Config->Pic || Config->EMachine == EM_ARM))
-      addModuleReloc(Body, Got, Got->getTlsIndexOff(), true);
+      addModuleReloc(Got->getTlsIndexOff(), true);
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
     return 1;
   }
+
   if (Target->isTlsGlobalDynamicRel(Type)) {
     if (Got->addDynTlsEntry(Body) &&
         (Body.isPreemptible() || Config->EMachine == EM_ARM)) {
-      uintX_t Off = Got->getGlobalDynOffset(Body);
-      addModuleReloc(Body, Got, Off, false);
+      uint64_t Off = Got->getGlobalDynOffset(Body);
+      addModuleReloc(Off, false);
       if (Body.isPreemptible())
         In<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, Got,
-                                     Off + (uintX_t)sizeof(uintX_t), false,
-                                     &Body, 0});
+                                     Off + Config->Wordsize, false, &Body, 0});
     }
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
     return 1;
   }
+
   return 0;
 }
 
