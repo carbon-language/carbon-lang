@@ -17747,17 +17747,10 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op,
 
   // SKX processor
   if ((InVTElt == MVT::i1) &&
-      (((Subtarget.hasBWI() && Subtarget.hasVLX() &&
-        VT.getSizeInBits() <= 256 && VTElt.getSizeInBits() <= 16)) ||
+      (((Subtarget.hasBWI() && VTElt.getSizeInBits() <= 16)) ||
 
-       ((Subtarget.hasBWI() && VT.is512BitVector() &&
-        VTElt.getSizeInBits() <= 16)) ||
+       ((Subtarget.hasDQI() && VTElt.getSizeInBits() >= 32))))
 
-       ((Subtarget.hasDQI() && Subtarget.hasVLX() &&
-        VT.getSizeInBits() <= 256 && VTElt.getSizeInBits() >= 32)) ||
-
-       ((Subtarget.hasDQI() && VT.is512BitVector() &&
-        VTElt.getSizeInBits() >= 32))))
     return DAG.getNode(X86ISD::VSEXT, dl, VT, In);
 
   unsigned NumElts = VT.getVectorNumElements();
@@ -18002,7 +17995,8 @@ static SDValue LowerExtended1BitVectorLoad(SDValue Op,
   MVT VT = Op.getValueType().getSimpleVT();
   unsigned NumElts = VT.getVectorNumElements();
 
-  if ((Subtarget.hasVLX() && Subtarget.hasBWI() && Subtarget.hasDQI()) ||
+  if ((Subtarget.hasBWI() && NumElts >= 32) ||
+      (Subtarget.hasDQI() && NumElts < 16) ||
       NumElts == 16) {
     // Load and extend - everything is legal
     if (NumElts < 8) {
@@ -18031,7 +18025,7 @@ static SDValue LowerExtended1BitVectorLoad(SDValue Op,
 
   if (NumElts <= 8) {
     // A subset, assume that we have only AVX-512F
-    unsigned NumBitsToLoad = NumElts < 8 ? 8 : NumElts;
+    unsigned NumBitsToLoad = 8;
     MVT TypeToLoad = MVT::getIntegerVT(NumBitsToLoad);
     SDValue Load = DAG.getLoad(TypeToLoad, dl, Ld->getChain(),
                               Ld->getBasePtr(),
