@@ -138,13 +138,13 @@ template <class ELFT>
 static unsigned
 handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase &C,
                     typename ELFT::uint Offset, int64_t Addend, RelExpr Expr) {
+  typedef typename ELFT::uint uintX_t;
+
   if (!(C.Flags & SHF_ALLOC))
     return 0;
 
   if (!Body.isTls())
     return 0;
-
-  typedef typename ELFT::uint uintX_t;
 
   if (Config->EMachine == EM_ARM)
     return handleNoRelaxTlsRelocation<ELFT>(In<ELFT>::Got, Type, Body, C,
@@ -221,11 +221,11 @@ handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase &C,
         In<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, In<ELFT>::Got,
                                      Body.getGotOffset(), false, &Body, 0});
       }
-      return Target->TlsGdRelaxSkip;
+    } else {
+      C.Relocations.push_back(
+          {Target->adjustRelaxExpr(Type, nullptr, R_RELAX_TLS_GD_TO_LE), Type,
+                Offset, Addend, &Body});
     }
-    C.Relocations.push_back(
-        {Target->adjustRelaxExpr(Type, nullptr, R_RELAX_TLS_GD_TO_LE), Type,
-         Offset, Addend, &Body});
     return Target->TlsGdRelaxSkip;
   }
 
