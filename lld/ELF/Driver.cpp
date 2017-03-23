@@ -397,10 +397,10 @@ static UnresolvedPolicy getUnresolvedSymbolPolicy(opt::InputArgList &Args) {
   if (Args.hasArg(OPT_relocatable))
     return UnresolvedPolicy::IgnoreAll;
 
-  UnresolvedPolicy ErrorOrWarn =
-      getArg(Args, OPT_error_undef, OPT_warn_undef, true)
-          ? UnresolvedPolicy::ReportError
-          : UnresolvedPolicy::Warn;
+  UnresolvedPolicy ErrorOrWarn = getArg(Args, OPT_error_unresolved_symbols,
+                                        OPT_warn_unresolved_symbols, true)
+                                     ? UnresolvedPolicy::ReportError
+                                     : UnresolvedPolicy::Warn;
 
   // Process the last of -unresolved-symbols, -no-undefined or -z defs.
   for (auto *Arg : llvm::reverse(Args)) {
