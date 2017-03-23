@@ -4732,28 +4732,30 @@ static bool canWidenShuffleElements(ArrayRef<int> Mask,
                                     SmallVectorImpl<int> &WidenedMask) {
   WidenedMask.assign(Mask.size() / 2, 0);
   for (int i = 0, Size = Mask.size(); i < Size; i += 2) {
+    int M0 = Mask[i];
+    int M1 = Mask[i + 1];
+
     // If both elements are undef, its trivial.
-    if (Mask[i] == SM_SentinelUndef && Mask[i + 1] == SM_SentinelUndef) {
+    if (M0 == SM_SentinelUndef && M1 == SM_SentinelUndef) {
       WidenedMask[i / 2] = SM_SentinelUndef;
       continue;
     }
 
     // Check for an undef mask and a mask value properly aligned to fit with
     // a pair of values. If we find such a case, use the non-undef mask's value.
-    if (Mask[i] == SM_SentinelUndef && Mask[i + 1] >= 0 &&
-        Mask[i + 1] % 2 == 1) {
-      WidenedMask[i / 2] = Mask[i + 1] / 2;
+    if (M0 == SM_SentinelUndef && M1 >= 0 && (M1 % 2) == 1) {
+      WidenedMask[i / 2] = M1 / 2;
       continue;
     }
-    if (Mask[i + 1] == SM_SentinelUndef && Mask[i] >= 0 && Mask[i] % 2 == 0) {
-      WidenedMask[i / 2] = Mask[i] / 2;
+    if (M1 == SM_SentinelUndef && M0 >= 0 && (M0 % 2) == 0) {
+      WidenedMask[i / 2] = M0 / 2;
       continue;
     }
 
     // When zeroing, we need to spread the zeroing across both lanes to widen.
-    if (Mask[i] == SM_SentinelZero || Mask[i + 1] == SM_SentinelZero) {
-      if ((Mask[i] == SM_SentinelZero || Mask[i] == SM_SentinelUndef) &&
-          (Mask[i + 1] == SM_SentinelZero || Mask[i + 1] == SM_SentinelUndef)) {
+    if (M0 == SM_SentinelZero || M1 == SM_SentinelZero) {
+      if ((M0 == SM_SentinelZero || M0 == SM_SentinelUndef) &&
+          (M1 == SM_SentinelZero || M1 == SM_SentinelUndef)) {
         WidenedMask[i / 2] = SM_SentinelZero;
         continue;
       }
@@ -4762,9 +4764,8 @@ static bool canWidenShuffleElements(ArrayRef<int> Mask,
 
     // Finally check if the two mask values are adjacent and aligned with
     // a pair.
-    if (Mask[i] != SM_SentinelUndef && Mask[i] % 2 == 0 &&
-        Mask[i] + 1 == Mask[i + 1]) {
-      WidenedMask[i / 2] = Mask[i] / 2;
+    if (M0 != SM_SentinelUndef && (M0 % 2) == 0 && (M0 + 1) == M1) {
+      WidenedMask[i / 2] = M0 / 2;
       continue;
     }
 
