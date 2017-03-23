@@ -197,7 +197,7 @@ public:
   bool wasInlined() const override;
   std::string getUnused() const override;
 
-protected:
+private:
   NativeSession &Session;
 };
 
