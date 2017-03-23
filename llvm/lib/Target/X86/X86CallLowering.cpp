@@ -47,7 +47,9 @@ void X86CallLowering::splitToValueTypes(const ArgInfo &OrigArg,
   unsigned NumParts = TLI.getNumRegisters(Context, VT);
 
   if (NumParts == 1) {
-    SplitArgs.push_back(OrigArg);
+    // replace the original type ( pointer -> GPR ).
+    SplitArgs.emplace_back(OrigArg.Reg, VT.getTypeForEVT(Context),
+                           OrigArg.Flags, OrigArg.IsFixed);
     return;
   }
 
