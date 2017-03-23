@@ -95,8 +95,6 @@
 #include <algorithm>
 using namespace llvm;
 
-
-
 #define DEBUG_TYPE "scalar-evolution"
 
 STATISTIC(NumArrayLenItCounts,
@@ -114,8 +112,6 @@ MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
                                  "symbolically execute a constant "
                                  "derived loop"),
                         cl::init(100));
-
-
 
 // FIXME: Enable this with EXPENSIVE_CHECKS when the test suite is clean.
 static cl::opt<bool>
