@@ -14,14 +14,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86CallLowering.h"
+#include "X86CallingConv.h"
 #include "X86ISelLowering.h"
 #include "X86InstrInfo.h"
 #include "X86TargetMachine.h"
-#include "X86CallingConv.h"
 
 #include "llvm/CodeGen/GlobalISel/MachineIRBuilder.h"
-#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/MachineValueType.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
@@ -116,7 +116,7 @@ bool X86CallLowering::lowerReturn(MachineIRBuilder &MIRBuilder,
                       });
 
     FuncReturnHandler Handler(MIRBuilder, MRI, MIB, RetCC_X86);
-    if(!handleAssignments(MIRBuilder, SplitArgs, Handler))
+    if (!handleAssignments(MIRBuilder, SplitArgs, Handler))
       return false;
   }
 
@@ -137,9 +137,8 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
     int FI = MFI.CreateFixedObject(Size, Offset, true);
     MPO = MachinePointerInfo::getFixedStack(MIRBuilder.getMF(), FI);
 
-    unsigned AddrReg =
-        MRI.createGenericVirtualRegister(LLT::pointer(0,
-                                         DL.getPointerSizeInBits(0)));
+    unsigned AddrReg = MRI.createGenericVirtualRegister(
+        LLT::pointer(0, DL.getPointerSizeInBits(0)));
     MIRBuilder.buildFrameIndex(AddrReg, FI);
     return AddrReg;
   }
@@ -161,7 +160,7 @@ struct FormalArgHandler : public CallLowering::ValueHandler {
 
   const DataLayout &DL;
 };
-}
+} // namespace
 
 bool X86CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
                                            const Function &F,
@@ -169,7 +168,7 @@ bool X86CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
   if (F.arg_empty())
     return true;
 
-  //TODO: handle variadic function
+  // TODO: handle variadic function
   if (F.isVarArg())
     return false;
 
@@ -203,7 +202,7 @@ bool X86CallLowering::lowerFormalArguments(MachineIRBuilder &MIRBuilder,
 
   MachineBasicBlock &MBB = MIRBuilder.getMBB();
   if (!MBB.empty())
-     MIRBuilder.setInstr(*MBB.begin());
+    MIRBuilder.setInstr(*MBB.begin());
 
   FormalArgHandler Handler(MIRBuilder, MRI, CC_X86, DL);
   if (!handleAssignments(MIRBuilder, SplitArgs, Handler))

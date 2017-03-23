@@ -72,8 +72,7 @@ X86RegisterBankInfo::getOperandsMapping(const MachineInstr &MI, bool isFP) {
   unsigned NumOperands = MI.getNumOperands();
   LLT Ty = MRI.getType(MI.getOperand(0).getReg());
 
-  if (NumOperands != 3 ||
-      (Ty != MRI.getType(MI.getOperand(1).getReg())) ||
+  if (NumOperands != 3 || (Ty != MRI.getType(MI.getOperand(1).getReg())) ||
       (Ty != MRI.getType(MI.getOperand(2).getReg())))
     llvm_unreachable("Unsupported operand maping yet.");
 
@@ -106,7 +105,7 @@ X86RegisterBankInfo::getOperandsMapping(const MachineInstr &MI, bool isFP) {
         ValMapIdx = VMI_3OpsFp64Idx;
         break;
       default:
-          llvm_unreachable("Unsupported register size.");
+        llvm_unreachable("Unsupported register size.");
       }
     }
   } else {

@@ -118,13 +118,13 @@ static bool selectCopy(MachineInstr &I, const TargetInstrInfo &TII,
   // No need to constrain SrcReg. It will get constrained when
   // we hit another of its use or its defs.
   // Copies do not have constraints.
-  const TargetRegisterClass *OldRC  = MRI.getRegClassOrNull(DstReg);
+  const TargetRegisterClass *OldRC = MRI.getRegClassOrNull(DstReg);
   if (!OldRC || !RC->hasSubClassEq(OldRC)) {
     if (!RBI.constrainGenericRegister(DstReg, *RC, MRI)) {
-        DEBUG(dbgs() << "Failed to constrain " << TII.getName(I.getOpcode())
-                     << " operand\n");
-        return false;
-      }
+      DEBUG(dbgs() << "Failed to constrain " << TII.getName(I.getOpcode())
+                   << " operand\n");
+      return false;
+    }
   }
   I.setDesc(TII.get(X86::COPY));
   return true;
@@ -152,7 +152,8 @@ bool X86InstructionSelector::select(MachineInstr &I) const {
   assert(I.getNumOperands() == I.getNumExplicitOperands() &&
          "Generic instruction has unexpected implicit operands\n");
 
-  // TODO: This should be implemented by tblgen, pattern with predicate not supported yet.
+  // TODO: This should be implemented by tblgen, pattern with predicate not
+  // supported yet.
   if (selectBinaryOp(I, MRI))
     return true;
 
@@ -300,4 +301,3 @@ bool X86InstructionSelector::selectBinaryOp(MachineInstr &I,
 
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
 }
-

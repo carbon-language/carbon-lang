@@ -85,5 +85,4 @@ void X86LegalizerInfo::setLegalizerInfoSSE2() {
   for (unsigned BinOp : {G_ADD, G_SUB})
     for (auto Ty : {v4s32})
       setAction({BinOp, Ty}, Legal);
-
 }
