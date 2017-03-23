@@ -2999,39 +2999,7 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   // Handle consecutive loads/stores.
   GetElementPtrInst *Gep = getGEPInstruction(Ptr);
   if (ConsecutiveStride) {
-    if (Gep) {
-      unsigned NumOperands = Gep->getNumOperands();
-#ifndef NDEBUG
-      // The original GEP that identified as a consecutive memory access
-      // should have only one loop-variant operand.
-      unsigned NumOfLoopVariantOps = 0;
-      for (unsigned i = 0; i < NumOperands; ++i)
-        if (!PSE.getSE()->isLoopInvariant(PSE.getSCEV(Gep->getOperand(i)),
-                                          OrigLoop))
-          NumOfLoopVariantOps++;
-      assert(NumOfLoopVariantOps == 1 &&
-             "Consecutive GEP should have only one loop-variant operand");
-#endif
-      GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-      Gep2->setName("gep.indvar");
-
-      // A new GEP is created for a 0-lane value of the first unroll iteration.
-      // The GEPs for the rest of the unroll iterations are computed below as an
-      // offset from this GEP.
-      for (unsigned i = 0; i < NumOperands; ++i)
-        // We can apply getScalarValue() for all GEP indices. It returns an
-        // original value for loop-invariant operand and 0-lane for consecutive
-        // operand.
-        Gep2->setOperand(i, getScalarValue(Gep->getOperand(i),
-                                           0, /* First unroll iteration */
-                                           0  /* 0-lane of the vector */ ));
-      setDebugLocFromInst(Builder, Gep);
-      Ptr = Builder.Insert(Gep2);
-
-    } else { // No GEP
-      setDebugLocFromInst(Builder, Ptr);
-      Ptr = getScalarValue(Ptr, 0, 0);
-    }
+    Ptr = getScalarValue(Ptr, 0, 0);
   } else {
     // At this point we should vector version of GEP for Gather or Scatter
     assert(CreateGatherScatter && "The instruction should be scalarized");
