@@ -5228,8 +5228,7 @@ static SDValue concat256BitVectors(SDValue V1, SDValue V2, EVT VT,
 /// Returns a vector of specified type with all bits set.
 /// Always build ones vectors as <4 x i32>, <8 x i32> or <16 x i32>.
 /// Then bitcast to their original type, ensuring they get CSE'd.
-static SDValue getOnesVector(EVT VT, const X86Subtarget &Subtarget,
-                             SelectionDAG &DAG, const SDLoc &dl) {
+static SDValue getOnesVector(EVT VT, SelectionDAG &DAG, const SDLoc &dl) {
   assert((VT.is128BitVector() || VT.is256BitVector() || VT.is512BitVector()) &&
          "Expected a 128/256/512-bit vector type");
 
@@ -7553,7 +7552,7 @@ static SDValue materializeVectorConstant(SDValue Op, SelectionDAG &DAG,
         (VT == MVT::v8i32 && Subtarget.hasInt256()))
       return Op;
 
-    return getOnesVector(VT, Subtarget, DAG, DL);
+    return getOnesVector(VT, DAG, DL);
   }
 
   return SDValue();
@@ -13585,7 +13584,7 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   if (ISD::isBuildVectorAllZeros(V1.getNode()))
     V1 = getZeroVector(ExtVT, Subtarget, DAG, DL);
   else if (ISD::isBuildVectorAllOnes(V1.getNode()))
-    V1 = getOnesVector(ExtVT, Subtarget, DAG, DL);
+    V1 = getOnesVector(ExtVT, DAG, DL);
   else
     V1 = DAG.getNode(ISD::SIGN_EXTEND, DL, ExtVT, V1);
 
@@ -13594,7 +13593,7 @@ static SDValue lower1BitVectorShuffle(const SDLoc &DL, ArrayRef<int> Mask,
   else if (ISD::isBuildVectorAllZeros(V2.getNode()))
     V2 = getZeroVector(ExtVT, Subtarget, DAG, DL);
   else if (ISD::isBuildVectorAllOnes(V2.getNode()))
-    V2 = getOnesVector(ExtVT, Subtarget, DAG, DL);
+    V2 = getOnesVector(ExtVT, DAG, DL);
   else
     V2 = DAG.getNode(ISD::SIGN_EXTEND, DL, ExtVT, V2);
 
@@ -17775,7 +17774,7 @@ static SDValue LowerSIGN_EXTEND_AVX512(SDValue Op,
     V = getExtendInVec(X86ISD::VSEXT, dl, ExtVT, In, DAG);
     assert(!VT.is512BitVector() && "Unexpected vector type");
   } else {
-    SDValue NegOne = getOnesVector(ExtVT, Subtarget, DAG, dl);
+    SDValue NegOne = getOnesVector(ExtVT, DAG, dl);
     SDValue Zero = getZeroVector(ExtVT, Subtarget, DAG, dl);
     V = DAG.getNode(ISD::VSELECT, dl, ExtVT, In, NegOne, Zero);
     if (ExtVT == VT)
@@ -34711,7 +34710,7 @@ static SDValue combineVectorCompare(SDNode *N, SelectionDAG &DAG,
 
   if (N->getOperand(0) == N->getOperand(1)) {
     if (N->getOpcode() == X86ISD::PCMPEQ)
-      return getOnesVector(VT, Subtarget, DAG, DL);
+      return getOnesVector(VT, DAG, DL);
     if (N->getOpcode() == X86ISD::PCMPGT)
       return getZeroVector(VT, Subtarget, DAG, DL);
   }
