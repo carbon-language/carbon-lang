@@ -734,12 +734,33 @@ const CallExpression *NewGVN::createCallExpression(CallInst *CI,
 bool NewGVN::someEquivalentDominates(const Instruction *Inst,
                                      const Instruction *U) const {
   auto *CC = ValueToClass.lookup(Inst);
-  assert(isa<Instruction>(CC->RepLeader) && CC->RepLeader == Inst);
-  if (CC)
-    return llvm::any_of(CC->Members, [&](const Value *Member) {
-      return DT->dominates(cast<Instruction>(Member), U);
-    });
-  return false;
+  // This must be an instruction because we are only called from phi nodes
+  // in the case that the value it needs to check against is an instruction.
+
+  // The most likely candiates for dominance are the leader and the next leader.
+  // The leader or nextleader will dominate in all cases where there is an
+  // equivalent that is higher up in the dom tree.
+  // We can't *only* check them, however, because the
+  // dominator tree could have an infinite number of non-dominating siblings
+  // with instructions that are in the right congruence class.
+  //       A
+  // B C D E F G
+  // |
+  // H
+  // Instruction U could be in H,  with equivalents in every other sibling.
+  // Depending on the rpo order picked, the leader could be the equivalent in
+  // any of these siblings.
+  if (!CC)
+    return false;
+  if (DT->dominates(cast<Instruction>(CC->RepLeader), U))
+    return true;
+  if (CC->NextLeader.first &&
+      DT->dominates(cast<Instruction>(CC->NextLeader.first), U))
+    return true;
+  return llvm::any_of(CC->Members, [&](const Value *Member) {
+    return Member != CC->RepLeader &&
+           DT->dominates(cast<Instruction>(Member), U);
+  });
 }
 
 // See if we have a congruence class and leader for this operand, and if so,
@@ -1380,13 +1401,18 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I,
   // We assert on phi nodes when this happens, currently, for debugging, because
   // we want to make sure we name phi node cycles properly.
   if (isa<Instruction>(NewClass->RepLeader) && NewClass->RepLeader &&
-      I != NewClass->RepLeader &&
-      DT->properlyDominates(
-          I->getParent(),
-          cast<Instruction>(NewClass->RepLeader)->getParent())) {
-    ++NumGVNNotMostDominatingLeader;
-    assert(!isa<PHINode>(I) &&
-           "New class for instruction should not be dominated by instruction");
+      I != NewClass->RepLeader) {
+    auto *IBB = I->getParent();
+    auto *NCBB = cast<Instruction>(NewClass->RepLeader)->getParent();
+    bool Dominated = IBB == NCBB &&
+                     InstrDFS.lookup(I) < InstrDFS.lookup(NewClass->RepLeader);
+    Dominated = Dominated || DT->properlyDominates(IBB, NCBB);
+    if (Dominated) {
+      ++NumGVNNotMostDominatingLeader;
+      assert(
+          !isa<PHINode>(I) &&
+          "New class for instruction should not be dominated by instruction");
+    }
   }
 
   if (NewClass->RepLeader != I) {
