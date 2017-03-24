@@ -57,7 +57,7 @@ private:
   bool inExceptionList(const CodeGenInstruction *Inst) {
     // List of EVEX instructions that match VEX instructions by the encoding
     // but do not perform the same operation.
-    static constexpr StringLiteral ExceptionList[] = {
+    static constexpr const char *ExceptionList[] = {
         "VCVTQQ2PD",
         "VCVTQQ2PS",
         "VPMAXSQ",
