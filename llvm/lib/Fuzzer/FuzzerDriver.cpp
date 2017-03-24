@@ -317,7 +317,9 @@ int MinimizeCrashInput(const std::vector<std::string> &Args,
            CurrentFilePath.c_str(), U.size());
 
     std::string ArtifactPath =
-        Options.ArtifactPrefix + "minimized-from-" + Hash(U);
+        Flags.exact_artifact_path
+            ? Flags.exact_artifact_path
+            : Options.ArtifactPrefix + "minimized-from-" + Hash(U);
     Cmd += " -minimize_crash_internal_step=1 -exact_artifact_path=" +
         ArtifactPath;
     Printf("CRASH_MIN: executing: %s\n", Cmd.c_str());
