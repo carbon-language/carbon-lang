@@ -18,8 +18,8 @@
 // I don't think implicit default values are useful because they are
 // usually explicitly specified by the compiler driver. They can even
 // be harmful when you are doing cross-linking. Therefore, in LLD, we
-// simply trust the compiler driver to pass all required options to us
-// and don't try to make effort on our side.
+// simply trust the compiler driver to pass all required options and
+// don't try to make effort on our side.
 //
 //===----------------------------------------------------------------------===//
 

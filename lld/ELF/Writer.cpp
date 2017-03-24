@@ -1337,9 +1337,8 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
     AddHdr(PT_GNU_EH_FRAME, In<ELFT>::EhFrameHdr->OutSec->getPhdrFlags())
         ->add(In<ELFT>::EhFrameHdr->OutSec);
 
-  // PT_OPENBSD_RANDOMIZE specifies the location and size of a part of the
-  // memory image of the program that must be filled with random data before any
-  // code in the object is executed.
+  // PT_OPENBSD_RANDOMIZE is an OpenBSD-specific feature. That makes
+  // the dynamic linker fill the segment with random data.
   if (OutputSection *Sec = findSection(".openbsd.randomdata"))
     AddHdr(PT_OPENBSD_RANDOMIZE, Sec->getPhdrFlags())->add(Sec);
 
