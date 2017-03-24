@@ -1825,7 +1825,9 @@ void SIScheduleDAGMI::schedule()
   // if VGPR usage is extremely high, try other good performing variants
   // which could lead to lower VGPR usage
   if (Best.MaxVGPRUsage > 180) {
-    std::vector<std::pair<SISchedulerBlockCreatorVariant, SISchedulerBlockSchedulerVariant>> Variants = {
+    static constexpr std::pair<SISchedulerBlockCreatorVariant,
+                               SISchedulerBlockSchedulerVariant>
+        Variants[] = {
       { LatenciesAlone, BlockRegUsageLatency },
 //      { LatenciesAlone, BlockRegUsage },
       { LatenciesGrouped, BlockLatencyRegUsage },
@@ -1844,7 +1846,9 @@ void SIScheduleDAGMI::schedule()
   // if VGPR usage is still extremely high, we may spill. Try other variants
   // which are less performing, but that could lead to lower VGPR usage.
   if (Best.MaxVGPRUsage > 200) {
-    std::vector<std::pair<SISchedulerBlockCreatorVariant, SISchedulerBlockSchedulerVariant>> Variants = {
+    static constexpr std::pair<SISchedulerBlockCreatorVariant,
+                               SISchedulerBlockSchedulerVariant>
+        Variants[] = {
 //      { LatenciesAlone, BlockRegUsageLatency },
       { LatenciesAlone, BlockRegUsage },
 //      { LatenciesGrouped, BlockLatencyRegUsage },
