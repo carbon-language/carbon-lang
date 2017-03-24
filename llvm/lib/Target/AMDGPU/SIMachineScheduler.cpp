@@ -1465,8 +1465,8 @@ SIScheduleBlock *SIScheduleBlockScheduler::pickBlock() {
                         VregCurrentUsage, SregCurrentUsage);
   if (VregCurrentUsage > maxVregUsage)
     maxVregUsage = VregCurrentUsage;
-  if (VregCurrentUsage > maxSregUsage)
-    maxSregUsage = VregCurrentUsage;
+  if (SregCurrentUsage > maxSregUsage)
+    maxSregUsage = SregCurrentUsage;
   DEBUG(
     dbgs() << "Picking New Blocks\n";
     dbgs() << "Available: ";
