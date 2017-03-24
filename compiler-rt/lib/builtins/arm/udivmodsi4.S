@@ -16,7 +16,8 @@
 
 	.syntax unified
 	.text
-#if defined(USE_THUMB_PROLOGUE)
+
+#if __ARM_ARCH_ISA_THUMB == 2
 	.thumb
 #endif
 
@@ -26,7 +27,7 @@
 @   value is the quotient, the remainder is placed in the variable.
 
 	.p2align 2
-#if defined(USE_THUMB_PROLOGUE)
+#if __ARM_ARCH_ISA_THUMB == 2
 DEFINE_COMPILERRT_THUMB_FUNCTION(__udivmodsi4)
 #else
 DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
@@ -66,7 +67,7 @@ DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
 	clz	r3, r1
 	/* r0 >= r1 implies clz(r0) <= clz(r1), so ip <= r3. */
 	sub	r3, r3, ip
-#    if defined(USE_THUMB_2)
+#    if __ARM_ARCH_ISA_THUMB == 2
 	adr	ip, LOCAL_LABEL(div0block) + 1
 	sub	ip, ip, r3, lsl #1
 #    else
@@ -77,7 +78,7 @@ DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
 	mov	r3, #0
 	bx	ip
 #  else
-#    if defined(USE_THUMB_2)
+#    if __ARM_ARCH_ISA_THUMB == 2
 #    error THUMB mode requires CLZ or UDIV
 #    endif
 	str	r4, [sp, #-8]!

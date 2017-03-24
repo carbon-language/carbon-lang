@@ -38,20 +38,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "../assembly.h"
-    .syntax unified
-    .text
-#if defined(USE_THUMB_PROLOGUE)
-    .thumb
+.syntax unified
+#if __ARM_ARCH_ISA_THUMB == 2
+.thumb
 #endif
 
 @ int __eqsf2(float a, float b)
 
     .p2align 2
-#if defined(USE_THUMB_PROLOGUE)
-DEFINE_COMPILERRT_THUMB_FUNCTION(__eqsf2)
-#else
 DEFINE_COMPILERRT_FUNCTION(__eqsf2)
-#endif
 #if defined(COMPILER_RT_ARMHF_TARGET)
     vmov r0, s0
     vmov r1, s1
@@ -72,7 +67,7 @@ DEFINE_COMPILERRT_FUNCTION(__eqsf2)
     // flag if both a and b are zero (of either sign).  The shift of r3 doesn't
     // effect this at all, but it *does* make sure that the C flag is clear for
     // the subsequent operations.
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
     lsrs    r6,     r3, #1
     orrs    r6,     r2
 #else
@@ -80,7 +75,7 @@ DEFINE_COMPILERRT_FUNCTION(__eqsf2)
 #endif
     // Next, we check if a and b have the same or different signs.  If they have
     // opposite signs, this eor will set the N flag.
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
     beq     1f
     movs    r6,     r0
     eors    r6,     r1
@@ -94,7 +89,7 @@ DEFINE_COMPILERRT_FUNCTION(__eqsf2)
     // ignoring NaNs for now), this subtract will zero out r0.  If they have the
     // same sign, the flags are updated as they would be for a comparison of the
     // absolute values of a and b.
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
     bmi     1f
     subs    r0,     r2, r3
 1:
@@ -113,7 +108,7 @@ DEFINE_COMPILERRT_FUNCTION(__eqsf2)
     // still clear from the shift argument in orrs; if a is positive and b
     // negative, this places 0 in r0; if a is negative and b positive, -1 is
     // placed in r0.
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
     bhs     1f
     // Here if a and b have the same sign and absA < absB, the result is thus
     // b < 0 ? 1 : -1. Same if a and b have the opposite sign (ignoring Nan).
@@ -132,7 +127,7 @@ DEFINE_COMPILERRT_FUNCTION(__eqsf2)
     // the sign of b in r0.  Thus, if both are negative and a < b, -1 is placed
     // in r0, which is the desired result.  Conversely, if both are positive
     // and a > b, zero is placed in r0.
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
     bls     1f
     // Here both have the same sign and absA > absB.
     movs    r0,         #1
@@ -150,14 +145,14 @@ DEFINE_COMPILERRT_FUNCTION(__eqsf2)
     // If a == b, then the Z flag is set, so we can get the correct final value
     // into r0 by simply or'ing with 1 if Z is clear.
     // For Thumb-1, r0 contains -1 if a < b, 0 if a > b and 0 if a == b.
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB != 1
     it ne
     orrne   r0,     r0, #1
 #endif
 
     // Finally, we need to deal with NaNs.  If either argument is NaN, replace
     // the value in r0 with 1.
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
 LOCAL_LABEL(CHECK_NAN):
     movs    r6,         #0xff
     lsls    r6,         #24
@@ -185,11 +180,7 @@ DEFINE_COMPILERRT_FUNCTION_ALIAS(__nesf2, __eqsf2)
 @ int __gtsf2(float a, float b)
 
     .p2align 2
-#if defined(USE_THUMB)
-DEFINE_COMPILERRT_THUMB_FUNCTION(__gtsf2)
-#else
 DEFINE_COMPILERRT_FUNCTION(__gtsf2)
-#endif
     // Identical to the preceding except in that we return -1 for NaN values.
     // Given that the two paths share so much code, one might be tempted to
     // unify them; however, the extra code needed to do so makes the code size
@@ -198,7 +189,7 @@ DEFINE_COMPILERRT_FUNCTION(__gtsf2)
     vmov r0, s0
     vmov r1, s1
 #endif
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
     push    {r6, lr}
     lsls    r2,        r0, #1
     lsls    r3,        r1, #1
@@ -263,12 +254,7 @@ DEFINE_COMPILERRT_FUNCTION_ALIAS(__gesf2, __gtsf2)
 @ int __unordsf2(float a, float b)
 
     .p2align 2
-#if defined(USE_THUMB)
-DEFINE_COMPILERRT_THUMB_FUNCTION(__unordsf2)
-#else
 DEFINE_COMPILERRT_FUNCTION(__unordsf2)
-#endif
-
 #if defined(COMPILER_RT_ARMHF_TARGET)
     vmov    r0,         s0
     vmov    r1,         s1
@@ -277,7 +263,7 @@ DEFINE_COMPILERRT_FUNCTION(__unordsf2)
     lsls    r2,         r0, #1
     lsls    r3,         r1, #1
     movs    r0,         #0
-#if defined(USE_THUMB_1)
+#if __ARM_ARCH_ISA_THUMB == 1
     movs    r1,         #0xff
     lsls    r1,         #24
     cmp     r2,         r1
