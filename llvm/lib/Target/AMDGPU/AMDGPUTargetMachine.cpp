@@ -132,6 +132,7 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   initializeSIInsertSkipsPass(*PR);
   initializeSIDebuggerInsertNopsPass(*PR);
   initializeSIOptimizeExecMaskingPass(*PR);
+  initializeAMDGPUUnifyDivergentExitNodesPass(*PR);
   initializeAMDGPUAAWrapperPassPass(*PR);
 }
 
@@ -673,6 +674,10 @@ bool GCNPassConfig::addPreISel() {
   // supported.
   const AMDGPUTargetMachine &TM = getAMDGPUTargetMachine();
   addPass(createAMDGPUAnnotateKernelFeaturesPass(&TM));
+
+  // Merge divergent exit nodes. StructurizeCFG won't recognize the multi-exit
+  // regions formed by them.
+  addPass(&AMDGPUUnifyDivergentExitNodesID);
   addPass(createStructurizeCFGPass(true)); // true -> SkipUniformRegions
   addPass(createSinkingPass());
   addPass(createSITypeRewriter());
