@@ -38,8 +38,8 @@ class X86EVEX2VEXTablesEmitter {
 
   // Represents a manually added entry to the tables
   struct ManualEntry {
-    StringLiteral EVEXInstStr;
-    StringLiteral VEXInstStr;
+    const char *EVEXInstStr;
+    const char *VEXInstStr;
     bool Is128Bit;
   };
 
