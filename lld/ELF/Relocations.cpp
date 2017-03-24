@@ -593,10 +593,12 @@ static int64_t computeAddend(const elf::ObjectFile<ELFT> &File,
 template <class ELFT>
 static void reportUndefined(SymbolBody &Sym, InputSectionBase &S,
                             typename ELFT::uint Offset) {
+  if (Config->UnresolvedSymbols == UnresolvedPolicy::IgnoreAll)
+    return;
+
   bool CanBeExternal = Sym.symbol()->computeBinding() != STB_LOCAL &&
                        Sym.getVisibility() == STV_DEFAULT;
-  if (Config->UnresolvedSymbols == UnresolvedPolicy::IgnoreAll ||
-      (Config->UnresolvedSymbols == UnresolvedPolicy::Ignore && CanBeExternal))
+  if (Config->UnresolvedSymbols == UnresolvedPolicy::Ignore && CanBeExternal)
     return;
 
   std::string Msg = S.getLocation<ELFT>(Offset) + ": undefined symbol '" +
