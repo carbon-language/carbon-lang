@@ -1403,6 +1403,7 @@ SIScheduleBlockScheduler::SIScheduleBlockScheduler(SIScheduleDAGMI *DAG,
     for (SIScheduleBlock* Block : BlocksScheduled) {
       dbgs() << ' ' << Block->getID();
     }
+    dbgs() << '\n';
   );
 }
 
