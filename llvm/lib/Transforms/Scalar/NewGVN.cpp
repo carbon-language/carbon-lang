@@ -420,6 +420,7 @@ private:
   void verifyIterationSettled(Function &F);
   bool singleReachablePHIPath(const MemoryAccess *, const MemoryAccess *) const;
   BasicBlock *getBlockForValue(Value *V) const;
+  void deleteExpression(const Expression *E);
   // Debug counter info.  When verifying, we have to reset the value numbering
   // debug counter to the same state it started in to get the same results.
   std::pair<int, int> StartingVNCounter;
@@ -469,6 +470,16 @@ BasicBlock *NewGVN::getBlockForValue(Value *V) const {
     return MP->getBlock();
   llvm_unreachable("Should have been able to figure out a block for our value");
   return nullptr;
+}
+
+// Delete a definitely dead expression, so it can be reused by the expression
+// allocator.  Some of these are not in creation functions, so we have to accept
+// const versions.
+void NewGVN::deleteExpression(const Expression *E) {
+  assert(isa<BasicExpression>(E));
+  auto *BE = cast<BasicExpression>(E);
+  const_cast<BasicExpression *>(BE)->deallocateOperands(ArgRecycler);
+  ExpressionAllocator.Deallocate(E);
 }
 
 PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
@@ -559,16 +570,13 @@ const Expression *NewGVN::checkSimplificationResults(Expression *E,
     NumGVNOpsSimplified++;
     assert(isa<BasicExpression>(E) &&
            "We should always have had a basic expression here");
-
-    cast<BasicExpression>(E)->deallocateOperands(ArgRecycler);
-    ExpressionAllocator.Deallocate(E);
+    deleteExpression(E);
     return createConstantExpression(C);
   } else if (isa<Argument>(V) || isa<GlobalVariable>(V)) {
     if (I)
       DEBUG(dbgs() << "Simplified " << *I << " to "
                    << " variable " << *V << "\n");
-    cast<BasicExpression>(E)->deallocateOperands(ArgRecycler);
-    ExpressionAllocator.Deallocate(E);
+    deleteExpression(E);
     return createVariableExpression(V);
   }
 
@@ -578,10 +586,7 @@ const Expression *NewGVN::checkSimplificationResults(Expression *E,
       DEBUG(dbgs() << "Simplified " << *I << " to "
                    << " expression " << *V << "\n");
     NumGVNOpsSimplified++;
-    assert(isa<BasicExpression>(E) &&
-           "We should always have had a basic expression here");
-    cast<BasicExpression>(E)->deallocateOperands(ArgRecycler);
-    ExpressionAllocator.Deallocate(E);
+    deleteExpression(E);
     return CC->DefiningExpr;
   }
   return nullptr;
@@ -832,7 +837,8 @@ const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I) {
     // The RepStoredValue gets nulled if all the stores disappear in a class, so
     // we don't need to check if the class contains a store besides us.
     if (CC && CC->RepStoredValue == lookupOperandLeader(SI->getValueOperand()))
-      return createStoreExpression(SI, StoreRHS);
+      return OldStore;
+    deleteExpression(OldStore);
     // Also check if our value operand is defined by a load of the same memory
     // location, and the memory state is the same as it was then
     // (otherwise, it could have been overwritten later. See test32 in
@@ -1024,6 +1030,7 @@ bool NewGVN::setMemoryAccessEquivTo(MemoryAccess *From, CongruenceClass *To) {
 
   return Changed;
 }
+
 // Evaluate PHI nodes symbolically, and create an expression result.
 const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) {
   auto *E = cast<PHIExpression>(createPHIExpression(I));
@@ -1045,8 +1052,7 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) {
   if (Filtered.begin() == Filtered.end()) {
     DEBUG(dbgs() << "Simplified PHI node " << *I << " to undef"
                  << "\n");
-    E->deallocateOperands(ArgRecycler);
-    ExpressionAllocator.Deallocate(E);
+    deleteExpression(E);
     return createConstantExpression(UndefValue::get(I->getType()));
   }
   Value *AllSameValue = *(Filtered.begin());
@@ -1074,8 +1080,7 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) {
     NumGVNPhisAllSame++;
     DEBUG(dbgs() << "Simplified PHI node " << *I << " to " << *AllSameValue
                  << "\n");
-    E->deallocateOperands(ArgRecycler);
-    ExpressionAllocator.Deallocate(E);
+    deleteExpression(E);
     return createVariableOrConstant(AllSameValue);
   }
   return E;
