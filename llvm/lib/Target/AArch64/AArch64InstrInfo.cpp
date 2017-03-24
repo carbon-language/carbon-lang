@@ -4280,7 +4280,7 @@ unsigned AArch64InstrInfo::getOutliningBenefit(size_t SequenceSize,
 }
 
 bool AArch64InstrInfo::isFunctionSafeToOutlineFrom(MachineFunction &MF) const {
-  return true;
+  return MF.getFunction()->hasFnAttribute(Attribute::NoRedZone);
 }
 
 AArch64GenInstrInfo::MachineOutlinerInstrType
