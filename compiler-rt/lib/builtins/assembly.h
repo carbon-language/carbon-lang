@@ -92,20 +92,35 @@
   JMP(ip)
 #endif
 
-#if __ARM_ARCH_ISA_THUMB == 2
+/*
+ * Determine actual [ARM][THUMB[1][2]] ISA using compiler predefined macros:
+ * - for '-mthumb -march=armv6' compiler defines '__thumb__'
+ * - for '-mthumb -march=armv7' compiler defines '__thumb__' and '__thumb2__'
+ */
+#if defined(__thumb2__)
+#define USE_THUMB_2 1
+#elif defined(__thumb__)
+#define USE_THUMB_1 1
+#endif
+
+#if defined(USE_THUMB_1) && defined(USE_THUMB_2)
+#error "USE_THUMB_1 and USE_THUMB_2 can't be defined together."
+#endif
+
+#if defined(USE_THUMB_1) || defined(USE_THUMB_1)
+#define USE_THUMB_PROLOGUE 1
+#endif
+
+#if defined(USE_THUMB_2)
 #define IT(cond)  it cond
 #define ITT(cond) itt cond
+#define WIDE(op) op.w
 #else
 #define IT(cond)
 #define ITT(cond)
-#endif
-
-#if __ARM_ARCH_ISA_THUMB == 2
-#define WIDE(op) op.w
-#else
 #define WIDE(op) op
 #endif
-#endif
+#endif /* defined(__arm__) */
 
 #define GLUE2(a, b) a##b
 #define GLUE(a, b) GLUE2(a, b)

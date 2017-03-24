@@ -16,8 +16,7 @@
 
 	.syntax unified
 	.text
-
-#if __ARM_ARCH_ISA_THUMB == 2
+#if defined(USE_THUMB_PROLOGUE)
 	.thumb
 #endif
 
@@ -27,7 +26,7 @@ DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
 @ unsigned int __udivsi3(unsigned int divident, unsigned int divisor)
 @   Calculate and return the quotient of the (unsigned) division.
 
-#if __ARM_ARCH_ISA_THUMB == 2
+#if defined(USE_THUMB_PROLOGUE)
 DEFINE_COMPILERRT_THUMB_FUNCTION(__udivsi3)
 #else
 DEFINE_COMPILERRT_FUNCTION(__udivsi3)
@@ -40,7 +39,7 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 #else
 	cmp	r1, #1
 	bcc	LOCAL_LABEL(divby0)
-#if __ARM_ARCH_ISA_THUMB == 1
+#if defined(USE_THUMB_1)
 	bne LOCAL_LABEL(num_neq_denom)
 	JMP(lr)
 LOCAL_LABEL(num_neq_denom):
@@ -49,7 +48,7 @@ LOCAL_LABEL(num_neq_denom):
 	JMPc(lr, eq)
 #endif
 	cmp	r0, r1
-#if __ARM_ARCH_ISA_THUMB == 1
+#if defined(USE_THUMB_1)
 	bhs LOCAL_LABEL(num_ge_denom)
 	movs r0, #0
 	JMP(lr)
@@ -81,7 +80,7 @@ LOCAL_LABEL(num_ge_denom):
 	clz	r3, r1
 	/* r0 >= r1 implies clz(r0) <= clz(r1), so ip <= r3. */
 	sub	r3, r3, ip
-#    if __ARM_ARCH_ISA_THUMB == 2
+#    if defined(USE_THUMB_2)
 	adr	ip, LOCAL_LABEL(div0block) + 1
 	sub	ip, ip, r3, lsl #1
 #    else
@@ -92,17 +91,17 @@ LOCAL_LABEL(num_ge_denom):
 	mov	r3, #0
 	bx	ip
 #  else /* No CLZ Feature */
-#    if __ARM_ARCH_ISA_THUMB == 2
+#    if defined(USE_THUMB_2)
 #    error THUMB mode requires CLZ or UDIV
 #    endif
-#    if __ARM_ARCH_ISA_THUMB == 1
+#    if defined(USE_THUMB_1)
 #      define BLOCK_SIZE 10
 #    else
 #      define BLOCK_SIZE 12
 #    endif
 
 	mov	r2, r0
-#    if __ARM_ARCH_ISA_THUMB == 1
+#    if defined(USE_THUMB_1)
 	mov ip, r0
 	adr r0, LOCAL_LABEL(div0block)
 	adds r0, #1
@@ -111,7 +110,7 @@ LOCAL_LABEL(num_ge_denom):
 #    endif
 	lsrs	r3, r2, #16
 	cmp	r3, r1
-#    if __ARM_ARCH_ISA_THUMB == 1
+#    if defined(USE_THUMB_1)
 	blo LOCAL_LABEL(skip_16)
 	movs r2, r3
 	subs r0, r0, #(16 * BLOCK_SIZE)
@@ -123,7 +122,7 @@ LOCAL_LABEL(skip_16):
 
 	lsrs	r3, r2, #8
 	cmp	r3, r1
-#    if __ARM_ARCH_ISA_THUMB == 1
+#    if defined(USE_THUMB_1)
 	blo LOCAL_LABEL(skip_8)
 	movs r2, r3
 	subs r0, r0, #(8 * BLOCK_SIZE)
@@ -135,7 +134,7 @@ LOCAL_LABEL(skip_8):
 
 	lsrs	r3, r2, #4
 	cmp	r3, r1
-#    if __ARM_ARCH_ISA_THUMB == 1
+#    if defined(USE_THUMB_1)
 	blo LOCAL_LABEL(skip_4)
 	movs r2, r3
 	subs r0, r0, #(4 * BLOCK_SIZE)
@@ -147,7 +146,7 @@ LOCAL_LABEL(skip_4):
 
 	lsrs	r3, r2, #2
 	cmp	r3, r1
-#    if __ARM_ARCH_ISA_THUMB == 1
+#    if defined(USE_THUMB_1)
 	blo LOCAL_LABEL(skip_2)
 	movs r2, r3
 	subs r0, r0, #(2 * BLOCK_SIZE)
@@ -158,7 +157,7 @@ LOCAL_LABEL(skip_2):
 #    endif
 
 	/* Last block, no need to update r2 or r3. */
-#    if __ARM_ARCH_ISA_THUMB == 1
+#    if defined(USE_THUMB_1)
 	lsrs r3, r2, #1
 	cmp r3, r1
 	blo LOCAL_LABEL(skip_1)
@@ -191,7 +190,7 @@ LOCAL_LABEL(divby0):
 	JMP(lr)
 
 
-#if __ARM_ARCH_ISA_THUMB == 1
+#if defined(USE_THUMB_1)
 #define block(shift)                                                           \
 	lsls r2, r1, IMM shift;                                                      \
 	cmp r0, r2;                                                                  \

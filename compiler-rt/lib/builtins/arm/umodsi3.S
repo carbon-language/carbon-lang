@@ -16,7 +16,7 @@
 
 	.syntax unified
 	.text
-#if __ARM_ARCH_ISA_THUMB == 2
+#if defined(USE_THUMB_PROLOGUE)
 	.thumb
 #endif
 
@@ -24,7 +24,7 @@
 @   Calculate and return the remainder of the (unsigned) division.
 
 	.p2align 2
-#if __ARM_ARCH_ISA_THUMB == 2
+#if defined(USE_THUMB_PROLOGUE)
 DEFINE_COMPILERRT_THUMB_FUNCTION(__umodsi3)
 #else
 DEFINE_COMPILERRT_FUNCTION(__umodsi3)
@@ -65,7 +65,7 @@ DEFINE_COMPILERRT_FUNCTION(__umodsi3)
 	clz	r3, r1
 	/* r0 >= r1 implies clz(r0) <= clz(r1), so ip <= r3. */
 	sub	r3, r3, ip
-#    if __ARM_ARCH_ISA_THUMB == 2
+#    if defined(USE_THUMB_2)
 	adr	ip, LOCAL_LABEL(div0block) + 1
 	sub	ip, ip, r3, lsl #1
 #    else
@@ -74,7 +74,7 @@ DEFINE_COMPILERRT_FUNCTION(__umodsi3)
 	sub	ip, ip, r3, lsl #3
 	bx	ip
 #  else
-#    if __ARM_ARCH_ISA_THUMB == 2
+#    if defined(USE_THUMB_2)
 #    error THUMB mode requires CLZ or UDIV
 #    endif
 	mov	r2, r0

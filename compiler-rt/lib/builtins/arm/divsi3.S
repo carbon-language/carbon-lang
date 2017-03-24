@@ -20,10 +20,10 @@
 #define CLEAR_FRAME_AND_RETURN \
     pop    {r4, r7, pc}
 
-	.syntax unified
-	.text
-#if __ARM_ARCH_ISA_THUMB == 2
-	.thumb
+   .syntax unified
+   .text
+#if defined(USE_THUMB_PROLOGUE)
+   .thumb
 #endif
 
 	.p2align 3
@@ -33,7 +33,7 @@ DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_idiv, __divsi3)
 @ int __divsi3(int divident, int divisor)
 @   Calculate and return the quotient of the (signed) division.
 
-#if __ARM_ARCH_ISA_THUMB == 2
+#if defined(USE_THUMB_PROLOGUE)
 DEFINE_COMPILERRT_THUMB_FUNCTION(__divsi3)
 #else
 DEFINE_COMPILERRT_FUNCTION(__divsi3)
@@ -72,7 +72,7 @@ ESTABLISH_FRAME
 //  abs(a) / abs(b)
     bl      SYMBOL_NAME(__udivsi3)
 //  Apply sign of quotient to result and return.
-#  if __ARM_ARCH_ISA_THUMB == 1
+#  if defined(USE_THUMB_1)
     asrs    r4,     #31
     eors    r0,     r4
     subs    r0,     r0, r4
