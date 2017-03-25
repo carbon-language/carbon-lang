@@ -414,9 +414,9 @@ remove_flags(-stdlib=libc++ -stdlib=libstdc++)
 # non-debug DLLs
 remove_flags("/D_DEBUG" "/MTd" "/MDd" "/MT" "/Md")
 
-# FIXME(EricWF): See the FIXME on LIBCXX_ENABLE_PEqDANTIC.
+# FIXME(EricWF): See the FIXME on LIBCXX_ENABLE_PEDANTIC.
 # Remove the -pedantic flag and -Wno-pedantic and -pedantic-errors
-# so they don't get transformed into -Wno and -errors respectivly.
+# so they don't get transformed into -Wno and -errors respectively.
 remove_flags(-Wno-pedantic -pedantic-errors -pedantic)
 
 # Required flags ==============================================================
