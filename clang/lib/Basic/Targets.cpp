@@ -2027,14 +2027,23 @@ ArrayRef<const char *> NVPTXTargetInfo::getGCCRegNames() const {
   return llvm::makeArrayRef(GCCRegNames);
 }
 
-static const unsigned AMDGPUAddrSpaceMap[] = {
-  1,    // opencl_global
-  3,    // opencl_local
-  2,    // opencl_constant
-  4,    // opencl_generic
-  1,    // cuda_device
-  2,    // cuda_constant
-  3     // cuda_shared
+static const LangAS::Map AMDGPUPrivateIsZeroMap = {
+    1,  // opencl_global
+    3,  // opencl_local
+    2,  // opencl_constant
+    4,  // opencl_generic
+    1,  // cuda_device
+    2,  // cuda_constant
+    3   // cuda_shared
+};
+static const LangAS::Map AMDGPUGenericIsZeroMap = {
+    1,  // opencl_global
+    3,  // opencl_local
+    4,  // opencl_constant
+    0,  // opencl_generic
+    1,  // cuda_device
+    4,  // cuda_constant
+    3   // cuda_shared
 };
 
 // If you edit the description strings, make sure you update
@@ -2044,14 +2053,38 @@ static const char *const DataLayoutStringR600 =
   "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
   "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
-static const char *const DataLayoutStringSI =
+static const char *const DataLayoutStringSIPrivateIsZero =
   "e-p:32:32-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32"
+  "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
+  "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
+
+static const char *const DataLayoutStringSIGenericIsZero =
+  "e-p:64:64-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32"
   "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
   "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
 class AMDGPUTargetInfo final : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
   static const char * const GCCRegNames[];
+
+  struct AddrSpace {
+    unsigned Generic, Global, Local, Constant, Private;
+    AddrSpace(bool IsGenericZero_ = false){
+      if (IsGenericZero_) {
+        Generic   = 0;
+        Global    = 1;
+        Local     = 3;
+        Constant  = 4;
+        Private   = 5;
+      } else {
+        Generic   = 4;
+        Global    = 1;
+        Local     = 3;
+        Constant  = 2;
+        Private   = 0;
+      }
+    }
+  };
 
   /// \brief The GPU profiles supported by the AMDGPU target.
   enum GPUKind {
@@ -2079,6 +2112,10 @@ class AMDGPUTargetInfo final : public TargetInfo {
     return TT.getArch() == llvm::Triple::amdgcn;
   }
 
+  static bool isGenericZero(const llvm::Triple &TT) {
+    return TT.getEnvironmentName() == "amdgiz" ||
+        TT.getEnvironmentName() == "amdgizcl";
+  }
 public:
   AMDGPUTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
     : TargetInfo(Triple) ,
@@ -2086,17 +2123,21 @@ public:
       hasFP64(false),
       hasFMAF(false),
       hasLDEXPF(false),
-      hasFullSpeedFP32Denorms(false){
+      hasFullSpeedFP32Denorms(false),
+      AS(isGenericZero(Triple)){
     if (getTriple().getArch() == llvm::Triple::amdgcn) {
       hasFP64 = true;
       hasFMAF = true;
       hasLDEXPF = true;
     }
-
+    auto IsGenericZero = isGenericZero(Triple);
     resetDataLayout(getTriple().getArch() == llvm::Triple::amdgcn ?
-                    DataLayoutStringSI : DataLayoutStringR600);
+                    (IsGenericZero ? DataLayoutStringSIGenericIsZero :
+                        DataLayoutStringSIPrivateIsZero)
+                    : DataLayoutStringR600);
 
-    AddrSpaceMap = &AMDGPUAddrSpaceMap;
+    AddrSpaceMap = IsGenericZero ? &AMDGPUGenericIsZeroMap :
+        &AMDGPUPrivateIsZeroMap;
     UseAddrSpaceMapMangling = true;
   }
 
@@ -2104,14 +2145,10 @@ public:
     if (GPU <= GK_CAYMAN)
       return 32;
 
-    switch(AddrSpace) {
-      default:
-        return 64;
-      case 0:
-      case 3:
-      case 5:
-        return 32;
+    if (AddrSpace == AS.Private || AddrSpace == AS.Local) {
+      return 32;
     }
+    return 64;
   }
 
   uint64_t getMaxPointerWidth() const override {
@@ -2304,12 +2341,13 @@ public:
   /// DWARF.
   Optional<unsigned> getDWARFAddressSpace(
       unsigned AddressSpace) const override {
-    switch (AddressSpace) {
-    case 0: // LLVM Private.
-      return 1; // DWARF Private.
-    case 3: // LLVM Local.
-      return 2; // DWARF Local.
-    default:
+    const unsigned DWARF_Private = 1;
+    const unsigned DWARF_Local   = 2;
+    if (AddressSpace == AS.Private) {
+      return DWARF_Private;
+    } else if (AddressSpace == AS.Local) {
+      return DWARF_Local;
+    } else {
       return None;
     }
   }
@@ -2330,6 +2368,8 @@ public:
   uint64_t getNullPointerValue(unsigned AS) const override {
     return AS == LangAS::opencl_local ? ~0 : 0;
   }
+
+  const AddrSpace AS;
 };
 
 const Builtin::Info AMDGPUTargetInfo::BuiltinInfo[] = {
