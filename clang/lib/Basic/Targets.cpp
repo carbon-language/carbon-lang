@@ -1412,7 +1412,6 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   //   __RSQRTEF__
   //   _SOFT_DOUBLE_
   //   __NO_LWSYNC__
-  //   __LONGDOUBLE128
   //   __CMODEL_MEDIUM__
   //   __CMODEL_LARGE__
   //   _CALL_SYSV
