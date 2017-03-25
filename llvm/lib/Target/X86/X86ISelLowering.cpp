@@ -26646,25 +26646,23 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
 
 unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
     SDValue Op, const SelectionDAG &DAG, unsigned Depth) const {
+  unsigned VTBits = Op.getScalarValueSizeInBits();
   unsigned Opcode = Op.getOpcode();
   switch (Opcode) {
   case X86ISD::SETCC_CARRY:
     // SETCC_CARRY sets the dest to ~0 for true or 0 for false.
-    return Op.getScalarValueSizeInBits();
+    return VTBits;
 
   case X86ISD::VSEXT: {
     SDValue Src = Op.getOperand(0);
-    EVT VT = Op.getValueType();
-    EVT SrcVT = Src.getValueType();
     unsigned Tmp = DAG.ComputeNumSignBits(Src, Depth + 1);
-    Tmp += VT.getScalarSizeInBits() - SrcVT.getScalarSizeInBits();
+    Tmp += VTBits - Src.getScalarValueSizeInBits();
     return Tmp;
   }
 
   case X86ISD::VSRAI: {
     SDValue Src = Op.getOperand(0);
     unsigned Tmp = DAG.ComputeNumSignBits(Src, Depth + 1);
-    unsigned VTBits = Op.getValueType().getScalarSizeInBits();
     APInt ShiftVal = cast<ConstantSDNode>(Op.getOperand(1))->getAPIntValue();
     ShiftVal += Tmp;
     return ShiftVal.uge(VTBits) ? VTBits : ShiftVal.getZExtValue();
@@ -26676,7 +26674,7 @@ unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
   case X86ISD::VPCOM:
   case X86ISD::VPCOMU:
     // Vector compares return zero/all-bits result values.
-    return Op.getScalarValueSizeInBits();
+    return VTBits;
   }
 
   // Fallback case.
