@@ -5560,6 +5560,7 @@
 // PPC64:#define __FLT_MIN_EXP__ (-125)
 // PPC64:#define __FLT_MIN__ 1.17549435e-38F
 // PPC64:#define __FLT_RADIX__ 2
+// PPC64:#define __HAVE_BSWAP__ 1
 // PPC64:#define __INT16_C_SUFFIX__
 // PPC64:#define __INT16_FMTd__ "hd"
 // PPC64:#define __INT16_FMTi__ "hi"
@@ -5763,6 +5764,7 @@
 // PPC64LE:#define __FLT_MIN_EXP__ (-125)
 // PPC64LE:#define __FLT_MIN__ 1.17549435e-38F
 // PPC64LE:#define __FLT_RADIX__ 2
+// PPC64LE:#define __HAVE_BSWAP__ 1
 // PPC64LE:#define __INT16_C_SUFFIX__
 // PPC64LE:#define __INT16_FMTd__ "hd"
 // PPC64LE:#define __INT16_FMTi__ "hi"
@@ -6182,6 +6184,7 @@
 // PPC64-LINUX:#define __FLT_MIN_EXP__ (-125)
 // PPC64-LINUX:#define __FLT_MIN__ 1.17549435e-38F
 // PPC64-LINUX:#define __FLT_RADIX__ 2
+// PPC64-LINUX:#define __HAVE_BSWAP__ 1
 // PPC64-LINUX:#define __INT16_C_SUFFIX__
 // PPC64-LINUX:#define __INT16_FMTd__ "hd"
 // PPC64-LINUX:#define __INT16_FMTi__ "hi"
@@ -6393,6 +6396,7 @@
 // PPC:#define __FLT_MIN_EXP__ (-125)
 // PPC:#define __FLT_MIN__ 1.17549435e-38F
 // PPC:#define __FLT_RADIX__ 2
+// PPC:#define __HAVE_BSWAP__ 1
 // PPC:#define __INT16_C_SUFFIX__
 // PPC:#define __INT16_FMTd__ "hd"
 // PPC:#define __INT16_FMTi__ "hi"
@@ -6584,6 +6588,7 @@
 // PPC-LINUX:#define __FLT_MIN_EXP__ (-125)
 // PPC-LINUX:#define __FLT_MIN__ 1.17549435e-38F
 // PPC-LINUX:#define __FLT_RADIX__ 2
+// PPC-LINUX:#define __HAVE_BSWAP__ 1
 // PPC-LINUX:#define __INT16_C_SUFFIX__
 // PPC-LINUX:#define __INT16_FMTd__ "hd"
 // PPC-LINUX:#define __INT16_FMTi__ "hi"
@@ -6775,6 +6780,7 @@
 // PPC-DARWIN:#define __FLT_MIN_EXP__ (-125)
 // PPC-DARWIN:#define __FLT_MIN__ 1.17549435e-38F
 // PPC-DARWIN:#define __FLT_RADIX__ 2
+// PPC-DARWIN:#define __HAVE_BSWAP__ 1
 // PPC-DARWIN:#define __INT16_C_SUFFIX__
 // PPC-DARWIN:#define __INT16_FMTd__ "hd"
 // PPC-DARWIN:#define __INT16_FMTi__ "hi"
