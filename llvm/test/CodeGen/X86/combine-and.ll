@@ -253,7 +253,6 @@ define <4 x i32> @and_or_zext_v4i16(<4 x i16> %a0) {
 define <8 x i16> @ashr_mask1_v8i16(<8 x i16> %a0) {
 ; CHECK-LABEL: ashr_mask1_v8i16:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    psraw $15, %xmm0
 ; CHECK-NEXT:    psrlw $15, %xmm0
 ; CHECK-NEXT:    retq
   %1 = ashr <8 x i16> %a0, <i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15, i16 15>

@@ -31075,13 +31075,14 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
   bool LogicalShift = X86ISD::VSHLI == Opcode || X86ISD::VSRLI == Opcode;
   EVT VT = N->getValueType(0);
   SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
   unsigned NumBitsPerElt = VT.getScalarSizeInBits();
   assert(VT == N0.getValueType() && (NumBitsPerElt % 8) == 0 &&
          "Unexpected value type");
 
   // Out of range logical bit shifts are guaranteed to be zero.
   // Out of range arithmetic bit shifts splat the sign bit.
-  APInt ShiftVal = cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
+  APInt ShiftVal = cast<ConstantSDNode>(N1)->getAPIntValue();
   if (ShiftVal.zextOrTrunc(8).uge(NumBitsPerElt)) {
     if (LogicalShift)
       return getZeroVector(VT.getSimpleVT(), Subtarget, DAG, SDLoc(N));
@@ -31096,6 +31097,13 @@ static SDValue combineVectorShift(SDNode *N, SelectionDAG &DAG,
   // Shift zero -> zero.
   if (ISD::isBuildVectorAllZeros(N0.getNode()))
     return getZeroVector(VT.getSimpleVT(), Subtarget, DAG, SDLoc(N));
+
+  // fold (VSRLI (VSRAI X, Y), 31) -> (VSRLI X, 31).
+  // This VSRLI only looks at the sign bit, which is unmodified by VSRAI.
+  // TODO - support other sra opcodes as needed.
+  if (Opcode == X86ISD::VSRLI && (ShiftVal + 1) == NumBitsPerElt &&
+      N0.getOpcode() == X86ISD::VSRAI)
+    return DAG.getNode(X86ISD::VSRLI, SDLoc(N), VT, N0.getOperand(0), N1);
 
   // We can decode 'whole byte' logical bit shifts as shuffles.
   if (LogicalShift && (ShiftVal.getZExtValue() % 8) == 0) {
