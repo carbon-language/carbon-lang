@@ -1248,8 +1248,10 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   Builder.defineMacro("__REGISTER_PREFIX__", "");
 
   // FIXME: Should be controlled by command line option.
-  if (LongDoubleWidth == 128)
+  if (LongDoubleWidth == 128) {
     Builder.defineMacro("__LONG_DOUBLE_128__");
+    Builder.defineMacro("__LONGDOUBLE128");
+  }
 
   // Define this for elfv2 (64-bit only) or 64-bit darwin.
   if (ABI == "elfv2" ||
