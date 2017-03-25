@@ -1250,68 +1250,78 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__STRUCT_PARM_ALIGN__", "16");
 
   // CPU identification.
-  ArchDefineTypes defs = (ArchDefineTypes)llvm::StringSwitch<int>(CPU)
-    .Case("440",   ArchDefineName)
-    .Case("450",   ArchDefineName | ArchDefine440)
-    .Case("601",   ArchDefineName)
-    .Case("602",   ArchDefineName | ArchDefinePpcgr)
-    .Case("603",   ArchDefineName | ArchDefinePpcgr)
-    .Case("603e",  ArchDefineName | ArchDefine603 | ArchDefinePpcgr)
-    .Case("603ev", ArchDefineName | ArchDefine603 | ArchDefinePpcgr)
-    .Case("604",   ArchDefineName | ArchDefinePpcgr)
-    .Case("604e",  ArchDefineName | ArchDefine604 | ArchDefinePpcgr)
-    .Case("620",   ArchDefineName | ArchDefinePpcgr)
-    .Case("630",   ArchDefineName | ArchDefinePpcgr)
-    .Case("7400",  ArchDefineName | ArchDefinePpcgr)
-    .Case("7450",  ArchDefineName | ArchDefinePpcgr)
-    .Case("750",   ArchDefineName | ArchDefinePpcgr)
-    .Case("970",   ArchDefineName | ArchDefinePwr4 | ArchDefinePpcgr
-                     | ArchDefinePpcsq)
-    .Case("a2",    ArchDefineA2)
-    .Case("a2q",   ArchDefineName | ArchDefineA2 | ArchDefineA2q)
-    .Case("pwr3",  ArchDefinePpcgr)
-    .Case("pwr4",  ArchDefineName | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("pwr5",  ArchDefineName | ArchDefinePwr4 | ArchDefinePpcgr
-                     | ArchDefinePpcsq)
-    .Case("pwr5x", ArchDefineName | ArchDefinePwr5 | ArchDefinePwr4
-                     | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("pwr6",  ArchDefineName | ArchDefinePwr5x | ArchDefinePwr5
-                     | ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("pwr6x", ArchDefineName | ArchDefinePwr6 | ArchDefinePwr5x
-                     | ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
-                     | ArchDefinePpcsq)
-    .Case("pwr7",  ArchDefineName | ArchDefinePwr6x | ArchDefinePwr6
-                     | ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4
-                     | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("pwr8",  ArchDefineName | ArchDefinePwr7 | ArchDefinePwr6x
-                     | ArchDefinePwr6 | ArchDefinePwr5x | ArchDefinePwr5
-                     | ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("pwr9",  ArchDefineName | ArchDefinePwr8 | ArchDefinePwr7
-                     | ArchDefinePwr6x | ArchDefinePwr6 | ArchDefinePwr5x
-                     | ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
-                     | ArchDefinePpcsq)
-    .Case("power3",  ArchDefinePpcgr)
-    .Case("power4",  ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("power5",  ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
-                       | ArchDefinePpcsq)
-    .Case("power5x", ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4
-                       | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("power6",  ArchDefinePwr6 | ArchDefinePwr5x | ArchDefinePwr5
-                       | ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("power6x", ArchDefinePwr6x | ArchDefinePwr6 | ArchDefinePwr5x
-                       | ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
-                       | ArchDefinePpcsq)
-    .Case("power7",  ArchDefinePwr7 | ArchDefinePwr6x | ArchDefinePwr6
-                       | ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4
-                       | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("power8",  ArchDefinePwr8 | ArchDefinePwr7 | ArchDefinePwr6x
-                       | ArchDefinePwr6 | ArchDefinePwr5x | ArchDefinePwr5
-                       | ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
-    .Case("power9",  ArchDefinePwr9 | ArchDefinePwr8 | ArchDefinePwr7
-                       | ArchDefinePwr6x | ArchDefinePwr6 | ArchDefinePwr5x
-                       | ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr
-                       | ArchDefinePpcsq)
-    .Default(ArchDefineNone);
+  ArchDefineTypes defs =
+      (ArchDefineTypes)llvm::StringSwitch<int>(CPU)
+          .Case("440", ArchDefineName)
+          .Case("450", ArchDefineName | ArchDefine440)
+          .Case("601", ArchDefineName)
+          .Case("602", ArchDefineName | ArchDefinePpcgr)
+          .Case("603", ArchDefineName | ArchDefinePpcgr)
+          .Case("603e", ArchDefineName | ArchDefine603 | ArchDefinePpcgr)
+          .Case("603ev", ArchDefineName | ArchDefine603 | ArchDefinePpcgr)
+          .Case("604", ArchDefineName | ArchDefinePpcgr)
+          .Case("604e", ArchDefineName | ArchDefine604 | ArchDefinePpcgr)
+          .Case("620", ArchDefineName | ArchDefinePpcgr)
+          .Case("630", ArchDefineName | ArchDefinePpcgr)
+          .Case("7400", ArchDefineName | ArchDefinePpcgr)
+          .Case("7450", ArchDefineName | ArchDefinePpcgr)
+          .Case("750", ArchDefineName | ArchDefinePpcgr)
+          .Case("970", ArchDefineName | ArchDefinePwr4 | ArchDefinePpcgr |
+                           ArchDefinePpcsq)
+          .Case("a2", ArchDefineA2)
+          .Case("a2q", ArchDefineName | ArchDefineA2 | ArchDefineA2q)
+          .Case("pwr3", ArchDefinePpcgr)
+          .Case("pwr4", ArchDefineName | ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("pwr5", ArchDefineName | ArchDefinePwr4 | ArchDefinePpcgr |
+                            ArchDefinePpcsq)
+          .Case("pwr5x", ArchDefineName | ArchDefinePwr5 | ArchDefinePwr4 |
+                             ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("pwr6", ArchDefineName | ArchDefinePwr5x | ArchDefinePwr5 |
+                            ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("pwr6x", ArchDefineName | ArchDefinePwr6 | ArchDefinePwr5x |
+                             ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr |
+                             ArchDefinePpcsq)
+          .Case("pwr7", ArchDefineName | ArchDefinePwr6x | ArchDefinePwr6 |
+                            ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4 |
+                            ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("pwr8", ArchDefineName | ArchDefinePwr7 | ArchDefinePwr6x |
+                            ArchDefinePwr6 | ArchDefinePwr5x | ArchDefinePwr5 |
+                            ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("pwr9", ArchDefineName | ArchDefinePwr8 | ArchDefinePwr7 |
+                            ArchDefinePwr6x | ArchDefinePwr6 | ArchDefinePwr5x |
+                            ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr |
+                            ArchDefinePpcsq)
+          .Case("power3", ArchDefinePpcgr)
+          .Case("power4", ArchDefinePwr4 | ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("power5", ArchDefinePwr5 | ArchDefinePwr4 | ArchDefinePpcgr |
+                              ArchDefinePpcsq)
+          .Case("power5x", ArchDefinePwr5x | ArchDefinePwr5 | ArchDefinePwr4 |
+                               ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("power6", ArchDefinePwr6 | ArchDefinePwr5x | ArchDefinePwr5 |
+                              ArchDefinePwr4 | ArchDefinePpcgr |
+                              ArchDefinePpcsq)
+          .Case("power6x", ArchDefinePwr6x | ArchDefinePwr6 | ArchDefinePwr5x |
+                               ArchDefinePwr5 | ArchDefinePwr4 |
+                               ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("power7", ArchDefinePwr7 | ArchDefinePwr6x | ArchDefinePwr6 |
+                              ArchDefinePwr5x | ArchDefinePwr5 |
+                              ArchDefinePwr4 | ArchDefinePpcgr |
+                              ArchDefinePpcsq)
+          .Case("power8", ArchDefinePwr8 | ArchDefinePwr7 | ArchDefinePwr6x |
+                              ArchDefinePwr6 | ArchDefinePwr5x |
+                              ArchDefinePwr5 | ArchDefinePwr4 |
+                              ArchDefinePpcgr | ArchDefinePpcsq)
+          .Case("power9", ArchDefinePwr9 | ArchDefinePwr8 | ArchDefinePwr7 |
+                              ArchDefinePwr6x | ArchDefinePwr6 |
+                              ArchDefinePwr5x | ArchDefinePwr5 |
+                              ArchDefinePwr4 | ArchDefinePpcgr |
+                              ArchDefinePpcsq)
+          // powerpc64le automatically defaults to at least power8.
+          .Case("ppc64le", ArchDefinePwr8 | ArchDefinePwr7 | ArchDefinePwr6x |
+                               ArchDefinePwr6 | ArchDefinePwr5x |
+                               ArchDefinePwr5 | ArchDefinePwr4 |
+                               ArchDefinePpcgr | ArchDefinePpcsq)
+          .Default(ArchDefineNone);
 
   if (defs & ArchDefineName)
     Builder.defineMacro(Twine("_ARCH_", StringRef(CPU).upper()));

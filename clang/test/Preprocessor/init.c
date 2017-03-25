@@ -6093,6 +6093,9 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-none-none -target-cpu power8 -fno-signed-char < /dev/null | FileCheck -match-full-lines -check-prefix PPCPOWER8 %s
 //
+// ppc64le also defaults to power8.
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-none-none -target-cpu ppc64le -fno-signed-char < /dev/null | FileCheck -match-full-lines -check-prefix PPCPOWER8 %s
+//
 // PPCPOWER8:#define _ARCH_PPC 1
 // PPCPOWER8:#define _ARCH_PPC64 1
 // PPCPOWER8:#define _ARCH_PPCGR 1
