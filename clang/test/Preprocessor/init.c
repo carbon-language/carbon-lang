@@ -6144,6 +6144,7 @@
 // PPC64-LINUX:#define _ARCH_PPC 1
 // PPC64-LINUX:#define _ARCH_PPC64 1
 // PPC64-LINUX:#define _BIG_ENDIAN 1
+// PPC64-LINUX:#define _CALL_LINUX 1
 // PPC64-LINUX:#define _LP64 1
 // PPC64-LINUX:#define __BIGGEST_ALIGNMENT__ 16
 // PPC64-LINUX:#define __BIG_ENDIAN__ 1
@@ -6345,6 +6346,11 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu -target-abi elfv2 < /dev/null | FileCheck -match-full-lines -check-prefix PPC64-ELFv2 %s
 // PPC64-ELFv1:#define _CALL_ELF 1
 // PPC64-ELFv2:#define _CALL_ELF 2
+//
+// Most of this is encompassed in other places.
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu -target-abi elfv2 < /dev/null | FileCheck -match-full-lines -check-prefix PPC64LE-LINUX %s
+//
+// PPC64LE-LINUX:#define _CALL_LINUX 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc-none-none -fno-signed-char < /dev/null | FileCheck -match-full-lines -check-prefix PPC %s
 //
