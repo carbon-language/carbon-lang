@@ -2110,6 +2110,7 @@ class AMDGPUTargetInfo final : public TargetInfo {
   bool hasFMAF:1;
   bool hasLDEXPF:1;
   bool hasFullSpeedFP32Denorms:1;
+  const AddrSpace AS;
 
   static bool isAMDGCN(const llvm::Triple &TT) {
     return TT.getArch() == llvm::Triple::amdgcn;
@@ -2371,8 +2372,6 @@ public:
   uint64_t getNullPointerValue(unsigned AS) const override {
     return AS == LangAS::opencl_local ? ~0 : 0;
   }
-
-  const AddrSpace AS;
 };
 
 const Builtin::Info AMDGPUTargetInfo::BuiltinInfo[] = {
