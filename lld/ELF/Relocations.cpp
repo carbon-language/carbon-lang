@@ -312,6 +312,15 @@ static bool isRelExpr(RelExpr Expr) {
                         R_PAGE_PC, R_RELAX_GOT_PC>(Expr);
 }
 
+// Returns true if a given relocation can be computed at link-time.
+//
+// For instance, we know the offset from a relocation to its target at
+// link-time if the relocation is PC-relative and refers a
+// (non-interruptible) function in the same executable. This function
+// will return true for such relocation.
+//
+// If this function returns false, that means we need to emit a
+// dynamic relocation so that the relocation will be fixed at load-time.
 template <class ELFT>
 static bool
 isStaticLinkTimeConstant(RelExpr E, uint32_t Type, const SymbolBody &Body,
@@ -331,16 +340,19 @@ isStaticLinkTimeConstant(RelExpr E, uint32_t Type, const SymbolBody &Body,
 
   if (isPreemptible(Body, Type))
     return false;
-
   if (!Config->Pic)
     return true;
 
+  // For the target and the relocation, we want to know if they are
+  // absolute or relative.
   bool AbsVal = isAbsoluteValue<ELFT>(Body);
   bool RelE = isRelExpr(E);
   if (AbsVal && !RelE)
     return true;
   if (!AbsVal && RelE)
     return true;
+  if (!AbsVal && !RelE)
+    return Target->usesOnlyLowPageBits(Type);
 
   // Relative relocation to an absolute value. This is normally unrepresentable,
   // but if the relocation refers to a weak undefined symbol, we allow it to
@@ -350,16 +362,14 @@ isStaticLinkTimeConstant(RelExpr E, uint32_t Type, const SymbolBody &Body,
   // Another special case is MIPS _gp_disp symbol which represents offset
   // between start of a function and '_gp' value and defined as absolute just
   // to simplify the code.
-  if (AbsVal && RelE) {
-    if (Body.isUndefined() && !Body.isLocal() && Body.symbol()->isWeak())
-      return true;
-    error(S.getLocation<ELFT>(RelOff) + ": relocation " + toString(Type) +
-          " cannot refer to absolute symbol '" + toString(Body) +
-          "' defined in " + toString(Body.File));
+  assert(AbsVal && RelE);
+  if (Body.isUndefined() && !Body.isLocal() && Body.symbol()->isWeak())
     return true;
-  }
 
-  return Target->usesOnlyLowPageBits(Type);
+  error(S.getLocation<ELFT>(RelOff) + ": relocation " + toString(Type) +
+        " cannot refer to absolute symbol '" + toString(Body) +
+        "' defined in " + toString(Body.File));
+  return true;
 }
 
 static RelExpr toPlt(RelExpr Expr) {
