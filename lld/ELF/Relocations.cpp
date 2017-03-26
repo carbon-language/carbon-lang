@@ -700,8 +700,6 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
   typedef typename ELFT::uint uintX_t;
 
   const elf::ObjectFile<ELFT> *File = Sec.getFile<ELFT>();
-  ArrayRef<uint8_t> SectionData = Sec.Data;
-  const uint8_t *Buf = SectionData.begin();
   OffsetGetter GetOffset(Sec);
 
   for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
@@ -735,8 +733,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       continue;
 
     bool Preemptible = isPreemptible(Body, Type);
-    Expr = adjustExpr(*File, Body, Expr, Type, Buf + Rel.r_offset, Sec,
-                      Rel.r_offset);
+    Expr = adjustExpr(*File, Body, Expr, Type, Sec.Data.data() + Rel.r_offset,
+                      Sec, Rel.r_offset);
     if (ErrorCount)
       continue;
 
@@ -746,7 +744,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
                        R_GOTREL_FROM_END, R_PPC_TOC>(Expr))
       In<ELFT>::Got->HasGotOffRel = true;
 
-    int64_t Addend = computeAddend(*File, Buf, E, Rel, Expr, Body);
+    int64_t Addend = computeAddend(*File, Sec.Data.data(), E, Rel, Expr, Body);
 
     if (unsigned Processed =
             handleTlsRelocation<ELFT>(Type, Body, Sec, Offset, Addend, Expr)) {
