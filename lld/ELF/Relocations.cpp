@@ -495,9 +495,9 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol *SS) {
 }
 
 template <class ELFT>
-static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
-                          RelExpr Expr, uint32_t Type, const uint8_t *Data,
-                          InputSectionBase &S, typename ELFT::uint RelOff) {
+static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, uint32_t Type,
+                          const uint8_t *Data, InputSectionBase &S,
+                          typename ELFT::uint RelOff) {
   bool Preemptible = isPreemptible(Body, Type);
   if (Body.isGnuIFunc()) {
     Expr = toPlt(Expr);
@@ -699,12 +699,11 @@ template <class ELFT, class RelTy>
 static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
   typedef typename ELFT::uint uintX_t;
 
-  const elf::ObjectFile<ELFT> *File = Sec.getFile<ELFT>();
   OffsetGetter GetOffset(Sec);
 
   for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
     const RelTy &Rel = *I;
-    SymbolBody &Body = File->getRelocTargetSym(Rel);
+    SymbolBody &Body = Sec.getFile<ELFT>()->getRelocTargetSym(Rel);
     uint32_t Type = Rel.getType(Config->IsMips64EL);
 
     if (Config->MipsN32Abi) {
@@ -733,8 +732,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       continue;
 
     bool Preemptible = isPreemptible(Body, Type);
-    Expr = adjustExpr(*File, Body, Expr, Type, Sec.Data.data() + Rel.r_offset,
-                      Sec, Rel.r_offset);
+    Expr = adjustExpr<ELFT>(Body, Expr, Type, Sec.Data.data() + Rel.r_offset,
+                            Sec, Rel.r_offset);
     if (ErrorCount)
       continue;
 
@@ -744,7 +743,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
                        R_GOTREL_FROM_END, R_PPC_TOC>(Expr))
       In<ELFT>::Got->HasGotOffRel = true;
 
-    int64_t Addend = computeAddend(*File, Sec.Data.data(), E, Rel, Expr, Body);
+    int64_t Addend = computeAddend(*Sec.getFile<ELFT>(), Sec.Data.data(), E,
+                                   Rel, Expr, Body);
 
     if (unsigned Processed =
             handleTlsRelocation<ELFT>(Type, Body, Sec, Offset, Addend, Expr)) {
