@@ -3129,13 +3129,14 @@ public:
 
     /// Resolves case value for current case.
     ConstantIntTy *getCaseValue() {
-      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      assert((unsigned)Index < SI->getNumCases() &&
+             "Index out the number of cases.");
       return reinterpret_cast<ConstantIntTy*>(SI->getOperand(2 + Index*2));
     }
 
     /// Resolves successor for current case.
     BasicBlockTy *getCaseSuccessor() {
-      assert((Index < SI->getNumCases() ||
+      assert(((unsigned)Index < SI->getNumCases() ||
               Index == DefaultPseudoIndex) &&
              "Index out the number of cases.");
       return SI->getSuccessor(getSuccessorIndex());
@@ -3146,7 +3147,8 @@ public:
 
     /// Returns TerminatorInst's successor index for current case successor.
     unsigned getSuccessorIndex() const {
-      assert((Index == DefaultPseudoIndex || Index < SI->getNumCases()) &&
+      assert((Index == DefaultPseudoIndex ||
+              (unsigned)Index < SI->getNumCases()) &&
              "Index out the number of cases.");
       return Index != DefaultPseudoIndex ? Index + 1 : 0;
     }
@@ -3154,7 +3156,7 @@ public:
     Self &operator+=(ptrdiff_t N) {
       // Check index correctness after addition.
       // Note: Index == getNumCases() means end().
-      assert(Index + N >= 0 && Index + N <= SI->getNumCases() &&
+      assert(Index + N >= 0 && (unsigned)(Index + N) <= SI->getNumCases() &&
              "Index out the number of cases.");
       Index += N;
       return *this;
@@ -3162,7 +3164,7 @@ public:
     Self &operator-=(ptrdiff_t N) {
       // Check index correctness after subtraction.
       // Note: Index == getNumCases() means end().
-      assert(Index - N >= 0 && Index - N <= SI->getNumCases() &&
+      assert(Index - N >= 0 && (unsigned)(Index - N) <= SI->getNumCases() &&
              "Index out the number of cases.");
       Index -= N;
       return *this;
@@ -3191,7 +3193,8 @@ public:
 
     /// Sets the new value for current case.
     void setValue(ConstantInt *V) {
-      assert(Index < SI->getNumCases() && "Index out the number of cases.");
+      assert((unsigned)Index < SI->getNumCases() &&
+             "Index out the number of cases.");
       SI->setOperand(2 + Index*2, reinterpret_cast<Value*>(V));
     }
 
