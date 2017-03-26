@@ -715,6 +715,32 @@ static void addPltEntry(PltSection *Plt, GotPltSection *GotPlt,
   Rel->addReloc({Type, GotPlt, Sym.getGotPltOffset(), UseSymVA, &Sym, 0});
 }
 
+template <class ELFT>
+static void addGotEntry(SymbolBody &Sym, bool Preemptible) {
+  In<ELFT>::Got->addEntry(Sym);
+
+  uint64_t Off = Sym.getGotOffset();
+  uint32_t DynType;
+  RelExpr Expr = R_ABS;
+
+  if (Sym.isTls()) {
+    DynType = Target->TlsGotRel;
+    Expr = R_TLS;
+  } else if (!Preemptible && Config->Pic && !isAbsolute(Sym)) {
+    DynType = Target->RelativeRel;
+  } else {
+    DynType = Target->GotRel;
+  }
+
+  bool Constant = !Preemptible && !(Config->Pic && !isAbsolute(Sym));
+  if (!Constant)
+    In<ELFT>::RelaDyn->addReloc(
+        {DynType, In<ELFT>::Got, Off, !Preemptible, &Sym, 0});
+
+  if (Constant || (!Config->IsRela && !Preemptible))
+    In<ELFT>::Got->Relocations.push_back({Expr, DynType, Off, 0, &Sym});
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -869,28 +895,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
         continue;
       }
 
-      if (Body.isInGot())
-        continue;
-
-      In<ELFT>::Got->addEntry(Body);
-      uint64_t Off = Body.getGotOffset();
-      uint32_t DynType;
-      RelExpr GotRE = R_ABS;
-      if (Body.isTls()) {
-        DynType = Target->TlsGotRel;
-        GotRE = R_TLS;
-      } else if (!Preemptible && Config->Pic && !isAbsolute(Body))
-        DynType = Target->RelativeRel;
-      else
-        DynType = Target->GotRel;
-
-      // FIXME: this logic is almost duplicated above.
-      bool Constant = !Preemptible && !(Config->Pic && !isAbsolute(Body));
-      if (!Constant)
-        In<ELFT>::RelaDyn->addReloc(
-            {DynType, In<ELFT>::Got, Off, !Preemptible, &Body, 0});
-      if (Constant || (!RelTy::IsRela && !Preemptible))
-        In<ELFT>::Got->Relocations.push_back({GotRE, DynType, Off, 0, &Body});
+      if (!Body.isInGot())
+        addGotEntry<ELFT>(Body, Preemptible);
       continue;
     }
   }
