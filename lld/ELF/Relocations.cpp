@@ -506,10 +506,9 @@ template <class ELFT>
 static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, uint32_t Type,
                           const uint8_t *Data, InputSectionBase &S,
                           typename ELFT::uint RelOff) {
-  bool Preemptible = isPreemptible(Body, Type);
   if (Body.isGnuIFunc()) {
     Expr = toPlt(Expr);
-  } else if (!Preemptible) {
+  } else if (!isPreemptible(Body, Type)) {
     if (needsPlt(Expr))
       Expr = fromPlt(Expr);
     if (Expr == R_GOT_PC && !isAbsoluteValue(Body))
@@ -531,11 +530,13 @@ static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, uint32_t Type,
           " defined in " + toString(Body.File));
     return Expr;
   }
+
   if (Body.getVisibility() != STV_DEFAULT) {
     error(S.getLocation<ELFT>(RelOff) + ": cannot preempt symbol '" +
           toString(Body) + "' defined in " + toString(Body.File));
     return Expr;
   }
+
   if (Body.isObject()) {
     // Produce a copy relocation.
     auto *B = cast<SharedSymbol>(&Body);
@@ -549,6 +550,7 @@ static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, uint32_t Type,
     }
     return Expr;
   }
+
   if (Body.isFunc()) {
     // This handles a non PIC program call to function in a shared library. In
     // an ideal world, we could just report an error saying the relocation can
@@ -573,9 +575,9 @@ static RelExpr adjustExpr(SymbolBody &Body, RelExpr Expr, uint32_t Type,
     Body.NeedsPltAddr = true;
     return toPlt(Expr);
   }
+
   error("symbol '" + toString(Body) + "' defined in " + toString(Body.File) +
         " is missing type");
-
   return Expr;
 }
 
