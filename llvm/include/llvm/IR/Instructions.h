@@ -3093,18 +3093,18 @@ public:
   // -2
   static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
 
-  template <class SwitchInstTy, class ConstantIntTy, class BasicBlockTy>
+  template <class SwitchInstT, class ConstantIntT, class BasicBlockT>
   class CaseIteratorT
       : public iterator_facade_base<
-            CaseIteratorT<SwitchInstTy, ConstantIntTy, BasicBlockTy>,
+            CaseIteratorT<SwitchInstT, ConstantIntT, BasicBlockT>,
             std::random_access_iterator_tag,
-            CaseIteratorT<SwitchInstTy, ConstantIntTy, BasicBlockTy>> {
+            CaseIteratorT<SwitchInstT, ConstantIntT, BasicBlockT>> {
   protected:
-    SwitchInstTy *SI;
+    SwitchInstT *SI;
     ptrdiff_t Index;
 
   public:
-    typedef CaseIteratorT<SwitchInstTy, ConstantIntTy, BasicBlockTy> Self;
+    typedef CaseIteratorT<SwitchInstT, ConstantIntT, BasicBlockT> Self;
 
     /// Default constructed iterator is in an invalid state until assigned to
     /// a case for a particular switch.
@@ -3112,14 +3112,14 @@ public:
 
     /// Initializes case iterator for given SwitchInst and for given
     /// case number.
-    CaseIteratorT(SwitchInstTy *SI, unsigned CaseNum) {
+    CaseIteratorT(SwitchInstT *SI, unsigned CaseNum) {
       this->SI = SI;
       Index = CaseNum;
     }
 
     /// Initializes case iterator for given SwitchInst and for given
     /// TerminatorInst's successor index.
-    static Self fromSuccessorIndex(SwitchInstTy *SI, unsigned SuccessorIndex) {
+    static Self fromSuccessorIndex(SwitchInstT *SI, unsigned SuccessorIndex) {
       assert(SuccessorIndex < SI->getNumSuccessors() &&
              "Successor index # out of range!");
       return SuccessorIndex != 0 ?
@@ -3128,14 +3128,14 @@ public:
     }
 
     /// Resolves case value for current case.
-    ConstantIntTy *getCaseValue() {
+    ConstantIntT *getCaseValue() {
       assert((unsigned)Index < SI->getNumCases() &&
              "Index out the number of cases.");
-      return reinterpret_cast<ConstantIntTy*>(SI->getOperand(2 + Index*2));
+      return reinterpret_cast<ConstantIntT *>(SI->getOperand(2 + Index * 2));
     }
 
     /// Resolves successor for current case.
-    BasicBlockTy *getCaseSuccessor() {
+    BasicBlockT *getCaseSuccessor() {
       assert(((unsigned)Index < SI->getNumCases() ||
               (unsigned)Index == DefaultPseudoIndex) &&
              "Index out the number of cases.");
