@@ -638,6 +638,50 @@ mergeMipsN32RelTypes(uint32_t Type, uint32_t Offset, RelTy *I, RelTy *E) {
   return std::make_pair(Type, Processed);
 }
 
+// .eh_frame sections are mergeable input sections, so their input
+// offsets are not linearly mapped to output section. For each input
+// offset, we need to find a section piece containing the offset and
+// add the piece's base address to the input offset to compute the
+// output offset. That isn't cheap.
+//
+// This class is to speed up the offset computation. When we process
+// relocations, we access offsets in the monotonically increasing
+// order. So we can optimize for that access pattern.
+//
+// For sections other than .eh_frame, this class doesn't do anything.
+namespace {
+class OffsetGetter {
+public:
+  explicit OffsetGetter(InputSectionBase &Sec) {
+    if (auto *Eh = dyn_cast<EhInputSection>(&Sec)) {
+      P = Eh->Pieces;
+      Size = Eh->Pieces.size();
+    }
+  }
+
+  uint64_t get(uint64_t Off) {
+    if (P.empty())
+      return Off;
+
+    while (I != Size && P[I].InputOff + P[I].size() <= Off)
+      ++I;
+    if (I == Size)
+      return Off;
+    assert(P[I].InputOff <= Off && "Relocation not in any piece");
+
+    // Offset -1 means that the piece is dead (i.e. garbage collected).
+    if (P[I].OutputOff == -1)
+      return -1;
+    return P[I].OutputOff + Off - P[I].InputOff;
+  }
+
+private:
+  ArrayRef<EhSectionPiece> P;
+  size_t I = 0;
+  size_t Size;
+};
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -666,13 +710,7 @@ static void scanRelocs(InputSectionBase &C, ArrayRef<RelTy> Rels) {
   const elf::ObjectFile<ELFT> *File = C.getFile<ELFT>();
   ArrayRef<uint8_t> SectionData = C.Data;
   const uint8_t *Buf = SectionData.begin();
-
-  ArrayRef<EhSectionPiece> Pieces;
-  if (auto *Eh = dyn_cast<EhInputSection>(&C))
-    Pieces = Eh->Pieces;
-
-  ArrayRef<EhSectionPiece>::iterator PieceI = Pieces.begin();
-  ArrayRef<EhSectionPiece>::iterator PieceE = Pieces.end();
+  OffsetGetter GetOffset(C);
 
   for (auto I = Rels.begin(), E = Rels.end(); I != E; ++I) {
     const RelTy &RI = *I;
@@ -685,6 +723,11 @@ static void scanRelocs(InputSectionBase &C, ArrayRef<RelTy> Rels) {
           mergeMipsN32RelTypes(Type, RI.r_offset, I + 1, E);
       I += Processed;
     }
+
+    // Compute the offset of this section in the output section.
+    uintX_t Offset = GetOffset.get(RI.r_offset);
+    if (Offset == uintX_t(-1))
+      continue;
 
     // Report undefined symbols. The fact that we report undefined
     // symbols here means that we report undefined symbols only when
@@ -704,24 +747,6 @@ static void scanRelocs(InputSectionBase &C, ArrayRef<RelTy> Rels) {
                       RI.r_offset);
     if (ErrorCount)
       continue;
-
-    // Skip a relocation that points to a dead piece
-    // in a eh_frame section.
-    while (PieceI != PieceE &&
-           (PieceI->InputOff + PieceI->size() <= RI.r_offset))
-      ++PieceI;
-
-    // Compute the offset of this section in the output section. We do it here
-    // to try to compute it only once.
-    uintX_t Offset;
-    if (PieceI != PieceE) {
-      assert(PieceI->InputOff <= RI.r_offset && "Relocation not in any piece");
-      if (PieceI->OutputOff == -1)
-        continue;
-      Offset = PieceI->OutputOff + RI.r_offset - PieceI->InputOff;
-    } else {
-      Offset = RI.r_offset;
-    }
 
     // This relocation does not require got entry, but it is relative to got and
     // needs it to be created. Here we request for that.
