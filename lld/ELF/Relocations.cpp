@@ -393,6 +393,7 @@ static RelExpr fromPlt(RelExpr Expr) {
   return Expr;
 }
 
+// Returns true if a given shared symbol is in a read-only segment in a DSO.
 template <class ELFT> static bool isReadOnly(SharedSymbol *SS) {
   typedef typename ELFT::Phdr Elf_Phdr;
   uint64_t Value = SS->getValue<ELFT>();
