@@ -683,7 +683,11 @@ public:
       ++I;
     if (I == Size)
       return Off;
-    assert(P[I].InputOff <= Off && "Relocation not in any piece");
+
+    if (Off < P[I].InputOff) {
+      error("relocation not in any piece");
+      return -1;
+    }
 
     // Offset -1 means that the piece is dead (i.e. garbage collected).
     if (P[I].OutputOff == -1)
