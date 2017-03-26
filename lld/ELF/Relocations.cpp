@@ -237,10 +237,6 @@ handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase &C,
   return 0;
 }
 
-static int16_t readSignedLo16(const uint8_t *Loc) {
-  return read32(Loc, Config->Endianness) & 0xffff;
-}
-
 template <class RelTy>
 static uint32_t getMipsPairType(const RelTy *Rel, const SymbolBody &Sym) {
   switch (Rel->getType(Config->IsMips64EL)) {
@@ -276,8 +272,11 @@ static int32_t findMipsPairedAddend(const uint8_t *Buf, const uint8_t *BufLoc,
       continue;
     if (RI->getSymbol(Config->IsMips64EL) != SymIndex)
       continue;
-    return ((read32(BufLoc, Config->Endianness) & 0xffff) << 16) +
-           readSignedLo16(Buf + RI->r_offset);
+
+    endianness E = Config->Endianness;
+    int32_t Hi = (read32(BufLoc, E) & 0xffff) << 16;
+    int32_t Lo = SignExtend32<16>(read32(Buf + RI->r_offset, E));
+    return Hi + Lo;
   }
 
   warn("can't find matching " + toString(Type) + " relocation for " +
