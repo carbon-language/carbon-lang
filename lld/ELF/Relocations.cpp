@@ -496,9 +496,8 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol *SS) {
 
 template <class ELFT>
 static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
-                          bool IsWrite, RelExpr Expr, uint32_t Type,
-                          const uint8_t *Data, InputSectionBase &S,
-                          typename ELFT::uint RelOff) {
+                          RelExpr Expr, uint32_t Type, const uint8_t *Data,
+                          InputSectionBase &S, typename ELFT::uint RelOff) {
   bool Preemptible = isPreemptible(Body, Type);
   if (Body.isGnuIFunc()) {
     Expr = toPlt(Expr);
@@ -509,6 +508,7 @@ static RelExpr adjustExpr(const elf::ObjectFile<ELFT> &File, SymbolBody &Body,
       Expr = Target->adjustRelaxExpr(Type, Data, Expr);
   }
 
+  bool IsWrite = !Config->ZText || (S.Flags & SHF_WRITE);
   if (IsWrite || isStaticLinkTimeConstant<ELFT>(Expr, Type, Body, S, RelOff))
     return Expr;
 
@@ -699,10 +699,6 @@ template <class ELFT, class RelTy>
 static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
   typedef typename ELFT::uint uintX_t;
 
-  bool IsWrite = Sec.Flags & SHF_WRITE;
-  if (!Config->ZText)
-    IsWrite = true;
-
   const elf::ObjectFile<ELFT> *File = Sec.getFile<ELFT>();
   ArrayRef<uint8_t> SectionData = Sec.Data;
   const uint8_t *Buf = SectionData.begin();
@@ -739,7 +735,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       continue;
 
     bool Preemptible = isPreemptible(Body, Type);
-    Expr = adjustExpr(*File, Body, IsWrite, Expr, Type, Buf + Rel.r_offset, Sec,
+    Expr = adjustExpr(*File, Body, Expr, Type, Buf + Rel.r_offset, Sec,
                       Rel.r_offset);
     if (ErrorCount)
       continue;
