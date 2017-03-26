@@ -313,7 +313,7 @@ static bool isRelExpr(RelExpr Expr) {
 //
 // For instance, we know the offset from a relocation to its target at
 // link-time if the relocation is PC-relative and refers a
-// (non-interruptible) function in the same executable. This function
+// non-interposable function in the same executable. This function
 // will return true for such relocation.
 //
 // If this function returns false, that means we need to emit a
@@ -672,6 +672,9 @@ public:
     }
   }
 
+  // Translates offsets in input sections to offsets in output sections.
+  // Given offset must increase monotonically. We assume that P is
+  // sorted by InputOff.
   uint64_t get(uint64_t Off) {
     if (P.empty())
       return Off;
