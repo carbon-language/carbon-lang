@@ -706,6 +706,15 @@ private:
 };
 } // namespace
 
+template <class ELFT, class GotPltSection>
+static void addPltEntry(PltSection *Plt, GotPltSection *GotPlt,
+                        RelocationSection<ELFT> *Rel, uint32_t Type,
+                        SymbolBody &Sym, bool UseSymVA) {
+  Plt->addEntry<ELFT>(Sym);
+  GotPlt->addEntry(Sym);
+  Rel->addReloc({Type, GotPlt, Sym.getGotPltOffset(), UseSymVA, &Sym, 0});
+}
+
 // The reason we have to do this early scan is as follows
 // * To mmap the output file, we need to know the size
 // * For that, we need to know how many dynamic relocs we will have.
@@ -835,19 +844,12 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       if (Body.isInPlt())
         continue;
 
-      if (Body.isGnuIFunc() && !Preemptible) {
-        InX::Iplt->addEntry<ELFT>(Body);
-        In<ELFT>::IgotPlt->addEntry(Body);
-        In<ELFT>::RelaIplt->addReloc({Target->IRelativeRel, In<ELFT>::IgotPlt,
-                                      Body.getGotPltOffset(), !Preemptible,
-                                      &Body, 0});
-      } else {
-        InX::Plt->addEntry<ELFT>(Body);
-        In<ELFT>::GotPlt->addEntry(Body);
-        In<ELFT>::RelaPlt->addReloc({Target->PltRel, In<ELFT>::GotPlt,
-                                     Body.getGotPltOffset(), !Preemptible,
-                                     &Body, 0});
-      }
+      if (Body.isGnuIFunc() && !Preemptible)
+        addPltEntry(InX::Iplt, In<ELFT>::IgotPlt, In<ELFT>::RelaIplt,
+                    Target->IRelativeRel, Body, true);
+      else
+        addPltEntry(InX::Plt, In<ELFT>::GotPlt, In<ELFT>::RelaPlt,
+                    Target->PltRel, Body, !Preemptible);
       continue;
     }
 
