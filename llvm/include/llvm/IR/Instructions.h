@@ -3137,7 +3137,7 @@ public:
     /// Resolves successor for current case.
     BasicBlockTy *getCaseSuccessor() {
       assert(((unsigned)Index < SI->getNumCases() ||
-              Index == DefaultPseudoIndex) &&
+              (unsigned)Index == DefaultPseudoIndex) &&
              "Index out the number of cases.");
       return SI->getSuccessor(getSuccessorIndex());
     }
@@ -3147,7 +3147,7 @@ public:
 
     /// Returns TerminatorInst's successor index for current case successor.
     unsigned getSuccessorIndex() const {
-      assert((Index == DefaultPseudoIndex ||
+      assert(((unsigned)Index == DefaultPseudoIndex ||
               (unsigned)Index < SI->getNumCases()) &&
              "Index out the number of cases.");
       return Index != DefaultPseudoIndex ? Index + 1 : 0;
