@@ -703,10 +703,6 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
   if (!Config->ZText)
     IsWrite = true;
 
-  auto AddDyn = [=](const DynamicReloc &Reloc) {
-    In<ELFT>::RelaDyn->addReloc(Reloc);
-  };
-
   const elf::ObjectFile<ELFT> *File = Sec.getFile<ELFT>();
   ArrayRef<uint8_t> SectionData = Sec.Data;
   const uint8_t *Buf = SectionData.begin();
@@ -772,7 +768,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       if (!Target->isPicRel(Type))
         error(Sec.getLocation<ELFT>(Offset) + ": relocation " + toString(Type) +
               " cannot be used against shared object; recompile with -fPIC.");
-      AddDyn({Target->getDynRel(Type), &Sec, Offset, false, &Body, Addend});
+      In<ELFT>::RelaDyn->addReloc(
+          {Target->getDynRel(Type), &Sec, Offset, false, &Body, Addend});
 
       // MIPS ABI turns using of GOT and dynamic relocations inside out.
       // While regular ABI uses dynamic relocations to fill up GOT entries
@@ -804,7 +801,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     // relocation. We can process some of it and and just ask the dynamic
     // linker to add the load address.
     if (!Constant)
-      AddDyn({Target->RelativeRel, &Sec, Offset, true, &Body, Addend});
+      In<ELFT>::RelaDyn->addReloc(
+          {Target->RelativeRel, &Sec, Offset, true, &Body, Addend});
 
     // If the produced value is a constant, we just remember to write it
     // when outputting this section. We also have to do it if the format
@@ -847,8 +845,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
         In<ELFT>::MipsGot->addEntry(Body, Addend, Expr);
         if (Body.isTls() && Body.isPreemptible())
-          AddDyn({Target->TlsGotRel, In<ELFT>::MipsGot, Body.getGotOffset(),
-                  false, &Body, 0});
+          In<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, In<ELFT>::MipsGot,
+                                       Body.getGotOffset(), false, &Body, 0});
         continue;
       }
 
@@ -870,7 +868,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       // FIXME: this logic is almost duplicated above.
       bool Constant = !Preemptible && !(Config->Pic && !isAbsolute<ELFT>(Body));
       if (!Constant)
-        AddDyn({DynType, In<ELFT>::Got, Off, !Preemptible, &Body, 0});
+        In<ELFT>::RelaDyn->addReloc(
+            {DynType, In<ELFT>::Got, Off, !Preemptible, &Body, 0});
       if (Constant || (!RelTy::IsRela && !Preemptible))
         In<ELFT>::Got->Relocations.push_back({GotRE, DynType, Off, 0, &Body});
       continue;
