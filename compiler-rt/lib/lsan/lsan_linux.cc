@@ -22,5 +22,5 @@ AllocatorCache *GetAllocatorCache() { return &allocator_cache; }
 
 } // namespace __lsan
 
-#endif // CAN_SANITIZE_LEAKS && SANITIZER_LINUX
+#endif // SANITIZER_LINUX
 
