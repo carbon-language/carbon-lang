@@ -1164,11 +1164,9 @@ public:
   void setAllBits() {
     if (isSingleWord())
       VAL = UINT64_MAX;
-    else {
+    else
       // Set all the bits in all the words.
-      for (unsigned i = 0; i < getNumWords(); ++i)
-        pVal[i] = UINT64_MAX;
-    }
+      memset(pVal, -1, getNumWords() * APINT_WORD_SIZE);
     // Clear the unused ones
     clearUnusedBits();
   }
