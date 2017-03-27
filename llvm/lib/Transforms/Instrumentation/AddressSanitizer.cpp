@@ -576,6 +576,8 @@ struct AddressSanitizer : public FunctionPass {
   Type *IntptrTy;
   ShadowMapping Mapping;
   DominatorTree *DT;
+  Function *AsanCtorFunction = nullptr;
+  Function *AsanInitFunction = nullptr;
   Function *AsanHandleNoReturnFunc;
   Function *AsanPtrCmpFunction, *AsanPtrSubFunction;
   // This array is indexed by AccessIsWrite, Experiment and log2(AccessSize).
@@ -1934,19 +1936,13 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   Mapping = getShadowMapping(TargetTriple, LongSize, CompileKernel);
   initializeCallbacks(M);
 
-  if (CompileKernel)
-    return false;
-
-  Function *AsanCtorFunction;
-  std::tie(AsanCtorFunction, std::ignore) = createSanitizerCtorAndInitFunctions(
-      M, kAsanModuleCtorName, kAsanInitName, /*InitArgTypes=*/{},
-      /*InitArgs=*/{}, kAsanVersionCheckName);
-  appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority);
-
   bool Changed = false;
+
   // TODO(glider): temporarily disabled globals instrumentation for KASan.
-  if (ClGlobals) {
-    IRBuilder<> IRB(AsanCtorFunction->getEntryBlock().getTerminator());
+  if (ClGlobals && !CompileKernel) {
+    Function *CtorFunc = M.getFunction(kAsanModuleCtorName);
+    assert(CtorFunc);
+    IRBuilder<> IRB(CtorFunc->getEntryBlock().getTerminator());
     Changed |= InstrumentGlobals(IRB, M);
   }
 
@@ -2015,6 +2011,7 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
 // virtual
 bool AddressSanitizer::doInitialization(Module &M) {
   // Initialize the private fields. No one has accessed them before.
+
   GlobalsMD.init(M);
 
   C = &(M.getContext());
@@ -2022,6 +2019,13 @@ bool AddressSanitizer::doInitialization(Module &M) {
   IntptrTy = Type::getIntNTy(*C, LongSize);
   TargetTriple = Triple(M.getTargetTriple());
 
+  if (!CompileKernel) {
+    std::tie(AsanCtorFunction, AsanInitFunction) =
+        createSanitizerCtorAndInitFunctions(
+            M, kAsanModuleCtorName, kAsanInitName,
+            /*InitArgTypes=*/{}, /*InitArgs=*/{}, kAsanVersionCheckName);
+    appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority);
+  }
   Mapping = getShadowMapping(TargetTriple, LongSize, CompileKernel);
   return true;
 }
@@ -2040,8 +2044,6 @@ bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
   // We cannot just ignore these methods, because they may call other
   // instrumented functions.
   if (F.getName().find(" load]") != std::string::npos) {
-    Function *AsanInitFunction =
-        declareSanitizerInitFunction(*F.getParent(), kAsanInitName, {});
     IRBuilder<> IRB(&F.front(), F.front().begin());
     IRB.CreateCall(AsanInitFunction, {});
     return true;
@@ -2089,6 +2091,7 @@ void AddressSanitizer::markEscapedLocalAllocas(Function &F) {
 }
 
 bool AddressSanitizer::runOnFunction(Function &F) {
+  if (&F == AsanCtorFunction) return false;
   if (F.getLinkage() == GlobalValue::AvailableExternallyLinkage) return false;
   if (!ClDebugFunc.empty() && ClDebugFunc == F.getName()) return false;
   if (F.getName().startswith("__asan_")) return false;
