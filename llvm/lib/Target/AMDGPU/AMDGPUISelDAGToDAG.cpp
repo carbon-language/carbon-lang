@@ -162,6 +162,9 @@ private:
                                  SDValue &Clamp,
                                  SDValue &Omod) const;
 
+  bool SelectVOP3OMods(SDValue In, SDValue &Src,
+                       SDValue &Clamp, SDValue &Omod) const;
+
   bool SelectVOP3PMods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
   bool SelectVOP3PMods0(SDValue In, SDValue &Src, SDValue &SrcMods,
                         SDValue &Clamp) const;
@@ -1667,6 +1670,18 @@ bool AMDGPUDAGToDAGISel::SelectVOP3Mods0Clamp0OMod(SDValue In, SDValue &Src,
                                                    SDValue &Omod) const {
   Clamp = Omod = CurDAG->getTargetConstant(0, SDLoc(In), MVT::i32);
   return SelectVOP3Mods(In, Src, SrcMods);
+}
+
+bool AMDGPUDAGToDAGISel::SelectVOP3OMods(SDValue In, SDValue &Src,
+                                         SDValue &Clamp, SDValue &Omod) const {
+  Src = In;
+
+  SDLoc DL(In);
+  // FIXME: Handle Clamp and Omod
+  Clamp = CurDAG->getTargetConstant(0, DL, MVT::i32);
+  Omod = CurDAG->getTargetConstant(0, DL, MVT::i32);
+
+  return true;
 }
 
 bool AMDGPUDAGToDAGISel::SelectVOP3PMods(SDValue In, SDValue &Src,
