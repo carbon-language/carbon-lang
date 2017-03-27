@@ -467,6 +467,14 @@ public:
     return InRegs;
   }
 
+  std::set<unsigned> getOutRegs() {
+    std::set<unsigned> OutRegs;
+    for (const auto &RegMaskPair : RPTracker.getPressure().LiveOutRegs) {
+      OutRegs.insert(RegMaskPair.RegUnit);
+    }
+    return OutRegs;
+  };
+
   unsigned getVGPRSetID() const { return VGPRSetID; }
   unsigned getSGPRSetID() const { return SGPRSetID; }
 

@@ -1350,6 +1350,24 @@ SIScheduleBlockScheduler::SIScheduleBlockScheduler(SIScheduleDAGMI *DAG,
   std::set<unsigned> InRegs = DAG->getInRegs();
   addLiveRegs(InRegs);
 
+  // Increase LiveOutRegsNumUsages for blocks
+  // producing registers consumed in another
+  // scheduling region.
+  for (unsigned Reg : DAG->getOutRegs()) {
+    for (unsigned i = 0, e = Blocks.size(); i != e; ++i) {
+      // Do reverse traversal
+      int ID = BlocksStruct.TopDownIndex2Block[Blocks.size()-1-i];
+      SIScheduleBlock *Block = Blocks[ID];
+      const std::set<unsigned> &OutRegs = Block->getOutRegs();
+
+      if (OutRegs.find(Reg) == OutRegs.end())
+        continue;
+
+      ++LiveOutRegsNumUsages[ID][Reg];
+      break;
+    }
+  }
+
   // Fill LiveRegsConsumers for regs that were already
   // defined before scheduling.
   for (unsigned i = 0, e = Blocks.size(); i != e; ++i) {
