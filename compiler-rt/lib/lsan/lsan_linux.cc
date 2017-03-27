@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "sanitizer_common/sanitizer_platform.h"
+
 #if SANITIZER_LINUX
 
 #include "lsan_allocator.h"
@@ -23,4 +25,3 @@ AllocatorCache *GetAllocatorCache() { return &allocator_cache; }
 } // namespace __lsan
 
 #endif // SANITIZER_LINUX
-
