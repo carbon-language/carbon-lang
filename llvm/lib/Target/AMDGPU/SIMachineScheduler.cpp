@@ -835,6 +835,17 @@ void SIScheduleBlockCreator::colorEndsAccordingToDependencies() {
   unsigned DAGSize = DAG->SUnits.size();
   std::vector<int> PendingColoring = CurrentColoring;
 
+  assert(DAGSize >= 1 &&
+         CurrentBottomUpReservedDependencyColoring.size() == DAGSize &&
+         CurrentTopDownReservedDependencyColoring.size() == DAGSize);
+  // If there is no reserved block at all, do nothing. We don't want
+  // everything in one block.
+  if (*std::max_element(CurrentBottomUpReservedDependencyColoring.begin(),
+                        CurrentBottomUpReservedDependencyColoring.end()) == 0 &&
+      *std::max_element(CurrentTopDownReservedDependencyColoring.begin(),
+                        CurrentTopDownReservedDependencyColoring.end()) == 0)
+    return;
+
   for (unsigned SUNum : DAG->BottomUpIndex2SU) {
     SUnit *SU = &DAG->SUnits[SUNum];
     std::set<unsigned> SUColors;
@@ -856,6 +867,9 @@ void SIScheduleBlockCreator::colorEndsAccordingToDependencies() {
         SUColors.insert(CurrentColoring[Succ->NodeNum]);
       SUColorsPending.insert(PendingColoring[Succ->NodeNum]);
     }
+    // If there is only one child/parent block, and that block
+    // is not among the ones we are removing in this path, then
+    // merge the instruction to that block
     if (SUColors.size() == 1 && SUColorsPending.size() == 1)
       PendingColoring[SU->NodeNum] = *SUColors.begin();
     else // TODO: Attribute new colors depending on color
