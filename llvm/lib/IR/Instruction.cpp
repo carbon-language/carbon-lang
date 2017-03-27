@@ -60,12 +60,6 @@ const Module *Instruction::getModule() const {
   return getParent()->getModule();
 }
 
-Module *Instruction::getModule() {
-  return getParent()->getModule();
-}
-
-Function *Instruction::getFunction() { return getParent()->getParent(); }
-
 const Function *Instruction::getFunction() const {
   return getParent()->getParent();
 }
