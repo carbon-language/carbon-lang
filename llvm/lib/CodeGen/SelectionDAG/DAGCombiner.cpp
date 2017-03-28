@@ -1148,9 +1148,9 @@ SDValue DAGCombiner::PromoteIntShiftOp(SDValue Op) {
     bool Replace = false;
     SDValue N0 = Op.getOperand(0);
     if (Opc == ISD::SRA)
-      N0 = SExtPromoteOperand(Op.getOperand(0), PVT);
+      N0 = SExtPromoteOperand(N0, PVT);
     else if (Opc == ISD::SRL)
-      N0 = ZExtPromoteOperand(Op.getOperand(0), PVT);
+      N0 = ZExtPromoteOperand(N0, PVT);
     else
       N0 = PromoteOperand(N0, PVT, Replace);
     if (!N0.getNode())
