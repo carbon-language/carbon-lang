@@ -27269,7 +27269,8 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
   // here, we're not going to remove the operands we find.
   bool UnaryShuffle = (Inputs.size() == 1);
   SDValue V1 = peekThroughBitcasts(Inputs[0]);
-  SDValue V2 = (UnaryShuffle ? V1 : peekThroughBitcasts(Inputs[1]));
+  SDValue V2 = (UnaryShuffle ? DAG.getUNDEF(V1.getValueType())
+                             : peekThroughBitcasts(Inputs[1]));
 
   MVT VT1 = V1.getSimpleValueType();
   MVT VT2 = V2.getSimpleValueType();
