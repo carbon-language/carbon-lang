@@ -27140,44 +27140,43 @@ static bool matchBinaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
   }
 
   // Attempt to combine to X86ISD::BLENDI.
+  // TODO - add 16i16 support (requires lane duplication).
   if (NumMaskElts <= 8 && ((Subtarget.hasSSE41() && MaskVT.is128BitVector()) ||
                            (Subtarget.hasAVX() && MaskVT.is256BitVector()))) {
-    // Determine a type compatible with X86ISD::BLENDI.
-    // TODO - add 16i16 support (requires lane duplication).
-    MVT BlendVT = MaskVT;
-    if (Subtarget.hasAVX2()) {
-      if (BlendVT == MVT::v4i64)
-        BlendVT = MVT::v8i32;
-      else if (BlendVT == MVT::v2i64)
-        BlendVT = MVT::v4i32;
-    } else {
-      if (BlendVT == MVT::v2i64 || BlendVT == MVT::v4i32)
-        BlendVT = MVT::v8i16;
-      else if (BlendVT == MVT::v4i64)
-        BlendVT = MVT::v4f64;
-      else if (BlendVT == MVT::v8i32)
-        BlendVT = MVT::v8f32;
-    }
-
-    if (NumMaskElts <= BlendVT.getVectorNumElements()) {
-      uint64_t BlendMask = 0;
-      bool ForceV1Zero = false, ForceV2Zero = false;
-      SmallVector<int, 8> TargetMask(Mask.begin(), Mask.end());
-      if (matchVectorShuffleAsBlend(V1, V2, TargetMask, ForceV1Zero,
-                                    ForceV2Zero, BlendMask)) {
-        if (NumMaskElts < BlendVT.getVectorNumElements()) {
-          int Scale = BlendVT.getVectorNumElements() / NumMaskElts;
-          BlendMask =
-              scaleVectorShuffleBlendMask(BlendMask, NumMaskElts, Scale);
-        }
-
-        V1 = ForceV1Zero ? getZeroVector(BlendVT, Subtarget, DAG, DL) : V1;
-        V2 = ForceV2Zero ? getZeroVector(BlendVT, Subtarget, DAG, DL) : V2;
-        PermuteImm = (unsigned)BlendMask;
-        Shuffle = X86ISD::BLENDI;
-        ShuffleVT = BlendVT;
-        return true;
+    uint64_t BlendMask = 0;
+    bool ForceV1Zero = false, ForceV2Zero = false;
+    SmallVector<int, 8> TargetMask(Mask.begin(), Mask.end());
+    if (matchVectorShuffleAsBlend(V1, V2, TargetMask, ForceV1Zero, ForceV2Zero,
+                                  BlendMask)) {
+      // Determine a type compatible with X86ISD::BLENDI.
+      ShuffleVT = MaskVT;
+      if (Subtarget.hasAVX2()) {
+        if (ShuffleVT == MVT::v4i64)
+          ShuffleVT = MVT::v8i32;
+        else if (ShuffleVT == MVT::v2i64)
+          ShuffleVT = MVT::v4i32;
+      } else {
+        if (ShuffleVT == MVT::v2i64 || ShuffleVT == MVT::v4i32)
+          ShuffleVT = MVT::v8i16;
+        else if (ShuffleVT == MVT::v4i64)
+          ShuffleVT = MVT::v4f64;
+        else if (ShuffleVT == MVT::v8i32)
+          ShuffleVT = MVT::v8f32;
       }
+
+      V1 = ForceV1Zero ? getZeroVector(MaskVT, Subtarget, DAG, DL) : V1;
+      V2 = ForceV2Zero ? getZeroVector(MaskVT, Subtarget, DAG, DL) : V2;
+
+      if (!ShuffleVT.isFloatingPoint()) {
+        int Scale = EltSizeInBits / ShuffleVT.getScalarSizeInBits();
+        BlendMask = scaleVectorShuffleBlendMask(BlendMask, NumMaskElts, Scale);
+        ShuffleVT = MVT::getIntegerVT(EltSizeInBits / Scale);
+        ShuffleVT = MVT::getVectorVT(ShuffleVT, NumMaskElts * Scale);
+      }
+
+      PermuteImm = (unsigned)BlendMask;
+      Shuffle = X86ISD::BLENDI;
+      return true;
     }
   }
 
