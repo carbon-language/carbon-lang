@@ -66,11 +66,232 @@ using namespace bolt;
 
 namespace opts {
 
+extern cl::OptionCategory BoltCategory;
+extern cl::OptionCategory BoltOptCategory;
+
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
 
 static cl::opt<std::string>
-OutputFilename("o", cl::desc("<output file>"), cl::Required);
+OutputFilename("o",
+  cl::desc("<output file>"),
+  cl::Required,
+  cl::cat(BoltCategory));
+
+static cl::opt<unsigned>
+AlignFunctions("align-functions",
+  cl::desc("align functions at a given value (relocation mode)"),
+  cl::init(64),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+AlignFunctionsMaxBytes("align-functions-max-bytes",
+  cl::desc("maximum number of bytes to use to align functions"),
+  cl::init(7),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<bool>
+AllowStripped("allow-stripped",
+  cl::desc("allow processing of stripped binaries"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+BoostMacroops("boost-macroops",
+  cl::desc("try to boost macro-op fusions by avoiding the cache-line boundary"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::list<std::string>
+BreakFunctionNames("break-funcs",
+  cl::CommaSeparated,
+  cl::desc("list of functions to core dump on (debugging)"),
+  cl::value_desc("func1,func2,func3,..."),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+DumpDotAll("dump-dot-all",
+  cl::desc("dump function CFGs to graphviz format after each stage"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+DumpEHFrame("dump-eh-frame",
+  cl::desc("dump parsed .eh_frame (debugging)"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+DynoStatsAll("dyno-stats-all",
+  cl::desc("print dyno stats after each stage"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
+  cl::init(true),
+  cl::desc("do another pass if we encounter large functions, to correct their "
+           "debug info."),
+  cl::ZeroOrMore,
+  cl::ReallyHidden,
+  cl::cat(BoltCategory));
+
+static cl::list<std::string>
+FunctionNames("funcs",
+  cl::CommaSeparated,
+  cl::desc("list of functions to optimize"),
+  cl::value_desc("func1,func2,func3,..."),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<std::string>
+FunctionNamesFile("funcs-file",
+  cl::desc("file with list of functions to optimize"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::list<std::string>
+FunctionPadSpec("pad-funcs",
+  cl::CommaSeparated,
+  cl::desc("list of functions to pad with amount of bytes"),
+  cl::value_desc("func1:pad1,func2:pad2,func3:pad3,..."),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+HotText("hot-text",
+  cl::desc("hot text symbols support (relocation mode)"),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+KeepTmp("keep-tmp",
+  cl::desc("preserve intermediate .o file"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+MarkFuncs("mark-funcs",
+  cl::desc("mark function boundaries with break instruction to make "
+           "sure we accidentally don't cross them"),
+  cl::ReallyHidden,
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+static cl::opt<unsigned>
+MaxFunctions("max-funcs",
+  cl::desc("maximum number of functions to overwrite"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+PrintAll("print-all",
+  cl::desc("print functions after each stage"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+PrintCFG("print-cfg",
+  cl::desc("print functions after CFG construction"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+PrintDisasm("print-disasm",
+  cl::desc("print function after disassembly"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+PrintDynoStats("dyno-stats",
+  cl::desc("print execution info based on profile"),
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+PrintLoopInfo("print-loops",
+  cl::desc("print loop related information"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+Relocs("relocs",
+  cl::desc("relocation mode - use relocations to move functions in the binary"),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+static cl::list<std::string>
+SkipFunctionNames("skip-funcs",
+  cl::CommaSeparated,
+  cl::desc("list of functions to skip"),
+  cl::value_desc("func1,func2,func3,..."),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<std::string>
+SkipFunctionNamesFile("skip-funcs-file",
+  cl::desc("file with list of functions to skip"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<BinaryFunction::SplittingType>
+SplitFunctions("split-functions",
+  cl::desc("split functions into hot and cold regions"),
+  cl::init(BinaryFunction::ST_NONE),
+  cl::values(clEnumValN(BinaryFunction::ST_NONE, "0",
+                        "do not split any function"),
+             clEnumValN(BinaryFunction::ST_EH, "1",
+                        "split all landing pads"),
+             clEnumValN(BinaryFunction::ST_LARGE, "2",
+                        "also split if function too large to fit"),
+             clEnumValN(BinaryFunction::ST_ALL, "3",
+                        "split all functions"),
+             clEnumValEnd),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+TopCalledLimit("top-called-limit",
+  cl::desc("maximum number of functions to print in top called "
+           "functions section"),
+  cl::init(100),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+TrapOldCode("trap-old-code",
+  cl::desc("insert traps in old function bodies (relocation mode)"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+UpdateDebugSections("update-debug-sections",
+  cl::desc("update DWARF debug sections of the executable"),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+static cl::opt<bool>
+UseGnuStack("use-gnu-stack",
+  cl::desc("use GNU_STACK program header for new segment (workaround for "
+           "issues with strip/objcopy)"),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
+
+cl::opt<bool>
+UseOldText("use-old-text",
+  cl::desc("re-use space in old .text if possible (relocation mode)"),
+  cl::cat(BoltCategory));
 
 // The default verbosity level (0) is pretty terse, level 1 is fairly
 // verbose and usually prints some informational message for every
@@ -85,181 +306,10 @@ OutputFilename("o", cl::desc("<output file>"), cl::Required);
 // dbgs() for output within DEBUG().
 cl::opt<unsigned>
 Verbosity("v",
-          cl::desc("set verbosity level for diagnostic output"),
-          cl::init(0),
-          cl::ZeroOrMore);
-
-static cl::opt<unsigned>
-AlignFunctions("align-functions",
-               cl::desc("align functions at a given value"),
-               cl::init(64),
-               cl::ZeroOrMore);
-
-static cl::opt<unsigned>
-AlignFunctionsMaxBytes("align-functions-max-bytes",
-               cl::desc("maximum number of bytes to use to align functions"),
-               cl::init(7),
-               cl::ZeroOrMore);
-
-static cl::list<std::string>
-BreakFunctionNames("break-funcs",
-                   cl::CommaSeparated,
-                   cl::desc("list of functions to core dump on (debugging)"),
-                   cl::value_desc("func1,func2,func3,..."),
-                   cl::Hidden);
-
-cl::opt<bool>
-UseOldText("use-old-text",
-           cl::desc("re-use space in old .text if possible"),
-           cl::Hidden);
-
-cl::opt<bool>
-TrapOldCode("trap-old-code",
-            cl::desc("insert traps in old function bodies"),
-            cl::Hidden);
-
-cl::opt<bool>
-PrintDynoStats("dyno-stats",
-               cl::desc("print execution info based on profile"));
-
-cl::opt<bool>
-DynoStatsAll("dyno-stats-all", cl::desc("print dyno stats after each stage"),
-             cl::ZeroOrMore,
-             cl::Hidden);
-
-static cl::opt<unsigned>
-TopCalledLimit("top-called-limit",
-               cl::desc("maximum number of functions to print in top called "
-                        "functions section"),
-               cl::init(100),
-               cl::ZeroOrMore,
-               cl::Hidden);
-
-cl::opt<bool>
-HotText("hot-text",
-        cl::desc("hot text symbols support"),
-        cl::ZeroOrMore);
-
-static cl::list<std::string>
-FunctionNames("funcs",
-              cl::CommaSeparated,
-              cl::desc("list of functions to optimize"),
-              cl::value_desc("func1,func2,func3,..."));
-
-static cl::opt<std::string>
-FunctionNamesFile("funcs-file",
-                  cl::desc("file with list of functions to optimize"));
-
-cl::opt<bool>
-Relocs("relocs",
-       cl::desc("relocation support (experimental)"),
-       cl::ZeroOrMore);
-
-static cl::list<std::string>
-FunctionPadSpec("pad-funcs",
-                cl::CommaSeparated,
-                cl::desc("list of functions to pad with amount of bytes"),
-                cl::value_desc("func1:pad1,func2:pad2,func3:pad3,..."));
-
-static cl::list<std::string>
-SkipFunctionNames("skip-funcs",
-                  cl::CommaSeparated,
-                  cl::desc("list of functions to skip"),
-                  cl::value_desc("func1,func2,func3,..."));
-
-static cl::opt<std::string>
-SkipFunctionNamesFile("skip-funcs-file",
-                      cl::desc("file with list of functions to skip"));
-static cl::opt<bool>
-MarkFuncs("mark-funcs",
-          cl::desc("mark function boundaries with break instruction to make "
-                   "sure we accidentally don't cross them"),
-          cl::ReallyHidden,
-          cl::ZeroOrMore);
-
-static cl::opt<unsigned>
-MaxFunctions("max-funcs",
-             cl::desc("maximum # of functions to overwrite"),
-             cl::ZeroOrMore);
-
-cl::opt<BinaryFunction::SplittingType>
-SplitFunctions("split-functions",
-               cl::desc("split functions into hot and cold regions"),
-               cl::init(BinaryFunction::ST_NONE),
-               cl::values(clEnumValN(BinaryFunction::ST_NONE, "0",
-                                     "do not split any function"),
-                          clEnumValN(BinaryFunction::ST_EH, "1",
-                                     "split all landing pads"),
-                          clEnumValN(BinaryFunction::ST_LARGE, "2",
-                                     "also split if function too large to fit"),
-                          clEnumValN(BinaryFunction::ST_ALL, "3",
-                                     "split all functions"),
-                          clEnumValEnd),
-               cl::ZeroOrMore);
-
-cl::opt<bool>
-UpdateDebugSections("update-debug-sections",
-                    cl::desc("update DWARF debug sections of the executable"),
-                    cl::ZeroOrMore);
-
-static cl::opt<bool>
-FixDebugInfoLargeFunctions("fix-debuginfo-large-functions",
-                           cl::init(true),
-                           cl::desc("do another pass if we encounter large "
-                                    "functions, to correct their debug info."),
-                           cl::ZeroOrMore,
-                           cl::ReallyHidden);
-
-static cl::opt<bool>
-AlignBlocks("align-blocks",
-            cl::desc("try to align BBs inserting nops"),
-            cl::ZeroOrMore);
-
-static cl::opt<bool>
-UseGnuStack("use-gnu-stack",
-            cl::desc("use GNU_STACK program header for new segment"),
-            cl::ZeroOrMore);
-
-static cl::opt<bool>
-DumpEHFrame("dump-eh-frame", cl::desc("dump parsed .eh_frame (debugging)"),
-            cl::ZeroOrMore,
-            cl::Hidden);
-
-cl::opt<bool>
-PrintAll("print-all", cl::desc("print functions after each stage"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-cl::opt<bool>
-DumpDotAll("dump-dot-all",
-           cl::desc("dump function CFGs to graphviz format after each stage"),
-           cl::ZeroOrMore,
-           cl::Hidden);
-
-static cl::opt<bool>
-PrintCFG("print-cfg", cl::desc("print functions after CFG construction"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-static cl::opt<bool>
-PrintLoopInfo("print-loops", cl::desc("print loop related information"),
-              cl::ZeroOrMore,
-              cl::Hidden);
-
-static cl::opt<bool>
-PrintDisasm("print-disasm", cl::desc("print function after disassembly"),
-            cl::ZeroOrMore,
-            cl::Hidden);
-
-static cl::opt<bool>
-KeepTmp("keep-tmp",
-        cl::desc("preserve intermediate .o file"),
-        cl::Hidden);
-
-cl::opt<bool>
-AllowStripped("allow-stripped",
-              cl::desc("allow processing of stripped binaries"),
-              cl::Hidden);
+  cl::desc("set verbosity level for diagnostic output"),
+  cl::init(0),
+  cl::ZeroOrMore,
+  cl::cat(BoltCategory));
 
 // Check against lists of functions from options if we should
 // optimize the function with a given name.

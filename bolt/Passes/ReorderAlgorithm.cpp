@@ -26,14 +26,22 @@ using namespace bolt;
 
 namespace opts {
 
+extern cl::OptionCategory BoltOptCategory;
+
 static cl::opt<bool>
-PrintClusters("print-clusters", cl::desc("print clusters"), cl::ZeroOrMore);
+PrintClusters("print-clusters",
+  cl::desc("print clusters"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
 
 cl::opt<uint32_t>
 RandomSeed("bolt-seed",
-           cl::desc("seed for randomization"),
-           cl::init(42),
-           cl::ZeroOrMore);
+  cl::desc("seed for randomization"),
+  cl::init(42),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
 
 } // namespace opts
 

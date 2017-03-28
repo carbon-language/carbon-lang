@@ -19,160 +19,186 @@ using namespace llvm;
 
 namespace opts {
 
+extern cl::OptionCategory BoltOptCategory;
+
 extern cl::opt<bool> PrintAll;
 extern cl::opt<bool> DumpDotAll;
 extern cl::opt<bool> DynoStatsAll;
 
-llvm::cl::opt<bool> TimeOpts("time-opts",
-                             cl::desc("print time spent in each optimization"),
-                             cl::init(false), cl::ZeroOrMore);
-
-static llvm::cl::opt<bool>
-VerifyCFG("verify-cfg",
-          cl::desc("verify the CFG after every pass"),
-          cl::init(false),
-          cl::Hidden,
-          cl::ZeroOrMore);
-
 static cl::opt<bool>
 EliminateUnreachable("eliminate-unreachable",
-                     cl::desc("eliminate unreachable code"),
-                     cl::init(true),
-                     cl::ZeroOrMore);
-
-static cl::opt<bool>
-OptimizeBodylessFunctions(
-    "optimize-bodyless-functions",
-    cl::desc("optimize functions that just do a tail call"),
-    cl::ZeroOrMore);
+  cl::desc("eliminate unreachable code"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 IndirectCallPromotion("indirect-call-promotion",
-                      cl::desc("indirect call promotion"),
-                      cl::ZeroOrMore);
+  cl::desc("indirect call promotion"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-InlineSmallFunctions(
-    "inline-small-functions",
-    cl::desc("inline functions with a single basic block"),
-    cl::ZeroOrMore);
-
-static cl::opt<bool>
-SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
-                             cl::desc("simplify conditional tail calls "
-                                      "by removing unnecessary jumps"),
-                             cl::ZeroOrMore);
-
-static cl::opt<bool>
-Peepholes("peepholes",
-          cl::desc("run peephole optimizations"),
-          cl::ZeroOrMore);
-
-static cl::opt<bool>
-SimplifyRODataLoads("simplify-rodata-loads",
-                    cl::desc("simplify loads from read-only sections by "
-                             "replacing the memory operand with the "
-                             "constant found in the corresponding "
-                             "section"),
-                    cl::ZeroOrMore);
-
-static cl::opt<bool>
-StripRepRet("strip-rep-ret",
-    cl::desc("strip 'repz' prefix from 'repz retq' sequence (on by default)"),
-    cl::init(true),
-    cl::ZeroOrMore);
-
-static cl::opt<bool> OptimizeFrameAccesses(
-    "frame-opt", cl::desc("optimize stack frame accesses"), cl::ZeroOrMore);
-
-static cl::opt<bool>
-PrintReordered("print-reordered",
-               cl::desc("print functions after layout optimization"),
-               cl::ZeroOrMore,
-               cl::Hidden);
-
-static cl::opt<bool>
-PrintReorderedFunctions("print-reordered-functions",
-               cl::desc("print functions after clustering"),
-               cl::ZeroOrMore,
-               cl::Hidden);
-
-static cl::opt<bool>
-PrintOptimizeBodyless("print-optimize-bodyless",
-            cl::desc("print functions after bodyless optimization"),
-            cl::ZeroOrMore,
-            cl::Hidden);
-
-static cl::opt<bool>
-PrintAfterBranchFixup("print-after-branch-fixup",
-                      cl::desc("print function after fixing local branches"),
-                      cl::Hidden);
-
-static cl::opt<bool>
-PrintFinalized("print-finalized",
-                cl::desc("print function after CFG is finalized"),
-                cl::Hidden);
-
-static cl::opt<bool>
-PrintAfterLowering("print-after-lowering",
-    cl::desc("print function after instruction lowering"),
-    cl::Hidden);
-
-static cl::opt<bool>
-PrintUCE("print-uce",
-         cl::desc("print functions after unreachable code elimination"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-static cl::opt<bool>
-PrintSCTC("print-sctc",
-         cl::desc("print functions after conditional tail call simplification"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-static cl::opt<bool>
-PrintPeepholes("print-peepholes",
-               cl::desc("print functions after peephole optimization"),
-               cl::ZeroOrMore,
-               cl::Hidden);
-
-static cl::opt<bool>
-PrintSimplifyROLoads("print-simplify-rodata-loads",
-                     cl::desc("print functions after simplification of RO data"
-                              " loads"),
-                     cl::ZeroOrMore,
-                     cl::Hidden);
-
-static cl::opt<bool>
-PrintICF("print-icf",
-         cl::desc("print functions after ICF optimization"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-static cl::opt<bool>
-PrintICP("print-icp",
-         cl::desc("print functions after indirect call promotion"),
-         cl::ZeroOrMore,
-         cl::Hidden);
-
-static cl::opt<bool>
-PrintInline("print-inline",
-            cl::desc("print functions after inlining optimization"),
-            cl::ZeroOrMore,
-            cl::Hidden);
-
-static cl::opt<bool>
-PrintFOP("print-fop",
-         cl::desc("print functions after frame optimizer pass"),
-         cl::ZeroOrMore,
-         cl::Hidden);
+InlineSmallFunctions("inline-small-functions",
+  cl::desc("inline functions with a single basic block"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 NeverPrint("never-print",
-           cl::desc("never print"),
-           cl::init(false),
-           cl::ZeroOrMore,
-           cl::ReallyHidden);
+  cl::desc("never print"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::ReallyHidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+OptimizeBodylessFunctions("optimize-bodyless-functions",
+  cl::desc("optimize functions that just do a tail call"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+OptimizeFrameAccesses("frame-opt",
+  cl::desc("optimize stack frame accesses"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+Peepholes("peepholes",
+  cl::desc("run peephole optimizations"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintAfterBranchFixup("print-after-branch-fixup",
+  cl::desc("print function after fixing local branches"),
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintAfterLowering("print-after-lowering",
+  cl::desc("print function after instruction lowering"),
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintFOP("print-fop",
+  cl::desc("print functions after frame optimizer pass"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintFinalized("print-finalized",
+  cl::desc("print function after CFG is finalized"),
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintICF("print-icf",
+  cl::desc("print functions after ICF optimization"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintICP("print-icp",
+  cl::desc("print functions after indirect call promotion"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintInline("print-inline",
+  cl::desc("print functions after inlining optimization"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintOptimizeBodyless("print-optimize-bodyless",
+  cl::desc("print functions after bodyless optimization"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintPeepholes("print-peepholes",
+  cl::desc("print functions after peephole optimization"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintReordered("print-reordered",
+  cl::desc("print functions after layout optimization"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintReorderedFunctions("print-reordered-functions",
+  cl::desc("print functions after clustering"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintSCTC("print-sctc",
+  cl::desc("print functions after conditional tail call simplification"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintSimplifyROLoads("print-simplify-rodata-loads",
+  cl::desc("print functions after simplification of RO data loads"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+PrintUCE("print-uce",
+  cl::desc("print functions after unreachable code elimination"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
+  cl::desc("simplify conditional tail calls by removing unnecessary jumps"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+SimplifyRODataLoads("simplify-rodata-loads",
+  cl::desc("simplify loads from read-only sections by replacing the memory "
+           "operand with the constant found in the corresponding section"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+StripRepRet("strip-rep-ret",
+  cl::desc("strip 'repz' prefix from 'repz retq' sequence (on by default)"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static llvm::cl::opt<bool>
+TimeOpts("time-opts",
+  cl::desc("print time spent in each optimization"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static llvm::cl::opt<bool>
+VerifyCFG("verify-cfg",
+  cl::desc("verify the CFG after every pass"),
+  cl::init(false),
+  cl::Hidden,
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 } // namespace opts
 

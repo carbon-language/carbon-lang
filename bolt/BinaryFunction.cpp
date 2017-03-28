@@ -42,6 +42,10 @@ using namespace bolt;
 
 namespace opts {
 
+extern cl::OptionCategory BoltCategory;
+extern cl::OptionCategory BoltOptCategory;
+extern cl::OptionCategory BoltRelocCategory;
+
 extern bool shouldProcess(const BinaryFunction &);
 
 extern cl::opt<bool> PrintDynoStats;
@@ -51,25 +55,30 @@ extern cl::opt<unsigned> Verbosity;
 
 static cl::opt<bool>
 AggressiveSplitting("split-all-cold",
-                   cl::desc("outline as many cold basic blocks as possible"),
-                   cl::ZeroOrMore);
+  cl::desc("outline as many cold basic blocks as possible"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 AlignBlocks("align-blocks",
-            cl::desc("try to align BBs inserting nops"),
-            cl::ZeroOrMore);
+  cl::desc("try to align BBs inserting nops"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 DotToolTipCode("dot-tooltip-code",
-               cl::desc("add basic block instructions as tool tips on nodes"),
-               cl::ZeroOrMore,
-               cl::Hidden);
+  cl::desc("add basic block instructions as tool tips on nodes"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 static cl::opt<uint32_t>
 DynoStatsScale("dyno-stats-scale",
-               cl::desc("scale to be applied while reporting dyno stats"),
-               cl::Optional,
-               cl::init(1));
+  cl::desc("scale to be applied while reporting dyno stats"),
+  cl::Optional,
+  cl::init(1),
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 cl::opt<JumpTableSupportLevel>
 JumpTables("jump-tables",
@@ -89,26 +98,30 @@ JumpTables("jump-tables",
                  "aggressively split jump tables section based on usage "
                  "of the tables"),
       clEnumValEnd),
-  cl::ZeroOrMore);
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
 PrintJumpTables("print-jump-tables",
-                cl::desc("print jump tables"),
-                cl::ZeroOrMore,
-                cl::Hidden);
+  cl::desc("print jump tables"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 static cl::list<std::string>
 PrintOnly("print-only",
   cl::CommaSeparated,
   cl::desc("list of functions to print"),
   cl::value_desc("func1,func2,func3,..."),
-  cl::Hidden);
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 static cl::opt<bool>
 SplitEH("split-eh",
-        cl::desc("split C++ exception handling code (experimental)"),
-        cl::ZeroOrMore,
-        cl::Hidden);
+  cl::desc("split C++ exception handling code (experimental)"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
 
 bool shouldPrint(const BinaryFunction &Function) {
   if (PrintOnly.empty())

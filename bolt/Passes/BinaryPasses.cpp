@@ -49,6 +49,8 @@ const char* dynoStatsOptDesc(const bolt::DynoStats::Category C) {
 
 namespace opts {
 
+extern cl::OptionCategory BoltOptCategory;
+
 extern cl::opt<unsigned> Verbosity;
 extern cl::opt<uint32_t> RandomSeed;
 extern cl::opt<bool> Relocs;
@@ -56,117 +58,174 @@ extern cl::opt<bolt::BinaryFunction::SplittingType> SplitFunctions;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 extern size_t padFunction(const bolt::BinaryFunction &Function);
 
-static cl::opt<unsigned>
-IndirectCallPromotionThreshold(
-    "indirect-call-promotion-threshold",
-    cl::desc("threshold for optimizing a frequently taken indirect call"),
-    cl::init(90),
-    cl::ZeroOrMore);
-
-static cl::opt<unsigned>
-IndirectCallPromotionMispredictThreshold(
-    "indirect-call-promotion-mispredict-threshold",
-    cl::desc("misprediction threshold for skipping ICP on an "
-             "indirect call"),
-    cl::init(2),
-    cl::ZeroOrMore);
-
-static cl::opt<bool>
-IndirectCallPromotionUseMispredicts(
-    "indirect-call-promotion-use-mispredicts",
-    cl::desc("use misprediction frequency for determining whether or not ICP "
-             "should be applied at a callsite.  The "
-             "-indirect-call-promotion-mispredict-threshold value will be used "
-             "by this heuristic"),
-    cl::ZeroOrMore);
-
-static cl::opt<unsigned>
-IndirectCallPromotionTopN(
-    "indirect-call-promotion-topn",
-    cl::desc("number of targets to consider when doing indirect "
-                   "call promotion"),
-    cl::init(1),
-    cl::ZeroOrMore);
-
-static cl::list<std::string>
-ICPFuncsList("icp-funcs",
-             cl::CommaSeparated,
-             cl::desc("list of functions to enable ICP for"),
-             cl::value_desc("func1,func2,func3,..."),
-             cl::Hidden);
-
-static cl::opt<bool>
-ICPOldCodeSequence(
-    "icp-old-code-sequence",
-    cl::desc("use old code sequence for promoted calls"),
-    cl::init(false),
-    cl::ZeroOrMore,
-    cl::Hidden);
-
-static cl::opt<bolt::BinaryFunction::LayoutType>
-ReorderBlocks(
-    "reorder-blocks",
-    cl::desc("change layout of basic blocks in a function"),
-    cl::init(bolt::BinaryFunction::LT_NONE),
-    cl::values(clEnumValN(bolt::BinaryFunction::LT_NONE,
-                          "none",
-                          "do not reorder basic blocks"),
-               clEnumValN(bolt::BinaryFunction::LT_REVERSE,
-                          "reverse",
-                          "layout blocks in reverse order"),
-               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE,
-                          "normal",
-                          "perform optimal layout based on profile"),
-               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_BRANCH,
-                          "branch-predictor",
-                          "perform optimal layout prioritizing branch "
-                          "predictions"),
-               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_CACHE,
-                          "cache",
-                          "perform optimal layout prioritizing I-cache "
-                          "behavior"),
-               clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_SHUFFLE,
-                          "cluster-shuffle",
-                          "perform random layout of clusters"),
-               clEnumValEnd),
-    cl::ZeroOrMore);
-
-static cl::opt<bool>
-MinBranchClusters(
-    "min-branch-clusters",
-    cl::desc("use a modified clustering algorithm geared towards "
-             "minimizing branches"),
-    cl::ZeroOrMore,
-    cl::Hidden);
-
-static cl::list<bolt::DynoStats::Category>
-PrintSortedBy(
-    "print-sorted-by",
-    cl::CommaSeparated,
-    cl::desc("print functions sorted by order of dyno stats"),
-    cl::value_desc("key1,key2,key3,..."),
-    cl::values(
-#define D(name, ...)                                      \
-    clEnumValN(bolt::DynoStats::name,                     \
-               dynoStatsOptName(bolt::DynoStats::name),   \
-               dynoStatsOptDesc(bolt::DynoStats::name)),
-    DYNO_STATS
-#undef D
-    clEnumValEnd),
-    cl::ZeroOrMore);
-
 enum DynoStatsSortOrder : char {
   Ascending,
   Descending
 };
 
 static cl::opt<DynoStatsSortOrder>
-DynoStatsSortOrderOpt(
-    "print-sorted-by-order",
-    cl::desc("use ascending or descending order when printing "
-             "functions ordered by dyno stats"),
-    cl::ZeroOrMore,
-    cl::init(DynoStatsSortOrder::Descending));
+DynoStatsSortOrderOpt("print-sorted-by-order",
+  cl::desc("use ascending or descending order when printing functions "
+           "ordered by dyno stats"),
+  cl::ZeroOrMore,
+  cl::init(DynoStatsSortOrder::Descending),
+  cl::cat(BoltOptCategory));
+
+static cl::opt<std::string>
+FunctionOrderFile("function-order",
+  cl::desc("file containing an ordered list of functions to use for function "
+           "reordering"),
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+ICF("icf",
+  cl::desc("fold functions with identical code"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+ICFUseDFS("icf-dfs",
+  cl::desc("use DFS ordering when using -icf option"),
+  cl::ReallyHidden,
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::list<std::string>
+ICPFuncsList("icp-funcs",
+  cl::CommaSeparated,
+  cl::desc("list of functions to enable ICP for"),
+  cl::value_desc("func1,func2,func3,..."),
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+ICPOldCodeSequence("icp-old-code-sequence",
+  cl::desc("use old code sequence for promoted calls"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+IndirectCallPromotionMispredictThreshold(
+  "indirect-call-promotion-mispredict-threshold",
+  cl::desc("misprediction threshold for skipping ICP on an "
+    "indirect call"),
+  cl::init(2),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+IndirectCallPromotionThreshold("indirect-call-promotion-threshold",
+  cl::desc("threshold for optimizing a frequently taken indirect call"),
+  cl::init(90),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<unsigned>
+IndirectCallPromotionTopN("indirect-call-promotion-topn",
+  cl::desc("number of targets to consider when doing indirect "
+           "call promotion"),
+  cl::init(1),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+IndirectCallPromotionUseMispredicts("indirect-call-promotion-use-mispredicts",
+  cl::desc("use misprediction frequency for determining whether or not ICP "
+           "should be applied at a callsite.  The "
+           "-indirect-call-promotion-mispredict-threshold value will be used "
+           "by this heuristic"),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+MinBranchClusters("min-branch-clusters",
+  cl::desc("use a modified clustering algorithm geared towards minimizing "
+           "branches"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::list<bolt::DynoStats::Category>
+PrintSortedBy("print-sorted-by",
+  cl::CommaSeparated,
+  cl::desc("print functions sorted by order of dyno stats"),
+  cl::value_desc("key1,key2,key3,..."),
+  cl::values(
+#define D(name, ...)                                        \
+    clEnumValN(bolt::DynoStats::name,                     \
+               dynoStatsOptName(bolt::DynoStats::name),   \
+               dynoStatsOptDesc(bolt::DynoStats::name)),
+    DYNO_STATS
+#undef D
+    clEnumValEnd),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bolt::BinaryFunction::LayoutType>
+ReorderBlocks("reorder-blocks",
+  cl::desc("change layout of basic blocks in a function"),
+  cl::init(bolt::BinaryFunction::LT_NONE),
+  cl::values(
+    clEnumValN(bolt::BinaryFunction::LT_NONE,
+      "none",
+      "do not reorder basic blocks"),
+    clEnumValN(bolt::BinaryFunction::LT_REVERSE,
+      "reverse",
+      "layout blocks in reverse order"),
+    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE,
+      "normal",
+      "perform optimal layout based on profile"),
+    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_BRANCH,
+      "branch-predictor",
+      "perform optimal layout prioritizing branch "
+      "predictions"),
+    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_CACHE,
+      "cache",
+      "perform optimal layout prioritizing I-cache "
+      "behavior"),
+    clEnumValN(bolt::BinaryFunction::LT_OPTIMIZE_SHUFFLE,
+      "cluster-shuffle",
+      "perform random layout of clusters"),
+    clEnumValEnd),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+cl::opt<bolt::BinaryFunction::ReorderType>
+ReorderFunctions("reorder-functions",
+  cl::desc("reorder and cluster functions (works only with relocations)"),
+  cl::init(bolt::BinaryFunction::RT_NONE),
+  cl::values(clEnumValN(bolt::BinaryFunction::RT_NONE,
+      "none",
+      "do not reorder functions"),
+    clEnumValN(bolt::BinaryFunction::RT_EXEC_COUNT,
+      "exec-count",
+      "order by execution count"),
+    clEnumValN(bolt::BinaryFunction::RT_HFSORT,
+      "hfsort",
+      "use hfsort algorithm"),
+    clEnumValN(bolt::BinaryFunction::RT_HFSORT_PLUS,
+      "hfsort+",
+      "use hfsort+ algorithm"),
+    clEnumValN(bolt::BinaryFunction::RT_PETTIS_HANSEN,
+      "pettis-hansen",
+      "use Pettis-Hansen algorithm"),
+    clEnumValN(bolt::BinaryFunction::RT_RANDOM,
+      "random",
+      "reorder functions randomly"),
+    clEnumValN(bolt::BinaryFunction::RT_USER,
+      "user",
+      "use function order specified by -function-order"),
+    clEnumValEnd),
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+ReorderFunctionsUseHotSize("reorder-functions-use-hot-size",
+  cl::desc("use a function's hot size when doing clustering"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 enum SctcModes : char {
   SctcAlways,
@@ -175,80 +234,27 @@ enum SctcModes : char {
 };
 
 static cl::opt<SctcModes>
-SctcMode(
-    "sctc-mode",
-    cl::desc("mode for simplify conditional tail calls"),
-    cl::init(SctcHeuristic),
-    cl::values(clEnumValN(SctcAlways, "always", "always perform sctc"),
-               clEnumValN(SctcPreserveDirection,
-                          "preserve",
-                          "only perform sctc when branch direction is "
-                          "preserved"),
-               clEnumValN(SctcHeuristic,
-                          "heuristic",
-                          "use branch prediction data to control sctc"),
-               clEnumValEnd),
-    cl::ZeroOrMore);
+SctcMode("sctc-mode",
+  cl::desc("mode for simplify conditional tail calls"),
+  cl::init(SctcHeuristic),
+  cl::values(clEnumValN(SctcAlways, "always", "always perform sctc"),
+    clEnumValN(SctcPreserveDirection,
+      "preserve",
+      "only perform sctc when branch direction is "
+      "preserved"),
+    clEnumValN(SctcHeuristic,
+      "heuristic",
+      "use branch prediction data to control sctc"),
+    clEnumValEnd),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<bool>
-IdenticalCodeFolding(
-    "icf",
-    cl::desc("fold functions with identical code"),
-    cl::ZeroOrMore);
-
-static cl::opt<bool>
-UseDFSForICF(
-    "icf-dfs",
-    cl::desc("use DFS ordering when using -icf option"),
-    cl::ReallyHidden,
-    cl::ZeroOrMore);
-
-cl::opt<bolt::BinaryFunction::ReorderType>
-ReorderFunctions(
-    "reorder-functions",
-    cl::desc("reorder and cluster functions (works only with relocations)"),
-    cl::init(bolt::BinaryFunction::RT_NONE),
-    cl::values(clEnumValN(bolt::BinaryFunction::RT_NONE,
-                          "none",
-                          "do not reorder functions"),
-               clEnumValN(bolt::BinaryFunction::RT_EXEC_COUNT,
-                          "exec-count",
-                          "order by execution count"),
-               clEnumValN(bolt::BinaryFunction::RT_HFSORT,
-                          "hfsort",
-                          "use hfsort algorithm"),
-               clEnumValN(bolt::BinaryFunction::RT_HFSORT_PLUS,
-                          "hfsort+",
-                          "use hfsort+ algorithm"),
-               clEnumValN(bolt::BinaryFunction::RT_PETTIS_HANSEN,
-                          "pettis-hansen",
-                          "use Pettis-Hansen algorithm"),
-               clEnumValN(bolt::BinaryFunction::RT_RANDOM,
-                          "random",
-                          "reorder functions randomly"),
-               clEnumValN(bolt::BinaryFunction::RT_USER,
-                          "user",
-                          "use function order specified by -function-order"),
-               clEnumValEnd));
-
-static cl::opt<std::string>
-FunctionOrderFile("function-order",
-                  cl::desc("file containing an ordered list of functions to use"
-                           " for function reordering"));
-
-static cl::opt<bool>
-ReorderFunctionsUseHotSize(
-    "reorder-functions-use-hot-size",
-    cl::desc("use a function's hot size when doing clustering"),
-    cl::init(true),
-    cl::ZeroOrMore);
-
-static cl::opt<bool>
-UseEdgeCounts(
-    "use-edge-counts",
-    cl::desc("use edge count data when doing clustering"),
-    cl::init(true),
-    cl::ZeroOrMore);
+UseEdgeCounts("use-edge-counts",
+  cl::desc("use edge count data when doing clustering"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 } // namespace opts
 
@@ -848,7 +854,7 @@ void SimplifyRODataLoads::runOnFunctions(
 void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
                                         std::map<uint64_t, BinaryFunction> &BFs,
                                         std::set<uint64_t> &) {
-  if (!opts::IdenticalCodeFolding)
+  if (!opts::ICF)
     return;
 
   const auto OriginalFunctionCount = BFs.size();
@@ -856,7 +862,7 @@ void IdenticalCodeFolding::runOnFunctions(BinaryContext &BC,
   uint64_t NumJTFunctionsFolded = 0;
   uint64_t BytesSavedEstimate = 0;
   uint64_t CallsSavedEstimate = 0;
-  static bool UseDFS = opts::UseDFSForICF;
+  static bool UseDFS = opts::ICFUseDFS;
 
   // This hash table is used to identify identical functions. It maps
   // a function to a bucket of functions identical to it.

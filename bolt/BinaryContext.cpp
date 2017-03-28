@@ -24,12 +24,15 @@ using namespace bolt;
 
 namespace opts {
 
+extern cl::OptionCategory BoltCategory;
+
 extern cl::opt<bool> Relocs;
 
 static cl::opt<bool>
 PrintDebugInfo("print-debug-info",
-               cl::desc("print debug info when printing functions"),
-               cl::Hidden);
+  cl::desc("print debug info when printing functions"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
 
 } // namespace opts
 

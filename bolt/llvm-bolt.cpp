@@ -32,15 +32,32 @@ using namespace bolt;
 
 namespace opts {
 
-static cl::opt<std::string>
-InputFilename(cl::Positional, cl::desc("<executable>"), cl::Required);
+cl::OptionCategory BoltCategory("BOLT generic options");
+cl::OptionCategory BoltOptCategory("BOLT optimization options");
+cl::OptionCategory BoltRelocCategory("BOLT options in relocation mode");
 
-static cl::opt<std::string>
-InputDataFilename("data", cl::desc("<data file>"), cl::Optional);
+static cl::OptionCategory *BoltCategories[] = {&BoltCategory,
+                                               &BoltOptCategory,
+                                               &BoltRelocCategory};
 
 static cl::opt<bool>
-DumpData("dump-data", cl::desc("dump parsed bolt data and exit (debugging)"),
-         cl::Hidden);
+DumpData("dump-data",
+  cl::desc("dump parsed bolt data and exit (debugging)"),
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+static cl::opt<std::string>
+InputDataFilename("data",
+  cl::desc("<data file>"),
+  cl::Optional,
+  cl::cat(BoltCategory));
+
+static cl::opt<std::string>
+InputFilename(
+  cl::Positional,
+  cl::desc("<executable>"),
+  cl::Required,
+  cl::cat(BoltCategory));
 
 } // namespace opts
 
@@ -67,6 +84,8 @@ int main(int argc, char **argv) {
 
   llvm::InitializeAllTargets();
   llvm::InitializeAllAsmPrinters();
+
+  cl::HideUnrelatedOptions(makeArrayRef(opts::BoltCategories));
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);

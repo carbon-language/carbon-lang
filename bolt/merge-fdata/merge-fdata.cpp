@@ -27,6 +27,8 @@ using namespace bolt;
 
 namespace opts {
 
+cl::OptionCategory MergeFdataCategory("merge-fdata options");
+
 enum SortType : char {
   ST_NONE,
   ST_EXEC_COUNT,      /// Sort based on function execution count.
@@ -34,32 +36,35 @@ enum SortType : char {
 };
 
 static cl::list<std::string>
-InputDataFilenames(cl::Positional,
-                   cl::CommaSeparated,
-                   cl::desc("<fdata1> [<fdata2>]..."),
-                   cl::OneOrMore);
+InputDataFilenames(
+  cl::Positional,
+  cl::CommaSeparated,
+  cl::desc("<fdata1> [<fdata2>]..."),
+  cl::OneOrMore,
+  cl::cat(MergeFdataCategory));
+
+static cl::opt<SortType>
+PrintFunctionList("print",
+  cl::desc("print the list of objects with count to stderr"),
+  cl::init(ST_NONE),
+  cl::values(clEnumValN(ST_NONE,
+      "none",
+      "do not print objects/functions"),
+    clEnumValN(ST_EXEC_COUNT,
+      "exec",
+      "print functions sorted by execution count"),
+    clEnumValN(ST_TOTAL_BRANCHES,
+      "branches",
+      "print functions sorted by total branch count"),
+    clEnumValEnd),
+  cl::cat(MergeFdataCategory));
 
 static cl::opt<bool>
 SuppressMergedDataOutput("q",
-                         cl::desc("do not print merged data to stdout"),
-                         cl::init(false),
-                         cl::Optional);
-
-static cl::opt<SortType>
-PrintFunctionList(
-    "print",
-    cl::desc("print the list of objects with count to stderr"),
-    cl::init(ST_NONE),
-    cl::values(clEnumValN(ST_NONE,
-                          "none",
-                          "do not print objects/functions"),
-               clEnumValN(ST_EXEC_COUNT,
-                          "exec",
-                          "print functions sorted by execution count"),
-               clEnumValN(ST_TOTAL_BRANCHES,
-                          "branches",
-                          "print functions sorted by total branch count"),
-               clEnumValEnd));
+  cl::desc("do not print merged data to stdout"),
+  cl::init(false),
+  cl::Optional,
+  cl::cat(MergeFdataCategory));
 
 } // namespace opts
 
@@ -77,6 +82,8 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
 
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
+  cl::HideUnrelatedOptions(opts::MergeFdataCategory);
 
   cl::ParseCommandLineOptions(argc, argv,
                               "merge fdata into a single file");

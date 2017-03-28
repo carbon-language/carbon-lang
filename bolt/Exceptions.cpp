@@ -37,13 +37,16 @@ using namespace llvm::dwarf;
 
 namespace opts {
 
+extern llvm::cl::OptionCategory BoltCategory;
+
 extern llvm::cl::opt<unsigned> Verbosity;
 
 static llvm::cl::opt<bool>
 PrintExceptions("print-exceptions",
-                llvm::cl::desc("print exception handling data"),
-                llvm::cl::ZeroOrMore,
-                llvm::cl::Hidden);
+  llvm::cl::desc("print exception handling data"),
+  llvm::cl::ZeroOrMore,
+  llvm::cl::Hidden,
+  llvm::cl::cat(BoltCategory));
 
 } // namespace opts
 

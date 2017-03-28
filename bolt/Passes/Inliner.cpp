@@ -17,19 +17,23 @@
 using namespace llvm;
 
 namespace opts {
-static cl::list<std::string>
-ForceInlineFunctions("force-inline",
-                     cl::CommaSeparated,
-                     cl::desc("list of functions to always consider "
-                              "for inlining"),
-                     cl::value_desc("func1,func2,func3,..."),
-                     cl::Hidden);
+
+extern cl::OptionCategory BoltOptCategory;
 
 static cl::opt<bool>
 AggressiveInlining("aggressive-inlining",
-                   cl::desc("perform aggressive inlining"),
-                   cl::ZeroOrMore,
-                   cl::Hidden);
+  cl::desc("perform aggressive inlining"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
+
+static cl::list<std::string>
+ForceInlineFunctions("force-inline",
+  cl::CommaSeparated,
+  cl::desc("list of functions to always consider for inlining"),
+  cl::value_desc("func1,func2,func3,..."),
+  cl::Hidden,
+  cl::cat(BoltOptCategory));
 
 }
 
