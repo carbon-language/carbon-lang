@@ -394,6 +394,7 @@ public:
     NoInfs &= Flags->NoInfs;
     NoSignedZeros &= Flags->NoSignedZeros;
     AllowReciprocal &= Flags->AllowReciprocal;
+    VectorReduction &= Flags->VectorReduction;
     AllowContract &= Flags->AllowContract;
   }
 };
