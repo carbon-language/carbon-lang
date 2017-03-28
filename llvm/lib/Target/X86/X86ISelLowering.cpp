@@ -8212,10 +8212,10 @@ static bool isTargetShuffleEquivalent(ArrayRef<int> Mask,
 static SmallVector<int, 64> createTargetShuffleMask(ArrayRef<int> Mask,
                                                     const APInt &Zeroable) {
   int NumElts = Mask.size();
-  assert(NumElts == Zeroable.getBitWidth() && "Mismatch mask sizes");
+  assert(NumElts == (int)Zeroable.getBitWidth() && "Mismatch mask sizes");
 
   SmallVector<int, 64> TargetMask(NumElts, SM_SentinelUndef);
-  for (unsigned i = 0; i != NumElts; ++i) {
+  for (int i = 0; i != NumElts; ++i) {
     int M = Mask[i];
     if (M == SM_SentinelUndef)
       continue;
