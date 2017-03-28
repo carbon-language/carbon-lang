@@ -3182,11 +3182,10 @@ SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
   ISD::CondCode CC1 = cast<CondCodeSDNode>(N1CC)->get();
   EVT VT = N1.getValueType();
 
-  if (LR == RR && isa<ConstantSDNode>(LR) && CC0 == CC1 &&
-      LL.getValueType().isInteger()) {
+  if (LR == RR && CC0 == CC1 && LL.getValueType().isInteger()) {
+    EVT CCVT = getSetCCResultType(LR.getValueType());
     // fold (and (seteq X, 0), (seteq Y, 0)) -> (seteq (or X, Y), 0)
     if (isNullConstant(LR) && CC1 == ISD::SETEQ) {
-      EVT CCVT = getSetCCResultType(LR.getValueType());
       if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
         SDValue Or = DAG.getNode(ISD::OR, SDLoc(N0), LR.getValueType(), LL, RL);
         AddToWorklist(Or.getNode());
@@ -3196,7 +3195,6 @@ SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
     if (isAllOnesConstant(LR)) {
       // fold (and (seteq X, -1), (seteq Y, -1)) -> (seteq (and X, Y), -1)
       if (CC1 == ISD::SETEQ) {
-        EVT CCVT = getSetCCResultType(LR.getValueType());
         if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
           SDValue And =
               DAG.getNode(ISD::AND, SDLoc(N0), LR.getValueType(), LL, RL);
@@ -3206,7 +3204,6 @@ SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
       }
       // fold (and (setgt X, -1), (setgt Y, -1)) -> (setgt (or X, Y), -1)
       if (CC1 == ISD::SETGT) {
-        EVT CCVT = getSetCCResultType(LR.getValueType());
         if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
           SDValue Or =
               DAG.getNode(ISD::OR, SDLoc(N0), LR.getValueType(), LL, RL);
@@ -3216,11 +3213,11 @@ SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
       }
     }
   }
+
   // Simplify (and (setne X, 0), (setne X, -1)) -> (setuge (add X, 1), 2)
-  if (LL == RL && isa<ConstantSDNode>(LR) && isa<ConstantSDNode>(RR) &&
-      CC0 == CC1 && LL.getValueType().isInteger() && CC0 == ISD::SETNE &&
-      ((isNullConstant(LR) && isAllOnesConstant(RR)) ||
-       (isAllOnesConstant(LR) && isNullConstant(RR)))) {
+  if (LL == RL && CC0 == CC1 && LL.getValueType().isInteger() &&
+      CC0 == ISD::SETNE && ((isNullConstant(LR) && isAllOnesConstant(RR)) ||
+                            (isAllOnesConstant(LR) && isNullConstant(RR)))) {
     EVT CCVT = getSetCCResultType(LL.getValueType());
     if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
       SDLoc DL0(N0);
@@ -3231,7 +3228,8 @@ SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
           DL, VT, Add, DAG.getConstant(2, DL, LL.getValueType()), ISD::SETUGE);
     }
   }
-  // canonicalize equivalent to ll == rl
+
+  // Canonicalize equivalent operands to LL == RL.
   if (LL == RR && LR == RL) {
     CC1 = ISD::getSetCCSwappedOperands(CC1);
     std::swap(RL, RR);
