@@ -4646,8 +4646,12 @@ MVT X86TargetLowering::hasFastEqualityCompare(unsigned NumBits) const {
   if (NumBits == 128 && isTypeLegal(MVT::v16i8))
     return MVT::v16i8;
 
+  // VPMOVMSKB can handle this.
+  if (NumBits == 256 && isTypeLegal(MVT::v32i8))
+    return MVT::v32i8;
+
   // TODO: Allow 64-bit type for 32-bit target.
-  // TODO: 256- and 512-bit types should be allowed, but make sure that those
+  // TODO: 512-bit types should be allowed, but make sure that those
   // cases are handled in combineVectorSizedSetCCEquality().
 
   return MVT::INVALID_SIMPLE_VALUE_TYPE;
