@@ -1513,21 +1513,17 @@ TEST_F(ApplyAtomicChangesTest, InsertsNewIncludesInRightOrder) {
 }
 
 TEST_F(ApplyAtomicChangesTest, RemoveAndSortIncludes) {
-  setInput(R"(
-#include "a"
-#include "b"
-#include "c"
-
-int a;
-      )");
+  setInput("#include \"a\"\n"
+           "#include \"b\"\n"
+           "#include \"c\"\n"
+           "\n"
+           "int a;");
   Changes.emplace_back(FilePath, "key1");
   Changes.back().removeHeader("b");
-  EXPECT_EQ(R"(
-#include "a"
-#include "c"
-
-int a;
-      )",
+  EXPECT_EQ("#include \"a\"\n"
+            "#include \"c\"\n"
+            "\n"
+            "int a;",
             rewrite());
 }
 TEST_F(ApplyAtomicChangesTest, InsertsSystemIncludes) {
@@ -1553,23 +1549,19 @@ TEST_F(ApplyAtomicChangesTest, InsertsSystemIncludes) {
 }
 
 TEST_F(ApplyAtomicChangesTest, RemoveSystemIncludes) {
-  setInput(R"(
-#include <a>
-#include <b>
-
-#include "c"
-
-int a;
-      )");
+  setInput("#include <a>\n"
+           "#include <b>\n"
+           "\n"
+           "#include \"c\""
+           "\n"
+           "int a;");
   Changes.emplace_back(FilePath, "key1");
   Changes.back().removeHeader("<a>");
-  EXPECT_EQ(R"(
-#include <b>
-
-#include "c"
-
-int a;
-      )",
+  EXPECT_EQ("#include <b>\n"
+            "\n"
+            "#include \"c\""
+            "\n"
+            "int a;",
             rewrite());
 }
 
