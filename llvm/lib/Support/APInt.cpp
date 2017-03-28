@@ -2359,47 +2359,45 @@ void APInt::print(raw_ostream &OS, bool isSigned) const {
 static_assert(integerPartWidth % 2 == 0, "Part width must be divisible by 2!");
 
 /* Some handy functions local to this file.  */
-namespace {
 
-  /* Returns the integer part with the least significant BITS set.
-     BITS cannot be zero.  */
-  static inline integerPart
-  lowBitMask(unsigned bits)
-  {
-    assert(bits != 0 && bits <= integerPartWidth);
+/* Returns the integer part with the least significant BITS set.
+   BITS cannot be zero.  */
+static inline integerPart
+lowBitMask(unsigned bits)
+{
+  assert(bits != 0 && bits <= integerPartWidth);
 
-    return ~(integerPart) 0 >> (integerPartWidth - bits);
-  }
+  return ~(integerPart) 0 >> (integerPartWidth - bits);
+}
 
-  /* Returns the value of the lower half of PART.  */
-  static inline integerPart
-  lowHalf(integerPart part)
-  {
-    return part & lowBitMask(integerPartWidth / 2);
-  }
+/* Returns the value of the lower half of PART.  */
+static inline integerPart
+lowHalf(integerPart part)
+{
+  return part & lowBitMask(integerPartWidth / 2);
+}
 
-  /* Returns the value of the upper half of PART.  */
-  static inline integerPart
-  highHalf(integerPart part)
-  {
-    return part >> (integerPartWidth / 2);
-  }
+/* Returns the value of the upper half of PART.  */
+static inline integerPart
+highHalf(integerPart part)
+{
+  return part >> (integerPartWidth / 2);
+}
 
-  /* Returns the bit number of the most significant set bit of a part.
-     If the input number has no bits set -1U is returned.  */
-  static unsigned
-  partMSB(integerPart value)
-  {
-    return findLastSet(value, ZB_Max);
-  }
+/* Returns the bit number of the most significant set bit of a part.
+   If the input number has no bits set -1U is returned.  */
+static unsigned
+partMSB(integerPart value)
+{
+  return findLastSet(value, ZB_Max);
+}
 
-  /* Returns the bit number of the least significant set bit of a
-     part.  If the input number has no bits set -1U is returned.  */
-  static unsigned
-  partLSB(integerPart value)
-  {
-    return findFirstSet(value, ZB_Max);
-  }
+/* Returns the bit number of the least significant set bit of a
+   part.  If the input number has no bits set -1U is returned.  */
+static unsigned
+partLSB(integerPart value)
+{
+  return findFirstSet(value, ZB_Max);
 }
 
 /* Sets the least significant part of a bignum to the input value, and
