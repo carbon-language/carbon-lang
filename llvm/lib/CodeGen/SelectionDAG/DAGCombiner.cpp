@@ -350,6 +350,7 @@ namespace {
                              bool NotExtCompare = false);
     SDValue foldSelectCCToShiftAnd(const SDLoc &DL, SDValue N0, SDValue N1,
                                    SDValue N2, SDValue N3, ISD::CondCode CC);
+    SDValue foldAndOfSetCCs(SDValue N0, SDValue N1, SDNode *LocReference);
     SDValue SimplifySetCC(EVT VT, SDValue N0, SDValue N1, ISD::CondCode Cond,
                           const SDLoc &DL, bool foldBooleans = true);
 
@@ -3170,20 +3171,13 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
   return SDValue();
 }
 
-/// This contains all DAGCombine rules which reduce two values combined by
-/// an And operation to a single value. This makes them reusable in the context
-/// of visitSELECT(). Rules involving constants are not included as
-/// visitSELECT() already handles those cases.
-SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
-                                  SDNode *LocReference) {
+SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1,
+                                     SDNode *LocReference) {
   EVT VT = N1.getValueType();
-
-  // fold (and x, undef) -> 0
-  if (N0.isUndef() || N1.isUndef())
-    return DAG.getConstant(0, SDLoc(LocReference), VT);
   // fold (and (setcc x), (setcc y)) -> (setcc (and x, y))
   SDValue LL, LR, RL, RR, CC0, CC1;
-  if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
+  if (isSetCCEquivalent(N0, LL, LR, CC0) &&
+      isSetCCEquivalent(N1, RL, RR, CC1)) {
     ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
     ISD::CondCode Op1 = cast<CondCodeSDNode>(CC1)->get();
 
@@ -3193,8 +3187,8 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
       if (isNullConstant(LR) && Op1 == ISD::SETEQ) {
         EVT CCVT = getSetCCResultType(LR.getValueType());
         if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
-          SDValue ORNode = DAG.getNode(ISD::OR, SDLoc(N0),
-                                       LR.getValueType(), LL, RL);
+          SDValue ORNode =
+              DAG.getNode(ISD::OR, SDLoc(N0), LR.getValueType(), LL, RL);
           AddToWorklist(ORNode.getNode());
           return DAG.getSetCC(SDLoc(LocReference), VT, ORNode, LR, Op1);
         }
@@ -3204,8 +3198,8 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
         if (Op1 == ISD::SETEQ) {
           EVT CCVT = getSetCCResultType(LR.getValueType());
           if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
-            SDValue ANDNode = DAG.getNode(ISD::AND, SDLoc(N0),
-                                          LR.getValueType(), LL, RL);
+            SDValue ANDNode =
+                DAG.getNode(ISD::AND, SDLoc(N0), LR.getValueType(), LL, RL);
             AddToWorklist(ANDNode.getNode());
             return DAG.getSetCC(SDLoc(LocReference), VT, ANDNode, LR, Op1);
           }
@@ -3214,8 +3208,8 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
         if (Op1 == ISD::SETGT) {
           EVT CCVT = getSetCCResultType(LR.getValueType());
           if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
-            SDValue ORNode = DAG.getNode(ISD::OR, SDLoc(N0),
-                                         LR.getValueType(), LL, RL);
+            SDValue ORNode =
+                DAG.getNode(ISD::OR, SDLoc(N0), LR.getValueType(), LL, RL);
             AddToWorklist(ORNode.getNode());
             return DAG.getSetCC(SDLoc(LocReference), VT, ORNode, LR, Op1);
           }
@@ -3224,15 +3218,15 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
     }
     // Simplify (and (setne X, 0), (setne X, -1)) -> (setuge (add X, 1), 2)
     if (LL == RL && isa<ConstantSDNode>(LR) && isa<ConstantSDNode>(RR) &&
-        Op0 == Op1 && LL.getValueType().isInteger() &&
-      Op0 == ISD::SETNE && ((isNullConstant(LR) && isAllOnesConstant(RR)) ||
-                            (isAllOnesConstant(LR) && isNullConstant(RR)))) {
+        Op0 == Op1 && LL.getValueType().isInteger() && Op0 == ISD::SETNE &&
+        ((isNullConstant(LR) && isAllOnesConstant(RR)) ||
+         (isAllOnesConstant(LR) && isNullConstant(RR)))) {
       EVT CCVT = getSetCCResultType(LL.getValueType());
       if (VT == CCVT || (!LegalOperations && VT == MVT::i1)) {
         SDLoc DL(N0);
-        SDValue ADDNode = DAG.getNode(ISD::ADD, DL, LL.getValueType(),
-                                      LL, DAG.getConstant(1, DL,
-                                                          LL.getValueType()));
+        SDValue ADDNode =
+            DAG.getNode(ISD::ADD, DL, LL.getValueType(), LL,
+                        DAG.getConstant(1, DL, LL.getValueType()));
         AddToWorklist(ADDNode.getNode());
         return DAG.getSetCC(SDLoc(LocReference), VT, ADDNode,
                             DAG.getConstant(2, DL, LL.getValueType()),
@@ -3254,11 +3248,29 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
         EVT CCVT = getSetCCResultType(LL.getValueType());
         if (N0.getValueType() == CCVT ||
             (!LegalOperations && N0.getValueType() == MVT::i1))
-          return DAG.getSetCC(SDLoc(LocReference), N0.getValueType(),
-                              LL, LR, Result);
+          return DAG.getSetCC(SDLoc(LocReference), N0.getValueType(), LL, LR,
+                              Result);
       }
     }
   }
+
+  return SDValue();
+}
+
+/// This contains all DAGCombine rules which reduce two values combined by
+/// an And operation to a single value. This makes them reusable in the context
+/// of visitSELECT(). Rules involving constants are not included as
+/// visitSELECT() already handles those cases.
+SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1,
+                                  SDNode *LocReference) {
+  EVT VT = N1.getValueType();
+
+  // fold (and x, undef) -> 0
+  if (N0.isUndef() || N1.isUndef())
+    return DAG.getConstant(0, SDLoc(LocReference), VT);
+
+  if (SDValue V = foldAndOfSetCCs(N0, N1, LocReference))
+    return V;
 
   if (N0.getOpcode() == ISD::ADD && N1.getOpcode() == ISD::SRL &&
       VT.getSizeInBits() <= 64) {
