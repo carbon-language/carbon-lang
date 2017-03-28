@@ -830,8 +830,13 @@ bool SubStmtBuilder::makeReturnOnAllocFailure() {
       S.ActOnCallExpr(nullptr, DeclNameExpr.get(), Loc, {}, Loc);
   if (ReturnObjectOnAllocationFailure.isInvalid()) return false;
 
-  StmtResult ReturnStmt = S.ActOnReturnStmt(
-      Loc, ReturnObjectOnAllocationFailure.get(), S.getCurScope());
+  // FIXME: ActOnReturnStmt expects a scope that is inside of the function, due
+  //   to CheckJumpOutOfSEHFinally(*this, ReturnLoc, *CurScope->getFnParent());
+  //   S.getCurScope()->getFnParent() == nullptr at ActOnFinishFunctionBody when
+  //   CoroutineBodyStmt is built. Figure it out and fix it.
+  //   Use BuildReturnStmt here to unbreak sanitized tests. (Gor:3/27/2017)
+  StmtResult ReturnStmt =
+      S.BuildReturnStmt(Loc, ReturnObjectOnAllocationFailure.get());
   if (ReturnStmt.isInvalid()) return false;
 
   this->ReturnStmtOnAllocFailure = ReturnStmt.get();
