@@ -435,7 +435,8 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::ExternalSymbol  , VT, Custom);
     setOperationAction(ISD::BlockAddress    , VT, Custom);
   }
-  // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
+
+  // 64-bit shl, sra, srl (iff 32-bit x86)
   for (auto VT : { MVT::i32, MVT::i64 }) {
     if (VT == MVT::i64 && !Subtarget.is64Bit())
       continue;
