@@ -2920,7 +2920,7 @@ private:
 
   // This is only meaningful for operations on floating point types and 0
   // otherwise.
-  unsigned FPFeatures : 2;
+  unsigned FPFeatures : 1;
   SourceLocation OpLoc;
 
   enum { LHS, RHS, END_EXPR };
@@ -3078,8 +3078,8 @@ public:
 
   // Get the FP contractability status of this operator. Only meaningful for
   // operations on floating point types.
-  bool isFPContractableWithinStatement() const {
-    return FPOptions(FPFeatures).allowFPContractWithinStatement();
+  bool isFPContractable() const {
+    return FPOptions(FPFeatures).isFPContractable();
   }
 
 protected:
