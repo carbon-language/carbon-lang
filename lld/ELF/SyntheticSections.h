@@ -166,7 +166,7 @@ public:
   size_t getSize() const override { return Size; }
 
 private:
-  size_t Size = 0;
+  uint64_t Size = 0;
 };
 
 class MipsGotSection final : public SyntheticSection {

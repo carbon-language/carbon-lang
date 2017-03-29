@@ -367,11 +367,11 @@ void BuildIdSection::computeHash(
 BssSection::BssSection(StringRef Name)
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_NOBITS, 0, Name) {}
 
-size_t BssSection::reserveSpace(size_t Size, uint32_t Alignment) {
+size_t BssSection::reserveSpace(uint64_t Size, uint32_t Alignment) {
   if (OutSec)
     OutSec->updateAlignment(Alignment);
   this->Size = alignTo(this->Size, Alignment) + Size;
-  this->Alignment = std::max<uint32_t>(this->Alignment, Alignment);
+  this->Alignment = std::max(this->Alignment, Alignment);
   return this->Size - Size;
 }
 
