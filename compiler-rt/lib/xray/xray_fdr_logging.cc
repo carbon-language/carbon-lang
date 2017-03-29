@@ -125,12 +125,16 @@ XRayLogFlushStatus fdrLoggingFlush() XRAY_NEVER_INSTRUMENT {
   // before setting the values in the header.
   Header.ConstantTSC = 1;
   Header.NonstopTSC = 1;
-  clock_gettime(CLOCK_REALTIME, &Header.TS);
+  Header.FdrData = FdrAdditionalHeaderData{LocalBQ->ConfiguredBufferSize()};
   retryingWriteAll(Fd, reinterpret_cast<char *>(&Header),
                    reinterpret_cast<char *>(&Header) + sizeof(Header));
+
   LocalBQ->apply([&](const BufferQueue::Buffer &B) {
-    retryingWriteAll(Fd, reinterpret_cast<char *>(B.Buffer),
-                     reinterpret_cast<char *>(B.Buffer) + B.Size);
+    uint64_t BufferSize = B.Size;
+    if (BufferSize > 0) {
+      retryingWriteAll(Fd, reinterpret_cast<char *>(B.Buffer),
+                       reinterpret_cast<char *>(B.Buffer) + B.Size);
+    }
   });
   __sanitizer::atomic_store(&LogFlushStatus,
                             XRayLogFlushStatus::XRAY_LOG_FLUSHED,
