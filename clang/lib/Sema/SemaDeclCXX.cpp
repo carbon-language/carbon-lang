@@ -12243,7 +12243,7 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
   // Set the body of the conversion function.
   Stmt *ReturnS = Return.get();
   Conv->setBody(new (Context) CompoundStmt(Context, ReturnS,
-                                           Conv->getLocation(), 
+                                           Conv->getLocation(),
                                            Conv->getLocation()));
   
   // We're done; notify the mutation listener, if any.
