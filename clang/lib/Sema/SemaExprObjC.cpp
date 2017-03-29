@@ -3100,7 +3100,9 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
     // In ARC, check for message sends which are likely to introduce
     // retain cycles.
     checkRetainCycles(Result);
+  }
 
+  if (getLangOpts().ObjCWeak) {
     if (!isImplicit && Method) {
       if (const ObjCPropertyDecl *Prop = Method->findPropertyDecl()) {
         bool IsWeak =
