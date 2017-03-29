@@ -2728,7 +2728,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     DwarfVersion = getToolChain().GetDefaultDwarfVersion();
   }
 
-  // We ignore flags -gstrict-dwarf and -grecord-gcc-switches for now.
+  // We ignore flag -gstrict-dwarf for now.
+  // And we handle flag -grecord-gcc-switches later with DwarfDebugFlags.
   Args.ClaimAllArgs(options::OPT_g_flags_Group);
 
   // Column info is included by default for everything except PS4 and CodeView.
@@ -4321,7 +4322,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // Optionally embed the -cc1 level arguments into the debug info, for build
   // analysis.
-  if (getToolChain().UseDwarfDebugFlags()) {
+  // Also record command line arguments into the debug info if
+  // -grecord-gcc-switches options is set on.
+  // By default, -gno-record-gcc-switches is set on and no recording.
+  if (getToolChain().UseDwarfDebugFlags() ||
+      Args.hasFlag(options::OPT_grecord_gcc_switches,
+                   options::OPT_gno_record_gcc_switches, false)) {
     ArgStringList OriginalArgs;
     for (const auto &Arg : Args)
       Arg->render(Args, OriginalArgs);
