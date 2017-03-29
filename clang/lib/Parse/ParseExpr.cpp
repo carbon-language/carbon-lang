@@ -473,14 +473,12 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
 ///
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
-                                       TypeCastState isTypeCast,
-                                       bool isVectorLiteral) {
+                                       TypeCastState isTypeCast) {
   bool NotCastExpr;
   ExprResult Res = ParseCastExpression(isUnaryExpression,
                                        isAddressOfOperand,
                                        NotCastExpr,
-                                       isTypeCast,
-                                       isVectorLiteral);
+                                       isTypeCast);
   if (NotCastExpr)
     Diag(Tok, diag::err_expected_expression);
   return Res;
@@ -696,8 +694,7 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
                                        bool &NotCastExpr,
-                                       TypeCastState isTypeCast,
-                                       bool isVectorLiteral) {
+                                       TypeCastState isTypeCast) {
   ExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
@@ -724,9 +721,6 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     SourceLocation RParenLoc;
     Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
                                isTypeCast == IsTypeCast, CastTy, RParenLoc);
-
-    if (isVectorLiteral)
-        return Res;
 
     switch (ParenExprType) {
     case SimpleExpr:   break;    // Nothing else to do.
@@ -2356,48 +2350,6 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
         return ParseCompoundLiteralExpression(Ty.get(), OpenLoc, RParenLoc);
       }
 
-      if (Tok.is(tok::l_paren)) {
-        // This could be OpenCL vector Literals
-        if (getLangOpts().OpenCL)
-        {
-          TypeResult Ty;
-          {
-            InMessageExpressionRAIIObject InMessage(*this, false);
-            Ty = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo);
-          }
-          if(Ty.isInvalid())
-          {
-             return ExprError();
-          }
-          QualType QT = Ty.get().get().getCanonicalType();
-          if (QT->isVectorType())
-          {
-            // We parsed '(' vector-type-name ')' followed by '('
-
-            // Parse the cast-expression that follows it next.
-            // isVectorLiteral = true will make sure we don't parse any
-            // Postfix expression yet
-            Result = ParseCastExpression(/*isUnaryExpression=*/false,
-                                         /*isAddressOfOperand=*/false,
-                                         /*isTypeCast=*/IsTypeCast,
-                                         /*isVectorLiteral=*/true);
-
-            if (!Result.isInvalid()) {
-              Result = Actions.ActOnCastExpr(getCurScope(), OpenLoc,
-                                             DeclaratorInfo, CastTy,
-                                             RParenLoc, Result.get());
-            }
-
-            // After we performed the cast we can check for postfix-expr pieces.
-            if (!Result.isInvalid()) {
-              Result = ParsePostfixExpressionSuffix(Result);
-            }
-
-            return Result;
-          }
-        }
-      }
-
       if (ExprType == CastExpr) {
         // We parsed '(' type-name ')' and the thing after it wasn't a '{'.
 
@@ -2427,13 +2379,10 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
         }
 
         // Parse the cast-expression that follows it next.
-        // isVectorLiteral = true will make sure we don't parse any
-        // Postfix expression yet
         // TODO: For cast expression with CastTy.
         Result = ParseCastExpression(/*isUnaryExpression=*/false,
                                      /*isAddressOfOperand=*/false,
-                                     /*isTypeCast=*/IsTypeCast,
-                                     /*isVectorLiteral=*/true);
+                                     /*isTypeCast=*/IsTypeCast);
         if (!Result.isInvalid()) {
           Result = Actions.ActOnCastExpr(getCurScope(), OpenLoc,
                                          DeclaratorInfo, CastTy, 

@@ -1449,12 +1449,10 @@ private:
   ExprResult ParseCastExpression(bool isUnaryExpression,
                                  bool isAddressOfOperand,
                                  bool &NotCastExpr,
-                                 TypeCastState isTypeCast,
-                                 bool isVectorLiteral = false);
+                                 TypeCastState isTypeCast);
   ExprResult ParseCastExpression(bool isUnaryExpression,
                                  bool isAddressOfOperand = false,
-                                 TypeCastState isTypeCast = NotTypeCast,
-                                 bool isVectorLiteral = false);
+                                 TypeCastState isTypeCast = NotTypeCast);
 
   /// Returns true if the next token cannot start an expression.
   bool isNotExpressionStart();
