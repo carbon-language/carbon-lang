@@ -3533,7 +3533,8 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
       report_fatal_error("SSE register return with SSE disabled");
     }
 
-    // If the return value is an i1 and AVX-512 is enabled, stop.
+    // If the return value is an i1 and AVX-512 is enabled, we need
+    // to do a fixup to make the copy legal.
     if (CopyVT == MVT::i1 && SrcReg == X86::AL && Subtarget->hasAVX512()) {
       // Need to copy to a GR32 first.
       // TODO: MOVZX isn't great here. We don't care about the upper bits.
