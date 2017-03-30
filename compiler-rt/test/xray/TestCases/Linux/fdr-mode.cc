@@ -3,7 +3,7 @@
 // RUN: %llvm_xray convert --symbolize --output-format=yaml -instr_map=%t "`ls fdr-logging-test-* | head -1`" | FileCheck %s --check-prefix TRACE
 // RUN: rm fdr-logging-test-*
 // FIXME: Make llvm-xray work on non-x86_64 as well.
-// REQUIRES: x86_64
+// REQUIRES: x86_64-linux
 
 #include "xray/xray_log_interface.h"
 #include <cassert>
