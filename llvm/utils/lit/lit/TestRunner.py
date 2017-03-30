@@ -252,7 +252,7 @@ def _executeShCmd(cmd, shenv, results, timeoutHelper):
         if os.path.isabs(newdir):
             shenv.cwd = newdir
         else:
-            shenv.cwd = os.path.join(shenv.cwd, newdir)
+            shenv.cwd = os.path.realpath(os.path.join(shenv.cwd, newdir))
         # The cd builtin always succeeds. If the directory does not exist, the
         # following Popen calls will fail instead.
         return 0
