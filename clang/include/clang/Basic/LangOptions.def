@@ -263,6 +263,8 @@ LANGOPT(SanitizeAddressFieldPadding, 2, 0, "controls how aggressive is ASan "
                                            "field padding (0: none, 1:least "
                                            "aggressive, 2: more aggressive)")
 
+LANGOPT(XRayInstrument, 1, 0, "controls whether to do XRay instrumentation")
+
 #undef LANGOPT
 #undef COMPATIBLE_LANGOPT
 #undef BENIGN_LANGOPT
