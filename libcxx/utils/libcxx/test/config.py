@@ -279,7 +279,7 @@ class Configuration(object):
             self.use_system_cxx_lib = True
         elif self.use_system_cxx_lib == 'false':
             self.use_system_cxx_lib = False
-        else if self.use_system_cxx_lib:
+        elif self.use_system_cxx_lib:
             assert os.path.isdir(self.use_system_cxx_lib)
         self.lit_config.note(
             "inferred use_system_cxx_lib as: %r" % self.use_system_cxx_lib)
