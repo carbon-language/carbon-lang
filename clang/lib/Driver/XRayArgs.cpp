@@ -17,6 +17,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/SpecialCaseList.h"
+#include "llvm/Support/ScopedPrinter.h"
 
 using namespace clang;
 using namespace clang::driver;
@@ -91,7 +92,7 @@ void XRayArgs::addArgs(const ToolChain &TC, const ArgList &Args,
 
   CmdArgs.push_back(XRayInstrumentOption);
   CmdArgs.push_back(Args.MakeArgString(XRayInstructionThresholdOption +
-                                       std::to_string(InstructionThreshold)));
+                                       llvm::to_string(InstructionThreshold)));
 
   for (const auto &Always : AlwaysInstrumentFiles) {
     SmallString<64> AlwaysInstrumentOpt(XRayAlwaysInstrumentOption);
