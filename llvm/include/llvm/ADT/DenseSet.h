@@ -179,12 +179,12 @@ public:
   void erase(ConstIterator CI) { return TheMap.erase(CI.I); }
 
   std::pair<iterator, bool> insert(const ValueT &V) {
-    detail::DenseSetEmpty Empty;
+    llvm::detail::DenseSetEmpty Empty;
     return TheMap.try_emplace(V, Empty);
   }
 
   std::pair<iterator, bool> insert(ValueT &&V) {
-    detail::DenseSetEmpty Empty;
+    llvm::detail::DenseSetEmpty Empty;
     return TheMap.try_emplace(std::move(V), Empty);
   }
 
@@ -193,11 +193,12 @@ public:
   template <typename LookupKeyT>
   std::pair<iterator, bool> insert_as(const ValueT &V,
                                       const LookupKeyT &LookupKey) {
-    return TheMap.insert_as({V, detail::DenseSetEmpty()}, LookupKey);
+    return TheMap.insert_as({V, llvm::detail::DenseSetEmpty()}, LookupKey);
   }
   template <typename LookupKeyT>
   std::pair<iterator, bool> insert_as(ValueT &&V, const LookupKeyT &LookupKey) {
-    return TheMap.insert_as({std::move(V), detail::DenseSetEmpty()}, LookupKey);
+    return TheMap.insert_as({std::move(V), llvm::detail::DenseSetEmpty()},
+                            LookupKey);
   }
 
   // Range insertion of values.
