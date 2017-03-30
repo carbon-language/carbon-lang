@@ -179,12 +179,12 @@ public:
   void erase(ConstIterator CI) { return TheMap.erase(CI.I); }
 
   std::pair<iterator, bool> insert(const ValueT &V) {
-    llvm::detail::DenseSetEmpty Empty;
+    detail::DenseSetEmpty Empty;
     return TheMap.try_emplace(V, Empty);
   }
 
   std::pair<iterator, bool> insert(ValueT &&V) {
-    llvm::detail::DenseSetEmpty Empty;
+    detail::DenseSetEmpty Empty;
     return TheMap.try_emplace(std::move(V), Empty);
   }
 
@@ -193,12 +193,11 @@ public:
   template <typename LookupKeyT>
   std::pair<iterator, bool> insert_as(const ValueT &V,
                                       const LookupKeyT &LookupKey) {
-    return TheMap.insert_as({V, llvm::detail::DenseSetEmpty()}, LookupKey);
+    return TheMap.insert_as({V, detail::DenseSetEmpty()}, LookupKey);
   }
   template <typename LookupKeyT>
   std::pair<iterator, bool> insert_as(ValueT &&V, const LookupKeyT &LookupKey) {
-    return TheMap.insert_as({std::move(V), llvm::detail::DenseSetEmpty()},
-                            LookupKey);
+    return TheMap.insert_as({std::move(V), detail::DenseSetEmpty()}, LookupKey);
   }
 
   // Range insertion of values.
@@ -213,15 +212,15 @@ public:
 
 /// Implements a dense probed hash-table based set.
 template <typename ValueT, typename ValueInfoT = DenseMapInfo<ValueT>>
-class DenseSet
-    : public llvm::detail::DenseSetImpl<
-          ValueT, DenseMap<ValueT, llvm::detail::DenseSetEmpty, ValueInfoT,
-                           llvm::detail::DenseSetPair<ValueT>>,
-          ValueInfoT> {
-  using BaseT = llvm::detail::DenseSetImpl<
-      ValueT, DenseMap<ValueT, llvm::detail::DenseSetEmpty, ValueInfoT,
-                       llvm::detail::DenseSetPair<ValueT>>,
-      ValueInfoT>;
+class DenseSet : public detail::DenseSetImpl<
+                     ValueT, DenseMap<ValueT, detail::DenseSetEmpty, ValueInfoT,
+                                      detail::DenseSetPair<ValueT>>,
+                     ValueInfoT> {
+  using BaseT =
+      detail::DenseSetImpl<ValueT,
+                           DenseMap<ValueT, detail::DenseSetEmpty, ValueInfoT,
+                                    detail::DenseSetPair<ValueT>>,
+                           ValueInfoT>;
 
 public:
   using BaseT::BaseT;
@@ -232,14 +231,13 @@ public:
 template <typename ValueT, unsigned InlineBuckets = 4,
           typename ValueInfoT = DenseMapInfo<ValueT>>
 class SmallDenseSet
-    : public llvm::detail::DenseSetImpl<
-          ValueT,
-          SmallDenseMap<ValueT, llvm::detail::DenseSetEmpty, InlineBuckets,
-                        ValueInfoT, llvm::detail::DenseSetPair<ValueT>>,
+    : public detail::DenseSetImpl<
+          ValueT, SmallDenseMap<ValueT, detail::DenseSetEmpty, InlineBuckets,
+                                ValueInfoT, detail::DenseSetPair<ValueT>>,
           ValueInfoT> {
-  using BaseT = llvm::detail::DenseSetImpl<
-      ValueT, SmallDenseMap<ValueT, llvm::detail::DenseSetEmpty, InlineBuckets,
-                            ValueInfoT, llvm::detail::DenseSetPair<ValueT>>,
+  using BaseT = detail::DenseSetImpl<
+      ValueT, SmallDenseMap<ValueT, detail::DenseSetEmpty, InlineBuckets,
+                            ValueInfoT, detail::DenseSetPair<ValueT>>,
       ValueInfoT>;
 
 public:

@@ -231,7 +231,7 @@ inline size_t join_items_size(const A1 &A, Args &&... Items) {
 template <typename IteratorT>
 inline std::string join(IteratorT Begin, IteratorT End, StringRef Separator) {
   typedef typename std::iterator_traits<IteratorT>::iterator_category tag;
-  return llvm::detail::join_impl(Begin, End, Separator, tag());
+  return detail::join_impl(Begin, End, Separator, tag());
 }
 
 /// Joins the strings in the range [R.begin(), R.end()), adding Separator
@@ -251,11 +251,10 @@ inline std::string join_items(Sep Separator, Args &&... Items) {
   if (sizeof...(Items) == 0)
     return Result;
 
-  size_t NS = llvm::detail::join_one_item_size(Separator);
-  size_t NI = llvm::detail::join_items_size(std::forward<Args>(Items)...);
+  size_t NS = detail::join_one_item_size(Separator);
+  size_t NI = detail::join_items_size(std::forward<Args>(Items)...);
   Result.reserve(NI + (sizeof...(Items) - 1) * NS + 1);
-  llvm::detail::join_items_impl(Result, Separator,
-                                std::forward<Args>(Items)...);
+  detail::join_items_impl(Result, Separator, std::forward<Args>(Items)...);
   return Result;
 }
 
