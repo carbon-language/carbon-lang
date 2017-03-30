@@ -703,7 +703,7 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
     computeKnownBits(Op1, KnownZero, KnownOne, Q.DL, 0, Q.AC, Q.CxtI, Q.DT);
-    if (KnownZero == ~APInt::getSignBit(BitWidth)) {
+    if (KnownZero.isMaxSignedValue()) {
       // Op1 is either 0 or the minimum signed value. If the sub is NSW, then
       // Op1 must be 0 because negating the minimum signed value is undefined.
       if (isNSW)
