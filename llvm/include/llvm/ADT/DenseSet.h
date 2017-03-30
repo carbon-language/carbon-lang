@@ -212,15 +212,15 @@ public:
 
 /// Implements a dense probed hash-table based set.
 template <typename ValueT, typename ValueInfoT = DenseMapInfo<ValueT>>
-class DenseSet : public detail::DenseSetImpl<
-                     ValueT, DenseMap<ValueT, detail::DenseSetEmpty, ValueInfoT,
-                                      detail::DenseSetPair<ValueT>>,
-                     ValueInfoT> {
-  using BaseT =
-      detail::DenseSetImpl<ValueT,
-                           DenseMap<ValueT, detail::DenseSetEmpty, ValueInfoT,
-                                    detail::DenseSetPair<ValueT>>,
-                           ValueInfoT>;
+class DenseSet
+    : public llvm::detail::DenseSetImpl<
+          ValueT, DenseMap<ValueT, llvm::detail::DenseSetEmpty, ValueInfoT,
+                           llvm::detail::DenseSetPair<ValueT>>,
+          ValueInfoT> {
+  using BaseT = llvm::detail::DenseSetImpl<
+      ValueT, DenseMap<ValueT, llvm::detail::DenseSetEmpty, ValueInfoT,
+                       llvm::detail::DenseSetPair<ValueT>>,
+      ValueInfoT>;
 
 public:
   using BaseT::BaseT;
@@ -231,13 +231,14 @@ public:
 template <typename ValueT, unsigned InlineBuckets = 4,
           typename ValueInfoT = DenseMapInfo<ValueT>>
 class SmallDenseSet
-    : public detail::DenseSetImpl<
-          ValueT, SmallDenseMap<ValueT, detail::DenseSetEmpty, InlineBuckets,
-                                ValueInfoT, detail::DenseSetPair<ValueT>>,
+    : public llvm::detail::DenseSetImpl<
+          ValueT,
+          SmallDenseMap<ValueT, llvm::detail::DenseSetEmpty, InlineBuckets,
+                        ValueInfoT, llvm::detail::DenseSetPair<ValueT>>,
           ValueInfoT> {
-  using BaseT = detail::DenseSetImpl<
-      ValueT, SmallDenseMap<ValueT, detail::DenseSetEmpty, InlineBuckets,
-                            ValueInfoT, detail::DenseSetPair<ValueT>>,
+  using BaseT = llvm::detail::DenseSetImpl<
+      ValueT, SmallDenseMap<ValueT, llvm::detail::DenseSetEmpty, InlineBuckets,
+                            ValueInfoT, llvm::detail::DenseSetPair<ValueT>>,
       ValueInfoT>;
 
 public:
