@@ -2432,8 +2432,11 @@ public:
                                              unsigned Depth = 0) const;
 
   /// This method can be implemented by targets that want to expose additional
-  /// information about sign bits to the DAG Combiner.
+  /// information about sign bits to the DAG Combiner. The DemandedElts
+  /// argument allows us to only collect the minimum sign bits that are shared
+  /// by the requested vector elements.
   virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
+                                                   const APInt &DemandedElts,
                                                    const SelectionDAG &DAG,
                                                    unsigned Depth = 0) const;
 

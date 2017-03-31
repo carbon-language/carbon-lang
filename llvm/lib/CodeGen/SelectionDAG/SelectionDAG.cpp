@@ -2899,6 +2899,15 @@ bool SelectionDAG::isKnownToBeAPowerOfTwo(SDValue Val) const {
 
 unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
   EVT VT = Op.getValueType();
+  APInt DemandedElts = VT.isVector()
+                           ? APInt::getAllOnesValue(VT.getVectorNumElements())
+                           : APInt(1, 1);
+  return ComputeNumSignBits(Op, DemandedElts, Depth);
+}
+
+unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
+                                          unsigned Depth) const {
+  EVT VT = Op.getValueType();
   assert(VT.isInteger() && "Invalid VT!");
   unsigned VTBits = VT.getScalarSizeInBits();
   unsigned Tmp, Tmp2;
@@ -2906,6 +2915,9 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
 
   if (Depth == 6)
     return 1;  // Limit search depth.
+
+  if (!DemandedElts)
+    return 1;  // No demanded elts, better to assume we don't know anything.
 
   switch (Op.getOpcode()) {
   default: break;
@@ -2924,6 +2936,9 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
   case ISD::BUILD_VECTOR:
     Tmp = VTBits;
     for (unsigned i = 0, e = Op.getNumOperands(); (i < e) && (Tmp > 1); ++i) {
+      if (!DemandedElts[i])
+        continue;
+
       SDValue SrcOp = Op.getOperand(i);
       Tmp2 = ComputeNumSignBits(Op.getOperand(i), Depth + 1);
 
@@ -3116,18 +3131,28 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
     return std::max(std::min(KnownSign - rIndex * BitWidth, BitWidth), 0);
   }
   case ISD::EXTRACT_VECTOR_ELT: {
-    // At the moment we keep this simple and skip tracking the specific
-    // element. This way we get the lowest common denominator for all elements
-    // of the vector.
-    // TODO: get information for given vector element
+    SDValue InVec = Op.getOperand(0);
+    SDValue EltNo = Op.getOperand(1);
+    EVT VecVT = InVec.getValueType();
     const unsigned BitWidth = Op.getValueSizeInBits();
     const unsigned EltBitWidth = Op.getOperand(0).getScalarValueSizeInBits();
+    const unsigned NumSrcElts = VecVT.getVectorNumElements();
+
     // If BitWidth > EltBitWidth the value is anyext:ed, and we do not know
     // anything about sign bits. But if the sizes match we can derive knowledge
     // about sign bits from the vector operand.
-    if (BitWidth == EltBitWidth)
-      return ComputeNumSignBits(Op.getOperand(0), Depth+1);
-    break;
+    if (BitWidth != EltBitWidth)
+      break;
+
+    // If we know the element index, just demand that vector element, else for
+    // an unknown element index, ignore DemandedElts and demand them all.
+    APInt DemandedSrcElts = APInt::getAllOnesValue(NumSrcElts);
+    ConstantSDNode *ConstEltNo = dyn_cast<ConstantSDNode>(EltNo);
+    if (ConstEltNo && ConstEltNo->getAPIntValue().ult(NumSrcElts))
+      DemandedSrcElts =
+          APInt::getOneBitSet(NumSrcElts, ConstEltNo->getZExtValue());
+
+    return ComputeNumSignBits(InVec, DemandedSrcElts, Depth + 1);
   }
   case ISD::EXTRACT_SUBVECTOR:
     return ComputeNumSignBits(Op.getOperand(0), Depth + 1);
@@ -3162,7 +3187,8 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
       Op.getOpcode() == ISD::INTRINSIC_WO_CHAIN ||
       Op.getOpcode() == ISD::INTRINSIC_W_CHAIN ||
       Op.getOpcode() == ISD::INTRINSIC_VOID) {
-    unsigned NumBits = TLI->ComputeNumSignBitsForTargetNode(Op, *this, Depth);
+    unsigned NumBits =
+        TLI->ComputeNumSignBitsForTargetNode(Op, DemandedElts, *this, Depth);
     if (NumBits > 1)
       FirstAnswer = std::max(FirstAnswer, NumBits);
   }
@@ -3170,7 +3196,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
   // Finally, if we can prove that the top bits of the result are 0's or 1's,
   // use this information.
   APInt KnownZero, KnownOne;
-  computeKnownBits(Op, KnownZero, KnownOne, Depth);
+  computeKnownBits(Op, KnownZero, KnownOne, DemandedElts, Depth);
 
   APInt Mask;
   if (KnownZero.isNegative()) {        // sign bit is 0

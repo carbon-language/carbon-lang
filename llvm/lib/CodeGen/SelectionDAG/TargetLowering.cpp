@@ -1338,6 +1338,7 @@ void TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
 /// This method can be implemented by targets that want to expose additional
 /// information about sign bits to the DAG Combiner.
 unsigned TargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
+                                                         const APInt &,
                                                          const SelectionDAG &,
                                                          unsigned Depth) const {
   assert((Op.getOpcode() >= ISD::BUILTIN_OP_END ||

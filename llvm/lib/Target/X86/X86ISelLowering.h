@@ -832,6 +832,7 @@ namespace llvm {
 
     /// Determine the number of bits in the operation that are sign bits.
     unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
+                                             const APInt &DemandedElts,
                                              const SelectionDAG &DAG,
                                              unsigned Depth) const override;
 

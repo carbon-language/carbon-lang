@@ -26745,7 +26745,8 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
 }
 
 unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(
-    SDValue Op, const SelectionDAG &DAG, unsigned Depth) const {
+    SDValue Op, const APInt &DemandedElts, const SelectionDAG &DAG,
+    unsigned Depth) const {
   unsigned VTBits = Op.getScalarValueSizeInBits();
   unsigned Opcode = Op.getOpcode();
   switch (Opcode) {

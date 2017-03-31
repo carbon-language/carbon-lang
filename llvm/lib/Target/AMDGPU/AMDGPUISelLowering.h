@@ -206,7 +206,8 @@ public:
                                      const SelectionDAG &DAG,
                                      unsigned Depth = 0) const override;
 
-  unsigned ComputeNumSignBitsForTargetNode(SDValue Op, const SelectionDAG &DAG,
+  unsigned ComputeNumSignBitsForTargetNode(SDValue Op, const APInt &DemandedElts,
+                                           const SelectionDAG &DAG,
                                            unsigned Depth = 0) const override;
 
   /// \brief Helper function that adds Reg to the LiveIn list of the DAG's
