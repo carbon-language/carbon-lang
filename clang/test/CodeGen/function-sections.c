@@ -10,7 +10,7 @@
 // RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -S -fno-data-sections -fdata-sections -o - < %s | FileCheck %s --check-prefix=DATA_SECT
 
 // Try again through a clang invocation of the ThinLTO backend.
-// RUN: %clang -O2 %s -flto=thin -c -o %t.o
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -O2 %s -flto=thin -o %t.o
 // RUN: llvm-lto -thinlto -o %t %t.o
 // RUN: %clang -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -S -ffunction-sections -o - | FileCheck %s --check-prefix=FUNC_SECT
 // RUN: %clang -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -S -fdata-sections -o - | FileCheck %s --check-prefix=DATA_SECT
