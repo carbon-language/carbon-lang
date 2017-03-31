@@ -1918,14 +1918,6 @@ inline const APInt &umax(const APInt &A, const APInt &B) {
   return A.ugt(B) ? A : B;
 }
 
-/// \brief Check if the specified APInt has a N-bits unsigned integer value.
-inline bool isIntN(unsigned N, const APInt &APIVal) { return APIVal.isIntN(N); }
-
-/// \brief Check if the specified APInt has a N-bits signed integer value.
-inline bool isSignedIntN(unsigned N, const APInt &APIVal) {
-  return APIVal.isSignedIntN(N);
-}
-
 /// \returns true if the argument APInt value is a sequence of ones starting at
 /// the least significant bit with the remainder zero.
 inline bool isMask(unsigned numBits, const APInt &APIVal) {
@@ -1945,12 +1937,6 @@ inline bool isMask(const APInt &Value) {
 inline bool isShiftedMask(unsigned numBits, const APInt &APIVal) {
   return isMask(numBits, (APIVal - APInt(numBits, 1)) | APIVal);
 }
-
-/// \brief Returns a byte-swapped representation of the specified APInt Value.
-inline APInt byteSwap(const APInt &APIVal) { return APIVal.byteSwap(); }
-
-/// \brief Returns the floor log base 2 of the specified APInt value.
-inline unsigned logBase2(const APInt &APIVal) { return APIVal.logBase2(); }
 
 /// \brief Compute GCD of two APInt values.
 ///
