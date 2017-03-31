@@ -12,8 +12,8 @@
 // Try again through a clang invocation of the ThinLTO backend.
 // RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -O2 %s -flto=thin -emit-llvm-bc -o %t.o
 // RUN: llvm-lto -thinlto -o %t %t.o
-// RUN: %clang -Xclang -triple -Xclang x86_64-pc-linux-gnu -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -S -ffunction-sections -o - | FileCheck %s --check-prefix=FUNC_SECT
-// RUN: %clang -Xclang -triple -Xclang x86_64-pc-linux-gnu -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -S -fdata-sections -o - | FileCheck %s --check-prefix=DATA_SECT
+// RUN: %clang -Xclang -triple -Xclang x86_64-pc-linux-gnu -Xclang -target-cpu -Xclang x86-64 -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -S -ffunction-sections -o - | FileCheck %s --check-prefix=FUNC_SECT
+// RUN: %clang -Xclang -triple -Xclang x86_64-pc-linux-gnu -Xclang -target-cpu -Xclang x86-64 -O2 -x ir %t.o -fthinlto-index=%t.thinlto.bc -S -fdata-sections -o - | FileCheck %s --check-prefix=DATA_SECT
 
 const int hello = 123;
 void world() {}
