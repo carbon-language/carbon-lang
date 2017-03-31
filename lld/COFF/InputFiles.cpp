@@ -355,12 +355,13 @@ void BitcodeFile::parse() {
       SymbolBody *Alias = Symtab->addUndefined(Saver.save(Fallback));
       checkAndSetWeakAlias(Symtab, this, Sym->body(), Alias);
     } else {
-      bool IsCOMDAT = ObjSym.getComdatIndex() != -1;
+      Expected<int> ComdatIndex = ObjSym.getComdatIndex();
+      bool IsCOMDAT = ComdatIndex && *ComdatIndex != -1;
       Sym = Symtab->addRegular(this, SymName, IsCOMDAT);
     }
     SymbolBodies.push_back(Sym->body());
   }
-  Directives = Obj->getCOFFLinkerOpts();
+  Directives = check(Obj->getLinkerOpts());
 }
 
 MachineTypes BitcodeFile::getMachineType() {
