@@ -713,7 +713,7 @@ def getDefaultSubstitutions(test, tmpDir, tmpBase, normalize_slashes=False):
                           ('%p', sourcedir),
                           ('%{pathsep}', os.pathsep),
                           ('%t', tmpName),
-                          ('%basename', baseName),
+                          ('%basename_t', baseName),
                           ('%T', tmpDir),
                           ('#_MARKER_#', '%')])
 
