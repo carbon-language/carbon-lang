@@ -274,6 +274,7 @@ For API clients and LLVM developers.
    Coroutines
    GlobalISel
    XRay
+   XRayExample
    PDB/index
 
 :doc:`WritingAnLLVMPass`
