@@ -168,7 +168,7 @@ public:
     PowerABIBuiltinVaList,
 
     /// __builtin_va_list as defined by the x86-64 ABI:
-    /// http://www.x86-64.org/documentation/abi.pdf
+    /// http://refspecs.linuxbase.org/elf/x86_64-abi-0.21.pdf
     X86_64ABIBuiltinVaList,
 
     /// __builtin_va_list as defined by ARM AAPCS ABI
