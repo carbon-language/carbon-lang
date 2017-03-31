@@ -1640,7 +1640,7 @@ bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Mips::BI__builtin_msa_sldi_d: i = 2; l = 0; u = 1; break;
   // Memory offsets and immediate loads.
   // These intrinsics take a signed 10 bit immediate.
-  case Mips::BI__builtin_msa_ldi_b: i = 0; l = -128; u = 127; break;
+  case Mips::BI__builtin_msa_ldi_b: i = 0; l = -128; u = 255; break;
   case Mips::BI__builtin_msa_ldi_h:
   case Mips::BI__builtin_msa_ldi_w:
   case Mips::BI__builtin_msa_ldi_d: i = 0; l = -512; u = 511; break;
