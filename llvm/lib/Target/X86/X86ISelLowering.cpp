@@ -26661,6 +26661,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr &MI,
 void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
                                                       APInt &KnownZero,
                                                       APInt &KnownOne,
+                                                      const APInt &DemandedElts,
                                                       const SelectionDAG &DAG,
                                                       unsigned Depth) const {
   unsigned BitWidth = KnownZero.getBitWidth();

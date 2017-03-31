@@ -1323,6 +1323,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 void TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
                                                    APInt &KnownZero,
                                                    APInt &KnownOne,
+                                                   const APInt &DemandedElts,
                                                    const SelectionDAG &DAG,
                                                    unsigned Depth) const {
   assert((Op.getOpcode() >= ISD::BUILTIN_OP_END ||

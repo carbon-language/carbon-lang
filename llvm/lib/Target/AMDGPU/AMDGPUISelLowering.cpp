@@ -3556,7 +3556,7 @@ SDValue AMDGPUTargetLowering::getRecipEstimate(SDValue Operand,
 
 void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
     const SDValue Op, APInt &KnownZero, APInt &KnownOne,
-    const SelectionDAG &DAG, unsigned Depth) const {
+    const APInt &DemandedElts, const SelectionDAG &DAG, unsigned Depth) const {
 
   unsigned BitWidth = KnownZero.getBitWidth();
   KnownZero = KnownOne = APInt(BitWidth, 0); // Don't know anything.

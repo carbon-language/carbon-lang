@@ -2421,10 +2421,13 @@ public:
                             DAGCombinerInfo &DCI) const;
 
   /// Determine which of the bits specified in Mask are known to be either zero
-  /// or one and return them in the KnownZero/KnownOne bitsets.
+  /// or one and return them in the KnownZero/KnownOne bitsets. The DemandedElts
+  /// argument allows us to only collect the known bits that are shared by the
+  /// requested vector elements.
   virtual void computeKnownBitsForTargetNode(const SDValue Op,
                                              APInt &KnownZero,
                                              APInt &KnownOne,
+                                             const APInt &DemandedElts,
                                              const SelectionDAG &DAG,
                                              unsigned Depth = 0) const;
 

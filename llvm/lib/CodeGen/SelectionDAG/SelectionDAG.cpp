@@ -1996,8 +1996,6 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
 /// them in the KnownZero/KnownOne bitsets. The DemandedElts argument allows
 /// us to only collect the known bits that are shared by the requested vector
 /// elements.
-/// TODO: We only support DemandedElts on a few opcodes so far, the remainder
-/// should be added when they become necessary.
 void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
                                     APInt &KnownOne, const APInt &DemandedElts,
                                     unsigned Depth) const {
@@ -2814,7 +2812,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
   case ISD::INTRINSIC_W_CHAIN:
   case ISD::INTRINSIC_VOID:
     // Allow the target to implement this method for its nodes.
-    TLI->computeKnownBitsForTargetNode(Op, KnownZero, KnownOne, *this, Depth);
+    TLI->computeKnownBitsForTargetNode(Op, KnownZero, KnownOne, DemandedElts,
+                                       *this, Depth);
     break;
   }
 
