@@ -34,7 +34,7 @@ struct TableOfRecentCompares {
     T A, B;
   };
   ATTRIBUTE_NO_SANITIZE_ALL
-  void Insert(size_t Idx, T Arg1, T Arg2) {
+  void Insert(size_t Idx, const T &Arg1, const T &Arg2) {
     Idx = Idx % kSize;
     Table[Idx].A = Arg1;
     Table[Idx].B = Arg2;
