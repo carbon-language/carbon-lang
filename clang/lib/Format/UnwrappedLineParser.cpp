@@ -916,7 +916,9 @@ void UnwrappedLineParser::parseStructuralElement() {
         return;
       }
     }
-    if (FormatTok->isOneOf(Keywords.kw_signals, Keywords.kw_qsignals,
+    if ((Style.Language == FormatStyle::LK_Cpp ||
+         Style.Language == FormatStyle::LK_ObjC) &&
+        FormatTok->isOneOf(Keywords.kw_signals, Keywords.kw_qsignals,
                            Keywords.kw_slots, Keywords.kw_qslots)) {
       nextToken();
       if (FormatTok->is(tok::colon)) {
