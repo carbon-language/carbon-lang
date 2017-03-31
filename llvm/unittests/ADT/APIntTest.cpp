@@ -1958,3 +1958,21 @@ TEST(APIntTest, setAllBits) {
   EXPECT_EQ(128u, i128.countTrailingOnes());
   EXPECT_EQ(128u, i128.countPopulation());
 }
+
+TEST(APIntTest, getLoBits) {
+  APInt i32(32, 0xfa);
+  i32.setHighBits(1);
+  EXPECT_EQ(0xa, i32.getLoBits(4));
+  APInt i128(128, 0xfa);
+  i128.setHighBits(1);
+  EXPECT_EQ(0xa, i128.getLoBits(4));
+}
+
+TEST(APIntTest, getHiBits) {
+  APInt i32(32, 0xfa);
+  i32.setHighBits(2);
+  EXPECT_EQ(0xc, i32.getHiBits(4));
+  APInt i128(128, 0xfa);
+  i128.setHighBits(2);
+  EXPECT_EQ(0xc, i128.getHiBits(4));
+}
