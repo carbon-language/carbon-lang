@@ -837,6 +837,11 @@ void RewriteInstance::discoverFileObjects() {
                 "support. Cannot optimize.\n";
       exit(1);
     }
+    if (NameOrError && NameOrError->startswith("__llvm_coverage_mapping")) {
+      errs() << "BOLT-ERROR: input file was compiled or linked with coverage "
+                "support. Cannot optimize.\n";
+      exit(1);
+    }
 
     if (Symbol.getFlags() & SymbolRef::SF_Undefined)
       continue;
