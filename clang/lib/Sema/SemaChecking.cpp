@@ -2308,7 +2308,7 @@ bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case X86::BI__builtin_ia32_scatterpfdps:
   case X86::BI__builtin_ia32_scatterpfqpd:
   case X86::BI__builtin_ia32_scatterpfqps:
-    i = 4; l = 1; u = 2;
+    i = 4; l = 2; u = 3;
     break;
   case X86::BI__builtin_ia32_pcmpestrm128:
   case X86::BI__builtin_ia32_pcmpestri128:
