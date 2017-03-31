@@ -7453,7 +7453,7 @@ CheckReturnStackAddr(Sema &S, Expr *RetValExp, QualType lhsType,
   if (!stackE)
     return; // Nothing suspicious was found.
 
-  // Parameters are initalized in the calling scope, so taking the address
+  // Parameters are initialized in the calling scope, so taking the address
   // of a parameter reference doesn't need a warning.
   for (auto *DRE : refVars)
     if (isa<ParmVarDecl>(DRE->getDecl()))
