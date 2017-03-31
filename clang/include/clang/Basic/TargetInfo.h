@@ -154,7 +154,7 @@ public:
     /// typedef void* __builtin_va_list;
     VoidPtrBuiltinVaList,
 
-    /// __builtin_va_list as defind by the AArch64 ABI
+    /// __builtin_va_list as defined by the AArch64 ABI
     /// http://infocenter.arm.com/help/topic/com.arm.doc.ihi0055a/IHI0055A_aapcs64.pdf
     AArch64ABIBuiltinVaList,
 
