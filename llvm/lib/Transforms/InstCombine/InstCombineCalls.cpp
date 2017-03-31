@@ -4143,6 +4143,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     CallInst *CI = cast<CallInst>(Caller);
     NC = Builder->CreateCall(Callee, Args, OpBundles);
     NC->takeName(CI);
+    // Preserve the weight metadata for the new call instruction. The metadata
+    // is used by SamplePGO to check callsite's hotness.
+    uint64_t W;
+    if (CI->extractProfTotalWeight(W))
+      NC->setProfWeight(W);
+
     cast<CallInst>(NC)->setTailCallKind(CI->getTailCallKind());
     cast<CallInst>(NC)->setCallingConv(CI->getCallingConv());
     cast<CallInst>(NC)->setAttributes(NewCallerPAL);
