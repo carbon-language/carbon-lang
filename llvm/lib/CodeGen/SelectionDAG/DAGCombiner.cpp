@@ -3214,8 +3214,10 @@ SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
 
     // All bits set?
     // (and (seteq X, -1), (seteq Y, -1)) --> (seteq (and X, Y), -1)
-    // TODO: All sign bits set?
-    if (isAllOnesConstant(LR) && CC1 == ISD::SETEQ) {
+    // All sign bits set?
+    // (and (setlt X,  0), (setlt Y,  0)) --> (setlt (and X, Y),  0)
+    if ((isAllOnesConstant(LR) && CC1 == ISD::SETEQ) ||
+        (isNullConstant(LR) && CC1 == ISD::SETLT)) {
       SDValue And = DAG.getNode(ISD::AND, SDLoc(N0), OpVT, LL, RL);
       AddToWorklist(And.getNode());
       return DAG.getSetCC(DL, VT, And, LR, CC1);

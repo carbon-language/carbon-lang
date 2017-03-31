@@ -45,11 +45,8 @@ define zeroext i1 @all_bits_set(i32 %P, i32 %Q)  {
 define zeroext i1 @all_sign_bits_set(i32 %P, i32 %Q)  {
 ; CHECK-LABEL: all_sign_bits_set:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    cmpwi 0, 3, 0
-; CHECK-NEXT:    cmpwi 1, 4, 0
-; CHECK-NEXT:    li 3, 1
-; CHECK-NEXT:    crnand 20, 0, 4
-; CHECK-NEXT:    isel 3, 0, 3, 20
+; CHECK-NEXT:    and 3, 3, 4
+; CHECK-NEXT:    srwi 3, 3, 31
 ; CHECK-NEXT:    blr
   %a = icmp slt i32 %P, 0
   %b = icmp slt i32 %Q, 0
@@ -188,10 +185,9 @@ return:
 define i32 @all_sign_bits_set_branch(i32 %P, i32 %Q)  {
 ; CHECK-LABEL: all_sign_bits_set_branch:
 ; CHECK:       # BB#0: # %entry
-; CHECK-NEXT:    cmpwi 0, 3, 0
-; CHECK-NEXT:    cmpwi 1, 4, 0
-; CHECK-NEXT:    crand 20, 0, 4
-; CHECK-NEXT:    bc 4, 20, .LBB11_2
+; CHECK-NEXT:    and 3, 3, 4
+; CHECK-NEXT:    cmpwi 0, 3, -1
+; CHECK-NEXT:    bgt 0, .LBB11_2
 ; CHECK-NEXT:  # BB#1: # %bb1
 ; CHECK-NEXT:    li 3, 4
 ; CHECK-NEXT:    blr
