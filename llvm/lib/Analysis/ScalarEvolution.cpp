@@ -4726,7 +4726,7 @@ static ConstantRange getRangeForAffineARHelper(APInt Step,
   if (Step == 0 || MaxBECount == 0)
     return StartRange;
 
-  // If we don't know anything about the inital value (i.e. StartRange is
+  // If we don't know anything about the initial value (i.e. StartRange is
   // FullRange), then we don't know anything about the final range either.
   // Return FullRange.
   if (StartRange.isFullSet())
