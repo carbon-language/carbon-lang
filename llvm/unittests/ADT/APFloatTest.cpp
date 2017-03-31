@@ -3258,7 +3258,8 @@ TEST(APFloatTest, mod) {
 
 TEST(APFloatTest, PPCDoubleDoubleAddSpecial) {
   using DataType = std::tuple<uint64_t, uint64_t, uint64_t, uint64_t,
-                              APFloat::fltCategory, APFloat::roundingMode>;  DataType Data[] = {
+                              APFloat::fltCategory, APFloat::roundingMode>;
+  DataType Data[] = {
       // (1 + 0) + (-1 + 0) = fcZero
       std::make_tuple(0x3ff0000000000000ull, 0, 0xbff0000000000000ull, 0,
                       APFloat::fcZero, APFloat::rmNearestTiesToEven),
