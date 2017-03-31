@@ -167,7 +167,7 @@ struct Symbol {
   bool isFormatSpecific() const { return (Flags >> S::FB_format_specific) & 1; }
   bool isUnnamedAddr() const { return (Flags >> S::FB_unnamed_addr) & 1; }
 
-  size_t getCommonSize() const {
+  uint64_t getCommonSize() const {
     assert(isCommon());
     return CommonSize;
   }
