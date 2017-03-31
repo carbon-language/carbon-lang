@@ -1934,8 +1934,8 @@ inline bool isMask(const APInt &Value) {
 
 /// \brief Return true if the argument APInt value contains a sequence of ones
 /// with the remainder zero.
-inline bool isShiftedMask(unsigned numBits, const APInt &APIVal) {
-  return isMask(numBits, (APIVal - APInt(numBits, 1)) | APIVal);
+inline bool isShiftedMask(const APInt &APIVal) {
+  return (APIVal != 0) && isMask((APIVal - 1) | APIVal);
 }
 
 /// \brief Compute GCD of two APInt values.
