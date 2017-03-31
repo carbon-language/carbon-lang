@@ -114,7 +114,8 @@ size_t LibStdcppUniquePtrSyntheticFrontEnd::GetIndexOfChildWithName(
     return 0;
   if (name == ConstString("del") || name == ConstString("deleter"))
     return 1;
-  if (name == ConstString("obj") || name == ConstString("object"))
+  if (name == ConstString("obj") || name == ConstString("object") ||
+      name == ConstString("$$dereference$$"))
     return 2;
   return UINT32_MAX;
 }

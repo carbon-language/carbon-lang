@@ -42,13 +42,17 @@ class StdUniquePtrDataFormatterTestCase(TestBase):
         self.expect("frame variable sdp", substrs=['sdp = 0x', 'deleter = ', 'a = 3', 'b = 4'])
 
         self.assertEqual(123, frame.GetValueForVariablePath("iup.object").GetValueAsUnsigned())
+        self.assertEqual(123, frame.GetValueForVariablePath("*iup").GetValueAsUnsigned())
         self.assertFalse(frame.GetValueForVariablePath("iup.deleter").IsValid())
 
         self.assertEqual('"foobar"', frame.GetValueForVariablePath("sup.object").GetSummary())
+        self.assertEqual('"foobar"', frame.GetValueForVariablePath("*sup").GetSummary())
         self.assertFalse(frame.GetValueForVariablePath("sup.deleter").IsValid())
 
         self.assertEqual(456, frame.GetValueForVariablePath("idp.object").GetValueAsUnsigned())
+        self.assertEqual(456, frame.GetValueForVariablePath("*idp").GetValueAsUnsigned())
         self.assertEqual('"baz"', frame.GetValueForVariablePath("sdp.object").GetSummary())
+        self.assertEqual('"baz"', frame.GetValueForVariablePath("*sdp").GetSummary())
 
         idp_deleter = frame.GetValueForVariablePath("idp.deleter")
         self.assertTrue(idp_deleter.IsValid())
@@ -86,5 +90,7 @@ class StdUniquePtrDataFormatterTestCase(TestBase):
         frame = self.frame()
         self.assertTrue(frame.IsValid())
         self.assertEqual(2, frame.GetValueForVariablePath("f1->fp.object.data").GetValueAsUnsigned())
+        self.assertEqual(2, frame.GetValueForVariablePath("f1->fp->data").GetValueAsUnsigned())
         self.assertEqual(1, frame.GetValueForVariablePath("f1->fp.object.fp.object.data").GetValueAsUnsigned())
+        self.assertEqual(1, frame.GetValueForVariablePath("f1->fp->fp->data").GetValueAsUnsigned())
 
