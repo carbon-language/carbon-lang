@@ -98,14 +98,6 @@ AliasResult AMDGPUAAResult::alias(const MemoryLocation &LocA,
   AliasResult Result = ASAliasRules.getAliasResult(asA, asB);
   if (Result == NoAlias) return Result;
 
-  if (isa<Argument>(LocA.Ptr) && isa<Argument>(LocB.Ptr)) {
-    Type *T1 = cast<PointerType>(LocA.Ptr->getType())->getElementType();
-    Type *T2 = cast<PointerType>(LocB.Ptr->getType())->getElementType();
-
-    if ((T1->isVectorTy() && !T2->isVectorTy()) ||
-        (T2->isVectorTy() && !T1->isVectorTy()))
-      return NoAlias;
-  }
   // Forward the query to the next alias analysis.
   return AAResultBase::alias(LocA, LocB);
 }
