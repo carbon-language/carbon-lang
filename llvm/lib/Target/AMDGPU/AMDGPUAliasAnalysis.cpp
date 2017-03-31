@@ -38,7 +38,8 @@ void AMDGPUAAWrapperPass::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 // Must match the table in getAliasResult.
-AMDGPUAAResult::ASAliasRulesTy::ASAliasRulesTy(AMDGPUAS AS_) : AS(AS_) {
+AMDGPUAAResult::ASAliasRulesTy::ASAliasRulesTy(AMDGPUAS AS_, Triple::ArchType Arch_)
+  : Arch(Arch_), AS(AS_) {
   // These arrarys are indexed by address space value
   // enum elements 0 ... to 5
   static const AliasResult ASAliasRulesPrivIsZero[6][6] = {
@@ -80,8 +81,12 @@ AMDGPUAAResult::ASAliasRulesTy::ASAliasRulesTy(AMDGPUAS AS_) : AS(AS_) {
 
 AliasResult AMDGPUAAResult::ASAliasRulesTy::getAliasResult(unsigned AS1,
     unsigned AS2) const {
-  if (AS1 > AS.MAX_COMMON_ADDRESS || AS2 > AS.MAX_COMMON_ADDRESS)
-    report_fatal_error("Pointer address space out of range");
+  if (AS1 > AS.MAX_COMMON_ADDRESS || AS2 > AS.MAX_COMMON_ADDRESS) {
+    if (Arch == Triple::amdgcn)
+      report_fatal_error("Pointer address space out of range");
+    return AS1 == AS2 ? MayAlias : NoAlias;
+  }
+
   return (*ASAliasRules)[AS1][AS2];
 }
 
