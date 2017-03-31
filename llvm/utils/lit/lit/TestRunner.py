@@ -706,11 +706,14 @@ def getDefaultSubstitutions(test, tmpDir, tmpBase, normalize_slashes=False):
     substitutions = []
     substitutions.extend([('%%', '#_MARKER_#')])
     substitutions.extend(test.config.substitutions)
+    tmpName = tmpBase + '.tmp'
+    baseName = os.path.basename(tmpBase)
     substitutions.extend([('%s', sourcepath),
                           ('%S', sourcedir),
                           ('%p', sourcedir),
                           ('%{pathsep}', os.pathsep),
-                          ('%t', tmpBase + '.tmp'),
+                          ('%t', tmpName),
+                          ('%basename', baseName),
                           ('%T', tmpDir),
                           ('#_MARKER_#', '%')])
 
