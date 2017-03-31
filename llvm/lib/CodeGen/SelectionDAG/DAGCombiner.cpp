@@ -3201,25 +3201,24 @@ SDValue DAGCombiner::foldAndOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
   ISD::CondCode CC1 = cast<CondCodeSDNode>(N1CC)->get();
   bool IsInteger = OpVT.isInteger();
   if (LR == RR && CC0 == CC1 && IsInteger) {
-    // (and (seteq X, 0), (seteq Y, 0)) --> (seteq (or X, Y), 0)
-    if (isNullConstant(LR) && CC1 == ISD::SETEQ) {
+    // All bits cleared?
+    // (and (seteq X,  0), (seteq Y,  0)) --> (seteq (or X, Y),  0)
+    // All sign bits cleared?
+    // (and (setgt X, -1), (setgt Y, -1)) --> (setgt (or X, Y), -1)
+    if ((isNullConstant(LR) && CC1 == ISD::SETEQ) ||
+        (isAllOnesConstant(LR) && CC1 == ISD::SETGT)) {
       SDValue Or = DAG.getNode(ISD::OR, SDLoc(N0), OpVT, LL, RL);
       AddToWorklist(Or.getNode());
       return DAG.getSetCC(DL, VT, Or, LR, CC1);
     }
 
+    // All bits set?
     // (and (seteq X, -1), (seteq Y, -1)) --> (seteq (and X, Y), -1)
+    // TODO: All sign bits set?
     if (isAllOnesConstant(LR) && CC1 == ISD::SETEQ) {
       SDValue And = DAG.getNode(ISD::AND, SDLoc(N0), OpVT, LL, RL);
       AddToWorklist(And.getNode());
       return DAG.getSetCC(DL, VT, And, LR, CC1);
-    }
-
-    // (and (setgt X, -1), (setgt Y, -1)) --> (setgt (or X, Y), -1)
-    if (isAllOnesConstant(LR) && CC1 == ISD::SETGT) {
-      SDValue Or = DAG.getNode(ISD::OR, SDLoc(N0), OpVT, LL, RL);
-      AddToWorklist(Or.getNode());
-      return DAG.getSetCC(DL, VT, Or, LR, CC1);
     }
   }
 
@@ -4001,14 +4000,18 @@ SDValue DAGCombiner::foldOrOfSetCCs(SDValue N0, SDValue N1, const SDLoc &DL) {
   ISD::CondCode CC1 = cast<CondCodeSDNode>(N1CC)->get();
   bool IsInteger = OpVT.isInteger();
   if (LR == RR && CC0 == CC1 && IsInteger) {
+    // Any bits set?
     // (or (setne X, 0), (setne Y, 0)) --> (setne (or X, Y), 0)
-    // (or (setlt X, 0), (setlt Y, 0)) --> (setne (or X, Y), 0)
+    // Any sign bits set?
+    // (or (setlt X, 0), (setlt Y, 0)) --> (setlt (or X, Y), 0)
     if (isNullConstant(LR) && (CC1 == ISD::SETNE || CC1 == ISD::SETLT)) {
       SDValue Or = DAG.getNode(ISD::OR, SDLoc(N0), OpVT, LL, RL);
       AddToWorklist(Or.getNode());
       return DAG.getSetCC(DL, VT, Or, LR, CC1);
     }
+    // Any bits clear?
     // (or (setne X, -1), (setne Y, -1)) --> (setne (and X, Y), -1)
+    // Any sign bits clear?
     // (or (setgt X, -1), (setgt Y  -1)) --> (setgt (and X, Y), -1)
     if (isAllOnesConstant(LR) && (CC1 == ISD::SETNE || CC1 == ISD::SETGT)) {
       SDValue And = DAG.getNode(ISD::AND, SDLoc(N0), OpVT, LL, RL);
