@@ -14,8 +14,8 @@
 
 #include "llvm/LTO/legacy/LTOModule.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Analysis/ObjectUtils.h"
 #include "llvm/Bitcode/BitcodeReader.h"
-#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DiagnosticPrinter.h"

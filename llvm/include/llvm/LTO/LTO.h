@@ -19,7 +19,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/CodeGen/Analysis.h"
+#include "llvm/Analysis/ObjectUtils.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/ModuleSummaryIndex.h"
 #include "llvm/LTO/Config.h"
