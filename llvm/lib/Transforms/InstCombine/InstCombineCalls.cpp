@@ -2091,6 +2091,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::floor:
   case Intrinsic::round:
   case Intrinsic::nearbyint:
+  case Intrinsic::rint:
   case Intrinsic::trunc: {
     Value *ExtSrc;
     if (match(II->getArgOperand(0), m_FPExt(m_Value(ExtSrc))) &&
