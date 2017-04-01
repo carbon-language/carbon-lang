@@ -429,17 +429,9 @@ private:
 
 template <typename T>
 static bool equalsLoadStoreHelper(const T &LHS, const Expression &RHS) {
-  if ((!isa<LoadExpression>(RHS) && !isa<StoreExpression>(RHS)) ||
-      !LHS.BasicExpression::equals(RHS)) {
+  if (!isa<LoadExpression>(RHS) && !isa<StoreExpression>(RHS))
     return false;
-  } else if (const auto *L = dyn_cast<LoadExpression>(&RHS)) {
-    if (LHS.getDefiningAccess() != L->getDefiningAccess())
-      return false;
-  } else if (const auto *S = dyn_cast<StoreExpression>(&RHS)) {
-    if (LHS.getDefiningAccess() != S->getDefiningAccess())
-      return false;
-  }
-  return true;
+  return LHS.MemoryExpression::equals(RHS);
 }
 
 bool LoadExpression::equals(const Expression &Other) const {
@@ -447,13 +439,13 @@ bool LoadExpression::equals(const Expression &Other) const {
 }
 
 bool StoreExpression::equals(const Expression &Other) const {
-  bool Result = equalsLoadStoreHelper(*this, Other);
+  if (!equalsLoadStoreHelper(*this, Other))
+    return false;
   // Make sure that store vs store includes the value operand.
-  if (Result)
-    if (const auto *S = dyn_cast<StoreExpression>(&Other))
-      if (getStoredValue() != S->getStoredValue())
-        return false;
-  return Result;
+  if (const auto *S = dyn_cast<StoreExpression>(&Other))
+    if (getStoredValue() != S->getStoredValue())
+      return false;
+  return true;
 }
 
 #ifndef NDEBUG
