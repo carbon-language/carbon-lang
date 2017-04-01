@@ -458,11 +458,8 @@ Error WasmObjectFile::parseGlobalSection(const uint8_t *Ptr, const uint8_t *End)
     wasm::WasmGlobal Global;
     Global.Type = readVarint7(Ptr);
     Global.Mutable = readVaruint1(Ptr);
-    size_t offset = Ptr - getPtr(0);
-    if (Error Err = readInitExpr(Global.InitExpr, Ptr)) {
-      offset = Ptr - getPtr(0);
+    if (Error Err = readInitExpr(Global.InitExpr, Ptr))
       return Err;
-    }
     Globals.push_back(Global);
   }
   if (Ptr != End)
