@@ -1064,13 +1064,14 @@ upward_defs(const MemoryAccessPair &Pair) {
 /// no defining use (e.g. a MemoryPhi or liveOnEntry). Note that, when comparing
 /// against a null def_chain_iterator, this will compare equal only after
 /// walking said Phi/liveOnEntry.
+template <class T>
 struct def_chain_iterator
-    : public iterator_facade_base<def_chain_iterator, std::forward_iterator_tag,
-                                  MemoryAccess *> {
+    : public iterator_facade_base<def_chain_iterator<T>,
+                                  std::forward_iterator_tag, MemoryAccess *> {
   def_chain_iterator() : MA(nullptr) {}
-  def_chain_iterator(MemoryAccess *MA) : MA(MA) {}
+  def_chain_iterator(T MA) : MA(MA) {}
 
-  MemoryAccess *operator*() const { return MA; }
+  T operator*() const { return MA; }
 
   def_chain_iterator &operator++() {
     // N.B. liveOnEntry has a null defining access.
@@ -1084,16 +1085,17 @@ struct def_chain_iterator
   bool operator==(const def_chain_iterator &O) const { return MA == O.MA; }
 
 private:
-  MemoryAccess *MA;
+  T MA;
 };
 
-inline iterator_range<def_chain_iterator>
-def_chain(MemoryAccess *MA, MemoryAccess *UpTo = nullptr) {
+template <class T>
+inline iterator_range<def_chain_iterator<T>>
+def_chain(T MA, MemoryAccess *UpTo = nullptr) {
 #ifdef EXPENSIVE_CHECKS
   assert((!UpTo || find(def_chain(MA), UpTo) != def_chain_iterator()) &&
          "UpTo isn't in the def chain!");
 #endif
-  return make_range(def_chain_iterator(MA), def_chain_iterator(UpTo));
+  return make_range(def_chain_iterator<T>(MA), def_chain_iterator<T>(UpTo));
 }
 
 } // end namespace llvm

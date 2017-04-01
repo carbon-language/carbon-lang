@@ -1899,28 +1899,32 @@ bool NewGVN::singleReachablePHIPath(const MemoryAccess *First,
                                     const MemoryAccess *Second) const {
   if (First == Second)
     return true;
-
-  if (auto *FirstDef = dyn_cast<MemoryUseOrDef>(First)) {
-    auto *DefAccess = FirstDef->getDefiningAccess();
-    return singleReachablePHIPath(DefAccess, Second);
-  } else {
-    auto *MP = cast<MemoryPhi>(First);
-    auto ReachableOperandPred = [&](const Use &U) {
-      return ReachableEdges.count({MP->getIncomingBlock(U), MP->getBlock()});
-    };
-    auto FilteredPhiArgs =
-        make_filter_range(MP->operands(), ReachableOperandPred);
-    SmallVector<const Value *, 32> OperandList;
-    std::copy(FilteredPhiArgs.begin(), FilteredPhiArgs.end(),
-              std::back_inserter(OperandList));
-    bool Okay = OperandList.size() == 1;
-    if (!Okay)
-      Okay = std::equal(OperandList.begin(), OperandList.end(),
-                        OperandList.begin());
-    if (Okay)
-      return singleReachablePHIPath(cast<MemoryAccess>(OperandList[0]), Second);
+  if (MSSA->isLiveOnEntryDef(First))
     return false;
+  const auto *EndDef = First;
+  for (auto *ChainDef : def_chain(First)) {
+    if (ChainDef == Second)
+      return true;
+    if (MSSA->isLiveOnEntryDef(ChainDef))
+      return false;
+    EndDef = ChainDef;
   }
+  auto *MP = cast<MemoryPhi>(EndDef);
+  auto ReachableOperandPred = [&](const Use &U) {
+    return ReachableEdges.count({MP->getIncomingBlock(U), MP->getBlock()});
+  };
+  auto FilteredPhiArgs =
+      make_filter_range(MP->operands(), ReachableOperandPred);
+  SmallVector<const Value *, 32> OperandList;
+  std::copy(FilteredPhiArgs.begin(), FilteredPhiArgs.end(),
+            std::back_inserter(OperandList));
+  bool Okay = OperandList.size() == 1;
+  if (!Okay)
+    Okay =
+        std::equal(OperandList.begin(), OperandList.end(), OperandList.begin());
+  if (Okay)
+    return singleReachablePHIPath(cast<MemoryAccess>(OperandList[0]), Second);
+  return false;
 }
 
 // Verify the that the memory equivalence table makes sense relative to the
