@@ -1092,7 +1092,7 @@ template <class T>
 inline iterator_range<def_chain_iterator<T>>
 def_chain(T MA, MemoryAccess *UpTo = nullptr) {
 #ifdef EXPENSIVE_CHECKS
-  assert((!UpTo || find(def_chain(MA), UpTo) != def_chain_iterator()) &&
+  assert((!UpTo || find(def_chain(MA), UpTo) != def_chain_iterator<T>()) &&
          "UpTo isn't in the def chain!");
 #endif
   return make_range(def_chain_iterator<T>(MA), def_chain_iterator<T>(UpTo));
