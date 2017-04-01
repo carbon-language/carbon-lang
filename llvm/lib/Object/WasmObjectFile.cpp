@@ -810,7 +810,7 @@ SubtargetFeatures WasmObjectFile::getFeatures() const {
 bool WasmObjectFile::isRelocatableObject() const { return false; }
 
 const WasmSection &WasmObjectFile::getWasmSection(DataRefImpl Ref) const {
-  assert(Ref.d.a >= 0 && Ref.d.a < Sections.size());
+  assert(Ref.d.a < Sections.size());
   return Sections[Ref.d.a];
 }
 
@@ -826,8 +826,8 @@ WasmObjectFile::getWasmRelocation(const RelocationRef &Ref) const {
 
 const wasm::WasmRelocation &
 WasmObjectFile::getWasmRelocation(DataRefImpl Ref) const {
-  assert(Ref.d.a >= 0 && Ref.d.a < Sections.size());
+  assert(Ref.d.a < Sections.size());
   const WasmSection& Sec = Sections[Ref.d.a];
-  assert(Ref.d.b >= 0 && Ref.d.b < Sec.Relocations.size());
+  assert(Ref.d.b < Sec.Relocations.size());
   return Sec.Relocations[Ref.d.b];
 }
