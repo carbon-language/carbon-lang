@@ -12,10 +12,10 @@
 /// walk memory instructions using a use/def graph.
 ///
 /// Memory SSA class builds an SSA form that links together memory access
-/// instructions such as loads, stores, atomics, and calls. Additionally, it does
-/// a trivial form of "heap versioning" Every time the memory state changes in
-/// the program, we generate a new heap version. It generates MemoryDef/Uses/Phis
-/// that are overlayed on top of the existing instructions.
+/// instructions such as loads, stores, atomics, and calls. Additionally, it
+/// does a trivial form of "heap versioning" Every time the memory state changes
+/// in the program, we generate a new heap version. It generates
+/// MemoryDef/Uses/Phis that are overlayed on top of the existing instructions.
 ///
 /// As a trivial example,
 /// define i32 @main() #0 {
@@ -54,15 +54,15 @@
 /// }
 ///
 /// Given this form, all the stores that could ever effect the load at %8 can be
-/// gotten by using the MemoryUse associated with it, and walking from use to def
-/// until you hit the top of the function.
+/// gotten by using the MemoryUse associated with it, and walking from use to
+/// def until you hit the top of the function.
 ///
 /// Each def also has a list of users associated with it, so you can walk from
 /// both def to users, and users to defs. Note that we disambiguate MemoryUses,
 /// but not the RHS of MemoryDefs. You can see this above at %7, which would
 /// otherwise be a MemoryUse(4). Being disambiguated means that for a given
-/// store, all the MemoryUses on its use lists are may-aliases of that store (but
-/// the MemoryDefs on its use list may not be).
+/// store, all the MemoryUses on its use lists are may-aliases of that store
+/// (but the MemoryDefs on its use list may not be).
 ///
 /// MemoryDefs are not disambiguated because it would require multiple reaching
 /// definitions, which would require multiple phis, and multiple memoryaccesses
@@ -711,10 +711,8 @@ private:
   unsigned NextID;
 };
 
-
 // Internal MemorySSA utils, for use by MemorySSA classes and walkers
-class MemorySSAUtil
-{
+class MemorySSAUtil {
 protected:
   friend class MemorySSAWalker;
   friend class GVNHoist;
