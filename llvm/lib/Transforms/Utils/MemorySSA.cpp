@@ -519,7 +519,6 @@ class ClobberWalker {
   // Phi optimization bookkeeping
   SmallVector<DefPath, 32> Paths;
   DenseSet<ConstMemoryAccessPair> VisitedPhis;
-  DenseMap<const BasicBlock *, MemoryAccess *> WalkTargetCache;
 
   void setUseCache(bool Use) { UseCache = Use; }
   bool shouldIgnoreCache() const {
@@ -557,46 +556,17 @@ class ClobberWalker {
   }
 
   /// Find the nearest def or phi that `From` can legally be optimized to.
-  ///
-  /// FIXME: Deduplicate this with MSSA::findDominatingDef. Ideally, MSSA should
-  /// keep track of this information for us, and allow us O(1) lookups of this
-  /// info.
-  MemoryAccess *getWalkTarget(const MemoryPhi *From) {
+  MemoryAccess *getWalkTarget(const MemoryPhi *From) const {
     assert(From->getNumOperands() && "Phi with no operands?");
 
     BasicBlock *BB = From->getBlock();
-    auto At = WalkTargetCache.find(BB);
-    if (At != WalkTargetCache.end())
-      return At->second;
-
-    SmallVector<const BasicBlock *, 8> ToCache;
-    ToCache.push_back(BB);
-
     MemoryAccess *Result = MSSA.getLiveOnEntryDef();
     DomTreeNode *Node = DT.getNode(BB);
     while ((Node = Node->getIDom())) {
-      auto At = WalkTargetCache.find(BB);
-      if (At != WalkTargetCache.end()) {
-        Result = At->second;
-        break;
-      }
-
-      auto *Accesses = MSSA.getBlockAccesses(Node->getBlock());
-      if (Accesses) {
-        auto Iter = find_if(reverse(*Accesses), [](const MemoryAccess &MA) {
-          return !isa<MemoryUse>(MA);
-        });
-        if (Iter != Accesses->rend()) {
-          Result = const_cast<MemoryAccess *>(&*Iter);
-          break;
-        }
-      }
-
-      ToCache.push_back(Node->getBlock());
+      auto *Defs = MSSA.getBlockDefs(Node->getBlock());
+      if (Defs)
+        return const_cast<MemoryAccess *>(&*Defs->rbegin());
     }
-
-    for (const BasicBlock *BB : ToCache)
-      WalkTargetCache.insert({BB, Result});
     return Result;
   }
 
@@ -991,7 +961,7 @@ public:
                 WalkerCache &WC)
       : MSSA(MSSA), AA(AA), DT(DT), WC(WC), UseCache(true) {}
 
-  void reset() { WalkTargetCache.clear(); }
+  void reset() {}
 
   /// Finds the nearest clobber for the given query, optimizing phis if
   /// possible.
@@ -1104,10 +1074,7 @@ public:
   /// answer a clobber query.
   void setAutoResetWalker(bool AutoReset) { AutoResetWalker = AutoReset; }
 
-  /// Drop the walker's persistent data structures. At the moment, this means
-  /// "drop the walker's cache of BasicBlocks ->
-  /// earliest-MemoryAccess-we-can-optimize-to". This is necessary if we're
-  /// going to have DT updates, if we remove MemoryAccesses, etc.
+  /// Drop the walker's persistent data structures.
   void resetClobberWalker() { Walker.reset(); }
 
   void verify(const MemorySSA *MSSA) override {
