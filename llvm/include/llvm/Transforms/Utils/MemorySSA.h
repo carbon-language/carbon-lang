@@ -1055,6 +1055,47 @@ inline upward_defs_iterator upward_defs_begin(const MemoryAccessPair &Pair) {
 
 inline upward_defs_iterator upward_defs_end() { return upward_defs_iterator(); }
 
+inline iterator_range<upward_defs_iterator>
+upward_defs(const MemoryAccessPair &Pair) {
+  return make_range(upward_defs_begin(Pair), upward_defs_end());
+}
+
+/// Walks the defining uses of MemoryDefs. Stops after we hit something that has
+/// no defining use (e.g. a MemoryPhi or liveOnEntry). Note that, when comparing
+/// against a null def_chain_iterator, this will compare equal only after
+/// walking said Phi/liveOnEntry.
+struct def_chain_iterator
+    : public iterator_facade_base<def_chain_iterator, std::forward_iterator_tag,
+                                  MemoryAccess *> {
+  def_chain_iterator() : MA(nullptr) {}
+  def_chain_iterator(MemoryAccess *MA) : MA(MA) {}
+
+  MemoryAccess *operator*() const { return MA; }
+
+  def_chain_iterator &operator++() {
+    // N.B. liveOnEntry has a null defining access.
+    if (auto *MUD = dyn_cast<MemoryUseOrDef>(MA))
+      MA = MUD->getDefiningAccess();
+    else
+      MA = nullptr;
+    return *this;
+  }
+
+  bool operator==(const def_chain_iterator &O) const { return MA == O.MA; }
+
+private:
+  MemoryAccess *MA;
+};
+
+inline iterator_range<def_chain_iterator>
+def_chain(MemoryAccess *MA, MemoryAccess *UpTo = nullptr) {
+#ifdef EXPENSIVE_CHECKS
+  assert((!UpTo || find(def_chain(MA), UpTo) != def_chain_iterator()) &&
+         "UpTo isn't in the def chain!");
+#endif
+  return make_range(def_chain_iterator(MA), def_chain_iterator(UpTo));
+}
+
 } // end namespace llvm
 
 #endif // LLVM_TRANSFORMS_UTILS_MEMORYSSA_H
