@@ -642,11 +642,6 @@ public:
   ///
   void setRegBank(unsigned Reg, const RegisterBank &RegBank);
 
-  void setRegClassOrRegBank(unsigned Reg,
-                            const RegClassOrRegBank &RCOrRB){
-    VRegInfo[Reg].first = RCOrRB;
-  }
-
   /// constrainRegClass - Constrain the register class of the specified virtual
   /// register to be a common subclass of RC and the current register class,
   /// but only if the new class has at least MinNumRegs registers.  Return the
