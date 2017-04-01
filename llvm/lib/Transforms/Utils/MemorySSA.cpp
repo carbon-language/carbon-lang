@@ -538,7 +538,8 @@ class ClobberWalker {
     WC.insert(What, To, Loc, Query->IsCall);
   }
 
-  MemoryAccess *lookupCache(const MemoryAccess *MA, const MemoryLocation &Loc) {
+  MemoryAccess *lookupCache(const MemoryAccess *MA,
+                            const MemoryLocation &Loc) const {
     return shouldIgnoreCache() ? nullptr : WC.lookup(MA, Loc, Query->IsCall);
   }
 
@@ -556,7 +557,7 @@ class ClobberWalker {
   }
 
   /// Find the nearest def or phi that `From` can legally be optimized to.
-  MemoryAccess *getWalkTarget(const MemoryPhi *From) const {
+  const MemoryAccess *getWalkTarget(const MemoryPhi *From) const {
     assert(From->getNumOperands() && "Phi with no operands?");
 
     BasicBlock *BB = From->getBlock();
@@ -565,7 +566,7 @@ class ClobberWalker {
     while ((Node = Node->getIDom())) {
       auto *Defs = MSSA.getBlockDefs(Node->getBlock());
       if (Defs)
-        return const_cast<MemoryAccess *>(&*Defs->rbegin());
+        return &*Defs->rbegin();
     }
     return Result;
   }
@@ -584,8 +585,9 @@ class ClobberWalker {
   /// StopAt.
   ///
   /// This does not test for whether StopAt is a clobber
-  UpwardsWalkResult walkToPhiOrClobber(DefPath &Desc,
-                                       MemoryAccess *StopAt = nullptr) {
+  UpwardsWalkResult
+  walkToPhiOrClobber(DefPath &Desc,
+                     const MemoryAccess *StopAt = nullptr) const {
     assert(!isa<MemoryUse>(Desc.Last) && "Uses don't exist in my world");
 
     for (MemoryAccess *Current : def_chain(Desc.Last)) {
@@ -636,7 +638,7 @@ class ClobberWalker {
   /// If this returns None, NewPaused is a vector of searches that terminated
   /// at StopWhere. Otherwise, NewPaused is left in an unspecified state.
   Optional<TerminatedPath>
-  getBlockingAccess(MemoryAccess *StopWhere,
+  getBlockingAccess(const MemoryAccess *StopWhere,
                     SmallVectorImpl<ListIndex> &PausedSearches,
                     SmallVectorImpl<ListIndex> &NewPaused,
                     SmallVectorImpl<TerminatedPath> &Terminated) {
@@ -800,7 +802,7 @@ class ClobberWalker {
       assert(!MSSA.isLiveOnEntryDef(Current) &&
              "liveOnEntry wasn't treated as a clobber?");
 
-      MemoryAccess *Target = getWalkTarget(Current);
+      const auto *Target = getWalkTarget(Current);
       // If a TerminatedPath doesn't dominate Target, then it wasn't a legal
       // optimization for the prior phi.
       assert(all_of(TerminatedPaths, [&](const TerminatedPath &P) {
@@ -878,7 +880,7 @@ class ClobberWalker {
         // If we couldn't find the dominating phi/liveOnEntry in the above loop,
         // do it now.
         if (!DefChainEnd)
-          for (MemoryAccess *MA : def_chain(Target))
+          for (auto *MA : def_chain(const_cast<MemoryAccess *>(Target)))
             DefChainEnd = MA;
 
         // If any of the terminated paths don't dominate the phi we'll try to
