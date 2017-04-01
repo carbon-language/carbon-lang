@@ -2819,10 +2819,7 @@ int APInt::tcCompare(const integerPart *lhs, const integerPart *rhs,
     if (lhs[parts] == rhs[parts])
       continue;
 
-    if (lhs[parts] > rhs[parts])
-      return 1;
-    else
-      return -1;
+    return (lhs[parts] > rhs[parts]) ? 1 : -1;
   }
 
   return 0;
