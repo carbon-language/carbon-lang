@@ -407,23 +407,17 @@ APInt& APInt::operator*=(const APInt& RHS) {
 }
 
 APInt& APInt::AndAssignSlowCase(const APInt& RHS) {
-  unsigned numWords = getNumWords();
-  for (unsigned i = 0; i < numWords; ++i)
-    pVal[i] &= RHS.pVal[i];
+  tcAnd(pVal, RHS.pVal, getNumWords());
   return *this;
 }
 
 APInt& APInt::OrAssignSlowCase(const APInt& RHS) {
-  unsigned numWords = getNumWords();
-  for (unsigned i = 0; i < numWords; ++i)
-    pVal[i] |= RHS.pVal[i];
+  tcOr(pVal, RHS.pVal, getNumWords());
   return *this;
 }
 
 APInt& APInt::XorAssignSlowCase(const APInt& RHS) {
-  unsigned numWords = getNumWords();
-  for (unsigned i = 0; i < numWords; ++i)
-    pVal[i] ^= RHS.pVal[i];
+  tcXor(pVal, RHS.pVal, getNumWords());
   return *this;
 }
 
