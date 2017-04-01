@@ -3,8 +3,7 @@
 
 define float @fdiv_constant_fold() {
 ; CHECK-LABEL: @fdiv_constant_fold(
-; CHECK-NEXT:    [[F:%.*]] = fdiv float 3.000000e+00, 2.000000e+00
-; CHECK-NEXT:    ret float [[F]]
+; CHECK-NEXT:    ret float 1.500000e+00
 ;
   %f = fdiv float 3.0, 2.0
   ret float %f
@@ -12,8 +11,7 @@ define float @fdiv_constant_fold() {
 
 define float @frem_constant_fold() {
 ; CHECK-LABEL: @frem_constant_fold(
-; CHECK-NEXT:    [[F:%.*]] = frem float 3.000000e+00, 2.000000e+00
-; CHECK-NEXT:    ret float [[F]]
+; CHECK-NEXT:    ret float 1.000000e+00
 ;
   %f = frem float 3.0, 2.0
   ret float %f
