@@ -881,7 +881,7 @@ APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
   APInt A = API1, B = API2;
   while (!!B) {
     APInt T = B;
-    B = APIntOps::urem(A, B);
+    B = A.urem(B);
     A = T;
   }
   return A;

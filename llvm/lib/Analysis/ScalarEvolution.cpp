@@ -7221,7 +7221,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
     // Convert from chrec coefficients to polynomial coefficients AX^2+BX+C
     // The B coefficient is M-N/2
     APInt B(M);
-    B -= sdiv(N,Two);
+    B -= N.sdiv(Two);
 
     // The A coefficient is N/2
     APInt A(N.sdiv(Two));
