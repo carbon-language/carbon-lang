@@ -31,6 +31,31 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
+const char *TargetMachine::StartAfterOptName = "start-after";
+const char *TargetMachine::StartBeforeOptName = "start-before";
+const char *TargetMachine::StopAfterOptName = "stop-after";
+const char *TargetMachine::StopBeforeOptName = "stop-before";
+
+static cl::opt<std::string>
+    StartAfterOpt(StringRef(TargetMachine::StartAfterOptName),
+                  cl::desc("Resume compilation after a specific pass"),
+                  cl::value_desc("pass-name"), cl::init(""));
+
+static cl::opt<std::string>
+    StartBeforeOpt(StringRef(TargetMachine::StartBeforeOptName),
+                   cl::desc("Resume compilation before a specific pass"),
+                   cl::value_desc("pass-name"), cl::init(""));
+
+static cl::opt<std::string>
+    StopAfterOpt(StringRef(TargetMachine::StopAfterOptName),
+                 cl::desc("Stop compilation after a specific pass"),
+                 cl::value_desc("pass-name"), cl::init(""));
+
+static cl::opt<std::string>
+    StopBeforeOpt(StringRef(TargetMachine::StopBeforeOptName),
+                  cl::desc("Stop compilation before a specific pass"),
+                  cl::value_desc("pass-name"), cl::init(""));
+
 cl::opt<bool> EnableIPRA("enable-ipra", cl::init(false), cl::Hidden,
                          cl::desc("Enable interprocedural register allocation "
                                   "to reduce load/store at procedure calls."));
@@ -54,6 +79,42 @@ TargetMachine::~TargetMachine() {
   delete MRI;
   delete MII;
   delete STI;
+}
+
+AnalysisID TargetMachine::getPassIDForOption(PipelineControlOption Kind,
+                                             bool AbortIfNotRegistered) {
+  static cl::opt<std::string> *PassNames[] = {&StartAfterOpt, &StartBeforeOpt,
+                                              &StopAfterOpt, &StopBeforeOpt};
+#define CHECK_OPT(OPTNAME)                                                     \
+  assert(PassNames[TargetMachine::OPTNAME] == &OPTNAME##Opt &&                 \
+         "Static array is messed up for " #OPTNAME);
+  CHECK_OPT(StartAfter);
+  CHECK_OPT(StartBefore);
+  CHECK_OPT(StopAfter);
+  CHECK_OPT(StopBefore);
+  static_assert(LastPipelineControlOption == 3,
+                "The check before needs to be updated");
+  return getPassID(*PassNames[Kind], AbortIfNotRegistered);
+}
+
+const PassInfo *TargetMachine::getPassInfo(StringRef PassName,
+                                           bool AbortIfNotRegistered) {
+  if (PassName.empty())
+    return nullptr;
+
+  const PassRegistry &PR = *PassRegistry::getPassRegistry();
+  const PassInfo *PI = PR.getPassInfo(PassName);
+  if (!PI && AbortIfNotRegistered) {
+    errs() << "\"" << PassName << "\" pass is not registered.\n";
+    exit(1);
+  }
+  return PI;
+}
+
+AnalysisID TargetMachine::getPassID(StringRef PassName,
+                                    bool AbortIfNotRegistered) {
+  const PassInfo *PI = getPassInfo(PassName, AbortIfNotRegistered);
+  return PI ? PI->getTypeInfo() : nullptr;
 }
 
 bool TargetMachine::isPositionIndependent() const {
