@@ -627,13 +627,7 @@ public:
   ///
   /// \returns true if *this is zero, false otherwise.
   bool operator!() const {
-    if (isSingleWord())
-      return !VAL;
-
-    for (unsigned i = 0; i != getNumWords(); ++i)
-      if (pVal[i])
-        return false;
-    return true;
+    return *this == 0;
   }
 
   /// @}
