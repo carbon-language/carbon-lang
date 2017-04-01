@@ -118,6 +118,22 @@ static cl::opt<bool> DiscardValueNames(
     cl::desc("Discard names from Value (other than GlobalValue)."),
     cl::init(false), cl::Hidden);
 
+static cl::opt<std::string> StopBefore("stop-before",
+    cl::desc("Stop compilation before a specific pass"),
+    cl::value_desc("pass-name"), cl::init(""));
+
+static cl::opt<std::string> StopAfter("stop-after",
+    cl::desc("Stop compilation after a specific pass"),
+    cl::value_desc("pass-name"), cl::init(""));
+
+static cl::opt<std::string> StartBefore("start-before",
+    cl::desc("Resume compilation before a specific pass"),
+    cl::value_desc("pass-name"), cl::init(""));
+
+static cl::opt<std::string> StartAfter("start-after",
+    cl::desc("Resume compilation after a specific pass"),
+    cl::value_desc("pass-name"), cl::init(""));
+
 static cl::list<std::string> IncludeDirs("I", cl::desc("include search path"));
 
 static cl::opt<bool> PassRemarksWithHotness(
@@ -322,12 +338,15 @@ int main(int argc, char **argv) {
 
 static bool addPass(PassManagerBase &PM, const char *argv0,
                     StringRef PassName, TargetPassConfig &TPC) {
-  if (PassName.empty() || PassName == "none")
+  if (PassName == "none")
     return false;
 
-  const PassInfo *PI =
-      TargetMachine::getPassInfo(PassName, /*AbortIfNotRegistered=*/true);
-  assert(PI && "We should have aborted in the previous call in that case");
+  const PassRegistry *PR = PassRegistry::getPassRegistry();
+  const PassInfo *PI = PR->getPassInfo(PassName);
+  if (!PI) {
+    errs() << argv0 << ": run-pass " << PassName << " is not registered.\n";
+    return true;
+  }
 
   Pass *P;
   if (PI->getTargetMachineCtor())
@@ -343,6 +362,20 @@ static bool addPass(PassManagerBase &PM, const char *argv0,
   TPC.printAndVerify(Banner);
 
   return false;
+}
+
+static AnalysisID getPassID(const char *argv0, const char *OptionName,
+                            StringRef PassName) {
+  if (PassName.empty())
+    return nullptr;
+
+  const PassRegistry &PR = *PassRegistry::getPassRegistry();
+  const PassInfo *PI = PR.getPassInfo(PassName);
+  if (!PI) {
+    errs() << argv0 << ": " << OptionName << " pass is not registered.\n";
+    exit(1);
+  }
+  return PI->getTypeInfo();
 }
 
 static int compileModule(char **argv, LLVMContext &Context) {
@@ -476,13 +509,9 @@ static int compileModule(char **argv, LLVMContext &Context) {
       OS = BOS.get();
     }
 
-    AnalysisID StartBeforeID = TargetMachine::getStartBeforeID();
-    AnalysisID StartAfterID = TargetMachine::getStartAfterID();
-    AnalysisID StopAfterID = TargetMachine::getStopAfterID();
-    AnalysisID StopBeforeID = TargetMachine::getStopBeforeID();
-
     if (!RunPassNames->empty()) {
-      if (StartAfterID || StopAfterID || StartBeforeID || StopBeforeID) {
+      if (!StartAfter.empty() || !StopAfter.empty() || !StartBefore.empty() ||
+          !StopBefore.empty()) {
         errs() << argv[0] << ": start-after and/or stop-after passes are "
                              "redundant when run-pass is specified.\n";
         return 1;
@@ -505,6 +534,11 @@ static int compileModule(char **argv, LLVMContext &Context) {
       }
       PM.add(createPrintMIRPass(*OS));
     } else {
+      const char *argv0 = argv[0];
+      AnalysisID StartBeforeID = getPassID(argv0, "start-before", StartBefore);
+      AnalysisID StartAfterID = getPassID(argv0, "start-after", StartAfter);
+      AnalysisID StopAfterID = getPassID(argv0, "stop-after", StopAfter);
+      AnalysisID StopBeforeID = getPassID(argv0, "stop-before", StopBefore);
 
       if (StartBeforeID && StartAfterID) {
         errs() << argv[0] << ": -start-before and -start-after specified!\n";

@@ -95,80 +95,6 @@ public:
   const TargetOptions DefaultOptions;
   mutable TargetOptions Options;
 
-  /// Provide a generic way to handle the Start/Stop After/Before
-  /// parameters of addPassesToEmitFile.
-  /// @{
-  /// Name of the commandline option to set the StartAfter parameter.
-  static const char *StartAfterOptName;
-  /// Name of the commandline option to set the StartAfter parameter.
-  static const char *StartBeforeOptName;
-  /// Name of the commandline option to set the StopAfter parameter.
-  static const char *StopAfterOptName;
-  /// Name of the commandline option to set the StopBefore parameter.
-  static const char *StopBeforeOptName;
-
-  /// Enum of the different options available to control the pipeline
-  /// when emitting a file (addPassesToEmitFile).
-  enum PipelineControlOption {
-    StartAfter,
-    StartBefore,
-    StopAfter,
-    StopBefore,
-    LastPipelineControlOption = StopBefore
-  };
-
-  /// Helper method to get the pass ID of the Start/Stop After/Before
-  /// passes from the generic options.
-  /// \p Kind defines which pass ID we look for.
-  ///
-  /// This uses getPassID with the value of the related option as
-  /// PassName. In other words, \see getPassID for the usage of
-  /// \p AbortIfNotRegistered.
-  static AnalysisID getPassIDForOption(PipelineControlOption Kind,
-                                       bool AbortIfNotRegistered = true);
-
-  /// Helper method to get the pass ID of \p PassName.
-  /// This is a simple wrapper around getPassInfo.
-  static AnalysisID getPassID(StringRef PassName,
-                              bool AbortIfNotRegistered = true);
-
-  /// Helper method to get the pass ID of the StartAfter generic option.
-  /// \see getPassIDForOption.
-  static AnalysisID getStartAfterID(bool AbortIfNotRegistered = true) {
-    return getPassIDForOption(TargetMachine::StartAfter, AbortIfNotRegistered);
-  }
-
-  /// Helper method to get the pass ID of the StartBefore generic option.
-  /// \see getPassIDForOption.
-  static AnalysisID getStartBeforeID(bool AbortIfNotRegistered = true) {
-    return getPassIDForOption(TargetMachine::StartBefore, AbortIfNotRegistered);
-  }
-
-  /// Helper method to get the pass ID of the StopAfter generic option.
-  /// \see getPassIDForOption.
-  static AnalysisID getStopAfterID(bool AbortIfNotRegistered = true) {
-    return getPassIDForOption(TargetMachine::StopAfter, AbortIfNotRegistered);
-  }
-
-  /// Helper method to get the pass ID of the StopBefore generic option.
-  /// \see getPassIDForOption.
-  static AnalysisID getStopBeforeID(bool AbortIfNotRegistered = true) {
-    return getPassIDForOption(TargetMachine::StopBefore, AbortIfNotRegistered);
-  }
-
-  /// Helper method to get the PassInfo of \p PassName
-  /// \p AbortIfNotRegistered will abort the process if the name of
-  /// the pass specified with the related option hasn't been found.
-  /// This parameter has no effect if the option was not set.
-  ///
-  /// \pre The pass registry has been initialized.
-  ///
-  /// \return The PassInfo of \p PassName or nullptr if PassName is empty
-  /// or this pass does not exist.
-  static const PassInfo *getPassInfo(StringRef PassName,
-                                     bool AbortIfNotRegistered = true);
-  /// @}
-
   TargetMachine(const TargetMachine &) = delete;
   void operator=(const TargetMachine &) = delete;
   virtual ~TargetMachine();
@@ -299,11 +225,9 @@ public:
   /// supported, or false on success.
   virtual bool addPassesToEmitFile(
       PassManagerBase &, raw_pwrite_stream &, CodeGenFileType,
-      bool /*DisableVerify*/ = true,
-      AnalysisID StartBefore = getStartBeforeID(),
-      AnalysisID StartAfter = getStartAfterID(),
-      AnalysisID StopBefore = getStopBeforeID(),
-      AnalysisID StopAfter = getStopAfterID(),
+      bool /*DisableVerify*/ = true, AnalysisID /*StartBefore*/ = nullptr,
+      AnalysisID /*StartAfter*/ = nullptr, AnalysisID /*StopBefore*/ = nullptr,
+      AnalysisID /*StopAfter*/ = nullptr,
       MachineFunctionInitializer * /*MFInitializer*/ = nullptr) {
     return true;
   }
@@ -363,10 +287,9 @@ public:
   /// emitted.  Typically this will involve several steps of code generation.
   bool addPassesToEmitFile(
       PassManagerBase &PM, raw_pwrite_stream &Out, CodeGenFileType FileType,
-      bool DisableVerify = true, AnalysisID StartBefore = getStartBeforeID(),
-      AnalysisID StartAfter = getStartAfterID(),
-      AnalysisID StopBefore = getStopBeforeID(),
-      AnalysisID StopAfter = getStopAfterID(),
+      bool DisableVerify = true, AnalysisID StartBefore = nullptr,
+      AnalysisID StartAfter = nullptr, AnalysisID StopBefore = nullptr,
+      AnalysisID StopAfter = nullptr,
       MachineFunctionInitializer *MFInitializer = nullptr) override;
 
   /// Add passes to the specified pass manager to get machine code emitted with
