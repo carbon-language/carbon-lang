@@ -876,13 +876,11 @@ APInt APInt::reverseBits() const {
   return Reversed;
 }
 
-APInt llvm::APIntOps::GreatestCommonDivisor(const APInt& API1,
-                                            const APInt& API2) {
-  APInt A = API1, B = API2;
+APInt llvm::APIntOps::GreatestCommonDivisor(APInt A, APInt B) {
   while (!!B) {
-    APInt T = B;
-    B = A.urem(B);
-    A = T;
+    APInt R = A.urem(B);
+    A = std::move(B);
+    B = std::move(R);
   }
   return A;
 }
