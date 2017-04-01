@@ -63,7 +63,6 @@
 #include "llvm/Support/AtomicOrdering.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CodeGen.h"
-#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
@@ -72,7 +71,6 @@
 #include <iterator>
 #include <utility>
 
-#define DEBUG_TYPE "aarch64-fastisel"
 using namespace llvm;
 
 namespace {
@@ -5050,92 +5048,85 @@ bool AArch64FastISel::selectAtomicCmpXchg(const AtomicCmpXchgInst *I) {
   return true;
 }
 
-#define ReturnSelect(expr) do {                                         \
-    bool Selected ## __LINE__ =  expr;                                  \
-    if (Selected ## __LINE__)                                           \
-      DEBUG(dbgs() << "FastISel Selected: " << *I << '\n');             \
-    return Selected ## __LINE__;                                        \
-  } while(0)
-
 bool AArch64FastISel::fastSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
     break;
   case Instruction::Add:
   case Instruction::Sub:
-    ReturnSelect(selectAddSub(I));
+    return selectAddSub(I);
   case Instruction::Mul:
-    ReturnSelect(selectMul(I));
+    return selectMul(I);
   case Instruction::SDiv:
-    ReturnSelect(selectSDiv(I));
+    return selectSDiv(I);
   case Instruction::SRem:
     if (!selectBinaryOp(I, ISD::SREM))
-      ReturnSelect(selectRem(I, ISD::SREM));
-    ReturnSelect(true);
+      return selectRem(I, ISD::SREM);
+    return true;
   case Instruction::URem:
     if (!selectBinaryOp(I, ISD::UREM))
-      ReturnSelect(selectRem(I, ISD::UREM));
-    ReturnSelect(true);
+      return selectRem(I, ISD::UREM);
+    return true;
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
-    ReturnSelect(selectShift(I));
+    return selectShift(I);
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
-    ReturnSelect(selectLogicalOp(I));
+    return selectLogicalOp(I);
   case Instruction::Br:
-    ReturnSelect(selectBranch(I));
+    return selectBranch(I);
   case Instruction::IndirectBr:
-    ReturnSelect(selectIndirectBr(I));
+    return selectIndirectBr(I);
   case Instruction::BitCast:
     if (!FastISel::selectBitCast(I))
-      ReturnSelect(selectBitCast(I));
-    ReturnSelect(true);
+      return selectBitCast(I);
+    return true;
   case Instruction::FPToSI:
     if (!selectCast(I, ISD::FP_TO_SINT))
-      ReturnSelect(selectFPToInt(I, /*Signed=*/true));
-    ReturnSelect(true);
+      return selectFPToInt(I, /*Signed=*/true);
+    return true;
   case Instruction::FPToUI:
-    ReturnSelect(selectFPToInt(I, /*Signed=*/false));
+    return selectFPToInt(I, /*Signed=*/false);
   case Instruction::ZExt:
   case Instruction::SExt:
-    ReturnSelect(selectIntExt(I));
+    return selectIntExt(I);
   case Instruction::Trunc:
     if (!selectCast(I, ISD::TRUNCATE))
-      ReturnSelect(selectTrunc(I));
-    ReturnSelect(true);
+      return selectTrunc(I);
+    return true;
   case Instruction::FPExt:
-    ReturnSelect(selectFPExt(I));
+    return selectFPExt(I);
   case Instruction::FPTrunc:
-    ReturnSelect(selectFPTrunc(I));
+    return selectFPTrunc(I);
   case Instruction::SIToFP:
     if (!selectCast(I, ISD::SINT_TO_FP))
-      ReturnSelect(selectIntToFP(I, /*Signed=*/true));
-    ReturnSelect(true);
+      return selectIntToFP(I, /*Signed=*/true);
+    return true;
   case Instruction::UIToFP:
-    ReturnSelect(selectIntToFP(I, /*Signed=*/false));
+    return selectIntToFP(I, /*Signed=*/false);
   case Instruction::Load:
-    ReturnSelect(selectLoad(I));
+    return selectLoad(I);
   case Instruction::Store:
-    ReturnSelect(selectStore(I));
+    return selectStore(I);
   case Instruction::FCmp:
   case Instruction::ICmp:
-    ReturnSelect(selectCmp(I));
+    return selectCmp(I);
   case Instruction::Select:
-    ReturnSelect(selectSelect(I));
+    return selectSelect(I);
   case Instruction::Ret:
-    ReturnSelect(selectRet(I));
+    return selectRet(I);
   case Instruction::FRem:
-    ReturnSelect(selectFRem(I));
+    return selectFRem(I);
   case Instruction::GetElementPtr:
-    ReturnSelect(selectGetElementPtr(I));
+    return selectGetElementPtr(I);
   case Instruction::AtomicCmpXchg:
-    ReturnSelect(selectAtomicCmpXchg(cast<AtomicCmpXchgInst>(I)));
+    return selectAtomicCmpXchg(cast<AtomicCmpXchgInst>(I));
   }
 
   // fall-back to target-independent instruction selection.
-  ReturnSelect(selectOperator(I, I->getOpcode()));
+  return selectOperator(I, I->getOpcode());
   // Silence warnings.
   (void)&CC_AArch64_DarwinPCS_VarArg;
 }

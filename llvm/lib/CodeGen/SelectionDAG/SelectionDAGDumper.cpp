@@ -371,6 +371,7 @@ static Printable PrintNodeId(const SDNode &Node) {
 LLVM_DUMP_METHOD void SDNode::dump() const { dump(nullptr); }
 LLVM_DUMP_METHOD void SDNode::dump(const SelectionDAG *G) const {
   print(dbgs(), G);
+  dbgs() << '\n';
 }
 #endif
 
