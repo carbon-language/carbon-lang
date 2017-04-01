@@ -2816,15 +2816,15 @@ void APInt::tcComplement(integerPart *dst, unsigned parts) {
 int APInt::tcCompare(const integerPart *lhs, const integerPart *rhs,
                      unsigned parts) {
   while (parts) {
-      parts--;
-      if (lhs[parts] == rhs[parts])
-        continue;
+    parts--;
+    if (lhs[parts] == rhs[parts])
+      continue;
 
-      if (lhs[parts] > rhs[parts])
-        return 1;
-      else
-        return -1;
-    }
+    if (lhs[parts] > rhs[parts])
+      return 1;
+    else
+      return -1;
+  }
 
   return 0;
 }
