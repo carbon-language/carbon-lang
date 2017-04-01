@@ -2207,7 +2207,9 @@ struct NewGVN::ValueDFS {
   int DFSOut = 0;
   int LocalNum = 0;
   // Only one of Def and U will be set.
-  Value *Def = nullptr;
+  // The bool in the Def tells us whether the Def is the stored value of a
+  // store.
+  PointerIntPair<Value *, 1, bool> Def;
   Use *U = nullptr;
   bool operator<(const ValueDFS &Other) const {
     // It's not enough that any given field be less than - we have sets
@@ -2274,12 +2276,19 @@ void NewGVN::convertClassToDFSOrdered(
     DomTreeNode *DomNode = DT->getNode(BB);
     VDDef.DFSIn = DomNode->getDFSNumIn();
     VDDef.DFSOut = DomNode->getDFSNumOut();
-    // If it's a store, use the leader of the value operand.
+    // If it's a store, use the leader of the value operand, if it's always
+    // available, or the value operand.  TODO: We could do dominance checks to
+    // find a dominating leader, but not worth it ATM.
     if (auto *SI = dyn_cast<StoreInst>(D)) {
       auto Leader = lookupOperandLeader(SI->getValueOperand());
-      VDDef.Def = alwaysAvailable(Leader) ? Leader : SI->getValueOperand();
+      if (alwaysAvailable(Leader)) {
+        VDDef.Def.setPointer(Leader);
+      } else {
+        VDDef.Def.setPointer(SI->getValueOperand());
+        VDDef.Def.setInt(true);
+      }
     } else {
-      VDDef.Def = D;
+      VDDef.Def.setPointer(D);
     }
     assert(isa<Instruction>(D) &&
            "The dense set member should always be an instruction");
@@ -2344,7 +2353,7 @@ void NewGVN::convertClassToLoadsAndStores(
     DomTreeNode *DomNode = DT->getNode(BB);
     VD.DFSIn = DomNode->getDFSNumIn();
     VD.DFSOut = DomNode->getDFSNumOut();
-    VD.Def = D;
+    VD.Def.setPointer(D);
 
     // If it's an instruction, use the real local dfs number.
     if (auto *I = dyn_cast<Instruction>(D))
@@ -2591,7 +2600,8 @@ bool NewGVN::eliminateInstructions(Function &F) {
         for (auto &VD : DFSOrderedSet) {
           int MemberDFSIn = VD.DFSIn;
           int MemberDFSOut = VD.DFSOut;
-          Value *Def = VD.Def;
+          Value *Def = VD.Def.getPointer();
+          bool FromStore = VD.Def.getInt();
           Use *U = VD.U;
           // We ignore void things because we can't get a value from them.
           if (Def && Def->getType()->isVoidTy())
@@ -2644,9 +2654,12 @@ bool NewGVN::eliminateInstructions(Function &F) {
             // equivalent to something else. For these things, we can just mark
             // it all dead.  Note that this is different from the "ProbablyDead"
             // set, which may not be dominated by anything, and thus, are only
-            // easy to prove dead if they are also side-effect free.
+            // easy to prove dead if they are also side-effect free. Note that
+            // because stores are put in terms of the stored value, we skip
+            // stored values here. If the stored value is really dead, it will
+            // still be marked for deletion when we process it in its own class.
             if (!EliminationStack.empty() && Def != EliminationStack.back() &&
-                isa<Instruction>(Def))
+                isa<Instruction>(Def) && !FromStore)
               markInstructionForDeletion(cast<Instruction>(Def));
             continue;
           }
@@ -2729,7 +2742,7 @@ bool NewGVN::eliminateInstructions(Function &F) {
       for (auto &VD : PossibleDeadStores) {
         int MemberDFSIn = VD.DFSIn;
         int MemberDFSOut = VD.DFSOut;
-        Instruction *Member = cast<Instruction>(VD.Def);
+        Instruction *Member = cast<Instruction>(VD.Def.getPointer());
         if (EliminationStack.empty() ||
             !EliminationStack.isInScope(MemberDFSIn, MemberDFSOut)) {
           // Sync to our current scope.
