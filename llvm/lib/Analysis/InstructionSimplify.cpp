@@ -887,27 +887,25 @@ static Value *SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
 }
 
 /// Given the operands for an FMul, see if we can fold the result
-static Value *SimplifyFMulInst(Value *Op0, Value *Op1,
-                               FastMathFlags FMF,
-                               const Query &Q,
-                               unsigned MaxRecurse) {
- if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
+static Value *SimplifyFMulInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                               const Query &Q, unsigned MaxRecurse) {
+  if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
     if (Constant *CRHS = dyn_cast<Constant>(Op1))
       return ConstantFoldBinaryOpOperands(Instruction::FMul, CLHS, CRHS, Q.DL);
 
     // Canonicalize the constant to the RHS.
     std::swap(Op0, Op1);
- }
+  }
 
- // fmul X, 1.0 ==> X
- if (match(Op1, m_FPOne()))
-   return Op0;
+  // fmul X, 1.0 ==> X
+  if (match(Op1, m_FPOne()))
+    return Op0;
 
- // fmul nnan nsz X, 0 ==> 0
- if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op1, m_AnyZero()))
-   return Op1;
+  // fmul nnan nsz X, 0 ==> 0
+  if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op1, m_AnyZero()))
+    return Op1;
 
- return nullptr;
+  return nullptr;
 }
 
 /// Given operands for a Mul, see if we can fold the result.
@@ -4112,38 +4110,41 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                             const Query &Q, unsigned MaxRecurse) {
   switch (Opcode) {
   case Instruction::Add:
-    return SimplifyAddInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
-                           Q, MaxRecurse);
+    return SimplifyAddInst(LHS, RHS, false, false, Q, MaxRecurse);
   case Instruction::FAdd:
     return SimplifyFAddInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
-
   case Instruction::Sub:
-    return SimplifySubInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
-                           Q, MaxRecurse);
+    return SimplifySubInst(LHS, RHS, false, false, Q, MaxRecurse);
   case Instruction::FSub:
     return SimplifyFSubInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
-
-  case Instruction::Mul:  return SimplifyMulInst (LHS, RHS, Q, MaxRecurse);
+  case Instruction::Mul:
+    return SimplifyMulInst(LHS, RHS, Q, MaxRecurse);
   case Instruction::FMul:
-    return SimplifyFMulInst (LHS, RHS, FastMathFlags(), Q, MaxRecurse);
-  case Instruction::SDiv: return SimplifySDivInst(LHS, RHS, Q, MaxRecurse);
-  case Instruction::UDiv: return SimplifyUDivInst(LHS, RHS, Q, MaxRecurse);
+    return SimplifyFMulInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
+  case Instruction::SDiv:
+    return SimplifySDivInst(LHS, RHS, Q, MaxRecurse);
+  case Instruction::UDiv:
+    return SimplifyUDivInst(LHS, RHS, Q, MaxRecurse);
   case Instruction::FDiv:
-      return SimplifyFDivInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
-  case Instruction::SRem: return SimplifySRemInst(LHS, RHS, Q, MaxRecurse);
-  case Instruction::URem: return SimplifyURemInst(LHS, RHS, Q, MaxRecurse);
+    return SimplifyFDivInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
+  case Instruction::SRem:
+    return SimplifySRemInst(LHS, RHS, Q, MaxRecurse);
+  case Instruction::URem:
+    return SimplifyURemInst(LHS, RHS, Q, MaxRecurse);
   case Instruction::FRem:
-      return SimplifyFRemInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
+    return SimplifyFRemInst(LHS, RHS, FastMathFlags(), Q, MaxRecurse);
   case Instruction::Shl:
-    return SimplifyShlInst(LHS, RHS, /*isNSW*/false, /*isNUW*/false,
-                           Q, MaxRecurse);
+    return SimplifyShlInst(LHS, RHS, false, false, Q, MaxRecurse);
   case Instruction::LShr:
-    return SimplifyLShrInst(LHS, RHS, /*isExact*/false, Q, MaxRecurse);
+    return SimplifyLShrInst(LHS, RHS, false, Q, MaxRecurse);
   case Instruction::AShr:
-    return SimplifyAShrInst(LHS, RHS, /*isExact*/false, Q, MaxRecurse);
-  case Instruction::And: return SimplifyAndInst(LHS, RHS, Q, MaxRecurse);
-  case Instruction::Or:  return SimplifyOrInst (LHS, RHS, Q, MaxRecurse);
-  case Instruction::Xor: return SimplifyXorInst(LHS, RHS, Q, MaxRecurse);
+    return SimplifyAShrInst(LHS, RHS, false, Q, MaxRecurse);
+  case Instruction::And:
+    return SimplifyAndInst(LHS, RHS, Q, MaxRecurse);
+  case Instruction::Or:
+    return SimplifyOrInst(LHS, RHS, Q, MaxRecurse);
+  case Instruction::Xor:
+    return SimplifyXorInst(LHS, RHS, Q, MaxRecurse);
   default:
     if (Constant *CLHS = dyn_cast<Constant>(LHS))
       if (Constant *CRHS = dyn_cast<Constant>(RHS))
