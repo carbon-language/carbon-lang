@@ -100,7 +100,7 @@ static int8_t readVarint7(const uint8_t *&Ptr) {
 
 static uint8_t readVaruint7(const uint8_t *&Ptr) {
   uint64_t result = readULEB128(Ptr);
-  assert(result <= VARUINT7_MAX && result >= 0);
+  assert(result <= VARUINT7_MAX);
   return result;
 }
 
@@ -112,7 +112,7 @@ static int32_t readVarint32(const uint8_t *&Ptr) {
 
 static uint32_t readVaruint32(const uint8_t *&Ptr) {
   uint64_t result = readULEB128(Ptr);
-  assert(result <= UINT32_MAX && result >= 0);
+  assert(result <= UINT32_MAX);
   return result;
 }
 
