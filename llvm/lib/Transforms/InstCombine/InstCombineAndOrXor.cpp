@@ -137,9 +137,8 @@ Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
 }
 
 /// This handles expressions of the form ((val OP C1) & C2).  Where
-/// the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
-/// guaranteed to be a binary operator.
-Instruction *InstCombiner::OptAndOp(Instruction *Op,
+/// the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.
+Instruction *InstCombiner::OptAndOp(BinaryOperator *Op,
                                     ConstantInt *OpRHS,
                                     ConstantInt *AndRHS,
                                     BinaryOperator &TheAnd) {
@@ -149,6 +148,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     Together = ConstantExpr::getAnd(AndRHS, OpRHS);
 
   switch (Op->getOpcode()) {
+  default: break;
   case Instruction::Xor:
     if (Op->hasOneUse()) {
       // (X ^ C1) & C2 --> (X & C2) ^ (C1&C2)
