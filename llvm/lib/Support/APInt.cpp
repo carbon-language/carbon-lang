@@ -226,21 +226,6 @@ APInt& APInt::operator--() {
   return clearUnusedBits();
 }
 
-/// This function adds the integer array x to the integer array Y and
-/// places the result in dest.
-/// @returns the carry out from the addition
-/// @brief General addition of 64-bit integer arrays
-static bool add(uint64_t *dest, const uint64_t *x, const uint64_t *y,
-                unsigned len) {
-  bool carry = false;
-  for (unsigned i = 0; i< len; ++i) {
-    uint64_t limit = std::min(x[i],y[i]); // must come first in case dest == x
-    dest[i] = x[i] + y[i] + carry;
-    carry = dest[i] < limit || (carry && dest[i] == limit);
-  }
-  return carry;
-}
-
 /// Adds the RHS APint to this APInt.
 /// @returns this, after addition of RHS.
 /// @brief Addition assignment operator.
@@ -248,9 +233,8 @@ APInt& APInt::operator+=(const APInt& RHS) {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
   if (isSingleWord())
     VAL += RHS.VAL;
-  else {
-    add(pVal, pVal, RHS.pVal, getNumWords());
-  }
+  else
+    tcAdd(pVal, RHS.pVal, 0, getNumWords());
   return clearUnusedBits();
 }
 
@@ -262,20 +246,6 @@ APInt& APInt::operator+=(uint64_t RHS) {
   return clearUnusedBits();
 }
 
-/// Subtracts the integer array y from the integer array x
-/// @returns returns the borrow out.
-/// @brief Generalized subtraction of 64-bit integer arrays.
-static bool sub(uint64_t *dest, const uint64_t *x, const uint64_t *y,
-                unsigned len) {
-  bool borrow = false;
-  for (unsigned i = 0; i < len; ++i) {
-    uint64_t x_tmp = borrow ? x[i] - 1 : x[i];
-    borrow = y[i] > x_tmp || (borrow && x[i] == 0);
-    dest[i] = x_tmp - y[i];
-  }
-  return borrow;
-}
-
 /// Subtracts the RHS APInt from this APInt
 /// @returns this, after subtraction
 /// @brief Subtraction assignment operator.
@@ -284,7 +254,7 @@ APInt& APInt::operator-=(const APInt& RHS) {
   if (isSingleWord())
     VAL -= RHS.VAL;
   else
-    sub(pVal, pVal, RHS.pVal, getNumWords());
+    tcSubtract(pVal, RHS.pVal, 0, getNumWords());
   return clearUnusedBits();
 }
 
