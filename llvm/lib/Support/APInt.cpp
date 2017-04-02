@@ -2375,19 +2375,17 @@ bool APInt::tcIsZero(const WordType *src, unsigned parts) {
 
 /* Extract the given bit of a bignum; returns 0 or 1.  */
 int APInt::tcExtractBit(const WordType *parts, unsigned bit) {
-  return (parts[bit / APINT_BITS_PER_WORD] &
-          ((WordType) 1 << bit % APINT_BITS_PER_WORD)) != 0;
+  return (parts[whichWord(bit)] & maskBit(bit)) != 0;
 }
 
 /* Set the given bit of a bignum. */
 void APInt::tcSetBit(WordType *parts, unsigned bit) {
-  parts[bit / APINT_BITS_PER_WORD] |= (WordType) 1 << (bit % APINT_BITS_PER_WORD);
+  parts[whichWord(bit)] |= maskBit(bit);
 }
 
 /* Clears the given bit of a bignum. */
 void APInt::tcClearBit(WordType *parts, unsigned bit) {
-  parts[bit / APINT_BITS_PER_WORD] &=
-    ~((WordType) 1 << (bit % APINT_BITS_PER_WORD));
+  parts[whichWord(bit)] &= ~maskBit(bit);
 }
 
 /* Returns the bit number of the least significant set bit of a
