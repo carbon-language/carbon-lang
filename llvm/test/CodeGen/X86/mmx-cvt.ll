@@ -193,11 +193,10 @@ define void @fptosi_v4f32_v4i32(<4 x float>, <1 x i64>*) nounwind {
 ; X86-NEXT:    pushl %ebp
 ; X86-NEXT:    movl %esp, %ebp
 ; X86-NEXT:    andl $-8, %esp
-; X86-NEXT:    subl $16, %esp
+; X86-NEXT:    subl $8, %esp
 ; X86-NEXT:    movl 8(%ebp), %eax
 ; X86-NEXT:    cvttps2dq %xmm0, %xmm0
-; X86-NEXT:    movlps %xmm0, {{[0-9]+}}(%esp)
-; X86-NEXT:    movq {{[0-9]+}}(%esp), %mm0
+; X86-NEXT:    movdq2q %xmm0, %mm0
 ; X86-NEXT:    paddd %mm0, %mm0
 ; X86-NEXT:    movq %mm0, (%esp)
 ; X86-NEXT:    movl (%esp), %ecx
@@ -211,8 +210,7 @@ define void @fptosi_v4f32_v4i32(<4 x float>, <1 x i64>*) nounwind {
 ; X64-LABEL: fptosi_v4f32_v4i32:
 ; X64:       # BB#0:
 ; X64-NEXT:    cvttps2dq %xmm0, %xmm0
-; X64-NEXT:    movlps %xmm0, -{{[0-9]+}}(%rsp)
-; X64-NEXT:    movq -{{[0-9]+}}(%rsp), %mm0
+; X64-NEXT:    movdq2q %xmm0, %mm0
 ; X64-NEXT:    paddd %mm0, %mm0
 ; X64-NEXT:    movq %mm0, (%rdi)
 ; X64-NEXT:    retq

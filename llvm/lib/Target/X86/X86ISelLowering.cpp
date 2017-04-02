@@ -28958,8 +28958,10 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
       return DAG.getNode(X86ISD::MMX_MOVW2D, SDLoc(N00), VT, N00);
   }
 
-  // Detect bitcasts between v2i64/v2f64 extraction to x86mmx.
-  if (VT == MVT::x86mmx && N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+  // Detect bitcasts between element or subvector extraction to x86mmx.
+  if (VT == MVT::x86mmx &&
+      (N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
+       N0.getOpcode() == ISD::EXTRACT_SUBVECTOR) &&
       isNullConstant(N0.getOperand(1))) {
     SDValue N00 = N0->getOperand(0);
     if (N00.getValueType().is128BitVector())
