@@ -28965,7 +28965,8 @@ static SDValue combineBitcast(SDNode *N, SelectionDAG &DAG,
       isNullConstant(N0.getOperand(1))) {
     SDValue N00 = N0->getOperand(0);
     if (N00.getValueType().is128BitVector())
-      return DAG.getNode(X86ISD::MOVDQ2Q, SDLoc(N00), VT, N00);
+      return DAG.getNode(X86ISD::MOVDQ2Q, SDLoc(N00), VT,
+                         DAG.getBitcast(MVT::v2i64, N00));
   }
 
   // Convert a bitcasted integer logic operation that has one bitcasted
