@@ -2168,9 +2168,8 @@ void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
   // Figure out if we can shift instead of multiply
   unsigned shift = (radix == 16 ? 4 : radix == 8 ? 3 : radix == 2 ? 1 : 0);
 
-  // Set up an APInt for the digit to add outside the loop so we don't
+  // Set up an APInt for the radix multiplier outside the loop so we don't
   // constantly construct/destruct it.
-  APInt apdigit(getBitWidth(), 0);
   APInt apradix(getBitWidth(), radix);
 
   // Enter digit traversal loop
@@ -2187,11 +2186,7 @@ void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
     }
 
     // Add in the digit we just interpreted
-    if (apdigit.isSingleWord())
-      apdigit.VAL = digit;
-    else
-      apdigit.pVal[0] = digit;
-    *this += apdigit;
+    *this += digit;
   }
   // If its negative, put it in two's complement form
   if (isNeg) {
