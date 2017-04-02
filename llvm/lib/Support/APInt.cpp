@@ -2489,9 +2489,7 @@ integerPart APInt::tcAdd(integerPart *dst, const integerPart *rhs,
   assert(c <= 1);
 
   for (unsigned i = 0; i < parts; i++) {
-    integerPart l;
-
-    l = dst[i];
+    integerPart l = dst[i];
     if (c) {
       dst[i] += rhs[i] + 1;
       c = (dst[i] <= l);
@@ -2511,9 +2509,7 @@ integerPart APInt::tcSubtract(integerPart *dst, const integerPart *rhs,
   assert(c <= 1);
 
   for (unsigned i = 0; i < parts; i++) {
-    integerPart l;
-
-    l = dst[i];
+    integerPart l = dst[i];
     if (c) {
       dst[i] -= rhs[i] + 1;
       c = (dst[i] >= l);
