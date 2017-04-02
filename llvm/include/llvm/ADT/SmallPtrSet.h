@@ -194,7 +194,7 @@ protected:
       return Bucket;
     return EndPointer();
   }
-  
+
 private:
   bool isSmall() const { return CurArray == SmallArray; }
 
