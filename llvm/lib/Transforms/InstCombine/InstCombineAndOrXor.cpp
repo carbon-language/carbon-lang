@@ -2123,7 +2123,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
     ConstantInt *C1 = nullptr; Value *X = nullptr;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
-    // iff (C1 & C2) == 0.
+    // iff (C1 & C2) != 0.
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) &&
         (RHS->getValue() & C1->getValue()) != 0 &&
         Op0->hasOneUse()) {
