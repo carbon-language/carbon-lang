@@ -1661,7 +1661,7 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
       Changed = true;
       DidPruneOps = true;
       unsigned OrigOpNumber = 0;
-      while (Ops[OrigOpNumber].getNode() != Op && OrigOpNumber < Ops.size())
+      while (OrigOpNumber < Ops.size() && Ops[OrigOpNumber].getNode() != Op)
         OrigOpNumber++;
       assert((OrigOpNumber != Ops.size()) &&
              "expected to find TokenFactor Operand");
