@@ -159,13 +159,6 @@ Instruction *InstCombiner::OptAndOp(BinaryOperator *Op,
     break;
   case Instruction::Or:
     if (Op->hasOneUse()){
-      if (Together != OpRHS) {
-        // (X | C1) & C2 --> (X | (C1&C2)) & C2
-        Value *Or = Builder->CreateOr(X, Together);
-        Or->takeName(Op);
-        return BinaryOperator::CreateAnd(Or, AndRHS);
-      }
-
       ConstantInt *TogetherCI = dyn_cast<ConstantInt>(Together);
       if (TogetherCI && !TogetherCI->isZero()){
         // (X | C1) & C2 --> (X & (C2^(C1&C2))) | C1
