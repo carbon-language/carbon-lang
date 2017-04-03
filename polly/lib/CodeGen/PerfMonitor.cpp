@@ -12,6 +12,7 @@
 #include "polly/CodeGen/PerfMonitor.h"
 #include "polly/CodeGen/RuntimeDebugBuilder.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/IR/Intrinsics.h"
 
 using namespace llvm;
 using namespace polly;
@@ -56,17 +57,7 @@ void PerfMonitor::addToGlobalConstructors(Function *Fn) {
 }
 
 Function *PerfMonitor::getRDTSCP() {
-  const char *Name = "llvm.x86.rdtscp";
-  Function *F = M->getFunction(Name);
-
-  if (!F) {
-    GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
-    FunctionType *Ty = FunctionType::get(Builder.getInt64Ty(),
-                                         {Builder.getInt8PtrTy()}, false);
-    F = Function::Create(Ty, Linkage, Name, M);
-  }
-
-  return F;
+  return Intrinsic::getDeclaration(M, Intrinsic::x86_rdtscp);
 }
 
 PerfMonitor::PerfMonitor(Module *M) : M(M), Builder(M->getContext()) {
