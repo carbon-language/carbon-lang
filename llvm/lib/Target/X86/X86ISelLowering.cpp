@@ -31532,7 +31532,7 @@ static SDValue combineAndMaskToShift(SDNode *N, SelectionDAG &DAG,
 
   APInt SplatVal;
   if (!ISD::isConstantSplatVector(Op1.getNode(), SplatVal) ||
-      !APIntOps::isMask(SplatVal))
+      !SplatVal.isMask())
     return SDValue();
 
   if (!SupportedVectorShiftWithImm(VT0.getSimpleVT(), Subtarget, ISD::SRL))
@@ -32127,7 +32127,7 @@ static SDValue detectUSatPattern(SDValue In, EVT VT) {
   if (ISD::isConstantSplatVector(In.getOperand(1).getNode(), C)) {
     // C should be equal to UINT32_MAX / UINT16_MAX / UINT8_MAX according
     // the element size of the destination type.
-    return APIntOps::isMask(VT.getScalarSizeInBits(), C) ? In.getOperand(0) :
+    return C.isMask(VT.getScalarSizeInBits()) ? In.getOperand(0) :
       SDValue();
   }
   return SDValue();

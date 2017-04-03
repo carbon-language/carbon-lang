@@ -3337,7 +3337,7 @@ SDValue DAGCombiner::visitANDLike(SDValue N0, SDValue N1, SDNode *N) {
         unsigned MaskBits = AndMask.countTrailingOnes();
         EVT HalfVT = EVT::getIntegerVT(*DAG.getContext(), Size / 2);
 
-        if (APIntOps::isMask(AndMask) &&
+        if (AndMask.isMask() &&
             // Required bits must not span the two halves of the integer and
             // must fit in the half size type.
             (ShiftBits + MaskBits <= Size / 2) &&
@@ -3377,7 +3377,7 @@ bool DAGCombiner::isAndLoadExtLoad(ConstantSDNode *AndC, LoadSDNode *LoadN,
                                    bool &NarrowLoad) {
   uint32_t ActiveBits = AndC->getAPIntValue().getActiveBits();
 
-  if (ActiveBits == 0 || !APIntOps::isMask(ActiveBits, AndC->getAPIntValue()))
+  if (ActiveBits == 0 || !AndC->getAPIntValue().isMask(ActiveBits))
     return false;
 
   ExtVT = EVT::getIntegerVT(*DAG.getContext(), ActiveBits);
