@@ -315,6 +315,12 @@ private:
   std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
                         DWARFCompileUnit *>> SubprogramDIEs;
 
+  /// Line table for the function with containing compilation unit.
+  /// Because of identical code folding the function could have multiple
+  /// associated compilation units. The first of them with line number info
+  /// is referenced by UnitLineTable.
+  DWARFUnitLineTable UnitLineTable{nullptr, nullptr};
+
   /// Offset of this function's address ranges in the .debug_ranges section of
   /// the output binary.
   uint32_t AddressRangesOffset{-1U};
@@ -752,6 +758,12 @@ private:
   IndirectBranchType analyzeIndirectBranch(MCInst &Instruction,
                                            unsigned Size,
                                            uint64_t Offset);
+
+  /// Emit line number information corresponding to \p NewLoc. \p PrevLoc
+  /// provides a context for de-duplication of line number info.
+  ///
+  /// Return new current location which is either \p NewLoc or \p PrevLoc.
+  SMLoc emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc) const;
 
   BinaryFunction& operator=(const BinaryFunction &) = delete;
   BinaryFunction(const BinaryFunction &) = delete;
@@ -1668,22 +1680,24 @@ public:
 
   /// Sets the associated .debug_info entry.
   void addSubprogramDIE(DWARFCompileUnit *Unit,
-                          const DWARFDebugInfoEntryMinimal *DIE) {
+                        const DWARFDebugInfoEntryMinimal *DIE) {
     SubprogramDIEs.emplace_back(DIE, Unit);
+    if (!UnitLineTable.first) {
+      if (const auto *LineTable = BC.DwCtx->getLineTableForUnit(Unit)) {
+        UnitLineTable = std::make_pair(Unit, LineTable);
+      }
+    }
   }
 
+  /// Return all compilation units with entry for this function.
+  /// Because of identical code folding there could be multiple of these.
   const decltype(SubprogramDIEs) &getSubprogramDIEs() const {
     return SubprogramDIEs;
   }
 
-  /// Return DWARF compile unit with line info.
+  /// Return DWARF compile unit with line info for this function.
   DWARFUnitLineTable getDWARFUnitLineTable() const {
-    for (auto &DIEUnitPair : SubprogramDIEs) {
-      if (auto *LT = BC.DwCtx->getLineTableForUnit(DIEUnitPair.second)) {
-        return std::make_pair(DIEUnitPair.second, LT);
-      }
-    }
-    return std::make_pair(nullptr, nullptr);
+    return UnitLineTable;
   }
 
   /// Returns the size of the basic block in the original binary.

@@ -2526,7 +2526,6 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
 }
 
 void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
-  auto ULT = getDWARFUnitLineTable();
   int64_t CurrentGnuArgsSize = 0;
   for (auto BB : layout()) {
     if (EmitColdPart != BB->isCold())
@@ -2536,14 +2535,9 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       Streamer.EmitCodeAlignment(BB->getAlignment());
     Streamer.EmitLabel(BB->getLabel());
 
-    // Remember last .debug_line entry emitted so that we don't repeat them in
-    // subsequent instructions, as gdb can figure it out by looking at the
-    // previous instruction with available line number info.
-    SMLoc LastLocSeen;
-
     // Remember if last instruction emitted was a prefix
     bool LastIsPrefix = false;
-
+    SMLoc LastLocSeen;
     for (auto I = BB->begin(), E = BB->end(); I != E; ++I) {
       auto &Instr = *I;
       // Handle pseudo instructions.
@@ -2558,52 +2552,8 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
         Streamer.EmitCFIInstruction(*getCFIFor(Instr));
         continue;
       }
-      if (opts::UpdateDebugSections) {
-        auto RowReference = DebugLineTableRowRef::fromSMLoc(Instr.getLoc());
-        if (RowReference != DebugLineTableRowRef::NULL_ROW &&
-            Instr.getLoc().getPointer() != LastLocSeen.getPointer()) {
-          auto Unit = ULT.first;
-          auto OriginalLineTable = ULT.second;
-          const auto OrigUnitID = Unit->getOffset();
-          unsigned NewFilenum = 0;
-
-          // If the CU id from the current instruction location does not
-          // match the CU id from the current function, it means that we
-          // have come across some inlined code.  We must look up the CU
-          // for the instruction's original function and get the line table
-          // from that.  We also update the current CU debug info with the
-          // filename of the inlined function.
-          if (RowReference.DwCompileUnitIndex != OrigUnitID) {
-            Unit = BC.DwCtx->
-                getCompileUnitForOffset(RowReference.DwCompileUnitIndex);
-            OriginalLineTable = BC.DwCtx->getLineTableForUnit(Unit);
-            const auto Filenum =
-              OriginalLineTable->Rows[RowReference.RowIndex - 1].File;
-            NewFilenum =
-              BC.addDebugFilenameToUnit(OrigUnitID,
-                                        RowReference.DwCompileUnitIndex,
-                                        Filenum);
-          }
-
-          assert(Unit && OriginalLineTable &&
-                 "Invalid CU offset set in instruction debug info.");
-
-          const auto &OriginalRow =
-            OriginalLineTable->Rows[RowReference.RowIndex - 1];
-
-          BC.Ctx->setCurrentDwarfLoc(
-            NewFilenum == 0 ? OriginalRow.File : NewFilenum,
-            OriginalRow.Line,
-            OriginalRow.Column,
-            (DWARF2_FLAG_IS_STMT * OriginalRow.IsStmt) |
-            (DWARF2_FLAG_BASIC_BLOCK * OriginalRow.BasicBlock) |
-            (DWARF2_FLAG_PROLOGUE_END * OriginalRow.PrologueEnd) |
-            (DWARF2_FLAG_EPILOGUE_BEGIN * OriginalRow.EpilogueBegin),
-            OriginalRow.Isa,
-            OriginalRow.Discriminator);
-          BC.Ctx->setDwarfCompileUnitID(OrigUnitID);
-          LastLocSeen = Instr.getLoc();
-        }
+      if (opts::UpdateDebugSections && UnitLineTable.first) {
+        LastLocSeen = emitLineInfo(Instr.getLoc(), LastLocSeen);
       }
 
       // Emit GNU_args_size CFIs as necessary.
@@ -3495,6 +3445,56 @@ bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
     return false;
 
   return true;
+}
+
+SMLoc BinaryFunction::emitLineInfo(SMLoc NewLoc, SMLoc PrevLoc) const {
+  auto *FunctionCU = UnitLineTable.first;
+  const auto *FunctionLineTable = UnitLineTable.second;
+  assert(FunctionCU && "cannot emit line info for function without CU");
+
+  auto RowReference = DebugLineTableRowRef::fromSMLoc(NewLoc);
+
+  // Check if no new line info needs to be emitted.
+  if (RowReference == DebugLineTableRowRef::NULL_ROW ||
+      NewLoc.getPointer() == PrevLoc.getPointer())
+    return PrevLoc;
+
+  unsigned CurrentFilenum = 0;
+  const auto *CurrentLineTable = FunctionLineTable;
+
+  // If the CU id from the current instruction location does not
+  // match the CU id from the current function, it means that we
+  // have come across some inlined code.  We must look up the CU
+  // for the instruction's original function and get the line table
+  // from that.
+  const auto FunctionUnitIndex = FunctionCU->getOffset();
+  const auto CurrentUnitIndex = RowReference.DwCompileUnitIndex;
+  if (CurrentUnitIndex != FunctionUnitIndex) {
+    CurrentLineTable = BC.DwCtx->getLineTableForUnit(
+        BC.DwCtx->getCompileUnitForOffset(CurrentUnitIndex));
+    // Add filename from the inlined function to the current CU.
+    CurrentFilenum =
+      BC.addDebugFilenameToUnit(FunctionUnitIndex, CurrentUnitIndex,
+        CurrentLineTable->Rows[RowReference.RowIndex - 1].File);
+  }
+
+  const auto &CurrentRow = CurrentLineTable->Rows[RowReference.RowIndex - 1];
+  if (!CurrentFilenum)
+    CurrentFilenum = CurrentRow.File;
+
+  BC.Ctx->setCurrentDwarfLoc(
+    CurrentFilenum,
+    CurrentRow.Line,
+    CurrentRow.Column,
+    (DWARF2_FLAG_IS_STMT * CurrentRow.IsStmt) |
+    (DWARF2_FLAG_BASIC_BLOCK * CurrentRow.BasicBlock) |
+    (DWARF2_FLAG_PROLOGUE_END * CurrentRow.PrologueEnd) |
+    (DWARF2_FLAG_EPILOGUE_BEGIN * CurrentRow.EpilogueBegin),
+    CurrentRow.Isa,
+    CurrentRow.Discriminator);
+  BC.Ctx->setDwarfCompileUnitID(FunctionUnitIndex);
+
+  return NewLoc;
 }
 
 BinaryFunction::~BinaryFunction() {
