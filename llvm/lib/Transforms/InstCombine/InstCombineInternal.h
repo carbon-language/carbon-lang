@@ -571,7 +571,7 @@ private:
   Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);
 
   /// This is a convenience wrapper function for the above two functions.
-  Instruction *foldOpWithConstantIntoOperand(Instruction &I);
+  Instruction *foldOpWithConstantIntoOperand(BinaryOperator &I);
 
   /// \brief Try to rotate an operation below a PHI node, using PHI nodes for
   /// its operands.
