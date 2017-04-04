@@ -298,7 +298,7 @@ static unsigned parseSectionFlags(StringRef flagsStr, bool *UseLastGroup) {
     case 'w':
       flags |= ELF::SHF_WRITE;
       break;
-    case 'm':
+    case 'o':
       flags |= ELF::SHF_LINK_ORDER;
       break;
     case 'M':

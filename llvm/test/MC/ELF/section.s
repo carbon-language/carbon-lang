@@ -163,12 +163,12 @@ bar:
 .Lshf_metadata_target2_2:
         .quad 0
 
-.section .shf_metadata1,"am",@progbits,.Lshf_metadata_target2_1
-.section .shf_metadata2,"am",@progbits,.Lshf_metadata_target2_2
-.section .shf_metadata3,"am",@progbits,.shf_metadata_target1
-// ASM: .section .shf_metadata1,"am",@progbits,.Lshf_metadata_target2_1
-// ASM: .section .shf_metadata2,"am",@progbits,.Lshf_metadata_target2_2
-// ASM: .section .shf_metadata3,"am",@progbits,.shf_metadata_target1
+.section .shf_metadata1,"ao",@progbits,.Lshf_metadata_target2_1
+.section .shf_metadata2,"ao",@progbits,.Lshf_metadata_target2_2
+.section .shf_metadata3,"ao",@progbits,.shf_metadata_target1
+// ASM: .section .shf_metadata1,"ao",@progbits,.Lshf_metadata_target2_1
+// ASM: .section .shf_metadata2,"ao",@progbits,.Lshf_metadata_target2_2
+// ASM: .section .shf_metadata3,"ao",@progbits,.shf_metadata_target1
 
 // CHECK:      Section {
 // CHECK:        Index: 22
