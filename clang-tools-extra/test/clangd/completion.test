@@ -16,26 +16,6 @@ Content-Length: 148
 # nondeterministic, so we check regardless of order.
 #
 # CHECK: {"jsonrpc":"2.0","id":1,"result":[
-# CHECK-DAG: {"label":"_M_allocate"}
-# CHECK-DAG: {"label":"_M_allocate_and_copy"}
-# CHECK-DAG: {"label":"_M_assign_aux"}
-# CHECK-DAG: {"label":"_M_assign_dispatch"}
-# CHECK-DAG: {"label":"_M_check_len"}
-# CHECK-DAG: {"label":"_M_create_storage"
-# CHECK-DAG: {"label":"_M_deallocate"}
-# CHECK-DAG: {"label":"_M_erase_at_end"}
-# CHECK-DAG: {"label":"_M_fill_assign"}
-# CHECK-DAG: {"label":"_M_fill_initialize"}
-# CHECK-DAG: {"label":"_M_fill_insert"}
-# CHECK-DAG: {"label":"_M_get_Tp_allocator"}
-# CHECK-DAG: {"label":"_M_impl"}
-# CHECK-DAG: {"label":"_M_initialize_dispatch"}
-# CHECK-DAG: {"label":"_M_insert_aux"}
-# CHECK-DAG: {"label":"_M_insert_dispatch"}
-# CHECK-DAG: {"label":"_M_range_check"}
-# CHECK-DAG: {"label":"_M_range_initialize"}
-# CHECK-DAG: {"label":"_M_range_insert"}
-# CHECK-DAG: {"label":"_Vector_base"}
 # CHECK-DAG: {"label":"assign"}
 # CHECK-DAG: {"label":"at"}
 # CHECK-DAG: {"label":"back"}
