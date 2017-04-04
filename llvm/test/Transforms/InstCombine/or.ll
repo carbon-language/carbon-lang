@@ -722,3 +722,14 @@ define <2 x i32> @test49vec(i1 %C) {
   %V = or <2 x i32> %A, <i32 123, i32 123>
   ret <2 x i32> %V
 }
+
+define <2 x i32> @test49vec2(i1 %C) {
+; CHECK-LABEL: @test49vec2(
+; CHECK-NEXT:    [[A:%.*]] = select i1 [[C:%.*]], <2 x i32> <i32 1000, i32 2500>, <2 x i32> <i32 10, i32 30>
+; CHECK-NEXT:    [[V:%.*]] = or <2 x i32> [[A]], <i32 123, i32 333>
+; CHECK-NEXT:    ret <2 x i32> [[V]]
+;
+  %A = select i1 %C, <2 x i32> <i32 1000, i32 2500>, <2 x i32> <i32 10, i32 30>
+  %V = or <2 x i32> %A, <i32 123, i32 333>
+  ret <2 x i32> %V
+}

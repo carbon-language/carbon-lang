@@ -494,3 +494,34 @@ define i64 @test39(i32 %X) {
   %res = and i64 %zsub, 240
   ret i64 %res
 }
+
+define i32 @test40(i1 %C) {
+; CHECK-LABEL: @test40(
+; CHECK-NEXT:    [[A:%.*]] = select i1 [[C:%.*]], i32 104, i32 10
+; CHECK-NEXT:    ret i32 [[A]]
+;
+  %A = select i1 %C, i32 1000, i32 10
+  %V = and i32 %A, 123
+  ret i32 %V
+}
+
+define <2 x i32> @test40vec(i1 %C) {
+; CHECK-LABEL: @test40vec(
+; CHECK-NEXT:    [[A:%.*]] = select i1 [[C:%.*]], <2 x i32> <i32 104, i32 104>, <2 x i32> <i32 10, i32 10>
+; CHECK-NEXT:    ret <2 x i32> [[A]]
+;
+  %A = select i1 %C, <2 x i32> <i32 1000, i32 1000>, <2 x i32> <i32 10, i32 10>
+  %V = and <2 x i32> %A, <i32 123, i32 123>
+  ret <2 x i32> %V
+}
+
+define <2 x i32> @test40vec2(i1 %C) {
+; CHECK-LABEL: @test40vec2(
+; CHECK-NEXT:    [[A:%.*]] = select i1 [[C:%.*]], <2 x i32> <i32 1000, i32 2500>, <2 x i32> <i32 10, i32 30>
+; CHECK-NEXT:    [[V:%.*]] = and <2 x i32> [[A]], <i32 123, i32 333>
+; CHECK-NEXT:    ret <2 x i32> [[V]]
+;
+  %A = select i1 %C, <2 x i32> <i32 1000, i32 2500>, <2 x i32> <i32 10, i32 30>
+  %V = and <2 x i32> %A, <i32 123, i32 333>
+  ret <2 x i32> %V
+}
