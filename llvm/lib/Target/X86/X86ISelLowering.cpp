@@ -29767,18 +29767,6 @@ static SDValue combineSelectOfTwoConstants(SDNode *N, SelectionDAG &DAG) {
                        DAG.getConstant(ShAmt, DL, MVT::i8));
   }
 
-  // Optimize Cond ? cst+1 : cst -> zext(setcc(C)+cst.
-  if (FalseC->getAPIntValue() + 1 == TrueC->getAPIntValue()) {
-    if (NeedsCondInvert) // Invert the condition if needed.
-      Cond = DAG.getNode(ISD::XOR, DL, Cond.getValueType(), Cond,
-                         DAG.getConstant(1, DL, Cond.getValueType()));
-
-    // Zero extend the condition if needed.
-    Cond = DAG.getNode(ISD::ZERO_EXTEND, DL, FalseC->getValueType(0), Cond);
-    return DAG.getNode(ISD::ADD, DL, Cond.getValueType(), Cond,
-                       SDValue(FalseC, 0));
-  }
-
   // Optimize cases that will turn into an LEA instruction.  This requires
   // an i32 or i64 and an efficient multiplier (1, 2, 3, 4, 5, 8, 9).
   if (N->getValueType(0) == MVT::i32 || N->getValueType(0) == MVT::i64) {
