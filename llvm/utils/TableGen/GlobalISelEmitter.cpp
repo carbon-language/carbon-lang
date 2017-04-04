@@ -1011,9 +1011,14 @@ StringRef RuleMatcher::getInsnVarName(const InstructionMatcher &InsnMatcher) con
 
 /// Emit a C++ initializer_list containing references to every matched instruction.
 void RuleMatcher::emitCxxCapturedInsnList(raw_ostream &OS) {
-  OS << "{";
+  SmallVector<StringRef, 2> Names;
   for (const auto &Pair : InsnVariableNames)
-    OS << "&" << Pair.second << ", ";
+    Names.push_back(Pair.second);
+  std::sort(Names.begin(), Names.end());
+
+  OS << "{";
+  for (const auto &Name : Names)
+    OS << "&" << Name << ", ";
   OS << "}";
 }
 
