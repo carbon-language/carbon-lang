@@ -220,3 +220,50 @@ bar:
 // CHECK-NEXT:   Size:
 // CHECK-NEXT:   Link:    22
 // CHECK-NEXT:   Info:    0
+
+.section	.text.foo
+// CHECK:        Section {
+// CHECK:          Name: .text.foo
+// CHECK-NEXT:     Type: SHT_PROGBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_EXECINSTR
+// CHECK-NEXT:     ]
+
+.section .bss
+// CHECK:        Section {
+// CHECK:          Name: .bss
+// CHECK-NEXT:     Type: SHT_NOBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_WRITE
+// CHECK-NEXT:     ]
+
+.section .bss.foo
+// CHECK:        Section {
+// CHECK:          Name: .bss.foo
+// CHECK-NEXT:     Type: SHT_NOBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_WRITE
+// CHECK-NEXT:     ]
+
+.section .tbss
+// CHECK:        Section {
+// CHECK:          Name: .tbss
+// CHECK-NEXT:     Type: SHT_NOBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_TLS
+// CHECK-NEXT:       SHF_WRITE
+// CHECK-NEXT:     ]
+
+.section .tbss.foo
+// CHECK:        Section {
+// CHECK:          Name: .tbss.foo
+// CHECK-NEXT:     Type: SHT_NOBITS
+// CHECK-NEXT:     Flags [
+// CHECK-NEXT:       SHF_ALLOC
+// CHECK-NEXT:       SHF_TLS
+// CHECK-NEXT:       SHF_WRITE
+// CHECK-NEXT:     ]
