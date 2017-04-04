@@ -525,3 +525,71 @@ define <2 x i32> @test40vec2(i1 %C) {
   %V = and <2 x i32> %A, <i32 123, i32 333>
   ret <2 x i32> %V
 }
+
+define i32 @test41(i1 %which) {
+; CHECK-LABEL: @test41(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br i1 [[WHICH:%.*]], label [[FINAL:%.*]], label [[DELAY:%.*]]
+; CHECK:       delay:
+; CHECK-NEXT:    br label [[FINAL]]
+; CHECK:       final:
+; CHECK-NEXT:    [[A:%.*]] = phi i32 [ 104, [[ENTRY:%.*]] ], [ 10, [[DELAY]] ]
+; CHECK-NEXT:    ret i32 [[A]]
+;
+entry:
+  br i1 %which, label %final, label %delay
+
+delay:
+  br label %final
+
+final:
+  %A = phi i32 [ 1000, %entry ], [ 10, %delay ]
+  %value = and i32 %A, 123
+  ret i32 %value
+}
+
+define <2 x i32> @test41vec(i1 %which) {
+; CHECK-LABEL: @test41vec(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br i1 [[WHICH:%.*]], label [[FINAL:%.*]], label [[DELAY:%.*]]
+; CHECK:       delay:
+; CHECK-NEXT:    br label [[FINAL]]
+; CHECK:       final:
+; CHECK-NEXT:    [[A:%.*]] = phi <2 x i32> [ <i32 1000, i32 1000>, [[ENTRY:%.*]] ], [ <i32 10, i32 10>, [[DELAY]] ]
+; CHECK-NEXT:    [[VALUE:%.*]] = and <2 x i32> [[A]], <i32 106, i32 106>
+; CHECK-NEXT:    ret <2 x i32> [[VALUE]]
+;
+entry:
+  br i1 %which, label %final, label %delay
+
+delay:
+  br label %final
+
+final:
+  %A = phi <2 x i32> [ <i32 1000, i32 1000>, %entry ], [ <i32 10, i32 10>, %delay ]
+  %value = and <2 x i32> %A, <i32 123, i32 123>
+  ret <2 x i32> %value
+}
+
+define <2 x i32> @test41vec2(i1 %which) {
+; CHECK-LABEL: @test41vec2(
+; CHECK-NEXT:  entry:
+; CHECK-NEXT:    br i1 [[WHICH:%.*]], label [[FINAL:%.*]], label [[DELAY:%.*]]
+; CHECK:       delay:
+; CHECK-NEXT:    br label [[FINAL]]
+; CHECK:       final:
+; CHECK-NEXT:    [[A:%.*]] = phi <2 x i32> [ <i32 1000, i32 2500>, [[ENTRY:%.*]] ], [ <i32 10, i32 30>, [[DELAY]] ]
+; CHECK-NEXT:    [[VALUE:%.*]] = and <2 x i32> [[A]], <i32 123, i32 333>
+; CHECK-NEXT:    ret <2 x i32> [[VALUE]]
+;
+entry:
+  br i1 %which, label %final, label %delay
+
+delay:
+  br label %final
+
+final:
+  %A = phi <2 x i32> [ <i32 1000, i32 2500>, %entry ], [ <i32 10, i32 30>, %delay ]
+  %value = and <2 x i32> %A, <i32 123, i32 333>
+  ret <2 x i32> %value
+}
