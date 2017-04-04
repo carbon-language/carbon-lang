@@ -1563,7 +1563,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     return Res;
   }
 
-  if (I.getType()->isIntegerTy(1))
+  if (I.getType()->getScalarType()->isIntegerTy(1))
     return BinaryOperator::CreateXor(Op0, Op1);
 
   // Replace (-1 - A) with (~A).

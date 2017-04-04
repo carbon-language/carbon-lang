@@ -744,3 +744,12 @@ define i32 @test52(i32 %X) {
   %res = and i32 %sub, 127
   ret i32 %res
 }
+
+define <2 x i1> @test53(<2 x i1> %A, <2 x i1> %B) {
+  %sub = sub <2 x i1> %A, %B
+  ret <2 x i1> %sub
+; CHECK-LABEL: @test53(
+; CHECK-NEXT: %sub = xor <2 x i1> %A, %B
+; CHECK-NEXT: ret <2 x i1> %sub
+}
+
