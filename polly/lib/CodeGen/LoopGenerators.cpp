@@ -360,8 +360,8 @@ Value *ParallelLoopGenerator::createSubFn(Value *Stride, AllocaInst *StructData,
 
   Builder.CreateBr(CheckNextBB);
   Builder.SetInsertPoint(&*--Builder.GetInsertPoint());
-  IV = createLoop(LB, UB, Stride, Builder, LI, DT, AfterBB,
-                  ICmpInst::ICMP_SLE, nullptr, true, /* UseGuard */ false);
+  IV = createLoop(LB, UB, Stride, Builder, LI, DT, AfterBB, ICmpInst::ICMP_SLE,
+                  nullptr, true, /* UseGuard */ false);
 
   BasicBlock::iterator LoopBody = Builder.GetInsertPoint();
 
