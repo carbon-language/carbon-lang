@@ -1,4 +1,5 @@
 // RUN: %libomp-compile && env OMP_CANCELLATION=true %libomp-run
+// XFAIL: gcc
 // Regression test for a bug in cancellation to cover effect of `#pragma omp cancel`
 // in a loop construct, on sections construct.
 // Pass condition: Cancellation status from `for` does not persist
