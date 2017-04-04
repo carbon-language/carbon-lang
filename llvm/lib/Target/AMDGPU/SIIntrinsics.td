@@ -14,19 +14,6 @@
 
 
 let TargetPrefix = "SI", isTarget = 1 in {
-  def int_SI_export : Intrinsic <[],
-    [llvm_i32_ty,   // en
-    llvm_i32_ty,    // vm   (FIXME: should be i1)
-    llvm_i32_ty,    // done (FIXME: should be i1)
-    llvm_i32_ty,    // tgt
-    llvm_i32_ty,    // compr (FIXME: should be i1)
-    llvm_float_ty,  // src0
-    llvm_float_ty,  // src1
-    llvm_float_ty,  // src2
-    llvm_float_ty], // src3
-    []
-  >;
-
   def int_SI_load_const : Intrinsic <[llvm_float_ty], [llvm_anyint_ty, llvm_i32_ty], [IntrNoMem]>;
 
   // Fully-flexible TBUFFER_STORE_FORMAT_* except for the ADDR64 bit, which is not exposed
