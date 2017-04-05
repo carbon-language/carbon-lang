@@ -1026,7 +1026,7 @@ size_t LinkerScript::getPhdrIndex(const Twine &Loc, StringRef PhdrName) {
   return 0;
 }
 
-class elf::ScriptParser final : public ScriptLexer {
+class elf::ScriptParser final : ScriptLexer {
   typedef void (ScriptParser::*Handler)();
 
 public:
