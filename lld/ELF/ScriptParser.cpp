@@ -160,9 +160,6 @@ static ExprValue bitOr(ExprValue A, ExprValue B) {
           (A.getValue() | B.getValue()) - A.getSecAddr()};
 }
 
-static ExprValue bitNot(ExprValue A) { return ~A.getValue(); }
-static ExprValue minus(ExprValue A) { return -A.getValue(); }
-
 void ScriptParser::readDynamicList() {
   expect("{");
   readAnonymousDeclaration();
@@ -828,11 +825,11 @@ Expr ScriptParser::readPrimary() {
 
   if (Tok == "~") {
     Expr E = readPrimary();
-    return [=] { return bitNot(E()); };
+    return [=] { return ~E().getValue(); };
   }
   if (Tok == "-") {
     Expr E = readPrimary();
-    return [=] { return minus(E()); };
+    return [=] { return -E().getValue(); };
   }
 
   // Built-in functions are parsed here.
