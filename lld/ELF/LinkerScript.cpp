@@ -285,35 +285,31 @@ bool LinkerScript::shouldKeep(InputSectionBase *S) {
   return false;
 }
 
-static bool comparePriority(InputSectionBase *A, InputSectionBase *B) {
-  return getPriority(A->Name) < getPriority(B->Name);
-}
-
-static bool compareName(InputSectionBase *A, InputSectionBase *B) {
-  return A->Name < B->Name;
-}
-
-static bool compareAlignment(InputSectionBase *A, InputSectionBase *B) {
-  // ">" is not a mistake. Larger alignments are placed before smaller
-  // alignments in order to reduce the amount of padding necessary.
-  // This is compatible with GNU.
-  return A->Alignment > B->Alignment;
-}
-
+// A helper function for the SORT() command.
 static std::function<bool(InputSectionBase *, InputSectionBase *)>
 getComparator(SortSectionPolicy K) {
   switch (K) {
   case SortSectionPolicy::Alignment:
-    return compareAlignment;
+    return [](InputSectionBase *A, InputSectionBase *B) {
+      // ">" is not a mistake. Sections with larger alignments are placed
+      // before sections with smaller alignments in order to reduce the
+      // amount of padding necessary. This is compatible with GNU.
+      return A->Alignment > B->Alignment;
+    };
   case SortSectionPolicy::Name:
-    return compareName;
+    return [](InputSectionBase *A, InputSectionBase *B) {
+      return A->Name < B->Name;
+    };
   case SortSectionPolicy::Priority:
-    return comparePriority;
+    return [](InputSectionBase *A, InputSectionBase *B) {
+      return getPriority(A->Name) < getPriority(B->Name);
+    };
   default:
     llvm_unreachable("unknown sort policy");
   }
 }
 
+// A helper function for the SORT() command.
 static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
                              ConstraintKind Kind) {
   if (Kind == ConstraintKind::NoConstraint)
