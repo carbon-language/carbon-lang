@@ -359,6 +359,7 @@ Expected<typename ELFT::ShdrRange> ELFFile<ELFT>::sections() const {
   if (SectionTableOffset + sizeof(Elf_Shdr) > FileSize)
     return createError("section header table goes past the end of the file");
 
+  fprintf(stderr, "alignof(Elf_Shdr): %d\n", static_cast<int>(alignof(Elf_Shdr)));
   // Invalid address alignment of section headers
   if (SectionTableOffset & (alignof(Elf_Shdr) - 1))
     return createError("invalid alignment of section headers");
