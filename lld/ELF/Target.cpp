@@ -444,30 +444,33 @@ bool X86TargetInfo::isTlsInitialExecRel(uint32_t Type) const {
 }
 
 void X86TargetInfo::writePltHeader(uint8_t *Buf) const {
-  // Executable files and shared object files have
-  // separate procedure linkage tables.
   if (Config->Pic) {
     const uint8_t V[] = {
         0xff, 0xb3, 0x04, 0x00, 0x00, 0x00, // pushl 4(%ebx)
         0xff, 0xa3, 0x08, 0x00, 0x00, 0x00, // jmp   *8(%ebx)
-        0x90, 0x90, 0x90, 0x90              // nop; nop; nop; nop
+        0x90, 0x90, 0x90, 0x90              // nop
     };
     memcpy(Buf, V, sizeof(V));
+
+    uint32_t Ebx = In<ELF32LE>::Got->getVA() + In<ELF32LE>::Got->getSize();
+    uint32_t GotPlt = In<ELF32LE>::GotPlt->getVA() - Ebx;
+    write32le(Buf + 2, GotPlt + 4);
+    write32le(Buf + 8, GotPlt + 8);
     return;
   }
 
   const uint8_t PltData[] = {
       0xff, 0x35, 0x00, 0x00, 0x00, 0x00, // pushl (GOT+4)
       0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // jmp   *(GOT+8)
-      0x90, 0x90, 0x90, 0x90              // nop; nop; nop; nop
+      0x90, 0x90, 0x90, 0x90              // nop
   };
   memcpy(Buf, PltData, sizeof(PltData));
-  uint32_t Got = In<ELF32LE>::GotPlt->getVA();
-  write32le(Buf + 2, Got + 4);
-  write32le(Buf + 8, Got + 8);
+  uint32_t GotPlt = In<ELF32LE>::GotPlt->getVA();
+  write32le(Buf + 2, GotPlt + 4);
+  write32le(Buf + 8, GotPlt + 8);
 }
 
-void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
                              uint64_t PltEntryAddr, int32_t Index,
                              unsigned RelOff) const {
   const uint8_t Inst[] = {
@@ -477,10 +480,17 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   };
   memcpy(Buf, Inst, sizeof(Inst));
 
-  // jmp *foo@GOT(%ebx) or jmp *foo_in_GOT
-  Buf[1] = Config->Pic ? 0xa3 : 0x25;
-  uint32_t Got = In<ELF32LE>::GotPlt->getVA();
-  write32le(Buf + 2, Config->Shared ? GotEntryAddr - Got : GotEntryAddr);
+  if (Config->Pic) {
+    // jmp *foo@GOT(%ebx)
+    uint32_t Ebx = In<ELF32LE>::Got->getVA() + In<ELF32LE>::Got->getSize();
+    Buf[1] = 0xa3;
+    write32le(Buf + 2, GotPltEntryAddr - Ebx);
+  } else {
+    // jmp *foo_in_GOT
+    Buf[1] = 0x25;
+    write32le(Buf + 2, GotPltEntryAddr);
+  }
+
   write32le(Buf + 7, RelOff);
   write32le(Buf + 12, -Index * PltEntrySize - PltHeaderSize - 16);
 }
