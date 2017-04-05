@@ -224,8 +224,8 @@ struct ScriptConfiguration {
 
 class LinkerScript {
 protected:
-  void assignSymbol(SymbolAssignment *Cmd, bool InSec = false);
-  void setDot(Expr E, const Twine &Loc, bool InSec = false);
+  void assignSymbol(SymbolAssignment *Cmd, bool InSec);
+  void setDot(Expr E, const Twine &Loc, bool InSec);
 
   std::vector<InputSectionBase *>
   computeInputSections(const InputSectionDescription *);

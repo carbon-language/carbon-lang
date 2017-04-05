@@ -644,7 +644,7 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
     return;
 
   if (Cmd->AddrExpr && (Sec->Flags & SHF_ALLOC))
-    setDot(Cmd->AddrExpr, Cmd->Location);
+    setDot(Cmd->AddrExpr, Cmd->Location, false);
 
   if (Cmd->LMAExpr) {
     uint64_t D = Dot;
@@ -858,7 +858,7 @@ void LinkerScript::placeOrphanSections() {
 void LinkerScript::processNonSectionCommands() {
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get()))
-      assignSymbol(Cmd);
+      assignSymbol(Cmd, false);
     else if (auto *Cmd = dyn_cast<AssertCommand>(Base.get()))
       Cmd->Expression();
   }
@@ -872,7 +872,7 @@ void LinkerScript::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
 
   for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
     if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
-      assignSymbol(Cmd);
+      assignSymbol(Cmd, false);
       continue;
     }
 
