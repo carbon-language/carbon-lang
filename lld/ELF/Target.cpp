@@ -559,7 +559,7 @@ void X86TargetInfo::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
       0x81, 0xe8, 0x00, 0x00, 0x00, 0x00  // subl 0(%ebx), %eax
   };
   memcpy(Loc - 3, Inst, sizeof(Inst));
-  relocateOne(Loc + 5, R_386_32, Val);
+  write32le(Loc + 5, Val);
 }
 
 void X86TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
@@ -575,7 +575,7 @@ void X86TargetInfo::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
       0x03, 0x83, 0x00, 0x00, 0x00, 0x00  // addl 0(%ebx), %eax
   };
   memcpy(Loc - 3, Inst, sizeof(Inst));
-  relocateOne(Loc + 5, R_386_32, Val);
+  write32le(Loc + 5, Val);
 }
 
 // In some conditions, relocations can be optimized to avoid using GOT.
@@ -615,13 +615,13 @@ void X86TargetInfo::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
       Loc[-1] = 0x80 | (Reg << 3) | Reg;
     }
   }
-  relocateOne(Loc, R_386_TLS_LE, Val);
+  write32le(Loc, Val);
 }
 
 void X86TargetInfo::relaxTlsLdToLe(uint8_t *Loc, uint32_t Type,
                                    uint64_t Val) const {
   if (Type == R_386_TLS_LDO_32) {
-    relocateOne(Loc, R_386_TLS_LE, Val);
+    write32le(Loc, Val);
     return;
   }
 
@@ -785,9 +785,10 @@ void X86_64TargetInfo<ELFT>::relaxTlsGdToLe(uint8_t *Loc, uint32_t Type,
       0x48, 0x8d, 0x80, 0x00, 0x00, 0x00, 0x00              // lea x@tpoff,%rax
   };
   memcpy(Loc - 4, Inst, sizeof(Inst));
+
   // The original code used a pc relative relocation and so we have to
   // compensate for the -4 in had in the addend.
-  relocateOne(Loc + 8, R_X86_64_TPOFF32, Val + 4);
+  write32le(Loc + 8, Val + 4);
 }
 
 template <class ELFT>
@@ -807,9 +808,10 @@ void X86_64TargetInfo<ELFT>::relaxTlsGdToIe(uint8_t *Loc, uint32_t Type,
       0x48, 0x03, 0x05, 0x00, 0x00, 0x00, 0x00              // addq x@tpoff,%rax
   };
   memcpy(Loc - 4, Inst, sizeof(Inst));
+
   // Both code sequences are PC relatives, but since we are moving the constant
   // forward by 8 bytes we have to subtract the value by 8.
-  relocateOne(Loc + 8, R_X86_64_PC32, Val - 8);
+  write32le(Loc + 8, Val - 8);
 }
 
 // In some conditions, R_X86_64_GOTTPOFF relocation can be optimized to
@@ -854,7 +856,7 @@ void X86_64TargetInfo<ELFT>::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type,
 
   // The original code used a PC relative relocation.
   // Need to compensate for the -4 it had in the addend.
-  relocateOne(Loc, R_X86_64_TPOFF32, Val + 4);
+  write32le(Loc, Val + 4);
 }
 
 template <class ELFT>
@@ -874,7 +876,7 @@ void X86_64TargetInfo<ELFT>::relaxTlsLdToLe(uint8_t *Loc, uint32_t Type,
     return;
   }
   if (Type == R_X86_64_DTPOFF32) {
-    relocateOne(Loc, R_X86_64_TPOFF32, Val);
+    write32le(Loc, Val);
     return;
   }
 
@@ -1004,7 +1006,7 @@ void X86_64TargetInfo<ELFT>::relaxGotNoPic(uint8_t *Loc, uint64_t Val,
     // SIB.base field.
     // See "2.2.1.2 More on REX Prefix Fields " (2-8 Vol. 2A).
     Loc[-3] = (Rex & ~0x4) | (Rex & 0x4) >> 2;
-    relocateOne(Loc, R_X86_64_PC32, Val);
+    write32le(Loc, Val);
     return;
   }
 
@@ -1025,7 +1027,7 @@ void X86_64TargetInfo<ELFT>::relaxGotNoPic(uint8_t *Loc, uint64_t Val,
   // descriptions about each operation.
   Loc[-2] = 0x81;
   Loc[-3] = (Rex & ~0x4) | (Rex & 0x4) >> 2;
-  relocateOne(Loc, R_X86_64_PC32, Val);
+  write32le(Loc, Val);
 }
 
 template <class ELFT>
@@ -1036,7 +1038,7 @@ void X86_64TargetInfo<ELFT>::relaxGot(uint8_t *Loc, uint64_t Val) const {
   // Convert "mov foo@GOTPCREL(%rip),%reg" to "lea foo(%rip),%reg".
   if (Op == 0x8b) {
     Loc[-2] = 0x8d;
-    relocateOne(Loc, R_X86_64_PC32, Val);
+    write32le(Loc, Val);
     return;
   }
 
@@ -1055,7 +1057,7 @@ void X86_64TargetInfo<ELFT>::relaxGot(uint8_t *Loc, uint64_t Val) const {
     // prefix. That makes result expression to be a single instruction.
     Loc[-2] = 0x67; // addr32 prefix
     Loc[-1] = 0xe8; // call
-    relocateOne(Loc, R_X86_64_PC32, Val);
+    write32le(Loc, Val);
     return;
   }
 
@@ -1064,7 +1066,7 @@ void X86_64TargetInfo<ELFT>::relaxGot(uint8_t *Loc, uint64_t Val) const {
   assert(ModRm == 0x25);
   Loc[-2] = 0xe9; // jmp
   Loc[3] = 0x90;  // nop
-  relocateOne(Loc - 1, R_X86_64_PC32, Val + 1);
+  write32le(Loc - 1, Val + 1);
 }
 
 // Relocation masks following the #lo(value), #hi(value), #ha(value),
