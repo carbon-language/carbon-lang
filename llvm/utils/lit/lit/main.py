@@ -302,7 +302,7 @@ def main_with_tmp(builtinParameters):
         opts.numThreads = lit.util.detectCPUs()
 
     if opts.executionStrategy is None:
-        opts.executionStrategy = 'PROCESS_POOL'
+        opts.executionStrategy = 'PROCESSES'
 
     if opts.maxFailures == 0:
         parser.error("Setting --max-failures to 0 does not have any effect.")
