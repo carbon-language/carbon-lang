@@ -596,14 +596,10 @@ void LinkerScript::process(BaseCommand &Base) {
 
 static OutputSection *
 findSection(StringRef Name, const std::vector<OutputSection *> &Sections) {
-  auto End = Sections.end();
-  auto HasName = [=](OutputSection *Sec) { return Sec->Name == Name; };
-  auto I = std::find_if(Sections.begin(), End, HasName);
-  std::vector<OutputSection *> Ret;
-  if (I == End)
-    return nullptr;
-  assert(std::find_if(I + 1, End, HasName) == End);
-  return *I;
+  for (OutputSection *Sec : Sections)
+    if (Sec->Name == Name)
+      return Sec;
+  return nullptr;
 }
 
 // This function searches for a memory region to place the given output
