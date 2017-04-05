@@ -359,7 +359,7 @@ class Run(object):
         # Install a console-control signal handler on Windows.
         if win32api is not None:
             def console_ctrl_handler(type):
-                print "Ctr-C received, terminating"
+                print('\nCtrl-C detected, terminating.')
                 pool.terminate()
                 pool.join()
                 os.kill(0,9)
