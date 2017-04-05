@@ -554,42 +554,43 @@ void LinkerScript::switchTo(OutputSection *Sec) {
 }
 
 void LinkerScript::process(BaseCommand &Base) {
-  // This handles the assignments to symbol or to a location counter (.)
-  if (auto *AssignCmd = dyn_cast<SymbolAssignment>(&Base)) {
-    assignSymbol(AssignCmd, true);
+  // This handles the assignments to symbol or to the dot.
+  if (auto *Cmd = dyn_cast<SymbolAssignment>(&Base)) {
+    assignSymbol(Cmd, true);
     return;
   }
 
   // Handle BYTE(), SHORT(), LONG(), or QUAD().
-  if (auto *DataCmd = dyn_cast<BytesDataCommand>(&Base)) {
-    DataCmd->Offset = Dot - CurOutSec->Addr;
-    Dot += DataCmd->Size;
+  if (auto *Cmd = dyn_cast<BytesDataCommand>(&Base)) {
+    Cmd->Offset = Dot - CurOutSec->Addr;
+    Dot += Cmd->Size;
     CurOutSec->Size = Dot - CurOutSec->Addr;
     return;
   }
 
-  if (auto *AssertCmd = dyn_cast<AssertCommand>(&Base)) {
-    AssertCmd->Expression();
+  // Handle ASSERT().
+  if (auto *Cmd = dyn_cast<AssertCommand>(&Base)) {
+    Cmd->Expression();
     return;
   }
 
-  // It handles single input section description command,
-  // calculates and assigns the offsets for each section and also
+  // Handle a single input section description command.
+  // It calculates and assigns the offsets for each section and also
   // updates the output section size.
-  auto &ICmd = cast<InputSectionDescription>(Base);
-  for (InputSectionBase *IB : ICmd.Sections) {
+  auto &Cmd = cast<InputSectionDescription>(Base);
+  for (InputSectionBase *Sec : Cmd.Sections) {
     // We tentatively added all synthetic sections at the beginning and removed
     // empty ones afterwards (because there is no way to know whether they were
     // going be empty or not other than actually running linker scripts.)
     // We need to ignore remains of empty sections.
-    if (auto *Sec = dyn_cast<SyntheticSection>(IB))
-      if (Sec->empty())
+    if (auto *S = dyn_cast<SyntheticSection>(Sec))
+      if (S->empty())
         continue;
 
-    if (!IB->Live)
+    if (!Sec->Live)
       continue;
-    assert(CurOutSec == IB->OutSec || AlreadyOutputOS.count(IB->OutSec));
-    output(cast<InputSection>(IB));
+    assert(CurOutSec == Sec->OutSec || AlreadyOutputOS.count(Sec->OutSec));
+    output(cast<InputSection>(Sec));
   }
 }
 
@@ -628,10 +629,10 @@ MemoryRegion *LinkerScript::findMemoryRegion(OutputSectionCommand *Cmd,
     return nullptr;
 
   // See if a region can be found by matching section flags.
-  for (auto &MRI : Opt.MemoryRegions) {
-    MemoryRegion &MR = MRI.second;
-    if ((MR.Flags & Sec->Flags) != 0 && (MR.NegFlags & Sec->Flags) == 0)
-      return &MR;
+  for (auto &Pair : Opt.MemoryRegions) {
+    MemoryRegion &M = Pair.second;
+    if ((M.Flags & Sec->Flags) && (M.NegFlags & Sec->Flags) == 0)
+      return &M;
   }
 
   // Otherwise, no suitable region was found.
