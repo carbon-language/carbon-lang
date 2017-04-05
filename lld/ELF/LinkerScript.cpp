@@ -923,10 +923,12 @@ std::vector<PhdrEntry> LinkerScript::createPhdrs() {
 bool LinkerScript::ignoreInterpSection() {
   // Ignore .interp section in case we have PHDRS specification
   // and PT_INTERP isn't listed.
-  return !Opt.PhdrsCommands.empty() &&
-         llvm::find_if(Opt.PhdrsCommands, [](const PhdrsCommand &Cmd) {
-           return Cmd.Type == PT_INTERP;
-         }) == Opt.PhdrsCommands.end();
+  if (Opt.PhdrsCommands.empty())
+    return false;
+  for (PhdrsCommand &Cmd : Opt.PhdrsCommands)
+    if (Cmd.Type == PT_INTERP)
+      return false;
+  return true;
 }
 
 uint32_t LinkerScript::getFiller(StringRef Name) {
