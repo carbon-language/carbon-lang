@@ -314,10 +314,11 @@ static bool matchConstraints(ArrayRef<InputSectionBase *> Sections,
                              ConstraintKind Kind) {
   if (Kind == ConstraintKind::NoConstraint)
     return true;
-  bool IsRW = llvm::any_of(Sections, [=](InputSectionBase *Sec2) {
-    auto *Sec = static_cast<InputSectionBase *>(Sec2);
-    return Sec->Flags & SHF_WRITE;
+
+  bool IsRW = llvm::any_of(Sections, [](InputSectionBase *Sec) {
+    return static_cast<InputSectionBase *>(Sec)->Flags & SHF_WRITE;
   });
+
   return (IsRW && Kind == ConstraintKind::ReadWrite) ||
          (!IsRW && Kind == ConstraintKind::ReadOnly);
 }
