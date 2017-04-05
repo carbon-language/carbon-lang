@@ -29,7 +29,6 @@ namespace lld {
 namespace elf {
 
 class DefinedCommon;
-class ScriptParser;
 class SymbolBody;
 class InputSectionBase;
 class InputSection;

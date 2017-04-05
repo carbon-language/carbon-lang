@@ -36,7 +36,8 @@ using namespace lld::elf;
 
 static bool isUnderSysroot(StringRef Path);
 
-class elf::ScriptParser final : ScriptLexer {
+namespace {
+class ScriptParser final : ScriptLexer {
 public:
   ScriptParser(MemoryBufferRef MB)
       : ScriptLexer(MB),
@@ -101,6 +102,7 @@ private:
 
   bool IsUnderSysroot;
 };
+} // namespace
 
 static bool isUnderSysroot(StringRef Path) {
   if (Config->Sysroot == "")
