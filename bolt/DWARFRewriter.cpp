@@ -396,9 +396,8 @@ void RewriteInstance::updateFunctionRanges() {
 }
 
 void RewriteInstance::generateDebugRanges() {
-  using RangeType = enum { RANGES, ARANGES };
-  for (int IntRT = RANGES; IntRT <= ARANGES; ++IntRT) {
-    RangeType RT = static_cast<RangeType>(IntRT);
+  enum { RANGES, ARANGES };
+  for (auto RT = RANGES + 0; RT <= ARANGES; ++RT) {
     const char *SectionName = (RT == RANGES) ? ".debug_ranges"
                                              : ".debug_aranges";
     SmallVector<char, 16> RangesBuffer;

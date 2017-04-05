@@ -384,7 +384,7 @@ private:
                                        bool IsSimple);
 private:
 
-  /// If we are updating debug info, these are the section we need to overwrite.
+  /// When updating debug info, these are the sections we overwrite.
   static constexpr const char *DebugSectionsToOverwrite[] = {
     ".debug_aranges",
     ".debug_line",

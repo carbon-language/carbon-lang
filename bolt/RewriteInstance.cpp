@@ -455,27 +455,21 @@ uint8_t *ExecutableFileMemoryManager::recordNoteSection(
                << " with size " << Size << ", alignment " << Alignment
                << " at 0x"
                << Twine::utohexstr(reinterpret_cast<uint64_t>(Data)) << '\n');
-  if (SectionName == ".debug_line") {
     // We need to make a copy of the section contents if we'll need it for
-    // a future reference.
-    uint8_t *DataCopy = new uint8_t[Size];
-    memcpy(DataCopy, Data, Size);
-    NoteSectionInfo[SectionName] =
-      SectionInfo(reinterpret_cast<uint64_t>(DataCopy),
-                  Size,
-                  Alignment,
-                  /*IsCode=*/false,
-                  /*IsReadOnly=*/true,
-                  /*IsLocal=*/false,
-                  0,
-                  0,
-                  SectionID);
-    return DataCopy;
-  } else {
-    DEBUG(dbgs() << "BOLT-DEBUG: ignoring section " << SectionName
-                 << " in recordNoteSection()\n");
-    return nullptr;
-  }
+  // a future reference. RuntimeDyld will not allocate the space forus.
+  uint8_t *DataCopy = new uint8_t[Size];
+  memcpy(DataCopy, Data, Size);
+  NoteSectionInfo[SectionName] =
+    SectionInfo(reinterpret_cast<uint64_t>(DataCopy),
+                Size,
+                Alignment,
+                /*IsCode=*/false,
+                /*IsReadOnly=*/true,
+                /*IsLocal=*/false,
+                0,
+                0,
+                SectionID);
+  return DataCopy;
 }
 
 bool ExecutableFileMemoryManager::finalizeMemory(std::string *ErrMsg) {
@@ -2105,13 +2099,10 @@ void RewriteInstance::emitFunctions() {
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_end"));
   }
 
-  if (opts::Relocs) {
-    emitDataSections(Streamer.get());
-  }
-
-
   if (opts::UpdateDebugSections)
     updateDebugLineInfoForNonSimpleFunctions();
+
+  emitDataSections(Streamer.get());
 
   // Relocate .eh_frame to .eh_frame_old.
   if (EHFrameSection.getObject() != nullptr) {
@@ -2401,16 +2392,22 @@ void RewriteInstance::emitDataSection(MCStreamer *Streamer, SectionRef Section,
     SectionName = Name;
   else
     Section.getName(SectionName);
+
+  const auto SectionFlags = ELFSectionRef(Section).getFlags();
+  const auto SectionType = ELFSectionRef(Section).getType();
   auto *ELFSection = BC->Ctx->getELFSection(SectionName,
-                                            ELF::SHT_PROGBITS,
-                                            ELF::SHF_WRITE | ELF::SHF_ALLOC);
+                                            SectionType,
+                                            SectionFlags);
+
   StringRef SectionContents;
   Section.getContents(SectionContents);
 
   Streamer->SwitchSection(ELFSection);
   Streamer->EmitValueToAlignment(Section.getAlignment());
 
-  DEBUG(dbgs() << "BOLT-DEBUG: emitting section " << SectionName << '\n');
+  DEBUG(dbgs() << "BOLT-DEBUG: emitting "
+               << (SectionFlags & ELF::SHF_ALLOC ? "" : "non-")
+               << "allocatable data section " << SectionName << '\n');
 
   auto SRI = BC->SectionRelocations.find(Section);
   if (SRI == BC->SectionRelocations.end()) {
@@ -2634,7 +2631,7 @@ void RewriteInstance::rewriteNoteSections() {
       // Write section extension.
       Address = SI.AllocAddress;
       if (Address) {
-        DEBUG(dbgs() << "BOLT: " << (Size ? "appending" : "writing")
+        DEBUG(dbgs() << "BOLT-DEBUG: " << (Size ? "appending" : "writing")
                      << " contents to section "
                      << *SectionName << '\n');
         OS.write(reinterpret_cast<const char *>(Address), SI.Size);
