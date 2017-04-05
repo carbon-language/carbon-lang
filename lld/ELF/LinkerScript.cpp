@@ -617,10 +617,9 @@ MemoryRegion *LinkerScript::findMemoryRegion(OutputSectionCommand *Cmd,
     return nullptr;
   }
 
-  // The memory region name is empty, thus a suitable region must be
-  // searched for in the region map. If the region map is empty, just
-  // return. Note that this check doesn't happen at the very beginning
-  // so that uses of undeclared regions can be caught.
+  // If at least one memory region is defined, all sections must
+  // belong to some memory region. Otherwise, we don't need to do
+  // anything for memory regions.
   if (Opt.MemoryRegions.empty())
     return nullptr;
 
