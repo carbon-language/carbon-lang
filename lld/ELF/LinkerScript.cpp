@@ -658,17 +658,19 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
     Dot = CurMemRegion->Offset;
   switchTo(Sec);
 
-  // Find the last section output location. We will output orphan sections
-  // there so that end symbols point to the correct location.
-  auto E =
+  // flush() may add orphan sections, so the order of flush() and
+  // symbol assignments is important. We want to call flush() first so
+  // that symbols pointing the end of the current section points to
+  // the location after orphan sections.
+  auto Mid =
       std::find_if(Cmd->Commands.rbegin(), Cmd->Commands.rend(),
                    [](BaseCommand *Cmd) { return !isa<SymbolAssignment>(Cmd); })
           .base();
-  for (auto I = Cmd->Commands.begin(); I != E; ++I)
+  for (auto I = Cmd->Commands.begin(); I != Mid; ++I)
     process(**I);
   flush();
-  std::for_each(E, Cmd->Commands.end(),
-                [this](BaseCommand *B) { process(*B); });
+  for (auto I = Mid, E = Cmd->Commands.end(); I != E; ++I)
+    process(**I);
 }
 
 void LinkerScript::removeEmptyCommands() {
@@ -765,13 +767,12 @@ void LinkerScript::adjustSectionsAfterSorting() {
 //  /* The RW PT_LOAD starts here*/
 //  rw_sec : { *(rw_sec) }
 // would mean that the RW PT_LOAD would become unaligned.
-static bool shouldSkip(const BaseCommand &Cmd) {
+static bool shouldSkip(BaseCommand *Cmd) {
   if (isa<OutputSectionCommand>(Cmd))
     return false;
-  const auto *Assign = dyn_cast<SymbolAssignment>(&Cmd);
-  if (!Assign)
-    return true;
-  return Assign->Name != ".";
+  if (auto *Assign = dyn_cast<SymbolAssignment>(Cmd))
+    return Assign->Name != ".";
+  return true;
 }
 
 // Orphan sections are sections present in the input files which are
@@ -806,14 +807,9 @@ void LinkerScript::placeOrphanSections() {
   // section. We do this because it is common to set a load address by starting
   // the script with ". = 0xabcd" and the expectation is that every section is
   // after that.
-  auto FirstSectionOrDotAssignment = std::find_if(
-      Opt.Commands.begin(), Opt.Commands.end(), [](BaseCommand *Cmd) {
-        if (isa<OutputSectionCommand>(Cmd))
-          return true;
-        if (auto *Assign = dyn_cast<SymbolAssignment>(Cmd))
-          return Assign->Name == ".";
-        return false;
-      });
+  auto FirstSectionOrDotAssignment =
+      std::find_if(Opt.Commands.begin(), Opt.Commands.end(),
+                   [](BaseCommand *Cmd) { return !shouldSkip(Cmd); });
   if (FirstSectionOrDotAssignment != Opt.Commands.end()) {
     CmdIndex = FirstSectionOrDotAssignment - Opt.Commands.begin();
     if (isa<SymbolAssignment>(**FirstSectionOrDotAssignment))
@@ -827,7 +823,7 @@ void LinkerScript::placeOrphanSections() {
     // correct result.
     auto CmdIter = Opt.Commands.begin() + CmdIndex;
     auto E = Opt.Commands.end();
-    while (CmdIter != E && shouldSkip(**CmdIter)) {
+    while (CmdIter != E && shouldSkip(*CmdIter)) {
       ++CmdIter;
       ++CmdIndex;
     }
