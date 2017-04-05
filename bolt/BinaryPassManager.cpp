@@ -176,6 +176,7 @@ PrintUCE("print-uce",
 static cl::opt<bool>
 SimplifyConditionalTailCalls("simplify-conditional-tail-calls",
   cl::desc("simplify conditional tail calls by removing unnecessary jumps"),
+  cl::init(true),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 

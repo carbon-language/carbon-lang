@@ -230,7 +230,7 @@ enum SctcModes : char {
 static cl::opt<SctcModes>
 SctcMode("sctc-mode",
   cl::desc("mode for simplify conditional tail calls"),
-  cl::init(SctcHeuristic),
+  cl::init(SctcAlways),
   cl::values(clEnumValN(SctcAlways, "always", "always perform sctc"),
     clEnumValN(SctcPreserveDirection,
       "preserve",
@@ -475,7 +475,9 @@ namespace {
 // B0: ...
 //     jmp  B2   (or jcc B2)
 //
-uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
+uint64_t fixDoubleJumps(BinaryContext &BC,
+                        BinaryFunction &Function,
+                        bool MarkInvalid) {
   uint64_t NumDoubleJumps = 0;
 
   for (auto &BB : Function) {
@@ -484,7 +486,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
                              const MCSymbol *SuccSym) {
       // Ignore infinite loop jumps or fallthrough tail jumps.
       if (Pred == Succ || Succ == &BB)
-        return;
+        return false;
 
       if (Succ) {
         const MCSymbol *TBB = nullptr;
@@ -495,7 +497,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
         if(!Res) {
           DEBUG(dbgs() << "analyzeBranch failed in peepholes in block:\n";
                 Pred->dump());
-          return;
+          return false;
         }
         Pred->replaceSuccessor(&BB, Succ);
 
@@ -519,7 +521,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
           Pred->eraseInstruction(Branch);
           Pred->addTailCallInstruction(SuccSym);
         } else {
-          return;
+          return false;
         }
       }
 
@@ -528,6 +530,8 @@ uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
                    << Pred->getName() << " -> " << BB.getName() << " to "
                    << Pred->getName() << " -> " << SuccSym->getName()
                    << (!Succ ? " (tail)\n" : "\n"));
+
+      return true;
     };
 
     if (BB.getNumNonPseudos() != 1 || BB.isLandingPad())
@@ -542,7 +546,7 @@ uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
     const auto *SuccSym = BC.MIA->getTargetSymbol(*Inst);
     auto *Succ = BB.getSuccessor();
 
-    if ((!Succ || &BB == Succ) && !IsTailCall)
+    if (((!Succ || &BB == Succ) && !IsTailCall) || (IsTailCall && !SuccSym))
       continue;
 
     std::vector<BinaryBasicBlock *> Preds{BB.pred_begin(), BB.pred_end()};
@@ -554,7 +558,11 @@ uint64_t fixDoubleJumps(BinaryContext &BC, BinaryFunction &Function) {
       if (Pred->getSuccessor() == &BB ||
           (Pred->getConditionalSuccessor(true) == &BB && !IsTailCall) ||
           Pred->getConditionalSuccessor(false) == &BB) {
-        checkAndPatch(Pred, Succ, SuccSym);
+        if (checkAndPatch(Pred, Succ, SuccSym) && MarkInvalid) {
+          BB.markValid(BB.pred_size() != 0 ||
+                       BB.isLandingPad() ||
+                       BB.isEntryPoint());
+        }
         assert(Function.validateCFG());
       }
     }
@@ -698,7 +706,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   }
 
   if (NumLocalCTCs > 0) {
-    NumDoubleJumps += fixDoubleJumps(BC, BF);
+    NumDoubleJumps += fixDoubleJumps(BC, BF, true);
     // Clean-up unreachable tail-call blocks.
     const auto Stats = BF.eraseInvalidBBs();
     DeletedBlocks += Stats.first;
@@ -798,7 +806,7 @@ void Peepholes::runOnFunctions(BinaryContext &BC,
     auto &Function = It.second;
     if (shouldOptimize(Function)) {
       shortenInstructions(BC, Function);
-      NumDoubleJumps += fixDoubleJumps(BC, Function);
+      NumDoubleJumps += fixDoubleJumps(BC, Function, false);
       addTailcallTraps(BC, Function);
       removeUselessCondBranches(BC, Function);
     }

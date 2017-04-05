@@ -3889,7 +3889,12 @@ DynoStats BinaryFunction::getDynoStats() const {
         NonTakenCount = BBExecutionCount - TakenCount;
       else
         NonTakenCount = 0;
-      IsForwardBranch = isForwardBranch(BB, BB->getFallthrough());
+
+      // If succ_size == 0 then we are branching to a function
+      // rather than a BB label.
+      IsForwardBranch = BB->succ_size() == 0
+        ? isForwardCall(BC.MIA->getTargetSymbol(*CondBranch))
+        : isForwardBranch(BB, BB->getFallthrough());
     }
 
     if (TakenCount == COUNT_NO_PROFILE)
