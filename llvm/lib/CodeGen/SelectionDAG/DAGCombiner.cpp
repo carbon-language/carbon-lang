@@ -3255,6 +3255,21 @@ SDValue DAGCombiner::foldLogicOfSetCCs(bool IsAnd, SDValue N0, SDValue N1,
     return DAG.getSetCC(DL, VT, Add, Two, ISD::SETUGE);
   }
 
+  // Try more general transforms if the predicates match and the only user of
+  // the compares is the 'and' or 'or'.
+  if (IsInteger && TLI.convertSetCCLogicToBitwiseLogic(OpVT) && CC0 == CC1 &&
+      N0.hasOneUse() && N1.hasOneUse()) {
+    // and (seteq A, B), (seteq C, D) --> seteq (or (xor A, B), (xor C, D)), 0
+    // or  (setne A, B), (setne C, D) --> setne (or (xor A, B), (xor C, D)), 0
+    if ((IsAnd && CC1 == ISD::SETEQ) || (!IsAnd && CC1 == ISD::SETNE)) {
+      SDValue XorL = DAG.getNode(ISD::XOR, SDLoc(N0), OpVT, LL, LR);
+      SDValue XorR = DAG.getNode(ISD::XOR, SDLoc(N1), OpVT, RL, RR);
+      SDValue Or = DAG.getNode(ISD::OR, DL, OpVT, XorL, XorR);
+      SDValue Zero = DAG.getConstant(0, DL, OpVT);
+      return DAG.getSetCC(DL, VT, Or, Zero, CC1);
+    }
+  }
+
   // Canonicalize equivalent operands to LL == RL.
   if (LL == RR && LR == RL) {
     CC1 = ISD::getSetCCSwappedOperands(CC1);
