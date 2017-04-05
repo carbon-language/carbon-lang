@@ -2,12 +2,11 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_clang_unittest(ClangAnalysisTests
+add_clang_unittest(CFGTests
   CFGTest.cpp
-  CloneDetectionTest.cpp
   )
 
-target_link_libraries(ClangAnalysisTests
+target_link_libraries(CFGTests
   clangAnalysis
   clangAST
   clangASTMatchers

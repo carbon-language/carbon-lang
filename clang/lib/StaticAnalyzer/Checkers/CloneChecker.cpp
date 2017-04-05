@@ -38,15 +38,14 @@ public:
   void checkEndOfTranslationUnit(const TranslationUnitDecl *TU,
                                  AnalysisManager &Mgr, BugReporter &BR) const;
 
-  /// Reports all clones to the user.
+  /// \brief Reports all clones to the user.
   void reportClones(BugReporter &BR, AnalysisManager &Mgr,
-                    std::vector<CloneDetector::CloneGroup> &CloneGroups) const;
+                    int MinComplexity) const;
 
-  /// Reports only suspicious clones to the user along with informaton
-  /// that explain why they are suspicious.
-  void reportSuspiciousClones(
-      BugReporter &BR, AnalysisManager &Mgr,
-      std::vector<CloneDetector::CloneGroup> &CloneGroups) const;
+  /// \brief Reports only suspicious clones to the user along with informaton
+  ///        that explain why they are suspicious.
+  void reportSuspiciousClones(BugReporter &BR, AnalysisManager &Mgr,
+                              int MinComplexity) const;
 };
 } // end anonymous namespace
 
@@ -73,30 +72,11 @@ void CloneChecker::checkEndOfTranslationUnit(const TranslationUnitDecl *TU,
   bool ReportNormalClones = Mgr.getAnalyzerOptions().getBooleanOption(
       "ReportNormalClones", true, this);
 
-  // Let the CloneDetector create a list of clones from all the analyzed
-  // statements. We don't filter for matching variable patterns at this point
-  // because reportSuspiciousClones() wants to search them for errors.
-  std::vector<CloneDetector::CloneGroup> AllCloneGroups;
-
-  Detector.findClones(AllCloneGroups, RecursiveCloneTypeIIConstraint(),
-                      MinComplexityConstraint(MinComplexity),
-                      MinGroupSizeConstraint(2), OnlyLargestCloneConstraint());
-
   if (ReportSuspiciousClones)
-    reportSuspiciousClones(BR, Mgr, AllCloneGroups);
+    reportSuspiciousClones(BR, Mgr, MinComplexity);
 
-  // We are done for this translation unit unless we also need to report normal
-  // clones.
-  if (!ReportNormalClones)
-    return;
-
-  // Now that the suspicious clone detector has checked for pattern errors,
-  // we also filter all clones who don't have matching patterns
-  CloneDetector::constrainClones(AllCloneGroups,
-                                 MatchingVariablePatternConstraint(),
-                                 MinGroupSizeConstraint(2));
-
-  reportClones(BR, Mgr, AllCloneGroups);
+  if (ReportNormalClones)
+    reportClones(BR, Mgr, MinComplexity);
 }
 
 static PathDiagnosticLocation makeLocation(const StmtSequence &S,
@@ -107,55 +87,37 @@ static PathDiagnosticLocation makeLocation(const StmtSequence &S,
       Mgr.getAnalysisDeclContext(ACtx.getTranslationUnitDecl()));
 }
 
-void CloneChecker::reportClones(
-    BugReporter &BR, AnalysisManager &Mgr,
-    std::vector<CloneDetector::CloneGroup> &CloneGroups) const {
+void CloneChecker::reportClones(BugReporter &BR, AnalysisManager &Mgr,
+                                int MinComplexity) const {
+
+  std::vector<CloneDetector::CloneGroup> CloneGroups;
+  Detector.findClones(CloneGroups, MinComplexity);
 
   if (!BT_Exact)
     BT_Exact.reset(new BugType(this, "Exact code clone", "Code clone"));
 
-  for (const CloneDetector::CloneGroup &Group : CloneGroups) {
+  for (CloneDetector::CloneGroup &Group : CloneGroups) {
     // We group the clones by printing the first as a warning and all others
     // as a note.
-    auto R = llvm::make_unique<BugReport>(*BT_Exact, "Duplicate code detected",
-                                          makeLocation(Group.front(), Mgr));
-    R->addRange(Group.front().getSourceRange());
+    auto R = llvm::make_unique<BugReport>(
+        *BT_Exact, "Duplicate code detected",
+        makeLocation(Group.Sequences.front(), Mgr));
+    R->addRange(Group.Sequences.front().getSourceRange());
 
-    for (unsigned i = 1; i < Group.size(); ++i)
-      R->addNote("Similar code here", makeLocation(Group[i], Mgr),
-                 Group[i].getSourceRange());
+    for (unsigned i = 1; i < Group.Sequences.size(); ++i)
+      R->addNote("Similar code here",
+                      makeLocation(Group.Sequences[i], Mgr),
+                      Group.Sequences[i].getSourceRange());
     BR.emitReport(std::move(R));
   }
 }
 
-void CloneChecker::reportSuspiciousClones(
-    BugReporter &BR, AnalysisManager &Mgr,
-    std::vector<CloneDetector::CloneGroup> &CloneGroups) const {
-  std::vector<VariablePattern::SuspiciousClonePair> Pairs;
+void CloneChecker::reportSuspiciousClones(BugReporter &BR,
+                                          AnalysisManager &Mgr,
+                                          int MinComplexity) const {
 
-  for (const CloneDetector::CloneGroup &Group : CloneGroups) {
-    for (unsigned i = 0; i < Group.size(); ++i) {
-      VariablePattern PatternA(Group[i]);
-
-      for (unsigned j = i + 1; j < Group.size(); ++j) {
-        VariablePattern PatternB(Group[j]);
-
-        VariablePattern::SuspiciousClonePair ClonePair;
-        // For now, we only report clones which break the variable pattern just
-        // once because multiple differences in a pattern are an indicator that
-        // those differences are maybe intended (e.g. because it's actually a
-        // different algorithm).
-        // FIXME: In very big clones even multiple variables can be unintended,
-        // so replacing this number with a percentage could better handle such
-        // cases. On the other hand it could increase the false-positive rate
-        // for all clones if the percentage is too high.
-        if (PatternA.countPatternDifferences(PatternB, &ClonePair) == 1) {
-          Pairs.push_back(ClonePair);
-          break;
-        }
-      }
-    }
-  }
+  std::vector<CloneDetector::SuspiciousClonePair> Clones;
+  Detector.findSuspiciousClones(Clones, MinComplexity);
 
   if (!BT_Suspicious)
     BT_Suspicious.reset(
@@ -166,7 +128,7 @@ void CloneChecker::reportSuspiciousClones(
   AnalysisDeclContext *ADC =
       Mgr.getAnalysisDeclContext(ACtx.getTranslationUnitDecl());
 
-  for (VariablePattern::SuspiciousClonePair &Pair : Pairs) {
+  for (CloneDetector::SuspiciousClonePair &Pair : Clones) {
     // FIXME: We are ignoring the suggestions currently, because they are
     // only 50% accurate (even if the second suggestion is unavailable),
     // which may confuse the user.
