@@ -136,15 +136,14 @@ static bool isUnderSysroot(StringRef Path) {
 
 OutputSection *LinkerScript::getOutputSection(const Twine &Loc,
                                               StringRef Name) {
-  static OutputSection FakeSec("", 0, 0);
-
   for (OutputSection *Sec : *OutputSections)
     if (Sec->Name == Name)
       return Sec;
 
+  static OutputSection Dummy("", 0, 0);
   if (ErrorOnMissingSection)
     error(Loc + ": undefined section " + Name);
-  return &FakeSec;
+  return &Dummy;
 }
 
 // This function is essentially the same as getOutputSection(Name)->Size,
