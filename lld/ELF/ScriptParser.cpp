@@ -85,7 +85,8 @@ private:
   SymbolAssignment *readProvideHidden(bool Provide, bool Hidden);
   SymbolAssignment *readProvideOrAssignment(StringRef Tok);
   void readSort();
-  Expr readAssert();
+  AssertCommand *readAssert();
+  Expr readAssertExpr();
 
   uint64_t readMemoryAssignment(StringRef, StringRef, StringRef);
   std::pair<uint32_t, uint32_t> readMemoryAttributes();
@@ -206,7 +207,7 @@ void ScriptParser::readLinkerScript() {
       continue;
 
     if (Tok == "ASSERT") {
-      Script->Opt.Commands.push_back(make<AssertCommand>(readAssert()));
+      Script->Opt.Commands.push_back(readAssert());
     } else if (Tok == "ENTRY") {
       readEntry();
     } else if (Tok == "EXTERN") {
@@ -396,7 +397,7 @@ void ScriptParser::readSections() {
     BaseCommand *Cmd = readProvideOrAssignment(Tok);
     if (!Cmd) {
       if (Tok == "ASSERT")
-        Cmd = make<AssertCommand>(readAssert());
+        Cmd = readAssert();
       else
         Cmd = readOutputSectionDescription(Tok);
     }
@@ -527,7 +528,11 @@ void ScriptParser::readSort() {
   expect(")");
 }
 
-Expr ScriptParser::readAssert() {
+AssertCommand *ScriptParser::readAssert() {
+  return make<AssertCommand>(readAssertExpr());
+}
+
+Expr ScriptParser::readAssertExpr() {
   expect("(");
   Expr E = readExpr();
   expect(",");
@@ -588,7 +593,7 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
     } else if (BytesDataCommand *Data = readBytesDataCommand(Tok)) {
       Cmd->Commands.push_back(Data);
     } else if (Tok == "ASSERT") {
-      Cmd->Commands.push_back(make<AssertCommand>(readAssert()));
+      Cmd->Commands.push_back(readAssert());
       expect(";");
     } else if (Tok == "CONSTRUCTORS") {
       // CONSTRUCTORS is a keyword to make the linker recognize C++ ctors/dtors
@@ -855,7 +860,7 @@ Expr ScriptParser::readPrimary() {
     return [=] { return Script->getOutputSection(Location, Name)->Alignment; };
   }
   if (Tok == "ASSERT")
-    return readAssert();
+    return readAssertExpr();
   if (Tok == "CONSTANT") {
     StringRef Name = readParenLiteral();
     return [=] { return getConstant(Name); };
