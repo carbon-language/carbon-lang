@@ -641,7 +641,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       MCInst *UncondBranch = nullptr;
       auto Result = PredBB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
 
-      // analyzeBranch can fail due to unusual branch instructions, e.g. jrcxz
+      // analyzeBranch() can fail due to unusual branch instructions, e.g. jrcxz
       if (!Result) {
         DEBUG(dbgs() << "analyzeBranch failed in SCTC in block:\n";
               PredBB->dump());
@@ -772,26 +772,22 @@ void Peepholes::removeUselessCondBranches(BinaryContext &BC,
 
     auto *CondBB = BB.getConditionalSuccessor(true);
     auto *UncondBB = BB.getConditionalSuccessor(false);
+    if (CondBB != UncondBB)
+      continue;
 
-    if (CondBB == UncondBB) {
-      const MCSymbol *TBB = nullptr;
-      const MCSymbol *FBB = nullptr;
-      MCInst *CondBranch = nullptr;
-      MCInst *UncondBranch = nullptr;
-      auto Result = BB.analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
+    auto Result = BB.analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
 
-      // analyzeBranch can fail due to unusual branch instructions, e.g. jrcxz
-      if (!Result) {
-        DEBUG(dbgs() << "analyzeBranch failed in peepholes in block:\n";
-              BB.dump());
-        continue;
-      }
+    // analyzeBranch() can fail due to unusual branch instructions,
+    // e.g. jrcxz, or jump tables (indirect jump).
+    if (!Result || !CondBranch)
+      continue;
 
-      if (CondBranch) {
-        BB.removeDuplicateConditionalSuccessor(CondBranch);
-        ++NumUselessCondBranches;
-      }
-    }
+    BB.removeDuplicateConditionalSuccessor(CondBranch);
+    ++NumUselessCondBranches;
   }
 }
 

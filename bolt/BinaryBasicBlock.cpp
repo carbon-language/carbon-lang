@@ -232,11 +232,10 @@ void BinaryBasicBlock::removePredecessor(BinaryBasicBlock *Pred) {
 }
 
 void BinaryBasicBlock::removeDuplicateConditionalSuccessor(MCInst *CondBranch) {
-  assert(succ_size() == 2);
+  assert(succ_size() == 2 && Successors[0] == Successors[1] &&
+         "conditional successors expected");
 
   auto *Succ = Successors[0];
-  assert(Succ == Successors[1]);
-
   const auto CondBI = BranchInfo[0];
   const auto UncondBI = BranchInfo[1];
 
@@ -246,11 +245,11 @@ void BinaryBasicBlock::removeDuplicateConditionalSuccessor(MCInst *CondBranch) {
   BranchInfo.clear();
 
   Successors.push_back(Succ);
-  BranchInfo.push_back({CondBI.Count + UncondBI.Count,
-                        CondBI.MispredictedCount + UncondBI.MispredictedCount});
 
-  assert(isSuccessor(Succ));
-  assert(Succ->isPredecessor(this));
+  uint64_t Count = COUNT_NO_PROFILE;
+  if (CondBI.Count != COUNT_NO_PROFILE && UncondBI.Count != COUNT_NO_PROFILE)
+    Count = CondBI.Count + UncondBI.Count;
+  BranchInfo.push_back({Count, 0});
 }
 
 void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {
