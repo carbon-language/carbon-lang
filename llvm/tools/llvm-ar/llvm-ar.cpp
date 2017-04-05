@@ -52,7 +52,7 @@ static StringRef ToolName;
 
 // Show the error message and exit.
 LLVM_ATTRIBUTE_NORETURN static void fail(Twine Error) {
-  outs() << ToolName << ": " << Error << ".\n";
+  errs() << ToolName << ": " << Error << ".\n";
   exit(1);
 }
 
