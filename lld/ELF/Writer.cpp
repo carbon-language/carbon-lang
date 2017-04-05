@@ -148,10 +148,6 @@ template <class ELFT> void Writer<ELFT>::removeEmptyPTLoad() {
   Phdrs.erase(I, Phdrs.end());
 }
 
-static uint64_t getOutputFlags(InputSectionBase *S) {
-  return S->Flags & ~(uint64_t)(SHF_GROUP | SHF_COMPRESSED);
-}
-
 // This function scans over the input sections and creates mergeable
 // synthetic sections. It removes MergeInputSections from array and
 // adds new synthetic ones. Each synthetic section is added to the
@@ -169,7 +165,7 @@ static void combineMergableSections() {
       continue;
 
     StringRef OutsecName = getOutputSectionName(MS->Name);
-    uint64_t Flags = getOutputFlags(MS);
+    uint64_t Flags = MS->Flags & ~(uint64_t)(SHF_GROUP | SHF_COMPRESSED);
     uint32_t Alignment = std::max<uint32_t>(MS->Alignment, MS->Entsize);
 
     auto I =
