@@ -940,22 +940,16 @@ uint32_t LinkerScript::getFiller(StringRef Name) {
 }
 
 static void writeInt(uint8_t *Buf, uint64_t Data, uint64_t Size) {
-  switch (Size) {
-  case 1:
-    *Buf = (uint8_t)Data;
-    break;
-  case 2:
+  if (Size == 1)
+    *Buf = Data;
+  else if (Size == 2)
     write16(Buf, Data, Config->Endianness);
-    break;
-  case 4:
+  else if (Size == 4)
     write32(Buf, Data, Config->Endianness);
-    break;
-  case 8:
+  else if (Size == 8)
     write64(Buf, Data, Config->Endianness);
-    break;
-  default:
+  else
     llvm_unreachable("unsupported Size argument");
-  }
 }
 
 void LinkerScript::writeDataBytes(StringRef Name, uint8_t *Buf) {
