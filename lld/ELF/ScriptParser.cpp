@@ -142,14 +142,6 @@ static ExprValue div(ExprValue A, ExprValue B) {
   return 0;
 }
 
-static ExprValue leftShift(ExprValue A, ExprValue B) {
-  return A.getValue() << B.getValue();
-}
-
-static ExprValue rightShift(ExprValue A, ExprValue B) {
-  return A.getValue() >> B.getValue();
-}
-
 static ExprValue bitAnd(ExprValue A, ExprValue B) {
   moveAbsRight(A, B);
   return {A.Sec, A.ForceAbsolute,
@@ -708,9 +700,9 @@ static Expr combine(StringRef Op, Expr L, Expr R) {
   if (Op == "-")
     return [=] { return sub(L(), R()); };
   if (Op == "<<")
-    return [=] { return leftShift(L(), R()); };
+    return [=] { return L().getValue() << R().getValue(); };
   if (Op == ">>")
-    return [=] { return rightShift(L(), R()); };
+    return [=] { return L().getValue() >> R().getValue(); };
   if (Op == "<")
     return [=] { return L().getValue() < R().getValue(); };
   if (Op == ">")
