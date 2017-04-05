@@ -6,6 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// This file contains a recursive-descendent parser for linker scripts.
+// Parsed results are stored to Config and Script global objects.
+//
+//===----------------------------------------------------------------------===//
 
 #include "ScriptParser.h"
 #include "Config.h"
