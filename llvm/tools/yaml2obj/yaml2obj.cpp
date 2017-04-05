@@ -82,7 +82,8 @@ int main(int argc, char **argv) {
   std::unique_ptr<tool_output_file> Out(
       new tool_output_file(OutputFilename, EC, sys::fs::F_None));
   if (EC) {
-    errs() << EC.message() << '\n';
+    errs() << "yaml2obj: Error opening '" << OutputFilename
+           << "': " + EC.message() << "\n";
     return 1;
   }
 
