@@ -330,28 +330,32 @@ static void sortSections(InputSectionBase **Begin, InputSectionBase **End,
 }
 
 // Compute and remember which sections the InputSectionDescription matches.
-void LinkerScript::computeInputSections(InputSectionDescription *I) {
-  // Collects all sections that satisfy constraints of I
-  // and attach them to I.
-  for (SectionPattern &Pat : I->SectionPatterns) {
-    size_t SizeBefore = I->Sections.size();
+std::vector<InputSectionBase *>
+LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
+  std::vector<InputSectionBase *> Ret;
 
-    for (InputSectionBase *S : InputSections) {
-      if (S->Assigned)
+  // Collects all sections that satisfy constraints of Cmd.
+  for (const SectionPattern &Pat : Cmd->SectionPatterns) {
+    size_t SizeBefore = Ret.size();
+
+    for (InputSectionBase *Sec : InputSections) {
+      if (Sec->Assigned)
         continue;
+
       // For -emit-relocs we have to ignore entries like
       //   .rela.dyn : { *(.rela.data) }
       // which are common because they are in the default bfd script.
-      if (S->Type == SHT_REL || S->Type == SHT_RELA)
+      if (Sec->Type == SHT_REL || Sec->Type == SHT_RELA)
         continue;
 
-      StringRef Filename = basename(S);
-      if (!I->FilePat.match(Filename) || Pat.ExcludedFilePat.match(Filename))
+      StringRef Filename = basename(Sec);
+      if (!Cmd->FilePat.match(Filename) ||
+          Pat.ExcludedFilePat.match(Filename) ||
+          !Pat.SectionPat.match(Sec->Name))
         continue;
-      if (!Pat.SectionPat.match(S->Name))
-        continue;
-      I->Sections.push_back(S);
-      S->Assigned = true;
+
+      Ret.push_back(Sec);
+      Sec->Assigned = true;
     }
 
     // Sort sections as instructed by SORT-family commands and --sort-section
@@ -365,8 +369,8 @@ void LinkerScript::computeInputSections(InputSectionDescription *I) {
     //    --sort-section is handled as an inner SORT command.
     // 3. If one SORT command is given, and if it is SORT_NONE, don't sort.
     // 4. If no SORT command is given, sort according to --sort-section.
-    InputSectionBase **Begin = I->Sections.data() + SizeBefore;
-    InputSectionBase **End = I->Sections.data() + I->Sections.size();
+    InputSectionBase **Begin = Ret.data() + SizeBefore;
+    InputSectionBase **End = Ret.data() + Ret.size();
     if (Pat.SortOuter != SortSectionPolicy::None) {
       if (Pat.SortInner == SortSectionPolicy::Default)
         sortSections(Begin, End, Config->SortSection);
@@ -375,6 +379,7 @@ void LinkerScript::computeInputSections(InputSectionDescription *I) {
       sortSections(Begin, End, Pat.SortOuter);
     }
   }
+  return Ret;
 }
 
 void LinkerScript::discard(ArrayRef<InputSectionBase *> V) {
@@ -394,7 +399,8 @@ LinkerScript::createInputSectionList(OutputSectionCommand &OutCmd) {
     auto *Cmd = dyn_cast<InputSectionDescription>(Base.get());
     if (!Cmd)
       continue;
-    computeInputSections(Cmd);
+
+    Cmd->Sections = computeInputSections(Cmd);
     for (InputSectionBase *S : Cmd->Sections)
       Ret.push_back(static_cast<InputSectionBase *>(S));
   }

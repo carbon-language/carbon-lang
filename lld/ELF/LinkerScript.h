@@ -225,8 +225,10 @@ struct ScriptConfiguration {
 class LinkerScript {
 protected:
   void assignSymbol(SymbolAssignment *Cmd, bool InSec = false);
-  void computeInputSections(InputSectionDescription *);
   void setDot(Expr E, const Twine &Loc, bool InSec = false);
+
+  std::vector<InputSectionBase *>
+  computeInputSections(const InputSectionDescription *);
 
   std::vector<InputSectionBase *>
   createInputSectionList(OutputSectionCommand &Cmd);
