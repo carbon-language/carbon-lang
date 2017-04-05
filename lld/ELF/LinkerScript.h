@@ -68,9 +68,6 @@ enum SectionsCommandKind {
 
 struct BaseCommand {
   BaseCommand(int K) : Kind(K) {}
-
-  virtual ~BaseCommand() = default;
-
   int Kind;
 };
 
