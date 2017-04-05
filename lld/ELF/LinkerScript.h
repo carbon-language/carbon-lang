@@ -208,7 +208,7 @@ struct ScriptConfiguration {
   // A map from memory region name to a memory region descriptor.
   llvm::DenseMap<llvm::StringRef, MemoryRegion> MemoryRegions;
 
-  // A list of undefined symbols referenced by the script.
+  // A list of symbols referenced by the script.
   std::vector<llvm::StringRef> ReferencedSymbols;
 };
 

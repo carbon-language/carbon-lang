@@ -434,13 +434,19 @@ SortSectionPolicy ScriptParser::readSortKind() {
   return SortSectionPolicy::Default;
 }
 
-// Method reads a list of sequence of excluded files and section globs given in
-// a following form: ((EXCLUDE_FILE(file_pattern+))? section_pattern+)+
-// Example: *(.foo.1 EXCLUDE_FILE (*a.o) .foo.2 EXCLUDE_FILE (*b.o) .foo.3)
-// The semantics of that is next:
-// * Include .foo.1 from every file.
-// * Include .foo.2 from every file but a.o
-// * Include .foo.3 from every file but b.o
+// Reads SECTIONS command contents in the following form:
+//
+// <contents> ::= <elem>*
+// <elem>     ::= <exclude>? <glob-pattern>
+// <exclude>  ::= "EXCLUDE_FILE" "(" <glob-pattern>+ ")"
+//
+// For example,
+//
+// *(.foo EXCLUDE_FILE (a.o) .bar EXCLUDE_FILE (b.o) .baz)
+//
+// is parsed as ".foo", ".bar" with "a.o", and ".baz" with "b.o".
+// The semantics of that is section .foo in any file, section .bar in
+// any file but a.o, and section .baz in any file but b.o.
 std::vector<SectionPattern> ScriptParser::readInputSectionsList() {
   std::vector<SectionPattern> Ret;
   while (!Error && peek() != ")") {
