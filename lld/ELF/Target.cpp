@@ -129,7 +129,7 @@ public:
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writeIgotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltHeader(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+  void writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
@@ -152,7 +152,7 @@ public:
   void writeGotPltHeader(uint8_t *Buf) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltHeader(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+  void writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 
@@ -180,7 +180,7 @@ class PPC64TargetInfo final : public TargetInfo {
 public:
   PPC64TargetInfo();
   RelExpr getRelExpr(uint32_t Type, const SymbolBody &S) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+  void writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
 };
@@ -193,7 +193,7 @@ public:
   bool isTlsInitialExecRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltHeader(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+  void writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool usesOnlyLowPageBits(uint32_t Type) const override;
   void relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const override;
@@ -224,7 +224,7 @@ public:
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writeIgotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltHeader(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+  void writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   void addPltSymbols(InputSectionBase *IS, uint64_t Off) const override;
   void addPltHeaderSymbols(InputSectionBase *ISD) const override;
@@ -244,7 +244,7 @@ public:
   bool isTlsGlobalDynamicRel(uint32_t Type) const override;
   void writeGotPlt(uint8_t *Buf, const SymbolBody &S) const override;
   void writePltHeader(uint8_t *Buf) const override;
-  void writePlt(uint8_t *Buf, uint64_t GotEntryAddr, uint64_t PltEntryAddr,
+  void writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr, uint64_t PltEntryAddr,
                 int32_t Index, unsigned RelOff) const override;
   bool needsThunk(RelExpr Expr, uint32_t RelocType, const InputFile *File,
                   const SymbolBody &S) const override;
@@ -732,7 +732,7 @@ void X86_64TargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
 }
 
 template <class ELFT>
-void X86_64TargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+void X86_64TargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
                                       uint64_t PltEntryAddr, int32_t Index,
                                       unsigned RelOff) const {
   const uint8_t Inst[] = {
@@ -742,7 +742,7 @@ void X86_64TargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   };
   memcpy(Buf, Inst, sizeof(Inst));
 
-  write32le(Buf + 2, GotEntryAddr - PltEntryAddr - 6);
+  write32le(Buf + 2, GotPltEntryAddr - PltEntryAddr - 6);
   write32le(Buf + 7, Index);
   write32le(Buf + 12, -Index * PltEntrySize - PltHeaderSize - 16);
 }
@@ -1169,10 +1169,10 @@ RelExpr PPC64TargetInfo::getRelExpr(uint32_t Type, const SymbolBody &S) const {
   }
 }
 
-void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+void PPC64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
                                uint64_t PltEntryAddr, int32_t Index,
                                unsigned RelOff) const {
-  uint64_t Off = GotEntryAddr - getPPC64TocBase();
+  uint64_t Off = GotPltEntryAddr - getPPC64TocBase();
 
   // FIXME: What we should do, in theory, is get the offset of the function
   // descriptor in the .opd section, and use that as the offset from %r2 (the
@@ -1406,7 +1406,7 @@ void AArch64TargetInfo::writePltHeader(uint8_t *Buf) const {
   relocateOne(Buf + 12, R_AARCH64_ADD_ABS_LO12_NC, Got + 16);
 }
 
-void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
                                  uint64_t PltEntryAddr, int32_t Index,
                                  unsigned RelOff) const {
   const uint8_t Inst[] = {
@@ -1418,9 +1418,9 @@ void AArch64TargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   memcpy(Buf, Inst, sizeof(Inst));
 
   relocateOne(Buf, R_AARCH64_ADR_PREL_PG_HI21,
-              getAArch64Page(GotEntryAddr) - getAArch64Page(PltEntryAddr));
-  relocateOne(Buf + 4, R_AARCH64_LDST64_ABS_LO12_NC, GotEntryAddr);
-  relocateOne(Buf + 8, R_AARCH64_ADD_ABS_LO12_NC, GotEntryAddr);
+              getAArch64Page(GotPltEntryAddr) - getAArch64Page(PltEntryAddr));
+  relocateOne(Buf + 4, R_AARCH64_LDST64_ABS_LO12_NC, GotPltEntryAddr);
+  relocateOne(Buf + 8, R_AARCH64_ADD_ABS_LO12_NC, GotPltEntryAddr);
 }
 
 static void write32AArch64Addr(uint8_t *L, uint64_t Imm) {
@@ -1778,7 +1778,7 @@ void ARMTargetInfo::addPltHeaderSymbols(InputSectionBase *ISD) const {
   addSyntheticLocal<ELF32LE>("$d", STT_NOTYPE, 16, 0, IS);
 }
 
-void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
                              uint64_t PltEntryAddr, int32_t Index,
                              unsigned RelOff) const {
   // FIXME: Using simple code sequence with simple relocations.
@@ -1792,7 +1792,7 @@ void ARMTargetInfo::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
   };
   memcpy(Buf, PltData, sizeof(PltData));
   uint64_t L1 = PltEntryAddr + 4;
-  write32le(Buf + 12, GotEntryAddr - L1 - 8);
+  write32le(Buf + 12, GotPltEntryAddr - L1 - 8);
 }
 
 void ARMTargetInfo::addPltSymbols(InputSectionBase *ISD, uint64_t Off) const {
@@ -2231,7 +2231,7 @@ void MipsTargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
 }
 
 template <class ELFT>
-void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
+void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
                                     uint64_t PltEntryAddr, int32_t Index,
                                     unsigned RelOff) const {
   const endianness E = ELFT::TargetEndianness;
@@ -2240,9 +2240,9 @@ void MipsTargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotEntryAddr,
                                    // jr    $25
   write32<E>(Buf + 8, isMipsR6<ELFT>() ? 0x03200009 : 0x03200008);
   write32<E>(Buf + 12, 0x25f80000); // addiu $24, $15, %lo(.got.plt entry)
-  writeMipsHi16<E>(Buf, GotEntryAddr);
-  writeMipsLo16<E>(Buf + 4, GotEntryAddr);
-  writeMipsLo16<E>(Buf + 12, GotEntryAddr);
+  writeMipsHi16<E>(Buf, GotPltEntryAddr);
+  writeMipsLo16<E>(Buf + 4, GotPltEntryAddr);
+  writeMipsLo16<E>(Buf + 12, GotPltEntryAddr);
 }
 
 template <class ELFT>
