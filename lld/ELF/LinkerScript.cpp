@@ -643,7 +643,7 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
   if (!Sec)
     return;
 
-  if (Cmd->AddrExpr && Sec->Flags & SHF_ALLOC)
+  if (Cmd->AddrExpr && (Sec->Flags & SHF_ALLOC))
     setDot(Cmd->AddrExpr, Cmd->Location);
 
   if (Cmd->LMAExpr) {
