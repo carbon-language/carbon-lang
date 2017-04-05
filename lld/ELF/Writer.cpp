@@ -1180,7 +1180,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     // we need to assign addresses so that we can tell if jump instructions
     // are out of range. This will need to turn into a loop that converges
     // when no more Thunks are added
-    if (createThunks<ELFT>(OutputSections))
+    ThunkCreator<ELFT> TC;
+    if (TC.createThunks(OutputSections))
       applySynthetic({In<ELFT>::MipsGot},
                      [](SyntheticSection *SS) { SS->updateAllocSize(); });
   }
