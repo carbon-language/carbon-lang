@@ -80,34 +80,42 @@ static ExprValue add(ExprValue A, ExprValue B) {
   moveAbsRight(A, B);
   return {A.Sec, A.ForceAbsolute, A.Val + B.getValue()};
 }
+
 static ExprValue sub(ExprValue A, ExprValue B) {
   return {A.Sec, A.Val - B.getValue()};
 }
+
 static ExprValue mul(ExprValue A, ExprValue B) {
   return A.getValue() * B.getValue();
 }
+
 static ExprValue div(ExprValue A, ExprValue B) {
   if (uint64_t BV = B.getValue())
     return A.getValue() / BV;
   error("division by zero");
   return 0;
 }
+
 static ExprValue leftShift(ExprValue A, ExprValue B) {
   return A.getValue() << B.getValue();
 }
+
 static ExprValue rightShift(ExprValue A, ExprValue B) {
   return A.getValue() >> B.getValue();
 }
+
 static ExprValue bitAnd(ExprValue A, ExprValue B) {
   moveAbsRight(A, B);
   return {A.Sec, A.ForceAbsolute,
           (A.getValue() & B.getValue()) - A.getSecAddr()};
 }
+
 static ExprValue bitOr(ExprValue A, ExprValue B) {
   moveAbsRight(A, B);
   return {A.Sec, A.ForceAbsolute,
           (A.getValue() | B.getValue()) - A.getSecAddr()};
 }
+
 static ExprValue bitNot(ExprValue A) { return ~A.getValue(); }
 static ExprValue minus(ExprValue A) { return -A.getValue(); }
 
