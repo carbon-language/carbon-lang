@@ -395,8 +395,8 @@ std::vector<InputSectionBase *>
 LinkerScript::createInputSectionList(OutputSectionCommand &OutCmd) {
   std::vector<InputSectionBase *> Ret;
 
-  for (const std::unique_ptr<BaseCommand> &Base : OutCmd.Commands) {
-    auto *Cmd = dyn_cast<InputSectionDescription>(Base.get());
+  for (BaseCommand *Base : OutCmd.Commands) {
+    auto *Cmd = dyn_cast<InputSectionDescription>(Base);
     if (!Cmd)
       continue;
 
@@ -425,15 +425,15 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
 
   for (unsigned I = 0; I < Opt.Commands.size(); ++I) {
     auto Iter = Opt.Commands.begin() + I;
-    const std::unique_ptr<BaseCommand> &Base1 = *Iter;
+    BaseCommand *Base1 = *Iter;
 
     // Handle symbol assignments outside of any output section.
-    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1.get())) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base1)) {
       addSymbol(Cmd);
       continue;
     }
 
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base1.get())) {
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base1)) {
       std::vector<InputSectionBase *> V = createInputSectionList(*Cmd);
 
       // The output section name `/DISCARD/' is special.
@@ -460,8 +460,8 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
 
       // A directive may contain symbol definitions like this:
       // ".foo : { ...; bar = .; }". Handle them.
-      for (const std::unique_ptr<BaseCommand> &Base : Cmd->Commands)
-        if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base.get()))
+      for (BaseCommand *Base : Cmd->Commands)
+        if (auto *OutCmd = dyn_cast<SymbolAssignment>(Base))
           addSymbol(OutCmd);
 
       // Handle subalign (e.g. ".foo : SUBALIGN(32) { ... }"). If subalign
@@ -663,16 +663,15 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
 
   // Find the last section output location. We will output orphan sections
   // there so that end symbols point to the correct location.
-  auto E = std::find_if(Cmd->Commands.rbegin(), Cmd->Commands.rend(),
-                        [](const std::unique_ptr<BaseCommand> &Cmd) {
-                          return !isa<SymbolAssignment>(*Cmd);
-                        })
-               .base();
+  auto E =
+      std::find_if(Cmd->Commands.rbegin(), Cmd->Commands.rend(),
+                   [](BaseCommand *Cmd) { return !isa<SymbolAssignment>(Cmd); })
+          .base();
   for (auto I = Cmd->Commands.begin(); I != E; ++I)
     process(**I);
   flush();
   std::for_each(E, Cmd->Commands.end(),
-                [this](std::unique_ptr<BaseCommand> &B) { process(*B.get()); });
+                [this](BaseCommand *B) { process(*B); });
 }
 
 void LinkerScript::removeEmptyCommands() {
@@ -683,9 +682,8 @@ void LinkerScript::removeEmptyCommands() {
   // We instead remove trivially empty sections. The bfd linker seems even
   // more aggressive at removing them.
   auto Pos = std::remove_if(
-      Opt.Commands.begin(), Opt.Commands.end(),
-      [&](const std::unique_ptr<BaseCommand> &Base) {
-        if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
+      Opt.Commands.begin(), Opt.Commands.end(), [&](BaseCommand *Base) {
+        if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
           return !findSection(Cmd->Name, *OutputSections);
         return false;
       });
@@ -693,8 +691,8 @@ void LinkerScript::removeEmptyCommands() {
 }
 
 static bool isAllSectionDescription(const OutputSectionCommand &Cmd) {
-  for (const std::unique_ptr<BaseCommand> &I : Cmd.Commands)
-    if (!isa<InputSectionDescription>(*I))
+  for (BaseCommand *Base : Cmd.Commands)
+    if (!isa<InputSectionDescription>(*Base))
       return false;
   return true;
 }
@@ -706,8 +704,8 @@ void LinkerScript::adjustSectionsBeforeSorting() {
   // consequeces and gives us a section to put the symbol in.
   uint64_t Flags = SHF_ALLOC;
   uint32_t Type = SHT_NOBITS;
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
+  for (BaseCommand *Base : Opt.Commands) {
+    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
     if (!Cmd)
       continue;
     if (OutputSection *Sec = findSection(Cmd->Name, *OutputSections)) {
@@ -742,10 +740,11 @@ void LinkerScript::adjustSectionsAfterSorting() {
 
   // Walk the commands and propagate the program headers to commands that don't
   // explicitly specify them.
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
+  for (BaseCommand *Base : Opt.Commands) {
+    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
     if (!Cmd)
       continue;
+
     if (Cmd->Phdrs.empty())
       Cmd->Phdrs = DefPhdrs;
     else
@@ -810,16 +809,14 @@ void LinkerScript::placeOrphanSections() {
   // section. We do this because it is common to set a load address by starting
   // the script with ". = 0xabcd" and the expectation is that every section is
   // after that.
-  auto FirstSectionOrDotAssignment =
-      std::find_if(Opt.Commands.begin(), Opt.Commands.end(),
-                   [](const std::unique_ptr<BaseCommand> &Cmd) {
-                     if (isa<OutputSectionCommand>(*Cmd))
-                       return true;
-                     const auto *Assign = dyn_cast<SymbolAssignment>(Cmd.get());
-                     if (!Assign)
-                       return false;
-                     return Assign->Name == ".";
-                   });
+  auto FirstSectionOrDotAssignment = std::find_if(
+      Opt.Commands.begin(), Opt.Commands.end(), [](BaseCommand *Cmd) {
+        if (isa<OutputSectionCommand>(Cmd))
+          return true;
+        if (auto *Assign = dyn_cast<SymbolAssignment>(Cmd))
+          return Assign->Name == ".";
+        return false;
+      });
   if (FirstSectionOrDotAssignment != Opt.Commands.end()) {
     CmdIndex = FirstSectionOrDotAssignment - Opt.Commands.begin();
     if (isa<SymbolAssignment>(**FirstSectionOrDotAssignment))
@@ -838,14 +835,12 @@ void LinkerScript::placeOrphanSections() {
       ++CmdIndex;
     }
 
-    auto Pos =
-        std::find_if(CmdIter, E, [&](const std::unique_ptr<BaseCommand> &Base) {
-          auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
-          return Cmd && Cmd->Name == Name;
-        });
+    auto Pos = std::find_if(CmdIter, E, [&](BaseCommand *Base) {
+      auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
+      return Cmd && Cmd->Name == Name;
+    });
     if (Pos == E) {
-      Opt.Commands.insert(CmdIter,
-                          llvm::make_unique<OutputSectionCommand>(Name));
+      Opt.Commands.insert(CmdIter, make<OutputSectionCommand>(Name));
       ++CmdIndex;
       continue;
     }
@@ -856,10 +851,10 @@ void LinkerScript::placeOrphanSections() {
 }
 
 void LinkerScript::processNonSectionCommands() {
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
-    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get()))
+  for (BaseCommand *Base : Opt.Commands) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base))
       assignSymbol(Cmd, false);
-    else if (auto *Cmd = dyn_cast<AssertCommand>(Base.get()))
+    else if (auto *Cmd = dyn_cast<AssertCommand>(Base))
       Cmd->Expression();
   }
 }
@@ -870,18 +865,18 @@ void LinkerScript::assignAddresses(std::vector<PhdrEntry> &Phdrs) {
   ErrorOnMissingSection = true;
   switchTo(Aether);
 
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
-    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base.get())) {
+  for (BaseCommand *Base : Opt.Commands) {
+    if (auto *Cmd = dyn_cast<SymbolAssignment>(Base)) {
       assignSymbol(Cmd, false);
       continue;
     }
 
-    if (auto *Cmd = dyn_cast<AssertCommand>(Base.get())) {
+    if (auto *Cmd = dyn_cast<AssertCommand>(Base)) {
       Cmd->Expression();
       continue;
     }
 
-    auto *Cmd = cast<OutputSectionCommand>(Base.get());
+    auto *Cmd = cast<OutputSectionCommand>(Base);
     assignOffsets(Cmd);
   }
 
@@ -942,8 +937,8 @@ bool LinkerScript::ignoreInterpSection() {
 }
 
 uint32_t LinkerScript::getFiller(StringRef Name) {
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
+  for (BaseCommand *Base : Opt.Commands)
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
       if (Cmd->Name == Name)
         return Cmd->Filler;
   return 0;
@@ -973,15 +968,15 @@ void LinkerScript::writeDataBytes(StringRef Name, uint8_t *Buf) {
   if (I == INT_MAX)
     return;
 
-  auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I].get());
-  for (const std::unique_ptr<BaseCommand> &Base : Cmd->Commands)
-    if (auto *Data = dyn_cast<BytesDataCommand>(Base.get()))
+  auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I]);
+  for (BaseCommand *Base : Cmd->Commands)
+    if (auto *Data = dyn_cast<BytesDataCommand>(Base))
       writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
 }
 
 bool LinkerScript::hasLMA(StringRef Name) {
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get()))
+  for (BaseCommand *Base : Opt.Commands)
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
       if (Cmd->LMAExpr && Cmd->Name == Name)
         return true;
   return false;
@@ -993,7 +988,7 @@ bool LinkerScript::hasLMA(StringRef Name) {
 // it returns INT_MAX, so that it will be laid out at end of file.
 int LinkerScript::getSectionIndex(StringRef Name) {
   for (int I = 0, E = Opt.Commands.size(); I != E; ++I)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I].get()))
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I]))
       if (Cmd->Name == Name)
         return I;
   return INT_MAX;
@@ -1018,8 +1013,8 @@ bool LinkerScript::isDefined(StringRef S) { return findSymbol(S) != nullptr; }
 // by Name. Each index is a zero based number of ELF header listed within
 // PHDRS {} script block.
 std::vector<size_t> LinkerScript::getPhdrIndices(StringRef SectionName) {
-  for (const std::unique_ptr<BaseCommand> &Base : Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base.get());
+  for (BaseCommand *Base : Opt.Commands) {
+    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
     if (!Cmd || Cmd->Name != SectionName)
       continue;
 
@@ -1154,7 +1149,7 @@ void ScriptParser::readLinkerScript() {
       continue;
 
     if (Tok == "ASSERT") {
-      Script->Opt.Commands.emplace_back(new AssertCommand(readAssert()));
+      Script->Opt.Commands.push_back(make<AssertCommand>(readAssert()));
     } else if (Tok == "ENTRY") {
       readEntry();
     } else if (Tok == "EXTERN") {
@@ -1355,11 +1350,11 @@ void ScriptParser::readSections() {
     BaseCommand *Cmd = readProvideOrAssignment(Tok);
     if (!Cmd) {
       if (Tok == "ASSERT")
-        Cmd = new AssertCommand(readAssert());
+        Cmd = make<AssertCommand>(readAssert());
       else
         Cmd = readOutputSectionDescription(Tok);
     }
-    Script->Opt.Commands.emplace_back(Cmd);
+    Script->Opt.Commands.push_back(Cmd);
   }
 }
 
@@ -1433,8 +1428,9 @@ std::vector<SectionPattern> ScriptParser::readInputSectionsList() {
 // <section-list> is parsed by readInputSectionsList().
 InputSectionDescription *
 ScriptParser::readInputSectionRules(StringRef FilePattern) {
-  auto *Cmd = new InputSectionDescription(FilePattern);
+  auto *Cmd = make<InputSectionDescription>(FilePattern);
   expect("(");
+
   while (!Error && !consume(")")) {
     SortSectionPolicy Outer = readSortKind();
     SortSectionPolicy Inner = SortSectionPolicy::Default;
@@ -1512,7 +1508,7 @@ uint32_t ScriptParser::readFill() {
 
 OutputSectionCommand *
 ScriptParser::readOutputSectionDescription(StringRef OutSec) {
-  OutputSectionCommand *Cmd = new OutputSectionCommand(OutSec);
+  OutputSectionCommand *Cmd = make<OutputSectionCommand>(OutSec);
   Cmd->Location = getCurrentLocation();
 
   // Read an address expression.
@@ -1626,7 +1622,7 @@ SymbolAssignment *ScriptParser::readAssignment(StringRef Name) {
     std::string Loc = getCurrentLocation();
     E = [=] { return add(Script->getSymbolValue(Loc, Name), E()); };
   }
-  return new SymbolAssignment(Name, E, getCurrentLocation());
+  return make<SymbolAssignment>(Name, E, getCurrentLocation());
 }
 
 // This is an operator-precedence parser to parse a linker
@@ -1756,7 +1752,7 @@ BytesDataCommand *ScriptParser::readBytesDataCommand(StringRef Tok) {
   if (Size == -1)
     return nullptr;
 
-  return new BytesDataCommand(readParenExpr(), Size);
+  return make<BytesDataCommand>(readParenExpr(), Size);
 }
 
 StringRef ScriptParser::readParenLiteral() {

@@ -123,7 +123,7 @@ struct OutputSectionCommand : BaseCommand {
   Expr AlignExpr;
   Expr LMAExpr;
   Expr SubalignExpr;
-  std::vector<std::unique_ptr<BaseCommand>> Commands;
+  std::vector<BaseCommand *> Commands;
   std::vector<StringRef> Phdrs;
   uint32_t Filler = 0;
   ConstraintKind Constraint = ConstraintKind::NoConstraint;
@@ -204,7 +204,7 @@ struct MemoryRegion {
 // ScriptConfiguration holds linker script parse results.
 struct ScriptConfiguration {
   // Used to assign addresses to sections.
-  std::vector<std::unique_ptr<BaseCommand>> Commands;
+  std::vector<BaseCommand *> Commands;
 
   // Used to assign sections to headers.
   std::vector<PhdrsCommand> PhdrsCommands;
