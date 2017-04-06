@@ -1625,10 +1625,8 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       APInt RHSKnownZero(BitWidth, 0);
       APInt RHSKnownOne(BitWidth, 0);
       computeKnownBits(Op1, RHSKnownZero, RHSKnownOne, 0, &I);
-      if ((*Op0C | RHSKnownZero).isAllOnesValue()) {
-        assert(0);
+      if ((*Op0C | RHSKnownZero).isAllOnesValue())
         return BinaryOperator::CreateXor(Op1, Op0);
-      }
     }
   }
 
