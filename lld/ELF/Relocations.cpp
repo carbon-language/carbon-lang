@@ -133,7 +133,7 @@ static unsigned handleNoRelaxTlsRelocation(GOT *Got, uint32_t Type,
     return 1;
   }
 
-  if (Target->isTlsGlobalDynamicRel(Type)) {
+  if (isRelExprOneOf<R_TLSGD, R_TLSGD_PC, R_MIPS_TLSGD>(Expr)) {
     if (Got->addDynTlsEntry(Body) &&
         (Body.isPreemptible() || Config->EMachine == EM_ARM)) {
       uint64_t Off = Got->getGlobalDynOffset(Body);
@@ -202,8 +202,8 @@ handleTlsRelocation(uint32_t Type, SymbolBody &Body, InputSectionBase &C,
     return 1;
   }
 
-  if (isRelExprOneOf<R_TLSDESC_PAGE, R_TLSDESC, R_TLSDESC_CALL>(Expr) ||
-      Target->isTlsGlobalDynamicRel(Type)) {
+  if (isRelExprOneOf<R_TLSDESC, R_TLSDESC_PAGE, R_TLSDESC_CALL, R_TLSGD,
+                     R_TLSGD_PC>(Expr)) {
     if (Config->Shared) {
       if (In<ELFT>::Got->addDynTlsEntry(Body)) {
         uint64_t Off = In<ELFT>::Got->getGlobalDynOffset(Body);
