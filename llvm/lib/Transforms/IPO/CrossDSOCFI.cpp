@@ -98,7 +98,7 @@ void CrossDSOCFI::buildCFICheck(Module &M) {
   LLVMContext &Ctx = M.getContext();
   Constant *C = M.getOrInsertFunction(
       "__cfi_check", Type::getVoidTy(Ctx), Type::getInt64Ty(Ctx),
-      Type::getInt8PtrTy(Ctx), Type::getInt8PtrTy(Ctx), nullptr);
+      Type::getInt8PtrTy(Ctx), Type::getInt8PtrTy(Ctx));
   Function *F = dyn_cast<Function>(C);
   F->setAlignment(4096);
   auto args = F->arg_begin();
@@ -115,9 +115,9 @@ void CrossDSOCFI::buildCFICheck(Module &M) {
 
   BasicBlock *TrapBB = BasicBlock::Create(Ctx, "fail", F);
   IRBuilder<> IRBFail(TrapBB);
-  Constant *CFICheckFailFn = M.getOrInsertFunction(
-      "__cfi_check_fail", Type::getVoidTy(Ctx), Type::getInt8PtrTy(Ctx),
-      Type::getInt8PtrTy(Ctx), nullptr);
+  Constant *CFICheckFailFn =
+      M.getOrInsertFunction("__cfi_check_fail", Type::getVoidTy(Ctx),
+                            Type::getInt8PtrTy(Ctx), Type::getInt8PtrTy(Ctx));
   IRBFail.CreateCall(CFICheckFailFn, {&CFICheckFailData, &Addr});
   IRBFail.CreateBr(ExitBB);
 
