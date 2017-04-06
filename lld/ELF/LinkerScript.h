@@ -224,7 +224,7 @@ protected:
   std::vector<size_t> getPhdrIndices(StringRef SectionName);
   size_t getPhdrIndex(const Twine &Loc, StringRef PhdrName);
 
-  MemoryRegion *findMemoryRegion(OutputSectionCommand *Cmd, OutputSection *Sec);
+  MemoryRegion *findMemoryRegion(OutputSectionCommand *Cmd);
 
   void switchTo(OutputSection *Sec);
   void flush();

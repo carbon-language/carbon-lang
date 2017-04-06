@@ -533,8 +533,7 @@ findSection(StringRef Name, const std::vector<OutputSection *> &Sections) {
 // This function searches for a memory region to place the given output
 // section in. If found, a pointer to the appropriate memory region is
 // returned. Otherwise, a nullptr is returned.
-MemoryRegion *LinkerScript::findMemoryRegion(OutputSectionCommand *Cmd,
-                                             OutputSection *Sec) {
+MemoryRegion *LinkerScript::findMemoryRegion(OutputSectionCommand *Cmd) {
   // If a memory region name was specified in the output section command,
   // then try to find that region first.
   if (!Cmd->MemoryRegionName.empty()) {
@@ -551,6 +550,7 @@ MemoryRegion *LinkerScript::findMemoryRegion(OutputSectionCommand *Cmd,
   if (Opt.MemoryRegions.empty())
     return nullptr;
 
+  OutputSection *Sec = Cmd->Sec;
   // See if a region can be found by matching section flags.
   for (auto &Pair : Opt.MemoryRegions) {
     MemoryRegion &M = Pair.second;
@@ -584,7 +584,7 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
     Sec->updateAlignment(Cmd->AlignExpr().getValue());
 
   // Try and find an appropriate memory region to assign offsets in.
-  CurMemRegion = findMemoryRegion(Cmd, Sec);
+  CurMemRegion = findMemoryRegion(Cmd);
   if (CurMemRegion)
     Dot = CurMemRegion->Offset;
   switchTo(Sec);
