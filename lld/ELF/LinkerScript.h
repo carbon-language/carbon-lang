@@ -105,6 +105,7 @@ struct OutputSectionCommand : BaseCommand {
 
   static bool classof(const BaseCommand *C);
 
+  OutputSection *Sec = nullptr;
   StringRef Name;
   Expr AddrExpr;
   Expr AlignExpr;

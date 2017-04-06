@@ -567,7 +567,7 @@ MemoryRegion *LinkerScript::findMemoryRegion(OutputSectionCommand *Cmd,
 // This function assigns offsets to input sections and an output section
 // for a single sections command (e.g. ".text { *(.text); }").
 void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
-  OutputSection *Sec = findSection(Cmd->Name, *OutputSections);
+  OutputSection *Sec = Cmd->Sec;
   if (!Sec)
     return;
 
@@ -614,7 +614,7 @@ void LinkerScript::removeEmptyCommands() {
   auto Pos = std::remove_if(
       Opt.Commands.begin(), Opt.Commands.end(), [&](BaseCommand *Base) {
         if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-          return !findSection(Cmd->Name, *OutputSections);
+          return !Cmd->Sec;
         return false;
       });
   Opt.Commands.erase(Pos, Opt.Commands.end());
@@ -639,6 +639,7 @@ void LinkerScript::adjustSectionsBeforeSorting() {
     if (!Cmd)
       continue;
     if (OutputSection *Sec = findSection(Cmd->Name, *OutputSections)) {
+      Cmd->Sec = Sec;
       Flags = Sec->Flags;
       Type = Sec->Type;
       continue;
@@ -649,6 +650,7 @@ void LinkerScript::adjustSectionsBeforeSorting() {
 
     auto *OutSec = make<OutputSection>(Cmd->Name, Type, Flags);
     OutputSections->push_back(OutSec);
+    Cmd->Sec = OutSec;
   }
 }
 
@@ -764,7 +766,9 @@ void LinkerScript::placeOrphanSections() {
       return Cmd && Cmd->Name == Name;
     });
     if (Pos == E) {
-      Opt.Commands.insert(CmdIter, make<OutputSectionCommand>(Name));
+      auto *Cmd = make<OutputSectionCommand>(Name);
+      Cmd->Sec = Sec;
+      Opt.Commands.insert(CmdIter, Cmd);
       ++CmdIndex;
       continue;
     }
