@@ -133,6 +133,7 @@
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a72  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-A72-FAST
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a72 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=cortex-a73 | FileCheck %s --check-prefix=CORTEX-A73
+; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=kryo | FileCheck %s --check-prefix=KRYO
 ; RUN: llc < %s -mtriple=armv8.1a-linux-gnueabi | FileCheck %s --check-prefix=GENERIC-ARMV8_1-A
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m1 | FileCheck %s --check-prefix=EXYNOS-M1
 ; RUN: llc < %s -mtriple=armv8-linux-gnueabi -mcpu=exynos-m1  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=EXYNOS-M1-FAST
