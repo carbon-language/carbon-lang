@@ -1314,7 +1314,7 @@ __isl_give isl_schedule_node *ScheduleTreeOptimizer::optimizeMatMulPattern(
   int NewJ = MMI.j == DimOutNum - 3 ? MMI.i : MMI.j;
   int NewK = MMI.k == DimOutNum - 3 ? MMI.i : MMI.k;
   Node = permuteBandNodeDimensions(Node, NewJ, DimOutNum - 2);
-  NewK = MMI.k == DimOutNum - 2 ? MMI.j : MMI.k;
+  NewK = NewK == DimOutNum - 2 ? NewJ : NewK;
   Node = permuteBandNodeDimensions(Node, NewK, DimOutNum - 1);
   auto MicroKernelParams = getMicroKernelParams(TTI, MMI);
   auto MacroKernelParams = getMacroKernelParams(MicroKernelParams, MMI);
