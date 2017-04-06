@@ -4169,28 +4169,7 @@ static Value *SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
   case Instruction::Xor:
     return SimplifyXorInst(LHS, RHS, Q, MaxRecurse);
   default:
-    if (Constant *CLHS = dyn_cast<Constant>(LHS))
-      if (Constant *CRHS = dyn_cast<Constant>(RHS))
-        return ConstantFoldBinaryOpOperands(Opcode, CLHS, CRHS, Q.DL);
-
-    // If the operation is associative, try some generic simplifications.
-    if (Instruction::isAssociative(Opcode))
-      if (Value *V = SimplifyAssociativeBinOp(Opcode, LHS, RHS, Q, MaxRecurse))
-        return V;
-
-    // If the operation is with the result of a select instruction check whether
-    // operating on either branch of the select always yields the same value.
-    if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
-      if (Value *V = ThreadBinOpOverSelect(Opcode, LHS, RHS, Q, MaxRecurse))
-        return V;
-
-    // If the operation is with the result of a phi instruction, check whether
-    // operating on all incoming values of the phi always yields the same value.
-    if (isa<PHINode>(LHS) || isa<PHINode>(RHS))
-      if (Value *V = ThreadBinOpOverPHI(Opcode, LHS, RHS, Q, MaxRecurse))
-        return V;
-
-    return nullptr;
+    llvm_unreachable("Unexpected opcode");
   }
 }
 
