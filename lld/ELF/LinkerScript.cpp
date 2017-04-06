@@ -579,10 +579,6 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
     LMAOffset = [=] { return Cmd->LMAExpr().getValue() - D; };
   }
 
-  // Handle align (e.g. ".foo : ALIGN(16) { ... }").
-  if (Cmd->AlignExpr)
-    Sec->updateAlignment(Cmd->AlignExpr().getValue());
-
   CurMemRegion = Cmd->MemRegion;
   if (CurMemRegion)
     Dot = CurMemRegion->Offset;
@@ -657,9 +653,14 @@ void LinkerScript::adjustSectionsAfterSorting() {
   placeOrphanSections();
 
   // Try and find an appropriate memory region to assign offsets in.
-  for (BaseCommand *Base : Opt.Commands)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
+  for (BaseCommand *Base : Opt.Commands) {
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base)) {
       Cmd->MemRegion = findMemoryRegion(Cmd);
+      // Handle align (e.g. ".foo : ALIGN(16) { ... }").
+      if (Cmd->AlignExpr)
+	Cmd->Sec->updateAlignment(Cmd->AlignExpr().getValue());
+    }
+  }
 
   // If output section command doesn't specify any segments,
   // and we haven't previously assigned any section to segment,
