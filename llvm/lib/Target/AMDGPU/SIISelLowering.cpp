@@ -1092,17 +1092,6 @@ SDValue SITargetLowering::LowerFormalArguments(
     assert(VA.isRegLoc() && "Parameter must be in a register!");
 
     unsigned Reg = VA.getLocReg();
-
-    if (VT == MVT::i64) {
-      // For now assume it is a pointer
-      Reg = TRI->getMatchingSuperReg(Reg, AMDGPU::sub0,
-                                     &AMDGPU::SGPR_64RegClass);
-      Reg = MF.addLiveIn(Reg, &AMDGPU::SGPR_64RegClass);
-      SDValue Copy = DAG.getCopyFromReg(Chain, DL, Reg, VT);
-      InVals.push_back(Copy);
-      continue;
-    }
-
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg, VT);
 
     Reg = MF.addLiveIn(Reg, RC);
