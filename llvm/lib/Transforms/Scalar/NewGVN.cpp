@@ -497,16 +497,26 @@ private:
   bool singleReachablePHIPath(const MemoryAccess *, const MemoryAccess *) const;
   BasicBlock *getBlockForValue(Value *V) const;
   void deleteExpression(const Expression *E);
-  unsigned getInstrNum(const Value *V) const {
+  unsigned InstrToDFSNum(const Value *V) const {
     assert(isa<Instruction>(V) && "This should not be used for MemoryAccesses");
     return InstrDFS.lookup(V);
   }
 
-  unsigned getInstrNum(const MemoryAccess *MA) const {
-    return getMemoryInstrNum(MA);
+  unsigned InstrToDFSNum(const MemoryAccess *MA) const {
+    return MemoryToDFSNum(MA);
+  }
+  Value *InstrFromDFSNum(unsigned DFSNum) { return DFSToInstr[DFSNum]; }
+  // Given a MemoryAccess, return the relevant instruction DFS number.  Note:
+  // This deliberately takes a value so it can be used with Use's, which will
+  // auto-convert to Value's but not to MemoryAccess's.
+  unsigned MemoryToDFSNum(const Value *MA) const {
+    assert(isa<MemoryAccess>(MA) &&
+           "This should not be used with instructions");
+    return isa<MemoryUseOrDef>(MA)
+               ? InstrToDFSNum(cast<MemoryUseOrDef>(MA)->getMemoryInst())
+               : InstrDFS.lookup(MA);
   }
 
-  unsigned getMemoryInstrNum(const Value *) const;
   template <class T, class Range> T *getMinDFSOfRange(const Range &) const;
   // Debug counter info.  When verifying, we have to reset the value numbering
   // debug counter to the same state it started in to get the same results.
@@ -873,15 +883,6 @@ bool NewGVN::isMemoryAccessTop(const MemoryAccess *MA) const {
   return getMemoryClass(MA) == TOPClass;
 }
 
-// Given a MemoryAccess, return the relevant instruction DFS number.  Note: This
-// deliberately takes a value so it can be used with Use's, which will
-// auto-convert to Value's but not to MemoryAccess's.
-unsigned NewGVN::getMemoryInstrNum(const Value *MA) const {
-  assert(isa<MemoryAccess>(MA) && "This should not be used with instructions");
-  return isa<MemoryUseOrDef>(MA)
-             ? InstrDFS.lookup(cast<MemoryUseOrDef>(MA)->getMemoryInst())
-             : InstrDFS.lookup(MA);
-}
 
 LoadExpression *NewGVN::createLoadExpression(Type *LoadType, Value *PointerOp,
                                              LoadInst *LI,
@@ -1546,7 +1547,7 @@ void NewGVN::markUsersTouched(Value *V) {
   // Now mark the users as touched.
   for (auto *User : V->users()) {
     assert(isa<Instruction>(User) && "Use of value not within an instruction?");
-    TouchedInstructions.set(InstrDFS.lookup(User));
+    TouchedInstructions.set(InstrToDFSNum(User));
   }
 }
 
@@ -1556,18 +1557,18 @@ void NewGVN::addMemoryUsers(const MemoryAccess *To, MemoryAccess *U) {
 }
 
 void NewGVN::markMemoryDefTouched(const MemoryAccess *MA) {
-  TouchedInstructions.set(getMemoryInstrNum(MA));
+  TouchedInstructions.set(MemoryToDFSNum(MA));
 }
 
 void NewGVN::markMemoryUsersTouched(const MemoryAccess *MA) {
   if (isa<MemoryUse>(MA))
     return;
   for (auto U : MA->users())
-    TouchedInstructions.set(getMemoryInstrNum(U));
+    TouchedInstructions.set(MemoryToDFSNum(U));
   const auto Result = MemoryToUsers.find(MA);
   if (Result != MemoryToUsers.end()) {
     for (auto *User : Result->second)
-      TouchedInstructions.set(getMemoryInstrNum(User));
+      TouchedInstructions.set(MemoryToDFSNum(User));
     MemoryToUsers.erase(Result);
   }
 }
@@ -1585,7 +1586,7 @@ void NewGVN::markPredicateUsersTouched(Instruction *I) {
   const auto Result = PredicateToUsers.find(I);
   if (Result != PredicateToUsers.end()) {
     for (auto *User : Result->second)
-      TouchedInstructions.set(InstrDFS.lookup(User));
+      TouchedInstructions.set(InstrToDFSNum(User));
     PredicateToUsers.erase(Result);
   }
 }
@@ -1601,7 +1602,7 @@ void NewGVN::markMemoryLeaderChangeTouched(CongruenceClass *CC) {
 void NewGVN::markValueLeaderChangeTouched(CongruenceClass *CC) {
   for (auto M : CC->Members) {
     if (auto *I = dyn_cast<Instruction>(M))
-      TouchedInstructions.set(InstrDFS.lookup(I));
+      TouchedInstructions.set(InstrToDFSNum(I));
     LeaderChanges.insert(M);
   }
 }
@@ -1612,7 +1613,7 @@ template <class T, class Range>
 T *NewGVN::getMinDFSOfRange(const Range &R) const {
   std::pair<T *, unsigned> MinDFS = {nullptr, ~0U};
   for (const auto X : R) {
-    auto DFSNum = getInstrNum(X);
+    auto DFSNum = InstrToDFSNum(X);
     if (DFSNum < MinDFS.second)
       MinDFS = {X, DFSNum};
   }
@@ -1727,8 +1728,8 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I, const Expression *E,
       I != NewClass->RepLeader) {
     auto *IBB = I->getParent();
     auto *NCBB = cast<Instruction>(NewClass->RepLeader)->getParent();
-    bool Dominated = IBB == NCBB &&
-                     InstrDFS.lookup(I) < InstrDFS.lookup(NewClass->RepLeader);
+    bool Dominated =
+        IBB == NCBB && InstrToDFSNum(I) < InstrToDFSNum(NewClass->RepLeader);
     Dominated = Dominated || DT->properlyDominates(IBB, NCBB);
     if (Dominated) {
       ++NumGVNNotMostDominatingLeader;
@@ -1739,7 +1740,7 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I, const Expression *E,
   }
 
   if (NewClass->RepLeader != I) {
-    auto DFSNum = InstrDFS.lookup(I);
+    auto DFSNum = InstrToDFSNum(I);
     if (DFSNum < NewClass->NextLeader.second)
       NewClass->NextLeader = {I, DFSNum};
   }
@@ -1934,11 +1935,11 @@ void NewGVN::updateReachableEdge(BasicBlock *From, BasicBlock *To) {
       // they are the only thing that depend on new edges. Anything using their
       // values will get propagated to if necessary.
       if (MemoryAccess *MemPhi = MSSA->getMemoryAccess(To))
-        TouchedInstructions.set(InstrDFS.lookup(MemPhi));
+        TouchedInstructions.set(InstrToDFSNum(MemPhi));
 
       auto BI = To->begin();
       while (isa<PHINode>(BI)) {
-        TouchedInstructions.set(InstrDFS.lookup(&*BI));
+        TouchedInstructions.set(InstrToDFSNum(&*BI));
         ++BI;
       }
     }
@@ -2330,7 +2331,7 @@ void NewGVN::verifyMemoryCongruency() const {
           return true;
         if (auto *MemDef = dyn_cast<MemoryDef>(Pair.first))
           return !isInstructionTriviallyDead(MemDef->getMemoryInst());
-        if (getMemoryInstrNum(Pair.first) == 0)
+        if (MemoryToDFSNum(Pair.first) == 0)
           return false;
         return true;
       };
@@ -2392,7 +2393,7 @@ void NewGVN::verifyIterationSettled(Function &F) {
   for (auto &KV : ValueToClass) {
     if (auto *I = dyn_cast<Instruction>(KV.first))
       // Skip unused/dead instructions.
-      if (InstrDFS.lookup(I) == 0)
+      if (InstrToDFSNum(I) == 0)
         continue;
     BeforeIteration.insert({KV.first, *KV.second});
   }
@@ -2405,7 +2406,7 @@ void NewGVN::verifyIterationSettled(Function &F) {
   for (const auto &KV : ValueToClass) {
     if (auto *I = dyn_cast<Instruction>(KV.first))
       // Skip unused/dead instructions.
-      if (InstrDFS.lookup(I) == 0)
+      if (InstrToDFSNum(I) == 0)
         continue;
     // We could sink these uses, but i think this adds a bit of clarity here as
     // to what we are comparing.
@@ -2432,7 +2433,7 @@ void NewGVN::iterateTouchedInstructions() {
   // Nothing set, nothing to iterate, just return.
   if (FirstInstr == -1)
     return;
-  BasicBlock *LastBlock = getBlockForValue(DFSToInstr[FirstInstr]);
+  BasicBlock *LastBlock = getBlockForValue(InstrFromDFSNum(FirstInstr));
   while (TouchedInstructions.any()) {
     ++Iterations;
     // Walk through all the instructions in all the blocks in RPO.
@@ -2449,7 +2450,7 @@ void NewGVN::iterateTouchedInstructions() {
         continue;
       }
 
-      Value *V = DFSToInstr[InstrNum];
+      Value *V = InstrFromDFSNum(InstrNum);
       BasicBlock *CurrBlock = getBlockForValue(V);
 
       // If we hit a new block, do reachability processing.
@@ -2685,7 +2686,7 @@ void NewGVN::convertClassToDFSOrdered(
     }
     assert(isa<Instruction>(D) &&
            "The dense set member should always be an instruction");
-    VDDef.LocalNum = InstrDFS.lookup(D);
+    VDDef.LocalNum = InstrToDFSNum(D);
     DFSOrderedSet.emplace_back(VDDef);
     Instruction *Def = cast<Instruction>(D);
     unsigned int UseCount = 0;
@@ -2705,7 +2706,7 @@ void NewGVN::convertClassToDFSOrdered(
           VDUse.LocalNum = InstrDFS.size() + 1;
         } else {
           IBlock = I->getParent();
-          VDUse.LocalNum = InstrDFS.lookup(I);
+          VDUse.LocalNum = InstrToDFSNum(I);
         }
 
         // Skip uses in unreachable blocks, as we're going
@@ -2750,7 +2751,7 @@ void NewGVN::convertClassToLoadsAndStores(
 
     // If it's an instruction, use the real local dfs number.
     if (auto *I = dyn_cast<Instruction>(D))
-      VD.LocalNum = InstrDFS.lookup(I);
+      VD.LocalNum = InstrToDFSNum(I);
     else
       llvm_unreachable("Should have been an instruction");
 
@@ -3169,7 +3170,7 @@ unsigned int NewGVN::getRank(const Value *V) const {
 
   // Need to shift the instruction DFS by number of arguments + 3 to account for
   // the constant and argument ranking above.
-  unsigned Result = InstrDFS.lookup(V);
+  unsigned Result = InstrToDFSNum(V);
   if (Result > 0)
     return 3 + NumFuncArgs + Result;
   // Unreachable or something else, just return a really large number.
