@@ -1079,9 +1079,9 @@ const Expression *NewGVN::performSymbolicLoadEvaluation(Instruction *I) {
       // defining access has a different type, or it is a pointer produced by
       // certain memory operations that cause the memory to have a fixed value
       // (IE things like calloc).
-      const Expression *CoercionResult = performSymbolicLoadCoercion(
-          LI->getType(), LoadAddressLeader, LI, DefiningInst, DefiningAccess);
-      if (CoercionResult)
+      if (const auto *CoercionResult =
+              performSymbolicLoadCoercion(LI->getType(), LoadAddressLeader, LI,
+                                          DefiningInst, DefiningAccess))
         return CoercionResult;
     }
   }
