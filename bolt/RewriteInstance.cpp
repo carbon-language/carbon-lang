@@ -2555,10 +2555,18 @@ void RewriteInstance::patchELFPHDRTable() {
 }
 
 namespace {
-void writePadding(raw_pwrite_stream &OS, unsigned BytesToWrite) {
-  for (unsigned I = 0; I < BytesToWrite; ++I)
+
+/// Write padding to \p OS such that its current \p Offset becomes aligned
+/// at \p Alignment. Return new (aligned) offset.
+uint64_t appendPadding(raw_pwrite_stream &OS,
+                       uint64_t Offset,
+                       uint64_t Alignment) {
+  const auto PaddingSize = OffsetToAlignment(Offset, Alignment);
+  for (unsigned I = 0; I < PaddingSize; ++I)
     OS.write((unsigned char)0);
+  return Offset + PaddingSize;
 }
+
 }
 
 void RewriteInstance::rewriteNoteSections() {
@@ -2586,15 +2594,8 @@ void RewriteInstance::rewriteNoteSections() {
       continue;
 
     // Insert padding as needed.
-    if (Section.sh_addralign > 1) {
-      auto PaddingSize = OffsetToAlignment(NextAvailableOffset,
-                                           Section.sh_addralign);
-      writePadding(OS, PaddingSize);
-      NextAvailableOffset += PaddingSize;
-
-      assert(Section.sh_size % Section.sh_addralign == 0 &&
-             "section size does not match section alignment");
-    }
+    NextAvailableOffset =
+      appendPadding(OS, NextAvailableOffset, Section.sh_addralign);
 
     ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
     check_error(SectionName.getError(), "cannot get section name");
@@ -2611,6 +2612,9 @@ void RewriteInstance::rewriteNoteSections() {
         (*SectionPatchersIt->second).patchBinary(Data);
       }
       OS << Data;
+
+      // Add padding as the section extension might rely on the alignment.
+      Size = appendPadding(OS, Size, Section.sh_addralign);
     }
 
     if (Section.sh_type == ELF::SHT_SYMTAB) {
@@ -2724,9 +2728,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
 
   NewSectionIndex.resize(Obj->getNumSections());
 
-  auto PaddingSize = OffsetToAlignment(SHTOffset, sizeof(Elf_Shdr));
-  writePadding(OS, PaddingSize);
-  SHTOffset += PaddingSize;
+  SHTOffset = appendPadding(OS, SHTOffset, sizeof(Elf_Shdr));
 
   // Copy over entries for original allocatable sections with minor
   // modifications (e.g. name).
@@ -3330,9 +3332,8 @@ void RewriteInstance::writeEHFrameHeader(SectionInfo &EHFrameSecInfo) {
 
   DEBUG(dbgs() << "BOLT: writing a new .eh_frame_hdr\n");
 
-  auto PaddingSize = OffsetToAlignment(NextAvailableAddress, EHFrameHdrAlign);
-  writePadding(Out->os(), PaddingSize);
-  NextAvailableAddress += PaddingSize;
+  NextAvailableAddress =
+    appendPadding(Out->os(), NextAvailableAddress, EHFrameHdrAlign);
 
   SectionInfo EHFrameHdrSecInfo;
   EHFrameHdrSecInfo.FileAddress = NextAvailableAddress;
