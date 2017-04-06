@@ -569,6 +569,37 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     }
     return false;   // Don't fall through, will infinitely loop.
   case ISD::AND:
+    // If the RHS is a constant, check to see if the LHS would be zero without
+    // using the bits from the RHS.  Below, we use knowledge about the RHS to
+    // simplify the LHS, here we're using information from the LHS to simplify
+    // the RHS.
+    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+      SDValue Op0 = Op.getOperand(0);
+      APInt LHSZero, LHSOne;
+      // Do not increment Depth here; that can cause an infinite loop.
+      TLO.DAG.computeKnownBits(Op0, LHSZero, LHSOne, Depth);
+      // If the LHS already has zeros where RHSC does, this and is dead.
+      if ((LHSZero & NewMask) == (~RHSC->getAPIntValue() & NewMask))
+        return TLO.CombineTo(Op, Op0);
+
+      // If any of the set bits in the RHS are known zero on the LHS, shrink
+      // the constant.
+      if (TLO.ShrinkDemandedConstant(Op, ~LHSZero & NewMask))
+        return true;
+
+      // Bitwise-not (xor X, -1) is a special case: we don't usually shrink its
+      // constant, but if this 'and' is only clearing bits that were just set by
+      // the xor, then this 'and' can be eliminated by shrinking the mask of
+      // the xor. For example, for a 32-bit X:
+      // and (xor (srl X, 31), -1), 1 --> xor (srl X, 31), 1
+      if (isBitwiseNot(Op0) && Op0.hasOneUse() &&
+          LHSOne == ~RHSC->getAPIntValue()) {
+        SDValue Xor = TLO.DAG.getNode(ISD::XOR, dl, Op.getValueType(),
+                                      Op0.getOperand(0), Op.getOperand(1));
+        return TLO.CombineTo(Op, Xor);
+      }
+    }
+
     if (SimplifyDemandedBits(Op.getOperand(1), NewMask, KnownZero,
                              KnownOne, TLO, Depth+1))
       return true;
@@ -593,21 +624,6 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // If the operation can be done in a smaller type, do so.
     if (TLO.ShrinkDemandedOp(Op, BitWidth, NewMask, dl))
       return true;
-
-    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      SDValue Op0 = Op.getOperand(0);
-      // Bitwise-not (xor X, -1) is a special case: we don't usually shrink its
-      // constant, but if this 'and' is only clearing bits that were just set by
-      // the xor, then this 'and' can be eliminated by shrinking the mask of
-      // the xor. For example, for a 32-bit X:
-      // and (xor (srl X, 31), -1), 1 --> xor (srl X, 31), 1
-      if (isBitwiseNot(Op0) && Op0.hasOneUse() &&
-          KnownOne2 == ~RHSC->getAPIntValue()) {
-        SDValue Xor = TLO.DAG.getNode(ISD::XOR, dl, Op.getValueType(),
-                                      Op0.getOperand(0), Op.getOperand(1));
-        return TLO.CombineTo(Op, Xor);
-      }
-    }
 
     // Output known-1 bits are only known if set in both the LHS & RHS.
     KnownOne &= KnownOne2;
