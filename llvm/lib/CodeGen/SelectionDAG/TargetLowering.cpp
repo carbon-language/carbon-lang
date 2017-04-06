@@ -775,9 +775,6 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       // TODO: Should we check for other forms of sign-bit comparisons?
       // Examples: X <= -1, X >= 0
     }
-    if (getBooleanContents(Op.getOperand(0).getValueType()) ==
-            BooleanContent::ZeroOrOneBooleanContent && BitWidth > 1)
-      KnownZero.setBitsFrom(1);
     break;
   }
   case ISD::SHL:
