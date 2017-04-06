@@ -22,6 +22,7 @@ namespace __sanitizer {
 
 class FlagHandlerBase {
  public:
+  virtual ~FlagHandlerBase() {}
   virtual bool Parse(const char *value) { return false; }
 };
 
