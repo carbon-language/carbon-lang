@@ -492,7 +492,7 @@ void RecursiveCloneTypeIIConstraint::constrain(
 
     // Sort hash_codes in StmtsByHash.
     std::stable_sort(StmtsByHash.begin(), StmtsByHash.end(),
-                     [this](std::pair<size_t, StmtSequence> LHS,
+                     [](std::pair<size_t, StmtSequence> LHS,
                             std::pair<size_t, StmtSequence> RHS) {
                        return LHS.first < RHS.first;
                      });
