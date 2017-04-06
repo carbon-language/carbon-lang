@@ -930,7 +930,7 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const Query &Q,
     return X;
 
   // i1 mul -> and.
-  if (MaxRecurse && Op0->getType()->isIntegerTy(1))
+  if (MaxRecurse && Op0->getType()->getScalarType()->isIntegerTy(1))
     if (Value *V = SimplifyAndInst(Op0, Op1, Q, MaxRecurse-1))
       return V;
 
