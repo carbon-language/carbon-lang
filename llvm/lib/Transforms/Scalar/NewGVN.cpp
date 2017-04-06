@@ -2948,27 +2948,21 @@ bool NewGVN::eliminateInstructions(Function &F) {
     // are left.
     Value *Leader = CC->RepStoredValue ? CC->RepStoredValue : CC->RepLeader;
     if (alwaysAvailable(Leader)) {
-      SmallPtrSet<Value *, 4> MembersLeft;
+      CongruenceClass::MemberSet MembersLeft;
       for (auto M : CC->Members) {
         Value *Member = M;
         // Void things have no uses we can replace.
-        if (Member == Leader || Member->getType()->isVoidTy()) {
+        if (Member == Leader || !isa<Instruction>(Member) ||
+            Member->getType()->isVoidTy()) {
           MembersLeft.insert(Member);
           continue;
         }
         DEBUG(dbgs() << "Found replacement " << *(Leader) << " for " << *Member
                      << "\n");
-        // Due to equality propagation, these may not always be
-        // instructions, they may be real values.  We don't really
-        // care about trying to replace the non-instructions.
-        if (auto *I = dyn_cast<Instruction>(Member)) {
-          assert(Leader != I && "About to accidentally remove our leader");
-          replaceInstruction(I, Leader);
-          AnythingReplaced = true;
-          continue;
-        } else {
-          MembersLeft.insert(I);
-        }
+        auto *I = cast<Instruction>(Member);
+        assert(Leader != I && "About to accidentally remove our leader");
+        replaceInstruction(I, Leader);
+        AnythingReplaced = true;
       }
       CC->Members.swap(MembersLeft);
     } else {
@@ -3114,15 +3108,11 @@ bool NewGVN::eliminateInstructions(Function &F) {
         markInstructionForDeletion(I);
 
     // Cleanup the congruence class.
-    SmallPtrSet<Value *, 4> MembersLeft;
-    for (Value *Member : CC->Members) {
-      if (Member->getType()->isVoidTy()) {
+    CongruenceClass::MemberSet MembersLeft;
+    for (auto *Member : CC->Members)
+      if (!isa<Instruction>(Member) ||
+          !InstructionsToErase.count(cast<Instruction>(Member)))
         MembersLeft.insert(Member);
-        continue;
-      }
-
-      MembersLeft.insert(Member);
-    }
     CC->Members.swap(MembersLeft);
 
     // If we have possible dead stores to look at, try to eliminate them.
