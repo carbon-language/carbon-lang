@@ -100,7 +100,7 @@ void TypeDumper::dump(const PDBSymbolTypeUDT &Symbol) {
 
   Printer.NewLine();
 
-  if (opts::pretty::NoClassDefs) {
+  if (opts::pretty::ClassFormat == opts::pretty::ClassDefinitionFormat::None) {
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "class ";
     WithColor(Printer, PDB_ColorItem::Identifier).get() << Symbol.getName();
   } else {

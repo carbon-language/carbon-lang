@@ -170,9 +170,17 @@ cl::opt<bool>
     ExcludeSystemLibraries("no-system-libs",
                            cl::desc("Don't show symbols from system libraries"),
                            cl::cat(FilterCategory), cl::sub(PrettySubcommand));
-cl::opt<bool> NoClassDefs("no-class-definitions",
-                          cl::desc("Don't display full class definitions"),
-                          cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+cl::opt<ClassDefinitionFormat> ClassFormat(
+    "class-definitions", cl::desc("Class definition format"),
+    cl::init(ClassDefinitionFormat::Full),
+    cl::values(clEnumValN(ClassDefinitionFormat::Full, "full",
+                          "Display complete class definition"),
+               clEnumValN(ClassDefinitionFormat::LayoutOnly, "layout",
+                          "Display only members which affect record layout"),
+               clEnumValN(ClassDefinitionFormat::None, "none",
+                          "Don't display class definitions")),
+    cl::cat(FilterCategory), cl::sub(PrettySubcommand));
+
 cl::opt<bool> NoEnumDefs("no-enum-definitions",
                          cl::desc("Don't display full enum definitions"),
                          cl::cat(FilterCategory), cl::sub(PrettySubcommand));
