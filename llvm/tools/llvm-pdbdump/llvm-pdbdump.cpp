@@ -112,8 +112,17 @@ cl::opt<bool> Globals("globals", cl::desc("Dump global symbols"),
                       cl::cat(TypeCategory), cl::sub(PrettySubcommand));
 cl::opt<bool> Externals("externals", cl::desc("Dump external symbols"),
                         cl::cat(TypeCategory), cl::sub(PrettySubcommand));
-cl::opt<bool> Types("types", cl::desc("Display types"), cl::cat(TypeCategory),
-                    cl::sub(PrettySubcommand));
+cl::opt<bool>
+    Types("types",
+          cl::desc("Display all types (implies -classes, -enums, -typedefs)"),
+          cl::cat(TypeCategory), cl::sub(PrettySubcommand));
+cl::opt<bool> Classes("classes", cl::desc("Display class types"),
+                      cl::cat(TypeCategory), cl::sub(PrettySubcommand));
+cl::opt<bool> Enums("enums", cl::desc("Display enum types"),
+                    cl::cat(TypeCategory), cl::sub(PrettySubcommand));
+cl::opt<bool> Typedefs("typedefs", cl::desc("Display typedef types"),
+                       cl::cat(TypeCategory), cl::sub(PrettySubcommand));
+
 cl::opt<bool> Lines("lines", cl::desc("Line tables"), cl::cat(TypeCategory),
                     cl::sub(PrettySubcommand));
 cl::opt<bool>
@@ -557,7 +566,7 @@ static void dumpPretty(StringRef Path) {
     Printer.Unindent();
   }
 
-  if (opts::pretty::Types) {
+  if (opts::pretty::Classes || opts::pretty::Enums || opts::pretty::Typedefs) {
     Printer.NewLine();
     WithColor(Printer, PDB_ColorItem::SectionHeader).get() << "---TYPES---";
     Printer.Indent();
@@ -697,6 +706,12 @@ int main(int argc_, const char *argv_[]) {
       opts::pretty::Types = true;
       opts::pretty::Externals = true;
       opts::pretty::Lines = true;
+    }
+
+    if (opts::pretty::Types) {
+      opts::pretty::Classes = true;
+      opts::pretty::Typedefs = true;
+      opts::pretty::Enums = true;
     }
 
     // When adding filters for excluded compilands and types, we need to
