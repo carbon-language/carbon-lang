@@ -606,7 +606,7 @@ class AddressSanitizerModule : public ModulePass {
 private:
   void initializeCallbacks(Module &M);
 
-  bool InstrumentGlobals(IRBuilder<> &IRB, Module &M);
+  bool InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool *CtorComdat);
   void InstrumentGlobalsCOFF(IRBuilder<> &IRB, Module &M,
                              ArrayRef<GlobalVariable *> ExtendedGlobals,
                              ArrayRef<Constant *> MetadataInitializers);
@@ -645,6 +645,9 @@ private:
   Function *AsanUnregisterGlobals;
   Function *AsanRegisterImageGlobals;
   Function *AsanUnregisterImageGlobals;
+
+  Function *AsanCtorFunction = nullptr;
+  Function *AsanDtorFunction = nullptr;
 };
 
 // Stack poisoning does not play well with exception handling.
@@ -1428,8 +1431,13 @@ void AddressSanitizerModule::poisonOneInitializer(Function &GlobalInit,
 void AddressSanitizerModule::createInitializerPoisonCalls(
     Module &M, GlobalValue *ModuleName) {
   GlobalVariable *GV = M.getGlobalVariable("llvm.global_ctors");
+  if (!GV)
+    return;
 
-  ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
+  ConstantArray *CA = dyn_cast<ConstantArray>(GV->getInitializer());
+  if (!CA)
+    return;
+
   for (Use &OP : CA->operands()) {
     if (isa<ConstantAggregateZero>(OP)) continue;
     ConstantStruct *CS = cast<ConstantStruct>(OP);
@@ -1635,11 +1643,10 @@ AddressSanitizerModule::CreateMetadataGlobal(Module &M, Constant *Initializer,
 }
 
 IRBuilder<> AddressSanitizerModule::CreateAsanModuleDtor(Module &M) {
-  Function *AsanDtorFunction =
+  AsanDtorFunction =
       Function::Create(FunctionType::get(Type::getVoidTy(*C), false),
                        GlobalValue::InternalLinkage, kAsanModuleDtorName, &M);
   BasicBlock *AsanDtorBB = BasicBlock::Create(*C, "", AsanDtorFunction);
-  appendToGlobalDtors(M, AsanDtorFunction, kAsanCtorAndDtorPriority);
 
   return IRBuilder<>(ReturnInst::Create(*C, AsanDtorBB));
 }
@@ -1755,7 +1762,10 @@ void AddressSanitizerModule::InstrumentGlobalsWithMetadataArray(
 // This function replaces all global variables with new variables that have
 // trailing redzones. It also creates a function that poisons
 // redzones and inserts this function into llvm.global_ctors.
-bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
+// Sets *CtorComdat to true if the global registration code emitted into the
+// asan constructor is comdat-compatible.
+bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M, bool *CtorComdat) {
+  *CtorComdat = false;
   GlobalsMD.init(M);
 
   SmallVector<GlobalVariable *, 16> GlobalsToChange;
@@ -1765,7 +1775,10 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
   }
 
   size_t n = GlobalsToChange.size();
-  if (n == 0) return false;
+  if (n == 0) {
+    *CtorComdat = true;
+    return false;
+  }
 
   auto &DL = M.getDataLayout();
 
@@ -1937,17 +1950,36 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   if (CompileKernel)
     return false;
 
-  Function *AsanCtorFunction;
+  // Create a module constructor. A destructor is created lazily because not all
+  // platforms, and not all modules need it.
   std::tie(AsanCtorFunction, std::ignore) = createSanitizerCtorAndInitFunctions(
       M, kAsanModuleCtorName, kAsanInitName, /*InitArgTypes=*/{},
       /*InitArgs=*/{}, kAsanVersionCheckName);
-  appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority);
 
+  bool CtorComdat = true;
   bool Changed = false;
   // TODO(glider): temporarily disabled globals instrumentation for KASan.
   if (ClGlobals) {
     IRBuilder<> IRB(AsanCtorFunction->getEntryBlock().getTerminator());
-    Changed |= InstrumentGlobals(IRB, M);
+    Changed |= InstrumentGlobals(IRB, M, &CtorComdat);
+  }
+
+  // Put the constructor and destructor in comdat if both
+  // (1) global instrumentation is not TU-specific
+  // (2) target is ELF.
+  if (TargetTriple.isOSBinFormatELF() && CtorComdat) {
+    AsanCtorFunction->setComdat(M.getOrInsertComdat(kAsanModuleCtorName));
+    appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority,
+                        AsanCtorFunction);
+    if (AsanDtorFunction) {
+      AsanDtorFunction->setComdat(M.getOrInsertComdat(kAsanModuleDtorName));
+      appendToGlobalDtors(M, AsanDtorFunction, kAsanCtorAndDtorPriority,
+                          AsanDtorFunction);
+    }
+  } else {
+    appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndDtorPriority);
+    if (AsanDtorFunction)
+      appendToGlobalDtors(M, AsanDtorFunction, kAsanCtorAndDtorPriority);
   }
 
   return Changed;
