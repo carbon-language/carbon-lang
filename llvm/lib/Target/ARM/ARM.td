@@ -345,9 +345,7 @@ def ProcA73     : SubtargetFeature<"a73", "ARMProcFamily", "CortexA73",
                                    "Cortex-A73 ARM processors", []>;
 
 def ProcKrait   : SubtargetFeature<"krait", "ARMProcFamily", "Krait",
-                                   "Qualcomm Krait processors", []>;
-def ProcKryo    : SubtargetFeature<"kryo", "ARMProcFamily", "Kryo",
-                                   "Qualcomm Kryo processors", []>;
+                                   "Qualcomm ARM processors", []>;
 def ProcSwift   : SubtargetFeature<"swift", "ARMProcFamily", "Swift",
                                    "Swift ARM processors", []>;
 
@@ -832,12 +830,6 @@ def : ProcNoItin<"exynos-m2",                           [ARMv8a, ProcExynosM1,
                                                          FeatureCRC]>;
 
 def : ProcNoItin<"exynos-m3",                           [ARMv8a, ProcExynosM1,
-                                                         FeatureHWDiv,
-                                                         FeatureHWDivARM,
-                                                         FeatureCrypto,
-                                                         FeatureCRC]>;
-
-def : ProcNoItin<"kryo",                                [ARMv8a, ProcKryo,
                                                          FeatureHWDiv,
                                                          FeatureHWDivARM,
                                                          FeatureCrypto,
