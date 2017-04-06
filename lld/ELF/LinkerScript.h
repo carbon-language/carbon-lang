@@ -99,6 +99,18 @@ struct SymbolAssignment : BaseCommand {
 // with ONLY_IF_RW is created if all input sections are RW.
 enum class ConstraintKind { NoConstraint, ReadOnly, ReadWrite };
 
+// This struct is used to represent the location and size of regions of
+// target memory. Instances of the struct are created by parsing the
+// MEMORY command.
+struct MemoryRegion {
+  std::string Name;
+  uint64_t Origin;
+  uint64_t Length;
+  uint64_t Offset;
+  uint32_t Flags;
+  uint32_t NegFlags;
+};
+
 struct OutputSectionCommand : BaseCommand {
   OutputSectionCommand(StringRef Name)
       : BaseCommand(OutputSectionKind), Name(Name) {}
@@ -106,6 +118,7 @@ struct OutputSectionCommand : BaseCommand {
   static bool classof(const BaseCommand *C);
 
   OutputSection *Sec = nullptr;
+  MemoryRegion *MemRegion = nullptr;
   StringRef Name;
   Expr AddrExpr;
   Expr AlignExpr;
@@ -175,18 +188,6 @@ struct PhdrsCommand {
   bool HasPhdrs;
   unsigned Flags;
   Expr LMAExpr;
-};
-
-// This struct is used to represent the location and size of regions of
-// target memory. Instances of the struct are created by parsing the
-// MEMORY command.
-struct MemoryRegion {
-  std::string Name;
-  uint64_t Origin;
-  uint64_t Length;
-  uint64_t Offset;
-  uint32_t Flags;
-  uint32_t NegFlags;
 };
 
 // ScriptConfiguration holds linker script parse results.
