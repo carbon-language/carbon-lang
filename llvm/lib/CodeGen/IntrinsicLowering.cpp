@@ -111,19 +111,25 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
                              Type::getVoidTy(M.getContext()));
         break;
       case Intrinsic::memcpy:
-        M.getOrInsertFunction(
-            "memcpy", Type::getInt8PtrTy(Context), Type::getInt8PtrTy(Context),
-            Type::getInt8PtrTy(Context), DL.getIntPtrType(Context));
+        M.getOrInsertFunction("memcpy",
+          Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt8PtrTy(Context), 
+                              DL.getIntPtrType(Context), nullptr);
         break;
       case Intrinsic::memmove:
-        M.getOrInsertFunction(
-            "memmove", Type::getInt8PtrTy(Context), Type::getInt8PtrTy(Context),
-            Type::getInt8PtrTy(Context), DL.getIntPtrType(Context));
+        M.getOrInsertFunction("memmove",
+          Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt8PtrTy(Context), 
+                              DL.getIntPtrType(Context), nullptr);
         break;
       case Intrinsic::memset:
-        M.getOrInsertFunction(
-            "memset", Type::getInt8PtrTy(Context), Type::getInt8PtrTy(Context),
-            Type::getInt32Ty(M.getContext()), DL.getIntPtrType(Context));
+        M.getOrInsertFunction("memset",
+          Type::getInt8PtrTy(Context),
+                              Type::getInt8PtrTy(Context), 
+                              Type::getInt32Ty(M.getContext()), 
+                              DL.getIntPtrType(Context), nullptr);
         break;
       case Intrinsic::sqrt:
         EnsureFPIntrinsicsExist(M, F, "sqrtf", "sqrt", "sqrtl");

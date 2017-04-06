@@ -262,34 +262,39 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   Int32Ty = IRB.getInt32Ty();
 
   SanCovFunction = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovName, VoidTy, Int32PtrTy));
+      M.getOrInsertFunction(SanCovName, VoidTy, Int32PtrTy, nullptr));
   SanCovWithCheckFunction = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovWithCheckName, VoidTy, Int32PtrTy));
+      M.getOrInsertFunction(SanCovWithCheckName, VoidTy, Int32PtrTy, nullptr));
   SanCovTracePCIndir = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTracePCIndirName, VoidTy, IntptrTy));
-  SanCovIndirCallFunction = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovIndirCallName, VoidTy, IntptrTy, IntptrTy));
+      M.getOrInsertFunction(SanCovTracePCIndirName, VoidTy, IntptrTy, nullptr));
+  SanCovIndirCallFunction =
+      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+          SanCovIndirCallName, VoidTy, IntptrTy, IntptrTy, nullptr));
   SanCovTraceCmpFunction[0] =
       checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-          SanCovTraceCmp1, VoidTy, IRB.getInt8Ty(), IRB.getInt8Ty()));
-  SanCovTraceCmpFunction[1] =
+          SanCovTraceCmp1, VoidTy, IRB.getInt8Ty(), IRB.getInt8Ty(), nullptr));
+  SanCovTraceCmpFunction[1] = checkSanitizerInterfaceFunction(
+      M.getOrInsertFunction(SanCovTraceCmp2, VoidTy, IRB.getInt16Ty(),
+                            IRB.getInt16Ty(), nullptr));
+  SanCovTraceCmpFunction[2] = checkSanitizerInterfaceFunction(
+      M.getOrInsertFunction(SanCovTraceCmp4, VoidTy, IRB.getInt32Ty(),
+                            IRB.getInt32Ty(), nullptr));
+  SanCovTraceCmpFunction[3] =
       checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-          SanCovTraceCmp2, VoidTy, IRB.getInt16Ty(), IRB.getInt16Ty()));
-  SanCovTraceCmpFunction[2] =
-      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-          SanCovTraceCmp4, VoidTy, IRB.getInt32Ty(), IRB.getInt32Ty()));
-  SanCovTraceCmpFunction[3] = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTraceCmp8, VoidTy, Int64Ty, Int64Ty));
+          SanCovTraceCmp8, VoidTy, Int64Ty, Int64Ty, nullptr));
 
-  SanCovTraceDivFunction[0] = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTraceDiv4, VoidTy, IRB.getInt32Ty()));
-  SanCovTraceDivFunction[1] = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTraceDiv8, VoidTy, Int64Ty));
-  SanCovTraceGepFunction = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTraceGep, VoidTy, IntptrTy));
+  SanCovTraceDivFunction[0] =
+      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+          SanCovTraceDiv4, VoidTy, IRB.getInt32Ty(), nullptr));
+  SanCovTraceDivFunction[1] =
+      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+          SanCovTraceDiv8, VoidTy, Int64Ty, nullptr));
+  SanCovTraceGepFunction =
+      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+          SanCovTraceGep, VoidTy, IntptrTy, nullptr));
   SanCovTraceSwitchFunction =
       checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-          SanCovTraceSwitchName, VoidTy, Int64Ty, Int64PtrTy));
+          SanCovTraceSwitchName, VoidTy, Int64Ty, Int64PtrTy, nullptr));
 
   // We insert an empty inline asm after cov callbacks to avoid callback merge.
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
@@ -297,13 +302,13 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
                             /*hasSideEffects=*/true);
 
   SanCovTracePC = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTracePCName, VoidTy));
-  SanCovTracePCGuard = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTracePCGuardName, VoidTy, Int32PtrTy));
+      M.getOrInsertFunction(SanCovTracePCName, VoidTy, nullptr));
+  SanCovTracePCGuard = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+      SanCovTracePCGuardName, VoidTy, Int32PtrTy, nullptr));
   SanCovTraceEnter = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTraceEnterName, VoidTy, Int32PtrTy));
+      M.getOrInsertFunction(SanCovTraceEnterName, VoidTy, Int32PtrTy, nullptr));
   SanCovTraceBB = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction(SanCovTraceBBName, VoidTy, Int32PtrTy));
+      M.getOrInsertFunction(SanCovTraceBBName, VoidTy, Int32PtrTy, nullptr));
 
   // At this point we create a dummy array of guards because we don't
   // know how many elements we will need.

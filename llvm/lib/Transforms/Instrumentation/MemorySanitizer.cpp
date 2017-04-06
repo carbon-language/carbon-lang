@@ -425,38 +425,39 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
   // which is not yet implemented.
   StringRef WarningFnName = Recover ? "__msan_warning"
                                     : "__msan_warning_noreturn";
-  WarningFn = M.getOrInsertFunction(WarningFnName, IRB.getVoidTy());
+  WarningFn = M.getOrInsertFunction(WarningFnName, IRB.getVoidTy(), nullptr);
 
   for (size_t AccessSizeIndex = 0; AccessSizeIndex < kNumberOfAccessSizes;
        AccessSizeIndex++) {
     unsigned AccessSize = 1 << AccessSizeIndex;
     std::string FunctionName = "__msan_maybe_warning_" + itostr(AccessSize);
-    MaybeWarningFn[AccessSizeIndex] =
-        M.getOrInsertFunction(FunctionName, IRB.getVoidTy(),
-                              IRB.getIntNTy(AccessSize * 8), IRB.getInt32Ty());
+    MaybeWarningFn[AccessSizeIndex] = M.getOrInsertFunction(
+        FunctionName, IRB.getVoidTy(), IRB.getIntNTy(AccessSize * 8),
+        IRB.getInt32Ty(), nullptr);
 
     FunctionName = "__msan_maybe_store_origin_" + itostr(AccessSize);
     MaybeStoreOriginFn[AccessSizeIndex] = M.getOrInsertFunction(
         FunctionName, IRB.getVoidTy(), IRB.getIntNTy(AccessSize * 8),
-        IRB.getInt8PtrTy(), IRB.getInt32Ty());
+        IRB.getInt8PtrTy(), IRB.getInt32Ty(), nullptr);
   }
 
   MsanSetAllocaOrigin4Fn = M.getOrInsertFunction(
-      "__msan_set_alloca_origin4", IRB.getVoidTy(), IRB.getInt8PtrTy(),
-      IntptrTy, IRB.getInt8PtrTy(), IntptrTy);
-  MsanPoisonStackFn = M.getOrInsertFunction(
-      "__msan_poison_stack", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy);
-  MsanChainOriginFn = M.getOrInsertFunction("__msan_chain_origin",
-                                            IRB.getInt32Ty(), IRB.getInt32Ty());
-  MemmoveFn =
-      M.getOrInsertFunction("__msan_memmove", IRB.getInt8PtrTy(),
-                            IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy);
-  MemcpyFn =
-      M.getOrInsertFunction("__msan_memcpy", IRB.getInt8PtrTy(),
-                            IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy);
-  MemsetFn =
-      M.getOrInsertFunction("__msan_memset", IRB.getInt8PtrTy(),
-                            IRB.getInt8PtrTy(), IRB.getInt32Ty(), IntptrTy);
+    "__msan_set_alloca_origin4", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy,
+    IRB.getInt8PtrTy(), IntptrTy, nullptr);
+  MsanPoisonStackFn =
+      M.getOrInsertFunction("__msan_poison_stack", IRB.getVoidTy(),
+                            IRB.getInt8PtrTy(), IntptrTy, nullptr);
+  MsanChainOriginFn = M.getOrInsertFunction(
+    "__msan_chain_origin", IRB.getInt32Ty(), IRB.getInt32Ty(), nullptr);
+  MemmoveFn = M.getOrInsertFunction(
+    "__msan_memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    IRB.getInt8PtrTy(), IntptrTy, nullptr);
+  MemcpyFn = M.getOrInsertFunction(
+    "__msan_memcpy", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    IntptrTy, nullptr);
+  MemsetFn = M.getOrInsertFunction(
+    "__msan_memset", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt32Ty(),
+    IntptrTy, nullptr);
 
   // Create globals.
   RetvalTLS = new GlobalVariable(

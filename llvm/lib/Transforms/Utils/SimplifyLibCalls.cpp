@@ -819,7 +819,7 @@ static Value *emitCalloc(Value *Num, Value *Size, const AttributeList &Attrs,
   const DataLayout &DL = M->getDataLayout();
   IntegerType *PtrType = DL.getIntPtrType((B.GetInsertBlock()->getContext()));
   Value *Calloc = M->getOrInsertFunction("calloc", Attrs, B.getInt8PtrTy(),
-                                         PtrType, PtrType);
+                                         PtrType, PtrType, nullptr);
   CallInst *CI = B.CreateCall(Calloc, { Num, Size }, "calloc");
 
   if (const auto *F = dyn_cast<Function>(Calloc->stripPointerCasts()))
@@ -1217,8 +1217,9 @@ Value *LibCallSimplifier::optimizeExp2(CallInst *CI, IRBuilder<> &B) {
         One = ConstantExpr::getFPExtend(One, Op->getType());
 
       Module *M = CI->getModule();
-      Value *NewCallee = M->getOrInsertFunction(
-          TLI->getName(LdExp), Op->getType(), Op->getType(), B.getInt32Ty());
+      Value *NewCallee =
+          M->getOrInsertFunction(TLI->getName(LdExp), Op->getType(),
+                                 Op->getType(), B.getInt32Ty(), nullptr);
       CallInst *CI = B.CreateCall(NewCallee, {One, LdExpArg});
       if (const Function *F = dyn_cast<Function>(Callee->stripPointerCasts()))
         CI->setCallingConv(F->getCallingConv());
@@ -1441,8 +1442,8 @@ static void insertSinCosCall(IRBuilder<> &B, Function *OrigCallee, Value *Arg,
   }
 
   Module *M = OrigCallee->getParent();
-  Value *Callee =
-      M->getOrInsertFunction(Name, OrigCallee->getAttributes(), ResTy, ArgTy);
+  Value *Callee = M->getOrInsertFunction(Name, OrigCallee->getAttributes(),
+                                         ResTy, ArgTy, nullptr);
 
   if (Instruction *ArgInst = dyn_cast<Instruction>(Arg)) {
     // If the argument is an instruction, it must dominate all uses so put our

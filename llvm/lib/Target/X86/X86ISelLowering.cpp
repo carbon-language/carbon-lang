@@ -2098,9 +2098,10 @@ void X86TargetLowering::insertSSPDeclarations(Module &M) const {
                         Type::getInt8PtrTy(M.getContext()));
 
     // MSVC CRT has a function to validate security cookie.
-    auto *SecurityCheckCookie = cast<Function>(M.getOrInsertFunction(
-        "__security_check_cookie", Type::getVoidTy(M.getContext()),
-        Type::getInt8PtrTy(M.getContext())));
+    auto *SecurityCheckCookie = cast<Function>(
+        M.getOrInsertFunction("__security_check_cookie",
+                              Type::getVoidTy(M.getContext()),
+                              Type::getInt8PtrTy(M.getContext()), nullptr));
     SecurityCheckCookie->setCallingConv(CallingConv::X86_FastCall);
     SecurityCheckCookie->addAttribute(1, Attribute::AttrKind::InReg);
     return;

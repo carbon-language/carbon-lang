@@ -160,13 +160,13 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
                            Attribute::NoUnwind);
   // Initialize the callbacks.
   TsanFuncEntry = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-      "__tsan_func_entry", Attr, IRB.getVoidTy(), IRB.getInt8PtrTy()));
+      "__tsan_func_entry", Attr, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
   TsanFuncExit = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction("__tsan_func_exit", Attr, IRB.getVoidTy()));
+      M.getOrInsertFunction("__tsan_func_exit", Attr, IRB.getVoidTy(), nullptr));
   TsanIgnoreBegin = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-      "__tsan_ignore_thread_begin", Attr, IRB.getVoidTy()));
-  TsanIgnoreEnd = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction("__tsan_ignore_thread_end", Attr, IRB.getVoidTy()));
+      "__tsan_ignore_thread_begin", Attr, IRB.getVoidTy(), nullptr));
+  TsanIgnoreEnd = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
+      "__tsan_ignore_thread_end", Attr, IRB.getVoidTy(), nullptr));
   OrdTy = IRB.getInt32Ty();
   for (size_t i = 0; i < kNumberOfAccessSizes; ++i) {
     const unsigned ByteSize = 1U << i;
@@ -175,31 +175,31 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
     std::string BitSizeStr = utostr(BitSize);
     SmallString<32> ReadName("__tsan_read" + ByteSizeStr);
     TsanRead[i] = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-        ReadName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy()));
+        ReadName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
 
     SmallString<32> WriteName("__tsan_write" + ByteSizeStr);
     TsanWrite[i] = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-        WriteName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy()));
+        WriteName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
 
     SmallString<64> UnalignedReadName("__tsan_unaligned_read" + ByteSizeStr);
     TsanUnalignedRead[i] =
         checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-            UnalignedReadName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy()));
+            UnalignedReadName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
 
     SmallString<64> UnalignedWriteName("__tsan_unaligned_write" + ByteSizeStr);
     TsanUnalignedWrite[i] =
         checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-            UnalignedWriteName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy()));
+            UnalignedWriteName, Attr, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
 
     Type *Ty = Type::getIntNTy(M.getContext(), BitSize);
     Type *PtrTy = Ty->getPointerTo();
     SmallString<32> AtomicLoadName("__tsan_atomic" + BitSizeStr + "_load");
     TsanAtomicLoad[i] = checkSanitizerInterfaceFunction(
-        M.getOrInsertFunction(AtomicLoadName, Attr, Ty, PtrTy, OrdTy));
+        M.getOrInsertFunction(AtomicLoadName, Attr, Ty, PtrTy, OrdTy, nullptr));
 
     SmallString<32> AtomicStoreName("__tsan_atomic" + BitSizeStr + "_store");
     TsanAtomicStore[i] = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-        AtomicStoreName, Attr, IRB.getVoidTy(), PtrTy, Ty, OrdTy));
+        AtomicStoreName, Attr, IRB.getVoidTy(), PtrTy, Ty, OrdTy, nullptr));
 
     for (int op = AtomicRMWInst::FIRST_BINOP;
         op <= AtomicRMWInst::LAST_BINOP; ++op) {
@@ -223,33 +223,33 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
         continue;
       SmallString<32> RMWName("__tsan_atomic" + itostr(BitSize) + NamePart);
       TsanAtomicRMW[op][i] = checkSanitizerInterfaceFunction(
-          M.getOrInsertFunction(RMWName, Attr, Ty, PtrTy, Ty, OrdTy));
+          M.getOrInsertFunction(RMWName, Attr, Ty, PtrTy, Ty, OrdTy, nullptr));
     }
 
     SmallString<32> AtomicCASName("__tsan_atomic" + BitSizeStr +
                                   "_compare_exchange_val");
     TsanAtomicCAS[i] = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-        AtomicCASName, Attr, Ty, PtrTy, Ty, Ty, OrdTy, OrdTy));
+        AtomicCASName, Attr, Ty, PtrTy, Ty, Ty, OrdTy, OrdTy, nullptr));
   }
   TsanVptrUpdate = checkSanitizerInterfaceFunction(
       M.getOrInsertFunction("__tsan_vptr_update", Attr, IRB.getVoidTy(),
-                            IRB.getInt8PtrTy(), IRB.getInt8PtrTy()));
+                            IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), nullptr));
   TsanVptrLoad = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-      "__tsan_vptr_read", Attr, IRB.getVoidTy(), IRB.getInt8PtrTy()));
+      "__tsan_vptr_read", Attr, IRB.getVoidTy(), IRB.getInt8PtrTy(), nullptr));
   TsanAtomicThreadFence = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-      "__tsan_atomic_thread_fence", Attr, IRB.getVoidTy(), OrdTy));
+      "__tsan_atomic_thread_fence", Attr, IRB.getVoidTy(), OrdTy, nullptr));
   TsanAtomicSignalFence = checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-      "__tsan_atomic_signal_fence", Attr, IRB.getVoidTy(), OrdTy));
+      "__tsan_atomic_signal_fence", Attr, IRB.getVoidTy(), OrdTy, nullptr));
 
   MemmoveFn = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction("memmove", Attr, IRB.getInt8PtrTy(),
-                            IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy));
+      M.getOrInsertFunction("memmove", Attr, IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+                            IRB.getInt8PtrTy(), IntptrTy, nullptr));
   MemcpyFn = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction("memcpy", Attr, IRB.getInt8PtrTy(),
-                            IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy));
+      M.getOrInsertFunction("memcpy", Attr, IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+                            IRB.getInt8PtrTy(), IntptrTy, nullptr));
   MemsetFn = checkSanitizerInterfaceFunction(
-      M.getOrInsertFunction("memset", Attr, IRB.getInt8PtrTy(),
-                            IRB.getInt8PtrTy(), IRB.getInt32Ty(), IntptrTy));
+      M.getOrInsertFunction("memset", Attr, IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+                            IRB.getInt32Ty(), IntptrTy, nullptr));
 }
 
 bool ThreadSanitizer::doInitialization(Module &M) {
