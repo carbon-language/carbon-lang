@@ -3159,6 +3159,17 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
     SDValue Cast = DAG.getNode(ISD::BITCAST, DL, MVT::i32, Src);
     return DAG.getNode(AMDGPUISD::KILL, DL, MVT::Other, Chain, Cast);
   }
+  case Intrinsic::amdgcn_s_barrier: {
+    if (getTargetMachine().getOptLevel() > CodeGenOpt::None) {
+      const MachineFunction &MF = DAG.getMachineFunction();
+      const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
+      unsigned WGSize = ST.getFlatWorkGroupSizes(*MF.getFunction()).second;
+      if (WGSize <= ST.getWavefrontSize())
+        return SDValue(DAG.getMachineNode(AMDGPU::WAVE_BARRIER, DL, MVT::Other,
+                                          Op.getOperand(0)), 0);
+    }
+    return SDValue();
+  };
   default:
     return Op;
   }
