@@ -35,12 +35,13 @@ Configuration files:
   option, command-line option takes precedence. The effective
   configuration can be inspected using -dump-config:
 
-    $ clang-tidy -dump-config - --
+    $ clang-tidy -dump-config
     ---
     Checks:          '-*,some-check'
     WarningsAsErrors: ''
     HeaderFilterRegex: ''
     AnalyzeTemporaryDtors: false
+    FormatStyle:     none
     User:            user
     CheckOptions:
       - key:             some-check.SomeOption
@@ -131,6 +132,8 @@ Style for formatting code around applied fixes:
   - 'llvm', 'google', 'webkit', 'mozilla'
 See clang-format documentation for the up-to-date
 information about formatting styles and options.
+This option overrides the 'FormatStyle` option in
+.clang-tidy file, if any.
 )"),
                                    cl::init("none"),
                                    cl::cat(ClangTidyCategory));
