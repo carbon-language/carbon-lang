@@ -521,7 +521,7 @@ define <2 x i132> @orsext_to_sel_vec_swap(<2 x i132> %x, <2 x i1> %y) {
 
 define i32 @test39(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test39(
-; CHECK-NEXT:    [[OR:%.*]] = or i32 %a, %b
+; CHECK-NEXT:    [[OR:%.*]] = or i32 %b, %a
 ; CHECK-NEXT:    ret i32 [[OR]]
 ;
   %xor = xor i32 %a, -1
@@ -801,9 +801,7 @@ final:
 define i8 @test51(i8 %a, i8 %b, i8 %c) {
 ; CHECK-LABEL: @test51(
 ; CHECK-NEXT:    [[W:%.*]] = mul i8 [[B:%.*]], [[C:%.*]]
-; CHECK-NEXT:    [[Z:%.*]] = xor i8 [[A:%.*]], -1
-; CHECK-NEXT:    [[Y:%.*]] = and i8 [[W]], [[Z]]
-; CHECK-NEXT:    [[X:%.*]] = or i8 [[Y]], [[A]]
+; CHECK-NEXT:    [[X:%.*]] = or i8 [[W]], [[A:%.*]]
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %w = mul i8 %b, %c
@@ -816,9 +814,7 @@ define i8 @test51(i8 %a, i8 %b, i8 %c) {
 define i8 @test52(i8 %a, i8 %b, i8 %c) {
 ; CHECK-LABEL: @test52(
 ; CHECK-NEXT:    [[W:%.*]] = mul i8 [[B:%.*]], [[C:%.*]]
-; CHECK-NEXT:    [[Z:%.*]] = xor i8 [[W]], -1
-; CHECK-NEXT:    [[Y:%.*]] = and i8 [[Z]], [[A:%.*]]
-; CHECK-NEXT:    [[X:%.*]] = or i8 [[W]], [[Y]]
+; CHECK-NEXT:    [[X:%.*]] = or i8 [[W]], [[A:%.*]]
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %w = mul i8 %b, %c
@@ -831,9 +827,7 @@ define i8 @test52(i8 %a, i8 %b, i8 %c) {
 define i8 @test53(i8 %a, i8 %b, i8 %c) {
 ; CHECK-LABEL: @test53(
 ; CHECK-NEXT:    [[W:%.*]] = mul i8 [[B:%.*]], [[C:%.*]]
-; CHECK-NEXT:    [[Z:%.*]] = xor i8 [[W]], -1
-; CHECK-NEXT:    [[Y:%.*]] = and i8 [[Z]], [[A:%.*]]
-; CHECK-NEXT:    [[X:%.*]] = or i8 [[W]], [[Y]]
+; CHECK-NEXT:    [[X:%.*]] = or i8 [[W]], [[A:%.*]]
 ; CHECK-NEXT:    ret i8 [[X]]
 ;
   %w = mul i8 %b, %c
