@@ -327,7 +327,7 @@
 # RAW-NEXT:     SecName: 65535
 # RAW-NEXT:     ClassName: 65535
 # RAW-NEXT:     Offset: 0
-# RAW-NEXT:     SecByteLength: 122
+# RAW-NEXT:     SecByteLength:
 # RAW-NEXT:   }
 # RAW-NEXT:   Entry {
 # RAW-NEXT:     Flags [ (0x208)
@@ -392,7 +392,7 @@
 # RAW-NEXT:   }
 # RAW-NEXT:   {
 # RAW-NEXT:     Name: .rdata
-# RAW-NEXT:     Virtual Size: 122
+# RAW-NEXT:     Virtual Size:
 # RAW-NEXT:     Virtual Address: 16384
 # RAW-NEXT:     Size of Raw Data: 512
 # RAW-NEXT:     File Pointer to Raw Data: 2560
