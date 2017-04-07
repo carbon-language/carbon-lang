@@ -181,6 +181,9 @@ static unsigned handleARMTlsRelocation(GotSection<ELFT> *Got, uint32_t Type,
       if (Body.isPreemptible())
         In<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, Got,
                                      Off + Config->Wordsize, false, &Body, 0});
+      else
+        Got->Relocations.push_back(
+            {R_ABS, R_ARM_ABS32, Off + Config->Wordsize, 0, &Body});
     }
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
     return 1;
