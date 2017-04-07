@@ -438,12 +438,12 @@ unsigned char test_interlockedbittestandset(volatile long *ptr, long bit) {
   return _interlockedbittestandset(ptr, bit);
 }
 // CHECK-LABEL: define{{.*}} i8 @test_interlockedbittestandset
-// CHECK: %0 = shl i32 1, %bit
-// CHECK: %1 = atomicrmw or i32* %ptr, i32 %0 seq_cst
-// CHECK: %2 = lshr i32 %1, %bit
-// CHECK: %3 = trunc i32 %2 to i8
-// CHECK: %4 = and i8 %3, 1
-// CHECK: ret i8 %4
+// CHECK: [[MASKBIT:%[0-9]+]] = shl i32 1, %bit
+// CHECK: [[OLD:%[0-9]+]] = atomicrmw or i32* %ptr, i32 [[MASKBIT]] seq_cst
+// CHECK: [[SHIFT:%[0-9]+]] = lshr i32 [[OLD]], %bit
+// CHECK: [[TRUNC:%[0-9]+]] = trunc i32 [[SHIFT]] to i8
+// CHECK: [[AND:%[0-9]+]] = and i8 [[TRUNC]], 1
+// CHECK: ret i8 [[AND]]
 
 void test__fastfail() {
   __fastfail(42);
