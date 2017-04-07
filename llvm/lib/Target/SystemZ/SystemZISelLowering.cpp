@@ -5001,8 +5001,6 @@ SDValue SystemZTargetLowering::combineSTORE(
 SDValue SystemZTargetLowering::combineEXTRACT_VECTOR_ELT(
     SDNode *N, DAGCombinerInfo &DCI) const {
 
-  // <1 x ..> vectors may be present in the function even without vector
-  // support, which will be handled during legalization.
   if (!Subtarget.hasVector())
     return SDValue();
 
