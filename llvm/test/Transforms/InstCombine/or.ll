@@ -542,6 +542,44 @@ define i32 @test40(i32 %a, i32 %b) {
   ret i32 %or
 }
 
+define i32 @test40b(i32 %a, i32 %b) {
+; CHECK-LABEL: @test40b(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %b, %a
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 %a, -1
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[AND]], [[XOR]]
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %and = and i32 %b, %a
+  %xor = xor i32 %a, -1
+  %or = or i32 %and, %xor
+  ret i32 %or
+}
+
+define i32 @test40c(i32 %a, i32 %b) {
+; CHECK-LABEL: @test40c(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %b, %a
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 %a, -1
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[AND]], [[XOR]]
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %and = and i32 %b, %a
+  %xor = xor i32 %a, -1
+  %or = or i32 %xor, %and
+  ret i32 %or
+}
+
+define i32 @test40d(i32 %a, i32 %b) {
+; CHECK-LABEL: @test40d(
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 %a, -1
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[XOR]], %b
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %and = and i32 %a, %b
+  %xor = xor i32 %a, -1
+  %or = or i32 %xor, %and
+  ret i32 %or
+}
+
 define i32 @test41(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test41(
 ; CHECK-NEXT:    [[TMP1:%.*]] = xor i32 %a, -1
