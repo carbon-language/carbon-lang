@@ -42,5 +42,5 @@ TEST(Parallel, parallel_for) {
   std::fill(expected, expected + 2049, 2);
   ASSERT_TRUE(std::equal(range, range + 2049, expected));
   // Check that we don't write past the end of the requested range.
-  ASSERT_EQ(range[2049], 1);
+  ASSERT_EQ(range[2049], 1u);
 }
