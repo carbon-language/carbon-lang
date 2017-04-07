@@ -544,9 +544,8 @@ define i32 @test40(i32 %a, i32 %b) {
 
 define i32 @test40b(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test40b(
-; CHECK-NEXT:    [[AND:%.*]] = and i32 %b, %a
 ; CHECK-NEXT:    [[XOR:%.*]] = xor i32 %a, -1
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[AND]], [[XOR]]
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[XOR]], %b
 ; CHECK-NEXT:    ret i32 [[OR]]
 ;
   %and = and i32 %b, %a
@@ -557,9 +556,8 @@ define i32 @test40b(i32 %a, i32 %b) {
 
 define i32 @test40c(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test40c(
-; CHECK-NEXT:    [[AND:%.*]] = and i32 %b, %a
 ; CHECK-NEXT:    [[XOR:%.*]] = xor i32 %a, -1
-; CHECK-NEXT:    [[OR:%.*]] = or i32 [[AND]], [[XOR]]
+; CHECK-NEXT:    [[OR:%.*]] = or i32 [[XOR]], %b
 ; CHECK-NEXT:    ret i32 [[OR]]
 ;
   %and = and i32 %b, %a

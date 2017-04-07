@@ -2098,9 +2098,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return BinaryOperator::CreateOr(Op0, A);
 
   // ((A & B) | ~A) -> (~A | B)
-  if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
-      match(Op1, m_Not(m_Specific(A))))
-    return BinaryOperator::CreateOr(Builder->CreateNot(A), B);
+  // The NOT is guaranteed to be in the RHS by complexity ordering.
+  if (match(Op1, m_Not(m_Value(A))) &&
+      match(Op0, m_c_And(m_Specific(A), m_Value(B))))
+    return BinaryOperator::CreateOr(Op1, B);
 
   // (A & ~B) | (A ^ B) -> (A ^ B)
   // (~B & A) | (A ^ B) -> (A ^ B)
