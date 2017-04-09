@@ -431,10 +431,7 @@ define i32 @test33b(i32 %b) {
 
 define <2 x i32> @test33vec(<2 x i32> %b) {
 ; CHECK-LABEL: @test33vec(
-; CHECK-NEXT:    [[TMP_4_MASK:%.*]] = and <2 x i32> [[B:%.*]], <i32 1, i32 1>
-; CHECK-NEXT:    [[TMP_10:%.*]] = xor <2 x i32> [[TMP_4_MASK]], <i32 1, i32 1>
-; CHECK-NEXT:    [[TMP_12:%.*]] = and <2 x i32> [[B]], <i32 -2, i32 -2>
-; CHECK-NEXT:    [[TMP_13:%.*]] = or <2 x i32> [[TMP_12]], [[TMP_10]]
+; CHECK-NEXT:    [[TMP_13:%.*]] = xor <2 x i32> [[B:%.*]], <i32 1, i32 1>
 ; CHECK-NEXT:    ret <2 x i32> [[TMP_13]]
 ;
   %tmp.4.mask = and <2 x i32> %b, <i32 1, i32 1>
@@ -446,10 +443,7 @@ define <2 x i32> @test33vec(<2 x i32> %b) {
 
 define <2 x i32> @test33vecb(<2 x i32> %b) {
 ; CHECK-LABEL: @test33vecb(
-; CHECK-NEXT:    [[TMP_4_MASK:%.*]] = and <2 x i32> [[B:%.*]], <i32 1, i32 1>
-; CHECK-NEXT:    [[TMP_10:%.*]] = xor <2 x i32> [[TMP_4_MASK]], <i32 1, i32 1>
-; CHECK-NEXT:    [[TMP_12:%.*]] = and <2 x i32> [[B]], <i32 -2, i32 -2>
-; CHECK-NEXT:    [[TMP_13:%.*]] = or <2 x i32> [[TMP_10]], [[TMP_12]]
+; CHECK-NEXT:    [[TMP_13:%.*]] = xor <2 x i32> [[B:%.*]], <i32 1, i32 1>
 ; CHECK-NEXT:    ret <2 x i32> [[TMP_13]]
 ;
   %tmp.4.mask = and <2 x i32> %b, <i32 1, i32 1>

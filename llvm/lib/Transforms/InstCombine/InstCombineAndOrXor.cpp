@@ -2070,26 +2070,29 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (Instruction *BSwap = MatchBSwap(I))
     return BSwap;
 
-  Value *A = nullptr, *B = nullptr;
-  ConstantInt *C1 = nullptr, *C2 = nullptr;
+  {
+    Value *A;
+    const APInt *C;
+    // (X^C)|Y -> (X|Y)^C iff Y&C == 0
+    if (match(Op0, m_OneUse(m_Xor(m_Value(A), m_APInt(C)))) &&
+        MaskedValueIsZero(Op1, *C, 0, &I)) {
+      Value *NOr = Builder->CreateOr(A, Op1);
+      NOr->takeName(Op0);
+      return BinaryOperator::CreateXor(NOr,
+                                       cast<Instruction>(Op0)->getOperand(1));
+    }
 
-  // (X^C)|Y -> (X|Y)^C iff Y&C == 0
-  if (Op0->hasOneUse() &&
-      match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
-      MaskedValueIsZero(Op1, C1->getValue(), 0, &I)) {
-    Value *NOr = Builder->CreateOr(A, Op1);
-    NOr->takeName(Op0);
-    return BinaryOperator::CreateXor(NOr, C1);
+    // Y|(X^C) -> (X|Y)^C iff Y&C == 0
+    if (match(Op1, m_OneUse(m_Xor(m_Value(A), m_APInt(C)))) &&
+        MaskedValueIsZero(Op0, *C, 0, &I)) {
+      Value *NOr = Builder->CreateOr(A, Op0);
+      NOr->takeName(Op0);
+      return BinaryOperator::CreateXor(NOr,
+                                       cast<Instruction>(Op1)->getOperand(1));
+    }
   }
 
-  // Y|(X^C) -> (X|Y)^C iff Y&C == 0
-  if (Op1->hasOneUse() &&
-      match(Op1, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
-      MaskedValueIsZero(Op0, C1->getValue(), 0, &I)) {
-    Value *NOr = Builder->CreateOr(A, Op0);
-    NOr->takeName(Op0);
-    return BinaryOperator::CreateXor(NOr, C1);
-  }
+  Value *A, *B;
 
   // ((~A & B) | A) -> (A | B)
   if (match(Op0, m_c_And(m_Not(m_Specific(Op1)), m_Value(A))))
@@ -2121,8 +2124,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (match(Op0, m_And(m_Value(A), m_Value(C))) &&
       match(Op1, m_And(m_Value(B), m_Value(D)))) {
     Value *V1 = nullptr, *V2 = nullptr;
-    C1 = dyn_cast<ConstantInt>(C);
-    C2 = dyn_cast<ConstantInt>(D);
+    ConstantInt *C1 = dyn_cast<ConstantInt>(C);
+    ConstantInt *C2 = dyn_cast<ConstantInt>(D);
     if (C1 && C2) {  // (A & C1)|(B & C2)
       if ((C1->getValue() & C2->getValue()) == 0) {
         // ((V | N) & C1) | (V & C2) --> (V|N) & (C1|C2)
@@ -2347,6 +2350,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   // be simplified by a later pass either, so we try swapping the inner/outer
   // ORs in the hopes that we'll be able to simplify it this way.
   // (X|C) | V --> (X|V) | C
+  ConstantInt *C1;
   if (Op0->hasOneUse() && !isa<ConstantInt>(Op1) &&
       match(Op0, m_Or(m_Value(A), m_ConstantInt(C1)))) {
     Value *Inner = Builder->CreateOr(A, Op1);
