@@ -2467,9 +2467,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if (Op0I->getOpcode() == Instruction::Sub && RHSC->isAllOnesValue())
         if (Constant *Op0I0C = dyn_cast<Constant>(Op0I->getOperand(0))) {
           Constant *NegOp0I0C = ConstantExpr::getNeg(Op0I0C);
-          Constant *ConstantRHS = ConstantExpr::getSub(NegOp0I0C,
-                                      ConstantInt::get(I.getType(), 1));
-          return BinaryOperator::CreateAdd(Op0I->getOperand(1), ConstantRHS);
+          return BinaryOperator::CreateAdd(Op0I->getOperand(1),
+                                           SubOne(NegOp0I0C));
         }
 
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
@@ -2477,10 +2476,8 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           // ~(X-c) --> (-c-1)-X
           if (RHSC->isAllOnesValue()) {
             Constant *NegOp0CI = ConstantExpr::getNeg(Op0CI);
-            return BinaryOperator::CreateSub(
-                           ConstantExpr::getSub(NegOp0CI,
-                                      ConstantInt::get(I.getType(), 1)),
-                                      Op0I->getOperand(0));
+            return BinaryOperator::CreateSub(SubOne(NegOp0CI),
+                                             Op0I->getOperand(0));
           } else if (RHSC->getValue().isSignBit()) {
             // (X + C) ^ signbit -> (X + C + signbit)
             Constant *C = Builder->getInt(RHSC->getValue() + Op0CI->getValue());
