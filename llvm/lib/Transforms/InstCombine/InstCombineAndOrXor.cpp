@@ -2567,8 +2567,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                Op0I->hasOneUse()){
       if (A == Op1)                                        // (A&B)^A -> (B&A)^A
         std::swap(A, B);
+      const APInt *C;
       if (B == Op1 &&                                      // (B&A)^A == ~B & A
-          !isa<ConstantInt>(Op1)) {  // Canonical form is (B&C)^C
+          !match(Op1, m_APInt(C))) {  // Canonical form is (B&C)^C
         return BinaryOperator::CreateAnd(Builder->CreateNot(A), Op1);
       }
     }
