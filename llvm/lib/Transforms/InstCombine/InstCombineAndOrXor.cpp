@@ -2446,14 +2446,14 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
                                CI->getOperand(0), CI->getOperand(1));
   }
 
-  if (ConstantInt *RHS = dyn_cast<ConstantInt>(Op1)) {
+  if (ConstantInt *RHSC = dyn_cast<ConstantInt>(Op1)) {
     // fold (xor(zext(cmp)), 1) and (xor(sext(cmp)), -1) to ext(!cmp).
     if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
       if (CmpInst *CI = dyn_cast<CmpInst>(Op0C->getOperand(0))) {
         if (CI->hasOneUse() && Op0C->hasOneUse()) {
           Instruction::CastOps Opcode = Op0C->getOpcode();
           if ((Opcode == Instruction::ZExt || Opcode == Instruction::SExt) &&
-              (RHS == ConstantExpr::getCast(Opcode, Builder->getTrue(),
+              (RHSC == ConstantExpr::getCast(Opcode, Builder->getTrue(),
                                             Op0C->getDestTy()))) {
             CI->setPredicate(CI->getInversePredicate());
             return CastInst::Create(Opcode, CI, Op0C->getType());
@@ -2464,7 +2464,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
     if (BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0)) {
       // ~(c-X) == X-c-1 == X+(-c-1)
-      if (Op0I->getOpcode() == Instruction::Sub && RHS->isAllOnesValue())
+      if (Op0I->getOpcode() == Instruction::Sub && RHSC->isAllOnesValue())
         if (Constant *Op0I0C = dyn_cast<Constant>(Op0I->getOperand(0))) {
           Constant *NegOp0I0C = ConstantExpr::getNeg(Op0I0C);
           Constant *ConstantRHS = ConstantExpr::getSub(NegOp0I0C,
@@ -2475,15 +2475,15 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1))) {
         if (Op0I->getOpcode() == Instruction::Add) {
           // ~(X-c) --> (-c-1)-X
-          if (RHS->isAllOnesValue()) {
+          if (RHSC->isAllOnesValue()) {
             Constant *NegOp0CI = ConstantExpr::getNeg(Op0CI);
             return BinaryOperator::CreateSub(
                            ConstantExpr::getSub(NegOp0CI,
                                       ConstantInt::get(I.getType(), 1)),
                                       Op0I->getOperand(0));
-          } else if (RHS->getValue().isSignBit()) {
+          } else if (RHSC->getValue().isSignBit()) {
             // (X + C) ^ signbit -> (X + C + signbit)
-            Constant *C = Builder->getInt(RHS->getValue() + Op0CI->getValue());
+            Constant *C = Builder->getInt(RHSC->getValue() + Op0CI->getValue());
             return BinaryOperator::CreateAdd(Op0I->getOperand(0), C);
 
           }
@@ -2491,10 +2491,10 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           // (X|C1)^C2 -> X^(C1|C2) iff X&~C1 == 0
           if (MaskedValueIsZero(Op0I->getOperand(0), Op0CI->getValue(),
                                 0, &I)) {
-            Constant *NewRHS = ConstantExpr::getOr(Op0CI, RHS);
+            Constant *NewRHS = ConstantExpr::getOr(Op0CI, RHSC);
             // Anything in both C1 and C2 is known to be zero, remove it from
             // NewRHS.
-            Constant *CommonBits = ConstantExpr::getAnd(Op0CI, RHS);
+            Constant *CommonBits = ConstantExpr::getAnd(Op0CI, RHSC);
             NewRHS = ConstantExpr::getAnd(NewRHS,
                                        ConstantExpr::getNot(CommonBits));
             Worklist.Add(Op0I);
@@ -2512,7 +2512,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
               E1->getOpcode() == Instruction::Xor &&
               (C1 = dyn_cast<ConstantInt>(E1->getOperand(1)))) {
             // fold (C1 >> C2) ^ C3
-            ConstantInt *C2 = Op0CI, *C3 = RHS;
+            ConstantInt *C2 = Op0CI, *C3 = RHSC;
             APInt FoldConst = C1->getValue().lshr(C2->getValue());
             FoldConst ^= C3->getValue();
             // Prepare the two operands.
