@@ -1,5 +1,4 @@
-//===-- AttributeSetNode.h - AttributeList Internal Node ---------*- C++
-//-*-===//
+//===-- AttributeSetNode.h - AttributeList Internal Node --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -9,7 +8,8 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file defines the node class used internally by AttributeList.
+/// \brief This file defines the class that represents a group of attributes
+/// that apply to one element: function, return type, or parameter.
 ///
 //===----------------------------------------------------------------------===//
 
@@ -63,6 +63,8 @@ public:
   AttributeSetNode &operator=(const AttributeSetNode &) = delete;
 
   void operator delete(void *p) { ::operator delete(p); }
+
+  static AttributeSetNode *get(LLVMContext &C, const AttrBuilder &B);
 
   static AttributeSetNode *get(LLVMContext &C, ArrayRef<Attribute> Attrs);
 

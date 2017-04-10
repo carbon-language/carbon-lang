@@ -16,10 +16,10 @@
 #ifndef LLVM_LIB_IR_ATTRIBUTEIMPL_H
 #define LLVM_LIB_IR_ATTRIBUTEIMPL_H
 
-#include "AttributeSetNode.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/AttributeSetNode.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/Support/TrailingObjects.h"
 #include <algorithm>
