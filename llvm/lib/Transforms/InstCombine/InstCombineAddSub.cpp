@@ -1623,8 +1623,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   {
     Value *Y;
     // X-(X+Y) == -Y    X-(Y+X) == -Y
-    if (match(Op1, m_Add(m_Specific(Op0), m_Value(Y))) ||
-        match(Op1, m_Add(m_Value(Y), m_Specific(Op0))))
+    if (match(Op1, m_c_Add(m_Specific(Op0), m_Value(Y))))
       return BinaryOperator::CreateNeg(Y);
 
     // (X-Y)-X == -Y

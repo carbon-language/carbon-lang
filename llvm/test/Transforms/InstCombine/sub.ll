@@ -851,3 +851,21 @@ final:
   %value = sub <2 x i32> <i32 123, i32 333>, %A
   ret <2 x i32> %value
 }
+
+define i32 @test56(i32 %A, i32 %B) {
+; CHECK-LABEL: @test56(
+; CHECK-NEXT:    [[Y:%.*]] = sub i32 0, [[B:%.*]]
+; CHECK-NEXT:    ret i32 [[Y]]
+;
+  %X = add i32 %A, %B
+  %Y = sub i32 %A, %X
+  ret i32 %Y                                                                                                                                                                                                                                             }
+
+define i32 @test57(i32 %A, i32 %B) {
+; CHECK-LABEL: @test57(
+; CHECK-NEXT:    [[Y:%.*]] = sub i32 0, [[B:%.*]]
+; CHECK-NEXT:    ret i32 [[Y]]
+;
+  %X = add i32 %B, %A
+  %Y = sub i32 %A, %X
+  ret i32 %Y                                                                                                                                                                                                                                             }
