@@ -14,6 +14,7 @@
 #include "PrettyFunctionDumper.h"
 #include "llvm-pdbdump.h"
 
+#include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeArray.h"
@@ -23,10 +24,12 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolTypePointer.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeTypedef.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeUDT.h"
+#include "llvm/DebugInfo/PDB/PDBTypes.h"
 
 #include "llvm/Support/Format.h"
 
 using namespace llvm;
+using namespace llvm::codeview;
 using namespace llvm::pdb;
 
 VariableDumper::VariableDumper(LinePrinter &P)
@@ -55,7 +58,6 @@ void VariableDumper::start(const PDBSymbolData &Var) {
       break;
     Printer.NewLine();
     Printer << "data ";
-    WithColor(Printer, PDB_ColorItem::Keyword).get() << "const ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
     Printer << " = ";
     WithColor(Printer, PDB_ColorItem::LiteralValue).get() << Var.getValue();
@@ -85,6 +87,23 @@ void VariableDumper::start(const PDBSymbolData &Var) {
   }
 }
 
+void VariableDumper::dump(const PDBSymbolTypeArray &Symbol) {
+  auto ElementType = Symbol.getElementType();
+  assert(ElementType);
+  if (!ElementType)
+    return;
+  ElementType->dump(*this);
+}
+
+void VariableDumper::dumpRight(const PDBSymbolTypeArray &Symbol) {
+  auto ElementType = Symbol.getElementType();
+  assert(ElementType);
+  if (!ElementType)
+    return;
+  Printer << '[' << Symbol.getCount() << ']';
+  ElementType->dumpRight(*this);
+}
+
 void VariableDumper::dump(const PDBSymbolTypeBuiltin &Symbol) {
   BuiltinDumper Dumper(Printer);
   Dumper.start(Symbol);
@@ -94,27 +113,71 @@ void VariableDumper::dump(const PDBSymbolTypeEnum &Symbol) {
   WithColor(Printer, PDB_ColorItem::Type).get() << Symbol.getName();
 }
 
-void VariableDumper::dump(const PDBSymbolTypeFunctionSig &Symbol) {}
+void VariableDumper::dump(const PDBSymbolTypeFunctionSig &Symbol) {
+  auto ReturnType = Symbol.getReturnType();
+  ReturnType->dump(*this);
+  Printer << " ";
+
+  uint32_t ClassParentId = Symbol.getClassParentId();
+  auto ClassParent =
+      Symbol.getSession().getConcreteSymbolById<PDBSymbolTypeUDT>(
+          ClassParentId);
+
+  if (ClassParent) {
+    WithColor(Printer, PDB_ColorItem::Identifier).get()
+      << ClassParent->getName();
+    Printer << "::";
+  }
+}
+
+void VariableDumper::dumpRight(const PDBSymbolTypeFunctionSig &Symbol) {
+  Printer << "(";
+  if (auto Arguments = Symbol.getArguments()) {
+    uint32_t Index = 0;
+    while (auto Arg = Arguments->getNext()) {
+      Arg->dump(*this);
+      if (++Index < Arguments->getChildCount())
+        Printer << ", ";
+    }
+  }
+  Printer << ")";
+
+  if (Symbol.isConstType())
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << " const";
+  if (Symbol.isVolatileType())
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << " volatile";
+}
 
 void VariableDumper::dump(const PDBSymbolTypePointer &Symbol) {
   auto PointeeType = Symbol.getPointeeType();
   if (!PointeeType)
     return;
-
-  if (auto Func = PointeeType->cast<PDBSymbolFunc>()) {
-    FunctionDumper NestedDumper(Printer);
-    FunctionDumper::PointerType Pointer =
-        Symbol.isReference() ? FunctionDumper::PointerType::Reference
-                             : FunctionDumper::PointerType::Pointer;
-    NestedDumper.start(*Func, Pointer);
-  } else {
-    if (Symbol.isConstType())
-      WithColor(Printer, PDB_ColorItem::Keyword).get() << "const ";
-    if (Symbol.isVolatileType())
-      WithColor(Printer, PDB_ColorItem::Keyword).get() << "volatile ";
-    PointeeType->dump(*this);
-    Printer << (Symbol.isReference() ? "&" : "*");
+  PointeeType->dump(*this);
+  if (auto Func = PointeeType->cast<PDBSymbolTypeFunctionSig>()) {
+    // A hack to get the calling convention in the right spot.
+    Printer << " (";
+    PDB_CallingConv CC = Func->getCallingConvention();
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << CC << " ";
+  } else if (isa<PDBSymbolTypeArray>(PointeeType.get())) {
+    Printer << " (";
   }
+  Printer << (Symbol.isReference() ? "&" : "*");
+  if (Symbol.isConstType())
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << " const ";
+  if (Symbol.isVolatileType())
+    WithColor(Printer, PDB_ColorItem::Keyword).get() << " volatile ";
+}
+
+void VariableDumper::dumpRight(const PDBSymbolTypePointer &Symbol) {
+  auto PointeeType = Symbol.getPointeeType();
+  assert(PointeeType);
+  if (!PointeeType)
+    return;
+  if (isa<PDBSymbolTypeFunctionSig>(PointeeType.get()) ||
+      isa<PDBSymbolTypeArray>(PointeeType.get())) {
+    Printer << ")";
+  }
+  PointeeType->dumpRight(*this);
 }
 
 void VariableDumper::dump(const PDBSymbolTypeTypedef &Symbol) {
@@ -128,43 +191,7 @@ void VariableDumper::dump(const PDBSymbolTypeUDT &Symbol) {
 
 void VariableDumper::dumpSymbolTypeAndName(const PDBSymbol &Type,
                                            StringRef Name) {
-  if (auto *ArrayType = Type.cast<PDBSymbolTypeArray>()) {
-    std::string IndexSpec;
-    raw_string_ostream IndexStream(IndexSpec);
-    std::unique_ptr<PDBSymbol> ElementType = ArrayType->getElementType();
-    while (auto NestedArray = ElementType->cast<PDBSymbolTypeArray>()) {
-      IndexStream << "[";
-      IndexStream << NestedArray->getCount();
-      IndexStream << "]";
-      ElementType = NestedArray->getElementType();
-    }
-    IndexStream << "[" << ArrayType->getCount() << "]";
-    ElementType->dump(*this);
-    WithColor(Printer, PDB_ColorItem::Identifier).get() << " " << Name;
-    Printer << IndexStream.str();
-  } else {
-    if (!tryDumpFunctionPointer(Type, Name)) {
-      Type.dump(*this);
-      WithColor(Printer, PDB_ColorItem::Identifier).get() << " " << Name;
-    }
-  }
-}
-
-bool VariableDumper::tryDumpFunctionPointer(const PDBSymbol &Type,
-                                            StringRef Name) {
-  // Function pointers come across as pointers to function signatures.  But the
-  // signature carries no name, so we have to handle this case separately.
-  if (auto *PointerType = Type.cast<PDBSymbolTypePointer>()) {
-    auto PointeeType = PointerType->getPointeeType();
-    if (auto *FunctionSig = PointeeType->cast<PDBSymbolTypeFunctionSig>()) {
-      FunctionDumper Dumper(Printer);
-      FunctionDumper::PointerType PT = FunctionDumper::PointerType::Pointer;
-      if (PointerType->isReference())
-        PT = FunctionDumper::PointerType::Reference;
-      std::string NameStr(Name.begin(), Name.end());
-      Dumper.start(*FunctionSig, NameStr.c_str(), PT);
-      return true;
-    }
-  }
-  return false;
+  Type.dump(*this);
+  WithColor(Printer, PDB_ColorItem::Identifier).get() << " " << Name;
+  Type.dumpRight(*this);
 }
