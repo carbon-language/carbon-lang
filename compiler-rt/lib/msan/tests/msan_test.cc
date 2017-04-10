@@ -175,10 +175,16 @@ void ExpectPoisonedWithOrigin(const T& t, unsigned origin) {
 }
 
 #define EXPECT_NOT_POISONED(x) EXPECT_EQ(true, TestForNotPoisoned((x)))
+#define EXPECT_NOT_POISONED2(data, size) \
+  EXPECT_EQ(true, TestForNotPoisoned((data), (size)))
+
+bool TestForNotPoisoned(const void *data, size_t size) {
+  return __msan_test_shadow(data, size) == -1;
+}
 
 template<typename T>
 bool TestForNotPoisoned(const T& t) {
-  return __msan_test_shadow((void*)&t, sizeof(t)) == -1;
+  return TestForNotPoisoned((void *)&t, sizeof(t));
 }
 
 static U8 poisoned_array[100];
@@ -879,48 +885,78 @@ TEST(MemorySanitizer, bind_getsockname) {
   close(sock);
 }
 
+class SocketAddr {
+ public:
+  virtual ~SocketAddr() = default;
+  virtual struct sockaddr *ptr() = 0;
+  virtual size_t size() const = 0;
+};
+
+class SocketAddr4 : public SocketAddr {
+ public:
+  SocketAddr4() { EXPECT_POISONED(sai_); }
+  explicit SocketAddr4(uint16_t port) {
+    memset(&sai_, 0, sizeof(sai_));
+    sai_.sin_family = AF_INET;
+    sai_.sin_port = port;
+    sai_.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  }
+
+  sockaddr *ptr() override {
+    return reinterpret_cast<sockaddr *>(&sai_);
+  }
+
+  size_t size() const override { return sizeof(sai_); }
+
+ private:
+  sockaddr_in sai_;
+};
+
+template <class... Args>
+std::unique_ptr<SocketAddr> CreateSockAddr(Args... args) {
+  return std::unique_ptr<SocketAddr>(new SocketAddr4(args...));
+}
+
+int CreateSocket(int socket_type) { return socket(AF_INET, socket_type, 0); }
+
 TEST(MemorySanitizer, accept) {
-  int listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+  int listen_socket = CreateSocket(SOCK_STREAM);
   ASSERT_LT(0, listen_socket);
 
-  struct sockaddr_in sai;
-  memset(&sai, 0, sizeof(sai));
-  sai.sin_family = AF_INET;
-  sai.sin_port = 0;
-  sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  int res = bind(listen_socket, (struct sockaddr *)&sai, sizeof(sai));
+  auto sai = CreateSockAddr(0);
+  int res = bind(listen_socket, sai->ptr(), sai->size());
   ASSERT_EQ(0, res);
 
   res = listen(listen_socket, 1);
   ASSERT_EQ(0, res);
 
-  socklen_t sz = sizeof(sai);
-  res = getsockname(listen_socket, (struct sockaddr *)&sai, &sz);
+  socklen_t sz = sai->size();
+  res = getsockname(listen_socket, sai->ptr(), &sz);
   ASSERT_EQ(0, res);
-  ASSERT_EQ(sizeof(sai), sz);
+  ASSERT_EQ(sai->size(), sz);
 
-  int connect_socket = socket(AF_INET, SOCK_STREAM, 0);
+  int connect_socket = CreateSocket(SOCK_STREAM);
   ASSERT_LT(0, connect_socket);
   res = fcntl(connect_socket, F_SETFL, O_NONBLOCK);
   ASSERT_EQ(0, res);
-  res = connect(connect_socket, (struct sockaddr *)&sai, sizeof(sai));
+  res = connect(connect_socket, sai->ptr(), sai->size());
   // On FreeBSD this connection completes immediately.
   if (res != 0) {
     ASSERT_EQ(-1, res);
     ASSERT_EQ(EINPROGRESS, errno);
   }
 
-  __msan_poison(&sai, sizeof(sai));
-  int new_sock = accept(listen_socket, (struct sockaddr *)&sai, &sz);
+  __msan_poison(sai->ptr(), sai->size());
+  int new_sock = accept(listen_socket, sai->ptr(), &sz);
   ASSERT_LT(0, new_sock);
-  ASSERT_EQ(sizeof(sai), sz);
-  EXPECT_NOT_POISONED(sai);
+  ASSERT_EQ(sai->size(), sz);
+  EXPECT_NOT_POISONED2(sai->ptr(), sai->size());
 
-  __msan_poison(&sai, sizeof(sai));
-  res = getpeername(new_sock, (struct sockaddr *)&sai, &sz);
+  __msan_poison(sai->ptr(), sai->size());
+  res = getpeername(new_sock, sai->ptr(), &sz);
   ASSERT_EQ(0, res);
-  ASSERT_EQ(sizeof(sai), sz);
-  EXPECT_NOT_POISONED(sai);
+  ASSERT_EQ(sai->size(), sz);
+  EXPECT_NOT_POISONED2(sai->ptr(), sai->size());
 
   close(new_sock);
   close(connect_socket);
@@ -928,38 +964,29 @@ TEST(MemorySanitizer, accept) {
 }
 
 TEST(MemorySanitizer, recvmsg) {
-  int server_socket = socket(AF_INET, SOCK_DGRAM, 0);
+  int server_socket = CreateSocket(SOCK_DGRAM);
   ASSERT_LT(0, server_socket);
 
-  struct sockaddr_in sai;
-  memset(&sai, 0, sizeof(sai));
-  sai.sin_family = AF_INET;
-  sai.sin_port = 0;
-  sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  int res = bind(server_socket, (struct sockaddr *)&sai, sizeof(sai));
+  auto sai = CreateSockAddr(0);
+  int res = bind(server_socket, sai->ptr(), sai->size());
   ASSERT_EQ(0, res);
 
-  socklen_t sz = sizeof(sai);
-  res = getsockname(server_socket, (struct sockaddr *)&sai, &sz);
+  socklen_t sz = sai->size();
+  res = getsockname(server_socket, sai->ptr(), &sz);
   ASSERT_EQ(0, res);
-  ASSERT_EQ(sizeof(sai), sz);
+  ASSERT_EQ(sai->size(), sz);
 
-
-  int client_socket = socket(AF_INET, SOCK_DGRAM, 0);
+  int client_socket = CreateSocket(SOCK_DGRAM);
   ASSERT_LT(0, client_socket);
 
-  struct sockaddr_in client_sai;
-  memset(&client_sai, 0, sizeof(client_sai));
-  client_sai.sin_family = AF_INET;
-  client_sai.sin_port = 0;
-  client_sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  res = bind(client_socket, (struct sockaddr *)&client_sai, sizeof(client_sai));
+  auto client_sai = CreateSockAddr(0);
+  res = bind(client_socket, client_sai->ptr(), client_sai->size());
   ASSERT_EQ(0, res);
 
-  sz = sizeof(client_sai);
-  res = getsockname(client_socket, (struct sockaddr *)&client_sai, &sz);
+  sz = client_sai->size();
+  res = getsockname(client_socket, client_sai->ptr(), &sz);
   ASSERT_EQ(0, res);
-  ASSERT_EQ(sizeof(client_sai), sz);
+  ASSERT_EQ(client_sai->size(), sz);
 
   const char *s = "message text";
   struct iovec iov;
@@ -967,30 +994,29 @@ TEST(MemorySanitizer, recvmsg) {
   iov.iov_len = strlen(s) + 1;
   struct msghdr msg;
   memset(&msg, 0, sizeof(msg));
-  msg.msg_name = &sai;
-  msg.msg_namelen = sizeof(sai);
+  msg.msg_name = sai->ptr();
+  msg.msg_namelen = sai->size();
   msg.msg_iov = &iov;
   msg.msg_iovlen = 1;
   res = sendmsg(client_socket, &msg, 0);
   ASSERT_LT(0, res);
 
-
   char buf[1000];
   struct iovec recv_iov;
   recv_iov.iov_base = (void *)&buf;
   recv_iov.iov_len = sizeof(buf);
-  struct sockaddr_in recv_sai;
+  auto recv_sai = CreateSockAddr();
   struct msghdr recv_msg;
   memset(&recv_msg, 0, sizeof(recv_msg));
-  recv_msg.msg_name = &recv_sai;
-  recv_msg.msg_namelen = sizeof(recv_sai);
+  recv_msg.msg_name = recv_sai->ptr();
+  recv_msg.msg_namelen = recv_sai->size();
   recv_msg.msg_iov = &recv_iov;
   recv_msg.msg_iovlen = 1;
   res = recvmsg(server_socket, &recv_msg, 0);
   ASSERT_LT(0, res);
 
-  ASSERT_EQ(sizeof(recv_sai), recv_msg.msg_namelen);
-  EXPECT_NOT_POISONED(*(struct sockaddr_in *)recv_msg.msg_name);
+  ASSERT_EQ(recv_sai->size(), recv_msg.msg_namelen);
+  EXPECT_NOT_POISONED2(recv_sai->ptr(), recv_sai->size());
   EXPECT_STREQ(s, buf);
 
   close(server_socket);
@@ -1042,7 +1068,7 @@ TEST(MemorySanitizer, getaddrinfo) {
   ASSERT_EQ(0, res);
   EXPECT_NOT_POISONED(*ai);
   ASSERT_EQ(sizeof(sockaddr_in), ai->ai_addrlen);
-  EXPECT_NOT_POISONED(*(sockaddr_in*)ai->ai_addr); 
+  EXPECT_NOT_POISONED(*(sockaddr_in *)ai->ai_addr);
 }
 
 TEST(MemorySanitizer, getnameinfo) {
