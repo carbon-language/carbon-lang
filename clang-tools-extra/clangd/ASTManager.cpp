@@ -232,7 +232,9 @@ tooling::CompilationDatabase *
 ASTManager::getOrCreateCompilationDatabaseForFile(StringRef File) {
   namespace path = llvm::sys::path;
 
-  assert(path::is_absolute(File) && "path must be absolute");
+  assert((path::is_absolute(File, path::Style::posix) ||
+          path::is_absolute(File, path::Style::windows)) &&
+         "path must be absolute");
 
   for (auto Path = path::parent_path(File); !Path.empty();
        Path = path::parent_path(Path)) {
