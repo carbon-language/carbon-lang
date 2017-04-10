@@ -19,7 +19,7 @@
 
 ; We are expecting foo() to be inlined in main() (almost all the cycles are
 ; spent inside foo).
-; CHECK: remark: remarks.cc:13:21: inlined hot callee '_Z3foov' with 623868 samples into 'main'
+; CHECK: remark: remarks.cc:13:21: inlined hot callee '_Z3foov' into 'main'
 
 ; The back edge for the loop is the hottest edge in the loop subgraph.
 ; CHECK: remark: remarks.cc:6:9: most popular destination for conditional branches at remarks.cc:5:3
