@@ -1489,11 +1489,7 @@ MachineBlockPlacement::selectBestSuccessor(
     if (DupProb < BestProb)
       break;
     if (canTailDuplicateUnplacedPreds(BB, Succ, Chain, BlockFilter)
-        // If tail duplication gives us fallthrough when we otherwise wouldn't
-        // have it, that is a strict gain.
-        && (BestSucc.BB == nullptr
-            || isProfitableToTailDup(BB, Succ, BestProb, Chain,
-                                     BlockFilter))) {
+        && (isProfitableToTailDup(BB, Succ, BestProb, Chain, BlockFilter))) {
       DEBUG(
           dbgs() << "    Candidate: " << getBlockName(Succ) << ", probability: "
                  << DupProb
