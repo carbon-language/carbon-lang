@@ -2504,12 +2504,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   BinaryOperator *Op1I = dyn_cast<BinaryOperator>(Op1);
   if (Op1I) {
     Value *A, *B;
-    if (match(Op1I, m_Or(m_Value(A), m_Value(B)))) {
-      if (A == Op0) {              // B^(B|A) == (A|B)^B
+    if (match(Op1I, m_OneUse(m_Or(m_Value(A), m_Value(B))))) {
+      if (A == Op0) {                                      // A^(A|B) == A^(B|A)
         Op1I->swapOperands();
-        I.swapOperands();
-        std::swap(Op0, Op1);
-      } else if (B == Op0) {       // B^(A|B) == (A|B)^B
+        std::swap(A, B);
+      }
+      if (B == Op0) {                                      // A^(B|A) == (B|A)^A
         I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
       }
