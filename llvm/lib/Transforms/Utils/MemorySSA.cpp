@@ -976,13 +976,6 @@ void MemorySSA::renamePass(DomTreeNode *Root, MemoryAccess *IncomingVal,
   }
 }
 
-/// \brief Compute dominator levels, used by the phi insertion algorithm above.
-void MemorySSA::computeDomLevels(DenseMap<DomTreeNode *, unsigned> &DomLevels) {
-  for (auto DFI = df_begin(DT->getRootNode()), DFE = df_end(DT->getRootNode());
-       DFI != DFE; ++DFI)
-    DomLevels[*DFI] = DFI.getPathLength() - 1;
-}
-
 /// \brief This handles unreachable block accesses by deleting phi nodes in
 /// unreachable blocks, and marking all other unreachable MemoryAccess's as
 /// being uses of the live on entry definition.
