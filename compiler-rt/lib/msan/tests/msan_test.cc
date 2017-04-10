@@ -902,9 +902,7 @@ class SocketAddr4 : public SocketAddr {
     sai_.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
 
-  sockaddr *ptr() override {
-    return reinterpret_cast<sockaddr *>(&sai_);
-  }
+  sockaddr *ptr() override { return reinterpret_cast<sockaddr *>(&sai_); }
 
   size_t size() const override { return sizeof(sai_); }
 
@@ -912,14 +910,60 @@ class SocketAddr4 : public SocketAddr {
   sockaddr_in sai_;
 };
 
-template <class... Args>
-std::unique_ptr<SocketAddr> CreateSockAddr(Args... args) {
-  return std::unique_ptr<SocketAddr>(new SocketAddr4(args...));
+class SocketAddr6 : public SocketAddr {
+ public:
+  SocketAddr6() { EXPECT_POISONED(sai_); }
+  explicit SocketAddr6(uint16_t port) {
+    memset(&sai_, 0, sizeof(sai_));
+    sai_.sin6_family = AF_INET6;
+    sai_.sin6_port = port;
+    sai_.sin6_addr = in6addr_loopback;
+  }
+
+  sockaddr *ptr() override { return reinterpret_cast<sockaddr *>(&sai_); }
+
+  size_t size() const override { return sizeof(sai_); }
+
+ private:
+  sockaddr_in6 sai_;
+};
+
+class MemorySanitizerIpTest : public ::testing::TestWithParam<int> {
+ public:
+  void SetUp() override {
+    ASSERT_TRUE(GetParam() == AF_INET || GetParam() == AF_INET6);
+  }
+
+  template <class... Args>
+  std::unique_ptr<SocketAddr> CreateSockAddr(Args... args) const {
+    if (GetParam() == AF_INET)
+      return std::unique_ptr<SocketAddr>(new SocketAddr4(args...));
+    return std::unique_ptr<SocketAddr>(new SocketAddr6(args...));
+  }
+
+  int CreateSocket(int socket_type) const {
+    return socket(GetParam(), socket_type, 0);
+  }
+};
+
+std::vector<int> GetAvailableIpSocketFamilies() {
+  std::vector<int> result;
+
+  for (int i : std::vector<int>(AF_INET, AF_INET6)) {
+    int s = socket(i, SOCK_STREAM, 0);
+    if (s > 0) {
+      result.push_back(i);
+      close(s);
+    }
+  }
+
+  return result;
 }
 
-int CreateSocket(int socket_type) { return socket(AF_INET, socket_type, 0); }
+INSTANTIATE_TEST_CASE_P(IpTests, MemorySanitizerIpTest,
+                        ::testing::ValuesIn(GetAvailableIpSocketFamilies()));
 
-TEST(MemorySanitizer, accept) {
+TEST_P(MemorySanitizerIpTest, accept) {
   int listen_socket = CreateSocket(SOCK_STREAM);
   ASSERT_LT(0, listen_socket);
 
@@ -963,7 +1007,7 @@ TEST(MemorySanitizer, accept) {
   close(listen_socket);
 }
 
-TEST(MemorySanitizer, recvmsg) {
+TEST_P(MemorySanitizerIpTest, recvmsg) {
   int server_socket = CreateSocket(SOCK_DGRAM);
   ASSERT_LT(0, server_socket);
 
