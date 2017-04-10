@@ -21,8 +21,6 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/AssemblyAnnotationWriter.h"
-#include "llvm/IR/AttributeSetNode.h"
-#include "llvm/IR/Attributes.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -606,7 +604,7 @@ private:
   unsigned mdnNext;
 
   /// asMap - The slot map for attribute sets.
-  DenseMap<AttributeSetNode *, unsigned> asMap;
+  DenseMap<AttributeList, unsigned> asMap;
   unsigned asNext;
 public:
   /// Construct from a module.
@@ -629,7 +627,7 @@ public:
   int getLocalSlot(const Value *V);
   int getGlobalSlot(const GlobalValue *V);
   int getMetadataSlot(const MDNode *N);
-  int getAttributeGroupSlot(AttributeSetNode *AS);
+  int getAttributeGroupSlot(AttributeList AS);
 
   /// If you'd like to deal with a function instead of just a module, use
   /// this method to get its data into the SlotTracker.
@@ -652,8 +650,8 @@ public:
   unsigned mdn_size() const { return mdnMap.size(); }
   bool mdn_empty() const { return mdnMap.empty(); }
 
-  /// AttributeSetNode map iterators.
-  typedef DenseMap<AttributeSetNode *, unsigned>::iterator as_iterator;
+  /// AttributeList map iterators.
+  typedef DenseMap<AttributeList, unsigned>::iterator as_iterator;
   as_iterator as_begin()   { return asMap.begin(); }
   as_iterator as_end()     { return asMap.end(); }
   unsigned as_size() const { return asMap.size(); }
@@ -673,8 +671,8 @@ private:
   /// CreateFunctionSlot - Insert the specified Value* into the slot table.
   void CreateFunctionSlot(const Value *V);
 
-  /// \brief Insert the specified AttributeSetNode into the slot table.
-  void CreateAttributeSetSlot(AttributeSetNode *AS);
+  /// \brief Insert the specified AttributeList into the slot table.
+  void CreateAttributeSetSlot(AttributeList AS);
 
   /// Add all of the module level global variables (and their initializers)
   /// and function declarations, but not the contents of those functions.
@@ -833,8 +831,8 @@ void SlotTracker::processModule() {
 
     // Add all the function attributes to the table.
     // FIXME: Add attributes of other objects?
-    AttributeSetNode *FnAttrs = F.getAttributes().getFnAttributes();
-    if (FnAttrs)
+    AttributeList FnAttrs = F.getAttributes().getFnAttributes();
+    if (FnAttrs.hasAttributes(AttributeList::FunctionIndex))
       CreateAttributeSetSlot(FnAttrs);
   }
 
@@ -871,13 +869,13 @@ void SlotTracker::processFunction() {
       // target may not be linked into the optimizer.
       if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
         // Add all the call attributes to the table.
-        AttributeSetNode *Attrs = CI->getAttributes().getFnAttributes();
-        if (Attrs)
+        AttributeList Attrs = CI->getAttributes().getFnAttributes();
+        if (Attrs.hasAttributes(AttributeList::FunctionIndex))
           CreateAttributeSetSlot(Attrs);
       } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
         // Add all the call attributes to the table.
-        AttributeSetNode *Attrs = II->getAttributes().getFnAttributes();
-        if (Attrs)
+        AttributeList Attrs = II->getAttributes().getFnAttributes();
+        if (Attrs.hasAttributes(AttributeList::FunctionIndex))
           CreateAttributeSetSlot(Attrs);
       }
     }
@@ -963,11 +961,11 @@ int SlotTracker::getLocalSlot(const Value *V) {
   return FI == fMap.end() ? -1 : (int)FI->second;
 }
 
-int SlotTracker::getAttributeGroupSlot(AttributeSetNode *AS) {
+int SlotTracker::getAttributeGroupSlot(AttributeList AS) {
   // Check for uninitialized state and do lazy initialization.
   initialize();
 
-  // Find the AttributeSetNode in the module map.
+  // Find the AttributeList in the module map.
   as_iterator AI = asMap.find(AS);
   return AI == asMap.end() ? -1 : (int)AI->second;
 }
@@ -1017,8 +1015,9 @@ void SlotTracker::CreateMetadataSlot(const MDNode *N) {
       CreateMetadataSlot(Op);
 }
 
-void SlotTracker::CreateAttributeSetSlot(AttributeSetNode *AS) {
-  assert(AS && "Doesn't need a slot!");
+void SlotTracker::CreateAttributeSetSlot(AttributeList AS) {
+  assert(AS.hasAttributes(AttributeList::FunctionIndex) &&
+         "Doesn't need a slot!");
 
   as_iterator I = asMap.find(AS);
   if (I != asMap.end())
@@ -2607,10 +2606,17 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   const AttributeList &Attrs = F->getAttributes();
   if (Attrs.hasAttributes(AttributeList::FunctionIndex)) {
-    AttributeSetNode *AS = Attrs.getFnAttributes();
+    AttributeList AS = Attrs.getFnAttributes();
     std::string AttrStr;
 
-    for (const Attribute &Attr : *AS) {
+    unsigned Idx = 0;
+    for (unsigned E = AS.getNumSlots(); Idx != E; ++Idx)
+      if (AS.getSlotIndex(Idx) == AttributeList::FunctionIndex)
+        break;
+
+    for (AttributeList::iterator I = AS.begin(Idx), E = AS.end(Idx); I != E;
+         ++I) {
+      Attribute Attr = *I;
       if (!Attr.isStringAttribute()) {
         if (!AttrStr.empty()) AttrStr += ' ';
         AttrStr += Attr.getAsString();
@@ -3244,7 +3250,7 @@ void AssemblyWriter::printMDNodeBody(const MDNode *Node) {
 }
 
 void AssemblyWriter::writeAllAttributeGroups() {
-  std::vector<std::pair<AttributeSetNode *, unsigned>> asVec;
+  std::vector<std::pair<AttributeList, unsigned>> asVec;
   asVec.resize(Machine.as_size());
 
   for (SlotTracker::as_iterator I = Machine.as_begin(), E = Machine.as_end();
@@ -3253,7 +3259,7 @@ void AssemblyWriter::writeAllAttributeGroups() {
 
   for (const auto &I : asVec)
     Out << "attributes #" << I.second << " = { "
-        << I.first->getAsString(true) << " }\n";
+        << I.first.getAsString(AttributeList::FunctionIndex, true) << " }\n";
 }
 
 void AssemblyWriter::printUseListOrder(const UseListOrder &Order) {

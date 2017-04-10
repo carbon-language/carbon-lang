@@ -1392,6 +1392,7 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
 
   // Create the statepoint given all the arguments
   Instruction *Token = nullptr;
+  AttributeList ReturnAttrs;
   if (CS.isCall()) {
     CallInst *ToReplace = cast<CallInst>(CS.getInstruction());
     CallInst *Call = Builder.CreateGCStatepointCall(
@@ -1406,9 +1407,8 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
     AttributeList NewAttrs = legalizeCallAttributes(ToReplace->getAttributes());
     // In case if we can handle this set of attributes - set up function attrs
     // directly on statepoint and return attrs later for gc_result intrinsic.
-    Call->setAttributes(AttributeList::get(Call->getContext(),
-                                           AttributeList::FunctionIndex,
-                                           NewAttrs.getFnAttributes()));
+    Call->setAttributes(NewAttrs.getFnAttributes());
+    ReturnAttrs = NewAttrs.getRetAttributes();
 
     Token = Call;
 
@@ -1435,9 +1435,8 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
     AttributeList NewAttrs = legalizeCallAttributes(ToReplace->getAttributes());
     // In case if we can handle this set of attributes - set up function attrs
     // directly on statepoint and return attrs later for gc_result intrinsic.
-    Invoke->setAttributes(AttributeList::get(Invoke->getContext(),
-                                             AttributeList::FunctionIndex,
-                                             NewAttrs.getFnAttributes()));
+    Invoke->setAttributes(NewAttrs.getFnAttributes());
+    ReturnAttrs = NewAttrs.getRetAttributes();
 
     Token = Invoke;
 
@@ -1483,9 +1482,7 @@ makeStatepointExplicitImpl(const CallSite CS, /* to replace */
       StringRef Name =
           CS.getInstruction()->hasName() ? CS.getInstruction()->getName() : "";
       CallInst *GCResult = Builder.CreateGCResult(Token, CS.getType(), Name);
-      GCResult->setAttributes(
-          AttributeList::get(GCResult->getContext(), AttributeList::ReturnIndex,
-                             CS.getAttributes().getRetAttributes()));
+      GCResult->setAttributes(CS.getAttributes().getRetAttributes());
 
       // We cannot RAUW or delete CS.getInstruction() because it could be in the
       // live set of some other safepoint, in which case that safepoint's
