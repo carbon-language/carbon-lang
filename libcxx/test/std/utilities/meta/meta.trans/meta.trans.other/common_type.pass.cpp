@@ -45,6 +45,8 @@ namespace std
 
     template <> struct common_type< ::S<long>, long> {};
     template <> struct common_type<long, ::S<long> > {};
+    template <> struct common_type<::X<float> > {};
+    template <> struct common_type<::X<double>, ::X<double> > {};
 }
 
 #if TEST_STD_VER >= 11
@@ -304,5 +306,7 @@ int main()
     static_assert((std::is_same<std::common_type<const int, int>::type,       int>::value), "");
     static_assert((std::is_same<std::common_type<int, const int>::type,       int>::value), "");
     static_assert((std::is_same<std::common_type<const int, const int>::type, int>::value), "");
-    
+
+    static_assert(no_common_type<X<float> >::value, "");
+    static_assert(no_common_type<X<double> >::value, "");
 }
