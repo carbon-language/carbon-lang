@@ -1128,8 +1128,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
 
-  if (isa<Constant>(RHS) && isa<PHINode>(LHS))
-    if (Instruction *NV = FoldOpIntoPhi(I))
+  if (isa<Constant>(RHS))
+    if (Instruction *NV = foldOpWithConstantIntoOperand(I))
       return NV;
 
   if (I.getType()->getScalarType()->isIntegerTy(1))
@@ -1200,11 +1200,6 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         return BinaryOperator::CreateAnd(NewAdd, C2);
       }
     }
-
-    // Try to fold constant add into select arguments.
-    if (SelectInst *SI = dyn_cast<SelectInst>(LHS))
-      if (Instruction *R = FoldOpIntoSelect(I, SI))
-        return R;
   }
 
   // add (select X 0 (sub n A)) A  -->  select X A n
