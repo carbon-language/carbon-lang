@@ -43,13 +43,15 @@ void VariableDumper::start(const PDBSymbolData &Var) {
 
   auto VarType = Var.getType();
 
+  uint64_t Length = VarType->getRawSymbol().getLength();
+
   switch (auto LocType = Var.getLocationType()) {
   case PDB_LocType::Static:
     Printer.NewLine();
     Printer << "data [";
     WithColor(Printer, PDB_ColorItem::Address).get()
         << format_hex(Var.getVirtualAddress(), 10);
-    Printer << "] ";
+    Printer << ", sizeof=" << Length << "] ";
     WithColor(Printer, PDB_ColorItem::Keyword).get() << "static ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
     break;
@@ -57,7 +59,7 @@ void VariableDumper::start(const PDBSymbolData &Var) {
     if (isa<PDBSymbolTypeEnum>(*VarType))
       break;
     Printer.NewLine();
-    Printer << "data ";
+    Printer << "data [sizeof=" << Length << "] ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
     Printer << " = ";
     WithColor(Printer, PDB_ColorItem::LiteralValue).get() << Var.getValue();
@@ -66,21 +68,23 @@ void VariableDumper::start(const PDBSymbolData &Var) {
     Printer.NewLine();
     Printer << "data ";
     WithColor(Printer, PDB_ColorItem::Offset).get()
-        << "+" << format_hex(Var.getOffset(), 4) << " ";
+        << "+" << format_hex(Var.getOffset(), 4) << " [sizeof=" << Length
+        << "] ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
     break;
   case PDB_LocType::BitField:
     Printer.NewLine();
     Printer << "data ";
     WithColor(Printer, PDB_ColorItem::Offset).get()
-        << "+" << format_hex(Var.getOffset(), 4) << " ";
+        << "+" << format_hex(Var.getOffset(), 4) << " [sizeof=" << Length
+        << "] ";
     dumpSymbolTypeAndName(*VarType, Var.getName());
     Printer << " : ";
     WithColor(Printer, PDB_ColorItem::LiteralValue).get() << Var.getLength();
     break;
   default:
     Printer.NewLine();
-    Printer << "data ";
+    Printer << "data [sizeof=" << Length << "] ";
     Printer << "unknown(" << LocType << ") ";
     WithColor(Printer, PDB_ColorItem::Identifier).get() << Var.getName();
     break;
