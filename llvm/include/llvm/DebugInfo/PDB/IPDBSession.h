@@ -45,12 +45,6 @@ public:
     return std::unique_ptr<T>(ConcreteSymbol);
   }
 
-  template <>
-  std::unique_ptr<PDBSymbol>
-  getConcreteSymbolById<PDBSymbol>(uint32_t SymbolId) const {
-    return getSymbolById(SymbolId);
-  }
-
   virtual std::unique_ptr<PDBSymbol>
   findSymbolByAddress(uint64_t Address, PDB_SymType Type) const = 0;
 
