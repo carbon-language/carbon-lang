@@ -349,6 +349,8 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
     Call->eraseFromParent();
   }
 
+  const DataLayout &DL = F->getParent()->getDataLayout();
+
   // Since we have now created the new function, splice the body of the old
   // function right into the new function, leaving the old rotting hulk of the
   // function empty.
@@ -376,7 +378,8 @@ doPromotion(Function *F, SmallPtrSetImpl<Argument *> &ArgsToPromote,
 
       // Just add all the struct element types.
       Type *AgTy = cast<PointerType>(I->getType())->getElementType();
-      Value *TheAlloca = new AllocaInst(AgTy, nullptr, "", InsertPt);
+      Value *TheAlloca = new AllocaInst(AgTy, DL.getAllocaAddrSpace(), nullptr,
+                                        "", InsertPt);
       StructType *STy = cast<StructType>(AgTy);
       Value *Idxs[2] = {ConstantInt::get(Type::getInt32Ty(F->getContext()), 0),
                         nullptr};

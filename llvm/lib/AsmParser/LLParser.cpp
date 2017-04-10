@@ -1852,6 +1852,34 @@ bool LLParser::ParseOptionalCommaAlign(unsigned &Alignment,
   return false;
 }
 
+/// ParseOptionalCommaAddrSpace
+///   ::=
+///   ::= ',' addrspace(1)
+///
+/// This returns with AteExtraComma set to true if it ate an excess comma at the
+/// end.
+bool LLParser::ParseOptionalCommaAddrSpace(unsigned &AddrSpace,
+                                           LocTy &Loc,
+                                           bool &AteExtraComma) {
+  AteExtraComma = false;
+  while (EatIfPresent(lltok::comma)) {
+    // Metadata at the end is an early exit.
+    if (Lex.getKind() == lltok::MetadataVar) {
+      AteExtraComma = true;
+      return false;
+    }
+
+    Loc = Lex.getLoc();
+    if (Lex.getKind() != lltok::kw_addrspace)
+      return Error(Lex.getLoc(), "expected metadata or 'addrspace'");
+
+    if (ParseOptionalAddrSpace(AddrSpace))
+      return true;
+  }
+
+  return false;
+}
+
 bool LLParser::parseAllocSizeArguments(unsigned &BaseSizeArg,
                                        Optional<unsigned> &HowManyArg) {
   Lex.Lex();
@@ -6033,8 +6061,9 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 ///       (',' 'align' i32)?
 int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
   Value *Size = nullptr;
-  LocTy SizeLoc, TyLoc;
+  LocTy SizeLoc, TyLoc, ASLoc;
   unsigned Alignment = 0;
+  unsigned AddrSpace = 0;
   Type *Ty = nullptr;
 
   bool IsInAlloca = EatIfPresent(lltok::kw_inalloca);
@@ -6048,12 +6077,21 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
   bool AteExtraComma = false;
   if (EatIfPresent(lltok::comma)) {
     if (Lex.getKind() == lltok::kw_align) {
-      if (ParseOptionalAlignment(Alignment)) return true;
+      if (ParseOptionalAlignment(Alignment))
+        return true;
+      if (ParseOptionalCommaAddrSpace(AddrSpace, ASLoc, AteExtraComma))
+        return true;
+    } else if (Lex.getKind() == lltok::kw_addrspace) {
+      ASLoc = Lex.getLoc();
+      if (ParseOptionalAddrSpace(AddrSpace))
+        return true;
     } else if (Lex.getKind() == lltok::MetadataVar) {
       AteExtraComma = true;
     } else {
       if (ParseTypeAndValue(Size, SizeLoc, PFS) ||
-          ParseOptionalCommaAlign(Alignment, AteExtraComma))
+          ParseOptionalCommaAlign(Alignment, AteExtraComma) ||
+          (!AteExtraComma &&
+           ParseOptionalCommaAddrSpace(AddrSpace, ASLoc, AteExtraComma)))
         return true;
     }
   }
@@ -6061,7 +6099,14 @@ int LLParser::ParseAlloc(Instruction *&Inst, PerFunctionState &PFS) {
   if (Size && !Size->getType()->isIntegerTy())
     return Error(SizeLoc, "element count must have integer type");
 
-  AllocaInst *AI = new AllocaInst(Ty, Size, Alignment);
+  const DataLayout &DL = M->getDataLayout();
+  unsigned AS = DL.getAllocaAddrSpace();
+  if (AS != AddrSpace) {
+    // TODO: In the future it should be possible to specify addrspace per-alloca.
+    return Error(ASLoc, "address space must match datalayout");
+  }
+
+  AllocaInst *AI = new AllocaInst(Ty, AS, Size, Alignment);
   AI->setUsedWithInAlloca(IsInAlloca);
   AI->setSwiftError(IsSwiftError);
   Inst = AI;

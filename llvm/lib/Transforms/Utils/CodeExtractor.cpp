@@ -440,8 +440,10 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
   // Emit a call to the new function, passing in: *pointer to struct (if
   // aggregating parameters), or plan inputs and allocated memory for outputs
   std::vector<Value*> params, StructValues, ReloadOutputs, Reloads;
-  
-  LLVMContext &Context = newFunction->getContext();
+
+  Module *M = newFunction->getParent();
+  LLVMContext &Context = M->getContext();
+  const DataLayout &DL = M->getDataLayout();
 
   // Add inputs as params, or to be filled into the struct
   for (Value *input : inputs)
@@ -456,8 +458,9 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       StructValues.push_back(output);
     } else {
       AllocaInst *alloca =
-          new AllocaInst(output->getType(), nullptr, output->getName() + ".loc",
-                         &codeReplacer->getParent()->front().front());
+        new AllocaInst(output->getType(), DL.getAllocaAddrSpace(),
+                       nullptr, output->getName() + ".loc",
+                       &codeReplacer->getParent()->front().front());
       ReloadOutputs.push_back(alloca);
       params.push_back(alloca);
     }
@@ -473,7 +476,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     // Allocate a struct at the beginning of this function
     StructArgTy = StructType::get(newFunction->getContext(), ArgTypes);
-    Struct = new AllocaInst(StructArgTy, nullptr, "structArg",
+    Struct = new AllocaInst(StructArgTy, DL.getAllocaAddrSpace(), nullptr,
+                            "structArg",
                             &codeReplacer->getParent()->front().front());
     params.push_back(Struct);
 

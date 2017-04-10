@@ -4006,7 +4006,12 @@ Error BitcodeReader::parseFunctionBody(Function *F) {
       }
       if (!Ty || !Size)
         return error("Invalid record");
-      AllocaInst *AI = new AllocaInst(Ty, Size, Align);
+
+      // FIXME: Make this an optional field.
+      const DataLayout &DL = TheModule->getDataLayout();
+      unsigned AS = DL.getAllocaAddrSpace();
+
+      AllocaInst *AI = new AllocaInst(Ty, AS, Size, Align);
       AI->setUsedWithInAlloca(InAlloca);
       AI->setSwiftError(SwiftError);
       I = AI;

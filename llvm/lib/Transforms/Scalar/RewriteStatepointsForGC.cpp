@@ -1619,8 +1619,10 @@ static void relocationViaAlloca(
 
   // Emit alloca for "LiveValue" and record it in "allocaMap" and
   // "PromotableAllocas"
+  const DataLayout &DL = F.getParent()->getDataLayout();
   auto emitAllocaFor = [&](Value *LiveValue) {
-    AllocaInst *Alloca = new AllocaInst(LiveValue->getType(), "",
+    AllocaInst *Alloca = new AllocaInst(LiveValue->getType(),
+                                        DL.getAllocaAddrSpace(), "",
                                         F.getEntryBlock().getFirstNonPHI());
     AllocaMap[LiveValue] = Alloca;
     PromotableAllocas.push_back(Alloca);

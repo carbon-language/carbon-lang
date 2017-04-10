@@ -3117,6 +3117,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (AI->getAlignment()) {
       Out << ", align " << AI->getAlignment();
     }
+
+    unsigned AddrSpace = AI->getType()->getAddressSpace();
+    if (AddrSpace != 0) {
+      Out << ", addrspace(" << AddrSpace << ')';
+    }
+
   } else if (isa<CastInst>(I)) {
     if (Operand) {
       Out << ' ';
