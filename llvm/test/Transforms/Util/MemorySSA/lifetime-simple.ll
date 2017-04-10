@@ -9,7 +9,7 @@ entry:
 ; CHECK:  1 = MemoryDef(liveOnEntry)
 ; CHECK-NEXT:   call void @llvm.lifetime.start(i64 32, i8* %P)
   call void @llvm.lifetime.start(i64 32, i8* %P)
-; CHECK:  MemoryUse(liveOnEntry)
+; CHECK:  MemoryUse(1)
 ; CHECK-NEXT:   %0 = load i8, i8* %P
   %0 = load i8, i8* %P
 ; CHECK:  2 = MemoryDef(1)
