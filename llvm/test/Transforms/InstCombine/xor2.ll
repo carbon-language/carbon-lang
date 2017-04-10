@@ -147,9 +147,7 @@ define i32 @test9(i32 %b, i32 %c) {
 ; (A & B) ^ (B ^ A) -> (A | B)
 define i32 @test9b(i32 %b, i32 %c) {
 ; CHECK-LABEL: @test9b(
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[B:%.*]], [[C:%.*]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[C]], [[B]]
-; CHECK-NEXT:    [[XOR2:%.*]] = xor i32 [[AND]], [[XOR]]
+; CHECK-NEXT:    [[XOR2:%.*]] = or i32 [[B:%.*]], [[C:%.*]]
 ; CHECK-NEXT:    ret i32 [[XOR2]]
 ;
   %and = and i32 %b, %c
@@ -173,9 +171,7 @@ define i32 @test10(i32 %b, i32 %c) {
 ; (A ^ B) ^ (A & B) -> (A | B)
 define i32 @test10b(i32 %b, i32 %c) {
 ; CHECK-LABEL: @test10b(
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[B:%.*]], [[C:%.*]]
-; CHECK-NEXT:    [[AND:%.*]] = and i32 [[C]], [[B]]
-; CHECK-NEXT:    [[XOR2:%.*]] = xor i32 [[XOR]], [[AND]]
+; CHECK-NEXT:    [[XOR2:%.*]] = or i32 [[B:%.*]], [[C:%.*]]
 ; CHECK-NEXT:    ret i32 [[XOR2]]
 ;
   %xor = xor i32 %b, %c

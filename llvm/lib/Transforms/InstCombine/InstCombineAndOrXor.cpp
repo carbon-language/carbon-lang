@@ -2600,11 +2600,11 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     }
     // (A & B) ^ (A ^ B) -> (A | B)
     if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
-        match(Op1, m_Xor(m_Specific(A), m_Specific(B))))
+        match(Op1, m_c_Xor(m_Specific(A), m_Specific(B))))
       return BinaryOperator::CreateOr(A, B);
     // (A ^ B) ^ (A & B) -> (A | B)
     if (match(Op0, m_Xor(m_Value(A), m_Value(B))) &&
-        match(Op1, m_And(m_Specific(A), m_Specific(B))))
+        match(Op1, m_c_And(m_Specific(A), m_Specific(B))))
       return BinaryOperator::CreateOr(A, B);
   }
 
