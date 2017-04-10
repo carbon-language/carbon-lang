@@ -2513,8 +2513,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         I.swapOperands();     // Simplified below.
         std::swap(Op0, Op1);
       }
-    } else if (match(Op1I, m_And(m_Value(A), m_Value(B))) &&
-               Op1I->hasOneUse()){
+    } else if (match(Op1I, m_OneUse(m_And(m_Value(A), m_Value(B))))) {
       if (A == Op0) {                                      // A^(A&B) -> A^(B&A)
         Op1I->swapOperands();
         std::swap(A, B);
@@ -2529,14 +2528,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   BinaryOperator *Op0I = dyn_cast<BinaryOperator>(Op0);
   if (Op0I) {
     Value *A, *B;
-    if (match(Op0I, m_Or(m_Value(A), m_Value(B))) &&
-        Op0I->hasOneUse()) {
+    if (match(Op0I, m_OneUse(m_Or(m_Value(A), m_Value(B))))) {
       if (A == Op1)                                  // (B|A)^B == (A|B)^B
         std::swap(A, B);
       if (B == Op1)                                  // (A|B)^B == A & ~B
         return BinaryOperator::CreateAnd(A, Builder->CreateNot(Op1));
-    } else if (match(Op0I, m_And(m_Value(A), m_Value(B))) &&
-               Op0I->hasOneUse()){
+    } else if (match(Op0I, m_OneUse(m_And(m_Value(A), m_Value(B))))) {
       if (A == Op1)                                        // (A&B)^A -> (B&A)^A
         std::swap(A, B);
       const APInt *C;
