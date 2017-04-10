@@ -211,12 +211,12 @@ TYPED_TEST(BitVectorTest, FindOperations) {
   EXPECT_EQ(-1, A.find_next_unset(99));
 
   A.set(0, 100);
-  EXPECT_EQ(100, A.count());
+  EXPECT_EQ(100U, A.count());
   EXPECT_EQ(0, A.find_first());
   EXPECT_EQ(-1, A.find_first_unset());
 
   A.reset(0, 100);
-  EXPECT_EQ(0, A.count());
+  EXPECT_EQ(0U, A.count());
   EXPECT_EQ(-1, A.find_first());
   EXPECT_EQ(0, A.find_first_unset());
 }
