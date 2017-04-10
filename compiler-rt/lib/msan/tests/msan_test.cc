@@ -927,74 +927,6 @@ TEST(MemorySanitizer, accept) {
   close(listen_socket);
 }
 
-TEST(MemorySanitizer, getaddrinfo) {
-  struct addrinfo *ai;
-  struct addrinfo hints;
-  memset(&hints, 0, sizeof(hints));
-  hints.ai_family = AF_INET;
-  int res = getaddrinfo("localhost", NULL, &hints, &ai);
-  ASSERT_EQ(0, res);
-  EXPECT_NOT_POISONED(*ai);
-  ASSERT_EQ(sizeof(sockaddr_in), ai->ai_addrlen);
-  EXPECT_NOT_POISONED(*(sockaddr_in*)ai->ai_addr); 
-}
-
-TEST(MemorySanitizer, getnameinfo) {
-  struct sockaddr_in sai;
-  memset(&sai, 0, sizeof(sai));
-  sai.sin_family = AF_INET;
-  sai.sin_port = 80;
-  sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-  char host[500];
-  char serv[500];
-  int res = getnameinfo((struct sockaddr *)&sai, sizeof(sai), host,
-                        sizeof(host), serv, sizeof(serv), 0);
-  ASSERT_EQ(0, res);
-  EXPECT_NOT_POISONED(host[0]);
-  EXPECT_POISONED(host[sizeof(host) - 1]);
-
-  ASSERT_NE(0U, strlen(host));
-  EXPECT_NOT_POISONED(serv[0]);
-  EXPECT_POISONED(serv[sizeof(serv) - 1]);
-  ASSERT_NE(0U, strlen(serv));
-}
-
-#define EXPECT_HOSTENT_NOT_POISONED(he)        \
-  do {                                         \
-    EXPECT_NOT_POISONED(*(he));                \
-    ASSERT_NE((void *) 0, (he)->h_name);       \
-    ASSERT_NE((void *) 0, (he)->h_aliases);    \
-    ASSERT_NE((void *) 0, (he)->h_addr_list);  \
-    EXPECT_NOT_POISONED(strlen((he)->h_name)); \
-    char **p = (he)->h_aliases;                \
-    while (*p) {                               \
-      EXPECT_NOT_POISONED(strlen(*p));         \
-      ++p;                                     \
-    }                                          \
-    char **q = (he)->h_addr_list;              \
-    while (*q) {                               \
-      EXPECT_NOT_POISONED(*q[0]);              \
-      ++q;                                     \
-    }                                          \
-    EXPECT_NOT_POISONED(*q);                   \
-  } while (0)
-
-TEST(MemorySanitizer, gethostent) {
-  struct hostent *he = gethostent();
-  ASSERT_NE((void *)NULL, he);
-  EXPECT_HOSTENT_NOT_POISONED(he);
-}
-
-#ifndef MSAN_TEST_DISABLE_GETHOSTBYNAME
-
-TEST(MemorySanitizer, gethostbyname) {
-  struct hostent *he = gethostbyname("localhost");
-  ASSERT_NE((void *)NULL, he);
-  EXPECT_HOSTENT_NOT_POISONED(he);
-}
-
-#endif // MSAN_TEST_DISABLE_GETHOSTBYNAME
-
 TEST(MemorySanitizer, recvmsg) {
   int server_socket = socket(AF_INET, SOCK_DGRAM, 0);
   ASSERT_LT(0, server_socket);
@@ -1063,6 +995,74 @@ TEST(MemorySanitizer, recvmsg) {
 
   close(server_socket);
   close(client_socket);
+}
+
+#define EXPECT_HOSTENT_NOT_POISONED(he)        \
+  do {                                         \
+    EXPECT_NOT_POISONED(*(he));                \
+    ASSERT_NE((void *)0, (he)->h_name);        \
+    ASSERT_NE((void *)0, (he)->h_aliases);     \
+    ASSERT_NE((void *)0, (he)->h_addr_list);   \
+    EXPECT_NOT_POISONED(strlen((he)->h_name)); \
+    char **p = (he)->h_aliases;                \
+    while (*p) {                               \
+      EXPECT_NOT_POISONED(strlen(*p));         \
+      ++p;                                     \
+    }                                          \
+    char **q = (he)->h_addr_list;              \
+    while (*q) {                               \
+      EXPECT_NOT_POISONED(*q[0]);              \
+      ++q;                                     \
+    }                                          \
+    EXPECT_NOT_POISONED(*q);                   \
+  } while (0)
+
+TEST(MemorySanitizer, gethostent) {
+  struct hostent *he = gethostent();
+  ASSERT_NE((void *)NULL, he);
+  EXPECT_HOSTENT_NOT_POISONED(he);
+}
+
+#ifndef MSAN_TEST_DISABLE_GETHOSTBYNAME
+
+TEST(MemorySanitizer, gethostbyname) {
+  struct hostent *he = gethostbyname("localhost");
+  ASSERT_NE((void *)NULL, he);
+  EXPECT_HOSTENT_NOT_POISONED(he);
+}
+
+#endif  // MSAN_TEST_DISABLE_GETHOSTBYNAME
+
+TEST(MemorySanitizer, getaddrinfo) {
+  struct addrinfo *ai;
+  struct addrinfo hints;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  int res = getaddrinfo("localhost", NULL, &hints, &ai);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(*ai);
+  ASSERT_EQ(sizeof(sockaddr_in), ai->ai_addrlen);
+  EXPECT_NOT_POISONED(*(sockaddr_in*)ai->ai_addr); 
+}
+
+TEST(MemorySanitizer, getnameinfo) {
+  struct sockaddr_in sai;
+  memset(&sai, 0, sizeof(sai));
+  sai.sin_family = AF_INET;
+  sai.sin_port = 80;
+  sai.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  char host[500];
+  char serv[500];
+  int res = getnameinfo((struct sockaddr *)&sai, sizeof(sai), host,
+                        sizeof(host), serv, sizeof(serv), 0);
+  ASSERT_EQ(0, res);
+  EXPECT_NOT_POISONED(host[0]);
+  EXPECT_POISONED(host[sizeof(host) - 1]);
+
+  ASSERT_NE(0U, strlen(host));
+  EXPECT_NOT_POISONED(serv[0]);
+  EXPECT_POISONED(serv[sizeof(serv) - 1]);
+  ASSERT_NE(0U, strlen(serv));
 }
 
 TEST(MemorySanitizer, gethostbyname2) {
