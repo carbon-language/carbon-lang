@@ -495,6 +495,20 @@ bool AttributeImpl::operator<(const AttributeImpl &AI) const {
 // AttributeSetNode Definition
 //===----------------------------------------------------------------------===//
 
+AttributeSetNode::AttributeSetNode(ArrayRef<Attribute> Attrs)
+    : NumAttrs(Attrs.size()), AvailableAttrs(0) {
+  static_assert(Attribute::EndAttrKinds <= sizeof(AvailableAttrs) * CHAR_BIT,
+                "Too many attributes for AvailableAttrs");
+  // There's memory after the node where we can store the entries in.
+  std::copy(Attrs.begin(), Attrs.end(), getTrailingObjects<Attribute>());
+
+  for (Attribute I : *this) {
+    if (!I.isStringAttribute()) {
+      AvailableAttrs |= ((uint64_t)1) << I.getKindAsEnum();
+    }
+  }
+}
+
 AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
                                         ArrayRef<Attribute> Attrs) {
   if (Attrs.empty())
