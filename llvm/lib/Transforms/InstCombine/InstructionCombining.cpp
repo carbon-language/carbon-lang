@@ -726,9 +726,20 @@ Value *InstCombiner::dyn_castNegVal(Value *V) const {
     if (C->getType()->getElementType()->isIntegerTy())
       return ConstantExpr::getNeg(C);
 
-  if (ConstantVector *C = dyn_cast<ConstantVector>(V))
-    if (C->getType()->getElementType()->isIntegerTy())
-      return ConstantExpr::getNeg(C);
+  if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
+    for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
+      Constant *Elt = CV->getAggregateElement(i);
+      if (!Elt)
+        return nullptr;
+
+      if (isa<UndefValue>(Elt))
+        continue;
+
+      if (!isa<ConstantInt>(Elt))
+        return nullptr;
+    }
+    return ConstantExpr::getNeg(CV);
+  }
 
   return nullptr;
 }
