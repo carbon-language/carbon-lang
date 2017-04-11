@@ -656,6 +656,52 @@ std::string AttributeSetNode::getAsString(bool InAttrGrp) const {
 // AttributeListImpl Definition
 //===----------------------------------------------------------------------===//
 
+AttributeListImpl::AttributeListImpl(
+    LLVMContext &C, ArrayRef<std::pair<unsigned, AttributeSetNode *>> Slots)
+    : Context(C), NumSlots(Slots.size()), AvailableFunctionAttrs(0) {
+#ifndef NDEBUG
+  if (Slots.size() >= 2) {
+    auto &PrevPair = Slots.front();
+    for (auto &CurPair : Slots.drop_front()) {
+      assert(PrevPair.first <= CurPair.first && "Attribute set not ordered!");
+    }
+  }
+#endif
+
+  // There's memory after the node where we can store the entries in.
+  std::copy(Slots.begin(), Slots.end(), getTrailingObjects<IndexAttrPair>());
+
+  // Initialize AvailableFunctionAttrs summary bitset.
+  if (NumSlots > 0) {
+    static_assert(Attribute::EndAttrKinds <=
+                      sizeof(AvailableFunctionAttrs) * CHAR_BIT,
+                  "Too many attributes");
+    static_assert(AttributeList::FunctionIndex == ~0u,
+                  "FunctionIndex should be biggest possible index");
+    const std::pair<unsigned, AttributeSetNode *> &Last = Slots.back();
+    if (Last.first == AttributeList::FunctionIndex) {
+      const AttributeSetNode *Node = Last.second;
+      for (Attribute I : *Node) {
+        if (!I.isStringAttribute())
+          AvailableFunctionAttrs |= ((uint64_t)1) << I.getKindAsEnum();
+      }
+    }
+  }
+}
+
+void AttributeListImpl::Profile(FoldingSetNodeID &ID) const {
+  Profile(ID, makeArrayRef(getNode(0), getNumSlots()));
+}
+
+void AttributeListImpl::Profile(
+    FoldingSetNodeID &ID,
+    ArrayRef<std::pair<unsigned, AttributeSetNode *>> Nodes) {
+  for (const auto &Node : Nodes) {
+    ID.AddInteger(Node.first);
+    ID.AddPointer(Node.second);
+  }
+}
+
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void AttributeListImpl::dump() const {
   AttributeList(const_cast<AttributeListImpl *>(this)).dump();
