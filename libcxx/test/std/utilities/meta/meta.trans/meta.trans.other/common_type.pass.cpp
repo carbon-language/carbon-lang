@@ -96,6 +96,9 @@ void test_bullet_two() {
   static_assert(std::is_same<CommonType<int const>, int>::value, "");
   static_assert(std::is_same<CommonType<int volatile[]>, int volatile*>::value, "");
   static_assert(std::is_same<CommonType<void(&)()>, void(*)()>::value, "");
+
+  static_assert(no_common_type<X<float> >::value, "");
+  static_assert(no_common_type<X<double> >::value, "");
 }
 
 template <class T, class U, class Expect>
@@ -306,7 +309,4 @@ int main()
     static_assert((std::is_same<std::common_type<const int, int>::type,       int>::value), "");
     static_assert((std::is_same<std::common_type<int, const int>::type,       int>::value), "");
     static_assert((std::is_same<std::common_type<const int, const int>::type, int>::value), "");
-
-    static_assert(no_common_type<X<float> >::value, "");
-    static_assert(no_common_type<X<double> >::value, "");
 }
