@@ -622,19 +622,6 @@ serializeValueProfDataFrom(ValueProfRecordClosure *Closure,
  * specified via command line. */
 #define INSTR_PROF_PROFILE_NAME_VAR __llvm_profile_filename
 
-#ifdef _WIN32
-/* Runtime section names and name strings.  */
-#define INSTR_PROF_DATA_SECT_NAME .lprfd
-#define INSTR_PROF_NAME_SECT_NAME .lprfn
-#define INSTR_PROF_CNTS_SECT_NAME .lprfc
-/* Array of pointers. Each pointer points to a list
- * of value nodes associated with one value site.
- */
-#define INSTR_PROF_VALS_SECT_NAME .lprfv
-/* Value profile nodes section. */
-#define INSTR_PROF_VNODES_SECT_NAME .lprfnd
-#define INSTR_PROF_COVMAP_SECT_NAME .lcovmap
-#else
 /* Runtime section names and name strings.  */
 #define INSTR_PROF_DATA_SECT_NAME __llvm_prf_data
 #define INSTR_PROF_NAME_SECT_NAME __llvm_prf_names
@@ -646,7 +633,6 @@ serializeValueProfDataFrom(ValueProfRecordClosure *Closure,
 /* Value profile nodes section. */
 #define INSTR_PROF_VNODES_SECT_NAME __llvm_prf_vnds
 #define INSTR_PROF_COVMAP_SECT_NAME __llvm_covmap
-#endif
 
 #define INSTR_PROF_DATA_SECT_NAME_STR                                          \
   INSTR_PROF_QUOTE(INSTR_PROF_DATA_SECT_NAME)
