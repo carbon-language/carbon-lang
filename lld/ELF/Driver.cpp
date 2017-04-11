@@ -713,6 +713,9 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
       Config->DefaultSymbolVersion = VER_NDX_LOCAL;
   }
 
+  if (getArg(Args, OPT_export_dynamic, OPT_no_export_dynamic, false))
+    Config->DefaultSymbolVersion = VER_NDX_GLOBAL;
+
   if (auto *Arg = Args.getLastArg(OPT_version_script))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
       readVersionScript(*Buffer);
