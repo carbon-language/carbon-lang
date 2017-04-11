@@ -5769,7 +5769,10 @@ void ASTRecordWriter::AddCXXDefinitionData(const CXXRecordDecl *D) {
   Record->push_back(Data.ImplicitCopyAssignmentHasConstParam);
   Record->push_back(Data.HasDeclaredCopyConstructorWithConstParam);
   Record->push_back(Data.HasDeclaredCopyAssignmentWithConstParam);
-  Record->push_back(Data.ODRHash);
+
+  // getODRHash will compute the ODRHash if it has not been previously computed.
+  Record->push_back(D->getODRHash());
+
   bool ModularCodegen = Writer->Context->getLangOpts().ModularCodegen &&
                         Writer->WritingModule && !D->isDependentType();
   Record->push_back(ModularCodegen);

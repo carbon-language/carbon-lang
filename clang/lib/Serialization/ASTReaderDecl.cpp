@@ -1536,6 +1536,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.HasDeclaredCopyConstructorWithConstParam = Record.readInt();
   Data.HasDeclaredCopyAssignmentWithConstParam = Record.readInt();
   Data.ODRHash = Record.readInt();
+  Data.HasODRHash = true;
 
   if (Record.readInt()) {
     Reader.BodySource[D] = Loc.F->Kind == ModuleKind::MK_MainFile
@@ -1673,7 +1674,6 @@ void ASTDeclReader::MergeDefinitionData(
   OR_FIELD(HasDeclaredCopyConstructorWithConstParam)
   OR_FIELD(HasDeclaredCopyAssignmentWithConstParam)
   MATCH_FIELD(IsLambda)
-  MATCH_FIELD(ODRHash)
 #undef OR_FIELD
 #undef MATCH_FIELD
 
@@ -1695,6 +1695,10 @@ void ASTDeclReader::MergeDefinitionData(
   if (DD.IsLambda) {
     // FIXME: ODR-checking for merging lambdas (this happens, for instance,
     // when they occur within the body of a function template specialization).
+  }
+
+  if (D->getODRHash() != MergeDD.ODRHash) {
+    DetectedOdrViolation = true;
   }
 
   if (DetectedOdrViolation)
