@@ -45,8 +45,8 @@ namespace std
 
     template <> struct common_type< ::S<long>, long> {};
     template <> struct common_type<long, ::S<long> > {};
-    template <> struct common_type<::X<float> > {};
-    template <> struct common_type<::X<double>, ::X<double> > {};
+    template <> struct common_type< ::X<float> > {};
+    template <> struct common_type< ::X<double>, ::X<double> > {};
 }
 
 #if TEST_STD_VER >= 11
