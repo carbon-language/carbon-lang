@@ -33,11 +33,6 @@ void *registers_thread_func(void *arg) {
       :
       : "r" (p)
       );
-#elif defined(__arm__)
-  asm ( "mov r5, %0"
-      :
-      : "r" (p)
-      );
 #else
 #error "Test is not supported on this architecture."
 #endif

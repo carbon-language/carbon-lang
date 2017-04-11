@@ -16,8 +16,7 @@
 
 #if SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__) || \
                         defined(__aarch64__) || defined(__powerpc64__) || \
-                        defined(__s390__) || defined(__i386__) || \
-                        defined(__arm__))
+                        defined(__s390__) || defined(__i386__))
 
 #include "sanitizer_stoptheworld.h"
 
@@ -533,4 +532,4 @@ uptr SuspendedThreadsList::RegisterCount() {
 
 #endif  // SANITIZER_LINUX && (defined(__x86_64__) || defined(__mips__)
         // || defined(__aarch64__) || defined(__powerpc64__)
-        // || defined(__s390__) || defined(__i386__) || defined(__arm__)
+        // || defined(__s390__) || defined(__i386__)
