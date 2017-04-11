@@ -23,7 +23,7 @@ namespace {
 
 template <typename T> struct Source {
   T t;
-  Source(T &&t) : t(std::move(t)) {}
+  Source(T t) : t(t) {}
   operator T() { return t; }
   template <typename U = T> U &get() { return t; }
   template <typename U = T> const U &get() const { return t; }
