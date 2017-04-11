@@ -249,8 +249,15 @@ unsigned encodeWaitcnt(const IsaInfo::IsaVersion &Version,
 
 unsigned getInitialPSInputAddr(const Function &F);
 
-bool isShader(CallingConv::ID cc);
-bool isCompute(CallingConv::ID cc);
+LLVM_READNONE
+bool isShader(CallingConv::ID CC);
+
+LLVM_READNONE
+bool isCompute(CallingConv::ID CC);
+
+LLVM_READNONE
+bool isEntryFunctionCC(CallingConv::ID CC);
+
 
 bool isSI(const MCSubtargetInfo &STI);
 bool isCI(const MCSubtargetInfo &STI);
