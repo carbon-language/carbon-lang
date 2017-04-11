@@ -177,6 +177,7 @@ void ExternalASTMerger::FindExternalLexicalDecls(
             Decl *ImportedDecl =
                 IP.Forward->Import(const_cast<Decl *>(SourceDecl));
             assert(ImportedDecl->getDeclContext() == DC);
+            (void)ImportedDecl;
           }
         }
       });
