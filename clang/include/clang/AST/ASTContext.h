@@ -2317,21 +2317,15 @@ public:
     return getTargetAddressSpace(Q.getAddressSpace());
   }
 
-  unsigned getTargetAddressSpace(unsigned AS) const {
-    if (AS < LangAS::Offset || AS >= LangAS::Offset + LangAS::Count)
-      return AS;
-    else
-      return (*AddrSpaceMap)[AS - LangAS::Offset];
-  }
+  unsigned getTargetAddressSpace(unsigned AS) const;
 
   /// Get target-dependent integer value for null pointer which is used for
   /// constant folding.
   uint64_t getTargetNullPointerValue(QualType QT) const;
 
   bool addressSpaceMapManglingFor(unsigned AS) const {
-    return AddrSpaceMapMangling ||
-           AS < LangAS::Offset ||
-           AS >= LangAS::Offset + LangAS::Count;
+    return AddrSpaceMapMangling || 
+           AS >= LangAS::Count;
   }
 
 private:

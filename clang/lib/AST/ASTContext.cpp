@@ -703,6 +703,7 @@ static const LangAS::Map *getAddressSpaceMap(const TargetInfo &T,
     // The fake address space map must have a distinct entry for each
     // language-specific address space.
     static const unsigned FakeAddrSpaceMap[] = {
+      0, // Default
       1, // opencl_global
       3, // opencl_local
       2, // opencl_constant
@@ -8727,7 +8728,8 @@ static QualType DecodeTypeFromStr(const char *&Str, const ASTContext &Context,
       char *End;
       unsigned AddrSpace = strtoul(Str, &End, 10);
       if (End != Str && AddrSpace != 0) {
-        Type = Context.getAddrSpaceQualType(Type, AddrSpace);
+        Type = Context.getAddrSpaceQualType(Type, AddrSpace +
+            LangAS::Count);
         Str = End;
       }
       if (c == '*')
@@ -9544,6 +9546,18 @@ uint64_t ASTContext::getTargetNullPointerValue(QualType QT) const {
     AS = QT->getPointeeType().getAddressSpace();
 
   return getTargetInfo().getNullPointerValue(AS);
+}
+
+unsigned ASTContext::getTargetAddressSpace(unsigned AS) const {
+  // For OpenCL, only function local variables are not explicitly marked with
+  // an address space in the AST, and these need to be the address space of
+  // alloca.
+  if (!AS && LangOpts.OpenCL)
+    return getTargetInfo().getDataLayout().getAllocaAddrSpace();
+  if (AS >= LangAS::Count)
+    return AS - LangAS::Count;
+  else
+    return (*AddrSpaceMap)[AS];
 }
 
 // Explicitly instantiate this in case a Redeclarable<T> is used from a TU that
