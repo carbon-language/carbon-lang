@@ -408,8 +408,8 @@ Value *BlockGenerator::getOrCreateAlloca(const ScopArrayInfo *Array) {
   else
     NameExt = ".s2a";
 
-  const DataLayout &DL
-    = Builder.GetInsertBlock()->getParent()->getParent()->getDataLayout();
+  const DataLayout &DL =
+      Builder.GetInsertBlock()->getParent()->getParent()->getDataLayout();
 
   Addr = new AllocaInst(Ty, DL.getAllocaAddrSpace(),
                         ScalarBase->getName() + NameExt);
