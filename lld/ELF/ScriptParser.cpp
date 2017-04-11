@@ -36,6 +36,7 @@
 
 using namespace llvm;
 using namespace llvm::ELF;
+using namespace llvm::support::endian;
 using namespace lld;
 using namespace lld::elf;
 
@@ -637,11 +638,13 @@ ScriptParser::readOutputSectionDescription(StringRef OutSec) {
 // as 32-bit big-endian values. We will do the same as ld.gold does
 // because it's simpler than what ld.bfd does.
 uint32_t ScriptParser::readOutputSectionFiller(StringRef Tok) {
-  uint32_t V;
-  if (!Tok.getAsInteger(0, V))
-    return V;
-  setError("invalid filler expression: " + Tok);
-  return 0;
+  uint32_t V = 0;
+  if (Tok.getAsInteger(0, V))
+    setError("invalid filler expression: " + Tok);
+
+  uint32_t Buf;
+  write32be(&Buf, V);
+  return Buf;
 }
 
 SymbolAssignment *ScriptParser::readProvideHidden(bool Provide, bool Hidden) {

@@ -221,15 +221,13 @@ void OutputSection::sortCtorsDtors() {
   std::stable_sort(Sections.begin(), Sections.end(), compCtors);
 }
 
-// Fill [Buf, Buf + Size) with Filler. Filler is written in big
-// endian order. This is used for linker script "=fillexp" command.
+// Fill [Buf, Buf + Size) with Filler.
+// This is used for linker script "=fillexp" command.
 static void fill(uint8_t *Buf, size_t Size, uint32_t Filler) {
-  uint8_t V[4];
-  write32be(V, Filler);
   size_t I = 0;
   for (; I + 4 < Size; I += 4)
-    memcpy(Buf + I, V, 4);
-  memcpy(Buf + I, V, Size - I);
+    memcpy(Buf + I, &Filler, 4);
+  memcpy(Buf + I, &Filler, Size - I);
 }
 
 uint32_t OutputSection::getFiller() {
