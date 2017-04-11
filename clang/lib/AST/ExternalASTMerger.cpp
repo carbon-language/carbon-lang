@@ -172,10 +172,10 @@ void ExternalASTMerger::FindExternalLexicalDecls(
   ForEachMatchingDC(
       DC, Importers, [DC, IsKindWeWant](const ImporterPair &IP,
                                         Source<const DeclContext *> SourceDC) {
-        for (Source<const Decl *> SourceDecl : SourceDC.get()->decls()) {
-          if (IsKindWeWant(SourceDecl.get()->getKind())) {
+        for (const Decl *SourceDecl : SourceDC.get()->decls()) {
+          if (IsKindWeWant(SourceDecl->getKind())) {
             Decl *ImportedDecl =
-                IP.Forward->Import(const_cast<Decl *>(SourceDecl.get()));
+                IP.Forward->Import(const_cast<Decl *>(SourceDecl));
             assert(ImportedDecl->getDeclContext() == DC);
           }
         }
