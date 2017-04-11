@@ -334,6 +334,9 @@ class NewGVN {
   // Number of function arguments, used by ranking
   unsigned int NumFuncArgs;
 
+  // RPOOrdering of basic blocks
+  DenseMap<const DomTreeNode *, unsigned> RPOOrdering;
+
   // Congruence class info.
 
   // This class is called INITIAL in the paper. It is the class everything
@@ -432,7 +435,7 @@ private:
   // Expression handling.
   const Expression *createExpression(Instruction *);
   const Expression *createBinaryExpression(unsigned, Type *, Value *, Value *);
-  PHIExpression *createPHIExpression(Instruction *);
+  PHIExpression *createPHIExpression(Instruction *, bool&);
   const VariableExpression *createVariableExpression(Value *);
   const ConstantExpression *createConstantExpression(Constant *);
   const Expression *createVariableOrConstant(Value *V);
@@ -627,7 +630,8 @@ void NewGVN::deleteExpression(const Expression *E) {
   ExpressionAllocator.Deallocate(E);
 }
 
-PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
+PHIExpression *NewGVN::createPHIExpression(Instruction *I,
+                                           bool &HasBackedge) {
   BasicBlock *PHIBlock = I->getParent();
   auto *PN = cast<PHINode>(I);
   auto *E =
@@ -637,6 +641,8 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
   E->setType(I->getType());
   E->setOpcode(I->getOpcode());
 
+  unsigned PHIRPO = RPOOrdering.lookup(DT->getNode(PHIBlock));
+
   // Filter out unreachable phi operands.
   auto Filtered = make_filter_range(PN->operands(), [&](const Use &U) {
     return ReachableEdges.count({PN->getIncomingBlock(U), PHIBlock});
@@ -644,6 +650,11 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I) {
 
   std::transform(Filtered.begin(), Filtered.end(), op_inserter(E),
                  [&](const Use &U) -> Value * {
+                   auto *BB = PN->getIncomingBlock(U);
+                   auto *DTN = DT->getNode(BB);
+                   if (RPOOrdering.lookup(DTN) >= PHIRPO)
+                     HasBackedge = true;
+
                    // Don't try to transform self-defined phis.
                    if (U == PN)
                      return PN;
@@ -1315,7 +1326,8 @@ bool NewGVN::setMemoryClass(const MemoryAccess *From,
 
 // Evaluate PHI nodes symbolically, and create an expression result.
 const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) {
-  auto *E = cast<PHIExpression>(createPHIExpression(I));
+  bool HasBackedge = false;
+  auto *E = cast<PHIExpression>(createPHIExpression(I, HasBackedge));
   // We match the semantics of SimplifyPhiNode from InstructionSimplify here.
 
   // See if all arguaments are the same.
@@ -1337,10 +1349,12 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) {
     deleteExpression(E);
     return createConstantExpression(UndefValue::get(I->getType()));
   }
+  unsigned NumOps = 0;
   Value *AllSameValue = *(Filtered.begin());
   ++Filtered.begin();
   // Can't use std::equal here, sadly, because filter.begin moves.
-  if (llvm::all_of(Filtered, [AllSameValue](const Value *V) {
+  if (llvm::all_of(Filtered, [AllSameValue, &NumOps](const Value *V) {
+        ++NumOps;
         return V == AllSameValue;
       })) {
     // In LLVM's non-standard representation of phi nodes, it's possible to have
@@ -1353,6 +1367,15 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) {
     // We also special case undef, so that if we have an undef, we can't use the
     // common value unless it dominates the phi block.
     if (HasUndef) {
+      // If we have undef and at least one other value, this is really a
+      // multivalued phi.  We can't ignore the undef when going over a backedge
+      // unless the value being propagated *is* undef itself.  This is because
+      // if they are all undef, they will not become less undef (and if they
+      // did, we will stop them here).  Note that NumOps does not include the
+      // undef itself.
+      if (HasBackedge && NumOps > 0 && !isa<UndefValue>(AllSameValue))
+        return E;
+
       // Only have to check for instructions
       if (auto *AllSameInst = dyn_cast<Instruction>(AllSameValue))
         if (!someEquivalentDominates(AllSameInst, I))
@@ -2559,7 +2582,6 @@ bool NewGVN::runGVN() {
   // The dominator tree does guarantee that, for a given dom tree node, it's
   // parent must occur before it in the RPO ordering. Thus, we only need to sort
   // the siblings.
-  DenseMap<const DomTreeNode *, unsigned> RPOOrdering;
   ReversePostOrderTraversal<Function *> RPOT(&F);
   unsigned Counter = 0;
   for (auto &B : RPOT) {
@@ -2572,7 +2594,7 @@ bool NewGVN::runGVN() {
     auto *Node = DT->getNode(B);
     if (Node->getChildren().size() > 1)
       std::sort(Node->begin(), Node->end(),
-                [&RPOOrdering](const DomTreeNode *A, const DomTreeNode *B) {
+                [&](const DomTreeNode *A, const DomTreeNode *B) {
                   return RPOOrdering[A] < RPOOrdering[B];
                 });
   }
