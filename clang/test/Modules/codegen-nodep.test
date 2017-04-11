@@ -1,0 +1,13 @@
+RUN: rm -rf %t
+REQUIRES: x86-registered-target
+
+RUN: %clang_cc1 -triple=x86_64-linux-gnu -fmodules-codegen -x c++ -fmodules \
+RUN:            -emit-module -fmodule-name=foo \
+RUN:            %S/Inputs/codegen-nodep/foo.modulemap -o - \
+RUN:          | llvm-bcanalyzer - -dump \
+RUN:          | FileCheck %s
+
+Ensure there's only one modular codegen decl - the sentinel plain inline
+function, not any for the function template.
+
+CHECK: <MODULAR_CODEGEN_DECLS op0={{[0-9]+}}/>

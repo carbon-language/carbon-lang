@@ -4834,7 +4834,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       bool InferExplicitSubmodules = Record[Idx++];
       bool InferExportWildcard = Record[Idx++];
       bool ConfigMacrosExhaustive = Record[Idx++];
-      bool WithCodegen = Record[Idx++];
 
       Module *ParentModule = nullptr;
       if (Parent)
@@ -4880,7 +4879,6 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       CurrentModule->InferExplicitSubmodules = InferExplicitSubmodules;
       CurrentModule->InferExportWildcard = InferExportWildcard;
       CurrentModule->ConfigMacrosExhaustive = ConfigMacrosExhaustive;
-      CurrentModule->WithCodegen = WithCodegen;
       if (DeserializationListener)
         DeserializationListener->ModuleRead(GlobalID, CurrentModule);
 
@@ -8149,16 +8147,12 @@ ASTReader::getSourceDescriptor(unsigned ID) {
   return None;
 }
 
-ExternalASTSource::ExtKind ASTReader::hasExternalDefinitions(unsigned ID) {
-  const Module *M = getSubmodule(ID);
-  if (!M || !M->WithCodegen)
+ExternalASTSource::ExtKind
+ASTReader::hasExternalDefinitions(const FunctionDecl *FD) {
+  auto I = BodySource.find(FD);
+  if (I == BodySource.end())
     return EK_ReplyHazy;
-
-  ModuleFile *MF = ModuleMgr.lookup(M->getASTFile());
-  assert(MF); // ?
-  if (MF->Kind == ModuleKind::MK_MainFile)
-    return EK_Never;
-  return EK_Always;
+  return I->second ? EK_Never : EK_Always;
 }
 
 Selector ASTReader::getLocalSelector(ModuleFile &M, unsigned LocalID) {
@@ -8992,9 +8986,9 @@ void ASTReader::finishPendingActions() {
       // FIXME: Check for =delete/=default?
       // FIXME: Complain about ODR violations here?
       const FunctionDecl *Defn = nullptr;
-      if (!getContext().getLangOpts().Modules || !FD->hasBody(Defn))
+      if (!getContext().getLangOpts().Modules || !FD->hasBody(Defn)) {
         FD->setLazyBody(PB->second);
-      else
+      } else
         mergeDefinitionVisibility(const_cast<FunctionDecl*>(Defn), FD);
       continue;
     }

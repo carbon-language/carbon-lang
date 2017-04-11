@@ -95,9 +95,9 @@ MultiplexExternalSemaSource::GetExternalCXXCtorInitializers(uint64_t Offset) {
 }
 
 ExternalASTSource::ExtKind
-MultiplexExternalSemaSource::hasExternalDefinitions(unsigned int ID) {
+MultiplexExternalSemaSource::hasExternalDefinitions(const FunctionDecl *FD) {
   for (const auto &S : Sources)
-    if (auto EK = S->hasExternalDefinitions(ID))
+    if (auto EK = S->hasExternalDefinitions(FD))
       if (EK != EK_ReplyHazy)
         return EK;
   return EK_ReplyHazy;

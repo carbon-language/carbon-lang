@@ -8897,7 +8897,7 @@ GVALinkage ASTContext::GetGVALinkageForFunction(const FunctionDecl *FD) const {
       *this, basicGVALinkageForFunction(*this, FD), FD);
   auto EK = ExternalASTSource::EK_ReplyHazy;
   if (auto *Ext = getExternalSource())
-    EK = Ext->hasExternalDefinitions(FD->getOwningModuleID());
+    EK = Ext->hasExternalDefinitions(FD);
   switch (EK) {
   case ExternalASTSource::EK_Never:
     if (L == GVA_DiscardableODR)
@@ -8993,7 +8993,7 @@ GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
       *this, basicGVALinkageForVariable(*this, VD), VD);
 }
 
-bool ASTContext::DeclMustBeEmitted(const Decl *D, bool ForModularCodegen) {
+bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (!VD->isFileVarDecl())
       return false;
@@ -9058,9 +9058,6 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D, bool ForModularCodegen) {
     }
 
     GVALinkage Linkage = GetGVALinkageForFunction(FD);
-
-    if (Linkage == GVA_DiscardableODR && ForModularCodegen)
-      return true;
 
     // static, static inline, always_inline, and extern inline functions can
     // always be deferred.  Normal inline functions can be deferred in C99/C++.
