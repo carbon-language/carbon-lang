@@ -12231,6 +12231,33 @@ void DAGCombiner::getStoreMergeCandidates(
   if (BasePtr.Base.isUndef())
     return;
 
+  bool IsLoadSrc = isa<LoadSDNode>(St->getValue());
+  bool IsConstantSrc = isa<ConstantSDNode>(St->getValue()) ||
+                       isa<ConstantFPSDNode>(St->getValue());
+  bool IsExtractVecSrc =
+      (St->getValue().getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
+       St->getValue().getOpcode() == ISD::EXTRACT_SUBVECTOR);
+  auto CandidateMatch = [&](StoreSDNode *Other, BaseIndexOffset &Ptr) -> bool {
+    if (Other->isVolatile() || Other->isIndexed())
+      return false;
+    // We can merge constant floats to equivalent integers
+    if (Other->getMemoryVT() != MemVT)
+      if (!(MemVT.isInteger() && MemVT.bitsEq(Other->getMemoryVT()) &&
+            isa<ConstantFPSDNode>(Other->getValue())))
+        return false;
+    Ptr = BaseIndexOffset::match(Other->getBasePtr(), DAG);
+    if (!Ptr.equalBaseIndex(BasePtr))
+      return false;
+    if (IsLoadSrc)
+      return isa<LoadSDNode>(Other->getValue());
+    if (IsConstantSrc)
+      return (isa<ConstantSDNode>(Other->getValue()) ||
+              isa<ConstantFPSDNode>(Other->getValue()));
+    if (IsExtractVecSrc)
+      return (Other->getValue().getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
+              Other->getValue().getOpcode() == ISD::EXTRACT_SUBVECTOR);
+    return false;
+  };
   // We looking for a root node which is an ancestor to all mergable
   // stores. We search up through a load, to our root and then down
   // through all children. For instance we will find Store{1,2,3} if
@@ -12260,39 +12287,13 @@ void DAGCombiner::getStoreMergeCandidates(
   } else
     CandidateParents.insert(RootNode);
 
-  bool IsLoadSrc = isa<LoadSDNode>(St->getValue());
-  bool IsConstantSrc = isa<ConstantSDNode>(St->getValue()) ||
-                       isa<ConstantFPSDNode>(St->getValue());
-  bool IsExtractVecSrc =
-      (St->getValue().getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
-       St->getValue().getOpcode() == ISD::EXTRACT_SUBVECTOR);
-  auto CorrectValueKind = [&](StoreSDNode *Other) -> bool {
-    if (IsLoadSrc)
-      return isa<LoadSDNode>(Other->getValue());
-    if (IsConstantSrc)
-      return (isa<ConstantSDNode>(Other->getValue()) ||
-              isa<ConstantFPSDNode>(Other->getValue()));
-    if (IsExtractVecSrc)
-      return (Other->getValue().getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
-              Other->getValue().getOpcode() == ISD::EXTRACT_SUBVECTOR);
-    return false;
-  };
-
   // check all parents of mergable children
   for (auto P = CandidateParents.begin(); P != CandidateParents.end(); ++P)
     for (auto I = (*P)->use_begin(), E = (*P)->use_end(); I != E; ++I)
       if (I.getOperandNo() == 0)
         if (StoreSDNode *OtherST = dyn_cast<StoreSDNode>(*I)) {
-          if (OtherST->isVolatile() || OtherST->isIndexed())
-            continue;
-          // We can merge constant floats to equivalent integers
-          if (OtherST->getMemoryVT() != MemVT)
-            if (!(MemVT.isInteger() && MemVT.bitsEq(OtherST->getMemoryVT()) &&
-                  isa<ConstantFPSDNode>(OtherST->getValue())))
-              continue;
-          BaseIndexOffset Ptr =
-              BaseIndexOffset::match(OtherST->getBasePtr(), DAG);
-          if (Ptr.equalBaseIndex(BasePtr) && CorrectValueKind(OtherST))
+          BaseIndexOffset Ptr;
+          if (CandidateMatch(OtherST, Ptr))
             StoreNodes.push_back(MemOpLink(OtherST, Ptr.Offset));
         }
 }
