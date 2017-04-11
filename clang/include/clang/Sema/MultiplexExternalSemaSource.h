@@ -90,7 +90,7 @@ public:
   /// initializers themselves.
   CXXCtorInitializer **GetExternalCXXCtorInitializers(uint64_t Offset) override;
 
-  ExtKind hasExternalDefinitions(const FunctionDecl *FD) override;
+  ExtKind hasExternalDefinitions(const Decl *D) override;
 
   /// \brief Find all declarations with the given name in the
   /// given context.

@@ -7,7 +7,7 @@ RUN:            %S/Inputs/codegen-nodep/foo.modulemap -o - \
 RUN:          | llvm-bcanalyzer - -dump \
 RUN:          | FileCheck %s
 
-Ensure there's only one modular codegen decl - the sentinel plain inline
-function, not any for the function template.
+Ensure there are only two modular codegen decls (one for the class, one for the
+function - none for the class and function templates).
 
-CHECK: <MODULAR_CODEGEN_DECLS op0={{[0-9]+}}/>
+CHECK: <MODULAR_CODEGEN_DECLS op0={{[0-9]+}} op1={{[0-9]+}}/>

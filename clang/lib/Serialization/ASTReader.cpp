@@ -8147,8 +8147,7 @@ ASTReader::getSourceDescriptor(unsigned ID) {
   return None;
 }
 
-ExternalASTSource::ExtKind
-ASTReader::hasExternalDefinitions(const FunctionDecl *FD) {
+ExternalASTSource::ExtKind ASTReader::hasExternalDefinitions(const Decl *FD) {
   auto I = BodySource.find(FD);
   if (I == BodySource.end())
     return EK_ReplyHazy;

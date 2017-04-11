@@ -1,5 +1,11 @@
 template <typename T>
-void ftempl() {
+void foot() {
 }
-inline void f() {
+inline void foo() {
 }
+
+template <typename T>
+struct bart {
+};
+struct bar {
+};

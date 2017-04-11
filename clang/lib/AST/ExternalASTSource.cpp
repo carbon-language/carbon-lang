@@ -29,7 +29,7 @@ ExternalASTSource::getSourceDescriptor(unsigned ID) {
 }
 
 ExternalASTSource::ExtKind
-ExternalASTSource::hasExternalDefinitions(const FunctionDecl *FD) {
+ExternalASTSource::hasExternalDefinitions(const Decl *D) {
   return EK_ReplyHazy;
 }
 

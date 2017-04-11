@@ -5770,6 +5770,12 @@ void ASTRecordWriter::AddCXXDefinitionData(const CXXRecordDecl *D) {
   Record->push_back(Data.HasDeclaredCopyConstructorWithConstParam);
   Record->push_back(Data.HasDeclaredCopyAssignmentWithConstParam);
   Record->push_back(Data.ODRHash);
+  bool ModularCodegen = Writer->Context->getLangOpts().ModularCodegen &&
+                        Writer->WritingModule && !D->isDependentType();
+  Record->push_back(ModularCodegen);
+  if (ModularCodegen)
+    Writer->ModularCodegenDecls.push_back(Writer->GetDeclRef(D));
+
   // IsLambda bit is already saved.
 
   Record->push_back(Data.NumBases);
