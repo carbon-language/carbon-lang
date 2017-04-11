@@ -258,6 +258,18 @@ bool isCompute(CallingConv::ID CC);
 LLVM_READNONE
 bool isEntryFunctionCC(CallingConv::ID CC);
 
+// FIXME: Remove this when calling conventions cleaned up
+LLVM_READNONE
+inline bool isKernel(CallingConv::ID CC) {
+  switch (CC) {
+  case CallingConv::C:
+  case CallingConv::AMDGPU_KERNEL:
+  case CallingConv::SPIR_KERNEL:
+    return true;
+  default:
+    return false;
+  }
+}
 
 bool isSI(const MCSubtargetInfo &STI);
 bool isCI(const MCSubtargetInfo &STI);

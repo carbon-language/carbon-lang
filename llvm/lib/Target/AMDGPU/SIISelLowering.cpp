@@ -1171,7 +1171,7 @@ SDValue SITargetLowering::LowerFormalArguments(
                  *DAG.getContext());
 
   bool IsShader = AMDGPU::isShader(CallConv);
-  bool IsKernel = !IsShader;
+  bool IsKernel = AMDGPU::isKernel(CallConv);
   bool IsEntryFunc = AMDGPU::isEntryFunctionCC(CallConv);
 
   if (IsShader) {
