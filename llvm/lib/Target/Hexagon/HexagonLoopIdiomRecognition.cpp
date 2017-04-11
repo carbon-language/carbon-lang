@@ -2146,7 +2146,8 @@ CleanupAndExit:
       Type *VoidTy = Type::getVoidTy(Ctx);
       Module *M = Func->getParent();
       Constant *CF = M->getOrInsertFunction(HexagonVolatileMemcpyName, VoidTy,
-                                            Int32PtrTy, Int32PtrTy, Int32Ty);
+                                            Int32PtrTy, Int32PtrTy, Int32Ty,
+                                            nullptr);
       Function *Fn = cast<Function>(CF);
       Fn->setLinkage(Function::ExternalLinkage);
 

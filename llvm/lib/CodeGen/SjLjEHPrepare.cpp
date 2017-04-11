@@ -482,10 +482,10 @@ bool SjLjEHPrepare::runOnFunction(Function &F) {
   Module &M = *F.getParent();
   RegisterFn = M.getOrInsertFunction(
       "_Unwind_SjLj_Register", Type::getVoidTy(M.getContext()),
-      PointerType::getUnqual(FunctionContextTy));
+      PointerType::getUnqual(FunctionContextTy), nullptr);
   UnregisterFn = M.getOrInsertFunction(
       "_Unwind_SjLj_Unregister", Type::getVoidTy(M.getContext()),
-      PointerType::getUnqual(FunctionContextTy));
+      PointerType::getUnqual(FunctionContextTy), nullptr);
   FrameAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::frameaddress);
   StackAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::stacksave);
   StackRestoreFn = Intrinsic::getDeclaration(&M, Intrinsic::stackrestore);
