@@ -468,7 +468,7 @@ namespace {
     /// Candidate stores have indirect dependency through their
     /// operands. \return True if safe to merge
     bool checkMergeStoreCandidatesForDependencies(
-        SmallVectorImpl<MemOpLink> &StoreNodes);
+        SmallVectorImpl<MemOpLink> &StoreNodes, unsigned NumStores);
 
     /// Merge consecutive store operations into a wide store.
     /// This optimization uses wide integers or vectors when possible.
@@ -12287,18 +12287,18 @@ void DAGCombiner::getStoreMergeCandidates(
 // through the chain). Check in parallel by searching up from
 // non-chain operands of candidates.
 bool DAGCombiner::checkMergeStoreCandidatesForDependencies(
-    SmallVectorImpl<MemOpLink> &StoreNodes) {
+    SmallVectorImpl<MemOpLink> &StoreNodes, unsigned NumStores) {
   SmallPtrSet<const SDNode *, 16> Visited;
   SmallVector<const SDNode *, 8> Worklist;
   // search ops of store candidates
-  for (unsigned i = 0; i < StoreNodes.size(); ++i) {
+  for (unsigned i = 0; i < NumStores; ++i) {
     SDNode *n = StoreNodes[i].MemNode;
     // Potential loops may happen only through non-chain operands
     for (unsigned j = 1; j < n->getNumOperands(); ++j)
       Worklist.push_back(n->getOperand(j).getNode());
   }
   // search through DAG. We can stop early if we find a storenode
-  for (unsigned i = 0; i < StoreNodes.size(); ++i) {
+  for (unsigned i = 0; i < NumStores; ++i) {
     if (SDNode::hasPredecessorHelper(StoreNodes[i].MemNode, Visited, Worklist))
       return false;
   }
@@ -12351,10 +12351,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
   if (StoreNodes.size() < 2)
     return false;
 
-  // Check that we can merge these candidates without causing a cycle
-  if (!checkMergeStoreCandidatesForDependencies(StoreNodes))
-    return false;
-
   // Sort the memory operands according to their distance from the
   // base pointer.
   std::sort(StoreNodes.begin(), StoreNodes.end(),
@@ -12378,6 +12374,11 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
 
   if (NumConsecutiveStores < 2)
     return false;
+
+  // Check that we can merge these candidates without causing a cycle
+  if (!checkMergeStoreCandidatesForDependencies(StoreNodes, NumConsecutiveStores))
+    return false;
+
 
   // The node with the lowest store address.
   LLVMContext &Context = *DAG.getContext();
