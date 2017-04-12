@@ -2088,6 +2088,10 @@ private:
   /// pairs.
   typedef DenseMap<Instruction *, unsigned> ScalarCostsTy;
 
+  /// A set containing all BasicBlocks that are known to present after
+  /// vectorization as a predicated block.
+  SmallPtrSet<BasicBlock *, 4> PredicatedBBsAfterVectorization;
+
   /// A map holding scalar costs for different vectorization factors. The
   /// presence of a cost for an instruction in the mapping indicates that the
   /// instruction will be scalarized when vectorizing with the associated
@@ -6826,6 +6830,9 @@ void LoopVectorizationCostModel::collectInstsToScalarize(unsigned VF) {
         ScalarCostsTy ScalarCosts;
         if (computePredInstDiscount(&I, ScalarCosts, VF) >= 0)
           ScalarCostsVF.insert(ScalarCosts.begin(), ScalarCosts.end());
+
+        // Remember that BB will remain after vectorization.
+        PredicatedBBsAfterVectorization.insert(BB);
       }
   }
 }
@@ -7272,7 +7279,31 @@ unsigned LoopVectorizationCostModel::getInstructionCost(Instruction *I,
     // instruction cost.
     return 0;
   case Instruction::Br: {
-    return TTI.getCFInstrCost(I->getOpcode());
+    // In cases of scalarized and predicated instructions, there will be VF
+    // predicated blocks in the vectorized loop. Each branch around these
+    // blocks requires also an extract of its vector compare i1 element.
+    bool ScalarPredicatedBB = false;
+    BranchInst *BI = cast<BranchInst>(I);
+    if (VF > 1 && BI->isConditional() &&
+        (PredicatedBBsAfterVectorization.count(BI->getSuccessor(0)) ||
+         PredicatedBBsAfterVectorization.count(BI->getSuccessor(1))))
+      ScalarPredicatedBB = true;
+
+    if (ScalarPredicatedBB) {
+      // Return cost for branches around scalarized and predicated blocks.
+      Type *Vec_i1Ty =
+          VectorType::get(IntegerType::getInt1Ty(RetTy->getContext()), VF);
+      return (TTI.getScalarizationOverhead(Vec_i1Ty, false, true) +
+              (TTI.getCFInstrCost(Instruction::Br) * VF));
+    } else if (I->getParent() == TheLoop->getLoopLatch() || VF == 1)
+      // The back-edge branch will remain, as will all scalar branches.
+      return TTI.getCFInstrCost(Instruction::Br);
+    else
+      // This branch will be eliminated by if-conversion.
+      return 0;
+    // Note: We currently assume zero cost for an unconditional branch inside
+    // a predicated block since it will become a fall-through, although we
+    // may decide in the future to call TTI for all branches.
   }
   case Instruction::PHI: {
     auto *Phi = cast<PHINode>(I);
