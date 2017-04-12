@@ -82,6 +82,12 @@ class SOP1_0_32 <string opName, list<dag> pattern = []> : SOP1_Pseudo <
   let has_sdst = 0;
 }
 
+class SOP1_0_32R <string opName, list<dag> pattern = []> : SOP1_Pseudo <
+  opName, (outs), (ins SReg_32:$src0),
+  "$src0", pattern> {
+  let has_sdst = 0;
+}
+
 class SOP1_64 <string opName, list<dag> pattern=[]> : SOP1_Pseudo <
   opName, (outs SReg_64:$sdst), (ins SSrc_b64:$src0),
   "$sdst, $src0", pattern
@@ -210,7 +216,7 @@ def S_MOVRELD_B32 : SOP1_32 <"s_movreld_b32">;
 def S_MOVRELD_B64 : SOP1_64 <"s_movreld_b64">;
 } // End Uses = [M0]
 
-def S_CBRANCH_JOIN : SOP1_1  <"s_cbranch_join">;
+def S_CBRANCH_JOIN : SOP1_0_32R <"s_cbranch_join">;
 def S_MOV_REGRD_B32 : SOP1_32 <"s_mov_regrd_b32">;
 let Defs = [SCC] in {
 def S_ABS_I32 : SOP1_32 <"s_abs_i32">;
