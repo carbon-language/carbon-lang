@@ -3096,7 +3096,7 @@ public:
   // -2
   static const unsigned DefaultPseudoIndex = static_cast<unsigned>(~0L-1);
 
-  template <typename CaseHandleT> class CaseIteratorT;
+  template <typename CaseHandleT> class CaseIteratorImpl;
 
   /// A handle to a particular switch case. It exposes a convenient interface
   /// to both the case value and the successor block.
@@ -3104,10 +3104,10 @@ public:
   /// We define this as a template and instantiate it to form both a const and
   /// non-const handle.
   template <typename SwitchInstT, typename ConstantIntT, typename BasicBlockT>
-  class CaseHandleT {
+  class CaseHandleImpl {
     // Directly befriend both const and non-const iterators.
-    friend class SwitchInst::CaseIteratorT<
-        CaseHandleT<SwitchInstT, ConstantIntT, BasicBlockT>>;
+    friend class SwitchInst::CaseIteratorImpl<
+        CaseHandleImpl<SwitchInstT, ConstantIntT, BasicBlockT>>;
 
   protected:
     // Expose the switch type we're parameterized with to the iterator.
@@ -3116,8 +3116,8 @@ public:
     SwitchInstT *SI;
     ptrdiff_t Index;
 
-    CaseHandleT() = default;
-    CaseHandleT(SwitchInstT *SI, ptrdiff_t Index) : SI(SI), Index(Index) {}
+    CaseHandleImpl() = default;
+    CaseHandleImpl(SwitchInstT *SI, ptrdiff_t Index) : SI(SI), Index(Index) {}
 
   public:
     /// Resolves case value for current case.
@@ -3146,20 +3146,21 @@ public:
       return (unsigned)Index != DefaultPseudoIndex ? Index + 1 : 0;
     }
 
-    bool operator==(const CaseHandleT &RHS) const {
+    bool operator==(const CaseHandleImpl &RHS) const {
       assert(SI == RHS.SI && "Incompatible operators.");
       return Index == RHS.Index;
     }
   };
 
-  typedef CaseHandleT<const SwitchInst, const ConstantInt, const BasicBlock>
+  typedef CaseHandleImpl<const SwitchInst, const ConstantInt, const BasicBlock>
       ConstCaseHandle;
 
-  class CaseHandle : public CaseHandleT<SwitchInst, ConstantInt, BasicBlock> {
-    friend class SwitchInst::CaseIteratorT<CaseHandle>;
+  class CaseHandle
+      : public CaseHandleImpl<SwitchInst, ConstantInt, BasicBlock> {
+    friend class SwitchInst::CaseIteratorImpl<CaseHandle>;
 
   public:
-    CaseHandle(SwitchInst *SI, ptrdiff_t Index) : CaseHandleT(SI, Index) {}
+    CaseHandle(SwitchInst *SI, ptrdiff_t Index) : CaseHandleImpl(SI, Index) {}
 
     /// Sets the new value for current case.
     void setValue(ConstantInt *V) {
@@ -3175,8 +3176,8 @@ public:
   };
 
   template <typename CaseHandleT>
-  class CaseIteratorT
-      : public iterator_facade_base<CaseIteratorT<CaseHandleT>,
+  class CaseIteratorImpl
+      : public iterator_facade_base<CaseIteratorImpl<CaseHandleT>,
                                     std::random_access_iterator_tag,
                                     CaseHandleT> {
     typedef typename CaseHandleT::SwitchInstType SwitchInstT;
@@ -3186,29 +3187,29 @@ public:
   public:
     /// Default constructed iterator is in an invalid state until assigned to
     /// a case for a particular switch.
-    CaseIteratorT() = default;
+    CaseIteratorImpl() = default;
 
     /// Initializes case iterator for given SwitchInst and for given
     /// case number.
-    CaseIteratorT(SwitchInstT *SI, unsigned CaseNum) : Case(SI, CaseNum) {}
+    CaseIteratorImpl(SwitchInstT *SI, unsigned CaseNum) : Case(SI, CaseNum) {}
 
     /// Initializes case iterator for given SwitchInst and for given
     /// TerminatorInst's successor index.
-    static CaseIteratorT fromSuccessorIndex(SwitchInstT *SI,
-                                            unsigned SuccessorIndex) {
+    static CaseIteratorImpl fromSuccessorIndex(SwitchInstT *SI,
+                                               unsigned SuccessorIndex) {
       assert(SuccessorIndex < SI->getNumSuccessors() &&
              "Successor index # out of range!");
-      return SuccessorIndex != 0 ? CaseIteratorT(SI, SuccessorIndex - 1)
-                                 : CaseIteratorT(SI, DefaultPseudoIndex);
+      return SuccessorIndex != 0 ? CaseIteratorImpl(SI, SuccessorIndex - 1)
+                                 : CaseIteratorImpl(SI, DefaultPseudoIndex);
     }
 
     /// Support converting to the const variant. This will be a no-op for const
     /// variant.
-    operator CaseIteratorT<ConstCaseHandle>() const {
-      return CaseIteratorT<ConstCaseHandle>(Case.SI, Case.Index);
+    operator CaseIteratorImpl<ConstCaseHandle>() const {
+      return CaseIteratorImpl<ConstCaseHandle>(Case.SI, Case.Index);
     }
 
-    CaseIteratorT &operator+=(ptrdiff_t N) {
+    CaseIteratorImpl &operator+=(ptrdiff_t N) {
       // Check index correctness after addition.
       // Note: Index == getNumCases() means end().
       assert(Case.Index + N >= 0 &&
@@ -3217,7 +3218,7 @@ public:
       Case.Index += N;
       return *this;
     }
-    CaseIteratorT &operator-=(ptrdiff_t N) {
+    CaseIteratorImpl &operator-=(ptrdiff_t N) {
       // Check index correctness after subtraction.
       // Note: Case.Index == getNumCases() means end().
       assert(Case.Index - N >= 0 &&
@@ -3226,12 +3227,14 @@ public:
       Case.Index -= N;
       return *this;
     }
-    ptrdiff_t operator-(const CaseIteratorT &RHS) const {
+    ptrdiff_t operator-(const CaseIteratorImpl &RHS) const {
       assert(Case.SI == RHS.Case.SI && "Incompatible operators.");
       return Case.Index - RHS.Case.Index;
     }
-    bool operator==(const CaseIteratorT &RHS) const { return Case == RHS.Case; }
-    bool operator<(const CaseIteratorT &RHS) const {
+    bool operator==(const CaseIteratorImpl &RHS) const {
+      return Case == RHS.Case;
+    }
+    bool operator<(const CaseIteratorImpl &RHS) const {
       assert(Case.SI == RHS.Case.SI && "Incompatible operators.");
       return Case.Index < RHS.Case.Index;
     }
@@ -3239,8 +3242,8 @@ public:
     const CaseHandleT &operator*() const { return Case; }
   };
 
-  typedef CaseIteratorT<CaseHandle> CaseIt;
-  typedef CaseIteratorT<ConstCaseHandle> ConstCaseIt;
+  typedef CaseIteratorImpl<CaseHandle> CaseIt;
+  typedef CaseIteratorImpl<ConstCaseHandle> ConstCaseIt;
 
   static SwitchInst *Create(Value *Value, BasicBlock *Default,
                             unsigned NumCases,
