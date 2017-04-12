@@ -766,7 +766,8 @@ Value *InstCombiner::SimplifyMultipleUseDemandedBits(Instruction *I,
   // context, we can at least compute the knownzero/knownone bits, and we can
   // do simplifications that apply to *just* the one user if we know that
   // this instruction has a simpler value in that context.
-  if (I->getOpcode() == Instruction::And) {
+  switch (I->getOpcode()) {
+  case Instruction::And:
     // If either the LHS or the RHS are Zero, the result is zero.
     computeKnownBits(I->getOperand(1), RHSKnownZero, RHSKnownOne, Depth + 1,
                      CxtI);
@@ -787,7 +788,9 @@ Value *InstCombiner::SimplifyMultipleUseDemandedBits(Instruction *I,
     if ((DemandedMask & (RHSKnownZero|LHSKnownZero)) == DemandedMask)
       return Constant::getNullValue(ITy);
 
-  } else if (I->getOpcode() == Instruction::Or) {
+    break;
+
+  case Instruction::Or:
     // We can simplify (X|Y) -> X or Y in the user's context if we know that
     // only bits from X or Y are demanded.
 
@@ -815,7 +818,10 @@ Value *InstCombiner::SimplifyMultipleUseDemandedBits(Instruction *I,
     if ((DemandedMask & (~LHSKnownZero) & RHSKnownOne) ==
         (DemandedMask & (~LHSKnownZero)))
       return I->getOperand(1);
-  } else if (I->getOpcode() == Instruction::Xor) {
+
+    break;
+
+  case Instruction::Xor:
     // We can simplify (X^Y) -> X or Y in the user's context if we know that
     // only bits from X or Y are demanded.
 
@@ -830,6 +836,8 @@ Value *InstCombiner::SimplifyMultipleUseDemandedBits(Instruction *I,
       return I->getOperand(0);
     if ((DemandedMask & LHSKnownZero) == DemandedMask)
       return I->getOperand(1);
+
+    break;
   }
 
   // Compute the KnownZero/KnownOne bits to simplify things downstream.
