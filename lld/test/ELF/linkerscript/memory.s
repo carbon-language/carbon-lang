@@ -48,14 +48,14 @@
 
 ## Check bad `ORIGIN`.
 
-# RUN: echo "MEMORY { ram (rwx) : ORIGI = 0x8000, LENGTH = 256K } }" > %t.script
+# RUN: echo "MEMORY { ram (rwx) : XYZ = 0x8000 } }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR1 %s
 # ERR1: {{.*}}.script:1: expected one of: ORIGIN, org, or o
 
 ## Check bad `LENGTH`.
 
-# RUN: echo "MEMORY { ram (rwx) : ORIGIN = 0x8000, LENTH = 256K } }" > %t.script
+# RUN: echo "MEMORY { ram (rwx) : ORIGIN = 0x8000, XYZ = 256K } }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR2 %s
 # ERR2: {{.*}}.script:1: expected one of: LENGTH, len, or l
