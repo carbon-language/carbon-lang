@@ -18,6 +18,8 @@
 #include "test_macros.h"
 
 struct Deleter {
+  Deleter() {}
+
   void operator()(void*) const {}
 
   int test() { return 5; }
