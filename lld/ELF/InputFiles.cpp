@@ -661,7 +661,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
   // DSOs are identified by soname, and they usually contain
   // DT_SONAME tag in their header. But if they are missing,
   // filenames are used as default sonames.
-  SoName = this->DefaultSoName;
+  SoName = sys::path::filename(this->getName());
 
   if (!DynamicSec)
     return;
