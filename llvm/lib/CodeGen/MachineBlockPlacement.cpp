@@ -1165,6 +1165,9 @@ void MachineBlockPlacement::precomputeTriangleChains() {
     }
   }
 
+  // Iterating over a DenseMap is safe here, because the only thing in the body
+  // of the loop is inserting into another DenseMap (ComputedEdges).
+  // ComputedEdges is never iterated, so this doesn't lead to non-determinism.
   for (auto &ChainPair : TriangleChainMap) {
     TriangleChain &Chain = ChainPair.second;
     // Benchmarking has shown that due to branch correlation duplicating 2 or
