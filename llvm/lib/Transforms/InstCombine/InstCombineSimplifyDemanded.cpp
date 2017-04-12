@@ -538,7 +538,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
           SimplifyDemandedBits(I, 0, DemandedFromOps, LHSKnownZero, LHSKnownOne,
                                Depth + 1) ||
           ShrinkDemandedConstant(I, 1, DemandedFromOps) ||
-          SimplifyDemandedBits(I, 1, DemandedFromOps, LHSKnownZero, LHSKnownOne,
+          SimplifyDemandedBits(I, 1, DemandedFromOps, RHSKnownZero, RHSKnownOne,
                                Depth + 1)) {
         // Disable the nsw and nuw flags here: We can no longer guarantee that
         // we won't wrap after simplification. Removing the nsw/nuw flags is
@@ -548,6 +548,15 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         BinOP.setHasNoUnsignedWrap(false);
         return I;
       }
+
+      // If we are known to be adding/subtracting zeros to every bit below
+      // the highest demanded bit, we just return the other side.
+      if ((DemandedFromOps & RHSKnownZero) == DemandedFromOps)
+        return I->getOperand(0);
+      // We can't do this with the LHS for subtraction.
+      if (I->getOpcode() == Instruction::Add &&
+          (DemandedFromOps & LHSKnownZero) == DemandedFromOps)
+        return I->getOperand(1);
     }
 
     // Otherwise just hand the add/sub off to computeKnownBits to fill in
