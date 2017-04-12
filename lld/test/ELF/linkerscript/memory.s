@@ -18,7 +18,7 @@
 
 # RUN: echo "MEMORY { \
 # RUN:   ram (rwx) : ORIGIN = 0, LENGTH = 1024M \
-# RUN:   rom (rx) : org = 0x80000000, len = 64M \
+# RUN:   rom (rx) : org = (0x80 * 0x1000 * 0x1000), len = 64M \
 # RUN: } \
 # RUN: SECTIONS { \
 # RUN:   .text : { *(.text) } > rom \
