@@ -1,6 +1,6 @@
 ; REQUIRES: asserts
 ; RUN: opt -mtriple=systemz-unknown -mcpu=z13 -slp-vectorizer -debug-only=SLP \
-; RUN:   -S -disable-output < %s |& FileCheck %s
+; RUN:   -S -disable-output < %s 2>&1 | FileCheck %s
 ;
 ; Check that SLP vectorizer gets the right cost difference for a compare
 ; node.
