@@ -195,10 +195,6 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         (DemandedMask & ~RHSKnownZero))
       return I->getOperand(1);
 
-    // If all of the demanded bits in the inputs are known zeros, return zero.
-    if ((DemandedMask & (RHSKnownZero|LHSKnownZero)) == DemandedMask)
-      return Constant::getNullValue(VTy);
-
     // If the RHS is a constant, see if we can simplify it.
     if (ShrinkDemandedConstant(I, 1, DemandedMask & ~LHSKnownZero))
       return I;
