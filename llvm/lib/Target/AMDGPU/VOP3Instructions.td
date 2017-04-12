@@ -402,7 +402,7 @@ multiclass VOP3be_Real_ci<bits<9> op> {
 
 defm V_MQSAD_U16_U8     : VOP3_Real_ci <0x172>;
 defm V_QSAD_PK_U16_U8   : VOP3_Real_ci <0x172>;
-defm V_MQSAD_U32_U8     : VOP3_Real_ci <0x174>;
+defm V_MQSAD_U32_U8     : VOP3_Real_ci <0x175>;
 defm V_MAD_U64_U32      : VOP3be_Real_ci <0x176>;
 defm V_MAD_I64_I32      : VOP3be_Real_ci <0x177>;
 
