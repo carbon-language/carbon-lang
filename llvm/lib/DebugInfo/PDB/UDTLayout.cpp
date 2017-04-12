@@ -89,7 +89,8 @@ VTableLayoutItem::VTableLayoutItem(const UDTLayoutBase &Parent,
           VTableType->getPointeeType())) {
     VTableFuncs.resize(Shape->getCount());
 
-    auto ParentFunctions = Parent.getSymbol().findAllChildren<PDBSymbolFunc>();
+    auto ParentFunctions =
+        Parent.getSymbolBase().findAllChildren<PDBSymbolFunc>();
     while (auto Func = ParentFunctions->getNext()) {
       if (Func->isVirtual()) {
         uint32_t Index = Func->getVirtualBaseOffset();
@@ -109,15 +110,19 @@ VTableLayoutItem::VTableLayoutItem(const UDTLayoutBase &Parent,
 
 UDTLayoutBase::UDTLayoutBase(const PDBSymbol &Symbol, const std::string &Name,
                              uint32_t Size)
-    : Symbol(Symbol), Name(Name), SizeOf(Size) {
+    : SymbolBase(Symbol), Name(Name), SizeOf(Size) {
   UsedBytes.resize(Size);
   ChildrenPerByte.resize(Size);
   initializeChildren(Symbol);
 }
 
+ClassLayout::ClassLayout(const PDBSymbolTypeUDT &UDT)
+    : UDTLayoutBase(UDT, UDT.getName(), UDT.getLength()), UDT(UDT) {}
+
 ClassLayout::ClassLayout(std::unique_ptr<PDBSymbolTypeUDT> UDT)
-    : UDTLayoutBase(*UDT, UDT->getName(), UDT->getLength()),
-      Type(std::move(UDT)) {}
+    : ClassLayout(*UDT) {
+  OwnedStorage = std::move(UDT);
+}
 
 BaseClassLayout::BaseClassLayout(const UDTLayoutBase &Parent,
                                  std::unique_ptr<PDBSymbolTypeBaseClass> Base)

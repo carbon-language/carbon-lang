@@ -126,9 +126,10 @@ cl::opt<ClassDefinitionFormat> ClassFormat(
     "class-definitions", cl::desc("Class definition format"),
     cl::init(ClassDefinitionFormat::Standard),
     cl::values(
-        clEnumValN(ClassDefinitionFormat::Standard, "full",
-                   "Display complete class definition"),
-        clEnumValN(ClassDefinitionFormat::Layout, "layout",
+        clEnumValN(ClassDefinitionFormat::Standard, "all-members",
+                   "Display all class members including data, constants, "
+                   "typedefs, etc"),
+        clEnumValN(ClassDefinitionFormat::Layout, "layout-members",
                    "Only display members that contribute to class size."),
         clEnumValN(ClassDefinitionFormat::None, "none",
                    "Don't display class definitions")),

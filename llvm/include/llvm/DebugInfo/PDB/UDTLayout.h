@@ -95,15 +95,17 @@ public:
 
   uint32_t getClassSize() const { return SizeOf; }
 
-  const PDBSymbol &getSymbol() const { return Symbol; }
-
   ArrayRef<std::unique_ptr<StorageItemBase>> layout_items() const {
     return ChildStorage;
   }
 
+  ArrayRef<BaseClassLayout *> base_classes() const { return BaseClasses; }
+
   ArrayRef<std::unique_ptr<PDBSymbol>> other_items() const {
     return NonStorageItems;
   }
+
+  const PDBSymbol &getSymbolBase() const { return SymbolBase; }
 
 protected:
   void initializeChildren(const PDBSymbol &Sym);
@@ -113,7 +115,7 @@ protected:
   uint32_t SizeOf = 0;
   std::string Name;
 
-  const PDBSymbol &Symbol;
+  const PDBSymbol &SymbolBase;
   BitVector UsedBytes;
   std::vector<std::unique_ptr<PDBSymbol>> NonStorageItems;
   std::vector<std::unique_ptr<StorageItemBase>> ChildStorage;
@@ -124,16 +126,22 @@ protected:
 
 class ClassLayout : public UDTLayoutBase {
 public:
+  explicit ClassLayout(const PDBSymbolTypeUDT &UDT);
   explicit ClassLayout(std::unique_ptr<PDBSymbolTypeUDT> UDT);
 
+  const PDBSymbolTypeUDT &getClass() const { return UDT; }
+
 private:
-  std::unique_ptr<PDBSymbolTypeUDT> Type;
+  std::unique_ptr<PDBSymbolTypeUDT> OwnedStorage;
+  const PDBSymbolTypeUDT &UDT;
 };
 
 class BaseClassLayout : public UDTLayoutBase, public StorageItemBase {
 public:
   BaseClassLayout(const UDTLayoutBase &Parent,
                   std::unique_ptr<PDBSymbolTypeBaseClass> Base);
+
+  const PDBSymbolTypeBaseClass &getBase() const { return *Base; }
 
 private:
   std::unique_ptr<PDBSymbolTypeBaseClass> Base;

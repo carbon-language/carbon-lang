@@ -25,6 +25,7 @@ class BitVector;
 
 namespace pdb {
 
+class ClassLayout;
 class LinePrinter;
 
 class ClassDefinitionDumper : public PDBSymDumper {
@@ -33,18 +34,10 @@ public:
 
   void start(const PDBSymbolTypeUDT &Exe);
 
-  void dump(const PDBSymbolTypeBaseClass &Symbol) override;
-  void dump(const PDBSymbolData &Symbol) override;
-  void dump(const PDBSymbolTypeEnum &Symbol) override;
-  void dump(const PDBSymbolFunc &Symbol) override;
-  void dump(const PDBSymbolTypeTypedef &Symbol) override;
-  void dump(const PDBSymbolTypeUDT &Symbol) override;
-  void dump(const PDBSymbolTypeVTable &Symbol) override;
-
 private:
-  bool maybeDumpSymbol(std::unique_ptr<PDBSymbolData> Data,
-                       const BitVector &Padding, int &NextUnusedByte);
-  bool maybeDumpSymbol(std::unique_ptr<PDBSymbolFunc> Data);
+  void prettyPrintClassIntro(const ClassLayout &Class);
+  void prettyPrintClassOutro(const ClassLayout &Class);
+
   bool DumpedAnything = false;
   LinePrinter &Printer;
 };
