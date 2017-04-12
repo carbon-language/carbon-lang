@@ -707,7 +707,7 @@ static void LoadLibCxxFormatters(lldb::TypeCategoryImplSP cpp_category_sp) {
   AddCXXSynthetic(
       cpp_category_sp, lldb_private::formatters::LibcxxFunctionFrontEndCreator,
       "std::function synthetic value provider",
-      ConstString("^std::__1::function<.+>$"), stl_synth_flags, true);
+      ConstString("^std::__(ndk)?1::function<.+>$"), stl_synth_flags, true);
 #endif
 }
 
