@@ -21,6 +21,8 @@
 #include <unordered_map>
 
 namespace llvm {
+class BitVector;
+
 namespace pdb {
 
 class LinePrinter;
@@ -40,6 +42,10 @@ public:
   void dump(const PDBSymbolTypeVTable &Symbol) override;
 
 private:
+  bool maybeDumpSymbol(std::unique_ptr<PDBSymbolData> Data,
+                       const BitVector &Padding, int &NextUnusedByte);
+  bool maybeDumpSymbol(std::unique_ptr<PDBSymbolFunc> Data);
+  bool DumpedAnything = false;
   LinePrinter &Printer;
 };
 }
