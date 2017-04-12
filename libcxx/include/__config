@@ -25,8 +25,12 @@
 
 #ifdef __GNUC__
 #define _GNUC_VER (__GNUC__ * 100 + __GNUC_MINOR__)
+// The _GNUC_VER_NEW macro better represents the new GCC versioning scheme
+// introduced in GCC 5.0.
+#define _GNUC_VER_NEW (_GNUC_VER * 10 + __GNUC_PATCHLEVEL__)
 #else
 #define _GNUC_VER 0
+#define _GNUC_VER_NEW 0
 #endif
 
 #define _LIBCPP_VERSION 5000
@@ -1061,7 +1065,7 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #endif
 
 #if !__has_builtin(__builtin_addressof) && _GNUC_VER < 700
-#define _LIBCPP_HAS_NO_BUILTIN_ADDRESSOF
+# define _LIBCPP_HAS_NO_BUILTIN_ADDRESSOF
 #endif
 
 #if !defined(_LIBCPP_HAS_NO_OFF_T_FUNCTIONS)
@@ -1095,6 +1099,10 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 
 #if !defined(__cpp_deduction_guides) || __cpp_deduction_guides < 201611
 # define _LIBCPP_HAS_NO_DEDUCTION_GUIDES
+#endif
+
+#if !__has_keyword(__is_aggregate) && (_GNUC_VER_NEW < 7001)
+# define _LIBCPP_HAS_NO_IS_AGGREGATE
 #endif
 
 #endif // __cplusplus
