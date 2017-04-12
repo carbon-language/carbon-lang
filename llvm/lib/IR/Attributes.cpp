@@ -539,7 +539,8 @@ uint64_t AttributeSet::getDereferenceableOrNullBytes() const {
 }
 
 std::pair<unsigned, Optional<unsigned>> AttributeSet::getAllocSizeArgs() const {
-  return SetNode ? SetNode->getAllocSizeArgs() : std::make_pair(0, 0);
+  return SetNode ? SetNode->getAllocSizeArgs()
+                 : std::pair<unsigned, Optional<unsigned>>(0, 0);
 }
 
 std::string AttributeSet::getAsString(bool InAttrGrp) const {
