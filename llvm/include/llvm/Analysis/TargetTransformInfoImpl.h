@@ -262,6 +262,8 @@ public:
   unsigned getOperandsScalarizationOverhead(ArrayRef<const Value *> Args,
                                             unsigned VF) { return 0; }
 
+  bool supportsEfficientVectorElementLoadStore() { return false; }
+
   bool enableAggressiveInterleaving(bool LoopHasReductions) { return false; }
 
   bool enableInterleavedAccessVectorization() { return false; }

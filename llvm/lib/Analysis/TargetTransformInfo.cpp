@@ -197,6 +197,10 @@ getOperandsScalarizationOverhead(ArrayRef<const Value *> Args,
   return TTIImpl->getOperandsScalarizationOverhead(Args, VF);
 }
 
+bool TargetTransformInfo::supportsEfficientVectorElementLoadStore() const {
+  return TTIImpl->supportsEfficientVectorElementLoadStore();
+}
+
 bool TargetTransformInfo::enableAggressiveInterleaving(bool LoopHasReductions) const {
   return TTIImpl->enableAggressiveInterleaving(LoopHasReductions);
 }

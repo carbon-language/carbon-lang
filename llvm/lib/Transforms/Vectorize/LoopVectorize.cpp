@@ -3663,13 +3663,17 @@ static unsigned getScalarizationOverhead(Instruction *I, unsigned VF,
 
   unsigned Cost = 0;
   Type *RetTy = ToVectorTy(I->getType(), VF);
-  if (!RetTy->isVoidTy())
+  if (!RetTy->isVoidTy() &&
+      (!isa<LoadInst>(I) ||
+       !TTI.supportsEfficientVectorElementLoadStore()))
     Cost += TTI.getScalarizationOverhead(RetTy, true, false);
 
   if (CallInst *CI = dyn_cast<CallInst>(I)) {
     SmallVector<const Value *, 4> Operands(CI->arg_operands());
     Cost += TTI.getOperandsScalarizationOverhead(Operands, VF);
-  } else {
+  }
+  else if (!isa<StoreInst>(I) ||
+           !TTI.supportsEfficientVectorElementLoadStore()) {
     SmallVector<const Value *, 4> Operands(I->operand_values());
     Cost += TTI.getOperandsScalarizationOverhead(Operands, VF);
   }

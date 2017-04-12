@@ -437,6 +437,11 @@ public:
   unsigned getOperandsScalarizationOverhead(ArrayRef<const Value *> Args,
                                             unsigned VF) const;
 
+  /// If target has efficient vector element load/store instructions, it can
+  /// return true here so that insertion/extraction costs are not added to
+  /// the scalarization cost of a load/store.
+  bool supportsEfficientVectorElementLoadStore() const;
+
   /// \brief Don't restrict interleaved unrolling to small loops.
   bool enableAggressiveInterleaving(bool LoopHasReductions) const;
 
@@ -790,6 +795,7 @@ public:
   getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) = 0;
   virtual unsigned getOperandsScalarizationOverhead(ArrayRef<const Value *> Args,
                                                     unsigned VF) = 0;
+  virtual bool supportsEfficientVectorElementLoadStore() = 0;
   virtual bool enableAggressiveInterleaving(bool LoopHasReductions) = 0;
   virtual bool enableInterleavedAccessVectorization() = 0;
   virtual bool isFPVectorizationPotentiallyUnsafe() = 0;
@@ -994,6 +1000,10 @@ public:
   unsigned getOperandsScalarizationOverhead(ArrayRef<const Value *> Args,
                                             unsigned VF) override {
     return Impl.getOperandsScalarizationOverhead(Args, VF);
+  }
+
+  bool supportsEfficientVectorElementLoadStore() override {
+    return Impl.supportsEfficientVectorElementLoadStore();
   }
 
   bool enableAggressiveInterleaving(bool LoopHasReductions) override {
