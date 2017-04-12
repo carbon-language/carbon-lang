@@ -3,7 +3,7 @@
 
 ## Check simple RAM-only memory region.
 
-# RUN: echo "MEMORY { ram (rwx)  : ORIGIN = 0x8000, LENGTH = 256K } \
+# RUN: echo "MEMORY { ram (rwx) : ORIGIN = 0x8000, LENGTH = 256K } \
 # RUN: SECTIONS { \
 # RUN:   .text : { *(.text) } > ram \
 # RUN:   .data : { *(.data) } > ram \
@@ -48,28 +48,28 @@
 
 ## Check bad `ORIGIN`.
 
-# RUN: echo "MEMORY { ram (rwx)  : ORIGI = 0x8000, LENGTH = 256K } }" > %t.script
+# RUN: echo "MEMORY { ram (rwx) : ORIGI = 0x8000, LENGTH = 256K } }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR1 %s
 # ERR1: {{.*}}.script:1: expected one of: ORIGIN, org, or o
 
 ## Check bad `LENGTH`.
 
-# RUN: echo "MEMORY { ram (rwx)  : ORIGIN = 0x8000, LENTH = 256K } }" > %t.script
+# RUN: echo "MEMORY { ram (rwx) : ORIGIN = 0x8000, LENTH = 256K } }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR2 %s
 # ERR2: {{.*}}.script:1: expected one of: LENGTH, len, or l
 
 ## Check duplicate regions.
 
-# RUN: echo "MEMORY { ram (rwx)  : o = 8, l = 256K ram (rx)  : o = 0, l = 256K }" > %t.script
+# RUN: echo "MEMORY { ram (rwx) : o = 8, l = 256K ram (rx) : o = 0, l = 256K }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR3 %s
 # ERR3: {{.*}}.script:1: region 'ram' already defined
 
 ## Check no region available.
 
-# RUN: echo "MEMORY { ram (!rx)  : ORIGIN = 0x8000, LENGTH = 256K } \
+# RUN: echo "MEMORY { ram (!rx) : ORIGIN = 0x8000, LENGTH = 256K } \
 # RUN: SECTIONS { \
 # RUN:   .text : { *(.text) } \
 # RUN:   .data : { *(.data) } > ram \
@@ -87,7 +87,7 @@
 
 ## Check region overflow.
 
-# RUN: echo "MEMORY { ram (rwx)  : ORIGIN = 0, LENGTH = 2K } \
+# RUN: echo "MEMORY { ram (rwx) : ORIGIN = 0, LENGTH = 2K } \
 # RUN: SECTIONS { \
 # RUN:   .text : { *(.text) } > ram \
 # RUN:   .data : { *(.data) } > ram \
@@ -98,7 +98,7 @@
 
 ## Check invalid region attributes.
 
-# RUN: echo "MEMORY { ram (abc)  : ORIGIN = 8000, LENGTH = 256K } }" > %t.script
+# RUN: echo "MEMORY { ram (abc) : ORIGIN = 8000, LENGTH = 256K } }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR7 %s
 # ERR7: {{.*}}.script:1: invalid memory region attribute
