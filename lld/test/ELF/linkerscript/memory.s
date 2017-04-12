@@ -3,16 +3,10 @@
 
 ## Check simple RAM-only memory region.
 
-# RUN: echo "MEMORY { \
-# RUN:   ram (rwx)  : ORIGIN = 0x8000, LENGTH = 256K \
-# RUN: } \
+# RUN: echo "MEMORY { ram (rwx)  : ORIGIN = 0x8000, LENGTH = 256K } \
 # RUN: SECTIONS { \
-# RUN:   .text : { \
-# RUN:     *(.text) \
-# RUN:   } > ram \
-# RUN:   .data : { \
-# RUN:     *(.data) \
-# RUN:   } > ram \
+# RUN:   .text : { *(.text) } > ram \
+# RUN:   .data : { *(.data) } > ram \
 # RUN: }" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t1 | FileCheck -check-prefix=RAM %s
@@ -27,12 +21,8 @@
 # RUN:   rom (rx) : org = 0x80000000, len = 64M \
 # RUN: } \
 # RUN: SECTIONS { \
-# RUN:   .text : { \
-# RUN:     *(.text) \
-# RUN:   } > rom \
-# RUN:   .data : { \
-# RUN:     *(.data) \
-# RUN:   } > ram \
+# RUN:   .text : { *(.text) } > rom \
+# RUN:   .data : { *(.data) } > ram \
 # RUN: }" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t1 | FileCheck -check-prefix=RAMROM %s
@@ -47,12 +37,8 @@
 # RUN:   rom (rx) : o = 0x80000000, l = 64M \
 # RUN: } \
 # RUN: SECTIONS { \
-# RUN:   .text : { \
-# RUN:     *(.text) \
-# RUN:   } \
-# RUN:   .data : { \
-# RUN:     *(.data) \
-# RUN:   } > ram \
+# RUN:   .text : { *(.text) } \
+# RUN:   .data : { *(.data) } > ram \
 # RUN: }" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t1 | FileCheck -check-prefix=ATTRS %s
@@ -83,16 +69,10 @@
 
 ## Check no region available.
 
-# RUN: echo "MEMORY { \
-# RUN:   ram (!rx)  : ORIGIN = 0x8000, LENGTH = 256K \
-# RUN: } \
+# RUN: echo "MEMORY { ram (!rx)  : ORIGIN = 0x8000, LENGTH = 256K } \
 # RUN: SECTIONS { \
-# RUN:   .text : { \
-# RUN:     *(.text) \
-# RUN:   } \
-# RUN:   .data : { \
-# RUN:     *(.data) \
-# RUN:   } > ram \
+# RUN:   .text : { *(.text) } \
+# RUN:   .data : { *(.data) } > ram \
 # RUN: }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR4 %s
@@ -107,16 +87,10 @@
 
 ## Check region overflow.
 
-# RUN: echo "MEMORY { \
-# RUN:   ram (rwx)  : ORIGIN = 0x0, LENGTH = 2K \
-# RUN: } \
+# RUN: echo "MEMORY { ram (rwx)  : ORIGIN = 0x0, LENGTH = 2K } \
 # RUN: SECTIONS { \
-# RUN:   .text : { \
-# RUN:     *(.text) \
-# RUN:   } > ram \
-# RUN:   .data : { \
-# RUN:     *(.data) \
-# RUN:   } > ram \
+# RUN:   .text : { *(.text) } > ram \
+# RUN:   .data : { *(.data) } > ram \
 # RUN: }" > %t.script
 # RUN: not ld.lld -o %t2 --script %t.script %t 2>&1 \
 # RUN:  | FileCheck -check-prefix=ERR6 %s
