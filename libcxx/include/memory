@@ -2110,8 +2110,8 @@ public:
     typedef typename remove_reference<_T1>::type& _T1_reference;
     typedef typename remove_reference<_T2>::type& _T2_reference;
 
-    typedef const typename remove_reference<_T1>::type& _T1_const_reference;
-    typedef const typename remove_reference<_T2>::type& _T2_const_reference;
+    typedef typename remove_reference<typename add_const<_T1>::type>::type& _T1_const_reference;
+    typedef typename remove_reference<typename add_const<_T2>::type>::type& _T2_const_reference;
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() : __first_(), __second_() {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1)
@@ -2166,7 +2166,8 @@ public:
     typedef typename remove_reference<_T2>::type& _T2_reference;
 
     typedef const _T1&                                        _T1_const_reference;
-    typedef const typename remove_reference<_T2>::type& _T2_const_reference;
+    typedef typename remove_reference<typename add_const<_T2>::type>::type&
+        _T2_const_reference;
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() : __second_() {}
     _LIBCPP_INLINE_VISIBILITY explicit __libcpp_compressed_pair_imp(_T1_param __t1)
@@ -2219,7 +2220,8 @@ public:
     typedef typename remove_reference<_T1>::type& _T1_reference;
     typedef _T2&                                        _T2_reference;
 
-    typedef const typename remove_reference<_T1>::type& _T1_const_reference;
+    typedef typename remove_reference<typename add_const<_T1>::type>::type&
+        _T1_const_reference;
     typedef const _T2&                                        _T2_const_reference;
 
     _LIBCPP_INLINE_VISIBILITY __libcpp_compressed_pair_imp() : __first_() {}
@@ -2459,8 +2461,9 @@ private:
 
     struct __nat {int __for_bool_;};
 
-    typedef       typename remove_reference<deleter_type>::type& _Dp_reference;
-    typedef const typename remove_reference<deleter_type>::type& _Dp_const_reference;
+    typedef typename remove_reference<deleter_type>::type& _Dp_reference;
+    typedef typename remove_reference<typename add_const<deleter_type>::type>::type&
+        _Dp_const_reference;
 public:
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR unique_ptr() _NOEXCEPT
         : __ptr_(pointer())
@@ -2648,8 +2651,9 @@ private:
 
     struct __nat {int __for_bool_;};
 
-    typedef       typename remove_reference<deleter_type>::type& _Dp_reference;
-    typedef const typename remove_reference<deleter_type>::type& _Dp_const_reference;
+    typedef typename remove_reference<deleter_type>::type& _Dp_reference;
+    typedef typename remove_reference<typename add_const<deleter_type>::type>::type&
+        _Dp_const_reference;
 public:
     _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR unique_ptr() _NOEXCEPT
         : __ptr_(pointer())
