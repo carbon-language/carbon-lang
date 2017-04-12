@@ -834,6 +834,12 @@ Value *InstCombiner::SimplifyMultipleUseDemandedBits(Instruction *I,
 
   // Compute the KnownZero/KnownOne bits to simplify things downstream.
   computeKnownBits(I, KnownZero, KnownOne, Depth, CxtI);
+
+  // If this user is only demanding bits that we know, return the known
+  // constant.
+  if ((DemandedMask & (KnownZero|KnownOne)) == DemandedMask)
+    return Constant::getIntegerValue(ITy, KnownOne);
+
   return nullptr;
 }
 

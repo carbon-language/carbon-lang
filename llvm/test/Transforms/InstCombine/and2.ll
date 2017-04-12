@@ -171,7 +171,7 @@ define i32 @test13(i32 %a, i32 %b) {
 define i32 @test14(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test14(
 ; CHECK-NEXT:    [[X:%.*]] = shl i32 [[A:%.*]], 8
-; CHECK-NEXT:    [[Y:%.*]] = sub i32 [[X]], [[B:%.*]]
+; CHECK-NEXT:    [[Y:%.*]] = sub i32 0, [[B:%.*]]
 ; CHECK-NEXT:    [[Z:%.*]] = and i32 [[Y]], 128
 ; CHECK-NEXT:    [[W:%.*]] = mul i32 [[Z]], [[X]]
 ; CHECK-NEXT:    ret i32 [[W]]
