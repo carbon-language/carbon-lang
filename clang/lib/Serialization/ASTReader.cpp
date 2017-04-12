@@ -5525,18 +5525,54 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
              "Invalid data, not enough diag/map pairs");
       while (Size--) {
         unsigned DiagID = Record[Idx++];
-        diag::Severity Map = (diag::Severity)Record[Idx++];
-        DiagnosticMapping Mapping = Diag.makeUserMapping(Map, Loc);
-        if (Mapping.isPragma() || IncludeNonPragmaStates)
-          NewState->setMapping(DiagID, Mapping);
+        unsigned SeverityAndUpgradedFromWarning = Record[Idx++];
+        bool WasUpgradedFromWarning =
+            DiagnosticMapping::deserializeUpgradedFromWarning(
+                SeverityAndUpgradedFromWarning);
+        DiagnosticMapping NewMapping =
+            Diag.makeUserMapping(DiagnosticMapping::deserializeSeverity(
+                                     SeverityAndUpgradedFromWarning),
+                                 Loc);
+        if (!NewMapping.isPragma() && !IncludeNonPragmaStates)
+          continue;
+
+        DiagnosticMapping &Mapping = NewState->getOrAddMapping(DiagID);
+
+        // If this mapping was specified as a warning but the severity was
+        // upgraded due to diagnostic settings, simulate the current diagnostic
+        // settings (and use a warning).
+        if (WasUpgradedFromWarning && !Mapping.isErrorOrFatal()) {
+          Mapping = Diag.makeUserMapping(diag::Severity::Warning, Loc);
+          continue;
+        }
+
+        // Use the deserialized mapping verbatim.
+        Mapping = NewMapping;
+        Mapping.setUpgradedFromWarning(WasUpgradedFromWarning);
       }
       return NewState;
     };
 
     // Read the first state.
-    auto *FirstState = ReadDiagState(
-        F.isModule() ? DiagState() : *Diag.DiagStatesByLoc.CurDiagState,
-        SourceLocation(), F.isModule());
+    DiagState *FirstState;
+    if (F.Kind == MK_ImplicitModule) {
+      // Implicitly-built modules are reused with different diagnostic
+      // settings.  Use the initial diagnostic state from Diag to simulate this
+      // compilation's diagnostic settings.
+      FirstState = Diag.DiagStatesByLoc.FirstDiagState;
+      DiagStates.push_back(FirstState);
+
+      // Skip the initial diagnostic state from the serialized module.
+      assert(Record[0] == 0 &&
+             "Invalid data, unexpected backref in initial state");
+      Idx = 2 + Record[1] * 2;
+      assert(Idx < Record.size() &&
+             "Invalid data, not enough state change pairs in initial state");
+    } else {
+      FirstState = ReadDiagState(
+          F.isModule() ? DiagState() : *Diag.DiagStatesByLoc.CurDiagState,
+          SourceLocation(), F.isModule());
+    }
 
     // Read the state transitions.
     unsigned NumLocations = Record[Idx++];
