@@ -423,7 +423,9 @@ static inline void processFunctionHook(
       return;
     }
 
-    uint64_t CycleFrequency = getTSCFrequency();
+    uint64_t CycleFrequency = probeRequiredCPUFeatures()
+                              ? getTSCFrequency()
+                              : __xray::NanosecondsPerSecond;
     NumberOfTicksThreshold = CycleFrequency *
                              flags()->xray_fdr_log_func_duration_threshold_us /
                              1000000;
