@@ -721,6 +721,7 @@ AttributeListImpl::AttributeListImpl(
     LLVMContext &C, ArrayRef<std::pair<unsigned, AttributeSet>> Slots)
     : Context(C), NumSlots(Slots.size()), AvailableFunctionAttrs(0) {
 #ifndef NDEBUG
+  assert(!Slots.empty() && "pointless AttributeListImpl");
   if (Slots.size() >= 2) {
     auto &PrevPair = Slots.front();
     for (auto &CurPair : Slots.drop_front()) {
@@ -733,19 +734,17 @@ AttributeListImpl::AttributeListImpl(
   std::copy(Slots.begin(), Slots.end(), getTrailingObjects<IndexAttrPair>());
 
   // Initialize AvailableFunctionAttrs summary bitset.
-  if (NumSlots > 0) {
-    static_assert(Attribute::EndAttrKinds <=
-                      sizeof(AvailableFunctionAttrs) * CHAR_BIT,
-                  "Too many attributes");
-    static_assert(AttributeList::FunctionIndex == ~0u,
-                  "FunctionIndex should be biggest possible index");
-    const auto &Last = Slots.back();
-    if (Last.first == AttributeList::FunctionIndex) {
-      AttributeSet Node = Last.second;
-      for (Attribute I : Node) {
-        if (!I.isStringAttribute())
-          AvailableFunctionAttrs |= ((uint64_t)1) << I.getKindAsEnum();
-      }
+  static_assert(Attribute::EndAttrKinds <=
+                    sizeof(AvailableFunctionAttrs) * CHAR_BIT,
+                "Too many attributes");
+  static_assert(AttributeList::FunctionIndex == ~0u,
+                "FunctionIndex should be biggest possible index");
+  const auto &Last = Slots.back();
+  if (Last.first == AttributeList::FunctionIndex) {
+    AttributeSet Node = Last.second;
+    for (Attribute I : Node) {
+      if (!I.isStringAttribute())
+        AvailableFunctionAttrs |= ((uint64_t)1) << I.getKindAsEnum();
     }
   }
 }
