@@ -260,6 +260,8 @@ def V_MAD_I16 : VOP3Inst <"v_mad_i16", VOP3_Profile<VOP_I16_I16_I16_I16>>;
 
 }  // End isCommutable = 1
 
+def V_PERM_B32 : VOP3Inst <"v_perm_b32", VOP3_Profile<VOP_I32_I32_I32_I32>>;
+
 } // End SubtargetPredicate = isVI
 
 let Predicates = [isVI] in {
@@ -472,6 +474,8 @@ defm V_MQSAD_U32_U8     : VOP3_Real_vi <0x1e7>;
 defm V_MAD_F16          : VOP3_Real_vi <0x1ea>;
 defm V_MAD_U16          : VOP3_Real_vi <0x1eb>;
 defm V_MAD_I16          : VOP3_Real_vi <0x1ec>;
+
+defm V_PERM_B32         : VOP3_Real_vi <0x1ed>;
 
 defm V_FMA_F16          : VOP3_Real_vi <0x1ee>;
 defm V_DIV_FIXUP_F16    : VOP3_Real_vi <0x1ef>;
