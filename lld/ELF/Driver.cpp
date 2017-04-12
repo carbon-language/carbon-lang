@@ -153,7 +153,7 @@ LinkerDriver::getArchiveMembers(MemoryBufferRef MB) {
 
 // Opens and parses a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
-void LinkerDriver::addFile(StringRef Path) {
+void LinkerDriver::addFile(StringRef Path, bool WithLOption) {
   using namespace sys::fs;
 
   Optional<MemoryBufferRef> Buffer = readFile(Path);
@@ -184,6 +184,11 @@ void LinkerDriver::addFile(StringRef Path) {
       return;
     }
     Files.push_back(createSharedFile(MBRef));
+    // If the library is found at an explicitly given path use the entire path
+    // as he default soname. Such libraries should not require RPATH or
+    // LD_LIBRARY_PATH to run.
+    Files.back()->DefaultSoName =
+        WithLOption ? sys::path::filename(Path) : Path;
     return;
   default:
     if (InLib)
@@ -196,7 +201,7 @@ void LinkerDriver::addFile(StringRef Path) {
 // Add a given library by searching it from input search paths.
 void LinkerDriver::addLibrary(StringRef Name) {
   if (Optional<std::string> Path = searchLibrary(Name))
-    addFile(*Path);
+    addFile(*Path, /*WithLOption=*/true);
   else
     error("unable to find library -l" + Name);
 }
@@ -762,7 +767,7 @@ void LinkerDriver::createFiles(opt::InputArgList &Args) {
       addLibrary(Arg->getValue());
       break;
     case OPT_INPUT:
-      addFile(Arg->getValue());
+      addFile(Arg->getValue(), /*WithLOption=*/false);
       break;
     case OPT_alias_script_T:
     case OPT_script:
