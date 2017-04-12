@@ -1348,7 +1348,7 @@ template <typename Val_t> inline Signum_match<Val_t> m_Signum(const Val_t &V) {
 // Matchers for two-operands operators with the operators in either order
 //
 
-/// \brief Matches a Add with LHS and RHS in either order.
+/// \brief Matches a BinaryOperator with LHS and RHS in either order.
 template<typename LHS, typename RHS>
 inline match_combine_or<AnyBinaryOp_match<LHS, RHS>,
                         AnyBinaryOp_match<RHS, LHS>>
