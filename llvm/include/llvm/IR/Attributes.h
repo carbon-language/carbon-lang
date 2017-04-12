@@ -213,7 +213,7 @@ class AttributeSet {
   template <typename Ty> friend struct DenseMapInfo;
 
 private:
-  AttributeSet(AttributeSetNode *ASN) : SetNode(ASN) {}
+  explicit AttributeSet(AttributeSetNode *ASN) : SetNode(ASN) {}
 
 public:
   /// AttributeSet is a trivially copyable value type.
