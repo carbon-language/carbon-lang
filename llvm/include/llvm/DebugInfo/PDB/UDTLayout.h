@@ -112,10 +112,10 @@ protected:
 
   void addChildToLayout(std::unique_ptr<StorageItemBase> Child);
 
-  uint32_t SizeOf = 0;
-  std::string Name;
-
   const PDBSymbol &SymbolBase;
+  std::string Name;
+  uint32_t SizeOf = 0;
+
   BitVector UsedBytes;
   std::vector<std::unique_ptr<PDBSymbol>> NonStorageItems;
   std::vector<std::unique_ptr<StorageItemBase>> ChildStorage;

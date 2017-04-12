@@ -42,8 +42,8 @@ StorageItemBase::StorageItemBase(const UDTLayoutBase &Parent,
                                  const PDBSymbol &Symbol,
                                  const std::string &Name,
                                  uint32_t OffsetInParent, uint32_t Size)
-    : Parent(Parent), Symbol(Symbol), Name(Name), SizeOf(Size),
-      OffsetInParent(OffsetInParent) {
+    : Parent(Parent), Symbol(Symbol), Name(Name),
+      OffsetInParent(OffsetInParent), SizeOf(Size) {
   UsedBytes.resize(SizeOf, true);
 }
 
