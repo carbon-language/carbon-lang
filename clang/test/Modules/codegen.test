@@ -1,7 +1,7 @@
 RUN: rm -rf %t
 REQUIRES: x86-registered-target
 
-RUN: %clang_cc1 -triple=x86_64-linux-gnu -fmodules-codegen -x c++ -fmodules -emit-module -fmodule-name=foo %S/Inputs/codegen/foo.modulemap -o %t/foo.pcm
+RUN: %clang_cc1 -triple=x86_64-linux-gnu -fmodules-codegen -fmodules-debuginfo -x c++ -fmodules -emit-module -fmodule-name=foo %S/Inputs/codegen/foo.modulemap -o %t/foo.pcm
 
 RUN: %clang_cc1 -triple x86_64-linux-gnu -emit-llvm -debug-info-kind=limited -o - %t/foo.pcm | FileCheck --check-prefix=FOO --check-prefix=BOTH %s
 RUN: %clang_cc1 -triple x86_64-linux-gnu -emit-llvm -debug-info-kind=limited -o - -fmodules -fmodule-file=%t/foo.pcm %S/Inputs/codegen/use.cpp | FileCheck --check-prefix=BOTH --check-prefix=USE %s
