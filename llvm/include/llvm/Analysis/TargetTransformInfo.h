@@ -572,8 +572,10 @@ public:
                      Type *SubTp = nullptr) const;
 
   /// \return The expected cost of cast instructions, such as bitcast, trunc,
-  /// zext, etc.
-  int getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const;
+  /// zext, etc. If there is an existing instruction that holds Opcode, it
+  /// may be passed in the 'I' parameter.
+  int getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
+                       const Instruction *I = nullptr) const;
 
   /// \return The expected cost of a sign- or zero-extended vector extract. Use
   /// -1 to indicate that there is no information about the index value.
@@ -584,9 +586,11 @@ public:
   /// Phi, Ret, Br.
   int getCFInstrCost(unsigned Opcode) const;
 
-  /// \returns The expected cost of compare and select instructions.
+  /// \returns The expected cost of compare and select instructions. If there
+  /// is an existing instruction that holds Opcode, it may be passed in the
+  /// 'I' parameter.
   int getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                         Type *CondTy = nullptr) const;
+                 Type *CondTy = nullptr, const Instruction *I = nullptr) const;
 
   /// \return The expected cost of vector Insert and Extract.
   /// Use -1 to indicate that there is no information on the index value.
@@ -594,7 +598,7 @@ public:
 
   /// \return The cost of Load and Store instructions.
   int getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
-                      unsigned AddressSpace) const;
+                      unsigned AddressSpace, const Instruction *I = nullptr) const;
 
   /// \return The cost of masked Load and Store instructions.
   int getMaskedMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
@@ -821,16 +825,17 @@ public:
                          ArrayRef<const Value *> Args) = 0;
   virtual int getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
                              Type *SubTp) = 0;
-  virtual int getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) = 0;
+  virtual int getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
+                               const Instruction *I) = 0;
   virtual int getExtractWithExtendCost(unsigned Opcode, Type *Dst,
                                        VectorType *VecTy, unsigned Index) = 0;
   virtual int getCFInstrCost(unsigned Opcode) = 0;
   virtual int getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                 Type *CondTy) = 0;
+                                Type *CondTy, const Instruction *I) = 0;
   virtual int getVectorInstrCost(unsigned Opcode, Type *Val,
                                  unsigned Index) = 0;
   virtual int getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
-                              unsigned AddressSpace) = 0;
+                              unsigned AddressSpace, const Instruction *I) = 0;
   virtual int getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
                                     unsigned Alignment,
                                     unsigned AddressSpace) = 0;
@@ -1065,8 +1070,9 @@ public:
                      Type *SubTp) override {
     return Impl.getShuffleCost(Kind, Tp, Index, SubTp);
   }
-  int getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) override {
-    return Impl.getCastInstrCost(Opcode, Dst, Src);
+  int getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
+                       const Instruction *I) override {
+    return Impl.getCastInstrCost(Opcode, Dst, Src, I);
   }
   int getExtractWithExtendCost(unsigned Opcode, Type *Dst, VectorType *VecTy,
                                unsigned Index) override {
@@ -1075,15 +1081,16 @@ public:
   int getCFInstrCost(unsigned Opcode) override {
     return Impl.getCFInstrCost(Opcode);
   }
-  int getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) override {
-    return Impl.getCmpSelInstrCost(Opcode, ValTy, CondTy);
+  int getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy,
+                         const Instruction *I) override {
+    return Impl.getCmpSelInstrCost(Opcode, ValTy, CondTy, I);
   }
   int getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) override {
     return Impl.getVectorInstrCost(Opcode, Val, Index);
   }
   int getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
-                      unsigned AddressSpace) override {
-    return Impl.getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
+                      unsigned AddressSpace, const Instruction *I) override {
+    return Impl.getMemoryOpCost(Opcode, Src, Alignment, AddressSpace, I);
   }
   int getMaskedMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                             unsigned AddressSpace) override {

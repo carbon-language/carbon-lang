@@ -334,7 +334,8 @@ public:
     return 1;
   }
 
-  unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) { return 1; }
+  unsigned getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src,
+                            const Instruction *I) { return 1; }
 
   unsigned getExtractWithExtendCost(unsigned Opcode, Type *Dst,
                                     VectorType *VecTy, unsigned Index) {
@@ -343,7 +344,8 @@ public:
 
   unsigned getCFInstrCost(unsigned Opcode) { return 1; }
 
-  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy) {
+  unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy, Type *CondTy,
+                              const Instruction *I) {
     return 1;
   }
 
@@ -352,7 +354,7 @@ public:
   }
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
-                           unsigned AddressSpace) {
+                           unsigned AddressSpace, const Instruction *I) {
     return 1;
   }
 
