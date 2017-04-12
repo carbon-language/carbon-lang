@@ -1702,6 +1702,8 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
   Type *ScalarTy = VL[0]->getType();
   if (StoreInst *SI = dyn_cast<StoreInst>(VL[0]))
     ScalarTy = SI->getValueOperand()->getType();
+  else if (CmpInst *CI = dyn_cast<CmpInst>(VL[0]))
+    ScalarTy = CI->getOperand(0)->getType();
   VectorType *VecTy = VectorType::get(ScalarTy, VL.size());
 
   // If we have computed a smaller type for the expression, update VecTy so
