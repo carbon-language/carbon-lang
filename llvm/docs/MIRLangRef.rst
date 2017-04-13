@@ -72,6 +72,53 @@ specific test directories (``lib/CodeGen/TARGETNAME``). They also need to
 specify a target triple or a target architecture either in the run line or in
 the embedded LLVM IR module.
 
+Simplifying MIR files
+^^^^^^^^^^^^^^^^^^^^^
+
+The MIR code coming out of ``-stop-after``/``-stop-before`` is very verbose;
+Tests are more accessible and future proof when simplified:
+
+- Machine function attributes often have default values or the test works just
+  as well with default values. Typical candidates for this are: `alignment:`,
+  `exposesReturnsTwice`, `legalized`, `regBankSelected`, `selected`.
+  The whole `frameInfo` section is often unnecessary if there is no special
+  frame usage in the function. `tracksRegLiveness` on the other hand is often
+  necessary for some passes that care about block livein lists.
+
+- The (global) `liveins:` list is typically only interesting for early
+  instruction selection passes and can be removed when testing later passes.
+  The per-block `liveins:` on the other hand are necessary if
+  `tracksRegLiveness` is true.
+
+- Branch probability data in block `successors:` lists can be dropped if the
+  test doesn't depend on it. Example:
+  `successors: %bb.1(0x40000000), %bb.2(0x40000000)` can be replaced with
+  `successors: %bb.1, %bb.2`.
+
+- MIR code contains a whole IR module. This is necessary because there are
+  no equivalents in MIR for global variables, references to external functions,
+  function attributes, metadata, debug info. Instead some MIR data references
+  the IR constructs. You can often remove them if the test doesn't depend on
+  them.
+
+- Alias Analysis is performed on IR values. These are referenced by memory
+  operands in MIR. Example: `:: (load 8 from %ir.foobar, !alias.scope !9)`.
+  If the test doesn't depend on (good) alias analysis the references can be
+  dropped: `:: (load 8)`
+
+- MIR blocks can reference IR blocks for debug printing, profile information
+  or debug locations. Example: `bb.42.myblock` in MIR references the IR block
+  `myblock`. It is usually possible to drop the `.myblock` reference and simply
+  use `bb.42`.
+
+- If there are no memory operands or blocks referencing the IR then the
+  IR function can be replaced by a parameterless dummy function like
+  `define @func() { ret void }`.
+
+- It is possible to drop the whole IR section of the MIR file if it only
+  contains dummy functions (see above). The .mir loader will create the
+  IR functions automatically in this case.
+
 Limitations
 -----------
 
