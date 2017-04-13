@@ -918,13 +918,14 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
     // TODO: This could be generalized to clearing any bit set in y where the
     // following bit is known to be unset in y.
     Value *Y = nullptr;
-    if (match(I->getOperand(0), m_Add(m_Specific(I->getOperand(1)),
-                                      m_Value(Y))) ||
-        match(I->getOperand(1), m_Add(m_Specific(I->getOperand(0)),
-                                      m_Value(Y)))) {
-      APInt KnownZero3(BitWidth, 0), KnownOne3(BitWidth, 0);
-      computeKnownBits(Y, KnownZero3, KnownOne3, Depth + 1, Q);
-      if (KnownOne3.countTrailingOnes() > 0)
+    if (!KnownZero[0] && !KnownOne[0] &&
+        (match(I->getOperand(0), m_Add(m_Specific(I->getOperand(1)),
+                                       m_Value(Y))) ||
+         match(I->getOperand(1), m_Add(m_Specific(I->getOperand(0)),
+                                       m_Value(Y))))) {
+      KnownZero2.clearAllBits(); KnownOne2.clearAllBits();
+      computeKnownBits(Y, KnownZero2, KnownOne2, Depth + 1, Q);
+      if (KnownOne2.countTrailingOnes() > 0)
         KnownZero.setBit(0);
     }
     break;
