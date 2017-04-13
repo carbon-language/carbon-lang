@@ -2026,7 +2026,7 @@ void Verifier::visitFunction(const Function &F) {
     }
 
     // Check that swifterror argument is only used by loads and stores.
-    if (Attrs.hasAttribute(i+1, Attribute::SwiftError)) {
+    if (Attrs.hasParamAttribute(i, Attribute::SwiftError)) {
       verifySwiftErrorValue(&Arg);
     }
     ++i;
@@ -2763,10 +2763,10 @@ static AttrBuilder getParameterABIAttributes(int I, AttributeList Attrs) {
       Attribute::SwiftError};
   AttrBuilder Copy;
   for (auto AK : ABIAttrs) {
-    if (Attrs.hasAttribute(I + 1, AK))
+    if (Attrs.hasParamAttribute(I, AK))
       Copy.addAttribute(AK);
   }
-  if (Attrs.hasAttribute(I + 1, Attribute::Alignment))
+  if (Attrs.hasParamAttribute(I, Attribute::Alignment))
     Copy.addAlignmentAttr(Attrs.getParamAlignment(I + 1));
   return Copy;
 }
