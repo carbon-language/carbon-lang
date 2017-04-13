@@ -129,7 +129,7 @@ public:
 
   CouldNotNegotiate(std::string Signature);
   std::error_code convertToErrorCode() const override;
-  void log(raw_ostream &OS) const override;  
+  void log(raw_ostream &OS) const override;
   const std::string &getSignature() const { return Signature; }
 private:
   std::string Signature;
@@ -362,30 +362,122 @@ template <> class ResultTraits<Error> : public ResultTraits<void> {};
 template <typename RetT>
 class ResultTraits<Expected<RetT>> : public ResultTraits<RetT> {};
 
+// Determines whether an RPC function's defined error return type supports
+// error return value.
+template <typename T>
+class SupportsErrorReturn {
+public:
+  static const bool value = false;
+};
+
+template <>
+class SupportsErrorReturn<Error> {
+public:
+  static const bool value = true;
+};
+
+template <typename T>
+class SupportsErrorReturn<Expected<T>> {
+public:
+  static const bool value = true;
+};
+
+// RespondHelper packages return values based on whether or not the declared
+// RPC function return type supports error returns.
+template <bool FuncSupportsErrorReturn>
+class RespondHelper;
+
+// RespondHelper specialization for functions that support error returns.
+template <>
+class RespondHelper<true> {
+public:
+
+  // Send Expected<T>.
+  template <typename WireRetT, typename HandlerRetT, typename ChannelT,
+            typename FunctionIdT, typename SequenceNumberT>
+  static Error sendResult(ChannelT &C, const FunctionIdT &ResponseId,
+                          SequenceNumberT SeqNo,
+                          Expected<HandlerRetT> ResultOrErr) {
+    if (!ResultOrErr && ResultOrErr.template errorIsA<RPCFatalError>())
+      return ResultOrErr.takeError();
+
+    // Open the response message.
+    if (auto Err = C.startSendMessage(ResponseId, SeqNo))
+      return Err;
+
+    // Serialize the result.
+    if (auto Err =
+        SerializationTraits<ChannelT, WireRetT,
+                            Expected<HandlerRetT>>::serialize(
+                                                     C, std::move(ResultOrErr)))
+      return Err;
+
+    // Close the response message.
+    return C.endSendMessage();
+  }
+
+  template <typename ChannelT, typename FunctionIdT, typename SequenceNumberT>
+  static Error sendResult(ChannelT &C, const FunctionIdT &ResponseId,
+                          SequenceNumberT SeqNo, Error Err) {
+    if (Err && Err.isA<RPCFatalError>())
+      return Err;
+    if (auto Err2 = C.startSendMessage(ResponseId, SeqNo))
+      return Err2;
+    if (auto Err2 = serializeSeq(C, std::move(Err)))
+      return Err2;
+    return C.endSendMessage();
+  }
+
+};
+
+// RespondHelper specialization for functions that do not support error returns.
+template <>
+class RespondHelper<false> {
+public:
+
+  template <typename WireRetT, typename HandlerRetT, typename ChannelT,
+            typename FunctionIdT, typename SequenceNumberT>
+  static Error sendResult(ChannelT &C, const FunctionIdT &ResponseId,
+                          SequenceNumberT SeqNo,
+                          Expected<HandlerRetT> ResultOrErr) {
+    if (auto Err = ResultOrErr.takeError())
+      return Err;
+
+    // Open the response message.
+    if (auto Err = C.startSendMessage(ResponseId, SeqNo))
+      return Err;
+
+    // Serialize the result.
+    if (auto Err =
+        SerializationTraits<ChannelT, WireRetT, HandlerRetT>::serialize(
+                                                               C, *ResultOrErr))
+      return Err;
+
+    // Close the response message.
+    return C.endSendMessage();
+  }
+
+  template <typename ChannelT, typename FunctionIdT, typename SequenceNumberT>
+  static Error sendResult(ChannelT &C, const FunctionIdT &ResponseId,
+                          SequenceNumberT SeqNo, Error Err) {
+    if (Err)
+      return Err;
+    if (auto Err2 = C.startSendMessage(ResponseId, SeqNo))
+      return Err2;
+    return C.endSendMessage();
+  }
+
+};
+
+
 // Send a response of the given wire return type (WireRetT) over the
 // channel, with the given sequence number.
 template <typename WireRetT, typename HandlerRetT, typename ChannelT,
           typename FunctionIdT, typename SequenceNumberT>
-static Error respond(ChannelT &C, const FunctionIdT &ResponseId,
-                     SequenceNumberT SeqNo, Expected<HandlerRetT> ResultOrErr) {
-  // If this was an error bail out.
-  // FIXME: Send an "error" message to the client if this is not a channel
-  //        failure?
-  if (auto Err = ResultOrErr.takeError())
-    return Err;
-
-  // Open the response message.
-  if (auto Err = C.startSendMessage(ResponseId, SeqNo))
-    return Err;
-
-  // Serialize the result.
-  if (auto Err =
-          SerializationTraits<ChannelT, WireRetT, HandlerRetT>::serialize(
-              C, *ResultOrErr))
-    return Err;
-
-  // Close the response message.
-  return C.endSendMessage();
+Error respond(ChannelT &C, const FunctionIdT &ResponseId,
+              SequenceNumberT SeqNo, Expected<HandlerRetT> ResultOrErr) {
+  return RespondHelper<SupportsErrorReturn<WireRetT>::value>::
+    template sendResult<WireRetT>(C, ResponseId, SeqNo, std::move(ResultOrErr));
 }
 
 // Send an empty response message on the given channel to indicate that
@@ -394,11 +486,8 @@ template <typename WireRetT, typename ChannelT, typename FunctionIdT,
           typename SequenceNumberT>
 Error respond(ChannelT &C, const FunctionIdT &ResponseId, SequenceNumberT SeqNo,
               Error Err) {
-  if (Err)
-    return Err;
-  if (auto Err2 = C.startSendMessage(ResponseId, SeqNo))
-    return Err2;
-  return C.endSendMessage();
+  return RespondHelper<SupportsErrorReturn<WireRetT>::value>::
+    sendResult(C, ResponseId, SeqNo, std::move(Err));
 }
 
 // Converts a given type to the equivalent error return type.
@@ -655,6 +744,72 @@ public:
     if (auto Err = C.endReceiveMessage())
       return Err;
     return Handler(Error::success());
+  }
+
+  // Abandon this response by calling the handler with an 'abandoned response'
+  // error.
+  void abandon() override {
+    if (auto Err = Handler(this->createAbandonedResponseError())) {
+      // Handlers should not fail when passed an abandoned response error.
+      report_fatal_error(std::move(Err));
+    }
+  }
+
+private:
+  HandlerT Handler;
+};
+
+template <typename ChannelT, typename FuncRetT, typename HandlerT>
+class ResponseHandlerImpl<ChannelT, Expected<FuncRetT>, HandlerT>
+    : public ResponseHandler<ChannelT> {
+public:
+  ResponseHandlerImpl(HandlerT Handler) : Handler(std::move(Handler)) {}
+
+  // Handle the result by deserializing it from the channel then passing it
+  // to the user defined handler.
+  Error handleResponse(ChannelT &C) override {
+    using HandlerArgType = typename ResponseHandlerArg<
+        typename HandlerTraits<HandlerT>::Type>::ArgType;
+    HandlerArgType Result((typename HandlerArgType::value_type()));
+
+    if (auto Err =
+            SerializationTraits<ChannelT, Expected<FuncRetT>,
+                                HandlerArgType>::deserialize(C, Result))
+      return Err;
+    if (auto Err = C.endReceiveMessage())
+      return Err;
+    return Handler(std::move(Result));
+  }
+
+  // Abandon this response by calling the handler with an 'abandoned response'
+  // error.
+  void abandon() override {
+    if (auto Err = Handler(this->createAbandonedResponseError())) {
+      // Handlers should not fail when passed an abandoned response error.
+      report_fatal_error(std::move(Err));
+    }
+  }
+
+private:
+  HandlerT Handler;
+};
+
+template <typename ChannelT, typename HandlerT>
+class ResponseHandlerImpl<ChannelT, Error, HandlerT>
+    : public ResponseHandler<ChannelT> {
+public:
+  ResponseHandlerImpl(HandlerT Handler) : Handler(std::move(Handler)) {}
+
+  // Handle the result by deserializing it from the channel then passing it
+  // to the user defined handler.
+  Error handleResponse(ChannelT &C) override {
+    Error Result = Error::success();
+    if (auto Err =
+            SerializationTraits<ChannelT, Error, Error>::deserialize(C, Result))
+      return Err;
+    if (auto Err = C.endReceiveMessage())
+      return Err;
+    return Handler(std::move(Result));
   }
 
   // Abandon this response by calling the handler with an 'abandoned response'

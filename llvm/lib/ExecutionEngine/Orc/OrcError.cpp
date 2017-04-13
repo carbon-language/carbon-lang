@@ -49,6 +49,9 @@ public:
       return "Unexpected RPC call";
     case OrcErrorCode::UnexpectedRPCResponse:
       return "Unexpected RPC response";
+    case OrcErrorCode::UnknownErrorCodeFromRemote:
+      return "Unknown error returned from remote RPC function "
+             "(Use StringError to get error message)";
     }
     llvm_unreachable("Unhandled error code");
   }

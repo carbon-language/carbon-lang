@@ -236,6 +236,14 @@ public:
     return getPtr() && getPtr()->isA(ErrT::classID());
   }
 
+  /// Returns the dynamic class id of this error, or null if this is a success
+  /// value.
+  const void* dynamicClassID() const {
+    if (!getPtr())
+      return nullptr;
+    return getPtr()->dynamicClassID();
+  }
+
 private:
   void assertIsChecked() {
 #if LLVM_ENABLE_ABI_BREAKING_CHECKS
@@ -635,6 +643,7 @@ private:
 /// takeError(). It also adds an bool errorIsA<ErrT>() method for testing the
 /// error class type.
 template <class T> class LLVM_NODISCARD Expected {
+  template <class T1> friend class ExpectedAsOutParameter;
   template <class OtherT> friend class Expected;
   static const bool isRef = std::is_reference<T>::value;
   typedef ReferenceStorage<typename std::remove_reference<T>::type> wrap;
@@ -743,7 +752,7 @@ public:
 
   /// \brief Check that this Expected<T> is an error of type ErrT.
   template <typename ErrT> bool errorIsA() const {
-    return HasError && getErrorStorage()->template isA<ErrT>();
+    return HasError && (*getErrorStorage())->template isA<ErrT>();
   }
 
   /// \brief Take ownership of the stored error.
@@ -838,6 +847,18 @@ private:
     return reinterpret_cast<error_type *>(ErrorStorage.buffer);
   }
 
+  const error_type *getErrorStorage() const {
+    assert(HasError && "Cannot get error when a value exists!");
+    return reinterpret_cast<const error_type *>(ErrorStorage.buffer);
+  }
+
+  // Used by ExpectedAsOutParameter to reset the checked flag.
+  void setUnchecked() {
+#if LLVM_ENABLE_ABI_BREAKING_CHECKS
+    Unchecked = true;
+#endif
+  }
+
   void assertIsChecked() {
 #if LLVM_ENABLE_ABI_BREAKING_CHECKS
     if (Unchecked) {
@@ -862,6 +883,28 @@ private:
 #if LLVM_ENABLE_ABI_BREAKING_CHECKS
   bool Unchecked : 1;
 #endif
+};
+
+/// Helper for Expected<T>s used as out-parameters.
+///
+/// See ErrorAsOutParameter.
+template <typename T>
+class ExpectedAsOutParameter {
+public:
+
+  ExpectedAsOutParameter(Expected<T> *ValOrErr)
+    : ValOrErr(ValOrErr) {
+    if (ValOrErr)
+      (void)!!*ValOrErr;
+  }
+
+  ~ExpectedAsOutParameter() {
+    if (ValOrErr)
+      ValOrErr->setUnchecked();
+  }
+
+private:
+  Expected<T> *ValOrErr;
 };
 
 /// This class wraps a std::error_code in a Error.
