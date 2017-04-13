@@ -452,7 +452,7 @@ void registerStringError() {
         });
     AlreadyRegistered = true;
   }
-};
+}
 
 /// SerializationTraits for Expected<T1> from an Expected<T2>.
 template <typename ChannelT, typename T1, typename T2>
