@@ -87,7 +87,7 @@ bool llvm::formLCSSAForInstructions(SmallVectorImpl<Instruction *> &Worklist,
     Instruction *I = Worklist.pop_back_val();
     BasicBlock *InstBB = I->getParent();
     Loop *L = LI.getLoopFor(InstBB);
-    if (!LoopExitBlocks.count(L))   
+    if (!LoopExitBlocks.count(L))
       L->getExitBlocks(LoopExitBlocks[L]);
     assert(LoopExitBlocks.count(L));
     const SmallVectorImpl<BasicBlock *> &ExitBlocks = LoopExitBlocks[L];
