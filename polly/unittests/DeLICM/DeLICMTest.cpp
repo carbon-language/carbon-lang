@@ -49,7 +49,7 @@ typedef struct {
   const char *OccupiedStr;
   const char *UndefStr;
   const char *WrittenStr;
-} Knowledge;
+} KnowledgeStr;
 
 isl::union_set parseSetOrNull(isl_ctx *Ctx, const char *Str) {
   if (!Str)
@@ -57,7 +57,8 @@ isl::union_set parseSetOrNull(isl_ctx *Ctx, const char *Str) {
   return isl::union_set(Ctx, Str);
 }
 
-bool checkIsConflictingNonsymmetric(Knowledge Existing, Knowledge Proposed) {
+bool checkIsConflictingNonsymmetric(KnowledgeStr Existing,
+                                    KnowledgeStr Proposed) {
   std::unique_ptr<isl_ctx, decltype(&isl_ctx_free)> Ctx(isl_ctx_alloc(),
                                                         &isl_ctx_free);
 
@@ -127,7 +128,7 @@ bool checkIsConflictingNonsymmetric(Knowledge Existing, Knowledge Proposed) {
   return Result;
 }
 
-bool checkIsConflicting(Knowledge Existing, Knowledge Proposed) {
+bool checkIsConflicting(KnowledgeStr Existing, KnowledgeStr Proposed) {
   auto Forward = checkIsConflictingNonsymmetric(Existing, Proposed);
   auto Backward = checkIsConflictingNonsymmetric(Proposed, Existing);
 
