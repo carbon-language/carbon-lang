@@ -243,8 +243,8 @@ throw_with_nested (_Tp& __t)
 #endif // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 {
 #ifndef _LIBCPP_NO_EXCEPTIONS
-    typedef typename remove_reference<_Tp>::type _Up;
-//    static_assert( is_copy_constructible<_Up>::value, "");
+    typedef typename decay<_Tp>::type _Up;
+    static_assert( is_copy_constructible<_Up>::value, "type thrown must be CopyConstructible");
     __throw_with_nested<_Tp, _Up,
         is_class<_Up>::value &&
         !is_base_of<nested_exception, _Up>::value &&
