@@ -778,71 +778,65 @@ def fno_signaling_math : Flag<["-"], "fno-signaling-math">, Group<f_Group>;
 def fjump_tables : Flag<["-"], "fjump-tables">, Group<f_Group>;
 def fno_jump_tables : Flag<["-"], "fno-jump-tables">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Do not use jump tables for lowering switches">;
-
-// Begin sanitizer flags. These should all be core options exposed in all driver
-// modes.
-let Flags = [CC1Option, CoreOption] in {
-
 def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
-                   MetaVarName<"<check>">,
+                   Flags<[CC1Option, CoreOption]>, MetaVarName<"<check>">,
                    HelpText<"Turn on runtime checks for various forms of undefined "
                             "or suspicious behavior. See user manual for available checks">;
 def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>,
-                      Flags<[CoreOption, DriverOption]>;
+                      Flags<[CoreOption]>;
 def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
-                          Group<f_clang_Group>,
+                          Group<f_clang_Group>, Flags<[CC1Option, CoreOption]>,
                           HelpText<"Path to blacklist file for sanitizers">;
 def fno_sanitize_blacklist : Flag<["-"], "fno-sanitize-blacklist">,
                              Group<f_clang_Group>,
                              HelpText<"Don't use blacklist file for sanitizers">;
 def fsanitize_coverage
     : CommaJoined<["-"], "fsanitize-coverage=">,
-      Group<f_clang_Group>,
+      Group<f_clang_Group>, Flags<[CoreOption]>,
       HelpText<"Specify the type of coverage instrumentation for Sanitizers">;
 def fno_sanitize_coverage
     : CommaJoined<["-"], "fno-sanitize-coverage=">,
-      Group<f_clang_Group>, Flags<[CoreOption, DriverOption]>,
+      Group<f_clang_Group>, Flags<[CoreOption]>,
       HelpText<"Disable specified features of coverage instrumentation for "
                "Sanitizers">;
 def fsanitize_memory_track_origins_EQ : Joined<["-"], "fsanitize-memory-track-origins=">,
-                                        Group<f_clang_Group>,
+                                        Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Enable origins tracking in MemorySanitizer">;
 def fsanitize_memory_track_origins : Flag<["-"], "fsanitize-memory-track-origins">,
-                                     Group<f_clang_Group>,
+                                     Group<f_clang_Group>, Flags<[CC1Option]>,
                                      HelpText<"Enable origins tracking in MemorySanitizer">;
 def fno_sanitize_memory_track_origins : Flag<["-"], "fno-sanitize-memory-track-origins">,
-                                        Group<f_clang_Group>,
-                                        Flags<[CoreOption, DriverOption]>,
+                                        Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Disable origins tracking in MemorySanitizer">;
 def fsanitize_memory_use_after_dtor : Flag<["-"], "fsanitize-memory-use-after-dtor">,
-                                     Group<f_clang_Group>,
+                                     Group<f_clang_Group>, Flags<[CC1Option]>,
                                      HelpText<"Enable use-after-destroy detection in MemorySanitizer">;
 def fsanitize_address_field_padding : Joined<["-"], "fsanitize-address-field-padding=">,
-                                        Group<f_clang_Group>,
+                                        Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Level of field padding for AddressSanitizer">;
 def fsanitize_address_use_after_scope : Flag<["-"], "fsanitize-address-use-after-scope">,
-                                        Group<f_clang_Group>,
+                                        Group<f_clang_Group>, Flags<[CC1Option]>,
                                         HelpText<"Enable use-after-scope detection in AddressSanitizer">;
 def fno_sanitize_address_use_after_scope : Flag<["-"], "fno-sanitize-address-use-after-scope">,
-                                           Group<f_clang_Group>,
-                                           Flags<[CoreOption, DriverOption]>,
+                                           Group<f_clang_Group>, Flags<[CC1Option]>,
                                            HelpText<"Disable use-after-scope detection in AddressSanitizer">;
-def fsanitize_recover : Flag<["-"], "fsanitize-recover">, Group<f_clang_Group>;
+def fsanitize_recover : Flag<["-"], "fsanitize-recover">, Group<f_clang_Group>,
+                        Flags<[CoreOption]>;
 def fno_sanitize_recover : Flag<["-"], "fno-sanitize-recover">,
-                           Flags<[CoreOption, DriverOption]>,
-                           Group<f_clang_Group>;
+                           Group<f_clang_Group>, Flags<[CoreOption]>;
 def fsanitize_recover_EQ : CommaJoined<["-"], "fsanitize-recover=">,
                            Group<f_clang_Group>,
+                           Flags<[CC1Option, CoreOption]>,
                            HelpText<"Enable recovery for specified sanitizers">;
 def fno_sanitize_recover_EQ
     : CommaJoined<["-"], "fno-sanitize-recover=">,
-      Group<f_clang_Group>,
-      Flags<[CoreOption, DriverOption]>,
+      Group<f_clang_Group>, Flags<[CoreOption]>,
       HelpText<"Disable recovery for specified sanitizers">;
 def fsanitize_trap_EQ : CommaJoined<["-"], "fsanitize-trap=">, Group<f_clang_Group>,
+                        Flags<[CC1Option, CoreOption]>,
                         HelpText<"Enable trapping for specified sanitizers">;
 def fno_sanitize_trap_EQ : CommaJoined<["-"], "fno-sanitize-trap=">, Group<f_clang_Group>,
-                           Flags<[CoreOption, DriverOption]>,
+                           Flags<[CoreOption]>,
                            HelpText<"Disable trapping for specified sanitizers">;
 def fsanitize_undefined_trap_on_error : Flag<["-"], "fsanitize-undefined-trap-on-error">,
                                         Group<f_clang_Group>;
@@ -851,47 +845,39 @@ def fno_sanitize_undefined_trap_on_error : Flag<["-"], "fno-sanitize-undefined-t
 def fsanitize_link_cxx_runtime : Flag<["-"], "fsanitize-link-c++-runtime">,
                                  Group<f_clang_Group>;
 def fsanitize_cfi_cross_dso : Flag<["-"], "fsanitize-cfi-cross-dso">,
-                              Group<f_clang_Group>,
+                              Group<f_clang_Group>, Flags<[CC1Option]>,
                               HelpText<"Enable control flow integrity (CFI) checks for cross-DSO calls.">;
 def fno_sanitize_cfi_cross_dso : Flag<["-"], "fno-sanitize-cfi-cross-dso">,
-                                 Flags<[CoreOption, DriverOption]>,
-                                 Group<f_clang_Group>,
+                                 Group<f_clang_Group>, Flags<[CC1Option]>,
                                  HelpText<"Disable control flow integrity (CFI) checks for cross-DSO calls.">;
 def fsanitize_stats : Flag<["-"], "fsanitize-stats">,
-                              Group<f_clang_Group>,
+                              Group<f_clang_Group>, Flags<[CC1Option]>,
                               HelpText<"Enable sanitizer statistics gathering.">;
 def fno_sanitize_stats : Flag<["-"], "fno-sanitize-stats">,
-                                 Group<f_clang_Group>,
-                                 Flags<[CoreOption, DriverOption]>,
+                                 Group<f_clang_Group>, Flags<[CC1Option]>,
                                  HelpText<"Disable sanitizer statistics gathering.">;
 def fsanitize_thread_memory_access : Flag<["-"], "fsanitize-thread-memory-access">,
                                      Group<f_clang_Group>,
                                      HelpText<"Enable memory access instrumentation in ThreadSanitizer (default)">;
 def fno_sanitize_thread_memory_access : Flag<["-"], "fno-sanitize-thread-memory-access">,
                                         Group<f_clang_Group>,
-                                        Flags<[CoreOption, DriverOption]>,
                                         HelpText<"Disable memory access instrumentation in ThreadSanitizer">;
 def fsanitize_thread_func_entry_exit : Flag<["-"], "fsanitize-thread-func-entry-exit">,
                                        Group<f_clang_Group>,
                                        HelpText<"Enable function entry/exit instrumentation in ThreadSanitizer (default)">;
 def fno_sanitize_thread_func_entry_exit : Flag<["-"], "fno-sanitize-thread-func-entry-exit">,
                                           Group<f_clang_Group>,
-                                          Flags<[CoreOption, DriverOption]>,
                                           HelpText<"Disable function entry/exit instrumentation in ThreadSanitizer">;
 def fsanitize_thread_atomics : Flag<["-"], "fsanitize-thread-atomics">,
                                Group<f_clang_Group>,
                                HelpText<"Enable atomic operations instrumentation in ThreadSanitizer (default)">;
 def fno_sanitize_thread_atomics : Flag<["-"], "fno-sanitize-thread-atomics">,
                                   Group<f_clang_Group>,
-                                  Flags<[CoreOption, DriverOption]>,
                                   HelpText<"Disable atomic operations instrumentation in ThreadSanitizer">;
 def fsanitize_undefined_strip_path_components_EQ : Joined<["-"], "fsanitize-undefined-strip-path-components=">,
-  Group<f_clang_Group>, MetaVarName<"<number>">,
+  Group<f_clang_Group>, Flags<[CC1Option]>, MetaVarName<"<number>">,
   HelpText<"Strip (or keep only, if negative) a given number of path components "
            "when emitting check metadata.">;
-
-} // end -f[no-]sanitize* flags
-
 def funsafe_math_optimizations : Flag<["-"], "funsafe-math-optimizations">,
   Group<f_Group>;
 def fno_unsafe_math_optimizations : Flag<["-"], "fno-unsafe-math-optimizations">,
