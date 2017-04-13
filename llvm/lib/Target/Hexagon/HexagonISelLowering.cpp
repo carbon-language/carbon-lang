@@ -1254,7 +1254,7 @@ SDValue HexagonTargetLowering::LowerFormalArguments(
         InVals.push_back(FIN);
       } else {
         InVals.push_back(
-            DAG.getLoad(VA.getLocVT(), dl, Chain, FIN, MachinePointerInfo()));
+            DAG.getLoad(VA.getValVT(), dl, Chain, FIN, MachinePointerInfo()));
       }
     }
   }
