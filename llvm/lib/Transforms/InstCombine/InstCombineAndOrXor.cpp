@@ -1775,7 +1775,7 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
       if (LHS->getOperand(0) == RHS->getOperand(0)) {
         // if LHSC and RHSC differ only by one bit:
         // (A == C1 || A == C2) -> (A | (C1 ^ C2)) == C2
-        assert(LHSC->getValue().ule(LHSC->getValue()));
+        assert(LHSC->getValue().ult(RHSC->getValue()));
 
         APInt Xor = LHSC->getValue() ^ RHSC->getValue();
         if (Xor.isPowerOf2()) {
