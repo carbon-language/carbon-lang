@@ -1698,10 +1698,14 @@ public:
   /// DST += RHS + CARRY where CARRY is zero or one.  Returns the carry flag.
   static WordType tcAdd(WordType *, const WordType *,
                         WordType carry, unsigned);
+  /// DST += RHS.  Returns the carry flag.
+  static WordType tcAddPart(WordType *, WordType, unsigned);
 
   /// DST -= RHS + CARRY where CARRY is zero or one. Returns the carry flag.
   static WordType tcSubtract(WordType *, const WordType *,
                              WordType carry, unsigned);
+  /// DST -= RHS.  Returns the carry flag.
+  static WordType tcSubtractPart(WordType *, WordType, unsigned);
 
   /// DST += SRC * MULTIPLIER + PART   if add is true
   /// DST  = SRC * MULTIPLIER + PART   if add is false
@@ -1762,10 +1766,14 @@ public:
   static int tcCompare(const WordType *, const WordType *, unsigned);
 
   /// Increment a bignum in-place.  Return the carry flag.
-  static WordType tcIncrement(WordType *, unsigned);
+  static WordType tcIncrement(WordType *dst, unsigned parts) {
+    return tcAddPart(dst, 1, parts);
+  }
 
   /// Decrement a bignum in-place.  Return the borrow flag.
-  static WordType tcDecrement(WordType *, unsigned);
+  static WordType tcDecrement(WordType *dst, unsigned parts) {
+    return tcSubtractPart(dst, 1, parts);
+  }
 
   /// Set the least significant BITS and clear the rest.
   static void tcSetLeastSignificantBits(WordType *, unsigned, unsigned bits);
