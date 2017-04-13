@@ -469,6 +469,26 @@ private:
   /// implicitly defined as the complement of #Occupied.
   isl::union_set Unused;
 
+  /// { [Element[] -> Zone[]] -> ValInst[] }
+  /// Maps to the known content for each array element at any interval.
+  ///
+  /// Any element/interval can map to multiple known elements. This is due to
+  /// multiple llvm::Value referring to the same content. Examples are
+  ///
+  /// - A value stored and loaded again. The LoadInst represents the same value
+  /// as the StoreInst's value operand.
+  ///
+  /// - A PHINode is equal to any one of the incoming values. In case of
+  /// LCSSA-form, it is always equal to its single incoming value.
+  ///
+  /// Two Knowledges are considered not conflicting if at least one of the known
+  /// values match. Not known values are not stored as an unnamed tuple (as
+  /// #Written does), but maps to nothing.
+  ///
+  ///  Known values are usually just defined for #Occupied elements. Knowing
+  ///  #Unused contents has no advantage as it can be overwritten.
+  isl::union_map Known;
+
   /// { [Element[] -> Scatter[]] -> ValInst[] }
   /// The write actions currently in the scop or that would be added when
   /// mapping a scalar. Maps to the value that is written.
@@ -481,10 +501,11 @@ private:
   void checkConsistency() const {
 #ifndef NDEBUG
     // Default-initialized object
-    if (!Occupied && !Unused && !Written)
+    if (!Occupied && !Unused && !Known && !Written)
       return;
 
     assert(Occupied || Unused);
+    assert(Known);
     assert(Written);
 
     // If not all fields are defined, we cannot derived the universe.
@@ -494,6 +515,8 @@ private:
     assert(isl_union_set_is_disjoint(Occupied.keep(), Unused.keep()) ==
            isl_bool_true);
     auto Universe = give(isl_union_set_union(Occupied.copy(), Unused.copy()));
+
+    assert(Known.domain().is_subset(Universe).is_true_or_error());
     assert(Written.domain().is_subset(Universe).is_true_or_error());
 #endif
   }
@@ -507,12 +530,14 @@ public:
   Knowledge(isl::union_set Occupied, isl::union_set Unused,
             isl::union_set Written)
       : Occupied(std::move(Occupied)), Unused(std::move(Unused)),
+        Known(isl::manage(
+            isl_union_map_empty(isl_union_set_get_space(Written.keep())))),
         Written(isl::manage(isl_union_map_from_domain(Written.take()))) {
     checkConsistency();
   }
 
   /// Return whether this object was not default-constructed.
-  bool isUsable() const { return (Occupied || Unused) && Written; }
+  bool isUsable() const { return (Occupied || Unused) && Known && Written; }
 
   /// Print the content of this object to @p OS.
   void print(llvm::raw_ostream &OS, unsigned Indent = 0) const {
@@ -525,6 +550,7 @@ public:
         OS.indent(Indent) << "Unused:   " << Unused << "\n";
       else
         OS.indent(Indent) << "Unused:   <Everything else not in Occupied>\n";
+      OS.indent(Indent) << "Known:    " << Known << "\n";
       OS.indent(Indent) << "Written : " << Written << '\n';
     } else {
       OS.indent(Indent) << "Invalid knowledge\n";
@@ -544,6 +570,7 @@ public:
                         "That.Occupied.copy()));`");
 
     Unused = give(isl_union_set_subtract(Unused.take(), That.Occupied.copy()));
+    Known = give(isl_union_map_union(Known.take(), That.Known.copy()));
     Written = give(isl_union_map_union(Written.take(), That.Written.take()));
 
     checkConsistency();
