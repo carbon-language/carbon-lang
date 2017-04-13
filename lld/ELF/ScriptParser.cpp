@@ -559,7 +559,6 @@ uint32_t ScriptParser::readFill() {
   expect("(");
   uint32_t V = readOutputSectionFiller(next());
   expect(")");
-  expect(";");
   return V;
 }
 
