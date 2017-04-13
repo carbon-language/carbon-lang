@@ -39,37 +39,38 @@ MIR Testing Guide
 You can use the MIR format for testing in two different ways:
 
 - You can write MIR tests that invoke a single code generation pass using the
-  ``run-pass`` option in llc.
+  ``-run-pass`` option in llc.
 
-- You can use llc's ``stop-after`` option with existing or new LLVM assembly
+- You can use llc's ``-stop-after`` option with existing or new LLVM assembly
   tests and check the MIR output of a specific code generation pass.
 
 Testing Individual Code Generation Passes
 -----------------------------------------
 
-The ``run-pass`` option in llc allows you to create MIR tests that invoke
-just a single code generation pass. When this option is used, llc will parse
-an input MIR file, run the specified code generation pass, and print the
-resulting MIR to the standard output stream.
+The ``-run-pass`` option in llc allows you to create MIR tests that invoke just
+a single code generation pass. When this option is used, llc will parse an
+input MIR file, run the specified code generation pass(es), and output the
+resulting MIR code.
 
-You can generate an input MIR file for the test by using the ``stop-after``
-option in llc. For example, if you would like to write a test for the
-post register allocation pseudo instruction expansion pass, you can specify
-the machine copy propagation pass in the ``stop-after`` option, as it runs
-just before the pass that we are trying to test:
+You can generate an input MIR file for the test by using the ``-stop-after`` or
+``-stop-before`` option in llc. For example, if you would like to write a test
+for the post register allocation pseudo instruction expansion pass, you can
+specify the machine copy propagation pass in the ``-stop-after`` option, as it
+runs just before the pass that we are trying to test:
 
-   ``llc -stop-after machine-cp bug-trigger.ll > test.mir``
+   ``llc -stop-after=machine-cp bug-trigger.ll > test.mir``
 
 After generating the input MIR file, you'll have to add a run line that uses
 the ``-run-pass`` option to it. In order to test the post register allocation
 pseudo instruction expansion pass on X86-64, a run line like the one shown
 below can be used:
 
-    ``# RUN: llc -run-pass postrapseudos -march=x86-64 %s -o /dev/null | FileCheck %s``
+    ``# RUN: llc -o - %s -mtriple=x86_64-- -run-pass=postrapseudos | FileCheck %s``
 
 The MIR files are target dependent, so they have to be placed in the target
-specific test directories. They also need to specify a target triple or a
-target architecture either in the run line or in the embedded LLVM IR module.
+specific test directories (``lib/CodeGen/TARGETNAME``). They also need to
+specify a target triple or a target architecture either in the run line or in
+the embedded LLVM IR module.
 
 Limitations
 -----------
