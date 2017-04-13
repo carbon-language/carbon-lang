@@ -8,27 +8,21 @@
 //===----------------------------------------------------------------------===//
 
 // <functional>
-// REQUIRES: c++98 || c++03 || c++11 || c++14
 
-// const_mem_fun_t
+// template <CopyConstructible Arg1, CopyConstructible Arg2, Returnable Result>
+// pointer_to_binary_function<Arg1,Arg2,Result>
+// ptr_fun(Result (*f)(Arg1, Arg2));
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
 #include <functional>
 #include <type_traits>
 #include <cassert>
 
-struct A
-{
-    char a1() {return 5;}
-    short a2(int i) {return short(i+1);}
-    int a3() const {return 1;}
-    double a4(unsigned i) const {return i-1;}
-};
+#include "test_macros.h"
+
+double binary_f(int i, short j) {return i - j + .75;}
 
 int main()
 {
-    typedef std::const_mem_fun_t<int, A> F;
-    static_assert((std::is_base_of<std::unary_function<const A*, int>, F>::value), "");
-    const F f(&A::a3);
-    const A a = A();
-    assert(f(&a) == 1);
+    assert(std::ptr_fun(binary_f)(36, 27) == 9.75);
 }

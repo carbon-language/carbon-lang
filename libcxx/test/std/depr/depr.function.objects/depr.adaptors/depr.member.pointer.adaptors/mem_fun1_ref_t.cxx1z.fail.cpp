@@ -8,13 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 // <functional>
-// REQUIRES: c++98 || c++03 || c++11 || c++14
 
-// const_mem_fun_t
+// mem_fun1_ref_t
+// Removed in c++1z
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
 #include <functional>
 #include <type_traits>
 #include <cassert>
+
+#include "test_macros.h"
 
 struct A
 {
@@ -26,9 +29,5 @@ struct A
 
 int main()
 {
-    typedef std::const_mem_fun_t<int, A> F;
-    static_assert((std::is_base_of<std::unary_function<const A*, int>, F>::value), "");
-    const F f(&A::a3);
-    const A a = A();
-    assert(f(&a) == 1);
+    typedef std::mem_fun1_ref_t<short, A, int> F;
 }

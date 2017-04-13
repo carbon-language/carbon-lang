@@ -8,13 +8,17 @@
 //===----------------------------------------------------------------------===//
 
 // <functional>
-// REQUIRES: c++98 || c++03 || c++11 || c++14
 
-// const_mem_fun_t
+// template<Returnable S, ClassType T, CopyConstructible A>
+//   const_mem_fun1_ref_t<S,T,A>
+//   mem_fun_ref(S (T::*f)(A) const);
+// Removed in c++1z
+// UNSUPPORTED: c++98, c++03, c++11, c++14
 
 #include <functional>
-#include <type_traits>
 #include <cassert>
+
+#include "test_macros.h"
 
 struct A
 {
@@ -26,9 +30,6 @@ struct A
 
 int main()
 {
-    typedef std::const_mem_fun_t<int, A> F;
-    static_assert((std::is_base_of<std::unary_function<const A*, int>, F>::value), "");
-    const F f(&A::a3);
     const A a = A();
-    assert(f(&a) == 1);
+    assert(std::mem_fun_ref(&A::a4)(a, 6) == 5);
 }
