@@ -2154,7 +2154,7 @@ class __compressed_pair : private __compressed_pair_elem<_T1, 0>,
   // is *almost never* used in a scenario where it's possible for T1 == T2.
   // (The exception is std::function where it is possible that the function
   //  object and the allocator have the same type).
-  static_assert(!is_same<_T1, _T2>::value,
+  static_assert((!is_same<_T1, _T2>::value),
     "__compressed_pair cannot be instantated when T1 and T2 are the same type; "
     "The current implementation is NOT ABI-compatible with the previous "
     "implementation for this configuration");
