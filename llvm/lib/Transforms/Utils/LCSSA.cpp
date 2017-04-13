@@ -105,7 +105,7 @@ bool llvm::formLCSSAForInstructions(SmallVectorImpl<Instruction *> &Worklist,
     for (Use &U : I->uses()) {
       Instruction *User = cast<Instruction>(U.getUser());
       BasicBlock *UserBB = User->getParent();
-      if (PHINode *PN = dyn_cast<PHINode>(User))
+      if (auto *PN = dyn_cast<PHINode>(User))
         UserBB = PN->getIncomingBlock(U);
 
       if (InstBB != UserBB && !L->contains(UserBB))
@@ -123,7 +123,7 @@ bool llvm::formLCSSAForInstructions(SmallVectorImpl<Instruction *> &Worklist,
     // DomBB dominates the value, so adjust DomBB to the normal destination
     // block, which is effectively where the value is first usable.
     BasicBlock *DomBB = InstBB;
-    if (InvokeInst *Inv = dyn_cast<InvokeInst>(I))
+    if (auto *Inv = dyn_cast<InvokeInst>(I))
       DomBB = Inv->getNormalDest();
 
     DomTreeNode *DomNode = DT.getNode(DomBB);
@@ -188,7 +188,7 @@ bool llvm::formLCSSAForInstructions(SmallVectorImpl<Instruction *> &Worklist,
       // block.
       Instruction *User = cast<Instruction>(UseToRewrite->getUser());
       BasicBlock *UserBB = User->getParent();
-      if (PHINode *PN = dyn_cast<PHINode>(User))
+      if (auto *PN = dyn_cast<PHINode>(User))
         UserBB = PN->getIncomingBlock(*UseToRewrite);
 
       if (isa<PHINode>(UserBB->begin()) && isExitBlock(UserBB, ExitBlocks)) {
