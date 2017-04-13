@@ -87,7 +87,12 @@ AllocatorCache *GetAllocatorCache() { return &get_tls_val(true)->cache; }
 
 // Required on Linux for initialization of TLS behavior, but should not be
 // required on Darwin.
-void InitializePlatformSpecificModules() {}
+void InitializePlatformSpecificModules() {
+  if (flags()->use_tls) {
+    Report("use_tls=1 is not supported on Darwin.\n");
+    Die();
+  }
+}
 
 // Scans global variables for heap pointers.
 void ProcessGlobalRegions(Frontier *frontier) {
