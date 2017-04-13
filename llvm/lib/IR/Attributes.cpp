@@ -778,7 +778,7 @@ AttributeList AttributeList::getImpl(
 #ifndef NDEBUG
   unsigned LastIndex = 0;
   bool IsFirst = true;
-  for (const auto &AttrPair : Attrs) {
+  for (auto &&AttrPair : Attrs) {
     assert((IsFirst || LastIndex < AttrPair.first) &&
            "unsorted or duplicate AttributeList indices");
     assert(AttrPair.second.hasAttributes() && "pointless AttributeList slot");
@@ -855,20 +855,20 @@ AttributeList::get(LLVMContext &C,
   return getImpl(C, Attrs);
 }
 
-AttributeList AttributeList::get(LLVMContext &C, ArrayRef<AttributeSet> Attrs) {
-  assert(Attrs.size() >= 2 &&
-         "should always have function and return attr slots");
+AttributeList AttributeList::get(LLVMContext &C, AttributeSet FnAttrs,
+                                 AttributeSet RetAttrs,
+                                 ArrayRef<AttributeSet> ArgAttrs) {
   SmallVector<std::pair<unsigned, AttributeSet>, 8> AttrPairs;
-  size_t Index = 0;
-  for (AttributeSet AS : Attrs) {
-    if (AS.hasAttributes()) {
-      // If this is the last AttributeSetNode, it's for the function.
-      if (Index == Attrs.size() - 1)
-        Index = AttributeList::FunctionIndex;
+  if (RetAttrs.hasAttributes())
+    AttrPairs.emplace_back(ReturnIndex, RetAttrs);
+  size_t Index = 1;
+  for (AttributeSet AS : ArgAttrs) {
+    if (AS.hasAttributes())
       AttrPairs.emplace_back(Index, AS);
-    }
     ++Index;
   }
+  if (FnAttrs.hasAttributes())
+    AttrPairs.emplace_back(FunctionIndex, FnAttrs);
   if (AttrPairs.empty())
     return AttributeList();
   return getImpl(C, AttrPairs);
