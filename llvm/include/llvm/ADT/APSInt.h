@@ -24,7 +24,9 @@ class LLVM_NODISCARD APSInt : public APInt {
 
 public:
   /// Default constructor that creates an uninitialized APInt.
-  explicit APSInt() : IsUnsigned(false) {}
+  explicit APSInt() : IsUnsigned(false) {
+    static_assert(sizeof(*this) == 16, "APSInt fields poorly packed");
+  }
 
   /// APSInt ctor - Create an APSInt with the specified width, default to
   /// unsigned.
