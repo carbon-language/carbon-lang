@@ -881,11 +881,11 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       // zero.
       if (LHSC->getValue() == 0 && RHSC->getValue().isAllOnesValue())
         std::swap(LHSC, RHSC);
-      if (LHSC == SubOne(RHSC)) { // (X != 13 & X != 14) -> X-13 >u 1
-        Constant *AddC = ConstantExpr::getNeg(LHSC);
-        Value *Add = Builder->CreateAdd(LHS0, AddC, LHS0->getName() + ".off");
-        return Builder->CreateICmpUGT(Add, ConstantInt::get(Add->getType(), 1),
-                                      LHS0->getName() + ".cmp");
+      if (LHSC == SubOne(RHSC)) {
+        // (X != 13 & X != 14) -> X-13 >u 1
+        // An 'add' is the canonical IR form, so favor that over a 'sub'.
+        Value *Add = Builder->CreateAdd(LHS0, ConstantExpr::getNeg(LHSC));
+        return Builder->CreateICmpUGT(Add, ConstantInt::get(Add->getType(), 1));
       }
       break; // (X != 13 & X != 15) -> no change
     }
@@ -1786,11 +1786,10 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
       }
 
       if (LHSC == SubOne(RHSC)) {
-        // (X == 13 | X == 14) -> X-13 <u 2
-        Constant *AddC = ConstantExpr::getNeg(LHSC);
-        Value *Add = Builder->CreateAdd(LHS0, AddC, LHS0->getName() + ".off");
-        AddC = ConstantExpr::getSub(AddOne(RHSC), LHSC);
-        return Builder->CreateICmpULT(Add, AddC);
+        // (X == 13 | X == 14) -> X-13 <=u 1
+        // An 'add' is the canonical IR form, so favor that over a 'sub'.
+        Value *Add = Builder->CreateAdd(LHS0, ConstantExpr::getNeg(LHSC));
+        return Builder->CreateICmpULE(Add, ConstantInt::get(Add->getType(), 1));
       }
 
       break;                 // (X == 13 | X == 15) -> no change
