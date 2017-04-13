@@ -271,10 +271,9 @@ define i1 @cmp_eq_with_diff_one(i8 %x) {
 
 define i1 @cmp_eq_with_diff_one_signed(i32 %x) {
 ; CHECK-LABEL: @cmp_eq_with_diff_one_signed(
-; CHECK-NEXT:    [[CMP1:%.*]] = icmp eq i32 %x, -1
-; CHECK-NEXT:    [[CMP2:%.*]] = icmp eq i32 %x, 0
-; CHECK-NEXT:    [[OR:%.*]] = or i1 [[CMP1]], [[CMP2]]
-; CHECK-NEXT:    ret i1 [[OR]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add i32 %x, 1
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult i32 [[TMP1]], 2
+; CHECK-NEXT:    ret i1 [[TMP2]]
 ;
   %cmp1 = icmp eq i32 %x, -1
   %cmp2 = icmp eq i32 %x, 0

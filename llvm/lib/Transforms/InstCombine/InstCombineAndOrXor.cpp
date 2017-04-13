@@ -878,7 +878,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
       return RHS;
     case ICmpInst::ICMP_NE:
       // Special case to get the ordering right when the values wrap around
-      // zero.
+      // zero. Ie, we assumed the constants were unsigned when swapping earlier.
       if (LHSC->getValue() == 0 && RHSC->getValue().isAllOnesValue())
         std::swap(LHSC, RHSC);
       if (LHSC == SubOne(RHSC)) {
@@ -1785,6 +1785,10 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
         }
       }
 
+      // Special case to get the ordering right when the values wrap around
+      // zero. Ie, we assumed the constants were unsigned when swapping earlier.
+      if (LHSC->getValue() == 0 && RHSC->getValue().isAllOnesValue())
+        std::swap(LHSC, RHSC);
       if (LHSC == SubOne(RHSC)) {
         // (X == 13 | X == 14) -> X-13 <=u 1
         // An 'add' is the canonical IR form, so favor that over a 'sub'.
