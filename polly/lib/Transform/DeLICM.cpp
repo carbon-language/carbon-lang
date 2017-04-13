@@ -469,10 +469,13 @@ private:
   /// implicitly defined as the complement of #Occupied.
   isl::union_set Unused;
 
-  /// { [Element[] -> Scatter[]] }
+  /// { [Element[] -> Scatter[]] -> ValInst[] }
   /// The write actions currently in the scop or that would be added when
-  /// mapping a scalar.
-  isl::union_set Written;
+  /// mapping a scalar. Maps to the value that is written.
+  ///
+  /// Written values that cannot be identified are represented by an unknown
+  /// ValInst[] (an unnamed tuple of 0 dimension). It conflicts with itself.
+  isl::union_map Written;
 
   /// Check whether this Knowledge object is well-formed.
   void checkConsistency() const {
@@ -491,8 +494,7 @@ private:
     assert(isl_union_set_is_disjoint(Occupied.keep(), Unused.keep()) ==
            isl_bool_true);
     auto Universe = give(isl_union_set_union(Occupied.copy(), Unused.copy()));
-    assert(isl_union_set_is_subset(Written.keep(), Universe.keep()) ==
-           isl_bool_true);
+    assert(Written.domain().is_subset(Universe).is_true_or_error());
 #endif
   }
 
@@ -505,7 +507,7 @@ public:
   Knowledge(isl::union_set Occupied, isl::union_set Unused,
             isl::union_set Written)
       : Occupied(std::move(Occupied)), Unused(std::move(Unused)),
-        Written(std::move(Written)) {
+        Written(isl::manage(isl_union_map_from_domain(Written.take()))) {
     checkConsistency();
   }
 
@@ -542,7 +544,7 @@ public:
                         "That.Occupied.copy()));`");
 
     Unused = give(isl_union_set_subtract(Unused.take(), That.Occupied.copy()));
-    Written = give(isl_union_set_union(Written.take(), That.Written.take()));
+    Written = give(isl_union_map_union(Written.take(), That.Written.take()));
 
     checkConsistency();
   }
@@ -608,11 +610,13 @@ public:
     // Knowledge to check this property also for accesses to MemoryKind::Array.
     auto ProposedFixedDefs =
         convertZoneToTimepoints(Proposed.Occupied, true, false);
-    if (isl_union_set_is_disjoint(Existing.Written.keep(),
+    auto ExistingWrittenDomain =
+        isl::manage(isl_union_map_domain(Existing.Written.copy()));
+    if (isl_union_set_is_disjoint(ExistingWrittenDomain.keep(),
                                   ProposedFixedDefs.keep()) != isl_bool_true) {
       if (OS) {
         auto ConflictingWrites = give(isl_union_set_intersect(
-            Existing.Written.copy(), ProposedFixedDefs.copy()));
+            ExistingWrittenDomain.copy(), ProposedFixedDefs.copy()));
         OS->indent(Indent) << "Proposed writes into range used by existing\n";
         OS->indent(Indent) << "Conflicting writes: " << ConflictingWrites
                            << "\n";
@@ -623,12 +627,14 @@ public:
     // Do the new writes in Proposed only overwrite unused values in Existing?
     auto ExistingAvailableDefs =
         convertZoneToTimepoints(Existing.Unused, true, false);
-    if (isl_union_set_is_subset(Proposed.Written.keep(),
+    auto ProposedWrittenDomain =
+        isl::manage(isl_union_map_domain(Proposed.Written.copy()));
+    if (isl_union_set_is_subset(ProposedWrittenDomain.keep(),
                                 ExistingAvailableDefs.keep()) !=
         isl_bool_true) {
       if (OS) {
         auto ConflictingWrites = give(isl_union_set_subtract(
-            Proposed.Written.copy(), ExistingAvailableDefs.copy()));
+            ProposedWrittenDomain.copy(), ExistingAvailableDefs.copy()));
         OS->indent(Indent)
             << "Proposed a lifetime where there is an Existing write into it\n";
         OS->indent(Indent) << "Conflicting writes: " << ConflictingWrites
@@ -639,11 +645,12 @@ public:
 
     // Does Proposed write at the same time as Existing already does (order of
     // writes is undefined)?
-    if (isl_union_set_is_disjoint(Existing.Written.keep(),
-                                  Proposed.Written.keep()) != isl_bool_true) {
+    if (isl_union_set_is_disjoint(ExistingWrittenDomain.keep(),
+                                  ProposedWrittenDomain.keep()) !=
+        isl_bool_true) {
       if (OS) {
         auto ConflictingWrites = give(isl_union_set_intersect(
-            Existing.Written.copy(), Proposed.Written.copy()));
+            ExistingWrittenDomain.copy(), ProposedWrittenDomain.copy()));
         OS->indent(Indent) << "Proposed writes at the same time as an already "
                               "Existing write\n";
         OS->indent(Indent) << "Conflicting writes: " << ConflictingWrites
