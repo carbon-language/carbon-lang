@@ -874,20 +874,17 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   // __ehdr_start is the location of ELF file headers.
   addOptionalRegular<ELFT>("__ehdr_start", Out::ElfHeader, 0, STV_HIDDEN);
 
-  // __bss_start is the location of .bss section.
-  ElfSym::Bss =
-      addOptionalRegular<ELFT>("__bss_start", Out::ElfHeader, 0, STV_DEFAULT);
-
-  auto Define = [](StringRef S, DefinedRegular *&Sym1, DefinedRegular *&Sym2) {
-    Sym1 = addOptionalRegular<ELFT>(S, Out::ElfHeader, 0, STV_DEFAULT);
-    assert(S.startswith("_"));
-    S = S.substr(1);
-    Sym2 = addOptionalRegular<ELFT>(S, Out::ElfHeader, 0, STV_DEFAULT);
+  auto Add = [](StringRef S) {
+    return addOptionalRegular<ELFT>(S, Out::ElfHeader, 0, STV_DEFAULT);
   };
 
-  Define("_end", ElfSym::End, ElfSym::End2);
-  Define("_etext", ElfSym::Etext, ElfSym::Etext2);
-  Define("_edata", ElfSym::Edata, ElfSym::Edata2);
+  ElfSym::Bss = Add("__bss_start");
+  ElfSym::End = Add("_end");
+  ElfSym::End2 = Add("end");
+  ElfSym::Etext = Add("_etext");
+  ElfSym::Etext2 = Add("etext");
+  ElfSym::Edata = Add("_edata");
+  ElfSym::Edata2 = Add("edata");
 }
 
 // Sort input sections by section name suffixes for
