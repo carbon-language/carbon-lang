@@ -976,11 +976,7 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
     break;
   }
   case Instruction::Select: {
-    computeKnownBits(I->getOperand(2), KnownZero, KnownOne, Depth + 1, Q);
-    computeKnownBits(I->getOperand(1), KnownZero2, KnownOne2, Depth + 1, Q);
-
-    const Value *LHS;
-    const Value *RHS;
+    const Value *LHS, *RHS;
     SelectPatternFlavor SPF = matchSelectPattern(I, LHS, RHS).Flavor;
     if (SelectPatternResult::isMinOrMax(SPF)) {
       computeKnownBits(RHS, KnownZero, KnownOne, Depth + 1, Q);
