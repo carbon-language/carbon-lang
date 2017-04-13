@@ -87,6 +87,7 @@ bool llvm::formLCSSAForInstructions(SmallVectorImpl<Instruction *> &Worklist,
     Instruction *I = Worklist.pop_back_val();
     BasicBlock *InstBB = I->getParent();
     Loop *L = LI.getLoopFor(InstBB);
+    assert(L && "Instruction belongs to a BB that's not part of a loop");
     if (!LoopExitBlocks.count(L))
       L->getExitBlocks(LoopExitBlocks[L]);
     assert(LoopExitBlocks.count(L));
