@@ -949,7 +949,7 @@ class MemorySanitizerIpTest : public ::testing::TestWithParam<int> {
 std::vector<int> GetAvailableIpSocketFamilies() {
   std::vector<int> result;
 
-  for (int i : std::vector<int>(AF_INET, AF_INET6)) {
+  for (int i : {AF_INET, AF_INET6}) {
     int s = socket(i, SOCK_STREAM, 0);
     if (s > 0) {
       result.push_back(i);
