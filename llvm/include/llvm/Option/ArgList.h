@@ -162,6 +162,10 @@ protected:
   // Protect the dtor to ensure this type is never destroyed polymorphically.
   ~ArgList() = default;
 
+  // Implicitly convert a value to an OptSpecifier. Used to work around a bug
+  // in MSVC's implementation of narrowing conversion checking.
+  static OptSpecifier toOptSpecifier(OptSpecifier S) { return S; }
+
 public:
   /// @name Arg Access
   /// @{
@@ -192,21 +196,23 @@ public:
   template<typename ...OptSpecifiers>
   iterator_range<filtered_iterator<sizeof...(OptSpecifiers)>>
   filtered(OptSpecifiers ...Ids) const {
-    OptRange Range = getRange({Ids...});
+    OptRange Range = getRange({toOptSpecifier(Ids)...});
     auto B = Args.begin() + Range.first;
     auto E = Args.begin() + Range.second;
     using Iterator = filtered_iterator<sizeof...(OptSpecifiers)>;
-    return make_range(Iterator(B, E, {Ids...}), Iterator(E, E, {Ids...}));
+    return make_range(Iterator(B, E, {toOptSpecifier(Ids)...}),
+                      Iterator(E, E, {toOptSpecifier(Ids)...}));
   }
 
   template<typename ...OptSpecifiers>
   iterator_range<filtered_reverse_iterator<sizeof...(OptSpecifiers)>>
   filtered_reverse(OptSpecifiers ...Ids) const {
-    OptRange Range = getRange({Ids...});
+    OptRange Range = getRange({toOptSpecifier(Ids)...});
     auto B = Args.rend() - Range.second;
     auto E = Args.rend() - Range.first;
     using Iterator = filtered_reverse_iterator<sizeof...(OptSpecifiers)>;
-    return make_range(Iterator(B, E, {Ids...}), Iterator(E, E, {Ids...}));
+    return make_range(Iterator(B, E, {toOptSpecifier(Ids)...}),
+                      Iterator(E, E, {toOptSpecifier(Ids)...}));
   }
 
   /// @}
