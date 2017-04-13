@@ -34,10 +34,6 @@ public:
   void dump(const PDBSymbolTypeTypedef &Symbol) override;
   void dump(const PDBSymbolTypeUDT &Symbol) override;
   void dump(const PDBSymbolTypeVTable &Symbol) override;
-
-private:
-  bool DumpedAnything = false;
-  LinePrinter &Printer;
 };
 }
 }

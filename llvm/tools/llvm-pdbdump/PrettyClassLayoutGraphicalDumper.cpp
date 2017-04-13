@@ -14,7 +14,7 @@ using namespace llvm::pdb;
 
 PrettyClassLayoutGraphicalDumper::PrettyClassLayoutGraphicalDumper(
     LinePrinter &P)
-    : PDBSymDumper(true), Printer(P) {}
+    : PDBSymDumper(true) {}
 
 bool PrettyClassLayoutGraphicalDumper::start(const ClassLayout &Layout) {
   return false;
