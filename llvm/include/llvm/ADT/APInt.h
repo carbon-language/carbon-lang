@@ -620,7 +620,9 @@ public:
 
   /// \brief Postfix increment operator.
   ///
-  /// \returns a new APInt value representing *this incremented by one
+  /// Increments *this by 1.
+  ///
+  /// \returns a new APInt value representing the original value of *this.
   const APInt operator++(int) {
     APInt API(*this);
     ++(*this);
@@ -634,7 +636,9 @@ public:
 
   /// \brief Postfix decrement operator.
   ///
-  /// \returns a new APInt representing *this decremented by one.
+  /// Decrements *this by 1.
+  ///
+  /// \returns a new APInt value representing the original value of *this.
   const APInt operator--(int) {
     APInt API(*this);
     --(*this);
