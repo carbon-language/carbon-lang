@@ -947,7 +947,7 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
     APInt KnownZeroOut = (KnownZero & KnownZero2) | (KnownOne & KnownOne2);
     // Output known-1 are known to be set if set in only one of the LHS, RHS.
     KnownOne = (KnownZero & KnownOne2) | (KnownOne & KnownZero2);
-    KnownZero = KnownZeroOut;
+    KnownZero = std::move(KnownZeroOut);
     break;
   }
   case Instruction::Mul: {
