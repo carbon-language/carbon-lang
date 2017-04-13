@@ -64,6 +64,12 @@ public:
   /// using std::error_code. It will be removed in the future.
   virtual std::error_code convertToErrorCode() const = 0;
 
+  // Returns the class ID for this type.
+  static const void *classID() { return &ID; }
+
+  // Returns the class ID for the dynamic type of this ErrorInfoBase instance.
+  virtual const void *dynamicClassID() const = 0;
+
   // Check whether this instance is a subclass of the class identified by
   // ClassID.
   virtual bool isA(const void *const ClassID) const {
@@ -74,9 +80,6 @@ public:
   template <typename ErrorInfoT> bool isA() const {
     return isA(ErrorInfoT::classID());
   }
-
-  // Returns the class ID for this type.
-  static const void *classID() { return &ID; }
 
 private:
   virtual void anchor();
@@ -316,11 +319,14 @@ template <typename ErrT, typename... ArgTs> Error make_error(ArgTs &&... Args) {
 template <typename ThisErrT, typename ParentErrT = ErrorInfoBase>
 class ErrorInfo : public ParentErrT {
 public:
+
+  static const void *classID() { return &ThisErrT::ID; }
+
+  const void *dynamicClassID() const override { return &ThisErrT::ID; }
+
   bool isA(const void *const ClassID) const override {
     return ClassID == classID() || ParentErrT::isA(ClassID);
   }
-
-  static const void *classID() { return &ThisErrT::ID; }
 };
 
 /// Special ErrorInfo subclass representing a list of ErrorInfos.
@@ -925,6 +931,8 @@ public:
 
   void log(raw_ostream &OS) const override;
   std::error_code convertToErrorCode() const override;
+
+  const std::string &getMessage() const { return Msg; }
 
 private:
   std::string Msg;

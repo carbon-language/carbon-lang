@@ -604,10 +604,10 @@ TEST(DummyRPC, TestAPICalls) {
 
   {
     auto Err = DummyCallsAll::negotiate(Client);
-    EXPECT_EQ(errorToErrorCode(std::move(Err)).value(),
-              static_cast<int>(OrcErrorCode::UnknownRPCFunction))
-      << "Expected 'UnknownRPCFunction' error for attempted negotiate of "
+    EXPECT_TRUE(Err.isA<CouldNotNegotiate>())
+      << "Expected CouldNotNegotiate error for attempted negotiate of "
          "unsupported function";
+    consumeError(std::move(Err));
   }
 
   ServerThread.join();

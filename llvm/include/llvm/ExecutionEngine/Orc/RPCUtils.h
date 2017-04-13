@@ -32,6 +32,109 @@ namespace llvm {
 namespace orc {
 namespace rpc {
 
+/// Base class of all fatal RPC errors (those that necessarily result in the
+/// termination of the RPC session).
+class RPCFatalError : public ErrorInfo<RPCFatalError> {
+public:
+  static char ID;
+};
+
+/// RPCConnectionClosed is returned from RPC operations if the RPC connection
+/// has already been closed due to either an error or graceful disconnection.
+class ConnectionClosed : public ErrorInfo<ConnectionClosed> {
+public:
+  static char ID;
+  std::error_code convertToErrorCode() const override;
+  void log(raw_ostream &OS) const override;
+};
+
+/// BadFunctionCall is returned from handleOne when the remote makes a call with
+/// an unrecognized function id.
+///
+/// This error is fatal because Orc RPC needs to know how to parse a function
+/// call to know where the next call starts, and if it doesn't recognize the
+/// function id it cannot parse the call.
+template <typename FnIdT, typename SeqNoT>
+class BadFunctionCall
+  : public ErrorInfo<BadFunctionCall<FnIdT, SeqNoT>, RPCFatalError> {
+public:
+  static char ID;
+
+  BadFunctionCall(FnIdT FnId, SeqNoT SeqNo)
+      : FnId(std::move(FnId)), SeqNo(std::move(SeqNo)) {}
+
+  std::error_code convertToErrorCode() const override {
+    return orcError(OrcErrorCode::UnexpectedRPCCall);
+  }
+
+  void log(raw_ostream &OS) const override {
+    OS << "Call to invalid RPC function id '" << FnId << "' with "
+          "sequence number " << SeqNo;
+  }
+
+private:
+  FnIdT FnId;
+  SeqNoT SeqNo;
+};
+
+template <typename FnIdT, typename SeqNoT>
+char BadFunctionCall<FnIdT, SeqNoT>::ID = 0;
+
+/// InvalidSequenceNumberForResponse is returned from handleOne when a response
+/// call arrives with a sequence number that doesn't correspond to any in-flight
+/// function call.
+///
+/// This error is fatal because Orc RPC needs to know how to parse the rest of
+/// the response call to know where the next call starts, and if it doesn't have
+/// a result parser for this sequence number it can't do that.
+template <typename SeqNoT>
+class InvalidSequenceNumberForResponse
+    : public ErrorInfo<InvalidSequenceNumberForResponse<SeqNoT>, RPCFatalError> {
+public:
+  static char ID;
+
+  InvalidSequenceNumberForResponse(SeqNoT SeqNo)
+      : SeqNo(std::move(SeqNo)) {}
+
+  std::error_code convertToErrorCode() const override {
+    return orcError(OrcErrorCode::UnexpectedRPCCall);
+  };
+
+  void log(raw_ostream &OS) const override {
+    OS << "Response has unknown sequence number " << SeqNo;
+  }
+private:
+  SeqNoT SeqNo;
+};
+
+template <typename SeqNoT>
+char InvalidSequenceNumberForResponse<SeqNoT>::ID = 0;
+
+/// This non-fatal error will be passed to asynchronous result handlers in place
+/// of a result if the connection goes down before a result returns, or if the
+/// function to be called cannot be negotiated with the remote.
+class ResponseAbandoned : public ErrorInfo<ResponseAbandoned> {
+public:
+  static char ID;
+
+  std::error_code convertToErrorCode() const override;
+  void log(raw_ostream &OS) const override;
+};
+
+/// This error is returned if the remote does not have a handler installed for
+/// the given RPC function.
+class CouldNotNegotiate : public ErrorInfo<CouldNotNegotiate> {
+public:
+  static char ID;
+
+  CouldNotNegotiate(std::string Signature);
+  std::error_code convertToErrorCode() const override;
+  void log(raw_ostream &OS) const override;  
+  const std::string &getSignature() const { return Signature; }
+private:
+  std::string Signature;
+};
+
 template <typename DerivedFunc, typename FnT> class Function;
 
 // RPC Function class.
@@ -500,7 +603,7 @@ public:
 
   // Create an error instance representing an abandoned response.
   static Error createAbandonedResponseError() {
-    return errorCodeToError(orcError(OrcErrorCode::RPCResponseAbandoned));
+    return make_error<ResponseAbandoned>();
   }
 };
 
@@ -814,12 +917,9 @@ public:
     if (auto FnIdOrErr = getRemoteFunctionId<Func>(LazyAutoNegotiation, false))
       FnId = *FnIdOrErr;
     else {
-      // This isn't a channel error so we don't want to abandon other pending
-      // responses, but we still need to run the user handler with an error to
-      // let them know the call failed.
-      if (auto Err = Handler(errorCodeToError(
-                               orcError(OrcErrorCode::UnknownRPCFunction))))
-        report_fatal_error(std::move(Err));
+      // Negotiation failed. Notify the handler then return the negotiate-failed
+      // error.
+      cantFail(Handler(make_error<ResponseAbandoned>()));
       return FnIdOrErr.takeError();
     }
 
@@ -885,7 +985,8 @@ public:
       return I->second(C, SeqNo);
 
     // else: No handler found. Report error to client?
-    return errorCodeToError(orcError(OrcErrorCode::UnexpectedRPCCall));
+    return make_error<BadFunctionCall<FunctionIdT, SequenceNumberT>>(FnId,
+                                                                     SeqNo);
   }
 
   /// Helper for handling setter procedures - this method returns a functor that
@@ -995,7 +1096,8 @@ protected:
         // Unlock the pending results map to prevent recursive lock.
         Lock.unlock();
         abandonPendingResponses();
-        return errorCodeToError(orcError(OrcErrorCode::UnexpectedRPCResponse));
+        return make_error<
+                 InvalidSequenceNumberForResponse<SequenceNumberT>>(SeqNo);
       }
     }
 
@@ -1041,7 +1143,7 @@ protected:
           Impl.template callB<OrcRPCNegotiate>(Func::getPrototype())) {
         RemoteFunctionIds[Func::getPrototype()] = *RemoteIdOrErr;
         if (*RemoteIdOrErr == getInvalidFunctionId())
-          return make_error<RPCFunctionNotSupported>(Func::getPrototype());
+          return make_error<CouldNotNegotiate>(Func::getPrototype());
         return *RemoteIdOrErr;
       } else
         return RemoteIdOrErr.takeError();
@@ -1049,7 +1151,7 @@ protected:
 
     // No key was available in the map and we weren't allowed to try to
     // negotiate one, so return an unknown function error.
-    return make_error<RPCFunctionNotSupported>(Func::getPrototype());
+    return make_error<CouldNotNegotiate>(Func::getPrototype());
   }
 
   using WrappedHandlerFn = std::function<Error(ChannelT &, SequenceNumberT)>;
