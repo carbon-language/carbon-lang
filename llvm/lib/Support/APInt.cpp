@@ -120,7 +120,7 @@ APInt::APInt(unsigned numBits, unsigned numWords, const uint64_t bigVal[])
 }
 
 APInt::APInt(unsigned numbits, StringRef Str, uint8_t radix)
-  : BitWidth(numbits), VAL(0) {
+  : VAL(0), BitWidth(numbits) {
   assert(BitWidth && "Bitwidth too small");
   fromString(numbits, Str, radix);
 }
