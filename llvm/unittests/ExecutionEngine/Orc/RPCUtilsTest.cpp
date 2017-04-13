@@ -615,7 +615,7 @@ TEST(DummyRPC, ReturnErrorFailure) {
   ServerThread.join();
 }
 
-TEST(DummyRPC, RPCExpectedSuccess) {
+TEST(DummyRPC, ReturnExpectedSuccess) {
   registerDummyErrorSerialization<QueueChannel>();
 
   auto Channels = createPairedQueueChannels();
@@ -645,9 +645,9 @@ TEST(DummyRPC, RPCExpectedSuccess) {
   cantFail(Client.handleOne());
 
   ServerThread.join();
-};
+}
 
-TEST(DummyRPC, RPCExpectedFailure) {
+TEST(DummyRPC, ReturnExpectedFailure) {
   registerDummyErrorSerialization<QueueChannel>();
 
   auto Channels = createPairedQueueChannels();
@@ -683,7 +683,7 @@ TEST(DummyRPC, RPCExpectedFailure) {
   cantFail(Client.handleOne());
 
   ServerThread.join();
-};
+}
 
 TEST(DummyRPC, TestParallelCallGroup) {
   auto Channels = createPairedQueueChannels();
