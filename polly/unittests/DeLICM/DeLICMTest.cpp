@@ -109,21 +109,30 @@ bool checkIsConflictingNonsymmetric(KnowledgeStr Existing,
   completeLifetime(Universe, ExistingOccupied, ExistingUnused);
   completeLifetime(Universe, ProposedOccupied, ProposedUnused);
 
-  auto Result =
-      isConflicting(ExistingOccupied, ExistingUnused, ExistingWritten,
-                    ProposedOccupied, ProposedUnused, ProposedWritten);
+  auto ParamSpace = isl::manage(isl_union_set_get_space(Universe.keep()));
+  auto EmptyUnionMap = isl::union_map::empty(ParamSpace);
+  auto ExistingWrittenMap =
+      isl::manage(isl_union_map_from_domain(ExistingWritten.copy()));
+  auto ProposedWrittenMap =
+      isl::manage(isl_union_map_from_domain(ProposedWritten.copy()));
+  auto Result = isConflicting(
+      ExistingOccupied, ExistingUnused, EmptyUnionMap, ExistingWrittenMap,
+      ProposedOccupied, ProposedUnused, EmptyUnionMap, ProposedWrittenMap);
 
   // isConflicting does not require ExistingOccupied nor ProposedUnused and are
   // implicitly assumed to be the remainder elements. Test the implicitness as
   // well.
   EXPECT_EQ(Result,
-            isConflicting(ExistingOccupied, ExistingUnused, ExistingWritten,
-                          ProposedOccupied, {}, ProposedWritten));
+            isConflicting(ExistingOccupied, ExistingUnused, EmptyUnionMap,
+                          ExistingWrittenMap, ProposedOccupied, {},
+                          EmptyUnionMap, ProposedWrittenMap));
   EXPECT_EQ(Result,
-            isConflicting({}, ExistingUnused, ExistingWritten, ProposedOccupied,
-                          ProposedUnused, ProposedWritten));
-  EXPECT_EQ(Result, isConflicting({}, ExistingUnused, ExistingWritten,
-                                  ProposedOccupied, {}, ProposedWritten));
+            isConflicting({}, ExistingUnused, EmptyUnionMap, ExistingWrittenMap,
+                          ProposedOccupied, ProposedUnused, EmptyUnionMap,
+                          ProposedWrittenMap));
+  EXPECT_EQ(Result, isConflicting({}, ExistingUnused, EmptyUnionMap,
+                                  ExistingWrittenMap, ProposedOccupied, {},
+                                  EmptyUnionMap, ProposedWrittenMap));
 
   return Result;
 }

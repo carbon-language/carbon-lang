@@ -536,6 +536,14 @@ public:
     checkConsistency();
   }
 
+  /// Create a new object with the given members.
+  Knowledge(isl::union_set Occupied, isl::union_set Unused,
+            isl::union_map Known, isl::union_map Written)
+      : Occupied(std::move(Occupied)), Unused(std::move(Unused)),
+        Known(std::move(Known)), Written(std::move(Written)) {
+    checkConsistency();
+  }
+
   /// Return whether this object was not default-constructed.
   bool isUsable() const { return (Occupied || Unused) && Known && Written; }
 
@@ -1806,17 +1814,16 @@ INITIALIZE_PASS_DEPENDENCY(ScopInfoWrapperPass)
 INITIALIZE_PASS_END(DeLICM, "polly-delicm", "Polly - DeLICM/DePRE", false,
                     false)
 
-bool polly::isConflicting(isl::union_set ExistingOccupied,
-                          isl::union_set ExistingUnused,
-                          isl::union_set ExistingWrites,
-                          isl::union_set ProposedOccupied,
-                          isl::union_set ProposedUnused,
-                          isl::union_set ProposedWrites, llvm::raw_ostream *OS,
-                          unsigned Indent) {
+bool polly::isConflicting(
+    isl::union_set ExistingOccupied, isl::union_set ExistingUnused,
+    isl::union_map ExistingKnown, isl::union_map ExistingWrites,
+    isl::union_set ProposedOccupied, isl::union_set ProposedUnused,
+    isl::union_map ProposedKnown, isl::union_map ProposedWrites,
+    llvm::raw_ostream *OS, unsigned Indent) {
   Knowledge Existing(std::move(ExistingOccupied), std::move(ExistingUnused),
-                     std::move(ExistingWrites));
+                     std::move(ExistingKnown), std::move(ExistingWrites));
   Knowledge Proposed(std::move(ProposedOccupied), std::move(ProposedUnused),
-                     std::move(ProposedWrites));
+                     std::move(ProposedKnown), std::move(ProposedWrites));
 
   return Knowledge::isConflicting(Existing, Proposed, OS, Indent);
 }
