@@ -4122,29 +4122,27 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   SmallVector<OperandBundleDef, 1> OpBundles;
   CS.getOperandBundlesAsDefs(OpBundles);
 
-  Instruction *NC;
+  CallSite NewCS;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
-    NC = Builder->CreateInvoke(Callee, II->getNormalDest(), II->getUnwindDest(),
-                               Args, OpBundles);
-    NC->takeName(II);
-    cast<InvokeInst>(NC)->setCallingConv(II->getCallingConv());
-    cast<InvokeInst>(NC)->setAttributes(NewCallerPAL);
+    NewCS = Builder->CreateInvoke(Callee, II->getNormalDest(),
+                                  II->getUnwindDest(), Args, OpBundles);
   } else {
-    CallInst *CI = cast<CallInst>(Caller);
-    NC = Builder->CreateCall(Callee, Args, OpBundles);
-    NC->takeName(CI);
-    // Preserve the weight metadata for the new call instruction. The metadata
-    // is used by SamplePGO to check callsite's hotness.
-    uint64_t W;
-    if (CI->extractProfTotalWeight(W))
-      NC->setProfWeight(W);
-
-    cast<CallInst>(NC)->setTailCallKind(CI->getTailCallKind());
-    cast<CallInst>(NC)->setCallingConv(CI->getCallingConv());
-    cast<CallInst>(NC)->setAttributes(NewCallerPAL);
+    NewCS = Builder->CreateCall(Callee, Args, OpBundles);
+    cast<CallInst>(NewCS.getInstruction())
+        ->setTailCallKind(cast<CallInst>(Caller)->getTailCallKind());
   }
+  NewCS->takeName(Caller);
+  NewCS.setCallingConv(CS.getCallingConv());
+  NewCS.setAttributes(NewCallerPAL);
+
+  // Preserve the weight metadata for the new call instruction. The metadata
+  // is used by SamplePGO to check callsite's hotness.
+  uint64_t W;
+  if (Caller->extractProfTotalWeight(W))
+    NewCS->setProfWeight(W);
 
   // Insert a cast of the return type as necessary.
+  Instruction *NC = NewCS.getInstruction();
   Value *NV = NC;
   if (OldRetTy != NV->getType() && !Caller->use_empty()) {
     if (!NV->getType()->isVoidTy()) {
