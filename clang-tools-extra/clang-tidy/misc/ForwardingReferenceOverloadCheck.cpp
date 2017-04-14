@@ -123,7 +123,7 @@ void ForwardingReferenceOverloadCheck::check(
         (OtherCtor->isCopyConstructor() ? EnabledCopy : EnabledMove) = true;
     }
   }
-  bool Copy = !EnabledMove && !DisabledMove && !DisabledCopy || EnabledCopy;
+  bool Copy = (!EnabledMove && !DisabledMove && !DisabledCopy) || EnabledCopy;
   bool Move = !DisabledMove || EnabledMove;
   if (!Copy && !Move)
     return;
