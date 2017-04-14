@@ -83,11 +83,6 @@ static const SCEV *transformImpl(const TransformKind Kind, NormalizePredTy Pred,
             transformSubExpr(Kind, Pred, SE, Cache, AR->getStepRecurrence(SE));
         Result = SE.getMinusSCEV(Result, TransformedStep);
       }
-#if 0
-      // See the comment on the assert above.
-      assert(S == transformSubExpr(Result, User, OperandValToReplace) &&
-             "SCEV normalization is not invertible!");
-#endif
       break;
     case Denormalize:
       // Here we want to normalize step expressions for the same reasons, as
