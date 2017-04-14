@@ -33,16 +33,15 @@ enum TransformKind {
 /// map of transformed expressions.
 class PostIncTransform {
   TransformKind Kind;
-  Optional<NormalizePredTy> Pred;
-  const PostIncLoopSet &Loops;
+  NormalizePredTy Pred;
   ScalarEvolution &SE;
 
   DenseMap<const SCEV*, const SCEV*> Transformed;
 
 public:
-  PostIncTransform(TransformKind kind, Optional<NormalizePredTy> Pred,
-                   const PostIncLoopSet &loops, ScalarEvolution &se)
-      : Kind(kind), Pred(Pred), Loops(loops), SE(se) {}
+  PostIncTransform(TransformKind kind, NormalizePredTy Pred,
+                   ScalarEvolution &se)
+      : Kind(kind), Pred(Pred), SE(se) {}
 
   const SCEV *TransformSubExpr(const SCEV *S);
 
@@ -70,13 +69,13 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(S)) {
     // An addrec. This is the interesting part.
     SmallVector<const SCEV *, 8> Operands;
-    const Loop *L = AR->getLoop();
 
     transform(AR->operands(), std::back_inserter(Operands),
               [&](const SCEV *Op) { return TransformSubExpr(Op); });
 
     // Conservatively use AnyWrap until/unless we need FlagNW.
-    const SCEV *Result = SE.getAddRecExpr(Operands, L, SCEV::FlagAnyWrap);
+    const SCEV *Result =
+        SE.getAddRecExpr(Operands, AR->getLoop(), SCEV::FlagAnyWrap);
     switch (Kind) {
     case Normalize:
       // We want to normalize step expression, because otherwise we might not be
@@ -93,7 +92,7 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
       //     (100 /u {1,+,1}<%bb16>)}<%bb25>
       //  Note that the initial value changes after normalization +
       //  denormalization, which isn't correct.
-      if ((Pred && (*Pred)(AR)) || (!Pred && Loops.count(L))) {
+      if (Pred(AR)) {
         const SCEV *TransformedStep =
             TransformSubExpr(AR->getStepRecurrence(SE));
         Result = SE.getMinusSCEV(Result, TransformedStep);
@@ -107,7 +106,7 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
     case Denormalize:
       // Here we want to normalize step expressions for the same reasons, as
       // stated above.
-      if (Loops.count(L)) {
+      if (Pred(AR)) {
         const SCEV *TransformedStep =
             TransformSubExpr(AR->getStepRecurrence(SE));
         Result = SE.getAddExpr(Result, TransformedStep);
@@ -171,27 +170,31 @@ const SCEV *PostIncTransform::TransformSubExpr(const SCEV *S) {
 /// Top level driver for transforming an expression DAG into its requested
 /// post-inc form (either "Normalized" or "Denormalized").
 static const SCEV *TransformForPostIncUse(TransformKind Kind, const SCEV *S,
-                                          Optional<NormalizePredTy> Pred,
-                                          const PostIncLoopSet &Loops,
+                                          NormalizePredTy Pred,
                                           ScalarEvolution &SE) {
-  PostIncTransform Transform(Kind, Pred, Loops, SE);
+  PostIncTransform Transform(Kind, Pred, SE);
   return Transform.TransformSubExpr(S);
 }
 
 const SCEV *llvm::normalizeForPostIncUse(const SCEV *S,
                                          const PostIncLoopSet &Loops,
                                          ScalarEvolution &SE) {
-  return TransformForPostIncUse(Normalize, S, None, Loops, SE);
+  auto Pred = [&](const SCEVAddRecExpr *AR) {
+    return Loops.count(AR->getLoop());
+  };
+  return TransformForPostIncUse(Normalize, S, Pred, SE);
 }
 
 const SCEV *llvm::normalizeForPostIncUseIf(const SCEV *S, NormalizePredTy Pred,
                                            ScalarEvolution &SE) {
-  PostIncLoopSet Empty;
-  return TransformForPostIncUse(Normalize, S, Pred, Empty, SE);
+  return TransformForPostIncUse(Normalize, S, Pred, SE);
 }
 
 const SCEV *llvm::denormalizeForPostIncUse(const SCEV *S,
                                            const PostIncLoopSet &Loops,
                                            ScalarEvolution &SE) {
-  return TransformForPostIncUse(Denormalize, S, None, Loops, SE);
+  auto Pred = [&](const SCEVAddRecExpr *AR) {
+    return Loops.count(AR->getLoop());
+  };
+  return TransformForPostIncUse(Denormalize, S, Pred, SE);
 }
