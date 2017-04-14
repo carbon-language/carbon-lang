@@ -661,11 +661,9 @@ template <class ELFT> void InputSection::writeTo(uint8_t *Buf) {
     return;
   }
 
-  // Copy section contents from source object file to output file.
-  ArrayRef<uint8_t> Data = this->Data;
+  // Copy section contents from source object file to output file
+  // and then apply relocations.
   memcpy(Buf + OutSecOff, Data.data(), Data.size());
-
-  // Iterate over all relocation sections that apply to this section.
   uint8_t *BufEnd = Buf + OutSecOff + Data.size();
   this->relocate<ELFT>(Buf, BufEnd);
 }
