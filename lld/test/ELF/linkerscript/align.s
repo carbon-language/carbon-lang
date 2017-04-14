@@ -2,43 +2,25 @@
 # RUN: llvm-mc -filetype=obj -triple=x86_64-unknown-linux %s -o %t
 
 ## Check that ALIGN command workable using location counter
-# RUN: echo "SECTIONS { \
-# RUN:  . = 0x10000; \
-# RUN:  .aaa : \
-# RUN:  { \
-# RUN:   *(.aaa) \
-# RUN:  } \
-# RUN:  . = ALIGN(4096); \
-# RUN:  .bbb : \
-# RUN:  { \
-# RUN:   *(.bbb) \
-# RUN:  } \
+# RUN: echo "SECTIONS {      \
+# RUN:  . = 0x10000;         \
+# RUN:  .aaa : { *(.aaa) }   \
+# RUN:  . = ALIGN(4096);     \
+# RUN:  .bbb : { *(.bbb) }   \
 # RUN:  . = ALIGN(4096 * 4); \
-# RUN:  .ccc : \
-# RUN:  { \
-# RUN:   *(.ccc) \
-# RUN:  } \
+# RUN:  .ccc : { *(.ccc) }   \
 # RUN: }" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t1 | FileCheck %s
 
 ## Check that the two argument version of ALIGN command works
-# RUN: echo "SECTIONS { \
+# RUN: echo "SECTIONS {             \
 # RUN:  . = ALIGN(0x1234, 0x10000); \
-# RUN:  .aaa : \
-# RUN:  { \
-# RUN:   *(.aaa) \
-# RUN:  } \
-# RUN:  . = ALIGN(., 4096); \
-# RUN:  .bbb : \
-# RUN:  { \
-# RUN:   *(.bbb) \
-# RUN:  } \
-# RUN:  . = ALIGN(., 4096 * 4); \
-# RUN:  .ccc : \
-# RUN:  { \
-# RUN:   *(.ccc) \
-# RUN:  } \
+# RUN:  .aaa : { *(.aaa) }          \
+# RUN:  . = ALIGN(., 4096);         \
+# RUN:  .bbb : { *(.bbb) }          \
+# RUN:  . = ALIGN(., 4096 * 4);     \
+# RUN:  .ccc : { *(.ccc) }          \
 # RUN: }" > %t.script
 # RUN: ld.lld -o %t1 --script %t.script %t
 # RUN: llvm-objdump -section-headers %t1 | FileCheck %s
@@ -51,43 +33,25 @@
 # CHECK-NEXT:   3 .ccc          00000008 0000000000014000 DATA
 
 ## Check output sections ALIGN modificator
-# RUN: echo "SECTIONS { \
-# RUN:  . = 0x10000; \
-# RUN:  .aaa : \
-# RUN:  { \
-# RUN:   *(.aaa) \
-# RUN:  } \
-# RUN:  .bbb : ALIGN(4096) \
-# RUN:  { \
-# RUN:   *(.bbb) \
-# RUN:  } \
-# RUN:  .ccc : ALIGN(4096 * 4) \
-# RUN:  { \
-# RUN:   *(.ccc) \
-# RUN:  } \
+# RUN: echo "SECTIONS {                    \
+# RUN:  . = 0x10000;                       \
+# RUN:  .aaa : { *(.aaa) }                 \
+# RUN:  .bbb : ALIGN(4096) { *(.bbb) }     \
+# RUN:  .ccc : ALIGN(4096 * 4) { *(.ccc) } \
 # RUN: }" > %t2.script
 # RUN: ld.lld -o %t2 --script %t2.script %t
 # RUN: llvm-objdump -section-headers %t2 | FileCheck %s
 
 ## Check use of variables in align expressions:
-# RUN: echo " VAR = 0x1000; \
-# RUN: __code_base__ = 0x10000; \
-# RUN: SECTIONS { \
-# RUN:  . = __code_base__; \
-# RUN:  .aaa : \
-# RUN:  { \
-# RUN:   *(.aaa) \
-# RUN:  } \
-# RUN:  .bbb : ALIGN(VAR) \
-# RUN:  { \
-# RUN:   *(.bbb) \
-# RUN:  } \
-# RUN:  . = ALIGN(., VAR * 4); \
-# RUN:  .ccc : \
-# RUN:  { \
-# RUN:   *(.ccc) \
-# RUN:  } \
-# RUN:  __start_bbb = ADDR(.bbb); \
+# RUN: echo "VAR = 0x1000;                                  \
+# RUN: __code_base__ = 0x10000;                             \
+# RUN: SECTIONS {                                           \
+# RUN:  . = __code_base__;                                  \
+# RUN:  .aaa : { *(.aaa) }                                  \
+# RUN:  .bbb : ALIGN(VAR) { *(.bbb) }                       \
+# RUN:  . = ALIGN(., VAR * 4);                              \
+# RUN:  .ccc : { *(.ccc) }                                  \
+# RUN:  __start_bbb = ADDR(.bbb);                           \
 # RUN:  __end_bbb = ALIGN(__start_bbb + SIZEOF(.bbb), VAR); \
 # RUN: }" > %t3.script
 # RUN: ld.lld -o %t3 --script %t3.script %t
