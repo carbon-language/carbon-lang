@@ -1006,7 +1006,7 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
         MaxHighZeros = std::max(KnownZero.countLeadingOnes(),
                                 KnownZero2.countLeadingOnes());
       // If either side is negative, the result is negative.
-      else if (KnownOne[BitWidth - 1] || KnownOne2[BitWidth - 1])
+      else if (KnownOne.isNegative() || KnownOne2.isNegative())
         MaxHighOnes = 1;
     } else if (SPF == SPF_UMAX) {
       // We can derive a lower bound on the result by taking the max of the
