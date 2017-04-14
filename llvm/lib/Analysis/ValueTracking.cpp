@@ -1078,15 +1078,10 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
     KnownZero = KnownZero.trunc(SrcBitWidth);
     KnownOne = KnownOne.trunc(SrcBitWidth);
     computeKnownBits(I->getOperand(0), KnownZero, KnownOne, Depth + 1, Q);
-    KnownZero = KnownZero.zext(BitWidth);
-    KnownOne = KnownOne.zext(BitWidth);
-
     // If the sign bit of the input is known set or clear, then we know the
     // top bits of the result.
-    if (KnownZero[SrcBitWidth-1])             // Input sign bit known zero
-      KnownZero.setBitsFrom(SrcBitWidth);
-    else if (KnownOne[SrcBitWidth-1])           // Input sign bit known set
-      KnownOne.setBitsFrom(SrcBitWidth);
+    KnownZero = KnownZero.sext(BitWidth);
+    KnownOne = KnownOne.sext(BitWidth);
     break;
   }
   case Instruction::Shl: {
