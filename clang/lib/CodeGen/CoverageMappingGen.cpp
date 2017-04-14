@@ -961,7 +961,7 @@ struct CounterCoverageMappingBuilder
   }
 };
 
-StringRef getCoverageSection(const CodeGenModule &CGM) {
+std::string getCoverageSection(const CodeGenModule &CGM) {
   return llvm::getInstrProfCoverageSectionName(&CGM.getModule());
 }
 
