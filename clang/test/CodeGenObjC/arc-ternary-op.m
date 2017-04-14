@@ -120,9 +120,9 @@ void test2(int cond) {
 
   // CHECK-LABEL:    define void @test2(
   // CHECK:      [[COND:%.*]] = alloca i32,
-  // CHECK:      alloca i8*
   // CHECK:      [[CLEANUP_SAVE:%.*]] = alloca i8*
   // CHECK:      [[RUN_CLEANUP:%.*]] = alloca i1
+  // CHECK:      alloca i8*
   //   Evaluate condition; cleanup disabled by default.
   // CHECK:      [[T0:%.*]] = load i32, i32* [[COND]],
   // CHECK-NEXT: icmp ne i32 [[T0]], 0

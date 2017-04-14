@@ -1469,11 +1469,6 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   if (DI)
     DI->EmitLexicalBlockStart(Builder, S.getSourceRange().getBegin());
 
-  // The local variable comes into scope immediately.
-  AutoVarEmission variable = AutoVarEmission::invalid();
-  if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement()))
-    variable = EmitAutoVarAlloca(*cast<VarDecl>(SD->getSingleDecl()));
-
   JumpDest LoopEnd = getJumpDestInCurrentScope("forcoll.end");
 
   // Fast enumeration state.
@@ -1625,8 +1620,10 @@ void CodeGenFunction::EmitObjCForCollectionStmt(const ObjCForCollectionStmt &S){
   bool elementIsVariable;
   LValue elementLValue;
   QualType elementType;
+  AutoVarEmission variable = AutoVarEmission::invalid();
   if (const DeclStmt *SD = dyn_cast<DeclStmt>(S.getElement())) {
     // Initialize the variable, in case it's a __block variable or something.
+    variable = EmitAutoVarAlloca(*cast<VarDecl>(SD->getSingleDecl()));
     EmitAutoVarInit(variable);
 
     const VarDecl* D = cast<VarDecl>(SD->getSingleDecl());
