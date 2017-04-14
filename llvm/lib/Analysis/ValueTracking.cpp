@@ -1428,11 +1428,8 @@ static void computeKnownBitsFromOperator(const Operator *I, APInt &KnownZero,
         // We can bound the space the count needs.  Also, bits known to be zero
         // can't contribute to the population.
         unsigned BitsPossiblySet = BitWidth - KnownZero2.countPopulation();
-        unsigned LeadingZeros =
-          APInt(BitWidth, BitsPossiblySet).countLeadingZeros();
-        assert(LeadingZeros <= BitWidth);
-        KnownZero.setHighBits(LeadingZeros);
-        KnownOne &= ~KnownZero;
+        unsigned LowBits = Log2_32(BitsPossiblySet)+1;
+        KnownZero.setBitsFrom(LowBits);
         // TODO: we could bound KnownOne using the lower bound on the number
         // of bits which might be set provided by popcnt KnownOne2.
         break;
