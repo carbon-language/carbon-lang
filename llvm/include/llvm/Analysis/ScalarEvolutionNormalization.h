@@ -40,21 +40,15 @@
 
 namespace llvm {
 
-class Instruction;
-class DominatorTree;
 class Loop;
 class ScalarEvolution;
 class SCEV;
-class Value;
 
 /// TransformKind - Different types of transformations that
 /// TransformForPostIncUse can do.
 enum TransformKind {
   /// Normalize - Normalize according to the given loops.
   Normalize,
-  /// NormalizeAutodetect - Detect post-inc opportunities on new expressions,
-  /// update the given loop set, and normalize.
-  NormalizeAutodetect,
   /// Denormalize - Perform the inverse transform on the expression with the
   /// given loop set.
   Denormalize
@@ -63,16 +57,13 @@ enum TransformKind {
 /// PostIncLoopSet - A set of loops.
 typedef SmallPtrSet<const Loop *, 2> PostIncLoopSet;
 
+typedef function_ref<bool(const SCEVAddRecExpr *)> NormalizePredTy;
+
 /// TransformForPostIncUse - Transform the given expression according to the
 /// given transformation kind.
-const SCEV *TransformForPostIncUse(TransformKind Kind,
-                                   const SCEV *S,
-                                   Instruction *User,
-                                   Value *OperandValToReplace,
-                                   PostIncLoopSet &Loops,
-                                   ScalarEvolution &SE,
-                                   DominatorTree &DT);
-
+const SCEV *TransformForPostIncUse(TransformKind Kind, const SCEV *S,
+                                   Optional<NormalizePredTy> Pred,
+                                   PostIncLoopSet &Loops, ScalarEvolution &SE);
 }
 
 #endif

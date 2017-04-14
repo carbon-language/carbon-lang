@@ -1268,8 +1268,8 @@ Value *SCEVExpander::expandAddRecExprLiterally(const SCEVAddRecExpr *S) {
   if (PostIncLoops.count(L)) {
     PostIncLoopSet Loops;
     Loops.insert(L);
-    Normalized = cast<SCEVAddRecExpr>(TransformForPostIncUse(
-        Normalize, S, nullptr, nullptr, Loops, SE, SE.DT));
+    Normalized = cast<SCEVAddRecExpr>(
+        TransformForPostIncUse(Normalize, S, None, Loops, SE));
   }
 
   // Strip off any non-loop-dominating component from the addrec start.
