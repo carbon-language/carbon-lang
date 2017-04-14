@@ -19,19 +19,29 @@ using namespace llvm;
 
 namespace {
 
+/// TransformKind - Different types of transformations that
+/// TransformForPostIncUse can do.
+enum TransformKind {
+  /// Normalize - Normalize according to the given loops.
+  Normalize,
+  /// Denormalize - Perform the inverse transform on the expression with the
+  /// given loop set.
+  Denormalize
+};
+
 /// Hold the state used during post-inc expression transformation, including a
 /// map of transformed expressions.
 class PostIncTransform {
   TransformKind Kind;
   Optional<NormalizePredTy> Pred;
-  PostIncLoopSet &Loops;
+  const PostIncLoopSet &Loops;
   ScalarEvolution &SE;
 
   DenseMap<const SCEV*, const SCEV*> Transformed;
 
 public:
   PostIncTransform(TransformKind kind, Optional<NormalizePredTy> Pred,
-                   PostIncLoopSet &loops, ScalarEvolution &se)
+                   const PostIncLoopSet &loops, ScalarEvolution &se)
       : Kind(kind), Pred(Pred), Loops(loops), SE(se) {}
 
   const SCEV *TransformSubExpr(const SCEV *S);
@@ -160,10 +170,28 @@ const SCEV *PostIncTransform::TransformSubExpr(const SCEV *S) {
 
 /// Top level driver for transforming an expression DAG into its requested
 /// post-inc form (either "Normalized" or "Denormalized").
-const SCEV *llvm::TransformForPostIncUse(TransformKind Kind, const SCEV *S,
-                                         Optional<NormalizePredTy> Pred,
-                                         PostIncLoopSet &Loops,
-                                         ScalarEvolution &SE) {
+static const SCEV *TransformForPostIncUse(TransformKind Kind, const SCEV *S,
+                                          Optional<NormalizePredTy> Pred,
+                                          const PostIncLoopSet &Loops,
+                                          ScalarEvolution &SE) {
   PostIncTransform Transform(Kind, Pred, Loops, SE);
   return Transform.TransformSubExpr(S);
+}
+
+const SCEV *llvm::normalizeForPostIncUse(const SCEV *S,
+                                         const PostIncLoopSet &Loops,
+                                         ScalarEvolution &SE) {
+  return TransformForPostIncUse(Normalize, S, None, Loops, SE);
+}
+
+const SCEV *llvm::normalizeForPostIncUseIf(const SCEV *S, NormalizePredTy Pred,
+                                           ScalarEvolution &SE) {
+  PostIncLoopSet Empty;
+  return TransformForPostIncUse(Normalize, S, Pred, Empty, SE);
+}
+
+const SCEV *llvm::denormalizeForPostIncUse(const SCEV *S,
+                                           const PostIncLoopSet &Loops,
+                                           ScalarEvolution &SE) {
+  return TransformForPostIncUse(Denormalize, S, None, Loops, SE);
 }

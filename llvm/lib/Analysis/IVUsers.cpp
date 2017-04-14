@@ -270,17 +270,15 @@ bool IVUsers::AddUsersImpl(Instruction *I,
         return Result;
       };
 
-      ISE = TransformForPostIncUse(Normalize, ISE,
-                                   Optional<NormalizePredTy>(NormalizePred),
-                                   NewUse.PostIncLoops, *SE);
+      ISE = normalizeForPostIncUseIf(ISE, NormalizePred, *SE);
 
       // PostIncNormalization effectively simplifies the expression under
       // pre-increment assumptions. Those assumptions (no wrapping) might not
       // hold for the post-inc value. Catch such cases by making sure the
       // transformation is invertible.
       if (OriginalISE != ISE) {
-        const SCEV *DenormalizedISE = TransformForPostIncUse(
-            Denormalize, ISE, None, NewUse.PostIncLoops, *SE);
+        const SCEV *DenormalizedISE =
+            denormalizeForPostIncUse(ISE, NewUse.PostIncLoops, *SE);
 
         // If we normalized the expression, but denormalization doesn't give the
         // original one, discard this user.
@@ -398,9 +396,8 @@ const SCEV *IVUsers::getReplacementExpr(const IVStrideUse &IU) const {
 
 /// getExpr - Return the expression for the use.
 const SCEV *IVUsers::getExpr(const IVStrideUse &IU) const {
-  return TransformForPostIncUse(
-      Normalize, getReplacementExpr(IU), None,
-      const_cast<PostIncLoopSet &>(IU.getPostIncLoops()), *SE);
+  return normalizeForPostIncUse(getReplacementExpr(IU), IU.getPostIncLoops(),
+                                *SE);
 }
 
 static const SCEVAddRecExpr *findAddRecForLoop(const SCEV *S, const Loop *L) {

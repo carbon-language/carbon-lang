@@ -44,26 +44,24 @@ class Loop;
 class ScalarEvolution;
 class SCEV;
 
-/// TransformKind - Different types of transformations that
-/// TransformForPostIncUse can do.
-enum TransformKind {
-  /// Normalize - Normalize according to the given loops.
-  Normalize,
-  /// Denormalize - Perform the inverse transform on the expression with the
-  /// given loop set.
-  Denormalize
-};
-
-/// PostIncLoopSet - A set of loops.
 typedef SmallPtrSet<const Loop *, 2> PostIncLoopSet;
 
 typedef function_ref<bool(const SCEVAddRecExpr *)> NormalizePredTy;
 
-/// TransformForPostIncUse - Transform the given expression according to the
-/// given transformation kind.
-const SCEV *TransformForPostIncUse(TransformKind Kind, const SCEV *S,
-                                   Optional<NormalizePredTy> Pred,
-                                   PostIncLoopSet &Loops, ScalarEvolution &SE);
-}
+/// Normalize \p S to be post-increment for all loops present in \p
+/// Loops.
+const SCEV *normalizeForPostIncUse(const SCEV *S, const PostIncLoopSet &Loops,
+                                   ScalarEvolution &SE);
+
+/// Normalize \p S for all add recurrence sub-expressions for which \p
+/// Pred returns true.
+const SCEV *normalizeForPostIncUseIf(const SCEV *S, NormalizePredTy Pred,
+                                     ScalarEvolution &SE);
+
+/// Denormalize \p S to be post-increment for all loops present in \p
+/// Loops.
+const SCEV *denormalizeForPostIncUse(const SCEV *S, const PostIncLoopSet &Loops,
+                                     ScalarEvolution &SE);
+} // namespace llvm
 
 #endif
