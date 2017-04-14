@@ -638,6 +638,9 @@ bool HexagonOptAddrMode::constructDefMap(MachineBasicBlock *B) {
 }
 
 bool HexagonOptAddrMode::runOnMachineFunction(MachineFunction &MF) {
+  if (skipFunction(*MF.getFunction()))
+    return false;
+
   bool Changed = false;
   auto &HST = MF.getSubtarget<HexagonSubtarget>();
   auto &MRI = MF.getRegInfo();
