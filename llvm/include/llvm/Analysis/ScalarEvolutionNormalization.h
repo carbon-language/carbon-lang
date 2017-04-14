@@ -38,6 +38,7 @@
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Analysis/ScalarEvolutionExpressions.h"
 
 namespace llvm {
 
