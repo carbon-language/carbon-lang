@@ -617,9 +617,9 @@ namespace llvm {
     const SCEV *visitAddExpr(const SCEVAddExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
       bool Changed = false;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
-        Changed |= Expr->getOperand(i) != Operands.back();
+      for (auto *Op : Expr->operands()) {
+        Operands.push_back(((SC*)this)->visit(Op));
+        Changed |= Op != Operands.back();
       }
       return !Changed ? Expr : SE.getAddExpr(Operands);
     }
@@ -627,9 +627,9 @@ namespace llvm {
     const SCEV *visitMulExpr(const SCEVMulExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
       bool Changed = false;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
-        Changed |= Expr->getOperand(i) != Operands.back();
+      for (auto *Op : Expr->operands()) {
+        Operands.push_back(((SC*)this)->visit(Op));
+        Changed |= Op != Operands.back();
       }
       return !Changed ? Expr : SE.getMulExpr(Operands);
     }
@@ -644,9 +644,9 @@ namespace llvm {
     const SCEV *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
       bool Changed = false;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
-        Changed |= Expr->getOperand(i) != Operands.back();
+      for (auto *Op : Expr->operands()) {
+        Operands.push_back(((SC*)this)->visit(Op));
+        Changed |= Op != Operands.back();
       }
       return !Changed ? Expr
                       : SE.getAddRecExpr(Operands, Expr->getLoop(),
@@ -656,9 +656,9 @@ namespace llvm {
     const SCEV *visitSMaxExpr(const SCEVSMaxExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
       bool Changed = false;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-        Operands.push_back(((SC *)this)->visit(Expr->getOperand(i)));
-        Changed |= Expr->getOperand(i) != Operands.back();
+      for (auto *Op : Expr->operands()) {
+        Operands.push_back(((SC *)this)->visit(Op));
+        Changed |= Op != Operands.back();
       }
       return !Changed ? Expr : SE.getSMaxExpr(Operands);
     }
@@ -666,9 +666,9 @@ namespace llvm {
     const SCEV *visitUMaxExpr(const SCEVUMaxExpr *Expr) {
       SmallVector<const SCEV *, 2> Operands;
       bool Changed = false;
-      for (int i = 0, e = Expr->getNumOperands(); i < e; ++i) {
-        Operands.push_back(((SC*)this)->visit(Expr->getOperand(i)));
-        Changed |= Expr->getOperand(i) != Operands.back();
+      for (auto *Op : Expr->operands()) {
+        Operands.push_back(((SC*)this)->visit(Op));
+        Changed |= Op != Operands.back();
       }
       return !Changed ? Expr : SE.getUMaxExpr(Operands);
     }
