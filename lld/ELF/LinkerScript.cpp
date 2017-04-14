@@ -632,7 +632,7 @@ void LinkerScript::adjustSectionsBeforeSorting() {
   // '.' is assigned to, but creating these section should not have any bad
   // consequeces and gives us a section to put the symbol in.
   uint64_t Flags = SHF_ALLOC;
-  uint32_t Type = SHT_NOBITS;
+  uint32_t Type = SHT_PROGBITS;
   for (BaseCommand *Base : Opt.Commands) {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
     if (!Cmd)
