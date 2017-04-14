@@ -17,8 +17,6 @@
 #include "llvm/Analysis/ScalarEvolutionNormalization.h"
 using namespace llvm;
 
-namespace {
-
 /// TransformKind - Different types of transformations that
 /// TransformForPostIncUse can do.
 enum TransformKind {
@@ -29,33 +27,19 @@ enum TransformKind {
   Denormalize
 };
 
-/// Hold the state used during post-inc expression transformation, including a
-/// map of transformed expressions.
-class PostIncTransform {
-  TransformKind Kind;
-  NormalizePredTy Pred;
-  ScalarEvolution &SE;
+typedef DenseMap<const SCEV *, const SCEV *> NormalizedCacheTy;
 
-  DenseMap<const SCEV*, const SCEV*> Transformed;
-
-public:
-  PostIncTransform(TransformKind kind, NormalizePredTy Pred,
-                   ScalarEvolution &se)
-      : Kind(kind), Pred(Pred), SE(se) {}
-
-  const SCEV *TransformSubExpr(const SCEV *S);
-
-protected:
-  const SCEV *TransformImpl(const SCEV *S);
-};
-
-} // namespace
+static const SCEV *transformSubExpr(const TransformKind Kind,
+                                    NormalizePredTy Pred, ScalarEvolution &SE,
+                                    NormalizedCacheTy &Cache, const SCEV *S);
 
 /// Implement post-inc transformation for all valid expression types.
-const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
+static const SCEV *transformImpl(const TransformKind Kind, NormalizePredTy Pred,
+                                 ScalarEvolution &SE, NormalizedCacheTy &Cache,
+                                 const SCEV *S) {
   if (const SCEVCastExpr *X = dyn_cast<SCEVCastExpr>(S)) {
     const SCEV *O = X->getOperand();
-    const SCEV *N = TransformSubExpr(O);
+    const SCEV *N = transformSubExpr(Kind, Pred, SE, Cache, O);
     if (O != N)
       switch (S->getSCEVType()) {
       case scZeroExtend: return SE.getZeroExtendExpr(N, S->getType());
@@ -71,7 +55,9 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
     SmallVector<const SCEV *, 8> Operands;
 
     transform(AR->operands(), std::back_inserter(Operands),
-              [&](const SCEV *Op) { return TransformSubExpr(Op); });
+              [&](const SCEV *Op) {
+                return transformSubExpr(Kind, Pred, SE, Cache, Op);
+              });
 
     // Conservatively use AnyWrap until/unless we need FlagNW.
     const SCEV *Result =
@@ -94,12 +80,12 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
       //  denormalization, which isn't correct.
       if (Pred(AR)) {
         const SCEV *TransformedStep =
-            TransformSubExpr(AR->getStepRecurrence(SE));
+            transformSubExpr(Kind, Pred, SE, Cache, AR->getStepRecurrence(SE));
         Result = SE.getMinusSCEV(Result, TransformedStep);
       }
 #if 0
       // See the comment on the assert above.
-      assert(S == TransformSubExpr(Result, User, OperandValToReplace) &&
+      assert(S == transformSubExpr(Result, User, OperandValToReplace) &&
              "SCEV normalization is not invertible!");
 #endif
       break;
@@ -108,7 +94,7 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
       // stated above.
       if (Pred(AR)) {
         const SCEV *TransformedStep =
-            TransformSubExpr(AR->getStepRecurrence(SE));
+            transformSubExpr(Kind, Pred, SE, Cache, AR->getStepRecurrence(SE));
         Result = SE.getAddExpr(Result, TransformedStep);
       }
       break;
@@ -121,7 +107,7 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
     bool Changed = false;
     // Transform each operand.
     for (auto *O : X->operands()) {
-      const SCEV *N = TransformSubExpr(O);
+      const SCEV *N = transformSubExpr(Kind, Pred, SE, Cache, O);
       Changed |= N != O;
       Operands.push_back(N);
     }
@@ -140,8 +126,8 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
   if (const SCEVUDivExpr *X = dyn_cast<SCEVUDivExpr>(S)) {
     const SCEV *LO = X->getLHS();
     const SCEV *RO = X->getRHS();
-    const SCEV *LN = TransformSubExpr(LO);
-    const SCEV *RN = TransformSubExpr(RO);
+    const SCEV *LN = transformSubExpr(Kind, Pred, SE, Cache, LO);
+    const SCEV *RN = transformSubExpr(Kind, Pred, SE, Cache, RO);
     if (LO != LN || RO != RN)
       return SE.getUDivExpr(LN, RN);
     return S;
@@ -152,26 +138,19 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
 
 /// Manage recursive transformation across an expression DAG. Revisiting
 /// expressions would lead to exponential recursion.
-const SCEV *PostIncTransform::TransformSubExpr(const SCEV *S) {
+static const SCEV *transformSubExpr(const TransformKind Kind,
+                                    NormalizePredTy Pred, ScalarEvolution &SE,
+                                    NormalizedCacheTy &Cache, const SCEV *S) {
   if (isa<SCEVConstant>(S) || isa<SCEVUnknown>(S))
     return S;
 
-  const SCEV *Result = Transformed.lookup(S);
+  const SCEV *Result = Cache.lookup(S);
   if (Result)
     return Result;
 
-  Result = TransformImpl(S);
-  Transformed[S] = Result;
+  Result = transformImpl(Kind, Pred, SE, Cache, S);
+  Cache[S] = Result;
   return Result;
-}
-
-/// Top level driver for transforming an expression DAG into its requested
-/// post-inc form (either "Normalized" or "Denormalized").
-static const SCEV *TransformForPostIncUse(TransformKind Kind, const SCEV *S,
-                                          NormalizePredTy Pred,
-                                          ScalarEvolution &SE) {
-  PostIncTransform Transform(Kind, Pred, SE);
-  return Transform.TransformSubExpr(S);
 }
 
 const SCEV *llvm::normalizeForPostIncUse(const SCEV *S,
@@ -180,12 +159,14 @@ const SCEV *llvm::normalizeForPostIncUse(const SCEV *S,
   auto Pred = [&](const SCEVAddRecExpr *AR) {
     return Loops.count(AR->getLoop());
   };
-  return TransformForPostIncUse(Normalize, S, Pred, SE);
+  NormalizedCacheTy Cache;
+  return transformSubExpr(Normalize, Pred, SE, Cache, S);
 }
 
 const SCEV *llvm::normalizeForPostIncUseIf(const SCEV *S, NormalizePredTy Pred,
                                            ScalarEvolution &SE) {
-  return TransformForPostIncUse(Normalize, S, Pred, SE);
+  NormalizedCacheTy Cache;
+  return transformSubExpr(Normalize, Pred, SE, Cache, S);
 }
 
 const SCEV *llvm::denormalizeForPostIncUse(const SCEV *S,
@@ -194,5 +175,6 @@ const SCEV *llvm::denormalizeForPostIncUse(const SCEV *S,
   auto Pred = [&](const SCEVAddRecExpr *AR) {
     return Loops.count(AR->getLoop());
   };
-  return TransformForPostIncUse(Denormalize, S, Pred, SE);
+  NormalizedCacheTy Cache;
+  return transformSubExpr(Denormalize, Pred, SE, Cache, S);
 }
