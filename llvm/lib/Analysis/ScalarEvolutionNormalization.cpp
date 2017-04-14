@@ -120,9 +120,7 @@ const SCEV *PostIncTransform::TransformImpl(const SCEV *S) {
     SmallVector<const SCEV *, 8> Operands;
     bool Changed = false;
     // Transform each operand.
-    for (SCEVNAryExpr::op_iterator I = X->op_begin(), E = X->op_end();
-         I != E; ++I) {
-      const SCEV *O = *I;
+    for (auto *O : X->operands()) {
       const SCEV *N = TransformSubExpr(O);
       Changed |= N != O;
       Operands.push_back(N);
