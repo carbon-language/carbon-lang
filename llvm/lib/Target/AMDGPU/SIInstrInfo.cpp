@@ -3930,3 +3930,16 @@ bool SIInstrInfo::isBasicBlockPrologue(const MachineInstr &MI) const {
   return !MI.isTerminator() && MI.getOpcode() != AMDGPU::COPY &&
          MI.modifiesRegister(AMDGPU::EXEC, &RI);
 }
+
+MachineInstrBuilder
+SIInstrInfo::getAddNoCarry(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator I,
+                           const DebugLoc &DL,
+                           unsigned DestReg) const {
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
+
+  unsigned UnusedCarry = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
+
+  return BuildMI(MBB, I, DL, get(AMDGPU::V_ADD_I32_e64), DestReg)
+           .addReg(UnusedCarry, RegState::Define | RegState::Dead);
+}
