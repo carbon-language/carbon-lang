@@ -260,18 +260,13 @@ private:
 
 class BitcodeFile : public InputFile {
 public:
-  BitcodeFile(MemoryBufferRef M, uint64_t OffsetInArchive);
+  BitcodeFile(MemoryBufferRef M, StringRef ArchiveName,
+              uint64_t OffsetInArchive);
   static bool classof(const InputFile *F) { return F->kind() == BitcodeKind; }
   template <class ELFT>
   void parse(llvm::DenseSet<llvm::CachedHashStringRef> &ComdatGroups);
   ArrayRef<Symbol *> getSymbols() { return Symbols; }
   std::unique_ptr<llvm::lto::InputFile> Obj;
-
-  // If this file is in an archive, the member contains the offset of
-  // the file in the archive. Otherwise, it's just zero. We store this
-  // field so that we can pass it to lib/LTO in order to disambiguate
-  // between objects.
-  uint64_t OffsetInArchive;
 
 private:
   std::vector<Symbol *> Symbols;
