@@ -797,19 +797,9 @@ void Liveness::computeLiveIns() {
       //dbgs() << "\tcomp = " << Print<RegisterAggr>(LiveMap[&B], DFG) << '\n';
 
       LV.clear();
-      for (std::pair<RegisterId,LaneBitmask> P : LiveMap[&B]) {
-        MCSubRegIndexIterator S(P.first, &TRI);
-        if (!S.isValid()) {
-          LV.push_back(RegisterRef(P.first));
-          continue;
-        }
-        do {
-          LaneBitmask M = TRI.getSubRegIndexLaneMask(S.getSubRegIndex());
-          if ((M & P.second).any())
-            LV.push_back(RegisterRef(S.getSubReg()));
-          ++S;
-        } while (S.isValid());
-      }
+      const RegisterAggr &LG = LiveMap[&B];
+      for (auto I = LG.rr_begin(), E = LG.rr_end(); I != E; ++I)
+        LV.push_back(*I);
       std::sort(LV.begin(), LV.end());
       dbgs() << "\tcomp = {";
       for (auto I : LV)
@@ -830,9 +820,10 @@ void Liveness::resetLiveIns() {
     for (auto I : T)
       B.removeLiveIn(I);
     // Add the newly computed live-ins.
-    auto &LiveIns = LiveMap[&B];
-    for (auto I : LiveIns) {
-      B.addLiveIn({MCPhysReg(I.first), I.second});
+    const RegisterAggr &LiveIns = LiveMap[&B];
+    for (auto I = LiveIns.rr_begin(), E = LiveIns.rr_end(); I != E; ++I) {
+      RegisterRef R = *I;
+      B.addLiveIn({MCPhysReg(R.Reg), R.Mask});
     }
   }
 }
@@ -1032,10 +1023,9 @@ void Liveness::traverse(MachineBasicBlock *B, RefMap &LiveIn) {
           // registers are not covering LRef. The first def from the
           // upward chain will be live.
           // Subtract all accumulated defs (RRs) from LRef.
-          RegisterAggr L(PRI);
-          L.insert(LRef).clear(RRs);
-          assert(!L.empty());
-          NewDefs.insert({TA.Id,L.begin()->second});
+          RegisterRef T = RRs.clearIn(LRef);
+          assert(T);
+          NewDefs.insert({TA.Id,T.Mask});
           break;
         }
 

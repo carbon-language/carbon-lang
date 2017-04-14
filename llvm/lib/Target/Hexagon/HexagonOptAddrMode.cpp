@@ -259,7 +259,7 @@ void HexagonOptAddrMode::getAllRealUses(NodeAddr<StmtNode *> SA,
                      << Print<Liveness::RefMap>(phiUse, *DFG) << "\n");
         if (!phiUse.empty()) {
           for (auto I : phiUse) {
-            if (DR.Reg != I.first)
+            if (!DFG->getPRI().alias(RegisterRef(I.first), DR))
               continue;
             auto phiUseSet = I.second;
             for (auto phiUI : phiUseSet) {
