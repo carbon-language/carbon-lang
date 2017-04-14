@@ -242,7 +242,7 @@ public:
   uint64_t getDereferenceableBytes() const;
   uint64_t getDereferenceableOrNullBytes() const;
   std::pair<unsigned, Optional<unsigned>> getAllocSizeArgs() const;
-  std::string getAsString(bool InAttrGrp) const;
+  std::string getAsString(bool InAttrGrp = false) const;
 
   typedef const Attribute *iterator;
   iterator begin() const;
