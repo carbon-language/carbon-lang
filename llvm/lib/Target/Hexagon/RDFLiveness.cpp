@@ -425,6 +425,7 @@ void Liveness::computePhiInfo() {
   // phi use -> (map: reaching phi -> set of registers defined in between)
   std::map<NodeId,std::map<NodeId,RegisterAggr>> PhiUp;
   std::vector<NodeId> PhiUQ;  // Work list of phis for upward propagation.
+  std::map<NodeId,RegisterAggr> PhiDRs;  // Phi -> registers defined by it.
 
   // Go over all phis.
   for (NodeAddr<PhiNode*> PhiA : Phis) {
@@ -437,12 +438,15 @@ void Liveness::computePhiInfo() {
     // For each def, add to the queue all reached (non-phi) defs.
     SetVector<NodeId> DefQ;
     NodeSet PhiDefs;
+    RegisterAggr DRs(PRI);
     for (NodeAddr<RefNode*> R : PhiRefs) {
       if (!DFG.IsRef<NodeAttrs::Def>(R))
         continue;
+      DRs.insert(R.Addr->getRegRef(DFG));
       DefQ.insert(R.Id);
       PhiDefs.insert(R.Id);
     }
+    PhiDRs.insert(std::make_pair(PhiA.Id, DRs));
 
     // Collect the super-set of all possible reached uses. This set will
     // contain all uses reached from this phi, either directly from the
@@ -615,14 +619,19 @@ void Liveness::computePhiInfo() {
         //       then add (R-MidDefs,U) to RealUseMap[P]
         //
         for (const std::pair<RegisterId,NodeRefSet> &T : RUM) {
-          RegisterRef R = DFG.restrictRef(RegisterRef(T.first), UR);
-          if (!R)
+          RegisterRef R(T.first);
+          // The current phi (PA) could be a phi for a regmask. It could
+          // reach a whole variety of uses that are not related to the
+          // specific upward phi (P.first).
+          const RegisterAggr &DRs = PhiDRs.at(P.first);
+          if (!DRs.hasAliasOf(R))
             continue;
+          R = DRs.intersectWith(R);
           for (std::pair<NodeId,LaneBitmask> V : T.second) {
-            RegisterRef S = DFG.restrictRef(RegisterRef(R.Reg, V.second), R);
-            if (!S)
+            LaneBitmask M = R.Mask & V.second;
+            if (M.none())
               continue;
-            if (RegisterRef SS = MidDefs.clearIn(S)) {
+            if (RegisterRef SS = MidDefs.clearIn(RegisterRef(R.Reg, M))) {
               NodeRefSet &RS = RealUseMap[P.first][SS.Reg];
               Changed |= RS.insert({V.first,SS.Mask}).second;
             }

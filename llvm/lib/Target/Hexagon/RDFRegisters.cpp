@@ -308,6 +308,44 @@ RegisterAggr &RegisterAggr::insert(const RegisterAggr &RG) {
   return *this;
 }
 
+RegisterAggr &RegisterAggr::intersect(RegisterRef RR) {
+  if (PhysicalRegisterInfo::isRegMaskId(RR.Reg))
+    return intersect(RegisterAggr(PRI).insert(RR));
+
+  RegisterRef NR = PRI.normalize(RR);
+  auto F = Masks.find(NR.Reg);
+  LaneBitmask M;
+  if (F != Masks.end())
+    M = NR.Mask & F->second;
+  Masks.clear();
+  ExpUnits.clear();
+  CheckUnits = false;
+  if (M.any())
+    insert(RegisterRef(NR.Reg, M));
+  return *this;
+}
+
+RegisterAggr &RegisterAggr::intersect(const RegisterAggr &RG) {
+  for (auto I = Masks.begin(); I != Masks.end(); ) {
+    auto F = RG.Masks.find(I->first);
+    if (F == RG.Masks.end()) {
+      I = Masks.erase(I);
+    } else {
+      I->second &= F->second;
+      ++I;
+    }
+  }
+  if (CheckUnits && RG.CheckUnits) {
+    ExpUnits &= RG.ExpUnits;
+    if (ExpUnits.empty())
+      CheckUnits = false;
+  } else {
+    ExpUnits.clear();
+    CheckUnits = false;
+  }
+  return *this;
+}
+
 RegisterAggr &RegisterAggr::clear(RegisterRef RR) {
   if (PhysicalRegisterInfo::isRegMaskId(RR.Reg)) {
     // XXX SLOW
@@ -336,6 +374,14 @@ RegisterAggr &RegisterAggr::clear(const RegisterAggr &RG) {
   for (std::pair<RegisterId,LaneBitmask> P : RG.Masks)
     clear(RegisterRef(P.first, P.second));
   return *this;
+}
+
+RegisterRef RegisterAggr::intersectWith(RegisterRef RR) const {
+  RegisterAggr T(PRI);
+  T.insert(RR).intersect(*this);
+  if (T.empty())
+    return RegisterRef();
+  return RegisterRef(T.begin()->first, T.begin()->second);
 }
 
 RegisterRef RegisterAggr::clearIn(RegisterRef RR) const {

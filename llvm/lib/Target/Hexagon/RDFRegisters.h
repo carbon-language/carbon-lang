@@ -141,9 +141,12 @@ namespace rdf {
 
     RegisterAggr &insert(RegisterRef RR);
     RegisterAggr &insert(const RegisterAggr &RG);
+    RegisterAggr &intersect(RegisterRef RR);
+    RegisterAggr &intersect(const RegisterAggr &RG);
     RegisterAggr &clear(RegisterRef RR);
     RegisterAggr &clear(const RegisterAggr &RG);
 
+    RegisterRef intersectWith(RegisterRef RR) const;
     RegisterRef clearIn(RegisterRef RR) const;
 
     void print(raw_ostream &OS) const;
