@@ -146,7 +146,6 @@ template <class ELFT> class ObjectFile : public ELFFileBase<ELFT> {
   typedef typename ELFT::Rela Elf_Rela;
   typedef typename ELFT::Sym Elf_Sym;
   typedef typename ELFT::Shdr Elf_Shdr;
-  typedef typename ELFT::SymRange Elf_Sym_Range;
   typedef typename ELFT::Word Elf_Word;
 
   StringRef getShtGroupSignature(ArrayRef<Elf_Shdr> Sections,
@@ -160,7 +159,6 @@ public:
 
   ArrayRef<SymbolBody *> getSymbols();
   ArrayRef<SymbolBody *> getLocalSymbols();
-  ArrayRef<SymbolBody *> getNonLocalSymbols();
 
   explicit ObjectFile(MemoryBufferRef M);
   void parse(llvm::DenseSet<llvm::CachedHashStringRef> &ComdatGroups);
@@ -288,7 +286,6 @@ template <class ELFT> class SharedFile : public ELFFileBase<ELFT> {
   typedef typename ELFT::SymRange Elf_Sym_Range;
   typedef typename ELFT::Verdef Elf_Verdef;
   typedef typename ELFT::Versym Elf_Versym;
-  typedef typename ELFT::Word Elf_Word;
 
   std::vector<StringRef> Undefs;
   StringRef SoName;

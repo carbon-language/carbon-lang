@@ -179,11 +179,6 @@ elf::ObjectFile<ELFT>::ObjectFile(MemoryBufferRef M)
     : ELFFileBase<ELFT>(Base::ObjectKind, M) {}
 
 template <class ELFT>
-ArrayRef<SymbolBody *> elf::ObjectFile<ELFT>::getNonLocalSymbols() {
-  return makeArrayRef(this->SymbolBodies).slice(this->FirstNonLocal);
-}
-
-template <class ELFT>
 ArrayRef<SymbolBody *> elf::ObjectFile<ELFT>::getLocalSymbols() {
   if (this->SymbolBodies.empty())
     return this->SymbolBodies;
