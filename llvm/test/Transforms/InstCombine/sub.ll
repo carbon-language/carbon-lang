@@ -913,9 +913,8 @@ define i32 @test55(i1 %which) {
 ; CHECK:       delay:
 ; CHECK-NEXT:    br label [[FINAL]]
 ; CHECK:       final:
-; CHECK-NEXT:    [[A:%.*]] = phi i32 [ 1000, [[ENTRY:%.*]] ], [ 10, [[DELAY]] ]
-; CHECK-NEXT:    [[VALUE:%.*]] = sub nsw i32 123, [[A]]
-; CHECK-NEXT:    ret i32 [[VALUE]]
+; CHECK-NEXT:    [[A:%.*]] = phi i32 [ -877, [[ENTRY:%.*]] ], [ 113, [[DELAY]] ]
+; CHECK-NEXT:    ret i32 [[A]]
 ;
 entry:
   br i1 %which, label %final, label %delay
@@ -936,9 +935,8 @@ define <2 x i32> @test55vec(i1 %which) {
 ; CHECK:       delay:
 ; CHECK-NEXT:    br label [[FINAL]]
 ; CHECK:       final:
-; CHECK-NEXT:    [[A:%.*]] = phi <2 x i32> [ <i32 1000, i32 1000>, [[ENTRY:%.*]] ], [ <i32 10, i32 10>, [[DELAY]] ]
-; CHECK-NEXT:    [[VALUE:%.*]] = sub nsw <2 x i32> <i32 123, i32 123>, [[A]]
-; CHECK-NEXT:    ret <2 x i32> [[VALUE]]
+; CHECK-NEXT:    [[A:%.*]] = phi <2 x i32> [ <i32 -877, i32 -877>, [[ENTRY:%.*]] ], [ <i32 113, i32 113>, [[DELAY]] ]
+; CHECK-NEXT:    ret <2 x i32> [[A]]
 ;
 entry:
   br i1 %which, label %final, label %delay
@@ -959,9 +957,8 @@ define <2 x i32> @test55vec2(i1 %which) {
 ; CHECK:       delay:
 ; CHECK-NEXT:    br label [[FINAL]]
 ; CHECK:       final:
-; CHECK-NEXT:    [[A:%.*]] = phi <2 x i32> [ <i32 1000, i32 2500>, [[ENTRY:%.*]] ], [ <i32 10, i32 30>, [[DELAY]] ]
-; CHECK-NEXT:    [[VALUE:%.*]] = sub nsw <2 x i32> <i32 123, i32 333>, [[A]]
-; CHECK-NEXT:    ret <2 x i32> [[VALUE]]
+; CHECK-NEXT:    [[A:%.*]] = phi <2 x i32> [ <i32 -877, i32 -2167>, [[ENTRY:%.*]] ], [ <i32 113, i32 303>, [[DELAY]] ]
+; CHECK-NEXT:    ret <2 x i32> [[A]]
 ;
 entry:
   br i1 %which, label %final, label %delay
