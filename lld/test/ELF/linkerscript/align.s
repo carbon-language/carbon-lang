@@ -67,7 +67,40 @@
 # RUN:  } \
 # RUN: }" > %t2.script
 # RUN: ld.lld -o %t2 --script %t2.script %t
-# RUN: llvm-objdump -section-headers %t1 | FileCheck %s
+# RUN: llvm-objdump -section-headers %t2 | FileCheck %s
+
+## Check use of variables in align expressions:
+# RUN: echo " VAR = 0x1000; \
+# RUN: __code_base__ = 0x10000; \
+# RUN: SECTIONS { \
+# RUN:  . = __code_base__; \
+# RUN:  .aaa : \
+# RUN:  { \
+# RUN:   *(.aaa) \
+# RUN:  } \
+# RUN:  .bbb : ALIGN(VAR) \
+# RUN:  { \
+# RUN:   *(.bbb) \
+# RUN:  } \
+# RUN:  . = ALIGN(., VAR * 4); \
+# RUN:  .ccc : \
+# RUN:  { \
+# RUN:   *(.ccc) \
+# RUN:  } \
+# RUN:  __start_bbb = ADDR(.bbb); \
+# RUN:  __end_bbb = ALIGN(__start_bbb + SIZEOF(.bbb), VAR); \
+# RUN: }" > %t3.script
+# RUN: ld.lld -o %t3 --script %t3.script %t
+# RUN: llvm-objdump -section-headers %t3 | FileCheck %s
+# RUN: llvm-objdump -t %t3 | FileCheck -check-prefix SYMBOLS %s
+
+# SYMBOLS-LABEL: SYMBOL TABLE:
+# SYMBOLS-NEXT: 0000000000000000         *UND*           00000000
+# SYMBOLS-NEXT: 0000000000014008         .text           00000000 _start
+# SYMBOLS-NEXT: 0000000000010000         *ABS*           00000000 __code_base__
+# SYMBOLS-NEXT: 0000000000001000         *ABS*           00000000 VAR
+# SYMBOLS-NEXT: 0000000000011000         .bbb            00000000 __start_bbb
+# SYMBOLS-NEXT: 0000000000012000         *ABS*           00000000 __end_bbb
 
 .global _start
 _start:
