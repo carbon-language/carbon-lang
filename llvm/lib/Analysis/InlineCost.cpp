@@ -1101,19 +1101,10 @@ bool CallAnalyzer::analyzeBlock(BasicBlock *BB,
     // is expensive or the function has the "use-soft-float" attribute, this may
     // eventually become a library call. Treat the cost as such.
     if (I->getType()->isFloatingPointTy()) {
-      bool hasSoftFloatAttr = false;
-
       // If the function has the "use-soft-float" attribute, mark it as
       // expensive.
-      if (F.hasFnAttribute("use-soft-float")) {
-        Attribute Attr = F.getFnAttribute("use-soft-float");
-        StringRef Val = Attr.getValueAsString();
-        if (Val == "true")
-          hasSoftFloatAttr = true;
-      }
-
       if (TTI.getFPOpCost(I->getType()) == TargetTransformInfo::TCC_Expensive ||
-          hasSoftFloatAttr)
+          (F.getFnAttribute("use-soft-float").getValueAsString() == "true"))
         Cost += InlineConstants::CallPenalty;
     }
 
