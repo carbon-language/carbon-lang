@@ -177,5 +177,31 @@ define i1 @and_ne_with_diff_one_signed(i64 %x) {
   ret i1 %and
 }
 
+; FIXME: Vectors with splat constants get the same folds.
 
+define <2 x i1> @or_eq_with_one_bit_diff_constants2_splatvec(<2 x i32> %x) {
+; CHECK-LABEL: @or_eq_with_one_bit_diff_constants2_splatvec(
+; CHECK-NEXT:    [[CMP1:%.*]] = icmp eq <2 x i32> %x, <i32 97, i32 97>
+; CHECK-NEXT:    [[CMP2:%.*]] = icmp eq <2 x i32> %x, <i32 65, i32 65>
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i1> [[CMP1]], [[CMP2]]
+; CHECK-NEXT:    ret <2 x i1> [[OR]]
+;
+  %cmp1 = icmp eq <2 x i32> %x, <i32 97, i32 97>
+  %cmp2 = icmp eq <2 x i32> %x, <i32 65, i32 65>
+  %or = or <2 x i1> %cmp1, %cmp2
+  ret <2 x i1> %or
+}
+
+define <2 x i1> @and_ne_with_diff_one_splatvec(<2 x i32> %x) {
+; CHECK-LABEL: @and_ne_with_diff_one_splatvec(
+; CHECK-NEXT:    [[CMP1:%.*]] = icmp ne <2 x i32> %x, <i32 40, i32 40>
+; CHECK-NEXT:    [[CMP2:%.*]] = icmp ne <2 x i32> %x, <i32 39, i32 39>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i1> [[CMP1]], [[CMP2]]
+; CHECK-NEXT:    ret <2 x i1> [[AND]]
+;
+  %cmp1 = icmp ne <2 x i32> %x, <i32 40, i32 40>
+  %cmp2 = icmp ne <2 x i32> %x, <i32 39, i32 39>
+  %and = and <2 x i1> %cmp1, %cmp2
+  ret <2 x i1> %and
+}
 
