@@ -2342,19 +2342,19 @@ private:
   struct __nat { int __for_bool_; };
 
 #ifndef _LIBCPP_CXX03_LANG
-  typedef __unique_ptr_deleter_sfinae<_Dp> _SFINAE;
+  typedef __unique_ptr_deleter_sfinae<_Dp> _DeleterSFINAE;
 
   template <bool _Dummy>
   using _LValRefType =
-      typename __dependent_type<_SFINAE, _Dummy>::__lval_ref_type;
+      typename __dependent_type<_DeleterSFINAE, _Dummy>::__lval_ref_type;
 
   template <bool _Dummy>
   using _GoodRValRefType =
-      typename __dependent_type<_SFINAE, _Dummy>::__good_rval_ref_type;
+      typename __dependent_type<_DeleterSFINAE, _Dummy>::__good_rval_ref_type;
 
   template <bool _Dummy>
   using _BadRValRefType =
-      typename __dependent_type<_SFINAE, _Dummy>::__bad_rval_ref_type;
+      typename __dependent_type<_DeleterSFINAE, _Dummy>::__bad_rval_ref_type;
 
   template <bool _Dummy, class _Deleter = typename __dependent_type<
                              __identity<deleter_type>, _Dummy>::type>
@@ -2587,17 +2587,6 @@ public:
   }
 };
 
-template <class _From, class _ToUnique>
-struct __check_array_pointer_conversion : is_same<_From, typename _ToUnique::pointer> {};
-
-template <class _FromElem, class _ToUnique>
-struct __check_array_pointer_conversion<_FromElem*, _ToUnique>
-    : integral_constant<bool,
-        is_same<_FromElem*, typename _ToUnique::pointer>::value ||
-          (is_same<typename _ToUnique::pointer, typename _ToUnique::element_type*>::value &&
-           is_convertible<_FromElem(*)[], typename _ToUnique::element_type(*)[]>::value)
-    >
-{};
 
 template <class _Tp, class _Dp>
 class _LIBCPP_TEMPLATE_VIS unique_ptr<_Tp[], _Dp> {
@@ -2609,26 +2598,32 @@ public:
 private:
   __compressed_pair<pointer, deleter_type> __ptr_;
 
-  struct __nat { int __for_bool_; };
+  template <class _From>
+  struct _CheckArrayPointerConversion : is_same<_From, pointer> {};
 
-  typedef deleter_type& _Dp_reference;
-  typedef typename remove_reference<typename add_const<deleter_type>::type>::type&
-      _Dp_const_reference;
+  template <class _FromElem>
+  struct _CheckArrayPointerConversion<_FromElem*>
+      : integral_constant<bool,
+          is_same<_FromElem*, pointer>::value ||
+            (is_same<pointer, element_type*>::value &&
+             is_convertible<_FromElem(*)[], element_type(*)[]>::value)
+      >
+  {};
 
 #ifndef _LIBCPP_CXX03_LANG
-  typedef __unique_ptr_deleter_sfinae<_Dp> _SFINAE;
+  typedef __unique_ptr_deleter_sfinae<_Dp> _DeleterSFINAE;
 
   template <bool _Dummy>
   using _LValRefType =
-      typename __dependent_type<_SFINAE, _Dummy>::__lval_ref_type;
+      typename __dependent_type<_DeleterSFINAE, _Dummy>::__lval_ref_type;
 
   template <bool _Dummy>
   using _GoodRValRefType =
-      typename __dependent_type<_SFINAE, _Dummy>::__good_rval_ref_type;
+      typename __dependent_type<_DeleterSFINAE, _Dummy>::__good_rval_ref_type;
 
   template <bool _Dummy>
   using _BadRValRefType =
-      typename __dependent_type<_SFINAE, _Dummy>::__bad_rval_ref_type;
+      typename __dependent_type<_DeleterSFINAE, _Dummy>::__bad_rval_ref_type;
 
   template <bool _Dummy, class _Deleter = typename __dependent_type<
                              __identity<deleter_type>, _Dummy>::type>
@@ -2642,7 +2637,7 @@ private:
 
   template <class _Pp>
   using _EnableIfPointerConvertible = typename enable_if<
-      __check_array_pointer_conversion<_Pp, unique_ptr>::value
+      _CheckArrayPointerConversion<_Pp>::value
   >::type;
 
   template <class _UPtr, class _Up,
@@ -2860,7 +2855,7 @@ public:
   template <class _Pp>
   _LIBCPP_INLINE_VISIBILITY
   typename enable_if<
-      __check_array_pointer_conversion<_Pp, unique_ptr>::value
+      _CheckArrayPointerConversion<_Pp>::value
   >::type
   reset(_Pp __p) _NOEXCEPT {
     pointer __tmp = __ptr_.first();
