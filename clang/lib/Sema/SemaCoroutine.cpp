@@ -454,7 +454,7 @@ static bool actOnCoroutineBodyStart(Sema &S, Scope *SC, SourceLocation KWLoc,
                                          /*IsImplicit*/ true);
     Suspend = S.ActOnFinishFullExpr(Suspend.get());
     if (Suspend.isInvalid()) {
-      S.Diag(Loc, diag::note_coroutine_promise_suspend_implicitly_required)
+      S.Diag(Loc, diag::note_coroutine_promise_call_implicitly_required)
           << ((Name == "initial_suspend") ? 0 : 1);
       S.Diag(KWLoc, diag::note_declared_coroutine_here) << Keyword;
       return StmtError();
@@ -660,39 +660,6 @@ StmtResult Sema::BuildCoreturnStmt(SourceLocation Loc, Expr *E,
   return Res;
 }
 
-/// Look up the std::nothrow object.
-static Expr *buildStdNoThrowDeclRef(Sema &S, SourceLocation Loc) {
-  NamespaceDecl *Std = S.getStdNamespace();
-  assert(Std && "Should already be diagnosed");
-
-  LookupResult Result(S, &S.PP.getIdentifierTable().get("nothrow"), Loc,
-                      Sema::LookupOrdinaryName);
-  if (!S.LookupQualifiedName(Result, Std)) {
-    // FIXME: <experimental/coroutine> should have been included already.
-    // If we require it to include <new> then this diagnostic is no longer
-    // needed.
-    S.Diag(Loc, diag::err_implicit_coroutine_std_nothrow_type_not_found);
-    return nullptr;
-  }
-
-  // FIXME: Mark the variable as ODR used. This currently does not work
-  // likely due to the scope at in which this function is called.
-  auto *VD = Result.getAsSingle<VarDecl>();
-  if (!VD) {
-    Result.suppressDiagnostics();
-    // We found something weird. Complain about the first thing we found.
-    NamedDecl *Found = *Result.begin();
-    S.Diag(Found->getLocation(), diag::err_malformed_std_nothrow);
-    return nullptr;
-  }
-
-  ExprResult DR = S.BuildDeclRefExpr(VD, VD->getType(), VK_LValue, Loc);
-  if (DR.isInvalid())
-    return nullptr;
-
-  return DR.get();
-}
-
 // Find an appropriate delete for the promise.
 static FunctionDecl *findDeleteForPromise(Sema &S, SourceLocation Loc,
                                           QualType PromiseType) {
@@ -880,51 +847,23 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
   if (S.RequireCompleteType(Loc, PromiseType, diag::err_incomplete_type))
     return false;
 
-  const bool RequiresNoThrowAlloc = ReturnStmtOnAllocFailure != nullptr;
-
+  // FIXME: Add nothrow_t placement arg for global alloc
+  //        if ReturnStmtOnAllocFailure != nullptr.
   // FIXME: Add support for stateful allocators.
 
   FunctionDecl *OperatorNew = nullptr;
   FunctionDecl *OperatorDelete = nullptr;
   FunctionDecl *UnusedResult = nullptr;
   bool PassAlignment = false;
-  MultiExprArg PlacementArgs = None;
 
   S.FindAllocationFunctions(Loc, SourceRange(),
                             /*UseGlobal*/ false, PromiseType,
-                            /*isArray*/ false, PassAlignment, PlacementArgs,
-                            OperatorNew, UnusedResult);
+                            /*isArray*/ false, PassAlignment,
+                            /*PlacementArgs*/ None, OperatorNew, UnusedResult);
 
-  bool IsGlobalOverload =
-      OperatorNew && !isa<CXXRecordDecl>(OperatorNew->getDeclContext());
-  // If we didn't find a class-local new declaration and non-throwing new
-  // was is required then we need to lookup the non-throwing global operator
-  // instead.
-  if (RequiresNoThrowAlloc && (!OperatorNew || IsGlobalOverload)) {
-    auto *StdNoThrow = buildStdNoThrowDeclRef(S, Loc);
-    if (!StdNoThrow)
-      return false;
-    PlacementArgs = MultiExprArg(StdNoThrow);
-    OperatorNew = nullptr;
-    S.FindAllocationFunctions(Loc, SourceRange(),
-                              /*UseGlobal*/ true, PromiseType,
-                              /*isArray*/ false, PassAlignment, PlacementArgs,
-                              OperatorNew, UnusedResult);
-  }
+  OperatorDelete = findDeleteForPromise(S, Loc, PromiseType);
 
-  if (OperatorNew && RequiresNoThrowAlloc) {
-    const auto *FT = OperatorNew->getType()->getAs<FunctionProtoType>();
-    if (!FT->isNothrow(S.Context, /*ResultIfDependent*/ false)) {
-      S.Diag(OperatorNew->getLocation(),
-             diag::err_coroutine_promise_new_requires_nothrow)
-          << OperatorNew;
-      S.Diag(Loc, diag::note_coroutine_promise_call_implicitly_required)
-          << OperatorNew;
-      return false;
-    }
-  }
-
-  if ((OperatorDelete = findDeleteForPromise(S, Loc, PromiseType)) == nullptr)
+  if (!OperatorDelete || !OperatorNew)
     return false;
 
   Expr *FramePtr =
@@ -940,13 +879,8 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
   if (NewRef.isInvalid())
     return false;
 
-  SmallVector<Expr *, 2> NewArgs{FrameSize};
-  for (auto Arg : PlacementArgs)
-    NewArgs.push_back(Arg);
-
   ExprResult NewExpr =
-      S.ActOnCallExpr(S.getCurScope(), NewRef.get(), Loc, NewArgs, Loc);
-  NewExpr = S.ActOnFinishFullExpr(NewExpr.get());
+      S.ActOnCallExpr(S.getCurScope(), NewRef.get(), Loc, FrameSize, Loc);
   if (NewExpr.isInvalid())
     return false;
 
@@ -972,7 +906,6 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
 
   ExprResult DeleteExpr =
       S.ActOnCallExpr(S.getCurScope(), DeleteRef.get(), Loc, DeleteArgs, Loc);
-  DeleteExpr = S.ActOnFinishFullExpr(DeleteExpr.get());
   if (DeleteExpr.isInvalid())
     return false;
 

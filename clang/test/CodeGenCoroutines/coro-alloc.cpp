@@ -19,19 +19,8 @@ struct coroutine_handle<void> {
   coroutine_handle(coroutine_handle<PromiseType>) {}
 };
 
-} // end namespace experimental
-
-struct nothrow_t {};
-constexpr nothrow_t nothrow = {};
-
-} // end namespace std
-
-// Required when get_return_object_on_allocation_failure() is defined by
-// the promise.
-using SizeT = decltype(sizeof(int));
-void* operator new(SizeT __sz, const std::nothrow_t&) noexcept;
-void  operator delete(void* __p, const std::nothrow_t&) noexcept;
-
+}
+}
 
 struct suspend_always {
   bool await_ready() { return false; }
@@ -156,7 +145,7 @@ struct std::experimental::coroutine_traits<int, promise_on_alloc_failure_tag> {
 extern "C" int f4(promise_on_alloc_failure_tag) {
   // CHECK: %[[ID:.+]] = call token @llvm.coro.id(i32 16
   // CHECK: %[[SIZE:.+]] = call i64 @llvm.coro.size.i64()
-  // CHECK: %[[MEM:.+]] = call i8* @_ZnwmRKSt9nothrow_t(i64 %[[SIZE]], %"struct.std::nothrow_t"* dereferenceable(1) @_ZStL7nothrow)
+  // CHECK: %[[MEM:.+]] = call i8* @_Znwm(i64 %[[SIZE]])
   // CHECK: %[[OK:.+]] = icmp ne i8* %[[MEM]], null
   // CHECK: br i1 %[[OK]], label %[[OKBB:.+]], label %[[ERRBB:.+]]
 
