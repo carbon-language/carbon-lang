@@ -46,16 +46,22 @@ using EnableIfNotSame = typename std::enable_if<
     !std::is_same<typename std::decay<T>::type, typename std::decay<U>::type>::value
 >::type;
 
-template <template <int> class Templ, class Other>
-struct is_specialization : std::false_type {};
+template <class Templ, class Other>
+struct is_specialization;
 
-template <template <int> class Templ, int ID>
-struct is_specialization<Templ, Templ<ID> > : std::true_type {};
+template <template <int> class Templ, int ID1, class Other>
+struct is_specialization<Templ<ID1>, Other> : std::false_type {};
 
-template <template <int> class Templ, class Other>
+template <template <int> class Templ, int ID1, int ID2>
+struct is_specialization<Templ<ID1>, Templ<ID2> > : std::true_type {};
+
+template <class Templ, class Other>
 using EnableIfSpecialization = typename std::enable_if<
     is_specialization<Templ, typename std::decay<Other>::type >::value
   >::type;
+
+template <int ID> struct TrackingDeleter;
+template <int ID> struct ConstTrackingDeleter;
 
 template <int ID>
 struct TrackingDeleter {
