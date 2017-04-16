@@ -2245,73 +2245,61 @@ void swap(__compressed_pair<_T1, _T2>& __x, __compressed_pair<_T1, _T2>& __y)
   __x.swap(__y);
 }
 
-// __same_or_less_cv_qualified
-
-template <class _Ptr1, class _Ptr2,
-          bool = is_same<typename remove_cv<typename pointer_traits<_Ptr1>::element_type>::type,
-                         typename remove_cv<typename pointer_traits<_Ptr2>::element_type>::type
-                        >::value
-         >
-struct __same_or_less_cv_qualified_imp
-    : is_convertible<_Ptr1, _Ptr2> {};
-
-template <class _Ptr1, class _Ptr2>
-struct __same_or_less_cv_qualified_imp<_Ptr1, _Ptr2, false>
-    : false_type {};
-
-template <class _Ptr1, class _Ptr2, bool = is_pointer<_Ptr1>::value ||
-                                           is_same<_Ptr1, _Ptr2>::value ||
-                                           __has_element_type<_Ptr1>::value>
-struct __same_or_less_cv_qualified
-    : __same_or_less_cv_qualified_imp<_Ptr1, _Ptr2> {};
-
-template <class _Ptr1, class _Ptr2>
-struct __same_or_less_cv_qualified<_Ptr1, _Ptr2, false>
-    : false_type {};
-
 // default_delete
 
 template <class _Tp>
-struct _LIBCPP_TEMPLATE_VIS default_delete
-{
-#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
-    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT = default;
+struct _LIBCPP_TEMPLATE_VIS default_delete {
+#ifndef _LIBCPP_CXX03_LANG
+  _LIBCPP_INLINE_VISIBILITY constexpr default_delete() noexcept = default;
 #else
-    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT {}
+  _LIBCPP_INLINE_VISIBILITY default_delete() {}
 #endif
-    template <class _Up>
-        _LIBCPP_INLINE_VISIBILITY default_delete(const default_delete<_Up>&,
-             typename enable_if<is_convertible<_Up*, _Tp*>::value>::type* = 0) _NOEXCEPT {}
-    _LIBCPP_INLINE_VISIBILITY void operator() (_Tp* __ptr) const _NOEXCEPT
-        {
-            static_assert(sizeof(_Tp) > 0, "default_delete can not delete incomplete type");
-            static_assert(!is_void<_Tp>::value, "default_delete can not delete incomplete type");
-            delete __ptr;
-        }
+  template <class _Up>
+  _LIBCPP_INLINE_VISIBILITY
+  default_delete(const default_delete<_Up>&,
+                 typename enable_if<is_convertible<_Up*, _Tp*>::value>::type* =
+                     0) _NOEXCEPT {}
+
+  _LIBCPP_INLINE_VISIBILITY void operator()(_Tp* __ptr) const _NOEXCEPT {
+    static_assert(sizeof(_Tp) > 0,
+                  "default_delete can not delete incomplete type");
+    static_assert(!is_void<_Tp>::value,
+                  "default_delete can not delete incomplete type");
+    delete __ptr;
+  }
 };
 
 template <class _Tp>
-struct _LIBCPP_TEMPLATE_VIS default_delete<_Tp[]>
-{
+struct _LIBCPP_TEMPLATE_VIS default_delete<_Tp[]> {
+private:
+  template <class _Up>
+  struct _EnableIfConvertible
+      : enable_if<is_convertible<_Up(*)[], _Tp(*)[]>::value> {};
+
 public:
-#ifndef _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
-    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT = default;
+#ifndef _LIBCPP_CXX03_LANG
+  _LIBCPP_INLINE_VISIBILITY constexpr default_delete() noexcept = default;
 #else
-    _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR default_delete() _NOEXCEPT {}
+  _LIBCPP_INLINE_VISIBILITY default_delete() {}
 #endif
-    template <class _Up>
-        _LIBCPP_INLINE_VISIBILITY default_delete(const default_delete<_Up[]>&,
-             typename enable_if<__same_or_less_cv_qualified<_Up*, _Tp*>::value>::type* = 0) _NOEXCEPT {}
-    template <class _Up>
-        _LIBCPP_INLINE_VISIBILITY
-        void operator() (_Up* __ptr,
-                         typename enable_if<__same_or_less_cv_qualified<_Up*, _Tp*>::value>::type* = 0) const _NOEXCEPT
-        {
-            static_assert(sizeof(_Tp) > 0, "default_delete can not delete incomplete type");
-            static_assert(!is_void<_Tp>::value, "default_delete can not delete void type");
-            delete [] __ptr;
-        }
+
+  template <class _Up>
+  _LIBCPP_INLINE_VISIBILITY
+  default_delete(const default_delete<_Up[]>&,
+                 typename _EnableIfConvertible<_Up>::type* = 0) _NOEXCEPT {}
+
+  template <class _Up>
+  _LIBCPP_INLINE_VISIBILITY
+  typename _EnableIfConvertible<_Up>::type
+  operator()(_Up* __ptr) const _NOEXCEPT {
+    static_assert(sizeof(_Tp) > 0,
+                  "default_delete can not delete incomplete type");
+    static_assert(!is_void<_Tp>::value,
+                  "default_delete can not delete void type");
+    delete[] __ptr;
+  }
 };
+
 
 
 #ifndef _LIBCPP_CXX03_LANG
