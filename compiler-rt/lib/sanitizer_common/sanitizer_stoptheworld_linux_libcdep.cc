@@ -126,10 +126,10 @@ bool ThreadSuspender::SuspendThread(tid_t tid) {
                        &pterrno)) {
     // Either the thread is dead, or something prevented us from attaching.
     // Log this event and move on.
-    VReport(1, "Could not attach to thread %d (errno %d).\n", tid, pterrno);
+    VReport(1, "Could not attach to thread %lu (errno %d).\n", tid, pterrno);
     return false;
   } else {
-    VReport(2, "Attached to thread %d.\n", tid);
+    VReport(2, "Attached to thread %lu.\n", tid);
     // The thread is not guaranteed to stop before ptrace returns, so we must
     // wait on it. Note: if the thread receives a signal concurrently,
     // we can get notification about the signal before notification about stop.
@@ -147,7 +147,7 @@ bool ThreadSuspender::SuspendThread(tid_t tid) {
       if (internal_iserror(waitpid_status, &wperrno)) {
         // Got a ECHILD error. I don't think this situation is possible, but it
         // doesn't hurt to report it.
-        VReport(1, "Waiting on thread %d failed, detaching (errno %d).\n",
+        VReport(1, "Waiting on thread %lu failed, detaching (errno %d).\n",
                 tid, wperrno);
         internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr);
         return false;
