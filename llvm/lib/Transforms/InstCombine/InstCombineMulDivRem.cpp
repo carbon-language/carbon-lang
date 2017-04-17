@@ -1238,25 +1238,23 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a udiv.
-  if (I.getType()->isIntegerTy()) {
-    APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
-    if (MaskedValueIsZero(Op0, Mask, 0, &I)) {
-      if (MaskedValueIsZero(Op1, Mask, 0, &I)) {
-        // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
-        auto *BO = BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
-        BO->setIsExact(I.isExact());
-        return BO;
-      }
+  APInt Mask(APInt::getSignBit(I.getType()->getScalarSizeInBits()));
+  if (MaskedValueIsZero(Op0, Mask, 0, &I)) {
+    if (MaskedValueIsZero(Op1, Mask, 0, &I)) {
+      // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
+      auto *BO = BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+      BO->setIsExact(I.isExact());
+      return BO;
+    }
 
-      if (isKnownToBeAPowerOfTwo(Op1, DL, /*OrZero*/ true, 0, &AC, &I, &DT)) {
-        // X sdiv (1 << Y) -> X udiv (1 << Y) ( -> X u>> Y)
-        // Safe because the only negative value (1 << Y) can take on is
-        // INT_MIN, and X sdiv INT_MIN == X udiv INT_MIN == 0 if X doesn't have
-        // the sign bit set.
-        auto *BO = BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
-        BO->setIsExact(I.isExact());
-        return BO;
-      }
+    if (isKnownToBeAPowerOfTwo(Op1, DL, /*OrZero*/ true, 0, &AC, &I, &DT)) {
+      // X sdiv (1 << Y) -> X udiv (1 << Y) ( -> X u>> Y)
+      // Safe because the only negative value (1 << Y) can take on is
+      // INT_MIN, and X sdiv INT_MIN == X udiv INT_MIN == 0 if X doesn't have
+      // the sign bit set.
+      auto *BO = BinaryOperator::CreateUDiv(Op0, Op1, I.getName());
+      BO->setIsExact(I.isExact());
+      return BO;
     }
   }
 
