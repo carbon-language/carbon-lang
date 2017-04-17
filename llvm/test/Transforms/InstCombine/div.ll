@@ -388,6 +388,17 @@ define i32 @test35(i32 %A) {
   ret i32 %mul
 }
 
+define <2 x i32> @test35vec(<2 x i32> %A) {
+; CHECK-LABEL: @test35vec(
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[A:%.*]], <i32 2147483647, i32 2147483647>
+; CHECK-NEXT:    [[MUL:%.*]] = sdiv exact <2 x i32> [[AND]], <i32 2147483647, i32 2147483647>
+; CHECK-NEXT:    ret <2 x i32> [[MUL]]
+;
+  %and = and <2 x i32> %A, <i32 2147483647, i32 2147483647>
+  %mul = sdiv exact <2 x i32> %and, <i32 2147483647, i32 2147483647>
+  ret <2 x i32> %mul
+}
+
 define i32 @test36(i32 %A) {
 ; CHECK-LABEL: @test36(
 ; CHECK-NEXT:    [[AND:%.*]] = and i32 %A, 2147483647
