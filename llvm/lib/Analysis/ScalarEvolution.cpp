@@ -1741,6 +1741,7 @@ const SCEV *ScalarEvolution::getSignExtendExprCached(const SCEV *Op, Type *Ty,
   const SCEV *SExt = getSignExtendExprImpl(Op, Ty, Cache);
   auto InsertResult = Cache.insert({{Op, Ty}, SExt});
   assert(InsertResult.second && "Expect the key was not in the cache");
+  (void)InsertResult;
   return SExt;
 }
 
