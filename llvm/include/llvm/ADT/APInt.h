@@ -693,24 +693,16 @@ public:
 
   /// @brief Move assignment operator.
   APInt &operator=(APInt &&that) {
-    if (!isSingleWord()) {
-      // The MSVC STL shipped in 2013 requires that self move assignment be a
-      // no-op.  Otherwise algorithms like stable_sort will produce answers
-      // where half of the output is left in a moved-from state.
-      if (this == &that)
-        return *this;
+    assert(this != &that && "Self-move not supported");
+    if (!isSingleWord())
       delete[] pVal;
-    }
 
     // Use memcpy so that type based alias analysis sees both VAL and pVal
     // as modified.
     memcpy(&VAL, &that.VAL, sizeof(uint64_t));
 
-    // If 'this == &that', avoid zeroing our own bitwidth by storing to 'that'
-    // first.
-    unsigned ThatBitWidth = that.BitWidth;
+    BitWidth = that.BitWidth;
     that.BitWidth = 0;
-    BitWidth = ThatBitWidth;
 
     return *this;
   }

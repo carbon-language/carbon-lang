@@ -1606,36 +1606,6 @@ TEST(APIntTest, isShiftedMask) {
   }
 }
 
-#if defined(__clang__)
-// Disable the pragma warning from versions of Clang without -Wself-move
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunknown-pragmas"
-// Disable the warning that triggers on exactly what is being tested.
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wself-move"
-#endif
-TEST(APIntTest, SelfMoveAssignment) {
-  APInt X(32, 0xdeadbeef);
-  X = std::move(X);
-  EXPECT_EQ(32u, X.getBitWidth());
-  EXPECT_EQ(0xdeadbeefULL, X.getLimitedValue());
-
-  uint64_t Bits[] = {0xdeadbeefdeadbeefULL, 0xdeadbeefdeadbeefULL};
-  APInt Y(128, Bits);
-  Y = std::move(Y);
-  EXPECT_EQ(128u, Y.getBitWidth());
-  EXPECT_EQ(~0ULL, Y.getLimitedValue());
-  const uint64_t *Raw = Y.getRawData();
-  EXPECT_EQ(2u, Y.getNumWords());
-  EXPECT_EQ(0xdeadbeefdeadbeefULL, Raw[0]);
-  EXPECT_EQ(0xdeadbeefdeadbeefULL, Raw[1]);
-}
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#pragma clang diagnostic pop
-#endif
-}
-
 TEST(APIntTest, reverseBits) {
   EXPECT_EQ(1, APInt(1, 1).reverseBits());
   EXPECT_EQ(0, APInt(1, 0).reverseBits());
@@ -2025,3 +1995,5 @@ TEST(APIntTest, GCD) {
   APInt C = GreatestCommonDivisor(A, B);
   EXPECT_EQ(C, HugePrime);
 }
+
+} // end anonymous namespace
