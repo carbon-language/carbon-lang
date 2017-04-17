@@ -1520,6 +1520,7 @@ const SCEV *ScalarEvolution::getZeroExtendExprCached(const SCEV *Op, Type *Ty,
   const SCEV *ZExt = getZeroExtendExprImpl(Op, Ty, Cache);
   auto InsertResult = Cache.insert({{Op, Ty}, ZExt});
   assert(InsertResult.second && "Expect the key was not in the cache");
+  (void)InsertResult;
   return ZExt;
 }
 
