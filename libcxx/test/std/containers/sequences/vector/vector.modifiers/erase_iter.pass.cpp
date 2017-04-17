@@ -18,6 +18,7 @@
 #include "min_allocator.h"
 #include "asan_testing.h"
 
+#ifndef TEST_HAS_NO_EXCEPTIONS
 struct Throws {
     Throws() : v_(0) {}
     Throws(int v) : v_(v) {}
@@ -30,6 +31,7 @@ struct Throws {
     };
 
 bool Throws::sThrows = false;
+#endif
 
 int main()
 {
@@ -85,6 +87,7 @@ int main()
     assert(is_contiguous_container_asan_correct(l1));
     }
 #endif
+#ifndef TEST_HAS_NO_EXCEPTIONS
 // Test for LWG2853:
 // Throws: Nothing unless an exception is thrown by the assignment operator or move assignment operator of T.
     {
@@ -96,4 +99,5 @@ int main()
     v.erase(v.begin());
     assert(v.size() == 0);
     }
+#endif
 }
