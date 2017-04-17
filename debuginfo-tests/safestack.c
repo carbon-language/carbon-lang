@@ -4,22 +4,32 @@
 //           Zorg configures the ASAN stage2 bots to not build the
 //           safestack compiler-rt.  Only run this test on
 //           non-asanified configurations.
-//
-// DEBUGGER: break 19
-// DEBUGGER: r
-// DEBUGGER: p s
-//
-// CHECK: a = ([0] = 0, [1] = 1, [2] = 2, [3] = 3, [4] = 4, [5] = 5, [6] = 6, [7] = 7)
 
 struct S {
   int a[8];
 };
 
-int f(struct S s, unsigned i) {
-  return s.a[i];
-}
+int f(struct S s, unsigned i);
 
 int main(int argc, const char **argv) {
   struct S s = {{0, 1, 2, 3, 4, 5, 6, 7}};
-  return f(s, 4);
+  // DEBUGGER: break 17
+  f(s, 4);
+  // DEBUGGER: break 19
+  return 0;
 }
+
+int f(struct S s, unsigned i) {
+  // DEBUGGER: break 24
+  return s.a[i];
+}
+
+// DEBUGGER: r
+// DEBUGGER: p s
+// CHECK: a = ([0] = 0, [1] = 1, [2] = 2, [3] = 3, [4] = 4, [5] = 5, [6] = 6, [7] = 7)
+// DEBUGGER: c
+// DEBUGGER: p s
+// CHECK: a = ([0] = 0, [1] = 1, [2] = 2, [3] = 3, [4] = 4, [5] = 5, [6] = 6, [7] = 7)
+// DEBUGGER: c
+// DEBUGGER: p s
+// CHECK: a = ([0] = 0, [1] = 1, [2] = 2, [3] = 3, [4] = 4, [5] = 5, [6] = 6, [7] = 7)
