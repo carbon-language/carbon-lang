@@ -18,7 +18,6 @@
 #include "sanitizer_common.h"
 
 namespace __sanitizer {
-typedef int SuspendedThreadID;
 
 enum PtraceRegistersStatus {
   REGISTERS_UNAVAILABLE_FATAL = -1,
@@ -32,7 +31,7 @@ class SuspendedThreadsList {
  public:
   SuspendedThreadsList()
     : thread_ids_(1024) {}
-  SuspendedThreadID GetThreadID(uptr index) const {
+  tid_t GetThreadID(uptr index) const {
     CHECK_LT(index, thread_ids_.size());
     return thread_ids_[index];
   }
@@ -41,19 +40,19 @@ class SuspendedThreadsList {
   // The buffer in GetRegistersAndSP should be at least this big.
   static uptr RegisterCount();
   uptr thread_count() const { return thread_ids_.size(); }
-  bool Contains(SuspendedThreadID thread_id) const {
+  bool Contains(tid_t thread_id) const {
     for (uptr i = 0; i < thread_ids_.size(); i++) {
       if (thread_ids_[i] == thread_id)
         return true;
     }
     return false;
   }
-  void Append(SuspendedThreadID thread_id) {
+  void Append(tid_t thread_id) {
     thread_ids_.push_back(thread_id);
   }
 
  private:
-  InternalMmapVector<SuspendedThreadID> thread_ids_;
+  InternalMmapVector<tid_t> thread_ids_;
 
   // Prohibit copy and assign.
   SuspendedThreadsList(const SuspendedThreadsList&);

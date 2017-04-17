@@ -72,7 +72,7 @@ INLINE uptr GetPageSizeCached() {
 uptr GetMmapGranularity();
 uptr GetMaxVirtualAddress();
 // Threads
-uptr GetTid();
+tid_t GetTid();
 uptr GetThreadSelf();
 void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
                                 uptr *stack_bottom);

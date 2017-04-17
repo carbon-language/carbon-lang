@@ -80,7 +80,7 @@ uptr internal_getpid() {
 
 // In contrast to POSIX, on Windows GetCurrentThreadId()
 // returns a system-unique identifier.
-uptr GetTid() {
+tid_t GetTid() {
   return GetCurrentThreadId();
 }
 

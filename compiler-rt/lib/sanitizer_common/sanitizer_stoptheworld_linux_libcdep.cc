@@ -82,8 +82,6 @@
 
 namespace __sanitizer {
 
-COMPILER_CHECK(sizeof(SuspendedThreadID) == sizeof(pid_t));
-
 // Structure for passing arguments into the tracer thread.
 struct TracerThreadArgument {
   StopTheWorldCallback callback;
@@ -114,10 +112,10 @@ class ThreadSuspender {
  private:
   SuspendedThreadsList suspended_threads_list_;
   pid_t pid_;
-  bool SuspendThread(SuspendedThreadID thread_id);
+  bool SuspendThread(tid_t thread_id);
 };
 
-bool ThreadSuspender::SuspendThread(SuspendedThreadID tid) {
+bool ThreadSuspender::SuspendThread(tid_t tid) {
   // Are we already attached to this thread?
   // Currently this check takes linear time, however the number of threads is
   // usually small.
