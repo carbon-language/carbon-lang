@@ -227,7 +227,8 @@ define i32 @test19(i32 %x) {
 
 define <2 x i32> @test19vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test19vec(
-; CHECK-NEXT:    [[A:%.*]] = udiv <2 x i32> <i32 1, i32 1>, [[X:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq <2 x i32> [[X:%.*]], <i32 1, i32 1>
+; CHECK-NEXT:    [[A:%.*]] = zext <2 x i1> [[TMP1]] to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[A]]
 ;
   %A = udiv <2 x i32> <i32 1, i32 1>, %x
@@ -247,7 +248,9 @@ define i32 @test20(i32 %x) {
 
 define <2 x i32> @test20vec(<2 x i32> %x) {
 ; CHECK-LABEL: @test20vec(
-; CHECK-NEXT:    [[A:%.*]] = sdiv <2 x i32> <i32 1, i32 1>, [[X:%.*]]
+; CHECK-NEXT:    [[TMP1:%.*]] = add <2 x i32> [[X:%.*]], <i32 1, i32 1>
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult <2 x i32> [[TMP1]], <i32 3, i32 3>
+; CHECK-NEXT:    [[A:%.*]] = select <2 x i1> [[TMP2]], <2 x i32> [[X]], <2 x i32> zeroinitializer
 ; CHECK-NEXT:    ret <2 x i32> [[A]]
 ;
   %A = sdiv <2 x i32> <i32 1, i32 1>, %x

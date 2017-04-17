@@ -944,22 +944,21 @@ Instruction *InstCombiner::commonIDivTransforms(BinaryOperator &I) {
     }
   }
 
-  if (ConstantInt *One = dyn_cast<ConstantInt>(Op0)) {
-    if (One->isOne() && !I.getType()->isIntegerTy(1)) {
-      bool isSigned = I.getOpcode() == Instruction::SDiv;
-      if (isSigned) {
-        // If Op1 is 0 then it's undefined behaviour, if Op1 is 1 then the
-        // result is one, if Op1 is -1 then the result is minus one, otherwise
-        // it's zero.
-        Value *Inc = Builder->CreateAdd(Op1, One);
-        Value *Cmp = Builder->CreateICmpULT(
-                         Inc, ConstantInt::get(I.getType(), 3));
-        return SelectInst::Create(Cmp, Op1, ConstantInt::get(I.getType(), 0));
-      } else {
-        // If Op1 is 0 then it's undefined behaviour. If Op1 is 1 then the
-        // result is one, otherwise it's zero.
-        return new ZExtInst(Builder->CreateICmpEQ(Op1, One), I.getType());
-      }
+  if (match(Op0, m_One())) {
+    assert(!I.getType()->getScalarType()->isIntegerTy(1) &&
+           "i1 divide not removed?");
+    if (I.getOpcode() == Instruction::SDiv) {
+      // If Op1 is 0 then it's undefined behaviour, if Op1 is 1 then the
+      // result is one, if Op1 is -1 then the result is minus one, otherwise
+      // it's zero.
+      Value *Inc = Builder->CreateAdd(Op1, Op0);
+      Value *Cmp = Builder->CreateICmpULT(
+                       Inc, ConstantInt::get(I.getType(), 3));
+      return SelectInst::Create(Cmp, Op1, ConstantInt::get(I.getType(), 0));
+    } else {
+      // If Op1 is 0 then it's undefined behaviour. If Op1 is 1 then the
+      // result is one, otherwise it's zero.
+      return new ZExtInst(Builder->CreateICmpEQ(Op1, Op0), I.getType());
     }
   }
 
