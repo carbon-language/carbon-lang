@@ -2734,7 +2734,7 @@ public:
   >
   _LIBCPP_INLINE_VISIBILITY
   unique_ptr(unique_ptr<_Up, _Ep>&& __u) noexcept
-      : __ptr_(__u.release(), _VSTD::forward<deleter_type>(__u.get_deleter())) {
+      : __ptr_(__u.release(), _VSTD::forward<_Ep>(__u.get_deleter())) {
   }
 
   template <class _Up, class _Ep,
