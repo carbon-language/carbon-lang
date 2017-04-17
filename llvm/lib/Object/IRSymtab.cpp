@@ -28,7 +28,7 @@ struct Builder {
   Builder(SmallVector<char, 0> &Symtab, SmallVector<char, 0> &Strtab)
       : Symtab(Symtab), Strtab(Strtab) {}
 
-  StringTableBuilder StrtabBuilder{StringTableBuilder::ELF};
+  StringTableBuilder StrtabBuilder{StringTableBuilder::RAW};
 
   BumpPtrAllocator Alloc;
   StringSaver Saver{Alloc};
@@ -49,6 +49,7 @@ struct Builder {
 
   void setStr(storage::Str &S, StringRef Value) {
     S.Offset = StrtabBuilder.add(Value);
+    S.Size = Value.size();
   }
   template <typename T>
   void writeRange(storage::Range<T> &R, const std::vector<T> &Objs) {

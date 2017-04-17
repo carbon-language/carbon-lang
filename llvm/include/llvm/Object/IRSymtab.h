@@ -41,9 +41,9 @@ typedef support::ulittle32_t Word;
 
 /// A reference to a string in the string table.
 struct Str {
-  Word Offset;
+  Word Offset, Size;
   StringRef get(StringRef Strtab) const {
-    return Strtab.data() + Offset;
+    return {Strtab.data() + Offset, Size};
   }
 };
 
