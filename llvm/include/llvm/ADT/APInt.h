@@ -881,8 +881,8 @@ public:
     return R;
   }
 
-  /// Logical right-shift this APInt by shiftAmt in place.
-  void lshrInPlace(unsigned shiftAmt);
+  /// Logical right-shift this APInt by ShiftAmt in place.
+  void lshrInPlace(unsigned ShiftAmt);
 
   /// \brief Left-shift function.
   ///
@@ -1769,9 +1769,9 @@ public:
   /// restrictions on COUNT.
   static void tcShiftLeft(WordType *, unsigned parts, unsigned count);
 
-  /// Shift a bignum right COUNT bits.  Shifted in bits are zero.  There are no
-  /// restrictions on COUNT.
-  static void tcShiftRight(WordType *, unsigned parts, unsigned count);
+  /// Shift a bignum right Count bits.  Shifted in bits are zero.  There are no
+  /// restrictions on Count.
+  static void tcShiftRight(WordType *, unsigned Words, unsigned Count);
 
   /// The obvious AND, OR and XOR and complement operations.
   static void tcAnd(WordType *, const WordType *, unsigned);
