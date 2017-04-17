@@ -586,7 +586,7 @@ define i32 @test22(i32 %A) {
 define <2 x i32> @test23(<2 x i32> %A) {
 ; CHECK-LABEL: @test23(
 ; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[A:%.*]], <i32 2147483647, i32 2147483647>
-; CHECK-NEXT:    [[MUL:%.*]] = srem <2 x i32> [[AND]], <i32 2147483647, i32 2147483647>
+; CHECK-NEXT:    [[MUL:%.*]] = urem <2 x i32> [[AND]], <i32 2147483647, i32 2147483647>
 ; CHECK-NEXT:    ret <2 x i32> [[MUL]]
 ;
   %and = and <2 x i32> %A, <i32 2147483647, i32 2147483647>

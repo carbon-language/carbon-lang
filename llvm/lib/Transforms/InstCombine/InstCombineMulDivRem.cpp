@@ -1544,13 +1544,11 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
 
   // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a urem.
-  if (I.getType()->isIntegerTy()) {
-    APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
-    if (MaskedValueIsZero(Op1, Mask, 0, &I) &&
-        MaskedValueIsZero(Op0, Mask, 0, &I)) {
-      // X srem Y -> X urem Y, iff X and Y don't have sign bit set
-      return BinaryOperator::CreateURem(Op0, Op1, I.getName());
-    }
+  APInt Mask(APInt::getSignBit(I.getType()->getScalarSizeInBits()));
+  if (MaskedValueIsZero(Op1, Mask, 0, &I) &&
+      MaskedValueIsZero(Op0, Mask, 0, &I)) {
+    // X srem Y -> X urem Y, iff X and Y don't have sign bit set
+    return BinaryOperator::CreateURem(Op0, Op1, I.getName());
   }
 
   // If it's a constant vector, flip any negative values positive.
