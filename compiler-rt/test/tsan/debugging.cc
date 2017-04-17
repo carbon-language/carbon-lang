@@ -2,6 +2,7 @@
 // RUN: %deflake %run %t 2>&1 | FileCheck %s
 
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
