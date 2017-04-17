@@ -225,6 +225,15 @@ define i32 @test19(i32 %x) {
   ret i32 %A
 }
 
+define <2 x i32> @test19vec(<2 x i32> %x) {
+; CHECK-LABEL: @test19vec(
+; CHECK-NEXT:    [[A:%.*]] = udiv <2 x i32> <i32 1, i32 1>, [[X:%.*]]
+; CHECK-NEXT:    ret <2 x i32> [[A]]
+;
+  %A = udiv <2 x i32> <i32 1, i32 1>, %x
+  ret <2 x i32> %A
+}
+
 define i32 @test20(i32 %x) {
 ; CHECK-LABEL: @test20(
 ; CHECK-NEXT:    [[TMP1:%.*]] = add i32 %x, 1
@@ -234,6 +243,15 @@ define i32 @test20(i32 %x) {
 ;
   %A = sdiv i32 1, %x
   ret i32 %A
+}
+
+define <2 x i32> @test20vec(<2 x i32> %x) {
+; CHECK-LABEL: @test20vec(
+; CHECK-NEXT:    [[A:%.*]] = sdiv <2 x i32> <i32 1, i32 1>, [[X:%.*]]
+; CHECK-NEXT:    ret <2 x i32> [[A]]
+;
+  %A = sdiv <2 x i32> <i32 1, i32 1>, %x
+  ret <2 x i32> %A
 }
 
 define i32 @test21(i32 %a) {
