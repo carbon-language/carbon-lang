@@ -1578,7 +1578,7 @@ void DwarfDebug::emitDebugLoc() {
   // Start the dwarf loc section.
   Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfLocSection());
-  unsigned char Size = Asm->getDataLayout().getPointerSize();
+  unsigned char Size = Asm->MAI->getCodePointerSize();
   for (const auto &List : DebugLocs.getLists()) {
     Asm->OutStreamer->EmitLabel(List.Label);
     const DwarfCompileUnit *CU = List.CU;
@@ -1708,7 +1708,7 @@ void DwarfDebug::emitDebugARanges() {
   Asm->OutStreamer->SwitchSection(
       Asm->getObjFileLowering().getDwarfARangesSection());
 
-  unsigned PtrSize = Asm->getDataLayout().getPointerSize();
+  unsigned PtrSize = Asm->MAI->getCodePointerSize();
 
   // Build a list of CUs used.
   std::vector<DwarfCompileUnit *> CUs;
@@ -1791,7 +1791,7 @@ void DwarfDebug::emitDebugRanges() {
       Asm->getObjFileLowering().getDwarfRangesSection());
 
   // Size for our labels.
-  unsigned char Size = Asm->getDataLayout().getPointerSize();
+  unsigned char Size = Asm->MAI->getCodePointerSize();
 
   // Grab the specific ranges for the compile units in the module.
   for (const auto &I : CUMap) {

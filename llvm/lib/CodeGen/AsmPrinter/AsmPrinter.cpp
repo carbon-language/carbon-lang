@@ -1356,7 +1356,7 @@ bool AsmPrinter::doFinalization(Module &M) {
         OutContext.getOrCreateSymbol(StringRef("__morestack_addr"));
     OutStreamer->EmitLabel(AddrSymbol);
 
-    unsigned PtrSize = M.getDataLayout().getPointerSize(0);
+    unsigned PtrSize = MAI->getCodePointerSize();
     OutStreamer->EmitSymbolValue(GetExternalSymbolSymbol("__morestack"),
                                  PtrSize);
   }
@@ -2781,7 +2781,7 @@ void AsmPrinter::emitXRayTable() {
   // before the function's end, we assume that this is happening after
   // the last return instruction.
 
-  auto WordSizeBytes = TM.getPointerSize();
+  auto WordSizeBytes = MAI->getCodePointerSize();
   MCSymbol *Tmp = OutContext.createTempSymbol("xray_synthetic_", true);
   OutStreamer->EmitCodeAlignment(16);
   OutStreamer->EmitSymbolValue(Tmp, WordSizeBytes, false);
