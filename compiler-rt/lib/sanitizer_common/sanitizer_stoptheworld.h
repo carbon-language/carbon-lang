@@ -29,31 +29,21 @@ enum PtraceRegistersStatus {
 // register contexts.
 class SuspendedThreadsList {
  public:
-  SuspendedThreadsList()
-    : thread_ids_(1024) {}
-  tid_t GetThreadID(uptr index) const {
-    CHECK_LT(index, thread_ids_.size());
-    return thread_ids_[index];
+  SuspendedThreadsList() = default;
+
+  // Can't declare pure virtual functions in sanitizer runtimes:
+  // __cxa_pure_virtual might be unavailable. Use UNIMPLEMENTED() instead.
+  virtual PtraceRegistersStatus GetRegistersAndSP(uptr index, uptr *buffer,
+                                                  uptr *sp) const {
+    UNIMPLEMENTED();
   }
-  PtraceRegistersStatus GetRegistersAndSP(uptr index, uptr *buffer,
-                                          uptr *sp) const;
+
   // The buffer in GetRegistersAndSP should be at least this big.
-  static uptr RegisterCount();
-  uptr thread_count() const { return thread_ids_.size(); }
-  bool Contains(tid_t thread_id) const {
-    for (uptr i = 0; i < thread_ids_.size(); i++) {
-      if (thread_ids_[i] == thread_id)
-        return true;
-    }
-    return false;
-  }
-  void Append(tid_t thread_id) {
-    thread_ids_.push_back(thread_id);
-  }
+  virtual uptr RegisterCount() const { UNIMPLEMENTED(); }
+  virtual uptr ThreadCount() const { UNIMPLEMENTED(); }
+  virtual tid_t GetThreadID(uptr index) const { UNIMPLEMENTED(); }
 
  private:
-  InternalMmapVector<tid_t> thread_ids_;
-
   // Prohibit copy and assign.
   SuspendedThreadsList(const SuspendedThreadsList&);
   void operator=(const SuspendedThreadsList&);

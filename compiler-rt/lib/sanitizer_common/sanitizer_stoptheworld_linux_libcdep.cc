@@ -82,6 +82,23 @@
 
 namespace __sanitizer {
 
+class SuspendedThreadsListLinux : public SuspendedThreadsList {
+ public:
+  SuspendedThreadsListLinux() : thread_ids_(1024) {}
+
+  tid_t GetThreadID(uptr index) const;
+  uptr ThreadCount() const;
+  bool ContainsTid(tid_t thread_id) const;
+  void Append(tid_t tid);
+
+  PtraceRegistersStatus GetRegistersAndSP(uptr index, uptr *buffer,
+                                          uptr *sp) const;
+  uptr RegisterCount() const;
+
+ private:
+  InternalMmapVector<tid_t> thread_ids_;
+};
+
 // Structure for passing arguments into the tracer thread.
 struct TracerThreadArgument {
   StopTheWorldCallback callback;
@@ -105,12 +122,12 @@ class ThreadSuspender {
   bool SuspendAllThreads();
   void ResumeAllThreads();
   void KillAllThreads();
-  SuspendedThreadsList &suspended_threads_list() {
+  SuspendedThreadsListLinux &suspended_threads_list() {
     return suspended_threads_list_;
   }
   TracerThreadArgument *arg;
  private:
-  SuspendedThreadsList suspended_threads_list_;
+  SuspendedThreadsListLinux suspended_threads_list_;
   pid_t pid_;
   bool SuspendThread(tid_t thread_id);
 };
@@ -119,8 +136,7 @@ bool ThreadSuspender::SuspendThread(tid_t tid) {
   // Are we already attached to this thread?
   // Currently this check takes linear time, however the number of threads is
   // usually small.
-  if (suspended_threads_list_.Contains(tid))
-    return false;
+  if (suspended_threads_list_.ContainsTid(tid)) return false;
   int pterrno;
   if (internal_iserror(internal_ptrace(PTRACE_ATTACH, tid, nullptr, nullptr),
                        &pterrno)) {
@@ -165,7 +181,7 @@ bool ThreadSuspender::SuspendThread(tid_t tid) {
 }
 
 void ThreadSuspender::ResumeAllThreads() {
-  for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++) {
+  for (uptr i = 0; i < suspended_threads_list_.ThreadCount(); i++) {
     pid_t tid = suspended_threads_list_.GetThreadID(i);
     int pterrno;
     if (!internal_iserror(internal_ptrace(PTRACE_DETACH, tid, nullptr, nullptr),
@@ -181,7 +197,7 @@ void ThreadSuspender::ResumeAllThreads() {
 }
 
 void ThreadSuspender::KillAllThreads() {
-  for (uptr i = 0; i < suspended_threads_list_.thread_count(); i++)
+  for (uptr i = 0; i < suspended_threads_list_.ThreadCount(); i++)
     internal_ptrace(PTRACE_KILL, suspended_threads_list_.GetThreadID(i),
                     nullptr, nullptr);
 }
@@ -492,9 +508,28 @@ typedef _user_regs_struct regs_struct;
 #error "Unsupported architecture"
 #endif // SANITIZER_ANDROID && defined(__arm__)
 
-PtraceRegistersStatus SuspendedThreadsList::GetRegistersAndSP(uptr index,
-                                                              uptr *buffer,
-                                                              uptr *sp) const {
+tid_t SuspendedThreadsListLinux::GetThreadID(uptr index) const {
+  CHECK_LT(index, thread_ids_.size());
+  return thread_ids_[index];
+}
+
+uptr SuspendedThreadsListLinux::ThreadCount() const {
+  return thread_ids_.size();
+}
+
+bool SuspendedThreadsListLinux::ContainsTid(tid_t thread_id) const {
+  for (uptr i = 0; i < thread_ids_.size(); i++) {
+    if (thread_ids_[i] == thread_id) return true;
+  }
+  return false;
+}
+
+void SuspendedThreadsListLinux::Append(tid_t tid) {
+  thread_ids_.push_back(tid);
+}
+
+PtraceRegistersStatus SuspendedThreadsListLinux::GetRegistersAndSP(
+    uptr index, uptr *buffer, uptr *sp) const {
   pid_t tid = GetThreadID(index);
   regs_struct regs;
   int pterrno;
@@ -524,7 +559,7 @@ PtraceRegistersStatus SuspendedThreadsList::GetRegistersAndSP(uptr index,
   return REGISTERS_AVAILABLE;
 }
 
-uptr SuspendedThreadsList::RegisterCount() {
+uptr SuspendedThreadsListLinux::RegisterCount() const {
   return sizeof(regs_struct) / sizeof(uptr);
 }
 } // namespace __sanitizer
