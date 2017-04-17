@@ -635,12 +635,12 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 
         // If LHS is non-negative or has all low bits zero, then the upper bits
         // are all zero.
-        if (LHSKnownZero.isNegative() || ((LHSKnownZero & LowBits) == LowBits))
+        if (LHSKnownZero.isSignBitSet() || ((LHSKnownZero & LowBits) == LowBits))
           KnownZero |= ~LowBits;
 
         // If LHS is negative and not all low bits are zero, then the upper bits
         // are all one.
-        if (LHSKnownOne.isNegative() && ((LHSKnownOne & LowBits) != 0))
+        if (LHSKnownOne.isSignBitSet() && ((LHSKnownOne & LowBits) != 0))
           KnownOne |= ~LowBits;
 
         assert(!(KnownZero & KnownOne) && "Bits known to be one AND zero?");
@@ -650,11 +650,11 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 
     // The sign bit is the LHS's sign bit, except when the result of the
     // remainder is zero.
-    if (DemandedMask.isNegative()) {
+    if (DemandedMask.isSignBitSet()) {
       computeKnownBits(I->getOperand(0), LHSKnownZero, LHSKnownOne, Depth + 1,
                        CxtI);
       // If it's known zero, our sign bit is also zero.
-      if (LHSKnownZero.isNegative())
+      if (LHSKnownZero.isSignBitSet())
         KnownZero.setSignBit();
     }
     break;
