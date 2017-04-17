@@ -8880,7 +8880,7 @@ def err_coroutine_promise_unhandled_exception_required : Error<
   "%0 is required to declare the member 'unhandled_exception()'">;
 def warn_coroutine_promise_unhandled_exception_required_with_exceptions : Warning<
   "%0 is required to declare the member 'unhandled_exception()' when exceptions are enabled">,
-  InGroup<Coroutine>;
+  InGroup<CoroutineMissingUnhandledException>;
 def err_coroutine_promise_get_return_object_on_allocation_failure : Error<
   "%0: 'get_return_object_on_allocation_failure()' must be a static member function">;
 }

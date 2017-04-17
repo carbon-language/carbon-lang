@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu -fcoroutines-ts -std=c++14 -emit-llvm %s -o - -disable-llvm-passes | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-linux-gnu -fcoroutines-ts -std=c++14 \
+// RUN:    -Wno-coroutine-missing-unhandled-exception -emit-llvm %s -o - -disable-llvm-passes \
+// RUN:   | FileCheck %s
 
 namespace std {
 namespace experimental {
@@ -133,7 +135,7 @@ struct promise_on_alloc_failure_tag {};
 template<>
 struct std::experimental::coroutine_traits<int, promise_on_alloc_failure_tag> {
   struct promise_type {
-    int get_return_object() {}
+    int get_return_object() { return 0; }
     suspend_always initial_suspend() { return {}; }
     suspend_always final_suspend() { return {}; }
     void return_void() {}
