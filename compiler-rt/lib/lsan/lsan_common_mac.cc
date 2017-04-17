@@ -108,7 +108,7 @@ void ProcessGlobalRegions(Frontier *frontier) {
 
     for (const __sanitizer::LoadedModule::AddressRange &range :
          modules[i].ranges()) {
-      if (range.executable) continue;
+      if (range.executable || !range.readable) continue;
 
       ScanGlobalRange(range.beg, range.end, frontier);
     }
