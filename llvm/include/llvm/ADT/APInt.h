@@ -191,6 +191,9 @@ private:
   /// out-of-line slow case for shl
   void shlSlowCase(unsigned ShiftAmt);
 
+  /// out-of-line slow case for lshr.
+  void lshrSlowCase(unsigned ShiftAmt);
+
   /// out-of-line slow case for operator=
   APInt &AssignSlowCase(const APInt &RHS);
 
@@ -889,7 +892,16 @@ public:
   }
 
   /// Logical right-shift this APInt by ShiftAmt in place.
-  void lshrInPlace(unsigned ShiftAmt);
+  void lshrInPlace(unsigned ShiftAmt) {
+    if (isSingleWord()) {
+      if (ShiftAmt >= BitWidth)
+        VAL = 0;
+      else
+        VAL >>= ShiftAmt;
+      return;
+    }
+    lshrSlowCase(ShiftAmt);
+  }
 
   /// \brief Left-shift function.
   ///

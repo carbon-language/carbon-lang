@@ -1140,15 +1140,7 @@ void APInt::lshrInPlace(const APInt &shiftAmt) {
 
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
-void APInt::lshrInPlace(unsigned ShiftAmt) {
-  if (isSingleWord()) {
-    if (ShiftAmt >= BitWidth)
-      VAL = 0;
-    else
-      VAL >>= ShiftAmt;
-    return;
-  }
-
+void APInt::lshrSlowCase(unsigned ShiftAmt) {
   tcShiftRight(pVal, getNumWords(), ShiftAmt);
 }
 
