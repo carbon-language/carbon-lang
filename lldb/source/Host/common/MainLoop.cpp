@@ -15,7 +15,6 @@
 #include <cassert>
 #include <cerrno>
 #include <csignal>
-#include <sys/select.h>
 #include <vector>
 
 #if HAVE_SYS_EVENT_H
