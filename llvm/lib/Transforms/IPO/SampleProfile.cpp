@@ -1191,8 +1191,11 @@ void SampleProfileLoader::propagateWeights(Function &F) {
     if (!isa<BranchInst>(TI) && !isa<SwitchInst>(TI))
       continue;
 
+    DebugLoc BranchLoc = TI->getDebugLoc();
     DEBUG(dbgs() << "\nGetting weights for branch at line "
-                 << TI->getDebugLoc().getLine() << ".\n");
+                 << ((BranchLoc) ? Twine(BranchLoc.getLine())
+                                 : Twine("<UNKNOWN LOCATION>"))
+                 << ".\n");
     SmallVector<uint32_t, 4> Weights;
     uint32_t MaxWeight = 0;
     DebugLoc MaxDestLoc;
@@ -1229,7 +1232,6 @@ void SampleProfileLoader::propagateWeights(Function &F) {
       DEBUG(dbgs() << "SUCCESS. Found non-zero weights.\n");
       TI->setMetadata(llvm::LLVMContext::MD_prof,
                       MDB.createBranchWeights(Weights));
-      DebugLoc BranchLoc = TI->getDebugLoc();
       emitOptimizationRemark(
           Ctx, DEBUG_TYPE, F, MaxDestLoc,
           Twine("most popular destination for conditional branches at ") +
