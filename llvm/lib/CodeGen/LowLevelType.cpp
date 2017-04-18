@@ -21,10 +21,10 @@ using namespace llvm;
 LLT llvm::getLLTForType(Type &Ty, const DataLayout &DL) {
   if (auto VTy = dyn_cast<VectorType>(&Ty)) {
     auto NumElements = VTy->getNumElements();
-    LLT ScalarTy = getLLTForType(*VTy->getElementType(), DL);
+    auto ScalarSizeInBits = VTy->getElementType()->getPrimitiveSizeInBits();
     if (NumElements == 1)
-      return ScalarTy;
-    return LLT::vector(NumElements, ScalarTy);
+      return LLT::scalar(ScalarSizeInBits);
+    return LLT::vector(NumElements, ScalarSizeInBits);
   } else if (auto PTy = dyn_cast<PointerType>(&Ty)) {
     return LLT::pointer(PTy->getAddressSpace(), DL.getTypeSizeInBits(&Ty));
   } else if (Ty.isSized()) {
