@@ -914,7 +914,14 @@ public:
   /// \brief Logical right-shift function.
   ///
   /// Logical right-shift this APInt by shiftAmt.
-  APInt lshr(const APInt &shiftAmt) const;
+  APInt lshr(const APInt &ShiftAmt) const {
+    APInt R(*this);
+    R.lshrInPlace(ShiftAmt);
+    return R;
+  }
+
+  /// Logical right-shift this APInt by ShiftAmt in place.
+  void lshrInPlace(const APInt &ShiftAmt);
 
   /// \brief Left-shift function.
   ///

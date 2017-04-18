@@ -5350,7 +5350,7 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
           Shift = DAG.getNode(ISD::SHL, DL, VT, N0.getOperand(0),
                               DAG.getConstant(c2 - c1, DL, N1.getValueType()));
         } else {
-          Mask = Mask.lshr(c1 - c2);
+          Mask.lshrInPlace(c1 - c2);
           SDLoc DL(N);
           Shift = DAG.getNode(ISD::SRL, DL, VT, N0.getOperand(0),
                               DAG.getConstant(c1 - c2, DL, N1.getValueType()));
@@ -5660,7 +5660,7 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
                           DAG.getConstant(ShiftAmt, DL0,
                                           getShiftAmountTy(SmallVT)));
       AddToWorklist(SmallShift.getNode());
-      APInt Mask = APInt::getAllOnesValue(OpSizeInBits).lshr(ShiftAmt);
+      APInt Mask = APInt::getLowBitsSet(OpSizeInBits, OpSizeInBits - ShiftAmt);
       SDLoc DL(N);
       return DAG.getNode(ISD::AND, DL, VT,
                          DAG.getNode(ISD::ANY_EXTEND, DL, VT, SmallShift),
@@ -8687,7 +8687,7 @@ ConstantFoldBITCASTofBUILD_VECTOR(SDNode *BV, EVT DstEltVT) {
     for (unsigned j = 0; j != NumOutputsPerInput; ++j) {
       APInt ThisVal = OpVal.trunc(DstBitSize);
       Ops.push_back(DAG.getConstant(ThisVal, DL, DstEltVT));
-      OpVal = OpVal.lshr(DstBitSize);
+      OpVal.lshrInPlace(DstBitSize);
     }
 
     // For big endian targets, swap the order of the pieces of each element.
@@ -15143,9 +15143,9 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
 
       // Extract the sub element from the constant bit mask.
       if (DAG.getDataLayout().isBigEndian()) {
-        Bits = Bits.lshr((Split - SubIdx - 1) * NumSubBits);
+        Bits.lshrInPlace((Split - SubIdx - 1) * NumSubBits);
       } else {
-        Bits = Bits.lshr(SubIdx * NumSubBits);
+        Bits.lshrInPlace(SubIdx * NumSubBits);
       }
 
       if (Split > 1)

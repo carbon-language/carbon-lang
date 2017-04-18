@@ -1134,8 +1134,8 @@ APInt APInt::ashr(unsigned shiftAmt) const {
 
 /// Logical right-shift this APInt by shiftAmt.
 /// @brief Logical right-shift function.
-APInt APInt::lshr(const APInt &shiftAmt) const {
-  return lshr((unsigned)shiftAmt.getLimitedValue(BitWidth));
+void APInt::lshrInPlace(const APInt &shiftAmt) {
+  lshrInPlace((unsigned)shiftAmt.getLimitedValue(BitWidth));
 }
 
 /// Logical right-shift this APInt by shiftAmt.
@@ -1149,7 +1149,7 @@ void APInt::lshrInPlace(unsigned ShiftAmt) {
     return;
   }
 
-  return tcShiftRight(pVal, getNumWords(), ShiftAmt);
+  tcShiftRight(pVal, getNumWords(), ShiftAmt);
 }
 
 /// Left-shift this APInt by shiftAmt.
@@ -2145,7 +2145,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     while (Tmp != 0) {
       unsigned Digit = unsigned(Tmp.getRawData()[0]) & MaskAmt;
       Str.push_back(Digits[Digit]);
-      Tmp = Tmp.lshr(ShiftAmt);
+      Tmp.lshrInPlace(ShiftAmt);
     }
   } else {
     APInt divisor(Radix == 10? 4 : 8, Radix);
