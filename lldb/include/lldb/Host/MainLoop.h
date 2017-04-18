@@ -10,9 +10,14 @@
 #ifndef lldb_Host_MainLoop_h_
 #define lldb_Host_MainLoop_h_
 
+#include "lldb/Host/Config.h"
 #include "lldb/Host/MainLoopBase.h"
 
 #include "llvm/ADT/DenseMap.h"
+
+#if !HAVE_PPOLL && !HAVE_SYS_EVENT_H
+#define SIGNAL_POLLING_UNSUPPORTED 1
+#endif
 
 namespace lldb_private {
 
@@ -83,7 +88,9 @@ private:
 
   struct SignalInfo {
     Callback callback;
+#if !SIGNAL_POLLING_UNSUPPORTED
     struct sigaction old_action;
+#endif
     bool was_blocked : 1;
   };
 

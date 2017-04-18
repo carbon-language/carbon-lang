@@ -33,7 +33,6 @@
 #endif
 
 #if !HAVE_PPOLL && !HAVE_SYS_EVENT_H
-#define SIGNAL_POLLING_UNSUPPORTED 1
 
 int ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout_ts,
           const sigset_t *) {
