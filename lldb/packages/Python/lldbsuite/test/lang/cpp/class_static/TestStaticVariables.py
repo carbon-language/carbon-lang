@@ -57,12 +57,7 @@ class StaticVariableTestCase(TestBase):
                 startstr="(int) A::g_points[1].x = 11")
 
     @expectedFailureAll(
-        oslist=lldbplatformutil.getDarwinOSTriples(),
-        bugnumber="<rdar://problem/28706946>")
-    @expectedFailureAll(
-        compiler=[
-            "clang",
-            "gcc"],
+        compiler=["gcc"],
         bugnumber="Compiler emits incomplete debug info")
     @expectedFailureAll(
         oslist=['freebsd'],
