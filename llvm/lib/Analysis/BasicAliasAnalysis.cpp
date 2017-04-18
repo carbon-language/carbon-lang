@@ -808,7 +808,7 @@ ModRefInfo BasicAAResult::getModRefInfo(ImmutableCallSite CS,
   // well.  Or alternatively, replace all of this with inaccessiblememonly once
   // that's implemented fully. 
   auto *Inst = CS.getInstruction();
-  if (isMallocLikeFn(Inst, &TLI) || isCallocLikeFn(Inst, &TLI)) {
+  if (isMallocOrCallocLikeFn(Inst, &TLI)) {
     // Be conservative if the accessed pointer may alias the allocation -
     // fallback to the generic handling below.
     if (getBestAAResults().alias(MemoryLocation(Inst), Loc) == NoAlias)
