@@ -2631,6 +2631,7 @@ Error BitcodeReader::globalCleanup() {
 
   // Look for intrinsic functions which need to be upgraded at some point
   for (Function &F : *TheModule) {
+    MDLoader->upgradeDebugIntrinsics(F);
     Function *NewFn;
     if (UpgradeIntrinsicFunction(&F, NewFn))
       UpgradedIntrinsics[&F] = NewFn;
