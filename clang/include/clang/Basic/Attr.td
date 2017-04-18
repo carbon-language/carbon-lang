@@ -2351,9 +2351,8 @@ def DLLImport : InheritableAttr, TargetSpecificAttr<TargetWindows> {
   let Documentation = [DLLImportDocs];
 }
 
-def SelectAny : InheritableAttr {
-  let Spellings = [Declspec<"selectany">];
-  let LangOpts = [MicrosoftExt];
+def SelectAny : InheritableAttr, TargetSpecificAttr<TargetWindows> {
+  let Spellings = [Declspec<"selectany">, GCC<"selectany">];
   let Documentation = [Undocumented];
 }
 
