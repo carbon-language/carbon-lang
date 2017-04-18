@@ -60,6 +60,8 @@ class StaticVariableTestCase(TestBase):
         compiler=["gcc"],
         bugnumber="Compiler emits incomplete debug info")
     @expectedFailureAll(
+        oslist=['linux'])
+    @expectedFailureAll(
         oslist=['freebsd'],
         bugnumber='llvm.org/pr20550 failing on FreeBSD-11')
     @add_test_categories(['pyapi'])
