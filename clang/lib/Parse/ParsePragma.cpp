@@ -1014,6 +1014,8 @@ static bool isAbstractAttrMatcherRule(attr::SubjectMatchRule Rule) {
     return IsAbstract;
 #include "clang/Basic/AttrSubMatchRulesList.inc"
   }
+  llvm_unreachable("Invalid attribute subject match rule");
+  return false;
 }
 
 static void diagnoseExpectedAttributeSubjectSubRule(

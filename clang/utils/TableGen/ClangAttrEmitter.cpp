@@ -3168,7 +3168,7 @@ emitAttributeMatchRules(PragmaClangAttributeSupport &PragmaAttributeSupport,
     OS << ";\n";
   }
   OS << "  }\n";
-  OS << "  llvm_unreachable(\"Invalid match rule\");\n";
+  OS << "  llvm_unreachable(\"Invalid match rule\");\nreturn false;\n";
   OS << "}\n\n";
 }
 
