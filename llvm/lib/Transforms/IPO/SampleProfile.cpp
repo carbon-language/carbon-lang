@@ -677,7 +677,7 @@ bool SampleProfileLoader::inlineHotFunctions(
       for (auto &I : BB.getInstList()) {
         const FunctionSamples *FS = nullptr;
         if ((isa<CallInst>(I) || isa<InvokeInst>(I)) &&
-            (FS = findCalleeFunctionSamples(I))) {
+            !isa<IntrinsicInst>(I) && (FS = findCalleeFunctionSamples(I))) {
           Candidates.push_back(&I);
           if (callsiteIsHot(Samples, FS))
             Hot = true;
