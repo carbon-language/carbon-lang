@@ -22647,7 +22647,7 @@ bool X86TargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
 // FIXME: On 32 bits x86, fild/movq might be faster than lock cmpxchg8b.
 TargetLowering::AtomicExpansionKind
 X86TargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
-  auto PTy = cast<PointerType>(LI->getPointerOperand()->getType());
+  auto PTy = cast<PointerType>(LI->getPointerOperandType());
   return needsCmpXchgNb(PTy->getElementType()) ? AtomicExpansionKind::CmpXChg
                                                : AtomicExpansionKind::None;
 }
