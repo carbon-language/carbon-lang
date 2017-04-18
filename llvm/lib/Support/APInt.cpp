@@ -774,14 +774,12 @@ APInt APInt::reverseBits() const {
   }
 
   APInt Val(*this);
-  APInt Reversed(*this);
-  int S = BitWidth - 1;
+  APInt Reversed(BitWidth, 0);
+  unsigned S = BitWidth;
 
-  const APInt One(BitWidth, 1);
-
-  for ((Val = Val.lshr(1)); Val != 0; (Val = Val.lshr(1))) {
+  for (; Val != 0; Val.lshrInPlace(1)) {
     Reversed <<= 1;
-    Reversed |= (Val & One);
+    Reversed |= Val[0];
     --S;
   }
 
