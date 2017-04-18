@@ -912,7 +912,9 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
                               OperatorNew, UnusedResult);
   }
 
-  if (OperatorNew && RequiresNoThrowAlloc) {
+  assert(OperatorNew && "expected definition of operator new to be found");
+
+  if (RequiresNoThrowAlloc) {
     const auto *FT = OperatorNew->getType()->getAs<FunctionProtoType>();
     if (!FT->isNothrow(S.Context, /*ResultIfDependent*/ false)) {
       S.Diag(OperatorNew->getLocation(),
@@ -923,9 +925,6 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
       return false;
     }
   }
-
-  // FIXME: Diagnose and handle the case where no matching operator new is found
-  //  (ie OperatorNew == nullptr)
 
   if ((OperatorDelete = findDeleteForPromise(S, Loc, PromiseType)) == nullptr)
     return false;
