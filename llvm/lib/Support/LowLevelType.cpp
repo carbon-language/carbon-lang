@@ -46,11 +46,11 @@ void LLT::print(raw_ostream &OS) const {
     llvm_unreachable("trying to print an invalid type");
 }
 
-const LLT::BitFieldInfo LLT::ScalarSizeFieldInfo;
-const LLT::BitFieldInfo LLT::PointerSizeFieldInfo;
-const LLT::BitFieldInfo LLT::PointerAddressSpaceFieldInfo;
-const LLT::BitFieldInfo LLT::VectorElementsFieldInfo;
-const LLT::BitFieldInfo LLT::VectorSizeFieldInfo;
-const LLT::BitFieldInfo LLT::PointerVectorElementsFieldInfo;
-const LLT::BitFieldInfo LLT::PointerVectorSizeFieldInfo;
-const LLT::BitFieldInfo LLT::PointerVectorAddressSpaceFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::ScalarSizeFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::PointerSizeFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::PointerAddressSpaceFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::VectorElementsFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::VectorSizeFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::PointerVectorElementsFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::PointerVectorSizeFieldInfo;
+const constexpr LLT::BitFieldInfo LLT::PointerVectorAddressSpaceFieldInfo;
