@@ -3167,7 +3167,9 @@ emitAttributeMatchRules(PragmaClangAttributeSupport &PragmaAttributeSupport,
     }
     OS << ";\n";
   }
-  OS << "  }\n}\n\n";
+  OS << "  }\n";
+  OS << "  llvm_unreachable(\"Invalid match rule\");\n";
+  OS << "}\n\n";
 }
 
 static void GenerateDefaultLangOptRequirements(raw_ostream &OS) {
