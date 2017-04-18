@@ -77,8 +77,8 @@ static const std::pair<LibFunc, AllocFnsTy> AllocationFnData[] = {
   // TODO: Handle "int posix_memalign(void **, size_t, size_t)"
 };
 
-static Function *getCalledFunction(const Value *V, bool LookThroughBitCast,
-                                   bool &IsNoBuiltin) {
+static const Function *getCalledFunction(const Value *V, bool LookThroughBitCast,
+                                         bool &IsNoBuiltin) {
   // Don't care about intrinsics in this case.
   if (isa<IntrinsicInst>(V))
     return nullptr;
@@ -86,13 +86,13 @@ static Function *getCalledFunction(const Value *V, bool LookThroughBitCast,
   if (LookThroughBitCast)
     V = V->stripPointerCasts();
 
-  CallSite CS(const_cast<Value*>(V));
+  ImmutableCallSite CS(V);
   if (!CS.getInstruction())
     return nullptr;
 
   IsNoBuiltin = CS.isNoBuiltin();
 
-  Function *Callee = CS.getCalledFunction();
+  const Function *Callee = CS.getCalledFunction();
   if (!Callee || !Callee->isDeclaration())
     return nullptr;
   return Callee;
