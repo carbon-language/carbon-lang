@@ -2742,13 +2742,13 @@ static bool shouldGuaranteeTCO(CallingConv::ID CC, bool GuaranteedTailCallOpt) {
   return GuaranteedTailCallOpt && canGuaranteeTCO(CC);
 }
 
-bool X86TargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
+bool X86TargetLowering::mayBeEmittedAsTailCall(const CallInst *CI) const {
   auto Attr =
       CI->getParent()->getParent()->getFnAttribute("disable-tail-calls");
   if (!CI->isTailCall() || Attr.getValueAsString() == "true")
     return false;
 
-  CallSite CS(CI);
+  ImmutableCallSite CS(CI);
   CallingConv::ID CalleeCC = CS.getCallingConv();
   if (!mayTailCallThisCC(CalleeCC))
     return false;
