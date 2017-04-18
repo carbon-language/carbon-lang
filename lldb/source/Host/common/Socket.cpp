@@ -101,7 +101,7 @@ std::unique_ptr<Socket> Socket::Create(const SocketProtocol protocol,
   case ProtocolUnixAbstract:
 #ifdef __linux__
     socket_up =
-        llvm::make_unique<AbstractSocket>(true, child_processes_inherit);
+        llvm::make_unique<AbstractSocket>(child_processes_inherit);
 #else
     error.SetErrorString(
         "Abstract domain sockets are not supported on this platform.");
