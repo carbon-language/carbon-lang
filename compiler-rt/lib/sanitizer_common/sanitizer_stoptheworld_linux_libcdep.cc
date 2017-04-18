@@ -32,17 +32,13 @@
 #include <sys/types.h> // for pid_t
 #include <sys/uio.h> // for iovec
 #include <elf.h> // for NT_PRSTATUS
-#if SANITIZER_ANDROID && defined(__arm__)
-# include <linux/user.h>  // for pt_regs
-#else
-# ifdef __aarch64__
+#if defined(__aarch64__) && !SANITIZER_ANDROID
 // GLIBC 2.20+ sys/user does not include asm/ptrace.h
-#  include <asm/ptrace.h>
-# endif
-# include <sys/user.h>  // for user_regs_struct
-# if SANITIZER_ANDROID && SANITIZER_MIPS
-#   include <asm/reg.h>  // for mips SP register in sys/user.h
-# endif
+# include <asm/ptrace.h>
+#endif
+#include <sys/user.h>  // for user_regs_struct
+#if SANITIZER_ANDROID && SANITIZER_MIPS
+# include <asm/reg.h>  // for mips SP register in sys/user.h
 #endif
 #include <sys/wait.h> // for signal-related stuff
 
