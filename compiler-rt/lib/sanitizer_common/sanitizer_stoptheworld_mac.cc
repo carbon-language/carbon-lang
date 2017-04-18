@@ -14,7 +14,7 @@
 #include "sanitizer_platform.h"
 
 #if SANITIZER_MAC && (defined(__x86_64__) || defined(__aarch64__) || \
-                      defined(__mips64) || defined(__i386))
+                      defined(__i386))
 
 #include <mach/mach.h>
 
@@ -94,4 +94,4 @@ uptr SuspendedThreadsListMac::RegisterCount() const {
 } // namespace __sanitizer
 
 #endif  // SANITIZER_MAC && (defined(__x86_64__) || defined(__aarch64__)) ||
-        //                   defined(__mips64) || defined(__i386))
+        //                   defined(__i386))
