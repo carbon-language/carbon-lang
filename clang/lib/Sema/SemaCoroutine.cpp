@@ -888,7 +888,7 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
   FunctionDecl *OperatorDelete = nullptr;
   FunctionDecl *UnusedResult = nullptr;
   bool PassAlignment = false;
-  MultiExprArg PlacementArgs = None;
+  SmallVector<Expr *, 1> PlacementArgs;
 
   S.FindAllocationFunctions(Loc, SourceRange(),
                             /*UseGlobal*/ false, PromiseType,
@@ -904,7 +904,7 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
     auto *StdNoThrow = buildStdNoThrowDeclRef(S, Loc);
     if (!StdNoThrow)
       return false;
-    PlacementArgs = MultiExprArg(StdNoThrow);
+    PlacementArgs = {StdNoThrow};
     OperatorNew = nullptr;
     S.FindAllocationFunctions(Loc, SourceRange(),
                               /*UseGlobal*/ true, PromiseType,
@@ -924,6 +924,9 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
     }
   }
 
+  // FIXME: Diagnose and handle the case where no matching operator new is found
+  //  (ie OperatorNew == nullptr)
+
   if ((OperatorDelete = findDeleteForPromise(S, Loc, PromiseType)) == nullptr)
     return false;
 
@@ -940,7 +943,7 @@ bool CoroutineStmtBuilder::makeNewAndDeleteExpr() {
   if (NewRef.isInvalid())
     return false;
 
-  SmallVector<Expr *, 2> NewArgs{FrameSize};
+  SmallVector<Expr *, 2> NewArgs(1, FrameSize);
   for (auto Arg : PlacementArgs)
     NewArgs.push_back(Arg);
 
