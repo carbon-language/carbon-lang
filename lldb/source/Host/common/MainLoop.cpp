@@ -176,7 +176,6 @@ Error MainLoop::Run() {
     // listen to, we
     // will store the *real* list of events separately.
     signals.clear();
-    read_fds.clear();
 
 #if HAVE_SYS_EVENT_H
     events.resize(m_read_fds.size() + m_signals.size());
@@ -198,6 +197,7 @@ Error MainLoop::Run() {
       return Error("kevent() failed with error %d\n", num_events);
 
 #else
+    read_fds.clear();
     if (int ret = pthread_sigmask(SIG_SETMASK, nullptr, &sigmask))
       return Error("pthread_sigmask failed with error %d\n", ret);
 
