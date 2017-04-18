@@ -32234,8 +32234,8 @@ static SDValue detectAVGPattern(SDValue In, EVT VT, SelectionDAG &DAG,
     BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(V);
     if (!BV || !BV->isConstant())
       return false;
-    for (unsigned i = 0, e = V.getNumOperands(); i < e; i++) {
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(V.getOperand(i));
+    for (SDValue Op : V->ops()) {
+      ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
       if (!C)
         return false;
       uint64_t Val = C->getZExtValue();
