@@ -1,4 +1,5 @@
-// RUN: %check_clang_tidy %s performance-inefficient-vector-operation %t -- -format-style=llvm --
+// RUN: %check_clang_tidy %s performance-inefficient-vector-operation %t -- -format-style=llvm -- -fno-ms-extensions
+// FIXME: This may work with -target x86_64-win32.
 
 typedef int size_t;
 
