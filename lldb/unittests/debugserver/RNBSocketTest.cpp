@@ -96,7 +96,7 @@ void TestSocketConnect(const char *addr) {
     ASSERT_EQ(bye, goodbye);
   } else {
     Socket *connected_socket;
-    err = server_socket->Accept(addr_wrap, false, connected_socket);
+    err = server_socket->Accept(connected_socket);
     if (err.Fail()) {
       llvm::errs() << err.AsCString();
       abort();

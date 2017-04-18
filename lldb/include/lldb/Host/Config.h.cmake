@@ -16,4 +16,6 @@
 
 #cmakedefine01 HAVE_SYS_EVENT_H
 
+#cmakedefine01 HAVE_PPOLL
+
 #endif // #ifndef LLDB_HOST_CONFIG_H
