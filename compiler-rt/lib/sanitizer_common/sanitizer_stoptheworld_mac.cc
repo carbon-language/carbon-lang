@@ -88,8 +88,7 @@ PtraceRegistersStatus SuspendedThreadsListMac::GetRegistersAndSP(
 }
 
 uptr SuspendedThreadsListMac::RegisterCount() const {
-  CHECK(0 && "unimplemented");
-  return 0;
+  return MACHINE_THREAD_STATE_COUNT;
 }
 } // namespace __sanitizer
 
