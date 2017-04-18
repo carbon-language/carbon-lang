@@ -25,10 +25,8 @@ using namespace clang;
 enum ActionType {
   GenClangAttrClasses,
   GenClangAttrParserStringSwitches,
-  GenClangAttrSubjectMatchRulesParserStringSwitches,
   GenClangAttrImpl,
   GenClangAttrList,
-  GenClangAttrSubjectMatchRuleList,
   GenClangAttrPCHRead,
   GenClangAttrPCHWrite,
   GenClangAttrHasAttributeImpl,
@@ -56,8 +54,7 @@ enum ActionType {
   GenArmNeonTest,
   GenAttrDocs,
   GenDiagDocs,
-  GenOptDocs,
-  GenTestPragmaAttributeSupportedAttributes
+  GenOptDocs
 };
 
 namespace {
@@ -69,17 +66,10 @@ cl::opt<ActionType> Action(
         clEnumValN(GenClangAttrParserStringSwitches,
                    "gen-clang-attr-parser-string-switches",
                    "Generate all parser-related attribute string switches"),
-        clEnumValN(GenClangAttrSubjectMatchRulesParserStringSwitches,
-                   "gen-clang-attr-subject-match-rules-parser-string-switches",
-                   "Generate all parser-related attribute subject match rule"
-                   "string switches"),
         clEnumValN(GenClangAttrImpl, "gen-clang-attr-impl",
                    "Generate clang attribute implementations"),
         clEnumValN(GenClangAttrList, "gen-clang-attr-list",
                    "Generate a clang attribute list"),
-        clEnumValN(GenClangAttrSubjectMatchRuleList,
-                   "gen-clang-attr-subject-match-rule-list",
-                   "Generate a clang attribute subject match rule list"),
         clEnumValN(GenClangAttrPCHRead, "gen-clang-attr-pch-read",
                    "Generate clang PCH attribute reader"),
         clEnumValN(GenClangAttrPCHWrite, "gen-clang-attr-pch-write",
@@ -90,7 +80,8 @@ cl::opt<ActionType> Action(
         clEnumValN(GenClangAttrSpellingListIndex,
                    "gen-clang-attr-spelling-index",
                    "Generate a clang attribute spelling index"),
-        clEnumValN(GenClangAttrASTVisitor, "gen-clang-attr-ast-visitor",
+        clEnumValN(GenClangAttrASTVisitor,
+                   "gen-clang-attr-ast-visitor",
                    "Generate a recursive AST visitor for clang attributes"),
         clEnumValN(GenClangAttrTemplateInstantiate,
                    "gen-clang-attr-template-instantiate",
@@ -146,11 +137,8 @@ cl::opt<ActionType> Action(
                    "Generate attribute documentation"),
         clEnumValN(GenDiagDocs, "gen-diag-docs",
                    "Generate diagnostic documentation"),
-        clEnumValN(GenOptDocs, "gen-opt-docs", "Generate option documentation"),
-        clEnumValN(GenTestPragmaAttributeSupportedAttributes,
-                   "gen-clang-test-pragma-attribute-supported-attributes",
-                   "Generate a list of attributes supported by #pragma clang "
-                   "attribute for testing purposes")));
+        clEnumValN(GenOptDocs, "gen-opt-docs",
+                   "Generate option documentation")));
 
 cl::opt<std::string>
 ClangComponent("clang-component",
@@ -165,17 +153,11 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
   case GenClangAttrParserStringSwitches:
     EmitClangAttrParserStringSwitches(Records, OS);
     break;
-  case GenClangAttrSubjectMatchRulesParserStringSwitches:
-    EmitClangAttrSubjectMatchRulesParserStringSwitches(Records, OS);
-    break;
   case GenClangAttrImpl:
     EmitClangAttrImpl(Records, OS);
     break;
   case GenClangAttrList:
     EmitClangAttrList(Records, OS);
-    break;
-  case GenClangAttrSubjectMatchRuleList:
-    EmitClangAttrSubjectMatchRuleList(Records, OS);
     break;
   case GenClangAttrPCHRead:
     EmitClangAttrPCHRead(Records, OS);
@@ -261,9 +243,6 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenOptDocs:
     EmitClangOptDocs(Records, OS);
-    break;
-  case GenTestPragmaAttributeSupportedAttributes:
-    EmitTestPragmaAttributeSupportedAttributes(Records, OS);
     break;
   }
 
