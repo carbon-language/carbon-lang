@@ -2024,4 +2024,37 @@ TEST(APIntTest, LogicalRightShift) {
   EXPECT_EQ(0, neg_one.lshr(257));
 }
 
+TEST(APIntTest, LeftShift) {
+  APInt i256(APInt::getLowBitsSet(256, 2));
+
+  i256 <<= 1;
+  EXPECT_EQ(253U, i256.countLeadingZeros());
+  EXPECT_EQ(1U, i256.countTrailingZeros());
+  EXPECT_EQ(2U, i256.countPopulation());
+
+  i256 <<= 62;
+  EXPECT_EQ(191U, i256.countLeadingZeros());
+  EXPECT_EQ(63U, i256.countTrailingZeros());
+  EXPECT_EQ(2U, i256.countPopulation());
+
+  i256 <<= 65;
+  EXPECT_EQ(126U, i256.countLeadingZeros());
+  EXPECT_EQ(128U, i256.countTrailingZeros());
+  EXPECT_EQ(2U, i256.countPopulation());
+
+  i256 <<= 64;
+  EXPECT_EQ(62U, i256.countLeadingZeros());
+  EXPECT_EQ(192U, i256.countTrailingZeros());
+  EXPECT_EQ(2U, i256.countPopulation());
+
+  i256 <<= 63;
+  EXPECT_EQ(0U, i256.countLeadingZeros());
+  EXPECT_EQ(255U, i256.countTrailingZeros());
+  EXPECT_EQ(1U, i256.countPopulation());
+
+  // Ensure we handle large shifts of multi-word.
+  const APInt neg_one(128, static_cast<uint64_t>(-1), true);
+  EXPECT_EQ(0, neg_one.shl(257));
+}
+
 } // end anonymous namespace

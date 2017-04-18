@@ -189,7 +189,7 @@ private:
   void initSlowCase(const APInt &that);
 
   /// out-of-line slow case for shl
-  APInt shlSlowCase(unsigned shiftAmt) const;
+  void shlSlowCase(unsigned ShiftAmt);
 
   /// out-of-line slow case for operator=
   APInt &AssignSlowCase(const APInt &RHS);
@@ -842,9 +842,16 @@ public:
   ///
   /// Shifts *this left by shiftAmt and assigns the result to *this.
   ///
-  /// \returns *this after shifting left by shiftAmt
-  APInt &operator<<=(unsigned shiftAmt) {
-    *this = shl(shiftAmt);
+  /// \returns *this after shifting left by ShiftAmt
+  APInt &operator<<=(unsigned ShiftAmt) {
+    if (isSingleWord()) {
+      if (ShiftAmt >= BitWidth)
+        VAL = 0;
+      else
+        VAL <<= ShiftAmt;
+      return clearUnusedBits();
+    }
+    shlSlowCase(ShiftAmt);
     return *this;
   }
 
@@ -888,13 +895,9 @@ public:
   ///
   /// Left-shift this APInt by shiftAmt.
   APInt shl(unsigned shiftAmt) const {
-    assert(shiftAmt <= BitWidth && "Invalid shift amount");
-    if (isSingleWord()) {
-      if (shiftAmt >= BitWidth)
-        return APInt(BitWidth, 0); // avoid undefined shift results
-      return APInt(BitWidth, VAL << shiftAmt);
-    }
-    return shlSlowCase(shiftAmt);
+    APInt R(*this);
+    R <<= shiftAmt;
+    return R;
   }
 
   /// \brief Rotate left by rotateAmt.
@@ -1765,9 +1768,9 @@ public:
                       WordType *remainder, WordType *scratch,
                       unsigned parts);
 
-  /// Shift a bignum left COUNT bits.  Shifted in bits are zero.  There are no
-  /// restrictions on COUNT.
-  static void tcShiftLeft(WordType *, unsigned parts, unsigned count);
+  /// Shift a bignum left Count bits. Shifted in bits are zero. There are no
+  /// restrictions on Count.
+  static void tcShiftLeft(WordType *, unsigned Words, unsigned Count);
 
   /// Shift a bignum right Count bits.  Shifted in bits are zero.  There are no
   /// restrictions on Count.
