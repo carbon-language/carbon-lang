@@ -18,4 +18,6 @@
 
 #cmakedefine01 HAVE_PPOLL
 
+#cmakedefine01 HAVE_SIGACTION
+
 #endif // #ifndef LLDB_HOST_CONFIG_H

@@ -433,6 +433,7 @@ endif()
 
 find_package(Backtrace)
 check_symbol_exists(ppoll poll.h HAVE_PPOLL)
+check_symbol_exists(sigaction signal.h HAVE_SIGACTION)
 
 check_include_file(termios.h HAVE_TERMIOS_H)
 
