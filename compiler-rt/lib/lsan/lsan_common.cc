@@ -83,7 +83,7 @@ static SuppressionContext *GetSuppressionContext() {
   return suppression_ctx;
 }
 
-InternalMmapVector<RootRegion> *root_regions;
+static InternalMmapVector<RootRegion> *root_regions;
 
 InternalMmapVector<RootRegion> const *GetRootRegions() { return root_regions; }
 
@@ -288,7 +288,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
   }
 }
 
-void ScanRootRegion(Frontier *frontier, RootRegion const &root_region,
+void ScanRootRegion(Frontier *frontier, const RootRegion &root_region,
                     uptr region_begin, uptr region_end, uptr prot) {
   uptr intersection_begin = Max(root_region.begin, region_begin);
   uptr intersection_end = Min(region_end, root_region.begin + root_region.size);
@@ -304,7 +304,7 @@ void ScanRootRegion(Frontier *frontier, RootRegion const &root_region,
 }
 
 static void ProcessRootRegion(Frontier *frontier,
-                              RootRegion const &root_region) {
+                              const RootRegion &root_region) {
   MemoryMappingLayout proc_maps(/*cache_enabled*/ true);
   uptr begin, end, prot;
   while (proc_maps.Next(&begin, &end,
