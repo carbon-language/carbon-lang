@@ -44,10 +44,8 @@ using namespace llvm;
 using namespace rdf;
 
 namespace llvm {
-
   FunctionPass *createHexagonOptAddrMode();
-  void initializeHexagonOptAddrModePass(PassRegistry &);
-
+  void initializeHexagonOptAddrModePass(PassRegistry&);
 } // end namespace llvm
 
 namespace {
@@ -58,10 +56,7 @@ public:
 
   HexagonOptAddrMode()
       : MachineFunctionPass(ID), HII(nullptr), MDT(nullptr), DFG(nullptr),
-        LV(nullptr) {
-    PassRegistry &R = *PassRegistry::getPassRegistry();
-    initializeHexagonOptAddrModePass(R);
-  }
+        LV(nullptr) {}
 
   StringRef getPassName() const override {
     return "Optimize addressing mode of load/store";
@@ -108,11 +103,11 @@ private:
 
 char HexagonOptAddrMode::ID = 0;
 
-INITIALIZE_PASS_BEGIN(HexagonOptAddrMode, "opt-amode",
+INITIALIZE_PASS_BEGIN(HexagonOptAddrMode, "amode-opt",
                       "Optimize addressing mode", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(MachineDominanceFrontier)
-INITIALIZE_PASS_END(HexagonOptAddrMode, "opt-amode", "Optimize addressing mode",
+INITIALIZE_PASS_END(HexagonOptAddrMode, "amode-opt", "Optimize addressing mode",
                     false, false)
 
 bool HexagonOptAddrMode::hasRepForm(MachineInstr &MI, unsigned TfrDefR) {
@@ -485,14 +480,14 @@ bool HexagonOptAddrMode::changeAddAsl(NodeAddr<UseNode *> AddAslUN,
       MIB.add(AddAslMI->getOperand(2));
       MIB.add(AddAslMI->getOperand(3));
       const GlobalValue *GV = ImmOp.getGlobal();
-      MIB.addGlobalAddress(GV, UseMI->getOperand(2).getImm(),
+      MIB.addGlobalAddress(GV, UseMI->getOperand(2).getImm()+ImmOp.getOffset(),
                            ImmOp.getTargetFlags());
       OpStart = 3;
     } else if (UseMID.mayStore()) {
       MIB.add(AddAslMI->getOperand(2));
       MIB.add(AddAslMI->getOperand(3));
       const GlobalValue *GV = ImmOp.getGlobal();
-      MIB.addGlobalAddress(GV, UseMI->getOperand(1).getImm(),
+      MIB.addGlobalAddress(GV, UseMI->getOperand(1).getImm()+ImmOp.getOffset(),
                            ImmOp.getTargetFlags());
       MIB.add(UseMI->getOperand(2));
       OpStart = 3;
