@@ -89,7 +89,7 @@ template <class ELFT> void OutputSection::maybeCompress() {
   typedef typename ELFT::Chdr Elf_Chdr;
 
   // Compress only DWARF debug sections.
-  if (!Config->CompressDebugSections || !(Flags & SHF_ALLOC) ||
+  if (!Config->CompressDebugSections || (Flags & SHF_ALLOC) ||
       !Name.startswith(".debug_"))
     return;
 
