@@ -14,6 +14,7 @@
 ; ELF: Flags [ (0x6)
 ; ELF: SHF_ALLOC (0x2)
 ; ELF: SHF_EXECINSTR (0x4)
+; ELF: AddressAlignment: 4
 ; ELF: }
 
 ; ELF: SHT_NOTE
@@ -36,6 +37,8 @@
 ; HSA-VI: .hsa_code_object_isa 8,0,1,"AMD","AMDGPU"
 
 ; HSA-NOT: .amdgpu_hsa_kernel simple
+; HSA: .globl simple
+; HSA: .p2align 2
 ; HSA: {{^}}simple:
 ; HSA: .amd_kernel_code_t
 ; HSA: enable_sgpr_private_segment_buffer = 1
@@ -55,6 +58,16 @@
 
 define void @simple(i32 addrspace(1)* %out) {
 entry:
+  store i32 0, i32 addrspace(1)* %out
+  ret void
+}
+
+; Ignore explicit alignment that is too low.
+; HSA: .globl simple_align2
+; HSA: .p2align 2
+define void @simple_align2(i32 addrspace(1)* addrspace(2)* %ptr.out) align 2 {
+entry:
+  %out = load i32 addrspace(1)*, i32 addrspace(1)* addrspace(2)* %ptr.out
   store i32 0, i32 addrspace(1)* %out
   ret void
 }

@@ -184,9 +184,11 @@ void AMDGPUAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 }
 
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  const AMDGPUMachineFunction *MFI = MF.getInfo<AMDGPUMachineFunction>();
 
   // The starting address of all shader programs must be 256 bytes aligned.
-  MF.setAlignment(8);
+  // Regular functions just need the basic required instruction alignment.
+  MF.setAlignment(MFI->isEntryFunction() ? 8 : 2);
 
   SetupMachineFunction(MF);
 
