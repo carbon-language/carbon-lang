@@ -574,7 +574,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // using the bits from the RHS.  Below, we use knowledge about the RHS to
     // simplify the LHS, here we're using information from the LHS to simplify
     // the RHS.
-    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+    if (ConstantSDNode *RHSC = isConstOrConstSplat(Op.getOperand(1))) {
       SDValue Op0 = Op.getOperand(0);
       APInt LHSZero, LHSOne;
       // Do not increment Depth here; that can cause an infinite loop.
