@@ -95,7 +95,6 @@ class CoverageData {
   void DumpCallerCalleePairs();
   void DumpTrace();
   void DumpAsBitSet();
-  void DumpCounters();
   void DumpOffsets();
   void DumpAll();
 
@@ -105,10 +104,7 @@ class CoverageData {
   void InitializeGuardArray(s32 *guards);
   void InitializeGuards(s32 *guards, uptr n, const char *module_name,
                         uptr caller_pc);
-  void InitializeCounters(u8 *counters, uptr n);
   void ReinitializeGuards();
-  uptr GetNumberOf8bitCounters();
-  uptr Update8bitCounterBitsetAndClearCounters(u8 *bitset);
 
   uptr *data();
   uptr size() const;
@@ -149,14 +145,6 @@ class CoverageData {
   // Vector of module and compilation unit pc ranges.
   InternalMmapVectorNoCtor<NamedPcRange> comp_unit_name_vec;
   InternalMmapVectorNoCtor<NamedPcRange> module_name_vec;
-
-  struct CounterAndSize {
-    u8 *counters;
-    uptr n;
-  };
-
-  InternalMmapVectorNoCtor<CounterAndSize> counters_vec;
-  uptr num_8bit_counters;
 
   // Caller-Callee (cc) array, size and current index.
   static const uptr kCcArrayMaxSize = FIRST_32_SECOND_64(1 << 18, 1 << 24);
@@ -232,8 +220,6 @@ void CoverageData::Enable() {
       GetMmapGranularity());
   tr_event_array_size = kTrEventArrayMaxSize;
   tr_event_pointer = tr_event_array;
-
-  num_8bit_counters = 0;
 }
 
 void CoverageData::InitializeGuardArray(s32 *guards) {
@@ -339,15 +325,6 @@ void CoverageData::Extend(uptr npcs) {
   }
 
   atomic_store(&pc_array_size, size, memory_order_release);
-}
-
-void CoverageData::InitializeCounters(u8 *counters, uptr n) {
-  if (!counters) return;
-  CHECK_EQ(reinterpret_cast<uptr>(counters) % 16, 0);
-  n = RoundUpTo(n, 16); // The compiler must ensure that counters is 16-aligned.
-  SpinMutexLock l(&mu);
-  counters_vec.push_back({counters, n});
-  num_8bit_counters += n;
 }
 
 void CoverageData::UpdateModuleNameVec(uptr caller_pc, uptr range_beg,
@@ -456,64 +433,6 @@ void CoverageData::IndirCall(uptr caller, uptr callee, uptr callee_cache[],
     if (was == callee)  // Already have this callee.
       return;
   }
-}
-
-uptr CoverageData::GetNumberOf8bitCounters() {
-  return num_8bit_counters;
-}
-
-// Map every 8bit counter to a 8-bit bitset and clear the counter.
-uptr CoverageData::Update8bitCounterBitsetAndClearCounters(u8 *bitset) {
-  uptr num_new_bits = 0;
-  uptr cur = 0;
-  // For better speed we map 8 counters to 8 bytes of bitset at once.
-  static const uptr kBatchSize = 8;
-  CHECK_EQ(reinterpret_cast<uptr>(bitset) % kBatchSize, 0);
-  for (uptr i = 0, len = counters_vec.size(); i < len; i++) {
-    u8 *c = counters_vec[i].counters;
-    uptr n = counters_vec[i].n;
-    CHECK_EQ(n % 16, 0);
-    CHECK_EQ(cur % kBatchSize, 0);
-    CHECK_EQ(reinterpret_cast<uptr>(c) % kBatchSize, 0);
-    if (!bitset) {
-      internal_bzero_aligned16(c, n);
-      cur += n;
-      continue;
-    }
-    for (uptr j = 0; j < n; j += kBatchSize, cur += kBatchSize) {
-      CHECK_LT(cur, num_8bit_counters);
-      u64 *pc64 = reinterpret_cast<u64*>(c + j);
-      u64 *pb64 = reinterpret_cast<u64*>(bitset + cur);
-      u64 c64 = *pc64;
-      u64 old_bits_64 = *pb64;
-      u64 new_bits_64 = old_bits_64;
-      if (c64) {
-        *pc64 = 0;
-        for (uptr k = 0; k < kBatchSize; k++) {
-          u64 x = (c64 >> (8 * k)) & 0xff;
-          if (x) {
-            u64 bit = 0;
-            /**/ if (x >= 128) bit = 128;
-            else if (x >= 32) bit = 64;
-            else if (x >= 16) bit = 32;
-            else if (x >= 8) bit = 16;
-            else if (x >= 4) bit = 8;
-            else if (x >= 3) bit = 4;
-            else if (x >= 2) bit = 2;
-            else if (x >= 1) bit = 1;
-            u64 mask = bit << (8 * k);
-            if (!(new_bits_64 & mask)) {
-              num_new_bits++;
-              new_bits_64 |= mask;
-            }
-          }
-        }
-        *pb64 = new_bits_64;
-      }
-    }
-  }
-  CHECK_EQ(cur, num_8bit_counters);
-  return num_new_bits;
 }
 
 uptr *CoverageData::data() {
@@ -698,30 +617,6 @@ void CoverageData::TraceBasicBlock(u32 *id) {
   tr_event_pointer++;
 }
 
-void CoverageData::DumpCounters() {
-  if (!common_flags()->coverage_counters) return;
-  uptr n = coverage_data.GetNumberOf8bitCounters();
-  if (!n) return;
-  InternalScopedBuffer<u8> bitset(n);
-  coverage_data.Update8bitCounterBitsetAndClearCounters(bitset.data());
-  InternalScopedString path(kMaxPathLength);
-
-  for (uptr m = 0; m < module_name_vec.size(); m++) {
-    auto r = module_name_vec[m];
-    CHECK(r.copied_module_name);
-    CHECK_LE(r.beg, r.end);
-    CHECK_LE(r.end, size());
-    const char *base_name = StripModuleName(r.copied_module_name);
-    fd_t fd =
-        CovOpenFile(&path, /* packed */ false, base_name, "counters-sancov");
-    if (fd == kInvalidFd) return;
-    WriteToFile(fd, bitset.data() + r.beg, r.end - r.beg);
-    CloseFile(fd);
-    VReport(1, " CovDump: %zd counters written for '%s'\n", r.end - r.beg,
-            base_name);
-  }
-}
-
 void CoverageData::DumpAsBitSet() {
   if (!common_flags()->coverage_bitset) return;
   if (!size()) return;
@@ -869,7 +764,6 @@ void CoverageData::DumpAll() {
   if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
     return;
   DumpAsBitSet();
-  DumpCounters();
   DumpTrace();
   DumpOffsets();
   DumpCallerCalleePairs();
@@ -964,7 +858,6 @@ SANITIZER_INTERFACE_ATTRIBUTE void
 __sanitizer_cov_module_init(s32 *guards, uptr npcs, u8 *counters,
                             const char *comp_unit_name) {
   coverage_data.InitializeGuards(guards, npcs, comp_unit_name, GET_CALLER_PC());
-  coverage_data.InitializeCounters(counters, npcs);
   if (!common_flags()->coverage_direct) return;
   if (SANITIZER_ANDROID && coverage_enabled) {
     // dlopen/dlclose interceptors do not work on Android, so we rely on
@@ -1009,16 +902,6 @@ SANITIZER_INTERFACE_ATTRIBUTE
 uptr __sanitizer_get_coverage_guards(uptr **data) {
   *data = coverage_data.data();
   return coverage_data.size();
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-uptr __sanitizer_get_number_of_counters() {
-  return coverage_data.GetNumberOf8bitCounters();
-}
-
-SANITIZER_INTERFACE_ATTRIBUTE
-uptr __sanitizer_update_counter_bitset_and_clear_counters(u8 *bitset) {
-  return coverage_data.Update8bitCounterBitsetAndClearCounters(bitset);
 }
 
 // Default empty implementations (weak). Users should redefine them.
