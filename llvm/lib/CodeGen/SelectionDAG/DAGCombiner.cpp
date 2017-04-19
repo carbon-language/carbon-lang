@@ -5058,8 +5058,7 @@ SDValue DAGCombiner::visitXOR(SDNode *N) {
       return Tmp;
 
   // Simplify the expression using non-local knowledge.
-  if (!VT.isVector() &&
-      SimplifyDemandedBits(SDValue(N, 0)))
+  if (SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
 
   return SDValue();

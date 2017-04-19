@@ -715,7 +715,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     // If the RHS is a constant, see if we can simplify it.
     // for XOR, we prefer to force bits to 1 if they will make a -1.
     // If we can't force bits, try to shrink the constant.
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+    if (ConstantSDNode *C = isConstOrConstSplat(Op.getOperand(1))) {
       APInt Expanded = C->getAPIntValue() | (~NewMask);
       // If we can expand it to have all bits set, do it.
       if (Expanded.isAllOnesValue()) {
