@@ -426,8 +426,7 @@ public:
   /// If this value is smaller than the specified limit, return it, otherwise
   /// return the limit value.  This causes the value to saturate to the limit.
   uint64_t getLimitedValue(uint64_t Limit = UINT64_MAX) const {
-    return (getActiveBits() > 64 || getZExtValue() > Limit) ? Limit
-                                                            : getZExtValue();
+    return ugt(Limit) ? Limit : getZExtValue();
   }
 
   /// \brief Check if the APInt consists of a repeated bit pattern.
