@@ -59,7 +59,6 @@ using namespace llvm;
 static const char *const SanCovModuleInitName = "__sanitizer_cov_module_init";
 static const char *const SanCovName = "__sanitizer_cov";
 static const char *const SanCovWithCheckName = "__sanitizer_cov_with_check";
-static const char *const SanCovIndirCallName = "__sanitizer_cov_indir_call16";
 static const char *const SanCovTracePCIndirName =
     "__sanitizer_cov_trace_pc_indir";
 static const char *const SanCovTracePCName = "__sanitizer_cov_trace_pc";
@@ -82,8 +81,7 @@ static const char *const SanCovTracePCGuardInitName =
 static cl::opt<int> ClCoverageLevel(
     "sanitizer-coverage-level",
     cl::desc("Sanitizer Coverage. 0: none, 1: entry block, 2: all blocks, "
-             "3: all blocks and critical edges, "
-             "4: above plus indirect calls"),
+             "3: all blocks and critical edges"),
     cl::Hidden, cl::init(0));
 
 static cl::opt<unsigned> ClCoverageBlockThreshold(
@@ -197,7 +195,7 @@ private:
   StringRef getSanCovTracePCGuardSectionEnd() const;
   Function *SanCovFunction;
   Function *SanCovWithCheckFunction;
-  Function *SanCovIndirCallFunction, *SanCovTracePCIndir;
+  Function *SanCovTracePCIndir;
   Function *SanCovTracePC, *SanCovTracePCGuard;
   Function *SanCovTraceCmpFunction[4];
   Function *SanCovTraceDivFunction[2];
@@ -243,9 +241,6 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
       M.getOrInsertFunction(SanCovWithCheckName, VoidTy, Int32PtrTy));
   SanCovTracePCIndir = checkSanitizerInterfaceFunction(
       M.getOrInsertFunction(SanCovTracePCIndirName, VoidTy, IntptrTy));
-  SanCovIndirCallFunction =
-      checkSanitizerInterfaceFunction(M.getOrInsertFunction(
-          SanCovIndirCallName, VoidTy, IntptrTy, IntptrTy));
   SanCovTraceCmpFunction[0] =
       checkSanitizerInterfaceFunction(M.getOrInsertFunction(
           SanCovTraceCmp1, VoidTy, IRB.getInt8Ty(), IRB.getInt8Ty()));
@@ -516,26 +511,15 @@ void SanitizerCoverageModule::InjectCoverageForIndirectCalls(
     Function &F, ArrayRef<Instruction *> IndirCalls) {
   if (IndirCalls.empty())
     return;
-  const int CacheSize = 16;
-  const int CacheAlignment = 64; // Align for better performance.
-  Type *Ty = ArrayType::get(IntptrTy, CacheSize);
+  if (!Options.TracePC && !Options.TracePCGuard)
+    return;
   for (auto I : IndirCalls) {
     IRBuilder<> IRB(I);
     CallSite CS(I);
     Value *Callee = CS.getCalledValue();
     if (isa<InlineAsm>(Callee))
       continue;
-    GlobalVariable *CalleeCache = new GlobalVariable(
-        *F.getParent(), Ty, false, GlobalValue::PrivateLinkage,
-        Constant::getNullValue(Ty), "__sancov_gen_callee_cache");
-    CalleeCache->setAlignment(CacheAlignment);
-    if (Options.TracePC || Options.TracePCGuard)
-      IRB.CreateCall(SanCovTracePCIndir,
-                     IRB.CreatePointerCast(Callee, IntptrTy));
-    else
-      IRB.CreateCall(SanCovIndirCallFunction,
-                     {IRB.CreatePointerCast(Callee, IntptrTy),
-                      IRB.CreatePointerCast(CalleeCache, IntptrTy)});
+    IRB.CreateCall(SanCovTracePCIndir, IRB.CreatePointerCast(Callee, IntptrTy));
   }
 }
 

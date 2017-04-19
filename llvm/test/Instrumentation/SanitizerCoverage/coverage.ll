@@ -5,7 +5,6 @@
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=0  -S | FileCheck %s --check-prefix=CHECK_WITH_CHECK
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=1  -S | FileCheck %s --check-prefix=CHECK_WITH_CHECK
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=3 -sanitizer-coverage-block-threshold=10 -S | FileCheck %s --check-prefix=CHECK3
-; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -S | FileCheck %s --check-prefix=CHECK4
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=4 -sanitizer-coverage-trace-pc  -S | FileCheck %s --check-prefix=CHECK_TRACE_PC
 
 ; RUN: opt < %s -sancov -sanitizer-coverage-level=2 -sanitizer-coverage-block-threshold=10 \
@@ -93,13 +92,6 @@ entry:
   ret void
 }
 
-; We expect to see two calls to __sanitizer_cov_indir_call16
-; with different values of second argument.
-; CHECK4-LABEL: define void @CallViaVptr
-; CHECK4: call void @__sanitizer_cov_indir_call16({{.*}},[[CACHE:.*]])
-; CHECK4-NOT: call void @__sanitizer_cov_indir_call16({{.*}},[[CACHE]])
-; CHECK4: ret void
-
 ; CHECK_TRACE_PC-LABEL: define void @foo
 ; CHECK_TRACE_PC: call void @__sanitizer_cov_trace_pc
 ; CHECK_TRACE_PC: call void asm sideeffect "", ""()
@@ -114,10 +106,6 @@ define void @call_unreachable() uwtable sanitize_address {
 entry:
   unreachable
 }
-
-; CHECK4-LABEL: define void @call_unreachable
-; CHECK4-NOT: __sanitizer_cov
-; CHECK4: unreachable
 
 ; CHECKPRUNE-LABEL: define void @foo
 ; CHECKPRUNE: call void @__sanitizer_cov
