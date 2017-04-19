@@ -2251,14 +2251,6 @@ bool VarDecl::checkInitIsICE() const {
   return Eval->IsICE;
 }
 
-template<typename DeclT>
-static DeclT *getDefinitionOrSelf(DeclT *D) {
-  assert(D);
-  if (auto *Def = D->getDefinition())
-    return Def;
-  return D;
-}
-
 VarDecl *VarDecl::getTemplateInstantiationPattern() const {
   // If it's a variable template specialization, find the template or partial
   // specialization from which it was instantiated.
@@ -2270,7 +2262,7 @@ VarDecl *VarDecl::getTemplateInstantiationPattern() const {
           break;
         VTD = NewVTD;
       }
-      return getDefinitionOrSelf(VTD->getTemplatedDecl());
+      return VTD->getTemplatedDecl()->getDefinition();
     }
     if (auto *VTPSD =
             From.dyn_cast<VarTemplatePartialSpecializationDecl *>()) {
@@ -2279,7 +2271,7 @@ VarDecl *VarDecl::getTemplateInstantiationPattern() const {
           break;
         VTPSD = NewVTPSD;
       }
-      return getDefinitionOrSelf<VarDecl>(VTPSD);
+      return VTPSD->getDefinition();
     }
   }
 
@@ -2288,18 +2280,23 @@ VarDecl *VarDecl::getTemplateInstantiationPattern() const {
       VarDecl *VD = getInstantiatedFromStaticDataMember();
       while (auto *NewVD = VD->getInstantiatedFromStaticDataMember())
         VD = NewVD;
-      return getDefinitionOrSelf(VD);
+      return VD->getDefinition();
     }
   }
 
   if (VarTemplateDecl *VarTemplate = getDescribedVarTemplate()) {
+
     while (VarTemplate->getInstantiatedFromMemberTemplate()) {
       if (VarTemplate->isMemberSpecialization())
         break;
       VarTemplate = VarTemplate->getInstantiatedFromMemberTemplate();
     }
 
-    return getDefinitionOrSelf(VarTemplate->getTemplatedDecl());
+    assert((!VarTemplate->getTemplatedDecl() ||
+            !isTemplateInstantiation(getTemplateSpecializationKind())) &&
+           "couldn't find pattern for variable instantiation");
+
+    return VarTemplate->getTemplatedDecl();
   }
   return nullptr;
 }
@@ -3203,12 +3200,9 @@ bool FunctionDecl::isTemplateInstantiation() const {
    
 FunctionDecl *FunctionDecl::getTemplateInstantiationPattern() const {
   // Handle class scope explicit specialization special case.
-  if (getTemplateSpecializationKind() == TSK_ExplicitSpecialization) {
-    if (auto *Spec = getClassScopeSpecializationPattern())
-      return getDefinitionOrSelf(Spec);
-    return nullptr;
-  }
-
+  if (getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+    return getClassScopeSpecializationPattern();
+  
   // If this is a generic lambda call operator specialization, its 
   // instantiation pattern is always its primary template's pattern
   // even if its primary template was instantiated from another 
@@ -3220,10 +3214,16 @@ FunctionDecl *FunctionDecl::getTemplateInstantiationPattern() const {
 
   if (isGenericLambdaCallOperatorSpecialization(
           dyn_cast<CXXMethodDecl>(this))) {
-    assert(getPrimaryTemplate() && "not a generic lambda call operator?");
-    return getDefinitionOrSelf(getPrimaryTemplate()->getTemplatedDecl());
+    assert(getPrimaryTemplate() && "A generic lambda specialization must be "
+                                   "generated from a primary call operator "
+                                   "template");
+    assert(getPrimaryTemplate()->getTemplatedDecl()->getBody() &&
+           "A generic lambda call operator template must always have a body - "
+           "even if instantiated from a prototype (i.e. as written) member "
+           "template");
+    return getPrimaryTemplate()->getTemplatedDecl();
   }
-
+  
   if (FunctionTemplateDecl *Primary = getPrimaryTemplate()) {
     while (Primary->getInstantiatedFromMemberTemplate()) {
       // If we have hit a point where the user provided a specialization of
@@ -3232,14 +3232,11 @@ FunctionDecl *FunctionDecl::getTemplateInstantiationPattern() const {
         break;
       Primary = Primary->getInstantiatedFromMemberTemplate();
     }
-
-    return getDefinitionOrSelf(Primary->getTemplatedDecl());
+    
+    return Primary->getTemplatedDecl();
   } 
-
-  if (auto *MFD = getInstantiatedFromMemberFunction())
-    return getDefinitionOrSelf(MFD);
-
-  return nullptr;
+    
+  return getInstantiatedFromMemberFunction();
 }
 
 FunctionTemplateDecl *FunctionDecl::getPrimaryTemplate() const {
@@ -3783,7 +3780,7 @@ EnumDecl *EnumDecl::getTemplateInstantiationPattern() const {
       EnumDecl *ED = getInstantiatedFromMemberEnum();
       while (auto *NewED = ED->getInstantiatedFromMemberEnum())
         ED = NewED;
-      return getDefinitionOrSelf(ED);
+      return ED;
     }
   }
 

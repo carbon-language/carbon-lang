@@ -1326,6 +1326,12 @@ bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   return !R.empty();
 }
 
+/// \brief Find the declaration that a class temploid member specialization was
+/// instantiated from, or the member itself if it is an explicit specialization.
+static Decl *getInstantiatedFrom(Decl *D, MemberSpecializationInfo *MSInfo) {
+  return MSInfo->isExplicitSpecialization() ? D : MSInfo->getInstantiatedFrom();
+}
+
 Module *Sema::getOwningModule(Decl *Entity) {
   // If it's imported, grab its owning module.
   Module *M = Entity->getImportedOwningModule();
@@ -1407,14 +1413,20 @@ static Module *getDefiningModule(Sema &S, Decl *Entity) {
     if (CXXRecordDecl *Pattern = RD->getTemplateInstantiationPattern())
       Entity = Pattern;
   } else if (EnumDecl *ED = dyn_cast<EnumDecl>(Entity)) {
-    if (auto *Pattern = ED->getTemplateInstantiationPattern())
-      Entity = Pattern;
+    if (MemberSpecializationInfo *MSInfo = ED->getMemberSpecializationInfo())
+      Entity = getInstantiatedFrom(ED, MSInfo);
   } else if (VarDecl *VD = dyn_cast<VarDecl>(Entity)) {
-    if (VarDecl *Pattern = VD->getTemplateInstantiationPattern())
-      Entity = Pattern;
+    // FIXME: Map from variable template specializations back to the template.
+    if (MemberSpecializationInfo *MSInfo = VD->getMemberSpecializationInfo())
+      Entity = getInstantiatedFrom(VD, MSInfo);
   }
 
-  return S.getOwningModule(Entity);
+  // Walk up to the containing context. That might also have been instantiated
+  // from a template.
+  DeclContext *Context = Entity->getDeclContext();
+  if (Context->isFileContext())
+    return S.getOwningModule(Entity);
+  return getDefiningModule(S, cast<Decl>(Context));
 }
 
 llvm::DenseSet<Module*> &Sema::getLookupModules() {

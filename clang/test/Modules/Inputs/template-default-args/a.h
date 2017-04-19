@@ -14,11 +14,3 @@ struct FriendL {
   template<typename T> friend struct L;
 };
 END
-
-namespace DeferredLookup {
-  template<typename T, typename U = T> using X = U;
-  template<typename T> void f() { (void) X<T>(); }
-  template<typename T> int n = X<T>();
-  template<typename T> struct S { X<T> xt; enum E : int; };
-  template<typename T> enum S<T>::E : int { a = X<T>() };
-}
