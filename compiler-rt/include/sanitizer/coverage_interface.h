@@ -35,14 +35,6 @@ extern "C" {
   // Get the number of unique covered blocks (or edges).
   // This can be useful for coverage-directed in-process fuzzers.
   uintptr_t __sanitizer_get_total_unique_coverage();
-
-  // Reset the basic-block (edge) coverage to the initial state.
-  // Useful for in-process fuzzing to start collecting coverage from scratch.
-  // Experimental, will likely not work for multi-threaded process.
-  void __sanitizer_reset_coverage();
-  // Set *data to the array of covered PCs and return the size of that array.
-  // Some of the entries in *data will be zero.
-  uintptr_t __sanitizer_get_coverage_guards(uintptr_t **data);
 #ifdef __cplusplus
 }  // extern "C"
 #endif
