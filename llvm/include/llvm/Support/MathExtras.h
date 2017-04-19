@@ -18,6 +18,7 @@
 #include "llvm/Support/SwapByteOrder.h"
 #include <algorithm>
 #include <cassert>
+#include <climits>
 #include <cstring>
 #include <type_traits>
 #include <limits>
