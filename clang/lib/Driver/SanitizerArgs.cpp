@@ -469,34 +469,12 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       int LegacySanitizeCoverage;
       if (Arg->getNumValues() == 1 &&
           !StringRef(Arg->getValue(0))
-               .getAsInteger(0, LegacySanitizeCoverage) &&
-          LegacySanitizeCoverage >= 0 && LegacySanitizeCoverage <= 4) {
-        switch (LegacySanitizeCoverage) {
-        case 0:
-          CoverageFeatures = 0;
-          Arg->claim();
-          break;
-        case 1:
-          D.Diag(diag::warn_drv_deprecated_arg) << Arg->getAsString(Args)
-                                                << "-fsanitize-coverage=func";
-          CoverageFeatures = CoverageFunc;
-          break;
-        case 2:
-          D.Diag(diag::warn_drv_deprecated_arg) << Arg->getAsString(Args)
-                                                << "-fsanitize-coverage=bb";
-          CoverageFeatures = CoverageBB;
-          break;
-        case 3:
-          D.Diag(diag::warn_drv_deprecated_arg) << Arg->getAsString(Args)
-                                                << "-fsanitize-coverage=edge";
-          CoverageFeatures = CoverageEdge;
-          break;
-        case 4:
+               .getAsInteger(0, LegacySanitizeCoverage)) {
+        CoverageFeatures = 0;
+        Arg->claim();
+        if (LegacySanitizeCoverage != 0) {
           D.Diag(diag::warn_drv_deprecated_arg)
-              << Arg->getAsString(Args)
-              << "-fsanitize-coverage=edge,indirect-calls";
-          CoverageFeatures = CoverageEdge | CoverageIndirCall;
-          break;
+              << Arg->getAsString(Args) << "-fsanitize-coverage=trace-pc-guard";
         }
         continue;
       }

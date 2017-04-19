@@ -202,27 +202,7 @@ edges by introducing new dummy blocks and then instruments those blocks:
 Bitset
 ======
 
-When ``coverage_bitset=1`` run-time flag is given, the coverage will also be
-dumped as a bitset (text file with 1 for blocks that have been executed and 0
-for blocks that were not).
-
-.. code-block:: console
-
-    % clang++ -fsanitize=address -fsanitize-coverage=edge cov.cc
-    % ASAN_OPTIONS="coverage=1:coverage_bitset=1" ./a.out
-    main
-    % ASAN_OPTIONS="coverage=1:coverage_bitset=1" ./a.out 1
-    foo
-    main
-    % head *bitset*
-    ==> a.out.38214.bitset-sancov <==
-    01101
-    ==> a.out.6128.bitset-sancov <==
-    11011%
-
-For a given executable the length of the bitset is always the same (well,
-unless dlopen/dlclose come into play), so the bitset coverage can be
-easily used for bitset-based corpus distillation.
+**coverage_bitset=1 is deprecated, don't use**
 
 Caller-callee coverage
 ======================
@@ -325,8 +305,6 @@ Basic block tracing is currently supported only for single-threaded applications
 
 Tracing PCs
 ===========
-
-**Deprecated, don't use**
 
 *Experimental* feature similar to tracing basic blocks, but with a different API.
 With ``-fsanitize-coverage=trace-pc`` the compiler will insert
