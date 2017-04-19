@@ -35,8 +35,6 @@ extern "C" {
   // Get the number of unique covered blocks (or edges).
   // This can be useful for coverage-directed in-process fuzzers.
   uintptr_t __sanitizer_get_total_unique_coverage();
-  // Get the number of unique indirect caller-callee pairs.
-  uintptr_t __sanitizer_get_total_unique_caller_callee_pairs();
 
   // Reset the basic-block (edge) coverage to the initial state.
   // Useful for in-process fuzzing to start collecting coverage from scratch.
