@@ -205,7 +205,7 @@ template <typename T> T maskTrailingOnes(unsigned N) {
   static_assert(std::is_unsigned<T>::value, "Invalid type!");
   const unsigned Bits = CHAR_BIT * sizeof(T);
   assert(N <= Bits && "Invalid bit index");
-  return -T(N != 0) & (T(-1) >> (Bits - N));
+  return N == 0 ? 0 : (T(-1) >> (Bits - N));
 }
 
 /// \brief Create a bitmask with the N left-most bits set to 1, and all other

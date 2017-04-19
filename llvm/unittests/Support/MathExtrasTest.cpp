@@ -84,6 +84,11 @@ TEST(MathExtras, onesMask) {
 
   EXPECT_EQ(0xFFFFFFFFU, maskTrailingOnes<uint32_t>(32U));
   EXPECT_EQ(0xFFFFFFFFU, maskLeadingOnes<uint32_t>(32U));
+  EXPECT_EQ(0xFFFFFFFFFFFFFFFFULL, maskTrailingOnes<uint64_t>(64U));
+  EXPECT_EQ(0xFFFFFFFFFFFFFFFFULL, maskLeadingOnes<uint64_t>(64U));
+
+  EXPECT_EQ(0x0000FFFFFFFFFFFFULL, maskTrailingOnes<uint64_t>(48U));
+  EXPECT_EQ(0xFFFFFFFFFFFF0000ULL, maskLeadingOnes<uint64_t>(48U));
 }
 
 TEST(MathExtras, findFirstSet) {
