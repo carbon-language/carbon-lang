@@ -22,7 +22,7 @@ issue on the llvm-dev mailing list.
 
 LLVM still supports an alternate mechanism for conservative garbage collection 
 support using the ``gcroot`` intrinsic.  The ``gcroot`` mechanism is mostly of
-historical interest at this point with one exception - it's implementation of 
+historical interest at this point with one exception - its implementation of
 shadow stacks has been used successfully by a number of language frontends and
 is still supported.  
 
@@ -138,7 +138,7 @@ explicitly visible in the IR.  Doing so requires that we:
 At the most abstract level, inserting a safepoint can be thought of as
 replacing a call instruction with a call to a multiple return value
 function which both calls the original target of the call, returns
-it's result, and returns updated values for any live pointers to
+its result, and returns updated values for any live pointers to
 garbage collected objects.
 
   Note that the task of identifying all live pointers to garbage
@@ -234,7 +234,9 @@ The relevant parts of the StackMap section for our example are:
 	  .short	7
 	  .long	0
 
-This example was taken from the tests for the :ref:`RewriteStatepointsForGC` utility pass.  As such, it's full StackMap can be easily examined with the following command.
+This example was taken from the tests for the :ref:`RewriteStatepointsForGC`
+utility pass.  As such, its full StackMap can be easily examined with the
+following command.
 
 .. code-block:: bash
 
@@ -570,7 +572,7 @@ Semantics:
 """"""""""
 
 The return value of ``gc.relocate`` is the potentially relocated value
-of the pointer specified by it's arguments.  It is unspecified how the
+of the pointer specified by its arguments.  It is unspecified how the
 value of the returned pointer relates to the argument to the
 ``gc.statepoint`` other than that a) it points to the same source
 language object with the same offset, and b) the 'based-on'
