@@ -2253,6 +2253,7 @@ bool VarDecl::checkInitIsICE() const {
 
 template<typename DeclT>
 static DeclT *getDefinitionOrSelf(DeclT *D) {
+  assert(D);
   if (auto *Def = D->getDefinition())
     return Def;
   return D;
@@ -3202,9 +3203,12 @@ bool FunctionDecl::isTemplateInstantiation() const {
    
 FunctionDecl *FunctionDecl::getTemplateInstantiationPattern() const {
   // Handle class scope explicit specialization special case.
-  if (getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
-    return getDefinitionOrSelf(getClassScopeSpecializationPattern());
-  
+  if (getTemplateSpecializationKind() == TSK_ExplicitSpecialization) {
+    if (auto *Spec = getClassScopeSpecializationPattern())
+      return getDefinitionOrSelf(Spec);
+    return nullptr;
+  }
+
   // If this is a generic lambda call operator specialization, its 
   // instantiation pattern is always its primary template's pattern
   // even if its primary template was instantiated from another 
