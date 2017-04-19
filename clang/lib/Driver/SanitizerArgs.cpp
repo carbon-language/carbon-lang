@@ -508,12 +508,11 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   // Basic block tracing and 8-bit counters require some type of coverage
   // enabled.
   int CoverageTypes = CoverageFunc | CoverageBB | CoverageEdge;
-  if ((CoverageFeatures & CoverageTraceBB) &&
-      !(CoverageFeatures & CoverageTypes))
-    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+  if (CoverageFeatures & CoverageTraceBB)
+    D.Diag(clang::diag::warn_drv_deprecated_arg)
         << "-fsanitize-coverage=trace-bb"
-        << "-fsanitize-coverage=(func|bb|edge)";
-  if ((CoverageFeatures & Coverage8bitCounters))
+        << "-fsanitize-coverage=trace-pc-guard";
+  if (CoverageFeatures & Coverage8bitCounters)
     D.Diag(clang::diag::warn_drv_deprecated_arg)
         << "-fsanitize-coverage=8bit-counters"
         << "-fsanitize-coverage=trace-pc-guard";
