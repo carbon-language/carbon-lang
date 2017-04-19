@@ -62,8 +62,6 @@ static const char *const SanCovWithCheckName = "__sanitizer_cov_with_check";
 static const char *const SanCovIndirCallName = "__sanitizer_cov_indir_call16";
 static const char *const SanCovTracePCIndirName =
     "__sanitizer_cov_trace_pc_indir";
-static const char *const SanCovTraceEnterName =
-    "__sanitizer_cov_trace_func_enter";
 static const char *const SanCovTracePCName = "__sanitizer_cov_trace_pc";
 static const char *const SanCovTraceCmp1 = "__sanitizer_cov_trace_cmp1";
 static const char *const SanCovTraceCmp2 = "__sanitizer_cov_trace_cmp2";
@@ -287,7 +285,6 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   // At this point we create a dummy array of guards because we don't
   // know how many elements we will need.
   Type *Int32Ty = IRB.getInt32Ty();
-  Type *Int8Ty = IRB.getInt8Ty();
 
   if (!Options.TracePCGuard)
     GuardArray =
