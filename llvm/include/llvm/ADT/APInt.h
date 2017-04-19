@@ -200,9 +200,6 @@ private:
   /// out-of-line slow case for operator==
   bool EqualSlowCase(const APInt &RHS) const LLVM_READONLY;
 
-  /// out-of-line slow case for operator==
-  bool EqualSlowCase(uint64_t Val) const LLVM_READONLY;
-
   /// out-of-line slow case for countLeadingZeros
   unsigned countLeadingZerosSlowCase() const LLVM_READONLY;
 
@@ -1031,9 +1028,7 @@ public:
   ///
   /// \returns true if *this == Val
   bool operator==(uint64_t Val) const {
-    if (isSingleWord())
-      return VAL == Val;
-    return EqualSlowCase(Val);
+    return (isSingleWord() || getActiveBits() <= 64) && getZExtValue() == Val;
   }
 
   /// \brief Equality comparison.

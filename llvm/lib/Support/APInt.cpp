@@ -364,14 +364,6 @@ bool APInt::EqualSlowCase(const APInt& RHS) const {
   return std::equal(pVal, pVal + getNumWords(), RHS.pVal);
 }
 
-bool APInt::EqualSlowCase(uint64_t Val) const {
-  unsigned n = getActiveBits();
-  if (n <= APINT_BITS_PER_WORD)
-    return pVal[0] == Val;
-  else
-    return false;
-}
-
 bool APInt::ult(const APInt& RHS) const {
   assert(BitWidth == RHS.BitWidth && "Bit widths must be same for comparison");
   if (isSingleWord())
