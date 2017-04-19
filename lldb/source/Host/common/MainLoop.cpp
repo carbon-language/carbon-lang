@@ -141,7 +141,7 @@ void MainLoop::UnregisterReadObject(IOObject::WaitableHandle handle) {
 
 void MainLoop::UnregisterSignal(int signo) {
 #if SIGNAL_POLLING_UNSUPPORTED
-  error.SetErrorString("Signal polling is not supported on this platform.");
+  Error("Signal polling is not supported on this platform.");
   return nullptr;
 #else
   // We undo the actions of RegisterSignal on a best-effort basis.
