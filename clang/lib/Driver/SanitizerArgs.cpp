@@ -513,11 +513,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
     D.Diag(clang::diag::err_drv_argument_only_allowed_with)
         << "-fsanitize-coverage=trace-bb"
         << "-fsanitize-coverage=(func|bb|edge)";
-  if ((CoverageFeatures & Coverage8bitCounters) &&
-      !(CoverageFeatures & CoverageTypes))
-    D.Diag(clang::diag::err_drv_argument_only_allowed_with)
+  if ((CoverageFeatures & Coverage8bitCounters))
+    D.Diag(clang::diag::warn_drv_deprecated_arg)
         << "-fsanitize-coverage=8bit-counters"
-        << "-fsanitize-coverage=(func|bb|edge)";
+        << "-fsanitize-coverage=trace-pc-guard";
   // trace-pc w/o func/bb/edge implies edge.
   if ((CoverageFeatures & (CoverageTracePC | CoverageTracePCGuard)) &&
       !(CoverageFeatures & CoverageTypes))
