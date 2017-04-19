@@ -146,7 +146,7 @@ void ProcessPlatformSpecificAllocations(Frontier *frontier) {
 }
 
 void DoStopTheWorld(StopTheWorldCallback callback, void *argument) {
-  CHECK(0 && "unimplemented");
+  StopTheWorld(callback, argument);
 }
 
 } // namespace __lsan
