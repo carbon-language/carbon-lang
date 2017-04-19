@@ -125,16 +125,16 @@ APInt::APInt(unsigned numbits, StringRef Str, uint8_t radix)
   fromString(numbits, Str, radix);
 }
 
-APInt& APInt::AssignSlowCase(const APInt& RHS) {
+void APInt::AssignSlowCase(const APInt& RHS) {
   // Don't do anything for X = X
   if (this == &RHS)
-    return *this;
+    return;
 
   if (BitWidth == RHS.getBitWidth()) {
     // assume same bit-width single-word case is already handled
     assert(!isSingleWord());
     memcpy(pVal, RHS.pVal, getNumWords() * APINT_WORD_SIZE);
-    return *this;
+    return;
   }
 
   if (isSingleWord()) {
@@ -154,7 +154,7 @@ APInt& APInt::AssignSlowCase(const APInt& RHS) {
     memcpy(pVal, RHS.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
   }
   BitWidth = RHS.BitWidth;
-  return clearUnusedBits();
+  clearUnusedBits();
 }
 
 /// This method 'profiles' an APInt for use with FoldingSet.
@@ -339,19 +339,16 @@ APInt& APInt::operator*=(const APInt& RHS) {
   return *this;
 }
 
-APInt& APInt::AndAssignSlowCase(const APInt& RHS) {
+void APInt::AndAssignSlowCase(const APInt& RHS) {
   tcAnd(pVal, RHS.pVal, getNumWords());
-  return *this;
 }
 
-APInt& APInt::OrAssignSlowCase(const APInt& RHS) {
+void APInt::OrAssignSlowCase(const APInt& RHS) {
   tcOr(pVal, RHS.pVal, getNumWords());
-  return *this;
 }
 
-APInt& APInt::XorAssignSlowCase(const APInt& RHS) {
+void APInt::XorAssignSlowCase(const APInt& RHS) {
   tcXor(pVal, RHS.pVal, getNumWords());
-  return *this;
 }
 
 APInt APInt::operator*(const APInt& RHS) const {

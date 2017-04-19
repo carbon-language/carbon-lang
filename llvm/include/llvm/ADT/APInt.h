@@ -195,7 +195,7 @@ private:
   void lshrSlowCase(unsigned ShiftAmt);
 
   /// out-of-line slow case for operator=
-  APInt &AssignSlowCase(const APInt &RHS);
+  void AssignSlowCase(const APInt &RHS);
 
   /// out-of-line slow case for operator==
   bool EqualSlowCase(const APInt &RHS) const LLVM_READONLY;
@@ -219,13 +219,13 @@ private:
   void flipAllBitsSlowCase();
 
   /// out-of-line slow case for operator&=.
-  APInt& AndAssignSlowCase(const APInt& RHS);
+  void AndAssignSlowCase(const APInt& RHS);
 
   /// out-of-line slow case for operator|=.
-  APInt& OrAssignSlowCase(const APInt& RHS);
+  void OrAssignSlowCase(const APInt& RHS);
 
   /// out-of-line slow case for operator^=.
-  APInt& XorAssignSlowCase(const APInt& RHS);
+  void XorAssignSlowCase(const APInt& RHS);
 
 public:
   /// \name Constructors
@@ -691,7 +691,8 @@ public:
       return clearUnusedBits();
     }
 
-    return AssignSlowCase(RHS);
+    AssignSlowCase(RHS);
+    return *this;
   }
 
   /// @brief Move assignment operator.
@@ -736,11 +737,11 @@ public:
   /// \returns *this after ANDing with RHS.
   APInt &operator&=(const APInt &RHS) {
     assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-    if (isSingleWord()) {
+    if (isSingleWord())
       VAL &= RHS.VAL;
-      return *this;
-    }
-    return AndAssignSlowCase(RHS);
+    else
+      AndAssignSlowCase(RHS);
+    return *this;
   }
 
   /// \brief Bitwise AND assignment operator.
@@ -766,11 +767,11 @@ public:
   /// \returns *this after ORing with RHS.
   APInt &operator|=(const APInt &RHS) {
     assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-    if (isSingleWord()) {
+    if (isSingleWord())
       VAL |= RHS.VAL;
-      return *this;
-    }
-    return OrAssignSlowCase(RHS);
+    else
+      OrAssignSlowCase(RHS);
+    return *this;
   }
 
   /// \brief Bitwise OR assignment operator.
@@ -796,11 +797,11 @@ public:
   /// \returns *this after XORing with RHS.
   APInt &operator^=(const APInt &RHS) {
     assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
-    if (isSingleWord()) {
+    if (isSingleWord())
       VAL ^= RHS.VAL;
-      return *this;
-    }
-    return XorAssignSlowCase(RHS);
+    else
+      XorAssignSlowCase(RHS);
+    return *this;
   }
 
   /// \brief Bitwise XOR assignment operator.
