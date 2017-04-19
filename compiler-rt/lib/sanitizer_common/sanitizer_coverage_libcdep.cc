@@ -93,13 +93,9 @@ class CoverageData {
   void IndirCall(uptr caller, uptr callee, uptr callee_cache[],
                  uptr cache_size);
   void DumpCallerCalleePairs();
-  void DumpTrace();
   void DumpAsBitSet();
   void DumpOffsets();
   void DumpAll();
-
-  ALWAYS_INLINE
-  void TraceBasicBlock(u32 *id);
 
   void InitializeGuardArray(s32 *guards);
   void InitializeGuards(s32 *guards, uptr n, const char *module_name,
@@ -152,23 +148,6 @@ class CoverageData {
   atomic_uintptr_t cc_array_index;
   atomic_uintptr_t cc_array_size;
 
-  // Tracing event array, size and current pointer.
-  // We record all events (basic block entries) in a global buffer of u32
-  // values. Each such value is the index in pc_array.
-  // So far the tracing is highly experimental:
-  //   - not thread-safe;
-  //   - does not support long traces;
-  //   - not tuned for performance.
-  // Windows doesn't do overcommit (committed virtual memory costs swap), so
-  // programs can't reliably map such large amounts of virtual memory.
-  // TODO(etienneb): Find a way to support coverage of larger executable
-static const uptr kTrEventArrayMaxSize =
-    (SANITIZER_WORDSIZE == 32 || SANITIZER_WINDOWS) ? 1 << 22 : 1 << 30;
-  u32 *tr_event_array;
-  uptr tr_event_array_size;
-  u32 *tr_event_pointer;
-  static const uptr kTrPcArrayMaxSize    = FIRST_32_SECOND_64(1 << 22, 1 << 27);
-
   StaticSpinMutex mu;
 };
 
@@ -210,16 +189,6 @@ void CoverageData::Enable() {
       sizeof(uptr *) * kCcArrayMaxSize, "CovInit::cc_array"));
   atomic_store(&cc_array_size, kCcArrayMaxSize, memory_order_relaxed);
   atomic_store(&cc_array_index, 0, memory_order_relaxed);
-
-  // Allocate tr_event_array with a guard page at the end.
-  tr_event_array = reinterpret_cast<u32 *>(MmapNoReserveOrDie(
-      sizeof(tr_event_array[0]) * kTrEventArrayMaxSize + GetMmapGranularity(),
-      "CovInit::tr_event_array"));
-  MprotectNoAccess(
-      reinterpret_cast<uptr>(&tr_event_array[kTrEventArrayMaxSize]),
-      GetMmapGranularity());
-  tr_event_array_size = kTrEventArrayMaxSize;
-  tr_event_pointer = tr_event_array;
 }
 
 void CoverageData::InitializeGuardArray(s32 *guards) {
@@ -240,13 +209,6 @@ void CoverageData::Disable() {
   if (cc_array) {
     UnmapOrDie(cc_array, sizeof(uptr *) * kCcArrayMaxSize);
     cc_array = nullptr;
-  }
-  if (tr_event_array) {
-    UnmapOrDie(tr_event_array,
-               sizeof(tr_event_array[0]) * kTrEventArrayMaxSize +
-                   GetMmapGranularity());
-    tr_event_array = nullptr;
-    tr_event_pointer = nullptr;
   }
   if (pc_fd != kInvalidFd) {
     CloseFile(pc_fd);
@@ -515,55 +477,6 @@ static fd_t CovOpenFile(InternalScopedString *path, bool packed,
   return fd;
 }
 
-// Dump trace PCs and trace events into two separate files.
-void CoverageData::DumpTrace() {
-  uptr max_idx = tr_event_pointer - tr_event_array;
-  if (!max_idx) return;
-  auto sym = Symbolizer::GetOrInit();
-  if (!sym)
-    return;
-  InternalScopedString out(32 << 20);
-  for (uptr i = 0, n = size(); i < n; i++) {
-    const char *module_name = "<unknown>";
-    uptr module_address = 0;
-    sym->GetModuleNameAndOffsetForPC(UnbundlePc(pc_array[i]), &module_name,
-                                     &module_address);
-    out.append("%s 0x%zx\n", module_name, module_address);
-  }
-  InternalScopedString path(kMaxPathLength);
-  fd_t fd = CovOpenFile(&path, false, "trace-points");
-  if (fd == kInvalidFd) return;
-  WriteToFile(fd, out.data(), out.length());
-  CloseFile(fd);
-
-  fd = CovOpenFile(&path, false, "trace-compunits");
-  if (fd == kInvalidFd) return;
-  out.clear();
-  for (uptr i = 0; i < comp_unit_name_vec.size(); i++)
-    out.append("%s\n", comp_unit_name_vec[i].copied_module_name);
-  WriteToFile(fd, out.data(), out.length());
-  CloseFile(fd);
-
-  fd = CovOpenFile(&path, false, "trace-events");
-  if (fd == kInvalidFd) return;
-  uptr bytes_to_write = max_idx * sizeof(tr_event_array[0]);
-  u8 *event_bytes = reinterpret_cast<u8*>(tr_event_array);
-  // The trace file could be huge, and may not be written with a single syscall.
-  while (bytes_to_write) {
-    uptr actually_written;
-    if (WriteToFile(fd, event_bytes, bytes_to_write, &actually_written) &&
-        actually_written <= bytes_to_write) {
-      bytes_to_write -= actually_written;
-      event_bytes += actually_written;
-    } else {
-      break;
-    }
-  }
-  CloseFile(fd);
-  VReport(1, " CovDump: Trace: %zd PCs written\n", size());
-  VReport(1, " CovDump: Trace: %zd Events written\n", max_idx);
-}
-
 // This function dumps the caller=>callee pairs into a file as a sequence of
 // lines like "module_name offset".
 void CoverageData::DumpCallerCalleePairs() {
@@ -602,19 +515,6 @@ void CoverageData::DumpCallerCalleePairs() {
   WriteToFile(fd, out.data(), out.length());
   CloseFile(fd);
   VReport(1, " CovDump: %zd caller-callee pairs written\n", total);
-}
-
-// Record the current PC into the event buffer.
-// Every event is a u32 value (index in tr_pc_array_index) so we compute
-// it once and then cache in the provided 'cache' storage.
-//
-// This function will eventually be inlined by the compiler.
-void CoverageData::TraceBasicBlock(u32 *id) {
-  // Will trap here if
-  //  1. coverage is not enabled at run-time.
-  //  2. The array tr_event_array is full.
-  *tr_event_pointer = *id - 1;
-  tr_event_pointer++;
 }
 
 void CoverageData::DumpAsBitSet() {
@@ -764,7 +664,6 @@ void CoverageData::DumpAll() {
   if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
     return;
   DumpAsBitSet();
-  DumpTrace();
   DumpOffsets();
   DumpCallerCalleePairs();
 }
@@ -880,16 +779,6 @@ uptr __sanitizer_get_total_unique_caller_callee_pairs() {
   return atomic_load(&caller_callee_counter, memory_order_relaxed);
 }
 
-SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_cov_trace_func_enter(u32 *id) {
-  __sanitizer_cov_with_check(id);
-  coverage_data.TraceBasicBlock(id);
-}
-SANITIZER_INTERFACE_ATTRIBUTE
-void __sanitizer_cov_trace_basic_block(u32 *id) {
-  __sanitizer_cov_with_check(id);
-  coverage_data.TraceBasicBlock(id);
-}
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_reset_coverage() {
   ResetGlobalCounters();
