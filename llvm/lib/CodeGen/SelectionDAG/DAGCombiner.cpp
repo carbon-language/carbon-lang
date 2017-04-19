@@ -4225,8 +4225,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     return Load;
 
   // Simplify the operands using demanded-bits information.
-  if (!VT.isVector() &&
-      SimplifyDemandedBits(SDValue(N, 0)))
+  if (SimplifyDemandedBits(SDValue(N, 0)))
     return SDValue(N, 0);
 
   return SDValue();
