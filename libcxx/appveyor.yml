@@ -10,7 +10,7 @@ build:
 
 branches:
   only:
-    - windows-build
+    - master
 
 configuration:
   - Debug
