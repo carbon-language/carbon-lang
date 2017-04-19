@@ -2833,7 +2833,7 @@ SelectionDAG::OverflowKind SelectionDAG::computeOverflowKind(SDValue N0,
     computeKnownBits(N0, N0Zero, N0One);
 
     bool overflow;
-    (~N0Zero).uadd_ov(~N1Zero, overflow);
+    (void)(~N0Zero).uadd_ov(~N1Zero, overflow);
     if (!overflow)
       return OFK_Never;
   }

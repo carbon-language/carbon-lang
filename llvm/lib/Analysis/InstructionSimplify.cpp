@@ -1081,7 +1081,7 @@ static Value *SimplifyDiv(Instruction::BinaryOps Opcode, Value *Op0, Value *Op1,
   if (!isSigned && match(Op0, m_UDiv(m_Value(X), m_ConstantInt(C1))) &&
       match(Op1, m_ConstantInt(C2))) {
     bool Overflow;
-    C1->getValue().umul_ov(C2->getValue(), Overflow);
+    (void)C1->getValue().umul_ov(C2->getValue(), Overflow);
     if (Overflow)
       return Constant::getNullValue(Op0->getType());
   }
