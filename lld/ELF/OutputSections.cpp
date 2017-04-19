@@ -94,8 +94,8 @@ template <class ELFT> void OutputSection::maybeCompress() {
     return;
 
   // Create a section header.
-  CompressedHeader.resize(sizeof(Elf_Chdr));
-  auto *Hdr = reinterpret_cast<Elf_Chdr *>(CompressedHeader.data());
+  ZDebugHeader.resize(sizeof(Elf_Chdr));
+  auto *Hdr = reinterpret_cast<Elf_Chdr *>(ZDebugHeader.data());
   Hdr->ch_type = ELFCOMPRESS_ZLIB;
   Hdr->ch_size = Size;
   Hdr->ch_addralign = Alignment;
@@ -276,9 +276,9 @@ template <class ELFT> void OutputSection::writeTo(uint8_t *Buf) {
   // We may have already rendered compressed content when using
   // -compress-debug-sections option. Write it together with header.
   if (!CompressedData.empty()) {
-    memcpy(Buf, CompressedHeader.data(), CompressedHeader.size());
-    Buf += CompressedHeader.size();
-    memcpy(Buf, CompressedData.data(), CompressedData.size());
+    memcpy(Buf, ZDebugHeader.data(), ZDebugHeader.size());
+    memcpy(Buf + ZDebugHeader.size(), CompressedData.data(),
+           CompressedData.size());
     return;
   }
 
