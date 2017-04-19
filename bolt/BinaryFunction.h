@@ -439,8 +439,9 @@ private:
   std::unordered_map<const MCSymbol *, BinaryBasicBlock *> LabelToBB;
 
   using BranchListType = std::vector<std::pair<uint32_t, uint32_t>>;
-  BranchListType TakenBranches; /// All local taken branches.
-  BranchListType FTBranches;    /// All fall-through branches.
+  BranchListType TakenBranches;       /// All local taken branches.
+  BranchListType FTBranches;          /// All fall-through branches.
+  BranchListType IgnoredBranches;     /// Branches ignored by CFG purposes.
 
   /// Storage for all landing pads and their corresponding invokes.
   using LandingPadsMapType = std::map<const MCSymbol *, std::vector<unsigned> >;

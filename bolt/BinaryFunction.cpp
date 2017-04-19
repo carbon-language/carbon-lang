@@ -1134,8 +1134,8 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                            << " : replacing with nop.\n");
               BC.MIA->createNoop(Instruction);
               if (IsCondBranch) {
-                // Register FT branch for passing function profile validation.
-                FTBranches.emplace_back(Offset, Offset + Size);
+                // Register branch function profile validation.
+                IgnoredBranches.emplace_back(Offset, Offset + Size);
               }
               goto add_instruction;
             }
@@ -1888,6 +1888,7 @@ bool BinaryFunction::buildCFG() {
   clearList(OffsetToCFI);
   clearList(TakenBranches);
   clearList(FTBranches);
+  clearList(IgnoredBranches);
   clearList(LPToBBIndex);
   clearList(EntryOffsets);
 
@@ -1986,6 +1987,9 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
   FunctionBranches.insert(FunctionBranches.end(),
                           FTBranches.begin(),
                           FTBranches.end());
+  FunctionBranches.insert(FunctionBranches.end(),
+                          IgnoredBranches.begin(),
+                          IgnoredBranches.end());
   std::sort(FunctionBranches.begin(), FunctionBranches.end());
 
   BranchListType DiffBranches; // Branches in profile without a match.
