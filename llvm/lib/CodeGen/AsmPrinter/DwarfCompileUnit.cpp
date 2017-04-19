@@ -556,9 +556,9 @@ DIE *DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
     Ops.push_back(Offset);
     Ops.append(Expr->elements_begin(), Expr->elements_end());
     DIExpressionCursor Cursor(Ops);
-    DwarfExpr.setMemoryLocationKind();
-    DwarfExpr.addMachineRegExpression(
-        *Asm->MF->getSubtarget().getRegisterInfo(), Cursor, FrameReg);
+    DwarfExpr.addMachineLocExpression(
+        *Asm->MF->getSubtarget().getRegisterInfo(), Cursor,
+        MachineLocation(FrameReg));
     DwarfExpr.addExpression(std::move(Cursor));
   }
   addBlock(*VariableDie, dwarf::DW_AT_location, DwarfExpr.finalize());
@@ -780,8 +780,6 @@ void DwarfCompileUnit::addAddress(DIE &Die, dwarf::Attribute Attribute,
                                   const MachineLocation &Location) {
   DIELoc *Loc = new (DIEValueAllocator) DIELoc;
   DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
-  if (Location.isIndirect())
-    DwarfExpr.setMemoryLocationKind();
 
   SmallVector<uint64_t, 8> Ops;
   if (Location.isIndirect() && Location.getOffset()) {
@@ -790,7 +788,7 @@ void DwarfCompileUnit::addAddress(DIE &Die, dwarf::Attribute Attribute,
   }
   DIExpressionCursor Cursor(Ops);
   const TargetRegisterInfo &TRI = *Asm->MF->getSubtarget().getRegisterInfo();
-  if (!DwarfExpr.addMachineRegExpression(TRI, Cursor, Location.getReg()))
+  if (!DwarfExpr.addMachineLocExpression(TRI, Cursor, Location))
     return;
   DwarfExpr.addExpression(std::move(Cursor));
 
@@ -809,8 +807,6 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
   const DIExpression *DIExpr = DV.getSingleExpression();
   DwarfExpr.addFragmentOffset(DIExpr);
-  if (Location.isIndirect())
-    DwarfExpr.setMemoryLocationKind();
 
   SmallVector<uint64_t, 8> Ops;
   if (Location.isIndirect() && Location.getOffset()) {
@@ -820,7 +816,7 @@ void DwarfCompileUnit::addComplexAddress(const DbgVariable &DV, DIE &Die,
   Ops.append(DIExpr->elements_begin(), DIExpr->elements_end());
   DIExpressionCursor Cursor(Ops);
   const TargetRegisterInfo &TRI = *Asm->MF->getSubtarget().getRegisterInfo();
-  if (!DwarfExpr.addMachineRegExpression(TRI, Cursor, Location.getReg()))
+  if (!DwarfExpr.addMachineLocExpression(TRI, Cursor, Location))
     return;
   DwarfExpr.addExpression(std::move(Cursor));
 

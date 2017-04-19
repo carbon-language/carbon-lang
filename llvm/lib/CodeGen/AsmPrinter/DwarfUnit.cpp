@@ -472,8 +472,6 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
   // variable's location.
   DIELoc *Loc = new (DIEValueAllocator) DIELoc;
   DIEDwarfExpression DwarfExpr(*Asm, *this, *Loc);
-  if (Location.isIndirect())
-    DwarfExpr.setMemoryLocationKind();
 
   SmallVector<uint64_t, 9> Ops;
   if (Location.isIndirect() && Location.getOffset()) {
@@ -507,7 +505,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 
   DIExpressionCursor Cursor(Ops);
   const TargetRegisterInfo &TRI = *Asm->MF->getSubtarget().getRegisterInfo();
-  if (!DwarfExpr.addMachineRegExpression(TRI, Cursor, Location.getReg()))
+  if (!DwarfExpr.addMachineLocExpression(TRI, Cursor, Location))
     return;
   DwarfExpr.addExpression(std::move(Cursor));
 
