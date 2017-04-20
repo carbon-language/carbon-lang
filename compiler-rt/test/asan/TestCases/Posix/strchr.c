@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   if (mprotect(p + 1, 1, PROT_NONE))
     return 1;
   char *r = strchr(s, 'x');
-  // CHECK: AddressSanitizer: SEGV on unknown address
+  // CHECK: AddressSanitizer: {{SEGV|BUS}} on unknown address
   // CHECK: The signal is caused by a READ memory access
   // CHECK: strchr.c:[[@LINE-3]]
   assert(r == p);
