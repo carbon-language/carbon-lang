@@ -43,10 +43,14 @@ class Recycler {
   FreeNode *pop_val() {
     auto *Val = FreeList;
     FreeList = FreeList->Next;
+    __msan_allocated_memory(Val, Size);
+    __asan_unpoison_memory_region(Val, Size);
     return Val;
   }
 
   void push(FreeNode *N) {
+    __asan_poison_memory_region(N, Size);
+    __asan_unpoison_memory_region(N, sizeof(FreeNode));
     N->Next = FreeList;
     FreeList = N;
   }

@@ -48,12 +48,16 @@ template <class T, size_t Align = alignof(T)> class ArrayRecycler {
     if (!Entry)
       return nullptr;
     Bucket[Idx] = Entry->Next;
+    __msan_allocated_memory(Entry, Capacity::get(Idx).getSize());
+    __asan_unpoison_memory_region(Entry, Capacity::get(Idx).getSize());
     return reinterpret_cast<T*>(Entry);
   }
 
   // Add an entry to the free list at Bucket[Idx].
   void push(unsigned Idx, T *Ptr) {
     assert(Ptr && "Cannot recycle NULL pointer");
+    __asan_poison_memory_region(Ptr, Capacity::get(Idx).getSize());
+    __asan_unpoison_memory_region(Ptr, sizeof(FreeList));
     FreeList *Entry = reinterpret_cast<FreeList*>(Ptr);
     if (Idx >= Bucket.size())
       Bucket.resize(size_t(Idx) + 1);
