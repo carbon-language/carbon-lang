@@ -2157,6 +2157,15 @@ bool ARMConstantIslands::optimizeThumb2JumpTables() {
 
       // If we're in PIC mode, there should be another ADD following.
       auto *TRI = STI->getRegisterInfo();
+
+      // %base cannot be redefined after the load as it will appear before
+      // TBB/TBH like:
+      //      %base =
+      //      %base =
+      //      tBB %base, %idx
+      if (registerDefinedBetween(BaseReg, Load->getNextNode(), MBB->end(), TRI))
+        continue;
+
       if (isPositionIndependentOrROPI) {
         MachineInstr *Add = Load->getNextNode();
         if (Add->getOpcode() != ARM::tADDrr ||
