@@ -44,7 +44,7 @@ namespace llvm {
     bool operator!=(EVT VT) const {
       if (V.SimpleTy != VT.V.SimpleTy)
         return true;
-      if (V.SimpleTy < 0)
+      if (V.SimpleTy == MVT::INVALID_SIMPLE_VALUE_TYPE)
         return LLVMTy != VT.LLVMTy;
       return false;
     }
@@ -60,7 +60,7 @@ namespace llvm {
     /// bits.
     static EVT getIntegerVT(LLVMContext &Context, unsigned BitWidth) {
       MVT M = MVT::getIntegerVT(BitWidth);
-      if (M.SimpleTy >= 0)
+      if (M.SimpleTy != MVT::INVALID_SIMPLE_VALUE_TYPE)
         return M;
       return getExtendedIntegerVT(Context, BitWidth);
     }
@@ -69,7 +69,7 @@ namespace llvm {
     /// each element is of type VT.
     static EVT getVectorVT(LLVMContext &Context, EVT VT, unsigned NumElements) {
       MVT M = MVT::getVectorVT(VT.V, NumElements);
-      if (M.SimpleTy >= 0)
+      if (M.SimpleTy != MVT::INVALID_SIMPLE_VALUE_TYPE)
         return M;
       return getExtendedVectorVT(Context, VT, NumElements);
     }
@@ -104,7 +104,7 @@ namespace llvm {
 
     /// Test if the given EVT is simple (as opposed to being extended).
     bool isSimple() const {
-      return V.SimpleTy >= 0;
+      return V.SimpleTy != MVT::INVALID_SIMPLE_VALUE_TYPE;
     }
 
     /// Test if the given EVT is extended (as opposed to being simple).
