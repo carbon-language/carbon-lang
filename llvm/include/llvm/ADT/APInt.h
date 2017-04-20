@@ -443,8 +443,9 @@ public:
     assert(numBits <= BitWidth && "numBits out of range");
     if (isSingleWord())
       return VAL == (UINT64_MAX >> (APINT_BITS_PER_WORD - numBits));
-    unsigned Ones = countTrailingOnes();
-    return (numBits == Ones) && ((Ones + countLeadingZeros()) == BitWidth);
+    unsigned Ones = countTrailingOnesSlowCase();
+    return (numBits == Ones) &&
+           ((Ones + countLeadingZerosSlowCase()) == BitWidth);
   }
 
   /// \returns true if this APInt is a non-empty sequence of ones starting at
@@ -453,8 +454,8 @@ public:
   bool isMask() const {
     if (isSingleWord())
       return isMask_64(VAL);
-    unsigned Ones = countTrailingOnes();
-    return (Ones > 0) && ((Ones + countLeadingZeros()) == BitWidth);
+    unsigned Ones = countTrailingOnesSlowCase();
+    return (Ones > 0) && ((Ones + countLeadingZerosSlowCase()) == BitWidth);
   }
 
   /// \brief Return true if this APInt value contains a sequence of ones with
@@ -462,8 +463,9 @@ public:
   bool isShiftedMask() const {
     if (isSingleWord())
       return isShiftedMask_64(VAL);
-    unsigned Ones = countPopulation();
-    return (Ones + countTrailingZeros() + countLeadingZeros()) == BitWidth;
+    unsigned Ones = countPopulationSlowCase();
+    unsigned LeadZ = countLeadingZerosSlowCase();
+    return (Ones + LeadZ + countTrailingZeros()) == BitWidth;
   }
 
   /// @}
