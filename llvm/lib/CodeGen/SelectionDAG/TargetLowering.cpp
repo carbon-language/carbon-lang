@@ -861,11 +861,12 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
             InnerOp.getOpcode() == ISD::SRL &&
             InnerOp.hasOneUse() &&
             isa<ConstantSDNode>(InnerOp.getOperand(1))) {
-          uint64_t InnerShAmt = cast<ConstantSDNode>(InnerOp.getOperand(1))
+          unsigned InnerShAmt = cast<ConstantSDNode>(InnerOp.getOperand(1))
             ->getZExtValue();
           if (InnerShAmt < ShAmt &&
               InnerShAmt < InnerBits &&
-              NewMask.lshr(InnerBits - InnerShAmt + ShAmt) == 0 &&
+              NewMask.lshr(std::min(InnerBits - InnerShAmt + ShAmt,
+                                    BitWidth)) == 0 &&
               NewMask.trunc(ShAmt) == 0) {
             SDValue NewSA =
               TLO.DAG.getConstant(ShAmt - InnerShAmt, dl,
