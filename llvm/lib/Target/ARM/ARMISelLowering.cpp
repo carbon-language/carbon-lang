@@ -852,7 +852,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
   if (!Subtarget->hasV6Ops())
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);
 
-  bool hasDivide = Subtarget->isThumb() ? Subtarget->hasDivide()
+  bool hasDivide = Subtarget->isThumb() ? Subtarget->hasDivideInThumbMode()
                                         : Subtarget->hasDivideInARMMode();
   if (!hasDivide) {
     // These are expanded into libcalls if the cpu doesn't have HW divider.
@@ -860,7 +860,7 @@ ARMTargetLowering::ARMTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::UDIV,  MVT::i32, LibCall);
   }
 
-  if (Subtarget->isTargetWindows() && !Subtarget->hasDivide()) {
+  if (Subtarget->isTargetWindows() && !Subtarget->hasDivideInThumbMode()) {
     setOperationAction(ISD::SDIV, MVT::i32, Custom);
     setOperationAction(ISD::UDIV, MVT::i32, Custom);
 
@@ -13043,7 +13043,7 @@ SDValue ARMTargetLowering::LowerDivRem(SDValue Op, SelectionDAG &DAG) const {
   //     rem = a - b * div
   //     return {div, rem}
   // This should be lowered into UDIV/SDIV + MLS later on.
-  bool hasDivide = Subtarget->isThumb() ? Subtarget->hasDivide()
+  bool hasDivide = Subtarget->isThumb() ? Subtarget->hasDivideInThumbMode()
                                         : Subtarget->hasDivideInARMMode();
   if (hasDivide && Op->getValueType(0).isSimple() &&
       Op->getSimpleValueType(0) == MVT::i32) {
