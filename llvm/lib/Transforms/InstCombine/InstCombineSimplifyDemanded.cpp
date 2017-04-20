@@ -38,7 +38,7 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
 
   // If there are no bits set that aren't demanded, nothing to do.
   Demanded = Demanded.zextOrTrunc(C->getBitWidth());
-  if ((~Demanded & *C) == 0)
+  if (C->isSubsetOf(Demanded))
     return false;
 
   // This instruction is producing bits that are not demanded. Shrink the RHS.

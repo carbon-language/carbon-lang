@@ -212,6 +212,9 @@ private:
   /// out-of-line slow case for intersects.
   bool intersectsSlowCase(const APInt &RHS) const LLVM_READONLY;
 
+  /// out-of-line slow case for isSubsetOf.
+  bool isSubsetOfSlowCase(const APInt &RHS) const LLVM_READONLY;
+
   /// out-of-line slow case for setBits.
   void setBitsSlowCase(unsigned loBit, unsigned hiBit);
 
@@ -1217,6 +1220,14 @@ public:
     if (isSingleWord())
       return (VAL & RHS.VAL) != 0;
     return intersectsSlowCase(RHS);
+  }
+
+  /// This operation checks that all bits set in this APInt are also set in RHS.
+  bool isSubsetOf(const APInt &RHS) const {
+    assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
+    if (isSingleWord())
+      return (VAL & ~RHS.VAL) == 0;
+    return isSubsetOfSlowCase(RHS);
   }
 
   /// @}
