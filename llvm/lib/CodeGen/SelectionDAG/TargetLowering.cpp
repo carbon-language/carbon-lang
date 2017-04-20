@@ -1205,21 +1205,23 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
                                       getShiftAmountTy(Op.getValueType(), DL));
         }
 
-        APInt HighBits = APInt::getHighBitsSet(OperandBitWidth,
-                                               OperandBitWidth - BitWidth);
-        HighBits.lshrInPlace(ShAmt->getZExtValue());
-        HighBits = HighBits.trunc(BitWidth);
+        if (ShAmt->getZExtValue() < BitWidth) {
+          APInt HighBits = APInt::getHighBitsSet(OperandBitWidth,
+                                                 OperandBitWidth - BitWidth);
+          HighBits.lshrInPlace(ShAmt->getZExtValue());
+          HighBits = HighBits.trunc(BitWidth);
 
-        if (ShAmt->getZExtValue() < BitWidth && !(HighBits & NewMask)) {
-          // None of the shifted in bits are needed.  Add a truncate of the
-          // shift input, then shift it.
-          SDValue NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, dl,
-                                             Op.getValueType(),
-                                             In.getOperand(0));
-          return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl,
-                                                   Op.getValueType(),
-                                                   NewTrunc,
-                                                   Shift));
+          if (!(HighBits & NewMask)) {
+            // None of the shifted in bits are needed.  Add a truncate of the
+            // shift input, then shift it.
+            SDValue NewTrunc = TLO.DAG.getNode(ISD::TRUNCATE, dl,
+                                               Op.getValueType(),
+                                               In.getOperand(0));
+            return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl,
+                                                     Op.getValueType(),
+                                                     NewTrunc,
+                                                     Shift));
+          }
         }
         break;
       }
