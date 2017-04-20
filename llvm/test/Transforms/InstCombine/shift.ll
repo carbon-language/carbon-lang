@@ -1270,8 +1270,7 @@ define <2 x i64> @test_64_splat_vec(<2 x i32> %t) {
 
 define <2 x i8> @ashr_demanded_bits_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @ashr_demanded_bits_splat(
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i8> %x, <i8 -128, i8 -128>
-; CHECK-NEXT:    [[SHR:%.*]] = ashr exact <2 x i8> [[AND]], <i8 7, i8 7>
+; CHECK-NEXT:    [[SHR:%.*]] = ashr <2 x i8> %x, <i8 7, i8 7>
 ; CHECK-NEXT:    ret <2 x i8> [[SHR]]
 ;
   %and = and <2 x i8> %x, <i8 128, i8 128>
@@ -1281,8 +1280,7 @@ define <2 x i8> @ashr_demanded_bits_splat(<2 x i8> %x) {
 
 define <2 x i8> @lshr_demanded_bits_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @lshr_demanded_bits_splat(
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i8> %x, <i8 -128, i8 -128>
-; CHECK-NEXT:    [[SHR:%.*]] = lshr exact <2 x i8> [[AND]], <i8 7, i8 7>
+; CHECK-NEXT:    [[SHR:%.*]] = lshr <2 x i8> %x, <i8 7, i8 7>
 ; CHECK-NEXT:    ret <2 x i8> [[SHR]]
 ;
   %and = and <2 x i8> %x, <i8 128, i8 128>
