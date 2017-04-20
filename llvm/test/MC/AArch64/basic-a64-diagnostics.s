@@ -1812,11 +1812,11 @@
 // CHECK-ERROR-NEXT:           fmov s15, #0x100
 // CHECK-ERROR-NEXT:                     ^
 
-        ;; No particular reason, but a striking omission
-        fmov d0, #0.0
-// CHECK-ERROR-AARCH64: error: expected compatible register or floating-point constant
-// CHECK-ERROR-AARCH64-NEXT:           fmov d0, #0.0
-// CHECK-ERROR-AARCH64-NEXT:                    ^
+        ;; Not possible to fmov ZR to a whole vector
+        fmov v0.4s, #0.0
+// CHECK-ERROR: error: invalid operand for instruction
+// CHECK-ERROR-NEXT:           fmov v0.4s, #0.0
+// CHECK-ERROR-NEXT:                       ^
 
 //------------------------------------------------------------------------------
 // Floating-point <-> integer conversion
