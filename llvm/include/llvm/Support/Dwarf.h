@@ -228,8 +228,8 @@ enum LineNumberExtendedOps {
   DW_LNE_hi_user = 0xff
 };
 
-enum LinerNumberEntryFormat {
-#define HANDLE_DW_LNCT(ID, NAME) DW_DEFAULTED_##NAME = ID,
+enum LineNumberEntryFormat {
+#define HANDLE_DW_LNCT(ID, NAME) DW_LNCT_##NAME = ID,
 #include "llvm/Support/Dwarf.def"
   DW_LNCT_lo_user = 0x2000,
   DW_LNCT_hi_user = 0x3fff,
