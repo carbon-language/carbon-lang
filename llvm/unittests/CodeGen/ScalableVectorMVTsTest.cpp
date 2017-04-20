@@ -70,7 +70,7 @@ TEST(ScalableVectorMVTsTest, HelperFuncs) {
 
   // Check fields inside MVT::ElementCount
   EltCnt = Vnx4i32.getVectorElementCount();
-  EXPECT_EQ(EltCnt.Min, 4);
+  EXPECT_EQ(EltCnt.Min, 4U);
   ASSERT_TRUE(EltCnt.Scalable);
 
   // Check that fixed-length vector types aren't scalable.
@@ -81,7 +81,7 @@ TEST(ScalableVectorMVTsTest, HelperFuncs) {
 
   // Check that MVT::ElementCount works for fixed-length types.
   EltCnt = V8i32.getVectorElementCount();
-  EXPECT_EQ(EltCnt.Min, 8);
+  EXPECT_EQ(EltCnt.Min, 8U);
   ASSERT_FALSE(EltCnt.Scalable);
 }
 
