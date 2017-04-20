@@ -848,7 +848,13 @@ int __lsan_is_turned_off() {
 
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 const char *__lsan_default_suppressions() {
+#if SANITIZER_SUPPRESS_LEAK_ON_PTHREAD_EXIT
+  // The actual string allocation happens here (for more details refer to the
+  // SANITIZER_SUPPRESS_LEAK_ON_PTHREAD_EXIT definition).
+  return "leak:*_dl_map_object_deps*";
+#else
   return "";
+#endif  // SANITIZER_SUPPRESS_LEAK_ON_PTHREAD_EXIT
 }
 #endif
 } // extern "C"
