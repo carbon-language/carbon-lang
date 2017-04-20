@@ -345,8 +345,13 @@ def run_clang_format_and_save_to_tree(changed_lines, revision=None,
   """Run clang-format on each file and save the result to a git tree.
 
   Returns the object ID (SHA-1) of the created tree."""
+  def iteritems(container):
+      try:
+          return container.iteritems() # Python 2
+      except AttributeError:
+          return container.items() # Python 3
   def index_info_generator():
-    for filename, line_ranges in changed_lines.viewitems():
+    for filename, line_ranges in iteritems(changed_lines):
       if revision:
         git_metadata_cmd = ['git', 'ls-tree',
                             '%s:%s' % (revision, os.path.dirname(filename)),
