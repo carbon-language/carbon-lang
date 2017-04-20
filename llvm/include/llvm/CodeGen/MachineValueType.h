@@ -232,6 +232,42 @@ class MVT {
 
     SimpleValueType SimpleTy;
 
+
+    // A class to represent the number of elements in a vector
+    //
+    // For fixed-length vectors, the total number of elements is equal to 'Min'
+    // For scalable vectors, the total number of elements is a multiple of 'Min'
+    class ElementCount {
+    public:
+      unsigned Min;
+      bool Scalable;
+
+      ElementCount(unsigned Min, bool Scalable)
+      : Min(Min), Scalable(Scalable) {}
+
+      ElementCount operator*(unsigned RHS) {
+        return { Min * RHS, Scalable };
+      }
+
+      ElementCount& operator*=(unsigned RHS) {
+        Min *= RHS;
+        return *this;
+      }
+
+      ElementCount operator/(unsigned RHS) {
+        return { Min / RHS, Scalable };
+      }
+
+      ElementCount& operator/=(unsigned RHS) {
+        Min /= RHS;
+        return *this;
+      }
+
+      bool operator==(const ElementCount& RHS) {
+        return Min == RHS.Min && Scalable == RHS.Scalable;
+      }
+    };
+
     constexpr MVT() : SimpleTy(INVALID_SIMPLE_VALUE_TYPE) {}
     constexpr MVT(SimpleValueType SVT) : SimpleTy(SVT) {}
 
@@ -274,6 +310,15 @@ class MVT {
     bool isVector() const {
       return (SimpleTy >= MVT::FIRST_VECTOR_VALUETYPE &&
               SimpleTy <= MVT::LAST_VECTOR_VALUETYPE);
+    }
+
+    /// Return true if this is a vector value type where the
+    /// runtime length is machine dependent
+    bool isScalableVector() const {
+      return ((SimpleTy >= MVT::FIRST_INTEGER_SCALABLE_VALUETYPE &&
+               SimpleTy <= MVT::LAST_INTEGER_SCALABLE_VALUETYPE) ||
+              (SimpleTy >= MVT::FIRST_FP_SCALABLE_VALUETYPE &&
+               SimpleTy <= MVT::LAST_FP_SCALABLE_VALUETYPE));
     }
 
     /// Return true if this is a 16-bit vector type.
@@ -560,6 +605,10 @@ class MVT {
       }
     }
 
+    MVT::ElementCount getVectorElementCount() const {
+      return { getVectorNumElements(), isScalableVector() };
+    }
+
     unsigned getSizeInBits() const {
       switch (SimpleTy) {
       default:
@@ -837,6 +886,83 @@ class MVT {
       return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
     }
 
+    static MVT getScalableVectorVT(MVT VT, unsigned NumElements) {
+      switch(VT.SimpleTy) {
+        default:
+          break;
+        case MVT::i1:
+          if (NumElements == 2)  return MVT::nxv2i1;
+          if (NumElements == 4)  return MVT::nxv4i1;
+          if (NumElements == 8)  return MVT::nxv8i1;
+          if (NumElements == 16) return MVT::nxv16i1;
+          if (NumElements == 32) return MVT::nxv32i1;
+          break;
+        case MVT::i8:
+          if (NumElements == 1)  return MVT::nxv1i8;
+          if (NumElements == 2)  return MVT::nxv2i8;
+          if (NumElements == 4)  return MVT::nxv4i8;
+          if (NumElements == 8)  return MVT::nxv8i8;
+          if (NumElements == 16) return MVT::nxv16i8;
+          if (NumElements == 32) return MVT::nxv32i8;
+          break;
+        case MVT::i16:
+          if (NumElements == 1)  return MVT::nxv1i16;
+          if (NumElements == 2)  return MVT::nxv2i16;
+          if (NumElements == 4)  return MVT::nxv4i16;
+          if (NumElements == 8)  return MVT::nxv8i16;
+          if (NumElements == 16) return MVT::nxv16i16;
+          if (NumElements == 32) return MVT::nxv32i16;
+          break;
+        case MVT::i32:
+          if (NumElements == 1)  return MVT::nxv1i32;
+          if (NumElements == 2)  return MVT::nxv2i32;
+          if (NumElements == 4)  return MVT::nxv4i32;
+          if (NumElements == 8)  return MVT::nxv8i32;
+          if (NumElements == 16) return MVT::nxv16i32;
+          if (NumElements == 32) return MVT::nxv32i32;
+          break;
+        case MVT::i64:
+          if (NumElements == 1)  return MVT::nxv1i64;
+          if (NumElements == 2)  return MVT::nxv2i64;
+          if (NumElements == 4)  return MVT::nxv4i64;
+          if (NumElements == 8)  return MVT::nxv8i64;
+          if (NumElements == 16) return MVT::nxv16i64;
+          if (NumElements == 32) return MVT::nxv32i64;
+          break;
+        case MVT::f16:
+          if (NumElements == 2)  return MVT::nxv2f16;
+          if (NumElements == 4)  return MVT::nxv4f16;
+          if (NumElements == 8)  return MVT::nxv8f16;
+          break;
+        case MVT::f32:
+          if (NumElements == 1)  return MVT::nxv1f32;
+          if (NumElements == 2)  return MVT::nxv2f32;
+          if (NumElements == 4)  return MVT::nxv4f32;
+          if (NumElements == 8)  return MVT::nxv8f32;
+          if (NumElements == 16) return MVT::nxv16f32;
+          break;
+        case MVT::f64:
+          if (NumElements == 1)  return MVT::nxv1f64;
+          if (NumElements == 2)  return MVT::nxv2f64;
+          if (NumElements == 4)  return MVT::nxv4f64;
+          if (NumElements == 8)  return MVT::nxv8f64;
+          break;
+      }
+      return (MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE);
+    }
+
+    static MVT getVectorVT(MVT VT, unsigned NumElements, bool IsScalable) {
+      if (IsScalable)
+        return getScalableVectorVT(VT, NumElements);
+      return getVectorVT(VT, NumElements);
+    }
+
+    static MVT getVectorVT(MVT VT, MVT::ElementCount EC) {
+      if (EC.Scalable)
+        return getScalableVectorVT(VT, EC.Min);
+      return getVectorVT(VT, EC.Min);
+    }
+
     /// Return the value type corresponding to the specified type.  This returns
     /// all pointers as iPTR.  If HandleUnknown is true, unknown types are
     /// returned as Other, otherwise they are invalid.
@@ -886,6 +1012,14 @@ class MVT {
       return mvt_range(
           MVT::FIRST_FP_VECTOR_VALUETYPE,
           (MVT::SimpleValueType)(MVT::LAST_FP_VECTOR_VALUETYPE + 1));
+    }
+    static mvt_range integer_scalable_vector_valuetypes() {
+      return mvt_range(MVT::FIRST_INTEGER_SCALABLE_VALUETYPE,
+              (MVT::SimpleValueType)(MVT::LAST_INTEGER_SCALABLE_VALUETYPE + 1));
+    }
+    static mvt_range fp_scalable_vector_valuetypes() {
+      return mvt_range(MVT::FIRST_FP_SCALABLE_VALUETYPE,
+                   (MVT::SimpleValueType)(MVT::LAST_FP_SCALABLE_VALUETYPE + 1));
     }
     /// @}
   };
