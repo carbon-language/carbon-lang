@@ -304,6 +304,17 @@ namespace llvm {
       return EVT::getVectorVT(Context, EltVT, getVectorNumElements());
     }
 
+    // Return a VT for a vector type with the same element type but
+    // half the number of elements. The type returned may be an
+    // extended type.
+    EVT getHalfNumVectorElementsVT(LLVMContext &Context) const {
+      EVT EltVT = getVectorElementType();
+      auto EltCnt = getVectorNumElements();
+      assert(!(getVectorNumElements() & 1) &&
+             "Splitting vector, but not in half!");
+      return EVT::getVectorVT(Context, EltVT, EltCnt / 2);
+    }
+
     /// Returns true if the given vector is a power of 2.
     bool isPow2VectorType() const {
       unsigned NElts = getVectorNumElements();
