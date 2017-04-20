@@ -475,7 +475,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       const APInt *ShrAmt;
       if (match(I->getOperand(0), m_Shr(m_Value(), m_APInt(ShrAmt)))) {
         Instruction *Shr = cast<Instruction>(I->getOperand(0));
-        if (Value *R = SimplifyShrShlDemandedBits(
+        if (Value *R = simplifyShrShlDemandedBits(
                 Shr, *ShrAmt, I, *SA, DemandedMask, KnownZero, KnownOne))
           return R;
       }
@@ -874,7 +874,7 @@ Value *InstCombiner::SimplifyMultipleUseDemandedBits(Instruction *I,
 /// As with SimplifyDemandedUseBits, it returns NULL if the simplification was
 /// not successful.
 Value *
-InstCombiner::SimplifyShrShlDemandedBits(Instruction *Shr, const APInt &ShrOp1,
+InstCombiner::simplifyShrShlDemandedBits(Instruction *Shr, const APInt &ShrOp1,
                                          Instruction *Shl, const APInt &ShlOp1,
                                          const APInt &DemandedMask,
                                          APInt &KnownZero, APInt &KnownOne) {
