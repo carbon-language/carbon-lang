@@ -839,7 +839,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         SDValue InnerOp = InOp.getNode()->getOperand(0);
         EVT InnerVT = InnerOp.getValueType();
         unsigned InnerBits = InnerVT.getSizeInBits();
-        if (ShAmt < InnerBits && NewMask.lshr(InnerBits) == 0 &&
+        if (ShAmt < InnerBits && NewMask.getActiveBits() <= InnerBits &&
             isTypeDesirableForOp(ISD::SHL, InnerVT)) {
           EVT ShTy = getShiftAmountTy(InnerVT, DL);
           if (!APInt(BitWidth, ShAmt).isIntN(ShTy.getSizeInBits()))
@@ -865,9 +865,8 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
             ->getZExtValue();
           if (InnerShAmt < ShAmt &&
               InnerShAmt < InnerBits &&
-              NewMask.lshr(std::min(InnerBits - InnerShAmt + ShAmt,
-                                    BitWidth)) == 0 &&
-              NewMask.trunc(ShAmt) == 0) {
+              NewMask.getActiveBits() <= (InnerBits - InnerShAmt + ShAmt) &&
+              NewMask.countTrailingZeros() >= ShAmt) {
             SDValue NewSA =
               TLO.DAG.getConstant(ShAmt - InnerShAmt, dl,
                                   Op.getOperand(1).getValueType());
