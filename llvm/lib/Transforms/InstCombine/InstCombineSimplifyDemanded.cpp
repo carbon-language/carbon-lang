@@ -225,15 +225,6 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         (DemandedMask & ~RHSKnownOne))
       return I->getOperand(1);
 
-    // If all of the potentially set bits on one side are known to be set on
-    // the other side, just use the 'other' side.
-    if ((DemandedMask & (~RHSKnownZero) & LHSKnownOne) ==
-        (DemandedMask & (~RHSKnownZero)))
-      return I->getOperand(0);
-    if ((DemandedMask & (~LHSKnownZero) & RHSKnownOne) ==
-        (DemandedMask & (~LHSKnownZero)))
-      return I->getOperand(1);
-
     // If the RHS is a constant, see if we can simplify it.
     if (ShrinkDemandedConstant(I, 1, DemandedMask))
       return I;
@@ -817,15 +808,6 @@ Value *InstCombiner::SimplifyMultipleUseDemandedBits(Instruction *I,
       return I->getOperand(0);
     if ((DemandedMask & ~RHSKnownOne & LHSKnownZero) ==
         (DemandedMask & ~RHSKnownOne))
-      return I->getOperand(1);
-
-    // If all of the potentially set bits on one side are known to be set on
-    // the other side, just use the 'other' side.
-    if ((DemandedMask & (~RHSKnownZero) & LHSKnownOne) ==
-        (DemandedMask & (~RHSKnownZero)))
-      return I->getOperand(0);
-    if ((DemandedMask & (~LHSKnownZero) & RHSKnownOne) ==
-        (DemandedMask & (~LHSKnownZero)))
       return I->getOperand(1);
 
     KnownZero = std::move(IKnownZero);
