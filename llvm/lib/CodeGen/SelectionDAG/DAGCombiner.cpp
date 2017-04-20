@@ -16099,9 +16099,11 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
                                       Base2, Offset2, GV2, CV2);
 
   // If they have a same base address then check to see if they overlap.
+  unsigned NumBytes0 = Op0->getMemoryVT().getSizeInBits() >> 3;
+  unsigned NumBytes1 = Op1->getMemoryVT().getSizeInBits() >> 3;
   if (Base1 == Base2 || (GV1 && (GV1 == GV2)) || (CV1 && (CV1 == CV2)))
-    return !((Offset1 + (Op0->getMemoryVT().getSizeInBits() >> 3)) <= Offset2 ||
-             (Offset2 + (Op1->getMemoryVT().getSizeInBits() >> 3)) <= Offset1);
+    return !((Offset1 + NumBytes0) <= Offset2 ||
+             (Offset2 + NumBytes1) <= Offset1);
 
   // It is possible for different frame indices to alias each other, mostly
   // when tail call optimization reuses return address slots for arguments.
@@ -16111,8 +16113,8 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
     MachineFrameInfo &MFI = DAG.getMachineFunction().getFrameInfo();
     Offset1 += MFI.getObjectOffset(cast<FrameIndexSDNode>(Base1)->getIndex());
     Offset2 += MFI.getObjectOffset(cast<FrameIndexSDNode>(Base2)->getIndex());
-    return !((Offset1 + (Op0->getMemoryVT().getSizeInBits() >> 3)) <= Offset2 ||
-             (Offset2 + (Op1->getMemoryVT().getSizeInBits() >> 3)) <= Offset1);
+    return !((Offset1 + NumBytes0) <= Offset2 ||
+             (Offset2 + NumBytes1) <= Offset1);
   }
 
   // Otherwise, if we know what the bases are, and they aren't identical, then
@@ -16126,16 +16128,14 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
   // splitting vector types.
   if ((Op0->getOriginalAlignment() == Op1->getOriginalAlignment()) &&
       (Op0->getSrcValueOffset() != Op1->getSrcValueOffset()) &&
-      (Op0->getMemoryVT().getSizeInBits() >> 3 ==
-       Op1->getMemoryVT().getSizeInBits() >> 3) &&
-      (Op0->getOriginalAlignment() > (Op0->getMemoryVT().getSizeInBits() >> 3))) {
+      (NumBytes0 == NumBytes1) && (Op0->getOriginalAlignment() > NumBytes0)) {
     int64_t OffAlign1 = Op0->getSrcValueOffset() % Op0->getOriginalAlignment();
     int64_t OffAlign2 = Op1->getSrcValueOffset() % Op1->getOriginalAlignment();
 
     // There is no overlap between these relatively aligned accesses of similar
     // size, return no alias.
-    if ((OffAlign1 + (Op0->getMemoryVT().getSizeInBits() >> 3)) <= OffAlign2 ||
-        (OffAlign2 + (Op1->getMemoryVT().getSizeInBits() >> 3)) <= OffAlign1)
+    if ((OffAlign1 + NumBytes0) <= OffAlign2 ||
+        (OffAlign2 + NumBytes1) <= OffAlign1)
       return false;
   }
 
@@ -16152,10 +16152,8 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
     // Use alias analysis information.
     int64_t MinOffset = std::min(Op0->getSrcValueOffset(),
                                  Op1->getSrcValueOffset());
-    int64_t Overlap1 = (Op0->getMemoryVT().getSizeInBits() >> 3) +
-        Op0->getSrcValueOffset() - MinOffset;
-    int64_t Overlap2 = (Op1->getMemoryVT().getSizeInBits() >> 3) +
-        Op1->getSrcValueOffset() - MinOffset;
+    int64_t Overlap1 = NumBytes0 + Op0->getSrcValueOffset() - MinOffset;
+    int64_t Overlap2 = NumBytes1 + Op1->getSrcValueOffset() - MinOffset;
     AliasResult AAResult =
         AA.alias(MemoryLocation(Op0->getMemOperand()->getValue(), Overlap1,
                                 UseTBAA ? Op0->getAAInfo() : AAMDNodes()),
