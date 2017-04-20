@@ -1781,12 +1781,20 @@
         ;; Exponent too large
         fmov d3, #0.0625
         fmov s2, #32.0
+        fmov s2, #32
+        fmov v0.4s, #-32
 // CHECK-ERROR: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov d3, #0.0625
 // CHECK-ERROR-NEXT:                    ^
 // CHECK-ERROR-NEXT: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov s2, #32.0
 // CHECK-ERROR-NEXT:                    ^
+// CHECK-ERROR-NEXT: error: expected compatible register or floating-point constant
+// CHECK-ERROR-NEXT:           fmov s2, #32
+// CHECK-ERROR-NEXT:                    ^
+// CHECK-ERROR-NEXT: error: expected compatible register or floating-point constant
+// CHECK-ERROR-NEXT:           fmov v0.4s, #-32
+// CHECK-ERROR-NEXT:                       ^
 
         ;; Fraction too precise
         fmov s9, #1.03125
@@ -1796,6 +1804,12 @@
 // CHECK-ERROR-NEXT:                    ^
 // CHECK-ERROR-NEXT: error: expected compatible register or floating-point constant
 // CHECK-ERROR-NEXT:           fmov s28, #1.96875
+// CHECK-ERROR-NEXT:                     ^
+
+        ;; Explicitly encoded value too large
+        fmov s15, #0x100
+// CHECK-ERROR: error: encoded floating point value out of range
+// CHECK-ERROR-NEXT:           fmov s15, #0x100
 // CHECK-ERROR-NEXT:                     ^
 
         ;; No particular reason, but a striking omission
