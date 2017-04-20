@@ -555,7 +555,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 
     // If the sign bit is the only bit demanded by this ashr, then there is no
     // need to do it, the shift doesn't change the high bit.
-    if (DemandedMask.isSignBit())
+    if (DemandedMask.isSignMask())
       return I->getOperand(0);
 
     if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
@@ -583,9 +583,9 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       KnownOne.lshrInPlace(ShiftAmt);
 
       // Handle the sign bits.
-      APInt SignBit(APInt::getSignBit(BitWidth));
+      APInt SignMask(APInt::getSignMask(BitWidth));
       // Adjust to where it is now in the mask.
-      SignBit.lshrInPlace(ShiftAmt);
+      SignMask.lshrInPlace(ShiftAmt);
 
       // If the input sign bit is known to be zero, or if none of the top bits
       // are demanded, turn this into an unsigned shift right.
@@ -596,7 +596,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
                                                             SA, I->getName());
         NewVal->setIsExact(cast<BinaryOperator>(I)->isExact());
         return InsertNewInstWith(NewVal, *I);
-      } else if ((KnownOne & SignBit) != 0) { // New bits are known one.
+      } else if ((KnownOne & SignMask) != 0) { // New bits are known one.
         KnownOne |= HighBits;
       }
     }
@@ -613,7 +613,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
           return I->getOperand(0);
 
         APInt LowBits = RA - 1;
-        APInt Mask2 = LowBits | APInt::getSignBit(BitWidth);
+        APInt Mask2 = LowBits | APInt::getSignMask(BitWidth);
         if (SimplifyDemandedBits(I, 0, Mask2, LHSKnownZero, LHSKnownOne,
                                  Depth + 1))
           return I;

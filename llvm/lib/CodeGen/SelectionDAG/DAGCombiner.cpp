@@ -2146,7 +2146,7 @@ SDValue DAGCombiner::visitSUB(SDNode *N) {
     if (N->getFlags()->hasNoUnsignedWrap())
       return N0;
 
-    if (DAG.MaskedValueIsZero(N1, ~APInt::getSignBit(BitWidth))) {
+    if (DAG.MaskedValueIsZero(N1, ~APInt::getSignMask(BitWidth))) {
       // N1 is either 0 or the minimum signed value. If the sub is NSW, then
       // N1 must be 0 because negating the minimum signed value is undefined.
       if (N->getFlags()->hasNoSignedWrap())
@@ -8298,11 +8298,11 @@ static SDValue foldBitcastedFPLogic(SDNode *N, SelectionDAG &DAG,
   switch (N0.getOpcode()) {
   case ISD::AND:
     FPOpcode = ISD::FABS;
-    SignMask = ~APInt::getSignBit(SourceVT.getSizeInBits());
+    SignMask = ~APInt::getSignMask(SourceVT.getSizeInBits());
     break;
   case ISD::XOR:
     FPOpcode = ISD::FNEG;
-    SignMask = APInt::getSignBit(SourceVT.getSizeInBits());
+    SignMask = APInt::getSignMask(SourceVT.getSizeInBits());
     break;
   // TODO: ISD::OR --> ISD::FNABS?
   default:
@@ -8413,7 +8413,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
     if (N0.getValueType() == MVT::ppcf128 && !LegalTypes) {
       assert(VT.getSizeInBits() == 128);
       SDValue SignBit = DAG.getConstant(
-          APInt::getSignBit(VT.getSizeInBits() / 2), SDLoc(N0), MVT::i64);
+          APInt::getSignMask(VT.getSizeInBits() / 2), SDLoc(N0), MVT::i64);
       SDValue FlipBit;
       if (N0.getOpcode() == ISD::FNEG) {
         FlipBit = SignBit;
@@ -8433,7 +8433,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
       AddToWorklist(FlipBits.getNode());
       return DAG.getNode(ISD::XOR, DL, VT, NewConv, FlipBits);
     }
-    APInt SignBit = APInt::getSignBit(VT.getSizeInBits());
+    APInt SignBit = APInt::getSignMask(VT.getSizeInBits());
     if (N0.getOpcode() == ISD::FNEG)
       return DAG.getNode(ISD::XOR, DL, VT,
                          NewConv, DAG.getConstant(SignBit, DL, VT));
@@ -8481,7 +8481,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
       }
 
       if (N0.getValueType() == MVT::ppcf128 && !LegalTypes) {
-        APInt SignBit = APInt::getSignBit(VT.getSizeInBits() / 2);
+        APInt SignBit = APInt::getSignMask(VT.getSizeInBits() / 2);
         SDValue Cst = DAG.getBitcast(VT, N0.getOperand(0));
         AddToWorklist(Cst.getNode());
         SDValue X = DAG.getBitcast(VT, N0.getOperand(1));
@@ -8502,7 +8502,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
         AddToWorklist(FlipBits.getNode());
         return DAG.getNode(ISD::XOR, SDLoc(N), VT, Cst, FlipBits);
       }
-      APInt SignBit = APInt::getSignBit(VT.getSizeInBits());
+      APInt SignBit = APInt::getSignMask(VT.getSizeInBits());
       X = DAG.getNode(ISD::AND, SDLoc(X), VT,
                       X, DAG.getConstant(SignBit, SDLoc(X), VT));
       AddToWorklist(X.getNode());
@@ -10313,11 +10313,11 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
       if (N0.getValueType().isVector()) {
         // For a vector, get a mask such as 0x80... per scalar element
         // and splat it.
-        SignMask = APInt::getSignBit(N0.getScalarValueSizeInBits());
+        SignMask = APInt::getSignMask(N0.getScalarValueSizeInBits());
         SignMask = APInt::getSplat(IntVT.getSizeInBits(), SignMask);
       } else {
         // For a scalar, just generate 0x80...
-        SignMask = APInt::getSignBit(IntVT.getSizeInBits());
+        SignMask = APInt::getSignMask(IntVT.getSizeInBits());
       }
       SDLoc DL0(N0);
       Int = DAG.getNode(ISD::XOR, DL0, IntVT, Int,
@@ -10418,11 +10418,11 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
       if (N0.getValueType().isVector()) {
         // For a vector, get a mask such as 0x7f... per scalar element
         // and splat it.
-        SignMask = ~APInt::getSignBit(N0.getScalarValueSizeInBits());
+        SignMask = ~APInt::getSignMask(N0.getScalarValueSizeInBits());
         SignMask = APInt::getSplat(IntVT.getSizeInBits(), SignMask);
       } else {
         // For a scalar, just generate 0x7f...
-        SignMask = ~APInt::getSignBit(IntVT.getSizeInBits());
+        SignMask = ~APInt::getSignMask(IntVT.getSizeInBits());
       }
       SDLoc DL(N0);
       Int = DAG.getNode(ISD::AND, DL, IntVT, Int,

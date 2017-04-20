@@ -416,10 +416,10 @@ public:
     return countPopulationSlowCase() == 1;
   }
 
-  /// \brief Check if the APInt's value is returned by getSignBit.
+  /// \brief Check if the APInt's value is returned by getSignMask.
   ///
-  /// \returns true if this is the value returned by getSignBit.
-  bool isSignBit() const { return isMinSignedValue(); }
+  /// \returns true if this is the value returned by getSignMask.
+  bool isSignMask() const { return isMinSignedValue(); }
 
   /// \brief Convert APInt to a boolean value.
   ///
@@ -497,11 +497,11 @@ public:
     return API;
   }
 
-  /// \brief Get the SignBit for a specific bit width.
+  /// \brief Get the SignMask for a specific bit width.
   ///
   /// This is just a wrapper function of getSignedMinValue(), and it helps code
-  /// readability when we want to get a SignBit.
-  static APInt getSignBit(unsigned BitWidth) {
+  /// readability when we want to get a SignMask.
+  static APInt getSignMask(unsigned BitWidth) {
     return getSignedMinValue(BitWidth);
   }
 
