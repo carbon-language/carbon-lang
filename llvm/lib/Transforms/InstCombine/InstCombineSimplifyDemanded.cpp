@@ -26,7 +26,7 @@ using namespace llvm::PatternMatch;
 /// constant integer. If so, check to see if there are any bits set in the
 /// constant that are not demanded. If so, shrink the constant and return true.
 static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
-                                   APInt Demanded) {
+                                   const APInt &Demanded) {
   assert(I && "No instruction?");
   assert(OpNo < I->getNumOperands() && "Operand index too large");
 
@@ -37,13 +37,11 @@ static bool ShrinkDemandedConstant(Instruction *I, unsigned OpNo,
     return false;
 
   // If there are no bits set that aren't demanded, nothing to do.
-  Demanded = Demanded.zextOrTrunc(C->getBitWidth());
   if (C->isSubsetOf(Demanded))
     return false;
 
   // This instruction is producing bits that are not demanded. Shrink the RHS.
-  Demanded &= *C;
-  I->setOperand(OpNo, ConstantInt::get(Op->getType(), Demanded));
+  I->setOperand(OpNo, ConstantInt::get(Op->getType(), *C & Demanded));
 
   return true;
 }
