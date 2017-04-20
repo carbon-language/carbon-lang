@@ -508,22 +508,6 @@ public:
     return *this;
   }
 
-  SmallBitVector &operator<<=(unsigned N) {
-    if (isSmall())
-      setSmallBits(getSmallBits() << N);
-    else
-      getPointer()->operator<<=(N);
-    return *this;
-  }
-
-  SmallBitVector &operator>>=(unsigned N) {
-    if (isSmall())
-      setSmallBits(getSmallBits() >> N);
-    else
-      getPointer()->operator>>=(N);
-    return *this;
-  }
-
   // Assignment operator.
   const SmallBitVector &operator=(const SmallBitVector &RHS) {
     if (isSmall()) {
