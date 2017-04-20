@@ -209,6 +209,9 @@ private:
   /// out-of-line slow case for countPopulation
   unsigned countPopulationSlowCase() const LLVM_READONLY;
 
+  /// out-of-line slow case for intersects.
+  bool intersectsSlowCase(const APInt &RHS) const LLVM_READONLY;
+
   /// out-of-line slow case for setBits.
   void setBitsSlowCase(unsigned loBit, unsigned hiBit);
 
@@ -1206,9 +1209,10 @@ public:
   /// This operation tests if there are any pairs of corresponding bits
   /// between this APInt and RHS that are both set.
   bool intersects(const APInt &RHS) const {
-    APInt temp(*this);
-    temp &= RHS;
-    return temp != 0;
+    assert(BitWidth == RHS.BitWidth && "Bit widths must be the same");
+    if (isSingleWord())
+      return (VAL & RHS.VAL) != 0;
+    return intersectsSlowCase(RHS);
   }
 
   /// @}

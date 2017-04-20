@@ -722,6 +722,14 @@ unsigned APInt::countPopulationSlowCase() const {
   return Count;
 }
 
+bool APInt::intersectsSlowCase(const APInt &RHS) const {
+  for (unsigned i = 0, e = getNumWords(); i != e; ++i)
+    if ((pVal[i] & RHS.pVal[i]) != 0)
+      return true;
+
+  return false;
+}
+
 APInt APInt::byteSwap() const {
   assert(BitWidth >= 16 && BitWidth % 16 == 0 && "Cannot byteswap!");
   if (BitWidth == 16)
