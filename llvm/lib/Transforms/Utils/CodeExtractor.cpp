@@ -194,9 +194,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   // containing PHI nodes merging values from outside of the region, and a
   // second that contains all of the code for the block and merges back any
   // incoming values from inside of the region.
-  BasicBlock::iterator AfterPHIs = Header->getFirstNonPHI()->getIterator();
-  BasicBlock *NewBB = Header->splitBasicBlock(AfterPHIs,
-                                              Header->getName()+".ce");
+  BasicBlock *NewBB = llvm::SplitBlock(Header, Header->getFirstNonPHI(), DT);
 
   // We only want to code extract the second block now, and it becomes the new
   // header of the region.
@@ -204,11 +202,6 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
   Blocks.remove(OldPred);
   Blocks.insert(NewBB);
   Header = NewBB;
-
-  // Okay, update dominator sets. The blocks that dominate the new one are the
-  // blocks that dominate TIBB plus the new block itself.
-  if (DT)
-    DT->splitBlock(NewBB);
 
   // Okay, now we need to adjust the PHI nodes and any branches from within the
   // region to go to the new header block instead of the old header block.
@@ -224,6 +217,7 @@ void CodeExtractor::severSplitPHINodes(BasicBlock *&Header) {
 
     // Okay, everything within the region is now branching to the right block, we
     // just have to update the PHI nodes now, inserting PHI nodes into NewBB.
+    BasicBlock::iterator AfterPHIs;
     for (AfterPHIs = OldPred->begin(); isa<PHINode>(AfterPHIs); ++AfterPHIs) {
       PHINode *PN = cast<PHINode>(AfterPHIs);
       // Create a new PHI node in the new region, which has an incoming value
