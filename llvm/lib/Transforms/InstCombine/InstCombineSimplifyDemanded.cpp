@@ -469,8 +469,9 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     computeKnownBits(V, KnownZero, KnownOne, Depth, CxtI);
     break;
   }
-  case Instruction::Shl:
-    if (ConstantInt *SA = dyn_cast<ConstantInt>(I->getOperand(1))) {
+  case Instruction::Shl: {
+    const APInt *SA;
+    if (match(I->getOperand(1), m_APInt(SA))) {
       {
         Value *VarX; ConstantInt *C1;
         if (match(I->getOperand(0), m_Shr(m_Value(VarX), m_ConstantInt(C1)))) {
@@ -503,6 +504,7 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
         KnownZero.setLowBits(ShiftAmt);
     }
     break;
+  }
   case Instruction::LShr: {
     const APInt *SA;
     if (match(I->getOperand(1), m_APInt(SA))) {
