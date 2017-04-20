@@ -539,11 +539,11 @@ bool ARMDAGToDAGISel::SelectImmShifterOperand(SDValue N,
     SDValue NewMulConst;
     if (canExtractShiftFromMul(N, 31, PowerOfTwo, NewMulConst)) {
       HandleSDNode Handle(N);
+      SDLoc Loc(N);
       replaceDAGValue(N.getOperand(1), NewMulConst);
       BaseReg = Handle.getValue();
-      Opc = CurDAG->getTargetConstant(ARM_AM::getSORegOpc(ARM_AM::lsl,
-                                                          PowerOfTwo),
-                                      SDLoc(N), MVT::i32);
+      Opc = CurDAG->getTargetConstant(
+          ARM_AM::getSORegOpc(ARM_AM::lsl, PowerOfTwo), Loc, MVT::i32);
       return true;
     }
   }
