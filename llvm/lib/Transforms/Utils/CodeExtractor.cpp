@@ -112,24 +112,6 @@ buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
   return buildExtractionBlockSet(BBs.begin(), BBs.end());
 }
 
-/// \brief Helper to call buildExtractionBlockSet with a RegionNode.
-static SetVector<BasicBlock *>
-buildExtractionBlockSet(const RegionNode &RN) {
-  if (!RN.isSubRegion())
-    // Just a single BasicBlock.
-    return buildExtractionBlockSet(RN.getNodeAs<BasicBlock>());
-
-  const Region &R = *RN.getNodeAs<Region>();
-
-  return buildExtractionBlockSet(R.block_begin(), R.block_end());
-}
-
-CodeExtractor::CodeExtractor(BasicBlock *BB, bool AggregateArgs,
-                             BlockFrequencyInfo *BFI,
-                             BranchProbabilityInfo *BPI)
-    : DT(nullptr), AggregateArgs(AggregateArgs || AggregateArgsOpt), BFI(BFI),
-      BPI(BPI), Blocks(buildExtractionBlockSet(BB)), NumExitBlocks(~0U) {}
-
 CodeExtractor::CodeExtractor(ArrayRef<BasicBlock *> BBs, DominatorTree *DT,
                              bool AggregateArgs, BlockFrequencyInfo *BFI,
                              BranchProbabilityInfo *BPI)
@@ -142,12 +124,6 @@ CodeExtractor::CodeExtractor(DominatorTree &DT, Loop &L, bool AggregateArgs,
     : DT(&DT), AggregateArgs(AggregateArgs || AggregateArgsOpt), BFI(BFI),
       BPI(BPI), Blocks(buildExtractionBlockSet(L.getBlocks())),
       NumExitBlocks(~0U) {}
-
-CodeExtractor::CodeExtractor(DominatorTree &DT, const RegionNode &RN,
-                             bool AggregateArgs, BlockFrequencyInfo *BFI,
-                             BranchProbabilityInfo *BPI)
-    : DT(&DT), AggregateArgs(AggregateArgs || AggregateArgsOpt), BFI(BFI),
-      BPI(BPI), Blocks(buildExtractionBlockSet(RN)), NumExitBlocks(~0U) {}
 
 /// definedInRegion - Return true if the specified value is defined in the
 /// extracted region.
