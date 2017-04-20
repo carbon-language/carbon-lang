@@ -265,6 +265,12 @@ def : InstRW<[FalkorWr_2LD_2VXVY_2LD_1XYZ_2VXVY_4cyc, WriteAdr],(instregex "^LD4
 // Arithmetic and Logical Instructions
 // -----------------------------------------------------------------------------
 def : InstRW<[FalkorWr_ADD],          (instregex "^ADD(S)?(W|X)r(s|x)$")>;
+def : InstRW<[FalkorWr_1XYZ_1cyc],    (instregex "^AND(S)?(W|X)r(i|r|s)$")>;
+def : InstRW<[FalkorWr_1XYZ_1cyc],    (instregex "^BIC(S)?(W|X)r(r|s)$")>;
+def : InstRW<[FalkorWr_1XYZ_1cyc],    (instregex "^EON(W|X)r(r|s)$")>;
+def : InstRW<[FalkorWr_1XYZ_1cyc],    (instregex "^EOR(W|X)r(i|r|s)$")>;
+def : InstRW<[FalkorWr_1XYZ_1cyc],    (instregex "^ORN(W|X)r(r|s)$")>;
+def : InstRW<[FalkorWr_1XYZ_1cyc],    (instregex "^ORR(W|X)r(i|r|s)$")>;
 def : InstRW<[FalkorWr_2XYZ_2cyc],    (instregex "^SUB(S)?(W|X)r(s|x)$")>;
 
 // SIMD Miscellaneous Instructions
