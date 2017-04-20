@@ -847,9 +847,8 @@ public:
   ///
   /// \returns *this after shifting left by ShiftAmt
   APInt &operator<<=(unsigned ShiftAmt) {
-    assert(ShiftAmt <= BitWidth && "Invalid shift amount");
     if (isSingleWord()) {
-      if (ShiftAmt == BitWidth)
+      if (ShiftAmt >= BitWidth)
         VAL = 0;
       else
         VAL <<= ShiftAmt;
@@ -894,9 +893,8 @@ public:
 
   /// Logical right-shift this APInt by ShiftAmt in place.
   void lshrInPlace(unsigned ShiftAmt) {
-    assert(ShiftAmt <= BitWidth && "Invalid shift amount");
     if (isSingleWord()) {
-      if (ShiftAmt == BitWidth)
+      if (ShiftAmt >= BitWidth)
         VAL = 0;
       else
         VAL >>= ShiftAmt;
