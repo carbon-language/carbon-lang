@@ -675,12 +675,13 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   bool AfterFPPop = Opc == X86::TAILJMPm64 || Opc == X86::TAILJMPm ||
                     Opc == X86::TCRETURNmi || Opc == X86::TCRETURNmi64;
 
-  if (hasBasePointer(MF))
+  if (AfterFPPop) {
+    assert(FrameIndex < 0 && "Should only reference fixed stack objects here");
+    BasePtr = StackPtr;
+  } else if (hasBasePointer(MF))
     BasePtr = (FrameIndex < 0 ? FramePtr : getBaseRegister());
   else if (needsStackRealignment(MF))
     BasePtr = (FrameIndex < 0 ? FramePtr : StackPtr);
-  else if (AfterFPPop)
-    BasePtr = StackPtr;
   else
     BasePtr = (TFI->hasFP(MF) ? FramePtr : StackPtr);
 
