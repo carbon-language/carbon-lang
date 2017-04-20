@@ -1073,6 +1073,18 @@ define i32 @test54(i32 %x) {
   ret i32 %and
 }
 
+define <2 x i32> @test54_splat_vec(<2 x i32> %x) {
+; CHECK-LABEL: @test54_splat_vec(
+; CHECK-NEXT:    [[SHR2:%.*]] = lshr <2 x i32> %x, <i32 1, i32 1>
+; CHECK-NEXT:    [[SHL:%.*]] = shl <2 x i32> [[SHR2]], <i32 4, i32 4>
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[SHL]], <i32 16, i32 16>
+; CHECK-NEXT:    ret <2 x i32> [[AND]]
+;
+  %shr2 = lshr <2 x i32> %x, <i32 1, i32 1>
+  %shl = shl <2 x i32> %shr2, <i32 4, i32 4>
+  %and = and <2 x i32> %shl, <i32 16, i32 16>
+  ret <2 x i32> %and
+}
 
 define i32 @test55(i32 %x) {
 ; CHECK-LABEL: @test55(
@@ -1099,7 +1111,6 @@ define i32 @test56(i32 %x) {
   ret i32 %or
 }
 
-
 define i32 @test57(i32 %x) {
 ; CHECK-LABEL: @test57(
 ; CHECK-NEXT:    [[SHR1:%.*]] = lshr i32 %x, 1
@@ -1113,7 +1124,6 @@ define i32 @test57(i32 %x) {
   ret i32 %or
 }
 
-
 define i32 @test58(i32 %x) {
 ; CHECK-LABEL: @test58(
 ; CHECK-NEXT:    [[TMP1:%.*]] = ashr i32 %x, 3
@@ -1126,6 +1136,18 @@ define i32 @test58(i32 %x) {
   ret i32 %or
 }
 
+define <2 x i32> @test58_splat_vec(<2 x i32> %x) {
+; CHECK-LABEL: @test58_splat_vec(
+; CHECK-NEXT:    [[SHR:%.*]] = ashr <2 x i32> %x, <i32 4, i32 4>
+; CHECK-NEXT:    [[SHL:%.*]] = shl nsw <2 x i32> [[SHR]], <i32 1, i32 1>
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[SHL]], <i32 1, i32 1>
+; CHECK-NEXT:    ret <2 x i32> [[OR]]
+;
+  %shr = ashr <2 x i32> %x, <i32 4, i32 4>
+  %shl = shl <2 x i32> %shr, <i32 1, i32 1>
+  %or = or <2 x i32> %shl, <i32 1, i32 1>
+  ret <2 x i32> %or
+}
 
 define i32 @test59(i32 %x) {
 ; CHECK-LABEL: @test59(
