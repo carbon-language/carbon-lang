@@ -578,12 +578,12 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       // If the input sign bit is known to be zero, or if none of the top bits
       // are demanded, turn this into an unsigned shift right.
       if (BitWidth <= ShiftAmt || KnownZero[BitWidth-ShiftAmt-1] ||
-          (HighBits & ~DemandedMask) == HighBits) {
+          !DemandedMask.intersects(HighBits)) {
         BinaryOperator *LShr = BinaryOperator::CreateLShr(I->getOperand(0),
                                                           I->getOperand(1));
         LShr->setIsExact(cast<BinaryOperator>(I)->isExact());
         return InsertNewInstWith(LShr, *I);
-      } else if ((KnownOne & SignMask) != 0) { // New bits are known one.
+      } else if (KnownOne.intersects(SignMask)) { // New bits are known one.
         KnownOne |= HighBits;
       }
     }
@@ -612,12 +612,12 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 
         // If LHS is non-negative or has all low bits zero, then the upper bits
         // are all zero.
-        if (LHSKnownZero.isSignBitSet() || ((LHSKnownZero & LowBits) == LowBits))
+        if (LHSKnownZero.isSignBitSet() || LowBits.isSubsetOf(LHSKnownZero))
           KnownZero |= ~LowBits;
 
         // If LHS is negative and not all low bits are zero, then the upper bits
         // are all one.
-        if (LHSKnownOne.isSignBitSet() && ((LHSKnownOne & LowBits) != 0))
+        if (LHSKnownOne.isSignBitSet() && LowBits.intersects(LHSKnownOne))
           KnownOne |= ~LowBits;
 
         assert(!(KnownZero & KnownOne) && "Bits known to be one AND zero?");
