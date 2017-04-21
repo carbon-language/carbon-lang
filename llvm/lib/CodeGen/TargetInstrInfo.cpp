@@ -428,8 +428,8 @@ static const TargetRegisterClass *canFoldCopy(const MachineInstr &MI,
   return nullptr;
 }
 
-void TargetInstrInfo::getNoop(MCInst &NopInst) const {
-  llvm_unreachable("Not implemented");
+void TargetInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
+  llvm_unreachable("Not a MachO target");
 }
 
 static MachineInstr *foldPatchpoint(MachineFunction &MF, MachineInstr &MI,
