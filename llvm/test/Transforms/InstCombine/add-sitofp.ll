@@ -15,3 +15,88 @@ define double @x(i32 %a, i32 %b) {
   %p = fadd double %o, 1.0
   ret double %p
 }
+
+define double @test(i32 %a) {
+; CHECK-LABEL: @test(
+; CHECK-NEXT:    [[A_AND:%.*]] = and i32 [[A:%.*]], 1073741823
+; CHECK-NEXT:    [[ADDCONV:%.*]] = add nuw nsw i32 [[A_AND]], 1
+; CHECK-NEXT:    [[RES:%.*]] = sitofp i32 [[ADDCONV]] to double
+; CHECK-NEXT:    ret double [[RES]]
+;
+  ; Drop two highest bits to guarantee that %a + 1 doesn't overflow
+  %a_and = and i32 %a, 1073741823
+  %a_and_fp = sitofp i32 %a_and to double
+  %res = fadd double %a_and_fp, 1.0
+  ret double %res
+}
+
+define float @test_neg(i32 %a) {
+; CHECK-LABEL: @test_neg(
+; CHECK-NEXT:    [[A_AND:%.*]] = and i32 [[A:%.*]], 1073741823
+; CHECK-NEXT:    [[A_AND_FP:%.*]] = sitofp i32 [[A_AND]] to float
+; CHECK-NEXT:    [[RES:%.*]] = fadd float [[A_AND_FP]], 1.000000e+00
+; CHECK-NEXT:    ret float [[RES]]
+;
+  ; Drop two highest bits to guarantee that %a + 1 doesn't overflow
+  %a_and = and i32 %a, 1073741823
+  %a_and_fp = sitofp i32 %a_and to float
+  %res = fadd float %a_and_fp, 1.0
+  ret float %res
+}
+
+define double @test_2(i32 %a, i32 %b) {
+; CHECK-LABEL: @test_2(
+; CHECK-NEXT:    [[A_AND:%.*]] = and i32 [[A:%.*]], 1073741823
+; CHECK-NEXT:    [[B_AND:%.*]] = and i32 [[B:%.*]], 1073741823
+; CHECK-NEXT:    [[ADDCONV:%.*]] = add nuw nsw i32 [[A_AND]], [[B_AND]]
+; CHECK-NEXT:    [[RES:%.*]] = sitofp i32 [[ADDCONV]] to double
+; CHECK-NEXT:    ret double [[RES]]
+;
+  ; Drop two highest bits to guarantee that %a + %b doesn't overflow
+  %a_and = and i32 %a, 1073741823
+  %b_and = and i32 %b, 1073741823
+
+  %a_and_fp = sitofp i32 %a_and to double
+  %b_and_fp = sitofp i32 %b_and to double
+
+  %res = fadd double %a_and_fp, %b_and_fp
+  ret double %res
+}
+
+define float @test_2_neg(i32 %a, i32 %b) {
+; CHECK-LABEL: @test_2_neg(
+; CHECK-NEXT:    [[A_AND:%.*]] = and i32 [[A:%.*]], 1073741823
+; CHECK-NEXT:    [[B_AND:%.*]] = and i32 [[B:%.*]], 1073741823
+; CHECK-NEXT:    [[A_AND_FP:%.*]] = sitofp i32 [[A_AND]] to float
+; CHECK-NEXT:    [[B_AND_FP:%.*]] = sitofp i32 [[B_AND]] to float
+; CHECK-NEXT:    [[RES:%.*]] = fadd float [[A_AND_FP]], [[B_AND_FP]]
+; CHECK-NEXT:    ret float [[RES]]
+;
+  ; Drop two highest bits to guarantee that %a + %b doesn't overflow
+  %a_and = and i32 %a, 1073741823
+  %b_and = and i32 %b, 1073741823
+
+  %a_and_fp = sitofp i32 %a_and to float
+  %b_and_fp = sitofp i32 %b_and to float
+
+  %res = fadd float %a_and_fp, %b_and_fp
+  ret float %res
+}
+
+; This test demonstrates overly conservative legality check. The float addition
+; can be replaced with the integer addition because the result of the operation
+; can be represented in float, but we don't do that now.
+define float @test_3(i32 %a, i32 %b) {
+; CHECK-LABEL: @test_3(
+; CHECK-NEXT:    [[M:%.*]] = lshr i32 [[A:%.*]], 24
+; CHECK-NEXT:    [[N:%.*]] = and i32 [[M]], [[B:%.*]]
+; CHECK-NEXT:    [[O:%.*]] = sitofp i32 [[N]] to float
+; CHECK-NEXT:    [[P:%.*]] = fadd float [[O]], 1.000000e+00
+; CHECK-NEXT:    ret float [[P]]
+;
+  %m = lshr i32 %a, 24
+  %n = and i32 %m, %b
+  %o = sitofp i32 %n to float
+  %p = fadd float %o, 1.0
+  ret float %p
+}
