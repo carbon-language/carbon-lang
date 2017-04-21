@@ -509,10 +509,10 @@ def : InstRW<[WriteVST],              (instrs STNPDi, STNPSi)>;
 def : InstRW<[WriteSTP],              (instrs STNPWi, STNPXi)>;
 def : InstRW<[FalkorWr_2LD_1Z_3cyc],  (instrs ERET)>;
 
-def : InstRW<[WriteST],               (instregex "^LDC.*$")>;
-def : InstRW<[WriteST],               (instregex "^STLR(B|H|W|X)$")>;
-def : InstRW<[WriteST],               (instregex "^STXP(W|X)$")>;
-def : InstRW<[WriteST],               (instregex "^STXR(B|H|W|X)$")>;
+def : InstRW<[FalkorWr_1ST_1SD_1LD_3cyc], (instregex "^LDC.*$")>;
+def : InstRW<[FalkorWr_1ST_1SD_1LD_0cyc], (instregex "^STLR(B|H|W|X)$")>;
+def : InstRW<[FalkorWr_1ST_1SD_1LD_0cyc], (instregex "^STXP(W|X)$")>;
+def : InstRW<[FalkorWr_1ST_1SD_1LD_0cyc], (instregex "^STXR(B|H|W|X)$")>;
 
 def : InstRW<[WriteSTX],              (instregex "^STLXP(W|X)$")>;
 def : InstRW<[WriteSTX],              (instregex "^STLXR(B|H|W|X)$")>;
