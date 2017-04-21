@@ -1605,7 +1605,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
         TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                               !DCI.isBeforeLegalizeOps());
         const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-        if (TLI.ShrinkDemandedConstant(OutVal, DemandedMask, TLO) ||
+        if (TLO.ShrinkDemandedConstant(OutVal, DemandedMask) ||
             TLI.SimplifyDemandedBits(OutVal, DemandedMask, KnownZero, KnownOne,
                                      TLO))
           DCI.CommitTargetLoweringOpt(TLO);
@@ -1622,7 +1622,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
         TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                               !DCI.isBeforeLegalizeOps());
         const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-        if (TLI.ShrinkDemandedConstant(Time, DemandedMask, TLO) ||
+        if (TLO.ShrinkDemandedConstant(Time, DemandedMask) ||
             TLI.SimplifyDemandedBits(Time, DemandedMask, KnownZero, KnownOne,
                                      TLO))
           DCI.CommitTargetLoweringOpt(TLO);

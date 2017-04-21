@@ -2315,13 +2315,12 @@ static bool simplifyI24(SDNode *Node24, unsigned OpIdx,
 
   SelectionDAG &DAG = DCI.DAG;
   SDValue Op = Node24->getOperand(OpIdx);
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   EVT VT = Op.getValueType();
 
   APInt Demanded = APInt::getLowBitsSet(VT.getSizeInBits(), 24);
   APInt KnownZero, KnownOne;
   TargetLowering::TargetLoweringOpt TLO(DAG, true, true);
-  if (TLI.SimplifyDemandedBits(Node24, OpIdx, Demanded, DCI, TLO))
+  if (TLO.SimplifyDemandedBits(Node24, OpIdx, Demanded, DCI))
     return true;
 
   return false;
@@ -3362,7 +3361,7 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
       TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                             !DCI.isBeforeLegalizeOps());
       const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-      if (TLI.ShrinkDemandedConstant(BitsFrom, Demanded, TLO) ||
+      if (TLO.ShrinkDemandedConstant(BitsFrom, Demanded) ||
           TLI.SimplifyDemandedBits(BitsFrom, Demanded,
                                    KnownZero, KnownOne, TLO)) {
         DCI.CommitTargetLoweringOpt(TLO);

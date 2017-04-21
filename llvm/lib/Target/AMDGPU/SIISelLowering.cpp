@@ -4696,7 +4696,7 @@ SDValue SITargetLowering::performCvtF32UByteNCombine(SDNode *N,
   TargetLowering::TargetLoweringOpt TLO(DAG, !DCI.isBeforeLegalize(),
                                         !DCI.isBeforeLegalizeOps());
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (TLI.ShrinkDemandedConstant(Src, Demanded, TLO) ||
+  if (TLO.ShrinkDemandedConstant(Src, Demanded) ||
       TLI.SimplifyDemandedBits(Src, Demanded, KnownZero, KnownOne, TLO)) {
     DCI.CommitTargetLoweringOpt(TLO);
   }
