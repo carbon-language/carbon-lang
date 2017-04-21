@@ -515,8 +515,8 @@ def : InstRW<[FalkorWr_1ST_1SD_1LD_0cyc], (instregex "^STLR(B|H|W|X)$")>;
 def : InstRW<[FalkorWr_1ST_1SD_1LD_0cyc], (instregex "^STXP(W|X)$")>;
 def : InstRW<[FalkorWr_1ST_1SD_1LD_0cyc], (instregex "^STXR(B|H|W|X)$")>;
 
-def : InstRW<[WriteSTX],              (instregex "^STLXP(W|X)$")>;
-def : InstRW<[WriteSTX],              (instregex "^STLXR(B|H|W|X)$")>;
+def : InstRW<[FalkorWr_2LD_1ST_1SD_3cyc], (instregex "^STLXP(W|X)$")>;
+def : InstRW<[FalkorWr_2LD_1ST_1SD_3cyc], (instregex "^STLXR(B|H|W|X)$")>;
 def : InstRW<[WriteVST, WriteVST],    (instrs STNPQi)>;
 
 // Store Instructions
