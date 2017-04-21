@@ -648,7 +648,7 @@ TextDocumentPositionParams::parse(llvm::yaml::MappingNode *Params) {
     auto *Value =
         dyn_cast_or_null<llvm::yaml::MappingNode>(NextKeyValue.getValue());
     if (!Value)
-      return llvm::None;
+      continue;
 
     llvm::SmallString<10> Storage;
     if (KeyValue == "textDocument") {
