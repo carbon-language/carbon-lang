@@ -106,7 +106,6 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemset(
   SDValue Count;
   ConstantSDNode *ValC = dyn_cast<ConstantSDNode>(Src);
   unsigned BytesLeft = 0;
-  bool TwoRepStos = false;
   if (ValC) {
     unsigned ValReg;
     uint64_t Val = ValC->getZExtValue() & 255;
@@ -163,20 +162,7 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemset(
   SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
   Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops);
 
-  if (TwoRepStos) {
-    InFlag = Chain.getValue(1);
-    Count  = Size;
-    EVT CVT = Count.getValueType();
-    SDValue Left = DAG.getNode(ISD::AND, dl, CVT, Count,
-                               DAG.getConstant((AVT == MVT::i64) ? 7 : 3, dl,
-                                               CVT));
-    Chain = DAG.getCopyToReg(Chain, dl, (CVT == MVT::i64) ? X86::RCX : X86::ECX,
-                             Left, InFlag);
-    InFlag = Chain.getValue(1);
-    Tys = DAG.getVTList(MVT::Other, MVT::Glue);
-    SDValue Ops[] = { Chain, DAG.getValueType(MVT::i8), InFlag };
-    Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops);
-  } else if (BytesLeft) {
+  if (BytesLeft) {
     // Handle the last 1 - 7 bytes.
     unsigned Offset = SizeVal - BytesLeft;
     EVT AddrVT = Dst.getValueType();
