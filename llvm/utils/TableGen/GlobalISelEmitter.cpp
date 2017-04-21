@@ -1749,8 +1749,8 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
   OS << "#ifdef GET_GLOBALISEL_PREDICATE_BITSET\n"
      << "const unsigned MAX_SUBTARGET_PREDICATES = " << SubtargetFeatures.size()
      << ";\n"
-     << "using PredicateBitset = "
-        "PredicateBitsetImpl<MAX_SUBTARGET_PREDICATES>;\n"
+     << "typedef PredicateBitsetImpl<MAX_SUBTARGET_PREDICATES> "
+        "PredicateBitset;\n"
      << "#endif // ifdef GET_GLOBALISEL_PREDICATE_BITSET\n\n";
 
   OS << "#ifdef GET_GLOBALISEL_TEMPORARIES_DECL\n";
