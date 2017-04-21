@@ -418,7 +418,7 @@ class Configuration(object):
                 # initial Windows failures until they can be properly diagnosed
                 # and fixed. This allows easier detection of new test failures
                 # and regressions. Note: New failures should not be suppressed
-                # using this feature.
+                # using this feature. (Also see llvm.org/PR32730)
                 self.config.available_features.add('LIBCXX-WINDOWS-FIXME')
 
         # Attempt to detect the glibc version by querying for __GLIBC__

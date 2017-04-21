@@ -7,6 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+// There appears to be a bug in VerifyDiagnosticReporter on Windows that
+// causes -verify to not see the emitted warnings even though they are
+// actually getting omitted.
+// XFAIL: LIBCXX-WINDOWS-FIXME
+
 // REQUIRES: verify-support, diagnose-if-support
 // UNSUPPORTED: libcpp-has-no-threads
 
