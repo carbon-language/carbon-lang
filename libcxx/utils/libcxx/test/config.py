@@ -311,10 +311,10 @@ class Configuration(object):
             # NOTE: We do not test for the -verify flag directly because
             #   -verify will always exit with non-zero on an empty file.
             self.use_clang_verify = self.cxx.isVerifySupported()
-            if self.use_clang_verify:
-                self.config.available_features.add('verify-support')
             self.lit_config.note(
                 "inferred use_clang_verify as: %r" % self.use_clang_verify)
+        if self.use_clang_verify:
+                self.config.available_features.add('verify-support')
 
     def configure_use_thread_safety(self):
         '''If set, run clang with -verify on failing tests.'''
