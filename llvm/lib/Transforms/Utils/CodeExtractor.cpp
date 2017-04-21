@@ -73,12 +73,13 @@ bool CodeExtractor::isBlockValidForExtraction(const BasicBlock &BB) {
 }
 
 /// \brief Build a set of blocks to extract if the input blocks are viable.
-template <typename IteratorT>
-static SetVector<BasicBlock *> buildExtractionBlockSet(IteratorT BBBegin,
-                                                       IteratorT BBEnd) {
-  SetVector<BasicBlock *> Result;
+static SetVector<BasicBlock *>
+buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
+  auto BBBegin = BBs.begin();
+  auto BBEnd = BBs.end();
+  assert(BBBegin != BBEnd && "The set of blocks to extract must be non-empty");
 
-  assert(BBBegin != BBEnd);
+  SetVector<BasicBlock *> Result;
 
   // Loop over the blocks, adding them to our set-vector, and aborting with an
   // empty set if we encounter invalid blocks.
@@ -104,12 +105,6 @@ static SetVector<BasicBlock *> buildExtractionBlockSet(IteratorT BBBegin,
 #endif
 
   return Result;
-}
-
-/// \brief Helper to call buildExtractionBlockSet with an ArrayRef.
-static SetVector<BasicBlock *>
-buildExtractionBlockSet(ArrayRef<BasicBlock *> BBs) {
-  return buildExtractionBlockSet(BBs.begin(), BBs.end());
 }
 
 CodeExtractor::CodeExtractor(ArrayRef<BasicBlock *> BBs, DominatorTree *DT,
