@@ -95,8 +95,7 @@ void initializeFixupBWInstPassPass(PassRegistry &);
 /// encoding when possible in order to reduce code size.
 FunctionPass *createX86EvexToVexInsts();
 
-InstructionSelector *createX86InstructionSelector(const X86TargetMachine &TM,
-                                                  X86Subtarget &,
+InstructionSelector *createX86InstructionSelector(X86Subtarget &,
                                                   X86RegisterBankInfo &);
 
 void initializeEvexToVexInstPassPass(PassRegistry &);
