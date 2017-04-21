@@ -90,6 +90,8 @@ private:
 
   friend struct DenseMapAPIntKeyInfo;
 
+  friend class APSInt;
+
   /// \brief Fast internal constructor
   ///
   /// This constructor is used only internally for speed of construction of
