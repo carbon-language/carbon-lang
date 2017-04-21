@@ -4,8 +4,9 @@
 ; RUN: llc -mtriple=i686-linux-gnu -mattr=+ermsb < %s -o - | FileCheck %s --check-prefix=ALL --check-prefix=FAST
 ; RUN: llc -mtriple=x86_64-linux-gnu -mcpu=generic < %s -o - | FileCheck %s --check-prefix=ALL --check-prefix=NOFAST
 ; RUN: llc -mtriple=x86_64-linux-gnu -mcpu=haswell < %s -o - | FileCheck %s --check-prefix=ALL --check-prefix=FAST
-; FIXME: The documentation stes that ivybridge has ermsb, but this is not
-; enabled right now since I coud not confirm by testing.
+; RUN: llc -mtriple=x86_64-linux-gnu -mcpu=skylake < %s -o - | FileCheck %s --check-prefix=ALL --check-prefix=FAST
+; FIXME: The documentation states that ivybridge has ermsb, but this is not
+; enabled right now since I could not confirm by testing.
 ; RUN: llc -mtriple=x86_64-linux-gnu -mcpu=ivybridge < %s -o - | FileCheck %s --check-prefix=ALL --check-prefix=NOFAST
 
 %struct.large = type { [4096 x i8] }
