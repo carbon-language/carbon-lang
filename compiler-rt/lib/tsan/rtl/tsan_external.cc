@@ -61,7 +61,7 @@ void __tsan_external_read(void *addr, void *caller_pc, void *tag) {
   if (caller_pc) FuncEntry(thr, (uptr)caller_pc);
   bool in_ignored_lib;
   if (!caller_pc || !libignore()->IsIgnored((uptr)caller_pc, &in_ignored_lib)) {
-    MemoryRead(thr, CALLERPC, (uptr)addr, kSizeLog8);
+    MemoryRead(thr, CALLERPC, (uptr)addr, kSizeLog1);
   }
   if (caller_pc) FuncExit(thr);
   thr->external_tag = 0;
@@ -75,7 +75,7 @@ void __tsan_external_write(void *addr, void *caller_pc, void *tag) {
   if (caller_pc) FuncEntry(thr, (uptr)caller_pc);
   bool in_ignored_lib;
   if (!caller_pc || !libignore()->IsIgnored((uptr)caller_pc, &in_ignored_lib)) {
-    MemoryWrite(thr, CALLERPC, (uptr)addr, kSizeLog8);
+    MemoryWrite(thr, CALLERPC, (uptr)addr, kSizeLog1);
   }
   if (caller_pc) FuncExit(thr);
   thr->external_tag = 0;
