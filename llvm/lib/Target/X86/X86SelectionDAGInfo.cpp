@@ -215,7 +215,12 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
     return SDValue();
 
   MVT AVT;
-  if (Align & 1)
+  if (Subtarget.hasFastString())
+    // If the target has fast strings, then it's at least as fast to use
+    // REP MOVSB instead of REP MOVS{W,D,Q}, and it avoids having to handle
+    // BytesLeft.
+    AVT = MVT::i8;
+  else if (Align & 1)
     AVT = MVT::i8;
   else if (Align & 2)
     AVT = MVT::i16;

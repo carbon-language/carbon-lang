@@ -273,6 +273,13 @@ def FeatureFastSHLDRotate
           "fast-shld-rotate", "HasFastSHLDRotate", "true",
           "SHLD can be used as a faster rotate">;
 
+// String operations (e.g. REP MOVS) are fast. See "REP String Enhancement" in
+// the Intel Software Development Manual.
+def FeatureFastString
+    : SubtargetFeature<
+          "fast-string", "HasFastString", "true",
+          "REP MOVS/STOS are fast">;
+
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
 //===----------------------------------------------------------------------===//
@@ -498,6 +505,7 @@ def HSWFeatures : ProcessorFeatures<IVBFeatures.Value, [
   FeatureAVX2,
   FeatureBMI,
   FeatureBMI2,
+  FeatureFastString,
   FeatureFMA,
   FeatureLZCNT,
   FeatureMOVBE,
