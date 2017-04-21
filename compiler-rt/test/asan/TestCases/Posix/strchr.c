@@ -28,8 +28,7 @@ int main(int argc, char **argv) {
     return 1;
   char *r = strchr(s, 'x');
   // CHECK: AddressSanitizer: {{SEGV|BUS}} on unknown address
-  // CHECK: The signal is caused by a {{READ|UNKNOWN}} memory access
-  // CHECK: strchr.c:[[@LINE-3]]
+  // CHECK: strchr.c:[[@LINE-2]]
   assert(r == p);
 
   return 0;
