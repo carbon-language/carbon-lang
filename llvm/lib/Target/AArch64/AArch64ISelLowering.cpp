@@ -825,7 +825,7 @@ static bool optimizeLogicalImm(SDValue Op, unsigned Size, uint64_t Imm,
         ((InvertedImm << 1) | (InvertedImm >> (EltSize - 1) & 1)) &
         NonDemandedBits;
     uint64_t Sum = RotatedImm + NonDemandedBits;
-    bool Carry = NonDemandedBits & ~Sum & (1 << (EltSize - 1));
+    bool Carry = NonDemandedBits & ~Sum & (1ULL << (EltSize - 1));
     uint64_t Ones = (Sum + Carry) & NonDemandedBits;
     NewImm = (Imm | Ones) & Mask;
 
