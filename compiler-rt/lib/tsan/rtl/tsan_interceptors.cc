@@ -269,6 +269,7 @@ ScopedInterceptor::~ScopedInterceptor() {
 void ScopedInterceptor::EnableIgnores() {
   if (ignoring_) {
     ThreadIgnoreBegin(thr_, pc_, false);
+    if (flags()->ignore_noninstrumented_modules) thr_->suppress_reports++;
     if (in_ignored_lib_) {
       DCHECK(!thr_->in_ignored_lib);
       thr_->in_ignored_lib = true;
@@ -279,6 +280,7 @@ void ScopedInterceptor::EnableIgnores() {
 void ScopedInterceptor::DisableIgnores() {
   if (ignoring_) {
     ThreadIgnoreEnd(thr_, pc_);
+    if (flags()->ignore_noninstrumented_modules) thr_->suppress_reports--;
     if (in_ignored_lib_) {
       DCHECK(thr_->in_ignored_lib);
       thr_->in_ignored_lib = false;
