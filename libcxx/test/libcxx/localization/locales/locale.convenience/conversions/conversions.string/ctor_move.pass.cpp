@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// This test fails because the `from_bytes` call seems to result in a call
-// to 'abort()'
+// 'do_bytes' throws a std::range_error unexpectedly
 // XFAIL: LIBCXX-WINDOWS-FIXME
 
 // UNSUPPORTED: c++98, c++03
