@@ -15,7 +15,6 @@
 #define LLVM_ADT_BITVECTOR_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cassert>
@@ -163,6 +162,22 @@ public:
     return -1;
   }
 
+  /// find_last - Returns the index of the last set bit, -1 if none of the bits
+  /// are set.
+  int find_last() const {
+    if (Size == 0)
+      return -1;
+
+    unsigned N = NumBitWords(size());
+    assert(N > 0);
+
+    unsigned i = N - 1;
+    while (i > 0 && Bits[i] == BitWord(0))
+      --i;
+
+    return int((i + 1) * BITWORD_SIZE - countLeadingZeros(Bits[i])) - 1;
+  }
+
   /// find_first_unset - Returns the index of the first unset bit, -1 if all
   /// of the bits are set.
   int find_first_unset() const {
@@ -172,6 +187,30 @@ public:
         return Result < size() ? Result : -1;
       }
     return -1;
+  }
+
+  /// find_last_unset - Returns the index of the last unset bit, -1 if all of
+  /// the bits are set.
+  int find_last_unset() const {
+    if (Size == 0)
+      return -1;
+
+    const unsigned N = NumBitWords(size());
+    assert(N > 0);
+
+    unsigned i = N - 1;
+    BitWord W = Bits[i];
+
+    // The last word in the BitVector has some unused bits, so we need to set
+    // them all to 1 first.  Set them all to 1 so they don't get treated as
+    // valid unset bits.
+    unsigned UnusedCount = BITWORD_SIZE - size() % BITWORD_SIZE;
+    W |= maskLeadingOnes<BitWord>(UnusedCount);
+
+    while (W == ~BitWord(0) && --i > 0)
+      W = Bits[i];
+
+    return int((i + 1) * BITWORD_SIZE - countLeadingOnes(W)) - 1;
   }
 
   /// find_next - Returns the index of the next set bit following the
