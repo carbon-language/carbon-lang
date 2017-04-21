@@ -1,14 +1,16 @@
 include(CheckCXXSourceCompiles)
 
-CHECK_CXX_SOURCE_COMPILES("
-    static thread_local int blah;
-    int main() {
-      return 0;
-    }
-    " HAS_THREAD_LOCAL)
+if( APPLE )
+  CHECK_CXX_SOURCE_COMPILES("
+      static thread_local int blah;
+      int main() {
+        return 0;
+      }
+      " HAS_THREAD_LOCAL)
 
-if( NOT HAS_THREAD_LOCAL )
+  if( NOT HAS_THREAD_LOCAL )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Dthread_local=__thread")
+  endif()
 endif()
 
 set(LIBFUZZER_FLAGS_BASE "${CMAKE_CXX_FLAGS}")
