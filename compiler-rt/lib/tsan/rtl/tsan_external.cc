@@ -30,6 +30,20 @@ const char *GetObjectTypeFromTag(uptr tag) {
   return registered_tags[tag];
 }
 
+typedef void(*AccessFunc)(ThreadState *, uptr, uptr, int);
+void ExternalAccess(void *addr, void *caller_pc, void *tag, AccessFunc access) {
+  CHECK_LT(tag, atomic_load(&used_tags, memory_order_relaxed));
+  ThreadState *thr = cur_thread();
+  thr->external_tag = (uptr)tag;
+  if (caller_pc) FuncEntry(thr, (uptr)caller_pc);
+  bool in_ignored_lib;
+  if (!caller_pc || !libignore()->IsIgnored((uptr)caller_pc, &in_ignored_lib)) {
+    access(thr, CALLERPC, (uptr)addr, kSizeLog1);
+  }
+  if (caller_pc) FuncExit(thr);
+  thr->external_tag = 0;
+}
+
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE
 void *__tsan_external_register_tag(const char *object_type) {
@@ -55,30 +69,12 @@ void __tsan_external_assign_tag(void *addr, void *tag) {
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __tsan_external_read(void *addr, void *caller_pc, void *tag) {
-  CHECK_LT(tag, atomic_load(&used_tags, memory_order_relaxed));
-  ThreadState *thr = cur_thread();
-  thr->external_tag = (uptr)tag;
-  if (caller_pc) FuncEntry(thr, (uptr)caller_pc);
-  bool in_ignored_lib;
-  if (!caller_pc || !libignore()->IsIgnored((uptr)caller_pc, &in_ignored_lib)) {
-    MemoryRead(thr, CALLERPC, (uptr)addr, kSizeLog1);
-  }
-  if (caller_pc) FuncExit(thr);
-  thr->external_tag = 0;
+  ExternalAccess(addr, caller_pc, tag, MemoryRead);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void __tsan_external_write(void *addr, void *caller_pc, void *tag) {
-  CHECK_LT(tag, atomic_load(&used_tags, memory_order_relaxed));
-  ThreadState *thr = cur_thread();
-  thr->external_tag = (uptr)tag;
-  if (caller_pc) FuncEntry(thr, (uptr)caller_pc);
-  bool in_ignored_lib;
-  if (!caller_pc || !libignore()->IsIgnored((uptr)caller_pc, &in_ignored_lib)) {
-    MemoryWrite(thr, CALLERPC, (uptr)addr, kSizeLog1);
-  }
-  if (caller_pc) FuncExit(thr);
-  thr->external_tag = 0;
+  ExternalAccess(addr, caller_pc, tag, MemoryWrite);
 }
 }  // extern "C"
 
