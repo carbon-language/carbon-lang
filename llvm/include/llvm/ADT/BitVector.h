@@ -755,7 +755,7 @@ private:
   }
 
   void grow(unsigned NewSize) {
-    unsigned NewCapacity = std::max(NumBitWords(NewSize), Bits.size() * 2);
+    size_t NewCapacity = std::max<size_t>(NumBitWords(NewSize), Bits.size() * 2);
     assert(NewCapacity > 0 && "realloc-ing zero space");
     BitWord *NewBits =
         (BitWord *)std::realloc(Bits.data(), NewCapacity * sizeof(BitWord));
