@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "tsan_rtl.h"
+#include "tsan_interceptors.h"
 
 namespace __tsan {
 
@@ -57,9 +58,12 @@ void __tsan_external_read(void *addr, void *caller_pc, void *tag) {
   CHECK_LT(tag, atomic_load(&used_tags, memory_order_relaxed));
   ThreadState *thr = cur_thread();
   thr->external_tag = (uptr)tag;
-  FuncEntry(thr, (uptr)caller_pc);
-  MemoryRead(thr, CALLERPC, (uptr)addr, kSizeLog8);
-  FuncExit(thr);
+  if (caller_pc) FuncEntry(thr, (uptr)caller_pc);
+  bool in_ignored_lib;
+  if (!caller_pc || !libignore()->IsIgnored((uptr)caller_pc, &in_ignored_lib)) {
+    MemoryRead(thr, CALLERPC, (uptr)addr, kSizeLog8);
+  }
+  if (caller_pc) FuncExit(thr);
   thr->external_tag = 0;
 }
 
@@ -68,9 +72,12 @@ void __tsan_external_write(void *addr, void *caller_pc, void *tag) {
   CHECK_LT(tag, atomic_load(&used_tags, memory_order_relaxed));
   ThreadState *thr = cur_thread();
   thr->external_tag = (uptr)tag;
-  FuncEntry(thr, (uptr)caller_pc);
-  MemoryWrite(thr, CALLERPC, (uptr)addr, kSizeLog8);
-  FuncExit(thr);
+  if (caller_pc) FuncEntry(thr, (uptr)caller_pc);
+  bool in_ignored_lib;
+  if (!caller_pc || !libignore()->IsIgnored((uptr)caller_pc, &in_ignored_lib)) {
+    MemoryWrite(thr, CALLERPC, (uptr)addr, kSizeLog8);
+  }
+  if (caller_pc) FuncExit(thr);
   thr->external_tag = 0;
 }
 }  // extern "C"
