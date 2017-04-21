@@ -1123,10 +1123,10 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
         // "Inf" or NaN, that atof will accept, but the lexer will not.  Check
         // that the string matches the "[-+]?[0-9]" regex.
         //
-        assert((StrVal[0] >= '0' && StrVal[0] <= '9') ||
-               ((StrVal[0] == '-' || StrVal[0] == '+') &&
-                (StrVal[1] >= '0' && StrVal[1] <= '9')) &&
-                   "[-+]?[0-9] regex does not match!");
+        assert(((StrVal[0] >= '0' && StrVal[0] <= '9') ||
+                ((StrVal[0] == '-' || StrVal[0] == '+') &&
+                 (StrVal[1] >= '0' && StrVal[1] <= '9'))) &&
+               "[-+]?[0-9] regex does not match!");
         // Reparse stringized version!
         if (APFloat(APFloat::IEEEdouble(), StrVal).convertToDouble() == Val) {
           Out << StrVal;
