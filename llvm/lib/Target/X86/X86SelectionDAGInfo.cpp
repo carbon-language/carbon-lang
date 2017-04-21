@@ -181,6 +181,24 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemset(
   return Chain;
 }
 
+namespace {
+
+// Represents a cover of a buffer of SizeVal bytes with blocks of size
+// AVT, as well as how many bytes remain (BytesLeft is always smaller than
+// the block size).
+struct RepMovsRepeats {
+  RepMovsRepeats(const uint64_t SizeVal, const MVT& AVT) {
+    const unsigned UBytes = AVT.getSizeInBits() / 8;
+    Count = SizeVal / UBytes;
+    BytesLeft = SizeVal % UBytes;
+  }
+
+  unsigned Count;
+  unsigned BytesLeft;
+};
+
+}  // namespace
+
 SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
     SelectionDAG &DAG, const SDLoc &dl, SDValue Chain, SDValue Dst, SDValue Src,
     SDValue Size, unsigned Align, bool isVolatile, bool AlwaysInline,
@@ -231,14 +249,18 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
     // QWORD aligned
     AVT = Subtarget.is64Bit() ? MVT::i64 : MVT::i32;
 
-  unsigned UBytes = AVT.getSizeInBits() / 8;
-  unsigned CountVal = SizeVal / UBytes;
-  SDValue Count = DAG.getIntPtrConstant(CountVal, dl);
-  unsigned BytesLeft = SizeVal % UBytes;
+  RepMovsRepeats Repeats(SizeVal, AVT);
+  if (Repeats.BytesLeft > 0 &&
+      DAG.getMachineFunction().getFunction()->optForMinSize()) {
+    // When agressively optimizing for size, avoid generating the code to handle
+    // BytesLeft.
+    AVT = MVT::i8;
+    Repeats = RepMovsRepeats(SizeVal, AVT);
+  }
 
   SDValue InFlag;
   Chain = DAG.getCopyToReg(Chain, dl, Subtarget.is64Bit() ? X86::RCX : X86::ECX,
-                           Count, InFlag);
+                           DAG.getIntPtrConstant(Repeats.Count, dl), InFlag);
   InFlag = Chain.getValue(1);
   Chain = DAG.getCopyToReg(Chain, dl, Subtarget.is64Bit() ? X86::RDI : X86::EDI,
                            Dst, InFlag);
@@ -253,9 +275,9 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
 
   SmallVector<SDValue, 4> Results;
   Results.push_back(RepMovs);
-  if (BytesLeft) {
+  if (Repeats.BytesLeft) {
     // Handle the last 1 - 7 bytes.
-    unsigned Offset = SizeVal - BytesLeft;
+    unsigned Offset = SizeVal - Repeats.BytesLeft;
     EVT DstVT = Dst.getValueType();
     EVT SrcVT = Src.getValueType();
     EVT SizeVT = Size.getValueType();
@@ -266,7 +288,8 @@ SDValue X86SelectionDAGInfo::EmitTargetCodeForMemcpy(
                                     DAG.getNode(ISD::ADD, dl, SrcVT, Src,
                                                 DAG.getConstant(Offset, dl,
                                                                 SrcVT)),
-                                    DAG.getConstant(BytesLeft, dl, SizeVT),
+                                    DAG.getConstant(Repeats.BytesLeft, dl,
+                                                    SizeVT),
                                     Align, isVolatile, AlwaysInline, false,
                                     DstPtrInfo.getWithOffset(Offset),
                                     SrcPtrInfo.getWithOffset(Offset)));

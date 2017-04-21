@@ -17,3 +17,29 @@ define void @test1(%struct.large* nocapture %x) nounwind {
 ; FAST: rep;movsb
 ; HASWELL: rep;movsb
 }
+
+define void @test2(%struct.large* nocapture %x) nounwind minsize {
+  call void @foo(%struct.large* align 8 byval %x)
+  ret void
+
+; ALL-LABEL: test2:
+; NOFAST: rep;movsq
+; GENERIC: rep;movsq
+; FAST: rep;movsb
+; HASWELL: rep;movsb
+}
+
+%struct.large_oddsize = type { [4095 x i8] }
+
+declare void @foo_oddsize(%struct.large_oddsize* align 8 byval) nounwind
+
+define void @test3(%struct.large_oddsize* nocapture %x) nounwind minsize {
+  call void @foo_oddsize(%struct.large_oddsize* align 8 byval %x)
+  ret void
+
+; ALL-LABEL: test3:
+; NOFAST: rep;movsb
+; GENERIC: rep;movsb
+; FAST: rep;movsb
+; HASWELL: rep;movsb
+}
