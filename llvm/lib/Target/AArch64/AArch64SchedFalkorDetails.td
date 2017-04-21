@@ -328,6 +328,7 @@ def : InstRW<[FalkorWr_5VXVY_7cyc],   (instregex "^TBX(v8i8Four|v16i8Four)$")>;
 // -----------------------------------------------------------------------------
 def : InstRW<[WriteVST],              (instregex "^STP(D|S)(i)$")>;
 def : InstRW<[WriteVST, WriteAdr],    (instregex "^STP(D|S)(post|pre)$")>;
+def : InstRW<[FalkorWr_2XYZ_2ST_2VSD_0cyc], (instregex "^STRQro(W|X)$")>;
 
 def : InstRW<[WriteVST],                                                        (instregex "^ST1(One(v8b|v4h|v2s|v1d)(_POST)?|(i8|i16|i32|i64)(_POST)?|One(v16b|v8h|v4s|v2d)|Two(v8b|v4h|v2s|v1d))$")>;
 def : InstRW<[WriteVST],                                                        (instregex "^ST2(Two(v8b|v4h|v2s|v1d)|(i8|i16|i32|i64))$")>;

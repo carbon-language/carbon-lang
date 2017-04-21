@@ -305,6 +305,13 @@ def FalkorWr_2LD_2VXVY_2none_4cyc: SchedWriteRes<[FalkorUnitLD, FalkorUnitLD,
   let NumMicroOps = 6;
 }
 
+def FalkorWr_2XYZ_2ST_2VSD_0cyc: SchedWriteRes<[FalkorUnitXYZ, FalkorUnitST,
+                                                FalkorUnitVSD, FalkorUnitXYZ,
+                                                FalkorUnitST, FalkorUnitVSD]> {
+  let Latency = 0;
+  let NumMicroOps = 6;
+}
+
 //===----------------------------------------------------------------------===//
 // Define 8 micro-op types
 
