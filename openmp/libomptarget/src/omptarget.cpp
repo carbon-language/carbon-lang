@@ -60,6 +60,10 @@ struct HostDataToTargetTy {
   HostDataToTargetTy(uintptr_t BP, uintptr_t B, uintptr_t E, uintptr_t TB)
       : HstPtrBase(BP), HstPtrBegin(B), HstPtrEnd(E),
         TgtPtrBegin(TB), RefCount(1) {}
+  HostDataToTargetTy(uintptr_t BP, uintptr_t B, uintptr_t E, uintptr_t TB,
+      long RF)
+      : HstPtrBase(BP), HstPtrBegin(B), HstPtrEnd(E),
+        TgtPtrBegin(TB), RefCount(RF) {}
 };
 
 typedef std::list<HostDataToTargetTy> HostDataToTargetListTy;
@@ -902,7 +906,7 @@ void *DeviceTy::getTgtPtrBegin(void *HstPtrBegin, int64_t Size, bool &IsLast,
 }
 
 // Return the target pointer begin (where the data will be moved).
-// Lock-free version called from within assertions.
+// Lock-free version called when loading global symbols from the fat binary.
 void *DeviceTy::getTgtPtrBegin(void *HstPtrBegin, int64_t Size) {
   uintptr_t hp = (uintptr_t)HstPtrBegin;
   LookupResult lr = lookupMapping(HstPtrBegin, Size);
@@ -1303,6 +1307,7 @@ static int InitLibrary(DeviceTy& Device) {
     }
 
     // process global data that needs to be mapped.
+    Device.DataMapMtx.lock();
     __tgt_target_table *HostTable = &TransTable->HostTable;
     for (__tgt_offload_entry *CurrDeviceEntry = TargetTable->EntriesBegin,
                              *CurrHostEntry = HostTable->EntriesBegin,
@@ -1318,15 +1323,20 @@ static int InitLibrary(DeviceTy& Device) {
         // therefore we must allow for multiple weak symbols to be loaded from
         // the fat binary. Treat these mappings as any other "regular" mapping.
         // Add entry to map.
+        if (Device.getTgtPtrBegin(CurrHostEntry->addr, CurrHostEntry->size))
+          continue;
         DP("Add mapping from host " DPxMOD " to device " DPxMOD " with size %zu"
             "\n", DPxPTR(CurrHostEntry->addr), DPxPTR(CurrDeviceEntry->addr),
             CurrDeviceEntry->size);
-        bool IsNew; //unused
-        Device.getOrAllocTgtPtr(CurrHostEntry->addr /*HstPtrBegin*/,
-            CurrHostEntry->addr /*HstPtrBase*/, CurrHostEntry->size /*Size*/,
-            IsNew, false /*IsImplicit*/, true /*UpdateRefCount*/);
+        Device.HostDataToTargetMap.push_front(HostDataToTargetTy(
+            (uintptr_t)CurrHostEntry->addr /*HstPtrBase*/,
+            (uintptr_t)CurrHostEntry->addr /*HstPtrBegin*/,
+            (uintptr_t)CurrHostEntry->addr + CurrHostEntry->size /*HstPtrEnd*/,
+            (uintptr_t)CurrDeviceEntry->addr /*TgtPtrBegin*/,
+            INF_REF_CNT /*RefCount*/));
       }
     }
+    Device.DataMapMtx.unlock();
   }
   TrlTblMtx.unlock();
 
