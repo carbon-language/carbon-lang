@@ -688,7 +688,8 @@ unsigned APInt::countTrailingOnesSlowCase() const {
     Count += APINT_BITS_PER_WORD;
   if (i < getNumWords())
     Count += llvm::countTrailingOnes(pVal[i]);
-  return std::min(Count, BitWidth);
+  assert(Count <= BitWidth);
+  return Count;
 }
 
 unsigned APInt::countPopulationSlowCase() const {
