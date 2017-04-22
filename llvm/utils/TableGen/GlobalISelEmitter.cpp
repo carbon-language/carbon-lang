@@ -1014,8 +1014,9 @@ private:
   bool canMutate() const {
     for (const auto &Renderer : enumerate(OperandRenderers)) {
       if (const auto *Copy = dyn_cast<CopyRenderer>(&*Renderer.value())) {
-        if (Matched.getOperand(Copy->getSymbolicName()).getOperandIndex() !=
-            Renderer.index())
+        const OperandMatcher &OM = Matched.getOperand(Copy->getSymbolicName());
+        if (&Matched != &OM.getInstructionMatcher() ||
+            OM.getOperandIndex() != Renderer.index())
           return false;
       } else
         return false;
