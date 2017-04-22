@@ -2208,13 +2208,6 @@ static int target(int32_t device_id, void *host_ptr, int32_t arg_num,
 
 EXTERN int __tgt_target(int32_t device_id, void *host_ptr, int32_t arg_num,
     void **args_base, void **args, int64_t *arg_sizes, int32_t *arg_types) {
-  if (device_id == OFFLOAD_DEVICE_CONSTRUCTOR ||
-      device_id == OFFLOAD_DEVICE_DESTRUCTOR) {
-    // Return immediately for the time being, target calls with device_id
-    // -2 or -3 will be removed from the compiler in the future.
-    return OFFLOAD_SUCCESS;
-  }
-
   DP("Entering target region with entry point " DPxMOD " and device Id %d\n",
      DPxPTR(host_ptr), device_id);
 
@@ -2262,13 +2255,6 @@ EXTERN int __tgt_target_nowait(int32_t device_id, void *host_ptr,
 EXTERN int __tgt_target_teams(int32_t device_id, void *host_ptr,
     int32_t arg_num, void **args_base, void **args, int64_t *arg_sizes,
     int32_t *arg_types, int32_t team_num, int32_t thread_limit) {
-  if (device_id == OFFLOAD_DEVICE_CONSTRUCTOR ||
-      device_id == OFFLOAD_DEVICE_DESTRUCTOR) {
-    // Return immediately for the time being, target calls with device_id
-    // -2 or -3 will be removed from the compiler in the future.
-    return OFFLOAD_SUCCESS;
-  }
-
   DP("Entering target region with entry point " DPxMOD " and device Id %d\n",
      DPxPTR(host_ptr), device_id);
 
