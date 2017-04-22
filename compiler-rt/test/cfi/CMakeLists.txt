@@ -31,7 +31,6 @@ endmacro()
 
 if (APPLE)
   add_cfi_test_suites(False False)
-  add_cfi_test_suites(False True)
 elseif(WINDOWS)
   add_cfi_test_suites(True False)
   add_cfi_test_suites(True True)
