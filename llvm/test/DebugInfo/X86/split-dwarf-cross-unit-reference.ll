@@ -1,13 +1,13 @@
-; RUN: llc -split-dwarf-file=foo.dwo -filetype=obj -o - < %s | llvm-objdump -r - | FileCheck %s
+; RUN: llc -mtriple=x86_64-linux -split-dwarf-file=foo.dwo -filetype=obj -o - < %s | llvm-objdump -r - | FileCheck %s
 
-; CHECK-NOT: .rela.debug_info.dwo
-; CHECK: RELOCATION RECORDS FOR [.rela.debug_info]:
+; CHECK-NOT: .rel{{a?}}.debug_info.dwo
+; CHECK: RELOCATION RECORDS FOR [.rel{{a?}}.debug_info]:
 ; CHECK-NOT: RELOCATION RECORDS
 ; Expect one relocation in debug_info, between f3 and f1.
 ; CHECK: R_X86_64_32 .debug_info
 ; CHECK-NOT: .debug_info
 ; CHECK: RELOCATION RECORDS
-; CHECK-NOT: .rela.debug_info.dwo
+; CHECK-NOT: .rel{{a?}}.debug_info.dwo
 
 
 ; Function Attrs: noinline nounwind optnone uwtable
