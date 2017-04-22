@@ -1391,11 +1391,14 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
     // analysis can tell us that the result of the addition has less significant
     // bits than the integer type can hold.
     auto IsValidPromotion = [](Type *FTy, Type *ITy) {
+      Type *FScalarTy = FTy->getScalarType();
+      Type *IScalarTy = ITy->getScalarType();
+
       // Do we have enough bits in the significand to represent the result of
       // the integer addition?
       unsigned MaxRepresentableBits =
-          APFloat::semanticsPrecision(FTy->getFltSemantics());
-      return ITy->getIntegerBitWidth() <= MaxRepresentableBits;
+          APFloat::semanticsPrecision(FScalarTy->getFltSemantics());
+      return IScalarTy->getIntegerBitWidth() <= MaxRepresentableBits;
     };
 
     // (fadd double (sitofp x), fpcst) --> (sitofp (add int x, intcst))
