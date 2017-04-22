@@ -104,8 +104,6 @@ protected:
   bool applySubprogramDefinitionAttributes(const DISubprogram *SP, DIE &SPDie);
 
 public:
-  virtual ~DwarfUnit();
-
   // Accessors.
   AsmPrinter* getAsmPrinter() const { return Asm; }
   uint16_t getLanguage() const { return CUNode->getSourceLanguage(); }
@@ -289,6 +287,8 @@ public:
   void constructTypeDIE(DIE &Buffer, const DICompositeType *CTy);
 
 protected:
+  ~DwarfUnit();
+
   /// Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(const DIDerivedType *DT);
 
@@ -337,7 +337,7 @@ private:
   virtual bool isDwoUnit() const = 0;
 };
 
-class DwarfTypeUnit : public DwarfUnit {
+class DwarfTypeUnit final : public DwarfUnit {
   uint64_t TypeSignature;
   const DIE *Ty;
   DwarfCompileUnit &CU;

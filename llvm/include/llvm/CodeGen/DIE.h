@@ -793,6 +793,9 @@ class DIEUnit {
   uint32_t Length; /// The length in bytes of all of the DIEs in this unit.
   const uint16_t Version; /// The Dwarf version number for this unit.
   const uint8_t AddrSize; /// The size in bytes of an address for this unit.
+protected:
+  ~DIEUnit() = default;
+
 public:
   DIEUnit(uint16_t Version, uint8_t AddrSize, dwarf::Tag UnitTag);
   DIEUnit(const DIEUnit &RHS) = delete;
@@ -822,7 +825,11 @@ public:
   const DIE &getUnitDie() const { return Die; }
 };
 
-  
+struct BasicDIEUnit final : DIEUnit {
+  BasicDIEUnit(uint16_t Version, uint8_t AddrSize, dwarf::Tag UnitTag)
+      : DIEUnit(Version, AddrSize, UnitTag) {}
+};
+
 //===--------------------------------------------------------------------===//
 /// DIELoc - Represents an expression location.
 //
