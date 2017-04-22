@@ -22,7 +22,7 @@ def complex : Operand<i32>, ComplexPattern<i32, 2, "SelectComplexPattern", []> {
   let MIOperandInfo = (ops i32imm, i32imm);
 }
 def gi_complex :
-    GIComplexOperandMatcher<s32, (ops i32imm, i32imm), "selectComplexPattern">,
+    GIComplexOperandMatcher<s32, "selectComplexPattern">,
     GIComplexPatternEquiv<complex>;
 
 def m1 : OperandWithDefaultOps <i32, (ops (i32 -1))>;
@@ -72,17 +72,15 @@ def HasB : Predicate<"Subtarget->hasB()">;
 // CHECK-NEXT:        ((/* src1 */ (MRI.getType(MI0.getOperand(1).getReg()) == (LLT::scalar(32))) &&
 // CHECK-NEXT:         ((&RBI.getRegBankFromRegClass(MyTarget::GPR32RegClass) == RBI.getRegBank(MI0.getOperand(1).getReg(), MRI, TRI))))) &&
 // CHECK-NEXT:        ((/* src2 */ (MRI.getType(MI0.getOperand(2).getReg()) == (LLT::scalar(32))) &&
-// CHECK-NEXT:        (selectComplexPattern(MI0.getOperand(2), TempOp0, TempOp1)))) &&
+// CHECK-NEXT:        ((Renderer0 = selectComplexPattern(MI0.getOperand(2)))))) &&
 // CHECK-NEXT:        ((/* src3 */ (MRI.getType(MI0.getOperand(3).getReg()) == (LLT::scalar(32))) &&
-// CHECK-NEXT:        (selectComplexPattern(MI0.getOperand(3), TempOp2, TempOp3))))) {
+// CHECK-NEXT:        ((Renderer1 = selectComplexPattern(MI0.getOperand(3))))))) {
 // CHECK-NEXT:          // (select:i32 GPR32:i32:$src1, complex:i32:$src2, complex:i32:$src3) => (INSN2:i32 GPR32:i32:$src1, complex:i32:$src3, complex:i32:$src2)
 // CHECK-NEXT:          MachineInstrBuilder MIB = BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(MyTarget::INSN2));
 // CHECK-NEXT:          MIB.add(MI0.getOperand(0)/*dst*/);
 // CHECK-NEXT:          MIB.add(MI0.getOperand(1)/*src1*/);
-// CHECK-NEXT:          MIB.add(TempOp2);
-// CHECK-NEXT:          MIB.add(TempOp3);
-// CHECK-NEXT:          MIB.add(TempOp0);
-// CHECK-NEXT:          MIB.add(TempOp1);
+// CHECK-NEXT:          Renderer1(MIB);
+// CHECK-NEXT:          Renderer0(MIB);
 // CHECK-NEXT:          for (const auto *FromMI : {&MI0, })
 // CHECK-NEXT:            for (const auto &MMO : FromMI->memoperands())
 // CHECK-NEXT:              MIB.addMemOperand(MMO);
@@ -263,13 +261,12 @@ def MUL : I<(outs GPR32:$dst), (ins GPR32:$src2, GPR32:$src1),
 // CHECK-NEXT:        ((/* src1 */ (MRI.getType(MI0.getOperand(1).getReg()) == (LLT::scalar(32))) &&
 // CHECK-NEXT:         ((&RBI.getRegBankFromRegClass(MyTarget::GPR32RegClass) == RBI.getRegBank(MI0.getOperand(1).getReg(), MRI, TRI))))) &&
 // CHECK-NEXT:        ((/* src2 */ (MRI.getType(MI0.getOperand(2).getReg()) == (LLT::scalar(32))) &&
-// CHECK-NEXT:        (selectComplexPattern(MI0.getOperand(2), TempOp0, TempOp1))))) {
+// CHECK-NEXT:        ((Renderer0 = selectComplexPattern(MI0.getOperand(2))))))) {
 // CHECK-NEXT:          // (sub:i32 GPR32:i32:$src1, complex:i32:$src2) => (INSN1:i32 GPR32:i32:$src1, complex:i32:$src2)
 // CHECK-NEXT:          MachineInstrBuilder MIB = BuildMI(*I.getParent(), I, I.getDebugLoc(), TII.get(MyTarget::INSN1));
 // CHECK-NEXT:          MIB.add(MI0.getOperand(0)/*dst*/);
 // CHECK-NEXT:          MIB.add(MI0.getOperand(1)/*src1*/);
-// CHECK-NEXT:          MIB.add(TempOp0);
-// CHECK-NEXT:          MIB.add(TempOp1);
+// CHECK-NEXT:          Renderer0(MIB);
 // CHECK-NEXT:          for (const auto *FromMI : {&MI0, })
 // CHECK-NEXT:            for (const auto &MMO : FromMI->memoperands())
 // CHECK-NEXT:              MIB.addMemOperand(MMO);
