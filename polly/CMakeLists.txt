@@ -114,6 +114,9 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
 
   # Make sure the isl c files are built as fPIC
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
+
+  # Set directory for polly-isl-test.
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin")
 else ()
   set(LLVM_SOURCE_ROOT "${LLVM_MAIN_SRC_DIR}")
   set(POLLY_GTEST_AVAIL 1)
