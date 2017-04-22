@@ -9,6 +9,7 @@ def MyTarget : Target { let InstructionSet = MyTargetISA; }
 
 def R0 : Register<"r0"> { let Namespace = "MyTarget"; }
 def GPR32 : RegisterClass<"MyTarget", [i32], 32, (add R0)>;
+def GPR32Op : RegisterOperand<GPR32>;
 
 class I<dag OOps, dag IOps, list<dag> Pat>
   : Instruction {
@@ -91,7 +92,7 @@ def HasB : Predicate<"Subtarget->hasB()">;
 // CHECK-NEXT:        }
 
 def : GINodeEquiv<G_SELECT, select>;
-def INSN2 : I<(outs GPR32:$dst), (ins GPR32:$src1, complex:$src2, complex:$src3), []>;
+def INSN2 : I<(outs GPR32:$dst), (ins GPR32Op:$src1, complex:$src2, complex:$src3), []>;
 def : Pat<(select GPR32:$src1, complex:$src2, complex:$src3),
           (INSN2 GPR32:$src1, complex:$src3, complex:$src2)>;
 

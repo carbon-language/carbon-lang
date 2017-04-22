@@ -1384,6 +1384,12 @@ Error GlobalISelEmitter::importChildMatcher(InstructionMatcher &InsnMatcher,
       return Error::success();
     }
 
+    if (ChildRec->isSubClassOf("RegisterOperand")) {
+      OM.addPredicate<RegisterBankOperandMatcher>(
+          Target.getRegisterClass(ChildRec->getValueAsDef("RegClass")));
+      return Error::success();
+    }
+
     // Check for ComplexPattern's.
     if (ChildRec->isSubClassOf("ComplexPattern")) {
       const auto &ComplexPattern = ComplexPatternEquivs.find(ChildRec);
@@ -1447,7 +1453,8 @@ Error GlobalISelEmitter::importExplicitUseRenderer(
       return Error::success();
     }
 
-    if (ChildRec->isSubClassOf("RegisterClass")) {
+    if (ChildRec->isSubClassOf("RegisterClass") ||
+        ChildRec->isSubClassOf("RegisterOperand")) {
       DstMIBuilder.addRenderer<CopyRenderer>(InsnMatcher, DstChild->getName());
       return Error::success();
     }
@@ -1614,6 +1621,8 @@ Expected<RuleMatcher> GlobalISelEmitter::runOnPattern(const PatternToMatch &P) {
 
     const auto &DstIOperand = DstI.Operands[OpIdx];
     Record *DstIOpRec = DstIOperand.Rec;
+    if (DstIOpRec->isSubClassOf("RegisterOperand"))
+      DstIOpRec = DstIOpRec->getValueAsDef("RegClass");
     if (!DstIOpRec->isSubClassOf("RegisterClass"))
       return failedImport("Dst MI def isn't a register class");
 
