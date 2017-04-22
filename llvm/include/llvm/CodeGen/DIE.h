@@ -811,6 +811,10 @@ public:
     this->Section = Section;
   }
 
+  virtual const MCSymbol *getCrossSectionRelativeBaseAddress() const {
+    return nullptr;
+  }
+
   /// Return the section that this DIEUnit will be emitted into.
   ///
   /// \returns Section pointer which can be NULL.

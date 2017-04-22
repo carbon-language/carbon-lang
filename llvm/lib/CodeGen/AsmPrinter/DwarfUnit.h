@@ -335,6 +335,7 @@ private:
   void setIndexTyDie(DIE *D) { IndexTyDie = D; }
 
   virtual bool isDwoUnit() const = 0;
+  const MCSymbol *getCrossSectionRelativeBaseAddress() const override;
 };
 
 class DwarfTypeUnit final : public DwarfUnit {
