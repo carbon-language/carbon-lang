@@ -844,7 +844,7 @@ APInt llvm::APIntOps::RoundDoubleToAPInt(double Double, unsigned width) {
 
   // Otherwise, we have to shift the mantissa bits up to the right location
   APInt Tmp(width, mantissa);
-  Tmp <<= (unsigned)exp - 52;
+  Tmp = Tmp.shl((unsigned)exp - 52);
   return isNeg ? -Tmp : Tmp;
 }
 
@@ -1128,10 +1128,9 @@ void APInt::lshrSlowCase(unsigned ShiftAmt) {
 
 /// Left-shift this APInt by shiftAmt.
 /// @brief Left-shift function.
-APInt &APInt::operator<<=(const APInt &shiftAmt) {
+APInt APInt::shl(const APInt &shiftAmt) const {
   // It's undefined behavior in C to shift by BitWidth or greater.
-  *this <<= (unsigned)shiftAmt.getLimitedValue(BitWidth);
-  return *this;
+  return shl((unsigned)shiftAmt.getLimitedValue(BitWidth));
 }
 
 void APInt::shlSlowCase(unsigned ShiftAmt) {
