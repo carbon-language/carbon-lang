@@ -17,7 +17,9 @@
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/OptimizationDiagnosticInfo.h"
 #include "llvm/IR/CFG.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
@@ -27,7 +29,7 @@
 #include "llvm/Transforms/Utils/CodeExtractor.h"
 using namespace llvm;
 
-#define DEBUG_TYPE "partialinlining"
+#define DEBUG_TYPE "partial-inlining"
 
 STATISTIC(NumPartialInlined, "Number of functions partially inlined");
 
@@ -152,11 +154,25 @@ Function *PartialInlinerImpl::unswitchFunction(Function *F) {
   // Inline the top-level if test into all callers.
   std::vector<User *> Users(DuplicateFunction->user_begin(),
                             DuplicateFunction->user_end());
-  for (User *User : Users)
+
+  for (User *User : Users) {
+    CallSite CS;
     if (CallInst *CI = dyn_cast<CallInst>(User))
-      InlineFunction(CI, IFI);
+      CS = CallSite(CI);
     else if (InvokeInst *II = dyn_cast<InvokeInst>(User))
-      InlineFunction(II, IFI);
+      CS = CallSite(II);
+    else
+      llvm_unreachable("All uses must be calls");
+
+    OptimizationRemarkEmitter ORE(CS.getCaller());
+    DebugLoc DLoc = CS.getInstruction()->getDebugLoc();
+    BasicBlock *Block = CS.getParent();
+    ORE.emit(OptimizationRemark(DEBUG_TYPE, "PartiallyInlined", DLoc, Block)
+             << ore::NV("Callee", F) << " partially inlined into "
+             << ore::NV("Caller", CS.getCaller()));
+
+    InlineFunction(CS, IFI);
+  }
 
   // Ditch the duplicate, since we're done with it, and rewrite all remaining
   // users (function pointers, etc.) back to the original function.
