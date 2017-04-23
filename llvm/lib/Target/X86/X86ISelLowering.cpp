@@ -31054,8 +31054,7 @@ static SDValue combineShiftLeft(SDNode *N, SelectionDAG &DAG) {
       N0.getOperand(1).getOpcode() == ISD::Constant) {
     SDValue N00 = N0.getOperand(0);
     APInt Mask = cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue();
-    const APInt &ShAmt = N1C->getAPIntValue();
-    Mask = Mask.shl(ShAmt);
+    Mask <<= N1C->getAPIntValue();
     bool MaskOK = false;
     // We can handle cases concerning bit-widening nodes containing setcc_c if
     // we carefully interrogate the mask to make sure we are semantics
