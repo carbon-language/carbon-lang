@@ -138,15 +138,10 @@ private:
   /// zero'd out.
   APInt &clearUnusedBits() {
     // Compute how many bits are used in the final word
-    unsigned wordBits = BitWidth % APINT_BITS_PER_WORD;
-    if (wordBits == 0)
-      // If all bits are used, we want to leave the value alone. This also
-      // avoids the undefined behavior of >> when the shift is the same size as
-      // the word size (64).
-      return *this;
+    unsigned WordBits = ((BitWidth-1) % APINT_BITS_PER_WORD) + 1;
 
     // Mask out the high bits.
-    uint64_t mask = WORD_MAX >> (APINT_BITS_PER_WORD - wordBits);
+    uint64_t mask = WORD_MAX >> (APINT_BITS_PER_WORD - WordBits);
     if (isSingleWord())
       VAL &= mask;
     else
