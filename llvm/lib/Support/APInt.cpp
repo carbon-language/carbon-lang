@@ -942,11 +942,8 @@ APInt APInt::trunc(unsigned width) const {
 APInt APInt::sext(unsigned width) const {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
 
-  if (width <= APINT_BITS_PER_WORD) {
-    uint64_t val = VAL << (APINT_BITS_PER_WORD - BitWidth);
-    val = (int64_t)val >> (width - BitWidth);
-    return APInt(width, val >> (APINT_BITS_PER_WORD - width));
-  }
+  if (width <= APINT_BITS_PER_WORD)
+    return APInt(width, SignExtend64(VAL, BitWidth));
 
   APInt Result(getMemory(getNumWords(width)), width);
 
