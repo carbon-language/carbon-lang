@@ -70,6 +70,93 @@ define <4 x i32> @and_to_xor1_vec(<4 x i32> %a, <4 x i32> %b) {
   ret <4 x i32> %and2
 }
 
+; In the next 4 tests, cast instructions are used to thwart operand complexity
+; canonicalizations, so we can test all of the commuted patterns.
+
+define i32 @and_to_nxor1(float %fa, float %fb) {
+; CHECK-LABEL: @and_to_nxor1(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[NOTA:%.*]] = xor i32 [[A]], -1
+; CHECK-NEXT:    [[NOTB:%.*]] = xor i32 [[B]], -1
+; CHECK-NEXT:    [[OR1:%.*]] = or i32 [[A]], [[NOTB]]
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[NOTA]], [[B]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[OR1]], [[OR2]]
+; CHECK-NEXT:    ret i32 [[AND]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %or1 = or i32 %a, %notb
+  %or2 = or i32 %nota, %b
+  %and = and i32 %or1, %or2
+  ret i32 %and
+}
+
+define i32 @and_to_nxor2(float %fa, float %fb) {
+; CHECK-LABEL: @and_to_nxor2(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[NOTA:%.*]] = xor i32 [[A]], -1
+; CHECK-NEXT:    [[NOTB:%.*]] = xor i32 [[B]], -1
+; CHECK-NEXT:    [[OR1:%.*]] = or i32 [[A]], [[NOTB]]
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[B]], [[NOTA]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[OR1]], [[OR2]]
+; CHECK-NEXT:    ret i32 [[AND]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %or1 = or i32 %a, %notb
+  %or2 = or i32 %b, %nota
+  %and = and i32 %or1, %or2
+  ret i32 %and
+}
+
+define i32 @and_to_nxor3(float %fa, float %fb) {
+; CHECK-LABEL: @and_to_nxor3(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[NOTA:%.*]] = xor i32 [[A]], -1
+; CHECK-NEXT:    [[NOTB:%.*]] = xor i32 [[B]], -1
+; CHECK-NEXT:    [[OR1:%.*]] = or i32 [[NOTA]], [[B]]
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[A]], [[NOTB]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[OR1]], [[OR2]]
+; CHECK-NEXT:    ret i32 [[AND]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %or1 = or i32 %nota, %b
+  %or2 = or i32 %a, %notb
+  %and = and i32 %or1, %or2
+  ret i32 %and
+}
+
+define i32 @and_to_nxor4(float %fa, float %fb) {
+; CHECK-LABEL: @and_to_nxor4(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[NOTA:%.*]] = xor i32 [[A]], -1
+; CHECK-NEXT:    [[NOTB:%.*]] = xor i32 [[B]], -1
+; CHECK-NEXT:    [[OR1:%.*]] = or i32 [[NOTA]], [[B]]
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[NOTB]], [[A]]
+; CHECK-NEXT:    [[AND:%.*]] = and i32 [[OR1]], [[OR2]]
+; CHECK-NEXT:    ret i32 [[AND]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %or1 = or i32 %nota, %b
+  %or2 = or i32 %notb, %a
+  %and = and i32 %or1, %or2
+  ret i32 %and
+}
+
 ; (a & ~b) | (~a & b) --> a ^ b
 
 define i32 @or_to_xor1(float %fa, float %fb) {
@@ -144,6 +231,66 @@ define i32 @or_to_xor4(float %fa, float %fb) {
   %and2 = and i32 %a, %notb
   %or = or i32 %and1, %and2
   ret i32 %or
+}
+
+define i32 @or_to_nxor1(i32 %a, i32 %b) {
+; CHECK-LABEL: @or_to_nxor1(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %a, %b
+; CHECK-NEXT:    [[OR:%.*]] = or i32 %a, %b
+; CHECK-NEXT:    [[NOTOR:%.*]] = xor i32 [[OR]], -1
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[AND]], [[NOTOR]]
+; CHECK-NEXT:    ret i32 [[OR2]]
+;
+  %and = and i32 %a, %b
+  %or = or i32 %a, %b
+  %notor = xor i32 %or, -1
+  %or2 = or i32 %and, %notor
+  ret i32 %or2
+}
+
+define i32 @or_to_nxor2(i32 %a, i32 %b) {
+; CHECK-LABEL: @or_to_nxor2(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %a, %b
+; CHECK-NEXT:    [[OR:%.*]] = or i32 %b, %a
+; CHECK-NEXT:    [[NOTOR:%.*]] = xor i32 [[OR]], -1
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[AND]], [[NOTOR]]
+; CHECK-NEXT:    ret i32 [[OR2]]
+;
+  %and = and i32 %a, %b
+  %or = or i32 %b, %a
+  %notor = xor i32 %or, -1
+  %or2 = or i32 %and, %notor
+  ret i32 %or2
+}
+
+define i32 @or_to_nxor3(i32 %a, i32 %b) {
+; CHECK-LABEL: @or_to_nxor3(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %a, %b
+; CHECK-NEXT:    [[OR:%.*]] = or i32 %a, %b
+; CHECK-NEXT:    [[NOTOR:%.*]] = xor i32 [[OR]], -1
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[AND]], [[NOTOR]]
+; CHECK-NEXT:    ret i32 [[OR2]]
+;
+  %and = and i32 %a, %b
+  %or = or i32 %a, %b
+  %notor = xor i32 %or, -1
+  %or2 = or i32 %notor, %and
+  ret i32 %or2
+}
+
+define i32 @or_to_nxor4(i32 %a, i32 %b) {
+; CHECK-LABEL: @or_to_nxor4(
+; CHECK-NEXT:    [[AND:%.*]] = and i32 %b, %a
+; CHECK-NEXT:    [[OR:%.*]] = or i32 %a, %b
+; CHECK-NEXT:    [[NOTOR:%.*]] = xor i32 [[OR]], -1
+; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[AND]], [[NOTOR]]
+; CHECK-NEXT:    ret i32 [[OR2]]
+;
+  %and = and i32 %b, %a
+  %or = or i32 %a, %b
+  %notor = xor i32 %or, -1
+  %or2 = or i32 %notor, %and
+  ret i32 %or2
 }
 
 ; (a & b) ^ (a | b) --> a ^ b
