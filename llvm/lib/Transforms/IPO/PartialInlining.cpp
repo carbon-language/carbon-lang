@@ -33,6 +33,17 @@ using namespace llvm;
 
 STATISTIC(NumPartialInlined, "Number of functions partially inlined");
 
+// Command line option to disable partial-inlining. The default is false:
+static cl::opt<bool>
+    DisablePartialInlining("disable-partial-inlining", cl::init(false),
+                           cl::Hidden, cl::desc("Disable partial ininling"));
+
+// Command line option to set the maximum number of partial inlining allowed
+// for the module. The default value of -1 means no limit.
+static cl::opt<int> MaxNumPartialInlining(
+    "max-partial-inlining", cl::init(-1), cl::Hidden, cl::ZeroOrMore,
+    cl::desc("Max number of partial inlining. The default is unlimited"));
+
 namespace {
 struct PartialInlinerImpl {
   PartialInlinerImpl(InlineFunctionInfo IFI) : IFI(std::move(IFI)) {}
@@ -41,6 +52,12 @@ struct PartialInlinerImpl {
 
 private:
   InlineFunctionInfo IFI;
+  int NumPartialInlining = 0;
+
+  bool IsLimitReached() {
+    return (MaxNumPartialInlining != -1 &&
+            NumPartialInlining >= MaxNumPartialInlining);
+  }
 };
 struct PartialInlinerLegacyPass : public ModulePass {
   static char ID; // Pass identification, replacement for typeid
@@ -164,6 +181,10 @@ Function *PartialInlinerImpl::unswitchFunction(Function *F) {
     else
       llvm_unreachable("All uses must be calls");
 
+    if (IsLimitReached())
+      continue;
+    NumPartialInlining++;
+
     OptimizationRemarkEmitter ORE(CS.getCaller());
     DebugLoc DLoc = CS.getInstruction()->getDebugLoc();
     BasicBlock *Block = CS.getParent();
@@ -185,6 +206,9 @@ Function *PartialInlinerImpl::unswitchFunction(Function *F) {
 }
 
 bool PartialInlinerImpl::run(Module &M) {
+  if (DisablePartialInlining)
+    return false;
+
   std::vector<Function *> Worklist;
   Worklist.reserve(M.size());
   for (Function &F : M)
