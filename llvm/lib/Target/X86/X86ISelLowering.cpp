@@ -31265,9 +31265,9 @@ static SDValue combineVectorShiftImm(SDNode *N, SelectionDAG &DAG,
     unsigned ShiftImm = ShiftVal.getZExtValue();
     for (APInt &Elt : EltBits) {
       if (X86ISD::VSHLI == Opcode)
-        Elt = Elt.shl(ShiftImm);
+        Elt <<= ShiftImm;
       else if (X86ISD::VSRAI == Opcode)
-        Elt = Elt.ashr(ShiftImm);
+        Elt.ashrInPlace(ShiftImm);
       else
         Elt.lshrInPlace(ShiftImm);
     }

@@ -4160,7 +4160,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, const SDLoc &DL, EVT VT,
     auto SignExtendInReg = [&](APInt Val, llvm::EVT ConstantVT) {
       unsigned FromBits = EVT.getScalarSizeInBits();
       Val <<= Val.getBitWidth() - FromBits;
-      Val = Val.ashr(Val.getBitWidth() - FromBits);
+      Val.ashrInPlace(Val.getBitWidth() - FromBits);
       return getConstant(Val, DL, ConstantVT);
     };
 
