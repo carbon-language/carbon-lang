@@ -26717,8 +26717,8 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
       DAG.computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, Depth + 1);
       unsigned ShAmt = ShiftImm->getZExtValue();
       if (Opc == X86ISD::VSHLI) {
-        KnownZero = KnownZero << ShAmt;
-        KnownOne = KnownOne << ShAmt;
+        KnownZero <<= ShAmt;
+        KnownOne <<= ShAmt;
         // Low bits are known zero.
         KnownZero.setLowBits(ShAmt);
       } else {

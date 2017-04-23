@@ -2323,8 +2323,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
     if (const APInt *ShAmt = getValidShiftAmountConstant(Op)) {
       computeKnownBits(Op.getOperand(0), KnownZero, KnownOne, DemandedElts,
                        Depth + 1);
-      KnownZero = KnownZero << *ShAmt;
-      KnownOne = KnownOne << *ShAmt;
+      KnownZero <<= *ShAmt;
+      KnownOne <<= *ShAmt;
       // Low bits are known zero.
       KnownZero.setLowBits(ShAmt->getZExtValue());
     }

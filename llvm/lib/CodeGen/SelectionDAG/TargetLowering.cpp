@@ -1714,7 +1714,7 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
               bestWidth = width;
               break;
             }
-            newMask = newMask << width;
+            newMask <<= width;
           }
         }
       }
