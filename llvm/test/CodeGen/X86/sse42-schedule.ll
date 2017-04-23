@@ -447,14 +447,14 @@ define <2 x i64> @test_pcmpgtq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; SLM-LABEL: test_pcmpgtq:
 ; SLM:       # BB#0:
-; SLM-NEXT:    pcmpgtq %xmm1, %xmm0 # sched: [?:0.000000e+00]
-; SLM-NEXT:    pcmpgtq (%rdi), %xmm0 # sched: [?:0.000000e+00]
+; SLM-NEXT:    pcmpgtq %xmm1, %xmm0 # sched: [1:0.50]
+; SLM-NEXT:    pcmpgtq (%rdi), %xmm0 # sched: [4:1.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_pcmpgtq:
 ; SANDY:       # BB#0:
-; SANDY-NEXT:    vpcmpgtq %xmm1, %xmm0, %xmm0 # sched: [?:0.000000e+00]
-; SANDY-NEXT:    vpcmpgtq (%rdi), %xmm0, %xmm0 # sched: [?:0.000000e+00]
+; SANDY-NEXT:    vpcmpgtq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; SANDY-NEXT:    vpcmpgtq (%rdi), %xmm0, %xmm0 # sched: [5:0.50]
 ; SANDY-NEXT:    retq # sched: [5:1.00]
 ;
 ; HASWELL-LABEL: test_pcmpgtq:
@@ -465,8 +465,8 @@ define <2 x i64> @test_pcmpgtq(<2 x i64> %a0, <2 x i64> %a1, <2 x i64> *%a2) {
 ;
 ; BTVER2-LABEL: test_pcmpgtq:
 ; BTVER2:       # BB#0:
-; BTVER2-NEXT:    vpcmpgtq %xmm1, %xmm0, %xmm0 # sched: [?:0.000000e+00]
-; BTVER2-NEXT:    vpcmpgtq (%rdi), %xmm0, %xmm0 # sched: [?:0.000000e+00]
+; BTVER2-NEXT:    vpcmpgtq %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
+; BTVER2-NEXT:    vpcmpgtq (%rdi), %xmm0, %xmm0 # sched: [6:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
   %1 = icmp sgt <2 x i64> %a0, %a1
   %2 = sext <2 x i1> %1 to <2 x i64>
