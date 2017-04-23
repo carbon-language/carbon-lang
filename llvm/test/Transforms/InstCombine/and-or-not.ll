@@ -4,20 +4,62 @@
 
 ; (a | b) & ~(a & b) --> a ^ b
 
-define i32 @and_to_xor(i32 %a, i32 %b) {
-; CHECK-LABEL: @and_to_xor(
+define i32 @and_to_xor1(i32 %a, i32 %b) {
+; CHECK-LABEL: @and_to_xor1(
+; CHECK-NEXT:    [[AND2:%.*]] = xor i32 %a, %b
+; CHECK-NEXT:    ret i32 [[AND2]]
+;
+  %or = or i32 %a, %b
+  %and = and i32 %a, %b
+  %not = xor i32 %and, -1
+  %and2 = and i32 %or, %not
+  ret i32 %and2
+}
+
+; ~(a & b) & (a | b) --> a ^ b
+
+define i32 @and_to_xor2(i32 %a, i32 %b) {
+; CHECK-LABEL: @and_to_xor2(
+; CHECK-NEXT:    [[AND2:%.*]] = xor i32 %a, %b
+; CHECK-NEXT:    ret i32 [[AND2]]
+;
+  %or = or i32 %a, %b
+  %and = and i32 %a, %b
+  %not = xor i32 %and, -1
+  %and2 = and i32 %not, %or
+  ret i32 %and2
+}
+
+; (a | b) & ~(b & a) --> a ^ b
+
+define i32 @and_to_xor3(i32 %a, i32 %b) {
+; CHECK-LABEL: @and_to_xor3(
 ; CHECK-NEXT:    [[AND2:%.*]] = xor i32 %b, %a
 ; CHECK-NEXT:    ret i32 [[AND2]]
 ;
-  %or = or i32 %b, %a
+  %or = or i32 %a, %b
   %and = and i32 %b, %a
   %not = xor i32 %and, -1
   %and2 = and i32 %or, %not
   ret i32 %and2
 }
 
-define <4 x i32> @and_to_xor_vec(<4 x i32> %a, <4 x i32> %b) {
-; CHECK-LABEL: @and_to_xor_vec(
+; ~(a & b) & (b | a) --> a ^ b
+
+define i32 @and_to_xor4(i32 %a, i32 %b) {
+; CHECK-LABEL: @and_to_xor4(
+; CHECK-NEXT:    [[AND2:%.*]] = xor i32 %a, %b
+; CHECK-NEXT:    ret i32 [[AND2]]
+;
+  %or = or i32 %b, %a
+  %and = and i32 %a, %b
+  %not = xor i32 %and, -1
+  %and2 = and i32 %not, %or
+  ret i32 %and2
+}
+
+define <4 x i32> @and_to_xor1_vec(<4 x i32> %a, <4 x i32> %b) {
+; CHECK-LABEL: @and_to_xor1_vec(
 ; CHECK-NEXT:    [[AND2:%.*]] = xor <4 x i32> %a, %b
 ; CHECK-NEXT:    ret <4 x i32> [[AND2]]
 ;
