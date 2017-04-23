@@ -124,7 +124,7 @@ define i32 @xor_to_xor4(i32 %a, i32 %b) {
 
 ; (a | ~b) ^ (~a | b) --> a ^ b
 
-; In the next 8 tests, cast instructions are used to thwart operand complexity 
+; In the next 8 tests, cast instructions are used to thwart operand complexity
 ; canonicalizations, so we can test all of the commuted patterns.
 
 define i32 @xor_to_xor5(float %fa, float %fb) {
@@ -150,11 +150,7 @@ define i32 @xor_to_xor6(float %fa, float %fb) {
 ; CHECK-LABEL: @xor_to_xor6(
 ; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
 ; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
-; CHECK-NEXT:    [[NOTA:%.*]] = xor i32 [[A]], -1
-; CHECK-NEXT:    [[NOTB:%.*]] = xor i32 [[B]], -1
-; CHECK-NEXT:    [[OR1:%.*]] = or i32 [[A]], [[NOTB]]
-; CHECK-NEXT:    [[OR2:%.*]] = or i32 [[B]], [[NOTA]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[OR1]], [[OR2]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[B]], [[A]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
 ;
   %a = fptosi float %fa to i32
@@ -230,11 +226,7 @@ define i32 @xor_to_xor10(float %fa, float %fb) {
 ; CHECK-LABEL: @xor_to_xor10(
 ; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
 ; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
-; CHECK-NEXT:    [[NOTA:%.*]] = xor i32 [[A]], -1
-; CHECK-NEXT:    [[NOTB:%.*]] = xor i32 [[B]], -1
-; CHECK-NEXT:    [[AND1:%.*]] = and i32 [[A]], [[NOTB]]
-; CHECK-NEXT:    [[AND2:%.*]] = and i32 [[B]], [[NOTA]]
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[AND1]], [[AND2]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[B]], [[A]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
 ;
   %a = fptosi float %fa to i32

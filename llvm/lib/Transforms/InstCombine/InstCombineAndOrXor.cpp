@@ -2374,6 +2374,58 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   return Changed ? &I : nullptr;
 }
 
+/// A ^ B can be specified using other logic ops in a variety of patterns. We
+/// can fold these early and efficiently by morphing an existing instruction.
+static Instruction *foldXorToXor(BinaryOperator &I) {
+  assert(I.getOpcode() == Instruction::Xor);
+  Value *Op0 = I.getOperand(0);
+  Value *Op1 = I.getOperand(1);
+  Value *A, *B;
+
+  // There are 4 commuted variants for each of the basic patterns.
+
+  // (A & B) ^ (A | B) -> A ^ B
+  // (A & B) ^ (B | A) -> A ^ B
+  // (A | B) ^ (A & B) -> A ^ B
+  // (A | B) ^ (B & A) -> A ^ B
+  if ((match(Op0, m_And(m_Value(A), m_Value(B))) &&
+       match(Op1, m_c_Or(m_Specific(A), m_Specific(B)))) ||
+      (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
+       match(Op1, m_c_And(m_Specific(A), m_Specific(B))))) {
+    I.setOperand(0, A);
+    I.setOperand(1, B);
+    return &I;
+  }
+
+  // (A | ~B) ^ (~A | B) -> A ^ B
+  // (~B | A) ^ (~A | B) -> A ^ B
+  // (~A | B) ^ (A | ~B) -> A ^ B
+  // (B | ~A) ^ (A | ~B) -> A ^ B
+  if ((match(Op0, m_c_Or(m_Value(A), m_Not(m_Value(B)))) &&
+       match(Op1, m_Or(m_Not(m_Specific(A)), m_Specific(B)))) ||
+      (match(Op0, m_c_Or(m_Not(m_Value(A)), m_Value(B))) &&
+       match(Op1, m_Or(m_Specific(A), m_Not(m_Specific(B)))))) {
+    I.setOperand(0, A);
+    I.setOperand(1, B);
+    return &I;
+  }
+
+  // (A & ~B) ^ (~A & B) -> A ^ B
+  // (~B & A) ^ (~A & B) -> A ^ B
+  // (~A & B) ^ (A & ~B) -> A ^ B
+  // (B & ~A) ^ (A & ~B) -> A ^ B
+  if ((match(Op0, m_c_And(m_Value(A), m_Not(m_Value(B)))) &&
+       match(Op1, m_And(m_Not(m_Specific(A)), m_Specific(B)))) ||
+      (match(Op0, m_c_And(m_Not(m_Value(A)), m_Value(B))) &&
+       match(Op1, m_And(m_Specific(A), m_Not(m_Specific(B)))))) {
+    I.setOperand(0, A);
+    I.setOperand(1, B);
+    return &I;
+  }
+
+  return nullptr;
+}
+
 // FIXME: We use commutative matchers (m_c_*) for some, but not all, matches
 // here. We should standardize that construct where it is needed or choose some
 // other way to ensure that commutated variants of patterns are not missed.
@@ -2386,6 +2438,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   if (Value *V = SimplifyXorInst(Op0, Op1, DL, &TLI, &DT, &AC))
     return replaceInstUsesWith(I, V);
+
+  if (Instruction *NewXor = foldXorToXor(I))
+    return NewXor;
 
   // (A&B)^(A&C) -> A&(B^C) etc
   if (Value *V = SimplifyUsingDistributiveLaws(I))
@@ -2569,40 +2624,6 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
 
   {
     Value *A, *B, *C, *D;
-    // (A & B)^(A | B) -> A ^ B
-    if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
-        match(Op1, m_Or(m_Value(C), m_Value(D)))) {
-      if ((A == C && B == D) || (A == D && B == C))
-        return BinaryOperator::CreateXor(A, B);
-    }
-    // (A | B)^(A & B) -> A ^ B
-    if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
-        match(Op1, m_And(m_Value(C), m_Value(D)))) {
-      if ((A == C && B == D) || (A == D && B == C))
-        return BinaryOperator::CreateXor(A, B);
-    }
-    // (A | ~B) ^ (~A | B) -> A ^ B
-    // (~B | A) ^ (~A | B) -> A ^ B
-    if (match(Op0, m_c_Or(m_Value(A), m_Not(m_Value(B)))) &&
-        match(Op1, m_Or(m_Not(m_Specific(A)), m_Specific(B))))
-      return BinaryOperator::CreateXor(A, B);
-
-    // (~A | B) ^ (A | ~B) -> A ^ B
-    if (match(Op0, m_Or(m_Not(m_Value(A)), m_Value(B))) &&
-        match(Op1, m_Or(m_Specific(A), m_Not(m_Specific(B))))) {
-      return BinaryOperator::CreateXor(A, B);
-    }
-    // (A & ~B) ^ (~A & B) -> A ^ B
-    // (~B & A) ^ (~A & B) -> A ^ B
-    if (match(Op0, m_c_And(m_Value(A), m_Not(m_Value(B)))) &&
-        match(Op1, m_And(m_Not(m_Specific(A)), m_Specific(B))))
-      return BinaryOperator::CreateXor(A, B);
-
-    // (~A & B) ^ (A & ~B) -> A ^ B
-    if (match(Op0, m_And(m_Not(m_Value(A)), m_Value(B))) &&
-        match(Op1, m_And(m_Specific(A), m_Not(m_Specific(B))))) {
-      return BinaryOperator::CreateXor(A, B);
-    }
     // (A ^ C)^(A | B) -> ((~A) & B) ^ C
     if (match(Op0, m_Xor(m_Value(D), m_Value(C))) &&
         match(Op1, m_Or(m_Value(A), m_Value(B)))) {
