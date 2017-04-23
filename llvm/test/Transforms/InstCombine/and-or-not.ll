@@ -70,6 +70,82 @@ define <4 x i32> @and_to_xor1_vec(<4 x i32> %a, <4 x i32> %b) {
   ret <4 x i32> %and2
 }
 
+; (a & ~b) | (~a & b) --> a ^ b
+
+define i32 @or_to_xor1(float %fa, float %fb) {
+; CHECK-LABEL: @or_to_xor1(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[OR:%.*]] = xor i32 [[A]], [[B]]
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %and1 = and i32 %a, %notb
+  %and2 = and i32 %nota, %b
+  %or = or i32 %and1, %and2
+  ret i32 %or
+}
+
+; (a & ~b) | (b & ~a) --> a ^ b
+
+define i32 @or_to_xor2(float %fa, float %fb) {
+; CHECK-LABEL: @or_to_xor2(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[OR:%.*]] = xor i32 [[A]], [[B]]
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %and1 = and i32 %a, %notb
+  %and2 = and i32 %b, %nota
+  %or = or i32 %and1, %and2
+  ret i32 %or
+}
+
+; (~a & b) | (~b & a) --> a ^ b
+
+define i32 @or_to_xor3(float %fa, float %fb) {
+; CHECK-LABEL: @or_to_xor3(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[OR:%.*]] = xor i32 [[B]], [[A]]
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %and1 = and i32 %nota, %b
+  %and2 = and i32 %notb, %a
+  %or = or i32 %and1, %and2
+  ret i32 %or
+}
+
+; (~a & b) | (a & ~b) --> a ^ b
+
+define i32 @or_to_xor4(float %fa, float %fb) {
+; CHECK-LABEL: @or_to_xor4(
+; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
+; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
+; CHECK-NEXT:    [[OR:%.*]] = xor i32 [[B]], [[A]]
+; CHECK-NEXT:    ret i32 [[OR]]
+;
+  %a = fptosi float %fa to i32
+  %b = fptosi float %fb to i32
+  %nota = xor i32 %a, -1
+  %notb = xor i32 %b, -1
+  %and1 = and i32 %nota, %b
+  %and2 = and i32 %a, %notb
+  %or = or i32 %and1, %and2
+  ret i32 %or
+}
+
 ; (a & b) ^ (a | b) --> a ^ b
 
 define i32 @xor_to_xor1(i32 %a, i32 %b) {
