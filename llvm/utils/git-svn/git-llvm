@@ -208,6 +208,8 @@ def fix_eol_style_native(rev, sr, svn_sr_path):
                     ignore_errors=True).split('\n')
     crlf_files = []
     for eol_prop in eol_props:
+        # Remove spare CR.
+        eol_prop = eol_prop.strip('\r')
         if not eol_prop:
             continue
         prop_parts = eol_prop.rsplit(' - ', 1)
