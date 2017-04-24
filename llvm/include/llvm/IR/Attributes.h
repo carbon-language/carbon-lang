@@ -511,6 +511,9 @@ public:
   /// \brief Return the attributes at the given slot.
   AttributeList getSlotAttributes(unsigned Slot) const;
 
+  /// \brief Return the attributes at the given slot.
+  AttributeSet getSlotSet(unsigned Slot) const;
+
   void dump() const;
 };
 

@@ -1257,6 +1257,12 @@ AttributeList AttributeList::getSlotAttributes(unsigned Slot) const {
   return pImpl->getSlotAttributes(Slot);
 }
 
+AttributeSet AttributeList::getSlotSet(unsigned Slot) const {
+  assert(pImpl && Slot < pImpl->getNumSlots() &&
+         "Slot # out of range!");
+  return pImpl->getSlotNode(Slot);
+}
+
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void AttributeList::dump() const {
   dbgs() << "PAL[\n";
