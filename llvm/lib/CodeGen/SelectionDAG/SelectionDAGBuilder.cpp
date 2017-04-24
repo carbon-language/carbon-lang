@@ -3969,9 +3969,9 @@ void SelectionDAGBuilder::visitFence(const FenceInst &I) {
   SDValue Ops[3];
   Ops[0] = getRoot();
   Ops[1] = DAG.getConstant((unsigned)I.getOrdering(), dl,
-                           TLI.getPointerTy(DAG.getDataLayout()));
+                           TLI.getFenceOperandTy(DAG.getDataLayout()));
   Ops[2] = DAG.getConstant(I.getSynchScope(), dl,
-                           TLI.getPointerTy(DAG.getDataLayout()));
+                           TLI.getFenceOperandTy(DAG.getDataLayout()));
   DAG.setRoot(DAG.getNode(ISD::ATOMIC_FENCE, dl, MVT::Other, Ops));
 }
 
