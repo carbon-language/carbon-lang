@@ -11,7 +11,6 @@
 
 #include "LinePrinter.h"
 #include "PrettyClassLayoutGraphicalDumper.h"
-#include "PrettyClassLayoutTextDumper.h"
 #include "llvm-pdbdump.h"
 
 #include "llvm/ADT/APFloat.h"
@@ -39,21 +38,8 @@ void ClassDefinitionDumper::start(const PDBSymbolTypeUDT &Class) {
 void ClassDefinitionDumper::start(const ClassLayout &Layout) {
   prettyPrintClassIntro(Layout);
 
-  switch (opts::pretty::ClassFormat) {
-  case opts::pretty::ClassDefinitionFormat::Graphical: {
-    PrettyClassLayoutGraphicalDumper Dumper(Printer, 0);
-    DumpedAnything = Dumper.start(Layout);
-    break;
-  }
-  case opts::pretty::ClassDefinitionFormat::Standard:
-  case opts::pretty::ClassDefinitionFormat::Layout: {
-    PrettyClassLayoutTextDumper Dumper(Printer);
-    DumpedAnything |= Dumper.start(Layout);
-    break;
-  }
-  default:
-    llvm_unreachable("Unreachable!");
-  }
+  PrettyClassLayoutGraphicalDumper Dumper(Printer, 1, 0);
+  DumpedAnything |= Dumper.start(Layout);
 
   prettyPrintClassOutro(Layout);
 }
