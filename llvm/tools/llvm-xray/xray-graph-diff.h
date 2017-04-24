@@ -49,7 +49,7 @@ public:
     std::array<std::reference_wrapper<const GraphRenderer::GraphT>, N> G;
 
   public:
-    template <typename... Ts> Factory(Ts &... Args) : G{{Args...}} {};
+    template <typename... Ts> Factory(Ts &... Args) : G{{Args...}} {}
 
     Expected<GraphDiffRenderer> getGraphDiffRenderer();
   };
@@ -66,7 +66,7 @@ public:
                         StatType VertexColor = StatType::NONE,
                         int TruncLen = 40);
 
-  const GraphT &getGraph() { return G; };
+  const GraphT &getGraph() { return G; }
 };
 } // namespace xray
 } // namespace llvm

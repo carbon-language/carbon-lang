@@ -149,7 +149,7 @@ public:
     bool KeepGoing;
     bool DeduceSiblingCalls;
     std::string InstrMap;
-    Trace Trace;
+    ::llvm::xray::Trace Trace;
     Expected<GraphRenderer> getGraphRenderer();
   };
 
