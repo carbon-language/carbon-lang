@@ -16088,6 +16088,19 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
   if (Op1->isInvariant() && Op0->writeMem())
     return false;
 
+  unsigned NumBytes0 = Op0->getMemoryVT().getSizeInBits() >> 3;
+  unsigned NumBytes1 = Op1->getMemoryVT().getSizeInBits() >> 3;
+
+  // Check for BaseIndexOffset matching.
+  BaseIndexOffset BasePtr0 = BaseIndexOffset::match(Op0->getBasePtr(), DAG);
+  BaseIndexOffset BasePtr1 = BaseIndexOffset::match(Op1->getBasePtr(), DAG);
+  if (BasePtr0.equalBaseIndex(BasePtr1))
+    return !((BasePtr0.Offset + NumBytes0 <= BasePtr1.Offset) ||
+             (BasePtr1.Offset + NumBytes1 <= BasePtr0.Offset));
+
+  // FIXME: findBaseOffset and ConstantValue/GlobalValue/FrameIndex analysis
+  // modified to use BaseIndexOffset.
+
   // Gather base node and offset information.
   SDValue Base0, Base1;
   int64_t Offset0, Offset1;
@@ -16099,8 +16112,6 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
                                       Base1, Offset1, GV1, CV1);
 
   // If they have the same base address, then check to see if they overlap.
-  unsigned NumBytes0 = Op0->getMemoryVT().getSizeInBits() >> 3;
-  unsigned NumBytes1 = Op1->getMemoryVT().getSizeInBits() >> 3;
   if (Base0 == Base1 || (GV0 && (GV0 == GV1)) || (CV0 && (CV0 == CV1)))
     return !((Offset0 + NumBytes0) <= Offset1 ||
              (Offset1 + NumBytes1) <= Offset0);
