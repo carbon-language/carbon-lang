@@ -378,7 +378,7 @@ public:
       return serializeSeq(C, std::string());
 
     return handleErrors(std::move(Err),
-                        [&C, &Lock](const ErrorInfoBase &EIB) {
+                        [&C](const ErrorInfoBase &EIB) {
                           auto SI = Serializers.find(EIB.dynamicClassID());
                           if (SI == Serializers.end())
                             return serializeAsStringError(C, EIB);
