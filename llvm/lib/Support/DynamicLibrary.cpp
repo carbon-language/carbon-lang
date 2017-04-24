@@ -61,7 +61,7 @@ public:
       Handles.push_back(Handle);
     } else {
 #ifndef LLVM_ON_WIN32
-      if (Process != nullptr) {
+      if (Process) {
         if (CanClose)
           DLClose(Process);
         if (Process == Handle)

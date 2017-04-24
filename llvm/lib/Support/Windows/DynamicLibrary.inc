@@ -61,7 +61,7 @@ void *DynamicLibrary::HandleSet::DLOpen(const char *File, std::string *Err) {
 
 static DynamicLibrary::HandleSet *IsOpenedHandlesInstance(void *Handle) {
   if (!OpenedHandles.isConstructed())
-    return false;
+    return nullptr;
   DynamicLibrary::HandleSet &Inst = *OpenedHandles;
   return Handle == &Inst ? &Inst : nullptr;
 }
