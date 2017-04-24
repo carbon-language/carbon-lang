@@ -30,7 +30,8 @@
   define void @test_stores() #0 { ret void }
 
   define void @test_gep() { ret void }
-  define void @test_constants() { ret void }
+  define void @test_constant_imm() { ret void }
+  define void @test_constant_cimm() { ret void }
 
   define void @test_soft_fp_double() #0 { ret void }
 
@@ -744,8 +745,8 @@ body:             |
     BX_RET 14, _, implicit %r0
 ...
 ---
-name:            test_constants
-# CHECK-LABEL: name: test_constants
+name:            test_constant_imm
+# CHECK-LABEL: name: test_constant_imm
 legalized:       true
 regBankSelected: true
 selected:        false
@@ -756,6 +757,26 @@ registers:
 body:             |
   bb.0:
     %0(s32) = G_CONSTANT 42
+    ; CHECK: %[[C]] = MOVi 42, 14, _, _
+
+    %r0 = COPY %0(s32)
+    BX_RET 14, _, implicit %r0
+...
+---
+name:            test_constant_cimm
+# CHECK-LABEL: name: test_constant_cimm
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+# CHECK: id: [[C:[0-9]+]], class: gpr
+body:             |
+  bb.0:
+    ; Adding a type on G_CONSTANT changes its operand from an Imm into a CImm.
+    ; We still want to see the same thing in the output though.
+    %0(s32) = G_CONSTANT i32 42
     ; CHECK: %[[C]] = MOVi 42, 14, _, _
 
     %r0 = COPY %0(s32)

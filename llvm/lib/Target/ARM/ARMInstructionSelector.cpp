@@ -351,6 +351,18 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
            "Expected constant to live in a GPR");
     I.setDesc(TII.get(ARM::MOVi));
     MIB.add(predOps(ARMCC::AL)).add(condCodeOp());
+
+    auto &Val = I.getOperand(1);
+    if (Val.isCImm()) {
+      if (Val.getCImm()->getBitWidth() > 32)
+        return false;
+      Val.ChangeToImmediate(Val.getCImm()->getZExtValue());
+    }
+
+    if (!Val.isImm()) {
+      return false;
+    }
+
     break;
   }
   case G_STORE:
