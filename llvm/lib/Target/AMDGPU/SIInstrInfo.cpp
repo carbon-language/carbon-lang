@@ -138,6 +138,11 @@ bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
   }
 
   if (isSMRD(Opc0) && isSMRD(Opc1)) {
+    // Skip time and cache invalidation instructions.
+    if (AMDGPU::getNamedOperandIdx(Opc0, AMDGPU::OpName::sbase) == -1 ||
+        AMDGPU::getNamedOperandIdx(Opc1, AMDGPU::OpName::sbase) == -1)
+      return false;
+
     assert(getNumOperandsNoGlue(Load0) == getNumOperandsNoGlue(Load1));
 
     // Check base reg.
