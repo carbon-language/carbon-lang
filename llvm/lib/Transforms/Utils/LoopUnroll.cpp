@@ -334,7 +334,6 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount, bool Force,
 
   auto CheckSuccessors = [&](unsigned S1, unsigned S2) {
     return BI->getSuccessor(S1) == Header && !L->contains(BI->getSuccessor(S2));
-
   };
 
   if (!CheckSuccessors(0, 1) && !CheckSuccessors(1, 0)) {
