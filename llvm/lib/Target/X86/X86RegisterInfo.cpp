@@ -137,25 +137,29 @@ X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
     case X86::FR32RegClassID:
     case X86::FR64RegClassID:
       // If AVX-512 isn't supported we should only inflate to these classes.
-      if (!Subtarget.hasAVX512() && Super->getSize() == RC->getSize())
+      if (!Subtarget.hasAVX512() &&
+          getRegSizeInBits(*Super) == getRegSizeInBits(*RC))
         return Super;
       break;
     case X86::VR128RegClassID:
     case X86::VR256RegClassID:
       // If VLX isn't supported we should only inflate to these classes.
-      if (!Subtarget.hasVLX() && Super->getSize() == RC->getSize())
+      if (!Subtarget.hasVLX() &&
+          getRegSizeInBits(*Super) == getRegSizeInBits(*RC))
         return Super;
       break;
     case X86::VR128XRegClassID:
     case X86::VR256XRegClassID:
       // If VLX isn't support we shouldn't inflate to these classes.
-      if (Subtarget.hasVLX() && Super->getSize() == RC->getSize())
+      if (Subtarget.hasVLX() &&
+          getRegSizeInBits(*Super) == getRegSizeInBits(*RC))
         return Super;
       break;
     case X86::FR32XRegClassID:
     case X86::FR64XRegClassID:
       // If AVX-512 isn't support we shouldn't inflate to these classes.
-      if (Subtarget.hasAVX512() && Super->getSize() == RC->getSize())
+      if (Subtarget.hasAVX512() &&
+          getRegSizeInBits(*Super) == getRegSizeInBits(*RC))
         return Super;
       break;
     case X86::GR8RegClassID:
@@ -168,7 +172,7 @@ X86RegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
     case X86::VR512RegClassID:
       // Don't return a super-class that would shrink the spill size.
       // That can happen with the vector and float classes.
-      if (Super->getSize() == RC->getSize())
+      if (getRegSizeInBits(*Super) == getRegSizeInBits(*RC))
         return Super;
     }
     Super = *I++;

@@ -1924,14 +1924,15 @@ bool X86FrameLowering::assignCalleeSavedSpillSlots(
       continue;
 
     const TargetRegisterClass *RC = TRI->getMinimalPhysRegClass(Reg);
+    unsigned Size = TRI->getSpillSize(*RC);
+    unsigned Align = TRI->getSpillAlignment(*RC);
     // ensure alignment
-    SpillSlotOffset -= std::abs(SpillSlotOffset) % RC->getAlignment();
+    SpillSlotOffset -= std::abs(SpillSlotOffset) % Align;
     // spill into slot
-    SpillSlotOffset -= RC->getSize();
-    int SlotIndex =
-        MFI.CreateFixedSpillStackObject(RC->getSize(), SpillSlotOffset);
+    SpillSlotOffset -= Size;
+    int SlotIndex = MFI.CreateFixedSpillStackObject(Size, SpillSlotOffset);
     CSI[i - 1].setFrameIdx(SlotIndex);
-    MFI.ensureMaxAlignment(RC->getAlignment());
+    MFI.ensureMaxAlignment(Align);
   }
 
   return true;
