@@ -288,7 +288,7 @@ TEST(APIntTest, i1) {
   EXPECT_EQ(zero, one.shl(1));
   EXPECT_EQ(one, one.shl(0));
   EXPECT_EQ(zero, one.lshr(1));
-  EXPECT_EQ(zero, one.ashr(1));
+  EXPECT_EQ(one, one.ashr(1));
 
   // Rotates.
   EXPECT_EQ(one, one.rotl(0));

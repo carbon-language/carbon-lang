@@ -1041,7 +1041,9 @@ APInt APInt::ashr(unsigned shiftAmt) const {
   // Handle single word shifts with built-in ashr
   if (isSingleWord()) {
     if (shiftAmt == BitWidth)
-      return APInt(BitWidth, 0); // undefined
+      // Undefined
+      return APInt(BitWidth,
+                   SignExtend64(VAL, BitWidth) >> (APINT_BITS_PER_WORD - 1));
     return APInt(BitWidth, SignExtend64(VAL, BitWidth) >> shiftAmt);
   }
 
