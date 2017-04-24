@@ -2584,7 +2584,7 @@ void APInt::tcShiftLeft(WordType *Dst, unsigned Words, unsigned Count) {
   if (!Count)
     return;
 
-  /* WordShift is the inter-part shift; BitShift is is intra-part shift.  */
+  // WordShift is the inter-part shift; BitShift is the intra-part shift.
   unsigned WordShift = std::min(Count / APINT_BITS_PER_WORD, Words);
   unsigned BitShift = Count % APINT_BITS_PER_WORD;
 
@@ -2611,7 +2611,7 @@ void APInt::tcShiftRight(WordType *Dst, unsigned Words, unsigned Count) {
   if (!Count)
     return;
 
-  // WordShift is the inter-part shift; BitShift is is intra-part shift.
+  // WordShift is the inter-part shift; BitShift is the intra-part shift.
   unsigned WordShift = std::min(Count / APINT_BITS_PER_WORD, Words);
   unsigned BitShift = Count % APINT_BITS_PER_WORD;
 
