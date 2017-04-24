@@ -40,12 +40,13 @@ class TargetRegisterClass {
 public:
   typedef const MCPhysReg* iterator;
   typedef const MCPhysReg* const_iterator;
+  typedef const MVT::SimpleValueType* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 
   // Instance variables filled by tablegen, do not use!
   const MCRegisterClass *MC;
   const uint16_t SpillSize, SpillAlignment;
-  const MVT::SimpleValueType *VTs;
+  const vt_iterator VTs;
   const uint32_t *SubClassMask;
   const uint16_t *SuperRegIndices;
   const LaneBitmask LaneMask;
@@ -100,6 +101,26 @@ public:
   /// Return true if this register class may be used to create virtual
   /// registers.
   bool isAllocatable() const { return MC->isAllocatable(); }
+
+  /// Return true if this TargetRegisterClass has the ValueType vt.
+  bool hasType(MVT vt) const {
+    for(int i = 0; VTs[i] != MVT::Other; ++i)
+      if (MVT(VTs[i]) == vt)
+        return true;
+    return false;
+  }
+
+  /// vt_begin / vt_end - Loop over all of the value types that can be
+  /// represented by values in this register class.
+  vt_iterator vt_begin() const {
+    return VTs;
+  }
+
+  vt_iterator vt_end() const {
+    vt_iterator I = VTs;
+    while (*I != MVT::Other) ++I;
+    return I;
+  }
 
   /// Return true if the specified TargetRegisterClass
   /// is a proper sub-class of this TargetRegisterClass.
@@ -218,7 +239,6 @@ struct RegClassWeight {
 class TargetRegisterInfo : public MCRegisterInfo {
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
-  typedef const MVT::SimpleValueType* vt_iterator;
 private:
   const TargetRegisterInfoDesc *InfoDesc;     // Extra desc array for codegen
   const char *const *SubRegIndexNames;        // Names of subreg indexes.
@@ -315,27 +335,6 @@ public:
   /// of this class.
   unsigned getSpillAlignment(const TargetRegisterClass &RC) const {
     return RC.SpillAlignment;
-  }
-
-  /// Return true if the given TargetRegisterClass has the ValueType T.
-  bool hasType(const TargetRegisterClass &RC, MVT T) const {
-    for (int i = 0; RC.VTs[i] != MVT::Other; ++i)
-      if (MVT(RC.VTs[i]) == T)
-        return true;
-    return false;
-  }
-
-  /// Loop over all of the value types that can be represented by values
-  // in the given register class.
-  vt_iterator valuetypes_begin(const TargetRegisterClass &RC) const {
-    return RC.VTs;
-  }
-
-  vt_iterator valuetypes_end(const TargetRegisterClass &RC) const {
-    vt_iterator I = RC.VTs;
-    while (*I != MVT::Other)
-      ++I;
-    return I;
   }
 
   /// Returns the Register Class of a physical register of the given type,

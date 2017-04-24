@@ -25944,7 +25944,6 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
   DebugLoc DL = MI.getDebugLoc();
   MachineFunction *MF = MBB->getParent();
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
-  const TargetRegisterInfo *TRI = Subtarget.getRegisterInfo();
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
   const BasicBlock *BB = MBB->getBasicBlock();
@@ -25961,8 +25960,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
 
   DstReg = MI.getOperand(CurOp++).getReg();
   const TargetRegisterClass *RC = MRI.getRegClass(DstReg);
-  assert(TRI->hasType(*RC, MVT::i32) && "Invalid destination!");
-  (void)TRI;
+  assert(RC->hasType(MVT::i32) && "Invalid destination!");
   unsigned mainDstReg = MRI.createVirtualRegister(RC);
   unsigned restoreDstReg = MRI.createVirtualRegister(RC);
 
@@ -35939,7 +35937,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
   // type.  For example, we want to map "{ax},i32" -> {eax}, we don't want it to
   // turn into {ax},{dx}.
   // MVT::Other is used to specify clobber names.
-  if (TRI->hasType(*Res.second, VT) || VT == MVT::Other)
+  if (Res.second->hasType(VT) || VT == MVT::Other)
     return Res;   // Correct type already, nothing to do.
 
   // Get a matching integer of the correct size. i.e. "ax" with MVT::32 should
@@ -35977,11 +35975,11 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       Res.second = &X86::FR32RegClass;
     else if (VT == MVT::f64 || VT == MVT::i64)
       Res.second = &X86::FR64RegClass;
-    else if (TRI->hasType(X86::VR128RegClass, VT))
+    else if (X86::VR128RegClass.hasType(VT))
       Res.second = &X86::VR128RegClass;
-    else if (TRI->hasType(X86::VR256RegClass, VT))
+    else if (X86::VR256RegClass.hasType(VT))
       Res.second = &X86::VR256RegClass;
-    else if (TRI->hasType(X86::VR512RegClass, VT))
+    else if (X86::VR512RegClass.hasType(VT))
       Res.second = &X86::VR512RegClass;
     else {
       // Type mismatch and not a clobber: Return an error;

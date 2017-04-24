@@ -9057,7 +9057,6 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
                                     MachineBasicBlock *MBB) const {
   DebugLoc DL = MI.getDebugLoc();
   const TargetInstrInfo *TII = Subtarget.getInstrInfo();
-  const PPCRegisterInfo *TRI = Subtarget.getRegisterInfo();
 
   MachineFunction *MF = MBB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
@@ -9071,7 +9070,7 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
 
   unsigned DstReg = MI.getOperand(0).getReg();
   const TargetRegisterClass *RC = MRI.getRegClass(DstReg);
-  assert(TRI->hasType(*RC, MVT::i32) && "Invalid destination!");
+  assert(RC->hasType(MVT::i32) && "Invalid destination!");
   unsigned mainDstReg = MRI.createVirtualRegister(RC);
   unsigned restoreDstReg = MRI.createVirtualRegister(RC);
 
@@ -9154,6 +9153,7 @@ PPCTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
 
   // Setup
   MIB = BuildMI(*thisMBB, MI, DL, TII->get(PPC::BCLalways)).addMBB(mainMBB);
+  const PPCRegisterInfo *TRI = Subtarget.getRegisterInfo();
   MIB.addRegMask(TRI->getNoPreservedMask());
 
   BuildMI(*thisMBB, MI, DL, TII->get(PPC::LI), restoreDstReg).addImm(1);

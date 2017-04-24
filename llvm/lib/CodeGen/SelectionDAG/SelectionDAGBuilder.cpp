@@ -6653,12 +6653,12 @@ static void GetRegistersForValue(SelectionDAG &DAG, const TargetLowering &TLI,
 
   MachineFunction &MF = DAG.getMachineFunction();
   SmallVector<unsigned, 4> Regs;
-  const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
 
   // If this is a constraint for a single physreg, or a constraint for a
   // register class, find it.
   std::pair<unsigned, const TargetRegisterClass *> PhysReg =
-      TLI.getRegForInlineAsmConstraint(&TRI, OpInfo.ConstraintCode,
+      TLI.getRegForInlineAsmConstraint(MF.getSubtarget().getRegisterInfo(),
+                                       OpInfo.ConstraintCode,
                                        OpInfo.ConstraintVT);
 
   unsigned NumRegs = 1;
@@ -6667,11 +6667,11 @@ static void GetRegistersForValue(SelectionDAG &DAG, const TargetLowering &TLI,
     // cast of the input value.  More generally, handle any case where the input
     // value disagrees with the register class we plan to stick this in.
     if (OpInfo.Type == InlineAsm::isInput &&
-        PhysReg.second && !TRI.hasType(*PhysReg.second, OpInfo.ConstraintVT)) {
+        PhysReg.second && !PhysReg.second->hasType(OpInfo.ConstraintVT)) {
       // Try to convert to the first EVT that the reg class contains.  If the
       // types are identical size, use a bitcast to convert (e.g. two differing
       // vector types).
-      MVT RegVT = *TRI.valuetypes_begin(*PhysReg.second);
+      MVT RegVT = *PhysReg.second->vt_begin();
       if (RegVT.getSizeInBits() == OpInfo.CallOperand.getValueSizeInBits()) {
         OpInfo.CallOperand = DAG.getNode(ISD::BITCAST, DL,
                                          RegVT, OpInfo.CallOperand);
@@ -6699,12 +6699,12 @@ static void GetRegistersForValue(SelectionDAG &DAG, const TargetLowering &TLI,
   if (unsigned AssignedReg = PhysReg.first) {
     const TargetRegisterClass *RC = PhysReg.second;
     if (OpInfo.ConstraintVT == MVT::Other)
-      ValueVT = *TRI.valuetypes_begin(*RC);
+      ValueVT = *RC->vt_begin();
 
     // Get the actual register value type.  This is important, because the user
     // may have asked for (e.g.) the AX register in i32 type.  We need to
     // remember that AX is actually i16 to get the right extension.
-    RegVT = *TRI.valuetypes_begin(*RC);
+    RegVT = *RC->vt_begin();
 
     // This is a explicit reference to a physical register.
     Regs.push_back(AssignedReg);
@@ -6730,7 +6730,7 @@ static void GetRegistersForValue(SelectionDAG &DAG, const TargetLowering &TLI,
   // Otherwise, if this was a reference to an LLVM register class, create vregs
   // for this reference.
   if (const TargetRegisterClass *RC = PhysReg.second) {
-    RegVT = *TRI.valuetypes_begin(*RC);
+    RegVT = *RC->vt_begin();
     if (OpInfo.ConstraintVT == MVT::Other)
       ValueVT = RegVT;
 

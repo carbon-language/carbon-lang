@@ -78,12 +78,11 @@ BitVector AVRRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 const TargetRegisterClass *
 AVRRegisterInfo::getLargestLegalSuperClass(const TargetRegisterClass *RC,
                                            const MachineFunction &MF) const {
-  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
-  if (TRI->hasType(*RC, MVT::i16)) {
+  if (RC->hasType(MVT::i16)) {
     return &AVR::DREGSRegClass;
   }
 
-  if (TRI->hasType(*RC, MVT::i8)) {
+  if (RC->hasType(MVT::i8)) {
     return &AVR::GPR8RegClass;
   }
 

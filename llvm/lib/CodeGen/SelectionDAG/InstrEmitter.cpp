@@ -161,8 +161,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
   if (VRBase) {
     DstRC = MRI->getRegClass(VRBase);
   } else if (UseRC) {
-    assert(TRI->hasType(*UseRC, VT) &&
-           "Incompatible phys register def and uses!");
+    assert(UseRC->hasType(VT) && "Incompatible phys register def and uses!");
     DstRC = UseRC;
   } else {
     DstRC = TLI->getRegClassFor(VT);

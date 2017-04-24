@@ -3234,7 +3234,6 @@ SparcTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
                                       MachineBasicBlock *MBB) const {
   DebugLoc DL = MI.getDebugLoc();
   const TargetInstrInfo *TII = Subtarget->getInstrInfo();
-  const TargetRegisterInfo *TRI = Subtarget->getRegisterInfo();
 
   MachineFunction *MF = MBB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
@@ -3246,8 +3245,7 @@ SparcTargetLowering::emitEHSjLjSetJmp(MachineInstr &MI,
 
   unsigned DstReg = MI.getOperand(0).getReg();
   const TargetRegisterClass *RC = MRI.getRegClass(DstReg);
-  assert(TRI->hasType(*RC, MVT::i32) && "Invalid destination!");
-  (void)TRI;
+  assert(RC->hasType(MVT::i32) && "Invalid destination!");
   unsigned mainDstReg = MRI.createVirtualRegister(RC);
   unsigned restoreDstReg = MRI.createVirtualRegister(RC);
 
