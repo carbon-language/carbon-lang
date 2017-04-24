@@ -332,6 +332,16 @@ bool ARMInstructionSelector::select(MachineInstr &I) const {
     }
     MIB.add(predOps(ARMCC::AL)).add(condCodeOp());
     break;
+  case G_SDIV:
+    assert(TII.getSubtarget().hasDivideInARMMode() && "Unsupported operation");
+    I.setDesc(TII.get(ARM::SDIV));
+    MIB.add(predOps(ARMCC::AL));
+    break;
+  case G_UDIV:
+    assert(TII.getSubtarget().hasDivideInARMMode() && "Unsupported operation");
+    I.setDesc(TII.get(ARM::UDIV));
+    MIB.add(predOps(ARMCC::AL));
+    break;
   case G_FADD:
     if (!selectFAdd(MIB, TII, MRI))
       return false;

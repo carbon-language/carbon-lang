@@ -47,6 +47,13 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
     for (auto Ty : {s1, s8, s16, s32})
       setAction({Op, Ty}, Legal);
 
+  for (unsigned Op : {G_SDIV, G_UDIV}) {
+    if (ST.hasDivideInARMMode())
+      setAction({Op, s32}, Legal);
+    else
+      setAction({Op, s32}, Libcall);
+  }
+
   for (unsigned Op : {G_SEXT, G_ZEXT}) {
     setAction({Op, s32}, Legal);
     for (auto Ty : {s1, s8, s16})
