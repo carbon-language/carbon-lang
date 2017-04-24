@@ -204,7 +204,6 @@ static bool isAddressExpression(const Value &V) {
 //
 // Precondition: V is an address expression.
 static SmallVector<Value *, 2> getPointerOperands(const Value &V) {
-  assert(isAddressExpression(V));
   const Operator &Op = cast<Operator>(V);
   switch (Op.getOpcode()) {
   case Instruction::PHI: {
