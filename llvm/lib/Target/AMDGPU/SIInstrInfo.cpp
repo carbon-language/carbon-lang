@@ -2640,6 +2640,19 @@ void SIInstrInfo::legalizeOperandsVOP2(MachineRegisterInfo &MRI,
   if (isLegalRegOperand(MRI, InstrDesc.OpInfo[Src1Idx], Src1))
     return;
 
+  // Special case: V_READLANE_B32 accepts only immediate or SGPR operands for
+  // lane select. Fix up using V_READFIRSTLANE, since we assume that the lane
+  // select is uniform.
+  if (Opc == AMDGPU::V_READLANE_B32 && Src1.isReg() &&
+      RI.isVGPR(MRI, Src1.getReg())) {
+    unsigned Reg = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
+    const DebugLoc &DL = MI.getDebugLoc();
+    BuildMI(*MI.getParent(), MI, DL, get(AMDGPU::V_READFIRSTLANE_B32), Reg)
+        .add(Src1);
+    Src1.ChangeToRegister(Reg, false);
+    return;
+  }
+
   // We do not use commuteInstruction here because it is too aggressive and will
   // commute if it is possible. We only want to commute here if it improves
   // legality. This can be called a fairly large number of times so don't waste
