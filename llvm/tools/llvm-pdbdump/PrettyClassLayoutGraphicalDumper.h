@@ -19,7 +19,7 @@ namespace llvm {
 namespace pdb {
 
 class UDTLayoutBase;
-class StorageItemBase;
+class LayoutItemBase;
 class LinePrinter;
 
 class PrettyClassLayoutGraphicalDumper : public PDBSymDumper {
@@ -37,7 +37,7 @@ private:
 
   LinePrinter &Printer;
 
-  StorageItemBase *CurrentItem = nullptr;
+  LayoutItemBase *CurrentItem = nullptr;
   uint32_t ClassOffsetZero = 0;
   uint32_t CurrentAbsoluteOffset = 0;
   bool DumpedAnything = false;

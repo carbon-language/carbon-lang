@@ -19,7 +19,7 @@ namespace opts {
 namespace pretty {
 
 enum class ClassDefinitionFormat { None, Layout, Graphical, Standard };
-enum class ClassSortMode { None, Name, Size, Padding };
+enum class ClassSortMode { None, Name, Size, Padding, PaddingPct };
 
 extern llvm::cl::opt<bool> Compilands;
 extern llvm::cl::opt<bool> Symbols;

@@ -124,12 +124,15 @@ cl::opt<bool> Typedefs("typedefs", cl::desc("Display typedef types"),
                        cl::cat(TypeCategory), cl::sub(PrettySubcommand));
 cl::opt<ClassSortMode> ClassOrder(
     "class-order", cl::desc("Class sort order"), cl::init(ClassSortMode::None),
-    cl::values(clEnumValN(ClassSortMode::None, "none",
-                          "Undefined / no particular sort order"),
-               clEnumValN(ClassSortMode::Name, "name", "Sort classes by name"),
-               clEnumValN(ClassSortMode::Size, "size", "Sort classes by size"),
-               clEnumValN(ClassSortMode::Padding, "padding",
-                          "Sort classes by amount of padding")),
+    cl::values(
+        clEnumValN(ClassSortMode::None, "none",
+                   "Undefined / no particular sort order"),
+        clEnumValN(ClassSortMode::Name, "name", "Sort classes by name"),
+        clEnumValN(ClassSortMode::Size, "size", "Sort classes by size"),
+        clEnumValN(ClassSortMode::Padding, "padding",
+                   "Sort classes by amount of padding"),
+        clEnumValN(ClassSortMode::PaddingPct, "padding-pct",
+                   "Sort classes by percentage of space consumed by padding")),
     cl::cat(TypeCategory), cl::sub(PrettySubcommand));
 
 cl::opt<ClassDefinitionFormat> ClassFormat(

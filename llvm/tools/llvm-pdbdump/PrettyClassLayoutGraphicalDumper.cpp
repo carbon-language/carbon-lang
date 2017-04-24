@@ -53,15 +53,28 @@ bool PrettyClassLayoutGraphicalDumper::start(const UDTLayoutBase &Layout) {
       }
     }
 
-    CurrentItem = Item.get();
-    Item->getSymbol().dump(*this);
+    CurrentItem = Item;
+    if (Item->isVBPtr()) {
+      VTableLayoutItem &Layout = static_cast<VTableLayoutItem &>(*CurrentItem);
+
+      VariableDumper VarDumper(Printer);
+      VarDumper.startVbptr(CurrentAbsoluteOffset, Layout.getSize());
+    } else {
+      if (auto Sym = Item->getSymbol())
+        Sym->dump(*this);
+    }
+
+    if (Item->getLayoutSize() > 0) {
+      uint32_t Prev = RelativeOffset + Item->getLayoutSize() - 1;
+      NextPaddingByte = UseMap.find_next_unset(Prev);
+    }
   }
 
-  if (NextPaddingByte >= 0 && Layout.getClassSize() > 1) {
-    uint32_t Amount = Layout.getClassSize() - NextPaddingByte;
+  auto TailPadding = Layout.tailPadding();
+  if (TailPadding > 0) {
     Printer.NewLine();
-    WithColor(Printer, PDB_ColorItem::Padding).get() << "<padding> (" << Amount
-                                                     << " bytes)";
+    WithColor(Printer, PDB_ColorItem::Padding).get() << "<padding> ("
+      << TailPadding << " bytes)";
     DumpedAnything = true;
   }
 
@@ -85,12 +98,19 @@ void PrettyClassLayoutGraphicalDumper::dump(
   Printer.NewLine();
   BaseClassLayout &Layout = static_cast<BaseClassLayout &>(*CurrentItem);
 
-  std::string Label = Layout.isVirtualBase() ? "vbase" : "base";
+  std::string Label = "base";
+  if (Layout.isVirtualBase()) {
+    Label.insert(Label.begin(), 'v');
+    if (Layout.getBase().isIndirectVirtualBaseClass())
+      Label.insert(Label.begin(), 'i');
+  }
   Printer << Label << " ";
 
+  uint32_t Size = Layout.isEmptyBase() ? 1 : Layout.getLayoutSize();
+
   WithColor(Printer, PDB_ColorItem::Offset).get()
-      << "+" << format_hex(CurrentAbsoluteOffset, 4)
-      << " [sizeof=" << Layout.getSize() << "] ";
+      << "+" << format_hex(CurrentAbsoluteOffset, 4) << " [sizeof=" << Size
+      << "] ";
 
   WithColor(Printer, PDB_ColorItem::Identifier).get() << Layout.getName();
 
@@ -125,27 +145,8 @@ void PrettyClassLayoutGraphicalDumper::dump(const PDBSymbolData &Symbol) {
 void PrettyClassLayoutGraphicalDumper::dump(const PDBSymbolTypeVTable &Symbol) {
   assert(CurrentItem != nullptr);
 
-  VTableLayoutItem &Layout = static_cast<VTableLayoutItem &>(*CurrentItem);
-
   VariableDumper VarDumper(Printer);
   VarDumper.start(Symbol, ClassOffsetZero);
-
-  Printer.Indent();
-  uint32_t Index = 0;
-  for (auto &Func : Layout.funcs()) {
-    Printer.NewLine();
-    std::string Name = Func->getName();
-    auto ParentClass =
-        unique_dyn_cast<PDBSymbolTypeUDT>(Func->getClassParent());
-    assert(ParentClass);
-    WithColor(Printer, PDB_ColorItem::Address).get() << " [" << Index << "] ";
-    WithColor(Printer, PDB_ColorItem::Identifier).get()
-        << "&" << ParentClass->getName();
-    Printer << "::";
-    WithColor(Printer, PDB_ColorItem::Identifier).get() << Name;
-    ++Index;
-  }
-  Printer.Unindent();
 
   DumpedAnything = true;
 }

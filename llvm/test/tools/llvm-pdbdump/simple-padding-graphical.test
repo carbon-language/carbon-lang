@@ -71,7 +71,6 @@
 
 ; VFPTR:      struct SimplePadVfptr [sizeof = 8] {
 ; VFPTR-NEXT:   vfptr +0x00 [sizeof=4]
-; VFPTR-NEXT:     [0] &SimplePadVfptr::~SimplePadVfptr
 ; VFPTR-NEXT:   data +0x04 [sizeof=4] int X
 ; VFPTR-NEXT: }
 
@@ -89,15 +88,15 @@
 ; MULTIPLE_INHERIT2:      SimplePadMultiInherit2 [sizeof = 16]
 ; MULTIPLE_INHERIT2-NEXT:   : public SimplePadFields1
 ; MULTIPLE_INHERIT2-NEXT:   , public SimplePadFields2 {
-; MULTIPLE_INHERIT2-NEXT:   base +0x00 [sizeof=4] SimplePadFields1
+; MULTIPLE_INHERIT2-NEXT:   base +0x00 [sizeof=3] SimplePadFields1
 ; MULTIPLE_INHERIT2-NEXT:     data +0x00 [sizeof=1] char A
 ; MULTIPLE_INHERIT2-NEXT:     data +0x01 [sizeof=1] char B
 ; MULTIPLE_INHERIT2-NEXT:     data +0x02 [sizeof=1] char C
-; MULTIPLE_INHERIT2-NEXT:     <padding> (1 bytes)
-; MULTIPLE_INHERIT2-NEXT:   base +0x04 [sizeof=8] SimplePadFields2
+; MULTIPLE_INHERIT2-NEXT:   <padding> (1 bytes)
+; MULTIPLE_INHERIT2-NEXT:   base +0x04 [sizeof=5] SimplePadFields2
 ; MULTIPLE_INHERIT2-NEXT:     data +0x04 [sizeof=4] int Y
 ; MULTIPLE_INHERIT2-NEXT:     data +0x08 [sizeof=1] char X
-; MULTIPLE_INHERIT2-NEXT:     <padding> (3 bytes)
+; MULTIPLE_INHERIT2-NEXT:   <padding> (3 bytes)
 ; MULTIPLE_INHERIT2-NEXT:   data +0x0c [sizeof=4] int X
 ; MULTIPLE_INHERIT2-NEXT: }
 

@@ -36,9 +36,8 @@
 
 ; BASE_CLASS_D: ---TYPES---
 ; BASE_CLASS_D: class BaseClassTest::D [sizeof = 8]
-; BASE_CLASS_D-DAG: protected BaseClassTest::B
-; BASE_CLASS_D-DAG: private BaseClassTest::C
-; BASE_CLASS_D-DAG: protected virtual BaseClassTest::A
+; BASE_CLASS_D-NEXT: protected BaseClassTest::B
+; BASE_CLASS_D-NEXT: private BaseClassTest::C
 
 ; UDT_KIND_TEST: ---TYPES---
 ; UDT_KIND_TEST-DAG: union UdtKindTest::C [sizeof = 1] {}

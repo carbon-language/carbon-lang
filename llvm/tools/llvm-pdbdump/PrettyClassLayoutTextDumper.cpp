@@ -59,14 +59,17 @@ bool PrettyClassLayoutTextDumper::start(const ClassLayout &Layout) {
         NextUnusedByte = UseMap.find_next_unset(Off);
       }
     }
-    LayoutItem->getSymbol().dump(*this);
+    if (auto Sym = LayoutItem->getSymbol())
+      Sym->dump(*this);
   }
 
-  if (NextUnusedByte >= 0 && Layout.getClassSize() > 1) {
-    uint32_t Amount = Layout.getClassSize() - NextUnusedByte;
-    Printer.NewLine();
-    WithColor(Printer, PDB_ColorItem::Padding).get() << "<padding> (" << Amount
-                                                     << " bytes)";
+  if (NextUnusedByte >= 0 && Layout.getSize() > 1) {
+    uint32_t Amount = Layout.getSize() - NextUnusedByte;
+    if (Amount > 0) {
+      Printer.NewLine();
+      WithColor(Printer, PDB_ColorItem::Padding).get() << "<padding> ("
+                                                       << Amount << " bytes)";
+    }
     DumpedAnything = true;
   }
 
@@ -115,5 +118,7 @@ void PrettyClassLayoutTextDumper::dump(const PDBSymbolTypeTypedef &Symbol) {
   TypedefDumper Dumper(Printer);
   Dumper.start(Symbol);
 }
+
+void PrettyClassLayoutTextDumper::dump(const PDBSymbolTypeBuiltin &Symbol) {}
 
 void PrettyClassLayoutTextDumper::dump(const PDBSymbolTypeUDT &Symbol) {}

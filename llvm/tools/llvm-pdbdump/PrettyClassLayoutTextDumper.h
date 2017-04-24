@@ -34,6 +34,7 @@ public:
   void dump(const PDBSymbolTypeTypedef &Symbol) override;
   void dump(const PDBSymbolTypeUDT &Symbol) override;
   void dump(const PDBSymbolTypeVTable &Symbol) override;
+  void dump(const PDBSymbolTypeBuiltin &Symbol) override;
 
 private:
   bool DumpedAnything = false;
