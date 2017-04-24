@@ -1877,6 +1877,19 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const Query &Q,
       (A == Op0 || B == Op0))
     return Constant::getAllOnesValue(Op0->getType());
 
+  // (A & ~B) | (A ^ B) -> (A ^ B)
+  // (~B & A) | (A ^ B) -> (A ^ B)
+  if (match(Op0, m_c_And(m_Value(A), m_Not(m_Value(B)))) &&
+      match(Op1, m_Xor(m_Specific(A), m_Specific(B))))
+    return Op1;
+
+  // Commute the 'or' operands.
+  // (A ^ B) | (A & ~B) -> (A ^ B)
+  // (A ^ B) | (~B & A) -> (A ^ B)
+  if (match(Op1, m_c_And(m_Value(A), m_Not(m_Value(B)))) &&
+      match(Op0, m_Xor(m_Specific(A), m_Specific(B))))
+    return Op0;
+
   if (auto *ICILHS = dyn_cast<ICmpInst>(Op0)) {
     if (auto *ICIRHS = dyn_cast<ICmpInst>(Op1)) {
       if (Value *V = SimplifyOrOfICmps(ICILHS, ICIRHS))
