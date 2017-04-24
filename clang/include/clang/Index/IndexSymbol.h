@@ -59,6 +59,7 @@ enum class SymbolLanguage {
   C,
   ObjC,
   CXX,
+  Swift,
 };
 
 /// Language specific sub-kinds.

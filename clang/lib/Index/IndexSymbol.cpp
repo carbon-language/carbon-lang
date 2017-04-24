@@ -318,6 +318,20 @@ SymbolInfo index::getSymbolInfo(const Decl *D) {
   if (Info.Properties & (unsigned)SymbolProperty::Generic)
     Info.Lang = SymbolLanguage::CXX;
 
+  auto getExternalSymAttr = [](const Decl *D) -> ExternalSourceSymbolAttr* {
+    if (auto *attr = D->getAttr<ExternalSourceSymbolAttr>())
+      return attr;
+    if (auto *dcd = dyn_cast<Decl>(D->getDeclContext())) {
+      if (auto *attr = dcd->getAttr<ExternalSourceSymbolAttr>())
+        return attr;
+    }
+    return nullptr;
+  };
+  if (auto *attr = getExternalSymAttr(D)) {
+    if (attr->getLanguage() == "Swift")
+      Info.Lang = SymbolLanguage::Swift;
+  }
+
   return Info;
 }
 
@@ -458,6 +472,7 @@ StringRef index::getSymbolLanguageString(SymbolLanguage K) {
   case SymbolLanguage::C: return "C";
   case SymbolLanguage::ObjC: return "ObjC";
   case SymbolLanguage::CXX: return "C++";
+  case SymbolLanguage::Swift: return "Swift";
   }
   llvm_unreachable("invalid symbol language kind");
 }
