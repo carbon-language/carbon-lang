@@ -939,40 +939,26 @@ APInt APInt::trunc(unsigned width) const {
 }
 
 // Sign extend to a new width.
-APInt APInt::sext(unsigned width) const {
-  assert(width > BitWidth && "Invalid APInt SignExtend request");
+APInt APInt::sext(unsigned Width) const {
+  assert(Width > BitWidth && "Invalid APInt SignExtend request");
 
-  if (width <= APINT_BITS_PER_WORD)
-    return APInt(width, SignExtend64(VAL, BitWidth));
+  if (Width <= APINT_BITS_PER_WORD)
+    return APInt(Width, SignExtend64(VAL, BitWidth));
 
-  APInt Result(getMemory(getNumWords(width)), width);
+  APInt Result(getMemory(getNumWords(Width)), Width);
 
-  // Copy full words.
-  unsigned i;
-  uint64_t word = 0;
-  for (i = 0; i != BitWidth / APINT_BITS_PER_WORD; i++) {
-    word = getRawData()[i];
-    Result.pVal[i] = word;
-  }
+  // Copy words.
+  std::memcpy(Result.pVal, getRawData(), getNumWords() * APINT_WORD_SIZE);
 
-  // Read and sign-extend any partial word.
-  unsigned bits = (0 - BitWidth) % APINT_BITS_PER_WORD;
-  if (bits != 0)
-    word = (int64_t)getRawData()[i] << bits >> bits;
-  else
-    word = (int64_t)word >> (APINT_BITS_PER_WORD - 1);
+  // Sign extend the last word since there may be unused bits in the input.
+  Result.pVal[getNumWords() - 1] =
+      SignExtend64(Result.pVal[getNumWords() - 1],
+                   ((BitWidth - 1) % APINT_BITS_PER_WORD) + 1);
 
-  // Write remaining full words.
-  for (; i != width / APINT_BITS_PER_WORD; i++) {
-    Result.pVal[i] = word;
-    word = (int64_t)word >> (APINT_BITS_PER_WORD - 1);
-  }
-
-  // Write any partial word.
-  bits = (0 - width) % APINT_BITS_PER_WORD;
-  if (bits != 0)
-    Result.pVal[i] = word << bits >> bits;
-
+  // Fill with sign bits.
+  std::memset(Result.pVal + getNumWords(), isNegative() ? -1 : 0,
+              (Result.getNumWords() - getNumWords()) * APINT_WORD_SIZE);
+  Result.clearUnusedBits();
   return Result;
 }
 
@@ -986,12 +972,11 @@ APInt APInt::zext(unsigned width) const {
   APInt Result(getMemory(getNumWords(width)), width);
 
   // Copy words.
-  unsigned i;
-  for (i = 0; i != getNumWords(); i++)
-    Result.pVal[i] = getRawData()[i];
+  std::memcpy(Result.pVal, getRawData(), getNumWords() * APINT_WORD_SIZE);
 
   // Zero remaining words.
-  memset(&Result.pVal[i], 0, (Result.getNumWords() - i) * APINT_WORD_SIZE);
+  std::memset(Result.pVal + getNumWords(), 0,
+              (Result.getNumWords() - getNumWords()) * APINT_WORD_SIZE);
 
   return Result;
 }
