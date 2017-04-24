@@ -6079,24 +6079,68 @@ ScalarEvolution::computeExitLimit(const Loop *L, BasicBlock *ExitingBlock,
   return getCouldNotCompute();
 }
 
-ScalarEvolution::ExitLimit
-ScalarEvolution::computeExitLimitFromCond(const Loop *L,
-                                          Value *ExitCond,
-                                          BasicBlock *TBB,
-                                          BasicBlock *FBB,
-                                          bool ControlsExit,
-                                          bool AllowPredicates) {
+ScalarEvolution::ExitLimit ScalarEvolution::computeExitLimitFromCond(
+    const Loop *L, Value *ExitCond, BasicBlock *TBB, BasicBlock *FBB,
+    bool ControlsExit, bool AllowPredicates) {
+  ScalarEvolution::ExitLimitCacheTy Cache(L, TBB, FBB, AllowPredicates);
+  return computeExitLimitFromCondCached(Cache, L, ExitCond, TBB, FBB,
+                                        ControlsExit, AllowPredicates);
+}
+
+Optional<ScalarEvolution::ExitLimit>
+ScalarEvolution::ExitLimitCache::find(const Loop *L, Value *ExitCond,
+                                      BasicBlock *TBB, BasicBlock *FBB,
+                                      bool ControlsExit, bool AllowPredicates) {
+  assert(this->L == L && this->TBB == TBB && this->FBB == FBB &&
+         this->AllowPredicates == AllowPredicates &&
+         "Variance in assumed invariant key components!");
+  auto Itr = TripCountMap.find({ExitCond, ControlsExit});
+  if (Itr == TripCountMap.end())
+    return None;
+  return Itr->second;
+}
+
+void ScalarEvolution::ExitLimitCache::insert(const Loop *L, Value *ExitCond,
+                                             BasicBlock *TBB, BasicBlock *FBB,
+                                             bool ControlsExit,
+                                             bool AllowPredicates,
+                                             const ExitLimit &EL) {
+  assert(this->L == L && this->TBB == TBB && this->FBB == FBB &&
+         this->AllowPredicates == AllowPredicates &&
+         "Variance in assumed invariant key components!");
+
+  auto InsertResult = TripCountMap.insert({{ExitCond, ControlsExit}, EL});
+  assert(InsertResult.second && "Expected successful insertion!");
+}
+
+ScalarEvolution::ExitLimit ScalarEvolution::computeExitLimitFromCondCached(
+    ExitLimitCacheTy &Cache, const Loop *L, Value *ExitCond, BasicBlock *TBB,
+    BasicBlock *FBB, bool ControlsExit, bool AllowPredicates) {
+
+  if (auto MaybeEL =
+          Cache.find(L, ExitCond, TBB, FBB, ControlsExit, AllowPredicates))
+    return *MaybeEL;
+
+  ExitLimit EL = computeExitLimitFromCondImpl(Cache, L, ExitCond, TBB, FBB,
+                                              ControlsExit, AllowPredicates);
+  Cache.insert(L, ExitCond, TBB, FBB, ControlsExit, AllowPredicates, EL);
+  return EL;
+}
+
+ScalarEvolution::ExitLimit ScalarEvolution::computeExitLimitFromCondImpl(
+    ExitLimitCacheTy &Cache, const Loop *L, Value *ExitCond, BasicBlock *TBB,
+    BasicBlock *FBB, bool ControlsExit, bool AllowPredicates) {
   // Check if the controlling expression for this loop is an And or Or.
   if (BinaryOperator *BO = dyn_cast<BinaryOperator>(ExitCond)) {
     if (BO->getOpcode() == Instruction::And) {
       // Recurse on the operands of the and.
       bool EitherMayExit = L->contains(TBB);
-      ExitLimit EL0 = computeExitLimitFromCond(L, BO->getOperand(0), TBB, FBB,
-                                               ControlsExit && !EitherMayExit,
-                                               AllowPredicates);
-      ExitLimit EL1 = computeExitLimitFromCond(L, BO->getOperand(1), TBB, FBB,
-                                               ControlsExit && !EitherMayExit,
-                                               AllowPredicates);
+      ExitLimit EL0 = computeExitLimitFromCondCached(
+          Cache, L, BO->getOperand(0), TBB, FBB, ControlsExit && !EitherMayExit,
+          AllowPredicates);
+      ExitLimit EL1 = computeExitLimitFromCondCached(
+          Cache, L, BO->getOperand(1), TBB, FBB, ControlsExit && !EitherMayExit,
+          AllowPredicates);
       const SCEV *BECount = getCouldNotCompute();
       const SCEV *MaxBECount = getCouldNotCompute();
       if (EitherMayExit) {
@@ -6140,12 +6184,12 @@ ScalarEvolution::computeExitLimitFromCond(const Loop *L,
     if (BO->getOpcode() == Instruction::Or) {
       // Recurse on the operands of the or.
       bool EitherMayExit = L->contains(FBB);
-      ExitLimit EL0 = computeExitLimitFromCond(L, BO->getOperand(0), TBB, FBB,
-                                               ControlsExit && !EitherMayExit,
-                                               AllowPredicates);
-      ExitLimit EL1 = computeExitLimitFromCond(L, BO->getOperand(1), TBB, FBB,
-                                               ControlsExit && !EitherMayExit,
-                                               AllowPredicates);
+      ExitLimit EL0 = computeExitLimitFromCondCached(
+          Cache, L, BO->getOperand(0), TBB, FBB, ControlsExit && !EitherMayExit,
+          AllowPredicates);
+      ExitLimit EL1 = computeExitLimitFromCondCached(
+          Cache, L, BO->getOperand(1), TBB, FBB, ControlsExit && !EitherMayExit,
+          AllowPredicates);
       const SCEV *BECount = getCouldNotCompute();
       const SCEV *MaxBECount = getCouldNotCompute();
       if (EitherMayExit) {
