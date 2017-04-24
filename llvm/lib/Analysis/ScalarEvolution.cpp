@@ -6098,6 +6098,11 @@ Optional<ScalarEvolution::ExitLimit>
 ScalarEvolution::ExitLimitCache::find(const Loop *L, Value *ExitCond,
                                       BasicBlock *TBB, BasicBlock *FBB,
                                       bool ControlsExit, bool AllowPredicates) {
+  (void)this->L;
+  (void)this->TBB;
+  (void)this->FBB;
+  (void)this->AllowPredicates;
+
   assert(this->L == L && this->TBB == TBB && this->FBB == FBB &&
          this->AllowPredicates == AllowPredicates &&
          "Variance in assumed invariant key components!");
@@ -6118,6 +6123,7 @@ void ScalarEvolution::ExitLimitCache::insert(const Loop *L, Value *ExitCond,
 
   auto InsertResult = TripCountMap.insert({{ExitCond, ControlsExit}, EL});
   assert(InsertResult.second && "Expected successful insertion!");
+  (void)InsertResult;
 }
 
 ScalarEvolution::ExitLimit ScalarEvolution::computeExitLimitFromCondCached(
