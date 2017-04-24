@@ -779,7 +779,7 @@ void ModuleBitcodeWriter::writeAttributeTable() {
     const AttributeList &A = Attrs[i];
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i)
       Record.push_back(
-          VE.getAttributeGroupID({A.getSlotIndex(i), A.getSlotSet(i)}));
+          VE.getAttributeGroupID({A.getSlotIndex(i), A.getSlotAttributes(i)}));
 
     Stream.EmitRecord(bitc::PARAMATTR_CODE_ENTRY, Record);
     Record.clear();

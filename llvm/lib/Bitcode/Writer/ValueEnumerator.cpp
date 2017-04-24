@@ -900,7 +900,7 @@ void ValueEnumerator::EnumerateAttributes(AttributeList PAL) {
 
   // Do lookups for all attribute groups.
   for (unsigned i = 0, e = PAL.getNumSlots(); i != e; ++i) {
-    IndexAndAttrSet Pair = {PAL.getSlotIndex(i), PAL.getSlotSet(i)};
+    IndexAndAttrSet Pair = {PAL.getSlotIndex(i), PAL.getSlotAttributes(i)};
     unsigned &Entry = AttributeGroupMap[Pair];
     if (Entry == 0) {
       AttributeGroups.push_back(Pair);
