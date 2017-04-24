@@ -114,16 +114,9 @@ MaxBruteForceIterations("scalar-evolution-max-iterations", cl::ReallyHidden,
                         cl::init(100));
 
 // FIXME: Enable this with EXPENSIVE_CHECKS when the test suite is clean.
-static cl::opt<bool> VerifySCEV(
-    "verify-scev",
-    cl::desc("Verify ScalarEvolution's backedge taken counts (slow)"),
-#ifdef EXPENSIVE_CHECKS
-    cl::init(true)
-#else
-    cl::init(false)
-#endif
-  );
-
+static cl::opt<bool>
+VerifySCEV("verify-scev",
+           cl::desc("Verify ScalarEvolution's backedge taken counts (slow)"));
 static cl::opt<bool>
     VerifySCEVMap("verify-scev-maps",
                   cl::desc("Verify no dangling value in ScalarEvolution's "
