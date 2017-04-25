@@ -1068,8 +1068,13 @@ void AsmPrinter::EmitFunctionBody() {
                           (TT.isOSWindows() && TT.isOSBinFormatCOFF()))) {
     MCInst Noop;
     MF->getSubtarget().getInstrInfo()->getNoop(Noop);
-    OutStreamer->AddComment("avoids zero-length function");
-    OutStreamer->EmitInstruction(Noop, getSubtargetInfo());
+
+    // Targets can opt-out of emitting the noop here by leaving the opcode
+    // unspecified.
+    if (Noop.getOpcode()) {
+      OutStreamer->AddComment("avoids zero-length function");
+      OutStreamer->EmitInstruction(Noop, getSubtargetInfo());
+    }
   }
 
   const Function *F = MF->getFunction();
