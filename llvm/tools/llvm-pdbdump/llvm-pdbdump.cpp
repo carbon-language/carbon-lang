@@ -375,8 +375,14 @@ cl::opt<bool> DbiModuleSyms(
 cl::opt<bool> DbiModuleSourceFileInfo(
     "dbi-module-source-info",
     cl::desc(
-        "Dump DBI Module Source File Information (implies -dbi-module-info"),
+        "Dump DBI Module Source File Information (implies -dbi-module-info)"),
     cl::sub(PdbToYamlSubcommand), cl::init(false));
+
+cl::opt<bool>
+    DbiModuleSourceLineInfo("dbi-module-lines",
+                            cl::desc("Dump DBI Module Source Line Information "
+                                     "(implies -dbi-module-source-info)"),
+                            cl::sub(PdbToYamlSubcommand), cl::init(false));
 
 cl::opt<bool> TpiStream("tpi-stream",
                         cl::desc("Dump the TPI Stream (Stream 3)"),
