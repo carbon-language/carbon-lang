@@ -2697,7 +2697,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   RecordData::value_type Record[] = {
       getNumberOfModules(WritingModule),
       FirstSubmoduleID - NUM_PREDEF_SUBMODULE_IDS,
-      WritingModule->Kind};
+      (unsigned)WritingModule->Kind};
   Stream.EmitRecord(SUBMODULE_METADATA, Record);
   
   // Write all of the submodules.
