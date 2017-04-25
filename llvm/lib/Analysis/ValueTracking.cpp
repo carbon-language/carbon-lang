@@ -1532,7 +1532,7 @@ void computeKnownBits(const Value *V, APInt &KnownZero, APInt &KnownOne,
     // We know that CDS must be a vector of integers. Take the intersection of
     // each element.
     KnownZero.setAllBits(); KnownOne.setAllBits();
-    APInt Elt(KnownZero.getBitWidth(), 0);
+    APInt Elt(BitWidth, 0);
     for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
       Elt = CDS->getElementAsInteger(i);
       KnownZero &= ~Elt;
