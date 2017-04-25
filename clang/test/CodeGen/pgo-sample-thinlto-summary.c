@@ -32,7 +32,7 @@ void unroll() {
     baz(i);
 }
 
-// Checks that icp is invoked.
+// Check that icp is not invoked (both -O2 and ThinLTO).
 // O2-LABEL: define void @icp
 // THINLTO-LABEL: define void @icp
 // O2-NOT: if.true.direct_targ
