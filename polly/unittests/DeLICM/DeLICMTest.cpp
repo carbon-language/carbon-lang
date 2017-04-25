@@ -65,6 +65,11 @@ void completeLifetime(isl::union_set Universe, isl::union_map OccupiedAndKnown,
   if (!Known) { // By default, nothing is known.
     Known = isl::union_map::empty(ParamSpace);
   }
+
+  // Conditions that must hold when returning.
+  assert(Occupied);
+  assert(Undef);
+  assert(Known);
 }
 
 typedef struct {
