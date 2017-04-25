@@ -512,7 +512,7 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_UnaryOp(SDNode *N) {
                            N->getValueType(0).getScalarType(), Elt);
   // Revectorize the result so the types line up with what the uses of this
   // expression expect.
-  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), N->getValueType(0), Op);
+  return DAG.getBuildVector(N->getValueType(0), SDLoc(N), Op);
 }
 
 /// The vectors to concatenate have length one - use a BUILD_VECTOR instead.
@@ -2631,7 +2631,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_BITCAST(SDNode *N) {
       if (InVT.isVector())
         NewVec = DAG.getNode(ISD::CONCAT_VECTORS, dl, NewInVT, Ops);
       else
-        NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl, NewInVT, Ops);
+        NewVec = DAG.getBuildVector(NewInVT, dl, Ops);
       return DAG.getNode(ISD::BITCAST, dl, WidenVT, NewVec);
     }
   }
