@@ -362,9 +362,9 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, const SDLoc &DL,
     return DAG.getUNDEF(ValueVT);
   }
 
-  if (ValueVT.getVectorNumElements() == 1 &&
-      ValueVT.getVectorElementType() != PartEVT)
-    Val = DAG.getAnyExtOrTrunc(Val, DL, ValueVT.getScalarType());
+  EVT ValueSVT = ValueVT.getVectorElementType();
+  if (ValueVT.getVectorNumElements() == 1 && ValueSVT != PartEVT)
+    Val = DAG.getAnyExtOrTrunc(Val, DL, ValueSVT);
 
   return DAG.getNode(ISD::BUILD_VECTOR, DL, ValueVT, Val);
 }
@@ -4896,11 +4896,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
 
     Entry.Node = Src;
     Args.push_back(Entry);
-    
+
     Entry.Ty = I.getArgOperand(2)->getType();
     Entry.Node = NumElements;
     Args.push_back(Entry);
-    
+
     Entry.Ty = Type::getInt32Ty(*DAG.getContext());
     Entry.Node = ElementSize;
     Args.push_back(Entry);
@@ -5743,7 +5743,7 @@ void SelectionDAGBuilder::visitConstrainedFPIntrinsic(const CallInst &I,
   unsigned Opcode;
   switch (Intrinsic) {
   default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
-  case Intrinsic::experimental_constrained_fadd: 
+  case Intrinsic::experimental_constrained_fadd:
     Opcode = ISD::STRICT_FADD;
     break;
   case Intrinsic::experimental_constrained_fsub:

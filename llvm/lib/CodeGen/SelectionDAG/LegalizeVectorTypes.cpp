@@ -526,10 +526,10 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_CONCAT_VECTORS(SDNode *N) {
 /// If the input is a vector that needs to be scalarized, it must be <1 x ty>,
 /// so just return the element, ignoring the index.
 SDValue DAGTypeLegalizer::ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
+  EVT VT = N->getValueType(0);
   SDValue Res = GetScalarizedVector(N->getOperand(0));
-  if (Res.getValueType() != N->getValueType(0))
-    Res = DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), N->getValueType(0),
-                      Res);
+  if (Res.getValueType() != VT)
+    Res = DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), VT, Res);
   return Res;
 }
 
