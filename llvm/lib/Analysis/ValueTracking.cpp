@@ -2036,7 +2036,7 @@ static bool isKnownNonEqual(const Value *V1, const Value *V2, const Query &Q) {
     APInt KnownOne2(BitWidth, 0);
     computeKnownBits(V2, KnownZero2, KnownOne2, 0, Q);
 
-    auto OppositeBits = (KnownZero1 & KnownOne2) | (KnownZero2 & KnownOne1);
+    APInt OppositeBits = (KnownZero1 & KnownOne2) | (KnownZero2 & KnownOne1);
     if (OppositeBits.getBoolValue())
       return true;
   }
