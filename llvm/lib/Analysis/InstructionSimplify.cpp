@@ -1376,8 +1376,7 @@ static Value *SimplifyShift(Instruction::BinaryOps Opcode, Value *Op0,
   // If all valid bits in the shift amount are known zero, the first operand is
   // unchanged.
   unsigned NumValidShiftBits = Log2_32_Ceil(BitWidth);
-  APInt ShiftAmountMask = APInt::getLowBitsSet(BitWidth, NumValidShiftBits);
-  if ((KnownZero & ShiftAmountMask) == ShiftAmountMask)
+  if (KnownZero.countTrailingOnes() >= NumValidShiftBits)
     return Op0;
 
   return nullptr;
@@ -3372,7 +3371,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       APInt LHSKnownOne(BitWidth, 0);
       computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, Q.DL, /*Depth=*/0, Q.AC,
                        Q.CxtI, Q.DT);
-      if (((LHSKnownZero & *RHSVal) != 0) || ((LHSKnownOne & ~(*RHSVal)) != 0))
+      if (LHSKnownZero.intersects(*RHSVal) || !LHSKnownOne.isSubsetOf(*RHSVal))
         return Pred == ICmpInst::ICMP_EQ ? ConstantInt::getFalse(ITy)
                                          : ConstantInt::getTrue(ITy);
     }

@@ -1934,12 +1934,12 @@ bool isKnownNonZero(const Value *V, unsigned Depth, const Query &Q) {
       // The sign bit of X is set.  If some other bit is set then X is not equal
       // to INT_MIN.
       computeKnownBits(X, KnownZero, KnownOne, Depth, Q);
-      if ((KnownOne & Mask) != 0)
+      if (KnownOne.intersects(Mask))
         return true;
       // The sign bit of Y is set.  If some other bit is set then Y is not equal
       // to INT_MIN.
       computeKnownBits(Y, KnownZero, KnownOne, Depth, Q);
-      if ((KnownOne & Mask) != 0)
+      if (KnownOne.intersects(Mask))
         return true;
     }
 
@@ -2056,7 +2056,7 @@ bool MaskedValueIsZero(const Value *V, const APInt &Mask, unsigned Depth,
                        const Query &Q) {
   APInt KnownZero(Mask.getBitWidth(), 0), KnownOne(Mask.getBitWidth(), 0);
   computeKnownBits(V, KnownZero, KnownOne, Depth, Q);
-  return (KnownZero & Mask) == Mask;
+  return Mask.isSubsetOf(KnownZero);
 }
 
 /// For vector constants, loop over the elements and find the constant with the
@@ -4289,7 +4289,7 @@ static bool isTruePredicate(CmpInst::Predicate Pred,
         APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
         computeKnownBits(X, KnownZero, KnownOne, DL, Depth + 1, AC, CxtI, DT);
 
-        if ((KnownZero & *CA) == *CA && (KnownZero & *CB) == *CB)
+        if (CA->isSubsetOf(KnownZero) && CB->isSubsetOf(KnownZero))
           return true;
       }
 

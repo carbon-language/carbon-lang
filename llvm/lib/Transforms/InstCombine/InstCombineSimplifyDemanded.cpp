@@ -453,11 +453,11 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
 
       // If we are known to be adding/subtracting zeros to every bit below
       // the highest demanded bit, we just return the other side.
-      if ((DemandedFromOps & RHSKnownZero) == DemandedFromOps)
+      if (DemandedFromOps.isSubsetOf(RHSKnownZero))
         return I->getOperand(0);
       // We can't do this with the LHS for subtraction.
       if (I->getOpcode() == Instruction::Add &&
-          (DemandedFromOps & LHSKnownZero) == DemandedFromOps)
+          DemandedFromOps.isSubsetOf(LHSKnownZero))
         return I->getOperand(1);
     }
 

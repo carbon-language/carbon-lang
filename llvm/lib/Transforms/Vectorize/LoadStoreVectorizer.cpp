@@ -331,8 +331,7 @@ bool Vectorizer::isConsecutiveAccess(Value *A, Value *B) {
     APInt KnownZero(BitWidth, 0);
     APInt KnownOne(BitWidth, 0);
     computeKnownBits(OpA, KnownZero, KnownOne, DL, 0, nullptr, OpA, &DT);
-    KnownZero &= ~APInt::getHighBitsSet(BitWidth, 1);
-    if (KnownZero != 0)
+    if (KnownZero.countTrailingZeros() < (BitWidth - 1))
       Safe = true;
   }
 
