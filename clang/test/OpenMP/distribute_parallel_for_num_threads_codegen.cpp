@@ -114,7 +114,7 @@ int main() {
 // CHECK: call {{.*}}void {{.+}} @__kmpc_fork_teams({{.+}}, i32 0, {{.+}}* [[T_OMP_TEAMS_OUTLINED_3:@.+]] to {{.+}})
 
 // CHECK: define{{.+}} void [[T_OMP_TEAMS_OUTLINED_3]](
-// CHECK-DAG:   [[CALL_RES:%.+]] = invoke{{.+}} i8 [[S_TY_CHAR_OP:@.+]]([[S_TY]]* {{.+}})
+// CHECK-DAG:   [[CALL_RES:%.+]] = invoke{{.*}} i8 [[S_TY_CHAR_OP:@.+]]([[S_TY]]* {{.+}})
 // CHECK-DAG:   [[CALL_RES_SEXT:%.+]] = sext i8 [[CALL_RES]] to {{.+}}
 // CHECK:       call {{.*}}void @__kmpc_push_num_threads([[IDENT_T_TY]]* [[DEF_LOC_2]], i32 {{.+}}, i32 [[CALL_RES_SEXT]])
 // CHECK:       call {{.*}}void {{.*}} @__kmpc_fork_call(
