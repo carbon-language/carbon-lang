@@ -2239,7 +2239,7 @@ static unsigned ComputeNumSignBitsImpl(const Value *V, unsigned Depth,
 
         // If the input is known to be 0 or 1, the output is 0/-1, which is all
         // sign bits set.
-        if ((KnownZero | APInt(TyBits, 1)).isAllOnesValue())
+        if ((KnownZero | 1).isAllOnesValue())
           return TyBits;
 
         // If we are subtracting one from a positive number, there is no carry
@@ -2263,7 +2263,7 @@ static unsigned ComputeNumSignBitsImpl(const Value *V, unsigned Depth,
         computeKnownBits(U->getOperand(1), KnownZero, KnownOne, Depth + 1, Q);
         // If the input is known to be 0 or 1, the output is 0/-1, which is all
         // sign bits set.
-        if ((KnownZero | APInt(TyBits, 1)).isAllOnesValue())
+        if ((KnownZero | 1).isAllOnesValue())
           return TyBits;
 
         // If the input is known to be positive (the sign bit is known clear),
