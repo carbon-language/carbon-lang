@@ -1407,11 +1407,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     }
 
     // (A&((~A)|B)) -> A&B
-    if (match(Op0, m_Or(m_Not(m_Specific(Op1)), m_Value(A))) ||
-        match(Op0, m_Or(m_Value(A), m_Not(m_Specific(Op1)))))
+    if (match(Op0, m_c_Or(m_Not(m_Specific(Op1)), m_Value(A))))
       return BinaryOperator::CreateAnd(A, Op1);
-    if (match(Op1, m_Or(m_Not(m_Specific(Op0)), m_Value(A))) ||
-        match(Op1, m_Or(m_Value(A), m_Not(m_Specific(Op0)))))
+    if (match(Op1, m_c_Or(m_Not(m_Specific(Op0)), m_Value(A))))
       return BinaryOperator::CreateAnd(A, Op0);
 
     // (A ^ B) & ((B ^ C) ^ A) -> (A ^ B) & ~C
