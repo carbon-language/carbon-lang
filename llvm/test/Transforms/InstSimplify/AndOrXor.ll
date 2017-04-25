@@ -538,7 +538,7 @@ define i32 @test45(i32 %a, i32 %b) {
 }
 
 define i32 @test45_commuted_and(i32 %a, i32 %b) {
-; CHECK-LABEL: @test45(
+; CHECK-LABEL: @test45_commuted_and(
 ; CHECK-NEXT:    [[NEGB:%.*]] = xor i32 [[B:%.*]], -1
 ; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[A:%.*]], [[NEGB]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
@@ -571,7 +571,7 @@ define i32 @test46(i32 %a, i32 %b) {
 ; (~A & ~B) | (~A ^ B) -> ~A ^ B
 
 define i32 @test46_commuted_and(i32 %a, i32 %b) {
-; CHECK-LABEL: @test45(
+; CHECK-LABEL: @test46_commuted_and(
 ; CHECK-NEXT:    [[NEGB:%.*]] = xor i32 [[B:%.*]], -1
 ; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[A:%.*]], [[NEGB]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
