@@ -488,7 +488,7 @@ static Constant *getConstantAt(Value *V, Instruction *At, LazyValueInfo *LVI) {
     ConstantInt::getFalse(C->getContext());
 }
 
-static bool runImpl(Function &F, LazyValueInfo *LVI, const SimplifyQuery &Q) {
+static bool runImpl(Function &F, LazyValueInfo *LVI, const SimplifyQuery &SQ) {
   bool FnChanged = false;
   // Visiting in a pre-order depth-first traversal causes us to simplify early
   // blocks before querying later blocks (which require us to analyze early
@@ -504,7 +504,7 @@ static bool runImpl(Function &F, LazyValueInfo *LVI, const SimplifyQuery &Q) {
         BBChanged |= processSelect(cast<SelectInst>(II), LVI);
         break;
       case Instruction::PHI:
-        BBChanged |= processPHI(cast<PHINode>(II), LVI, Q);
+        BBChanged |= processPHI(cast<PHINode>(II), LVI, SQ);
         break;
       case Instruction::ICmp:
       case Instruction::FCmp:
