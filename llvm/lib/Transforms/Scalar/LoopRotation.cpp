@@ -312,8 +312,6 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   for (; PHINode *PN = dyn_cast<PHINode>(I); ++I)
     ValueMap[PN] = PN->getIncomingValueForBlock(OrigPreheader);
 
-  const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
-
   // For the rest of the instructions, either hoist to the OrigPreheader if
   // possible or create a clone in the OldPreHeader if not.
   TerminatorInst *LoopEntryBranch = OrigPreheader->getTerminator();
