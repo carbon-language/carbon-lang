@@ -79,14 +79,15 @@ define i32 @bool_logic_and_math(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
 ; CHECK-NEXT:    cmpl %ecx, %edx
 ; CHECK-NEXT:    setne %cl
 ; CHECK-NEXT:    andb %al, %cl
-; CHECK-NEXT:    movzbl %cl, %eax
-; CHECK-NEXT:    incl %eax
+; CHECK-NEXT:    movzbl %cl, %ecx
+; CHECK-NEXT:    movl $1, %eax
+; CHECK-NEXT:    subl %ecx, %eax
 ; CHECK-NEXT:    retq
   %cmp1 = icmp ne i32 %a, %b
   %cmp2 = icmp ne i32 %c, %d
   %and = and i1 %cmp1, %cmp2
-  %zext = zext i1 %and to i32
-  %add = add i32 %zext, 1
+  %ext = sext i1 %and to i32
+  %add = add i32 %ext, 1
   ret i32 %add
 }
 
@@ -99,13 +100,13 @@ define <4 x i32> @bool_logic_and_math_vec(<4 x i32> %a, <4 x i32> %b, <4 x i32> 
 ; CHECK-NEXT:    vpxor %xmm1, %xmm2, %xmm1
 ; CHECK-NEXT:    vpandn %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    vpbroadcastd {{.*}}(%rip), %xmm1
-; CHECK-NEXT:    vpsubd %xmm0, %xmm1, %xmm0
+; CHECK-NEXT:    vpaddd %xmm1, %xmm0, %xmm0
 ; CHECK-NEXT:    retq
   %cmp1 = icmp ne <4 x i32> %a, %b
   %cmp2 = icmp ne <4 x i32> %c, %d
   %and = and <4 x i1> %cmp1, %cmp2
-  %zext = zext <4 x i1> %and to <4 x i32>
-  %add = add <4 x i32> %zext, <i32 1, i32 1, i32 1, i32 1>
+  %ext = sext <4 x i1> %and to <4 x i32>
+  %add = add <4 x i32> %ext, <i32 1, i32 1, i32 1, i32 1>
   ret <4 x i32> %add
 }
 
