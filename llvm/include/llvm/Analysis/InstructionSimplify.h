@@ -59,6 +59,11 @@ namespace llvm {
                   const DominatorTree *DT, AssumptionCache *AC = nullptr,
                   const Instruction *CXTI = nullptr)
         : DL(DL), TLI(TLI), DT(DT), AC(AC), CxtI(CXTI) {}
+    SimplifyQuery getWithInstruction(Instruction *I) const {
+      SimplifyQuery Copy(*this);
+      Copy.CxtI = I;
+      return Copy;
+    }
   };
 
   // NOTE: the explicit multiple argument versions of these functions are
