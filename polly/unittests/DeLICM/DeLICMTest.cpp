@@ -321,5 +321,8 @@ TEST(DeLICM, isConflicting) {
                                       {"{}", nullptr, "{ Dom[0] -> ValB[] }"}));
   EXPECT_TRUE(checkIsConflictingKnown({"{}", nullptr, "{ Dom[0] -> Val[] }"},
                                       {"{}", nullptr, "{ Dom[0] -> [] }"}));
+  EXPECT_FALSE(checkIsConflictingKnown(
+      {"{}", nullptr, "{ Dom[0] -> Val[]}"},
+      {"{}", nullptr, "{ Dom[0] -> Val[]; Dom[0] -> Phi[] }"}));
 }
 } // anonymous namespace
