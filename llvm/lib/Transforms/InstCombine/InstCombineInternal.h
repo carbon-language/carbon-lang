@@ -489,10 +489,9 @@ public:
     return nullptr; // Don't do anything with FI
   }
 
-  void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
+  void computeKnownBits(Value *V, KnownBits &Known,
                         unsigned Depth, Instruction *CxtI) const {
-    return llvm::computeKnownBits(V, KnownZero, KnownOne, DL, Depth, &AC, CxtI,
-                                  &DT);
+    return llvm::computeKnownBits(V, Known, DL, Depth, &AC, CxtI, &DT);
   }
 
   bool MaskedValueIsZero(Value *V, const APInt &Mask, unsigned Depth = 0,
@@ -536,25 +535,23 @@ private:
 
   /// \brief Attempts to replace V with a simpler value based on the demanded
   /// bits.
-  Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask, APInt &KnownZero,
-                                 APInt &KnownOne, unsigned Depth,
-                                 Instruction *CxtI);
+  Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask, KnownBits &Known,
+                                 unsigned Depth, Instruction *CxtI);
   bool SimplifyDemandedBits(Instruction *I, unsigned Op,
-                            const APInt &DemandedMask, APInt &KnownZero,
-                            APInt &KnownOne, unsigned Depth = 0);
+                            const APInt &DemandedMask, KnownBits &Known,
+                            unsigned Depth = 0);
   /// Helper routine of SimplifyDemandedUseBits. It computes KnownZero/KnownOne
   /// bits. It also tries to handle simplifications that can be done based on
   /// DemandedMask, but without modifying the Instruction.
   Value *SimplifyMultipleUseDemandedBits(Instruction *I,
                                          const APInt &DemandedMask,
-                                         APInt &KnownZero, APInt &KnownOne,
+                                         KnownBits &Known,
                                          unsigned Depth, Instruction *CxtI);
   /// Helper routine of SimplifyDemandedUseBits. It tries to simplify demanded
   /// bit for "r1 = shr x, c1; r2 = shl r1, c2" instruction sequence.
   Value *simplifyShrShlDemandedBits(
       Instruction *Shr, const APInt &ShrOp1, Instruction *Shl,
-      const APInt &ShlOp1, const APInt &DemandedMask, APInt &KnownZero,
-      APInt &KnownOne);
+      const APInt &ShlOp1, const APInt &DemandedMask, KnownBits &Known);
 
   /// \brief Tries to simplify operands to an integer instruction based on its
   /// demanded bits.

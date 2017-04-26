@@ -60,6 +60,7 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/KnownBits.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -2180,11 +2181,10 @@ Instruction *InstCombiner::visitReturnInst(ReturnInst &RI) {
 
   // There might be assume intrinsics dominating this return that completely
   // determine the value. If so, constant fold it.
-  unsigned BitWidth = VTy->getPrimitiveSizeInBits();
-  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  computeKnownBits(ResultOp, KnownZero, KnownOne, 0, &RI);
-  if ((KnownZero|KnownOne).isAllOnesValue())
-    RI.setOperand(0, Constant::getIntegerValue(VTy, KnownOne));
+  KnownBits Known(VTy->getPrimitiveSizeInBits());
+  computeKnownBits(ResultOp, Known, 0, &RI);
+  if ((Known.Zero|Known.One).isAllOnesValue())
+    RI.setOperand(0, Constant::getIntegerValue(VTy, Known.One));
 
   return nullptr;
 }
@@ -2263,10 +2263,10 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   }
 
   unsigned BitWidth = cast<IntegerType>(Cond->getType())->getBitWidth();
-  APInt KnownZero(BitWidth, 0), KnownOne(BitWidth, 0);
-  computeKnownBits(Cond, KnownZero, KnownOne, 0, &SI);
-  unsigned LeadingKnownZeros = KnownZero.countLeadingOnes();
-  unsigned LeadingKnownOnes = KnownOne.countLeadingOnes();
+  KnownBits Known(BitWidth);
+  computeKnownBits(Cond, Known, 0, &SI);
+  unsigned LeadingKnownZeros = Known.Zero.countLeadingOnes();
+  unsigned LeadingKnownOnes = Known.One.countLeadingOnes();
 
   // Compute the number of leading bits we can ignore.
   // TODO: A better way to determine this would use ComputeNumSignBits().
@@ -2863,11 +2863,10 @@ bool InstCombiner::run() {
     Type *Ty = I->getType();
     if (ExpensiveCombines && !I->use_empty() && Ty->isIntOrIntVectorTy()) {
       unsigned BitWidth = Ty->getScalarSizeInBits();
-      APInt KnownZero(BitWidth, 0);
-      APInt KnownOne(BitWidth, 0);
-      computeKnownBits(I, KnownZero, KnownOne, /*Depth*/0, I);
-      if ((KnownZero | KnownOne).isAllOnesValue()) {
-        Constant *C = ConstantInt::get(Ty, KnownOne);
+      KnownBits Known(BitWidth);
+      computeKnownBits(I, Known, /*Depth*/0, I);
+      if ((Known.Zero | Known.One).isAllOnesValue()) {
+        Constant *C = ConstantInt::get(Ty, Known.One);
         DEBUG(dbgs() << "IC: ConstFold (all bits known) to: " << *C <<
                         " from: " << *I << '\n');
 

@@ -35,6 +35,7 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
+#include "llvm/Support/KnownBits.h"
 #include <algorithm>
 using namespace llvm;
 using namespace llvm::PatternMatch;
@@ -693,10 +694,9 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       return Op0;
 
     unsigned BitWidth = Op1->getType()->getScalarSizeInBits();
-    APInt KnownZero(BitWidth, 0);
-    APInt KnownOne(BitWidth, 0);
-    computeKnownBits(Op1, KnownZero, KnownOne, Q.DL, 0, Q.AC, Q.CxtI, Q.DT);
-    if (KnownZero.isMaxSignedValue()) {
+    KnownBits Known(BitWidth);
+    computeKnownBits(Op1, Known, Q.DL, 0, Q.AC, Q.CxtI, Q.DT);
+    if (Known.Zero.isMaxSignedValue()) {
       // Op1 is either 0 or the minimum signed value. If the sub is NSW, then
       // Op1 must be 0 because negating the minimum signed value is undefined.
       if (isNSW)
@@ -1402,16 +1402,15 @@ static Value *SimplifyShift(Instruction::BinaryOps Opcode, Value *Op0,
   // If any bits in the shift amount make that value greater than or equal to
   // the number of bits in the type, the shift is undefined.
   unsigned BitWidth = Op1->getType()->getScalarSizeInBits();
-  APInt KnownZero(BitWidth, 0);
-  APInt KnownOne(BitWidth, 0);
-  computeKnownBits(Op1, KnownZero, KnownOne, Q.DL, 0, Q.AC, Q.CxtI, Q.DT);
-  if (KnownOne.getLimitedValue() >= BitWidth)
+  KnownBits Known(BitWidth);
+  computeKnownBits(Op1, Known, Q.DL, 0, Q.AC, Q.CxtI, Q.DT);
+  if (Known.One.getLimitedValue() >= BitWidth)
     return UndefValue::get(Op0->getType());
 
   // If all valid bits in the shift amount are known zero, the first operand is
   // unchanged.
   unsigned NumValidShiftBits = Log2_32_Ceil(BitWidth);
-  if (KnownZero.countTrailingOnes() >= NumValidShiftBits)
+  if (Known.Zero.countTrailingOnes() >= NumValidShiftBits)
     return Op0;
 
   return nullptr;
@@ -1437,11 +1436,9 @@ static Value *SimplifyRightShift(Instruction::BinaryOps Opcode, Value *Op0,
   // The low bit cannot be shifted out of an exact shift if it is set.
   if (isExact) {
     unsigned BitWidth = Op0->getType()->getScalarSizeInBits();
-    APInt Op0KnownZero(BitWidth, 0);
-    APInt Op0KnownOne(BitWidth, 0);
-    computeKnownBits(Op0, Op0KnownZero, Op0KnownOne, Q.DL, /*Depth=*/0, Q.AC,
-                     Q.CxtI, Q.DT);
-    if (Op0KnownOne[0])
+    KnownBits Op0Known(BitWidth);
+    computeKnownBits(Op0, Op0Known, Q.DL, /*Depth=*/0, Q.AC, Q.CxtI, Q.DT);
+    if (Op0Known.One[0])
       return Op0;
   }
 
@@ -3427,11 +3424,10 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     const APInt *RHSVal;
     if (match(RHS, m_APInt(RHSVal))) {
       unsigned BitWidth = RHSVal->getBitWidth();
-      APInt LHSKnownZero(BitWidth, 0);
-      APInt LHSKnownOne(BitWidth, 0);
-      computeKnownBits(LHS, LHSKnownZero, LHSKnownOne, Q.DL, /*Depth=*/0, Q.AC,
-                       Q.CxtI, Q.DT);
-      if (LHSKnownZero.intersects(*RHSVal) || !LHSKnownOne.isSubsetOf(*RHSVal))
+      KnownBits LHSKnown(BitWidth);
+      computeKnownBits(LHS, LHSKnown, Q.DL, /*Depth=*/0, Q.AC, Q.CxtI, Q.DT);
+      if (LHSKnown.Zero.intersects(*RHSVal) ||
+          !LHSKnown.One.isSubsetOf(*RHSVal))
         return Pred == ICmpInst::ICMP_EQ ? ConstantInt::getFalse(ITy)
                                          : ConstantInt::getTrue(ITy);
     }
@@ -4854,12 +4850,10 @@ Value *llvm::SimplifyInstruction(Instruction *I, const SimplifyQuery &Q,
   // value even when the operands are not all constants.
   if (!Result && I->getType()->isIntOrIntVectorTy()) {
     unsigned BitWidth = I->getType()->getScalarSizeInBits();
-    APInt KnownZero(BitWidth, 0);
-    APInt KnownOne(BitWidth, 0);
-    computeKnownBits(I, KnownZero, KnownOne, Q.DL, /*Depth*/ 0, Q.AC, I, Q.DT,
-                     ORE);
-    if ((KnownZero | KnownOne).isAllOnesValue())
-      Result = ConstantInt::get(I->getType(), KnownOne);
+    KnownBits Known(BitWidth);
+    computeKnownBits(I, Known, Q.DL, /*Depth*/ 0, Q.AC, I, Q.DT, ORE);
+    if ((Known.Zero | Known.One).isAllOnesValue())
+      Result = ConstantInt::get(I->getType(), Known.One);
   }
 
   /// If called on unreachable code, the above logic may report that the
