@@ -17,9 +17,11 @@
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AssumptionCache.h"
+#include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetFolder.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstVisitor.h"
@@ -27,10 +29,9 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Pass.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Transforms/InstCombine/InstCombineWorklist.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Support/Dwarf.h"
-#include "llvm/IR/DIBuilder.h"
 
 #define DEBUG_TYPE "instcombine"
 
@@ -193,7 +194,7 @@ private:
   TargetLibraryInfo &TLI;
   DominatorTree &DT;
   const DataLayout &DL;
-
+  const SimplifyQuery SQ;
   // Optional analyses. When non-null, these can both be used to do better
   // combining and will be updated to reflect any changes.
   LoopInfo *LI;
@@ -203,11 +204,11 @@ private:
 public:
   InstCombiner(InstCombineWorklist &Worklist, BuilderTy *Builder,
                bool MinimizeSize, bool ExpensiveCombines, AliasAnalysis *AA,
-               AssumptionCache &AC, TargetLibraryInfo &TLI,
-               DominatorTree &DT, const DataLayout &DL, LoopInfo *LI)
+               AssumptionCache &AC, TargetLibraryInfo &TLI, DominatorTree &DT,
+               const DataLayout &DL, LoopInfo *LI)
       : Worklist(Worklist), Builder(Builder), MinimizeSize(MinimizeSize),
         ExpensiveCombines(ExpensiveCombines), AA(AA), AC(AC), TLI(TLI), DT(DT),
-        DL(DL), LI(LI), MadeIRChange(false) {}
+        DL(DL), SQ(DL, &TLI, &DT, &AC), LI(LI), MadeIRChange(false) {}
 
   /// \brief Run the combiner over the entire worklist until it is empty.
   ///
@@ -532,6 +533,12 @@ private:
   /// & (B | C) -> (A&B) | (A&C)" if this is a win).  Returns the simplified
   /// value, or null if it didn't simplify.
   Value *SimplifyUsingDistributiveLaws(BinaryOperator &I);
+
+  /// This tries to simplify binary operations by factorizing out common terms
+  /// (e. g. "(A*B)+(A*C)" -> "A*(B+C)").
+  Value *tryFactorization(InstCombiner::BuilderTy *, BinaryOperator &,
+                          Instruction::BinaryOps, Value *, Value *, Value *,
+                          Value *);
 
   /// \brief Attempts to replace V with a simpler value based on the demanded
   /// bits.

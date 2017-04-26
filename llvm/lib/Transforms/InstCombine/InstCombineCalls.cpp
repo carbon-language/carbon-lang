@@ -1818,8 +1818,8 @@ Instruction *InstCombiner::visitVACopyInst(VACopyInst &I) {
 /// lifting.
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   auto Args = CI.arg_operands();
-  if (Value *V = SimplifyCall(CI.getCalledValue(), Args.begin(), Args.end(), DL,
-                              &TLI, &DT, &AC))
+  if (Value *V =
+          SimplifyCall(CI.getCalledValue(), Args.begin(), Args.end(), SQ))
     return replaceInstUsesWith(CI, V);
 
   if (isFreeCall(&CI, &TLI))

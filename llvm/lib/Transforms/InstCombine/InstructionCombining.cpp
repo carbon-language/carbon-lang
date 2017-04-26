@@ -256,7 +256,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         Value *C = I.getOperand(1);
 
         // Does "B op C" simplify?
-        if (Value *V = SimplifyBinOp(Opcode, B, C, DL)) {
+        if (Value *V = SimplifyBinOp(Opcode, B, C, SQ)) {
           // It simplifies to V.  Form "A op V".
           I.setOperand(0, A);
           I.setOperand(1, V);
@@ -285,7 +285,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         Value *C = Op1->getOperand(1);
 
         // Does "A op B" simplify?
-        if (Value *V = SimplifyBinOp(Opcode, A, B, DL)) {
+        if (Value *V = SimplifyBinOp(Opcode, A, B, SQ)) {
           // It simplifies to V.  Form "V op C".
           I.setOperand(0, V);
           I.setOperand(1, C);
@@ -313,7 +313,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         Value *C = I.getOperand(1);
 
         // Does "C op A" simplify?
-        if (Value *V = SimplifyBinOp(Opcode, C, A, DL)) {
+        if (Value *V = SimplifyBinOp(Opcode, C, A, SQ)) {
           // It simplifies to V.  Form "V op B".
           I.setOperand(0, V);
           I.setOperand(1, B);
@@ -333,7 +333,7 @@ bool InstCombiner::SimplifyAssociativeOrCommutative(BinaryOperator &I) {
         Value *C = Op1->getOperand(1);
 
         // Does "C op A" simplify?
-        if (Value *V = SimplifyBinOp(Opcode, C, A, DL)) {
+        if (Value *V = SimplifyBinOp(Opcode, C, A, SQ)) {
           // It simplifies to V.  Form "B op V".
           I.setOperand(0, B);
           I.setOperand(1, V);
@@ -498,10 +498,10 @@ getBinOpsForFactorization(Instruction::BinaryOps TopLevelOpcode,
 
 /// This tries to simplify binary operations by factorizing out common terms
 /// (e. g. "(A*B)+(A*C)" -> "A*(B+C)").
-static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
-                               const DataLayout &DL, BinaryOperator &I,
-                               Instruction::BinaryOps InnerOpcode, Value *A,
-                               Value *B, Value *C, Value *D) {
+Value *InstCombiner::tryFactorization(InstCombiner::BuilderTy *Builder,
+                                      BinaryOperator &I,
+                                      Instruction::BinaryOps InnerOpcode,
+                                      Value *A, Value *B, Value *C, Value *D) {
   assert(A && B && C && D && "All values must be provided");
 
   Value *V = nullptr;
@@ -521,7 +521,7 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
         std::swap(C, D);
       // Consider forming "A op' (B op D)".
       // If "B op D" simplifies then it can be formed with no cost.
-      V = SimplifyBinOp(TopLevelOpcode, B, D, DL);
+      V = SimplifyBinOp(TopLevelOpcode, B, D, SQ);
       // If "B op D" doesn't simplify then only go on if both of the existing
       // operations "A op' B" and "C op' D" will be zapped as no longer used.
       if (!V && LHS->hasOneUse() && RHS->hasOneUse())
@@ -540,7 +540,7 @@ static Value *tryFactorization(InstCombiner::BuilderTy *Builder,
         std::swap(C, D);
       // Consider forming "(A op C) op' B".
       // If "A op C" simplifies then it can be formed with no cost.
-      V = SimplifyBinOp(TopLevelOpcode, A, C, DL);
+      V = SimplifyBinOp(TopLevelOpcode, A, C, SQ);
 
       // If "A op C" doesn't simplify then only go on if both of the existing
       // operations "A op' B" and "C op' D" will be zapped as no longer used.
@@ -610,23 +610,23 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
     // The instruction has the form "(A op' B) op (C op' D)".  Try to factorize
     // a common term.
     if (Op0 && Op1 && LHSOpcode == RHSOpcode)
-      if (Value *V = tryFactorization(Builder, DL, I, LHSOpcode, A, B, C, D))
+      if (Value *V = tryFactorization(Builder, I, LHSOpcode, A, B, C, D))
         return V;
 
     // The instruction has the form "(A op' B) op (C)".  Try to factorize common
     // term.
     if (Op0)
       if (Value *Ident = getIdentityValue(LHSOpcode, RHS))
-        if (Value *V = tryFactorization(Builder, DL, I, LHSOpcode, A, B, RHS,
-                                        Ident))
+        if (Value *V =
+                tryFactorization(Builder, I, LHSOpcode, A, B, RHS, Ident))
           return V;
 
     // The instruction has the form "(B) op (C op' D)".  Try to factorize common
     // term.
     if (Op1)
       if (Value *Ident = getIdentityValue(RHSOpcode, LHS))
-        if (Value *V = tryFactorization(Builder, DL, I, RHSOpcode, LHS, Ident,
-                                        C, D))
+        if (Value *V =
+                tryFactorization(Builder, I, RHSOpcode, LHS, Ident, C, D))
           return V;
   }
 
@@ -638,8 +638,8 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
     Instruction::BinaryOps InnerOpcode = Op0->getOpcode(); // op'
 
     // Do "A op C" and "B op C" both simplify?
-    if (Value *L = SimplifyBinOp(TopLevelOpcode, A, C, DL))
-      if (Value *R = SimplifyBinOp(TopLevelOpcode, B, C, DL)) {
+    if (Value *L = SimplifyBinOp(TopLevelOpcode, A, C, SQ))
+      if (Value *R = SimplifyBinOp(TopLevelOpcode, B, C, SQ)) {
         // They do! Return "L op' R".
         ++NumExpand;
         C = Builder->CreateBinOp(InnerOpcode, L, R);
@@ -655,8 +655,8 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
     Instruction::BinaryOps InnerOpcode = Op1->getOpcode(); // op'
 
     // Do "A op B" and "A op C" both simplify?
-    if (Value *L = SimplifyBinOp(TopLevelOpcode, A, B, DL))
-      if (Value *R = SimplifyBinOp(TopLevelOpcode, A, C, DL)) {
+    if (Value *L = SimplifyBinOp(TopLevelOpcode, A, B, SQ))
+      if (Value *R = SimplifyBinOp(TopLevelOpcode, A, C, SQ)) {
         // They do! Return "L op' R".
         ++NumExpand;
         A = Builder->CreateBinOp(InnerOpcode, L, R);
@@ -672,14 +672,14 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
       if (SI0->getCondition() == SI1->getCondition()) {
         Value *SI = nullptr;
         if (Value *V = SimplifyBinOp(TopLevelOpcode, SI0->getFalseValue(),
-                                     SI1->getFalseValue(), DL, &TLI, &DT, &AC))
+                                     SI1->getFalseValue(), SQ))
           SI = Builder->CreateSelect(SI0->getCondition(),
                                      Builder->CreateBinOp(TopLevelOpcode,
                                                           SI0->getTrueValue(),
                                                           SI1->getTrueValue()),
                                      V);
         if (Value *V = SimplifyBinOp(TopLevelOpcode, SI0->getTrueValue(),
-                                     SI1->getTrueValue(), DL, &TLI, &DT, &AC))
+                                     SI1->getTrueValue(), SQ))
           SI = Builder->CreateSelect(
               SI0->getCondition(), V,
               Builder->CreateBinOp(TopLevelOpcode, SI0->getFalseValue(),
@@ -1399,8 +1399,7 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   SmallVector<Value*, 8> Ops(GEP.op_begin(), GEP.op_end());
 
-  if (Value *V =
-          SimplifyGEPInst(GEP.getSourceElementType(), Ops, DL, &TLI, &DT, &AC))
+  if (Value *V = SimplifyGEPInst(GEP.getSourceElementType(), Ops, SQ))
     return replaceInstUsesWith(GEP, V);
 
   Value *PtrOp = GEP.getOperand(0);
@@ -1589,7 +1588,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (SO1->getType() != GO1->getType())
         return nullptr;
 
-      Value* Sum = SimplifyAddInst(GO1, SO1, false, false, DL, &TLI, &DT, &AC);
+      Value *Sum = SimplifyAddInst(GO1, SO1, false, false, SQ);
       // Only do the combine when we are sure the cost after the
       // merge is never more than that before the merge.
       if (Sum == nullptr)
@@ -2304,8 +2303,7 @@ Instruction *InstCombiner::visitExtractValueInst(ExtractValueInst &EV) {
   if (!EV.hasIndices())
     return replaceInstUsesWith(EV, Agg);
 
-  if (Value *V =
-          SimplifyExtractValueInst(Agg, EV.getIndices(), DL, &TLI, &DT, &AC))
+  if (Value *V = SimplifyExtractValueInst(Agg, EV.getIndices(), SQ))
     return replaceInstUsesWith(EV, V);
 
   if (InsertValueInst *IV = dyn_cast<InsertValueInst>(Agg)) {
