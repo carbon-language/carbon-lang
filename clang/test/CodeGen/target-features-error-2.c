@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -S -verify -o - -D NEED_SSE41
+// RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -S -verify -o - -D NEED_SSE42
 // RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -S -verify -o - -D NEED_AVX_1
 // RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -S -verify -o - -D NEED_AVX_2
 // RUN: %clang_cc1 %s -triple=x86_64-linux-gnu -S -verify -o - -D NEED_AVX_3
@@ -7,12 +7,9 @@
 #define __MM_MALLOC_H
 #include <x86intrin.h>
 
-// Really, this needs AVX, but because targetting AVX includes all the SSE features too, and
-// features are sorted by hash function, and we just return the first missing feature, then we end
-// up returning the subfeature sse4.1 instead of avx.
-#if NEED_SSE41
+#if NEED_SSE42
 int baz(__m256i a) {
-  return _mm256_extract_epi32(a, 3); // expected-error {{always_inline function '_mm256_extract_epi32' requires target feature 'sse4.1', but would be inlined into function 'baz' that is compiled without support for 'sse4.1'}}
+  return _mm256_extract_epi32(a, 3); // expected-error {{always_inline function '_mm256_extract_epi32' requires target feature 'sse4.2', but would be inlined into function 'baz' that is compiled without support for 'sse4.2'}}
 }
 #endif
 

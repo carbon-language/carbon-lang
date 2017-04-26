@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/xxhash.h"
 #include <iterator>
 
 namespace llvm {
@@ -152,11 +151,15 @@ void SplitString(StringRef Source,
 
 /// HashString - Hash function for strings.
 ///
-/// Just fall back on xxHash64.  Yes we drop the high bits on platforms where
-/// unsigned == 4 bytes (which includes x86_64), but xxHash64 already has good
-/// avalanching, so we wouldn't gain much if anything.
-static inline unsigned HashString(StringRef Str, unsigned Seed = 0) {
-  return xxHash64(Str, Seed);
+/// This is the Bernstein hash function.
+//
+// FIXME: Investigate whether a modified bernstein hash function performs
+// better: http://eternallyconfuzzled.com/tuts/algorithms/jsw_tut_hashing.aspx
+//   X*33+c -> X*33^c
+static inline unsigned HashString(StringRef Str, unsigned Result = 0) {
+  for (StringRef::size_type i = 0, e = Str.size(); i != e; ++i)
+    Result = Result * 33 + (unsigned char)Str[i];
+  return Result;
 }
 
 /// Returns the English suffix for an ordinal integer (-st, -nd, -rd, -th).
