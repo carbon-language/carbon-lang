@@ -118,6 +118,7 @@ private:
   typedef SmallVector<SharingMapTy, 4> StackTy;
 
   /// \brief Stack of used declaration and their data-sharing attributes.
+  DeclSAMapTy Threadprivates;
   StackTy Stack;
   /// \brief true, if check for DSA must be from parent directive, false, if
   /// from current directive.
@@ -134,7 +135,7 @@ private:
   bool isOpenMPLocal(VarDecl *D, StackTy::reverse_iterator Iter);
 
 public:
-  explicit DSAStackTy(Sema &S) : Stack(1), SemaRef(S) {}
+  explicit DSAStackTy(Sema &S) : SemaRef(S) {}
 
   bool isClauseParsingMode() const { return ClauseKindMode != OMPC_unknown; }
   void setClauseParsingMode(OpenMPClauseKind K) { ClauseKindMode = K; }
@@ -149,7 +150,7 @@ public:
   }
 
   void pop() {
-    assert(Stack.size() > 1 && "Data-sharing attributes stack is empty!");
+    assert(!Stack.empty() && "Data-sharing attributes stack is empty!");
     Stack.pop_back();
   }
 
@@ -229,11 +230,11 @@ public:
 
   /// \brief Returns currently analyzed directive.
   OpenMPDirectiveKind getCurrentDirective() const {
-    return Stack.back().Directive;
+    return Stack.empty() ? OMPD_unknown : Stack.back().Directive;
   }
   /// \brief Returns parent directive.
   OpenMPDirectiveKind getParentDirective() const {
-    if (Stack.size() > 2)
+    if (Stack.size() > 1)
       return Stack[Stack.size() - 2].Directive;
     return OMPD_unknown;
   }
@@ -250,10 +251,10 @@ public:
   }
 
   DefaultDataSharingAttributes getDefaultDSA() const {
-    return Stack.back().DefaultAttr;
+    return Stack.empty() ? DSA_unspecified : Stack.back().DefaultAttr;
   }
   SourceLocation getDefaultDSALocation() const {
-    return Stack.back().DefaultAttrLoc;
+    return Stack.empty() ? SourceLocation() : Stack.back().DefaultAttrLoc;
   }
 
   /// \brief Checks if the specified variable is a threadprivate.
@@ -270,13 +271,13 @@ public:
   /// \brief Returns true, if parent region is ordered (has associated
   /// 'ordered' clause), false - otherwise.
   bool isParentOrderedRegion() const {
-    if (Stack.size() > 2)
+    if (Stack.size() > 1)
       return Stack[Stack.size() - 2].OrderedRegion.getInt();
     return false;
   }
   /// \brief Returns optional parameter for the ordered region.
   Expr *getParentOrderedRegionParam() const {
-    if (Stack.size() > 2)
+    if (Stack.size() > 1)
       return Stack[Stack.size() - 2].OrderedRegion.getPointer();
     return nullptr;
   }
@@ -287,28 +288,32 @@ public:
   /// \brief Returns true, if parent region is nowait (has associated
   /// 'nowait' clause), false - otherwise.
   bool isParentNowaitRegion() const {
-    if (Stack.size() > 2)
+    if (Stack.size() > 1)
       return Stack[Stack.size() - 2].NowaitRegion;
     return false;
   }
   /// \brief Marks parent region as cancel region.
   void setParentCancelRegion(bool Cancel = true) {
-    if (Stack.size() > 2)
+    if (Stack.size() > 1)
       Stack[Stack.size() - 2].CancelRegion =
           Stack[Stack.size() - 2].CancelRegion || Cancel;
   }
   /// \brief Return true if current region has inner cancel construct.
-  bool isCancelRegion() const { return Stack.back().CancelRegion; }
+  bool isCancelRegion() const {
+    return Stack.empty() ? false : Stack.back().CancelRegion;
+  }
 
   /// \brief Set collapse value for the region.
   void setAssociatedLoops(unsigned Val) { Stack.back().AssociatedLoops = Val; }
   /// \brief Return collapse value for region.
-  unsigned getAssociatedLoops() const { return Stack.back().AssociatedLoops; }
+  unsigned getAssociatedLoops() const {
+    return Stack.empty() ? 0 : Stack.back().AssociatedLoops;
+  }
 
   /// \brief Marks current target region as one with closely nested teams
   /// region.
   void setParentTeamsRegionLoc(SourceLocation TeamsRegionLoc) {
-    if (Stack.size() > 2)
+    if (Stack.size() > 1)
       Stack[Stack.size() - 2].InnerTeamsRegionLoc = TeamsRegionLoc;
   }
   /// \brief Returns true, if current region has closely nested teams region.
@@ -317,14 +322,18 @@ public:
   }
   /// \brief Returns location of the nested teams region (if any).
   SourceLocation getInnerTeamsRegionLoc() const {
-    if (Stack.size() > 1)
-      return Stack.back().InnerTeamsRegionLoc;
-    return SourceLocation();
+    return Stack.empty() ? SourceLocation() : Stack.back().InnerTeamsRegionLoc;
   }
 
-  Scope *getCurScope() const { return Stack.back().CurScope; }
-  Scope *getCurScope() { return Stack.back().CurScope; }
-  SourceLocation getConstructLoc() { return Stack.back().ConstructLoc; }
+  Scope *getCurScope() const {
+    return Stack.empty() ? nullptr : Stack.back().CurScope;
+  }
+  Scope *getCurScope() {
+    return Stack.empty() ? nullptr : Stack.back().CurScope;
+  }
+  SourceLocation getConstructLoc() {
+    return Stack.empty() ? SourceLocation() : Stack.back().ConstructLoc;
+  }
 
   /// Do the check specified in \a Check to all component lists and return true
   /// if any issue is found.
@@ -361,7 +370,7 @@ public:
       ValueDecl *VD,
       OMPClauseMappableExprCommon::MappableExprComponentListRef Components,
       OpenMPClauseKind WhereFoundClauseKind) {
-    assert(Stack.size() > 1 &&
+    assert(!Stack.empty() &&
            "Not expecting to retrieve components from a empty stack!");
     auto &MEC = Stack.back().MappedExprComponents[VD];
     // Create new entry and append the new components there.
@@ -371,23 +380,23 @@ public:
   }
 
   unsigned getNestingLevel() const {
-    assert(Stack.size() > 1);
-    return Stack.size() - 2;
+    assert(!Stack.empty());
+    return Stack.size() - 1;
   }
   void addDoacrossDependClause(OMPDependClause *C, OperatorOffsetTy &OpsOffs) {
-    assert(Stack.size() > 2);
+    assert(Stack.size() > 1);
     assert(isOpenMPWorksharingDirective(Stack[Stack.size() - 2].Directive));
     Stack[Stack.size() - 2].DoacrossDepends.insert({C, OpsOffs});
   }
   llvm::iterator_range<DoacrossDependMapTy::const_iterator>
   getDoacrossDependClauses() const {
-    assert(Stack.size() > 1);
-    if (isOpenMPWorksharingDirective(Stack[Stack.size() - 1].Directive)) {
-      auto &Ref = Stack[Stack.size() - 1].DoacrossDepends;
+    assert(!Stack.empty());
+    if (isOpenMPWorksharingDirective(Stack.back().Directive)) {
+      auto &Ref = Stack.back().DoacrossDepends;
       return llvm::make_range(Ref.begin(), Ref.end());
     }
-    return llvm::make_range(Stack[0].DoacrossDepends.end(),
-                            Stack[0].DoacrossDepends.end());
+    return llvm::make_range(Stack.back().DoacrossDepends.end(),
+                            Stack.back().DoacrossDepends.end());
   }
 };
 bool isParallelOrTaskRegion(OpenMPDirectiveKind DKind) {
@@ -416,7 +425,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator &Iter,
   auto *VD = dyn_cast<VarDecl>(D);
   auto *FD = dyn_cast<FieldDecl>(D);
   DSAVarData DVar;
-  if (Iter == std::prev(Stack.rend())) {
+  if (Iter == Stack.rend()) {
     // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
     // in a region but not in construct]
     //  File-scope or namespace-scope variables referenced in called routines
@@ -490,8 +499,9 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator &Iter,
     //  bound to the current team is shared.
     if (isOpenMPTaskingDirective(DVar.DKind)) {
       DSAVarData DVarTemp;
-      for (StackTy::reverse_iterator I = std::next(Iter), EE = Stack.rend();
-           I != EE; ++I) {
+      auto I = Iter, E = Stack.rend();
+      do {
+        ++I;
         // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables
         // Referenced in a Construct, implicitly determined, p.6]
         //  In a task construct, if no default clause is present, a variable
@@ -503,9 +513,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator &Iter,
           DVar.CKind = OMPC_firstprivate;
           return DVar;
         }
-        if (isParallelOrTaskRegion(I->Directive))
-          break;
-      }
+      } while (I != E && !isParallelOrTaskRegion(I->Directive));
       DVar.CKind =
           (DVarTemp.CKind == OMPC_unknown) ? OMPC_firstprivate : OMPC_shared;
       return DVar;
@@ -520,7 +528,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator &Iter,
 }
 
 Expr *DSAStackTy::addUniqueAligned(ValueDecl *D, Expr *NewDE) {
-  assert(Stack.size() > 1 && "Data sharing attributes stack is empty");
+  assert(!Stack.empty() && "Data sharing attributes stack is empty");
   D = getCanonicalDecl(D);
   auto It = Stack.back().AlignedMap.find(D);
   if (It == Stack.back().AlignedMap.end()) {
@@ -535,21 +543,21 @@ Expr *DSAStackTy::addUniqueAligned(ValueDecl *D, Expr *NewDE) {
 }
 
 void DSAStackTy::addLoopControlVariable(ValueDecl *D, VarDecl *Capture) {
-  assert(Stack.size() > 1 && "Data-sharing attributes stack is empty");
+  assert(!Stack.empty() && "Data-sharing attributes stack is empty");
   D = getCanonicalDecl(D);
   Stack.back().LCVMap.insert(
-      std::make_pair(D, LCDeclInfo(Stack.back().LCVMap.size() + 1, Capture)));
+      {D, LCDeclInfo(Stack.back().LCVMap.size() + 1, Capture)});
 }
 
 DSAStackTy::LCDeclInfo DSAStackTy::isLoopControlVariable(ValueDecl *D) {
-  assert(Stack.size() > 1 && "Data-sharing attributes stack is empty");
+  assert(!Stack.empty() && "Data-sharing attributes stack is empty");
   D = getCanonicalDecl(D);
   return Stack.back().LCVMap.count(D) > 0 ? Stack.back().LCVMap[D]
                                           : LCDeclInfo(0, nullptr);
 }
 
 DSAStackTy::LCDeclInfo DSAStackTy::isParentLoopControlVariable(ValueDecl *D) {
-  assert(Stack.size() > 2 && "Data-sharing attributes stack is empty");
+  assert(Stack.size() > 1 && "Data-sharing attributes stack is empty");
   D = getCanonicalDecl(D);
   return Stack[Stack.size() - 2].LCVMap.count(D) > 0
              ? Stack[Stack.size() - 2].LCVMap[D]
@@ -557,7 +565,7 @@ DSAStackTy::LCDeclInfo DSAStackTy::isParentLoopControlVariable(ValueDecl *D) {
 }
 
 ValueDecl *DSAStackTy::getParentLoopControlVariable(unsigned I) {
-  assert(Stack.size() > 2 && "Data-sharing attributes stack is empty");
+  assert(Stack.size() > 1 && "Data-sharing attributes stack is empty");
   if (Stack[Stack.size() - 2].LCVMap.size() < I)
     return nullptr;
   for (auto &Pair : Stack[Stack.size() - 2].LCVMap) {
@@ -571,12 +579,12 @@ void DSAStackTy::addDSA(ValueDecl *D, Expr *E, OpenMPClauseKind A,
                         DeclRefExpr *PrivateCopy) {
   D = getCanonicalDecl(D);
   if (A == OMPC_threadprivate) {
-    auto &Data = Stack[0].SharingMap[D];
+    auto &Data = Threadprivates[D];
     Data.Attributes = A;
     Data.RefExpr.setPointer(E);
     Data.PrivateCopy = nullptr;
   } else {
-    assert(Stack.size() > 1 && "Data-sharing attributes stack is empty");
+    assert(!Stack.empty() && "Data-sharing attributes stack is empty");
     auto &Data = Stack.back().SharingMap[D];
     assert(Data.Attributes == OMPC_unknown || (A == Data.Attributes) ||
            (A == OMPC_firstprivate && Data.Attributes == OMPC_lastprivate) ||
@@ -602,19 +610,17 @@ void DSAStackTy::addDSA(ValueDecl *D, Expr *E, OpenMPClauseKind A,
 
 bool DSAStackTy::isOpenMPLocal(VarDecl *D, StackTy::reverse_iterator Iter) {
   D = D->getCanonicalDecl();
-  if (Stack.size() > 2) {
-    reverse_iterator I = Iter, E = std::prev(Stack.rend());
+  if (Stack.size() > 1) {
+    reverse_iterator I = Iter, E = Stack.rend();
     Scope *TopScope = nullptr;
-    while (I != E && !isParallelOrTaskRegion(I->Directive)) {
+    while (I != E && !isParallelOrTaskRegion(I->Directive))
       ++I;
-    }
     if (I == E)
       return false;
     TopScope = I->CurScope ? I->CurScope->getParent() : nullptr;
     Scope *CurScope = getCurScope();
-    while (CurScope != TopScope && !CurScope->isDeclScope(D)) {
+    while (CurScope != TopScope && !CurScope->isDeclScope(D))
       CurScope = CurScope->getParent();
-    }
     return CurScope != TopScope;
   }
   return false;
@@ -665,16 +671,16 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(ValueDecl *D, bool FromParent) {
                                D->getLocation()),
            OMPC_threadprivate);
   }
-  if (Stack[0].SharingMap.count(D)) {
-    DVar.RefExpr = Stack[0].SharingMap[D].RefExpr.getPointer();
+  auto TI = Threadprivates.find(D);
+  if (TI != Threadprivates.end()) {
+    DVar.RefExpr = TI->getSecond().RefExpr.getPointer();
     DVar.CKind = OMPC_threadprivate;
     return DVar;
   }
 
-  if (Stack.size() == 1) {
+  if (Stack.empty())
     // Not in OpenMP execution region and top scope was already checked.
     return DVar;
-  }
 
   // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
   // in a Construct, C/C++, predetermined, p.4]
@@ -723,10 +729,9 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(ValueDecl *D, bool FromParent) {
   // Explicitly specified attributes and local variables with predetermined
   // attributes.
   auto StartI = std::next(Stack.rbegin());
-  auto EndI = std::prev(Stack.rend());
-  if (FromParent && StartI != EndI) {
+  auto EndI = Stack.rend();
+  if (FromParent && StartI != EndI)
     StartI = std::next(StartI);
-  }
   auto I = std::prev(StartI);
   if (I->SharingMap.count(D)) {
     DVar.RefExpr = I->SharingMap[D].RefExpr.getPointer();
@@ -742,10 +747,9 @@ DSAStackTy::DSAVarData DSAStackTy::getImplicitDSA(ValueDecl *D,
                                                   bool FromParent) {
   D = getCanonicalDecl(D);
   auto StartI = Stack.rbegin();
-  auto EndI = std::prev(Stack.rend());
-  if (FromParent && StartI != EndI) {
+  auto EndI = Stack.rend();
+  if (FromParent && StartI != EndI)
     StartI = std::next(StartI);
-  }
   return getDSA(StartI, D);
 }
 
@@ -757,17 +761,20 @@ DSAStackTy::hasDSA(ValueDecl *D,
   D = getCanonicalDecl(D);
   auto StartI = std::next(Stack.rbegin());
   auto EndI = Stack.rend();
-  if (FromParent && StartI != EndI) {
+  if (FromParent && StartI != EndI)
     StartI = std::next(StartI);
-  }
-  for (auto I = StartI, EE = EndI; I != EE; ++I) {
+  if (StartI == EndI)
+    return {};
+  auto I = std::prev(StartI);
+  do {
+    ++I;
     if (!DPred(I->Directive) && !isParallelOrTaskRegion(I->Directive))
       continue;
     DSAVarData DVar = getDSA(I, D);
     if (CPred(DVar.CKind))
       return DVar;
-  }
-  return DSAVarData();
+  } while (I != EndI);
+  return {};
 }
 
 DSAStackTy::DSAVarData DSAStackTy::hasInnermostDSA(
@@ -791,7 +798,7 @@ bool DSAStackTy::hasExplicitDSA(
   if (CPred(ClauseKindMode))
     return true;
   D = getCanonicalDecl(D);
-  auto StartI = std::next(Stack.begin());
+  auto StartI = Stack.begin();
   auto EndI = Stack.end();
   if (std::distance(StartI, EndI) <= (int)Level)
     return false;
@@ -805,7 +812,7 @@ bool DSAStackTy::hasExplicitDSA(
 bool DSAStackTy::hasExplicitDirective(
     const llvm::function_ref<bool(OpenMPDirectiveKind)> &DPred,
     unsigned Level) {
-  auto StartI = std::next(Stack.begin());
+  auto StartI = Stack.begin();
   auto EndI = Stack.end();
   if (std::distance(StartI, EndI) <= (int)Level)
     return false;
@@ -819,13 +826,12 @@ bool DSAStackTy::hasDirective(
         &DPred,
     bool FromParent) {
   // We look only in the enclosing region.
-  if (Stack.size() < 2)
+  if (Stack.size() < 1)
     return false;
   auto StartI = std::next(Stack.rbegin());
-  auto EndI = std::prev(Stack.rend());
-  if (FromParent && StartI != EndI) {
+  auto EndI = Stack.rend();
+  if (FromParent && StartI != EndI)
     StartI = std::next(StartI);
-  }
   for (auto I = StartI, EE = EndI; I != EE; ++I) {
     if (DPred(I->Directive, I->DirectiveName, I->ConstructLoc))
       return true;
