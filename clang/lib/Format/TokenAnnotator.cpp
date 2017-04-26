@@ -2543,7 +2543,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     if (NonComment &&
         NonComment->isOneOf(tok::kw_return, tok::kw_continue, tok::kw_break,
                             tok::kw_throw, Keywords.kw_interface,
-                            Keywords.kw_type))
+                            Keywords.kw_type, tok::kw_static, tok::kw_public,
+                            tok::kw_private, tok::kw_protected,
+                            Keywords.kw_abstract,
+                            Keywords.kw_get,
+                            Keywords.kw_set))
       return false; // Otherwise a semicolon is inserted.
     if (Left.is(TT_JsFatArrow) && Right.is(tok::l_brace))
       return false;
