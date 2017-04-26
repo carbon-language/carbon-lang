@@ -52,6 +52,7 @@ void testNoCandidates() {
 }
 
 class string {};
+
 struct Item {
   void Nest();
   string text();
@@ -88,12 +89,16 @@ void f(LinkedNode *node) {
 struct NestedNode {
   NestedNode* Nest();
   NestedNode* next();
-  string text() const;
+  // Note, this test is dependent on the order in which identifiers are passed
+  // to the typo corrector, which is based on the hash function used.  For
+  // consistency, I am making the next keyword the first identifier returned.
+  string eext() const;
 };
 void f(NestedNode *node) {
   // There are two equidistant, usable corrections for Next: next and Nest
   NestedNode *next = node->Next();  // expected-error-re {{no member named 'Next' in 'initializerCorrections::NestedNode'{{$}}}}
 }
+
 }
 
 namespace PR21669 {

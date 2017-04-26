@@ -73,8 +73,8 @@
 ; EMPTY-NEXT:   Guid: {0B355641-86A0-A249-896F-9988FAE52FF0}
 ; EMPTY-NEXT:   Features: 0x1
 ; EMPTY-NEXT:   Named Streams {
-; EMPTY-NEXT:     /names: 13
 ; EMPTY-NEXT:     /LinkInfo: 5
+; EMPTY-NEXT:     /names: 13
 ; EMPTY-NEXT:     /src/headerblock: 9
 ; EMPTY-NEXT:   }
 ; EMPTY-NEXT: }
@@ -1837,8 +1837,8 @@
 ; BIG-NEXT:   Guid: {880ECC89-DF81-0B4F-839C-58CBD052E937}
 ; BIG-NEXT:   Features: 0x1
 ; BIG-NEXT:   Named Streams {
-; BIG-NEXT:     /names: 13
 ; BIG-NEXT:     /LinkInfo: 5
+; BIG-NEXT:     /names: 13
 ; BIG-NEXT:     /src/headerblock: 61
 ; BIG-NEXT:   }
 ; BIG-NEXT: }

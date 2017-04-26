@@ -27,12 +27,12 @@
 
 ; Check that all the names are present in the output
 ; CHECK:  Hash = 0x00597841
-; CHECK:    Name: {{[0-9a-f]*}} "is"
 ; CHECK:    Name: {{[0-9a-f]*}} "k1"
+; CHECK:    Name: {{[0-9a-f]*}} "is"
 
 ; CHECK: Hash = 0xa4b42a1e
-; CHECK:    Name: {{[0-9a-f]*}} "_ZN5clang23DataRecursiveASTVisitorIN12_GLOBAL__N_124UnusedBackingIvarCheckerEE26TraverseCUDAKernelCallExprEPNS_18CUDAKernelCallExprE"
 ; CHECK:    Name: {{[0-9a-f]*}} "_ZN4llvm16DenseMapIteratorIPNS_10MDLocationENS_6detail13DenseSetEmptyENS_10MDNodeInfoIS1_EENS3_12DenseSetPairIS2_EELb0EE23AdvancePastEmptyBucketsEv"
+; CHECK:    Name: {{[0-9a-f]*}} "_ZN5clang23DataRecursiveASTVisitorIN12_GLOBAL__N_124UnusedBackingIvarCheckerEE26TraverseCUDAKernelCallExprEPNS_18CUDAKernelCallExprE"
 
 ; CHECK: Hash = 0xeee7c0b2
 ; CHECK:    Name: {{[0-9a-f]*}} "_ZNK4llvm12LivePhysRegs5printERNS_11raw_ostreamE"
