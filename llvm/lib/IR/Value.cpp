@@ -825,8 +825,8 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
       // pointer.
       Entry->operator=(DenseMapInfo<Value *>::getTombstoneKey());
       break;
-    case Weak:
-      // Weak just goes to null, which will unlink it from the list.
+    case WeakTracking:
+      // WeakTracking just goes to null, which will unlink it from the list.
       Entry->operator=(nullptr);
       break;
     case Callback:
@@ -877,14 +877,16 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
       // Asserting handle does not follow RAUW implicitly.
       break;
     case Tracking:
-      // Tracking goes to new value like a WeakVH. Note that this may make it
-      // something incompatible with its templated type. We don't want to have a
-      // virtual (or inline) interface to handle this though, so instead we make
-      // the TrackingVH accessors guarantee that a client never sees this value.
+      // Tracking goes to new value like a WeakTrackingVH. Note that this may
+      // make it something incompatible with its templated type. We don't want
+      // to have a virtual (or inline) interface to handle this though, so
+      // instead we make the TrackingVH accessors guarantee that a client never
+      // sees this value.
 
       LLVM_FALLTHROUGH;
-    case Weak:
-      // Weak goes to the new value, which will unlink it from Old's list.
+    case WeakTracking:
+      // WeakTracking goes to the new value, which will unlink it from Old's
+      // list.
       Entry->operator=(New);
       break;
     case Callback:
@@ -901,7 +903,7 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
     for (Entry = pImpl->ValueHandles[Old]; Entry; Entry = Entry->Next)
       switch (Entry->getKind()) {
       case Tracking:
-      case Weak:
+      case WeakTracking:
         dbgs() << "After RAUW from " << *Old->getType() << " %"
                << Old->getName() << " to " << *New->getType() << " %"
                << New->getName() << "\n";

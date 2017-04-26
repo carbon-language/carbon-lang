@@ -2156,9 +2156,9 @@ llvm/IR/ValueMap.h
 ValueMap is a wrapper around a :ref:`DenseMap <dss_densemap>` mapping
 ``Value*``\ s (or subclasses) to another type.  When a Value is deleted or
 RAUW'ed, ValueMap will update itself so the new version of the key is mapped to
-the same value, just as if the key were a WeakVH.  You can configure exactly how
-this happens, and what else happens on these two events, by passing a ``Config``
-parameter to the ValueMap template.
+the same value, just as if the key were a WeakTrackingVH.  You can configure
+exactly how this happens, and what else happens on these two events, by passing
+a ``Config`` parameter to the ValueMap template.
 
 .. _dss_intervalmap:
 

@@ -121,10 +121,10 @@ class AliasSet : public ilist_node<AliasSet> {
   AliasSet *Forward;
 
   /// All instructions without a specific address in this alias set.
-  /// In rare cases this vector can have a null'ed out WeakVH
+  /// In rare cases this vector can have a null'ed out WeakTrackingVH
   /// instances (can happen if some other loop pass deletes an
   /// instruction in this list).
-  std::vector<WeakVH> UnknownInsts;
+  std::vector<WeakTrackingVH> UnknownInsts;
 
   /// Number of nodes pointing to this AliasSet plus the number of AliasSets
   /// forwarding to it.

@@ -34,12 +34,7 @@ protected:
   ///
   /// This is to avoid having a vtable for the light-weight handle pointers. The
   /// fully general Callback version does have a vtable.
-  enum HandleBaseKind {
-    Assert,
-    Callback,
-    Tracking,
-    Weak
-  };
+  enum HandleBaseKind { Assert, Callback, Tracking, WeakTracking };
 
   ValueHandleBase(const ValueHandleBase &RHS)
       : ValueHandleBase(RHS.PrevPair.getInt(), RHS) {}
@@ -138,14 +133,14 @@ private:
 /// is useful for advisory sorts of information, but should not be used as the
 /// key of a map (since the map would have to rearrange itself when the pointer
 /// changes).
-class WeakVH : public ValueHandleBase {
+class WeakTrackingVH : public ValueHandleBase {
 public:
-  WeakVH() : ValueHandleBase(Weak) {}
-  WeakVH(Value *P) : ValueHandleBase(Weak, P) {}
-  WeakVH(const WeakVH &RHS)
-    : ValueHandleBase(Weak, RHS) {}
+  WeakTrackingVH() : ValueHandleBase(WeakTracking) {}
+  WeakTrackingVH(Value *P) : ValueHandleBase(WeakTracking, P) {}
+  WeakTrackingVH(const WeakTrackingVH &RHS)
+      : ValueHandleBase(WeakTracking, RHS) {}
 
-  WeakVH &operator=(const WeakVH &RHS) = default;
+  WeakTrackingVH &operator=(const WeakTrackingVH &RHS) = default;
 
   Value *operator=(Value *RHS) {
     return ValueHandleBase::operator=(RHS);
@@ -159,15 +154,17 @@ public:
   }
 };
 
-// Specialize simplify_type to allow WeakVH to participate in
+// Specialize simplify_type to allow WeakTrackingVH to participate in
 // dyn_cast, isa, etc.
-template <> struct simplify_type<WeakVH> {
+template <> struct simplify_type<WeakTrackingVH> {
   typedef Value *SimpleType;
-  static SimpleType getSimplifiedValue(WeakVH &WVH) { return WVH; }
+  static SimpleType getSimplifiedValue(WeakTrackingVH &WVH) { return WVH; }
 };
-template <> struct simplify_type<const WeakVH> {
+template <> struct simplify_type<const WeakTrackingVH> {
   typedef Value *SimpleType;
-  static SimpleType getSimplifiedValue(const WeakVH &WVH) { return WVH; }
+  static SimpleType getSimplifiedValue(const WeakTrackingVH &WVH) {
+    return WVH;
+  }
 };
 
 /// \brief Value handle that asserts if the Value is deleted.
@@ -359,8 +356,8 @@ public:
   ///
   /// Called when this->getValPtr() is destroyed, inside ~Value(), so you
   /// may call any non-virtual Value method on getValPtr(), but no subclass
-  /// methods.  If WeakVH were implemented as a CallbackVH, it would use this
-  /// method to call setValPtr(NULL).  AssertingVH would use this method to
+  /// methods.  If WeakTrackingVH were implemented as a CallbackVH, it would use
+  /// this method to call setValPtr(NULL).  AssertingVH would use this method to
   /// cause an assertion failure.
   ///
   /// All implementations must remove the reference from this object to the
@@ -370,8 +367,8 @@ public:
   /// \brief Callback for Value RAUW.
   ///
   /// Called when this->getValPtr()->replaceAllUsesWith(new_value) is called,
-  /// _before_ any of the uses have actually been replaced.  If WeakVH were
-  /// implemented as a CallbackVH, it would use this method to call
+  /// _before_ any of the uses have actually been replaced.  If WeakTrackingVH
+  /// were implemented as a CallbackVH, it would use this method to call
   /// setValPtr(new_value).  AssertingVH would do nothing in this method.
   virtual void allUsesReplacedWith(Value *) {}
 };
