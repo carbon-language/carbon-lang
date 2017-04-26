@@ -665,7 +665,7 @@ template <class ELFT> void SharedFile<ELFT>::parseSoName() {
       uint64_t Val = Dyn.getVal();
       if (Val >= this->StringTable.size())
         fatal(toString(this) + ": invalid DT_SONAME entry");
-      SoName = StringRef(this->StringTable.data() + Val);
+      SoName = this->StringTable.data() + Val;
       return;
     }
   }
