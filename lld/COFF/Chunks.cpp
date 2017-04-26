@@ -339,7 +339,7 @@ void SEHTableChunk::writeTo(uint8_t *Buf) const {
 // This already reduce the size of relocations to 1/3 compared to ELF
 // .dynrel, but Windows does more to reduce it (probably because it was
 // invented for PCs in the late '80s or early '90s.) Offsets in .reloc
-// are grouped by page where page size is 16 bits, and offsets sharing
+// are grouped by page where page size is 20 bits, and offsets sharing
 // the same page address are stored consecutively to represent them with
 // less space. This is a very similar to the page table which is grouped
 // by (multiple stages of) pages.
@@ -360,7 +360,7 @@ void SEHTableChunk::writeTo(uint8_t *Buf) const {
 //     0x0008
 //
 // Usually we have a lot of relocatinos for each page, so the number of
-// bytes for one .reloc entry is close to 2 bytes.
+// bytes for one .reloc entry is close to 2 bytes on average.
 BaserelChunk::BaserelChunk(uint32_t Page, Baserel *Begin, Baserel *End) {
   // Block header consists of 4 byte page RVA and 4 byte block size.
   // Each entry is 2 byte. Last entry may be padding.
