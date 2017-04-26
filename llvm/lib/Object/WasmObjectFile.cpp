@@ -316,14 +316,15 @@ Error WasmObjectFile::parseRelocSection(StringRef Name, const uint8_t *Ptr,
     case wasm::R_WEBASSEMBLY_FUNCTION_INDEX_LEB:
     case wasm::R_WEBASSEMBLY_TABLE_INDEX_SLEB:
     case wasm::R_WEBASSEMBLY_TABLE_INDEX_I32:
+    case wasm::R_WEBASSEMBLY_TYPE_INDEX_LEB:
       break;
     case wasm::R_WEBASSEMBLY_GLOBAL_ADDR_LEB:
     case wasm::R_WEBASSEMBLY_GLOBAL_ADDR_SLEB:
     case wasm::R_WEBASSEMBLY_GLOBAL_ADDR_I32:
-      Reloc.Addend = readVaruint32(Ptr);
+      Reloc.Addend = readVarint32(Ptr);
       break;
     default:
-      return make_error<GenericBinaryError>("Bad relocation type",
+      return make_error<GenericBinaryError>("Bad relocation type: " + Twine(Reloc.Type),
                                             object_error::parse_failed);
     }
     Section->Relocations.push_back(Reloc);
