@@ -31,24 +31,24 @@
 // C89-ish modes.
 LANGSTANDARD(c89, "c89",
              C, "ISO C 1990",
-             C89 | ImplicitInt)
+             ImplicitInt)
 LANGSTANDARD(c90, "c90", C,
              "ISO C 1990",
-             C89 | ImplicitInt)
+             ImplicitInt)
 LANGSTANDARD(iso9899_1990, "iso9899:1990",
              C, "ISO C 1990",
-             C89 | ImplicitInt)
+             ImplicitInt)
 
 LANGSTANDARD(c94, "iso9899:199409",
              C, "ISO C 1990 with amendment 1",
-             C89 | Digraphs | ImplicitInt)
+             Digraphs | ImplicitInt)
 
 LANGSTANDARD(gnu89, "gnu89",
              C, "ISO C 1990 with GNU extensions",
-             LineComment | C89 | Digraphs | GNUMode | ImplicitInt)
+             LineComment | Digraphs | GNUMode | ImplicitInt)
 LANGSTANDARD(gnu90, "gnu90",
              C, "ISO C 1990 with GNU extensions",
-             LineComment | C89 | Digraphs | GNUMode | ImplicitInt)
+             LineComment | Digraphs | GNUMode | ImplicitInt)
 
 // C99-ish modes
 LANGSTANDARD(c99, "c99",

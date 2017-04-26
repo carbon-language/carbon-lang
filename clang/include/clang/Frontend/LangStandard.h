@@ -20,18 +20,17 @@ namespace frontend {
 
 enum LangFeatures {
   LineComment = (1 << 0),
-  C89 = (1 << 1),
-  C99 = (1 << 2),
-  C11 = (1 << 3),
-  CPlusPlus = (1 << 4),
-  CPlusPlus11 = (1 << 5),
-  CPlusPlus14 = (1 << 6),
-  CPlusPlus1z = (1 << 7),
-  Digraphs = (1 << 8),
-  GNUMode = (1 << 9),
-  HexFloat = (1 << 10),
-  ImplicitInt = (1 << 11),
-  OpenCL = (1 << 12)
+  C99 = (1 << 1),
+  C11 = (1 << 2),
+  CPlusPlus = (1 << 3),
+  CPlusPlus11 = (1 << 4),
+  CPlusPlus14 = (1 << 5),
+  CPlusPlus1z = (1 << 6),
+  Digraphs = (1 << 7),
+  GNUMode = (1 << 8),
+  HexFloat = (1 << 9),
+  ImplicitInt = (1 << 10),
+  OpenCL = (1 << 11)
 };
 
 }
@@ -63,9 +62,6 @@ public:
 
   /// Language supports '//' comments.
   bool hasLineComments() const { return Flags & frontend::LineComment; }
-
-  /// isC89 - Language is a superset of C89.
-  bool isC89() const { return Flags & frontend::C89; }
 
   /// isC99 - Language is a superset of C99.
   bool isC99() const { return Flags & frontend::C99; }
