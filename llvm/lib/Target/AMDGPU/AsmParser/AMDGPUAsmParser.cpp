@@ -479,6 +479,8 @@ public:
   bool isSMRDLiteralOffset() const;
   bool isDPPCtrl() const;
   bool isGPRIdxMode() const;
+  bool isS16Imm() const;
+  bool isU16Imm() const;
 
   StringRef getExpressionAsToken() const {
     assert(isExpr());
@@ -3856,6 +3858,14 @@ bool AMDGPUOperand::isDPPCtrl() const {
 
 bool AMDGPUOperand::isGPRIdxMode() const {
   return isImm() && isUInt<4>(getImm());
+}
+
+bool AMDGPUOperand::isS16Imm() const {
+  return isImm() && (isInt<16>(getImm()) || isUInt<16>(getImm()));
+}
+
+bool AMDGPUOperand::isU16Imm() const {
+  return isImm() && isUInt<16>(getImm());
 }
 
 OperandMatchResultTy
