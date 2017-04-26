@@ -235,7 +235,7 @@ class ObjectSizeOffsetEvaluator
   : public InstVisitor<ObjectSizeOffsetEvaluator, SizeOffsetEvalType> {
 
   typedef IRBuilder<TargetFolder> BuilderTy;
-  typedef std::pair<WeakTrackingVH, WeakTrackingVH> WeakEvalType;
+  typedef std::pair<WeakVH, WeakVH> WeakEvalType;
   typedef DenseMap<const Value*, WeakEvalType> CacheMapTy;
   typedef SmallPtrSet<const Value*, 8> PtrSetTy;
 

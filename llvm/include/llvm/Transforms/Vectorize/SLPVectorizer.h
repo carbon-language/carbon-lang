@@ -40,8 +40,8 @@ class BoUpSLP;
 struct SLPVectorizerPass : public PassInfoMixin<SLPVectorizerPass> {
   typedef SmallVector<StoreInst *, 8> StoreList;
   typedef MapVector<Value *, StoreList> StoreListMap;
-  typedef SmallVector<WeakTrackingVH, 8> WeakTrackingVHList;
-  typedef MapVector<Value *, WeakTrackingVHList> WeakTrackingVHListMap;
+  typedef SmallVector<WeakVH, 8> WeakVHList;
+  typedef MapVector<Value *, WeakVHList> WeakVHListMap;
 
   ScalarEvolution *SE = nullptr;
   TargetTransformInfo *TTI = nullptr;
@@ -111,7 +111,7 @@ private:
   StoreListMap Stores;
 
   /// The getelementptr instructions in a basic block organized by base pointer.
-  WeakTrackingVHListMap GEPs;
+  WeakVHListMap GEPs;
 };
 }
 

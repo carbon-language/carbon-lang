@@ -44,29 +44,11 @@ TEST_F(ValueHandle, WeakVH_BasicOperation) {
   // doesn't matter which method.
   EXPECT_EQ(Type::getInt32Ty(Context), WVH->getType());
   EXPECT_EQ(Type::getInt32Ty(Context), (*WVH).getType());
-
-  WVH = BitcastV.get();
-  BitcastV->replaceAllUsesWith(ConstantV);
-  EXPECT_EQ(WVH, BitcastV.get());
-  BitcastV.reset();
-  EXPECT_EQ(WVH, nullptr);
 }
 
-TEST_F(ValueHandle, WeakTrackingVH_BasicOperation) {
-  WeakTrackingVH WVH(BitcastV.get());
-  EXPECT_EQ(BitcastV.get(), WVH);
-  WVH = ConstantV;
-  EXPECT_EQ(ConstantV, WVH);
-
-  // Make sure I can call a method on the underlying Value.  It
-  // doesn't matter which method.
-  EXPECT_EQ(Type::getInt32Ty(Context), WVH->getType());
-  EXPECT_EQ(Type::getInt32Ty(Context), (*WVH).getType());
-}
-
-TEST_F(ValueHandle, WeakTrackingVH_Comparisons) {
-  WeakTrackingVH BitcastWVH(BitcastV.get());
-  WeakTrackingVH ConstantWVH(ConstantV);
+TEST_F(ValueHandle, WeakVH_Comparisons) {
+  WeakVH BitcastWVH(BitcastV.get());
+  WeakVH ConstantWVH(ConstantV);
 
   EXPECT_TRUE(BitcastWVH == BitcastWVH);
   EXPECT_TRUE(BitcastV.get() == BitcastWVH);
@@ -97,20 +79,20 @@ TEST_F(ValueHandle, WeakTrackingVH_Comparisons) {
   EXPECT_EQ(BV >= CV, BitcastWVH >= ConstantV);
 }
 
-TEST_F(ValueHandle, WeakTrackingVH_FollowsRAUW) {
-  WeakTrackingVH WVH(BitcastV.get());
-  WeakTrackingVH WVH_Copy(WVH);
-  WeakTrackingVH WVH_Recreated(BitcastV.get());
+TEST_F(ValueHandle, WeakVH_FollowsRAUW) {
+  WeakVH WVH(BitcastV.get());
+  WeakVH WVH_Copy(WVH);
+  WeakVH WVH_Recreated(BitcastV.get());
   BitcastV->replaceAllUsesWith(ConstantV);
   EXPECT_EQ(ConstantV, WVH);
   EXPECT_EQ(ConstantV, WVH_Copy);
   EXPECT_EQ(ConstantV, WVH_Recreated);
 }
 
-TEST_F(ValueHandle, WeakTrackingVH_NullOnDeletion) {
-  WeakTrackingVH WVH(BitcastV.get());
-  WeakTrackingVH WVH_Copy(WVH);
-  WeakTrackingVH WVH_Recreated(BitcastV.get());
+TEST_F(ValueHandle, WeakVH_NullOnDeletion) {
+  WeakVH WVH(BitcastV.get());
+  WeakVH WVH_Copy(WVH);
+  WeakVH WVH_Recreated(BitcastV.get());
   BitcastV.reset();
   Value *null_value = nullptr;
   EXPECT_EQ(null_value, WVH);
@@ -361,11 +343,11 @@ TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
 
   class DestroyingVH final : public CallbackVH {
   public:
-    std::unique_ptr<WeakTrackingVH> ToClear[2];
+    std::unique_ptr<WeakVH> ToClear[2];
     DestroyingVH(Value *V) {
-      ToClear[0].reset(new WeakTrackingVH(V));
+      ToClear[0].reset(new WeakVH(V));
       setValPtr(V);
-      ToClear[1].reset(new WeakTrackingVH(V));
+      ToClear[1].reset(new WeakVH(V));
     }
     void deleted() override {
       ToClear[0].reset();
@@ -379,9 +361,9 @@ TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
   };
 
   {
-    WeakTrackingVH ShouldBeVisited1(BitcastV.get());
+    WeakVH ShouldBeVisited1(BitcastV.get());
     DestroyingVH C(BitcastV.get());
-    WeakTrackingVH ShouldBeVisited2(BitcastV.get());
+    WeakVH ShouldBeVisited2(BitcastV.get());
 
     BitcastV->replaceAllUsesWith(ConstantV);
     EXPECT_EQ(ConstantV, static_cast<Value*>(ShouldBeVisited1));
@@ -389,9 +371,9 @@ TEST_F(ValueHandle, DestroyingOtherVHOnSameValueDoesntBreakIteration) {
   }
 
   {
-    WeakTrackingVH ShouldBeVisited1(BitcastV.get());
+    WeakVH ShouldBeVisited1(BitcastV.get());
     DestroyingVH C(BitcastV.get());
-    WeakTrackingVH ShouldBeVisited2(BitcastV.get());
+    WeakVH ShouldBeVisited2(BitcastV.get());
 
     BitcastV.reset();
     EXPECT_EQ(nullptr, static_cast<Value*>(ShouldBeVisited1));

@@ -561,7 +561,7 @@ void llvm::RemovePredecessorAndSimplify(BasicBlock *BB, BasicBlock *Pred) {
   // that can be removed.
   BB->removePredecessor(Pred, true);
 
-  WeakTrackingVH PhiIt = &BB->front();
+  WeakVH PhiIt = &BB->front();
   while (PHINode *PN = dyn_cast<PHINode>(PhiIt)) {
     PhiIt = &*++BasicBlock::iterator(cast<Instruction>(PhiIt));
     Value *OldPhiIt = PhiIt;
@@ -1519,7 +1519,7 @@ BasicBlock *llvm::changeToInvokeAndSplitBasicBlock(CallInst *CI,
   II->setAttributes(CI->getAttributes());
 
   // Make sure that anything using the call now uses the invoke!  This also
-  // updates the CallGraph if present, because it uses a WeakTrackingVH.
+  // updates the CallGraph if present, because it uses a WeakVH.
   CI->replaceAllUsesWith(II);
 
   // Delete the original call
