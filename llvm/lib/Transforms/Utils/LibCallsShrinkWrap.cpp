@@ -49,16 +49,6 @@ using namespace llvm;
 STATISTIC(NumWrappedOneCond, "Number of One-Condition Wrappers Inserted");
 STATISTIC(NumWrappedTwoCond, "Number of Two-Condition Wrappers Inserted");
 
-static cl::opt<bool> LibCallsShrinkWrapDoDomainError(
-    "libcalls-shrinkwrap-domain-error", cl::init(true), cl::Hidden,
-    cl::desc("Perform shrink-wrap on lib calls with domain errors"));
-static cl::opt<bool> LibCallsShrinkWrapDoRangeError(
-    "libcalls-shrinkwrap-range-error", cl::init(true), cl::Hidden,
-    cl::desc("Perform shrink-wrap on lib calls with range errors"));
-static cl::opt<bool> LibCallsShrinkWrapDoPoleError(
-    "libcalls-shrinkwrap-pole-error", cl::init(true), cl::Hidden,
-    cl::desc("Perform shrink-wrap on lib calls with pole errors"));
-
 namespace {
 class LibCallsShrinkWrapLegacyPass : public FunctionPass {
 public:
@@ -244,8 +234,6 @@ bool LibCallsShrinkWrap::performCallErrors(CallInst *CI,
   case LibFunc_atanhf: // Same as atanh
   case LibFunc_atanhl: // Same as atanh
   {
-    if (!LibCallsShrinkWrapDoDomainError || !LibCallsShrinkWrapDoPoleError)
-      return false;
     ++NumWrappedTwoCond;
     Cond = createOrCond(CI, CmpInst::FCMP_OLE, -1.0f, CmpInst::FCMP_OGE, 1.0f);
     break;
@@ -265,8 +253,6 @@ bool LibCallsShrinkWrap::performCallErrors(CallInst *CI,
   case LibFunc_logbf:  // Same as log
   case LibFunc_logbl:  // Same as log
   {
-    if (!LibCallsShrinkWrapDoDomainError || !LibCallsShrinkWrapDoPoleError)
-      return false;
     ++NumWrappedOneCond;
     Cond = createCond(CI, CmpInst::FCMP_OLE, 0.0f);
     break;
@@ -277,8 +263,6 @@ bool LibCallsShrinkWrap::performCallErrors(CallInst *CI,
   case LibFunc_log1pf: // Same as log1p
   case LibFunc_log1pl: // Same as log1p
   {
-    if (!LibCallsShrinkWrapDoDomainError || !LibCallsShrinkWrapDoPoleError)
-      return false;
     ++NumWrappedOneCond;
     Cond = createCond(CI, CmpInst::FCMP_OLE, -1.0f);
     break;
@@ -288,9 +272,6 @@ bool LibCallsShrinkWrap::performCallErrors(CallInst *CI,
                      // RangeError:  overflow or underflow
   case LibFunc_powf:
   case LibFunc_powl: {
-    if (!LibCallsShrinkWrapDoDomainError || !LibCallsShrinkWrapDoPoleError ||
-        !LibCallsShrinkWrapDoRangeError)
-      return false;
     Cond = generateCondForPow(CI, Func);
     if (Cond == nullptr)
       return false;
@@ -528,12 +509,8 @@ bool LibCallsShrinkWrap::perform(CallInst *CI) {
   TLI.getLibFunc(*Callee, Func);
   assert(Func && "perform() is not expecting an empty function");
 
-  if (LibCallsShrinkWrapDoDomainError && performCallDomainErrorOnly(CI, Func))
+  if (performCallDomainErrorOnly(CI, Func) || performCallRangeErrorOnly(CI, Func))
     return true;
-
-  if (LibCallsShrinkWrapDoRangeError && performCallRangeErrorOnly(CI, Func))
-    return true;
-
   return performCallErrors(CI, Func);
 }
 
