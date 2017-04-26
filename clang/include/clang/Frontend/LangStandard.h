@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_LANGSTANDARD_H
 
 #include "clang/Basic/LLVM.h"
+#include "clang/Frontend/FrontendOptions.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
@@ -39,7 +40,7 @@ enum LangFeatures {
 /// standard.
 struct LangStandard {
   enum Kind {
-#define LANGSTANDARD(id, name, desc, features) \
+#define LANGSTANDARD(id, name, lang, desc, features) \
     lang_##id,
 #include "clang/Frontend/LangStandards.def"
     lang_unspecified
@@ -48,6 +49,7 @@ struct LangStandard {
   const char *ShortName;
   const char *Description;
   unsigned Flags;
+  InputKind::Language Language;
 
 public:
   /// getName - Get the name of this standard.
@@ -55,6 +57,9 @@ public:
 
   /// getDescription - Get the description of this standard.
   const char *getDescription() const { return Description; }
+
+  /// Get the language that this standard describes.
+  InputKind::Language getLanguage() const { return Language; }
 
   /// Language supports '//' comments.
   bool hasLineComments() const { return Flags & frontend::LineComment; }
