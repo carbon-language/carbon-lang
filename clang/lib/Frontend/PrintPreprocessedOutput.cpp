@@ -172,8 +172,7 @@ public:
 
   /// MacroUndefined - This hook is called whenever a macro #undef is seen.
   void MacroUndefined(const Token &MacroNameTok,
-                      const MacroDefinition &MD,
-                      const MacroDirective *Undef) override;
+                      const MacroDefinition &MD) override;
 };
 }  // end anonymous namespace
 
@@ -390,8 +389,7 @@ void PrintPPOutputPPCallbacks::MacroDefined(const Token &MacroNameTok,
 }
 
 void PrintPPOutputPPCallbacks::MacroUndefined(const Token &MacroNameTok,
-                                              const MacroDefinition &MD,
-                                              const MacroDirective *Undef) {
+                                              const MacroDefinition &MD) {
   // Only print out macro definitions in -dD mode.
   if (!DumpDefines) return;
 

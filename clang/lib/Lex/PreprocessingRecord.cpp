@@ -422,8 +422,7 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
 }
 
 void PreprocessingRecord::MacroUndefined(const Token &Id,
-                                         const MacroDefinition &MD,
-                                         const MacroDirective *Undef) {
+                                         const MacroDefinition &MD) {
   MD.forAllDefinitions([&](MacroInfo *MI) { MacroDefinitions.erase(MI); });
 }
 
