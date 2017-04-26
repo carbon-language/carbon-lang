@@ -1120,7 +1120,11 @@ private:
                 Current.Type = TT_FunctionAnnotationRParen;
           }
         }
-    } else if (Current.is(tok::at) && Current.Next) {
+    } else if (Current.is(tok::at) && Current.Next &&
+               Style.Language != FormatStyle::LK_JavaScript &&
+               Style.Language != FormatStyle::LK_Java) {
+      // In Java & JavaScript, "@..." is a decorator or annotation. In ObjC, it
+      // marks declarations and properties that need special formatting.
       switch (Current.Next->Tok.getObjCKeywordID()) {
       case tok::objc_interface:
       case tok::objc_implementation:

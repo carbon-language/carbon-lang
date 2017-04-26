@@ -1239,6 +1239,9 @@ TEST_F(FormatTestJS, MetadataAnnotations) {
                "}");
   verifyFormat("class X {}\n"
                "class Y {}");
+  verifyFormat("class X {\n"
+               "  @property() private isReply = false;\n"
+               "}\n");
 }
 
 TEST_F(FormatTestJS, TypeAliases) {
