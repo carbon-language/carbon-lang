@@ -330,7 +330,7 @@ Value *LibCallsShrinkWrap::generateOneRangeCond(CallInst *CI,
     UpperBound = 11356.0f;
     break;
   default:
-    llvm_unreachable("Should be reach here");
+    llvm_unreachable("Unhandled library call!");
   }
 
   ++NumWrappedOneCond;
@@ -394,7 +394,7 @@ Value *LibCallsShrinkWrap::generateTwoRangeCond(CallInst *CI,
     UpperBound = 11383.0f;
     break;
   default:
-    llvm_unreachable("Should be reach here");
+    llvm_unreachable("Unhandled library call!");
   }
 
   ++NumWrappedTwoCond;
@@ -483,7 +483,7 @@ Value *LibCallsShrinkWrap::generateCondForPow(CallInst *CI,
 
 // Wrap conditions that can potentially generate errno to the library call.
 void LibCallsShrinkWrap::shrinkWrapCI(CallInst *CI, Value *Cond) {
-  assert(Cond != nullptr && "hrinkWrapCI is not expecting an empty call inst");
+  assert(Cond != nullptr && "ShrinkWrapCI is not expecting an empty call inst");
   MDNode *BranchWeights =
       MDBuilder(CI->getContext()).createBranchWeights(1, 2000);
 
