@@ -586,7 +586,7 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
                              const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyAddInst(Op0, Op1, isNSW, isNUW, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyAddInst(Op0, Op1, isNSW, isNUW, {DL, TLI, DT, AC, CxtI},
                            RecursionLimit);
 }
 
@@ -803,7 +803,7 @@ Value *llvm::SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
                              const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifySubInst(Op0, Op1, isNSW, isNUW, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifySubInst(Op0, Op1, isNSW, isNUW, {DL, TLI, DT, AC, CxtI},
                            RecursionLimit);
 }
 
@@ -958,7 +958,7 @@ Value *llvm::SimplifyFAddInst(Value *Op0, Value *Op1, FastMathFlags FMF,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFAddInst(Op0, Op1, FMF, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFAddInst(Op0, Op1, FMF, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -972,7 +972,7 @@ Value *llvm::SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFSubInst(Op0, Op1, FMF, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFSubInst(Op0, Op1, FMF, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -986,7 +986,7 @@ Value *llvm::SimplifyFMulInst(Value *Op0, Value *Op1, FastMathFlags FMF,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFMulInst(Op0, Op1, FMF, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFMulInst(Op0, Op1, FMF, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -999,8 +999,7 @@ Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyMulInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                           RecursionLimit);
+  return ::SimplifyMulInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyMulInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -1129,8 +1128,7 @@ Value *llvm::SimplifySDivInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifySDivInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                            RecursionLimit);
+  return ::SimplifySDivInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifySDivInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -1161,8 +1159,7 @@ Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyUDivInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                            RecursionLimit);
+  return ::SimplifyUDivInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyUDivInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -1215,7 +1212,7 @@ Value *llvm::SimplifyFDivInst(Value *Op0, Value *Op1, FastMathFlags FMF,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFDivInst(Op0, Op1, FMF, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFDivInst(Op0, Op1, FMF, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -1270,8 +1267,7 @@ Value *llvm::SimplifySRemInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifySRemInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                            RecursionLimit);
+  return ::SimplifySRemInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifySRemInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -1302,8 +1298,7 @@ Value *llvm::SimplifyURemInst(Value *Op0, Value *Op1, const DataLayout &DL,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyURemInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                            RecursionLimit);
+  return ::SimplifyURemInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyURemInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -1337,7 +1332,7 @@ Value *llvm::SimplifyFRemInst(Value *Op0, Value *Op1, FastMathFlags FMF,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFRemInst(Op0, Op1, FMF, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFRemInst(Op0, Op1, FMF, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -1476,7 +1471,7 @@ Value *llvm::SimplifyShlInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
                              const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyShlInst(Op0, Op1, isNSW, isNUW, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyShlInst(Op0, Op1, isNSW, isNUW, {DL, TLI, DT, AC, CxtI},
                            RecursionLimit);
 }
 
@@ -1506,7 +1501,7 @@ Value *llvm::SimplifyLShrInst(Value *Op0, Value *Op1, bool isExact,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyLShrInst(Op0, Op1, isExact, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyLShrInst(Op0, Op1, isExact, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -1545,7 +1540,7 @@ Value *llvm::SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyAShrInst(Op0, Op1, isExact, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyAShrInst(Op0, Op1, isExact, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -1805,8 +1800,7 @@ Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyAndInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                           RecursionLimit);
+  return ::SimplifyAndInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyAndInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -2036,8 +2030,7 @@ Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const DataLayout &DL,
                             const TargetLibraryInfo *TLI,
                             const DominatorTree *DT, AssumptionCache *AC,
                             const Instruction *CxtI) {
-  return ::SimplifyOrInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                          RecursionLimit);
+  return ::SimplifyOrInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyOrInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -2089,8 +2082,7 @@ Value *llvm::SimplifyXorInst(Value *Op0, Value *Op1, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyXorInst(Op0, Op1, SimplifyQuery(DL, TLI, DT, AC, CxtI),
-                           RecursionLimit);
+  return ::SimplifyXorInst(Op0, Op1, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyXorInst(Value *Op0, Value *Op1, const SimplifyQuery &Q) {
@@ -3465,7 +3457,7 @@ Value *llvm::SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyICmpInst(Predicate, LHS, RHS, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyICmpInst(Predicate, LHS, RHS, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -3603,8 +3595,8 @@ Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyFCmpInst(Predicate, LHS, RHS, FMF,
-                            SimplifyQuery(DL, TLI, DT, AC, CxtI), RecursionLimit);
+  return ::SimplifyFCmpInst(Predicate, LHS, RHS, FMF, {DL, TLI, DT, AC, CxtI},
+                            RecursionLimit);
 }
 
 Value *llvm::SimplifyFCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
@@ -3878,8 +3870,8 @@ Value *llvm::SimplifySelectInst(Value *Cond, Value *TrueVal, Value *FalseVal,
                                 const TargetLibraryInfo *TLI,
                                 const DominatorTree *DT, AssumptionCache *AC,
                                 const Instruction *CxtI) {
-  return ::SimplifySelectInst(Cond, TrueVal, FalseVal,
-                              SimplifyQuery(DL, TLI, DT, AC, CxtI), RecursionLimit);
+  return ::SimplifySelectInst(Cond, TrueVal, FalseVal, {DL, TLI, DT, AC, CxtI},
+                              RecursionLimit);
 }
 
 Value *llvm::SimplifySelectInst(Value *Cond, Value *TrueVal, Value *FalseVal,
@@ -4004,8 +3996,7 @@ Value *llvm::SimplifyGEPInst(Type *SrcTy, ArrayRef<Value *> Ops,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyGEPInst(SrcTy, Ops,
-                           SimplifyQuery(DL, TLI, DT, AC, CxtI), RecursionLimit);
+  return ::SimplifyGEPInst(SrcTy, Ops, {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyGEPInst(Type *SrcTy, ArrayRef<Value *> Ops,
@@ -4046,7 +4037,7 @@ Value *llvm::SimplifyInsertValueInst(
     Value *Agg, Value *Val, ArrayRef<unsigned> Idxs, const DataLayout &DL,
     const TargetLibraryInfo *TLI, const DominatorTree *DT, AssumptionCache *AC,
     const Instruction *CxtI) {
-  return ::SimplifyInsertValueInst(Agg, Val, Idxs, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyInsertValueInst(Agg, Val, Idxs, {DL, TLI, DT, AC, CxtI},
                                    RecursionLimit);
 }
 
@@ -4087,7 +4078,7 @@ Value *llvm::SimplifyExtractValueInst(Value *Agg, ArrayRef<unsigned> Idxs,
                                       const DominatorTree *DT,
                                       AssumptionCache *AC,
                                       const Instruction *CxtI) {
-  return ::SimplifyExtractValueInst(Agg, Idxs, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyExtractValueInst(Agg, Idxs, {DL, TLI, DT, AC, CxtI},
                                     RecursionLimit);
 }
 
@@ -4124,7 +4115,7 @@ static Value *SimplifyExtractElementInst(Value *Vec, Value *Idx, const SimplifyQ
 Value *llvm::SimplifyExtractElementInst(
     Value *Vec, Value *Idx, const DataLayout &DL, const TargetLibraryInfo *TLI,
     const DominatorTree *DT, AssumptionCache *AC, const Instruction *CxtI) {
-  return ::SimplifyExtractElementInst(Vec, Idx, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyExtractElementInst(Vec, Idx, {DL, TLI, DT, AC, CxtI},
                                       RecursionLimit);
 }
 
@@ -4205,7 +4196,7 @@ Value *llvm::SimplifyCastInst(unsigned CastOpc, Value *Op, Type *Ty,
                               const TargetLibraryInfo *TLI,
                               const DominatorTree *DT, AssumptionCache *AC,
                               const Instruction *CxtI) {
-  return ::SimplifyCastInst(CastOpc, Op, Ty, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyCastInst(CastOpc, Op, Ty, {DL, TLI, DT, AC, CxtI},
                             RecursionLimit);
 }
 
@@ -4341,8 +4332,8 @@ Value *llvm::SimplifyShuffleVectorInst(
     Value *Op0, Value *Op1, Constant *Mask, Type *RetTy,
     const DataLayout &DL, const TargetLibraryInfo *TLI, const DominatorTree *DT,
     AssumptionCache *AC, const Instruction *CxtI) {
-  return ::SimplifyShuffleVectorInst(
-      Op0, Op1, Mask, RetTy, SimplifyQuery(DL, TLI, DT, AC, CxtI), RecursionLimit);
+  return ::SimplifyShuffleVectorInst(Op0, Op1, Mask, RetTy,
+                                     {DL, TLI, DT, AC, CxtI}, RecursionLimit);
 }
 
 Value *llvm::SimplifyShuffleVectorInst(Value *Op0, Value *Op1, Constant *Mask,
@@ -4423,7 +4414,7 @@ Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                            const DataLayout &DL, const TargetLibraryInfo *TLI,
                            const DominatorTree *DT, AssumptionCache *AC,
                            const Instruction *CxtI) {
-  return ::SimplifyBinOp(Opcode, LHS, RHS, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyBinOp(Opcode, LHS, RHS, {DL, TLI, DT, AC, CxtI},
                          RecursionLimit);
 }
 
@@ -4437,7 +4428,7 @@ Value *llvm::SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyFPBinOp(Opcode, LHS, RHS, FMF, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyFPBinOp(Opcode, LHS, RHS, FMF, {DL, TLI, DT, AC, CxtI},
                            RecursionLimit);
 }
 
@@ -4458,7 +4449,7 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                              const DataLayout &DL, const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
-  return ::SimplifyCmpInst(Predicate, LHS, RHS, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyCmpInst(Predicate, LHS, RHS, {DL, TLI, DT, AC, CxtI},
                            RecursionLimit);
 }
 
@@ -4689,7 +4680,7 @@ Value *llvm::SimplifyCall(Value *V, User::op_iterator ArgBegin,
                           User::op_iterator ArgEnd, const DataLayout &DL,
                           const TargetLibraryInfo *TLI, const DominatorTree *DT,
                           AssumptionCache *AC, const Instruction *CxtI) {
-  return ::SimplifyCall(V, ArgBegin, ArgEnd, SimplifyQuery(DL, TLI, DT, AC, CxtI),
+  return ::SimplifyCall(V, ArgBegin, ArgEnd, {DL, TLI, DT, AC, CxtI},
                         RecursionLimit);
 }
 
@@ -4702,8 +4693,8 @@ Value *llvm::SimplifyCall(Value *V, ArrayRef<Value *> Args,
                           const DataLayout &DL, const TargetLibraryInfo *TLI,
                           const DominatorTree *DT, AssumptionCache *AC,
                           const Instruction *CxtI) {
-  return ::SimplifyCall(V, Args.begin(), Args.end(),
-                        SimplifyQuery(DL, TLI, DT, AC, CxtI), RecursionLimit);
+  return ::SimplifyCall(V, Args.begin(), Args.end(), {DL, TLI, DT, AC, CxtI},
+                        RecursionLimit);
 }
 
 Value *llvm::SimplifyCall(Value *V, ArrayRef<Value *> Args,
