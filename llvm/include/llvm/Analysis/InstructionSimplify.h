@@ -347,9 +347,9 @@ namespace llvm {
   /// In contrast to SimplifyBinOp, try to use FastMathFlag when folding the
   /// result. In case we don't need FastMathFlags, simply fall to SimplifyBinOp.
   Value *SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                         const FastMathFlags &FMF, const SimplifyQuery &Q);
+                         FastMathFlags FMF, const SimplifyQuery &Q);
   Value *SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                         const FastMathFlags &FMF, const DataLayout &DL,
+                         FastMathFlags FMF, const DataLayout &DL,
                          const TargetLibraryInfo *TLI = nullptr,
                          const DominatorTree *DT = nullptr,
                          AssumptionCache *AC = nullptr,

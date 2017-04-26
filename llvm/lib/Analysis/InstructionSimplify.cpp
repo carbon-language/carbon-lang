@@ -4433,7 +4433,7 @@ Value *llvm::SimplifyBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                             const FastMathFlags &FMF, const DataLayout &DL,
+                             FastMathFlags FMF, const DataLayout &DL,
                              const TargetLibraryInfo *TLI,
                              const DominatorTree *DT, AssumptionCache *AC,
                              const Instruction *CxtI) {
@@ -4442,7 +4442,7 @@ Value *llvm::SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
 }
 
 Value *llvm::SimplifyFPBinOp(unsigned Opcode, Value *LHS, Value *RHS,
-                             const FastMathFlags &FMF, const SimplifyQuery &Q) {
+                             FastMathFlags FMF, const SimplifyQuery &Q) {
   return ::SimplifyFPBinOp(Opcode, LHS, RHS, FMF, Q, RecursionLimit);
 }
 
