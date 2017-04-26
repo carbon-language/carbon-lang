@@ -34,6 +34,24 @@ public:
   ConcreteCallbackVH(Value *V) : CallbackVH(V) {}
 };
 
+TEST_F(ValueHandle, WeakVH_BasicOperation) {
+  WeakVH WVH(BitcastV.get());
+  EXPECT_EQ(BitcastV.get(), WVH);
+  WVH = ConstantV;
+  EXPECT_EQ(ConstantV, WVH);
+
+  // Make sure I can call a method on the underlying Value.  It
+  // doesn't matter which method.
+  EXPECT_EQ(Type::getInt32Ty(Context), WVH->getType());
+  EXPECT_EQ(Type::getInt32Ty(Context), (*WVH).getType());
+
+  WVH = BitcastV.get();
+  BitcastV->replaceAllUsesWith(ConstantV);
+  EXPECT_EQ(WVH, BitcastV.get());
+  BitcastV.reset();
+  EXPECT_EQ(WVH, nullptr);
+}
+
 TEST_F(ValueHandle, WeakTrackingVH_BasicOperation) {
   WeakTrackingVH WVH(BitcastV.get());
   EXPECT_EQ(BitcastV.get(), WVH);
