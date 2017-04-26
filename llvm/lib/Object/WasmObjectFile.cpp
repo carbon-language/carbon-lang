@@ -324,7 +324,7 @@ Error WasmObjectFile::parseRelocSection(StringRef Name, const uint8_t *Ptr,
       Reloc.Addend = readVarint32(Ptr);
       break;
     default:
-      return make_error<GenericBinaryError>("Bad relocation type: " + Twine(Reloc.Type),
+      return make_error<GenericBinaryError>("Bad relocation type",
                                             object_error::parse_failed);
     }
     Section->Relocations.push_back(Reloc);
