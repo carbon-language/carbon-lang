@@ -242,6 +242,9 @@ static void checkOptions(opt::InputArgList &Args) {
   if (Config->Pie && Config->Shared)
     error("-shared and -pie may not be used together");
 
+  if (!Config->Shared && !Config->AuxiliaryList.empty())
+    error("-f may not be used without -shared");
+
   if (Config->Relocatable) {
     if (Config->Shared)
       error("-r and -shared may not be used together");
@@ -707,9 +710,6 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
 
   std::tie(Config->SysvHash, Config->GnuHash) = getHashStyle(Args);
   std::tie(Config->BuildId, Config->BuildIdVector) = getBuildId(Args);
-
-  if (!Config->Shared && !Config->AuxiliaryList.empty())
-    error("-f may not be used without -shared");
 
   if (auto *Arg = Args.getLastArg(OPT_symbol_ordering_file))
     if (Optional<MemoryBufferRef> Buffer = readFile(Arg->getValue()))
