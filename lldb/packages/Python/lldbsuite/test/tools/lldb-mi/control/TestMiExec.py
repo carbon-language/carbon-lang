@@ -325,8 +325,10 @@ class MiExecTestCase(lldbmi_testcase.MiTestCaseBase):
         if it == 1:
             # Call to s_MyFunction may not follow immediately after g_MyFunction.
             # There might be some instructions in between to restore caller-saved registers.
-            # We need to get past these instructions with a step to reach call to s_MyFunction.
-            self.runCmd("-exec-step --thread 1")
+            # We need to get past these instructions with a next to reach call to s_MyFunction.
+            self.runCmd("-exec-next --thread 1")
+            self.expect("\^running")
+            self.expect("\*stopped,reason=\"end-stepping-range\".+?main\.cpp\",line=\"30\"")
 
         # Test that -exec-step steps into s_MyFunction
         # (and that --frame is optional)
