@@ -4418,8 +4418,14 @@ private:
   bool HandleConditionalOperator(const ConditionalOperator *E) {
     bool BoolResult;
     if (!EvaluateAsBooleanCondition(E->getCond(), BoolResult, Info)) {
-      if (Info.checkingPotentialConstantExpression() && Info.noteFailure())
+      if (Info.checkingPotentialConstantExpression() && Info.noteFailure()) {
         CheckPotentialConstantConditional(E);
+        return false;
+      }
+      if (Info.noteFailure()) {
+        StmtVisitorTy::Visit(E->getTrueExpr());
+        StmtVisitorTy::Visit(E->getFalseExpr());
+      }
       return false;
     }
 
