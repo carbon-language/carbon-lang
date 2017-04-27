@@ -71,11 +71,10 @@ Error visitModuleDebugFragment(const ModuleDebugFragment &R,
 
 template <> class VarStreamArrayExtractor<codeview::LineColumnEntry> {
 public:
-  VarStreamArrayExtractor(const codeview::LineFragmentHeader *Header)
-      : Header(Header) {}
+  typedef const codeview::LineFragmentHeader ContextType;
 
-  Error operator()(BinaryStreamRef Stream, uint32_t &Len,
-                   codeview::LineColumnEntry &Item) const {
+  static Error extract(BinaryStreamRef Stream, uint32_t &Len,
+                       codeview::LineColumnEntry &Item, ContextType *Header) {
     using namespace codeview;
     const LineBlockFragmentHeader *BlockHeader;
     BinaryStreamReader Reader(Stream);
@@ -104,15 +103,14 @@ public:
     }
     return Error::success();
   }
-
-private:
-  const codeview::LineFragmentHeader *Header;
 };
 
 template <> class VarStreamArrayExtractor<codeview::FileChecksumEntry> {
 public:
-  Error operator()(BinaryStreamRef Stream, uint32_t &Len,
-                   codeview::FileChecksumEntry &Item) const {
+  typedef void ContextType;
+
+  static Error extract(BinaryStreamRef Stream, uint32_t &Len,
+                       codeview::FileChecksumEntry &Item, void *Ctx) {
     using namespace codeview;
     const FileChecksum *Header;
     BinaryStreamReader Reader(Stream);

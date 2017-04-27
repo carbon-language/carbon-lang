@@ -64,8 +64,9 @@ struct ModuleInfoEx {
 } // end namespace pdb
 
 template <> struct VarStreamArrayExtractor<pdb::DbiModuleDescriptor> {
-  Error operator()(BinaryStreamRef Stream, uint32_t &Length,
-                   pdb::DbiModuleDescriptor &Info) const {
+  typedef void ContextType;
+  static Error extract(BinaryStreamRef Stream, uint32_t &Length,
+                       pdb::DbiModuleDescriptor &Info, void *Ctx) {
     if (auto EC = pdb::DbiModuleDescriptor::initialize(Stream, Info))
       return EC;
     Length = Info.getRecordLength();

@@ -68,9 +68,8 @@ Error llvm::codeview::visitModuleDebugFragment(const ModuleDebugFragment &R,
     const LineFragmentHeader *Header;
     if (auto EC = Reader.readObject(Header))
       return EC;
-    VarStreamArrayExtractor<LineColumnEntry> E(Header);
-    LineInfoArray LineInfos(E);
-    if (auto EC = Reader.readArray(LineInfos, Reader.bytesRemaining()))
+    LineInfoArray LineInfos;
+    if (auto EC = Reader.readArray(LineInfos, Reader.bytesRemaining(), Header))
       return EC;
     return V.visitLines(R.getRecordData(), Header, LineInfos);
   }

@@ -74,8 +74,10 @@ typedef VarStreamArray<ModuleDebugFragment> ModuleDebugFragmentArray;
 } // namespace codeview
 
 template <> struct VarStreamArrayExtractor<codeview::ModuleDebugFragment> {
-  Error operator()(BinaryStreamRef Stream, uint32_t &Length,
-                   codeview::ModuleDebugFragment &Info) const {
+  typedef void ContextType;
+
+  static Error extract(BinaryStreamRef Stream, uint32_t &Length,
+                       codeview::ModuleDebugFragment &Info, void *Ctx) {
     if (auto EC = codeview::ModuleDebugFragment::initialize(Stream, Info))
       return EC;
     Length = Info.getRecordLength();
