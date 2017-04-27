@@ -748,7 +748,7 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
     // with explicit versions.
     if (V) {
       StringRef VerName = this->StringTable.data() + V->getAux()->vda_name;
-      Name = Saver.save(Twine(Name) + "@" + VerName);
+      Name = Saver.save(Name + "@" + VerName);
       elf::Symtab<ELFT>::X->addShared(this, Name, Sym, V);
     }
   }
@@ -891,9 +891,9 @@ template <class ELFT> void BinaryFile::parse() {
   std::transform(Filename.begin(), Filename.end(), Filename.begin(),
                  [](char C) { return isalnum(C) ? C : '_'; });
   Filename = "_binary_" + Filename;
-  StringRef StartName = Saver.save(Twine(Filename) + "_start");
-  StringRef EndName = Saver.save(Twine(Filename) + "_end");
-  StringRef SizeName = Saver.save(Twine(Filename) + "_size");
+  StringRef StartName = Saver.save(Filename + "_start");
+  StringRef EndName = Saver.save(Filename + "_end");
+  StringRef SizeName = Saver.save(Filename + "_size");
 
   auto *Section =
       make<InputSection>(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS, 8, Data, ".data");
