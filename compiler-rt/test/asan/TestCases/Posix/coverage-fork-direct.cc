@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 
 // CHECK-DAG: Child PID: [[ChildPID:[0-9]+]]
 // CHECK-DAG: Parent PID: [[ParentPID:[0-9]+]]
-// CHECK-DAG: read 3 64-bit PCs from {{.*}}.[[ParentPID]].sancov
+// CHECK-DAG: read 3 {{64|32}}-bit PCs from {{.*}}.[[ParentPID]].sancov
 
 // FIXME: this is missing
-// XCHECK-DAG: read 1 64-bit PCs from {{.*}}.[[ChildPID]].sancov
+// XCHECK-DAG: read 1 {{64|32}}-bit PCs from {{.*}}.[[ChildPID]].sancov
