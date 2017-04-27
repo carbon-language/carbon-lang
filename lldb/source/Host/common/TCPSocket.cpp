@@ -188,7 +188,9 @@ Error TCPSocket::Listen(llvm::StringRef name, int backlog) {
 
     // enable local address reuse
     int option_value = 1;
-    ::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &option_value,
+    set_socket_option_arg_type option_value_p =
+        reinterpret_cast<get_socket_option_arg_type>(&option_value);
+    ::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, option_value_p,
                  sizeof(option_value));
 
     address.SetPort(port);
