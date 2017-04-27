@@ -1,4 +1,4 @@
-//===- ModuleSubstreamVisitor.h ---------------------------------*- C++ -*-===//
+//===- ModuleDebugFragmentVisitor.h -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_CODEVIEW_MODULESUBSTREAMVISITOR_H
-#define LLVM_DEBUGINFO_CODEVIEW_MODULESUBSTREAMVISITOR_H
+#ifndef LLVM_DEBUGINFO_CODEVIEW_MODULEDEBUGFRAGMENTVISITOR_H
+#define LLVM_DEBUGINFO_CODEVIEW_MODULEDEBUGFRAGMENTVISITOR_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/CodeViewError.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
-#include "llvm/DebugInfo/CodeView/ModuleSubstream.h"
+#include "llvm/DebugInfo/CodeView/ModuleDebugFragment.h"
 #include "llvm/Support/BinaryStreamArray.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/BinaryStreamRef.h"
@@ -41,15 +41,15 @@ struct FileChecksumEntry {
 typedef VarStreamArray<LineColumnEntry> LineInfoArray;
 typedef VarStreamArray<FileChecksumEntry> FileChecksumArray;
 
-class IModuleSubstreamVisitor {
+class ModuleDebugFragmentVisitor {
 public:
-  virtual ~IModuleSubstreamVisitor() = default;
+  virtual ~ModuleDebugFragmentVisitor() = default;
 
-  virtual Error visitUnknown(ModuleSubstreamKind Kind,
+  virtual Error visitUnknown(ModuleDebugFragmentKind Kind,
                              BinaryStreamRef Data) = 0;
   virtual Error visitSymbols(BinaryStreamRef Data);
   virtual Error visitLines(BinaryStreamRef Data,
-                           const LineSubstreamHeader *Header,
+                           const LineFragmentHeader *Header,
                            const LineInfoArray &Lines);
   virtual Error visitStringTable(BinaryStreamRef Data);
   virtual Error visitFileChecksums(BinaryStreamRef Data,
@@ -65,19 +65,19 @@ public:
   virtual Error visitCoffSymbolRVA(BinaryStreamRef Data);
 };
 
-Error visitModuleSubstream(const ModuleSubstream &R,
-                           IModuleSubstreamVisitor &V);
+Error visitModuleDebugFragment(const ModuleDebugFragment &R,
+                               ModuleDebugFragmentVisitor &V);
 } // end namespace codeview
 
 template <> class VarStreamArrayExtractor<codeview::LineColumnEntry> {
 public:
-  VarStreamArrayExtractor(const codeview::LineSubstreamHeader *Header)
+  VarStreamArrayExtractor(const codeview::LineFragmentHeader *Header)
       : Header(Header) {}
 
   Error operator()(BinaryStreamRef Stream, uint32_t &Len,
                    codeview::LineColumnEntry &Item) const {
     using namespace codeview;
-    const LineFileBlockHeader *BlockHeader;
+    const LineBlockFragmentHeader *BlockHeader;
     BinaryStreamReader Reader(Stream);
     if (auto EC = Reader.readObject(BlockHeader))
       return EC;
@@ -85,15 +85,15 @@ public:
     uint32_t LineInfoSize =
         BlockHeader->NumLines *
         (sizeof(LineNumberEntry) + (HasColumn ? sizeof(ColumnNumberEntry) : 0));
-    if (BlockHeader->BlockSize < sizeof(LineFileBlockHeader))
+    if (BlockHeader->BlockSize < sizeof(LineBlockFragmentHeader))
       return make_error<CodeViewError>(cv_error_code::corrupt_record,
                                        "Invalid line block record size");
-    uint32_t Size = BlockHeader->BlockSize - sizeof(LineFileBlockHeader);
+    uint32_t Size = BlockHeader->BlockSize - sizeof(LineBlockFragmentHeader);
     if (LineInfoSize > Size)
       return make_error<CodeViewError>(cv_error_code::corrupt_record,
                                        "Invalid line block record size");
     // The value recorded in BlockHeader->BlockSize includes the size of
-    // LineFileBlockHeader.
+    // LineBlockFragmentHeader.
     Len = BlockHeader->BlockSize;
     Item.NameIndex = BlockHeader->NameIndex;
     if (auto EC = Reader.readArray(Item.LineNumbers, BlockHeader->NumLines))
@@ -106,7 +106,7 @@ public:
   }
 
 private:
-  const codeview::LineSubstreamHeader *Header;
+  const codeview::LineFragmentHeader *Header;
 };
 
 template <> class VarStreamArrayExtractor<codeview::FileChecksumEntry> {
@@ -129,4 +129,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_DEBUGINFO_CODEVIEW_MODULESUBSTREAMVISITOR_H
+#endif // LLVM_DEBUGINFO_CODEVIEW_MODULEDEBUGFRAGMENTVISITOR_H

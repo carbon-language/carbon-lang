@@ -16,20 +16,20 @@
 #include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
-#include "llvm/DebugInfo/CodeView/ModuleSubstreamVisitor.h"
+#include "llvm/DebugInfo/CodeView/ModuleDebugFragmentVisitor.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
 #include "llvm/DebugInfo/CodeView/TypeDatabaseVisitor.h"
 #include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
 #include "llvm/DebugInfo/CodeView/TypeDumpVisitor.h"
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbackPipeline.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
+#include "llvm/DebugInfo/PDB/Native/DbiModuleDescriptor.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/EnumTables.h"
 #include "llvm/DebugInfo/PDB/Native/GlobalsStream.h"
 #include "llvm/DebugInfo/PDB/Native/ISectionContribVisitor.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
-#include "llvm/DebugInfo/PDB/Native/ModInfo.h"
-#include "llvm/DebugInfo/PDB/Native/ModStream.h"
+#include "llvm/DebugInfo/PDB/Native/ModuleDebugStream.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/PublicsStream.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
@@ -606,7 +606,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
             File.getMsfLayout(), File.getMsfBuffer(),
             Modi.Info.getModuleStreamIndex());
 
-        ModStream ModS(Modi.Info, std::move(ModStreamData));
+        ModuleDebugStream ModS(Modi.Info, std::move(ModStreamData));
         if (auto EC = ModS.reload())
           return EC;
 
@@ -636,10 +636,10 @@ Error LLVMOutputStyle::dumpDbiStream() {
           bool HadError = false;
           // Define a locally scoped visitor to print the different
           // substream types types.
-          class RecordVisitor : public codeview::IModuleSubstreamVisitor {
+          class RecordVisitor : public codeview::ModuleDebugFragmentVisitor {
           public:
             RecordVisitor(ScopedPrinter &P, PDBFile &F) : P(P), F(F) {}
-            Error visitUnknown(ModuleSubstreamKind Kind,
+            Error visitUnknown(ModuleDebugFragmentKind Kind,
                                BinaryStreamRef Stream) override {
               DictScope DD(P, "Unknown");
               ArrayRef<uint8_t> Data;
@@ -670,7 +670,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
             }
 
             Error visitLines(BinaryStreamRef Data,
-                             const LineSubstreamHeader *Header,
+                             const LineFragmentHeader *Header,
                              const LineInfoArray &Lines) override {
               DictScope DD(P, "Lines");
               for (const auto &L : Lines) {
@@ -721,7 +721,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
 
           RecordVisitor V(P, File);
           for (const auto &L : ModS.lines(&HadError)) {
-            if (auto EC = codeview::visitModuleSubstream(L, V))
+            if (auto EC = codeview::visitModuleDebugFragment(L, V))
               return EC;
           }
         }

@@ -13,12 +13,12 @@
 #include "llvm-pdbdump.h"
 
 #include "llvm/DebugInfo/CodeView/Line.h"
-#include "llvm/DebugInfo/CodeView/ModuleSubstream.h"
-#include "llvm/DebugInfo/CodeView/ModuleSubstreamVisitor.h"
+#include "llvm/DebugInfo/CodeView/ModuleDebugFragment.h"
+#include "llvm/DebugInfo/CodeView/ModuleDebugFragmentVisitor.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
-#include "llvm/DebugInfo/PDB/Native/ModStream.h"
+#include "llvm/DebugInfo/PDB/Native/ModuleDebugStream.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
@@ -75,12 +75,12 @@ Error YAMLOutputStyle::dump() {
 }
 
 namespace {
-class C13SubstreamVisitor : public codeview::IModuleSubstreamVisitor {
+class C13SubstreamVisitor : public codeview::ModuleDebugFragmentVisitor {
 public:
   C13SubstreamVisitor(llvm::pdb::yaml::PdbSourceFileInfo &Info, PDBFile &F)
       : Info(Info), F(F) {}
 
-  Error visitUnknown(codeview::ModuleSubstreamKind Kind,
+  Error visitUnknown(codeview::ModuleDebugFragmentKind Kind,
                      BinaryStreamRef Stream) override {
     return Error::success();
   }
@@ -103,7 +103,7 @@ public:
   }
 
   Error visitLines(BinaryStreamRef Data,
-                   const codeview::LineSubstreamHeader *Header,
+                   const codeview::LineFragmentHeader *Header,
                    const codeview::LineInfoArray &Lines) override {
 
     Info.Lines.CodeSize = Header->CodeSize;
@@ -165,15 +165,15 @@ private:
 }
 
 Expected<Optional<llvm::pdb::yaml::PdbSourceFileInfo>>
-YAMLOutputStyle::getFileLineInfo(const pdb::ModStream &ModS) {
+YAMLOutputStyle::getFileLineInfo(const pdb::ModuleDebugStream &ModS) {
   if (!ModS.hasLineInfo())
     return None;
 
   yaml::PdbSourceFileInfo Info;
   bool Error = false;
   C13SubstreamVisitor Visitor(Info, File);
-  for (auto &Substream : ModS.lines(&Error)) {
-    if (auto E = codeview::visitModuleSubstream(Substream, Visitor))
+  for (auto &Frag : ModS.lines(&Error)) {
+    if (auto E = codeview::visitModuleDebugFragment(Frag, Visitor))
       return std::move(E);
   }
 
@@ -293,7 +293,7 @@ Error YAMLOutputStyle::dumpDbiStream() {
           File.getMsfLayout(), File.getMsfBuffer(),
           MI.Info.getModuleStreamIndex());
 
-      pdb::ModStream ModS(MI.Info, std::move(ModStreamData));
+      pdb::ModuleDebugStream ModS(MI.Info, std::move(ModStreamData));
       if (auto EC = ModS.reload())
         return EC;
 
