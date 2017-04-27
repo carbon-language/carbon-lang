@@ -9,7 +9,7 @@
 
 #include "PipSqueak.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__GNUC__)
 // Disable warnings from inclusion of xlocale & exception
 #pragma warning(push)
 #pragma warning(disable: 4530)
