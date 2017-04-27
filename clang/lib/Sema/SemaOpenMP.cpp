@@ -828,14 +828,14 @@ DSAStackTy::hasDSA(ValueDecl *D,
                ? std::next(Stack.back().first.rbegin())
                : Stack.back().first.rbegin();
   auto EndI = Stack.back().first.rend();
-  do {
+  while (std::distance(I, EndI) > 1) {
     std::advance(I, 1);
     if (!DPred(I->Directive) && !isParallelOrTaskRegion(I->Directive))
       continue;
     DSAVarData DVar = getDSA(I, D);
     if (CPred(DVar.CKind))
       return DVar;
-  } while (std::distance(I, EndI) > 1);
+  }
   return {};
 }
 
