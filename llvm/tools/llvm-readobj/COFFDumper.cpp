@@ -79,6 +79,7 @@ public:
   void printCOFFDirectives() override;
   void printCOFFBaseReloc() override;
   void printCOFFDebugDirectory() override;
+  void printCOFFResources() override;
   void printCodeViewDebugInfo() override;
   void mergeCodeViewTypes(llvm::codeview::TypeTableBuilder &CVIDs,
                           llvm::codeview::TypeTableBuilder &CVTypes) override;
@@ -1518,6 +1519,30 @@ void COFFDumper::printCOFFBaseReloc() {
     DictScope Import(W, "Entry");
     W.printString("Type", getBaseRelocTypeName(Type));
     W.printHex("Address", RVA);
+  }
+}
+
+void COFFDumper::printCOFFResources() {
+  ListScope ResourcesD(W, "Resources");
+  for (const SectionRef &S : Obj->sections()) {
+    StringRef Name;
+    error(S.getName(Name));
+    if (!Name.startswith(".rsrc"))
+      continue;
+
+    StringRef Ref;
+    error(S.getContents(Ref));
+
+    if ((Name == ".rsrc") || (Name == ".rsrc$01")) {
+      auto Table =
+          reinterpret_cast<const coff_resource_dir_table *>(Ref.data());
+      char FormattedTime[20];
+      time_t TDS = time_t(Table->TimeDateStamp);
+      strftime(FormattedTime, sizeof(FormattedTime), "%Y-%m-%d %H:%M:%S",
+               gmtime(&TDS));
+      W.printHex("Time/Date Stamp", FormattedTime, Table->TimeDateStamp);
+    }
+    W.printBinaryBlock(Name.str() + " Data", Ref);
   }
 }
 
