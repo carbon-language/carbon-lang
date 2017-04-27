@@ -21,6 +21,7 @@
 #include <cstdint>
 
 using namespace llvm;
+using namespace llvm::codeview;
 using namespace llvm::msf;
 using namespace llvm::pdb;
 
@@ -54,7 +55,8 @@ Error ModuleDebugStream::reload() {
     return EC;
 
   BinaryStreamReader LineReader(C13LinesSubstream);
-  if (auto EC = LineReader.readArray(LineInfo, LineReader.bytesRemaining()))
+  if (auto EC =
+          LineReader.readArray(LinesAndChecksums, LineReader.bytesRemaining()))
     return EC;
 
   uint32_t GlobalRefsSize;
@@ -77,13 +79,13 @@ ModuleDebugStream::symbols(bool *HadError) const {
   return make_range(SymbolsSubstream.begin(HadError), SymbolsSubstream.end());
 }
 
-iterator_range<codeview::ModuleDebugFragmentArray::Iterator>
-ModuleDebugStream::lines(bool *HadError) const {
-  return make_range(LineInfo.begin(HadError), LineInfo.end());
+llvm::iterator_range<ModuleDebugStream::LinesAndChecksumsIterator>
+ModuleDebugStream::linesAndChecksums() const {
+  return make_range(LinesAndChecksums.begin(), LinesAndChecksums.end());
 }
 
 bool ModuleDebugStream::hasLineInfo() const {
-  return C13LinesSubstream.getLength() > 0 || LinesSubstream.getLength() > 0;
+  return C13LinesSubstream.getLength() > 0;
 }
 
 Error ModuleDebugStream::commit() { return Error::success(); }

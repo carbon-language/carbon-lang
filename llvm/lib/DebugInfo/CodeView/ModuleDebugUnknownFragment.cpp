@@ -1,4 +1,4 @@
-//===- ModuleDebugFragment.cpp -----------------------------------*- C++-*-===//
+//===- ModuleDebugUnknownFragment.cpp ---------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,4 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/DebugInfo/CodeView/ModuleDebugFragment.h"
-
-using namespace llvm::codeview;
-
-ModuleDebugFragment::~ModuleDebugFragment() {}
+#include "llvm/DebugInfo/CodeView/ModuleDebugUnknownFragment.h"

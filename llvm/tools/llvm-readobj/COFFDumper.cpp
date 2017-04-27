@@ -25,6 +25,7 @@
 #include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
+#include "llvm/DebugInfo/CodeView/ModuleDebugFileChecksumFragment.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumpDelegate.h"
@@ -985,29 +986,22 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
 void COFFDumper::printCodeViewFileChecksums(StringRef Subsection) {
   BinaryByteStream S(Subsection, llvm::support::little);
   BinaryStreamReader SR(S);
-  while (!SR.empty()) {
+  ModuleDebugFileChecksumFragment Checksums;
+  error(Checksums.initialize(SR));
+
+  for (auto &FC : Checksums) {
     DictScope S(W, "FileChecksum");
-    const FileChecksum *FC;
-    error(SR.readObject(FC));
-    if (FC->FileNameOffset >= CVStringTable.size())
+
+    if (FC.FileNameOffset >= CVStringTable.size())
       error(object_error::parse_failed);
     StringRef Filename =
-        CVStringTable.drop_front(FC->FileNameOffset).split('\0').first;
-    W.printHex("Filename", Filename, FC->FileNameOffset);
-    W.printHex("ChecksumSize", FC->ChecksumSize);
-    W.printEnum("ChecksumKind", uint8_t(FC->ChecksumKind),
+        CVStringTable.drop_front(FC.FileNameOffset).split('\0').first;
+    W.printHex("Filename", Filename, FC.FileNameOffset);
+    W.printHex("ChecksumSize", FC.Checksum.size());
+    W.printEnum("ChecksumKind", uint8_t(FC.Kind),
                 makeArrayRef(FileChecksumKindNames));
-    if (FC->ChecksumSize >= SR.bytesRemaining())
-      error(object_error::parse_failed);
-    ArrayRef<uint8_t> ChecksumBytes;
-    error(SR.readBytes(ChecksumBytes, FC->ChecksumSize));
-    W.printBinary("ChecksumBytes", ChecksumBytes);
-    unsigned PaddedSize = alignTo(FC->ChecksumSize + sizeof(FileChecksum), 4) -
-                          sizeof(FileChecksum);
-    PaddedSize -= ChecksumBytes.size();
-    if (PaddedSize > SR.bytesRemaining())
-      error(object_error::parse_failed);
-    error(SR.skip(PaddedSize));
+
+    W.printBinary("ChecksumBytes", FC.Checksum);
   }
 }
 
