@@ -160,7 +160,7 @@ inline int64_t decodeSLEB128(const uint8_t *p, unsigned *n = nullptr,
       return 0;
     }
     Byte = *p++;
-    Value |= ((Byte & 0x7f) << Shift);
+    Value |= (int64_t(Byte & 0x7f) << Shift);
     Shift += 7;
   } while (Byte >= 128);
   // Sign extend negative numbers.
