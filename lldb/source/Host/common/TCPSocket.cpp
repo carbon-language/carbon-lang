@@ -32,8 +32,10 @@
 
 #ifdef LLVM_ON_WIN32
 #define CLOSE_SOCKET closesocket
+typedef const char *set_socket_option_arg_type;
 #else
 #define CLOSE_SOCKET ::close
+typedef const void *set_socket_option_arg_type;
 #endif
 
 using namespace lldb;
