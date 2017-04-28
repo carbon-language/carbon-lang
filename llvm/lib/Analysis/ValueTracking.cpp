@@ -1162,12 +1162,12 @@ static void computeKnownBitsFromOperator(const Operator *I, KnownBits &Known,
 
         // If the first operand is non-negative or has all low bits zero, then
         // the upper bits are all zero.
-        if (Known2.Zero.isSignBitSet() || ((Known2.Zero & LowBits) == LowBits))
+        if (Known2.Zero.isSignBitSet() || LowBits.isSubsetOf(Known2.Zero))
           Known.Zero |= ~LowBits;
 
         // If the first operand is negative and not all low bits are zero, then
         // the upper bits are all one.
-        if (Known2.One.isSignBitSet() && ((Known2.One & LowBits) != 0))
+        if (Known2.One.isSignBitSet() && LowBits.intersects(Known2.One))
           Known.One |= ~LowBits;
 
         assert((Known.Zero & Known.One) == 0 && "Bits known to be one AND zero?");
