@@ -72,7 +72,7 @@ public:
   ///}
 
   void verifyGeneratedFunction(Scop &S, Function &F) {
-    if (!verifyFunction(F, &errs()) || !Verify)
+    if (!Verify || !verifyFunction(F, &errs()))
       return;
 
     DEBUG({
