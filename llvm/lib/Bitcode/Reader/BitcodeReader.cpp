@@ -4969,7 +4969,6 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
   // "OriginalName" attachement.
   GlobalValueSummary *LastSeenSummary = nullptr;
   GlobalValue::GUID LastSeenGUID = 0;
-  bool Combined = false;
 
   // We can expect to see any number of type ID information records before
   // each function summary records; these variables store the information
@@ -5136,7 +5135,6 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       LastSeenGUID = GUID;
       FS->setModulePath(ModuleIdMap[ModuleId]);
       TheIndex.addGlobalValueSummary(GUID, std::move(FS));
-      Combined = true;
       break;
     }
     // FS_COMBINED_ALIAS: [valueid, modid, flags, valueid]
@@ -5162,7 +5160,6 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       GlobalValue::GUID GUID = getGUIDFromValueId(ValueID).first;
       LastSeenGUID = GUID;
       TheIndex.addGlobalValueSummary(GUID, std::move(AS));
-      Combined = true;
       break;
     }
     // FS_COMBINED_GLOBALVAR_INIT_REFS: [valueid, modid, flags, n x valueid]
@@ -5179,7 +5176,6 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
       GlobalValue::GUID GUID = getGUIDFromValueId(ValueID).first;
       LastSeenGUID = GUID;
       TheIndex.addGlobalValueSummary(GUID, std::move(FS));
-      Combined = true;
       break;
     }
     // FS_COMBINED_ORIGINAL_NAME: [original_name]
