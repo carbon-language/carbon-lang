@@ -98,7 +98,7 @@ template <class ELFT> PrettyPrinter<ELFT>::PrettyPrinter() {
     raw_string_ostream OS(Str[I]);
     writeHeader<ELFT>(OS, Syms[I]->getVA(), Syms[I]->template getSize<ELFT>(),
                       0);
-    OS << indent(3) << left_justify(toString(*Syms[I]), 7) << '\n';
+    OS << indent(3) << toString(*Syms[I]) << '\n';
   });
   for (size_t I = 0, E = Syms.size(); I < E; ++I)
     SymStr[Syms[I]] = std::move(Str[I]);
@@ -120,7 +120,7 @@ void PrettyPrinter<ELFT>::writeInputSection(raw_ostream &OS,
   if (IS->Name != CurSection) {
     writeHeader<ELFT>(OS, IS->OutSec->Addr + IS->OutSecOff, IS->getSize(),
                       IS->Alignment);
-    OS << indent(1) << left_justify(IS->Name, 7) << '\n';
+    OS << indent(1) << IS->Name << '\n';
     CurSection = IS->Name;
   }
 
@@ -131,7 +131,7 @@ void PrettyPrinter<ELFT>::writeInputSection(raw_ostream &OS,
 
   writeHeader<ELFT>(OS, IS->OutSec->Addr + IS->OutSecOff, IS->getSize(),
                     IS->Alignment);
-  OS << indent(2) << left_justify(toString(File), 7) << '\n';
+  OS << indent(2) << toString(File) << '\n';
 
   for (DefinedRegular *Sym : Symbols[IS])
     OS << SymStr[Sym];
@@ -148,7 +148,7 @@ void PrettyPrinter<ELFT>::print(raw_ostream &OS,
   // Print out a mapfile.
   for (OutputSection *Sec : OutputSections) {
     writeHeader<ELFT>(OS, Sec->Addr, Sec->Size, Sec->Alignment);
-    OS << left_justify(Sec->Name, 7) << '\n';
+    OS << Sec->Name << '\n';
 
     StringRef CurSection;
     for (InputSection *IS : Sec->Sections)
