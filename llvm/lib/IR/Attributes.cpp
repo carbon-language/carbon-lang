@@ -1363,15 +1363,7 @@ AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
 }
 
 AttrBuilder &AttrBuilder::removeAttributes(AttributeList A, uint64_t Index) {
-  for (Attribute Attr : A.getAttributes(Index)) {
-    if (Attr.isEnumAttribute() || Attr.isIntAttribute()) {
-      removeAttribute(Attr.getKindAsEnum());
-    } else {
-      assert(Attr.isStringAttribute() && "Invalid attribute type!");
-      removeAttribute(Attr.getKindAsString());
-    }
-  }
-
+  remove(A.getAttributes(Index));
   return *this;
 }
 
@@ -1513,25 +1505,16 @@ bool AttrBuilder::hasAttributes() const {
   return !Attrs.none() || !TargetDepAttrs.empty();
 }
 
-bool AttrBuilder::hasAttributes(AttributeList A, uint64_t Index) const {
-  unsigned Slot = ~0U;
-  for (unsigned I = 0, E = A.getNumSlots(); I != E; ++I)
-    if (A.getSlotIndex(I) == Index) {
-      Slot = I;
-      break;
-    }
+bool AttrBuilder::hasAttributes(AttributeList AL, uint64_t Index) const {
+  AttributeSet AS = AL.getAttributes(Index);
 
-  assert(Slot != ~0U && "Couldn't find the index!");
-
-  for (AttributeList::iterator I = A.begin(Slot), E = A.end(Slot); I != E;
-       ++I) {
-    Attribute Attr = *I;
+  for (Attribute Attr : AS) {
     if (Attr.isEnumAttribute() || Attr.isIntAttribute()) {
-      if (Attrs[I->getKindAsEnum()])
+      if (contains(Attr.getKindAsEnum()))
         return true;
     } else {
       assert(Attr.isStringAttribute() && "Invalid attribute kind!");
-      return TargetDepAttrs.find(Attr.getKindAsString())!=TargetDepAttrs.end();
+      return contains(Attr.getKindAsString());
     }
   }
 

@@ -578,9 +578,9 @@ unsigned Value::getPointerDereferenceableBytes(const DataLayout &DL,
       CanBeNull = true;
     }
   } else if (auto CS = ImmutableCallSite(this)) {
-    DerefBytes = CS.getDereferenceableBytes(0);
+    DerefBytes = CS.getDereferenceableBytes(AttributeList::ReturnIndex);
     if (DerefBytes == 0) {
-      DerefBytes = CS.getDereferenceableOrNullBytes(0);
+      DerefBytes = CS.getDereferenceableOrNullBytes(AttributeList::ReturnIndex);
       CanBeNull = true;
     }
   } else if (const LoadInst *LI = dyn_cast<LoadInst>(this)) {

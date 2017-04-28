@@ -599,7 +599,7 @@ public:
   bool isReturnNonNull() const {
     if (hasRetAttr(Attribute::NonNull))
       return true;
-    else if (getDereferenceableBytes(0) > 0 &&
+    else if (getDereferenceableBytes(AttributeList::ReturnIndex) > 0 &&
              getType()->getPointerAddressSpace() == 0)
       return true;
 
