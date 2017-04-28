@@ -479,6 +479,9 @@ struct AttributeComparator {
     if (L->isSpeculatable != R->isSpeculatable)
       return R->isSpeculatable;
 
+    if (L->hasSideEffects != R->hasSideEffects)
+      return R->hasSideEffects;
+
     // Try to order by readonly/readnone attribute.
     CodeGenIntrinsic::ModRefBehavior LK = L->ModRef;
     CodeGenIntrinsic::ModRefBehavior RK = R->ModRef;

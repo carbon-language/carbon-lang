@@ -123,6 +123,10 @@ struct CodeGenIntrinsic {
   /// True if the intrinsic is marked as convergent.
   bool isConvergent;
 
+  /// True if the intrinsic has side effects that aren't captured by any
+  /// of the other flags.
+  bool hasSideEffects;
+
   // True if the intrinsic is marked as speculatable.
   bool isSpeculatable;
 
