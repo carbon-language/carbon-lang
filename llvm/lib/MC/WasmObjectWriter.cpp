@@ -468,16 +468,16 @@ static void ApplyRelocations(
 
 // Write out the portions of the relocation records that the linker will
 // need to handle.
-static void WriteRelocations(
-    ArrayRef<WasmRelocationEntry> Relocations,
-    raw_pwrite_stream &Stream,
-    DenseMap<const MCSymbolWasm *, uint32_t> &SymbolIndices)
-{
+static void
+WriteRelocations(ArrayRef<WasmRelocationEntry> Relocations,
+                 raw_pwrite_stream &Stream,
+                 DenseMap<const MCSymbolWasm *, uint32_t> &SymbolIndices,
+                 uint64_t HeaderSize) {
   for (const WasmRelocationEntry RelEntry : Relocations) {
     encodeULEB128(RelEntry.Type, Stream);
 
     uint64_t Offset = RelEntry.Offset +
-                      RelEntry.FixupSection->getSectionOffset();
+                      RelEntry.FixupSection->getSectionOffset() + HeaderSize;
     uint32_t Index = SymbolIndices[RelEntry.Symbol];
     int64_t Addend = RelEntry.Addend;
 
@@ -1052,6 +1052,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   }
 
   // === Data Section ==========================================================
+  uint32_t DataSectionHeaderSize = 0;
   if (!DataBytes.empty()) {
     startSection(Section, wasm::WASM_SEC_DATA);
 
@@ -1061,11 +1062,12 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
     encodeSLEB128(0, getStream()); // offset
     write8(wasm::WASM_OPCODE_END);
     encodeULEB128(DataBytes.size(), getStream()); // size
+    DataSectionHeaderSize = getStream().tell() - Section.ContentsOffset;
     writeBytes(DataBytes); // data
 
     // Apply fixups.
     ApplyRelocations(DataRelocations, getStream(), SymbolIndices,
-                     Section.ContentsOffset);
+                     Section.ContentsOffset + DataSectionHeaderSize);
 
     endSection(Section);
   }
@@ -1109,7 +1111,7 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
 
     encodeULEB128(CodeRelocations.size() + TypeIndexFixups.size(), getStream());
 
-    WriteRelocations(CodeRelocations, getStream(), SymbolIndices);
+    WriteRelocations(CodeRelocations, getStream(), SymbolIndices, 0);
     WriteTypeRelocations(TypeIndexFixups, TypeIndexFixupTypes, getStream());
 
     endSection(Section);
@@ -1123,7 +1125,8 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
 
     encodeULEB128(DataRelocations.size(), getStream());
 
-    WriteRelocations(DataRelocations, getStream(), SymbolIndices);
+    WriteRelocations(DataRelocations, getStream(), SymbolIndices,
+                     DataSectionHeaderSize);
 
     endSection(Section);
   }
