@@ -4985,16 +4985,6 @@ Error ModuleSummaryIndexBitcodeReader::parseEntireSummary(
     case BitstreamEntry::Error:
       return error("Malformed block");
     case BitstreamEntry::EndBlock:
-      // For a per-module index, remove any entries that still have empty
-      // summaries. The VST parsing creates entries eagerly for all symbols,
-      // but not all have associated summaries (e.g. it doesn't know how to
-      // distinguish between VST_CODE_ENTRY for function declarations vs global
-      // variables with initializers that end up with a summary). Remove those
-      // entries now so that we don't need to rely on the combined index merger
-      // to clean them up (especially since that may not run for the first
-      // module's index if we merge into that).
-      if (!Combined)
-        TheIndex.removeEmptySummaryEntries();
       return Error::success();
     case BitstreamEntry::Record:
       // The interesting case.
