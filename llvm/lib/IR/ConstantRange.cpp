@@ -198,7 +198,7 @@ ConstantRange::makeGuaranteedNoWrapRegion(Instruction::BinaryOps BinOp,
     return ConstantRange(BitWidth, false);
 
   if (auto *C = Other.getSingleElement())
-    if (C->isMinValue())
+    if (C->isNullValue())
       // Full set: nothing signed / unsigned wraps when added to 0.
       return ConstantRange(BitWidth);
 
@@ -884,7 +884,7 @@ ConstantRange::binaryOr(const ConstantRange &Other) const {
   // TODO: replace this with something less conservative
 
   APInt umax = APIntOps::umax(getUnsignedMin(), Other.getUnsignedMin());
-  if (umax.isMinValue())
+  if (umax.isNullValue())
     return ConstantRange(getBitWidth(), /*isFullSet=*/true);
   return ConstantRange(umax, APInt::getNullValue(getBitWidth()));
 }
