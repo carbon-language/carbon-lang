@@ -6,10 +6,10 @@
 // RUN: llvm-mc -filetype=obj -triple=x86_64-pc-linux %p/Inputs/map-file4.s -o %t4.o
 // RUN: rm -f %t4.a
 // RUN: llvm-ar rc %t4.a %t4.o
-// RUN: ld.lld %t1.o %t2.o %t3.o %t4.a -o %t -M | FileCheck %s
-// RUN: ld.lld %t1.o %t2.o %t3.o %t4.a -o %t -print-map | FileCheck %s
+// RUN: ld.lld %t1.o %t2.o %t3.o %t4.a -o %t -M | FileCheck -strict-whitespace %s
+// RUN: ld.lld %t1.o %t2.o %t3.o %t4.a -o %t -print-map | FileCheck -strict-whitespace %s
 // RUN: ld.lld %t1.o %t2.o %t3.o %t4.a -o %t -Map=%t.map
-// RUN: FileCheck %s < %t.map
+// RUN: FileCheck -strict-whitespace %s < %t.map
 
 .global _start
 _start:
@@ -32,9 +32,9 @@ local:
 // CHECK-NEXT: 0000000000201000 0000000000000015     4 .text
 // CHECK-NEXT: 0000000000201000 000000000000000e     4         .text
 // CHECK-NEXT: 0000000000201000 000000000000000e     4                 {{.*}}{{/|\\}}map-file.s.tmp1.o
-// CHECK-NEXT: 000000000020100e 0000000000000000     0                         local
-// CHECK-NEXT: 0000000000201005 0000000000000000     0                         f(int)
 // CHECK-NEXT: 0000000000201000 0000000000000000     0                         _start
+// CHECK-NEXT: 0000000000201005 0000000000000000     0                         f(int)
+// CHECK-NEXT: 000000000020100e 0000000000000000     0                         local
 // CHECK-NEXT: 0000000000201010 0000000000000002     4                 {{.*}}{{/|\\}}map-file.s.tmp2.o
 // CHECK-NEXT: 0000000000201010 0000000000000000     0                         foo
 // CHECK-NEXT: 0000000000201011 0000000000000000     0                         bar
