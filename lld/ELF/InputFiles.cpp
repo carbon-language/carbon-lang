@@ -461,6 +461,15 @@ elf::ObjectFile<ELFT>::createInputSection(const Elf_Shdr &Sec,
   if (Config->Strip != StripPolicy::None && Name.startswith(".debug"))
     return &InputSection::Discarded;
 
+  // If -gdb-index is given, LLD creates .gdb_index section, and that
+  // section serves the same purpose as .debug_gnu_pub{names,types} sections.
+  // If that's the case, we want to eliminate .debug_gnu_pub{names,types}
+  // because they are redundant and can waste large amount of disk space
+  // (for example, they are about 400 MiB in total for a clang debug build.)
+  if (Config->GdbIndex &&
+      (Name == ".debug_gnu_pubnames" || Name == ".debug_gnu_pubtypes"))
+    return &InputSection::Discarded;
+
   // The linkonce feature is a sort of proto-comdat. Some glibc i386 object
   // files contain definitions of symbol "__x86.get_pc_thunk.bx" in linkonce
   // sections. Drop those sections to avoid duplicate symbol errors.
