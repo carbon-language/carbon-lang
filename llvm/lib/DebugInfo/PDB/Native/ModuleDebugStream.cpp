@@ -73,9 +73,6 @@ Error ModuleDebugStream::reload() {
 
 iterator_range<codeview::CVSymbolArray::Iterator>
 ModuleDebugStream::symbols(bool *HadError) const {
-  // It's OK if the stream is empty.
-  if (SymbolsSubstream.getUnderlyingStream().getLength() == 0)
-    return make_range(SymbolsSubstream.end(), SymbolsSubstream.end());
   return make_range(SymbolsSubstream.begin(HadError), SymbolsSubstream.end());
 }
 
