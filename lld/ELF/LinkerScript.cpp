@@ -635,8 +635,8 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
     Dot = CurMemRegion->Offset;
   switchTo(Sec);
 
-  for (BaseCommand *Cmd : Cmd->Commands)
-    process(*Cmd);
+  for (BaseCommand *C : Cmd->Commands)
+    process(*C);
 }
 
 void LinkerScript::removeEmptyCommands() {
