@@ -418,6 +418,14 @@ public:
     removeFnAttr(Attribute::Convergent);
   }
 
+  /// @brief Determine if the call has sideeffects.
+  bool isSpeculatable() const {
+    return hasFnAttribute(Attribute::Speculatable);
+  }
+  void setSpeculatable() {
+    addFnAttr(Attribute::Speculatable);
+  }
+
   /// Determine if the function is known not to recurse, directly or
   /// indirectly.
   bool doesNotRecurse() const {

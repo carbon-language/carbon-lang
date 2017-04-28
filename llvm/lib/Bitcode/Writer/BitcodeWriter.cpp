@@ -688,6 +688,8 @@ static uint64_t getAttrKindEncoding(Attribute::AttrKind Kind) {
     return bitc::ATTR_KIND_RETURNS_TWICE;
   case Attribute::SExt:
     return bitc::ATTR_KIND_S_EXT;
+  case Attribute::Speculatable:
+    return bitc::ATTR_KIND_SPECULATABLE;
   case Attribute::StackAlignment:
     return bitc::ATTR_KIND_STACK_ALIGNMENT;
   case Attribute::StackProtect:

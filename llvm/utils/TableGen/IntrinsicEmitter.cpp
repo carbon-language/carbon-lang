@@ -476,6 +476,9 @@ struct AttributeComparator {
     if (L->isConvergent != R->isConvergent)
       return R->isConvergent;
 
+    if (L->isSpeculatable != R->isSpeculatable)
+      return R->isSpeculatable;
+
     // Try to order by readonly/readnone attribute.
     CodeGenIntrinsic::ModRefBehavior LK = L->ModRef;
     CodeGenIntrinsic::ModRefBehavior RK = R->ModRef;
@@ -600,7 +603,7 @@ void IntrinsicEmitter::EmitAttributes(const CodeGenIntrinsicTable &Ints,
     if (!intrinsic.canThrow ||
         intrinsic.ModRef != CodeGenIntrinsic::ReadWriteMem ||
         intrinsic.isNoReturn || intrinsic.isNoDuplicate ||
-        intrinsic.isConvergent) {
+        intrinsic.isConvergent || intrinsic.isSpeculatable) {
       OS << "      const Attribute::AttrKind Atts[] = {";
       bool addComma = false;
       if (!intrinsic.canThrow) {
@@ -623,6 +626,12 @@ void IntrinsicEmitter::EmitAttributes(const CodeGenIntrinsicTable &Ints,
         if (addComma)
           OS << ",";
         OS << "Attribute::Convergent";
+        addComma = true;
+      }
+      if (intrinsic.isSpeculatable) {
+        if (addComma)
+          OS << ",";
+        OS << "Attribute::Speculatable";
         addComma = true;
       }
 

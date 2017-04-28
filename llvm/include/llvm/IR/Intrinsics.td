@@ -98,6 +98,9 @@ def IntrNoDuplicate : IntrinsicProperty;
 // Parallels the convergent attribute on LLVM IR functions.
 def IntrConvergent : IntrinsicProperty;
 
+// This property indicates that the intrinsic is safe to speculate.
+def IntrSpeculatable : IntrinsicProperty;
+
 //===----------------------------------------------------------------------===//
 // Types used by intrinsics.
 //===----------------------------------------------------------------------===//
