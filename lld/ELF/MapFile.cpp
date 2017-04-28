@@ -11,13 +11,11 @@
 // hierarchically the output sections, input sections, input files and
 // symbol:
 //
-// Address  Size     Align Out     In      File    Symbol
-// =================================================================
-// 00201000 00000015     4 .text
-// 00201000 0000000e     4         .text
-// 00201000 0000000e     4                 test.o
-// 0020100e 00000000     0                         local
-// 00201005 00000000     0                         f(int)
+//   Address  Size     Align Out     In      Symbol
+//   00201000 00000015     4 .text
+//   00201000 0000000e     4         test.o:.text
+//   0020100e 00000000     0                 local
+//   00201005 00000000     0                 f(int)
 //
 //===----------------------------------------------------------------------===//
 
@@ -42,8 +40,7 @@ public:
   void print(raw_ostream &OS, ArrayRef<OutputSection *> OutputSections);
 
 private:
-  void writeInputSection(raw_ostream &OS, const InputSection *IS,
-                         StringRef &CurSection);
+  void writeInputSection(raw_ostream &OS, const InputSection *IS);
 
   // Maps sections to their symbols.
   DenseMap<const SectionBase *, SmallVector<DefinedRegular *, 4>> Symbols;
@@ -98,7 +95,7 @@ template <class ELFT> PrettyPrinter<ELFT>::PrettyPrinter() {
     raw_string_ostream OS(Str[I]);
     writeHeader<ELFT>(OS, Syms[I]->getVA(), Syms[I]->template getSize<ELFT>(),
                       0);
-    OS << indent(3) << toString(*Syms[I]) << '\n';
+    OS << indent(2) << toString(*Syms[I]) << '\n';
   });
   for (size_t I = 0, E = Syms.size(); I < E; ++I)
     SymStr[Syms[I]] = std::move(Str[I]);
@@ -106,33 +103,11 @@ template <class ELFT> PrettyPrinter<ELFT>::PrettyPrinter() {
 
 template <class ELFT>
 void PrettyPrinter<ELFT>::writeInputSection(raw_ostream &OS,
-                                            const InputSection *IS,
-                                            StringRef &CurSection) {
-  // We want to print out a line like
-  //
-  //   Address  Size     Align Out     In      File    Symbol
-  //   =================================================================
-  //   00201000 00000015     4 .text
-  //   00201000 0000000e     4         .text             <----- THIS
-  //   00201000 0000000e     4                 test.o
-  //
-  // once for each new input section.
-  if (IS->Name != CurSection) {
-    writeHeader<ELFT>(OS, IS->OutSec->Addr + IS->OutSecOff, IS->getSize(),
-                      IS->Alignment);
-    OS << indent(1) << IS->Name << '\n';
-    CurSection = IS->Name;
-  }
-
+                                            const InputSection *IS) {
   // Write a line for each symbol defined in the given section.
-  elf::ObjectFile<ELFT> *File = IS->template getFile<ELFT>();
-  if (!File)
-    return;
-
   writeHeader<ELFT>(OS, IS->OutSec->Addr + IS->OutSecOff, IS->getSize(),
                     IS->Alignment);
-  OS << indent(2) << toString(File) << '\n';
-
+  OS << indent(1) << toString(IS) << '\n';
   for (DefinedRegular *Sym : Symbols[IS])
     OS << SymStr[Sym];
 }
@@ -143,16 +118,14 @@ void PrettyPrinter<ELFT>::print(raw_ostream &OS,
   // Print out the header line.
   int W = ELFT::Is64Bits ? 16 : 8;
   OS << left_justify("Address", W) << ' ' << left_justify("Size", W)
-     << " Align Out     In      File    Symbol\n";
+     << " Align Out     In      Symbol\n";
 
   // Print out a mapfile.
   for (OutputSection *Sec : OutputSections) {
     writeHeader<ELFT>(OS, Sec->Addr, Sec->Size, Sec->Alignment);
     OS << Sec->Name << '\n';
-
-    StringRef CurSection;
     for (InputSection *IS : Sec->Sections)
-      writeInputSection(OS, IS, CurSection);
+      writeInputSection(OS, IS);
   }
 }
 
