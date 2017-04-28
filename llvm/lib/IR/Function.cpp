@@ -84,8 +84,7 @@ bool Argument::hasByValOrInAllocaAttr() const {
 
 unsigned Argument::getParamAlignment() const {
   assert(getType()->isPointerTy() && "Only pointers have alignments");
-  return getParent()->getParamAlignment(getArgNo()+1);
-
+  return getParent()->getParamAlignment(getArgNo());
 }
 
 uint64_t Argument::getDereferenceableBytes() const {

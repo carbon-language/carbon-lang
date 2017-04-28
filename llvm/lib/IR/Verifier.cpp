@@ -2772,7 +2772,7 @@ static AttrBuilder getParameterABIAttributes(int I, AttributeList Attrs) {
       Copy.addAttribute(AK);
   }
   if (Attrs.hasParamAttribute(I, Attribute::Alignment))
-    Copy.addAlignmentAttr(Attrs.getParamAlignment(I + 1));
+    Copy.addAlignmentAttr(Attrs.getParamAlignment(I));
   return Copy;
 }
 
@@ -3992,8 +3992,8 @@ void Verifier::visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS) {
       return isPowerOf2_64(Alignment) && ElementSizeVal.ule(Alignment);
     };
 
-    uint64_t DstAlignment = CS.getParamAlignment(1),
-             SrcAlignment = CS.getParamAlignment(2);
+    uint64_t DstAlignment = CS.getParamAlignment(0),
+             SrcAlignment = CS.getParamAlignment(1);
 
     Assert(IsValidAlignment(DstAlignment),
            "incorrect alignment of the destination argument",

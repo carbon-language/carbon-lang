@@ -316,8 +316,8 @@ public:
   void addDereferenceableOrNullAttr(unsigned i, uint64_t Bytes);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
-  unsigned getParamAlignment(unsigned i) const {
-    return AttributeSets.getParamAlignment(i);
+  unsigned getParamAlignment(unsigned ArgNo) const {
+    return AttributeSets.getParamAlignment(ArgNo);
   }
 
   /// @brief Extract the number of dereferenceable bytes for a call or

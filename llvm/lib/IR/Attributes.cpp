@@ -1191,8 +1191,12 @@ Attribute AttributeList::getAttribute(unsigned Index, StringRef Kind) const {
   return getAttributes(Index).getAttribute(Kind);
 }
 
-unsigned AttributeList::getParamAlignment(unsigned Index) const {
-  return getAttributes(Index).getAlignment();
+unsigned AttributeList::getRetAlignment() const {
+  return getAttributes(ReturnIndex).getAlignment();
+}
+
+unsigned AttributeList::getParamAlignment(unsigned ArgNo) const {
+  return getAttributes(ArgNo + 1).getAlignment();
 }
 
 unsigned AttributeList::getStackAlignment(unsigned Index) const {
