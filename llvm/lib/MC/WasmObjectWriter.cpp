@@ -913,12 +913,14 @@ void WasmObjectWriter::writeObject(MCAssembler &Asm,
   // For now, always emit the memory section, since loads and stores are not
   // valid without it. In the future, we could perhaps be more clever and omit
   // it if there are no loads or stores.
-  startSection(Section, wasm::WASM_SEC_MEMORY);
+  uint32_t NumPages =
+      (DataBytes.size() + wasm::WasmPageSize - 1) / wasm::WasmPageSize;
 
+  startSection(Section, wasm::WASM_SEC_MEMORY);
   encodeULEB128(1, getStream()); // number of memory spaces
 
   encodeULEB128(0, getStream()); // flags
-  encodeULEB128(DataBytes.size(), getStream()); // initial
+  encodeULEB128(NumPages, getStream()); // initial
 
   endSection(Section);
 
