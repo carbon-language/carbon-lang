@@ -670,8 +670,9 @@ PreservedAnalyses LoopRotatePass::run(Loop &L, LoopAnalysisManager &AM,
                                       LPMUpdater &) {
   int Threshold = EnableHeaderDuplication ? DefaultRotationThreshold : 0;
   const DataLayout &DL = L.getHeader()->getModule()->getDataLayout();
+  const SimplifyQuery SQ = getBestSimplifyQuery(AR, DL);
   LoopRotate LR(Threshold, &AR.LI, &AR.TTI, &AR.AC, &AR.DT, &AR.SE,
-                getBestSimplifyQuery(AR, DL));
+                SQ);
 
   bool Changed = LR.processLoop(&L);
   if (!Changed)
@@ -714,8 +715,8 @@ public:
     auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
     auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
     auto *SE = SEWP ? &SEWP->getSE() : nullptr;
-    LoopRotate LR(MaxHeaderSize, LI, TTI, AC, DT, SE,
-                  getBestSimplifyQuery(*this, F));
+    const SimplifyQuery SQ = getBestSimplifyQuery(*this, F);
+    LoopRotate LR(MaxHeaderSize, LI, TTI, AC, DT, SE, SQ);
     return LR.processLoop(L);
   }
 };
