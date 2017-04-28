@@ -877,8 +877,8 @@
 		9A357673116E7B6400E8ED2F /* SBStringList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A357672116E7B6400E8ED2F /* SBStringList.cpp */; };
 		9A3576A8116E9AB700E8ED2F /* SBHostOS.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A3576A7116E9AB700E8ED2F /* SBHostOS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A3576AA116E9AC700E8ED2F /* SBHostOS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A3576A9116E9AC700E8ED2F /* SBHostOS.cpp */; };
-		9A36D24D1EB3BE7F00AAD9EA /* SBTrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A1E59581EB2B10D002206A5 /* SBTrace.h */; };
-		9A36D24E1EB3BE7F00AAD9EA /* SBTraceOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A1E59591EB2B10D002206A5 /* SBTraceOptions.h */; };
+		9A36D24D1EB3BE7F00AAD9EA /* SBTrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A1E59581EB2B10D002206A5 /* SBTrace.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		9A36D24E1EB3BE7F00AAD9EA /* SBTraceOptions.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A1E59591EB2B10D002206A5 /* SBTraceOptions.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A4F350F1368A51A00823F52 /* StreamAsynchronousIO.cpp */; };
 		9A77AD541E64E2760025CE04 /* RegisterInfoPOSIX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A77AD501E64E24E0025CE04 /* RegisterInfoPOSIX_arm.cpp */; };
 		9AC7038E117674FB0086C050 /* SBInstruction.h in Headers */ = {isa = PBXBuildFile; fileRef = 9AC7038D117674EB0086C050 /* SBInstruction.h */; settings = {ATTRIBUTES = (Public, ); }; };
