@@ -326,6 +326,9 @@ InferAddressSpaces::collectFlatAddressExpressions(Function &F) const {
         PushPtrOperand(Cmp->getOperand(0));
         PushPtrOperand(Cmp->getOperand(1));
       }
+    } else if (auto *ASC = dyn_cast<AddrSpaceCastInst>(&I)) {
+      if (!ASC->getType()->isVectorTy())
+        PushPtrOperand(ASC->getPointerOperand());
     }
   }
 
@@ -878,6 +881,15 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
                 ConstantExpr::getAddrSpaceCast(KOtherSrc, NewV->getType()));
               continue;
             }
+          }
+        }
+
+        if (AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(CurUser)) {
+          unsigned NewAS = NewV->getType()->getPointerAddressSpace();
+          if (ASC->getDestAddressSpace() == NewAS) {
+            ASC->replaceAllUsesWith(NewV);
+            ASC->eraseFromParent();
+            continue;
           }
         }
 

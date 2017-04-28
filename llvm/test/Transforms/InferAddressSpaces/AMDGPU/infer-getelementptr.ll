@@ -5,10 +5,20 @@
 
 @lds = internal unnamed_addr addrspace(3) global [648 x double] undef, align 8
 
+; CHECK-LABEL: @simplified_constexpr_gep_addrspacecast(
+; CHECK: %gep0 = getelementptr inbounds double, double addrspace(3)* getelementptr inbounds ([648 x double], [648 x double] addrspace(3)* @lds, i64 0, i64 384), i64 %idx0
+; CHECK-NEXT: store double 1.000000e+00, double addrspace(3)* %gep0, align 8
+define void @simplified_constexpr_gep_addrspacecast(i64 %idx0, i64 %idx1) {
+  %gep0 = getelementptr inbounds double, double addrspace(4)* addrspacecast (double addrspace(3)* getelementptr inbounds ([648 x double], [648 x double] addrspace(3)* @lds, i64 0, i64 384) to double addrspace(4)*), i64 %idx0
+  %asc = addrspacecast double addrspace(4)* %gep0 to double addrspace(3)*
+  store double 1.000000e+00, double addrspace(3)* %asc, align 8
+  ret void
+}
+
+; FIXME: Should be able to eliminate inner constantexpr addrspacecast.
 ; CHECK-LABEL: @constexpr_gep_addrspacecast(
-; CHECK: %gep0 = getelementptr inbounds double, double addrspace(4)* addrspacecast (double addrspace(3)* getelementptr inbounds ([648 x double], [648 x double] addrspace(3)* @lds, i64 0, i64 384) to double addrspace(4)*), i64 %idx0
-; CHECK-NEXT: %asc = addrspacecast double addrspace(4)* %gep0 to double addrspace(3)*
-; CHECK-NEXT: store double 1.000000e+00, double addrspace(3)* %asc
+; CHECK: %gep0 = getelementptr inbounds double, double addrspace(3)* addrspacecast (double addrspace(4)* getelementptr ([648 x double], [648 x double] addrspace(4)* addrspacecast ([648 x double] addrspace(3)* @lds to [648 x double] addrspace(4)*), i64 0, i64 384) to double addrspace(3)*), i64 %idx0
+; CHECK-NEXT: store double 1.000000e+00, double addrspace(3)* %gep0, align 8
 define void @constexpr_gep_addrspacecast(i64 %idx0, i64 %idx1) {
   %gep0 = getelementptr inbounds double, double addrspace(4)* getelementptr ([648 x double], [648 x double] addrspace(4)* addrspacecast ([648 x double] addrspace(3)* @lds to [648 x double] addrspace(4)*), i64 0, i64 384), i64 %idx0
   %asc = addrspacecast double addrspace(4)* %gep0 to double addrspace(3)*
@@ -18,10 +28,8 @@ define void @constexpr_gep_addrspacecast(i64 %idx0, i64 %idx1) {
 
 ; CHECK-LABEL: @constexpr_gep_gep_addrspacecast(
 ; CHECK: %gep0 = getelementptr inbounds double, double addrspace(3)* getelementptr inbounds ([648 x double], [648 x double] addrspace(3)* @lds, i64 0, i64 384), i64 %idx0
-; CHECK-NEXT: %1 = addrspacecast double addrspace(3)* %gep0 to double addrspace(4)*
-; CHECK-NEXT: %gep1 = getelementptr inbounds double, double addrspace(4)* %1, i64 %idx1
-; CHECK-NEXT: %asc = addrspacecast double addrspace(4)* %gep1 to double addrspace(3)*
-; CHECK-NEXT: store double 1.000000e+00, double addrspace(3)* %asc, align 8
+; CHECK-NEXT: %gep1 = getelementptr inbounds double, double addrspace(3)* %gep0, i64 %idx1
+; CHECK-NEXT: store double 1.000000e+00, double addrspace(3)* %gep1, align 8
 define void @constexpr_gep_gep_addrspacecast(i64 %idx0, i64 %idx1) {
   %gep0 = getelementptr inbounds double, double addrspace(4)* getelementptr ([648 x double], [648 x double] addrspace(4)* addrspacecast ([648 x double] addrspace(3)* @lds to [648 x double] addrspace(4)*), i64 0, i64 384), i64 %idx0
   %gep1 = getelementptr inbounds double, double addrspace(4)* %gep0, i64 %idx1
