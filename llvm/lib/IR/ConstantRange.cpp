@@ -210,8 +210,8 @@ ConstantRange::makeGuaranteedNoWrapRegion(Instruction::BinaryOps BinOp,
                                               -Other.getUnsignedMax()));
 
   if (NoWrapKind & OBO::NoSignedWrap) {
-    APInt SignedMin = Other.getSignedMin();
-    APInt SignedMax = Other.getSignedMax();
+    const APInt &SignedMin = Other.getSignedMin();
+    const APInt &SignedMax = Other.getSignedMax();
 
     if (SignedMax.isStrictlyPositive())
       Result = SubsetIntersect(
