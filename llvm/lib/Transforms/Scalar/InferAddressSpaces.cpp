@@ -815,6 +815,8 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
     NewV->setOperand(OperandNo, ValueWithNewAddrSpace.lookup(UndefUse->get()));
   }
 
+  SmallVector<Instruction *, 16> DeadInstructions;
+
   // Replaces the uses of the old address expressions with the new ones.
   for (Value *V : Postorder) {
     Value *NewV = ValueWithNewAddrSpace.lookup(V);
@@ -888,7 +890,7 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
           unsigned NewAS = NewV->getType()->getPointerAddressSpace();
           if (ASC->getDestAddressSpace() == NewAS) {
             ASC->replaceAllUsesWith(NewV);
-            ASC->eraseFromParent();
+            DeadInstructions.push_back(ASC);
             continue;
           }
         }
@@ -906,9 +908,14 @@ bool InferAddressSpaces::rewriteWithNewAddressSpaces(
       }
     }
 
-    if (V->use_empty())
-      RecursivelyDeleteTriviallyDeadInstructions(V);
+    if (V->use_empty()) {
+      if (Instruction *I = dyn_cast<Instruction>(V))
+        DeadInstructions.push_back(I);
+    }
   }
+
+  for (Instruction *I : DeadInstructions)
+    RecursivelyDeleteTriviallyDeadInstructions(I);
 
   return true;
 }
