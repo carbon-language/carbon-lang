@@ -2395,7 +2395,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
       Known.Zero.setBitsFrom(MemBits);
     } else if (const MDNode *Ranges = LD->getRanges()) {
       if (LD->getExtensionType() == ISD::NON_EXTLOAD)
-        computeKnownBitsFromRangeMetadata(*Ranges, Known.Zero, Known.One);
+        computeKnownBitsFromRangeMetadata(*Ranges, Known);
     }
     break;
   }
