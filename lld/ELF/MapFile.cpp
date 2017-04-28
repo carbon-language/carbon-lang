@@ -117,12 +117,11 @@ void PrettyPrinter<ELFT>::writeInputSection(raw_ostream &OS,
   //   00201000 0000000e     4                 test.o
   //
   // once for each new input section.
-  StringRef Name = IS->Name;
-  if (Name != CurSection) {
+  if (IS->Name != CurSection) {
     writeHeader<ELFT>(OS, IS->OutSec->Addr + IS->OutSecOff, IS->getSize(),
                       IS->Alignment);
-    OS << indent(1) << left_justify(Name, 7) << '\n';
-    CurSection = Name;
+    OS << indent(1) << left_justify(IS->Name, 7) << '\n';
+    CurSection = IS->Name;
   }
 
   // Write a line for each symbol defined in the given section.
