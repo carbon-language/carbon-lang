@@ -3197,7 +3197,7 @@ Value *llvm::GetUnderlyingObject(Value *V, const DataLayout &DL,
       // See if InstructionSimplify knows any relevant tricks.
       if (Instruction *I = dyn_cast<Instruction>(V))
         // TODO: Acquire a DominatorTree and AssumptionCache and use them.
-        if (Value *Simplified = SimplifyInstruction(I, DL, nullptr)) {
+        if (Value *Simplified = SimplifyInstruction(I, {DL, I})) {
           V = Simplified;
           continue;
         }

@@ -341,7 +341,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
     // With the operands remapped, see if the instruction constant folds or is
     // otherwise simplifyable.  This commonly occurs because the entry from PHI
     // nodes allows icmps and other instructions to fold.
-    Value *V = SimplifyInstruction(C, SQ.getWithInstruction(C));
+    Value *V = SimplifyInstruction(C, SQ);
     if (V && LI->replacementPreservesLCSSAForm(C, V)) {
       // If so, then delete the temporary instruction and stick the folded value
       // in the map.
@@ -670,8 +670,8 @@ PreservedAnalyses LoopRotatePass::run(Loop &L, LoopAnalysisManager &AM,
                                       LPMUpdater &) {
   int Threshold = EnableHeaderDuplication ? DefaultRotationThreshold : 0;
   const DataLayout &DL = L.getHeader()->getModule()->getDataLayout();
-  const SimplifyQuery SQ(DL, &AR.TLI, &AR.DT, &AR.AC);
-  LoopRotate LR(Threshold, &AR.LI, &AR.TTI, &AR.AC, &AR.DT, &AR.SE, SQ);
+  LoopRotate LR(Threshold, &AR.LI, &AR.TTI, &AR.AC, &AR.DT, &AR.SE,
+                getBestSimplifyQuery(AR, DL));
 
   bool Changed = LR.processLoop(&L);
   if (!Changed)
@@ -714,11 +714,8 @@ public:
     auto *DT = DTWP ? &DTWP->getDomTree() : nullptr;
     auto *SEWP = getAnalysisIfAvailable<ScalarEvolutionWrapperPass>();
     auto *SE = SEWP ? &SEWP->getSE() : nullptr;
-    auto *TLIWP = getAnalysisIfAvailable<TargetLibraryInfoWrapperPass>();
-    auto *TLI = TLIWP ? &TLIWP->getTLI() : nullptr;
-    const DataLayout &DL = L->getHeader()->getModule()->getDataLayout();
-    const SimplifyQuery SQ(DL, TLI, DT, AC);
-    LoopRotate LR(MaxHeaderSize, LI, TTI, AC, DT, SE, SQ);
+    LoopRotate LR(MaxHeaderSize, LI, TTI, AC, DT, SE,
+                  getBestSimplifyQuery(*this, F));
     return LR.processLoop(L);
   }
 };
