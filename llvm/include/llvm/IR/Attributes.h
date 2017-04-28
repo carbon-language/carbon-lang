@@ -354,6 +354,9 @@ public:
   /// \brief Add attributes to the attribute set at the given index. Because
   /// attribute sets are immutable, this returns a new set.
   AttributeList addAttributes(LLVMContext &C, unsigned Index,
+                              AttributeList Attrs) const;
+
+  AttributeList addAttributes(LLVMContext &C, unsigned Index,
                               const AttrBuilder &B) const;
 
   /// \brief Remove the specified attribute at the specified index from this
@@ -372,7 +375,13 @@ public:
   /// attribute list. Because attribute lists are immutable, this returns the
   /// new list.
   AttributeList removeAttributes(LLVMContext &C, unsigned Index,
-                                 const AttrBuilder &AttrsToRemove) const;
+                                 AttributeList Attrs) const;
+
+  /// \brief Remove the specified attributes at the specified index from this
+  /// attribute list. Because attribute lists are immutable, this returns the
+  /// new list.
+  AttributeList removeAttributes(LLVMContext &C, unsigned Index,
+                                 const AttrBuilder &Attrs) const;
 
   /// \brief Remove all attributes at the specified index from this
   /// attribute list. Because attribute lists are immutable, this returns the

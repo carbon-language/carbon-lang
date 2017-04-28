@@ -490,14 +490,15 @@ static void createFPFnStub(Function *F, Module *M, FPParamVariant PV,
 // remove the use-soft-float attribute
 //
 static void removeUseSoftFloat(Function &F) {
-  AttrBuilder B;
+  AttributeList A;
   DEBUG(errs() << "removing -use-soft-float\n");
-  B.addAttribute("use-soft-float", "false");
-  F.removeAttributes(AttributeList::FunctionIndex, B);
+  A = A.addAttribute(F.getContext(), AttributeList::FunctionIndex,
+                     "use-soft-float", "false");
+  F.removeAttributes(AttributeList::FunctionIndex, A);
   if (F.hasFnAttribute("use-soft-float")) {
     DEBUG(errs() << "still has -use-soft-float\n");
   }
-  F.addAttributes(AttributeList::FunctionIndex, B);
+  F.addAttributes(AttributeList::FunctionIndex, A);
 }
 
 

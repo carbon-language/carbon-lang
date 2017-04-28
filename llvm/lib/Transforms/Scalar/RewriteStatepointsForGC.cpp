@@ -2290,7 +2290,8 @@ static void RemoveNonValidAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
     R.addAttribute(Attribute::NoAlias);
 
   if (!R.empty())
-    AH.setAttributes(AH.getAttributes().removeAttributes(Ctx, Index, R));
+    AH.setAttributes(AH.getAttributes().removeAttributes(
+        Ctx, Index, AttributeList::get(Ctx, Index, R)));
 }
 
 void

@@ -346,21 +346,29 @@ static inline void setFunctionAttributes(StringRef CPU, StringRef Features,
                                          Module &M) {
   for (auto &F : M) {
     auto &Ctx = F.getContext();
-    AttributeList Attrs = F.getAttributes();
-    AttrBuilder NewAttrs;
+    AttributeList Attrs = F.getAttributes(), NewAttrs;
 
     if (!CPU.empty())
-      NewAttrs.addAttribute("target-cpu", CPU);
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeList::FunctionIndex,
+                                       "target-cpu", CPU);
+
     if (!Features.empty())
-      NewAttrs.addAttribute("target-features", Features);
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeList::FunctionIndex,
+                                       "target-features", Features);
+
     if (DisableFPElim.getNumOccurrences() > 0)
-      NewAttrs.addAttribute("no-frame-pointer-elim",
-                            DisableFPElim ? "true" : "false");
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeList::FunctionIndex,
+                                       "no-frame-pointer-elim",
+                                       DisableFPElim ? "true" : "false");
+
     if (DisableTailCalls.getNumOccurrences() > 0)
-      NewAttrs.addAttribute("disable-tail-calls",
-                            toStringRef(DisableTailCalls));
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeList::FunctionIndex,
+                                       "disable-tail-calls",
+                                       toStringRef(DisableTailCalls));
+
     if (StackRealign)
-      NewAttrs.addAttribute("stackrealign");
+      NewAttrs = NewAttrs.addAttribute(Ctx, AttributeList::FunctionIndex,
+                                       "stackrealign");
 
     if (TrapFuncName.getNumOccurrences() > 0)
       for (auto &B : F)
@@ -374,8 +382,8 @@ static inline void setFunctionAttributes(StringRef CPU, StringRef Features,
                     Attribute::get(Ctx, "trap-func-name", TrapFuncName));
 
     // Let NewAttrs override Attrs.
-    F.setAttributes(
-        Attrs.addAttributes(Ctx, AttributeList::FunctionIndex, NewAttrs));
+    NewAttrs = Attrs.addAttributes(Ctx, AttributeList::FunctionIndex, NewAttrs);
+    F.setAttributes(NewAttrs);
   }
 }
 

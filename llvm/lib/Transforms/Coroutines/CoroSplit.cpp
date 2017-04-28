@@ -245,7 +245,9 @@ static Function *createClone(Function &F, Twine Suffix, coro::Shape &Shape,
   // Remove old return attributes.
   NewF->removeAttributes(
       AttributeList::ReturnIndex,
-      AttributeFuncs::typeIncompatible(NewF->getReturnType()));
+      AttributeList::get(
+          NewF->getContext(), AttributeList::ReturnIndex,
+          AttributeFuncs::typeIncompatible(NewF->getReturnType())));
 
   // Make AllocaSpillBlock the new entry block.
   auto *SwitchBB = cast<BasicBlock>(VMap[ResumeEntry]);
