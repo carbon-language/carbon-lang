@@ -635,10 +635,16 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
 
     // Skip assume intrinsics, they don't really have side effects (although
     // they're marked as such to ensure preservation of control dependencies),
-    // and this pass will not disturb any of the assumption's control
-    // dependencies.
+    // and this pass will not bother with its removal. However, we should mark
+    // its condition as true for all dominated blocks.
     if (match(Inst, m_Intrinsic<Intrinsic::assume>())) {
-      DEBUG(dbgs() << "EarlyCSE skipping assumption: " << *Inst << '\n');
+      auto *CondI =
+          dyn_cast<Instruction>(cast<CallInst>(Inst)->getArgOperand(0));
+      if (CondI && SimpleValue::canHandle(CondI)) {
+        DEBUG(dbgs() << "EarlyCSE considering assumption: " << *Inst << '\n');
+        AvailableValues.insert(CondI, ConstantInt::getTrue(BB->getContext()));
+      } else
+        DEBUG(dbgs() << "EarlyCSE skipping assumption: " << *Inst << '\n');
       continue;
     }
 
