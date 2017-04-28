@@ -26712,7 +26712,7 @@ void X86TargetLowering::computeKnownBitsForTargetNode(const SDValue Op,
   case X86ISD::VSRLI: {
     if (auto *ShiftImm = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
       if (ShiftImm->getAPIntValue().uge(VT.getScalarSizeInBits())) {
-        KnownZero = APInt::getAllOnesValue(BitWidth);
+        KnownZero.setAllBits();
         break;
       }
 
