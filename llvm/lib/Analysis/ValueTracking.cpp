@@ -3318,12 +3318,18 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
                                               LI->getAlignment(), DL, CtxI, DT);
   }
   case Instruction::Call: {
+    auto *CI = cast<const CallInst>(Inst);
+    const Function *Callee = CI->getCalledFunction();
+    if (Callee && Callee->isSpeculatable())
+      return true;
     if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
       switch (II->getIntrinsicID()) {
       // These synthetic intrinsics have no side-effects and just mark
       // information about their operands.
       // FIXME: There are other no-op synthetic instructions that potentially
       // should be considered at least *safe* to speculate...
+      // FIXME: The speculatable attribute should be added to all these
+      // intrinsics and this case statement should be removed.
       case Intrinsic::dbg_declare:
       case Intrinsic::dbg_value:
         return true;
