@@ -2719,7 +2719,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
 
     // We only know that the absolute values's MSB will be zero iff there is
     // a set bit that isn't the sign bit (otherwise it could be INT_MIN).
-    Known2.One.clearBit(BitWidth - 1);
+    Known2.One.clearSignBit();
     if (Known2.One.getBoolValue()) {
       Known.Zero = APInt::getSignMask(BitWidth);
       break;

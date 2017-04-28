@@ -1402,6 +1402,11 @@ public:
   /// Set the given bit to 0 whose position is given as "bitPosition".
   void clearBit(unsigned bitPosition);
 
+  /// Set the sign bit to 0.
+  void clearSignBit() {
+    clearBit(BitWidth - 1);
+  }
+
   /// \brief Toggle every bit to its opposite value.
   void flipAllBits() {
     if (isSingleWord()) {
