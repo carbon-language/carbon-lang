@@ -597,7 +597,7 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
   if (LowerDiv.uge(MaxValue)) {
     APInt Div(getBitWidth(), 0);
     APInt::udivrem(LowerDiv, MaxBitValue, Div, LowerDiv);
-    UpperDiv = UpperDiv - MaxBitValue * Div;
+    UpperDiv -= MaxBitValue * Div;
   }
 
   if (UpperDiv.ule(MaxValue))
@@ -605,10 +605,10 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
                          UpperDiv.trunc(DstTySize)).unionWith(Union);
 
   // The truncated value wraps around. Check if we can do better than fullset.
-  APInt UpperModulo = UpperDiv - MaxBitValue;
-  if (UpperModulo.ult(LowerDiv))
+  UpperDiv -= MaxBitValue;
+  if (UpperDiv.ult(LowerDiv))
     return ConstantRange(LowerDiv.trunc(DstTySize),
-                         UpperModulo.trunc(DstTySize)).unionWith(Union);
+                         UpperDiv.trunc(DstTySize)).unionWith(Union);
 
   return ConstantRange(DstTySize, /*isFullSet=*/true);
 }
