@@ -42,13 +42,6 @@ def HasC : Predicate<"Subtarget->hasC()"> { let RecomputePerFunction = 1; }
 // CHECK-NEXT:    Feature_HasCBit = 2,
 // CHECK-NEXT:  };
 
-// CHECK-LABEL: static const char *SubtargetFeatureNames[] = {
-// CHECK-NEXT:    "Feature_HasA",
-// CHECK-NEXT:    "Feature_HasB",
-// CHECK-NEXT:    "Feature_HasC",
-// CHECK-NEXT:    nullptr
-// CHECK-NEXT:  };
-
 // CHECK-LABEL: PredicateBitset MyTargetInstructionSelector::
 // CHECK-NEXT:  computeAvailableModuleFeatures(const MyTargetSubtarget *Subtarget) const {
 // CHECK-NEXT:    PredicateBitset Features;
