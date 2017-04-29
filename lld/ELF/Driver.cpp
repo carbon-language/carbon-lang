@@ -594,14 +594,14 @@ static std::vector<StringRef> getLines(MemoryBufferRef MB) {
 }
 
 static bool getCompressDebugSections(opt::InputArgList &Args) {
-  if (auto *Arg = Args.getLastArg(OPT_compress_debug_sections)) {
-    StringRef S = Arg->getValue();
-    if (S == "zlib")
-      return zlib::isAvailable();
-    if (S != "none")
-      error("unknown --compress-debug-sections value: " + S);
-  }
-  return false;
+  StringRef S = getString(Args, OPT_compress_debug_sections, "none");
+  if (S == "none")
+    return false;
+  if (S != "zlib")
+    error("unknown --compress-debug-sections value: " + S);
+  if (!zlib::isAvailable())
+    error("--compress-debug-sections: zlib is not available");
+  return true;
 }
 
 // Initializes Config members by the command line options.
