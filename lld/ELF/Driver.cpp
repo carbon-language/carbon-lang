@@ -399,7 +399,7 @@ static std::vector<StringRef> getArgs(opt::InputArgList &Args, int Id) {
   return V;
 }
 
-static std::string getRPath(opt::InputArgList &Args) {
+static std::string getRpath(opt::InputArgList &Args) {
   std::vector<StringRef> V = getArgs(Args, OPT_rpath);
   return llvm::join(V.begin(), V.end(), ":");
 }
@@ -640,7 +640,7 @@ void LinkerDriver::readConfigs(opt::InputArgList &Args) {
   Config->OutputFile = getString(Args, OPT_o);
   Config->Pie = getArg(Args, OPT_pie, OPT_nopie, false);
   Config->PrintGcSections = Args.hasArg(OPT_print_gc_sections);
-  Config->RPath = getRPath(Args);
+  Config->Rpath = getRpath(Args);
   Config->Relocatable = Args.hasArg(OPT_relocatable);
   Config->SaveTemps = Args.hasArg(OPT_save_temps);
   Config->SearchPaths = getArgs(Args, OPT_L);
