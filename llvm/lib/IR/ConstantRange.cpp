@@ -276,7 +276,6 @@ APInt ConstantRange::getUnsignedMin() const {
 }
 
 APInt ConstantRange::getSignedMax() const {
-  APInt SignedMax(APInt::getSignedMaxValue(getBitWidth()));
   if (!isWrappedSet()) {
     APInt UpperMinusOne = getUpper() - 1;
     if (getLower().sle(UpperMinusOne))
