@@ -569,9 +569,8 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
   if (isFullSet())
     return ConstantRange(DstTySize, /*isFullSet=*/true);
 
-  APInt MaxValue = APInt::getMaxValue(DstTySize).zext(getBitWidth());
-  APInt MaxBitValue(getBitWidth(), 0);
-  MaxBitValue.setBit(DstTySize);
+  APInt MaxValue = APInt::getLowBitsSet(getBitWidth(), DstTySize);
+  APInt MaxBitValue = APInt::getOneBitSet(getBitWidth(), DstTySize);
 
   APInt LowerDiv(Lower), UpperDiv(Upper);
   ConstantRange Union(DstTySize, /*isFullSet=*/false);
