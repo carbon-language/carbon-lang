@@ -5481,8 +5481,11 @@ public:
   bool VisitUnaryAddrOf(const UnaryOperator *E);
   bool VisitObjCStringLiteral(const ObjCStringLiteral *E)
       { return Success(E); }
-  bool VisitObjCBoxedExpr(const ObjCBoxedExpr *E)
-      { return Success(E); }
+  bool VisitObjCBoxedExpr(const ObjCBoxedExpr *E) {
+    if (Info.noteFailure())
+      EvaluateIgnoredValue(Info, E->getSubExpr());
+    return Error(E);
+  }
   bool VisitAddrLabelExpr(const AddrLabelExpr *E)
       { return Success(E); }
   bool VisitCallExpr(const CallExpr *E);
