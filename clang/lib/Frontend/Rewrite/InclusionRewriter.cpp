@@ -52,7 +52,7 @@ class InclusionRewriter : public PPCallbacks {
 public:
   InclusionRewriter(Preprocessor &PP, raw_ostream &OS, bool ShowLineMarkers,
                     bool UseLineDirectives);
-  bool Process(FileID FileId, SrcMgr::CharacteristicKind FileType);
+  void Process(FileID FileId, SrcMgr::CharacteristicKind FileType);
   void setPredefinesBuffer(const llvm::MemoryBuffer *Buf) {
     PredefinesBuffer = Buf;
   }
@@ -400,9 +400,8 @@ bool InclusionRewriter::HandleHasInclude(
 
 /// Use a raw lexer to analyze \p FileId, incrementally copying parts of it
 /// and including content of included files recursively.
-bool InclusionRewriter::Process(FileID FileId,
-                                SrcMgr::CharacteristicKind FileType)
-{
+void InclusionRewriter::Process(FileID FileId,
+                                SrcMgr::CharacteristicKind FileType) {
   bool Invalid;
   const MemoryBuffer &FromFile = *SM.getBuffer(FileId, &Invalid);
   assert(!Invalid && "Attempting to process invalid inclusion");
@@ -419,7 +418,7 @@ bool InclusionRewriter::Process(FileID FileId,
     WriteLineInfo(FileName, 1, FileType, " 1");
 
   if (SM.getFileIDSize(FileId) == 0)
-    return false;
+    return;
 
   // The next byte to be copied from the source file, which may be non-zero if
   // the lexer handled a BOM.
@@ -453,14 +452,11 @@ bool InclusionRewriter::Process(FileID FileId,
             if (const Module *Mod = FindModuleAtLocation(Loc))
               WriteImplicitModuleImport(Mod);
             else if (const IncludedFile *Inc = FindIncludeAtLocation(Loc)) {
-              // include and recursively process the file
-              if (Process(Inc->Id, Inc->FileType)) {
-                // and set lineinfo back to this file, if the nested one was
-                // actually included
-                // `2' indicates returning to a file (after having included
-                // another file.
-                LineInfoExtra = " 2";
-              }
+              // Include and recursively process the file.
+              Process(Inc->Id, Inc->FileType);
+              // Add line marker to indicate we're returning from an included
+              // file.
+              LineInfoExtra = " 2";
             }
             // fix up lineinfo (since commented out directive changed line
             // numbers) for inclusions that were skipped due to header guards
@@ -569,7 +565,6 @@ bool InclusionRewriter::Process(FileID FileId,
   OutputContentUpTo(FromFile, NextToWrite,
                     SM.getFileOffset(SM.getLocForEndOfFile(FileId)), LocalEOL,
                     Line, /*EnsureNewline=*/true);
-  return true;
 }
 
 /// InclusionRewriterInInput - Implement -frewrite-includes mode.
