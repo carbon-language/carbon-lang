@@ -447,16 +447,14 @@ static UnresolvedPolicy getUnresolvedSymbolPolicy(opt::InputArgList &Args) {
 }
 
 static Target2Policy getTarget2(opt::InputArgList &Args) {
-  if (auto *Arg = Args.getLastArg(OPT_target2)) {
-    StringRef S = Arg->getValue();
-    if (S == "rel")
-      return Target2Policy::Rel;
-    if (S == "abs")
-      return Target2Policy::Abs;
-    if (S == "got-rel")
-      return Target2Policy::GotRel;
-    error("unknown --target2 option: " + S);
-  }
+  StringRef S = getString(Args, OPT_target2, "got-rel");
+  if (S == "rel")
+    return Target2Policy::Rel;
+  if (S == "abs")
+    return Target2Policy::Abs;
+  if (S == "got-rel")
+    return Target2Policy::GotRel;
+  error("unknown --target2 option: " + S);
   return Target2Policy::GotRel;
 }
 
@@ -561,11 +559,7 @@ getBuildId(opt::InputArgList &Args) {
   if (Args.hasArg(OPT_build_id))
     return {BuildIdKind::Fast, {}};
 
-  auto *Arg = Args.getLastArg(OPT_build_id_eq);
-  if (!Arg)
-    return {BuildIdKind::None, {}};
-
-  StringRef S = Arg->getValue();
+  StringRef S = getString(Args, OPT_build_id_eq, "none");
   if (S == "md5")
     return {BuildIdKind::Md5, {}};
   if (S == "sha1" || S == "tree")
