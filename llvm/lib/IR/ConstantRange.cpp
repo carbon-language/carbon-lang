@@ -431,11 +431,8 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
       return ConstantRange(CR.Lower, Upper);
     }
 
-    APInt L = Lower, U = Upper;
-    if (CR.Lower.ult(L))
-      L = CR.Lower;
-    if ((CR.Upper - 1).ugt(U - 1))
-      U = CR.Upper;
+    APInt L = CR.Lower.ult(Lower) ? CR.Lower : Lower;
+    APInt U = (CR.Upper - 1).ugt(Upper - 1) ? CR.Upper : Upper;
 
     if (L == 0 && U == 0)
       return ConstantRange(getBitWidth());
@@ -481,11 +478,8 @@ ConstantRange ConstantRange::unionWith(const ConstantRange &CR) const {
   if (CR.Lower.ule(Upper) || Lower.ule(CR.Upper))
     return ConstantRange(getBitWidth());
 
-  APInt L = Lower, U = Upper;
-  if (CR.Upper.ugt(U))
-    U = CR.Upper;
-  if (CR.Lower.ult(L))
-    L = CR.Lower;
+  APInt L = CR.Lower.ult(Lower) ? CR.Lower : Lower;
+  APInt U = CR.Upper.ugt(Upper) ? CR.Upper : Upper;
 
   return ConstantRange(std::move(L), std::move(U));
 }
