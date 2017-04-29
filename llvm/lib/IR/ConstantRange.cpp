@@ -243,11 +243,8 @@ bool ConstantRange::isSignWrappedSet() const {
 }
 
 APInt ConstantRange::getSetSize() const {
-  if (isFullSet()) {
-    APInt Size(getBitWidth()+1, 0);
-    Size.setBit(getBitWidth());
-    return Size;
-  }
+  if (isFullSet())
+    return APInt::getOneBitSet(getBitWidth()+1, getBitWidth());
 
   // This is also correct for wrapped sets.
   return (Upper - Lower).zext(getBitWidth()+1);
