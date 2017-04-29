@@ -906,6 +906,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
 
       ListScope S(W, "FilenameSegment");
       printFileNameForOffset("Filename", Entry.NameIndex);
+      uint32_t ColumnIndex = 0;
       for (const auto &Line : Entry.LineNumbers) {
         if (Line.Offset >= LineInfo.header()->CodeSize) {
           error(object_error::parse_failed);
@@ -925,8 +926,9 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
         W.printNumber("LineNumberEndDelta", LI.getLineDelta());
         W.printBoolean("IsStatement", LI.isStatement());
         if (LineInfo.header()->Flags & HaveColumns) {
-          W.printNumber("ColStart", Entry.Columns[0].StartColumn);
-          W.printNumber("ColEnd", Entry.Columns[0].EndColumn);
+          W.printNumber("ColStart", Entry.Columns[ColumnIndex].StartColumn);
+          W.printNumber("ColEnd", Entry.Columns[ColumnIndex].EndColumn);
+          ++ColumnIndex;
         }
       }
     }
