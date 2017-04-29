@@ -35,7 +35,7 @@ Error ModuleDebugStream::reload() {
   BinaryStreamReader Reader(*Stream);
 
   uint32_t SymbolSize = Mod.getSymbolDebugInfoByteSize();
-  uint32_t C11Size = Mod.getLineInfoByteSize();
+  uint32_t C11Size = Mod.getC11LineInfoByteSize();
   uint32_t C13Size = Mod.getC13LineInfoByteSize();
 
   if (C11Size > 0 && C13Size > 0)

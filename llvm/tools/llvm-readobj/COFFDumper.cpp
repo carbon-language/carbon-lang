@@ -925,7 +925,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
           W.printNumber("LineNumberStart", LI.getStartLine());
         W.printNumber("LineNumberEndDelta", LI.getLineDelta());
         W.printBoolean("IsStatement", LI.isStatement());
-        if (LineInfo.header()->Flags & HaveColumns) {
+        if (LineInfo.hasColumnInfo()) {
           W.printNumber("ColStart", Entry.Columns[ColumnIndex].StartColumn);
           W.printNumber("ColEnd", Entry.Columns[ColumnIndex].EndColumn);
           ++ColumnIndex;
