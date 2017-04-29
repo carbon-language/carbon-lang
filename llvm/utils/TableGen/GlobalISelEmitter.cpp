@@ -1712,7 +1712,6 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
   OS << "#ifdef GET_GLOBALISEL_IMPL\n";
   SubtargetFeatureInfo::emitSubtargetFeatureBitEnumeration(SubtargetFeatures,
                                                            OS);
-  SubtargetFeatureInfo::emitNameTable(SubtargetFeatures, OS);
 
   // Separate subtarget features by how often they must be recomputed.
   SubtargetFeatureInfoMap ModuleFeatures;
