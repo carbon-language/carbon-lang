@@ -132,7 +132,7 @@ void InclusionRewriter::WriteLineInfo(StringRef Filename, int Line,
 }
 
 void InclusionRewriter::WriteImplicitModuleImport(const Module *Mod) {
-  OS << "@import " << Mod->getFullModuleName() << ";"
+  OS << "#pragma clang module import " << Mod->getFullModuleName()
      << " /* clang -frewrite-includes: implicit import */" << MainEOL;
 }
 
@@ -450,9 +450,7 @@ bool InclusionRewriter::Process(FileID FileId,
               WriteLineInfo(FileName, Line - 1, FileType, "");
             StringRef LineInfoExtra;
             SourceLocation Loc = HashToken.getLocation();
-            if (const Module *Mod = PP.getLangOpts().ObjC2
-                                        ? FindModuleAtLocation(Loc)
-                                        : nullptr)
+            if (const Module *Mod = FindModuleAtLocation(Loc))
               WriteImplicitModuleImport(Mod);
             else if (const IncludedFile *Inc = FindIncludeAtLocation(Loc)) {
               // include and recursively process the file
