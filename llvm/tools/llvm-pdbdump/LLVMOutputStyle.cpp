@@ -84,8 +84,8 @@ struct PageStats {
 // substream types types.
 class C13RawVisitor : public C13DebugFragmentVisitor {
 public:
-  C13RawVisitor(ScopedPrinter &P, PDBFile &F, TypeDatabase &TypeDB)
-      : C13DebugFragmentVisitor(F), P(P), DB(TypeDB) {}
+  C13RawVisitor(ScopedPrinter &P, PDBFile &F)
+      : C13DebugFragmentVisitor(F), P(P) {}
 
   Error handleLines() override {
     DictScope DD(P, "Lines");
@@ -151,7 +151,6 @@ private:
   }
 
   ScopedPrinter &P;
-  TypeDatabase &DB;
 };
 }
 
@@ -753,7 +752,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
           ListScope SS(P, "LineInfo");
 
           // Inlinee Line Type Indices refer to the IPI stream.
-          C13RawVisitor V(P, File, ItemDB);
+          C13RawVisitor V(P, File);
           if (auto EC = codeview::visitModuleDebugFragments(
                   ModS.linesAndChecksums(), V))
             return EC;
