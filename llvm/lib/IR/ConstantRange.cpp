@@ -29,12 +29,9 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-ConstantRange::ConstantRange(uint32_t BitWidth, bool Full) {
-  if (Full)
-    Lower = Upper = APInt::getMaxValue(BitWidth);
-  else
-    Lower = Upper = APInt::getMinValue(BitWidth);
-}
+ConstantRange::ConstantRange(uint32_t BitWidth, bool Full)
+    : Lower(Full ? APInt::getMaxValue(BitWidth) : APInt::getMinValue(BitWidth)),
+      Upper(Lower) {}
 
 ConstantRange::ConstantRange(APInt V)
     : Lower(std::move(V)), Upper(Lower + 1) {}
