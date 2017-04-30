@@ -4063,14 +4063,18 @@ static Value *SimplifyShuffleVectorInst(Value *Op0, Value *Op1, Constant *Mask,
   if (Op0Const && Op1Const)
     return ConstantFoldShuffleVectorInstruction(Op0Const, Op1Const, Mask);
 
+  SmallVector<int, 32> Indices;
+  ShuffleVectorInst::getShuffleMask(Mask, Indices);
+  assert(MaskNumElts == Indices.size() &&
+         "Size of Indices not same as number of mask elements?");
+
   // If only one of the operands is constant, constant fold the shuffle if the
   // mask does not select elements from the variable operand.
   bool MaskSelects0 = false, MaskSelects1 = false;
   for (unsigned i = 0; i != MaskNumElts; ++i) {
-    int Idx = ShuffleVectorInst::getMaskValue(Mask, i);
-    if (Idx == -1)
+    if (Indices[i] == -1)
       continue;
-    if ((unsigned)Idx < InVecNumElts)
+    if ((unsigned)Indices[i] < InVecNumElts)
       MaskSelects0 = true;
     else
       MaskSelects1 = true;
@@ -4096,9 +4100,8 @@ static Value *SimplifyShuffleVectorInst(Value *Op0, Value *Op1, Constant *Mask,
   // Don't fold a shuffle with undef mask elements. This may get folded in a
   // better way using demanded bits or other analysis.
   // TODO: Should we allow this?
-  for (unsigned i = 0; i != MaskNumElts; ++i)
-    if (ShuffleVectorInst::getMaskValue(Mask, i) == -1)
-      return nullptr;
+  if (find(Indices, -1) != Indices.end())
+    return nullptr;
 
   // Check if every element of this shuffle can be mapped back to the
   // corresponding element of a single root vector. If so, we don't need this
