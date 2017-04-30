@@ -2516,7 +2516,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     computeKnownBits(Op.getOperand(1), Known2, DemandedElts, Depth + 1);
     KnownZeroLow = std::min(KnownZeroLow,
                             Known2.Zero.countTrailingOnes());
-    Known.Zero.setBits(0, KnownZeroLow);
+    Known.Zero.setLowBits(KnownZeroLow);
     break;
   }
   case ISD::UADDO:
