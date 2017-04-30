@@ -581,7 +581,7 @@ ConstantRange ConstantRange::truncate(uint32_t DstTySize) const {
       return ConstantRange(DstTySize, /*isFullSet=*/true);
 
     Union = ConstantRange(APInt::getMaxValue(DstTySize),Upper.trunc(DstTySize));
-    UpperDiv = APInt::getMaxValue(getBitWidth());
+    UpperDiv.setAllBits();
 
     // Union covers the MaxValue case, so return if the remaining range is just
     // MaxValue.
@@ -837,7 +837,7 @@ ConstantRange::udiv(const ConstantRange &RHS) const {
     if (RHS.getUpper() == 1)
       RHS_umin = RHS.getLower();
     else
-      RHS_umin = APInt(getBitWidth(), 1);
+      RHS_umin = 1;
   }
 
   APInt Upper = getUnsignedMax().udiv(RHS_umin) + 1;
