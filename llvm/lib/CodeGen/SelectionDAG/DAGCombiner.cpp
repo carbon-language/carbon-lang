@@ -399,6 +399,7 @@ namespace {
     SDValue createBuildVecShuffle(const SDLoc &DL, SDNode *N,
                                   ArrayRef<int> VectorMask, SDValue VecIn1,
                                   SDValue VecIn2, unsigned LeftIdx);
+    SDValue matchVSelectOpSizesWithSetCC(SDNode *N);
 
     SDValue GetDemandedBits(SDValue V, const APInt &Mask);
 
@@ -6942,6 +6943,51 @@ SDValue DAGCombiner::CombineExtLoad(SDNode *N) {
   return SDValue(N, 0); // Return N so it doesn't get rechecked!
 }
 
+/// If we're narrowing or widening the result of a vector select and the final
+/// size is the same size as a setcc (compare) feeding the select, then try to
+/// apply the cast operation to the select's operands because matching vector
+/// sizes for a select condition and other operands should be more efficient.
+SDValue DAGCombiner::matchVSelectOpSizesWithSetCC(SDNode *Cast) {
+  unsigned CastOpcode = Cast->getOpcode();
+  assert((CastOpcode == ISD::SIGN_EXTEND || CastOpcode == ISD::ZERO_EXTEND ||
+          CastOpcode == ISD::TRUNCATE || CastOpcode == ISD::FP_EXTEND ||
+          CastOpcode == ISD::FP_ROUND) &&
+         "Unexpected opcode for vector select narrowing/widening");
+
+  // We only do this transform before legal ops because the pattern may be
+  // obfuscated by target-specific operations after legalization. Do not create
+  // an illegal select op, however, because that may be difficult to lower.
+  EVT VT = Cast->getValueType(0);
+  if (LegalOperations || !TLI.isOperationLegalOrCustom(ISD::VSELECT, VT))
+    return SDValue();
+
+  SDValue VSel = Cast->getOperand(0);
+  if (VSel.getOpcode() != ISD::VSELECT || !VSel.hasOneUse() ||
+      VSel.getOperand(0).getOpcode() != ISD::SETCC)
+    return SDValue();
+
+  // Does the setcc have the same vector size as the casted select?
+  SDValue SetCC = VSel.getOperand(0);
+  EVT SetCCVT = getSetCCResultType(SetCC.getOperand(0).getValueType());
+  if (SetCCVT.getSizeInBits() != VT.getSizeInBits())
+    return SDValue();
+
+  // cast (vsel (setcc X), A, B) --> vsel (setcc X), (cast A), (cast B)
+  SDValue A = VSel.getOperand(1);
+  SDValue B = VSel.getOperand(2);
+  SDValue CastA, CastB;
+  SDLoc DL(Cast);
+  if (CastOpcode == ISD::FP_ROUND) {
+    // FP_ROUND (fptrunc) has an extra flag operand to pass along.
+    CastA = DAG.getNode(CastOpcode, DL, VT, A, Cast->getOperand(1));
+    CastB = DAG.getNode(CastOpcode, DL, VT, B, Cast->getOperand(1));
+  } else {
+    CastA = DAG.getNode(CastOpcode, DL, VT, A);
+    CastB = DAG.getNode(CastOpcode, DL, VT, B);
+  }
+  return DAG.getNode(ISD::VSELECT, DL, VT, SetCC, CastA, CastB);
+}
+
 SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
@@ -7164,6 +7210,9 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if ((!LegalOperations || TLI.isOperationLegal(ISD::ZERO_EXTEND, VT)) &&
       DAG.SignBitIsZero(N0))
     return DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N0);
+
+  if (SDValue NewVSel = matchVSelectOpSizesWithSetCC(N))
+    return NewVSel;
 
   return SDValue();
 }
@@ -7497,6 +7546,9 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                        DAG.getNode(ISD::ZERO_EXTEND, DL, VT, N0.getOperand(0)),
                        ShAmt);
   }
+
+  if (SDValue NewVSel = matchVSelectOpSizesWithSetCC(N))
+    return NewVSel;
 
   return SDValue();
 }
@@ -8291,6 +8343,9 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     auto VTs = DAG.getVTList(VT, N0->getValueType(1));
     return DAG.getNode(N0.getOpcode(), SL, VTs, X, Y, N0.getOperand(2));
   }
+
+  if (SDValue NewVSel = matchVSelectOpSizesWithSetCC(N))
+    return NewVSel;
 
   return SDValue();
 }
@@ -10243,6 +10298,9 @@ SDValue DAGCombiner::visitFP_ROUND(SDNode *N) {
                        Tmp, N0.getOperand(1));
   }
 
+  if (SDValue NewVSel = matchVSelectOpSizesWithSetCC(N))
+    return NewVSel;
+
   return SDValue();
 }
 
@@ -10308,6 +10366,9 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
               ExtLoad.getValue(1));
     return SDValue(N, 0);   // Return N so it doesn't get rechecked!
   }
+
+  if (SDValue NewVSel = matchVSelectOpSizesWithSetCC(N))
+    return NewVSel;
 
   return SDValue();
 }
