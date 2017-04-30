@@ -4049,6 +4049,9 @@ static Value *foldIdentityShuffles(int DestElt, Value *Op0, Value *Op1,
 static Value *SimplifyShuffleVectorInst(Value *Op0, Value *Op1, Constant *Mask,
                                         Type *RetTy, const SimplifyQuery &Q,
                                         unsigned MaxRecurse) {
+  if (isa<UndefValue>(Mask))
+    return UndefValue::get(RetTy);
+
   Type *InVecTy = Op0->getType();
   unsigned MaskNumElts = Mask->getType()->getVectorNumElements();
   unsigned InVecNumElts = InVecTy->getVectorNumElements();
