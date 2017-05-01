@@ -159,8 +159,8 @@ void HexagonMCChecker::init(MCInst const &MCI) {
                isPredicateRegister(*SRI))
         // Some insns produce predicates too late to be used in the same packet.
         LatePreds.insert(*SRI);
-      else if (i == 0 && llvm::HexagonMCInstrInfo::getType(MCII, MCI) ==
-                             HexagonII::TypeCVI_VM_CUR_LD)
+      else if (i == 0 && HexagonMCInstrInfo::isCVINew(MCII, MCI) &&
+               MCID.mayLoad())
         // Current loads should be used in the same packet.
         // TODO: relies on the impossibility of a current and a temporary loads
         // in the same packet.

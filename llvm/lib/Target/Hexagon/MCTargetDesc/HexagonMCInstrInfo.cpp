@@ -505,6 +505,11 @@ bool HexagonMCInstrInfo::isCompound(MCInstrInfo const &MCII,
   return (getType(MCII, MCI) == HexagonII::TypeCJ);
 }
 
+bool HexagonMCInstrInfo::isCVINew(MCInstrInfo const &MCII, MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+  return ((F >> HexagonII::CVINewPos) & HexagonII::CVINewMask);
+}
+
 bool HexagonMCInstrInfo::isDblRegForSubInst(unsigned Reg) {
   return ((Reg >= Hexagon::D0 && Reg <= Hexagon::D3) ||
           (Reg >= Hexagon::D8 && Reg <= Hexagon::D11));

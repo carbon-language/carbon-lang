@@ -113,8 +113,6 @@ void HexagonCVIResource::SetupTUL(TypeUnitsAndLanes *TUL, StringRef CPU) {
   (*TUL)[HexagonII::TypeCVI_VM_LD] =
       UnitsAndLanes(CVI_XLANE | CVI_SHIFT | CVI_MPY0 | CVI_MPY1, 1);
   (*TUL)[HexagonII::TypeCVI_VM_TMP_LD] = UnitsAndLanes(CVI_NONE, 0);
-  (*TUL)[HexagonII::TypeCVI_VM_CUR_LD] =
-      UnitsAndLanes(CVI_XLANE | CVI_SHIFT | CVI_MPY0 | CVI_MPY1, 1);
   (*TUL)[HexagonII::TypeCVI_VM_VP_LDU] = UnitsAndLanes(CVI_XLANE, 1);
   (*TUL)[HexagonII::TypeCVI_VM_ST] =
       UnitsAndLanes(CVI_XLANE | CVI_SHIFT | CVI_MPY0 | CVI_MPY1, 1);
@@ -327,7 +325,6 @@ bool HexagonShuffler::check() {
       ++onlyNo1;
     case HexagonII::TypeCVI_VM_LD:
     case HexagonII::TypeCVI_VM_TMP_LD:
-    case HexagonII::TypeCVI_VM_CUR_LD:
       ++CVIloads;
     case HexagonII::TypeLD:
       ++loads;
