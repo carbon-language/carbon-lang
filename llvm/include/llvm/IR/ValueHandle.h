@@ -46,7 +46,7 @@ protected:
   }
 
 private:
-  PointerIntPair<ValueHandleBase**, 3, HandleBaseKind> PrevPair;
+  PointerIntPair<ValueHandleBase**, 2, HandleBaseKind> PrevPair;
   ValueHandleBase *Next;
 
   Value *Val;
