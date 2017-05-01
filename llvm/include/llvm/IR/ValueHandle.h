@@ -37,7 +37,6 @@ protected:
   enum HandleBaseKind {
     Assert,
     Callback,
-    Tracking,
     Weak
   };
 
@@ -165,6 +164,10 @@ public:
   operator Value*() const {
     return getValPtr();
   }
+
+  bool pointsToAliveValue() const {
+    return ValueHandleBase::isValid(getValPtr());
+  }
 };
 
 // Specialize simplify_type to allow WeakVH to participate in
@@ -280,39 +283,37 @@ struct isPodLike<AssertingVH<T> > {
 /// to a Value (or subclass) across some operations which may move that value,
 /// but should never destroy it or replace it with some unacceptable type.
 ///
-/// It is an error to do anything with a TrackingVH whose value has been
-/// destroyed, except to destruct it.
-///
 /// It is an error to attempt to replace a value with one of a type which is
 /// incompatible with any of its outstanding TrackingVHs.
-template<typename ValueTy>
-class TrackingVH : public ValueHandleBase {
-  void CheckValidity() const {
-    Value *VP = ValueHandleBase::getValPtr();
+///
+/// It is an error to read from a TrackingVH that does not point to a valid
+/// value.  A TrackingVH is said to not point to a valid value if either it
+/// hasn't yet been assigned a value yet or because the value it was tracking
+/// has since been deleted.
+///
+/// Assigning a value to a TrackingVH is always allowed, even if said TrackingVH
+/// no longer points to a valid value.
+template <typename ValueTy> class TrackingVH {
+  WeakVH InnerHandle;
 
-    // Null is always ok.
-    if (!VP) return;
-
-    // Check that this value is valid (i.e., it hasn't been deleted). We
-    // explicitly delay this check until access to avoid requiring clients to be
-    // unnecessarily careful w.r.t. destruction.
-    assert(ValueHandleBase::isValid(VP) && "Tracked Value was deleted!");
+public:
+  ValueTy *getValPtr() const {
+    assert(InnerHandle.pointsToAliveValue() &&
+           "TrackingVH must be non-null and valid on dereference!");
 
     // Check that the value is a member of the correct subclass. We would like
     // to check this property on assignment for better debugging, but we don't
     // want to require a virtual interface on this VH. Instead we allow RAUW to
     // replace this value with a value of an invalid type, and check it here.
-    assert(isa<ValueTy>(VP) &&
+    assert(isa<ValueTy>(InnerHandle) &&
            "Tracked Value was replaced by one with an invalid type!");
+    return cast<ValueTy>(InnerHandle);
   }
 
-  ValueTy *getValPtr() const {
-    CheckValidity();
-    return (ValueTy*)ValueHandleBase::getValPtr();
-  }
   void setValPtr(ValueTy *P) {
-    CheckValidity();
-    ValueHandleBase::operator=(GetAsValue(P));
+    // Assigning to non-valid TrackingVH's are fine so we just unconditionally
+    // assign here.
+    InnerHandle = GetAsValue(P);
   }
 
   // Convert a ValueTy*, which may be const, to the type the base
@@ -321,8 +322,8 @@ class TrackingVH : public ValueHandleBase {
   static Value *GetAsValue(const Value *V) { return const_cast<Value*>(V); }
 
 public:
-  TrackingVH() : ValueHandleBase(Tracking) {}
-  TrackingVH(ValueTy *P) : ValueHandleBase(Tracking, GetAsValue(P)) {}
+  TrackingVH() {}
+  TrackingVH(ValueTy *P) { setValPtr(P); }
 
   operator ValueTy*() const {
     return getValPtr();
