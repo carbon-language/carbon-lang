@@ -523,7 +523,8 @@ class StackPointerTracking : public ForwardDataflow<int> {
     if (BC.MII->get(Point.getOpcode())
             .hasDefOfPhysReg(Point, MIA->getStackPointer(), *BC.MRI)) {
       int64_t Offset = Cur;
-      if (!MIA->updateStackPointerUpdate(Point, Offset))
+      if (!MIA->evaluateSimple(Point, Offset, std::make_pair(0, 0),
+                               std::make_pair(0, 0)))
         return SUPERPOSITION;
 
       return static_cast<int>(Offset);
@@ -606,7 +607,7 @@ bool FrameOptimizerPass::restoreFrameIndex(const BinaryContext &BC,
         continue;
       }
 
-      if (BC.MIA->leaksStackAddress(Inst, *BC.MRI)) {
+      if (BC.MIA->leaksStackAddress(Inst, *BC.MRI, false)) {
         DEBUG(dbgs() << "Leaked stack address, giving up on this function.\n");
         DEBUG(dbgs() << "Blame insn: ");
         DEBUG(Inst.dump());
@@ -614,6 +615,7 @@ bool FrameOptimizerPass::restoreFrameIndex(const BinaryContext &BC,
       }
 
       bool IsLoad = false;
+      bool IsStore = false;
       bool IsStoreFromReg = false;
       bool IsSimple = false;
       int32_t SrcImm{0};
@@ -621,8 +623,10 @@ bool FrameOptimizerPass::restoreFrameIndex(const BinaryContext &BC,
       MCPhysReg StackPtrReg{0};
       int64_t StackOffset{0};
       uint8_t Size{0};
-      if (BC.MIA->isStackAccess(Inst, IsLoad, IsStoreFromReg, Reg, SrcImm,
-                                StackPtrReg, StackOffset, Size, IsSimple)) {
+      bool IsIndexed = false;
+      if (BC.MIA->isStackAccess(Inst, IsLoad, IsStore, IsStoreFromReg, Reg,
+                                SrcImm, StackPtrReg, StackOffset, Size,
+                                IsSimple, IsIndexed)) {
         assert(Size != 0);
         if (CfaRegLocked && CfaRegLockedVal != CfaReg) {
           DEBUG(dbgs() << "CFA reg changed, giving up on this function.\n");

@@ -974,6 +974,20 @@ public:
     return nullptr;
   }
 
+  /// Retrieve the landing pad BB associated with invoke instruction \p Invoke
+  /// that is in \p BB. Return nullptr if none exists
+  BinaryBasicBlock *getLandingPadBBFor(const BinaryBasicBlock &BB,
+                                       const MCInst &InvokeInst) {
+    assert(BC.MIA->isInvoke(InvokeInst) && "must be invoke instruction");
+    MCLandingPad LP = BC.MIA->getEHInfo(InvokeInst);
+    if (LP.first) {
+      auto *LBB = BB.getLandingPad(LP.first);
+      assert (LBB && "Landing pad should be defined");
+      return LBB;
+    }
+    return nullptr;
+  }
+
   /// Return the name of the function as extracted from the binary file.
   /// If the function has multiple names - return the last one
   /// followed by "(*#<numnames>)".
@@ -1412,6 +1426,14 @@ public:
     return;
   }
 
+  BinaryBasicBlock::iterator addCFIInstruction(BinaryBasicBlock *BB,
+                                               BinaryBasicBlock::iterator Pos,
+                                               MCCFIInstruction &&Inst) {
+    auto Idx = FrameInstructions.size();
+    FrameInstructions.emplace_back(std::forward<MCCFIInstruction>(Inst));
+    return addCFIPseudo(BB, Pos, Idx);
+  }
+
   /// Insert a CFI pseudo instruction in a basic block. This pseudo instruction
   /// is a placeholder that refers to a real MCCFIInstruction object kept by
   /// this function that will be emitted at that position.
@@ -1424,6 +1446,14 @@ public:
   }
 
   /// Retrieve the MCCFIInstruction object associated with a CFI pseudo.
+  MCCFIInstruction* getCFIFor(const MCInst &Instr) {
+    if (!BC.MIA->isCFI(Instr))
+      return nullptr;
+    uint32_t Offset = Instr.getOperand(0).getImm();
+    assert(Offset < FrameInstructions.size() && "Invalid CFI offset");
+    return &FrameInstructions[Offset];
+  }
+
   const MCCFIInstruction* getCFIFor(const MCInst &Instr) const {
     if (!BC.MIA->isCFI(Instr))
       return nullptr;
