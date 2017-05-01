@@ -7,6 +7,9 @@
 // RUN: FileCheck %s < %t.log
 //
 // XFAIL: android
+// UNSUPPORTED: powerpc64le
+// FIXME: This test occasionally fails on powerpc64 LE possibly starting with
+// r279664.  Re-enable the test once the problem(s) have been fixed.
 
 #include <stdio.h>
 #include <string.h>
