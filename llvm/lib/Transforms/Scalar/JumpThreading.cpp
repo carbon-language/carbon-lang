@@ -1268,13 +1268,16 @@ bool JumpThreadingPass::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
     BasicBlock *DestBB;
     if (isa<UndefValue>(Val))
       DestBB = nullptr;
-    else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
+    else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
+      assert(isa<ConstantInt>(Val) && "Expecting a constant integer");
       DestBB = BI->getSuccessor(cast<ConstantInt>(Val)->isZero());
-    else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
+    } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
+      assert(isa<ConstantInt>(Val) && "Expecting a constant integer");
       DestBB = SI->findCaseValue(cast<ConstantInt>(Val))->getCaseSuccessor();
     } else {
       assert(isa<IndirectBrInst>(BB->getTerminator())
               && "Unexpected terminator");
+      assert(isa<BlockAddress>(Val) && "Expecting a constant blockaddress");
       DestBB = cast<BlockAddress>(Val)->getBasicBlock();
     }
 
