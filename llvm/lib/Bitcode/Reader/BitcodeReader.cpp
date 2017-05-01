@@ -5503,11 +5503,7 @@ Error BitcodeModule::readSummary(ModuleSummaryIndex &CombinedIndex,
 
   ModuleSummaryIndexBitcodeReader R(std::move(Stream), Strtab, CombinedIndex,
                                     ModuleIdentifier, ModuleId);
-
-  if (Error Err = R.parseModule())
-    return std::move(Err);
-
-  return Error::success();
+  return R.parseModule();
 }
 
 // Parse the specified bitcode buffer, returning the function info index.
