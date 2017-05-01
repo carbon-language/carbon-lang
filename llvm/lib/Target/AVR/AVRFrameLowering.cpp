@@ -216,8 +216,9 @@ void AVRFrameLowering::emitEpilogue(MachineFunction &MF,
 bool AVRFrameLowering::hasFP(const MachineFunction &MF) const {
   const AVRMachineFunctionInfo *FuncInfo = MF.getInfo<AVRMachineFunctionInfo>();
 
-  return (FuncInfo->getHasSpills() || FuncInfo->getHasAllocas() ||
-          FuncInfo->getHasStackArgs());
+  // TODO: We do not always need a frame pointer.
+  // This can be optimised.
+  return true;
 }
 
 bool AVRFrameLowering::spillCalleeSavedRegisters(
