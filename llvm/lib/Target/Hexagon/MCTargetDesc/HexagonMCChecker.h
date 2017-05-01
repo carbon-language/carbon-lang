@@ -115,6 +115,7 @@ class HexagonMCChecker {
   bool checkPredicates();
   bool checkNewValues();
   bool checkRegisters();
+  bool checkRegistersReadOnly();
   bool checkSolo();
   bool checkShuffle();
   bool checkSlots();
