@@ -3042,7 +3042,7 @@ static CompleteObject findCompleteObject(EvalInfo &Info, const Expr *E,
     if (Info.Ctx.getAsIncompleteArrayType(BaseType)) {
       QualType MostRecentType =
          cast<ValueDecl const>(D->getMostRecentDecl())->getType();
-      if (auto CAT = Info.Ctx.getAsConstantArrayType(MostRecentType))
+      if (Info.Ctx.getAsConstantArrayType(MostRecentType))
         BaseType = MostRecentType;
     }
   } else {
