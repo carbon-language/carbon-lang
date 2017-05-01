@@ -35,14 +35,6 @@ define i117 @test5(i117 %A, i117* %P) {
         ret i117 %r
 }
 
-define i117 @test6(i117 %A, i117 %B) {
-        ;; ~(~X & Y) --> (X | ~Y)
-        %t0 = xor i117 %A, -1
-        %t1 = and i117 %t0, %B
-        %r = xor i117 %t1, -1
-        ret i117 %r
-}
-
 define i1024 @test7(i1024 %A) {
         %X = ashr i1024 %A, 1016 ;; sign extend
         %C1 = and i1024 %X, 255

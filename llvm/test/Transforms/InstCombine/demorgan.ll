@@ -186,6 +186,62 @@ define i71 @test5_apint(i71 %A, i71 %B) {
   ret i71 %notc
 }
 
+; ~(~A & B) --> (A | ~B)
+
+define i8 @demorgan_nand(i8 %A, i8 %B) {
+; CHECK-LABEL: @demorgan_nand(
+; CHECK-NEXT:    [[B_NOT:%.*]] = xor i8 %B, -1
+; CHECK-NEXT:    [[NOTC:%.*]] = or i8 [[B_NOT]], %A
+; CHECK-NEXT:    ret i8 [[NOTC]]
+;
+  %notx = xor i8 %A, -1
+  %c = and i8 %notx, %B
+  %notc = xor i8 %c, -1
+  ret i8 %notc
+}
+
+; ~(~A & B) --> (A | ~B)
+
+define i7 @demorgan_nand_apint1(i7 %A, i7 %B) {
+; CHECK-LABEL: @demorgan_nand_apint1(
+; CHECK-NEXT:    [[B_NOT:%.*]] = xor i7 %B, -1
+; CHECK-NEXT:    [[NOTC:%.*]] = or i7 [[B_NOT]], %A
+; CHECK-NEXT:    ret i7 [[NOTC]]
+;
+  %nota = xor i7 %A, -1
+  %c = and i7 %nota, %B
+  %notc = xor i7 %c, -1
+  ret i7 %notc
+}
+
+; ~(~A & B) --> (A | ~B)
+
+define i117 @demorgan_nand_apint2(i117 %A, i117 %B) {
+; CHECK-LABEL: @demorgan_nand_apint2(
+; CHECK-NEXT:    [[B_NOT:%.*]] = xor i117 %B, -1
+; CHECK-NEXT:    [[NOTC:%.*]] = or i117 [[B_NOT]], %A
+; CHECK-NEXT:    ret i117 [[NOTC]]
+;
+  %nota = xor i117 %A, -1
+  %c = and i117 %nota, %B
+  %notc = xor i117 %c, -1
+  ret i117 %notc
+}
+
+; ~(~A | B) --> (A & ~B)
+
+define i8 @demorgan_nor(i8 %A, i8 %B) {
+; CHECK-LABEL: @demorgan_nor(
+; CHECK-NEXT:    [[B_NOT:%.*]] = xor i8 %B, -1
+; CHECK-NEXT:    [[NOTC:%.*]] = and i8 [[B_NOT]], %A
+; CHECK-NEXT:    ret i8 [[NOTC]]
+;
+  %notx = xor i8 %A, -1
+  %c = or i8 %notx, %B
+  %notc = xor i8 %c, -1
+  ret i8 %notc
+}
+
 ; FIXME: Do not apply DeMorgan's Law to constants. We prefer 'not' ops.
 
 define i32 @demorganize_constant1(i32 %a) {

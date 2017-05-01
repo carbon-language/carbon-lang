@@ -34,14 +34,6 @@ define i7 @test5(i7 %A, i7* %P) {
         ret i7 %r
 }
 
-define i7 @test6(i7 %A, i7 %B) {
-        ;; ~(~X & Y) --> (X | ~Y)
-        %t0 = xor i7 %A, -1
-        %t1 = and i7 %t0, %B
-        %r = xor i7 %t1, -1
-        ret i7 %r
-}
-
 define i47 @test7(i47 %A) {
         %X = ashr i47 %A, 39 ;; sign extend
         %C1 = and i47 %X, 255
