@@ -265,12 +265,13 @@ public:
     return getStateAt(*Point.getInst());
   }
 
+  /// Relies on a ptr map to fetch the previous instruction and then retrieve
+  /// state. WARNING: Watch out for invalidated pointers. Do not use this
+  /// function if you invalidated pointers after the analysis has been completed
   ErrorOr<const StateTy &> getStateBefore(const MCInst &Point) {
     return getStateAt(PrevPoint[&Point]);
   }
 
-  /// Return the in set (out set) of a given program point if the direction of
-  /// the dataflow is forward (backward).
   ErrorOr<const StateTy &>getStateBefore(ProgramPoint Point) {
     if (Point.isBB())
       return getStateAt(*Point.getBB());
@@ -490,6 +491,25 @@ public:
   std::vector<const MCInst *> Expressions;
   /// Maps expressions defs (MCInsts) to its index in the Expressions vector
   std::unordered_map<const MCInst *, uint64_t> ExprToIdx;
+
+  /// Return whether \p Expr is in the state set at \p Point
+  bool count(ProgramPoint Point, const MCInst &Expr) const {
+    auto IdxIter = ExprToIdx.find(&Expr);
+    assert (IdxIter != ExprToIdx.end() && "Invalid Expr");
+    return (*this->getStateAt(Point))[IdxIter->second];
+  }
+
+  bool count(const MCInst &Point, const MCInst &Expr) const {
+    auto IdxIter = ExprToIdx.find(&Expr);
+    assert (IdxIter != ExprToIdx.end() && "Invalid Expr");
+    return (*this->getStateAt(Point))[IdxIter->second];
+  }
+
+  /// Return whether \p Expr is in the state set at the instr of index
+  /// \p PointIdx
+  bool count(unsigned PointIdx, const MCInst &Expr) const {
+    return count(*Expressions[PointIdx], Expr);
+  }
 
   InstrsDataflowAnalysis(const BinaryContext &BC, BinaryFunction &BF)
       : DataflowAnalysis<Derived, BitVector, Backward>(BC, BF) {}

@@ -143,6 +143,12 @@ public:
 
   const DataReader &DR;
 
+  /// Sum of execution count of all functions
+  uint64_t SumExecutionCount{0};
+
+  /// Number of functions with profile information
+  uint64_t NumProfiledFuncs{0};
+
   BinaryContext(std::unique_ptr<MCContext> Ctx,
                 std::unique_ptr<DWARFContext> DwCtx,
                 std::unique_ptr<Triple> TheTriple,
@@ -262,8 +268,19 @@ public:
     return Size;
   }
 
+  /// Return a function execution count threshold for determining whether the
+  /// the function is 'hot'. Consider it hot if count is above the average exec
+  /// count of profiled functions.
+  uint64_t getHotThreshold() const {
+    static uint64_t Threshold{0};
+    if (Threshold == 0) {
+      Threshold = NumProfiledFuncs ? SumExecutionCount / NumProfiledFuncs : 1;
+    }
+    return Threshold;
+  }
+
   /// Print the string name for a CFI operation.
-  static void printCFI(raw_ostream &OS, uint32_t Operation);
+  static void printCFI(raw_ostream &OS, const MCCFIInstruction &Inst);
 
   /// Print a single MCInst in native format.  If Function is non-null,
   /// the instruction will be annotated with CFI and possibly DWARF line table

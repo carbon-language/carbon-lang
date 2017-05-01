@@ -624,6 +624,11 @@ public:
     /// Total number of times this jump table was used.
     uint64_t Count{0};
 
+    /// Change all entries of the jump table in \p JTAddress pointing to
+    /// \p OldDest to \p NewDest. Return false if unsuccessful.
+    bool replaceDestination(uint64_t JTAddress, const MCSymbol *OldDest,
+                            MCSymbol *NewDest);
+
     /// Update jump table at its original location.
     void updateOriginal(BinaryContext &BC);
 
@@ -1367,6 +1372,21 @@ public:
   /// Recompute the CFI state for NumNewBlocks following Start after inserting
   /// new blocks into the CFG.  This must be called after updateLayout.
   void updateCFIState(BinaryBasicBlock *Start, const unsigned NumNewBlocks);
+
+  /// Change \p OrigDest to \p NewDest in the jump table used at the end of
+  /// \p BB. Returns false if \p OrigDest couldn't be find as a valid target
+  /// and no replacement took place.
+  bool replaceJumpTableEntryIn(BinaryBasicBlock *BB,
+                               BinaryBasicBlock *OldDest,
+                               BinaryBasicBlock *NewDest);
+
+  /// Split the CFG edge <From, To> by inserting an intermediate basic block.
+  /// Returns a pointer to this new intermediate basic block. BB "From" will be
+  /// updated to jump to the intermediate block, which in turn will have an
+  /// unconditional branch to BB "To".
+  /// User needs to manually call fixBranches(). This function only creates the
+  /// correct CFG edges.
+  BinaryBasicBlock *splitEdge(BinaryBasicBlock *From, BinaryBasicBlock *To);
 
   /// Determine direction of the branch based on the current layout.
   /// Callee is responsible of updating basic block indices prior to using

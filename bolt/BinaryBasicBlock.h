@@ -617,20 +617,26 @@ public:
     return Instructions.erase(II);
   }
 
+  /// Retrieve iterator for \p Inst or return end iterator if instruction is not
+  /// from this basic block.
+  decltype(Instructions)::iterator findInstruction(const MCInst *Inst) {
+    if (Instructions.empty())
+      return Instructions.end();
+    size_t Index = Inst - &Instructions[0];
+    return Index >= Instructions.size() ? Instructions.end()
+                                        : Instructions.begin() + Index;
+  }
+
   /// Replace an instruction with a sequence of instructions. Returns true
   /// if the instruction to be replaced was found and replaced.
   template <typename Itr>
   bool replaceInstruction(const MCInst *Inst, Itr Begin, Itr End) {
-    auto I = Instructions.end();
-    auto B = Instructions.begin();
-    while (I > B) {
-      --I;
-      if (&*I == Inst) {
-        adjustNumPseudos(*Inst, -1);
-        Instructions.insert(Instructions.erase(I), Begin, End);
-        adjustNumPseudos(Begin, End, 1);
-        return true;
-      }
+    auto I = findInstruction(Inst);
+    if (I != Instructions.end()) {
+      adjustNumPseudos(*Inst, -1);
+      Instructions.insert(Instructions.erase(I), Begin, End);
+      adjustNumPseudos(Begin, End, 1);
+      return true;
     }
     return false;
   }
@@ -639,6 +645,23 @@ public:
                           const std::vector<MCInst> &Replacement) {
     return replaceInstruction(Inst, Replacement.begin(), Replacement.end());
   }
+
+  /// Insert \p NewInst before \p At, which must be an existing instruction in
+  /// this BB. Return a pointer to the newly inserted instruction.
+  iterator insertInstruction(iterator At, MCInst &&NewInst) {
+    adjustNumPseudos(NewInst, 1);
+    return Instructions.emplace(At, std::move(NewInst));
+  }
+
+  /// Helper to retrieve any terminators in \p BB before \p Pos. This is used
+  /// to skip CFI instructions and to retrieve the first terminator instruction
+  /// in basic blocks with two terminators (conditional jump and unconditional
+  /// jump).
+  MCInst *getTerminatorBefore(MCInst *Pos);
+
+  /// Used to identify whether an instruction is before a terminator and whether
+  /// moving it to the end of the BB would render it dead code.
+  bool hasTerminatorAfter(MCInst *Pos);
 
   /// Split apart the instructions in this basic block starting at Inst.
   /// The instructions following Inst are removed and returned in a vector.

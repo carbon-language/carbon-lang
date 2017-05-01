@@ -14,6 +14,7 @@
 
 #include "DataflowAnalysis.h"
 #include "FrameAnalysis.h"
+#include "llvm/Support/Timer.h"
 
 namespace llvm {
 namespace bolt {
@@ -28,6 +29,18 @@ public:
       : DataflowAnalysis<LivenessAnalysis, BitVector, true>(BC, BF), FA(FA),
         NumRegs(BC.MRI->getNumRegs()) {}
   virtual ~LivenessAnalysis();
+
+  bool isAlive(ProgramPoint PP, MCPhysReg Reg) const {
+    BitVector BV = (*this->getStateAt(PP));
+    const BitVector &RegAliases = BC.MIA->getAliases(Reg, *BC.MRI);
+    BV &= RegAliases;
+    return BV.any();
+  }
+
+  void run() {
+    NamedRegionTimer T1("LA", "Dataflow", true);
+    DataflowAnalysis<LivenessAnalysis, BitVector, true>::run();
+  }
 
 protected:
   /// Reference to the result of stack frame analysis

@@ -13,6 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_DOMINATORANALYSIS_H
 
 #include "DataflowAnalysis.h"
+#include "llvm/Support/Timer.h"
 
 namespace llvm {
 namespace bolt {
@@ -60,13 +61,21 @@ public:
     return Result;
   }
 
-  bool doesADominatesB(const MCInst &A, const MCInst &B) {
-    return (*this->getStateAt(B))[this->ExprToIdx[&A]];
+  bool doesADominateB(const MCInst &A, unsigned BIdx) {
+    return this->count(BIdx, A);
   }
 
-  bool doesADominatesB(ProgramPoint A, const MCInst &B) {
+  bool doesADominateB(const MCInst &A, const MCInst &B) {
+    return this->count(B, A);
+  }
+
+  bool doesADominateB(const MCInst &A, ProgramPoint B) {
+    return this->count(B, A);
+  }
+
+  bool doesADominateB(ProgramPoint A, const MCInst &B) {
     if (A.isInst())
-      return doesADominatesB(*A.getInst(), B);
+      return doesADominateB(*A.getInst(), B);
 
     // This analysis keep track of which instructions dominates another
     // instruction, it doesn't keep track of BBs. So we need a non-empty
@@ -79,7 +88,7 @@ public:
       BB = *BB->succ_begin();
     }
     const MCInst &InstA = *BB->begin();
-    return doesADominatesB(InstA, B);
+    return doesADominateB(InstA, B);
   }
 
   void doForAllDominators(const MCInst &Inst,
@@ -87,6 +96,11 @@ public:
     for (auto I = this->expr_begin(Inst), E = this->expr_end(); I != E; ++I) {
       Task(**I);
     }
+  }
+
+  void run() {
+    NamedRegionTimer T1("DA", "Dataflow", true);
+    InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>::run();
   }
 
 private:

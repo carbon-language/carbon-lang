@@ -150,7 +150,7 @@ constexpr unsigned NoRegister = 0;
 
 constexpr const char *DynoStats::Desc[];
 constexpr unsigned BinaryFunction::MinAlign;
-  
+
 namespace {
 
 /// Gets debug line information for the instruction located at the given
@@ -535,8 +535,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     for (auto &Elmt : OffsetToCFI) {
       OS << format("    %08x:\t", Elmt.first);
       assert(Elmt.second < FrameInstructions.size() && "Incorrect CFI offset");
-      BinaryContext::printCFI(OS,
-                              FrameInstructions[Elmt.second].getOperation());
+      BinaryContext::printCFI(OS, FrameInstructions[Elmt.second]);
       OS << "\n";
     }
   } else {
@@ -544,7 +543,7 @@ void BinaryFunction::print(raw_ostream &OS, std::string Annotation,
     for (uint32_t I = 0, E = FrameInstructions.size(); I != E; ++I) {
       const MCCFIInstruction &CFI = FrameInstructions[I];
       OS << format("    %d:\t", I);
-      BinaryContext::printCFI(OS, CFI.getOperation());
+      BinaryContext::printCFI(OS, CFI);
       OS << "\n";
     }
   }
@@ -3442,6 +3441,54 @@ void BinaryFunction::updateLayout(LayoutType Type,
   updateLayoutIndices();
 }
 
+bool BinaryFunction::replaceJumpTableEntryIn(BinaryBasicBlock *BB,
+                                             BinaryBasicBlock *OldDest,
+                                             BinaryBasicBlock *NewDest) {
+  auto *Instr = BB->getLastNonPseudoInstr();
+  if (!Instr || !BC.MIA->isIndirectBranch(*Instr))
+    return false;
+  auto JTAddress = BC.MIA->getJumpTable(*Instr);
+  assert(JTAddress && "Invalid jump table address");
+  auto *JT = getJumpTableContainingAddress(JTAddress);
+  assert(JT && "No jump table structure for this indirect branch");
+  bool Patched = JT->replaceDestination(JTAddress, OldDest->getLabel(),
+                                        NewDest->getLabel());
+  assert(Patched && "Invalid entry to be replaced in jump table");
+  return true;
+}
+
+BinaryBasicBlock *BinaryFunction::splitEdge(BinaryBasicBlock *From,
+                                            BinaryBasicBlock *To) {
+  // Create intermediate BB
+  MCSymbol *Tmp = BC.Ctx->createTempSymbol("SplitEdge", true);
+  auto NewBB = createBasicBlock(0, Tmp);
+  auto NewBBPtr = NewBB.get();
+
+  // Update "From" BB
+  auto I = From->succ_begin();
+  auto BI = From->branch_info_begin();
+  for (; I != From->succ_end(); ++I) {
+    if (*I == To)
+      break;
+    ++BI;
+  }
+  assert(I != From->succ_end() && "Invalid CFG edge in splitEdge!");
+  uint64_t OrigCount{BI->Count};
+  uint64_t OrigMispreds{BI->MispredictedCount};
+  replaceJumpTableEntryIn(From, To, NewBBPtr);
+  From->replaceSuccessor(To, NewBBPtr, OrigCount, OrigMispreds);
+
+  NewBB->addSuccessor(To, OrigCount, OrigMispreds);
+  NewBB->setExecutionCount(OrigCount);
+  NewBB->setIsCold(From->isCold());
+
+  // Update CFI and BB layout with new intermediate BB
+  std::vector<std::unique_ptr<BinaryBasicBlock>> NewBBs;
+  NewBBs.emplace_back(std::move(NewBB));
+  insertBasicBlocks(From, std::move(NewBBs), true, true);
+  return NewBBPtr;
+}
+
 bool BinaryFunction::isSymbolValidInScope(const SymbolRef &Symbol,
                                           uint64_t SymbolSize) const {
   // Some symbols are tolerated inside function bodies, others are not.
@@ -3576,6 +3623,22 @@ BinaryFunction::JumpTable::getEntriesForAddress(const uint64_t Addr) const {
   }
 
   return std::make_pair(StartIndex, EndIndex);
+}
+
+bool BinaryFunction::JumpTable::replaceDestination(uint64_t JTAddress,
+                                                   const MCSymbol *OldDest,
+                                                   MCSymbol *NewDest) {
+  bool Patched{false};
+  const auto Range = getEntriesForAddress(JTAddress);
+  for (auto I = &Entries[Range.first], E = &Entries[Range.second];
+       I != E; ++I) {
+    auto &Entry = *I;
+    if (Entry == OldDest) {
+      Patched = true;
+      Entry = NewDest;
+    }
+  }
+  return Patched;
 }
 
 void BinaryFunction::JumpTable::updateOriginal(BinaryContext &BC) {

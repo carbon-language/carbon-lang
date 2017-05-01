@@ -13,6 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGDEFORUSE_H
 
 #include "DataflowAnalysis.h"
+#include "llvm/Support/Timer.h"
 
 namespace llvm {
 namespace bolt {
@@ -48,6 +49,11 @@ public:
 
   bool doesAReachesB(const MCInst &A, const MCInst &B) {
     return (*this->getStateAt(B))[this->ExprToIdx[&A]];
+  }
+
+  void run() {
+    NamedRegionTimer T1("RD", "Dataflow", true);
+    InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>::run();
   }
 
 protected:

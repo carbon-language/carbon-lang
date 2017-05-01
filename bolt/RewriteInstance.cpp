@@ -1659,6 +1659,7 @@ void RewriteInstance::readDebugInfo() {
 void RewriteInstance::disassembleFunctions() {
   // Disassemble every function and build it's control flow graph.
   TotalScore = 0;
+  BC->SumExecutionCount = 0;
   for (auto &BFI : BinaryFunctions) {
     BinaryFunction &Function = BFI.second;
 
@@ -1803,6 +1804,7 @@ void RewriteInstance::disassembleFunctions() {
     }
 
     TotalScore += Function.getFunctionScore();
+    BC->SumExecutionCount += Function.getKnownExecutionCount();
 
   } // Iterate over all functions
 
@@ -1821,6 +1823,7 @@ void RewriteInstance::disassembleFunctions() {
     else
       ++NumStaleProfileFunctions;
   }
+  BC->NumProfiledFuncs = ProfiledFunctions.size();
 
   const auto NumAllProfiledFunctions =
                             ProfiledFunctions.size() + NumStaleProfileFunctions;

@@ -12,6 +12,9 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGINSNS_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGINSNS_H
 
+#include "DataflowAnalysis.h"
+#include "llvm/Support/Timer.h"
+
 namespace llvm {
 namespace bolt {
 
@@ -35,6 +38,11 @@ public:
     const BinaryBasicBlock *BB = InsnToBB[&Inst];
     assert(BB && "Unknown instruction");
     return isInLoop(*BB);
+  }
+
+  void run() {
+    NamedRegionTimer T1("RI", "Dataflow", true);
+    InstrsDataflowAnalysis<ReachingInsns<Backward>, Backward>::run();
   }
 
 protected:

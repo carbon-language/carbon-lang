@@ -14,10 +14,12 @@
 
 #include "FrameAnalysis.h"
 #include "ReachingDefOrUse.h"
+#include "StackReachingUses.h"
 #include "DominatorAnalysis.h"
 #include "StackPointerTracking.h"
 #include "ReachingInsns.h"
 #include "LivenessAnalysis.h"
+#include "StackAllocationAnalysis.h"
 
 namespace llvm {
 namespace bolt {
@@ -33,11 +35,13 @@ class DataflowInfoManager {
   std::unique_ptr<ReachingDefOrUse</*Def=*/true>> RD;
   std::unique_ptr<ReachingDefOrUse</*Def=*/false>> RU;
   std::unique_ptr<LivenessAnalysis> LA;
+  std::unique_ptr<StackReachingUses> SRU;
   std::unique_ptr<DominatorAnalysis</*Bwd=*/false>> DA;
   std::unique_ptr<DominatorAnalysis</*Bwd=*/true>> PDA;
   std::unique_ptr<StackPointerTracking> SPT;
   std::unique_ptr<ReachingInsns<false>> RI;
   std::unique_ptr<ReachingInsns<true>> RIB;
+  std::unique_ptr<StackAllocationAnalysis> SAA;
   std::unique_ptr<std::unordered_map<const MCInst *, BinaryBasicBlock *>>
       InsnToBB;
 
@@ -45,12 +49,20 @@ public:
   DataflowInfoManager(const FrameAnalysis *FA, const BinaryContext &BC,
                       BinaryFunction &BF) : FA(FA), BC(BC), BF(BF) {};
 
+  /// Helper function to fetch the parent BB associated with a program point
+  /// If PP is a BB itself, then return itself (cast to a BinaryBasicBlock)
+  BinaryBasicBlock *getParentBB(ProgramPoint PP) {
+    return PP.isBB() ? PP.getBB() : getInsnToBBMap()[PP.getInst()];
+  }
+
   ReachingDefOrUse</*Def=*/true> &getReachingDefs();
   void invalidateReachingDefs();
   ReachingDefOrUse</*Def=*/false> &getReachingUses();
   void invalidateReachingUses();
   LivenessAnalysis &getLivenessAnalysis();
   void invalidateLivenessAnalysis();
+  StackReachingUses &getStackReachingUses();
+  void invalidateStackReachingUses();
   DominatorAnalysis<false> &getDominatorAnalysis();
   void invalidateDominatorAnalysis();
   DominatorAnalysis<true> &getPostDominatorAnalysis();
@@ -61,6 +73,8 @@ public:
   void invalidateReachingInsns();
   ReachingInsns<true> &getReachingInsnsBackwards();
   void invalidateReachingInsnsBackwards();
+  StackAllocationAnalysis &getStackAllocationAnalysis();
+  void invalidateStackAllocationAnalysis();
   std::unordered_map<const MCInst *, BinaryBasicBlock *> &getInsnToBBMap();
   void invalidateInsnToBBMap();
   void invalidateAll();

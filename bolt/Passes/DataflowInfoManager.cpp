@@ -20,10 +20,7 @@ ReachingDefOrUse</*Def=*/true> &DataflowInfoManager::getReachingDefs() {
     return *RD;
   assert(FA && "FrameAnalysis required");
   RD.reset(new ReachingDefOrUse<true>(*FA, BC, BF));
-  {
-    NamedRegionTimer T1("RD", "Dataflow", true);
-    RD->run();
-  }
+  RD->run();
   return *RD;
 }
 
@@ -36,10 +33,7 @@ ReachingDefOrUse</*Def=*/false> &DataflowInfoManager::getReachingUses() {
     return *RU;
   assert(FA && "FrameAnalysis required");
   RU.reset(new ReachingDefOrUse<false>(*FA, BC, BF));
-  {
-    NamedRegionTimer T1("RU", "Dataflow", true);
-    RU->run();
-  }
+  RU->run();
   return *RU;
 }
 
@@ -52,10 +46,7 @@ LivenessAnalysis &DataflowInfoManager::getLivenessAnalysis() {
     return *LA;
   assert(FA && "FrameAnalysis required");
   LA.reset(new LivenessAnalysis(*FA, BC, BF));
-  {
-    NamedRegionTimer T1("LA", "Dataflow", true);
-    LA->run();
-  }
+  LA->run();
   return *LA;
 }
 
@@ -63,14 +54,24 @@ void DataflowInfoManager::invalidateLivenessAnalysis() {
   LA.reset(nullptr);
 }
 
+StackReachingUses &DataflowInfoManager::getStackReachingUses() {
+  if (SRU)
+    return *SRU;
+  assert(FA && "FrameAnalysis required");
+  SRU.reset(new StackReachingUses(*FA, BC, BF));
+  SRU->run();
+  return *SRU;
+}
+
+void DataflowInfoManager::invalidateStackReachingUses() {
+  SRU.reset(nullptr);
+}
+
 DominatorAnalysis<false> &DataflowInfoManager::getDominatorAnalysis() {
   if (DA)
     return *DA;
   DA.reset(new DominatorAnalysis<false>(BC, BF));
-  {
-    NamedRegionTimer T1("DA", "Dataflow", true);
-    DA->run();
-  }
+  DA->run();
   return *DA;
 }
 
@@ -82,10 +83,7 @@ DominatorAnalysis<true> &DataflowInfoManager::getPostDominatorAnalysis() {
   if (PDA)
     return *PDA;
   PDA.reset(new DominatorAnalysis<true>(BC, BF));
-  {
-    NamedRegionTimer T1("PDA", "Dataflow", true);
-    PDA->run();
-  }
+  PDA->run();
   return *PDA;
 }
 
@@ -97,14 +95,12 @@ StackPointerTracking &DataflowInfoManager::getStackPointerTracking() {
   if (SPT)
     return *SPT;
   SPT.reset(new StackPointerTracking(BC, BF));
-  {
-    NamedRegionTimer T1("SPT", "Dataflow", true);
-    SPT->run();
-  }
+  SPT->run();
   return *SPT;
 }
 
 void DataflowInfoManager::invalidateStackPointerTracking() {
+  invalidateStackAllocationAnalysis();
   SPT.reset(nullptr);
 }
 
@@ -112,10 +108,7 @@ ReachingInsns<false> &DataflowInfoManager::getReachingInsns() {
   if (RI)
     return *RI;
   RI.reset(new ReachingInsns<false>(BC, BF));
-  {
-    NamedRegionTimer T1("RI", "Dataflow", true);
-    RI->run();
-  }
+  RI->run();
   return *RI;
 }
 
@@ -127,15 +120,24 @@ ReachingInsns<true> &DataflowInfoManager::getReachingInsnsBackwards() {
   if (RIB)
     return *RIB;
   RIB.reset(new ReachingInsns<true>(BC, BF));
-  {
-    NamedRegionTimer T1("RIB", "Dataflow", true);
-    RIB->run();
-  }
+  RIB->run();
   return *RIB;
 }
 
 void DataflowInfoManager::invalidateReachingInsnsBackwards() {
   RIB.reset(nullptr);
+}
+
+StackAllocationAnalysis &DataflowInfoManager::getStackAllocationAnalysis() {
+  if (SAA)
+    return *SAA;
+  SAA.reset(new StackAllocationAnalysis(BC, BF, getStackPointerTracking()));
+  SAA->run();
+  return *SAA;
+}
+
+void DataflowInfoManager::invalidateStackAllocationAnalysis() {
+  SAA.reset(nullptr);
 }
 
 std::unordered_map<const MCInst *, BinaryBasicBlock *> &
@@ -158,11 +160,13 @@ void DataflowInfoManager::invalidateAll() {
   invalidateReachingDefs();
   invalidateReachingUses();
   invalidateLivenessAnalysis();
+  invalidateStackReachingUses();
   invalidateDominatorAnalysis();
   invalidatePostDominatorAnalysis();
   invalidateStackPointerTracking();
   invalidateReachingInsns();
   invalidateReachingInsnsBackwards();
+  invalidateStackAllocationAnalysis();
   invalidateInsnToBBMap();
 }
 

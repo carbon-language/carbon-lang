@@ -13,6 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_STACKPOINTERTRACKING_H
 
 #include "DataflowAnalysis.h"
+#include "llvm/Support/Timer.h"
 
 namespace llvm {
 namespace bolt {
@@ -190,6 +191,11 @@ class StackPointerTracking
 public:
   StackPointerTracking(const BinaryContext &BC, BinaryFunction &BF);
   virtual ~StackPointerTracking() {}
+
+  void run() {
+    NamedRegionTimer T1("SPT", "Dataflow", true);
+    StackPointerTrackingBase<StackPointerTracking>::run();
+  }
 };
 
 } // end namespace bolt

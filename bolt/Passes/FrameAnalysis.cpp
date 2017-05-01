@@ -215,6 +215,12 @@ public:
 
 void FrameAnalysis::addArgAccessesFor(const BinaryContext &BC, MCInst &Inst,
                                       ArgAccesses &&AA) {
+  if (auto OldAA = getArgAccessesFor(BC, Inst)) {
+    if (OldAA->AssumeEverything)
+      return;
+    *OldAA = std::move(AA);
+    return;
+  }
   if (AA.AssumeEverything) {
     // Index 0 in ArgAccessesVector represents an "assumeeverything" entry
     BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry", 0U);
@@ -222,7 +228,7 @@ void FrameAnalysis::addArgAccessesFor(const BinaryContext &BC, MCInst &Inst,
   }
   BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "ArgAccessEntry",
                         (unsigned)ArgAccessesVector.size());
-  ArgAccessesVector.emplace_back(AA);
+  ArgAccessesVector.emplace_back(std::move(AA));
 }
 
 void FrameAnalysis::addArgInStackAccessFor(const BinaryContext &BC,
@@ -329,29 +335,39 @@ BitVector FrameAnalysis::getFunctionClobberList(const BinaryContext &BC,
 
 void FrameAnalysis::buildClobberMap(const BinaryContext &BC) {
   std::queue<BinaryFunction *> Queue;
+  std::set<BinaryFunction *> InQueue;
 
   for (auto *Func : TopologicalCGOrder) {
     Queue.push(Func);
+    InQueue.insert(Func);
   }
 
   while (!Queue.empty()) {
     auto *Func = Queue.front();
     Queue.pop();
+    InQueue.erase(Func);
 
     BitVector RegsKilled = getFunctionClobberList(BC, Func);
-    bool Updated = ClobberAnalysisOnly ? false : computeArgsAccessed(BC, *Func);
+    bool ArgsUpdated = ClobberAnalysisOnly ? false : computeArgsAccessed(BC, *Func);
+    bool RegsUpdated = false;
 
     if (RegsKilledMap.find(Func) == RegsKilledMap.end()) {
       RegsKilledMap[Func] = std::move(RegsKilled);
-      continue;
+    } else {
+      RegsUpdated = RegsKilledMap[Func] != RegsKilled;
+      if (RegsUpdated)
+        RegsKilledMap[Func] = std::move(RegsKilled);
     }
 
-    if (RegsKilledMap[Func] != RegsKilled || Updated) {
+    if (RegsUpdated || ArgsUpdated) {
       for (auto Caller : Cg.predecessors(Cg.getNodeId(Func))) {
-        Queue.push(Cg.nodeIdToFunc(Caller));
+        BinaryFunction *CallerFunc = Cg.nodeIdToFunc(Caller);
+        if (!InQueue.count(CallerFunc)) {
+          InQueue.insert(CallerFunc);
+          Queue.push(CallerFunc);
+        }
       }
     }
-    RegsKilledMap[Func] = std::move(RegsKilled);
   }
 
   if (opts::Verbosity == 0) {
@@ -453,10 +469,11 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryContext &BC,
       break;
     }
     DEBUG(dbgs() << "Added arg in stack access annotation "
-                  << CurOffset + Elem.first << "\n");
+                 << CurOffset + Elem.first << "\n");
     addArgInStackAccessFor(
-        BC, Inst, ArgInStackAccess{/*StackOffset=*/CurOffset + Elem.first,
-                                   /*Size=*/Elem.second});
+        BC, Inst,
+        ArgInStackAccess{/*StackOffset=*/CurOffset + Elem.first,
+                         /*Size=*/Elem.second});
   }
   return Changed;
 }

@@ -359,6 +359,12 @@ public:
                       std::set<uint64_t> &LargeFunctions) override;
 };
 
+enum FrameOptimizationType : char {
+  FOP_NONE, /// Don't perform FOP.
+  FOP_HOT,  /// Perform FOP on hot functions.
+  FOP_ALL   /// Perform FOP on all functions.
+};
+
 } // namespace bolt
 } // namespace llvm
 

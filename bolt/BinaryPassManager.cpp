@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "BinaryPassManager.h"
+#include "Passes/AllocCombiner.h"
 #include "Passes/FrameOptimizer.h"
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
@@ -59,12 +60,6 @@ NeverPrint("never-print",
 static cl::opt<bool>
 OptimizeBodylessFunctions("optimize-bodyless-functions",
   cl::desc("optimize functions that just do a tail call"),
-  cl::ZeroOrMore,
-  cl::cat(BoltOptCategory));
-
-static cl::opt<bool>
-OptimizeFrameAccesses("frame-opt",
-  cl::desc("optimize stack frame accesses"),
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
@@ -331,9 +326,6 @@ void BinaryFunctionPassManager::runAllPasses(
   // fix branches consistency internally.
   Manager.registerPass(llvm::make_unique<FixupBranches>(PrintAfterBranchFixup));
 
-  Manager.registerPass(llvm::make_unique<FrameOptimizerPass>(PrintFOP),
-                       OptimizeFrameAccesses);
-
   // This pass should come close to last since it uses the estimated hot
   // size of a function to determine the order.  It should definitely
   // also happen after any changes to the call graph are made, e.g. inlining.
@@ -355,6 +347,14 @@ void BinaryFunctionPassManager::runAllPasses(
 
   // This pass should always run last.*
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));
+
+  // FrameOptimizer has an implicit dependency on FinalizeFunctions.
+  // FrameOptimizer move values around and needs to update CFIs. To do this, it
+  // must read CFI, interpret it and rewrite it, so CFIs need to be correctly
+  // placed according to the final layout.
+  Manager.registerPass(llvm::make_unique<FrameOptimizerPass>(PrintFOP));
+
+  Manager.registerPass(llvm::make_unique<AllocCombinerPass>(PrintFOP));
 
   // *except for this pass.  This pass turns tail calls into jumps which
   // makes them invisible to function reordering.

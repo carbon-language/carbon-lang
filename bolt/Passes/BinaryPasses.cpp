@@ -584,9 +584,11 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         auto BI = PredBB->branch_info_begin();
         std::swap(*BI, *(BI + 1));
       } else {
-        // Change destination of the unconditional branch.
+        // Change destination of the conditional branch.
         MIA->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
       }
+      // Annotate it, so "isCall" returns true for this jcc
+      MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "IsCTC", true);
 
       // Remove the unused successor which may be eliminated later
       // if there are no other users.

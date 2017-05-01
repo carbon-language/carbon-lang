@@ -239,24 +239,57 @@ void BinaryContext::preprocessDebugInfo(
   }
 }
 
-void BinaryContext::printCFI(raw_ostream &OS, uint32_t Operation) {
-  switch(Operation) {
-    case MCCFIInstruction::OpSameValue:        OS << "OpSameValue";       break;
-    case MCCFIInstruction::OpRememberState:    OS << "OpRememberState";   break;
-    case MCCFIInstruction::OpRestoreState:     OS << "OpRestoreState";    break;
-    case MCCFIInstruction::OpOffset:           OS << "OpOffset";          break;
-    case MCCFIInstruction::OpDefCfaRegister:   OS << "OpDefCfaRegister";  break;
-    case MCCFIInstruction::OpDefCfaOffset:     OS << "OpDefCfaOffset";    break;
-    case MCCFIInstruction::OpDefCfa:           OS << "OpDefCfa";          break;
-    case MCCFIInstruction::OpRelOffset:        OS << "OpRelOffset";       break;
-    case MCCFIInstruction::OpAdjustCfaOffset:  OS << "OfAdjustCfaOffset"; break;
-    case MCCFIInstruction::OpEscape:           OS << "OpEscape";          break;
-    case MCCFIInstruction::OpRestore:          OS << "OpRestore";         break;
-    case MCCFIInstruction::OpUndefined:        OS << "OpUndefined";       break;
-    case MCCFIInstruction::OpRegister:         OS << "OpRegister";        break;
-    case MCCFIInstruction::OpWindowSave:       OS << "OpWindowSave";      break;
-    case MCCFIInstruction::OpGnuArgsSize:      OS << "OpGnuArgsSize";     break;
-    default:                                   OS << "Op#" << Operation; break;
+void BinaryContext::printCFI(raw_ostream &OS, const MCCFIInstruction &Inst) {
+  uint32_t Operation = Inst.getOperation();
+  switch (Operation) {
+  case MCCFIInstruction::OpSameValue:
+    OS << "OpSameValue Reg" << Inst.getRegister();
+    break;
+  case MCCFIInstruction::OpRememberState:
+    OS << "OpRememberState";
+    break;
+  case MCCFIInstruction::OpRestoreState:
+    OS << "OpRestoreState";
+    break;
+  case MCCFIInstruction::OpOffset:
+    OS << "OpOffset Reg" << Inst.getRegister() << " " << Inst.getOffset();
+    break;
+  case MCCFIInstruction::OpDefCfaRegister:
+    OS << "OpDefCfaRegister Reg" << Inst.getRegister();
+    break;
+  case MCCFIInstruction::OpDefCfaOffset:
+    OS << "OpDefCfaOffset " << Inst.getOffset();
+    break;
+  case MCCFIInstruction::OpDefCfa:
+    OS << "OpDefCfa Reg" << Inst.getRegister() << " " << Inst.getOffset();
+    break;
+  case MCCFIInstruction::OpRelOffset:
+    OS << "OpRelOffset";
+    break;
+  case MCCFIInstruction::OpAdjustCfaOffset:
+    OS << "OfAdjustCfaOffset";
+    break;
+  case MCCFIInstruction::OpEscape:
+    OS << "OpEscape";
+    break;
+  case MCCFIInstruction::OpRestore:
+    OS << "OpRestore";
+    break;
+  case MCCFIInstruction::OpUndefined:
+    OS << "OpUndefined";
+    break;
+  case MCCFIInstruction::OpRegister:
+    OS << "OpRegister";
+    break;
+  case MCCFIInstruction::OpWindowSave:
+    OS << "OpWindowSave";
+    break;
+  case MCCFIInstruction::OpGnuArgsSize:
+    OS << "OpGnuArgsSize";
+    break;
+  default:
+    OS << "Op#" << Operation;
+    break;
   }
 }
 
@@ -274,7 +307,7 @@ void BinaryContext::printInstruction(raw_ostream &OS,
     uint32_t Offset = Instruction.getOperand(0).getImm();
     OS << "\t!CFI\t$" << Offset << "\t; ";
     if (Function)
-      printCFI(OS, Function->getCFIFor(Instruction)->getOperation());
+      printCFI(OS, *Function->getCFIFor(Instruction));
     OS << "\n";
     return;
   }

@@ -148,8 +148,9 @@ BinaryBasicBlock *BinaryBasicBlock::getLandingPad(const MCSymbol *Label) const {
 }
 
 int32_t BinaryBasicBlock::getCFIStateAtInstr(const MCInst *Instr) const {
-  assert(getFunction()->getState() == BinaryFunction::State::CFG &&
-         "can only calculate CFI state when function is in active CFG state");
+  assert(
+      getFunction()->getState() >= BinaryFunction::State::CFG &&
+      "can only calculate CFI state when function is in or past the CFG state");
 
   const auto &FDEProgram = getFunction()->getFDEProgram();
 
@@ -314,6 +315,38 @@ bool BinaryBasicBlock::analyzeBranch(const MCSymbol *&TBB,
                                      MCInst *&UncondBranch) {
   auto &MIA = Function->getBinaryContext().MIA;
   return MIA->analyzeBranch(Instructions, TBB, FBB, CondBranch, UncondBranch);
+}
+
+MCInst *BinaryBasicBlock::getTerminatorBefore(MCInst *Pos) {
+  auto &BC = Function->getBinaryContext();
+  auto Itr = rbegin();
+  bool Check = Pos ? false : true;
+  MCInst *FirstTerminator{nullptr};
+  while (Itr != rend()) {
+    if (!Check) {
+      if (&*Itr == Pos)
+        Check = true;
+      ++Itr;
+      continue;
+    }
+    if (BC.MIA->isTerminator(*Itr))
+      FirstTerminator = &*Itr;
+    ++Itr;
+  }
+  return FirstTerminator;
+}
+
+bool BinaryBasicBlock::hasTerminatorAfter(MCInst *Pos) {
+  auto &BC = Function->getBinaryContext();
+  auto Itr = rbegin();
+  while (Itr != rend()) {
+    if (&*Itr == Pos)
+      return false;
+    if (BC.MIA->isTerminator(*Itr))
+      return true;
+    ++Itr;
+  }
+  return false;
 }
 
 bool BinaryBasicBlock::swapConditionalSuccessors() {

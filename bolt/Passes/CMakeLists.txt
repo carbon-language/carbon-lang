@@ -1,4 +1,5 @@
 add_llvm_library(LLVMBOLTPasses
+  AllocCombiner.cpp
   BinaryPasses.cpp
   BinaryFunctionCallGraph.cpp
   CallGraph.cpp
@@ -14,7 +15,11 @@ add_llvm_library(LLVMBOLTPasses
   PettisAndHansen.cpp
   ReorderAlgorithm.cpp
   ReorderFunctions.cpp
+  ShrinkWrapping.cpp
+  StackAllocationAnalysis.cpp
+  StackAvailableExpressions.cpp
   StackPointerTracking.cpp
+  StackReachingUses.cpp
   )
 
 include_directories( ${LLVM_MAIN_SRC_DIR}/tools/llvm-bolt )
