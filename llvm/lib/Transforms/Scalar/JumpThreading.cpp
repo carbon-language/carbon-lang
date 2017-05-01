@@ -1250,6 +1250,8 @@ bool JumpThreadingPass::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
 
   BasicBlock *OnlyDest = nullptr;
   BasicBlock *MultipleDestSentinel = (BasicBlock*)(intptr_t)~0ULL;
+  Constant *OnlyVal = nullptr;
+  Constant *MultipleVal = (Constant *)(intptr_t)~0ULL;
 
   for (const auto &PredValue : PredValues) {
     BasicBlock *Pred = PredValue.second;
@@ -1277,10 +1279,17 @@ bool JumpThreadingPass::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
     }
 
     // If we have exactly one destination, remember it for efficiency below.
-    if (PredToDestList.empty())
+    if (PredToDestList.empty()) {
       OnlyDest = DestBB;
-    else if (OnlyDest != DestBB)
-      OnlyDest = MultipleDestSentinel;
+      OnlyVal = Val;
+    } else {
+      if (OnlyDest != DestBB)
+        OnlyDest = MultipleDestSentinel;
+      // It possible we have same destination, but different value, e.g. default
+      // case in switchinst.
+      if (Val != OnlyVal)
+        OnlyVal = MultipleVal;
+    }
 
     PredToDestList.push_back(std::make_pair(Pred, DestBB));
   }
@@ -1310,11 +1319,18 @@ bool JumpThreadingPass::ProcessThreadableEdges(Value *Cond, BasicBlock *BB,
 
       // If the condition is now dead due to the removal of the old terminator,
       // erase it.
-      auto *CondInst = dyn_cast<Instruction>(Cond);
-      if (CondInst && CondInst->use_empty())
-        CondInst->eraseFromParent();
-      // FIXME: in case this instruction is defined in the current BB and it
-      // resolves to a single value from all predecessors, we can do RAUW.
+      if (auto *CondInst = dyn_cast<Instruction>(Cond)) {
+        if (CondInst->use_empty() && !CondInst->mayHaveSideEffects())
+          CondInst->eraseFromParent();
+        else if (OnlyVal && OnlyVal != MultipleVal &&
+                 CondInst->getParent() == BB) {
+          // If we just learned Cond is the same value for all uses of the
+          // condition, replace it with a constant value
+          CondInst->replaceAllUsesWith(OnlyVal);
+          if (!CondInst->mayHaveSideEffects())
+            CondInst->eraseFromParent();
+        }
+      }
       return true;
     }
   }
