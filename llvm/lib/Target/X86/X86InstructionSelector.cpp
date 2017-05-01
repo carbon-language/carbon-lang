@@ -400,7 +400,7 @@ unsigned X86InstructionSelector::getLoadStoreOp(LLT &Ty, const RegisterBank &RB,
   } else if (Ty == LLT::scalar(16)) {
     if (X86::GPRRegBankID == RB.getID())
       return Isload ? X86::MOV16rm : X86::MOV16mr;
-  } else if (Ty == LLT::scalar(32)) {
+  } else if (Ty == LLT::scalar(32) || Ty == LLT::pointer(0, 32)) {
     if (X86::GPRRegBankID == RB.getID())
       return Isload ? X86::MOV32rm : X86::MOV32mr;
     if (X86::VECRRegBankID == RB.getID())
@@ -408,7 +408,7 @@ unsigned X86InstructionSelector::getLoadStoreOp(LLT &Ty, const RegisterBank &RB,
                                  : HasAVX ? X86::VMOVSSrm : X86::MOVSSrm)
                     : (HasAVX512 ? X86::VMOVSSZmr
                                  : HasAVX ? X86::VMOVSSmr : X86::MOVSSmr);
-  } else if (Ty == LLT::scalar(64)) {
+  } else if (Ty == LLT::scalar(64) || Ty == LLT::pointer(0, 64)) {
     if (X86::GPRRegBankID == RB.getID())
       return Isload ? X86::MOV64rm : X86::MOV64mr;
     if (X86::VECRRegBankID == RB.getID())
