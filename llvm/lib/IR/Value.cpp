@@ -820,8 +820,8 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
     switch (Entry->getKind()) {
     case Assert:
       break;
-    case Weak:
-      // Weak just goes to null, which will unlink it from the list.
+    case WeakTracking:
+      // WeakTracking just goes to null, which will unlink it from the list.
       Entry->operator=(nullptr);
       break;
     case Callback:
@@ -871,7 +871,7 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
     case Assert:
       // Asserting handle does not follow RAUW implicitly.
       break;
-    case Weak:
+    case WeakTracking:
       // Weak goes to the new value, which will unlink it from Old's list.
       Entry->operator=(New);
       break;
@@ -888,12 +888,12 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
   if (Old->HasValueHandle)
     for (Entry = pImpl->ValueHandles[Old]; Entry; Entry = Entry->Next)
       switch (Entry->getKind()) {
-      case Weak:
+      case WeakTracking:
         dbgs() << "After RAUW from " << *Old->getType() << " %"
                << Old->getName() << " to " << *New->getType() << " %"
                << New->getName() << "\n";
         llvm_unreachable(
-            "A weak value handle still pointed to the  old value!\n");
+            "A weak tracking value handle still pointed to the  old value!\n");
       default:
         break;
       }
