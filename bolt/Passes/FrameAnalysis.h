@@ -92,7 +92,7 @@ raw_ostream &operator<<(raw_ostream &OS,
 /// Initialization:
 ///
 ///   FrameAnalysis FA(PrintPass);
-///   RA.runOnFunctions(BC, BFs, LargeFunctions);
+///   FA.runOnFunctions(BC, BFs, LargeFunctions);
 ///
 /// Usage (fetching frame access information about a given instruction):
 ///
@@ -155,6 +155,11 @@ class FrameAnalysis : public BinaryFunctionPass {
   uint64_t CountFunctionsFailedRestoreFI{0};
   uint64_t CountDenominator{0};
 
+  /// If this flag is set to true, the analysis will never run completely,
+  /// but will stop after callgraph and a clobber analysis for every function
+  /// has been computed.
+  bool ClobberAnalysisOnly{false};
+
   /// Convenience functions for appending MCAnnotations to instructions with
   /// our specific data
   void addArgAccessesFor(const BinaryContext &BC, MCInst &Inst,
@@ -203,8 +208,10 @@ class FrameAnalysis : public BinaryFunctionPass {
   bool restoreFrameIndex(const BinaryContext &BC, BinaryFunction &BF);
 
 public:
-  explicit FrameAnalysis(const cl::opt<bool> &PrintPass)
-      : BinaryFunctionPass(PrintPass) {
+  explicit FrameAnalysis(const cl::opt<bool> &PrintPass,
+                         bool ClobberAnalysisOnly=false)
+      : BinaryFunctionPass(PrintPass),
+        ClobberAnalysisOnly(ClobberAnalysisOnly) {
     // Position 0 of the vector should be always associated with "assume access
     // everything".
     ArgAccessesVector.emplace_back(ArgAccesses(/*AssumeEverything*/ true));

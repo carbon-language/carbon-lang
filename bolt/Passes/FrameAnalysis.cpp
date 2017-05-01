@@ -404,7 +404,7 @@ void FrameAnalysis::buildClobberMap(const BinaryContext &BC) {
     Queue.pop();
 
     BitVector RegsKilled = getFunctionClobberList(BC, Func);
-    bool Updated = computeArgsAccessed(BC, *Func);
+    bool Updated = ClobberAnalysisOnly ? false : computeArgsAccessed(BC, *Func);
 
     if (RegsKilledMap.find(Func) == RegsKilledMap.end()) {
       RegsKilledMap[Func] = std::move(RegsKilled);
@@ -652,6 +652,10 @@ void FrameAnalysis::runOnFunctions(BinaryContext &BC,
     NamedRegionTimer T1("build clobber map", "FOP breakdown", true);
     buildClobberMap(BC);
   }
+
+  if (ClobberAnalysisOnly)
+    return;
+
   for (auto &I : BFs) {
     auto Count = I.second.getExecutionCount();
     if (Count != BinaryFunction::COUNT_NO_PROFILE)

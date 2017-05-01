@@ -565,6 +565,7 @@ private:
   ///
   /// The jump table may include other jump tables that are referenced by
   /// a different label at a different offset in this jump table.
+public:
   struct JumpTable {
     enum JumpTableType : char {
       JTT_NORMAL,
@@ -634,6 +635,7 @@ private:
     /// Print for debugging purposes.
     void print(raw_ostream &OS) const;
   };
+private:
 
   /// All compound jump tables for this function.
   /// <OriginalAddress> -> <JumpTable>

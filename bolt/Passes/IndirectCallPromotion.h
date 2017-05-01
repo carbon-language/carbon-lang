@@ -117,15 +117,17 @@ class IndirectCallPromotion : public BinaryFunctionPass {
     uint64_t Mispreds{0};
     uint64_t Branches{0};
     BranchHistories Histories;
+    // Indices in the jmp table (jt only)
+    std::vector<uint64_t> JTIndex;
     bool isValid() const {
       return From.isValid() && To.isValid();
     }
     Callsite(BinaryFunction &BF, const BranchInfo &BI);
     Callsite(const Location &From, const Location &To,
              uint64_t Mispreds, uint64_t Branches,
-             const BranchHistories &Histories)
+             const BranchHistories &Histories, uint64_t JTIndex)
     : From(From), To(To), Mispreds(Mispreds), Branches(Branches),
-      Histories(Histories) { }
+      Histories(Histories), JTIndex(1, JTIndex) { }
   };
 
   std::unordered_set<const BinaryFunction *> Modified;

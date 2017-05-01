@@ -771,6 +771,11 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
                                      &DispExpr))
     return IndirectBranchType::UNKNOWN;
 
+  // Do not set annotate with index reg if address was precomputed earlier
+  // and reg may not be live at the jump site.
+  if (MemLocInstr != &Instruction)
+    IndexRegNum = 0;
+
   if ((BaseRegNum != bolt::NoRegister && BaseRegNum != RIPRegister) ||
       SegRegNum != bolt::NoRegister)
     return IndirectBranchType::UNKNOWN;
@@ -800,7 +805,7 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
 
   // Check if there's already a jump table registered at this address.
   if (auto *JT = getJumpTableContainingAddress(ArrayStart)) {
-      auto JTOffset = ArrayStart - JT->Address;
+    auto JTOffset = ArrayStart - JT->Address;
     if (Type == IndirectBranchType::POSSIBLE_PIC_JUMP_TABLE && JTOffset != 0) {
         // Adjust the size of this jump table and create a new one if necessary.
         // We cannot re-use the entries since the offsets are relative to the
@@ -829,7 +834,7 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
       }
 
       BC.MIA->replaceMemOperandDisp(*MemLocInstr, LI->second, BC.Ctx.get());
-      BC.MIA->setJumpTable(Instruction, ArrayStart);
+      BC.MIA->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
 
       JTSites.emplace_back(Offset, ArrayStart);
 
@@ -912,7 +917,7 @@ BinaryFunction::analyzeIndirectBranch(MCInst &Instruction,
                                              std::move(JTOffsetCandidates),
                                              {{0, JTStartLabel}}});
     BC.MIA->replaceMemOperandDisp(*MemLocInstr, JTStartLabel, BC.Ctx.get());
-    BC.MIA->setJumpTable(Instruction, ArrayStart);
+    BC.MIA->setJumpTable(BC.Ctx.get(), Instruction, ArrayStart, IndexRegNum);
 
     JTSites.emplace_back(Offset, ArrayStart);
 

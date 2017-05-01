@@ -29,8 +29,9 @@ namespace bolt {
 
 /// An optimization/analysis pass that runs on functions.
 class BinaryFunctionPass {
-  const cl::opt<bool> &PrintPass;
 protected:
+  const cl::opt<bool> &PrintPass;
+
   explicit BinaryFunctionPass(const cl::opt<bool> &PrintPass)
     : PrintPass(PrintPass) { }
 

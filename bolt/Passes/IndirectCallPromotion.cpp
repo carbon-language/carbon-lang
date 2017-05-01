@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndirectCallPromotion.h"
+#include "DataflowInfoManager.h"
 #include "llvm/Support/Options.h"
 
 #define DEBUG_TYPE "ICP"
@@ -90,6 +91,12 @@ ICPOldCodeSequence(
     cl::Hidden,
     cl::cat(BoltOptCategory));
 
+static cl::opt<bool> ICPJumpTablesByTarget(
+    "icp-jump-tables-targets",
+    cl::desc(
+        "for jump tables, optimize indirect jmp targets instead of indices"),
+    cl::init(false), cl::ZeroOrMore, cl::Hidden, cl::cat(BoltOptCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -125,19 +132,27 @@ IndirectCallPromotion::getCallTargets(
   std::vector<Callsite> Targets;
 
   if (const auto *JT = BF.getJumpTable(Inst)) {
+    // Don't support PIC jump tables for now
+    if (!opts::ICPJumpTablesByTarget &&
+        JT->Type == BinaryFunction::JumpTable::JTT_PIC)
+      return Targets;
     const Location From(BF.getSymbol());
     const auto Range = JT->getEntriesForAddress(BC.MIA->getJumpTable(Inst));
     assert(JT->Counts.empty() || JT->Counts.size() >= Range.second);
     BinaryFunction::JumpInfo DefaultJI;
     const auto *JI = JT->Counts.empty() ? &DefaultJI : &JT->Counts[Range.first];
     const size_t JIAdj = JT->Counts.empty() ? 0 : 1;
+    assert(JT->Type == BinaryFunction::JumpTable::JTT_PIC ||
+           JT->EntrySize == BC.AsmInfo->getPointerSize());
     for (size_t I = Range.first; I < Range.second; ++I, JI += JIAdj) {
       auto *Entry = JT->Entries[I];
       assert(BF.getBasicBlockForLabel(Entry) ||
              Entry == BF.getFunctionEndLabel() ||
              Entry == BF.getFunctionColdEndLabel());
       const Location To(Entry);
-      Callsite CS{From, To, JI->Mispreds, JI->Count, BranchHistories()};
+      Callsite CS{
+          From, To, JI->Mispreds, JI->Count, BranchHistories(),
+          I - Range.first};
       Targets.emplace_back(CS);
     }
 
@@ -154,9 +169,10 @@ IndirectCallPromotion::getCallTargets(
                   return A.To.Addr < B.To.Addr;
               });
 
-    // TODO: I'm going to leave this as is since it will be fixed in
-    // D5005620 and it ought to make merging easier if there are fewer
-    // changes.
+    // Targets may contain multiple entries to the same target, but using
+    // different indices. Their profile will report the same number of branches
+    // for different indices if the target is the same. That's because we don't
+    // profile the index value, but only the target via LBR.
     auto First = Targets.begin();
     auto Last = Targets.end();
     auto Result = First;
@@ -164,19 +180,17 @@ IndirectCallPromotion::getCallTargets(
       auto &A = *Result;
       const auto &B = *First;
       if (A.To.IsSymbol && B.To.IsSymbol && A.To.Sym == B.To.Sym) {
-        A.Mispreds += B.Mispreds;
-        A.Branches += B.Branches;
+        A.JTIndex.insert(A.JTIndex.end(), B.JTIndex.begin(), B.JTIndex.end());
       } else {
         *(++Result) = *First;
       }
     }
     ++Result;
 
-    DEBUG(
-      if (Targets.end() - Result > 0) {
-        dbgs() << "BOLT-INFO: ICP: " << (Targets.end() - Result)
-               << " duplicate targets removed\n";
-      });
+    DEBUG(if (Targets.end() - Result > 0) {
+      dbgs() << "BOLT-INFO: ICP: " << (Targets.end() - Result)
+             << " duplicate targets removed\n";
+    });
 
     Targets.erase(Result, Targets.end());
   } else {
@@ -241,9 +255,18 @@ IndirectCallPromotion::findCallTargetSymbols(
 ) const {
   std::vector<std::pair<MCSymbol *, uint64_t>> SymTargets;
 
-  for (size_t I = 0; I < N; ++I) {
-    assert(Targets[I].To.IsSymbol && "All ICP targets must be to known symbols");
-    SymTargets.push_back(std::make_pair(Targets[I].To.Sym, 0));
+  size_t TgtIdx = 0;
+  for (size_t I = 0; I < N; ++TgtIdx) {
+    assert(Targets[TgtIdx].To.IsSymbol && "All ICP targets must be to known symbols");
+    if (Targets[TgtIdx].JTIndex.empty()) {
+      SymTargets.push_back(std::make_pair(Targets[TgtIdx].To.Sym, 0));
+      ++I;
+    } else {
+      for (auto Idx : Targets[TgtIdx].JTIndex) {
+        SymTargets.push_back(std::make_pair(Targets[TgtIdx].To.Sym, Idx));
+        ++I;
+      }
+    }
   }
 
   return SymTargets;
@@ -357,11 +380,18 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
   // New BinaryBranchInfo scaled to the execution count of the original BB.
   std::vector<BinaryBranchInfo> BBI;
   for (auto Itr = Targets.begin(); Itr != Targets.end(); ++Itr) {
-    BBI.push_back(
-      BinaryBranchInfo{
-        uint64_t(TotalCount * ((double)Itr->Branches / TotalIndirectBranches)),
-        uint64_t(TotalMispreds * ((double)Itr->Mispreds / TotalIndirectMispreds))
-      });
+    const auto BranchPct = (double)Itr->Branches / TotalIndirectBranches;
+    const auto MispredPct = (double)Itr->Mispreds / TotalIndirectMispreds;
+    if (Itr->JTIndex.empty()) {
+      BBI.push_back(BinaryBranchInfo{uint64_t(TotalCount * BranchPct),
+                                     uint64_t(TotalMispreds * MispredPct)});
+      continue;
+    }
+    for (size_t I = 0, E = Itr->JTIndex.size(); I != E; ++I) {
+      BBI.push_back(
+          BinaryBranchInfo{uint64_t(TotalCount * (BranchPct / E)),
+                           uint64_t(TotalMispreds * (MispredPct / E))});
+    }
   }
 
   auto BI = BBI.begin();
@@ -377,11 +407,22 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
       moveSuccessors(IndCallBlock, NewBBs.back().get());
     }
 
+    std::vector<MCSymbol*> SymTargets;
+    for (size_t I = 0; I < Targets.size(); ++I) {
+      assert(Targets[I].To.IsSymbol);
+      if (Targets[I].JTIndex.empty())
+        SymTargets.push_back(Targets[I].To.Sym);
+      else {
+        for (size_t Idx = 0, E = Targets[I].JTIndex.size(); Idx != E; ++Idx) {
+          SymTargets.push_back(Targets[I].To.Sym);
+        }
+      }
+    }
+
     // Fix up successors and execution counts.
     updateCurrentBranchInfo();
     if (IsJumpTable) {
-      assert(Targets[0].To.IsSymbol);
-      auto *Succ = Function.getBasicBlockForLabel(Targets[0].To.Sym);
+      auto *Succ = Function.getBasicBlockForLabel(SymTargets[0]);
       IndCallBlock->addSuccessor(Succ, BBI[0]);  // cond branch
     }
     IndCallBlock->addSuccessor(NewBBs[0].get(), TotalCount); // fallthru branch
@@ -392,8 +433,7 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
       uint64_t ExecCount = BBI[I+1].Count;
       updateCurrentBranchInfo();
       if (IsJumpTable) {
-        assert(Targets[I+1].To.IsSymbol);
-        auto *Succ = Function.getBasicBlockForLabel(Targets[I+1].To.Sym);
+        auto *Succ = Function.getBasicBlockForLabel(SymTargets[I+1]);
         NewBBs[I]->addSuccessor(Succ, BBI[I+1]);
       }
       NewBBs[I]->addSuccessor(NewBBs[I+1].get(), TotalCount); // fallthru
@@ -411,7 +451,7 @@ BinaryBasicBlock *IndirectCallPromotion::fixCFG(
     MergeBlock = NewBBs.back().get();
 
     moveSuccessors(IndCallBlock, MergeBlock);
-  
+
     // Fix up successors and execution counts.
     updateCurrentBranchInfo();
     IndCallBlock->addSuccessor(NewBBs[1].get(), TotalCount); // cond branch
@@ -495,7 +535,8 @@ IndirectCallPromotion::canPromoteCallsite(const BinaryBasicBlock *BB,
   uint64_t TotalMispredictsTopN = 0;
   size_t N = 0;
 
-  if (opts::IndirectCallPromotionUseMispredicts) {
+  if (opts::IndirectCallPromotionUseMispredicts &&
+      (!IsJumpTable || opts::ICPJumpTablesByTarget)) {
     // Count total number of mispredictions for (at most) the top N targets.
     // We may choose a smaller N (TrialN vs. N) if the frequency threshold
     // is exceeded by fewer targets.
@@ -531,7 +572,10 @@ IndirectCallPromotion::canPromoteCallsite(const BinaryBasicBlock *BB,
     // We may choose a smaller N (TrialN vs. N) if the frequency threshold
     // is exceeded by fewer targets.
     double Threshold = double(opts::IndirectCallPromotionThreshold);
-    for (size_t I = 0; I < TrialN && Threshold > 0; ++I, ++N) {
+    for (size_t I = 0; I < TrialN && Threshold > 0; ++I) {
+      if (N + (Targets[I].JTIndex.empty() ? 1 : Targets[I].JTIndex.size()) >
+          TrialN)
+        break;
       const auto Frequency = (100.0 * Targets[I].Branches) / NumCalls;
       TotalCallsTopN += Targets[I].Branches;
       TotalMispredictsTopN += Targets[I].Mispreds;
@@ -540,6 +584,7 @@ IndirectCallPromotion::canPromoteCallsite(const BinaryBasicBlock *BB,
       else
         TotalNumFrequentJmps += Targets[I].Branches;
       Threshold -= Frequency;
+      N += Targets[I].JTIndex.empty() ? 1 : Targets[I].JTIndex.size();
     }
 
     // Compute the frequency of the top N call targets.  If this frequency
@@ -558,6 +603,11 @@ IndirectCallPromotion::canPromoteCallsite(const BinaryBasicBlock *BB,
       }
       return 0;
     }
+
+    // Don't check misprediction frequency for jump tables -- we don't really
+    // care as long as we are saving loads from the jump table.
+    if (IsJumpTable && !opts::ICPJumpTablesByTarget)
+      return N;
 
     // Compute the misprediction frequency of the top N call targets.  If
     // this frequency is less than the threshold, we should skip ICP at
@@ -629,6 +679,10 @@ void IndirectCallPromotion::runOnFunctions(
   if (opts::IndirectCallPromotion == ICP_NONE)
     return;
 
+  FrameAnalysis FA(PrintPass, /*ClobberAnalysisOnly=*/true);
+  if (opts::IndirectCallPromotion >= ICP_JUMP_TABLES)
+    FA.runOnFunctions(BC, BFs, LargeFunctions);
+
   for (auto &BFIt : BFs) {
     auto &Function = BFIt.second;
 
@@ -659,7 +713,10 @@ void IndirectCallPromotion::runOnFunctions(
         BBs.push_back(&BB);
       }
     }
+    if (BBs.empty())
+      continue;
 
+    DataflowInfoManager Info(&FA, BC, Function);
     while (!BBs.empty()) {
       auto *BB = BBs.back();
       BBs.pop_back();
@@ -677,7 +734,7 @@ void IndirectCallPromotion::runOnFunctions(
         const bool OptimizeJumpTables =
           (opts::IndirectCallPromotion == ICP_JUMP_TABLES ||
            opts::IndirectCallPromotion == ICP_ALL);
-        
+
         if (!((HasBranchData && OptimizeCalls) ||
               (IsJumpTable && OptimizeJumpTables)))
           continue;
@@ -701,6 +758,19 @@ void IndirectCallPromotion::runOnFunctions(
         else
           FuncTotalIndirectJmps += NumCalls;
 
+        // If FLAGS regs is alive after this jmp site, do not try
+        // promoting because we will clobber FLAGS.
+        if (IsJumpTable && (*Info.getLivenessAnalysis().getStateBefore(
+                               Inst))[BC.MIA->getFlagsReg()]) {
+          if (opts::Verbosity >= 1) {
+            outs() << "BOLT-INFO: ICP failed in " << Function << " @ "
+                   << InstIdx << " in " << BB->getName()
+                   << ", calls = " << NumCalls
+                   << ", cannot clobber flags reg.\n";
+          }
+          continue;
+        }
+
         // Should this callsite be optimized?  Return the number of targets
         // to use when promoting this call.  A value of zero means to skip
         // this callsite.
@@ -720,20 +790,21 @@ void IndirectCallPromotion::runOnFunctions(
         if (SymTargets.size() < N) {
           const auto LastTarget = SymTargets.size();
           if (opts::Verbosity >= 1) {
-            outs() << "BOLT-INFO: ICP failed to find target symbol for "
-                   << Targets[LastTarget].To.Sym->getName() << " in "
-                   << Function << " @ " << InstIdx << " in "
-                   << BB->getName() << ", calls = " << NumCalls << "\n";
+            outs() << "BOLT-INFO: ICP failed in " << Function << " @ "
+                   << InstIdx << " in " << BB->getName()
+                   << ", calls = " << NumCalls
+                   << ", ICP failed to find target symbol for "
+                   << Targets[LastTarget].To.Sym->getName() << "\n";
           }
           continue;
         }
 
         // Generate new promoted call code for this callsite.
         auto ICPcode =
-          BC.MIA->indirectCallPromotion(Inst,
-                                        SymTargets,
-                                        opts::ICPOldCodeSequence,
-                                        BC.Ctx.get());
+            (IsJumpTable && !opts::ICPJumpTablesByTarget)
+                ? BC.MIA->jumpTablePromotion(Inst, SymTargets, BC.Ctx.get())
+                : BC.MIA->indirectCallPromotion(
+                      Inst, SymTargets, opts::ICPOldCodeSequence, BC.Ctx.get());
 
         if (ICPcode.empty()) {
           if (opts::Verbosity >= 1) {
@@ -793,6 +864,9 @@ void IndirectCallPromotion::runOnFunctions(
     TotalIndirectJmps += FuncTotalIndirectJmps;
   }
 
+  if (opts::IndirectCallPromotion >= ICP_JUMP_TABLES)
+    FA.cleanAnnotations(BC, BFs);
+
   outs() << "BOLT-INFO: ICP total indirect callsites = "
          << TotalIndirectCallsites
          << "\n"
@@ -814,12 +888,12 @@ void IndirectCallPromotion::runOnFunctions(
          << format("%.1f", (100.0 * TotalOptimizedIndirectCallsites) /
                    std::max(TotalIndirectCallsites, 1ul))
          << "%\n"
-         << "BOLT-INFO: ICP percentage of jump table calls that can be "
+         << "BOLT-INFO: ICP percentage of indirect branches that are "
             "optimized = "
          << format("%.1f", (100.0 * TotalNumFrequentJmps) /
                    std::max(TotalIndirectJmps, 1ul))
          << "%\n"
-         << "BOLT-INFO: ICP percentage of jump table calls that are optimized = "
+         << "BOLT-INFO: ICP percentage of jump table callsites that are optimized = "
          << format("%.1f", (100.0 * TotalOptimizedJumpTableCallsites) /
                    std::max(TotalJumpTableCallsites, 1ul))
          << "%\n";
