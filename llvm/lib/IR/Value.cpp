@@ -820,8 +820,10 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
     switch (Entry->getKind()) {
     case Assert:
       break;
+    case Weak:
     case WeakTracking:
-      // WeakTracking just goes to null, which will unlink it from the list.
+      // WeakTracking and Weak just go to null, which unlinks them
+      // from the list.
       Entry->operator=(nullptr);
       break;
     case Callback:
@@ -869,7 +871,8 @@ void ValueHandleBase::ValueIsRAUWd(Value *Old, Value *New) {
 
     switch (Entry->getKind()) {
     case Assert:
-      // Asserting handle does not follow RAUW implicitly.
+    case Weak:
+      // Asserting and Weak handles do not follow RAUW implicitly.
       break;
     case WeakTracking:
       // Weak goes to the new value, which will unlink it from Old's list.
