@@ -118,7 +118,6 @@ class HexagonMCChecker {
   bool checkSolo();
   bool checkShuffle();
   bool checkSlots();
-  bool checkSize();
 
   static void compoundRegisterMap(unsigned &);
 
@@ -141,6 +140,7 @@ public:
   bool check(bool FullCheck = true);
   void reportErrorRegisters(unsigned Register);
   void reportErrorNewValue(unsigned Register);
+  void reportError(SMLoc Loc, llvm::Twine const &Msg);
   void reportError(llvm::Twine const &Msg);
   void reportWarning(llvm::Twine const &Msg);
 };

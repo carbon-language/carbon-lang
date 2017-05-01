@@ -484,16 +484,16 @@ bool HexagonMCChecker::checkRegisters() {
 
 // Check for legal use of solo insns.
 bool HexagonMCChecker::checkSolo() {
-  if (HexagonMCInstrInfo::isBundle(MCB) &&
-      HexagonMCInstrInfo::bundleSize(MCB) > 1) {
+  if (HexagonMCInstrInfo::bundleSize(MCB) > 1)
     for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCB)) {
       if (llvm::HexagonMCInstrInfo::isSolo(MCII, *I.getInst())) {
-        reportError(
-            "instruction cannot appear in packet with other instructions");
+        SMLoc Loc = I.getInst()->getLoc();
+        reportError(Loc, "Instruction is marked `isSolo' and "
+                         "cannot have other instructions in "
+                         "the same packet");
         return false;
       }
     }
-  }
 
   return true;
 }
@@ -575,8 +575,12 @@ void HexagonMCChecker::reportErrorNewValue(unsigned Register) {
 }
 
 void HexagonMCChecker::reportError(llvm::Twine const &Msg) {
+  reportError(MCB.getLoc(), Msg);
+}
+
+void HexagonMCChecker::reportError(SMLoc Loc, llvm::Twine const &Msg) {
   if (ReportErrors)
-    Context.reportError(MCB.getLoc(), Msg);
+    Context.reportError(Loc, Msg);
 }
 
 void HexagonMCChecker::reportWarning(llvm::Twine const &Msg) {
