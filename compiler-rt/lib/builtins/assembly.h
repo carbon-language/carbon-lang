@@ -166,5 +166,4 @@
 #define END_COMPILERRT_FUNCTION(name)
 #endif
 
-
 #endif /* COMPILERRT_ASSEMBLY_H */
