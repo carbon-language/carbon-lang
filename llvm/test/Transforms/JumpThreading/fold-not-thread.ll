@@ -189,4 +189,58 @@ L3:
   ret void
 }
 
+; Make sure we can fold this branch ... We will not be able to thread it as
+; L0 is too big to duplicate.
+; We do not attempt to rewrite the indirectbr target here, but we still take
+; its target after L0 into account and that enables us to fold.
+;
+; L2 is the unreachable block here.
+; 
+; CHECK-LABEL: @test_br_folding_not_threading_indirect_branch(
+; CHECK: L1:
+; CHECK: call i32 @f2()
+; CHECK: call void @f3()
+; CHECK-NEXT: ret void
+; CHECK-NOT: br
+; CHECK: L3:
+define void @test_br_folding_not_threading_indirect_branch(i1 %condx, i1 %cond) nounwind {
+entry:
+  br i1 %condx, label %X0, label %X1
 
+X0:
+  br i1 %cond, label %L0, label %L3
+
+X1:
+  br i1 %cond, label %XX1, label %L3
+
+XX1:
+  indirectbr i8* blockaddress(@test_br_folding_not_threading_indirect_branch, %L0), [label %L0]
+
+L0:
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  call i32 @f2()
+  br i1 %cond, label %L1, label %L2
+
+L1:
+  call void @f3()
+  ret void
+
+L2:
+  call void @f3()
+  ret void
+
+L3:
+  call void @f3()
+  ret void
+}
