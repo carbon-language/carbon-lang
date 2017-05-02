@@ -159,12 +159,6 @@ void HexagonMCChecker::init(MCInst const &MCI) {
                isPredicateRegister(*SRI))
         // Some insns produce predicates too late to be used in the same packet.
         LatePreds.insert(*SRI);
-      else if (i == 0 && HexagonMCInstrInfo::isCVINew(MCII, MCI) &&
-               MCID.mayLoad())
-        // Current loads should be used in the same packet.
-        // TODO: relies on the impossibility of a current and a temporary loads
-        // in the same packet.
-        CurDefs.insert(*SRI), Defs[*SRI].insert(PredSense(PredReg, isTrue));
       else if (i == 0 && llvm::HexagonMCInstrInfo::getType(MCII, MCI) ==
                              HexagonII::TypeCVI_VM_TMP_LD)
         // Temporary loads should be used in the same packet, but don't commit
@@ -252,6 +246,7 @@ bool HexagonMCChecker::check(bool FullCheck) {
   bool chkNV = checkNewValues();
   bool chkR = checkRegisters();
   bool chkRRO = checkRegistersReadOnly();
+  checkRegisterCurDefs();
   bool chkS = checkSolo();
   bool chkSh = true;
   if (FullCheck)
@@ -396,6 +391,43 @@ bool HexagonMCChecker::checkRegistersReadOnly() {
   return true;
 }
 
+bool HexagonMCChecker::registerUsed(MCInst const &Inst, unsigned Register) {
+  if (HexagonMCInstrInfo::isDuplex(MCII, Inst)) {
+    if (registerUsed(*Inst.getOperand(0).getInst(), Register) ||
+        registerUsed(*Inst.getOperand(1).getInst(), Register))
+      return true;
+  } else {
+    unsigned Defs = HexagonMCInstrInfo::getDesc(MCII, Inst).getNumDefs();
+    for (unsigned j = Defs, n = Inst.getNumOperands(); j < n; ++j) {
+      MCOperand const &Operand = Inst.getOperand(j);
+      if (Operand.isReg() && Operand.getReg() == Register)
+        return true;
+    }
+  }
+  return false;
+}
+
+bool HexagonMCChecker::registerUsed(unsigned Register) {
+  auto Range = HexagonMCInstrInfo::bundleInstructions(MCB);
+  return std::any_of(Range.begin(), Range.end(), [&](MCOperand const &Operand) {
+    return registerUsed(*Operand.getInst(), Register);
+  });
+}
+
+void HexagonMCChecker::checkRegisterCurDefs() {
+  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCB)) {
+    MCInst const &Inst = *I.getInst();
+    if (HexagonMCInstrInfo::isCVINew(MCII, Inst) &&
+        HexagonMCInstrInfo::getDesc(MCII, Inst).mayLoad()) {
+      unsigned Register = Inst.getOperand(0).getReg();
+      if (!registerUsed(Register))
+        reportWarning("Register `" + llvm::Twine(RI.getName(Register)) +
+                      "' used with `.cur' "
+                      "but not used in the same packet");
+    }
+  }
+}
+
 // Check for legal register uses and definitions.
 bool HexagonMCChecker::checkRegisters() {
   // Check for proper register definitions.
@@ -453,19 +485,6 @@ bool HexagonMCChecker::checkRegisters() {
           return false;
         }
       }
-    }
-  }
-
-  // Check for use of current definitions.
-  for (const auto &I : CurDefs) {
-    unsigned R = I;
-
-    if (!Uses.count(R)) {
-      // Warn on an unused current definition.
-      reportWarning("register `" + llvm::Twine(RI.getName(R)) +
-                    "' used with `.cur' "
-                    "but not used in the same packet");
-      return true;
     }
   }
 
