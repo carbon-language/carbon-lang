@@ -22,15 +22,18 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
+
 Hexagon::PacketIterator::PacketIterator(MCInstrInfo const &MCII,
                                         MCInst const &Inst)
     : MCII(MCII), BundleCurrent(Inst.begin() +
                                 HexagonMCInstrInfo::bundleInstructionsOffset),
       BundleEnd(Inst.end()), DuplexCurrent(Inst.end()), DuplexEnd(Inst.end()) {}
+
 Hexagon::PacketIterator::PacketIterator(MCInstrInfo const &MCII,
                                         MCInst const &Inst, std::nullptr_t)
     : MCII(MCII), BundleCurrent(Inst.end()), BundleEnd(Inst.end()),
       DuplexCurrent(Inst.end()), DuplexEnd(Inst.end()) {}
+
 Hexagon::PacketIterator &Hexagon::PacketIterator::operator++() {
   if (DuplexCurrent != DuplexEnd) {
     ++DuplexCurrent;
@@ -50,15 +53,18 @@ Hexagon::PacketIterator &Hexagon::PacketIterator::operator++() {
   }
   return *this;
 }
+
 MCInst const &Hexagon::PacketIterator::operator*() const {
   if (DuplexCurrent != DuplexEnd)
     return *DuplexCurrent->getInst();
   return *BundleCurrent->getInst();
 }
+
 bool Hexagon::PacketIterator::operator==(PacketIterator const &Other) const {
   return BundleCurrent == Other.BundleCurrent && BundleEnd == Other.BundleEnd &&
          DuplexCurrent == Other.DuplexCurrent && DuplexEnd == Other.DuplexEnd;
 }
+
 void HexagonMCInstrInfo::addConstant(MCInst &MI, uint64_t Value,
                                      MCContext &Context) {
   MI.addOperand(MCOperand::createExpr(MCConstantExpr::create(Value, Context)));

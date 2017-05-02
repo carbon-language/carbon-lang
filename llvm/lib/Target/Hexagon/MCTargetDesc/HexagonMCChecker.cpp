@@ -113,7 +113,7 @@ void HexagonMCChecker::init(MCInst const &MCI) {
         // The instruction table models the USR.OVF flag, which can be
         // implicitly modified more than once, but cannot be modified in the
         // same packet with an instruction that modifies is explicitly. Deal
-        // with such situ- ations individually.
+        // with such situations individually.
         SoftDefs.insert(R);
       else if (isPredicateRegister(R) &&
                HexagonMCInstrInfo::isPredicateLate(MCII, MCI))
@@ -196,9 +196,8 @@ void HexagonMCChecker::init(MCInst const &MCI) {
     if (HexagonMCInstrInfo::hasNewValue2(MCII, MCI)) {
       unsigned R2 = HexagonMCInstrInfo::getNewValueOperand2(MCII, MCI).getReg();
 
-      for (MCRegAliasIterator SRI(R2, &RI,
-                                  !MCSubRegIterator(R2, &RI).isValid());
-           SRI.isValid(); ++SRI)
+      bool HasSubRegs = MCSubRegIterator(R2, &RI).isValid();
+      for (MCRegAliasIterator SRI(R2, &RI, !HasSubRegs); SRI.isValid(); ++SRI)
         if (!MCSubRegIterator(*SRI, &RI).isValid())
           NewDefs[*SRI].push_back(NewSense::Def(
               PredReg, HexagonMCInstrInfo::isPredicatedTrue(MCII, MCI),
@@ -553,8 +552,7 @@ bool HexagonMCChecker::checkRegisters() {
         if (PM.count(P) && PM.size() > 2) {
           // Error out on conditional changes based on the same predicate
           // multiple times
-          // (e.g., "{ if (p0) r0 =...; if (!p0) r0 =... }; if (!p0) r0 =...
-          // }").
+          // (e.g., "if (p0) r0 =...; if (!p0) r0 =... }; if (!p0) r0 =...").
           reportErrorRegisters(R);
           return false;
         }

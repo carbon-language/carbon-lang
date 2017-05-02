@@ -105,8 +105,9 @@ class HexagonMCChecker {
   void init();
   void init(MCInst const &);
   void initReg(MCInst const &, unsigned, unsigned &PredReg, bool &isTrue);
-  
+
   bool registerUsed(unsigned Register);
+
   // Checks performed.
   bool checkBranches();
   bool checkPredicates();

@@ -210,7 +210,7 @@ bool HexagonShuffler::check() {
   // Descriptive slot masks.
   const unsigned slotSingleLoad = 0x1, slotSingleStore = 0x1, slotOne = 0x2,
                  slotThree = 0x8, // slotFirstJump = 0x8,
-      slotFirstLoadStore = 0x2, slotLastLoadStore = 0x1;
+                 slotFirstLoadStore = 0x2, slotLastLoadStore = 0x1;
   // Highest slots for branches and stores used to keep their original order.
   // unsigned slotJump = slotFirstJump;
   unsigned slotLoadStore = slotFirstLoadStore;
