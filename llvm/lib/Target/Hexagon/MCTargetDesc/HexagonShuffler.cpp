@@ -273,8 +273,8 @@ bool HexagonShuffler::check() {
   unsigned memory = 0, loads = 0, load0 = 0, stores = 0, store0 = 0, store1 = 0;
   // Number of HVX loads, HVX stores.
   unsigned CVIloads = 0, CVIstores = 0;
-  // Number of duplex insns, solo insns.
-  unsigned duplex = 0, solo = 0;
+  // Number of duplex insns
+  unsigned duplex = 0;
   // Number of insns restricting other insns in the packet to A and X types,
   // which is neither A or X types.
   unsigned onlyAX = 0, neitherAnorX = 0;
@@ -295,12 +295,10 @@ bool HexagonShuffler::check() {
   for (iterator ISJ = begin(); ISJ != end(); ++ISJ) {
     MCInst const &ID = ISJ->getDesc();
 
-    if (HexagonMCInstrInfo::isSolo(MCII, ID))
-      solo++;
-    else if (HexagonMCInstrInfo::isSoloAX(MCII, ID))
-      onlyAX++;
+    if (HexagonMCInstrInfo::isSoloAX(MCII, ID))
+      ++onlyAX;
     else if (HexagonMCInstrInfo::isSoloAin1(MCII, ID))
-      onlyAin1++;
+      ++onlyAin1;
     neitherAnorX += countNeitherAnorX(MCII, ID);
     if (HexagonMCInstrInfo::prefersSlot3(MCII, ID)) {
       ++pSlot3Cnt;
@@ -409,8 +407,8 @@ bool HexagonShuffler::check() {
   }
 
   // Check if the packet is legal.
-  if ((load0 > 1 || store0 > 1 || CVIloads > 1 || CVIstores > 1) ||
-      (duplex > 1 || (duplex && memory)) || (solo && size() > 1) ||
+  if ((load0 > 1 || store0 > 1) ||
+      (duplex > 1 || (duplex && memory)) ||
       (onlyAX && neitherAnorX > 1) || (onlyAX && xtypeFloat)) {
     reportError(llvm::Twine("invalid instruction packet"));
     return false;
