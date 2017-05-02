@@ -255,8 +255,9 @@ bool HexagonMCChecker::check(bool FullCheck) {
   bool chkSl = true;
   if (FullCheck)
     chkSl = checkSlots();
+  bool chkAXOK = checkAXOK();
   bool chk = chkB && chkP && chkNV && chkR && chkRRO && chkELB && chkS &&
-             chkSh && chkSl;
+             chkSh && chkSl && chkAXOK;
 
   return chk;
 }
@@ -274,6 +275,81 @@ bool HexagonMCChecker::checkEndloopBranches() {
                         "`" + llvm::Twine(RI.getName(Hexagon::PC)) + "'");
         return false;
       }
+    }
+  }
+  return true;
+}
+
+namespace {
+bool isDuplexAGroup(unsigned Opcode) {
+  switch (Opcode) {
+  case Hexagon::SA1_addi:
+  case Hexagon::SA1_addrx:
+  case Hexagon::SA1_addsp:
+  case Hexagon::SA1_and1:
+  case Hexagon::SA1_clrf:
+  case Hexagon::SA1_clrfnew:
+  case Hexagon::SA1_clrt:
+  case Hexagon::SA1_clrtnew:
+  case Hexagon::SA1_cmpeqi:
+  case Hexagon::SA1_combine0i:
+  case Hexagon::SA1_combine1i:
+  case Hexagon::SA1_combine2i:
+  case Hexagon::SA1_combine3i:
+  case Hexagon::SA1_combinerz:
+  case Hexagon::SA1_combinezr:
+  case Hexagon::SA1_dec:
+  case Hexagon::SA1_inc:
+  case Hexagon::SA1_seti:
+  case Hexagon::SA1_setin1:
+  case Hexagon::SA1_sxtb:
+  case Hexagon::SA1_sxth:
+  case Hexagon::SA1_tfr:
+  case Hexagon::SA1_zxtb:
+  case Hexagon::SA1_zxth:
+    return true;
+    break;
+  default:
+    return false;
+  }
+}
+
+bool isNeitherAnorX(MCInstrInfo const &MCII, MCInst const &ID) {
+  unsigned Result = 0;
+  unsigned Type = HexagonMCInstrInfo::getType(MCII, ID);
+  if (Type == HexagonII::TypeDUPLEX) {
+    unsigned subInst0Opcode = ID.getOperand(0).getInst()->getOpcode();
+    unsigned subInst1Opcode = ID.getOperand(1).getInst()->getOpcode();
+    Result += !isDuplexAGroup(subInst0Opcode);
+    Result += !isDuplexAGroup(subInst1Opcode);
+  } else
+    Result +=
+        Type != HexagonII::TypeALU32_2op && Type != HexagonII::TypeALU32_3op &&
+        Type != HexagonII::TypeALU32_ADDI && Type != HexagonII::TypeS_2op &&
+        Type != HexagonII::TypeS_3op &&
+        (Type != HexagonII::TypeALU64 || HexagonMCInstrInfo::isFloat(MCII, ID));
+  return Result != 0;
+}
+} // namespace
+
+bool HexagonMCChecker::checkAXOK() {
+  MCInst const *HasSoloAXInst = nullptr;
+  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCII, MCB)) {
+    if (HexagonMCInstrInfo::isSoloAX(MCII, I)) {
+      HasSoloAXInst = &I;
+    }
+  }
+  if (!HasSoloAXInst)
+    return true;
+  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCII, MCB)) {
+    if (&I != HasSoloAXInst && isNeitherAnorX(MCII, I)) {
+      reportError(
+          HasSoloAXInst->getLoc(),
+          llvm::Twine("Instruction can only be in a packet with ALU or "
+                      "non-FPU XTYPE instructions"));
+      reportError(I.getLoc(),
+                  llvm::Twine("Not an ALU or non-FPU XTYPE instruction"));
+      return false;
     }
   }
   return true;

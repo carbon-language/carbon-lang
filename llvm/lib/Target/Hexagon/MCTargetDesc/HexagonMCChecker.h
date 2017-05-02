@@ -118,6 +118,7 @@ class HexagonMCChecker {
   bool checkSolo();
   bool checkShuffle();
   bool checkSlots();
+  bool checkAXOK();
 
   static void compoundRegisterMap(unsigned &);
 
