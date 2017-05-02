@@ -86,24 +86,21 @@ entry:
 define %scalar @pr31719(%scalar* nocapture readonly %this, %scalar %arg.b) {
 ; CHECK-LABEL: pr31719:
 ; CHECK:       # BB#0: # %entry
-; CHECK-NEXT:    addq (%rsi), %rdx
+; CHECK-NEXT:    addq 8(%rsi), %rcx
 ; CHECK-NEXT:    sbbq %r10, %r10
 ; CHECK-NEXT:    andl $1, %r10d
-; CHECK-NEXT:    addq 8(%rsi), %rcx
+; CHECK-NEXT:    addq 16(%rsi), %r8
 ; CHECK-NEXT:    sbbq %rax, %rax
 ; CHECK-NEXT:    andl $1, %eax
-; CHECK-NEXT:    addq %r10, %rcx
-; CHECK-NEXT:    adcq $0, %rax
-; CHECK-NEXT:    addq 16(%rsi), %r8
-; CHECK-NEXT:    sbbq %r10, %r10
-; CHECK-NEXT:    andl $1, %r10d
 ; CHECK-NEXT:    addq 24(%rsi), %r9
-; CHECK-NEXT:    addq %rax, %r8
-; CHECK-NEXT:    adcq %r10, %r9
+; CHECK-NEXT:    addq (%rsi), %rdx
+; CHECK-NEXT:    adcq $0, %rcx
+; CHECK-NEXT:    adcq %r8, %r10
+; CHECK-NEXT:    adcq %r9, %rax
 ; CHECK-NEXT:    movq %rdx, (%rdi)
 ; CHECK-NEXT:    movq %rcx, 8(%rdi)
-; CHECK-NEXT:    movq %r8, 16(%rdi)
-; CHECK-NEXT:    movq %r9, 24(%rdi)
+; CHECK-NEXT:    movq %r10, 16(%rdi)
+; CHECK-NEXT:    movq %rax, 24(%rdi)
 ; CHECK-NEXT:    movq %rdi, %rax
 ; CHECK-NEXT:    retq
 entry:
@@ -158,9 +155,8 @@ define void @muladd(%accumulator* nocapture %this, i64 %arg.a, i64 %arg.b) {
 ; CHECK-NEXT:    movq %rdx, %rax
 ; CHECK-NEXT:    mulq %rsi
 ; CHECK-NEXT:    addq (%rdi), %rax
-; CHECK-NEXT:    adcq $0, %rdx
 ; CHECK-NEXT:    movq %rax, (%rdi)
-; CHECK-NEXT:    addq 8(%rdi), %rdx
+; CHECK-NEXT:    adcq 8(%rdi), %rdx
 ; CHECK-NEXT:    movq %rdx, 8(%rdi)
 ; CHECK-NEXT:    adcl $0, 16(%rdi)
 ; CHECK-NEXT:    retq
