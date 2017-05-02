@@ -186,3 +186,21 @@ entry:
   store i32 %19, i32* %15, align 4
   ret void
 }
+
+define i64 @shiftadd(i64 %a, i64 %b, i64 %c, i64 %d) {
+; CHECK-LABEL: shiftadd:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    leaq (%rdx,%rcx), %rax
+; CHECK-NEXT:    addq %rsi, %rdi
+; CHECK-NEXT:    adcq $0, %rax
+; CHECK-NEXT:    retq
+entry:
+  %0 = zext i64 %a to i128
+  %1 = zext i64 %b to i128
+  %2 = add i128 %0, %1
+  %3 = lshr i128 %2, 64
+  %4 = trunc i128 %3 to i64
+  %5 = add i64 %c, %d
+  %6 = add i64 %4, %5
+  ret i64 %6
+}
