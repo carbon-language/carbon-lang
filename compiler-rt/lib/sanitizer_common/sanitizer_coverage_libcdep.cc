@@ -155,6 +155,13 @@ void CoverageData::DirectOpen() {
 
 void CoverageData::Init() {
   pc_fd = kInvalidFd;
+
+  if (!common_flags()->coverage) return;
+  Printf("**\n***\n***\n");
+  Printf("**WARNING: this implementation of SanitizerCoverage is deprecated\n");
+  Printf("**WARNING: and will be removed in future versions\n");
+  Printf("**WARNING: See https://clang.llvm.org/docs/SanitizerCoverage.html\n");
+  Printf("**\n***\n***\n");
 }
 
 void CoverageData::Enable() {
