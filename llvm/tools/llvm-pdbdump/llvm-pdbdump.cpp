@@ -47,9 +47,9 @@
 #include "llvm/DebugInfo/PDB/Native/NativeSession.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFileBuilder.h"
+#include "llvm/DebugInfo/PDB/Native/PDBStringTableBuilder.h"
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
-#include "llvm/DebugInfo/PDB/Native/StringTableBuilder.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStreamBuilder.h"
 #include "llvm/DebugInfo/PDB/PDB.h"
@@ -427,7 +427,7 @@ static ExitOnError ExitOnErr;
 static uint32_t
 getFileChecksumOffset(StringRef FileName,
                       ModuleDebugFileChecksumFragment &Checksums,
-                      StringTableBuilder &Strings) {
+                      PDBStringTableBuilder &Strings) {
   // The offset in the line info record is the offset of the checksum
   // entry for the corresponding file.  That entry then contains an
   // offset into the global string table of the file name.  So to
