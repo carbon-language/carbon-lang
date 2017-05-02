@@ -36,7 +36,7 @@ class HexagonPacketizerList : public VLIWPacketizerList {
 
   // Set to true if the packet contains an instruction that stalls with an
   // instruction from the previous packet.
-  bool PacketStalls;
+  bool PacketStalls = false;
 
 protected:
   /// \brief A handle to the branch probability pass.
