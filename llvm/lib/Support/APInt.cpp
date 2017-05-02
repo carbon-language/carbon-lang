@@ -392,13 +392,6 @@ int APInt::compareSigned(const APInt& RHS) const {
   return tcCompare(pVal, RHS.pVal, getNumWords());
 }
 
-void APInt::setBit(unsigned bitPosition) {
-  if (isSingleWord())
-    VAL |= maskBit(bitPosition);
-  else
-    pVal[whichWord(bitPosition)] |= maskBit(bitPosition);
-}
-
 void APInt::setBitsSlowCase(unsigned loBit, unsigned hiBit) {
   unsigned loWord = whichWord(loBit);
   unsigned hiWord = whichWord(hiBit);
@@ -424,15 +417,6 @@ void APInt::setBitsSlowCase(unsigned loBit, unsigned hiBit) {
   // Fill any words between loWord and hiWord with all ones.
   for (unsigned word = loWord + 1; word < hiWord; ++word)
     pVal[word] = WORD_MAX;
-}
-
-/// Set the given bit to 0 whose position is given as "bitPosition".
-/// @brief Set a given bit to 0.
-void APInt::clearBit(unsigned bitPosition) {
-  if (isSingleWord())
-    VAL &= ~maskBit(bitPosition);
-  else
-    pVal[whichWord(bitPosition)] &= ~maskBit(bitPosition);
 }
 
 /// @brief Toggle every bit to its opposite value.

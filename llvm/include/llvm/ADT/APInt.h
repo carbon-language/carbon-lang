@@ -1352,7 +1352,14 @@ public:
   /// \brief Set a given bit to 1.
   ///
   /// Set the given bit to 1 whose position is given as "bitPosition".
-  void setBit(unsigned bitPosition);
+  void setBit(unsigned BitPosition) {
+    assert(BitPosition <= BitWidth && "BitPosition out of range");
+    WordType Mask = maskBit(BitPosition);
+    if (isSingleWord())
+      VAL |= Mask;
+    else
+      pVal[whichWord(BitPosition)] |= Mask;
+  }
 
   /// Set the sign bit to 1.
   void setSignBit() {
@@ -1404,7 +1411,14 @@ public:
   /// \brief Set a given bit to 0.
   ///
   /// Set the given bit to 0 whose position is given as "bitPosition".
-  void clearBit(unsigned bitPosition);
+  void clearBit(unsigned BitPosition) {
+    assert(BitPosition <= BitWidth && "BitPosition out of range");
+    WordType Mask = ~maskBit(BitPosition);
+    if (isSingleWord())
+      VAL &= Mask;
+    else
+      pVal[whichWord(BitPosition)] &= Mask;
+  }
 
   /// Set the sign bit to 0.
   void clearSignBit() {
