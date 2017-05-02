@@ -31,6 +31,25 @@ public:
   DuplexCandidate(unsigned i, unsigned j, unsigned iClass)
       : packetIndexI(i), packetIndexJ(j), iClass(iClass) {}
 };
+namespace Hexagon {
+class PacketIterator {
+  MCInstrInfo const &MCII;
+  MCInst::const_iterator BundleCurrent;
+  MCInst::const_iterator BundleEnd;
+  MCInst::const_iterator DuplexCurrent;
+  MCInst::const_iterator DuplexEnd;
+
+public:
+  PacketIterator(MCInstrInfo const &MCII, MCInst const &Inst);
+  PacketIterator(MCInstrInfo const &MCII, MCInst const &Inst, std::nullptr_t);
+  PacketIterator &operator++();
+  MCInst const &operator*() const;
+  bool operator==(PacketIterator const &Other) const;
+  bool operator!=(PacketIterator const &Other) const {
+    return !(*this == Other);
+  }
+};
+} // namespace Hexagon
 namespace HexagonMCInstrInfo {
 size_t const innerLoopOffset = 0;
 int64_t const innerLoopMask = 1 << innerLoopOffset;
@@ -54,6 +73,8 @@ void addConstExtender(MCContext &Context, MCInstrInfo const &MCII, MCInst &MCB,
                       MCInst const &MCI);
 
 // Returns a iterator range of instructions in this bundle
+iterator_range<Hexagon::PacketIterator>
+bundleInstructions(MCInstrInfo const &MCII, MCInst const &MCI);
 iterator_range<MCInst::const_iterator> bundleInstructions(MCInst const &MCI);
 
 // Returns the number of instructions in the bundle
@@ -283,7 +304,7 @@ unsigned SubregisterBit(unsigned Consumer, unsigned Producer,
 // Attempt to find and replace compound pairs
 void tryCompound(MCInstrInfo const &MCII, MCSubtargetInfo const &STI,
                  MCContext &Context, MCInst &MCI);
-}
-}
+} // namespace HexagonMCInstrInfo
+} // namespace llvm
 
 #endif // LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINSTRINFO_H

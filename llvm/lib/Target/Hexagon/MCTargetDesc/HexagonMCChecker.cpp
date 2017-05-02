@@ -392,26 +392,20 @@ bool HexagonMCChecker::checkRegistersReadOnly() {
 }
 
 bool HexagonMCChecker::registerUsed(MCInst const &Inst, unsigned Register) {
-  if (HexagonMCInstrInfo::isDuplex(MCII, Inst)) {
-    if (registerUsed(*Inst.getOperand(0).getInst(), Register) ||
-        registerUsed(*Inst.getOperand(1).getInst(), Register))
+  unsigned Defs = HexagonMCInstrInfo::getDesc(MCII, Inst).getNumDefs();
+  for (unsigned j = Defs, n = Inst.getNumOperands(); j < n; ++j) {
+    MCOperand const &Operand = Inst.getOperand(j);
+    if (Operand.isReg() && Operand.getReg() == Register)
       return true;
-  } else {
-    unsigned Defs = HexagonMCInstrInfo::getDesc(MCII, Inst).getNumDefs();
-    for (unsigned j = Defs, n = Inst.getNumOperands(); j < n; ++j) {
-      MCOperand const &Operand = Inst.getOperand(j);
-      if (Operand.isReg() && Operand.getReg() == Register)
-        return true;
-    }
   }
   return false;
 }
 
 bool HexagonMCChecker::registerUsed(unsigned Register) {
-  auto Range = HexagonMCInstrInfo::bundleInstructions(MCB);
-  return std::any_of(Range.begin(), Range.end(), [&](MCOperand const &Operand) {
-    return registerUsed(*Operand.getInst(), Register);
-  });
+  for (auto const &I: HexagonMCInstrInfo::bundleInstructions(MCII, MCB))
+    if (registerUsed(I, Register))
+      return true;
+  return false;
 }
 
 void HexagonMCChecker::checkRegisterCurDefs() {

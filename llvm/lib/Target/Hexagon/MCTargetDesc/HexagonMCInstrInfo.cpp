@@ -22,6 +22,43 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
+Hexagon::PacketIterator::PacketIterator(MCInstrInfo const &MCII,
+                                        MCInst const &Inst)
+    : MCII(MCII), BundleCurrent(Inst.begin() +
+                                HexagonMCInstrInfo::bundleInstructionsOffset),
+      BundleEnd(Inst.end()), DuplexCurrent(Inst.end()), DuplexEnd(Inst.end()) {}
+Hexagon::PacketIterator::PacketIterator(MCInstrInfo const &MCII,
+                                        MCInst const &Inst, std::nullptr_t)
+    : MCII(MCII), BundleCurrent(Inst.end()), BundleEnd(Inst.end()),
+      DuplexCurrent(Inst.end()), DuplexEnd(Inst.end()) {}
+Hexagon::PacketIterator &Hexagon::PacketIterator::operator++() {
+  if (DuplexCurrent != DuplexEnd) {
+    ++DuplexCurrent;
+    if (DuplexCurrent == DuplexEnd) {
+      DuplexCurrent = BundleEnd;
+      DuplexEnd = BundleEnd;
+    }
+    return *this;
+  }
+  ++BundleCurrent;
+  if (BundleCurrent != BundleEnd) {
+    MCInst const &Inst = *BundleCurrent->getInst();
+    if (HexagonMCInstrInfo::isDuplex(MCII, Inst)) {
+      DuplexCurrent = Inst.begin();
+      DuplexEnd = Inst.end();
+    }
+  }
+  return *this;
+}
+MCInst const &Hexagon::PacketIterator::operator*() const {
+  if (DuplexCurrent != DuplexEnd)
+    return *DuplexCurrent->getInst();
+  return *BundleCurrent->getInst();
+}
+bool Hexagon::PacketIterator::operator==(PacketIterator const &Other) const {
+  return BundleCurrent == Other.BundleCurrent && BundleEnd == Other.BundleEnd &&
+         DuplexCurrent == Other.DuplexCurrent && DuplexEnd == Other.DuplexEnd;
+}
 void HexagonMCInstrInfo::addConstant(MCInst &MI, uint64_t Value,
                                      MCContext &Context) {
   MI.addOperand(MCOperand::createExpr(MCConstantExpr::create(Value, Context)));
@@ -39,6 +76,14 @@ void HexagonMCInstrInfo::addConstExtender(MCContext &Context,
       new (Context) MCInst(HexagonMCInstrInfo::deriveExtender(MCII, MCI, exOp));
 
   MCB.addOperand(MCOperand::createInst(XMCI));
+}
+
+iterator_range<Hexagon::PacketIterator>
+HexagonMCInstrInfo::bundleInstructions(MCInstrInfo const &MCII,
+                                       MCInst const &MCI) {
+  assert(isBundle(MCI));
+  return make_range(Hexagon::PacketIterator(MCII, MCI),
+                    Hexagon::PacketIterator(MCII, MCI, nullptr));
 }
 
 iterator_range<MCInst::const_iterator>
@@ -292,7 +337,7 @@ int HexagonMCInstrInfo::getMinValue(MCInstrInfo const &MCII,
 }
 
 StringRef HexagonMCInstrInfo::getName(MCInstrInfo const &MCII,
-                                        MCInst const &MCI) {
+                                      MCInst const &MCI) {
   return MCII.getName(MCI.getOpcode());
 }
 
@@ -397,9 +442,8 @@ bool HexagonMCInstrInfo::hasDuplex(MCInstrInfo const &MCII, MCInst const &MCI) {
   if (!HexagonMCInstrInfo::isBundle(MCI))
     return false;
 
-  for (const auto &I : HexagonMCInstrInfo::bundleInstructions(MCI)) {
-    auto MI = I.getInst();
-    if (HexagonMCInstrInfo::isDuplex(MCII, *MI))
+  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCII, MCI)) {
+    if (HexagonMCInstrInfo::isDuplex(MCII, I))
       return true;
   }
 
@@ -410,13 +454,12 @@ bool HexagonMCInstrInfo::hasExtenderForIndex(MCInst const &MCB, size_t Index) {
   return extenderForIndex(MCB, Index) != nullptr;
 }
 
-bool HexagonMCInstrInfo::hasImmExt(MCInst const &MCI) {
+bool HexagonMCInstrInfo::hasImmExt( MCInst const &MCI) {
   if (!HexagonMCInstrInfo::isBundle(MCI))
     return false;
 
   for (const auto &I : HexagonMCInstrInfo::bundleInstructions(MCI)) {
-    auto MI = I.getInst();
-    if (isImmext(*MI))
+    if (isImmext(*I.getInst()))
       return true;
   }
 
@@ -818,4 +861,4 @@ unsigned HexagonMCInstrInfo::SubregisterBit(unsigned Consumer,
     return 0x1;
   return 0;
 }
-}
+} // namespace llvm
