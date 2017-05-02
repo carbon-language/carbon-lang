@@ -609,6 +609,17 @@ APInt APInt::getLoBits(unsigned numBits) const {
   return Result;
 }
 
+/// Return a value containing V broadcasted over NewLen bits.
+APInt APInt::getSplat(unsigned NewLen, const APInt &V) {
+  assert(NewLen >= V.getBitWidth() && "Can't splat to smaller bit width!");
+
+  APInt Val = V.zextOrSelf(NewLen);
+  for (unsigned I = V.getBitWidth(); I < NewLen; I <<= 1)
+    Val |= Val << I;
+
+  return Val;
+}
+
 unsigned APInt::countLeadingZerosSlowCase() const {
   unsigned Count = 0;
   for (int i = getNumWords()-1; i >= 0; --i) {
