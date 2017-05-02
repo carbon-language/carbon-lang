@@ -336,6 +336,14 @@ bool HexagonShuffler::check() {
         ++jumps;
         foundBranches.push_back(ISJ);
       }
+      if (HexagonMCInstrInfo::getDesc(MCII, Inst0).isReturn()) {
+        ++deallocs, ++jumps, ++jump1; // DEALLOC_RETURN is of type LD.
+        foundBranches.push_back(ISJ);
+      }
+      if (HexagonMCInstrInfo::getDesc(MCII, Inst1).isReturn()) {
+        ++deallocs, ++jumps, ++jump1; // DEALLOC_RETURN is of type LD.
+        foundBranches.push_back(ISJ);
+      }
       break;
     }
     }
