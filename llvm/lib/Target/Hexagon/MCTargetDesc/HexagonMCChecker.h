@@ -107,13 +107,13 @@ class HexagonMCChecker {
   void initReg(MCInst const &, unsigned, unsigned &PredReg, bool &isTrue);
   
   bool registerUsed(unsigned Register);
-  bool registerUsed(MCInst const &Inst, unsigned Register);
   // Checks performed.
   bool checkBranches();
   bool checkPredicates();
   bool checkNewValues();
   bool checkRegisters();
   bool checkRegistersReadOnly();
+  bool checkEndloopBranches();
   void checkRegisterCurDefs();
   bool checkSolo();
   bool checkShuffle();

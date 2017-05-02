@@ -246,6 +246,7 @@ bool HexagonMCChecker::check(bool FullCheck) {
   bool chkNV = checkNewValues();
   bool chkR = checkRegisters();
   bool chkRRO = checkRegistersReadOnly();
+  bool chkELB = checkEndloopBranches();
   checkRegisterCurDefs();
   bool chkS = checkSolo();
   bool chkSh = true;
@@ -254,9 +255,28 @@ bool HexagonMCChecker::check(bool FullCheck) {
   bool chkSl = true;
   if (FullCheck)
     chkSl = checkSlots();
-  bool chk = chkB && chkP && chkNV && chkR && chkRRO && chkS && chkSh && chkSl;
+  bool chk = chkB && chkP && chkNV && chkR && chkRRO && chkELB && chkS &&
+             chkSh && chkSl;
 
   return chk;
+}
+
+bool HexagonMCChecker::checkEndloopBranches() {
+  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCII, MCB)) {
+    MCInstrDesc const &Desc = HexagonMCInstrInfo::getDesc(MCII, I);
+    if (Desc.isBranch() || Desc.isCall()) {
+      auto Inner = HexagonMCInstrInfo::isInnerLoop(MCB);
+      if (Inner || HexagonMCInstrInfo::isOuterLoop(MCB)) {
+        reportError(I.getLoc(),
+                    llvm::Twine("packet marked with `:endloop") +
+                        (Inner ? "0" : "1") + "' " +
+                        "cannot contain instructions that modify register " +
+                        "`" + llvm::Twine(RI.getName(Hexagon::PC)) + "'");
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 bool HexagonMCChecker::checkSlots() {
@@ -304,16 +324,6 @@ bool HexagonMCChecker::checkBranches() {
       }
     }
 
-    if (Branches) // FIXME: should "Defs.count(Hexagon::PC)" be here too?
-      if (HexagonMCInstrInfo::isInnerLoop(MCB) ||
-          HexagonMCInstrInfo::isOuterLoop(MCB)) {
-        // Error out if there's any branch in a loop-end packet.
-        Twine N(HexagonMCInstrInfo::isInnerLoop(MCB) ? '0' : '1');
-        reportError("packet marked with `:endloop" + N + "' " +
-                    "cannot contain instructions that modify register " + "`" +
-                    llvm::Twine(RI.getName(Hexagon::PC)) + "'");
-        return false;
-      }
     if (Branches > 1)
       if (!hasConditional || Conditional > Unconditional) {
         // Error out if more than one unconditional branch or
@@ -391,29 +401,23 @@ bool HexagonMCChecker::checkRegistersReadOnly() {
   return true;
 }
 
-bool HexagonMCChecker::registerUsed(MCInst const &Inst, unsigned Register) {
-  unsigned Defs = HexagonMCInstrInfo::getDesc(MCII, Inst).getNumDefs();
-  for (unsigned j = Defs, n = Inst.getNumOperands(); j < n; ++j) {
-    MCOperand const &Operand = Inst.getOperand(j);
-    if (Operand.isReg() && Operand.getReg() == Register)
-      return true;
-  }
-  return false;
-}
-
 bool HexagonMCChecker::registerUsed(unsigned Register) {
-  for (auto const &I: HexagonMCInstrInfo::bundleInstructions(MCII, MCB))
-    if (registerUsed(I, Register))
-      return true;
+  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCII, MCB))
+    for (unsigned j = HexagonMCInstrInfo::getDesc(MCII, I).getNumDefs(),
+                  n = I.getNumOperands();
+         j < n; ++j) {
+      MCOperand const &Operand = I.getOperand(j);
+      if (Operand.isReg() && Operand.getReg() == Register)
+        return true;
+    }
   return false;
 }
 
 void HexagonMCChecker::checkRegisterCurDefs() {
-  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCB)) {
-    MCInst const &Inst = *I.getInst();
-    if (HexagonMCInstrInfo::isCVINew(MCII, Inst) &&
-        HexagonMCInstrInfo::getDesc(MCII, Inst).mayLoad()) {
-      unsigned Register = Inst.getOperand(0).getReg();
+  for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCII, MCB)) {
+    if (HexagonMCInstrInfo::isCVINew(MCII, I) &&
+        HexagonMCInstrInfo::getDesc(MCII, I).mayLoad()) {
+      unsigned Register = I.getOperand(0).getReg();
       if (!registerUsed(Register))
         reportWarning("Register `" + llvm::Twine(RI.getName(Register)) +
                       "' used with `.cur' "
@@ -512,12 +516,11 @@ bool HexagonMCChecker::checkRegisters() {
 // Check for legal use of solo insns.
 bool HexagonMCChecker::checkSolo() {
   if (HexagonMCInstrInfo::bundleSize(MCB) > 1)
-    for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCB)) {
-      if (llvm::HexagonMCInstrInfo::isSolo(MCII, *I.getInst())) {
-        SMLoc Loc = I.getInst()->getLoc();
-        reportError(Loc, "Instruction is marked `isSolo' and "
-                         "cannot have other instructions in "
-                         "the same packet");
+    for (auto const &I : HexagonMCInstrInfo::bundleInstructions(MCII, MCB)) {
+      if (llvm::HexagonMCInstrInfo::isSolo(MCII, I)) {
+        reportError(I.getLoc(), "Instruction is marked `isSolo' and "
+                                "cannot have other instructions in "
+                                "the same packet");
         return false;
       }
     }
