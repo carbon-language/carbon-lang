@@ -4886,9 +4886,9 @@ bool X86::isZeroNode(SDValue Elt) {
   return isNullConstant(Elt) || isNullFPConstant(Elt);
 }
 
-// Build a vector of constants
+// Build a vector of constants.
 // Use an UNDEF node if MaskElt == -1.
-// Spilt 64-bit constants in the 32-bit mode.
+// Split 64-bit constants in the 32-bit mode.
 static SDValue getConstVector(ArrayRef<int> Values, MVT VT, SelectionDAG &DAG,
                               const SDLoc &dl, bool IsMask = false) {
 
