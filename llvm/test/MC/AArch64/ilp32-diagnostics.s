@@ -1,13 +1,9 @@
 // RUN: not llvm-mc -triple aarch64-none-linux-gnu -target-abi=ilp32 \
-// RUN:  < %s 2> %t2 -filetype=obj >/dev/null
+// RUN:  < %s 2> %t2 -filetype=obj 
 // RUN: FileCheck --check-prefix=CHECK-ERROR %s < %t2
 
         .xword sym-.
 // CHECK-ERROR: error: ILP32 8 byte PC relative data relocation not supported (LP64 eqv: PREL64)
-// CHECK-ERROR: ^
-
-        .xword sym+16
-// CHECK-ERROR: error: ILP32 8 byte absolute data relocation not supported (LP64 eqv: ABS64)
 // CHECK-ERROR: ^
 
         movz x7, #:abs_g3:some_label
@@ -68,30 +64,4 @@
         movk x13, #:gottprel_g0_nc:var
 // CHECK-ERROR: error: ILP32 absolute MOV relocation not supported (LP64 eqv: TLSIE_MOVW_GOTTPREL_G0_NC)
 // CHECK-ERROR: movk x13, #:gottprel_g0_nc:var
-// CHECK-ERROR: ^
-
-        ldr x10, [x0, #:gottprel_lo12:var]
-// CHECK-ERROR: error: ILP32 64-bit load/store relocation not supported (LP64 eqv: TLSIE_LD64_GOTTPREL_LO12_NC)
-// CHECK-ERROR: ldr x10, [x0, #:gottprel_lo12:var]
-// CHECK-ERROR: ^
-
-   ldr x24, [x23, #:got_lo12:sym]
-// CHECK-ERROR: error: ILP32 64-bit load/store relocation not supported (LP64 eqv: LD64_GOT_LO12_NC)
-// CHECK-ERROR: ^
-
-   ldr x24, [x23, :gottprel_lo12:sym]
-// CHECK-ERROR: error: ILP32 64-bit load/store relocation not supported (LP64 eqv: TLSIE_LD64_GOTTPREL_LO12_NC)
-// CHECK-ERROR: ^
-
-        ldr x10, [x0, #:gottprel_lo12:var]
-// CHECK-ERROR: error: ILP32 64-bit load/store relocation not supported (LP64 eqv: TLSIE_LD64_GOTTPREL_LO12_NC)
-// CHECK-ERROR: ldr x10, [x0, #:gottprel_lo12:var]
-// CHECK-ERROR: ^
-
-   ldr x24, [x23, #:got_lo12:sym]
-// CHECK-ERROR: error: ILP32 64-bit load/store relocation not supported (LP64 eqv: LD64_GOT_LO12_NC)
-// CHECK-ERROR: ^
-
-   ldr x24, [x23, :gottprel_lo12:sym]
-// CHECK-ERROR: error: ILP32 64-bit load/store relocation not supported (LP64 eqv: TLSIE_LD64_GOTTPREL_LO12_NC)
 // CHECK-ERROR: ^
