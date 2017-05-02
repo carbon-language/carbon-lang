@@ -28,7 +28,7 @@
 #include "llvm/DebugInfo/PDB/Native/InfoStreamBuilder.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFileBuilder.h"
-#include "llvm/DebugInfo/PDB/Native/PDBStringTableBuilder.h"
+#include "llvm/DebugInfo/PDB/Native/StringTableBuilder.h"
 #include "llvm/DebugInfo/PDB/Native/PDBTypeServerHandler.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStreamBuilder.h"
