@@ -152,7 +152,6 @@ MCOperand const &getNewValueOperand(MCInstrInfo const &MCII, MCInst const &MCI);
 unsigned short getNewValueOp2(MCInstrInfo const &MCII, MCInst const &MCI);
 MCOperand const &getNewValueOperand2(MCInstrInfo const &MCII,
                                      MCInst const &MCI);
-int getSubTarget(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Return the Hexagon ISA class for the insn.
 unsigned getType(MCInstrInfo const &MCII, MCInst const &MCI);

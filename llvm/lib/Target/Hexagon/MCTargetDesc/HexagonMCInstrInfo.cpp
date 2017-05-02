@@ -384,25 +384,6 @@ unsigned HexagonMCInstrInfo::getType(MCInstrInfo const &MCII,
   return ((F >> HexagonII::TypePos) & HexagonII::TypeMask);
 }
 
-int HexagonMCInstrInfo::getSubTarget(MCInstrInfo const &MCII,
-                                     MCInst const &MCI) {
-  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
-
-  HexagonII::SubTarget Target = static_cast<HexagonII::SubTarget>(
-      (F >> HexagonII::validSubTargetPos) & HexagonII::validSubTargetMask);
-
-  switch (Target) {
-  default:
-    return Hexagon::ArchV4;
-  case HexagonII::HasV5SubT:
-    return Hexagon::ArchV5;
-  case HexagonII::HasV55SubT:
-    return Hexagon::ArchV55;
-  case HexagonII::HasV60SubT:
-    return Hexagon::ArchV60;
-  }
-}
-
 /// Return the slots this instruction can execute out of
 unsigned HexagonMCInstrInfo::getUnits(MCInstrInfo const &MCII,
                                       MCSubtargetInfo const &STI,

@@ -4139,11 +4139,6 @@ unsigned HexagonInstrInfo::getUnits(const MachineInstr &MI) const {
   return IS.getUnits();
 }
 
-unsigned HexagonInstrInfo::getValidSubTargets(const unsigned Opcode) const {
-  const uint64_t F = get(Opcode).TSFlags;
-  return (F >> HexagonII::validSubTargetPos) & HexagonII::validSubTargetMask;
-}
-
 // Calculate size of the basic block without debug instructions.
 unsigned HexagonInstrInfo::nonDbgBBSize(const MachineBasicBlock *BB) const {
   return nonDbgMICount(BB->instr_begin(), BB->instr_end());
