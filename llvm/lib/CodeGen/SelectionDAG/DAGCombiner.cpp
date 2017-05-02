@@ -2015,6 +2015,11 @@ SDValue DAGCombiner::visitADDLike(SDValue N0, SDValue N1, SDNode *LocReference) 
     }
   }
 
+  // (add X, (addcarry Y, 0, Carry)) -> (addcarry X, Y, Carry)
+  if (N1.getOpcode() == ISD::ADDCARRY && isNullConstant(N1.getOperand(1)))
+    return DAG.getNode(ISD::ADDCARRY, DL, N1->getVTList(),
+                       N0, N1.getOperand(0), N1.getOperand(2));
+
   return SDValue();
 }
 
