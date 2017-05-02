@@ -476,8 +476,8 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
     } else
       switch (kind) {
       case MCSymbolRefExpr::VK_None: {
-        if (HexagonMCInstrInfo::s23_2_reloc(*MO.getExpr()))
-          FixupKind = Hexagon::fixup_Hexagon_23_REG;
+        if (HexagonMCInstrInfo::s27_2_reloc(*MO.getExpr()))
+          FixupKind = Hexagon::fixup_Hexagon_27_REG;
         else
           if (MCID.mayStore() || MCID.mayLoad()) {
             for (const MCPhysReg *ImpUses = MCID.getImplicitUses(); *ImpUses;

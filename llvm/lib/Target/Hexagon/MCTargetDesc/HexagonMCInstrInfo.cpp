@@ -767,16 +767,16 @@ bool HexagonMCInstrInfo::mustNotExtend(MCExpr const &Expr) {
   HexagonMCExpr const &HExpr = cast<HexagonMCExpr>(Expr);
   return HExpr.mustNotExtend();
 }
-void HexagonMCInstrInfo::setS23_2_reloc(MCExpr const &Expr, bool Val) {
+void HexagonMCInstrInfo::setS27_2_reloc(MCExpr const &Expr, bool Val) {
   HexagonMCExpr &HExpr =
       const_cast<HexagonMCExpr &>(*llvm::cast<HexagonMCExpr>(&Expr));
-  HExpr.setS23_2_reloc(Val);
+  HExpr.setS27_2_reloc(Val);
 }
-bool HexagonMCInstrInfo::s23_2_reloc(MCExpr const &Expr) {
+bool HexagonMCInstrInfo::s27_2_reloc(MCExpr const &Expr) {
   HexagonMCExpr const *HExpr = llvm::dyn_cast<HexagonMCExpr>(&Expr);
   if (!HExpr)
     return false;
-  return HExpr->s23_2_reloc();
+  return HExpr->s27_2_reloc();
 }
 
 void HexagonMCInstrInfo::padEndloop(MCInst &MCB, MCContext &Context) {

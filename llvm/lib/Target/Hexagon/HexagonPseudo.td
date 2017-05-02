@@ -14,8 +14,11 @@ let PrintMethod = "printGlobalOperand" in {
 
 let isPseudo = 1 in {
 let isCodeGenOnly = 0 in
-def A2_iconst : Pseudo<(outs IntRegs:$Rd32), (ins s23_2Imm:$Ii), "${Rd32}=iconst(#${Ii})">;
-def DUPLEX_Pseudo : InstHexagon<(outs), (ins s32_0Imm:$offset), "DUPLEX", [], "", DUPLEX, TypePSEUDO>;
+def A2_iconst : Pseudo<(outs IntRegs:$Rd32),
+    (ins s27_2Imm:$Ii), "${Rd32}=iconst(#${Ii})">;
+
+def DUPLEX_Pseudo : InstHexagon<(outs),
+    (ins s32_0Imm:$offset), "DUPLEX", [], "", DUPLEX, TypePSEUDO>;
 }
 
 let isExtendable = 1, opExtendable = 1, opExtentBits = 6,

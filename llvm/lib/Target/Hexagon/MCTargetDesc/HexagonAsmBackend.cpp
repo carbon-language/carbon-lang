@@ -295,6 +295,7 @@ public:
       case fixup_Hexagon_32_PCREL:
       case fixup_Hexagon_6_PCREL_X:
       case fixup_Hexagon_23_REG:
+      case fixup_Hexagon_27_REG:
       case fixup_Hexagon_GD_PLT_B22_PCREL_X:
       case fixup_Hexagon_GD_PLT_B32_PCREL_X:
       case fixup_Hexagon_LD_PLT_B22_PCREL_X:
