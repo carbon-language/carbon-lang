@@ -54,7 +54,7 @@ Error StringTable::commit(BinaryStreamWriter &Writer) const {
     Writer.setOffset(Offset);
     if (auto EC = Writer.writeCString(S))
       return EC;
-    MaxOffset = std::max(MaxOffset, Offset + S.size() + 1);
+    MaxOffset = std::max<uint32_t>(MaxOffset, Offset + S.size() + 1);
   }
 
   Writer.setOffset(MaxOffset);
