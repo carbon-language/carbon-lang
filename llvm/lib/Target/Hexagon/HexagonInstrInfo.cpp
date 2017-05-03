@@ -869,6 +869,9 @@ void HexagonInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   MachineFrameInfo &MFI = MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
   unsigned KillFlag = getKillRegState(isKill);
+  bool HasAlloca = MFI.hasVarSizedObjects();
+  const auto &HST = MF.getSubtarget<HexagonSubtarget>();
+  const HexagonFrameLowering &HFI = *HST.getFrameLowering();
 
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       MachinePointerInfo::getFixedStack(MF, FI), MachineMemOperand::MOStore,
@@ -899,24 +902,36 @@ void HexagonInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VectorRegs128BRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 128 ? Hexagon::V6_vS32Ub_ai_128B
                                : Hexagon::V6_vS32b_ai_128B;
     BuildMI(MBB, I, DL, get(Opc))
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VectorRegsRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 64 ? Hexagon::V6_vS32Ub_ai
                               : Hexagon::V6_vS32b_ai;
     BuildMI(MBB, I, DL, get(Opc))
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegsRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 64 ? Hexagon::PS_vstorerwu_ai
                               : Hexagon::PS_vstorerw_ai;
     BuildMI(MBB, I, DL, get(Opc))
       .addFrameIndex(FI).addImm(0)
       .addReg(SrcReg, KillFlag).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegs128BRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 128 ? Hexagon::PS_vstorerwu_ai_128B
                                : Hexagon::PS_vstorerw_ai_128B;
     BuildMI(MBB, I, DL, get(Opc))
@@ -935,6 +950,9 @@ void HexagonInstrInfo::loadRegFromStackSlot(
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
+  bool HasAlloca = MFI.hasVarSizedObjects();
+  const auto &HST = MF.getSubtarget<HexagonSubtarget>();
+  const HexagonFrameLowering &HFI = *HST.getFrameLowering();
 
   MachineMemOperand *MMO = MF.getMachineMemOperand(
       MachinePointerInfo::getFixedStack(MF, FI), MachineMemOperand::MOLoad,
@@ -959,21 +977,33 @@ void HexagonInstrInfo::loadRegFromStackSlot(
     BuildMI(MBB, I, DL, get(Hexagon::PS_vloadrq_ai), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegs128BRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 128 ? Hexagon::PS_vloadrwu_ai_128B
                                : Hexagon::PS_vloadrw_ai_128B;
     BuildMI(MBB, I, DL, get(Opc), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VectorRegs128BRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 128 ? Hexagon::V6_vL32Ub_ai_128B
                                : Hexagon::V6_vL32b_ai_128B;
     BuildMI(MBB, I, DL, get(Opc), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VectorRegsRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 64 ? Hexagon::V6_vL32Ub_ai
                               : Hexagon::V6_vL32b_ai;
     BuildMI(MBB, I, DL, get(Opc), DestReg)
       .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else if (Hexagon::VecDblRegsRegClass.hasSubClassEq(RC)) {
+    // If there are variable-sized objects, spills will not be aligned.
+    if (HasAlloca)
+      Align = HFI.getStackAlignment();
     unsigned Opc = Align < 64 ? Hexagon::PS_vloadrwu_ai
                               : Hexagon::PS_vloadrw_ai;
     BuildMI(MBB, I, DL, get(Opc), DestReg)
