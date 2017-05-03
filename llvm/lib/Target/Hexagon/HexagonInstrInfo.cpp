@@ -1140,8 +1140,9 @@ bool HexagonInstrInfo::expandPostRAPseudo(MachineInstr &MI) const {
       unsigned Offset = Is128B ? VecOffset << 7 : VecOffset << 6;
       MachineInstr *MI1New = BuildMI(MBB, MI, DL, get(NewOpc),
                                      HRI.getSubReg(DstReg, Hexagon::vsub_lo))
-                                 .add(MI.getOperand(1))
-                                 .addImm(MI.getOperand(2).getImm());
+              .add(MI.getOperand(1))
+              .addImm(MI.getOperand(2).getImm())
+              .setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
       MI1New->getOperand(1).setIsKill(false);
       BuildMI(MBB, MI, DL, get(NewOpc), HRI.getSubReg(DstReg, Hexagon::vsub_hi))
           .add(MI.getOperand(1))
