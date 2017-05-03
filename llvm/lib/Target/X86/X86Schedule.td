@@ -497,7 +497,6 @@ def IIC_IN_RI : InstrItinClass;
 def IIC_OUT_RR : InstrItinClass;
 def IIC_OUT_IR : InstrItinClass;
 def IIC_INS : InstrItinClass;
-def IIC_LWP : InstrItinClass;
 def IIC_MOV_REG_DR : InstrItinClass;
 def IIC_MOV_DR_REG : InstrItinClass;
 def IIC_MOV_REG_CR : InstrItinClass;

@@ -559,9 +559,6 @@ namespace llvm {
       // Conversions between float and half-float.
       CVTPS2PH, CVTPH2PS,
 
-      // LWP insert record.
-      LWPINS,
-
       // Compare and swap.
       LCMPXCHG_DAG = ISD::FIRST_TARGET_MEMORY_OPCODE,
       LCMPXCHG8_DAG,

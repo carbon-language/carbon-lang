@@ -265,7 +265,6 @@ void X86Subtarget::initializeEnvironment() {
   HasFMA4 = false;
   HasXOP = false;
   HasTBM = false;
-  HasLWP = false;
   HasMOVBE = false;
   HasRDRAND = false;
   HasF16C = false;
