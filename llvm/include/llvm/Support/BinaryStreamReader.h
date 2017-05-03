@@ -31,7 +31,6 @@ namespace llvm {
 /// are overridable.
 class BinaryStreamReader {
 public:
-  BinaryStreamReader() = default;
   explicit BinaryStreamReader(BinaryStreamRef Stream);
   virtual ~BinaryStreamReader() {}
 
@@ -243,9 +242,6 @@ public:
   ///
   /// \returns the next byte in the stream.
   uint8_t peek() const;
-
-  std::pair<BinaryStreamReader, BinaryStreamReader>
-  split(uint32_t Offset) const;
 
 private:
   BinaryStreamRef Stream;
