@@ -8,10 +8,6 @@ os:
 build:
   verbosity: detailed
 
-branches:
-  only:
-    - master
-
 configuration:
   - Debug
 
