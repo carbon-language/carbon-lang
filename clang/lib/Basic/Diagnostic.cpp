@@ -146,8 +146,9 @@ void DiagnosticsEngine::SetDelayedDiagnostic(unsigned DiagID, StringRef Arg1,
 }
 
 void DiagnosticsEngine::ReportDelayed() {
-  Report(DelayedDiagID) << DelayedDiagArg1 << DelayedDiagArg2;
+  unsigned ID = DelayedDiagID;
   DelayedDiagID = 0;
+  Report(ID) << DelayedDiagArg1 << DelayedDiagArg2;
   DelayedDiagArg1.clear();
   DelayedDiagArg2.clear();
 }
