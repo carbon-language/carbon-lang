@@ -516,9 +516,10 @@ bool llvm::UnrollRuntimeLoopRemainder(Loop *L, unsigned Count,
   // targets of the Latch be the single exit block out of the loop. This needs
   // to be guaranteed by the callers of UnrollRuntimeLoopRemainder.
   BranchInst *LatchBR = cast<BranchInst>(Latch->getTerminator());
-  assert(LatchBR->getSuccessor(0) == Exit ||
-         LatchBR->getSuccessor(1) == Exit && "loop latch successor should be "
-                                             "exit block!");
+  assert(
+      (LatchBR->getSuccessor(0) == Exit || LatchBR->getSuccessor(1) == Exit) &&
+      "one of the loop latch successors should be "
+      "the exit block!");
   // Loop structure is the following:
   //
   // PreHeader
