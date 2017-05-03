@@ -34,9 +34,11 @@ class StringTableRef {
 public:
   StringTableRef();
 
-  Error initialize(BinaryStreamReader &Stream);
+  Error initialize(BinaryStreamRef Contents);
 
-  StringRef getString(uint32_t Offset) const;
+  Expected<StringRef> getString(uint32_t Offset) const;
+
+  bool valid() const { return Stream.valid(); }
 
 private:
   BinaryStreamRef Stream;

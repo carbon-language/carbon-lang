@@ -42,7 +42,11 @@ Error PDBStringTable::readHeader(BinaryStreamReader &Reader) {
 }
 
 Error PDBStringTable::readStrings(BinaryStreamReader &Reader) {
-  if (auto EC = Strings.initialize(Reader)) {
+  BinaryStreamRef Stream;
+  if (auto EC = Reader.readStreamRef(Stream))
+    return EC;
+
+  if (auto EC = Strings.initialize(Stream)) {
     return joinErrors(std::move(EC),
                       make_error<RawError>(raw_error_code::corrupt_file,
                                            "Invalid hash table byte length"));
@@ -99,11 +103,11 @@ Error PDBStringTable::reload(BinaryStreamReader &Reader) {
   return Error::success();
 }
 
-StringRef PDBStringTable::getStringForID(uint32_t ID) const {
+Expected<StringRef> PDBStringTable::getStringForID(uint32_t ID) const {
   return Strings.getString(ID);
 }
 
-uint32_t PDBStringTable::getIDForString(StringRef Str) const {
+Expected<uint32_t> PDBStringTable::getIDForString(StringRef Str) const {
   uint32_t Hash =
       (Header->HashVersion == 1) ? hashStringV1(Str) : hashStringV2(Str);
   size_t Count = IDs.size();
@@ -115,12 +119,14 @@ uint32_t PDBStringTable::getIDForString(StringRef Str) const {
     uint32_t Index = (Start + I) % Count;
 
     uint32_t ID = IDs[Index];
-    StringRef S = getStringForID(ID);
-    if (S == Str)
+    auto ExpectedStr = getStringForID(ID);
+    if (!ExpectedStr)
+      return ExpectedStr.takeError();
+
+    if (*ExpectedStr == Str)
       return ID;
   }
-  // IDs[0] contains the ID of the "invalid" entry.
-  return IDs[0];
+  return make_error<RawError>(raw_error_code::no_entry);
 }
 
 FixedStreamArray<support::ulittle32_t> PDBStringTable::name_ids() const {

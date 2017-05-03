@@ -18,17 +18,17 @@ using namespace llvm::codeview;
 
 StringTableRef::StringTableRef() {}
 
-Error StringTableRef::initialize(BinaryStreamReader &Reader) {
-  return Reader.readStreamRef(Stream, Reader.bytesRemaining());
+Error StringTableRef::initialize(BinaryStreamRef Contents) {
+  Stream = Contents;
+  return Error::success();
 }
 
-StringRef StringTableRef::getString(uint32_t Offset) const {
+Expected<StringRef> StringTableRef::getString(uint32_t Offset) const {
   BinaryStreamReader Reader(Stream);
   Reader.setOffset(Offset);
   StringRef Result;
-  Error EC = Reader.readCString(Result);
-  assert(!EC);
-  consumeError(std::move(EC));
+  if (auto EC = Reader.readCString(Result))
+    return std::move(EC);
   return Result;
 }
 

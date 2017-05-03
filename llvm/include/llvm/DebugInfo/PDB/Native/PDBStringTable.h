@@ -1,5 +1,4 @@
-//===- PDBStringTable.h - PDB String Table -------------------------*- C++
-//-*-===//
+//===- PDBStringTable.h - PDB String Table -----------------------*- C++-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -41,8 +40,8 @@ public:
   uint32_t getHashVersion() const;
   uint32_t getSignature() const;
 
-  StringRef getStringForID(uint32_t ID) const;
-  uint32_t getIDForString(StringRef Str) const;
+  Expected<StringRef> getStringForID(uint32_t ID) const;
+  Expected<uint32_t> getIDForString(StringRef Str) const;
 
   FixedStreamArray<support::ulittle32_t> name_ids() const;
 
