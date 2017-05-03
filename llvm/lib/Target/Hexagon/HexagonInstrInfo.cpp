@@ -59,6 +59,7 @@ using namespace llvm;
 #define GET_INSTRMAP_INFO
 #include "HexagonGenInstrInfo.inc"
 #include "HexagonGenDFAPacketizer.inc"
+#include "HexagonDepTimingClasses.h"
 
 cl::opt<bool> ScheduleInlineAsm("hexagon-sched-inline-asm", cl::Hidden,
   cl::init(false), cl::desc("Do not consider inline-asm a scheduling/"
@@ -1643,6 +1644,7 @@ unsigned HexagonInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
   return getInstrTimingClassLatency(ItinData, MI);
 }
 
+
 DFAPacketizer *HexagonInstrInfo::CreateTargetScheduleState(
     const TargetSubtargetInfo &STI) const {
   const InstrItineraryData *II = STI.getInstrItineraryData();
@@ -2047,9 +2049,7 @@ bool HexagonInstrInfo::isEarlySourceInstr(const MachineInstr &MI) const {
 
   // Multiply
   unsigned SchedClass = MI.getDesc().getSchedClass();
-  if (SchedClass == Hexagon::Sched::M_tc_3or4x_SLOT23)
-    return true;
-  return false;
+  return is_TC4x(SchedClass) || is_TC3x(SchedClass);
 }
 
 bool HexagonInstrInfo::isEndLoopN(unsigned Opcode) const {
@@ -2117,7 +2117,7 @@ bool HexagonInstrInfo::isFloat(const MachineInstr &MI) const {
 // No V60 HVX VMEM with A_INDIRECT.
 bool HexagonInstrInfo::isHVXMemWithAIndirect(const MachineInstr &I,
       const MachineInstr &J) const {
-  if (!isV60VectorInstruction(I))
+  if (!isHVXVec(I))
     return false;
   if (!I.mayLoad() && !I.mayStore())
     return false;
@@ -2241,30 +2241,13 @@ bool HexagonInstrInfo::isLateResultInstr(const MachineInstr &MI) const {
   }
 
   unsigned SchedClass = MI.getDesc().getSchedClass();
-
-  switch (SchedClass) {
-  case Hexagon::Sched::ALU32_2op_tc_1_SLOT0123:
-  case Hexagon::Sched::ALU32_3op_tc_1_SLOT0123:
-  case Hexagon::Sched::ALU32_ADDI_tc_1_SLOT0123:
-  case Hexagon::Sched::ALU64_tc_1_SLOT23:
-  case Hexagon::Sched::EXTENDER_tc_1_SLOT0123:
-  case Hexagon::Sched::S_2op_tc_1_SLOT23:
-  case Hexagon::Sched::S_3op_tc_1_SLOT23:
-  case Hexagon::Sched::V2LDST_tc_ld_SLOT01:
-  case Hexagon::Sched::V2LDST_tc_st_SLOT0:
-  case Hexagon::Sched::V2LDST_tc_st_SLOT01:
-  case Hexagon::Sched::V4LDST_tc_ld_SLOT01:
-  case Hexagon::Sched::V4LDST_tc_st_SLOT0:
-  case Hexagon::Sched::V4LDST_tc_st_SLOT01:
-    return false;
-  }
-  return true;
+  return !is_TC1(SchedClass);
 }
 
 bool HexagonInstrInfo::isLateSourceInstr(const MachineInstr &MI) const {
   // Instructions with iclass A_CVI_VX and attribute A_CVI_LATE uses a multiply
   // resource, but all operands can be received late like an ALU instruction.
-  return MI.getDesc().getSchedClass() == Hexagon::Sched::CVI_VX_LATE;
+  return getType(MI) == HexagonII::TypeCVI_VX_LATE;
 }
 
 bool HexagonInstrInfo::isLoopN(const MachineInstr &MI) const {
@@ -2507,61 +2490,22 @@ bool HexagonInstrInfo::isTailCall(const MachineInstr &MI) const {
 // Returns true when SU has a timing class TC1.
 bool HexagonInstrInfo::isTC1(const MachineInstr &MI) const {
   unsigned SchedClass = MI.getDesc().getSchedClass();
-  switch (SchedClass) {
-  case Hexagon::Sched::ALU32_2op_tc_1_SLOT0123:
-  case Hexagon::Sched::ALU32_3op_tc_1_SLOT0123:
-  case Hexagon::Sched::ALU32_ADDI_tc_1_SLOT0123:
-  case Hexagon::Sched::ALU64_tc_1_SLOT23:
-  case Hexagon::Sched::EXTENDER_tc_1_SLOT0123:
-  //case Hexagon::Sched::M_tc_1_SLOT23:
-  case Hexagon::Sched::S_2op_tc_1_SLOT23:
-  case Hexagon::Sched::S_3op_tc_1_SLOT23:
-    return true;
-
-  default:
-    return false;
-  }
+  return is_TC1(SchedClass);
 }
 
 bool HexagonInstrInfo::isTC2(const MachineInstr &MI) const {
   unsigned SchedClass = MI.getDesc().getSchedClass();
-  switch (SchedClass) {
-  case Hexagon::Sched::ALU32_3op_tc_2_SLOT0123:
-  case Hexagon::Sched::ALU64_tc_2_SLOT23:
-  case Hexagon::Sched::CR_tc_2_SLOT3:
-  case Hexagon::Sched::M_tc_2_SLOT23:
-  case Hexagon::Sched::S_2op_tc_2_SLOT23:
-  case Hexagon::Sched::S_3op_tc_2_SLOT23:
-    return true;
-
-  default:
-    return false;
-  }
+  return is_TC2(SchedClass);
 }
 
 bool HexagonInstrInfo::isTC2Early(const MachineInstr &MI) const {
   unsigned SchedClass = MI.getDesc().getSchedClass();
-  switch (SchedClass) {
-  case Hexagon::Sched::ALU32_2op_tc_2early_SLOT0123:
-  case Hexagon::Sched::ALU32_3op_tc_2early_SLOT0123:
-  case Hexagon::Sched::ALU64_tc_2early_SLOT23:
-  case Hexagon::Sched::CR_tc_2early_SLOT23:
-  case Hexagon::Sched::CR_tc_2early_SLOT3:
-  case Hexagon::Sched::J_tc_2early_SLOT0123:
-  case Hexagon::Sched::J_tc_2early_SLOT2:
-  case Hexagon::Sched::J_tc_2early_SLOT23:
-  case Hexagon::Sched::S_2op_tc_2early_SLOT23:
-  case Hexagon::Sched::S_3op_tc_2early_SLOT23:
-    return true;
-
-  default:
-    return false;
-  }
+  return is_TC2early(SchedClass);
 }
 
 bool HexagonInstrInfo::isTC4x(const MachineInstr &MI) const {
   unsigned SchedClass = MI.getDesc().getSchedClass();
-  return SchedClass == Hexagon::Sched::M_tc_3or4x_SLOT23;
+  return is_TC4x(SchedClass);
 }
 
 // Schedule this ASAP.
@@ -2583,7 +2527,7 @@ bool HexagonInstrInfo::isToBeScheduledASAP(const MachineInstr &MI1,
   return false;
 }
 
-bool HexagonInstrInfo::isV60VectorInstruction(const MachineInstr &MI) const {
+bool HexagonInstrInfo::isHVXVec(const MachineInstr &MI) const {
   const uint64_t V = getType(MI);
   return HexagonII::TypeCVI_FIRST <= V && V <= HexagonII::TypeCVI_LAST;
 }
@@ -2782,7 +2726,7 @@ bool HexagonInstrInfo::isValidOffset(unsigned Opcode, int Offset,
 }
 
 bool HexagonInstrInfo::isVecAcc(const MachineInstr &MI) const {
-  return isV60VectorInstruction(MI) && isAccumulator(MI);
+  return isHVXVec(MI) && isAccumulator(MI);
 }
 
 bool HexagonInstrInfo::isVecALU(const MachineInstr &MI) const {
@@ -2888,7 +2832,7 @@ bool HexagonInstrInfo::isZeroExtendingLoad(const MachineInstr &MI) const {
 // Add latency to instruction.
 bool HexagonInstrInfo::addLatencyToSchedule(const MachineInstr &MI1,
       const MachineInstr &MI2) const {
-  if (isV60VectorInstruction(MI1) && isV60VectorInstruction(MI2))
+  if (isHVXVec(MI1) && isHVXVec(MI2))
     if (!isVecUsableNextPacket(MI1, MI2))
       return true;
   return false;
@@ -3013,7 +2957,7 @@ bool HexagonInstrInfo::mayBeNewStore(const MachineInstr &MI) const {
 bool HexagonInstrInfo::producesStall(const MachineInstr &ProdMI,
       const MachineInstr &ConsMI) const {
   // There is no stall when ProdMI is not a V60 vector.
-  if (!isV60VectorInstruction(ProdMI))
+  if (!isHVXVec(ProdMI))
     return false;
 
   // There is no stall when ProdMI and ConsMI are not dependent.
@@ -3031,7 +2975,7 @@ bool HexagonInstrInfo::producesStall(const MachineInstr &ProdMI,
 bool HexagonInstrInfo::producesStall(const MachineInstr &MI,
       MachineBasicBlock::const_instr_iterator BII) const {
   // There is no stall when I is not a V60 vector.
-  if (!isV60VectorInstruction(MI))
+  if (!isHVXVec(MI))
     return false;
 
   MachineBasicBlock::const_instr_iterator MII = BII;
@@ -3414,7 +3358,6 @@ int HexagonInstrInfo::getNonDotCurOp(const MachineInstr &MI) const {
 //               \            /
 //                 p.old store
 //             [if (p0)memw(R0+#0)=R2]
-//
 //
 // The following set of instructions further explains the scenario where
 // conditional new-value store becomes invalid when promoted to .new predicate
@@ -4025,18 +3968,53 @@ unsigned HexagonInstrInfo::getInstrTimingClassLatency(
   if (!ItinData)
     return getInstrLatency(ItinData, MI);
 
-  // Get the latency embedded in the itinerary. If we're not using timing class
-  // latencies or if we using BSB scheduling, then restrict the maximum latency
-  // to 1 (that is, either 0 or 1).
   if (MI.isTransient())
     return 0;
-  unsigned Latency = ItinData->getStageLatency(MI.getDesc().getSchedClass());
-  if (!EnableTimingClassLatency ||
-      MI.getParent()->getParent()->getSubtarget<HexagonSubtarget>().
-      useBSBScheduling())
-    if (Latency > 1)
-      Latency = 1;
-  return Latency;
+  return ItinData->getStageLatency(MI.getDesc().getSchedClass());
+}
+
+/// getOperandLatency - Compute and return the use operand latency of a given
+/// pair of def and use.
+/// In most cases, the static scheduling itinerary was enough to determine the
+/// operand latency. But it may not be possible for instructions with variable
+/// number of defs / uses.
+///
+/// This is a raw interface to the itinerary that may be directly overriden by
+/// a target. Use computeOperandLatency to get the best estimate of latency.
+int HexagonInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
+                                        const MachineInstr &DefMI,
+                                        unsigned DefIdx,
+                                        const MachineInstr &UseMI,
+                                        unsigned UseIdx) const {
+  auto &RI = getRegisterInfo();
+  // Get DefIdx and UseIdx for super registers.
+  MachineOperand DefMO = DefMI.getOperand(DefIdx);
+
+  if (RI.isPhysicalRegister(DefMO.getReg())) {
+    if (DefMO.isImplicit()) {
+      for (MCSuperRegIterator SR(DefMO.getReg(), &RI); SR.isValid(); ++SR) {
+        int Idx = DefMI.findRegisterDefOperandIdx(*SR, false, false, &RI);
+        if (Idx != -1) {
+          DefIdx = Idx;
+          break;
+        }
+      }
+    }
+
+    MachineOperand UseMO = UseMI.getOperand(UseIdx);
+    if (UseMO.isImplicit()) {
+      for (MCSuperRegIterator SR(UseMO.getReg(), &RI); SR.isValid(); ++SR) {
+        int Idx = UseMI.findRegisterUseOperandIdx(*SR, false, &RI);
+        if (Idx != -1) {
+          UseIdx = Idx;
+          break;
+        }
+      }
+    }
+  }
+
+  return TargetInstrInfo::getOperandLatency(ItinData, DefMI, DefIdx,
+                                            UseMI, UseIdx);
 }
 
 // inverts the predication logic.
