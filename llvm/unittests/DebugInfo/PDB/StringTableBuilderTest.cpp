@@ -25,12 +25,6 @@ namespace {
 class StringTableBuilderTest : public ::testing::Test {};
 }
 
-template <typename T>
-static void ExpectExpected(Expected<T> &&E, const T &Value) {
-  EXPECT_EXPECTED(E);
-  EXPECT_EQ(Value, *E);
-}
-
 TEST_F(StringTableBuilderTest, Simple) {
   // Create /names table contents.
   PDBStringTableBuilder Builder;
