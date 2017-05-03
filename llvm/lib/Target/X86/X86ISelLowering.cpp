@@ -3757,7 +3757,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // set X86_INTR calling convention because it has the same CSR mask
   // (same preserved registers).
   const uint32_t *Mask = RegInfo->getCallPreservedMask(
-      MF, HasNCSR ? CallingConv::X86_INTR : CallConv);
+      MF, HasNCSR ? (CallingConv::ID)CallingConv::X86_INTR : CallConv);
   assert(Mask && "Missing call preserved mask for calling convention");
 
   // If this is an invoke in a 32-bit function using a funclet-based
