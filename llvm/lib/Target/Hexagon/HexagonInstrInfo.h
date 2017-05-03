@@ -399,6 +399,7 @@ public:
                              const MachineInstr &GB) const;
   int getCondOpcode(int Opc, bool sense) const;
   int getDotCurOp(const MachineInstr &MI) const;
+  int getNonDotCurOp(const MachineInstr &MI) const;
   int getDotNewOp(const MachineInstr &MI) const;
   int getDotNewPredJumpOp(const MachineInstr &MI,
                           const MachineBranchProbabilityInfo *MBPI) const;

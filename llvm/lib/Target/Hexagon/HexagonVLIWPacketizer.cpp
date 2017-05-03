@@ -356,7 +356,7 @@ void HexagonPacketizerList::cleanUpDotCur() {
   MachineInstr *MI = nullptr;
   for (auto BI : CurrentPacketMIs) {
     DEBUG(dbgs() << "Cleanup packet has "; BI->dump(););
-    if (BI->getOpcode() == Hexagon::V6_vL32b_cur_ai) {
+    if (HII->isDotCurInst(*BI)) {
       MI = BI;
       continue;
     }
@@ -369,7 +369,7 @@ void HexagonPacketizerList::cleanUpDotCur() {
   if (!MI)
     return;
   // We did not find a use of the CUR, so de-cur it.
-  MI->setDesc(HII->get(Hexagon::V6_vL32b_ai));
+  MI->setDesc(HII->get(HII->getNonDotCurOp(*MI)));
   DEBUG(dbgs() << "Demoted CUR "; MI->dump(););
 }
 
