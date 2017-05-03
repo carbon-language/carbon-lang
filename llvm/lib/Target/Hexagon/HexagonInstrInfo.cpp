@@ -2907,6 +2907,11 @@ bool HexagonInstrInfo::getMemOpBaseRegImmOfs(MachineInstr &LdSt,
 /// \brief Can these instructions execute at the same time in a bundle.
 bool HexagonInstrInfo::canExecuteInBundle(const MachineInstr &First,
       const MachineInstr &Second) const {
+  if (Second.mayStore() && First.getOpcode() == Hexagon::S2_allocframe) {
+    const MachineOperand &Op = Second.getOperand(0);
+    if (Op.isReg() && Op.isUse() && Op.getReg() == Hexagon::R29)
+      return true;
+  }
   if (DisableNVSchedule)
     return false;
   if (mayBeNewStore(Second)) {
