@@ -520,6 +520,8 @@ bool llvm::UnrollRuntimeLoopRemainder(Loop *L, unsigned Count,
       (LatchBR->getSuccessor(0) == Exit || LatchBR->getSuccessor(1) == Exit) &&
       "one of the loop latch successors should be "
       "the exit block!");
+  // Avoid warning of unused `LatchBR` variable in release builds.
+  (void)LatchBR;
   // Loop structure is the following:
   //
   // PreHeader
