@@ -20318,6 +20318,19 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget &Subtarget,
       // during ExpandISelPseudos in EmitInstrWithCustomInserter.
       return SDValue();
     }
+    case Intrinsic::x86_lwpins32:
+    case Intrinsic::x86_lwpins64: {
+      SDLoc dl(Op);
+      SDValue Chain = Op->getOperand(0);
+      SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other);
+      SDValue LwpIns =
+          DAG.getNode(X86ISD::LWPINS, dl, VTs, Chain, Op->getOperand(2),
+                      Op->getOperand(3), Op->getOperand(4));
+      SDValue SetCC = getSETCC(X86::COND_B, LwpIns.getValue(0), dl, DAG);
+      SDValue Result = DAG.getNode(ISD::ZERO_EXTEND, dl, MVT::i8, SetCC);
+      return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(), Result,
+                         LwpIns.getValue(1));
+    }
     }
     return SDValue();
   }
@@ -24494,6 +24507,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CVTP2UI_RND:        return "X86ISD::CVTP2UI_RND";
   case X86ISD::CVTS2SI_RND:        return "X86ISD::CVTS2SI_RND";
   case X86ISD::CVTS2UI_RND:        return "X86ISD::CVTS2UI_RND";
+  case X86ISD::LWPINS:             return "X86ISD::LWPINS";
   }
   return nullptr;
 }
