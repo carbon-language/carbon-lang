@@ -447,11 +447,13 @@ public:
   }
 
   bool HandleDebugLine() {
+    std::map<uint64_t, DWARFDie> StmtListToDie;
     bool Success = true;
     OS << "Verifying .debug_line...\n";
     for (const auto &CU : DCtx.compile_units()) {
       uint32_t LineTableOffset = 0;
-      auto StmtFormValue = CU->getUnitDIE().find(DW_AT_stmt_list);
+      auto CUDie = CU->getUnitDIE();
+      auto StmtFormValue = CUDie.find(DW_AT_stmt_list);
       if (!StmtFormValue) {
         // No line table for this compile unit.
         continue;
@@ -468,6 +470,21 @@ public:
           // Skip this line table as it isn't valid. No need to create an error
           // here because we validate this in the .debug_info verifier.
           continue;
+        } else {
+          auto Iter = StmtListToDie.find(LineTableOffset);
+          if (Iter != StmtListToDie.end()) {
+            Success = false;
+            OS << "error: two compile unit DIEs, "
+               << format("0x%08" PRIx32, Iter->second.getOffset()) << " and "
+               << format("0x%08" PRIx32, CUDie.getOffset())
+               << ", have the same DW_AT_stmt_list section offset:\n";
+            Iter->second.dump(OS, 0);
+            CUDie.dump(OS, 0);
+            OS << '\n';
+            // Already verified this line table before, no need to do it again.
+            continue;
+          }
+          StmtListToDie[LineTableOffset] = CUDie;
         }
       }
       auto LineTable = DCtx.getLineTableForUnit(CU.get());
@@ -475,7 +492,7 @@ public:
         Success = false;
         OS << "error: .debug_line[" << format("0x%08" PRIx32, LineTableOffset)
            << "] was not able to be parsed for CU:\n";
-        CU->getUnitDIE().dump(OS, 0);
+        CUDie.dump(OS, 0);
         OS << '\n';
         continue;
       }
