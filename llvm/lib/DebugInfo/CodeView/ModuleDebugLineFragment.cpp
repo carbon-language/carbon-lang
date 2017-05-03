@@ -69,8 +69,8 @@ bool ModuleDebugLineFragmentRef::hasColumnInfo() const {
 
 ModuleDebugLineFragment::ModuleDebugLineFragment(
     ModuleDebugFileChecksumFragment &Checksums, StringTable &Strings)
-    : ModuleDebugFragment(ModuleDebugFragmentKind::Lines), Checksums(Checksums),
-      Strings(Strings) {}
+    : ModuleDebugFragment(ModuleDebugFragmentKind::Lines),
+      Checksums(Checksums) {}
 
 void ModuleDebugLineFragment::createBlock(StringRef FileName) {
   uint32_t Offset = Checksums.mapChecksumOffset(FileName);
