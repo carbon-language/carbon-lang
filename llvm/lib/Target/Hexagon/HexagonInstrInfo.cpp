@@ -2697,6 +2697,7 @@ bool HexagonInstrInfo::isValidOffset(unsigned Opcode, int Offset,
   case Hexagon::L2_loadrh_io:
   case Hexagon::L2_loadruh_io:
   case Hexagon::S2_storerh_io:
+  case Hexagon::S2_storerf_io:
     return (Offset >= Hexagon_MEMH_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMH_OFFSET_MAX);
 
