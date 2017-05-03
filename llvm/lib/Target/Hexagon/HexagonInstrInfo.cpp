@@ -1971,7 +1971,7 @@ bool HexagonInstrInfo::isDeallocRet(const MachineInstr &MI) const {
   case Hexagon::L4_return_fnew_pnt :
   case Hexagon::L4_return_tnew_pt :
   case Hexagon::L4_return_fnew_pt :
-   return true;
+    return true;
   }
   return false;
 }
@@ -2170,7 +2170,7 @@ bool HexagonInstrInfo::isJumpR(const MachineInstr &MI) const {
 bool HexagonInstrInfo::isJumpWithinBranchRange(const MachineInstr &MI,
       unsigned offset) const {
   // This selection of jump instructions matches to that what
-  // AnalyzeBranch can parse, plus NVJ.
+  // analyzeBranch can parse, plus NVJ.
   if (isNewValueJump(MI)) // r9:2
     return isInt<11>(offset);
 
@@ -3519,7 +3519,6 @@ int HexagonInstrInfo::getDotNewOp(const MachineInstr &MI) const {
   return 0;
 }
 
-
 // Returns the opcode to use when converting MI, which is a conditional jump,
 // into a conditional instruction which uses the .new value of the predicate.
 // We also use branch probabilities to add a hint to the jump.
@@ -4016,18 +4015,6 @@ HexagonII::SubInstructionGroup HexagonInstrInfo::getDuplexCandidateGroup(
 
 short HexagonInstrInfo::getEquivalentHWInstr(const MachineInstr &MI) const {
   return Hexagon::getRealHWInstr(MI.getOpcode(), Hexagon::InstrType_Real);
-}
-
-// Return first non-debug instruction in the basic block.
-MachineInstr *HexagonInstrInfo::getFirstNonDbgInst(MachineBasicBlock *BB)
-      const {
-  for (auto MII = BB->instr_begin(), End = BB->instr_end(); MII != End; MII++) {
-    MachineInstr &MI = *MII;
-    if (MI.isDebugValue())
-      continue;
-    return &MI;
-  }
-  return nullptr;
 }
 
 unsigned HexagonInstrInfo::getInstrTimingClassLatency(
