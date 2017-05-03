@@ -130,7 +130,6 @@ public:
 
 private:
   ModuleDebugFileChecksumFragment &Checksums;
-  StringTable &Strings;
 
   uint16_t RelocOffset = 0;
   uint16_t RelocSegment = 0;
