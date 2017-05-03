@@ -57,10 +57,9 @@ bool ModuleDebugInlineeLineFragmentRef::hasExtraFiles() const {
 }
 
 ModuleDebugInlineeLineFragment::ModuleDebugInlineeLineFragment(
-    ModuleDebugFileChecksumFragment &Checksums, StringTable &Strings,
-    bool HasExtraFiles)
+    ModuleDebugFileChecksumFragment &Checksums, bool HasExtraFiles)
     : ModuleDebugFragment(ModuleDebugFragmentKind::InlineeLines),
-      Checksums(Checksums), Strings(Strings), HasExtraFiles(HasExtraFiles) {}
+      Checksums(Checksums), HasExtraFiles(HasExtraFiles) {}
 
 uint32_t ModuleDebugInlineeLineFragment::calculateSerializedLength() {
   // 4 bytes for the signature

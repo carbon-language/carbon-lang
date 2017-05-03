@@ -76,7 +76,7 @@ private:
 class ModuleDebugInlineeLineFragment final : public ModuleDebugFragment {
 public:
   ModuleDebugInlineeLineFragment(ModuleDebugFileChecksumFragment &Checksums,
-                                 StringTable &Strings, bool HasExtraFiles);
+                                 bool HasExtraFiles);
 
   static bool classof(const ModuleDebugFragment *S) {
     return S->kind() == ModuleDebugFragmentKind::InlineeLines;
@@ -90,7 +90,6 @@ public:
 
 private:
   ModuleDebugFileChecksumFragment &Checksums;
-  StringTable &Strings;
 
   bool HasExtraFiles = false;
   uint32_t ExtraFileCount = 0;

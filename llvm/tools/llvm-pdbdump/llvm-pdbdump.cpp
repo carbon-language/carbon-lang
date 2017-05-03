@@ -543,7 +543,7 @@ static void yamlToPdb(StringRef Path) {
 
       for (const auto &Inlinee : FLI.Inlinees) {
         auto Inlinees = llvm::make_unique<ModuleDebugInlineeLineFragment>(
-            ChecksumRef, Strings, Inlinee.HasExtraFiles);
+            ChecksumRef, Inlinee.HasExtraFiles);
         for (const auto &Site : Inlinee.Sites) {
           Inlinees->addInlineSite(Site.Inlinee, Site.FileName,
                                   Site.SourceLineNum);
