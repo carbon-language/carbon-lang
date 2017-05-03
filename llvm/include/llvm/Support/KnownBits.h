@@ -43,6 +43,22 @@ public:
     return Zero.getBitWidth();
   }
 
+  /// Returns true if there is conflicting information.
+  bool hasConflict() const { return Zero.intersects(One); }
+
+  /// Returns true if we know the value of all bits.
+  bool isConstant() const {
+    assert(!hasConflict() && "KnownBits conflict!");
+    return Zero.countPopulation() + One.countPopulation() == getBitWidth();
+  }
+
+  /// Returns the value when all bits have a known value. This just returns One
+  /// with a protective assertion.
+  const APInt &getConstant() const {
+    assert(isConstant() && "Can only get value when all bits are known");
+    return One;
+  }
+
   /// Returns true if this value is known to be negative.
   bool isNegative() const { return One.isSignBitSet(); }
 
