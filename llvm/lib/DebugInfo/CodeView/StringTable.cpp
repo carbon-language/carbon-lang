@@ -63,3 +63,9 @@ Error StringTable::commit(BinaryStreamWriter &Writer) const {
 }
 
 uint32_t StringTable::size() const { return Strings.size(); }
+
+uint32_t StringTable::getStringId(StringRef S) const {
+  auto P = Strings.find(S);
+  assert(P != Strings.end());
+  return P->second;
+}

@@ -53,6 +53,9 @@ public:
   // Returns the ID for S.
   uint32_t insert(StringRef S);
 
+  // Return the ID for string S.  Assumes S exists in the table.
+  uint32_t getStringId(StringRef S) const;
+
   uint32_t calculateSerializedSize() const;
   Error commit(BinaryStreamWriter &Writer) const;
 
