@@ -24,6 +24,12 @@ struct KnownBits {
   APInt Zero;
   APInt One;
 
+private:
+  // Internal constructor for creating a ConstantRange from two APInts.
+  KnownBits(APInt Zero, APInt One)
+      : Zero(std::move(Zero)), One(std::move(One)) {}
+
+public:
   // Default construct Zero and One.
   KnownBits() {}
 
@@ -53,6 +59,30 @@ struct KnownBits {
   void makeNonNegative() {
     assert(!isNegative() && "Can't make a negative value non-negative");
     Zero.setSignBit();
+  }
+
+  /// Truncate the underlying known Zero and One bits. This is equivalent
+  /// to truncating the value we're tracking.
+  KnownBits trunc(unsigned BitWidth) {
+    return KnownBits(Zero.trunc(BitWidth), One.trunc(BitWidth));
+  }
+
+  /// Zero extends the underlying known Zero and One bits. This is equivalent
+  /// to zero extending the value we're tracking.
+  KnownBits zext(unsigned BitWidth) {
+    return KnownBits(Zero.zext(BitWidth), One.zext(BitWidth));
+  }
+
+  /// Sign extends the underlying known Zero and One bits. This is equivalent
+  /// to sign extending the value we're tracking.
+  KnownBits sext(unsigned BitWidth) {
+    return KnownBits(Zero.sext(BitWidth), One.sext(BitWidth));
+  }
+
+  /// Zero extends or truncates the underlying known Zero and One bits. This is
+  /// equivalent to zero extending or truncating the value we're tracking.
+  KnownBits zextOrTrunc(unsigned BitWidth) {
+    return KnownBits(Zero.zextOrTrunc(BitWidth), One.zextOrTrunc(BitWidth));
   }
 };
 

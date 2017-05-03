@@ -561,8 +561,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       if (Known2.One.getBitWidth() != BitWidth) {
         assert(Known2.getBitWidth() > BitWidth &&
                "Expected BUILD_VECTOR implicit truncation");
-        Known2.One = Known2.One.trunc(BitWidth);
-        Known2.Zero = Known2.Zero.trunc(BitWidth);
+        Known2 = Known2.trunc(BitWidth);
       }
 
       // Known bits are the values that are shared by every element.
@@ -1087,8 +1086,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if (SimplifyDemandedBits(Op.getOperand(0), InMask, Known, TLO, Depth+1))
       return true;
     assert((Known.Zero & Known.One) == 0 && "Bits known to be one AND zero?");
-    Known.Zero = Known.Zero.zext(BitWidth);
-    Known.One = Known.One.zext(BitWidth);
+    Known = Known.zext(BitWidth);
     Known.Zero |= NewBits;
     break;
   }
@@ -1114,8 +1112,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if (SimplifyDemandedBits(Op.getOperand(0), InDemandedBits, Known, TLO,
                              Depth+1))
       return true;
-    Known.Zero = Known.Zero.zext(BitWidth);
-    Known.One = Known.One.zext(BitWidth);
+    Known = Known.zext(BitWidth);
 
     // If the sign bit is known zero, convert this to a zero extend.
     if (Known.Zero.intersects(InSignBit))
@@ -1139,8 +1136,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     if (SimplifyDemandedBits(Op.getOperand(0), InMask, Known, TLO, Depth+1))
       return true;
     assert((Known.Zero & Known.One) == 0 && "Bits known to be one AND zero?");
-    Known.Zero = Known.Zero.zext(BitWidth);
-    Known.One = Known.One.zext(BitWidth);
+    Known = Known.zext(BitWidth);
     break;
   }
   case ISD::TRUNCATE: {
@@ -1150,8 +1146,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     APInt TruncMask = NewMask.zext(OperandBitWidth);
     if (SimplifyDemandedBits(Op.getOperand(0), TruncMask, Known, TLO, Depth+1))
       return true;
-    Known.Zero = Known.Zero.trunc(BitWidth);
-    Known.One = Known.One.trunc(BitWidth);
+    Known = Known.trunc(BitWidth);
 
     // If the input is only used by this truncate, see if we can shrink it based
     // on the known demanded bits.
