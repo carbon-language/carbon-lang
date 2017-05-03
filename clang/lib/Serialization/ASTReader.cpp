@@ -5531,14 +5531,8 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
              "Invalid data, not enough diag/map pairs");
       while (Size--) {
         unsigned DiagID = Record[Idx++];
-        unsigned SeverityAndUpgradedFromWarning = Record[Idx++];
-        bool WasUpgradedFromWarning =
-            DiagnosticMapping::deserializeUpgradedFromWarning(
-                SeverityAndUpgradedFromWarning);
         DiagnosticMapping NewMapping =
-            Diag.makeUserMapping(DiagnosticMapping::deserializeSeverity(
-                                     SeverityAndUpgradedFromWarning),
-                                 Loc);
+            DiagnosticMapping::deserialize(Record[Idx++]);
         if (!NewMapping.isPragma() && !IncludeNonPragmaStates)
           continue;
 
@@ -5547,14 +5541,12 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
         // If this mapping was specified as a warning but the severity was
         // upgraded due to diagnostic settings, simulate the current diagnostic
         // settings (and use a warning).
-        if (WasUpgradedFromWarning && !Mapping.isErrorOrFatal()) {
-          Mapping = Diag.makeUserMapping(diag::Severity::Warning, Loc);
-          continue;
+        if (NewMapping.wasUpgradedFromWarning() && !Mapping.isErrorOrFatal()) {
+          NewMapping.setSeverity(diag::Severity::Warning);
+          NewMapping.setUpgradedFromWarning(false);
         }
 
-        // Use the deserialized mapping verbatim.
         Mapping = NewMapping;
-        Mapping.setUpgradedFromWarning(WasUpgradedFromWarning);
       }
       return NewState;
     };
@@ -5569,22 +5561,36 @@ void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
       DiagStates.push_back(FirstState);
 
       // Skip the initial diagnostic state from the serialized module.
-      assert(Record[0] == 0 &&
+      assert(Record[1] == 0 &&
              "Invalid data, unexpected backref in initial state");
-      Idx = 2 + Record[1] * 2;
+      Idx = 3 + Record[2] * 2;
       assert(Idx < Record.size() &&
              "Invalid data, not enough state change pairs in initial state");
-    } else {
-      FirstState = ReadDiagState(
-          F.isModule() ? DiagState() : *Diag.DiagStatesByLoc.CurDiagState,
-          SourceLocation(), F.isModule());
+    } else if (F.isModule()) {
+      // For an explicit module, preserve the flags from the module build
+      // command line (-w, -Weverything, -Werror, ...) along with any explicit
+      // -Wblah flags.
+      unsigned Flags = Record[Idx++];
+      DiagState Initial;
+      Initial.SuppressSystemWarnings = Flags & 1; Flags >>= 1;
+      Initial.ErrorsAsFatal = Flags & 1; Flags >>= 1;
+      Initial.WarningsAsErrors = Flags & 1; Flags >>= 1;
+      Initial.EnableAllWarnings = Flags & 1; Flags >>= 1;
+      Initial.IgnoreAllWarnings = Flags & 1; Flags >>= 1;
+      Initial.ExtBehavior = (diag::Severity)Flags;
+      FirstState = ReadDiagState(Initial, SourceLocation(), true);
 
-      // For an explicit module, set up the root buffer of the module to start
-      // with the initial diagnostic state of the module itself, to cover files
-      // that contain no explicit transitions.
-      if (F.isModule())
-        Diag.DiagStatesByLoc.Files[F.OriginalSourceFileID]
-            .StateTransitions.push_back({FirstState, 0});
+      // Set up the root buffer of the module to start with the initial
+      // diagnostic state of the module itself, to cover files that contain no
+      // explicit transitions (for which we did not serialize anything).
+      Diag.DiagStatesByLoc.Files[F.OriginalSourceFileID]
+          .StateTransitions.push_back({FirstState, 0});
+    } else {
+      // For prefix ASTs, start with whatever the user configured on the
+      // command line.
+      Idx++; // Skip flags.
+      FirstState = ReadDiagState(*Diag.DiagStatesByLoc.CurDiagState,
+                                 SourceLocation(), false);
     }
 
     // Read the state transitions.
