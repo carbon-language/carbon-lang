@@ -310,7 +310,7 @@ public:
     OperandsMapper(MachineInstr &MI, const InstructionMapping &InstrMapping,
                    MachineRegisterInfo &MRI);
 
-    /// Getters.
+    /// \name Getters.
     /// @{
     /// The MachineInstr being remapped.
     MachineInstr &getMI() const { return MI; }
@@ -432,7 +432,7 @@ protected:
   const PartialMapping &getPartialMapping(unsigned StartIdx, unsigned Length,
                                           const RegisterBank &RegBank) const;
 
-  /// Methods to get a uniquely generated ValueMapping.
+  /// \name Methods to get a uniquely generated ValueMapping.
   /// @{
 
   /// The most common ValueMapping consists of a single PartialMapping.
@@ -445,7 +445,7 @@ protected:
                                       unsigned NumBreakDowns) const;
   /// @}
 
-  /// Methods to get a uniquely generated array of ValueMapping.
+  /// \name Methods to get a uniquely generated array of ValueMapping.
   /// @{
 
   /// Get the uniquely generated array of ValueMapping for the
