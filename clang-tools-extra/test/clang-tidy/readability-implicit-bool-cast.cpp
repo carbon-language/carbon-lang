@@ -195,7 +195,7 @@ void implicitCastToBoolSimpleCases() {
 
   auto pointerToMember = &Struct::member;
   functionTaking<bool>(pointerToMember);
-  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: implicit cast 'int struct Struct::*' -> bool
+  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: implicit cast 'int Struct::*' -> bool
   // CHECK-FIXES: functionTaking<bool>(pointerToMember != nullptr);
 }
 
