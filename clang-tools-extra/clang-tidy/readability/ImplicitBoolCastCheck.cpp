@@ -270,11 +270,22 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
       anyOf(hasParent(explicitCastExpr()),
             allOf(isMacroExpansion(), unless(isNULLMacroExpansion())),
             isInTemplateInstantiation(), hasAncestor(functionTemplateDecl())));
-
+  auto implicitCastFromBool = implicitCastExpr(
+      unless(exceptionCases),
+      anyOf(hasCastKind(CK_IntegralCast), hasCastKind(CK_IntegralToFloating),
+            // Prior to C++11 cast from bool literal to pointer was allowed.
+            allOf(anyOf(hasCastKind(CK_NullToPointer),
+                        hasCastKind(CK_NullToMemberPointer)),
+                  hasSourceExpression(cxxBoolLiteral()))),
+      hasSourceExpression(expr(hasType(booleanType()))));
+  auto boolXor =
+      binaryOperator(hasOperatorName("^"), hasLHS(implicitCastFromBool),
+                     hasRHS(implicitCastFromBool));
   Finder->addMatcher(
       implicitCastExpr(
           // Exclude cases common to implicit cast to and from bool.
           unless(exceptionCases),
+          unless(has(boolXor)),
           // Exclude case of using if or while statements with variable
           // declaration, e.g.:
           //   if (int var = functionCall()) {}
@@ -290,21 +301,12 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
           .bind("implicitCastToBool"),
       this);
 
-  auto implicitCastFromBool = implicitCastExpr(
-      unless(exceptionCases),
-      anyOf(hasCastKind(CK_IntegralCast), hasCastKind(CK_IntegralToFloating),
-            // Prior to C++11 cast from bool literal to pointer was allowed.
-            allOf(anyOf(hasCastKind(CK_NullToPointer),
-                        hasCastKind(CK_NullToMemberPointer)),
-                  hasSourceExpression(cxxBoolLiteral()))),
-      hasSourceExpression(expr(hasType(booleanType()))));
-
   auto boolComparison = binaryOperator(
       anyOf(hasOperatorName("=="), hasOperatorName("!=")),
       hasLHS(implicitCastFromBool), hasRHS(implicitCastFromBool));
-  auto boolOpAssignment = binaryOperator(
-      anyOf(hasOperatorName("|="), hasOperatorName("&=")),
-      hasLHS(expr(hasType(booleanType()))), hasRHS(implicitCastFromBool));
+  auto boolOpAssignment =
+      binaryOperator(anyOf(hasOperatorName("|="), hasOperatorName("&=")),
+                     hasLHS(expr(hasType(booleanType()))));
   Finder->addMatcher(
       implicitCastExpr(
           implicitCastFromBool,
@@ -312,8 +314,8 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
           // in such context:
           //   bool_expr_a == bool_expr_b
           //   bool_expr_a != bool_expr_b
-          unless(hasParent(
-              binaryOperator(anyOf(boolComparison, boolOpAssignment)))),
+          unless(hasParent(binaryOperator(
+              anyOf(boolComparison, boolXor, boolOpAssignment)))),
           // Check also for nested casts, for example: bool -> int -> float.
           anyOf(hasParent(implicitCastExpr().bind("furtherImplicitCast")),
                 anything()))
