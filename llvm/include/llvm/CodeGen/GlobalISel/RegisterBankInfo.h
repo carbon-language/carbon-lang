@@ -378,15 +378,18 @@ protected:
 
   /// Keep dynamically allocated PartialMapping in a separate map.
   /// This shouldn't be needed when everything gets TableGen'ed.
-  mutable DenseMap<unsigned, std::unique_ptr<const PartialMapping>> MapOfPartialMappings;
+  mutable DenseMap<unsigned, std::unique_ptr<const PartialMapping>>
+      MapOfPartialMappings;
 
   /// Keep dynamically allocated ValueMapping in a separate map.
   /// This shouldn't be needed when everything gets TableGen'ed.
-  mutable DenseMap<unsigned, std::unique_ptr<const ValueMapping> > MapOfValueMappings;
+  mutable DenseMap<unsigned, std::unique_ptr<const ValueMapping>>
+      MapOfValueMappings;
 
   /// Keep dynamically allocated array of ValueMapping in a separate map.
   /// This shouldn't be needed when everything gets TableGen'ed.
-  mutable DenseMap<unsigned, std::unique_ptr<ValueMapping[]>> MapOfOperandsMappings;
+  mutable DenseMap<unsigned, std::unique_ptr<ValueMapping[]>>
+      MapOfOperandsMappings;
 
   /// Create a RegisterBankInfo that can accomodate up to \p NumRegBanks
   /// RegisterBank instances.
