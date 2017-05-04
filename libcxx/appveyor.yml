@@ -50,8 +50,7 @@ install:
   ############################################################################
   # Setup the cached copy of LLVM
   ############################################################################
-  - if exist llvm (git -C llvm pull --rebase=true --ff-only)
-  - if not exist llvm (git clone --depth=1 http://llvm.org/git/llvm.git)
+  - git clone --depth=1 http://llvm.org/git/llvm.git
 
 
 before_build:
@@ -88,6 +87,3 @@ on_failure:
 artifacts:
   - path: '_build/CMakeFiles/*.log'
     name: logs
-
-cache:
-  - C:\projects\deps\llvm
