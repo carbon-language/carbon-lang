@@ -580,7 +580,7 @@ bool JumpThreadingPass::ComputeValueKnownInPredecessors(
 
     // If comparing a live-in value against a constant, see if we know the
     // live-in value on any predecessors.
-    if (isa<Constant>(Cmp->getOperand(1)) && Cmp->getType()->isIntegerTy()) {
+    if (isa<Constant>(Cmp->getOperand(1)) && !Cmp->getType()->isVectorTy()) {
       Constant *CmpConst = cast<Constant>(Cmp->getOperand(1));
 
       if (!isa<Instruction>(Cmp->getOperand(0)) ||
