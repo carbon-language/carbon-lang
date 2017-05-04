@@ -609,11 +609,8 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
     VerLabel = "IPI Version";
   }
 
-  bool IsSilentDatabaseBuild = !DumpRecordBytes && !DumpRecords && !DumpTpiHash;
-  if (IsSilentDatabaseBuild) {
-    outs().flush();
-    errs() << "Building Type Information For " << Label << "\n";
-  }
+  if (!DumpRecordBytes && !DumpRecords && !DumpTpiHash)
+    return Error::success();
 
   auto Tpi = (StreamIdx == StreamTPI) ? File.getPDBTpiStream()
                                       : File.getPDBIpiStream();
@@ -623,38 +620,43 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
   std::unique_ptr<DictScope> StreamScope;
   std::unique_ptr<ListScope> RecordScope;
 
-  if (!IsSilentDatabaseBuild) {
-    StreamScope = llvm::make_unique<DictScope>(P, Label);
-    P.printNumber(VerLabel, Tpi->getTpiVersion());
-    P.printNumber("Record count", Tpi->NumTypeRecords());
+  StreamScope = llvm::make_unique<DictScope>(P, Label);
+  P.printNumber(VerLabel, Tpi->getTpiVersion());
+  P.printNumber("Record count", Tpi->NumTypeRecords());
+
+  Optional<TypeDatabase> &StreamDB = (StreamIdx == StreamTPI) ? TypeDB : ItemDB;
+
+  std::vector<std::unique_ptr<TypeVisitorCallbacks>> Visitors;
+
+  Visitors.push_back(make_unique<TypeDeserializer>());
+  if (!StreamDB.hasValue()) {
+    StreamDB.emplace();
+    Visitors.push_back(make_unique<TypeDatabaseVisitor>(*StreamDB));
   }
+  // If we're in dump mode, add a dumper with the appropriate detail level.
+  if (DumpRecords) {
+    std::unique_ptr<TypeVisitorCallbacks> Dumper;
+    if (opts::raw::CompactRecords)
+      Dumper = make_unique<CompactTypeDumpVisitor>(*StreamDB, &P);
+    else {
+      assert(TypeDB.hasValue());
 
-  TypeDatabase &StreamDB = (StreamIdx == StreamTPI) ? TypeDB : ItemDB;
-
-  TypeDatabaseVisitor DBV(StreamDB);
-  CompactTypeDumpVisitor CTDV(StreamDB, &P);
-  TypeDumpVisitor TDV(TypeDB, &P, false);
-  if (StreamIdx == StreamIPI)
-    TDV.setItemDB(ItemDB);
-  RecordBytesVisitor RBV(P);
-  TypeDeserializer Deserializer;
+      auto X = make_unique<TypeDumpVisitor>(*TypeDB, &P, false);
+      if (StreamIdx == StreamIPI)
+        X->setItemDB(*ItemDB);
+      Dumper = std::move(X);
+    }
+    Visitors.push_back(std::move(Dumper));
+  }
+  if (DumpRecordBytes)
+    Visitors.push_back(make_unique<RecordBytesVisitor>(P));
 
   // We always need to deserialize and add it to the type database.  This is
   // true if even if we're not dumping anything, because we could need the
   // type database for the purposes of dumping symbols.
   TypeVisitorCallbackPipeline Pipeline;
-  Pipeline.addCallbackToPipeline(Deserializer);
-  Pipeline.addCallbackToPipeline(DBV);
-
-  // If we're in dump mode, add a dumper with the appropriate detail level.
-  if (DumpRecords) {
-    if (opts::raw::CompactRecords)
-      Pipeline.addCallbackToPipeline(CTDV);
-    else
-      Pipeline.addCallbackToPipeline(TDV);
-  }
-  if (DumpRecordBytes)
-    Pipeline.addCallbackToPipeline(RBV);
+  for (const auto &V : Visitors)
+    Pipeline.addCallbackToPipeline(*V);
 
   CVTypeVisitor Visitor(Pipeline);
 
@@ -700,17 +702,40 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
     }
   }
 
-  if (!IsSilentDatabaseBuild) {
-    ListScope L(P, "TypeIndexOffsets");
-    for (const auto &IO : Tpi->getTypeIndexOffsets()) {
-      P.printString(formatv("Index: {0:x}, Offset: {1:N}", IO.Type.getIndex(),
-                            (uint32_t)IO.Offset)
-                        .str());
-    }
+  ListScope L(P, "TypeIndexOffsets");
+  for (const auto &IO : Tpi->getTypeIndexOffsets()) {
+    P.printString(formatv("Index: {0:x}, Offset: {1:N}", IO.Type.getIndex(),
+                          (uint32_t)IO.Offset)
+                      .str());
   }
 
   P.flush();
   return Error::success();
+}
+
+Error LLVMOutputStyle::buildTypeDatabase(uint32_t SN) {
+  assert(SN == StreamIPI || SN == StreamTPI);
+
+  auto &DB = (SN == StreamIPI) ? ItemDB : TypeDB;
+
+  if (DB.hasValue())
+    return Error::success();
+
+  DB.emplace();
+
+  TypeVisitorCallbackPipeline Pipeline;
+  TypeDeserializer Deserializer;
+  TypeDatabaseVisitor DBV(*DB);
+  Pipeline.addCallbackToPipeline(Deserializer);
+  Pipeline.addCallbackToPipeline(DBV);
+
+  auto Tpi =
+      (SN == StreamTPI) ? File.getPDBTpiStream() : File.getPDBIpiStream();
+  if (!Tpi)
+    return Tpi.takeError();
+
+  CVTypeVisitor Visitor(Pipeline);
+  return Visitor.visitTypeStream(Tpi->types(nullptr));
 }
 
 Error LLVMOutputStyle::dumpDbiStream() {
@@ -785,8 +810,11 @@ Error LLVMOutputStyle::dumpDbiStream() {
           return EC;
 
         if (ShouldDumpSymbols) {
+          if (auto EC = buildTypeDatabase(StreamTPI))
+            return EC;
+
           ListScope SS(P, "Symbols");
-          codeview::CVSymbolDumper SD(P, TypeDB, nullptr, false);
+          codeview::CVSymbolDumper SD(P, *TypeDB, nullptr, false);
           bool HadError = false;
           for (auto S : ModS.symbols(&HadError)) {
             DictScope LL(P, "");
@@ -807,8 +835,10 @@ Error LLVMOutputStyle::dumpDbiStream() {
         }
         if (opts::raw::DumpLineInfo) {
           ListScope SS(P, "LineInfo");
+          if (auto EC = buildTypeDatabase(StreamIPI))
+            return EC;
 
-          C13RawVisitor V(P, File, ItemDB);
+          C13RawVisitor V(P, File, *ItemDB);
           if (auto EC = codeview::visitModuleDebugFragments(
                   ModS.linesAndChecksums(), V))
             return EC;
@@ -925,7 +955,10 @@ Error LLVMOutputStyle::dumpPublicsStream() {
   P.printList("Section Offsets", Publics->getSectionOffsets(),
               printSectionOffset);
   ListScope L(P, "Symbols");
-  codeview::CVSymbolDumper SD(P, TypeDB, nullptr, false);
+  if (auto EC = buildTypeDatabase(StreamTPI))
+    return EC;
+
+  codeview::CVSymbolDumper SD(P, *TypeDB, nullptr, false);
   bool HadError = false;
   for (auto S : Publics->getSymbols(&HadError)) {
     DictScope DD(P, "");
