@@ -39,6 +39,7 @@
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/PublicsStream.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
+#include "llvm/DebugInfo/PDB/Native/TpiHashing.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"
 #include "llvm/Object/COFF.h"
@@ -622,7 +623,7 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
 
   StreamScope = llvm::make_unique<DictScope>(P, Label);
   P.printNumber(VerLabel, Tpi->getTpiVersion());
-  P.printNumber("Record count", Tpi->NumTypeRecords());
+  P.printNumber("Record count", Tpi->getNumTypeRecords());
 
   Optional<TypeDatabase> &StreamDB = (StreamIdx == StreamTPI) ? TypeDB : ItemDB;
 
@@ -682,7 +683,7 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
 
   if (DumpTpiHash) {
     DictScope DD(P, "Hash");
-    P.printNumber("Number of Hash Buckets", Tpi->NumHashBuckets());
+    P.printNumber("Number of Hash Buckets", Tpi->getNumHashBuckets());
     P.printNumber("Hash Key Size", Tpi->getHashKeySize());
     P.printList("Values", Tpi->getHashValues());
 
@@ -723,16 +724,25 @@ Error LLVMOutputStyle::buildTypeDatabase(uint32_t SN) {
 
   DB.emplace();
 
+  auto Tpi =
+      (SN == StreamTPI) ? File.getPDBTpiStream() : File.getPDBIpiStream();
+
+  if (!Tpi)
+    return Tpi.takeError();
+
   TypeVisitorCallbackPipeline Pipeline;
   TypeDeserializer Deserializer;
   TypeDatabaseVisitor DBV(*DB);
   Pipeline.addCallbackToPipeline(Deserializer);
   Pipeline.addCallbackToPipeline(DBV);
 
-  auto Tpi =
-      (SN == StreamTPI) ? File.getPDBTpiStream() : File.getPDBIpiStream();
-  if (!Tpi)
-    return Tpi.takeError();
+  auto HashValues = Tpi->getHashValues();
+  std::unique_ptr<TpiHashVerifier> HashVerifier;
+  if (!HashValues.empty()) {
+    HashVerifier =
+        make_unique<TpiHashVerifier>(HashValues, Tpi->getNumHashBuckets());
+    Pipeline.addCallbackToPipeline(*HashVerifier);
+  }
 
   CVTypeVisitor Visitor(Pipeline);
   return Visitor.visitTypeStream(Tpi->types(nullptr));
