@@ -775,37 +775,37 @@ Error LLVMOutputStyle::dumpDbiStream() {
 
   if (DumpModules) {
     ListScope L(P, "Modules");
-    for (auto &Modi : DS->modules()) {
+    const DbiModuleList &Modules = DS->modules();
+    for (uint32_t I = 0; I < Modules.getModuleCount(); ++I) {
+      const DbiModuleDescriptor &Modi = Modules.getModuleDescriptor(I);
       DictScope DD(P);
-      P.printString("Name", Modi.Info.getModuleName().str());
-      P.printNumber("Debug Stream Index", Modi.Info.getModuleStreamIndex());
-      P.printString("Object File Name", Modi.Info.getObjFileName().str());
-      P.printNumber("Num Files", Modi.Info.getNumberOfFiles());
-      P.printNumber("Source File Name Idx", Modi.Info.getSourceFileNameIndex());
-      P.printNumber("Pdb File Name Idx", Modi.Info.getPdbFilePathNameIndex());
-      P.printNumber("Line Info Byte Size", Modi.Info.getC11LineInfoByteSize());
-      P.printNumber("C13 Line Info Byte Size",
-                    Modi.Info.getC13LineInfoByteSize());
-      P.printNumber("Symbol Byte Size", Modi.Info.getSymbolDebugInfoByteSize());
-      P.printNumber("Type Server Index", Modi.Info.getTypeServerIndex());
-      P.printBoolean("Has EC Info", Modi.Info.hasECInfo());
+      P.printString("Name", Modi.getModuleName().str());
+      P.printNumber("Debug Stream Index", Modi.getModuleStreamIndex());
+      P.printString("Object File Name", Modi.getObjFileName().str());
+      P.printNumber("Num Files", Modi.getNumberOfFiles());
+      P.printNumber("Source File Name Idx", Modi.getSourceFileNameIndex());
+      P.printNumber("Pdb File Name Idx", Modi.getPdbFilePathNameIndex());
+      P.printNumber("Line Info Byte Size", Modi.getC11LineInfoByteSize());
+      P.printNumber("C13 Line Info Byte Size", Modi.getC13LineInfoByteSize());
+      P.printNumber("Symbol Byte Size", Modi.getSymbolDebugInfoByteSize());
+      P.printNumber("Type Server Index", Modi.getTypeServerIndex());
+      P.printBoolean("Has EC Info", Modi.hasECInfo());
       if (opts::raw::DumpModuleFiles) {
-        std::string FileListName =
-            to_string(Modi.SourceFiles.size()) + " Contributing Source Files";
+        std::string FileListName = to_string(Modules.getSourceFileCount(I)) +
+                                   " Contributing Source Files";
         ListScope LL(P, FileListName);
-        for (auto File : Modi.SourceFiles)
-          P.printString(File.str());
+        for (auto File : Modules.source_files(I))
+          P.printString(File);
       }
-      bool HasModuleDI =
-          (Modi.Info.getModuleStreamIndex() < File.getNumStreams());
+      bool HasModuleDI = (Modi.getModuleStreamIndex() < File.getNumStreams());
       bool ShouldDumpSymbols =
           (opts::raw::DumpModuleSyms || opts::raw::DumpSymRecordBytes);
       if (HasModuleDI && (ShouldDumpSymbols || opts::raw::DumpLineInfo)) {
         auto ModStreamData = MappedBlockStream::createIndexedStream(
             File.getMsfLayout(), File.getMsfBuffer(),
-            Modi.Info.getModuleStreamIndex());
+            Modi.getModuleStreamIndex());
 
-        ModuleDebugStreamRef ModS(Modi.Info, std::move(ModStreamData));
+        ModuleDebugStreamRef ModS(Modi, std::move(ModStreamData));
         if (auto EC = ModS.reload())
           return EC;
 
@@ -876,9 +876,10 @@ Error LLVMOutputStyle::dumpSectionContribs() {
       {
         DictScope DD(P, "Module");
         P.printNumber("Index", SC.Imod);
-        auto M = DS.modules();
-        if (M.size() > SC.Imod) {
-          P.printString("Name", M[SC.Imod].Info.getModuleName());
+        const DbiModuleList &Modules = DS.modules();
+        if (Modules.getModuleCount() > SC.Imod) {
+          P.printString("Name",
+                        Modules.getModuleDescriptor(SC.Imod).getModuleName());
         }
       }
       P.printNumber("Data CRC", SC.DataCrc);
