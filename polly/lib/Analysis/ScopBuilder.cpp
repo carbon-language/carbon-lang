@@ -571,7 +571,7 @@ void ScopBuilder::ensureValueRead(Value *V, BasicBlock *UserBB) {
     if (!ModelReadOnlyScalars)
       break;
 
-    LLVM_FALLTHROUGH
+    LLVM_FALLTHROUGH;
   case VirtualUse::Inter:
 
     // Do not create another MemoryAccess for reloading the value if one already
