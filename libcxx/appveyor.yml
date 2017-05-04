@@ -12,10 +12,10 @@ environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
       COMPILER: Clang-CL 4.0
-      MSVC_SETUP_PATH: "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
+      MSVC_SETUP_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat"
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
       COMPILER: Clang-CL 4.0
-      MSVC_SETUP_PATH: "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat"
+      MSVC_SETUP_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat"
 
 install:
   ############################################################################
