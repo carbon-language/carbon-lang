@@ -2811,10 +2811,10 @@ void AsmPrinter::emitXRayTable() {
 
   // We then emit a single entry in the index per function. We use the symbols
   // that bound the instrumentation map as the range for a specific function.
-  // Each entry here will be 16-byte aligned, as we're writing down two
-  // pointers.
+  // Each entry here will be 2 * word size aligned, as we're writing down two
+  // pointers. This should work for both 32-bit and 64-bit platforms.
   OutStreamer->SwitchSection(FnSledIndex);
-  OutStreamer->EmitCodeAlignment(16);
+  OutStreamer->EmitCodeAlignment(2 * WordSizeBytes);
   OutStreamer->EmitLabel(IdxRef);
   OutStreamer->EmitSymbolValue(SledsStart, WordSizeBytes);
   OutStreamer->EmitSymbolValue(SledsEnd, WordSizeBytes);
