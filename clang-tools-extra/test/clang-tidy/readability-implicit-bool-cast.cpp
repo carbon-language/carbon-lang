@@ -48,8 +48,11 @@ float implicitCastFromBoolInReturnValue() {
   // CHECK-FIXES: return static_cast<float>(boolean);
 }
 
-void implicitCastFromBoolInSingleBoolExpressions() {
+void implicitCastFromBoolInSingleBoolExpressions(bool b1, bool b2) {
   bool boolean = true;
+  boolean = b1 && b2;
+  boolean |= !b1 || !b2;
+  boolean &= b1;
 
   int integer = boolean - 3;
   // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: implicit cast bool -> 'int'

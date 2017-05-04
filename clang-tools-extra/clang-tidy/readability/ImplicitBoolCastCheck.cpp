@@ -40,24 +40,6 @@ AST_MATCHER(Stmt, isNULLMacroExpansion) {
   return isNULLMacroExpansion(&Node, Finder->getASTContext());
 }
 
-ast_matchers::internal::Matcher<Expr> createExceptionCasesMatcher() {
-  return expr(anyOf(hasParent(explicitCastExpr()),
-                    allOf(isMacroExpansion(), unless(isNULLMacroExpansion())),
-                    isInTemplateInstantiation(),
-                    hasAncestor(functionTemplateDecl())));
-}
-
-StatementMatcher createImplicitCastFromBoolMatcher() {
-  return implicitCastExpr(
-      unless(createExceptionCasesMatcher()),
-      anyOf(hasCastKind(CK_IntegralCast), hasCastKind(CK_IntegralToFloating),
-            // Prior to C++11 cast from bool literal to pointer was allowed.
-            allOf(anyOf(hasCastKind(CK_NullToPointer),
-                        hasCastKind(CK_NullToMemberPointer)),
-                  hasSourceExpression(cxxBoolLiteral()))),
-      hasSourceExpression(expr(hasType(qualType(booleanType())))));
-}
-
 StringRef getZeroLiteralToCompareWithForType(CastKind CastExprKind,
                                              QualType Type,
                                              ASTContext &Context) {
@@ -284,10 +266,15 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
     return;
   }
 
+  auto exceptionCases = expr(
+      anyOf(hasParent(explicitCastExpr()),
+            allOf(isMacroExpansion(), unless(isNULLMacroExpansion())),
+            isInTemplateInstantiation(), hasAncestor(functionTemplateDecl())));
+
   Finder->addMatcher(
       implicitCastExpr(
           // Exclude cases common to implicit cast to and from bool.
-          unless(createExceptionCasesMatcher()),
+          unless(exceptionCases),
           // Exclude case of using if or while statements with variable
           // declaration, e.g.:
           //   if (int var = functionCall()) {}
@@ -303,17 +290,30 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
           .bind("implicitCastToBool"),
       this);
 
+  auto implicitCastFromBool = implicitCastExpr(
+      unless(exceptionCases),
+      anyOf(hasCastKind(CK_IntegralCast), hasCastKind(CK_IntegralToFloating),
+            // Prior to C++11 cast from bool literal to pointer was allowed.
+            allOf(anyOf(hasCastKind(CK_NullToPointer),
+                        hasCastKind(CK_NullToMemberPointer)),
+                  hasSourceExpression(cxxBoolLiteral()))),
+      hasSourceExpression(expr(hasType(booleanType()))));
+
+  auto boolComparison = binaryOperator(
+      anyOf(hasOperatorName("=="), hasOperatorName("!=")),
+      hasLHS(implicitCastFromBool), hasRHS(implicitCastFromBool));
+  auto boolOpAssignment = binaryOperator(
+      anyOf(hasOperatorName("|="), hasOperatorName("&=")),
+      hasLHS(expr(hasType(booleanType()))), hasRHS(implicitCastFromBool));
   Finder->addMatcher(
       implicitCastExpr(
-          createImplicitCastFromBoolMatcher(),
+          implicitCastFromBool,
           // Exclude comparisons of bools, as they are always cast to integers
           // in such context:
           //   bool_expr_a == bool_expr_b
           //   bool_expr_a != bool_expr_b
-          unless(hasParent(binaryOperator(
-              anyOf(hasOperatorName("=="), hasOperatorName("!=")),
-              hasLHS(createImplicitCastFromBoolMatcher()),
-              hasRHS(createImplicitCastFromBoolMatcher())))),
+          unless(hasParent(
+              binaryOperator(anyOf(boolComparison, boolOpAssignment)))),
           // Check also for nested casts, for example: bool -> int -> float.
           anyOf(hasParent(implicitCastExpr().bind("furtherImplicitCast")),
                 anything()))
