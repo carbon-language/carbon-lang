@@ -176,7 +176,7 @@ define <8 x i32> @vpsubd256_test(<8 x i32> %i, <8 x i32> %j) nounwind readnone {
 define <8 x i32> @vpmulld256_test(<8 x i32> %i, <8 x i32> %j) {
 ; CHECK-LABEL: vpmulld256_test:
 ; CHECK:       ## BB#0:
-; CHECK-NEXT:    vpmulld %ymm1, %ymm0, %ymm0 ## encoding: [0xc4,0xe2,0x7d,0x40,0xc1]
+; CHECK-NEXT:    vpmulld %ymm1, %ymm0, %ymm0 ## EVEX TO VEX Compression encoding: [0xc4,0xe2,0x7d,0x40,0xc1]
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
   %x = mul <8 x i32> %i, %j
   ret <8 x i32> %x
