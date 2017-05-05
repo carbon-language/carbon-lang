@@ -20972,7 +20972,7 @@ static SDValue Lower512IntUnary(SDValue Op, SelectionDAG &DAG) {
 // ( sub(trunc(lzcnt(zext32(x)))) ). In case zext32(x) is illegal,
 // split the vector, perform operation on it's Lo a Hi part and
 // concatenate the results.
-static SDValue LowerVectorCTLZ_AVX512(SDValue Op, SelectionDAG &DAG) {
+static SDValue LowerVectorCTLZ_AVX512CDI(SDValue Op, SelectionDAG &DAG) {
   assert(Op.getOpcode() == ISD::CTLZ);
   SDLoc dl(Op);
   MVT VT = Op.getSimpleValueType();
@@ -21074,12 +21074,16 @@ static SDValue LowerVectorCTLZ(SDValue Op, const SDLoc &DL,
                                SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
 
-  if (Subtarget.hasAVX512())
-    return LowerVectorCTLZ_AVX512(Op, DAG);
+  if (Subtarget.hasCDI())
+    return LowerVectorCTLZ_AVX512CDI(Op, DAG);
 
   // Decompose 256-bit ops into smaller 128-bit ops.
   if (VT.is256BitVector() && !Subtarget.hasInt256())
     return Lower256IntUnary(Op, DAG);
+
+  // Decompose 512-bit ops into smaller 256-bit ops.
+  if (VT.is512BitVector() && !Subtarget.hasBWI())
+    return Lower512IntUnary(Op, DAG);
 
   assert(Subtarget.hasSSSE3() && "Expected SSSE3 support for PSHUFB");
   return LowerVectorCTLZInRegLUT(Op, DL, Subtarget, DAG);
