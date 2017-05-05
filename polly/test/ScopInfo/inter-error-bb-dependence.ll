@@ -1,7 +1,7 @@
 ; RUN: opt %loadPolly -pass-remarks-analysis="polly-scops" -polly-scops -analyze < %s 2>&1 > /dev/null | FileCheck %s
 ;
 ; Error statements (%bb33) do not require their uses to be verified.
-; In this case it uses %tmp32 from %bb31 which is not available becase
+; In this case it uses %tmp32 from %bb31 which is not available because
 ; %bb31 is an error statement as well.
 
 target datalayout = "e-p:64:64:64-S128-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f16:16:16-f32:32:32-f64:64:64-f128:128:128-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
