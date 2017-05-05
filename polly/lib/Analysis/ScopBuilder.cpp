@@ -655,6 +655,12 @@ static void verifyUse(Scop *S, Use &Op, LoopInfo &LI) {
 /// to pick up the virtual uses. But here in the code generator, this has not
 /// happened yet, such that virtual and physical uses are equivalent.
 static void verifyUses(Scop *S, LoopInfo &LI, DominatorTree &DT) {
+  // We require the SCoP to be fully built. Without feasible context, some
+  // construction steps are skipped. In particular, we require error statements
+  // to be removed.
+  if (!S->hasFeasibleRuntimeContext())
+    return;
+
   for (auto *BB : S->getRegion().blocks()) {
     auto *Stmt = S->getStmtFor(BB);
     if (!Stmt)
