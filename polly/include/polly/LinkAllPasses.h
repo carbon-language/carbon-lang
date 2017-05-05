@@ -15,7 +15,6 @@
 #ifndef POLLY_LINKALLPASSES_H
 #define POLLY_LINKALLPASSES_H
 
-#include "polly/CodeGen/PPCGCodeGeneration.h"
 #include "polly/Config/config.h"
 #include "polly/PruneUnprofitable.h"
 #include "polly/Simplify.h"
@@ -49,8 +48,7 @@ llvm::Pass *createScopInfoWrapperPassPass();
 llvm::Pass *createIslAstInfoPass();
 llvm::Pass *createCodeGenerationPass();
 #ifdef GPU_CODEGEN
-llvm::Pass *createPPCGCodeGenerationPass(GPUArch Arch = GPUArch::NVPTX64,
-                                         GPURuntime Runtime = GPURuntime::CUDA);
+llvm::Pass *createPPCGCodeGenerationPass();
 #endif
 llvm::Pass *createIslScheduleOptimizerPass();
 llvm::Pass *createFlattenSchedulePass();

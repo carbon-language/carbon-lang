@@ -76,27 +76,12 @@
  *
  */
 
-typedef enum PollyGPURuntimeT {
-  RUNTIME_NONE,
-  RUNTIME_CUDA,
-  RUNTIME_CL
-} PollyGPURuntime;
-
 typedef struct PollyGPUContextT PollyGPUContext;
 typedef struct PollyGPUFunctionT PollyGPUFunction;
 typedef struct PollyGPUDevicePtrT PollyGPUDevicePtr;
 
-typedef struct OpenCLContextT OpenCLContext;
-typedef struct OpenCLKernelT OpenCLKernel;
-typedef struct OpenCLDevicePtrT OpenCLDevicePtr;
-
-typedef struct CUDAContextT CUDAContext;
-typedef struct CUDAKernelT CUDAKernel;
-typedef struct CUDADevicePtrT CUDADevicePtr;
-
-PollyGPUContext *polly_initContextCUDA();
-PollyGPUContext *polly_initContextCL();
-PollyGPUFunction *polly_getKernel(const char *BinaryBuffer,
+PollyGPUContext *polly_initContext();
+PollyGPUFunction *polly_getKernel(const char *PTXBuffer,
                                   const char *KernelName);
 void polly_freeKernel(PollyGPUFunction *Kernel);
 void polly_copyFromHostToDevice(void *HostData, PollyGPUDevicePtr *DevData,
