@@ -219,8 +219,9 @@ private:
 // archive file semantics.
 class LazyObjectFile : public InputFile {
 public:
-  explicit LazyObjectFile(MemoryBufferRef M, StringRef ArchiveName)
-      : InputFile(LazyObjectKind, M) {
+  explicit LazyObjectFile(MemoryBufferRef M, StringRef ArchiveName,
+                          uint64_t OffsetInArchive)
+      : InputFile(LazyObjectKind, M), OffsetInArchive(OffsetInArchive) {
     this->ArchiveName = ArchiveName;
   }
 
@@ -238,6 +239,7 @@ private:
   std::vector<StringRef> getBitcodeSymbols();
 
   bool Seen = false;
+  uint64_t OffsetInArchive;
 };
 
 // An ArchiveFile object represents a .a file.

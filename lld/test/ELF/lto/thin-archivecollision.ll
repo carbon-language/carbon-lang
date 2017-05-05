@@ -2,9 +2,15 @@
 ; RUN: mkdir -p %t1 %t2
 ; RUN: opt -module-summary %p/Inputs/thin1.ll -o %t1/t.coll.o
 ; RUN: opt -module-summary %p/Inputs/thin2.ll -o %t2/t.coll.o
+
 ; RUN: rm -f %t.a
 ; RUN: llvm-ar rcs %t.a %t1/t.coll.o %t2/t.coll.o
+; RUN: ld.lld %t.o %t.a -o %t
+; RUN: llvm-nm %t | FileCheck %s
 
+; Check without a archive symbol table
+; RUN: rm -f %t.a
+; RUN: llvm-ar rcS %t.a %t1/t.coll.o %t2/t.coll.o
 ; RUN: ld.lld %t.o %t.a -o %t
 ; RUN: llvm-nm %t | FileCheck %s
 

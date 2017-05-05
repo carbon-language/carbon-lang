@@ -187,7 +187,7 @@ void LinkerDriver::addFile(StringRef Path, bool WithLOption) {
     // we'll handle it as if it had a symbol table.
     if (!File->hasSymbolTable()) {
       for (const auto &P : getArchiveMembers(MBRef))
-        Files.push_back(make<LazyObjectFile>(P.first, Path));
+        Files.push_back(make<LazyObjectFile>(P.first, Path, P.second));
       return;
     }
 
@@ -215,7 +215,7 @@ void LinkerDriver::addFile(StringRef Path, bool WithLOption) {
     return;
   default:
     if (InLib)
-      Files.push_back(make<LazyObjectFile>(MBRef, ""));
+      Files.push_back(make<LazyObjectFile>(MBRef, "", 0));
     else
       Files.push_back(createObjectFile(MBRef));
   }
