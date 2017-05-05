@@ -64,8 +64,8 @@ class VarStreamArrayIterator
 public:
   VarStreamArrayIterator() = default;
   VarStreamArrayIterator(const ArrayType &Array, const WrappedCtx &Ctx,
-                         BinaryStreamRef Stream, bool *HadError = nullptr)
-      : IterRef(Stream), Ctx(&Ctx), Array(&Array), HadError(HadError) {
+                         BinaryStreamRef Stream, bool *HadError = nullptr, uint32_t Offset = 0)
+      : IterRef(Stream), Ctx(&Ctx), Array(&Array), HadError(HadError), AbsOffset(Offset) {
     if (IterRef.getLength() == 0)
       moveToEnd();
     else {
@@ -238,7 +238,7 @@ public:
   /// since the behavior is undefined if \p Offset does not refer to the
   /// beginning of a valid record.
   Iterator at(uint32_t Offset) const {
-    return Iterator(*this, Ctx, Stream.drop_front(Offset), nullptr);
+    return Iterator(*this, Ctx, Stream.drop_front(Offset), nullptr, Offset);
   }
 
   BinaryStreamRef getUnderlyingStream() const { return Stream; }
