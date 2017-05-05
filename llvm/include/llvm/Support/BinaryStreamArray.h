@@ -64,8 +64,10 @@ class VarStreamArrayIterator
 public:
   VarStreamArrayIterator() = default;
   VarStreamArrayIterator(const ArrayType &Array, const WrappedCtx &Ctx,
-                         BinaryStreamRef Stream, bool *HadError = nullptr, uint32_t Offset = 0)
-      : IterRef(Stream), Ctx(&Ctx), Array(&Array), HadError(HadError), AbsOffset(Offset) {
+                         BinaryStreamRef Stream, bool *HadError = nullptr,
+                         uint32_t Offset = 0)
+      : IterRef(Stream), Ctx(&Ctx), Array(&Array), AbsOffset(Offset),
+        HadError(HadError) {
     if (IterRef.getLength() == 0)
       moveToEnd();
     else {
