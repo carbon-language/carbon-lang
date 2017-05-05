@@ -219,7 +219,10 @@ private:
 // archive file semantics.
 class LazyObjectFile : public InputFile {
 public:
-  explicit LazyObjectFile(MemoryBufferRef M) : InputFile(LazyObjectKind, M) {}
+  explicit LazyObjectFile(MemoryBufferRef M, StringRef ArchiveName)
+      : InputFile(LazyObjectKind, M) {
+    this->ArchiveName = ArchiveName;
+  }
 
   static bool classof(const InputFile *F) {
     return F->kind() == LazyObjectKind;

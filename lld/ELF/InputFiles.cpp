@@ -981,7 +981,7 @@ InputFile *LazyObjectFile::fetch() {
   MemoryBufferRef MBRef = getBuffer();
   if (MBRef.getBuffer().empty())
     return nullptr;
-  return createObjectFile(MBRef);
+  return createObjectFile(MBRef, ArchiveName);
 }
 
 template <class ELFT> void LazyObjectFile::parse() {
