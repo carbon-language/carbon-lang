@@ -5079,6 +5079,15 @@ static void handleUuidAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     }
   }
 
+  // FIXME: It'd be nice to also emit a fixit removing uuid(...) (and, if it's
+  // the only thing in the [] list, the [] too), and add an insertion of
+  // __declspec(uuid(...)).  But sadly, neither the SourceLocs of the commas
+  // separating attributes nor of the [ and the ] are in the AST.
+  // Cf "SourceLocations of attribute list delimiters – [[ ... , ... ]] etc"
+  // on cfe-dev.
+  if (Attr.isMicrosoftAttribute()) // Check for [uuid(...)] spelling.
+    S.Diag(Attr.getLoc(), diag::warn_atl_uuid_deprecated);
+
   UuidAttr *UA = S.mergeUuidAttr(D, Attr.getRange(),
                                  Attr.getAttributeSpellingListIndex(), StrRef);
   if (UA)

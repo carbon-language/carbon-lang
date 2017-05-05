@@ -730,6 +730,9 @@ def err_super_in_lambda_unsupported : Error<
 def warn_pragma_unused_undeclared_var : Warning<
   "undeclared variable %0 used as an argument for '#pragma unused'">,
   InGroup<IgnoredPragmas>;
+def warn_atl_uuid_deprecated : Warning<
+  "specifying 'uuid' as an ATL attribute is deprecated; use __declspec instead">,
+  InGroup<DeprecatedDeclarations>;
 def warn_pragma_unused_expected_var_arg : Warning<
   "only variables can be arguments to '#pragma unused'">,
   InGroup<IgnoredPragmas>;
