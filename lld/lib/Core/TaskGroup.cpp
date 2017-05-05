@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/TaskGroup.h"
-#include "llvm/config/llvm-config.h"
+#include "llvm/Config/llvm-config.h"
 
 #include <atomic>
 #include <stack>
