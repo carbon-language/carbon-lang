@@ -342,7 +342,7 @@ private:
 template <typename T>
 class FixedStreamArrayIterator
     : public iterator_facade_base<FixedStreamArrayIterator<T>,
-                                  std::random_access_iterator_tag, T> {
+                                  std::random_access_iterator_tag, const T> {
 
 public:
   FixedStreamArrayIterator(const FixedStreamArray<T> &Array, uint32_t Index)
@@ -356,6 +356,7 @@ public:
   }
 
   const T &operator*() const { return Array[Index]; }
+  const T &operator*() { return Array[Index]; }
 
   bool operator==(const FixedStreamArrayIterator<T> &R) const {
     assert(Array == R.Array);
