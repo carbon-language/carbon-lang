@@ -2730,7 +2730,7 @@ define i1 @and_ult_ult_swap(i8 %x) {
 }
 
 ; eq
-; x == 13 && x == 17
+; x == 13 || x == 17
 
 define i1 @or_eq_eq(i8 %x) {
 ; CHECK-LABEL: @or_eq_eq(
@@ -2745,7 +2745,7 @@ define i1 @or_eq_eq(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x != 17
+; x == 13 || x != 17
 
 define i1 @or_eq_ne(i8 %x) {
 ; CHECK-LABEL: @or_eq_ne(
@@ -2760,7 +2760,7 @@ define i1 @or_eq_ne(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x >=s 17
+; x == 13 || x >=s 17
 
 define i1 @or_eq_sge(i8 %x) {
 ; CHECK-LABEL: @or_eq_sge(
@@ -2775,7 +2775,7 @@ define i1 @or_eq_sge(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x >s 17
+; x == 13 || x >s 17
 
 define i1 @or_eq_sgt(i8 %x) {
 ; CHECK-LABEL: @or_eq_sgt(
@@ -2790,7 +2790,7 @@ define i1 @or_eq_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x <=s 17
+; x == 13 || x <=s 17
 
 define i1 @or_eq_sle(i8 %x) {
 ; CHECK-LABEL: @or_eq_sle(
@@ -2805,7 +2805,7 @@ define i1 @or_eq_sle(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x <s 17
+; x == 13 || x <s 17
 
 define i1 @or_eq_slt(i8 %x) {
 ; CHECK-LABEL: @or_eq_slt(
@@ -2820,7 +2820,7 @@ define i1 @or_eq_slt(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x >=u 17
+; x == 13 || x >=u 17
 
 define i1 @or_eq_uge(i8 %x) {
 ; CHECK-LABEL: @or_eq_uge(
@@ -2835,7 +2835,7 @@ define i1 @or_eq_uge(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x >u 17
+; x == 13 || x >u 17
 
 define i1 @or_eq_ugt(i8 %x) {
 ; CHECK-LABEL: @or_eq_ugt(
@@ -2850,7 +2850,7 @@ define i1 @or_eq_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x <=u 17
+; x == 13 || x <=u 17
 
 define i1 @or_eq_ule(i8 %x) {
 ; CHECK-LABEL: @or_eq_ule(
@@ -2865,7 +2865,7 @@ define i1 @or_eq_ule(i8 %x) {
   ret i1 %c
 }
 
-; x == 13 && x <u 17
+; x == 13 || x <u 17
 
 define i1 @or_eq_ult(i8 %x) {
 ; CHECK-LABEL: @or_eq_ult(
@@ -2881,7 +2881,7 @@ define i1 @or_eq_ult(i8 %x) {
 }
 
 ; ne
-; x != 13 && x == 17
+; x != 13 || x == 17
 
 define i1 @or_ne_eq(i8 %x) {
 ; CHECK-LABEL: @or_ne_eq(
@@ -2896,7 +2896,7 @@ define i1 @or_ne_eq(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x != 17
+; x != 13 || x != 17
 
 define i1 @or_ne_ne(i8 %x) {
 ; CHECK-LABEL: @or_ne_ne(
@@ -2911,7 +2911,7 @@ define i1 @or_ne_ne(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x >=s 17
+; x != 13 || x >=s 17
 
 define i1 @or_ne_sge(i8 %x) {
 ; CHECK-LABEL: @or_ne_sge(
@@ -2926,7 +2926,7 @@ define i1 @or_ne_sge(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x >s 17
+; x != 13 || x >s 17
 
 define i1 @or_ne_sgt(i8 %x) {
 ; CHECK-LABEL: @or_ne_sgt(
@@ -2941,7 +2941,7 @@ define i1 @or_ne_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x <=s 17
+; x != 13 || x <=s 17
 
 define i1 @or_ne_sle(i8 %x) {
 ; CHECK-LABEL: @or_ne_sle(
@@ -2956,7 +2956,7 @@ define i1 @or_ne_sle(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x <s 17
+; x != 13 || x <s 17
 
 define i1 @or_ne_slt(i8 %x) {
 ; CHECK-LABEL: @or_ne_slt(
@@ -2971,7 +2971,7 @@ define i1 @or_ne_slt(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x >=u 17
+; x != 13 || x >=u 17
 
 define i1 @or_ne_uge(i8 %x) {
 ; CHECK-LABEL: @or_ne_uge(
@@ -2986,7 +2986,7 @@ define i1 @or_ne_uge(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x >u 17
+; x != 13 || x >u 17
 
 define i1 @or_ne_ugt(i8 %x) {
 ; CHECK-LABEL: @or_ne_ugt(
@@ -3001,7 +3001,7 @@ define i1 @or_ne_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x <=u 17
+; x != 13 || x <=u 17
 
 define i1 @or_ne_ule(i8 %x) {
 ; CHECK-LABEL: @or_ne_ule(
@@ -3016,7 +3016,7 @@ define i1 @or_ne_ule(i8 %x) {
   ret i1 %c
 }
 
-; x != 13 && x <u 17
+; x != 13 || x <u 17
 
 define i1 @or_ne_ult(i8 %x) {
 ; CHECK-LABEL: @or_ne_ult(
@@ -3032,7 +3032,7 @@ define i1 @or_ne_ult(i8 %x) {
 }
 
 ; sge
-; x >=s 13 && x == 17
+; x >=s 13 || x == 17
 
 define i1 @or_sge_eq(i8 %x) {
 ; CHECK-LABEL: @or_sge_eq(
@@ -3047,7 +3047,7 @@ define i1 @or_sge_eq(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x != 17
+; x >=s 13 || x != 17
 
 define i1 @or_sge_ne(i8 %x) {
 ; CHECK-LABEL: @or_sge_ne(
@@ -3062,7 +3062,7 @@ define i1 @or_sge_ne(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x >=s 17
+; x >=s 13 || x >=s 17
 
 define i1 @or_sge_sge(i8 %x) {
 ; CHECK-LABEL: @or_sge_sge(
@@ -3077,7 +3077,7 @@ define i1 @or_sge_sge(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x >s 17
+; x >=s 13 || x >s 17
 
 define i1 @or_sge_sgt(i8 %x) {
 ; CHECK-LABEL: @or_sge_sgt(
@@ -3092,7 +3092,7 @@ define i1 @or_sge_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x <=s 17
+; x >=s 13 || x <=s 17
 
 define i1 @or_sge_sle(i8 %x) {
 ; CHECK-LABEL: @or_sge_sle(
@@ -3107,7 +3107,7 @@ define i1 @or_sge_sle(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x <s 17
+; x >=s 13 || x <s 17
 
 define i1 @or_sge_slt(i8 %x) {
 ; CHECK-LABEL: @or_sge_slt(
@@ -3122,7 +3122,7 @@ define i1 @or_sge_slt(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x >=u 17
+; x >=s 13 || x >=u 17
 
 define i1 @or_sge_uge(i8 %x) {
 ; CHECK-LABEL: @or_sge_uge(
@@ -3137,7 +3137,7 @@ define i1 @or_sge_uge(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x >u 17
+; x >=s 13 || x >u 17
 
 define i1 @or_sge_ugt(i8 %x) {
 ; CHECK-LABEL: @or_sge_ugt(
@@ -3152,7 +3152,7 @@ define i1 @or_sge_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x <=u 17
+; x >=s 13 || x <=u 17
 
 define i1 @or_sge_ule(i8 %x) {
 ; CHECK-LABEL: @or_sge_ule(
@@ -3167,7 +3167,7 @@ define i1 @or_sge_ule(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 13 && x <u 17
+; x >=s 13 || x <u 17
 
 define i1 @or_sge_ult(i8 %x) {
 ; CHECK-LABEL: @or_sge_ult(
@@ -3183,7 +3183,7 @@ define i1 @or_sge_ult(i8 %x) {
 }
 
 ; sgt
-; x >s 13 && x == 17
+; x >s 13 || x == 17
 
 define i1 @or_sgt_eq(i8 %x) {
 ; CHECK-LABEL: @or_sgt_eq(
@@ -3198,7 +3198,7 @@ define i1 @or_sgt_eq(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x != 17
+; x >s 13 || x != 17
 
 define i1 @or_sgt_ne(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ne(
@@ -3213,7 +3213,7 @@ define i1 @or_sgt_ne(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x >=s 17
+; x >s 13 || x >=s 17
 
 define i1 @or_sgt_sge(i8 %x) {
 ; CHECK-LABEL: @or_sgt_sge(
@@ -3228,7 +3228,7 @@ define i1 @or_sgt_sge(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x >s 17
+; x >s 13 || x >s 17
 
 define i1 @or_sgt_sgt(i8 %x) {
 ; CHECK-LABEL: @or_sgt_sgt(
@@ -3243,7 +3243,7 @@ define i1 @or_sgt_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x <=s 17
+; x >s 13 || x <=s 17
 
 define i1 @or_sgt_sle(i8 %x) {
 ; CHECK-LABEL: @or_sgt_sle(
@@ -3258,7 +3258,7 @@ define i1 @or_sgt_sle(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x <s 17
+; x >s 13 || x <s 17
 
 define i1 @or_sgt_slt(i8 %x) {
 ; CHECK-LABEL: @or_sgt_slt(
@@ -3273,7 +3273,7 @@ define i1 @or_sgt_slt(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x >=u 17
+; x >s 13 || x >=u 17
 
 define i1 @or_sgt_uge(i8 %x) {
 ; CHECK-LABEL: @or_sgt_uge(
@@ -3288,7 +3288,7 @@ define i1 @or_sgt_uge(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x >u 17
+; x >s 13 || x >u 17
 
 define i1 @or_sgt_ugt(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ugt(
@@ -3303,7 +3303,7 @@ define i1 @or_sgt_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x <=u 17
+; x >s 13 || x <=u 17
 
 define i1 @or_sgt_ule(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ule(
@@ -3318,7 +3318,7 @@ define i1 @or_sgt_ule(i8 %x) {
   ret i1 %c
 }
 
-; x >s 13 && x <u 17
+; x >s 13 || x <u 17
 
 define i1 @or_sgt_ult(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ult(
@@ -3334,7 +3334,7 @@ define i1 @or_sgt_ult(i8 %x) {
 }
 
 ; sle
-; x <=s 13 && x == 17
+; x <=s 13 || x == 17
 
 define i1 @or_sle_eq(i8 %x) {
 ; CHECK-LABEL: @or_sle_eq(
@@ -3349,7 +3349,7 @@ define i1 @or_sle_eq(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x != 17
+; x <=s 13 || x != 17
 
 define i1 @or_sle_ne(i8 %x) {
 ; CHECK-LABEL: @or_sle_ne(
@@ -3364,7 +3364,7 @@ define i1 @or_sle_ne(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x >=s 17
+; x <=s 13 || x >=s 17
 
 define i1 @or_sle_sge(i8 %x) {
 ; CHECK-LABEL: @or_sle_sge(
@@ -3379,7 +3379,7 @@ define i1 @or_sle_sge(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x >s 17
+; x <=s 13 || x >s 17
 
 define i1 @or_sle_sgt(i8 %x) {
 ; CHECK-LABEL: @or_sle_sgt(
@@ -3394,7 +3394,7 @@ define i1 @or_sle_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x <=s 17
+; x <=s 13 || x <=s 17
 
 define i1 @or_sle_sle(i8 %x) {
 ; CHECK-LABEL: @or_sle_sle(
@@ -3409,7 +3409,7 @@ define i1 @or_sle_sle(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x <s 17
+; x <=s 13 || x <s 17
 
 define i1 @or_sle_slt(i8 %x) {
 ; CHECK-LABEL: @or_sle_slt(
@@ -3424,7 +3424,7 @@ define i1 @or_sle_slt(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x >=u 17
+; x <=s 13 || x >=u 17
 
 define i1 @or_sle_uge(i8 %x) {
 ; CHECK-LABEL: @or_sle_uge(
@@ -3439,7 +3439,7 @@ define i1 @or_sle_uge(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x >u 17
+; x <=s 13 || x >u 17
 
 define i1 @or_sle_ugt(i8 %x) {
 ; CHECK-LABEL: @or_sle_ugt(
@@ -3454,7 +3454,7 @@ define i1 @or_sle_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x <=u 17
+; x <=s 13 || x <=u 17
 
 define i1 @or_sle_ule(i8 %x) {
 ; CHECK-LABEL: @or_sle_ule(
@@ -3469,7 +3469,7 @@ define i1 @or_sle_ule(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 13 && x <u 17
+; x <=s 13 || x <u 17
 
 define i1 @or_sle_ult(i8 %x) {
 ; CHECK-LABEL: @or_sle_ult(
@@ -3485,7 +3485,7 @@ define i1 @or_sle_ult(i8 %x) {
 }
 
 ; slt
-; x <s 13 && x == 17
+; x <s 13 || x == 17
 
 define i1 @or_slt_eq(i8 %x) {
 ; CHECK-LABEL: @or_slt_eq(
@@ -3500,7 +3500,7 @@ define i1 @or_slt_eq(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x != 17
+; x <s 13 || x != 17
 
 define i1 @or_slt_ne(i8 %x) {
 ; CHECK-LABEL: @or_slt_ne(
@@ -3515,7 +3515,7 @@ define i1 @or_slt_ne(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x >=s 17
+; x <s 13 || x >=s 17
 
 define i1 @or_slt_sge(i8 %x) {
 ; CHECK-LABEL: @or_slt_sge(
@@ -3530,7 +3530,7 @@ define i1 @or_slt_sge(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x >s 17
+; x <s 13 || x >s 17
 
 define i1 @or_slt_sgt(i8 %x) {
 ; CHECK-LABEL: @or_slt_sgt(
@@ -3545,7 +3545,7 @@ define i1 @or_slt_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x <=s 17
+; x <s 13 || x <=s 17
 
 define i1 @or_slt_sle(i8 %x) {
 ; CHECK-LABEL: @or_slt_sle(
@@ -3560,7 +3560,7 @@ define i1 @or_slt_sle(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x <s 17
+; x <s 13 || x <s 17
 
 define i1 @or_slt_slt(i8 %x) {
 ; CHECK-LABEL: @or_slt_slt(
@@ -3575,7 +3575,7 @@ define i1 @or_slt_slt(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x >=u 17
+; x <s 13 || x >=u 17
 
 define i1 @or_slt_uge(i8 %x) {
 ; CHECK-LABEL: @or_slt_uge(
@@ -3590,7 +3590,7 @@ define i1 @or_slt_uge(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x >u 17
+; x <s 13 || x >u 17
 
 define i1 @or_slt_ugt(i8 %x) {
 ; CHECK-LABEL: @or_slt_ugt(
@@ -3605,7 +3605,7 @@ define i1 @or_slt_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x <=u 17
+; x <s 13 || x <=u 17
 
 define i1 @or_slt_ule(i8 %x) {
 ; CHECK-LABEL: @or_slt_ule(
@@ -3620,7 +3620,7 @@ define i1 @or_slt_ule(i8 %x) {
   ret i1 %c
 }
 
-; x <s 13 && x <u 17
+; x <s 13 || x <u 17
 
 define i1 @or_slt_ult(i8 %x) {
 ; CHECK-LABEL: @or_slt_ult(
@@ -3636,7 +3636,7 @@ define i1 @or_slt_ult(i8 %x) {
 }
 
 ; uge
-; x >=u 13 && x == 17
+; x >=u 13 || x == 17
 
 define i1 @or_uge_eq(i8 %x) {
 ; CHECK-LABEL: @or_uge_eq(
@@ -3651,7 +3651,7 @@ define i1 @or_uge_eq(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x != 17
+; x >=u 13 || x != 17
 
 define i1 @or_uge_ne(i8 %x) {
 ; CHECK-LABEL: @or_uge_ne(
@@ -3666,7 +3666,7 @@ define i1 @or_uge_ne(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x >=s 17
+; x >=u 13 || x >=s 17
 
 define i1 @or_uge_sge(i8 %x) {
 ; CHECK-LABEL: @or_uge_sge(
@@ -3681,7 +3681,7 @@ define i1 @or_uge_sge(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x >s 17
+; x >=u 13 || x >s 17
 
 define i1 @or_uge_sgt(i8 %x) {
 ; CHECK-LABEL: @or_uge_sgt(
@@ -3696,7 +3696,7 @@ define i1 @or_uge_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x <=s 17
+; x >=u 13 || x <=s 17
 
 define i1 @or_uge_sle(i8 %x) {
 ; CHECK-LABEL: @or_uge_sle(
@@ -3711,7 +3711,7 @@ define i1 @or_uge_sle(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x <s 17
+; x >=u 13 || x <s 17
 
 define i1 @or_uge_slt(i8 %x) {
 ; CHECK-LABEL: @or_uge_slt(
@@ -3726,7 +3726,7 @@ define i1 @or_uge_slt(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x >=u 17
+; x >=u 13 || x >=u 17
 
 define i1 @or_uge_uge(i8 %x) {
 ; CHECK-LABEL: @or_uge_uge(
@@ -3741,7 +3741,7 @@ define i1 @or_uge_uge(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x >u 17
+; x >=u 13 || x >u 17
 
 define i1 @or_uge_ugt(i8 %x) {
 ; CHECK-LABEL: @or_uge_ugt(
@@ -3756,7 +3756,7 @@ define i1 @or_uge_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x <=u 17
+; x >=u 13 || x <=u 17
 
 define i1 @or_uge_ule(i8 %x) {
 ; CHECK-LABEL: @or_uge_ule(
@@ -3771,7 +3771,7 @@ define i1 @or_uge_ule(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 13 && x <u 17
+; x >=u 13 || x <u 17
 
 define i1 @or_uge_ult(i8 %x) {
 ; CHECK-LABEL: @or_uge_ult(
@@ -3787,7 +3787,7 @@ define i1 @or_uge_ult(i8 %x) {
 }
 
 ; ugt
-; x >u 13 && x == 17
+; x >u 13 || x == 17
 
 define i1 @or_ugt_eq(i8 %x) {
 ; CHECK-LABEL: @or_ugt_eq(
@@ -3802,7 +3802,7 @@ define i1 @or_ugt_eq(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x != 17
+; x >u 13 || x != 17
 
 define i1 @or_ugt_ne(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ne(
@@ -3817,7 +3817,7 @@ define i1 @or_ugt_ne(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x >=s 17
+; x >u 13 || x >=s 17
 
 define i1 @or_ugt_sge(i8 %x) {
 ; CHECK-LABEL: @or_ugt_sge(
@@ -3832,7 +3832,7 @@ define i1 @or_ugt_sge(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x >s 17
+; x >u 13 || x >s 17
 
 define i1 @or_ugt_sgt(i8 %x) {
 ; CHECK-LABEL: @or_ugt_sgt(
@@ -3847,7 +3847,7 @@ define i1 @or_ugt_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x <=s 17
+; x >u 13 || x <=s 17
 
 define i1 @or_ugt_sle(i8 %x) {
 ; CHECK-LABEL: @or_ugt_sle(
@@ -3862,7 +3862,7 @@ define i1 @or_ugt_sle(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x <s 17
+; x >u 13 || x <s 17
 
 define i1 @or_ugt_slt(i8 %x) {
 ; CHECK-LABEL: @or_ugt_slt(
@@ -3877,7 +3877,7 @@ define i1 @or_ugt_slt(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x >=u 17
+; x >u 13 || x >=u 17
 
 define i1 @or_ugt_uge(i8 %x) {
 ; CHECK-LABEL: @or_ugt_uge(
@@ -3892,7 +3892,7 @@ define i1 @or_ugt_uge(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x >u 17
+; x >u 13 || x >u 17
 
 define i1 @or_ugt_ugt(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ugt(
@@ -3907,7 +3907,7 @@ define i1 @or_ugt_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x <=u 17
+; x >u 13 || x <=u 17
 
 define i1 @or_ugt_ule(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ule(
@@ -3922,7 +3922,7 @@ define i1 @or_ugt_ule(i8 %x) {
   ret i1 %c
 }
 
-; x >u 13 && x <u 17
+; x >u 13 || x <u 17
 
 define i1 @or_ugt_ult(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ult(
@@ -3938,7 +3938,7 @@ define i1 @or_ugt_ult(i8 %x) {
 }
 
 ; ule
-; x <=u 13 && x == 17
+; x <=u 13 || x == 17
 
 define i1 @or_ule_eq(i8 %x) {
 ; CHECK-LABEL: @or_ule_eq(
@@ -3953,7 +3953,7 @@ define i1 @or_ule_eq(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x != 17
+; x <=u 13 || x != 17
 
 define i1 @or_ule_ne(i8 %x) {
 ; CHECK-LABEL: @or_ule_ne(
@@ -3968,7 +3968,7 @@ define i1 @or_ule_ne(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x >=s 17
+; x <=u 13 || x >=s 17
 
 define i1 @or_ule_sge(i8 %x) {
 ; CHECK-LABEL: @or_ule_sge(
@@ -3983,7 +3983,7 @@ define i1 @or_ule_sge(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x >s 17
+; x <=u 13 || x >s 17
 
 define i1 @or_ule_sgt(i8 %x) {
 ; CHECK-LABEL: @or_ule_sgt(
@@ -3998,7 +3998,7 @@ define i1 @or_ule_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x <=s 17
+; x <=u 13 || x <=s 17
 
 define i1 @or_ule_sle(i8 %x) {
 ; CHECK-LABEL: @or_ule_sle(
@@ -4013,7 +4013,7 @@ define i1 @or_ule_sle(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x <s 17
+; x <=u 13 || x <s 17
 
 define i1 @or_ule_slt(i8 %x) {
 ; CHECK-LABEL: @or_ule_slt(
@@ -4028,7 +4028,7 @@ define i1 @or_ule_slt(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x >=u 17
+; x <=u 13 || x >=u 17
 
 define i1 @or_ule_uge(i8 %x) {
 ; CHECK-LABEL: @or_ule_uge(
@@ -4043,7 +4043,7 @@ define i1 @or_ule_uge(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x >u 17
+; x <=u 13 || x >u 17
 
 define i1 @or_ule_ugt(i8 %x) {
 ; CHECK-LABEL: @or_ule_ugt(
@@ -4058,7 +4058,7 @@ define i1 @or_ule_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x <=u 17
+; x <=u 13 || x <=u 17
 
 define i1 @or_ule_ule(i8 %x) {
 ; CHECK-LABEL: @or_ule_ule(
@@ -4073,7 +4073,7 @@ define i1 @or_ule_ule(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 13 && x <u 17
+; x <=u 13 || x <u 17
 
 define i1 @or_ule_ult(i8 %x) {
 ; CHECK-LABEL: @or_ule_ult(
@@ -4089,7 +4089,7 @@ define i1 @or_ule_ult(i8 %x) {
 }
 
 ; ult
-; x <u 13 && x == 17
+; x <u 13 || x == 17
 
 define i1 @or_ult_eq(i8 %x) {
 ; CHECK-LABEL: @or_ult_eq(
@@ -4104,7 +4104,7 @@ define i1 @or_ult_eq(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x != 17
+; x <u 13 || x != 17
 
 define i1 @or_ult_ne(i8 %x) {
 ; CHECK-LABEL: @or_ult_ne(
@@ -4119,7 +4119,7 @@ define i1 @or_ult_ne(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x >=s 17
+; x <u 13 || x >=s 17
 
 define i1 @or_ult_sge(i8 %x) {
 ; CHECK-LABEL: @or_ult_sge(
@@ -4134,7 +4134,7 @@ define i1 @or_ult_sge(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x >s 17
+; x <u 13 || x >s 17
 
 define i1 @or_ult_sgt(i8 %x) {
 ; CHECK-LABEL: @or_ult_sgt(
@@ -4149,7 +4149,7 @@ define i1 @or_ult_sgt(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x <=s 17
+; x <u 13 || x <=s 17
 
 define i1 @or_ult_sle(i8 %x) {
 ; CHECK-LABEL: @or_ult_sle(
@@ -4164,7 +4164,7 @@ define i1 @or_ult_sle(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x <s 17
+; x <u 13 || x <s 17
 
 define i1 @or_ult_slt(i8 %x) {
 ; CHECK-LABEL: @or_ult_slt(
@@ -4179,7 +4179,7 @@ define i1 @or_ult_slt(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x >=u 17
+; x <u 13 || x >=u 17
 
 define i1 @or_ult_uge(i8 %x) {
 ; CHECK-LABEL: @or_ult_uge(
@@ -4194,7 +4194,7 @@ define i1 @or_ult_uge(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x >u 17
+; x <u 13 || x >u 17
 
 define i1 @or_ult_ugt(i8 %x) {
 ; CHECK-LABEL: @or_ult_ugt(
@@ -4209,7 +4209,7 @@ define i1 @or_ult_ugt(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x <=u 17
+; x <u 13 || x <=u 17
 
 define i1 @or_ult_ule(i8 %x) {
 ; CHECK-LABEL: @or_ult_ule(
@@ -4224,7 +4224,7 @@ define i1 @or_ult_ule(i8 %x) {
   ret i1 %c
 }
 
-; x <u 13 && x <u 17
+; x <u 13 || x <u 17
 
 define i1 @or_ult_ult(i8 %x) {
 ; CHECK-LABEL: @or_ult_ult(
@@ -4240,7 +4240,7 @@ define i1 @or_ult_ult(i8 %x) {
 }
 
 ; eq
-; x == 23 && x == 17
+; x == 23 || x == 17
 
 define i1 @or_eq_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_eq_swap(
@@ -4255,7 +4255,7 @@ define i1 @or_eq_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x != 17
+; x == 23 || x != 17
 
 define i1 @or_eq_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_ne_swap(
@@ -4270,7 +4270,7 @@ define i1 @or_eq_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x >=s 17
+; x == 23 || x >=s 17
 
 define i1 @or_eq_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_sge_swap(
@@ -4285,7 +4285,7 @@ define i1 @or_eq_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x >s 17
+; x == 23 || x >s 17
 
 define i1 @or_eq_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_sgt_swap(
@@ -4300,7 +4300,7 @@ define i1 @or_eq_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x <=s 17
+; x == 23 || x <=s 17
 
 define i1 @or_eq_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_sle_swap(
@@ -4315,7 +4315,7 @@ define i1 @or_eq_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x <s 17
+; x == 23 || x <s 17
 
 define i1 @or_eq_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_slt_swap(
@@ -4330,7 +4330,7 @@ define i1 @or_eq_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x >=u 17
+; x == 23 || x >=u 17
 
 define i1 @or_eq_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_uge_swap(
@@ -4345,7 +4345,7 @@ define i1 @or_eq_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x >u 17
+; x == 23 || x >u 17
 
 define i1 @or_eq_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_ugt_swap(
@@ -4360,7 +4360,7 @@ define i1 @or_eq_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x <=u 17
+; x == 23 || x <=u 17
 
 define i1 @or_eq_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_ule_swap(
@@ -4375,7 +4375,7 @@ define i1 @or_eq_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x == 23 && x <u 17
+; x == 23 || x <u 17
 
 define i1 @or_eq_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_eq_ult_swap(
@@ -4391,7 +4391,7 @@ define i1 @or_eq_ult_swap(i8 %x) {
 }
 
 ; ne
-; x != 23 && x == 17
+; x != 23 || x == 17
 
 define i1 @or_ne_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_eq_swap(
@@ -4406,7 +4406,7 @@ define i1 @or_ne_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x != 17
+; x != 23 || x != 17
 
 define i1 @or_ne_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_ne_swap(
@@ -4421,7 +4421,7 @@ define i1 @or_ne_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x >=s 17
+; x != 23 || x >=s 17
 
 define i1 @or_ne_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_sge_swap(
@@ -4436,7 +4436,7 @@ define i1 @or_ne_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x >s 17
+; x != 23 || x >s 17
 
 define i1 @or_ne_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_sgt_swap(
@@ -4451,7 +4451,7 @@ define i1 @or_ne_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x <=s 17
+; x != 23 || x <=s 17
 
 define i1 @or_ne_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_sle_swap(
@@ -4466,7 +4466,7 @@ define i1 @or_ne_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x <s 17
+; x != 23 || x <s 17
 
 define i1 @or_ne_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_slt_swap(
@@ -4481,7 +4481,7 @@ define i1 @or_ne_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x >=u 17
+; x != 23 || x >=u 17
 
 define i1 @or_ne_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_uge_swap(
@@ -4496,7 +4496,7 @@ define i1 @or_ne_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x >u 17
+; x != 23 || x >u 17
 
 define i1 @or_ne_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_ugt_swap(
@@ -4511,7 +4511,7 @@ define i1 @or_ne_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x <=u 17
+; x != 23 || x <=u 17
 
 define i1 @or_ne_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_ule_swap(
@@ -4526,7 +4526,7 @@ define i1 @or_ne_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x != 23 && x <u 17
+; x != 23 || x <u 17
 
 define i1 @or_ne_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_ne_ult_swap(
@@ -4542,7 +4542,7 @@ define i1 @or_ne_ult_swap(i8 %x) {
 }
 
 ; sge
-; x >=s 23 && x == 17
+; x >=s 23 || x == 17
 
 define i1 @or_sge_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_eq_swap(
@@ -4557,7 +4557,7 @@ define i1 @or_sge_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x != 17
+; x >=s 23 || x != 17
 
 define i1 @or_sge_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_ne_swap(
@@ -4572,7 +4572,7 @@ define i1 @or_sge_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x >=s 17
+; x >=s 23 || x >=s 17
 
 define i1 @or_sge_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_sge_swap(
@@ -4587,7 +4587,7 @@ define i1 @or_sge_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x >s 17
+; x >=s 23 || x >s 17
 
 define i1 @or_sge_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_sgt_swap(
@@ -4602,7 +4602,7 @@ define i1 @or_sge_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x <=s 17
+; x >=s 23 || x <=s 17
 
 define i1 @or_sge_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_sle_swap(
@@ -4617,7 +4617,7 @@ define i1 @or_sge_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x <s 17
+; x >=s 23 || x <s 17
 
 define i1 @or_sge_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_slt_swap(
@@ -4632,7 +4632,7 @@ define i1 @or_sge_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x >=u 17
+; x >=s 23 || x >=u 17
 
 define i1 @or_sge_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_uge_swap(
@@ -4647,7 +4647,7 @@ define i1 @or_sge_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x >u 17
+; x >=s 23 || x >u 17
 
 define i1 @or_sge_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_ugt_swap(
@@ -4662,7 +4662,7 @@ define i1 @or_sge_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x <=u 17
+; x >=s 23 || x <=u 17
 
 define i1 @or_sge_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_ule_swap(
@@ -4677,7 +4677,7 @@ define i1 @or_sge_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=s 23 && x <u 17
+; x >=s 23 || x <u 17
 
 define i1 @or_sge_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_sge_ult_swap(
@@ -4693,7 +4693,7 @@ define i1 @or_sge_ult_swap(i8 %x) {
 }
 
 ; sgt
-; x >s 23 && x == 17
+; x >s 23 || x == 17
 
 define i1 @or_sgt_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_eq_swap(
@@ -4708,7 +4708,7 @@ define i1 @or_sgt_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x != 17
+; x >s 23 || x != 17
 
 define i1 @or_sgt_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ne_swap(
@@ -4723,7 +4723,7 @@ define i1 @or_sgt_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x >=s 17
+; x >s 23 || x >=s 17
 
 define i1 @or_sgt_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_sge_swap(
@@ -4738,7 +4738,7 @@ define i1 @or_sgt_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x >s 17
+; x >s 23 || x >s 17
 
 define i1 @or_sgt_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_sgt_swap(
@@ -4753,7 +4753,7 @@ define i1 @or_sgt_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x <=s 17
+; x >s 23 || x <=s 17
 
 define i1 @or_sgt_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_sle_swap(
@@ -4768,7 +4768,7 @@ define i1 @or_sgt_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x <s 17
+; x >s 23 || x <s 17
 
 define i1 @or_sgt_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_slt_swap(
@@ -4783,7 +4783,7 @@ define i1 @or_sgt_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x >=u 17
+; x >s 23 || x >=u 17
 
 define i1 @or_sgt_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_uge_swap(
@@ -4798,7 +4798,7 @@ define i1 @or_sgt_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x >u 17
+; x >s 23 || x >u 17
 
 define i1 @or_sgt_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ugt_swap(
@@ -4813,7 +4813,7 @@ define i1 @or_sgt_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x <=u 17
+; x >s 23 || x <=u 17
 
 define i1 @or_sgt_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ule_swap(
@@ -4828,7 +4828,7 @@ define i1 @or_sgt_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >s 23 && x <u 17
+; x >s 23 || x <u 17
 
 define i1 @or_sgt_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_sgt_ult_swap(
@@ -4844,7 +4844,7 @@ define i1 @or_sgt_ult_swap(i8 %x) {
 }
 
 ; sle
-; x <=s 23 && x == 17
+; x <=s 23 || x == 17
 
 define i1 @or_sle_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_eq_swap(
@@ -4859,7 +4859,7 @@ define i1 @or_sle_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x != 17
+; x <=s 23 || x != 17
 
 define i1 @or_sle_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_ne_swap(
@@ -4874,7 +4874,7 @@ define i1 @or_sle_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x >=s 17
+; x <=s 23 || x >=s 17
 
 define i1 @or_sle_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_sge_swap(
@@ -4889,7 +4889,7 @@ define i1 @or_sle_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x >s 17
+; x <=s 23 || x >s 17
 
 define i1 @or_sle_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_sgt_swap(
@@ -4904,7 +4904,7 @@ define i1 @or_sle_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x <=s 17
+; x <=s 23 || x <=s 17
 
 define i1 @or_sle_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_sle_swap(
@@ -4919,7 +4919,7 @@ define i1 @or_sle_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x <s 17
+; x <=s 23 || x <s 17
 
 define i1 @or_sle_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_slt_swap(
@@ -4934,7 +4934,7 @@ define i1 @or_sle_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x >=u 17
+; x <=s 23 || x >=u 17
 
 define i1 @or_sle_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_uge_swap(
@@ -4949,7 +4949,7 @@ define i1 @or_sle_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x >u 17
+; x <=s 23 || x >u 17
 
 define i1 @or_sle_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_ugt_swap(
@@ -4964,7 +4964,7 @@ define i1 @or_sle_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x <=u 17
+; x <=s 23 || x <=u 17
 
 define i1 @or_sle_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_ule_swap(
@@ -4979,7 +4979,7 @@ define i1 @or_sle_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=s 23 && x <u 17
+; x <=s 23 || x <u 17
 
 define i1 @or_sle_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_sle_ult_swap(
@@ -4995,7 +4995,7 @@ define i1 @or_sle_ult_swap(i8 %x) {
 }
 
 ; slt
-; x <s 23 && x == 17
+; x <s 23 || x == 17
 
 define i1 @or_slt_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_eq_swap(
@@ -5010,7 +5010,7 @@ define i1 @or_slt_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x != 17
+; x <s 23 || x != 17
 
 define i1 @or_slt_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_ne_swap(
@@ -5025,7 +5025,7 @@ define i1 @or_slt_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x >=s 17
+; x <s 23 || x >=s 17
 
 define i1 @or_slt_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_sge_swap(
@@ -5040,7 +5040,7 @@ define i1 @or_slt_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x >s 17
+; x <s 23 || x >s 17
 
 define i1 @or_slt_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_sgt_swap(
@@ -5055,7 +5055,7 @@ define i1 @or_slt_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x <=s 17
+; x <s 23 || x <=s 17
 
 define i1 @or_slt_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_sle_swap(
@@ -5070,7 +5070,7 @@ define i1 @or_slt_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x <s 17
+; x <s 23 || x <s 17
 
 define i1 @or_slt_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_slt_swap(
@@ -5085,7 +5085,7 @@ define i1 @or_slt_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x >=u 17
+; x <s 23 || x >=u 17
 
 define i1 @or_slt_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_uge_swap(
@@ -5100,7 +5100,7 @@ define i1 @or_slt_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x >u 17
+; x <s 23 || x >u 17
 
 define i1 @or_slt_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_ugt_swap(
@@ -5115,7 +5115,7 @@ define i1 @or_slt_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x <=u 17
+; x <s 23 || x <=u 17
 
 define i1 @or_slt_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_ule_swap(
@@ -5130,7 +5130,7 @@ define i1 @or_slt_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <s 23 && x <u 17
+; x <s 23 || x <u 17
 
 define i1 @or_slt_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_slt_ult_swap(
@@ -5146,7 +5146,7 @@ define i1 @or_slt_ult_swap(i8 %x) {
 }
 
 ; uge
-; x >=u 23 && x == 17
+; x >=u 23 || x == 17
 
 define i1 @or_uge_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_eq_swap(
@@ -5161,7 +5161,7 @@ define i1 @or_uge_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x != 17
+; x >=u 23 || x != 17
 
 define i1 @or_uge_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_ne_swap(
@@ -5176,7 +5176,7 @@ define i1 @or_uge_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x >=s 17
+; x >=u 23 || x >=s 17
 
 define i1 @or_uge_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_sge_swap(
@@ -5191,7 +5191,7 @@ define i1 @or_uge_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x >s 17
+; x >=u 23 || x >s 17
 
 define i1 @or_uge_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_sgt_swap(
@@ -5206,7 +5206,7 @@ define i1 @or_uge_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x <=s 17
+; x >=u 23 || x <=s 17
 
 define i1 @or_uge_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_sle_swap(
@@ -5221,7 +5221,7 @@ define i1 @or_uge_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x <s 17
+; x >=u 23 || x <s 17
 
 define i1 @or_uge_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_slt_swap(
@@ -5236,7 +5236,7 @@ define i1 @or_uge_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x >=u 17
+; x >=u 23 || x >=u 17
 
 define i1 @or_uge_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_uge_swap(
@@ -5251,7 +5251,7 @@ define i1 @or_uge_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x >u 17
+; x >=u 23 || x >u 17
 
 define i1 @or_uge_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_ugt_swap(
@@ -5266,7 +5266,7 @@ define i1 @or_uge_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x <=u 17
+; x >=u 23 || x <=u 17
 
 define i1 @or_uge_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_ule_swap(
@@ -5281,7 +5281,7 @@ define i1 @or_uge_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >=u 23 && x <u 17
+; x >=u 23 || x <u 17
 
 define i1 @or_uge_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_uge_ult_swap(
@@ -5297,7 +5297,7 @@ define i1 @or_uge_ult_swap(i8 %x) {
 }
 
 ; ugt
-; x >u 23 && x == 17
+; x >u 23 || x == 17
 
 define i1 @or_ugt_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_eq_swap(
@@ -5312,7 +5312,7 @@ define i1 @or_ugt_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x != 17
+; x >u 23 || x != 17
 
 define i1 @or_ugt_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ne_swap(
@@ -5327,7 +5327,7 @@ define i1 @or_ugt_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x >=s 17
+; x >u 23 || x >=s 17
 
 define i1 @or_ugt_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_sge_swap(
@@ -5342,7 +5342,7 @@ define i1 @or_ugt_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x >s 17
+; x >u 23 || x >s 17
 
 define i1 @or_ugt_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_sgt_swap(
@@ -5357,7 +5357,7 @@ define i1 @or_ugt_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x <=s 17
+; x >u 23 || x <=s 17
 
 define i1 @or_ugt_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_sle_swap(
@@ -5372,7 +5372,7 @@ define i1 @or_ugt_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x <s 17
+; x >u 23 || x <s 17
 
 define i1 @or_ugt_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_slt_swap(
@@ -5387,7 +5387,7 @@ define i1 @or_ugt_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x >=u 17
+; x >u 23 || x >=u 17
 
 define i1 @or_ugt_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_uge_swap(
@@ -5402,7 +5402,7 @@ define i1 @or_ugt_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x >u 17
+; x >u 23 || x >u 17
 
 define i1 @or_ugt_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ugt_swap(
@@ -5417,7 +5417,7 @@ define i1 @or_ugt_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x <=u 17
+; x >u 23 || x <=u 17
 
 define i1 @or_ugt_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ule_swap(
@@ -5432,7 +5432,7 @@ define i1 @or_ugt_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x >u 23 && x <u 17
+; x >u 23 || x <u 17
 
 define i1 @or_ugt_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_ugt_ult_swap(
@@ -5448,7 +5448,7 @@ define i1 @or_ugt_ult_swap(i8 %x) {
 }
 
 ; ule
-; x <=u 23 && x == 17
+; x <=u 23 || x == 17
 
 define i1 @or_ule_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_eq_swap(
@@ -5463,7 +5463,7 @@ define i1 @or_ule_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x != 17
+; x <=u 23 || x != 17
 
 define i1 @or_ule_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_ne_swap(
@@ -5478,7 +5478,7 @@ define i1 @or_ule_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x >=s 17
+; x <=u 23 || x >=s 17
 
 define i1 @or_ule_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_sge_swap(
@@ -5493,7 +5493,7 @@ define i1 @or_ule_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x >s 17
+; x <=u 23 || x >s 17
 
 define i1 @or_ule_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_sgt_swap(
@@ -5508,7 +5508,7 @@ define i1 @or_ule_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x <=s 17
+; x <=u 23 || x <=s 17
 
 define i1 @or_ule_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_sle_swap(
@@ -5523,7 +5523,7 @@ define i1 @or_ule_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x <s 17
+; x <=u 23 || x <s 17
 
 define i1 @or_ule_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_slt_swap(
@@ -5538,7 +5538,7 @@ define i1 @or_ule_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x >=u 17
+; x <=u 23 || x >=u 17
 
 define i1 @or_ule_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_uge_swap(
@@ -5553,7 +5553,7 @@ define i1 @or_ule_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x >u 17
+; x <=u 23 || x >u 17
 
 define i1 @or_ule_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_ugt_swap(
@@ -5568,7 +5568,7 @@ define i1 @or_ule_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x <=u 17
+; x <=u 23 || x <=u 17
 
 define i1 @or_ule_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_ule_swap(
@@ -5583,7 +5583,7 @@ define i1 @or_ule_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <=u 23 && x <u 17
+; x <=u 23 || x <u 17
 
 define i1 @or_ule_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_ule_ult_swap(
@@ -5599,7 +5599,7 @@ define i1 @or_ule_ult_swap(i8 %x) {
 }
 
 ; ult
-; x <u 23 && x == 17
+; x <u 23 || x == 17
 
 define i1 @or_ult_eq_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_eq_swap(
@@ -5614,7 +5614,7 @@ define i1 @or_ult_eq_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x != 17
+; x <u 23 || x != 17
 
 define i1 @or_ult_ne_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_ne_swap(
@@ -5629,7 +5629,7 @@ define i1 @or_ult_ne_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x >=s 17
+; x <u 23 || x >=s 17
 
 define i1 @or_ult_sge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_sge_swap(
@@ -5644,7 +5644,7 @@ define i1 @or_ult_sge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x >s 17
+; x <u 23 || x >s 17
 
 define i1 @or_ult_sgt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_sgt_swap(
@@ -5659,7 +5659,7 @@ define i1 @or_ult_sgt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x <=s 17
+; x <u 23 || x <=s 17
 
 define i1 @or_ult_sle_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_sle_swap(
@@ -5674,7 +5674,7 @@ define i1 @or_ult_sle_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x <s 17
+; x <u 23 || x <s 17
 
 define i1 @or_ult_slt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_slt_swap(
@@ -5689,7 +5689,7 @@ define i1 @or_ult_slt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x >=u 17
+; x <u 23 || x >=u 17
 
 define i1 @or_ult_uge_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_uge_swap(
@@ -5704,7 +5704,7 @@ define i1 @or_ult_uge_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x >u 17
+; x <u 23 || x >u 17
 
 define i1 @or_ult_ugt_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_ugt_swap(
@@ -5719,7 +5719,7 @@ define i1 @or_ult_ugt_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x <=u 17
+; x <u 23 || x <=u 17
 
 define i1 @or_ult_ule_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_ule_swap(
@@ -5734,7 +5734,7 @@ define i1 @or_ult_ule_swap(i8 %x) {
   ret i1 %c
 }
 
-; x <u 23 && x <u 17
+; x <u 23 || x <u 17
 
 define i1 @or_ult_ult_swap(i8 %x) {
 ; CHECK-LABEL: @or_ult_ult_swap(
