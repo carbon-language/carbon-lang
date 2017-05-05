@@ -13,7 +13,7 @@
 #include "lld/Core/LLVM.h"
 #include "lld/Core/TaskGroup.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/config/llvm-config.h"
+#include "llvm/Config/llvm-config.h"
 
 #include <algorithm>
 
