@@ -37,6 +37,11 @@ static cl::opt<bool> ModelReadOnlyScalars(
     cl::desc("Model read-only scalar values in the scop description"),
     cl::Hidden, cl::ZeroOrMore, cl::init(true), cl::cat(PollyCategory));
 
+static cl::opt<bool> UnprofitableScalarAccs(
+    "polly-unprofitable-scalar-accs",
+    cl::desc("Count statements with scalar accesses as not optimizable"),
+    cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+
 void ScopBuilder::buildPHIAccesses(PHINode *PHI, Region *NonAffineSubRegion,
                                    bool IsExitBlock) {
 
@@ -655,12 +660,6 @@ static void verifyUse(Scop *S, Use &Op, LoopInfo &LI) {
 /// to pick up the virtual uses. But here in the code generator, this has not
 /// happened yet, such that virtual and physical uses are equivalent.
 static void verifyUses(Scop *S, LoopInfo &LI, DominatorTree &DT) {
-  // We require the SCoP to be fully built. Without feasible context, some
-  // construction steps are skipped. In particular, we require error statements
-  // to be removed.
-  if (!S->hasFeasibleRuntimeContext())
-    return;
-
   for (auto *BB : S->getRegion().blocks()) {
     auto *Stmt = S->getStmtFor(BB);
     if (!Stmt)
@@ -732,7 +731,58 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC) {
       addArrayAccess(MemAccInst(GlobalRead), MemoryAccess::READ, BP,
                      BP->getType(), false, {AF}, {nullptr}, GlobalRead);
 
-  scop->init(AA, AC, DT, LI);
+  scop->buildInvariantEquivalenceClasses();
+
+  if (!scop->buildDomains(&R, DT, LI))
+    return;
+
+  scop->addUserAssumptions(AC, DT, LI);
+
+  // Remove empty statements.
+  // Exit early in case there are no executable statements left in this scop.
+  scop->simplifySCoP(false);
+  if (scop->isEmpty())
+    return;
+
+  // The ScopStmts now have enough information to initialize themselves.
+  for (ScopStmt &Stmt : *scop)
+    Stmt.init(LI);
+
+  // Check early for a feasible runtime context.
+  if (!scop->hasFeasibleRuntimeContext())
+    return;
+
+  // Check early for profitability. Afterwards it cannot change anymore,
+  // only the runtime context could become infeasible.
+  if (!scop->isProfitable(UnprofitableScalarAccs)) {
+    scop->invalidate(PROFITABLE, DebugLoc());
+    return;
+  }
+
+  scop->buildSchedule(LI);
+
+  scop->finalizeAccesses();
+
+  scop->realignParams();
+  scop->addUserContext();
+
+  // After the context was fully constructed, thus all our knowledge about
+  // the parameters is in there, we add all recorded assumptions to the
+  // assumed/invalid context.
+  scop->addRecordedAssumptions();
+
+  scop->simplifyContexts();
+  if (!scop->buildAliasChecks(AA))
+    return;
+
+  scop->hoistInvariantLoads();
+  scop->verifyInvariantLoads();
+  scop->simplifySCoP(true);
+
+  // Check late for a feasible runtime context because profitability did not
+  // change.
+  if (!scop->hasFeasibleRuntimeContext())
+    return;
 
 #ifndef NDEBUG
   verifyUses(scop.get(), LI, DT);
