@@ -219,8 +219,8 @@ private:
 // archive file semantics.
 class LazyObjectFile : public InputFile {
 public:
-  explicit LazyObjectFile(MemoryBufferRef M, StringRef ArchiveName,
-                          uint64_t OffsetInArchive)
+  LazyObjectFile(MemoryBufferRef M, StringRef ArchiveName,
+                 uint64_t OffsetInArchive)
       : InputFile(LazyObjectKind, M), OffsetInArchive(OffsetInArchive) {
     this->ArchiveName = ArchiveName;
   }
