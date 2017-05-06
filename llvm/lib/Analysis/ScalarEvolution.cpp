@@ -2970,7 +2970,7 @@ static const APInt gcd(const SCEVConstant *C1, const SCEVConstant *C2) {
   else if (ABW < BBW)
     A = A.zext(BBW);
 
-  return APIntOps::GreatestCommonDivisor(A, B);
+  return APIntOps::GreatestCommonDivisor(std::move(A), std::move(B));
 }
 
 /// Get a canonical unsigned division expression, or something simpler if
@@ -8980,7 +8980,7 @@ bool ScalarEvolution::doesIVOverflowOnLT(const SCEV *RHS, const SCEV *Stride,
                                 .getSignedMax();
 
     // SMaxRHS + SMaxStrideMinusOne > SMaxValue => overflow!
-    return (MaxValue - MaxStrideMinusOne).slt(MaxRHS);
+    return (std::move(MaxValue) - std::move(MaxStrideMinusOne)).slt(MaxRHS);
   }
 
   APInt MaxRHS = getUnsignedRange(RHS).getUnsignedMax();
@@ -8989,7 +8989,7 @@ bool ScalarEvolution::doesIVOverflowOnLT(const SCEV *RHS, const SCEV *Stride,
                               .getUnsignedMax();
 
   // UMaxRHS + UMaxStrideMinusOne > UMaxValue => overflow!
-  return (MaxValue - MaxStrideMinusOne).ult(MaxRHS);
+  return (std::move(MaxValue) - std::move(MaxStrideMinusOne)).ult(MaxRHS);
 }
 
 bool ScalarEvolution::doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,
@@ -9006,7 +9006,7 @@ bool ScalarEvolution::doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,
                                .getSignedMax();
 
     // SMinRHS - SMaxStrideMinusOne < SMinValue => overflow!
-    return (MinValue + MaxStrideMinusOne).sgt(MinRHS);
+    return (std::move(MinValue) + std::move(MaxStrideMinusOne)).sgt(MinRHS);
   }
 
   APInt MinRHS = getUnsignedRange(RHS).getUnsignedMin();
@@ -9015,7 +9015,7 @@ bool ScalarEvolution::doesIVOverflowOnGT(const SCEV *RHS, const SCEV *Stride,
                             .getUnsignedMax();
 
   // UMinRHS - UMaxStrideMinusOne < UMinValue => overflow!
-  return (MinValue + MaxStrideMinusOne).ugt(MinRHS);
+  return (std::move(MinValue) + std::move(MaxStrideMinusOne)).ugt(MinRHS);
 }
 
 const SCEV *ScalarEvolution::computeBECount(const SCEV *Delta, const SCEV *Step,
