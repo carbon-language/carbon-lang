@@ -8943,7 +8943,7 @@ bool ScalarEvolution::isImpliedCondOperandsViaRanges(ICmpInst::Predicate Pred,
   if (!Addend)
     return false;
 
-  APInt ConstFoundRHS = cast<SCEVConstant>(FoundRHS)->getAPInt();
+  const APInt &ConstFoundRHS = cast<SCEVConstant>(FoundRHS)->getAPInt();
 
   // `FoundLHSRange` is the range we know `FoundLHS` to be in by virtue of the
   // antecedent "`FoundLHS` `Pred` `FoundRHS`".
@@ -8955,7 +8955,7 @@ bool ScalarEvolution::isImpliedCondOperandsViaRanges(ICmpInst::Predicate Pred,
 
   // We can also compute the range of values for `LHS` that satisfy the
   // consequent, "`LHS` `Pred` `RHS`":
-  APInt ConstRHS = cast<SCEVConstant>(RHS)->getAPInt();
+  const APInt &ConstRHS = cast<SCEVConstant>(RHS)->getAPInt();
   ConstantRange SatisfyingLHSRange =
       ConstantRange::makeSatisfyingICmpRegion(Pred, ConstRHS);
 
