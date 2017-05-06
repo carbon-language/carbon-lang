@@ -1240,8 +1240,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       }
     }
     if (Subtarget.hasVLX()) {
-      setOperationAction(ISD::ABS,              MVT::v4i64, Legal);
-      setOperationAction(ISD::ABS,              MVT::v2i64, Legal);
       setOperationAction(ISD::SINT_TO_FP,       MVT::v8i32, Legal);
       setOperationAction(ISD::UINT_TO_FP,       MVT::v8i32, Legal);
       setOperationAction(ISD::FP_TO_SINT,       MVT::v8i32, Legal);
@@ -1307,6 +1305,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SELECT,             MVT::v16f32, Custom);
 
     setOperationAction(ISD::MUL,                MVT::v16i32, Legal);
+
+    // NonVLX sub-targets extend 128/256 vectors to use the 512 version.
+    setOperationAction(ISD::ABS,                MVT::v4i64, Legal);
+    setOperationAction(ISD::ABS,                MVT::v2i64, Legal);
 
     for (auto VT : { MVT::v8i1, MVT::v16i1 }) {
       setOperationAction(ISD::ADD,              VT, Custom);
