@@ -9306,9 +9306,8 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(const ConstantRange &Range,
     // the upper value of the range must be the first possible exit value.
     // If A is negative then the lower of the range is the last possible loop
     // value.  Also note that we already checked for a full range.
-    APInt One(BitWidth,1);
     APInt A = cast<SCEVConstant>(getOperand(1))->getAPInt();
-    APInt End = A.sge(One) ? (Range.getUpper() - One) : Range.getLower();
+    APInt End = A.sge(1) ? (Range.getUpper() - 1) : Range.getLower();
 
     // The exit value should be (End+A)/A.
     APInt ExitVal = (End + A).udiv(A);
@@ -9324,7 +9323,7 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(const ConstantRange &Range,
     // Ensure that the previous value is in the range.  This is a sanity check.
     assert(Range.contains(
            EvaluateConstantChrecAtConstant(this,
-           ConstantInt::get(SE.getContext(), ExitVal - One), SE)->getValue()) &&
+           ConstantInt::get(SE.getContext(), ExitVal - 1), SE)->getValue()) &&
            "Linear scev computation is off in a bad way!");
     return SE.getConstant(ExitValue);
   } else if (isQuadratic()) {
