@@ -57,10 +57,10 @@ typedef CUresult CUDAAPI CuMemAllocFcnTy(CUdeviceptr *, size_t);
 static CuMemAllocFcnTy *CuMemAllocFcnPtr;
 
 typedef CUresult CUDAAPI CuLaunchKernelFcnTy(
-    CUfunction f, unsigned int gridDimX, unsigned int gridDimY,
-    unsigned int gridDimZ, unsigned int blockDimX, unsigned int blockDimY,
-    unsigned int blockDimZ, unsigned int sharedMemBytes, CUstream hStream,
-    void **kernelParams, void **extra);
+    CUfunction F, unsigned int GridDimX, unsigned int GridDimY,
+    unsigned int GridDimZ, unsigned int BlockDimX, unsigned int BlockDimY,
+    unsigned int BlockDimZ, unsigned int SharedMemBytes, CUstream HStream,
+    void **KernelParams, void **Extra);
 static CuLaunchKernelFcnTy *CuLaunchKernelFcnPtr;
 
 typedef CUresult CUDAAPI CuMemcpyDtoHFcnTy(void *, CUdeviceptr, size_t);
@@ -95,8 +95,8 @@ typedef CUresult CUDAAPI CuModuleLoadDataExFcnTy(CUmodule *, const void *,
                                                  void **);
 static CuModuleLoadDataExFcnTy *CuModuleLoadDataExFcnPtr;
 
-typedef CUresult CUDAAPI CuModuleLoadDataFcnTy(CUmodule *module,
-                                               const void *image);
+typedef CUresult CUDAAPI CuModuleLoadDataFcnTy(CUmodule *Module,
+                                               const void *Image);
 static CuModuleLoadDataFcnTy *CuModuleLoadDataFcnPtr;
 
 typedef CUresult CUDAAPI CuModuleGetFunctionFcnTy(CUfunction *, CUmodule,
@@ -109,25 +109,25 @@ static CuDeviceComputeCapabilityFcnTy *CuDeviceComputeCapabilityFcnPtr;
 typedef CUresult CUDAAPI CuDeviceGetNameFcnTy(char *, int, CUdevice);
 static CuDeviceGetNameFcnTy *CuDeviceGetNameFcnPtr;
 
-typedef CUresult CUDAAPI CuLinkAddDataFcnTy(CUlinkState state,
-                                            CUjitInputType type, void *data,
-                                            size_t size, const char *name,
-                                            unsigned int numOptions,
-                                            CUjit_option *options,
-                                            void **optionValues);
+typedef CUresult CUDAAPI CuLinkAddDataFcnTy(CUlinkState State,
+                                            CUjitInputType Type, void *Data,
+                                            size_t Size, const char *Name,
+                                            unsigned int NumOptions,
+                                            CUjit_option *Options,
+                                            void **OptionValues);
 static CuLinkAddDataFcnTy *CuLinkAddDataFcnPtr;
 
-typedef CUresult CUDAAPI CuLinkCreateFcnTy(unsigned int numOptions,
-                                           CUjit_option *options,
-                                           void **optionValues,
-                                           CUlinkState *stateOut);
+typedef CUresult CUDAAPI CuLinkCreateFcnTy(unsigned int NumOptions,
+                                           CUjit_option *Options,
+                                           void **OptionValues,
+                                           CUlinkState *StateOut);
 static CuLinkCreateFcnTy *CuLinkCreateFcnPtr;
 
-typedef CUresult CUDAAPI CuLinkCompleteFcnTy(CUlinkState state, void **cubinOut,
-                                             size_t *sizeOut);
+typedef CUresult CUDAAPI CuLinkCompleteFcnTy(CUlinkState State, void **CubinOut,
+                                             size_t *SizeOut);
 static CuLinkCompleteFcnTy *CuLinkCompleteFcnPtr;
 
-typedef CUresult CUDAAPI CuLinkDestroyFcnTy(CUlinkState state);
+typedef CUresult CUDAAPI CuLinkDestroyFcnTy(CUlinkState State);
 static CuLinkDestroyFcnTy *CuLinkDestroyFcnPtr;
 
 typedef CUresult CUDAAPI CuCtxSynchronizeFcnTy();
