@@ -143,7 +143,7 @@ static void *getAPIHandle(void *Handle, const char *FuncName) {
   dlerror();
   FuncPtr = dlsym(Handle, FuncName);
   if ((Err = dlerror()) != 0) {
-    fprintf(stdout, "Load CUDA driver API failed: %s. \n", Err);
+    fprintf(stderr, "Load CUDA driver API failed: %s. \n", Err);
     return 0;
   }
   return FuncPtr;
@@ -264,19 +264,19 @@ PollyGPUContext *polly_initContext() {
 
   /* Get API handles. */
   if (initialDeviceAPIs() == 0) {
-    fprintf(stdout, "Getting the \"handle\" for the CUDA driver API failed.\n");
+    fprintf(stderr, "Getting the \"handle\" for the CUDA driver API failed.\n");
     exit(-1);
   }
 
   if (CuInitFcnPtr(0) != CUDA_SUCCESS) {
-    fprintf(stdout, "Initializing the CUDA driver API failed.\n");
+    fprintf(stderr, "Initializing the CUDA driver API failed.\n");
     exit(-1);
   }
 
   /* Get number of devices that supports CUDA. */
   CuDeviceGetCountFcnPtr(&DeviceCount);
   if (DeviceCount == 0) {
-    fprintf(stdout, "There is no device supporting CUDA.\n");
+    fprintf(stderr, "There is no device supporting CUDA.\n");
     exit(-1);
   }
 
@@ -290,7 +290,7 @@ PollyGPUContext *polly_initContext() {
   /* Create context on the device. */
   Context = (PollyGPUContext *)malloc(sizeof(PollyGPUContext));
   if (Context == 0) {
-    fprintf(stdout, "Allocate memory for Polly GPU context failed.\n");
+    fprintf(stderr, "Allocate memory for Polly GPU context failed.\n");
     exit(-1);
   }
   CuCtxCreateFcnPtr(&(Context->Cuda), 0, Device);
@@ -333,7 +333,7 @@ PollyGPUFunction *polly_getKernel(const char *PTXBuffer,
   PollyGPUFunction *Function = malloc(sizeof(PollyGPUFunction));
 
   if (Function == 0) {
-    fprintf(stdout, "Allocate memory for Polly GPU function failed.\n");
+    fprintf(stderr, "Allocate memory for Polly GPU function failed.\n");
     exit(-1);
   }
 
@@ -373,14 +373,14 @@ PollyGPUFunction *polly_getKernel(const char *PTXBuffer,
   Res = CuLinkAddDataFcnPtr(LState, CU_JIT_INPUT_PTX, (void *)PTXBuffer,
                             strlen(PTXBuffer) + 1, 0, 0, 0, 0);
   if (Res != CUDA_SUCCESS) {
-    fprintf(stdout, "PTX Linker Error:\n%s\n%s", ErrorLog, InfoLog);
+    fprintf(stderr, "PTX Linker Error:\n%s\n%s", ErrorLog, InfoLog);
     exit(-1);
   }
 
   Res = CuLinkCompleteFcnPtr(LState, &CuOut, &OutSize);
   if (Res != CUDA_SUCCESS) {
-    fprintf(stdout, "Complete ptx linker step failed.\n");
-    fprintf(stdout, "\n%s\n", ErrorLog);
+    fprintf(stderr, "Complete ptx linker step failed.\n");
+    fprintf(stderr, "\n%s\n", ErrorLog);
     exit(-1);
   }
 
@@ -389,14 +389,14 @@ PollyGPUFunction *polly_getKernel(const char *PTXBuffer,
 
   Res = CuModuleLoadDataFcnPtr(&(Function->CudaModule), CuOut);
   if (Res != CUDA_SUCCESS) {
-    fprintf(stdout, "Loading ptx assembly text failed.\n");
+    fprintf(stderr, "Loading ptx assembly text failed.\n");
     exit(-1);
   }
 
   Res = CuModuleGetFunctionFcnPtr(&(Function->Cuda), Function->CudaModule,
                                   KernelName);
   if (Res != CUDA_SUCCESS) {
-    fprintf(stdout, "Loading kernel function failed.\n");
+    fprintf(stderr, "Loading kernel function failed.\n");
     exit(-1);
   }
 
@@ -438,14 +438,14 @@ void polly_copyFromDeviceToHost(PollyGPUDevicePtr *DevData, void *HostData,
   dump_function();
 
   if (CuMemcpyDtoHFcnPtr(HostData, DevData->Cuda, MemSize) != CUDA_SUCCESS) {
-    fprintf(stdout, "Copying results from device to host memory failed.\n");
+    fprintf(stderr, "Copying results from device to host memory failed.\n");
     exit(-1);
   }
 }
 void polly_synchronizeDevice() {
   dump_function();
   if (CuCtxSynchronizeFcnPtr() != CUDA_SUCCESS) {
-    fprintf(stdout, "Synchronizing device and host memory failed.\n");
+    fprintf(stderr, "Synchronizing device and host memory failed.\n");
     exit(-1);
   }
 }
@@ -466,7 +466,7 @@ void polly_launchKernel(PollyGPUFunction *Kernel, unsigned int GridDimX,
                              BlockDimX, BlockDimY, BlockDimZ, SharedMemBytes,
                              Stream, Parameters, Extra);
   if (Res != CUDA_SUCCESS) {
-    fprintf(stdout, "Launching CUDA kernel failed.\n");
+    fprintf(stderr, "Launching CUDA kernel failed.\n");
     exit(-1);
   }
 }
@@ -483,14 +483,14 @@ PollyGPUDevicePtr *polly_allocateMemoryForDevice(long MemSize) {
   PollyGPUDevicePtr *DevData = malloc(sizeof(PollyGPUDevicePtr));
 
   if (DevData == 0) {
-    fprintf(stdout, "Allocate memory for GPU device memory pointer failed.\n");
+    fprintf(stderr, "Allocate memory for GPU device memory pointer failed.\n");
     exit(-1);
   }
 
   CUresult Res = CuMemAllocFcnPtr(&(DevData->Cuda), MemSize);
 
   if (Res != CUDA_SUCCESS) {
-    fprintf(stdout, "Allocate memory for GPU device memory pointer failed.\n");
+    fprintf(stderr, "Allocate memory for GPU device memory pointer failed.\n");
     exit(-1);
   }
 
