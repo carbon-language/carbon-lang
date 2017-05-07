@@ -698,7 +698,11 @@ class Configuration(object):
                 self.cxx.link_flags += ['-nodefaultlibs']
                 # FIXME: Handle MSVCRT as part of the ABI library handling.
                 if self.is_windows:
-                    self.cxx.link_flags += ['-nostdlib']
+                    # Prevent the MSVC STL from getting linked into the program.
+                    self.cxx.link_flags += ['-Wl,-nodefaultlib:msvcprt',
+                                            '-Wl,-nodefaultlib:msvcprtd',
+                                            '-Wl,-nodefaultlib:libcpmt',
+                                            '-Wl,-nodefaultlib:libcpmtd']
                 self.configure_link_flags_cxx_library()
                 self.configure_link_flags_abi_library()
                 self.configure_extra_library_flags()
