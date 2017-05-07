@@ -169,6 +169,9 @@ public:
   /// Compare set size of this range with the range CR.
   bool isSizeStrictlySmallerThan(const ConstantRange &CR) const;
 
+  // Compare set size of this range with Value.
+  bool isSizeLargerThan(uint64_t MaxSize) const;
+
   /// Return the largest unsigned value contained in the ConstantRange.
   APInt getUnsignedMax() const;
 

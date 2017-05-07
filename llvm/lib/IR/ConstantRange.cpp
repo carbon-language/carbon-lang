@@ -260,6 +260,17 @@ ConstantRange::isSizeStrictlySmallerThan(const ConstantRange &Other) const {
   return (Upper - Lower).ult(Other.Upper - Other.Lower);
 }
 
+bool
+ConstantRange::isSizeLargerThan(uint64_t MaxSize) const {
+  assert(MaxSize && "MaxSize can't be 0.");
+  // If this a full set, we need special handling to avoid needing an extra bit
+  // to represent the size.
+  if (isFullSet())
+    return APInt::getMaxValue(getBitWidth()).ugt(MaxSize - 1);
+
+  return (Upper - Lower).ugt(MaxSize);
+}
+
 APInt ConstantRange::getUnsignedMax() const {
   if (isFullSet() || isWrappedSet())
     return APInt::getMaxValue(getBitWidth());
