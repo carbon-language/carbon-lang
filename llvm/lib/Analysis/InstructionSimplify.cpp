@@ -1519,6 +1519,46 @@ static Value *simplifyOrOfICmpsWithSameOperands(ICmpInst *Op0, ICmpInst *Op1) {
   return nullptr;
 }
 
+/// Test if a pair of compares with a shared operand and 2 constants has an
+/// empty set intersection, full set union, or if one compare is a superset of
+/// the other.
+static Value *simplifyAndOrOfICmpsWithConstants(ICmpInst *Cmp0, ICmpInst *Cmp1,
+                                                bool IsAnd) {
+  // Look for this pattern: {and/or} (icmp X, C0), (icmp X, C1)).
+  if (Cmp0->getOperand(0) != Cmp1->getOperand(0))
+    return nullptr;
+
+  const APInt *C0, *C1;
+  if (!match(Cmp0->getOperand(1), m_APInt(C0)) ||
+      !match(Cmp1->getOperand(1), m_APInt(C1)))
+    return nullptr;
+
+  auto Range0 = ConstantRange::makeExactICmpRegion(Cmp0->getPredicate(), *C0);
+  auto Range1 = ConstantRange::makeExactICmpRegion(Cmp1->getPredicate(), *C1);
+
+  // For and-of-comapares, check if the intersection is empty:
+  // (icmp X, C0) && (icmp X, C1) --> empty set --> false
+  if (IsAnd && Range0.intersectWith(Range1).isEmptySet())
+    return getFalse(Cmp0->getType());
+
+  // For or-of-compares, check if the union is full:
+  // (icmp X, C0) || (icmp X, C1) --> full set --> true
+  if (!IsAnd && Range0.unionWith(Range1).isFullSet())
+    return getTrue(Cmp0->getType());
+
+  // Is one range a superset of the other?
+  // If this is and-of-compares, take the smaller set:
+  // (icmp sgt X, 4) && (icmp sgt X, 42) --> icmp sgt X, 42
+  // If this is or-of-compares, take the larger set:
+  // (icmp sgt X, 4) || (icmp sgt X, 42) --> icmp sgt X, 4
+  if (Range0.contains(Range1))
+    return IsAnd ? Cmp1 : Cmp0;
+  if (Range1.contains(Range0))
+    return IsAnd ? Cmp0 : Cmp1;
+
+  return nullptr;
+}
+
 /// Commuted variants are assumed to be handled by calling this function again
 /// with the parameters swapped.
 static Value *simplifyAndOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
@@ -1528,29 +1568,14 @@ static Value *simplifyAndOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
   if (Value *X = simplifyAndOfICmpsWithSameOperands(Op0, Op1))
     return X;
 
-  // FIXME: This should be shared with or-of-icmps.
-  // Look for this pattern: (icmp V, C0) & (icmp V, C1)).
+  if (Value *X = simplifyAndOrOfICmpsWithConstants(Op0, Op1, true))
+    return X;
+
+  // (icmp (add V, C0), C1) & (icmp V, C0)
   Type *ITy = Op0->getType();
   ICmpInst::Predicate Pred0, Pred1;
   const APInt *C0, *C1;
   Value *V;
-  if (match(Op0, m_ICmp(Pred0, m_Value(V), m_APInt(C0))) &&
-      match(Op1, m_ICmp(Pred1, m_Specific(V), m_APInt(C1)))) {
-    // Make a constant range that's the intersection of the two icmp ranges.
-    // If the intersection is empty, we know that the result is false.
-    auto Range0 = ConstantRange::makeExactICmpRegion(Pred0, *C0);
-    auto Range1 = ConstantRange::makeExactICmpRegion(Pred1, *C1);
-    if (Range0.intersectWith(Range1).isEmptySet())
-      return getFalse(ITy);
-
-    // If a range is a superset of the other, the smaller set is all we need.
-    if (Range0.contains(Range1))
-      return Op1;
-    if (Range1.contains(Range0))
-      return Op0;
-  }
-
-  // (icmp (add V, C0), C1) & (icmp V, C0)
   if (!match(Op0, m_ICmp(Pred0, m_Add(m_Value(V), m_APInt(C0)), m_APInt(C1))))
     return nullptr;
 
@@ -1598,6 +1623,9 @@ static Value *simplifyOrOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
     return X;
 
   if (Value *X = simplifyOrOfICmpsWithSameOperands(Op0, Op1))
+    return X;
+
+  if (Value *X = simplifyAndOrOfICmpsWithConstants(Op0, Op1, false))
     return X;
 
   // (icmp (add V, C0), C1) | (icmp V, C0)
