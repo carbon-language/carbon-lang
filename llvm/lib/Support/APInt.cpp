@@ -2254,8 +2254,7 @@ int APInt::tcMultiplyPart(WordType *dst, const WordType *src,
   /* N loops; minimum of dstParts and srcParts.  */
   unsigned n = std::min(dstParts, srcParts);
 
-  unsigned i;
-  for (i = 0; i < n; i++) {
+  for (unsigned i = 0; i < n; i++) {
     WordType low, mid, high, srcPart;
 
       /* [ LOW, HIGH ] = MULTIPLIER * SRC[i] + DST[i] + CARRY.
@@ -2306,10 +2305,10 @@ int APInt::tcMultiplyPart(WordType *dst, const WordType *src,
     carry = high;
   }
 
-  if (i < dstParts) {
+  if (srcParts < dstParts) {
     /* Full multiplication, there is no overflow.  */
-    assert(i + 1 == dstParts);
-    dst[i] = carry;
+    assert(srcParts + 1 == dstParts);
+    dst[srcParts] = carry;
     return 0;
   }
 
@@ -2321,7 +2320,7 @@ int APInt::tcMultiplyPart(WordType *dst, const WordType *src,
      non-zero.  This is true if any remaining src parts are non-zero
      and the multiplier is non-zero.  */
   if (multiplier)
-    for (; i < srcParts; i++)
+    for (unsigned i = dstParts; i < srcParts; i++)
       if (src[i])
         return 1;
 
