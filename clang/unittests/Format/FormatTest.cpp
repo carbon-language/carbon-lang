@@ -2591,6 +2591,60 @@ TEST_F(FormatTest, BreakingBeforeNonAssigmentOperators) {
                Style);
 }
 
+TEST_F(FormatTest, AllowBinPackingInsideArguments) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_NonAssignment;
+  Style.BinPackArguments = false;
+  Style.ColumnLimit = 40;
+  verifyFormat("void test() {\n"
+               "  someFunction(\n"
+               "      this + argument + is + quite\n"
+               "      + long + so + it + gets + wrapped\n"
+               "      + but + remains + bin - packed);\n"
+               "}",
+               Style);
+  verifyFormat("void test() {\n"
+               "  someFunction(arg1,\n"
+               "               this + argument + is\n"
+               "                   + quite + long + so\n"
+               "                   + it + gets + wrapped\n"
+               "                   + but + remains + bin\n"
+               "                   - packed,\n"
+               "               arg3);\n"
+               "}",
+               Style);
+  verifyFormat("void test() {\n"
+               "  someFunction(\n"
+               "      arg1,\n"
+               "      this + argument + has\n"
+               "          + anotherFunc(nested,\n"
+               "                        calls + whose\n"
+               "                            + arguments\n"
+               "                            + are + also\n"
+               "                            + wrapped,\n"
+               "                        in + addition)\n"
+               "          + to + being + bin - packed,\n"
+               "      arg3);\n"
+               "}",
+               Style);
+
+  Style.BreakBeforeBinaryOperators = FormatStyle::BOS_None;
+  verifyFormat("void test() {\n"
+               "  someFunction(\n"
+               "      arg1,\n"
+               "      this + argument + has +\n"
+               "          anotherFunc(nested,\n"
+               "                      calls + whose +\n"
+               "                          arguments +\n"
+               "                          are + also +\n"
+               "                          wrapped,\n"
+               "                      in + addition) +\n"
+               "          to + being + bin - packed,\n"
+               "      arg3);\n"
+               "}",
+               Style);
+}
+
 TEST_F(FormatTest, ConstructorInitializers) {
   verifyFormat("Constructor() : Initializer(FitsOnTheLine) {}");
   verifyFormat("Constructor() : Inttializer(FitsOnTheLine) {}",
