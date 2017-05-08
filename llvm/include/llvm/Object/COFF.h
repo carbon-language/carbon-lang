@@ -22,6 +22,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/COFF.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ErrorOr.h"
@@ -1074,7 +1075,7 @@ public:
   ResourceSectionRef() = default;
   explicit ResourceSectionRef(StringRef Ref) : BBS(Ref, support::little) {}
 
-  ErrorOr<StringRef> getEntryNameString(const coff_resource_dir_entry &Entry);
+  ErrorOr<ArrayRef<UTF16>> getEntryNameString(const coff_resource_dir_entry &Entry);
   ErrorOr<const coff_resource_dir_table &>
   getEntrySubDir(const coff_resource_dir_entry &Entry);
   ErrorOr<const coff_resource_dir_table &> getBaseTable();
@@ -1083,7 +1084,7 @@ private:
   BinaryByteStream BBS;
 
   ErrorOr<const coff_resource_dir_table &> getTableAtOffset(uint32_t Offset);
-  ErrorOr<StringRef> getDirStringAtOffset(uint32_t Offset);
+  ErrorOr<ArrayRef<UTF16>> getDirStringAtOffset(uint32_t Offset);
 };
 
 // Corresponds to `_FPO_DATA` structure in the PE/COFF spec.

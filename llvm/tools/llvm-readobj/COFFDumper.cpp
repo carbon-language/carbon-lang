@@ -44,6 +44,7 @@
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/COFF.h"
+#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataExtractor.h"
@@ -1560,9 +1561,12 @@ void COFFDumper::printResourceDirectoryTable(
     SmallString<20> IDStr;
     raw_svector_ostream OS(IDStr);
     if (i < Table.NumberOfNameEntries) {
-      StringRef EntryNameString = unwrapOrError(RSF.getEntryNameString(Entry));
+      ArrayRef<UTF16> RawEntryNameString = unwrapOrError(RSF.getEntryNameString(Entry));
+      std::string EntryNameString;
+      if (!llvm::convertUTF16ToUTF8String(RawEntryNameString, EntryNameString))
+        error(object_error::parse_failed);
       OS << ": ";
-      OS << EntryNameString.str();
+      OS << EntryNameString;
     } else {
       if (Level == "Type") {
         ScopedPrinter Printer(OS);
@@ -1594,7 +1598,7 @@ void COFFDumper::printResourceDirectoryTable(
 ErrorOr<const coff_resource_dir_entry &>
 COFFDumper::getResourceDirectoryTableEntry(const coff_resource_dir_table &Table,
                                            uint32_t Index) {
-  if (Index >= Table.NumberOfNameEntries + Table.NumberOfIDEntries)
+  if (Index >= (uint32_t)(Table.NumberOfNameEntries + Table.NumberOfIDEntries))
     return object_error::parse_failed;
   auto TablePtr = reinterpret_cast<const coff_resource_dir_entry *>(&Table + 1);
   return TablePtr[Index];
