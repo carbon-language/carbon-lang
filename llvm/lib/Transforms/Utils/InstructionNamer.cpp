@@ -26,7 +26,7 @@ namespace {
     InstNamer() : FunctionPass(ID) {
       initializeInstNamerPass(*PassRegistry::getPassRegistry());
     }
-    
+
     void getAnalysisUsage(AnalysisUsage &Info) const override {
       Info.setPreservesAll();
     }
@@ -48,11 +48,11 @@ namespace {
       return true;
     }
   };
-  
+
   char InstNamer::ID = 0;
 }
 
-INITIALIZE_PASS(InstNamer, "instnamer", 
+INITIALIZE_PASS(InstNamer, "instnamer",
                 "Assign names to anonymous instructions", false, false)
 char &llvm::InstructionNamerID = InstNamer::ID;
 //===----------------------------------------------------------------------===//
