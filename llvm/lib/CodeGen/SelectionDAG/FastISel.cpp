@@ -1150,16 +1150,16 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
       return true;
     }
 
-    unsigned Offset = 0;
+    // Byval arguments with frame indices were already handled after argument
+    // lowering and before isel.
+    const auto *Arg =
+        dyn_cast<Argument>(Address->stripInBoundsConstantOffsets());
+    if (Arg && FuncInfo.getArgumentFrameIndex(Arg) != INT_MAX)
+      return true;
+
     Optional<MachineOperand> Op;
-    if (const auto *Arg = dyn_cast<Argument>(Address))
-      // Some arguments' frame index is recorded during argument lowering.
-      Offset = FuncInfo.getArgumentFrameIndex(Arg);
-    if (Offset)
-      Op = MachineOperand::CreateFI(Offset);
-    if (!Op)
-      if (unsigned Reg = lookUpRegForValue(Address))
-        Op = MachineOperand::CreateReg(Reg, false);
+    if (unsigned Reg = lookUpRegForValue(Address))
+      Op = MachineOperand::CreateReg(Reg, false);
 
     // If we have a VLA that has a "use" in a metadata node that's then used
     // here but it has no other uses, then we have a problem. E.g.,
