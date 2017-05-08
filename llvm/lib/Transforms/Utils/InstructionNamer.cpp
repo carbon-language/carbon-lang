@@ -32,10 +32,9 @@ namespace {
     }
 
     bool runOnFunction(Function &F) override {
-      for (Function::arg_iterator AI = F.arg_begin(), AE = F.arg_end();
-           AI != AE; ++AI)
-        if (!AI->hasName())
-          AI->setName("arg");
+      for (auto &Arg : F.args())
+        if (!Arg.hasName())
+          Arg.setName("arg");
 
       for (BasicBlock &BB : F) {
         if (!BB.hasName())
