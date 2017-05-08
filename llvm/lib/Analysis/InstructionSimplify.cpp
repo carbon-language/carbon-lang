@@ -1536,7 +1536,7 @@ static Value *simplifyAndOrOfICmpsWithConstants(ICmpInst *Cmp0, ICmpInst *Cmp1,
   auto Range0 = ConstantRange::makeExactICmpRegion(Cmp0->getPredicate(), *C0);
   auto Range1 = ConstantRange::makeExactICmpRegion(Cmp1->getPredicate(), *C1);
 
-  // For and-of-comapares, check if the intersection is empty:
+  // For and-of-compares, check if the intersection is empty:
   // (icmp X, C0) && (icmp X, C1) --> empty set --> false
   if (IsAnd && Range0.intersectWith(Range1).isEmptySet())
     return getFalse(Cmp0->getType());
