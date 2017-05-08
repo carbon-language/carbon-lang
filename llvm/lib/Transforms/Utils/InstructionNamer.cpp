@@ -34,7 +34,7 @@ namespace {
     bool runOnFunction(Function &F) override {
       for (Function::arg_iterator AI = F.arg_begin(), AE = F.arg_end();
            AI != AE; ++AI)
-        if (!AI->hasName() && !AI->getType()->isVoidTy())
+        if (!AI->hasName())
           AI->setName("arg");
 
       for (BasicBlock &BB : F) {
