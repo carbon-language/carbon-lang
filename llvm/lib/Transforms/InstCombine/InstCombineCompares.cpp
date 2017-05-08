@@ -2785,6 +2785,9 @@ Instruction *InstCombiner::foldICmpInstWithConstantNotInt(ICmpInst &I) {
 }
 
 /// Try to fold icmp (binop), X or icmp X, (binop).
+/// TODO: A large part of this logic is duplicated in InstSimplify's
+/// simplifyICmpWithBinOp(). We should be able to share that and avoid the code
+/// duplication.
 Instruction *InstCombiner::foldICmpBinOp(ICmpInst &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
