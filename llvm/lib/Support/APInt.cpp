@@ -256,6 +256,16 @@ APInt& APInt::operator*=(const APInt& RHS) {
   return *this;
 }
 
+APInt& APInt::operator*=(uint64_t RHS) {
+  if (isSingleWord()) {
+    U.VAL *= RHS;
+  } else {
+    unsigned NumWords = getNumWords();
+    tcMultiplyPart(U.pVal, U.pVal, RHS, 0, NumWords, NumWords, false);
+  }
+  return clearUnusedBits();
+}
+
 bool APInt::EqualSlowCase(const APInt& RHS) const {
   return std::equal(U.pVal, U.pVal + getNumWords(), RHS.U.pVal);
 }
