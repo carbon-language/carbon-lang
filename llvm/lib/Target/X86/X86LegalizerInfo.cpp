@@ -70,6 +70,12 @@ void X86LegalizerInfo::setLegalizerInfo32bit() {
   // Pointer-handling
   setAction({G_FRAME_INDEX, p0}, Legal);
 
+  setAction({G_GEP, p0}, Legal);
+  setAction({G_GEP, 1, s32}, Legal);
+
+  for (auto Ty : {s1, s8, s16})
+    setAction({G_GEP, 1, Ty}, WidenScalar);
+
   // Constants
   for (auto Ty : {s8, s16, s32, p0})
     setAction({TargetOpcode::G_CONSTANT, Ty}, Legal);
@@ -113,6 +119,13 @@ void X86LegalizerInfo::setLegalizerInfo64bit() {
 
   // Pointer-handling
   setAction({G_FRAME_INDEX, p0}, Legal);
+
+  setAction({G_GEP, p0}, Legal);
+  setAction({G_GEP, 1, s32}, Legal);
+  setAction({G_GEP, 1, s64}, Legal);
+
+  for (auto Ty : {s1, s8, s16})
+    setAction({G_GEP, 1, Ty}, WidenScalar);
 
   // Constants
   for (auto Ty : {s8, s16, s32, s64, p0})
