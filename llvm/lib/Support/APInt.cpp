@@ -1599,7 +1599,7 @@ APInt APInt::udiv(const APInt& RHS) const {
     return APInt(BitWidth, this->U.pVal[0] / RHS.U.pVal[0]);
 
   // We have to compute it the hard way. Invoke the Knuth divide algorithm.
-  APInt Quotient(1,0); // to hold result.
+  APInt Quotient; // to hold result.
   divide(*this, lhsWords, RHS, rhsWords, &Quotient, nullptr);
   return Quotient;
 }
@@ -1646,7 +1646,7 @@ APInt APInt::urem(const APInt& RHS) const {
     return APInt(BitWidth, U.pVal[0] % RHS.U.pVal[0]);
 
   // We have to compute it the hard way. Invoke the Knuth divide algorithm.
-  APInt Remainder(1,0);
+  APInt Remainder;
   divide(*this, lhsWords, RHS, rhsWords, nullptr, &Remainder);
   return Remainder;
 }
