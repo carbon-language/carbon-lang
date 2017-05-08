@@ -342,7 +342,7 @@ TEST_F(FormatTest, FormatIfWithoutCompoundStatement) {
   verifyFormat("if (a)\n  if (b) {\n    f();\n  }\ng();");
 
   FormatStyle AllowsMergedIf = getLLVMStyle();
-  AllowsMergedIf.AlignEscapedNewlinesLeft = true;
+  AllowsMergedIf.AlignEscapedNewlines = FormatStyle::ENAS_Left;
   AllowsMergedIf.AllowShortIfStatementsOnASingleLine = true;
   verifyFormat("if (a)\n"
                "  // comment\n"
@@ -6477,7 +6477,7 @@ TEST_F(FormatTest, BreaksStringLiterals) {
   EXPECT_EQ("\"some text other\";", format("\"some text other\";", Style));
 
   FormatStyle AlignLeft = getLLVMStyleWithColumns(12);
-  AlignLeft.AlignEscapedNewlinesLeft = true;
+  AlignLeft.AlignEscapedNewlines = FormatStyle::ENAS_Left;
   EXPECT_EQ("#define A \\\n"
             "  \"some \" \\\n"
             "  \"text \" \\\n"
@@ -6878,7 +6878,7 @@ TEST_F(FormatTest, ConfigurableUseOfTab) {
   FormatStyle Tab = getLLVMStyleWithColumns(42);
   Tab.IndentWidth = 8;
   Tab.UseTab = FormatStyle::UT_Always;
-  Tab.AlignEscapedNewlinesLeft = true;
+  Tab.AlignEscapedNewlines = FormatStyle::ENAS_Left;
 
   EXPECT_EQ("if (aaaaaaaa && // q\n"
             "    bb)\t\t// w\n"
@@ -7659,14 +7659,21 @@ TEST_F(FormatTest, AlignConsecutiveAssignments) {
                    "int oneTwoThree = 123;\n"
                    "int oneTwo = 12;",
                    Alignment));
-  Alignment.AlignEscapedNewlinesLeft = true;
+  Alignment.AlignEscapedNewlines = FormatStyle::ENAS_DontAlign;
+  verifyFormat("#define A \\\n"
+               "  int aaaa       = 12; \\\n"
+               "  int b          = 23; \\\n"
+               "  int ccc        = 234; \\\n"
+               "  int dddddddddd = 2345;",
+               Alignment);
+  Alignment.AlignEscapedNewlines = FormatStyle::ENAS_Left;
   verifyFormat("#define A               \\\n"
                "  int aaaa       = 12;  \\\n"
                "  int b          = 23;  \\\n"
                "  int ccc        = 234; \\\n"
                "  int dddddddddd = 2345;",
                Alignment);
-  Alignment.AlignEscapedNewlinesLeft = false;
+  Alignment.AlignEscapedNewlines = FormatStyle::ENAS_Right;
   verifyFormat("#define A                                                      "
                "                \\\n"
                "  int aaaa       = 12;                                         "
@@ -7933,14 +7940,21 @@ TEST_F(FormatTest, AlignConsecutiveDeclarations) {
                    "}",
                    Alignment));
   Alignment.AlignConsecutiveAssignments = false;
-  Alignment.AlignEscapedNewlinesLeft = true;
+  Alignment.AlignEscapedNewlines = FormatStyle::ENAS_DontAlign;
+  verifyFormat("#define A \\\n"
+               "  int       aaaa = 12; \\\n"
+               "  float     b = 23; \\\n"
+               "  const int ccc = 234; \\\n"
+               "  unsigned  dddddddddd = 2345;",
+               Alignment);
+  Alignment.AlignEscapedNewlines = FormatStyle::ENAS_Left;
   verifyFormat("#define A              \\\n"
                "  int       aaaa = 12; \\\n"
                "  float     b = 23;    \\\n"
                "  const int ccc = 234; \\\n"
                "  unsigned  dddddddddd = 2345;",
                Alignment);
-  Alignment.AlignEscapedNewlinesLeft = false;
+  Alignment.AlignEscapedNewlines = FormatStyle::ENAS_Right;
   Alignment.ColumnLimit = 30;
   verifyFormat("#define A                    \\\n"
                "  int       aaaa = 12;       \\\n"
@@ -8725,7 +8739,6 @@ TEST_F(FormatTest, GetsCorrectBasedOnStyle) {
 TEST_F(FormatTest, ParsesConfigurationBools) {
   FormatStyle Style = {};
   Style.Language = FormatStyle::LK_Cpp;
-  CHECK_PARSE_BOOL(AlignEscapedNewlinesLeft);
   CHECK_PARSE_BOOL(AlignOperands);
   CHECK_PARSE_BOOL(AlignTrailingComments);
   CHECK_PARSE_BOOL(AlignConsecutiveAssignments);
@@ -8847,6 +8860,19 @@ TEST_F(FormatTest, ParsesConfiguration) {
               FormatStyle::BAS_DontAlign);
   CHECK_PARSE("AlignAfterOpenBracket: true", AlignAfterOpenBracket,
               FormatStyle::BAS_Align);
+
+  Style.AlignEscapedNewlines = FormatStyle::ENAS_Left;
+  CHECK_PARSE("AlignEscapedNewlines: DontAlign", AlignEscapedNewlines,
+              FormatStyle::ENAS_DontAlign);
+  CHECK_PARSE("AlignEscapedNewlines: Left", AlignEscapedNewlines,
+              FormatStyle::ENAS_Left);
+  CHECK_PARSE("AlignEscapedNewlines: Right", AlignEscapedNewlines,
+              FormatStyle::ENAS_Right);
+  // For backward compatibility:
+  CHECK_PARSE("AlignEscapedNewlinesLeft: true", AlignEscapedNewlines,
+              FormatStyle::ENAS_Left);
+  CHECK_PARSE("AlignEscapedNewlinesLeft: false", AlignEscapedNewlines,
+              FormatStyle::ENAS_Right);
 
   Style.UseTab = FormatStyle::UT_ForIndentation;
   CHECK_PARSE("UseTab: Never", UseTab, FormatStyle::UT_Never);
