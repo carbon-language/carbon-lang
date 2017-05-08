@@ -2041,15 +2041,16 @@ Constant *llvm::ConstantFoldGetElementPtr(Type *PointeeTy, Constant *C,
                                           Optional<unsigned> InRangeIndex,
                                           ArrayRef<Value *> Idxs) {
   if (Idxs.empty()) return C;
-  Constant *Idx0 = cast<Constant>(Idxs[0]);
-  if ((Idxs.size() == 1 && Idx0->isNullValue()))
-    return C;
 
   if (isa<UndefValue>(C)) {
     Type *GEPTy = GetElementPtrInst::getGEPReturnType(
         C, makeArrayRef((Value * const *)Idxs.data(), Idxs.size()));
     return UndefValue::get(GEPTy);
   }
+
+  Constant *Idx0 = cast<Constant>(Idxs[0]);
+  if (Idxs.size() == 1 && (Idx0->isNullValue() || isa<UndefValue>(Idx0)))
+    return C;
 
   if (C->isNullValue()) {
     bool isNull = true;
