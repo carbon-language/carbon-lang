@@ -172,7 +172,7 @@ bool DWARFVerifier::handleDebugInfo() {
       }
     }
   }
-  veifyDebugInfoReferences();
+  verifyDebugInfoReferences();
   return NumDebugInfoErrors == 0;
 }
 
