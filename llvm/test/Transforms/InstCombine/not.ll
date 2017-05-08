@@ -79,8 +79,7 @@ define i8 @not_ashr_const(i8 %x) {
 
 define <2 x i8> @not_ashr_const_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @not_ashr_const_splat(
-; CHECK-NEXT:    [[SHR:%.*]] = ashr <2 x i8> <i8 -42, i8 -42>, %x
-; CHECK-NEXT:    [[NOT:%.*]] = xor <2 x i8> [[SHR]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[NOT:%.*]] = lshr <2 x i8> <i8 41, i8 41>, %x
 ; CHECK-NEXT:    ret <2 x i8> [[NOT]]
 ;
   %shr = ashr <2 x i8> <i8 -42, i8 -42>, %x
@@ -88,10 +87,22 @@ define <2 x i8> @not_ashr_const_splat(<2 x i8> %x) {
   ret <2 x i8> %not
 }
 
+; We can't get rid of the 'not' on a logical shift of a negative constant.
+
+define i8 @not_lshr_const_negative(i8 %x) {
+; CHECK-LABEL: @not_lshr_const_negative(
+; CHECK-NEXT:    [[SHR:%.*]] = lshr i8 -42, %x
+; CHECK-NEXT:    [[NOT:%.*]] = xor i8 [[SHR]], -1
+; CHECK-NEXT:    ret i8 [[NOT]]
+;
+  %shr = lshr i8 -42, %x
+  %not = xor i8 %shr, -1
+  ret i8 %not
+}
+
 define i8 @not_lshr_const(i8 %x) {
 ; CHECK-LABEL: @not_lshr_const(
-; CHECK-NEXT:    [[SHR:%.*]] = lshr i8 42, %x
-; CHECK-NEXT:    [[NOT:%.*]] = xor i8 [[SHR]], -1
+; CHECK-NEXT:    [[NOT:%.*]] = ashr i8 -43, %x
 ; CHECK-NEXT:    ret i8 [[NOT]]
 ;
   %shr = lshr i8 42, %x
@@ -101,8 +112,7 @@ define i8 @not_lshr_const(i8 %x) {
 
 define <2 x i8> @not_lshr_const_splat(<2 x i8> %x) {
 ; CHECK-LABEL: @not_lshr_const_splat(
-; CHECK-NEXT:    [[SHR:%.*]] = lshr <2 x i8> <i8 42, i8 42>, %x
-; CHECK-NEXT:    [[NOT:%.*]] = xor <2 x i8> [[SHR]], <i8 -1, i8 -1>
+; CHECK-NEXT:    [[NOT:%.*]] = ashr <2 x i8> <i8 -43, i8 -43>, %x
 ; CHECK-NEXT:    ret <2 x i8> [[NOT]]
 ;
   %shr = lshr <2 x i8> <i8 42, i8 42>, %x
