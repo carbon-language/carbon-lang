@@ -529,7 +529,7 @@ AArch64RegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     // for the greedy mode the cost of the cross bank copy will
     // offset this number.
     // FIXME: Should be derived from the scheduling model.
-    if (OpRegBankIdx[0] >= PMI_FirstFPR)
+    if (OpRegBankIdx[0] != PMI_FirstGPR)
       Cost = 2;
     break;
   }
