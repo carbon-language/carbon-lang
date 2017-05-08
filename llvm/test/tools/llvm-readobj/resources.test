@@ -6,7 +6,7 @@
 
 RUN: llvm-readobj -coff-resources -section-data %p/Inputs/zero-string-table.obj.coff-i386 \
 RUN:   | FileCheck %s -check-prefix ZERO
-RUN: llvm-readobj -coff-resources %p/Inputs/resources/test_resource.o \
+RUN: llvm-readobj -coff-resources %p/Inputs/resources/test_resource.obj.coff \
 RUN:   | FileCheck %s -check-prefix TEST_RES
 
 ZERO:      Resources [
