@@ -2252,7 +2252,7 @@ int APInt::tcMultiplyPart(WordType *dst, const WordType *src,
   assert(dstParts <= srcParts + 1);
 
   /* N loops; minimum of dstParts and srcParts.  */
-  unsigned n = dstParts < srcParts ? dstParts: srcParts;
+  unsigned n = std::min(dstParts, srcParts);
 
   unsigned i;
   for (i = 0; i < n; i++) {
