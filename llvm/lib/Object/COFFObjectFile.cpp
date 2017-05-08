@@ -21,7 +21,6 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/COFF.h"
-#include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -1597,7 +1596,7 @@ std::error_code BaseRelocRef::getRVA(uint32_t &Result) const {
   if (auto EC = errorToErrorCode(X))                                           \
     return EC;
 
-ErrorOr<StringRef> ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
+ErrorOr<ArrayRef<UTF16>> ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
   BinaryStreamReader Reader = BinaryStreamReader(BBS);
   Reader.setOffset(Offset);
   uint16_t Length;
@@ -1606,13 +1605,10 @@ ErrorOr<StringRef> ResourceSectionRef::getDirStringAtOffset(uint32_t Offset) {
   // Strings are stored as 2-byte aligned unicode characters but readFixedString
   // assumes byte string, so we double length.
   RETURN_IF_ERROR(Reader.readArray(RawDirString, Length));
-  std::string DirString;
-  if (!llvm::convertUTF16ToUTF8String(RawDirString, DirString))
-    return object_error::parse_failed;
-  return DirString;
+  return RawDirString;
 }
 
-ErrorOr<StringRef>
+ErrorOr<ArrayRef<UTF16>>
 ResourceSectionRef::getEntryNameString(const coff_resource_dir_entry &Entry) {
   return getDirStringAtOffset(Entry.Identifier.getNameOffset());
 }
