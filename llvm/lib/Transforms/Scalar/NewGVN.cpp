@@ -730,23 +730,35 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I, bool &HasBackedge,
 
   unsigned PHIRPO = RPOOrdering.lookup(DT->getNode(PHIBlock));
 
+  // NewGVN assumes the operands of a PHI node are in a consistent order across
+  // PHIs. LLVM doesn't seem to always guarantee this. While we need to fix
+  // this in LLVM at some point we don't want GVN to find wrong congruences.
+  // Therefore, here we sort uses in predecessor order.
+  SmallVector<const Use *, 4> PHIOperands;
+  for (const Use &U : PN->operands())
+    PHIOperands.push_back(&U);
+  std::sort(PHIOperands.begin(), PHIOperands.end(),
+            [&](const Use *U1, const Use *U2) {
+              return PN->getIncomingBlock(*U1) < PN->getIncomingBlock(*U2);
+            });
+
   // Filter out unreachable phi operands.
-  auto Filtered = make_filter_range(PN->operands(), [&](const Use &U) {
-    return ReachableEdges.count({PN->getIncomingBlock(U), PHIBlock});
+  auto Filtered = make_filter_range(PHIOperands, [&](const Use *U) {
+    return ReachableEdges.count({PN->getIncomingBlock(*U), PHIBlock});
   });
 
   std::transform(Filtered.begin(), Filtered.end(), op_inserter(E),
-                 [&](const Use &U) -> Value * {
-                   auto *BB = PN->getIncomingBlock(U);
+                 [&](const Use *U) -> Value * {
+                   auto *BB = PN->getIncomingBlock(*U);
                    auto *DTN = DT->getNode(BB);
                    if (RPOOrdering.lookup(DTN) >= PHIRPO)
                      HasBackedge = true;
-                   AllConstant &= isa<UndefValue>(U) || isa<Constant>(U);
+                   AllConstant &= isa<UndefValue>(*U) || isa<Constant>(*U);
 
                    // Don't try to transform self-defined phis.
-                   if (U == PN)
+                   if (*U == PN)
                      return PN;
-                   return lookupOperandLeader(U);
+                   return lookupOperandLeader(*U);
                  });
   return E;
 }
