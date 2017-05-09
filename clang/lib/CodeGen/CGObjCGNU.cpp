@@ -63,8 +63,13 @@ public:
     CGM = Mod;
     FunctionName = name;
     Function = nullptr;
-    std::vector<llvm::Type *> ArgTys{{Types...}};
-    FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
+    if(sizeof...(Tys)) {
+      SmallVector<llvm::Type *, 8> ArgTys({Types...});
+      FTy = llvm::FunctionType::get(RetTy, ArgTys, false);
+    }
+    else {
+      FTy = llvm::FunctionType::get(RetTy, None, false);
+    }
   }
 
   llvm::FunctionType *getType() { return FTy; }
