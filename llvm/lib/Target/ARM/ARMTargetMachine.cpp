@@ -13,7 +13,7 @@
 #include "ARM.h"
 #include "ARMCallLowering.h"
 #include "ARMLegalizerInfo.h"
-#ifndef LLVM_BUILD_GLOBAL_ISEL
+#ifdef LLVM_BUILD_GLOBAL_ISEL
 #include "ARMRegisterBankInfo.h"
 #endif
 #include "ARMSubtarget.h"
