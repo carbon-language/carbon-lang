@@ -13416,9 +13416,9 @@ Instruction* ARMTargetLowering::makeDMB(IRBuilder<> &Builder,
 }
 
 // Based on http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
-Instruction* ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
-                                         AtomicOrdering Ord, bool IsStore,
-                                         bool IsLoad) const {
+Instruction *ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
+                                                 Instruction *Inst,
+                                                 AtomicOrdering Ord) const {
   switch (Ord) {
   case AtomicOrdering::NotAtomic:
   case AtomicOrdering::Unordered:
@@ -13427,7 +13427,7 @@ Instruction* ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
   case AtomicOrdering::Acquire:
     return nullptr; // Nothing to do
   case AtomicOrdering::SequentiallyConsistent:
-    if (!IsStore)
+    if (!Inst->hasAtomicStore())
       return nullptr; // Nothing to do
     /*FALLTHROUGH*/
   case AtomicOrdering::Release:
@@ -13441,9 +13441,9 @@ Instruction* ARMTargetLowering::emitLeadingFence(IRBuilder<> &Builder,
   llvm_unreachable("Unknown fence ordering in emitLeadingFence");
 }
 
-Instruction* ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
-                                          AtomicOrdering Ord, bool IsStore,
-                                          bool IsLoad) const {
+Instruction *ARMTargetLowering::emitTrailingFence(IRBuilder<> &Builder,
+                                                  Instruction *Inst,
+                                                  AtomicOrdering Ord) const {
   switch (Ord) {
   case AtomicOrdering::NotAtomic:
   case AtomicOrdering::Unordered:
