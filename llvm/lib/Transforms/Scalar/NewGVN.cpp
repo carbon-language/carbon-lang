@@ -734,6 +734,10 @@ PHIExpression *NewGVN::createPHIExpression(Instruction *I, bool &HasBackedge,
   // PHIs. LLVM doesn't seem to always guarantee this. While we need to fix
   // this in LLVM at some point we don't want GVN to find wrong congruences.
   // Therefore, here we sort uses in predecessor order.
+  // We're sorting the values by pointer. In theory this might be cause of
+  // non-determinism, but here we don't rely on the ordering for anything
+  // significant, e.g. we don't create new instructions based on it so we're
+  // fine.
   SmallVector<const Use *, 4> PHIOperands;
   for (const Use &U : PN->operands())
     PHIOperands.push_back(&U);
