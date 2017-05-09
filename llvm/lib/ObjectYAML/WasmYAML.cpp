@@ -265,8 +265,12 @@ void MappingTraits<WasmYAML::Import>::mapping(IO &IO,
   if (Import.Kind == wasm::WASM_EXTERNAL_FUNCTION) {
     IO.mapRequired("SigIndex", Import.SigIndex);
   } else if (Import.Kind == wasm::WASM_EXTERNAL_GLOBAL) {
-    IO.mapRequired("GlobalType", Import.GlobalType);
-    IO.mapRequired("GlobalMutable", Import.GlobalMutable);
+    IO.mapRequired("GlobalType", Import.Global.Type);
+    IO.mapRequired("GlobalMutable", Import.Global.Mutable);
+  } else if (Import.Kind == wasm::WASM_EXTERNAL_TABLE) {
+    IO.mapRequired("Table", Import.Table);
+  } else if (Import.Kind == wasm::WASM_EXTERNAL_MEMORY ) {
+    IO.mapRequired("Memory", Import.Memory);
   } else {
     llvm_unreachable("unhandled import type");
   }
