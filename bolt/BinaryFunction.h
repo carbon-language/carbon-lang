@@ -167,7 +167,7 @@ public:
     Disassembled,     /// Function have been disassembled.
     CFG,              /// Control flow graph have been built.
     CFG_Finalized,    /// CFG is finalized. No optimizations allowed.
-    Assembled,        /// Function has been assembled in memory.
+    Emitted,          /// Instructions have been emitted to output.
   };
 
   /// Settings for splitting function bodies into hot/cold partitions.
@@ -201,13 +201,6 @@ public:
     LT_OPTIMIZE_SHUFFLE,
   };
 
-  enum JumpTableSupportLevel : char {
-    JTS_NONE = 0,       /// Disable jump tables support
-    JTS_BASIC = 1,      /// Enable basic jump tables support
-    JTS_SPLIT = 2,      /// Enable hot/cold splitting of jump tables
-    JTS_AGGRESSIVE = 3, /// Aggressive splitting of jump tables
-  };
-
   enum ReorderType : char {
     RT_NONE = 0,
     RT_EXEC_COUNT,
@@ -223,6 +216,9 @@ public:
   // Function size, in number of BBs, above which we fallback to a heuristic
   // solution to the layout problem instead of seeking the optimal one.
   static constexpr uint64_t FUNC_SIZE_THRESHOLD = 10;
+
+  /// We have to use at least 2-byte alignment for functions because of C++ ABI.
+  static constexpr unsigned MinAlign = 2;
 
   using BasicBlockOrderType = std::vector<BinaryBasicBlock *>;
 
@@ -243,6 +239,12 @@ private:
 
   /// Original size of the function.
   uint64_t Size;
+
+  /// Address of the function in output.
+  uint64_t OutputAddress{0};
+
+  /// Size of the function in the output file.
+  uint64_t OutputSize{0};
 
   /// Offset in the file.
   uint64_t FileOffset{0};
@@ -974,7 +976,12 @@ public:
   /// Return true if function has a control flow graph available.
   bool hasCFG() const {
     return getState() == State::CFG ||
-           getState() == State::CFG_Finalized;
+           getState() == State::CFG_Finalized ||
+           getState() == State::Emitted;
+  }
+
+  bool isEmitted() const {
+    return getState() == State::Emitted;
   }
 
   /// Return containing file section.
@@ -985,6 +992,14 @@ public:
   /// Return original address of the function (or offset from base for PIC).
   uint64_t getAddress() const {
     return Address;
+  }
+
+  uint64_t getOutputAddress() const {
+    return OutputAddress;
+  }
+
+  uint64_t getOutputSize() const {
+    return OutputSize;
   }
 
   /// Does this function have a valid streaming order index?
@@ -1405,6 +1420,16 @@ public:
     return *this;
   }
 
+  BinaryFunction &setOutputAddress(uint64_t Address) {
+    OutputAddress = Address;
+    return *this;
+  }
+
+  BinaryFunction &setOutputSize(uint64_t Size) {
+    OutputSize = Size;
+    return *this;
+  }
+
   BinaryFunction &setSimple(bool Simple) {
     IsSimple = Simple;
     return *this;
@@ -1635,6 +1660,10 @@ public:
     CurrentState = State::CFG_Finalized;
   }
 
+  void setEmitted() {
+    CurrentState = State::Emitted;
+  }
+
   /// Split function in two: a part with warm or hot BBs and a part with never
   /// executed BBs. The cold part is moved to a new BinaryFunction.
   void splitFunction();
@@ -1815,7 +1844,7 @@ inline raw_ostream &operator<<(raw_ostream &OS,
   case BinaryFunction::State::Disassembled: OS << "disassembled";  break;
   case BinaryFunction::State::CFG:          OS << "CFG constructed";  break;
   case BinaryFunction::State::CFG_Finalized:OS << "CFG finalized";  break;
-  case BinaryFunction::State::Assembled:    OS << "assembled";  break;
+  case BinaryFunction::State::Emitted:      OS << "emitted";  break;
   }
 
   return OS;

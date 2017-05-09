@@ -25,6 +25,8 @@
 namespace llvm {
 namespace bolt {
 
+constexpr uint32_t BinaryBasicBlock::INVALID_OFFSET;
+
 bool operator<(const BinaryBasicBlock &LHS, const BinaryBasicBlock &RHS) {
   return LHS.Index < RHS.Index;
 }
@@ -347,7 +349,8 @@ BinaryBasicBlock::getBranchStats(const BinaryBasicBlock *Succ) const {
 void BinaryBasicBlock::dump() const {
   auto &BC = Function->getBinaryContext();
   if (Label) outs() << Label->getName() << ":\n";
-  BC.printInstructions(outs(), Instructions.begin(), Instructions.end(), Offset);
+  BC.printInstructions(outs(), Instructions.begin(), Instructions.end(),
+                       getOffset());
   outs() << "preds:";
   for (auto itr = pred_begin(); itr != pred_end(); ++itr) {
     outs() << " " << (*itr)->getName();

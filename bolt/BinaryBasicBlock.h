@@ -50,6 +50,9 @@ public:
     uint64_t MispredictedCount; /// number of branches mispredicted
   };
 
+  static constexpr uint32_t INVALID_OFFSET =
+                                          std::numeric_limits<uint32_t>::max();
+
 private:
   /// Vector of all instructions in the block.
   std::vector<MCInst> Instructions;
@@ -69,14 +72,11 @@ private:
   /// Label associated with the block.
   MCSymbol *Label{nullptr};
 
-  /// Label associated with the end of the block in the output binary.
-  const MCSymbol *EndLabel{nullptr};
-
   /// [Begin, End) address range for this block in the output binary.
   std::pair<uint64_t, uint64_t> OutputAddressRange{0, 0};
 
-  /// Original offset in the function.
-  uint64_t Offset{std::numeric_limits<uint64_t>::max()};
+  /// Original range of the basic block in the function.
+  std::pair<uint32_t, uint32_t> InputRange{INVALID_OFFSET, INVALID_OFFSET};
 
   /// Alignment requirements for the block.
   uint64_t Alignment{1};
@@ -119,9 +119,10 @@ private:
   explicit BinaryBasicBlock(
       BinaryFunction *Function,
       MCSymbol *Label,
-      uint64_t Offset = std::numeric_limits<uint64_t>::max())
-    : Function(Function), Label(Label), Offset(Offset) {
+      uint32_t Offset = INVALID_OFFSET)
+    : Function(Function), Label(Label) {
     assert(Function && "Function must be non-null");
+    InputRange.first = Offset;
   }
 
   // Exclusively managed by BinaryFunction.
@@ -655,19 +656,14 @@ public:
     return SplitInst;
   }
 
-  /// Sets the symbol pointing to the end of the BB in the output binary.
-  void setEndLabel(const MCSymbol *Symbol) {
-    EndLabel = Symbol;
+  /// Sets address of the basic block in the output.
+  void setOutputStartAddress(uint64_t Address) {
+    OutputAddressRange.first = Address;
   }
 
-  /// Gets the symbol pointing to the end of the BB in the output binary.
-  const MCSymbol *getEndLabel() const {
-    return EndLabel;
-  }
-
-  /// Sets the memory address range of this BB in the output binary.
-  void setOutputAddressRange(std::pair<uint64_t, uint64_t> Range) {
-    OutputAddressRange = Range;
+  /// Sets address past the end of the basic block in the output.
+  void setOutputEndAddress(uint64_t Address) {
+    OutputAddressRange.second = Address;
   }
 
   /// Gets the memory address range of this BB in the output binary.
@@ -722,12 +718,7 @@ private:
 
   /// Return offset of the basic block from the function start.
   uint64_t getOffset() const {
-    return Offset;
-  }
-
-  /// Set offset of the basic block from the function start.
-  void setOffset(uint64_t NewOffset) {
-    Offset = NewOffset;
+    return InputRange.first;
   }
 
   /// Get the index of this basic block.

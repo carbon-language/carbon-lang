@@ -155,7 +155,7 @@ void findAddressRangesObjects(
       // and if we convert one DIE, it may affect the rest. Thus
       // the conservative approach that does not involve expanding
       // .debug_abbrev, is to switch all DIEs to use .debug_ranges, even if
-      // they use a single [a,b) range. The secondary reason is that it allows
+      // they have a simple [a,b) range. The secondary reason is that it allows
       // us to get rid of the original portion of .debug_ranges to save
       // space in the binary.
       auto Function = getBinaryFunctionContainingAddress(Ranges.front().first,
@@ -194,6 +194,13 @@ void findSubprograms(DWARFCompileUnit *Unit,
         It->second.addSubprogramDIE(Unit, DIE);
       } else {
         Unknown.emplace_back(DIE, Unit);
+      }
+    } else {
+      const auto RangesVector = DIE->getAddressRanges(Unit);
+      if (!RangesVector.empty()) {
+        errs() << "BOLT-ERROR: split function detected in .debug_info. "
+                  "Split functions are not supported.\n";
+        exit(1);
       }
     }
   }
@@ -296,7 +303,7 @@ void BinaryContext::preprocessFunctionDebugInfo(
   for (const auto &DebugLocEntry : DebugLoc->getLocationLists()) {
     if (DebugLocEntry.Entries.empty())
       continue;
-    auto StartAddress = DebugLocEntry.Entries.front().Begin;
+    const auto StartAddress = DebugLocEntry.Entries.front().Begin;
     auto *Function = getBinaryFunctionContainingAddress(StartAddress,
                                                         BinaryFunctions);
     if (!Function || !Function->isSimple())
@@ -304,8 +311,11 @@ void BinaryContext::preprocessFunctionDebugInfo(
     LocationLists.emplace_back(DebugLocEntry.Offset);
     auto &LocationList = LocationLists.back();
     for (const auto &Location : DebugLocEntry.Entries) {
-      LocationList.addLocation(&Location.Loc, *Function, Location.Begin,
-                               Location.End);
+      LocationList.addLocation(
+          &Location.Loc,
+          *Function,
+          Location.Begin,
+          Location.End);
     }
   }
 }

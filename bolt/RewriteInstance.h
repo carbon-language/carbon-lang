@@ -200,6 +200,9 @@ public:
   /// Map all sections to their final addresses.
   void mapFileSections(orc::ObjectLinkingLayer<>::ObjSetHandleT &ObjectsHandle);
 
+  /// Update output object's values based on the final \p Layout.
+  void updateOutputValues(const MCAsmLayout &Layout);
+
   /// Check which functions became larger than their original version and
   /// annotate function splitting information.
   ///

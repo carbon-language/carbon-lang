@@ -1873,10 +1873,10 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     Streamer.setCodeSkew(EmitColdPart ? 0 : Function.getAddress());
 
   if (opts::Relocs) {
-    // We have to use at least 2-byte alignment because of C++ ABI.
-    Streamer.EmitCodeAlignment(2);
-    Streamer.EmitCodeAlignment(opts::AlignFunctions,
-                               opts::AlignFunctionsMaxBytes);
+    Streamer.EmitCodeAlignment(std::max((unsigned)opts::AlignFunctions,
+                                        BinaryFunction::MinAlign),
+                               std::max((unsigned)opts::AlignFunctionsMaxBytes,
+                                        BinaryFunction::MinAlign - 1));
   } else {
     Streamer.EmitCodeAlignment(Function.getAlignment());
   }
@@ -1953,14 +1953,13 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   Streamer.EmitLabel(EmitColdPart ? Function.getFunctionColdEndLabel()
                                   : Function.getFunctionEndLabel());
 
-  if (!Function.isSimple() && !opts::Relocs)
-    return;
-
   // Exception handling info for the function.
   Function.emitLSDA(&Streamer, EmitColdPart);
 
   if (!EmitColdPart && opts::JumpTables > JTS_NONE)
     Function.emitJumpTables(&Streamer);
+
+  Function.setEmitted();
 }
 
 template <typename T>
@@ -2113,7 +2112,7 @@ void RewriteInstance::emitFunctions() {
   Streamer->Finish();
 
   //////////////////////////////////////////////////////////////////////////////
-  // Assign addresses to new functions/sections.
+  // Assign addresses to new sections.
   //////////////////////////////////////////////////////////////////////////////
 
   if (opts::UpdateDebugSections) {
@@ -2150,40 +2149,15 @@ void RewriteInstance::emitFunctions() {
         std::move(Resolver),
         /* ProcessAllSections = */true);
 
-  // Is there benefit in using notifyObjectLoaded() to remap sections?
+  // Assign addresses to all sections.
   mapFileSections(ObjectsHandle);
 
-  if (opts::UpdateDebugSections) {
-    MCAsmLayout Layout(
+  // Update output addresses based on the new section map and layout.
+  MCAsmLayout FinalLayout(
         static_cast<MCObjectStreamer *>(Streamer.get())->getAssembler());
-
-    for (auto &BFI : BinaryFunctions) {
-      auto &Function = BFI.second;
-      for (auto &BB : Function) {
-        if (!(BB.getLabel()->isDefined(false) &&
-              BB.getEndLabel() && BB.getEndLabel()->isDefined(false))) {
-          continue;
-        }
-        uint64_t BaseAddress = (BB.isCold() ? Function.cold().getAddress()
-                                            : Function.getAddress());
-        uint64_t BeginAddress =
-            BaseAddress + Layout.getSymbolOffset(*BB.getLabel());
-        uint64_t EndAddress =
-            BaseAddress + Layout.getSymbolOffset(*BB.getEndLabel());
-        BB.setOutputAddressRange(std::make_pair(BeginAddress, EndAddress));
-      }
-    }
-  }
+  updateOutputValues(FinalLayout);
 
   OLT.emitAndFinalize(ObjectsHandle);
-
-  if (opts::Relocs) {
-    const auto *EntryFunction = getBinaryFunctionContainingAddress(EntryPoint);
-    assert(EntryFunction && "cannot find function for entry point");
-    auto JITS = OLT.findSymbol(EntryFunction->getSymbol()->getName(), false);
-    EntryPoint = JITS.getAddress();
-    assert(EntryPoint && "entry point cannot be NULL");
-  }
 
   if (opts::KeepTmp)
     TempOut->keep();
@@ -2382,6 +2356,73 @@ void RewriteInstance::mapFileSections(
     StringRef SectionContents;
     Section.getContents(SectionContents);
     SI.FileOffset = SectionContents.data() - InputFile->getData().data();
+  }
+}
+
+void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+
+    if (!Function.isEmitted())
+      continue;
+
+    if (opts::Relocs) {
+      const auto BaseAddress = NewTextSectionStartAddress;
+      const auto StartOffset = Layout.getSymbolOffset(*Function.getSymbol());
+      const auto EndOffset =
+        Layout.getSymbolOffset(*Function.getFunctionEndLabel());
+      Function.setOutputAddress(BaseAddress + StartOffset);
+      Function.setOutputSize(EndOffset - StartOffset);
+      if (Function.isSplit()) {
+        const auto *ColdStartSymbol = Function.getColdSymbol();
+        assert(ColdStartSymbol && ColdStartSymbol->isDefined(false) &&
+               "split function should have defined cold symbol");
+        const auto *ColdEndSymbol = Function.getFunctionColdEndLabel();
+        assert(ColdEndSymbol && ColdEndSymbol->isDefined(false) &&
+               "split function should have defined cold end symbol");
+        const auto ColdStartOffset = Layout.getSymbolOffset(*ColdStartSymbol);
+        const auto ColdEndOffset = Layout.getSymbolOffset(*ColdEndSymbol);
+        Function.cold().setAddress(BaseAddress + ColdStartOffset);
+        Function.cold().setImageSize(ColdEndOffset - ColdStartOffset);
+
+      }
+    } else {
+      Function.setOutputAddress(Function.getAddress());
+      Function.setOutputSize(
+          Layout.getSymbolOffset(*Function.getFunctionEndLabel()));
+    }
+
+    // Update basic block output ranges only for the debug info.
+    if (!opts::UpdateDebugSections)
+      continue;
+
+    // Output ranges should match the input if the body hasn't changed.
+    if (!Function.isSimple())
+      continue;
+
+    BinaryBasicBlock *PrevBB = nullptr;
+    for (auto BBI = Function.layout_begin(), BBE = Function.layout_end();
+         BBI != BBE; ++BBI) {
+      auto *BB = *BBI;
+      assert(BB->getLabel()->isDefined(false) && "symbol should be defined");
+      uint64_t BaseAddress = BB->isCold() ? Function.cold().getAddress()
+                                          : Function.getOutputAddress();
+      uint64_t Address = BaseAddress + Layout.getSymbolOffset(*BB->getLabel());
+      BB->setOutputStartAddress(Address);
+
+      if (PrevBB) {
+        auto PrevBBEndAddress = Address;
+        if (BB->isCold() != PrevBB->isCold()) {
+          PrevBBEndAddress =
+            Function.getOutputAddress() + Function.getOutputSize();
+        }
+        PrevBB->setOutputEndAddress(PrevBBEndAddress);
+      }
+      PrevBB = BB;
+    }
+    PrevBB->setOutputEndAddress(Function.isSplit() ?
+        Function.cold().getAddress() + Function.cold().getImageSize() :
+        Function.getOutputAddress() + Function.getOutputSize());
   }
 }
 
@@ -2868,7 +2909,11 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
 
   // Fix ELF header.
   auto NewEhdr = *Obj->getHeader();
-  NewEhdr.e_entry = EntryPoint;
+
+  if (opts::Relocs) {
+    NewEhdr.e_entry = getNewFunctionAddress(NewEhdr.e_entry);
+    assert(NewEhdr.e_entry && "cannot find new address for entry point");
+  }
   NewEhdr.e_phoff = PHDRTableOffset;
   NewEhdr.e_phnum = Phnum;
   NewEhdr.e_shoff = SHTOffset;
@@ -2880,8 +2925,6 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
          "internal calculation error");
 }
 
-// FIXME: proper size for symbols based on output. Current method doesn't
-// work well with split functions.
 template <typename ELFT>
 void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
   if (!opts::Relocs)
@@ -2897,19 +2940,9 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     auto StringSectionOrError = Obj->getStringTableForSymtab(*Section);
     for (const Elf_Sym &Symbol : Obj->symbols(Section)) {
       auto NewSymbol = Symbol;
-      if (auto NewAddress = getNewFunctionAddress(Symbol.st_value)) {
-        std::size_t Size = 0;
-        auto BFI = BinaryFunctions.upper_bound(NewAddress);
-        if (BFI != BinaryFunctions.end()) {
-          Size = BFI->first - NewAddress;
-        } else {
-          Size = BFI->second.getSize();
-        }
-        DEBUG(dbgs() << "BOLT-DEBUG: patching symbol address 0x"
-                     << Twine::utohexstr(Symbol.st_value) << " with 0x"
-                     << Twine::utohexstr(NewAddress)
-                     << " size " << Size << '\n');
-        NewSymbol.st_value = NewAddress;
+      if (const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value)) {
+        NewSymbol.st_value = Function->getOutputAddress();
+        NewSymbol.st_size = Function->getOutputSize();
         NewSymbol.st_shndx = NewTextSectionIndex;
       } else {
         if (NewSymbol.st_shndx < ELF::SHN_LORESERVE) {
@@ -3089,8 +3122,7 @@ uint64_t RewriteInstance::getNewFunctionAddress(uint64_t OldAddress) {
   const auto *Function = getBinaryFunctionAtAddress(OldAddress);
   if (!Function)
     return 0;
-  auto JITS = OLT.findSymbol(Function->getSymbol()->getName(), false);
-  return JITS.getAddress();
+  return Function->getOutputAddress();
 }
 
 void RewriteInstance::rewriteFile() {
@@ -3152,7 +3184,8 @@ void RewriteInstance::rewriteFile() {
         outs() << "BOLT: rewriting function \"" << Function << "\"\n";
       }
       OS.pwrite(reinterpret_cast<char *>(Function.getImageAddress()),
-                       Function.getImageSize(), Function.getFileOffset());
+                Function.getImageSize(),
+                Function.getFileOffset());
 
       // Write nops at the end of the function.
       auto Pos = OS.tell();
@@ -3190,10 +3223,9 @@ void RewriteInstance::rewriteFile() {
         outs() << "BOLT: rewriting function \"" << Function
                << "\" (cold part)\n";
       }
-      OS.pwrite(reinterpret_cast<char*>
-                                            (Function.cold().getImageAddress()),
-                       Function.cold().getImageSize(),
-                       Function.cold().getFileOffset());
+      OS.pwrite(reinterpret_cast<char*>(Function.cold().getImageAddress()),
+                Function.cold().getImageSize(),
+                Function.cold().getFileOffset());
 
       // FIXME: write nops after cold part too.
 

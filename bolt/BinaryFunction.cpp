@@ -2585,12 +2585,6 @@ void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {
       Streamer.EmitInstruction(Instr, *BC.STI);
       LastIsPrefix = BC.MIA->isPrefix(Instr);
     }
-
-    if (opts::UpdateDebugSections) {
-      MCSymbol *BBEndLabel = BC.Ctx->createTempSymbol();
-      BB->setEndLabel(BBEndLabel);
-      Streamer.EmitLabel(BBEndLabel);
-    }
   }
 }
 
