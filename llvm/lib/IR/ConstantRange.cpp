@@ -908,13 +908,13 @@ ConstantRange
 ConstantRange::lshr(const ConstantRange &Other) const {
   if (isEmptySet() || Other.isEmptySet())
     return ConstantRange(getBitWidth(), /*isFullSet=*/false);
-  
-  APInt max = getUnsignedMax().lshr(Other.getUnsignedMin());
+
+  APInt max = getUnsignedMax().lshr(Other.getUnsignedMin()) + 1;
   APInt min = getUnsignedMin().lshr(Other.getUnsignedMax());
-  if (min == max + 1)
+  if (min == max)
     return ConstantRange(getBitWidth(), /*isFullSet=*/true);
 
-  return ConstantRange(std::move(min), std::move(max) + 1);
+  return ConstantRange(std::move(min), std::move(max));
 }
 
 ConstantRange ConstantRange::inverse() const {
