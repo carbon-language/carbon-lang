@@ -1392,8 +1392,7 @@ bool NewGVN::setMemoryClass(const MemoryAccess *From,
   DEBUG(dbgs() << "Setting " << *From);
   DEBUG(dbgs() << " equivalent to congruence class ");
   DEBUG(dbgs() << NewClass->getID() << " with current MemoryAccess leader ");
-  DEBUG(dbgs() << *NewClass->getMemoryLeader());
-  DEBUG(dbgs() << "\n");
+  DEBUG(dbgs() << *NewClass->getMemoryLeader() << "\n");
 
   auto LookupResult = MemoryAccessToClass.find(From);
   bool Changed = false;
