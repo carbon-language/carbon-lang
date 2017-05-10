@@ -828,7 +828,7 @@ void LinkerScript::placeOrphanSections() {
     // representations agree on which input sections to use.
     auto Pos = std::find_if(CmdIter, E, [&](BaseCommand *Base) {
       auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
-      return Cmd && Cmd->Name == Name;
+      return Cmd && Cmd->Sec == Sec;
     });
     if (Pos == E) {
       auto *Cmd = make<OutputSectionCommand>(Name);
