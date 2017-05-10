@@ -859,12 +859,15 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
   if (!In<ELFT>::DynSymTab)
     Symtab<ELFT>::X->addIgnored("__tls_get_addr");
 
+  // __ehdr_start is the location of ELF file headers. Note that we define
+  // this symbol unconditionally even when using a linker script, which
+  // differs from the behavior implemented by GNU linker which only define
+  // this symbol if ELF headers are in the memory mapped segment.
+  addOptionalRegular<ELFT>("__ehdr_start", Out::ElfHeader, 0, STV_HIDDEN);
+
   // If linker script do layout we do not need to create any standart symbols.
   if (Script->Opt.HasSections)
     return;
-
-  // __ehdr_start is the location of ELF file headers.
-  addOptionalRegular<ELFT>("__ehdr_start", Out::ElfHeader, 0, STV_HIDDEN);
 
   auto Add = [](StringRef S) {
     return addOptionalRegular<ELFT>(S, Out::ElfHeader, 0, STV_DEFAULT);
