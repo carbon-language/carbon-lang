@@ -757,11 +757,6 @@
 	locr	%r0,%r0,-1
 	locr	%r0,%r0,16
 
-#CHECK: error: instruction requires: execution-hint
-#CHECK: niai	0, 0
-
-	niai	0, 0
-
 #CHECK: error: invalid register pair
 #CHECK: lpd	%r1, 0, 0
 #CHECK: error: invalid use of indexed addressing
@@ -801,6 +796,11 @@
 	lpdg	%r2, 4096(%r1), 160(%r15)
 	lpdg	%r2, 0(%r1), -1(%r15)
 	lpdg	%r2, 0(%r1), 4096(%r15)
+
+#CHECK: error: instruction requires: execution-hint
+#CHECK: niai	0, 0
+
+	niai	0, 0
 
 #CHECK: error: instruction requires: transactional-execution
 #CHECK: ntstg	%r0, 524287(%r1,%r15)
@@ -933,20 +933,20 @@
 	stch	%r0, 524288
 
 #CHECK: error: invalid operand
-#CHECK: sthh	%r0, -524289
-#CHECK: error: invalid operand
-#CHECK: sthh	%r0, 524288
-
-	sthh	%r0, -524289
-	sthh	%r0, 524288
-
-#CHECK: error: invalid operand
 #CHECK: stfh	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: stfh	%r0, 524288
 
 	stfh	%r0, -524289
 	stfh	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: sthh	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: sthh	%r0, 524288
+
+	sthh	%r0, -524289
+	sthh	%r0, 524288
 
 #CHECK: error: invalid operand
 #CHECK: stoc	%r0,0,-1
