@@ -1108,7 +1108,7 @@ protected:
 
   /// Get the domain of @p Stmt.
   isl::set getDomainFor(ScopStmt *Stmt) const {
-    return give(Stmt->getDomain());
+    return give(isl_set_remove_redundancies(Stmt->getDomain()));
   }
 
   /// Get the domain @p MA's parent statement.
