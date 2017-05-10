@@ -1,4 +1,4 @@
-//===- llvm/Value.h - Definition of the Value class -------------*- C++ -*-===//
+//===-- llvm/Value.h - Definition of the Value class ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -44,12 +44,12 @@ class LLVMContext;
 class Module;
 class ModuleSlotTracker;
 class raw_ostream;
-template<typename ValueTy> class StringMapEntry;
 class StringRef;
 class Twine;
 class Type;
 
-using ValueName = StringMapEntry<Value*>;
+template<typename ValueTy> class StringMapEntry;
+typedef StringMapEntry<Value*> ValueName;
 
 //===----------------------------------------------------------------------===//
 //                                 Value Class
@@ -120,14 +120,12 @@ private:
   template <typename UseT> // UseT == 'Use' or 'const Use'
   class use_iterator_impl
       : public std::iterator<std::forward_iterator_tag, UseT *> {
+    UseT *U;
+    explicit use_iterator_impl(UseT *u) : U(u) {}
     friend class Value;
 
-    UseT *U = nullptr;
-
-    explicit use_iterator_impl(UseT *u) : U(u) {}
-
   public:
-    use_iterator_impl() = default;
+    use_iterator_impl() : U() {}
 
     bool operator==(const use_iterator_impl &x) const { return U == x.U; }
     bool operator!=(const use_iterator_impl &x) const { return !operator==(x); }
@@ -159,11 +157,9 @@ private:
   template <typename UserTy> // UserTy == 'User' or 'const User'
   class user_iterator_impl
       : public std::iterator<std::forward_iterator_tag, UserTy *> {
-    friend class Value;
-
     use_iterator_impl<Use> UI;
-
     explicit user_iterator_impl(Use *U) : UI(U) {}
+    friend class Value;
 
   public:
     user_iterator_impl() = default;
@@ -313,8 +309,8 @@ public:
     return UseList == nullptr;
   }
 
-  using use_iterator = use_iterator_impl<Use>;
-  using const_use_iterator =  use_iterator_impl<const Use>;
+  typedef use_iterator_impl<Use> use_iterator;
+  typedef use_iterator_impl<const Use> const_use_iterator;
   use_iterator materialized_use_begin() { return use_iterator(UseList); }
   const_use_iterator materialized_use_begin() const {
     return const_use_iterator(UseList);
@@ -349,8 +345,8 @@ public:
     return UseList == nullptr;
   }
 
-  using user_iterator = user_iterator_impl<User>;
-  using const_user_iterator = user_iterator_impl<const User>;
+  typedef user_iterator_impl<User> user_iterator;
+  typedef user_iterator_impl<const User> const_user_iterator;
   user_iterator materialized_user_begin() { return user_iterator(UseList); }
   const_user_iterator materialized_user_begin() const {
     return const_user_iterator(UseList);
@@ -564,6 +560,7 @@ public:
   /// block.
   const Value *DoPHITranslation(const BasicBlock *CurBB,
                                 const BasicBlock *PredBB) const;
+
   Value *DoPHITranslation(const BasicBlock *CurBB, const BasicBlock *PredBB) {
     return const_cast<Value *>(
              static_cast<const Value *>(this)->DoPHITranslation(CurBB, PredBB));
@@ -609,7 +606,7 @@ private:
     Use *Merged;
     Use **Next = &Merged;
 
-    while (true) {
+    for (;;) {
       if (!L) {
         *Next = R;
         break;
