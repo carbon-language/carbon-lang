@@ -1697,8 +1697,8 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
 
   if (lhsWords == 1 && rhsWords == 1) {
     // There is only one word to consider so use the native versions.
-    uint64_t lhsValue = LHS.isSingleWord() ? LHS.U.VAL : LHS.U.pVal[0];
-    uint64_t rhsValue = RHS.isSingleWord() ? RHS.U.VAL : RHS.U.pVal[0];
+    uint64_t lhsValue = LHS.U.pVal[0];
+    uint64_t rhsValue = RHS.U.pVal[0];
     Quotient = APInt(LHS.getBitWidth(), lhsValue / rhsValue);
     Remainder = APInt(LHS.getBitWidth(), lhsValue % rhsValue);
     return;
