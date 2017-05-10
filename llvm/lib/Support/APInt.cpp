@@ -1431,7 +1431,7 @@ void APInt::divide(const APInt &LHS, unsigned lhsWords, const APInt &RHS,
   // Initialize the dividend
   memset(U, 0, (m+n+1)*sizeof(unsigned));
   for (unsigned i = 0; i < lhsWords; ++i) {
-    uint64_t tmp = (LHS.getNumWords() == 1 ? LHS.U.VAL : LHS.U.pVal[i]);
+    uint64_t tmp = LHS.getRawData()[i];
     U[i * 2] = (unsigned)(tmp & mask);
     U[i * 2 + 1] = (unsigned)(tmp >> (sizeof(unsigned)*CHAR_BIT));
   }
@@ -1440,7 +1440,7 @@ void APInt::divide(const APInt &LHS, unsigned lhsWords, const APInt &RHS,
   // Initialize the divisor
   memset(V, 0, (n)*sizeof(unsigned));
   for (unsigned i = 0; i < rhsWords; ++i) {
-    uint64_t tmp = (RHS.getNumWords() == 1 ? RHS.U.VAL : RHS.U.pVal[i]);
+    uint64_t tmp = RHS.getRawData()[i];
     V[i * 2] = (unsigned)(tmp & mask);
     V[i * 2 + 1] = (unsigned)(tmp >> (sizeof(unsigned)*CHAR_BIT));
   }
