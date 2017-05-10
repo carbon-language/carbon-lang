@@ -187,6 +187,7 @@ private:
       DEBUG(dbgs() << "Cleanup of " << WA << ":\n");
       DEBUG(dbgs() << "      Scalar: " << *AccVal << "\n");
       DEBUG(dbgs() << "      AccRel: " << AccRel << "\n");
+      (void)AccVal;
       (void)AccRel;
 
       Stmt->removeSingleMemoryAccess(WA);
