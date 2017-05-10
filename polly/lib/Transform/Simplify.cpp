@@ -166,6 +166,7 @@ private:
         }
 
         if (auto *Conflicting = hasWriteBetween(&Stmt, RA, WA, WARel)) {
+          (void)Conflicting;
           InBetweenStore++;
           DEBUG(dbgs() << "Not cleaning up " << WA
                        << " because there is another store to the same element "
@@ -186,6 +187,7 @@ private:
       DEBUG(dbgs() << "Cleanup of " << WA << ":\n");
       DEBUG(dbgs() << "      Scalar: " << *AccVal << "\n");
       DEBUG(dbgs() << "      AccRel: " << AccRel << "\n");
+      (void)AccRel;
 
       Stmt->removeSingleMemoryAccess(WA);
 
