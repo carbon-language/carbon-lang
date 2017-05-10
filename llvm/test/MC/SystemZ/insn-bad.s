@@ -720,6 +720,17 @@
 	celgbr	%f0, 0, %r0, 0
 
 #CHECK: error: invalid operand
+#CHECK: cfc	-1
+#CHECK: error: invalid operand
+#CHECK: cfc	4096
+#CHECK: error: invalid use of indexed addressing
+#CHECK: cfc	0(%r1,%r2)
+
+	cfc	-1
+	cfc	4096
+	cfc	0(%r1,%r2)
+
+#CHECK: error: invalid operand
 #CHECK: cfdbr	%r0, -1, %f0
 #CHECK: error: invalid operand
 #CHECK: cfdbr	%r0, 16, %f0
@@ -1115,6 +1126,11 @@
         cit     %r0, 32768
         citno   %r0, 0
         cito    %r0, 0
+
+#CHECK: error: invalid register pair
+#CHECK: cksm	%r0, %r1
+
+	cksm	%r0, %r1
 
 #CHECK: error: invalid operand
 #CHECK: cl	%r0, -1
@@ -1620,6 +1636,14 @@
 
 	cly	%r0, -524289
 	cly	%r0, 524288
+
+#CHECK: error: invalid register pair
+#CHECK: cmpsc	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cmpsc	%r0, %r1
+
+	cmpsc	%r1, %r0
+	cmpsc	%r0, %r1
 
 #CHECK: error: missing length in address
 #CHECK: cp	0, 0(1)
@@ -2142,6 +2166,17 @@
 
 	dxbr	%f0, %f2
 	dxbr	%f2, %f0
+
+#CHECK: error: invalid operand
+#CHECK: ecag	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: ecag	%r0, %r0, 524288
+#CHECK: error: invalid use of indexed addressing
+#CHECK: ecag	%r0, %r0, 0(%r1,%r2)
+
+	ecag	%r0, %r0, -524289
+	ecag	%r0, %r0, 524288
+	ecag	%r0, %r0, 0(%r1,%r2)
 
 #CHECK: error: invalid use of indexed addressing
 #CHECK: ectg    160(%r1,%r15),160(%r15), %r2
@@ -3203,6 +3238,23 @@
 
 	maeb	%f0, %f0, -1
 	maeb	%f0, %f0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: mc	-1, 0
+#CHECK: error: invalid operand
+#CHECK: mc	4096, 0
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mc	0(%r1,%r2), 0
+#CHECK: error: invalid operand
+#CHECK: mc	0, -1
+#CHECK: error: invalid operand
+#CHECK: mc	0, 256
+
+	mc	-1, 0
+	mc	4096, 0
+	mc	0(%r1,%r2), 0
+	mc	0, -1
+	mc	0, 256
 
 #CHECK: error: invalid operand
 #CHECK: mdb	%f0, -1

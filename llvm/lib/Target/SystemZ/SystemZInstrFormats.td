@@ -1627,6 +1627,9 @@ class ICV<string name>
 //   Inherent:
 //     One register output operand and no input operands.
 //
+//   InherentDual:
+//     Two register output operands and no input operands.
+//
 //   StoreInherent:
 //     One address operand.  The instruction stores to the address.
 //
@@ -1751,6 +1754,10 @@ class InherentRRE<string mnemonic, bits<16> opcode, RegisterOperand cls,
             [(set cls:$R1, (operator))]> {
   let R2 = 0;
 }
+
+class InherentDualRRE<string mnemonic, bits<16> opcode, RegisterOperand cls>
+  : InstRRE<opcode, (outs cls:$R1, cls:$R2), (ins),
+            mnemonic#"\t$R1, $R2", []>;
 
 class InherentVRIa<string mnemonic, bits<16> opcode, bits<16> value>
   : InstVRIa<opcode, (outs VR128:$V1), (ins), mnemonic#"\t$V1", []> {
@@ -2667,6 +2674,10 @@ class SideEffectBinaryIE<string mnemonic, bits<16> opcode,
                          Immediate imm1, Immediate imm2>
   : InstIE<opcode, (outs), (ins imm1:$I1, imm2:$I2),
            mnemonic#"\t$I1, $I2", []>;
+
+class SideEffectBinarySI<string mnemonic, bits<8> opcode, Operand imm>
+  : InstSI<opcode, (outs), (ins bdaddr12only:$BD1, imm:$I2),
+           mnemonic#"\t$BD1, $I2", []>;
 
 class SideEffectBinarySIL<string mnemonic, bits<16> opcode,
                           SDPatternOperator operator, Immediate imm>

@@ -628,11 +628,26 @@ def : InstRW<[FXU, LSU, Lat30], (instregex "SRST$")>;
 def : InstRW<[LSU, Lat30], (instregex "SRSTU$")>;
 def : InstRW<[LSU, Lat30, GroupAlone], (instregex "CUSE$")>;
 
+// Various complex instructions
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "CFC$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "UPT$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "CKSM$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "CMPSC$")>;
+
 // Move with key
 def : InstRW<[LSU, Lat8, GroupAlone], (instregex "MVCK$")>;
 
+// Monitor call
+def : InstRW<[FXU], (instregex "MC$")>;
+
+// Extract CPU attribute
+def : InstRW<[FXU, Lat30], (instregex "ECAG$")>;
+
 // Extract CPU Time
 def : InstRW<[FXU, Lat5, LSU], (instregex "ECTG$")>;
+
+// Extract PSW
+def : InstRW<[FXU, Lat30], (instregex "EPSW$")>;
 
 // Execute
 def : InstRW<[LSU, GroupAlone], (instregex "EX(RL)?$")>;

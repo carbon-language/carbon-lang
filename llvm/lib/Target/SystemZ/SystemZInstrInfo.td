@@ -1874,9 +1874,30 @@ let mayLoad = 1, Defs = [CC], Uses = [R0L] in
 let mayLoad = 1, Defs = [CC], Uses = [R0L, R1L] in
   def CUSE : SideEffectBinaryMemMemRRE<"cuse", 0xB257, GR128, GR128>;
 
+// Compare and form codeword.
+let mayLoad = 1, Defs = [CC, R1D, R2D, R3D], Uses = [R1D, R2D, R3D] in
+  def CFC : SideEffectAddressS<"cfc", 0xB21A, null_frag>;
+
+// Update tree.
+let mayLoad = 1, mayStore = 1, Defs = [CC, R0D, R1D, R2D, R3D, R5D],
+    Uses = [R0D, R1D, R2D, R3D, R4D, R5D] in
+  def UPT : SideEffectInherentE<"upt", 0x0102>;
+
+// Checksum.
+let mayLoad = 1, Defs = [CC] in
+  def CKSM : SideEffectBinaryMemMemRRE<"cksm", 0xB241, GR64, GR128>;
+
+// Compression call.
+let mayLoad = 1, mayStore = 1, Defs = [CC, R1D], Uses = [R0L, R1D] in
+  def CMPSC : SideEffectBinaryMemMemRRE<"cmpsc", 0xB263, GR128, GR128>;
+
 // Supervisor call.
 let hasSideEffects = 1, isCall = 1, Defs = [CC] in
   def SVC : SideEffectUnaryI<"svc", 0x0A, imm32zx8>;
+
+// Monitor call.
+let hasSideEffects = 1, isCall = 1 in
+  def MC : SideEffectBinarySI<"mc", 0xAF, imm32zx8>;
 
 // Store clock.
 let hasSideEffects = 1, Defs = [CC] in {
@@ -1889,9 +1910,17 @@ let hasSideEffects = 1, Defs = [CC] in {
 let hasSideEffects = 1, Uses = [R0D], Defs = [R0D, CC] in
   def STFLE : StoreInherentS<"stfle", 0xB2B0, null_frag, 0>;
 
+// Extract CPU attribute.
+let hasSideEffects = 1 in
+  def ECAG : BinaryRSY<"ecag", 0xEB4C, null_frag, GR64>;
+
 // Extract CPU time.
 let Defs = [R0D, R1D], hasSideEffects = 1, mayLoad = 1 in
   def ECTG : SideEffectTernarySSF<"ectg", 0xC81, GR64>;
+
+// Extract PSW.
+let hasSideEffects = 1, Uses = [CC] in
+  def EPSW : InherentDualRRE<"epsw", 0xB98D, GR32>;
 
 // Execute.
 let hasSideEffects = 1 in {
