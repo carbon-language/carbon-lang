@@ -447,7 +447,7 @@ TEST_F(ConstantRangeTest, Multiply) {
   // TODO: This should be return [-2, 0]
   EXPECT_EQ(ConstantRange(APInt(8, -2)).multiply(
               ConstantRange(APInt(8, 0), APInt(8, 2))),
-            ConstantRange(APInt(8, 0), APInt(8, 255)));
+            ConstantRange(APInt(8, -2), APInt(8, 1)));
 }
 
 TEST_F(ConstantRangeTest, UMax) {
