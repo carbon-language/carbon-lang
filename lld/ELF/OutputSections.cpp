@@ -429,8 +429,11 @@ void OutputSectionFactory::addInputSec(InputSectionBase *IS,
       if (canMergeToProgbits(Sec->Type) && canMergeToProgbits(IS->Type))
         Sec->Type = SHT_PROGBITS;
       else
-        error("Section has different type from others with the same name " +
-              toString(IS));
+        error("section type mismatch for " + IS->Name +
+              "\n>>> " + toString(IS) + ": " +
+              getELFSectionTypeName(Config->EMachine, IS->Type) +
+              "\n>>> output section " + Sec->Name + ": " +
+              getELFSectionTypeName(Config->EMachine, Sec->Type));
     }
     Sec->Flags |= Flags;
   } else {
