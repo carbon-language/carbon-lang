@@ -2590,6 +2590,26 @@ class SideEffectBinarySIL<string mnemonic, bits<16> opcode,
   : InstSIL<opcode, (outs), (ins bdaddr12only:$BD1, imm:$I2),
             mnemonic#"\t$BD1, $I2", [(operator bdaddr12only:$BD1, imm:$I2)]>;
 
+class SideEffectBinarySSa<string mnemonic, bits<8> opcode>
+  : InstSSa<opcode, (outs), (ins bdladdr12onlylen8:$BDL1, bdaddr12only:$BD2),
+            mnemonic##"\t$BDL1, $BD2", []>;
+
+class SideEffectBinaryMemMemRR<string mnemonic, bits<8> opcode,
+                               RegisterOperand cls1, RegisterOperand cls2>
+  : InstRR<opcode, (outs cls1:$R1, cls2:$R2), (ins cls1:$R1src, cls2:$R2src),
+           mnemonic#"\t$R1, $R2", []> {
+    let Constraints = "$R1 = $R1src, $R2 = $R2src";
+    let DisableEncoding = "$R1src, $R2src";
+}
+
+class SideEffectBinaryMemMemRRE<string mnemonic, bits<16> opcode,
+                                RegisterOperand cls1, RegisterOperand cls2>
+  : InstRRE<opcode, (outs cls1:$R1, cls2:$R2), (ins cls1:$R1src, cls2:$R2src),
+            mnemonic#"\t$R1, $R2", []> {
+    let Constraints = "$R1 = $R1src, $R2 = $R2src";
+    let DisableEncoding = "$R1src, $R2src";
+}
+
 class BinaryRR<string mnemonic, bits<8> opcode, SDPatternOperator operator,
                RegisterOperand cls1, RegisterOperand cls2>
   : InstRR<opcode, (outs cls1:$R1), (ins cls1:$R1src, cls2:$R2),
@@ -3376,6 +3396,24 @@ multiclass TernaryRSPair<string mnemonic, bits<8> rsOpcode, bits<16> rsyOpcode,
   }
 }
 
+class SideEffectTernaryMemMemRS<string mnemonic, bits<8> opcode,
+                                RegisterOperand cls1, RegisterOperand cls2>
+  : InstRSa<opcode, (outs cls1:$R1, cls2:$R3),
+            (ins cls1:$R1src, cls2:$R3src, shift12only:$BD2),
+            mnemonic#"\t$R1, $R3, $BD2", []> {
+    let Constraints = "$R1 = $R1src, $R3 = $R3src";
+    let DisableEncoding = "$R1src, $R3src";
+}
+
+class SideEffectTernaryMemMemRSY<string mnemonic, bits<16> opcode,
+                                 RegisterOperand cls1, RegisterOperand cls2>
+  : InstRSYa<opcode, (outs cls1:$R1, cls2:$R3),
+             (ins cls1:$R1src, cls2:$R3src, shift20only:$BD2),
+             mnemonic#"\t$R1, $R3, $BD2", []> {
+    let Constraints = "$R1 = $R1src, $R3 = $R3src";
+    let DisableEncoding = "$R1src, $R3src";
+}
+
 class TernaryRXF<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                  RegisterOperand cls, SDPatternOperator load, bits<5> bytes>
   : InstRXF<opcode, (outs cls:$R1),
@@ -3981,9 +4019,7 @@ class AtomicLoadWBinaryImm<SDPatternOperator operator, Immediate imm>
 // another instruction to handle the excess.
 multiclass MemorySS<string mnemonic, bits<8> opcode,
                     SDPatternOperator sequence, SDPatternOperator loop> {
-  def "" : InstSSa<opcode, (outs), (ins bdladdr12onlylen8:$BDL1,
-                                        bdaddr12only:$BD2),
-                   mnemonic##"\t$BDL1, $BD2", []>;
+  def "" : SideEffectBinarySSa<mnemonic, opcode>;
   let usesCustomInserter = 1, hasNoSchedulingInfo = 1 in {
     def Sequence : Pseudo<(outs), (ins bdaddr12only:$dest, bdaddr12only:$src,
                                        imm64:$length),
@@ -4003,13 +4039,8 @@ multiclass MemorySS<string mnemonic, bits<8> opcode,
 // the full loop (the main instruction plus the branch on CC==3).
 multiclass StringRRE<string mnemonic, bits<16> opcode,
                      SDPatternOperator operator> {
-  def "" : InstRRE<opcode, (outs GR64:$R1, GR64:$R2),
-                   (ins GR64:$R1src, GR64:$R2src),
-                   mnemonic#"\t$R1, $R2", []> {
-    let Uses = [R0L];
-    let Constraints = "$R1 = $R1src, $R2 = $R2src";
-    let DisableEncoding = "$R1src, $R2src";
-  }
+  let Uses = [R0L] in
+    def "" : SideEffectBinaryMemMemRRE<mnemonic, opcode, GR64, GR64>;
   let usesCustomInserter = 1, hasNoSchedulingInfo = 1 in
     def Loop : Pseudo<(outs GR64:$end),
                       (ins GR64:$start1, GR64:$start2, GR32:$char),

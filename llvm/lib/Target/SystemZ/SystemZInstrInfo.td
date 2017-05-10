@@ -464,6 +464,11 @@ def MVGHI : StoreSIL<"mvghi", 0xE548, store,         imm64sx16>;
 // Memory-to-memory moves.
 let mayLoad = 1, mayStore = 1 in
   defm MVC : MemorySS<"mvc", 0xD2, z_mvc, z_mvc_loop>;
+let mayLoad = 1, mayStore = 1, Defs = [CC] in {
+  def MVCL  : SideEffectBinaryMemMemRR<"mvcl", 0x0E, GR128, GR128>;
+  def MVCLE : SideEffectTernaryMemMemRS<"mvcle", 0xA8, GR128, GR128>;
+  def MVCLU : SideEffectTernaryMemMemRSY<"mvclu", 0xEB8E, GR128, GR128>;
+}
 
 // String moves.
 let mayLoad = 1, mayStore = 1, Defs = [CC] in
@@ -741,6 +746,10 @@ def LRVG : UnaryRXY<"lrvg", 0xE30F, z_lrvg, GR64, 8>;
 def STRVH : StoreRXY<"strvh", 0xE33F, z_strvh, GR32, 2>;
 def STRV  : StoreRXY<"strv",  0xE33E, z_strv,  GR32, 4>;
 def STRVG : StoreRXY<"strvg", 0xE32F, z_strvg, GR64, 8>;
+
+// Byte-swapping memory-to-memory moves.
+let mayLoad = 1, mayStore = 1 in
+  def MVCIN : SideEffectBinarySSa<"mvcin", 0xE8>;
 
 //===----------------------------------------------------------------------===//
 // Load address instructions
@@ -1351,8 +1360,12 @@ let Defs = [CC], CCValues = 0xE, IsLogical = 1 in {
 defm : ZXB<z_ucmp, GR64, CLGFR>;
 
 // Memory-to-memory comparison.
-let mayLoad = 1, Defs = [CC] in
+let mayLoad = 1, Defs = [CC] in {
   defm CLC : MemorySS<"clc", 0xD5, z_clc, z_clc_loop>;
+  def CLCL  : SideEffectBinaryMemMemRR<"clcl", 0x0F, GR128, GR128>;
+  def CLCLE : SideEffectTernaryMemMemRS<"clcle", 0xA9, GR128, GR128>;
+  def CLCLU : SideEffectTernaryMemMemRSY<"clclu", 0xEB8F, GR128, GR128>;
+}
 
 // String comparison.
 let mayLoad = 1, Defs = [CC] in
@@ -1712,7 +1725,13 @@ let usesCustomInserter = 1 in {
 
 // Search a block of memory for a character.
 let mayLoad = 1, Defs = [CC] in
-  defm SRST : StringRRE<"srst", 0xb25e, z_search_string>;
+  defm SRST : StringRRE<"srst", 0xB25E, z_search_string>;
+let mayLoad = 1, Defs = [CC], Uses = [R0L] in
+  def SRSTU : SideEffectBinaryMemMemRRE<"srstu", 0xB9BE, GR64, GR64>;
+
+// Compare until substring equal.
+let mayLoad = 1, Defs = [CC], Uses = [R0L, R1L] in
+  def CUSE : SideEffectBinaryMemMemRRE<"cuse", 0xB257, GR128, GR128>;
 
 // Supervisor call.
 let hasSideEffects = 1, isCall = 1, Defs = [CC] in

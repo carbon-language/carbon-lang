@@ -1081,6 +1081,42 @@
 	clc	0(1,%r2), 0(%r1,%r2)
 	clc	0(-), 0
 
+#CHECK: error: invalid register pair
+#CHECK: clcl	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: clcl	%r0, %r1
+
+	clcl	%r1, %r0
+	clcl	%r0, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: clcle	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: clcle	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: clcle	%r0, %r0, -1
+#CHECK: error: invalid operand
+#CHECK: clcle	%r0, %r0, 4096
+
+	clcle	%r1, %r0, 0
+	clcle	%r0, %r1, 0
+	clcle	%r0, %r0, -1
+	clcle	%r0, %r0, 4096
+
+#CHECK: error: invalid register pair
+#CHECK: clclu	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: clclu	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: clclu	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: clclu	%r0, %r0, 524288
+
+	clclu	%r1, %r0, 0
+	clclu	%r0, %r1, 0
+	clclu	%r0, %r0, -524289
+	clclu	%r0, %r0, 524288
+
 #CHECK: error: instruction requires: fp-extension
 #CHECK: clfdbr	%r0, 0, %f0, 0
 
@@ -1549,6 +1585,14 @@
 	csy	%r0, %r0, -524289
 	csy	%r0, %r0, 524288
 	csy	%r0, %r0, 0(%r1,%r2)
+
+#CHECK: error: invalid register pair
+#CHECK: cuse	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cuse	%r0, %r1
+
+	cuse	%r1, %r0
+	cuse	%r0, %r1
 
 #CHECK: error: invalid register pair
 #CHECK: cxbr	%f0, %f2
@@ -2745,6 +2789,50 @@
 	mvc	0(1,%r2), 0(%r1,%r2)
 	mvc	0(-), 0
 
+#CHECK: error: missing length in address
+#CHECK: mvcin	0, 0
+#CHECK: error: missing length in address
+#CHECK: mvcin	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: mvcin	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvcin	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvcin	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvcin	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvcin	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvcin	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvcin	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvcin	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvcin	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvcin	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvcin	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: mvcin	0(-), 0
+
+	mvcin	0, 0
+	mvcin	0(%r1), 0(%r1)
+	mvcin	0(1,%r1), 0(2,%r1)
+	mvcin	0(0,%r1), 0(%r1)
+	mvcin	0(257,%r1), 0(%r1)
+	mvcin	-1(1,%r1), 0(%r1)
+	mvcin	4096(1,%r1), 0(%r1)
+	mvcin	0(1,%r1), -1(%r1)
+	mvcin	0(1,%r1), 4096(%r1)
+	mvcin	0(1,%r0), 0(%r1)
+	mvcin	0(1,%r1), 0(%r0)
+	mvcin	0(%r1,%r2), 0(%r1)
+	mvcin	0(1,%r2), 0(%r1,%r2)
+	mvcin	0(-), 0
+
 #CHECK: error: invalid use of length addressing
 #CHECK: mvck	0(%r1,%r1), 0(2,%r1), %r3
 #CHECK: error: invalid operand
@@ -2773,6 +2861,42 @@
 	mvck	0(%r1,%r1), 0(%r0), %r3
 	mvck	0(%r1,%r2), 0(%r1,%r2), %r3
 	mvck	0(-), 0, %r3
+
+#CHECK: error: invalid register pair
+#CHECK: mvcl	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: mvcl	%r0, %r1
+
+	mvcl	%r1, %r0
+	mvcl	%r0, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: mvcle	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: mvcle	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: mvcle	%r0, %r0, -1
+#CHECK: error: invalid operand
+#CHECK: mvcle	%r0, %r0, 4096
+
+	mvcle	%r1, %r0, 0
+	mvcle	%r0, %r1, 0
+	mvcle	%r0, %r0, -1
+	mvcle	%r0, %r0, 4096
+
+#CHECK: error: invalid register pair
+#CHECK: mvclu	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: mvclu	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: mvclu	%r0, %r0, -524289
+#CHECK: error: invalid operand
+#CHECK: mvclu	%r0, %r0, 524288
+
+	mvclu	%r1, %r0, 0
+	mvclu	%r0, %r1, 0
+	mvclu	%r0, %r0, -524289
+	mvclu	%r0, %r0, 524288
 
 #CHECK: error: invalid operand
 #CHECK: mvghi	-1, 0

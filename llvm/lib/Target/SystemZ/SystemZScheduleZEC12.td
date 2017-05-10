@@ -155,6 +155,7 @@ def : InstRW<[FXU, LSU, Lat5], (instregex "MVI(Y)?$")>;
 
 // Move character
 def : InstRW<[LSU, LSU, LSU, FXU, Lat8, GroupAlone], (instregex "MVC$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "MVCL(E|U)?$")>;
 
 // Pseudo -> reg move
 def : InstRW<[FXU], (instregex "COPY(_TO_REGCLASS)?$")>;
@@ -256,6 +257,7 @@ def : InstRW<[LSU, LSU, FXU, FXU, FXU, Lat10, GroupAlone],
 def : InstRW<[FXU], (instregex "LRV(G)?R$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "LRV(G|H)?$")>;
 def : InstRW<[FXU, LSU, Lat5], (instregex "STRV(G|H)?$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "MVCIN$")>;
 
 //===----------------------------------------------------------------------===//
 // Load address instructions
@@ -475,7 +477,7 @@ def : InstRW<[FXU, Lat2], (instregex "CGFR$")>;
 
 // Compare logical character
 def : InstRW<[FXU, LSU, LSU, Lat9, GroupAlone], (instregex "CLC$")>;
-
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "CLCL(E|U)?$")>;
 def : InstRW<[LSU, Lat30, GroupAlone], (instregex "CLST$")>;
 
 // Test under mask
@@ -609,6 +611,8 @@ def : InstRW<[FXU], (instregex "ZEXT128_(32|64)$")>;
 
 // String instructions
 def : InstRW<[FXU, LSU, Lat30], (instregex "SRST$")>;
+def : InstRW<[LSU, Lat30], (instregex "SRSTU$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "CUSE$")>;
 
 // Move with key
 def : InstRW<[LSU, Lat8, GroupAlone], (instregex "MVCK$")>;
