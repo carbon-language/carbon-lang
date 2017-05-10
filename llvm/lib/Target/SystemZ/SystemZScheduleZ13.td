@@ -565,6 +565,15 @@ def : InstRW<[FXb, FXb, LSU, Lat6, GroupAlone], (instregex "STPQ$")>;
 def : InstRW<[LSU, LSU, Lat5, GroupAlone], (instregex "LPD(G)?$")>;
 
 //===----------------------------------------------------------------------===//
+// Translate and convert
+//===----------------------------------------------------------------------===//
+
+def : InstRW<[FXa, Lat30, GroupAlone], (instregex "TR(T|TR)?(E|EOpt)?$")>;
+def : InstRW<[FXa, Lat30, GroupAlone], (instregex "TR(T|O)(T|O)(Opt)?$")>;
+def : InstRW<[FXa, Lat30, GroupAlone], (instregex "CU(12|14|21|24|41|42)(Opt)?$")>;
+def : InstRW<[FXa, Lat30, GroupAlone], (instregex "(CUUTF|CUTFU)(Opt)?$")>;
+
+//===----------------------------------------------------------------------===//
 // Access registers
 //===----------------------------------------------------------------------===//
 

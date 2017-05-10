@@ -1587,12 +1587,112 @@
 	csy	%r0, %r0, 0(%r1,%r2)
 
 #CHECK: error: invalid register pair
+#CHECK: cu12	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cu12	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: cu12	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: cu12	%r2, %r4, 16
+
+	cu12	%r1, %r0
+	cu12	%r0, %r1
+	cu12	%r2, %r4, -1
+	cu12	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: cu14	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cu14	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: cu14	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: cu14	%r2, %r4, 16
+
+	cu14	%r1, %r0
+	cu14	%r0, %r1
+	cu14	%r2, %r4, -1
+	cu14	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: cu21	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cu21	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: cu21	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: cu21	%r2, %r4, 16
+
+	cu21	%r1, %r0
+	cu21	%r0, %r1
+	cu21	%r2, %r4, -1
+	cu21	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: cu24	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cu24	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: cu24	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: cu24	%r2, %r4, 16
+
+	cu24	%r1, %r0
+	cu24	%r0, %r1
+	cu24	%r2, %r4, -1
+	cu24	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: cu41	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cu41	%r0, %r1
+
+	cu41	%r1, %r0
+	cu41	%r0, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: cu42	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cu42	%r0, %r1
+
+	cu42	%r1, %r0
+	cu42	%r0, %r1
+
+#CHECK: error: invalid register pair
 #CHECK: cuse	%r1, %r0
 #CHECK: error: invalid register pair
 #CHECK: cuse	%r0, %r1
 
 	cuse	%r1, %r0
 	cuse	%r0, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: cutfu	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cutfu	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: cutfu	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: cutfu	%r2, %r4, 16
+
+	cutfu	%r1, %r0
+	cutfu	%r0, %r1
+	cutfu	%r2, %r4, -1
+	cutfu	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: cuutf	%r1, %r0
+#CHECK: error: invalid register pair
+#CHECK: cuutf	%r0, %r1
+#CHECK: error: invalid operand
+#CHECK: cuutf	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: cuutf	%r2, %r4, 16
+
+	cuutf	%r1, %r0
+	cuutf	%r0, %r1
+	cuutf	%r2, %r4, -1
+	cuutf	%r2, %r4, 16
 
 #CHECK: error: invalid register pair
 #CHECK: cxbr	%f0, %f2
@@ -4195,6 +4295,209 @@
 	tmy	0(%r1,%r2), 0
 	tmy	0, -1
 	tmy	0, 256
+
+#CHECK: error: missing length in address
+#CHECK: tr	0, 0
+#CHECK: error: missing length in address
+#CHECK: tr	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: tr	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: tr	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: tr	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: tr	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: tr	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: tr	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: tr	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: tr	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: tr	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: tr	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: tr	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: tr	0(-), 0
+
+	tr	0, 0
+	tr	0(%r1), 0(%r1)
+	tr	0(1,%r1), 0(2,%r1)
+	tr	0(0,%r1), 0(%r1)
+	tr	0(257,%r1), 0(%r1)
+	tr	-1(1,%r1), 0(%r1)
+	tr	4096(1,%r1), 0(%r1)
+	tr	0(1,%r1), -1(%r1)
+	tr	0(1,%r1), 4096(%r1)
+	tr	0(1,%r0), 0(%r1)
+	tr	0(1,%r1), 0(%r0)
+	tr	0(%r1,%r2), 0(%r1)
+	tr	0(1,%r2), 0(%r1,%r2)
+	tr	0(-), 0
+
+#CHECK: error: invalid register pair
+#CHECK: tre	%r1, %r0
+
+	tre	%r1, %r0
+
+#CHECK: error: invalid register pair
+#CHECK: troo	%r1, %r0
+#CHECK: error: invalid operand
+#CHECK: troo	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: troo	%r2, %r4, 16
+
+	troo	%r1, %r0
+	troo	%r2, %r4, -1
+	troo	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: trot	%r1, %r0
+#CHECK: error: invalid operand
+#CHECK: trot	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: trot	%r2, %r4, 16
+
+	trot	%r1, %r0
+	trot	%r2, %r4, -1
+	trot	%r2, %r4, 16
+
+#CHECK: error: missing length in address
+#CHECK: trt	0, 0
+#CHECK: error: missing length in address
+#CHECK: trt	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: trt	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: trt	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trt	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trt	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trt	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trt	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: trt	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: trt	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: trt	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: trt	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: trt	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: trt	0(-), 0
+
+	trt	0, 0
+	trt	0(%r1), 0(%r1)
+	trt	0(1,%r1), 0(2,%r1)
+	trt	0(0,%r1), 0(%r1)
+	trt	0(257,%r1), 0(%r1)
+	trt	-1(1,%r1), 0(%r1)
+	trt	4096(1,%r1), 0(%r1)
+	trt	0(1,%r1), -1(%r1)
+	trt	0(1,%r1), 4096(%r1)
+	trt	0(1,%r0), 0(%r1)
+	trt	0(1,%r1), 0(%r0)
+	trt	0(%r1,%r2), 0(%r1)
+	trt	0(1,%r2), 0(%r1,%r2)
+	trt	0(-), 0
+
+#CHECK: error: invalid register pair
+#CHECK: trte	%r1, %r0
+#CHECK: error: invalid operand
+#CHECK: trte	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: trte	%r2, %r4, 16
+
+	trte	%r1, %r0
+	trte	%r2, %r4, -1
+	trte	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: trto	%r1, %r0
+#CHECK: error: invalid operand
+#CHECK: trto	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: trto	%r2, %r4, 16
+
+	trto	%r1, %r0
+	trto	%r2, %r4, -1
+	trto	%r2, %r4, 16
+
+#CHECK: error: missing length in address
+#CHECK: trtr	0, 0
+#CHECK: error: missing length in address
+#CHECK: trtr	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: trtr	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: trtr	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trtr	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trtr	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trtr	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: trtr	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: trtr	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: trtr	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: trtr	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: trtr	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: trtr	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: trtr	0(-), 0
+
+	trtr	0, 0
+	trtr	0(%r1), 0(%r1)
+	trtr	0(1,%r1), 0(2,%r1)
+	trtr	0(0,%r1), 0(%r1)
+	trtr	0(257,%r1), 0(%r1)
+	trtr	-1(1,%r1), 0(%r1)
+	trtr	4096(1,%r1), 0(%r1)
+	trtr	0(1,%r1), -1(%r1)
+	trtr	0(1,%r1), 4096(%r1)
+	trtr	0(1,%r0), 0(%r1)
+	trtr	0(1,%r1), 0(%r0)
+	trtr	0(%r1,%r2), 0(%r1)
+	trtr	0(1,%r2), 0(%r1,%r2)
+	trtr	0(-), 0
+
+#CHECK: error: invalid register pair
+#CHECK: trtre	%r1, %r0
+#CHECK: error: invalid operand
+#CHECK: trtre	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: trtre	%r2, %r4, 16
+
+	trtre	%r1, %r0
+	trtre	%r2, %r4, -1
+	trtre	%r2, %r4, 16
+
+#CHECK: error: invalid register pair
+#CHECK: trtt	%r1, %r0
+#CHECK: error: invalid operand
+#CHECK: trtt	%r2, %r4, -1
+#CHECK: error: invalid operand
+#CHECK: trtt	%r2, %r4, 16
+
+	trtt	%r1, %r0
+	trtt	%r2, %r4, -1
+	trtt	%r2, %r4, 16
 
 #CHECK: error: invalid operand
 #CHECK: ts	-1

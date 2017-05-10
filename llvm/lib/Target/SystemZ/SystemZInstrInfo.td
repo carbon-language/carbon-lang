@@ -1594,6 +1594,47 @@ let Predicates = [FeatureInterlockedAccess1], Defs = [CC] in {
 }
 
 //===----------------------------------------------------------------------===//
+// Translate and convert
+//===----------------------------------------------------------------------===//
+
+let mayLoad = 1, mayStore = 1 in
+  def TR : SideEffectBinarySSa<"tr", 0xDC>;
+
+let mayLoad = 1, Defs = [CC, R0L, R1D] in {
+  def TRT  : SideEffectBinarySSa<"trt", 0xDD>;
+  def TRTR : SideEffectBinarySSa<"trtr", 0xD0>;
+}
+
+let mayLoad = 1, mayStore = 1, Uses = [R0L] in
+  def TRE : SideEffectBinaryMemMemRRE<"tre", 0xB2A5, GR128, GR64>;
+
+let mayLoad = 1, Uses = [R1D], Defs = [CC] in {
+  defm TRTE  : BinaryMemRRFcOpt<"trte",  0xB9BF, GR128, GR64>;
+  defm TRTRE : BinaryMemRRFcOpt<"trtre", 0xB9BD, GR128, GR64>;
+}
+
+let mayLoad = 1, mayStore = 1, Uses = [R0L, R1D], Defs = [CC] in {
+  defm TROO : SideEffectTernaryMemMemRRFcOpt<"troo", 0xB993, GR128, GR64>;
+  defm TROT : SideEffectTernaryMemMemRRFcOpt<"trot", 0xB992, GR128, GR64>;
+  defm TRTO : SideEffectTernaryMemMemRRFcOpt<"trto", 0xB991, GR128, GR64>;
+  defm TRTT : SideEffectTernaryMemMemRRFcOpt<"trtt", 0xB990, GR128, GR64>;
+}
+
+let mayLoad = 1, mayStore = 1, Defs = [CC] in {
+  defm CU12 : SideEffectTernaryMemMemRRFcOpt<"cu12", 0xB2A7, GR128, GR128>;
+  defm CU14 : SideEffectTernaryMemMemRRFcOpt<"cu14", 0xB9B0, GR128, GR128>;
+  defm CU21 : SideEffectTernaryMemMemRRFcOpt<"cu21", 0xB2A6, GR128, GR128>;
+  defm CU24 : SideEffectTernaryMemMemRRFcOpt<"cu24", 0xB9B1, GR128, GR128>;
+  def  CU41 : SideEffectBinaryMemMemRRE<"cu41", 0xB9B2, GR128, GR128>;
+  def  CU42 : SideEffectBinaryMemMemRRE<"cu42", 0xB9B3, GR128, GR128>;
+
+  let isAsmParserOnly = 1 in {
+    defm CUUTF : SideEffectTernaryMemMemRRFcOpt<"cuutf", 0xB2A6, GR128, GR128>;
+    defm CUTFU : SideEffectTernaryMemMemRRFcOpt<"cutfu", 0xB2A7, GR128, GR128>;
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // Access registers
 //===----------------------------------------------------------------------===//
 
