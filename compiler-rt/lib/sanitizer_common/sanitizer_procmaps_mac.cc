@@ -227,12 +227,8 @@ static const struct mach_header *get_dyld_image_header() {
 // and it is expensive to compute once many libraries have been loaded,
 // so cache it here and do not reset.
 static const struct mach_header *get_dyld_hdr() {
-#if !SANITIZER_GO
   static const struct mach_header *header = get_dyld_image_header();
   return header;
-#else
-  return get_dyld_image_header();
-#endif
 }
 
 void MemoryMappingLayout::GetSegmentAddrRange(uptr *start, uptr *end,
