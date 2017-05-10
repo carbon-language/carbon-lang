@@ -62,7 +62,7 @@ build_script:
   - "%MAKE_PROGRAM%"
 
 test_script:
-  - "%MAKE_PROGRAM%" check-cxx
+  - "%MAKE_PROGRAM% check-cxx"
 
 on_failure:
   - appveyor PushArtifact CMakeFiles/CMakeOutput.log
