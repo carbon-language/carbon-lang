@@ -76,8 +76,8 @@ void parallelForEach(IterTy Begin, IterTy End, FuncTy Fn) {
     for_each(parallel::seq, Begin, End, Fn);
 }
 
-inline void parallelFor(size_t Begin, size_t End,
-                        std::function<void(size_t)> Fn) {
+inline void parallelForEachN(size_t Begin, size_t End,
+                             std::function<void(size_t)> Fn) {
   if (Config->Threads)
     for_each_n(parallel::par, Begin, End, Fn);
   else

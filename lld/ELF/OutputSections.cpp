@@ -297,7 +297,7 @@ template <class ELFT> void OutputSection::writeTo(uint8_t *Buf) {
   if (Filler)
     fill(Buf, Sections.empty() ? Size : Sections[0]->OutSecOff, Filler);
 
-  parallelFor(0, Sections.size(), [=](size_t I) {
+  parallelForEachN(0, Sections.size(), [=](size_t I) {
     InputSection *Sec = Sections[I];
     Sec->writeTo<ELFT>(Buf);
 
