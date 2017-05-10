@@ -1846,10 +1846,8 @@ void APInt::fromString(unsigned numbits, StringRef str, uint8_t radix) {
     *this += digit;
   }
   // If its negative, put it in two's complement form
-  if (isNeg) {
-    --(*this);
-    this->flipAllBits();
-  }
+  if (isNeg)
+    this->negate();
 }
 
 void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
@@ -1927,8 +1925,7 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     // They want to print the signed version and it is a negative value
     // Flip the bits and add one to turn it into the equivalent positive
     // value and put a '-' in the result.
-    Tmp.flipAllBits();
-    ++Tmp;
+    Tmp.negate();
     Str.push_back('-');
   }
 
