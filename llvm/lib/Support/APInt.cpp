@@ -2386,22 +2386,20 @@ int APInt::tcDivide(WordType *lhs, const WordType *rhs,
   /* Loop, subtracting SRHS if REMAINDER is greater and adding that to
      the total.  */
   for (;;) {
-      int compare;
+    int compare = tcCompare(remainder, srhs, parts);
+    if (compare >= 0) {
+      tcSubtract(remainder, srhs, 0, parts);
+      lhs[n] |= mask;
+    }
 
-      compare = tcCompare(remainder, srhs, parts);
-      if (compare >= 0) {
-        tcSubtract(remainder, srhs, 0, parts);
-        lhs[n] |= mask;
-      }
-
-      if (shiftCount == 0)
-        break;
-      shiftCount--;
-      tcShiftRight(srhs, parts, 1);
-      if ((mask >>= 1) == 0) {
-        mask = (WordType) 1 << (APINT_BITS_PER_WORD - 1);
-        n--;
-      }
+    if (shiftCount == 0)
+      break;
+    shiftCount--;
+    tcShiftRight(srhs, parts, 1);
+    if ((mask >>= 1) == 0) {
+      mask = (WordType) 1 << (APINT_BITS_PER_WORD - 1);
+      n--;
+    }
   }
 
   return false;
