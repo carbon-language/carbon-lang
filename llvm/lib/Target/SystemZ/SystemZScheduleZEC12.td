@@ -59,6 +59,7 @@ def : WriteRes<Lat30, []> { let Latency = 30; let NumMicroOps = 0;}
 def ZEC12_FXUnit : ProcResource<2>;
 def ZEC12_LSUnit : ProcResource<2>;
 def ZEC12_FPUnit : ProcResource<1>;
+def ZEC12_DFUnit : ProcResource<1>;
 def ZEC12_VBUnit : ProcResource<1>;
 
 // Subtarget specific definitions of scheduling resources.
@@ -67,6 +68,8 @@ def : WriteRes<LSU,      [ZEC12_LSUnit]> { let Latency = 4; }
 def : WriteRes<LSU_lat1, [ZEC12_LSUnit]> { let Latency = 1; }
 def : WriteRes<FPU,  [ZEC12_FPUnit]> { let Latency = 8; }
 def : WriteRes<FPU2, [ZEC12_FPUnit, ZEC12_FPUnit]> { let Latency = 9; }
+def : WriteRes<DFU,  [ZEC12_DFUnit]> { let Latency = 2; }
+def : WriteRes<DFU2, [ZEC12_DFUnit, ZEC12_FPUnit]> { let Latency = 3; }
 def : WriteRes<VBU,  [ZEC12_VBUnit]>; // Virtual Branching Unit
 
 // -------------------------- INSTRUCTIONS ---------------------------------- //
@@ -548,6 +551,26 @@ def : InstRW<[FXU, Lat30, GroupAlone], (instregex "(CUUTF|CUTFU)(Opt)?$")>;
 
 def : InstRW<[FXU, Lat30, GroupAlone], (instregex "KM(C|F|O|CTR)?$")>;
 def : InstRW<[FXU, Lat30, GroupAlone], (instregex "(KIMD|KLMD|KMAC|PCC)$")>;
+
+//===----------------------------------------------------------------------===//
+// Decimal arithmetic
+//===----------------------------------------------------------------------===//
+
+def : InstRW<[FXU, DFU, LSU, Lat30, GroupAlone], (instregex "CVB(Y|G)?$")>;
+def : InstRW<[FXU, DFU, FXU, Lat30, GroupAlone], (instregex "CVD(Y|G)?$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "MV(N|Z|O)$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "(PACK|PKA|PKU)$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "UNPK(A|U)?$")>;
+
+def : InstRW<[FXU, FXU, DFU2, LSU, LSU, LSU, LSU, Lat15, GroupAlone],
+             (instregex "(A|S|ZA)P$")>;
+def : InstRW<[FXU, FXU, DFU2, LSU, LSU, LSU, LSU, Lat30, GroupAlone],
+             (instregex "(M|D)P$")>;
+def : InstRW<[FXU, FXU, DFU2, LSU, LSU, Lat15, GroupAlone],
+             (instregex "SRP$")>;
+def : InstRW<[DFU2, LSU, LSU, LSU, LSU, Lat11, GroupAlone], (instregex "CP$")>;
+def : InstRW<[DFU2, LSU, LSU, Lat3, GroupAlone], (instregex "TP$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "ED(MK)?$")>;
 
 //===----------------------------------------------------------------------===//
 // Access registers

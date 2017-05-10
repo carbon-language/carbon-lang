@@ -1658,6 +1658,51 @@ let mayLoad = 1, mayStore = 1, Uses = [R0L, R1D], Defs = [CC] in {
 }
 
 //===----------------------------------------------------------------------===//
+// Decimal arithmetic
+//===----------------------------------------------------------------------===//
+
+defm CVB  : BinaryRXPair<"cvb",0x4F, 0xE306, null_frag, GR32, load, 4>;
+def  CVBG : BinaryRXY<"cvbg", 0xE30E, null_frag, GR64, load, 8>;
+
+defm CVD  : StoreRXPair<"cvd", 0x4E, 0xE326, null_frag, GR32, 4>;
+def  CVDG : StoreRXY<"cvdg", 0xE32E, null_frag, GR64, 8>;
+
+let mayLoad = 1, mayStore = 1 in {
+  def MVN : SideEffectBinarySSa<"mvn", 0xD1>;
+  def MVZ : SideEffectBinarySSa<"mvz", 0xD3>;
+  def MVO : SideEffectBinarySSb<"mvo", 0xF1>;
+
+  def PACK : SideEffectBinarySSb<"pack", 0xF2>;
+  def PKA  : SideEffectBinarySSf<"pka", 0xE9>;
+  def PKU  : SideEffectBinarySSf<"pku", 0xE1>;
+  def UNPK : SideEffectBinarySSb<"unpk", 0xF3>;
+  let Defs = [CC] in {
+    def UNPKA : SideEffectBinarySSa<"unpka", 0xEA>;
+    def UNPKU : SideEffectBinarySSa<"unpku", 0xE2>;
+  }
+}
+
+let mayLoad = 1, mayStore = 1 in {
+  let Defs = [CC] in {
+    def AP : SideEffectBinarySSb<"ap", 0xFA>;
+    def SP : SideEffectBinarySSb<"sp", 0xFB>;
+    def ZAP : SideEffectBinarySSb<"zap", 0xF8>;
+    def SRP : SideEffectTernarySSc<"srp", 0xF0>;
+  }
+  def MP : SideEffectBinarySSb<"mp", 0xFC>;
+  def DP : SideEffectBinarySSb<"dp", 0xFD>;
+  let Defs = [CC] in {
+    def ED : SideEffectBinarySSa<"ed", 0xDE>;
+    def EDMK : SideEffectBinarySSa<"edmk", 0xDF>;
+  }
+}
+
+let Defs = [CC] in {
+  def CP : CompareSSb<"cp", 0xF9>;
+  def TP : TestRSL<"tp", 0xEBC0>;
+}
+
+//===----------------------------------------------------------------------===//
 // Access registers
 //===----------------------------------------------------------------------===//
 

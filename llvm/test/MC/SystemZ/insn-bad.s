@@ -219,6 +219,59 @@
 	aly	%r0, -524289
 	aly	%r0, 524288
 
+#CHECK: error: missing length in address
+#CHECK: ap	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: ap	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: ap	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: ap	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: ap	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: ap	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: ap	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: ap	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: ap	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: ap	0(-), 0(1)
+
+	ap	0, 0(1)
+	ap	0(1), 0
+	ap	0(%r1), 0(1,%r1)
+	ap	0(1,%r1), 0(%r1)
+	ap	0(0,%r1), 0(1,%r1)
+	ap	0(1,%r1), 0(0,%r1)
+	ap	0(17,%r1), 0(1,%r1)
+	ap	0(1,%r1), 0(17,%r1)
+	ap	-1(1,%r1), 0(1,%r1)
+	ap	4096(1,%r1), 0(1,%r1)
+	ap	0(1,%r1), -1(1,%r1)
+	ap	0(1,%r1), 4096(1,%r1)
+	ap	0(1,%r0), 0(1,%r1)
+	ap	0(1,%r1), 0(1,%r0)
+	ap	0(%r1,%r2), 0(1,%r1)
+	ap	0(1,%r2), 0(%r1,%r2)
+	ap	0(-), 0(1)
+
 #CHECK: error: instruction requires: distinct-ops
 #CHECK: ark	%r2,%r3,%r4
 
@@ -1492,6 +1545,59 @@
 	cly	%r0, -524289
 	cly	%r0, 524288
 
+#CHECK: error: missing length in address
+#CHECK: cp	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: cp	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: cp	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: cp	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: cp	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: cp	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: cp	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: cp	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: cp	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: cp	0(-), 0(1)
+
+	cp	0, 0(1)
+	cp	0(1), 0
+	cp	0(%r1), 0(1,%r1)
+	cp	0(1,%r1), 0(%r1)
+	cp	0(0,%r1), 0(1,%r1)
+	cp	0(1,%r1), 0(0,%r1)
+	cp	0(17,%r1), 0(1,%r1)
+	cp	0(1,%r1), 0(17,%r1)
+	cp	-1(1,%r1), 0(1,%r1)
+	cp	4096(1,%r1), 0(1,%r1)
+	cp	0(1,%r1), -1(1,%r1)
+	cp	0(1,%r1), 4096(1,%r1)
+	cp	0(1,%r0), 0(1,%r1)
+	cp	0(1,%r1), 0(1,%r0)
+	cp	0(%r1,%r2), 0(1,%r1)
+	cp	0(1,%r2), 0(%r1,%r2)
+	cp	0(-), 0(1)
+
 #CHECK: error: offset out of range
 #CHECK: crj	%r0, %r0, 0, -0x100002
 #CHECK: error: offset out of range
@@ -1694,6 +1800,54 @@
 	cuutf	%r2, %r4, -1
 	cuutf	%r2, %r4, 16
 
+#CHECK: error: invalid operand
+#CHECK: cvb	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: cvb	%r0, 4096
+
+	cvb	%r0, -1
+	cvb	%r0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: cvbg	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: cvbg	%r0, 524288
+
+	cvbg	%r0, -524289
+	cvbg	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: cvby	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: cvby	%r0, 524288
+
+	cvby	%r0, -524289
+	cvby	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: cvd	%r0, -1
+#CHECK: error: invalid operand
+#CHECK: cvd	%r0, 4096
+
+	cvd	%r0, -1
+	cvd	%r0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: cvdg	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: cvdg	%r0, 524288
+
+	cvdg	%r0, -524289
+	cvdg	%r0, 524288
+
+#CHECK: error: invalid operand
+#CHECK: cvdy	%r0, -524289
+#CHECK: error: invalid operand
+#CHECK: cvdy	%r0, 524288
+
+	cvdy	%r0, -524289
+	cvdy	%r0, 524288
+
 #CHECK: error: invalid register pair
 #CHECK: cxbr	%f0, %f2
 #CHECK: error: invalid register pair
@@ -1788,6 +1942,59 @@
 
 	dlr	%r1, %r0
 
+#CHECK: error: missing length in address
+#CHECK: dp	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: dp	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: dp	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: dp	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: dp	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: dp	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: dp	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: dp	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: dp	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: dp	0(-), 0(1)
+
+	dp	0, 0(1)
+	dp	0(1), 0
+	dp	0(%r1), 0(1,%r1)
+	dp	0(1,%r1), 0(%r1)
+	dp	0(0,%r1), 0(1,%r1)
+	dp	0(1,%r1), 0(0,%r1)
+	dp	0(17,%r1), 0(1,%r1)
+	dp	0(1,%r1), 0(17,%r1)
+	dp	-1(1,%r1), 0(1,%r1)
+	dp	4096(1,%r1), 0(1,%r1)
+	dp	0(1,%r1), -1(1,%r1)
+	dp	0(1,%r1), 4096(1,%r1)
+	dp	0(1,%r0), 0(1,%r1)
+	dp	0(1,%r1), 0(1,%r0)
+	dp	0(%r1,%r2), 0(1,%r1)
+	dp	0(1,%r2), 0(%r1,%r2)
+	dp	0(-), 0(1)
+
 #CHECK: error: invalid operand
 #CHECK: dsg	%r0, -524289
 #CHECK: error: invalid operand
@@ -1844,6 +2051,94 @@
         ectg    4096(%r1),160(%r15), %r2
         ectg    0(%r1),-1(%r15), %r2
         ectg    0(%r1),4096(%r15), %r2
+
+#CHECK: error: missing length in address
+#CHECK: ed	0, 0
+#CHECK: error: missing length in address
+#CHECK: ed	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: ed	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: ed	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: ed	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: ed	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: ed	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: ed	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: ed	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: ed	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: ed	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: ed	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: ed	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: ed	0(-), 0
+
+	ed	0, 0
+	ed	0(%r1), 0(%r1)
+	ed	0(1,%r1), 0(2,%r1)
+	ed	0(0,%r1), 0(%r1)
+	ed	0(257,%r1), 0(%r1)
+	ed	-1(1,%r1), 0(%r1)
+	ed	4096(1,%r1), 0(%r1)
+	ed	0(1,%r1), -1(%r1)
+	ed	0(1,%r1), 4096(%r1)
+	ed	0(1,%r0), 0(%r1)
+	ed	0(1,%r1), 0(%r0)
+	ed	0(%r1,%r2), 0(%r1)
+	ed	0(1,%r2), 0(%r1,%r2)
+	ed	0(-), 0
+
+#CHECK: error: missing length in address
+#CHECK: edmk	0, 0
+#CHECK: error: missing length in address
+#CHECK: edmk	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: edmk	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: edmk	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: edmk	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: edmk	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: edmk	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: edmk	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: edmk	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: edmk	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: edmk	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: edmk	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: edmk	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: edmk	0(-), 0
+
+	edmk	0, 0
+	edmk	0(%r1), 0(%r1)
+	edmk	0(1,%r1), 0(2,%r1)
+	edmk	0(0,%r1), 0(%r1)
+	edmk	0(257,%r1), 0(%r1)
+	edmk	-1(1,%r1), 0(%r1)
+	edmk	4096(1,%r1), 0(%r1)
+	edmk	0(1,%r1), -1(%r1)
+	edmk	0(1,%r1), 4096(%r1)
+	edmk	0(1,%r0), 0(%r1)
+	edmk	0(1,%r1), 0(%r0)
+	edmk	0(%r1,%r2), 0(%r1)
+	edmk	0(1,%r2), 0(%r1,%r2)
+	edmk	0(-), 0
 
 #CHECK: error: invalid operand
 #CHECK: ex      %r0, -1
@@ -2827,6 +3122,59 @@
 
 	mlgr	%r1, %r0
 
+#CHECK: error: missing length in address
+#CHECK: mp	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: mp	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: mp	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: mp	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mp	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mp	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mp	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mp	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mp	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: mp	0(-), 0(1)
+
+	mp	0, 0(1)
+	mp	0(1), 0
+	mp	0(%r1), 0(1,%r1)
+	mp	0(1,%r1), 0(%r1)
+	mp	0(0,%r1), 0(1,%r1)
+	mp	0(1,%r1), 0(0,%r1)
+	mp	0(17,%r1), 0(1,%r1)
+	mp	0(1,%r1), 0(17,%r1)
+	mp	-1(1,%r1), 0(1,%r1)
+	mp	4096(1,%r1), 0(1,%r1)
+	mp	0(1,%r1), -1(1,%r1)
+	mp	0(1,%r1), 4096(1,%r1)
+	mp	0(1,%r0), 0(1,%r1)
+	mp	0(1,%r1), 0(1,%r0)
+	mp	0(%r1,%r2), 0(1,%r1)
+	mp	0(1,%r2), 0(%r1,%r2)
+	mp	0(-), 0(1)
+
 #CHECK: error: invalid operand
 #CHECK: ms	%r0, -1
 #CHECK: error: invalid operand
@@ -3128,6 +3476,147 @@
 	mviy	0(%r1,%r2), 0
 	mviy	0, -1
 	mviy	0, 256
+
+#CHECK: error: missing length in address
+#CHECK: mvn	0, 0
+#CHECK: error: missing length in address
+#CHECK: mvn	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: mvn	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvn	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvn	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvn	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvn	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvn	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvn	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvn	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvn	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvn	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvn	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: mvn	0(-), 0
+
+	mvn	0, 0
+	mvn	0(%r1), 0(%r1)
+	mvn	0(1,%r1), 0(2,%r1)
+	mvn	0(0,%r1), 0(%r1)
+	mvn	0(257,%r1), 0(%r1)
+	mvn	-1(1,%r1), 0(%r1)
+	mvn	4096(1,%r1), 0(%r1)
+	mvn	0(1,%r1), -1(%r1)
+	mvn	0(1,%r1), 4096(%r1)
+	mvn	0(1,%r0), 0(%r1)
+	mvn	0(1,%r1), 0(%r0)
+	mvn	0(%r1,%r2), 0(%r1)
+	mvn	0(1,%r2), 0(%r1,%r2)
+	mvn	0(-), 0
+
+#CHECK: error: missing length in address
+#CHECK: mvo	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: mvo	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: mvo	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: mvo	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvo	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvo	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvo	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvo	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvo	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: mvo	0(-), 0(1)
+
+	mvo	0, 0(1)
+	mvo	0(1), 0
+	mvo	0(%r1), 0(1,%r1)
+	mvo	0(1,%r1), 0(%r1)
+	mvo	0(0,%r1), 0(1,%r1)
+	mvo	0(1,%r1), 0(0,%r1)
+	mvo	0(17,%r1), 0(1,%r1)
+	mvo	0(1,%r1), 0(17,%r1)
+	mvo	-1(1,%r1), 0(1,%r1)
+	mvo	4096(1,%r1), 0(1,%r1)
+	mvo	0(1,%r1), -1(1,%r1)
+	mvo	0(1,%r1), 4096(1,%r1)
+	mvo	0(1,%r0), 0(1,%r1)
+	mvo	0(1,%r1), 0(1,%r0)
+	mvo	0(%r1,%r2), 0(1,%r1)
+	mvo	0(1,%r2), 0(%r1,%r2)
+	mvo	0(-), 0(1)
+
+#CHECK: error: missing length in address
+#CHECK: mvz	0, 0
+#CHECK: error: missing length in address
+#CHECK: mvz	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: mvz	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: mvz	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvz	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvz	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvz	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvz	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: mvz	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvz	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: mvz	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvz	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: mvz	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: mvz	0(-), 0
+
+	mvz	0, 0
+	mvz	0(%r1), 0(%r1)
+	mvz	0(1,%r1), 0(2,%r1)
+	mvz	0(0,%r1), 0(%r1)
+	mvz	0(257,%r1), 0(%r1)
+	mvz	-1(1,%r1), 0(%r1)
+	mvz	4096(1,%r1), 0(%r1)
+	mvz	0(1,%r1), -1(%r1)
+	mvz	0(1,%r1), 4096(%r1)
+	mvz	0(1,%r0), 0(%r1)
+	mvz	0(1,%r1), 0(%r0)
+	mvz	0(%r1,%r2), 0(%r1)
+	mvz	0(1,%r2), 0(%r1,%r2)
+	mvz	0(-), 0
 
 #CHECK: error: invalid register pair
 #CHECK: mxbr	%f0, %f2
@@ -3473,6 +3962,59 @@
 	oy	%r0, -524289
 	oy	%r0, 524288
 
+#CHECK: error: missing length in address
+#CHECK: pack	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: pack	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: pack	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: pack	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pack	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: pack	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: pack	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: pack	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: pack	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: pack	0(-), 0(1)
+
+	pack	0, 0(1)
+	pack	0(1), 0
+	pack	0(%r1), 0(1,%r1)
+	pack	0(1,%r1), 0(%r1)
+	pack	0(0,%r1), 0(1,%r1)
+	pack	0(1,%r1), 0(0,%r1)
+	pack	0(17,%r1), 0(1,%r1)
+	pack	0(1,%r1), 0(17,%r1)
+	pack	-1(1,%r1), 0(1,%r1)
+	pack	4096(1,%r1), 0(1,%r1)
+	pack	0(1,%r1), -1(1,%r1)
+	pack	0(1,%r1), 4096(1,%r1)
+	pack	0(1,%r0), 0(1,%r1)
+	pack	0(1,%r1), 0(1,%r0)
+	pack	0(%r1,%r2), 0(1,%r1)
+	pack	0(1,%r2), 0(%r1,%r2)
+	pack	0(-), 0(1)
+
 #CHECK: error: instruction requires: message-security-assist-extension4
 #CHECK: pcc
 
@@ -3511,6 +4053,94 @@
 	pfdrl	1, -1
 	pfdrl	1, 1
 	pfdrl	1, 0x100000000
+
+#CHECK: error: missing length in address
+#CHECK: pka	0, 0
+#CHECK: error: missing length in address
+#CHECK: pka	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: pka	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: pka	0(%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: pka	0(%r1), 0(257,%r1)
+#CHECK: error: invalid operand
+#CHECK: pka	-1(%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pka	4096(%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pka	0(%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pka	0(%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: pka	0(%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: pka	0(%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: pka	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: pka	0(%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: pka	0, 0(-)
+
+	pka	0, 0
+	pka	0(%r1), 0(%r1)
+	pka	0(1,%r1), 0(2,%r1)
+	pka	0(%r1), 0(0,%r1)
+	pka	0(%r1), 0(257,%r1)
+	pka	-1(%r1), 0(1,%r1)
+	pka	4096(%r1), 0(1,%r1)
+	pka	0(%r1), -1(1,%r1)
+	pka	0(%r1), 4096(1,%r1)
+	pka	0(%r0), 0(1,%r1)
+	pka	0(%r1), 0(1,%r0)
+	pka	0(%r1,%r2), 0(1,%r1)
+	pka	0(%r2), 0(%r1,%r2)
+	pka	0, 0(-)
+
+#CHECK: error: missing length in address
+#CHECK: pku	0, 0
+#CHECK: error: missing length in address
+#CHECK: pku	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: pku	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: pku	0(%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: pku	0(%r1), 0(257,%r1)
+#CHECK: error: invalid operand
+#CHECK: pku	-1(%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pku	4096(%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pku	0(%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: pku	0(%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: pku	0(%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: pku	0(%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: pku	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: pku	0(%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: pku	0, 0(-)
+
+	pku	0, 0
+	pku	0(%r1), 0(%r1)
+	pku	0(1,%r1), 0(2,%r1)
+	pku	0(%r1), 0(0,%r1)
+	pku	0(%r1), 0(257,%r1)
+	pku	-1(%r1), 0(1,%r1)
+	pku	4096(%r1), 0(1,%r1)
+	pku	0(%r1), -1(1,%r1)
+	pku	0(%r1), 4096(1,%r1)
+	pku	0(%r0), 0(1,%r1)
+	pku	0(%r1), 0(1,%r0)
+	pku	0(%r1,%r2), 0(1,%r1)
+	pku	0(%r2), 0(%r1,%r2)
+	pku	0, 0(-)
 
 #CHECK: error: invalid use of indexed addressing
 #CHECK: plo	%r2, 160(%r1,%r15), %r4, 160(%r15)
@@ -3843,6 +4473,59 @@
 	sly	%r0, -524289
 	sly	%r0, 524288
 
+#CHECK: error: missing length in address
+#CHECK: sp	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: sp	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: sp	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: sp	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: sp	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: sp	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: sp	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: sp	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: sp	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: sp	0(-), 0(1)
+
+	sp	0, 0(1)
+	sp	0(1), 0
+	sp	0(%r1), 0(1,%r1)
+	sp	0(1,%r1), 0(%r1)
+	sp	0(0,%r1), 0(1,%r1)
+	sp	0(1,%r1), 0(0,%r1)
+	sp	0(17,%r1), 0(1,%r1)
+	sp	0(1,%r1), 0(17,%r1)
+	sp	-1(1,%r1), 0(1,%r1)
+	sp	4096(1,%r1), 0(1,%r1)
+	sp	0(1,%r1), -1(1,%r1)
+	sp	0(1,%r1), 4096(1,%r1)
+	sp	0(1,%r0), 0(1,%r1)
+	sp	0(1,%r1), 0(1,%r0)
+	sp	0(%r1,%r2), 0(1,%r1)
+	sp	0(1,%r2), 0(%r1,%r2)
+	sp	0(-), 0(1)
+
 #CHECK: error: invalid operand
 #CHECK: sqdb	%f0, -1
 #CHECK: error: invalid operand
@@ -3964,6 +4647,56 @@
 	srnmt	-1
 	srnmt	4096
 	srnmt	0(%r1,%r2)
+
+#CHECK: error: missing length in address
+#CHECK: srp	0, 0, 0
+#CHECK: error: missing length in address
+#CHECK: srp	0(%r1), 0(%r1), 0
+#CHECK: error: invalid use of length addressing
+#CHECK: srp	0(1,%r1), 0(2,%r1), 0
+#CHECK: error: invalid operand
+#CHECK: srp	0(0,%r1), 0(%r1), 0
+#CHECK: error: invalid operand
+#CHECK: srp	0(17,%r1), 0(%r1), 0
+#CHECK: error: invalid operand
+#CHECK: srp	-1(1,%r1), 0(%r1), 0
+#CHECK: error: invalid operand
+#CHECK: srp	4096(1,%r1), 0(%r1), 0
+#CHECK: error: invalid operand
+#CHECK: srp	0(1,%r1), -1(%r1), 0
+#CHECK: error: invalid operand
+#CHECK: srp	0(1,%r1), 4096(%r1), 0
+#CHECK: error: %r0 used in an address
+#CHECK: srp	0(1,%r0), 0(%r1), 0
+#CHECK: error: %r0 used in an address
+#CHECK: srp	0(1,%r1), 0(%r0), 0
+#CHECK: error: invalid use of indexed addressing
+#CHECK: srp	0(%r1,%r2), 0(%r1), 0
+#CHECK: error: invalid use of indexed addressing
+#CHECK: srp	0(1,%r2), 0(%r1,%r2), 0
+#CHECK: error: invalid operand
+#CHECK: srp	0(1), 0, -1
+#CHECK: error: invalid operand
+#CHECK: srp	0(1), 0, 16
+#CHECK: error: unknown token in expression
+#CHECK: srp	0(-), 0, 0
+
+	srp	0, 0, 0
+	srp	0(%r1), 0(%r1), 0
+	srp	0(1,%r1), 0(2,%r1), 0
+	srp	0(0,%r1), 0(%r1), 0
+	srp	0(17,%r1), 0(%r1), 0
+	srp	-1(1,%r1), 0(%r1), 0
+	srp	4096(1,%r1), 0(%r1), 0
+	srp	0(1,%r1), -1(%r1), 0
+	srp	0(1,%r1), 4096(%r1), 0
+	srp	0(1,%r0), 0(%r1), 0
+	srp	0(1,%r1), 0(%r0), 0
+	srp	0(%r1,%r2), 0(%r1), 0
+	srp	0(1,%r2), 0(%r1,%r2), 0
+	srp	0(1), 0, -1
+	srp	0(1), 0, 16
+	srp	0(-), 0, 0
 
 #CHECK: error: invalid operand
 #CHECK: st	%r0, -1
@@ -4348,6 +5081,35 @@
 	tmy	0, 256
 
 #CHECK: error: missing length in address
+#CHECK: tp	0
+#CHECK: error: missing length in address
+#CHECK: tp	0(%r1)
+#CHECK: error: invalid operand
+#CHECK: tp	0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: tp	0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: tp	-1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: tp	4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: tp	0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: tp	0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: tp	0(-)
+
+	tp	0
+	tp	0(%r1)
+	tp	0(0,%r1)
+	tp	0(17,%r1)
+	tp	-1(1,%r1)
+	tp	4096(1,%r1)
+	tp	0(1,%r0)
+	tp	0(%r1,%r2)
+	tp	0(-)
+
+#CHECK: error: missing length in address
 #CHECK: tr	0, 0
 #CHECK: error: missing length in address
 #CHECK: tr	0(%r1), 0(%r1)
@@ -4561,6 +5323,147 @@
 	ts	4096
 	ts	0(%r1,%r2)
 
+#CHECK: error: missing length in address
+#CHECK: unpk	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: unpk	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: unpk	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: unpk	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpk	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: unpk	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: unpk	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: unpk	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: unpk	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: unpk	0(-), 0(1)
+
+	unpk	0, 0(1)
+	unpk	0(1), 0
+	unpk	0(%r1), 0(1,%r1)
+	unpk	0(1,%r1), 0(%r1)
+	unpk	0(0,%r1), 0(1,%r1)
+	unpk	0(1,%r1), 0(0,%r1)
+	unpk	0(17,%r1), 0(1,%r1)
+	unpk	0(1,%r1), 0(17,%r1)
+	unpk	-1(1,%r1), 0(1,%r1)
+	unpk	4096(1,%r1), 0(1,%r1)
+	unpk	0(1,%r1), -1(1,%r1)
+	unpk	0(1,%r1), 4096(1,%r1)
+	unpk	0(1,%r0), 0(1,%r1)
+	unpk	0(1,%r1), 0(1,%r0)
+	unpk	0(%r1,%r2), 0(1,%r1)
+	unpk	0(1,%r2), 0(%r1,%r2)
+	unpk	0(-), 0(1)
+
+#CHECK: error: missing length in address
+#CHECK: unpka	0, 0
+#CHECK: error: missing length in address
+#CHECK: unpka	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: unpka	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpka	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpka	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpka	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpka	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpka	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpka	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: unpka	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: unpka	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: unpka	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: unpka	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: unpka	0(-), 0
+
+	unpka	0, 0
+	unpka	0(%r1), 0(%r1)
+	unpka	0(1,%r1), 0(2,%r1)
+	unpka	0(0,%r1), 0(%r1)
+	unpka	0(257,%r1), 0(%r1)
+	unpka	-1(1,%r1), 0(%r1)
+	unpka	4096(1,%r1), 0(%r1)
+	unpka	0(1,%r1), -1(%r1)
+	unpka	0(1,%r1), 4096(%r1)
+	unpka	0(1,%r0), 0(%r1)
+	unpka	0(1,%r1), 0(%r0)
+	unpka	0(%r1,%r2), 0(%r1)
+	unpka	0(1,%r2), 0(%r1,%r2)
+	unpka	0(-), 0
+
+#CHECK: error: missing length in address
+#CHECK: unpku	0, 0
+#CHECK: error: missing length in address
+#CHECK: unpku	0(%r1), 0(%r1)
+#CHECK: error: invalid use of length addressing
+#CHECK: unpku	0(1,%r1), 0(2,%r1)
+#CHECK: error: invalid operand
+#CHECK: unpku	0(0,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpku	0(257,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpku	-1(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpku	4096(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpku	0(1,%r1), -1(%r1)
+#CHECK: error: invalid operand
+#CHECK: unpku	0(1,%r1), 4096(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: unpku	0(1,%r0), 0(%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: unpku	0(1,%r1), 0(%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: unpku	0(%r1,%r2), 0(%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: unpku	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: unpku	0(-), 0
+
+	unpku	0, 0
+	unpku	0(%r1), 0(%r1)
+	unpku	0(1,%r1), 0(2,%r1)
+	unpku	0(0,%r1), 0(%r1)
+	unpku	0(257,%r1), 0(%r1)
+	unpku	-1(1,%r1), 0(%r1)
+	unpku	4096(1,%r1), 0(%r1)
+	unpku	0(1,%r1), -1(%r1)
+	unpku	0(1,%r1), 4096(%r1)
+	unpku	0(1,%r0), 0(%r1)
+	unpku	0(1,%r1), 0(%r0)
+	unpku	0(%r1,%r2), 0(%r1)
+	unpku	0(1,%r2), 0(%r1,%r2)
+	unpku	0(-), 0
+
 #CHECK: error: invalid operand
 #CHECK: x	%r0, -1
 #CHECK: error: invalid operand
@@ -4688,3 +5591,56 @@
 
 	xy	%r0, -524289
 	xy	%r0, 524288
+
+#CHECK: error: missing length in address
+#CHECK: zap	0, 0(1)
+#CHECK: error: missing length in address
+#CHECK: zap	0(1), 0
+#CHECK: error: missing length in address
+#CHECK: zap	0(%r1), 0(1,%r1)
+#CHECK: error: missing length in address
+#CHECK: zap	0(1,%r1), 0(%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	0(0,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	0(1,%r1), 0(0,%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	0(17,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	0(1,%r1), 0(17,%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	-1(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	4096(1,%r1), 0(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	0(1,%r1), -1(1,%r1)
+#CHECK: error: invalid operand
+#CHECK: zap	0(1,%r1), 4096(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: zap	0(1,%r0), 0(1,%r1)
+#CHECK: error: %r0 used in an address
+#CHECK: zap	0(1,%r1), 0(1,%r0)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: zap	0(%r1,%r2), 0(1,%r1)
+#CHECK: error: invalid use of indexed addressing
+#CHECK: zap	0(1,%r2), 0(%r1,%r2)
+#CHECK: error: unknown token in expression
+#CHECK: zap	0(-), 0(1)
+
+	zap	0, 0(1)
+	zap	0(1), 0
+	zap	0(%r1), 0(1,%r1)
+	zap	0(1,%r1), 0(%r1)
+	zap	0(0,%r1), 0(1,%r1)
+	zap	0(1,%r1), 0(0,%r1)
+	zap	0(17,%r1), 0(1,%r1)
+	zap	0(1,%r1), 0(17,%r1)
+	zap	-1(1,%r1), 0(1,%r1)
+	zap	4096(1,%r1), 0(1,%r1)
+	zap	0(1,%r1), -1(1,%r1)
+	zap	0(1,%r1), 4096(1,%r1)
+	zap	0(1,%r0), 0(1,%r1)
+	zap	0(1,%r1), 0(1,%r0)
+	zap	0(%r1,%r2), 0(1,%r1)
+	zap	0(1,%r2), 0(%r1,%r2)
+	zap	0(-), 0(1)

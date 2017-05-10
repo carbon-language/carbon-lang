@@ -710,6 +710,21 @@ class InstRSI<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{15-0}  = RI2;
 }
 
+class InstRSLa<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<20> BDL1;
+
+  let Inst{47-40} = op{15-8};
+  let Inst{39-36} = BDL1{19-16};
+  let Inst{35-32} = 0;
+  let Inst{31-16} = BDL1{15-0};
+  let Inst{15-8}  = 0;
+  let Inst{7-0}   = op{7-0};
+}
+
 class InstRSYa<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstSystemZ<6, outs, ins, asmstr, pattern> {
   field bits<48> Inst;
@@ -817,6 +832,37 @@ class InstSSa<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{15-0}  = BD2;
 }
 
+class InstSSb<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<20> BDL1;
+  bits<20> BDL2;
+
+  let Inst{47-40} = op;
+  let Inst{39-36} = BDL1{19-16};
+  let Inst{35-32} = BDL2{19-16};
+  let Inst{31-16} = BDL1{15-0};
+  let Inst{15-0}  = BDL2{15-0};
+}
+
+class InstSSc<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<20> BDL1;
+  bits<16> BD2;
+  bits<4> I3;
+
+  let Inst{47-40} = op;
+  let Inst{39-36} = BDL1{19-16};
+  let Inst{35-32} = I3;
+  let Inst{31-16} = BDL1{15-0};
+  let Inst{15-0}  = BD2;
+}
+
 class InstSSd<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstSystemZ<6, outs, ins, asmstr, pattern> {
   field bits<48> Inst;
@@ -848,6 +894,20 @@ class InstSSe<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{35-32} = R3;
   let Inst{31-16} = BD2;
   let Inst{15-0}  = BD4;
+}
+
+class InstSSf<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<16> BD1;
+  bits<24> BDL2;
+
+  let Inst{47-40} = op;
+  let Inst{39-32} = BDL2{23-16};
+  let Inst{31-16} = BD1;
+  let Inst{15-0}  = BDL2{15-0};
 }
 
 class InstSSE<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
@@ -1642,8 +1702,9 @@ class ICV<string name>
 //     Two input operands and an implicit CC output operand.
 //
 //   Test:
-//     Two input operands and an implicit CC output operand.  The second
-//     input operand is an "address" operand used as a test class mask.
+//     One or two input operands and an implicit CC output operand.  If
+//     present, the second input operand is an "address" operand used as
+//     a test class mask.
 //
 //   Ternary:
 //     One register output operand and three input operands.
@@ -2609,6 +2670,15 @@ class SideEffectBinarySSa<string mnemonic, bits<8> opcode>
   : InstSSa<opcode, (outs), (ins bdladdr12onlylen8:$BDL1, bdaddr12only:$BD2),
             mnemonic##"\t$BDL1, $BD2", []>;
 
+class SideEffectBinarySSb<string mnemonic, bits<8> opcode>
+  : InstSSb<opcode,
+            (outs), (ins bdladdr12onlylen4:$BDL1, bdladdr12onlylen4:$BDL2),
+            mnemonic##"\t$BDL1, $BDL2", []>;
+
+class SideEffectBinarySSf<string mnemonic, bits<8> opcode>
+  : InstSSf<opcode, (outs), (ins bdaddr12only:$BD1, bdladdr12onlylen8:$BDL2),
+            mnemonic##"\t$BD1, $BDL2", []>;
+
 class SideEffectBinaryMemMemRR<string mnemonic, bits<8> opcode,
                                RegisterOperand cls1, RegisterOperand cls2>
   : InstRR<opcode, (outs cls1:$R1, cls2:$R2), (ins cls1:$R1src, cls2:$R2src),
@@ -3303,6 +3373,14 @@ multiclass CompareRXPair<string mnemonic, bits<8> rxOpcode, bits<16> rxyOpcode,
   }
 }
 
+class CompareSSb<string mnemonic, bits<8> opcode>
+  : InstSSb<opcode,
+            (outs), (ins bdladdr12onlylen4:$BDL1, bdladdr12onlylen4:$BDL2),
+            mnemonic##"\t$BDL1, $BDL2", []> {
+  let isCompare = 1;
+  let mayLoad = 1;
+}
+
 class CompareSI<string mnemonic, bits<8> opcode, SDPatternOperator operator,
                 SDPatternOperator load, Immediate imm,
                 AddressingMode mode = bdaddr12only>
@@ -3378,6 +3456,17 @@ class TestRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
             [(operator cls:$R1, bdxaddr12only:$XBD2)]> {
   let M3 = 0;
 }
+
+class TestRSL<string mnemonic, bits<16> opcode>
+  : InstRSLa<opcode, (outs), (ins bdladdr12onlylen4:$BDL1),
+             mnemonic#"\t$BDL1", []> {
+  let mayLoad = 1;
+}
+
+class SideEffectTernarySSc<string mnemonic, bits<8> opcode>
+  : InstSSc<opcode, (outs), (ins bdladdr12onlylen4:$BDL1,
+                                 shift12only:$BD2, imm32zx4:$I3),
+            mnemonic##"\t$BDL1, $BD2, $I3", []>;
 
 class SideEffectTernaryMemMemMemRRFb<string mnemonic, bits<16> opcode,
                                      RegisterOperand cls1,

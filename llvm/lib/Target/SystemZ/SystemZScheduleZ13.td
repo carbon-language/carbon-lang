@@ -76,6 +76,8 @@ def : WriteRes<VecBF,   [Z13_VecUnit]> { let Latency = 8; }
 def : WriteRes<VecBF2,  [Z13_VecUnit, Z13_VecUnit]> { let Latency = 9; }
 def : WriteRes<VecDF,   [Z13_VecUnit]> { let Latency = 8; }
 def : WriteRes<VecDF2,  [Z13_VecUnit, Z13_VecUnit]> { let Latency = 9; }
+def : WriteRes<VecDFX,  [Z13_VecUnit]> { let Latency = 1; }
+def : WriteRes<VecDFX2, [Z13_VecUnit, Z13_VecUnit]> { let Latency = 2; }
 def : WriteRes<VecFPd,  [Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
                          Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
                          Z13_VecFPdUnit, Z13_VecFPdUnit, Z13_VecFPdUnit,
@@ -579,6 +581,26 @@ def : InstRW<[FXa, Lat30, GroupAlone], (instregex "(CUUTF|CUTFU)(Opt)?$")>;
 
 def : InstRW<[FXa, Lat30, GroupAlone], (instregex "KM(C|F|O|CTR)?$")>;
 def : InstRW<[FXa, Lat30, GroupAlone], (instregex "(KIMD|KLMD|KMAC|PCC|PPNO)$")>;
+
+//===----------------------------------------------------------------------===//
+// Decimal arithmetic
+//===----------------------------------------------------------------------===//
+
+def : InstRW<[FXb, VecDF, LSU, Lat30, GroupAlone], (instregex "CVB(Y|G)?$")>;
+def : InstRW<[FXb, VecDF, FXb, Lat30, GroupAlone], (instregex "CVD(Y|G)?$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "MV(N|Z|O)$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "(PACK|PKA|PKU)$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "UNPK(A|U)?$")>;
+
+def : InstRW<[FXb, VecDFX, LSU, LSU, Lat9, GroupAlone],
+             (instregex "(A|S|ZA)P$")>;
+def : InstRW<[FXb, VecDFX2, LSU, LSU, Lat30, GroupAlone],
+             (instregex "(M|D)P$")>;
+def : InstRW<[FXb, FXb, VecDFX2, LSU, LSU, LSU, Lat15, GroupAlone],
+             (instregex "SRP$")>;
+def : InstRW<[VecDFX, LSU, LSU, Lat5, GroupAlone], (instregex "CP$")>;
+def : InstRW<[VecDFX, LSU, Lat4, GroupAlone], (instregex "TP$")>;
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "ED(MK)?$")>;
 
 //===----------------------------------------------------------------------===//
 // Access registers
