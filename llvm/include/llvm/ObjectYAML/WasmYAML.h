@@ -69,8 +69,8 @@ struct Import {
   ExportKind Kind;
   union {
     uint32_t SigIndex;
-    Global Global;
-    Table Table;
+    Global GlobalImport;
+    Table TableImport;
     Limits Memory;
   };
 };

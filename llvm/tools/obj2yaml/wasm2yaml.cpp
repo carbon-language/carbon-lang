@@ -108,11 +108,11 @@ ErrorOr<WasmYAML::Object *> WasmDumper::dump() {
           Im.SigIndex = Import.SigIndex;
           break;
         case wasm::WASM_EXTERNAL_GLOBAL:
-          Im.Global.Type = Import.Global.Type;
-          Im.Global.Mutable = Import.Global.Mutable;
+          Im.GlobalImport.Type = Import.Global.Type;
+          Im.GlobalImport.Mutable = Import.Global.Mutable;
           break;
         case wasm::WASM_EXTERNAL_TABLE:
-          Im.Table = make_table(Import.Table);
+          Im.TableImport = make_table(Import.Table);
           break;
         case wasm::WASM_EXTERNAL_MEMORY:
           Im.Memory = make_limits(Import.Memory);
