@@ -197,6 +197,11 @@
 	ppa	%r0, %r0, -1
 	ppa	%r0, %r0, 16
 
+#CHECK: error: instruction requires: message-security-assist-extension5
+#CHECK: ppno	%r2, %r4
+
+	ppno	%r2, %r4
+
 #CHECK: error: invalid operand
 #CHECK: risbgn	%r0,%r0,0,0,-1
 #CHECK: error: invalid operand

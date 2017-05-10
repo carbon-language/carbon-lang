@@ -103,6 +103,14 @@
 	lzrg	%r0, -524289
 	lzrg	%r0, 524288
 
+#CHECK: error: invalid register pair
+#CHECK: ppno	%r1, %r2
+#CHECK: error: invalid register pair
+#CHECK: ppno	%r2, %r1
+
+	ppno	%r1, %r2
+	ppno	%r2, %r1
+
 #CHECK: error: invalid operand
 #CHECK: stocfh	%r0, 0, -1
 #CHECK: error: invalid operand

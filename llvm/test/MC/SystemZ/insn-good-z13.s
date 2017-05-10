@@ -356,6 +356,16 @@
 	stocfhnp  %r1, 2(%r3)
 	stocfhno  %r1, 2(%r3)
 
+#CHECK: ppno	%r2, %r2                # encoding: [0xb9,0x3c,0x00,0x22]
+#CHECK: ppno	%r2, %r14               # encoding: [0xb9,0x3c,0x00,0x2e]
+#CHECK: ppno	%r14, %r2               # encoding: [0xb9,0x3c,0x00,0xe2]
+#CHECK: ppno	%r6, %r10               # encoding: [0xb9,0x3c,0x00,0x6a]
+
+	ppno	%r2, %r2
+	ppno	%r2, %r14
+	ppno	%r14, %r2
+	ppno	%r6, %r10
+
 #CHECK: va      %v0, %v0, %v0, 0        # encoding: [0xe7,0x00,0x00,0x00,0x00,0xf3]
 #CHECK: va      %v0, %v0, %v0, 15       # encoding: [0xe7,0x00,0x00,0x00,0xf0,0xf3]
 #CHECK: va      %v0, %v0, %v31, 0       # encoding: [0xe7,0x00,0xf0,0x00,0x02,0xf3]

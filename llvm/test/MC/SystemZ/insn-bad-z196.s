@@ -503,6 +503,33 @@
 	fixbra	%f0, 0, %f2, 0
 	fixbra	%f2, 0, %f0, 0
 
+#CHECK: error: invalid register pair
+#CHECK: kmctr	%r1, %r2, %r4
+#CHECK: error: invalid register pair
+#CHECK: kmctr	%r2, %r1, %r4
+#CHECK: error: invalid register pair
+#CHECK: kmctr	%r2, %r4, %r1
+
+	kmctr	%r1, %r2, %r4
+	kmctr	%r2, %r1, %r4
+	kmctr	%r2, %r4, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: kmf	%r1, %r2
+#CHECK: error: invalid register pair
+#CHECK: kmf	%r2, %r1
+
+	kmf	%r1, %r2
+	kmf	%r2, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: kmo	%r1, %r2
+#CHECK: error: invalid register pair
+#CHECK: kmo	%r2, %r1
+
+	kmo	%r1, %r2
+	kmo	%r2, %r1
+
 #CHECK: error: invalid operand
 #CHECK: laa	%r0, %r0, -524289
 #CHECK: error: invalid operand

@@ -543,6 +543,13 @@ def : InstRW<[FXU, Lat30, GroupAlone], (instregex "CU(12|14|21|24|41|42)(Opt)?$"
 def : InstRW<[FXU, Lat30, GroupAlone], (instregex "(CUUTF|CUTFU)(Opt)?$")>;
 
 //===----------------------------------------------------------------------===//
+// Message-security assist
+//===----------------------------------------------------------------------===//
+
+def : InstRW<[FXU, Lat30, GroupAlone], (instregex "KM(C|F|O|CTR)?$")>;
+def : InstRW<[FXU, Lat30, GroupAlone], (instregex "(KIMD|KLMD|KMAC|PCC)$")>;
+
+//===----------------------------------------------------------------------===//
 // Access registers
 //===----------------------------------------------------------------------===//
 

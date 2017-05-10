@@ -6364,6 +6364,56 @@
 	ipm	%r1
 	ipm	%r15
 
+#CHECK: kimd	%r0, %r2                # encoding: [0xb9,0x3e,0x00,0x02]
+#CHECK: kimd	%r0, %r14               # encoding: [0xb9,0x3e,0x00,0x0e]
+#CHECK: kimd	%r15, %r2               # encoding: [0xb9,0x3e,0x00,0xf2]
+#CHECK: kimd	%r7, %r10               # encoding: [0xb9,0x3e,0x00,0x7a]
+
+	kimd	%r0, %r2
+	kimd	%r0, %r14
+	kimd	%r15, %r2
+	kimd	%r7, %r10
+
+#CHECK: klmd	%r0, %r2                # encoding: [0xb9,0x3f,0x00,0x02]
+#CHECK: klmd	%r0, %r14               # encoding: [0xb9,0x3f,0x00,0x0e]
+#CHECK: klmd	%r15, %r2               # encoding: [0xb9,0x3f,0x00,0xf2]
+#CHECK: klmd	%r7, %r10               # encoding: [0xb9,0x3f,0x00,0x7a]
+
+	klmd	%r0, %r2
+	klmd	%r0, %r14
+	klmd	%r15, %r2
+	klmd	%r7, %r10
+
+#CHECK: km	%r2, %r2                # encoding: [0xb9,0x2e,0x00,0x22]
+#CHECK: km	%r2, %r14               # encoding: [0xb9,0x2e,0x00,0x2e]
+#CHECK: km	%r14, %r2               # encoding: [0xb9,0x2e,0x00,0xe2]
+#CHECK: km	%r6, %r10               # encoding: [0xb9,0x2e,0x00,0x6a]
+
+	km	%r2, %r2
+	km	%r2, %r14
+	km	%r14, %r2
+	km	%r6, %r10
+
+#CHECK: kmac	%r0, %r2                # encoding: [0xb9,0x1e,0x00,0x02]
+#CHECK: kmac	%r0, %r14               # encoding: [0xb9,0x1e,0x00,0x0e]
+#CHECK: kmac	%r15, %r2               # encoding: [0xb9,0x1e,0x00,0xf2]
+#CHECK: kmac	%r7, %r10               # encoding: [0xb9,0x1e,0x00,0x7a]
+
+	kmac	%r0, %r2
+	kmac	%r0, %r14
+	kmac	%r15, %r2
+	kmac	%r7, %r10
+
+#CHECK: kmc	%r2, %r2                # encoding: [0xb9,0x2f,0x00,0x22]
+#CHECK: kmc	%r2, %r14               # encoding: [0xb9,0x2f,0x00,0x2e]
+#CHECK: kmc	%r14, %r2               # encoding: [0xb9,0x2f,0x00,0xe2]
+#CHECK: kmc	%r6, %r10               # encoding: [0xb9,0x2f,0x00,0x6a]
+
+	kmc	%r2, %r2
+	kmc	%r2, %r14
+	kmc	%r14, %r2
+	kmc	%r6, %r10
+
 #CHECK: l	%r0, 0                  # encoding: [0x58,0x00,0x00,0x00]
 #CHECK: l	%r0, 4095               # encoding: [0x58,0x00,0x0f,0xff]
 #CHECK: l	%r0, 0(%r1)             # encoding: [0x58,0x00,0x10,0x00]

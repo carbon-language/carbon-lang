@@ -1714,6 +1714,12 @@ class SideEffectInherentS<string mnemonic, bits<16> opcode,
   let BD2 = 0;
 }
 
+class SideEffectInherentRRE<string mnemonic, bits<16> opcode>
+  : InstRRE<opcode, (outs), (ins), mnemonic, []> {
+  let R1 = 0;
+  let R2 = 0;
+}
+
 // Allow an optional TLS marker symbol to generate TLS call relocations.
 class CallRI<string mnemonic, bits<12> opcode>
   : InstRIb<opcode, (outs), (ins GR64:$R1, brtarget16tls:$RI2),
@@ -2611,6 +2617,14 @@ class SideEffectBinaryMemMemRR<string mnemonic, bits<8> opcode,
     let DisableEncoding = "$R1src, $R2src";
 }
 
+class SideEffectBinaryMemRRE<string mnemonic, bits<16> opcode,
+                             RegisterOperand cls1, RegisterOperand cls2>
+  : InstRRE<opcode, (outs cls2:$R2), (ins cls1:$R1, cls2:$R2src),
+            mnemonic#"\t$R1, $R2", []> {
+  let Constraints = "$R2 = $R2src";
+  let DisableEncoding = "$R2src";
+}
+
 class SideEffectBinaryMemMemRRE<string mnemonic, bits<16> opcode,
                                 RegisterOperand cls1, RegisterOperand cls2>
   : InstRRE<opcode, (outs cls1:$R1, cls2:$R2), (ins cls1:$R1src, cls2:$R2src),
@@ -3363,6 +3377,18 @@ class TestRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
             mnemonic#"\t$R1, $XBD2",
             [(operator cls:$R1, bdxaddr12only:$XBD2)]> {
   let M3 = 0;
+}
+
+class SideEffectTernaryMemMemMemRRFb<string mnemonic, bits<16> opcode,
+                                     RegisterOperand cls1,
+                                     RegisterOperand cls2,
+                                     RegisterOperand cls3>
+  : InstRRFb<opcode, (outs cls1:$R1, cls2:$R2, cls3:$R3),
+             (ins cls1:$R1src, cls2:$R2src, cls3:$R3src),
+             mnemonic#"\t$R1, $R3, $R2", []> {
+  let Constraints = "$R1 = $R1src, $R2 = $R2src, $R3 = $R3src";
+  let DisableEncoding = "$R1src, $R2src, $R3src";
+  let M4 = 0;
 }
 
 class SideEffectTernaryRRFc<string mnemonic, bits<16> opcode,

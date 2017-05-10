@@ -2009,6 +2009,52 @@
 	iill	%r0, -1
 	iill	%r0, 0x10000
 
+#CHECK: error: invalid register pair
+#CHECK: kimd	%r0, %r1
+
+	kimd	%r0, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: klmd	%r0, %r1
+
+	klmd	%r0, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: km	%r1, %r2
+#CHECK: error: invalid register pair
+#CHECK: km	%r2, %r1
+
+	km	%r1, %r2
+	km	%r2, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: kmac	%r0, %r1
+
+	kmac	%r0, %r1
+
+#CHECK: error: invalid register pair
+#CHECK: kmc	%r1, %r2
+#CHECK: error: invalid register pair
+#CHECK: kmc	%r2, %r1
+
+	kmc	%r1, %r2
+	kmc	%r2, %r1
+
+#CHECK: error: instruction requires: message-security-assist-extension4
+#CHECK: kmctr	%r2, %r4, %r6
+
+	kmctr	%r2, %r4, %r6
+
+#CHECK: error: instruction requires: message-security-assist-extension4
+#CHECK: kmf	%r2, %r4
+
+	kmf	%r2, %r4
+
+#CHECK: error: instruction requires: message-security-assist-extension4
+#CHECK: kmo	%r2, %r4
+
+	kmo	%r2, %r4
+
 #CHECK: error: invalid operand
 #CHECK: l	%r0, -1
 #CHECK: error: invalid operand
@@ -3426,6 +3472,11 @@
 
 	oy	%r0, -524289
 	oy	%r0, 524288
+
+#CHECK: error: instruction requires: message-security-assist-extension4
+#CHECK: pcc
+
+	pcc
 
 #CHECK: error: invalid operand
 #CHECK: pfd	-1, 0

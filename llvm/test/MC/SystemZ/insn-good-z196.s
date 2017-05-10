@@ -619,6 +619,36 @@
 	fixbra	%f4, 5, %f8, 9
 	fixbra	%f13, 0, %f0, 0
 
+#CHECK: kmctr	%r2, %r2, %r2           # encoding: [0xb9,0x2d,0x20,0x22]
+#CHECK: kmctr	%r2, %r8, %r14          # encoding: [0xb9,0x2d,0x80,0x2e]
+#CHECK: kmctr	%r14, %r8, %r2          # encoding: [0xb9,0x2d,0x80,0xe2]
+#CHECK: kmctr	%r6, %r8, %r10          # encoding: [0xb9,0x2d,0x80,0x6a]
+
+	kmctr	%r2, %r2, %r2
+	kmctr	%r2, %r8, %r14
+	kmctr	%r14, %r8, %r2
+	kmctr	%r6, %r8, %r10
+
+#CHECK: kmf	%r2, %r2                # encoding: [0xb9,0x2a,0x00,0x22]
+#CHECK: kmf	%r2, %r14               # encoding: [0xb9,0x2a,0x00,0x2e]
+#CHECK: kmf	%r14, %r2               # encoding: [0xb9,0x2a,0x00,0xe2]
+#CHECK: kmf	%r6, %r10               # encoding: [0xb9,0x2a,0x00,0x6a]
+
+	kmf	%r2, %r2
+	kmf	%r2, %r14
+	kmf	%r14, %r2
+	kmf	%r6, %r10
+
+#CHECK: kmo	%r2, %r2                # encoding: [0xb9,0x2b,0x00,0x22]
+#CHECK: kmo	%r2, %r14               # encoding: [0xb9,0x2b,0x00,0x2e]
+#CHECK: kmo	%r14, %r2               # encoding: [0xb9,0x2b,0x00,0xe2]
+#CHECK: kmo	%r6, %r10               # encoding: [0xb9,0x2b,0x00,0x6a]
+
+	kmo	%r2, %r2
+	kmo	%r2, %r14
+	kmo	%r14, %r2
+	kmo	%r6, %r10
+
 #CHECK: laa	%r0, %r0, -524288       # encoding: [0xeb,0x00,0x00,0x00,0x80,0xf8]
 #CHECK: laa	%r0, %r0, -1            # encoding: [0xeb,0x00,0x0f,0xff,0xff,0xf8]
 #CHECK: laa	%r0, %r0, 0             # encoding: [0xeb,0x00,0x00,0x00,0x00,0xf8]
@@ -1302,6 +1332,10 @@
 	ork	%r0,%r15,%r0
 	ork	%r15,%r0,%r0
 	ork	%r7,%r8,%r9
+
+#CHECK: pcc                             # encoding: [0xb9,0x2c,0x00,0x00]
+
+	pcc
 
 #CHECK: popcnt	%r0, %r0                # encoding: [0xb9,0xe1,0x00,0x00]
 #CHECK: popcnt	%r0, %r15               # encoding: [0xb9,0xe1,0x00,0x0f]

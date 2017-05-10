@@ -1635,6 +1635,29 @@ let mayLoad = 1, mayStore = 1, Defs = [CC] in {
 }
 
 //===----------------------------------------------------------------------===//
+// Message-security assist
+//===----------------------------------------------------------------------===//
+
+let mayLoad = 1, mayStore = 1, Uses = [R0L, R1D], Defs = [CC] in {
+  def KM  : SideEffectBinaryMemMemRRE<"km",  0xB92E, GR128, GR128>;
+  def KMC : SideEffectBinaryMemMemRRE<"kmc", 0xB92F, GR128, GR128>;
+
+  def KIMD : SideEffectBinaryMemRRE<"kimd", 0xB93E, GR64, GR128>;
+  def KLMD : SideEffectBinaryMemRRE<"klmd", 0xB93F, GR64, GR128>;
+  def KMAC : SideEffectBinaryMemRRE<"kmac", 0xB91E, GR64, GR128>;
+
+  let Predicates = [FeatureMessageSecurityAssist4] in {
+    def KMF   : SideEffectBinaryMemMemRRE<"kmf", 0xB92A, GR128, GR128>;
+    def KMO   : SideEffectBinaryMemMemRRE<"kmo", 0xB92B, GR128, GR128>;
+    def KMCTR : SideEffectTernaryMemMemMemRRFb<"kmctr", 0xB92D,
+                                               GR128, GR128, GR128>;
+    def PCC   : SideEffectInherentRRE<"pcc", 0xB92C>;
+  }
+  let Predicates = [FeatureMessageSecurityAssist5] in
+    def PPNO  : SideEffectBinaryMemMemRRE<"ppno", 0xB93C, GR128, GR128>;
+}
+
+//===----------------------------------------------------------------------===//
 // Access registers
 //===----------------------------------------------------------------------===//
 
