@@ -36,7 +36,7 @@ install:
   ############################################################################
   # All external dependencies are installed in C:\projects\deps
   ############################################################################
-  - call "%APPVEYOR_BUILD_FOLDER%\\install-appveyor-reqs.cmd"
+  - call "%APPVEYOR_BUILD_FOLDER%\\appveyor-reqs-install.cmd"
 
 before_build:
   - if DEFINED MSVC_SETUP_PATH call "%MSVC_SETUP_PATH%" %MSVC_SETUP_ARG%
