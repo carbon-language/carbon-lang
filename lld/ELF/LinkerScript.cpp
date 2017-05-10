@@ -1057,10 +1057,10 @@ void LinkerScript::writeDataBytes(OutputSection *Sec, uint8_t *Buf) {
       writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
 }
 
-bool LinkerScript::hasLMA(StringRef Name) {
+bool LinkerScript::hasLMA(OutputSection *Sec) {
   for (BaseCommand *Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-      if (Cmd->LMAExpr && Cmd->Name == Name)
+      if (Cmd->LMAExpr && Cmd->Sec == Sec)
         return true;
   return false;
 }

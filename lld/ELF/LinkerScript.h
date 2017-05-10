@@ -263,7 +263,7 @@ public:
   bool ignoreInterpSection();
 
   llvm::Optional<uint32_t> getFiller(OutputSection *Sec);
-  bool hasLMA(StringRef Name);
+  bool hasLMA(OutputSection *Sec);
   bool shouldKeep(InputSectionBase *S);
   void assignOffsets(OutputSectionCommand *Cmd);
   void placeOrphanSections();

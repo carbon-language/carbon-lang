@@ -1335,7 +1335,7 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
     // different flags or is loaded at a discontiguous address using AT linker
     // script command.
     uint64_t NewFlags = computeFlags(Sec->getPhdrFlags());
-    if (Script->hasLMA(Sec->Name) || Flags != NewFlags) {
+    if (Script->hasLMA(Sec) || Flags != NewFlags) {
       Load = AddHdr(PT_LOAD, NewFlags);
       Flags = NewFlags;
     }
@@ -1398,7 +1398,7 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
   PhdrEntry *Note = nullptr;
   for (OutputSection *Sec : OutputSections) {
     if (Sec->Type == SHT_NOTE) {
-      if (!Note || Script->hasLMA(Sec->Name))
+      if (!Note || Script->hasLMA(Sec))
         Note = AddHdr(PT_NOTE, PF_R);
       Note->add(Sec);
     } else {
