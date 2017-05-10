@@ -8,40 +8,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP_SUPPORT_WIN32_SUPPORT_H
-#define _LIBCPP_SUPPORT_WIN32_SUPPORT_H
+#ifndef _LIBCPP_SUPPORT_WIN32_MSVC_BUILTIN_SUPPORT_H
+#define _LIBCPP_SUPPORT_WIN32_MSVC_BUILTIN_SUPPORT_H
 
-// Functions and constants used in libc++ that
-// are missing from the Windows C library.
-
-#include <wchar.h> // mbstate_t
-#include <cstdarg> // va_ macros
-// "builtins" not implemented here for Clang or GCC as they provide
-// implementations. Assuming required for elsewhere else, certainly MSVC.
-#if defined(_LIBCPP_COMPILER_MSVC)
-#include <intrin.h>
+#ifndef _LIBCPP_COMPILER_MSVC
+#error "This header can only be included when using Microsoft's C1XX frontend"
 #endif
-#define swprintf _snwprintf
-#define vswprintf _vsnwprintf
 
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 
-// The mingw headers already define these as static.
-#ifndef __MINGW32__
-extern "C" {
-
-int vasprintf(char **sptr, const char *__restrict fmt, va_list ap);
-int asprintf(char **sptr, const char *__restrict fmt, ...);
-size_t mbsnrtowcs(wchar_t *__restrict dst, const char **__restrict src,
-                  size_t nmc, size_t len, mbstate_t *__restrict ps);
-size_t wcsnrtombs(char *__restrict dst, const wchar_t **__restrict src,
-                  size_t nwc, size_t len, mbstate_t *__restrict ps);
-}
-#endif // __MINGW32__
-
-#if defined(_LIBCPP_COMPILER_MSVC)
+// "builtins" not implemented here for Clang or GCC as they provide
+// implementations. Assuming required for elsewhere else, certainly MSVC.
+#include <intrin.h>
 
 // Bit builtin's make these assumptions when calling _BitScanForward/Reverse
 // etc. These assumptions are expected to be true for Win32/Win64 which this
@@ -172,6 +152,5 @@ _LIBCPP_ALWAYS_INLINE int __builtin_clz(unsigned int x)
 {
   return __builtin_clzl(x);
 }
-#endif // _LIBCPP_MSVC
 
-#endif // _LIBCPP_SUPPORT_WIN32_SUPPORT_H
+#endif // _LIBCPP_SUPPORT_WIN32_MSVC_BUILTIN_SUPPORT_H

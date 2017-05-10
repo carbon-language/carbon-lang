@@ -644,8 +644,8 @@ template <class BidirectionalIterator, class Compare>
 #if defined(__IBMCPP__)
 #include "support/ibm/support.h"
 #endif
-#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
-#include "support/win32/support.h"
+#if defined(_LIBCPP_COMPILER_MSVC)
+#include "support/win32/msvc_builtin_support.h"
 #endif
 
 #include <__undef_min_max>
