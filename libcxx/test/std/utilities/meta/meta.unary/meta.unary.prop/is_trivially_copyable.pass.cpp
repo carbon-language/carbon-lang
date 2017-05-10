@@ -22,13 +22,13 @@ void test_is_trivially_copyable()
 {
     static_assert( std::is_trivially_copyable<T>::value, "");
     static_assert( std::is_trivially_copyable<const T>::value, "");
-    static_assert(!std::is_trivially_copyable<volatile T>::value, "");
-    static_assert(!std::is_trivially_copyable<const volatile T>::value, "");
+    static_assert( std::is_trivially_copyable<volatile T>::value, "");
+    static_assert( std::is_trivially_copyable<const volatile T>::value, "");
 #if TEST_STD_VER > 14
     static_assert( std::is_trivially_copyable_v<T>, "");
     static_assert( std::is_trivially_copyable_v<const T>, "");
-    static_assert(!std::is_trivially_copyable_v<volatile T>, "");
-    static_assert(!std::is_trivially_copyable_v<const volatile T>, "");
+    static_assert( std::is_trivially_copyable_v<volatile T>, "");
+    static_assert( std::is_trivially_copyable_v<const volatile T>, "");
 #endif
 }
 
