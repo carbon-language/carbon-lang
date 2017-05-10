@@ -212,7 +212,8 @@ struct ScriptConfiguration {
 };
 
 class LinkerScript final {
-  OutputSectionCommand *getCmd(OutputSection *Sec);
+  llvm::DenseMap<OutputSection *, OutputSectionCommand *> SecToCommand;
+  OutputSectionCommand *getCmd(OutputSection *Sec) const;
   void assignSymbol(SymbolAssignment *Cmd, bool InSec);
   void setDot(Expr E, const Twine &Loc, bool InSec);
 

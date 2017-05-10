@@ -415,6 +415,7 @@ void LinkerScript::processCommands(OutputSectionFactory &Factory) {
       if (OutputSection *Sec = Cmd->Sec) {
         assert(Sec->SectionIndex == INT_MAX);
         Sec->SectionIndex = I;
+        SecToCommand[Sec] = Cmd;
       }
     }
   }
@@ -444,6 +445,7 @@ void LinkerScript::fabricateDefaultCommands() {
 
     auto *OSCmd = make<OutputSectionCommand>(Sec->Name);
     OSCmd->Sec = Sec;
+    SecToCommand[Sec] = OSCmd;
 
     // Prefer user supplied address over additional alignment constraint
     auto I = Config->SectionStartMap.find(Sec->Name);
@@ -488,6 +490,7 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
       auto *Cmd = cast<OutputSectionCommand>(*I);
       Factory.addInputSec(S, Name, Cmd->Sec);
       if (OutputSection *Sec = Cmd->Sec) {
+        SecToCommand[Sec] = Cmd;
         unsigned Index = std::distance(Opt.Commands.begin(), I);
         assert(Sec->SectionIndex == INT_MAX || Sec->SectionIndex == Index);
         Sec->SectionIndex = Index;
@@ -703,6 +706,7 @@ void LinkerScript::adjustSectionsBeforeSorting() {
     OutSec->SectionIndex = I;
     OutputSections->push_back(OutSec);
     Cmd->Sec = OutSec;
+    SecToCommand[OutSec] = Cmd;
   }
 }
 
@@ -833,6 +837,7 @@ void LinkerScript::placeOrphanSections() {
       ++CmdIndex;
 
       Cmd->Sec = Sec;
+      SecToCommand[Sec] = Cmd;
       auto *ISD = make<InputSectionDescription>("");
       for (InputSection *IS : Sec->Sections)
         ISD->Sections.push_back(IS);
@@ -1025,12 +1030,11 @@ bool LinkerScript::ignoreInterpSection() {
   return true;
 }
 
-OutputSectionCommand *LinkerScript::getCmd(OutputSection *Sec) {
-  for (BaseCommand *Base : Opt.Commands)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-      if (Cmd->Sec == Sec)
-        return Cmd;
-  return nullptr;
+OutputSectionCommand *LinkerScript::getCmd(OutputSection *Sec) const {
+  auto I = SecToCommand.find(Sec);
+  if (I == SecToCommand.end())
+    return nullptr;
+  return I->second;
 }
 
 Optional<uint32_t> LinkerScript::getFiller(OutputSection *Sec) {
