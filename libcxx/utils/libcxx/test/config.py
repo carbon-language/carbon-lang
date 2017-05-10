@@ -67,10 +67,7 @@ class Configuration(object):
         self.abi_library_root = None
         self.link_shared = self.get_lit_bool('enable_shared', default=True)
         self.debug_build = self.get_lit_bool('debug_build',   default=False)
-        # FIXME: Some tests on Windows require we copy all of the environment
-        # variables into the runtime environment. Should we do this on other
-        # platforms too?
-        self.exec_env = {} if not self.is_windows else dict(os.environ)
+        self.exec_env = dict(os.environ)
         self.use_target = False
         self.use_system_cxx_lib = False
         self.use_clang_verify = False
