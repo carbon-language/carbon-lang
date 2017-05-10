@@ -49,6 +49,7 @@ static void debug_print(const char *format, ...) {
 
 #define KERNEL_CACHE_SIZE 10
 
+static void err_runtime() __attribute__((noreturn));
 static void err_runtime() {
   fprintf(stderr, "Runtime not correctly initialized.\n");
   exit(-1);
