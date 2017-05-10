@@ -48,8 +48,12 @@ using namespace lld::elf;
 LinkerScript *elf::Script;
 
 uint64_t ExprValue::getValue() const {
-  if (Sec)
-    return Sec->getOffset(Val) + Sec->getOutputSection()->Addr;
+  if (Sec) {
+    if (Sec->getOutputSection())
+      return Sec->getOffset(Val) + Sec->getOutputSection()->Addr;
+    error("unable to evaluate expression: input section " + Sec->Name +
+          " has no output section assigned");
+  }
   return Val;
 }
 
