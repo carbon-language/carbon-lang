@@ -222,7 +222,7 @@ protected:
   std::vector<InputSectionBase *>
   createInputSectionList(OutputSectionCommand &Cmd);
 
-  std::vector<size_t> getPhdrIndices(StringRef SectionName);
+  std::vector<size_t> getPhdrIndices(OutputSection *Sec);
   size_t getPhdrIndex(const Twine &Loc, StringRef PhdrName);
 
   MemoryRegion *findMemoryRegion(OutputSectionCommand *Cmd);
