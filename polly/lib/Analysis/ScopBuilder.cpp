@@ -776,6 +776,7 @@ void ScopBuilder::buildScop(Region &R, AssumptionCache &AC) {
     return;
 
   scop->hoistInvariantLoads();
+  scop->canonicalizeDynamicBasePtrs();
   scop->verifyInvariantLoads();
   scop->simplifySCoP(true);
 
