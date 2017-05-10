@@ -1258,7 +1258,7 @@ protected:
       // TODO: Add only the induction variables referenced in SCEVAddRecExpr
       // expressions, not just all of them.
       auto ScevId = give(isl_id_alloc(UseDomainSpace.get_ctx().get(), nullptr,
-                                      (void *)ScevExpr));
+                                      const_cast<SCEV *>(ScevExpr)));
       auto ScevSpace =
           give(isl_space_drop_dims(UseDomainSpace.copy(), isl_dim_set, 0, 0));
       ScevSpace = give(
