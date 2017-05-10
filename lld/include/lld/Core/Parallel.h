@@ -38,9 +38,9 @@ struct is_execution_policy
 constexpr sequential_execution_policy seq{};
 constexpr parallel_execution_policy par{};
 
-#if LLVM_ENABLE_THREADS
-
 namespace detail {
+
+#if LLVM_ENABLE_THREADS
 
 #if defined(_MSC_VER)
 template <class RandomAccessIterator, class Comparator>
@@ -148,12 +148,13 @@ void parallel_for_each_n(IndexTy Begin, IndexTy End, FuncTy Fn) {
 
 #endif
 
+#endif
+
 template <typename Iter>
 using DefComparator =
     std::less<typename std::iterator_traits<Iter>::value_type>;
 
 } // namespace detail
-#endif
 
 // sequential algorithm implementations.
 template <class Policy, class RandomAccessIterator,
@@ -182,7 +183,7 @@ void for_each_n(Policy policy, IndexTy Begin, IndexTy End, FuncTy Fn) {
 
 // Parallel algorithm implementations, only available when LLVM_ENABLE_THREADS
 // is true.
-#if defined(LLVM_ENABLE_THREADS)
+#if LLVM_ENABLE_THREADS
 template <class RandomAccessIterator,
           class Comparator = detail::DefComparator<RandomAccessIterator>>
 void sort(parallel_execution_policy policy, RandomAccessIterator Start,
