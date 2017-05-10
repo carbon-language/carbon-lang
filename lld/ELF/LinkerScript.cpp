@@ -826,12 +826,9 @@ void LinkerScript::placeOrphanSections() {
     // If there is no command corresponding to this output section,
     // create one and put a InputSectionDescription in it so that both
     // representations agree on which input sections to use.
-    auto Pos = std::find_if(CmdIter, E, [&](BaseCommand *Base) {
-      auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
-      return Cmd && Cmd->Sec == Sec;
-    });
-    if (Pos == E) {
-      auto *Cmd = make<OutputSectionCommand>(Name);
+    OutputSectionCommand *Cmd = getCmd(Sec);
+    if (!Cmd) {
+      Cmd = make<OutputSectionCommand>(Name);
       Opt.Commands.insert(CmdIter, Cmd);
       ++CmdIndex;
 
@@ -845,7 +842,11 @@ void LinkerScript::placeOrphanSections() {
     }
 
     // Continue from where we found it.
-    CmdIndex = (Pos - Opt.Commands.begin()) + 1;
+    while (*CmdIter != Cmd) {
+      ++CmdIter;
+      ++CmdIndex;
+    }
+    ++CmdIndex;
   }
 }
 
@@ -1024,11 +1025,17 @@ bool LinkerScript::ignoreInterpSection() {
   return true;
 }
 
-Optional<uint32_t> LinkerScript::getFiller(OutputSection *Sec) {
+OutputSectionCommand *LinkerScript::getCmd(OutputSection *Sec) {
   for (BaseCommand *Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
       if (Cmd->Sec == Sec)
-        return Cmd->Filler;
+        return Cmd;
+  return nullptr;
+}
+
+Optional<uint32_t> LinkerScript::getFiller(OutputSection *Sec) {
+  if (OutputSectionCommand *Cmd = getCmd(Sec))
+    return Cmd->Filler;
   return None;
 }
 
@@ -1046,26 +1053,16 @@ static void writeInt(uint8_t *Buf, uint64_t Data, uint64_t Size) {
 }
 
 void LinkerScript::writeDataBytes(OutputSection *Sec, uint8_t *Buf) {
-  auto I = std::find_if(Opt.Commands.begin(), Opt.Commands.end(),
-                        [=](BaseCommand *Base) {
-                          if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-                            if (Cmd->Sec == Sec)
-                              return true;
-                          return false;
-                        });
-  if (I == Opt.Commands.end())
-    return;
-  auto *Cmd = cast<OutputSectionCommand>(*I);
-  for (BaseCommand *Base : Cmd->Commands)
-    if (auto *Data = dyn_cast<BytesDataCommand>(Base))
-      writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
+  if (OutputSectionCommand *Cmd = getCmd(Sec))
+    for (BaseCommand *Base : Cmd->Commands)
+      if (auto *Data = dyn_cast<BytesDataCommand>(Base))
+        writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
 }
 
 bool LinkerScript::hasLMA(OutputSection *Sec) {
-  for (BaseCommand *Base : Opt.Commands)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-      if (Cmd->LMAExpr && Cmd->Sec == Sec)
-        return true;
+  if (OutputSectionCommand *Cmd = getCmd(Sec))
+    if (Cmd->LMAExpr)
+      return true;
   return false;
 }
 
@@ -1087,11 +1084,7 @@ bool LinkerScript::isDefined(StringRef S) { return findSymbol(S) != nullptr; }
 // Returns indices of ELF headers containing specific section. Each index is a
 // zero based number of ELF header listed within PHDRS {} script block.
 std::vector<size_t> LinkerScript::getPhdrIndices(OutputSection *Sec) {
-  for (BaseCommand *Base : Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
-    if (!Cmd || Cmd->Sec != Sec)
-      continue;
-
+  if (OutputSectionCommand *Cmd = getCmd(Sec)) {
     std::vector<size_t> Ret;
     for (StringRef PhdrName : Cmd->Phdrs)
       Ret.push_back(getPhdrIndex(Cmd->Location, PhdrName));

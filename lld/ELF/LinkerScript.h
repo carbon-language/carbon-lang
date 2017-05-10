@@ -212,6 +212,7 @@ struct ScriptConfiguration {
 };
 
 class LinkerScript final {
+  OutputSectionCommand *getCmd(OutputSection *Sec);
   void assignSymbol(SymbolAssignment *Cmd, bool InSec);
   void setDot(Expr E, const Twine &Loc, bool InSec);
 
