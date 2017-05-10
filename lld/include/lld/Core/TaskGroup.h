@@ -25,40 +25,40 @@ namespace lld {
 ///
 /// Calling dec() on a Latch with a count of 0 has undefined behaivor.
 class Latch {
-  uint32_t _count;
-  mutable std::mutex _condMut;
-  mutable std::condition_variable _cond;
+  uint32_t Count;
+  mutable std::mutex Mutex;
+  mutable std::condition_variable Cond;
 
 public:
-  explicit Latch(uint32_t count = 0) : _count(count) {}
+  explicit Latch(uint32_t count = 0) : Count(count) {}
   ~Latch() { sync(); }
 
   void inc() {
-    std::unique_lock<std::mutex> lock(_condMut);
-    ++_count;
+    std::unique_lock<std::mutex> lock(Mutex);
+    ++Count;
   }
 
   void dec() {
-    std::unique_lock<std::mutex> lock(_condMut);
-    if (--_count == 0)
-      _cond.notify_all();
+    std::unique_lock<std::mutex> lock(Mutex);
+    if (--Count == 0)
+      Cond.notify_all();
   }
 
   void sync() const {
-    std::unique_lock<std::mutex> lock(_condMut);
-    _cond.wait(lock, [&] { return _count == 0; });
+    std::unique_lock<std::mutex> lock(Mutex);
+    Cond.wait(lock, [&] { return Count == 0; });
   }
 };
 
 /// \brief Allows launching a number of tasks and waiting for them to finish
 ///   either explicitly via sync() or implicitly on destruction.
 class TaskGroup {
-  Latch _latch;
+  Latch L;
 
 public:
-  void spawn(std::function<void()> f);
+  void spawn(std::function<void()> F);
 
-  void sync() const { _latch.sync(); }
+  void sync() const { L.sync(); }
 };
 }
 

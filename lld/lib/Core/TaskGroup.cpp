@@ -132,10 +132,10 @@ Executor *Executor::getDefaultExecutor() {
 #endif
 }
 
-void TaskGroup::spawn(std::function<void()> f) {
-  _latch.inc();
-  Executor::getDefaultExecutor()->add([&, f] {
-    f();
-    _latch.dec();
+void TaskGroup::spawn(std::function<void()> F) {
+  L.inc();
+  Executor::getDefaultExecutor()->add([&, F] {
+    F();
+    L.dec();
   });
 }
