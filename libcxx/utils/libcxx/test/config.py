@@ -160,7 +160,11 @@ class Configuration(object):
         # Print as list to prevent "set([...])" from being printed.
         self.lit_config.note('Using available_features: %s' %
                              list(self.config.available_features))
-        self.lit_config.note('Using environment: %r' % self.exec_env)
+        show_env_vars = {}
+        for k,v in self.exec_env.items():
+            if k not in os.environ or os.environ[k] != v:
+                show_env_vars[k] = v
+        self.lit_config.note('Adding environment variables: %r' % show_env_vars)
         sys.stderr.flush()  # Force flushing to avoid broken output on Windows
 
     def get_test_format(self):
