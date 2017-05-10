@@ -44,10 +44,6 @@ namespace ISD {
     /// EntryToken - This is the marker used to indicate the start of a region.
     EntryToken,
 
-    /// DummyNode - Temporary node for node replacement. These nodes
-    /// should not persist beyond their introduction.
-    DummyNode,
-
     /// TokenFactor - This node takes multiple tokens as input and produces a
     /// single token result. This is used to represent the fact that the operand
     /// operators are independent of each other.
