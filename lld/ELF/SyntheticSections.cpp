@@ -2187,7 +2187,7 @@ MipsRldMapSection::MipsRldMapSection()
 
 void MipsRldMapSection::writeTo(uint8_t *Buf) {
   // Apply filler from linker script.
-  Optional<uint32_t> Fill = Script->getFiller(this->Name);
+  Optional<uint32_t> Fill = Script->getFiller(this->OutSec);
   if (!Fill || *Fill == 0)
     return;
 

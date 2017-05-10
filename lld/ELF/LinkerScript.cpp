@@ -1020,10 +1020,10 @@ bool LinkerScript::ignoreInterpSection() {
   return true;
 }
 
-Optional<uint32_t> LinkerScript::getFiller(StringRef Name) {
+Optional<uint32_t> LinkerScript::getFiller(OutputSection *Sec) {
   for (BaseCommand *Base : Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-      if (Cmd->Name == Name)
+      if (Cmd->Sec == Sec)
         return Cmd->Filler;
   return None;
 }

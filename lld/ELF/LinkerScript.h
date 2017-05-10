@@ -262,7 +262,7 @@ public:
   std::vector<PhdrEntry> createPhdrs();
   bool ignoreInterpSection();
 
-  llvm::Optional<uint32_t> getFiller(StringRef Name);
+  llvm::Optional<uint32_t> getFiller(OutputSection *Sec);
   bool hasLMA(StringRef Name);
   bool shouldKeep(InputSectionBase *S);
   void assignOffsets(OutputSectionCommand *Cmd);

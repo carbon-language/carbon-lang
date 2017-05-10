@@ -273,7 +273,7 @@ uint32_t OutputSection::getFiller() {
   // linker script. If nothing is specified and this is an executable section,
   // fall back to trap instructions to prevent bad diassembly and detect invalid
   // jumps to padding.
-  if (Optional<uint32_t> Filler = Script->getFiller(Name))
+  if (Optional<uint32_t> Filler = Script->getFiller(this))
     return *Filler;
   if (Flags & SHF_EXECINSTR)
     return Target->TrapInstr;
