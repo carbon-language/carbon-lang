@@ -1948,22 +1948,23 @@ void APInt::toString(SmallVectorImpl<char> &Str, unsigned Radix,
     unsigned ShiftAmt = (Radix == 16 ? 4 : (Radix == 8 ? 3 : 1));
     unsigned MaskAmt = Radix - 1;
 
-    while (Tmp != 0) {
+    while (Tmp.getBoolValue()) {
       unsigned Digit = unsigned(Tmp.getRawData()[0]) & MaskAmt;
       Str.push_back(Digits[Digit]);
       Tmp.lshrInPlace(ShiftAmt);
     }
   } else {
-    APInt divisor(Radix == 10? 4 : 8, Radix);
-    while (Tmp != 0) {
-      APInt APdigit(1, 0);
-      APInt tmp2(Tmp.getBitWidth(), 0);
-      divide(Tmp, Tmp.getNumWords(), divisor, divisor.getNumWords(), &tmp2,
-             &APdigit);
+    APInt divisor(Tmp.getBitWidth(), Radix);
+    APInt APdigit;
+    APInt tmp2(Tmp.getBitWidth(), 0);
+    while (Tmp.getBoolValue()) {
+      udivrem(Tmp, divisor, tmp2, APdigit);
       unsigned Digit = (unsigned)APdigit.getZExtValue();
       assert(Digit < Radix && "divide failed");
       Str.push_back(Digits[Digit]);
-      Tmp = tmp2;
+      // Move the quotient into Tmp and move the old allocation of Tmp into
+      // tmp2 to be used on the next loop iteration.
+      std::swap(Tmp, tmp2);
     }
   }
 
