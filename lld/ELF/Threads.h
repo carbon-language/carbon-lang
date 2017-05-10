@@ -62,7 +62,6 @@
 #include "Config.h"
 
 #include "lld/Core/Parallel.h"
-#include <algorithm>
 #include <functional>
 
 namespace lld {
