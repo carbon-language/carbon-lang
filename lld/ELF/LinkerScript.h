@@ -211,8 +211,7 @@ struct ScriptConfiguration {
   std::vector<llvm::StringRef> ReferencedSymbols;
 };
 
-class LinkerScript {
-protected:
+class LinkerScript final {
   void assignSymbol(SymbolAssignment *Cmd, bool InSec);
   void setDot(Expr E, const Twine &Loc, bool InSec);
 
