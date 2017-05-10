@@ -774,7 +774,8 @@ public:
   SafeStackLegacyPass() : SafeStackLegacyPass(nullptr) {}
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.addRequired<ScalarEvolutionWrapperPass>();
+    AU.addRequired<TargetLibraryInfoWrapperPass>();
+    AU.addRequired<AssumptionCacheTracker>();
   }
 
   bool runOnFunction(Function &F) override {
@@ -799,7 +800,19 @@ public:
       report_fatal_error("TargetLowering instance is required");
 
     auto *DL = &F.getParent()->getDataLayout();
-    auto &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
+    auto &TLI = getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
+    auto &ACT = getAnalysis<AssumptionCacheTracker>().getAssumptionCache(F);
+
+    // Compute DT and LI only for functions that have the attribute.
+    // This is only useful because the legacy pass manager doesn't let us
+    // compute analyzes lazily.
+    // In the backend pipeline, nothing preserves DT before SafeStack, so we
+    // would otherwise always compute it wastefully, even if there is no
+    // function with the safestack attribute.
+    DominatorTree DT(F);
+    LoopInfo LI(DT);
+
+    ScalarEvolution SE(F, TLI, ACT, DT, LI);
 
     return SafeStack(F, *TL, *DL, SE).run();
   }
