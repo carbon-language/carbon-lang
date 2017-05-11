@@ -17,11 +17,11 @@ void g() {
   // CHECK: br label %[[LOOP:.*]]
 
   // [[LOOP]]:
-  // CHECK: {{call|invoke}} void @_ZN1AC1Ev([[TEMPORARY:.*]])
+  // CHECK: {{call|invoke}}[[THISCALL:( x86_thiscallcc)?]] void @_ZN1AC1Ev([[TEMPORARY:.*]])
   // CHECK-EH:  unwind label %[[PARTIAL_ARRAY_LPAD:.*]]
-  // CHECK: {{call|invoke}} void @_ZN1BC1E1A({{.*}}, [[TEMPORARY]])
+  // CHECK: {{call|invoke}}[[THISCALL]] void @_ZN1BC1E1A({{.*}}, [[TEMPORARY]])
   // CHECK-EH:  unwind label %[[A_AND_PARTIAL_ARRAY_LPAD:.*]]
-  // CHECK: {{call|invoke}} void @_ZN1AD1Ev([[TEMPORARY]])
+  // CHECK: {{call|invoke}}[[THISCALL]] void @_ZN1AD1Ev([[TEMPORARY]])
   // CHECK-EH:  unwind label %[[PARTIAL_ARRAY_LPAD]]
   // CHECK: getelementptr {{.*}}, i{{[0-9]*}} 1
   // CHECK: icmp eq
@@ -32,5 +32,5 @@ void g() {
   f();
 
   // CHECK-NOT: @_ZN1AD1Ev(
-  // CHECK: {{call|invoke}} void @_ZN1BD1Ev(
+  // CHECK: {{call|invoke}}[[THISCALL]] void @_ZN1BD1Ev(
 }
