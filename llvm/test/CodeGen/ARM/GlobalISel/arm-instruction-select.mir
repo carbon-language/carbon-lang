@@ -4,6 +4,8 @@
   define void @test_sext_s1() { ret void }
   define void @test_sext_s8() { ret void }
   define void @test_zext_s16() { ret void }
+  define void @test_anyext_s8() { ret void }
+  define void @test_anyext_s16() { ret void }
 
   define void @test_trunc_s32_16() { ret void }
 
@@ -141,6 +143,58 @@ body:             |
 
     %1(s32) = G_ZEXT %0(s16)
     ; CHECK: [[VREGEXT:%[0-9]+]] = UXTH [[VREGX]], 0, 14, _
+
+    %r0 = COPY %1(s32)
+    ; CHECK: %r0 = COPY [[VREGEXT]]
+
+    BX_RET 14, _, implicit %r0
+    ; CHECK: BX_RET 14, _, implicit %r0
+...
+---
+name:            test_anyext_s8
+# CHECK-LABEL: name: test_anyext_s8
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+  - { id: 1, class: gprb }
+body:             |
+  bb.0:
+    liveins: %r0
+
+    %0(s8) = COPY %r0
+    ; CHECK: [[VREGX:%[0-9]+]] = COPY %r0
+
+    %1(s32) = G_ANYEXT %0(s8)
+    ; CHECK: [[VREGEXT:%[0-9]+]] = COPY [[VREGX]]
+
+    %r0 = COPY %1(s32)
+    ; CHECK: %r0 = COPY [[VREGEXT]]
+
+    BX_RET 14, _, implicit %r0
+    ; CHECK: BX_RET 14, _, implicit %r0
+...
+---
+name:            test_anyext_s16
+# CHECK-LABEL: name: test_anyext_s16
+legalized:       true
+regBankSelected: true
+selected:        false
+# CHECK: selected: true
+registers:
+  - { id: 0, class: gprb }
+  - { id: 1, class: gprb }
+body:             |
+  bb.0:
+    liveins: %r0
+
+    %0(s16) = COPY %r0
+    ; CHECK: [[VREGX:%[0-9]+]] = COPY %r0
+
+    %1(s32) = G_ANYEXT %0(s16)
+    ; CHECK: [[VREGEXT:%[0-9]+]] = COPY [[VREGX]]
 
     %r0 = COPY %1(s32)
     ; CHECK: %r0 = COPY [[VREGEXT]]
