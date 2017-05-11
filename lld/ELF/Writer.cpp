@@ -742,7 +742,6 @@ static bool compareSectionsNonScript(const OutputSection *A,
 }
 
 // Output section ordering is determined by this function.
-template <class ELFT>
 static bool compareSections(const OutputSection *A, const OutputSection *B) {
   // For now, put sections mentioned in a linker script
   // first. Sections not on linker script will have a SectionIndex of
@@ -1040,7 +1039,7 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
   //    a PT_LOAD.
 
   std::stable_sort(OutputSections.begin(), OutputSections.end(),
-                   compareSections<ELFT>);
+                   compareSections);
 
   auto I = OutputSections.begin();
   auto E = OutputSections.end();
