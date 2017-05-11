@@ -139,14 +139,10 @@ endif()
 if (LIBCXXABI_ENABLE_STATIC)
   add_library(cxxabi_static STATIC $<TARGET_OBJECTS:cxxabi_objects>)
   target_link_libraries(cxxabi_static ${libraries})
-  set(STATIC_OUTPUT_NAME "c++abi")
-  if (WIN32)
-    set(STATIC_OUTPUT_NAME "libc++abi")
-  endif()
   set_target_properties(cxxabi_static
     PROPERTIES
       LINK_FLAGS    "${LIBCXXABI_LINK_FLAGS}"
-      OUTPUT_NAME   "${STATIC_OUTPUT_NAME}"
+      OUTPUT_NAME   "c++abi"
   )
   list(APPEND LIBCXXABI_TARGETS "cxxabi_static")
 endif()
