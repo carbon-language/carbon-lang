@@ -61,7 +61,13 @@ struct _LIBCXXABI_HIDDEN __cxa_exception {
     size_t referenceCount;
 #endif
 
-    _Unwind_Exception unwindHeader;
+    // This field is annotated with attribute aligned so that the exception
+    // object following the field is sufficiently aligned and there is no
+    // gap between the field and the exception object. r276215 made a change to
+    // annotate _Unwind_Exception with __attribute__((aligned)), but we cannot
+    // incorporate the fix on Darwin since it is an ABI-breaking change, which
+    // is why we need the attribute on this field.
+    _Unwind_Exception unwindHeader __attribute__((aligned));
 };
 
 // http://sourcery.mentor.com/archives/cxx-abi-dev/msg01924.html
@@ -96,7 +102,9 @@ struct _LIBCXXABI_HIDDEN __cxa_dependent_exception {
     void* primaryException;
 #endif
 
-    _Unwind_Exception unwindHeader;
+    // See the comment in __cxa_exception as to why this field has attribute
+    // aligned.
+    _Unwind_Exception unwindHeader __attribute__((aligned));
 };
 
 struct _LIBCXXABI_HIDDEN __cxa_eh_globals {
