@@ -578,7 +578,7 @@ static int getMipsSectionRank(const OutputSection *S) {
 //
 // This function returns true if a section needs to be put into a
 // PT_GNU_RELRO segment.
-template <class ELFT> bool elf::isRelroSection(const OutputSection *Sec) {
+bool elf::isRelroSection(const OutputSection *Sec) {
   if (!Config->ZRelro)
     return false;
 
@@ -715,8 +715,8 @@ static bool compareSectionsNonScript(const OutputSection *A,
 
   // We place nobits RelRo sections before plain r/w ones, and non-nobits RelRo
   // sections after r/w ones, so that the RelRo sections are contiguous.
-  bool AIsRelRo = isRelroSection<ELFT>(A);
-  bool BIsRelRo = isRelroSection<ELFT>(B);
+  bool AIsRelRo = isRelroSection(A);
+  bool BIsRelRo = isRelroSection(B);
   if (AIsRelRo != BIsRelRo)
     return AIsNonTlsNoBits ? AIsRelRo : BIsRelRo;
 
@@ -1362,7 +1362,7 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
   // read-only by dynamic linker after proccessing relocations.
   PhdrEntry RelRo(PT_GNU_RELRO, PF_R);
   for (OutputSection *Sec : OutputSections)
-    if (needsPtLoad(Sec) && isRelroSection<ELFT>(Sec))
+    if (needsPtLoad(Sec) && isRelroSection(Sec))
       RelRo.add(Sec);
   if (RelRo.First)
     Ret.push_back(std::move(RelRo));
@@ -1761,8 +1761,3 @@ template void elf::writeResult<ELF32LE>();
 template void elf::writeResult<ELF32BE>();
 template void elf::writeResult<ELF64LE>();
 template void elf::writeResult<ELF64BE>();
-
-template bool elf::isRelroSection<ELF32LE>(const OutputSection *);
-template bool elf::isRelroSection<ELF32BE>(const OutputSection *);
-template bool elf::isRelroSection<ELF64LE>(const OutputSection *);
-template bool elf::isRelroSection<ELF64BE>(const OutputSection *);
