@@ -2,6 +2,7 @@
 // RUN: FileCheck %s < %t.out && FileCheck %s < %t.out
 
 // XFAIL: mips
+// REQUIRES: stable-runtime
 
 #include <assert.h>
 #include <wchar.h>
