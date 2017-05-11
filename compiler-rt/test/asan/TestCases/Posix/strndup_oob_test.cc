@@ -6,7 +6,7 @@
 // When built as C on Linux, strndup is transformed to __strndup.
 // RUN: %clangxx_asan -O3 -xc %s -o %t && not %run %t 2>&1 | FileCheck %s
 
-// UNSUPPORTED: win32
+// UNSUPPORTED: win32,s390
 
 #include <string.h>
 
