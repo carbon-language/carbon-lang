@@ -1028,15 +1028,15 @@ template <class ELFT> void DynamicSection<ELFT>::addEntries() {
   // Add strings to .dynstr early so that .dynstr's size will be
   // fixed early.
   for (StringRef S : Config->AuxiliaryList)
-    add({DT_AUXILIARY, In<ELFT>::DynStrTab->addString(S)});
+    add({DT_AUXILIARY, InX::DynStrTab->addString(S)});
   if (!Config->Rpath.empty())
     add({Config->EnableNewDtags ? DT_RUNPATH : DT_RPATH,
-         In<ELFT>::DynStrTab->addString(Config->Rpath)});
+         InX::DynStrTab->addString(Config->Rpath)});
   for (SharedFile<ELFT> *F : Symtab<ELFT>::X->getSharedFiles())
     if (F->isNeeded())
-      add({DT_NEEDED, In<ELFT>::DynStrTab->addString(F->SoName)});
+      add({DT_NEEDED, InX::DynStrTab->addString(F->SoName)});
   if (!Config->SoName.empty())
-    add({DT_SONAME, In<ELFT>::DynStrTab->addString(Config->SoName)});
+    add({DT_SONAME, InX::DynStrTab->addString(Config->SoName)});
 
   if (!Config->Shared && !Config->Relocatable)
     add({DT_DEBUG, (uint64_t)0});
@@ -1072,7 +1072,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
   if (DtFlags1)
     add({DT_FLAGS_1, DtFlags1});
 
-  this->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
+  this->Link = InX::DynStrTab->OutSec->SectionIndex;
   if (In<ELFT>::RelaDyn->OutSec->Size > 0) {
     bool IsRela = Config->IsRela;
     add({IsRela ? DT_RELA : DT_REL, In<ELFT>::RelaDyn});
@@ -1099,8 +1099,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
 
   add({DT_SYMTAB, In<ELFT>::DynSymTab});
   add({DT_SYMENT, sizeof(Elf_Sym)});
-  add({DT_STRTAB, In<ELFT>::DynStrTab});
-  add({DT_STRSZ, In<ELFT>::DynStrTab->getSize()});
+  add({DT_STRTAB, InX::DynStrTab});
+  add({DT_STRSZ, InX::DynStrTab->getSize()});
   if (!Config->ZText)
     add({DT_TEXTREL, (uint64_t)0});
   if (In<ELFT>::GnuHashTab)
@@ -1149,8 +1149,8 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
     else
       add({DT_MIPS_GOTSYM, In<ELFT>::DynSymTab->getNumSymbols()});
     add({DT_PLTGOT, InX::MipsGot});
-    if (In<ELFT>::MipsRldMap)
-      add({DT_MIPS_RLD_MAP, In<ELFT>::MipsRldMap});
+    if (InX::MipsRldMap)
+      add({DT_MIPS_RLD_MAP, InX::MipsRldMap});
   }
 
   this->OutSec->Link = this->Link;
@@ -1951,11 +1951,11 @@ static StringRef getFileDefName() {
 }
 
 template <class ELFT> void VersionDefinitionSection<ELFT>::finalizeContents() {
-  FileDefNameOff = In<ELFT>::DynStrTab->addString(getFileDefName());
+  FileDefNameOff = InX::DynStrTab->addString(getFileDefName());
   for (VersionDefinition &V : Config->VersionDefinitions)
-    V.NameOff = In<ELFT>::DynStrTab->addString(V.Name);
+    V.NameOff = InX::DynStrTab->addString(V.Name);
 
-  this->OutSec->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
+  this->OutSec->Link = InX::DynStrTab->OutSec->SectionIndex;
 
   // sh_info should be set to the number of definitions. This fact is missed in
   // documentation, but confirmed by binutils community:
@@ -2051,14 +2051,14 @@ void VersionNeedSection<ELFT>::addSymbol(SharedSymbol *SS) {
   // to create one by adding it to our needed list and creating a dynstr entry
   // for the soname.
   if (File->VerdefMap.empty())
-    Needed.push_back({File, In<ELFT>::DynStrTab->addString(File->SoName)});
+    Needed.push_back({File, InX::DynStrTab->addString(File->SoName)});
   typename SharedFile<ELFT>::NeededVer &NV = File->VerdefMap[Ver];
   // If we don't already know that we need an Elf_Vernaux for this Elf_Verdef,
   // prepare to create one by allocating a version identifier and creating a
   // dynstr entry for the version name.
   if (NV.Index == 0) {
-    NV.StrTab = In<ELFT>::DynStrTab->addString(File->getStringTable().data() +
-                                               Ver->getAux()->vda_name);
+    NV.StrTab = InX::DynStrTab->addString(File->getStringTable().data() +
+                                          Ver->getAux()->vda_name);
     NV.Index = NextIndex++;
   }
   SS->symbol()->VersionId = NV.Index;
@@ -2100,7 +2100,7 @@ template <class ELFT> void VersionNeedSection<ELFT>::writeTo(uint8_t *Buf) {
 }
 
 template <class ELFT> void VersionNeedSection<ELFT>::finalizeContents() {
-  this->OutSec->Link = In<ELFT>::DynStrTab->OutSec->SectionIndex;
+  this->OutSec->Link = InX::DynStrTab->OutSec->SectionIndex;
   this->OutSec->Info = Needed.size();
 }
 

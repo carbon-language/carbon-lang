@@ -461,7 +461,7 @@ void X86TargetInfo::writePltHeader(uint8_t *Buf) const {
     memcpy(Buf, V, sizeof(V));
 
     uint32_t Ebx = In<ELF32LE>::Got->getVA() + In<ELF32LE>::Got->getSize();
-    uint32_t GotPlt = In<ELF32LE>::GotPlt->getVA() - Ebx;
+    uint32_t GotPlt = InX::GotPlt->getVA() - Ebx;
     write32le(Buf + 2, GotPlt + 4);
     write32le(Buf + 8, GotPlt + 8);
     return;
@@ -473,7 +473,7 @@ void X86TargetInfo::writePltHeader(uint8_t *Buf) const {
       0x90, 0x90, 0x90, 0x90              // nop
   };
   memcpy(Buf, PltData, sizeof(PltData));
-  uint32_t GotPlt = In<ELF32LE>::GotPlt->getVA();
+  uint32_t GotPlt = InX::GotPlt->getVA();
   write32le(Buf + 2, GotPlt + 4);
   write32le(Buf + 8, GotPlt + 8);
 }
@@ -737,7 +737,7 @@ void X86_64TargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
   };
   memcpy(Buf, PltData, sizeof(PltData));
   uint64_t GotPlt = InX::GotPlt->getVA();
-  uint64_t Plt = In<ELFT>::Plt->getVA();
+  uint64_t Plt = InX::Plt->getVA();
   write32le(Buf + 2, GotPlt - Plt + 2); // GOTPLT+8
   write32le(Buf + 8, GotPlt - Plt + 4); // GOTPLT+16
 }
@@ -1369,7 +1369,7 @@ bool AArch64TargetInfo::isPicRel(uint32_t Type) const {
 }
 
 void AArch64TargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
-  write64le(Buf, In<ELF64LE>::Plt->getVA());
+  write64le(Buf, InX::Plt->getVA());
 }
 
 // Page(Expr) is the page address of the expression Expr, defined
@@ -1392,8 +1392,8 @@ void AArch64TargetInfo::writePltHeader(uint8_t *Buf) const {
   };
   memcpy(Buf, PltData, sizeof(PltData));
 
-  uint64_t Got = In<ELF64LE>::GotPlt->getVA();
-  uint64_t Plt = In<ELF64LE>::Plt->getVA();
+  uint64_t Got = InX::GotPlt->getVA();
+  uint64_t Plt = InX::Plt->getVA();
   relocateOne(Buf + 4, R_AARCH64_ADR_PREL_PG_HI21,
               getAArch64Page(Got + 16) - getAArch64Page(Plt + 4));
   relocateOne(Buf + 8, R_AARCH64_LDST64_ABS_LO12_NC, Got + 16);
@@ -1746,7 +1746,7 @@ uint32_t ARMTargetInfo::getDynRel(uint32_t Type) const {
 }
 
 void ARMTargetInfo::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
-  write32le(Buf, In<ELF32LE>::Plt->getVA());
+  write32le(Buf, InX::Plt->getVA());
 }
 
 void ARMTargetInfo::writeIgotPlt(uint8_t *Buf, const SymbolBody &S) const {
@@ -1763,8 +1763,8 @@ void ARMTargetInfo::writePltHeader(uint8_t *Buf) const {
       0x00, 0x00, 0x00, 0x00, // L2: .word   &(.got.plt) - L1 - 8
   };
   memcpy(Buf, PltData, sizeof(PltData));
-  uint64_t GotPlt = In<ELF32LE>::GotPlt->getVA();
-  uint64_t L1 = In<ELF32LE>::Plt->getVA() + 8;
+  uint64_t GotPlt = InX::GotPlt->getVA();
+  uint64_t L1 = InX::Plt->getVA() + 8;
   write32le(Buf + 16, GotPlt - L1 - 8);
 }
 
@@ -2134,7 +2134,7 @@ uint32_t MipsTargetInfo<ELFT>::getDynRel(uint32_t Type) const {
 
 template <class ELFT>
 void MipsTargetInfo<ELFT>::writeGotPlt(uint8_t *Buf, const SymbolBody &) const {
-  write32<ELFT::TargetEndianness>(Buf, In<ELFT>::Plt->getVA());
+  write32<ELFT::TargetEndianness>(Buf, InX::Plt->getVA());
 }
 
 template <endianness E, uint8_t BSIZE, uint8_t SHIFT>

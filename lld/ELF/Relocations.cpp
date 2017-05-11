@@ -518,7 +518,7 @@ template <class ELFT> static void addCopyRelSymbol(SharedSymbol *SS) {
   // See if this symbol is in a read-only segment. If so, preserve the symbol's
   // memory protection by reserving space in the .bss.rel.ro section.
   bool IsReadOnly = isReadOnly<ELFT>(SS);
-  BssSection *Sec = IsReadOnly ? In<ELFT>::BssRelRo : In<ELFT>::Bss;
+  BssSection *Sec = IsReadOnly ? InX::BssRelRo : InX::Bss;
   uint64_t Off = Sec->reserveSpace(SymSize, SS->getAlignment<ELFT>());
 
   // Look through the DSO's dynamic symbol table for aliases and create a
@@ -874,7 +874,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
     // If a relocation needs PLT, we create PLT and GOTPLT slots for the symbol.
     if (needsPlt(Expr) && !Body.isInPlt()) {
       if (Body.isGnuIFunc() && !Preemptible)
-        addPltEntry(InX::Iplt, In<ELFT>::IgotPlt, In<ELFT>::RelaIplt,
+        addPltEntry(InX::Iplt, InX::IgotPlt, In<ELFT>::RelaIplt,
                     Target->IRelativeRel, Body, true);
       else
         addPltEntry(InX::Plt, InX::GotPlt, In<ELFT>::RelaPlt, Target->PltRel,
