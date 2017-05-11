@@ -106,21 +106,21 @@ static unsigned handleMipsTlsRelocation(uint32_t Type, SymbolBody &Body,
                                         InputSectionBase &C, uint64_t Offset,
                                         int64_t Addend, RelExpr Expr) {
   if (Expr == R_MIPS_TLSLD) {
-    if (In<ELFT>::MipsGot->addTlsIndex() && Config->Pic)
-      In<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel, In<ELFT>::MipsGot,
-                                   In<ELFT>::MipsGot->getTlsIndexOff(), false,
+    if (InX::MipsGot->addTlsIndex() && Config->Pic)
+      In<ELFT>::RelaDyn->addReloc({Target->TlsModuleIndexRel, InX::MipsGot,
+                                   InX::MipsGot->getTlsIndexOff(), false,
                                    nullptr, 0});
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
     return 1;
   }
 
   if (Expr == R_MIPS_TLSGD) {
-    if (In<ELFT>::MipsGot->addDynTlsEntry(Body) && Body.isPreemptible()) {
-      uint64_t Off = In<ELFT>::MipsGot->getGlobalDynOffset(Body);
+    if (InX::MipsGot->addDynTlsEntry(Body) && Body.isPreemptible()) {
+      uint64_t Off = InX::MipsGot->getGlobalDynOffset(Body);
       In<ELFT>::RelaDyn->addReloc(
-          {Target->TlsModuleIndexRel, In<ELFT>::MipsGot, Off, false, &Body, 0});
+          {Target->TlsModuleIndexRel, InX::MipsGot, Off, false, &Body, 0});
       if (Body.isPreemptible())
-        In<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, In<ELFT>::MipsGot,
+        In<ELFT>::RelaDyn->addReloc({Target->TlsOffsetRel, InX::MipsGot,
                                      Off + Config->Wordsize, false, &Body, 0});
     }
     C.Relocations.push_back({Expr, Type, Offset, Addend, &Body});
@@ -891,9 +891,9 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
         // See "Global Offset Table" in Chapter 5 in the following document
         // for detailed description:
         // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-        In<ELFT>::MipsGot->addEntry(Body, Addend, Expr);
+        InX::MipsGot->addEntry(Body, Addend, Expr);
         if (Body.isTls() && Body.isPreemptible())
-          In<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, In<ELFT>::MipsGot,
+          In<ELFT>::RelaDyn->addReloc({Target->TlsGotRel, InX::MipsGot,
                                        Body.getGotOffset(), false, &Body, 0});
       } else if (!Body.isInGot()) {
         addGotEntry<ELFT>(Body, Preemptible);
@@ -927,7 +927,7 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
       // a dynamic relocation.
       // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf p.4-19
       if (Config->EMachine == EM_MIPS)
-        In<ELFT>::MipsGot->addEntry(Body, Addend, Expr);
+        InX::MipsGot->addEntry(Body, Addend, Expr);
       continue;
     }
 

@@ -425,15 +425,15 @@ getRelocTargetVA(uint32_t Type, int64_t A, typename ELFT::uint P,
   case R_TLSDESC_CALL:
     llvm_unreachable("cannot relocate hint relocs");
   case R_MIPS_GOTREL:
-    return Body.getVA(A) - In<ELFT>::MipsGot->getGp();
+    return Body.getVA(A) - InX::MipsGot->getGp();
   case R_MIPS_GOT_GP:
-    return In<ELFT>::MipsGot->getGp() + A;
+    return InX::MipsGot->getGp() + A;
   case R_MIPS_GOT_GP_PC: {
     // R_MIPS_LO16 expression has R_MIPS_GOT_GP_PC type iif the target
     // is _gp_disp symbol. In that case we should use the following
     // formula for calculation "AHL + GP - P + 4". For details see p. 4-19 at
     // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
-    uint64_t V = In<ELFT>::MipsGot->getGp() + A - P;
+    uint64_t V = InX::MipsGot->getGp() + A - P;
     if (Type == R_MIPS_LO16)
       V += 4;
     return V;
@@ -442,24 +442,21 @@ getRelocTargetVA(uint32_t Type, int64_t A, typename ELFT::uint P,
     // If relocation against MIPS local symbol requires GOT entry, this entry
     // should be initialized by 'page address'. This address is high 16-bits
     // of sum the symbol's value and the addend.
-    return In<ELFT>::MipsGot->getVA() +
-           In<ELFT>::MipsGot->getPageEntryOffset(Body, A) -
-           In<ELFT>::MipsGot->getGp();
+    return InX::MipsGot->getVA() + InX::MipsGot->getPageEntryOffset(Body, A) -
+           InX::MipsGot->getGp();
   case R_MIPS_GOT_OFF:
   case R_MIPS_GOT_OFF32:
     // In case of MIPS if a GOT relocation has non-zero addend this addend
     // should be applied to the GOT entry content not to the GOT entry offset.
     // That is why we use separate expression type.
-    return In<ELFT>::MipsGot->getVA() +
-           In<ELFT>::MipsGot->getBodyEntryOffset(Body, A) -
-           In<ELFT>::MipsGot->getGp();
+    return InX::MipsGot->getVA() + InX::MipsGot->getBodyEntryOffset(Body, A) -
+           InX::MipsGot->getGp();
   case R_MIPS_TLSGD:
-    return In<ELFT>::MipsGot->getVA() + In<ELFT>::MipsGot->getTlsOffset() +
-           In<ELFT>::MipsGot->getGlobalDynOffset(Body) -
-           In<ELFT>::MipsGot->getGp();
+    return InX::MipsGot->getVA() + InX::MipsGot->getTlsOffset() +
+           InX::MipsGot->getGlobalDynOffset(Body) - InX::MipsGot->getGp();
   case R_MIPS_TLSLD:
-    return In<ELFT>::MipsGot->getVA() + In<ELFT>::MipsGot->getTlsOffset() +
-           In<ELFT>::MipsGot->getTlsIndexOff() - In<ELFT>::MipsGot->getGp();
+    return InX::MipsGot->getVA() + InX::MipsGot->getTlsOffset() +
+           InX::MipsGot->getTlsIndexOff() - InX::MipsGot->getGp();
   case R_PAGE_PC:
   case R_PLT_PAGE_PC:
     if (Body.isUndefined() && !Body.isLocal() && Body.symbol()->isWeak())

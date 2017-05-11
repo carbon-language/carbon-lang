@@ -401,8 +401,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   // Add .got. MIPS' .got is so different from the other archs,
   // it has its own class.
   if (Config->EMachine == EM_MIPS) {
-    In<ELFT>::MipsGot = make<MipsGotSection>();
-    Add(In<ELFT>::MipsGot);
+    InX::MipsGot = make<MipsGotSection>();
+    Add(InX::MipsGot);
   } else {
     In<ELFT>::Got = make<GotSection<ELFT>>();
     Add(In<ELFT>::Got);
@@ -1185,7 +1185,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
                   In<ELFT>::GnuHashTab, In<ELFT>::HashTab,  In<ELFT>::SymTab,
                   In<ELFT>::ShStrTab,   In<ELFT>::StrTab,   In<ELFT>::VerDef,
                   In<ELFT>::DynStrTab,  In<ELFT>::GdbIndex, In<ELFT>::Got,
-                  In<ELFT>::MipsGot,    In<ELFT>::IgotPlt,  InX::GotPlt,
+                  InX::MipsGot,         In<ELFT>::IgotPlt,  InX::GotPlt,
                   In<ELFT>::RelaDyn,    In<ELFT>::RelaIplt, In<ELFT>::RelaPlt,
                   In<ELFT>::Plt,        In<ELFT>::Iplt,     In<ELFT>::Plt,
                   In<ELFT>::EhFrameHdr, In<ELFT>::VerSym,   In<ELFT>::VerNeed,
@@ -1204,7 +1204,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     // when no more Thunks are added
     ThunkCreator<ELFT> TC;
     if (TC.createThunks(OutputSections))
-      applySynthetic({In<ELFT>::MipsGot},
+      applySynthetic({InX::MipsGot},
                      [](SyntheticSection *SS) { SS->updateAllocSize(); });
   }
   // Fill other section headers. The dynamic table is finalized
