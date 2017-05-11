@@ -117,7 +117,7 @@ private:
   std::stack<std::function<void()>> WorkStack;
   std::mutex Mutex;
   std::condition_variable Cond;
-  Latch Done;
+  detail::Latch Done;
 };
 
 Executor *Executor::getDefaultExecutor() {

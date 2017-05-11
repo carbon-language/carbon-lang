@@ -36,7 +36,7 @@ class Latch {
   mutable std::condition_variable Cond;
 
 public:
-  explicit Latch(uint32_t count = 0) : Count(Count) {}
+  explicit Latch(uint32_t Count = 0) : Count(Count) {}
   ~Latch() { sync(); }
 
   void inc() {
@@ -117,7 +117,8 @@ RandomAccessIterator medianOf3(RandomAccessIterator Start,
 
 template <class RandomAccessIterator, class Comparator>
 void parallel_quick_sort(RandomAccessIterator Start, RandomAccessIterator End,
-                         const Comparator &Comp, TaskGroup &TG, size_t Depth) {
+                         const Comparator &Comp, detail::TaskGroup &TG,
+                         size_t Depth) {
   // Do a sequential sort for small inputs.
   if (std::distance(Start, End) < detail::MinParallelSize || Depth == 0) {
     std::sort(Start, End, Comp);
@@ -144,7 +145,7 @@ void parallel_quick_sort(RandomAccessIterator Start, RandomAccessIterator End,
 template <class RandomAccessIterator, class Comparator>
 void parallel_sort(RandomAccessIterator Start, RandomAccessIterator End,
                    const Comparator &Comp) {
-  TaskGroup TG;
+  detail::TaskGroup TG;
   parallel_quick_sort(Start, End, Comp, TG,
                       llvm::Log2_64(std::distance(Start, End)) + 1);
 }
@@ -159,7 +160,7 @@ void parallel_for_each(IterTy Begin, IterTy End, FuncTy Fn) {
   if (TaskSize == 0)
     TaskSize = 1;
 
-  TaskGroup TG;
+  detail::TaskGroup TG;
   while (TaskSize <= std::distance(Begin, End)) {
     TG.spawn([=, &Fn] { std::for_each(Begin, Begin + TaskSize, Fn); });
     Begin += TaskSize;
@@ -173,7 +174,7 @@ void parallel_for_each_n(IndexTy Begin, IndexTy End, FuncTy Fn) {
   if (TaskSize == 0)
     TaskSize = 1;
 
-  TaskGroup TG;
+  detail::TaskGroup TG;
   IndexTy I = Begin;
   for (; I + TaskSize < End; I += TaskSize) {
     TG.spawn([=, &Fn] {
