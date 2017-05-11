@@ -400,7 +400,7 @@ getRelocTargetVA(uint32_t Type, int64_t A, typename ELFT::uint P,
     return Body.getVA(A);
   case R_GOT:
   case R_RELAX_TLS_GD_TO_IE_ABS:
-    return Body.getGotVA<ELFT>() + A;
+    return Body.getGotVA() + A;
   case R_GOTONLY_PC:
     return InX::Got->getVA() + A - P;
   case R_GOTONLY_PC_FROM_END:
@@ -416,10 +416,10 @@ getRelocTargetVA(uint32_t Type, int64_t A, typename ELFT::uint P,
     return Body.getGotOffset() + A;
   case R_GOT_PAGE_PC:
   case R_RELAX_TLS_GD_TO_IE_PAGE_PC:
-    return getAArch64Page(Body.getGotVA<ELFT>() + A) - getAArch64Page(P);
+    return getAArch64Page(Body.getGotVA() + A) - getAArch64Page(P);
   case R_GOT_PC:
   case R_RELAX_TLS_GD_TO_IE:
-    return Body.getGotVA<ELFT>() + A - P;
+    return Body.getGotVA() + A - P;
   case R_HINT:
   case R_NONE:
   case R_TLSDESC_CALL:
