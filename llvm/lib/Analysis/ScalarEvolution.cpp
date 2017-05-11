@@ -7377,14 +7377,17 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
   const APInt &N = NC->getAPInt();
   APInt Two(BitWidth, 2);
 
-  const APInt& C = L;
   // Convert from chrec coefficients to polynomial coefficients AX^2+BX+C
-  // The B coefficient is M-N/2
-  APInt B(M);
-  B -= N.sdiv(Two);
 
   // The A coefficient is N/2
   APInt A(N.sdiv(Two));
+
+  // The B coefficient is M-N/2
+  APInt B(M);
+  B -= A; // A is the same as N/2.
+
+  // The C coefficient is L.
+  const APInt& C = L;
 
   // Compute the B^2-4ac term.
   APInt SqrtTerm(B);
@@ -7402,9 +7405,10 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec, ScalarEvolution &SE) {
 
   // Compute the two solutions for the quadratic formula.
   // The divisions must be performed as signed divisions.
-  APInt NegB(-B);
-  APInt TwoA(A << 1);
-  if (TwoA.isMinValue())
+  APInt NegB(-std::move(B));
+  APInt TwoA(std::move(A));
+  TwoA <<= 1;
+  if (TwoA.isNullValue())
     return None;
 
   LLVMContext &Context = SE.getContext();
