@@ -645,7 +645,6 @@ bool elf::isRelroSection(const OutputSection *Sec) {
          S == ".eh_frame" || S == ".openbsd.randomdata";
 }
 
-template <class ELFT>
 static bool compareSectionsNonScript(const OutputSection *A,
                                      const OutputSection *B) {
   // Put .interp first because some loaders want to see that section
@@ -1001,9 +1000,8 @@ findOrphanPos(std::vector<OutputSection *>::iterator B,
   }
 
   // Find the fist position that Sec compares less to.
-  return std::find_if(B, E, [=](OutputSection *S) {
-    return compareSectionsNonScript<ELFT>(Sec, S);
-  });
+  return std::find_if(
+      B, E, [=](OutputSection *S) { return compareSectionsNonScript(Sec, S); });
 }
 
 template <class ELFT> void Writer<ELFT>::sortSections() {
@@ -1013,7 +1011,7 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
     return;
   if (!Script->Opt.HasSections) {
     std::stable_sort(OutputSections.begin(), OutputSections.end(),
-                     compareSectionsNonScript<ELFT>);
+                     compareSectionsNonScript);
     return;
   }
   Script->adjustSectionsBeforeSorting();
