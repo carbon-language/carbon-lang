@@ -2245,6 +2245,7 @@ BssSection *InX::Bss;
 BssSection *InX::BssRelRo;
 BuildIdSection *InX::BuildId;
 InputSection *InX::Common;
+SyntheticSection *InX::Dynamic;
 StringTableSection *InX::DynStrTab;
 InputSection *InX::Interp;
 GdbIndexSection *InX::GdbIndex;

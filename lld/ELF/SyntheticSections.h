@@ -750,6 +750,7 @@ struct InX {
   static BssSection *BssRelRo;
   static BuildIdSection *BuildId;
   static InputSection *Common;
+  static SyntheticSection *Dynamic;
   static StringTableSection *DynStrTab;
   static InputSection *Interp;
   static GdbIndexSection *GdbIndex;
@@ -764,7 +765,6 @@ struct InX {
 };
 
 template <class ELFT> struct In : public InX {
-  static DynamicSection<ELFT> *Dynamic;
   static SymbolTableSection<ELFT> *DynSymTab;
   static EhFrameHeader<ELFT> *EhFrameHdr;
   static GnuHashTableSection<ELFT> *GnuHashTab;
@@ -780,7 +780,6 @@ template <class ELFT> struct In : public InX {
   static VersionNeedSection<ELFT> *VerNeed;
 };
 
-template <class ELFT> DynamicSection<ELFT> *In<ELFT>::Dynamic;
 template <class ELFT> SymbolTableSection<ELFT> *In<ELFT>::DynSymTab;
 template <class ELFT> EhFrameHeader<ELFT> *In<ELFT>::EhFrameHdr;
 template <class ELFT> GnuHashTableSection<ELFT> *In<ELFT>::GnuHashTab;

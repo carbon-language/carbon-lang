@@ -313,7 +313,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
   auto Add = [](InputSectionBase *Sec) { InputSections.push_back(Sec); };
 
   InX::DynStrTab = make<StringTableSection>(".dynstr", true);
-  In<ELFT>::Dynamic = make<DynamicSection<ELFT>>();
+  InX::Dynamic = make<DynamicSection<ELFT>>();
   In<ELFT>::RelaDyn = make<RelocationSection<ELFT>>(
       Config->IsRela ? ".rela.dyn" : ".rel.dyn", Config->ZCombreloc);
   InX::ShStrTab = make<StringTableSection>(".shstrtab", false);
@@ -393,7 +393,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
       Add(In<ELFT>::HashTab);
     }
 
-    Add(In<ELFT>::Dynamic);
+    Add(InX::Dynamic);
     Add(InX::DynStrTab);
     Add(In<ELFT>::RelaDyn);
   }
@@ -626,7 +626,7 @@ template <class ELFT> bool elf::isRelroSection(const OutputSection *Sec) {
   // .dynamic section contains data for the dynamic linker, and
   // there's no need to write to it at runtime, so it's better to put
   // it into RELRO.
-  if (Sec == In<ELFT>::Dynamic->OutSec)
+  if (Sec == InX::Dynamic->OutSec)
     return true;
 
   // .bss.rel.ro is used for copy relocations for read-only symbols.
@@ -1110,7 +1110,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // Even the author of gold doesn't remember why gold behaves that way.
   // https://sourceware.org/ml/binutils/2002-03/msg00360.html
   if (In<ELFT>::DynSymTab)
-    addRegular<ELFT>("_DYNAMIC", In<ELFT>::Dynamic, 0);
+    addRegular<ELFT>("_DYNAMIC", InX::Dynamic, 0);
 
   // Define __rel[a]_iplt_{start,end} symbols if needed.
   addRelIpltSymbols();
@@ -1188,7 +1188,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
                   InX::MipsGot,         InX::IgotPlt,       InX::GotPlt,
                   In<ELFT>::RelaDyn,    In<ELFT>::RelaIplt, In<ELFT>::RelaPlt,
                   InX::Plt,             InX::Iplt,          In<ELFT>::EhFrameHdr,
-                  In<ELFT>::VerSym,     In<ELFT>::VerNeed,  In<ELFT>::Dynamic},
+                  In<ELFT>::VerSym,     In<ELFT>::VerNeed,  InX::Dynamic},
                  [](SyntheticSection *SS) { SS->finalizeContents(); });
 
   // Some architectures use small displacements for jump instructions.
@@ -1355,8 +1355,8 @@ template <class ELFT> std::vector<PhdrEntry> Writer<ELFT>::createPhdrs() {
 
   // Add an entry for .dynamic.
   if (In<ELFT>::DynSymTab)
-    AddHdr(PT_DYNAMIC, In<ELFT>::Dynamic->OutSec->getPhdrFlags())
-        ->add(In<ELFT>::Dynamic->OutSec);
+    AddHdr(PT_DYNAMIC, InX::Dynamic->OutSec->getPhdrFlags())
+        ->add(InX::Dynamic->OutSec);
 
   // PT_GNU_RELRO includes all sections that should be marked as
   // read-only by dynamic linker after proccessing relocations.
