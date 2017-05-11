@@ -1285,6 +1285,19 @@ void ScopStmt::buildAccessRelations() {
   }
 }
 
+MemoryAccess *ScopStmt::lookupPHIReadOf(PHINode *PHI) const {
+  for (auto *MA : *this) {
+    if (!MA->isRead())
+      continue;
+    if (!MA->isLatestAnyPHIKind())
+      continue;
+
+    if (MA->getAccessInstruction() == PHI)
+      return MA;
+  }
+  return nullptr;
+}
+
 void ScopStmt::addAccess(MemoryAccess *Access) {
   Instruction *AccessInst = Access->getAccessInstruction();
 

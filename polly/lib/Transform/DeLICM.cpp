@@ -1949,12 +1949,9 @@ private:
       }
     };
 
-    // Add initial scalar. Either the value written by the store, or all inputs
-    // of its statement.
-    auto WrittenValUse = VirtualUse::create(
-        S, TargetStoreMA->getAccessInstruction()->getOperandUse(0), LI, true);
-    if (WrittenValUse.isInter())
-      Worklist.push_back(WrittenValUse.getMemoryAccess());
+    auto *WrittenVal = TargetStoreMA->getAccessInstruction()->getOperand(0);
+    if (auto *WrittenValInputMA = TargetStmt->lookupInputAccessOf(WrittenVal))
+      Worklist.push_back(WrittenValInputMA);
     else
       ProcessAllIncoming(TargetStmt);
 
