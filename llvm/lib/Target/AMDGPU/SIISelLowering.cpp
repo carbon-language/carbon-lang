@@ -2004,6 +2004,7 @@ MachineBasicBlock *SITargetLowering::EmitInstrWithCustomInserter(
       break;
     }
     assert(Found);
+    (void)Found;
 
     // This should be before all vector instructions.
     BuildMI(*BB, FirstMI, DebugLoc(), TII->get(AMDGPU::S_BFE_U32), CountReg)
