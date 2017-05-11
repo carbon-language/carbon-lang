@@ -1996,9 +1996,24 @@ private:
       if (SAI->isPHIKind()) {
         if (!tryMapPHI(SAI, EltTarget))
           continue;
-        // Add inputs of all incoming statements to the worklist.
-        for (auto *PHIWrite : DefUse.getPHIIncomings(SAI))
-          ProcessAllIncoming(PHIWrite->getStatement());
+        // Add inputs of all incoming statements to the worklist. Prefer the
+        // input accesses of the incoming blocks.
+        for (auto *PHIWrite : DefUse.getPHIIncomings(SAI)) {
+          auto *PHIWriteStmt = PHIWrite->getStatement();
+          bool FoundAny = false;
+          for (auto Incoming : PHIWrite->getIncoming()) {
+            auto *IncomingInputMA =
+                PHIWriteStmt->lookupInputAccessOf(Incoming.second);
+            if (!IncomingInputMA)
+              continue;
+
+            Worklist.push_back(IncomingInputMA);
+            FoundAny = true;
+          }
+
+          if (!FoundAny)
+            ProcessAllIncoming(PHIWrite->getStatement());
+        }
 
         AnyMapped = true;
         continue;
