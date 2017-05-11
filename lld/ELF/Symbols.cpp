@@ -164,7 +164,7 @@ uint64_t SymbolBody::getVA(int64_t Addend) const {
 }
 
 template <class ELFT> typename ELFT::uint SymbolBody::getGotVA() const {
-  return In<ELFT>::Got->getVA() + getGotOffset();
+  return InX::Got->getVA() + getGotOffset();
 }
 
 uint64_t SymbolBody::getGotOffset() const {

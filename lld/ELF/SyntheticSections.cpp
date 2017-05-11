@@ -618,17 +618,16 @@ template <class ELFT> void EhFrameSection<ELFT>::writeTo(uint8_t *Buf) {
   }
 }
 
-template <class ELFT>
-GotSection<ELFT>::GotSection()
+GotBaseSection::GotBaseSection()
     : SyntheticSection(SHF_ALLOC | SHF_WRITE, SHT_PROGBITS,
                        Target->GotEntrySize, ".got") {}
 
-template <class ELFT> void GotSection<ELFT>::addEntry(SymbolBody &Sym) {
+void GotBaseSection::addEntry(SymbolBody &Sym) {
   Sym.GotIndex = NumEntries;
   ++NumEntries;
 }
 
-template <class ELFT> bool GotSection<ELFT>::addDynTlsEntry(SymbolBody &Sym) {
+bool GotBaseSection::addDynTlsEntry(SymbolBody &Sym) {
   if (Sym.GlobalDynIndex != -1U)
     return false;
   Sym.GlobalDynIndex = NumEntries;
@@ -639,7 +638,7 @@ template <class ELFT> bool GotSection<ELFT>::addDynTlsEntry(SymbolBody &Sym) {
 
 // Reserves TLS entries for a TLS module ID and a TLS block offset.
 // In total it takes two GOT slots.
-template <class ELFT> bool GotSection<ELFT>::addTlsIndex() {
+bool GotBaseSection::addTlsIndex() {
   if (TlsIndexOff != uint32_t(-1))
     return false;
   TlsIndexOff = NumEntries * Config->Wordsize;
@@ -647,21 +646,19 @@ template <class ELFT> bool GotSection<ELFT>::addTlsIndex() {
   return true;
 }
 
-template <class ELFT>
-uint64_t GotSection<ELFT>::getGlobalDynAddr(const SymbolBody &B) const {
+uint64_t GotBaseSection::getGlobalDynAddr(const SymbolBody &B) const {
   return this->getVA() + B.GlobalDynIndex * Config->Wordsize;
 }
 
-template <class ELFT>
-uint64_t GotSection<ELFT>::getGlobalDynOffset(const SymbolBody &B) const {
+uint64_t GotBaseSection::getGlobalDynOffset(const SymbolBody &B) const {
   return B.GlobalDynIndex * Config->Wordsize;
 }
 
-template <class ELFT> void GotSection<ELFT>::finalizeContents() {
+void GotBaseSection::finalizeContents() {
   Size = NumEntries * Config->Wordsize;
 }
 
-template <class ELFT> bool GotSection<ELFT>::empty() const {
+bool GotBaseSection::empty() const {
   // If we have a relocation that is relative to GOT (such as GOTOFFREL),
   // we need to emit a GOT even if it's empty.
   return NumEntries == 0 && !HasGotOffRel;
@@ -2249,6 +2246,7 @@ SyntheticSection *InX::Dynamic;
 StringTableSection *InX::DynStrTab;
 InputSection *InX::Interp;
 GdbIndexSection *InX::GdbIndex;
+GotBaseSection *InX::Got;
 GotPltSection *InX::GotPlt;
 IgotPltSection *InX::IgotPlt;
 MipsGotSection *InX::MipsGot;

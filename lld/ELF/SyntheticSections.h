@@ -104,10 +104,9 @@ private:
   llvm::DenseMap<std::pair<ArrayRef<uint8_t>, SymbolBody *>, CieRecord> CieMap;
 };
 
-template <class ELFT> class GotSection final : public SyntheticSection {
+class GotBaseSection : public SyntheticSection {
 public:
-  GotSection();
-  void writeTo(uint8_t *Buf) override;
+  GotBaseSection();
   size_t getSize() const override { return Size; }
   void finalizeContents() override;
   bool empty() const override;
@@ -125,10 +124,15 @@ public:
   // that relies on its address.
   bool HasGotOffRel = false;
 
-private:
+protected:
   size_t NumEntries = 0;
   uint32_t TlsIndexOff = -1;
   uint64_t Size = 0;
+};
+
+template <class ELFT> class GotSection final : public GotBaseSection {
+public:
+  void writeTo(uint8_t *Buf) override;
 };
 
 // .note.gnu.build-id section.
@@ -754,6 +758,7 @@ struct InX {
   static StringTableSection *DynStrTab;
   static InputSection *Interp;
   static GdbIndexSection *GdbIndex;
+  static GotBaseSection *Got;
   static GotPltSection *GotPlt;
   static IgotPltSection *IgotPlt;
   static MipsGotSection *MipsGot;
@@ -768,7 +773,6 @@ template <class ELFT> struct In : public InX {
   static SymbolTableSection<ELFT> *DynSymTab;
   static EhFrameHeader<ELFT> *EhFrameHdr;
   static GnuHashTableSection<ELFT> *GnuHashTab;
-  static GotSection<ELFT> *Got;
   static EhFrameSection<ELFT> *EhFrame;
   static HashTableSection<ELFT> *HashTab;
   static RelocationSection<ELFT> *RelaDyn;
@@ -783,7 +787,6 @@ template <class ELFT> struct In : public InX {
 template <class ELFT> SymbolTableSection<ELFT> *In<ELFT>::DynSymTab;
 template <class ELFT> EhFrameHeader<ELFT> *In<ELFT>::EhFrameHdr;
 template <class ELFT> GnuHashTableSection<ELFT> *In<ELFT>::GnuHashTab;
-template <class ELFT> GotSection<ELFT> *In<ELFT>::Got;
 template <class ELFT> EhFrameSection<ELFT> *In<ELFT>::EhFrame;
 template <class ELFT> HashTableSection<ELFT> *In<ELFT>::HashTab;
 template <class ELFT> RelocationSection<ELFT> *In<ELFT>::RelaDyn;

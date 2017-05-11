@@ -404,8 +404,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     InX::MipsGot = make<MipsGotSection>();
     Add(InX::MipsGot);
   } else {
-    In<ELFT>::Got = make<GotSection<ELFT>>();
-    Add(In<ELFT>::Got);
+    InX::Got = make<GotSection<ELFT>>();
+    Add(InX::Got);
   }
 
   InX::GotPlt = make<GotPltSection>();
@@ -613,7 +613,7 @@ template <class ELFT> bool elf::isRelroSection(const OutputSection *Sec) {
   // .got contains pointers to external symbols. They are resolved by
   // the dynamic linker when a module is loaded into memory, and after
   // that they are not expected to change. So, it can be in RELRO.
-  if (In<ELFT>::Got && Sec == In<ELFT>::Got->OutSec)
+  if (InX::Got && Sec == InX::Got->OutSec)
     return true;
 
   // .got.plt contains pointers to external function symbols. They are
@@ -1184,7 +1184,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   applySynthetic({In<ELFT>::DynSymTab,  InX::Bss,           InX::BssRelRo,
                   In<ELFT>::GnuHashTab, In<ELFT>::HashTab,  In<ELFT>::SymTab,
                   InX::ShStrTab,        InX::StrTab,        In<ELFT>::VerDef,
-                  InX::DynStrTab,       InX::GdbIndex,      In<ELFT>::Got,
+                  InX::DynStrTab,       InX::GdbIndex,      InX::Got,
                   InX::MipsGot,         InX::IgotPlt,       InX::GotPlt,
                   In<ELFT>::RelaDyn,    In<ELFT>::RelaIplt, In<ELFT>::RelaPlt,
                   InX::Plt,             InX::Iplt,          In<ELFT>::EhFrameHdr,

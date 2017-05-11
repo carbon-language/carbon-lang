@@ -402,16 +402,16 @@ getRelocTargetVA(uint32_t Type, int64_t A, typename ELFT::uint P,
   case R_RELAX_TLS_GD_TO_IE_ABS:
     return Body.getGotVA<ELFT>() + A;
   case R_GOTONLY_PC:
-    return In<ELFT>::Got->getVA() + A - P;
+    return InX::Got->getVA() + A - P;
   case R_GOTONLY_PC_FROM_END:
-    return In<ELFT>::Got->getVA() + A - P + In<ELFT>::Got->getSize();
+    return InX::Got->getVA() + A - P + InX::Got->getSize();
   case R_GOTREL:
-    return Body.getVA(A) - In<ELFT>::Got->getVA();
+    return Body.getVA(A) - InX::Got->getVA();
   case R_GOTREL_FROM_END:
-    return Body.getVA(A) - In<ELFT>::Got->getVA() - In<ELFT>::Got->getSize();
+    return Body.getVA(A) - InX::Got->getVA() - InX::Got->getSize();
   case R_GOT_FROM_END:
   case R_RELAX_TLS_GD_TO_IE_END:
-    return Body.getGotOffset() + A - In<ELFT>::Got->getSize();
+    return Body.getGotOffset() + A - InX::Got->getSize();
   case R_GOT_OFF:
     return Body.getGotOffset() + A;
   case R_GOT_PAGE_PC:
@@ -520,19 +520,18 @@ getRelocTargetVA(uint32_t Type, int64_t A, typename ELFT::uint P,
   case R_SIZE:
     return Body.getSize<ELFT>() + A;
   case R_TLSDESC:
-    return In<ELFT>::Got->getGlobalDynAddr(Body) + A;
+    return InX::Got->getGlobalDynAddr(Body) + A;
   case R_TLSDESC_PAGE:
-    return getAArch64Page(In<ELFT>::Got->getGlobalDynAddr(Body) + A) -
+    return getAArch64Page(InX::Got->getGlobalDynAddr(Body) + A) -
            getAArch64Page(P);
   case R_TLSGD:
-    return In<ELFT>::Got->getGlobalDynOffset(Body) + A -
-           In<ELFT>::Got->getSize();
+    return InX::Got->getGlobalDynOffset(Body) + A - InX::Got->getSize();
   case R_TLSGD_PC:
-    return In<ELFT>::Got->getGlobalDynAddr(Body) + A - P;
+    return InX::Got->getGlobalDynAddr(Body) + A - P;
   case R_TLSLD:
-    return In<ELFT>::Got->getTlsIndexOff() + A - In<ELFT>::Got->getSize();
+    return InX::Got->getTlsIndexOff() + A - InX::Got->getSize();
   case R_TLSLD_PC:
-    return In<ELFT>::Got->getTlsIndexVA() + A - P;
+    return InX::Got->getTlsIndexVA() + A - P;
   }
   llvm_unreachable("Invalid expression");
 }

@@ -460,7 +460,7 @@ void X86TargetInfo::writePltHeader(uint8_t *Buf) const {
     };
     memcpy(Buf, V, sizeof(V));
 
-    uint32_t Ebx = In<ELF32LE>::Got->getVA() + In<ELF32LE>::Got->getSize();
+    uint32_t Ebx = InX::Got->getVA() + InX::Got->getSize();
     uint32_t GotPlt = InX::GotPlt->getVA() - Ebx;
     write32le(Buf + 2, GotPlt + 4);
     write32le(Buf + 8, GotPlt + 8);
@@ -490,7 +490,7 @@ void X86TargetInfo::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
 
   if (Config->Pic) {
     // jmp *foo@GOT(%ebx)
-    uint32_t Ebx = In<ELF32LE>::Got->getVA() + In<ELF32LE>::Got->getSize();
+    uint32_t Ebx = InX::Got->getVA() + InX::Got->getSize();
     Buf[1] = 0xa3;
     write32le(Buf + 2, GotPltEntryAddr - Ebx);
   } else {
@@ -1140,7 +1140,7 @@ uint64_t getPPC64TocBase() {
   // TOC starts where the first of these sections starts. We always create a
   // .got when we see a relocation that uses it, so for us the start is always
   // the .got.
-  uint64_t TocVA = In<ELF64BE>::Got->getVA();
+  uint64_t TocVA = InX::Got->getVA();
 
   // Per the ppc64-elf-linux ABI, The TOC base is TOC value plus 0x8000
   // thus permitting a full 64 Kbytes segment. Note that the glibc startup
