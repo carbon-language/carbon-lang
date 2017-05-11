@@ -29,7 +29,23 @@
 
 namespace llvm {
 
+namespace parallel {
+struct sequential_execution_policy {};
+struct parallel_execution_policy {};
+
+template <typename T>
+struct is_execution_policy
+    : public std::integral_constant<
+          bool, llvm::is_one_of<T, sequential_execution_policy,
+                                parallel_execution_policy>::value> {};
+
+constexpr sequential_execution_policy seq{};
+constexpr parallel_execution_policy par{};
+
 namespace detail {
+
+#if LLVM_ENABLE_THREADS
+
 class Latch {
   uint32_t Count;
   mutable std::mutex Mutex;
@@ -64,24 +80,6 @@ public:
 
   void sync() const { L.sync(); }
 };
-}
-
-namespace parallel {
-struct sequential_execution_policy {};
-struct parallel_execution_policy {};
-
-template <typename T>
-struct is_execution_policy
-    : public std::integral_constant<
-          bool, llvm::is_one_of<T, sequential_execution_policy,
-                                parallel_execution_policy>::value> {};
-
-constexpr sequential_execution_policy seq{};
-constexpr parallel_execution_policy par{};
-
-namespace detail {
-
-#if LLVM_ENABLE_THREADS
 
 #if defined(_MSC_VER)
 template <class RandomAccessIterator, class Comparator>
@@ -117,8 +115,7 @@ RandomAccessIterator medianOf3(RandomAccessIterator Start,
 
 template <class RandomAccessIterator, class Comparator>
 void parallel_quick_sort(RandomAccessIterator Start, RandomAccessIterator End,
-                         const Comparator &Comp, detail::TaskGroup &TG,
-                         size_t Depth) {
+                         const Comparator &Comp, TaskGroup &TG, size_t Depth) {
   // Do a sequential sort for small inputs.
   if (std::distance(Start, End) < detail::MinParallelSize || Depth == 0) {
     std::sort(Start, End, Comp);
@@ -145,7 +142,7 @@ void parallel_quick_sort(RandomAccessIterator Start, RandomAccessIterator End,
 template <class RandomAccessIterator, class Comparator>
 void parallel_sort(RandomAccessIterator Start, RandomAccessIterator End,
                    const Comparator &Comp) {
-  detail::TaskGroup TG;
+  TaskGroup TG;
   parallel_quick_sort(Start, End, Comp, TG,
                       llvm::Log2_64(std::distance(Start, End)) + 1);
 }
@@ -160,7 +157,7 @@ void parallel_for_each(IterTy Begin, IterTy End, FuncTy Fn) {
   if (TaskSize == 0)
     TaskSize = 1;
 
-  detail::TaskGroup TG;
+  TaskGroup TG;
   while (TaskSize <= std::distance(Begin, End)) {
     TG.spawn([=, &Fn] { std::for_each(Begin, Begin + TaskSize, Fn); });
     Begin += TaskSize;
@@ -174,7 +171,7 @@ void parallel_for_each_n(IndexTy Begin, IndexTy End, FuncTy Fn) {
   if (TaskSize == 0)
     TaskSize = 1;
 
-  detail::TaskGroup TG;
+  TaskGroup TG;
   IndexTy I = Begin;
   for (; I + TaskSize < End; I += TaskSize) {
     TG.spawn([=, &Fn] {
