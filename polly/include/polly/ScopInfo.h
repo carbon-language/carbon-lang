@@ -1253,6 +1253,9 @@ private:
                                 llvm::SmallVectorImpl<MemoryAccess *> &Loads);
   //@}
 
+  /// Remove @p MA from dictionaries pointing to them.
+  void removeAccessData(MemoryAccess *MA);
+
 public:
   ~ScopStmt();
 

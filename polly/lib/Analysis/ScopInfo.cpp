@@ -1858,6 +1858,24 @@ void ScopStmt::print(raw_ostream &OS) const {
 
 void ScopStmt::dump() const { print(dbgs()); }
 
+void ScopStmt::removeAccessData(MemoryAccess *MA) {
+  if (MA->isRead() && MA->isOriginalValueKind()) {
+    bool Found = ValueReads.erase(MA->getAccessValue());
+    (void)Found;
+    assert(Found && "Expected access data not found");
+  }
+  if (MA->isWrite() && MA->isOriginalValueKind()) {
+    bool Found = ValueWrites.erase(cast<Instruction>(MA->getAccessValue()));
+    (void)Found;
+    assert(Found && "Expected access data not found");
+  }
+  if (MA->isWrite() && MA->isOriginalAnyPHIKind()) {
+    bool Found = PHIWrites.erase(cast<PHINode>(MA->getAccessInstruction()));
+    (void)Found;
+    assert(Found && "Expected access data not found");
+  }
+}
+
 void ScopStmt::removeMemoryAccess(MemoryAccess *MA) {
   // Remove the memory accesses from this statement together with all scalar
   // accesses that were caused by it. MemoryKind::Value READs have no access
@@ -1868,6 +1886,10 @@ void ScopStmt::removeMemoryAccess(MemoryAccess *MA) {
   auto Predicate = [&](MemoryAccess *Acc) {
     return Acc->getAccessInstruction() == MA->getAccessInstruction();
   };
+  for (auto *MA : MemAccs) {
+    if (Predicate(MA))
+      removeAccessData(MA);
+  }
   MemAccs.erase(std::remove_if(MemAccs.begin(), MemAccs.end(), Predicate),
                 MemAccs.end());
   InstructionToAccess.erase(MA->getAccessInstruction());
@@ -1877,6 +1899,8 @@ void ScopStmt::removeSingleMemoryAccess(MemoryAccess *MA) {
   auto MAIt = std::find(MemAccs.begin(), MemAccs.end(), MA);
   assert(MAIt != MemAccs.end());
   MemAccs.erase(MAIt);
+
+  removeAccessData(MA);
 
   auto It = InstructionToAccess.find(MA->getAccessInstruction());
   if (It != InstructionToAccess.end()) {
