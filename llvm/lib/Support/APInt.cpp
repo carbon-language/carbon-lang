@@ -1710,12 +1710,12 @@ void APInt::sdivrem(const APInt &LHS, const APInt &RHS,
       APInt::udivrem(-LHS, -RHS, Quotient, Remainder);
     else {
       APInt::udivrem(-LHS, RHS, Quotient, Remainder);
-      Quotient = -Quotient;
+      Quotient.negate();
     }
-    Remainder = -Remainder;
+    Remainder.negate();
   } else if (RHS.isNegative()) {
     APInt::udivrem(LHS, -RHS, Quotient, Remainder);
-    Quotient = -Quotient;
+    Quotient.negate();
   } else {
     APInt::udivrem(LHS, RHS, Quotient, Remainder);
   }
