@@ -1093,7 +1093,7 @@ template <class ELFT> void DynamicSection<ELFT>::finalizeContents() {
     add({DT_JMPREL, In<ELFT>::RelaPlt});
     add({DT_PLTRELSZ, In<ELFT>::RelaPlt->OutSec->Size});
     add({Config->EMachine == EM_MIPS ? DT_MIPS_PLTGOT : DT_PLTGOT,
-         In<ELFT>::GotPlt});
+         InX::GotPlt});
     add({DT_PLTREL, uint64_t(Config->IsRela ? DT_RELA : DT_REL)});
   }
 

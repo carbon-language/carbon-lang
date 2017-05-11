@@ -877,8 +877,8 @@ static void scanRelocs(InputSectionBase &Sec, ArrayRef<RelTy> Rels) {
         addPltEntry(InX::Iplt, In<ELFT>::IgotPlt, In<ELFT>::RelaIplt,
                     Target->IRelativeRel, Body, true);
       else
-        addPltEntry(InX::Plt, In<ELFT>::GotPlt, In<ELFT>::RelaPlt,
-                    Target->PltRel, Body, !Preemptible);
+        addPltEntry(InX::Plt, InX::GotPlt, In<ELFT>::RelaPlt, Target->PltRel,
+                    Body, !Preemptible);
     }
 
     // Create a GOT slot if a relocation needs GOT.

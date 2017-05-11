@@ -736,7 +736,7 @@ void X86_64TargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
       0x0f, 0x1f, 0x40, 0x00              // nop
   };
   memcpy(Buf, PltData, sizeof(PltData));
-  uint64_t GotPlt = In<ELFT>::GotPlt->getVA();
+  uint64_t GotPlt = InX::GotPlt->getVA();
   uint64_t Plt = In<ELFT>::Plt->getVA();
   write32le(Buf + 2, GotPlt - Plt + 2); // GOTPLT+8
   write32le(Buf + 8, GotPlt - Plt + 4); // GOTPLT+16
@@ -2203,7 +2203,7 @@ void MipsTargetInfo<ELFT>::writePltHeader(uint8_t *Buf) const {
   write32<E>(Buf + 24, 0x0320f809); // jalr  $25
   write32<E>(Buf + 28, 0x2718fffe); // subu  $24, $24, 2
 
-  uint64_t GotPlt = In<ELFT>::GotPlt->getVA();
+  uint64_t GotPlt = InX::GotPlt->getVA();
   writeMipsHi16<E>(Buf, GotPlt);
   writeMipsLo16<E>(Buf + 4, GotPlt);
   writeMipsLo16<E>(Buf + 8, GotPlt);

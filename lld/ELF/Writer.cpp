@@ -408,8 +408,8 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(In<ELFT>::Got);
   }
 
-  In<ELFT>::GotPlt = make<GotPltSection>();
-  Add(In<ELFT>::GotPlt);
+  InX::GotPlt = make<GotPltSection>();
+  Add(InX::GotPlt);
   In<ELFT>::IgotPlt = make<IgotPltSection>();
   Add(In<ELFT>::IgotPlt);
 
@@ -620,7 +620,7 @@ template <class ELFT> bool elf::isRelroSection(const OutputSection *Sec) {
   // by default resolved lazily, so we usually cannot put it into RELRO.
   // However, if "-z now" is given, the lazy symbol resolution is
   // disabled, which enables us to put it into RELRO.
-  if (Sec == In<ELFT>::GotPlt->OutSec)
+  if (Sec == InX::GotPlt->OutSec)
     return Config->ZNow;
 
   // .dynamic section contains data for the dynamic linker, and
@@ -1185,7 +1185,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
                   In<ELFT>::GnuHashTab, In<ELFT>::HashTab,  In<ELFT>::SymTab,
                   In<ELFT>::ShStrTab,   In<ELFT>::StrTab,   In<ELFT>::VerDef,
                   In<ELFT>::DynStrTab,  In<ELFT>::GdbIndex, In<ELFT>::Got,
-                  In<ELFT>::MipsGot,    In<ELFT>::IgotPlt,  In<ELFT>::GotPlt,
+                  In<ELFT>::MipsGot,    In<ELFT>::IgotPlt,  InX::GotPlt,
                   In<ELFT>::RelaDyn,    In<ELFT>::RelaIplt, In<ELFT>::RelaPlt,
                   In<ELFT>::Plt,        In<ELFT>::Iplt,     In<ELFT>::Plt,
                   In<ELFT>::EhFrameHdr, In<ELFT>::VerSym,   In<ELFT>::VerNeed,
