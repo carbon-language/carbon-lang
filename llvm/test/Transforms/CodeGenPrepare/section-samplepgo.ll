@@ -10,26 +10,26 @@ define void @hot_func() !prof !15 {
   ret void
 }
 
-; For instrumentation based PGO, we should only look at entry counts,
-; not call site VP metadata (which can exist on value profiled memcpy,
-; or possibly left behind after static analysis based devirtualization).
-; CHECK: cold_func1{{.*}}!section_prefix ![[COLD_ID:[0-9]+]]
-define void @cold_func1() !prof !16 {
+; CHECK: hot_call_func{{.*}}!section_prefix ![[HOT_ID]]
+; The sum of 2 callsites are hot
+define void @hot_call_func() !prof !16 {
   call void @hot_func(), !prof !17
   call void @hot_func(), !prof !17
   ret void
 }
 
-; CHECK: cold_func2{{.*}}!section_prefix
-define void @cold_func2() !prof !16 {
+; CHECK-NOT: normal_func{{.*}}!section_prefix
+; The sum of all callsites are neither hot or cold
+define void @normal_func() !prof !16 {
   call void @hot_func(), !prof !17
   call void @hot_func(), !prof !18
   call void @hot_func(), !prof !18
   ret void
 }
 
-; CHECK: cold_func3{{.*}}!section_prefix ![[COLD_ID]]
-define void @cold_func3() !prof !16 {
+; CHECK: cold_func{{.*}}!section_prefix ![[COLD_ID:[0-9]+]]
+; The entry and the callsite are both cold
+define void @cold_func() !prof !16 {
   call void @hot_func(), !prof !18
   ret void
 }
@@ -39,7 +39,7 @@ define void @cold_func3() !prof !16 {
 !llvm.module.flags = !{!1}
 !1 = !{i32 1, !"ProfileSummary", !2}
 !2 = !{!3, !4, !5, !6, !7, !8, !9, !10}
-!3 = !{!"ProfileFormat", !"InstrProf"}
+!3 = !{!"ProfileFormat", !"SampleProfile"}
 !4 = !{!"TotalCount", i64 10000}
 !5 = !{!"MaxCount", i64 1000}
 !6 = !{!"MaxInternalCount", i64 1}

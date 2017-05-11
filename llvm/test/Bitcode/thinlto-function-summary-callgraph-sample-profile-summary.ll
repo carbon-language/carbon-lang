@@ -29,7 +29,7 @@
 ; CHECK-NEXT:    <VERSION
 ; CHECK-NEXT:    <VALUE_GUID op0=25 op1=123/>
 ; op4=hot1 op6=cold op8=hot2 op10=hot4 op12=none1 op14=hot3 op16=none2 op18=none3 op20=123
-; CHECK-NEXT:    <PERMODULE_PROFILE {{.*}} op4=1 op5=3 op6=5 op7=1 op8=2 op9=3 op10=4 op11=1 op12=6 op13=2 op14=3 op15=3 op16=7 op17=2 op18=8 op19=2 op20=25 op21=3/>
+; CHECK-NEXT:    <PERMODULE_PROFILE {{.*}} op4=1 op5=3 op6=5 op7=1 op8=2 op9=3 op10=4 op11=3 op12=6 op13=2 op14=3 op15=3 op16=7 op17=2 op18=8 op19=2 op20=25 op21=3/>
 ; CHECK-NEXT:  </GLOBALVAL_SUMMARY_BLOCK>
 
 ; CHECK: <STRTAB_BLOCK
@@ -106,7 +106,7 @@ declare void @none3() #1
 
 !1 = !{i32 1, !"ProfileSummary", !2}
 !2 = !{!3, !4, !5, !6, !7, !8, !9, !10}
-!3 = !{!"ProfileFormat", !"InstrProf"}
+!3 = !{!"ProfileFormat", !"SampleProfile"}
 !4 = !{!"TotalCount", i64 10000}
 !5 = !{!"MaxCount", i64 10}
 !6 = !{!"MaxInternalCount", i64 1}
