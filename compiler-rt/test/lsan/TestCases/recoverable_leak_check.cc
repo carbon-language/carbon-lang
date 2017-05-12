@@ -3,6 +3,8 @@
 // RUN: %clangxx_lsan %s -o %t
 // RUN: %env_lsan_opts=$LSAN_BASE %run %t foo 2>&1 | FileCheck %s
 // RUN: %env_lsan_opts=$LSAN_BASE %run %t 2>&1 | FileCheck %s
+//
+// XFAIL: darwin
 
 #include <assert.h>
 #include <stdio.h>
