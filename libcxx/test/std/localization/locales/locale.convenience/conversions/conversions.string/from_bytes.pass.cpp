@@ -33,7 +33,7 @@ struct TestHelper<CharT, 4> {
 
 template <class CharT>
 void TestHelper<CharT, 2>::test() {
-  static_assert(std::is_same<CharT, wchar_t>::value, "");
+  static_assert((std::is_same<CharT, wchar_t>::value), "");
   {
     std::wstring_convert<std::codecvt_utf8<CharT> > myconv;
     std::string bs("\xE1\x80\x85\x00");
@@ -52,7 +52,7 @@ void TestHelper<CharT, 2>::test() {
 
 template <class CharT>
 void TestHelper<CharT, 4>::test() {
-  static_assert(std::is_same<CharT, wchar_t>::value, "");
+  static_assert((std::is_same<CharT, wchar_t>::value), "");
   {
     std::wstring_convert<std::codecvt_utf8<CharT> > myconv;
     std::string bs("\xF1\x80\x80\x83");
