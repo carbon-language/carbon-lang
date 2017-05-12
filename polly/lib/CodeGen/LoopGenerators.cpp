@@ -17,11 +17,13 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
 using namespace polly;
+using namespace PatternMatch;
 
 static cl::opt<int>
     PollyNumThreads("polly-num-threads",
@@ -49,6 +51,9 @@ static cl::opt<int>
 // contains the loop iv 'polly.indvar', the incremented loop iv
 // 'polly.indvar_next' as well as the condition to check if we execute another
 // iteration of the loop. After the loop has finished, we branch to ExitBB.
+// We expect the type of UB, LB, UB+Stride to be large enough for values that
+// UB may take throughout the execution of the loop, including the computation
+// of indvar + Stride before the final abort.
 Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
                          PollyIRBuilder &Builder, LoopInfo &LI,
                          DominatorTree &DT, BasicBlock *&ExitBB,
@@ -123,10 +128,8 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   IV->addIncoming(LB, PreHeaderBB);
   Stride = Builder.CreateZExtOrBitCast(Stride, LoopIVType);
   Value *IncrementedIV = Builder.CreateNSWAdd(IV, Stride, "polly.indvar_next");
-  Value *LoopCondition;
-  UB = Builder.CreateSub(UB, Stride, "polly.adjust_ub");
-  LoopCondition = Builder.CreateICmp(Predicate, IV, UB);
-  LoopCondition->setName("polly.loop_cond");
+  Value *LoopCondition =
+      Builder.CreateICmp(Predicate, IncrementedIV, UB, "polly.loop_cond");
 
   // Create the loop latch and annotate it as such.
   BranchInst *B = Builder.CreateCondBr(LoopCondition, HeaderBB, ExitBB);
