@@ -1380,6 +1380,14 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
         {"powf", "__svml_powf8", 8},
         {"powf", "__svml_powf16", 16},
 
+        { "__pow_finite", "__svml_pow2", 2 },
+        { "__pow_finite", "__svml_pow4", 4 },
+        { "__pow_finite", "__svml_pow8", 8 },
+
+        { "__powf_finite", "__svml_powf4", 4 },
+        { "__powf_finite", "__svml_powf8", 8 },
+        { "__powf_finite", "__svml_powf16", 16 },
+
         {"llvm.pow.f64", "__svml_pow2", 2},
         {"llvm.pow.f64", "__svml_pow4", 4},
         {"llvm.pow.f64", "__svml_pow8", 8},
@@ -1396,6 +1404,14 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
         {"expf", "__svml_expf8", 8},
         {"expf", "__svml_expf16", 16},
 
+        { "__exp_finite", "__svml_exp2", 2 },
+        { "__exp_finite", "__svml_exp4", 4 },
+        { "__exp_finite", "__svml_exp8", 8 },
+
+        { "__expf_finite", "__svml_expf4", 4 },
+        { "__expf_finite", "__svml_expf8", 8 },
+        { "__expf_finite", "__svml_expf16", 16 },
+
         {"llvm.exp.f64", "__svml_exp2", 2},
         {"llvm.exp.f64", "__svml_exp4", 4},
         {"llvm.exp.f64", "__svml_exp8", 8},
@@ -1411,6 +1427,14 @@ void TargetLibraryInfoImpl::addVectorizableFunctionsFromVecLib(
         {"logf", "__svml_logf4", 4},
         {"logf", "__svml_logf8", 8},
         {"logf", "__svml_logf16", 16},
+
+        { "__log_finite", "__svml_log2", 2 },
+        { "__log_finite", "__svml_log4", 4 },
+        { "__log_finite", "__svml_log8", 8 },
+
+        { "__logf_finite", "__svml_logf4", 4 },
+        { "__logf_finite", "__svml_logf8", 8 },
+        { "__logf_finite", "__svml_logf16", 16 },
 
         {"llvm.log.f64", "__svml_log2", 2},
         {"llvm.log.f64", "__svml_log4", 4},
