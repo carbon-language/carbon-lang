@@ -7409,14 +7409,8 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     }
 
     if (!LegalOperations || TLI.isOperationLegal(ISD::AND, VT)) {
-      SDValue Op = N0.getOperand(0);
-      if (SrcVT.bitsLT(VT)) {
-        Op = DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), VT, Op);
-        AddToWorklist(Op.getNode());
-      } else if (SrcVT.bitsGT(VT)) {
-        Op = DAG.getNode(ISD::TRUNCATE, SDLoc(N), VT, Op);
-        AddToWorklist(Op.getNode());
-      }
+      SDValue Op = DAG.getAnyExtOrTrunc(N0.getOperand(0), SDLoc(N), VT);
+      AddToWorklist(Op.getNode());
       return DAG.getZeroExtendInReg(Op, SDLoc(N), MinVT.getScalarType());
     }
   }
