@@ -164,11 +164,10 @@ static void combineMergableSections() {
     uint64_t Flags = MS->Flags & ~(uint64_t)(SHF_GROUP | SHF_COMPRESSED);
     uint32_t Alignment = std::max<uint32_t>(MS->Alignment, MS->Entsize);
 
-    auto I =
-        llvm::find_if(MergeSections, [=](MergeSyntheticSection *Sec) {
-          return Sec->Name == OutsecName && Sec->Flags == Flags &&
-                 Sec->Alignment == Alignment;
-        });
+    auto I = llvm::find_if(MergeSections, [=](MergeSyntheticSection *Sec) {
+      return Sec->Name == OutsecName && Sec->Flags == Flags &&
+             Sec->Alignment == Alignment;
+    });
     if (I == MergeSections.end()) {
       MergeSyntheticSection *Syn =
           make<MergeSyntheticSection>(OutsecName, MS->Type, Flags, Alignment);
@@ -1204,14 +1203,30 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
-  applySynthetic({In<ELFT>::DynSymTab,  InX::Bss,           InX::BssRelRo,
-                  In<ELFT>::GnuHashTab, In<ELFT>::HashTab,  In<ELFT>::SymTab,
-                  InX::ShStrTab,        InX::StrTab,        In<ELFT>::VerDef,
-                  InX::DynStrTab,       InX::GdbIndex,      InX::Got,
-                  InX::MipsGot,         InX::IgotPlt,       InX::GotPlt,
-                  In<ELFT>::RelaDyn,    In<ELFT>::RelaIplt, In<ELFT>::RelaPlt,
-                  InX::Plt,             InX::Iplt,          In<ELFT>::EhFrameHdr,
-                  In<ELFT>::VerSym,     In<ELFT>::VerNeed,  InX::Dynamic},
+  applySynthetic({In<ELFT>::DynSymTab,
+                  InX::Bss,
+                  InX::BssRelRo,
+                  In<ELFT>::GnuHashTab,
+                  In<ELFT>::HashTab,
+                  In<ELFT>::SymTab,
+                  InX::ShStrTab,
+                  InX::StrTab,
+                  In<ELFT>::VerDef,
+                  InX::DynStrTab,
+                  InX::GdbIndex,
+                  InX::Got,
+                  InX::MipsGot,
+                  InX::IgotPlt,
+                  InX::GotPlt,
+                  In<ELFT>::RelaDyn,
+                  In<ELFT>::RelaIplt,
+                  In<ELFT>::RelaPlt,
+                  InX::Plt,
+                  InX::Iplt,
+                  In<ELFT>::EhFrameHdr,
+                  In<ELFT>::VerSym,
+                  In<ELFT>::VerNeed,
+                  InX::Dynamic},
                  [](SyntheticSection *SS) { SS->finalizeContents(); });
 
   // Some architectures use small displacements for jump instructions.
