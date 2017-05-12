@@ -1686,8 +1686,11 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
     // There is only one word to consider so use the native versions.
     uint64_t lhsValue = LHS.U.pVal[0];
     uint64_t rhsValue = RHS.U.pVal[0];
-    Quotient = APInt(LHS.getBitWidth(), lhsValue / rhsValue);
-    Remainder = APInt(LHS.getBitWidth(), lhsValue % rhsValue);
+    // Make sure there is enough space to hold the results.
+    Quotient.reallocate(LHS.BitWidth);
+    Remainder.reallocate(LHS.BitWidth);
+    Quotient = lhsValue / rhsValue;
+    Remainder = lhsValue % rhsValue;
     return;
   }
 
