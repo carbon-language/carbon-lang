@@ -1565,14 +1565,18 @@ APInt APInt::udiv(const APInt& RHS) const {
   }
 
   // Get some facts about the LHS and RHS number of bits and words
-  unsigned rhsWords = getNumWords(RHS.getActiveBits());
-  assert(rhsWords && "Divided by zero???");
   unsigned lhsWords = getNumWords(getActiveBits());
+  unsigned rhsBits  = RHS.getActiveBits();
+  unsigned rhsWords = getNumWords(rhsBits);
+  assert(rhsWords && "Divided by zero???");
 
   // Deal with some degenerate cases
   if (!lhsWords)
     // 0 / X ===> 0
     return APInt(BitWidth, 0);
+  if (rhsBits == 1)
+    // X / 1 ===> X
+    return *this;
   if (lhsWords < rhsWords || this->ult(RHS))
     // X / Y ===> 0, iff X < Y
     return APInt(BitWidth, 0);
@@ -1611,12 +1615,16 @@ APInt APInt::urem(const APInt& RHS) const {
   unsigned lhsWords = getNumWords(getActiveBits());
 
   // Get some facts about the RHS
-  unsigned rhsWords = getNumWords(RHS.getActiveBits());
+  unsigned rhsBits = RHS.getActiveBits();
+  unsigned rhsWords = getNumWords(rhsBits);
   assert(rhsWords && "Performing remainder operation by zero ???");
 
   // Check the degenerate cases
   if (lhsWords == 0)
     // 0 % Y ===> 0
+    return APInt(BitWidth, 0);
+  if (rhsBits == 1)
+    // X % 1 ===> 0
     return APInt(BitWidth, 0);
   if (lhsWords < rhsWords || this->ult(RHS))
     // X % Y ===> X, iff X < Y
@@ -1662,7 +1670,8 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
 
   // Get some size facts about the dividend and divisor
   unsigned lhsWords = getNumWords(LHS.getActiveBits());
-  unsigned rhsWords = getNumWords(RHS.getActiveBits());
+  unsigned rhsBits  = RHS.getActiveBits();
+  unsigned rhsWords = getNumWords(rhsBits);
   assert(rhsWords && "Performing divrem operation by zero ???");
 
   // Check the degenerate cases
@@ -1670,6 +1679,11 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
     Quotient = 0;                // 0 / Y ===> 0
     Remainder = 0;               // 0 % Y ===> 0
     return;
+  }
+
+  if (rhsBits == 1) {
+    Quotient = LHS;             // X / 1 ===> X
+    Remainder = 0;              // X % 1 ===> 0
   }
 
   if (lhsWords < rhsWords || LHS.ult(RHS)) {
