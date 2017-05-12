@@ -45,7 +45,7 @@ public:
 
   static std::unique_ptr<ThreadSpec>
   CreateFromStructuredData(const StructuredData::Dictionary &data_dict,
-                           Error &error);
+                           Status &error);
 
   StructuredData::ObjectSP SerializeToStructuredData();
 

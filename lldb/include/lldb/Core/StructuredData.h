@@ -28,7 +28,7 @@
 #include <stdint.h> // for uint64_t
 
 namespace lldb_private {
-class Error;
+class Status;
 }
 namespace lldb_private {
 class Stream;
@@ -558,7 +558,7 @@ public:
 
   static ObjectSP ParseJSON(std::string json_text);
 
-  static ObjectSP ParseJSONFromFile(const FileSpec &file, Error &error);
+  static ObjectSP ParseJSONFromFile(const FileSpec &file, Status &error);
 };
 
 } // namespace lldb_private

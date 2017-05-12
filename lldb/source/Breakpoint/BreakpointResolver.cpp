@@ -72,7 +72,7 @@ BreakpointResolver::BreakpointResolver(Breakpoint *bkpt,
 BreakpointResolver::~BreakpointResolver() {}
 
 BreakpointResolverSP BreakpointResolver::CreateFromStructuredData(
-    const StructuredData::Dictionary &resolver_dict, Error &error) {
+    const StructuredData::Dictionary &resolver_dict, Status &error) {
   BreakpointResolverSP result_sp;
   if (!resolver_dict.IsValid()) {
     error.SetErrorString("Can't deserialize from an invalid data object.");

@@ -140,7 +140,7 @@ public:
 
   static lldb::BreakpointResolverSP
   CreateFromStructuredData(const StructuredData::Dictionary &resolver_dict,
-                           Error &error);
+                           Status &error);
 
   virtual StructuredData::ObjectSP SerializeToStructuredData() {
     return StructuredData::ObjectSP();

@@ -16,7 +16,7 @@
 #include "lldb/Symbol/SymbolContext.h" // for SymbolContext
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/ConstString.h" // for ConstString
-#include "lldb/Utility/Error.h"       // for Error
+#include "lldb/Utility/Status.h"      // for Status
 #include "lldb/Utility/Stream.h"      // for Stream
 #include "lldb/lldb-enumerations.h"   // for SymbolContextItem::eSymbolCo...
 
@@ -80,7 +80,7 @@ SearchFilter::~SearchFilter() = default;
 
 SearchFilterSP SearchFilter::CreateFromStructuredData(
     Target &target, const StructuredData::Dictionary &filter_dict,
-    Error &error) {
+    Status &error) {
   SearchFilterSP result_sp;
   if (!filter_dict.IsValid()) {
     error.SetErrorString("Can't deserialize from an invalid data object.");
@@ -338,7 +338,8 @@ Searcher::CallbackReturn SearchFilter::DoFunctionIteration(
 //  "black list".
 //----------------------------------------------------------------------
 SearchFilterSP SearchFilterForUnconstrainedSearches::CreateFromStructuredData(
-    Target &target, const StructuredData::Dictionary &data_dict, Error &error) {
+    Target &target, const StructuredData::Dictionary &data_dict,
+    Status &error) {
   // No options for an unconstrained search.
   return std::make_shared<SearchFilterForUnconstrainedSearches>(
       target.shared_from_this());
@@ -466,7 +467,8 @@ SearchFilterByModule::DoCopyForBreakpoint(Breakpoint &breakpoint) {
 }
 
 SearchFilterSP SearchFilterByModule::CreateFromStructuredData(
-    Target &target, const StructuredData::Dictionary &data_dict, Error &error) {
+    Target &target, const StructuredData::Dictionary &data_dict,
+    Status &error) {
   StructuredData::Array *modules_array;
   bool success = data_dict.GetValueForKeyAsArray(GetKey(OptionNames::ModList),
                                                  modules_array);
@@ -628,7 +630,8 @@ SearchFilterByModuleList::DoCopyForBreakpoint(Breakpoint &breakpoint) {
 }
 
 SearchFilterSP SearchFilterByModuleList::CreateFromStructuredData(
-    Target &target, const StructuredData::Dictionary &data_dict, Error &error) {
+    Target &target, const StructuredData::Dictionary &data_dict,
+    Status &error) {
   StructuredData::Array *modules_array;
   bool success = data_dict.GetValueForKeyAsArray(GetKey(OptionNames::ModList),
                                                  modules_array);
@@ -691,7 +694,8 @@ operator=(const SearchFilterByModuleListAndCU &rhs) {
 SearchFilterByModuleListAndCU::~SearchFilterByModuleListAndCU() = default;
 
 lldb::SearchFilterSP SearchFilterByModuleListAndCU::CreateFromStructuredData(
-    Target &target, const StructuredData::Dictionary &data_dict, Error &error) {
+    Target &target, const StructuredData::Dictionary &data_dict,
+    Status &error) {
   StructuredData::Array *modules_array = nullptr;
   SearchFilterSP result_sp;
   bool success = data_dict.GetValueForKeyAsArray(GetKey(OptionNames::ModList),

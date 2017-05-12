@@ -94,7 +94,7 @@ OperatingSystemPython::OperatingSystemPython(lldb_private::Process *process,
       char python_module_path_cstr[PATH_MAX];
       python_module_path.GetPath(python_module_path_cstr,
                                  sizeof(python_module_path_cstr));
-      Error error;
+      Status error;
       if (m_interpreter->LoadScriptingModule(
               python_module_path_cstr, allow_reload, init_session, error)) {
         // Strip the ".py" extension if there is one

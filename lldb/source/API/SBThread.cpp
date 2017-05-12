@@ -1037,7 +1037,7 @@ SBError SBThread::JumpToLine(lldb::SBFileSpec &file_spec, uint32_t line) {
 
   Thread *thread = exe_ctx.GetThreadPtr();
 
-  Error err = thread->JumpToLine(file_spec.get(), line, true);
+  Status err = thread->JumpToLine(file_spec.get(), line, true);
   sb_error.SetError(err);
   return sb_error;
 }

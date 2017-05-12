@@ -962,7 +962,7 @@ DynamicLoaderDarwin::GetStepThroughTrampolinePlan(Thread &thread,
       for (Address address : addresses) {
         Symbol *symbol = address.CalculateSymbolContextSymbol();
         if (symbol && symbol->IsIndirect()) {
-          Error error;
+          Status error;
           Address symbol_address = symbol->GetAddress();
           addr_t resolved_addr = thread.GetProcess()->ResolveIndirectFunction(
               &symbol_address, error);
@@ -1062,7 +1062,7 @@ DynamicLoaderDarwin::GetThreadLocalData(const lldb::ModuleSP module_sp,
 
   lldb_private::Address tls_addr;
   if (module_sp->ResolveFileAddress(tls_file_addr, tls_addr)) {
-    Error error;
+    Status error;
     const size_t tsl_data_size = addr_size * 3;
     Target &target = m_process->GetTarget();
     if (target.ReadMemory(tls_addr, false, buf, tsl_data_size, error) ==

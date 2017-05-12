@@ -315,7 +315,7 @@ bool OperatingSystemGo::UpdateThreadList(ThreadList &old_thread_list,
   // the
   // lldb_private::Process subclass, no memory threads will be in this list.
 
-  Error err;
+  Status err;
   for (uint64_t i = 0; i < allglen; ++i) {
     goroutines.push_back(CreateGoroutineAtIndex(i, err));
     if (err.Fail()) {
@@ -448,7 +448,7 @@ TypeSP OperatingSystemGo::FindType(TargetSP target_sp, const char *name) {
 }
 
 OperatingSystemGo::Goroutine
-OperatingSystemGo::CreateGoroutineAtIndex(uint64_t idx, Error &err) {
+OperatingSystemGo::CreateGoroutineAtIndex(uint64_t idx, Status &err) {
   err.Clear();
   Goroutine result = {};
   ValueObjectSP g =

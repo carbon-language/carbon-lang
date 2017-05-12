@@ -39,7 +39,7 @@ const ThreadSpec &ThreadSpec::operator=(const ThreadSpec &rhs) {
 }
 
 std::unique_ptr<ThreadSpec> ThreadSpec::CreateFromStructuredData(
-    const StructuredData::Dictionary &spec_dict, Error &error) {
+    const StructuredData::Dictionary &spec_dict, Status &error) {
   uint32_t index = UINT32_MAX;
   lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
   std::string name;

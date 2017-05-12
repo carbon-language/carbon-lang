@@ -209,7 +209,7 @@ public:
 
   using OperationCreationFunc =
       std::function<FilterRuleSP(bool accept, size_t attribute_index,
-                                 const std::string &op_arg, Error &error)>;
+                                 const std::string &op_arg, Status &error)>;
 
   static void RegisterOperation(const ConstString &operation,
                                 const OperationCreationFunc &creation_func) {
@@ -218,7 +218,7 @@ public:
 
   static FilterRuleSP CreateRule(bool match_accepts, size_t attribute,
                                  const ConstString &operation,
-                                 const std::string &op_arg, Error &error) {
+                                 const std::string &op_arg, Status &error) {
     // Find the creation func for this type of filter rule.
     auto map = GetCreationFuncMap();
     auto find_it = map.find(operation);
@@ -304,7 +304,8 @@ protected:
 
 private:
   static FilterRuleSP CreateOperation(bool accept, size_t attribute_index,
-                                      const std::string &op_arg, Error &error) {
+                                      const std::string &op_arg,
+                                      Status &error) {
     // We treat the op_arg as a regex.  Validate it.
     if (op_arg.empty()) {
       error.SetErrorString("regex filter type requires a regex "
@@ -358,7 +359,8 @@ protected:
 
 private:
   static FilterRuleSP CreateOperation(bool accept, size_t attribute_index,
-                                      const std::string &op_arg, Error &error) {
+                                      const std::string &op_arg,
+                                      Status &error) {
     if (op_arg.empty()) {
       error.SetErrorString("exact match filter type requires an "
                            "argument containing the text that must "
@@ -524,9 +526,9 @@ public:
     m_filter_rules.clear();
   }
 
-  Error SetOptionValue(uint32_t option_idx, llvm::StringRef option_arg,
-                       ExecutionContext *execution_context) override {
-    Error error;
+  Status SetOptionValue(uint32_t option_idx, llvm::StringRef option_arg,
+                        ExecutionContext *execution_context) override {
+    Status error;
 
     const int short_option = m_getopt_table[option_idx].val;
     switch (short_option) {
@@ -664,8 +666,8 @@ public:
   bool GetBroadcastEvents() const { return m_broadcast_events; }
 
 private:
-  Error ParseFilterRule(llvm::StringRef rule_text) {
-    Error error;
+  Status ParseFilterRule(llvm::StringRef rule_text) {
+    Status error;
 
     if (rule_text.empty()) {
       error.SetErrorString("invalid rule_text");
@@ -899,7 +901,7 @@ protected:
     // Send configuration to the feature by way of the process.
     // Construct the options we will use.
     auto config_sp = m_options_sp->BuildConfigurationData(m_enable);
-    const Error error =
+    const Status error =
         process_sp->ConfigureStructuredData(GetDarwinLogTypeName(), config_sp);
 
     // Report results.
@@ -1040,7 +1042,7 @@ public:
   }
 };
 
-EnableOptionsSP ParseAutoEnableOptions(Error &error, Debugger &debugger) {
+EnableOptionsSP ParseAutoEnableOptions(Status &error, Debugger &debugger) {
   // We are abusing the options data model here so that we can parse
   // options without requiring the Debugger instance.
 
@@ -1212,7 +1214,7 @@ void StructuredDataDarwinLog::HandleArrivalOfStructuredData(
   // to inspect, including showing backtraces.
 }
 
-static void SetErrorWithJSON(Error &error, const char *message,
+static void SetErrorWithJSON(Status &error, const char *message,
                              StructuredData::Object &object) {
   if (!message) {
     error.SetErrorString("Internal error: message not set.");
@@ -1226,9 +1228,9 @@ static void SetErrorWithJSON(Error &error, const char *message,
   error.SetErrorStringWithFormat("%s: %s", message, object_stream.GetData());
 }
 
-Error StructuredDataDarwinLog::GetDescription(
+Status StructuredDataDarwinLog::GetDescription(
     const StructuredData::ObjectSP &object_sp, lldb_private::Stream &stream) {
-  Error error;
+  Status error;
 
   if (!object_sp) {
     error.SetErrorString("No structured data.");
@@ -1483,9 +1485,9 @@ void StructuredDataDarwinLog::DebuggerInitialize(Debugger &debugger) {
   }
 }
 
-Error StructuredDataDarwinLog::FilterLaunchInfo(ProcessLaunchInfo &launch_info,
-                                                Target *target) {
-  Error error;
+Status StructuredDataDarwinLog::FilterLaunchInfo(ProcessLaunchInfo &launch_info,
+                                                 Target *target) {
+  Status error;
 
   // If we're not debugging this launched process, there's nothing for us
   // to do here.
@@ -1991,7 +1993,7 @@ void StructuredDataDarwinLog::EnableNow() {
 
   // We can run it directly.
   // Send configuration to the feature by way of the process.
-  const Error error =
+  const Status error =
       process_sp->ConfigureStructuredData(GetDarwinLogTypeName(), config_sp);
 
   // Report results.
