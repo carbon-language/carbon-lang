@@ -207,10 +207,10 @@ lldb::BreakpointSP Breakpoint::CreateFromStructuredData(
   if (success && names_array) {
     size_t num_names = names_array->GetSize();
     for (size_t i = 0; i < num_names; i++) {
-      std::string name;
+      llvm::StringRef name;
       Status error;
       success = names_array->GetItemAtIndexAsString(i, name);
-      result_sp->AddName(name.c_str(), error);
+      result_sp->AddName(name, error);
     }
   }
 
@@ -242,7 +242,7 @@ bool Breakpoint::SerializedBreakpointMatchesNames(
   std::vector<std::string>::iterator end = names.end();
 
   for (size_t i = 0; i < num_names; i++) {
-    std::string name;
+    llvm::StringRef name;
     if (names_array->GetItemAtIndexAsString(i, name)) {
       if (std::find(begin, end, name) != end) {
         return true;
@@ -833,10 +833,10 @@ size_t Breakpoint::GetNumResolvedLocations() const {
 
 size_t Breakpoint::GetNumLocations() const { return m_locations.GetSize(); }
 
-bool Breakpoint::AddName(const char *new_name, Status &error) {
-  if (!new_name)
+bool Breakpoint::AddName(llvm::StringRef new_name, Status &error) {
+  if (new_name.empty())
     return false;
-  if (!BreakpointID::StringIsBreakpointName(llvm::StringRef(new_name), error)) {
+  if (!BreakpointID::StringIsBreakpointName(new_name, error)) {
     error.SetErrorStringWithFormat("input name \"%s\" not a breakpoint name.",
                                    new_name);
     return false;

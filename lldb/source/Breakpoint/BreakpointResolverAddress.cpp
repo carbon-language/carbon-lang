@@ -45,7 +45,7 @@ BreakpointResolverAddress::~BreakpointResolverAddress() {}
 BreakpointResolver *BreakpointResolverAddress::CreateFromStructuredData(
     Breakpoint *bkpt, const StructuredData::Dictionary &options_dict,
     Status &error) {
-  std::string module_name;
+  llvm::StringRef module_name;
   lldb::addr_t addr_offset;
   FileSpec module_filespec;
   bool success;

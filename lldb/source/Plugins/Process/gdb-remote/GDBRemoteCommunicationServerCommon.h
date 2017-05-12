@@ -153,8 +153,7 @@ protected:
                                   const ArchSpec &arch);
 
 private:
-  ModuleSpec GetModuleInfo(const std::string &module_path,
-                           const std::string &triple);
+  ModuleSpec GetModuleInfo(llvm::StringRef module_path, llvm::StringRef triple);
 };
 
 } // namespace process_gdb_remote

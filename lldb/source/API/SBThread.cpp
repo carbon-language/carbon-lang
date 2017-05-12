@@ -562,7 +562,7 @@ bool SBThread::GetInfoItemByPathAsString(const char *path, SBStream &strm) {
             info_root_sp->GetObjectForDotSeparatedPath(path);
         if (node) {
           if (node->GetType() == StructuredData::Type::eTypeString) {
-            strm.Printf("%s", node->GetAsString()->GetValue().c_str());
+            strm.Printf("%s", node->GetAsString()->GetValue().str().c_str());
             success = true;
           }
           if (node->GetType() == StructuredData::Type::eTypeInteger) {

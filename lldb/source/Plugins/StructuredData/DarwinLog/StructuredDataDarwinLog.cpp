@@ -1817,7 +1817,7 @@ StructuredDataDarwinLog::DumpHeader(Stream &output_stream,
   }
 
   if (options_sp->GetDisplayActivityChain()) {
-    std::string activity_chain;
+    llvm::StringRef activity_chain;
     if (event.GetValueForKeyAsString("activity-chain", activity_chain) &&
         !activity_chain.empty()) {
       if (header_count > 0)
@@ -1856,7 +1856,7 @@ StructuredDataDarwinLog::DumpHeader(Stream &output_stream,
   }
 
   if (options_sp->GetDisplaySubsystem()) {
-    std::string subsystem;
+    llvm::StringRef subsystem;
     if (event.GetValueForKeyAsString("subsystem", subsystem) &&
         !subsystem.empty()) {
       if (header_count > 0)
@@ -1868,7 +1868,7 @@ StructuredDataDarwinLog::DumpHeader(Stream &output_stream,
   }
 
   if (options_sp->GetDisplayCategory()) {
-    std::string category;
+    llvm::StringRef category;
     if (event.GetValueForKeyAsString("category", category) &&
         !category.empty()) {
       if (header_count > 0)
@@ -1901,16 +1901,16 @@ size_t StructuredDataDarwinLog::HandleDisplayOfEvent(
   size_t total_bytes = 0;
 
   // Grab the message content.
-  std::string message;
+  llvm::StringRef message;
   if (!event.GetValueForKeyAsString("message", message))
     return true;
 
   // Display the log entry.
-  const auto len = message.length();
+  const auto len = message.size();
 
   total_bytes += DumpHeader(stream, event);
 
-  stream.Write(message.c_str(), len);
+  stream.Write(message.data(), len);
   total_bytes += len;
 
   // Add an end of line.

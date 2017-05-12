@@ -440,8 +440,8 @@ bool DynamicLoaderDarwin::JSONImageInformationIntoImageInfo(
       Segment segment;
       StructuredData::Dictionary *seg =
           segments->GetItemAtIndex(j)->GetAsDictionary();
-      segment.name = ConstString(
-          seg->GetValueForKey("name")->GetAsString()->GetValue().c_str());
+      segment.name =
+          ConstString(seg->GetValueForKey("name")->GetAsString()->GetValue());
       segment.vmaddr =
           seg->GetValueForKey("vmaddr")->GetAsInteger()->GetValue();
       segment.vmsize =
@@ -478,8 +478,8 @@ bool DynamicLoaderDarwin::JSONImageInformationIntoImageInfo(
       image_infos[i].segments.push_back(segment);
     }
 
-    image_infos[i].uuid.SetFromCString(
-        image->GetValueForKey("uuid")->GetAsString()->GetValue().c_str());
+    image_infos[i].uuid.SetFromStringRef(
+        image->GetValueForKey("uuid")->GetAsString()->GetValue());
 
     // All sections listed in the dyld image info structure will all
     // either be fixed up already, or they will all be off by a single

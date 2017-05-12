@@ -613,7 +613,7 @@ public:
 
   lldb::SearchFilterSP GetSearchFilter() { return m_filter_sp; }
 
-  bool AddName(const char *new_name, Status &error);
+  bool AddName(llvm::StringRef new_name, Status &error);
 
   void RemoveName(const char *name_to_remove) {
     if (name_to_remove)

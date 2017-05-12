@@ -1140,7 +1140,7 @@ GDBRemoteCommunicationServerCommon::Handle_jModulesInfo(
         packet_array->GetItemAtIndex(i)->GetAsDictionary();
     if (!query)
       continue;
-    std::string file, triple;
+    llvm::StringRef file, triple;
     if (!query->GetValueForKeyAsString("file", file) ||
         !query->GetValueForKeyAsString("triple", triple))
       continue;
@@ -1278,9 +1278,10 @@ FileSpec GDBRemoteCommunicationServerCommon::FindModuleFile(
 #endif
 }
 
-ModuleSpec GDBRemoteCommunicationServerCommon::GetModuleInfo(
-    const std::string &module_path, const std::string &triple) {
-  ArchSpec arch(triple.c_str());
+ModuleSpec
+GDBRemoteCommunicationServerCommon::GetModuleInfo(llvm::StringRef module_path,
+                                                  llvm::StringRef triple) {
+  ArchSpec arch(triple);
 
   const FileSpec req_module_path_spec(module_path, true);
   const FileSpec module_path_spec =

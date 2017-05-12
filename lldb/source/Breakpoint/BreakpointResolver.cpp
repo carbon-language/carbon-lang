@@ -56,9 +56,9 @@ const char *BreakpointResolver::ResolverTyToName(enum ResolverTy type) {
 }
 
 BreakpointResolver::ResolverTy
-BreakpointResolver::NameToResolverTy(const char *name) {
+BreakpointResolver::NameToResolverTy(llvm::StringRef name) {
   for (size_t i = 0; i < LastKnownResolverType; i++) {
-    if (strcmp(name, g_ty_to_name[i]) == 0)
+    if (name == g_ty_to_name[i])
       return (ResolverTy)i;
   }
   return UnknownResolver;
@@ -79,7 +79,7 @@ BreakpointResolverSP BreakpointResolver::CreateFromStructuredData(
     return result_sp;
   }
 
-  std::string subclass_name;
+  llvm::StringRef subclass_name;
 
   bool success = resolver_dict.GetValueForKeyAsString(
       GetSerializationSubclassKey(), subclass_name);
@@ -90,10 +90,10 @@ BreakpointResolverSP BreakpointResolver::CreateFromStructuredData(
     return result_sp;
   }
 
-  ResolverTy resolver_type = NameToResolverTy(subclass_name.c_str());
+  ResolverTy resolver_type = NameToResolverTy(subclass_name);
   if (resolver_type == UnknownResolver) {
-    error.SetErrorStringWithFormat("Unknown resolver type: %s.",
-                                   subclass_name.c_str());
+    error.SetErrorStringWithFormatv("Unknown resolver type: {0}.",
+                                    subclass_name);
     return result_sp;
   }
 

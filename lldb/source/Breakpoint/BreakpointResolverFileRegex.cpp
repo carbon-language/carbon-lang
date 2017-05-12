@@ -40,7 +40,7 @@ BreakpointResolver *BreakpointResolverFileRegex::CreateFromStructuredData(
     Status &error) {
   bool success;
 
-  std::string regex_string;
+  llvm::StringRef regex_string;
   success = options_dict.GetValueForKeyAsString(
       GetKey(OptionNames::RegexString), regex_string);
   if (!success) {
@@ -65,7 +65,7 @@ BreakpointResolver *BreakpointResolverFileRegex::CreateFromStructuredData(
   if (success && names_array) {
     size_t num_names = names_array->GetSize();
     for (size_t i = 0; i < num_names; i++) {
-      std::string name;
+      llvm::StringRef name;
       success = names_array->GetItemAtIndexAsString(i, name);
       if (!success) {
         error.SetErrorStringWithFormat(

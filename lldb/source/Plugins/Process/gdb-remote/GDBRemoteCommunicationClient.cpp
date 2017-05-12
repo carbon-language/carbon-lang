@@ -3224,12 +3224,12 @@ ParseModuleSpec(StructuredData::Dictionary *dict) {
   if (!dict)
     return llvm::None;
 
-  std::string string;
+  llvm::StringRef string;
   uint64_t integer;
 
   if (!dict->GetValueForKeyAsString("uuid", string))
     return llvm::None;
-  result.GetUUID().SetFromCString(string.c_str(), string.size());
+  result.GetUUID().SetFromStringRef(string, string.size());
 
   if (!dict->GetValueForKeyAsInteger("file_offset", integer))
     return llvm::None;
@@ -3241,7 +3241,7 @@ ParseModuleSpec(StructuredData::Dictionary *dict) {
 
   if (!dict->GetValueForKeyAsString("triple", string))
     return llvm::None;
-  result.GetArchitecture().SetTriple(string.c_str());
+  result.GetArchitecture().SetTriple(string);
 
   if (!dict->GetValueForKeyAsString("file_path", string))
     return llvm::None;

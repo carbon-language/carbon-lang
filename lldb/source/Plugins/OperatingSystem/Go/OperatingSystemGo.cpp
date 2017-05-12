@@ -340,8 +340,8 @@ bool OperatingSystemGo::UpdateThreadList(ThreadList &old_thread_list,
         memory_thread->IsValid()) {
       memory_thread->ClearBackingThread();
     } else {
-      memory_thread.reset(new ThreadMemory(
-          *m_process, goroutine.m_goid, nullptr, nullptr, goroutine.m_gobuf));
+      memory_thread.reset(new ThreadMemory(*m_process, goroutine.m_goid, "", "",
+                                           goroutine.m_gobuf));
     }
     // Search for the backing thread if the goroutine is running.
     if (2 == (goroutine.m_status & 0xfff)) {

@@ -2113,9 +2113,9 @@ ProcessGDBRemote::SetThreadStopInfo(StructuredData::Dictionary *thread_dict) {
             if (mem_cache_dict->GetValueForKeyAsInteger<lldb::addr_t>(
                     "address", mem_cache_addr)) {
               if (mem_cache_addr != LLDB_INVALID_ADDRESS) {
-                StringExtractor bytes;
-                if (mem_cache_dict->GetValueForKeyAsString(
-                        "bytes", bytes.GetStringRef())) {
+                llvm::StringRef str;
+                if (mem_cache_dict->GetValueForKeyAsString("bytes", str)) {
+                  StringExtractor bytes(str);
                   bytes.SetFilePos(0);
 
                   const size_t byte_size = bytes.GetStringRef().size() / 2;

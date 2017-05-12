@@ -240,8 +240,8 @@ ThreadSP OperatingSystemPython::CreateThreadFromThreadInfo(
 
   uint32_t core_number;
   addr_t reg_data_addr;
-  std::string name;
-  std::string queue;
+  llvm::StringRef name;
+  llvm::StringRef queue;
 
   thread_dict.GetValueForKeyAsInteger("core", core_number, UINT32_MAX);
   thread_dict.GetValueForKeyAsInteger("register_data_addr", reg_data_addr,
@@ -266,8 +266,8 @@ ThreadSP OperatingSystemPython::CreateThreadFromThreadInfo(
   if (!thread_sp) {
     if (did_create_ptr)
       *did_create_ptr = true;
-    thread_sp.reset(new ThreadMemory(*m_process, tid, name.c_str(),
-                                     queue.c_str(), reg_data_addr));
+    thread_sp.reset(
+        new ThreadMemory(*m_process, tid, name, queue, reg_data_addr));
   }
 
   if (core_number < core_thread_list.GetSize(false)) {

@@ -2001,8 +2001,8 @@ bool Thread::GetDescription(Stream &strm, lldb::DescriptionLevel level,
       StructuredData::ObjectSP name = activity_dict->GetValueForKey("name");
       if (name && name->GetType() == StructuredData::Type::eTypeString && id &&
           id->GetType() == StructuredData::Type::eTypeInteger) {
-        strm.Printf("  Activity '%s', 0x%" PRIx64 "\n",
-                    name->GetAsString()->GetValue().c_str(),
+        strm.Format("  Activity '{0}', {1:x}\n",
+                    name->GetAsString()->GetValue(),
                     id->GetAsInteger()->GetValue());
       }
       printed_activity = true;
@@ -2018,8 +2018,8 @@ bool Thread::GetDescription(Stream &strm, lldb::DescriptionLevel level,
           breadcrumb_dict->GetValueForKey("name");
       if (breadcrumb_text &&
           breadcrumb_text->GetType() == StructuredData::Type::eTypeString) {
-        strm.Printf("  Current Breadcrumb: %s\n",
-                    breadcrumb_text->GetAsString()->GetValue().c_str());
+        strm.Format("  Current Breadcrumb: {0}\n",
+                    breadcrumb_text->GetAsString()->GetValue());
       }
       printed_breadcrumb = true;
     }
@@ -2040,8 +2040,7 @@ bool Thread::GetDescription(Stream &strm, lldb::DescriptionLevel level,
                 message_dict->GetValueForKey("message");
             if (message_text &&
                 message_text->GetType() == StructuredData::Type::eTypeString) {
-              strm.Printf("    %s\n",
-                          message_text->GetAsString()->GetValue().c_str());
+              strm.Format("    {0}\n", message_text->GetAsString()->GetValue());
             }
           }
         }

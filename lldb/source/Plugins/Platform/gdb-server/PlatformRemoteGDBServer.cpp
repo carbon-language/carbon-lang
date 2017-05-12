@@ -784,7 +784,7 @@ const UnixSignalsSP &PlatformRemoteGDBServer::GetRemoteUnixSignals() {
         if (!dict->GetValueForKeyAsInteger("signo", signo))
           return false;
 
-        std::string name;
+        llvm::StringRef name;
         if (!dict->GetValueForKeyAsString("name", name))
           return false;
 
@@ -809,7 +809,7 @@ const UnixSignalsSP &PlatformRemoteGDBServer::GetRemoteUnixSignals() {
         if (object_sp && object_sp->IsValid())
           description = object_sp->GetStringValue();
 
-        remote_signals_sp->AddSignal(signo, name.c_str(), suppress, stop,
+        remote_signals_sp->AddSignal(signo, name.str().c_str(), suppress, stop,
                                      notify, description.c_str());
         return true;
       });

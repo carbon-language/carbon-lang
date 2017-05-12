@@ -1050,7 +1050,7 @@ static bool FormatThreadExtendedInfoRecurse(
       s.Printf("%f", value->GetAsFloat()->GetValue());
       return true;
     } else if (value->GetType() == StructuredData::Type::eTypeString) {
-      s.Printf("%s", value->GetAsString()->GetValue().c_str());
+      s.Format("{0}", value->GetAsString()->GetValue());
       return true;
     } else if (value->GetType() == StructuredData::Type::eTypeArray) {
       if (value->GetAsArray()->GetSize() > 0) {

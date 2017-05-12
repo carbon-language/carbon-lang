@@ -285,7 +285,7 @@ public:
 
   static const char *FilterTyToName(enum FilterTy);
 
-  static FilterTy NameToFilterTy(const char *name);
+  static FilterTy NameToFilterTy(llvm::StringRef name);
 
 protected:
   // Serialization of SearchFilter options:

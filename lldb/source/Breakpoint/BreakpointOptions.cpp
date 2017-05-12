@@ -73,7 +73,7 @@ BreakpointOptions::CommandData::CreateFromStructuredData(
   if (success)
     found_something = true;
 
-  std::string interpreter_str;
+  llvm::StringRef interpreter_str;
   ScriptLanguage interp_language;
   success = options_dict.GetValueForKeyAsString(
       GetKey(OptionNames::Interpreter), interpreter_str);
@@ -99,7 +99,7 @@ BreakpointOptions::CommandData::CreateFromStructuredData(
     found_something = true;
     size_t num_elems = user_source->GetSize();
     for (size_t i = 0; i < num_elems; i++) {
-      std::string elem_string;
+      llvm::StringRef elem_string;
       success = user_source->GetItemAtIndexAsString(i, elem_string);
       if (success)
         data_up->user_source.AppendString(elem_string);

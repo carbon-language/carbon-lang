@@ -55,9 +55,9 @@ const char *SearchFilter::FilterTyToName(enum FilterTy type) {
   return g_ty_to_name[type];
 }
 
-SearchFilter::FilterTy SearchFilter::NameToFilterTy(const char *name) {
+SearchFilter::FilterTy SearchFilter::NameToFilterTy(llvm::StringRef name) {
   for (size_t i = 0; i <= LastKnownFilterType; i++) {
-    if (strcmp(name, g_ty_to_name[i]) == 0)
+    if (name == g_ty_to_name[i])
       return (FilterTy)i;
   }
   return UnknownFilter;
@@ -87,7 +87,7 @@ SearchFilterSP SearchFilter::CreateFromStructuredData(
     return result_sp;
   }
 
-  std::string subclass_name;
+  llvm::StringRef subclass_name;
 
   bool success = filter_dict.GetValueForKeyAsString(
       GetSerializationSubclassKey(), subclass_name);
@@ -96,10 +96,9 @@ SearchFilterSP SearchFilter::CreateFromStructuredData(
     return result_sp;
   }
 
-  FilterTy filter_type = NameToFilterTy(subclass_name.c_str());
+  FilterTy filter_type = NameToFilterTy(subclass_name);
   if (filter_type == UnknownFilter) {
-    error.SetErrorStringWithFormat("Unknown filter type: %s.",
-                                   subclass_name.c_str());
+    error.SetErrorStringWithFormatv("Unknown filter type: {0}.", subclass_name);
     return result_sp;
   }
 
@@ -484,7 +483,7 @@ SearchFilterSP SearchFilterByModule::CreateFromStructuredData(
     return nullptr;
   }
 
-  std::string module;
+  llvm::StringRef module;
   success = modules_array->GetItemAtIndexAsString(0, module);
   if (!success) {
     error.SetErrorString("SFBM::CFSD: filter module item not a string.");
@@ -639,7 +638,7 @@ SearchFilterSP SearchFilterByModuleList::CreateFromStructuredData(
   if (success) {
     size_t num_modules = modules_array->GetSize();
     for (size_t i = 0; i < num_modules; i++) {
-      std::string module;
+      llvm::StringRef module;
       success = modules_array->GetItemAtIndexAsString(i, module);
       if (!success) {
         error.SetErrorStringWithFormat(
@@ -704,7 +703,7 @@ lldb::SearchFilterSP SearchFilterByModuleListAndCU::CreateFromStructuredData(
   if (success) {
     size_t num_modules = modules_array->GetSize();
     for (size_t i = 0; i < num_modules; i++) {
-      std::string module;
+      llvm::StringRef module;
       success = modules_array->GetItemAtIndexAsString(i, module);
       if (!success) {
         error.SetErrorStringWithFormat(
@@ -726,7 +725,7 @@ lldb::SearchFilterSP SearchFilterByModuleListAndCU::CreateFromStructuredData(
   size_t num_cus = cus_array->GetSize();
   FileSpecList cus;
   for (size_t i = 0; i < num_cus; i++) {
-    std::string cu;
+    llvm::StringRef cu;
     success = cus_array->GetItemAtIndexAsString(i, cu);
     if (!success) {
       error.SetErrorStringWithFormat(

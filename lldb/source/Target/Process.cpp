@@ -6162,8 +6162,7 @@ void Process::MapSupportedStructuredDataPlugins(
         }
 
         const_type_names.insert(ConstString(type_name->GetValue()));
-        if (log)
-          log->Printf("- %s", type_name->GetValue().c_str());
+        LLDB_LOG(log, "- {0}", type_name->GetValue());
         return true;
       });
 
