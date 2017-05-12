@@ -122,35 +122,38 @@ APInt::APInt(unsigned numbits, StringRef Str, uint8_t radix)
   fromString(numbits, Str, radix);
 }
 
+void APInt::reallocate(unsigned NewBitWidth) {
+  // If the number of words is the same we can just change the width and stop.
+  if (getNumWords() == getNumWords(NewBitWidth)) {
+    BitWidth = NewBitWidth;
+    return;
+  }
+
+  // If we have an allocation, delete it.
+  if (!isSingleWord())
+    delete [] U.pVal;
+
+  // Update BitWidth.
+  BitWidth = NewBitWidth;
+
+  // If we are supposed to have an allocation, create it.
+  if (!isSingleWord())
+    U.pVal = getMemory(getNumWords());
+}
+
 void APInt::AssignSlowCase(const APInt& RHS) {
   // Don't do anything for X = X
   if (this == &RHS)
     return;
 
-  if (BitWidth == RHS.getBitWidth()) {
-    // assume same bit-width single-word case is already handled
-    assert(!isSingleWord());
-    memcpy(U.pVal, RHS.U.pVal, getNumWords() * APINT_WORD_SIZE);
-    return;
-  }
+  // Adjust the bit width and handle allocations as necessary.
+  reallocate(RHS.getBitWidth());
 
-  if (isSingleWord()) {
-    // assume case where both are single words is already handled
-    assert(!RHS.isSingleWord());
-    U.pVal = getMemory(RHS.getNumWords());
-    memcpy(U.pVal, RHS.U.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
-  } else if (getNumWords() == RHS.getNumWords())
-    memcpy(U.pVal, RHS.U.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
-  else if (RHS.isSingleWord()) {
-    delete [] U.pVal;
+  // Copy the data.
+  if (isSingleWord())
     U.VAL = RHS.U.VAL;
-  } else {
-    delete [] U.pVal;
-    U.pVal = getMemory(RHS.getNumWords());
-    memcpy(U.pVal, RHS.U.pVal, RHS.getNumWords() * APINT_WORD_SIZE);
-  }
-  BitWidth = RHS.BitWidth;
-  clearUnusedBits();
+  else
+    memcpy(U.pVal, RHS.U.pVal, getNumWords() * APINT_WORD_SIZE);
 }
 
 /// This method 'profiles' an APInt for use with FoldingSet.
@@ -1500,16 +1503,9 @@ void APInt::divide(const APInt &LHS, unsigned lhsWords, const APInt &RHS,
   // If the caller wants the quotient
   if (Quotient) {
     // Set up the Quotient value's memory.
-    if (Quotient->BitWidth != LHS.BitWidth) {
-      if (Quotient->isSingleWord())
-        Quotient->U.VAL = 0;
-      else
-        delete [] Quotient->U.pVal;
-      Quotient->BitWidth = LHS.BitWidth;
-      if (!Quotient->isSingleWord())
-        Quotient->U.pVal = getClearedMemory(Quotient->getNumWords());
-    } else
-      Quotient->clearAllBits();
+    Quotient->reallocate(LHS.BitWidth);
+    // Clear out any previous bits.
+    Quotient->clearAllBits();
 
     // The quotient is in Q. Reconstitute the quotient into Quotient's low
     // order words.
@@ -1531,16 +1527,9 @@ void APInt::divide(const APInt &LHS, unsigned lhsWords, const APInt &RHS,
   // If the caller wants the remainder
   if (Remainder) {
     // Set up the Remainder value's memory.
-    if (Remainder->BitWidth != RHS.BitWidth) {
-      if (Remainder->isSingleWord())
-        Remainder->U.VAL = 0;
-      else
-        delete [] Remainder->U.pVal;
-      Remainder->BitWidth = RHS.BitWidth;
-      if (!Remainder->isSingleWord())
-        Remainder->U.pVal = getClearedMemory(Remainder->getNumWords());
-    } else
-      Remainder->clearAllBits();
+    Remainder->reallocate(RHS.BitWidth);
+    // Clear out any previous bits.
+    Remainder->clearAllBits();
 
     // The remainder is in R. Reconstitute the remainder into Remainder's low
     // order words.
