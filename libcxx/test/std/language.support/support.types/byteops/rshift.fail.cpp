@@ -21,6 +21,6 @@
 //   is_integral_v<IntegerType> is true.
 
 int main () {
-	constexpr std::byte b1{1};
+	constexpr std::byte b1{static_cast<std::byte>(1)};
 	constexpr std::byte b2 = b1 >> 2.0f;
 }

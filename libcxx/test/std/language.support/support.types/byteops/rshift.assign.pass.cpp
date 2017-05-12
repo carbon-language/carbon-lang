@@ -28,8 +28,8 @@ constexpr std::byte test(std::byte b) {
 
 int main () {
 	std::byte b;  // not constexpr, just used in noexcept check
-	constexpr std::byte b16{16};
-	constexpr std::byte b192{192};
+	constexpr std::byte b16{static_cast<std::byte>(16)};
+	constexpr std::byte b192{static_cast<std::byte>(192)};
 
 	static_assert(noexcept(b >>= 2), "" );
 

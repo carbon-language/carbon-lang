@@ -27,8 +27,8 @@ constexpr std::byte test(std::byte b) {
 
 
 int main () {
-	constexpr std::byte b100{100};
-	constexpr std::byte b115{115};
+	constexpr std::byte b100{static_cast<std::byte>(100)};
+	constexpr std::byte b115{static_cast<std::byte>(115)};
 
 	static_assert(noexcept(b100 << 2), "" );
 
