@@ -760,7 +760,8 @@ void X86_64TargetInfo<ELFT>::writePlt(uint8_t *Buf, uint64_t GotPltEntryAddr,
 
 template <class ELFT>
 bool X86_64TargetInfo<ELFT>::isPicRel(uint32_t Type) const {
-  return Type != R_X86_64_PC32 && Type != R_X86_64_32;
+  return Type != R_X86_64_PC32 && Type != R_X86_64_32 &&
+         Type != R_X86_64_TPOFF32;
 }
 
 template <class ELFT>
