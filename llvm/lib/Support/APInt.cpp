@@ -1579,7 +1579,7 @@ APInt APInt::udiv(const APInt& RHS) const {
   if (*this == RHS)
     // X / X ===> 1
     return APInt(BitWidth, 1);
-  if (lhsWords == 1 && rhsWords == 1)
+  if (lhsWords == 1) // rhsWords is 1 if lhsWords is 1.
     // All high words are zero, just use native divide
     return APInt(BitWidth, this->U.pVal[0] / RHS.U.pVal[0]);
 
@@ -1682,7 +1682,7 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
     return;
   }
 
-  if (lhsWords == 1 && rhsWords == 1) {
+  if (lhsWords == 1) { // rhsWords is 1 if lhsWords is 1.
     // There is only one word to consider so use the native versions.
     uint64_t lhsValue = LHS.U.pVal[0];
     uint64_t rhsValue = RHS.U.pVal[0];
