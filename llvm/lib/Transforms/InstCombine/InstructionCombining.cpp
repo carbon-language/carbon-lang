@@ -2264,8 +2264,8 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   unsigned BitWidth = cast<IntegerType>(Cond->getType())->getBitWidth();
   KnownBits Known(BitWidth);
   computeKnownBits(Cond, Known, 0, &SI);
-  unsigned LeadingKnownZeros = Known.Zero.countLeadingOnes();
-  unsigned LeadingKnownOnes = Known.One.countLeadingOnes();
+  unsigned LeadingKnownZeros = Known.countMinLeadingZeros();
+  unsigned LeadingKnownOnes = Known.countMinLeadingOnes();
 
   // Compute the number of leading bits we can ignore.
   // TODO: A better way to determine this would use ComputeNumSignBits().

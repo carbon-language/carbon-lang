@@ -2217,10 +2217,10 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     // Also compute a conservative estimate for high known-0 bits.
     // More trickiness is possible, but this is sufficient for the
     // interesting case of alignment computation.
-    unsigned TrailZ = Known.Zero.countTrailingOnes() +
-                      Known2.Zero.countTrailingOnes();
-    unsigned LeadZ =  std::max(Known.Zero.countLeadingOnes() +
-                               Known2.Zero.countLeadingOnes(),
+    unsigned TrailZ = Known.countMinTrailingZeros() +
+                      Known2.countMinTrailingZeros();
+    unsigned LeadZ =  std::max(Known.countMinLeadingZeros() +
+                               Known2.countMinLeadingZeros(),
                                BitWidth) - BitWidth;
 
     Known.resetAll();
@@ -2233,13 +2233,12 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     // treat a udiv as a logical right shift by the power of 2 known to
     // be less than the denominator.
     computeKnownBits(Op.getOperand(0), Known2, DemandedElts, Depth + 1);
-    unsigned LeadZ = Known2.Zero.countLeadingOnes();
+    unsigned LeadZ = Known2.countMinLeadingZeros();
 
     computeKnownBits(Op.getOperand(1), Known2, DemandedElts, Depth + 1);
-    unsigned RHSUnknownLeadingOnes = Known2.One.countLeadingZeros();
-    if (RHSUnknownLeadingOnes != BitWidth)
-      LeadZ = std::min(BitWidth,
-                       LeadZ + BitWidth - RHSUnknownLeadingOnes - 1);
+    unsigned RHSMaxLeadingZeros = Known2.countMaxLeadingZeros();
+    if (RHSMaxLeadingZeros != BitWidth)
+      LeadZ = std::min(BitWidth, LeadZ + BitWidth - RHSMaxLeadingZeros - 1);
 
     Known.Zero.setHighBits(LeadZ);
     break;
@@ -2359,7 +2358,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
   case ISD::CTTZ_ZERO_UNDEF: {
     computeKnownBits(Op.getOperand(0), Known2, DemandedElts, Depth + 1);
     // If we have a known 1, its position is our upper bound.
-    unsigned PossibleTZ = Known2.One.countTrailingZeros();
+    unsigned PossibleTZ = Known2.countMaxTrailingZeros();
     unsigned LowBits = Log2_32(PossibleTZ) + 1;
     Known.Zero.setBitsFrom(LowBits);
     break;
@@ -2368,7 +2367,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
   case ISD::CTLZ_ZERO_UNDEF: {
     computeKnownBits(Op.getOperand(0), Known2, DemandedElts, Depth + 1);
     // If we have a known 1, its position is our upper bound.
-    unsigned PossibleLZ = Known2.One.countLeadingZeros();
+    unsigned PossibleLZ = Known2.countMaxLeadingZeros();
     unsigned LowBits = Log2_32(PossibleLZ) + 1;
     Known.Zero.setBitsFrom(LowBits);
     break;
@@ -2376,7 +2375,7 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
   case ISD::CTPOP: {
     computeKnownBits(Op.getOperand(0), Known2, DemandedElts, Depth + 1);
     // If we know some of the bits are zero, they can't be one.
-    unsigned PossibleOnes = BitWidth - Known2.Zero.countPopulation();
+    unsigned PossibleOnes = Known2.countMaxPopulation();
     Known.Zero.setBitsFrom(Log2_32(PossibleOnes) + 1);
     break;
   }
@@ -2493,13 +2492,12 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     // going to be 0 in the result. Both addition and complement operations
     // preserve the low zero bits.
     computeKnownBits(Op.getOperand(0), Known2, DemandedElts, Depth + 1);
-    unsigned KnownZeroLow = Known2.Zero.countTrailingOnes();
+    unsigned KnownZeroLow = Known2.countMinTrailingZeros();
     if (KnownZeroLow == 0)
       break;
 
     computeKnownBits(Op.getOperand(1), Known2, DemandedElts, Depth + 1);
-    KnownZeroLow = std::min(KnownZeroLow,
-                            Known2.Zero.countTrailingOnes());
+    KnownZeroLow = std::min(KnownZeroLow, Known2.countMinTrailingZeros());
     Known.Zero.setLowBits(KnownZeroLow);
     break;
   }
@@ -2526,15 +2524,13 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     // and the other has the top 8 bits clear, we know the top 7 bits of the
     // output must be clear.
     computeKnownBits(Op.getOperand(0), Known2, DemandedElts, Depth + 1);
-    unsigned KnownZeroHigh = Known2.Zero.countLeadingOnes();
-    unsigned KnownZeroLow = Known2.Zero.countTrailingOnes();
+    unsigned KnownZeroHigh = Known2.countMinLeadingZeros();
+    unsigned KnownZeroLow = Known2.countMinTrailingZeros();
 
     computeKnownBits(Op.getOperand(1), Known2, DemandedElts,
                      Depth + 1);
-    KnownZeroHigh = std::min(KnownZeroHigh,
-                             Known2.Zero.countLeadingOnes());
-    KnownZeroLow = std::min(KnownZeroLow,
-                            Known2.Zero.countTrailingOnes());
+    KnownZeroHigh = std::min(KnownZeroHigh, Known2.countMinLeadingZeros());
+    KnownZeroLow = std::min(KnownZeroLow, Known2.countMinTrailingZeros());
 
     if (Opcode == ISD::ADDE || Opcode == ISD::ADDCARRY) {
       // With ADDE and ADDCARRY, a carry bit may be added in, so we can only
@@ -2594,8 +2590,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
     computeKnownBits(Op.getOperand(0), Known, DemandedElts, Depth + 1);
     computeKnownBits(Op.getOperand(1), Known2, DemandedElts, Depth + 1);
 
-    uint32_t Leaders = std::max(Known.Zero.countLeadingOnes(),
-                                Known2.Zero.countLeadingOnes());
+    uint32_t Leaders =
+        std::max(Known.countMinLeadingZeros(), Known2.countMinLeadingZeros());
     Known.resetAll();
     Known.Zero.setHighBits(Leaders);
     break;
@@ -2711,8 +2707,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
 
     // UMIN - we know that the result will have the maximum of the
     // known zero leading bits of the inputs.
-    unsigned LeadZero = Known.Zero.countLeadingOnes();
-    LeadZero = std::max(LeadZero, Known2.Zero.countLeadingOnes());
+    unsigned LeadZero = Known.countMinLeadingZeros();
+    LeadZero = std::max(LeadZero, Known2.countMinLeadingZeros());
 
     Known.Zero &= Known2.Zero;
     Known.One &= Known2.One;
@@ -2726,8 +2722,8 @@ void SelectionDAG::computeKnownBits(SDValue Op, KnownBits &Known,
 
     // UMAX - we know that the result will have the maximum of the
     // known one leading bits of the inputs.
-    unsigned LeadOne = Known.One.countLeadingOnes();
-    LeadOne = std::max(LeadOne, Known2.One.countLeadingOnes());
+    unsigned LeadOne = Known.countMinLeadingOnes();
+    LeadOne = std::max(LeadOne, Known2.countMinLeadingOnes());
 
     Known.Zero &= Known2.Zero;
     Known.One &= Known2.One;
@@ -2843,8 +2839,7 @@ bool SelectionDAG::isKnownToBeAPowerOfTwo(SDValue Val) const {
   // Fall back to computeKnownBits to catch other known cases.
   KnownBits Known;
   computeKnownBits(Val, Known);
-  return (Known.Zero.countPopulation() == BitWidth - 1) &&
-         (Known.One.countPopulation() == 1);
+  return (Known.countMaxPopulation() == 1) && (Known.countMinPopulation() == 1);
 }
 
 unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const {
@@ -7520,7 +7515,7 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
     KnownBits Known(PtrWidth);
     llvm::computeKnownBits(const_cast<GlobalValue *>(GV), Known,
                            getDataLayout());
-    unsigned AlignBits = Known.Zero.countTrailingOnes();
+    unsigned AlignBits = Known.countMinTrailingZeros();
     unsigned Align = AlignBits ? 1 << std::min(31U, AlignBits) : 0;
     if (Align)
       return MinAlign(Align, GVOffset);
