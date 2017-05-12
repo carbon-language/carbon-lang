@@ -144,7 +144,7 @@ bool patchFunctionTailExit(const bool Enable, const uint32_t FuncId,
 }
 
 bool patchCustomEvent(const bool Enable, const uint32_t FuncId,
-                      const XRaySled &Sled)
+                      const XRaySledEntry &Sled)
     XRAY_NEVER_INSTRUMENT { // FIXME: Implement in arm?
   return false;
 }
