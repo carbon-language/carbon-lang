@@ -1648,14 +1648,15 @@ APInt APInt::srem(const APInt &RHS) const {
 void APInt::udivrem(const APInt &LHS, const APInt &RHS,
                     APInt &Quotient, APInt &Remainder) {
   assert(LHS.BitWidth == RHS.BitWidth && "Bit widths must be the same");
+  unsigned BitWidth = LHS.BitWidth;
 
   // First, deal with the easy case
   if (LHS.isSingleWord()) {
     assert(RHS.U.VAL != 0 && "Divide by zero?");
     uint64_t QuotVal = LHS.U.VAL / RHS.U.VAL;
     uint64_t RemVal = LHS.U.VAL % RHS.U.VAL;
-    Quotient = APInt(LHS.BitWidth, QuotVal);
-    Remainder = APInt(LHS.BitWidth, RemVal);
+    Quotient = APInt(BitWidth, QuotVal);
+    Remainder = APInt(BitWidth, RemVal);
     return;
   }
 
@@ -1688,8 +1689,8 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
     uint64_t lhsValue = LHS.U.pVal[0];
     uint64_t rhsValue = RHS.U.pVal[0];
     // Make sure there is enough space to hold the results.
-    Quotient.reallocate(LHS.BitWidth);
-    Remainder.reallocate(LHS.BitWidth);
+    Quotient.reallocate(BitWidth);
+    Remainder.reallocate(BitWidth);
     Quotient = lhsValue / rhsValue;
     Remainder = lhsValue % rhsValue;
     return;
