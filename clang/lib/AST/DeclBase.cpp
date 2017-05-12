@@ -83,7 +83,9 @@ void *Decl::operator new(std::size_t Size, const ASTContext &Ctx,
     char *Buffer = reinterpret_cast<char *>(
         ::operator new(ExtraAlign + sizeof(Module *) + Size + Extra, Ctx));
     Buffer += ExtraAlign;
-    return new (Buffer) Module*(nullptr) + 1;
+    auto *ParentModule =
+        Parent ? cast<Decl>(Parent)->getOwningModule() : nullptr;
+    return new (Buffer) Module*(ParentModule) + 1;
   }
   return ::operator new(Size + Extra, Ctx);
 }
@@ -273,6 +275,11 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
     getMultipleDC()->LexicalDC = DC;
   }
   Hidden = cast<Decl>(DC)->Hidden;
+  if (Hidden && !isFromASTFile()) {
+    assert(hasLocalOwningModuleStorage() &&
+           "hidden local declaration without local submodule visibility?");
+    setLocalOwningModule(cast<Decl>(DC)->getOwningModule());
+  }
 }
 
 void Decl::setDeclContextsImpl(DeclContext *SemaDC, DeclContext *LexicalDC,
