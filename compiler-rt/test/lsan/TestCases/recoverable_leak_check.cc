@@ -4,7 +4,7 @@
 // RUN: %env_lsan_opts=$LSAN_BASE %run %t foo 2>&1 | FileCheck %s
 // RUN: %env_lsan_opts=$LSAN_BASE %run %t 2>&1 | FileCheck %s
 //
-// XFAIL: darwin
+// UNSUPPORTED: darwin
 
 #include <assert.h>
 #include <stdio.h>
