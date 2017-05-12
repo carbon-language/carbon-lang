@@ -66,7 +66,7 @@ bool WorkaroundNeeded() {
   Log *log = ProcessPOSIXLog::GetLogIfAllCategoriesSet(POSIX_LOG_THREAD);
   ::pid_t child_pid = fork();
   if (child_pid == -1) {
-    LLDB_LOG(log, "failed to fork(): {0}", Error(errno, eErrorTypePOSIX));
+    LLDB_LOG(log, "failed to fork(): {0}", Status(errno, eErrorTypePOSIX));
     return false;
   }
   if (child_pid == 0)
