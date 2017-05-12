@@ -205,7 +205,7 @@ inline bool loggingInitialized(
 } // namespace
 
 inline void writeNewBufferPreamble(pid_t Tid, timespec TS,
-                                          char *&MemPtr) XRAY_NEVER_INSTRUMENT {
+                                   char *&MemPtr) XRAY_NEVER_INSTRUMENT {
   static constexpr int InitRecordsCount = 2;
   std::aligned_storage<sizeof(MetadataRecord)>::type Records[InitRecordsCount];
   {
@@ -254,7 +254,7 @@ inline void setupNewBuffer(int (*wall_clock_reader)(
 }
 
 inline void writeNewCPUIdMetadata(uint16_t CPU, uint64_t TSC,
-                                         char *&MemPtr) XRAY_NEVER_INSTRUMENT {
+                                  char *&MemPtr) XRAY_NEVER_INSTRUMENT {
   MetadataRecord NewCPUId;
   NewCPUId.Type = uint8_t(RecordType::Metadata);
   NewCPUId.RecordKind = uint8_t(MetadataRecord::RecordKinds::NewCPUId);
@@ -272,7 +272,7 @@ inline void writeNewCPUIdMetadata(uint16_t CPU, uint64_t TSC,
 }
 
 inline void writeNewCPUIdMetadata(uint16_t CPU,
-                                         uint64_t TSC) XRAY_NEVER_INSTRUMENT {
+                                  uint64_t TSC) XRAY_NEVER_INSTRUMENT {
   writeNewCPUIdMetadata(CPU, TSC, RecordPtr);
 }
 
@@ -292,7 +292,7 @@ inline void writeEOBMetadata() XRAY_NEVER_INSTRUMENT {
 }
 
 inline void writeTSCWrapMetadata(uint64_t TSC,
-                                        char *&MemPtr) XRAY_NEVER_INSTRUMENT {
+                                 char *&MemPtr) XRAY_NEVER_INSTRUMENT {
   MetadataRecord TSCWrap;
   TSCWrap.Type = uint8_t(RecordType::Metadata);
   TSCWrap.RecordKind = uint8_t(MetadataRecord::RecordKinds::TSCWrap);
@@ -312,8 +312,8 @@ inline void writeTSCWrapMetadata(uint64_t TSC) XRAY_NEVER_INSTRUMENT {
 }
 
 inline void writeFunctionRecord(int FuncId, uint32_t TSCDelta,
-                                       XRayEntryType EntryType,
-                                       char *&MemPtr) XRAY_NEVER_INSTRUMENT {
+                                XRayEntryType EntryType,
+                                char *&MemPtr) XRAY_NEVER_INSTRUMENT {
   std::aligned_storage<sizeof(FunctionRecord), alignof(FunctionRecord)>::type
       AlignedFuncRecordBuffer;
   auto &FuncRecord =
@@ -462,8 +462,8 @@ inline bool releaseThreadLocalBuffer(BufferQueue *BQ) {
 }
 
 inline bool prepareBuffer(int (*wall_clock_reader)(clockid_t,
-                                                          struct timespec *),
-                                 size_t MaxSize) XRAY_NEVER_INSTRUMENT {
+                                                   struct timespec *),
+                          size_t MaxSize) XRAY_NEVER_INSTRUMENT {
   char *BufferStart = static_cast<char *>(Buffer.Buffer);
   if ((RecordPtr + MaxSize) > (BufferStart + Buffer.Size - MetadataRecSize)) {
     writeEOBMetadata();
@@ -612,8 +612,8 @@ inline void processFunctionHook(
 
   // By this point, we are now ready to write at most 24 bytes (one metadata
   // record and one function record).
-  auto BufferStart = static_cast<char *>(Buffer.Buffer);
-  assert((RecordPtr + (MetadataRecSize + FunctionRecSize)) - BufferStart >=
+  assert((RecordPtr + (MetadataRecSize + FunctionRecSize)) -
+                 static_cast<char *>(Buffer.Buffer) >=
              static_cast<ptrdiff_t>(MetadataRecSize) &&
          "Misconfigured BufferQueue provided; Buffer size not large enough.");
 
