@@ -1662,6 +1662,7 @@ void APInt::udivrem(const APInt &LHS, const APInt &RHS,
   // Get some size facts about the dividend and divisor
   unsigned lhsWords = getNumWords(LHS.getActiveBits());
   unsigned rhsWords = getNumWords(RHS.getActiveBits());
+  assert(rhsWords && "Performing divrem operation by zero ???");
 
   // Check the degenerate cases
   if (lhsWords == 0) {
