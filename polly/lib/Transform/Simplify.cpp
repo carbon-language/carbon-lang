@@ -33,6 +33,7 @@ STATISTIC(InBetweenStore, "Number of Load-Store pairs NOT removed because "
                           "there is another store between them");
 STATISTIC(TotalIdenticalWritesRemoved,
           "Number of double writes removed in any SCoP");
+STATISTIC(TotalOverwritesRemoved, "Number of removed overwritten writes");
 STATISTIC(TotalRedundantWritesRemoved,
           "Number of writes of same value removed in any SCoP");
 STATISTIC(TotalStmtsRemoved, "Number of statements removed in any SCoP");
@@ -63,6 +64,43 @@ static Value *getWrittenScalar(MemoryAccess *WA) {
   return WA->getAccessInstruction();
 }
 
+static bool isImplicitRead(MemoryAccess *MA) {
+  return MA->isRead() && MA->isOriginalScalarKind();
+}
+
+static bool isExplicitAccess(MemoryAccess *MA) {
+  return MA->isOriginalArrayKind();
+}
+
+static bool isImplicitWrite(MemoryAccess *MA) {
+  return MA->isWrite() && MA->isOriginalScalarKind();
+}
+
+/// Return an iterator range that iterates over MemoryAccesses in the order in
+/// which they are executed.
+///
+/// The order is:
+/// - Implicit reads (BlockGenerator::generateScalarLoads)
+/// - Explicit reads and writes (BlockGenerator::generateArrayLoad,
+///   BlockGenerator::generateArrayStore)
+///   - In block statements, the accesses are in order in which their
+///     instructions are executed.
+///   - In region statements, that order of execution is not predictable at
+///     compile-time.
+/// - Implicit writes (BlockGenerator::generateScalarStores)
+///   The order in which implicit writes are executed relative to each other is
+///   undefined.
+static auto accessesInOrder(ScopStmt *Stmt) -> decltype(concat<MemoryAccess *>(
+    make_filter_range(make_range(Stmt->begin(), Stmt->end()), isImplicitRead),
+    make_filter_range(make_range(Stmt->begin(), Stmt->end()), isExplicitAccess),
+    make_filter_range(make_range(Stmt->begin(), Stmt->end()),
+                      isImplicitWrite))) {
+  auto AllRange = make_range(Stmt->begin(), Stmt->end());
+  return concat<MemoryAccess *>(make_filter_range(AllRange, isImplicitRead),
+                                make_filter_range(AllRange, isExplicitAccess),
+                                make_filter_range(AllRange, isImplicitWrite));
+}
+
 class Simplify : public ScopPass {
 private:
   /// The last/current SCoP that is/has been processed.
@@ -70,6 +108,9 @@ private:
 
   /// Number of double writes removed from this SCoP.
   int IdenticalWritesRemoved = 0;
+
+  /// Number of writes that are overwritten anyway.
+  int OverwritesRemoved = 0;
 
   /// Number of redundant writes removed from this SCoP.
   int RedundantWritesRemoved = 0;
@@ -79,8 +120,8 @@ private:
 
   /// Return whether at least one simplification has been applied.
   bool isModified() const {
-    return IdenticalWritesRemoved > 0 || RedundantWritesRemoved > 0 ||
-           StmtsRemoved > 0;
+    return IdenticalWritesRemoved > 0 || OverwritesRemoved > 0 ||
+           RedundantWritesRemoved > 0 || StmtsRemoved > 0;
   }
 
   MemoryAccess *getReadAccessForValue(ScopStmt *Stmt, llvm::Value *Val) {
@@ -223,6 +264,61 @@ private:
     }
   }
 
+  /// Remove writes that are overwritten unconditionally later in the same
+  /// statement.
+  ///
+  /// There must be no read of the same value between the write (that is to be
+  /// removed) and the overwrite.
+  void removeOverwrites() {
+    for (auto &Stmt : *S) {
+      auto Domain = give(Stmt.getDomain());
+      isl::union_map WillBeOverwritten =
+          isl::union_map::empty(give(S->getParamSpace()));
+
+      auto AccRange = accessesInOrder(&Stmt);
+      SmallVector<MemoryAccess *, 32> Accesses{AccRange.begin(),
+                                               AccRange.end()};
+
+      // Iterate in reverse order, so the overwrite comes before the write that
+      // is to be removed.
+      for (auto *MA : reverse(Accesses)) {
+
+        // In region statements, the explicit accesses can be in blocks that are
+        // can be executed in any order. We therefore process only the implicit
+        // writes and stop after that.
+        if (Stmt.isRegionStmt() && isExplicitAccess(MA))
+          break;
+
+        auto AccRel = give(MA->getAccessRelation());
+        AccRel = AccRel.intersect_domain(Domain);
+        AccRel = AccRel.intersect_params(give(S->getContext()));
+
+        // If a value is read in-between, do not consider it as overwritten.
+        if (MA->isRead()) {
+          WillBeOverwritten = WillBeOverwritten.subtract(AccRel);
+          continue;
+        }
+
+        // If all of a write's elements are overwritten, remove it.
+        isl::union_map AccRelUnion = AccRel;
+        if (isl_union_map_is_subset(AccRelUnion.keep(),
+                                    WillBeOverwritten.keep()) ==
+            isl_bool_true) {
+          DEBUG(dbgs() << "Removing " << MA
+                       << " which will be overwritten anyway\n");
+
+          Stmt.removeSingleMemoryAccess(MA);
+          OverwritesRemoved++;
+          TotalOverwritesRemoved++;
+        }
+
+        // Unconditional writes overwrite other values.
+        if (MA->isMustWrite())
+          WillBeOverwritten = WillBeOverwritten.add_map(AccRel);
+      }
+    }
+  }
+
   /// Remove writes that just write the same value already stored in the
   /// element.
   void removeRedundantWrites() {
@@ -314,6 +410,8 @@ private:
     OS.indent(Indent) << "Statistics {\n";
     OS.indent(Indent + 4) << "Identical writes removed: "
                           << IdenticalWritesRemoved << '\n';
+    OS.indent(Indent + 4) << "Overwrites removed: " << OverwritesRemoved
+                          << '\n';
     OS.indent(Indent + 4) << "Redundant writes removed: "
                           << RedundantWritesRemoved << "\n";
     OS.indent(Indent + 4) << "Stmts removed: " << StmtsRemoved << "\n";
@@ -351,6 +449,9 @@ public:
     DEBUG(dbgs() << "Removing identical writes...\n");
     removeIdenticalWrites();
 
+    DEBUG(dbgs() << "Removing overwrites...\n");
+    removeOverwrites();
+
     DEBUG(dbgs() << "Removing redundant writes...\n");
     removeRedundantWrites();
 
@@ -381,6 +482,7 @@ public:
     S = nullptr;
 
     IdenticalWritesRemoved = 0;
+    OverwritesRemoved = 0;
     RedundantWritesRemoved = 0;
     StmtsRemoved = 0;
   }
