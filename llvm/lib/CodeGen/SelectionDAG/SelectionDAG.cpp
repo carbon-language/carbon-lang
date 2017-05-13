@@ -2855,6 +2855,7 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
   EVT VT = Op.getValueType();
   assert(VT.isInteger() && "Invalid VT!");
   unsigned VTBits = VT.getScalarSizeInBits();
+  unsigned NumElts = DemandedElts.getBitWidth();
   unsigned Tmp, Tmp2;
   unsigned FirstAnswer = 1;
 
@@ -2897,6 +2898,39 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, const APInt &DemandedElts,
       Tmp = std::min(Tmp, Tmp2);
     }
     return Tmp;
+
+  case ISD::VECTOR_SHUFFLE: {
+    // Collect the minimum number of sign bits that are shared by every vector
+    // element referenced by the shuffle.
+    APInt DemandedLHS(NumElts, 0), DemandedRHS(NumElts, 0);
+    const ShuffleVectorSDNode *SVN = cast<ShuffleVectorSDNode>(Op);
+    assert(NumElts == SVN->getMask().size() && "Unexpected vector size");
+    for (unsigned i = 0; i != NumElts; ++i) {
+      int M = SVN->getMaskElt(i);
+      if (!DemandedElts[i])
+        continue;
+      // For UNDEF elements, we don't know anything about the common state of
+      // the shuffle result.
+      if (M < 0)
+        return 1;
+      if ((unsigned)M < NumElts)
+        DemandedLHS.setBit((unsigned)M % NumElts);
+      else
+        DemandedRHS.setBit((unsigned)M % NumElts);
+    }
+    Tmp = UINT_MAX;
+    if (!!DemandedLHS)
+      Tmp = ComputeNumSignBits(Op.getOperand(0), DemandedLHS, Depth + 1);
+    if (!!DemandedRHS) {
+      Tmp2 = ComputeNumSignBits(Op.getOperand(1), DemandedRHS, Depth + 1);
+      Tmp = std::min(Tmp, Tmp2);
+    }
+    // If we don't know anything, early out and try computeKnownBits fall-back.
+    if (Tmp == 1)
+      break;
+    assert(Tmp <= VTBits && "Failed to determine minimum sign bits");
+    return Tmp;
+  }
 
   case ISD::SIGN_EXTEND:
   case ISD::SIGN_EXTEND_VECTOR_INREG:
