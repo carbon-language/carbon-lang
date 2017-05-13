@@ -7513,8 +7513,7 @@ unsigned SelectionDAG::InferPtrAlignment(SDValue Ptr) const {
   if (TLI->isGAPlusOffset(Ptr.getNode(), GV, GVOffset)) {
     unsigned PtrWidth = getDataLayout().getPointerTypeSizeInBits(GV->getType());
     KnownBits Known(PtrWidth);
-    llvm::computeKnownBits(const_cast<GlobalValue *>(GV), Known,
-                           getDataLayout());
+    llvm::computeKnownBits(GV, Known, getDataLayout());
     unsigned AlignBits = Known.countMinTrailingZeros();
     unsigned Align = AlignBits ? 1 << std::min(31U, AlignBits) : 0;
     if (Align)
