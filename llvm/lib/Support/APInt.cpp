@@ -1302,7 +1302,7 @@ static void KnuthDiv(uint32_t *u, uint32_t *v, uint32_t *q, uint32_t* r,
     //     Set qp = (u[j+n]*b + u[j+n-1]) / v[n-1]. (qp=qprime=q')
     //     Set rp = (u[j+n]*b + u[j+n-1]) % v[n-1]. (rp=rprime=r')
     // Now test if qp == b or qp*v[n-2] > b*rp + u[j+n-2]; if so, decrease
-    // qp by 1, inrease rp by v[n-1], and repeat this test if rp < b. The test
+    // qp by 1, increase rp by v[n-1], and repeat this test if rp < b. The test
     // on v[n-2] determines at high speed most of the cases in which the trial
     // value qp is one too large, and it eliminates all cases where qp is two
     // too large.
