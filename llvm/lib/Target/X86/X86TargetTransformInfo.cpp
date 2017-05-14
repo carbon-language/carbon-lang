@@ -471,6 +471,11 @@ int X86TTIImpl::getArithmeticInstrCost(
   if (ST->hasSSE2() &&
       ((Op2Info == TargetTransformInfo::OK_UniformConstantValue) ||
        (Op2Info == TargetTransformInfo::OK_UniformValue))) {
+
+    // Handle AVX2 uniform v4i64 ISD::SRA, it's not worth a table.
+    if (ISD == ISD::SRA && LT.second == MVT::v4i64 && ST->hasAVX2())
+      return LT.first * 4; // 2*psrad + shuffle.
+
     if (const auto *Entry =
             CostTableLookup(SSE2UniformShiftCostTable, ISD, LT.second))
       return LT.first * Entry->Cost;

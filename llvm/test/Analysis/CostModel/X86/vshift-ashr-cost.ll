@@ -192,7 +192,7 @@ define <4 x i64> @splatvar_shift_v4i64(<4 x i64> %a, i64 %b) {
 ; SSE2: Found an estimated cost of 8 for instruction:   %shift
 ; SSE41: Found an estimated cost of 8 for instruction:   %shift
 ; AVX: Found an estimated cost of 10 for instruction:   %shift
-; AVX2: Found an estimated cost of 10 for instruction:   %shift
+; AVX2: Found an estimated cost of 4 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOP: Found an estimated cost of 6 for instruction:   %shift
   %insert = insertelement <4 x i64> undef, i64 %b, i32 0
@@ -206,7 +206,7 @@ define <8 x i64> @splatvar_shift_v8i64(<8 x i64> %a, i64 %b) {
 ; SSE2: Found an estimated cost of 16 for instruction:   %shift
 ; SSE41: Found an estimated cost of 16 for instruction:   %shift
 ; AVX: Found an estimated cost of 20 for instruction:   %shift
-; AVX2: Found an estimated cost of 20 for instruction:   %shift
+; AVX2: Found an estimated cost of 8 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOP: Found an estimated cost of 12 for instruction:   %shift
   %insert = insertelement <8 x i64> undef, i64 %b, i32 0
