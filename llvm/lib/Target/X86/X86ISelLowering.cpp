@@ -21888,9 +21888,18 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
   }
 
   // Special case in 32-bit mode, where i64 is expanded into high and low parts.
+  // TODO: Replace constant extraction with getTargetConstantBitsFromNode.
   if (!Subtarget.is64Bit() && !Subtarget.hasXOP() &&
       (VT == MVT::v2i64 || (Subtarget.hasInt256() && VT == MVT::v4i64) ||
        (Subtarget.hasAVX512() && VT == MVT::v8i64))) {
+
+    // AVX1 targets maybe extracting a 128-bit vector from a 256-bit constant.
+    unsigned SubVectorScale = 1;
+    if (Amt.getOpcode() == ISD::EXTRACT_SUBVECTOR) {
+      SubVectorScale =
+          Amt.getOperand(0).getValueSizeInBits() / Amt.getValueSizeInBits();
+      Amt = Amt.getOperand(0);
+    }
 
     // Peek through any splat that was introduced for i64 shift vectorization.
     int SplatIndex = -1;
@@ -21908,7 +21917,7 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 
     Amt = Amt.getOperand(0);
     unsigned Ratio = Amt.getSimpleValueType().getVectorNumElements() /
-                     VT.getVectorNumElements();
+                     (SubVectorScale * VT.getVectorNumElements());
     unsigned RatioInLog2 = Log2_32_Ceil(Ratio);
     uint64_t ShiftAmt = 0;
     unsigned BaseOp = (SplatIndex < 0 ? 0 : SplatIndex * Ratio);
