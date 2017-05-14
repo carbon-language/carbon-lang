@@ -454,18 +454,18 @@ int X86TTIImpl::getArithmeticInstrCost(
 
   static const CostTblEntry SSE2UniformShiftCostTable[] = {
     // Uniform splats are cheaper for the following instructions.
-    { ISD::SHL,  MVT::v16i16, 2 }, // psllw.
-    { ISD::SHL,  MVT::v8i32,  2 }, // pslld
-    { ISD::SHL,  MVT::v4i64,  2 }, // psllq.
+    { ISD::SHL,  MVT::v16i16, 2+2 }, // 2*psllw + split.
+    { ISD::SHL,  MVT::v8i32,  2+2 }, // 2*pslld + split.
+    { ISD::SHL,  MVT::v4i64,  2+2 }, // 2*psllq + split.
 
-    { ISD::SRL,  MVT::v16i16, 2 }, // psrlw.
-    { ISD::SRL,  MVT::v8i32,  2 }, // psrld.
-    { ISD::SRL,  MVT::v4i64,  2 }, // psrlq.
+    { ISD::SRL,  MVT::v16i16, 2+2 }, // 2*psrlw + split.
+    { ISD::SRL,  MVT::v8i32,  2+2 }, // 2*psrld + split.
+    { ISD::SRL,  MVT::v4i64,  2+2 }, // 2*psrlq + split.
 
-    { ISD::SRA,  MVT::v16i16, 2 }, // psraw.
-    { ISD::SRA,  MVT::v8i32,  2 }, // psrad.
-    { ISD::SRA,  MVT::v2i64,  4 }, // 2 x psrad + shuffle.
-    { ISD::SRA,  MVT::v4i64,  8 }, // 2 x psrad + shuffle.
+    { ISD::SRA,  MVT::v16i16, 2+2 }, // 2*psraw + split.
+    { ISD::SRA,  MVT::v8i32,  2+2 }, // 2*psrad + split.
+    { ISD::SRA,  MVT::v2i64,    4 }, // 2*psrad + shuffle.
+    { ISD::SRA,  MVT::v4i64,  8+2 }, // 2*(2*psrad + shuffle) + split.
   };
 
   if (ST->hasSSE2() &&

@@ -193,7 +193,7 @@ define <4 x i64> @splatvar_shift_v4i64(<4 x i64> %a, i64 %b) {
 ; CHECK: 'Cost Model Analysis' for function 'splatvar_shift_v4i64':
 ; SSE2: Found an estimated cost of 2 for instruction:   %shift
 ; SSE41: Found an estimated cost of 2 for instruction:   %shift
-; AVX: Found an estimated cost of 2 for instruction:   %shift
+; AVX: Found an estimated cost of 4 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 6 for instruction:   %shift
@@ -208,7 +208,7 @@ define <8 x i64> @splatvar_shift_v8i64(<8 x i64> %a, i64 %b) {
 ; CHECK: 'Cost Model Analysis' for function 'splatvar_shift_v8i64':
 ; SSE2: Found an estimated cost of 4 for instruction:   %shift
 ; SSE41: Found an estimated cost of 4 for instruction:   %shift
-; AVX: Found an estimated cost of 4 for instruction:   %shift
+; AVX: Found an estimated cost of 8 for instruction:   %shift
 ; AVX2: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 12 for instruction:   %shift
@@ -237,7 +237,7 @@ define <8 x i32> @splatvar_shift_v8i32(<8 x i32> %a, i32 %b) {
 ; CHECK: 'Cost Model Analysis' for function 'splatvar_shift_v8i32':
 ; SSE2: Found an estimated cost of 2 for instruction:   %shift
 ; SSE41: Found an estimated cost of 2 for instruction:   %shift
-; AVX: Found an estimated cost of 2 for instruction:   %shift
+; AVX: Found an estimated cost of 4 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 6 for instruction:   %shift
@@ -252,7 +252,7 @@ define <16 x i32> @splatvar_shift_v16i32(<16 x i32> %a, i32 %b) {
 ; CHECK: 'Cost Model Analysis' for function 'splatvar_shift_v16i32':
 ; SSE2: Found an estimated cost of 4 for instruction:   %shift
 ; SSE41: Found an estimated cost of 4 for instruction:   %shift
-; AVX: Found an estimated cost of 4 for instruction:   %shift
+; AVX: Found an estimated cost of 8 for instruction:   %shift
 ; AVX2: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 12 for instruction:   %shift
@@ -281,7 +281,7 @@ define <16 x i16> @splatvar_shift_v16i16(<16 x i16> %a, i16 %b) {
 ; CHECK: 'Cost Model Analysis' for function 'splatvar_shift_v16i16':
 ; SSE2: Found an estimated cost of 2 for instruction:   %shift
 ; SSE41: Found an estimated cost of 2 for instruction:   %shift
-; AVX: Found an estimated cost of 2 for instruction:   %shift
+; AVX: Found an estimated cost of 4 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 6 for instruction:   %shift
@@ -296,7 +296,7 @@ define <32 x i16> @splatvar_shift_v32i16(<32 x i16> %a, i16 %b) {
 ; CHECK: 'Cost Model Analysis' for function 'splatvar_shift_v32i16':
 ; SSE2: Found an estimated cost of 4 for instruction:   %shift
 ; SSE41: Found an estimated cost of 4 for instruction:   %shift
-; AVX: Found an estimated cost of 4 for instruction:   %shift
+; AVX: Found an estimated cost of 8 for instruction:   %shift
 ; AVX2: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512F: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512BW: Found an estimated cost of 1 for instruction:   %shift
@@ -529,7 +529,7 @@ define <4 x i64> @splatconstant_shift_v4i64(<4 x i64> %a) {
 ; CHECK: 'Cost Model Analysis' for function 'splatconstant_shift_v4i64':
 ; SSE2: Found an estimated cost of 2 for instruction:   %shift
 ; SSE41: Found an estimated cost of 2 for instruction:   %shift
-; AVX: Found an estimated cost of 2 for instruction:   %shift
+; AVX: Found an estimated cost of 4 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 6 for instruction:   %shift
@@ -542,7 +542,7 @@ define <8 x i64> @splatconstant_shift_v8i64(<8 x i64> %a) {
 ; CHECK: 'Cost Model Analysis' for function 'splatconstant_shift_v8i64':
 ; SSE2: Found an estimated cost of 4 for instruction:   %shift
 ; SSE41: Found an estimated cost of 4 for instruction:   %shift
-; AVX: Found an estimated cost of 4 for instruction:   %shift
+; AVX: Found an estimated cost of 8 for instruction:   %shift
 ; AVX2: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 12 for instruction:   %shift
@@ -567,7 +567,7 @@ define <8 x i32> @splatconstant_shift_v8i32(<8 x i32> %a) {
 ; CHECK: 'Cost Model Analysis' for function 'splatconstant_shift_v8i32':
 ; SSE2: Found an estimated cost of 2 for instruction:   %shift
 ; SSE41: Found an estimated cost of 2 for instruction:   %shift
-; AVX: Found an estimated cost of 2 for instruction:   %shift
+; AVX: Found an estimated cost of 4 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 6 for instruction:   %shift
@@ -580,7 +580,7 @@ define <16 x i32> @splatconstant_shift_v16i32(<16 x i32> %a) {
 ; CHECK: 'Cost Model Analysis' for function 'splatconstant_shift_v16i32':
 ; SSE2: Found an estimated cost of 4 for instruction:   %shift
 ; SSE41: Found an estimated cost of 4 for instruction:   %shift
-; AVX: Found an estimated cost of 4 for instruction:   %shift
+; AVX: Found an estimated cost of 8 for instruction:   %shift
 ; AVX2: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 12 for instruction:   %shift
@@ -605,7 +605,7 @@ define <16 x i16> @splatconstant_shift_v16i16(<16 x i16> %a) {
 ; CHECK: 'Cost Model Analysis' for function 'splatconstant_shift_v16i16':
 ; SSE2: Found an estimated cost of 2 for instruction:   %shift
 ; SSE41: Found an estimated cost of 2 for instruction:   %shift
-; AVX: Found an estimated cost of 2 for instruction:   %shift
+; AVX: Found an estimated cost of 4 for instruction:   %shift
 ; AVX2: Found an estimated cost of 1 for instruction:   %shift
 ; AVX512: Found an estimated cost of 1 for instruction:   %shift
 ; XOPAVX: Found an estimated cost of 6 for instruction:   %shift
@@ -618,7 +618,7 @@ define <32 x i16> @splatconstant_shift_v32i16(<32 x i16> %a) {
 ; CHECK: 'Cost Model Analysis' for function 'splatconstant_shift_v32i16':
 ; SSE2: Found an estimated cost of 4 for instruction:   %shift
 ; SSE41: Found an estimated cost of 4 for instruction:   %shift
-; AVX: Found an estimated cost of 4 for instruction:   %shift
+; AVX: Found an estimated cost of 8 for instruction:   %shift
 ; AVX2: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512F: Found an estimated cost of 2 for instruction:   %shift
 ; AVX512BW: Found an estimated cost of 1 for instruction:   %shift
