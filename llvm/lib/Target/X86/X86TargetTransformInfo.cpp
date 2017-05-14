@@ -247,29 +247,29 @@ int X86TTIImpl::getArithmeticInstrCost(
   }
 
   static const CostTblEntry SSE2UniformConstCostTable[] = {
-    { ISD::SHL,  MVT::v16i8,   2 }, // psllw + pand.
-    { ISD::SRL,  MVT::v16i8,   2 }, // psrlw + pand.
-    { ISD::SRA,  MVT::v16i8,   4 }, // psrlw, pand, pxor, psubb.
+    { ISD::SHL,  MVT::v16i8,     2 }, // psllw + pand.
+    { ISD::SRL,  MVT::v16i8,     2 }, // psrlw + pand.
+    { ISD::SRA,  MVT::v16i8,     4 }, // psrlw, pand, pxor, psubb.
 
-    { ISD::SHL,  MVT::v32i8, 4+2 }, // 2*(psllw + pand) + split.
-    { ISD::SRL,  MVT::v32i8, 4+2 }, // 2*(psrlw + pand) + split.
-    { ISD::SRA,  MVT::v32i8, 8+2 }, // 2*(psrlw, pand, pxor, psubb) + split.
+    { ISD::SHL,  MVT::v32i8,   4+2 }, // 2*(psllw + pand) + split.
+    { ISD::SRL,  MVT::v32i8,   4+2 }, // 2*(psrlw + pand) + split.
+    { ISD::SRA,  MVT::v32i8,   8+2 }, // 2*(psrlw, pand, pxor, psubb) + split.
 
-    { ISD::SDIV, MVT::v16i16, 12 }, // pmulhw sequence
-    { ISD::SDIV, MVT::v8i16,   6 }, // pmulhw sequence
-    { ISD::UDIV, MVT::v16i16, 12 }, // pmulhuw sequence
-    { ISD::UDIV, MVT::v8i16,   6 }, // pmulhuw sequence
-    { ISD::SDIV, MVT::v8i32,  38 }, // pmuludq sequence
-    { ISD::SDIV, MVT::v4i32,  19 }, // pmuludq sequence
-    { ISD::UDIV, MVT::v8i32,  30 }, // pmuludq sequence
-    { ISD::UDIV, MVT::v4i32,  15 }, // pmuludq sequence
+    { ISD::SDIV, MVT::v16i16, 12+2 }, // 2*pmulhw sequence + split.
+    { ISD::SDIV, MVT::v8i16,     6 }, // pmulhw sequence
+    { ISD::UDIV, MVT::v16i16, 12+2 }, // 2*pmulhuw sequence + split.
+    { ISD::UDIV, MVT::v8i16,     6 }, // pmulhuw sequence
+    { ISD::SDIV, MVT::v8i32,  38+2 }, // 2*pmuludq sequence + split.
+    { ISD::SDIV, MVT::v4i32,    19 }, // pmuludq sequence
+    { ISD::UDIV, MVT::v8i32,  30+2 }, // 2*pmuludq sequence + split.
+    { ISD::UDIV, MVT::v4i32,    15 }, // pmuludq sequence
   };
 
   if (Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
       ST->hasSSE2()) {
     // pmuldq sequence.
     if (ISD == ISD::SDIV && LT.second == MVT::v8i32 && ST->hasAVX())
-      return LT.first * 30;
+      return LT.first * 32;
     if (ISD == ISD::SDIV && LT.second == MVT::v4i32 && ST->hasSSE41())
       return LT.first * 15;
 
