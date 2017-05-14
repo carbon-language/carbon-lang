@@ -273,9 +273,12 @@ int X86TTIImpl::getArithmeticInstrCost(
     if (ISD == ISD::SDIV && LT.second == MVT::v4i32 && ST->hasSSE41())
       return LT.first * 15;
 
-    if (const auto *Entry = CostTableLookup(SSE2UniformConstCostTable, ISD,
-                                            LT.second))
-      return LT.first * Entry->Cost;
+    // XOP has faster vXi8 shifts.
+    if ((ISD != ISD::SHL && ISD != ISD::SRL && ISD != ISD::SRA) ||
+        !ST->hasXOP())
+      if (const auto *Entry =
+              CostTableLookup(SSE2UniformConstCostTable, ISD, LT.second))
+        return LT.first * Entry->Cost;
   }
 
   static const CostTblEntry AVX2UniformCostTable[] = {
