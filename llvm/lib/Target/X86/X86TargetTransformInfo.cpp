@@ -251,9 +251,9 @@ int X86TTIImpl::getArithmeticInstrCost(
     { ISD::SRL,  MVT::v16i8,   2 }, // psrlw + pand.
     { ISD::SRA,  MVT::v16i8,   4 }, // psrlw, pand, pxor, psubb.
 
-    { ISD::SHL,  MVT::v32i8,   4 }, // 2*(psllw + pand).
-    { ISD::SRL,  MVT::v32i8,   4 }, // 2*(psrlw + pand).
-    { ISD::SRA,  MVT::v32i8,   8 }, // 2*(psrlw, pand, pxor, psubb).
+    { ISD::SHL,  MVT::v32i8, 4+2 }, // 2*(psllw + pand) + split.
+    { ISD::SRL,  MVT::v32i8, 4+2 }, // 2*(psrlw + pand) + split.
+    { ISD::SRA,  MVT::v32i8, 8+2 }, // 2*(psrlw, pand, pxor, psubb) + split.
 
     { ISD::SDIV, MVT::v16i16, 12 }, // pmulhw sequence
     { ISD::SDIV, MVT::v8i16,   6 }, // pmulhw sequence
