@@ -2463,16 +2463,20 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       return true;
   }
 
-  // If the last token before a '}' is a comma or a trailing comment, the
-  // intention is to insert a line break after it in order to make shuffling
-  // around entries easier.
+  // If the last token before a '}', ']', or ')' is a comma or a trailing
+  // comment, the intention is to insert a line break after it in order to make
+  // shuffling around entries easier.
   const FormatToken *BeforeClosingBrace = nullptr;
-  if (Left.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) &&
+  if ((Left.isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) ||
+       (Style.Language == FormatStyle::LK_JavaScript &&
+        Left.is(tok::l_paren))) &&
       Left.BlockKind != BK_Block && Left.MatchingParen)
     BeforeClosingBrace = Left.MatchingParen->Previous;
   else if (Right.MatchingParen &&
-           Right.MatchingParen->isOneOf(tok::l_brace,
-                                        TT_ArrayInitializerLSquare))
+           (Right.MatchingParen->isOneOf(tok::l_brace,
+                                         TT_ArrayInitializerLSquare) ||
+            (Style.Language == FormatStyle::LK_JavaScript &&
+             Right.MatchingParen->is(tok::l_paren))))
     BeforeClosingBrace = &Left;
   if (BeforeClosingBrace && (BeforeClosingBrace->is(tok::comma) ||
                              BeforeClosingBrace->isTrailingComment()))
