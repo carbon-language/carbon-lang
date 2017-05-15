@@ -388,10 +388,21 @@ private:
                                  bool DoTransform = true);
 
   Instruction *transformSExtICmp(ICmpInst *ICI, Instruction &CI);
-  bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS, Instruction &CxtI);
+  bool WillNotOverflowSignedAdd(Value *LHS, Value *RHS, Instruction &CxtI) {
+    return computeOverflowForSignedAdd(LHS, RHS, &CxtI) ==
+           OverflowResult::NeverOverflows;
+  };
+  bool willNotOverflowUnsignedAdd(Value *LHS, Value *RHS, Instruction &CxtI) {
+    return computeOverflowForUnsignedAdd(LHS, RHS, &CxtI) ==
+           OverflowResult::NeverOverflows;
+  };
   bool WillNotOverflowSignedSub(Value *LHS, Value *RHS, Instruction &CxtI);
   bool WillNotOverflowUnsignedSub(Value *LHS, Value *RHS, Instruction &CxtI);
   bool WillNotOverflowSignedMul(Value *LHS, Value *RHS, Instruction &CxtI);
+  bool willNotOverflowUnsignedMul(Value *LHS, Value *RHS, Instruction &CxtI) {
+    return computeOverflowForUnsignedMul(LHS, RHS, &CxtI) ==
+           OverflowResult::NeverOverflows;
+  };
   Value *EmitGEPOffset(User *GEP);
   Instruction *scalarizePHI(ExtractElementInst &EI, PHINode *PN);
   Value *EvaluateInDifferentElementOrder(Value *V, ArrayRef<int> Mask);
@@ -514,6 +525,11 @@ public:
   OverflowResult computeOverflowForUnsignedAdd(Value *LHS, Value *RHS,
                                                const Instruction *CxtI) {
     return llvm::computeOverflowForUnsignedAdd(LHS, RHS, DL, &AC, CxtI, &DT);
+  }
+  OverflowResult computeOverflowForSignedAdd(const Value *LHS,
+                                             const Value *RHS,
+                                             const Instruction *CxtI) const {
+    return llvm::computeOverflowForSignedAdd(LHS, RHS, DL, &AC, CxtI, &DT);
   }
 
   /// Maximum size of array considered when transforming.
