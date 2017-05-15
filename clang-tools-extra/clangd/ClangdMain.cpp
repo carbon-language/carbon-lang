@@ -7,19 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ASTManager.h"
+#include "DocumentStore.h"
 #include "JSONRPCDispatcher.h"
-#include "ClangdLSPServer.h"
-#include "Protocol.h"
 #include "ProtocolHandlers.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Program.h"
-
 #include <iostream>
-#include <memory>
 #include <string>
-
-using namespace clang;
 using namespace clang::clangd;
 
 static llvm::cl::opt<bool>
@@ -38,7 +34,9 @@ int main(int argc, char *argv[]) {
 
   // Set up a document store and intialize all the method handlers for JSONRPC
   // dispatching.
-  ClangdLSPServer LSPServer(Out, RunSynchronously);
+  DocumentStore Store;
+  ASTManager AST(Out, Store, RunSynchronously);
+  Store.addListener(&AST);
   JSONRPCDispatcher Dispatcher(llvm::make_unique<Handler>(Out));
   Dispatcher.registerHandler("initialize",
                              llvm::make_unique<InitializeHandler>(Out));
@@ -47,26 +45,26 @@ int main(int argc, char *argv[]) {
   Dispatcher.registerHandler("shutdown", std::move(ShutdownPtr));
   Dispatcher.registerHandler(
       "textDocument/didOpen",
-      llvm::make_unique<TextDocumentDidOpenHandler>(Out, LSPServer));
+      llvm::make_unique<TextDocumentDidOpenHandler>(Out, Store));
   Dispatcher.registerHandler(
       "textDocument/didClose",
-      llvm::make_unique<TextDocumentDidCloseHandler>(Out, LSPServer));
+      llvm::make_unique<TextDocumentDidCloseHandler>(Out, Store));
   Dispatcher.registerHandler(
       "textDocument/didChange",
-      llvm::make_unique<TextDocumentDidChangeHandler>(Out, LSPServer));
+      llvm::make_unique<TextDocumentDidChangeHandler>(Out, Store));
   Dispatcher.registerHandler(
       "textDocument/rangeFormatting",
-      llvm::make_unique<TextDocumentRangeFormattingHandler>(Out, LSPServer));
+      llvm::make_unique<TextDocumentRangeFormattingHandler>(Out, Store));
   Dispatcher.registerHandler(
       "textDocument/onTypeFormatting",
-      llvm::make_unique<TextDocumentOnTypeFormattingHandler>(Out, LSPServer));
+      llvm::make_unique<TextDocumentOnTypeFormattingHandler>(Out, Store));
   Dispatcher.registerHandler(
       "textDocument/formatting",
-      llvm::make_unique<TextDocumentFormattingHandler>(Out, LSPServer));
+      llvm::make_unique<TextDocumentFormattingHandler>(Out, Store));
   Dispatcher.registerHandler("textDocument/codeAction",
-                             llvm::make_unique<CodeActionHandler>(Out, LSPServer));
+                             llvm::make_unique<CodeActionHandler>(Out, AST));
   Dispatcher.registerHandler("textDocument/completion",
-                             llvm::make_unique<CompletionHandler>(Out, LSPServer));
+                             llvm::make_unique<CompletionHandler>(Out, AST));
 
   while (std::cin.good()) {
     // A Language Server Protocol message starts with a HTTP header, delimited
