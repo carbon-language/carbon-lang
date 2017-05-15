@@ -1,3 +1,4 @@
+REQUIRES: linux
 RUN: echo -n "abc" > %t.file3
 RUN: echo -n "abcd" > %t.file4
 
