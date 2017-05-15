@@ -882,13 +882,9 @@ bool InstCombiner::WillNotOverflowSignedSub(Value *LHS, Value *RHS,
 bool InstCombiner::WillNotOverflowUnsignedSub(Value *LHS, Value *RHS,
                                               Instruction &CxtI) {
   // If the LHS is negative and the RHS is non-negative, no unsigned wrap.
-  bool LHSKnownNonNegative, LHSKnownNegative;
-  bool RHSKnownNonNegative, RHSKnownNegative;
-  ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, /*Depth=*/0,
-                 &CxtI);
-  ComputeSignBit(RHS, RHSKnownNonNegative, RHSKnownNegative, /*Depth=*/0,
-                 &CxtI);
-  if (LHSKnownNegative && RHSKnownNonNegative)
+  KnownBits LHSKnown = computeKnownBits(LHS, /*Depth=*/0, &CxtI);
+  KnownBits RHSKnown = computeKnownBits(RHS, /*Depth=*/0, &CxtI);
+  if (LHSKnown.isNegative() && RHSKnown.isNonNegative())
     return true;
 
   return false;

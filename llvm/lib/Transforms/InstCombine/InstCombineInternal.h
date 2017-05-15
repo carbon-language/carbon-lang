@@ -30,6 +30,7 @@
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/KnownBits.h"
 #include "llvm/Transforms/InstCombine/InstCombineWorklist.h"
 #include "llvm/Transforms/Utils/Local.h"
 
@@ -505,6 +506,10 @@ public:
                         unsigned Depth, Instruction *CxtI) const {
     llvm::computeKnownBits(V, Known, DL, Depth, &AC, CxtI, &DT);
   }
+  KnownBits computeKnownBits(Value *V, unsigned Depth,
+                             Instruction *CxtI) const {
+    return llvm::computeKnownBits(V, DL, Depth, &AC, CxtI, &DT);
+  }
 
   bool MaskedValueIsZero(Value *V, const APInt &Mask, unsigned Depth = 0,
                          Instruction *CxtI = nullptr) const {
@@ -513,10 +518,6 @@ public:
   unsigned ComputeNumSignBits(Value *Op, unsigned Depth = 0,
                               Instruction *CxtI = nullptr) const {
     return llvm::ComputeNumSignBits(Op, DL, Depth, &AC, CxtI, &DT);
-  }
-  void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
-                      unsigned Depth = 0, Instruction *CxtI = nullptr) const {
-    llvm::ComputeSignBit(V, KnownZero, KnownOne, DL, Depth, &AC, CxtI, &DT);
   }
   OverflowResult computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
                                                const Instruction *CxtI) {

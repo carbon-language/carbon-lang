@@ -169,15 +169,6 @@ bool llvm::haveNoCommonBitsSet(const Value *LHS, const Value *RHS,
 }
 
 
-void llvm::ComputeSignBit(const Value *V, bool &KnownZero, bool &KnownOne,
-                          const DataLayout &DL, unsigned Depth,
-                          AssumptionCache *AC, const Instruction *CxtI,
-                          const DominatorTree *DT) {
-  KnownBits Known = computeKnownBits(V, DL, Depth, AC, CxtI, DT);
-  KnownZero = Known.isNonNegative();
-  KnownOne = Known.isNegative();
-}
-
 static bool isKnownToBeAPowerOfTwo(const Value *V, bool OrZero, unsigned Depth,
                                    const Query &Q);
 

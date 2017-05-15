@@ -162,11 +162,9 @@ bool InstCombiner::WillNotOverflowSignedMul(Value *LHS, Value *RHS,
     // product is exactly the minimum negative number.
     // E.g. mul i16 with 17 sign bits: 0xff00 * 0xff80 = 0x8000
     // For simplicity we just check if at least one side is not negative.
-    bool LHSNonNegative, LHSNegative;
-    bool RHSNonNegative, RHSNegative;
-    ComputeSignBit(LHS, LHSNonNegative, LHSNegative, /*Depth=*/0, &CxtI);
-    ComputeSignBit(RHS, RHSNonNegative, RHSNegative, /*Depth=*/0, &CxtI);
-    if (LHSNonNegative || RHSNonNegative)
+    KnownBits LHSKnown = computeKnownBits(LHS, /*Depth=*/0, &CxtI);
+    KnownBits RHSKnown = computeKnownBits(RHS, /*Depth=*/0, &CxtI);
+    if (LHSKnown.isNonNegative() || RHSKnown.isNonNegative())
       return true;
   }
   return false;

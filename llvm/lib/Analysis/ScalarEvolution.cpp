@@ -6661,13 +6661,12 @@ ScalarEvolution::ExitLimit ScalarEvolution::computeShiftCompareExitLimit(
     // {K,ashr,<positive-constant>} stabilizes to signum(K) in at most
     // bitwidth(K) iterations.
     Value *FirstValue = PN->getIncomingValueForBlock(Predecessor);
-    bool KnownZero, KnownOne;
-    ComputeSignBit(FirstValue, KnownZero, KnownOne, DL, 0, nullptr,
-                   Predecessor->getTerminator(), &DT);
+    KnownBits Known = computeKnownBits(FirstValue, DL, 0, nullptr,
+                                       Predecessor->getTerminator(), &DT);
     auto *Ty = cast<IntegerType>(RHS->getType());
-    if (KnownZero)
+    if (Known.isNonNegative())
       StableValue = ConstantInt::get(Ty, 0);
-    else if (KnownOne)
+    else if (Known.isNegative())
       StableValue = ConstantInt::get(Ty, -1, true);
     else
       return getCouldNotCompute();
