@@ -45,7 +45,7 @@ public:
 
   /// Replace contents of the draft for \p File with \p Contents.
   /// \return The new version of the draft for \p File.
-  DocVersion updateDraft(PathRef File, llvm::StringRef Contents);
+  DocVersion updateDraft(PathRef File, StringRef Contents);
   /// Remove the contents of the draft
   /// \return The new version of the draft for \p File.
   DocVersion removeDraft(PathRef File);

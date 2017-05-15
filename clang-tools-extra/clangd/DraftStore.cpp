@@ -29,7 +29,7 @@ DocVersion DraftStore::getVersion(PathRef File) const {
   return It->second.Version;
 }
 
-DocVersion DraftStore::updateDraft(PathRef File, llvm::StringRef Contents) {
+DocVersion DraftStore::updateDraft(PathRef File, StringRef Contents) {
   std::lock_guard<std::mutex> Lock(Mutex);
 
   auto &Entry = Drafts[File];
