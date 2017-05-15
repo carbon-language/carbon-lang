@@ -492,7 +492,7 @@ public:
 
   void computeKnownBits(Value *V, KnownBits &Known,
                         unsigned Depth, Instruction *CxtI) const {
-    return llvm::computeKnownBits(V, Known, DL, Depth, &AC, CxtI, &DT);
+    llvm::computeKnownBits(V, Known, DL, Depth, &AC, CxtI, &DT);
   }
 
   bool MaskedValueIsZero(Value *V, const APInt &Mask, unsigned Depth = 0,
@@ -505,8 +505,7 @@ public:
   }
   void ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
                       unsigned Depth = 0, Instruction *CxtI = nullptr) const {
-    return llvm::ComputeSignBit(V, KnownZero, KnownOne, DL, Depth, &AC, CxtI,
-                                &DT);
+    llvm::ComputeSignBit(V, KnownZero, KnownOne, DL, Depth, &AC, CxtI, &DT);
   }
   OverflowResult computeOverflowForUnsignedMul(Value *LHS, Value *RHS,
                                                const Instruction *CxtI) {
