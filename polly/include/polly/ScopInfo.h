@@ -2762,16 +2762,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
-//===----------------------------------------------------------------------===//
-/// The legacy pass manager's analysis pass to compute scop information
-///        for the whole function.
-///
-/// This pass will maintain a map of the maximal region within a scop to its
-/// scop object for all the feasible scops present in a function.
-/// This pass is an alternative to the ScopInfoRegionPass in order to avoid a
-/// region pass manager.
-class ScopInfoWrapperPass : public FunctionPass {
-
+class ScopInfo {
 public:
   using RegionToScopMapTy = DenseMap<Region *, std::unique_ptr<Scop>>;
   using iterator = RegionToScopMapTy::iterator;
@@ -2783,10 +2774,9 @@ private:
   RegionToScopMapTy RegionToScopMap;
 
 public:
-  static char ID; // Pass identification, replacement for typeid
-
-  ScopInfoWrapperPass() : FunctionPass(ID) {}
-  ~ScopInfoWrapperPass() {}
+  ScopInfo(const DataLayout &DL, ScopDetection &SD, ScalarEvolution &SE,
+           LoopInfo &LI, AliasAnalysis &AA, DominatorTree &DT,
+           AssumptionCache &AC);
 
   /// Get the Scop object for the given Region
   ///
@@ -2805,11 +2795,44 @@ public:
   iterator end() { return RegionToScopMap.end(); }
   const_iterator begin() const { return RegionToScopMap.begin(); }
   const_iterator end() const { return RegionToScopMap.end(); }
+};
+
+struct ScopInfoAnalysis : public AnalysisInfoMixin<ScopInfoAnalysis> {
+  static AnalysisKey Key;
+  using Result = ScopInfo;
+  Result run(Function &, FunctionAnalysisManager &);
+};
+
+struct ScopInfoPrinterPass : public PassInfoMixin<ScopInfoPrinterPass> {
+  ScopInfoPrinterPass(raw_ostream &O) : Stream(O) {}
+  PreservedAnalyses run(Function &, FunctionAnalysisManager &);
+  raw_ostream &Stream;
+};
+
+//===----------------------------------------------------------------------===//
+/// The legacy pass manager's analysis pass to compute scop information
+///        for the whole function.
+///
+/// This pass will maintain a map of the maximal region within a scop to its
+/// scop object for all the feasible scops present in a function.
+/// This pass is an alternative to the ScopInfoRegionPass in order to avoid a
+/// region pass manager.
+class ScopInfoWrapperPass : public FunctionPass {
+  std::unique_ptr<ScopInfo> Result;
+
+public:
+  ScopInfoWrapperPass() : FunctionPass(ID) {}
+  ~ScopInfoWrapperPass() = default;
+
+  static char ID; // Pass identification, replacement for typeid
+
+  ScopInfo *getSI() { return Result.get(); }
+  const ScopInfo *getSI() const { return Result.get(); }
 
   /// Calculate all the polyhedral scops for a given function.
   bool runOnFunction(Function &F) override;
 
-  void releaseMemory() override { RegionToScopMap.clear(); }
+  void releaseMemory() override { Result.reset(); }
 
   void print(raw_ostream &O, const Module *M = nullptr) const override;
 
