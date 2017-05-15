@@ -1704,7 +1704,7 @@ readCuList(DWARFContext &Dwarf, InputSection *Sec) {
 static InputSectionBase *findSection(ArrayRef<InputSectionBase *> Arr,
                                      uint64_t Offset) {
   for (InputSectionBase *S : Arr)
-    if (S && S != &InputSection::Discarded)
+    if (S && S != &InputSection::Discarded && S->Live)
       if (Offset >= S->getOffsetInFile() &&
           Offset < S->getOffsetInFile() + S->getSize())
         return S;
