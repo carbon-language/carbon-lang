@@ -58,7 +58,6 @@ private:
 
   static unsigned phiInfoElementGetDest(PHIInfoElementT *Info);
   static void phiInfoElementSetDef(PHIInfoElementT *Info, unsigned NewDef);
-  static DebugLoc phiInfoElementGetDebugLoc(PHIInfoElementT *Info);
   static PHISourcesT &phiInfoElementGetSources(PHIInfoElementT *Info);
   static void phiInfoElementAddSource(PHIInfoElementT *Info, unsigned SourceReg,
                                       MachineBasicBlock *SourceMBB);
@@ -123,10 +122,6 @@ unsigned PHILinearize::phiInfoElementGetDest(PHIInfoElementT *Info) {
 void PHILinearize::phiInfoElementSetDef(PHIInfoElementT *Info,
                                         unsigned NewDef) {
   Info->DestReg = NewDef;
-}
-
-DebugLoc PHILinearize::phiInfoElementGetDebugLoc(PHIInfoElementT *Info) {
-  return Info->DL;
 }
 
 PHILinearize::PHISourcesT &
