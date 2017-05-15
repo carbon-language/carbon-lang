@@ -1321,6 +1321,8 @@ void RewriteInstance::readSpecialSections() {
       EHFrameSection = Section;
     } else if (SectionName == ".rela.text") {
       HasTextRelocations = true;
+    } else if (SectionName == ".gdb_index") {
+      GdbIndexSection = Section;
     }
 
     // Ignore zero-size allocatable sections as they present no interest to us.

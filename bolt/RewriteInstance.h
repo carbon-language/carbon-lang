@@ -346,6 +346,9 @@ private:
   /// blocks) to be updated.
   void updateDWARFAddressRanges();
 
+  /// Rewrite .gdb_index section if present.
+  void updateGdbIndexSection();
+
   /// Patches the binary for an object's address ranges to be updated.
   /// The object can be a anything that has associated address ranges via either
   /// DW_AT_low/high_pc or DW_AT_ranges (i.e. functions, lexical blocks, etc).
@@ -391,7 +394,9 @@ private:
   static constexpr const char *DebugSectionsToOverwrite[] = {
     ".debug_aranges",
     ".debug_line",
-    ".debug_ranges"};
+    ".debug_ranges",
+    ".gdb_index",
+  };
 
   /// Huge page size used for alignment.
   static constexpr unsigned PageAlign = 0x200000;
@@ -462,6 +467,9 @@ private:
   uint64_t LSDAAddress{0};
   const llvm::DWARFFrame *EHFrame{nullptr};
   SectionRef EHFrameSection;
+
+  /// .gdb_index section.
+  SectionRef GdbIndexSection;
 
   uint64_t NewSymTabOffset{0};
 

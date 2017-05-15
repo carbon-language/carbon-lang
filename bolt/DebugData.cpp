@@ -126,13 +126,14 @@ BasicBlockOffsetRanges::getAbsoluteAddressRanges() const {
   return MergedRanges;
 }
 
-void DebugRangesSectionsWriter::AddRange(uint32_t CompileUnitOffset,
+void DebugRangesSectionsWriter::addRange(uint32_t CompileUnitOffset,
                                          uint64_t Address,
                                          uint64_t Size) {
-  CUAddressRanges[CompileUnitOffset].emplace_back(std::make_pair(Address, Size));
+  CUAddressRanges[CompileUnitOffset].emplace_back(std::make_pair(Address,
+                                                                 Size));
 }
 
-void DebugRangesSectionsWriter::AddRange(AddressRangesOwner *BF,
+void DebugRangesSectionsWriter::addRange(AddressRangesOwner *BF,
                                          uint64_t Address,
                                          uint64_t Size) {
   ObjectAddressRanges[BF].emplace_back(std::make_pair(Address, Size));
@@ -145,7 +146,7 @@ namespace {
 // the form (begin address, range size), otherwise (begin address, end address).
 // Terminates the list by writing a pair of two zeroes.
 // Returns the number of written bytes.
-uint32_t WriteAddressRanges(
+uint32_t writeAddressRanges(
     MCObjectWriter *Writer,
     const std::vector<std::pair<uint64_t, uint64_t>> &AddressRanges,
     bool RelativeRange) {
@@ -162,37 +163,37 @@ uint32_t WriteAddressRanges(
 
 } // namespace
 
-void DebugRangesSectionsWriter::WriteRangesSection(MCObjectWriter *Writer) {
+void DebugRangesSectionsWriter::writeRangesSection(MCObjectWriter *Writer) {
   uint32_t SectionOffset = 0;
   for (const auto &CUOffsetAddressRangesPair : CUAddressRanges) {
-    uint64_t CUOffset = CUOffsetAddressRangesPair.first;
+    const auto CUOffset = CUOffsetAddressRangesPair.first;
     RangesSectionOffsetCUMap[CUOffset] = SectionOffset;
     const auto &AddressRanges = CUOffsetAddressRangesPair.second;
-    SectionOffset += WriteAddressRanges(Writer, AddressRanges, false);
+    SectionOffset += writeAddressRanges(Writer, AddressRanges, false);
   }
 
   for (const auto &BFAddressRangesPair : ObjectAddressRanges) {
     BFAddressRangesPair.first->setAddressRangesOffset(SectionOffset);
     const auto &AddressRanges = BFAddressRangesPair.second;
-    SectionOffset += WriteAddressRanges(Writer, AddressRanges, false);
+    SectionOffset += writeAddressRanges(Writer, AddressRanges, false);
   }
 
   // Write an empty address list to be used for objects with unknown address
   // ranges.
   EmptyRangesListOffset = SectionOffset;
-  SectionOffset += WriteAddressRanges(
+  SectionOffset += writeAddressRanges(
       Writer,
       std::vector<std::pair<uint64_t, uint64_t>>{},
       false);
 }
 
 void
-DebugRangesSectionsWriter::WriteArangesSection(MCObjectWriter *Writer) const {
+DebugRangesSectionsWriter::writeArangesSection(MCObjectWriter *Writer) const {
   // For reference on the format of the .debug_aranges section, see the DWARF4
   // specification, section 6.1.4 Lookup by Address
   // http://www.dwarfstd.org/doc/DWARF4.pdf
   for (const auto &CUOffsetAddressRangesPair : CUAddressRanges) {
-    uint64_t Offset = CUOffsetAddressRangesPair.first;
+    const auto Offset = CUOffsetAddressRangesPair.first;
     const auto &AddressRanges = CUOffsetAddressRangesPair.second;
 
     // Emit header.
@@ -222,7 +223,7 @@ DebugRangesSectionsWriter::WriteArangesSection(MCObjectWriter *Writer) const {
     // Padding before address table - 4 bytes in the 64-bit-pointer case.
     Writer->writeLE32(0);
 
-    WriteAddressRanges(Writer, AddressRanges, true);
+    writeAddressRanges(Writer, AddressRanges, true);
   }
 }
 

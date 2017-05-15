@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
+#include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/Support/SMLoc.h"
 #include <map>
 #include <string>
@@ -224,20 +225,20 @@ public:
   DebugRangesSectionsWriter() = default;
 
   /// Adds a range to the .debug_arange section.
-  void AddRange(uint32_t CompileUnitOffset, uint64_t Address, uint64_t Size);
+  void addRange(uint32_t CompileUnitOffset, uint64_t Address, uint64_t Size);
 
   /// Adds an address range that belongs to a given object.
   /// When .debug_ranges is written, the offset of the range corresponding
   /// to the function will be set using BF->setAddressRangesOffset().
-  void AddRange(AddressRangesOwner *ARO, uint64_t Address, uint64_t Size);
+  void addRange(AddressRangesOwner *ARO, uint64_t Address, uint64_t Size);
 
   using RangesCUMapType = std::map<uint32_t, uint32_t>;
 
   /// Writes .debug_aranges with the added ranges to the MCObjectWriter.
-  void WriteArangesSection(MCObjectWriter *Writer) const;
+  void writeArangesSection(MCObjectWriter *Writer) const;
 
   /// Writes .debug_ranges with the added ranges to the MCObjectWriter.
-  void WriteRangesSection(MCObjectWriter *Writer);
+  void writeRangesSection(MCObjectWriter *Writer);
 
   /// Resets the writer to a clear state.
   void reset() {
@@ -255,6 +256,7 @@ public:
   /// to .debug_ranges
   uint32_t getEmptyRangesListOffset() const { return EmptyRangesListOffset; }
 
+  /// Map DWARFCompileUnit index to ranges.
   using CUAddressRangesType =
     std::map<uint32_t, std::vector<std::pair<uint64_t, uint64_t>>>;
 

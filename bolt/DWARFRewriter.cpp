@@ -30,6 +30,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TimeValue.h"
@@ -40,6 +41,7 @@
 #define DEBUG_TYPE "bolt"
 
 using namespace llvm;
+using namespace llvm::support::endian;
 using namespace object;
 using namespace bolt;
 
@@ -62,6 +64,8 @@ void RewriteInstance::updateDebugInfo() {
   updateLocationLists();
 
   updateDWARFAddressRanges();
+
+  updateGdbIndexSection();
 }
 
 void RewriteInstance::updateEmptyModuleRanges() {
@@ -71,7 +75,7 @@ void RewriteInstance::updateEmptyModuleRanges() {
       continue;
     auto const &Ranges = CU->getUnitDIE(true)->getAddressRanges(CU.get());
     for (auto const &Range : Ranges) {
-      RangesSectionsWriter.AddRange(CU->getOffset(),
+      RangesSectionsWriter.addRange(CU->getOffset(),
                                     Range.first,
                                     Range.second - Range.first);
     }
@@ -294,7 +298,7 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
 void RewriteInstance::updateAddressRangesObjects() {
   for (auto &Obj : BC->AddressRangesObjects) {
     for (const auto &Range : Obj.getAbsoluteAddressRanges()) {
-      RangesSectionsWriter.AddRange(&Obj, Range.first,
+      RangesSectionsWriter.addRange(&Obj, Range.first,
                                     Range.second - Range.first);
     }
   }
@@ -366,9 +370,9 @@ void RewriteInstance::updateFunctionRanges() {
     // the identical code folding optimization. Update all of them with
     // the range.
     for (const auto DIECompileUnitPair : Function.getSubprogramDIEs()) {
-      auto CUOffset = DIECompileUnitPair.second->getOffset();
-      if (CUOffset != -1U)
-        RangesSectionsWriter.AddRange(CUOffset, RangeBegin, RangeSize);
+      const auto CU = DIECompileUnitPair.second;
+      if (CU->getOffset() != -1U)
+        RangesSectionsWriter.addRange(CU->getOffset(), RangeBegin, RangeSize);
     }
   };
 
@@ -383,12 +387,12 @@ void RewriteInstance::updateFunctionRanges() {
     addDebugArangesEntry(Function,
                          Function.getAddress(),
                          Size);
-    RangesSectionsWriter.AddRange(&Function, Function.getAddress(), Size);
+    RangesSectionsWriter.addRange(&Function, Function.getAddress(), Size);
     if (Function.isSimple() && Function.cold().getImageSize()) {
       addDebugArangesEntry(Function,
                            Function.cold().getAddress(),
                            Function.cold().getImageSize());
-      RangesSectionsWriter.AddRange(&Function,
+      RangesSectionsWriter.addRange(&Function,
                                     Function.cold().getAddress(),
                                     Function.cold().getImageSize());
     }
@@ -398,6 +402,10 @@ void RewriteInstance::updateFunctionRanges() {
 void RewriteInstance::generateDebugRanges() {
   enum { RANGES, ARANGES };
   for (auto RT = RANGES + 0; RT <= ARANGES; ++RT) {
+    // Skip .debug_aranges if we are re-generating .gdb_index.
+    if (GdbIndexSection.getObject() && RT == ARANGES)
+      continue;
+
     const char *SectionName = (RT == RANGES) ? ".debug_ranges"
                                              : ".debug_aranges";
     SmallVector<char, 16> RangesBuffer;
@@ -408,9 +416,9 @@ void RewriteInstance::generateDebugRanges() {
     auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
 
     if (RT == RANGES) {
-      RangesSectionsWriter.WriteRangesSection(Writer.get());
+      RangesSectionsWriter.writeRangesSection(Writer.get());
     } else {
-      RangesSectionsWriter.WriteArangesSection(Writer.get());
+      RangesSectionsWriter.writeArangesSection(Writer.get());
     }
     const auto &DebugRangesContents = OS.str();
 
@@ -507,4 +515,115 @@ void RewriteInstance::updateLocationListPointers(
   for (auto Child = DIE->getFirstChild(); Child; Child = Child->getSibling()) {
     updateLocationListPointers(Unit, Child, UpdatedOffsets);
   }
+}
+
+void RewriteInstance::updateGdbIndexSection() {
+  if (!GdbIndexSection.getObject())
+    return;
+
+  StringRef GdbIndexContents;
+  GdbIndexSection.getContents(GdbIndexContents);
+
+  const auto *Data = GdbIndexContents.data();
+
+  // Parse the header.
+  const auto Version = read32le(Data);
+  if (Version != 7 && Version != 8) {
+    errs() << "BOLT-ERROR: can only process .gdb_index versions 7 and 8\n";
+    exit(1);
+  }
+
+  // Some .gdb_index generators use file offsets while others use section
+  // offsets. Hence we can only rely on offsets relative to each other,
+  // and ignore their absolute values.
+  const auto CUListOffset = read32le(Data + 4);
+  const auto CUTypesOffset = read32le(Data + 8);
+  const auto AddressTableOffset = read32le(Data + 12);
+  const auto SymbolTableOffset = read32le(Data + 16);
+  const auto ConstantPoolOffset = read32le(Data + 20);
+  Data += 24;
+
+  assert(CUTypesOffset == AddressTableOffset &&
+         "CU types in .gdb_index should be empty");
+
+  // Map CUs offsets to indices and verify existing index table.
+  std::map<uint32_t, uint32_t> OffsetToIndexMap;
+  const auto CUListSize = CUTypesOffset - CUListOffset;
+  const auto NumCUs = BC->DwCtx->getNumCompileUnits();
+  if (CUListSize != NumCUs * 16) {
+    errs() << "BOLT-ERROR: .gdb_index: CU count mismatch\n";
+    exit(1);
+  }
+  for (unsigned Index = 0; Index < NumCUs; ++Index, Data += 16) {
+    const auto *CU = BC->DwCtx->getCompileUnitAtIndex(Index);
+    const auto Offset = read64le(Data);
+    if (CU->getOffset() != Offset) {
+      errs() << "BOLT-ERROR: .gdb_index CU offset mismatch\n";
+      exit(1);
+    }
+
+    OffsetToIndexMap[Offset] = Index;
+  }
+  
+  // Ignore old address table.
+  const auto OldAddressTableSize = SymbolTableOffset - AddressTableOffset;
+  Data += OldAddressTableSize;
+
+  // Calculate the size of the new address table.
+  uint32_t NewAddressTableSize = 0;
+  for (const auto &CURangesPair : RangesSectionsWriter.getCUAddressRanges()) {
+    const auto &Ranges = CURangesPair.second;
+    NewAddressTableSize += Ranges.size() * 20;
+  }
+
+  // Difference between old and new table (and section) sizes.
+  // Could be negative.
+  int32_t Delta = NewAddressTableSize - OldAddressTableSize;
+
+  size_t NewGdbIndexSize = GdbIndexContents.size() + Delta;
+
+  // Free'd by ExecutableFileMemoryManager.
+  auto * const NewGdbIndexContents = new uint8_t[NewGdbIndexSize];
+  auto *Buffer = NewGdbIndexContents;
+
+  write32le(Buffer, Version);
+  write32le(Buffer + 4, CUListOffset);
+  write32le(Buffer + 8, CUTypesOffset);
+  write32le(Buffer + 12, AddressTableOffset);
+  write32le(Buffer + 16, SymbolTableOffset + Delta);
+  write32le(Buffer + 20, ConstantPoolOffset + Delta);
+  Buffer += 24;
+
+  // Copy over CU list.
+  memcpy(Buffer, GdbIndexContents.data() + 24, CUListSize);
+  Buffer += CUListSize;
+
+  // Generate new address table.
+  for (const auto &CURangesPair : RangesSectionsWriter.getCUAddressRanges()) {
+    const auto CUIndex = OffsetToIndexMap[CURangesPair.first];
+    const auto &Ranges = CURangesPair.second;
+    for (const auto &Range : Ranges) {
+      write64le(Buffer, Range.first);
+      write64le(Buffer + 8, Range.first + Range.second);
+      write32le(Buffer + 16, CUIndex);
+      Buffer += 20;
+    }
+  }
+
+  const auto TrailingSize =
+    GdbIndexContents.data() + GdbIndexContents.size() - Data;
+  assert(Buffer + TrailingSize == NewGdbIndexContents + NewGdbIndexSize &&
+         "size calculation error");
+
+  // Copy over the rest of the original data.
+  memcpy(Buffer, Data, TrailingSize);
+
+  // Register the new section.
+  EFMM->NoteSectionInfo[".gdb_index"] = SectionInfo(
+      reinterpret_cast<uint64_t>(NewGdbIndexContents),
+      NewGdbIndexSize,
+      /*Alignment=*/0,
+      /*IsCode=*/false,
+      /*IsReadOnly=*/true,
+      /*IsLocal=*/false);
 }
