@@ -104,7 +104,7 @@ void test3(int b, int c) {
   //CHECK-NEXT: [[VLA_SIZEOF_DIM2:%.*]] = mul nuw i64 4, [[VLA_DIM2_PRE]]
   //CHECK-NEXT: [[VLA_NUM_ELEMENTS:%.*]] = udiv i64 [[VLA_SIZEOF]], [[VLA_SIZEOF_DIM2]]
   //CHECK-NEXT: [[VLA_END_INDEX:%.*]] = mul nsw i64 [[VLA_NUM_ELEMENTS]], [[VLA_DIM2_PRE]]
-  //CHECK-NEXT: [[VLA_END_PTR:%.*]] = getelementptr inbounds i32, i32* %7, i64 [[VLA_END_INDEX]]
+  //CHECK-NEXT: [[VLA_END_PTR:%.*]] = getelementptr inbounds i32, i32* {{%.*}}, i64 [[VLA_END_INDEX]]
   //CHECK-NEXT: store i32* [[VLA_END_PTR]], i32** %__end
  
   for (auto &d : varr) 0;
