@@ -79,32 +79,6 @@ void test2(int b) {
   for (int d : varr) 0;
 }
 
-#if 0
-  %0 = load i32, i32* %b.addr, align 4
-  %1 = zext i32 %0 to i64
-  %2 = load i32, i32* %c.addr, align 4
-  %3 = zext i32 %2 to i64
-  %4 = call i8* @llvm.stacksave()
-  store i8* %4, i8** %saved_stack, align 8
-  %5 = mul nuw i64 %1, %3
-  %vla = alloca i32, i64 %5, align 16
-  store i32 15, i32* %c.addr, align 4
-  store i32 15, i32* %b.addr, align 4
-  store i32* %vla, i32** %__range, align 8
-
-
-  %6 = load i32*, i32** %__range, align 8
-  store i32* %6, i32** %__begin, align 8
-  %7 = load i32*, i32** %__range, align 8
-  %8 = mul nuw i64 %1, %3
-  %9 = mul nuw i64 4, %8
-  %10 = mul nuw i64 4, %3
-  %div = udiv i64 %9, %10
-  %vla.index = mul nsw i64 %div, %3
-  %add.ptr = getelementptr inbounds i32, i32* %7, i64 %vla.index
-  store i32* %add.ptr, i32** %__end, align 8
-#endif
-
 void test3(int b, int c) {
   // CHECK-LABEL: define void {{.*}}test3{{.*}}(i32 %b, i32 %c)
   int varr[b][c];
