@@ -2222,7 +2222,7 @@ def ADR : AI1<{0,?,?,0}, (outs GPR:$Rd), (ins adrlabel:$label),
   let Inst{11-0} = label{11-0};
 }
 
-let hasSideEffects = 0, isReMaterializable = 1 in
+let hasSideEffects = 0, isReMaterializable = 1, isAsCheapAsAMove = 1 in
 def LEApcrel : ARMPseudoInst<(outs GPR:$Rd), (ins i32imm:$label, pred:$p),
                     4, IIC_iALUi, []>, Sched<[WriteALU, ReadALU]>;
 
