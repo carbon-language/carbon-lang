@@ -5955,6 +5955,30 @@ bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
   return false;
 }
 
+ScalarEvolution::ExitLimit::ExitLimit(const SCEV *E)
+    : ExactNotTaken(E), MaxNotTaken(E), MaxOrZero(false) {}
+
+ScalarEvolution::ExitLimit::ExitLimit(
+    const SCEV *E, const SCEV *M, bool MaxOrZero,
+    ArrayRef<const SmallPtrSetImpl<const SCEVPredicate *> *> PredSetList)
+    : ExactNotTaken(E), MaxNotTaken(M), MaxOrZero(MaxOrZero) {
+  assert((isa<SCEVCouldNotCompute>(ExactNotTaken) ||
+          !isa<SCEVCouldNotCompute>(MaxNotTaken)) &&
+         "Exact is not allowed to be less precise than Max");
+  for (auto *PredSet : PredSetList)
+    for (auto *P : *PredSet)
+      addPredicate(P);
+}
+
+ScalarEvolution::ExitLimit::ExitLimit(
+    const SCEV *E, const SCEV *M, bool MaxOrZero,
+    const SmallPtrSetImpl<const SCEVPredicate *> &PredSet)
+    : ExitLimit(E, M, MaxOrZero, {&PredSet}) {}
+
+ScalarEvolution::ExitLimit::ExitLimit(const SCEV *E, const SCEV *M,
+                                      bool MaxOrZero)
+    : ExitLimit(E, M, MaxOrZero, None) {}
+
 /// Allocate memory for BackedgeTakenInfo and copy the not-taken count of each
 /// computable exit into a persistent ExitNotTakenInfo array.
 ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
