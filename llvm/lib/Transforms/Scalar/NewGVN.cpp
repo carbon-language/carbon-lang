@@ -283,7 +283,6 @@ public:
 
   // Forward propagation info
   const Expression *getDefiningExpr() const { return DefiningExpr; }
-  void setDefiningExpr(const Expression *E) { DefiningExpr = E; }
 
   // Value member set
   bool empty() const { return Members.empty(); }
