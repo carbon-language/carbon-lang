@@ -664,7 +664,7 @@ private:
                ? InstrToDFSNum(cast<MemoryUseOrDef>(MA)->getMemoryInst())
                : InstrDFS.lookup(MA);
   }
-  bool isCycleFree(const PHINode *PN) const ;
+  bool isCycleFree(const PHINode *PN) const;
   template <class T, class Range> T *getMinDFSOfRange(const Range &) const;
   // Debug counter info.  When verifying, we have to reset the value numbering
   // debug counter to the same state it started in to get the same results.
@@ -1471,7 +1471,8 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) const {
   // not to later change the value of the phi.
   // IE it can't be v = phi(undef, v+1)
   bool AllConstant = true;
-  auto *E = cast<PHIExpression>(createPHIExpression(I, HasBackedge, AllConstant));
+  auto *E =
+      cast<PHIExpression>(createPHIExpression(I, HasBackedge, AllConstant));
   // We match the semantics of SimplifyPhiNode from InstructionSimplify here.
   // See if all arguments are the same.
   // We track if any were undef because they need special handling.
