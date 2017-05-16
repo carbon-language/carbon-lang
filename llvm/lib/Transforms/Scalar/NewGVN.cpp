@@ -1982,10 +1982,9 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I, const Expression *E,
     if (NewClass->getStoreCount() == 0 && !NewClass->getStoredValue()) {
       // If it's a store expression we are using, it means we are not equivalent
       // to something earlier.
-      if (isa<StoreExpression>(E)) {
-        assert(lookupOperandLeader(SI->getValueOperand()) !=
-               NewClass->getLeader());
-        NewClass->setStoredValue(lookupOperandLeader(SI->getValueOperand()));
+      if (auto *SE = dyn_cast<StoreExpression>(E)) {
+        assert(SE->getStoredValue() != NewClass->getLeader());
+        NewClass->setStoredValue(SE->getStoredValue());
         markValueLeaderChangeTouched(NewClass);
         // Shift the new class leader to be the store
         DEBUG(dbgs() << "Changing leader of congruence class "
@@ -2011,7 +2010,7 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I, const Expression *E,
   // See if we destroyed the class or need to swap leaders.
   if (OldClass->empty() && OldClass != TOPClass) {
     if (OldClass->getDefiningExpr()) {
-      DEBUG(dbgs() << "Erasing expression " << OldClass->getDefiningExpr()
+      DEBUG(dbgs() << "Erasing expression " << *OldClass->getDefiningExpr()
                    << " from table\n");
       ExpressionToClass.erase(OldClass->getDefiningExpr());
     }
@@ -2090,7 +2089,7 @@ void NewGVN::performCongruenceFinding(Instruction *I, const Expression *E) {
       } else if (const auto *SE = dyn_cast<StoreExpression>(E)) {
         StoreInst *SI = SE->getStoreInst();
         NewClass->setLeader(SI);
-        NewClass->setStoredValue(lookupOperandLeader(SI->getValueOperand()));
+        NewClass->setStoredValue(SE->getStoredValue());
         // The RepMemoryAccess field will be filled in properly by the
         // moveValueToNewCongruenceClass call.
       } else {
