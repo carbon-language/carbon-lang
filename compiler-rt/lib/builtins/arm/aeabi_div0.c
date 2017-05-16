@@ -26,6 +26,8 @@
  * line.
  */
 
+#include "../int_lib.h"
+
 /* provide an unused declaration to pacify pendantic compilation */
 extern unsigned char declaration;
 
