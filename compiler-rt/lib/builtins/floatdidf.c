@@ -104,7 +104,7 @@ __floatdidf(di_int a)
 }
 #endif
 
-#if defined(__AEABI__)
+#if defined(__ARM_EABI__)
 AEABI_RTABI double __aeabi_l2d(di_int a) {
   return __floatdidf(a);
 }
