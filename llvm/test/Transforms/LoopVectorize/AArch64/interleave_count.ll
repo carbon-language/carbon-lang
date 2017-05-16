@@ -1,4 +1,8 @@
+; REQUIRES: asserts
 ; RUN: opt < %s -loop-vectorize -force-target-instruction-cost=0 -force-vector-width=2 -force-vector-interleave=1 -instcombine -S | FileCheck %s
+
+target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
+target triple = "aarch64--linux-gnu"
 
 ; CHECK-LABEL: @copy(
 ; CHECK:       vector.body:
