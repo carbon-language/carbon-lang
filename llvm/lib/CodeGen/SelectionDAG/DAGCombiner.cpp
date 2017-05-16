@@ -1729,10 +1729,9 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
       NumLeftToConsider--;
   }
 
-  SDValue Result;
-
   // If we've changed things around then replace token factor.
   if (Changed) {
+    SDValue Result;
     if (Ops.empty()) {
       // The entry token is the only possible outcome.
       Result = DAG.getEntryNode();
@@ -1749,13 +1748,9 @@ SDValue DAGCombiner::visitTokenFactor(SDNode *N) {
         Result = DAG.getNode(ISD::TokenFactor, SDLoc(N), MVT::Other, Ops);
       }
     }
-
-    // Add users to worklist, since we may introduce a lot of new
-    // chained token factors while removing memory deps.
-    return CombineTo(N, Result, true /*add to worklist*/);
+    return Result;
   }
-
-  return Result;
+  return SDValue();
 }
 
 /// MERGE_VALUES can always be eliminated.
