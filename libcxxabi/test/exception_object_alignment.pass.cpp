@@ -28,6 +28,7 @@ int main() {
   auto i = reinterpret_cast<uintptr_t>(p);
   auto a = std::alignment_of<S>::value;
   assert(i % a == 0);
+  __cxxabiv1::__cxa_free_exception(p);
 #endif
   return 0;
 }
