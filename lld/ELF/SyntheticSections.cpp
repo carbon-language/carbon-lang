@@ -293,7 +293,6 @@ InputSection *elf::createInterpSection() {
   return Sec;
 }
 
-template <class ELFT>
 SymbolBody *elf::addSyntheticLocal(StringRef Name, uint8_t Type, uint64_t Value,
                                    uint64_t Size, InputSectionBase *Section) {
   auto *S = make<DefinedRegular>(Name, /*IsLocal*/ true, STV_DEFAULT, Type,
@@ -2269,19 +2268,6 @@ template MergeInputSection *elf::createCommentSection<ELF32LE>();
 template MergeInputSection *elf::createCommentSection<ELF32BE>();
 template MergeInputSection *elf::createCommentSection<ELF64LE>();
 template MergeInputSection *elf::createCommentSection<ELF64BE>();
-
-template SymbolBody *elf::addSyntheticLocal<ELF32LE>(StringRef, uint8_t,
-                                                     uint64_t, uint64_t,
-                                                     InputSectionBase *);
-template SymbolBody *elf::addSyntheticLocal<ELF32BE>(StringRef, uint8_t,
-                                                     uint64_t, uint64_t,
-                                                     InputSectionBase *);
-template SymbolBody *elf::addSyntheticLocal<ELF64LE>(StringRef, uint8_t,
-                                                     uint64_t, uint64_t,
-                                                     InputSectionBase *);
-template SymbolBody *elf::addSyntheticLocal<ELF64BE>(StringRef, uint8_t,
-                                                     uint64_t, uint64_t,
-                                                     InputSectionBase *);
 
 template class elf::MipsAbiFlagsSection<ELF32LE>;
 template class elf::MipsAbiFlagsSection<ELF32BE>;
