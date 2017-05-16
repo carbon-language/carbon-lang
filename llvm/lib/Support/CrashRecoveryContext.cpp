@@ -164,6 +164,14 @@ CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
 
 static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 {
+  switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
+  {
+  case DBG_PRINTEXCEPTION_C:
+  case DBG_PRINTEXCEPTION_WIDE_C:
+  case 0x406D1388:  // set debugger thread name
+    return EXCEPTION_CONTINUE_EXECUTION;
+  }
+
   // Lookup the current thread local recovery object.
   const CrashRecoveryContextImpl *CRCI = CurrentContext->get();
 
