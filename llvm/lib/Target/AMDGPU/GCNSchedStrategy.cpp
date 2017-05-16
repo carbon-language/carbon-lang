@@ -316,12 +316,18 @@ GCNScheduleDAGMILive::GCNScheduleDAGMILive(MachineSchedContext *C,
   MFI(*MF.getInfo<SIMachineFunctionInfo>()),
   StartingOccupancy(ST.getOccupancyWithLocalMemSize(MFI.getLDSSize(),
                                                     *MF.getFunction())),
-  MinOccupancy(StartingOccupancy), Stage(0) {
+  MinOccupancy(StartingOccupancy), Stage(0), RegionIdx(0) {
 
   DEBUG(dbgs() << "Starting occupancy is " << StartingOccupancy << ".\n");
 }
 
 void GCNScheduleDAGMILive::schedule() {
+  if (Stage == 0) {
+    // Just record regions at the first pass.
+    Regions.push_back(std::make_pair(RegionBegin, RegionEnd));
+    return;
+  }
+
   std::vector<MachineInstr*> Unsched;
   Unsched.reserve(NumRegionInstrs);
   for (auto &I : *this)
@@ -329,18 +335,27 @@ void GCNScheduleDAGMILive::schedule() {
 
   GCNRegPressure PressureBefore;
   if (LIS) {
-    discoverLiveIns();
-    PressureBefore = getRealRegPressure();
+    PressureBefore = Pressure[RegionIdx];
 
-    DEBUG(dbgs() << "Pressure before scheduling:\nSGPR = "
+    DEBUG(const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo*>(TRI);
+          dbgs() << "Pressure before scheduling:\nRegion live-ins:";
+          for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+            unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
+            auto It = LiveIns[RegionIdx].find(Reg);
+            if (It != LiveIns[RegionIdx].end() && It->second.any())
+              dbgs() << ' ' << PrintVRegOrUnit(Reg, SRI) << ':'
+                     << PrintLaneMask(It->second);
+          }
+          auto P = llvm::getRegPressure(MRI, LiveIns[RegionIdx]);
+          dbgs() << "\nLive-in pressure:\nSGPR = " << P.getSGPRNum()
+                 << "\nVGPR = " << P.getVGPRNum()
+                 << "\nReal region's register pressure:\nSGPR = "
                  << PressureBefore.getSGPRNum()
                  << "\nVGPR = " << PressureBefore.getVGPRNum() << '\n');
-
   }
 
   ScheduleDAGMILive::schedule();
-  if (Stage == 0)
-    Regions.push_back(std::make_pair(RegionBegin, RegionEnd));
+  Regions[RegionIdx] = std::make_pair(RegionBegin, RegionEnd);
 
   if (!LIS)
     return;
@@ -353,10 +368,9 @@ void GCNScheduleDAGMILive::schedule() {
                << PressureAfter.getSGPRNum()
                << "\nVGPR = " << PressureAfter.getVGPRNum() << '\n');
 
-  LiveIns.clear();
-
   if (PressureAfter.getSGPRNum() <= S.SGPRCriticalLimit &&
       PressureAfter.getVGPRNum() <= S.VGPRCriticalLimit) {
+    Pressure[RegionIdx] = PressureAfter;
     DEBUG(dbgs() << "Pressure in desired limits, done.\n");
     return;
   }
@@ -376,8 +390,10 @@ void GCNScheduleDAGMILive::schedule() {
                  << MinOccupancy << ".\n");
   }
 
-  if (WavesAfter >= WavesBefore)
+  if (WavesAfter >= WavesBefore) {
+    Pressure[RegionIdx] = PressureAfter;
     return;
+  }
 
   DEBUG(dbgs() << "Attempting to revert scheduling.\n");
   RegionEnd = RegionBegin;
@@ -406,86 +422,139 @@ void GCNScheduleDAGMILive::schedule() {
     DEBUG(dbgs() << "Scheduling " << *MI);
   }
   RegionBegin = Unsched.front()->getIterator();
-  if (Stage == 0)
-    Regions.back() = std::make_pair(RegionBegin, RegionEnd);
+  Regions[RegionIdx] = std::make_pair(RegionBegin, RegionEnd);
 
   placeDebugValues();
 }
 
-void GCNScheduleDAGMILive::discoverLiveIns() {
-  GCNDownwardRPTracker RPTracker(*LIS);
-  RPTracker.reset(*begin());
-
-  LiveIns = RPTracker.moveLiveRegs();
-
-  DEBUG(GCNRegPressure LiveInPressure = RPTracker.moveMaxPressure();
-        const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo*>(TRI);
-        dbgs() << "Region live-ins:";
-        for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
-          unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
-          auto It = LiveIns.find(Reg);
-          if (It != LiveIns.end())
-            dbgs() << ' ' << PrintVRegOrUnit(Reg, SRI) << ':'
-                   << PrintLaneMask(It->second);
-        }
-        dbgs() << "\nLive-in pressure:\nSGPR = "
-               << LiveInPressure.getSGPRNum()
-               << "\nVGPR = " << LiveInPressure.getVGPRNum() << '\n');
-}
-
 GCNRegPressure GCNScheduleDAGMILive::getRealRegPressure() const {
   GCNDownwardRPTracker RPTracker(*LIS);
-  RPTracker.advance(begin(), end(), &LiveIns);
+  RPTracker.advance(begin(), end(), &LiveIns[RegionIdx]);
   return RPTracker.moveMaxPressure();
 }
 
-void GCNScheduleDAGMILive::finalizeSchedule() {
-  // Retry function scheduling if we found resulting occupancy and it is
-  // lower than used for first pass scheduling. This will give more freedom
-  // to schedule low register pressure blocks.
-  // Code is partially copied from MachineSchedulerBase::scheduleRegions().
+void GCNScheduleDAGMILive::computeBlockPressure(const MachineBasicBlock *MBB) {
+  GCNDownwardRPTracker RPTracker(*LIS);
 
-  if (!LIS || StartingOccupancy <= MinOccupancy)
-    return;
-
-  DEBUG(dbgs() << "Retrying function scheduling with lowest recorded occupancy "
-               << MinOccupancy << ".\n");
-
-  Stage++;
-  GCNMaxOccupancySchedStrategy &S = (GCNMaxOccupancySchedStrategy&)*SchedImpl;
-  S.setTargetOccupancy(MinOccupancy);
-
-  MachineBasicBlock *MBB = nullptr;
-  for (auto Region : Regions) {
-    RegionBegin = Region.first;
-    RegionEnd = Region.second;
-
-    if (RegionBegin->getParent() != MBB) {
-      if (MBB) finishBlock();
-      MBB = RegionBegin->getParent();
-      startBlock(MBB);
-    }
-
-    unsigned NumRegionInstrs = std::distance(begin(), end());
-    enterRegion(MBB, begin(), end(), NumRegionInstrs);
-
-    // Skip empty scheduling regions (0 or 1 schedulable instructions).
-    if (begin() == end() || begin() == std::prev(end())) {
-      exitRegion();
-      continue;
-    }
-    DEBUG(dbgs() << "********** MI Scheduling **********\n");
-    DEBUG(dbgs() << MF.getName()
-          << ":BB#" << MBB->getNumber() << " " << MBB->getName()
-          << "\n  From: " << *begin() << "    To: ";
-          if (RegionEnd != MBB->end()) dbgs() << *RegionEnd;
-          else dbgs() << "End";
-          dbgs() << " RegionInstrs: " << NumRegionInstrs << '\n');
-
-    schedule();
-
-    exitRegion();
+  // If the block has the only successor then live-ins of that successor are
+  // live-outs of the current block. We can reuse calculated live set if the
+  // successor will be sent to scheduling past current block.
+  const MachineBasicBlock *OnlySucc = nullptr;
+  if (MBB->succ_size() == 1 && !(*MBB->succ_begin())->empty()) {
+    SlotIndexes *Ind = LIS->getSlotIndexes();
+    if (Ind->getMBBStartIdx(MBB) < Ind->getMBBStartIdx(*MBB->succ_begin()))
+      OnlySucc = *MBB->succ_begin();
   }
-  finishBlock();
-  LiveIns.shrink_and_clear();
+
+  // Scheduler sends regions from the end of the block upwards.
+  size_t CurRegion = RegionIdx;
+  for (size_t E = Regions.size(); CurRegion != E; ++CurRegion)
+    if (Regions[CurRegion].first->getParent() != MBB)
+      break;
+  --CurRegion;
+
+  auto I = MBB->begin();
+  auto LiveInIt = MBBLiveIns.find(MBB);
+  if (LiveInIt != MBBLiveIns.end()) {
+    auto LiveIn = std::move(LiveInIt->second);
+    RPTracker.reset(*MBB->begin(), &LiveIn);
+    MBBLiveIns.erase(LiveInIt);
+  } else {
+    I = Regions[CurRegion].first;
+    RPTracker.reset(*I);
+  }
+
+  for ( ; ; ) {
+    I = RPTracker.getNext();
+
+    if (Regions[CurRegion].first == I) {
+      LiveIns[CurRegion] = RPTracker.getLiveRegs();
+      RPTracker.clearMaxPressure();
+    }
+
+    if (Regions[CurRegion].second == I) {
+      Pressure[CurRegion] = RPTracker.moveMaxPressure();
+      if (CurRegion-- == RegionIdx)
+        break;
+    }
+    RPTracker.advanceToNext();
+    RPTracker.advanceBeforeNext();
+  }
+
+  if (OnlySucc) {
+    if (I != MBB->end()) {
+      RPTracker.advanceToNext();
+      RPTracker.advance(MBB->end());
+    }
+    RPTracker.reset(*OnlySucc->begin(), &RPTracker.getLiveRegs());
+    RPTracker.advanceBeforeNext();
+    MBBLiveIns[OnlySucc] = RPTracker.moveLiveRegs();
+  }
+}
+
+void GCNScheduleDAGMILive::finalizeSchedule() {
+  GCNMaxOccupancySchedStrategy &S = (GCNMaxOccupancySchedStrategy&)*SchedImpl;
+  DEBUG(dbgs() << "All regions recorded, starting actual scheduling.\n");
+
+  LiveIns.resize(Regions.size());
+  Pressure.resize(Regions.size());
+
+  do {
+    Stage++;
+    RegionIdx = 0;
+    MachineBasicBlock *MBB = nullptr;
+
+    if (Stage > 1) {
+      // Retry function scheduling if we found resulting occupancy and it is
+      // lower than used for first pass scheduling. This will give more freedom
+      // to schedule low register pressure blocks.
+      // Code is partially copied from MachineSchedulerBase::scheduleRegions().
+
+      if (!LIS || StartingOccupancy <= MinOccupancy)
+        break;
+
+      DEBUG(dbgs()
+              << "Retrying function scheduling with lowest recorded occupancy "
+              << MinOccupancy << ".\n");
+
+      S.setTargetOccupancy(MinOccupancy);
+    }
+
+    for (auto Region : Regions) {
+      RegionBegin = Region.first;
+      RegionEnd = Region.second;
+
+      if (RegionBegin->getParent() != MBB) {
+        if (MBB) finishBlock();
+        MBB = RegionBegin->getParent();
+        startBlock(MBB);
+        if (Stage == 1)
+          computeBlockPressure(MBB);
+      }
+
+      unsigned NumRegionInstrs = std::distance(begin(), end());
+      enterRegion(MBB, begin(), end(), NumRegionInstrs);
+
+      // Skip empty scheduling regions (0 or 1 schedulable instructions).
+      if (begin() == end() || begin() == std::prev(end())) {
+        exitRegion();
+        continue;
+      }
+
+      DEBUG(dbgs() << "********** MI Scheduling **********\n");
+      DEBUG(dbgs() << MF.getName()
+            << ":BB#" << MBB->getNumber() << " " << MBB->getName()
+            << "\n  From: " << *begin() << "    To: ";
+            if (RegionEnd != MBB->end()) dbgs() << *RegionEnd;
+            else dbgs() << "End";
+            dbgs() << " RegionInstrs: " << NumRegionInstrs << '\n');
+
+      schedule();
+
+      exitRegion();
+      ++RegionIdx;
+    }
+    finishBlock();
+
+  } while (Stage < 2);
 }

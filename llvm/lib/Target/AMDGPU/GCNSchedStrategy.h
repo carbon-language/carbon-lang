@@ -75,18 +75,28 @@ class GCNScheduleDAGMILive : public ScheduleDAGMILive {
   // Scheduling stage number.
   unsigned Stage;
 
+  // Current region index.
+  size_t RegionIdx;
+
   // Vecor of regions recorder for later rescheduling
   SmallVector<std::pair<MachineBasicBlock::iterator,
                         MachineBasicBlock::iterator>, 32> Regions;
 
-  // Region live-ins.
-  GCNRPTracker::LiveRegSet LiveIns;
+  // Region live-in cache.
+  SmallVector<GCNRPTracker::LiveRegSet, 32> LiveIns;
 
-  // Collect current region live-ins.
-  void discoverLiveIns();
+  // Region pressure cache.
+  SmallVector<GCNRegPressure, 32> Pressure;
+
+  // Temporary basic block live-in cache.
+  DenseMap<const MachineBasicBlock*, GCNRPTracker::LiveRegSet> MBBLiveIns;
 
   // Return current region pressure.
   GCNRegPressure getRealRegPressure() const;
+
+  // Compute and cache live-ins and pressure for all regions in block.
+  void computeBlockPressure(const MachineBasicBlock *MBB);
+
 
 public:
   GCNScheduleDAGMILive(MachineSchedContext *C,
