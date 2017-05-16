@@ -22,13 +22,8 @@ namespace llvm {
 
 class raw_ostream;
 
-struct DWARFAddressRange {
-  uint64_t LowPC;
-  uint64_t HighPC;
-};
-
 /// DWARFAddressRangesVector - represents a set of absolute address ranges.
-typedef std::vector<DWARFAddressRange> DWARFAddressRangesVector;
+typedef std::vector<std::pair<uint64_t, uint64_t>> DWARFAddressRangesVector;
 
 class DWARFDebugRangeList {
 public:
