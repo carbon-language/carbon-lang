@@ -6550,8 +6550,8 @@ unsigned LoopVectorizationCostModel::selectInterleaveCount(bool OptForSize,
     // We assume that the cost overhead is 1 and we use the cost model
     // to estimate the cost of the loop and interleave until the cost of the
     // loop overhead is about 5% of the cost of the loop.
-    unsigned SmallIC =
-        std::min(IC, (unsigned)PowerOf2Floor(SmallLoopCost / LoopCost));
+    unsigned SmallIC = std::min(
+        IC, (unsigned)PowerOf2Floor(SmallLoopCost / LoopCost ? LoopCost : 1));
 
     // Interleave until store/load ports (estimated by max interleave count) are
     // saturated.
