@@ -1,5 +1,6 @@
 ; RUN: opt < %s -instcombine -debug -S -o %t 2>&1 | FileCheck %s
 ; RUN: cat %t | FileCheck %s --check-prefix=CHECK-IR
+; REQUIRES: asserts
 
 ; Debug output from InstCombine should not have any @llvm.dbg.* instructions visited
 ; CHECK-NOT: call void @llvm.dbg.
