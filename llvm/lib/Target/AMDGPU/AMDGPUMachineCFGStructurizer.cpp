@@ -136,9 +136,11 @@ void PHILinearize::phiInfoElementAddSource(PHIInfoElementT *Info,
   // sources, because we cannot have different registers with
   // identical predecessors, but we can have the same register for
   // multiple predecessors.
+#if !defined(NDEBUG)
   for (auto SI : phiInfoElementGetSources(Info)) {
     assert((SI.second != SourceMBB || SourceReg == SI.first));
   }
+#endif
 
   phiInfoElementGetSources(Info).insert(PHISourceT(SourceReg, SourceMBB));
 }
