@@ -116,6 +116,8 @@ public:
   decltype(LiveRegs) moveLiveRegs() {
     return std::move(LiveRegs);
   }
+  static void printLiveRegs(raw_ostream &OS, const LiveRegSet& LiveRegs,
+                            const MachineRegisterInfo &MRI);
 };
 
 class GCNUpwardRPTracker : public GCNRPTracker {

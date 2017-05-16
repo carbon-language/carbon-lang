@@ -451,4 +451,16 @@ bool GCNUpwardRPTracker::isValid() const {
   return true;
 }
 
+void GCNRPTracker::printLiveRegs(raw_ostream &OS, const LiveRegSet& LiveRegs,
+                                 const MachineRegisterInfo &MRI) {
+  const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
+  for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
+    unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
+    auto It = LiveRegs.find(Reg);
+    if (It != LiveRegs.end() && It->second.any())
+      OS << ' ' << PrintVRegOrUnit(Reg, TRI) << ':'
+         << PrintLaneMask(It->second);
+  }
+  OS << '\n';
+}
 #endif

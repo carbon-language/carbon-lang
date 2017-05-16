@@ -337,21 +337,12 @@ void GCNScheduleDAGMILive::schedule() {
   if (LIS) {
     PressureBefore = Pressure[RegionIdx];
 
-    DEBUG(const SIRegisterInfo *SRI = static_cast<const SIRegisterInfo*>(TRI);
-          dbgs() << "Pressure before scheduling:\nRegion live-ins:";
-          for (unsigned I = 0, E = MRI.getNumVirtRegs(); I != E; ++I) {
-            unsigned Reg = TargetRegisterInfo::index2VirtReg(I);
-            auto It = LiveIns[RegionIdx].find(Reg);
-            if (It != LiveIns[RegionIdx].end() && It->second.any())
-              dbgs() << ' ' << PrintVRegOrUnit(Reg, SRI) << ':'
-                     << PrintLaneMask(It->second);
-          }
-          auto P = llvm::getRegPressure(MRI, LiveIns[RegionIdx]);
-          dbgs() << "\nLive-in pressure:\nSGPR = " << P.getSGPRNum()
-                 << "\nVGPR = " << P.getVGPRNum()
-                 << "\nReal region's register pressure:\nSGPR = "
-                 << PressureBefore.getSGPRNum()
-                 << "\nVGPR = " << PressureBefore.getVGPRNum() << '\n');
+    DEBUG(dbgs() << "Pressure before scheduling:\nRegion live-ins:";
+          GCNRPTracker::printLiveRegs(dbgs(), LiveIns[RegionIdx], MRI);
+          dbgs() << "Region live-in pressure:  ";
+          llvm::getRegPressure(MRI, LiveIns[RegionIdx]).print(dbgs());
+          dbgs() << "Region register pressure: ";
+          PressureBefore.print(dbgs()));
   }
 
   ScheduleDAGMILive::schedule();
@@ -364,9 +355,7 @@ void GCNScheduleDAGMILive::schedule() {
   GCNMaxOccupancySchedStrategy &S = (GCNMaxOccupancySchedStrategy&)*SchedImpl;
   auto PressureAfter = getRealRegPressure();
 
-  DEBUG(dbgs() << "Pressure after scheduling:\nSGPR = "
-               << PressureAfter.getSGPRNum()
-               << "\nVGPR = " << PressureAfter.getVGPRNum() << '\n');
+  DEBUG(dbgs() << "Pressure after scheduling: "; PressureAfter.print(dbgs()));
 
   if (PressureAfter.getSGPRNum() <= S.SGPRCriticalLimit &&
       PressureAfter.getVGPRNum() <= S.VGPRCriticalLimit) {
