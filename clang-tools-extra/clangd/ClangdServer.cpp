@@ -14,6 +14,7 @@
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/Support/FileSystem.h"
 
+using namespace clang;
 using namespace clang::clangd;
 
 WorkerRequest::WorkerRequest(WorkerRequestKind Kind, Path File,
