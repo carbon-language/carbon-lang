@@ -1590,7 +1590,7 @@ template <class ELFT> uint64_t Writer<ELFT>::getEntryAddr() {
   if (SymbolBody *B = Symtab<ELFT>::X->find(Config->Entry))
     return B->getVA();
   uint64_t Addr;
-  if (!Config->Entry.getAsInteger(0, Addr))
+  if (to_integer(Config->Entry, Addr))
     return Addr;
 
   // Case 4
