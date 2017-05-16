@@ -18,6 +18,7 @@
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/Support/SMLoc.h"
+#include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <string>
 #include <utility>
@@ -33,6 +34,7 @@ class MCObjectWriter;
 
 namespace bolt {
 
+class BinaryContext;
 class BasicBlockTable;
 class BinaryBasicBlock;
 class BinaryFunction;
@@ -76,235 +78,94 @@ struct DebugLineTableRowRef {
   }
 };
 
-/// Represents a list of address ranges where addresses are relative to the
-/// beginning of basic blocks. Useful for converting address ranges in the input
-/// binary to equivalent ranges after optimizations take place.
-class BasicBlockOffsetRanges {
-public:
-  typedef SmallVectorImpl<unsigned char> BinaryData;
-  struct AbsoluteRange {
-    uint64_t Begin;
-    uint64_t End;
-    const BinaryData *Data;
-  };
-
-  /// Add range [BeginAddress, EndAddress) to the address ranges list.
-  /// \p Function is the function that contains the given address range.
-  void addAddressRange(BinaryFunction &Function,
-                       uint64_t BeginAddress,
-                       uint64_t EndAddress,
-                       const BinaryData *Data = nullptr);
-
-  /// Returns the list of absolute addresses calculated using the output address
-  /// of the basic blocks, i.e. the input ranges updated after basic block
-  /// addresses might have changed, together with the data associated to them.
-  std::vector<AbsoluteRange> getAbsoluteAddressRanges() const;
-
-private:
-  /// An address range inside one basic block.
-  struct BBAddressRange {
-    const BinaryBasicBlock *BasicBlock;
-    /// Beginning of the range counting from BB's start address.
-    uint16_t RangeBeginOffset;
-    /// (Exclusive) end of the range counting from BB's start address.
-    uint16_t RangeEndOffset;
-    /// Binary data associated with this range.
-    const BinaryData *Data;
-
-    void print(raw_ostream &OS) const {
-      OS << "  BasicBlock : " << BasicBlock->getName() << '\n';
-      OS << "  StartOffset: " << RangeBeginOffset << '\n';
-      OS << "  EndOffset:   " << RangeEndOffset << '\n';
-    }
-  };
-
-  std::vector<BBAddressRange> AddressRanges;
-};
-
-/// Abstract interface for classes that represent objects that have
-/// associated address ranges in .debug_ranges. These address ranges can
-/// be serialized by DebugRangesSectionsWriter which notifies the object
-/// of where in the section its address ranges list was written.
-class AddressRangesOwner {
-public:
-  virtual void setAddressRangesOffset(uint32_t Offset) = 0;
-
-  virtual ~AddressRangesOwner() {}
-};
-
-/// Represents DWARF entities that have generic address ranges, maintaining
-/// their address ranges to be updated on the output debugging information.
-class AddressRangesDWARFObject : public AddressRangesOwner {
-public:
-  AddressRangesDWARFObject(const DWARFCompileUnit *CU,
-                           const DWARFDebugInfoEntryMinimal *DIE)
-      : CU(CU), DIE(DIE) { }
-
-  /// Add range [BeginAddress, EndAddress) to this object.
-  void addAddressRange(BinaryFunction &Function,
-                       uint64_t BeginAddress,
-                       uint64_t EndAddress) {
-    BBOffsetRanges.addAddressRange(Function, BeginAddress, EndAddress);
-  }
-
-  /// Add range that is guaranteed to not change.
-  void addAbsoluteRange(uint64_t BeginAddress,
-                        uint64_t EndAddress) {
-    AbsoluteRanges.emplace_back(std::make_pair(BeginAddress, EndAddress));
-  }
-
-  std::vector<std::pair<uint64_t, uint64_t>> getAbsoluteAddressRanges() const {
-    auto AddressRangesWithData = BBOffsetRanges.getAbsoluteAddressRanges();
-    std::vector<std::pair<uint64_t, uint64_t>>
-        AddressRanges(AddressRangesWithData.size());
-    for (unsigned I = 0, S = AddressRanges.size(); I != S; ++I) {
-      AddressRanges[I] = std::make_pair(AddressRangesWithData[I].Begin,
-                                        AddressRangesWithData[I].End);
-    }
-    std::move(AbsoluteRanges.begin(),
-              AbsoluteRanges.end(),
-              std::back_inserter(AddressRanges));
-    return AddressRanges;
-  }
-
-  void setAddressRangesOffset(uint32_t Offset) { AddressRangesOffset = Offset; }
-
-  uint32_t getAddressRangesOffset() const { return AddressRangesOffset; }
-
-  const DWARFCompileUnit *getCompileUnit() const { return CU; }
-  const DWARFDebugInfoEntryMinimal *getDIE() const { return DIE; }
-
-private:
-  const DWARFCompileUnit *CU;
-  const DWARFDebugInfoEntryMinimal *DIE;
-
-  BasicBlockOffsetRanges BBOffsetRanges;
-
-  std::vector<std::pair<uint64_t, uint64_t>> AbsoluteRanges;
-
-  /// Offset of the address ranges of this object in the output .debug_ranges.
-  uint32_t AddressRangesOffset{-1U};
-};
-
-
-
-/// Represents DWARF location lists, maintaining their list of location
-/// expressions and the address ranges in which they are valid to be updated in
-/// the output debugging information.
-class LocationList {
-public:
-  LocationList(uint32_t Offset) : DebugLocOffset(Offset) { }
-
-  /// Add a location expression that is valid in [BeginAddress, EndAddress)
-  /// within Function to location list.
-  void addLocation(const BasicBlockOffsetRanges::BinaryData *Expression,
-                   BinaryFunction &Function,
-                   uint64_t BeginAddress,
-                   uint64_t EndAddress) {
-    BBOffsetRanges.addAddressRange(Function, BeginAddress, EndAddress,
-                                   Expression);
-  }
-
-  std::vector<BasicBlockOffsetRanges::AbsoluteRange>
-  getAbsoluteAddressRanges() const {
-    return BBOffsetRanges.getAbsoluteAddressRanges();
-  }
-
-  uint32_t getOriginalOffset() const { return DebugLocOffset; }
-
-private:
-  BasicBlockOffsetRanges BBOffsetRanges;
-
-  /// Offset of this location list in the input .debug_loc section.
-  uint32_t DebugLocOffset;
-};
-
 /// Serializes the .debug_ranges and .debug_aranges DWARF sections.
 class DebugRangesSectionsWriter {
 public:
-  DebugRangesSectionsWriter() = default;
+  DebugRangesSectionsWriter(BinaryContext *BC);
 
-  /// Adds a range to the .debug_arange section.
-  void addRange(uint32_t CompileUnitOffset, uint64_t Address, uint64_t Size);
+  /// Add ranges for CU matching \p CUOffset and return offset into section.
+  uint64_t addCURanges(uint64_t CUOffset, DWARFAddressRangesVector &&Ranges);
 
-  /// Adds an address range that belongs to a given object.
-  /// When .debug_ranges is written, the offset of the range corresponding
-  /// to the function will be set using BF->setAddressRangesOffset().
-  void addRange(AddressRangesOwner *ARO, uint64_t Address, uint64_t Size);
+  /// Add ranges with caching for \p Function.
+  uint64_t addRanges(const BinaryFunction *Function,
+                     DWARFAddressRangesVector &&Ranges);
 
-  using RangesCUMapType = std::map<uint32_t, uint32_t>;
+  /// Add ranges and return offset into section.
+  uint64_t addRanges(const DWARFAddressRangesVector &Ranges);
 
   /// Writes .debug_aranges with the added ranges to the MCObjectWriter.
   void writeArangesSection(MCObjectWriter *Writer) const;
 
-  /// Writes .debug_ranges with the added ranges to the MCObjectWriter.
-  void writeRangesSection(MCObjectWriter *Writer);
-
   /// Resets the writer to a clear state.
   void reset() {
     CUAddressRanges.clear();
-    ObjectAddressRanges.clear();
-    RangesSectionOffsetCUMap.clear();
-  }
-
-  /// Return mapping of CUs to offsets in .debug_ranges.
-  const RangesCUMapType &getRangesOffsetCUMap() const {
-    return RangesSectionOffsetCUMap;
   }
 
   /// Returns an offset of an empty address ranges list that is always written
   /// to .debug_ranges
-  uint32_t getEmptyRangesListOffset() const { return EmptyRangesListOffset; }
+  uint64_t getEmptyRangesOffset() const { return EmptyRangesOffset; }
 
   /// Map DWARFCompileUnit index to ranges.
-  using CUAddressRangesType =
-    std::map<uint32_t, std::vector<std::pair<uint64_t, uint64_t>>>;
+  using CUAddressRangesType = std::map<uint64_t, DWARFAddressRangesVector>;
 
   /// Return ranges for a given CU.
   const CUAddressRangesType &getCUAddressRanges() const {
     return CUAddressRanges;
   }
 
+  SmallVectorImpl<char> *finalize() {
+    return RangesBuffer.release();
+  }
+
 private:
+  std::unique_ptr<SmallVector<char, 16>> RangesBuffer;
+
+  std::unique_ptr<raw_svector_ostream> RangesStream;
+
+  std::unique_ptr<MCObjectWriter> Writer;
+
+  /// Current offset in the section (updated as new entries are written).
+  /// Starts with 16 since the first 16 bytes are reserved for an empty range.
+  uint32_t SectionOffset{0};
+
   /// Map from compile unit offset to the list of address intervals that belong
   /// to that compile unit. Each interval is a pair
   /// (first address, interval size).
   CUAddressRangesType CUAddressRanges;
 
-  /// Map from BinaryFunction to the list of address intervals that belong
-  /// to that function, represented like CUAddressRanges.
-  std::map<AddressRangesOwner *, std::vector<std::pair<uint64_t, uint64_t>>>
-      ObjectAddressRanges;
-
   /// Offset of an empty address ranges list.
-  uint32_t EmptyRangesListOffset;
+  static constexpr uint64_t EmptyRangesOffset{0};
 
-  /// When writing data to .debug_ranges remember offset per CU.
-  RangesCUMapType RangesSectionOffsetCUMap;
+  /// Cached used for de-duplicating entries for the same function.
+  std::map<DWARFAddressRangesVector, uint64_t> CachedRanges;
 };
 
 /// Serializes the .debug_loc DWARF section with LocationLists.
 class DebugLocWriter {
 public:
-  /// Writes the given location list to the writer.
-  void write(const LocationList &LocList, MCObjectWriter *Writer);
+  DebugLocWriter(BinaryContext *BC);
 
-  using UpdatedOffsetMapType = std::map<uint32_t, uint32_t>;
+  uint64_t addList(const DWARFDebugLoc::LocationList &LocList);
 
-  /// Returns mapping from offsets in the input .debug_loc to offsets in the
-  /// output .debug_loc section with the corresponding updated location list
-  /// entry.
-  const UpdatedOffsetMapType &getUpdatedLocationListOffsets() const {
-    return UpdatedOffsets;
+  uint64_t getEmptyListOffset() const { return EmptyListOffset; }
+
+  SmallVectorImpl<char> *finalize() {
+    return LocBuffer.release();
   }
 
 private:
-  /// Current offset in the section (updated as new entries are written).
-  uint32_t SectionOffset{0};
+  std::unique_ptr<SmallVector<char, 16>> LocBuffer;
 
-  /// Map from input offsets to output offsets for location lists that were
-  /// updated, generated after write().
-  UpdatedOffsetMapType UpdatedOffsets;
+  std::unique_ptr<raw_svector_ostream> LocStream;
+
+  std::unique_ptr<MCObjectWriter> Writer;
+
+  /// Offset of an empty location list.
+  static uint64_t const EmptyListOffset = 0;
+
+  /// Current offset in the section (updated as new entries are written).
+  /// Starts with 16 since the first 16 bytes are reserved for an empty range.
+  uint32_t SectionOffset{0};
 };
 
 /// Abstract interface for classes that apply modifications to a binary string.

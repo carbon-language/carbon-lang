@@ -167,7 +167,7 @@ enum IndirectCallPromotionType : char {
 /// BinaryFunction is a representation of machine-level function.
 ///
 /// We use the term "Binary" as "Machine" was already taken.
-class BinaryFunction : public AddressRangesOwner {
+class BinaryFunction {
 public:
   enum class State : char {
     Empty = 0,        /// Function body is empty.
@@ -355,6 +355,11 @@ private:
   /// Return basic block that originally contained offset \p Offset
   /// from the function start.
   BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset);
+
+  const BinaryBasicBlock *getBasicBlockContainingOffset(uint64_t Offset) const {
+    return const_cast<BinaryFunction *>(this)
+      ->getBasicBlockContainingOffset(Offset);
+  }
 
   /// Return basic block that started at offset \p Offset.
   BinaryBasicBlock *getBasicBlockAtOffset(uint64_t Offset) {
@@ -1559,11 +1564,6 @@ public:
     return *this;
   }
 
-  /// Sets the function's address ranges list offset in .debug_ranges.
-  void setAddressRangesOffset(uint32_t Offset) {
-    AddressRangesOffset = Offset;
-  }
-
   /// Returns the offset of the function's address ranges in .debug_ranges.
   uint32_t getAddressRangesOffset() const { return AddressRangesOffset; }
 
@@ -1792,9 +1792,6 @@ public:
     return UnitLineTable;
   }
 
-  /// Returns the size of the basic block in the original binary.
-  size_t getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const;
-
   /// Returns an estimate of the function's hot part after splitting.
   /// This is a very rough estimate, as with C++ exceptions there are
   /// blocks we don't move, and it makes no attempt at estimating the size
@@ -1818,6 +1815,17 @@ public:
     }
     return Estimate;
   }
+
+  /// Return output address ranges for a function.
+  DWARFAddressRangesVector getOutputAddressRanges() const;
+
+  DWARFAddressRangesVector translateInputToOutputRanges(
+                                    DWARFAddressRangesVector InputRanges) const;
+
+  /// \p BaseAddress to be applied to all addresses in \pInputLL.
+  DWARFDebugLoc::LocationList translateInputToOutputLocationList(
+      DWARFDebugLoc::LocationList &&InputLL,
+      uint64_t BaseAddress) const;
 
   virtual ~BinaryFunction();
 

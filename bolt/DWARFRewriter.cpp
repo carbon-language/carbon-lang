@@ -49,6 +49,7 @@ namespace opts {
 
 extern cl::OptionCategory BoltCategory;
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> Relocs;
 
 static cl::opt<bool>
 KeepARanges("keep-aranges",
@@ -63,78 +64,152 @@ void RewriteInstance::updateDebugInfo() {
   SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
   SectionPatchers[".debug_info"]  = llvm::make_unique<SimpleBinaryPatcher>();
 
-  updateFunctionRanges();
+  RangesSectionsWriter = llvm::make_unique<DebugRangesSectionsWriter>(BC.get());
+  LocationListWriter = llvm::make_unique<DebugLocWriter>(BC.get());
 
-  updateAddressRangesObjects();
+  for (auto &CU : BC->DwCtx->compile_units()) {
+    updateUnitDebugInfo(CU.get(),
+                        CU->getUnitDIE(false),
+                        std::vector<const BinaryFunction *>{});
+  }
 
-  updateEmptyModuleRanges();
-
-  generateDebugRanges();
-
-  updateLocationLists();
-
-  updateDWARFAddressRanges();
+  finalizeDebugSections();
 
   updateGdbIndexSection();
 }
 
-void RewriteInstance::updateEmptyModuleRanges() {
-  const auto &CUAddressRanges = RangesSectionsWriter.getCUAddressRanges();
-  for (const auto &CU : BC->DwCtx->compile_units()) {
-    if (CUAddressRanges.find(CU->getOffset()) != CUAddressRanges.end())
-      continue;
-    auto const &Ranges = CU->getUnitDIE(true)->getAddressRanges(CU.get());
-    for (auto const &Range : Ranges) {
-      RangesSectionsWriter.addRange(CU->getOffset(),
-                                    Range.first,
-                                    Range.second - Range.first);
+void RewriteInstance::updateUnitDebugInfo(
+    DWARFCompileUnit *Unit,
+    const DWARFDebugInfoEntryMinimal *DIE,
+    std::vector<const BinaryFunction *> FunctionStack) {
+
+  bool IsFunctionDef = false;
+  switch (DIE->getTag()) {
+  case dwarf::DW_TAG_compile_unit:
+    {
+      const auto ModuleRanges = DIE->getAddressRanges(Unit);
+      auto OutputRanges = translateModuleAddressRanges(ModuleRanges);
+      const auto RangesSectionOffset =
+        RangesSectionsWriter->addCURanges(Unit->getOffset(),
+                                          std::move(OutputRanges));
+      updateDWARFObjectAddressRanges(Unit, DIE, RangesSectionOffset);
+    }
+    break;
+
+  case dwarf::DW_TAG_subprogram:
+    {
+      // The function cannot have multiple ranges on the input.
+      uint64_t LowPC, HighPC;
+      if (DIE->getLowAndHighPC(Unit, LowPC, HighPC)) {
+        IsFunctionDef = true;
+        const auto *Function = getBinaryFunctionAtAddress(LowPC);
+        if (Function && Function->isFolded()) {
+          Function = nullptr;
+        }
+        FunctionStack.push_back(Function);
+        auto RangesSectionOffset =
+          RangesSectionsWriter->getEmptyRangesOffset();
+        if (Function) {
+          auto FunctionRanges = Function->getOutputAddressRanges();
+          RangesSectionOffset =
+            RangesSectionsWriter->addRanges(Function,
+                                            std::move(FunctionRanges));
+        }
+        updateDWARFObjectAddressRanges(Unit, DIE, RangesSectionOffset);
+      }
+    }
+    break;
+
+  case dwarf::DW_TAG_lexical_block:
+  case dwarf::DW_TAG_inlined_subroutine:
+  case dwarf::DW_TAG_try_block:
+  case dwarf::DW_TAG_catch_block:
+    {
+      auto RangesSectionOffset =
+        RangesSectionsWriter->getEmptyRangesOffset();
+      const BinaryFunction *Function =
+        FunctionStack.empty() ? nullptr : FunctionStack.back();
+      if (Function) {
+        const auto Ranges = DIE->getAddressRanges(Unit);
+        auto OutputRanges = Function->translateInputToOutputRanges(Ranges);
+        DEBUG(
+          if (OutputRanges.empty() != Ranges.empty()) {
+            dbgs() << "BOLT-DEBUG: problem with DIE at 0x"
+                   << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
+                   << Twine::utohexstr(Unit->getOffset()) << '\n';
+          }
+        );
+        RangesSectionOffset =
+          RangesSectionsWriter->addRanges(Function, std::move(OutputRanges));
+      }
+      updateDWARFObjectAddressRanges(Unit, DIE, RangesSectionOffset);
+    }
+    break;
+
+  default:
+    {
+      // Handle any tag that can have DW_AT_location attribute.
+      DWARFFormValue Value;
+      uint32_t AttrOffset;
+      if (DIE->getAttributeValue(Unit, dwarf::DW_AT_location, Value,
+                                 &AttrOffset)) {
+        if (Value.isFormClass(DWARFFormValue::FC_Constant) ||
+            Value.isFormClass(DWARFFormValue::FC_SectionOffset)) {
+          auto LocListSectionOffset = LocationListWriter->getEmptyListOffset();
+          const BinaryFunction *Function =
+            FunctionStack.empty() ? nullptr : FunctionStack.back();
+          if (Function) {
+            // Limit parsing to a single list to save memory.
+            DWARFDebugLoc::LocationList LL;
+            LL.Offset = Value.isFormClass(DWARFFormValue::FC_Constant) ?
+              Value.getAsUnsignedConstant().getValue() :
+              Value.getAsSectionOffset().getValue();
+
+            Unit->getContext().getOneDebugLocList(LL);
+            assert(!LL.Entries.empty() && "location list cannot be empty");
+
+            const auto OutputLL = Function
+              ->translateInputToOutputLocationList(std::move(LL),
+                                                   Unit->getBaseAddress());
+            DEBUG(
+              if (OutputLL.Entries.empty()) {
+                dbgs() << "BOLT-DEBUG: location list translated to an empty one "
+                          "at 0x"
+                       << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
+                       << Twine::utohexstr(Unit->getOffset()) << '\n';
+              }
+            );
+
+            LocListSectionOffset = LocationListWriter->addList(OutputLL);
+          }
+
+          auto DebugInfoPatcher =
+              static_cast<SimpleBinaryPatcher *>(
+                  SectionPatchers[".debug_info"].get());
+          DebugInfoPatcher->addLE32Patch(AttrOffset, LocListSectionOffset);
+        } else {
+          assert((Value.isFormClass(DWARFFormValue::FC_Exprloc) ||
+                  Value.isFormClass(DWARFFormValue::FC_Block)) &&
+                 "unexpected DW_AT_location form");
+        }
+      }
     }
   }
+
+  // Recursively update each child.
+  for (auto Child = DIE->getFirstChild(); Child; Child = Child->getSibling()) {
+    updateUnitDebugInfo(Unit, Child, FunctionStack);
+  }
+
+  if (IsFunctionDef)
+    FunctionStack.pop_back();
 }
 
-void RewriteInstance::updateDWARFAddressRanges() {
-  // Update DW_AT_ranges for all compilation units.
-  for (const auto &CU : BC->DwCtx->compile_units()) {
-    const auto CUID = CU->getOffset();
-    const auto RSOI = RangesSectionsWriter.getRangesOffsetCUMap().find(CUID);
-    if (RSOI == RangesSectionsWriter.getRangesOffsetCUMap().end())
-      continue;
-    updateDWARFObjectAddressRanges(RSOI->second, CU.get(), CU->getUnitDIE());
-  }
-
-  // Update address ranges of functions.
-  for (const auto &BFI : BinaryFunctions) {
-    const auto &Function = BFI.second;
-    for (const auto DIECompileUnitPair : Function.getSubprogramDIEs()) {
-      updateDWARFObjectAddressRanges(
-          Function.getAddressRangesOffset(),
-          DIECompileUnitPair.second,
-          DIECompileUnitPair.first);
-    }
-  }
-
-  // Update address ranges of DIEs with addresses that don't match functions.
-  for (auto &DIECompileUnitPair : BC->UnknownFunctions) {
-    updateDWARFObjectAddressRanges(
-        RangesSectionsWriter.getEmptyRangesListOffset(),
-        DIECompileUnitPair.second,
-        DIECompileUnitPair.first);
-  }
-
-  // Update address ranges of DWARF block objects (lexical/try/catch blocks,
-  // inlined subroutine instances, etc).
-  for (const auto &Obj : BC->AddressRangesObjects) {
-    updateDWARFObjectAddressRanges(
-        Obj.getAddressRangesOffset(),
-        Obj.getCompileUnit(),
-        Obj.getDIE());
-  }
-}
 
 void RewriteInstance::updateDWARFObjectAddressRanges(
-    uint32_t DebugRangesOffset,
     const DWARFUnit *Unit,
-    const DWARFDebugInfoEntryMinimal *DIE) {
+    const DWARFDebugInfoEntryMinimal *DIE,
+    uint64_t DebugRangesOffset) {
 
   // Some objects don't have an associated DIE and cannot be updated (such as
   // compiler-generated functions).
@@ -300,15 +375,6 @@ void RewriteInstance::updateDebugLineInfoForNonSimpleFunctions() {
   }
 }
 
-void RewriteInstance::updateAddressRangesObjects() {
-  for (auto &Obj : BC->AddressRangesObjects) {
-    for (const auto &Range : Obj.getAbsoluteAddressRanges()) {
-      RangesSectionsWriter.addRange(&Obj, Range.first,
-                                    Range.second - Range.first);
-    }
-  }
-}
-
 void RewriteInstance::updateLineTableOffsets() {
   const auto LineSection =
     BC->Ctx->getObjectFileInfo()->getDwarfLineSection();
@@ -367,159 +433,51 @@ void RewriteInstance::updateLineTableOffsets() {
   }
 }
 
-void RewriteInstance::updateFunctionRanges() {
-  auto addDebugArangesEntry = [&](const BinaryFunction &Function,
-                                  uint64_t RangeBegin,
-                                  uint64_t RangeSize) {
-    // The function potentially has multiple associated CUs because of
-    // the identical code folding optimization. Update all of them with
-    // the range.
-    for (const auto DIECompileUnitPair : Function.getSubprogramDIEs()) {
-      const auto CU = DIECompileUnitPair.second;
-      if (CU->getOffset() != -1U)
-        RangesSectionsWriter.addRange(CU->getOffset(), RangeBegin, RangeSize);
-    }
-  };
-
-  for (auto &BFI : BinaryFunctions) {
-    auto &Function = BFI.second;
-    // If function doesn't have registered DIEs - there's nothting to update.
-    if (Function.getSubprogramDIEs().empty())
-      continue;
-    // Use either new (image) or original size for the function range.
-    auto Size = Function.isSimple() ? Function.getImageSize()
-                                    : Function.getSize();
-    addDebugArangesEntry(Function,
-                         Function.getAddress(),
-                         Size);
-    RangesSectionsWriter.addRange(&Function, Function.getAddress(), Size);
-    if (Function.isSimple() && Function.cold().getImageSize()) {
-      addDebugArangesEntry(Function,
-                           Function.cold().getAddress(),
-                           Function.cold().getImageSize());
-      RangesSectionsWriter.addRange(&Function,
-                                    Function.cold().getAddress(),
-                                    Function.cold().getImageSize());
-    }
-  }
-}
-
-void RewriteInstance::generateDebugRanges() {
-  enum { RANGES, ARANGES };
-  for (auto RT = RANGES + 0; RT <= ARANGES; ++RT) {
-    // Skip .debug_aranges if we are re-generating .gdb_index.
-    if (!opts::KeepARanges && GdbIndexSection.getObject() && RT == ARANGES)
-      continue;
-
-    const char *SectionName = (RT == RANGES) ? ".debug_ranges"
-                                             : ".debug_aranges";
-    SmallVector<char, 16> RangesBuffer;
-    raw_svector_ostream OS(RangesBuffer);
+void RewriteInstance::finalizeDebugSections() {
+  // Skip .debug_aranges if we are re-generating .gdb_index.
+  if (opts::KeepARanges || !GdbIndexSection.getObject()) {
+    SmallVector<char, 16> ARangesBuffer;
+    raw_svector_ostream OS(ARangesBuffer);
 
     auto MAB = std::unique_ptr<MCAsmBackend>(
         BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, ""));
     auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
 
-    if (RT == RANGES) {
-      RangesSectionsWriter.writeRangesSection(Writer.get());
-    } else {
-      RangesSectionsWriter.writeArangesSection(Writer.get());
-    }
-    const auto &DebugRangesContents = OS.str();
+    RangesSectionsWriter->writeArangesSection(Writer.get());
+    const auto &ARangesContents = OS.str();
 
     // Freed by ExecutableFileMemoryManager.
-    uint8_t *SectionData = new uint8_t[DebugRangesContents.size()];
-    memcpy(SectionData, DebugRangesContents.data(), DebugRangesContents.size());
-
-    EFMM->NoteSectionInfo[SectionName] = SectionInfo(
+    uint8_t *SectionData = new uint8_t[ARangesContents.size()];
+    memcpy(SectionData, ARangesContents.data(), ARangesContents.size());
+    EFMM->NoteSectionInfo[".debug_aranges"] = SectionInfo(
         reinterpret_cast<uint64_t>(SectionData),
-        DebugRangesContents.size(),
+        ARangesContents.size(),
         /*Alignment=*/0,
         /*IsCode=*/false,
         /*IsReadOnly=*/true,
         /*IsLocal=*/false);
   }
-}
 
-void RewriteInstance::updateLocationLists() {
-  // Write new contents to .debug_loc.
-  SmallVector<char, 16> DebugLocBuffer;
-  raw_svector_ostream OS(DebugLocBuffer);
-
-  auto MAB = std::unique_ptr<MCAsmBackend>(
-      BC->TheTarget->createMCAsmBackend(*BC->MRI, BC->TripleName, ""));
-  auto Writer = std::unique_ptr<MCObjectWriter>(MAB->createObjectWriter(OS));
-
-  DebugLocWriter LocationListsWriter;
-
-  for (const auto &Loc : BC->LocationLists) {
-    LocationListsWriter.write(Loc, Writer.get());
-  }
-
-  const auto &DebugLocContents = OS.str();
-
-  // Free'd by ExecutableFileMemoryManager.
-  uint8_t *SectionData = new uint8_t[DebugLocContents.size()];
-  memcpy(SectionData, DebugLocContents.data(), DebugLocContents.size());
-
-  EFMM->NoteSectionInfo[".debug_loc"] = SectionInfo(
-      reinterpret_cast<uint64_t>(SectionData),
-      DebugLocContents.size(),
-      /*Alignment=*/0,
+  auto RangesSectionContents = RangesSectionsWriter->finalize();
+  EFMM->NoteSectionInfo[".debug_ranges"] = SectionInfo(
+      reinterpret_cast<uint64_t>(RangesSectionContents->data()),
+      RangesSectionContents->size(),
+      /*Alignment=*/1,
       /*IsCode=*/false,
       /*IsReadOnly=*/true,
       /*IsLocal=*/false);
 
-  // For each CU, update pointers into .debug_loc.
-  for (const auto &CU : BC->DwCtx->compile_units()) {
-    updateLocationListPointers(
-        CU.get(),
-        CU->getUnitDIE(false),
-        LocationListsWriter.getUpdatedLocationListOffsets());
-  }
-}
-
-void RewriteInstance::updateLocationListPointers(
-    const DWARFUnit *Unit,
-    const DWARFDebugInfoEntryMinimal *DIE,
-    const std::map<uint32_t, uint32_t> &UpdatedOffsets) {
-  // Stop if we're in a non-simple function, which will not be rewritten.
-  auto Tag = DIE->getTag();
-  if (Tag == dwarf::DW_TAG_subprogram) {
-    uint64_t LowPC = -1ULL, HighPC = -1ULL;
-    DIE->getLowAndHighPC(Unit, LowPC, HighPC);
-    if (LowPC != -1ULL) {
-      auto It = BinaryFunctions.find(LowPC);
-      if (It != BinaryFunctions.end() && !It->second.isSimple())
-        return;
-    }
-  }
-  // If the DIE has a DW_AT_location attribute with a section offset, update it.
-  DWARFFormValue Value;
-  uint32_t AttrOffset;
-  if (DIE->getAttributeValue(Unit, dwarf::DW_AT_location, Value, &AttrOffset) &&
-      (Value.isFormClass(DWARFFormValue::FC_Constant) ||
-       Value.isFormClass(DWARFFormValue::FC_SectionOffset))) {
-    uint64_t DebugLocOffset = -1ULL;
-    if (Value.isFormClass(DWARFFormValue::FC_SectionOffset)) {
-      DebugLocOffset = Value.getAsSectionOffset().getValue();
-    } else if (Value.isFormClass(DWARFFormValue::FC_Constant)) {  // DWARF 3
-      DebugLocOffset = Value.getAsUnsignedConstant().getValue();
-    }
-
-    auto It = UpdatedOffsets.find(DebugLocOffset);
-    if (It != UpdatedOffsets.end()) {
-      auto DebugInfoPatcher =
-          static_cast<SimpleBinaryPatcher *>(
-              SectionPatchers[".debug_info"].get());
-      DebugInfoPatcher->addLE32Patch(AttrOffset, It->second + DebugLocSize);
-    }
-  }
-
-  // Recursively visit children.
-  for (auto Child = DIE->getFirstChild(); Child; Child = Child->getSibling()) {
-    updateLocationListPointers(Unit, Child, UpdatedOffsets);
-  }
+  auto LocationListSectionContents = LocationListWriter->finalize();
+  const auto SectionSize = LocationListSectionContents->size();
+  uint8_t *SectionData = new uint8_t[SectionSize];
+  memcpy(SectionData, LocationListSectionContents->data(), SectionSize);
+  EFMM->NoteSectionInfo[".debug_loc"] = SectionInfo(
+      reinterpret_cast<uint64_t>(SectionData),
+      SectionSize,
+      /*Alignment=*/1,
+      /*IsCode=*/false,
+      /*IsReadOnly=*/true,
+      /*IsLocal=*/false);
 }
 
 void RewriteInstance::updateGdbIndexSection() {
@@ -576,7 +534,7 @@ void RewriteInstance::updateGdbIndexSection() {
 
   // Calculate the size of the new address table.
   uint32_t NewAddressTableSize = 0;
-  for (const auto &CURangesPair : RangesSectionsWriter.getCUAddressRanges()) {
+  for (const auto &CURangesPair : RangesSectionsWriter->getCUAddressRanges()) {
     const auto &Ranges = CURangesPair.second;
     NewAddressTableSize += Ranges.size() * 20;
   }
@@ -604,12 +562,12 @@ void RewriteInstance::updateGdbIndexSection() {
   Buffer += CUListSize;
 
   // Generate new address table.
-  for (const auto &CURangesPair : RangesSectionsWriter.getCUAddressRanges()) {
+  for (const auto &CURangesPair : RangesSectionsWriter->getCUAddressRanges()) {
     const auto CUIndex = OffsetToIndexMap[CURangesPair.first];
     const auto &Ranges = CURangesPair.second;
     for (const auto &Range : Ranges) {
       write64le(Buffer, Range.first);
-      write64le(Buffer + 8, Range.first + Range.second);
+      write64le(Buffer + 8, Range.second);
       write32le(Buffer + 16, CUIndex);
       Buffer += 20;
     }

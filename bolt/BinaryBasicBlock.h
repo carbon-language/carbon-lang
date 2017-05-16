@@ -75,7 +75,7 @@ private:
   /// [Begin, End) address range for this block in the output binary.
   std::pair<uint64_t, uint64_t> OutputAddressRange{0, 0};
 
-  /// Original range of the basic block in the function.
+  /// Original offset range of the basic block in the function.
   std::pair<uint32_t, uint32_t> InputRange{INVALID_OFFSET, INVALID_OFFSET};
 
   /// Alignment requirements for the block.
@@ -666,6 +666,11 @@ public:
     OutputAddressRange.second = Address;
   }
 
+  /// Gets the memory address range of this BB in the input binary.
+  std::pair<uint64_t, uint64_t> getInputAddressRange() const {
+    return InputRange;
+  }
+
   /// Gets the memory address range of this BB in the output binary.
   std::pair<uint64_t, uint64_t> getOutputAddressRange() const {
     return OutputAddressRange;
@@ -696,6 +701,22 @@ public:
   /// Validate successor invariants for this BB.
   bool validateSuccessorInvariants();
 
+  /// Return offset of the basic block from the function start on input.
+  uint32_t getInputOffset() const {
+    return InputRange.first;
+  }
+
+  /// Return offset from the function start to location immediately past
+  /// the end of the basic block.
+  uint32_t getEndOffset() const {
+    return InputRange.second;
+  }
+
+  /// Return size of the basic block on input.
+  uint32_t getOriginalSize() const {
+    return InputRange.second - InputRange.first;
+  }
+
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 
@@ -717,8 +738,13 @@ private:
   void clearLandingPads();
 
   /// Return offset of the basic block from the function start.
-  uint64_t getOffset() const {
+  uint32_t getOffset() const {
     return InputRange.first;
+  }
+
+  /// Set end offset of this basic block.
+  void setEndOffset(uint32_t Offset) {
+    InputRange.second = Offset;
   }
 
   /// Get the index of this basic block.

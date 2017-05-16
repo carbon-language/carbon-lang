@@ -239,20 +239,8 @@ BinaryFunction::getBasicBlockContainingOffset(uint64_t Offset) {
                             CompareBasicBlockOffsets());
   assert(I != BasicBlockOffsets.begin() && "first basic block not at offset 0");
   --I;
-  return I->second;
-}
-
-size_t
-BinaryFunction::getBasicBlockOriginalSize(const BinaryBasicBlock *BB) const {
-  if (!hasCFG())
-    return 0;
-
-  auto Index = getIndex(BB);
-  if (Index + 1 == BasicBlocks.size()) {
-    return Size - BB->getOffset();
-  } else {
-    return BasicBlocks[Index + 1]->getOffset() - BB->getOffset();
-  }
+  auto *BB = I->second;
+  return (Offset < BB->getOffset() + BB->getOriginalSize()) ? BB : nullptr;
 }
 
 void BinaryFunction::markUnreachable() {
@@ -1863,9 +1851,14 @@ bool BinaryFunction::buildCFG() {
   removeConditionalTailCalls();
 
   // Set the basic block layout to the original order.
+  PrevBB = nullptr;
   for (auto BB : BasicBlocks) {
     BasicBlocksLayout.emplace_back(BB);
+    if (PrevBB)
+      PrevBB->setEndOffset(BB->getOffset());
+    PrevBB = BB;
   }
+  PrevBB->setEndOffset(getSize());
 
   // Make any necessary adjustments for indirect branches.
   if (!postProcessIndirectBranches()) {
@@ -3754,6 +3747,138 @@ void BinaryFunction::calculateLoopInfo() {
       }
     }
   }
+}
+
+DWARFAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
+  DWARFAddressRangesVector OutputRanges;
+
+  OutputRanges.emplace_back(getOutputAddress(),
+                            getOutputAddress() + getOutputSize());
+  if (isSplit()) {
+    assert(isEmitted() && "split function should be emitted");
+    OutputRanges.emplace_back(cold().getAddress(),
+                              cold().getAddress() + cold().getImageSize());
+  }
+
+  return OutputRanges;
+}
+
+DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
+                                  DWARFAddressRangesVector InputRanges) const {
+  // If the function wasn't changed - there's nothing to update.
+  if (!isEmitted() && !opts::Relocs)
+    return InputRanges;
+
+  DWARFAddressRangesVector OutputRanges;
+  uint64_t PrevEndAddress = 0;
+
+  for (const auto &Range : InputRanges) {
+    if (!containsAddress(Range.first)) {
+      DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
+                   << *this << " : [0x" << Twine::utohexstr(Range.first)
+                   << ", 0x" << Twine::utohexstr(Range.second) << "]\n");
+      PrevEndAddress = 0;
+      continue;
+    }
+    auto InputOffset = Range.first - getAddress();
+    const auto InputEndOffset = Range.second - getAddress();
+    do {
+      const auto *BB = getBasicBlockContainingOffset(InputOffset);
+      if (!BB) {
+        DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
+                     << *this << " : [0x" << Twine::utohexstr(Range.first)
+                     << ", 0x" << Twine::utohexstr(Range.second) << "]\n");
+        PrevEndAddress = 0;
+        break;
+      }
+
+      // Skip the range if the block was deleted.
+      if (const auto OutputStart = BB->getOutputAddressRange().first) {
+        const auto StartAddress = OutputStart + InputOffset - BB->getOffset();
+        auto EndAddress = BB->getOutputAddressRange().second;
+        if (InputEndOffset < BB->getEndOffset())
+          EndAddress = StartAddress + InputEndOffset - InputOffset;
+
+        if (StartAddress == PrevEndAddress) {
+          OutputRanges.back().second = EndAddress;
+        } else {
+          OutputRanges.emplace_back(StartAddress, EndAddress);
+        }
+        PrevEndAddress = EndAddress;
+      }
+
+      InputOffset = BB->getEndOffset();
+    } while (InputOffset < InputEndOffset);
+  }
+
+  return OutputRanges;
+}
+
+DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
+      DWARFDebugLoc::LocationList &&InputLL,
+      uint64_t BaseAddress) const {
+
+  // If the function wasn't changed - there's nothing to update.
+  if (!isEmitted() && !opts::Relocs) {
+    if (!BaseAddress) {
+      return InputLL;
+    } else {
+      auto OutputLL = std::move(InputLL);
+      for (auto &Entry : OutputLL.Entries) {
+        Entry.Begin += BaseAddress;
+        Entry.End += BaseAddress;
+      }
+      return OutputLL;
+    }
+  }
+
+  DWARFDebugLoc::LocationList OutputLL;
+
+  uint64_t PrevEndAddress = 0;
+  for (auto &Entry : InputLL.Entries) {
+    const auto Start = Entry.Begin + BaseAddress;
+    const auto End = Entry.End + BaseAddress;
+    if (!containsAddress(Start)) {
+      DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
+                   << *this << " : [0x" << Twine::utohexstr(Start)
+                   << ", 0x" << Twine::utohexstr(End) << "]\n");
+      PrevEndAddress = 0;
+      continue;
+    }
+    auto InputOffset = Start - getAddress();
+    const auto InputEndOffset = End - getAddress();
+    do {
+      const auto *BB = getBasicBlockContainingOffset(InputOffset);
+      if (!BB) {
+        DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
+                     << *this << " : [0x" << Twine::utohexstr(Start)
+                     << ", 0x" << Twine::utohexstr(End) << "]\n");
+        PrevEndAddress = 0;
+        break;
+      }
+
+      // Skip the range if the block was deleted.
+      if (const auto OutputStart = BB->getOutputAddressRange().first) {
+        const auto StartAddress = OutputStart + InputOffset - BB->getOffset();
+        auto EndAddress = BB->getOutputAddressRange().second;
+        if (InputEndOffset < BB->getEndOffset())
+          EndAddress = StartAddress + InputEndOffset - InputOffset;
+
+        if (StartAddress == PrevEndAddress) {
+          OutputLL.Entries.back().End = EndAddress;
+        } else {
+          OutputLL.Entries.emplace_back(
+              DWARFDebugLoc::Entry{StartAddress,
+                                   EndAddress,
+                                   std::move(Entry.Loc)});
+        }
+        PrevEndAddress = EndAddress;
+      }
+      InputOffset = BB->getEndOffset();
+    } while (InputOffset < InputEndOffset);
+  }
+
+  return OutputLL;
 }
 
 void BinaryFunction::printLoopInfo(raw_ostream &OS) const {

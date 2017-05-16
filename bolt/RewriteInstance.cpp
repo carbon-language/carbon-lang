@@ -386,7 +386,7 @@ size_t padFunction(const BinaryFunction &Function) {
 
 } // namespace opts
 
-constexpr const char *RewriteInstance::DebugSectionsToOverwrite[];
+constexpr const char *RewriteInstance::SectionsToOverwrite[];
 
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
@@ -619,6 +619,7 @@ void RewriteInstance::reset() {
   EHFrame = nullptr;
   FailedAddresses.clear();
   RangesSectionsWriter.reset();
+  LocationListWriter.reset();
   TotalScore = 0;
 }
 
@@ -743,7 +744,6 @@ void RewriteInstance::run() {
   discoverFileObjects();
   readDebugInfo();
   disassembleFunctions();
-  readFunctionDebugInfo();
   runOptimizationPasses();
   emitFunctions();
 
@@ -758,7 +758,6 @@ void RewriteInstance::run() {
     discoverFileObjects();
     readDebugInfo();
     disassembleFunctions();
-    readFunctionDebugInfo();
     runOptimizationPasses();
     emitFunctions();
   }
@@ -790,7 +789,6 @@ void RewriteInstance::run() {
       FunctionIt->second.setSimple(false);
     }
 
-    readFunctionDebugInfo();
     runOptimizationPasses();
     emitFunctions();
   }
@@ -1623,13 +1621,6 @@ void RewriteInstance::readDebugInfo() {
   BC->preprocessDebugInfo(BinaryFunctions);
 }
 
-void RewriteInstance::readFunctionDebugInfo() {
-  if (!opts::UpdateDebugSections)
-    return;
-
-  BC->preprocessFunctionDebugInfo(BinaryFunctions);
-}
-
 void RewriteInstance::disassembleFunctions() {
   // Disassemble every function and build it's control flow graph.
   TotalScore = 0;
@@ -1867,12 +1858,10 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   }
 
   Section->setHasInstructions(true);
+
   BC.Ctx->addGenDwarfSection(Section);
 
   Streamer.SwitchSection(Section);
-
-  if (!opts::Relocs)
-    Streamer.setCodeSkew(EmitColdPart ? 0 : Function.getAddress());
 
   if (opts::Relocs) {
     Streamer.EmitCodeAlignment(std::max((unsigned)opts::AlignFunctions,
@@ -1881,6 +1870,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
                                         BinaryFunction::MinAlign - 1));
   } else {
     Streamer.EmitCodeAlignment(Function.getAlignment());
+    Streamer.setCodeSkew(EmitColdPart ? 0 : Function.getAddress());
   }
 
   MCContext &Context = Streamer.getContext();
@@ -2100,7 +2090,7 @@ void RewriteInstance::emitFunctions() {
     Streamer->EmitLabel(BC->Ctx->getOrCreateSymbol("__hot_end"));
   }
 
-  if (opts::UpdateDebugSections)
+  if (!opts::Relocs && opts::UpdateDebugSections)
     updateDebugLineInfoForNonSimpleFunctions();
 
   emitDataSections(Streamer.get());
@@ -2365,8 +2355,11 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
 
-    if (!Function.isEmitted())
+    if (!Function.isEmitted()) {
+      Function.setOutputAddress(Function.getAddress());
+      Function.setOutputSize(Function.getSize());
       continue;
+    }
 
     if (opts::Relocs) {
       const auto BaseAddress = NewTextSectionStartAddress;
@@ -2386,7 +2379,6 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
         const auto ColdEndOffset = Layout.getSymbolOffset(*ColdEndSymbol);
         Function.cold().setAddress(BaseAddress + ColdStartOffset);
         Function.cold().setImageSize(ColdEndOffset - ColdStartOffset);
-
       }
     } else {
       Function.setOutputAddress(Function.getAddress());
@@ -3475,7 +3467,7 @@ uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {
 }
 
 bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
-  for (auto &OverwriteName : DebugSectionsToOverwrite) {
+  for (auto &OverwriteName : SectionsToOverwrite) {
     if (SectionName == OverwriteName)
       return true;
   }
@@ -3511,4 +3503,25 @@ RewriteInstance::getBinaryFunctionAtAddress(uint64_t Address) const {
     return nullptr;
 
   return BC->getFunctionForSymbol(Symbol);
+}
+
+DWARFAddressRangesVector RewriteInstance::translateModuleAddressRanges(
+      const DWARFAddressRangesVector &InputRanges) const {
+  DWARFAddressRangesVector OutputRanges;
+
+  for (const auto Range : InputRanges) {
+    auto BFI = BinaryFunctions.lower_bound(Range.first);
+    while (BFI != BinaryFunctions.end()) {
+      const auto &Function = BFI->second;
+      if (Function.getAddress() >= Range.second)
+        break;
+      const auto FunctionRanges = Function.getOutputAddressRanges();
+      std::move(std::begin(FunctionRanges),
+                std::end(FunctionRanges),
+                std::back_inserter(OutputRanges));
+      std::advance(BFI, 1);
+    }
+  }
+
+  return OutputRanges;
 }

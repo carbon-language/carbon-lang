@@ -31,115 +31,6 @@ namespace bolt {
 
 const DebugLineTableRowRef DebugLineTableRowRef::NULL_ROW{0, 0};
 
-void BasicBlockOffsetRanges::addAddressRange(BinaryFunction &Function,
-                                             uint64_t BeginAddress,
-                                             uint64_t EndAddress,
-                                             const BinaryData *Data) {
-  if (Function.getState() != BinaryFunction::State::CFG)
-    return;
-
-  const auto BBRange = Function.getBasicBlockRangeFromOffsetToEnd(
-                                          BeginAddress - Function.getAddress());
-
-  DEBUG(dbgs() << "adding range [0x" << Twine::utohexstr(BeginAddress) << ", 0x"
-               << Twine::utohexstr(EndAddress) << ") to function " << Function
-               << '\n');
-
-  if (BBRange.begin() == BBRange.end()) {
-    if (opts::Verbosity >= 1) {
-      errs() << "BOLT-WARNING: no basic blocks in function "
-             << Function << " intersect with debug range [0x"
-             << Twine::utohexstr(BeginAddress) << ", 0x"
-             << Twine::utohexstr(EndAddress) << ")\n";
-    }
-    return;
-  }
-
-  for (auto &BB : BBRange) {
-    const auto BBAddress = Function.getBasicBlockOriginalAddress(&BB);
-
-    // Some ranges could be of the form [BBAddress, BBAddress).
-    if (BBAddress > EndAddress ||
-        (BBAddress == EndAddress && EndAddress != BeginAddress))
-      break;
-
-    const auto InternalAddressRangeBegin = std::max(BBAddress, BeginAddress);
-    assert(BB.getFunction() == &Function && "mismatching functions\n");
-    const auto InternalAddressRangeEnd =
-      std::min(BBAddress + Function.getBasicBlockOriginalSize(&BB),
-               EndAddress);
-
-    assert(BB.isValid() && "attempting to record debug info for a deleted BB.");
-
-    AddressRanges.emplace_back(
-        BBAddressRange{
-            &BB,
-            static_cast<uint16_t>(InternalAddressRangeBegin - BBAddress),
-            static_cast<uint16_t>(InternalAddressRangeEnd - BBAddress),
-            Data});
-  }
-}
-
-std::vector<BasicBlockOffsetRanges::AbsoluteRange>
-BasicBlockOffsetRanges::getAbsoluteAddressRanges() const {
-  std::vector<AbsoluteRange> AbsoluteRanges;
-  for (const auto &BBAddressRange : AddressRanges) {
-    if (!BBAddressRange.BasicBlock->isValid())
-      continue;
-    auto BBOutputAddressRange =
-        BBAddressRange.BasicBlock->getOutputAddressRange();
-    uint64_t NewRangeBegin = BBOutputAddressRange.first +
-        BBAddressRange.RangeBeginOffset;
-    // If the end offset pointed to the end of the basic block, then we set
-    // the new end range to cover the whole basic block as the BB's size
-    // might have increased.
-    auto BBFunction = BBAddressRange.BasicBlock->getFunction();
-    uint64_t NewRangeEnd =
-        (BBAddressRange.RangeEndOffset ==
-         BBFunction->getBasicBlockOriginalSize(BBAddressRange.BasicBlock))
-        ? BBOutputAddressRange.second
-        : (BBOutputAddressRange.first + BBAddressRange.RangeEndOffset);
-    AbsoluteRanges.emplace_back(AbsoluteRange{NewRangeBegin, NewRangeEnd,
-                                              BBAddressRange.Data});
-  }
-  if (AbsoluteRanges.empty()) {
-    return AbsoluteRanges;
-  }
-  // Merge adjacent ranges that have the same data.
-  std::sort(AbsoluteRanges.begin(), AbsoluteRanges.end(),
-            [](const AbsoluteRange &A, const AbsoluteRange &B) {
-                return A.Begin < B.Begin;
-            });
-  decltype(AbsoluteRanges) MergedRanges;
-
-  MergedRanges.emplace_back(AbsoluteRanges[0]);
-  for (unsigned I = 1, S = AbsoluteRanges.size(); I != S; ++I) {
-    // If this range complements the last one and they point to the same
-    // (possibly null) data, merge them instead of creating another one.
-    if (AbsoluteRanges[I].Begin == MergedRanges.back().End &&
-        AbsoluteRanges[I].Data == MergedRanges.back().Data) {
-      MergedRanges.back().End = AbsoluteRanges[I].End;
-    } else {
-      MergedRanges.emplace_back(AbsoluteRanges[I]);
-    }
-  }
-
-  return MergedRanges;
-}
-
-void DebugRangesSectionsWriter::addRange(uint32_t CompileUnitOffset,
-                                         uint64_t Address,
-                                         uint64_t Size) {
-  CUAddressRanges[CompileUnitOffset].emplace_back(std::make_pair(Address,
-                                                                 Size));
-}
-
-void DebugRangesSectionsWriter::addRange(AddressRangesOwner *BF,
-                                         uint64_t Address,
-                                         uint64_t Size) {
-  ObjectAddressRanges[BF].emplace_back(std::make_pair(Address, Size));
-}
-
 namespace {
 
 // Writes address ranges to Writer as pairs of 64-bit (address, size).
@@ -147,14 +38,14 @@ namespace {
 // the form (begin address, range size), otherwise (begin address, end address).
 // Terminates the list by writing a pair of two zeroes.
 // Returns the number of written bytes.
-uint32_t writeAddressRanges(
+uint64_t writeAddressRanges(
     MCObjectWriter *Writer,
-    const std::vector<std::pair<uint64_t, uint64_t>> &AddressRanges,
-    bool RelativeRange) {
-  // Write entries.
+    const DWARFAddressRangesVector &AddressRanges,
+    const bool WriteRelativeRanges = false) {
   for (auto &Range : AddressRanges) {
     Writer->writeLE64(Range.first);
-    Writer->writeLE64((!RelativeRange) * Range.first + Range.second);
+    Writer->writeLE64(WriteRelativeRanges ? Range.second - Range.first
+                                          : Range.second);
   }
   // Finish with 0 entries.
   Writer->writeLE64(0);
@@ -164,28 +55,57 @@ uint32_t writeAddressRanges(
 
 } // namespace
 
-void DebugRangesSectionsWriter::writeRangesSection(MCObjectWriter *Writer) {
-  uint32_t SectionOffset = 0;
-  for (const auto &CUOffsetAddressRangesPair : CUAddressRanges) {
-    const auto CUOffset = CUOffsetAddressRangesPair.first;
-    RangesSectionOffsetCUMap[CUOffset] = SectionOffset;
-    const auto &AddressRanges = CUOffsetAddressRangesPair.second;
-    SectionOffset += writeAddressRanges(Writer, AddressRanges, false);
+DebugRangesSectionsWriter::DebugRangesSectionsWriter(BinaryContext *BC) {
+  RangesBuffer = llvm::make_unique<SmallVector<char, 16>>();
+  RangesStream = llvm::make_unique<raw_svector_ostream>(*RangesBuffer);
+  Writer =
+    std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*RangesStream));
+
+  // Add an empty range as the first entry;
+  SectionOffset += writeAddressRanges(Writer.get(), DWARFAddressRangesVector{});
+}
+
+uint64_t DebugRangesSectionsWriter::addCURanges(
+    uint64_t CUOffset,
+    DWARFAddressRangesVector &&Ranges) {
+  const auto RangesOffset = addRanges(Ranges);
+  CUAddressRanges.emplace(CUOffset, std::move(Ranges));
+
+  return RangesOffset;
+}
+
+uint64_t
+DebugRangesSectionsWriter::addRanges(const BinaryFunction *Function,
+                                     DWARFAddressRangesVector &&Ranges) {
+  if (Ranges.empty())
+    return getEmptyRangesOffset();
+
+  static const BinaryFunction *CachedFunction;
+
+  if (Function == CachedFunction) {
+    const auto RI = CachedRanges.find(Ranges);
+    if (RI != CachedRanges.end())
+      return RI->second;
+  } else {
+    CachedRanges.clear();
+    CachedFunction = Function;
   }
 
-  for (const auto &BFAddressRangesPair : ObjectAddressRanges) {
-    BFAddressRangesPair.first->setAddressRangesOffset(SectionOffset);
-    const auto &AddressRanges = BFAddressRangesPair.second;
-    SectionOffset += writeAddressRanges(Writer, AddressRanges, false);
-  }
+  const auto EntryOffset = addRanges(Ranges);
+  CachedRanges.emplace(std::move(Ranges), EntryOffset);
 
-  // Write an empty address list to be used for objects with unknown address
-  // ranges.
-  EmptyRangesListOffset = SectionOffset;
-  SectionOffset += writeAddressRanges(
-      Writer,
-      std::vector<std::pair<uint64_t, uint64_t>>{},
-      false);
+  return EntryOffset;
+}
+
+uint64_t
+DebugRangesSectionsWriter::addRanges(const DWARFAddressRangesVector &Ranges) {
+  if (Ranges.empty())
+    return getEmptyRangesOffset();
+
+  const auto EntryOffset = SectionOffset;
+  SectionOffset += writeAddressRanges(Writer.get(), Ranges);
+
+  return EntryOffset;
 }
 
 void
@@ -228,28 +148,38 @@ DebugRangesSectionsWriter::writeArangesSection(MCObjectWriter *Writer) const {
   }
 }
 
-void DebugLocWriter::write(const LocationList &LocList,
-                           MCObjectWriter *Writer) {
-  // Reference: DWARF 4 specification section 7.7.3.
-  UpdatedOffsets[LocList.getOriginalOffset()] = SectionOffset;
-  auto AbsoluteRanges = LocList.getAbsoluteAddressRanges();
+DebugLocWriter::DebugLocWriter(BinaryContext *BC) {
+  LocBuffer = llvm::make_unique<SmallVector<char, 16>>();
+  LocStream = llvm::make_unique<raw_svector_ostream>(*LocBuffer);
+  Writer =
+    std::unique_ptr<MCObjectWriter>(BC->createObjectWriter(*LocStream));
 
-  for (const auto &Entry : LocList.getAbsoluteAddressRanges()) {
+  // Add an empty list as the first entry;
+  Writer->writeLE64(0);
+  Writer->writeLE64(0);
+  SectionOffset += 2 * 8;
+}
+
+// DWARF 4: 2.6.2
+uint64_t DebugLocWriter::addList(const DWARFDebugLoc::LocationList &LocList) {
+  if (LocList.Entries.empty())
+    return getEmptyListOffset();
+
+  const auto EntryOffset = SectionOffset;
+  for (const auto &Entry : LocList.Entries) {
     Writer->writeLE64(Entry.Begin);
     Writer->writeLE64(Entry.End);
-    assert(Entry.Data && "Entry with null location expression.");
-    Writer->writeLE16(Entry.Data->size());
-
-    // Need to convert binary data from unsigned char to char.
+    Writer->writeLE16(Entry.Loc.size());
     Writer->writeBytes(
-        StringRef(reinterpret_cast<const char *>(Entry.Data->data()),
-                  Entry.Data->size()));
-
-    SectionOffset += 2 * 8 + 2 + Entry.Data->size();
+        StringRef(reinterpret_cast<const char *>(Entry.Loc.data()),
+                  Entry.Loc.size()));
+    SectionOffset += 2 * 8 + 2 + Entry.Loc.size();
   }
   Writer->writeLE64(0);
   Writer->writeLE64(0);
   SectionOffset += 2 * 8;
+
+  return EntryOffset;
 }
 
 void SimpleBinaryPatcher::addBinaryPatch(uint32_t Offset,

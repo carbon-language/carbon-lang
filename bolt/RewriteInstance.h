@@ -170,10 +170,6 @@ public:
   /// Read information from debug sections.
   void readDebugInfo();
 
-  /// Read information from debug sections that depends on disassembled
-  /// functions.
-  void readFunctionDebugInfo();
-
   /// Disassemble each function in the binary and associate it with a
   /// BinaryFunction object, preparing all information necessary for binary
   /// optimization.
@@ -197,6 +193,13 @@ public:
 
   /// Update debug information in the file for re-written code.
   void updateDebugInfo();
+
+  /// Recursively update debug info for all DIEs in \p Unit.
+  /// If \p Function is not empty, it points to a function corresponding
+  /// to a parent DW_TAG_subprogram node of the current \p DIE.
+  void updateUnitDebugInfo(DWARFCompileUnit *Unit,
+                           const DWARFDebugInfoEntryMinimal *DIE,
+                           std::vector<const BinaryFunction *> FunctionStack);
 
   /// Map all sections to their final addresses.
   void mapFileSections(orc::ObjectLinkingLayer<>::ObjSetHandleT &ObjectsHandle);
@@ -253,6 +256,10 @@ public:
                                                      bool UseMaxSize = false);
 
   const BinaryFunction *getBinaryFunctionAtAddress(uint64_t Address) const;
+
+  /// Produce output address ranges based on input ranges for some module.
+  DWARFAddressRangesVector translateModuleAddressRanges(
+      const DWARFAddressRangesVector &InputRanges) const;
 
 private:
 
@@ -317,31 +324,8 @@ private:
   /// and updates stmt_list for a corresponding compile unit.
   void updateLineTableOffsets();
 
-  /// Adds an entry to be saved in the .debug_aranges/.debug_ranges section.
-  /// \p OriginalFunctionAddress function's address in the original binary,
-  /// used for compile unit lookup.
-  /// \p RangeBegin first address of the address range being added.
-  /// \p RangeSie size in bytes of the address range.
-  void addDebugRangesEntry(uint64_t OriginalFunctionAddress,
-                           uint64_t RangeBegin,
-                           uint64_t RangeSize);
-
-  /// Update internal function ranges after functions have been written.
-  void updateFunctionRanges();
-
-  /// Update objects with address ranges after optimization.
-  void updateAddressRangesObjects();
-
-  /// If we've never mapped the unit, e.g. because there were no functions
-  /// marked in DWARF, update with the original ranges so that we can free up
-  /// the old part of .debug_ranges.
-  void updateEmptyModuleRanges();
-
-  /// Generate new contents for .debug_loc.
-  void updateLocationLists();
-
   /// Generate new contents for .debug_ranges and .debug_aranges section.
-  void generateDebugRanges();
+  void finalizeDebugSections();
 
   /// Patches the binary for DWARF address ranges (e.g. in functions and lexical
   /// blocks) to be updated.
@@ -357,15 +341,9 @@ private:
   /// new address ranges in the output binary.
   /// \p Unit Compile uniit the object belongs to.
   /// \p DIE is the object's DIE in the input binary.
-  void updateDWARFObjectAddressRanges(uint32_t DebugRangesOffset,
-                                      const DWARFUnit *Unit,
-                                      const DWARFDebugInfoEntryMinimal *DIE);
-
-  /// Updates pointers in .debug_info to location lists in .debug_loc.
-  void updateLocationListPointers(
-      const DWARFUnit *Unit,
-      const DWARFDebugInfoEntryMinimal *DIE,
-      const std::map<uint32_t, uint32_t> &UpdatedOffsets);
+  void updateDWARFObjectAddressRanges(const DWARFUnit *Unit,
+                                      const DWARFDebugInfoEntryMinimal *DIE,
+                                      uint64_t DebugRangesOffset);
 
   /// Return file offset corresponding to a given virtual address.
   uint64_t getFileOffsetFor(uint64_t Address) {
@@ -392,10 +370,11 @@ private:
 private:
 
   /// When updating debug info, these are the sections we overwrite.
-  static constexpr const char *DebugSectionsToOverwrite[] = {
+  static constexpr const char *SectionsToOverwrite[] = {
     ".shstrtab",
     ".debug_aranges",
     ".debug_line",
+    ".debug_loc",
     ".debug_ranges",
     ".gdb_index",
   };
@@ -452,7 +431,9 @@ private:
 
   /// Stores and serializes information that will be put into the .debug_ranges
   /// and .debug_aranges DWARF sections.
-  DebugRangesSectionsWriter RangesSectionsWriter;
+  std::unique_ptr<DebugRangesSectionsWriter> RangesSectionsWriter;
+
+  std::unique_ptr<DebugLocWriter> LocationListWriter;
 
   /// Patchers used to apply simple changes to sections of the input binary.
   /// Maps section name -> patcher.

@@ -106,24 +106,8 @@ public:
   /// when a function has more than a single entry point.
   std::set<uint64_t> InterproceduralReferences;
 
-  /// List of DWARF location lists in .debug_loc.
-  std::vector<LocationList> LocationLists;
-
   /// Section relocations.
   std::map<SectionRef, std::set<Relocation>> SectionRelocations;
-
-  /// List of DWARF entries in .debug_info that have address ranges to be
-  /// updated. These include lexical blocks (DW_TAG_lexical_block) and concrete
-  /// instances of inlined subroutines (DW_TAG_inlined_subroutine).
-  std::vector<AddressRangesDWARFObject> AddressRangesObjects;
-
-  using DIECompileUnitVector =
-    std::vector<std::pair<const DWARFDebugInfoEntryMinimal *,
-                          const DWARFCompileUnit *>> ;
-
-  /// List of subprogram DIEs that have addresses that don't match any
-  /// function, along with their CU.
-  DIECompileUnitVector UnknownFunctions;
 
   std::unique_ptr<MCContext> Ctx;
 
@@ -152,6 +136,8 @@ public:
   std::unique_ptr<const MCRegisterInfo> MRI;
 
   std::unique_ptr<MCDisassembler> DisAsm;
+
+  std::unique_ptr<MCAsmBackend> MAB;
 
   std::function<void(std::error_code)> ErrorCheck;
 
@@ -189,6 +175,8 @@ public:
       DR(DR) {}
 
   ~BinaryContext();
+
+  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS);
 
   /// Return a global symbol registered at a given \p Address. If no symbol
   /// exists, create one with unique name using \p Prefix.
@@ -249,11 +237,6 @@ public:
 
   /// Populate some internal data structures with debug info.
   void preprocessDebugInfo(
-      std::map<uint64_t, BinaryFunction> &BinaryFunctions);
-
-  /// Populate internal data structures with debug info that depends on
-  /// disassembled functions.
-  void preprocessFunctionDebugInfo(
       std::map<uint64_t, BinaryFunction> &BinaryFunctions);
 
   /// Add a filename entry from SrcCUID to DestCUID.
