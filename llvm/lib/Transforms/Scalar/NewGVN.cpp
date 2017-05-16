@@ -3291,10 +3291,6 @@ bool NewGVN::eliminateInstructions(Function &F) {
 
           Value *DominatingLeader = EliminationStack.back();
 
-          auto *II = dyn_cast<IntrinsicInst>(DominatingLeader);
-          if (II && II->getIntrinsicID() == Intrinsic::ssa_copy)
-            DominatingLeader = II->getOperand(0);
-
           // Don't replace our existing users with ourselves.
           if (U->get() == DominatingLeader)
             continue;
