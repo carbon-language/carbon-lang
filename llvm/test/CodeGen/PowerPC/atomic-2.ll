@@ -108,8 +108,10 @@ entry:
 ; CHECK: @atomic_load
   %tmp = load atomic i64, i64* %mem acquire, align 64
 ; CHECK-NOT: ldarx
-; CHECK: ld
-; CHECK: lwsync
+; CHECK: ld [[VAL:[0-9]+]]
+; CHECK: cmpw [[CR:[0-9]+]], [[VAL]], [[VAL]]
+; CHECK: bne- [[CR]], .+4
+; CHECK: isync
   ret i64 %tmp
 }
 
