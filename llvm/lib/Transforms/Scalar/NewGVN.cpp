@@ -2643,6 +2643,7 @@ void NewGVN::verifyIterationSettled(Function &F) {
 // if we don't erase the old store expressions from the table, a load can find
 // a no-longer valid StoreExpression.
 void NewGVN::verifyStoreExpressions() const {
+#ifndef NDEBUG
   DenseSet<std::pair<const Value *, const Value *>> StoreExpressionSet;
   for (const auto &KV : ExpressionToClass) {
     if (auto *SE = dyn_cast<StoreExpression>(KV.first)) {
@@ -2657,6 +2658,7 @@ void NewGVN::verifyStoreExpressions() const {
              "StoreExpression for value");
     }
   }
+#endif
 }
 
 // This is the main value numbering loop, it iterates over the initial touched
