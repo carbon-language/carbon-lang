@@ -334,7 +334,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
 
   if (Config->Strip != StripPolicy::All) {
     InX::StrTab = make<StringTableSection>(".strtab", false);
-    In<ELFT>::SymTab = make<SymbolTableSection<ELFT>>(*InX::StrTab);
+    InX::SymTab = make<SymbolTableSection<ELFT>>(*InX::StrTab);
   }
 
   if (Config->BuildId != BuildIdKind::None) {
@@ -383,7 +383,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     Add(In<ELFT>::VerNeed);
 
     if (Config->GnuHash) {
-      In<ELFT>::GnuHashTab = make<GnuHashTableSection<ELFT>>();
+      In<ELFT>::GnuHashTab = make<GnuHashTableSection>();
       Add(In<ELFT>::GnuHashTab);
     }
 
