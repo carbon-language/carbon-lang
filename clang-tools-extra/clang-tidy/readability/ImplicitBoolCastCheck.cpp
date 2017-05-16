@@ -267,10 +267,9 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
     return;
   }
 
-  auto exceptionCases = expr(
-      anyOf(hasParent(explicitCastExpr()),
-            allOf(isMacroExpansion(), unless(isNULLMacroExpansion())),
-            isInTemplateInstantiation(), hasAncestor(functionTemplateDecl())));
+  auto exceptionCases =
+      expr(anyOf(hasParent(explicitCastExpr()),
+                 allOf(isMacroExpansion(), unless(isNULLMacroExpansion()))));
   auto implicitCastFromBool = implicitCastExpr(
       unless(exceptionCases),
       anyOf(hasCastKind(CK_IntegralCast), hasCastKind(CK_IntegralToFloating),
@@ -285,8 +284,7 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
       implicitCastExpr(
           // Exclude cases common to implicit cast to and from bool.
-          unless(exceptionCases),
-          unless(has(boolXor)),
+          unless(exceptionCases), unless(has(boolXor)),
           // Exclude case of using if or while statements with variable
           // declaration, e.g.:
           //   if (int var = functionCall()) {}
@@ -298,7 +296,9 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
                 hasCastKind(CK_MemberPointerToBoolean)),
           // Retrive also parent statement, to check if we need additional
           // parens in replacement.
-          anyOf(hasParent(stmt().bind("parentStmt")), anything()))
+          anyOf(hasParent(stmt().bind("parentStmt")), anything()),
+          unless(isInTemplateInstantiation()),
+          unless(hasAncestor(functionTemplateDecl())))
           .bind("implicitCastToBool"),
       this);
 
@@ -319,7 +319,9 @@ void ImplicitBoolCastCheck::registerMatchers(MatchFinder *Finder) {
               anyOf(boolComparison, boolXor, boolOpAssignment)))),
           // Check also for nested casts, for example: bool -> int -> float.
           anyOf(hasParent(implicitCastExpr().bind("furtherImplicitCast")),
-                anything()))
+                anything()),
+          unless(isInTemplateInstantiation()),
+          unless(hasAncestor(functionTemplateDecl())))
           .bind("implicitCastFromBool"),
       this);
 }
