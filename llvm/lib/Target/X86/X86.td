@@ -235,8 +235,6 @@ def FeatureLEAUsesAG : SubtargetFeature<"lea-uses-ag", "LEAUsesAG", "true",
                                    "LEA instruction needs inputs at AG stage">;
 def FeatureSlowLEA : SubtargetFeature<"slow-lea", "SlowLEA", "true",
                                    "LEA instruction with certain arguments is slow">;
-def FeatureSlow3OpsLEA : SubtargetFeature<"slow-3ops-lea", "Slow3OpsLEA", "true",
-                                   "LEA instruction with 3 ops or certain registers is slow">;
 def FeatureSlowIncDec : SubtargetFeature<"slow-incdec", "SlowIncDec", "true",
                                    "INC and DEC instructions are slower than ADD and SUB">;
 def FeatureSoftFloat
@@ -482,7 +480,6 @@ def SNBFeatures : ProcessorFeatures<[], [
   FeatureXSAVE,
   FeatureXSAVEOPT,
   FeatureLAHFSAHF,
-  FeatureSlow3OpsLEA,
   FeatureFastScalarFSQRT,
   FeatureFastSHLDRotate
 ]>;
