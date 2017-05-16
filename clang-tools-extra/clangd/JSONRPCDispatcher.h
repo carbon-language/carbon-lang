@@ -79,6 +79,15 @@ private:
   std::unique_ptr<Handler> UnknownHandler;
 };
 
+/// Parses input queries from LSP client (coming from \p In) and runs call
+/// method of \p Dispatcher for each query.
+/// After handling each query checks if \p IsDone is set true and exits the loop
+/// if it is.
+/// Input stream(\p In) must be opened in binary mode to avoid preliminary
+/// replacements of \r\n with \n.
+void runLanguageServerLoop(std::istream &In, JSONOutput &Out,
+                           JSONRPCDispatcher &Dispatcher, bool &IsDone);
+
 } // namespace clangd
 } // namespace clang
 
