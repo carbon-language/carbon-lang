@@ -117,11 +117,7 @@ unsigned SIRegisterInfo::reservedPrivateSegmentBufferReg(
   return getMatchingSuperReg(BaseReg, AMDGPU::sub0, &AMDGPU::SReg_128RegClass);
 }
 
-unsigned SIRegisterInfo::reservedPrivateSegmentWaveByteOffsetReg(
-  const MachineFunction &MF) const {
-
-  const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
-  unsigned RegCount = ST.getMaxNumSGPRs(MF);
+static unsigned findPrivateSegmentWaveByteOffsetRegIndex(unsigned RegCount) {
   unsigned Reg;
 
   // Try to place it in a hole after PrivateSegmentBufferReg.
@@ -134,7 +130,20 @@ unsigned SIRegisterInfo::reservedPrivateSegmentWaveByteOffsetReg(
     // wave offset before it.
     Reg = RegCount - 5;
   }
+
+  return Reg;
+}
+
+unsigned SIRegisterInfo::reservedPrivateSegmentWaveByteOffsetReg(
+  const MachineFunction &MF) const {
+  const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
+  unsigned Reg = findPrivateSegmentWaveByteOffsetRegIndex(ST.getMaxNumSGPRs(MF));
   return AMDGPU::SGPR_32RegClass.getRegister(Reg);
+}
+
+unsigned SIRegisterInfo::reservedStackPtrOffsetReg(
+  const MachineFunction &MF) const {
+  return AMDGPU::SGPR32;
 }
 
 BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
@@ -198,15 +207,33 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
     assert(!isSubRegister(ScratchRSrcReg, ScratchWaveOffsetReg));
   }
 
+  unsigned StackPtrReg = MFI->getStackPtrOffsetReg();
+  if (StackPtrReg != AMDGPU::NoRegister) {
+    reserveRegisterTuples(Reserved, StackPtrReg);
+    assert(!isSubRegister(ScratchRSrcReg, StackPtrReg));
+  }
+
+  unsigned FrameReg = MFI->getFrameOffsetReg();
+  if (FrameReg != AMDGPU::NoRegister) {
+    reserveRegisterTuples(Reserved, FrameReg);
+    assert(!isSubRegister(ScratchRSrcReg, FrameReg));
+  }
+
   return Reserved;
 }
 
 bool SIRegisterInfo::requiresRegisterScavenging(const MachineFunction &Fn) const {
-  return Fn.getFrameInfo().hasStackObjects();
+  const SIMachineFunctionInfo *Info = Fn.getInfo<SIMachineFunctionInfo>();
+  if (Info->isEntryFunction()) {
+    const MachineFrameInfo &MFI = Fn.getFrameInfo();
+    return MFI.hasStackObjects() || MFI.hasCalls();
+  }
+
+  // May need scavenger for dealing with callee saved registers.
+  return true;
 }
 
-bool
-SIRegisterInfo::requiresFrameIndexScavenging(const MachineFunction &MF) const {
+bool SIRegisterInfo::requiresFrameIndexScavenging(const MachineFunction &MF) const {
   return MF.getFrameInfo().hasStackObjects();
 }
 
