@@ -629,19 +629,19 @@ static int CompareSCEVComplexity(
     const SCEVAddRecExpr *LA = cast<SCEVAddRecExpr>(LHS);
     const SCEVAddRecExpr *RA = cast<SCEVAddRecExpr>(RHS);
 
-    // If there is a dominance relationship between the loops, sort by the
-    // dominance. Otherwise, sort by depth. We require such order in getAddExpr.
+    // There is always a dominance between two recs that are used by one SCEV,
+    // so we can safely sort recs by loop header dominance. We require such
+    // order in getAddExpr.
     const Loop *LLoop = LA->getLoop(), *RLoop = RA->getLoop();
     if (LLoop != RLoop) {
       const BasicBlock *LHead = LLoop->getHeader(), *RHead = RLoop->getHeader();
       assert(LHead != RHead && "Two loops share the same header?");
       if (DT.dominates(LHead, RHead))
         return 1;
-      else if (DT.dominates(RHead, LHead))
-        return -1;
-      unsigned LDepth = LLoop->getLoopDepth(), RDepth = RLoop->getLoopDepth();
-      if (LDepth != RDepth)
-        return (int)LDepth - (int)RDepth;
+      else
+        assert(DT.dominates(RHead, LHead) &&
+               "No dominance between recurrences used by one SCEV?");
+      return -1;
     }
 
     // Addrec complexity grows with operand count.
