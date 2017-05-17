@@ -82,7 +82,7 @@ public:
   void PostprocessISelDAG() override;
 
 private:
-  SDValue foldFrameIndex(SDValue N) const;
+  std::pair<SDValue, SDValue> foldFrameIndex(SDValue N) const;
   bool isNoNanSrc(SDValue N) const;
   bool isInlineImmediate(const SDNode *N) const;
   bool FoldOperand(SDValue &Src, SDValue &Sel, SDValue &Neg, SDValue &Abs,
@@ -116,9 +116,11 @@ private:
   bool SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
                          SDValue &VAddr, SDValue &SOffset, SDValue &Offset,
                          SDValue &SLC) const;
-  bool SelectMUBUFScratchOffen(SDValue Addr, SDValue &RSrc, SDValue &VAddr,
+  bool SelectMUBUFScratchOffen(SDNode *Root,
+                               SDValue Addr, SDValue &RSrc, SDValue &VAddr,
                                SDValue &SOffset, SDValue &ImmOffset) const;
-  bool SelectMUBUFScratchOffset(SDValue Addr, SDValue &SRsrc, SDValue &Soffset,
+  bool SelectMUBUFScratchOffset(SDNode *Root,
+                                SDValue Addr, SDValue &SRsrc, SDValue &Soffset,
                                 SDValue &Offset) const;
 
   bool SelectMUBUFOffset(SDValue Addr, SDValue &SRsrc, SDValue &SOffset,
@@ -1074,13 +1076,33 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &SRsrc,
   return SelectMUBUFAddr64(Addr, SRsrc, VAddr, SOffset, Offset, GLC, SLC, TFE);
 }
 
-SDValue AMDGPUDAGToDAGISel::foldFrameIndex(SDValue N) const {
-  if (auto FI = dyn_cast<FrameIndexSDNode>(N))
-    return CurDAG->getTargetFrameIndex(FI->getIndex(), FI->getValueType(0));
-  return N;
+static bool isStackPtrRelative(const MachinePointerInfo &PtrInfo) {
+  auto PSV = PtrInfo.V.dyn_cast<const PseudoSourceValue *>();
+  return PSV && PSV->isStack();
 }
 
-bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffen(SDValue Addr, SDValue &Rsrc,
+std::pair<SDValue, SDValue> AMDGPUDAGToDAGISel::foldFrameIndex(SDValue N) const {
+  const MachineFunction &MF = CurDAG->getMachineFunction();
+  const SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
+
+  if (auto FI = dyn_cast<FrameIndexSDNode>(N)) {
+    SDValue TFI = CurDAG->getTargetFrameIndex(FI->getIndex(),
+                                              FI->getValueType(0));
+
+    // If we can resolve this to a frame index access, this is relative to the
+    // frame pointer SGPR.
+    return std::make_pair(TFI, CurDAG->getRegister(Info->getFrameOffsetReg(),
+                                                   MVT::i32));
+  }
+
+  // If we don't know this private access is a local stack object, it needs to
+  // be relative to the entry point's scratch wave offset register.
+  return std::make_pair(N, CurDAG->getRegister(Info->getScratchWaveOffsetReg(),
+                                               MVT::i32));
+}
+
+bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffen(SDNode *Root,
+                                                 SDValue Addr, SDValue &Rsrc,
                                                  SDValue &VAddr, SDValue &SOffset,
                                                  SDValue &ImmOffset) const {
 
@@ -1089,7 +1111,6 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffen(SDValue Addr, SDValue &Rsrc,
   const SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
 
   Rsrc = CurDAG->getRegister(Info->getScratchRSrcReg(), MVT::v4i32);
-  SOffset = CurDAG->getRegister(Info->getScratchWaveOffsetReg(), MVT::i32);
 
   if (ConstantSDNode *CAddr = dyn_cast<ConstantSDNode>(Addr)) {
     unsigned Imm = CAddr->getZExtValue();
@@ -1100,6 +1121,14 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffen(SDValue Addr, SDValue &Rsrc,
     MachineSDNode *MovHighBits = CurDAG->getMachineNode(AMDGPU::V_MOV_B32_e32,
                                                         DL, MVT::i32, HighBits);
     VAddr = SDValue(MovHighBits, 0);
+
+    // In a call sequence, stores to the argument stack area are relative to the
+    // stack pointer.
+    const MachinePointerInfo &PtrInfo = cast<MemSDNode>(Root)->getPointerInfo();
+    unsigned SOffsetReg = isStackPtrRelative(PtrInfo) ?
+      Info->getStackPtrOffsetReg() : Info->getScratchWaveOffsetReg();
+
+    SOffset = CurDAG->getRegister(SOffsetReg, MVT::i32);
     ImmOffset = CurDAG->getTargetConstant(Imm & 4095, DL, MVT::i16);
     return true;
   }
@@ -1113,19 +1142,20 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffen(SDValue Addr, SDValue &Rsrc,
     // Offsets in vaddr must be positive.
     ConstantSDNode *C1 = cast<ConstantSDNode>(N1);
     if (isLegalMUBUFImmOffset(C1)) {
-      VAddr = foldFrameIndex(N0);
+      std::tie(VAddr, SOffset) = foldFrameIndex(N0);
       ImmOffset = CurDAG->getTargetConstant(C1->getZExtValue(), DL, MVT::i16);
       return true;
     }
   }
 
   // (node)
-  VAddr = foldFrameIndex(Addr);
+  std::tie(VAddr, SOffset) = foldFrameIndex(Addr);
   ImmOffset = CurDAG->getTargetConstant(0, DL, MVT::i16);
   return true;
 }
 
-bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffset(SDValue Addr,
+bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffset(SDNode *Root,
+                                                  SDValue Addr,
                                                   SDValue &SRsrc,
                                                   SDValue &SOffset,
                                                   SDValue &Offset) const {
@@ -1138,7 +1168,15 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratchOffset(SDValue Addr,
   const SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
 
   SRsrc = CurDAG->getRegister(Info->getScratchRSrcReg(), MVT::v4i32);
-  SOffset = CurDAG->getRegister(Info->getScratchWaveOffsetReg(), MVT::i32);
+
+  const MachinePointerInfo &PtrInfo = cast<MemSDNode>(Root)->getPointerInfo();
+  unsigned SOffsetReg = isStackPtrRelative(PtrInfo) ?
+    Info->getStackPtrOffsetReg() : Info->getScratchWaveOffsetReg();
+
+  // FIXME: Get from MachinePointerInfo? We should only be using the frame
+  // offset if we know this is in a call sequence.
+  SOffset = CurDAG->getRegister(SOffsetReg, MVT::i32);
+
   Offset = CurDAG->getTargetConstant(CAddr->getZExtValue(), DL, MVT::i16);
   return true;
 }
