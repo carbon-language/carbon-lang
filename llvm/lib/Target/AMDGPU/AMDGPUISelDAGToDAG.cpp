@@ -1700,12 +1700,46 @@ bool AMDGPUDAGToDAGISel::SelectVOP3OMods(SDValue In, SDValue &Src,
   return true;
 }
 
+static SDValue stripBitcast(SDValue Val) {
+  return Val.getOpcode() == ISD::BITCAST ? Val.getOperand(0) : Val;
+}
+
+// Figure out if this is really an extract of the high 16-bits of a dword.
+static bool isExtractHiElt(SDValue In, SDValue &Out) {
+  In = stripBitcast(In);
+  if (In.getOpcode() != ISD::TRUNCATE)
+    return false;
+
+  SDValue Srl = In.getOperand(0);
+  if (Srl.getOpcode() == ISD::SRL) {
+    if (ConstantSDNode *ShiftAmt = dyn_cast<ConstantSDNode>(Srl.getOperand(1))) {
+      if (ShiftAmt->getZExtValue() == 16) {
+        Out = stripBitcast(Srl.getOperand(0));
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+// Look through operations that obscure just looking at the low 16-bits of the
+// same register.
+static SDValue stripExtractLoElt(SDValue In) {
+  if (In.getOpcode() == ISD::TRUNCATE) {
+    SDValue Src = In.getOperand(0);
+    if (Src.getValueType().getSizeInBits() == 32)
+      return stripBitcast(Src);
+  }
+
+  return In;
+}
+
 bool AMDGPUDAGToDAGISel::SelectVOP3PMods(SDValue In, SDValue &Src,
                                          SDValue &SrcMods) const {
   unsigned Mods = 0;
   Src = In;
 
-  // FIXME: Look for on separate components
   if (Src.getOpcode() == ISD::FNEG) {
     Mods ^= (SISrcMods::NEG | SISrcMods::NEG_HI);
     Src = Src.getOperand(0);
@@ -1714,18 +1748,27 @@ bool AMDGPUDAGToDAGISel::SelectVOP3PMods(SDValue In, SDValue &Src,
   if (Src.getOpcode() == ISD::BUILD_VECTOR) {
     unsigned VecMods = Mods;
 
-    SDValue Lo = Src.getOperand(0);
-    SDValue Hi = Src.getOperand(1);
+    SDValue Lo = stripBitcast(Src.getOperand(0));
+    SDValue Hi = stripBitcast(Src.getOperand(1));
 
     if (Lo.getOpcode() == ISD::FNEG) {
-      Lo = Lo.getOperand(0);
+      Lo = stripBitcast(Lo.getOperand(0));
       Mods ^= SISrcMods::NEG;
     }
 
     if (Hi.getOpcode() == ISD::FNEG) {
-      Hi = Hi.getOperand(0);
+      Hi = stripBitcast(Hi.getOperand(0));
       Mods ^= SISrcMods::NEG_HI;
     }
+
+    if (isExtractHiElt(Lo, Lo))
+      Mods |= SISrcMods::OP_SEL_0;
+
+    if (isExtractHiElt(Hi, Hi))
+      Mods |= SISrcMods::OP_SEL_1;
+
+    Lo = stripExtractLoElt(Lo);
+    Hi = stripExtractLoElt(Hi);
 
     if (Lo == Hi && !isInlineImmediate(Lo.getNode())) {
       // Really a scalar input. Just select from the low half of the register to
@@ -1740,9 +1783,6 @@ bool AMDGPUDAGToDAGISel::SelectVOP3PMods(SDValue In, SDValue &Src,
   }
 
   // Packed instructions do not have abs modifiers.
-
-  // FIXME: Handle abs/neg of individual components.
-  // FIXME: Handle swizzling with op_sel
   Mods |= SISrcMods::OP_SEL_1;
 
   SrcMods = CurDAG->getTargetConstant(Mods, SDLoc(In), MVT::i32);
