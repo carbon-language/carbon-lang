@@ -17,7 +17,6 @@
 namespace llvm {
 
 struct RelocAddrEntry {
-  uint8_t Width;
   int64_t Value;
 };
 
