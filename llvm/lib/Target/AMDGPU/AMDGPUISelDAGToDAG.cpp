@@ -1707,8 +1707,36 @@ bool AMDGPUDAGToDAGISel::SelectVOP3PMods(SDValue In, SDValue &Src,
 
   // FIXME: Look for on separate components
   if (Src.getOpcode() == ISD::FNEG) {
-    Mods |= (SISrcMods::NEG | SISrcMods::NEG_HI);
+    Mods ^= (SISrcMods::NEG | SISrcMods::NEG_HI);
     Src = Src.getOperand(0);
+  }
+
+  if (Src.getOpcode() == ISD::BUILD_VECTOR) {
+    unsigned VecMods = Mods;
+
+    SDValue Lo = Src.getOperand(0);
+    SDValue Hi = Src.getOperand(1);
+
+    if (Lo.getOpcode() == ISD::FNEG) {
+      Lo = Lo.getOperand(0);
+      Mods ^= SISrcMods::NEG;
+    }
+
+    if (Hi.getOpcode() == ISD::FNEG) {
+      Hi = Hi.getOperand(0);
+      Mods ^= SISrcMods::NEG_HI;
+    }
+
+    if (Lo == Hi && !isInlineImmediate(Lo.getNode())) {
+      // Really a scalar input. Just select from the low half of the register to
+      // avoid packing.
+
+      Src = Lo;
+      SrcMods = CurDAG->getTargetConstant(Mods, SDLoc(In), MVT::i32);
+      return true;
+    }
+
+    Mods = VecMods;
   }
 
   // Packed instructions do not have abs modifiers.
