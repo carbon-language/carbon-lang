@@ -2512,22 +2512,23 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
         SmallVector<const SCEV *, 4> AddRecOps(AddRec->op_begin(),
                                                AddRec->op_end());
         for (; OtherIdx != Ops.size() && isa<SCEVAddRecExpr>(Ops[OtherIdx]);
-             ++OtherIdx)
-          if (const auto *OtherAddRec = dyn_cast<SCEVAddRecExpr>(Ops[OtherIdx]))
-            if (OtherAddRec->getLoop() == AddRecLoop) {
-              for (unsigned i = 0, e = OtherAddRec->getNumOperands();
-                   i != e; ++i) {
-                if (i >= AddRecOps.size()) {
-                  AddRecOps.append(OtherAddRec->op_begin()+i,
-                                   OtherAddRec->op_end());
-                  break;
-                }
-                SmallVector<const SCEV *, 2> TwoOps = {
-                    AddRecOps[i], OtherAddRec->getOperand(i)};
-                AddRecOps[i] = getAddExpr(TwoOps, SCEV::FlagAnyWrap, Depth + 1);
+             ++OtherIdx) {
+          const auto *OtherAddRec = cast<SCEVAddRecExpr>(Ops[OtherIdx]);
+          if (OtherAddRec->getLoop() == AddRecLoop) {
+            for (unsigned i = 0, e = OtherAddRec->getNumOperands();
+                 i != e; ++i) {
+              if (i >= AddRecOps.size()) {
+                AddRecOps.append(OtherAddRec->op_begin()+i,
+                                 OtherAddRec->op_end());
+                break;
               }
-              Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
+              SmallVector<const SCEV *, 2> TwoOps = {
+                  AddRecOps[i], OtherAddRec->getOperand(i)};
+              AddRecOps[i] = getAddExpr(TwoOps, SCEV::FlagAnyWrap, Depth + 1);
             }
+            Ops.erase(Ops.begin() + OtherIdx); --OtherIdx;
+          }
+        }
         // Step size has changed, so we cannot guarantee no self-wraparound.
         Ops[Idx] = getAddRecExpr(AddRecOps, AddRecLoop, SCEV::FlagAnyWrap);
         return getAddExpr(Ops, SCEV::FlagAnyWrap, Depth + 1);
