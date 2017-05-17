@@ -2604,6 +2604,9 @@ namespace {
 uint64_t appendPadding(raw_pwrite_stream &OS,
                        uint64_t Offset,
                        uint64_t Alignment) {
+  if (!Alignment)
+    return Offset;
+
   const auto PaddingSize = OffsetToAlignment(Offset, Alignment);
   for (unsigned I = 0; I < PaddingSize; ++I)
     OS.write((unsigned char)0);
@@ -2716,12 +2719,30 @@ void RewriteInstance::rewriteNoteSections() {
 
     NextAvailableOffset += Size;
   }
+
+  // Write new note sections.
+  for (auto &SII : EFMM->NoteSectionInfo) {
+    auto &SI = SII.second;
+    if (SI.FileOffset || !SI.AllocAddress)
+      continue;
+
+    assert(SI.PendingRelocs.empty() && "cannot have pending relocs");
+
+    NextAvailableOffset = appendPadding(OS, NextAvailableOffset, SI.Alignment);
+    SI.FileOffset = NextAvailableOffset;
+
+    DEBUG(dbgs() << "BOLT-DEBUG: writing out new section " << SII.first
+                 << " of size " << SI.Size << " at offset 0x"
+                 << Twine::utohexstr(SI.FileOffset) << '\n');
+
+    OS.write(reinterpret_cast<const char *>(SI.AllocAddress), SI.Size);
+    NextAvailableOffset += SI.Size;
+  }
 }
 
 template <typename ELFT>
-void RewriteInstance::writeStringTable(ELFObjectFile<ELFT> *File) {
+void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
   auto *Obj = File->getELFFile();
-  auto &OS = Out->os();
 
   // Pre-populate section header string table.
   for (auto &Section : Obj->sections()) {
@@ -2734,16 +2755,22 @@ void RewriteInstance::writeStringTable(ELFObjectFile<ELFT> *File) {
   for (auto &SMII : EFMM->SectionMapInfo) {
     SHStrTab.add(SMII.first);
   }
+  for (auto &SMII : EFMM->NoteSectionInfo) {
+    SHStrTab.add(SMII.first);
+  }
   SHStrTab.finalize(StringTableBuilder::ELF);
 
-  auto SII = EFMM->NoteSectionInfo.find(".shstrtab");
-  assert(SII != EFMM->NoteSectionInfo.end() && "cannot find .shstrtab");
-  auto &SI = SII->second;
-  SI.FileOffset = OS.tell();
-  SI.Size = SHStrTab.data().size();
-
-  // Write data for the table.
-  OS << SHStrTab.data();
+  const auto SHStrTabSize = SHStrTab.data().size();
+  uint8_t *DataCopy = new uint8_t[SHStrTabSize];
+  memcpy(DataCopy, SHStrTab.data().data(), SHStrTabSize);
+  EFMM->NoteSectionInfo[".shstrtab"] =
+    SectionInfo(reinterpret_cast<uint64_t>(DataCopy),
+                SHStrTabSize,
+                /*Alignment*/1,
+                /*IsCode=*/false,
+                /*IsReadOnly=*/false,
+                /*IsLocal=*/false);
+  EFMM->NoteSectionInfo[".shstrtab"].IsStrTab = true;
 }
 
 // Rewrite section header table inserting new entries as needed. The sections
@@ -2751,10 +2778,12 @@ void RewriteInstance::writeStringTable(ELFObjectFile<ELFT> *File) {
 // so we are placing it at the end of the binary.
 //
 // As we rewrite entries we need to track how many sections were inserted
-// as it changes the sh_link value.
+// as it changes the sh_link value. We map old indices to new ones for
+// existing sections.
 //
 // The following are assumptions about file modifications:
-//    * There are no modifications done to existing allocatable sections.
+//    * There are no modifications done to address and/or size of existing
+//      allocatable sections.
 //    * All new allocatable sections are written immediately after existing
 //      allocatable sections.
 //    * There could be modifications done to non-allocatable sections, e.g.
@@ -2811,12 +2840,9 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
     OS.write(reinterpret_cast<const char *>(&NewSection), sizeof(NewSection));
     NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
       CurrentSectionIndex++;
-
   }
 
   // Create entries for new allocatable sections.
-  //
-  // Skip sections we overwrite in-place (like data sections).
   std::vector<Elf_Shdr> SectionsToRewrite;
   for (auto &SMII : EFMM->SectionMapInfo) {
     const auto &SectionName = SMII.first;
@@ -2829,7 +2855,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
       continue;
     }
     if (opts::Verbosity >= 1)
-      outs() << "BOLT-INFO: writing section header for " << SMII.first << '\n';
+      outs() << "BOLT-INFO: writing section header for " << SectionName << '\n';
     Elf_Shdr NewSection;
     NewSection.sh_name = SHStrTab.getOffset(SectionName);
     NewSection.sh_type = ELF::SHT_PROGBITS;
@@ -2859,7 +2885,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
     ++CurrentSectionIndex;
   }
 
-  int64_t NumNewSections = SectionsToRewrite.size();
+  int64_t SectionCountDelta = SectionsToRewrite.size();
+  uint64_t LastFileOffset = 0;
 
   // Copy over entries for non-allocatable sections performing necessary
   // adjustments.
@@ -2868,46 +2895,77 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
       continue;
     if (Section.sh_flags & ELF::SHF_ALLOC)
       continue;
+    if (Section.sh_type == ELF::SHT_RELA) {
+      --SectionCountDelta;
+      continue;
+    }
 
     ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
     check_error(SectionName.getError(), "cannot get section name");
-
-    if (Section.sh_type == ELF::SHT_RELA) {
-      if (opts::Verbosity)
-        outs() << "BOLT-INFO: omitting section header for relocation section "
-               << *SectionName << '\n';
-      --NumNewSections;
-      continue;
-    }
 
     auto SII = EFMM->NoteSectionInfo.find(*SectionName);
     assert(SII != EFMM->NoteSectionInfo.end() &&
            "missing section info for non-allocatable section");
 
+    const auto &SI = SII->second;
     auto NewSection = Section;
-    NewSection.sh_offset = SII->second.FileOffset;
-    NewSection.sh_size = SII->second.Size;
+    NewSection.sh_offset = SI.FileOffset;
+    NewSection.sh_size = SI.Size;
     NewSection.sh_name = SHStrTab.getOffset(*SectionName);
 
     // Adjust sh_link for sections that use it.
     if (Section.sh_link)
-      NewSection.sh_link = Section.sh_link + NumNewSections;
+      NewSection.sh_link = Section.sh_link + SectionCountDelta;
 
     // Adjust sh_info for relocation sections.
     if (Section.sh_type == ELF::SHT_REL || Section.sh_type == ELF::SHT_RELA) {
       if (Section.sh_info)
-        NewSection.sh_info = Section.sh_info + NumNewSections;
+        NewSection.sh_info = Section.sh_info + SectionCountDelta;
     }
 
     OS.write(reinterpret_cast<const char *>(&NewSection), sizeof(NewSection));
     NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
       CurrentSectionIndex++;
+
+    LastFileOffset = SI.FileOffset;
   }
 
-  // Using new section indices map updates sh_link and sh_info where needed.
-  //
+  // Create entries for new non-allocatable sections.
+  SectionsToRewrite.clear();
+  for (auto &SII : EFMM->NoteSectionInfo) {
+    const auto &SectionName = SII.first;
+    const auto &SI = SII.second;
 
-  // New section header string table goes last.
+    if (SI.FileOffset <= LastFileOffset)
+      continue;
+
+    if (opts::Verbosity >= 1)
+      outs() << "BOLT-INFO: writing section header for " << SectionName << '\n';
+    Elf_Shdr NewSection;
+    NewSection.sh_name = SHStrTab.getOffset(SectionName);
+    NewSection.sh_type = (SI.IsStrTab ? ELF::SHT_STRTAB : ELF::SHT_PROGBITS);
+    NewSection.sh_addr = 0;
+    NewSection.sh_offset = SI.FileOffset;
+    NewSection.sh_size = SI.Size;
+    NewSection.sh_entsize = 0;
+    NewSection.sh_flags = 0;
+    NewSection.sh_link = 0;
+    NewSection.sh_info = 0;
+    NewSection.sh_addralign = SI.Alignment ? SI.Alignment : 1;
+    SectionsToRewrite.emplace_back(NewSection);
+  }
+
+  // Write section header entries for new non-allocatable sections.
+  std::stable_sort(SectionsToRewrite.begin(), SectionsToRewrite.end(),
+      [] (Elf_Shdr A, Elf_Shdr B) {
+        return A.sh_offset < B.sh_offset;
+      });
+  for (auto &SI : SectionsToRewrite) {
+    OS.write(reinterpret_cast<const char *>(&SI), sizeof(SI));
+    ++CurrentSectionIndex;
+  }
+  const auto AllocSectionCountDelta = SectionCountDelta;
+  SectionCountDelta += SectionsToRewrite.size();
 
   // Fix ELF header.
   auto NewEhdr = *Obj->getHeader();
@@ -2919,8 +2977,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   NewEhdr.e_phoff = PHDRTableOffset;
   NewEhdr.e_phnum = Phnum;
   NewEhdr.e_shoff = SHTOffset;
-  NewEhdr.e_shnum = NewEhdr.e_shnum + NumNewSections;
-  NewEhdr.e_shstrndx = NewEhdr.e_shstrndx + NumNewSections;
+  NewEhdr.e_shnum = NewEhdr.e_shnum + SectionCountDelta;
+  NewEhdr.e_shstrndx = NewEhdr.e_shstrndx + AllocSectionCountDelta;
   OS.pwrite(reinterpret_cast<const char *>(&NewEhdr), sizeof(NewEhdr), 0);
 
   assert(NewEhdr.e_shnum == CurrentSectionIndex &&
@@ -3291,11 +3349,11 @@ void RewriteInstance::rewriteFile() {
   // Patch program header table.
   patchELFPHDRTable();
 
+  // Finalize memory image of section string table.
+  finalizeSectionStringTable();
+
   // Copy non-allocatable sections once allocatable part is finished.
   rewriteNoteSections();
-
-  // Write string.
-  writeStringTable();
 
   if (opts::Relocs) {
     // Patch dynamic section/segment.
@@ -3417,11 +3475,9 @@ uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {
 }
 
 bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
-  if (opts::UpdateDebugSections) {
-    for (auto &OverwriteName : DebugSectionsToOverwrite) {
-      if (SectionName == OverwriteName)
-        return true;
-    }
+  for (auto &OverwriteName : DebugSectionsToOverwrite) {
+    if (SectionName == OverwriteName)
+      return true;
   }
 
   auto SMII = EFMM->SectionMapInfo.find(SectionName);

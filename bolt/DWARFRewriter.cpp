@@ -422,7 +422,7 @@ void RewriteInstance::generateDebugRanges() {
     }
     const auto &DebugRangesContents = OS.str();
 
-    // Free'd by ExecutableFileMemoryManager.
+    // Freed by ExecutableFileMemoryManager.
     uint8_t *SectionData = new uint8_t[DebugRangesContents.size()];
     memcpy(SectionData, DebugRangesContents.data(), DebugRangesContents.size());
 

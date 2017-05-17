@@ -46,6 +46,7 @@ struct SectionInfo {
   bool     IsReadOnly{false}; /// Is the section read-only?
   bool     IsLocal{false};    /// Is this section local to a function, and
                               /// should only be emitted with the function?
+  bool     IsStrTab{false};   /// Is this a string table section.
   uint64_t FileAddress{0};    /// Address for the output file (final address).
   uint64_t FileOffset{0};     /// Offset in the output file.
   unsigned SectionID{0};      /// Unique ID used for address mapping.
@@ -309,8 +310,8 @@ private:
   /// Patch .rela.plt section.
   ELF_FUNCTION(patchELFRelaPLT);
 
-  /// Write .shstrtab.
-  ELF_FUNCTION(writeStringTable);
+  /// Finalize memory image of section header string table.
+  ELF_FUNCTION(finalizeSectionStringTable);
 
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.
@@ -392,6 +393,7 @@ private:
 
   /// When updating debug info, these are the sections we overwrite.
   static constexpr const char *DebugSectionsToOverwrite[] = {
+    ".shstrtab",
     ".debug_aranges",
     ".debug_line",
     ".debug_ranges",
@@ -456,6 +458,8 @@ private:
   /// Maps section name -> patcher.
   std::map<std::string, std::unique_ptr<BinaryPatcher>> SectionPatchers;
 
+  /// [old section index] -> [new section index] map. Used for adjusting
+  /// referenced section indices.
   std::vector<uint64_t> NewSectionIndex;
 
   uint64_t NewTextSectionStartAddress{0};
