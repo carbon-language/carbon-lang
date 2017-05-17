@@ -1392,6 +1392,16 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   // CTLZ: llvm\test\CodeGen\X86\vector-lzcnt-*.ll
   // CTPOP: llvm\test\CodeGen\X86\vector-popcnt-*.ll
   // CTTZ: llvm\test\CodeGen\X86\vector-tzcnt-*.ll
+  static const CostTblEntry AVX512BWCostTbl[] = {
+    { ISD::BITREVERSE, MVT::v8i64,   5 },
+    { ISD::BITREVERSE, MVT::v16i32,  5 },
+    { ISD::BITREVERSE, MVT::v32i16,  5 },
+    { ISD::BITREVERSE, MVT::v64i8,   5 },
+  };
+  static const CostTblEntry AVX512CostTbl[] = {
+    { ISD::BITREVERSE, MVT::v8i64,  36 },
+    { ISD::BITREVERSE, MVT::v16i32, 24 },
+  };
   static const CostTblEntry XOPCostTbl[] = {
     { ISD::BITREVERSE, MVT::v4i64,   4 },
     { ISD::BITREVERSE, MVT::v8i32,   4 },
@@ -1550,6 +1560,14 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   MVT MTy = LT.second;
 
   // Attempt to lookup cost.
+  if (ST->hasBWI())
+    if (const auto *Entry = CostTableLookup(AVX512BWCostTbl, ISD, MTy))
+      return LT.first * Entry->Cost;
+
+  if (ST->hasAVX512())
+    if (const auto *Entry = CostTableLookup(AVX512CostTbl, ISD, MTy))
+      return LT.first * Entry->Cost;
+
   if (ST->hasXOP())
     if (const auto *Entry = CostTableLookup(XOPCostTbl, ISD, MTy))
       return LT.first * Entry->Cost;
