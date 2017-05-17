@@ -78,9 +78,6 @@ static bool gCrashRecoveryEnabled = false;
 static ManagedStatic<sys::ThreadLocal<const CrashRecoveryContext>>
        tlIsRecoveringFromCrash;
 
-static void installExceptionOrSignalHandlers();
-static void uninstallExceptionOrSignalHandlers();
-
 CrashRecoveryContextCleanup::~CrashRecoveryContextCleanup() {}
 
 CrashRecoveryContext::~CrashRecoveryContext() {
@@ -116,23 +113,6 @@ CrashRecoveryContext *CrashRecoveryContext::GetCurrent() {
   return CRCI->CRC;
 }
 
-void CrashRecoveryContext::Enable() {
-  sys::ScopedLock L(*gCrashRecoveryContextMutex);
-  // FIXME: Shouldn't this be a refcount or something?
-  if (gCrashRecoveryEnabled)
-    return;
-  gCrashRecoveryEnabled = true;
-  installExceptionOrSignalHandlers();
-}
-
-void CrashRecoveryContext::Disable() {
-  sys::ScopedLock L(*gCrashRecoveryContextMutex);
-  if (!gCrashRecoveryEnabled)
-    return;
-  gCrashRecoveryEnabled = false;
-  uninstallExceptionOrSignalHandlers();
-}
-
 void CrashRecoveryContext::registerCleanup(CrashRecoveryContextCleanup *cleanup)
 {
   if (!cleanup)
@@ -160,51 +140,27 @@ CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
   delete cleanup;
 }
 
-#if defined(_MSC_VER)
-// If _MSC_VER is defined, we must have SEH. Use it if it's available. It's way
-// better than VEH. Vectored exception handling catches all exceptions happening
-// on the thread with installed exception handlers, so it can interfere with
-// internal exception handling of other libraries on that thread. SEH works
-// exactly as you would expect normal exception handling to work: it only
-// catches exceptions if they would bubble out from the stack frame with __try /
-// __except.
+#ifdef LLVM_ON_WIN32
 
-static void installExceptionOrSignalHandlers() {}
-static void uninstallExceptionOrSignalHandlers() {}
+#include "Windows/WindowsSupport.h"
 
-bool CrashRecoveryContext::RunSafely(function_ref<void()> Fn) {
-  bool Result = true;
-  __try {
-    Fn();
-  } __except (1) { // Catch any exception.
-    Result = false;
-  }
-  return Result;
-}
-
-#else // !_MSC_VER
-
-#if defined(LLVM_ON_WIN32)
-// This is a non-MSVC compiler, probably mingw gcc or clang without
-// -fms-extensions. Use vectored exception handling (VEH).
+// On Windows, we can make use of vectored exception handling to
+// catch most crashing situations.  Note that this does mean
+// we will be alerted of exceptions *before* structured exception
+// handling has the opportunity to catch it.  But that isn't likely
+// to cause problems because nowhere in the project is SEH being
+// used.
 //
-// On Windows, we can make use of vectored exception handling to catch most
-// crashing situations.  Note that this does mean we will be alerted of
-// exceptions *before* structured exception handling has the opportunity to
-// catch it. Unfortunately, this causes problems in practice with other code
-// running on threads with LLVM crash recovery contexts, so we would like to
-// eventually move away from VEH.
-//
-// Vectored works on a per-thread basis, which is an advantage over
-// SetUnhandledExceptionFilter. SetUnhandledExceptionFilter also doesn't have
-// any native support for chaining exception handlers, but VEH allows more than
-// one.
+// Vectored exception handling is built on top of SEH, and so it
+// works on a per-thread basis.
 //
 // The vectored exception handler functionality was added in Windows
 // XP, so if support for older versions of Windows is required,
 // it will have to be added.
-
-#include "Windows/WindowsSupport.h"
+//
+// If we want to support as far back as Win2k, we could use the
+// SetUnhandledExceptionFilter API, but there's a risk of that
+// being entirely overwritten (it's not a chain).
 
 static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 {
@@ -247,7 +203,14 @@ static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 // non-NULL, valid VEH handles, or NULL.
 static sys::ThreadLocal<const void> sCurrentExceptionHandle;
 
-static void installExceptionOrSignalHandlers() {
+void CrashRecoveryContext::Enable() {
+  sys::ScopedLock L(*gCrashRecoveryContextMutex);
+
+  if (gCrashRecoveryEnabled)
+    return;
+
+  gCrashRecoveryEnabled = true;
+
   // We can set up vectored exception handling now.  We will install our
   // handler as the front of the list, though there's no assurances that
   // it will remain at the front (another call could install itself before
@@ -256,7 +219,14 @@ static void installExceptionOrSignalHandlers() {
   sCurrentExceptionHandle.set(handle);
 }
 
-static void uninstallExceptionOrSignalHandlers() {
+void CrashRecoveryContext::Disable() {
+  sys::ScopedLock L(*gCrashRecoveryContextMutex);
+
+  if (!gCrashRecoveryEnabled)
+    return;
+
+  gCrashRecoveryEnabled = false;
+
   PVOID currentHandle = const_cast<PVOID>(sCurrentExceptionHandle.get());
   if (currentHandle) {
     // Now we can remove the vectored exception handler from the chain
@@ -267,7 +237,7 @@ static void uninstallExceptionOrSignalHandlers() {
   }
 }
 
-#else // !LLVM_ON_WIN32
+#else
 
 // Generic POSIX implementation.
 //
@@ -319,7 +289,14 @@ static void CrashRecoverySignalHandler(int Signal) {
     const_cast<CrashRecoveryContextImpl*>(CRCI)->HandleCrash();
 }
 
-static void installExceptionOrSignalHandlers() {
+void CrashRecoveryContext::Enable() {
+  sys::ScopedLock L(*gCrashRecoveryContextMutex);
+
+  if (gCrashRecoveryEnabled)
+    return;
+
+  gCrashRecoveryEnabled = true;
+
   // Setup the signal handler.
   struct sigaction Handler;
   Handler.sa_handler = CrashRecoverySignalHandler;
@@ -331,13 +308,20 @@ static void installExceptionOrSignalHandlers() {
   }
 }
 
-static void uninstallExceptionOrSignalHandlers() {
+void CrashRecoveryContext::Disable() {
+  sys::ScopedLock L(*gCrashRecoveryContextMutex);
+
+  if (!gCrashRecoveryEnabled)
+    return;
+
+  gCrashRecoveryEnabled = false;
+
   // Restore the previous signal handlers.
   for (unsigned i = 0; i != NumSignals; ++i)
     sigaction(Signals[i], &PrevActions[i], nullptr);
 }
 
-#endif // !LLVM_ON_WIN32
+#endif
 
 bool CrashRecoveryContext::RunSafely(function_ref<void()> Fn) {
   // If crash recovery is disabled, do nothing.
@@ -354,8 +338,6 @@ bool CrashRecoveryContext::RunSafely(function_ref<void()> Fn) {
   Fn();
   return true;
 }
-
-#endif // !_MSC_VER
 
 void CrashRecoveryContext::HandleCrash() {
   CrashRecoveryContextImpl *CRCI = (CrashRecoveryContextImpl *) Impl;
