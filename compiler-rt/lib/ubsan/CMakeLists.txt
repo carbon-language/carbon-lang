@@ -34,6 +34,14 @@ set(UBSAN_CXXFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_rtti_flag(ON UBSAN_CXXFLAGS)
 append_list_if(SANITIZER_CAN_USE_CXXABI -DUBSAN_CAN_USE_CXXABI UBSAN_CXXFLAGS)
 
+append_list_if(COMPILER_RT_HAS_LIBDL dl UBSAN_DYNAMIC_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBLOG log UBSAN_DYNAMIC_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBC c UBSAN_DYNAMIC_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBRT rt UBSAN_DYNAMIC_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBM m UBSAN_DYNAMIC_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBPTHREAD pthread UBSAN_DYNAMIC_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBSTDCXX stdc++ UBSAN_DYNAMIC_LIBS)
+ 
 add_compiler_rt_component(ubsan)
 
 if(APPLE)
@@ -142,6 +150,27 @@ else()
       ARCHS ${UBSAN_SUPPORTED_ARCH}
       OBJECT_LIBS RTUbsan_cxx
       CFLAGS ${UBSAN_CXXFLAGS}
+      PARENT_TARGET ubsan)
+
+    add_compiler_rt_runtime(clang_rt.ubsan_standalone
+      SHARED
+      ARCHS ${UBSAN_SUPPORTED_ARCH}
+      OBJECT_LIBS RTSanitizerCommon
+              RTSanitizerCommonLibc
+              RTUbsan
+      CFLAGS ${UBSAN_CFLAGS}
+      LINK_LIBS ${UBSAN_DYNAMIC_LIBS}
+      PARENT_TARGET ubsan)
+
+    add_compiler_rt_runtime(clang_rt.ubsan_standalone_cxx
+      SHARED
+      ARCHS ${UBSAN_SUPPORTED_ARCH}
+      OBJECT_LIBS RTSanitizerCommon
+              RTSanitizerCommonLibc
+              RTUbsan
+              RTUbsan_cxx
+      CFLAGS ${UBSAN_CXXFLAGS}
+      LINK_LIBS ${UBSAN_DYNAMIC_LIBS}
       PARENT_TARGET ubsan)
 
     if (UNIX)
