@@ -438,6 +438,7 @@ bool X86PassConfig::addPreISel() {
 
 void X86PassConfig::addPreRegAlloc() {
   if (getOptLevel() != CodeGenOpt::None) {
+    addPass(&LiveRangeShrinkID);
     addPass(createX86FixupSetCC());
     addPass(createX86OptimizeLEAs());
     addPass(createX86CallFrameOptimization());
