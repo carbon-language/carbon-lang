@@ -634,6 +634,78 @@ S3 s3;
 #endif
 }  // namespace Using
 
+namespace RecordType {
+#if defined(FIRST)
+struct B1 {};
+struct S1 {
+  B1 x;
+};
+#elif defined(SECOND)
+struct A1 {};
+struct S1 {
+  A1 x;
+};
+#else
+S1 s1;
+// expected-error@first.h:* {{'RecordType::S1::x' from module 'FirstModule' is not present in definition of 'RecordType::S1' in module 'SecondModule'}}
+// expected-note@second.h:* {{declaration of 'x' does not match}}
+#endif
+}
+
+namespace DependentType {
+#if defined(FIRST)
+template <class T>
+class S1 {
+  typename T::typeA x;
+};
+#elif defined(SECOND)
+template <class T>
+class S1 {
+  typename T::typeB x;
+};
+#else
+template<class T>
+using U1 = S1<T>;
+// expected-error@first.h:* {{'DependentType::S1::x' from module 'FirstModule' is not present in definition of 'S1<T>' in module 'SecondModule'}}
+// expected-note@second.h:* {{declaration of 'x' does not match}}
+#endif
+}
+
+namespace ElaboratedType {
+#if defined(FIRST)
+namespace N1 { using type = double; }
+struct S1 {
+  N1::type x;
+};
+#elif defined(SECOND)
+namespace N1 { using type = int; }
+struct S1 {
+  N1::type x;
+};
+#else
+S1 s1;
+// expected-error@first.h:* {{'ElaboratedType::S1::x' from module 'FirstModule' is not present in definition of 'ElaboratedType::S1' in module 'SecondModule'}}
+// expected-note@second.h:* {{declaration of 'x' does not match}}
+#endif
+}
+
+namespace Enum {
+#if defined(FIRST)
+enum A1 {};
+struct S1 {
+  A1 x;
+};
+#elif defined(SECOND)
+enum A2 {};
+struct S1 {
+  A2 x;
+};
+#else
+S1 s1;
+// expected-error@first.h:* {{'Enum::S1::x' from module 'FirstModule' is not present in definition of 'Enum::S1' in module 'SecondModule'}}
+// expected-note@second.h:* {{declaration of 'x' does not match}}
+#endif
+}
 
 // Interesting cases that should not cause errors.  struct S should not error
 // while struct T should error at the access specifier mismatch at the end.

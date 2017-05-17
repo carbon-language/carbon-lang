@@ -335,6 +335,20 @@ public:
     Hash.AddQualType(T);
   }
 
+  void AddNestedNameSpecifier(const NestedNameSpecifier *NNS) {
+    Hash.AddBoolean(NNS);
+    if (NNS) {
+      Hash.AddNestedNameSpecifier(NNS);
+    }
+  }
+
+  void AddIdentifierInfo(const IdentifierInfo *II) {
+    Hash.AddBoolean(II);
+    if (II) {
+      Hash.AddIdentifierInfo(II);
+    }
+  }
+
   void VisitQualifiers(Qualifiers Quals) {
     ID.AddInteger(Quals.getAsOpaqueValue());
   }
@@ -413,6 +427,42 @@ public:
     AddDecl(T->getDecl());
     AddQualType(T->getDecl()->getUnderlyingType().getCanonicalType());
     VisitType(T);
+  }
+
+  void VisitTagType(const TagType *T) {
+    AddDecl(T->getDecl());
+    VisitType(T);
+  }
+
+  void VisitRecordType(const RecordType *T) { VisitTagType(T); }
+  void VisitEnumType(const EnumType *T) { VisitTagType(T); }
+
+  void VisitTypeWithKeyword(const TypeWithKeyword *T) {
+    ID.AddInteger(T->getKeyword());
+    VisitType(T);
+  };
+
+  void VisitDependentNameType(const DependentNameType *T) {
+    AddNestedNameSpecifier(T->getQualifier());
+    AddIdentifierInfo(T->getIdentifier());
+    VisitTypeWithKeyword(T);
+  }
+
+  void VisitDependentTemplateSpecializationType(
+      const DependentTemplateSpecializationType *T) {
+    AddIdentifierInfo(T->getIdentifier());
+    AddNestedNameSpecifier(T->getQualifier());
+    ID.AddInteger(T->getNumArgs());
+    for (const auto &TA : T->template_arguments()) {
+      Hash.AddTemplateArgument(TA);
+    }
+    VisitTypeWithKeyword(T);
+  }
+
+  void VisitElaboratedType(const ElaboratedType *T) {
+    AddNestedNameSpecifier(T->getQualifier());
+    AddQualType(T->getNamedType());
+    VisitTypeWithKeyword(T);
   }
 };
 
