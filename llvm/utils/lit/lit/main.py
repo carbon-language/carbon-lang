@@ -282,6 +282,9 @@ def main_with_tmp(builtinParameters):
     debug_group.add_argument("--show-tests", dest="showTests",
                       help="Show all discovered tests",
                       action="store_true", default=False)
+    debug_group.add_argument("--use-processes", dest="executionStrategy",
+                      help="Run tests in parallel with processes (not threads)",
+                      action="store_const", const="PROCESSES")
 
     opts = parser.parse_args()
     args = opts.test_paths
