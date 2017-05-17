@@ -8,10 +8,10 @@ sections:
     Alignment:       4
     SectionData:     0000000000000000
     Relocations:
-  - VirtualAddress:  0
+      - VirtualAddress:  0
         SymbolName:      exportfn1
         Type:            IMAGE_REL_AMD64_ADDR32NB
-  - VirtualAddress:  4
+      - VirtualAddress:  4
         SymbolName:      exportfn2
         Type:            IMAGE_REL_AMD64_ADDR32NB
 symbols:
