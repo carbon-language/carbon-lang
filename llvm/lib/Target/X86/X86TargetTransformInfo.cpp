@@ -1392,11 +1392,29 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   // CTLZ: llvm\test\CodeGen\X86\vector-lzcnt-*.ll
   // CTPOP: llvm\test\CodeGen\X86\vector-popcnt-*.ll
   // CTTZ: llvm\test\CodeGen\X86\vector-tzcnt-*.ll
+  static const CostTblEntry AVX512CDCostTbl[] = {
+    { ISD::CTLZ,       MVT::v8i64,   1 },
+    { ISD::CTLZ,       MVT::v16i32,  1 },
+    { ISD::CTLZ,       MVT::v32i16,  8 },
+    { ISD::CTLZ,       MVT::v64i8,  20 },
+    { ISD::CTLZ,       MVT::v4i64,   1 },
+    { ISD::CTLZ,       MVT::v8i32,   1 },
+    { ISD::CTLZ,       MVT::v16i16,  4 },
+    { ISD::CTLZ,       MVT::v32i8,  10 },
+    { ISD::CTLZ,       MVT::v2i64,   1 },
+    { ISD::CTLZ,       MVT::v4i32,   1 },
+    { ISD::CTLZ,       MVT::v8i16,   4 },
+    { ISD::CTLZ,       MVT::v16i8,   4 },
+  };
   static const CostTblEntry AVX512BWCostTbl[] = {
     { ISD::BITREVERSE, MVT::v8i64,   5 },
     { ISD::BITREVERSE, MVT::v16i32,  5 },
     { ISD::BITREVERSE, MVT::v32i16,  5 },
     { ISD::BITREVERSE, MVT::v64i8,   5 },
+    { ISD::CTLZ,       MVT::v8i64,  23 },
+    { ISD::CTLZ,       MVT::v16i32, 22 },
+    { ISD::CTLZ,       MVT::v32i16, 18 },
+    { ISD::CTLZ,       MVT::v64i8,  17 },
     { ISD::CTTZ,       MVT::v8i64,  10 },
     { ISD::CTTZ,       MVT::v16i32, 14 },
     { ISD::CTTZ,       MVT::v32i16, 12 },
@@ -1405,6 +1423,8 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   static const CostTblEntry AVX512CostTbl[] = {
     { ISD::BITREVERSE, MVT::v8i64,  36 },
     { ISD::BITREVERSE, MVT::v16i32, 24 },
+    { ISD::CTLZ,       MVT::v8i64,  29 },
+    { ISD::CTLZ,       MVT::v16i32, 35 },
     { ISD::CTTZ,       MVT::v8i64,  20 },
     { ISD::CTTZ,       MVT::v16i32, 28 },
   };
@@ -1566,6 +1586,10 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   MVT MTy = LT.second;
 
   // Attempt to lookup cost.
+  if (ST->hasCDI())
+    if (const auto *Entry = CostTableLookup(AVX512CDCostTbl, ISD, MTy))
+      return LT.first * Entry->Cost;
+
   if (ST->hasBWI())
     if (const auto *Entry = CostTableLookup(AVX512BWCostTbl, ISD, MTy))
       return LT.first * Entry->Cost;
