@@ -1397,10 +1397,16 @@ int X86TTIImpl::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
     { ISD::BITREVERSE, MVT::v16i32,  5 },
     { ISD::BITREVERSE, MVT::v32i16,  5 },
     { ISD::BITREVERSE, MVT::v64i8,   5 },
+    { ISD::CTTZ,       MVT::v8i64,  10 },
+    { ISD::CTTZ,       MVT::v16i32, 14 },
+    { ISD::CTTZ,       MVT::v32i16, 12 },
+    { ISD::CTTZ,       MVT::v64i8,   9 },
   };
   static const CostTblEntry AVX512CostTbl[] = {
     { ISD::BITREVERSE, MVT::v8i64,  36 },
     { ISD::BITREVERSE, MVT::v16i32, 24 },
+    { ISD::CTTZ,       MVT::v8i64,  20 },
+    { ISD::CTTZ,       MVT::v16i32, 28 },
   };
   static const CostTblEntry XOPCostTbl[] = {
     { ISD::BITREVERSE, MVT::v4i64,   4 },
