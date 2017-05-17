@@ -164,15 +164,13 @@ CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
 
 static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
 {
-#ifdef DBG_PRINTEXCEPTION_WIDE_C
-  constexpr ULONG WideDbgPrintValue = DBG_PRINTEXCEPTION_WIDE_C;
-#else
-  constexpr ULONG WideDbgPrintValue = 0x4001000AL;
-#endif
+  // DBG_PRINTEXCEPTION_WIDE_C is not properly defined on all supported
+  // compilers and platforms, so we define it manually.
+  constexpr ULONG DbgPrintExceptionWideC = 0x4001000AL;
   switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
   {
   case DBG_PRINTEXCEPTION_C:
-  case WideDbgPrintValue:
+  case DbgPrintExceptionWideC:
   case 0x406D1388:  // set debugger thread name
     return EXCEPTION_CONTINUE_EXECUTION;
   }
