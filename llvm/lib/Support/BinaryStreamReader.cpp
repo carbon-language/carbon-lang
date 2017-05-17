@@ -13,9 +13,18 @@
 #include "llvm/Support/BinaryStreamRef.h"
 
 using namespace llvm;
+using endianness = llvm::support::endianness;
 
-BinaryStreamReader::BinaryStreamReader(BinaryStreamRef S)
-    : Stream(S), Offset(0) {}
+BinaryStreamReader::BinaryStreamReader(BinaryStreamRef Ref) : Stream(Ref) {}
+
+BinaryStreamReader::BinaryStreamReader(BinaryStream &Stream) : Stream(Stream) {}
+
+BinaryStreamReader::BinaryStreamReader(ArrayRef<uint8_t> Data,
+                                       endianness Endian)
+    : Stream(Data, Endian) {}
+
+BinaryStreamReader::BinaryStreamReader(StringRef Data, endianness Endian)
+    : Stream(Data, Endian) {}
 
 Error BinaryStreamReader::readLongestContiguousChunk(
     ArrayRef<uint8_t> &Buffer) {

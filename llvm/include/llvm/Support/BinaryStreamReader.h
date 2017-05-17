@@ -32,7 +32,21 @@ namespace llvm {
 class BinaryStreamReader {
 public:
   BinaryStreamReader() = default;
-  explicit BinaryStreamReader(BinaryStreamRef Stream);
+  explicit BinaryStreamReader(BinaryStreamRef Ref);
+  explicit BinaryStreamReader(BinaryStream &Stream);
+  explicit BinaryStreamReader(ArrayRef<uint8_t> Data,
+                              llvm::support::endianness Endian);
+  explicit BinaryStreamReader(StringRef Data, llvm::support::endianness Endian);
+
+  BinaryStreamReader(const BinaryStreamReader &Other)
+      : Stream(Other.Stream), Offset(Other.Offset) {}
+
+  BinaryStreamReader &operator=(const BinaryStreamReader &Other) {
+    Stream = Other.Stream;
+    Offset = Other.Offset;
+    return *this;
+  }
+
   virtual ~BinaryStreamReader() {}
 
   /// Read as much as possible from the underlying string at the current offset
@@ -249,7 +263,7 @@ public:
 
 private:
   BinaryStreamRef Stream;
-  uint32_t Offset;
+  uint32_t Offset = 0;
 };
 } // namespace llvm
 
