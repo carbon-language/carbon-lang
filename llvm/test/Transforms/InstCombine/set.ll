@@ -152,10 +152,8 @@ define <3 x i1> @test14vec(<3 x i1> %A, <3 x i1> %B) {
 
 define i1 @bool_eq0(i64 %a) {
 ; CHECK-LABEL: @bool_eq0(
-; CHECK-NEXT:    [[B:%.*]] = icmp sgt i64 %a, 0
-; CHECK-NEXT:    [[C:%.*]] = icmp eq i64 %a, 1
-; CHECK-NEXT:    [[AND:%.*]] = xor i1 [[C]], [[B]]
-; CHECK-NEXT:    ret i1 [[AND]]
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i64 %a, 1
+; CHECK-NEXT:    ret i1 [[TMP1]]
 ;
   %b = icmp sgt i64 %a, 0
   %c = icmp eq i64 %a, 1

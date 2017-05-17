@@ -4266,6 +4266,29 @@ static Instruction *canonicalizeICmpBool(ICmpInst &I,
   Value *A = I.getOperand(0), *B = I.getOperand(1);
   assert(A->getType()->getScalarType()->isIntegerTy(1) && "Bools only");
 
+  // A boolean compared to true/false can be simplified to Op0/true/false in
+  // 14 out of the 20 (10 predicates * 2 constants) possible combinations.
+  // Cases not handled by InstSimplify are always 'not' of Op0.
+  if (match(B, m_Zero())) {
+    switch (I.getPredicate()) {
+      case CmpInst::ICMP_EQ:  // A ==   0 -> !A
+      case CmpInst::ICMP_ULE: // A <=u  0 -> !A
+      case CmpInst::ICMP_SGE: // A >=s  0 -> !A
+        return BinaryOperator::CreateNot(A);
+      default:
+        llvm_unreachable("ICmp i1 X, C not simplified as expected.");
+    }
+  } else if (match(B, m_One())) {
+    switch (I.getPredicate()) {
+      case CmpInst::ICMP_NE:  // A !=  1 -> !A
+      case CmpInst::ICMP_ULT: // A <u  1 -> !A
+      case CmpInst::ICMP_SGT: // A >s -1 -> !A
+        return BinaryOperator::CreateNot(A);
+      default:
+        llvm_unreachable("ICmp i1 X, C not simplified as expected.");
+    }
+  }
+
   switch (I.getPredicate()) {
   default:
     llvm_unreachable("Invalid icmp instruction!");
