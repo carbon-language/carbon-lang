@@ -57,14 +57,33 @@ public:
     return Result;
   }
 
-  /// Return a new BinaryStreamRef with only the first \p N elements remaining.
-  RefType keep_front(uint32_t N) const {
+  /// Return a new BinaryStreamRef with the first \p N elements removed.
+  RefType drop_back(uint32_t N) const {
     if (!BorrowedImpl)
       return RefType();
+
     N = std::min(N, Length);
     RefType Result(static_cast<const RefType &>(*this));
-    Result.Length = N;
+    Result.Length -= N;
     return Result;
+  }
+
+  /// Return a new BinaryStreamRef with only the first \p N elements remaining.
+  RefType keep_front(uint32_t N) const {
+    assert(N <= getLength());
+    return drop_back(getLength() - N);
+  }
+
+  /// Return a new BinaryStreamRef with only the last \p N elements remaining.
+  RefType keep_back(uint32_t N) const {
+    assert(N <= getLength());
+    return drop_front(getLength() - N);
+  }
+
+  /// Return a new BinaryStreamRef with the first and last \p N elements
+  /// removed.
+  RefType drop_symmetric(uint32_t N) const {
+    return drop_front(N).drop_back(N);
   }
 
   /// Return a new BinaryStreamRef with the first \p Offset elements removed,

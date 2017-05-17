@@ -258,6 +258,8 @@ public:
   /// \returns the next byte in the stream.
   uint8_t peek() const;
 
+  Error padToAlignment(uint32_t Align);
+
   std::pair<BinaryStreamReader, BinaryStreamReader>
   split(uint32_t Offset) const;
 

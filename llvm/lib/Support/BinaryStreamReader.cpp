@@ -95,6 +95,11 @@ Error BinaryStreamReader::skip(uint32_t Amount) {
   return Error::success();
 }
 
+Error BinaryStreamReader::padToAlignment(uint32_t Align) {
+  uint32_t NewOffset = alignTo(Offset, Align);
+  return skip(NewOffset - Offset);
+}
+
 uint8_t BinaryStreamReader::peek() const {
   ArrayRef<uint8_t> Buffer;
   auto EC = Stream.readBytes(Offset, 1, Buffer);
