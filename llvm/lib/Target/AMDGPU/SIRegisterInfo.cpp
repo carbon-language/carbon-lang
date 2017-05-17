@@ -318,8 +318,11 @@ void SIRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
 
   MachineOperand *FIOp = TII->getNamedOperand(MI, AMDGPU::OpName::vaddr);
   assert(FIOp && FIOp->isFI() && "frame index must be address operand");
-
   assert(TII->isMUBUF(MI));
+  assert(TII->getNamedOperand(MI, AMDGPU::OpName::soffset)->getReg() ==
+         MF->getInfo<SIMachineFunctionInfo>()->getFrameOffsetReg() &&
+         "should only be seeing frame offset relative FrameIndex");
+
 
   MachineOperand *OffsetOp = TII->getNamedOperand(MI, AMDGPU::OpName::offset);
   int64_t NewOffset = OffsetOp->getImm() + Offset;
@@ -981,11 +984,71 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
     }
 
     default: {
-      if (TII->isMUBUF(*MI)) {
+      const DebugLoc &DL = MI->getDebugLoc();
+      bool IsMUBUF = TII->isMUBUF(*MI);
+
+      if (!IsMUBUF &&
+          MFI->getFrameOffsetReg() != MFI->getScratchWaveOffsetReg()) {
+        // Convert to an absolute stack address by finding the offset from the
+        // scratch wave base and scaling by the wave size.
+        //
+        // In an entry function/kernel the stack address is already the absolute
+        // address relative to the the scratch wave offset.
+
+        unsigned DiffReg
+          = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
+
+        bool IsCopy = MI->getOpcode() == AMDGPU::V_MOV_B32_e32;
+        unsigned ResultReg = IsCopy ?
+          MI->getOperand(0).getReg() :
+          MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
+
+        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_SUB_U32), DiffReg)
+          .addReg(MFI->getFrameOffsetReg())
+          .addReg(MFI->getScratchWaveOffsetReg());
+
+        int64_t Offset = FrameInfo.getObjectOffset(Index);
+        if (Offset == 0) {
+          // XXX - This never happens because of emergency scavenging slot at 0?
+          BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_LSHRREV_B32_e64), ResultReg)
+            .addImm(Log2_32(ST.getWavefrontSize()))
+            .addReg(DiffReg);
+        } else {
+          unsigned CarryOut
+            = MRI.createVirtualRegister(&AMDGPU::SReg_64_XEXECRegClass);
+          unsigned ScaledReg
+            = MRI.createVirtualRegister(&AMDGPU::SReg_32_XM0RegClass);
+
+          // XXX - Should this use a vector shift?
+          BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_LSHR_B32), ScaledReg)
+            .addReg(DiffReg, RegState::Kill)
+            .addImm(Log2_32(ST.getWavefrontSize()));
+
+          // TODO: Fold if use instruction is another add of a constant.
+          BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_ADD_I32_e64), ResultReg)
+            .addReg(CarryOut, RegState::Define | RegState::Dead)
+            .addImm(Offset)
+            .addReg(ScaledReg, RegState::Kill);
+
+          MRI.setRegAllocationHint(CarryOut, 0, AMDGPU::VCC);
+        }
+
+        // Don't introduce an extra copy if we're just materializing in a mov.
+        if (IsCopy)
+          MI->eraseFromParent();
+        else
+          FIOp.ChangeToRegister(ResultReg, false, false, true);
+        return;
+      }
+
+      if (IsMUBUF) {
         // Disable offen so we don't need a 0 vgpr base.
         assert(static_cast<int>(FIOperandNum) ==
                AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                           AMDGPU::OpName::vaddr));
+
+        assert(TII->getNamedOperand(*MI, AMDGPU::OpName::soffset)->getReg()
+               == MFI->getFrameOffsetReg());
 
         int64_t Offset = FrameInfo.getObjectOffset(Index);
         int64_t OldImm
@@ -995,17 +1058,19 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
         if (isUInt<12>(NewOffset) &&
             buildMUBUFOffsetLoadStore(TII, FrameInfo, MI, Index, NewOffset)) {
           MI->eraseFromParent();
-          break;
+          return;
         }
       }
+
+      // If the offset is simply too big, don't convert to a scratch wave offset
+      // relative index.
 
       int64_t Offset = FrameInfo.getObjectOffset(Index);
       FIOp.ChangeToImmediate(Offset);
       if (!TII->isImmOperandLegal(*MI, FIOperandNum, FIOp)) {
         unsigned TmpReg = MRI.createVirtualRegister(&AMDGPU::VGPR_32RegClass);
-        BuildMI(*MBB, MI, MI->getDebugLoc(),
-                TII->get(AMDGPU::V_MOV_B32_e32), TmpReg)
-                .addImm(Offset);
+        BuildMI(*MBB, MI, DL, TII->get(AMDGPU::V_MOV_B32_e32), TmpReg)
+          .addImm(Offset);
         FIOp.ChangeToRegister(TmpReg, false, false, true);
       }
     }
