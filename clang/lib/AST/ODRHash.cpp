@@ -81,7 +81,35 @@ void ODRHash::AddDeclarationName(DeclarationName Name) {
   }
 }
 
-void ODRHash::AddNestedNameSpecifier(const NestedNameSpecifier *NNS) {}
+void ODRHash::AddNestedNameSpecifier(const NestedNameSpecifier *NNS) {
+  assert(NNS && "Expecting non-null pointer.");
+  const auto *Prefix = NNS->getPrefix();
+  AddBoolean(Prefix);
+  if (Prefix) {
+    AddNestedNameSpecifier(Prefix);
+  }
+  auto Kind = NNS->getKind();
+  ID.AddInteger(Kind);
+  switch (Kind) {
+  case NestedNameSpecifier::Identifier:
+    AddIdentifierInfo(NNS->getAsIdentifier());
+    break;
+  case NestedNameSpecifier::Namespace:
+    AddDecl(NNS->getAsNamespace());
+    break;
+  case NestedNameSpecifier::NamespaceAlias:
+    AddDecl(NNS->getAsNamespaceAlias());
+    break;
+  case NestedNameSpecifier::TypeSpec:
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+    AddType(NNS->getAsType());
+    break;
+  case NestedNameSpecifier::Global:
+  case NestedNameSpecifier::Super:
+    break;
+  }
+}
+
 void ODRHash::AddTemplateName(TemplateName Name) {}
 void ODRHash::AddTemplateArgument(TemplateArgument TA) {}
 void ODRHash::AddTemplateParameterList(const TemplateParameterList *TPL) {}
