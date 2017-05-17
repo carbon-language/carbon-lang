@@ -654,11 +654,11 @@ bool SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
       int64_t Offset = (ST.getWavefrontSize() * FrOffset) + (EltSize * i);
       if (Offset != 0) {
         BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_ADD_U32), OffsetReg)
-          .addReg(MFI->getScratchWaveOffsetReg())
+          .addReg(MFI->getFrameOffsetReg())
           .addImm(Offset);
       } else {
         BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_MOV_B32), OffsetReg)
-          .addReg(MFI->getScratchWaveOffsetReg());
+          .addReg(MFI->getFrameOffsetReg());
       }
 
       BuildMI(*MBB, MI, DL, TII->get(ScalarStoreOp))
@@ -715,11 +715,11 @@ bool SIRegisterInfo::spillSGPR(MachineBasicBlock::iterator MI,
         = MF->getMachineMemOperand(PtrInfo, MachineMemOperand::MOStore,
                                    EltSize, MinAlign(Align, EltSize * i));
       BuildMI(*MBB, MI, DL, TII->get(AMDGPU::SI_SPILL_V32_SAVE))
-        .addReg(TmpReg, RegState::Kill)         // src
-        .addFrameIndex(Index)                   // vaddr
-        .addReg(MFI->getScratchRSrcReg())       // srrsrc
-        .addReg(MFI->getScratchWaveOffsetReg()) // soffset
-        .addImm(i * 4)                          // offset
+        .addReg(TmpReg, RegState::Kill)    // src
+        .addFrameIndex(Index)              // vaddr
+        .addReg(MFI->getScratchRSrcReg())  // srrsrc
+        .addReg(MFI->getFrameOffsetReg())  // soffset
+        .addImm(i * 4)                     // offset
         .addMemOperand(MMO);
     }
   }
@@ -806,11 +806,11 @@ bool SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
       int64_t Offset = (ST.getWavefrontSize() * FrOffset) + (EltSize * i);
       if (Offset != 0) {
         BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_ADD_U32), OffsetReg)
-          .addReg(MFI->getScratchWaveOffsetReg())
+          .addReg(MFI->getFrameOffsetReg())
           .addImm(Offset);
       } else {
         BuildMI(*MBB, MI, DL, TII->get(AMDGPU::S_MOV_B32), OffsetReg)
-          .addReg(MFI->getScratchWaveOffsetReg());
+          .addReg(MFI->getFrameOffsetReg());
       }
 
       auto MIB =
@@ -853,10 +853,10 @@ bool SIRegisterInfo::restoreSGPR(MachineBasicBlock::iterator MI,
         MinAlign(Align, EltSize * i));
 
       BuildMI(*MBB, MI, DL, TII->get(AMDGPU::SI_SPILL_V32_RESTORE), TmpReg)
-        .addFrameIndex(Index)                   // vaddr
-        .addReg(MFI->getScratchRSrcReg())       // srsrc
-        .addReg(MFI->getScratchWaveOffsetReg()) // soffset
-        .addImm(i * 4)                          // offset
+        .addFrameIndex(Index)              // vaddr
+        .addReg(MFI->getScratchRSrcReg())  // srsrc
+        .addReg(MFI->getFrameOffsetReg())  // soffset
+        .addImm(i * 4)                     // offset
         .addMemOperand(MMO);
 
       auto MIB =
