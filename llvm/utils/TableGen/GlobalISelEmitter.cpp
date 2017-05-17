@@ -1538,10 +1538,10 @@ Expected<BuildMIAction &> GlobalISelEmitter::createAndImportInstructionRenderer(
   }
 
   if (NumDefaultOps + Dst->getNumChildren() != DstINumUses)
-    return failedImport("Expected " + std::to_string(DstINumUses) +
+    return failedImport("Expected " + llvm::to_string(DstINumUses) +
                         " used operands but found " +
-                        std::to_string(Dst->getNumChildren()) +
-                        " explicit ones and " + std::to_string(NumDefaultOps) +
+                        llvm::to_string(Dst->getNumChildren()) +
+                        " explicit ones and " + llvm::to_string(NumDefaultOps) +
                         " default ones");
 
   return DstMIBuilder;
