@@ -148,8 +148,6 @@ define <3 x i1> @test14vec(<3 x i1> %A, <3 x i1> %B) {
   ret <3 x i1> %C
 }
 
-; FIXME: Not recognizing the icmp bool with constant exposes a missing fold.
-
 define i1 @bool_eq0(i64 %a) {
 ; CHECK-LABEL: @bool_eq0(
 ; CHECK-NEXT:    [[TMP1:%.*]] = icmp sgt i64 %a, 1
@@ -160,6 +158,21 @@ define i1 @bool_eq0(i64 %a) {
   %notc = icmp eq i1 %c, false
   %and = and i1 %b, %notc
   ret i1 %and
+}
+
+; FIXME: This is equivalent to the previous test.
+
+define i1 @xor_of_icmps(i64 %a) {
+; CHECK-LABEL: @xor_of_icmps(
+; CHECK-NEXT:    [[B:%.*]] = icmp sgt i64 %a, 0
+; CHECK-NEXT:    [[C:%.*]] = icmp eq i64 %a, 1
+; CHECK-NEXT:    [[XOR:%.*]] = xor i1 [[C]], [[B]]
+; CHECK-NEXT:    ret i1 [[XOR]]
+;
+  %b = icmp sgt i64 %a, 0
+  %c = icmp eq i64 %a, 1
+  %xor = xor i1 %c, %b
+  ret i1 %xor
 }
 
 define i1 @test16(i32 %A) {
