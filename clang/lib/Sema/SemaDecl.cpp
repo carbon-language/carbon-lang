@@ -7191,7 +7191,7 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
   // ISO/IEC TR 18037 S5.1.2
   if (!getLangOpts().OpenCL
       && NewVD->hasLocalStorage() && T.getAddressSpace() != 0) {
-    Diag(NewVD->getLocation(), diag::err_as_qualified_auto_decl);
+    Diag(NewVD->getLocation(), diag::err_as_qualified_auto_decl) << 0;
     NewVD->setInvalidDecl();
     return;
   }
@@ -7271,6 +7271,11 @@ void Sema::CheckVariableDeclarationType(VarDecl *NewVD) {
           NewVD->setInvalidDecl();
           return;
         }
+      } else if (T.getAddressSpace() != LangAS::Default) {
+        // Do not allow other address spaces on automatic variable.
+        Diag(NewVD->getLocation(), diag::err_as_qualified_auto_decl) << 1;
+        NewVD->setInvalidDecl();
+        return;
       }
     }
   }
