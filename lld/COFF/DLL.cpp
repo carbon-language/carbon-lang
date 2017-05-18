@@ -391,8 +391,7 @@ std::vector<Chunk *> IdataContents::getChunks() {
   V.insert(V.end(), Lookups.begin(), Lookups.end());
   V.insert(V.end(), Addresses.begin(), Addresses.end());
   V.insert(V.end(), Hints.begin(), Hints.end());
-  for (auto &KV : DLLNames)
-    V.push_back(KV.second);
+  V.insert(V.end(), DLLNames.begin(), DLLNames.end());
   return V;
 }
 
@@ -401,8 +400,6 @@ void IdataContents::create() {
 
   // Create .idata contents for each DLL.
   for (std::vector<DefinedImportData *> &Syms : V) {
-    StringRef Name = Syms[0]->getDLLName();
-
     // Create lookup and address tables. If they have external names,
     // we need to create HintName chunks to store the names.
     // If they don't (if they are import-by-ordinals), we store only
@@ -428,9 +425,8 @@ void IdataContents::create() {
       Syms[I]->setLocation(Addresses[Base + I]);
 
     // Create the import table header.
-    if (!DLLNames.count(Name))
-      DLLNames[Name] = make<StringChunk>(Name);
-    auto *Dir = make<ImportDirectoryChunk>(DLLNames[Name]);
+    DLLNames.push_back(make<StringChunk>(Syms[0]->getDLLName()));
+    auto *Dir = make<ImportDirectoryChunk>(DLLNames.back());
     Dir->LookupTab = Lookups[Base];
     Dir->AddressTab = Addresses[Base];
     Dirs.push_back(Dir);
@@ -444,8 +440,7 @@ std::vector<Chunk *> DelayLoadContents::getChunks() {
   V.insert(V.end(), Dirs.begin(), Dirs.end());
   V.insert(V.end(), Names.begin(), Names.end());
   V.insert(V.end(), HintNames.begin(), HintNames.end());
-  for (auto &KV : DLLNames)
-    V.push_back(KV.second);
+  V.insert(V.end(), DLLNames.begin(), DLLNames.end());
   return V;
 }
 
@@ -466,12 +461,9 @@ void DelayLoadContents::create(Defined *H) {
 
   // Create .didat contents for each DLL.
   for (std::vector<DefinedImportData *> &Syms : V) {
-    StringRef Name = Syms[0]->getDLLName();
-
     // Create the delay import table header.
-    if (!DLLNames.count(Name))
-      DLLNames[Name] = make<StringChunk>(Name);
-    auto *Dir = make<DelayDirectoryChunk>(DLLNames[Name]);
+    DLLNames.push_back(make<StringChunk>(Syms[0]->getDLLName()));
+    auto *Dir = make<DelayDirectoryChunk>(DLLNames.back());
 
     size_t Base = Addresses.size();
     for (DefinedImportData *S : Syms) {
