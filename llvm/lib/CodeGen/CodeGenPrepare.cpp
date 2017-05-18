@@ -350,7 +350,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 
     // Really free removed instructions during promotion.
     for (Instruction *I : RemovedInsts)
-      delete I;
+      I->deleteValue();
 
     EverMadeChange |= MadeChange;
   }
