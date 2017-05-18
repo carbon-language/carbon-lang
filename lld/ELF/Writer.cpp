@@ -403,7 +403,7 @@ template <class ELFT> void Writer<ELFT>::createSyntheticSections() {
     InX::MipsGot = make<MipsGotSection>();
     Add(InX::MipsGot);
   } else {
-    InX::Got = make<GotSection<ELFT>>();
+    InX::Got = make<GotSection>();
     Add(InX::Got);
   }
 
