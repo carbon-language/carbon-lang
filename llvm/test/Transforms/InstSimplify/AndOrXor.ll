@@ -865,3 +865,11 @@ define <2 x i8> @shl_undersized_mask_splat(<2 x i8> %x) {
   ret <2 x i8> %mask
 }
 
+define i32 @reversed_not(i32 %a) {
+; CHECK-LABEL: @reversed_not(
+; CHECK-NEXT:    ret i32 -1
+;
+  %nega = xor i32 -1, %a
+  %or = or i32 %a, %nega
+  ret i32 %or
+}
