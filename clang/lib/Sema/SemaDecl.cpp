@@ -6935,7 +6935,7 @@ void Sema::CheckShadow(NamedDecl *D, NamedDecl *ShadowedDecl,
         }
     }
 
-  DeclContext *OldDC = ShadowedDecl->getDeclContext();
+  DeclContext *OldDC = ShadowedDecl->getDeclContext()->getRedeclContext();
 
   unsigned WarningDiag = diag::warn_decl_shadow;
   SourceLocation CaptureLoc;
