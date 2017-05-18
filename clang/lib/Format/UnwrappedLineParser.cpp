@@ -1636,9 +1636,9 @@ void UnwrappedLineParser::parseForOrWhileLoop() {
   assert(FormatTok->isOneOf(tok::kw_for, tok::kw_while, TT_ForEachMacro) &&
          "'for', 'while' or foreach macro expected");
   nextToken();
-  // JS' for async ( ...
+  // JS' for await ( ...
   if (Style.Language == FormatStyle::LK_JavaScript &&
-      FormatTok->is(Keywords.kw_async))
+      FormatTok->is(Keywords.kw_await))
     nextToken();
   if (FormatTok->Tok.is(tok::l_paren))
     parseParens();
