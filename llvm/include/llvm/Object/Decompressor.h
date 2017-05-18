@@ -30,7 +30,7 @@ public:
 
   /// @brief Resize the buffer and uncompress section data into it.
   /// @param Out         Destination buffer.
-  template <class T> Error Decompressor::resizeAndDecompress(T &Out) {
+  template <class T> Error resizeAndDecompress(T &Out) {
     Out.resize(DecompressedSize);
     return decompress({Out.data(), (size_t)DecompressedSize});
   }
