@@ -1,8 +1,9 @@
-// RUN: %clangxx_msan %s -o %t && not %run %t 2>&1 | FileCheck --check-prefix=ON %s
-// RUN: %clangxx_msan %s -o %t && MSAN_OPTIONS=intercept_strndup=0 %run %t 2>&1 | FileCheck --check-prefix=OFF --allow-empty %s
+// RUN: echo DISABLED
+// DISABLED: %clangxx_msan %s -o %t && not %run %t 2>&1 | FileCheck --check-prefix=ON %s
+// DISABLED: %clangxx_msan %s -o %t && MSAN_OPTIONS=intercept_strndup=0 %run %t 2>&1 | FileCheck --check-prefix=OFF --allow-empty %s
 
 // When built as C on Linux, strndup is transformed to __strndup.
-// RUN: %clangxx_msan -O3 -xc %s -o %t && not %run %t 2>&1 | FileCheck --check-prefix=ON %s
+// DISABLED: %clangxx_msan -O3 -xc %s -o %t && not %run %t 2>&1 | FileCheck --check-prefix=ON %s
 
 // UNSUPPORTED: win32
 
