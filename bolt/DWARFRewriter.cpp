@@ -46,8 +46,18 @@ using namespace object;
 using namespace bolt;
 
 namespace opts {
+
+extern cl::OptionCategory BoltCategory;
 extern cl::opt<unsigned> Verbosity;
-}
+
+static cl::opt<bool>
+KeepARanges("keep-aranges",
+  cl::desc("keep or generate .debug_aranges section if .gdb_index is written"),
+  cl::ZeroOrMore,
+  cl::Hidden,
+  cl::cat(BoltCategory));
+
+} // namespace opts
 
 void RewriteInstance::updateDebugInfo() {
   SectionPatchers[".debug_abbrev"] = llvm::make_unique<DebugAbbrevPatcher>();
@@ -403,7 +413,7 @@ void RewriteInstance::generateDebugRanges() {
   enum { RANGES, ARANGES };
   for (auto RT = RANGES + 0; RT <= ARANGES; ++RT) {
     // Skip .debug_aranges if we are re-generating .gdb_index.
-    if (GdbIndexSection.getObject() && RT == ARANGES)
+    if (!opts::KeepARanges && GdbIndexSection.getObject() && RT == ARANGES)
       continue;
 
     const char *SectionName = (RT == RANGES) ? ".debug_ranges"
