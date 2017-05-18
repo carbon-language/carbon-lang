@@ -164,7 +164,6 @@ struct Configuration {
   bool AppContainer = false;
 
   // This is for debugging.
-  bool DebugPdb = false;
   bool DumpPdb = false;
 };
 
