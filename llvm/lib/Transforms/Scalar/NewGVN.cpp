@@ -3301,6 +3301,10 @@ bool NewGVN::eliminateInstructions(Function &F) {
 
           Value *DominatingLeader = EliminationStack.back();
 
+          auto *II = dyn_cast<IntrinsicInst>(DominatingLeader);
+          if (II && II->getIntrinsicID() == Intrinsic::ssa_copy)
+            DominatingLeader = II->getOperand(0);
+
           // Don't replace our existing users with ourselves.
           if (U->get() == DominatingLeader)
             continue;
@@ -3321,6 +3325,8 @@ bool NewGVN::eliminateInstructions(Function &F) {
           // It's about to be alive again.
           if (LeaderUseCount == 0 && isa<Instruction>(DominatingLeader))
             ProbablyDead.erase(cast<Instruction>(DominatingLeader));
+          if (LeaderUseCount == 0 && II)
+            ProbablyDead.insert(II);
           ++LeaderUseCount;
           AnythingReplaced = true;
         }
