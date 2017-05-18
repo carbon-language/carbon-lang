@@ -31,9 +31,11 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
+#include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/ModuleDebugFileChecksumFragment.h"
 #include "llvm/DebugInfo/CodeView/ModuleDebugInlineeLinesFragment.h"
 #include "llvm/DebugInfo/CodeView/ModuleDebugLineFragment.h"
+#include "llvm/DebugInfo/CodeView/TypeStreamMerger.h"
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
 #include "llvm/DebugInfo/PDB/GenericError.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -99,6 +101,9 @@ cl::SubCommand
 cl::SubCommand
     AnalyzeSubcommand("analyze",
                       "Analyze various aspects of a PDB's structure");
+
+cl::SubCommand MergeSubcommand("merge",
+                               "Merge multiple PDBs into a single PDB");
 
 cl::OptionCategory TypeCategory("Symbol Type Options");
 cl::OptionCategory FilterCategory("Filtering and Sorting Options");
@@ -440,6 +445,15 @@ cl::opt<bool> StringTable("hash-collisions", cl::desc("Find hash collisions"),
 cl::list<std::string> InputFilename(cl::Positional,
                                     cl::desc("<input PDB file>"), cl::Required,
                                     cl::sub(AnalyzeSubcommand));
+}
+
+namespace merge {
+cl::list<std::string> InputFilenames(cl::Positional,
+                                     cl::desc("<input PDB files>"),
+                                     cl::OneOrMore, cl::sub(MergeSubcommand));
+cl::opt<std::string>
+    PdbOutputFile("pdb", cl::desc("the name of the PDB file to write"),
+                  cl::sub(MergeSubcommand));
 }
 }
 
@@ -828,6 +842,54 @@ static void dumpPretty(StringRef Path) {
   outs().flush();
 }
 
+static void mergePdbs() {
+  BumpPtrAllocator Allocator;
+  TypeTableBuilder MergedTpi(Allocator);
+  TypeTableBuilder MergedIpi(Allocator);
+
+  // Create a Tpi and Ipi type table with all types from all input files.
+  for (const auto &Path : opts::merge::InputFilenames) {
+    std::unique_ptr<IPDBSession> Session;
+    auto &File = loadPDB(Path, Session);
+    if (File.hasPDBTpiStream()) {
+      auto &Tpi = ExitOnErr(File.getPDBTpiStream());
+      ExitOnErr(codeview::mergeTypeStreams(MergedIpi, MergedTpi, nullptr,
+                                           Tpi.typeArray()));
+    }
+    if (File.hasPDBIpiStream()) {
+      auto &Ipi = ExitOnErr(File.getPDBIpiStream());
+      ExitOnErr(codeview::mergeTypeStreams(MergedIpi, MergedTpi, nullptr,
+                                           Ipi.typeArray()));
+    }
+  }
+
+  // Then write the PDB.
+  PDBFileBuilder Builder(Allocator);
+  ExitOnErr(Builder.initialize(4096));
+  // Add each of the reserved streams.  We might not put any data in them,
+  // but at least they have to be present.
+  for (uint32_t I = 0; I < kSpecialStreamCount; ++I)
+    ExitOnErr(Builder.getMsfBuilder().addStream(0));
+
+  auto &DestTpi = Builder.getTpiBuilder();
+  auto &DestIpi = Builder.getIpiBuilder();
+  MergedTpi.ForEachRecord(
+      [&DestTpi](TypeIndex TI, MutableArrayRef<uint8_t> Data) {
+        DestTpi.addTypeRecord(Data, None);
+      });
+  MergedIpi.ForEachRecord(
+      [&DestIpi](TypeIndex TI, MutableArrayRef<uint8_t> Data) {
+        DestIpi.addTypeRecord(Data, None);
+      });
+
+  SmallString<64> OutFile = opts::merge::PdbOutputFile;
+  if (OutFile.empty()) {
+    OutFile = opts::merge::InputFilenames[0];
+    llvm::sys::path::replace_extension(OutFile, "merged.pdb");
+  }
+  ExitOnErr(Builder.commit(OutFile));
+}
+
 int main(int argc_, const char *argv_[]) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal(argv_[0]);
@@ -949,6 +1011,12 @@ int main(int argc_, const char *argv_[]) {
       exit(1);
     }
     diff(opts::diff::InputFilenames[0], opts::diff::InputFilenames[1]);
+  } else if (opts::MergeSubcommand) {
+    if (opts::merge::InputFilenames.size() < 2) {
+      errs() << "merge subcommand requires at least 2 input files.\n";
+      exit(1);
+    }
+    mergePdbs();
   }
 
   outs().flush();
