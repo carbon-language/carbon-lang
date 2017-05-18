@@ -643,7 +643,8 @@ private:
   void verifyMemoryCongruency() const;
   void verifyIterationSettled(Function &F);
   void verifyStoreExpressions() const;
-  bool singleReachablePHIPath(const MemoryAccess *, const MemoryAccess *) const;
+  bool singleReachablePHIPath(SmallPtrSet<const MemoryAccess *, 8> &,
+                              const MemoryAccess *, const MemoryAccess *) const;
   BasicBlock *getBlockForValue(Value *V) const;
   void deleteExpression(const Expression *E) const;
   unsigned InstrToDFSNum(const Value *V) const {
@@ -2460,12 +2461,22 @@ void NewGVN::valueNumberInstruction(Instruction *I) {
 
 // Check if there is a path, using single or equal argument phi nodes, from
 // First to Second.
-bool NewGVN::singleReachablePHIPath(const MemoryAccess *First,
-                                    const MemoryAccess *Second) const {
+bool NewGVN::singleReachablePHIPath(
+    SmallPtrSet<const MemoryAccess *, 8> &Visited, const MemoryAccess *First,
+    const MemoryAccess *Second) const {
   if (First == Second)
     return true;
   if (MSSA->isLiveOnEntryDef(First))
     return false;
+
+  // This is not perfect, but as we're just verifying here, we can live with
+  // the loss of precision. The real solution would be that of doing strongly
+  // connected component finding in this routine, and it's probably not worth
+  // the complexity for the time being. So, we just keep a set of visited
+  // MemoryAccess and return true when we hit a cycle.
+  if (Visited.count(First))
+    return true;
+  Visited.insert(First);
 
   const auto *EndDef = First;
   for (auto *ChainDef : optimized_def_chain(First)) {
@@ -2489,7 +2500,8 @@ bool NewGVN::singleReachablePHIPath(const MemoryAccess *First,
     Okay =
         std::equal(OperandList.begin(), OperandList.end(), OperandList.begin());
   if (Okay)
-    return singleReachablePHIPath(cast<MemoryAccess>(OperandList[0]), Second);
+    return singleReachablePHIPath(Visited, cast<MemoryAccess>(OperandList[0]),
+                                  Second);
   return false;
 }
 
@@ -2556,13 +2568,15 @@ void NewGVN::verifyMemoryCongruency() const {
            "Memory not unreachable but ended up in TOP");
     if (auto *FirstMUD = dyn_cast<MemoryUseOrDef>(KV.first)) {
       auto *SecondMUD = dyn_cast<MemoryUseOrDef>(KV.second->getMemoryLeader());
-      if (FirstMUD && SecondMUD)
-        assert((singleReachablePHIPath(FirstMUD, SecondMUD) ||
+      if (FirstMUD && SecondMUD) {
+        SmallPtrSet<const MemoryAccess *, 8> VisitedMAS;
+        assert((singleReachablePHIPath(VisitedMAS, FirstMUD, SecondMUD) ||
                 ValueToClass.lookup(FirstMUD->getMemoryInst()) ==
                     ValueToClass.lookup(SecondMUD->getMemoryInst())) &&
                "The instructions for these memory operations should have "
                "been in the same congruence class or reachable through"
                "a single argument phi");
+      }
     } else if (auto *FirstMP = dyn_cast<MemoryPhi>(KV.first)) {
       // We can only sanely verify that MemoryDefs in the operand list all have
       // the same class.
