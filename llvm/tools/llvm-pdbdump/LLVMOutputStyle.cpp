@@ -668,7 +668,7 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
     auto T = Types.getType(*I);
     if (auto EC = codeview::visitTypeRecord(T, *I, Pipeline))
       return EC;
-  } while (I = Types.getNext(*I));
+  } while ((I = Types.getNext(*I)));
 
   if (DumpTpiHash) {
     DictScope DD(P, "Hash");

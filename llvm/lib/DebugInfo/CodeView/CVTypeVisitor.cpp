@@ -232,7 +232,7 @@ Error CVTypeVisitor::visitTypeStream(TypeCollection &Types) {
     CVType Type = Types.getType(*I);
     if (auto EC = visitTypeRecord(Type, *I))
       return EC;
-  } while (I = Types.getNext(*I));
+  } while ((I = Types.getNext(*I)));
   return Error::success();
 }
 
