@@ -979,7 +979,7 @@ Error DWARFContextInMemory::maybeDecompress(const SectionRef &Sec,
     return Decompressor.takeError();
 
   SmallString<32> Out;
-  if (auto Err = Decompressor->decompress(Out))
+  if (auto Err = Decompressor->resizeAndDecompress(Out))
     return Err;
 
   UncompressedSections.emplace_back(std::move(Out));
