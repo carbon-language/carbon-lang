@@ -36,6 +36,7 @@
 #include "llvm/DebugInfo/CodeView/ModuleDebugInlineeLinesFragment.h"
 #include "llvm/DebugInfo/CodeView/ModuleDebugLineFragment.h"
 #include "llvm/DebugInfo/CodeView/TypeStreamMerger.h"
+#include "llvm/DebugInfo/CodeView/TypeTableBuilder.h"
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
 #include "llvm/DebugInfo/PDB/GenericError.h"
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
@@ -851,15 +852,18 @@ static void mergePdbs() {
   for (const auto &Path : opts::merge::InputFilenames) {
     std::unique_ptr<IPDBSession> Session;
     auto &File = loadPDB(Path, Session);
+    SmallVector<TypeIndex, 128> SourceToDest;
     if (File.hasPDBTpiStream()) {
+      SourceToDest.clear();
       auto &Tpi = ExitOnErr(File.getPDBTpiStream());
-      ExitOnErr(codeview::mergeTypeStreams(MergedIpi, MergedTpi, nullptr,
-                                           Tpi.typeArray()));
+      ExitOnErr(codeview::mergeTypeStreams(MergedIpi, MergedTpi, SourceToDest,
+                                           nullptr, Tpi.typeArray()));
     }
     if (File.hasPDBIpiStream()) {
+      SourceToDest.clear();
       auto &Ipi = ExitOnErr(File.getPDBIpiStream());
-      ExitOnErr(codeview::mergeTypeStreams(MergedIpi, MergedTpi, nullptr,
-                                           Ipi.typeArray()));
+      ExitOnErr(codeview::mergeTypeStreams(MergedIpi, MergedTpi, SourceToDest,
+                                           nullptr, Ipi.typeArray()));
     }
   }
 

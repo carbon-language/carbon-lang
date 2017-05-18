@@ -1072,8 +1072,9 @@ void COFFDumper::mergeCodeViewTypes(TypeTableBuilder &CVIDs,
         W.flush();
         error(object_error::parse_failed);
       }
-
-      if (auto EC = mergeTypeStreams(CVIDs, CVTypes, nullptr, Types))
+      SmallVector<TypeIndex, 128> SourceToDest;
+      if (auto EC =
+              mergeTypeStreams(CVIDs, CVTypes, SourceToDest, nullptr, Types))
         return error(std::move(EC));
     }
   }

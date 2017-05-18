@@ -58,9 +58,12 @@ namespace {
 class TypeStreamMerger : public TypeVisitorCallbacks {
 public:
   TypeStreamMerger(TypeTableBuilder &DestIdStream,
-                   TypeTableBuilder &DestTypeStream, TypeServerHandler *Handler)
+                   TypeTableBuilder &DestTypeStream,
+                   SmallVectorImpl<TypeIndex> &SourceToDest,
+                   TypeServerHandler *Handler)
       : DestIdStream(DestIdStream), DestTypeStream(DestTypeStream),
-        FieldListBuilder(DestTypeStream), Handler(Handler) {}
+        FieldListBuilder(DestTypeStream), Handler(Handler),
+        IndexMap(SourceToDest) {}
 
   static const TypeIndex Untranslated;
 
@@ -141,7 +144,7 @@ private:
 
   /// Map from source type index to destination type index. Indexed by source
   /// type index minus 0x1000.
-  SmallVector<TypeIndex, 0> IndexMap;
+  SmallVectorImpl<TypeIndex> &IndexMap;
 };
 
 } // end anonymous namespace
@@ -475,8 +478,9 @@ Error TypeStreamMerger::mergeStream(const CVTypeArray &Types) {
 
 Error llvm::codeview::mergeTypeStreams(TypeTableBuilder &DestIdStream,
                                        TypeTableBuilder &DestTypeStream,
+                                       SmallVectorImpl<TypeIndex> &SourceToDest,
                                        TypeServerHandler *Handler,
                                        const CVTypeArray &Types) {
-  return TypeStreamMerger(DestIdStream, DestTypeStream, Handler)
+  return TypeStreamMerger(DestIdStream, DestTypeStream, SourceToDest, Handler)
       .mergeStream(Types);
 }
