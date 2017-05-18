@@ -429,8 +429,9 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel,
     parseParens();
 
   addUnwrappedLine();
-  size_t OpeningLineIndex =
-      Lines.empty() ? (UnwrappedLine::kInvalidIndex) : (Lines.size() - 1);
+  size_t OpeningLineIndex = CurrentLines->empty()
+                                ? (UnwrappedLine::kInvalidIndex)
+                                : (CurrentLines->size() - 1);
 
   ScopedDeclarationState DeclarationState(*Line, DeclarationScopeStack,
                                           MustBeDeclaration);
