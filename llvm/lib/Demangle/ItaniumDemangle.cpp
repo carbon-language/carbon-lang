@@ -1947,7 +1947,7 @@ static const char *parse_type(const char *first, const char *last, C &db) {
               break;
             }
           }
-        // falls through
+          LLVM_FALLTHROUGH;
         default:
           // must check for builtin-types before class-enum-types to avoid
           // ambiguities with operator-names
