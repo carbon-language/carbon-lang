@@ -495,7 +495,7 @@ void CodeViewDebug::emitTypeInformation() {
           CommentOS.str().drop_front(CommentPrefix.size() - 1).rtrim());
     }
     OS.EmitBinaryData(Record.str_data());
-  } while (B = Table.getNext(*B));
+  } while ((B = Table.getNext(*B)));
 }
 
 namespace {
