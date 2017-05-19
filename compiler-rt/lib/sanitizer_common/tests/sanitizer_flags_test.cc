@@ -59,6 +59,14 @@ TEST(SanitizerCommon, BooleanFlags) {
   TestFlag(true, "flag_name=0", false);
   TestFlag(true, "flag_name=no", false);
   TestFlag(true, "flag_name=false", false);
+
+  EXPECT_DEATH(TestFlag(false, "flag_name", true), "expected '='");
+  EXPECT_DEATH(TestFlag(false, "flag_name=", true),
+               "Invalid value for bool option: ''");
+  EXPECT_DEATH(TestFlag(false, "flag_name=2", true),
+               "Invalid value for bool option: '2'");
+  EXPECT_DEATH(TestFlag(false, "flag_name=-1", true),
+               "Invalid value for bool option: '-1'");
 }
 
 TEST(SanitizerCommon, IntFlags) {
