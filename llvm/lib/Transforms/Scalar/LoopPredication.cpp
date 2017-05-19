@@ -272,6 +272,9 @@ bool LoopPredication::runOnLoop(Loop *Loop) {
         if (II->getIntrinsicID() == Intrinsic::experimental_guard)
           Guards.push_back(II);
 
+  if (Guards.empty())
+    return false;
+
   SCEVExpander Expander(*SE, *DL, "loop-predication");
 
   bool Changed = false;
