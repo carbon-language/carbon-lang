@@ -885,7 +885,7 @@ static void mergePdbs() {
         DestIpi.addTypeRecord(Data, None);
       });
 
-  SmallString<64> OutFile = opts::merge::PdbOutputFile;
+  SmallString<64> OutFile(opts::merge::PdbOutputFile);
   if (OutFile.empty()) {
     OutFile = opts::merge::InputFilenames[0];
     llvm::sys::path::replace_extension(OutFile, "merged.pdb");
