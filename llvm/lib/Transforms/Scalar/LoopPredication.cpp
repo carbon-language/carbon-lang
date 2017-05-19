@@ -64,6 +64,10 @@ class LoopPredication {
   const DataLayout *DL;
   BasicBlock *Preheader;
 
+  Value *expandCheck(SCEVExpander &Expander, IRBuilder<> &Builder,
+                     ICmpInst::Predicate Pred, const SCEV *LHS, const SCEV *RHS,
+                     Instruction *InsertAt);
+
   Optional<Value *> widenICmpRangeCheck(ICmpInst *ICI, SCEVExpander &Expander,
                                         IRBuilder<> &Builder);
   bool widenGuardConditions(IntrinsicInst *II, SCEVExpander &Expander);
@@ -114,6 +118,17 @@ PreservedAnalyses LoopPredicationPass::run(Loop &L, LoopAnalysisManager &AM,
     return PreservedAnalyses::all();
 
   return getLoopPassPreservedAnalyses();
+}
+
+Value *LoopPredication::expandCheck(SCEVExpander &Expander,
+                                    IRBuilder<> &Builder,
+                                    ICmpInst::Predicate Pred, const SCEV *LHS,
+                                    const SCEV *RHS, Instruction *InsertAt) {
+  Type *Ty = LHS->getType();
+  assert(Ty == RHS->getType() && "expandCheck operands have different types?");
+  Value *LHSV = Expander.expandCodeFor(LHS, Ty, InsertAt);
+  Value *RHSV = Expander.expandCodeFor(RHS, Ty, InsertAt);
+  return Builder.CreateICmp(Pred, LHSV, RHSV);
 }
 
 /// If ICI can be widened to a loop invariant condition emits the loop
@@ -179,12 +194,8 @@ Optional<Value *> LoopPredication::widenICmpRangeCheck(ICmpInst *ICI,
 
   DEBUG(dbgs() << "NewLHSS is loop invariant and safe to expand. Expand!\n");
 
-  Type *Ty = LHS->getType();
   Instruction *InsertAt = Preheader->getTerminator();
-  assert(Ty == RHS->getType() && "icmp operands have different types?");
-  Value *NewLHS = Expander.expandCodeFor(NewLHSS, Ty, InsertAt);
-  Value *NewRHS = Expander.expandCodeFor(RHSS, Ty, InsertAt);
-  return Builder.CreateICmp(Pred, NewLHS, NewRHS);
+  return expandCheck(Expander, Builder, Pred, NewLHSS, RHSS, InsertAt);
 }
 
 bool LoopPredication::widenGuardConditions(IntrinsicInst *Guard,
