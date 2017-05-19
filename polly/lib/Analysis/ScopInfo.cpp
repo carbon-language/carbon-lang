@@ -94,11 +94,12 @@ static int const MaxDisjunctsInDomain = 20;
 // number of disjunct when adding non-convex sets to the context.
 static int const MaxDisjunctsInContext = 4;
 
-static cl::opt<int> OptComputeOut(
-    "polly-analysis-computeout",
-    cl::desc("Bound the dependence analysis by a maximal amount of "
-             "computational steps (0 means no bound)"),
-    cl::Hidden, cl::init(1000000), cl::ZeroOrMore, cl::cat(PollyCategory));
+static cl::opt<int>
+    OptComputeOut("polly-analysis-computeout",
+                  cl::desc("Bound the scop analysis by a maximal amount of "
+                           "computational steps (0 means no bound)"),
+                  cl::Hidden, cl::init(1000000), cl::ZeroOrMore,
+                  cl::cat(PollyCategory));
 
 static cl::opt<bool> PollyRemarksMinimal(
     "polly-remarks-minimal",
