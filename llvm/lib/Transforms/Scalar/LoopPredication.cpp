@@ -64,6 +64,18 @@ class LoopPredication {
   const DataLayout *DL;
   BasicBlock *Preheader;
 
+  /// Represents an induction variable check:
+  ///   icmp Pred, <induction variable>, <loop invariant limit>
+  struct LoopICmp {
+    ICmpInst::Predicate Pred;
+    const SCEVAddRecExpr *IV;
+    const SCEV *Limit;
+    LoopICmp(ICmpInst::Predicate Pred, const SCEVAddRecExpr *IV, const SCEV *Limit)
+        : Pred(Pred), IV(IV), Limit(Limit) {}
+    LoopICmp() {}
+  };
+  Optional<LoopICmp> parseLoopICmp(ICmpInst *ICI);
+
   Value *expandCheck(SCEVExpander &Expander, IRBuilder<> &Builder,
                      ICmpInst::Predicate Pred, const SCEV *LHS, const SCEV *RHS,
                      Instruction *InsertAt);
@@ -120,6 +132,33 @@ PreservedAnalyses LoopPredicationPass::run(Loop &L, LoopAnalysisManager &AM,
   return getLoopPassPreservedAnalyses();
 }
 
+Optional<LoopPredication::LoopICmp>
+LoopPredication::parseLoopICmp(ICmpInst *ICI) {
+  ICmpInst::Predicate Pred = ICI->getPredicate();
+
+  Value *LHS = ICI->getOperand(0);
+  Value *RHS = ICI->getOperand(1);
+  const SCEV *LHSS = SE->getSCEV(LHS);
+  if (isa<SCEVCouldNotCompute>(LHSS))
+    return None;
+  const SCEV *RHSS = SE->getSCEV(RHS);
+  if (isa<SCEVCouldNotCompute>(RHSS))
+    return None;
+
+  // Canonicalize RHS to be loop invariant bound, LHS - a loop computable IV
+  if (SE->isLoopInvariant(LHSS, L)) {
+    std::swap(LHS, RHS);
+    std::swap(LHSS, RHSS);
+    Pred = ICmpInst::getSwappedPredicate(Pred);
+  }
+
+  const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(LHSS);
+  if (!AR || AR->getLoop() != L)
+    return None;
+
+  return LoopICmp(Pred, AR, RHSS);
+}
+
 Value *LoopPredication::expandCheck(SCEVExpander &Expander,
                                     IRBuilder<> &Builder,
                                     ICmpInst::Predicate Pred, const SCEV *LHS,
@@ -140,31 +179,18 @@ Optional<Value *> LoopPredication::widenICmpRangeCheck(ICmpInst *ICI,
   DEBUG(dbgs() << "Analyzing ICmpInst condition:\n");
   DEBUG(ICI->dump());
 
-  ICmpInst::Predicate Pred = ICI->getPredicate();
-  Value *LHS = ICI->getOperand(0);
-  Value *RHS = ICI->getOperand(1);
-  const SCEV *LHSS = SE->getSCEV(LHS);
-  if (isa<SCEVCouldNotCompute>(LHSS))
-    return None;
-  const SCEV *RHSS = SE->getSCEV(RHS);
-  if (isa<SCEVCouldNotCompute>(RHSS))
+  auto RangeCheck = parseLoopICmp(ICI);
+  if (!RangeCheck)
     return None;
 
-  // Canonicalize RHS to be loop invariant bound, LHS - a loop computable index
-  if (SE->isLoopInvariant(LHSS, L)) {
-    std::swap(LHS, RHS);
-    std::swap(LHSS, RHSS);
-    Pred = ICmpInst::getSwappedPredicate(Pred);
-  }
+  ICmpInst::Predicate Pred = RangeCheck->Pred;
+  const SCEVAddRecExpr *IndexAR = RangeCheck->IV;
+  const SCEV *RHSS = RangeCheck->Limit;
 
   auto CanExpand = [this](const SCEV *S) {
     return SE->isLoopInvariant(S, L) && isSafeToExpand(S, *SE);
   };
   if (!CanExpand(RHSS))
-    return None;
-
-  const SCEVAddRecExpr *IndexAR = dyn_cast<SCEVAddRecExpr>(LHSS);
-  if (!IndexAR || IndexAR->getLoop() != L)
     return None;
 
   DEBUG(dbgs() << "IndexAR: ");
