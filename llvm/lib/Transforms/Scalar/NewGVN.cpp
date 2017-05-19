@@ -2111,11 +2111,11 @@ void NewGVN::performCongruenceFinding(Instruction *I, const Expression *E) {
   // old store expression.  In particular, loads do not compare against stored
   // value, so they will find old store expressions (and associated class
   // mappings) if we leave them in the table.
-  if (ClassChanged && isa<StoreExpression>(E)) {
+  if (ClassChanged && isa<StoreInst>(I)) {
     auto *OldE = ValueToExpression.lookup(I);
     // It could just be that the old class died. We don't want to erase it if we
     // just moved classes.
-    if (OldE && isa<StoreExpression>(OldE) && !OldE->equals(*E))
+    if (OldE && isa<StoreExpression>(OldE) && *E != *OldE)
       ExpressionToClass.erase(OldE);
   }
   ValueToExpression[I] = E;
