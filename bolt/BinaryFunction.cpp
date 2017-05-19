@@ -149,7 +149,8 @@ namespace bolt {
 constexpr unsigned NoRegister = 0;
 
 constexpr const char *DynoStats::Desc[];
-
+constexpr unsigned BinaryFunction::MinAlign;
+  
 namespace {
 
 /// Gets debug line information for the instruction located at the given

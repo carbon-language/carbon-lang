@@ -569,6 +569,15 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   auto &MIA = BC.MIA;
   uint64_t NumLocalCTCCandidates = 0;
   uint64_t NumLocalCTCs = 0;
+  std::vector<std::tuple<BinaryBasicBlock *, BinaryBasicBlock *, const BinaryBasicBlock *>>
+    NeedsUncondBranch;
+
+  // Will block be deleted by UCE?
+  auto isValid = [](const BinaryBasicBlock *BB) {
+    return (BB->pred_size() != 0 ||
+            BB->isLandingPad() ||
+            BB->isEntryPoint());
+  };
 
   for (auto *BB : BF.layout()) {
     // Locate BB with a single direct tail-call instruction.
@@ -623,18 +632,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         // the target for the unconditional branch or add a unconditional
         // branch to the old target.  This has to be done manually since
         // fixupBranches is not called after SCTC.
-        if (UncondBranch) {
-          MIA->replaceBranchTarget(*UncondBranch,
-                                   CondSucc->getLabel(),
-                                   BC.Ctx.get());
-        } else {
-          MCInst Branch;
-          auto Result = MIA->createUncondBranch(Branch,
-                                                CondSucc->getLabel(),
-                                                BC.Ctx.get());
-          assert(Result);
-          PredBB->addInstruction(Branch);
-        }
+        NeedsUncondBranch.emplace_back(std::make_tuple(BB, PredBB, CondSucc));
         // Swap branch statistics after swapping the branch targets.
         auto BI = PredBB->branch_info_begin();
         std::swap(*BI, *(BI + 1));
@@ -651,9 +649,39 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     }
 
     // Remove the block from CFG if all predecessors were removed.
-    BB->markValid(BB->pred_size() != 0 ||
-                  BB->isLandingPad() ||
-                  BB->isEntryPoint());
+    BB->markValid(isValid(BB));
+  }
+
+  // Add unconditional branches at the end of BBs to new successors
+  // as long as the successor is not a fallthrough.
+  for (auto &Entry : NeedsUncondBranch) {
+    auto *BB = std::get<0>(Entry);
+    auto *PredBB = std::get<1>(Entry);
+    auto *CondSucc = std::get<2>(Entry);
+
+    const MCSymbol *TBB = nullptr;
+    const MCSymbol *FBB = nullptr;
+    MCInst *CondBranch = nullptr;
+    MCInst *UncondBranch = nullptr;
+    PredBB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
+
+    // Only add a new branch if the target is not the fall-through.
+    if (BF.getBasicBlockAfter(BB) != CondSucc || isValid(BB)) {
+      if (UncondBranch) {
+        MIA->replaceBranchTarget(*UncondBranch,
+                                 CondSucc->getLabel(),
+                                 BC.Ctx.get());
+      } else {
+        MCInst Branch;
+        auto Result = MIA->createUncondBranch(Branch,
+                                              CondSucc->getLabel(),
+                                              BC.Ctx.get());
+        assert(Result);
+        PredBB->addInstruction(Branch);
+      }
+    } else if (UncondBranch) {
+      PredBB->eraseInstruction(UncondBranch);
+    }
   }
 
   if (NumLocalCTCs > 0) {
