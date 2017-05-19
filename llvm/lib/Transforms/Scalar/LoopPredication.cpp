@@ -141,7 +141,11 @@ Optional<Value *> LoopPredication::widenICmpRangeCheck(ICmpInst *ICI,
     std::swap(LHSS, RHSS);
     Pred = ICmpInst::getSwappedPredicate(Pred);
   }
-  if (!SE->isLoopInvariant(RHSS, L) || !isSafeToExpand(RHSS, *SE))
+
+  auto CanExpand = [this](const SCEV *S) {
+    return SE->isLoopInvariant(S, L) && isSafeToExpand(S, *SE);
+  };
+  if (!CanExpand(RHSS))
     return None;
 
   const SCEVAddRecExpr *IndexAR = dyn_cast<SCEVAddRecExpr>(LHSS);
@@ -170,7 +174,7 @@ Optional<Value *> LoopPredication::widenICmpRangeCheck(ICmpInst *ICI,
   DEBUG(dbgs() << "NewLHSS: ");
   DEBUG(NewLHSS->dump());
 
-  if (!SE->isLoopInvariant(NewLHSS, L) || !isSafeToExpand(NewLHSS, *SE))
+  if (!CanExpand(NewLHSS))
     return None;
 
   DEBUG(dbgs() << "NewLHSS is loop invariant and safe to expand. Expand!\n");
