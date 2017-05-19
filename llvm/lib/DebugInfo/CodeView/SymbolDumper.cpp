@@ -11,6 +11,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/DebugInfo/CodeView/CVSymbolVisitor.h"
+#include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
 #include "llvm/DebugInfo/CodeView/StringTable.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
@@ -32,9 +33,9 @@ namespace {
 /// the visitor out of SymbolDumper.h.
 class CVSymbolDumperImpl : public SymbolVisitorCallbacks {
 public:
-  CVSymbolDumperImpl(TypeCollection &Types, SymbolDumpDelegate *ObjDelegate,
+  CVSymbolDumperImpl(TypeDatabase &TypeDB, SymbolDumpDelegate *ObjDelegate,
                      ScopedPrinter &W, bool PrintRecordBytes)
-      : Types(Types), ObjDelegate(ObjDelegate), W(W),
+      : TypeDB(TypeDB), ObjDelegate(ObjDelegate), W(W),
         PrintRecordBytes(PrintRecordBytes), InFunctionScope(false) {}
 
 /// CVSymbolVisitor overrides.
@@ -53,7 +54,7 @@ private:
   void printLocalVariableAddrGap(ArrayRef<LocalVariableAddrGap> Gaps);
   void printTypeIndex(StringRef FieldName, TypeIndex TI);
 
-  TypeCollection &Types;
+  TypeDatabase &TypeDB;
   SymbolDumpDelegate *ObjDelegate;
   ScopedPrinter &W;
 
@@ -82,7 +83,7 @@ void CVSymbolDumperImpl::printLocalVariableAddrGap(
 }
 
 void CVSymbolDumperImpl::printTypeIndex(StringRef FieldName, TypeIndex TI) {
-  codeview::printTypeIndex(W, FieldName, TI, Types);
+  CVTypeDumper::printTypeIndex(W, FieldName, TI, TypeDB);
 }
 
 Error CVSymbolDumperImpl::visitSymbolBegin(CVSymbol &CVR) {
@@ -669,7 +670,7 @@ Error CVSymbolDumperImpl::visitUnknownSymbol(CVSymbol &CVR) {
 Error CVSymbolDumper::dump(CVRecord<SymbolKind> &Record) {
   SymbolVisitorCallbackPipeline Pipeline;
   SymbolDeserializer Deserializer(ObjDelegate.get());
-  CVSymbolDumperImpl Dumper(Types, ObjDelegate.get(), W, PrintRecordBytes);
+  CVSymbolDumperImpl Dumper(TypeDB, ObjDelegate.get(), W, PrintRecordBytes);
 
   Pipeline.addCallbackToPipeline(Deserializer);
   Pipeline.addCallbackToPipeline(Dumper);
@@ -680,7 +681,7 @@ Error CVSymbolDumper::dump(CVRecord<SymbolKind> &Record) {
 Error CVSymbolDumper::dump(const CVSymbolArray &Symbols) {
   SymbolVisitorCallbackPipeline Pipeline;
   SymbolDeserializer Deserializer(ObjDelegate.get());
-  CVSymbolDumperImpl Dumper(Types, ObjDelegate.get(), W, PrintRecordBytes);
+  CVSymbolDumperImpl Dumper(TypeDB, ObjDelegate.get(), W, PrintRecordBytes);
 
   Pipeline.addCallbackToPipeline(Deserializer);
   Pipeline.addCallbackToPipeline(Dumper);

@@ -10,13 +10,15 @@
 #include "llvm/DebugInfo/CodeView/TypeDumpVisitor.h"
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/Formatters.h"
-#include "llvm/DebugInfo/CodeView/TypeCollection.h"
 #include "llvm/DebugInfo/CodeView/TypeDatabase.h"
 #include "llvm/DebugInfo/CodeView/TypeDatabaseVisitor.h"
+#include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
+#include "llvm/DebugInfo/CodeView/TypeVisitorCallbackPipeline.h"
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/ScopedPrinter.h"
@@ -163,15 +165,16 @@ static StringRef getLeafTypeName(TypeLeafKind LT) {
 }
 
 void TypeDumpVisitor::printTypeIndex(StringRef FieldName, TypeIndex TI) const {
-  codeview::printTypeIndex(*W, FieldName, TI, TpiTypes);
+  CVTypeDumper::printTypeIndex(*W, FieldName, TI, TypeDB);
 }
 
 void TypeDumpVisitor::printItemIndex(StringRef FieldName, TypeIndex TI) const {
-  codeview::printTypeIndex(*W, FieldName, TI, getSourceTypes());
+  CVTypeDumper::printTypeIndex(*W, FieldName, TI, getSourceDB());
 }
 
 Error TypeDumpVisitor::visitTypeBegin(CVType &Record) {
-  return visitTypeBegin(Record, TypeIndex::fromArrayIndex(TpiTypes.size()));
+  TypeIndex TI = getSourceDB().getAppendIndex();
+  return visitTypeBegin(Record, TI);
 }
 
 Error TypeDumpVisitor::visitTypeBegin(CVType &Record, TypeIndex Index) {
@@ -242,7 +245,7 @@ Error TypeDumpVisitor::visitKnownRecord(CVType &CVR, StringListRecord &Strs) {
   W->printNumber("NumStrings", Size);
   ListScope Arguments(*W, "Strings");
   for (uint32_t I = 0; I < Size; ++I) {
-    printItemIndex("String", Indices[I]);
+    printTypeIndex("String", Indices[I]);
   }
   return Error::success();
 }

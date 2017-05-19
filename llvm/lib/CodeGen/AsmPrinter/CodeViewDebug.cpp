@@ -13,6 +13,7 @@
 
 #include "CodeViewDebug.h"
 #include "llvm/ADT/TinyPtrVector.h"
+#include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
@@ -22,7 +23,6 @@
 #include "llvm/DebugInfo/CodeView/TypeDumpVisitor.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/CodeView/TypeTableCollection.h"
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbacks.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -469,21 +469,17 @@ void CodeViewDebug::emitTypeInformation() {
     CommentPrefix += ' ';
   }
 
-  TypeTableCollection Table(TypeTable.records());
-  Optional<TypeIndex> B = Table.getFirst();
-  do {
-    // This will fail if the record data is invalid.
-    CVType Record = Table.getType(*B);
-
+  TypeDatabase TypeDB(TypeTable.records().size());
+  CVTypeDumper CVTD(TypeDB);
+  TypeTable.ForEachRecord([&](TypeIndex Index, ArrayRef<uint8_t> Record) {
     if (OS.isVerboseAsm()) {
       // Emit a block comment describing the type record for readability.
       SmallString<512> CommentBlock;
       raw_svector_ostream CommentOS(CommentBlock);
       ScopedPrinter SP(CommentOS);
       SP.setPrefix(CommentPrefix);
-      TypeDumpVisitor TDV(Table, &SP, false);
-
-      Error E = codeview::visitTypeRecord(Record, *B, TDV);
+      TypeDumpVisitor TDV(TypeDB, &SP, false);
+      Error E = CVTD.dump(Record, TDV);
       if (E) {
         logAllUnhandledErrors(std::move(E), errs(), "error: ");
         llvm_unreachable("produced malformed type record");
@@ -493,9 +489,29 @@ void CodeViewDebug::emitTypeInformation() {
       // newline.
       OS.emitRawComment(
           CommentOS.str().drop_front(CommentPrefix.size() - 1).rtrim());
+    } else {
+#ifndef NDEBUG
+      // Assert that the type data is valid even if we aren't dumping
+      // comments. The MSVC linker doesn't do much type record validation,
+      // so the first link of an invalid type record can succeed while
+      // subsequent links will fail with LNK1285.
+      BinaryByteStream Stream(Record, llvm::support::little);
+      CVTypeArray Types;
+      BinaryStreamReader Reader(Stream);
+      Error E = Reader.readArray(Types, Reader.getLength());
+      if (!E) {
+        TypeVisitorCallbacks C;
+        E = codeview::visitTypeStream(Types, C);
+      }
+      if (E) {
+        logAllUnhandledErrors(std::move(E), errs(), "error: ");
+        llvm_unreachable("produced malformed type record");
+      }
+#endif
     }
-    OS.EmitBinaryData(Record.str_data());
-  } while ((B = Table.getNext(*B)));
+    StringRef S(reinterpret_cast<const char *>(Record.data()), Record.size());
+    OS.EmitBinaryData(S);
+  });
 }
 
 namespace {

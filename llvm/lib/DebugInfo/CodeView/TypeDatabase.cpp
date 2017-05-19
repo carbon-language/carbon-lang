@@ -72,20 +72,16 @@ TypeDatabase::TypeDatabase(uint32_t Capacity) : TypeNameStorage(Allocator) {
 }
 
 TypeIndex TypeDatabase::appendType(StringRef Name, const CVType &Data) {
-  LargestTypeIndex = getAppendIndex();
-  if (LargestTypeIndex.toArrayIndex() >= capacity())
+  TypeIndex TI;
+  TI = getAppendIndex();
+  if (TI.toArrayIndex() >= capacity())
     grow();
-  recordType(Name, LargestTypeIndex, Data);
-  return LargestTypeIndex;
+  recordType(Name, TI, Data);
+  return TI;
 }
 
 void TypeDatabase::recordType(StringRef Name, TypeIndex Index,
                               const CVType &Data) {
-  LargestTypeIndex = empty() ? Index : std::max(Index, LargestTypeIndex);
-
-  if (LargestTypeIndex.toArrayIndex() >= capacity())
-    grow(Index);
-
   uint32_t AI = Index.toArrayIndex();
 
   assert(!contains(Index));
@@ -148,65 +144,19 @@ uint32_t TypeDatabase::size() const { return Count; }
 
 uint32_t TypeDatabase::capacity() const { return TypeRecords.size(); }
 
-CVType TypeDatabase::getType(TypeIndex Index) { return getTypeRecord(Index); }
-
-StringRef TypeDatabase::getTypeName(TypeIndex Index) {
-  return static_cast<const TypeDatabase *>(this)->getTypeName(Index);
-}
-
-bool TypeDatabase::contains(TypeIndex Index) {
-  return static_cast<const TypeDatabase *>(this)->contains(Index);
-}
-
-uint32_t TypeDatabase::size() {
-  return static_cast<const TypeDatabase *>(this)->size();
-}
-
-uint32_t TypeDatabase::capacity() {
-  return static_cast<const TypeDatabase *>(this)->capacity();
-}
-
-void TypeDatabase::grow() { grow(LargestTypeIndex + 1); }
-
-void TypeDatabase::grow(TypeIndex NewIndex) {
-  uint32_t NewSize = NewIndex.toArrayIndex() + 1;
-
-  if (NewSize <= capacity())
-    return;
-
-  uint32_t NewCapacity = NewSize * 3 / 2;
-
-  TypeRecords.resize(NewCapacity);
-  CVUDTNames.resize(NewCapacity);
-  ValidRecords.resize(NewCapacity);
+void TypeDatabase::grow() {
+  TypeRecords.emplace_back();
+  CVUDTNames.emplace_back();
+  ValidRecords.resize(ValidRecords.size() + 1);
 }
 
 bool TypeDatabase::empty() const { return size() == 0; }
-
-Optional<TypeIndex> TypeDatabase::largestTypeIndexLessThan(TypeIndex TI) const {
-  uint32_t AI = TI.toArrayIndex();
-  int N = ValidRecords.find_prev(AI);
-  if (N == -1)
-    return None;
-  return TypeIndex::fromArrayIndex(N);
-}
 
 TypeIndex TypeDatabase::getAppendIndex() const {
   if (empty())
     return TypeIndex::fromArrayIndex(0);
 
-  return LargestTypeIndex + 1;
-}
-
-TypeIndex TypeDatabase::getFirst() {
-  int N = ValidRecords.find_first();
-  assert(N != -1);
-  return TypeIndex::fromArrayIndex(N);
-}
-
-Optional<TypeIndex> TypeDatabase::getNext(TypeIndex Prev) {
-  int N = ValidRecords.find_next(Prev.toArrayIndex());
-  if (N == -1)
-    return None;
-  return TypeIndex::fromArrayIndex(N);
+  int Index = ValidRecords.find_last();
+  assert(Index != -1);
+  return TypeIndex::fromArrayIndex(Index) + 1;
 }

@@ -17,7 +17,7 @@
 namespace llvm {
 class ScopedPrinter;
 namespace codeview {
-class TypeCollection;
+class TypeDatabase;
 }
 
 namespace pdb {
@@ -26,8 +26,8 @@ namespace pdb {
 /// Dumps records on a single line, and ignores member records.
 class CompactTypeDumpVisitor : public codeview::TypeVisitorCallbacks {
 public:
-  CompactTypeDumpVisitor(codeview::TypeCollection &Types, ScopedPrinter *W);
-  CompactTypeDumpVisitor(codeview::TypeCollection &Types,
+  CompactTypeDumpVisitor(codeview::TypeDatabase &TypeDB, ScopedPrinter *W);
+  CompactTypeDumpVisitor(codeview::TypeDatabase &TypeDB,
                          codeview::TypeIndex FirstTI, ScopedPrinter *W);
 
   /// Paired begin/end actions for all types. Receives all record data,
@@ -40,7 +40,7 @@ private:
 
   codeview::TypeIndex TI;
   uint32_t Offset;
-  codeview::TypeCollection &Types;
+  codeview::TypeDatabase &TypeDB;
 };
 
 } // end namespace pdb

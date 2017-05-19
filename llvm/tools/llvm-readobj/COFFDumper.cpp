@@ -22,9 +22,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
+#include "llvm/DebugInfo/CodeView/CVTypeDumper.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
-#include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
 #include "llvm/DebugInfo/CodeView/ModuleDebugFileChecksumFragment.h"
 #include "llvm/DebugInfo/CodeView/ModuleDebugInlineeLinesFragment.h"
@@ -35,13 +34,11 @@
 #include "llvm/DebugInfo/CodeView/SymbolDumpDelegate.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
-#include "llvm/DebugInfo/CodeView/TypeDatabase.h"
 #include "llvm/DebugInfo/CodeView/TypeDumpVisitor.h"
 #include "llvm/DebugInfo/CodeView/TypeIndex.h"
 #include "llvm/DebugInfo/CodeView/TypeRecord.h"
 #include "llvm/DebugInfo/CodeView/TypeStreamMerger.h"
 #include "llvm/DebugInfo/CodeView/TypeTableBuilder.h"
-#include "llvm/DebugInfo/CodeView/TypeTableCollection.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/BinaryStreamReader.h"
@@ -73,7 +70,7 @@ class COFFDumper : public ObjDumper {
 public:
   friend class COFFObjectDumpDelegate;
   COFFDumper(const llvm::object::COFFObjectFile *Obj, ScopedPrinter &Writer)
-      : ObjDumper(Writer), Obj(Obj), Writer(Writer), Types(100) {}
+      : ObjDumper(Writer), Obj(Obj), Writer(Writer), TypeDB(100) {}
 
   void printFileHeaders() override;
   void printSections() override;
@@ -109,7 +106,7 @@ private:
   void printFileNameForOffset(StringRef Label, uint32_t FileOffset);
   void printTypeIndex(StringRef FieldName, TypeIndex TI) {
     // Forward to CVTypeDumper for simplicity.
-    codeview::printTypeIndex(Writer, FieldName, TI, Types);
+    CVTypeDumper::printTypeIndex(Writer, FieldName, TI, TypeDB);
   }
 
   void printCodeViewSymbolsSubsection(StringRef Subsection,
@@ -162,8 +159,7 @@ private:
   StringTableRef CVStringTable;
 
   ScopedPrinter &Writer;
-  BinaryByteStream TypeContents;
-  LazyRandomTypeCollection Types;
+  TypeDatabase TypeDB;
 };
 
 class COFFObjectDumpDelegate : public SymbolDumpDelegate {
@@ -979,7 +975,9 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
                                Subsection.bytes_end());
   auto CODD = llvm::make_unique<COFFObjectDumpDelegate>(*this, Section, Obj,
                                                         SectionContents);
-  CVSymbolDumper CVSD(W, Types, std::move(CODD), opts::CodeViewSubsectionBytes);
+
+  CVSymbolDumper CVSD(W, TypeDB, std::move(CODD),
+                      opts::CodeViewSubsectionBytes);
   CVSymbolArray Symbols;
   BinaryStreamReader Reader(BinaryData, llvm::support::little);
   if (auto EC = Reader.readArray(Symbols, Reader.getLength())) {
@@ -1096,11 +1094,12 @@ void COFFDumper::printCodeViewTypeSection(StringRef SectionName,
   if (Magic != COFF::DEBUG_SECTION_MAGIC)
     return error(object_error::parse_failed);
 
-  Types.reset(Data);
-
-  TypeDumpVisitor TDV(Types, &W, opts::CodeViewSubsectionBytes);
-  error(codeview::visitTypeStream(Types, TDV));
-  W.flush();
+  CVTypeDumper CVTD(TypeDB);
+  TypeDumpVisitor TDV(TypeDB, &W, opts::CodeViewSubsectionBytes);
+  if (auto EC = CVTD.dump({Data.bytes_begin(), Data.bytes_end()}, TDV)) {
+    W.flush();
+    error(llvm::errorToErrorCode(std::move(EC)));
+  }
 }
 
 void COFFDumper::printSections() {
@@ -1640,22 +1639,35 @@ void llvm::dumpCodeViewMergedTypes(ScopedPrinter &Writer,
     TypeBuf.append(Record.begin(), Record.end());
   });
 
-  TypeTableCollection TpiTypes(CVTypes.records());
+  TypeDatabase TypeDB(CVTypes.records().size());
   {
     ListScope S(Writer, "MergedTypeStream");
-    TypeDumpVisitor TDV(TpiTypes, &Writer, opts::CodeViewSubsectionBytes);
-    error(codeview::visitTypeStream(TpiTypes, TDV));
-    Writer.flush();
+    CVTypeDumper CVTD(TypeDB);
+    TypeDumpVisitor TDV(TypeDB, &Writer, opts::CodeViewSubsectionBytes);
+    if (auto EC = CVTD.dump(
+            {TypeBuf.str().bytes_begin(), TypeBuf.str().bytes_end()}, TDV)) {
+      Writer.flush();
+      error(std::move(EC));
+    }
   }
 
   // Flatten the id stream and print it next. The ID stream refers to names from
   // the type stream.
-  TypeTableCollection IpiTypes(IDTable.records());
+  SmallString<0> IDBuf;
+  IDTable.ForEachRecord([&](TypeIndex TI, ArrayRef<uint8_t> Record) {
+    IDBuf.append(Record.begin(), Record.end());
+  });
+
   {
     ListScope S(Writer, "MergedIDStream");
-    TypeDumpVisitor TDV(TpiTypes, &Writer, opts::CodeViewSubsectionBytes);
-    TDV.setIpiTypes(IpiTypes);
-    error(codeview::visitTypeStream(IpiTypes, TDV));
-    Writer.flush();
+    TypeDatabase IDDB(IDTable.records().size());
+    CVTypeDumper CVTD(IDDB);
+    TypeDumpVisitor TDV(TypeDB, &Writer, opts::CodeViewSubsectionBytes);
+    TDV.setItemDB(IDDB);
+    if (auto EC = CVTD.dump(
+            {IDBuf.str().bytes_begin(), IDBuf.str().bytes_end()}, TDV)) {
+      Writer.flush();
+      error(std::move(EC));
+    }
   }
 }
