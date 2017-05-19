@@ -242,7 +242,7 @@ Error TypeDumpVisitor::visitKnownRecord(CVType &CVR, StringListRecord &Strs) {
   W->printNumber("NumStrings", Size);
   ListScope Arguments(*W, "Strings");
   for (uint32_t I = 0; I < Size; ++I) {
-    printTypeIndex("String", Indices[I]);
+    printItemIndex("String", Indices[I]);
   }
   return Error::success();
 }
