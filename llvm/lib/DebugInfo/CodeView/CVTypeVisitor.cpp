@@ -227,6 +227,9 @@ Error CVTypeVisitor::visitTypeStream(CVTypeRange Types) {
 }
 
 Error CVTypeVisitor::visitTypeStream(TypeCollection &Types) {
+  if (Types.empty())
+    return Error::success();
+
   Optional<TypeIndex> I = Types.getFirst();
   do {
     CVType Type = Types.getType(*I);
