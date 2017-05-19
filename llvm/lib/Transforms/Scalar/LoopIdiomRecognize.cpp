@@ -112,11 +112,12 @@ private:
   bool HasMemcpy;
   /// Return code for isLegalStore()
   enum LegalStoreKind {
-    None=0,
+    None = 0,
     Memset,
     MemsetPattern,
     Memcpy,
-    DontUse // Dummy retval never to be used. Allows catching errors in retval handling.
+    DontUse // Dummy retval never to be used. Allows catching errors in retval
+            // handling.
   };
 
   /// \name Countable Loop Idiom Handling
@@ -350,7 +351,8 @@ static Constant *getMemSetPatternValue(Value *V, const DataLayout *DL) {
   return ConstantArray::get(AT, std::vector<Constant *>(ArraySize, C));
 }
 
-LoopIdiomRecognize::LegalStoreKind LoopIdiomRecognize::isLegalStore(StoreInst *SI) {
+LoopIdiomRecognize::LegalStoreKind
+LoopIdiomRecognize::isLegalStore(StoreInst *SI) {
   // Don't touch volatile stores.
   if (!SI->isSimple())
     return LegalStoreKind::None;
