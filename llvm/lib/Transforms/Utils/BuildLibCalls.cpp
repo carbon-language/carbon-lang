@@ -38,6 +38,7 @@ STATISTIC(NumNoCapture, "Number of arguments inferred as nocapture");
 STATISTIC(NumReadOnlyArg, "Number of arguments inferred as readonly");
 STATISTIC(NumNoAlias, "Number of function returns inferred as noalias");
 STATISTIC(NumNonNull, "Number of function returns inferred as nonnull returns");
+STATISTIC(NumSpeculatable, "Number of functions inferred as speculatable");
 
 static bool setDoesNotAccessMemory(Function &F) {
   if (F.doesNotAccessMemory())
@@ -68,6 +69,14 @@ static bool setDoesNotThrow(Function &F) {
     return false;
   F.setDoesNotThrow();
   ++NumNoUnwind;
+  return true;
+}
+
+static bool setSpeculatable(Function &F) {
+  if (F.isSpeculatable())
+    return false;
+  F.setSpeculatable();
+  ++NumSpeculatable;
   return true;
 }
 
@@ -529,6 +538,9 @@ bool llvm::inferLibFuncAttributes(Function &F, const TargetLibraryInfo &TLI) {
     Changed |= setDoesNotCapture(F, 1);
     Changed |= setOnlyReadsMemory(F, 0);
     Changed |= setOnlyReadsMemory(F, 1);
+    return Changed;
+  case LibFunc_pthread_self:
+    Changed |= setSpeculatable(F);
     return Changed;
   case LibFunc_vfscanf:
     Changed |= setDoesNotThrow(F);
