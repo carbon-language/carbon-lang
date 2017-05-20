@@ -18,11 +18,9 @@
 namespace llvm {
 namespace object {
 
-static const char ResourceMagic[] = {
-    '\0',   '\0',   '\0', '\0', '\x20', '\0',   '\0', '\0',
-    '\xff', '\xff', '\0', '\0', '\xff', '\xff', '\0', '\0'};
+static const size_t ResourceMagicSize = 16;
 
-static const char NullEntry[16] = {'\0'};
+static const size_t NullEntrySize = 16;
 
 #define RETURN_IF_ERROR(X)                                                     \
   if (auto EC = X)                                                             \
@@ -30,7 +28,7 @@ static const char NullEntry[16] = {'\0'};
 
 WindowsResource::WindowsResource(MemoryBufferRef Source)
     : Binary(Binary::ID_WinRes, Source) {
-  size_t LeadingSize = sizeof(ResourceMagic) + sizeof(NullEntry);
+  size_t LeadingSize = ResourceMagicSize + NullEntrySize;
   BBS = BinaryByteStream(Data.getBuffer().drop_front(LeadingSize),
                          support::little);
 }
@@ -39,7 +37,7 @@ WindowsResource::~WindowsResource() = default;
 
 Expected<std::unique_ptr<WindowsResource>>
 WindowsResource::createWindowsResource(MemoryBufferRef Source) {
-  if (Source.getBufferSize() < sizeof(ResourceMagic) + sizeof(NullEntry))
+  if (Source.getBufferSize() < ResourceMagicSize + NullEntrySize)
     return make_error<GenericBinaryError>(
         "File too small to be a resource file",
         object_error::invalid_file_type);
