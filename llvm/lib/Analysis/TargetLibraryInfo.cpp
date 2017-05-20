@@ -1521,7 +1521,11 @@ TargetLibraryInfoImpl &TargetLibraryAnalysis::lookupInfoImpl(const Triple &T) {
 
 unsigned TargetLibraryInfoImpl::getTargetWCharSize(const Triple &T) {
   // See also clang/lib/Basic/Targets.cpp.
-  return T.isPS4() || T.isOSWindows() || T.getArch() == Triple::xcore ? 2 : 4;
+  if (T.isPS4() || T.isOSWindows() || T.isArch16Bit())
+    return 2;
+  if (T.getArch() == Triple::xcore)
+    return 1;
+  return 4;
 }
 
 unsigned TargetLibraryInfoImpl::getWCharSize(const Module &M) const {

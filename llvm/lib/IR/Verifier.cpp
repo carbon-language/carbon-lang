@@ -1322,9 +1322,6 @@ Verifier::visitModuleFlag(const MDNode *Op,
     ConstantInt *Value
       = mdconst::dyn_extract_or_null<ConstantInt>(Op->getOperand(2));
     Assert(Value, "wchar_size metadata requires constant integer argument");
-    uint64_t WCharSize = Value->getZExtValue();
-    Assert(WCharSize == 0 || WCharSize == 2 || WCharSize == 4,
-           "wchar_size should be 0, 2 or 4");
   }
 }
 
