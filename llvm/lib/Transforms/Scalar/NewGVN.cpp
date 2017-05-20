@@ -1251,7 +1251,7 @@ const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I) const {
            lookupOperandLeader(SI->getPointerOperand())) &&
           (lookupMemoryLeader(getMemoryAccess(LI)->getDefiningAccess()) ==
            StoreRHS))
-        return createVariableExpression(LI);
+        return createStoreExpression(SI, StoreRHS);
     }
   }
 
