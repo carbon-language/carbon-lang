@@ -61,7 +61,6 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -1224,7 +1223,6 @@ const Expression *NewGVN::performSymbolicStoreEvaluation(Instruction *I) const {
   // If we bypassed the use-def chains, make sure we add a use.
   if (StoreRHS != StoreAccess->getDefiningAccess())
     addMemoryUsers(StoreRHS, StoreAccess);
-
   StoreRHS = lookupMemoryLeader(StoreRHS);
   // If we are defined by ourselves, use the live on entry def.
   if (StoreRHS == StoreAccess)
@@ -1596,7 +1594,7 @@ const Expression *NewGVN::performSymbolicPHIEvaluation(Instruction *I) const {
   // See if all arguments are the same.
   // We track if any were undef because they need special handling.
   bool HasUndef = false;
-  bool CycleFree = isCycleFree(cast<PHINode>(I));
+  bool CycleFree = isCycleFree(I);
   auto Filtered = make_filter_range(E->operands(), [&](Value *Arg) {
     if (Arg == nullptr)
       return false;
@@ -2709,11 +2707,12 @@ void NewGVN::updateProcessedCount(const Value *V) {
 // Evaluate MemoryPhi nodes symbolically, just like PHI nodes
 void NewGVN::valueNumberMemoryPhi(MemoryPhi *MP) {
   // If all the arguments are the same, the MemoryPhi has the same value as the
-  // argument.
-  // Filter out unreachable blocks and self phis from our operands.
+  // argument.  Filter out unreachable blocks and self phis from our operands.
+  // TODO: We could do cycle-checking on the memory phis to allow valueizing for
+  // self-phi checking.
   const BasicBlock *PHIBlock = MP->getBlock();
   auto Filtered = make_filter_range(MP->operands(), [&](const Use &U) {
-    return lookupMemoryLeader(cast<MemoryAccess>(U)) != MP &&
+    return cast<MemoryAccess>(U) != MP &&
            !isMemoryAccessTOP(cast<MemoryAccess>(U)) &&
            ReachableEdges.count({MP->getIncomingBlock(U), PHIBlock});
   });
