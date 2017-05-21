@@ -1460,12 +1460,6 @@ std::string aff::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::aff aff::add(isl::aff aff2) const {
   auto res = isl_aff_add(copy(), aff2.release());
   return manage(res);
@@ -1670,12 +1664,6 @@ std::string ast_expr::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const ast_expr &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 std::string ast_expr::to_C_str() const {
   auto res = isl_ast_expr_to_C_str(get());
   std::string tmp(res);
@@ -1755,12 +1743,6 @@ std::string ast_node::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const ast_node &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 std::string ast_node::to_C_str() const {
@@ -1847,12 +1829,6 @@ std::string basic_map::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const basic_map &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::basic_map basic_map::affine_hull() const {
@@ -2059,12 +2035,6 @@ std::string basic_set::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const basic_set &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::basic_set basic_set::affine_hull() const {
   auto res = isl_basic_set_affine_hull(copy());
   return manage(res);
@@ -2229,12 +2199,6 @@ std::string id::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const id &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 // implementations for isl::local_space
 isl::local_space manage(__isl_take isl_local_space *ptr) {
   return local_space(ptr);
@@ -2388,12 +2352,6 @@ std::string map::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const map &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::basic_map map::affine_hull() const {
@@ -2675,12 +2633,6 @@ std::string multi_aff::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const multi_aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::multi_aff multi_aff::add(isl::multi_aff multi2) const {
   auto res = isl_multi_aff_add(copy(), multi2.release());
   return manage(res);
@@ -2803,12 +2755,6 @@ std::string multi_pw_aff::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const multi_pw_aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::multi_pw_aff multi_pw_aff::add(isl::multi_pw_aff multi2) const {
@@ -2945,12 +2891,6 @@ std::string multi_union_pw_aff::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const multi_union_pw_aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::multi_union_pw_aff multi_union_pw_aff::add(isl::multi_union_pw_aff multi2) const {
   auto res = isl_multi_union_pw_aff_add(copy(), multi2.release());
   return manage(res);
@@ -3053,12 +2993,6 @@ std::string multi_val::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const multi_val &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::multi_val multi_val::add(isl::multi_val multi2) const {
@@ -3165,12 +3099,6 @@ std::string point::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const point &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 // implementations for isl::pw_aff
 isl::pw_aff manage(__isl_take isl_pw_aff *ptr) {
   return pw_aff(ptr);
@@ -3263,12 +3191,6 @@ std::string pw_aff::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const pw_aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::pw_aff pw_aff::add(isl::pw_aff pwaff2) const {
@@ -3420,12 +3342,6 @@ std::string pw_multi_aff::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const pw_multi_aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::pw_multi_aff pw_multi_aff::add(isl::pw_multi_aff pma2) const {
   auto res = isl_pw_multi_aff_add(copy(), pma2.release());
   return manage(res);
@@ -3540,12 +3456,6 @@ std::string schedule::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const schedule &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::union_map schedule::get_map() const {
   auto res = isl_schedule_get_map(get());
   return manage(res);
@@ -3638,12 +3548,6 @@ std::string schedule_constraints::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const schedule_constraints &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::union_map schedule_constraints::get_coincidence() const {
@@ -3753,12 +3657,6 @@ std::string schedule_node::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const schedule_node &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::boolean schedule_node::band_member_get_coincident(int pos) const {
@@ -3893,12 +3791,6 @@ std::string set::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const set &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::set set::add_dims(isl::dim type, unsigned int n) const {
@@ -4160,12 +4052,6 @@ std::string space::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const space &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::space space::domain() const {
   auto res = isl_space_domain(copy());
   return manage(res);
@@ -4265,12 +4151,6 @@ std::string union_access_info::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const union_access_info &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::union_flow union_access_info::compute_flow() const {
   auto res = isl_union_access_info_compute_flow(copy());
   return manage(res);
@@ -4368,12 +4248,6 @@ std::string union_flow::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const union_flow &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::union_map union_flow::get_full_may_dependence() const {
@@ -4498,12 +4372,6 @@ std::string union_map::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const union_map &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::union_map union_map::add_map(isl::map map) const {
@@ -4875,12 +4743,6 @@ std::string union_pw_aff::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const union_pw_aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::union_pw_aff union_pw_aff::add(isl::union_pw_aff upa2) const {
   auto res = isl_union_pw_aff_add(copy(), upa2.release());
   return manage(res);
@@ -5020,12 +4882,6 @@ std::string union_pw_multi_aff::to_str() const {
   return S;
 }
 
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const union_pw_multi_aff &Obj) {
-  OS << Obj.to_str();
-  return OS;
-}
-
 isl::union_pw_multi_aff union_pw_multi_aff::add(isl::union_pw_multi_aff upma2) const {
   auto res = isl_union_pw_multi_aff_add(copy(), upma2.release());
   return manage(res);
@@ -5138,12 +4994,6 @@ std::string union_set::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const union_set &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::union_set union_set::affine_hull() const {
@@ -5353,12 +5203,6 @@ std::string val::to_str() const {
   std::string S(Tmp);
   free(Tmp);
   return S;
-}
-
-inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
-                                     const val &Obj) {
-  OS << Obj.to_str();
-  return OS;
 }
 
 isl::val val::two_exp() const {

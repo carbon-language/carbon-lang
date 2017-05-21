@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/FlattenAlgo.h"
+#include "polly/Support/ISLOStream.h"
 #include "llvm/Support/Debug.h"
 #define DEBUG_TYPE "polly-flatten-algo"
 

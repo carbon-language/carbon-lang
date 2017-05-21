@@ -15,6 +15,7 @@
 #include "polly/ScopInfo.h"
 #include "polly/ScopPass.h"
 #include "polly/Support/GICHelper.h"
+#include "polly/Support/ISLOStream.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #define DEBUG_TYPE "polly-simplify"
