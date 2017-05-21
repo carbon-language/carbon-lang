@@ -10,6 +10,7 @@
 
 #include <isl/aff.h>
 #include <isl/ast_build.h>
+#include <isl/constraint.h>
 #include <isl/flow.h>
 #include <isl/id.h>
 #include <isl/ilp.h>
@@ -122,6 +123,8 @@ class basic_map;
 class basic_map_list;
 class basic_set;
 class basic_set_list;
+class constraint;
+class constraint_list;
 class id;
 class id_list;
 class id_to_ast_expr;
@@ -555,6 +558,7 @@ public:
   inline std::string to_str() const;
   inline void dump() const;
 
+  inline isl::basic_map add_constraint(isl::constraint constraint) const;
   inline isl::basic_map add_dims(isl::dim type, unsigned int n) const;
   inline isl::basic_map affine_hull() const;
   inline isl::basic_map align_params(isl::space model) const;
@@ -586,12 +590,15 @@ public:
   inline isl::basic_map flatten() const;
   inline isl::basic_map flatten_domain() const;
   inline isl::basic_map flatten_range() const;
+  inline isl::stat foreach_constraint(const std::function<isl::stat(isl::constraint)> &fn) const;
   static inline isl::basic_map from_aff(isl::aff aff);
   static inline isl::basic_map from_aff_list(isl::space domain_dim, isl::aff_list list);
+  static inline isl::basic_map from_constraint(isl::constraint constraint);
   static inline isl::basic_map from_domain(isl::basic_set bset);
   static inline isl::basic_map from_domain_and_range(isl::basic_set domain, isl::basic_set range);
   static inline isl::basic_map from_multi_aff(isl::multi_aff maff);
   static inline isl::basic_map from_range(isl::basic_set bset);
+  inline isl::constraint_list get_constraint_list() const;
   inline isl::local_space get_local_space() const;
   inline isl::space get_space() const;
   inline std::string get_tuple_name(isl::dim type) const;
@@ -731,7 +738,11 @@ public:
   inline isl::basic_set fix_val(isl::dim type, unsigned int pos, isl::val v) const;
   inline isl::basic_set flat_product(isl::basic_set bset2) const;
   inline isl::basic_set flatten() const;
+  inline isl::stat foreach_bound_pair(isl::dim type, unsigned int pos, const std::function<isl::stat(isl::constraint, isl::constraint, isl::basic_set)> &fn) const;
+  inline isl::stat foreach_constraint(const std::function<isl::stat(isl::constraint)> &fn) const;
+  static inline isl::basic_set from_constraint(isl::constraint constraint);
   inline isl::basic_set from_params() const;
+  inline isl::constraint_list get_constraint_list() const;
   inline isl::local_space get_local_space() const;
   inline isl::space get_space() const;
   inline std::string get_tuple_name() const;
@@ -803,6 +814,86 @@ public:
   inline bool is_null() const;
   inline __isl_keep isl_basic_set_list *keep() const;
   inline __isl_give isl_basic_set_list *take();
+  inline explicit operator bool() const;
+  inline isl::ctx get_ctx() const;
+  inline void dump() const;
+
+};
+
+// declarations for isl::constraint
+inline isl::constraint manage(__isl_take isl_constraint *ptr);
+inline isl::constraint give(__isl_take isl_constraint *ptr);
+
+
+class constraint {
+  friend inline isl::constraint manage(__isl_take isl_constraint *ptr);
+
+  isl_constraint *ptr = nullptr;
+
+  inline explicit constraint(__isl_take isl_constraint *ptr);
+
+public:
+  inline /* implicit */ constraint();
+  inline /* implicit */ constraint(const isl::constraint &obj);
+  inline /* implicit */ constraint(std::nullptr_t);
+  inline isl::constraint &operator=(isl::constraint obj);
+  inline ~constraint();
+  inline __isl_give isl_constraint *copy() const &;
+  inline __isl_give isl_constraint *copy() && = delete;
+  inline __isl_keep isl_constraint *get() const;
+  inline __isl_give isl_constraint *release();
+  inline bool is_null() const;
+  inline __isl_keep isl_constraint *keep() const;
+  inline __isl_give isl_constraint *take();
+  inline explicit operator bool() const;
+  inline isl::ctx get_ctx() const;
+  inline void dump() const;
+
+  static inline isl::constraint alloc_equality(isl::local_space ls);
+  static inline isl::constraint alloc_inequality(isl::local_space ls);
+  inline int cmp_last_non_zero(const isl::constraint &c2) const;
+  inline isl::aff get_aff() const;
+  inline isl::aff get_bound(isl::dim type, int pos) const;
+  inline isl::val get_coefficient_val(isl::dim type, int pos) const;
+  inline isl::val get_constant_val() const;
+  inline isl::local_space get_local_space() const;
+  inline isl::space get_space() const;
+  inline isl::boolean involves_dims(isl::dim type, unsigned int first, unsigned int n) const;
+  inline int is_div_constraint() const;
+  inline isl::boolean is_lower_bound(isl::dim type, unsigned int pos) const;
+  inline isl::boolean is_upper_bound(isl::dim type, unsigned int pos) const;
+  inline int plain_cmp(const isl::constraint &c2) const;
+  inline isl::constraint set_coefficient_si(isl::dim type, int pos, int v) const;
+  inline isl::constraint set_coefficient_val(isl::dim type, int pos, isl::val v) const;
+  inline isl::constraint set_constant_si(int v) const;
+  inline isl::constraint set_constant_val(isl::val v) const;
+};
+
+// declarations for isl::constraint_list
+inline isl::constraint_list manage(__isl_take isl_constraint_list *ptr);
+inline isl::constraint_list give(__isl_take isl_constraint_list *ptr);
+
+
+class constraint_list {
+  friend inline isl::constraint_list manage(__isl_take isl_constraint_list *ptr);
+
+  isl_constraint_list *ptr = nullptr;
+
+  inline explicit constraint_list(__isl_take isl_constraint_list *ptr);
+
+public:
+  inline /* implicit */ constraint_list();
+  inline /* implicit */ constraint_list(const isl::constraint_list &obj);
+  inline /* implicit */ constraint_list(std::nullptr_t);
+  inline isl::constraint_list &operator=(isl::constraint_list obj);
+  inline ~constraint_list();
+  inline __isl_give isl_constraint_list *copy() const &;
+  inline __isl_give isl_constraint_list *copy() && = delete;
+  inline __isl_keep isl_constraint_list *get() const;
+  inline __isl_give isl_constraint_list *release();
+  inline bool is_null() const;
+  inline __isl_keep isl_constraint_list *keep() const;
+  inline __isl_give isl_constraint_list *take();
   inline explicit operator bool() const;
   inline isl::ctx get_ctx() const;
   inline void dump() const;
@@ -997,6 +1088,7 @@ public:
   inline std::string to_str() const;
   inline void dump() const;
 
+  inline isl::map add_constraint(isl::constraint constraint) const;
   inline isl::map add_dims(isl::dim type, unsigned int n) const;
   inline isl::basic_map affine_hull() const;
   inline isl::map align_params(isl::space model) const;
@@ -2033,6 +2125,7 @@ public:
   inline std::string to_str() const;
   inline void dump() const;
 
+  inline isl::set add_constraint(isl::constraint constraint) const;
   inline isl::set add_dims(isl::dim type, unsigned int n) const;
   inline isl::basic_set affine_hull() const;
   inline isl::set align_params(isl::space model) const;
@@ -4235,6 +4328,11 @@ void basic_map::dump() const {
 }
 
 
+isl::basic_map basic_map::add_constraint(isl::constraint constraint) const {
+  auto res = isl_basic_map_add_constraint(copy(), constraint.release());
+  return manage(res);
+}
+
 isl::basic_map basic_map::add_dims(isl::dim type, unsigned int n) const {
   auto res = isl_basic_map_add_dims(copy(), static_cast<enum isl_dim_type>(type), n);
   return manage(res);
@@ -4390,6 +4488,17 @@ isl::basic_map basic_map::flatten_range() const {
   return manage(res);
 }
 
+isl::stat basic_map::foreach_constraint(const std::function<isl::stat(isl::constraint)> &fn) const {
+  auto fn_p = &fn;
+  auto fn_lambda = [](isl_constraint *arg_0, void *arg_1) -> isl_stat {
+    auto *func = *static_cast<const std::function<isl::stat(isl::constraint)> **>(arg_1);
+    stat ret = (*func)(isl::manage(arg_0));
+    return isl_stat(ret);
+  };
+  auto res = isl_basic_map_foreach_constraint(get(), fn_lambda, &fn_p);
+  return isl::stat(res);
+}
+
 isl::basic_map basic_map::from_aff(isl::aff aff) {
   auto res = isl_basic_map_from_aff(aff.release());
   return manage(res);
@@ -4397,6 +4506,11 @@ isl::basic_map basic_map::from_aff(isl::aff aff) {
 
 isl::basic_map basic_map::from_aff_list(isl::space domain_dim, isl::aff_list list) {
   auto res = isl_basic_map_from_aff_list(domain_dim.release(), list.release());
+  return manage(res);
+}
+
+isl::basic_map basic_map::from_constraint(isl::constraint constraint) {
+  auto res = isl_basic_map_from_constraint(constraint.release());
   return manage(res);
 }
 
@@ -4417,6 +4531,11 @@ isl::basic_map basic_map::from_multi_aff(isl::multi_aff maff) {
 
 isl::basic_map basic_map::from_range(isl::basic_set bset) {
   auto res = isl_basic_map_from_range(bset.release());
+  return manage(res);
+}
+
+isl::constraint_list basic_map::get_constraint_list() const {
+  auto res = isl_basic_map_get_constraint_list(get());
   return manage(res);
 }
 
@@ -4953,8 +5072,40 @@ isl::basic_set basic_set::flatten() const {
   return manage(res);
 }
 
+isl::stat basic_set::foreach_bound_pair(isl::dim type, unsigned int pos, const std::function<isl::stat(isl::constraint, isl::constraint, isl::basic_set)> &fn) const {
+  auto fn_p = &fn;
+  auto fn_lambda = [](isl_constraint *arg_0, isl_constraint *arg_1, isl_basic_set *arg_2, void *arg_3) -> isl_stat {
+    auto *func = *static_cast<const std::function<isl::stat(isl::constraint, isl::constraint, isl::basic_set)> **>(arg_3);
+    stat ret = (*func)(isl::manage(arg_0), isl::manage(arg_1), isl::manage(arg_2));
+    return isl_stat(ret);
+  };
+  auto res = isl_basic_set_foreach_bound_pair(get(), static_cast<enum isl_dim_type>(type), pos, fn_lambda, &fn_p);
+  return isl::stat(res);
+}
+
+isl::stat basic_set::foreach_constraint(const std::function<isl::stat(isl::constraint)> &fn) const {
+  auto fn_p = &fn;
+  auto fn_lambda = [](isl_constraint *arg_0, void *arg_1) -> isl_stat {
+    auto *func = *static_cast<const std::function<isl::stat(isl::constraint)> **>(arg_1);
+    stat ret = (*func)(isl::manage(arg_0));
+    return isl_stat(ret);
+  };
+  auto res = isl_basic_set_foreach_constraint(get(), fn_lambda, &fn_p);
+  return isl::stat(res);
+}
+
+isl::basic_set basic_set::from_constraint(isl::constraint constraint) {
+  auto res = isl_basic_set_from_constraint(constraint.release());
+  return manage(res);
+}
+
 isl::basic_set basic_set::from_params() const {
   auto res = isl_basic_set_from_params(copy());
+  return manage(res);
+}
+
+isl::constraint_list basic_set::get_constraint_list() const {
+  auto res = isl_basic_set_get_constraint_list(get());
   return manage(res);
 }
 
@@ -5248,6 +5399,241 @@ isl::ctx basic_set_list::get_ctx() const {
 
 void basic_set_list::dump() const {
   isl_basic_set_list_dump(get());
+}
+
+
+
+// implementations for isl::constraint
+isl::constraint manage(__isl_take isl_constraint *ptr) {
+  return constraint(ptr);
+}
+isl::constraint give(__isl_take isl_constraint *ptr) {
+  return manage(ptr);
+}
+
+
+constraint::constraint()
+    : ptr(nullptr) {}
+
+constraint::constraint(const isl::constraint &obj)
+    : ptr(obj.copy()) {}
+constraint::constraint(std::nullptr_t)
+    : ptr(nullptr) {}
+
+
+constraint::constraint(__isl_take isl_constraint *ptr)
+    : ptr(ptr) {}
+
+
+constraint &constraint::operator=(isl::constraint obj) {
+  std::swap(this->ptr, obj.ptr);
+  return *this;
+}
+
+constraint::~constraint() {
+  if (ptr)
+    isl_constraint_free(ptr);
+}
+
+__isl_give isl_constraint *constraint::copy() const & {
+  return isl_constraint_copy(ptr);
+}
+
+__isl_keep isl_constraint *constraint::get() const {
+  return ptr;
+}
+
+__isl_give isl_constraint *constraint::release() {
+  isl_constraint *tmp = ptr;
+  ptr = nullptr;
+  return tmp;
+}
+
+bool constraint::is_null() const {
+  return ptr == nullptr;
+}
+__isl_keep isl_constraint *constraint::keep() const {
+  return get();
+}
+
+__isl_give isl_constraint *constraint::take() {
+  return release();
+}
+
+constraint::operator bool() const {
+  return !is_null();
+}
+
+isl::ctx constraint::get_ctx() const {
+  return isl::ctx(isl_constraint_get_ctx(ptr));
+}
+
+
+
+void constraint::dump() const {
+  isl_constraint_dump(get());
+}
+
+
+isl::constraint constraint::alloc_equality(isl::local_space ls) {
+  auto res = isl_constraint_alloc_equality(ls.release());
+  return manage(res);
+}
+
+isl::constraint constraint::alloc_inequality(isl::local_space ls) {
+  auto res = isl_constraint_alloc_inequality(ls.release());
+  return manage(res);
+}
+
+int constraint::cmp_last_non_zero(const isl::constraint &c2) const {
+  auto res = isl_constraint_cmp_last_non_zero(get(), c2.get());
+  return res;
+}
+
+isl::aff constraint::get_aff() const {
+  auto res = isl_constraint_get_aff(get());
+  return manage(res);
+}
+
+isl::aff constraint::get_bound(isl::dim type, int pos) const {
+  auto res = isl_constraint_get_bound(get(), static_cast<enum isl_dim_type>(type), pos);
+  return manage(res);
+}
+
+isl::val constraint::get_coefficient_val(isl::dim type, int pos) const {
+  auto res = isl_constraint_get_coefficient_val(get(), static_cast<enum isl_dim_type>(type), pos);
+  return manage(res);
+}
+
+isl::val constraint::get_constant_val() const {
+  auto res = isl_constraint_get_constant_val(get());
+  return manage(res);
+}
+
+isl::local_space constraint::get_local_space() const {
+  auto res = isl_constraint_get_local_space(get());
+  return manage(res);
+}
+
+isl::space constraint::get_space() const {
+  auto res = isl_constraint_get_space(get());
+  return manage(res);
+}
+
+isl::boolean constraint::involves_dims(isl::dim type, unsigned int first, unsigned int n) const {
+  auto res = isl_constraint_involves_dims(get(), static_cast<enum isl_dim_type>(type), first, n);
+  return manage(res);
+}
+
+int constraint::is_div_constraint() const {
+  auto res = isl_constraint_is_div_constraint(get());
+  return res;
+}
+
+isl::boolean constraint::is_lower_bound(isl::dim type, unsigned int pos) const {
+  auto res = isl_constraint_is_lower_bound(get(), static_cast<enum isl_dim_type>(type), pos);
+  return manage(res);
+}
+
+isl::boolean constraint::is_upper_bound(isl::dim type, unsigned int pos) const {
+  auto res = isl_constraint_is_upper_bound(get(), static_cast<enum isl_dim_type>(type), pos);
+  return manage(res);
+}
+
+int constraint::plain_cmp(const isl::constraint &c2) const {
+  auto res = isl_constraint_plain_cmp(get(), c2.get());
+  return res;
+}
+
+isl::constraint constraint::set_coefficient_si(isl::dim type, int pos, int v) const {
+  auto res = isl_constraint_set_coefficient_si(copy(), static_cast<enum isl_dim_type>(type), pos, v);
+  return manage(res);
+}
+
+isl::constraint constraint::set_coefficient_val(isl::dim type, int pos, isl::val v) const {
+  auto res = isl_constraint_set_coefficient_val(copy(), static_cast<enum isl_dim_type>(type), pos, v.release());
+  return manage(res);
+}
+
+isl::constraint constraint::set_constant_si(int v) const {
+  auto res = isl_constraint_set_constant_si(copy(), v);
+  return manage(res);
+}
+
+isl::constraint constraint::set_constant_val(isl::val v) const {
+  auto res = isl_constraint_set_constant_val(copy(), v.release());
+  return manage(res);
+}
+
+// implementations for isl::constraint_list
+isl::constraint_list manage(__isl_take isl_constraint_list *ptr) {
+  return constraint_list(ptr);
+}
+isl::constraint_list give(__isl_take isl_constraint_list *ptr) {
+  return manage(ptr);
+}
+
+
+constraint_list::constraint_list()
+    : ptr(nullptr) {}
+
+constraint_list::constraint_list(const isl::constraint_list &obj)
+    : ptr(obj.copy()) {}
+constraint_list::constraint_list(std::nullptr_t)
+    : ptr(nullptr) {}
+
+
+constraint_list::constraint_list(__isl_take isl_constraint_list *ptr)
+    : ptr(ptr) {}
+
+
+constraint_list &constraint_list::operator=(isl::constraint_list obj) {
+  std::swap(this->ptr, obj.ptr);
+  return *this;
+}
+
+constraint_list::~constraint_list() {
+  if (ptr)
+    isl_constraint_list_free(ptr);
+}
+
+__isl_give isl_constraint_list *constraint_list::copy() const & {
+  return isl_constraint_list_copy(ptr);
+}
+
+__isl_keep isl_constraint_list *constraint_list::get() const {
+  return ptr;
+}
+
+__isl_give isl_constraint_list *constraint_list::release() {
+  isl_constraint_list *tmp = ptr;
+  ptr = nullptr;
+  return tmp;
+}
+
+bool constraint_list::is_null() const {
+  return ptr == nullptr;
+}
+__isl_keep isl_constraint_list *constraint_list::keep() const {
+  return get();
+}
+
+__isl_give isl_constraint_list *constraint_list::take() {
+  return release();
+}
+
+constraint_list::operator bool() const {
+  return !is_null();
+}
+
+isl::ctx constraint_list::get_ctx() const {
+  return isl::ctx(isl_constraint_list_get_ctx(ptr));
+}
+
+
+
+void constraint_list::dump() const {
+  isl_constraint_list_dump(get());
 }
 
 
@@ -5799,6 +6185,11 @@ void map::dump() const {
   isl_map_dump(get());
 }
 
+
+isl::map map::add_constraint(isl::constraint constraint) const {
+  auto res = isl_map_add_constraint(copy(), constraint.release());
+  return manage(res);
+}
 
 isl::map map::add_dims(isl::dim type, unsigned int n) const {
   auto res = isl_map_add_dims(copy(), static_cast<enum isl_dim_type>(type), n);
@@ -9951,6 +10342,11 @@ void set::dump() const {
   isl_set_dump(get());
 }
 
+
+isl::set set::add_constraint(isl::constraint constraint) const {
+  auto res = isl_set_add_constraint(copy(), constraint.release());
+  return manage(res);
+}
 
 isl::set set::add_dims(isl::dim type, unsigned int n) const {
   auto res = isl_set_add_dims(copy(), static_cast<enum isl_dim_type>(type), n);
