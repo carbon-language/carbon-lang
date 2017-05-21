@@ -5947,8 +5947,6 @@ ScalarEvolution::BackedgeTakenInfo::getMax(ScalarEvolution *SE) const {
   if (any_of(ExitNotTaken, PredicateNotAlwaysTrue) || !getMax())
     return SE->getCouldNotCompute();
 
-  assert((isa<SCEVCouldNotCompute>(getMax()) || isa<SCEVConstant>(getMax())) &&
-         "No point in having a non-constant max backedge taken count!");
   return getMax();
 }
 
@@ -5974,11 +5972,7 @@ bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
 }
 
 ScalarEvolution::ExitLimit::ExitLimit(const SCEV *E)
-    : ExactNotTaken(E), MaxNotTaken(E), MaxOrZero(false) {
-  assert((isa<SCEVCouldNotCompute>(MaxNotTaken) ||
-          isa<SCEVConstant>(MaxNotTaken)) &&
-         "No point in having a non-constant max backedge taken count!");
-}
+    : ExactNotTaken(E), MaxNotTaken(E), MaxOrZero(false) {}
 
 ScalarEvolution::ExitLimit::ExitLimit(
     const SCEV *E, const SCEV *M, bool MaxOrZero,
@@ -5987,9 +5981,6 @@ ScalarEvolution::ExitLimit::ExitLimit(
   assert((isa<SCEVCouldNotCompute>(ExactNotTaken) ||
           !isa<SCEVCouldNotCompute>(MaxNotTaken)) &&
          "Exact is not allowed to be less precise than Max");
-  assert((isa<SCEVCouldNotCompute>(MaxNotTaken) ||
-          isa<SCEVConstant>(MaxNotTaken)) &&
-         "No point in having a non-constant max backedge taken count!");
   for (auto *PredSet : PredSetList)
     for (auto *P : *PredSet)
       addPredicate(P);
@@ -5998,19 +5989,11 @@ ScalarEvolution::ExitLimit::ExitLimit(
 ScalarEvolution::ExitLimit::ExitLimit(
     const SCEV *E, const SCEV *M, bool MaxOrZero,
     const SmallPtrSetImpl<const SCEVPredicate *> &PredSet)
-    : ExitLimit(E, M, MaxOrZero, {&PredSet}) {
-  assert((isa<SCEVCouldNotCompute>(MaxNotTaken) ||
-          isa<SCEVConstant>(MaxNotTaken)) &&
-         "No point in having a non-constant max backedge taken count!");
-}
+    : ExitLimit(E, M, MaxOrZero, {&PredSet}) {}
 
 ScalarEvolution::ExitLimit::ExitLimit(const SCEV *E, const SCEV *M,
                                       bool MaxOrZero)
-    : ExitLimit(E, M, MaxOrZero, None) {
-  assert((isa<SCEVCouldNotCompute>(MaxNotTaken) ||
-          isa<SCEVConstant>(MaxNotTaken)) &&
-         "No point in having a non-constant max backedge taken count!");
-}
+    : ExitLimit(E, M, MaxOrZero, None) {}
 
 /// Allocate memory for BackedgeTakenInfo and copy the not-taken count of each
 /// computable exit into a persistent ExitNotTakenInfo array.
@@ -6035,8 +6018,6 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
 
         return ExitNotTakenInfo(ExitBB, EL.ExactNotTaken, std::move(Predicate));
       });
-  assert((isa<SCEVCouldNotCompute>(MaxCount) || isa<SCEVConstant>(MaxCount)) &&
-         "No point in having a non-constant max backedge taken count!");
 }
 
 /// Invalidate this result and free the ExitNotTakenInfo array.
@@ -6298,7 +6279,7 @@ ScalarEvolution::ExitLimit ScalarEvolution::computeExitLimitFromCondImpl(
       // to not.
       if (isa<SCEVCouldNotCompute>(MaxBECount) &&
           !isa<SCEVCouldNotCompute>(BECount))
-        MaxBECount = getConstant(getUnsignedRange(BECount).getUnsignedMax());
+        MaxBECount = BECount;
 
       return ExitLimit(BECount, MaxBECount, false,
                        {&EL0.Predicates, &EL1.Predicates});
@@ -7602,20 +7583,13 @@ ScalarEvolution::howFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
       loopHasNoAbnormalExits(AddRec->getLoop())) {
     const SCEV *Exact =
         getUDivExpr(Distance, CountDown ? getNegativeSCEV(Step) : Step);
-    const SCEV *Max =
-        Exact == getCouldNotCompute()
-            ? Exact
-            : getConstant(getUnsignedRange(Exact).getUnsignedMax());
-    return ExitLimit(Exact, Max, false, Predicates);
+    return ExitLimit(Exact, Exact, false, Predicates);
   }
 
   // Solve the general equation.
-  const SCEV *E = SolveLinEquationWithOverflow(StepC->getAPInt(),
-                                               getNegativeSCEV(Start), *this);
-  const SCEV *M = E == getCouldNotCompute()
-                      ? E
-                      : getConstant(getUnsignedRange(E).getUnsignedMax());
-  return ExitLimit(E, M, false, Predicates);
+  const SCEV *E = SolveLinEquationWithOverflow(
+      StepC->getAPInt(), getNegativeSCEV(Start), *this);
+  return ExitLimit(E, E, false, Predicates);
 }
 
 ScalarEvolution::ExitLimit
@@ -9244,9 +9218,8 @@ ScalarEvolution::howManyLessThans(const SCEV *LHS, const SCEV *RHS,
                                 getConstant(StrideForMaxBECount), false);
   }
 
-  if (isa<SCEVCouldNotCompute>(MaxBECount) &&
-      !isa<SCEVCouldNotCompute>(BECount))
-    MaxBECount = getConstant(getUnsignedRange(BECount).getUnsignedMax());
+  if (isa<SCEVCouldNotCompute>(MaxBECount))
+    MaxBECount = BECount;
 
   return ExitLimit(BECount, MaxBECount, MaxOrZero, Predicates);
 }
