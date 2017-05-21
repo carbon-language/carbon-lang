@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/raw_ostream.h"
 #include "isl-noexceptions.h"
+#include "llvm/Support/raw_ostream.h"
 namespace polly {
 
 #define ADD_OSTREAM_PRINTER(name)                                              \
