@@ -503,12 +503,12 @@ void MemoryAccess::wrapConstantDimensions() {
 
 void MemoryAccess::updateDimensionality() {
   auto *SAI = getScopArrayInfo();
-  auto *ArraySpace = SAI->getSpace();
-  auto *AccessSpace = isl_space_range(isl_map_get_space(AccessRelation));
-  auto *Ctx = isl_space_get_ctx(AccessSpace);
+  isl::space ArraySpace = give(SAI->getSpace());
+  isl::space AccessSpace = give(isl_map_get_space(AccessRelation)).range();
+  isl::ctx Ctx = ArraySpace.get_ctx();
 
-  auto DimsArray = isl_space_dim(ArraySpace, isl_dim_set);
-  auto DimsAccess = isl_space_dim(AccessSpace, isl_dim_set);
+  auto DimsArray = ArraySpace.dim(isl::dim::set);
+  auto DimsAccess = AccessSpace.dim(isl::dim::set);
   auto DimsMissing = DimsArray - DimsAccess;
 
   auto *BB = getStatement()->getEntryBlock();
@@ -516,17 +516,16 @@ void MemoryAccess::updateDimensionality() {
   unsigned ArrayElemSize = SAI->getElemSizeInBytes();
   unsigned ElemBytes = DL.getTypeAllocSize(getElementType());
 
-  auto *Map = isl_map_from_domain_and_range(
-      isl_set_universe(AccessSpace),
-      isl_set_universe(isl_space_copy(ArraySpace)));
+  isl::map Map = isl::map::from_domain_and_range(
+      isl::set::universe(AccessSpace), isl::set::universe(ArraySpace));
 
   for (unsigned i = 0; i < DimsMissing; i++)
-    Map = isl_map_fix_si(Map, isl_dim_out, i, 0);
+    Map = Map.fix_si(isl::dim::out, i, 0);
 
   for (unsigned i = DimsMissing; i < DimsArray; i++)
-    Map = isl_map_equate(Map, isl_dim_in, i - DimsMissing, isl_dim_out, i);
+    Map = Map.equate(isl::dim::in, i - DimsMissing, isl::dim::out, i);
 
-  AccessRelation = isl_map_apply_range(AccessRelation, Map);
+  AccessRelation = isl_map_apply_range(AccessRelation, Map.release());
 
   // For the non delinearized arrays, divide the access function of the last
   // subscript by the size of the elements in the array.
@@ -539,8 +538,8 @@ void MemoryAccess::updateDimensionality() {
   // by the accesses element size, we will have chosen a smaller ArrayElemSize
   // that divides the offsets of all accesses to this base pointer.
   if (DimsAccess == 1) {
-    isl_val *V = isl_val_int_from_si(Ctx, ArrayElemSize);
-    AccessRelation = isl_map_floordiv_val(AccessRelation, V);
+    isl::val V = isl::val(Ctx, ArrayElemSize);
+    AccessRelation = isl_map_floordiv_val(AccessRelation, V.release());
   }
 
   // We currently do this only if we added at least one dimension, which means
@@ -562,33 +561,30 @@ void MemoryAccess::updateDimensionality() {
   if (ElemBytes > ArrayElemSize) {
     assert(ElemBytes % ArrayElemSize == 0 &&
            "Loaded element size should be multiple of canonical element size");
-    auto *Map = isl_map_from_domain_and_range(
-        isl_set_universe(isl_space_copy(ArraySpace)),
-        isl_set_universe(isl_space_copy(ArraySpace)));
+    isl::map Map = isl::map::from_domain_and_range(
+        isl::set::universe(ArraySpace), isl::set::universe(ArraySpace));
     for (unsigned i = 0; i < DimsArray - 1; i++)
-      Map = isl_map_equate(Map, isl_dim_in, i, isl_dim_out, i);
+      Map = Map.equate(isl::dim::in, i, isl::dim::out, i);
 
-    isl_constraint *C;
-    isl_local_space *LS;
+    isl::constraint C;
+    isl::local_space LS;
 
-    LS = isl_local_space_from_space(isl_map_get_space(Map));
+    LS = isl::local_space(Map.get_space());
     int Num = ElemBytes / getScopArrayInfo()->getElemSizeInBytes();
 
-    C = isl_constraint_alloc_inequality(isl_local_space_copy(LS));
-    C = isl_constraint_set_constant_val(C, isl_val_int_from_si(Ctx, Num - 1));
-    C = isl_constraint_set_coefficient_si(C, isl_dim_in, DimsArray - 1, 1);
-    C = isl_constraint_set_coefficient_si(C, isl_dim_out, DimsArray - 1, -1);
-    Map = isl_map_add_constraint(Map, C);
+    C = isl::constraint::alloc_inequality(LS);
+    C = C.set_constant_val(isl::val(Ctx, Num - 1));
+    C = C.set_coefficient_si(isl::dim::in, DimsArray - 1, 1);
+    C = C.set_coefficient_si(isl::dim::out, DimsArray - 1, -1);
+    Map = Map.add_constraint(C);
 
-    C = isl_constraint_alloc_inequality(LS);
-    C = isl_constraint_set_coefficient_si(C, isl_dim_in, DimsArray - 1, -1);
-    C = isl_constraint_set_coefficient_si(C, isl_dim_out, DimsArray - 1, 1);
-    C = isl_constraint_set_constant_val(C, isl_val_int_from_si(Ctx, 0));
-    Map = isl_map_add_constraint(Map, C);
-    AccessRelation = isl_map_apply_range(AccessRelation, Map);
+    C = isl::constraint::alloc_inequality(LS);
+    C = C.set_coefficient_si(isl::dim::in, DimsArray - 1, -1);
+    C = C.set_coefficient_si(isl::dim::out, DimsArray - 1, 1);
+    C = C.set_constant_val(isl::val(Ctx, 0));
+    Map = Map.add_constraint(C);
+    AccessRelation = isl_map_apply_range(AccessRelation, Map.release());
   }
-
-  isl_space_free(ArraySpace);
 }
 
 const std::string
