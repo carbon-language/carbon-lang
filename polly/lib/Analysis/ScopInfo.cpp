@@ -1204,15 +1204,19 @@ void MemoryAccess::setNewAccessRelation(__isl_take isl_map *NewAccess) {
   isl_space_free(NewDomainSpace);
   isl_space_free(OriginalDomainSpace);
 
-  // Check whether there is an access for every statement instance.
-  auto *StmtDomain = getStatement()->getDomain();
-  StmtDomain = isl_set_intersect_params(
-      StmtDomain, getStatement()->getParent()->getContext());
-  auto *NewDomain = isl_map_domain(isl_map_copy(NewAccess));
-  assert(isl_set_is_subset(StmtDomain, NewDomain) &&
-         "Partial accesses not supported");
-  isl_set_free(NewDomain);
-  isl_set_free(StmtDomain);
+  // Reads must be executed unconditionally. Writes might be executed in a
+  // subdomain only.
+  if (isRead()) {
+    // Check whether there is an access for every statement instance.
+    auto *StmtDomain = getStatement()->getDomain();
+    StmtDomain = isl_set_intersect_params(
+        StmtDomain, getStatement()->getParent()->getContext());
+    auto *NewDomain = isl_map_domain(isl_map_copy(NewAccess));
+    assert(isl_set_is_subset(StmtDomain, NewDomain) &&
+           "Partial READ accesses not supported");
+    isl_set_free(NewDomain);
+    isl_set_free(StmtDomain);
+  }
 
   auto *NewAccessSpace = isl_space_range(NewSpace);
   assert(isl_space_has_tuple_id(NewAccessSpace, isl_dim_set) &&
@@ -1241,6 +1245,13 @@ void MemoryAccess::setNewAccessRelation(__isl_take isl_map *NewAccess) {
 
   isl_map_free(NewAccessRelation);
   NewAccessRelation = NewAccess;
+}
+
+bool MemoryAccess::isLatestPartialAccess() const {
+  isl::set StmtDom = give(getStatement()->getDomain());
+  isl::set AccDom = give(isl_map_domain(getLatestAccessRelation()));
+
+  return isl_set_is_subset(StmtDom.keep(), AccDom.keep()) == isl_bool_false;
 }
 
 //===----------------------------------------------------------------------===//
