@@ -938,9 +938,6 @@ TLI_DEFINE_STRING_INTERNAL("pread")
 /// int printf(const char *format, ...);
 TLI_DEFINE_ENUM_INTERNAL(printf)
 TLI_DEFINE_STRING_INTERNAL("printf")
-/// pthread_t pthread_self(void);
-TLI_DEFINE_ENUM_INTERNAL(pthread_self)
-TLI_DEFINE_STRING_INTERNAL("pthread_self")
 /// int putc(int c, FILE *stream);
 TLI_DEFINE_ENUM_INTERNAL(putc)
 TLI_DEFINE_STRING_INTERNAL("putc")

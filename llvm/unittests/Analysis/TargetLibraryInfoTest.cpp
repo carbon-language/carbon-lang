@@ -63,13 +63,12 @@ TEST_F(TargetLibraryInfoTest, InvalidProto) {
   parseAssembly("%foo = type { %foo }\n");
 
   auto *StructTy = M->getTypeByName("foo");
+  auto *InvalidFTy = FunctionType::get(StructTy, /*isVarArg=*/false);
+
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {
     LibFunc LF = (LibFunc)FI;
-    // Using the library function name to create a function that takes
-    // 1 parameter and returns the same type. There should be no library
-    // function that matches this egregiously incorrect prototypes.
     auto *F = cast<Function>(
-        M->getOrInsertFunction(TLI.getName(LF), StructTy, StructTy));
+        M->getOrInsertFunction(TLI.getName(LF), InvalidFTy));
     EXPECT_FALSE(isLibFunc(F, LF));
   }
 }
@@ -247,7 +246,6 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
     "declare float @powf(float, float)\n"
     "declare x86_fp80 @powl(x86_fp80, x86_fp80)\n"
     "declare i32 @printf(i8*, ...)\n"
-    "declare %struct @pthread_self()\n"
     "declare i32 @putc(i32, %struct*)\n"
     "declare i32 @putchar(i32)\n"
     "declare i32 @puts(i8*)\n"
