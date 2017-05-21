@@ -184,37 +184,35 @@ combineInSequence(__isl_take isl_schedule *Prev,
   return isl_schedule_sequence(Prev, Succ);
 }
 
-static __isl_give isl_set *addRangeBoundsToSet(__isl_take isl_set *S,
-                                               const ConstantRange &Range,
-                                               int dim,
-                                               enum isl_dim_type type) {
-  isl_val *V;
-  isl_ctx *Ctx = isl_set_get_ctx(S);
+static isl::set addRangeBoundsToSet(isl::set S, const ConstantRange &Range,
+                                    int dim, isl::dim type) {
+  isl::val V;
+  isl::ctx Ctx = S.get_ctx();
 
   // The upper and lower bound for a parameter value is derived either from
   // the data type of the parameter or from the - possibly more restrictive -
   // range metadata.
-  V = isl_valFromAPInt(Ctx, Range.getSignedMin(), true);
-  S = isl_set_lower_bound_val(S, type, dim, V);
-  V = isl_valFromAPInt(Ctx, Range.getSignedMax(), true);
-  S = isl_set_upper_bound_val(S, type, dim, V);
+  V = valFromAPInt(Ctx.get(), Range.getSignedMin(), true);
+  S = S.lower_bound_val(type, dim, V);
+  V = valFromAPInt(Ctx.get(), Range.getSignedMax(), true);
+  S = S.upper_bound_val(type, dim, V);
 
   if (Range.isFullSet())
     return S;
 
-  if (isl_set_n_basic_set(S) > MaxDisjunctsInContext)
+  if (isl_set_n_basic_set(S.get()) > MaxDisjunctsInContext)
     return S;
 
   // In case of signed wrapping, we can refine the set of valid values by
   // excluding the part not covered by the wrapping range.
   if (Range.isSignWrappedSet()) {
-    V = isl_valFromAPInt(Ctx, Range.getLower(), true);
-    isl_set *SLB = isl_set_lower_bound_val(isl_set_copy(S), type, dim, V);
+    V = valFromAPInt(Ctx.get(), Range.getLower(), true);
+    isl::set SLB = S.lower_bound_val(type, dim, V);
 
-    V = isl_valFromAPInt(Ctx, Range.getUpper(), true);
-    V = isl_val_sub_ui(V, 1);
-    isl_set *SUB = isl_set_upper_bound_val(S, type, dim, V);
-    S = isl_set_union(SLB, SUB);
+    V = valFromAPInt(Ctx.get(), Range.getUpper(), true);
+    V = V.sub_ui(1);
+    isl::set SUB = S.upper_bound_val(type, dim, V);
+    S = SLB.unite(SUB);
   }
 
   return S;
@@ -858,10 +856,11 @@ void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
 
   assert(Min.sle(Max) && "Minimum expected to be less or equal than max");
 
-  isl_set *AccessRange = isl_map_range(isl_map_copy(AccessRelation));
-  AccessRange =
-      addRangeBoundsToSet(AccessRange, ConstantRange(Min, Max), 0, isl_dim_set);
-  AccessRelation = isl_map_intersect_range(AccessRelation, AccessRange);
+  isl::map Relation = give(AccessRelation);
+  isl::set AccessRange = Relation.range();
+  AccessRange = addRangeBoundsToSet(AccessRange, ConstantRange(Min, Max), 0,
+                                    isl::dim::set);
+  AccessRelation = Relation.intersect_range(AccessRange).release();
 }
 
 void MemoryAccess::foldAccessRelation() {
@@ -2208,7 +2207,9 @@ void Scop::addParameterBounds() {
   unsigned PDim = 0;
   for (auto *Parameter : Parameters) {
     ConstantRange SRange = SE->getSignedRange(Parameter);
-    Context = addRangeBoundsToSet(Context, SRange, PDim++, isl_dim_param);
+    Context =
+        addRangeBoundsToSet(give(Context), SRange, PDim++, isl::dim::param)
+            .release();
   }
 }
 
