@@ -954,7 +954,7 @@ const Expression *NewGVN::checkSimplificationResults(Expression *E,
   if (CC && CC->getDefiningExpr()) {
     if (I)
       DEBUG(dbgs() << "Simplified " << *I << " to "
-                   << " expression " << *V << "\n");
+                   << " expression " << *CC->getDefiningExpr() << "\n");
     NumGVNOpsSimplified++;
     deleteExpression(E);
     return CC->getDefiningExpr();
