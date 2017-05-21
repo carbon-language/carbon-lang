@@ -86,7 +86,7 @@ isl::val getConstant(isl::pw_aff PwAff, bool Max, bool Min) {
       return isl::stat::error;
     }
 
-    auto ThisVal = Aff.get_constant();
+    auto ThisVal = Aff.get_constant_val();
     if (!Result) {
       Result = ThisVal;
       return isl::stat::ok;
