@@ -59,3 +59,79 @@ entry:
   %31 = insertvalue %S undef, [4 x i64] %30, 0
   ret %S %31
 }
+
+define %S @sub(%S* nocapture readonly %this, %S %arg.b) local_unnamed_addr {
+; CHECK-LABEL: sub:
+; CHECK:       # BB#0: # %entry
+; CHECK-NEXT:    notq %rdx
+; CHECK-NEXT:    xorl %r10d, %r10d
+; CHECK-NEXT:    addq (%rsi), %rdx
+; CHECK-NEXT:    setb %r10b
+; CHECK-NEXT:    addq $1, %rdx
+; CHECK-NEXT:    adcq 8(%rsi), %r10
+; CHECK-NEXT:    setb %al
+; CHECK-NEXT:    movzbl %al, %r11d
+; CHECK-NEXT:    notq %rcx
+; CHECK-NEXT:    addq %r10, %rcx
+; CHECK-NEXT:    adcq 16(%rsi), %r11
+; CHECK-NEXT:    setb %al
+; CHECK-NEXT:    movzbl %al, %eax
+; CHECK-NEXT:    notq %r8
+; CHECK-NEXT:    addq %r11, %r8
+; CHECK-NEXT:    adcq 24(%rsi), %rax
+; CHECK-NEXT:    notq %r9
+; CHECK-NEXT:    addq %rax, %r9
+; CHECK-NEXT:    movq %rdx, (%rdi)
+; CHECK-NEXT:    movq %rcx, 8(%rdi)
+; CHECK-NEXT:    movq %r8, 16(%rdi)
+; CHECK-NEXT:    movq %r9, 24(%rdi)
+; CHECK-NEXT:    movq %rdi, %rax
+; CHECK-NEXT:    retq
+entry:
+  %0 = extractvalue %S %arg.b, 0
+  %.elt6 = extractvalue [4 x i64] %0, 1
+  %.elt8 = extractvalue [4 x i64] %0, 2
+  %.elt10 = extractvalue [4 x i64] %0, 3
+  %.elt = extractvalue [4 x i64] %0, 0
+  %1 = getelementptr inbounds %S, %S* %this, i64 0, i32 0, i64 0
+  %2 = load i64, i64* %1, align 8
+  %3 = zext i64 %2 to i128
+  %4 = add nuw nsw i128 %3, 1
+  %5 = xor i64 %.elt, -1
+  %6 = zext i64 %5 to i128
+  %7 = add nuw nsw i128 %4, %6
+  %8 = trunc i128 %7 to i64
+  %9 = lshr i128 %7, 64
+  %10 = getelementptr inbounds %S, %S* %this, i64 0, i32 0, i64 1
+  %11 = load i64, i64* %10, align 8
+  %12 = zext i64 %11 to i128
+  %13 = add nuw nsw i128 %9, %12
+  %14 = xor i64 %.elt6, -1
+  %15 = zext i64 %14 to i128
+  %16 = add nuw nsw i128 %13, %15
+  %17 = trunc i128 %16 to i64
+  %18 = lshr i128 %16, 64
+  %19 = getelementptr inbounds %S, %S* %this, i64 0, i32 0, i64 2
+  %20 = load i64, i64* %19, align 8
+  %21 = zext i64 %20 to i128
+  %22 = add nuw nsw i128 %18, %21
+  %23 = xor i64 %.elt8, -1
+  %24 = zext i64 %23 to i128
+  %25 = add nuw nsw i128 %22, %24
+  %26 = lshr i128 %25, 64
+  %27 = trunc i128 %25 to i64
+  %28 = getelementptr inbounds %S, %S* %this, i64 0, i32 0, i64 3
+  %29 = load i64, i64* %28, align 8
+  %30 = zext i64 %29 to i128
+  %31 = add nuw nsw i128 %26, %30
+  %32 = xor i64 %.elt10, -1
+  %33 = zext i64 %32 to i128
+  %34 = add nuw nsw i128 %31, %33
+  %35 = trunc i128 %34 to i64
+  %36 = insertvalue [4 x i64] undef, i64 %8, 0
+  %37 = insertvalue [4 x i64] %36, i64 %17, 1
+  %38 = insertvalue [4 x i64] %37, i64 %27, 2
+  %39 = insertvalue [4 x i64] %38, i64 %35, 3
+  %40 = insertvalue %S undef, [4 x i64] %39, 0
+  ret %S %40
+}
