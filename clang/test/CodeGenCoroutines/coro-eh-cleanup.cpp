@@ -51,7 +51,7 @@ coro_t f() {
 // CHECK: [[EHCLEANUP]]:
 // CHECK:   %[[INNERPAD:.+]] = cleanuppad within none []
 // CHECK:   call void @"\01??_DCleanup@@QEAAXXZ"(
-// CHECK:   cleanupret from %4 unwind label %[[CATCHDISPATCH:.+]]
+// CHECK:   cleanupret from %{{.+}} unwind label %[[CATCHDISPATCH:.+]]
 
 // CHECK: [[CATCHDISPATCH]]:
 // CHECK:   catchswitch within none [label %[[CATCHPAD:.+]]] unwind label %[[COROENDBB:.+]]
