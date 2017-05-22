@@ -694,6 +694,8 @@ private:
   BasicBlockListType BasicBlocks;
   BasicBlockListType DeletedBasicBlocks;
   BasicBlockOrderType BasicBlocksLayout;
+  /// Previous layout replaced by modifyLayout
+  BasicBlockOrderType BasicBlocksPreviousLayout;
 
   /// BasicBlockOffsets are used during CFG construction to map from code
   /// offsets to BinaryBasicBlocks.  Any modifications made to the CFG
@@ -1710,6 +1712,17 @@ public:
   /// Computes a function hotness score: the sum of the products of BB frequency
   /// and size.
   uint64_t getFunctionScore();
+
+  /// Return true if the layout has been changed by basic block reordering,
+  /// false otherwise.
+  bool hasLayoutChanged() const;
+
+  /// Get the edit distance of the new layout with respect to the previous
+  /// layout after basic block reordering.
+  uint64_t getEditDistance() const;
+
+  /// Get the number of instructions within this function.
+  uint64_t getInstructionCount() const;
 
   const CFIInstrMapType &getFDEProgram() const {
     return FrameInstructions;

@@ -53,6 +53,7 @@ extern cl::opt<bool> Relocs;
 extern cl::opt<bool> UpdateDebugSections;
 extern cl::opt<IndirectCallPromotionType> IndirectCallPromotion;
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<unsigned> PrintFuncStat;
 
 static cl::opt<bool>
 AggressiveSplitting("split-all-cold",
@@ -2538,11 +2539,56 @@ void BinaryFunction::modifyLayout(LayoutType Type, bool MinBranchClusters,
   }
 
   Algo->reorderBasicBlocks(*this, NewLayout);
+  if (opts::PrintFuncStat > 0)
+    BasicBlocksPreviousLayout = BasicBlocksLayout;
   BasicBlocksLayout.clear();
   BasicBlocksLayout.swap(NewLayout);
 
   if (Split)
     splitFunction();
+}
+
+uint64_t BinaryFunction::getInstructionCount() const {
+  uint64_t Count = 0;
+  for (auto &Block : BasicBlocksLayout) {
+    Count += Block->getNumNonPseudos();
+  }
+  return Count;
+}
+
+bool BinaryFunction::hasLayoutChanged() const {
+  assert(opts::PrintFuncStat > 0 && "PrintFuncStat flag is not on");
+  return BasicBlocksPreviousLayout != BasicBlocksLayout;
+}
+
+uint64_t BinaryFunction::getEditDistance() const {
+  assert(opts::PrintFuncStat > 0 && "PrintFuncStat flag is not on");
+  const auto LayoutSize = BasicBlocksPreviousLayout.size();
+  if (LayoutSize < 2) {
+    return 0;
+  }
+
+  std::vector<std::vector<uint64_t>> ChangeMatrix(
+      LayoutSize + 1, std::vector<uint64_t>(LayoutSize + 1));
+
+  for (uint64_t I = 0; I <= LayoutSize; ++I) {
+    ChangeMatrix[I][0] = I;
+    ChangeMatrix[0][I] = I;
+  }
+
+  for (uint64_t I = 1; I <= LayoutSize; ++I) {
+    for (uint64_t J = 1; J <= LayoutSize; ++J) {
+      if (BasicBlocksPreviousLayout[I] != BasicBlocksLayout[J]) {
+        ChangeMatrix[I][J] =
+            std::min(std::min(ChangeMatrix[I - 1][J], ChangeMatrix[I][J - 1]),
+                     ChangeMatrix[I - 1][J - 1]) + 1;
+      } else {
+        ChangeMatrix[I][J] = ChangeMatrix[I - 1][J - 1];
+      }
+    }
+  }
+
+  return ChangeMatrix[LayoutSize][LayoutSize];
 }
 
 void BinaryFunction::emitBody(MCStreamer &Streamer, bool EmitColdPart) {

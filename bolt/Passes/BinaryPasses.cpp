@@ -97,6 +97,13 @@ PrintSortedBy("print-sorted-by",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+cl::opt<unsigned>
+PrintFuncStat("print-function-statistics",
+  cl::desc("print statistics about basic block ordering"),
+  cl::init(0),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 static cl::opt<bolt::BinaryFunction::LayoutType>
 ReorderBlocks("reorder-blocks",
   cl::desc("change layout of basic blocks in a function"),
@@ -293,25 +300,64 @@ bool ReorderBasicBlocks::shouldPrint(const BinaryFunction &BF) const {
 }
 
 void ReorderBasicBlocks::runOnFunctions(
-    BinaryContext &BC,
-    std::map<uint64_t, BinaryFunction> &BFs,
-    std::set<uint64_t> &LargeFunctions) {
+        BinaryContext &BC,
+        std::map<uint64_t, BinaryFunction> &BFs,
+        std::set<uint64_t> &LargeFunctions) {
   if (opts::ReorderBlocks == BinaryFunction::LT_NONE)
     return;
 
+  uint64_t ModifiedFuncCount = 0;
   for (auto &It : BFs) {
     auto &Function = It.second;
 
-      if (!shouldOptimize(Function))
-        continue;
+    if (!shouldOptimize(Function))
+      continue;
 
     const bool ShouldSplit =
-      (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
-      (opts::SplitFunctions == BinaryFunction::ST_EH &&
-       Function.hasEHRanges()) ||
-      (LargeFunctions.find(It.first) != LargeFunctions.end());
+            (opts::SplitFunctions == BinaryFunction::ST_ALL) ||
+            (opts::SplitFunctions == BinaryFunction::ST_EH &&
+             Function.hasEHRanges()) ||
+            (LargeFunctions.find(It.first) != LargeFunctions.end());
     Function.modifyLayout(opts::ReorderBlocks, opts::MinBranchClusters,
                           ShouldSplit);
+
+    if (opts::PrintFuncStat > 0 && Function.hasLayoutChanged()) {
+      ++ModifiedFuncCount;
+    }
+  }
+
+  if (opts::PrintFuncStat > 0) {
+    raw_ostream &OS = outs();
+    // Copy all the values into vector in order to sort them
+    std::map<uint64_t, BinaryFunction &> ScoreMap;
+    for (auto It = BFs.begin(); It != BFs.end(); ++It) {
+      ScoreMap.insert(std::pair<uint64_t, BinaryFunction &>(
+          It->second.getFunctionScore(), It->second));
+    }
+
+    OS << "\nBOLT-INFO: Printing Function Statistics:\n\n";
+    OS << "           There are " << BFs.size() << " functions in total. \n";
+    OS << "           Number of functions being modified: " << ModifiedFuncCount
+       << "\n";
+    OS << "           User asks for detailed information on top "
+       << opts::PrintFuncStat << " functions. (Ranked by function score)"
+       << "\n\n";
+    uint64_t I = 0;
+    for (std::map<uint64_t, BinaryFunction &>::reverse_iterator
+             Rit = ScoreMap.rbegin();
+         Rit != ScoreMap.rend() && I < opts::PrintFuncStat; ++Rit, ++I) {
+      auto &Function = Rit->second;
+
+      OS << "           Information for function of top: " << (I + 1) << ": \n";
+      OS << "             Function Score is: " << Function.getFunctionScore()
+         << "\n";
+      OS << "             There are " << Function.size()
+         << " number of blocks in this function.\n";
+      OS << "             There are " << Function.getInstructionCount()
+         << " number of instructions in this function.\n";
+      OS << "             The edit distance for this function is: "
+         << Function.getEditDistance() << "\n\n";
+    }
   }
 }
 
