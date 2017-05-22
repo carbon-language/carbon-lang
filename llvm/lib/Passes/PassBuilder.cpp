@@ -156,7 +156,7 @@ static cl::opt<bool>
                        cl::desc("Run Partial inlinining pass"));
 
 static cl::opt<bool>
-    RunNewGVN("enable-nmp-newgvn", cl::init(false),
+    RunNewGVN("enable-npm-newgvn", cl::init(false),
               cl::Hidden, cl::ZeroOrMore,
               cl::desc("Run NewGVN instead of GVN"));
 
