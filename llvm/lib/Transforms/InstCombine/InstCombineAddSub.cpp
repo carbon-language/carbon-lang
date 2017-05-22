@@ -869,8 +869,8 @@ bool InstCombiner::WillNotOverflowSignedSub(Value *LHS, Value *RHS,
 
   // Subtraction of two 2's complement numbers having identical signs will
   // never overflow.
-  if ((LHSKnown.One[BitWidth - 1] && RHSKnown.One[BitWidth - 1]) ||
-      (LHSKnown.Zero[BitWidth - 1] && RHSKnown.Zero[BitWidth - 1]))
+  if ((LHSKnown.isNegative() && RHSKnown.isNegative()) ||
+      (LHSKnown.isNonNegative() && RHSKnown.isNonNegative()))
     return true;
 
   // TODO: implement logic similar to checkRippleForAdd
