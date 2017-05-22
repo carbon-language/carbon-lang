@@ -1577,7 +1577,7 @@ TEST_F(FormatTestComments, ReflowsComments) {
                    " *\n"
                    " * long */",
                    getLLVMStyleWithColumns(20)));
-  
+
   // Don't reflow lines having content that is a single character.
   EXPECT_EQ("// long long long\n"
             "// long\n"
@@ -1602,7 +1602,7 @@ TEST_F(FormatTestComments, ReflowsComments) {
             format("// long long long long\n"
                    "// @param arg",
                    getLLVMStyleWithColumns(20)));
-  
+
   // Don't reflow lines starting with 'TODO'.
   EXPECT_EQ("// long long long\n"
             "// long\n"
@@ -1669,6 +1669,69 @@ TEST_F(FormatTestComments, ReflowsComments) {
             "//  long",
             format("// long long long long\n"
                    "//  long",
+                   getLLVMStyleWithColumns(20)));
+
+  // Don't reflow separate bullets in list
+  EXPECT_EQ("// - long long long\n"
+            "// long\n"
+            "// - long",
+            format("// - long long long long\n"
+                   "// - long",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// * long long long\n"
+            "// long\n"
+            "// * long",
+            format("// * long long long long\n"
+                   "// * long",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// + long long long\n"
+            "// long\n"
+            "// + long",
+            format("// + long long long long\n"
+                   "// + long",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// 1. long long long\n"
+            "// long\n"
+            "// 2. long",
+            format("// 1. long long long long\n"
+                   "// 2. long",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// -# long long long\n"
+            "// long\n"
+            "// -# long",
+            format("// -# long long long long\n"
+                   "// -# long",
+                   getLLVMStyleWithColumns(20)));
+
+  EXPECT_EQ("// - long long long\n"
+            "// long long long\n"
+            "// - long",
+            format("// - long long long long\n"
+                   "// long long\n"
+                   "// - long",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("// - long long long\n"
+            "// long long long\n"
+            "// long\n"
+            "// - long",
+            format("// - long long long long\n"
+                   "// long long long\n"
+                   "// - long",
+                   getLLVMStyleWithColumns(20)));
+
+  // Large number (>2 digits) are not list items
+  EXPECT_EQ("// long long long\n"
+            "// long 1024. long.",
+            format("// long long long long\n"
+                   "// 1024. long.",
+                   getLLVMStyleWithColumns(20)));
+
+  // Do not break before number, to avoid introducing a non-reflowable doxygen
+  // list item.
+  EXPECT_EQ("// long long\n"
+            "// long 10. long.",
+            format("// long long long 10.\n"
+                   "// long.",
                    getLLVMStyleWithColumns(20)));
 
   // Don't break or reflow after implicit string literals.
