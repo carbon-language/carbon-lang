@@ -58,22 +58,24 @@ using namespace llvm;
 
 namespace {
 class LoopPredication {
-  ScalarEvolution *SE;
-
-  Loop *L;
-  const DataLayout *DL;
-  BasicBlock *Preheader;
-
   /// Represents an induction variable check:
   ///   icmp Pred, <induction variable>, <loop invariant limit>
   struct LoopICmp {
     ICmpInst::Predicate Pred;
     const SCEVAddRecExpr *IV;
     const SCEV *Limit;
-    LoopICmp(ICmpInst::Predicate Pred, const SCEVAddRecExpr *IV, const SCEV *Limit)
+    LoopICmp(ICmpInst::Predicate Pred, const SCEVAddRecExpr *IV,
+             const SCEV *Limit)
         : Pred(Pred), IV(IV), Limit(Limit) {}
     LoopICmp() {}
   };
+
+  ScalarEvolution *SE;
+
+  Loop *L;
+  const DataLayout *DL;
+  BasicBlock *Preheader;
+
   Optional<LoopICmp> parseLoopICmp(ICmpInst *ICI);
 
   Value *expandCheck(SCEVExpander &Expander, IRBuilder<> &Builder,
