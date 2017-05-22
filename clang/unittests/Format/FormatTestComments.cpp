@@ -1020,6 +1020,38 @@ TEST_F(FormatTestComments, SplitsLongLinesInCommentsInPreprocessor) {
                    getLLVMStyleWithColumns(20)));
 }
 
+TEST_F(FormatTestComments, KeepsTrailingPPCommentsAndSectionCommentsSeparate) {
+  verifyFormat("#ifdef A // line about A\n"
+               "// section comment\n"
+               "#endif",
+               getLLVMStyleWithColumns(80));
+  verifyFormat("#ifdef A // line 1 about A\n"
+               "         // line 2 about A\n"
+               "// section comment\n"
+               "#endif",
+               getLLVMStyleWithColumns(80));
+  EXPECT_EQ("#ifdef A // line 1 about A\n"
+            "         // line 2 about A\n"
+            "// section comment\n"
+            "#endif",
+            format("#ifdef A // line 1 about A\n"
+                   "          // line 2 about A\n"
+                   "// section comment\n"
+                   "#endif",
+                   getLLVMStyleWithColumns(80)));
+  verifyFormat("int f() {\n"
+               "  int i;\n"
+               "#ifdef A // comment about A\n"
+               "  // section comment 1\n"
+               "  // section comment 2\n"
+               "  i = 2;\n"
+               "#else // comment about #else\n"
+               "  // section comment 3\n"
+               "  i = 4;\n"
+               "#endif\n"
+               "}", getLLVMStyleWithColumns(80));
+}
+
 TEST_F(FormatTestComments, CommentsInStaticInitializers) {
   EXPECT_EQ(
       "static SomeType type = {aaaaaaaaaaaaaaaaaaaa, /* comment */\n"
