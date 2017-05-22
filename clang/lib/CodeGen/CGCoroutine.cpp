@@ -270,6 +270,15 @@ struct CallCoroDelete final : public EHScopeStack::Cleanup {
 };
 }
 
+static void emitBodyAndFallthrough(CodeGenFunction &CGF,
+                                   const CoroutineBodyStmt &S, Stmt *Body) {
+  CGF.EmitStmt(Body);
+  const bool CanFallthrough = CGF.Builder.GetInsertBlock();
+  if (CanFallthrough)
+    if (Stmt *OnFallthrough = S.getFallthroughHandler())
+      CGF.EmitStmt(OnFallthrough);
+}
+
 void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
   auto *NullPtr = llvm::ConstantPointerNull::get(Builder.getInt8PtrTy());
   auto &TI = CGM.getContext().getTargetInfo();
@@ -318,7 +327,19 @@ void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
     // FIXME: Emit initial suspend and more before the body.
 
     CurCoro.Data->CurrentAwaitKind = AwaitKind::Normal;
-    EmitStmt(S.getBody());
+
+    if (auto *OnException = S.getExceptionHandler()) {
+      auto Loc = S.getLocStart();
+      CXXCatchStmt Catch(Loc, /*exDecl=*/nullptr, OnException);
+      auto *TryStmt = CXXTryStmt::Create(getContext(), Loc, S.getBody(), &Catch);
+
+      EnterCXXTryStmt(*TryStmt);
+      emitBodyAndFallthrough(*this, S, TryStmt->getTryBlock());
+      ExitCXXTryStmt(*TryStmt);
+    }
+    else {
+      emitBodyAndFallthrough(*this, S, S.getBody());
+    }
 
     // See if we need to generate final suspend.
     const bool CanFallthrough = Builder.GetInsertBlock();
