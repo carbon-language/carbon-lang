@@ -61,8 +61,6 @@ public:
 
   // Return true if the constant pool is empty
   bool empty();
-
-  void clearCache();
 };
 
 class AssemblerConstantPools {
@@ -86,7 +84,6 @@ class AssemblerConstantPools {
 public:
   void emitAll(MCStreamer &Streamer);
   void emitForCurrentSection(MCStreamer &Streamer);
-  void clearCacheForCurrentSection(MCStreamer &Streamer);
   const MCExpr *addEntry(MCStreamer &Streamer, const MCExpr *Expr,
                          unsigned Size, SMLoc Loc);
 
