@@ -1025,11 +1025,11 @@ void CodeViewDebug::beginFunctionImpl(const MachineFunction *MF) {
   bool EmptyPrologue = true;
   for (const auto &MBB : *MF) {
     for (const auto &MI : MBB) {
-      if (!MI.isMetaInstruction() && !MI.getFlag(MachineInstr::FrameSetup) &&
+      if (!MI.isDebugValue() && !MI.getFlag(MachineInstr::FrameSetup) &&
           MI.getDebugLoc()) {
         PrologEndLoc = MI.getDebugLoc();
         break;
-      } else if (!MI.isMetaInstruction()) {
+      } else if (!MI.isDebugValue()) {
         EmptyPrologue = false;
       }
     }

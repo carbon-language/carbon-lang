@@ -86,9 +86,8 @@ void LexicalScopes::extractLexicalScopes(
         continue;
       }
 
-      // Ignore DBG_VALUE and similar instruction that do not contribute to any
-      // instruction in the output.
-      if (MInsn.isMetaInstruction())
+      // Ignore DBG_VALUE. It does not contribute to any instruction in output.
+      if (MInsn.isDebugValue())
         continue;
 
       if (RangeBeginMI) {
