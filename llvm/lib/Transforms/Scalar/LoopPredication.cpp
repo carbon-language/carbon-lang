@@ -182,8 +182,10 @@ Optional<Value *> LoopPredication::widenICmpRangeCheck(ICmpInst *ICI,
   DEBUG(ICI->dump());
 
   auto RangeCheck = parseLoopICmp(ICI);
-  if (!RangeCheck)
+  if (!RangeCheck) {
+    DEBUG(dbgs() << "Failed to parse the loop latch condition!\n");
     return None;
+  }
 
   ICmpInst::Predicate Pred = RangeCheck->Pred;
   const SCEVAddRecExpr *IndexAR = RangeCheck->IV;
