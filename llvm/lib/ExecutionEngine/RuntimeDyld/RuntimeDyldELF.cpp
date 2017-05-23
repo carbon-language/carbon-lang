@@ -1324,12 +1324,12 @@ RuntimeDyldELF::processRelocationRef(
       Obj.getPlatformFlags(AbiVariant);
       AbiVariant &= ELF::EF_PPC64_ABI;
       // A PPC branch relocation will need a stub function if the target is
-      // an external symbol (Symbol::ST_Unknown) or if the target address
+      // an external symbol (Value.SymbolName set) or if the target address
       // is not within the signed 24-bits branch address.
       SectionEntry &Section = Sections[SectionID];
       uint8_t *Target = Section.getAddressWithOffset(Offset);
       bool RangeOverflow = false;
-      if (SymType != SymbolRef::ST_Unknown) {
+      if (!Value.SymbolName) {
         if (AbiVariant != 2) {
           // In the ELFv1 ABI, a function call may point to the .opd entry,
           // so the final symbol value is calculated based on the relocation
@@ -1348,15 +1348,12 @@ RuntimeDyldELF::processRelocationRef(
         // If it is within 26-bits branch range, just set the branch target
         if (SignExtend64<26>(delta) == delta) {
           RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
-          if (Value.SymbolName)
-            addRelocationForSymbol(RE, Value.SymbolName);
-          else
-            addRelocationForSection(RE, Value.SectionID);
+          addRelocationForSection(RE, Value.SectionID);
         } else {
           RangeOverflow = true;
         }
       }
-      if (SymType == SymbolRef::ST_Unknown || RangeOverflow) {
+      if (Value.SymbolName || RangeOverflow) {
         // It is an external symbol (SymbolRef::ST_Unknown) or within a range
         // larger than 24-bits.
         StubMap::const_iterator i = Stubs.find(Value);
@@ -1412,7 +1409,7 @@ RuntimeDyldELF::processRelocationRef(
                             RelType, 0);
           Section.advanceStubOffset(getMaxStubSize());
         }
-        if (SymType == SymbolRef::ST_Unknown) {
+        if (Value.SymbolName) {
           // Restore the TOC for external calls
           if (AbiVariant == 2)
             writeInt32BE(Target + 4, 0xE8410018); // ld r2,28(r1)
