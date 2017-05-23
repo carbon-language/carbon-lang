@@ -2,6 +2,7 @@
 #error "Missing macro definition of HANDLE_DIE_HASH_ATTR"
 #endif
 
+HANDLE_DIE_HASH_ATTR(DW_AT_name)
 HANDLE_DIE_HASH_ATTR(DW_AT_accessibility)
 HANDLE_DIE_HASH_ATTR(DW_AT_address_class)
 HANDLE_DIE_HASH_ATTR(DW_AT_allocated)
