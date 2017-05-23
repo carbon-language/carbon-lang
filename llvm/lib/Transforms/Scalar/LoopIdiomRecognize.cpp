@@ -1035,6 +1035,17 @@ static Value *matchCondition(BranchInst *BI, BasicBlock *LoopEntry) {
   return nullptr;
 }
 
+// Check if the recurrence variable `VarX` is in the right form to create
+// the idiom. Returns the value coerced to a PHINode if so.
+static PHINode *getRecurrenceVar(Value *VarX, Instruction *DefX,
+                                 BasicBlock *LoopEntry) {
+  auto *PhiX = dyn_cast<PHINode>(VarX);
+  if (PhiX && PhiX->getParent() == LoopEntry &&
+      (PhiX->getOperand(0) == DefX || PhiX->getOperand(1) == DefX))
+    return PhiX;
+  return nullptr;
+}
+
 /// Return true iff the idiom is detected in the loop.
 ///
 /// Additionally:
@@ -1110,13 +1121,9 @@ static bool detectPopcountIdiom(Loop *CurLoop, BasicBlock *PreCondBB,
   }
 
   // step 3: Check the recurrence of variable X
-  {
-    PhiX = dyn_cast<PHINode>(VarX1);
-    if (!PhiX ||
-        (PhiX->getOperand(0) != DefX2 && PhiX->getOperand(1) != DefX2)) {
-      return false;
-    }
-  }
+  PhiX = getRecurrenceVar(VarX1, DefX2, LoopEntry);
+  if (!PhiX)
+    return false;
 
   // step 4: Find the instruction which count the population: cnt2 = cnt1 + 1
   {
@@ -1227,8 +1234,8 @@ static bool detectCTLZIdiom(Loop *CurLoop, PHINode *&PhiX,
   VarX = DefX->getOperand(0);
 
   // step 3: Check the recurrence of variable X
-  PhiX = dyn_cast<PHINode>(VarX);
-  if (!PhiX || (PhiX->getOperand(0) != DefX && PhiX->getOperand(1) != DefX))
+  PhiX = getRecurrenceVar(VarX, DefX, LoopEntry);
+  if (!PhiX)
     return false;
 
   // step 4: Find the instruction which count the CTLZ: cnt.next = cnt + 1
