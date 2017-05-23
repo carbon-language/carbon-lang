@@ -10,5 +10,5 @@ _clang()
   else
     COMPREPLY=( $( compgen -W "$flags" -- "$cur" ) )
   fi
-} 
+}
 complete -F _clang clang
