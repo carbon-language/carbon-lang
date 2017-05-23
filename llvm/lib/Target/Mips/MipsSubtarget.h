@@ -119,9 +119,6 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
   // Mips16 hard float
   bool InMips16HardFloat;
 
-  // PreviousInMips16 -- the function we just processed was in Mips 16 Mode
-  bool PreviousInMips16Mode;
-
   // InMicroMips -- can process MicroMips instructions
   bool InMicroMipsMode;
 

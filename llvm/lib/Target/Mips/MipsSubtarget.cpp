@@ -76,8 +76,6 @@ MipsSubtarget::MipsSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
       FrameLowering(MipsFrameLowering::create(*this)),
       TLInfo(MipsTargetLowering::create(TM, *this)) {
 
-  PreviousInMips16Mode = InMips16Mode;
-
   if (MipsArchVersion == MipsDefault)
     MipsArchVersion = Mips32;
 
