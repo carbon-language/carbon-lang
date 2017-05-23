@@ -69,7 +69,15 @@ extern "C" void f0(global_new_delete_tag) {
   // CHECK: %[[FRAME:.+]] = call i8* @llvm.coro.begin(token %[[ID]], i8* %[[PHI]])
 
   // CHECK: %[[MEM:.+]] = call i8* @llvm.coro.free(token %[[ID]], i8* %[[FRAME]])
+  // CHECK: %[[NeedDealloc:.+]] = icmp ne i8* %[[MEM]], null
+  // CHECK: br i1 %[[NeedDealloc]], label %[[FreeBB:.+]], label %[[Afterwards:.+]]
+
+  // CHECK: [[FreeBB]]:
   // CHECK: call void @_ZdlPv(i8* %[[MEM]])
+  // CHECK: br label %[[Afterwards]]
+
+  // CHECK: [[Afterwards]]:
+  // CHECK: ret void
   co_return;
 }
 

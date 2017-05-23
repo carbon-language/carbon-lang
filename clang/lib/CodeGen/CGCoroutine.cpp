@@ -62,6 +62,10 @@ struct clang::CodeGen::CGCoroData {
   // the address of the coroutine frame of the current coroutine.
   llvm::CallInst *CoroBegin = nullptr;
 
+  // Stores the last emitted coro.free for the deallocate expressions, we use it
+  // to wrap dealloc code with if(auto mem = coro.free) dealloc(mem).
+  llvm::CallInst *LastCoroFree = nullptr;
+
   // If coro.id came from the builtin, remember the expression to give better
   // diagnostic. If CoroIdExpr is nullptr, the coro.id was created by
   // EmitCoroutineBody.
@@ -262,14 +266,47 @@ namespace {
 struct CallCoroDelete final : public EHScopeStack::Cleanup {
   Stmt *Deallocate;
 
-  // TODO: Wrap deallocate in if(coro.free(...)) Deallocate.
+  // Emit "if (coro.free(CoroId, CoroBegin)) Deallocate;"
+
+  // Note: That deallocation will be emitted twice: once for a normal exit and
+  // once for exceptional exit. This usage is safe because Deallocate does not
+  // contain any declarations. The SubStmtBuilder::makeNewAndDeleteExpr()
+  // builds a single call to a deallocation function which is safe to emit
+  // multiple times.
   void Emit(CodeGenFunction &CGF, Flags) override {
-    // Note: That deallocation will be emitted twice: once for a normal exit and
-    // once for exceptional exit. This usage is safe because Deallocate does not
-    // contain any declarations. The SubStmtBuilder::makeNewAndDeleteExpr()
-    // builds a single call to a deallocation function which is safe to emit
-    // multiple times.
+    // Remember the current point, as we are going to emit deallocation code
+    // first to get to coro.free instruction that is an argument to a delete
+    // call.
+    BasicBlock *SaveInsertBlock = CGF.Builder.GetInsertBlock();
+
+    auto *FreeBB = CGF.createBasicBlock("coro.free");
+    CGF.EmitBlock(FreeBB);
     CGF.EmitStmt(Deallocate);
+
+    auto *AfterFreeBB = CGF.createBasicBlock("after.coro.free");
+    CGF.EmitBlock(AfterFreeBB);
+
+    // We should have captured coro.free from the emission of deallocate.
+    auto *CoroFree = CGF.CurCoro.Data->LastCoroFree;
+    if (!CoroFree) {
+      CGF.CGM.Error(Deallocate->getLocStart(),
+                    "Deallocation expressoin does not refer to coro.free");
+      return;
+    }
+
+    // Get back to the block we were originally and move coro.free there.
+    auto *InsertPt = SaveInsertBlock->getTerminator();
+    CoroFree->moveBefore(InsertPt);
+    CGF.Builder.SetInsertPoint(InsertPt);
+
+    // Add if (auto *mem = coro.free) Deallocate;
+    auto *NullPtr = llvm::ConstantPointerNull::get(CGF.Int8PtrTy);
+    auto *Cond = CGF.Builder.CreateICmpNE(CoroFree, NullPtr);
+    CGF.Builder.CreateCondBr(Cond, FreeBB, AfterFreeBB);
+
+    // No longer need old terminator.
+    InsertPt->eraseFromParent();
+    CGF.Builder.SetInsertPoint(AfterFreeBB);
   }
   explicit CallCoroDelete(Stmt *DeallocStmt) : Deallocate(DeallocStmt) {}
 };
@@ -431,7 +468,7 @@ RValue CodeGenFunction::EmitCoroutineIntrinsic(const CallExpr *E,
   llvm::Value *F = CGM.getIntrinsic(IID);
   llvm::CallInst *Call = Builder.CreateCall(F, Args);
 
-  // Note: The following code is to enable to emit coroutine intrinsics by
+  // Note: The following code is to enable to emit coro.id and coro.begin by
   // hand to experiment with coroutines in C.
   // If we see @llvm.coro.id remember it in the CoroData. We will update
   // coro.alloc, coro.begin and coro.free intrinsics to refer to it.
@@ -442,5 +479,10 @@ RValue CodeGenFunction::EmitCoroutineIntrinsic(const CallExpr *E,
     if (CurCoro.Data)
       CurCoro.Data->CoroBegin = Call;
   }
-  return RValue::get(Call);
+  else if (IID == llvm::Intrinsic::coro_free) {
+    // Remember the last coro_free as we need it to build the conditional
+    // deletion of the coroutine frame.
+    if (CurCoro.Data)
+      CurCoro.Data->LastCoroFree = Call;
+  }  return RValue::get(Call);
 }
