@@ -774,25 +774,25 @@ void MemoryAccess::buildMemIntrinsicAccessRelation() {
   assert(isMemoryIntrinsic());
   assert(Subscripts.size() == 2 && Sizes.size() == 1);
 
-  auto *SubscriptPWA = getPwAff(Subscripts[0]);
-  auto *SubscriptMap = isl_map_from_pw_aff(SubscriptPWA);
+  isl::pw_aff SubscriptPWA = give(getPwAff(Subscripts[0]));
+  isl::map SubscriptMap = isl::map::from_pw_aff(SubscriptPWA);
 
-  isl_map *LengthMap;
+  isl::map LengthMap;
   if (Subscripts[1] == nullptr) {
-    LengthMap = isl_map_universe(isl_map_get_space(SubscriptMap));
+    LengthMap = isl::map::universe(SubscriptMap.get_space());
   } else {
-    auto *LengthPWA = getPwAff(Subscripts[1]);
-    LengthMap = isl_map_from_pw_aff(LengthPWA);
-    auto *RangeSpace = isl_space_range(isl_map_get_space(LengthMap));
-    LengthMap = isl_map_apply_range(LengthMap, isl_map_lex_gt(RangeSpace));
+    isl::pw_aff LengthPWA = give(getPwAff(Subscripts[1]));
+    LengthMap = isl::map::from_pw_aff(LengthPWA);
+    isl::space RangeSpace = LengthMap.get_space().range();
+    LengthMap = LengthMap.apply_range(isl::map::lex_gt(RangeSpace));
   }
-  LengthMap = isl_map_lower_bound_si(LengthMap, isl_dim_out, 0, 0);
-  LengthMap = isl_map_align_params(LengthMap, isl_map_get_space(SubscriptMap));
-  SubscriptMap =
-      isl_map_align_params(SubscriptMap, isl_map_get_space(LengthMap));
-  LengthMap = isl_map_sum(LengthMap, SubscriptMap);
-  AccessRelation = isl_map_set_tuple_id(LengthMap, isl_dim_in,
-                                        getStatement()->getDomainId());
+  LengthMap = LengthMap.lower_bound_si(isl::dim::out, 0, 0);
+  LengthMap = LengthMap.align_params(SubscriptMap.get_space());
+  SubscriptMap = SubscriptMap.align_params(LengthMap.get_space());
+  LengthMap = LengthMap.sum(SubscriptMap);
+  AccessRelation =
+      LengthMap.set_tuple_id(isl::dim::in, give(getStatement()->getDomainId()))
+          .release();
 }
 
 void MemoryAccess::computeBoundsOnAccessRelation(unsigned ElementSize) {
