@@ -2912,6 +2912,8 @@ bool Scop::buildDomainsWithBranchConstraints(Region *R, DominatorTree &DT,
         SuccDomain = CondSet;
       }
 
+      SuccDomain = isl_set_detect_equalities(SuccDomain);
+
       // Check if the maximal number of domain disjunctions was reached.
       // In case this happens we will clean up and bail.
       if (isl_set_n_basic_set(SuccDomain) < MaxDisjunctsInDomain)
