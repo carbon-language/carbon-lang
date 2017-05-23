@@ -34,6 +34,7 @@ struct HashedTypePtr {
 };
 } // namespace
 
+namespace llvm {
 template <> struct DenseMapInfo<HashedTypePtr> {
   static inline HashedTypePtr getEmptyKey() { return HashedTypePtr(nullptr); }
   static inline HashedTypePtr getTombstoneKey() {
@@ -53,6 +54,7 @@ template <> struct DenseMapInfo<HashedTypePtr> {
     return ::memcmp(LHS->Data, RHS->Data, LHS->Size) == 0;
   }
 };
+}
 
 /// Private implementation so that we don't leak our DenseMap instantiations to
 /// users.
