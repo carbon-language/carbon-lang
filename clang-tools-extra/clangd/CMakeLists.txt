@@ -20,6 +20,7 @@ add_clang_library(clangDaemon
   clangSema
   clangTooling
   clangToolingCore
+  ${LLVM_PTHREAD_LIB}
   )
 
 add_subdirectory(tool)
