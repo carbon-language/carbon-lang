@@ -326,22 +326,18 @@ void ScopArrayInfo::applyAndSetFAD(Value *FAD) {
   assert(!this->FAD);
   this->FAD = FAD;
 
-  isl_space *Space = isl_space_set_alloc(S.getIslCtx(), 1, 0);
+  isl::space Space(S.getIslCtx(), 1, 0);
 
   std::string param_name = getName();
   param_name += "_fortranarr_size";
   // TODO: see if we need to add `this` as the id user pointer
-  isl_id *IdPwAff = isl_id_alloc(S.getIslCtx(), param_name.c_str(), nullptr);
+  isl::id IdPwAff = isl::id::alloc(S.getIslCtx(), param_name.c_str(), nullptr);
 
-  Space = isl_space_set_dim_id(Space, isl_dim_param, 0, IdPwAff);
-  isl_basic_set *Identity = isl_basic_set_universe(Space);
-  isl_local_space *LocalSpace = isl_basic_set_get_local_space(Identity);
-  isl_basic_set_free(Identity);
+  Space = Space.set_dim_id(isl::dim::param, 0, IdPwAff);
+  isl::pw_aff PwAff =
+      isl::aff::var_on_domain(isl::local_space(Space), isl::dim::param, 0);
 
-  isl_pw_aff *PwAff =
-      isl_pw_aff_from_aff(isl_aff_var_on_domain(LocalSpace, isl_dim_param, 0));
-
-  DimensionSizesPw[0] = PwAff;
+  DimensionSizesPw[0] = PwAff.release();
 }
 
 bool ScopArrayInfo::updateSizes(ArrayRef<const SCEV *> NewSizes,
