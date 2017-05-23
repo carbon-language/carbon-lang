@@ -135,7 +135,7 @@ static Error isTrivialOperatorNode(const TreePatternNode *N) {
   std::string Explanation = "";
   std::string Separator = "";
   if (N->isLeaf()) {
-    if (IntInit *Int = dyn_cast<IntInit>(N->getLeafValue()))
+    if (isa<IntInit>(N->getLeafValue()))
       return Error::success();
 
     Explanation = "Is a leaf";
@@ -1327,7 +1327,7 @@ Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
 
   if (Src->isLeaf()) {
     Init *SrcInit = Src->getLeafValue();
-    if (IntInit *SrcIntInit = dyn_cast<IntInit>(SrcInit)) {
+    if (isa<IntInit>(SrcInit)) {
       InsnMatcher.addPredicate<InstructionOpcodeMatcher>(
           &Target.getInstruction(RK.getDef("G_CONSTANT")));
     } else
