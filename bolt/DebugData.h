@@ -345,6 +345,11 @@ public:
   /// little-endian value at offset \p Offset.
   void addLE32Patch(uint32_t Offset, uint32_t NewValue);
 
+  /// Add a patch at \p Offset with \p Value using unsigned LEB128 encoding with
+  /// size \p Size. \p Size should not be less than a minimum number of bytes
+  /// needed to encode \p Value.
+  void addUDataPatch(uint32_t Offset, uint64_t Value, uint64_t Size);
+
   void patchBinary(std::string &BinaryContents) override;
 };
 

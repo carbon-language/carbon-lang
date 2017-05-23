@@ -174,15 +174,18 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
     DIE->getAttributeValue(Unit, dwarf::DW_AT_ranges, FormValue, &AttrOffset);
     DebugInfoPatcher->addLE32Patch(AttrOffset, DebugRangesOffset);
   } else {
-    // Case 2: The object has both DW_AT_low_pc and DW_AT_high_pc.
-    // We require the compiler to put both attributes one after the other
-    // for our approach to work. low_pc and high_pc both occupy 8 bytes
-    // as we're dealing with a 64-bit ELF. We basically change low_pc to
-    // DW_AT_ranges and high_pc to DW_AT_producer. ranges spans only 4 bytes
-    // in 32-bit DWARF, which we assume to be used, which leaves us with 12
-    // more bytes. We then set the value of DW_AT_producer as an arbitrary
-    // 12-byte string that fills the remaining space and leaves the rest of
-    // the abbreviation layout unchanged.
+    // Case 2: The object has both DW_AT_low_pc and DW_AT_high_pc emitted back
+    // to back. We replace the attributes with DW_AT_ranges and DW_AT_low_pc.
+    // The low_pc attribute is required for DW_TAG_compile_units to set a base
+    // address.
+    //
+    // Since DW_AT_ranges takes 4-byte DW_FROM_sec_offset value, we have to fill
+    // in up to 12-bytes left after removal of low/high pc field from
+    // .debug_info.
+    //
+    // To fill in the gap we use a variable length DW_FORM_udata encoding for
+    // DW_AT_low_pc. We exploit the fact that the encoding can take an arbitrary
+    // large size.
     if (AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_low_pc) != -1U &&
         AbbreviationDecl->findAttributeIndex(dwarf::DW_AT_high_pc) != -1U) {
       uint32_t LowPCOffset = -1U;
@@ -197,19 +200,15 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
           (HighPCFormValue.getForm() != dwarf::DW_FORM_addr &&
            HighPCFormValue.getForm() != dwarf::DW_FORM_data8 &&
            HighPCFormValue.getForm() != dwarf::DW_FORM_data4)) {
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
+        errs() << "BOLT-WARNING: unexpected form value. Cannot update DIE "
                  << "at offset 0x" << Twine::utohexstr(DIE->getOffset())
                  << "\n";
-        }
         return;
       }
       if (LowPCOffset == -1U || (LowPCOffset + 8 != HighPCOffset)) {
-        if (opts::Verbosity >= 1) {
-          errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
-                 << "Cannot update DIE at offset 0x"
-                 << Twine::utohexstr(DIE->getOffset()) << '\n';
-        }
+        errs() << "BOLT-WARNING: high_pc expected immediately after low_pc. "
+               << "Cannot update DIE at offset 0x"
+               << Twine::utohexstr(DIE->getOffset()) << '\n';
         return;
       }
 
@@ -221,23 +220,19 @@ void RewriteInstance::updateDWARFObjectAddressRanges(
       AbbrevPatcher->addAttributePatch(Unit,
                                        AbbrevCode,
                                        dwarf::DW_AT_high_pc,
-                                       dwarf::DW_AT_producer,
-                                       dwarf::DW_FORM_string);
-      unsigned StringSize = 0;
+                                       dwarf::DW_AT_low_pc,
+                                       dwarf::DW_FORM_udata);
+      unsigned LowPCSize = 0;
       if (HighPCFormValue.getForm() == dwarf::DW_FORM_addr ||
           HighPCFormValue.getForm() == dwarf::DW_FORM_data8) {
-        StringSize = 12;
+        LowPCSize = 12;
       } else if (HighPCFormValue.getForm() == dwarf::DW_FORM_data4) {
-        StringSize = 8;
+        LowPCSize = 8;
       } else {
-        assert(0 && "unexpected form");
+        llvm_unreachable("unexpected form");
       }
-
       DebugInfoPatcher->addLE32Patch(LowPCOffset, DebugRangesOffset);
-      std::string ProducerString{"LLVM-BOLT"};
-      ProducerString.resize(StringSize, ' ');
-      ProducerString.back() = '\0';
-      DebugInfoPatcher->addBinaryPatch(LowPCOffset + 4, ProducerString);
+      DebugInfoPatcher->addUDataPatch(LowPCOffset + 4, 0, LowPCSize);
     } else {
       if (opts::Verbosity >= 1) {
         errs() << "BOLT-WARNING: Cannot update ranges for DIE at offset 0x"

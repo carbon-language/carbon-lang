@@ -15,6 +15,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/LEB128.h"
 #include <algorithm>
 #include <cassert>
 
@@ -268,6 +269,18 @@ void SimpleBinaryPatcher::addLEPatch(uint32_t Offset, uint64_t NewValue,
     NewValue >>= 8;
   }
   Patches.emplace_back(std::make_pair(Offset, LE64));
+}
+
+void SimpleBinaryPatcher::addUDataPatch(uint32_t Offset, uint64_t Value, uint64_t Size) {
+  const auto EncodedSize = getULEB128Size(Value);
+  assert(EncodedSize <= Size && "value did not fit");
+
+  const auto Padding = Size - EncodedSize;
+  std::string Buff;
+  raw_string_ostream OS(Buff);
+  encodeULEB128(Value, OS, Padding);
+
+  Patches.emplace_back(Offset, OS.str());
 }
 
 void SimpleBinaryPatcher::addLE64Patch(uint32_t Offset, uint64_t NewValue) {
