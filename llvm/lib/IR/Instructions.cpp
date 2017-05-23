@@ -454,7 +454,7 @@ bool CallInst::dataOperandHasImpliedAttr(unsigned i,
   // question is a call argument; or be indirectly implied by the kind of its
   // containing operand bundle, if the operand is a bundle operand.
 
-  if (i == Attribute::ReturnIndex)
+  if (i == AttributeList::ReturnIndex)
     return hasRetAttr(Kind);
 
   // FIXME: Avoid these i - 1 calculations and update the API to use zero-based
@@ -782,7 +782,7 @@ bool InvokeInst::dataOperandHasImpliedAttr(unsigned i,
   // question is an invoke argument; or be indirectly implied by the kind of its
   // containing operand bundle, if the operand is a bundle operand.
 
-  if (i == Attribute::ReturnIndex)
+  if (i == AttributeList::ReturnIndex)
     return hasRetAttr(Kind);
 
   // FIXME: Avoid these i - 1 calculations and update the API to use zero-based
