@@ -151,6 +151,20 @@ static RValue emitSuspendExpression(CodeGenFunction &CGF, CGCoroData &Coro,
                                     AwaitKind Kind, AggValueSlot aggSlot,
                                     bool ignoreResult) {
   auto *E = S.getCommonExpr();
+
+  // FIXME: rsmith 5/22/2017. Does it still make sense for us to have a 
+  // UO_Coawait at all? As I recall, the only purpose it ever had was to
+  // represent a dependent co_await expression that couldn't yet be resolved to
+  // a CoawaitExpr. But now we have (and need!) a separate DependentCoawaitExpr
+  // node to store unqualified lookup results, it seems that the UnaryOperator
+  // portion of the representation serves no purpose (and as seen in this patch,
+  // it's getting in the way). Can we remove it?
+
+  // Skip passthrough operator co_await (present when awaiting on an LValue).
+  if (auto *UO = dyn_cast<UnaryOperator>(E))
+    if (UO->getOpcode() == UO_Coawait)
+      E = UO->getSubExpr();
+
   auto Binder =
       CodeGenFunction::OpaqueValueMappingData::bind(CGF, S.getOpaqueValue(), E);
   auto UnbindOnExit = llvm::make_scope_exit([&] { Binder.unbind(CGF); });

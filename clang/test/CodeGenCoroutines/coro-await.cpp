@@ -271,3 +271,10 @@ extern "C" void EndlessLoop() {
   // CHECK-NOT: call void @_ZNSt12experimental16coroutine_traitsIJvEE12promise_type13final_suspendEv(
   // CHECK-NOT: call zeroext i1 @_ZN10final_susp11await_readyEv(%struct.final_susp*
 }
+
+// Verifies that we don't crash when awaiting on an lvalue.
+// CHECK-LABEL: @_Z11AwaitLValuev(
+void AwaitLValue() {
+  suspend_always lval;
+  co_await lval;
+}
