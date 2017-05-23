@@ -71,6 +71,12 @@ class DWARFContext : public DIContext {
   std::unique_ptr<DWARFDebugAbbrev> AbbrevDWO;
   std::unique_ptr<DWARFDebugLocDWO> LocDWO;
 
+  struct DWOFile {
+    object::OwningBinary<object::ObjectFile> File;
+    std::unique_ptr<DWARFContext> Context;
+  };
+  StringMap<std::weak_ptr<DWOFile>> DWOFiles;
+
   /// Read compile units from the debug_info section (if necessary)
   /// and store them in CUs.
   void parseCompileUnits();
@@ -247,6 +253,8 @@ public:
   static bool isSupportedVersion(unsigned version) {
     return version == 2 || version == 3 || version == 4 || version == 5;
   }
+
+  std::shared_ptr<DWARFContext> getDWOContext(StringRef AbsolutePath);
 
 private:
   /// Return the compile unit that includes an offset (relative to .debug_info).

@@ -897,6 +897,28 @@ DWARFContext::getInliningInfoForAddress(uint64_t Address,
   return InliningInfo;
 }
 
+std::shared_ptr<DWARFContext>
+DWARFContext::getDWOContext(StringRef AbsolutePath) {
+  auto &Entry = DWOFiles[AbsolutePath];
+  if (auto S = Entry.lock()) {
+    DWARFContext *Ctxt = S->Context.get();
+    return std::shared_ptr<DWARFContext>(std::move(S), Ctxt);
+  }
+
+  auto S = std::make_shared<DWOFile>();
+  auto Obj = object::ObjectFile::createObjectFile(AbsolutePath);
+  if (!Obj) {
+    // TODO: Actually report errors helpfully.
+    consumeError(Obj.takeError());
+    return nullptr;
+  }
+  S->File = std::move(Obj.get());
+  S->Context = llvm::make_unique<DWARFContextInMemory>(*S->File.getBinary());
+  Entry = S;
+  auto *Ctxt = S->Context.get();
+  return std::shared_ptr<DWARFContext>(std::move(S), Ctxt);
+}
+
 static Error createError(const Twine &Reason, llvm::Error E) {
   return make_error<StringError>(Reason + toString(std::move(E)),
                                  inconvertibleErrorCode());
