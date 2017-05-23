@@ -57,6 +57,11 @@ struct clang::CodeGen::CGCoroData {
   // builtin.
   llvm::CallInst *CoroId = nullptr;
 
+  // Stores the llvm.coro.begin emitted in the function so that we can replace
+  // all coro.frame intrinsics with direct SSA value of coro.begin that returns
+  // the address of the coroutine frame of the current coroutine.
+  llvm::CallInst *CoroBegin = nullptr;
+
   // If coro.id came from the builtin, remember the expression to give better
   // diagnostic. If CoroIdExpr is nullptr, the coro.id was created by
   // EmitCoroutineBody.
@@ -330,8 +335,9 @@ void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
   auto *Phi = Builder.CreatePHI(VoidPtrTy, 2);
   Phi->addIncoming(NullPtr, EntryBB);
   Phi->addIncoming(AllocateCall, AllocOrInvokeContBB);
-  Builder.CreateCall(
+  auto *CoroBegin = Builder.CreateCall(
       CGM.getIntrinsic(llvm::Intrinsic::coro_begin), {CoroId, Phi});
+  CurCoro.Data->CoroBegin = CoroBegin;
 
   CurCoro.Data->CleanupJD = getJumpDestInCurrentScope(RetBB);
   {
@@ -388,6 +394,17 @@ RValue CodeGenFunction::EmitCoroutineIntrinsic(const CallExpr *E,
   switch (IID) {
   default:
     break;
+  // The coro.frame builtin is replaced with an SSA value of the coro.begin
+  // intrinsic.
+  case llvm::Intrinsic::coro_frame: {
+    if (CurCoro.Data && CurCoro.Data->CoroBegin) {
+      return RValue::get(CurCoro.Data->CoroBegin);
+    }
+    CGM.Error(E->getLocStart(), "this builtin expect that __builtin_coro_begin "
+      "has been used earlier in this function");
+    auto NullPtr = llvm::ConstantPointerNull::get(Builder.getInt8PtrTy());
+    return RValue::get(NullPtr);
+  }
   // The following three intrinsics take a token parameter referring to a token
   // returned by earlier call to @llvm.coro.id. Since we cannot represent it in
   // builtins, we patch it up here.
@@ -414,10 +431,16 @@ RValue CodeGenFunction::EmitCoroutineIntrinsic(const CallExpr *E,
   llvm::Value *F = CGM.getIntrinsic(IID);
   llvm::CallInst *Call = Builder.CreateCall(F, Args);
 
+  // Note: The following code is to enable to emit coroutine intrinsics by
+  // hand to experiment with coroutines in C.
   // If we see @llvm.coro.id remember it in the CoroData. We will update
   // coro.alloc, coro.begin and coro.free intrinsics to refer to it.
   if (IID == llvm::Intrinsic::coro_id) {
     createCoroData(*this, CurCoro, Call, E);
+  }
+  else if (IID == llvm::Intrinsic::coro_begin) {
+    if (CurCoro.Data)
+      CurCoro.Data->CoroBegin = Call;
   }
   return RValue::get(Call);
 }

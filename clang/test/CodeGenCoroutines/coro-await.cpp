@@ -40,6 +40,7 @@ struct std::experimental::coroutine_traits<void> {
 
 // CHECK-LABEL: f0(
 extern "C" void f0() {
+  // CHECK: %[[FRAME:.+]] = call i8* @llvm.coro.begin(
 
   co_await suspend_always{};
   // See if we need to suspend:
@@ -54,7 +55,6 @@ extern "C" void f0() {
   // ---------------------------
   // Build the coroutine handle and pass it to await_suspend
   // ---------------------------
-  // CHECK: %[[FRAME:.+]] = call i8* @llvm.coro.frame()
   // CHECK: call i8* @_ZNSt12experimental16coroutine_handleINS_16coroutine_traitsIJvEE12promise_typeEE12from_addressEPv(i8* %[[FRAME]])
   //   ... many lines of code to coerce coroutine_handle into an i8* scalar
   // CHECK: %[[CH:.+]] = load i8*, i8** %{{.+}}
@@ -100,8 +100,9 @@ struct std::experimental::coroutine_traits<void,int> {
 
 // CHECK-LABEL: f1(
 extern "C" void f1(int) {
-  co_yield 42;
   // CHECK: %[[PROMISE:.+]] = alloca %"struct.std::experimental::coroutine_traits<void, int>::promise_type"
+  // CHECK: %[[FRAME:.+]] = call i8* @llvm.coro.begin(
+  co_yield 42;
   // CHECK: call void @_ZNSt12experimental16coroutine_traitsIJviEE12promise_type11yield_valueEi(%struct.suspend_maybe* sret %[[AWAITER:.+]], %"struct.std::experimental::coroutine_traits<void, int>::promise_type"* %[[PROMISE]], i32 42)
 
   // See if we need to suspend:
@@ -116,7 +117,6 @@ extern "C" void f1(int) {
   // ---------------------------
   // Build the coroutine handle and pass it to await_suspend
   // ---------------------------
-  // CHECK: %[[FRAME:.+]] = call i8* @llvm.coro.frame()
   // CHECK: call i8* @_ZNSt12experimental16coroutine_handleINS_16coroutine_traitsIJviEE12promise_typeEE12from_addressEPv(i8* %[[FRAME]])
   //   ... many lines of code to coerce coroutine_handle into an i8* scalar
   // CHECK: %[[CH:.+]] = load i8*, i8** %{{.+}}
