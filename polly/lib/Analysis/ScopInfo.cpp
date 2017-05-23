@@ -274,15 +274,11 @@ __isl_give isl_space *ScopArrayInfo::getSpace() const {
 }
 
 bool ScopArrayInfo::isReadOnly() {
-  isl_union_set *WriteSet = isl_union_map_range(S.getWrites());
-  isl_space *Space = getSpace();
-  WriteSet = isl_union_set_intersect(
-      WriteSet, isl_union_set_from_set(isl_set_universe(Space)));
+  isl::union_set WriteSet = give(S.getWrites()).range();
+  isl::space Space = give(getSpace());
+  WriteSet = WriteSet.extract_set(Space);
 
-  bool IsReadOnly = isl_union_set_is_empty(WriteSet);
-  isl_union_set_free(WriteSet);
-
-  return IsReadOnly;
+  return bool(WriteSet.is_empty());
 }
 
 bool ScopArrayInfo::isCompatibleWith(const ScopArrayInfo *Array) const {
