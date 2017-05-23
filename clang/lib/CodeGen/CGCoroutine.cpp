@@ -284,6 +284,9 @@ void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
   auto &TI = CGM.getContext().getTargetInfo();
   unsigned NewAlign = TI.getNewAlign() / TI.getCharWidth();
 
+  auto *EntryBB = Builder.GetInsertBlock();
+  auto *AllocBB = createBasicBlock("coro.alloc");
+  auto *InitBB = createBasicBlock("coro.init");
   auto *FinalBB = createBasicBlock("coro.final");
   auto *RetBB = createBasicBlock("coro.ret");
 
@@ -293,12 +296,20 @@ void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
   createCoroData(*this, CurCoro, CoroId);
   CurCoro.Data->SuspendBB = RetBB;
 
+  // Backend is allowed to elide memory allocations, to help it, emit
+  // auto mem = coro.alloc() ? 0 : ... allocation code ...;
+  auto *CoroAlloc = Builder.CreateCall(
+      CGM.getIntrinsic(llvm::Intrinsic::coro_alloc), {CoroId});
+
+  Builder.CreateCondBr(CoroAlloc, AllocBB, InitBB);
+
+  EmitBlock(AllocBB);
   auto *AllocateCall = EmitScalarExpr(S.getAllocate());
+  auto *AllocOrInvokeContBB = Builder.GetInsertBlock();
 
   // Handle allocation failure if 'ReturnStmtOnAllocFailure' was provided.
   if (auto *RetOnAllocFailure = S.getReturnStmtOnAllocFailure()) {
     auto *RetOnFailureBB = createBasicBlock("coro.ret.on.failure");
-    auto *InitBB = createBasicBlock("coro.init");
 
     // See if allocation was successful.
     auto *NullPtr = llvm::ConstantPointerNull::get(Int8PtrTy);
@@ -308,9 +319,19 @@ void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
     // If not, return OnAllocFailure object.
     EmitBlock(RetOnFailureBB);
     EmitStmt(RetOnAllocFailure);
-
-    EmitBlock(InitBB);
   }
+  else {
+    Builder.CreateBr(InitBB);
+  }
+
+  EmitBlock(InitBB);
+
+  // Pass the result of the allocation to coro.begin.
+  auto *Phi = Builder.CreatePHI(VoidPtrTy, 2);
+  Phi->addIncoming(NullPtr, EntryBB);
+  Phi->addIncoming(AllocateCall, AllocOrInvokeContBB);
+  Builder.CreateCall(
+      CGM.getIntrinsic(llvm::Intrinsic::coro_begin), {CoroId, Phi});
 
   CurCoro.Data->CleanupJD = getJumpDestInCurrentScope(RetBB);
   {

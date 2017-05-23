@@ -56,8 +56,17 @@ struct std::experimental::coroutine_traits<void, global_new_delete_tag> {
 // CHECK-LABEL: f0(
 extern "C" void f0(global_new_delete_tag) {
   // CHECK: %[[ID:.+]] = call token @llvm.coro.id(i32 16
+  // CHECK: %[[NeedAlloc:.+]] = call i1 @llvm.coro.alloc(token %[[ID]])
+  // CHECK: br i1 %[[NeedAlloc]], label %[[AllocBB:.+]], label %[[InitBB:.+]]
+
+  // CHECK: [[AllocBB]]:
   // CHECK: %[[SIZE:.+]] = call i64 @llvm.coro.size.i64()
-  // CHECK: call i8* @_Znwm(i64 %[[SIZE]])
+  // CHECK: %[[MEM:.+]] = call i8* @_Znwm(i64 %[[SIZE]])
+  // CHECK: br label %[[InitBB]]
+
+  // CHECK: [[InitBB]]:
+  // CHECK: %[[PHI:.+]] = phi i8* [ null, %{{.+}} ], [ %call, %[[AllocBB]] ]
+  // CHECK: call i8* @llvm.coro.begin(token %[[ID]], i8* %[[PHI]])
 
   // CHECK: %[[FRAME:.+]] = call i8* @llvm.coro.frame()
   // CHECK: %[[MEM:.+]] = call i8* @llvm.coro.free(token %[[ID]], i8* %[[FRAME]])
