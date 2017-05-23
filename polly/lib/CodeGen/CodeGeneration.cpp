@@ -80,7 +80,7 @@ public:
                 "SCoP ==\n";
       S.print(errs());
       errs() << "\n== The isl AST ==\n";
-      AI->printScop(errs(), S);
+      AI->print(errs());
       errs() << "\n== The invalid function ==\n";
       F.print(errs());
     });
@@ -167,7 +167,7 @@ public:
 
   /// Generate LLVM-IR for the SCoP @p S.
   bool runOnScop(Scop &S) override {
-    AI = &getAnalysis<IslAstInfo>();
+    AI = &getAnalysis<IslAstInfoWrapperPass>().getAI();
 
     // Check if we created an isl_ast root node, otherwise exit.
     isl_ast_node *AstRoot = AI->getAst();
@@ -273,7 +273,7 @@ public:
   /// Register all analyses and transformation required.
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<IslAstInfo>();
+    AU.addRequired<IslAstInfoWrapperPass>();
     AU.addRequired<RegionInfoPass>();
     AU.addRequired<ScalarEvolutionWrapperPass>();
     AU.addRequired<ScopDetectionWrapperPass>();
@@ -287,7 +287,7 @@ public:
     AU.addPreserved<LoopInfoWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     AU.addPreserved<GlobalsAAWrapperPass>();
-    AU.addPreserved<IslAstInfo>();
+    AU.addPreserved<IslAstInfoWrapperPass>();
     AU.addPreserved<ScopDetectionWrapperPass>();
     AU.addPreserved<ScalarEvolutionWrapperPass>();
     AU.addPreserved<SCEVAAWrapperPass>();
