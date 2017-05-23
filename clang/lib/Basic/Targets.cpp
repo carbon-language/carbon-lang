@@ -2169,13 +2169,18 @@ public:
                     : DataLayoutStringR600);
     assert(DataLayout->getAllocaAddrSpace() == AS.Private);
 
-    AddrSpaceMap =
-        llvm::StringSwitch<const LangAS::Map *>(Triple.getEnvironmentName())
-            .Case("opencl", &AMDGPUOpenCLPrivateIsZeroMap)
-            .Case("amdgiz", &AMDGPUNonOpenCLGenericIsZeroMap)
-            .Case("amdgizcl", &AMDGPUOpenCLGenericIsZeroMap)
-            .Default(&AMDGPUNonOpenCLPrivateIsZeroMap);
     UseAddrSpaceMapMangling = true;
+  }
+
+  void adjust(LangOptions &Opts) override {
+    TargetInfo::adjust(Opts);
+    if (isGenericZero(getTriple())) {
+      AddrSpaceMap = Opts.OpenCL ? &AMDGPUOpenCLGenericIsZeroMap
+                                 : &AMDGPUNonOpenCLGenericIsZeroMap;
+    } else {
+      AddrSpaceMap = Opts.OpenCL ? &AMDGPUOpenCLPrivateIsZeroMap
+                                 : &AMDGPUNonOpenCLPrivateIsZeroMap;
+    }
   }
 
   uint64_t getPointerWidthV(unsigned AddrSpace) const override {
