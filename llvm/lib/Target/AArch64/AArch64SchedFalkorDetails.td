@@ -430,12 +430,12 @@ def : InstRW<[FalkorWr_FMUL64_1VXVY_6cyc, ReadDefault, ReadDefault, FalkorReadFM
 
 // FP Miscellaneous Instructions
 // -----------------------------------------------------------------------------
-def : InstRW<[FalkorWr_FMOV],         (instregex "^FMOV(H|S|D)i$")>;
-def : InstRW<[FalkorWr_1GTOV_1cyc],   (instregex "^FMOV(HW|HX|SW|DX|DXHigh)r$")>;
+def : InstRW<[FalkorWr_FMOV],         (instregex "^FMOV(WH|WS|XH|XD|XDHigh)r$")>;
+def : InstRW<[FalkorWr_1GTOV_1cyc],   (instregex "^FMOV(H|S|D)i$")>;
 def : InstRW<[FalkorWr_1VTOG_1cyc],   (instregex "^FCVTZ(S|U)(S|U)(W|X)(D|S)ri?$")>;
-def : InstRW<[FalkorWr_1VTOG_1cyc],   (instregex "^FMOV(WH|WS|XH|XD|XDHigh)r$")>;
+def : InstRW<[FalkorWr_1VTOG_1cyc],   (instregex "^FMOV(HW|HX|SW|DX|DXHigh)r$")>;
 def : InstRW<[FalkorWr_1VXVY_1cyc],   (instregex "^FMOV(Hr|Sr|Dr|v.*_ns)$")>;
-// FIXME: We are currently generating movi v0.2d, #0 for these, which is worse than fmov 0.0
+// FIXME: We are currently generating movi v0.2d, #0 for these, which is worse than fmov wzr/xzr
 def : InstRW<[FalkorWr_2VXVY_1cyc],   (instrs FMOVD0, FMOVS0)>;
 
 def : InstRW<[FalkorWr_1GTOV_4cyc],   (instregex "^(S|U)CVTF(S|U)(W|X)(D|S)ri$")>;
