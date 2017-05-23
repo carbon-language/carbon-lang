@@ -274,13 +274,10 @@ bool DWARFUnit::parseDWO() {
   if (!DWOContext)
     return false;
 
-  for (const auto &DWOCU : DWOContext->dwo_compile_units())
-    if (DWOCU->getDWOId() == DWOId) {
-      DWO = std::shared_ptr<DWARFUnit>(std::move(DWOContext), DWOCU.get());
-      break;
-    }
-  if (!DWO)
+  DWARFCompileUnit *DWOCU = DWOContext->getDWOCompileUnitForHash(*DWOId);
+  if (!DWOCU)
     return false;
+  DWO = std::shared_ptr<DWARFCompileUnit>(std::move(DWOContext), DWOCU);
   // Share .debug_addr and .debug_ranges section with compile unit in .dwo
   DWO->setAddrOffsetSection(AddrOffsetSection, AddrOffsetSectionBase);
   auto DWORangesBase = UnitDie.getRangesBaseAttribute();
