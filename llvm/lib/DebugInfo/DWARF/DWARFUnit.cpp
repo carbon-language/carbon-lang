@@ -327,7 +327,6 @@ void DWARFUnit::collectAddressRanges(DWARFAddressRangesVector &CURanges) {
 
   // Collect address ranges from DIEs in .dwo if necessary.
   bool DWOCreated = parseDWO();
-  assert(!DWOCreated);
   if (DWO)
     DWO->collectAddressRanges(CURanges);
   if (DWOCreated)
