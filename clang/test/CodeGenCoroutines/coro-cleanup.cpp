@@ -46,6 +46,11 @@ void f() {
   // CHECK: invoke void @_ZNSt12experimental16coroutine_traitsIJvEE12promise_typeC1Ev(
   // CHECK-NEXT: to label %{{.+}} unwind label %[[DeallocPad:.+]]
 
+  // CHECK: [[DeallocPad]]:
+  // CHECK-NEXT: landingpad
+  // CHECK-NEXT:   cleanup
+  // CHECK: br label %[[Dealloc:.+]]
+
   Cleanup cleanup;
   may_throw();
 
@@ -53,11 +58,6 @@ void f() {
 
   // CHECK: invoke void @_Z9may_throwv(
   // CHECK-NEXT: to label %{{.+}} unwind label %[[CatchPad:.+]]
-
-  // CHECK: [[DeallocPad]]:
-  // CHECK-NEXT: landingpad
-  // CHECK-NEXT:   cleanup
-  // CHECK: br label %[[Dealloc:.+]]
 
   // CHECK: [[CatchPad]]:
   // CHECK-NEXT:  landingpad

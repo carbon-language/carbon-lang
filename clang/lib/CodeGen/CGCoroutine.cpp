@@ -388,7 +388,10 @@ void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
 
     CurCoro.Data->FinalJD = getJumpDestInCurrentScope(FinalBB);
 
-    // FIXME: Emit initial suspend and more before the body.
+    // FIXME: Emit param moves.
+
+    CurCoro.Data->CurrentAwaitKind = AwaitKind::Init;
+    EmitStmt(S.getInitSuspendStmt());
 
     CurCoro.Data->CurrentAwaitKind = AwaitKind::Normal;
 
@@ -410,7 +413,8 @@ void CodeGenFunction::EmitCoroutineBody(const CoroutineBodyStmt &S) {
     const bool HasCoreturns = CurCoro.Data->CoreturnCount > 0;
     if (CanFallthrough || HasCoreturns) {
       EmitBlock(FinalBB);
-      // FIXME: Emit final suspend.
+      CurCoro.Data->CurrentAwaitKind = AwaitKind::Final;
+      EmitStmt(S.getFinalSuspendStmt());
     }
   }
 
