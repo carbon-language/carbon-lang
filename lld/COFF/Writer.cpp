@@ -365,6 +365,9 @@ void Writer::createImportTables() {
   // the same order as in the command line. (That affects DLL
   // initialization order, and this ordering is MSVC-compatible.)
   for (ImportFile *File : Symtab->ImportFiles) {
+    if (!File->Live)
+      continue;
+
     std::string DLL = StringRef(File->DLLName).lower();
     if (Config->DLLOrder.count(DLL) == 0)
       Config->DLLOrder[DLL] = Config->DLLOrder.size();
@@ -372,19 +375,25 @@ void Writer::createImportTables() {
 
   OutputSection *Text = createSection(".text");
   for (ImportFile *File : Symtab->ImportFiles) {
+    if (!File->Live)
+      continue;
+
     if (DefinedImportThunk *Thunk = File->ThunkSym)
       Text->addChunk(Thunk->getChunk());
+
     if (Config->DelayLoads.count(StringRef(File->DLLName).lower())) {
       DelayIdata.add(File->ImpSym);
     } else {
       Idata.add(File->ImpSym);
     }
   }
+
   if (!Idata.empty()) {
     OutputSection *Sec = createSection(".idata");
     for (Chunk *C : Idata.getChunks())
       Sec->addChunk(C);
   }
+
   if (!DelayIdata.empty()) {
     Defined *Helper = cast<Defined>(Config->DelayLoadHelper);
     DelayIdata.create(Helper);
@@ -435,6 +444,14 @@ Optional<coff_symbol16> Writer::createSymbol(Defined *Def) {
 
   if (auto *D = dyn_cast<DefinedRegular>(Def))
     if (!D->getChunk()->isLive())
+      return None;
+
+  if (auto *Sym = dyn_cast<DefinedImportData>(Def))
+    if (!Sym->File->Live)
+      return None;
+
+  if (auto *Sym = dyn_cast<DefinedImportThunk>(Def))
+    if (!Sym->WrappedSym->File->Live)
       return None;
 
   coff_symbol16 Sym;
