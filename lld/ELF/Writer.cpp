@@ -291,6 +291,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   } else {
     writeSectionsBinary();
   }
+  clearOutputSections();
 
   // Backfill .note.gnu.build-id section content. This is done at last
   // because the content is usually a hash value of the entire output file.
@@ -298,7 +299,6 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (ErrorCount)
     return;
 
-  clearOutputSections();
 
   // Handle -Map option.
   writeMapFile<ELFT>(Script->Opt.Commands);
