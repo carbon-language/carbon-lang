@@ -169,8 +169,7 @@ void RewriteInstance::updateUnitDebugInfo(
             assert(!LL.Entries.empty() && "location list cannot be empty");
 
             const auto OutputLL = Function
-              ->translateInputToOutputLocationList(std::move(LL),
-                                                   Unit->getBaseAddress());
+              ->translateInputToOutputLocationList(LL, Unit->getBaseAddress());
             DEBUG(
               if (OutputLL.Entries.empty()) {
                 dbgs() << "BOLT-DEBUG: location list translated to an empty one "
@@ -459,17 +458,20 @@ void RewriteInstance::finalizeDebugSections() {
   }
 
   auto RangesSectionContents = RangesSectionsWriter->finalize();
+  auto SectionSize = RangesSectionContents->size();
+  uint8_t *SectionData = new uint8_t[SectionSize];
+  memcpy(SectionData, RangesSectionContents->data(), SectionSize);
   EFMM->NoteSectionInfo[".debug_ranges"] = SectionInfo(
-      reinterpret_cast<uint64_t>(RangesSectionContents->data()),
-      RangesSectionContents->size(),
+      reinterpret_cast<uint64_t>(SectionData),
+      SectionSize,
       /*Alignment=*/1,
       /*IsCode=*/false,
       /*IsReadOnly=*/true,
       /*IsLocal=*/false);
 
   auto LocationListSectionContents = LocationListWriter->finalize();
-  const auto SectionSize = LocationListSectionContents->size();
-  uint8_t *SectionData = new uint8_t[SectionSize];
+  SectionSize = LocationListSectionContents->size();
+  SectionData = new uint8_t[SectionSize];
   memcpy(SectionData, LocationListSectionContents->data(), SectionSize);
   EFMM->NoteSectionInfo[".debug_loc"] = SectionInfo(
       reinterpret_cast<uint64_t>(SectionData),

@@ -3773,14 +3773,15 @@ DWARFAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
 }
 
 DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
-                                  DWARFAddressRangesVector InputRanges) const {
-  // If the function wasn't changed - there's nothing to update.
+    const DWARFAddressRangesVector &InputRanges) const {
+  // If the function hasn't changed return the same ranges.
   if (!isEmitted() && !opts::Relocs)
     return InputRanges;
 
-  DWARFAddressRangesVector OutputRanges;
+  // Even though we will merge ranges in a post-processing pass, we attempt to
+  // merge them in a main processing loop as it improves the processing time.
   uint64_t PrevEndAddress = 0;
-
+  DWARFAddressRangesVector OutputRanges;
   for (const auto &Range : InputRanges) {
     if (!containsAddress(Range.first)) {
       DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
@@ -3790,10 +3791,16 @@ DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
       continue;
     }
     auto InputOffset = Range.first - getAddress();
-    const auto InputEndOffset = Range.second - getAddress();
+    const auto InputEndOffset = std::min(Range.second - getAddress(), getSize());
+
+    auto BBI = std::upper_bound(BasicBlockOffsets.begin(),
+                                BasicBlockOffsets.end(),
+                                BasicBlockOffset(InputOffset, nullptr),
+                                CompareBasicBlockOffsets());
+    --BBI;
     do {
-      const auto *BB = getBasicBlockContainingOffset(InputOffset);
-      if (!BB) {
+      const auto *BB = BBI->second;
+      if (InputOffset < BB->getOffset() || InputOffset >= BB->getEndOffset()) {
         DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
                      << *this << " : [0x" << Twine::utohexstr(Range.first)
                      << ", 0x" << Twine::utohexstr(Range.second) << "]\n");
@@ -3809,24 +3816,40 @@ DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
           EndAddress = StartAddress + InputEndOffset - InputOffset;
 
         if (StartAddress == PrevEndAddress) {
-          OutputRanges.back().second = EndAddress;
+          OutputRanges.back().second = std::max(OutputRanges.back().second,
+                                                EndAddress);
         } else {
-          OutputRanges.emplace_back(StartAddress, EndAddress);
+          OutputRanges.emplace_back(StartAddress,
+                                    std::max(StartAddress, EndAddress));
         }
-        PrevEndAddress = EndAddress;
+        PrevEndAddress = OutputRanges.back().second;
       }
 
       InputOffset = BB->getEndOffset();
+      ++BBI;
     } while (InputOffset < InputEndOffset);
   }
 
-  return OutputRanges;
+  // Post-processing pass to sort and merge ranges.
+  std::sort(OutputRanges.begin(), OutputRanges.end());
+  DWARFAddressRangesVector MergedRanges;
+  PrevEndAddress = 0;
+  for(const auto &Range : OutputRanges) {
+    if (Range.first <= PrevEndAddress) {
+      MergedRanges.back().second = std::max(MergedRanges.back().second,
+                                            Range.second);
+    } else {
+      MergedRanges.emplace_back(Range.first, Range.second);
+    }
+    PrevEndAddress = MergedRanges.back().second;
+  }
+
+  return MergedRanges;
 }
 
 DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
-      DWARFDebugLoc::LocationList &&InputLL,
+      const DWARFDebugLoc::LocationList &InputLL,
       uint64_t BaseAddress) const {
-
   // If the function wasn't changed - there's nothing to update.
   if (!isEmitted() && !opts::Relocs) {
     if (!BaseAddress) {
@@ -3841,9 +3864,9 @@ DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
     }
   }
 
-  DWARFDebugLoc::LocationList OutputLL;
-
   uint64_t PrevEndAddress = 0;
+  SmallVectorImpl<unsigned char> *PrevLoc = nullptr;
+  DWARFDebugLoc::LocationList OutputLL;
   for (auto &Entry : InputLL.Entries) {
     const auto Start = Entry.Begin + BaseAddress;
     const auto End = Entry.End + BaseAddress;
@@ -3851,14 +3874,18 @@ DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
       DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
                    << *this << " : [0x" << Twine::utohexstr(Start)
                    << ", 0x" << Twine::utohexstr(End) << "]\n");
-      PrevEndAddress = 0;
       continue;
     }
     auto InputOffset = Start - getAddress();
-    const auto InputEndOffset = End - getAddress();
+    const auto InputEndOffset = std::min(End - getAddress(), getSize());
+    auto BBI = std::upper_bound(BasicBlockOffsets.begin(),
+                                BasicBlockOffsets.end(),
+                                BasicBlockOffset(InputOffset, nullptr),
+                                CompareBasicBlockOffsets());
+    --BBI;
     do {
-      const auto *BB = getBasicBlockContainingOffset(InputOffset);
-      if (!BB) {
+      const auto *BB = BBI->second;
+      if (InputOffset < BB->getOffset() || InputOffset >= BB->getEndOffset()) {
         DEBUG(dbgs() << "BOLT-DEBUG: invalid debug address range detected for "
                      << *this << " : [0x" << Twine::utohexstr(Start)
                      << ", 0x" << Twine::utohexstr(End) << "]\n");
@@ -3873,21 +3900,48 @@ DWARFDebugLoc::LocationList BinaryFunction::translateInputToOutputLocationList(
         if (InputEndOffset < BB->getEndOffset())
           EndAddress = StartAddress + InputEndOffset - InputOffset;
 
-        if (StartAddress == PrevEndAddress) {
-          OutputLL.Entries.back().End = EndAddress;
+        if (StartAddress == PrevEndAddress && Entry.Loc == *PrevLoc) {
+          OutputLL.Entries.back().End = std::max(OutputLL.Entries.back().End,
+                                                 EndAddress);
         } else {
           OutputLL.Entries.emplace_back(
               DWARFDebugLoc::Entry{StartAddress,
-                                   EndAddress,
-                                   std::move(Entry.Loc)});
+                                   std::max(StartAddress, EndAddress),
+                                   Entry.Loc});
         }
-        PrevEndAddress = EndAddress;
+        PrevEndAddress = OutputLL.Entries.back().End;
+        PrevLoc = &OutputLL.Entries.back().Loc;
       }
+
+      ++BBI;
       InputOffset = BB->getEndOffset();
     } while (InputOffset < InputEndOffset);
   }
 
-  return OutputLL;
+  // Sort and merge adjacent entries with identical location.
+  std::stable_sort(OutputLL.Entries.begin(), OutputLL.Entries.end(),
+      [] (const DWARFDebugLoc::Entry &A, const DWARFDebugLoc::Entry &B) {
+        return A.Begin < B.Begin;
+      });
+  DWARFDebugLoc::LocationList MergedLL;
+  PrevEndAddress = 0;
+  PrevLoc = nullptr;
+  for(const auto &Entry : OutputLL.Entries) {
+    if (Entry.Begin <= PrevEndAddress && *PrevLoc == Entry.Loc) {
+      MergedLL.Entries.back().End = std::max(Entry.End,
+                                             MergedLL.Entries.back().End);;
+    } else {
+      const auto Begin = std::max(Entry.Begin, PrevEndAddress);
+      const auto End = std::max(Begin, Entry.End);
+      MergedLL.Entries.emplace_back(DWARFDebugLoc::Entry{Begin,
+                                                         End,
+                                                         Entry.Loc});
+    }
+    PrevEndAddress = MergedLL.Entries.back().End;
+    PrevLoc = &MergedLL.Entries.back().Loc;
+  }
+
+  return MergedLL;
 }
 
 void BinaryFunction::printLoopInfo(raw_ostream &OS) const {

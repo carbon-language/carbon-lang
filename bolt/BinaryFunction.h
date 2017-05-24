@@ -1821,12 +1821,17 @@ public:
   /// Return output address ranges for a function.
   DWARFAddressRangesVector getOutputAddressRanges() const;
 
+  /// Take address ranges corresponding to the input binary and translate
+  /// them to address ranges in the output binary.
   DWARFAddressRangesVector translateInputToOutputRanges(
-                                    DWARFAddressRangesVector InputRanges) const;
+      const DWARFAddressRangesVector &InputRanges) const;
 
-  /// \p BaseAddress to be applied to all addresses in \pInputLL.
+  /// Similar to translateInputToOutputRanges() but operates on location lists
+  /// and moves associated data to output location lists.
+  ///
+  /// \p BaseAddress is applied to all addresses in \pInputLL.
   DWARFDebugLoc::LocationList translateInputToOutputLocationList(
-      DWARFDebugLoc::LocationList &&InputLL,
+      const DWARFDebugLoc::LocationList &InputLL,
       uint64_t BaseAddress) const;
 
   virtual ~BinaryFunction();
