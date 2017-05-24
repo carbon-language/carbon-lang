@@ -48,13 +48,11 @@ namespace coff {
 /// alias to Target.
 static void checkAndSetWeakAlias(SymbolTable *Symtab, InputFile *F,
                                  SymbolBody *Source, SymbolBody *Target) {
-  auto *U = dyn_cast<Undefined>(Source);
-  if (!U)
-    return;
-  else if (!U->WeakAlias)
+  if (auto *U = dyn_cast<Undefined>(Source)) {
+    if (U->WeakAlias && U->WeakAlias != Target)
+      Symtab->reportDuplicate(Source->symbol(), F);
     U->WeakAlias = Target;
-  else if (U->WeakAlias != Target)
-    Symtab->reportDuplicate(Source->symbol(), F);
+  }
 }
 
 ArchiveFile::ArchiveFile(MemoryBufferRef M) : InputFile(ArchiveKind, M) {}
