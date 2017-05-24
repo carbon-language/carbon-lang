@@ -421,6 +421,7 @@ BUILTIN(__builtin_vsx_insertword, "V16UcV4UiV16UcIi", "")
 BUILTIN(__builtin_vsx_extractuword, "V2ULLiV16UcIi", "")
 
 BUILTIN(__builtin_vsx_xxpermdi, "v.", "t")
+BUILTIN(__builtin_vsx_xxsldwi, "v.", "t")
 
 // HTM builtins
 BUILTIN(__builtin_tbegin, "UiUIi", "")

@@ -8475,6 +8475,47 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     auto RetTy = ConvertType(BIRetType);
     return Builder.CreateBitCast(ShuffleCall, RetTy);
   }
+
+  case PPC::BI__builtin_vsx_xxsldwi: {
+    ConstantInt *ArgCI = dyn_cast<ConstantInt>(Ops[2]);
+    assert(ArgCI && "Third argument must be a compile time constant");
+    unsigned Index = ArgCI->getZExtValue() & 0x3;
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::VectorType::get(Int32Ty, 4));
+    Ops[1] = Builder.CreateBitCast(Ops[1], llvm::VectorType::get(Int32Ty, 4));
+
+    // Create a shuffle mask
+    unsigned ElemIdx0;
+    unsigned ElemIdx1;
+    unsigned ElemIdx2;
+    unsigned ElemIdx3;
+    if (getTarget().isLittleEndian()) {
+      // Little endian element N comes from element 8+N-Index of the
+      // concatenated wide vector (of course, using modulo arithmetic on
+      // the total number of elements).
+      ElemIdx0 = (8 - Index) % 8;
+      ElemIdx1 = (9 - Index) % 8;
+      ElemIdx2 = (10 - Index) % 8;
+      ElemIdx3 = (11 - Index) % 8;
+    } else {
+      // Big endian ElemIdx<N> = Index + N
+      ElemIdx0 = Index;
+      ElemIdx1 = Index + 1;
+      ElemIdx2 = Index + 2;
+      ElemIdx3 = Index + 3;
+    }
+
+    Constant *ShuffleElts[4] = {ConstantInt::get(Int32Ty, ElemIdx0),
+                                ConstantInt::get(Int32Ty, ElemIdx1),
+                                ConstantInt::get(Int32Ty, ElemIdx2),
+                                ConstantInt::get(Int32Ty, ElemIdx3)};
+
+    Constant *ShuffleMask = llvm::ConstantVector::get(ShuffleElts);
+    Value *ShuffleCall =
+        Builder.CreateShuffleVector(Ops[0], Ops[1], ShuffleMask);
+    QualType BIRetType = E->getType();
+    auto RetTy = ConvertType(BIRetType);
+    return Builder.CreateBitCast(ShuffleCall, RetTy);
+  }
   }
 }
 

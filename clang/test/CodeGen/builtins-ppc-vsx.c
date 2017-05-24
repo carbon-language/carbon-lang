@@ -1731,6 +1731,47 @@ res_vsc = vec_xxpermdi(vsc, vsc, 0);
 res_vuc = vec_xxpermdi(vuc, vuc, 1);
 // CHECK: shufflevector <2 x i64> %{{[0-9]+}}, <2 x i64> %{{[0-9]+}}, <2 x i32> <i32 0, i32 3>
 // CHECK-LE: shufflevector <2 x i64> %{{[0-9]+}}, <2 x i64> %{{[0-9]+}}, <2 x i32> <i32 2, i32 1>
+
+res_vd = vec_xxsldwi(vd, vd, 0);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+
+res_vf = vec_xxsldwi(vf, vf, 1);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 1, i32 2, i32 3, i32 4>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 7, i32 0, i32 1, i32 2>
+
+res_vsll = vec_xxsldwi(vsll, vsll, 2);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 2, i32 3, i32 4, i32 5>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
+
+res_vull = vec_xxsldwi(vull, vull, 3);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 5, i32 6, i32 7, i32 0>
+
+res_vsi = vec_xxsldwi(vsi, vsi, 0);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+
+res_vui = vec_xxsldwi(vui, vui, 1);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 1, i32 2, i32 3, i32 4>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 7, i32 0, i32 1, i32 2>
+
+res_vss = vec_xxsldwi(vss, vss, 2);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 2, i32 3, i32 4, i32 5>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
+
+
+res_vus = vec_xxsldwi(vus, vus, 3);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 3, i32 4, i32 5, i32 6>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 5, i32 6, i32 7, i32 0>
+
+res_vsc = vec_xxsldwi(vsc, vsc, 0);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+
+res_vuc = vec_xxsldwi(vuc, vuc, 1);
+// CHECK: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 1, i32 2, i32 3, i32 4>
+// CHECK-LE: shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 7, i32 0, i32 1, i32 2>
 }
 
 // The return type of the call expression may be different from the return type of the shufflevector.
@@ -1747,4 +1788,18 @@ vector int xxpermdi_should_not_assert(vector int a, vector int b) {
 // CHECK-LE-NEXT:  bitcast <4 x i32> %{{[0-9]+}} to <2 x i64>
 // CHECK-LE-NEXT:  shufflevector <2 x i64> %{{[0-9]+}}, <2 x i64> %{{[0-9]+}}, <2 x i32> <i32 3, i32 1>
 // CHECK-LE-NEXT:  bitcast <2 x i64> %{{[0-9]+}} to <4 x i32>
+}
+
+vector double xxsldwi_should_not_assert(vector double a, vector double b) {
+  return vec_xxsldwi(a, b, 0);
+// CHECK-LABEL: xxsldwi_should_not_assert
+// CHECK:  bitcast <2 x double> %0 to <4 x i32>
+// CHECK-NEXT:  bitcast <2 x double> %1 to <4 x i32>
+// CHECK-NEXT:  shufflevector <4 x i32> %2, <4 x i32> %3, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:  bitcast <4 x i32> %4 to <2 x double>
+
+// CHECK-LE:  bitcast <2 x double> %0 to <4 x i32>
+// CHECK-NEXT-LE:  bitcast <2 x double> %1 to <4 x i32>
+// CHECK-NEXT-LE:  shufflevector <4 x i32> %2, <4 x i32> %3, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT-LE:  bitcast <4 x i32> %4 to <2 x double>
 }
