@@ -1793,13 +1793,13 @@ vector int xxpermdi_should_not_assert(vector int a, vector int b) {
 vector double xxsldwi_should_not_assert(vector double a, vector double b) {
   return vec_xxsldwi(a, b, 0);
 // CHECK-LABEL: xxsldwi_should_not_assert
-// CHECK:  bitcast <2 x double> %0 to <4 x i32>
-// CHECK-NEXT:  bitcast <2 x double> %1 to <4 x i32>
-// CHECK-NEXT:  shufflevector <4 x i32> %2, <4 x i32> %3, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT:  bitcast <4 x i32> %4 to <2 x double>
+// CHECK:  bitcast <2 x double> %{{[0-9]+}} to <4 x i32>
+// CHECK-NEXT:  bitcast <2 x double> %{{[0-9]+}} to <4 x i32>
+// CHECK-NEXT:  shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT:  bitcast <4 x i32> %{{[0-9]+}} to <2 x double>
 
-// CHECK-LE:  bitcast <2 x double> %0 to <4 x i32>
-// CHECK-NEXT-LE:  bitcast <2 x double> %1 to <4 x i32>
-// CHECK-NEXT-LE:  shufflevector <4 x i32> %2, <4 x i32> %3, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
-// CHECK-NEXT-LE:  bitcast <4 x i32> %4 to <2 x double>
+// CHECK-LE:  bitcast <2 x double> %{{[0-9]+}} to <4 x i32>
+// CHECK-NEXT-LE:  bitcast <2 x double> %{{[0-9]+}} to <4 x i32>
+// CHECK-NEXT-LE:  shufflevector <4 x i32> %{{[0-9]+}}, <4 x i32> %{{[0-9]+}}, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+// CHECK-NEXT-LE:  bitcast <4 x i32> %{{[0-9]+}} to <2 x double>
 }
