@@ -684,7 +684,6 @@ void LinkerScript::adjustSectionsBeforeSorting() {
   // '.' is assigned to, but creating these section should not have any bad
   // consequeces and gives us a section to put the symbol in.
   uint64_t Flags = SHF_ALLOC;
-  uint32_t Type = SHT_PROGBITS;
 
   for (int I = 0, E = Opt.Commands.size(); I != E; ++I) {
     auto *Cmd = dyn_cast<OutputSectionCommand>(Opt.Commands[I]);
@@ -692,14 +691,13 @@ void LinkerScript::adjustSectionsBeforeSorting() {
       continue;
     if (OutputSection *Sec = Cmd->Sec) {
       Flags = Sec->Flags;
-      Type = Sec->Type;
       continue;
     }
 
     if (isAllSectionDescription(*Cmd))
       continue;
 
-    auto *OutSec = make<OutputSection>(Cmd->Name, Type, Flags);
+    auto *OutSec = make<OutputSection>(Cmd->Name, SHT_PROGBITS, Flags);
     OutSec->SectionIndex = I;
     OutputSections->push_back(OutSec);
     Cmd->Sec = OutSec;
