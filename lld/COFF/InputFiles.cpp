@@ -151,8 +151,10 @@ void ObjectFile::initializeSymbols() {
   uint32_t NumSymbols = COFFObj->getNumberOfSymbols();
   SymbolBodies.reserve(NumSymbols);
   SparseSymbolBodies.resize(NumSymbols);
+
   SmallVector<std::pair<SymbolBody *, uint32_t>, 8> WeakAliases;
   int32_t LastSectionNumber = 0;
+
   for (uint32_t I = 0; I < NumSymbols; ++I) {
     // Get a COFFSymbolRef object.
     ErrorOr<COFFSymbolRef> SymOrErr = COFFObj->getSymbol(I);
@@ -183,9 +185,12 @@ void ObjectFile::initializeSymbols() {
     I += Sym.getNumberOfAuxSymbols();
     LastSectionNumber = Sym.getSectionNumber();
   }
-  for (auto WeakAlias : WeakAliases)
-    checkAndSetWeakAlias(Symtab, this, WeakAlias.first,
-                         SparseSymbolBodies[WeakAlias.second]);
+
+  for (auto &KV : WeakAliases) {
+    SymbolBody *Sym = KV.first;
+    uint32_t Idx = KV.second;
+    checkAndSetWeakAlias(Symtab, this, Sym, SparseSymbolBodies[Idx]);
+  }
 }
 
 SymbolBody *ObjectFile::createUndefined(COFFSymbolRef Sym) {
