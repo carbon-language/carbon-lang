@@ -51,6 +51,7 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 #include <fstream>
@@ -311,6 +312,13 @@ Verbosity("v",
   cl::ZeroOrMore,
   cl::cat(BoltCategory));
 
+static cl::opt<bool>
+AddBoltInfo("add-bolt-info",
+  cl::desc("add BOLT version and command line argument information to "
+           "processed binaries"),
+  cl::init(true),
+  cl::cat(BoltCategory));
+
 // Check against lists of functions from options if we should
 // optimize the function with a given name.
 bool shouldProcess(const BinaryFunction &Function) {
@@ -391,6 +399,12 @@ constexpr const char *RewriteInstance::SectionsToOverwrite[];
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
 const std::string RewriteInstance::BOLTSecPrefix = ".bolt";
+
+namespace llvm {
+namespace bolt {
+extern const char *BoltRevision;
+}
+}
 
 static void report_error(StringRef Message, std::error_code EC) {
   assert(EC);
@@ -597,8 +611,12 @@ std::unique_ptr<BinaryContext> createBinaryContext(
 } // namespace
 
 RewriteInstance::RewriteInstance(ELFObjectFileBase *File,
-                                 const DataReader &DR)
+                                 const DataReader &DR,
+                                 const int Argc,
+                                 const char *const *Argv)
     : InputFile(File),
+      Argc(Argc),
+      Argv(Argv),
       BC(createBinaryContext("x86-64", "x86_64-unknown-linux", DR,
          std::unique_ptr<DWARFContext>(
            new DWARFContextInMemory(*InputFile, nullptr, true)))) {
@@ -795,6 +813,8 @@ void RewriteInstance::run() {
 
   if (opts::UpdateDebugSections)
     updateDebugInfo();
+
+  addBoltInfoSection();
 
   // Copy allocatable part of the input.
   std::error_code EC;
@@ -2763,6 +2783,30 @@ void RewriteInstance::finalizeSectionStringTable(ELFObjectFile<ELFT> *File) {
                 /*IsReadOnly=*/false,
                 /*IsLocal=*/false);
   EFMM->NoteSectionInfo[".shstrtab"].IsStrTab = true;
+}
+
+void RewriteInstance::addBoltInfoSection() {
+  if (opts::AddBoltInfo) {
+    std::string Str;
+    raw_string_ostream OS(Str);
+
+    OS << "BOLT revision: " << BoltRevision << ", " << "command line:";
+    for (auto I = 0; I < Argc; ++I) {
+      OS << " " << Argv[I];
+    }
+
+    const auto BoltInfo = OS.str();
+    const auto SectionSize = BoltInfo.size();
+    uint8_t *SectionData = new uint8_t[SectionSize];
+    memcpy(SectionData, BoltInfo.data(), SectionSize);
+    EFMM->NoteSectionInfo[".bolt_info"] =
+      SectionInfo(reinterpret_cast<uint64_t>(SectionData),
+                  SectionSize,
+                  /*Alignment=*/1,
+                  /*IsCode=*/false,
+                  /*IsReadOnly=*/true,
+                  /*IsLocal=*/false);
+  }
 }
 
 // Rewrite section header table inserting new entries as needed. The sections

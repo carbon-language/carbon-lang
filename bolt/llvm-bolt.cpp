@@ -69,6 +69,18 @@ static void report_error(StringRef Message, std::error_code EC) {
   exit(1);
 }
 
+namespace llvm {
+namespace bolt {
+const char *BoltRevision =
+#include "BoltRevision.inc"
+;
+}
+}
+
+static void printBoltRevision() {
+  errs() << "BOLT revision " << BoltRevision << "\n";
+}
+
 int main(int argc, char **argv) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
@@ -88,6 +100,7 @@ int main(int argc, char **argv) {
   cl::HideUnrelatedOptions(makeArrayRef(opts::BoltCategories));
 
   // Register the target printer for --version.
+  cl::AddExtraVersionPrinter(printBoltRevision);
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
   cl::ParseCommandLineOptions(argc, argv,
@@ -122,7 +135,7 @@ int main(int argc, char **argv) {
   Binary &Binary = *BinaryOrErr.get().getBinary();
 
   if (auto *e = dyn_cast<ELFObjectFileBase>(&Binary)) {
-    RewriteInstance RI(e, *DR.get());
+    RewriteInstance RI(e, *DR.get(), argc, argv);
     RI.run();
   } else {
     report_error(opts::InputFilename, object_error::invalid_file_type);

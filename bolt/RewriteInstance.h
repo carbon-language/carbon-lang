@@ -146,7 +146,8 @@ public:
 /// events.
 class RewriteInstance {
 public:
-  RewriteInstance(llvm::object::ELFObjectFileBase *File, const DataReader &DR);
+  RewriteInstance(llvm::object::ELFObjectFileBase *File, const DataReader &DR,
+                  const int Argc, const char *const *Argv);
   ~RewriteInstance();
 
   /// Reset all state except for split hints. Used to run a second pass with
@@ -320,6 +321,9 @@ private:
   /// Finalize memory image of section header string table.
   ELF_FUNCTION(finalizeSectionStringTable);
 
+  /// Add a notes section containing the BOLT revision and command line options.
+  void addBoltInfoSection();
+
   /// Computes output .debug_line line table offsets for each compile unit,
   /// and updates stmt_list for a corresponding compile unit.
   void updateLineTableOffsets();
@@ -387,6 +391,10 @@ private:
 
   /// An instance of the input binary we are processing, externally owned.
   llvm::object::ELFObjectFileBase *InputFile;
+
+  /// Command line args used to process binary.
+  const int Argc;
+  const char *const *Argv;
 
   std::unique_ptr<BinaryContext> BC;
   std::unique_ptr<CFIReaderWriter> CFIRdWrt;
