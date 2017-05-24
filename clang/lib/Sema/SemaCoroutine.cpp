@@ -1160,8 +1160,68 @@ bool CoroutineStmtBuilder::makeGroDeclAndReturnStmt() {
   return true;
 }
 
+// Create a static_cast\<T&&>(expr).
+static Expr *castForMoving(Sema &S, Expr *E, QualType T = QualType()) {
+  if (T.isNull())
+    T = E->getType();
+  QualType TargetType = S.BuildReferenceType(
+      T, /*SpelledAsLValue*/ false, SourceLocation(), DeclarationName());
+  SourceLocation ExprLoc = E->getLocStart();
+  TypeSourceInfo *TargetLoc =
+      S.Context.getTrivialTypeSourceInfo(TargetType, ExprLoc);
+
+  return S
+      .BuildCXXNamedCast(ExprLoc, tok::kw_static_cast, TargetLoc, E,
+                         SourceRange(ExprLoc, ExprLoc), E->getSourceRange())
+      .get();
+}
+
+/// \brief Build a variable declaration for move parameter.
+static VarDecl *buildVarDecl(Sema &S, SourceLocation Loc, QualType Type,
+                             StringRef Name) {
+  DeclContext *DC = S.CurContext;
+  IdentifierInfo *II = &S.PP.getIdentifierTable().get(Name);
+  TypeSourceInfo *TInfo = S.Context.getTrivialTypeSourceInfo(Type, Loc);
+  VarDecl *Decl =
+      VarDecl::Create(S.Context, DC, Loc, Loc, II, Type, TInfo, SC_None);
+  Decl->setImplicit();
+  return Decl;
+}
+
 bool CoroutineStmtBuilder::makeParamMoves() {
-  // FIXME: Perform move-initialization of parameters into frame-local copies.
+  for (auto *paramDecl : FD.parameters()) {
+    auto Ty = paramDecl->getType();
+    if (Ty->isDependentType())
+      continue;
+
+    // No need to copy scalars, llvm will take care of them.
+    if (Ty->getAsCXXRecordDecl()) {
+      if (!paramDecl->getIdentifier())
+        continue;
+
+      ExprResult ParamRef =
+          S.BuildDeclRefExpr(paramDecl, paramDecl->getType(),
+                             ExprValueKind::VK_LValue, Loc); // FIXME: scope?
+      if (ParamRef.isInvalid())
+        return false;
+
+      Expr *RCast = castForMoving(S, ParamRef.get());
+
+      auto D = buildVarDecl(S, Loc, Ty, paramDecl->getIdentifier()->getName());
+
+      S.AddInitializerToDecl(D, RCast, /*DirectInit=*/true);
+
+      // Convert decl to a statement.
+      StmtResult Stmt = S.ActOnDeclStmt(S.ConvertDeclToDeclGroup(D), Loc, Loc);
+      if (Stmt.isInvalid())
+        return false;
+
+      ParamMovesVector.push_back(Stmt.get());
+    }
+  }
+
+  // Convert to ArrayRef in CtorArgs structure that builder inherits from.
+  ParamMoves = ParamMovesVector;
   return true;
 }
 
