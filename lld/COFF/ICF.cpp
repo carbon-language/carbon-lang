@@ -193,9 +193,9 @@ void ICF::forEachClass(std::function<void(size_t, size_t)> Fn) {
   size_t NumShards = 256;
   size_t Step = Chunks.size() / NumShards;
   for_each_n(parallel::par, size_t(0), NumShards, [&](size_t I) {
-    forEachClassRange(I * Step, (I + 1) * Step, Fn);
+    size_t End = (I == NumShards - 1) ? Chunks.size() : (I + 1) * Step;
+    forEachClassRange(I * Step, End, Fn);
   });
-  forEachClassRange(Step * NumShards, Chunks.size(), Fn);
 }
 
 // Merge identical COMDAT sections.
