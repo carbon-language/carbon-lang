@@ -2920,9 +2920,7 @@ define i1 @eq_mul_constants(i32 %x, i32 %y) {
 
 define <2 x i1> @eq_mul_constants_splat(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @eq_mul_constants_splat(
-; CHECK-NEXT:    [[A:%.*]] = mul <2 x i32> %x, <i32 5, i32 5>
-; CHECK-NEXT:    [[B:%.*]] = mul <2 x i32> %y, <i32 5, i32 5>
-; CHECK-NEXT:    [[C:%.*]] = icmp ne <2 x i32> [[A]], [[B]]
+; CHECK-NEXT:    [[C:%.*]] = icmp ne <2 x i32> %y, %x
 ; CHECK-NEXT:    ret <2 x i1> [[C]]
 ;
   %A = mul <2 x i32> %x, <i32 5, i32 5>
@@ -2950,9 +2948,9 @@ define i1 @eq_mul_constants_with_tz(i32 %x, i32 %y) {
 
 define <2 x i1> @eq_mul_constants_with_tz_splat(<2 x i32> %x, <2 x i32> %y) {
 ; CHECK-LABEL: @eq_mul_constants_with_tz_splat(
-; CHECK-NEXT:    [[A:%.*]] = mul <2 x i32> %x, <i32 12, i32 12>
-; CHECK-NEXT:    [[B:%.*]] = mul <2 x i32> %y, <i32 12, i32 12>
-; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i32> [[A]], [[B]]
+; CHECK-NEXT:    [[TMP1:%.*]] = xor <2 x i32> %x, %y
+; CHECK-NEXT:    [[TMP2:%.*]] = and <2 x i32> [[TMP1]], <i32 1073741823, i32 1073741823>
+; CHECK-NEXT:    [[C:%.*]] = icmp eq <2 x i32> [[TMP2]], zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[C]]
 ;
   %A = mul <2 x i32> %x, <i32 12, i32 12>
