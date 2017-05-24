@@ -374,37 +374,32 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
   }
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
-    unsigned SrcBitWidth =I->getOperand(0)->getType()->getScalarSizeInBits();
+    unsigned SrcBitWidth = I->getOperand(0)->getType()->getScalarSizeInBits();
 
-    APInt InputDemandedBits = DemandedMask &
-                              APInt::getLowBitsSet(BitWidth, SrcBitWidth);
+    APInt InputDemandedBits = DemandedMask.trunc(SrcBitWidth);
 
-    APInt NewBits(APInt::getBitsSetFrom(BitWidth, SrcBitWidth));
     // If any of the sign extended bits are demanded, we know that the sign
     // bit is demanded.
-    if ((NewBits & DemandedMask) != 0)
+    if (DemandedMask.getActiveBits() > SrcBitWidth)
       InputDemandedBits.setBit(SrcBitWidth-1);
 
-    InputDemandedBits = InputDemandedBits.trunc(SrcBitWidth);
-    Known = Known.trunc(SrcBitWidth);
-    if (SimplifyDemandedBits(I, 0, InputDemandedBits, Known, Depth + 1))
+    KnownBits InputKnown(SrcBitWidth);
+    if (SimplifyDemandedBits(I, 0, InputDemandedBits, InputKnown, Depth + 1))
       return I;
-    InputDemandedBits = InputDemandedBits.zext(BitWidth);
-    Known = Known.zext(BitWidth);
-    assert(!Known.hasConflict() && "Bits known to be one AND zero?");
-
-    // If the sign bit of the input is known set or clear, then we know the
-    // top bits of the result.
 
     // If the input sign bit is known zero, or if the NewBits are not demanded
     // convert this into a zero extension.
-    if (Known.Zero[SrcBitWidth-1] || (NewBits & ~DemandedMask) == NewBits) {
-      // Convert to ZExt cast
+    if (InputKnown.isNonNegative() ||
+        DemandedMask.getActiveBits() <= SrcBitWidth) {
+      // Convert to ZExt cast.
       CastInst *NewCast = new ZExtInst(I->getOperand(0), VTy, I->getName());
       return InsertNewInstWith(NewCast, *I);
-    } else if (Known.One[SrcBitWidth-1]) {    // Input sign bit known set
-      Known.One |= NewBits;
-    }
+     }
+
+    // If the sign bit of the input is known set or clear, then we know the
+    // top bits of the result.
+    Known = InputKnown.sext(BitWidth);
+    assert(!Known.hasConflict() && "Bits known to be one AND zero?");
     break;
   }
   case Instruction::Add:
