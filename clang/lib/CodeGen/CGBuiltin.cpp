@@ -8442,6 +8442,39 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
       return Builder.CreateCall(F, Ops);
     }
   }
+
+  case PPC::BI__builtin_vsx_xxpermdi: {
+    ConstantInt *ArgCI = dyn_cast<ConstantInt>(Ops[2]);
+    assert(ArgCI && "Third arg must be constant integer!");
+
+    unsigned Index = ArgCI->getZExtValue();
+    Ops[0] = Builder.CreateBitCast(Ops[0], llvm::VectorType::get(Int64Ty, 2));
+    Ops[1] = Builder.CreateBitCast(Ops[1], llvm::VectorType::get(Int64Ty, 2));
+
+    // Element zero comes from the first input vector and element one comes from
+    // the second. The element indices within each vector are numbered in big
+    // endian order so the shuffle mask must be adjusted for this on little
+    // endian platforms (i.e. index is complemented and source vector reversed).
+    unsigned ElemIdx0;
+    unsigned ElemIdx1;
+    if (getTarget().isLittleEndian()) {
+      ElemIdx0 = (~Index & 1) + 2;
+      ElemIdx1 = (~Index & 2) >> 1;
+    } else { // BigEndian
+      ElemIdx0 = (Index & 2) >> 1;
+      ElemIdx1 = 2 + (Index & 1);
+    }
+
+    Constant *ShuffleElts[2] = {ConstantInt::get(Int32Ty, ElemIdx0),
+                                ConstantInt::get(Int32Ty, ElemIdx1)};
+    Constant *ShuffleMask = llvm::ConstantVector::get(ShuffleElts);
+
+    Value *ShuffleCall =
+        Builder.CreateShuffleVector(Ops[0], Ops[1], ShuffleMask);
+    QualType BIRetType = E->getType();
+    auto RetTy = ConvertType(BIRetType);
+    return Builder.CreateBitCast(ShuffleCall, RetTy);
+  }
   }
 }
 

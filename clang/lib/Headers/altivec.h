@@ -12156,6 +12156,10 @@ static __inline__ void __ATTRS_o_ai vec_vsx_st(vector unsigned char __a,
 
 #endif
 
+#ifdef __VSX__
+#define vec_xxpermdi __builtin_vsx_xxpermdi
+#endif
+
 /* vec_xor */
 
 #define __builtin_altivec_vxor vec_xor
