@@ -325,14 +325,18 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
     Known.One = RHSKnown.One & LHSKnown.One;
     Known.Zero = RHSKnown.Zero & LHSKnown.Zero;
     break;
+  case Instruction::ZExt:
   case Instruction::Trunc: {
-    unsigned truncBf = I->getOperand(0)->getType()->getScalarSizeInBits();
-    DemandedMask = DemandedMask.zext(truncBf);
-    Known = Known.zext(truncBf);
-    if (SimplifyDemandedBits(I, 0, DemandedMask, Known, Depth + 1))
+    unsigned SrcBitWidth = I->getOperand(0)->getType()->getScalarSizeInBits();
+
+    APInt InputDemandedMask = DemandedMask.zextOrTrunc(SrcBitWidth);
+    KnownBits InputKnown(SrcBitWidth);
+    if (SimplifyDemandedBits(I, 0, InputDemandedMask, InputKnown, Depth + 1))
       return I;
-    DemandedMask = DemandedMask.trunc(BitWidth);
-    Known = Known.trunc(BitWidth);
+    Known = Known.zextOrTrunc(BitWidth);
+    // Any top bits are known to be zero.
+    if (BitWidth > SrcBitWidth)
+      Known.Zero.setBitsFrom(SrcBitWidth);
     assert(!Known.hasConflict() && "Bits known to be one AND zero?");
     break;
   }
@@ -357,21 +361,6 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       return I;
     assert(!Known.hasConflict() && "Bits known to be one AND zero?");
     break;
-  case Instruction::ZExt: {
-    // Compute the bits in the result that are not present in the input.
-    unsigned SrcBitWidth =I->getOperand(0)->getType()->getScalarSizeInBits();
-
-    DemandedMask = DemandedMask.trunc(SrcBitWidth);
-    Known = Known.trunc(SrcBitWidth);
-    if (SimplifyDemandedBits(I, 0, DemandedMask, Known, Depth + 1))
-      return I;
-    DemandedMask = DemandedMask.zext(BitWidth);
-    Known = Known.zext(BitWidth);
-    assert(!Known.hasConflict() && "Bits known to be one AND zero?");
-    // The top bits are known to be zero.
-    Known.Zero.setBitsFrom(SrcBitWidth);
-    break;
-  }
   case Instruction::SExt: {
     // Compute the bits in the result that are not present in the input.
     unsigned SrcBitWidth = I->getOperand(0)->getType()->getScalarSizeInBits();
