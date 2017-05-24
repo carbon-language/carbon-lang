@@ -4440,19 +4440,21 @@ static Value *SimplifyIntrinsic(Function *F, IterTy ArgBegin, IterTy ArgEnd,
     case Intrinsic::uadd_with_overflow:
     case Intrinsic::sadd_with_overflow: {
       // X + undef -> undef
-      if (isa<UndefValue>(RHS))
+      if (isa<UndefValue>(LHS) || isa<UndefValue>(RHS))
         return UndefValue::get(ReturnType);
 
       return nullptr;
     }
     case Intrinsic::umul_with_overflow:
     case Intrinsic::smul_with_overflow: {
+      // 0 * X -> { 0, false }
       // X * 0 -> { 0, false }
-      if (match(RHS, m_Zero()))
+      if (match(LHS, m_Zero()) || match(RHS, m_Zero()))
         return Constant::getNullValue(ReturnType);
 
+      // undef * X -> { 0, false }
       // X * undef -> { 0, false }
-      if (match(RHS, m_Undef()))
+      if (match(LHS, m_Undef()) || match(RHS, m_Undef()))
         return Constant::getNullValue(ReturnType);
 
       return nullptr;
