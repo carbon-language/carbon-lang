@@ -382,6 +382,9 @@ void Writer::createImportTables() {
       Text->addChunk(Thunk->getChunk());
 
     if (Config->DelayLoads.count(StringRef(File->DLLName).lower())) {
+      if (!File->ThunkSym)
+        fatal("cannot delay-load " + toString(File) +
+              " due to import of data: " + toString(*File->ImpSym));
       DelayIdata.add(File->ImpSym);
     } else {
       Idata.add(File->ImpSym);
