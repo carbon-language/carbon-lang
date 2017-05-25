@@ -1854,11 +1854,9 @@ void RewriteInstance::runOptimizationPasses() {
     opts::PrintDynoStats || opts::DynoStatsAll);
 }
 
-namespace {
-
 // Helper function to emit the contents of a function via a MCStreamer object.
-void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
-                  BinaryContext &BC, bool EmitColdPart) {
+void RewriteInstance::emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
+                                   bool EmitColdPart) {
   if (Function.getSize() == 0)
     return;
 
@@ -1867,19 +1865,19 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
 
   MCSection *Section;
   if (opts::Relocs) {
-    Section = BC.MOFI->getTextSection();
+    Section = BC->MOFI->getTextSection();
   } else {
     // Each fuction is emmitted into its own section.
     Section =
-        BC.Ctx->getELFSection(EmitColdPart ? Function.getColdCodeSectionName()
-                                           : Function.getCodeSectionName(),
+        BC->Ctx->getELFSection(EmitColdPart ? Function.getColdCodeSectionName()
+                                            : Function.getCodeSectionName(),
                               ELF::SHT_PROGBITS,
                               ELF::SHF_EXECINSTR | ELF::SHF_ALLOC);
   }
 
   Section->setHasInstructions(true);
 
-  BC.Ctx->addGenDwarfSection(Section);
+  BC->Ctx->addGenDwarfSection(Section);
 
   Streamer.SwitchSection(Section);
 
@@ -1898,7 +1896,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   // Emit all names the function is known under.
   for (const auto &Name : Function.getNames()) {
     Twine EmitName = EmitColdPart ? Twine(Name).concat(".cold") : Name;
-    auto *EmitSymbol = BC.Ctx->getOrCreateSymbol(EmitName);
+    auto *EmitSymbol = BC->Ctx->getOrCreateSymbol(EmitName);
     Streamer.EmitSymbolAttribute(EmitSymbol, MCSA_ELF_TypeFunction);
     DEBUG(dbgs() << "emitting symbol " << EmitSymbol->getName()
                  << " for function " << Function << '\n');
@@ -1915,7 +1913,7 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
     auto *LSDASymbol = EmitColdPart ? Function.getColdLSDASymbol()
                                     : Function.getLSDASymbol();
     if (LSDASymbol) {
-      Streamer.EmitCFILsda(LSDASymbol, BC.MOFI->getLSDAEncoding());
+      Streamer.EmitCFILsda(LSDASymbol, BC->MOFI->getLSDAEncoding());
     } else {
       Streamer.EmitCFILsda(0, dwarf::DW_EH_PE_omit);
     }
@@ -1972,6 +1970,8 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
 
   Function.setEmitted();
 }
+
+namespace {
 
 template <typename T>
 std::vector<T> singletonSet(T t) {
@@ -2080,7 +2080,7 @@ void RewriteInstance::emitFunctions() {
         for (auto *FPtr : SortedFunctions) {
           if (!FPtr->isSplit() || !FPtr->isSimple())
             continue;
-          emitFunction(*Streamer, *FPtr, *BC.get(), /*EmitColdPart=*/true);
+          emitFunction(*Streamer, *FPtr, /*EmitColdPart=*/true);
         }
       }
       DEBUG(dbgs() << "BOLT-DEBUG: first cold function: " << Function << '\n');
@@ -2096,10 +2096,10 @@ void RewriteInstance::emitFunctions() {
                  << Function << "\" : "
                  << Function.getFunctionNumber() << '\n');
 
-    emitFunction(*Streamer, Function, *BC.get(), /*EmitColdPart=*/false);
+    emitFunction(*Streamer, Function, /*EmitColdPart=*/false);
 
     if (!opts::Relocs && Function.isSplit())
-      emitFunction(*Streamer, Function, *BC.get(), /*EmitColdPart=*/true);
+      emitFunction(*Streamer, Function, /*EmitColdPart=*/true);
 
     ++CurrentIndex;
   }

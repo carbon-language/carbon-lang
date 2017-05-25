@@ -263,6 +263,9 @@ public:
       const DWARFAddressRangesVector &InputRanges) const;
 
 private:
+  /// Emit a single function.
+  void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
+                    bool EmitColdPart);
 
   /// Detect addresses and offsets available in the binary for allocating
   /// new sections.

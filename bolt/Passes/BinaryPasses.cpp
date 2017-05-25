@@ -77,6 +77,12 @@ FunctionOrderFile("function-order",
            "reordering"),
   cl::cat(BoltOptCategory));
 
+static cl::opt<std::string>
+GenerateFunctionOrderFile("generate-function-order",
+  cl::desc("file to dump the ordered list of functions to use for function "
+           "reordering"),
+  cl::cat(BoltOptCategory));
+
 static cl::opt<bool>
 ICFUseDFS("icf-dfs",
   cl::desc("use DFS ordering when using -icf option"),
@@ -1516,7 +1522,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
 
         if (FuncAddrs.empty()) {
           errs() << "BOLT-WARNING: Reorder functions: can't find function for "
-                 << Function << "\n";
+                 << Function << ".\n";
           continue;
         }
 
@@ -1527,11 +1533,13 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
           auto *BF = BC.getFunctionForSymbol(FuncSym);
           if (!BF) {
             errs() << "BOLT-WARNING: Reorder functions: can't find function for "
-                   << Function << "\n";
+                   << Function << ".\n";
             break;
           }
           if (!BF->hasValidIndex()) {
             BF->setIndex(Index++);
+          } else if (opts::Verbosity > 0) {
+            errs() << "BOLT-WARNING: Duplicate reorder entry for " << Function << ".\n";
           }
         }
       }
@@ -1540,6 +1548,52 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
   }
 
   reorder(std::move(Clusters), BFs);
+
+  if (!opts::GenerateFunctionOrderFile.empty()) {
+    std::ofstream FuncsFile(opts::GenerateFunctionOrderFile, std::ios::out);
+    if (!FuncsFile) {
+      errs() << "Ordered functions file \"" << opts::GenerateFunctionOrderFile
+             << "\" can't be opened.\n";
+      exit(1);
+    }
+
+    std::vector<BinaryFunction *> SortedFunctions(BFs.size());
+
+    std::transform(BFs.begin(),
+                   BFs.end(),
+                   SortedFunctions.begin(),
+                   [](std::pair<const uint64_t, BinaryFunction> &BFI) {
+                     return &BFI.second;
+                   });
+
+    // Sort functions by index.
+    std::stable_sort(
+      SortedFunctions.begin(),
+      SortedFunctions.end(),
+      [](const BinaryFunction *A, const BinaryFunction *B) {
+        if (A->hasValidIndex() && B->hasValidIndex()) {
+          return A->getIndex() < B->getIndex();
+        } else if (A->hasValidIndex() && !B->hasValidIndex()) {
+          return true;
+        } else if (!A->hasValidIndex() && B->hasValidIndex()) {
+          return false;
+        } else {
+          return A->getAddress() < B->getAddress();
+        }
+      });
+
+    for (const auto *Func : SortedFunctions) {
+      if (!Func->hasValidIndex())
+        break;
+      FuncsFile << Func->getSymbol()->getName().data() << "\n";
+    }
+    FuncsFile.close();
+
+    outs() << "BOLT-INFO: dumped function order to \""
+           << opts::GenerateFunctionOrderFile << "\"\n";
+
+    exit(0);
+  }
 }
 
 } // namespace bolt
