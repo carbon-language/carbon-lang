@@ -136,6 +136,7 @@ std::string BareMetal::findLibCxxIncludePath(CXXStdlibType LibType) const {
     return Dir.str();
   }
   }
+  llvm_unreachable("unhandled LibType");
 }
 
 void BareMetal::AddClangCXXStdlibIncludeArgs(
