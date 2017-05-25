@@ -19,8 +19,7 @@
 // template <class Promise>
 // struct coroutine_handle<Promise>;
 
-// Promise& promise()
-// Promise const& promise() const
+// Promise& promise() const
 
 #include <experimental/coroutine>
 #include <type_traits>
