@@ -85,7 +85,7 @@ struct _LIBCPP_TEMPLATE_VIS coroutine_traits
 {
 };
 
-template <typename Promise = void>
+template <typename _Promise = void>
 class _LIBCPP_TEMPLATE_VIS coroutine_handle;
 
 #if defined(__cpp_coroutines)
@@ -217,8 +217,6 @@ public:
     }
 };
 
-#endif // defined(__cpp_coroutines)
-
 struct _LIBCPP_TYPE_VIS suspend_never {
   _LIBCPP_ALWAYS_INLINE
   bool await_ready() const noexcept { return true; }
@@ -236,6 +234,8 @@ struct _LIBCPP_TYPE_VIS suspend_always {
   _LIBCPP_ALWAYS_INLINE
   void await_resume() const noexcept {}
 };
+
+#endif // defined(__cpp_coroutines)
 
 _LIBCPP_END_NAMESPACE_EXPERIMENTAL_COROUTINES
 
