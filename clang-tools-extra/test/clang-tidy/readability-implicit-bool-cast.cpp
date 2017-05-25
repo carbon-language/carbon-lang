@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s readability-implicit-bool-cast %t
+// RUN: %check_clang_tidy %s -fno-ms-compatibility readability-implicit-bool-cast %t
 
 // We need NULL macro, but some buildbots don't like including <cstddef> header
 // This is a portable way of getting it to work
