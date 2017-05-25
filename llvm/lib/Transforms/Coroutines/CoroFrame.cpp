@@ -800,9 +800,8 @@ void coro::buildCoroutineFrame(Function &F, Shape &Shape) {
   }
 
   // Put CoroEnds into their own blocks.
-  for (CoroEndInst *CE : Shape.CoroEnds) {
+  for (CoroEndInst *CE : Shape.CoroEnds)
     splitAround(CE, "CoroEnd");
-  }
 
   // Transforms multi-edge PHI Nodes, so that any value feeding into a PHI will
   // never has its definition separated from the PHI by the suspend point.
@@ -814,7 +813,7 @@ void coro::buildCoroutineFrame(Function &F, Shape &Shape) {
   IRBuilder<> Builder(F.getContext());
   SpillInfo Spills;
 
-  for (int repeat = 0; repeat < 4; ++repeat) {
+  for (int Repeat = 0; Repeat < 4; ++Repeat) {
     // See if there are materializable instructions across suspend points.
     for (Instruction &I : instructions(F))
       if (materializable(I))
