@@ -194,15 +194,9 @@ public:
         return *this;
     }
 
-  _LIBCPP_INLINE_VISIBILITY
-    _Promise& promise() {
-        return *reinterpret_cast<_Promise*>(
-            __builtin_coro_promise(this->__handle_, alignof(_Promise), false));
-    }
-
     _LIBCPP_INLINE_VISIBILITY
-    _Promise const& promise() const {
-        return *reinterpret_cast<_Promise const*>(
+    _Promise& promise() const {
+        return *reinterpret_cast<_Promise*>(
             __builtin_coro_promise(this->__handle_, alignof(_Promise), false));
     }
 
