@@ -249,6 +249,7 @@ InlineSmallFunctions::inlineCall(
         const bool Result = BC.MIA->analyzeBranch(Instruction, OldTargetLabel,
                                                   OldFTLabel, CondBranch,
                                                   UncondBranch);
+        (void)Result;
         assert(Result &&
                "analyzeBranch failed on instruction guaranteed to be a branch");
         assert(OldTargetLabel);

@@ -301,8 +301,9 @@ void BinaryBasicBlock::addLandingPad(BinaryBasicBlock *LPBlock) {
 
 void BinaryBasicBlock::clearLandingPads() {
   for (auto *LPBlock : LandingPads) {
-    auto count = LPBlock->Throwers.erase(this);
-    assert(count == 1 && "Possible duplicate entry in LandingPads");
+    auto Count = LPBlock->Throwers.erase(this);
+    (void)Count;
+    assert(Count == 1 && "Possible duplicate entry in LandingPads");
   }
   LandingPads.clear();
 }

@@ -419,8 +419,14 @@ void FrameAnalysis::buildClobberMap(const BinaryContext &BC) {
     RegsKilledMap[Func] = std::move(RegsKilled);
   }
 
-  if (opts::Verbosity == 0 && (!DebugFlag || !isCurrentDebugType("fa")))
+  if (opts::Verbosity == 0) {
+#ifndef NDEBUG
+    if (!DebugFlag || !isCurrentDebugType("fa"))
+      return;
+#else
     return;
+#endif
+  }
 
   // This loop is for computing statistics only
   for (auto *Func : TopologicalCGOrder) {
@@ -433,17 +439,16 @@ void FrameAnalysis::buildClobberMap(const BinaryContext &BC) {
         CountFunctionsAllClobber += Count;
       ++NumFunctionsAllClobber;
     }
-    if (!DebugFlag || !isCurrentDebugType("fa"))
-      continue;
-    // DEBUG only
-    dbgs() << "Killed regs set for func: " << Func->getPrintName() << "\n";
-    const BitVector &RegsKilled = Iter->second;
-    int RegIdx = RegsKilled.find_first();
-    while (RegIdx != -1) {
-      dbgs() << "\tREG" << RegIdx;
-      RegIdx = RegsKilled.find_next(RegIdx);
-    };
-    dbgs() << "\n";
+    DEBUG_WITH_TYPE("fa",
+      dbgs() << "Killed regs set for func: " << Func->getPrintName() << "\n";
+      const BitVector &RegsKilled = Iter->second;
+      int RegIdx = RegsKilled.find_first();
+      while (RegIdx != -1) {
+        dbgs() << "\tREG" << RegIdx;
+        RegIdx = RegsKilled.find_next(RegIdx);
+      };
+      dbgs() << "\n";
+    );
   }
 }
 

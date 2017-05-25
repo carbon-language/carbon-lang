@@ -676,6 +676,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         auto Result = MIA->createUncondBranch(Branch,
                                               CondSucc->getLabel(),
                                               BC.Ctx.get());
+        (void)Result;
         assert(Result);
         PredBB->addInstruction(Branch);
       }
@@ -1324,78 +1325,86 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
     }
   }
 
-  if (opts::ReorderFunctions != BinaryFunction::RT_NONE &&
-      (opts::Verbosity > 0 ||
-       (DebugFlag && isCurrentDebugType("hfsort")))) {
-    uint64_t TotalSize   = 0;
-    uint64_t CurPage     = 0;
-    uint64_t Hotfuncs    = 0;
-    double TotalDistance = 0;
-    double TotalCalls    = 0;
-    double TotalCalls64B = 0;
-    double TotalCalls4KB = 0;
-    double TotalCalls2MB = 0;
-    dbgs() << "============== page 0 ==============\n";
-    for (auto& Cluster : Clusters) {
-      dbgs() <<
-        format("-------- density = %.3lf (%u / %u) --------\n",
-               (double) Cluster.Samples / Cluster.Size,
-               Cluster.Samples, Cluster.Size);
+  if (opts::ReorderFunctions == BinaryFunction::RT_NONE)
+    return;
 
-      for (auto FuncId : Cluster.Targets) {
-        if (Cg.Targets[FuncId].Samples > 0) {
-          Hotfuncs++;
+  if (opts::Verbosity == 0) {
+#ifndef NDEBUG
+    if (!DebugFlag || !isCurrentDebugType("hfsort"))
+      return;
+#else
+    return;
+#endif
+  }
 
-          dbgs() << "BOLT-INFO: hot func " << *Funcs[FuncId]
-                 << " (" << Cg.Targets[FuncId].Size << ")\n";
+  TotalSize   = 0;
+  uint64_t CurPage     = 0;
+  uint64_t Hotfuncs    = 0;
+  double TotalDistance = 0;
+  double TotalCalls    = 0;
+  double TotalCalls64B = 0;
+  double TotalCalls4KB = 0;
+  double TotalCalls2MB = 0;
+  dbgs() << "============== page 0 ==============\n";
+  for (auto& Cluster : Clusters) {
+    dbgs() <<
+      format("-------- density = %.3lf (%u / %u) --------\n",
+             (double) Cluster.Samples / Cluster.Size,
+             Cluster.Samples, Cluster.Size);
 
-          uint64_t Dist = 0;
-          uint64_t Calls = 0;
-          for (auto Dst : Cg.Targets[FuncId].Succs) {
-            auto& A = *Cg.Arcs.find(Arc(FuncId, Dst));
-            auto D =
-              std::abs(FuncAddr[A.Dst] - (FuncAddr[FuncId] + A.AvgCallOffset));
-            auto W = A.Weight;
-            Calls += W;
-            if (D < 64)        TotalCalls64B += W;
-            if (D < 4096)      TotalCalls4KB += W;
-            if (D < (2 << 20)) TotalCalls2MB += W;
-            Dist += A.Weight * D;
-            dbgs() << format("arc: %u [@%lu+%.1lf] -> %u [@%lu]: "
-                             "weight = %.0lf, callDist = %f\n",
-                             A.Src, FuncAddr[A.Src], A.AvgCallOffset,
-                             A.Dst, FuncAddr[A.Dst], A.Weight, D);
-          }
-          TotalCalls += Calls;
-          TotalDistance += Dist;
-          dbgs() << format("start = %6u : avgCallDist = %lu : %s\n",
-                           TotalSize,
-                           Calls ? Dist / Calls : 0,
-                           Funcs[FuncId]->getPrintName().c_str());
-          TotalSize += Cg.Targets[FuncId].Size;
-          auto NewPage = TotalSize / PageSize;
-          if (NewPage != CurPage) {
-            CurPage = NewPage;
-            dbgs() << format("============== page %u ==============\n", CurPage);
-          }
+    for (auto FuncId : Cluster.Targets) {
+      if (Cg.Targets[FuncId].Samples > 0) {
+        Hotfuncs++;
+
+        dbgs() << "BOLT-INFO: hot func " << *Funcs[FuncId]
+               << " (" << Cg.Targets[FuncId].Size << ")\n";
+
+        uint64_t Dist = 0;
+        uint64_t Calls = 0;
+        for (auto Dst : Cg.Targets[FuncId].Succs) {
+          auto& A = *Cg.Arcs.find(Arc(FuncId, Dst));
+          auto D =
+            std::abs(FuncAddr[A.Dst] - (FuncAddr[FuncId] + A.AvgCallOffset));
+          auto W = A.Weight;
+          Calls += W;
+          if (D < 64)        TotalCalls64B += W;
+          if (D < 4096)      TotalCalls4KB += W;
+          if (D < (2 << 20)) TotalCalls2MB += W;
+          Dist += A.Weight * D;
+          dbgs() << format("arc: %u [@%lu+%.1lf] -> %u [@%lu]: "
+                           "weight = %.0lf, callDist = %f\n",
+                           A.Src, FuncAddr[A.Src], A.AvgCallOffset,
+                           A.Dst, FuncAddr[A.Dst], A.Weight, D);
+        }
+        TotalCalls += Calls;
+        TotalDistance += Dist;
+        dbgs() << format("start = %6u : avgCallDist = %lu : %s\n",
+                         TotalSize,
+                         Calls ? Dist / Calls : 0,
+                         Funcs[FuncId]->getPrintName().c_str());
+        TotalSize += Cg.Targets[FuncId].Size;
+        auto NewPage = TotalSize / PageSize;
+        if (NewPage != CurPage) {
+          CurPage = NewPage;
+          dbgs() << format("============== page %u ==============\n", CurPage);
         }
       }
     }
-    dbgs() << format("  Number of hot functions: %u\n"
-                     "  Number of clusters: %lu\n",
-                     Hotfuncs, Clusters.size())
-           << format("  Final average call distance = %.1lf (%.0lf / %.0lf)\n",
-                     TotalCalls ? TotalDistance / TotalCalls : 0,
-                     TotalDistance, TotalCalls)
-           << format("  Total Calls = %.0lf\n", TotalCalls);
-    if (TotalCalls) {
-      dbgs() << format("  Total Calls within 64B = %.0lf (%.2lf%%)\n",
-                       TotalCalls64B, 100 * TotalCalls64B / TotalCalls)
-             << format("  Total Calls within 4KB = %.0lf (%.2lf%%)\n",
-                       TotalCalls4KB, 100 * TotalCalls4KB / TotalCalls)
-             << format("  Total Calls within 2MB = %.0lf (%.2lf%%)\n",
-                       TotalCalls2MB, 100 * TotalCalls2MB / TotalCalls);
-    }
+  }
+  dbgs() << format("  Number of hot functions: %u\n"
+                   "  Number of clusters: %lu\n",
+                   Hotfuncs, Clusters.size())
+         << format("  Final average call distance = %.1lf (%.0lf / %.0lf)\n",
+                   TotalCalls ? TotalDistance / TotalCalls : 0,
+                   TotalDistance, TotalCalls)
+         << format("  Total Calls = %.0lf\n", TotalCalls);
+  if (TotalCalls) {
+    dbgs() << format("  Total Calls within 64B = %.0lf (%.2lf%%)\n",
+                     TotalCalls64B, 100 * TotalCalls64B / TotalCalls)
+           << format("  Total Calls within 4KB = %.0lf (%.2lf%%)\n",
+                     TotalCalls4KB, 100 * TotalCalls4KB / TotalCalls)
+           << format("  Total Calls within 2MB = %.0lf (%.2lf%%)\n",
+                     TotalCalls2MB, 100 * TotalCalls2MB / TotalCalls);
   }
 }
 

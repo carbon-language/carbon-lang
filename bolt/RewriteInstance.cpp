@@ -2552,7 +2552,9 @@ void RewriteInstance::patchELFPHDRTable() {
   OS.seek(PHDRTableOffset);
 
   bool ModdedGnuStack = false;
+  (void)ModdedGnuStack;
   bool AddedSegment = false;
+  (void)AddedSegment;
 
   // Copy existing program headers with modifications.
   for (auto &Phdr : Obj->program_headers()) {
@@ -3244,6 +3246,7 @@ void RewriteInstance::rewriteFile() {
   // Make sure output stream has enough reserved space, otherwise
   // pwrite() will fail.
   auto Offset = OS.seek(getFileOffsetForAddress(NextAvailableAddress));
+  (void)Offset;
   assert(Offset == getFileOffsetForAddress(NextAvailableAddress) &&
          "error resizing output file");
 

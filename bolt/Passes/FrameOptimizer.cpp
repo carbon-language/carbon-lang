@@ -168,8 +168,14 @@ void FrameOptimizerPass::buildClobberMap(const BinaryContext &BC) {
     RegsKilledMap[Func] = std::move(RegsKilled);
   }
 
-  if (opts::Verbosity == 0 && (!DebugFlag || !isCurrentDebugType("fop")))
+  if (opts::Verbosity == 0) {
+#ifndef NDEBUG
+    if (!DebugFlag || !isCurrentDebugType("fop"))
+      return;
+#else
     return;
+#endif
+  }
 
   // This loop is for computing statistics only
   for (auto *Func : TopologicalCGOrder) {
@@ -182,17 +188,16 @@ void FrameOptimizerPass::buildClobberMap(const BinaryContext &BC) {
         CountFunctionsAllClobber += Count;
       ++NumFunctionsAllClobber;
     }
-    if (!DebugFlag || !isCurrentDebugType("fop"))
-      continue;
-    // DEBUG only
-    dbgs() << "Killed regs set for func: " << Func->getPrintName() << "\n";
-    const BitVector &RegsKilled = Iter->second;
-    int RegIdx = RegsKilled.find_first();
-    while (RegIdx != -1) {
-      dbgs() << "\tREG" << RegIdx;
-      RegIdx = RegsKilled.find_next(RegIdx);
-    };
-    dbgs() << "\n";
+    DEBUG_WITH_TYPE("fop",
+      dbgs() << "Killed regs set for func: " << Func->getPrintName() << "\n";
+      const BitVector &RegsKilled = Iter->second;
+      int RegIdx = RegsKilled.find_first();
+      while (RegIdx != -1) {
+        dbgs() << "\tREG" << RegIdx;
+        RegIdx = RegsKilled.find_next(RegIdx);
+      };
+      dbgs() << "\n";
+    );
   }
 }
 
@@ -665,18 +670,17 @@ bool FrameOptimizerPass::restoreFrameIndex(const BinaryContext &BC,
                                      CfaOffset + StackOffset, Size, IsSimple});
         }
 
-        if (!DebugFlag || !isCurrentDebugType("fop"))
-          continue;
-        // DEBUG only
-        dbgs() << "Frame index annotation added to:\n";
-        BC.printInstruction(dbgs(), Inst, 0, &BF, true);
-        dbgs() << " FrameIndexEntry <IsLoad:" << IsLoad << " StackOffset:";
-        if (FrameIndexMap[&Inst].StackOffset < 0)
-          dbgs() << "-" << Twine::utohexstr(-FrameIndexMap[&Inst].StackOffset);
-        else
-          dbgs() << "+" << Twine::utohexstr(FrameIndexMap[&Inst].StackOffset);
-        dbgs() << " IsStoreFromReg:" << FrameIndexMap[&Inst].IsStoreFromReg
-               << " RegOrImm:" << FrameIndexMap[&Inst].RegOrImm << ">\n";
+        DEBUG_WITH_TYPE("fop",
+          dbgs() << "Frame index annotation added to:\n";
+          BC.printInstruction(dbgs(), Inst, 0, &BF, true);
+          dbgs() << " FrameIndexEntry <IsLoad:" << IsLoad << " StackOffset:";
+          if (FrameIndexMap[&Inst].StackOffset < 0)
+            dbgs() << "-" << Twine::utohexstr(-FrameIndexMap[&Inst].StackOffset);
+          else
+            dbgs() << "+" << Twine::utohexstr(FrameIndexMap[&Inst].StackOffset);
+          dbgs() << " IsStoreFromReg:" << FrameIndexMap[&Inst].IsStoreFromReg
+                 << " RegOrImm:" << FrameIndexMap[&Inst].RegOrImm << ">\n";
+        );
       }
     }
   }
@@ -816,8 +820,14 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
   outs() << "BOLT-INFO: FOP optimized " << NumRedundantLoads
          << " redundant load(s).\n";
 
-  if (opts::Verbosity == 0 && (!DebugFlag || !isCurrentDebugType("fop")))
+  if (opts::Verbosity == 0) {
+#ifndef NDEBUG
+    if (!DebugFlag || !isCurrentDebugType("fop"))
+      return;
+#else
     return;
+#endif
+  }
 
   outs() << "BOLT-INFO: FOP changed " << NumLoadsChangedToReg
          << " load(s) to use a register instead of a stack access, and "

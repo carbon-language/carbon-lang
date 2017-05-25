@@ -1074,6 +1074,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
         const auto Result =
           BC.MIA->replaceImmWithSymbol(Instruction, Relocation.Symbol,
                                        Relocation.Addend, BC.Ctx.get(), Value);
+        (void)Result;
         assert(Result && "cannot replace immediate with relocation");
 
         // Make sure we replaced the correct immediate (instruction
@@ -1240,6 +1241,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
           case IndirectBranchType::POSSIBLE_TAIL_CALL:
             {
               auto Result = MIA->convertJmpToTailCall(Instruction);
+              (void)Result;
               assert(Result);
               if (BranchDataOrErr) {
                 MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
@@ -2351,7 +2353,6 @@ void BinaryFunction::annotateCFIState() {
 }
 
 bool BinaryFunction::fixCFIState() {
-  auto Sep = "";
   DEBUG(dbgs() << "Trying to fix CFI states for each BB after reordering.\n");
   DEBUG(dbgs() << "This is the list of CFI states for each BB of " << *this
                << ": ");
@@ -2402,6 +2403,8 @@ bool BinaryFunction::fixCFIState() {
   int32_t State = 0;
   auto *FDEStartBB = BasicBlocksLayout[0];
   bool SeenCold = false;
+  auto Sep = "";
+  (void)Sep;
   for (auto *BB : BasicBlocksLayout) {
     const auto CFIStateAtExit = BB->getCFIStateAtExit();
 
@@ -3093,8 +3096,8 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
     auto BIMergeI = BBMerge->branch_info_begin();
     auto BII = BB->branch_info_begin();
     for (const auto *BBSucc : BB->successors()) {
-      auto *BBMergeSucc = *BBMergeSI;
-      assert(getIndex(BBSucc) == BF.getIndex(BBMergeSucc));
+      (void)BBSucc;
+      assert(getIndex(BBSucc) == BF.getIndex(*BBMergeSI));
 
       // At this point no branch count should be set to COUNT_NO_PROFILE.
       assert(BII->Count != BinaryBasicBlock::COUNT_NO_PROFILE &&
@@ -3124,7 +3127,7 @@ void BinaryFunction::mergeProfileDataInto(BinaryFunction &BF) const {
   assert(BBMergeI == BF.end());
 }
 
-__attribute__((noinline)) BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
+BinaryFunction::BasicBlockOrderType BinaryFunction::dfs() const {
   BasicBlockOrderType DFS;
   unsigned Index = 0;
   std::stack<BinaryBasicBlock *> Stack;
