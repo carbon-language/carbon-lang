@@ -163,8 +163,7 @@ set(GENERIC_SOURCES
   udivti3.c
   umoddi3.c
   umodsi3.c
-  umodti3.c
-  emutls.c)
+  umodti3.c)
 
 set(GENERIC_TF_SOURCES
   comparetf2.c
@@ -193,6 +192,7 @@ option(COMPILER_RT_EXCLUDE_ATOMIC_BUILTIN
 if(NOT COMPILER_RT_BAREMETAL_BUILD)
   set(GENERIC_SOURCES
     ${GENERIC_SOURCES}
+    emutls.c 
     enable_execute_stack.c)
 endif()
 
