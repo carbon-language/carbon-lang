@@ -207,7 +207,7 @@ public:
   /// Create a dummy ModelledPHI that will compare unequal to any other ModelledPHI
   /// without the same ID.
   /// \note This is specifically for DenseMapInfo - do not use this!
-  static ModelledPHI createDummy(unsigned ID) {
+  static ModelledPHI createDummy(size_t ID) {
     ModelledPHI M;
     M.Values.push_back(reinterpret_cast<Value*>(ID));
     return M;
