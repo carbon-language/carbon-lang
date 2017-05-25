@@ -2,7 +2,7 @@
 // RUN: -config='{CheckOptions: \
 // RUN:  [{key: readability-implicit-bool-cast.AllowConditionalIntegerCasts, value: 1}, \
 // RUN:   {key: readability-implicit-bool-cast.AllowConditionalPointerCasts, value: 1}]}' \
-// RUN: -- -std=c++11 -fno-ms-compatibility
+// RUN: -- -std=c++11
 
 template<typename T>
 void functionTaking(T);
