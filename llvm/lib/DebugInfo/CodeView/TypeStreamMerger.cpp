@@ -147,8 +147,6 @@ private:
 
   bool IsSecondPass = false;
 
-  bool HadUntranslatedMember = false;
-
   unsigned NumBadIndices = 0;
 
   TypeIndex CurIndex{TypeIndex::FirstNonSimpleIndex};
