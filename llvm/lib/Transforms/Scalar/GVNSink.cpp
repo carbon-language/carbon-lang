@@ -174,12 +174,14 @@ struct SinkingInstructionCandidate {
   }
 };
 
+#ifndef NDEBUG
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
                               const SinkingInstructionCandidate &C) {
   OS << "<Candidate Cost=" << C.Cost << " #Blocks=" << C.NumBlocks
      << " #Insts=" << C.NumInstructions << " #PHIs=" << C.NumPHIs << ">";
   return OS;
 }
+#endif
 
 //===----------------------------------------------------------------------===//
 
