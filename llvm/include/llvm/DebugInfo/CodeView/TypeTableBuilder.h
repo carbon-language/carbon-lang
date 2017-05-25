@@ -68,6 +68,10 @@ public:
     return Serializer.insertRecordBytes(Record);
   }
 
+  TypeIndex writeSerializedRecord(const RemappedType &Record) {
+    return Serializer.insertRecord(Record);
+  }
+
   template <typename TFunc> void ForEachRecord(TFunc Func) {
     uint32_t Index = TypeIndex::FirstNonSimpleIndex;
 
@@ -88,7 +92,7 @@ class FieldListRecordBuilder {
 
 public:
   explicit FieldListRecordBuilder(TypeTableBuilder &TypeTable)
-      : TypeTable(TypeTable), TempSerializer(Allocator) {
+      : TypeTable(TypeTable), TempSerializer(Allocator, false) {
     Type.Type = TypeLeafKind::LF_FIELDLIST;
   }
 
