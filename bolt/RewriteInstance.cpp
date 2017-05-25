@@ -1884,10 +1884,9 @@ void emitFunction(MCStreamer &Streamer, BinaryFunction &Function,
   Streamer.SwitchSection(Section);
 
   if (opts::Relocs) {
-    Streamer.EmitCodeAlignment(std::max((unsigned)opts::AlignFunctions,
-                                        BinaryFunction::MinAlign),
-                               std::max((unsigned)opts::AlignFunctionsMaxBytes,
-                                        BinaryFunction::MinAlign - 1));
+    Streamer.EmitCodeAlignment(BinaryFunction::MinAlign);
+    Streamer.EmitCodeAlignment(opts::AlignFunctions,
+                               opts::AlignFunctionsMaxBytes);
   } else {
     Streamer.EmitCodeAlignment(Function.getAlignment());
     Streamer.setCodeSkew(EmitColdPart ? 0 : Function.getAddress());
