@@ -78,6 +78,8 @@ private:
 public:
   TypeHasher(BumpPtrAllocator &RecordStorage) : RecordStorage(RecordStorage) {}
 
+  void reset() { HashedRecords.clear(); }
+
   /// Takes the bytes of type record, inserts them into the hash table, saves
   /// them, and returns a pointer to an identical stable type record along with
   /// its type index in the destination stream.
@@ -170,6 +172,17 @@ TypeSerializer::~TypeSerializer() = default;
 
 ArrayRef<ArrayRef<uint8_t>> TypeSerializer::records() const {
   return SeenRecords;
+}
+
+void TypeSerializer::reset() {
+  if (Hasher)
+    Hasher->reset();
+  Writer.setOffset(0);
+  CurrentSegment = RecordSegment();
+  FieldListSegments.clear();
+  TypeKind.reset();
+  MemberKind.reset();
+  SeenRecords.clear();
 }
 
 TypeIndex TypeSerializer::insertRecordBytes(ArrayRef<uint8_t> &Record) {

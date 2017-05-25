@@ -84,6 +84,8 @@ public:
   explicit TypeSerializer(BumpPtrAllocator &Storage, bool Hash = true);
   ~TypeSerializer();
 
+  void reset();
+
   ArrayRef<ArrayRef<uint8_t>> records() const;
   TypeIndex insertRecordBytes(ArrayRef<uint8_t> &Record);
   TypeIndex insertRecord(const RemappedType &Record);

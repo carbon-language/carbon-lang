@@ -490,21 +490,18 @@ Error TypeStreamMerger::visitKnownRecord(CVType &CVR, FieldListRecord &R) {
   assert(DestTypeStream);
   // Visit the members inside the field list.
   HadUntranslatedMember = false;
-  FieldListBuilder = llvm::make_unique<FieldListRecordBuilder>(*DestTypeStream);
+  if (!FieldListBuilder)
+    FieldListBuilder =
+        llvm::make_unique<FieldListRecordBuilder>(*DestTypeStream);
 
   FieldListBuilder->begin();
   if (auto EC = codeview::visitMemberRecordStream(CVR.content(), *this))
     return EC;
 
   // Write the record if we translated all field list members.
-  TypeIndex DestIdx = Untranslated;
-  if (!HadUntranslatedMember)
-    DestIdx = FieldListBuilder->end();
-  else
-    FieldListBuilder->reset();
-  addMapping(DestIdx);
+  TypeIndex DestIdx = FieldListBuilder->end(!HadUntranslatedMember);
+  addMapping(HadUntranslatedMember ? Untranslated : DestIdx);
 
-  FieldListBuilder.reset();
   return Error::success();
 }
 

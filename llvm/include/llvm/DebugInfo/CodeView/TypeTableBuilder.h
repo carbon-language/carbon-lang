@@ -97,6 +97,8 @@ public:
   }
 
   void begin() {
+    TempSerializer.reset();
+
     if (auto EC = TempSerializer.visitTypeBegin(Type))
       consumeError(std::move(EC));
   }
@@ -112,23 +114,19 @@ public:
       consumeError(std::move(EC));
   }
 
-  TypeIndex end() {
+  TypeIndex end(bool Write) {
+    TypeIndex Index;
     if (auto EC = TempSerializer.visitTypeEnd(Type)) {
       consumeError(std::move(EC));
       return TypeIndex();
     }
 
-    TypeIndex Index;
-    for (auto Record : TempSerializer.records()) {
-      Index = TypeTable.writeSerializedRecord(Record);
+    if (Write) {
+      for (auto Record : TempSerializer.records())
+        Index = TypeTable.writeSerializedRecord(Record);
     }
-    return Index;
-  }
 
-  /// Stop building the record.
-  void reset() {
-    if (auto EC = TempSerializer.visitTypeEnd(Type))
-      consumeError(std::move(EC));
+    return Index;
   }
 };
 
