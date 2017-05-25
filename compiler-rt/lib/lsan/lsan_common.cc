@@ -270,7 +270,7 @@ static void ProcessThreads(SuspendedThreadsList const &suspended_threads,
         // If the tls and cache ranges don't overlap, scan full tls range,
         // otherwise, only scan the non-overlapping portions
         if (cache_begin == cache_end || tls_end < cache_begin ||
-            tls_end > cache_end) {
+            tls_begin > cache_end) {
           ScanRangeForPointers(tls_begin, tls_end, frontier, "TLS", kReachable);
         } else {
           if (tls_begin < cache_begin)
