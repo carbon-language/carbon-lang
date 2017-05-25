@@ -42,7 +42,7 @@ if (LIBCXX_SUPPORTS_NODEFAULTLIBS_FLAG)
     # Mingw64 requires quite a few "C" runtime libraries in order for basic
     # programs to link successfully with -nodefaultlibs.
     if (LIBCXX_USE_COMPILER_RT)
-      set(MINGW_RUNTIME ${LIBCXXABI_BUILTINS_LIBRARY})
+      set(MINGW_RUNTIME ${LIBCXX_BUILTINS_LIBRARY})
     else ()
       set(MINGW_RUNTIME gcc_s gcc)
     endif()
