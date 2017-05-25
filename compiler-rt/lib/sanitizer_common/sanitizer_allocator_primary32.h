@@ -24,7 +24,7 @@ template<class SizeClassAllocator> struct SizeClassAllocator32LocalCache;
 // be returned by MmapOrDie().
 //
 // Region:
-//   a result of a single call to MmapAlignedOrDie(kRegionSize, kRegionSize).
+//   a result of an allocation of kRegionSize bytes aligned on kRegionSize.
 // Since the regions are aligned by kRegionSize, there are exactly
 // kNumPossibleRegions possible regions in the address space and so we keep
 // a ByteMap possible_regions to store the size classes of each Region.
@@ -106,6 +106,7 @@ class SizeClassAllocator32 {
   void Init(s32 release_to_os_interval_ms) {
     possible_regions.TestOnlyInit();
     internal_memset(size_class_info_array, 0, sizeof(size_class_info_array));
+    num_stashed_regions = 0;
   }
 
   s32 ReleaseToOSIntervalMs() const {
@@ -275,15 +276,52 @@ class SizeClassAllocator32 {
     return mem & ~(kRegionSize - 1);
   }
 
+  // Allocates a region of kRegionSize bytes, aligned on kRegionSize, by first
+  // allocating 2 * kRegionSize. If the result of the initial allocation is
+  // aligned, split it in two, and attempt to store the second part into a
+  // stash. In the event the stash is full, just unmap the superfluous memory.
+  // If the initial allocation is not aligned, trim the memory before and after.
+  uptr AllocateRegionSlow(AllocatorStats *stat) {
+    uptr map_size = 2 * kRegionSize;
+    uptr map_res = (uptr)MmapOrDie(map_size, "SizeClassAllocator32");
+    uptr region = map_res;
+    bool trim_region = true;
+    if (IsAligned(region, kRegionSize)) {
+      // We are aligned, attempt to stash the second half.
+      SpinMutexLock l(&regions_stash_mutex);
+      if (num_stashed_regions < kMaxStashedRegions) {
+        regions_stash[num_stashed_regions++] = region + kRegionSize;
+        trim_region = false;
+      }
+    }
+    // Trim the superfluous memory in front and behind us.
+    if (trim_region) {
+      // If map_res is already aligned on kRegionSize (in the event of a full
+      // stash), the following two lines amount to a no-op.
+      region = (map_res + kRegionSize - 1) & ~(kRegionSize - 1);
+      UnmapOrDie((void*)map_res, region - map_res);
+      uptr end = region + kRegionSize;
+      UnmapOrDie((void*)end, map_res + map_size - end);
+      map_size = kRegionSize;
+    }
+    MapUnmapCallback().OnMap(region, map_size);
+    stat->Add(AllocatorStatMapped, map_size);
+    return region;
+  }
+
   uptr AllocateRegion(AllocatorStats *stat, uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
-    uptr res = reinterpret_cast<uptr>(MmapAlignedOrDie(kRegionSize, kRegionSize,
-                                      "SizeClassAllocator32"));
-    MapUnmapCallback().OnMap(res, kRegionSize);
-    stat->Add(AllocatorStatMapped, kRegionSize);
-    CHECK_EQ(0U, (res & (kRegionSize - 1)));
-    possible_regions.set(ComputeRegionId(res), static_cast<u8>(class_id));
-    return res;
+    uptr region = 0;
+    {
+      SpinMutexLock l(&regions_stash_mutex);
+      if (num_stashed_regions > 0)
+        region = regions_stash[--num_stashed_regions];
+    }
+    if (!region)
+      region = AllocateRegionSlow(stat);
+    CHECK(IsAligned(region, kRegionSize));
+    possible_regions.set(ComputeRegionId(region), static_cast<u8>(class_id));
+    return region;
   }
 
   SizeClassInfo *GetSizeClassInfo(uptr class_id) {
@@ -316,8 +354,13 @@ class SizeClassAllocator32 {
     }
   }
 
+  // Unless several threads request regions simultaneously from different size
+  // classes, the stash rarely contains more than 1 entry.
+  static const uptr kMaxStashedRegions = 8;
+  SpinMutex regions_stash_mutex;
+  uptr num_stashed_regions;
+  uptr regions_stash[kMaxStashedRegions];
+
   ByteMap possible_regions;
   SizeClassInfo size_class_info_array[kNumClasses];
 };
-
-
