@@ -1,3 +1,5 @@
+// UNSUPPORTED: c++98, c++03
+
 #include <memory>
 
 template <int> struct Tag {};
@@ -21,7 +23,9 @@ struct Deleter {
   void operator()(Tp) const {
     using RawT = typename std::remove_pointer<Tp>::type;
     static_assert(std::is_function<RawT>::value ||
-                  std::is_null_pointer<RawT>::value, "");
+                  std::is_same<typename std::remove_cv<RawT>::type,
+                               std::nullptr_t>::value,
+                  "");
   }
 };
 
