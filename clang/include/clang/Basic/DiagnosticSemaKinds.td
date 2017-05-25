@@ -537,10 +537,10 @@ def err_maybe_falloff_nonvoid_block : Error<
 def err_falloff_nonvoid_block : Error<
   "control reaches end of non-void block">;
 def warn_maybe_falloff_nonvoid_coroutine : Warning<
-  "control may reach end of non-void coroutine">,
+  "control may reach end of coroutine; which is undefined behavior because the promise type %0 does not declare 'return_void()'">,
   InGroup<ReturnType>;
 def warn_falloff_nonvoid_coroutine : Warning<
-  "control reaches end of non-void coroutine">,
+  "control reaches end of coroutine; which is undefined behavior because the promise type %0 does not declare 'return_void()'">,
   InGroup<ReturnType>;
 def warn_suggest_noreturn_function : Warning<
   "%select{function|method}0 %1 could be declared with attribute 'noreturn'">,
