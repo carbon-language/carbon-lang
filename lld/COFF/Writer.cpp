@@ -805,19 +805,15 @@ void Writer::writeBuildId() {
   if (BuildId == nullptr)
     return;
 
-  MD5 Hash;
-  MD5::MD5Result Res;
-
-  Hash.update(ArrayRef<uint8_t>{Buffer->getBufferStart(),
-                                Buffer->getBufferEnd()});
-  Hash.final(Res);
-
   assert(BuildId->DI->Signature.CVSignature == OMF::Signature::PDB70 &&
          "only PDB 7.0 is supported");
-  assert(sizeof(Res) == sizeof(BuildId->DI->PDB70.Signature) &&
+  assert(sizeof(BuildId->DI->PDB70.Signature) == 16 &&
          "signature size mismatch");
-  memcpy(BuildId->DI->PDB70.Signature, Res.Bytes.data(),
-         sizeof(codeview::PDB70DebugInfo::Signature));
+
+  // Compute an MD5 hash.
+  ArrayRef<uint8_t> Buf(Buffer->getBufferStart(), Buffer->getBufferEnd());
+  memcpy(BuildId->DI->PDB70.Signature, MD5::hash(Buf).data(), 16);
+
   // TODO(compnerd) track the Age
   BuildId->DI->PDB70.Age = 1;
 }
