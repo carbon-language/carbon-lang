@@ -42,6 +42,8 @@ set(GENERIC_SOURCES
   ashlti3.c
   ashrdi3.c
   ashrti3.c
+  bswapdi2.c
+  bswapsi2.c
   clear_cache.c
   clzdi2.c
   clzsi2.c
