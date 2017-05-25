@@ -1,4 +1,4 @@
-// RUN: %check_clang_tidy %s -fno-ms-compatibility readability-implicit-bool-cast %t
+// RUN: %check_clang_tidy %s readability-implicit-bool-cast %t
 
 // We need NULL macro, but some buildbots don't like including <cstddef> header
 // This is a portable way of getting it to work
@@ -264,7 +264,7 @@ void implicitCastInNegationExpressions() {
   // CHECK-FIXES: bool boolComingFromNegatedChar = (character == 0);
 
   int* pointer = nullptr;
-  bool boolComingFromNegatedPointer = not pointer;
+  bool boolComingFromNegatedPointer = ! pointer;
   // CHECK-MESSAGES: :[[@LINE-1]]:43: warning: implicit cast 'int *' -> bool
   // CHECK-FIXES: bool boolComingFromNegatedPointer = pointer == nullptr;
 }
