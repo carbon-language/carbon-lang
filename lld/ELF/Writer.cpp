@@ -1785,7 +1785,9 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
   }
 
   OutputSection *EhFrameHdr =
-      In<ELFT>::EhFrameHdr ? In<ELFT>::EhFrameHdr->OutSec : nullptr;
+      (In<ELFT>::EhFrameHdr && !In<ELFT>::EhFrameHdr->empty())
+          ? In<ELFT>::EhFrameHdr->OutSec
+          : nullptr;
 
   // In -r or -emit-relocs mode, write the relocation sections first as in
   // ELf_Rel targets we might find out that we need to modify the relocated
@@ -1811,7 +1813,7 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 
   // The .eh_frame_hdr depends on .eh_frame section contents, therefore
   // it should be written after .eh_frame is written.
-  if (EhFrameHdr && !EhFrameHdr->Sections.empty()) {
+  if (EhFrameHdr) {
     OutputSectionCommand *Cmd = Script->getCmd(EhFrameHdr);
     Cmd->writeTo<ELFT>(Buf + EhFrameHdr->Offset);
   }
