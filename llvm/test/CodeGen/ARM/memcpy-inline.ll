@@ -95,10 +95,7 @@ entry:
 ; CHECK: movt [[REG7:r[0-9]+]], #22866
 ; CHECK: str [[REG7]]
 ; CHECK-T1-LABEL: t5:
-; CHECK-T1: movs [[TREG3:r[0-9]]],
-; CHECK-T1: strb [[TREG3]],
-; CHECK-T1: movs [[TREG4:r[0-9]]],
-; CHECK-T1: strb [[TREG4]],
+; CHECK-T1: bl _memcpy
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([7 x i8], [7 x i8]* @.str5, i64 0, i64 0), i64 7, i32 1, i1 false)
   ret void
 }

@@ -38,6 +38,56 @@ entry:
   ret void
 }
 
+define void @t3(i8* %p) {
+entry:
+; CHECK-7A-LABEL: t3:
+; CHECK-7A: muls [[REG:r[0-9]+]],
+; CHECK-7A: str  [[REG]],
+; CHECK-6M-LABEL: t3:
+; CHECK-6M-NOT: muls
+; CHECK-6M: strb [[REG:r[0-9]+]],
+; CHECK-6M: strb [[REG]],
+; CHECK-6M: strb [[REG]],
+; CHECK-6M: strb [[REG]],
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %0 = trunc i32 %i to i8
+  call void @llvm.memset.p0i8.i32(i8* %p, i8 %0, i32 4, i32 1, i1 false)
+  call void @something(i8* %p)
+  %inc = add nuw nsw i32 %i, 1
+  %exitcond = icmp eq i32 %inc, 255
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
+  ret void
+}
+
+define void @t4(i8* %p) {
+entry:
+; CHECK-7A-LABEL: t4:
+; CHECK-7A: muls [[REG:r[0-9]+]],
+; CHECK-7A: str  [[REG]],
+; CHECK-6M-LABEL: t4:
+; CHECK-6M: muls [[REG:r[0-9]+]],
+; CHECK-6M: strh [[REG]],
+; CHECK-6M: strh [[REG]],
+  br label %for.body
+
+for.body:
+  %i = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %0 = trunc i32 %i to i8
+  call void @llvm.memset.p0i8.i32(i8* %p, i8 %0, i32 4, i32 2, i1 false)
+  call void @something(i8* %p)
+  %inc = add nuw nsw i32 %i, 1
+  %exitcond = icmp eq i32 %inc, 255
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:
+  ret void
+}
+
 declare void @something(i8*) nounwind
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
