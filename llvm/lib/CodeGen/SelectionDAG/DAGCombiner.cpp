@@ -14848,10 +14848,10 @@ static SDValue combineShuffleOfScalars(ShuffleVectorSDNode *SVN,
 // This is often generated during legalization.
 // e.g. v4i32 <0,u,1,u> -> (v2i64 any_vector_extend_in_reg(v4i32 src))
 // TODO Add support for ZERO_EXTEND_VECTOR_INREG when we have a test case.
-SDValue combineShuffleToVectorExtend(ShuffleVectorSDNode *SVN,
-                                     SelectionDAG &DAG,
-                                     const TargetLowering &TLI,
-                                     bool LegalOperations) {
+static SDValue combineShuffleToVectorExtend(ShuffleVectorSDNode *SVN,
+                                            SelectionDAG &DAG,
+                                            const TargetLowering &TLI,
+                                            bool LegalOperations) {
   EVT VT = SVN->getValueType(0);
   bool IsBigEndian = DAG.getDataLayout().isBigEndian();
 
@@ -14898,7 +14898,8 @@ SDValue combineShuffleToVectorExtend(ShuffleVectorSDNode *SVN,
 // destination type. This is often generated during legalization.
 // If the source node itself was a '*_extend_vector_inreg' node then we should
 // then be able to remove it.
-SDValue combineTruncationShuffle(ShuffleVectorSDNode *SVN, SelectionDAG &DAG) {
+static SDValue combineTruncationShuffle(ShuffleVectorSDNode *SVN,
+                                        SelectionDAG &DAG) {
   EVT VT = SVN->getValueType(0);
   bool IsBigEndian = DAG.getDataLayout().isBigEndian();
 
