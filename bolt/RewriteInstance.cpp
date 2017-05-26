@@ -1534,14 +1534,14 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         Rel.getType() != ELF::R_X86_64_GOTTPOFF &&
         Rel.getType() != ELF::R_X86_64_GOTPCREL) {
       if (!IsPCRelative) {
-        if (opts::Verbosity > 1 &&
+        if (opts::Verbosity > 2 &&
             ExtractedValue != Address) {
           errs() << "BOLT-WARNING: mismatch ExtractedValue = 0x"
                  << Twine::utohexstr(ExtractedValue) << '\n';
         }
         Address = ExtractedValue;
       } else {
-        if (opts::Verbosity > 1 &&
+        if (opts::Verbosity > 2 &&
             ExtractedValue != Address - Rel.getOffset() + Addend) {
           errs() << "BOLT-WARNING: PC-relative mismatch ExtractedValue = 0x"
                  << Twine::utohexstr(ExtractedValue) << '\n';

@@ -13,16 +13,15 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_REORDER_FNCTIONS_H
 
 #include "BinaryPasses.h"
-#include "HFSort.h"
+#include "BinaryFunctionCallGraph.h"
 
 namespace llvm {
 namespace bolt {
 
 /// Modify function order for streaming based on hotness.
 class ReorderFunctions : public BinaryFunctionPass {
-  CallGraph Cg;
+  BinaryFunctionCallGraph Cg;
 
-  void normalizeArcWeights();
   void reorder(std::vector<Cluster> &&Clusters,
                std::map<uint64_t, BinaryFunction> &BFs);
  public:

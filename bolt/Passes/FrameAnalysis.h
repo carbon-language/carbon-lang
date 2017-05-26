@@ -13,7 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEANALYSIS_H
 
 #include "BinaryPasses.h"
-#include "CallGraph.h"
+#include "BinaryFunctionCallGraph.h"
 #include "StackPointerTracking.h"
 
 namespace llvm {
@@ -113,7 +113,7 @@ raw_ostream &operator<<(raw_ostream &OS,
 ///
 class FrameAnalysis : public BinaryFunctionPass {
   /// Call graph info
-  CallGraph Cg;
+  BinaryFunctionCallGraph Cg;
 
   /// DFS or reverse post-ordering of the call graph nodes to allow us to
   /// traverse the call graph bottom-up

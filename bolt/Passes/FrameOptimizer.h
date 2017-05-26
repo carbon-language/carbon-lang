@@ -13,7 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEOPTIMIZER_H
 
 #include "BinaryPasses.h"
-#include "CallGraph.h"
+#include "BinaryFunctionCallGraph.h"
 
 namespace llvm {
 namespace bolt {
@@ -76,7 +76,7 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   uint64_t CountFunctionsAllClobber{0};
 
   /// Call graph info
-  CallGraph Cg;
+  BinaryFunctionCallGraph Cg;
 
   /// DFS or reverse post-ordering of the call graph nodes to allow us to
   /// traverse the call graph bottom-up

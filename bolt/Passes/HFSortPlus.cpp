@@ -1,4 +1,4 @@
-//===--- HFSort.cpp - Cluster functions by hotness ------------------------===//
+//===--- HFSortPlus.cpp - Cluster functions by hotness --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -144,9 +144,9 @@ void sortByDensity(std::vector<Cluster *> &Clusters) {
       const double D2 = C2->density();
       // making sure the sorting is deterministic
       if (D1 != D2) return D1 > D2;
-      if (C1->Size != C2->Size) return C1->Size < C2->Size;
-      if (C1->Samples != C2->Samples) return C1->Samples > C2->Samples;
-      return C1->Targets[0] < C2->Targets[0];
+      if (C1->size() != C2->size()) return C1->size() < C2->size();
+      if (C1->samples() != C2->samples()) return C1->samples() > C2->samples();
+      return C1->target(0) < C2->target(0);
     }
   );
 }
@@ -155,8 +155,8 @@ void sortByDensity(std::vector<Cluster *> &Clusters) {
  * Density of a cluster formed by merging a given pair of clusters
  */
 double density(Cluster *ClusterPred, Cluster *ClusterSucc) {
-  const double CombinedSamples = ClusterPred->Samples + ClusterSucc->Samples;
-  const double CombinedSize = ClusterPred->Size + ClusterSucc->Size;
+  const double CombinedSamples = ClusterPred->samples() + ClusterSucc->samples();
+  const double CombinedSize = ClusterPred->size() + ClusterSucc->size();
   return CombinedSamples / CombinedSize;
 }
 
@@ -199,42 +199,42 @@ double expectedCacheHitRatio(const AlgoState &State,
   sortByDensity(Clusters);
 
   // generate function addresses with an alignment
-  std::vector<size_t> Addr(State.Cg->Nodes.size(), InvalidAddr);
+  std::vector<size_t> Addr(State.Cg->numNodes(), InvalidAddr);
   size_t CurAddr = 0;
   // 'hotness' of the pages
   std::vector<double> PageSamples;
   for (auto Cluster : Clusters) {
-    for (auto TargetId : Cluster->Targets) {
+    for (auto TargetId : Cluster->targets()) {
       if (CurAddr & 0xf) CurAddr = (CurAddr & ~0xf) + 16;
       Addr[TargetId] = CurAddr;
-      CurAddr += State.Cg->Nodes[TargetId].Size;
+      CurAddr += State.Cg->size(TargetId);
       // update page weight
       size_t Page = Addr[TargetId] / PageSize;
       while (PageSamples.size() <= Page) PageSamples.push_back(0.0);
-      PageSamples[Page] += State.Cg->Nodes[TargetId].Samples;
+      PageSamples[Page] += State.Cg->samples(TargetId);
     }
   }
 
   // computing expected number of misses for every function
   double Misses = 0;
   for (auto Cluster : Clusters) {
-    for (auto TargetId : Cluster->Targets) {
+    for (auto TargetId : Cluster->targets()) {
       size_t Page = Addr[TargetId] / PageSize;
-      double Samples = State.Cg->Nodes[TargetId].Samples;
+      double Samples = State.Cg->samples(TargetId);
       // probability that the page is not present in the cache
       double MissProb = missProbability(State, PageSamples[Page]);
 
-      for (auto Pred : State.Cg->Nodes[TargetId].Preds) {
-        if (State.Cg->Nodes[Pred].Samples == 0) continue;
-        auto A = State.Cg->Arcs.find(Arc(Pred, TargetId));
+      for (auto Pred : State.Cg->predecessors(TargetId)) {
+        if (State.Cg->samples(Pred) == 0) continue;
+        const auto &Arc = *State.Cg->findArc(Pred, TargetId);
 
         // the source page
-        size_t SrcPage = (Addr[Pred] + (size_t)A->AvgCallOffset) / PageSize;
+        size_t SrcPage = (Addr[Pred] + (size_t)Arc.avgCallOffset()) / PageSize;
         if (Page != SrcPage) {
           // this is a miss
-          Misses += A->Weight * MissProb;
+          Misses += Arc.weight() * MissProb;
         }
-        Samples -= A->Weight;
+        Samples -= Arc.weight();
       }
 
       // the remaining samples come from the jitted code
@@ -251,14 +251,14 @@ double expectedCacheHitRatio(const AlgoState &State,
 std::unordered_set<Cluster *> adjacentClusters(const AlgoState &State,
                                               Cluster *C) {
   std::unordered_set<Cluster *> Result;
-  for (auto TargetId : C->Targets) {
-    for (auto Succ : State.Cg->Nodes[TargetId].Succs) {
+  for (auto TargetId : C->targets()) {
+    for (auto Succ : State.Cg->successors(TargetId)) {
       auto SuccCluster = State.FuncCluster[Succ];
       if (SuccCluster != nullptr && SuccCluster != C) {
         Result.insert(SuccCluster);
       }
     }
-    for (auto Pred : State.Cg->Nodes[TargetId].Preds) {
+    for (auto Pred : State.Cg->predecessors(TargetId)) {
       auto PredCluster = State.FuncCluster[Pred];
       if (PredCluster != nullptr && PredCluster != C) {
         Result.insert(PredCluster);
@@ -285,15 +285,15 @@ double expectedCalls(int64_t SrcAddr, int64_t DstAddr, double EdgeWeight) {
  */
 double shortCalls(const AlgoState &State, Cluster *Cluster) {
   double Calls = 0;
-  for (auto TargetId : Cluster->Targets) {
-    for (auto Succ : State.Cg->Nodes[TargetId].Succs) {
+  for (auto TargetId : Cluster->targets()) {
+    for (auto Succ : State.Cg->successors(TargetId)) {
       if (State.FuncCluster[Succ] == Cluster) {
-        auto A = State.Cg->Arcs.find(Arc(TargetId, Succ));
+        const auto &Arc = *State.Cg->findArc(TargetId, Succ);
 
-        auto SrcAddr = State.Addr[TargetId] + A->AvgCallOffset;
+        auto SrcAddr = State.Addr[TargetId] + Arc.avgCallOffset();
         auto DstAddr = State.Addr[Succ];
 
-        Calls += expectedCalls(SrcAddr, DstAddr, A->Weight);
+        Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
       }
     }
   }
@@ -309,29 +309,29 @@ double shortCalls(const AlgoState &State,
                   Cluster *ClusterPred,
                   Cluster *ClusterSucc) {
   double Calls = 0;
-  for (auto TargetId : ClusterPred->Targets) {
-    for (auto Succ : State.Cg->Nodes[TargetId].Succs) {
+  for (auto TargetId : ClusterPred->targets()) {
+    for (auto Succ : State.Cg->successors(TargetId)) {
       if (State.FuncCluster[Succ] == ClusterSucc) {
-        auto A = State.Cg->Arcs.find(Arc(TargetId, Succ));
+        const auto &Arc = *State.Cg->findArc(TargetId, Succ);
 
-        auto SrcAddr = State.Addr[TargetId] + A->AvgCallOffset;
-        auto DstAddr = State.Addr[Succ] + ClusterPred->Size;
+        auto SrcAddr = State.Addr[TargetId] + Arc.avgCallOffset();
+        auto DstAddr = State.Addr[Succ] + ClusterPred->size();
 
-        Calls += expectedCalls(SrcAddr, DstAddr, A->Weight);
+        Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
       }
     }
   }
 
-  for (auto TargetId : ClusterPred->Targets) {
-    for (auto Pred : State.Cg->Nodes[TargetId].Preds) {
+  for (auto TargetId : ClusterPred->targets()) {
+    for (auto Pred : State.Cg->predecessors(TargetId)) {
       if (State.FuncCluster[Pred] == ClusterSucc) {
-        auto A = State.Cg->Arcs.find(Arc(Pred, TargetId));
+        const auto &Arc = *State.Cg->findArc(Pred, TargetId);
 
-        auto SrcAddr = State.Addr[Pred] + A->AvgCallOffset +
-          ClusterPred->Size;
+        auto SrcAddr = State.Addr[Pred] + Arc.avgCallOffset() +
+          ClusterPred->size();
         auto DstAddr = State.Addr[TargetId];
 
-        Calls += expectedCalls(SrcAddr, DstAddr, A->Weight);
+        Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
       }
     }
   }
@@ -355,12 +355,12 @@ double mergeGain(const AlgoState &State,
                  Cluster *ClusterPred,
                  Cluster *ClusterSucc) {
   // cache misses on the first cluster
-  double LongCallsPred = ClusterPred->Samples - shortCalls(State, ClusterPred);
+  double LongCallsPred = ClusterPred->samples() - shortCalls(State, ClusterPred);
   double ProbPred = missProbability(State, ClusterPred->density() * PageSize);
   double ExpectedMissesPred = LongCallsPred * ProbPred;
 
   // cache misses on the second cluster
-  double LongCallsSucc = ClusterSucc->Samples - shortCalls(State, ClusterSucc);
+  double LongCallsSucc = ClusterSucc->samples() - shortCalls(State, ClusterSucc);
   double ProbSucc = missProbability(State, ClusterSucc->density() * PageSize);
   double ExpectedMissesSucc = LongCallsSucc * ProbSucc;
 
@@ -373,28 +373,7 @@ double mergeGain(const AlgoState &State,
 
   double Gain = ExpectedMissesPred + ExpectedMissesSucc - MissesNew;
   // scaling the result to increase the importance of merging short clusters
-  return Gain / (ClusterPred->Size + ClusterSucc->Size);
-}
-
- /*
-  * Merge two clusters
-  */
-void mergeInto(AlgoState &State, Cluster *Into, Cluster *Other) {
-  auto &Targets = Other->Targets;
-  Into->Targets.insert(Into->Targets.end(), Targets.begin(), Targets.end());
-  Into->Size += Other->Size;
-  Into->Samples += Other->Samples;
-
-  size_t CurAddr = 0;
-  for (auto TargetId : Into->Targets) {
-    State.FuncCluster[TargetId] = Into;
-    State.Addr[TargetId] = CurAddr;
-    CurAddr += State.Cg->Nodes[TargetId].Size;
-  }
-
-  Other->Size = 0;
-  Other->Samples = 0;
-  Other->Targets.clear();
+  return Gain / (ClusterPred->size() + ClusterSucc->size());
 }
 
 /*
@@ -403,26 +382,26 @@ void mergeInto(AlgoState &State, Cluster *Into, Cluster *Other) {
 std::vector<Cluster> hfsortPlus(const CallGraph &Cg) {
   // create a cluster for every function
   std::vector<Cluster> AllClusters;
-  AllClusters.reserve(Cg.Nodes.size());
-  for (NodeId F = 0; F < Cg.Nodes.size(); F++) {
-    AllClusters.emplace_back(F, Cg.Nodes[F]);
+  AllClusters.reserve(Cg.numNodes());
+  for (NodeId F = 0; F < Cg.numNodes(); F++) {
+    AllClusters.emplace_back(F, Cg.getNode(F));
   }
 
   // initialize objects used by the algorithm
   std::vector<Cluster *> Clusters;
-  Clusters.reserve(Cg.Nodes.size());
+  Clusters.reserve(Cg.numNodes());
   AlgoState State;
   State.Cg = &Cg;
   State.TotalSamples = 0;
-  State.FuncCluster = std::vector<Cluster *>(Cg.Nodes.size(), nullptr);
-  State.Addr = std::vector<size_t>(Cg.Nodes.size(), InvalidAddr);
-  for (NodeId F = 0; F < Cg.Nodes.size(); F++) {
-    if (Cg.Nodes[F].Samples == 0) continue;
+  State.FuncCluster = std::vector<Cluster *>(Cg.numNodes(), nullptr);
+  State.Addr = std::vector<size_t>(Cg.numNodes(), InvalidAddr);
+  for (NodeId F = 0; F < Cg.numNodes(); F++) {
+    if (Cg.samples(F) == 0) continue;
 
     Clusters.push_back(&AllClusters[F]);
     State.FuncCluster[F] = &AllClusters[F];
     State.Addr[F] = 0;
-    State.TotalSamples += Cg.Nodes[F].Samples;
+    State.TotalSamples += Cg.samples(F);
   }
 
   DEBUG(dbgs() << "Starting hfsort+ for " << Clusters.size() << " clusters\n"
@@ -482,7 +461,15 @@ std::vector<Cluster> hfsortPlus(const CallGraph &Cg) {
     Cache.invalidate(BestClusterSucc);
 
     // merge the best pair of clusters
-    mergeInto(State, BestClusterPred, BestClusterSucc);
+    BestClusterPred->merge(std::move(*BestClusterSucc));
+
+    size_t CurAddr = 0;
+    for (auto TargetId : BestClusterPred->targets()) {
+      State.FuncCluster[TargetId] = BestClusterPred;
+      State.Addr[TargetId] = CurAddr;
+      CurAddr += State.Cg->size(TargetId);
+    }
+
     // remove BestClusterSucc from the list of active clusters
     auto Iter = std::remove(Clusters.begin(), Clusters.end(), BestClusterSucc);
     Clusters.erase(Iter, Clusters.end());

@@ -50,15 +50,27 @@ public:
   Cluster(CallGraph::NodeId Id, const CallGraph::Node &F);
 
   std::string toString() const;
-  double density() const {
-    return (double)Samples / Size;
-  }
-
+  double density() const { return Density; }
+  uint64_t samples() const { return Samples; }
+  uint32_t size() const { return Size; }
+  bool frozen() const { return Frozen; }
+  void freeze() { Frozen = true; }
   void merge(Cluster &&Other, const double Aw = 0);
-
+  size_t numTargets() const {
+    return Targets.size();
+  }
+  const std::vector<CallGraph::NodeId> &targets() const {
+    return Targets;
+  }
+  CallGraph::NodeId target(size_t N) const {
+    return Targets[N];
+  }
+  void reverseTargets();
+private:
   std::vector<CallGraph::NodeId> Targets;
-  uint32_t Samples;
+  uint64_t Samples;
   uint32_t Size;
+  double Density;
   bool Frozen; // not a candidate for merging
 };
 

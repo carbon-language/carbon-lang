@@ -347,8 +347,8 @@ void FrameAnalysis::buildClobberMap(const BinaryContext &BC) {
     }
 
     if (RegsKilledMap[Func] != RegsKilled || Updated) {
-      for (auto Caller : Cg.Nodes[Cg.FuncToNodeId.at(Func)].Preds) {
-        Queue.push(Cg.Funcs[Caller]);
+      for (auto Caller : Cg.predecessors(Cg.getNodeId(Func))) {
+        Queue.push(Cg.nodeIdToFunc(Caller));
       }
     }
     RegsKilledMap[Func] = std::move(RegsKilled);

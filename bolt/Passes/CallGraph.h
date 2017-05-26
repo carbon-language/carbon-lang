@@ -12,19 +12,13 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_CALLGRAPH_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_CALLGRAPH_H
 
+#include <cassert>
 #include <string>
 #include <unordered_set>
-#include <unordered_map>
 #include <vector>
-#include <functional>
-#include <map>
-#include <deque>
 
 namespace llvm {
 namespace bolt {
-
-class BinaryFunction;
-class BinaryContext;
 
 // TODO: find better place for this
 inline int64_t hashCombine(const int64_t Seed, const int64_t Val) {
@@ -55,6 +49,14 @@ public:
       return Lhs.Src == Rhs.Src && Lhs.Dst == Rhs.Dst;
     }
 
+    NodeId src() const { return Src; }
+    NodeId dst() const { return Dst; }
+    double weight() const { return Weight; }
+    double avgCallOffset() const { return AvgCallOffset; }
+    double normalizedWeight() const { return NormalizedWeight; }
+
+  private:
+    friend class CallGraph;
     const NodeId Src;
     const NodeId Dst;
     mutable double Weight;
@@ -62,50 +64,115 @@ public:
     mutable double AvgCallOffset{0};
   };
 
+  using ArcsType = std::unordered_set<Arc, Arc::Hash>;
+  using ArcIterator = ArcsType::iterator;
+  using ArcConstIterator = ArcsType::const_iterator;
+
   class Node {
   public:
-    explicit Node(uint32_t Size, uint32_t Samples = 0)
+    explicit Node(uint32_t Size, uint64_t Samples = 0)
       : Size(Size), Samples(Samples)
     {}
 
+    uint32_t size() const { return Size; }
+    uint64_t samples() const { return Samples; }
+
+    const std::vector<NodeId> &successors() const {
+      return Succs;
+    }
+    const std::vector<NodeId> &predecessors() const {
+      return Preds;
+    }
+
+  private:
+    friend class CallGraph;
     uint32_t Size;
-    uint32_t Samples;
+    uint64_t Samples;
 
     // preds and succs contain no duplicate elements and self arcs are not allowed
     std::vector<NodeId> Preds;
     std::vector<NodeId> Succs;
   };
 
-  NodeId addNode(uint32_t Size, uint32_t Samples = 0);
-  const Arc &incArcWeight(NodeId Src, NodeId Dst, double W = 1.0);
+  size_t numNodes() const {
+    return Nodes.size();
+  }
+  const Node &getNode(const NodeId Id) const {
+    assert(Id < Nodes.size());
+    return Nodes[Id];
+  }
+  uint32_t size(const NodeId Id) const {
+    assert(Id < Nodes.size());
+    return Nodes[Id].Size;
+  }
+  uint64_t samples(const NodeId Id) const {
+    assert(Id < Nodes.size());
+    return Nodes[Id].Samples;
+  }
+  const std::vector<NodeId> &successors(const NodeId Id) const {
+    assert(Id < Nodes.size());
+    return Nodes[Id].Succs;
+  }
+  const std::vector<NodeId> &predecessors(const NodeId Id) const {
+    assert(Id < Nodes.size());
+    return Nodes[Id].Preds;
+  }
+  NodeId addNode(uint32_t Size, uint64_t Samples = 0);
+  const Arc &incArcWeight(NodeId Src, NodeId Dst, double W = 1.0,
+                          double Offset = 0.0);
+  ArcIterator findArc(NodeId Src, NodeId Dst) {
+    return Arcs.find(Arc(Src, Dst));
+  }
+  ArcConstIterator findArc(NodeId Src, NodeId Dst) const {
+    return Arcs.find(Arc(Src, Dst));
+  }
+  const ArcsType &getArcs() const {
+    return Arcs;
+  }
 
-  /// Compute a DFS traversal of the call graph.
-  std::deque<BinaryFunction *> buildTraversalOrder();
+  void normalizeArcWeights(bool UseEdgeCounts);
 
+  template <typename L>
+  void printDot(char* fileName, L getLabel) const;
+private:
   std::vector<Node> Nodes;
-  std::unordered_set<Arc, Arc::Hash> Arcs;
-  std::vector<BinaryFunction *> Funcs;
-  std::unordered_map<const BinaryFunction *, NodeId> FuncToNodeId;
+  ArcsType Arcs;
 };
 
-inline bool NoFilter(const BinaryFunction &) { return false; }
+template<class L>
+void CallGraph::printDot(char* FileName, L GetLabel) const {
+  FILE* File = fopen(FileName, "wt");
+  if (!File) return;
 
-/// Builds a call graph from the map of BinaryFunctions provided in BFs.
-/// The arguments control how the graph is constructed.
-/// Filter is called on each function, any function that it returns true for
-/// is omitted from the graph.
-/// If IncludeColdCalls is true, then calls from cold BBs are considered for the
-/// graph, otherwise they are ignored.
-/// UseFunctionHotSize controls whether the hot size of a function is used when
-/// filling in the Size attribute of new Nodes.
-/// UseEdgeCounts is used to control if the AvgCallOffset attribute on Arcs is
-/// computed using the offsets of call instructions.
-CallGraph buildCallGraph(BinaryContext &BC,
-                         std::map<uint64_t, BinaryFunction> &BFs,
-                         std::function<bool (const BinaryFunction &BF)> Filter = NoFilter,
-                         bool IncludeColdCalls = true,
-                         bool UseFunctionHotSize = false,
-                         bool UseEdgeCounts = false);
+  fprintf(File, "digraph g {\n");
+  for (NodeId F = 0; F < Nodes.size(); F++) {
+    if (Nodes[F].samples() == 0) continue;
+    fprintf(
+            File,
+            "f%lu [label=\"%s\\nsamples=%u\\nsize=%u\"];\n",
+            F,
+            GetLabel(F),
+            Nodes[F].samples(),
+            Nodes[F].size());
+  }
+  for (NodeId F = 0; F < Nodes.size(); F++) {
+    if (Nodes[F].samples() == 0) continue;
+    for (auto Dst : Nodes[F].successors()) {
+      auto Arc = findArc(F, Dst);
+      fprintf(
+              File,
+              "f%lu -> f%u [label=\"normWgt=%.3lf,weight=%.0lf,callOffset=%.1lf\"];"
+              "\n",
+              F,
+              Dst,
+              Arc->normalizedWeight(),
+              Arc->weight(),
+              Arc->avgCallOffset());
+    }
+  }
+  fprintf(File, "}\n");
+  fclose(File);
+}
 
 } // namespace bolt
 } // namespace llvm

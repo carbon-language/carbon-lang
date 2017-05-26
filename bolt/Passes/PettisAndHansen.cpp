@@ -44,29 +44,29 @@ public:
 using ClusterArcSet = std::unordered_set<ClusterArc, ClusterArcHash>;
 
 void orderFuncs(const CallGraph &Cg, Cluster *C1, Cluster *C2) {
-  auto C1head = C1->Targets.front();
-  auto C1tail = C1->Targets.back();
-  auto C2head = C2->Targets.front();
-  auto C2tail = C2->Targets.back();
+  auto C1head = C1->targets().front();
+  auto C1tail = C1->targets().back();
+  auto C2head = C2->targets().front();
+  auto C2tail = C2->targets().back();
 
   double C1headC2head = 0;
   double C1headC2tail = 0;
   double C1tailC2head = 0;
   double C1tailC2tail = 0;
 
-  for (const auto &Arc : Cg.Arcs) {
-    if ((Arc.Src == C1head && Arc.Dst == C2head) ||
-        (Arc.Dst == C1head && Arc.Src == C2head)) {
-      C1headC2head += Arc.Weight;
-    } else if ((Arc.Src == C1head && Arc.Dst == C2tail) ||
-               (Arc.Dst == C1head && Arc.Src == C2tail)) {
-      C1headC2tail += Arc.Weight;
-    } else if ((Arc.Src == C1tail && Arc.Dst == C2head) ||
-               (Arc.Dst == C1tail && Arc.Src == C2head)) {
-      C1tailC2head += Arc.Weight;
-    } else if ((Arc.Src == C1tail && Arc.Dst == C2tail) ||
-               (Arc.Dst == C1tail && Arc.Src == C2tail)) {
-      C1tailC2tail += Arc.Weight;
+  for (const auto &Arc : Cg.getArcs()) {
+    if ((Arc.src() == C1head && Arc.dst() == C2head) ||
+        (Arc.dst() == C1head && Arc.src() == C2head)) {
+      C1headC2head += Arc.weight();
+    } else if ((Arc.src() == C1head && Arc.dst() == C2tail) ||
+               (Arc.dst() == C1head && Arc.src() == C2tail)) {
+      C1headC2tail += Arc.weight();
+    } else if ((Arc.src() == C1tail && Arc.dst() == C2head) ||
+               (Arc.dst() == C1tail && Arc.src() == C2head)) {
+      C1tailC2head += Arc.weight();
+    } else if ((Arc.src() == C1tail && Arc.dst() == C2tail) ||
+               (Arc.dst() == C1tail && Arc.src() == C2tail)) {
+      C1tailC2tail += Arc.weight();
     }
   }
 
@@ -75,29 +75,29 @@ void orderFuncs(const CallGraph &Cg, Cluster *C1, Cluster *C2) {
 
   if (C1headC2head == Max) {
     // flip C1
-    std::reverse(C1->Targets.begin(), C1->Targets.end());
+    C1->reverseTargets();
   } else if (C1headC2tail == Max) {
     // flip C1 C2
-    std::reverse(C1->Targets.begin(), C1->Targets.end());
-    std::reverse(C2->Targets.begin(), C2->Targets.end());
+    C1->reverseTargets();
+    C2->reverseTargets();
   } else if (C1tailC2tail == Max) {
     // flip C2
-    std::reverse(C2->Targets.begin(), C2->Targets.end());
+    C2->reverseTargets();
   }
 }
 }
 
 std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
   // indexed by NodeId, keeps its current cluster
-  std::vector<Cluster*> FuncCluster(Cg.Nodes.size(), nullptr);
+  std::vector<Cluster*> FuncCluster(Cg.numNodes(), nullptr);
   std::vector<Cluster> Clusters;
   std::vector<NodeId> Funcs;
 
-  Clusters.reserve(Cg.Nodes.size());
+  Clusters.reserve(Cg.numNodes());
 
-  for (NodeId F = 0; F < Cg.Nodes.size(); F++) {
-    if (Cg.Nodes[F].Samples == 0) continue;
-    Clusters.emplace_back(F, Cg.Nodes[F]);
+  for (NodeId F = 0; F < Cg.numNodes(); F++) {
+    if (Cg.samples(F) == 0) continue;
+    Clusters.emplace_back(F, Cg.getNode(F));
     FuncCluster[F] = &Clusters.back();
     Funcs.push_back(F);
   }
@@ -113,11 +113,11 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
 
   // Create a std::vector of cluster arcs
 
-  for (auto &Arc : Cg.Arcs) {
-    if (Arc.Weight == 0) continue;
+  for (auto &Arc : Cg.getArcs()) {
+    if (Arc.weight() == 0) continue;
 
-    auto const S = FuncCluster[Arc.Src];
-    auto const D = FuncCluster[Arc.Dst];
+    auto const S = FuncCluster[Arc.src()];
+    auto const D = FuncCluster[Arc.dst()];
 
     // ignore if s or d is nullptr
 
@@ -127,7 +127,7 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
 
     if (S == D) continue;
 
-    insertOrInc(S, D, Arc.Weight);
+    insertOrInc(S, D, Arc.weight());
   }
 
   // Find an arc with max weight and merge its nodes
@@ -147,9 +147,9 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
     auto const C1 = Max.C1;
     auto const C2 = Max.C2;
 
-    if (C1->Size + C2->Size > MaxClusterSize) continue;
+    if (C1->size() + C2->size() > MaxClusterSize) continue;
 
-    if (C1->Frozen || C2->Frozen) continue;
+    if (C1->frozen() || C2->frozen()) continue;
 
     // order functions and merge cluster
 
@@ -176,7 +176,7 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
 
     // update FuncCluster
 
-    for (auto F : C2->Targets) {
+    for (auto F : C2->targets()) {
       FuncCluster[F] = C1;
     }
     C1->merge(std::move(*C2), Max.Weight);

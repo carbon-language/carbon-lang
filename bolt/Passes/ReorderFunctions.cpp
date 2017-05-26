@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ReorderFunctions.h"
+#include "HFSort.h"
 #include "llvm/Support/Options.h"
 #include <fstream>
 
@@ -90,42 +91,19 @@ using NodeId = CallGraph::NodeId;
 using Arc = CallGraph::Arc;
 using Node = CallGraph::Node;  
 
-void ReorderFunctions::normalizeArcWeights() {
-  // Normalize arc weights.
-  if (!opts::UseEdgeCounts) {
-    for (NodeId FuncId = 0; FuncId < Cg.Nodes.size(); ++FuncId) {
-      auto& Func = Cg.Nodes[FuncId];
-      for (auto Caller : Func.Preds) {
-        auto& A = *Cg.Arcs.find(Arc(Caller, FuncId));
-        A.NormalizedWeight = A.Weight / Func.Samples;
-        A.AvgCallOffset /= A.Weight;
-        assert(A.AvgCallOffset < Cg.Nodes[Caller].Size);
-      }
-    }
-  } else {
-    for (NodeId FuncId = 0; FuncId < Cg.Nodes.size(); ++FuncId) {
-      auto &Func = Cg.Nodes[FuncId];
-      for (auto Caller : Func.Preds) {
-        auto& A = *Cg.Arcs.find(Arc(Caller, FuncId));
-        A.NormalizedWeight = A.Weight / Func.Samples;
-      }
-    }
-  }
-}
-
 void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
                                std::map<uint64_t, BinaryFunction> &BFs) {
-  std::vector<uint64_t> FuncAddr(Cg.Nodes.size());  // Just for computing stats
+  std::vector<uint64_t> FuncAddr(Cg.numNodes());  // Just for computing stats
   uint64_t TotalSize = 0;
   uint32_t Index = 0;
 
   // Set order of hot functions based on clusters.
   for (const auto& Cluster : Clusters) {
-    for (const auto FuncId : Cluster.Targets) {
-      assert(Cg.Nodes[FuncId].Samples > 0);
-      Cg.Funcs[FuncId]->setIndex(Index++);
+    for (const auto FuncId : Cluster.targets()) {
+      assert(Cg.samples(FuncId) > 0);
+      Cg.nodeIdToFunc(FuncId)->setIndex(Index++);
       FuncAddr[FuncId] = TotalSize;
-      TotalSize += Cg.Nodes[FuncId].Size;
+      TotalSize += Cg.size(FuncId);
     }
   }
 
@@ -141,6 +119,11 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
 #endif
   }
 
+  bool PrintDetailed = opts::Verbosity > 1;
+#ifndef NDEBUG
+  PrintDetailed |=
+    (DebugFlag && isCurrentDebugType("hfsort") && opts::Verbosity > 0);
+#endif
   TotalSize   = 0;
   uint64_t CurPage     = 0;
   uint64_t Hotfuncs    = 0;
@@ -149,65 +132,84 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
   double TotalCalls64B = 0;
   double TotalCalls4KB = 0;
   double TotalCalls2MB = 0;
-  dbgs() << "============== page 0 ==============\n";
+  if (PrintDetailed) {
+    outs() << "BOLT-INFO: Function reordering page layout\n"
+           << "BOLT-INFO: ============== page 0 ==============\n";
+  }
   for (auto& Cluster : Clusters) {
-    dbgs() <<
-      format("-------- density = %.3lf (%u / %u) --------\n",
-             (double) Cluster.Samples / Cluster.Size,
-             Cluster.Samples, Cluster.Size);
+    if (PrintDetailed) {
+      outs() <<
+        format("BOLT-INFO: -------- density = %.3lf (%u / %u) --------\n",
+               Cluster.density(), Cluster.samples(), Cluster.size());
+    }
 
-    for (auto FuncId : Cluster.Targets) {
-      if (Cg.Nodes[FuncId].Samples > 0) {
+    for (auto FuncId : Cluster.targets()) {
+      if (Cg.samples(FuncId) > 0) {
         Hotfuncs++;
 
-        dbgs() << "BOLT-INFO: hot func " << *Cg.Funcs[FuncId]
-               << " (" << Cg.Nodes[FuncId].Size << ")\n";
+        if (PrintDetailed) {
+          outs() << "BOLT-INFO: hot func " << *Cg.nodeIdToFunc(FuncId)
+                 << " (" << Cg.size(FuncId) << ")\n";
+        }
 
         uint64_t Dist = 0;
         uint64_t Calls = 0;
-        for (auto Dst : Cg.Nodes[FuncId].Succs) {
-          auto& A = *Cg.Arcs.find(Arc(FuncId, Dst));
-          auto D =
-            std::abs(FuncAddr[A.Dst] - (FuncAddr[FuncId] + A.AvgCallOffset));
-          auto W = A.Weight;
+        for (auto Dst : Cg.successors(FuncId)) {
+          const auto& Arc = *Cg.findArc(FuncId, Dst);
+          const auto D = std::abs(FuncAddr[Arc.dst()] -
+                                  (FuncAddr[FuncId] + Arc.avgCallOffset()));
+          const auto W = Arc.weight();
           Calls += W;
           if (D < 64)        TotalCalls64B += W;
           if (D < 4096)      TotalCalls4KB += W;
           if (D < (2 << 20)) TotalCalls2MB += W;
-          Dist += A.Weight * D;
-          dbgs() << format("arc: %u [@%lu+%.1lf] -> %u [@%lu]: "
-                           "weight = %.0lf, callDist = %f\n",
-                           A.Src, FuncAddr[A.Src], A.AvgCallOffset,
-                           A.Dst, FuncAddr[A.Dst], A.Weight, D);
+          Dist += Arc.weight() * D;
+          if (PrintDetailed) {
+            outs() << format("BOLT-INFO: arc: %u [@%lu+%.1lf] -> %u [@%lu]: "
+                             "weight = %.0lf, callDist = %f\n",
+                             Arc.src(),
+                             FuncAddr[Arc.src()],
+                             Arc.avgCallOffset(),
+                             Arc.dst(),
+                             FuncAddr[Arc.dst()],
+                             Arc.weight(), D);
+          }
         }
         TotalCalls += Calls;
         TotalDistance += Dist;
-        dbgs() << format("start = %6u : avgCallDist = %lu : %s\n",
-                         TotalSize,
-                         Calls ? Dist / Calls : 0,
-                         Cg.Funcs[FuncId]->getPrintName().c_str());
-        TotalSize += Cg.Nodes[FuncId].Size;
-        auto NewPage = TotalSize / HugePageSize;
-        if (NewPage != CurPage) {
-          CurPage = NewPage;
-          dbgs() << format("============== page %u ==============\n", CurPage);
+        TotalSize += Cg.size(FuncId);
+
+        if (PrintDetailed) {
+          outs() << format("BOLT-INFO: start = %6u : avgCallDist = %lu : %s\n",
+                           TotalSize,
+                           Calls ? Dist / Calls : 0,
+                           Cg.nodeIdToFunc(FuncId)->getPrintName().c_str());
+          const auto NewPage = TotalSize / HugePageSize;
+          if (NewPage != CurPage) {
+            CurPage = NewPage;
+            outs() <<
+              format("BOLT-INFO: ============== page %u ==============\n",
+                     CurPage);
+          }
         }
       }
     }
   }
-  dbgs() << format("  Number of hot functions: %u\n"
-                   "  Number of clusters: %lu\n",
+  outs() << "BOLT-INFO: Function reordering stats\n"
+         << format("BOLT-INFO:  Number of hot functions: %u\n"
+                   "BOLT-INFO:  Number of clusters: %lu\n",
                    Hotfuncs, Clusters.size())
-         << format("  Final average call distance = %.1lf (%.0lf / %.0lf)\n",
+         << format("BOLT-INFO:  Final average call distance = %.1lf "
+                   "(%.0lf / %.0lf)\n",
                    TotalCalls ? TotalDistance / TotalCalls : 0,
                    TotalDistance, TotalCalls)
-         << format("  Total Calls = %.0lf\n", TotalCalls);
+         << format("BOLT-INFO:  Total Calls = %.0lf\n", TotalCalls);
   if (TotalCalls) {
-    dbgs() << format("  Total Calls within 64B = %.0lf (%.2lf%%)\n",
+    outs() << format("BOLT-INFO:  Total Calls within 64B = %.0lf (%.2lf%%)\n",
                      TotalCalls64B, 100 * TotalCalls64B / TotalCalls)
-           << format("  Total Calls within 4KB = %.0lf (%.2lf%%)\n",
+           << format("BOLT-INFO:  Total Calls within 4KB = %.0lf (%.2lf%%)\n",
                      TotalCalls4KB, 100 * TotalCalls4KB / TotalCalls)
-           << format("  Total Calls within 2MB = %.0lf (%.2lf%%)\n",
+           << format("BOLT-INFO:  Total Calls within 2MB = %.0lf (%.2lf%%)\n",
                      TotalCalls2MB, 100 * TotalCalls2MB / TotalCalls);
   }
 }
@@ -251,7 +253,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
                         false, // IncludeColdCalls
                         opts::ReorderFunctionsUseHotSize,
                         opts::UseEdgeCounts);
-    normalizeArcWeights();
+    Cg.normalizeArcWeights(opts::UseEdgeCounts);
   }
 
   std::vector<Cluster> Clusters;

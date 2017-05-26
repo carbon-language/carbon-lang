@@ -1,5 +1,6 @@
 add_llvm_library(LLVMBOLTPasses
   BinaryPasses.cpp
+  BinaryFunctionCallGraph.cpp
   CallGraph.cpp
   DataflowAnalysis.cpp
   DataflowInfoManager.cpp
