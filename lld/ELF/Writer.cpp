@@ -794,12 +794,6 @@ static bool compareSections(const OutputSection *A, const OutputSection *B) {
   return compareSectionsNonScript(A, B);
 }
 
-// Program header entry
-PhdrEntry::PhdrEntry(unsigned Type, unsigned Flags) {
-  p_type = Type;
-  p_flags = Flags;
-}
-
 void PhdrEntry::add(OutputSection *Sec) {
   Last = Sec;
   if (!First)
