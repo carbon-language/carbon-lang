@@ -333,8 +333,8 @@ bool DWARFFormValue::extractValue(const DataExtractor &Data,
         return false;
       uint16_t AddrSize = (Form == DW_FORM_addr) ? U->getAddressByteSize()
                                                  : U->getRefAddrByteSize();
-      Value.uval = getRelocatedValue(Data, AddrSize, OffsetPtr,
-                                     U->getRelocMap(), &Value.SectionIndex);
+      Value.uval =
+          getRelocatedValue(Data, AddrSize, OffsetPtr, U->getRelocMap());
       break;
     }
     case DW_FORM_exprloc:
