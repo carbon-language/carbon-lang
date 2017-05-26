@@ -259,7 +259,7 @@ MachineBasicBlock *BranchRelaxation::splitBlockBeforeInstr(MachineInstr &MI,
 
   // Need to fix live-in lists if we track liveness.
   if (TRI->trackLivenessAfterRegAlloc(*MF))
-    computeLiveIns(LiveRegs, MF->getRegInfo(), *NewBB);
+    computeLiveIns(LiveRegs, *TRI, *NewBB);
 
   ++NumSplit;
 
