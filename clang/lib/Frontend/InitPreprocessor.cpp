@@ -750,8 +750,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
                    TI.getTypeWidth(TI.getWIntType()), TI, Builder);
   if (TI.hasInt128Type())
     DefineTypeSizeof("__SIZEOF_INT128__", 128, TI, Builder);
-  if (TI.hasFloat128Type())
-    DefineTypeSizeof("__SIZEOF_FLOAT128__", 128, TI, Builder);
 
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Builder);
   DefineFmt("__INTMAX", TI.getIntMaxType(), TI, Builder);
