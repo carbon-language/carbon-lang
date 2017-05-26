@@ -1567,7 +1567,6 @@ static Value *simplifyAndOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
     return X;
 
   // (icmp (add V, C0), C1) & (icmp V, C0)
-  Type *ITy = Op0->getType();
   ICmpInst::Predicate Pred0, Pred1;
   const APInt *C0, *C1;
   Value *V;
@@ -1581,6 +1580,7 @@ static Value *simplifyAndOfICmps(ICmpInst *Op0, ICmpInst *Op1) {
   if (AddInst->getOperand(1) != Op1->getOperand(1))
     return nullptr;
 
+  Type *ITy = Op0->getType();
   bool isNSW = AddInst->hasNoSignedWrap();
   bool isNUW = AddInst->hasNoUnsignedWrap();
 
