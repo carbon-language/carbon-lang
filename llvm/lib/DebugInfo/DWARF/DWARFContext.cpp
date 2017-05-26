@@ -60,15 +60,12 @@ typedef DILineInfoSpecifier::FileLineInfoKind FileLineInfoKind;
 typedef DILineInfoSpecifier::FunctionNameKind FunctionNameKind;
 
 uint64_t llvm::getRelocatedValue(const DataExtractor &Data, uint32_t Size,
-                                 uint32_t *Off, const RelocAddrMap *Relocs,
-                                 uint64_t *SectionIndex) {
+                                 uint32_t *Off, const RelocAddrMap *Relocs) {
   if (!Relocs)
     return Data.getUnsigned(Off, Size);
   RelocAddrMap::const_iterator AI = Relocs->find(*Off);
   if (AI == Relocs->end())
     return Data.getUnsigned(Off, Size);
-  if (SectionIndex)
-    *SectionIndex = AI->second.SectionIndex;
   return Data.getUnsigned(Off, Size) + AI->second.Value;
 }
 
@@ -961,27 +958,23 @@ static Error createError(const Twine &Reason, llvm::Error E) {
                                  inconvertibleErrorCode());
 }
 
-struct SymInfo {
-  uint64_t Address;
-  uint64_t SectionIndex;
-};
-
-/// Returns the address of symbol relocation used against and a section index.
-/// Used for futher relocations computation. Symbol's section load address is
-static Expected<SymInfo> getSymbolInfo(const object::ObjectFile &Obj,
-                                       const RelocationRef &Reloc,
-                                       const LoadedObjectInfo *L,
-                                       std::map<SymbolRef, SymInfo> &Cache) {
-  SymInfo Ret;
+/// Returns the address of symbol relocation used against. Used for futher
+/// relocations computation. Symbol's section load address is taken in account if
+/// LoadedObjectInfo interface is provided.
+static Expected<uint64_t>
+getSymbolAddress(const object::ObjectFile &Obj, const RelocationRef &Reloc,
+                 const LoadedObjectInfo *L,
+                 std::map<SymbolRef, uint64_t> &Cache) {
+  uint64_t Ret = 0;
   object::section_iterator RSec = Obj.section_end();
   object::symbol_iterator Sym = Reloc.getSymbol();
 
-  std::map<SymbolRef, SymInfo>::iterator CacheIt = Cache.end();
+  std::map<SymbolRef, uint64_t>::iterator CacheIt = Cache.end();
   // First calculate the address of the symbol or section as it appears
   // in the object file
   if (Sym != Obj.symbol_end()) {
     bool New;
-    std::tie(CacheIt, New) = Cache.insert({*Sym, {0, 0}});
+    std::tie(CacheIt, New) = Cache.insert({*Sym, 0});
     if (!New)
       return CacheIt->second;
 
@@ -997,13 +990,11 @@ static Expected<SymInfo> getSymbolInfo(const object::ObjectFile &Obj,
                          SectOrErr.takeError());
 
     RSec = *SectOrErr;
-    Ret.Address = *SymAddrOrErr;
+    Ret = *SymAddrOrErr;
   } else if (auto *MObj = dyn_cast<MachOObjectFile>(&Obj)) {
     RSec = MObj->getRelocationSection(Reloc.getRawDataRefImpl());
-    Ret.Address = RSec->getAddress();
+    Ret = RSec->getAddress();
   }
-
-  Ret.SectionIndex = RSec->getIndex();
 
   // If we are given load addresses for the sections, we need to adjust:
   // SymAddr = (Address of Symbol Or Section in File) -
@@ -1014,7 +1005,7 @@ static Expected<SymInfo> getSymbolInfo(const object::ObjectFile &Obj,
   // we need to perform the same computation.
   if (L && RSec != Obj.section_end())
     if (uint64_t SectionLoadAddress = L->getSectionLoadAddress(*RSec))
-      Ret.Address += SectionLoadAddress - RSec->getAddress();
+      Ret += SectionLoadAddress - RSec->getAddress();
 
   if (CacheIt != Cache.end())
     CacheIt->second = Ret;
@@ -1073,7 +1064,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
     // Try to obtain an already relocated version of this section.
     // Else use the unrelocated section from the object file. We'll have to
     // apply relocations ourselves later.
-    if (!L || !L->getLoadedSectionContents(*RelocatedSection, data))
+    if (!L || !L->getLoadedSectionContents(*RelocatedSection,data))
       Section.getContents(data);
 
     if (auto Err = maybeDecompress(Section, name, data)) {
@@ -1112,7 +1103,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
     // If the section we're relocating was relocated already by the JIT,
     // then we used the relocated version above, so we do not need to process
     // relocations for it now.
-    if (L && L->getLoadedSectionContents(*RelocatedSection, RelSecData))
+    if (L && L->getLoadedSectionContents(*RelocatedSection,RelSecData))
       continue;
 
     // In Mach-o files, the relocations do not need to be applied if
@@ -1156,30 +1147,29 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
     if (Section.relocation_begin() == Section.relocation_end())
       continue;
 
-    // Symbol to [address, section index] cache mapping.
-    std::map<SymbolRef, SymInfo> AddrCache;
+    std::map<SymbolRef, uint64_t> AddrCache;
     for (const RelocationRef &Reloc : Section.relocations()) {
       // FIXME: it's not clear how to correctly handle scattered
       // relocations.
       if (isRelocScattered(Obj, Reloc))
         continue;
 
-      Expected<SymInfo> SymInfoOrErr = getSymbolInfo(Obj, Reloc, L, AddrCache);
-      if (!SymInfoOrErr) {
-        errs() << toString(SymInfoOrErr.takeError()) << '\n';
+      Expected<uint64_t> SymAddrOrErr =
+          getSymbolAddress(Obj, Reloc, L, AddrCache);
+      if (!SymAddrOrErr) {
+        errs() << toString(SymAddrOrErr.takeError()) << '\n';
         continue;
       }
 
       object::RelocVisitor V(Obj);
-      uint64_t Val = V.visit(Reloc.getType(), Reloc, SymInfoOrErr->Address);
+      uint64_t Val = V.visit(Reloc.getType(), Reloc, *SymAddrOrErr);
       if (V.error()) {
         SmallString<32> Name;
         Reloc.getTypeName(Name);
         errs() << "error: failed to compute relocation: " << Name << "\n";
         continue;
       }
-      llvm::RelocAddrEntry Rel = {SymInfoOrErr->SectionIndex, Val};
-      Map->insert({Reloc.getOffset(), Rel});
+      Map->insert({Reloc.getOffset(), {Val}});
     }
   }
 }

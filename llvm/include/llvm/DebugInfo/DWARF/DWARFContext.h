@@ -46,8 +46,7 @@ class raw_ostream;
 /// Reads a value from data extractor and applies a relocation to the result if
 /// one exists for the given offset.
 uint64_t getRelocatedValue(const DataExtractor &Data, uint32_t Size,
-                           uint32_t *Off, const RelocAddrMap *Relocs,
-                           uint64_t *SecNdx = nullptr);
+                           uint32_t *Off, const RelocAddrMap *Relocs);
 
 /// DWARFContext
 /// This data structure is the top level entity that deals with dwarf debug

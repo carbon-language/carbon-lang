@@ -235,7 +235,6 @@ protected:
   std::error_code getSectionName(DataRefImpl Sec,
                                  StringRef &Res) const override;
   uint64_t getSectionAddress(DataRefImpl Sec) const override;
-  uint64_t getSectionIndex(DataRefImpl Sec) const override;
   uint64_t getSectionSize(DataRefImpl Sec) const override;
   std::error_code getSectionContents(DataRefImpl Sec,
                                      StringRef &Res) const override;
@@ -644,17 +643,6 @@ std::error_code ELFObjectFile<ELFT>::getSectionName(DataRefImpl Sec,
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getSectionAddress(DataRefImpl Sec) const {
   return getSection(Sec)->sh_addr;
-}
-
-template <class ELFT>
-uint64_t ELFObjectFile<ELFT>::getSectionIndex(DataRefImpl Sec) const {
-  auto SectionsOrErr = EF.sections();
-  handleAllErrors(std::move(SectionsOrErr.takeError()),
-                  [](const ErrorInfoBase &) {
-                    llvm_unreachable("unable to get section index");
-                  });
-  const Elf_Shdr *First = SectionsOrErr->begin();
-  return getSection(Sec) - First;
 }
 
 template <class ELFT>
