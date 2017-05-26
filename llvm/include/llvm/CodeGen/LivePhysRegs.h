@@ -95,7 +95,8 @@ public:
 
   /// \brief Removes physical registers clobbered by the regmask operand @p MO.
   void removeRegsInMask(const MachineOperand &MO,
-        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> *Clobbers);
+        SmallVectorImpl<std::pair<unsigned, const MachineOperand*>> *Clobbers =
+        nullptr);
 
   /// \brief Returns true if register @p Reg is contained in the set. This also
   /// works if only the super register of @p Reg has been defined, because
