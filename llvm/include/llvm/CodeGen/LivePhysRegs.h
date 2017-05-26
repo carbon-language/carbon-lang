@@ -44,33 +44,32 @@ class MachineOperand;
 class MachineRegisterInfo;
 class raw_ostream;
 
-/// \brief A set of live physical registers with functions to track liveness
+/// \brief A set of physical registers with utility functions to track liveness
 /// when walking backward/forward through a basic block.
 class LivePhysRegs {
   const TargetRegisterInfo *TRI = nullptr;
   SparseSet<unsigned> LiveRegs;
 
 public:
-  /// Constructs a new empty LivePhysRegs set.
+  /// Constructs an unitialized set. init() needs to be called to initialize it.
   LivePhysRegs() = default;
 
-  /// Constructs and initialize an empty LivePhysRegs set.
-  LivePhysRegs(const TargetRegisterInfo *TRI) : TRI(TRI) {
-    assert(TRI && "Invalid TargetRegisterInfo pointer.");
-    LiveRegs.setUniverse(TRI->getNumRegs());
+  /// Constructs and initializes an empty set.
+  LivePhysRegs(const TargetRegisterInfo &TRI) : TRI(&TRI) {
+    LiveRegs.setUniverse(TRI.getNumRegs());
   }
 
   LivePhysRegs(const LivePhysRegs&) = delete;
   LivePhysRegs &operator=(const LivePhysRegs&) = delete;
 
-  /// Clear and initialize the LivePhysRegs set.
+  /// (re-)initializes and clears the set.
   void init(const TargetRegisterInfo &TRI) {
     this->TRI = &TRI;
     LiveRegs.clear();
     LiveRegs.setUniverse(TRI.getNumRegs());
   }
 
-  /// Clears the LivePhysRegs set.
+  /// Clears the set.
   void clear() { LiveRegs.clear(); }
 
   /// Returns true if the set is empty.
@@ -134,7 +133,7 @@ public:
   /// callee saved registers.
   void addLiveOuts(const MachineBasicBlock &MBB);
 
-  /// Like addLiveOuts() but does not add pristine registers/callee saved
+  /// Adds all live-out registers of basic block \p MBB but skips pristine
   /// registers.
   void addLiveOutsNoPristines(const MachineBasicBlock &MBB);
 
@@ -160,7 +159,7 @@ inline raw_ostream &operator<<(raw_ostream &OS, const LivePhysRegs& LR) {
   return OS;
 }
 
-/// \brief Compute the live-in list for \p MBB assuming all of its successors
+/// \brief Computes the live-in list for \p MBB assuming all of its successors
 /// live-in lists are up-to-date. Uses the given LivePhysReg instance \p
 /// LiveRegs; This is just here to avoid repeated heap allocations when calling
 /// this multiple times in a pass.

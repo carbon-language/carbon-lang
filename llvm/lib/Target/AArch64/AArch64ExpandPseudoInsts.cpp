@@ -601,7 +601,7 @@ bool AArch64ExpandPseudo::expandCMP_SWAP(
   MachineOperand &Desired = MI.getOperand(3);
   MachineOperand &New = MI.getOperand(4);
 
-  LivePhysRegs LiveRegs(&TII->getRegisterInfo());
+  LivePhysRegs LiveRegs(TII->getRegisterInfo());
   LiveRegs.addLiveOuts(MBB);
   for (auto I = std::prev(MBB.end()); I != MBBI; --I)
     LiveRegs.stepBackward(*I);
@@ -677,7 +677,7 @@ bool AArch64ExpandPseudo::expandCMP_SWAP_128(
   MachineOperand &NewLo = MI.getOperand(6);
   MachineOperand &NewHi = MI.getOperand(7);
 
-  LivePhysRegs LiveRegs(&TII->getRegisterInfo());
+  LivePhysRegs LiveRegs(TII->getRegisterInfo());
   LiveRegs.addLiveOuts(MBB);
   for (auto I = std::prev(MBB.end()); I != MBBI; --I)
     LiveRegs.stepBackward(*I);
