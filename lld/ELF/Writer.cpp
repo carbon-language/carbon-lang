@@ -647,10 +647,11 @@ bool elf::isRelroSection(const OutputSection *Sec) {
 // * It is easy to check if a give branch was taken.
 // * It is easy two see how similar two ranks are (see getRankProximity).
 enum RankFlags {
-  RF_NOT_ADDR_SET = 1 << 15,
-  RF_NOT_INTERP = 1 << 14,
-  RF_NOT_ALLOC = 1 << 13,
-  RF_WRITE = 1 << 12,
+  RF_NOT_ADDR_SET = 1 << 16,
+  RF_NOT_INTERP = 1 << 15,
+  RF_NOT_ALLOC = 1 << 14,
+  RF_WRITE = 1 << 13,
+  RF_EXEC_WRITE = 1 << 12,
   RF_EXEC = 1 << 11,
   RF_NON_TLS_BSS = 1 << 10,
   RF_NON_TLS_BSS_RO = 1 << 9,
@@ -685,19 +686,29 @@ static unsigned getSectionRank(const OutputSection *Sec) {
   if (!(Sec->Flags & SHF_ALLOC))
     return Rank | RF_NOT_ALLOC;
 
-  // We want the read only sections first so that they go in the PT_LOAD
-  // covering the program headers at the start of the file.
-  if (Sec->Flags & SHF_WRITE)
-    Rank |= RF_WRITE;
+  // Sort sections based on their access permission in the following
+  // order: R, RX, RWX, RW.  This order is based on the following
+  // considerations:
+  // * Read-only sections come first such that they go in the
+  //   PT_LOAD covering the program headers at the start of the file.
+  // * Read-only, executable sections come next, unless the
+  //   -no-rosegment option is used.
+  // * Writable, executable sections follow such that .plt on
+  //   architectures where it needs to be writable will be placed
+  //   between .text and .data.
+  // * Writable sections come last, such that .bss lands at the very
+  //   end of the last PT_LOAD.
+  bool IsExec = Sec->Flags & SHF_EXECINSTR;
+  bool IsWrite = Sec->Flags & SHF_WRITE;
 
-  if (Sec->Flags & SHF_EXECINSTR) {
-    // For a corresponding reason, put non exec sections first (the program
-    // header PT_LOAD is not executable).
-    // We only do that if we are not using linker scripts, since with linker
-    // scripts ro and rx sections are in the same PT_LOAD, so their relative
-    // order is not important. The same applies for -no-rosegment.
-    if ((Rank & RF_WRITE) || !Config->SingleRoRx)
+  if (IsExec) {
+    if (IsWrite)
+      Rank |= RF_EXEC_WRITE;
+    else if (!Config->SingleRoRx)
       Rank |= RF_EXEC;
+  } else {
+    if (IsWrite)
+      Rank |= RF_WRITE;
   }
 
   // If we got here we know that both A and B are in the same PT_LOAD.
