@@ -12623,7 +12623,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
             IsFast) {
           LastLegalType = i + 1;
           // Or check whether a truncstore is legal.
-        } else if (TLI.getTypeAction(Context, StoreTy) ==
+        } else if (!LegalTypes &&
+                   TLI.getTypeAction(Context, StoreTy) ==
                    TargetLowering::TypePromoteInteger) {
           EVT LegalizedStoredValueTy =
               TLI.getTypeToTransformTo(Context, StoredVal.getValueType());
@@ -12838,7 +12839,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
       else if (TLI.getTypeAction(Context, StoreTy) ==
                TargetLowering::TypePromoteInteger) {
         EVT LegalizedStoredValueTy = TLI.getTypeToTransformTo(Context, StoreTy);
-        if (TLI.isTruncStoreLegal(LegalizedStoredValueTy, StoreTy) &&
+        if (!LegalTypes &&
+            TLI.isTruncStoreLegal(LegalizedStoredValueTy, StoreTy) &&
             TLI.canMergeStoresTo(FirstStoreAS, LegalizedStoredValueTy) &&
             TLI.isLoadExtLegal(ISD::ZEXTLOAD, LegalizedStoredValueTy,
                                StoreTy) &&
