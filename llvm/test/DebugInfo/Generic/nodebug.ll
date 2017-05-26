@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
 
-; RUN: %llc_dwarf < %s -filetype=obj | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: %llc_dwarf < %s -filetype=obj | llvm-dwarfdump - | FileCheck %s
 
 ; Test that a nodebug function (a function not appearing in the debug info IR
 ; metadata subprogram list) with DebugLocs on its IR doesn't cause crashes/does
@@ -17,8 +17,15 @@
 ; }
 
 ; Check that there's no DW_TAG_subprogram, not even for the 'f2' function.
+; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
 ; CHECK-NOT: DW_TAG_subprogram
+
+; Expect no line table entry since there are no functions and file references in this compile unit
+; CHECK: .debug_line contents:
+; CHECK: Line table prologue:
+; CHECK: total_length: 0x00000019
+; CHECK-NOT: file_names[
 
 @i = external global i32
 

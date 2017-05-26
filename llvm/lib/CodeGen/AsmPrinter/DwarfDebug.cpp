@@ -1036,6 +1036,10 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
   DebugHandlerBase::beginInstruction(MI);
   assert(CurMI);
 
+  const auto *SP = MI->getParent()->getParent()->getFunction()->getSubprogram();
+  if (!SP || SP->getUnit()->getEmissionKind() == DICompileUnit::NoDebug)
+    return;
+
   // Check if source location changes, but ignore DBG_VALUE and CFI locations.
   if (MI->isMetaInstruction())
     return;
