@@ -42,7 +42,7 @@ attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="
 !llvm.module.flags = !{!8, !9}
 !llvm.ident = !{!10}
 
-!0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !2, globals: !2, imports: !2)
+!0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, producer: "clang version 3.5.0 ", isOptimized: false, emissionKind: FullDebug, file: !1, enums: !2, retainedTypes: !12, globals: !2, imports: !2)
 !1 = !DIFile(filename: "nodebug.cpp", directory: "/tmp/dbginfo")
 !2 = !{}
 !4 = distinct !DISubprogram(name: "f1", linkageName: "_Z2f1v", line: 2, isLocal: false, isDefinition: true, virtualIndex: 6, flags: DIFlagPrototyped, isOptimized: false, unit: !0, scopeLine: 2, file: !1, scope: !5, type: !6, variables: !2)
@@ -53,3 +53,5 @@ attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="
 !9 = !{i32 2, !"Debug Info Version", i32 3}
 !10 = !{!"clang version 3.5.0 "}
 !11 = !DILocation(line: 3, scope: !4)
+!12 = !{!13}
+!13 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
