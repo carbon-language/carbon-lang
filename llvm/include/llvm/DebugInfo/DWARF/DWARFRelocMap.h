@@ -17,7 +17,6 @@
 namespace llvm {
 
 struct RelocAddrEntry {
-  uint64_t SectionIndex;
   uint64_t Value;
 };
 
