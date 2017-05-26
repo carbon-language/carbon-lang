@@ -340,7 +340,7 @@ SIMCCodeEmitter::getSDWA9SrcEncoding(const MCInst &MI, unsigned OpNo,
   unsigned Reg = MO.getReg();
   RegEnc |= MRI.getEncodingValue(Reg);
   RegEnc &= SDWA9EncValues::SRC_VGPR_MASK;
-  if (AMDGPU::isSGPR(Reg, &MRI)) {
+  if (AMDGPU::isSGPR(AMDGPU::mc2PseudoReg(Reg), &MRI)) {
     RegEnc |= SDWA9EncValues::SRC_SGPR_MASK;
   }
   return RegEnc;
