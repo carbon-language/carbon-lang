@@ -1,5 +1,6 @@
 add_llvm_library(LLVMBOLTPasses
   BinaryPasses.cpp
+  CallGraph.cpp
   DataflowAnalysis.cpp
   DataflowInfoManager.cpp
   FrameAnalysis.cpp
@@ -9,7 +10,9 @@ add_llvm_library(LLVMBOLTPasses
   IndirectCallPromotion.cpp
   Inliner.cpp
   LivenessAnalysis.cpp
+  PettisAndHansen.cpp
   ReorderAlgorithm.cpp
+  ReorderFunctions.cpp
   StackPointerTracking.cpp
   )
 

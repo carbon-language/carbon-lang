@@ -13,6 +13,7 @@
 #include "Passes/FrameOptimizer.h"
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
+#include "Passes/ReorderFunctions.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>

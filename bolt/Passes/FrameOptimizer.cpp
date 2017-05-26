@@ -24,71 +24,6 @@ extern cl::opt<unsigned> Verbosity;
 namespace llvm {
 namespace bolt {
 
-void FrameOptimizerPass::buildCallGraph(
-    const BinaryContext &BC, std::map<uint64_t, BinaryFunction> &BFs) {
-  for (auto &I : BFs) {
-    BinaryFunction &Caller = I.second;
-
-    Functions.emplace(&Caller);
-
-    for (BinaryBasicBlock &BB : Caller) {
-      for (MCInst &Inst : BB) {
-        if (!BC.MIA->isCall(Inst))
-          continue;
-
-        const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
-        if (!TargetSymbol) {
-          // This is an indirect call, we cannot record a target.
-          continue;
-        }
-
-        const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
-        if (!Function) {
-          // Call to a function without a BinaryFunction object.
-          continue;
-        }
-        // Create a new edge in the call graph
-        CallGraphEdges[&Caller].emplace_back(Function);
-        ReverseCallGraphEdges[Function].emplace_back(&Caller);
-      }
-    }
-  }
-}
-
-void FrameOptimizerPass::buildCGTraversalOrder() {
-  enum NodeStatus { NEW, VISITING, VISITED };
-  std::unordered_map<const BinaryFunction *, NodeStatus> NodeStatus;
-  std::stack<const BinaryFunction *> Worklist;
-
-  for (auto *Func : Functions) {
-    Worklist.push(Func);
-    NodeStatus[Func] = NEW;
-  }
-
-  while (!Worklist.empty()) {
-    const auto *Func = Worklist.top();
-    Worklist.pop();
-
-    if (NodeStatus[Func] == VISITED)
-      continue;
-
-    if (NodeStatus[Func] == VISITING) {
-      TopologicalCGOrder.push_back(Func);
-      NodeStatus[Func] = VISITED;
-      continue;
-    }
-
-    assert(NodeStatus[Func] == NEW);
-    NodeStatus[Func] = VISITING;
-    Worklist.push(Func);
-    for (const auto *Callee : CallGraphEdges[Func]) {
-      if (NodeStatus[Callee] == VISITING || NodeStatus[Callee] == VISITED)
-        continue;
-      Worklist.push(Callee);
-    }
-  }
-}
-
 void FrameOptimizerPass::getInstClobberList(const BinaryContext &BC,
                                             const MCInst &Inst,
                                             BitVector &KillSet) const {
@@ -161,8 +96,8 @@ void FrameOptimizerPass::buildClobberMap(const BinaryContext &BC) {
     }
 
     if (RegsKilledMap[Func] != RegsKilled) {
-      for (auto Caller : ReverseCallGraphEdges[Func]) {
-        Queue.push(Caller);
+      for (auto Caller : Cg.Nodes[Cg.FuncToNodeId.at(Func)].Preds) {
+        Queue.push(Cg.Funcs[Caller]);
       }
     }
     RegsKilledMap[Func] = std::move(RegsKilled);
@@ -794,8 +729,8 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
   uint64_t CountFunctionsNotOptimized{0};
   uint64_t CountFunctionsFailedRestoreFI{0};
   uint64_t CountDenominator{0};
-  buildCallGraph(BC, BFs);
-  buildCGTraversalOrder();
+  Cg = buildCallGraph(BC, BFs);
+  TopologicalCGOrder = Cg.buildTraversalOrder();
   buildClobberMap(BC);
   for (auto &I : BFs) {
     auto Count = I.second.getExecutionCount();

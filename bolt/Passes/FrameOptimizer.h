@@ -13,6 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEOPTIMIZER_H
 
 #include "BinaryPasses.h"
+#include "CallGraph.h"
 
 namespace llvm {
 namespace bolt {
@@ -75,17 +76,11 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   uint64_t CountFunctionsAllClobber{0};
 
   /// Call graph info
-  /// The set of functions analyzed by our call graph
-  std::set<BinaryFunction *> Functions;
-  /// Model the "function calls function" edges
-  std::map<const BinaryFunction *, std::vector<const BinaryFunction *>>
-      CallGraphEdges;
-  /// Model the "function called by function" edges
-  std::map<const BinaryFunction *, std::vector<const BinaryFunction *>>
-      ReverseCallGraphEdges;
+  CallGraph Cg;
+
   /// DFS or reverse post-ordering of the call graph nodes to allow us to
   /// traverse the call graph bottom-up
-  std::deque<const BinaryFunction *> TopologicalCGOrder;
+  std::deque<BinaryFunction *> TopologicalCGOrder;
 
   /// Map functions to the set of registers they may overwrite starting at when
   /// it is called until it returns to the caller.
@@ -126,15 +121,6 @@ public:
   void getInstClobberList(const BinaryContext &BC, const MCInst &Inst,
                           BitVector &KillSet) const;
 private:
-  /// Perform the initial step of populating CallGraphEdges and
-  /// ReverseCallGraphEdges for all functions in BFs.
-  void buildCallGraph(const BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs);
-
-  /// Compute a DFS traversal of the call graph in Functions, CallGraphEdges
-  /// and ReverseCallGraphEdges and stores it in TopologicalCGOrder.
-  void buildCGTraversalOrder();
-
   /// Compute the set of registers \p Func may write to during its execution,
   /// starting at the point when it is called up until when it returns. Returns
   /// a BitVector the size of the target number of registers, representing the

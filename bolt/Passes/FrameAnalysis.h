@@ -13,6 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_FRAMEANALYSIS_H
 
 #include "BinaryPasses.h"
+#include "CallGraph.h"
 #include "StackPointerTracking.h"
 
 namespace llvm {
@@ -112,14 +113,8 @@ raw_ostream &operator<<(raw_ostream &OS,
 ///
 class FrameAnalysis : public BinaryFunctionPass {
   /// Call graph info
-  /// The set of functions analyzed by our call graph
-  std::set<BinaryFunction *> Functions;
-  /// Model the "function calls function" edges
-  std::map<const BinaryFunction *, std::vector<BinaryFunction *>>
-      CallGraphEdges;
-  /// Model the "function called by function" edges
-  std::map<const BinaryFunction *, std::vector<BinaryFunction *>>
-      ReverseCallGraphEdges;
+  CallGraph Cg;
+
   /// DFS or reverse post-ordering of the call graph nodes to allow us to
   /// traverse the call graph bottom-up
   std::deque<BinaryFunction *> TopologicalCGOrder;
@@ -168,15 +163,6 @@ class FrameAnalysis : public BinaryFunctionPass {
                               const ArgInStackAccess &Arg);
   void addFIEFor(const BinaryContext &BC, MCInst &Inst,
                  const FrameIndexEntry &FIE);
-
-  /// Perform the initial step of populating CallGraphEdges and
-  /// ReverseCallGraphEdges for all functions in BFs.
-  void buildCallGraph(BinaryContext &BC,
-                      std::map<uint64_t, BinaryFunction> &BFs);
-
-  /// Compute a DFS traversal of the call graph in Functions, CallGraphEdges
-  /// and ReverseCallGraphEdges and stores it in TopologicalCGOrder.
-  void buildCGTraversalOrder();
 
   /// Compute the set of registers \p Func may write to during its execution,
   /// starting at the point when it is called up until when it returns. Returns

@@ -275,71 +275,6 @@ FrameAnalysis::getFIEFor(const BinaryContext &BC, const MCInst &Inst) const {
   return make_error_code(errc::result_out_of_range);
 }
 
-void FrameAnalysis::buildCallGraph(BinaryContext &BC,
-                                   std::map<uint64_t, BinaryFunction> &BFs) {
-  for (auto &I : BFs) {
-    BinaryFunction &Caller = I.second;
-
-    Functions.emplace(&Caller);
-
-    for (BinaryBasicBlock &BB : Caller) {
-      for (MCInst &Inst : BB) {
-        if (!BC.MIA->isCall(Inst))
-          continue;
-
-        auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
-        if (!TargetSymbol) {
-          // This is an indirect call, we cannot record a target.
-          continue;
-        }
-
-        auto *Function = BC.getFunctionForSymbol(TargetSymbol);
-        if (!Function) {
-          // Call to a function without a BinaryFunction object.
-          continue;
-        }
-        // Create a new edge in the call graph
-        CallGraphEdges[&Caller].emplace_back(Function);
-        ReverseCallGraphEdges[Function].emplace_back(&Caller);
-      }
-    }
-  }
-}
-
-void FrameAnalysis::buildCGTraversalOrder() {
-  enum NodeStatus { NEW, VISITING, VISITED };
-  std::unordered_map<const BinaryFunction *, NodeStatus> NodeStatus;
-  std::stack<BinaryFunction *> Worklist;
-
-  for (auto *Func : Functions) {
-    Worklist.push(Func);
-    NodeStatus[Func] = NEW;
-  }
-
-  while (!Worklist.empty()) {
-    auto *Func = Worklist.top();
-    Worklist.pop();
-
-    if (NodeStatus[Func] == VISITED)
-      continue;
-
-    if (NodeStatus[Func] == VISITING) {
-      TopologicalCGOrder.push_back(Func);
-      NodeStatus[Func] = VISITED;
-      continue;
-    }
-
-    assert(NodeStatus[Func] == NEW);
-    NodeStatus[Func] = VISITING;
-    Worklist.push(Func);
-    for (auto *Callee : CallGraphEdges[Func]) {
-      if (NodeStatus[Callee] == VISITING || NodeStatus[Callee] == VISITED)
-        continue;
-      Worklist.push(Callee);
-    }
-  }
-}
-
 void FrameAnalysis::getInstClobberList(const BinaryContext &BC,
                                        const MCInst &Inst,
                                        BitVector &KillSet) const {
@@ -412,8 +347,8 @@ void FrameAnalysis::buildClobberMap(const BinaryContext &BC) {
     }
 
     if (RegsKilledMap[Func] != RegsKilled || Updated) {
-      for (auto Caller : ReverseCallGraphEdges[Func]) {
-        Queue.push(Caller);
+      for (auto Caller : Cg.Nodes[Cg.FuncToNodeId.at(Func)].Preds) {
+        Queue.push(Cg.Funcs[Caller]);
       }
     }
     RegsKilledMap[Func] = std::move(RegsKilled);
@@ -647,11 +582,11 @@ void FrameAnalysis::runOnFunctions(BinaryContext &BC,
                                    std::set<uint64_t> &) {
   {
     NamedRegionTimer T1("Callgraph construction", "FOP breakdown", true);
-    buildCallGraph(BC, BFs);
+    Cg = buildCallGraph(BC, BFs);
   }
   {
     NamedRegionTimer T1("build cg traversal order", "FOP breakdown", true);
-    buildCGTraversalOrder();
+    TopologicalCGOrder = Cg.buildTraversalOrder();
   }
   {
     NamedRegionTimer T1("build clobber map", "FOP breakdown", true);
