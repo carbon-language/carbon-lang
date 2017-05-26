@@ -45,6 +45,7 @@ struct Foo
     virtual ~Foo() = default;
 };
 
+#ifdef _LIBCPP_VERSION
 struct Result {};
 static Result theFunction() { return Result(); }
 static int resultDeletorCount;
@@ -54,14 +55,15 @@ static void resultDeletor(Result (*pf)()) {
 }
 
 void test_pointer_to_function() {
-#ifdef _LIBCPP_VER
     { // https://bugs.llvm.org/show_bug.cgi?id=27566
       std::shared_ptr<Result()> x(&theFunction, &resultDeletor);
       std::shared_ptr<Result()> y(theFunction, resultDeletor);
     }
     assert(resultDeletorCount == 2);
-#endif
 }
+#else // _LIBCPP_VERSION
+void test_pointer_to_function() {}
+#endif // _LIBCPP_VERSION
 
 int main()
 {
