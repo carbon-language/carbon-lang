@@ -81,7 +81,8 @@ private:
   void addStartStopSymbols(OutputSection *Sec);
   uint64_t getEntryAddr();
   OutputSection *findSection(StringRef Name);
-  OutputSectionCommand *findSectionInScript(StringRef Name);
+  OutputSection *findSectionInScript(StringRef Name);
+  OutputSectionCommand *findSectionCommand(StringRef Name);
 
   std::vector<PhdrEntry> Phdrs;
 
@@ -1313,11 +1314,17 @@ void Writer<ELFT>::addStartStopSymbols(OutputSection *Sec) {
 }
 
 template <class ELFT>
-OutputSectionCommand *Writer<ELFT>::findSectionInScript(StringRef Name) {
+OutputSectionCommand *Writer<ELFT>::findSectionCommand(StringRef Name) {
   for (BaseCommand *Base : Script->Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
       if (Cmd->Name == Name)
         return Cmd;
+  return nullptr;
+}
+
+template <class ELFT> OutputSection *Writer<ELFT>::findSectionInScript(StringRef Name) {
+  if (OutputSectionCommand *Cmd = findSectionCommand(Name))
+    return Cmd->Sec;
   return nullptr;
 }
 
@@ -1607,7 +1614,7 @@ template <class ELFT> uint64_t Writer<ELFT>::getEntryAddr() {
     return Addr;
 
   // Case 4
-  if (OutputSection *Sec = findSection(".text")) {
+  if (OutputSection *Sec = findSectionInScript(".text")) {
     if (Config->WarnMissingEntry)
       warn("cannot find entry symbol " + Config->Entry + "; defaulting to 0x" +
            utohexstr(Sec->Addr));
@@ -1670,7 +1677,7 @@ template <class ELFT> void Writer<ELFT>::fixPredefinedSymbols() {
   }
 
   if (ElfSym::Bss)
-    ElfSym::Bss->Section = findSection(".bss");
+    ElfSym::Bss->Section = findSectionInScript(".bss");
 
   // Setup MIPS _gp_disp/__gnu_local_gp symbols which should
   // be equal to the _gp symbol's value.
@@ -1778,7 +1785,7 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
 
   // PPC64 needs to process relocations in the .opd section
   // before processing relocations in code-containing sections.
-  if (auto *OpdCmd = findSectionInScript(".opd")) {
+  if (auto *OpdCmd = findSectionCommand(".opd")) {
     Out::Opd = OpdCmd->Sec;
     Out::OpdBuf = Buf + Out::Opd->Offset;
     OpdCmd->template writeTo<ELFT>(Buf + Out::Opd->Offset);
