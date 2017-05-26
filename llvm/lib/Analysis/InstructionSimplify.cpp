@@ -1930,26 +1930,18 @@ static Value *SimplifyOrInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
       // If we have: ((V + N) & C1) | (V & C2)
       // .. and C2 = ~C1 and C2 is 0+1+ and (N & C2) == 0
       // replace with V+N.
-      Value *V1, *V2;
+      Value *N;
       if (C2->isMask() && // C2 == 0+1+
-          match(A, m_Add(m_Value(V1), m_Value(V2)))) {
+          match(A, m_c_Add(m_Specific(B), m_Value(N)))) {
         // Add commutes, try both ways.
-        if (V1 == B &&
-            MaskedValueIsZero(V2, *C2, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
-          return A;
-        if (V2 == B &&
-            MaskedValueIsZero(V1, *C2, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
+        if (MaskedValueIsZero(N, *C2, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
           return A;
       }
       // Or commutes, try both ways.
       if (C1->isMask() &&
-          match(B, m_Add(m_Value(V1), m_Value(V2)))) {
+          match(B, m_c_Add(m_Specific(A), m_Value(N)))) {
         // Add commutes, try both ways.
-        if (V1 == A &&
-            MaskedValueIsZero(V2, *C1, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
-          return B;
-        if (V2 == A &&
-            MaskedValueIsZero(V1, *C1, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
+        if (MaskedValueIsZero(N, *C1, Q.DL, 0, Q.AC, Q.CxtI, Q.DT))
           return B;
       }
     }
