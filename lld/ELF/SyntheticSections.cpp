@@ -1781,7 +1781,7 @@ void GdbIndexSection::readDwarf(InputSection *Sec) {
       CuVectors.push_back({});
     }
 
-    CuVectors[Sym->CuVectorIndex].insert(CuId | (Pair.second << 24));
+    CuVectors[Sym->CuVectorIndex].insert((Pair.second << 24) | (uint32_t)CuId);
   }
 }
 
