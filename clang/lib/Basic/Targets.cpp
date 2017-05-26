@@ -4644,7 +4644,9 @@ static void addMinGWDefines(const LangOptions &Opts, MacroBuilder &Builder) {
 class MinGWX86_32TargetInfo : public WindowsX86_32TargetInfo {
 public:
   MinGWX86_32TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
-      : WindowsX86_32TargetInfo(Triple, Opts) {}
+      : WindowsX86_32TargetInfo(Triple, Opts) {
+    HasFloat128 = true;
+  }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
     WindowsX86_32TargetInfo::getTargetDefines(Opts, Builder);
@@ -4936,6 +4938,7 @@ public:
     // with x86 FP ops. Weird.
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended();
+    HasFloat128 = true;
   }
 
   void getTargetDefines(const LangOptions &Opts,
