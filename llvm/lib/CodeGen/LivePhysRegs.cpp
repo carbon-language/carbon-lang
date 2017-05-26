@@ -155,62 +155,48 @@ void LivePhysRegs::addBlockLiveIns(const MachineBasicBlock &MBB) {
   }
 }
 
-/// Adds all callee saved registers to \p LiveRegs.
-static void addCalleeSavedRegs(LivePhysRegs &LiveRegs,
-                               const MachineFunction &MF) {
+/// Add pristine registers to the given \p LiveRegs. This function removes
+/// actually saved callee save registers when \p InPrologueEpilogue is false.
+static void addPristines(LivePhysRegs &LiveRegs, const MachineFunction &MF,
+                         const MachineFrameInfo &MFI,
+                         const TargetRegisterInfo &TRI) {
   const MachineRegisterInfo &MRI = MF.getRegInfo();
-  for (const MCPhysReg *CSR = MRI.getCalleeSavedRegs(); CSR && *CSR; ++CSR)
+  for (const MCPhysReg *CSR = MRI.getCalleeSavedRegs(); CSR && *CSR;
+       ++CSR)
     LiveRegs.addReg(*CSR);
-}
-
-/// Adds pristine registers to the given \p LiveRegs. Pristine registers are
-/// callee saved registers that are unused in the function.
-static void addPristines(LivePhysRegs &LiveRegs, const MachineFunction &MF) {
-  const MachineFrameInfo &MFI = MF.getFrameInfo();
-  if (!MFI.isCalleeSavedInfoValid())
-    return;
-  /// Add all callee saved regs, then remove the ones that are saved+restored.
-  addCalleeSavedRegs(LiveRegs, MF);
-  /// Remove the ones that are not saved/restored; they are pristine.
   for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo())
     LiveRegs.removeReg(Info.getReg());
 }
 
 void LivePhysRegs::addLiveOutsNoPristines(const MachineBasicBlock &MBB) {
-  if (!MBB.succ_empty()) {
-    // To get the live-outs we simply merge the live-ins of all successors.
-    for (const MachineBasicBlock *Succ : MBB.successors())
-      addBlockLiveIns(*Succ);
-  } else if (MBB.isReturnBlock()) {
-    // For the return block: Add all callee saved registers that are saved and
-    // restored (somewhere); This does not include callee saved registers that
-    // are unused and hence not saved and restored; they are called pristine.
-    const MachineFunction &MF = *MBB.getParent();
-    const MachineFrameInfo &MFI = MF.getFrameInfo();
-    if (MFI.isCalleeSavedInfoValid()) {
-      for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo())
-        addReg(Info.getReg());
-    }
-  }
+  // To get the live-outs we simply merge the live-ins of all successors.
+  for (const MachineBasicBlock *Succ : MBB.successors())
+    addBlockLiveIns(*Succ);
 }
 
 void LivePhysRegs::addLiveOuts(const MachineBasicBlock &MBB) {
-  if (!MBB.succ_empty()) {
-    addLiveOutsNoPristines(MBB);
-    const MachineFunction &MF = *MBB.getParent();
-    addPristines(*this, MF);
-  } else if (MBB.isReturnBlock()) {
-    // For the return block: Add all callee saved registers.
-    const MachineFunction &MF = *MBB.getParent();
-    const MachineFrameInfo &MFI = MF.getFrameInfo();
-    if (MFI.isCalleeSavedInfoValid())
-      addCalleeSavedRegs(*this, MF);
+  const MachineFunction &MF = *MBB.getParent();
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  if (MFI.isCalleeSavedInfoValid()) {
+    if (MBB.isReturnBlock()) {
+      // The return block has no successors whose live-ins we could merge
+      // below. So instead we add the callee saved registers manually.
+      const MachineRegisterInfo &MRI = MF.getRegInfo();
+      for (const MCPhysReg *I = MRI.getCalleeSavedRegs(); *I; ++I)
+        addReg(*I);
+    } else {
+      addPristines(*this, MF, MFI, *TRI);
+    }
   }
+
+  addLiveOutsNoPristines(MBB);
 }
 
 void LivePhysRegs::addLiveIns(const MachineBasicBlock &MBB) {
   const MachineFunction &MF = *MBB.getParent();
-  addPristines(*this, MF);
+  const MachineFrameInfo &MFI = MF.getFrameInfo();
+  if (MFI.isCalleeSavedInfoValid())
+    addPristines(*this, MF, MFI, *TRI);
   addBlockLiveIns(MBB);
 }
 
