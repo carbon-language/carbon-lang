@@ -1778,7 +1778,7 @@ void GdbIndexSection::readDwarf(InputSection *Sec) {
     std::tie(IsNew, Sym) = SymbolTable.add(Hash, Offset);
     if (IsNew) {
       Sym->CuVectorIndex = CuVectors.size();
-      CuVectors.push_back({});
+      CuVectors.resize(CuVectors.size() + 1);
     }
 
     CuVectors[Sym->CuVectorIndex].insert((Pair.second << 24) | (uint32_t)CuId);
