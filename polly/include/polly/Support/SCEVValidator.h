@@ -23,9 +23,19 @@ class ScalarEvolution;
 class Value;
 class Loop;
 class LoadInst;
+class CallInst;
 } // namespace llvm
 
 namespace polly {
+
+/// Check if a call is side-effect free and has only constant arguments.
+///
+/// Such calls can be re-generated easily, so we do not need to model them
+/// as scalar dependences.
+///
+/// @param Call The call to check.
+bool isConstCall(llvm::CallInst *Call);
+
 /// Find the loops referenced from a SCEV expression.
 ///
 /// @param Expr The SCEV expression to scan for loops.
