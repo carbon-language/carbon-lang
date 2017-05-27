@@ -67,12 +67,11 @@ constexpr int CallerDegradeFactor = 8;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-Cluster::Cluster(NodeId Id, const Node &Func) {
+Cluster::Cluster(NodeId Id, const Node &Func)
+: Samples(Func.samples()),
+  Size(Func.size()),
+  Density((double)Samples / Size) {
   Targets.push_back(Id);
-  Size = Func.size();
-  Samples = Func.samples();
-  Density = (double)Samples / Size;
-  Frozen = false;
 }
 
 std::string Cluster::toString() const {

@@ -128,6 +128,8 @@ struct AlgoState {
   std::vector<Cluster *> FuncCluster;
   // current address of the function from the beginning of its cluster
   std::vector<size_t> Addr;
+  // maximum cluster id.
+  size_t MaxClusterId;
 };
 
 }
@@ -136,7 +138,7 @@ struct AlgoState {
  * Sorting clusters by their density in decreasing order
  */
 void sortByDensity(std::vector<Cluster *> &Clusters) {
-  std::sort(
+  std::stable_sort(
     Clusters.begin(),
     Clusters.end(),
     [&] (const Cluster *C1, const Cluster *C2) {
@@ -248,23 +250,29 @@ double expectedCacheHitRatio(const AlgoState &State,
 /*
  * Get adjacent clusters (the ones that share an arc) with the given one
  */
-std::unordered_set<Cluster *> adjacentClusters(const AlgoState &State,
-                                              Cluster *C) {
-  std::unordered_set<Cluster *> Result;
+std::vector<Cluster *> adjacentClusters(const AlgoState &State, Cluster *C) {
+  std::vector<Cluster *> Result;
+  Result.reserve(State.MaxClusterId);
   for (auto TargetId : C->targets()) {
     for (auto Succ : State.Cg->successors(TargetId)) {
       auto SuccCluster = State.FuncCluster[Succ];
       if (SuccCluster != nullptr && SuccCluster != C) {
-        Result.insert(SuccCluster);
+        Result.push_back(SuccCluster);
       }
     }
     for (auto Pred : State.Cg->predecessors(TargetId)) {
       auto PredCluster = State.FuncCluster[Pred];
       if (PredCluster != nullptr && PredCluster != C) {
-        Result.insert(PredCluster);
+        Result.push_back(PredCluster);
       }
     }
   }
+  std::sort(Result.begin(), Result.end(),
+            [](const Cluster *A, const Cluster *B) {
+              return A->id() < B->id();
+            });
+  auto Last = std::unique(Result.begin(), Result.end());
+  Result.erase(Last, Result.end());
   return Result;
 }
 
@@ -385,6 +393,7 @@ std::vector<Cluster> hfsortPlus(const CallGraph &Cg) {
   AllClusters.reserve(Cg.numNodes());
   for (NodeId F = 0; F < Cg.numNodes(); F++) {
     AllClusters.emplace_back(F, Cg.getNode(F));
+    AllClusters.back().setId(F);
   }
 
   // initialize objects used by the algorithm
@@ -395,9 +404,9 @@ std::vector<Cluster> hfsortPlus(const CallGraph &Cg) {
   State.TotalSamples = 0;
   State.FuncCluster = std::vector<Cluster *>(Cg.numNodes(), nullptr);
   State.Addr = std::vector<size_t>(Cg.numNodes(), InvalidAddr);
+  State.MaxClusterId = AllClusters.back().id();
   for (NodeId F = 0; F < Cg.numNodes(); F++) {
     if (Cg.samples(F) == 0) continue;
-
     Clusters.push_back(&AllClusters[F]);
     State.FuncCluster[F] = &AllClusters[F];
     State.Addr[F] = 0;
@@ -487,7 +496,7 @@ std::vector<Cluster> hfsortPlus(const CallGraph &Cg) {
     Result.emplace_back(std::move(*Cluster));
   }
 
-  std::sort(Result.begin(), Result.end(), compareClustersDensity);
+  assert(std::is_sorted(Result.begin(), Result.end(), compareClustersDensity));
 
   return Result;
 }

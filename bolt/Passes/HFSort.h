@@ -66,12 +66,21 @@ public:
     return Targets[N];
   }
   void reverseTargets();
+  void setId(uint32_t NewId) {
+    assert(Id == -1u);
+    Id = NewId;
+  }
+  uint32_t id() const {
+    assert(Id != -1u);
+    return Id;
+  }
 private:
+  uint32_t Id{-1u};
   std::vector<CallGraph::NodeId> Targets;
-  uint64_t Samples;
-  uint32_t Size;
-  double Density;
-  bool Frozen; // not a candidate for merging
+  uint64_t Samples{0};
+  uint32_t Size{0};
+  double Density{0.0};
+  bool Frozen{false}; // not a candidate for merging
 };
 
 // Maximum size of a cluster, in bytes.
