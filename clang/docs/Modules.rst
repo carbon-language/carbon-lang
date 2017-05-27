@@ -413,9 +413,6 @@ altivec
 blocks
   The "blocks" language feature is available.
 
-coroutines
-  Support for the coroutines TS is available.
-
 cplusplus
   C++ support is available.
 
