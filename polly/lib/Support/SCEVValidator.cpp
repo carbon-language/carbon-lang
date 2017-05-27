@@ -429,6 +429,34 @@ public:
   }
 };
 
+class SCEVHasIVParams {
+  bool HasIVParams = false;
+
+public:
+  SCEVHasIVParams() {}
+
+  bool follow(const SCEV *S) {
+    const SCEVUnknown *Unknown = dyn_cast<SCEVUnknown>(S);
+    if (!Unknown)
+      return true;
+
+    CallInst *Call = dyn_cast<CallInst>(Unknown->getValue());
+
+    if (!Call)
+      return true;
+
+    if (isConstCall(Call)) {
+      HasIVParams = true;
+      return false;
+    }
+
+    return true;
+  }
+
+  bool isDone() { return HasIVParams; }
+  bool hasIVParams() { return HasIVParams; }
+};
+
 /// Check whether a SCEV refers to an SSA name defined inside a region.
 class SCEVInRegionDependences {
   const Region *R;
@@ -540,6 +568,13 @@ void findValues(const SCEV *Expr, ScalarEvolution &SE,
   SCEVFindValues FindValues(SE, Values);
   SCEVTraversal<SCEVFindValues> ST(FindValues);
   ST.visitAll(Expr);
+}
+
+bool hasIVParams(const SCEV *Expr) {
+  SCEVHasIVParams HasIVParams;
+  SCEVTraversal<SCEVHasIVParams> ST(HasIVParams);
+  ST.visitAll(Expr);
+  return HasIVParams.hasIVParams();
 }
 
 bool hasScalarDepsInsideRegion(const SCEV *Expr, const Region *R,
