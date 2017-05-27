@@ -671,7 +671,7 @@ public:
 /// [AL, AH, CL] - Represent a list of defs
 ///
 class ListInit final : public TypedInit, public FoldingSetNode,
-                       public TrailingObjects<BitsInit, Init *> {
+                       public TrailingObjects<ListInit, Init *> {
   unsigned NumValues;
 
 public:
