@@ -11,9 +11,8 @@
 // UNSUPPORTED: c++98, c++03, c++11
 // REQUIRES: fcoroutines-ts
 
-// These configurations run the tests with '-g', which hits a bug in Clangs
-// coroutine implementation.
-// XFAIL: asan, msan, ubsan, tsan
+// FIXME: When run under UBSAN this test hits an assertion inside Clang
+// XFAIL: ubsan
 
 // RUN: %build -fcoroutines-ts
 // RUN: %run
@@ -26,14 +25,15 @@ using namespace std::experimental;
 struct coro_t {
   struct promise_type {
     coro_t get_return_object() {
-      coroutine_handle<promise_type>{};
-      return {};
+      return coroutine_handle<promise_type>::from_promise(*this);
     }
     suspend_never initial_suspend() { return {}; }
     suspend_never final_suspend() { return {}; }
     void return_void(){}
     void unhandled_exception() {}
   };
+  coro_t(coroutine_handle<promise_type> hh) : h(hh) {}
+  coroutine_handle<promise_type> h;
 };
 
 struct NoSuspend {
@@ -64,7 +64,9 @@ coro_t g() {
 
 int main() {
   assert(!f_started && !f_resumed && !g_started && !g_resumed);
-  f();
+  auto fret = f();
+  assert(f_started && !f_resumed);
+  fret.h.destroy();
   assert(f_started && !f_resumed);
   g();
   assert(g_started && g_resumed);
