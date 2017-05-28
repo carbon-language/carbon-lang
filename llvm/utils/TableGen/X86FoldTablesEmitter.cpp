@@ -45,7 +45,7 @@ class IsMatch;
 
 // List of instructions requiring explicitly aligned memory.
 const char *const ExplicitAlign[] = {"MOVDQA",  "MOVAPS",  "MOVAPD",  "MOVNTPS",
-                               "MOVNTPD", "MOVNTDQ", "MOVNTDQA"};
+                                     "MOVNTPD", "MOVNTDQ", "MOVNTDQA"};
 
 // List of instructions NOT requiring explicit memory alignment.
 const char *const ExplicitUnalign[] = {"MOVDQU", "MOVUPS", "MOVUPD"};
