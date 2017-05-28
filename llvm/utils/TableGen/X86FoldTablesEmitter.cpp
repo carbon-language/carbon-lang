@@ -73,7 +73,7 @@ const ManualMapEntry ManualMapSet[] = {
 };
 
 // Do not add these instructions to any of the folding tables.
-const std::vector<const char *> NoFoldSet = {
+const char *const NoFoldSet[] = {
     "TCRETURNri64",
     "TCRETURNmi64", // Special dealing (in X86InstrCompiler.td under
     "TCRETURNri",   // "tailcall stuff" section).
@@ -645,7 +645,7 @@ void X86FoldTablesEmitter::run(raw_ostream &OS) {
     //   class ptr_rc_tailcall, which can be of a size 32 or 64, to ensure
     //   safe mapping of these instruction we manually map them and exclude
     //   them from the automation.
-    if (find(NoFoldSet, Rec->getName().str()) != NoFoldSet.end() ||
+    if (find(NoFoldSet, Rec->getName().str()) != std::end(NoFoldSet) ||
         hasRSTRegClass(Inst) || hasPtrTailcallRegClass(Inst))
       continue;
 
