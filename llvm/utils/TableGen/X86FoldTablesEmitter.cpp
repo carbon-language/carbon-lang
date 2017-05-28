@@ -44,11 +44,11 @@ struct ManualMapEntry {
 class IsMatch;
 
 // List of instructions requiring explicitly aligned memory.
-const char *ExplicitAlign[] = {"MOVDQA",  "MOVAPS",  "MOVAPD",  "MOVNTPS",
+const char *const ExplicitAlign[] = {"MOVDQA",  "MOVAPS",  "MOVAPD",  "MOVNTPS",
                                "MOVNTPD", "MOVNTDQ", "MOVNTDQA"};
 
 // List of instructions NOT requiring explicit memory alignment.
-const char *ExplicitUnalign[] = {"MOVDQU", "MOVUPS", "MOVUPD"};
+const char *const ExplicitUnalign[] = {"MOVDQU", "MOVUPS", "MOVUPD"};
 
 // For manually mapping instructions that do not match by their encoding.
 const ManualMapEntry ManualMapSet[] = {
