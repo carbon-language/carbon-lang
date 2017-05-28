@@ -17,6 +17,8 @@
 #include <experimental/coroutine>
 #include <cassert>
 
+#include "test_macros.h"
+
 using namespace std::experimental;
 
 int alive = 0;
@@ -30,8 +32,14 @@ void reset() {
 }
 struct Noisy {
   Noisy() { ++alive; ++ctor_called; }
-  Noisy(Noisy const&) = delete;
   ~Noisy() { --alive; ++dtor_called; }
+#if TEST_STD_VER > 14
+  Noisy(Noisy const&) = delete;
+#else
+  // FIXME: This test depends on copy elision taking place in C++14
+  // (pre-c++17 guaranteed copy elision)
+  Noisy(Noisy const&);
+#endif
 };
 
 struct Bug {
@@ -52,7 +60,6 @@ struct coro2 {
 
 // Checks that destructors are correctly invoked for the object returned by
 // coawait.
-// CHECK-LABEL: @a(
 coro2 a() {
   reset();
   {
