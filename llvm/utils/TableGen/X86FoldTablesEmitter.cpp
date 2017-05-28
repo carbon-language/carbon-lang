@@ -215,11 +215,11 @@ private:
   // X86MemoryFoldTableEntry.
   void printTable(const FoldTable &Table, std::string TableName,
                   raw_ostream &OS) {
-    OS << "static const X86MemoryFoldTableEntry MemoryFold" << TableName
+    OS << "\nstatic const X86MemoryFoldTableEntry MemoryFold" << TableName
        << "[] = {\n";
 
     for (const X86FoldTableEntry &E : Table)
-      OS << E;
+      OS.indent(2) << E;
 
     OS << "};\n";
   }
