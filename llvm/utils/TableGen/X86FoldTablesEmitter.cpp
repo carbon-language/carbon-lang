@@ -360,7 +360,7 @@ static inline const CodeGenInstruction *
 getAltRegInst(const CodeGenInstruction *I, const RecordKeeper &Records,
               const CodeGenTarget &Target) {
 
-  StringRef AltRegInstStr = I->TheDef->getValueAsString("FoldGenRegForm");
+  std::string AltRegInstStr = I->TheDef->getValueAsString("FoldGenRegForm");
   Record *AltRegInstRec = Records.getDef(AltRegInstStr);
   assert(AltRegInstRec &&
          "Alternative register form instruction def not found");
