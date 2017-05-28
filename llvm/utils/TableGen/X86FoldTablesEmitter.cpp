@@ -585,6 +585,7 @@ void X86FoldTablesEmitter::updateTables(const CodeGenInstruction *RegInstr,
       Record *MemOpRec = MemInstr->Operands[i].Rec;
       if (isRegisterOperand(RegOpRec) && isMemoryOperand(MemOpRec)) {
         switch (i) {
+        default: llvm_unreachable("Unexpected operand count!");
         case 0:
           addEntryWithFlags(Table0, RegInstr, MemInstr, S, 0);
           return;
