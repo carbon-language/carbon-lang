@@ -374,14 +374,18 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &SrcCU,
 
   // Find the subprogram's DwarfCompileUnit in the SPMap in case the subprogram
   // was inlined from another compile unit.
-  auto &CU = getOrCreateDwarfCompileUnit(SP->getUnit());
-  if (auto *SkelCU = CU.getSkeleton()) {
-    (shareAcrossDWOCUs() ? CU : SrcCU)
-        .constructAbstractSubprogramScopeDIE(Scope);
-    if (CU.getCUNode()->getSplitDebugInlining())
-      SkelCU->constructAbstractSubprogramScopeDIE(Scope);
-  } else {
-    CU.constructAbstractSubprogramScopeDIE(Scope);
+  if (useSplitDwarf() && !shareAcrossDWOCUs() && !SP->getUnit()->getSplitDebugInlining())
+    // Avoid building the original CU if it won't be used
+    SrcCU.constructAbstractSubprogramScopeDIE(Scope);
+  else {
+    auto &CU = getOrCreateDwarfCompileUnit(SP->getUnit());
+    if (auto *SkelCU = CU.getSkeleton()) {
+      (shareAcrossDWOCUs() ? CU : SrcCU)
+          .constructAbstractSubprogramScopeDIE(Scope);
+      if (CU.getCUNode()->getSplitDebugInlining())
+        SkelCU->constructAbstractSubprogramScopeDIE(Scope);
+    } else
+      CU.constructAbstractSubprogramScopeDIE(Scope);
   }
 }
 
