@@ -162,8 +162,8 @@ class X86FoldTablesEmitter {
 
     friend raw_ostream &operator<<(raw_ostream &OS,
                                    const X86FoldTableEntry &E) {
-      OS << "{ X86::" << E.RegInst->TheDef->getName().str()
-         << ", X86::" << E.MemInst->TheDef->getName().str() << ", ";
+      OS << "{ X86::" << E.RegInst->TheDef->getName()
+         << ", X86::" << E.MemInst->TheDef->getName() << ", ";
 
       if (E.IsLoad)
         OS << "TB_FOLDED_LOAD | ";
@@ -172,7 +172,7 @@ class X86FoldTablesEmitter {
       if (E.CannotUnfold)
         OS << "TB_NO_REVERSE | ";
       if (E.IsAligned)
-        OS << "TB_ALIGN_" + std::to_string(E.Alignment) + " | ";
+        OS << "TB_ALIGN_" << E.Alignment << " | ";
 
       OS << "0 },\n";
 
@@ -645,7 +645,7 @@ void X86FoldTablesEmitter::run(raw_ostream &OS) {
     //   class ptr_rc_tailcall, which can be of a size 32 or 64, to ensure
     //   safe mapping of these instruction we manually map them and exclude
     //   them from the automation.
-    if (find(NoFoldSet, Rec->getName().str()) != std::end(NoFoldSet) ||
+    if (find(NoFoldSet, Rec->getName()) != std::end(NoFoldSet) ||
         hasRSTRegClass(Inst) || hasPtrTailcallRegClass(Inst))
       continue;
 
