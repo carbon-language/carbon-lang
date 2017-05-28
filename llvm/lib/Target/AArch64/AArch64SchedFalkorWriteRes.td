@@ -26,6 +26,21 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
+// Define 0 micro-op types
+def FalkorWr_none_1cyc : SchedWriteRes<[]> {
+  let Latency = 1;
+  let NumMicroOps = 0;
+}
+def FalkorWr_none_3cyc : SchedWriteRes<[]> {
+  let Latency = 3;
+  let NumMicroOps = 0;
+}
+def FalkorWr_none_4cyc : SchedWriteRes<[]> {
+  let Latency = 4;
+  let NumMicroOps = 0;
+}
+
+//===----------------------------------------------------------------------===//
 // Define 1 micro-op types
 
 def FalkorWr_1X_2cyc    : SchedWriteRes<[FalkorUnitX]>   { let Latency = 2; }
@@ -49,6 +64,7 @@ def FalkorWr_1VXVY_4cyc : SchedWriteRes<[FalkorUnitVXVY]>{ let Latency = 4; }
 def FalkorWr_VMUL32_1VXVY_4cyc : SchedWriteRes<[FalkorUnitVXVY]>{ let Latency = 4; }
 def FalkorWr_1VXVY_5cyc : SchedWriteRes<[FalkorUnitVXVY]>{ let Latency = 5; }
 def FalkorWr_FMUL32_1VXVY_5cyc : SchedWriteRes<[FalkorUnitVXVY]>{ let Latency = 5; }
+def FalkorWr_1VXVY_6cyc : SchedWriteRes<[FalkorUnitVXVY]>{ let Latency = 6; }
 def FalkorWr_FMUL64_1VXVY_6cyc : SchedWriteRes<[FalkorUnitVXVY]>{ let Latency = 6; }
 
 def FalkorWr_1LD_0cyc   : SchedWriteRes<[FalkorUnitLD]>  { let Latency = 0; }
@@ -163,11 +179,13 @@ def FalkorWr_1Z_1XY_0cyc : SchedWriteRes<[FalkorUnitZ, FalkorUnitXY]> {
 
 def FalkorWr_1X_1Z_8cyc  : SchedWriteRes<[FalkorUnitX, FalkorUnitZ]> {
   let Latency = 8;
+  let NumMicroOps = 2;
   let ResourceCycles = [2, 8];
 }
 
 def FalkorWr_1X_1Z_16cyc : SchedWriteRes<[FalkorUnitX, FalkorUnitZ]> {
   let Latency = 16;
+  let NumMicroOps = 2;
   let ResourceCycles = [2, 16];
 }
 
@@ -309,6 +327,12 @@ def FalkorWr_2LD_1ST_1SD_3cyc: SchedWriteRes<[FalkorUnitLD, FalkorUnitST,
   let NumMicroOps = 4;
 }
 
+def FalkorWr_2VSD_2ST_0cyc: SchedWriteRes<[FalkorUnitST, FalkorUnitVSD,
+                                           FalkorUnitST, FalkorUnitVSD]> {
+  let Latency = 0;
+  let NumMicroOps = 4;
+}
+
 //===----------------------------------------------------------------------===//
 // Define 5 micro-op types
 
@@ -335,7 +359,12 @@ def FalkorWr_1XYZ_2ST_2VSD_0cyc: SchedWriteRes<[FalkorUnitXYZ, FalkorUnitST,
   let Latency = 0;
   let NumMicroOps = 5;
 }
-
+def FalkorWr_1VXVY_2ST_2VSD_0cyc : SchedWriteRes<[FalkorUnitVXVY, FalkorUnitST,
+                                                  FalkorUnitVSD, FalkorUnitST,
+                                                  FalkorUnitVSD]> {
+  let Latency = 0;
+  let NumMicroOps = 5;
+}
 //===----------------------------------------------------------------------===//
 // Define 6 micro-op types
 
@@ -352,6 +381,20 @@ def FalkorWr_2XYZ_2ST_2VSD_0cyc: SchedWriteRes<[FalkorUnitXYZ, FalkorUnitST,
   let NumMicroOps = 6;
 }
 
+def FalkorWr_2VXVY_2ST_2VSD_0cyc: SchedWriteRes<[FalkorUnitVXVY, FalkorUnitST,
+                                                 FalkorUnitVSD, FalkorUnitVXVY,
+                                                 FalkorUnitST, FalkorUnitVSD]> {
+  let Latency = 0;
+  let NumMicroOps = 6;
+}
+
+def FalkorWr_3VSD_3ST_0cyc: SchedWriteRes<[FalkorUnitST, FalkorUnitVSD,
+                                           FalkorUnitST, FalkorUnitVSD,
+                                           FalkorUnitST, FalkorUnitVSD]> {
+  let Latency = 0;
+  let NumMicroOps = 6;
+}
+
 //===----------------------------------------------------------------------===//
 // Define 8 micro-op types
 
@@ -360,6 +403,14 @@ def FalkorWr_2LD_2VXVY_2LD_2VXVY_4cyc:SchedWriteRes<[FalkorUnitLD, FalkorUnitLD,
                                              FalkorUnitLD, FalkorUnitLD,
                                              FalkorUnitVXVY, FalkorUnitVXVY]> {
   let Latency = 4;
+  let NumMicroOps = 8;
+}
+
+def FalkorWr_4VSD_4ST_0cyc: SchedWriteRes<[FalkorUnitST, FalkorUnitVSD,
+                                           FalkorUnitST, FalkorUnitVSD,
+                                           FalkorUnitST, FalkorUnitVSD,
+                                           FalkorUnitST, FalkorUnitVSD]> {
+  let Latency = 0;
   let NumMicroOps = 8;
 }
 
@@ -382,6 +433,31 @@ def FalkorWr_2LD_2VXVY_1XYZ_2LD_2VXVY_4cyc:SchedWriteRes<[FalkorUnitLD,
                                              FalkorUnitVXVY, FalkorUnitVXVY]> {
   let Latency = 4;
   let NumMicroOps = 9;
+}
+
+//===----------------------------------------------------------------------===//
+// Define 10 micro-op types
+
+def FalkorWr_2VXVY_4ST_4VSD_0cyc: SchedWriteRes<[FalkorUnitVXVY, FalkorUnitST,
+                                                 FalkorUnitVSD, FalkorUnitVXVY,
+                                                 FalkorUnitST, FalkorUnitVSD,
+                                                 FalkorUnitST, FalkorUnitVSD,
+                                                 FalkorUnitST, FalkorUnitVSD]> {
+  let Latency = 0;
+  let NumMicroOps = 10;
+}
+
+//===----------------------------------------------------------------------===//
+// Define 12 micro-op types
+
+def FalkorWr_4VXVY_4ST_4VSD_0cyc: SchedWriteRes<[FalkorUnitVXVY, FalkorUnitST,
+                                                 FalkorUnitVSD, FalkorUnitVXVY,
+                                                 FalkorUnitST, FalkorUnitVSD,
+                                                 FalkorUnitVXVY, FalkorUnitST,
+                                                 FalkorUnitVSD, FalkorUnitVXVY,
+                                                 FalkorUnitST, FalkorUnitVSD]> {
+  let Latency = 0;
+  let NumMicroOps = 12;
 }
 
 // Forwarding logic is modeled for multiply add/accumulate.
