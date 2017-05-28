@@ -241,7 +241,8 @@ static bool hasPtrTailcallRegClass(const CodeGenInstruction *Inst) {
 
 // Calculates the integer value representing the BitsInit object
 static inline uint64_t getValueFromBitsInit(const BitsInit *B) {
-  assert(B->getNumBits() <= sizeof(uint64_t) * 8 && "BitInits' too long!");
+  assert(B->getNumBits() <= sizeof(uint64_t) * CHAR_BIT &&
+         "BitInits' too long!");
 
   uint64_t Value = 0;
   for (unsigned i = 0, e = B->getNumBits(); i != e; ++i) {
