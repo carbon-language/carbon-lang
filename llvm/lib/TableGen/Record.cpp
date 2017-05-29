@@ -405,27 +405,21 @@ IntInit::convertInitializerBitRange(ArrayRef<unsigned> Bits) const {
 }
 
 CodeInit *CodeInit::get(StringRef V) {
-  static DenseMap<StringRef, CodeInit*> ThePool;
+  static StringMap<CodeInit*, BumpPtrAllocator &> ThePool(Allocator);
 
-  auto I = ThePool.insert(std::make_pair(V, nullptr));
-  if (I.second) {
-    StringRef VCopy = V.copy(Allocator);
-    I.first->first = VCopy;
-    I.first->second = new(Allocator) CodeInit(VCopy);
-  }
-  return I.first->second;
+  auto &Entry = *ThePool.insert(std::make_pair(V, nullptr)).first;
+  if (!Entry.second)
+    Entry.second = new(Allocator) CodeInit(Entry.getKey());
+  return Entry.second;
 }
 
 StringInit *StringInit::get(StringRef V) {
-  static DenseMap<StringRef, StringInit*> ThePool;
+  static StringMap<StringInit*, BumpPtrAllocator &> ThePool(Allocator);
 
-  auto I = ThePool.insert(std::make_pair(V, nullptr));
-  if (I.second) {
-    StringRef VCopy = V.copy(Allocator);
-    I.first->first = VCopy;
-    I.first->second = new(Allocator) StringInit(VCopy);
-  }
-  return I.first->second;
+  auto &Entry = *ThePool.insert(std::make_pair(V, nullptr)).first;
+  if (!Entry.second)
+    Entry.second = new(Allocator) StringInit(Entry.getKey());
+  return Entry.second;
 }
 
 Init *StringInit::convertInitializerTo(RecTy *Ty) const {
