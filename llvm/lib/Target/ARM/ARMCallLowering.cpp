@@ -214,8 +214,9 @@ bool ARMCallLowering::lowerReturnVal(MachineIRBuilder &MIRBuilder,
   SmallVector<ArgInfo, 4> SplitVTs;
   ArgInfo RetInfo(VReg, Val->getType());
   setArgFlags(RetInfo, AttributeList::ReturnIndex, DL, F);
-  splitToValueTypes(RetInfo, SplitVTs, MF,
-                    [&](unsigned Reg, uint64_t Offset) {});
+  splitToValueTypes(RetInfo, SplitVTs, MF, [&](unsigned Reg, uint64_t Offset) {
+    MIRBuilder.buildExtract(Reg, VReg, Offset);
+  });
 
   CCAssignFn *AssignFn =
       TLI.CCAssignFnForReturn(F.getCallingConv(), F.isVarArg());
@@ -476,13 +477,34 @@ bool ARMCallLowering::lowerCall(MachineIRBuilder &MIRBuilder,
       return false;
 
     ArgInfos.clear();
+    SmallVector<uint64_t, 8> RegOffsets;
+    SmallVector<unsigned, 8> SplitRegs;
     splitToValueTypes(OrigRet, ArgInfos, MF,
-                      [&](unsigned Reg, uint64_t Offset) {});
+                      [&](unsigned Reg, uint64_t Offset) {
+                        RegOffsets.push_back(Offset);
+                        SplitRegs.push_back(Reg);
+                      });
 
     auto RetAssignFn = TLI.CCAssignFnForReturn(CallConv, /*IsVarArg=*/false);
     CallReturnHandler RetHandler(MIRBuilder, MRI, MIB, RetAssignFn);
     if (!handleAssignments(MIRBuilder, ArgInfos, RetHandler))
       return false;
+
+    if (!RegOffsets.empty()) {
+      // We have split the value and allocated each individual piece, now build
+      // it up again.
+      LLT Ty = MRI.getType(OrigRet.Reg);
+      unsigned Dst = MRI.createGenericVirtualRegister(Ty);
+      MIRBuilder.buildUndef(Dst);
+
+      for (unsigned i = 0; i < SplitRegs.size(); ++i) {
+        unsigned Tmp = MRI.createGenericVirtualRegister(Ty);
+        MIRBuilder.buildInsert(Tmp, Dst, SplitRegs[i], RegOffsets[i]);
+        Dst = Tmp;
+      }
+
+      MIRBuilder.buildCopy(OrigRet.Reg, Dst);
+    }
   }
 
   // We now know the size of the stack - update the ADJCALLSTACKDOWN
