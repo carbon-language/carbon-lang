@@ -285,7 +285,7 @@ getMemOperandSize(const Record *MemRec, const bool IntrinsicSensitive = false) {
         (MemRec->getName() == "sdmem" || MemRec->getName() == "ssmem"))
       return 128;
 
-    StringRef Name =
+    std::string Name =
         MemRec->getValueAsDef("ParserMatchClass")->getValueAsString("Name");
     if (Name == "Mem8")
       return 8;
