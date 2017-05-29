@@ -59,14 +59,15 @@ public:
 /// libraries that link in LLVM components) and for making destruction be
 /// explicit through the llvm_shutdown() function call.
 ///
-template<class C>
+template <class C, void *(*Creator)() = object_creator<C>,
+          void (*Deleter)(void *) = object_deleter<C>::call>
 class ManagedStatic : public ManagedStaticBase {
 public:
   // Accessors.
   C &operator*() {
     void *Tmp = Ptr.load(std::memory_order_acquire);
     if (!Tmp)
-      RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
+      RegisterManagedStatic(Creator, Deleter);
 
     return *static_cast<C *>(Ptr.load(std::memory_order_relaxed));
   }
@@ -76,7 +77,7 @@ public:
   const C &operator*() const {
     void *Tmp = Ptr.load(std::memory_order_acquire);
     if (!Tmp)
-      RegisterManagedStatic(object_creator<C>, object_deleter<C>::call);
+      RegisterManagedStatic(Creator, Deleter);
 
     return *static_cast<C *>(Ptr.load(std::memory_order_relaxed));
   }
