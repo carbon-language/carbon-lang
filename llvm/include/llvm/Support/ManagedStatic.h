@@ -14,25 +14,20 @@
 #ifndef LLVM_SUPPORT_MANAGEDSTATIC_H
 #define LLVM_SUPPORT_MANAGEDSTATIC_H
 
-#include "llvm/Support/Compiler.h"
 #include <atomic>
 #include <cstddef>
 
 namespace llvm {
 
 /// object_creator - Helper method for ManagedStatic.
-template<class C>
-LLVM_LIBRARY_VISIBILITY void* object_creator() {
-  return new C();
-}
+template <class C> void *object_creator() { return new C(); }
 
 /// object_deleter - Helper method for ManagedStatic.
 ///
-template <typename T> struct LLVM_LIBRARY_VISIBILITY object_deleter {
+template <typename T> struct object_deleter {
   static void call(void *Ptr) { delete (T *)Ptr; }
 };
-template <typename T, size_t N>
-struct LLVM_LIBRARY_VISIBILITY object_deleter<T[N]> {
+template <typename T, size_t N> struct object_deleter<T[N]> {
   static void call(void *Ptr) { delete[](T *)Ptr; }
 };
 
