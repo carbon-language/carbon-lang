@@ -148,7 +148,7 @@ public:
     // FIXME: Should from_address(nullptr) be allowed?
     _LIBCPP_ALWAYS_INLINE
     static coroutine_handle from_address(nullptr_t) _NOEXCEPT {
-      return {};
+      return coroutine_handle(nullptr);
     }
 
     template <class _Tp, bool _CallIsValid = false>
@@ -231,7 +231,7 @@ public:
     // FIXME: should from_address work with nullptr?
     _LIBCPP_ALWAYS_INLINE
     static coroutine_handle from_address(nullptr_t) _NOEXCEPT {
-      return {};
+      return coroutine_handle(nullptr);
     }
 
     template <class _Tp, bool _CallIsValid = false>
