@@ -20,7 +20,9 @@
 namespace llvm {
 
 /// object_creator - Helper method for ManagedStatic.
-template <class C> void *object_creator() { return new C(); }
+template <class C> struct object_creator {
+  static void *call() { return new C(); }
+};
 
 /// object_deleter - Helper method for ManagedStatic.
 ///
@@ -54,15 +56,15 @@ public:
 /// libraries that link in LLVM components) and for making destruction be
 /// explicit through the llvm_shutdown() function call.
 ///
-template <class C, void *(*Creator)() = object_creator<C>,
-          void (*Deleter)(void *) = object_deleter<C>::call>
+template <class C, class Creator = object_creator<C>,
+          class Deleter = object_deleter<C>>
 class ManagedStatic : public ManagedStaticBase {
 public:
   // Accessors.
   C &operator*() {
     void *Tmp = Ptr.load(std::memory_order_acquire);
     if (!Tmp)
-      RegisterManagedStatic(Creator, Deleter);
+      RegisterManagedStatic(Creator::call, Deleter::call);
 
     return *static_cast<C *>(Ptr.load(std::memory_order_relaxed));
   }
@@ -72,7 +74,7 @@ public:
   const C &operator*() const {
     void *Tmp = Ptr.load(std::memory_order_acquire);
     if (!Tmp)
-      RegisterManagedStatic(Creator, Deleter);
+      RegisterManagedStatic(Creator::call, Deleter::call);
 
     return *static_cast<C *>(Ptr.load(std::memory_order_relaxed));
   }

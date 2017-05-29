@@ -82,12 +82,17 @@ TEST(ManagedStaticTest, NestedStatics) {
 } // namespace NestedStatics
 
 namespace CustomCreatorDeletor {
-void *CustomCreate() {
-  void *Mem = std::malloc(sizeof(int));
-  *((int *)Mem) = 42;
-  return Mem;
-}
-static ManagedStatic<int, CustomCreate, std::free> Custom;
+struct CustomCreate {
+  static void *call() {
+    void *Mem = std::malloc(sizeof(int));
+    *((int *)Mem) = 42;
+    return Mem;
+  }
+};
+struct CustomDelete {
+  static void call(void *P) { std::free(P); }
+};
+static ManagedStatic<int, CustomCreate, CustomDelete> Custom;
 TEST(ManagedStaticTest, CustomCreatorDeletor) {
   EXPECT_EQ(42, *Custom);
 }
