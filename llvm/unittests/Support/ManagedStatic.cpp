@@ -78,10 +78,6 @@ TEST(ManagedStaticTest, NestedStatics) {
   *Ms2;
   EXPECT_TRUE(Ms1.isConstructed());
   EXPECT_TRUE(Ms2.isConstructed());
-
-  llvm_shutdown();
-  EXPECT_FALSE(Ms1.isConstructed());
-  EXPECT_FALSE(Ms2.isConstructed());
 }
 } // namespace NestedStatics
 
@@ -94,8 +90,6 @@ void *CustomCreate() {
 static ManagedStatic<int, CustomCreate, std::free> Custom;
 TEST(ManagedStaticTest, CustomCreatorDeletor) {
   EXPECT_EQ(42, *Custom);
-  llvm_shutdown();
-  EXPECT_FALSE(Custom.isConstructed());
 }
 } // namespace CustomCreatorDeletor
 
