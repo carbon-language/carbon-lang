@@ -145,6 +145,19 @@ public:
         return __tmp;
     }
 
+    // FIXME: Should from_address(nullptr) be allowed?
+    _LIBCPP_ALWAYS_INLINE
+    static coroutine_handle from_address(nullptr_t) _NOEXCEPT {
+      return {};
+    }
+
+    template <class _Tp, bool _CallIsValid = false>
+    static coroutine_handle from_address(_Tp*) {
+      static_assert(_CallIsValid,
+       "coroutine_handle<void>::from_address cannot be called with "
+        "non-void pointers");
+    }
+
 private:
   bool __is_suspended() const _NOEXCEPT  {
     // FIXME actually implement a check for if the coro is suspended.
@@ -221,8 +234,19 @@ public:
       return {};
     }
 
-    // from_address cannot be used with the coroutines promise type.
-    static coroutine_handle from_address(_Promise*) = delete;
+    template <class _Tp, bool _CallIsValid = false>
+    static coroutine_handle from_address(_Tp*) {
+      static_assert(_CallIsValid,
+       "coroutine_handle<promise_type>::from_address cannot be called with "
+        "non-void pointers");
+    }
+
+    template <bool _CallIsValid = false>
+    static coroutine_handle from_address(_Promise*) {
+      static_assert(_CallIsValid,
+       "coroutine_handle<promise_type>::from_address cannot be used with "
+        "pointers to the coroutine's promise type; use 'from_promise' instead");
+    }
 
     _LIBCPP_ALWAYS_INLINE
     static coroutine_handle from_promise(_Promise& __promise) _NOEXCEPT {
