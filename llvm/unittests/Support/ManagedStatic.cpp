@@ -86,7 +86,7 @@ TEST(ManagedStaticTest, NestedStatics) {
 } // namespace NestedStatics
 
 namespace CustomCreatorDeletor {
-static void *CustomCreate() {
+void *CustomCreate() {
   void *Mem = std::malloc(sizeof(int));
   *((int *)Mem) = 42;
   return Mem;

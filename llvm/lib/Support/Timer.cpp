@@ -72,9 +72,11 @@ std::unique_ptr<raw_fd_ostream> llvm::CreateInfoOutputFile() {
   return llvm::make_unique<raw_fd_ostream>(2, false); // stderr.
 }
 
-static void *CreateDefaultTimerGroup() {
+namespace {
+void *CreateDefaultTimerGroup() {
   return new TimerGroup("misc", "Miscellaneous Ungrouped Timers");
 }
+} // namespace
 static ManagedStatic<TimerGroup, CreateDefaultTimerGroup> DefaultTimerGroup;
 static TimerGroup *getDefaultTimerGroup() { return &*DefaultTimerGroup; }
 
