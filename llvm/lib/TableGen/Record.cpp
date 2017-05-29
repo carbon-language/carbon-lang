@@ -1540,7 +1540,7 @@ Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) const {
   SmallVector<Init*, 8> NewArgs;
   NewArgs.reserve(arg_size());
   bool ArgsChanged = false;
-  for (const Init *Arg : args()) {
+  for (const Init *Arg : getArgs()) {
     Init *NewArg = Arg->resolveReferences(R, RV);
     NewArgs.push_back(NewArg);
     ArgsChanged |= NewArg != Arg;
