@@ -703,13 +703,12 @@ ProgramStateRef ProgramState::addPartialTaint(SymbolRef ParentSym,
   if (SubRegion == SubRegion->getBaseRegion())
     return addTaint(ParentSym, Kind);
 
-  TaintedSubRegionsRef TaintedSubRegions(0, TSRFactory.getTreeFactory());
-  if (const TaintedSubRegionsRef *SavedTaintedRegions =
-        get<DerivedSymTaint>(ParentSym))
-    TaintedSubRegions = *SavedTaintedRegions;
+  const TaintedSubRegions *SavedRegs = get<DerivedSymTaint>(ParentSym);
+  TaintedSubRegions Regs =
+      SavedRegs ? *SavedRegs : stateMgr->TSRFactory.getEmptyMap();
 
-  TaintedSubRegions = TaintedSubRegions.add(SubRegion, Kind);
-  ProgramStateRef NewState = set<DerivedSymTaint>(ParentSym, TaintedSubRegions);
+  Regs = stateMgr->TSRFactory.add(Regs, SubRegion, Kind);
+  ProgramStateRef NewState = set<DerivedSymTaint>(ParentSym, Regs);
   assert(NewState);
   return NewState;
 }
@@ -772,18 +771,16 @@ bool ProgramState::isTainted(SymbolRef Sym, TaintTagType Kind) const {
       // If this is a SymbolDerived with the same parent symbol as another
       // tainted SymbolDerived and a region that's a sub-region of that tainted
       // symbol, it's also tainted.
-      if (const TaintedSubRegionsRef *SymRegions =
-            get<DerivedSymTaint>(SD->getParentSymbol())) {
+      if (const TaintedSubRegions *Regs =
+              get<DerivedSymTaint>(SD->getParentSymbol())) {
         const TypedValueRegion *R = SD->getRegion();
-        for (TaintedSubRegionsRef::iterator I = SymRegions->begin(),
-                                            E = SymRegions->end();
-             I != E; ++I) {
+        for (auto I : *Regs) {
           // FIXME: The logic to identify tainted regions could be more
           // complete. For example, this would not currently identify
           // overlapping fields in a union as tainted. To identify this we can
           // check for overlapping/nested byte offsets.
-          if (Kind == I->second &&
-              (R == I->first || R->isSubRegionOf(I->first)))
+          if (Kind == I.second &&
+              (R == I.first || R->isSubRegionOf(I.first)))
             return true;
         }
       }

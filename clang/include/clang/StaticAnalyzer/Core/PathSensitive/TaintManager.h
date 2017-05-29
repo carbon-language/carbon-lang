@@ -39,7 +39,7 @@ template<> struct ProgramStateTrait<TaintMap>
 /// underlying regions. This is used to efficiently check whether a symbol is
 /// tainted when it represents a sub-region of a tainted symbol.
 struct DerivedSymTaint {};
-typedef llvm::ImmutableMap<SymbolRef, TaintedSubRegionsRef> DerivedSymTaintImpl;
+typedef llvm::ImmutableMap<SymbolRef, TaintedSubRegions> DerivedSymTaintImpl;
 template<> struct ProgramStateTrait<DerivedSymTaint>
     :  public ProgramStatePartialTrait<DerivedSymTaintImpl> {
   static void *GDMIndex() { static int index; return &index; }

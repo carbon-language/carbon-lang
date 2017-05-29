@@ -44,8 +44,6 @@ typedef std::unique_ptr<ConstraintManager>(*ConstraintManagerCreator)(
 typedef std::unique_ptr<StoreManager>(*StoreManagerCreator)(
     ProgramStateManager &);
 typedef llvm::ImmutableMap<const SubRegion*, TaintTagType> TaintedSubRegions;
-typedef llvm::ImmutableMapRef<const SubRegion*, TaintTagType>
-  TaintedSubRegionsRef;
 
 //===----------------------------------------------------------------------===//
 // ProgramStateTrait - Traits used by the Generic Data Map of a ProgramState.
@@ -90,7 +88,6 @@ private:
   Store store;               // Maps a location to its current value.
   GenericDataMap   GDM;      // Custom data stored by a client of this class.
   unsigned refCount;
-  TaintedSubRegions::Factory TSRFactory;
 
   /// makeWithStore - Return a ProgramState with the same values as the current
   ///  state with the exception of using the specified Store.
@@ -468,6 +465,7 @@ private:
   std::unique_ptr<ConstraintManager>   ConstraintMgr;
 
   ProgramState::GenericDataMap::Factory     GDMFactory;
+  TaintedSubRegions::Factory TSRFactory;
 
   typedef llvm::DenseMap<void*,std::pair<void*,void (*)(void*)> > GDMContextsTy;
   GDMContextsTy GDMContexts;
