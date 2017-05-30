@@ -406,6 +406,9 @@ void MappingTraits<MemberPointerInfo>::mapping(IO &IO, MemberPointerInfo &MPI) {
   IO.mapRequired("Representation", MPI.Representation);
 }
 
+namespace llvm {
+namespace CodeViewYAML {
+namespace detail {
 template <> void LeafRecordImpl<ModifierRecord>::map(IO &IO) {
   IO.mapRequired("ModifiedType", Record.ModifiedType);
   IO.mapRequired("Modifiers", Record.Modifiers);
@@ -464,6 +467,9 @@ template <> void LeafRecordImpl<ArrayRecord>::map(IO &IO) {
 void LeafRecordImpl<FieldListRecord>::map(IO &IO) {
   IO.mapRequired("FieldList", Members);
 }
+}
+}
+}
 
 namespace {
 class MemberRecordConversionVisitor : public TypeVisitorCallbacks {
@@ -509,6 +515,16 @@ CVType LeafRecordImpl<FieldListRecord>::toCodeViewRecord(
   return CVType(Kind, TTB.records().front());
 }
 
+void MappingTraits<OneMethodRecord>::mapping(IO &io, OneMethodRecord &Record) {
+  io.mapRequired("Type", Record.Type);
+  io.mapRequired("Attrs", Record.Attrs.Attrs);
+  io.mapRequired("VFTableOffset", Record.VFTableOffset);
+  io.mapRequired("Name", Record.Name);
+}
+
+namespace llvm {
+namespace CodeViewYAML {
+namespace detail {
 template <> void LeafRecordImpl<ClassRecord>::map(IO &IO) {
   IO.mapRequired("MemberCount", Record.MemberCount);
   IO.mapRequired("Options", Record.Options);
@@ -596,13 +612,6 @@ template <> void LeafRecordImpl<MethodOverloadListRecord>::map(IO &IO) {
   IO.mapRequired("Methods", Record.Methods);
 }
 
-void MappingTraits<OneMethodRecord>::mapping(IO &io, OneMethodRecord &Record) {
-  io.mapRequired("Type", Record.Type);
-  io.mapRequired("Attrs", Record.Attrs.Attrs);
-  io.mapRequired("VFTableOffset", Record.VFTableOffset);
-  io.mapRequired("Name", Record.Name);
-}
-
 template <> void MemberRecordImpl<OneMethodRecord>::map(IO &IO) {
   MappingTraits<OneMethodRecord>::mapping(IO, Record);
 }
@@ -658,6 +667,9 @@ template <> void MemberRecordImpl<VirtualBaseClassRecord>::map(IO &IO) {
 template <> void MemberRecordImpl<ListContinuationRecord>::map(IO &IO) {
   IO.mapRequired("ContinuationIndex", Record.ContinuationIndex);
 }
+}
+}
+}
 
 template <typename T>
 static inline Expected<LeafRecord> fromCodeViewRecordImpl(CVType Type) {
@@ -689,9 +701,17 @@ CVType LeafRecord::toCodeViewRecord(BumpPtrAllocator &Allocator) const {
   return Leaf->toCodeViewRecord(Allocator);
 }
 
+namespace llvm {
+namespace yaml {
 template <> struct MappingTraits<LeafRecordBase> {
   static void mapping(IO &io, LeafRecordBase &Record) { Record.map(io); }
 };
+
+template <> struct MappingTraits<MemberRecordBase> {
+  static void mapping(IO &io, MemberRecordBase &Record) { Record.map(io); }
+};
+}
+}
 
 template <typename ConcreteType>
 static void mapLeafRecordImpl(IO &IO, const char *Class, TypeLeafKind Kind,
@@ -724,10 +744,6 @@ void MappingTraits<LeafRecord>::mapping(IO &IO, LeafRecord &Obj) {
   default: { llvm_unreachable("Unknown leaf kind!"); }
   }
 }
-
-template <> struct MappingTraits<MemberRecordBase> {
-  static void mapping(IO &io, MemberRecordBase &Record) { Record.map(io); }
-};
 
 template <typename ConcreteType>
 static void mapMemberRecordImpl(IO &IO, const char *Class, TypeLeafKind Kind,
