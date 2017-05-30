@@ -377,7 +377,6 @@ private:
   int StoreCount = 0;
 };
 
-struct HashedExpression;
 namespace llvm {
 template <> struct DenseMapInfo<const Expression *> {
   static const Expression *getEmptyKey() {
@@ -391,40 +390,24 @@ template <> struct DenseMapInfo<const Expression *> {
     return reinterpret_cast<const Expression *>(Val);
   }
   static unsigned getHashValue(const Expression *E) {
-    return static_cast<unsigned>(E->getHashValue());
+    return static_cast<unsigned>(E->getComputedHash());
   }
-  static unsigned getHashValue(const HashedExpression &HE);
-  static bool isEqual(const HashedExpression &LHS, const Expression *RHS);
   static bool isEqual(const Expression *LHS, const Expression *RHS) {
     if (LHS == RHS)
       return true;
     if (LHS == getTombstoneKey() || RHS == getTombstoneKey() ||
         LHS == getEmptyKey() || RHS == getEmptyKey())
       return false;
+    // Compare hashes before equality.  This is *not* what the hashtable does,
+    // since it is computing it modulo the number of buckets, whereas we are
+    // using the full hash keyspace.  Since the hashes are precomputed, this
+    // check is *much* faster than equality.
+    if (LHS->getComputedHash() != RHS->getComputedHash())
+      return false;
     return *LHS == *RHS;
   }
 };
 } // end namespace llvm
-
-// This is just a wrapper around Expression that computes the hash value once at
-// creation time.  Hash values for an Expression can't change once they are
-// inserted into the DenseMap (it breaks DenseMap), so they must be immutable at
-// that point anyway.
-struct HashedExpression {
-  const Expression *E;
-  unsigned HashVal;
-  HashedExpression(const Expression *E)
-      : E(E), HashVal(DenseMapInfo<const Expression *>::getHashValue(E)) {}
-};
-
-unsigned
-DenseMapInfo<const Expression *>::getHashValue(const HashedExpression &HE) {
-  return HE.HashVal;
-}
-bool DenseMapInfo<const Expression *>::isEqual(const HashedExpression &LHS,
-                                               const Expression *RHS) {
-  return isEqual(LHS.E, RHS);
-}
 
 namespace {
 class NewGVN {
@@ -707,7 +690,7 @@ private:
   void markPredicateUsersTouched(Instruction *);
   void markValueLeaderChangeTouched(CongruenceClass *CC);
   void markMemoryLeaderChangeTouched(CongruenceClass *CC);
-  void markPhiOfOpsChanged(const HashedExpression &HE);
+  void markPhiOfOpsChanged(const Expression *E);
   void addPredicateUsers(const PredicateBase *, Instruction *) const;
   void addMemoryUsers(const MemoryAccess *To, MemoryAccess *U) const;
   void addAdditionalUsers(Value *To, Value *User) const;
@@ -2199,8 +2182,8 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I, const Expression *E,
 
 // For a given expression, mark the phi of ops instructions that could have
 // changed as a result.
-void NewGVN::markPhiOfOpsChanged(const HashedExpression &HE) {
-  touchAndErase(ExpressionToPhiOfOps, HE);
+void NewGVN::markPhiOfOpsChanged(const Expression *E) {
+  touchAndErase(ExpressionToPhiOfOps, E);
 }
 
 // Perform congruence finding on a given value numbering expression.
@@ -2214,14 +2197,13 @@ void NewGVN::performCongruenceFinding(Instruction *I, const Expression *E) {
   assert(!IClass->isDead() && "Found a dead class");
 
   CongruenceClass *EClass = nullptr;
-  HashedExpression HE(E);
   if (const auto *VE = dyn_cast<VariableExpression>(E)) {
     EClass = ValueToClass.lookup(VE->getVariableValue());
   } else if (isa<DeadExpression>(E)) {
     EClass = TOPClass;
   }
   if (!EClass) {
-    auto lookupResult = ExpressionToClass.insert_as({E, nullptr}, HE);
+    auto lookupResult = ExpressionToClass.insert({E, nullptr});
 
     // If it's not in the value table, create a new congruence class.
     if (lookupResult.second) {
@@ -2272,7 +2254,7 @@ void NewGVN::performCongruenceFinding(Instruction *I, const Expression *E) {
                  << "\n");
     if (ClassChanged) {
       moveValueToNewCongruenceClass(I, E, IClass, EClass);
-      markPhiOfOpsChanged(HE);
+      markPhiOfOpsChanged(E);
     }
 
     markUsersTouched(I);
