@@ -41,6 +41,17 @@ LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(TypeIndex)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(llvm::codeview::OneMethodRecord)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(llvm::codeview::MemberPointerInfo)
 
+LLVM_YAML_DECLARE_BITSET_TRAITS(CompileSym2Flags)
+LLVM_YAML_DECLARE_BITSET_TRAITS(CompileSym3Flags)
+LLVM_YAML_DECLARE_BITSET_TRAITS(ExportFlags)
+LLVM_YAML_DECLARE_BITSET_TRAITS(LocalSymFlags)
+LLVM_YAML_DECLARE_BITSET_TRAITS(ProcSymFlags)
+LLVM_YAML_DECLARE_BITSET_TRAITS(FrameProcedureOptions)
+LLVM_YAML_DECLARE_ENUM_TRAITS(CPUType)
+LLVM_YAML_DECLARE_ENUM_TRAITS(RegisterId)
+LLVM_YAML_DECLARE_ENUM_TRAITS(TrampolineType)
+LLVM_YAML_DECLARE_ENUM_TRAITS(ThunkOrdinal)
+
 namespace llvm {
 namespace CodeViewYAML {
 namespace detail {
@@ -371,104 +382,88 @@ void ScalarEnumerationTraits<SymbolKind>::enumeration(IO &io,
     io.enumCase(Value, E.Name.str().c_str(), E.Value);
 }
 
-template <> struct ScalarBitSetTraits<CompileSym2Flags> {
-  static void bitset(IO &io, CompileSym2Flags &Flags) {
-    auto FlagNames = getCompileSym2FlagNames();
-    for (const auto &E : FlagNames) {
-      io.bitSetCase(Flags, E.Name.str().c_str(),
-                    static_cast<CompileSym2Flags>(E.Value));
-    }
+void ScalarBitSetTraits<CompileSym2Flags>::bitset(IO &io,
+                                                  CompileSym2Flags &Flags) {
+  auto FlagNames = getCompileSym2FlagNames();
+  for (const auto &E : FlagNames) {
+    io.bitSetCase(Flags, E.Name.str().c_str(),
+                  static_cast<CompileSym2Flags>(E.Value));
   }
-};
+}
 
-template <> struct ScalarBitSetTraits<CompileSym3Flags> {
-  static void bitset(IO &io, CompileSym3Flags &Flags) {
-    auto FlagNames = getCompileSym3FlagNames();
-    for (const auto &E : FlagNames) {
-      io.bitSetCase(Flags, E.Name.str().c_str(),
-                    static_cast<CompileSym3Flags>(E.Value));
-    }
+void ScalarBitSetTraits<CompileSym3Flags>::bitset(IO &io,
+                                                  CompileSym3Flags &Flags) {
+  auto FlagNames = getCompileSym3FlagNames();
+  for (const auto &E : FlagNames) {
+    io.bitSetCase(Flags, E.Name.str().c_str(),
+                  static_cast<CompileSym3Flags>(E.Value));
   }
-};
+}
 
-template <> struct ScalarBitSetTraits<ExportFlags> {
-  static void bitset(IO &io, ExportFlags &Flags) {
-    auto FlagNames = getExportSymFlagNames();
-    for (const auto &E : FlagNames) {
-      io.bitSetCase(Flags, E.Name.str().c_str(),
-                    static_cast<ExportFlags>(E.Value));
-    }
+void ScalarBitSetTraits<ExportFlags>::bitset(IO &io, ExportFlags &Flags) {
+  auto FlagNames = getExportSymFlagNames();
+  for (const auto &E : FlagNames) {
+    io.bitSetCase(Flags, E.Name.str().c_str(),
+                  static_cast<ExportFlags>(E.Value));
   }
-};
+}
 
-template <> struct ScalarBitSetTraits<LocalSymFlags> {
-  static void bitset(IO &io, LocalSymFlags &Flags) {
-    auto FlagNames = getLocalFlagNames();
-    for (const auto &E : FlagNames) {
-      io.bitSetCase(Flags, E.Name.str().c_str(),
-                    static_cast<LocalSymFlags>(E.Value));
-    }
+void ScalarBitSetTraits<LocalSymFlags>::bitset(IO &io, LocalSymFlags &Flags) {
+  auto FlagNames = getLocalFlagNames();
+  for (const auto &E : FlagNames) {
+    io.bitSetCase(Flags, E.Name.str().c_str(),
+                  static_cast<LocalSymFlags>(E.Value));
   }
-};
+}
 
-template <> struct ScalarBitSetTraits<ProcSymFlags> {
-  static void bitset(IO &io, ProcSymFlags &Flags) {
-    auto FlagNames = getProcSymFlagNames();
-    for (const auto &E : FlagNames) {
-      io.bitSetCase(Flags, E.Name.str().c_str(),
-                    static_cast<ProcSymFlags>(E.Value));
-    }
+void ScalarBitSetTraits<ProcSymFlags>::bitset(IO &io, ProcSymFlags &Flags) {
+  auto FlagNames = getProcSymFlagNames();
+  for (const auto &E : FlagNames) {
+    io.bitSetCase(Flags, E.Name.str().c_str(),
+                  static_cast<ProcSymFlags>(E.Value));
   }
-};
+}
 
-template <> struct ScalarBitSetTraits<FrameProcedureOptions> {
-  static void bitset(IO &io, FrameProcedureOptions &Flags) {
-    auto FlagNames = getFrameProcSymFlagNames();
-    for (const auto &E : FlagNames) {
-      io.bitSetCase(Flags, E.Name.str().c_str(),
-                    static_cast<FrameProcedureOptions>(E.Value));
-    }
+void ScalarBitSetTraits<FrameProcedureOptions>::bitset(
+    IO &io, FrameProcedureOptions &Flags) {
+  auto FlagNames = getFrameProcSymFlagNames();
+  for (const auto &E : FlagNames) {
+    io.bitSetCase(Flags, E.Name.str().c_str(),
+                  static_cast<FrameProcedureOptions>(E.Value));
   }
-};
+}
 
-template <> struct ScalarEnumerationTraits<CPUType> {
-  static void enumeration(IO &io, CPUType &Cpu) {
-    auto CpuNames = getCPUTypeNames();
-    for (const auto &E : CpuNames) {
-      io.enumCase(Cpu, E.Name.str().c_str(), static_cast<CPUType>(E.Value));
-    }
+void ScalarEnumerationTraits<CPUType>::enumeration(IO &io, CPUType &Cpu) {
+  auto CpuNames = getCPUTypeNames();
+  for (const auto &E : CpuNames) {
+    io.enumCase(Cpu, E.Name.str().c_str(), static_cast<CPUType>(E.Value));
   }
-};
+}
 
-template <> struct ScalarEnumerationTraits<RegisterId> {
-  static void enumeration(IO &io, RegisterId &Reg) {
-    auto RegNames = getRegisterNames();
-    for (const auto &E : RegNames) {
-      io.enumCase(Reg, E.Name.str().c_str(), static_cast<RegisterId>(E.Value));
-    }
-    io.enumFallback<Hex16>(Reg);
+void ScalarEnumerationTraits<RegisterId>::enumeration(IO &io, RegisterId &Reg) {
+  auto RegNames = getRegisterNames();
+  for (const auto &E : RegNames) {
+    io.enumCase(Reg, E.Name.str().c_str(), static_cast<RegisterId>(E.Value));
   }
-};
+  io.enumFallback<Hex16>(Reg);
+}
 
-template <> struct ScalarEnumerationTraits<TrampolineType> {
-  static void enumeration(IO &io, TrampolineType &Tramp) {
-    auto TrampNames = getTrampolineNames();
-    for (const auto &E : TrampNames) {
-      io.enumCase(Tramp, E.Name.str().c_str(),
-                  static_cast<TrampolineType>(E.Value));
-    }
+void ScalarEnumerationTraits<TrampolineType>::enumeration(
+    IO &io, TrampolineType &Tramp) {
+  auto TrampNames = getTrampolineNames();
+  for (const auto &E : TrampNames) {
+    io.enumCase(Tramp, E.Name.str().c_str(),
+                static_cast<TrampolineType>(E.Value));
   }
-};
+}
 
-template <> struct ScalarEnumerationTraits<ThunkOrdinal> {
-  static void enumeration(IO &io, ThunkOrdinal &Ord) {
-    auto ThunkNames = getThunkOrdinalNames();
-    for (const auto &E : ThunkNames) {
-      io.enumCase(Ord, E.Name.str().c_str(),
-                  static_cast<ThunkOrdinal>(E.Value));
-    }
+void ScalarEnumerationTraits<ThunkOrdinal>::enumeration(IO &io,
+                                                        ThunkOrdinal &Ord) {
+  auto ThunkNames = getThunkOrdinalNames();
+  for (const auto &E : ThunkNames) {
+    io.enumCase(Ord, E.Name.str().c_str(), static_cast<ThunkOrdinal>(E.Value));
   }
-};
+}
 
 void ScalarTraits<HexFormattedString>::output(const HexFormattedString &Value,
                                               void *ctx, raw_ostream &Out) {
