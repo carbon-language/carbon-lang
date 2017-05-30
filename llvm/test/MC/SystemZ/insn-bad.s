@@ -28,6 +28,11 @@
 	adb	%f0, -1
 	adb	%f0, 4096
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: adtra	%f0, %f0, %f0, 0
+
+	adtra	%f0, %f0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: ae	%f0, -1
 #CHECK: error: invalid operand
@@ -376,6 +381,22 @@
 	axr	%f0, %f2
 	axr	%f2, %f0
 
+#CHECK: error: invalid register pair
+#CHECK: axtr	%f0, %f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: axtr	%f0, %f2, %f0
+#CHECK: error: invalid register pair
+#CHECK: axtr	%f2, %f0, %f0
+
+	axtr	%f0, %f0, %f2
+	axtr	%f0, %f2, %f0
+	axtr	%f2, %f0, %f0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: axtra	%f0, %f0, %f0, 0
+
+	axtra	%f0, %f0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: ay	%r0, -524289
 #CHECK: error: invalid operand
@@ -673,9 +694,19 @@
 	cdfbra	%f0, 0, %r0, 0
 
 #CHECK: error: instruction requires: fp-extension
+#CHECK: cdftr	%f0, 0, %r0, 0
+
+	cdftr	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
 #CHECK: cdgbra	%f0, 0, %r0, 0
 
 	cdgbra	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cdgtra	%f0, 0, %r0, 0
+
+	cdgtra	%f0, 0, %r0, 0
 
 #CHECK: error: instruction requires: fp-extension
 #CHECK: cdlfbr	%f0, 0, %r0, 0
@@ -683,9 +714,19 @@
 	cdlfbr	%f0, 0, %r0, 0
 
 #CHECK: error: instruction requires: fp-extension
+#CHECK: cdlftr	%f0, 0, %r0, 0
+
+	cdlftr	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
 #CHECK: cdlgbr	%f0, 0, %r0, 0
 
 	cdlgbr	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cdlgtr	%f0, 0, %r0, 0
+
+	cdlgtr	%f0, 0, %r0, 0
 
 #CHECK: error: invalid register pair
 #CHECK: cds	%r1, %r0, 0
@@ -774,6 +815,14 @@
 
 	celgbr	%f0, 0, %r0, 0
 
+#CHECK: error: invalid register pair
+#CHECK: cextr	%f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: cextr	%f2, %f0
+
+	cextr	%f0, %f2
+	cextr	%f2, %f0
+
 #CHECK: error: invalid operand
 #CHECK: cfc	-1
 #CHECK: error: invalid operand
@@ -797,6 +846,11 @@
 #CHECK: cfdbra	%r0, 0, %f0, 0
 
 	cfdbra	%r0, 0, %f0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cfdtr	%r0, 0, %f0, 0
+
+	cfdtr	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cfebr	%r0, -1, %f0
@@ -835,6 +889,11 @@
 
 	cfxbra	%r0, 0, %f0, 0
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cfxtr	%r0, 0, %f0, 0
+
+	cfxtr	%r0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: cfxr	%r0, -1, %f0
 #CHECK: error: invalid operand
@@ -866,6 +925,19 @@
 #CHECK: cgdbra	%r0, 0, %f0, 0
 
 	cgdbra	%r0, 0, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: cgdtr	%r0, -1, %f0
+#CHECK: error: invalid operand
+#CHECK: cgdtr	%r0, 16, %f0
+
+	cgdtr	%r0, -1, %f0
+	cgdtr	%r0, 16, %f0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cgdtra	%r0, 0, %f0, 0
+
+	cgdtra	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cgebr	%r0, -1, %f0
@@ -1063,6 +1135,22 @@
 #CHECK: cgxbra	%r0, 0, %f0, 0
 
 	cgxbra	%r0, 0, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: cgxtr	%r0, -1, %f0
+#CHECK: error: invalid operand
+#CHECK: cgxtr	%r0, 16, %f0
+#CHECK: error: invalid register pair
+#CHECK: cgxtr	%r0, 0, %f2
+
+	cgxtr	%r0, -1, %f0
+	cgxtr	%r0, 16, %f0
+	cgxtr	%r0, 0, %f2
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cgxtra	%r0, 0, %f0, 0
+
+	cgxtra	%r0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: cgxr	%r0, -1, %f0
@@ -1303,6 +1391,11 @@
 	clfdbr	%r0, 0, %f0, 0
 
 #CHECK: error: instruction requires: fp-extension
+#CHECK: clfdtr	%r0, 0, %f0, 0
+
+	clfdtr	%r0, 0, %f0, 0
+
+#CHECK: error: instruction requires: fp-extension
 #CHECK: clfebr	%r0, 0, %f0, 0
 
 	clfebr	%r0, 0, %f0, 0
@@ -1351,6 +1444,11 @@
 
 	clfxbr	%r0, 0, %f0, 0
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: clfxtr	%r0, 0, %f0, 0
+
+	clfxtr	%r0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: clg	%r0, -524289
 #CHECK: error: invalid operand
@@ -1363,6 +1461,11 @@
 #CHECK: clgdbr	%r0, 0, %f0, 0
 
 	clgdbr	%r0, 0, %f0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: clgdtr	%r0, 0, %f0, 0
+
+	clgdtr	%r0, 0, %f0, 0
 
 #CHECK: error: instruction requires: fp-extension
 #CHECK: clgebr	%r0, 0, %f0, 0
@@ -1514,6 +1617,11 @@
 #CHECK: clgxbr	%r0, 0, %f0, 0
 
 	clgxbr	%r0, 0, %f0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: clgxtr	%r0, 0, %f0, 0
+
+	clgxtr	%r0, 0, %f0, 0
 
 #CHECK: error: instruction requires: high-word
 #CHECK: clhf	%r0, 0
@@ -1831,6 +1939,14 @@
 	cs	%r0, %r0, 0(%r1,%r2)
 
 #CHECK: error: invalid operand
+#CHECK: csdtr	%r0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: csdtr	%r0, %f0, 16
+
+	csdtr	%r0, %f0, -1
+	csdtr	%r0, %f0, 16
+
+#CHECK: error: invalid operand
 #CHECK: csg	%r0, %r0, -524289
 #CHECK: error: invalid operand
 #CHECK: csg	%r0, %r0, 524288
@@ -1857,6 +1973,20 @@
         csst	4096(%r1), 160(%r15), %r2
         csst	0(%r1), -1(%r15), %r2
         csst	0(%r1), 4096(%r15), %r2
+
+#CHECK: error: invalid operand
+#CHECK: csxtr	%r0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: csxtr	%r0, %f0, 16
+#CHECK: error: invalid register pair
+#CHECK: csxtr	%r0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: csxtr	%r1, %f0, 0
+
+	csxtr	%r0, %f0, -1
+	csxtr	%r0, %f0, 16
+	csxtr	%r0, %f2, 0
+	csxtr	%r1, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: csy	%r0, %r0, -524289
@@ -1977,6 +2107,14 @@
 	cuutf	%r2, %r4, -1
 	cuutf	%r2, %r4, 16
 
+#CHECK: error: invalid register pair
+#CHECK: cuxtr	%r0, %f2
+#CHECK: error: invalid register pair
+#CHECK: cuxtr	%r1, %f0
+
+	cuxtr	%r0, %f2
+	cuxtr	%r1, %f0
+
 #CHECK: error: invalid operand
 #CHECK: cvb	%r0, -1
 #CHECK: error: invalid operand
@@ -2043,6 +2181,11 @@
 
 	cxfbra	%f0, 0, %r0, 0
 
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cxftr	%f0, 0, %r0, 0
+
+	cxftr	%f0, 0, %r0, 0
+
 #CHECK: error: invalid register pair
 #CHECK: cxfr	%f2, %r0
 
@@ -2063,15 +2206,35 @@
 
 	cxgr	%f2, %r0
 
+#CHECK: error: invalid register pair
+#CHECK: cxgtr	%f2, %r0
+
+	cxgtr	%f2, %r0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cxgtra	%f0, 0, %r0, 0
+
+	cxgtra	%f0, 0, %r0, 0
+
 #CHECK: error: instruction requires: fp-extension
 #CHECK: cxlfbr	%f0, 0, %r0, 0
 
 	cxlfbr	%f0, 0, %r0, 0
 
 #CHECK: error: instruction requires: fp-extension
+#CHECK: cxlftr	%f0, 0, %r0, 0
+
+	cxlftr	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
 #CHECK: cxlgbr	%f0, 0, %r0, 0
 
 	cxlgbr	%f0, 0, %r0, 0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: cxlgtr	%f0, 0, %r0, 0
+
+	cxlgtr	%f0, 0, %r0, 0
 
 #CHECK: error: invalid register pair
 #CHECK: cxr	%f0, %f2
@@ -2080,6 +2243,30 @@
 
 	cxr	%f0, %f2
 	cxr	%f2, %f0
+
+#CHECK: error: invalid register pair
+#CHECK: cxstr	%f0, %r1
+#CHECK: error: invalid register pair
+#CHECK: cxstr	%f2, %r0
+
+	cxstr	%f0, %r1
+	cxstr	%f2, %r0
+
+#CHECK: error: invalid register pair
+#CHECK: cxtr	%f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: cxtr	%f2, %f0
+
+	cxtr	%f0, %f2
+	cxtr	%f2, %f0
+
+#CHECK: error: invalid register pair
+#CHECK: cxutr	%f0, %r1
+#CHECK: error: invalid register pair
+#CHECK: cxutr	%f2, %r0
+
+	cxutr	%f0, %r1
+	cxutr	%f2, %r0
 
 #CHECK: error: invalid operand
 #CHECK: cy	%r0, -524289
@@ -2115,6 +2302,11 @@
 
 	ddb	%f0, -1
 	ddb	%f0, 4096
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: ddtra	%f0, %f0, %f0, 0
+
+	ddtra	%f0, %f0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: de	%f0, -1
@@ -2286,6 +2478,22 @@
 	dxr	%f0, %f2
 	dxr	%f2, %f0
 
+#CHECK: error: invalid register pair
+#CHECK: dxtr	%f0, %f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: dxtr	%f0, %f2, %f0
+#CHECK: error: invalid register pair
+#CHECK: dxtr	%f2, %f0, %f0
+
+	dxtr	%f0, %f0, %f2
+	dxtr	%f0, %f2, %f0
+	dxtr	%f2, %f0, %f0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: dxtra	%f0, %f0, %f0, 0
+
+	dxtra	%f0, %f0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: ecag	%r0, %r0, -524289
 #CHECK: error: invalid operand
@@ -2402,6 +2610,22 @@
 	edmk	0(1,%r2), 0(%r1,%r2)
 	edmk	0(-), 0
 
+#CHECK: error: invalid register pair
+#CHECK: eextr	%f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: eextr	%f2, %f0
+
+	eextr	%f0, %f2
+	eextr	%f2, %f0
+
+#CHECK: error: invalid register pair
+#CHECK: esxtr	%f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: esxtr	%f2, %f0
+
+	esxtr	%f0, %f2
+	esxtr	%f2, %f0
+
 #CHECK: error: invalid operand
 #CHECK: ex      %r0, -1
 #CHECK: error: invalid operand
@@ -2422,6 +2646,20 @@
 #CHECK: fidbra	%f0, 0, %f0, 0
 
 	fidbra	%f0, 0, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: fidtr	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: fidtr	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: fidtr	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: fidtr	%f0, 16, %f0, 0
+
+	fidtr	%f0, 0, %f0, -1
+	fidtr	%f0, 0, %f0, 16
+	fidtr	%f0, -1, %f0, 0
+	fidtr	%f0, 16, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: fiebr	%f0, -1, %f0
@@ -2462,6 +2700,26 @@
 
 	fixr	%f0, %f2
 	fixr	%f2, %f0
+
+#CHECK: error: invalid operand
+#CHECK: fixtr	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: fixtr	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: fixtr	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: fixtr	%f0, 16, %f0, 0
+#CHECK: error: invalid register pair
+#CHECK: fixtr	%f0, 0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: fixtr	%f2, 0, %f0, 0
+
+	fixtr	%f0, 0, %f0, -1
+	fixtr	%f0, 0, %f0, 16
+	fixtr	%f0, -1, %f0, 0
+	fixtr	%f0, 16, %f0, 0
+	fixtr	%f0, 0, %f2, 0
+	fixtr	%f2, 0, %f0, 0
 
 #CHECK: error: invalid register pair
 #CHECK: flogr	%r1, %r0
@@ -2525,6 +2783,17 @@
 
 	icy	%r0, -524289
 	icy	%r0, 524288
+
+#CHECK: error: invalid register pair
+#CHECK: iextr	%f0, %f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: iextr	%f0, %f2, %f0
+#CHECK: error: invalid register pair
+#CHECK: iextr	%f2, %f0, %f0
+
+	iextr	%f0, %f0, %f2
+	iextr	%f0, %f2, %f0
+	iextr	%f2, %f0, %f0
 
 #CHECK: error: invalid operand
 #CHECK: iihf	%r0, -1
@@ -2643,6 +2912,14 @@
 
 	kxbr	%f0, %f2
 	kxbr	%f2, %f0
+
+#CHECK: error: invalid register pair
+#CHECK: kxtr	%f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: kxtr	%f2, %f0
+
+	kxtr	%f0, %f2
+	kxtr	%f2, %f0
 
 #CHECK: error: invalid operand
 #CHECK: l	%r0, -1
@@ -2802,6 +3079,14 @@
 	ldeb	%f0, -1
 	ldeb	%f0, 4096
 
+#CHECK: error: invalid operand
+#CHECK: ldetr	%f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: ldetr	%f0, %f0, 16
+
+	ldetr	%f0, %f0, -1
+	ldetr	%f0, %f0, 16
+
 #CHECK: error: invalid register pair
 #CHECK: ldxbr	%f0, %f2
 #CHECK: error: invalid register pair
@@ -2819,6 +3104,26 @@
 #CHECK: ldxr	%f0, %f2
 
 	ldxr	%f0, %f2
+
+#CHECK: error: invalid operand
+#CHECK: ldxtr	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: ldxtr	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: ldxtr	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: ldxtr	%f0, 16, %f0, 0
+#CHECK: error: invalid register pair
+#CHECK: ldxtr	%f0, 0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: ldxtr	%f2, 0, %f0, 0
+
+	ldxtr	%f0, 0, %f0, -1
+	ldxtr	%f0, 0, %f0, 16
+	ldxtr	%f0, -1, %f0, 0
+	ldxtr	%f0, 16, %f0, 0
+	ldxtr	%f0, 0, %f2, 0
+	ldxtr	%f2, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: ldy	%f0, -524289
@@ -2840,6 +3145,20 @@
 #CHECK: ledbra	%f0, 0, %f0, 0
 
 	ledbra	%f0, 0, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: ledtr	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: ledtr	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: ledtr	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: ledtr	%f0, 16, %f0, 0
+
+	ledtr	%f0, 0, %f0, -1
+	ledtr	%f0, 0, %f0, 16
+	ledtr	%f0, -1, %f0, 0
+	ledtr	%f0, 16, %f0, 0
 
 #CHECK: error: invalid register pair
 #CHECK: lexbr	%f0, %f2
@@ -3365,6 +3684,14 @@
 	ltxr	%f0, %f14
 	ltxr	%f14, %f0
 
+#CHECK: error: invalid register pair
+#CHECK: ltxtr	%f0, %f14
+#CHECK: error: invalid register pair
+#CHECK: ltxtr	%f14, %f0
+
+	ltxtr	%f0, %f14
+	ltxtr	%f14, %f0
+
 #CHECK: error: invalid operand
 #CHECK: lxd	%f0, -1
 #CHECK: error: invalid operand
@@ -3396,6 +3723,17 @@
 #CHECK: lxdr	%f2, %f0
 
 	lxdr	%f2, %f0
+
+#CHECK: error: invalid operand
+#CHECK: lxdtr	%f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: lxdtr	%f0, %f0, 16
+#CHECK: error: invalid register pair
+#CHECK: lxdtr	%f2, %f0, 0
+
+	lxdtr	%f0, %f0, -1
+	lxdtr	%f0, %f0, 16
+	lxdtr	%f2, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: lxe	%f0, -1
@@ -3573,6 +3911,11 @@
 
 	mdeb	%f0, -1
 	mdeb	%f0, 4096
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: mdtra	%f0, %f0, %f0, 0
+
+	mdtra	%f0, %f0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: me	%f0, -1
@@ -4244,6 +4587,22 @@
 	mxr	%f0, %f2
 	mxr	%f2, %f0
 
+#CHECK: error: invalid register pair
+#CHECK: mxtr	%f0, %f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: mxtr	%f0, %f2, %f0
+#CHECK: error: invalid register pair
+#CHECK: mxtr	%f2, %f0, %f0
+
+	mxtr	%f0, %f0, %f2
+	mxtr	%f0, %f2, %f0
+	mxtr	%f2, %f0, %f0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: mxtra	%f0, %f0, %f0, 0
+
+	mxtra	%f0, %f0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: my	%f0, %f0, -1
 #CHECK: error: invalid operand
@@ -4803,6 +5162,31 @@
         pr    %r0
 
 #CHECK: error: invalid operand
+#CHECK: qadtr	%f0, %f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: qadtr	%f0, %f0, %f0, 16
+
+	qadtr	%f0, %f0, %f0, -1
+	qadtr	%f0, %f0, %f0, 16
+
+#CHECK: error: invalid operand
+#CHECK: qaxtr	%f0, %f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: qaxtr	%f0, %f0, %f0, 16
+#CHECK: error: invalid register pair
+#CHECK: qaxtr	%f0, %f0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: qaxtr	%f0, %f2, %f0, 0
+#CHECK: error: invalid register pair
+#CHECK: qaxtr	%f2, %f0, %f0, 0
+
+	qaxtr	%f0, %f0, %f0, -1
+	qaxtr	%f0, %f0, %f0, 16
+	qaxtr	%f0, %f0, %f2, 0
+	qaxtr	%f0, %f2, %f0, 0
+	qaxtr	%f2, %f0, %f0, 0
+
+#CHECK: error: invalid operand
 #CHECK: risbg	%r0,%r0,0,0,-1
 #CHECK: error: invalid operand
 #CHECK: risbg	%r0,%r0,0,0,64
@@ -4901,6 +5285,31 @@
 	rosbg	%r0,%r0,256,0,0
 
 #CHECK: error: invalid operand
+#CHECK: rrdtr	%f0, %f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: rrdtr	%f0, %f0, %f0, 16
+
+	rrdtr	%f0, %f0, %f0, -1
+	rrdtr	%f0, %f0, %f0, 16
+
+#CHECK: error: invalid operand
+#CHECK: rrxtr	%f0, %f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: rrxtr	%f0, %f0, %f0, 16
+#CHECK: error: invalid register pair
+#CHECK: rrxtr	%f0, %f0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: rrxtr	%f0, %f2, %f0, 0
+#CHECK: error: invalid register pair
+#CHECK: rrxtr	%f2, %f0, %f0, 0
+
+	rrxtr	%f0, %f0, %f0, -1
+	rrxtr	%f0, %f0, %f0, 16
+	rrxtr	%f0, %f0, %f2, 0
+	rrxtr	%f0, %f2, %f0, 0
+	rrxtr	%f2, %f0, %f0, 0
+
+#CHECK: error: invalid operand
 #CHECK: rxsbg	%r0,%r0,0,0,-1
 #CHECK: error: invalid operand
 #CHECK: rxsbg	%r0,%r0,0,0,64
@@ -4943,6 +5352,11 @@
 
 	sdb	%f0, -1
 	sdb	%f0, 4096
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: sdtra	%f0, %f0, %f0, 0
+
+	sdtra	%f0, %f0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: se	%f0, -1
@@ -5089,6 +5503,14 @@
 	sldl	%r0,0(%r1,%r2)
 
 #CHECK: error: invalid operand
+#CHECK: sldt	%f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: sldt	%f0, %f0, 4096
+
+	sldt	%f0, %f0, -1
+	sldt	%f0, %f0, 4096
+
+#CHECK: error: invalid operand
 #CHECK: slfi	%r0, -1
 #CHECK: error: invalid operand
 #CHECK: slfi	%r0, (1 << 32)
@@ -5162,6 +5584,20 @@
 #CHECK: slrk	%r2,%r3,%r4
 
 	slrk	%r2,%r3,%r4
+
+#CHECK: error: invalid operand
+#CHECK: slxt	%f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: slxt	%f0, %f0, 4096
+#CHECK: error: invalid register pair
+#CHECK: slxt	%f0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: slxt	%f2, %f0, 0
+
+	slxt	%f0, %f0, -1
+	slxt	%f0, %f0, 4096
+	slxt	%f0, %f2, 0
+	slxt	%f2, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: sly	%r0, -524289
@@ -5339,6 +5775,14 @@
 	srdl	%r0,0(%r0)
 	srdl	%r0,0(%r1,%r2)
 
+#CHECK: error: invalid operand
+#CHECK: srdt	%f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: srdt	%f0, %f0, 4096
+
+	srdt	%f0, %f0, -1
+	srdt	%f0, %f0, 4096
+
 #CHECK: error: instruction requires: distinct-ops
 #CHECK: srk	%r2,%r3,%r4
 
@@ -5453,6 +5897,20 @@
 	srp	0(1), 0, -1
 	srp	0(1), 0, 16
 	srp	0(-), 0, 0
+
+#CHECK: error: invalid operand
+#CHECK: srxt	%f0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: srxt	%f0, %f0, 4096
+#CHECK: error: invalid register pair
+#CHECK: srxt	%f0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: srxt	%f2, %f0, 0
+
+	srxt	%f0, %f0, -1
+	srxt	%f0, %f0, 4096
+	srxt	%f0, %f2, 0
+	srxt	%f2, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: st	%r0, -1
@@ -5788,6 +6246,22 @@
 	sxr	%f0, %f2
 	sxr	%f2, %f0
 
+#CHECK: error: invalid register pair
+#CHECK: sxtr	%f0, %f0, %f2
+#CHECK: error: invalid register pair
+#CHECK: sxtr	%f0, %f2, %f0
+#CHECK: error: invalid register pair
+#CHECK: sxtr	%f2, %f0, %f0
+
+	sxtr	%f0, %f0, %f2
+	sxtr	%f0, %f2, %f0
+	sxtr	%f2, %f0, %f0
+
+#CHECK: error: instruction requires: fp-extension
+#CHECK: sxtra	%f0, %f0, %f0, 0
+
+	sxtra	%f0, %f0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: sy	%r0, -524289
 #CHECK: error: invalid operand
@@ -5835,6 +6309,60 @@
 
 	tcxb	%f0, -1
 	tcxb	%f0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: tdcdt	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: tdcdt	%f0, 4096
+
+	tdcdt	%f0, -1
+	tdcdt	%f0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: tdcet	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: tdcet	%f0, 4096
+
+	tdcet	%f0, -1
+	tdcet	%f0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: tdcxt	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: tdcxt	%f0, 4096
+#CHECK: error: invalid register pair
+#CHECK: tdcxt	%f2, 0
+
+	tdcxt	%f0, -1
+	tdcxt	%f0, 4096
+	tdcxt	%f2, 0
+
+#CHECK: error: invalid operand
+#CHECK: tdgdt	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: tdgdt	%f0, 4096
+
+	tdgdt	%f0, -1
+	tdgdt	%f0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: tdget	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: tdget	%f0, 4096
+
+	tdget	%f0, -1
+	tdget	%f0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: tdgxt	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: tdgxt	%f0, 4096
+#CHECK: error: invalid register pair
+#CHECK: tdgxt	%f2, 0
+
+	tdgxt	%f0, -1
+	tdgxt	%f0, 4096
+	tdgxt	%f2, 0
 
 #CHECK: error: invalid operand
 #CHECK: tm	-1, 0

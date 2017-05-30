@@ -1016,6 +1016,130 @@ def : InstRW<[VecXsPm, Lat4], (instregex "C(E|D)R$")>;
 def : InstRW<[VecDF, VecDF, Lat20, GroupAlone], (instregex "CXR$")>;
 
 
+// ------------------------ Decimal floating point -------------------------- //
+
+//===----------------------------------------------------------------------===//
+// DFP: Move instructions
+//===----------------------------------------------------------------------===//
+
+// Load and Test
+def : InstRW<[VecDF], (instregex "LTDTR$")>;
+def : InstRW<[VecDF2, VecDF2, Lat11, GroupAlone], (instregex "LTXTR$")>;
+
+//===----------------------------------------------------------------------===//
+// DFP: Conversion instructions
+//===----------------------------------------------------------------------===//
+
+// Load rounded
+def : InstRW<[VecDF, Lat15], (instregex "LEDTR$")>;
+def : InstRW<[VecDF, VecDF, Lat20], (instregex "LDXTR$")>;
+
+// Load lengthened
+def : InstRW<[VecDF], (instregex "LDETR$")>;
+def : InstRW<[VecDF2, VecDF2, Lat11, GroupAlone], (instregex "LXDTR$")>;
+
+// Convert from fixed / logical
+def : InstRW<[FXb, VecDF, Lat30, BeginGroup], (instregex "CD(F|G)TR(A)?$")>;
+def : InstRW<[FXb, VecDF2, VecDF2, Lat30, GroupAlone], (instregex "CX(F|G)TR(A)?$")>;
+def : InstRW<[FXb, VecDF, Lat30, BeginGroup], (instregex "CDL(F|G)TR$")>;
+def : InstRW<[FXb, VecDF2, VecDF2, Lat30, GroupAlone], (instregex "CXL(F|G)TR$")>;
+
+// Convert to fixed / logical
+def : InstRW<[FXb, VecDF, Lat30, BeginGroup], (instregex "C(F|G)DTR(A)?$")>;
+def : InstRW<[FXb, VecDF, VecDF, Lat30, BeginGroup], (instregex "C(F|G)XTR(A)?$")>;
+def : InstRW<[FXb, VecDF, Lat30, BeginGroup], (instregex "CL(F|G)DTR$")>;
+def : InstRW<[FXb, VecDF, VecDF, Lat30, BeginGroup], (instregex "CL(F|G)XTR$")>;
+
+// Convert from / to signed / unsigned packed
+def : InstRW<[FXb, VecDF, Lat9, BeginGroup], (instregex "CD(S|U)TR$")>;
+def : InstRW<[FXb, FXb, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "CX(S|U)TR$")>;
+def : InstRW<[FXb, VecDF, Lat12, BeginGroup], (instregex "C(S|U)DTR$")>;
+def : InstRW<[FXb, FXb, VecDF2, VecDF2, Lat15, BeginGroup], (instregex "C(S|U)XTR$")>;
+
+// Convert from / to zoned
+def : InstRW<[LSU, VecDF, Lat11, BeginGroup], (instregex "CDZT$")>;
+def : InstRW<[LSU, LSU, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "CXZT$")>;
+def : InstRW<[FXb, LSU, VecDF, Lat11, BeginGroup], (instregex "CZDT$")>;
+def : InstRW<[FXb, LSU, VecDF, VecDF, Lat15, GroupAlone], (instregex "CZXT$")>;
+
+// Convert from / to packed
+def : InstRW<[LSU, VecDF, Lat11, BeginGroup], (instregex "CDPT$")>;
+def : InstRW<[LSU, LSU, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "CXPT$")>;
+def : InstRW<[FXb, LSU, VecDF, Lat11, BeginGroup], (instregex "CPDT$")>;
+def : InstRW<[FXb, LSU, VecDF, VecDF, Lat15, GroupAlone], (instregex "CPXT$")>;
+
+// Perform floating-point operation
+def : InstRW<[LSU, Lat30, GroupAlone], (instregex "PFPO$")>;
+
+//===----------------------------------------------------------------------===//
+// DFP: Unary arithmetic
+//===----------------------------------------------------------------------===//
+
+// Load FP integer
+def : InstRW<[VecDF], (instregex "FIDTR$")>;
+def : InstRW<[VecDF2, VecDF2, Lat11, GroupAlone], (instregex "FIXTR$")>;
+
+// Extract biased exponent
+def : InstRW<[FXb, VecDF, Lat12, BeginGroup], (instregex "EEDTR$")>;
+def : InstRW<[FXb, VecDF, Lat12, BeginGroup], (instregex "EEXTR$")>;
+
+// Extract significance
+def : InstRW<[FXb, VecDF, Lat12, BeginGroup], (instregex "ESDTR$")>;
+def : InstRW<[FXb, VecDF, VecDF, Lat15, BeginGroup], (instregex "ESXTR$")>;
+
+//===----------------------------------------------------------------------===//
+// DFP: Binary arithmetic
+//===----------------------------------------------------------------------===//
+
+// Addition
+def : InstRW<[VecDF], (instregex "ADTR(A)?$")>;
+def : InstRW<[VecDF2, VecDF2, Lat11, GroupAlone], (instregex "AXTR(A)?$")>;
+
+// Subtraction
+def : InstRW<[VecDF], (instregex "SDTR(A)?$")>;
+def : InstRW<[VecDF2, VecDF2, Lat11, GroupAlone], (instregex "SXTR(A)?$")>;
+
+// Multiply
+def : InstRW<[VecDF, Lat30], (instregex "MDTR(A)?$")>;
+def : InstRW<[VecDF2, VecDF2, Lat30, GroupAlone], (instregex "MXTR(A)?$")>;
+
+// Division
+def : InstRW<[VecDF, Lat30], (instregex "DDTR(A)?$")>;
+def : InstRW<[VecDF2, VecDF2, Lat30, GroupAlone], (instregex "DXTR(A)?$")>;
+
+// Quantize
+def : InstRW<[VecDF], (instregex "QADTR$")>;
+def : InstRW<[VecDF2, VecDF2, Lat11, GroupAlone], (instregex "QAXTR$")>;
+
+// Reround
+def : InstRW<[FXb, VecDF, Lat11], (instregex "RRDTR$")>;
+def : InstRW<[FXb, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "RRXTR$")>;
+
+// Shift significand left/right
+def : InstRW<[LSU, VecDF, Lat11], (instregex "S(L|R)DT$")>;
+def : InstRW<[LSU, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "S(L|R)XT$")>;
+
+// Insert biased exponent
+def : InstRW<[FXb, VecDF, Lat11], (instregex "IEDTR$")>;
+def : InstRW<[FXb, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "IEXTR$")>;
+
+//===----------------------------------------------------------------------===//
+// DFP: Comparisons
+//===----------------------------------------------------------------------===//
+
+// Compare
+def : InstRW<[VecDF], (instregex "(K|C)DTR$")>;
+def : InstRW<[VecDF, VecDF, Lat11, GroupAlone], (instregex "(K|C)XTR$")>;
+
+// Compare biased exponent
+def : InstRW<[VecDF], (instregex "CEDTR$")>;
+def : InstRW<[VecDF], (instregex "CEXTR$")>;
+
+// Test Data Class/Group
+def : InstRW<[LSU, VecDF, Lat11], (instregex "TD(C|G)(E|D)T$")>;
+def : InstRW<[LSU, VecDF2, VecDF2, Lat15, GroupAlone], (instregex "TD(C|G)XT$")>;
+
+
 // --------------------------------- Vector --------------------------------- //
 
 //===----------------------------------------------------------------------===//

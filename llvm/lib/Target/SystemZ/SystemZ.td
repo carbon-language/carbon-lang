@@ -55,6 +55,7 @@ include "SystemZInstrInfo.td"
 include "SystemZInstrVector.td"
 include "SystemZInstrFP.td"
 include "SystemZInstrHFP.td"
+include "SystemZInstrDFP.td"
 
 def SystemZInstrInfo : InstrInfo {}
 

@@ -527,6 +527,22 @@ class InstRRFc<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{3-0}   = R2;
 }
 
+class InstRRFd<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<4, outs, ins, asmstr, pattern> {
+  field bits<32> Inst;
+  field bits<32> SoftFail = 0;
+
+  bits<4> R1;
+  bits<4> R2;
+  bits<4> M4;
+
+  let Inst{31-16} = op;
+  let Inst{15-12} = 0;
+  let Inst{11-8}  = M4;
+  let Inst{7-4}   = R1;
+  let Inst{3-0}   = R2;
+}
+
 class InstRRFe<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   : InstSystemZ<4, outs, ins, asmstr, pattern> {
   field bits<32> Inst;
@@ -722,6 +738,22 @@ class InstRSLa<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{35-32} = 0;
   let Inst{31-16} = BDL1{15-0};
   let Inst{15-8}  = 0;
+  let Inst{7-0}   = op{7-0};
+}
+
+class InstRSLb<bits<16> op, dag outs, dag ins, string asmstr, list<dag> pattern>
+  : InstSystemZ<6, outs, ins, asmstr, pattern> {
+  field bits<48> Inst;
+  field bits<48> SoftFail = 0;
+
+  bits<4> R1;
+  bits<24> BDL2;
+  bits<4> M3;
+
+  let Inst{47-40} = op{15-8};
+  let Inst{39-16} = BDL2;
+  let Inst{15-12} = R1;
+  let Inst{11-8}  = M3;
   let Inst{7-0}   = op{7-0};
 }
 
@@ -2817,6 +2849,11 @@ multiclass BinaryMemRRFcOpt<string mnemonic, bits<16> opcode,
   def Opt : UnaryMemRRFc<mnemonic, opcode, cls1, cls2>;
 }
 
+class BinaryRRFd<string mnemonic, bits<16> opcode, RegisterOperand cls1,
+                RegisterOperand cls2>
+  : InstRRFd<opcode, (outs cls1:$R1), (ins cls2:$R2, imm32zx4:$M4),
+             mnemonic#"\t$R1, $R2, $M4", []>;
+
 class BinaryRRFe<string mnemonic, bits<16> opcode, RegisterOperand cls1,
                 RegisterOperand cls2>
   : InstRRFe<opcode, (outs cls1:$R1), (ins imm32zx4:$M3, cls2:$R2),
@@ -2965,6 +3002,13 @@ multiclass BinaryRSAndK<string mnemonic, bits<8> opcode1, bits<16> opcode2,
     let NumOpsValue = "2", isConvertibleToThreeAddress = 1 in
       def "" : BinaryRS<mnemonic, opcode1, operator, cls>;
   }
+}
+
+class BinaryRSL<string mnemonic, bits<16> opcode, RegisterOperand cls>
+  : InstRSLb<opcode, (outs cls:$R1),
+             (ins bdladdr12onlylen8:$BDL2, imm32zx4:$M3),
+             mnemonic#"\t$R1, $BDL2, $M3", []> {
+  let mayLoad = 1;
 }
 
 class BinaryRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
@@ -3315,6 +3359,13 @@ multiclass StoreBinaryRSPair<string mnemonic, bits<8> rsOpcode,
   }
 }
 
+class StoreBinaryRSL<string mnemonic, bits<16> opcode, RegisterOperand cls>
+  : InstRSLb<opcode, (outs),
+             (ins cls:$R1, bdladdr12onlylen8:$BDL2, imm32zx4:$M3),
+             mnemonic#"\t$R1, $BDL2, $M3", []> {
+  let mayStore = 1;
+}
+
 class StoreBinaryVRV<string mnemonic, bits<16> opcode, bits<5> bytes,
                      Immediate index>
   : InstVRV<opcode, (outs), (ins VR128:$V1, bdvaddr12only:$VBD2, index:$M3),
@@ -3601,6 +3652,12 @@ class SideEffectTernarySSF<string mnemonic, bits<12> opcode,
   : InstSSF<opcode, (outs),
             (ins bdaddr12only:$BD1, bdaddr12only:$BD2, cls:$R3),
             mnemonic#"\t$BD1, $BD2, $R3", []>;
+
+class TernaryRRFa<string mnemonic, bits<16> opcode,
+                 RegisterOperand cls1, RegisterOperand cls2,
+                 RegisterOperand cls3>
+  : InstRRFa<opcode, (outs cls1:$R1), (ins cls2:$R2, cls3:$R3, imm32zx4:$M4),
+             mnemonic#"\t$R1, $R2, $R3, $M4", []>;
 
 class TernaryRRFb<string mnemonic, bits<16> opcode,
                   RegisterOperand cls1, RegisterOperand cls2,
