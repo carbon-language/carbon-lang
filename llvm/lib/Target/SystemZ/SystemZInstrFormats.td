@@ -2752,6 +2752,15 @@ class BinaryRRE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   let DisableEncoding = "$R1src";
 }
 
+class BinaryRRD<string mnemonic, bits<16> opcode, SDPatternOperator operator,
+                RegisterOperand cls1, RegisterOperand cls2>
+  : InstRRD<opcode, (outs cls1:$R1), (ins cls2:$R3, cls2:$R2),
+            mnemonic#"\t$R1, $R3, $R2",
+            [(set cls1:$R1, (operator cls2:$R3, cls2:$R2))]> {
+  let OpKey = mnemonic#cls;
+  let OpType = "reg";
+}
+
 class BinaryRRFa<string mnemonic, bits<16> opcode, SDPatternOperator operator,
                  RegisterOperand cls1, RegisterOperand cls2,
                  RegisterOperand cls3>
@@ -2985,6 +2994,18 @@ class BinaryRXE<string mnemonic, bits<16> opcode, SDPatternOperator operator,
   let mayLoad = 1;
   let AccessBytes = bytes;
   let M3 = 0;
+}
+
+class BinaryRXF<string mnemonic, bits<16> opcode, SDPatternOperator operator,
+                RegisterOperand cls1, RegisterOperand cls2,
+                SDPatternOperator load, bits<5> bytes>
+  : InstRXF<opcode, (outs cls1:$R1), (ins cls2:$R3, bdxaddr12only:$XBD2),
+            mnemonic#"\t$R1, $R3, $XBD2",
+            [(set cls1:$R1, (operator cls2:$R3, (load bdxaddr12only:$XBD2)))]> {
+  let OpKey = mnemonic#"r"#cls;
+  let OpType = "mem";
+  let mayLoad = 1;
+  let AccessBytes = bytes;
 }
 
 class BinaryRXY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
@@ -3597,11 +3618,11 @@ class TernaryRRFe<string mnemonic, bits<16> opcode, RegisterOperand cls1,
              (ins imm32zx4:$M3, cls2:$R2, imm32zx4:$M4),
              mnemonic#"\t$R1, $M3, $R2, $M4", []>;
 
-class TernaryRRD<string mnemonic, bits<16> opcode,
-                 SDPatternOperator operator, RegisterOperand cls>
-  : InstRRD<opcode, (outs cls:$R1), (ins cls:$R1src, cls:$R3, cls:$R2),
+class TernaryRRD<string mnemonic, bits<16> opcode, SDPatternOperator operator,
+                 RegisterOperand cls1, RegisterOperand cls2>
+  : InstRRD<opcode, (outs cls1:$R1), (ins cls2:$R1src, cls2:$R3, cls2:$R2),
             mnemonic#"\t$R1, $R3, $R2",
-            [(set cls:$R1, (operator cls:$R1src, cls:$R3, cls:$R2))]> {
+            [(set cls1:$R1, (operator cls2:$R1src, cls2:$R3, cls2:$R2))]> {
   let OpKey = mnemonic#cls;
   let OpType = "reg";
   let Constraints = "$R1 = $R1src";
@@ -3661,12 +3682,13 @@ class SideEffectTernaryMemMemRSY<string mnemonic, bits<16> opcode,
 }
 
 class TernaryRXF<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-                 RegisterOperand cls, SDPatternOperator load, bits<5> bytes>
-  : InstRXF<opcode, (outs cls:$R1),
-            (ins cls:$R1src, cls:$R3, bdxaddr12only:$XBD2),
+                 RegisterOperand cls1, RegisterOperand cls2,
+                 SDPatternOperator load, bits<5> bytes>
+  : InstRXF<opcode, (outs cls1:$R1),
+            (ins cls2:$R1src, cls2:$R3, bdxaddr12only:$XBD2),
             mnemonic#"\t$R1, $R3, $XBD2",
-            [(set cls:$R1, (operator cls:$R1src, cls:$R3,
-                                     (load bdxaddr12only:$XBD2)))]> {
+            [(set cls1:$R1, (operator cls2:$R1src, cls2:$R3,
+                                      (load bdxaddr12only:$XBD2)))]> {
   let OpKey = mnemonic#"r"#cls;
   let OpType = "mem";
   let Constraints = "$R1 = $R1src";
