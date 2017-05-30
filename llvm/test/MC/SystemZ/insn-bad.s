@@ -3191,6 +3191,38 @@
 	ltxbr	%f0, %f14
 	ltxbr	%f14, %f0
 
+#CHECK: error: invalid operand
+#CHECK: lxdb	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: lxdb	%f0, 4096
+#CHECK: error: invalid register pair
+#CHECK: lxdb	%f2, 0
+
+	lxdb	%f0, -1
+	lxdb	%f0, 4096
+	lxdb	%f2, 0
+
+#CHECK: error: invalid register pair
+#CHECK: lxdbr	%f2, %f0
+
+	lxdbr	%f2, %f0
+
+#CHECK: error: invalid operand
+#CHECK: lxeb	%f0, -1
+#CHECK: error: invalid operand
+#CHECK: lxeb	%f0, 4096
+#CHECK: error: invalid register pair
+#CHECK: lxeb	%f2, 0
+
+	lxeb	%f0, -1
+	lxeb	%f0, 4096
+	lxeb	%f2, 0
+
+#CHECK: error: invalid register pair
+#CHECK: lxebr	%f2, %f0
+
+	lxebr	%f2, %f0
+
 #CHECK: error: invalid register pair
 #CHECK: lxr	%f0, %f2
 #CHECK: error: invalid register pair
