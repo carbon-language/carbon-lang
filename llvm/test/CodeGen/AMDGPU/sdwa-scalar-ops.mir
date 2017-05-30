@@ -86,7 +86,6 @@
 name:            sdwa_imm_operand
 alignment:       0
 exposesReturnsTwice: false
-noVRegs:         false
 legalized:       false
 regBankSelected: false
 selected:        false
@@ -248,7 +247,6 @@ body:             |
 name:            sdwa_sgpr_operand
 alignment:       0
 exposesReturnsTwice: false
-noVRegs:         false
 legalized:       false
 regBankSelected: false
 selected:        false
