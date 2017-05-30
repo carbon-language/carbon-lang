@@ -1717,7 +1717,7 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
   EHdr->e_ehsize = sizeof(Elf_Ehdr);
   EHdr->e_phnum = Phdrs.size();
   EHdr->e_shentsize = sizeof(Elf_Shdr);
-  EHdr->e_shnum = OutputSections.size() + 1;
+  EHdr->e_shnum = OutputSectionCommands.size() + 1;
   EHdr->e_shstrndx = InX::ShStrTab->OutSec->SectionIndex;
 
   if (Config->EMachine == EM_ARM)
@@ -1749,8 +1749,8 @@ template <class ELFT> void Writer<ELFT>::writeHeader() {
 
   // Write the section header table. Note that the first table entry is null.
   auto *SHdrs = reinterpret_cast<Elf_Shdr *>(Buf + EHdr->e_shoff);
-  for (OutputSection *Sec : OutputSections)
-    Sec->writeHeaderTo<ELFT>(++SHdrs);
+  for (OutputSectionCommand *Cmd : OutputSectionCommands)
+    Cmd->Sec->writeHeaderTo<ELFT>(++SHdrs);
 }
 
 // Open a result file.
