@@ -925,10 +925,6 @@ getStrictFPOpcodeAction(const TargetLowering &TLI, unsigned Opcode, EVT VT) {
   if (Action != TargetLowering::Legal)
     Action = TargetLowering::Expand;
 
-  // ISD::FPOWI returns 'Legal' even though it should be expanded.
-  if (Opcode == ISD::STRICT_FPOWI && Action == TargetLowering::Legal)
-    Action = TargetLowering::Expand;
-
   return Action;
 }
 
