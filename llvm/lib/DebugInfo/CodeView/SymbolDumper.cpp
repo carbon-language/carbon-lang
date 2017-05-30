@@ -41,7 +41,7 @@ public:
 #define SYMBOL_RECORD(EnumName, EnumVal, Name)                                 \
   Error visitKnownRecord(CVSymbol &CVR, Name &Record) override;
 #define SYMBOL_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
-#include "llvm/DebugInfo/CodeView/CVSymbolTypes.def"
+#include "llvm/DebugInfo/CodeView/CodeViewSymbols.def"
 
   Error visitSymbolBegin(CVSymbol &Record) override;
   Error visitSymbolEnd(CVSymbol &Record) override;

@@ -28,6 +28,7 @@
 #include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
+#include "llvm/ObjectYAML/CodeViewYAML.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -104,12 +105,12 @@ Error YAMLOutputStyle::dump() {
 namespace {
 class C13YamlVisitor : public C13DebugFragmentVisitor {
 public:
-  C13YamlVisitor(llvm::pdb::yaml::PdbSourceFileInfo &Info, PDBFile &F)
+  C13YamlVisitor(CodeViewYAML::SourceFileInfo &Info, PDBFile &F)
       : C13DebugFragmentVisitor(F), Info(Info) {}
 
   Error handleFileChecksums() override {
     for (const auto &C : *Checksums) {
-      llvm::pdb::yaml::PdbSourceFileChecksumEntry Entry;
+      CodeViewYAML::SourceFileChecksumEntry Entry;
       if (auto Result = getNameFromStringTable(C.FileNameOffset))
         Entry.FileName = *Result;
       else
@@ -143,7 +144,7 @@ public:
           return Result.takeError();
 
         for (const auto &N : L.LineNumbers) {
-          llvm::pdb::yaml::PdbSourceLineEntry Line;
+          CodeViewYAML::SourceLineEntry Line;
           Line.Offset = N.Offset;
           codeview::LineInfo LI(N.Flags);
           Line.LineStart = LI.getStartLine();
@@ -154,7 +155,7 @@ public:
 
         if (LF.hasColumnInfo()) {
           for (const auto &C : L.Columns) {
-            llvm::pdb::yaml::PdbSourceColumnEntry Column;
+            CodeViewYAML::SourceColumnEntry Column;
             Column.StartColumn = C.StartColumn;
             Column.EndColumn = C.EndColumn;
             Block.Columns.push_back(Column);
@@ -179,7 +180,7 @@ public:
         else
           return Result.takeError();
 
-        Site.Inlinee = IL.Header->Inlinee;
+        Site.Inlinee = IL.Header->Inlinee.getIndex();
         Site.SourceLineNum = IL.Header->SourceLineNum;
         if (ILF.hasExtraFiles()) {
           for (const auto &EF : IL.ExtraFiles) {
@@ -195,17 +196,16 @@ public:
   }
 
 private:
-
-  llvm::pdb::yaml::PdbSourceFileInfo &Info;
+  CodeViewYAML::SourceFileInfo &Info;
 };
 }
 
-Expected<Optional<llvm::pdb::yaml::PdbSourceFileInfo>>
+Expected<Optional<CodeViewYAML::SourceFileInfo>>
 YAMLOutputStyle::getFileLineInfo(const pdb::ModuleDebugStreamRef &ModS) {
   if (!ModS.hasLineInfo())
     return None;
 
-  yaml::PdbSourceFileInfo Info;
+  CodeViewYAML::SourceFileInfo Info;
   C13YamlVisitor Visitor(Info, File);
   if (auto EC =
           codeview::visitDebugSubsections(ModS.linesAndChecksums(), Visitor))
@@ -378,13 +378,10 @@ Error YAMLOutputStyle::dumpTpiStream() {
   Obj.TpiStream.emplace();
   Obj.TpiStream->Version = TS.getTpiVersion();
   for (auto &Record : TS.types(nullptr)) {
-    yaml::PdbTpiRecord R;
-    // It's not necessary to set R.RecordData here.  That only exists as a
-    // way to have the `PdbTpiRecord` structure own the memory that `R.Record`
-    // references.  In the case of reading an existing PDB though, that memory
-    // is owned by the backing stream.
-    R.Record = Record;
-    Obj.TpiStream->Records.push_back(R);
+    auto ExpectedRecord = CodeViewYAML::LeafRecord::fromCodeViewRecord(Record);
+    if (!ExpectedRecord)
+      return ExpectedRecord.takeError();
+    Obj.TpiStream->Records.push_back(*ExpectedRecord);
   }
 
   return Error::success();
@@ -402,9 +399,11 @@ Error YAMLOutputStyle::dumpIpiStream() {
   Obj.IpiStream.emplace();
   Obj.IpiStream->Version = IS.getTpiVersion();
   for (auto &Record : IS.types(nullptr)) {
-    yaml::PdbTpiRecord R;
-    R.Record = Record;
-    Obj.IpiStream->Records.push_back(R);
+    auto ExpectedRecord = CodeViewYAML::LeafRecord::fromCodeViewRecord(Record);
+    if (!ExpectedRecord)
+      return ExpectedRecord.takeError();
+
+    Obj.IpiStream->Records.push_back(*ExpectedRecord);
   }
 
   return Error::success();

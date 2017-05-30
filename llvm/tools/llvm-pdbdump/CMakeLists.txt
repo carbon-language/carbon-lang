@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   DebugInfoMSF
   DebugInfoPDB
   Object
+  ObjectYAML
   Support
   )
 
@@ -12,8 +13,6 @@ add_llvm_tool(llvm-pdbdump
   CompactTypeDumpVisitor.cpp
   Diff.cpp
   llvm-pdbdump.cpp
-  YamlSymbolDumper.cpp
-  YamlTypeDumper.cpp
   LinePrinter.cpp
   LLVMOutputStyle.cpp
   PdbYaml.cpp
@@ -29,6 +28,7 @@ add_llvm_tool(llvm-pdbdump
   PrettyVariableDumper.cpp
   StreamUtil.cpp
   YAMLOutputStyle.cpp
+  YamlSymbolDumper.cpp
   )
 
 if(LLVM_USE_SANITIZE_COVERAGE)

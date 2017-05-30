@@ -6,6 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// Defines constants and basic types describing CodeView debug information.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef LLVM_DEBUGINFO_CODEVIEW_CODEVIEW_H
 #define LLVM_DEBUGINFO_CODEVIEW_CODEVIEW_H
@@ -22,28 +26,28 @@ namespace codeview {
 /// documentation and headers talk about this as the "leaf" type.
 enum class TypeRecordKind : uint16_t {
 #define TYPE_RECORD(lf_ename, value, name) name = value,
-#include "TypeRecords.def"
+#include "CodeViewTypes.def"
 };
 
 /// Duplicate copy of the above enum, but using the official CV names. Useful
 /// for reference purposes and when dealing with unknown record types.
 enum TypeLeafKind : uint16_t {
 #define CV_TYPE(name, val) name = val,
-#include "TypeRecords.def"
+#include "CodeViewTypes.def"
 };
 
 /// Distinguishes individual records in the Symbols subsection of a .debug$S
 /// section. Equivalent to SYM_ENUM_e in cvinfo.h.
 enum class SymbolRecordKind : uint16_t {
 #define SYMBOL_RECORD(lf_ename, value, name) name = value,
-#include "CVSymbolTypes.def"
+#include "CodeViewSymbols.def"
 };
 
 /// Duplicate copy of the above enum, but using the official CV names. Useful
 /// for reference purposes and when dealing with unknown record types.
 enum SymbolKind : uint16_t {
 #define CV_SYMBOL(name, val) name = val,
-#include "CVSymbolTypes.def"
+#include "CodeViewSymbols.def"
 };
 
 #define CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(Class)                            \
@@ -280,7 +284,7 @@ CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(MethodOptions)
 /// Equivalent to CV_LABEL_TYPE_e.
 enum class LabelType : uint16_t {
   Near = 0x0,
-  Far  = 0x4,
+  Far = 0x4,
 };
 
 /// Equivalent to CV_modifier_t.

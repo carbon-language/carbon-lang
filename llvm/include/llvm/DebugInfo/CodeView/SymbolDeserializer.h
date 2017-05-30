@@ -54,7 +54,7 @@ public:
     return visitKnownRecordImpl(CVR, Record);                                  \
   }
 #define SYMBOL_RECORD_ALIAS(EnumName, EnumVal, Name, AliasName)
-#include "CVSymbolTypes.def"
+#include "llvm/DebugInfo/CodeView/CodeViewSymbols.def"
 
 private:
   template <typename T> Error visitKnownRecordImpl(CVSymbol &CVR, T &Record) {

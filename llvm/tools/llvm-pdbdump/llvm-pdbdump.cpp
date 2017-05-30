@@ -61,6 +61,7 @@
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolFunc.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolThunk.h"
+#include "llvm/ObjectYAML/CodeViewYAML.h"
 #include "llvm/Support/BinaryByteStream.h"
 #include "llvm/Support/COM.h"
 #include "llvm/Support/CommandLine.h"
@@ -476,6 +477,7 @@ static void yamlToPdb(StringRef Path) {
   std::unique_ptr<MemoryBuffer> &Buffer = ErrorOrBuffer.get();
 
   llvm::yaml::Input In(Buffer->getBuffer());
+  In.setContext(&Allocator);
   pdb::yaml::PdbObject YamlObj(Allocator);
   In >> YamlObj;
 
@@ -584,7 +586,7 @@ static void yamlToPdb(StringRef Path) {
         auto Inlinees = llvm::make_unique<DebugInlineeLinesSubsection>(
             ChecksumRef, Inlinee.HasExtraFiles);
         for (const auto &Site : Inlinee.Sites) {
-          Inlinees->addInlineSite(Site.Inlinee, Site.FileName,
+          Inlinees->addInlineSite(TypeIndex(Site.Inlinee), Site.FileName,
                                   Site.SourceLineNum);
           if (!Inlinee.HasExtraFiles)
             continue;
@@ -601,14 +603,18 @@ static void yamlToPdb(StringRef Path) {
   auto &TpiBuilder = Builder.getTpiBuilder();
   const auto &Tpi = YamlObj.TpiStream.getValueOr(DefaultTpiStream);
   TpiBuilder.setVersionHeader(Tpi.Version);
-  for (const auto &R : Tpi.Records)
-    TpiBuilder.addTypeRecord(R.Record.data(), R.Record.Hash);
+  for (const auto &R : Tpi.Records) {
+    CVType Type = R.toCodeViewRecord(Allocator);
+    TpiBuilder.addTypeRecord(Type.RecordData, None);
+  }
 
   const auto &Ipi = YamlObj.IpiStream.getValueOr(DefaultIpiStream);
   auto &IpiBuilder = Builder.getIpiBuilder();
   IpiBuilder.setVersionHeader(Ipi.Version);
-  for (const auto &R : Ipi.Records)
-    IpiBuilder.addTypeRecord(R.Record.data(), R.Record.Hash);
+  for (const auto &R : Ipi.Records) {
+    CVType Type = R.toCodeViewRecord(Allocator);
+    IpiBuilder.addTypeRecord(Type.RecordData, None);
+  }
 
   ExitOnErr(Builder.commit(opts::yaml2pdb::YamlPdbOutputFile));
 }

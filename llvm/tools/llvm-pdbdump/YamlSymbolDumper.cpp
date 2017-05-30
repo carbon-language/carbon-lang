@@ -9,7 +9,6 @@
 
 #include "YamlSymbolDumper.h"
 #include "PdbYaml.h"
-#include "YamlTypeDumper.h"
 
 #include "llvm/DebugInfo/CodeView/CVSymbolVisitor.h"
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
@@ -27,10 +26,10 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(OneMethodRecord)
 LLVM_YAML_IS_SEQUENCE_VECTOR(VFTableSlotKind)
 LLVM_YAML_IS_SEQUENCE_VECTOR(StringRef)
 LLVM_YAML_IS_SEQUENCE_VECTOR(CVType)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::PdbTpiFieldListRecord)
 
 namespace llvm {
 namespace yaml {
+
 void ScalarEnumerationTraits<SymbolKind>::enumeration(IO &io,
                                                       SymbolKind &Value) {
   auto SymbolNames = getSymbolTypeNames();

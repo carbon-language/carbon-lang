@@ -20,13 +20,13 @@ using namespace codeview;
 
 static const EnumEntry<SymbolKind> SymbolTypeNames[] = {
 #define CV_SYMBOL(enum, val) {#enum, enum},
-#include "llvm/DebugInfo/CodeView/CVSymbolTypes.def"
+#include "llvm/DebugInfo/CodeView/CodeViewSymbols.def"
 #undef CV_SYMBOL
 };
 
 static const EnumEntry<TypeLeafKind> TypeLeafNames[] = {
 #define CV_TYPE(name, val) {#name, name},
-#include "llvm/DebugInfo/CodeView/TypeRecords.def"
+#include "llvm/DebugInfo/CodeView/CodeViewTypes.def"
 #undef CV_TYPE
 };
 
