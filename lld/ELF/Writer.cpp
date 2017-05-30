@@ -74,6 +74,7 @@ private:
   std::unique_ptr<FileOutputBuffer> Buffer;
 
   std::vector<OutputSection *> OutputSections;
+  std::vector<OutputSectionCommand *> OutputSectionCommands;
   OutputSectionFactory Factory{OutputSections};
 
   void addRelIpltSymbols();
@@ -262,6 +263,10 @@ template <class ELFT> void Writer<ELFT>::run() {
     Script->fabricateDefaultCommands();
   }
 
+  for (BaseCommand *Base : Script->Opt.Commands)
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
+      OutputSectionCommands.push_back(Cmd);
+
   // If -compressed-debug-sections is specified, we need to compress
   // .debug_* sections. Do it right now because it changes the size of
   // output sections.
@@ -311,7 +316,7 @@ template <class ELFT> void Writer<ELFT>::run() {
 
 
   // Handle -Map option.
-  writeMapFile<ELFT>(Script->Opt.Commands);
+  writeMapFile<ELFT>(OutputSectionCommands);
   if (ErrorCount)
     return;
 
@@ -1315,10 +1320,9 @@ void Writer<ELFT>::addStartStopSymbols(OutputSection *Sec) {
 
 template <class ELFT>
 OutputSectionCommand *Writer<ELFT>::findSectionCommand(StringRef Name) {
-  for (BaseCommand *Base : Script->Opt.Commands)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-      if (Cmd->Name == Name)
-        return Cmd;
+  for (OutputSectionCommand *Cmd : OutputSectionCommands)
+    if (Cmd->Name == Name)
+      return Cmd;
   return nullptr;
 }
 
@@ -1769,10 +1773,7 @@ template <class ELFT> void Writer<ELFT>::openFile() {
 
 template <class ELFT> void Writer<ELFT>::writeSectionsBinary() {
   uint8_t *Buf = Buffer->getBufferStart();
-  for (BaseCommand *Base : Script->Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
-    if (!Cmd)
-      continue;
+  for (OutputSectionCommand *Cmd : OutputSectionCommands) {
     OutputSection *Sec = Cmd->Sec;
     if (Sec->Flags & SHF_ALLOC)
       Cmd->writeTo<ELFT>(Buf + Sec->Offset);
@@ -1799,19 +1800,13 @@ template <class ELFT> void Writer<ELFT>::writeSections() {
   // In -r or -emit-relocs mode, write the relocation sections first as in
   // ELf_Rel targets we might find out that we need to modify the relocated
   // section while doing it.
-  for (BaseCommand *Base : Script->Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
-    if (!Cmd)
-      continue;
+  for (OutputSectionCommand *Cmd : OutputSectionCommands) {
     OutputSection *Sec = Cmd->Sec;
     if (Sec->Type == SHT_REL || Sec->Type == SHT_RELA)
       Cmd->writeTo<ELFT>(Buf + Sec->Offset);
   }
 
-  for (BaseCommand *Base : Script->Opt.Commands) {
-    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
-    if (!Cmd)
-      continue;
+  for (OutputSectionCommand *Cmd : OutputSectionCommands) {
     OutputSection *Sec = Cmd->Sec;
     if (Sec != Out::Opd && Sec != EhFrameHdr && Sec->Type != SHT_REL &&
         Sec->Type != SHT_RELA)
