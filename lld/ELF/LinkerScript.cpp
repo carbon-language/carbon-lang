@@ -291,6 +291,9 @@ LinkerScript::computeInputSections(const InputSectionDescription *Cmd) {
     size_t SizeBefore = Ret.size();
 
     for (InputSectionBase *Sec : InputSections) {
+      if (!isa<InputSection>(Sec))
+        continue;
+
       if (Sec->Assigned)
         continue;
 
