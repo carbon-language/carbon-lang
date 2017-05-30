@@ -20,7 +20,7 @@ namespace object {
 
 #define RETURN_IF_ERROR(X)                                                     \
   if (auto EC = X)                                                             \
-    return std::move(EC);
+    return EC;
 
 const uint32_t MIN_HEADER_SIZE = 7 * sizeof(uint32_t) + 2 * sizeof(uint16_t);
 
