@@ -736,6 +736,9 @@ void GCNPassConfig::addMachineSSAOptimization() {
   addPass(createSIShrinkInstructionsPass());
   if (EnableSDWAPeephole) {
     addPass(&SIPeepholeSDWAID);
+    addPass(&MachineLICMID);
+    addPass(&MachineCSEID);
+    addPass(&SIFoldOperandsID);
     addPass(&DeadMachineInstructionElimID);
   }
 }
