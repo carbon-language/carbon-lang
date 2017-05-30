@@ -2003,7 +2003,7 @@ HexagonTargetLowering::HexagonTargetLowering(const TargetMachine &TM,
     // Floating point arithmetic/math functions:
     ISD::FADD,    ISD::FSUB,    ISD::FMUL,    ISD::FMA,     ISD::FDIV,
     ISD::FREM,    ISD::FNEG,    ISD::FABS,    ISD::FSQRT,   ISD::FSIN,
-    ISD::FCOS,    ISD::FPOWI,   ISD::FPOW,    ISD::FLOG,    ISD::FLOG2,
+    ISD::FCOS,    ISD::FPOW,    ISD::FLOG,    ISD::FLOG2,
     ISD::FLOG10,  ISD::FEXP,    ISD::FEXP2,   ISD::FCEIL,   ISD::FTRUNC,
     ISD::FRINT,   ISD::FNEARBYINT,            ISD::FROUND,  ISD::FFLOOR,
     ISD::FMINNUM, ISD::FMAXNUM, ISD::FSINCOS,

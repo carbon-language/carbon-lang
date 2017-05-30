@@ -1027,7 +1027,6 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     break;
   case ISD::EXTRACT_ELEMENT:
   case ISD::FLT_ROUNDS_:
-  case ISD::FPOWI:
   case ISD::MERGE_VALUES:
   case ISD::EH_RETURN:
   case ISD::FRAME_TO_ARGS_OFFSET:
