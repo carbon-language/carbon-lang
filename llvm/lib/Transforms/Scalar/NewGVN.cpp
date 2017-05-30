@@ -956,8 +956,12 @@ const Expression *NewGVN::checkSimplificationResults(Expression *E,
   if (CC && CC->getDefiningExpr()) {
     // If we simplified to something else, we need to communicate
     // that we're users of the value we simplified to.
-    if (I != V)
-      addAdditionalUsers(V, I);
+    if (I != V) {
+      // Don't add temporary instructions to the user lists.
+      if (!AllTempInstructions.count(I))
+        addAdditionalUsers(V, I);
+    }
+
     if (I)
       DEBUG(dbgs() << "Simplified " << *I << " to "
                    << " expression " << *CC->getDefiningExpr() << "\n");
@@ -2502,9 +2506,8 @@ NewGVN::makePossiblePhiOfOps(Instruction *I, bool HasBackedge,
         // Clone the instruction, create an expression from it, and see if we
         // have a leader.
         Instruction *ValueOp = I->clone();
-        auto Iter = TempToMemory.end();
         if (MemAccess)
-          Iter = TempToMemory.insert({ValueOp, MemAccess}).first;
+          TempToMemory.insert({ValueOp, MemAccess});
 
         for (auto &Op : ValueOp->operands()) {
           Op = Op->DoPHITranslation(PHIBlock, PredBB);
@@ -2523,7 +2526,7 @@ NewGVN::makePossiblePhiOfOps(Instruction *I, bool HasBackedge,
         AllTempInstructions.erase(ValueOp);
         ValueOp->deleteValue();
         if (MemAccess)
-          TempToMemory.erase(Iter);
+          TempToMemory.erase(ValueOp);
         if (!E)
           return nullptr;
         FoundVal = findPhiOfOpsLeader(E, PredBB);
