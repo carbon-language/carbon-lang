@@ -13,6 +13,7 @@
 
 #include "llvm/Object/WindowsResource.h"
 #include "llvm/Support/COFF.h"
+#include <sstream>
 #include <system_error>
 
 namespace llvm {
@@ -213,7 +214,7 @@ void WindowsResourceParser::TreeNode::print(ScopedPrinter &Writer,
     Child.second->print(Writer, Child.first);
   }
   for (auto const &Child : IDChildren) {
-    Child.second->print(Writer, std::to_string(Child.first));
+    Child.second->print(Writer, to_string(Child.first));
   }
 }
 
