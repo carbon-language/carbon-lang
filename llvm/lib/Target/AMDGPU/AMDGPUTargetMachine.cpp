@@ -456,7 +456,7 @@ namespace {
 
 class AMDGPUPassConfig : public TargetPassConfig {
 public:
-  AMDGPUPassConfig(TargetMachine *TM, PassManagerBase &PM)
+  AMDGPUPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
     : TargetPassConfig(TM, PM) {
     // Exceptions and StackMaps are not supported, so these passes will never do
     // anything.
@@ -487,7 +487,7 @@ public:
 
 class R600PassConfig final : public AMDGPUPassConfig {
 public:
-  R600PassConfig(TargetMachine *TM, PassManagerBase &PM)
+  R600PassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
     : AMDGPUPassConfig(TM, PM) {}
 
   ScheduleDAGInstrs *createMachineScheduler(
@@ -503,7 +503,7 @@ public:
 
 class GCNPassConfig final : public AMDGPUPassConfig {
 public:
-  GCNPassConfig(TargetMachine *TM, PassManagerBase &PM)
+  GCNPassConfig(LLVMTargetMachine &TM, PassManagerBase &PM)
     : AMDGPUPassConfig(TM, PM) {}
 
   GCNTargetMachine &getGCNTargetMachine() const {
@@ -682,7 +682,7 @@ void R600PassConfig::addPreEmitPass() {
 }
 
 TargetPassConfig *R600TargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new R600PassConfig(this, PM);
+  return new R600PassConfig(*this, PM);
 }
 
 //===----------------------------------------------------------------------===//
@@ -844,6 +844,6 @@ void GCNPassConfig::addPreEmitPass() {
 }
 
 TargetPassConfig *GCNTargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new GCNPassConfig(this, PM);
+  return new GCNPassConfig(*this, PM);
 }
 
