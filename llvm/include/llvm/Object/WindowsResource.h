@@ -116,7 +116,6 @@ private:
   class TreeNode {
   public:
     TreeNode() = default;
-    explicit TreeNode(uint32_t ID);
     explicit TreeNode(ArrayRef<UTF16> Ref);
     void addEntry(const ResourceEntryRef &Entry);
     void print(ScopedPrinter &Writer, StringRef Name) const;
@@ -127,7 +126,6 @@ private:
     TreeNode &addLanguageNode(const ResourceEntryRef &Entry);
     TreeNode &addChild(uint32_t ID);
     TreeNode &addChild(ArrayRef<UTF16> NameRef);
-    uint16_t ID;
     std::vector<UTF16> Name;
     std::map<uint32_t, std::unique_ptr<TreeNode>> IDChildren;
     std::map<std::string, std::unique_ptr<TreeNode>> StringChildren;

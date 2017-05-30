@@ -145,8 +145,6 @@ void WindowsResourceParser::TreeNode::addEntry(const ResourceEntryRef &Entry) {
   NameNode.addLanguageNode(Entry);
 }
 
-WindowsResourceParser::TreeNode::TreeNode(uint32_t ID) : ID(ID) {}
-
 WindowsResourceParser::TreeNode::TreeNode(ArrayRef<UTF16> NameRef)
     : Name(NameRef) {}
 
