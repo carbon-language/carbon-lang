@@ -9,8 +9,6 @@
 
 #include "PdbYaml.h"
 
-#include "YamlSymbolDumper.h"
-
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/DebugInfo/CodeView/CVSymbolVisitor.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
@@ -34,7 +32,6 @@ LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(uint32_t)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::StringRef)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::NamedStreamMapping)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::PdbDbiModuleInfo)
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::PdbSymbolRecord)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::pdb::yaml::StreamBlockList)
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(llvm::pdb::PdbRaw_FeatureSig)
 
@@ -212,29 +209,6 @@ void MappingTraits<NamedStreamMapping>::mapping(IO &IO,
                                                 NamedStreamMapping &Obj) {
   IO.mapRequired("Name", Obj.StreamName);
   IO.mapRequired("StreamNum", Obj.StreamNumber);
-}
-
-void MappingTraits<PdbSymbolRecord>::mapping(IO &IO, PdbSymbolRecord &Obj) {
-  BumpPtrAllocator *Alloc =
-      reinterpret_cast<BumpPtrAllocator *>(IO.getContext());
-  codeview::SymbolVisitorCallbackPipeline Pipeline;
-  codeview::SymbolSerializer Serializer(*Alloc);
-  codeview::SymbolDeserializer Deserializer(nullptr);
-  codeview::yaml::YamlSymbolDumper Dumper(IO);
-
-  if (IO.outputting()) {
-    // For PDB to Yaml, deserialize into a high level record type, then dump it.
-    Pipeline.addCallbackToPipeline(Deserializer);
-    Pipeline.addCallbackToPipeline(Dumper);
-  } else {
-    // For the other way around, dump it into a concrete structure, and then
-    // serialize it into the CVRecord.
-    Pipeline.addCallbackToPipeline(Dumper);
-    Pipeline.addCallbackToPipeline(Serializer);
-  }
-
-  codeview::CVSymbolVisitor Visitor(Pipeline);
-  consumeError(Visitor.visitSymbolRecord(Obj.Record));
 }
 
 void MappingTraits<PdbModiStream>::mapping(IO &IO, PdbModiStream &Obj) {

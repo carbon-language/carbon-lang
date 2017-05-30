@@ -57,13 +57,9 @@ struct PdbInfoStream {
   std::vector<NamedStreamMapping> NamedStreams;
 };
 
-struct PdbSymbolRecord {
-  codeview::CVSymbol Record;
-};
-
 struct PdbModiStream {
   uint32_t Signature;
-  std::vector<PdbSymbolRecord> Symbols;
+  std::vector<CodeViewYAML::SymbolRecord> Symbols;
 };
 
 struct PdbDbiModuleInfo {
@@ -118,7 +114,6 @@ LLVM_YAML_DECLARE_MAPPING_TRAITS(pdb::yaml::PdbInfoStream)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(pdb::yaml::PdbDbiStream)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(pdb::yaml::PdbTpiStream)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(pdb::yaml::NamedStreamMapping)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(pdb::yaml::PdbSymbolRecord)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(pdb::yaml::PdbModiStream)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(pdb::yaml::PdbDbiModuleInfo)
 

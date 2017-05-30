@@ -537,7 +537,7 @@ static void yamlToPdb(StringRef Path) {
     if (MI.Modi.hasValue()) {
       const auto &ModiStream = *MI.Modi;
       for (auto Symbol : ModiStream.Symbols)
-        ModiBuilder.addSymbol(Symbol.Record);
+        ModiBuilder.addSymbol(Symbol.toCodeViewSymbol(Allocator));
     }
     if (MI.FileLineInfo.hasValue()) {
       const auto &FLI = *MI.FileLineInfo;

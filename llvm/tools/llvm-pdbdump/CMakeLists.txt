@@ -28,7 +28,6 @@ add_llvm_tool(llvm-pdbdump
   PrettyVariableDumper.cpp
   StreamUtil.cpp
   YAMLOutputStyle.cpp
-  YamlSymbolDumper.cpp
   )
 
 if(LLVM_USE_SANITIZE_COVERAGE)

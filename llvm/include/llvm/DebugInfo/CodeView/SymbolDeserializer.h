@@ -34,6 +34,17 @@ class SymbolDeserializer : public SymbolVisitorCallbacks {
   };
 
 public:
+  template <typename T> static Error deserializeAs(CVSymbol Symbol, T &Record) {
+    SymbolDeserializer S(nullptr);
+    if (auto EC = S.visitSymbolBegin(Symbol))
+      return EC;
+    if (auto EC = S.visitKnownRecord(Symbol, Record))
+      return EC;
+    if (auto EC = S.visitSymbolEnd(Symbol))
+      return EC;
+    return Error::success();
+  }
+
   explicit SymbolDeserializer(SymbolVisitorDelegate *Delegate)
       : Delegate(Delegate) {}
 

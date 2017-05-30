@@ -357,8 +357,11 @@ Error YAMLOutputStyle::dumpDbiStream() {
         DMI.Modi->Signature = ModS.signature();
         bool HadError = false;
         for (auto &Sym : ModS.symbols(&HadError)) {
-          pdb::yaml::PdbSymbolRecord Record{Sym};
-          DMI.Modi->Symbols.push_back(Record);
+          auto ES = CodeViewYAML::SymbolRecord::fromCodeViewSymbol(Sym);
+          if (!ES)
+            return ES.takeError();
+
+          DMI.Modi->Symbols.push_back(*ES);
         }
       }
     }
