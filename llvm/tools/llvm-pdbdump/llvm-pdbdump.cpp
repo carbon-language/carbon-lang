@@ -31,10 +31,10 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
+#include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugInlineeLinesSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
-#include "llvm/DebugInfo/CodeView/ModuleDebugFileChecksumFragment.h"
-#include "llvm/DebugInfo/CodeView/ModuleDebugInlineeLinesFragment.h"
-#include "llvm/DebugInfo/CodeView/ModuleDebugLineFragment.h"
 #include "llvm/DebugInfo/CodeView/TypeStreamMerger.h"
 #include "llvm/DebugInfo/CodeView/TypeTableBuilder.h"
 #include "llvm/DebugInfo/MSF/MSFBuilder.h"
@@ -543,8 +543,7 @@ static void yamlToPdb(StringRef Path) {
       // File Checksums must be emitted before line information, because line
       // info records use offsets into the checksum buffer to reference a file's
       // source file name.
-      auto Checksums =
-          llvm::make_unique<ModuleDebugFileChecksumFragment>(Strings);
+      auto Checksums = llvm::make_unique<DebugChecksumsSubsection>(Strings);
       auto &ChecksumRef = *Checksums;
       if (!FLI.FileChecksums.empty()) {
         for (auto &FC : FLI.FileChecksums)
@@ -554,7 +553,7 @@ static void yamlToPdb(StringRef Path) {
 
       for (const auto &Fragment : FLI.LineFragments) {
         auto Lines =
-            llvm::make_unique<ModuleDebugLineFragment>(ChecksumRef, Strings);
+            llvm::make_unique<DebugLinesSubsection>(ChecksumRef, Strings);
         Lines->setCodeSize(Fragment.CodeSize);
         Lines->setRelocationAddress(Fragment.RelocSegment,
                                     Fragment.RelocOffset);
@@ -582,7 +581,7 @@ static void yamlToPdb(StringRef Path) {
       }
 
       for (const auto &Inlinee : FLI.Inlinees) {
-        auto Inlinees = llvm::make_unique<ModuleDebugInlineeLineFragment>(
+        auto Inlinees = llvm::make_unique<DebugInlineeLinesSubsection>(
             ChecksumRef, Inlinee.HasExtraFiles);
         for (const auto &Site : Inlinee.Sites) {
           Inlinees->addInlineSite(Site.Inlinee, Site.FileName,

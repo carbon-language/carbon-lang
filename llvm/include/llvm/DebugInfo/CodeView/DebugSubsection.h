@@ -1,4 +1,4 @@
-//===- ModuleDebugFragment.h ------------------------------------*- C++ -*-===//
+//===- DebugSubsection.h ------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -17,29 +17,29 @@
 namespace llvm {
 namespace codeview {
 
-class ModuleDebugFragmentRef {
+class DebugSubsectionRef {
 public:
-  explicit ModuleDebugFragmentRef(ModuleDebugFragmentKind Kind) : Kind(Kind) {}
-  virtual ~ModuleDebugFragmentRef();
+  explicit DebugSubsectionRef(DebugSubsectionKind Kind) : Kind(Kind) {}
+  virtual ~DebugSubsectionRef();
 
-  ModuleDebugFragmentKind kind() const { return Kind; }
+  DebugSubsectionKind kind() const { return Kind; }
 
 protected:
-  ModuleDebugFragmentKind Kind;
+  DebugSubsectionKind Kind;
 };
 
-class ModuleDebugFragment {
+class DebugSubsection {
 public:
-  explicit ModuleDebugFragment(ModuleDebugFragmentKind Kind) : Kind(Kind) {}
-  virtual ~ModuleDebugFragment();
+  explicit DebugSubsection(DebugSubsectionKind Kind) : Kind(Kind) {}
+  virtual ~DebugSubsection();
 
-  ModuleDebugFragmentKind kind() const { return Kind; }
+  DebugSubsectionKind kind() const { return Kind; }
 
   virtual Error commit(BinaryStreamWriter &Writer) = 0;
   virtual uint32_t calculateSerializedLength() = 0;
 
 protected:
-  ModuleDebugFragmentKind Kind;
+  DebugSubsectionKind Kind;
 };
 
 } // namespace codeview

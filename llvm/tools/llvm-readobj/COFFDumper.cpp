@@ -24,11 +24,11 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugInlineeLinesSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
-#include "llvm/DebugInfo/CodeView/ModuleDebugFileChecksumFragment.h"
-#include "llvm/DebugInfo/CodeView/ModuleDebugInlineeLinesFragment.h"
-#include "llvm/DebugInfo/CodeView/ModuleDebugLineFragment.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
 #include "llvm/DebugInfo/CodeView/StringTable.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
@@ -515,19 +515,19 @@ WeakExternalCharacteristics[] = {
 };
 
 static const EnumEntry<uint32_t> SubSectionTypes[] = {
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, Symbols),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, Lines),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, StringTable),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, FileChecksums),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, FrameData),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, InlineeLines),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, CrossScopeImports),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, CrossScopeExports),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, ILLines),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, FuncMDTokenMap),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, TypeMDTokenMap),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, MergedAssemblyInput),
-    LLVM_READOBJ_ENUM_CLASS_ENT(ModuleDebugFragmentKind, CoffSymbolRVA),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, Symbols),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, Lines),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, StringTable),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, FileChecksums),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, FrameData),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, InlineeLines),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, CrossScopeImports),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, CrossScopeExports),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, ILLines),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, FuncMDTokenMap),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, TypeMDTokenMap),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, MergedAssemblyInput),
+    LLVM_READOBJ_ENUM_CLASS_ENT(DebugSubsectionKind, CoffSymbolRVA),
 };
 
 static const EnumEntry<uint32_t> FrameDataFlags[] = {
@@ -774,13 +774,13 @@ void COFFDumper::initializeFileAndStringTables(BinaryStreamReader &Reader) {
     StringRef Contents;
     error(Reader.readFixedString(Contents, SubSectionSize));
 
-    switch (ModuleDebugFragmentKind(SubType)) {
-    case ModuleDebugFragmentKind::FileChecksums: {
+    switch (DebugSubsectionKind(SubType)) {
+    case DebugSubsectionKind::FileChecksums: {
       BinaryStreamReader CSR(Contents, support::little);
       error(CSR.readArray(CVFileChecksumTable, CSR.getLength()));
       break;
     }
-    case ModuleDebugFragmentKind::StringTable: {
+    case DebugSubsectionKind::StringTable: {
       BinaryStreamRef ST(Contents, support::little);
       error(CVStringTable.initialize(ST));
     } break;
@@ -847,20 +847,20 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
       printBinaryBlockWithRelocs("SubSectionContents", Section, SectionContents,
                                  Contents);
 
-    switch (ModuleDebugFragmentKind(SubType)) {
-    case ModuleDebugFragmentKind::Symbols:
+    switch (DebugSubsectionKind(SubType)) {
+    case DebugSubsectionKind::Symbols:
       printCodeViewSymbolsSubsection(Contents, Section, SectionContents);
       break;
 
-    case ModuleDebugFragmentKind::InlineeLines:
+    case DebugSubsectionKind::InlineeLines:
       printCodeViewInlineeLines(Contents);
       break;
 
-    case ModuleDebugFragmentKind::FileChecksums:
+    case DebugSubsectionKind::FileChecksums:
       printCodeViewFileChecksums(Contents);
       break;
 
-    case ModuleDebugFragmentKind::Lines: {
+    case DebugSubsectionKind::Lines: {
       // Holds a PC to file:line table.  Some data to parse this subsection is
       // stored in the other subsections, so just check sanity and store the
       // pointers for deferred processing.
@@ -886,7 +886,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
       FunctionNames.push_back(LinkageName);
       break;
     }
-    case ModuleDebugFragmentKind::FrameData: {
+    case DebugSubsectionKind::FrameData: {
       // First four bytes is a relocation against the function.
       BinaryStreamReader SR(Contents, llvm::support::little);
       const uint32_t *CodePtr;
@@ -934,7 +934,7 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
 
     BinaryStreamReader Reader(FunctionLineTables[Name], support::little);
 
-    ModuleDebugLineFragmentRef LineInfo;
+    DebugLinesSubsectionRef LineInfo;
     error(LineInfo.initialize(Reader));
 
     W.printHex("Flags", LineInfo.header()->Flags);
@@ -997,7 +997,7 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
 
 void COFFDumper::printCodeViewFileChecksums(StringRef Subsection) {
   BinaryStreamReader SR(Subsection, llvm::support::little);
-  ModuleDebugFileChecksumFragmentRef Checksums;
+  DebugChecksumsSubsectionRef Checksums;
   error(Checksums.initialize(SR));
 
   for (auto &FC : Checksums) {
@@ -1015,7 +1015,7 @@ void COFFDumper::printCodeViewFileChecksums(StringRef Subsection) {
 
 void COFFDumper::printCodeViewInlineeLines(StringRef Subsection) {
   BinaryStreamReader SR(Subsection, llvm::support::little);
-  ModuleDebugInlineeLineFragmentRef Lines;
+  DebugInlineeLinesSubsectionRef Lines;
   error(Lines.initialize(SR));
 
   for (auto &Line : Lines) {

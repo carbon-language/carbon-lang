@@ -7,12 +7,12 @@ add_llvm_library(LLVMDebugInfoCodeView
   Formatters.cpp
   LazyRandomTypeCollection.cpp
   Line.cpp
-  ModuleDebugFileChecksumFragment.cpp
-  ModuleDebugFragment.cpp
-  ModuleDebugFragmentRecord.cpp
-  ModuleDebugFragmentVisitor.cpp
-  ModuleDebugInlineeLinesFragment.cpp
-  ModuleDebugLineFragment.cpp
+  DebugChecksumsSubsection.cpp
+  DebugSubsection.cpp
+  DebugSubsectionRecord.cpp
+  DebugSubsectionVisitor.cpp
+  DebugInlineeLinesSubsection.cpp
+  DebugLinesSubsection.cpp
   RecordSerialization.cpp
   StringTable.cpp
   SymbolRecordMapping.cpp
