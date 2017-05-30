@@ -61,7 +61,7 @@ DebugSubsectionRecordBuilder::DebugSubsectionRecordBuilder(
 
 uint32_t DebugSubsectionRecordBuilder::calculateSerializedLength() {
   uint32_t Size = sizeof(DebugSubsectionHeader) +
-                  alignTo(Frag.calculateSerializedLength(), 4);
+                  alignTo(Frag.calculateSerializedSize(), 4);
   return Size;
 }
 

@@ -21,7 +21,7 @@
 namespace llvm {
 namespace codeview {
 
-class StringTable;
+class DebugStringTableSubsection;
 
 struct FileChecksumEntry {
   uint32_t FileNameOffset;    // Byte offset of filename in global stringtable.
@@ -55,7 +55,10 @@ public:
     return S->kind() == DebugSubsectionKind::FileChecksums;
   }
 
+  bool valid() const { return Checksums.valid(); }
+
   Error initialize(BinaryStreamReader Reader);
+  Error initialize(BinaryStreamRef Stream);
 
   Iterator begin() { return Checksums.begin(); }
   Iterator end() { return Checksums.end(); }
@@ -68,7 +71,7 @@ private:
 
 class DebugChecksumsSubsection final : public DebugSubsection {
 public:
-  explicit DebugChecksumsSubsection(StringTable &Strings);
+  explicit DebugChecksumsSubsection(DebugStringTableSubsection &Strings);
 
   static bool classof(const DebugSubsection *S) {
     return S->kind() == DebugSubsectionKind::FileChecksums;
@@ -77,12 +80,12 @@ public:
   void addChecksum(StringRef FileName, FileChecksumKind Kind,
                    ArrayRef<uint8_t> Bytes);
 
-  uint32_t calculateSerializedLength() override;
-  Error commit(BinaryStreamWriter &Writer) override;
+  uint32_t calculateSerializedSize() const override;
+  Error commit(BinaryStreamWriter &Writer) const override;
   uint32_t mapChecksumOffset(StringRef FileName) const;
 
 private:
-  StringTable &Strings;
+  DebugStringTableSubsection &Strings;
 
   DenseMap<uint32_t, uint32_t> OffsetMap;
   uint32_t SerializedSize = 0;

@@ -8,13 +8,15 @@ add_llvm_library(LLVMDebugInfoCodeView
   LazyRandomTypeCollection.cpp
   Line.cpp
   DebugChecksumsSubsection.cpp
+  DebugFrameDataSubsection.cpp
+  DebugInlineeLinesSubsection.cpp
+  DebugLinesSubsection.cpp
+  DebugStringTableSubsection.cpp
   DebugSubsection.cpp
   DebugSubsectionRecord.cpp
   DebugSubsectionVisitor.cpp
-  DebugInlineeLinesSubsection.cpp
-  DebugLinesSubsection.cpp
+  DebugSymbolsSubsection.cpp
   RecordSerialization.cpp
-  StringTable.cpp
   SymbolRecordMapping.cpp
   SymbolDumper.cpp
   SymbolSerializer.cpp

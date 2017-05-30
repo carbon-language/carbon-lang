@@ -10,7 +10,7 @@
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
 
 #include "llvm/DebugInfo/CodeView/CodeViewError.h"
-#include "llvm/DebugInfo/CodeView/StringTable.h"
+#include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/Support/BinaryStreamReader.h"
 
 using namespace llvm;
@@ -48,8 +48,13 @@ Error DebugChecksumsSubsectionRef::initialize(BinaryStreamReader Reader) {
 
   return Error::success();
 }
+Error DebugChecksumsSubsectionRef::initialize(BinaryStreamRef Section) {
+  BinaryStreamReader Reader(Section);
+  return initialize(Reader);
+}
 
-DebugChecksumsSubsection::DebugChecksumsSubsection(StringTable &Strings)
+DebugChecksumsSubsection::DebugChecksumsSubsection(
+    DebugStringTableSubsection &Strings)
     : DebugSubsection(DebugSubsectionKind::FileChecksums), Strings(Strings) {}
 
 void DebugChecksumsSubsection::addChecksum(StringRef FileName,
@@ -75,11 +80,11 @@ void DebugChecksumsSubsection::addChecksum(StringRef FileName,
   SerializedSize += Len;
 }
 
-uint32_t DebugChecksumsSubsection::calculateSerializedLength() {
+uint32_t DebugChecksumsSubsection::calculateSerializedSize() const {
   return SerializedSize;
 }
 
-Error DebugChecksumsSubsection::commit(BinaryStreamWriter &Writer) {
+Error DebugChecksumsSubsection::commit(BinaryStreamWriter &Writer) const {
   for (const auto &FC : Checksums) {
     FileChecksumEntryHeader Header;
     Header.ChecksumKind = uint8_t(FC.Kind);

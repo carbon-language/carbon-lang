@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMWinEHPrinter.h"
-#include "CodeView.h"
 #include "Error.h"
 #include "ObjDumper.h"
 #include "StackMapPrinter.h"
@@ -25,12 +24,13 @@
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugFrameDataSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugInlineeLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugLinesSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
 #include "llvm/DebugInfo/CodeView/RecordSerialization.h"
-#include "llvm/DebugInfo/CodeView/StringTable.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumpDelegate.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
@@ -157,9 +157,9 @@ private:
   bool RelocCached = false;
   RelocMapTy RelocMap;
 
-  VarStreamArray<FileChecksumEntry> CVFileChecksumTable;
+  DebugChecksumsSubsectionRef CVFileChecksumTable;
 
-  StringTableRef CVStringTable;
+  DebugStringTableSubsectionRef CVStringTable;
 
   ScopedPrinter &Writer;
   BinaryByteStream TypeContents;
@@ -200,7 +200,9 @@ public:
     return CD.getFileNameForFileOffset(FileOffset);
   }
 
-  StringTableRef getStringTable() override { return CD.CVStringTable; }
+  DebugStringTableSubsectionRef getStringTable() override {
+    return CD.CVStringTable;
+  }
 
 private:
   COFFDumper &CD;
@@ -774,16 +776,14 @@ void COFFDumper::initializeFileAndStringTables(BinaryStreamReader &Reader) {
     StringRef Contents;
     error(Reader.readFixedString(Contents, SubSectionSize));
 
+    BinaryStreamRef ST(Contents, support::little);
     switch (DebugSubsectionKind(SubType)) {
-    case DebugSubsectionKind::FileChecksums: {
-      BinaryStreamReader CSR(Contents, support::little);
-      error(CSR.readArray(CVFileChecksumTable, CSR.getLength()));
+    case DebugSubsectionKind::FileChecksums:
+      error(CVFileChecksumTable.initialize(ST));
       break;
-    }
-    case DebugSubsectionKind::StringTable: {
-      BinaryStreamRef ST(Contents, support::little);
+    case DebugSubsectionKind::StringTable:
       error(CVStringTable.initialize(ST));
-    } break;
+      break;
     default:
       break;
     }
@@ -889,31 +889,30 @@ void COFFDumper::printCodeViewSymbolSection(StringRef SectionName,
     case DebugSubsectionKind::FrameData: {
       // First four bytes is a relocation against the function.
       BinaryStreamReader SR(Contents, llvm::support::little);
-      const uint32_t *CodePtr;
-      error(SR.readObject(CodePtr));
+
+      DebugFrameDataSubsectionRef FrameData;
+      error(FrameData.initialize(SR));
+
       StringRef LinkageName;
       error(resolveSymbolName(Obj->getCOFFSection(Section), SectionContents,
-                              CodePtr, LinkageName));
+                              FrameData.getRelocPtr(), LinkageName));
       W.printString("LinkageName", LinkageName);
 
       // To find the active frame description, search this array for the
       // smallest PC range that includes the current PC.
-      while (!SR.empty()) {
-        const FrameData *FD;
-        error(SR.readObject(FD));
-
-        StringRef FrameFunc = error(CVStringTable.getString(FD->FrameFunc));
+      for (const auto &FD : FrameData) {
+        StringRef FrameFunc = error(CVStringTable.getString(FD.FrameFunc));
 
         DictScope S(W, "FrameData");
-        W.printHex("RvaStart", FD->RvaStart);
-        W.printHex("CodeSize", FD->CodeSize);
-        W.printHex("LocalSize", FD->LocalSize);
-        W.printHex("ParamsSize", FD->ParamsSize);
-        W.printHex("MaxStackSize", FD->MaxStackSize);
+        W.printHex("RvaStart", FD.RvaStart);
+        W.printHex("CodeSize", FD.CodeSize);
+        W.printHex("LocalSize", FD.LocalSize);
+        W.printHex("ParamsSize", FD.ParamsSize);
+        W.printHex("MaxStackSize", FD.MaxStackSize);
         W.printString("FrameFunc", FrameFunc);
-        W.printHex("PrologSize", FD->PrologSize);
-        W.printHex("SavedRegsSize", FD->SavedRegsSize);
-        W.printFlags("Flags", FD->Flags, makeArrayRef(FrameDataFlags));
+        W.printHex("PrologSize", FD.PrologSize);
+        W.printHex("SavedRegsSize", FD.SavedRegsSize);
+        W.printFlags("Flags", FD.Flags, makeArrayRef(FrameDataFlags));
       }
       break;
     }
@@ -996,9 +995,9 @@ void COFFDumper::printCodeViewSymbolsSubsection(StringRef Subsection,
 }
 
 void COFFDumper::printCodeViewFileChecksums(StringRef Subsection) {
-  BinaryStreamReader SR(Subsection, llvm::support::little);
+  BinaryStreamRef Stream(Subsection, llvm::support::little);
   DebugChecksumsSubsectionRef Checksums;
-  error(Checksums.initialize(SR));
+  error(Checksums.initialize(Stream));
 
   for (auto &FC : Checksums) {
     DictScope S(W, "FileChecksum");
@@ -1039,7 +1038,7 @@ StringRef COFFDumper::getFileNameForFileOffset(uint32_t FileOffset) {
   if (!CVFileChecksumTable.valid() || !CVStringTable.valid())
     error(object_error::parse_failed);
 
-  auto Iter = CVFileChecksumTable.at(FileOffset);
+  auto Iter = CVFileChecksumTable.getArray().at(FileOffset);
 
   // Check if the file checksum table offset is valid.
   if (Iter == CVFileChecksumTable.end())

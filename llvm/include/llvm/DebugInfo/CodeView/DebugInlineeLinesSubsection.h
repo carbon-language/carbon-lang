@@ -21,7 +21,6 @@ namespace codeview {
 
 class DebugInlineeLinesSubsectionsRef;
 class DebugChecksumsSubsection;
-class StringTable;
 
 enum class InlineeLinesSignature : uint32_t {
   Normal,    // CV_INLINEE_SOURCE_LINE_SIGNATURE
@@ -82,8 +81,8 @@ public:
     return S->kind() == DebugSubsectionKind::InlineeLines;
   }
 
-  Error commit(BinaryStreamWriter &Writer) override;
-  uint32_t calculateSerializedLength() override;
+  Error commit(BinaryStreamWriter &Writer) const override;
+  uint32_t calculateSerializedSize() const override;
 
   void addInlineSite(TypeIndex FuncId, StringRef FileName, uint32_t SourceLine);
   void addExtraFile(StringRef FileName);

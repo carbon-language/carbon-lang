@@ -11,8 +11,8 @@
 
 #include "llvm/DebugInfo/CodeView/CodeViewError.h"
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsectionRecord.h"
-#include "llvm/DebugInfo/CodeView/StringTable.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -68,7 +68,7 @@ bool DebugLinesSubsectionRef::hasColumnInfo() const {
 }
 
 DebugLinesSubsection::DebugLinesSubsection(DebugChecksumsSubsection &Checksums,
-                                           StringTable &Strings)
+                                           DebugStringTableSubsection &Strings)
     : DebugSubsection(DebugSubsectionKind::Lines), Checksums(Checksums) {}
 
 void DebugLinesSubsection::createBlock(StringRef FileName) {
@@ -99,7 +99,7 @@ void DebugLinesSubsection::addLineAndColumnInfo(uint32_t Offset,
   B.Columns.push_back(CNE);
 }
 
-Error DebugLinesSubsection::commit(BinaryStreamWriter &Writer) {
+Error DebugLinesSubsection::commit(BinaryStreamWriter &Writer) const {
   LineFragmentHeader Header;
   Header.CodeSize = CodeSize;
   Header.Flags = hasColumnInfo() ? LF_HaveColumns : 0;
@@ -133,7 +133,7 @@ Error DebugLinesSubsection::commit(BinaryStreamWriter &Writer) {
   return Error::success();
 }
 
-uint32_t DebugLinesSubsection::calculateSerializedLength() {
+uint32_t DebugLinesSubsection::calculateSerializedSize() const {
   uint32_t Size = sizeof(LineFragmentHeader);
   for (const auto &B : Blocks) {
     Size += sizeof(LineBlockFragmentHeader);

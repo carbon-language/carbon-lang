@@ -11,8 +11,8 @@
 
 #include "llvm/DebugInfo/CodeView/CodeViewError.h"
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsectionRecord.h"
-#include "llvm/DebugInfo/CodeView/StringTable.h"
 
 using namespace llvm;
 using namespace llvm::codeview;
@@ -61,7 +61,7 @@ DebugInlineeLinesSubsection::DebugInlineeLinesSubsection(
     : DebugSubsection(DebugSubsectionKind::InlineeLines), Checksums(Checksums),
       HasExtraFiles(HasExtraFiles) {}
 
-uint32_t DebugInlineeLinesSubsection::calculateSerializedLength() {
+uint32_t DebugInlineeLinesSubsection::calculateSerializedSize() const {
   // 4 bytes for the signature
   uint32_t Size = sizeof(InlineeLinesSignature);
 
@@ -78,7 +78,7 @@ uint32_t DebugInlineeLinesSubsection::calculateSerializedLength() {
   return Size;
 }
 
-Error DebugInlineeLinesSubsection::commit(BinaryStreamWriter &Writer) {
+Error DebugInlineeLinesSubsection::commit(BinaryStreamWriter &Writer) const {
   InlineeLinesSignature Sig = InlineeLinesSignature::Normal;
   if (HasExtraFiles)
     Sig = InlineeLinesSignature::ExtraFiles;

@@ -22,6 +22,8 @@ public:
   explicit DebugSubsectionRef(DebugSubsectionKind Kind) : Kind(Kind) {}
   virtual ~DebugSubsectionRef();
 
+  static bool classof(const DebugSubsectionRef *S) { return true; }
+
   DebugSubsectionKind kind() const { return Kind; }
 
 protected:
@@ -33,10 +35,12 @@ public:
   explicit DebugSubsection(DebugSubsectionKind Kind) : Kind(Kind) {}
   virtual ~DebugSubsection();
 
+  static bool classof(const DebugSubsection *S) { return true; }
+
   DebugSubsectionKind kind() const { return Kind; }
 
-  virtual Error commit(BinaryStreamWriter &Writer) = 0;
-  virtual uint32_t calculateSerializedLength() = 0;
+  virtual Error commit(BinaryStreamWriter &Writer) const = 0;
+  virtual uint32_t calculateSerializedSize() const = 0;
 
 protected:
   DebugSubsectionKind Kind;

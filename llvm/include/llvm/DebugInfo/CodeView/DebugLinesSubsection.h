@@ -20,7 +20,7 @@ namespace llvm {
 namespace codeview {
 
 class DebugChecksumsSubsection;
-class StringTable;
+class DebugStringTableSubsection;
 
 // Corresponds to the `CV_DebugSLinesHeader_t` structure.
 struct LineFragmentHeader {
@@ -108,7 +108,7 @@ class DebugLinesSubsection final : public DebugSubsection {
 
 public:
   DebugLinesSubsection(DebugChecksumsSubsection &Checksums,
-                       StringTable &Strings);
+                       DebugStringTableSubsection &Strings);
 
   static bool classof(const DebugSubsection *S) {
     return S->kind() == DebugSubsectionKind::Lines;
@@ -119,8 +119,8 @@ public:
   void addLineAndColumnInfo(uint32_t Offset, const LineInfo &Line,
                             uint32_t ColStart, uint32_t ColEnd);
 
-  uint32_t calculateSerializedLength() override;
-  Error commit(BinaryStreamWriter &Writer) override;
+  uint32_t calculateSerializedSize() const override;
+  Error commit(BinaryStreamWriter &Writer) const override;
 
   void setRelocationAddress(uint16_t Segment, uint16_t Offset);
   void setCodeSize(uint32_t Size);
