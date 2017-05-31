@@ -13,7 +13,6 @@
 #include "llvm/DebugInfo/CodeView/CVSymbolVisitor.h"
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
-#include "llvm/DebugInfo/CodeView/SymbolSerializer.h"
 #include "llvm/DebugInfo/CodeView/SymbolVisitorCallbackPipeline.h"
 #include "llvm/DebugInfo/CodeView/TypeSerializer.h"
 #include "llvm/DebugInfo/CodeView/TypeVisitorCallbackPipeline.h"

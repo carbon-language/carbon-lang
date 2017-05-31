@@ -16,6 +16,7 @@
 #define LLVM_OBJECTYAML_CODEVIEWYAML_H
 
 #include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "llvm/DebugInfo/CodeView/DebugSubsection.h"
 #include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
 #include "llvm/DebugInfo/CodeView/SymbolRecord.h"
 #include "llvm/DebugInfo/CodeView/SymbolSerializer.h"
@@ -27,6 +28,12 @@
 
 namespace llvm {
 namespace CodeViewYAML {
+namespace detail {
+struct C13FragmentBase;
+struct LeafRecordBase;
+struct MemberRecordBase;
+struct SymbolRecordBase;
+}
 
 namespace detail {
 struct MemberRecordBase;
@@ -106,46 +113,17 @@ struct SymbolRecord {
   codeview::CVSymbol toCodeViewSymbol(BumpPtrAllocator &Allocator) const;
   static Expected<SymbolRecord> fromCodeViewSymbol(codeview::CVSymbol Symbol);
 };
+
+struct C13DebugSection {
+  std::vector<detail::C13FragmentBase> Fragments;
+};
 } // namespace CodeViewYAML
 } // namespace llvm
-
-LLVM_YAML_DECLARE_SCALAR_TRAITS(codeview::TypeIndex, false)
-LLVM_YAML_DECLARE_SCALAR_TRAITS(CodeViewYAML::HexFormattedString, false)
-LLVM_YAML_DECLARE_SCALAR_TRAITS(APSInt, false)
-
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceLineEntry)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceColumnEntry)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceFileChecksumEntry)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceLineInfo)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceLineBlock)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceFileInfo)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::InlineeInfo)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::InlineeSite)
 
 LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::LeafRecord)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::MemberRecord)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SymbolRecord)
-
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::TypeLeafKind)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::SymbolKind)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::PointerToMemberRepresentation)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::VFTableSlotKind)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::CallingConvention)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::PointerKind)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::PointerMode)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::HfaKind)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::MemberAccess)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::MethodKind)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::WindowsRTClassKind)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::LabelType)
-LLVM_YAML_DECLARE_ENUM_TRAITS(codeview::FileChecksumKind)
-
-LLVM_YAML_DECLARE_BITSET_TRAITS(codeview::PointerOptions)
-LLVM_YAML_DECLARE_BITSET_TRAITS(codeview::LineFlags)
-LLVM_YAML_DECLARE_BITSET_TRAITS(codeview::ModifierOptions)
-LLVM_YAML_DECLARE_BITSET_TRAITS(codeview::FunctionOptions)
-LLVM_YAML_DECLARE_BITSET_TRAITS(codeview::ClassOptions)
-LLVM_YAML_DECLARE_BITSET_TRAITS(codeview::MethodOptions)
+LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceFileInfo)
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(CodeViewYAML::LeafRecord)
 LLVM_YAML_IS_SEQUENCE_VECTOR(CodeViewYAML::MemberRecord)
