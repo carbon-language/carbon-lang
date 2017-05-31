@@ -126,9 +126,11 @@ namespace {
     static unsigned calcLiveInMask(MachineBasicBlock *MBB) {
       unsigned Mask = 0;
       for (const auto &LI : MBB->liveins()) {
-        if (LI.PhysReg < X86::FP0 || LI.PhysReg > X86::FP6)
+        MCPhysReg Reg = LI.PhysReg;
+        static_assert(X86::FP7 - X86::FP0 == 7, "sequential FP regnumbers");
+        if (Reg < X86::FP0 || Reg > X86::FP6)
           continue;
-        Mask |= 1 << (LI.PhysReg - X86::FP0);
+        Mask |= 1 << (Reg - X86::FP0);
       }
       return Mask;
     }
@@ -453,6 +455,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
       unsigned Reg = DeadRegs[i];
       // Check if Reg is live on the stack. An inline-asm register operand that
       // is in the clobber list and marked dead might not be live on the stack.
+      static_assert(X86::FP7 - X86::FP0 == 7, "sequential FP regnumbers");
       if (Reg >= X86::FP0 && Reg <= X86::FP6 && isLive(Reg-X86::FP0)) {
         DEBUG(dbgs() << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
         freeStackSlotAfter(I, Reg-X86::FP0);
@@ -506,6 +509,7 @@ void FPS::setupBlockStack() {
 
   // Push the fixed live-in registers.
   for (unsigned i = Bundle.FixCount; i > 0; --i) {
+    static_assert(X86::ST7 - X86::ST0 == 7, "sequential ST regnumbers");
     MBB->addLiveIn(X86::ST0+i-1);
     DEBUG(dbgs() << "Live-in st(" << (i-1) << "): %FP"
                  << unsigned(Bundle.FixStack[i-1]) << '\n');
