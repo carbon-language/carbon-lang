@@ -220,10 +220,12 @@
 #endif  // __NetBSD__
 
 #if defined(_WIN32)
-#  define _LIBCPP_WIN32API      1
+#  define _LIBCPP_WIN32API
 #  define _LIBCPP_LITTLE_ENDIAN 1
 #  define _LIBCPP_BIG_ENDIAN    0
 #  define _LIBCPP_SHORT_WCHAR   1
+// Both MinGW and native MSVC provide a "MSVC"-like enviroment
+#  define _LIBCPP_MSVCRT_LIKE
 // If mingw not explicitly detected, assume using MS C runtime only.
 #  ifndef __MINGW32__
 #    define _LIBCPP_MSVCRT // Using Microsoft's C Runtime library

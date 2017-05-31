@@ -192,14 +192,7 @@ template <class charT> class messages_byname;
 #endif
 #include <cstdlib>
 #include <ctime>
-#if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
-#include <support/win32/locale_win32.h>
-#elif defined(_NEWLIB_VERSION)
-// FIXME: replace all the uses of _NEWLIB_VERSION with __NEWLIB__ preceded by an
-// include of <sys/cdefs.h> once https://sourceware.org/ml/newlib-cvs/2014-q3/msg00038.html
-// has had a chance to bake for a bit
-#include <support/newlib/xlocale.h>
-#endif
+#include <cstdio>
 #ifdef _LIBCPP_HAS_CATOPEN
 #include <nl_types.h>
 #endif
