@@ -5063,6 +5063,33 @@ void __kmp_env_initialize(char const *string) {
     if (KMP_AFFINITY_CAPABLE()) {
 
 #if KMP_GROUP_AFFINITY
+      // This checks to see if the initial affinity mask is equal
+      // to a single windows processor group.  If it is, then we do
+      // not respect the initial affinity mask and instead, use the
+      // entire machine.
+      bool exactly_one_group = false;
+      if (__kmp_num_proc_groups > 1) {
+        int group;
+        bool within_one_group;
+        // Get the initial affinity mask and determine if it is
+        // contained within a single group.
+        kmp_affin_mask_t *init_mask;
+        KMP_CPU_ALLOC(init_mask);
+        __kmp_get_system_affinity(init_mask, TRUE);
+        group = __kmp_get_proc_group(init_mask);
+        within_one_group = (group >= 0);
+        // If the initial affinity is within a single group,
+        // then determine if it is equal to that single group.
+        if (within_one_group) {
+          DWORD num_bits_in_group = __kmp_GetActiveProcessorCount(group);
+          int num_bits_in_mask = 0;
+          for (int bit = init_mask->begin(); bit != init_mask->end();
+               bit = init_mask->next(bit))
+            num_bits_in_mask++;
+          exactly_one_group = (num_bits_in_group == num_bits_in_mask);
+        }
+        KMP_CPU_FREE(init_mask);
+      }
 
       // Handle the Win 64 group affinity stuff if there are multiple
       // processor groups, or if the user requested it, and OMP 4.0
@@ -5073,7 +5100,8 @@ void __kmp_env_initialize(char const *string) {
            && (__kmp_nested_proc_bind.bind_types[0] == proc_bind_default))
 #endif
           || (__kmp_affinity_top_method == affinity_top_method_group)) {
-        if (__kmp_affinity_respect_mask == affinity_respect_mask_default) {
+        if (__kmp_affinity_respect_mask == affinity_respect_mask_default &&
+            exactly_one_group) {
           __kmp_affinity_respect_mask = FALSE;
         }
         if (__kmp_affinity_type == affinity_default) {
@@ -5150,7 +5178,7 @@ void __kmp_env_initialize(char const *string) {
       {
         if (__kmp_affinity_respect_mask == affinity_respect_mask_default) {
 #if KMP_GROUP_AFFINITY
-          if (__kmp_num_proc_groups > 1) {
+          if (__kmp_num_proc_groups > 1 && exactly_one_group) {
             __kmp_affinity_respect_mask = FALSE;
           } else
 #endif /* KMP_GROUP_AFFINITY */
