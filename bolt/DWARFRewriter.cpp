@@ -151,13 +151,13 @@ void RewriteInstance::updateUnitDebugInfo(
       // Handle any tag that can have DW_AT_location attribute.
       DWARFFormValue Value;
       uint32_t AttrOffset;
+      const BinaryFunction *Function =
+        FunctionStack.empty() ? nullptr : FunctionStack.back();
       if (DIE->getAttributeValue(Unit, dwarf::DW_AT_location, Value,
                                  &AttrOffset)) {
         if (Value.isFormClass(DWARFFormValue::FC_Constant) ||
             Value.isFormClass(DWARFFormValue::FC_SectionOffset)) {
           auto LocListSectionOffset = LocationListWriter->getEmptyListOffset();
-          const BinaryFunction *Function =
-            FunctionStack.empty() ? nullptr : FunctionStack.back();
           if (Function) {
             // Limit parsing to a single list to save memory.
             DWARFDebugLoc::LocationList LL;
@@ -172,8 +172,8 @@ void RewriteInstance::updateUnitDebugInfo(
               ->translateInputToOutputLocationList(LL, Unit->getBaseAddress());
             DEBUG(
               if (OutputLL.Entries.empty()) {
-                dbgs() << "BOLT-DEBUG: location list translated to an empty one "
-                          "at 0x"
+                dbgs() << "BOLT-DEBUG: location list translated to an empty "
+                          "one at 0x"
                        << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
                        << Twine::utohexstr(Unit->getOffset()) << '\n';
               }
@@ -190,6 +190,27 @@ void RewriteInstance::updateUnitDebugInfo(
           assert((Value.isFormClass(DWARFFormValue::FC_Exprloc) ||
                   Value.isFormClass(DWARFFormValue::FC_Block)) &&
                  "unexpected DW_AT_location form");
+        }
+      } else if (DIE->getAttributeValue(Unit, dwarf::DW_AT_low_pc, Value,
+                                        &AttrOffset)) {
+        const auto Result = Value.getAsAddress(Unit);
+        if (Result.hasValue()) {
+          uint64_t NewAddress = 0;
+          if (Function) {
+            const auto Address = Result.getValue();
+            NewAddress = Function->translateInputToOutputAddress(Address);
+            DEBUG(dbgs() << "BOLT-DEBUG: Fixing low_pc 0x"
+                         << Twine::utohexstr(Address)
+                         << " for DIE with tag " << DIE->getTag()
+                         << " to 0x" << Twine::utohexstr(NewAddress) << '\n');
+          }
+          auto DebugInfoPatcher =
+              static_cast<SimpleBinaryPatcher *>(
+                  SectionPatchers[".debug_info"].get());
+          DebugInfoPatcher->addLE64Patch(AttrOffset, NewAddress);
+        } else if (opts::Verbosity >= 1) {
+          errs() << "BOLT-WARNING: unexpected form value for attribute at 0x"
+                 << Twine::utohexstr(AttrOffset);
         }
       }
     }

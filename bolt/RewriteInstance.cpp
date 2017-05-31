@@ -2410,7 +2410,7 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
       continue;
 
     // Output ranges should match the input if the body hasn't changed.
-    if (!Function.isSimple())
+    if (!Function.isSimple() && !opts::Relocs)
       continue;
 
     BinaryBasicBlock *PrevBB = nullptr;
@@ -2418,8 +2418,13 @@ void RewriteInstance::updateOutputValues(const MCAsmLayout &Layout) {
          BBI != BBE; ++BBI) {
       auto *BB = *BBI;
       assert(BB->getLabel()->isDefined(false) && "symbol should be defined");
-      uint64_t BaseAddress = BB->isCold() ? Function.cold().getAddress()
-                                          : Function.getOutputAddress();
+      uint64_t BaseAddress;
+      if (opts::Relocs) {
+        BaseAddress = NewTextSectionStartAddress;
+      } else {
+        BaseAddress = BB->isCold() ? Function.cold().getAddress()
+                                   : Function.getOutputAddress();
+      }
       uint64_t Address = BaseAddress + Layout.getSymbolOffset(*BB->getLabel());
       BB->setOutputStartAddress(Address);
 

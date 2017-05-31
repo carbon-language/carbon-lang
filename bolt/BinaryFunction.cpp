@@ -3772,6 +3772,30 @@ DWARFAddressRangesVector BinaryFunction::getOutputAddressRanges() const {
   return OutputRanges;
 }
 
+uint64_t BinaryFunction::translateInputToOutputAddress(uint64_t Address) const {
+  // If the function hasn't changed return the same address.
+  if (!isEmitted() && !opts::Relocs)
+    return Address;
+
+  if (Address < getAddress())
+    return 0;
+
+  // FIXME: #18950828 - we rely on relative offsets inside basic blocks to stay
+  //        intact. Instead we can use pseudo instructions and/or annotations.
+  const auto Offset = Address - getAddress();
+  const auto *BB = getBasicBlockContainingOffset(Offset);
+  if (!BB) {
+    // Special case for address immediately past the end of the function.
+    if (Offset == getSize())
+      return getOutputAddress() + getOutputSize();
+
+    return 0;
+  }
+
+  return std::min(BB->getOutputAddressRange().first + Offset - BB->getOffset(),
+                  BB->getOutputAddressRange().second);
+}
+
 DWARFAddressRangesVector BinaryFunction::translateInputToOutputRanges(
     const DWARFAddressRangesVector &InputRanges) const {
   // If the function hasn't changed return the same ranges.
