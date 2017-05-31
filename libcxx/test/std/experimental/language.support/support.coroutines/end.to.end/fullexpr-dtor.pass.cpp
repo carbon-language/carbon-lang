@@ -9,10 +9,6 @@
 //===----------------------------------------------------------------------===//
 
 // UNSUPPORTED: c++98, c++03, c++11
-// REQUIRES: fcoroutines-ts
-
-// RUN: %build -fcoroutines-ts
-// RUN: %run
 
 #include <experimental/coroutine>
 #include <cassert>
@@ -67,6 +63,7 @@ coro2 a() {
     assert(alive == 1);
     assert(ctor_called == 1);
     assert(dtor_called == 0);
+    ((void)x);
   }
   assert(alive == 0);
   assert(dtor_called == 1);
@@ -75,7 +72,8 @@ coro2 a() {
 coro2 b() {
   reset();
   {
-    co_await Bug{};
+    auto x = co_await Bug{};
+    ((void)x);
     assert(ctor_called == 1);
     assert(dtor_called == 1);
     assert(alive == 0);
@@ -102,7 +100,8 @@ coro2 c() {
 coro2 d() {
   reset();
   {
-    co_yield 42;
+    auto x = co_yield 42;
+    ((void)x);
     assert(ctor_called == 1);
     assert(dtor_called == 1);
     assert(alive == 0);
