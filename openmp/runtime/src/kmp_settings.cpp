@@ -5033,6 +5033,16 @@ void __kmp_env_initialize(char const *string) {
     // affinity.
     const char *var = "KMP_AFFINITY";
     KMPAffinity::pick_api();
+#if KMP_USE_HWLOC
+    // If Hwloc topology discovery was requested but affinity was also disabled,
+    // then tell user that Hwloc request is being ignored and use default
+    // topology discovery method.
+    if (__kmp_affinity_top_method == affinity_top_method_hwloc &&
+        __kmp_affinity_dispatch->get_api_type() != KMPAffinity::HWLOC) {
+      KMP_WARNING(AffIgnoringHwloc, var);
+      __kmp_affinity_top_method = affinity_top_method_all;
+    }
+#endif
     if (__kmp_affinity_type == affinity_disabled) {
       KMP_AFFINITY_DISABLE();
     } else if (!KMP_AFFINITY_CAPABLE()) {
