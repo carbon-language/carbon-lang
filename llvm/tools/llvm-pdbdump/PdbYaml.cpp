@@ -21,6 +21,7 @@
 #include "llvm/DebugInfo/PDB/Native/TpiHashing.h"
 #include "llvm/DebugInfo/PDB/PDBExtras.h"
 #include "llvm/DebugInfo/PDB/PDBTypes.h"
+#include "llvm/ObjectYAML/CodeViewYAMLTypes.h"
 
 using namespace llvm;
 using namespace llvm::pdb;

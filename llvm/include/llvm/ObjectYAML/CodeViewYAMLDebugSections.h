@@ -1,4 +1,4 @@
-//===- CodeViewYAML.cpp - CodeView YAMLIO implementation ------------------===//
+//===- CodeViewYAMLDebugSections.h - CodeView YAMLIO debug sections -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,33 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECTYAML_CODEVIEWYAML_H
-#define LLVM_OBJECTYAML_CODEVIEWYAML_H
+#ifndef LLVM_OBJECTYAML_CODEVIEWYAMLDEBUGSECTIONS_H
+#define LLVM_OBJECTYAML_CODEVIEWYAMLDEBUGSECTIONS_H
 
 #include "llvm/DebugInfo/CodeView/CodeView.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsection.h"
-#include "llvm/DebugInfo/CodeView/SymbolDeserializer.h"
-#include "llvm/DebugInfo/CodeView/SymbolRecord.h"
-#include "llvm/DebugInfo/CodeView/SymbolSerializer.h"
-#include "llvm/DebugInfo/CodeView/TypeDeserializer.h"
-#include "llvm/DebugInfo/CodeView/TypeRecord.h"
-#include "llvm/DebugInfo/CodeView/TypeSerializer.h"
-#include "llvm/DebugInfo/CodeView/TypeTableBuilder.h"
 #include "llvm/ObjectYAML/YAML.h"
 
 namespace llvm {
 namespace CodeViewYAML {
 namespace detail {
 struct C13FragmentBase;
-struct LeafRecordBase;
-struct MemberRecordBase;
-struct SymbolRecordBase;
-}
-
-namespace detail {
-struct MemberRecordBase;
-struct LeafRecordBase;
-struct SymbolRecordBase;
 }
 
 struct SourceLineEntry {
@@ -96,37 +80,12 @@ struct SourceFileInfo {
   std::vector<InlineeInfo> Inlinees;
 };
 
-struct MemberRecord {
-  std::shared_ptr<detail::MemberRecordBase> Member;
-};
-
-struct LeafRecord {
-  std::shared_ptr<detail::LeafRecordBase> Leaf;
-
-  codeview::CVType toCodeViewRecord(BumpPtrAllocator &Allocator) const;
-  static Expected<LeafRecord> fromCodeViewRecord(codeview::CVType Type);
-};
-
-struct SymbolRecord {
-  std::shared_ptr<detail::SymbolRecordBase> Symbol;
-
-  codeview::CVSymbol toCodeViewSymbol(BumpPtrAllocator &Allocator) const;
-  static Expected<SymbolRecord> fromCodeViewSymbol(codeview::CVSymbol Symbol);
-};
-
 struct C13DebugSection {
   std::vector<detail::C13FragmentBase> Fragments;
 };
 } // namespace CodeViewYAML
 } // namespace llvm
 
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::LeafRecord)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::MemberRecord)
-LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SymbolRecord)
 LLVM_YAML_DECLARE_MAPPING_TRAITS(CodeViewYAML::SourceFileInfo)
-
-LLVM_YAML_IS_SEQUENCE_VECTOR(CodeViewYAML::LeafRecord)
-LLVM_YAML_IS_SEQUENCE_VECTOR(CodeViewYAML::MemberRecord)
-LLVM_YAML_IS_SEQUENCE_VECTOR(CodeViewYAML::SymbolRecord)
 
 #endif
