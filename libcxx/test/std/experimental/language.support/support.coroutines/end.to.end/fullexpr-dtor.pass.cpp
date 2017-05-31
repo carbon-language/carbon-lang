@@ -72,8 +72,7 @@ coro2 a() {
 coro2 b() {
   reset();
   {
-    auto x = co_await Bug{};
-    ((void)x);
+    (void)(co_await Bug{});
     assert(ctor_called == 1);
     assert(dtor_called == 1);
     assert(alive == 0);
@@ -100,8 +99,7 @@ coro2 c() {
 coro2 d() {
   reset();
   {
-    auto x = co_yield 42;
-    ((void)x);
+    (void)(co_yield 42);
     assert(ctor_called == 1);
     assert(dtor_called == 1);
     assert(alive == 0);
