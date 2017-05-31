@@ -1006,6 +1006,10 @@ AttributeList AttributeList::get(LLVMContext &C,
   for (AttributeList List : Attrs)
     MaxSize = std::max(MaxSize, List.getNumAttrSets());
 
+  // If every list was empty, there is no point in merging the lists.
+  if (MaxSize == 0)
+    return AttributeList();
+
   SmallVector<AttributeSet, 8> NewAttrSets(MaxSize);
   for (unsigned I = 0; I < MaxSize; ++I) {
     AttrBuilder CurBuilder;
