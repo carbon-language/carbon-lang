@@ -350,6 +350,11 @@ void MachineBasicBlock::removeLiveIn(MCPhysReg Reg, LaneBitmask LaneMask) {
     LiveIns.erase(I);
 }
 
+MachineBasicBlock::livein_iterator
+MachineBasicBlock::removeLiveIn(MachineBasicBlock::livein_iterator I) {
+  return LiveIns.erase(I);
+}
+
 bool MachineBasicBlock::isLiveIn(MCPhysReg Reg, LaneBitmask LaneMask) const {
   livein_iterator I = find_if(
       LiveIns, [Reg](const RegisterMaskPair &LI) { return LI.PhysReg == Reg; });
