@@ -1646,11 +1646,13 @@ class piecewise_linear_distribution
 #include <istream>
 #include <ostream>
 
-#include <__undef_min_max>
-
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
+
+_LIBCPP_PUSH_MACROS
+#include <__undef_macros>
+
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -6735,5 +6737,7 @@ operator>>(basic_istream<_CharT, _Traits>& __is,
 }
 
 _LIBCPP_END_NAMESPACE_STD
+
+_LIBCPP_POP_MACROS
 
 #endif  // _LIBCPP_RANDOM

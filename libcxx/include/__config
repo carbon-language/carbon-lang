@@ -1205,4 +1205,34 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_AVAILABILITY_NO_STREAMS_EXTERN_TEMPLATE
 #endif
 
+#if defined(_LIBCPP_COMPILER_IBM)
+#define _LIBCPP_HAS_NO_PRAGMA_PUSH_POP_MACRO
+#endif
+
+#if defined(_LIBCPP_HAS_NO_PRAGMA_PUSH_POP_MACRO)
+# define _LIBCPP_PUSH_MACROS
+# define _LIBCPP_POP_MACROS
+#else
+  // Don't warn about macro conflicts when we can restore them at the
+  // end of the header.
+# ifndef _LIBCPP_DISABLE_MACRO_CONFLICT_WARNINGS
+#   define _LIBCPP_DISABLE_MACRO_CONFLICT_WARNINGS
+# endif
+# if defined(_LIBCPP_COMPILER_MSVC)
+#   define _LIBCPP_PUSH_MACROS    \
+      __pragma(push_macro("min")) \
+      __pragma(push_macro("max"))
+#   define _LIBCPP_POP_MACROS     \
+      __pragma(pop_macro("min"))  \
+      __pragma(pop_macro("max"))
+# else
+#   define _LIBCPP_PUSH_MACROS        \
+      _Pragma("push_macro(\"min\")")  \
+      _Pragma("push_macro(\"max\")")
+#   define _LIBCPP_POP_MACROS         \
+      _Pragma("pop_macro(\"min\")")   \
+      _Pragma("pop_macro(\"max\")")
+# endif
+#endif // defined(_LIBCPP_HAS_NO_PRAGMA_PUSH_POP_MACRO)
+
 #endif // _LIBCPP_CONFIG
