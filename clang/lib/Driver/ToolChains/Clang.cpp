@@ -4781,14 +4781,36 @@ void Clang::AddClangCLArgs(const ArgList &Args, types::ID InputType,
       CmdArgs.push_back("-fms-memptr-rep=virtual");
   }
 
-  if (Args.getLastArg(options::OPT__SLASH_Gd))
-     CmdArgs.push_back("-fdefault-calling-conv=cdecl");
-  else if (Args.getLastArg(options::OPT__SLASH_Gr))
-     CmdArgs.push_back("-fdefault-calling-conv=fastcall");
-  else if (Args.getLastArg(options::OPT__SLASH_Gz))
-     CmdArgs.push_back("-fdefault-calling-conv=stdcall");
-  else if (Args.getLastArg(options::OPT__SLASH_Gv))
-     CmdArgs.push_back("-fdefault-calling-conv=vectorcall");
+  // Parse the default calling convention options.
+  if (Arg *CCArg =
+          Args.getLastArg(options::OPT__SLASH_Gd, options::OPT__SLASH_Gr,
+                          options::OPT__SLASH_Gz, options::OPT__SLASH_Gv)) {
+    unsigned DCCOptId = CCArg->getOption().getID();
+    const char *DCCFlag = nullptr;
+    bool ArchSupported = true;
+    llvm::Triple::ArchType Arch = getToolChain().getArch();
+    switch (DCCOptId) {
+    case options::OPT__SLASH_Gd:
+      DCCFlag = "-fdefault-calling-convention=cdecl";
+      break;
+    case options::OPT__SLASH_Gr:
+      ArchSupported = Arch == llvm::Triple::x86;
+      DCCFlag = "-fdefault-calling-convention=fastcall";
+      break;
+    case options::OPT__SLASH_Gz:
+      ArchSupported = Arch == llvm::Triple::x86;
+      DCCFlag = "-fdefault-calling-convention=stdcall";
+      break;
+    case options::OPT__SLASH_Gv:
+      ArchSupported = Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64;
+      DCCFlag = "-fdefault-calling-convention=vectorcall";
+      break;
+    }
+
+    // MSVC doesn't warn if /Gr or /Gz is used on x64, so we don't either.
+    if (ArchSupported && DCCFlag)
+      CmdArgs.push_back(DCCFlag);
+  }
 
   if (Arg *A = Args.getLastArg(options::OPT_vtordisp_mode_EQ))
     A->render(Args, CmdArgs);
