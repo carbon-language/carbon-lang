@@ -226,6 +226,7 @@ def ProcA73     : SubtargetFeature<"a73", "ARMProcFamily", "CortexA73",
                                    FeatureCRC,
                                    FeatureCrypto,
                                    FeatureFPARMv8,
+                                   FeatureFuseAES,
                                    FeatureNEON,
                                    FeaturePerfMon
                                    ]>;
