@@ -488,7 +488,7 @@ void LinkerScript::fabricateDefaultCommands() {
 // Add sections that didn't match any sections command.
 void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
   for (InputSectionBase *S : InputSections) {
-    if (!S->Live || S->OutSec)
+    if (!S->Live || S->Parent)
       continue;
     StringRef Name = getOutputSectionName(S->Name);
     auto I = std::find_if(
@@ -602,7 +602,7 @@ void LinkerScript::process(BaseCommand &Base) {
 
     if (!Sec->Live)
       continue;
-    assert(CurOutSec == Sec->OutSec);
+    assert(CurOutSec == Sec->getParent());
     output(Sec);
   }
 }
