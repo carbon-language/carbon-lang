@@ -954,11 +954,12 @@ static bool needFuncLabelsForEHOrDebugInfo(const MachineFunction &MF,
   if (!MF.getLandingPads().empty() || MF.hasEHFunclets() || MMI->hasDebugInfo())
     return true;
 
-  // We might emit an LSDA anyway if we have an EH personality.
-  const Constant *PerFn = MF.getFunction()->getPersonalityFn();
-  if (!PerFn)
+  // We might emit an EH table that uses function begin and end labels even if
+  // we don't have any landingpads.
+  if (!MF.getFunction()->hasPersonalityFn())
     return false;
-  return !isNoOpWithoutInvoke(classifyEHPersonality(PerFn));
+  return !isNoOpWithoutInvoke(
+      classifyEHPersonality(MF.getFunction()->getPersonalityFn()));
 }
 
 /// EmitFunctionBody - This method emits the body and trailer for a
