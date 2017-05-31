@@ -765,8 +765,7 @@ static uint64_t getMipsPageCount(uint64_t Size) {
 
 uint64_t MipsGotSection::getPageEntryOffset(const SymbolBody &B,
                                             int64_t Addend) const {
-  const OutputSection *OutSec =
-      cast<DefinedRegular>(&B)->Section->getOutputSection();
+  const OutputSection *OutSec = B.getOutputSection();
   uint64_t SecAddr = getMipsPageAddr(OutSec->Addr);
   uint64_t SymAddr = getMipsPageAddr(B.getVA(Addend));
   uint64_t Index = PageIndexMap.lookup(OutSec) + (SymAddr - SecAddr) / 0xffff;
@@ -1343,8 +1342,7 @@ size_t SymbolTableBaseSection::getSymbolIndex(SymbolBody *Body) {
     // This is used for -r, so we have to handle multiple section
     // symbols being combined.
     if (Body->Type == STT_SECTION && E.Symbol->Type == STT_SECTION)
-      return cast<DefinedRegular>(Body)->Section->getOutputSection() ==
-             cast<DefinedRegular>(E.Symbol)->Section->getOutputSection();
+      return Body->getOutputSection() == E.Symbol->getOutputSection();
     return false;
   });
   if (I == Symbols.end())
