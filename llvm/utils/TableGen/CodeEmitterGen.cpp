@@ -218,10 +218,12 @@ std::string CodeEmitterGen::getInstructionCase(Record *R,
     AddCodeToMergeInOperand(R, BI, Vals[i].getName(), NumberedOp,
                             NamedOpIndices, Case, Target);
   }
-  
-  std::string PostEmitter = R->getValueAsString("PostEncoderMethod");
+
+  StringRef PostEmitter = R->getValueAsString("PostEncoderMethod");
   if (!PostEmitter.empty()) {
-    Case += "      Value = " + PostEmitter + "(MI, Value";
+    Case += "      Value = ";
+    Case += PostEmitter;
+    Case += "(MI, Value";
     Case += ", STI";
     Case += ");\n";
   }
