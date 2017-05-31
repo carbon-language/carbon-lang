@@ -893,7 +893,9 @@ std::string PatternToMatch::getPredicateCheck() const {
   for (Record *Pred : PredicateRecs) {
     if (!PredicateCheck.empty())
       PredicateCheck += " && ";
-    PredicateCheck += "(" + Pred->getValueAsString("CondString") + ")";
+    PredicateCheck += "(";
+    PredicateCheck += Pred->getValueAsString("CondString");
+    PredicateCheck += ")";
   }
 
   return PredicateCheck.str();

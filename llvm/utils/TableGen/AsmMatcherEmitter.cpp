@@ -2486,14 +2486,18 @@ static void emitMnemonicAliasVariant(raw_ostream &OS,const AsmMatcherInfo &Info,
       if (!MatchCode.empty())
         MatchCode += "else ";
       MatchCode += "if ((Features & " + FeatureMask + ") == "+FeatureMask+")\n";
-      MatchCode += "  Mnemonic = \"" +R->getValueAsString("ToMnemonic")+"\";\n";
+      MatchCode += "  Mnemonic = \"";
+      MatchCode += R->getValueAsString("ToMnemonic");
+      MatchCode += "\";\n";
     }
 
     if (AliasWithNoPredicate != -1) {
       Record *R = ToVec[AliasWithNoPredicate];
       if (!MatchCode.empty())
         MatchCode += "else\n  ";
-      MatchCode += "Mnemonic = \"" + R->getValueAsString("ToMnemonic")+"\";\n";
+      MatchCode += "Mnemonic = \"";
+      MatchCode += R->getValueAsString("ToMnemonic");
+      MatchCode += "\";\n";
     }
 
     MatchCode += "return;";

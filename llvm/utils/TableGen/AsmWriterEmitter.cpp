@@ -523,7 +523,7 @@ emitRegisterNameString(raw_ostream &O, StringRef AltName,
       // If the register has an alternate name for this index, use it.
       // Otherwise, leave it empty as an error flag.
       if (Idx < e) {
-        std::vector<std::string> AltNames =
+        std::vector<StringRef> AltNames =
           Reg.TheDef->getValueAsListOfStrings("AltNames");
         if (AltNames.size() <= Idx)
           PrintFatalError(Reg.TheDef->getLoc(),
