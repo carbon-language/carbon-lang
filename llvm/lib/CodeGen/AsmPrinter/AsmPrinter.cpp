@@ -949,6 +949,18 @@ void AsmPrinter::emitFrameAlloc(const MachineInstr &MI) {
                              MCConstantExpr::create(FrameOffset, OutContext));
 }
 
+static bool needFuncLabelsForEHOrDebugInfo(const MachineFunction &MF,
+                                           MachineModuleInfo *MMI) {
+  if (!MF.getLandingPads().empty() || MF.hasEHFunclets() || MMI->hasDebugInfo())
+    return true;
+
+  // We might emit an LSDA anyway if we have an EH personality.
+  const Constant *PerFn = MF.getFunction()->getPersonalityFn();
+  if (!PerFn)
+    return false;
+  return !isNoOpWithoutInvoke(classifyEHPersonality(PerFn));
+}
+
 /// EmitFunctionBody - This method emits the body and trailer for a
 /// function.
 void AsmPrinter::EmitFunctionBody() {
@@ -1076,8 +1088,8 @@ void AsmPrinter::EmitFunctionBody() {
   // Emit target-specific gunk after the function body.
   EmitFunctionBodyEnd();
 
-  if (!MF->getLandingPads().empty() || MMI->hasDebugInfo() ||
-      MF->hasEHFunclets() || MAI->hasDotTypeDotSizeDirective()) {
+  if (needFuncLabelsForEHOrDebugInfo(*MF, MMI) ||
+      MAI->hasDotTypeDotSizeDirective()) {
     // Create a symbol for the end of function.
     CurrentFnEnd = createTempSymbol("func_end");
     OutStreamer->EmitLabel(CurrentFnEnd);
@@ -1402,8 +1414,7 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   CurrentFnBegin = nullptr;
   CurExceptionSym = nullptr;
   bool NeedsLocalForSize = MAI->needsLocalForSize();
-  if (!MF.getLandingPads().empty() || MMI->hasDebugInfo() ||
-      MF.hasEHFunclets() || NeedsLocalForSize) {
+  if (needFuncLabelsForEHOrDebugInfo(MF, MMI) || NeedsLocalForSize) {
     CurrentFnBegin = createTempSymbol("func_begin");
     if (NeedsLocalForSize)
       CurrentFnSymForSize = CurrentFnBegin;
