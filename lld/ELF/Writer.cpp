@@ -1697,12 +1697,12 @@ template <class ELFT> void Writer<ELFT>::fixPredefinedSymbols() {
   if (Config->EMachine == EM_MIPS && !ElfSym::MipsGp->Value) {
     // Find GP-relative section with the lowest address
     // and use this address to calculate default _gp value.
-    uint64_t Gp = -1;
-    for (const OutputSection *OS : OutputSections)
-      if ((OS->Flags & SHF_MIPS_GPREL) && OS->Addr < Gp)
-        Gp = OS->Addr;
-    if (Gp != (uint64_t)-1)
-      ElfSym::MipsGp->Value = Gp + 0x7ff0;
+    for (const OutputSection *OS : OutputSections) {
+      if (OS->Flags & SHF_MIPS_GPREL) {
+        ElfSym::MipsGp->Value = OS->Addr + 0x7ff0;
+        break;
+      }
+    }
   }
 }
 
