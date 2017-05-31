@@ -4791,19 +4791,19 @@ void Clang::AddClangCLArgs(const ArgList &Args, types::ID InputType,
     llvm::Triple::ArchType Arch = getToolChain().getArch();
     switch (DCCOptId) {
     case options::OPT__SLASH_Gd:
-      DCCFlag = "-fdefault-calling-convention=cdecl";
+      DCCFlag = "-fdefault-calling-conv=cdecl";
       break;
     case options::OPT__SLASH_Gr:
       ArchSupported = Arch == llvm::Triple::x86;
-      DCCFlag = "-fdefault-calling-convention=fastcall";
+      DCCFlag = "-fdefault-calling-conv=fastcall";
       break;
     case options::OPT__SLASH_Gz:
       ArchSupported = Arch == llvm::Triple::x86;
-      DCCFlag = "-fdefault-calling-convention=stdcall";
+      DCCFlag = "-fdefault-calling-conv=stdcall";
       break;
     case options::OPT__SLASH_Gv:
       ArchSupported = Arch == llvm::Triple::x86 || Arch == llvm::Triple::x86_64;
-      DCCFlag = "-fdefault-calling-convention=vectorcall";
+      DCCFlag = "-fdefault-calling-conv=vectorcall";
       break;
     }
 
