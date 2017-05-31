@@ -672,7 +672,7 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
     PredBB->analyzeBranch(TBB, FBB, CondBranch, UncondBranch);
 
     // Only add a new branch if the target is not the fall-through.
-    if (BF.getBasicBlockAfter(BB) != CondSucc || isValid(BB)) {
+    if (BF.getBasicBlockAfter(BB, false) != CondSucc || isValid(BB)) {
       if (UncondBranch) {
         MIA->replaceBranchTarget(*UncondBranch,
                                  CondSucc->getLabel(),

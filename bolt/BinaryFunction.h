@@ -965,20 +965,22 @@ public:
 
   /// Returns the basic block after the given basic block in the layout or
   /// nullptr the last basic block is given.
-  const BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB) const {
+  const BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB,
+                                             bool IgnoreSplits = true) const {
     for (auto I = layout_begin(), E = layout_end(); I != E; ++I) {
-      if (*I == BB && std::next(I) != E)
-        return *std::next(I);
+      auto Next = std::next(I);
+      if (*I == BB && Next != E) {
+        return (IgnoreSplits || (*I)->isCold() == (*Next)->isCold())
+          ? *Next : nullptr;
+      }
     }
     return nullptr;
   }
 
-  BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB) {
-    for (auto I = layout_begin(), E = layout_end(); I != E; ++I) {
-      if (*I == BB && std::next(I) != E)
-        return *std::next(I);
-    }
-    return nullptr;
+  BinaryBasicBlock *getBasicBlockAfter(const BinaryBasicBlock *BB,
+                                       bool IgnoreSplits = true) {
+    return
+      const_cast<BinaryFunction *>(this)->getBasicBlockAfter(BB, IgnoreSplits);
   }
 
   /// Retrieve the landing pad BB associated with invoke instruction \p Invoke
