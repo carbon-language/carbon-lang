@@ -2908,11 +2908,11 @@ struct __log2_imp<0, _Rp>
     static const size_t value = _Rp + 1;
 };
 
-template <class _UI, _UI _Xp>
+template <class _UIntType, _UIntType _Xp>
 struct __log2
 {
     static const size_t value = __log2_imp<_Xp,
-                                         sizeof(_UI) * __CHAR_BIT__ - 1>::value;
+                                         sizeof(_UIntType) * __CHAR_BIT__ - 1>::value;
 };
 
 template<class _Engine, class _UIntType>
