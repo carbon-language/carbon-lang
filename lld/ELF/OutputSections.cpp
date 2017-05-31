@@ -76,8 +76,8 @@ static bool compareByFilePosition(InputSection *A, InputSection *B) {
   if (A->kind() == InputSectionBase::Synthetic ||
       B->kind() == InputSectionBase::Synthetic)
     return false;
-  auto *LA = cast<InputSection>(A->getLinkOrderDep());
-  auto *LB = cast<InputSection>(B->getLinkOrderDep());
+  InputSection *LA = A->getLinkOrderDep();
+  InputSection *LB = B->getLinkOrderDep();
   OutputSection *AOut = LA->OutSec;
   OutputSection *BOut = LB->OutSec;
   if (AOut != BOut)

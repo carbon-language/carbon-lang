@@ -2200,7 +2200,7 @@ void ARMExidxSentinelSection::writeTo(uint8_t *Buf) {
                           });
   auto L = cast<InputSectionDescription>(*ISD);
   InputSection *Highest = L->Sections[L->Sections.size() - 2];
-  InputSection *LS = cast<InputSection>(Highest->getLinkOrderDep());
+  InputSection *LS = Highest->getLinkOrderDep();
   uint64_t S = LS->OutSec->Addr + LS->getOffset(LS->getSize());
   uint64_t P = getVA();
   Target->relocateOne(Buf, R_ARM_PREL31, S - P);

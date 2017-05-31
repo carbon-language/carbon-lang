@@ -158,7 +158,7 @@ public:
     return getFile<ELFT>()->getObj();
   }
 
-  InputSectionBase *getLinkOrderDep() const;
+  InputSection *getLinkOrderDep() const;
 
   void uncompress();
 

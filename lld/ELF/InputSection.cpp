@@ -181,9 +181,15 @@ uint64_t SectionBase::getOffset(const DefinedRegular &Sym) const {
   return getOffset(Sym.Value);
 }
 
-InputSectionBase *InputSectionBase::getLinkOrderDep() const {
-  if ((Flags & SHF_LINK_ORDER) && Link != 0)
-    return File->getSections()[Link];
+InputSection *InputSectionBase::getLinkOrderDep() const {
+  if ((Flags & SHF_LINK_ORDER) && Link != 0) {
+    InputSectionBase *L = File->getSections()[Link];
+    if (auto *IS = dyn_cast<InputSection>(L))
+      return IS;
+    error(
+        "Merge and .eh_frame sections are not supported with SHF_LINK_ORDER " +
+        toString(L));
+  }
   return nullptr;
 }
 
