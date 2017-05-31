@@ -300,13 +300,13 @@ template <class ELFT> void Writer<ELFT>::run() {
   openFile();
   if (ErrorCount)
     return;
+  clearOutputSections();
   if (!Config->OFormatBinary) {
     writeHeader();
     writeSections();
   } else {
     writeSectionsBinary();
   }
-  clearOutputSections();
 
   // Backfill .note.gnu.build-id section content. This is done at last
   // because the content is usually a hash value of the entire output file.

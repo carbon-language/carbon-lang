@@ -1085,7 +1085,12 @@ template <class ELFT> void OutputSectionCommand::writeTo(uint8_t *Buf) {
     return;
 
   // Write leading padding.
-  ArrayRef<InputSection *> Sections = Sec->Sections;
+  std::vector<InputSection *> Sections;
+  for (BaseCommand *Cmd : Commands)
+    if (auto *ISD = dyn_cast<InputSectionDescription>(Cmd))
+      for (InputSection *IS : ISD->Sections)
+        if (IS->Live)
+          Sections.push_back(IS);
   uint32_t Filler = getFiller();
   if (Filler)
     fill(Buf, Sections.empty() ? Sec->Size : Sections[0]->OutSecOff, Filler);
