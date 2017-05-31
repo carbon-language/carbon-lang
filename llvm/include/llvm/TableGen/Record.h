@@ -1237,7 +1237,8 @@ class RecordVal {
 
 public:
   RecordVal(Init *N, RecTy *T, bool P);
-  RecordVal(StringRef N, RecTy *T, bool P);
+  RecordVal(StringRef N, RecTy *T, bool P)
+    : RecordVal(StringInit::get(N), T, P) {}
 
   StringRef getName() const;
   Init *getNameInit() const { return Name; }
