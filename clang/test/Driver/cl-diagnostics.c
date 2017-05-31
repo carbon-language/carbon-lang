@@ -13,12 +13,12 @@
 // CARET-NOT: -fno-caret-diagnostics
 // CARET-NOT: -fno-show-column
 
-// RUN: not %clang_cl /diagnostics:classic /Zs -c -- %s 2>&1 | FileCheck %s --check-prefix=OUTPUT_CLASSIC
+// RUN: not %clang_cl -fms-compatibility-version=19  /diagnostics:classic /Zs -c -- %s 2>&1 | FileCheck %s --check-prefix=OUTPUT_CLASSIC
 
 // OUTPUT_CLASSIC: cl-diagnostics.c({{[0-9]+}}): error: "asdf"
 // OUTPUT_CLASSIC-NOT: #error
 
-// RUN: not %clang_cl /diagnostics:caret /Zs -c -- %s 2>&1 | FileCheck %s --check-prefix=OUTPUT_CARET
+// RUN: not %clang_cl -fms-compatibility-version=19 /diagnostics:caret /Zs -c -- %s 2>&1 | FileCheck %s --check-prefix=OUTPUT_CARET
 
 // OUTPUT_CARET: cl-diagnostics.c({{[0-9]+,[0-9]+}}): error: "asdf"
 // OUTPUT_CARET-NEXT: #error "asdf"
