@@ -1694,17 +1694,15 @@ template <class ELFT> void Writer<ELFT>::fixPredefinedSymbols() {
 
   // Setup MIPS _gp_disp/__gnu_local_gp symbols which should
   // be equal to the _gp symbol's value.
-  if (Config->EMachine == EM_MIPS) {
-    if (!ElfSym::MipsGp->Value) {
-      // Find GP-relative section with the lowest address
-      // and use this address to calculate default _gp value.
-      uint64_t Gp = -1;
-      for (const OutputSection *OS : OutputSections)
-        if ((OS->Flags & SHF_MIPS_GPREL) && OS->Addr < Gp)
-          Gp = OS->Addr;
-      if (Gp != (uint64_t)-1)
-        ElfSym::MipsGp->Value = Gp + 0x7ff0;
-    }
+  if (Config->EMachine == EM_MIPS && !ElfSym::MipsGp->Value) {
+    // Find GP-relative section with the lowest address
+    // and use this address to calculate default _gp value.
+    uint64_t Gp = -1;
+    for (const OutputSection *OS : OutputSections)
+      if ((OS->Flags & SHF_MIPS_GPREL) && OS->Addr < Gp)
+        Gp = OS->Addr;
+    if (Gp != (uint64_t)-1)
+      ElfSym::MipsGp->Value = Gp + 0x7ff0;
   }
 }
 
