@@ -99,24 +99,30 @@ template <class BrSelInst> static bool handleBrSelExpect(BrSelInst &BSI) {
 
   ICmpInst *CmpI = dyn_cast<ICmpInst>(BSI.getCondition());
   CmpInst::Predicate Predicate;
-  uint64_t ValueComparedTo = 0;
+  ConstantInt *CmpConstOperand = nullptr;
   if (!CmpI) {
     CI = dyn_cast<CallInst>(BSI.getCondition());
     Predicate = CmpInst::ICMP_NE;
-    ValueComparedTo = 0;
   } else {
     Predicate = CmpI->getPredicate();
     if (Predicate != CmpInst::ICMP_NE && Predicate != CmpInst::ICMP_EQ)
       return false;
-    ConstantInt *CmpConstOperand = dyn_cast<ConstantInt>(CmpI->getOperand(1));
+
+    CmpConstOperand = dyn_cast<ConstantInt>(CmpI->getOperand(1));
     if (!CmpConstOperand)
       return false;
-    ValueComparedTo = CmpConstOperand->getZExtValue();
     CI = dyn_cast<CallInst>(CmpI->getOperand(0));
   }
 
   if (!CI)
     return false;
+
+  uint64_t ValueComparedTo = 0;
+  if (CmpConstOperand) {
+    if (CmpConstOperand->getBitWidth() > 64)
+      return false;
+    ValueComparedTo = CmpConstOperand->getZExtValue();
+  }
 
   Function *Fn = CI->getCalledFunction();
   if (!Fn || Fn->getIntrinsicID() != Intrinsic::expect)
