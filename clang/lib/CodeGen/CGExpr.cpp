@@ -3530,6 +3530,25 @@ static Address emitAddrOfFieldStorage(CodeGenFunction &CGF, Address base,
   return CGF.Builder.CreateStructGEP(base, idx, offset, field->getName());
 }
 
+static bool hasAnyVptr(const QualType Type, const ASTContext &Context) {
+  const auto *RD = Type.getTypePtr()->getAsCXXRecordDecl();
+  if (!RD)
+    return false;
+
+  if (RD->isDynamicClass())
+    return true;
+
+  for (const auto &Base : RD->bases())
+    if (hasAnyVptr(Base.getType(), Context))
+      return true;
+
+  for (const FieldDecl *Field : RD->fields())
+    if (hasAnyVptr(Field->getType(), Context))
+      return true;
+
+  return false;
+}
+
 LValue CodeGenFunction::EmitLValueForField(LValue base,
                                            const FieldDecl *field) {
   LValueBaseInfo BaseInfo = base.getBaseInfo();
@@ -3572,6 +3591,14 @@ LValue CodeGenFunction::EmitLValueForField(LValue base,
     assert(!type->isReferenceType() && "union has reference member");
     // TODO: handle path-aware TBAA for union.
     TBAAPath = false;
+
+    const auto FieldType = field->getType();
+    if (CGM.getCodeGenOpts().StrictVTablePointers &&
+        hasAnyVptr(FieldType, getContext()))
+      // Because unions can easily skip invariant.barriers, we need to add
+      // a barrier every time CXXRecord field with vptr is referenced.
+      addr = Address(Builder.CreateInvariantGroupBarrier(addr.getPointer()),
+                     addr.getAlignment());
   } else {
     // For structs, we GEP to the field that the record layout suggests.
     addr = emitAddrOfFieldStorage(*this, addr, field);
