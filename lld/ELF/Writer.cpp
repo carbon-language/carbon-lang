@@ -1555,9 +1555,11 @@ static uint64_t setOffset(OutputSection *Sec, uint64_t Off) {
 
 template <class ELFT> void Writer<ELFT>::assignFileOffsetsBinary() {
   uint64_t Off = 0;
-  for (OutputSection *Sec : OutputSections)
+  for (OutputSectionCommand *Cmd : OutputSectionCommands) {
+    OutputSection *Sec = Cmd->Sec;
     if (Sec->Flags & SHF_ALLOC)
       Off = setOffset(Sec, Off);
+  }
   FileSize = alignTo(Off, Config->Wordsize);
 }
 
@@ -1567,11 +1569,12 @@ template <class ELFT> void Writer<ELFT>::assignFileOffsets() {
   Off = setOffset(Out::ElfHeader, Off);
   Off = setOffset(Out::ProgramHeaders, Off);
 
-  for (OutputSection *Sec : OutputSections)
-    Off = setOffset(Sec, Off);
+  for (OutputSectionCommand *Cmd : OutputSectionCommands)
+    Off = setOffset(Cmd->Sec, Off);
 
   SectionHeaderOff = alignTo(Off, Config->Wordsize);
-  FileSize = SectionHeaderOff + (OutputSections.size() + 1) * sizeof(Elf_Shdr);
+  FileSize =
+      SectionHeaderOff + (OutputSectionCommands.size() + 1) * sizeof(Elf_Shdr);
 }
 
 // Finalize the program headers. We call this function after we assign
@@ -1697,7 +1700,8 @@ template <class ELFT> void Writer<ELFT>::fixPredefinedSymbols() {
   if (Config->EMachine == EM_MIPS && !ElfSym::MipsGp->Value) {
     // Find GP-relative section with the lowest address
     // and use this address to calculate default _gp value.
-    for (const OutputSection *OS : OutputSections) {
+    for (const OutputSectionCommand *Cmd : OutputSectionCommands) {
+      OutputSection *OS = Cmd->Sec;
       if (OS->Flags & SHF_MIPS_GPREL) {
         ElfSym::MipsGp->Value = OS->Addr + 0x7ff0;
         break;
