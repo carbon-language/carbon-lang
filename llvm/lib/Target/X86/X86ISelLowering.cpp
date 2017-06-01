@@ -1578,6 +1578,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     // Support carry in as value rather than glue.
     setOperationAction(ISD::ADDCARRY, VT, Custom);
     setOperationAction(ISD::SUBCARRY, VT, Custom);
+    setOperationAction(ISD::SETCCCARRY, VT, Custom);
   }
 
   if (!Subtarget.is64Bit()) {
@@ -17413,6 +17414,30 @@ SDValue X86TargetLowering::LowerSETCCE(SDValue Op, SelectionDAG &DAG) const {
   return SetCC;
 }
 
+SDValue X86TargetLowering::LowerSETCCCARRY(SDValue Op, SelectionDAG &DAG) const {
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  SDValue Carry = Op.getOperand(2);
+  SDValue Cond = Op.getOperand(3);
+  SDLoc DL(Op);
+
+  assert(LHS.getSimpleValueType().isInteger() && "SETCCCARRY is integer only.");
+  X86::CondCode CC = TranslateIntegerX86CC(cast<CondCodeSDNode>(Cond)->get());
+
+  // Recreate the carry if needed.
+  EVT CarryVT = Carry.getValueType();
+  APInt NegOne = APInt::getAllOnesValue(CarryVT.getScalarSizeInBits());
+  Carry = DAG.getNode(X86ISD::ADD, DL, DAG.getVTList(CarryVT, MVT::i32),
+                      Carry, DAG.getConstant(NegOne, DL, CarryVT));
+
+  SDVTList VTs = DAG.getVTList(LHS.getValueType(), MVT::i32);
+  SDValue Cmp = DAG.getNode(X86ISD::SBB, DL, VTs, LHS, RHS, Carry.getValue(1));
+  SDValue SetCC = getSETCC(CC, Cmp.getValue(1), DL, DAG);
+  if (Op.getSimpleValueType() == MVT::i1)
+    return DAG.getNode(ISD::TRUNCATE, DL, MVT::i1, SetCC);
+  return SetCC;
+}
+
 /// Return true if opcode is a X86 logical comparison.
 static bool isX86LogicalCmp(SDValue Op) {
   unsigned Opc = Op.getOpcode();
@@ -23782,6 +23807,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FGETSIGN:           return LowerFGETSIGN(Op, DAG);
   case ISD::SETCC:              return LowerSETCC(Op, DAG);
   case ISD::SETCCE:             return LowerSETCCE(Op, DAG);
+  case ISD::SETCCCARRY:         return LowerSETCCCARRY(Op, DAG);
   case ISD::SELECT:             return LowerSELECT(Op, DAG);
   case ISD::BRCOND:             return LowerBRCOND(Op, DAG);
   case ISD::JumpTable:          return LowerJumpTable(Op, DAG);
