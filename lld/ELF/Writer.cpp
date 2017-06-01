@@ -261,6 +261,8 @@ template <class ELFT> void Writer<ELFT>::run() {
     if (!Config->Relocatable)
       fixSectionAlignments();
     Script->fabricateDefaultCommands();
+  } else {
+    Script->synchronize();
   }
 
   for (BaseCommand *Base : Script->Opt.Commands)
@@ -273,7 +275,6 @@ template <class ELFT> void Writer<ELFT>::run() {
   parallelForEach(OutputSections.begin(), OutputSections.end(),
                   [](OutputSection *S) { S->maybeCompress<ELFT>(); });
 
-  Script->synchronize();
   clearOutputSections();
 
   if (Config->Relocatable) {
