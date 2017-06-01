@@ -273,10 +273,11 @@ template <class ELFT> void Writer<ELFT>::run() {
   parallelForEach(OutputSections.begin(), OutputSections.end(),
                   [](OutputSection *S) { S->maybeCompress<ELFT>(); });
 
+  Script->synchronize();
+
   if (Config->Relocatable) {
     assignFileOffsets();
   } else {
-    Script->synchronize();
     Script->assignAddresses(Phdrs, OutputSectionCommands);
 
     // Remove empty PT_LOAD to avoid causing the dynamic linker to try to mmap a
