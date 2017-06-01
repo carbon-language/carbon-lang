@@ -1970,6 +1970,44 @@ SDValue DAGCombiner::visitADD(SDNode *N) {
   return SDValue();
 }
 
+static SDValue getAsCarry(const TargetLowering &TLI, SDValue V) {
+  bool Masked = false;
+
+  // First, peel away TRUNCATE/ZERO_EXTEND/AND nodes due to legalization.
+  while (true) {
+    if (V.getOpcode() == ISD::TRUNCATE || V.getOpcode() == ISD::ZERO_EXTEND) {
+      V = V.getOperand(0);
+      continue;
+    }
+
+    if (V.getOpcode() == ISD::AND && isOneConstant(V.getOperand(1))) {
+      Masked = true;
+      V = V.getOperand(0);
+      continue;
+    }
+
+    break;
+  }
+
+  // If this is not a carry, return.
+  if (V.getResNo() != 1)
+    return SDValue();
+
+  if (V.getOpcode() != ISD::ADDCARRY && V.getOpcode() != ISD::SUBCARRY &&
+      V.getOpcode() != ISD::UADDO && V.getOpcode() != ISD::USUBO)
+    return SDValue();
+
+  // If the result is masked, then no matter what kind of bool it is we can
+  // return. If it isn't, then we need to make sure the bool type is either 0 or
+  // 1 and not other values.
+  if (Masked ||
+      TLI.getBooleanContents(V.getValueType()) ==
+          TargetLoweringBase::ZeroOrOneBooleanContent)
+    return V;
+
+  return SDValue();
+}
+
 SDValue DAGCombiner::visitADDLike(SDValue N0, SDValue N1, SDNode *LocReference) {
   EVT VT = N0.getValueType();
   SDLoc DL(LocReference);
@@ -2016,6 +2054,12 @@ SDValue DAGCombiner::visitADDLike(SDValue N0, SDValue N1, SDNode *LocReference) 
   if (N1.getOpcode() == ISD::ADDCARRY && isNullConstant(N1.getOperand(1)))
     return DAG.getNode(ISD::ADDCARRY, DL, N1->getVTList(),
                        N0, N1.getOperand(0), N1.getOperand(2));
+
+  // (add X, Carry) -> (addcarry X, 0, Carry)
+  if (SDValue Carry = getAsCarry(TLI, N1))
+    return DAG.getNode(ISD::ADDCARRY, DL,
+                       DAG.getVTList(VT, Carry.getValueType()), N0,
+                       DAG.getConstant(0, DL, VT), Carry);
 
   return SDValue();
 }
@@ -2099,6 +2143,11 @@ SDValue DAGCombiner::visitUADDOLike(SDValue N0, SDValue N1, SDNode *N) {
       return DAG.getNode(ISD::ADDCARRY, SDLoc(N), N->getVTList(), N0, Y,
                          N1.getOperand(2));
   }
+
+  // (uaddo X, Carry) -> (addcarry X, 0, Carry)
+  if (SDValue Carry = getAsCarry(TLI, N1))
+    return DAG.getNode(ISD::ADDCARRY, SDLoc(N), N->getVTList(), N0,
+                       DAG.getConstant(0, SDLoc(N), N0.getValueType()), Carry);
 
   return SDValue();
 }
