@@ -269,13 +269,13 @@ template <class ELFT> void Writer<ELFT>::run() {
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
       OutputSectionCommands.push_back(Cmd);
 
+  clearOutputSections();
   // If -compressed-debug-sections is specified, we need to compress
   // .debug_* sections. Do it right now because it changes the size of
   // output sections.
-  parallelForEach(OutputSections.begin(), OutputSections.end(),
-                  [](OutputSection *S) { S->maybeCompress<ELFT>(); });
-
-  clearOutputSections();
+  parallelForEach(
+      OutputSectionCommands.begin(), OutputSectionCommands.end(),
+      [](OutputSectionCommand *Cmd) { Cmd->maybeCompress<ELFT>(); });
 
   if (Config->Relocatable) {
     assignFileOffsets();

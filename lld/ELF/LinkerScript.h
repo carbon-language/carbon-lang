@@ -137,6 +137,7 @@ struct OutputSectionCommand : BaseCommand {
   std::string MemoryRegionName;
 
   template <class ELFT> void writeTo(uint8_t *Buf);
+  template <class ELFT> void maybeCompress();
   uint32_t getFiller();
 };
 
