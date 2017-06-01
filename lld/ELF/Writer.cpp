@@ -274,6 +274,7 @@ template <class ELFT> void Writer<ELFT>::run() {
                   [](OutputSection *S) { S->maybeCompress<ELFT>(); });
 
   Script->synchronize();
+  clearOutputSections();
 
   if (Config->Relocatable) {
     assignFileOffsets();
@@ -301,7 +302,7 @@ template <class ELFT> void Writer<ELFT>::run() {
   openFile();
   if (ErrorCount)
     return;
-  clearOutputSections();
+
   if (!Config->OFormatBinary) {
     writeHeader();
     writeSections();
