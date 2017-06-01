@@ -333,7 +333,7 @@ int main(int argc, char **argv) {
   } else {
     ActivePrefix = CurrentExecPrefix;
     ActiveIncludeDir = ActivePrefix + "/include";
-    SmallString<PATH_MAX> path(StringRef(LLVM_TOOLS_INSTALL_DIR));
+    SmallString<256> path(StringRef(LLVM_TOOLS_INSTALL_DIR));
     sys::fs::make_absolute(ActivePrefix, path);
     ActiveBinDir = path.str();
     ActiveLibDir = ActivePrefix + "/lib" + LLVM_LIBDIR_SUFFIX;
