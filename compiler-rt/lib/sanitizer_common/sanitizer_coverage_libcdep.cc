@@ -609,10 +609,6 @@ extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() {
   __sanitizer_dump_trace_pc_guard_coverage();
 }
-SANITIZER_INTERFACE_ATTRIBUTE
-sptr __sanitizer_maybe_open_cov_file(const char *name) {
-  return (sptr)MaybeOpenCovFile(name);
-}
 // Default empty implementations (weak). Users should redefine them.
 SANITIZER_INTERFACE_WEAK_DEF(void, __sanitizer_cov_trace_cmp, void) {}
 SANITIZER_INTERFACE_WEAK_DEF(void, __sanitizer_cov_trace_cmp1, void) {}
