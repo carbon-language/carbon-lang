@@ -166,20 +166,22 @@ void RewriteInstance::updateUnitDebugInfo(
               Value.getAsSectionOffset().getValue();
 
             Unit->getContext().getOneDebugLocList(LL);
-            assert(!LL.Entries.empty() && "location list cannot be empty");
-
-            const auto OutputLL = Function
-              ->translateInputToOutputLocationList(LL, Unit->getBaseAddress());
-            DEBUG(
-              if (OutputLL.Entries.empty()) {
+            if (LL.Entries.empty()) {
+              errs() << "BOLT-WARNING: empty location list detected at 0x"
+                     << Twine::utohexstr(LL.Offset) << " for DIE at 0x"
+                     << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
+                     << Twine::utohexstr(Unit->getOffset()) << '\n';
+            } else {
+              const auto OutputLL = Function->
+                translateInputToOutputLocationList(LL, Unit->getBaseAddress());
+              DEBUG(if (OutputLL.Entries.empty()) {
                 dbgs() << "BOLT-DEBUG: location list translated to an empty "
                           "one at 0x"
                        << Twine::utohexstr(DIE->getOffset()) << " in CU at 0x"
                        << Twine::utohexstr(Unit->getOffset()) << '\n';
-              }
-            );
-
-            LocListSectionOffset = LocationListWriter->addList(OutputLL);
+              });
+              LocListSectionOffset = LocationListWriter->addList(OutputLL);
+            }
           }
 
           auto DebugInfoPatcher =
@@ -416,7 +418,7 @@ void RewriteInstance::updateLineTableOffsets() {
       continue;
 
     auto *CU = BC->DwCtx->getCompileUnitForOffset(CUOffset);
-    assert(CU && "expected non-null CU");
+    assert(CU && "no CU found at offset");
     auto LTOffset =
       BC->DwCtx->getAttrFieldOffsetForUnit(CU, dwarf::DW_AT_stmt_list);
     if (!LTOffset)
