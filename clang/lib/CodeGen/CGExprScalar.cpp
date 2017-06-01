@@ -3887,7 +3887,7 @@ Value *CodeGenFunction::EmitCheckedInBoundsGEP(Value *Ptr,
   /// Return the result of the given binary operation.
   auto eval = [&](BinaryOperator::Opcode Opcode, llvm::Value *LHS,
                   llvm::Value *RHS) -> llvm::Value * {
-    assert(Opcode == BO_Add || Opcode == BO_Mul && "Can't eval binop");
+    assert((Opcode == BO_Add || Opcode == BO_Mul) && "Can't eval binop");
 
     // If the operands are constants, return a constant result.
     if (auto *LHSCI = dyn_cast<llvm::ConstantInt>(LHS)) {
