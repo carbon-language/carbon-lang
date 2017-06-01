@@ -16,13 +16,13 @@ using namespace llvm;
 using namespace llvm::codeview;
 
 DebugSubsectionRecord::DebugSubsectionRecord()
-    : Kind(DebugSubsectionKind::None),
-      Container(CodeViewContainer::ObjectFile) {}
+    : Container(CodeViewContainer::ObjectFile),
+      Kind(DebugSubsectionKind::None) {}
 
 DebugSubsectionRecord::DebugSubsectionRecord(DebugSubsectionKind Kind,
                                              BinaryStreamRef Data,
                                              CodeViewContainer Container)
-    : Kind(Kind), Data(Data), Container(Container) {}
+    : Container(Container), Kind(Kind), Data(Data) {}
 
 Error DebugSubsectionRecord::initialize(BinaryStreamRef Stream,
                                         DebugSubsectionRecord &Info,
@@ -62,7 +62,7 @@ BinaryStreamRef DebugSubsectionRecord::getRecordData() const { return Data; }
 DebugSubsectionRecordBuilder::DebugSubsectionRecordBuilder(
     DebugSubsectionKind Kind, DebugSubsection &Frag,
     CodeViewContainer Container)
-    : Kind(Kind), Frag(Frag), Container(Container) {}
+    : Container(Container), Kind(Kind), Frag(Frag) {}
 
 uint32_t DebugSubsectionRecordBuilder::calculateSerializedLength() {
   uint32_t Size = sizeof(DebugSubsectionHeader) +
