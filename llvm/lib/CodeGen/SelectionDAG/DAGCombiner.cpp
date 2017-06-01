@@ -2058,10 +2058,11 @@ SDValue DAGCombiner::visitADDLike(SDValue N0, SDValue N1, SDNode *LocReference) 
                        N0, N1.getOperand(0), N1.getOperand(2));
 
   // (add X, Carry) -> (addcarry X, 0, Carry)
-  if (SDValue Carry = getAsCarry(TLI, N1))
-    return DAG.getNode(ISD::ADDCARRY, DL,
-                       DAG.getVTList(VT, Carry.getValueType()), N0,
-                       DAG.getConstant(0, DL, VT), Carry);
+  if (TLI.isOperationLegalOrCustom(ISD::ADDCARRY, VT))
+    if (SDValue Carry = getAsCarry(TLI, N1))
+      return DAG.getNode(ISD::ADDCARRY, DL,
+                         DAG.getVTList(VT, Carry.getValueType()), N0,
+                         DAG.getConstant(0, DL, VT), Carry);
 
   return SDValue();
 }
@@ -2136,6 +2137,8 @@ SDValue DAGCombiner::visitUADDO(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitUADDOLike(SDValue N0, SDValue N1, SDNode *N) {
+  auto VT = N0.getValueType();
+
   // (uaddo X, (addcarry Y, 0, Carry)) -> (addcarry X, Y, Carry)
   // If Y + 1 cannot overflow.
   if (N1.getOpcode() == ISD::ADDCARRY && isNullConstant(N1.getOperand(1))) {
@@ -2147,9 +2150,10 @@ SDValue DAGCombiner::visitUADDOLike(SDValue N0, SDValue N1, SDNode *N) {
   }
 
   // (uaddo X, Carry) -> (addcarry X, 0, Carry)
-  if (SDValue Carry = getAsCarry(TLI, N1))
-    return DAG.getNode(ISD::ADDCARRY, SDLoc(N), N->getVTList(), N0,
-                       DAG.getConstant(0, SDLoc(N), N0.getValueType()), Carry);
+  if (TLI.isOperationLegalOrCustom(ISD::ADDCARRY, VT))
+    if (SDValue Carry = getAsCarry(TLI, N1))
+      return DAG.getNode(ISD::ADDCARRY, SDLoc(N), N->getVTList(), N0,
+                         DAG.getConstant(0, SDLoc(N), VT), Carry);
 
   return SDValue();
 }
