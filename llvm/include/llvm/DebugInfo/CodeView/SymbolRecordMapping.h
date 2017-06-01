@@ -20,8 +20,12 @@ class BinaryStreamWriter;
 namespace codeview {
 class SymbolRecordMapping : public SymbolVisitorCallbacks {
 public:
-  explicit SymbolRecordMapping(BinaryStreamReader &Reader) : IO(Reader) {}
-  explicit SymbolRecordMapping(BinaryStreamWriter &Writer) : IO(Writer) {}
+  explicit SymbolRecordMapping(BinaryStreamReader &Reader,
+                               CodeViewContainer Container)
+      : IO(Reader), Container(Container) {}
+  explicit SymbolRecordMapping(BinaryStreamWriter &Writer,
+                               CodeViewContainer Container)
+      : IO(Writer), Container(Container) {}
 
   Error visitSymbolBegin(CVSymbol &Record) override;
   Error visitSymbolEnd(CVSymbol &Record) override;
@@ -34,6 +38,7 @@ public:
 private:
   Optional<SymbolKind> Kind;
 
+  CodeViewContainer Container;
   CodeViewRecordIO IO;
 };
 }
