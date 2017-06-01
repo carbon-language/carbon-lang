@@ -173,6 +173,7 @@ public:
     case CK_UnusedFunctionPointer:
       llvm_unreachable("Only function pointers kinds");
     }
+    llvm_unreachable("Should already return");
   }
 
 private:
