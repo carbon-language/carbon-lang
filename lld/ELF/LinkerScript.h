@@ -281,7 +281,8 @@ public:
   void placeOrphanSections();
   void processNonSectionCommands();
   void synchronize();
-  void assignAddresses(std::vector<PhdrEntry> &Phdrs);
+  void assignAddresses(std::vector<PhdrEntry> &Phdrs,
+                       ArrayRef<OutputSectionCommand *> OutputSectionCommands);
 
   void addSymbol(SymbolAssignment *Cmd);
   void processCommands(OutputSectionFactory &Factory);

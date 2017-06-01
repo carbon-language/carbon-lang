@@ -277,7 +277,7 @@ template <class ELFT> void Writer<ELFT>::run() {
     assignFileOffsets();
   } else {
     Script->synchronize();
-    Script->assignAddresses(Phdrs);
+    Script->assignAddresses(Phdrs, OutputSectionCommands);
 
     // Remove empty PT_LOAD to avoid causing the dynamic linker to try to mmap a
     // 0 sized region. This has to be done late since only after assignAddresses
