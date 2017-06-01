@@ -1,4 +1,4 @@
-; RUN: llc < %s | FileCheck
+; RUN: llc < %s | FileCheck %s
 target triple = "arm64-apple-ios7.0"
 
 define i64 @foo(i64* nocapture readonly %ptr, i64 %a, i64 %b, i64 %c) local_unnamed_addr #0 {
