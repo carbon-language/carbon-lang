@@ -2216,6 +2216,41 @@ SDValue DAGCombiner::visitADDCARRYLike(SDValue N0, SDValue N1, SDValue CarryIn,
     return DAG.getNode(ISD::ADDCARRY, SDLoc(N), N->getVTList(),
                        N0.getOperand(0), N0.getOperand(1), CarryIn);
 
+  /**
+   * When one of the addcarry argument is itself a carry, we may be facing
+   * a diamond carry propagation. In which case we try to transform the DAG
+   * to ensure linear carry propagation if that is possible.
+   *
+   * We are trying to get:
+   *   (addcarry X, 0, (addcarry A, B, Z):Carry)
+   */
+  if (auto Y = getAsCarry(TLI, N1)) {
+    /**
+     *            (uaddo A, B)
+     *             /       \
+     *          Carry      Sum
+     *            |          \
+     *            | (addcarry *, 0, Z)
+     *            |       /
+     *             \   Carry
+     *              |   /
+     * (addcarry X, *, *)
+     */
+    if (Y.getOpcode() == ISD::UADDO &&
+        CarryIn.getResNo() == 1 &&
+        CarryIn.getOpcode() == ISD::ADDCARRY &&
+        isNullConstant(CarryIn.getOperand(1)) &&
+        CarryIn.getOperand(0) == Y.getValue(0)) {
+      auto NewY = DAG.getNode(ISD::ADDCARRY, SDLoc(N), Y->getVTList(),
+                              Y.getOperand(0), Y.getOperand(1),
+                              CarryIn.getOperand(2));
+      AddToWorklist(NewY.getNode());
+      return DAG.getNode(ISD::ADDCARRY, SDLoc(N), N->getVTList(), N0,
+                         DAG.getConstant(0, SDLoc(N), N0.getValueType()),
+                         NewY.getValue(1));
+    }
+  }
+
   return SDValue();
 }
 
