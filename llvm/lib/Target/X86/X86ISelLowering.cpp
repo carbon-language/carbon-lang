@@ -34486,8 +34486,7 @@ static SDValue combineX86ADD(SDNode *N, SelectionDAG &DAG,
             isOneConstant(Carry.getOperand(1))))
       Carry = Carry.getOperand(0);
 
-    if (Carry.getOpcode() == ISD::SETCC ||
-        Carry.getOpcode() == X86ISD::SETCC ||
+    if (Carry.getOpcode() == X86ISD::SETCC ||
         Carry.getOpcode() == X86ISD::SETCC_CARRY) {
       if (Carry.getConstantOperandVal(0) == X86::COND_B)
         return DCI.CombineTo(N, SDValue(N, 0), Carry.getOperand(1));
