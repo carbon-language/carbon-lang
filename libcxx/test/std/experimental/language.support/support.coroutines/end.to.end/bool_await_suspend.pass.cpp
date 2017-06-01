@@ -25,7 +25,7 @@ struct coro_t {
     }
     suspend_never initial_suspend() { return {}; }
     suspend_never final_suspend() { return {}; }
-    void return_void(){}
+    void return_void() {}
     void unhandled_exception() {}
   };
   coro_t(coroutine_handle<promise_type> hh) : h(hh) {}
