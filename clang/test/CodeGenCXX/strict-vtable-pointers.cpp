@@ -209,7 +209,7 @@ void UnionsBarriers(U *u) {
   // CHECK-NEW: call i8* @llvm.invariant.group.barrier(i8*
   // CHECK-NEW: call void @_Z2g2P1A(%struct.A*
   g2(&u->b);
-  // CHECK-NEW: call void @_Z9changeToAP1U(%union.U* %6)
+  // CHECK-NEW: call void @_Z9changeToAP1U(%union.U* 
   changeToA(u);
   // CHECK-NEW: call i8* @llvm.invariant.group.barrier(i8*
   // call void @_Z2g2P1A(%struct.A* %a)
