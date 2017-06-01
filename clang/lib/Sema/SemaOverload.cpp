@@ -330,13 +330,13 @@ StandardConversionSequence::getNarrowingKind(ASTContext &Ctx,
     } else if (FromType->isIntegralType(Ctx) && ToType->isRealFloatingType()) {
       llvm::APSInt IntConstantValue;
       const Expr *Initializer = IgnoreNarrowingConversion(Converted);
+      assert(Initializer && "Unknown conversion expression");
 
       // If it's value-dependent, we can't tell whether it's narrowing.
       if (Initializer->isValueDependent())
         return NK_Dependent_Narrowing;
 
-      if (Initializer &&
-          Initializer->isIntegerConstantExpr(IntConstantValue, Ctx)) {
+      if (Initializer->isIntegerConstantExpr(IntConstantValue, Ctx)) {
         // Convert the integer to the floating type.
         llvm::APFloat Result(Ctx.getFloatTypeSemantics(ToType));
         Result.convertFromAPInt(IntConstantValue, IntConstantValue.isSigned(),
