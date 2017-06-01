@@ -80,8 +80,8 @@ private:
     return Error::success();
   }
 
-  CodeViewContainer Container;
   SymbolVisitorDelegate *Delegate;
+  CodeViewContainer Container;
   std::unique_ptr<MappingInfo> Mapping;
 };
 }

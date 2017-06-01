@@ -38,8 +38,8 @@ public:
 private:
   Optional<SymbolKind> Kind;
 
-  CodeViewContainer Container;
   CodeViewRecordIO IO;
+  CodeViewContainer Container;
 };
 }
 }
