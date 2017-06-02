@@ -1233,7 +1233,7 @@ bool LazyValueInfoImpl::solveBlockValueBinaryOp(LVILatticeVal &BBLV,
 
   // Filter out operators we don't know how to reason about before attempting to
   // recurse on our operand(s).  This can cut a long search short if we know
-  // we're not going to be able to get any useful information anways.
+  // we're not going to be able to get any useful information anyways.
   switch (BBI->getOpcode()) {
   case Instruction::Add:
   case Instruction::Sub:
