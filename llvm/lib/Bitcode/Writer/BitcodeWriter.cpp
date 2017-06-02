@@ -351,7 +351,8 @@ public:
   /// Calls the callback for each value GUID and summary to be written to
   /// bitcode. This hides the details of whether they are being pulled from the
   /// entire index or just those in a provided ModuleToSummariesForIndex map.
-  void forEachSummary(std::function<void(GVInfo)> Callback) {
+  template<typename Functor>
+  void forEachSummary(Functor Callback) {
     if (ModuleToSummariesForIndex) {
       for (auto &M : *ModuleToSummariesForIndex)
         for (auto &Summary : M.second)
