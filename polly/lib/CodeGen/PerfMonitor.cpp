@@ -157,6 +157,14 @@ Function *PerfMonitor::insertFinalReporting() {
 }
 
 void PerfMonitor::AppendScopReporting() {
+  if (!Supported)
+    return;
+
+  assert(FinalStartBB && "Expected FinalStartBB to be initialized by "
+                         "PerfMonitor::insertFinalReporting.");
+  assert(ReturnFromFinal && "Expected ReturnFromFinal to be initialized by "
+                            "PerfMonitor::insertFinalReporting.");
+
   Builder.SetInsertPoint(FinalStartBB);
   ReturnFromFinal->eraseFromParent();
 
