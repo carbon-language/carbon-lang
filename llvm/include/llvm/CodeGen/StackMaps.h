@@ -145,11 +145,18 @@ public:
 ///
 /// Statepoint operands take the form:
 ///   <id>, <num patch bytes >, <num call arguments>, <call target>,
-///   [call arguments], <StackMaps::ConstantOp>, <calling convention>,
+///   [call arguments...],
+///   <StackMaps::ConstantOp>, <calling convention>,
 ///   <StackMaps::ConstantOp>, <statepoint flags>,
-///   <StackMaps::ConstantOp>, <num other args>, [other args],
-///   [gc values]
+///   <StackMaps::ConstantOp>, <num deopt args>, [deopt args...],
+///   <gc base/derived pairs...> <gc allocas...>
+/// Note that the last two sets of arguments are not currently length
+///   prefixed.
 class StatepointOpers {
+  // TODO:: we should change the STATEPOINT representation so that CC and
+  // Flags should be part of meta operands, with args and deopt operands, and
+  // gc operands all prefixed by their length and a type code. This would be
+  // much more consistent. 
 public:
   // These values are aboolute offsets into the operands of the statepoint
   // instruction.
@@ -157,7 +164,7 @@ public:
 
   // These values are relative offests from the start of the statepoint meta
   // arguments (i.e. the end of the call arguments).
-  enum { CCOffset = 1, FlagsOffset = 3, NumVMSArgsOffset = 5 };
+  enum { CCOffset = 1, FlagsOffset = 3, NumDeoptOperandsOffset = 5 };
 
   explicit StatepointOpers(const MachineInstr *MI) : MI(MI) {}
 

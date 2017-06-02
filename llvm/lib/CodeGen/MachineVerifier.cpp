@@ -932,6 +932,20 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
         !MI->getOperand(StatepointOpers::NCallArgsPos).isImm())
       report("meta operands to STATEPOINT not constant!", MI);
     break;
+
+    auto VerifyStackMapConstant = [&](unsigned Offset) {
+      if (!MI->getOperand(Offset).isImm() ||
+          MI->getOperand(Offset).getImm() != StackMaps::ConstantOp || 
+          !MI->getOperand(Offset + 1).isImm()) 
+        report("stack map constant to STATEPOINT not well formed!", MI);
+    };
+    const unsigned VarStart = StatepointOpers(MI).getVarIdx();
+    VerifyStackMapConstant(VarStart + StatepointOpers::CCOffset);
+    VerifyStackMapConstant(VarStart + StatepointOpers::FlagsOffset);
+    VerifyStackMapConstant(VarStart + StatepointOpers::NumDeoptOperandsOffset);
+
+    // TODO: verify we have properly encoded deopt arguments
+   
   };
 }
 
