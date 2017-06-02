@@ -62,10 +62,6 @@ static atomic_uintptr_t coverage_counter;
 // To make the pc_array thread- and async-signal-safe it has to be large enough.
 // 128M counters "ought to be enough for anybody" (4M on 32-bit).
 
-// With coverage_direct=1 in ASAN_OPTIONS, pc_array memory is mapped to a file.
-// In this mode, __sanitizer_cov_dump does nothing, and CovUpdateMapping()
-// dump current memory layout to another file.
-
 static bool cov_sandboxed = false;
 static fd_t cov_fd = kInvalidFd;
 static unsigned int cov_max_block_size = 0;
@@ -137,8 +133,6 @@ class CoverageData {
 
 static CoverageData coverage_data;
 
-void CovUpdateMapping(const char *path, uptr caller_pc = 0);
-
 void CoverageData::DirectOpen() {
   InternalScopedString path(kMaxPathLength);
   internal_snprintf((char *)path.data(), path.size(), "%s/%zd.sancov.raw",
@@ -150,7 +144,6 @@ void CoverageData::DirectOpen() {
   }
 
   pc_array_mapped_size = 0;
-  CovUpdateMapping(coverage_dir);
 }
 
 void CoverageData::Init() {
@@ -210,7 +203,6 @@ void CoverageData::ReInit() {
       uptr npcs = size / sizeof(uptr);
       Enable();
       if (size) Extend(npcs);
-      if (coverage_enabled) CovUpdateMapping(coverage_dir);
     } else {
       Enable();
     }
@@ -596,11 +588,6 @@ void ReInitializeCoverage(bool enabled, const char *dir) {
   coverage_enabled = enabled;
   coverage_dir = dir;
   coverage_data.ReInit();
-}
-
-void CoverageUpdateMapping() {
-  if (coverage_enabled)
-    CovUpdateMapping(coverage_dir);
 }
 
 } // namespace __sanitizer
