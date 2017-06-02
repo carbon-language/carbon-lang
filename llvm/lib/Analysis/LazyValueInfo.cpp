@@ -668,7 +668,7 @@ namespace {
                            BasicBlock *BB);
   void intersectAssumeOrGuardBlockValueConstantRange(Value *Val,
                                                      LVILatticeVal &BBLV,
-                                              Instruction *BBI);
+                                                     Instruction *BBI);
 
   void solve();
 
