@@ -4753,7 +4753,7 @@ static void scaleShuffleMask(int Scale, ArrayRef<int> Mask,
                              SmallVectorImpl<int> &ScaledMask) {
   assert(0 < Scale && "Unexpected scaling factor");
   int NumElts = Mask.size();
-  ScaledMask.assign(NumElts * Scale, -1);
+  ScaledMask.assign(static_cast<size_t>(NumElts * Scale), -1);
 
   for (int i = 0; i != NumElts; ++i) {
     int M = Mask[i];
@@ -8003,7 +8003,7 @@ static bool is128BitLaneCrossingShuffleMask(MVT VT, ArrayRef<int> Mask) {
 static bool isRepeatedShuffleMask(unsigned LaneSizeInBits, MVT VT,
                                   ArrayRef<int> Mask,
                                   SmallVectorImpl<int> &RepeatedMask) {
-  int LaneSize = LaneSizeInBits / VT.getScalarSizeInBits();
+  auto LaneSize = LaneSizeInBits / VT.getScalarSizeInBits();
   RepeatedMask.assign(LaneSize, -1);
   int Size = Mask.size();
   for (int i = 0; i < Size; ++i) {
