@@ -150,7 +150,7 @@ public:
 ///   <StackMaps::ConstantOp>, <num other args>, [other args],
 ///   [gc values]
 class StatepointOpers {
-private:
+public:
   // These values are aboolute offsets into the operands of the statepoint
   // instruction.
   enum { IDPos, NBytesPos, NCallArgsPos, CallTargetPos, MetaEnd };
@@ -159,7 +159,6 @@ private:
   // arguments (i.e. the end of the call arguments).
   enum { CCOffset = 1, FlagsOffset = 3, NumVMSArgsOffset = 5 };
 
-public:
   explicit StatepointOpers(const MachineInstr *MI) : MI(MI) {}
 
   /// Get starting index of non call related arguments
