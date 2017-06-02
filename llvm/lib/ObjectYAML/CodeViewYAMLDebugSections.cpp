@@ -261,7 +261,7 @@ std::unique_ptr<DebugSubsection> YAMLLinesSubsection::toCodeViewSubsection(
       }
     }
   }
-  return Result;
+  return llvm::cast<DebugSubsection>(std::move(Result));
 }
 
 std::unique_ptr<DebugSubsection>
@@ -282,7 +282,7 @@ YAMLInlineeLinesSubsection::toCodeViewSubsection(
       Result->addExtraFile(EF);
     }
   }
-  return Result;
+  return llvm::cast<DebugSubsection>(std::move(Result));
 }
 
 static Expected<SourceFileChecksumEntry>
