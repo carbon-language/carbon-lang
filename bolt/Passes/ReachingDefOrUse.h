@@ -13,6 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_REACHINGDEFORUSE_H
 
 #include "DataflowAnalysis.h"
+#include "RegAnalysis.h"
 #include "llvm/Support/Timer.h"
 
 namespace llvm {
@@ -28,16 +29,16 @@ class ReachingDefOrUse
   friend class DataflowAnalysis<ReachingDefOrUse<Def>, BitVector, !Def>;
 
 public:
-  ReachingDefOrUse(const FrameAnalysis &FA, const BinaryContext &BC,
+  ReachingDefOrUse(const RegAnalysis &RA, const BinaryContext &BC,
                    BinaryFunction &BF)
-      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BC, BF), FA(FA) {}
+      : InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>(BC, BF), RA(RA) {}
   virtual ~ReachingDefOrUse() {}
 
   bool isReachedBy(MCPhysReg Reg, ExprIterator Candidates) {
     for (auto I = Candidates; I != this->expr_end(); ++I) {
       auto BV = BitVector(this->BC.MRI->getNumRegs(), false);
       if (Def) {
-        FA.getInstClobberList(this->BC, **I, BV);
+        RA.getInstClobberList(**I, BV);
       } else {
         this->BC.MIA->getTouchedRegs(**I, BV, *this->BC.MRI);
       }
@@ -57,8 +58,8 @@ public:
   }
 
 protected:
-  /// Reference to the result of stack frame analysis
-  const FrameAnalysis &FA;
+  /// Reference to the result of reg analysis
+  const RegAnalysis &RA;
 
   void preflight() {
     // Populate our universe of tracked expressions with all instructions
@@ -89,11 +90,11 @@ protected:
     // getClobberedRegs for X and Y. If they intersect, return true
     auto XClobbers = BitVector(this->BC.MRI->getNumRegs(), false);
     auto YClobbers = BitVector(this->BC.MRI->getNumRegs(), false);
-    FA.getInstClobberList(this->BC, *X, XClobbers);
+    RA.getInstClobberList(*X, XClobbers);
     // In defs, write after write -> kills first write
     // In uses, write after access (read or write) -> kills access
     if (Def)
-      FA.getInstClobberList(this->BC, *Y, YClobbers);
+      RA.getInstClobberList(*Y, YClobbers);
     else
       this->BC.MIA->getTouchedRegs(*Y, YClobbers, *this->BC.MRI);
     // X kills Y if it clobbers Y completely -- this is a conservative approach.

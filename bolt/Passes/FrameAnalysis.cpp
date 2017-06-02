@@ -9,6 +9,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "FrameAnalysis.h"
+#include "CallGraphWalker.h"
 #include <fstream>
 
 #define DEBUG_TYPE "fa"
@@ -213,9 +214,8 @@ public:
 
 } // end anonymous namespace
 
-void FrameAnalysis::addArgAccessesFor(const BinaryContext &BC, MCInst &Inst,
-                                      ArgAccesses &&AA) {
-  if (auto OldAA = getArgAccessesFor(BC, Inst)) {
+void FrameAnalysis::addArgAccessesFor(MCInst &Inst, ArgAccesses &&AA) {
+  if (auto OldAA = getArgAccessesFor(Inst)) {
     if (OldAA->AssumeEverything)
       return;
     *OldAA = std::move(AA);
@@ -231,13 +231,12 @@ void FrameAnalysis::addArgAccessesFor(const BinaryContext &BC, MCInst &Inst,
   ArgAccessesVector.emplace_back(std::move(AA));
 }
 
-void FrameAnalysis::addArgInStackAccessFor(const BinaryContext &BC,
-                                           MCInst &Inst,
+void FrameAnalysis::addArgInStackAccessFor(MCInst &Inst,
                                            const ArgInStackAccess &Arg) {
-  auto AA = getArgAccessesFor(BC, Inst);
+  auto AA = getArgAccessesFor(Inst);
   if (!AA) {
-    addArgAccessesFor(BC, Inst, ArgAccesses(false));
-    AA = getArgAccessesFor(BC, Inst);
+    addArgAccessesFor(Inst, ArgAccesses(false));
+    AA = getArgAccessesFor(Inst);
     assert(AA && "Object setup failed");
   }
   auto &Set = AA->Set;
@@ -245,15 +244,13 @@ void FrameAnalysis::addArgInStackAccessFor(const BinaryContext &BC,
   Set.emplace(Arg);
 }
 
-void FrameAnalysis::addFIEFor(const BinaryContext &BC, MCInst &Inst,
-                              const FrameIndexEntry &FIE) {
+void FrameAnalysis::addFIEFor(MCInst &Inst, const FrameIndexEntry &FIE) {
   BC.MIA->addAnnotation(BC.Ctx.get(), Inst, "FrameAccessEntry",
                         (unsigned)FIEVector.size());
   FIEVector.emplace_back(FIE);
 }
 
-ErrorOr<ArgAccesses &>
-FrameAnalysis::getArgAccessesFor(const BinaryContext &BC, const MCInst &Inst) {
+ErrorOr<ArgAccesses &> FrameAnalysis::getArgAccessesFor(const MCInst &Inst) {
   if (auto Idx = BC.MIA->tryGetAnnotationAs<unsigned>(Inst, "ArgAccessEntry")) {
     assert(ArgAccessesVector.size() > *Idx && "Out of bounds");
     return ArgAccessesVector[*Idx];
@@ -262,8 +259,7 @@ FrameAnalysis::getArgAccessesFor(const BinaryContext &BC, const MCInst &Inst) {
 }
 
 ErrorOr<const ArgAccesses &>
-FrameAnalysis::getArgAccessesFor(const BinaryContext &BC,
-                                 const MCInst &Inst) const {
+FrameAnalysis::getArgAccessesFor(const MCInst &Inst) const {
   if (auto Idx = BC.MIA->tryGetAnnotationAs<unsigned>(Inst, "ArgAccessEntry")) {
     assert(ArgAccessesVector.size() > *Idx && "Out of bounds");
     return ArgAccessesVector[*Idx];
@@ -272,7 +268,7 @@ FrameAnalysis::getArgAccessesFor(const BinaryContext &BC,
 }
 
 ErrorOr<const FrameIndexEntry &>
-FrameAnalysis::getFIEFor(const BinaryContext &BC, const MCInst &Inst) const {
+FrameAnalysis::getFIEFor(const MCInst &Inst) const {
   if (auto Idx =
           BC.MIA->tryGetAnnotationAs<unsigned>(Inst, "FrameAccessEntry")) {
     assert(FIEVector.size() > *Idx && "Out of bounds");
@@ -281,130 +277,17 @@ FrameAnalysis::getFIEFor(const BinaryContext &BC, const MCInst &Inst) const {
   return make_error_code(errc::result_out_of_range);
 }
 
-void FrameAnalysis::getInstClobberList(const BinaryContext &BC,
-                                       const MCInst &Inst,
-                                       BitVector &KillSet) const {
-  if (!BC.MIA->isCall(Inst)) {
-    BC.MIA->getClobberedRegs(Inst, KillSet, *BC.MRI);
-    return;
-  }
+void FrameAnalysis::traverseCG(BinaryFunctionCallGraph &CG) {
+  CallGraphWalker CGWalker(BC, BFs, CG);
 
-  const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
-  // If indirect call, kill set should have all elements
-  if (TargetSymbol == nullptr) {
-    KillSet.set(0, KillSet.size());
-    return;
-  }
+  CGWalker.registerVisitor([&](BinaryFunction *Func) -> bool {
+    return computeArgsAccessed(*Func);
+  });
 
-  const auto *Function = BC.getFunctionForSymbol(TargetSymbol);
-  if (Function == nullptr) {
-    // Call to a function without a BinaryFunction object.
-    // This should be a call to a PLT entry, and since it is a trampoline to
-    // a DSO, we can't really know the code in advance. Conservatively assume
-    // everything is clobbered.
-    KillSet.set(0, KillSet.size());
-    return;
-  }
-  auto BV = RegsKilledMap.find(Function);
-  if (BV != RegsKilledMap.end()) {
-    KillSet |= BV->second;
-    return;
-  }
-  // Ignore calls to function whose clobber list wasn't yet calculated. This
-  // instruction will be evaluated again once we have info for the callee.
-  return;
+  CGWalker.walk();
 }
 
-BitVector FrameAnalysis::getFunctionClobberList(const BinaryContext &BC,
-                                                const BinaryFunction *Func) {
-  BitVector RegsKilled = BitVector(BC.MRI->getNumRegs(), false);
-
-  if (!Func->isSimple() || !Func->hasCFG()) {
-    RegsKilled.set(0, RegsKilled.size());
-    return RegsKilled;
-  }
-
-  for (const auto &BB : *Func) {
-    for (const auto &Inst : BB) {
-      getInstClobberList(BC, Inst, RegsKilled);
-    }
-  }
-
-  return RegsKilled;
-}
-
-void FrameAnalysis::buildClobberMap(const BinaryContext &BC) {
-  std::queue<BinaryFunction *> Queue;
-  std::set<BinaryFunction *> InQueue;
-
-  for (auto *Func : TopologicalCGOrder) {
-    Queue.push(Func);
-    InQueue.insert(Func);
-  }
-
-  while (!Queue.empty()) {
-    auto *Func = Queue.front();
-    Queue.pop();
-    InQueue.erase(Func);
-
-    BitVector RegsKilled = getFunctionClobberList(BC, Func);
-    bool ArgsUpdated = ClobberAnalysisOnly ? false : computeArgsAccessed(BC, *Func);
-    bool RegsUpdated = false;
-
-    if (RegsKilledMap.find(Func) == RegsKilledMap.end()) {
-      RegsKilledMap[Func] = std::move(RegsKilled);
-    } else {
-      RegsUpdated = RegsKilledMap[Func] != RegsKilled;
-      if (RegsUpdated)
-        RegsKilledMap[Func] = std::move(RegsKilled);
-    }
-
-    if (RegsUpdated || ArgsUpdated) {
-      for (auto Caller : Cg.predecessors(Cg.getNodeId(Func))) {
-        BinaryFunction *CallerFunc = Cg.nodeIdToFunc(Caller);
-        if (!InQueue.count(CallerFunc)) {
-          InQueue.insert(CallerFunc);
-          Queue.push(CallerFunc);
-        }
-      }
-    }
-  }
-
-  if (opts::Verbosity == 0) {
-#ifndef NDEBUG
-    if (!DebugFlag || !isCurrentDebugType("fa"))
-      return;
-#else
-    return;
-#endif
-  }
-
-  // This loop is for computing statistics only
-  for (auto *Func : TopologicalCGOrder) {
-    auto Iter = RegsKilledMap.find(Func);
-    assert(Iter != RegsKilledMap.end() &&
-           "Failed to compute all clobbers list");
-    if (Iter->second.all()) {
-      auto Count = Func->getExecutionCount();
-      if (Count != BinaryFunction::COUNT_NO_PROFILE)
-        CountFunctionsAllClobber += Count;
-      ++NumFunctionsAllClobber;
-    }
-    DEBUG_WITH_TYPE("fa",
-      dbgs() << "Killed regs set for func: " << Func->getPrintName() << "\n";
-      const BitVector &RegsKilled = Iter->second;
-      int RegIdx = RegsKilled.find_first();
-      while (RegIdx != -1) {
-        dbgs() << "\tREG" << RegIdx;
-        RegIdx = RegsKilled.find_next(RegIdx);
-      };
-      dbgs() << "\n";
-    );
-  }
-}
-
-bool FrameAnalysis::updateArgsTouchedFor(const BinaryContext &BC,
-                                         const BinaryFunction &BF, MCInst &Inst,
+bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
                                          int CurOffset) {
   if (!BC.MIA->isCall(Inst))
     return false;
@@ -413,7 +296,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryContext &BC,
   const auto *TargetSymbol = BC.MIA->getTargetSymbol(Inst);
   // If indirect call, we conservatively assume it accesses all stack positions
   if (TargetSymbol == nullptr) {
-    addArgAccessesFor(BC, Inst, ArgAccesses(/*AssumeEverything=*/true));
+    addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
     bool Updated{false};
     if (!FunctionsRequireAlignment.count(&BF)) {
       Updated = true;
@@ -426,7 +309,7 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryContext &BC,
   // Call to a function without a BinaryFunction object. Conservatively assume
   // it accesses all stack positions
   if (Function == nullptr) {
-    addArgAccessesFor(BC, Inst, ArgAccesses(/*AssumeEverything=*/true));
+    addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
     bool Updated{false};
     if (!FunctionsRequireAlignment.count(&BF)) {
       Updated = true;
@@ -459,27 +342,25 @@ bool FrameAnalysis::updateArgsTouchedFor(const BinaryContext &BC,
 
   if (CurOffset == StackPointerTracking::EMPTY ||
       CurOffset == StackPointerTracking::SUPERPOSITION) {
-    addArgAccessesFor(BC, Inst, ArgAccesses(/*AssumeEverything=*/true));
+    addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
     return Changed;
   }
 
   for (auto Elem : Iter->second) {
     if (Elem.first == -1) {
-      addArgAccessesFor(BC, Inst, ArgAccesses(/*AssumeEverything=*/true));
+      addArgAccessesFor(Inst, ArgAccesses(/*AssumeEverything=*/true));
       break;
     }
     DEBUG(dbgs() << "Added arg in stack access annotation "
                  << CurOffset + Elem.first << "\n");
     addArgInStackAccessFor(
-        BC, Inst,
-        ArgInStackAccess{/*StackOffset=*/CurOffset + Elem.first,
-                         /*Size=*/Elem.second});
+        Inst, ArgInStackAccess{/*StackOffset=*/CurOffset + Elem.first,
+                               /*Size=*/Elem.second});
   }
   return Changed;
 }
 
-bool FrameAnalysis::computeArgsAccessed(const BinaryContext &BC,
-                                        BinaryFunction &BF) {
+bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
   if (!BF.isSimple() || !BF.hasCFG()) {
     DEBUG(dbgs() << "Treating " << BF.getPrintName() << " conservatively.\n");
     bool Updated = false;
@@ -505,7 +386,7 @@ bool FrameAnalysis::computeArgsAccessed(const BinaryContext &BC,
 
       // Check for calls -- attach stack accessing info to them regarding their
       // target
-      if (updateArgsTouchedFor(BC, BF, Inst, FAA.getSPOffset()))
+      if (updateArgsTouchedFor(BF, Inst, FAA.getSPOffset()))
         UpdatedArgsTouched = true;
 
       // Check for stack accesses that affect callers
@@ -548,8 +429,7 @@ bool FrameAnalysis::computeArgsAccessed(const BinaryContext &BC,
   return UpdatedArgsTouched || UpdatedAlignedStatus;
 }
 
-bool FrameAnalysis::restoreFrameIndex(const BinaryContext &BC,
-                                      BinaryFunction &BF) {
+bool FrameAnalysis::restoreFrameIndex(BinaryFunction &BF) {
   FrameAccessAnalysis FAA(BC, BF);
 
   DEBUG(dbgs() << "Restoring frame indices for \"" << BF.getPrintName()
@@ -572,7 +452,7 @@ bool FrameAnalysis::restoreFrameIndex(const BinaryContext &BC,
 
       const FrameIndexEntry &FIE = FAA.getFIE();
 
-      addFIEFor(BC, Inst, FIE);
+      addFIEFor(Inst, FIE);
       DEBUG({
         dbgs() << "Frame index annotation " << FIE << " added to:\n";
         BC.printInstruction(dbgs(), Inst, 0, &BF, true);
@@ -582,8 +462,7 @@ bool FrameAnalysis::restoreFrameIndex(const BinaryContext &BC,
   return true;
 }
 
-void FrameAnalysis::cleanAnnotations(const BinaryContext &BC,
-                                     std::map<uint64_t, BinaryFunction> &BFs) {
+void FrameAnalysis::cleanAnnotations() {
   for (auto &I : BFs) {
     for (auto &BB : I.second) {
       for (auto &Inst : BB) {
@@ -594,24 +473,15 @@ void FrameAnalysis::cleanAnnotations(const BinaryContext &BC,
   }
 }
 
-void FrameAnalysis::runOnFunctions(BinaryContext &BC,
-                                   std::map<uint64_t, BinaryFunction> &BFs,
-                                   std::set<uint64_t> &) {
-  {
-    NamedRegionTimer T1("Callgraph construction", "FOP breakdown", true);
-    Cg = buildCallGraph(BC, BFs);
-  }
-  {
-    NamedRegionTimer T1("build cg traversal order", "FOP breakdown", true);
-    TopologicalCGOrder = Cg.buildTraversalOrder();
-  }
-  {
-    NamedRegionTimer T1("build clobber map", "FOP breakdown", true);
-    buildClobberMap(BC);
-  }
+FrameAnalysis::FrameAnalysis(BinaryContext &BC,
+                             std::map<uint64_t, BinaryFunction> &BFs,
+                             BinaryFunctionCallGraph &CG)
+    : BC(BC), BFs(BFs) {
+  // Position 0 of the vector should be always associated with "assume access
+  // everything".
+  ArgAccessesVector.emplace_back(ArgAccesses(/*AssumeEverything*/ true));
 
-  if (ClobberAnalysisOnly)
-    return;
+  traverseCG(CG);
 
   for (auto &I : BFs) {
     auto Count = I.second.getExecutionCount();
@@ -630,7 +500,7 @@ void FrameAnalysis::runOnFunctions(BinaryContext &BC,
 
     {
       NamedRegionTimer T1("restore frame index", "FOP breakdown", true);
-      if (!restoreFrameIndex(BC, I.second)) {
+      if (!restoreFrameIndex(I.second)) {
         ++NumFunctionsFailedRestoreFI;
         auto Count = I.second.getExecutionCount();
         if (Count != BinaryFunction::COUNT_NO_PROFILE)
@@ -643,12 +513,7 @@ void FrameAnalysis::runOnFunctions(BinaryContext &BC,
 }
 
 void FrameAnalysis::printStats() {
-  outs() << "BOLT-INFO FRAME ANALYSIS: Number of functions conservatively "
-            "treated as clobbering all registers: "
-         << NumFunctionsAllClobber
-         << format(" (%.1lf%% dyn cov)\n",
-                   (100.0 * CountFunctionsAllClobber / CountDenominator))
-         << "BOLT-INFO FRAME ANALYSIS: " << NumFunctionsNotOptimized
+  outs() << "BOLT-INFO FRAME ANALYSIS: " << NumFunctionsNotOptimized
          << " function(s) "
          << format("(%.1lf%% dyn cov)",
                    (100.0 * CountFunctionsNotOptimized / CountDenominator))

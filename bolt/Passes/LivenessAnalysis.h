@@ -13,8 +13,13 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_LIVENESSANALYSIS_H
 
 #include "DataflowAnalysis.h"
-#include "FrameAnalysis.h"
+#include "RegAnalysis.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+
+namespace opts {
+extern llvm::cl::opt<bool> AssumeABI;
+}
 
 namespace llvm {
 namespace bolt {
@@ -24,9 +29,9 @@ class LivenessAnalysis
   friend class DataflowAnalysis<LivenessAnalysis, BitVector, true>;
 
 public:
-  LivenessAnalysis(const FrameAnalysis &FA, const BinaryContext &BC,
+  LivenessAnalysis(const RegAnalysis &RA, const BinaryContext &BC,
                    BinaryFunction &BF)
-      : DataflowAnalysis<LivenessAnalysis, BitVector, true>(BC, BF), FA(FA),
+      : DataflowAnalysis<LivenessAnalysis, BitVector, true>(BC, BF), RA(RA),
         NumRegs(BC.MRI->getNumRegs()) {}
   virtual ~LivenessAnalysis();
 
@@ -42,9 +47,21 @@ public:
     DataflowAnalysis<LivenessAnalysis, BitVector, true>::run();
   }
 
+  // Return a usable general-purpose reg after point P. Return 0 if no reg is
+  // available.
+  MCPhysReg scavengeRegAfter(ProgramPoint P) {
+    BitVector BV = *this->getStateAt(P);
+    BV.flip();
+    BitVector GPRegs(NumRegs, false);
+    this->BC.MIA->getGPRegs(GPRegs, *this->BC.MRI);
+    BV &= GPRegs;
+    int Reg = BV.find_first();
+    return Reg != -1 ? Reg : 0;
+  }
+
 protected:
-  /// Reference to the result of stack frame analysis
-  const FrameAnalysis &FA;
+  /// Reference to the result of reg analysis
+  const RegAnalysis &RA;
   const uint16_t NumRegs;
 
   void preflight() {}
@@ -63,18 +80,34 @@ protected:
 
   BitVector computeNext(const MCInst &Point, const BitVector &Cur) {
     BitVector Next = Cur;
+    bool IsCall = this->BC.MIA->isCall(Point);
     // Kill
     auto Written = BitVector(NumRegs, false);
-    if (this->BC.MIA->isCall(Point))
-      FA.getInstClobberList(this->BC, Point, Written);
-    else
+    if (!IsCall) {
       this->BC.MIA->getWrittenRegs(Point, Written, *this->BC.MRI);
+    } else {
+      RA.getInstClobberList(Point, Written);
+      // When clobber list is conservative, it is clobbering all/most registers,
+      // a conservative estimate because it knows nothing about this call.
+      // For our purposes, assume it kills no registers/callee-saved regs
+      // because we don't really know what's going on.
+      if (RA.isConservative(Written)) {
+        Written.reset();
+        BC.MIA->getCalleeSavedRegs(Written, *this->BC.MRI);
+      }
+    }
     Written.flip();
     Next &= Written;
     // Gen
     if (!this->BC.MIA->isCFI(Point)) {
       auto Used = BitVector(NumRegs, false);
-      this->BC.MIA->getUsedRegs(Point, Used, *this->BC.MRI);
+      RA.getInstUsedRegsList(Point, Used, /*GetClobbers*/false);
+      if (IsCall &&
+          (!BC.MIA->isTailCall(Point) || !BC.MIA->isConditionalBranch(Point))) {
+        // Never gen FLAGS from a non-conditional call... this is overly
+        // conservative
+        Used.reset(BC.MIA->getFlagsReg());
+      }
       Next |= Used;
     }
     return Next;

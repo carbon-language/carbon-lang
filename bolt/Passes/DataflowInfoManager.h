@@ -12,14 +12,15 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_PASSES_DATAFLOWINFOMANAGER_H
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_DATAFLOWINFOMANAGER_H
 
-#include "FrameAnalysis.h"
-#include "ReachingDefOrUse.h"
-#include "StackReachingUses.h"
 #include "DominatorAnalysis.h"
-#include "StackPointerTracking.h"
-#include "ReachingInsns.h"
+#include "FrameAnalysis.h"
 #include "LivenessAnalysis.h"
+#include "ReachingDefOrUse.h"
+#include "ReachingInsns.h"
+#include "RegAnalysis.h"
 #include "StackAllocationAnalysis.h"
+#include "StackPointerTracking.h"
+#include "StackReachingUses.h"
 
 namespace llvm {
 namespace bolt {
@@ -29,6 +30,7 @@ namespace bolt {
 /// recompute it. Also provide an interface for data invalidation when the
 /// analysis is outdated after a transform pass modified the function.
 class DataflowInfoManager {
+  const RegAnalysis *RA;
   const FrameAnalysis *FA;
   const BinaryContext &BC;
   BinaryFunction &BF;
@@ -46,8 +48,9 @@ class DataflowInfoManager {
       InsnToBB;
 
 public:
-  DataflowInfoManager(const FrameAnalysis *FA, const BinaryContext &BC,
-                      BinaryFunction &BF) : FA(FA), BC(BC), BF(BF) {};
+  DataflowInfoManager(const BinaryContext &BC, BinaryFunction &BF,
+                      const RegAnalysis *RA, const FrameAnalysis *FA)
+      : RA(RA), FA(FA), BC(BC), BF(BF){};
 
   /// Helper function to fetch the parent BB associated with a program point
   /// If PP is a BB itself, then return itself (cast to a BinaryBasicBlock)

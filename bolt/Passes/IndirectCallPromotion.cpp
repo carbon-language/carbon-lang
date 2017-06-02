@@ -679,9 +679,12 @@ void IndirectCallPromotion::runOnFunctions(
   if (opts::IndirectCallPromotion == ICP_NONE)
     return;
 
-  FrameAnalysis FA(PrintPass, /*ClobberAnalysisOnly=*/true);
-  if (opts::IndirectCallPromotion >= ICP_JUMP_TABLES)
-    FA.runOnFunctions(BC, BFs, LargeFunctions);
+  std::unique_ptr<RegAnalysis> RA;
+  std::unique_ptr<BinaryFunctionCallGraph> CG;
+  if (opts::IndirectCallPromotion >= ICP_JUMP_TABLES) {
+    CG.reset(new BinaryFunctionCallGraph(buildCallGraph(BC, BFs)));
+    RA.reset(new RegAnalysis(BC, BFs, *CG));
+  }
 
   for (auto &BFIt : BFs) {
     auto &Function = BFIt.second;
@@ -716,7 +719,7 @@ void IndirectCallPromotion::runOnFunctions(
     if (BBs.empty())
       continue;
 
-    DataflowInfoManager Info(&FA, BC, Function);
+    DataflowInfoManager Info(BC, Function, RA.get(), nullptr);
     while (!BBs.empty()) {
       auto *BB = BBs.back();
       BBs.pop_back();
@@ -863,9 +866,6 @@ void IndirectCallPromotion::runOnFunctions(
     TotalIndirectCalls += FuncTotalIndirectCalls;
     TotalIndirectJmps += FuncTotalIndirectJmps;
   }
-
-  if (opts::IndirectCallPromotion >= ICP_JUMP_TABLES)
-    FA.cleanAnnotations(BC, BFs);
 
   outs() << "BOLT-INFO: ICP total indirect callsites = "
          << TotalIndirectCallsites

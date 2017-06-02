@@ -12,6 +12,7 @@
 #include "BinaryFunctionCallGraph.h"
 #include "BinaryFunction.h"
 #include "BinaryContext.h"
+#include "llvm/Support/Timer.h"
 
 #define DEBUG_TYPE "callgraph"
 
@@ -30,6 +31,7 @@ CallGraph::NodeId BinaryFunctionCallGraph::addNode(BinaryFunction *BF,
 }
 
 std::deque<BinaryFunction *> BinaryFunctionCallGraph::buildTraversalOrder() {
+  NamedRegionTimer T1("Build cg traversal order", "CG breakdown", true);
   std::deque<BinaryFunction *> TopologicalOrder;
   enum NodeStatus { NEW, VISITING, VISITED };
   std::vector<NodeStatus> NodeStatus(Funcs.size());
@@ -73,6 +75,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
                                        bool IncludeColdCalls,
                                        bool UseFunctionHotSize,
                                        bool UseEdgeCounts) {
+  NamedRegionTimer T1("Callgraph construction", "CG breakdown", true);
   BinaryFunctionCallGraph Cg;
 
   // Add call graph nodes.

@@ -17,10 +17,11 @@
 namespace llvm {
 namespace bolt {
 
-StackAvailableExpressions::StackAvailableExpressions(const FrameAnalysis &FA,
+StackAvailableExpressions::StackAvailableExpressions(const RegAnalysis &RA,
+                                                     const FrameAnalysis &FA,
                                                      const BinaryContext &BC,
                                                      BinaryFunction &BF)
-    : InstrsDataflowAnalysis(BC, BF), FA(FA) {}
+    : InstrsDataflowAnalysis(BC, BF), RA(RA), FA(FA) {}
 
 void StackAvailableExpressions::preflight() {
   DEBUG(dbgs() << "Starting StackAvailableExpressions on \""
@@ -31,7 +32,7 @@ void StackAvailableExpressions::preflight() {
   // program.
   for (auto &BB : Func) {
     for (auto &Inst : BB) {
-      auto FIE = FA.getFIEFor(BC, Inst);
+      auto FIE = FA.getFIEFor(Inst);
       if (!FIE)
         continue;
       if (FIE->IsStore == true && FIE->IsSimple == true) {
@@ -80,8 +81,8 @@ bool isLoadRedundant(const FrameIndexEntry &LoadFIE,
 bool StackAvailableExpressions::doesXKillsY(const MCInst *X, const MCInst *Y) {
   // if both are stores, and both store to the same stack location, return
   // true
-  auto FIEX = FA.getFIEFor(BC, *X);
-  auto FIEY = FA.getFIEFor(BC, *Y);
+  auto FIEX = FA.getFIEFor(*X);
+  auto FIEY = FA.getFIEFor(*Y);
   if (FIEX && FIEY) {
     if (isLoadRedundant(*FIEX, *FIEY))
       return false;
@@ -93,14 +94,14 @@ bool StackAvailableExpressions::doesXKillsY(const MCInst *X, const MCInst *Y) {
   // getClobberedRegs for X and Y. If they intersect, return true
   BitVector XClobbers = BitVector(BC.MRI->getNumRegs(), false);
   BitVector YClobbers = BitVector(BC.MRI->getNumRegs(), false);
-  FA.getInstClobberList(BC, *X, XClobbers);
+  RA.getInstClobberList(*X, XClobbers);
   // If Y is a store to stack, its clobber list is its source reg. This is
   // different than the rest because we want to check if the store source
   // reaches its corresponding load untouched.
   if (FIEY && FIEY->IsStore == true && FIEY->IsStoreFromReg) {
     YClobbers.set(FIEY->RegOrImm);
   } else {
-    FA.getInstClobberList(BC, *Y, YClobbers);
+    RA.getInstClobberList(*Y, YClobbers);
   }
   XClobbers &= YClobbers;
   return XClobbers.any();
@@ -121,7 +122,7 @@ BitVector StackAvailableExpressions::computeNext(const MCInst &Point,
     }
   }
   // Gen
-  if (auto FIE = FA.getFIEFor(BC, Point)) {
+  if (auto FIE = FA.getFIEFor(Point)) {
     if (FIE->IsStore == true && FIE->IsSimple == true)
       Next.set(ExprToIdx[&Point]);
   }

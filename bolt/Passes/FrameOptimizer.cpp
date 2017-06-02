@@ -10,7 +10,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "FrameOptimizer.h"
-#include "FrameAnalysis.h"
 #include "ShrinkWrapping.h"
 #include "StackAvailableExpressions.h"
 #include "StackReachingUses.h"
@@ -45,10 +44,11 @@ FrameOptimization("frame-opt",
 namespace llvm {
 namespace bolt {
 
-void FrameOptimizerPass::removeUnnecessaryLoads(const FrameAnalysis &FA,
+void FrameOptimizerPass::removeUnnecessaryLoads(const RegAnalysis &RA,
+                                                const FrameAnalysis &FA,
                                                 const BinaryContext &BC,
                                                 BinaryFunction &BF) {
-  StackAvailableExpressions SAE(FA, BC, BF);
+  StackAvailableExpressions SAE(RA, FA, BC, BF);
   SAE.run();
 
   DEBUG(dbgs() << "Performing unnecessary loads removal\n");
@@ -71,7 +71,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const FrameAnalysis &FA,
       // if Inst is a load from stack and the current available expressions show
       // this value is available in a register or immediate, replace this load
       // with move from register or from immediate.
-      auto FIEX = FA.getFIEFor(BC, Inst);
+      auto FIEX = FA.getFIEFor(Inst);
       if (!FIEX) {
         Prev = &Inst;
         continue;
@@ -88,7 +88,7 @@ void FrameOptimizerPass::removeUnnecessaryLoads(const FrameAnalysis &FA,
       for (auto I = Prev ? SAE.expr_begin(*Prev) : SAE.expr_begin(BB);
            I != ExprEnd; ++I) {
         const MCInst *AvailableInst = *I;
-        auto FIEY = FA.getFIEFor(BC, *AvailableInst);
+        auto FIEY = FA.getFIEFor(*AvailableInst);
         if (!FIEY)
           continue;
         assert(FIEY->IsStore && FIEY->IsSimple);
@@ -172,7 +172,7 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
           (*I)->dump();
         }
       });
-      auto FIEX = FA.getFIEFor(BC, Inst);
+      auto FIEX = FA.getFIEFor(Inst);
       if (!FIEX) {
         Prev = &Inst;
         continue;
@@ -217,8 +217,9 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
     return;
 
   // Run FrameAnalysis pass
-  FrameAnalysis FA(PrintPass);
-  FA.runOnFunctions(BC, BFs, LargeFunctions);
+  BinaryFunctionCallGraph CG = buildCallGraph(BC, BFs);
+  FrameAnalysis FA(BC, BFs, CG);
+  RegAnalysis RA(BC, BFs, CG);
 
   // Our main loop: perform caller-saved register optimizations, then
   // callee-saved register optimizations (shrink wrapping).
@@ -237,7 +238,7 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
     }
     {
       NamedRegionTimer T1("remove loads", "FOP breakdown", true);
-      removeUnnecessaryLoads(FA, BC, I.second);
+      removeUnnecessaryLoads(RA, FA, BC, I.second);
     }
     {
       NamedRegionTimer T1("remove stores", "FOP breakdown", true);
@@ -248,13 +249,11 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
       continue;
     {
       NamedRegionTimer T1("move spills", "FOP breakdown", true);
-      DataflowInfoManager Info(&FA, BC, I.second);
+      DataflowInfoManager Info(BC, I.second, &RA, &FA);
       ShrinkWrapping SW(FA, BC, I.second, Info);
       SW.perform();
     }
   }
-
-  FA.cleanAnnotations(BC, BFs);
 
   outs() << "BOLT-INFO: FOP optimized " << NumRedundantLoads
          << " redundant load(s) and " << NumRedundantStores

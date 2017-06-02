@@ -41,7 +41,7 @@ void CalleeSavedAnalysis::analyzeSaves() {
     DEBUG(dbgs() << "\tNow at BB " << BB.getName() << "\n");
     const MCInst *Prev = nullptr;
     for (auto &Inst : BB) {
-      if (auto FIE = FA.getFIEFor(BC, Inst)) {
+      if (auto FIE = FA.getFIEFor(Inst)) {
         if (!FIE->IsStore || !FIE->IsSimple || !FIE->IsStoreFromReg ||
             FIE->StackOffset >= 0) {
           Prev = &Inst;
@@ -86,7 +86,7 @@ void CalleeSavedAnalysis::analyzeRestores() {
     const MCInst *Prev = nullptr;
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       auto &Inst = *I;
-      if (auto FIE = FA.getFIEFor(BC, Inst)) {
+      if (auto FIE = FA.getFIEFor(Inst)) {
         if (!FIE->IsLoad || !FIE->IsSimple || !CalleeSaved[FIE->RegOrImm] ||
             FIE->StackOffset >= 0) {
           Prev = &Inst;
@@ -229,7 +229,7 @@ void StackLayoutModifier::classifyStackAccesses() {
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       auto &Inst = *I;
       checkFramePointerInitialization(Inst);
-      auto FIEX = FA.getFIEFor(BC, Inst);
+      auto FIEX = FA.getFIEFor(Inst);
       if (!FIEX) {
         Prev = &Inst;
         continue;
@@ -346,7 +346,7 @@ bool StackLayoutModifier::canCollapseRegion(MCInst *DeletedPush) {
   if (!IsSimple || !BC.MIA->isPush(*DeletedPush))
     return false;
 
-  auto FIE = FA.getFIEFor(BC, *DeletedPush);
+  auto FIE = FA.getFIEFor(*DeletedPush);
   if (!FIE)
     return false;
 
@@ -370,7 +370,7 @@ bool StackLayoutModifier::canCollapseRegion(int64_t RegionAddr) {
 }
 
 bool StackLayoutModifier::collapseRegion(MCInst *DeletedPush) {
-  auto FIE = FA.getFIEFor(BC, *DeletedPush);
+  auto FIE = FA.getFIEFor(*DeletedPush);
   if (!FIE)
     return false;
   int64_t RegionAddr = FIE->StackOffset;
@@ -414,7 +414,7 @@ bool StackLayoutModifier::collapseRegion(MCInst *Alloc, int64_t RegionAddr,
         continue;
       }
 
-      auto FIE = FA.getFIEFor(BC, Inst);
+      auto FIE = FA.getFIEFor(Inst);
       assert(FIE);
       if (FIE->StackPtrReg == BC.MIA->getStackPointer() && Slot < RegionAddr)
         continue;
@@ -499,7 +499,7 @@ bool StackLayoutModifier::insertRegion(ProgramPoint P, int64_t RegionSz) {
         continue;
       }
 
-      auto FIE = FA.getFIEFor(BC, Inst);
+      auto FIE = FA.getFIEFor(Inst);
       assert(FIE);
       if (FIE->StackPtrReg == BC.MIA->getStackPointer() && Slot < RegionAddr)
         continue;

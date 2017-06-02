@@ -14,6 +14,7 @@
 
 #include "BinaryPasses.h"
 #include "FrameAnalysis.h"
+#include "RegAnalysis.h"
 
 namespace llvm {
 namespace bolt {
@@ -86,7 +87,8 @@ class FrameOptimizerPass : public BinaryFunctionPass {
   /// Perform a dataflow analysis in \p BF to reveal unnecessary reloads from
   /// the frame. Use the analysis to convert memory loads to register moves or
   /// immediate loads. Delete redundant register moves.
-  void removeUnnecessaryLoads(const FrameAnalysis &FA,
+  void removeUnnecessaryLoads(const RegAnalysis &RA,
+                              const FrameAnalysis &FA,
                               const BinaryContext &BC,
                               BinaryFunction &BF);
 

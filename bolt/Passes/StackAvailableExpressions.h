@@ -13,6 +13,7 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_STACKAVAILABLEEXPRESSIONS_H
 
 #include "DataflowAnalysis.h"
+#include "RegAnalysis.h"
 #include "llvm/Support/Timer.h"
 
 namespace llvm {
@@ -25,7 +26,7 @@ class StackAvailableExpressions
   friend class DataflowAnalysis<StackAvailableExpressions, BitVector>;
 
 public:
-  StackAvailableExpressions(const FrameAnalysis &FA,
+  StackAvailableExpressions(const RegAnalysis &RA, const FrameAnalysis &FA,
                             const BinaryContext &BC, BinaryFunction &BF);
   virtual ~StackAvailableExpressions() {}
 
@@ -35,7 +36,7 @@ public:
   }
 
 protected:
-  /// Reference to the result of stack frame analysis
+  const RegAnalysis &RA;
   const FrameAnalysis &FA;
 
   void preflight();

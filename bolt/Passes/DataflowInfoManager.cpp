@@ -18,8 +18,8 @@ namespace bolt {
 ReachingDefOrUse</*Def=*/true> &DataflowInfoManager::getReachingDefs() {
   if (RD)
     return *RD;
-  assert(FA && "FrameAnalysis required");
-  RD.reset(new ReachingDefOrUse<true>(*FA, BC, BF));
+  assert(RA && "RegAnalysis required");
+  RD.reset(new ReachingDefOrUse<true>(*RA, BC, BF));
   RD->run();
   return *RD;
 }
@@ -31,8 +31,8 @@ void DataflowInfoManager::invalidateReachingDefs() {
 ReachingDefOrUse</*Def=*/false> &DataflowInfoManager::getReachingUses() {
   if (RU)
     return *RU;
-  assert(FA && "FrameAnalysis required");
-  RU.reset(new ReachingDefOrUse<false>(*FA, BC, BF));
+  assert(RA && "RegAnalysis required");
+  RU.reset(new ReachingDefOrUse<false>(*RA, BC, BF));
   RU->run();
   return *RU;
 }
@@ -44,8 +44,8 @@ void DataflowInfoManager::invalidateReachingUses() {
 LivenessAnalysis &DataflowInfoManager::getLivenessAnalysis() {
   if (LA)
     return *LA;
-  assert(FA && "FrameAnalysis required");
-  LA.reset(new LivenessAnalysis(*FA, BC, BF));
+  assert(RA && "RegAnalysis required");
+  LA.reset(new LivenessAnalysis(*RA, BC, BF));
   LA->run();
   return *LA;
 }

@@ -22,7 +22,7 @@ bool StackReachingUses::isStoreUsed(const FrameIndexEntry &StoreFIE,
   for (auto I = Candidates; I != expr_end(); ++I) {
     const MCInst *ReachingInst = *I;
     if (IncludeLocalAccesses) {
-      if (auto FIEY = FA.getFIEFor(BC, *ReachingInst)) {
+      if (auto FIEY = FA.getFIEFor(*ReachingInst)) {
         assert(FIEY->IsLoad == 1);
         if (StoreFIE.StackOffset + StoreFIE.Size > FIEY->StackOffset &&
             StoreFIE.StackOffset < FIEY->StackOffset + FIEY->Size) {
@@ -30,7 +30,7 @@ bool StackReachingUses::isStoreUsed(const FrameIndexEntry &StoreFIE,
         }
       }
     }
-    auto Args = FA.getArgAccessesFor(BC, *ReachingInst);
+    auto Args = FA.getArgAccessesFor(*ReachingInst);
     if (!Args)
       continue;
     if (Args->AssumeEverything) {
@@ -55,14 +55,14 @@ void StackReachingUses::preflight() {
   // program.
   for (auto &BB : Func) {
     for (auto &Inst : BB) {
-      if (auto FIE = FA.getFIEFor(BC, Inst)) {
+      if (auto FIE = FA.getFIEFor(Inst)) {
         if (FIE->IsLoad == true) {
           Expressions.push_back(&Inst);
           ExprToIdx[&Inst] = NumInstrs++;
           continue;
         }
       }
-      auto AA = FA.getArgAccessesFor(BC, Inst);
+      auto AA = FA.getArgAccessesFor(Inst);
       if (AA && (!AA->Set.empty() || AA->AssumeEverything)) {
         Expressions.push_back(&Inst);
         ExprToIdx[&Inst] = NumInstrs++;
@@ -74,8 +74,8 @@ void StackReachingUses::preflight() {
 bool StackReachingUses::doesXKillsY(const MCInst *X, const MCInst *Y) {
   // if X is a store to the same stack location and the bytes fetched is a
   // superset of those bytes affected by the load in Y, return true
-  auto FIEX = FA.getFIEFor(BC, *X);
-  auto FIEY = FA.getFIEFor(BC, *Y);
+  auto FIEX = FA.getFIEFor(*X);
+  auto FIEY = FA.getFIEFor(*Y);
   if (FIEX && FIEY) {
     if (FIEX->IsStore == true && FIEY->IsLoad == true &&
         FIEX->StackOffset <= FIEY->StackOffset &&
@@ -98,11 +98,11 @@ BitVector StackReachingUses::computeNext(const MCInst &Point,
     }
   };
   // Gen
-  if (auto FIE = FA.getFIEFor(BC, Point)) {
+  if (auto FIE = FA.getFIEFor(Point)) {
     if (FIE->IsLoad == true)
       Next.set(ExprToIdx[&Point]);
   }
-  auto AA = FA.getArgAccessesFor(BC, Point);
+  auto AA = FA.getArgAccessesFor(Point);
   if (AA && (!AA->Set.empty() || AA->AssumeEverything))
     Next.set(ExprToIdx[&Point]);
   return Next;
