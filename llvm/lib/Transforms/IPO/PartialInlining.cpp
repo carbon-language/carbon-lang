@@ -581,13 +581,14 @@ std::tuple<int, int, int> PartialInlinerImpl::computeOutliningCosts(
   for (BasicBlock &BB : *OutlinedFunction) {
     OutlinedFunctionCost += computeBBInlineCost(&BB);
   }
+
+  assert(OutlinedFunctionCost >= OutlinedRegionCost &&
+         "Outlined function cost should be no less than the outlined region");
   // The code extractor introduces a new root and exit stub blocks with
   // additional unconditional branches. Those branches will be eliminated
   // later with bb layout. The cost should be adjusted accordingly:
   OutlinedFunctionCost -= 2 * InlineConstants::InstrCost;
 
-  assert(OutlinedFunctionCost >= OutlinedRegionCost &&
-         "Outlined function cost should be no less than the outlined region");
   int OutliningRuntimeOverhead = OutliningFuncCallCost +
                                  (OutlinedFunctionCost - OutlinedRegionCost) +
                                  ExtraOutliningPenalty;
