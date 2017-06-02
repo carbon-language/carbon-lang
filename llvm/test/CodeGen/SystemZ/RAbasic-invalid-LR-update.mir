@@ -160,8 +160,6 @@ body:             |
     KILL killed %f0d
   
   bb.2:
-    successors: %bb.2(0x7c000000), %bb.3(0x04000000)
-  
     %17 = VLGVH %11, _, 0
     %19 = LHR %17.subreg_l32
     undef %20.subreg_l64 = LGHI 0
@@ -183,8 +181,6 @@ body:             |
     J %bb.3
   
   bb.3:
-    successors: %bb.1(0x7c000000), %bb.4(0x04000000)
-  
     WFCDB undef %46, %45, implicit-def %cc
     %48 = IPM implicit killed %cc
     %48 = AFIMux %48, 268435456, implicit-def dead %cc
@@ -208,8 +204,6 @@ body:             |
   bb.5:
   
   bb.6:
-    successors: %bb.6, %bb.7
-  
     %51 = VLGVH undef %7, _, 0
     %53 = LLHRMux %51.subreg_l32
     %54 = VLGVH undef %1, _, 0
@@ -239,16 +233,12 @@ body:             |
     J %bb.6
   
   bb.7:
-    successors: %bb.6(0x7c000000), %bb.8(0x04000000)
-  
     CGHI undef %93, 0, implicit-def %cc
     %96 = IPM implicit killed %cc
     CGHI undef %97, 0, implicit-def %cc
     BRC 14, 6, %bb.6, implicit killed %cc
   
   bb.8:
-    successors: %bb.5(0x7c000000), %bb.9(0x04000000)
-  
     CHIMux %6, 0, implicit-def %cc
     %10 = LLILL 41639
     dead %10 = LOCGR %10, %4, 14, 6, implicit killed %cc
@@ -267,8 +257,6 @@ body:             |
     %100 = LHIMux 0
   
   bb.10:
-    successors: %bb.10(0x7c000000), %bb.11(0x04000000)
-  
     CHIMux %100, 0, implicit-def %cc
     BRC 14, 6, %bb.10, implicit killed %cc
     J %bb.11
