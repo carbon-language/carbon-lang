@@ -116,7 +116,7 @@ static cl::opt<bool> EnableAMDGPUAliasAnalysis("enable-amdgpu-aa", cl::Hidden,
 static cl::opt<bool> EnableSIInsertWaitcntsPass(
   "enable-si-insert-waitcnts",
   cl::desc("Use new waitcnt insertion pass"),
-  cl::init(false));
+  cl::init(true));
 
 // Option to run late CFG structurizer
 static cl::opt<bool> LateCFGStructurize(
