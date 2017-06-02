@@ -19,8 +19,6 @@
 extern "C" {
 #endif
 
-  // Initialize coverage.
-  void __sanitizer_cov_init();
   // Record and dump coverage info.
   void __sanitizer_cov_dump();
 

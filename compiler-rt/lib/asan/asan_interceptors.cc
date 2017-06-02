@@ -722,9 +722,7 @@ static void AfterFork() {
 INTERCEPTOR(int, fork, void) {
   ENSURE_ASAN_INITED();
   BeforeFork();
-  if (common_flags()->coverage) CovBeforeFork();
   int pid = REAL(fork)();
-  if (common_flags()->coverage) CovAfterFork(pid);
   AfterFork();
   return pid;
 }
