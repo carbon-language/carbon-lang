@@ -464,10 +464,6 @@ void LinkerScript::fabricateDefaultCommands() {
     auto I = Config->SectionStartMap.find(Sec->Name);
     if (I != Config->SectionStartMap.end())
       OSCmd->AddrExpr = [=] { return I->second; };
-    else if (Sec->PageAlign)
-      OSCmd->AddrExpr = [=] {
-        return alignTo(Script->getDot(), Config->MaxPageSize);
-      };
 
     Commands.push_back(OSCmd);
     if (Sec->Sections.size()) {
