@@ -67,8 +67,7 @@ define i1 @not_cmp_constant(i32 %a) {
 
 define <2 x i1> @not_cmp_constant_vector(<2 x i32> %a) {
 ; CHECK-LABEL: @not_cmp_constant_vector(
-; CHECK-NEXT:    [[NOTA:%.*]] = xor <2 x i32> %a, <i32 -1, i32 -1>
-; CHECK-NEXT:    [[CMP:%.*]] = icmp slt <2 x i32> [[NOTA]], <i32 42, i32 42>
+; CHECK-NEXT:    [[CMP:%.*]] = icmp sgt <2 x i32> %a, <i32 -43, i32 -43>
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %nota = xor <2 x i32> %a, <i32 -1, i32 -1>

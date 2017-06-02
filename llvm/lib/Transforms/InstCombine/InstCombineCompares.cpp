@@ -4514,10 +4514,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       if (match(Op1, m_Not(m_Value(B))))
         return new ICmpInst(I.getPredicate(), B, A);
 
-      // FIXME: Use m_APInt to include splat vector constants.
-      if (ConstantInt *RHSC = dyn_cast<ConstantInt>(Op1))
+      const APInt *C;
+      if (match(Op1, m_APInt(C)))
         return new ICmpInst(I.getSwappedPredicate(), A,
-                            ConstantExpr::getNot(RHSC));
+                            ConstantInt::get(Op1->getType(), ~(*C)));
     }
 
     Instruction *AddI = nullptr;
