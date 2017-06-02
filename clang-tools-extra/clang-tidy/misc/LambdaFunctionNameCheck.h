@@ -25,7 +25,7 @@ namespace misc {
 class LambdaFunctionNameCheck : public ClangTidyCheck {
 public:
   struct SourceRangeLessThan {
-    bool operator()(const SourceRange &L, const SourceRange &R) {
+    bool operator()(const SourceRange &L, const SourceRange &R) const {
       if (L.getBegin() == R.getBegin()) {
         return L.getEnd() < R.getEnd();
       }
