@@ -467,6 +467,9 @@ private:
   /// .gdb_index section.
   SectionRef GdbIndexSection;
 
+  /// .plt.got section.
+  SectionRef PLTGOTSection;
+
   uint64_t NewSymTabOffset{0};
 
   /// Keep track of functions we fail to write in the binary. We need to avoid

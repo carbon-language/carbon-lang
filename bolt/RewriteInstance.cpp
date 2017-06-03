@@ -1075,16 +1075,9 @@ void RewriteInstance::discoverFileObjects() {
       } else if (FDE.getAddressRange() != SymbolSize) {
         if (SymbolSize) {
           // Function addresses match but sizes differ.
-          errs() << "BOLT-ERROR: sizes differ for function " << UniqueName
+          errs() << "BOLT-WARNING: sizes differ for function " << UniqueName
                  << ". FDE : " << FDE.getAddressRange()
-                 << "; symbol table : " << SymbolSize << ". Skipping.\n";
-
-          // Create maximum size non-simple function.
-          IsSimple = false;
-        }
-        if (opts::Verbosity >= 1) {
-          outs() << "BOLT-INFO: adjusting size of function " << UniqueName
-                 << " using FDE data.\n";
+                 << "; symbol table : " << SymbolSize << ". Using max size.\n";
         }
         SymbolSize = std::max(SymbolSize, FDE.getAddressRange());
       }
@@ -1135,6 +1128,9 @@ void RewriteInstance::discoverFileObjects() {
       if (SectionName == ".plt") {
         // Set the size to 0 to prevent PLT from being disassembled.
         createBinaryFunction("__BOLT_PLT_PSEUDO" , *Section, Address, 0, false);
+      } else if (SectionName == ".plt.got") {
+        createBinaryFunction("__BOLT_PLT_GOT_PSEUDO" , *Section, Address, 0,
+                             false);
       } else {
         std::string FunctionName =
           "__BOLT_FDE_FUNCat" + Twine::utohexstr(Address).str();
@@ -1146,6 +1142,17 @@ void RewriteInstance::discoverFileObjects() {
       errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address) << ", 0x"
              << Twine::utohexstr(Address + FDE->getAddressRange())
              << ") conflicts with function " << *BF << '\n';
+    }
+  }
+
+  if (PLTGOTSection.getObject()) {
+    // Check if we need to create a function for .plt.got. Some linkers
+    // (depending on the version) would mark it with FDE while others wouldn't.
+    if (!getBinaryFunctionContainingAddress(PLTGOTSection.getAddress(), true)) {
+      DEBUG(dbgs() << "BOLT-DEBUG: creating .plt.got pseudo function at 0x"
+                   << Twine::utohexstr(PLTGOTSection.getAddress()) << '\n');
+      createBinaryFunction("__BOLT_PLT_GOT_PSEUDO" , PLTGOTSection,
+                           PLTGOTSection.getAddress(), 0, false);
     }
   }
 
@@ -1341,11 +1348,16 @@ void RewriteInstance::readSpecialSections() {
       HasTextRelocations = true;
     } else if (SectionName == ".gdb_index") {
       GdbIndexSection = Section;
+    } else if (SectionName == ".plt.got") {
+      PLTGOTSection = Section;
     }
 
     // Ignore zero-size allocatable sections as they present no interest to us.
+    // Note that .tbss is marked as having a positive size while in reality it
+    // is not taking any allocatable space.
     if ((ELFSectionRef(Section).getFlags() & ELF::SHF_ALLOC) &&
-        Section.getSize() > 0) {
+        Section.getSize() > 0 &&
+        SectionName != ".tbss") {
       BC->AllocatableSections.emplace(std::make_pair(Section.getAddress(),
                                                      Section));
     }
@@ -1497,6 +1509,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
       ForceRelocation = true;
     }
 
+    bool IsAbsoluteCodeRefWithAddend = false;
     if (!IsPCRelative && Addend != 0 && IsFromCode && !SymbolIsSection) {
       auto RefSection = BC->getSectionForAddress(SymbolAddress);
       if (RefSection && RefSection->isText()) {
@@ -1511,10 +1524,10 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
                << "; type name = " << TypeName
                << '\n';
         assert(ExtractedValue == SymbolAddress + Addend && "value mismatch");
+        Address = SymbolAddress;
+        IsAbsoluteCodeRefWithAddend = true;
       }
-    }
-
-    if (Addend < 0 && IsPCRelative) {
+    } else if (Addend < 0 && IsPCRelative) {
       Address -= Addend;
     } else {
       Addend = 0;
@@ -1534,12 +1547,14 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
         Rel.getType() != ELF::R_X86_64_GOTTPOFF &&
         Rel.getType() != ELF::R_X86_64_GOTPCREL) {
       if (!IsPCRelative) {
-        if (opts::Verbosity > 2 &&
-            ExtractedValue != Address) {
-          errs() << "BOLT-WARNING: mismatch ExtractedValue = 0x"
-                 << Twine::utohexstr(ExtractedValue) << '\n';
+        if (!IsAbsoluteCodeRefWithAddend) {
+          if (opts::Verbosity > 2 &&
+              ExtractedValue != Address) {
+            errs() << "BOLT-WARNING: mismatch ExtractedValue = 0x"
+                   << Twine::utohexstr(ExtractedValue) << '\n';
+          }
+          Address = ExtractedValue;
         }
-        Address = ExtractedValue;
       } else {
         if (opts::Verbosity > 2 &&
             ExtractedValue != Address - Rel.getOffset() + Addend) {
@@ -1554,7 +1569,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     if (IsFromCode) {
       ContainingBF = getBinaryFunctionContainingAddress(Rel.getOffset());
       assert(ContainingBF && "cannot find function for address in code");
-      DEBUG(dbgs() << "BOLT-DEBUG: relocation belongs to " << ContainingBF
+      DEBUG(dbgs() << "BOLT-DEBUG: relocation belongs to " << *ContainingBF
                    << '\n');
     }
 
@@ -1621,7 +1636,7 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     if (IsFromCode) {
       if (ReferencedBF || ForceRelocation) {
         ContainingBF->addRelocation(Rel.getOffset(), ReferencedSymbol,
-                                    Rel.getType(), Addend, Address);
+                                    Rel.getType(), Addend, ExtractedValue);
       } else {
         DEBUG(dbgs() << "BOLT-DEBUG: ignoring relocation from code to data\n");
       }
@@ -1729,7 +1744,7 @@ void RewriteInstance::disassembleFunctions() {
         // PLT requires special handling and could be ignored in this context.
         StringRef SectionName;
         Section->getName(SectionName);
-        if (SectionName == ".plt")
+        if (SectionName == ".plt" || SectionName == ".plt.got")
           continue;
 
         if (opts::Relocs) {
