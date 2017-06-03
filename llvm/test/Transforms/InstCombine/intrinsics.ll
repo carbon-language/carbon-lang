@@ -285,10 +285,7 @@ define i32 @cttz(i32 %a) {
 
 define <2 x i32> @cttz_vec(<2 x i32> %a) {
 ; CHECK-LABEL: @cttz_vec(
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[A:%.*]], <i32 8, i32 8>
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i32> [[OR]], <i32 -8, i32 -8>
-; CHECK-NEXT:    [[COUNT:%.*]] = tail call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[AND]], i1 true)
-; CHECK-NEXT:    ret <2 x i32> [[COUNT]]
+; CHECK-NEXT:    ret <2 x i32> <i32 3, i32 3>
 ;
   %or = or <2 x i32> %a, <i32 8, i32 8>
   %and = and <2 x i32> %or, <i32 -8, i32 -8>
@@ -382,10 +379,7 @@ define i8 @ctlz(i8 %a) {
 
 define <2 x i8> @ctlz_vec(<2 x i8> %a) {
 ; CHECK-LABEL: @ctlz_vec(
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i8> [[A:%.*]], <i8 32, i8 32>
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i8> [[OR]], <i8 63, i8 63>
-; CHECK-NEXT:    [[COUNT:%.*]] = tail call <2 x i8> @llvm.ctlz.v2i8(<2 x i8> [[AND]], i1 true)
-; CHECK-NEXT:    ret <2 x i8> [[COUNT]]
+; CHECK-NEXT:    ret <2 x i8> <i8 2, i8 2>
 ;
   %or = or <2 x i8> %a, <i8 32, i8 32>
   %and = and <2 x i8> %or, <i8 63, i8 63>
@@ -556,7 +550,7 @@ define i32 @ctlz_make_undef(i32 %a) {
 define <2 x i32> @ctlz_make_undef_vec(<2 x i32> %a) {
 ; CHECK-LABEL: @ctlz_make_undef_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[A:%.*]], <i32 8, i32 8>
-; CHECK-NEXT:    [[CTLZ:%.*]] = tail call <2 x i32> @llvm.ctlz.v2i32(<2 x i32> [[OR]], i1 false)
+; CHECK-NEXT:    [[CTLZ:%.*]] = tail call <2 x i32> @llvm.ctlz.v2i32(<2 x i32> [[OR]], i1 true)
 ; CHECK-NEXT:    ret <2 x i32> [[CTLZ]]
 ;
   %or = or <2 x i32> %a, <i32 8, i32 8>
@@ -593,7 +587,7 @@ define i32 @cttz_make_undef(i32 %a) {
 define <2 x i32> @cttz_make_undef_vec(<2 x i32> %a) {
 ; CHECK-LABEL: @cttz_make_undef_vec(
 ; CHECK-NEXT:    [[OR:%.*]] = or <2 x i32> [[A:%.*]], <i32 8, i32 8>
-; CHECK-NEXT:    [[CTTZ:%.*]] = tail call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[OR]], i1 false)
+; CHECK-NEXT:    [[CTTZ:%.*]] = tail call <2 x i32> @llvm.cttz.v2i32(<2 x i32> [[OR]], i1 true)
 ; CHECK-NEXT:    ret <2 x i32> [[CTTZ]]
 ;
   %or = or <2 x i32> %a, <i32 8, i32 8>
