@@ -406,7 +406,7 @@ define <2 x i1> @cttz_cmp_vec(<2 x i32> %a) {
 ; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i32> %a, zeroinitializer
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
-  %x = tail call <2 x i32> @llvm.ctlz.v2i32(<2 x i32> %a, i1 false) nounwind readnone
+  %x = tail call <2 x i32> @llvm.cttz.v2i32(<2 x i32> %a, i1 false) nounwind readnone
   %cmp = icmp ne <2 x i32> %x, <i32 32, i32 32>
   ret <2 x i1> %cmp
 }
