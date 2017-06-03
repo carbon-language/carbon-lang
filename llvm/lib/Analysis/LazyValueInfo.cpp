@@ -1213,8 +1213,7 @@ bool LazyValueInfoImpl::solveBlockValueCast(LVILatticeVal &BBLV,
       LHSRange = LHSVal.getConstantRange();
   }
 
-  const unsigned ResultBitWidth =
-    cast<IntegerType>(CI->getType())->getBitWidth();
+  const unsigned ResultBitWidth = CI->getType()->getIntegerBitWidth();
 
   // NOTE: We're currently limited by the set of operations that ConstantRange
   // can evaluate symbolically.  Enhancing that set will allows us to analyze
