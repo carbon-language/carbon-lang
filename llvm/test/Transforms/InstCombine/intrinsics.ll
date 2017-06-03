@@ -537,8 +537,7 @@ define i32 @ctlz_undef(i32 %Value) {
 
 define <2 x i32> @ctlz_undef_vec(<2 x i32> %Value) {
 ; CHECK-LABEL: @ctlz_undef_vec(
-; CHECK-NEXT:    [[CTLZ:%.*]] = call <2 x i32> @llvm.ctlz.v2i32(<2 x i32> zeroinitializer, i1 true)
-; CHECK-NEXT:    ret <2 x i32> [[CTLZ]]
+; CHECK-NEXT:    ret <2 x i32> undef
 ;
   %ctlz = call <2 x i32> @llvm.ctlz.v2i32(<2 x i32> zeroinitializer, i1 true)
   ret <2 x i32> %ctlz
@@ -575,8 +574,7 @@ define i32 @cttz_undef(i32 %Value) nounwind {
 
 define <2 x i32> @cttz_undef_vec(<2 x i32> %Value) nounwind {
 ; CHECK-LABEL: @cttz_undef_vec(
-; CHECK-NEXT:    [[CTTZ:%.*]] = call <2 x i32> @llvm.cttz.v2i32(<2 x i32> zeroinitializer, i1 true)
-; CHECK-NEXT:    ret <2 x i32> [[CTTZ]]
+; CHECK-NEXT:    ret <2 x i32> undef
 ;
   %cttz = call <2 x i32> @llvm.cttz.v2i32(<2 x i32> zeroinitializer, i1 true)
   ret <2 x i32> %cttz
