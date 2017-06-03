@@ -519,8 +519,8 @@ protected:
 
     uint16_t : NumLSBaseSDNodeBits;
 
-    bool IsTruncating : 1;
-    bool IsCompressing : 1;
+    uint16_t IsTruncating : 1;
+    uint16_t IsCompressing : 1;
   };
 
   union {
