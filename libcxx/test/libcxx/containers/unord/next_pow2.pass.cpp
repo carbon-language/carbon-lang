@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // REQUIRES: long_tests
+// UNSUPPORTED: c++98, c++03
 
 // Not a portable test
 
@@ -30,6 +31,12 @@ is_power_of_two(unsigned long n)
     return __builtin_popcount(n) == 1;
 }
 
+void test_next_pow2_val(size_t n)
+{
+        std::size_t npow2 = std::__next_hash_pow2(n);
+        assert(is_power_of_two(npow2) && npow2 > n);
+}
+
 void
 test_next_pow2()
 {
@@ -47,11 +54,12 @@ test_next_pow2()
         assert(std::__next_hash_pow2(pow2) == pow2);
     }
 
-    for (std::size_t n : {3, 7, 9, 15, 127, 129})
-    {
-        std::size_t npow2 = std::__next_hash_pow2(n);
-        assert(is_power_of_two(npow2) && npow2 > n);
-    }
+	test_next_pow2_val(3);
+	test_next_pow2_val(7);
+	test_next_pow2_val(9);
+	test_next_pow2_val(15);
+	test_next_pow2_val(127);
+	test_next_pow2_val(129);
 }
 
 // Note: this is only really useful when run with -fsanitize=undefined.
