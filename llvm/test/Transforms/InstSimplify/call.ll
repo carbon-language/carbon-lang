@@ -437,8 +437,7 @@ entry:
 define <2 x double> @constant_fold_powi_vec() nounwind uwtable ssp {
 ; CHECK-LABEL: @constant_fold_powi_vec(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP0:%.*]] = call <2 x double> @llvm.powi.v2f64(<2 x double> <double 3.000000e+00, double 5.000000e+00>, i32 2)
-; CHECK-NEXT:    ret <2 x double> [[TMP0]]
+; CHECK-NEXT:    ret <2 x double> <double 9.000000e+00, double 2.500000e+01>
 ;
 entry:
   %0 = call <2 x double> @llvm.powi.v2f64(<2 x double> <double 3.00000e+00, double 5.00000e+00>, i32 2)

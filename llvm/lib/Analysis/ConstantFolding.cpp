@@ -2036,7 +2036,8 @@ Constant *ConstantFoldVectorCall(StringRef Name, unsigned IntrinsicID,
     for (unsigned J = 0, JE = Operands.size(); J != JE; ++J) {
       // These intrinsics use a scalar type for their second argument.
       if (J == 1 &&
-          (IntrinsicID == Intrinsic::cttz || IntrinsicID == Intrinsic::ctlz)) {
+          (IntrinsicID == Intrinsic::cttz || IntrinsicID == Intrinsic::ctlz ||
+           IntrinsicID == Intrinsic::powi)) {
         Lane[J] = Operands[J];
         continue;
       }
