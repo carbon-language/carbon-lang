@@ -1584,6 +1584,9 @@ Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID, Type *Ty,
       // cosine(arg) is between -1 and 1. cosine(invalid arg) is NaN
       if (IntrinsicID == Intrinsic::cos)
         return Constant::getNullValue(Ty);
+      if (IntrinsicID == Intrinsic::bswap ||
+          IntrinsicID == Intrinsic::bitreverse)
+        return Operands[0];
     }
     if (auto *Op = dyn_cast<ConstantFP>(Operands[0])) {
       if (IntrinsicID == Intrinsic::convert_to_fp16) {
@@ -1826,13 +1829,6 @@ Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID, Type *Ty,
                                              /*roundTowardZero=*/true, Ty);
         break;
       }
-    }
-
-    if (isa<UndefValue>(Operands[0])) {
-      if (IntrinsicID == Intrinsic::bswap ||
-          IntrinsicID == Intrinsic::bitreverse)
-        return Operands[0];
-      return nullptr;
     }
 
     return nullptr;
