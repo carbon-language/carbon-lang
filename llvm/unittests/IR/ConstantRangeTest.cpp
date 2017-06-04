@@ -200,6 +200,10 @@ TEST_F(ConstantRangeTest, Trunc) {
   // trunc([5, 7), 3->2) = [1, 3)
   ConstantRange FiveSeven(APInt(3, 5), APInt(3, 7));
   EXPECT_EQ(FiveSeven.truncate(2), ConstantRange(APInt(2, 1), APInt(2, 3)));
+
+  // trunc([7, 1), 3->2) = [3, 1)
+  ConstantRange SevenOne(APInt(3, 7), APInt(3, 1));
+  EXPECT_EQ(SevenOne.truncate(2), ConstantRange(APInt(2, 3), APInt(2, 1)));
 }
 
 TEST_F(ConstantRangeTest, ZExt) {
