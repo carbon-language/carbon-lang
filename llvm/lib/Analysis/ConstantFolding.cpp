@@ -1815,7 +1815,7 @@ Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID, Type *Ty,
                 dyn_cast_or_null<ConstantFP>(Op->getAggregateElement(0U)))
           return ConstantFoldSSEConvertToInt(FPOp->getValueAPF(),
                                              /*roundTowardZero=*/false, Ty);
-        LLVM_FALLTHROUGH;
+        break;
       case Intrinsic::x86_sse_cvttss2si:
       case Intrinsic::x86_sse_cvttss2si64:
       case Intrinsic::x86_sse2_cvttsd2si:
@@ -1824,6 +1824,7 @@ Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID, Type *Ty,
                 dyn_cast_or_null<ConstantFP>(Op->getAggregateElement(0U)))
           return ConstantFoldSSEConvertToInt(FPOp->getValueAPF(),
                                              /*roundTowardZero=*/true, Ty);
+        break;
       }
     }
 
