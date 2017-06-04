@@ -187,6 +187,7 @@ TEST_F(ConstantRangeTest, Trunc) {
   EXPECT_EQ(TOne, ConstantRange(One.getLower().trunc(10),
                                 One.getUpper().trunc(10)));
   EXPECT_TRUE(TSome.isFullSet());
+  EXPECT_TRUE(TWrap.isFullSet());
 }
 
 TEST_F(ConstantRangeTest, ZExt) {
