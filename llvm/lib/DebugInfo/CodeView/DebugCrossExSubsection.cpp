@@ -42,7 +42,9 @@ uint32_t DebugCrossModuleExportsSubsection::calculateSerializedSize() const {
 Error DebugCrossModuleExportsSubsection::commit(
     BinaryStreamWriter &Writer) const {
   for (const auto &M : Mappings) {
-    if (auto EC = Writer.writeObject(M))
+    if (auto EC = Writer.writeInteger(M.first))
+      return EC;
+    if (auto EC = Writer.writeInteger(M.second))
       return EC;
   }
   return Error::success();
