@@ -101,10 +101,10 @@ static void *DoSearch(const char* SymbolName) {
 #define EXPLICIT_SYMBOL(SYM) \
    if (!strcmp(SymbolName, #SYM)) return &SYM
 
-// On linux we have a weird situation. The stderr/out/in symbols are both
+// Under glibc we have a weird situation. The stderr/out/in symbols are both
 // macros and global variables because of standards requirements. So, we
 // boldly use the EXPLICIT_SYMBOL macro without checking for a #define first.
-#if defined(__linux__) and !defined(__ANDROID__)
+#if defined(__GLIBC__)
   {
     EXPLICIT_SYMBOL(stderr);
     EXPLICIT_SYMBOL(stdout);
