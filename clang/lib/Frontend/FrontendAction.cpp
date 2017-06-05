@@ -443,21 +443,9 @@ static Module *prepareToBuildModule(CompilerInstance &CI,
   }
 
   // Check whether we can build this module at all.
-  clang::Module::Requirement Requirement;
-  clang::Module::UnresolvedHeaderDirective MissingHeader;
-  if (!M->isAvailable(CI.getLangOpts(), CI.getTarget(), Requirement,
-                      MissingHeader)) {
-    if (MissingHeader.FileNameLoc.isValid()) {
-      CI.getDiagnostics().Report(MissingHeader.FileNameLoc,
-                                 diag::err_module_header_missing)
-        << MissingHeader.IsUmbrella << MissingHeader.FileName;
-    } else {
-      CI.getDiagnostics().Report(diag::err_module_unavailable)
-        << M->getFullModuleName() << Requirement.second << Requirement.first;
-    }
-
+  if (Preprocessor::checkModuleIsAvailable(CI.getLangOpts(), CI.getTarget(),
+                                           CI.getDiagnostics(), M))
     return nullptr;
-  }
 
   // Inform the preprocessor that includes from within the input buffer should
   // be resolved relative to the build directory of the module map file.
