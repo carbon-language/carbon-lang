@@ -743,9 +743,13 @@ def alignedloadv8i64  : PatFrag<(ops node:$ptr),
 // allows unaligned accesses, match any load, though this may require
 // setting a feature bit in the processor (on startup, for example).
 // Opteron 10h and later implement such a feature.
+// Avoid non-temporal aligned loads on supported targets.
 def memop : PatFrag<(ops node:$ptr), (load node:$ptr), [{
-  return    Subtarget->hasSSEUnalignedMem()
-         || cast<LoadSDNode>(N)->getAlignment() >= 16;
+  return (Subtarget->hasSSEUnalignedMem() ||
+          cast<LoadSDNode>(N)->getAlignment() >= 16) &&
+         (!Subtarget->hasSSE41() ||
+          !(cast<LoadSDNode>(N)->getAlignment() >= 16 &&
+            cast<LoadSDNode>(N)->isNonTemporal()));
 }]>;
 
 // 128-bit memop pattern fragments
