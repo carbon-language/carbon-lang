@@ -34,9 +34,14 @@
 // RUN: rm %t/fwd.h %t/file.h %t/file2.h %t/module.modulemap
 // RUN: %clang_cc1 -fmodules -fmodule-name=file -fmodule-file=%t/fwd.pcm -x c++-module-map-cpp-output %t/copy.ii -emit-module -o %t/copy.pcm
 
-// Finally, check that our module contains correct mapping information for the headers.
+// Check that our module contains correct mapping information for the headers.
 // RUN: cp %S/Inputs/preprocess/fwd.h %S/Inputs/preprocess/file.h %S/Inputs/preprocess/file2.h %S/Inputs/preprocess/module.modulemap %t
 // RUN: %clang_cc1 -fmodules -fmodule-file=%t/copy.pcm %s -I%t -verify -fno-modules-error-recovery -DCOPY -DINCLUDE
+
+// Check that we can preprocess from a .pcm file and that we get the same result as preprocessing from the original sources.
+// RUN: %clang_cc1 -fmodules -fmodule-name=file -fmodule-file=%t/fwd.pcm -I%S/Inputs/preprocess -x c++-module-map %S/Inputs/preprocess/module.modulemap -emit-module -o %t/file.pcm
+// RUN: %clang_cc1 -fmodules -fmodule-name=file -fmodule-file=%t/fwd.pcm -I%S/Inputs/preprocess %t/file.pcm -E -frewrite-includes -o %t/file.rewrite.ii
+// RUN: cmp %t/rewrite.ii %t/file.rewrite.ii
 
 // == module map
 // CHECK: # 1 "{{.*}}module.modulemap"
