@@ -243,6 +243,11 @@ void RenameIndependentSubregs::rewriteOperands(const IntEqClasses &Classes,
 
     unsigned VReg = Intervals[ID]->reg;
     MO.setReg(VReg);
+    if (MO.isTied()) {
+      /// Undef use operands are not tracked in the equivalence class but need
+      /// to be update if they are tied.
+      MO.getParent()->substituteRegister(Reg, VReg, 0, TRI);
+    }
   }
   // TODO: We could attempt to recompute new register classes while visiting
   // the operands: Some of the split register may be fine with less constraint
