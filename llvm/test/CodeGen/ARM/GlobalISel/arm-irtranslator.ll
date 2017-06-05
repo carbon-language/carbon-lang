@@ -1,5 +1,5 @@
-; RUN: llc -mtriple arm-unknown -mattr=+vfp2 -global-isel -stop-after=irtranslator %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=LITTLE
-; RUN: llc -mtriple armeb-unknown -mattr=+vfp2 -global-isel -stop-after=irtranslator %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=BIG
+; RUN: llc -mtriple arm-unknown -mattr=+vfp2 -global-isel -stop-after=irtranslator -verify-machineinstrs %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=LITTLE
+; RUN: llc -mtriple armeb-unknown -mattr=+vfp2 -global-isel -stop-after=irtranslator -verify-machineinstrs %s -o - | FileCheck %s -check-prefix=CHECK -check-prefix=BIG
 
 define void @test_void_return() {
 ; CHECK-LABEL: name: test_void_return
@@ -420,9 +420,11 @@ entry:
 
 define arm_aapcscc void @test_indirect_call(void() *%fptr) {
 ; CHECK-LABEL: name: test_indirect_call
-; CHECK: [[FPTR:%[0-9]+]](p0) = COPY %r0
+; CHECK: registers:
+; CHECK-NEXT: id: [[FPTR:[0-9]+]], class: gpr
+; CHECK: %[[FPTR]](p0) = COPY %r0
 ; CHECK: ADJCALLSTACKDOWN 0, 0, 14, _, implicit-def %sp, implicit %sp
-; CHECK: BLX [[FPTR]](p0), csr_aapcs, implicit-def %lr, implicit %sp
+; CHECK: BLX %[[FPTR]](p0), csr_aapcs, implicit-def %lr, implicit %sp
 ; CHECK: ADJCALLSTACKUP 0, 0, 14, _, implicit-def %sp, implicit %sp
 entry:
   notail call arm_aapcscc void %fptr()
