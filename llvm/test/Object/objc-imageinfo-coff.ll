@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple x86_64-unknown-windows-msvc -filetype asm -o - %s | FileCheck %s
+; REQUIRES: x86-registered-target
 
 !llvm.module.flags = !{!0, !1, !2, !3}
 
