@@ -1251,18 +1251,6 @@ void Cost::RateFormula(const TargetTransformInfo &TTI,
       return;
   }
 
-  // Treat every new register that exceeds TTI.getNumberOfRegisters() - 1 as
-  // additional instruction (at least fill).
-  unsigned TTIRegNum = TTI.getNumberOfRegisters(false) - 1;
-  if (NumRegs > TTIRegNum) {
-    // Cost already exceeded TTIRegNum, then only newly added register can add
-    // new instructions.
-    if (PrevNumRegs > TTIRegNum)
-      Insns += (NumRegs - PrevNumRegs);
-    else
-      Insns += (NumRegs - TTIRegNum);
-  }
-
   // Determine how many (unfolded) adds we'll need inside the loop.
   size_t NumBaseParts = F.getNumRegs();
   if (NumBaseParts > 1)
@@ -1290,6 +1278,24 @@ void Cost::RateFormula(const TargetTransformInfo &TTI,
     if ((isa<LoadInst>(Fixup.UserInst) || isa<StoreInst>(Fixup.UserInst)) &&
         !TTI.isFoldableMemAccessOffset(Fixup.UserInst, Offset))
       NumBaseAdds++;
+  }
+
+  // If we don't count instruction cost exit here.
+  if (!InsnsCost) {
+    assert(isValid() && "invalid cost");
+    return;
+  }
+
+  // Treat every new register that exceeds TTI.getNumberOfRegisters() - 1 as
+  // additional instruction (at least fill).
+  unsigned TTIRegNum = TTI.getNumberOfRegisters(false) - 1;
+  if (NumRegs > TTIRegNum) {
+    // Cost already exceeded TTIRegNum, then only newly added register can add
+    // new instructions.
+    if (PrevNumRegs > TTIRegNum)
+      Insns += (NumRegs - PrevNumRegs);
+    else
+      Insns += (NumRegs - TTIRegNum);
   }
 
   // If ICmpZero formula ends with not 0, it could not be replaced by
@@ -1326,7 +1332,7 @@ void Cost::Lose() {
 
 /// Choose the lower cost.
 bool Cost::operator<(const Cost &Other) const {
-  if (InsnsCost && Insns != Other.Insns)
+  if (InsnsCost.getNumOccurrences() > 0 && InsnsCost && Insns != Other.Insns)
     return Insns < Other.Insns;
   return std::tie(NumRegs, AddRecCost, NumIVMuls, NumBaseAdds, ScaleCost,
                   ImmCost, SetupCost) <
@@ -1336,7 +1342,8 @@ bool Cost::operator<(const Cost &Other) const {
 }
 
 void Cost::print(raw_ostream &OS) const {
-  OS << Insns << " instruction" << (Insns == 1 ? " " : "s ");
+  if (InsnsCost)
+    OS << Insns << " instruction" << (Insns == 1 ? " " : "s ");
   OS << NumRegs << " reg" << (NumRegs == 1 ? "" : "s");
   if (AddRecCost != 0)
     OS << ", with addrec cost " << AddRecCost;
