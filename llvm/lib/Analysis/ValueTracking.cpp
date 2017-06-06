@@ -1990,14 +1990,11 @@ static bool isKnownNonEqual(const Value *V1, const Value *V2, const Query &Q) {
   if (isAddOfNonZero(V1, V2, Q) || isAddOfNonZero(V2, V1, Q))
     return true;
 
-  if (IntegerType *Ty = dyn_cast<IntegerType>(V1->getType())) {
+  if (isa<IntegerType>(V1->getType())) {
     // Are any known bits in V1 contradictory to known bits in V2? If V1
     // has a known zero where V2 has a known one, they must not be equal.
-    auto BitWidth = Ty->getBitWidth();
-    KnownBits Known1(BitWidth);
-    computeKnownBits(V1, Known1, 0, Q);
-    KnownBits Known2(BitWidth);
-    computeKnownBits(V2, Known2, 0, Q);
+    KnownBits Known1 = computeKnownBits(V1, 0, Q);
+    KnownBits Known2 = computeKnownBits(V2, 0, Q);
 
     if (Known1.Zero.intersects(Known2.One) ||
         Known2.Zero.intersects(Known1.One))
