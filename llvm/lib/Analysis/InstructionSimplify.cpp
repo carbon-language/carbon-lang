@@ -3308,7 +3308,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   }
 
   // icmp eq|ne X, Y -> false|true if X != Y
-  if ((Pred == ICmpInst::ICMP_EQ || Pred == ICmpInst::ICMP_NE) &&
+  if (ICmpInst::isEquality(Pred) &&
       isKnownNonEqual(LHS, RHS, Q.DL, Q.AC, Q.CxtI, Q.DT)) {
     LLVMContext &Ctx = LHS->getType()->getContext();
     return Pred == ICmpInst::ICMP_NE ?
