@@ -1001,19 +1001,18 @@ void ThunkCreator::mergeThunks() {
   }
 }
 
-ThunkSection *ThunkCreator::getOSThunkSec(ThunkSection *&TS,
-                                          OutputSection *OS) {
-  if (TS == nullptr) {
+ThunkSection *ThunkCreator::getOSThunkSec(OutputSection *OS) {
+  if (CurTS == nullptr) {
     uint32_t Off = 0;
     for (auto *IS : OS->Sections) {
       Off = IS->OutSecOff + IS->getSize();
       if ((IS->Flags & SHF_EXECINSTR) == 0)
         break;
     }
-    TS = make<ThunkSection>(OS, Off);
-    ThunkSections[&OS->Sections].push_back(TS);
+    CurTS = make<ThunkSection>(OS, Off);
+    ThunkSections[&OS->Sections].push_back(CurTS);
   }
-  return TS;
+  return CurTS;
 }
 
 ThunkSection *ThunkCreator::getISThunkSec(InputSection *IS, OutputSection *OS) {
@@ -1035,6 +1034,20 @@ std::pair<Thunk *, bool> ThunkCreator::getThunk(SymbolBody &Body,
   return std::make_pair(res.first->second, res.second);
 }
 
+// Call Fn on every executable InputSection accessed via the linker script
+// InputSectionDescription::Sections.
+void ThunkCreator::forEachExecInputSection(
+    ArrayRef<OutputSection *> OutputSections,
+    std::function<void(OutputSection *, InputSection *)> Fn) {
+  for (OutputSection *OS : OutputSections) {
+    if (!(OS->Flags & SHF_ALLOC) || !(OS->Flags & SHF_EXECINSTR))
+      continue;
+    CurTS = nullptr;
+    for (InputSection *IS : OS->Sections)
+      Fn(OS, IS);
+  }
+}
+
 // Process all relocations from the InputSections that have been assigned
 // to OutputSections and redirect through Thunks if needed.
 //
@@ -1052,31 +1065,29 @@ bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
   // We separate the creation of ThunkSections from the insertion of the
   // ThunkSections back into the OutputSection as ThunkSections are not always
   // inserted into the same OutputSection as the caller.
-  for (OutputSection *OS : OutputSections) {
-    ThunkSection *OSTS = nullptr;
-    for (InputSection *IS : OS->Sections) {
-      for (Relocation &Rel : IS->Relocations) {
-        SymbolBody &Body = *Rel.Sym;
-        if (!Target->needsThunk(Rel.Expr, Rel.Type, IS->File, Body))
-          continue;
-        Thunk *T;
-        bool IsNew;
-        std::tie(T, IsNew) = getThunk(Body, Rel.Type);
-        if (IsNew) {
-          // Find or create a ThunkSection for the new Thunk
-          ThunkSection *TS;
-          if (auto *TIS = T->getTargetInputSection())
-            TS = getISThunkSec(TIS, OS);
-          else
-            TS = getOSThunkSec(OSTS, OS);
-          TS->addThunk(T);
+  forEachExecInputSection(
+      OutputSections, [=](OutputSection *OS, InputSection *IS) {
+        for (Relocation &Rel : IS->Relocations) {
+          SymbolBody &Body = *Rel.Sym;
+          if (!Target->needsThunk(Rel.Expr, Rel.Type, IS->File, Body))
+            continue;
+          Thunk *T;
+          bool IsNew;
+          std::tie(T, IsNew) = getThunk(Body, Rel.Type);
+          if (IsNew) {
+            // Find or create a ThunkSection for the new Thunk
+            ThunkSection *TS;
+            if (auto *TIS = T->getTargetInputSection())
+              TS = getISThunkSec(TIS, OS);
+            else
+              TS = getOSThunkSec(OS);
+            TS->addThunk(T);
+          }
+          // Redirect relocation to Thunk, we never go via the PLT to a Thunk
+          Rel.Sym = T->ThunkSym;
+          Rel.Expr = fromPlt(Rel.Expr);
         }
-        // Redirect relocation to Thunk, we never go via the PLT to a Thunk
-        Rel.Sym = T->ThunkSym;
-        Rel.Expr = fromPlt(Rel.Expr);
-      }
-    }
-  }
+      });
 
   // Merge all created synthetic ThunkSections back into OutputSection
   mergeThunks();

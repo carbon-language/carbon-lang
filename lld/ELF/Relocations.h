@@ -127,8 +127,11 @@ public:
 
 private:
   void mergeThunks();
-  ThunkSection *getOSThunkSec(ThunkSection *&TS, OutputSection *OS);
+  ThunkSection *getOSThunkSec(OutputSection *OS);
   ThunkSection *getISThunkSec(InputSection *IS, OutputSection *OS);
+  void forEachExecInputSection(
+      ArrayRef<OutputSection *> OutputSections,
+      std::function<void(OutputSection *, InputSection *)> Fn);
   std::pair<Thunk *, bool> getThunk(SymbolBody &Body, uint32_t Type);
 
   // Track Symbols that already have a Thunk
@@ -140,6 +143,9 @@ private:
   // Track the ThunksSections that need to be inserted into an OutputSection
   std::map<std::vector<InputSection *> *, std::vector<ThunkSection *>>
       ThunkSections;
+
+  // The ThunkSection for this vector of InputSections
+  ThunkSection *CurTS;
 };
 
 // Return a int64_t to make sure we get the sign extension out of the way as
