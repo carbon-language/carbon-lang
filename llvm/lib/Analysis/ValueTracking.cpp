@@ -1999,9 +1999,8 @@ static bool isKnownNonEqual(const Value *V1, const Value *V2, const Query &Q) {
     KnownBits Known2(BitWidth);
     computeKnownBits(V2, Known2, 0, Q);
 
-    APInt OppositeBits = (Known1.Zero & Known2.One) |
-                         (Known2.Zero & Known1.One);
-    if (OppositeBits.getBoolValue())
+    if (Known1.Zero.intersects(Known2.One) ||
+        Known2.Zero.intersects(Known1.One))
       return true;
   }
   return false;
