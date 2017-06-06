@@ -3358,19 +3358,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  // If a bit is known to be zero for A and known to be one for B,
-  // then A and B cannot be equal.
-  if (ICmpInst::isEquality(Pred)) {
-    const APInt *RHSVal;
-    if (match(RHS, m_APInt(RHSVal))) {
-      KnownBits LHSKnown = computeKnownBits(LHS, Q.DL, /*Depth=*/0, Q.AC, Q.CxtI, Q.DT);
-      if (LHSKnown.Zero.intersects(*RHSVal) ||
-          !LHSKnown.One.isSubsetOf(*RHSVal))
-        return Pred == ICmpInst::ICMP_EQ ? ConstantInt::getFalse(ITy)
-                                         : ConstantInt::getTrue(ITy);
-    }
-  }
-
   // If the comparison is with the result of a select instruction, check whether
   // comparing with either branch of the select always yields the same value.
   if (isa<SelectInst>(LHS) || isa<SelectInst>(RHS))
