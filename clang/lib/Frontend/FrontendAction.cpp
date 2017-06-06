@@ -543,6 +543,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     // Options relating to how we treat the input (but not what we do with it)
     // are inherited from the AST unit.
+    CI.getHeaderSearchOpts() = AST->getHeaderSearchOpts();
+    CI.getPreprocessorOpts() = AST->getPreprocessorOpts();
     CI.getLangOpts() = AST->getLangOpts();
 
     // Preload all the module files loaded transitively by the AST unit.
@@ -552,6 +554,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
         if (&MF != &MM.getPrimaryModule())
           CI.getFrontendOpts().ModuleFiles.push_back(MF.FileName);
     }
+    // FIXME: Preload module maps loaded by the AST unit.
 
     // Set the shared objects, these are reset when we finish processing the
     // file, otherwise the CompilerInstance will happily destroy them.
