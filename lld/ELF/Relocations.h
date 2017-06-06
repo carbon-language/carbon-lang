@@ -126,7 +126,7 @@ public:
   bool createThunks(ArrayRef<OutputSection *> OutputSections);
 
 private:
-  void mergeThunks(OutputSection *OS, std::vector<ThunkSection *> &Thunks);
+  void mergeThunks();
   ThunkSection *getOSThunkSec(ThunkSection *&TS, OutputSection *OS);
   ThunkSection *getISThunkSec(InputSection *IS, OutputSection *OS);
   std::pair<Thunk *, bool> getThunk(SymbolBody &Body, uint32_t Type);
@@ -138,7 +138,8 @@ private:
   llvm::DenseMap<InputSection *, ThunkSection *> ThunkedSections;
 
   // Track the ThunksSections that need to be inserted into an OutputSection
-  std::map<OutputSection *, std::vector<ThunkSection *>> ThunkSections;
+  std::map<std::vector<InputSection *> *, std::vector<ThunkSection *>>
+      ThunkSections;
 };
 
 // Return a int64_t to make sure we get the sign extension out of the way as

@@ -967,33 +967,38 @@ template <class ELFT> void elf::scanRelocations(InputSectionBase &S) {
 // in the Sections vector, and recalculate the InputSection output section
 // offsets.
 // This may invalidate any output section offsets stored outside of InputSection
-void ThunkCreator::mergeThunks(OutputSection *OS,
-                               std::vector<ThunkSection *> &Thunks) {
-  // Order Thunks in ascending OutSecOff
-  auto ThunkCmp = [](const ThunkSection *A, const ThunkSection *B) {
-    return A->OutSecOff < B->OutSecOff;
-  };
-  std::stable_sort(Thunks.begin(), Thunks.end(), ThunkCmp);
+void ThunkCreator::mergeThunks() {
+  for (auto &KV : ThunkSections) {
+    std::vector<InputSection *> *ISR = KV.first;
+    std::vector<ThunkSection *> &Thunks = KV.second;
 
-  // Merge sorted vectors of Thunks and InputSections by OutSecOff
-  std::vector<InputSection *> Tmp;
-  Tmp.reserve(OS->Sections.size() + Thunks.size());
-  auto MergeCmp = [](const InputSection *A, const InputSection *B) {
-    // std::merge requires a strict weak ordering.
-    if (A->OutSecOff < B->OutSecOff)
-      return true;
-    if (A->OutSecOff == B->OutSecOff)
-      // Check if Thunk is immediately before any specific Target InputSection
-      // for example Mips LA25 Thunks.
-      if (auto *TA = dyn_cast<ThunkSection>(A))
-        if (TA && TA->getTargetInputSection() == B)
-          return true;
-    return false;
-  };
-  std::merge(OS->Sections.begin(), OS->Sections.end(), Thunks.begin(),
-             Thunks.end(), std::back_inserter(Tmp), MergeCmp);
-  OS->Sections = std::move(Tmp);
-  OS->assignOffsets();
+    // Order Thunks in ascending OutSecOff
+    auto ThunkCmp = [](const ThunkSection *A, const ThunkSection *B) {
+      return A->OutSecOff < B->OutSecOff;
+    };
+    std::stable_sort(Thunks.begin(), Thunks.end(), ThunkCmp);
+
+    // Merge sorted vectors of Thunks and InputSections by OutSecOff
+    std::vector<InputSection *> Tmp;
+    Tmp.reserve(ISR->size() + Thunks.size());
+    auto MergeCmp = [](const InputSection *A, const InputSection *B) {
+      // std::merge requires a strict weak ordering.
+      if (A->OutSecOff < B->OutSecOff)
+        return true;
+      if (A->OutSecOff == B->OutSecOff)
+        // Check if Thunk is immediately before any specific Target InputSection
+        // for example Mips LA25 Thunks.
+        if (auto *TA = dyn_cast<ThunkSection>(A))
+          if (TA && TA->getTargetInputSection() == B)
+            return true;
+      return false;
+    };
+    std::merge(ISR->begin(), ISR->end(), Thunks.begin(), Thunks.end(),
+               std::back_inserter(Tmp), MergeCmp);
+    OutputSection *OS = Thunks.front()->getParent();
+    OS->Sections = std::move(Tmp);
+    OS->assignOffsets();
+  }
 }
 
 ThunkSection *ThunkCreator::getOSThunkSec(ThunkSection *&TS,
@@ -1006,7 +1011,7 @@ ThunkSection *ThunkCreator::getOSThunkSec(ThunkSection *&TS,
         break;
     }
     TS = make<ThunkSection>(OS, Off);
-    ThunkSections[OS].push_back(TS);
+    ThunkSections[&OS->Sections].push_back(TS);
   }
   return TS;
 }
@@ -1017,7 +1022,7 @@ ThunkSection *ThunkCreator::getISThunkSec(InputSection *IS, OutputSection *OS) {
     return TS;
   auto *TOS = IS->getParent();
   TS = make<ThunkSection>(TOS, IS->OutSecOff);
-  ThunkSections[TOS].push_back(TS);
+  ThunkSections[&TOS->Sections].push_back(TS);
   ThunkedSections[IS] = TS;
   return TS;
 }
@@ -1074,8 +1079,7 @@ bool ThunkCreator::createThunks(ArrayRef<OutputSection *> OutputSections) {
   }
 
   // Merge all created synthetic ThunkSections back into OutputSection
-  for (auto &KV : ThunkSections)
-    mergeThunks(KV.first, KV.second);
+  mergeThunks();
   return !ThunkSections.empty();
 }
 
