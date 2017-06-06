@@ -704,8 +704,8 @@ define arm_aapcscc void @test_large_int_arrays([20 x i32] %arr) {
 ; CHECK: fixedStack:
 ; The parameters live in separate stack locations, one for each element that
 ; doesn't fit in the registers.
-; CHECK-DAG: id: [[FIRST_STACK_ID:[0-9]+]], offset: 0, size: 4
-; CHECK-DAG: id: [[LAST_STACK_ID:[-0]+]], offset: 60, size: 4
+; CHECK-DAG: id: [[FIRST_STACK_ID:[0-9]+]], type: default, offset: 0, size: 4,
+; CHECK-DAG: id: [[LAST_STACK_ID:[-0]+]], type: default, offset: 60, size: 4
 ; CHECK: liveins: %r0, %r1, %r2, %r3
 ; CHECK-DAG: [[R0:%[0-9]+]](s32) = COPY %r0
 ; CHECK-DAG: [[R1:%[0-9]+]](s32) = COPY %r1
@@ -757,7 +757,7 @@ declare arm_aapcscc [2 x float] @fp_arrays_aapcs_target([3 x double])
 define arm_aapcscc [2 x float] @test_fp_arrays_aapcs([3 x double] %arr) {
 ; CHECK-LABEL: name: test_fp_arrays_aapcs
 ; CHECK: fixedStack:
-; CHECK: id: [[ARR2_ID:[0-9]+]], offset: 0, size: 8
+; CHECK: id: [[ARR2_ID:[0-9]+]], type: default, offset: 0, size: 8,
 ; CHECK: liveins: %r0, %r1, %r2, %r3
 ; CHECK: [[ARR0_0:%[0-9]+]](s32) = COPY %r0
 ; CHECK: [[ARR0_1:%[0-9]+]](s32) = COPY %r1
@@ -817,10 +817,10 @@ declare arm_aapcs_vfpcc [4 x float] @fp_arrays_aapcs_vfp_target([3 x double], [3
 define arm_aapcs_vfpcc [4 x float] @test_fp_arrays_aapcs_vfp([3 x double] %x, [3 x float] %y, [4 x double] %z) {
 ; CHECK-LABEL: name: test_fp_arrays_aapcs_vfp
 ; CHECK: fixedStack:
-; CHECK-DAG: id: [[Z0_ID:[0-9]+]], offset: 0, size: 8
-; CHECK-DAG: id: [[Z1_ID:[0-9]+]], offset: 8, size: 8
-; CHECK-DAG: id: [[Z2_ID:[0-9]+]], offset: 16, size: 8
-; CHECK-DAG: id: [[Z3_ID:[0-9]+]], offset: 24, size: 8
+; CHECK-DAG: id: [[Z0_ID:[0-9]+]], type: default, offset: 0, size: 8,
+; CHECK-DAG: id: [[Z1_ID:[0-9]+]], type: default, offset: 8, size: 8,
+; CHECK-DAG: id: [[Z2_ID:[0-9]+]], type: default, offset: 16, size: 8,
+; CHECK-DAG: id: [[Z3_ID:[0-9]+]], type: default, offset: 24, size: 8,
 ; CHECK: liveins: %d0, %d1, %d2, %s6, %s7, %s8
 ; CHECK: [[X0:%[0-9]+]](s64) = COPY %d0
 ; CHECK: [[X1:%[0-9]+]](s64) = COPY %d1
@@ -918,8 +918,8 @@ define arm_aapcscc [2 x i32*] @test_tough_arrays([6 x [4 x i32]] %arr) {
 ; CHECK: fixedStack:
 ; The parameters live in separate stack locations, one for each element that
 ; doesn't fit in the registers.
-; CHECK-DAG: id: [[FIRST_STACK_ID:[0-9]+]], offset: 0, size: 4
-; CHECK-DAG: id: [[LAST_STACK_ID:[-0]+]], offset: 76, size: 4
+; CHECK-DAG: id: [[FIRST_STACK_ID:[0-9]+]], type: default, offset: 0, size: 4,
+; CHECK-DAG: id: [[LAST_STACK_ID:[-0]+]], type: default, offset: 76, size: 4
 ; CHECK: liveins: %r0, %r1, %r2, %r3
 ; CHECK-DAG: [[R0:%[0-9]+]](s32) = COPY %r0
 ; CHECK-DAG: [[R1:%[0-9]+]](s32) = COPY %r1
@@ -981,8 +981,8 @@ declare arm_aapcscc {i32, i32} @structs_target({i32, i32}, {i32*, float, i32, do
 define arm_aapcscc {i32, i32} @test_structs({i32, i32} %x, {i32*, float, i32, double} %y) {
 ; CHECK-LABEL: test_structs
 ; CHECK: fixedStack:
-; CHECK-DAG: id: [[Y2_ID:[0-9]+]], offset: 0, size: 4
-; CHECK-DAG: id: [[Y3_ID:[0-9]+]], offset: 8, size: 8
+; CHECK-DAG: id: [[Y2_ID:[0-9]+]], type: default, offset: 0, size: 4,
+; CHECK-DAG: id: [[Y3_ID:[0-9]+]], type: default, offset: 8, size: 8,
 ; CHECK: liveins: %r0, %r1, %r2, %r3
 ; CHECK-DAG: [[X0:%[0-9]+]](s32) = COPY %r0
 ; CHECK-DAG: [[X1:%[0-9]+]](s32) = COPY %r1

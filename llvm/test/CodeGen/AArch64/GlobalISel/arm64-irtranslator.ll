@@ -31,10 +31,13 @@ define i64 @muli64(i64 %arg1, i64 %arg2) {
 ; Tests for alloca
 ; CHECK-LABEL: name: allocai64
 ; CHECK: stack:
-; CHECK-NEXT:   - { id: 0, name: ptr1, offset: 0, size: 8, alignment: 8 }
-; CHECK-NEXT:   - { id: 1, name: ptr2, offset: 0, size: 8, alignment: 1 }
-; CHECK-NEXT:   - { id: 2, name: ptr3, offset: 0, size: 128, alignment: 8 }
-; CHECK-NEXT:   - { id: 3, name: ptr4, offset: 0, size: 1, alignment: 8 }
+; CHECK-NEXT:   - { id: 0, name: ptr1, type: default, offset: 0, size: 8, alignment: 8,
+; CHECK-NEXT:       callee-saved-register: '', di-variable: '', di-expression: '', di-location: '' }
+; CHECK-NEXT:   - { id: 1, name: ptr2, type: default, offset: 0, size: 8, alignment: 1,
+; CHECK-NEXT:       callee-saved-register: '', di-variable: '', di-expression: '', di-location: '' }
+; CHECK-NEXT:   - { id: 2, name: ptr3, type: default, offset: 0, size: 128, alignment: 8,
+; CHECK-NEXT:       callee-saved-register: '', di-variable: '', di-expression: '', di-location: '' }
+; CHECK-NEXT:   - { id: 3, name: ptr4, type: default, offset: 0, size: 1, alignment: 8,
 ; CHECK: %{{[0-9]+}}(p0) = G_FRAME_INDEX %stack.0.ptr1
 ; CHECK: %{{[0-9]+}}(p0) = G_FRAME_INDEX %stack.1.ptr2
 ; CHECK: %{{[0-9]+}}(p0) = G_FRAME_INDEX %stack.2.ptr3
