@@ -318,8 +318,6 @@ TEST_F(GDBRemoteCommunicationClientTest, SendSignalsToIgnore) {
   if (HasFailure())
     return;
 
-  const lldb::tid_t tid = 0x47;
-  const uint32_t reg_num = 4;
   std::future<Status> result = std::async(std::launch::async, [&] {
     return client.SendSignalsToIgnore({2, 3, 5, 7, 0xB, 0xD, 0x11});
   });
