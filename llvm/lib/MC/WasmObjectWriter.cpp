@@ -127,6 +127,27 @@ struct WasmGlobal {
   uint32_t ImportIndex;
 };
 
+// Information about a single relocation.
+struct WasmRelocationEntry {
+  uint64_t Offset;            // Where is the relocation.
+  const MCSymbolWasm *Symbol; // The symbol to relocate with.
+  int64_t Addend;             // A value to add to the symbol.
+  unsigned Type;              // The type of the relocation.
+  MCSectionWasm *FixupSection;// The section the relocation is targeting.
+
+  WasmRelocationEntry(uint64_t Offset, const MCSymbolWasm *Symbol,
+                      int64_t Addend, unsigned Type,
+                      MCSectionWasm *FixupSection)
+      : Offset(Offset), Symbol(Symbol), Addend(Addend), Type(Type),
+        FixupSection(FixupSection) {}
+
+  void print(raw_ostream &Out) const {
+    Out << "Off=" << Offset << ", Sym=" << Symbol << ", Addend=" << Addend
+        << ", Type=" << Type << ", FixupSection=" << FixupSection;
+  }
+  void dump() const { print(errs()); }
+};
+
 class WasmObjectWriter : public MCObjectWriter {
   /// Helper struct for containing some precomputed information on symbols.
   struct WasmSymbolData {
