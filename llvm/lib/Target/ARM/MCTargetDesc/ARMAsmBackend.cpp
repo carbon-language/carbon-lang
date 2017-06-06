@@ -695,7 +695,7 @@ unsigned ARMAsmBackend::adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
       return 0;
     }
     return Value;
-  case ARM::fixup_t2_so_imm:
+  case ARM::fixup_t2_so_imm: {
     Value = ARM_AM::getT2SOImmVal(Value);
     if ((int64_t)Value < 0) {
       Ctx.reportError(Fixup.getLoc(), "out of range immediate fixup value");
@@ -711,6 +711,7 @@ unsigned ARMAsmBackend::adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
     EncValue |= (Value & 0x700) << 4;
     EncValue |= (Value & 0xff);
     return swapHalfWords(EncValue, IsLittleEndian);
+  }
   }
 }
 
