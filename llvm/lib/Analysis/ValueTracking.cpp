@@ -1982,7 +1982,7 @@ static bool isAddOfNonZero(const Value *V1, const Value *V2, const Query &Q) {
 
 /// Return true if it is known that V1 != V2.
 static bool isKnownNonEqual(const Value *V1, const Value *V2, const Query &Q) {
-  if (V1->getType()->isVectorTy() || V1 == V2)
+  if (V1 == V2)
     return false;
   if (V1->getType() != V2->getType())
     // We can't look through casts yet.
@@ -1990,7 +1990,7 @@ static bool isKnownNonEqual(const Value *V1, const Value *V2, const Query &Q) {
   if (isAddOfNonZero(V1, V2, Q) || isAddOfNonZero(V2, V1, Q))
     return true;
 
-  if (isa<IntegerType>(V1->getType())) {
+  if (V1->getType()->isIntOrIntVectorTy()) {
     // Are any known bits in V1 contradictory to known bits in V2? If V1
     // has a known zero where V2 has a known one, they must not be equal.
     KnownBits Known1 = computeKnownBits(V1, 0, Q);
