@@ -1271,7 +1271,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   // at the end because some tags like RELSZ depend on result
   // of finalizing other sections.
   for (OutputSectionCommand *Cmd : OutputSectionCommands)
-    Cmd->Sec->finalize<ELFT>();
+    Cmd->finalize<ELFT>();
 
   // createThunks may have added local symbols to the static symbol table
   applySynthetic({InX::SymTab, InX::ShStrTab, InX::StrTab},
