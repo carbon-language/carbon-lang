@@ -68,6 +68,7 @@ void runChecks(
 
   MachineModuleInfo MMI(TM);
   bool Res = MParser->parseMachineFunctions(*M, MMI);
+  (void)Res;
   assert(!Res && "Couldn't parse MIR functions");
 
   auto F = M->getFunction("sizes");
