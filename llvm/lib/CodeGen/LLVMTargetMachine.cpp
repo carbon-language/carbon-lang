@@ -95,9 +95,7 @@ static MCContext *
 addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
                         bool DisableVerify, AnalysisID StartBefore,
                         AnalysisID StartAfter, AnalysisID StopBefore,
-                        AnalysisID StopAfter,
-                        MachineFunctionInitializer *MFInitializer = nullptr) {
-
+                        AnalysisID StopAfter) {
   // Targets may override createPassConfig to provide a target-specific
   // subclass.
   TargetPassConfig *PassConfig = TM->createPassConfig(PM);
@@ -107,7 +105,6 @@ addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
   PassConfig->setDisableVerify(DisableVerify);
   PM.add(PassConfig);
   MachineModuleInfo *MMI = new MachineModuleInfo(TM);
-  MMI->setMachineFunctionInitializer(MFInitializer);
   PM.add(MMI);
 
   if (PassConfig->addISelPasses())
@@ -192,12 +189,11 @@ bool LLVMTargetMachine::addAsmPrinter(PassManagerBase &PM,
 bool LLVMTargetMachine::addPassesToEmitFile(
     PassManagerBase &PM, raw_pwrite_stream &Out, CodeGenFileType FileType,
     bool DisableVerify, AnalysisID StartBefore, AnalysisID StartAfter,
-    AnalysisID StopBefore, AnalysisID StopAfter,
-    MachineFunctionInitializer *MFInitializer) {
+    AnalysisID StopBefore, AnalysisID StopAfter) {
   // Add common CodeGen passes.
   MCContext *Context =
       addPassesToGenerateCode(this, PM, DisableVerify, StartBefore, StartAfter,
-                              StopBefore, StopAfter, MFInitializer);
+                              StopBefore, StopAfter);
   if (!Context)
     return true;
 

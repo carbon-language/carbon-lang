@@ -401,7 +401,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
     if (StringRef(InputFilename).endswith_lower(".mir")) {
       MIR = createMIRParserFromFile(InputFilename, Err, Context);
       if (MIR)
-        M = MIR->parseLLVMModule();
+        M = MIR->parseIRModule();
     } else
       M = parseIRFile(InputFilename, Err, Context);
     if (!M) {
@@ -540,7 +540,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
       TPC.setDisableVerify(NoVerify);
       PM.add(&TPC);
       MachineModuleInfo *MMI = new MachineModuleInfo(&LLVMTM);
-      MMI->setMachineFunctionInitializer(MIR.get());
+      if (MIR->parseMachineFunctions(*M, *MMI))
+        return 1;
       PM.add(MMI);
       TPC.printAndVerify("");
 
