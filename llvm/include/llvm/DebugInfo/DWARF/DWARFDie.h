@@ -120,7 +120,8 @@ public:
   /// \param recurseDepth the depth to recurse to when dumping this DIE and its
   /// children.
   /// \param indent the number of characters to indent each line that is output.
-  void dump(raw_ostream &OS, unsigned recurseDepth, unsigned indent = 0) const;
+  void dump(raw_ostream &OS, unsigned recurseDepth, unsigned indent = 0,
+            DIDumpOptions DumpOpts = DIDumpOptions()) const;
 
   /// Extract the specified attribute from this DIE.
   ///
