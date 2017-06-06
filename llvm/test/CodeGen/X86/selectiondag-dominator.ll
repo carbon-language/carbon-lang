@@ -1,7 +1,7 @@
 ; Make sure we don't crash because we have a stale dominator tree.
 ; PR33266
 ; REQUIRES: asserts
-; RUN: llc -verify-dom-info %s
+; RUN: llc -o /dev/null -verify-dom-info %s
 
 target triple = "x86_64-unknown-linux-gnu"
 
