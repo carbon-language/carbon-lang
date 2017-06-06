@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MCTargetDesc/ARMMCTargetDesc.h"
-#include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMAsmBackend.h"
+#include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMAsmBackendDarwin.h"
 #include "MCTargetDesc/ARMAsmBackendELF.h"
 #include "MCTargetDesc/ARMAsmBackendWinCOFF.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMFixupKinds.h"
+#include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
