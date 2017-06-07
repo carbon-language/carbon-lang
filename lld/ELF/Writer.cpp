@@ -998,9 +998,6 @@ template <class ELFT> void Writer<ELFT>::createSections() {
   sortInitFini(findSection(".fini_array"));
   sortCtorsDtors(findSection(".ctors"));
   sortCtorsDtors(findSection(".dtors"));
-
-  for (OutputSection *Sec : OutputSections)
-    Sec->assignOffsets();
 }
 
 // We want to find how similar two ranks are.
