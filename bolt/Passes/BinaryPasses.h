@@ -198,6 +198,8 @@ class FinalizeFunctions : public BinaryFunctionPass {
 class SimplifyConditionalTailCalls : public BinaryFunctionPass {
   uint64_t NumCandidateTailCalls{0};
   uint64_t NumTailCallsPatched{0};
+  uint64_t CTCExecCount{0};
+  uint64_t CTCTakenCount{0};
   uint64_t NumOrigForwardBranches{0};
   uint64_t NumOrigBackwardBranches{0};
   uint64_t NumDoubleJumps{0};

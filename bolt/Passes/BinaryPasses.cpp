@@ -516,6 +516,8 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   auto &MIA = BC.MIA;
   uint64_t NumLocalCTCCandidates = 0;
   uint64_t NumLocalCTCs = 0;
+  uint64_t LocalCTCTakenCount = 0;
+  uint64_t LocalCTCExecCount = 0;
   std::vector<std::tuple<BinaryBasicBlock *, BinaryBasicBlock *, const BinaryBasicBlock *>>
     NeedsUncondBranch;
 
@@ -587,14 +589,29 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
         // Change destination of the conditional branch.
         MIA->replaceBranchTarget(*CondBranch, CalleeSymbol, BC.Ctx.get());
       }
+      const uint64_t CTCTakenFreq = PredBB->getBranchInfo(true).Count ==
+                                            BinaryBasicBlock::COUNT_NO_PROFILE
+                                        ? 0
+                                        : PredBB->getBranchInfo(true).Count;
       // Annotate it, so "isCall" returns true for this jcc
       MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "IsCTC", true);
+      // Add info abount the conditional tail call frequency, otherwise this
+      // info will be lost when we delete the associated BranchInfo entry
+      BC.MIA->addAnnotation(BC.Ctx.get(), *CondBranch, "CTCTakenFreq",
+                            CTCTakenFreq);
 
       // Remove the unused successor which may be eliminated later
       // if there are no other users.
       PredBB->removeSuccessor(BB);
+      // Update BB execution count
+      if (BB->getKnownExecutionCount() > 0) {
+        assert(CTCTakenFreq <= BB->getKnownExecutionCount());
+        BB->setExecutionCount(BB->getExecutionCount() - CTCTakenFreq);
+      }
 
       ++NumLocalCTCs;
+      LocalCTCTakenCount += CTCTakenFreq;
+      LocalCTCExecCount += PredBB->getKnownExecutionCount();
     }
 
     // Remove the block from CFG if all predecessors were removed.
@@ -643,11 +660,16 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
   }
 
   DEBUG(dbgs() << "BOLT: created " << NumLocalCTCs
-          << " conditional tail calls from a total of " << NumLocalCTCCandidates
-          << " candidates in function " << BF << "\n";);
+               << " conditional tail calls from a total of "
+               << NumLocalCTCCandidates << " candidates in function " << BF
+               << ". CTCs execution count for this function is "
+               << LocalCTCExecCount << " and CTC taken count is "
+               << LocalCTCTakenCount << "\n";);
 
   NumTailCallsPatched += NumLocalCTCs;
   NumCandidateTailCalls += NumLocalCTCCandidates;
+  CTCExecCount += LocalCTCExecCount;
+  CTCTakenCount += LocalCTCTakenCount;
 
   return NumLocalCTCs > 0;
 }
@@ -672,10 +694,13 @@ void SimplifyConditionalTailCalls::runOnFunctions(
   outs() << "BOLT-INFO: SCTC: patched " << NumTailCallsPatched
          << " tail calls (" << NumOrigForwardBranches << " forward)"
          << " tail calls (" << NumOrigBackwardBranches << " backward)"
-         << " from a total of " << NumCandidateTailCalls
-         << " while removing " << NumDoubleJumps << " double jumps"
+         << " from a total of " << NumCandidateTailCalls << " while removing "
+         << NumDoubleJumps << " double jumps"
          << " and removing " << DeletedBlocks << " basic blocks"
-         << " totalling " << DeletedBytes << " bytes of code.\n";
+         << " totalling " << DeletedBytes
+         << " bytes of code. CTCs total execution count is " << CTCExecCount
+         << " and the number of times CTCs are taken is " << CTCTakenCount
+         << ".\n";
 }
 
 void Peepholes::shortenInstructions(BinaryContext &BC,

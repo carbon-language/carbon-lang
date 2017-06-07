@@ -2083,7 +2083,7 @@ void BinaryFunction::inferFallThroughCounts() {
 
   auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
 
-  // Compute preliminary execution time for each basic block
+  // Compute preliminary execution count for each basic block
   for (auto CurBB : BasicBlocks) {
     CurBB->ExecutionCount = 0;
   }
@@ -4118,9 +4118,17 @@ DynoStats BinaryFunction::getDynoStats() const {
       }
       if (!BC.MIA->isCall(Instr))
         continue;
-      Stats[DynoStats::FUNCTION_CALLS] += BBExecutionCount;
+      uint64_t CallFreq = BBExecutionCount;
+      if (BC.MIA->isCTC(Instr)) {
+        CallFreq = 0;
+        if (auto FreqOrErr =
+                BC.MIA->tryGetAnnotationAs<uint64_t>(Instr, "CTCTakenFreq")) {
+          CallFreq = *FreqOrErr;
+        }
+      }
+      Stats[DynoStats::FUNCTION_CALLS] += CallFreq;
       if (BC.MIA->getMemoryOperandNo(Instr) != -1) {
-        Stats[DynoStats::INDIRECT_CALLS] += BBExecutionCount;
+        Stats[DynoStats::INDIRECT_CALLS] += CallFreq;
       } else if (const auto *CallSymbol = BC.MIA->getTargetSymbol(Instr)) {
         if (BC.getFunctionForSymbol(CallSymbol))
           continue;
@@ -4133,7 +4141,7 @@ DynoStats BinaryFunction::getDynoStats() const {
         StringRef SectionName;
         Section->getName(SectionName);
         if (SectionName == ".plt") {
-          Stats[DynoStats::PLT_CALLS] += BBExecutionCount;
+          Stats[DynoStats::PLT_CALLS] += CallFreq;
         }
       }
     }
@@ -4175,36 +4183,23 @@ DynoStats BinaryFunction::getDynoStats() const {
       continue;
     }
 
-    // Conditional branch that could be followed by an unconditional branch.
-    uint64_t TakenCount;
-    uint64_t NonTakenCount;
-    bool IsForwardBranch;
-    if (BB->succ_size() == 2) {
-      TakenCount = BB->getBranchInfo(true).Count;
-      NonTakenCount = BB->getBranchInfo(false).Count;
-      IsForwardBranch = isForwardBranch(BB, BB->getConditionalSuccessor(true));
-    } else {
-      // SCTC breaks the CFG invariant so we have to make some affordances
-      // here if we want dyno stats after running it.
-      TakenCount = BB->branch_info_begin()->Count;
-      if (TakenCount != COUNT_NO_PROFILE)
-        NonTakenCount = BBExecutionCount - TakenCount;
-      else
-        NonTakenCount = 0;
-
-      // If succ_size == 0 then we are branching to a function
-      // rather than a BB label.
-      IsForwardBranch = BB->succ_size() == 0
-        ? isForwardCall(BC.MIA->getTargetSymbol(*CondBranch))
-        : isForwardBranch(BB, BB->getFallthrough());
+    // CTCs
+    if (BC.MIA->isCTC(*CondBranch)) {
+      if (BB->branch_info_begin() != BB->branch_info_end())
+        Stats[DynoStats::UNCOND_BRANCHES] += BB->branch_info_begin()->Count;
+      continue;
     }
 
+    // Conditional branch that could be followed by an unconditional branch.
+    uint64_t TakenCount = BB->getBranchInfo(true).Count;
     if (TakenCount == COUNT_NO_PROFILE)
       TakenCount = 0;
+
+    uint64_t NonTakenCount = BB->getBranchInfo(false).Count;
     if (NonTakenCount == COUNT_NO_PROFILE)
       NonTakenCount = 0;
 
-    if (IsForwardBranch) {
+    if (isForwardBranch(BB, BB->getConditionalSuccessor(true))) {
       Stats[DynoStats::FORWARD_COND_BRANCHES] += BBExecutionCount;
       Stats[DynoStats::FORWARD_COND_BRANCHES_TAKEN] += TakenCount;
     } else {
