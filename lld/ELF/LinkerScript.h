@@ -281,7 +281,6 @@ public:
   void assignOffsets(OutputSectionCommand *Cmd);
   void placeOrphanSections();
   void processNonSectionCommands();
-  void synchronize();
   void assignAddresses(std::vector<PhdrEntry> &Phdrs,
                        ArrayRef<OutputSectionCommand *> OutputSectionCommands);
 

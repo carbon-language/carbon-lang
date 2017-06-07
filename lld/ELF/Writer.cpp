@@ -1225,6 +1225,12 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     if (SS->getParent() && !SS->empty())
       SS->getParent()->assignOffsets();
 
+  if (!Script->Opt.HasSections)
+    Script->fabricateDefaultCommands();
+  for (BaseCommand *Base : Script->Opt.Commands)
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
+      OutputSectionCommands.push_back(Cmd);
+
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
   applySynthetic({InX::DynSymTab,    InX::Bss,           InX::BssRelRo,
@@ -1253,13 +1259,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
                      [](SyntheticSection *SS) { SS->updateAllocSize(); });
   }
 
-  if (!Script->Opt.HasSections)
-    Script->fabricateDefaultCommands();
-  else
-    Script->synchronize();
-  for (BaseCommand *Base : Script->Opt.Commands)
-    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-      OutputSectionCommands.push_back(Cmd);
   clearOutputSections();
 
   // Fill other section headers. The dynamic table is finalized
