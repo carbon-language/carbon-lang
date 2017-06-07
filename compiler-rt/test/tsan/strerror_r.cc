@@ -10,8 +10,7 @@
 char buffer[1000];
 
 void *Thread(void *p) {
-  (void)strerror_r(TEST_ERROR, buffer, sizeof(buffer));
-  return p;
+  return strerror_r(TEST_ERROR, buffer, sizeof(buffer));
 }
 
 int main() {
