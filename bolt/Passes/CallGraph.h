@@ -130,6 +130,10 @@ public:
     return Arcs;
   }
 
+  double density() const {
+    return double(Arcs.size()) / (Nodes.size()*Nodes.size());
+  }
+
   void normalizeArcWeights(bool UseEdgeCounts);
 
   template <typename L>

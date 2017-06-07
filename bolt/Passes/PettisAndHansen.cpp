@@ -179,7 +179,8 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
     for (auto F : C2->targets()) {
       FuncCluster[F] = C1;
     }
-    C1->merge(std::move(*C2), Max.Weight);
+    C1->merge(*C2, Max.Weight);
+    C2->clear();
   }
 
   // Return the set of Clusters that are left, which are the ones that

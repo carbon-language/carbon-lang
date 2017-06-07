@@ -55,7 +55,8 @@ public:
   uint32_t size() const { return Size; }
   bool frozen() const { return Frozen; }
   void freeze() { Frozen = true; }
-  void merge(Cluster &&Other, const double Aw = 0);
+  void merge(const Cluster &Other, const double Aw = 0);
+  void clear();
   size_t numTargets() const {
     return Targets.size();
   }
@@ -66,12 +67,13 @@ public:
     return Targets[N];
   }
   void reverseTargets();
+  bool hasId() const { return Id != -1u; }
   void setId(uint32_t NewId) {
-    assert(Id == -1u);
+    assert(!hasId());
     Id = NewId;
   }
   uint32_t id() const {
-    assert(Id != -1u);
+    assert(hasId());
     return Id;
   }
 private:

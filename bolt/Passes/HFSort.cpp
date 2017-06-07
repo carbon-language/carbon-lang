@@ -112,17 +112,22 @@ void Cluster::reverseTargets() {
   std::reverse(Targets.begin(), Targets.end());
 }
 
-void Cluster::merge(Cluster&& Other, const double Aw) {
+void Cluster::merge(const Cluster& Other, const double Aw) {
   Targets.insert(Targets.end(),
                  Other.Targets.begin(),
                  Other.Targets.end());
   Size += Other.Size;
   Samples += Other.Samples;
   Density = (double)Samples / Size;
+}
 
-  Other.Size = 0;
-  Other.Samples = 0;
-  Other.Targets.clear();
+void Cluster::clear() {
+  Id = -1u;
+  Size = 0;
+  Samples = 0;
+  Density = 0.0;
+  Targets.clear();
+  Frozen = false;
 }
 
 std::vector<Cluster> clusterize(const CallGraph &Cg) {
@@ -218,7 +223,8 @@ std::vector<Cluster> clusterize(const CallGraph &Cg) {
       FuncCluster[F] = PredCluster;
     }
 
-    PredCluster->merge(std::move(*Cluster));
+    PredCluster->merge(*Cluster);
+    Cluster->clear();
   }
 
   // Return the set of Clusters that are left, which are the ones that
@@ -281,7 +287,7 @@ std::vector<Cluster> randomClusters(const CallGraph &Cg) {
     if (MergeIdx == Clusters.size()) {
       ++Idx;
     } else {
-      Clusters[Idx].merge(std::move(Clusters[MergeIdx]));
+      Clusters[Idx].merge(Clusters[MergeIdx]);
       Clusters.erase(Clusters.begin() + MergeIdx);
     }
   }

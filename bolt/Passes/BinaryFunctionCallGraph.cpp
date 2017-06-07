@@ -12,13 +12,14 @@
 #include "BinaryFunctionCallGraph.h"
 #include "BinaryFunction.h"
 #include "BinaryContext.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Options.h"
 #include "llvm/Support/Timer.h"
 
 #define DEBUG_TYPE "callgraph"
 
 namespace opts {
 extern llvm::cl::opt<bool> TimeOpts;
+extern llvm::cl::opt<unsigned> Verbosity;
 }
 
 namespace llvm {
@@ -130,8 +131,11 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
         const auto DstId = lookupNode(DstFunc);
         const auto AvgDelta = !UseEdgeCounts ? Offset - DstFunc->getAddress() : 0;
         Cg.incArcWeight(SrcId, DstId, Count, AvgDelta);
-        DEBUG(dbgs() << "BOLT-DEBUG: buildCallGraph: call " << *Function
-              << " -> " << *DstFunc << " @ " << Offset << "\n");
+        DEBUG(
+          if (opts::Verbosity > 1) {
+            dbgs() << "BOLT-DEBUG: buildCallGraph: call " << *Function
+                   << " -> " << *DstFunc << " @ " << Offset << "\n";
+          });
         return true;
       }
       return false;
@@ -194,8 +198,16 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
     }
   }
 
-  outs() << "BOLT-WARNING: buildCallGraph: " << NotProcessed
-         << " callsites not processed out of " << TotalCalls << "\n";
+#ifndef NDEBUG
+  bool PrintInfo = DebugFlag && isCurrentDebugType("callgraph");
+#else
+  bool PrintInfo = false;
+#endif
+  if (PrintInfo || opts::Verbosity > 0) {
+    outs() << format("BOLT-INFO: buildCallGraph: %u nodes, density = %.6lf, "
+                     "%u callsites not processed out of %u.\n",
+                     Cg.numNodes(), Cg.density(), NotProcessed, TotalCalls);
+  }
 
   return Cg;
 }

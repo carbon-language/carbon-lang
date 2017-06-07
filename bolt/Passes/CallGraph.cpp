@@ -10,8 +10,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "CallGraph.h"
-#include "BinaryFunction.h"
-#include "BinaryContext.h"
 
 #define DEBUG_TYPE "callgraph"
 
