@@ -392,6 +392,12 @@ public:
   /// not.
   bool isNullValue() const { return !*this; }
 
+  /// \brief Determine if all bits are clear
+  ///
+  /// This checks to see if the value has all bits of the APInt are clear or
+  /// not.
+  bool isOneValue() const { return getActiveBits() == 1; }
+
   /// \brief Determine if this is the largest unsigned value.
   ///
   /// This checks to see if the value of this APInt is the maximum unsigned
