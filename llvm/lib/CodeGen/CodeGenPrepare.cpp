@@ -1679,7 +1679,7 @@ class MemCmpExpansion {
   unsigned getNumLoads(unsigned Size);
 
 public:
-  MemCmpExpansion(CallInst *CI, unsigned MaxLoadSize,
+  MemCmpExpansion(CallInst *CI, uint64_t Size, unsigned MaxLoadSize,
                   unsigned NumLoadsPerBlock);
   Value *getMemCmpExpansion(uint64_t Size, bool IsLittleEndian);
 };
@@ -1695,19 +1695,15 @@ MemCmpExpansion::ResultBlock::ResultBlock()
 // return from.
 // 3. ResultBlock, block to branch to for early exit when a
 // LoadCmpBlock finds a difference.
-MemCmpExpansion::MemCmpExpansion(CallInst *CI, unsigned MaxLoadSize,
-                                 unsigned NumLoadsPerBlock)
-    : CI(CI), MaxLoadSize(MaxLoadSize), NumLoadsPerBlock(NumLoadsPerBlock) {
+MemCmpExpansion::MemCmpExpansion(CallInst *CI, uint64_t Size,
+                                 unsigned MaxLoadSize, unsigned LoadsPerBlock)
+    : CI(CI), MaxLoadSize(MaxLoadSize), NumLoadsPerBlock(LoadsPerBlock) {
 
   IRBuilder<> Builder(CI->getContext());
-
   BasicBlock *StartBlock = CI->getParent();
   EndBlock = StartBlock->splitBasicBlock(CI, "endblock");
   setupEndBlockPHINodes();
   IsUsedForZeroCmp = isOnlyUsedInZeroEqualityComparison(CI);
-
-  ConstantInt *SizeCast = dyn_cast<ConstantInt>(CI->getArgOperand(2));
-  uint64_t Size = SizeCast->getZExtValue();
 
   // Calculate how many load compare blocks are required for an expansion of
   // given Size.
@@ -2206,7 +2202,6 @@ static bool expandMemCmp(CallInst *CI, const TargetTransformInfo *TTI,
 
   // Early exit from expansion if size greater than max bytes to load.
   uint64_t SizeVal = SizeCast->getZExtValue();
-
   unsigned NumLoads = 0;
   unsigned RemainingSize = SizeVal;
   unsigned LoadSize = MaxLoadSize;
@@ -2226,7 +2221,7 @@ static bool expandMemCmp(CallInst *CI, const TargetTransformInfo *TTI,
   // MemCmpHelper object creates and sets up basic blocks required for
   // expanding memcmp with size SizeVal.
   unsigned NumLoadsPerBlock = MemCmpNumLoadsPerBlock;
-  MemCmpExpansion MemCmpHelper(CI, MaxLoadSize, NumLoadsPerBlock);
+  MemCmpExpansion MemCmpHelper(CI, SizeVal, MaxLoadSize, NumLoadsPerBlock);
 
   Value *Res = MemCmpHelper.getMemCmpExpansion(SizeVal, DL->isLittleEndian());
 
