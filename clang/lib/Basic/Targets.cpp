@@ -8476,7 +8476,7 @@ public:
   explicit WebAssembly32TargetInfo(const llvm::Triple &T,
                                    const TargetOptions &Opts)
       : WebAssemblyTargetInfo(T, Opts) {
-    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 32;
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
     resetDataLayout("e-m:e-p:32:32-i64:64-n32:64-S128");
   }
 
