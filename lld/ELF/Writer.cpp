@@ -1230,6 +1230,7 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   for (BaseCommand *Base : Script->Opt.Commands)
     if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
       OutputSectionCommands.push_back(Cmd);
+  clearOutputSections();
 
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
@@ -1242,8 +1243,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
                   InX::Plt,          InX::Iplt,          In<ELFT>::EhFrameHdr,
                   In<ELFT>::VerSym,  In<ELFT>::VerNeed,  InX::Dynamic},
                  [](SyntheticSection *SS) { SS->finalizeContents(); });
-
-  clearOutputSections();
 
   // Some architectures use small displacements for jump instructions.
   // It is linker's responsibility to create thunks containing long
