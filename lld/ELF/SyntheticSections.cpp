@@ -1699,17 +1699,6 @@ readCuList(DWARFContext &Dwarf, InputSection *Sec) {
   return Ret;
 }
 
-static InputSection *findSection(ArrayRef<InputSectionBase *> Arr,
-                                 uint64_t Offset) {
-  for (InputSectionBase *S : Arr)
-    if (auto *IS = dyn_cast_or_null<InputSection>(S))
-      if (IS != &InputSection::Discarded && IS->Live &&
-          Offset >= IS->getOffsetInFile() &&
-          Offset < IS->getOffsetInFile() + IS->getSize())
-        return IS;
-  return nullptr;
-}
-
 static std::vector<AddressEntry>
 readAddressArea(DWARFContext &Dwarf, InputSection *Sec, size_t CurrentCU) {
   std::vector<AddressEntry> Ret;
