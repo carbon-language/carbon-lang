@@ -162,6 +162,7 @@ bool SymbolTable::addByName(const Atom &newAtom) {
                    << existing->name() << " (" << existingSize << ") "
                    << newAtom.name() << " (" << newSize << ")\n";
       // fallthrough
+      LLVM_FALLTHROUGH;
     }
     case MCR_Error:
       llvm::errs() << "Duplicate symbols: "
