@@ -2549,7 +2549,7 @@ coherent) and so the L2 cache will coherent with the CPU and other agents.
                                                              always generate
                                                              (see comment for
                                                              previous fence).
-							   - Could be split into
+                                                           - Could be split into
                                                              separate s_waitcnt
                                                              vmcnt(0) and
                                                              s_waitcnt
