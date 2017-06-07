@@ -11843,7 +11843,7 @@ ExprResult Sema::BuildBinOp(Scope *S, SourceLocation OpLoc,
           std::any_of(OE->decls_begin(), OE->decls_end(), [](NamedDecl *ND) {
             return isa<FunctionTemplateDecl>(ND);
           })) {
-        if (auto *Q = OE->getQualifier()) {
+        if (OE->getQualifier()) {
           Diag(OE->getQualifierLoc().getBeginLoc(),
                diag::err_template_kw_missing)
             << OE->getName().getAsString() << "";
