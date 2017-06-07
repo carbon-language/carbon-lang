@@ -21,8 +21,7 @@ define signext i32 @zeroEqualityTest02(i8* %x, i8* %y) {
 ; CHECK-NEXT:    lwz 3, 0(3)
 ; CHECK-NEXT:    lwz 4, 0(4)
 ; CHECK-NEXT:    li 5, 1
-; CHECK-NEXT:    xor 3, 3, 4
-; CHECK-NEXT:    cmplwi 3, 0
+; CHECK-NEXT:    cmpld 3, 4
 ; CHECK-NEXT:    isel 3, 0, 5, 2
 ; CHECK-NEXT:    clrldi 3, 3, 32
 ; CHECK-NEXT:    blr
@@ -38,19 +37,19 @@ define signext i32 @zeroEqualityTest01(i8* %x, i8* %y) {
 ; CHECK:       # BB#0: # %loadbb
 ; CHECK-NEXT:    ld 5, 0(3)
 ; CHECK-NEXT:    ld 6, 0(4)
-; CHECK-NEXT:    xor. 5, 5, 6
+; CHECK-NEXT:    cmpld 5, 6
 ; CHECK-NEXT:    bne 0, .LBB1_2
 ; CHECK-NEXT:  # BB#1: # %loadbb1
 ; CHECK-NEXT:    ld 3, 8(3)
 ; CHECK-NEXT:    ld 4, 8(4)
-; CHECK-NEXT:    xor. 3, 3, 4
+; CHECK-NEXT:    cmpld 3, 4
+; CHECK-NEXT:    li 3, 0
 ; CHECK-NEXT:    beq 0, .LBB1_3
 ; CHECK-NEXT:  .LBB1_2: # %res_block
 ; CHECK-NEXT:    li 3, 1
 ; CHECK-NEXT:    clrldi 3, 3, 32
 ; CHECK-NEXT:    blr
-; CHECK-NEXT:  .LBB1_3:
-; CHECK-NEXT:    li 3, 0
+; CHECK-NEXT:  .LBB1_3: # %endblock
 ; CHECK-NEXT:    clrldi 3, 3, 32
 ; CHECK-NEXT:    blr
   %call = tail call signext i32 @memcmp(i8* %x, i8* %y, i64 16)
@@ -65,27 +64,24 @@ define signext i32 @zeroEqualityTest03(i8* %x, i8* %y) {
 ; CHECK:       # BB#0: # %loadbb
 ; CHECK-NEXT:    lwz 5, 0(3)
 ; CHECK-NEXT:    lwz 6, 0(4)
-; CHECK-NEXT:    xor 5, 5, 6
-; CHECK-NEXT:    cmplwi 5, 0
+; CHECK-NEXT:    cmpld 5, 6
 ; CHECK-NEXT:    bne 0, .LBB2_3
 ; CHECK-NEXT:  # BB#1: # %loadbb1
 ; CHECK-NEXT:    lhz 5, 4(3)
 ; CHECK-NEXT:    lhz 6, 4(4)
-; CHECK-NEXT:    xor 5, 5, 6
-; CHECK-NEXT:    rlwinm. 5, 5, 0, 16, 31
+; CHECK-NEXT:    cmpld 5, 6
 ; CHECK-NEXT:    bne 0, .LBB2_3
 ; CHECK-NEXT:  # BB#2: # %loadbb2
 ; CHECK-NEXT:    lbz 3, 6(3)
 ; CHECK-NEXT:    lbz 4, 6(4)
-; CHECK-NEXT:    xor 3, 3, 4
-; CHECK-NEXT:    rlwinm. 3, 3, 0, 24, 31
+; CHECK-NEXT:    cmpld 3, 4
+; CHECK-NEXT:    li 3, 0
 ; CHECK-NEXT:    beq 0, .LBB2_4
 ; CHECK-NEXT:  .LBB2_3: # %res_block
 ; CHECK-NEXT:    li 3, 1
 ; CHECK-NEXT:    clrldi 3, 3, 32
 ; CHECK-NEXT:    blr
-; CHECK-NEXT:  .LBB2_4:
-; CHECK-NEXT:    li 3, 0
+; CHECK-NEXT:  .LBB2_4: # %endblock
 ; CHECK-NEXT:    clrldi 3, 3, 32
 ; CHECK-NEXT:    blr
   %call = tail call signext i32 @memcmp(i8* %x, i8* %y, i64 7)
@@ -178,24 +174,22 @@ define signext i32 @zeroEqualityTest06() {
 ; CHECK-NEXT:    addis 4, 2, .LzeroEqualityTest04.buffer2@toc@ha
 ; CHECK-NEXT:    ld 3, .LzeroEqualityTest04.buffer1@toc@l(3)
 ; CHECK-NEXT:    ld 4, .LzeroEqualityTest04.buffer2@toc@l(4)
-; CHECK-NEXT:    xor. 3, 3, 4
+; CHECK-NEXT:    cmpld 3, 4
 ; CHECK-NEXT:    bne 0, .LBB5_2
 ; CHECK-NEXT:  # BB#1: # %loadbb1
 ; CHECK-NEXT:    addis 3, 2, .LzeroEqualityTest04.buffer1@toc@ha+8
 ; CHECK-NEXT:    addis 4, 2, .LzeroEqualityTest04.buffer2@toc@ha+8
 ; CHECK-NEXT:    ld 3, .LzeroEqualityTest04.buffer1@toc@l+8(3)
 ; CHECK-NEXT:    ld 4, .LzeroEqualityTest04.buffer2@toc@l+8(4)
-; CHECK-NEXT:    xor. 3, 3, 4
-; CHECK-NEXT:    beq 0, .LBB5_4
+; CHECK-NEXT:    cmpld 3, 4
+; CHECK-NEXT:    li 3, 0
+; CHECK-NEXT:    beq 0, .LBB5_3
 ; CHECK-NEXT:  .LBB5_2: # %res_block
 ; CHECK-NEXT:    li 3, 1
 ; CHECK-NEXT:  .LBB5_3: # %endblock
 ; CHECK-NEXT:    cntlzw 3, 3
 ; CHECK-NEXT:    srwi 3, 3, 5
 ; CHECK-NEXT:    blr
-; CHECK-NEXT:  .LBB5_4:
-; CHECK-NEXT:    li 3, 0
-; CHECK-NEXT:    b .LBB5_3
   %call = tail call signext i32 @memcmp(i8* bitcast ([15 x i32]* @zeroEqualityTest04.buffer1 to i8*), i8* bitcast ([15 x i32]* @zeroEqualityTest04.buffer2 to i8*), i64 16)
   %not.tobool = icmp eq i32 %call, 0
   %cond = zext i1 %not.tobool to i32

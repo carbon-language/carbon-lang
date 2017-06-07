@@ -1812,7 +1812,7 @@ void MemCmpExpansion::emitLoadCompareBlockMultipleLoads(
   unsigned NumLoads = std::min(NumLoadsRemaining, NumLoadsPerBlock);
 
   Builder.SetInsertPoint(LoadCmpBlocks[Index]);
-
+  Value *Cmp = nullptr;
   for (unsigned i = 0; i < NumLoads; ++i) {
     unsigned LoadSize = getLoadSize(RemainingBytes);
     unsigned GEPIndex = NumBytesProcessed / LoadSize;
@@ -1846,9 +1846,16 @@ void MemCmpExpansion::emitLoadCompareBlockMultipleLoads(
       LoadSrc1 = Builder.CreateZExtOrTrunc(LoadSrc1, MaxLoadType);
       LoadSrc2 = Builder.CreateZExtOrTrunc(LoadSrc2, MaxLoadType);
     }
-    Diff = Builder.CreateXor(LoadSrc1, LoadSrc2);
-    Diff = Builder.CreateZExtOrTrunc(Diff, MaxLoadType);
-    XorList.push_back(Diff);
+    if (NumLoads != 1) {
+      // If we have multiple loads per block, we need to generate a composite
+      // comparison using xor+or.
+      Diff = Builder.CreateXor(LoadSrc1, LoadSrc2);
+      Diff = Builder.CreateZExtOrTrunc(Diff, MaxLoadType);
+      XorList.push_back(Diff);
+    } else {
+      // If there's only one load per block, we just compare the loaded values.
+      Cmp = Builder.CreateICmpNE(LoadSrc1, LoadSrc2);
+    }
   }
 
   auto pairWiseOr = [&](std::vector<Value *> &InList) -> std::vector<Value *> {
@@ -1862,16 +1869,17 @@ void MemCmpExpansion::emitLoadCompareBlockMultipleLoads(
     return OutList;
   };
 
-  // Pairwise OR the XOR results.
-  OrList = pairWiseOr(XorList);
+  if (!Cmp) {
+    // Pairwise OR the XOR results.
+    OrList = pairWiseOr(XorList);
 
-  // Pairwise OR the OR results until one result left.
-  while (OrList.size() != 1) {
-    OrList = pairWiseOr(OrList);
+    // Pairwise OR the OR results until one result left.
+    while (OrList.size() != 1) {
+      OrList = pairWiseOr(OrList);
+    }
+    Cmp = Builder.CreateICmpNE(OrList[0], ConstantInt::get(Diff->getType(), 0));
   }
 
-  Value *Cmp = Builder.CreateICmp(ICmpInst::ICMP_NE, OrList[0],
-                                  ConstantInt::get(Diff->getType(), 0));
   BasicBlock *NextBB = (Index == (LoadCmpBlocks.size() - 1))
                            ? EndBlock
                            : LoadCmpBlocks[Index + 1];
