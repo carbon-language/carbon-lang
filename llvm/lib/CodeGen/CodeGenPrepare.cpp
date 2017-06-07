@@ -2199,7 +2199,7 @@ static bool expandMemCmp(CallInst *CI, const TargetTransformInfo *TTI,
     return false;
 
   // Early exit from expansion if -Oz.
-  if (CI->getParent()->getParent()->optForMinSize())
+  if (CI->getFunction()->optForMinSize())
     return false;
 
   // Early exit from expansion if size is not a constant.
@@ -2221,8 +2221,7 @@ static bool expandMemCmp(CallInst *CI, const TargetTransformInfo *TTI,
     LoadSize = LoadSize / 2;
   }
 
-  if (NumLoads >
-      TLI->getMaxExpandSizeMemcmp(CI->getParent()->getParent()->optForSize())) {
+  if (NumLoads > TLI->getMaxExpandSizeMemcmp(CI->getFunction()->optForSize())) {
     NumMemCmpGreaterThanMax++;
     return false;
   }
@@ -3948,7 +3947,7 @@ bool AddressingModeMatcher::matchAddr(Value *Addr, unsigned Depth) {
 static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
                                     const TargetLowering &TLI,
                                     const TargetRegisterInfo &TRI) {
-  const Function *F = CI->getParent()->getParent();
+  const Function *F = CI->getFunction();
   TargetLowering::AsmOperandInfoVector TargetConstraints =
       TLI.ParseConstraints(F->getParent()->getDataLayout(), &TRI,
                             ImmutableCallSite(CI));
@@ -4545,7 +4544,7 @@ bool CodeGenPrepare::optimizeInlineAsmInst(CallInst *CS) {
   bool MadeChange = false;
 
   const TargetRegisterInfo *TRI =
-      TM->getSubtargetImpl(*CS->getParent()->getParent())->getRegisterInfo();
+      TM->getSubtargetImpl(*CS->getFunction())->getRegisterInfo();
   TargetLowering::AsmOperandInfoVector TargetConstraints =
       TLI->ParseConstraints(*DL, TRI, CS);
   unsigned ArgNo = 0;
