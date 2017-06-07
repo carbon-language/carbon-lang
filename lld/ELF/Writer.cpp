@@ -1243,6 +1243,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
                   In<ELFT>::VerSym,  In<ELFT>::VerNeed,  InX::Dynamic},
                  [](SyntheticSection *SS) { SS->finalizeContents(); });
 
+  clearOutputSections();
+
   // Some architectures use small displacements for jump instructions.
   // It is linker's responsibility to create thunks containing long
   // jump instructions if jump targets are too far. Create thunks.
@@ -1254,12 +1256,10 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     // are out of range. This will need to turn into a loop that converges
     // when no more Thunks are added
     ThunkCreator TC;
-    if (TC.createThunks(OutputSections))
+    if (TC.createThunks(OutputSectionCommands))
       applySynthetic({InX::MipsGot},
                      [](SyntheticSection *SS) { SS->updateAllocSize(); });
   }
-
-  clearOutputSections();
 
   // Fill other section headers. The dynamic table is finalized
   // at the end because some tags like RELSZ depend on result
