@@ -1742,7 +1742,7 @@ void MemCmpExpansion::createResultBlock() {
 }
 
 // This function creates the IR instructions for loading and comparing 1 byte.
-// It loads 1 byte from each source of the memcmp paramters with the given
+// It loads 1 byte from each source of the memcmp parameters with the given
 // GEPIndex. It then subtracts the two loaded values and adds this result to the
 // final phi node for selecting the memcmp result.
 void MemCmpExpansion::emitLoadCompareByteBlock(unsigned Index, int GEPIndex) {
@@ -2016,17 +2016,17 @@ void MemCmpExpansion::emitMemCmpResultBlock(bool IsLittleEndian) {
 
 int MemCmpExpansion::calculateNumBlocks(unsigned Size) {
   int NumBlocks = 0;
-  bool haveOneByteLoad = false;
+  bool HaveOneByteLoad = false;
   unsigned RemainingSize = Size;
   unsigned LoadSize = MaxLoadSize;
   while (RemainingSize) {
     if (LoadSize == 1)
-      haveOneByteLoad = true;
+      HaveOneByteLoad = true;
     NumBlocks += RemainingSize / LoadSize;
     RemainingSize = RemainingSize % LoadSize;
     LoadSize = LoadSize / 2;
   }
-  NumBlocksNonOneByte = haveOneByteLoad ? (NumBlocks - 1) : NumBlocks;
+  NumBlocksNonOneByte = HaveOneByteLoad ? (NumBlocks - 1) : NumBlocks;
 
   if (IsUsedForZeroCmp)
     NumBlocks = NumBlocks / NumLoadsPerBlock +
@@ -2057,9 +2057,8 @@ Value *MemCmpExpansion::getMemCmpExpansionZeroCase(unsigned Size,
   unsigned NumBytesProcessed = 0;
   // This loop populates each of the LoadCmpBlocks with the IR sequence to
   // handle multiple loads per block.
-  for (unsigned i = 0; i < NumBlocks; ++i) {
+  for (unsigned i = 0; i < NumBlocks; ++i)
     emitLoadCompareBlockMultipleLoads(i, Size, NumBytesProcessed);
-  }
 
   emitMemCmpResultBlock(IsLittleEndian);
   return PhiRes;
@@ -2075,9 +2074,8 @@ Value *MemCmpExpansion::getMemCmpExpansion(bool IsLittleEndian) {
   int LoadSize = MaxLoadSize;
   int NumBytesToBeProcessed = Size;
 
-  if (IsUsedForZeroCmp) {
+  if (IsUsedForZeroCmp)
     return getMemCmpExpansionZeroCase(Size, IsLittleEndian);
-  }
 
   unsigned Index = 0;
   // This loop calls emitLoadCompareBlock for comparing SizeVal bytes of the two
