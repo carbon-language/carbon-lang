@@ -1668,6 +1668,8 @@ class MemCmpExpansion {
   void setupEndBlockPHINodes();
   void emitLoadCompareBlock(unsigned Index, int LoadSize, int GEPIndex,
                             bool IsLittleEndian);
+  Value *getCompareLoadPairs(unsigned Index, unsigned Size,
+                             unsigned &NumBytesProcessed, IRBuilder<> &Builder);
   void emitLoadCompareBlockMultipleLoads(unsigned Index, unsigned Size,
                                          unsigned &NumBytesProcessed);
   void emitLoadCompareByteBlock(unsigned Index, int GEPIndex);
@@ -1799,11 +1801,12 @@ unsigned MemCmpExpansion::getLoadSize(unsigned Size) {
   return MinAlign(PowerOf2Floor(Size), MaxLoadSize);
 }
 
-void MemCmpExpansion::emitLoadCompareBlockMultipleLoads(
-    unsigned Index, unsigned Size, unsigned &NumBytesProcessed) {
-
-  IRBuilder<> Builder(CI->getContext());
-
+/// Generate an equality comparison for one or more pairs of loaded values.
+/// This is used in the case where the memcmp() call is compared equal or not
+/// equal to zero.
+Value *MemCmpExpansion::getCompareLoadPairs(unsigned Index, unsigned Size,
+                                            unsigned &NumBytesProcessed,
+                                            IRBuilder<> &Builder) {
   std::vector<Value *> XorList, OrList;
   Value *Diff;
 
@@ -1879,6 +1882,14 @@ void MemCmpExpansion::emitLoadCompareBlockMultipleLoads(
     }
     Cmp = Builder.CreateICmpNE(OrList[0], ConstantInt::get(Diff->getType(), 0));
   }
+
+  return Cmp;
+}
+
+void MemCmpExpansion::emitLoadCompareBlockMultipleLoads(
+    unsigned Index, unsigned Size, unsigned &NumBytesProcessed) {
+  IRBuilder<> Builder(CI->getContext());
+  Value *Cmp = getCompareLoadPairs(Index, Size, NumBytesProcessed, Builder);
 
   BasicBlock *NextBB = (Index == (LoadCmpBlocks.size() - 1))
                            ? EndBlock
