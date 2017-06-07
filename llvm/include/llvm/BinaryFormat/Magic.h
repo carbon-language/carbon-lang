@@ -13,6 +13,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Twine.h"
 
+#include <system_error>
+
 namespace llvm {
 /// file_magic - An "enum class" enumeration of file types based on magic (the
 /// first N bytes of the file).
