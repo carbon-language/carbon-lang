@@ -1681,7 +1681,7 @@ class MemCmpExpansion {
 public:
   MemCmpExpansion(CallInst *CI, unsigned MaxLoadSize,
                   unsigned NumLoadsPerBlock);
-  Value *getMemCmpExpansion(bool IsLittleEndian);
+  Value *getMemCmpExpansion(uint64_t Size, bool IsLittleEndian);
 };
 
 MemCmpExpansion::ResultBlock::ResultBlock()
@@ -2077,24 +2077,19 @@ Value *MemCmpExpansion::getMemCmpExpansionZeroCase(unsigned Size,
 
 // This function expands the memcmp call into an inline expansion and returns
 // the memcmp result.
-Value *MemCmpExpansion::getMemCmpExpansion(bool IsLittleEndian) {
-
-  ConstantInt *SizeCast = dyn_cast<ConstantInt>(CI->getArgOperand(2));
-  uint64_t Size = SizeCast->getZExtValue();
-
-  int LoadSize = MaxLoadSize;
-  int NumBytesToBeProcessed = Size;
-
+Value *MemCmpExpansion::getMemCmpExpansion(uint64_t Size, bool IsLittleEndian) {
   if (IsUsedForZeroCmp)
     return getMemCmpExpansionZeroCase(Size, IsLittleEndian);
 
-  unsigned Index = 0;
-  // This loop calls emitLoadCompareBlock for comparing SizeVal bytes of the two
+  // This loop calls emitLoadCompareBlock for comparing Size bytes of the two
   // memcmp sources. It starts with loading using the maximum load size set by
   // the target. It processes any remaining bytes using a load size which is the
   // next smallest power of 2.
+  int LoadSize = MaxLoadSize;
+  int NumBytesToBeProcessed = Size;
+  unsigned Index = 0;
   while (NumBytesToBeProcessed) {
-    // Calculate how many blocks we can create with the current load size
+    // Calculate how many blocks we can create with the current load size.
     int NumBlocks = NumBytesToBeProcessed / LoadSize;
     int GEPIndex = (Size - NumBytesToBeProcessed) / LoadSize;
     NumBytesToBeProcessed = NumBytesToBeProcessed % LoadSize;
@@ -2233,7 +2228,7 @@ static bool expandMemCmp(CallInst *CI, const TargetTransformInfo *TTI,
   unsigned NumLoadsPerBlock = MemCmpNumLoadsPerBlock;
   MemCmpExpansion MemCmpHelper(CI, MaxLoadSize, NumLoadsPerBlock);
 
-  Value *Res = MemCmpHelper.getMemCmpExpansion(DL->isLittleEndian());
+  Value *Res = MemCmpHelper.getMemCmpExpansion(SizeVal, DL->isLittleEndian());
 
   // Replace call with result of expansion and erase call.
   CI->replaceAllUsesWith(Res);
