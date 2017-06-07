@@ -1841,11 +1841,11 @@ Value *MemCmpExpansion::getCompareLoadPairs(unsigned Index, unsigned Size,
     // Load LoadSizeType from the base address.
     Value *LoadSrc1 = Builder.CreateLoad(LoadSizeType, Source1);
     Value *LoadSrc2 = Builder.CreateLoad(LoadSizeType, Source2);
-    if (LoadSizeType != MaxLoadType) {
-      LoadSrc1 = Builder.CreateZExtOrTrunc(LoadSrc1, MaxLoadType);
-      LoadSrc2 = Builder.CreateZExtOrTrunc(LoadSrc2, MaxLoadType);
-    }
     if (NumLoads != 1) {
+      if (LoadSizeType != MaxLoadType) {
+        LoadSrc1 = Builder.CreateZExtOrTrunc(LoadSrc1, MaxLoadType);
+        LoadSrc2 = Builder.CreateZExtOrTrunc(LoadSrc2, MaxLoadType);
+      }
       // If we have multiple loads per block, we need to generate a composite
       // comparison using xor+or.
       Diff = Builder.CreateXor(LoadSrc1, LoadSrc2);
