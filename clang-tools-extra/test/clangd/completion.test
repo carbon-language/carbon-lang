@@ -5,9 +5,9 @@ Content-Length: 125
 
 {"jsonrpc":"2.0","id":0,"method":"initialize","params":{"processId":123,"rootPath":"clangd","capabilities":{},"trace":"off"}}
 
-Content-Length: 211
+Content-Length: 246
 
-{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///main.cpp","languageId":"cpp","version":1,"text":"struct fake { int a, bb, ccc; };\nint main() {\n  fake f;\n  f.\n}\n"}}}
+{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"file:///main.cpp","languageId":"cpp","version":1,"text":"struct fake { int a, bb, ccc; int f(int i, const float f) const; };\nint main() {\n  fake f;\n  f.\n}\n"}}}
 
 Content-Length: 148
 
@@ -16,9 +16,12 @@ Content-Length: 148
 # nondeterministic, so we check regardless of order.
 #
 # CHECK: {"jsonrpc":"2.0","id":1,"result":[
-# CHECK-DAG: {"label":"a","kind":5}
-# CHECK-DAG: {"label":"bb","kind":5}
-# CHECK-DAG: {"label":"ccc","kind":5}
+# CHECK-DAG: {"label":"a","kind":5,"detail":"int","sortText":"a","filterText":"a","insertText":"a"}
+# CHECK-DAG: {"label":"bb","kind":5,"detail":"int","sortText":"bb","filterText":"bb","insertText":"bb"}
+# CHECK-DAG: {"label":"ccc","kind":5,"detail":"int","sortText":"ccc","filterText":"ccc","insertText":"ccc"}
+# CHECK-DAG: {"label":"operator=(const fake &)","kind":2,"detail":"fake &","sortText":"operator=","filterText":"operator=","insertText":"operator="}
+# CHECK-DAG: {"label":"~fake()","kind":4,"detail":"void","sortText":"~fake","filterText":"~fake","insertText":"~fake"}
+# CHECK-DAG: {"label":"f(int i, const float f) const","kind":2,"detail":"int","sortText":"f","filterText":"f","insertText":"f"}
 # CHECK: ]}
 Content-Length: 146
 
@@ -26,9 +29,7 @@ Content-Length: 146
 # Test authority-less URI
 #
 # CHECK: {"jsonrpc":"2.0","id":1,"result":[
-# CHECK-DAG: {"label":"a","kind":5}
-# CHECK-DAG: {"label":"bb","kind":5}
-# CHECK-DAG: {"label":"ccc","kind":5}
+# CHECK-DAG: {"label":"a","kind":5,"detail":"int","sortText":"a","filterText":"a","insertText":"a"}
 # CHECK: ]}
 
 Content-Length: 172
@@ -37,9 +38,7 @@ Content-Length: 172
 # Test params parsing in the presence of a 1.x-compatible client (inlined "uri")
 #
 # CHECK: {"jsonrpc":"2.0","id":1,"result":[
-# CHECK-DAG: {"label":"a","kind":5}
-# CHECK-DAG: {"label":"bb","kind":5}
-# CHECK-DAG: {"label":"ccc","kind":5}
+# CHECK-DAG: {"label":"a","kind":5,"detail":"int","sortText":"a","filterText":"a","insertText":"a"}
 # CHECK: ]}
 Content-Length: 44
 
