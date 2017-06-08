@@ -1,7 +1,7 @@
 ; RUN: llvm-pdbdump raw -headers -string-table -tpi-records -tpi-record-bytes -module-syms \
 ; RUN:              -sym-record-bytes -globals -publics -module-files \
 ; RUN:              -stream-summary -stream-blocks -ipi-records -ipi-record-bytes \
-; RUN:              -section-contribs -section-map -section-headers -line-info \
+; RUN:              -section-contribs -section-map -section-headers -subsections=all \
 ; RUN:              -tpi-hash -fpo -page-stats %p/Inputs/empty.pdb | FileCheck -check-prefix=EMPTY %s
 ; RUN: llvm-pdbdump raw -all %p/Inputs/empty.pdb | FileCheck -check-prefix=ALL %s
 ; RUN: llvm-pdbdump raw -headers -modules -module-files \
@@ -484,7 +484,7 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:       ]
-; EMPTY-NEXT:       LineInfo [
+; EMPTY-NEXT:       Subsections [
 ; EMPTY-NEXT:         FileChecksums {
 ; EMPTY-NEXT:           Checksum {
 ; EMPTY-NEXT:             FileName: d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
@@ -757,7 +757,7 @@
 ; EMPTY-NEXT:           )
 ; EMPTY-NEXT:         }
 ; EMPTY-NEXT:       ]
-; EMPTY-NEXT:       LineInfo [
+; EMPTY-NEXT:       Subsections [
 ; EMPTY-NEXT:       ]
 ; EMPTY-NEXT:     }
 ; EMPTY-NEXT:   ]

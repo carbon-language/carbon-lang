@@ -89,7 +89,8 @@ public:
       : C13DebugFragmentVisitor(F), P(P), IPI(IPI) {}
 
   Error handleLines() override {
-    if (Lines.empty())
+    if (Lines.empty() ||
+        !opts::checkModuleSubsection(opts::ModuleSubsection::Lines))
       return Error::success();
 
     DictScope DD(P, "Lines");
@@ -132,7 +133,8 @@ public:
   }
 
   Error handleFileChecksums() override {
-    if (!Checksums.hasValue())
+    if (!Checksums.hasValue() ||
+        !opts::checkModuleSubsection(opts::ModuleSubsection::FileChecksums))
       return Error::success();
 
     DictScope DD(P, "FileChecksums");
@@ -149,7 +151,8 @@ public:
   }
 
   Error handleInlineeLines() override {
-    if (InlineeLines.empty())
+    if (InlineeLines.empty() ||
+        !opts::checkModuleSubsection(opts::ModuleSubsection::InlineeLines))
       return Error::success();
 
     DictScope D(P, "InlineeLines");
@@ -177,6 +180,10 @@ public:
   }
 
   Error handleCrossModuleExports() override {
+    if (CrossExports.empty() ||
+        !opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeExports))
+      return Error::success();
+
     for (const auto &M : CrossExports) {
       DictScope D(P, "CrossModuleExports");
       for (const auto &E : M) {
@@ -188,6 +195,10 @@ public:
   }
 
   Error handleCrossModuleImports() override {
+    if (CrossImports.empty() ||
+        !opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeImports))
+      return Error::success();
+
     for (const auto &M : CrossImports) {
       DictScope D(P, "CrossModuleImports");
       for (const auto &ImportGroup : M) {
@@ -755,8 +766,10 @@ LLVMOutputStyle::initializeTypeDatabase(uint32_t SN) {
 }
 
 Error LLVMOutputStyle::dumpDbiStream() {
-  bool DumpModules = opts::raw::DumpModules || opts::raw::DumpModuleSyms ||
-                     opts::raw::DumpModuleFiles || opts::raw::DumpLineInfo;
+  bool DumpModules = opts::shared::DumpModules ||
+                     opts::shared::DumpModuleSyms ||
+                     opts::shared::DumpModuleFiles ||
+                     !opts::shared::DumpModuleSubsections.empty();
   if (!opts::raw::DumpHeaders && !DumpModules)
     return Error::success();
   if (!File.hasPDBDbiStream()) {
@@ -806,7 +819,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
       P.printNumber("Symbol Byte Size", Modi.getSymbolDebugInfoByteSize());
       P.printNumber("Type Server Index", Modi.getTypeServerIndex());
       P.printBoolean("Has EC Info", Modi.hasECInfo());
-      if (opts::raw::DumpModuleFiles) {
+      if (opts::shared::DumpModuleFiles) {
         std::string FileListName = to_string(Modules.getSourceFileCount(I)) +
                                    " Contributing Source Files";
         ListScope LL(P, FileListName);
@@ -815,8 +828,9 @@ Error LLVMOutputStyle::dumpDbiStream() {
       }
       bool HasModuleDI = (Modi.getModuleStreamIndex() < File.getNumStreams());
       bool ShouldDumpSymbols =
-          (opts::raw::DumpModuleSyms || opts::raw::DumpSymRecordBytes);
-      if (HasModuleDI && (ShouldDumpSymbols || opts::raw::DumpLineInfo)) {
+          (opts::shared::DumpModuleSyms || opts::raw::DumpSymRecordBytes);
+      if (HasModuleDI &&
+          (ShouldDumpSymbols || !opts::shared::DumpModuleSubsections.empty())) {
         auto ModStreamData = MappedBlockStream::createIndexedStream(
             File.getMsfLayout(), File.getMsfBuffer(),
             Modi.getModuleStreamIndex(), File.getAllocator());
@@ -837,7 +851,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
           bool HadError = false;
           for (auto S : ModS.symbols(&HadError)) {
             DictScope LL(P, "");
-            if (opts::raw::DumpModuleSyms) {
+            if (opts::shared::DumpModuleSyms) {
               if (auto EC = SD.dump(S)) {
                 llvm::consumeError(std::move(EC));
                 HadError = true;
@@ -852,8 +866,8 @@ Error LLVMOutputStyle::dumpDbiStream() {
                 raw_error_code::corrupt_file,
                 "DBI stream contained corrupt symbol record");
         }
-        if (opts::raw::DumpLineInfo) {
-          ListScope SS(P, "LineInfo");
+        if (!opts::shared::DumpModuleSubsections.empty()) {
+          ListScope SS(P, "Subsections");
           auto ExpectedTypes = initializeTypeDatabase(StreamIPI);
           if (!ExpectedTypes)
             return ExpectedTypes.takeError();
