@@ -242,7 +242,7 @@ public:
 
   /// If a callsite does not have the 'nobuiltin' attribute, return if the
   /// called function is a known library function and set F to that function.
-  bool getLibFunc(ImmutableCallSite CS, LibFunc & F) const {
+  bool getLibFunc(ImmutableCallSite CS, LibFunc &F) const {
     return !CS.isNoBuiltin() && CS.getCalledFunction() &&
            getLibFunc(*(CS.getCalledFunction()), F);
   }
