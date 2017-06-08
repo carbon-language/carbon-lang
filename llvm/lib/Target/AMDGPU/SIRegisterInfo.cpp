@@ -1105,7 +1105,8 @@ void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
 }
 
 StringRef SIRegisterInfo::getRegAsmName(unsigned Reg) const {
-  #include "AMDGPURegAsmNames.inc"
+  #define AMDGPU_REG_ASM_NAMES
+  #include "AMDGPURegAsmNames.inc.cpp"
 
   #define REG_RANGE(BeginReg, EndReg, RegTable)            \
     if (Reg >= BeginReg && Reg <= EndReg) {                \

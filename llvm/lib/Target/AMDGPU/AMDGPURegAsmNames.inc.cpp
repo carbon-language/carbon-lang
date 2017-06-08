@@ -1,5 +1,7 @@
 //===-- AMDGPURegAsmNames.inc - Register asm names ----------*- C++ -*-----===//
 
+#ifdef AMDGPU_REG_ASM_NAMES
+
 static const char *const VGPR32RegNames[] = {
     "v0",   "v1",   "v2",   "v3",   "v4",   "v5",   "v6",   "v7",   "v8",
     "v9",   "v10",  "v11",  "v12",  "v13",  "v14",  "v15",  "v16",  "v17",
@@ -347,3 +349,5 @@ static const char *const SGPR512RegNames[] = {
     "s[48:63]", "s[52:67]", "s[56:71]", "s[60:75]", "s[64:79]",  "s[68:83]",
     "s[72:87]", "s[76:91]", "s[80:95]", "s[84:99]", "s[88:103]"
 };
+
+#endif
