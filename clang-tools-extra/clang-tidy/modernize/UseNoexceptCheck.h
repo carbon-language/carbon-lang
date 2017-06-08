@@ -25,7 +25,7 @@ namespace modernize {
 /// Is converted to:
 /// \code
 ///   void foo() ;
-//    void bar() noexcept(false);
+///   void bar() noexcept(false);
 /// \endcode
 ///
 /// For the user-facing documentation see:
