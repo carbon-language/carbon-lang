@@ -196,3 +196,18 @@ define signext i32 @zeroEqualityTest06() {
   ret i32 %cond
 }
 
+define i1 @length2_eq_nobuiltin_attr(i8* %X, i8* %Y) {
+; CHECK-LABEL: length2_eq_nobuiltin_attr:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    lhz 3, 0(3)
+; CHECK-NEXT:    lhz 4, 0(4)
+; CHECK-NEXT:    li 5, 0
+; CHECK-NEXT:    li 12, 1
+; CHECK-NEXT:    cmpw 3, 4
+; CHECK-NEXT:    isel 3, 12, 5, 2
+; CHECK-NEXT:    blr
+  %m = tail call signext i32 @memcmp(i8* %X, i8* %Y, i64 2) nobuiltin
+  %c = icmp eq i32 %m, 0
+  ret i1 %c
+}
+
