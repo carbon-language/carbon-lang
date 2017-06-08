@@ -638,7 +638,12 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
     Diag(Old->getLocation(), diag::note_previous_declaration);
     Invalid = true;
   } else if (!Old->getMostRecentDecl()->isInlined() && New->isInlined() &&
-             Old->isDefined(Def)) {
+             Old->isDefined(Def) &&
+             // If a friend function is inlined but does not have 'inline'
+             // specifier, it is a definition. Do not report attribute conflict
+             // in this case, redefinition will be diagnosed later.
+             (New->isInlineSpecified() ||
+              New->getFriendObjectKind() == Decl::FOK_None)) {
     // C++11 [dcl.fcn.spec]p4:
     //   If the definition of a function appears in a translation unit before its
     //   first declaration as inline, the program is ill-formed.
