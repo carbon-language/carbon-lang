@@ -73,27 +73,37 @@ RAW:        Modules [
 RAW-NEXT:     {
 RAW-NEXT:       Name: Foo.obj
 RAW:            Subsections [
-RAW-NEXT:         CrossModuleExports {
-RAW-NEXT:           Local: 0x12F4
-RAW-NEXT:           Global: 0x2443
-RAW-NEXT:           Local: 0x80001083
-RAW-NEXT:           Global: 0x23A3
-RAW-NEXT:         }
+RAW-NEXT:         CrossModuleExports [
+RAW-NEXT:           Export {
+RAW-NEXT:             Local: 0x12F4
+RAW-NEXT:             Global: 0x2443
+RAW-NEXT:           }
+RAW-NEXT:           Export {
+RAW-NEXT:             Local: 0x80001083
+RAW-NEXT:             Global: 0x23A3
+RAW-NEXT:           }
+RAW-NEXT:         ]
 RAW-NEXT:       ]
 RAW-NEXT:     }
 RAW-NEXT:     {
 RAW-NEXT:       Name: Bar.obj
 RAW:            Subsections [
-RAW-NEXT:         CrossModuleExports {
-RAW-NEXT:           Local: 0x10A9
-RAW-NEXT:           Global: 0x17D1
-RAW-NEXT:           Local: 0x10C9
-RAW-NEXT:           Global: 0x1245
-RAW-NEXT:         }
-RAW-NEXT:         CrossModuleImports {
-RAW-NEXT:           Module: Foo.obj
-RAW-NEXT:           Imports: [0x12F4, 0x80001083]
-RAW-NEXT:         }
+RAW-NEXT:         CrossModuleExports [
+RAW-NEXT:           Export {
+RAW-NEXT:             Local: 0x10A9
+RAW-NEXT:             Global: 0x17D1
+RAW-NEXT:           }
+RAW-NEXT:           Export {
+RAW-NEXT:             Local: 0x10C9
+RAW-NEXT:             Global: 0x1245
+RAW-NEXT:           }
+RAW-NEXT:         ]
+RAW-NEXT:         CrossModuleImports [
+RAW-NEXT:           ModuleImport {
+RAW-NEXT:             Module: Foo.obj
+RAW-NEXT:             Imports: [0x12F4, 0x80001083]
+RAW-NEXT:           }
+RAW-NEXT:         ]
 RAW-NEXT:       ]
 RAW-NEXT:     }
 RAW-NEXT:    {
@@ -116,31 +126,29 @@ RAW-NEXT:            )
 RAW-NEXT:          }
 RAW-NEXT:        }
 RAW-NEXT:        Lines {
-RAW-NEXT:          Block {
-RAW-NEXT:            RelocSegment: 1
-RAW-NEXT:            RelocOffset: 16
-RAW-NEXT:            CodeSize: 10
-RAW-NEXT:            HasColumns: No
-RAW-NEXT:            Lines {
-RAW-NEXT:              FileName: d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
-RAW-NEXT:              Line {
-RAW-NEXT:                Offset: 0
-RAW-NEXT:                LineNumberStart: 5
-RAW-NEXT:                EndDelta: 0
-RAW-NEXT:                IsStatement: Yes
-RAW-NEXT:              }
-RAW-NEXT:              Line {
-RAW-NEXT:                Offset: 3
-RAW-NEXT:                LineNumberStart: 6
-RAW-NEXT:                EndDelta: 0
-RAW-NEXT:                IsStatement: Yes
-RAW-NEXT:              }
-RAW-NEXT:              Line {
-RAW-NEXT:                Offset: 8
-RAW-NEXT:                LineNumberStart: 7
-RAW-NEXT:                EndDelta: 0
-RAW-NEXT:                IsStatement: Yes
-RAW-NEXT:              }
+RAW-NEXT:          RelocSegment: 1
+RAW-NEXT:          RelocOffset: 16
+RAW-NEXT:          CodeSize: 10
+RAW-NEXT:          HasColumns: No
+RAW-NEXT:          FileEntry {
+RAW-NEXT:            FileName: d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
+RAW-NEXT:            Line {
+RAW-NEXT:              Offset: 0
+RAW-NEXT:              LineNumberStart: 5
+RAW-NEXT:              EndDelta: 0
+RAW-NEXT:              IsStatement: Yes
+RAW-NEXT:            }
+RAW-NEXT:            Line {
+RAW-NEXT:              Offset: 3
+RAW-NEXT:              LineNumberStart: 6
+RAW-NEXT:              EndDelta: 0
+RAW-NEXT:              IsStatement: Yes
+RAW-NEXT:            }
+RAW-NEXT:            Line {
+RAW-NEXT:              Offset: 8
+RAW-NEXT:              LineNumberStart: 7
+RAW-NEXT:              EndDelta: 0
+RAW-NEXT:              IsStatement: Yes
 RAW-NEXT:            }
 RAW-NEXT:          }
 RAW-NEXT:        }

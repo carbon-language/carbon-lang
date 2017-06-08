@@ -9,7 +9,6 @@
 
 #include "YAMLOutputStyle.h"
 
-#include "C13DebugFragmentVisitor.h"
 #include "PdbYaml.h"
 #include "llvm-pdbdump.h"
 

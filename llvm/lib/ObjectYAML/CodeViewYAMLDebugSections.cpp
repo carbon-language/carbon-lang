@@ -533,25 +533,21 @@ llvm::CodeViewYAML::convertSubsectionList(
 
 namespace {
 struct SubsectionConversionVisitor : public DebugSubsectionVisitor {
-  explicit SubsectionConversionVisitor(
-      const DebugStringTableSubsectionRef &Strings,
-      const DebugChecksumsSubsectionRef &Checksums)
-      : Strings(Strings), Checksums(Checksums) {}
+  SubsectionConversionVisitor() {}
 
   Error visitUnknown(DebugUnknownSubsectionRef &Unknown) override;
-  Error visitLines(DebugLinesSubsectionRef &Lines) override;
-  Error visitFileChecksums(DebugChecksumsSubsectionRef &Checksums) override;
-  Error visitInlineeLines(DebugInlineeLinesSubsectionRef &Inlinees) override;
-  Error visitCrossModuleExports(
-      DebugCrossModuleExportsSubsectionRef &Checksums) override;
-  Error visitCrossModuleImports(
-      DebugCrossModuleImportsSubsectionRef &Inlinees) override;
+  Error visitLines(DebugLinesSubsectionRef &Lines,
+                   const DebugSubsectionState &State) override;
+  Error visitFileChecksums(DebugChecksumsSubsectionRef &Checksums,
+                           const DebugSubsectionState &State) override;
+  Error visitInlineeLines(DebugInlineeLinesSubsectionRef &Inlinees,
+                          const DebugSubsectionState &State) override;
+  Error visitCrossModuleExports(DebugCrossModuleExportsSubsectionRef &Checksums,
+                                const DebugSubsectionState &State) override;
+  Error visitCrossModuleImports(DebugCrossModuleImportsSubsectionRef &Inlinees,
+                                const DebugSubsectionState &State) override;
 
   YAMLDebugSubsection Subsection;
-
-private:
-  const DebugStringTableSubsectionRef &Strings;
-  const DebugChecksumsSubsectionRef &Checksums;
 };
 
 Error SubsectionConversionVisitor::visitUnknown(
@@ -559,9 +555,10 @@ Error SubsectionConversionVisitor::visitUnknown(
   return make_error<CodeViewError>(cv_error_code::operation_unsupported);
 }
 
-Error SubsectionConversionVisitor::visitLines(DebugLinesSubsectionRef &Lines) {
-  auto Result =
-      YAMLLinesSubsection::fromCodeViewSubsection(Strings, Checksums, Lines);
+Error SubsectionConversionVisitor::visitLines(
+    DebugLinesSubsectionRef &Lines, const DebugSubsectionState &State) {
+  auto Result = YAMLLinesSubsection::fromCodeViewSubsection(
+      State.strings(), State.checksums(), Lines);
   if (!Result)
     return Result.takeError();
   Subsection.Subsection = *Result;
@@ -569,9 +566,9 @@ Error SubsectionConversionVisitor::visitLines(DebugLinesSubsectionRef &Lines) {
 }
 
 Error SubsectionConversionVisitor::visitFileChecksums(
-    DebugChecksumsSubsectionRef &Checksums) {
-  auto Result =
-      YAMLChecksumsSubsection::fromCodeViewSubsection(Strings, Checksums);
+    DebugChecksumsSubsectionRef &Checksums, const DebugSubsectionState &State) {
+  auto Result = YAMLChecksumsSubsection::fromCodeViewSubsection(State.strings(),
+                                                                Checksums);
   if (!Result)
     return Result.takeError();
   Subsection.Subsection = *Result;
@@ -579,9 +576,10 @@ Error SubsectionConversionVisitor::visitFileChecksums(
 }
 
 Error SubsectionConversionVisitor::visitInlineeLines(
-    DebugInlineeLinesSubsectionRef &Inlinees) {
+    DebugInlineeLinesSubsectionRef &Inlinees,
+    const DebugSubsectionState &State) {
   auto Result = YAMLInlineeLinesSubsection::fromCodeViewSubsection(
-      Strings, Checksums, Inlinees);
+      State.strings(), State.checksums(), Inlinees);
   if (!Result)
     return Result.takeError();
   Subsection.Subsection = *Result;
@@ -589,7 +587,8 @@ Error SubsectionConversionVisitor::visitInlineeLines(
 }
 
 Error SubsectionConversionVisitor::visitCrossModuleExports(
-    DebugCrossModuleExportsSubsectionRef &Exports) {
+    DebugCrossModuleExportsSubsectionRef &Exports,
+    const DebugSubsectionState &State) {
   auto Result =
       YAMLCrossModuleExportsSubsection::fromCodeViewSubsection(Exports);
   if (!Result)
@@ -599,9 +598,10 @@ Error SubsectionConversionVisitor::visitCrossModuleExports(
 }
 
 Error SubsectionConversionVisitor::visitCrossModuleImports(
-    DebugCrossModuleImportsSubsectionRef &Imports) {
+    DebugCrossModuleImportsSubsectionRef &Imports,
+    const DebugSubsectionState &State) {
   auto Result = YAMLCrossModuleImportsSubsection::fromCodeViewSubsection(
-      Strings, Imports);
+      State.strings(), Imports);
   if (!Result)
     return Result.takeError();
   Subsection.Subsection = *Result;
@@ -613,8 +613,9 @@ Expected<YAMLDebugSubsection> YAMLDebugSubsection::fromCodeViewSubection(
     const DebugStringTableSubsectionRef &Strings,
     const DebugChecksumsSubsectionRef &Checksums,
     const DebugSubsectionRecord &SS) {
-  SubsectionConversionVisitor V(Strings, Checksums);
-  if (auto EC = visitDebugSubsection(SS, V))
+  DebugSubsectionState State(Strings, Checksums);
+  SubsectionConversionVisitor V;
+  if (auto EC = visitDebugSubsection(SS, V, State))
     return std::move(EC);
 
   return V.Subsection;

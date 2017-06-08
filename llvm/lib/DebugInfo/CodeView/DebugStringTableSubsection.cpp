@@ -23,6 +23,9 @@ Error DebugStringTableSubsectionRef::initialize(BinaryStreamRef Contents) {
   Stream = Contents;
   return Error::success();
 }
+Error DebugStringTableSubsectionRef::initialize(BinaryStreamReader &Reader) {
+  return Reader.readStreamRef(Stream, Reader.bytesRemaining());
+}
 
 Expected<StringRef>
 DebugStringTableSubsectionRef::getString(uint32_t Offset) const {

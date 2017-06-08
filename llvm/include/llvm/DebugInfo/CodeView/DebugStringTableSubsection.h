@@ -39,6 +39,7 @@ public:
   }
 
   Error initialize(BinaryStreamRef Contents);
+  Error initialize(BinaryStreamReader &Reader);
 
   Expected<StringRef> getString(uint32_t Offset) const;
 

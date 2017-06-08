@@ -9,7 +9,6 @@
 
 #include "LLVMOutputStyle.h"
 
-#include "C13DebugFragmentVisitor.h"
 #include "CompactTypeDumpVisitor.h"
 #include "StreamUtil.h"
 #include "llvm-pdbdump.h"
@@ -83,64 +82,61 @@ struct PageStats {
   BitVector UseAfterFreePages;
 };
 
-class C13RawVisitor : public C13DebugFragmentVisitor {
+class C13RawVisitor : public DebugSubsectionVisitor {
 public:
-  C13RawVisitor(ScopedPrinter &P, PDBFile &F, LazyRandomTypeCollection &IPI)
-      : C13DebugFragmentVisitor(F), P(P), IPI(IPI) {}
+  C13RawVisitor(ScopedPrinter &P, LazyRandomTypeCollection &IPI)
+      : P(P), IPI(IPI) {}
 
-  Error handleLines() override {
-    if (Lines.empty() ||
-        !opts::checkModuleSubsection(opts::ModuleSubsection::Lines))
+  Error visitLines(DebugLinesSubsectionRef &Lines,
+                   const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::Lines))
       return Error::success();
 
     DictScope DD(P, "Lines");
 
-    for (const auto &Fragment : Lines) {
-      DictScope DDD(P, "Block");
-      P.printNumber("RelocSegment", Fragment.header()->RelocSegment);
-      P.printNumber("RelocOffset", Fragment.header()->RelocOffset);
-      P.printNumber("CodeSize", Fragment.header()->CodeSize);
-      P.printBoolean("HasColumns", Fragment.hasColumnInfo());
+    P.printNumber("RelocSegment", Lines.header()->RelocSegment);
+    P.printNumber("RelocOffset", Lines.header()->RelocOffset);
+    P.printNumber("CodeSize", Lines.header()->CodeSize);
+    P.printBoolean("HasColumns", Lines.hasColumnInfo());
 
-      for (const auto &L : Fragment) {
-        DictScope DDDD(P, "Lines");
+    for (const auto &L : Lines) {
+      DictScope DDDD(P, "FileEntry");
 
-        if (auto EC = printFileName("FileName", L.NameIndex))
-          return EC;
+      if (auto EC = printFileName("FileName", L.NameIndex, State))
+        return EC;
 
-        for (const auto &N : L.LineNumbers) {
-          DictScope DDD(P, "Line");
-          LineInfo LI(N.Flags);
-          P.printNumber("Offset", N.Offset);
-          if (LI.isAlwaysStepInto())
-            P.printString("StepInto", StringRef("Always"));
-          else if (LI.isNeverStepInto())
-            P.printString("StepInto", StringRef("Never"));
-          else
-            P.printNumber("LineNumberStart", LI.getStartLine());
-          P.printNumber("EndDelta", LI.getLineDelta());
-          P.printBoolean("IsStatement", LI.isStatement());
-        }
-        for (const auto &C : L.Columns) {
-          DictScope DDD(P, "Column");
-          P.printNumber("Start", C.StartColumn);
-          P.printNumber("End", C.EndColumn);
-        }
+      for (const auto &N : L.LineNumbers) {
+        DictScope DDD(P, "Line");
+        LineInfo LI(N.Flags);
+        P.printNumber("Offset", N.Offset);
+        if (LI.isAlwaysStepInto())
+          P.printString("StepInto", StringRef("Always"));
+        else if (LI.isNeverStepInto())
+          P.printString("StepInto", StringRef("Never"));
+        else
+          P.printNumber("LineNumberStart", LI.getStartLine());
+        P.printNumber("EndDelta", LI.getLineDelta());
+        P.printBoolean("IsStatement", LI.isStatement());
+      }
+      for (const auto &C : L.Columns) {
+        DictScope DDD(P, "Column");
+        P.printNumber("Start", C.StartColumn);
+        P.printNumber("End", C.EndColumn);
       }
     }
 
     return Error::success();
   }
 
-  Error handleFileChecksums() override {
-    if (!Checksums.hasValue() ||
-        !opts::checkModuleSubsection(opts::ModuleSubsection::FileChecksums))
+  Error visitFileChecksums(DebugChecksumsSubsectionRef &Checksums,
+                           const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::FileChecksums))
       return Error::success();
 
     DictScope DD(P, "FileChecksums");
-    for (const auto &CS : *Checksums) {
+    for (const auto &CS : Checksums) {
       DictScope DDD(P, "Checksum");
-      if (auto Result = getNameFromStringTable(CS.FileNameOffset))
+      if (auto Result = getNameFromStringTable(CS.FileNameOffset, State))
         P.printString("FileName", *Result);
       else
         return Result.takeError();
@@ -150,65 +146,60 @@ public:
     return Error::success();
   }
 
-  Error handleInlineeLines() override {
-    if (InlineeLines.empty() ||
-        !opts::checkModuleSubsection(opts::ModuleSubsection::InlineeLines))
+  Error visitInlineeLines(DebugInlineeLinesSubsectionRef &Inlinees,
+                          const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::InlineeLines))
       return Error::success();
 
     DictScope D(P, "InlineeLines");
-    for (const auto &IL : InlineeLines) {
-      P.printBoolean("HasExtraFiles", IL.hasExtraFiles());
-      ListScope LS(P, "Lines");
-      for (const auto &L : IL) {
-        DictScope DDD(P, "Inlinee");
-        if (auto EC = printFileName("FileName", L.Header->FileID))
-          return EC;
+    P.printBoolean("HasExtraFiles", Inlinees.hasExtraFiles());
+    ListScope LS(P, "Lines");
+    for (const auto &L : Inlinees) {
+      DictScope DDD(P, "Inlinee");
+      if (auto EC = printFileName("FileName", L.Header->FileID, State))
+        return EC;
 
-        if (auto EC = dumpTypeRecord("Function", L.Header->Inlinee))
-          return EC;
-        P.printNumber("SourceLine", L.Header->SourceLineNum);
-        if (IL.hasExtraFiles()) {
-          ListScope DDDD(P, "ExtraFiles");
-          for (const auto &EF : L.ExtraFiles) {
-            if (auto EC = printFileName("File", EF))
-              return EC;
-          }
+      if (auto EC = dumpTypeRecord("Function", L.Header->Inlinee))
+        return EC;
+      P.printNumber("SourceLine", L.Header->SourceLineNum);
+      if (Inlinees.hasExtraFiles()) {
+        ListScope DDDD(P, "ExtraFiles");
+        for (const auto &EF : L.ExtraFiles) {
+          if (auto EC = printFileName("File", EF, State))
+            return EC;
         }
       }
     }
     return Error::success();
   }
 
-  Error handleCrossModuleExports() override {
-    if (CrossExports.empty() ||
-        !opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeExports))
+  Error visitCrossModuleExports(DebugCrossModuleExportsSubsectionRef &CSE,
+                                const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeExports))
       return Error::success();
 
-    for (const auto &M : CrossExports) {
-      DictScope D(P, "CrossModuleExports");
-      for (const auto &E : M) {
-        P.printHex("Local", E.Local);
-        P.printHex("Global", E.Global);
-      }
+    ListScope D(P, "CrossModuleExports");
+    for (const auto &M : CSE) {
+      DictScope D(P, "Export");
+      P.printHex("Local", M.Local);
+      P.printHex("Global", M.Global);
     }
     return Error::success();
   }
 
-  Error handleCrossModuleImports() override {
-    if (CrossImports.empty() ||
-        !opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeImports))
+  Error visitCrossModuleImports(DebugCrossModuleImportsSubsectionRef &CSI,
+                                const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeImports))
       return Error::success();
 
-    for (const auto &M : CrossImports) {
-      DictScope D(P, "CrossModuleImports");
-      for (const auto &ImportGroup : M) {
-        auto Name =
-            getNameFromStringTable(ImportGroup.Header->ModuleNameOffset);
-        if (!Name)
-          return Name.takeError();
-        P.printString("Module", *Name);
-        P.printHexList("Imports", ImportGroup.Imports);
-      }
+    ListScope L(P, "CrossModuleImports");
+    for (const auto &M : CSI) {
+      DictScope D(P, "ModuleImport");
+      auto Name = getNameFromStringTable(M.Header->ModuleNameOffset, State);
+      if (!Name)
+        return Name.takeError();
+      P.printString("Module", *Name);
+      P.printHexList("Imports", M.Imports);
     }
     return Error::success();
   }
@@ -228,12 +219,29 @@ private:
     }
     return Error::success();
   }
-  Error printFileName(StringRef Label, uint32_t Offset) {
-    if (auto Result = getNameFromChecksumsBuffer(Offset)) {
+  Error printFileName(StringRef Label, uint32_t Offset,
+                      const DebugSubsectionState &State) {
+    if (auto Result = getNameFromChecksumsBuffer(Offset, State)) {
       P.printString(Label, *Result);
       return Error::success();
     } else
       return Result.takeError();
+  }
+
+  Expected<StringRef>
+  getNameFromStringTable(uint32_t Offset, const DebugSubsectionState &State) {
+    return State.strings().getString(Offset);
+  }
+
+  Expected<StringRef>
+  getNameFromChecksumsBuffer(uint32_t Offset,
+                             const DebugSubsectionState &State) {
+    auto Array = State.checksums().getArray();
+    auto ChecksumIter = Array.at(Offset);
+    if (ChecksumIter == Array.end())
+      return make_error<RawError>(raw_error_code::invalid_format);
+    const auto &Entry = *ChecksumIter;
+    return getNameFromStringTable(Entry.FileNameOffset, State);
   }
 
   ScopedPrinter &P;
@@ -872,8 +880,16 @@ Error LLVMOutputStyle::dumpDbiStream() {
           if (!ExpectedTypes)
             return ExpectedTypes.takeError();
           auto &IpiItems = *ExpectedTypes;
-          C13RawVisitor V(P, File, IpiItems);
-          if (auto EC = codeview::visitDebugSubsections(ModS.subsections(), V))
+          auto ExpectedStrings = File.getStringTable();
+          if (!ExpectedStrings)
+            return joinErrors(
+                make_error<RawError>(raw_error_code::no_stream,
+                                     "Could not get string table!"),
+                std::move(ExpectedStrings.takeError()));
+
+          C13RawVisitor V(P, IpiItems);
+          if (auto EC = codeview::visitDebugSubsections(
+                  ModS.subsections(), V, ExpectedStrings->getStringTable()))
             return EC;
         }
       }
