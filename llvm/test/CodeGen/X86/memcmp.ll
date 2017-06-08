@@ -29,7 +29,7 @@ define i32 @length2(i8* %X, i8* %Y) nounwind {
   ret i32 %m
 }
 
-define i1 @length2_eq(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
+define i1 @length2_eq(i8* %X, i8* %Y) nounwind {
 ; X32-LABEL: length2_eq:
 ; X32:       # BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -50,7 +50,7 @@ define i1 @length2_eq(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
   ret i1 %c
 }
 
-define i1 @length2_eq_const(i8* %X, i32* nocapture %P) nounwind {
+define i1 @length2_eq_const(i8* %X) nounwind {
 ; X32-LABEL: length2_eq_const:
 ; X32:       # BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -70,7 +70,7 @@ define i1 @length2_eq_const(i8* %X, i32* nocapture %P) nounwind {
   ret i1 %c
 }
 
-define i1 @length2_eq_nobuiltin_attr(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
+define i1 @length2_eq_nobuiltin_attr(i8* %X, i8* %Y) nounwind {
 ; X32-LABEL: length2_eq_nobuiltin_attr:
 ; X32:       # BB#0:
 ; X32-NEXT:    pushl $0
@@ -162,7 +162,7 @@ define i32 @length4(i8* %X, i8* %Y) nounwind {
   ret i32 %m
 }
 
-define i1 @length4_eq(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
+define i1 @length4_eq(i8* %X, i8* %Y) nounwind {
 ; X32-LABEL: length4_eq:
 ; X32:       # BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -183,7 +183,7 @@ define i1 @length4_eq(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
   ret i1 %c
 }
 
-define i1 @length4_eq_const(i8* %X, i32* nocapture %P) nounwind {
+define i1 @length4_eq_const(i8* %X) nounwind {
 ; X32-LABEL: length4_eq_const:
 ; X32:       # BB#0:
 ; X32-NEXT:    movl {{[0-9]+}}(%esp), %eax
@@ -266,7 +266,7 @@ define i32 @length8(i8* %X, i8* %Y) nounwind {
   ret i32 %m
 }
 
-define i1 @length8_eq(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
+define i1 @length8_eq(i8* %X, i8* %Y) nounwind {
 ; X32-LABEL: length8_eq:
 ; X32:       # BB#0:
 ; X32-NEXT:    pushl $0
@@ -290,7 +290,7 @@ define i1 @length8_eq(i8* %X, i8* %Y, i32* nocapture %P) nounwind {
   ret i1 %c
 }
 
-define i1 @length8_eq_const(i8* %X, i32* nocapture %P) nounwind {
+define i1 @length8_eq_const(i8* %X) nounwind {
 ; X32-LABEL: length8_eq_const:
 ; X32:       # BB#0:
 ; X32-NEXT:    pushl $0
@@ -417,7 +417,7 @@ define i1 @length16_eq(i8* %x, i8* %y) nounwind {
   ret i1 %cmp
 }
 
-define i1 @length16_eq_const(i8* %X, i32* nocapture %P) nounwind {
+define i1 @length16_eq_const(i8* %X) nounwind {
 ; X32-LABEL: length16_eq_const:
 ; X32:       # BB#0:
 ; X32-NEXT:    pushl $0
@@ -510,7 +510,7 @@ define i1 @length32_eq(i8* %x, i8* %y) nounwind {
   ret i1 %cmp
 }
 
-define i1 @length32_eq_const(i8* %X, i32* nocapture %P) nounwind {
+define i1 @length32_eq_const(i8* %X) nounwind {
 ; X32-LABEL: length32_eq_const:
 ; X32:       # BB#0:
 ; X32-NEXT:    pushl $0
@@ -594,7 +594,7 @@ define i1 @length64_eq(i8* %x, i8* %y) nounwind {
   ret i1 %cmp
 }
 
-define i1 @length64_eq_const(i8* %X, i32* nocapture %P) nounwind {
+define i1 @length64_eq_const(i8* %X) nounwind {
 ; X32-LABEL: length64_eq_const:
 ; X32:       # BB#0:
 ; X32-NEXT:    pushl $0
