@@ -90,6 +90,10 @@ struct Builder {
 };
 
 Error Builder::addModule(Module *M) {
+  if (M->getDataLayoutStr().empty())
+    return make_error<StringError>("input module has no datalayout",
+                                   inconvertibleErrorCode());
+
   SmallPtrSet<GlobalValue *, 8> Used;
   collectUsedGlobalVariables(*M, Used, /*CompilerUsed*/ false);
 
@@ -276,10 +280,6 @@ static Expected<FileContents> upgrade(ArrayRef<BitcodeModule> BMs) {
                          /*IsImporting*/ false);
     if (!MOrErr)
       return MOrErr.takeError();
-
-    if ((*MOrErr)->getDataLayoutStr().empty())
-      return make_error<StringError>("input module has no datalayout",
-                                     inconvertibleErrorCode());
 
     Mods.push_back(MOrErr->get());
     OwnedMods.push_back(std::move(*MOrErr));
