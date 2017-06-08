@@ -17,13 +17,13 @@ declare signext i32 @memcmp(i8* nocapture, i8* nocapture, i64) local_unnamed_add
 ; Check 4 bytes - requires 1 load for each param.
 define signext i32 @zeroEqualityTest02(i8* %x, i8* %y) {
 ; CHECK-LABEL: zeroEqualityTest02:
-; CHECK:       # BB#0: # %loadbb
+; CHECK:       # BB#0:
 ; CHECK-NEXT:    lwz 3, 0(3)
 ; CHECK-NEXT:    lwz 4, 0(4)
-; CHECK-NEXT:    li 5, 1
-; CHECK-NEXT:    cmplw 3, 4
-; CHECK-NEXT:    isel 3, 0, 5, 2
-; CHECK-NEXT:    clrldi 3, 3, 32
+; CHECK-NEXT:    xor 3, 3, 4
+; CHECK-NEXT:    cntlzw 3, 3
+; CHECK-NEXT:    srwi 3, 3, 5
+; CHECK-NEXT:    xori 3, 3, 1
 ; CHECK-NEXT:    blr
   %call = tail call signext i32 @memcmp(i8* %x, i8* %y, i64 4)
   %not.cmp = icmp ne i32 %call, 0
