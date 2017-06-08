@@ -2406,12 +2406,10 @@ bool CodeGenPrepare::optimizeCallInst(CallInst *CI, bool& ModifiedDT) {
   }
 
   LibFunc Func;
-  if (TLInfo->getLibFunc(*CI->getCalledFunction(), Func) &&
-      Func == LibFunc_memcmp) {
-    if (expandMemCmp(CI, TTI, TLI, DL)) {
-      ModifiedDT = true;
-      return true;
-    }
+  if (TLInfo->getLibFunc(ImmutableCallSite(CI), Func) &&
+      Func == LibFunc_memcmp && expandMemCmp(CI, TTI, TLI, DL)) {
+    ModifiedDT = true;
+    return true;
   }
   return false;
 }
