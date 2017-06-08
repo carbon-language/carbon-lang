@@ -75,6 +75,15 @@ public:
   ExpectedMatchersTy ExpectedMatchers;
 };
 
+TEST(ParserTest, ParseBoolean) {
+  MockSema Sema;
+  Sema.parse("true");
+  Sema.parse("false");
+  EXPECT_EQ(2U, Sema.Values.size());
+  EXPECT_EQ(true, Sema.Values[0].getBoolean());
+  EXPECT_EQ(false, Sema.Values[1].getBoolean());
+}
+
 TEST(ParserTest, ParseUnsigned) {
   MockSema Sema;
   Sema.parse("0");

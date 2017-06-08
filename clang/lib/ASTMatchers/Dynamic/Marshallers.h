@@ -65,6 +65,16 @@ template <class T> struct ArgTypeTraits<ast_matchers::internal::Matcher<T> > {
   }
 };
 
+template <> struct ArgTypeTraits<bool> {
+  static bool is(const VariantValue &Value) { return Value.isBoolean(); }
+  static bool get(const VariantValue &Value) {
+    return Value.getBoolean();
+  }
+  static ArgKind getKind() {
+    return ArgKind(ArgKind::AK_Boolean);
+  }
+};
+
 template <> struct ArgTypeTraits<unsigned> {
   static bool is(const VariantValue &Value) { return Value.isUnsigned(); }
   static unsigned get(const VariantValue &Value) {
