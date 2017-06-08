@@ -10,6 +10,8 @@
 #ifndef LLVM_DEBUGINFO_CODEVIEW_MODULEDEBUGFRAGMENTVISITOR_H
 #define LLVM_DEBUGINFO_CODEVIEW_MODULEDEBUGFRAGMENTVISITOR_H
 
+#include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "llvm/DebugInfo/CodeView/DebugSubsectionRecord.h"
 #include "llvm/Support/Error.h"
 #include <cstdint>
 
