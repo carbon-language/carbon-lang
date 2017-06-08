@@ -434,5 +434,9 @@ void BinaryBasicBlock::dump() const {
   outs() << "\n";
 }
 
+uint64_t BinaryBasicBlock::estimateSize() const {
+  return Function->getBinaryContext().computeCodeSize(begin(), end());
+}
+
 } // namespace bolt
 } // namespace llvm

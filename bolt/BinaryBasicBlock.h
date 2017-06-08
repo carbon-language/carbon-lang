@@ -740,6 +740,9 @@ public:
     return InputRange.second - InputRange.first;
   }
 
+  /// Returns an estimate of size of basic block during run time.
+  uint64_t estimateSize() const;
+
 private:
   void adjustNumPseudos(const MCInst &Inst, int Sign);
 

@@ -69,11 +69,16 @@ void ClusterAlgorithm::computeClusterAverageFrequency() {
   AvgFreq.resize(Clusters.size(), 0.0);
   for (uint32_t I = 0, E = Clusters.size(); I < E; ++I) {
     double Freq = 0.0;
+    uint64_t ClusterSize = 0;
     for (auto BB : Clusters[I]) {
-      if (BB->getNumNonPseudos() > 0)
-        Freq += ((double) BB->getExecutionCount()) / BB->getNumNonPseudos();
+      if (BB->getNumNonPseudos() > 0) {
+        Freq += BB->getExecutionCount();
+        // Estimate the size of a block in bytes at run time
+        // NOTE: This might be inaccurate
+        ClusterSize += BB->estimateSize();
+      }
     }
-    AvgFreq[I] = Freq;
+    AvgFreq[I] = ClusterSize == 0 ? 0 : Freq / ClusterSize;
   }
 }
 
