@@ -129,7 +129,7 @@ struct AlgoState {
   // current address of the function from the beginning of its cluster
   std::vector<size_t> Addr;
   // maximum cluster id.
-  size_t MaxClusterId;
+  size_t MaxClusterId{0};
 };
 
 }
@@ -403,8 +403,10 @@ std::vector<Cluster> hfsortPlus(const CallGraph &Cg) {
   State.Cg = &Cg;
   State.TotalSamples = 0;
   State.FuncCluster = std::vector<Cluster *>(Cg.numNodes(), nullptr);
-  State.Addr = std::vector<size_t>(Cg.numNodes(), InvalidAddr);
-  State.MaxClusterId = AllClusters.back().id();
+  State.Addr = std::vector<size_t>(Cg.numNodes(), InvalidAddr); 
+  if (!AllClusters.empty()) {
+    State.MaxClusterId = AllClusters.back().id();
+  }
   for (NodeId F = 0; F < Cg.numNodes(); F++) {
     if (Cg.samples(F) == 0) continue;
     Clusters.push_back(&AllClusters[F]);
