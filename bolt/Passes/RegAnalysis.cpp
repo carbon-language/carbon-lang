@@ -25,7 +25,7 @@ RegAnalysis::RegAnalysis(BinaryContext &BC,
                          std::map<uint64_t, BinaryFunction> &BFs,
                          BinaryFunctionCallGraph &CG)
     : BC(BC) {
-  CallGraphWalker CGWalker(BC, BFs, CG);
+  CallGraphWalker CGWalker(CG);
 
   CGWalker.registerVisitor([&](BinaryFunction *Func) -> bool {
     BitVector RegsKilled = getFunctionClobberList(Func);

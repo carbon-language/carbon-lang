@@ -23,6 +23,7 @@ using namespace llvm;
 
 namespace opts {
 extern cl::opt<unsigned> Verbosity;
+extern cl::opt<bool> TimeOpts;
 extern cl::OptionCategory BoltOptCategory;
 
 using namespace bolt;
@@ -237,18 +238,18 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
                    << BC.getHotThreshold() << " )\n");
     }
     {
-      NamedRegionTimer T1("remove loads", "FOP breakdown", true);
+      NamedRegionTimer T1("remove loads", "FOP breakdown", opts::TimeOpts);
       removeUnnecessaryLoads(RA, FA, BC, I.second);
     }
     {
-      NamedRegionTimer T1("remove stores", "FOP breakdown", true);
+      NamedRegionTimer T1("remove stores", "FOP breakdown", opts::TimeOpts);
       removeUnusedStores(FA, BC, I.second);
     }
     // Don't even start shrink wrapping if no profiling info is available
     if (I.second.getKnownExecutionCount() == 0)
       continue;
     {
-      NamedRegionTimer T1("move spills", "FOP breakdown", true);
+      NamedRegionTimer T1("move spills", "FOP breakdown", opts::TimeOpts);
       DataflowInfoManager Info(BC, I.second, &RA, &FA);
       ShrinkWrapping SW(FA, BC, I.second, Info);
       SW.perform();

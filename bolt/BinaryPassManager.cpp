@@ -185,7 +185,7 @@ StripRepRet("strip-rep-ret",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
-static llvm::cl::opt<bool>
+llvm::cl::opt<bool>
 TimeOpts("time-opts",
   cl::desc("print time spent in each optimization"),
   cl::init(false),

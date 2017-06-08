@@ -13,7 +13,12 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_DOMINATORANALYSIS_H
 
 #include "DataflowAnalysis.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+
+namespace opts {
+extern llvm::cl::opt<bool> TimeOpts;
+}
 
 namespace llvm {
 namespace bolt {
@@ -99,7 +104,7 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("DA", "Dataflow", true);
+    NamedRegionTimer T1("DA", "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<DominatorAnalysis<Backward>, Backward>::run();
   }
 

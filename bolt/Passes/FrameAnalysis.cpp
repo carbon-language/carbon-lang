@@ -17,6 +17,7 @@
 using namespace llvm;
 
 namespace opts {
+extern cl::opt<bool> TimeOpts;
 extern cl::opt<unsigned> Verbosity;
 extern bool shouldProcess(const bolt::BinaryFunction &Function);
 
@@ -149,7 +150,7 @@ public:
   FrameAccessAnalysis(const BinaryContext &BC, BinaryFunction &BF)
       : SPT(BC, BF), BC(BC), BF(BF) {
     {
-      NamedRegionTimer T1("SPT", "Dataflow", true);
+      NamedRegionTimer T1("SPT", "Dataflow", opts::TimeOpts);
       SPT.run();
     }
   }
@@ -278,7 +279,7 @@ FrameAnalysis::getFIEFor(const MCInst &Inst) const {
 }
 
 void FrameAnalysis::traverseCG(BinaryFunctionCallGraph &CG) {
-  CallGraphWalker CGWalker(BC, BFs, CG);
+  CallGraphWalker CGWalker(CG);
 
   CGWalker.registerVisitor([&](BinaryFunction *Func) -> bool {
     return computeArgsAccessed(*Func);
@@ -499,7 +500,8 @@ FrameAnalysis::FrameAnalysis(BinaryContext &BC,
     }
 
     {
-      NamedRegionTimer T1("restore frame index", "FOP breakdown", true);
+      NamedRegionTimer T1("restore frame index", "FOP breakdown",
+                          opts::TimeOpts);
       if (!restoreFrameIndex(I.second)) {
         ++NumFunctionsFailedRestoreFI;
         auto Count = I.second.getExecutionCount();

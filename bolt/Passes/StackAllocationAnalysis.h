@@ -14,7 +14,12 @@
 
 #include "DataflowAnalysis.h"
 #include "StackPointerTracking.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+
+namespace opts {
+extern llvm::cl::opt<bool> TimeOpts;
+}
 
 namespace llvm {
 namespace bolt {
@@ -36,7 +41,7 @@ public:
   virtual ~StackAllocationAnalysis() {}
 
   void run() {
-    NamedRegionTimer T1("SAA", "Dataflow", true);
+    NamedRegionTimer T1("SAA", "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<StackAllocationAnalysis, false>::run();
   }
 

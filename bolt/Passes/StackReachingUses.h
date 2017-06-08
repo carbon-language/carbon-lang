@@ -13,7 +13,12 @@
 #define LLVM_TOOLS_LLVM_BOLT_PASSES_STACKREACHINGUSES_H
 
 #include "DataflowAnalysis.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+
+namespace opts {
+extern llvm::cl::opt<bool> TimeOpts;
+}
 
 namespace llvm {
 namespace bolt {
@@ -35,7 +40,7 @@ public:
                    bool IncludeLocalAccesses = true) const;
 
   void run() {
-    NamedRegionTimer T1("SRU", "Dataflow", true);
+    NamedRegionTimer T1("SRU", "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<StackReachingUses, true>::run();
   }
 

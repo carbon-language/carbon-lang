@@ -18,6 +18,7 @@ using namespace llvm;
 
 namespace opts {
 
+extern cl::opt<bool> TimeOpts;
 extern cl::OptionCategory BoltOptCategory;
 
 static cl::opt<unsigned> ShrinkWrappingThreshold(
@@ -1251,7 +1252,7 @@ public:
         TodoMap(TodoMap), Info(Info) {}
 
   void run() {
-    NamedRegionTimer T1("PSPT", "Dataflow", true);
+    NamedRegionTimer T1("PSPT", "Dataflow", opts::TimeOpts);
     StackPointerTrackingBase<PredictiveStackPointerTracking>::run();
   }
 };

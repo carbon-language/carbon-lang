@@ -14,7 +14,12 @@
 
 #include "DataflowAnalysis.h"
 #include "RegAnalysis.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+
+namespace opts {
+extern llvm::cl::opt<bool> TimeOpts;
+}
 
 namespace llvm {
 namespace bolt {
@@ -31,7 +36,7 @@ public:
   virtual ~StackAvailableExpressions() {}
 
   void run() {
-    NamedRegionTimer T1("SAE", "Dataflow", true);
+    NamedRegionTimer T1("SAE", "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<StackAvailableExpressions>::run();
   }
 

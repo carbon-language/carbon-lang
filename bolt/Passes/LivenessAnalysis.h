@@ -19,6 +19,7 @@
 
 namespace opts {
 extern llvm::cl::opt<bool> AssumeABI;
+extern llvm::cl::opt<bool> TimeOpts;
 }
 
 namespace llvm {
@@ -43,7 +44,7 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("LA", "Dataflow", true);
+    NamedRegionTimer T1("LA", "Dataflow", opts::TimeOpts);
     DataflowAnalysis<LivenessAnalysis, BitVector, true>::run();
   }
 

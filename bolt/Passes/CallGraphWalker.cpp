@@ -1,11 +1,16 @@
 #include "CallGraphWalker.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+
+namespace opts {
+extern llvm::cl::opt<bool> TimeOpts;
+}
 
 namespace llvm {
 namespace bolt {
 
 void CallGraphWalker::traverseCG() {
-  NamedRegionTimer T1("CG Traversal", "CG breakdown", true);
+  NamedRegionTimer T1("CG Traversal", "CG breakdown", opts::TimeOpts);
   std::queue<BinaryFunction *> Queue;
   std::set<BinaryFunction *> InQueue;
 

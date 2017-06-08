@@ -27,8 +27,6 @@ namespace bolt {
 /// a property that depends on callees. In the event of a CG cycles, this will
 /// re-visit functions until their observed property converges.
 class CallGraphWalker {
-  BinaryContext &BC;
-  std::map<uint64_t, BinaryFunction> &BFs;
   BinaryFunctionCallGraph &CG;
 
   /// DFS or reverse post-ordering of the call graph nodes to allow us to
@@ -44,9 +42,7 @@ class CallGraphWalker {
 
 public:
   /// Initialize core context references but don't do anything yet
-  CallGraphWalker(BinaryContext &BC, std::map<uint64_t, BinaryFunction> &BFs,
-                  BinaryFunctionCallGraph &CG)
-      : BC(BC), BFs(BFs), CG(CG) {}
+  CallGraphWalker(BinaryFunctionCallGraph &CG) : CG(CG) {}
 
   /// Register a new callback function to be called for each function when
   /// traversing the call graph bottom-up. Function should return true iff

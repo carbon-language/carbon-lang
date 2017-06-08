@@ -14,7 +14,12 @@
 
 #include "DataflowAnalysis.h"
 #include "RegAnalysis.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Timer.h"
+
+namespace opts {
+extern llvm::cl::opt<bool> TimeOpts;
+}
 
 namespace llvm {
 namespace bolt {
@@ -53,7 +58,7 @@ public:
   }
 
   void run() {
-    NamedRegionTimer T1("RD", "Dataflow", true);
+    NamedRegionTimer T1("RD", "Dataflow", opts::TimeOpts);
     InstrsDataflowAnalysis<ReachingDefOrUse<Def>, !Def>::run();
   }
 
