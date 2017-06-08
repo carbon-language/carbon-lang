@@ -32,6 +32,22 @@ public:
   using NodeId = size_t;
   static constexpr NodeId InvalidId = -1;
 
+  template <typename T>
+  class iterator_range {
+    T Begin;
+    T End;
+
+  public:
+    template <typename Container>
+    iterator_range(Container &&c) : Begin(c.begin()), End(c.end()) {}
+    iterator_range(T Begin, T End)
+      : Begin(std::move(Begin)),
+        End(std::move(End)) {}
+
+    T begin() const { return Begin; }
+    T end() const { return End; }
+  };
+
   class Arc {
   public:
     struct Hash {
@@ -57,9 +73,9 @@ public:
 
   private:
     friend class CallGraph;
-    const NodeId Src;
-    const NodeId Dst;
-    mutable double Weight;
+    NodeId Src{InvalidId};
+    NodeId Dst{InvalidId};
+    mutable double Weight{0};
     mutable double NormalizedWeight{0};
     mutable double AvgCallOffset{0};
   };
@@ -126,8 +142,11 @@ public:
   ArcConstIterator findArc(NodeId Src, NodeId Dst) const {
     return Arcs.find(Arc(Src, Dst));
   }
-  const ArcsType &getArcs() const {
-    return Arcs;
+  iterator_range<ArcConstIterator> arcs() const {
+    return iterator_range<ArcConstIterator>(Arcs.begin(), Arcs.end());
+  }
+  iterator_range<std::vector<Node>::const_iterator> nodes() const {
+    return iterator_range<std::vector<Node>::const_iterator>(Nodes.begin(), Nodes.end());
   }
 
   double density() const {

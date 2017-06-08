@@ -82,6 +82,22 @@ UseEdgeCounts("use-edge-counts",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static llvm::cl::opt<bool>
+UseGainCache("hfsort+-use-cache",
+  llvm::cl::desc("Use a cache for mergeGain results when computing hfsort+."),
+  llvm::cl::ZeroOrMore,
+  llvm::cl::init(true),
+  llvm::cl::Hidden,
+  llvm::cl::cat(BoltOptCategory));
+
+static llvm::cl::opt<bool>
+UseShortCallCache("hfsort+-use-short-call-cache",
+  llvm::cl::desc("Use a cache for shortCall results when computing hfsort+."),
+  llvm::cl::ZeroOrMore,
+  llvm::cl::init(true),
+  llvm::cl::Hidden,
+  llvm::cl::cat(BoltOptCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -297,7 +313,7 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
     Clusters = clusterize(Cg);
     break;
   case BinaryFunction::RT_HFSORT_PLUS:
-    Clusters = hfsortPlus(Cg);
+    Clusters = hfsortPlus(Cg, opts::UseGainCache, opts::UseShortCallCache);
     break;
   case BinaryFunction::RT_PETTIS_HANSEN:
     Clusters = pettisAndHansen(Cg);

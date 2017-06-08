@@ -42,37 +42,7 @@
 #define DEBUG_TYPE "hfsort"
 
 namespace opts {
-
-extern llvm::cl::OptionCategory BoltOptCategory;
 extern llvm::cl::opt<bool> Verbosity;
-
-static llvm::cl::opt<bool>
-UseGainCache("hfsort+-use-cache",
-  llvm::cl::desc("Use a cache for mergeGain results when computing hfsort+."),
-  llvm::cl::ZeroOrMore,
-  llvm::cl::init(true),
-  llvm::cl::Hidden,
-  llvm::cl::cat(BoltOptCategory));
-
-static llvm::cl::opt<bool>
-UseShortCallCache("hfsort+-use-short-call-cache",
-  llvm::cl::desc("Use a cache for shortCall results when computing hfsort+."),
-  llvm::cl::ZeroOrMore,
-  llvm::cl::init(true),
-  llvm::cl::Hidden,
-  llvm::cl::cat(BoltOptCategory));
-
-const char* cacheKindString() {
-  if (opts::UseGainCache && opts::UseShortCallCache)
-    return "gain + short call cache";
-  else if (opts::UseGainCache)
-    return "gain cache";
-  else if (opts::UseShortCallCache)
-    return "short call cache";
-  else
-    return "no cache";
-}
-
 }
 
 namespace llvm {
@@ -94,6 +64,17 @@ constexpr uint32_t PageSize = uint32_t(1) << 12;
 constexpr uint32_t ITLBEntries = 16;
 
 constexpr size_t InvalidAddr = -1;
+
+const char* cacheKindString(bool UseGainCache, bool UseShortCallCache) {
+  if (UseGainCache && UseShortCallCache)
+    return "gain + short call cache";
+  else if (UseGainCache)
+    return "gain cache";
+  else if (UseShortCallCache)
+    return "short call cache";
+  else
+    return "no cache";
+}
 
 // This class maintains adjacency information for all Clusters being
 // processed.  It is used to invalidate cache entries when merging
@@ -120,6 +101,8 @@ public:
     }
   }
 
+  // Merge adjacency info from cluster B into cluster A.  Info for cluster B is left
+  // in an undefined state.
   void merge(const Cluster *A, const Cluster *B) {
     Bits[A->id()] |= Bits[B->id()];
     Bits[A->id()][A->id()] = false;
@@ -220,31 +203,14 @@ class PrecomputedResults {
   BitVector Valid;
 };
 
-// A wrapper for algorithm-wide variables
-struct AlgoState {
-  explicit AlgoState(size_t Size)
-    : Cache(Size), ShortCallPairCache(Size) { }
-
-  // the call graph
-  const CallGraph *Cg;
-  // the total number of samples in the graph
-  double TotalSamples;
-  // target_id => cluster
-  std::vector<Cluster *> FuncCluster;
-  // current address of the function from the beginning of its cluster
-  std::vector<size_t> Addr;
-  // maximum cluster id.
-  size_t MaxClusterId{0};
-  // A cache that keeps precomputed values of mergeGain for pairs of clusters;
-  // when a pair of clusters (x,y) gets merged, we need to invalidate the pairs
-  // containing both x and y (and recompute them on the next iteration)
-  PrecomputedResults Cache;
-  // Cache for shortCalls for a single cluster.
-  std::unordered_map<const Cluster *, double> ShortCallCache;
-  // Cache for shortCalls for a pair of Clusters
-  PrecomputedResults ShortCallPairCache;
-};
-
+/*
+ * Erase an element from a container if it is present.  Otherwise, do nothing.
+ */
+template <typename C, typename V>
+void maybeErase(C &Container, const V& Value) {
+  auto Itr = Container.find(Value);
+  if (Itr != Container.end())
+    Container.erase(Itr);
 }
 
 /*
@@ -306,86 +272,8 @@ std::vector<Cluster *> sortByDensity(const C &Clusters_) {
  * is (1-p), and the probability that it is not in the cache (i.e. not accessed
  * during the last kITLBEntries function calls) is (1-p)^kITLBEntries
  */
-double missProbability(const AlgoState &State, double PageSamples) {
-  double P = PageSamples / State.TotalSamples;
-  double X = ITLBEntries;
-  // avoiding precision issues for small values
-  if (P < 0.0001) return (1.0 - X * P + X * (X - 1.0) * P * P / 2.0);
-  return pow(1.0 - P, X);
-}
-
-/*
- * Expected hit ratio of the iTLB cache under the given order of clusters
- *
- * Given an ordering of hot functions (and hence, their assignment to the
- * iTLB pages), we can divide all functions calls into two categories:
- * - 'short' ones that have a caller-callee distance less than a page;
- * - 'long' ones where the distance exceeds a page.
- * The short calls are likely to result in a iTLB cache hit. For the long ones,
- * the hit/miss result depends on the 'hotness' of the page (i.e., how often
- * the page is accessed). Assuming that functions are sent to the iTLB cache
- * in a random order, the probability that a page is present in the cache is
- * proportional to the number of samples corresponding to the functions on the
- * page. The following procedure detects short and long calls, and estimates
- * the expected number of cache misses for the long ones.
- */
-template <typename C>
-double expectedCacheHitRatio(const AlgoState &State, const C &Clusters_) {
-  // sort by density
-  std::vector<Cluster *> Clusters(sortByDensity(Clusters_));
-
-  // generate function addresses with an alignment
-  std::vector<size_t> Addr(State.Cg->numNodes(), InvalidAddr);
-  size_t CurAddr = 0;
-  // 'hotness' of the pages
-  std::vector<double> PageSamples;
-  for (auto Cluster : Clusters) {
-    for (auto TargetId : Cluster->targets()) {
-      if (CurAddr & 0xf) CurAddr = (CurAddr & ~0xf) + 16;
-      Addr[TargetId] = CurAddr;
-      CurAddr += State.Cg->size(TargetId);
-      // update page weight
-      size_t Page = Addr[TargetId] / PageSize;
-      while (PageSamples.size() <= Page) PageSamples.push_back(0.0);
-      PageSamples[Page] += State.Cg->samples(TargetId);
-    }
-  }
-
-  // computing expected number of misses for every function
-  double Misses = 0;
-  for (auto Cluster : Clusters) {
-    for (auto TargetId : Cluster->targets()) {
-      size_t Page = Addr[TargetId] / PageSize;
-      double Samples = State.Cg->samples(TargetId);
-      // probability that the page is not present in the cache
-      double MissProb = missProbability(State, PageSamples[Page]);
-
-      for (auto Pred : State.Cg->predecessors(TargetId)) {
-        if (State.Cg->samples(Pred) == 0) continue;
-        const auto &Arc = *State.Cg->findArc(Pred, TargetId);
-
-        // the source page
-        size_t SrcPage = (Addr[Pred] + (size_t)Arc.avgCallOffset()) / PageSize;
-        if (Page != SrcPage) {
-          // this is a miss
-          Misses += Arc.weight() * MissProb;
-        }
-        Samples -= Arc.weight();
-      }
-
-      // the remaining samples come from the jitted code
-      Misses += Samples * MissProb;
-    }
-  }
-
-  return 100.0 * (1.0 - Misses / State.TotalSamples);
-}
-
-/*
- * The expected number of calls for an edge withing the same TLB page
- */
 double expectedCalls(int64_t SrcAddr, int64_t DstAddr, double EdgeWeight) {
-  auto Dist = std::abs(SrcAddr - DstAddr);
+  const auto Dist = std::abs(SrcAddr - DstAddr);
   if (Dist > PageSize) {
     return 0;
   }
@@ -393,266 +281,418 @@ double expectedCalls(int64_t SrcAddr, int64_t DstAddr, double EdgeWeight) {
 }
 
 /*
- * The expected number of calls within a given cluster with both endpoints on
- * the same TLB cache page
- */
-double shortCalls(AlgoState &State, const Cluster *Cluster) {
-  if (opts::UseShortCallCache) {
-    auto Itr = State.ShortCallCache.find(Cluster);
-    if (Itr != State.ShortCallCache.end())
-      return Itr->second;
-  }
-
-  double Calls = 0;
-  for (auto TargetId : Cluster->targets()) {
-    for (auto Succ : State.Cg->successors(TargetId)) {
-      if (State.FuncCluster[Succ] == Cluster) {
-        const auto &Arc = *State.Cg->findArc(TargetId, Succ);
-
-        auto SrcAddr = State.Addr[TargetId] + Arc.avgCallOffset();
-        auto DstAddr = State.Addr[Succ];
-
-        Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
-      }
-    }
-  }
-
-  if (opts::UseShortCallCache) {
-    State.ShortCallCache[Cluster] = Calls;
-  }
-
-  return Calls;
-}
-
-/*
- * The number of calls between the two clusters with both endpoints on
- * the same TLB page, assuming that a given pair of clusters gets merged
- */
-double shortCalls(AlgoState &State,
-                  const Cluster *ClusterPred,
-                  const Cluster *ClusterSucc) {
-  if (opts::UseShortCallCache &&
-      State.ShortCallPairCache.contains(ClusterPred, ClusterSucc)) {
-    return State.ShortCallPairCache.get(ClusterPred, ClusterSucc);
-  }
-
-  double Calls = 0;
-  for (auto TargetId : ClusterPred->targets()) {
-    for (auto Succ : State.Cg->successors(TargetId)) {
-      if (State.FuncCluster[Succ] == ClusterSucc) {
-        const auto &Arc = *State.Cg->findArc(TargetId, Succ);
-
-        auto SrcAddr = State.Addr[TargetId] + Arc.avgCallOffset();
-        auto DstAddr = State.Addr[Succ] + ClusterPred->size();
-
-        Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
-      }
-    }
-  }
-
-  for (auto TargetId : ClusterPred->targets()) {
-    for (auto Pred : State.Cg->predecessors(TargetId)) {
-      if (State.FuncCluster[Pred] == ClusterSucc) {
-        const auto &Arc = *State.Cg->findArc(Pred, TargetId);
-
-        auto SrcAddr = State.Addr[Pred] + Arc.avgCallOffset() +
-          ClusterPred->size();
-        auto DstAddr = State.Addr[TargetId];
-
-        Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
-      }
-    }
-  }
-
-  if (opts::UseShortCallCache) {
-    State.ShortCallPairCache.set(ClusterPred, ClusterSucc, Calls);
-  }
-
-  return Calls;
-}
-
-/*
- * The gain of merging two clusters.
- *
- * We assume that the final clusters are sorted by their density, and hence
- * every cluster is likely to be adjacent with clusters of the same density.
- * Thus, the 'hotness' of every cluster can be estimated by density*pageSize,
- * which is used to compute the probability of cache misses for long calls
- * of a given cluster.
- * The result is also scaled by the size of the resulting cluster in order to
- * increse the chance of merging short clusters, which is helpful for
- * the i-cache performance.
- */
-double mergeGain(AlgoState &State,
-                 const Cluster *ClusterPred,
-                 const Cluster *ClusterSucc) {
-  if (opts::UseGainCache && State.Cache.contains(ClusterPred, ClusterSucc)) {
-    return State.Cache.get(ClusterPred, ClusterSucc);
-  }
-
-  // cache misses on the first cluster
-  double LongCallsPred = ClusterPred->samples() - shortCalls(State, ClusterPred);
-  double ProbPred = missProbability(State, ClusterPred->density() * PageSize);
-  double ExpectedMissesPred = LongCallsPred * ProbPred;
-
-  // cache misses on the second cluster
-  double LongCallsSucc = ClusterSucc->samples() - shortCalls(State, ClusterSucc);
-  double ProbSucc = missProbability(State, ClusterSucc->density() * PageSize);
-  double ExpectedMissesSucc = LongCallsSucc * ProbSucc;
-
-  // cache misses on the merged cluster
-  double LongCallsNew = LongCallsPred + LongCallsSucc -
-                        shortCalls(State, ClusterPred, ClusterSucc);
-  double NewDensity = density(ClusterPred, ClusterSucc);
-  double ProbNew = missProbability(State, NewDensity * PageSize);
-  double MissesNew = LongCallsNew * ProbNew;
-
-  double Gain = ExpectedMissesPred + ExpectedMissesSucc - MissesNew;
-  // scaling the result to increase the importance of merging short clusters
-  Gain /= (ClusterPred->size() + ClusterSucc->size());
-
-  if (opts::UseGainCache) {
-    State.Cache.set(ClusterPred, ClusterSucc, Gain);
-  }
-
-  return Gain;
-}
-
-template <typename C, typename V>
-void maybeErase(C &Container, const V& Value) {
-  auto Itr = Container.find(Value);
-  if (Itr != Container.end())
-    Container.erase(Itr);
-}
-
-/*
  * HFSortPlus - layout of hot functions with iTLB cache optimization
  */
-std::vector<Cluster> hfsortPlus(const CallGraph &Cg) {
-  // create a cluster for every function
-  std::vector<Cluster> AllClusters;
-  AllClusters.reserve(Cg.numNodes());
-  for (NodeId F = 0; F < Cg.numNodes(); F++) {
-    AllClusters.emplace_back(F, Cg.getNode(F));
+class HFSortPlus {
+public:
+  /*
+   * The probability that a page with a given weight is not present in the cache.
+   *
+   * Assume that the hot functions are called in a random order; then the
+   * probability of a TLB page being accessed after a function call is
+   * p=pageSamples/totalSamples. The probability that the page is not accessed
+   * is (1-p), and the probability that it is not in the cache (i.e. not accessed
+   * during the last kITLBEntries function calls) is (1-p)^kITLBEntries
+   */
+  double missProbability(double PageSamples) const {
+    double P = PageSamples / TotalSamples;
+    double X = ITLBEntries;
+    // avoiding precision issues for small values
+    if (P < 0.0001) return (1.0 - X * P + X * (X - 1.0) * P * P / 2.0);
+    return pow(1.0 - P, X);
   }
 
-  // initialize objects used by the algorithm
-  std::vector<Cluster *> Clusters;
-  Clusters.reserve(Cg.numNodes());
-  AlgoState State(AllClusters.size()); // TODO: should use final Clusters.size()
-  State.Cg = &Cg;
-  State.TotalSamples = 0;
-  State.FuncCluster = std::vector<Cluster *>(Cg.numNodes(), nullptr);
-  State.Addr = std::vector<size_t>(Cg.numNodes(), InvalidAddr);
-  uint32_t Id = 0;
-  for (NodeId F = 0; F < Cg.numNodes(); F++) {
-    if (Cg.samples(F) == 0) continue;
-    Clusters.push_back(&AllClusters[F]);
-    Clusters.back()->setId(Id);
-    State.FuncCluster[F] = &AllClusters[F];
-    State.Addr[F] = 0;
-    State.TotalSamples += Cg.samples(F);
-    ++Id;
-  }
-  State.MaxClusterId = Id;
+  /*
+   * Expected hit ratio of the iTLB cache under the given order of clusters
+   *
+   * Given an ordering of hot functions (and hence, their assignment to the
+   * iTLB pages), we can divide all functions calls into two categories:
+   * - 'short' ones that have a caller-callee distance less than a page;
+   * - 'long' ones where the distance exceeds a page.
+   * The short calls are likely to result in a iTLB cache hit. For the long ones,
+   * the hit/miss result depends on the 'hotness' of the page (i.e., how often
+   * the page is accessed). Assuming that functions are sent to the iTLB cache
+   * in a random order, the probability that a page is present in the cache is
+   * proportional to the number of samples corresponding to the functions on the
+   * page. The following procedure detects short and long calls, and estimates
+   * the expected number of cache misses for the long ones.
+   */
+  template <typename C>
+  double expectedCacheHitRatio(const C &Clusters_) const {
+    // sort by density
+    std::vector<Cluster *> Clusters(sortByDensity(Clusters_));
 
-  AdjacencyMatrix Adjacent(Cg, Clusters, State.FuncCluster);
-
-  DEBUG(dbgs() << "Starting hfsort+ w/" << opts::cacheKindString() << " for "
-               << Clusters.size() << " clusters\n"
-               << format("Initial expected iTLB cache hit ratio: %.4lf\n",
-                         expectedCacheHitRatio(State, Clusters)));
-
-  int Steps = 0;
-  // merge pairs of clusters while there is an improvement
-  while (Clusters.size() > 1) {
-    DEBUG(
-      if (Steps % 500 == 0) {
-        dbgs() << format("step = %d  clusters = %lu  expected_hit_rate = %.4lf\n",
-                         Steps,
-                         Clusters.size(),
-                         expectedCacheHitRatio(State, Clusters));
+    // generate function addresses with an alignment
+    std::vector<size_t> Addr(Cg.numNodes(), InvalidAddr);
+    size_t CurAddr = 0;
+    // 'hotness' of the pages
+    std::vector<double> PageSamples;
+    for (auto Cluster : Clusters) {
+      for (auto TargetId : Cluster->targets()) {
+        if (CurAddr & 0xf) CurAddr = (CurAddr & ~0xf) + 16;
+        Addr[TargetId] = CurAddr;
+        CurAddr += Cg.size(TargetId);
+        // update page weight
+        size_t Page = Addr[TargetId] / PageSize;
+        while (PageSamples.size() <= Page) PageSamples.push_back(0.0);
+        PageSamples[Page] += Cg.samples(TargetId);
       }
-    );
-    ++Steps;
-
-    Cluster *BestClusterPred = nullptr;
-    Cluster *BestClusterSucc = nullptr;
-    double BestGain = -1;
-    for (auto ClusterPred : Clusters) {
-      // get candidates for merging with the current cluster
-      Adjacent.forallAdjacent(
-        ClusterPred,
-        // find the best candidate
-        [&](Cluster *ClusterSucc) {
-          assert(ClusterPred != ClusterSucc);
-          // get a cost of merging two clusters
-          const double Gain = mergeGain(State, ClusterPred, ClusterSucc);
-
-          // breaking ties by density to make the hottest clusters be merged first
-          if (Gain > BestGain || (std::abs(Gain - BestGain) < 1e-8 &&
-                                  compareClusterPairs(ClusterPred,
-                                                      ClusterSucc,
-                                                      BestClusterPred,
-                                                      BestClusterSucc))) {
-            BestGain = Gain;
-            BestClusterPred = ClusterPred;
-            BestClusterSucc = ClusterSucc;
-          }
-        }
-      );
     }
 
-    if (BestGain <= 0.0) break;
+    // computing expected number of misses for every function
+    double Misses = 0;
+    for (auto Cluster : Clusters) {
+      for (auto TargetId : Cluster->targets()) {
+        size_t Page = Addr[TargetId] / PageSize;
+        double Samples = Cg.samples(TargetId);
+        // probability that the page is not present in the cache
+        double MissProb = missProbability(PageSamples[Page]);
 
-    // merge the best pair of clusters
+        for (auto Pred : Cg.predecessors(TargetId)) {
+          if (Cg.samples(Pred) == 0) continue;
+          const auto &Arc = *Cg.findArc(Pred, TargetId);
+
+          // the source page
+          size_t SrcPage = (Addr[Pred] + (size_t)Arc.avgCallOffset()) / PageSize;
+          if (Page != SrcPage) {
+            // this is a miss
+            Misses += Arc.weight() * MissProb;
+          }
+          Samples -= Arc.weight();
+        }
+
+        // the remaining samples come from the jitted code
+        Misses += Samples * MissProb;
+      }
+    }
+
+    return 100.0 * (1.0 - Misses / TotalSamples);
+  }
+
+  /*
+   * The expected number of calls within a given cluster with both endpoints on
+   * the same TLB cache page
+   */
+  double shortCalls(const Cluster *Cluster) const {
+    if (UseShortCallCache) {
+      auto Itr = ShortCallCache.find(Cluster);
+      if (Itr != ShortCallCache.end())
+        return Itr->second;
+    }
+
+    double Calls = 0;
+    for (auto TargetId : Cluster->targets()) {
+      for (auto Succ : Cg.successors(TargetId)) {
+        if (FuncCluster[Succ] == Cluster) {
+          const auto &Arc = *Cg.findArc(TargetId, Succ);
+
+          auto SrcAddr = Addr[TargetId] + Arc.avgCallOffset();
+          auto DstAddr = Addr[Succ];
+
+          Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
+        }
+      }
+    }
+
+    if (UseShortCallCache) {
+      ShortCallCache[Cluster] = Calls;
+    }
+
+    return Calls;
+  }
+
+  /*
+   * The number of calls between the two clusters with both endpoints on
+   * the same TLB page, assuming that a given pair of clusters gets merged
+   */
+  double shortCalls(const Cluster *ClusterPred,
+                    const Cluster *ClusterSucc) const {
+    if (UseShortCallCache &&
+        ShortCallPairCache.contains(ClusterPred, ClusterSucc)) {
+      return ShortCallPairCache.get(ClusterPred, ClusterSucc);
+    }
+
+    double Calls = 0;
+    for (auto TargetId : ClusterPred->targets()) {
+      for (auto Succ : Cg.successors(TargetId)) {
+        if (FuncCluster[Succ] == ClusterSucc) {
+          const auto &Arc = *Cg.findArc(TargetId, Succ);
+
+          auto SrcAddr = Addr[TargetId] + Arc.avgCallOffset();
+          auto DstAddr = Addr[Succ] + ClusterPred->size();
+
+          Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
+        }
+      }
+    }
+
+    for (auto TargetId : ClusterPred->targets()) {
+      for (auto Pred : Cg.predecessors(TargetId)) {
+        if (FuncCluster[Pred] == ClusterSucc) {
+          const auto &Arc = *Cg.findArc(Pred, TargetId);
+
+          auto SrcAddr = Addr[Pred] + Arc.avgCallOffset() +
+            ClusterPred->size();
+          auto DstAddr = Addr[TargetId];
+
+          Calls += expectedCalls(SrcAddr, DstAddr, Arc.weight());
+        }
+      }
+    }
+
+    if (UseShortCallCache) {
+      ShortCallPairCache.set(ClusterPred, ClusterSucc, Calls);
+    }
+
+    return Calls;
+  }
+
+  /*
+   * The gain of merging two clusters.
+   *
+   * We assume that the final clusters are sorted by their density, and hence
+   * every cluster is likely to be adjacent with clusters of the same density.
+   * Thus, the 'hotness' of every cluster can be estimated by density*pageSize,
+   * which is used to compute the probability of cache misses for long calls
+   * of a given cluster.
+   * The result is also scaled by the size of the resulting cluster in order to
+   * increse the chance of merging short clusters, which is helpful for
+   * the i-cache performance.
+   */
+  double mergeGain(const Cluster *ClusterPred,
+                   const Cluster *ClusterSucc) const {
+    if (UseGainCache && Cache.contains(ClusterPred, ClusterSucc)) {
+      return Cache.get(ClusterPred, ClusterSucc);
+    }
+
+    // cache misses on the first cluster
+    double LongCallsPred = ClusterPred->samples() - shortCalls(ClusterPred);
+    double ProbPred = missProbability(ClusterPred->density() * PageSize);
+    double ExpectedMissesPred = LongCallsPred * ProbPred;
+
+    // cache misses on the second cluster
+    double LongCallsSucc = ClusterSucc->samples() - shortCalls(ClusterSucc);
+    double ProbSucc = missProbability(ClusterSucc->density() * PageSize);
+    double ExpectedMissesSucc = LongCallsSucc * ProbSucc;
+
+    // cache misses on the merged cluster
+    double LongCallsNew = LongCallsPred + LongCallsSucc -
+                          shortCalls(ClusterPred, ClusterSucc);
+    double NewDensity = density(ClusterPred, ClusterSucc);
+    double ProbNew = missProbability(NewDensity * PageSize);
+    double MissesNew = LongCallsNew * ProbNew;
+
+    double Gain = ExpectedMissesPred + ExpectedMissesSucc - MissesNew;
+    // scaling the result to increase the importance of merging short clusters
+    Gain /= (ClusterPred->size() + ClusterSucc->size());
+
+    if (UseGainCache) {
+      Cache.set(ClusterPred, ClusterSucc, Gain);
+    }
+
+    return Gain;
+  }
+
+  /*
+   * Run hfsort+ algorithm and return ordered set of function clusters.
+   */
+  std::vector<Cluster> run() {
+    DEBUG(dbgs() << "Starting hfsort+ w/"
+                 << cacheKindString(UseGainCache, UseShortCallCache)
+                 << " for " << Clusters.size() << " clusters\n"
+                 << format("Initial expected iTLB cache hit ratio: %.4lf\n",
+                           expectedCacheHitRatio(Clusters)));
+
+    int Steps = 0;
+    // merge pairs of clusters while there is an improvement
+    while (Clusters.size() > 1) {
+      DEBUG(
+        if (Steps % 500 == 0) {
+          dbgs() << format("step = %d  clusters = %lu  expected_hit_rate = %.4lf\n",
+                           Steps, Clusters.size(),
+                           expectedCacheHitRatio(Clusters));
+        });
+      ++Steps;
+
+      Cluster *BestClusterPred = nullptr;
+      Cluster *BestClusterSucc = nullptr;
+      double BestGain = -1;
+      for (auto ClusterPred : Clusters) {
+        // get candidates for merging with the current cluster
+        Adjacent.forallAdjacent(
+          ClusterPred,
+          // find the best candidate
+          [&](Cluster *ClusterSucc) {
+            assert(ClusterPred != ClusterSucc);
+            // get a cost of merging two clusters
+            const double Gain = mergeGain(ClusterPred, ClusterSucc);
+
+            // breaking ties by density to make the hottest clusters be merged first
+            if (Gain > BestGain || (std::abs(Gain - BestGain) < 1e-8 &&
+                                    compareClusterPairs(ClusterPred,
+                                                        ClusterSucc,
+                                                        BestClusterPred,
+                                                        BestClusterSucc))) {
+              BestGain = Gain;
+              BestClusterPred = ClusterPred;
+              BestClusterSucc = ClusterSucc;
+            }
+          });
+      }
+
+      if (BestGain <= 0.0) break;
+
+      // merge the best pair of clusters
+      mergeClusters(BestClusterPred, BestClusterSucc);
+
+      // remove BestClusterSucc from the list of active clusters
+      auto Iter = std::remove(Clusters.begin(), Clusters.end(), BestClusterSucc);
+      Clusters.erase(Iter, Clusters.end());
+    }
+
+    DEBUG(dbgs() << "Completed hfsort+ with " << Clusters.size() << " clusters\n"
+                 << format("Final expected iTLB cache hit ratio: %.4lf\n",
+                           expectedCacheHitRatio(Clusters)));
+
+    // Return the set of clusters that are left, which are the ones that
+    // didn't get merged (so their first func is its original func).
+    std::vector<Cluster> Result;
+    for (auto Cluster : sortByDensity(Clusters)) {
+      Result.emplace_back(std::move(*Cluster));
+    }
+
+    assert(std::is_sorted(Result.begin(), Result.end(), compareClustersDensity));
+
+    return Result;
+  }
+
+  HFSortPlus(const CallGraph &Cg,
+             bool UseGainCache,
+             bool UseShortCallCache)
+  : Cg(Cg),
+    FuncCluster(Cg.numNodes(), nullptr),
+    Addr(Cg.numNodes(), InvalidAddr),
+    TotalSamples(0.0),
+    Clusters(initializeClusters()),
+    Adjacent(Cg, Clusters, FuncCluster),
+    UseGainCache(UseGainCache),
+    UseShortCallCache(UseShortCallCache),
+    Cache(Clusters.size()),
+    ShortCallPairCache(Clusters.size()) {
+  }
+private:
+  // Initialize the set of active clusters, function id to cluster mapping,
+  // total number of samples and function addresses.
+  std::vector<Cluster *> initializeClusters() {
+    std::vector<Cluster *> Clusters;
+
+    Clusters.reserve(Cg.numNodes());
+    AllClusters.reserve(Cg.numNodes());
+
+    for (NodeId F = 0; F < Cg.numNodes(); F++) {
+      AllClusters.emplace_back(F, Cg.getNode(F));
+      if (Cg.samples(F) == 0) continue;
+      Clusters.emplace_back(&AllClusters[F]);
+      Clusters.back()->setId(Clusters.size() - 1);
+      FuncCluster[F] = &AllClusters[F];
+      Addr[F] = 0;
+      TotalSamples += Cg.samples(F);
+    }
+
+    return Clusters;
+  }
+
+  /*
+   * Merge cluster From into cluster Into.
+   */
+  void mergeClusters(Cluster *Into, Cluster *From) {
     DEBUG(
       if (opts::Verbosity > 0) {
-        dbgs() << "Merging cluster " << BestClusterSucc->id()
-               << " into cluster " << BestClusterPred->id() << "\n";
+        dbgs() << "Merging cluster " << From->id()
+               << " into cluster " << Into->id() << "\n";
       });
 
-    Adjacent.merge(BestClusterPred, BestClusterSucc);
-    BestClusterPred->merge(*BestClusterSucc);
+    // The adjacency merge must happen before the Cluster::merge since that
+    // clobbers the contents of From.
+    Adjacent.merge(Into, From);
 
+    Into->merge(*From);
+
+    // Update the clusters and addresses for functions merged from From.
     size_t CurAddr = 0;
-    for (auto TargetId : BestClusterPred->targets()) {
-      State.FuncCluster[TargetId] = BestClusterPred;
-      State.Addr[TargetId] = CurAddr;
-      CurAddr += State.Cg->size(TargetId);
+    for (auto TargetId : Into->targets()) {
+      FuncCluster[TargetId] = Into;
+      Addr[TargetId] = CurAddr;
+      CurAddr += Cg.size(TargetId);
     }
 
-    if (opts::UseShortCallCache) {
-      maybeErase(State.ShortCallCache, BestClusterPred);
-      Adjacent.forallAdjacent(BestClusterPred,
-                              [&State](const Cluster *C) {
-                                maybeErase(State.ShortCallCache, C);
-                              });
-      State.ShortCallPairCache.invalidate(Adjacent, BestClusterPred);
-    }
-    if (opts::UseGainCache) {
-      State.Cache.invalidate(Adjacent, BestClusterPred);
-    }
-
-    // remove BestClusterSucc from the list of active clusters
-    auto Iter = std::remove(Clusters.begin(), Clusters.end(), BestClusterSucc);
-    Clusters.erase(Iter, Clusters.end());
+    invalidateCaches(Into);
   }
 
-  DEBUG(dbgs() << "Completed hfsort+ with " << Clusters.size() << " clusters\n"
-               << format("Final expected iTLB cache hit ratio: %.4lf\n",
-                         expectedCacheHitRatio(State, Clusters)));
-
-  // Return the set of clusters that are left, which are the ones that
-  // didn't get merged (so their first func is its original func).
-  std::vector<Cluster> Result;
-  for (auto Cluster : sortByDensity(Clusters)) {
-    Result.emplace_back(std::move(*Cluster));
+  /*
+   * Invalidate all cache entries associated with cluster C and its neighbors.
+   */
+  void invalidateCaches(const Cluster *C) {
+    if (UseShortCallCache) {
+      maybeErase(ShortCallCache, C);
+      Adjacent.forallAdjacent(C,
+        [this](const Cluster *A) {
+          maybeErase(ShortCallCache, A);
+        });
+      ShortCallPairCache.invalidate(Adjacent, C);
+    }
+    if (UseGainCache) {
+      Cache.invalidate(Adjacent, C);
+    }
   }
 
-  assert(std::is_sorted(Result.begin(), Result.end(), compareClustersDensity));
+  // the call graph
+  const CallGraph &Cg;
 
-  return Result;
+  // All clusters.
+  std::vector<Cluster> AllClusters;
+
+  // target_id => cluster
+  std::vector<Cluster *> FuncCluster;
+
+  // current address of the function from the beginning of its cluster
+  std::vector<size_t> Addr;
+
+  // the total number of samples in the graph
+  double TotalSamples;
+
+  // All clusters with non-zero number of samples.  This vector gets
+  // udpated at runtime when clusters are merged.
+  std::vector<Cluster *> Clusters;
+
+  // Cluster adjacency matrix.
+  AdjacencyMatrix Adjacent;
+
+  // Use cache for mergeGain results.
+  bool UseGainCache;
+
+  // Use caches for shortCalls results.
+  bool UseShortCallCache;
+
+  // A cache that keeps precomputed values of mergeGain for pairs of clusters;
+  // when a pair of clusters (x,y) gets merged, we need to invalidate the pairs
+  // containing both x and y and all clusters adjacent to x and y (and recompute
+  // them on the next iteration).
+  mutable PrecomputedResults Cache;
+
+  // Cache for shortCalls for a single cluster.
+  mutable std::unordered_map<const Cluster *, double> ShortCallCache;
+
+  // Cache for shortCalls for a pair of Clusters
+  mutable PrecomputedResults ShortCallPairCache;
+};
+
+}
+
+std::vector<Cluster> hfsortPlus(const CallGraph &Cg,
+                                bool UseGainCache,
+                                bool UseShortCallCache) {
+  return HFSortPlus(Cg, UseGainCache, UseShortCallCache).run();
 }
 
 }}

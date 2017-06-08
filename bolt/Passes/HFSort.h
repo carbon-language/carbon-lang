@@ -103,7 +103,9 @@ std::vector<Cluster> clusterize(const CallGraph &Cg);
 /*
  * Optimize function placement for iTLB cache and i-cache.
  */
-std::vector<Cluster> hfsortPlus(const CallGraph &Cg);
+std::vector<Cluster> hfsortPlus(const CallGraph &Cg,
+                                bool UseGainCache = true,
+                                bool UseShortCallCache = true);
 
 /*
  * Pettis-Hansen code layout algorithm

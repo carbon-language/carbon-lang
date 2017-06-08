@@ -54,7 +54,7 @@ void orderFuncs(const CallGraph &Cg, Cluster *C1, Cluster *C2) {
   double C1tailC2head = 0;
   double C1tailC2tail = 0;
 
-  for (const auto &Arc : Cg.getArcs()) {
+  for (const auto &Arc : Cg.arcs()) {
     if ((Arc.src() == C1head && Arc.dst() == C2head) ||
         (Arc.dst() == C1head && Arc.src() == C2head)) {
       C1headC2head += Arc.weight();
@@ -113,7 +113,7 @@ std::vector<Cluster> pettisAndHansen(const CallGraph &Cg) {
 
   // Create a std::vector of cluster arcs
 
-  for (auto &Arc : Cg.getArcs()) {
+  for (auto &Arc : Cg.arcs()) {
     if (Arc.weight() == 0) continue;
 
     auto const S = FuncCluster[Arc.src()];
