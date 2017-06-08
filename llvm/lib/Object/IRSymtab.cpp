@@ -262,11 +262,10 @@ Error irsymtab::build(ArrayRef<Module *> Mods, SmallVector<char, 0> &Symtab,
   return Builder(Symtab, Strtab).build(Mods);
 }
 
-Expected<FileContents> irsymtab::readBitcode(ArrayRef<BitcodeModule> BMs) {
+// Upgrade a vector of bitcode modules created by an old version of LLVM by
+// creating an irsymtab for them in the current format.
+static Expected<FileContents> upgrade(ArrayRef<BitcodeModule> BMs) {
   FileContents FC;
-  if (BMs.empty())
-    return make_error<StringError>("Bitcode file does not contain any modules",
-                                   inconvertibleErrorCode());
 
   LLVMContext Ctx;
   std::vector<Module *> Mods;
@@ -292,4 +291,14 @@ Expected<FileContents> irsymtab::readBitcode(ArrayRef<BitcodeModule> BMs) {
   FC.TheReader = {{FC.Symtab.data(), FC.Symtab.size()},
                   {FC.Strtab.data(), FC.Strtab.size()}};
   return std::move(FC);
+}
+
+Expected<FileContents> irsymtab::readBitcode(const BitcodeFileContents &BFC) {
+  if (BFC.Mods.empty())
+    return make_error<StringError>("Bitcode file does not contain any modules",
+                                   inconvertibleErrorCode());
+
+  // Right now we have no on-disk representation of symbol tables, so we always
+  // upgrade.
+  return upgrade(BFC.Mods);
 }
