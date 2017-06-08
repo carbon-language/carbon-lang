@@ -26,6 +26,8 @@ std::string ArgKind::asString() const {
     return (Twine("Matcher<") + MatcherKind.asStringRef() + ">").str();
   case AK_Boolean:
     return "boolean";
+  case AK_Double:
+    return "double";
   case AK_Unsigned:
     return "unsigned";
   case AK_String:
@@ -253,6 +255,10 @@ VariantValue::VariantValue(bool Boolean) : Type(VT_Nothing) {
   setBoolean(Boolean);
 }
 
+VariantValue::VariantValue(double Double) : Type(VT_Nothing) {
+  setDouble(Double);
+}
+
 VariantValue::VariantValue(unsigned Unsigned) : Type(VT_Nothing) {
   setUnsigned(Unsigned);
 }
@@ -273,6 +279,9 @@ VariantValue &VariantValue::operator=(const VariantValue &Other) {
   switch (Other.Type) {
   case VT_Boolean:
     setBoolean(Other.getBoolean());
+    break;
+  case VT_Double:
+    setDouble(Other.getDouble());
     break;
   case VT_Unsigned:
     setUnsigned(Other.getUnsigned());
@@ -300,6 +309,7 @@ void VariantValue::reset() {
     break;
   // Cases that do nothing.
   case VT_Boolean:
+  case VT_Double:
   case VT_Unsigned:
   case VT_Nothing:
     break;
@@ -320,6 +330,21 @@ void VariantValue::setBoolean(bool NewValue) {
   reset();
   Type = VT_Boolean;
   Value.Boolean = NewValue;
+}
+
+bool VariantValue::isDouble() const {
+  return Type == VT_Double;
+}
+
+double VariantValue::getDouble() const {
+  assert(isDouble());
+  return Value.Double;
+}
+
+void VariantValue::setDouble(double NewValue) {
+  reset();
+  Type = VT_Double;
+  Value.Double = NewValue;
 }
 
 bool VariantValue::isUnsigned() const {
@@ -375,6 +400,12 @@ bool VariantValue::isConvertibleTo(ArgKind Kind, unsigned *Specificity) const {
     *Specificity = 1;
     return true;
 
+  case ArgKind::AK_Double:
+    if (!isDouble())
+      return false;
+    *Specificity = 1;
+    return true;
+
   case ArgKind::AK_Unsigned:
     if (!isUnsigned())
       return false;
@@ -415,6 +446,7 @@ std::string VariantValue::getTypeAsString() const {
   case VT_String: return "String";
   case VT_Matcher: return getMatcher().getTypeAsString();
   case VT_Boolean: return "Boolean";
+  case VT_Double: return "Double";
   case VT_Unsigned: return "Unsigned";
   case VT_Nothing: return "Nothing";
   }

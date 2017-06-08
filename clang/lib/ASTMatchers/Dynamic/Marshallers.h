@@ -75,6 +75,16 @@ template <> struct ArgTypeTraits<bool> {
   }
 };
 
+template <> struct ArgTypeTraits<double> {
+  static bool is(const VariantValue &Value) { return Value.isDouble(); }
+  static double get(const VariantValue &Value) {
+    return Value.getDouble();
+  }
+  static ArgKind getKind() {
+    return ArgKind(ArgKind::AK_Double);
+  }
+};
+
 template <> struct ArgTypeTraits<unsigned> {
   static bool is(const VariantValue &Value) { return Value.isUnsigned(); }
   static unsigned get(const VariantValue &Value) {

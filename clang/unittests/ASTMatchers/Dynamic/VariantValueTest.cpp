@@ -76,6 +76,7 @@ TEST(VariantValueTest, Assignment) {
   EXPECT_EQ("A", Value.getString());
   EXPECT_TRUE(Value.hasValue());
   EXPECT_FALSE(Value.isBoolean());
+  EXPECT_FALSE(Value.isDouble());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isMatcher());
   EXPECT_EQ("String", Value.getTypeAsString());
@@ -83,6 +84,7 @@ TEST(VariantValueTest, Assignment) {
   Value = VariantMatcher::SingleMatcher(recordDecl());
   EXPECT_TRUE(Value.hasValue());
   EXPECT_FALSE(Value.isBoolean());
+  EXPECT_FALSE(Value.isDouble());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
   EXPECT_TRUE(Value.isMatcher());
@@ -98,10 +100,20 @@ TEST(VariantValueTest, Assignment) {
   EXPECT_FALSE(Value.isMatcher());
   EXPECT_FALSE(Value.isString());
 
+  Value = 3.14;
+  EXPECT_TRUE(Value.isDouble());
+  EXPECT_EQ(3.14, Value.getDouble());
+  EXPECT_TRUE(Value.hasValue());
+  EXPECT_FALSE(Value.isBoolean());
+  EXPECT_FALSE(Value.isUnsigned());
+  EXPECT_FALSE(Value.isMatcher());
+  EXPECT_FALSE(Value.isString());
+
   Value = 17;
   EXPECT_TRUE(Value.isUnsigned());
   EXPECT_EQ(17U, Value.getUnsigned());
   EXPECT_FALSE(Value.isBoolean());
+  EXPECT_FALSE(Value.isDouble());
   EXPECT_TRUE(Value.hasValue());
   EXPECT_FALSE(Value.isMatcher());
   EXPECT_FALSE(Value.isString());
@@ -109,6 +121,7 @@ TEST(VariantValueTest, Assignment) {
   Value = VariantValue();
   EXPECT_FALSE(Value.hasValue());
   EXPECT_FALSE(Value.isBoolean());
+  EXPECT_FALSE(Value.isDouble());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
   EXPECT_FALSE(Value.isMatcher());

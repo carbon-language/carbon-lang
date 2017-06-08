@@ -36,6 +36,7 @@ class ArgKind {
   enum Kind {
     AK_Matcher,
     AK_Boolean,
+    AK_Double,
     AK_Unsigned,
     AK_String
   };
@@ -243,6 +244,7 @@ struct VariantMatcher::TypedMatcherOps final : VariantMatcher::MatcherOps {
 ///
 /// Supported types:
 ///  - \c bool
+//   - \c double
 ///  - \c unsigned
 ///  - \c llvm::StringRef
 ///  - \c VariantMatcher (\c DynTypedMatcher / \c Matcher<T>)
@@ -256,6 +258,7 @@ public:
 
   /// \brief Specific constructors for each supported type.
   VariantValue(bool Boolean);
+  VariantValue(double Double);
   VariantValue(unsigned Unsigned);
   VariantValue(StringRef String);
   VariantValue(const VariantMatcher &Matchers);
@@ -271,6 +274,11 @@ public:
   bool isBoolean() const;
   bool getBoolean() const;
   void setBoolean(bool Boolean);
+
+  /// \brief Double value functions.
+  bool isDouble() const;
+  double getDouble() const;
+  void setDouble(double Double);
 
   /// \brief Unsigned value functions.
   bool isUnsigned() const;
@@ -315,6 +323,7 @@ private:
   enum ValueType {
     VT_Nothing,
     VT_Boolean,
+    VT_Double,
     VT_Unsigned,
     VT_String,
     VT_Matcher
@@ -323,6 +332,7 @@ private:
   /// \brief All supported value types.
   union AllValues {
     unsigned Unsigned;
+    double Double;
     bool Boolean;
     std::string *String;
     VariantMatcher *Matcher;
