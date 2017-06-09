@@ -38,7 +38,7 @@ DbiStream:
         - !Lines
           CodeSize:        10
           Flags:           [  ]
-          RelocOffset:     16
+          RelocOffset:     100016
           RelocSegment:    1
           Blocks:
             - FileName:        'd:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp'
