@@ -1661,25 +1661,24 @@ Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
 }
 
 static LazyValueInfo::Tristate getPredicateResult(unsigned Pred, Constant *C,
-                                                  LVILatticeVal &Result,
+                                                  const LVILatticeVal &Val,
                                                   const DataLayout &DL,
                                                   TargetLibraryInfo *TLI) {
 
   // If we know the value is a constant, evaluate the conditional.
   Constant *Res = nullptr;
-  if (Result.isConstant()) {
-    Res = ConstantFoldCompareInstOperands(Pred, Result.getConstant(), C, DL,
-                                          TLI);
+  if (Val.isConstant()) {
+    Res = ConstantFoldCompareInstOperands(Pred, Val.getConstant(), C, DL, TLI);
     if (ConstantInt *ResCI = dyn_cast<ConstantInt>(Res))
       return ResCI->isZero() ? LazyValueInfo::False : LazyValueInfo::True;
     return LazyValueInfo::Unknown;
   }
 
-  if (Result.isConstantRange()) {
+  if (Val.isConstantRange()) {
     ConstantInt *CI = dyn_cast<ConstantInt>(C);
     if (!CI) return LazyValueInfo::Unknown;
 
-    const ConstantRange &CR = Result.getConstantRange();
+    const ConstantRange &CR = Val.getConstantRange();
     if (Pred == ICmpInst::ICMP_EQ) {
       if (!CR.contains(CI->getValue()))
         return LazyValueInfo::False;
@@ -1704,20 +1703,20 @@ static LazyValueInfo::Tristate getPredicateResult(unsigned Pred, Constant *C,
     return LazyValueInfo::Unknown;
   }
 
-  if (Result.isNotConstant()) {
+  if (Val.isNotConstant()) {
     // If this is an equality comparison, we can try to fold it knowing that
     // "V != C1".
     if (Pred == ICmpInst::ICMP_EQ) {
       // !C1 == C -> false iff C1 == C.
       Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_NE,
-                                            Result.getNotConstant(), C, DL,
+                                            Val.getNotConstant(), C, DL,
                                             TLI);
       if (Res->isNullValue())
         return LazyValueInfo::False;
     } else if (Pred == ICmpInst::ICMP_NE) {
       // !C1 != C -> true iff C1 == C.
       Res = ConstantFoldCompareInstOperands(ICmpInst::ICMP_NE,
-                                            Result.getNotConstant(), C, DL,
+                                            Val.getNotConstant(), C, DL,
                                             TLI);
       if (Res->isNullValue())
         return LazyValueInfo::True;
