@@ -56,8 +56,7 @@ bool lldb_private::operator==(const VMRange &lhs, const VMRange &rhs) {
 }
 
 bool lldb_private::operator!=(const VMRange &lhs, const VMRange &rhs) {
-  return lhs.GetBaseAddress() != rhs.GetBaseAddress() ||
-         lhs.GetEndAddress() != rhs.GetEndAddress();
+  return !(lhs == rhs);
 }
 
 bool lldb_private::operator<(const VMRange &lhs, const VMRange &rhs) {
@@ -69,25 +68,13 @@ bool lldb_private::operator<(const VMRange &lhs, const VMRange &rhs) {
 }
 
 bool lldb_private::operator<=(const VMRange &lhs, const VMRange &rhs) {
-  if (lhs.GetBaseAddress() < rhs.GetBaseAddress())
-    return true;
-  else if (lhs.GetBaseAddress() > rhs.GetBaseAddress())
-    return false;
-  return lhs.GetEndAddress() <= rhs.GetEndAddress();
+  return !(lhs > rhs);
 }
 
 bool lldb_private::operator>(const VMRange &lhs, const VMRange &rhs) {
-  if (lhs.GetBaseAddress() > rhs.GetBaseAddress())
-    return true;
-  else if (lhs.GetBaseAddress() < rhs.GetBaseAddress())
-    return false;
-  return lhs.GetEndAddress() > rhs.GetEndAddress();
+  return rhs < lhs;
 }
 
 bool lldb_private::operator>=(const VMRange &lhs, const VMRange &rhs) {
-  if (lhs.GetBaseAddress() > rhs.GetBaseAddress())
-    return true;
-  else if (lhs.GetBaseAddress() < rhs.GetBaseAddress())
-    return false;
-  return lhs.GetEndAddress() >= rhs.GetEndAddress();
+  return !(lhs < rhs);
 }
