@@ -232,7 +232,7 @@ public:
       if (!Name)
         return joinErrors(make_error<RawError>(raw_error_code::invalid_format,
                                                "Invalid Frame.FrameFunc index"),
-                          std::move(Name.takeError()));
+                          Name.takeError());
       P.printNumber("Rva", Frame.RvaStart);
       P.printNumber("CodeSize", Frame.CodeSize);
       P.printNumber("LocalSize", Frame.LocalSize);
@@ -968,7 +968,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
             return joinErrors(
                 make_error<RawError>(raw_error_code::no_stream,
                                      "Could not get string table!"),
-                std::move(ExpectedStrings.takeError()));
+                ExpectedStrings.takeError());
 
           C13RawVisitor V(P, Tpi, Ipi);
           if (auto EC = codeview::visitDebugSubsections(
