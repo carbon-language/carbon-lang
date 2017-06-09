@@ -34,6 +34,9 @@ enum class ModuleSubsection {
   InlineeLines,
   CrossScopeImports,
   CrossScopeExports,
+  StringTable,
+  Symbols,
+  FrameData,
   All
 };
 

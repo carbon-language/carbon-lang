@@ -62,3 +62,30 @@ DbiStream:
             - FileName:        'f:\dd\externalapis\windows\10\sdk\inc\winerror.h'
               LineNum:         26950
               Inlinee:         22767
+    # The following subsections don't normally appear in PDB files, but we test
+    # them anyway
+    - Module:          'ObjFileSubsections'
+      ObjFile:         'ObjFileSubsections'
+      Subsections:
+        - !StringTable
+          Strings:
+            - 'String1'
+            - 'String2'
+            - 'String3'
+        - !Symbols
+          Records:
+            - Kind:            S_OBJNAME
+              ObjNameSym:
+                Signature:       0
+                ObjectName:      'ObjFileSubsections'
+        - !FrameData
+          Frames:
+            - CodeSize:           1
+              FrameFunc:          'MyFunc'
+              LocalSize:          2
+              MaxStackSize:       3
+              ParamsSize:         4
+              PrologSize:         5
+              RvaStart:           6
+              SavedRegsSize:      7
+...

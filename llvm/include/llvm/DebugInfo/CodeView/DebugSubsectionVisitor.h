@@ -24,8 +24,10 @@ class DebugSubsectionRecord;
 class DebugInlineeLinesSubsectionRef;
 class DebugCrossModuleExportsSubsectionRef;
 class DebugCrossModuleImportsSubsectionRef;
+class DebugFrameDataSubsectionRef;
 class DebugLinesSubsectionRef;
 class DebugStringTableSubsectionRef;
+class DebugSymbolsSubsectionRef;
 class DebugUnknownSubsectionRef;
 
 struct DebugSubsectionState {
@@ -97,6 +99,15 @@ public:
   virtual Error
   visitCrossModuleImports(DebugCrossModuleImportsSubsectionRef &CSE,
                           const DebugSubsectionState &State) = 0;
+
+  virtual Error visitStringTable(DebugStringTableSubsectionRef &ST,
+                                 const DebugSubsectionState &State) = 0;
+
+  virtual Error visitSymbols(DebugSymbolsSubsectionRef &CSE,
+                             const DebugSubsectionState &State) = 0;
+
+  virtual Error visitFrameData(DebugFrameDataSubsectionRef &FD,
+                               const DebugSubsectionState &State) = 0;
 };
 
 Error visitDebugSubsection(const DebugSubsectionRecord &R,

@@ -171,6 +171,12 @@ static opts::ModuleSubsection convertSubsectionKind(DebugSubsectionKind K) {
     return opts::ModuleSubsection::InlineeLines;
   case DebugSubsectionKind::Lines:
     return opts::ModuleSubsection::Lines;
+  case DebugSubsectionKind::Symbols:
+    return opts::ModuleSubsection::Symbols;
+  case DebugSubsectionKind::StringTable:
+    return opts::ModuleSubsection::StringTable;
+  case DebugSubsectionKind::FrameData:
+    return opts::ModuleSubsection::FrameData;
   default:
     return opts::ModuleSubsection::Unknown;
   }

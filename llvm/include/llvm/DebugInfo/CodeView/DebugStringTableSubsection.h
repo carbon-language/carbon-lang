@@ -45,6 +45,8 @@ public:
 
   bool valid() const { return Stream.valid(); }
 
+  BinaryStreamRef getBuffer() const { return Stream; }
+
 private:
   BinaryStreamRef Stream;
 };

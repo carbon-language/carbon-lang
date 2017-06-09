@@ -1,4 +1,4 @@
-//===- DebugSubsectionVisitor.cpp ---------------------------*- C++ -*-===//
+//===- DebugSubsectionVisitor.cpp -------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,10 +12,12 @@
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugCrossExSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugCrossImpSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugFrameDataSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugInlineeLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsectionRecord.h"
+#include "llvm/DebugInfo/CodeView/DebugSymbolsSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugUnknownSubsection.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/BinaryStreamRef.h"
@@ -90,6 +92,24 @@ Error llvm::codeview::visitDebugSubsection(const DebugSubsectionRecord &R,
     if (auto EC = Section.initialize(Reader))
       return EC;
     return V.visitCrossModuleImports(Section, State);
+  }
+  case DebugSubsectionKind::Symbols: {
+    DebugSymbolsSubsectionRef Section;
+    if (auto EC = Section.initialize(Reader))
+      return EC;
+    return V.visitSymbols(Section, State);
+  }
+  case DebugSubsectionKind::StringTable: {
+    DebugStringTableSubsectionRef Section;
+    if (auto EC = Section.initialize(Reader))
+      return EC;
+    return V.visitStringTable(Section, State);
+  }
+  case DebugSubsectionKind::FrameData: {
+    DebugFrameDataSubsectionRef Section;
+    if (auto EC = Section.initialize(Reader))
+      return EC;
+    return V.visitFrameData(Section, State);
   }
   default: {
     DebugUnknownSubsectionRef Fragment(R.kind(), R.getRecordData());

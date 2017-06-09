@@ -434,6 +434,14 @@ cl::list<ModuleSubsection> DumpModuleSubsections(
                    "Inlinee lines (DEBUG_S_INLINEELINES subsection)"),
         clEnumValN(ModuleSubsection::Lines, "lines",
                    "Lines (DEBUG_S_LINES subsection)"),
+        clEnumValN(ModuleSubsection::StringTable, "strings",
+                   "String Table (DEBUG_S_STRINGTABLE subsection) (not "
+                   "typically present in PDB file)"),
+        clEnumValN(ModuleSubsection::FrameData, "frames",
+                   "Frame Data (DEBUG_S_FRAMEDATA subsection)"),
+        clEnumValN(ModuleSubsection::Symbols, "symbols",
+                   "Symbols (DEBUG_S_SYMBOLS subsection) (not typically "
+                   "present in PDB file)"),
         clEnumValN(ModuleSubsection::All, "all", "All known subsections")),
     cl::cat(FileOptions), cl::sub(RawSubcommand), cl::sub(PdbToYamlSubcommand));
 cl::opt<bool> DumpModuleSyms("module-syms", cl::desc("dump module symbols"),
@@ -545,8 +553,8 @@ static void yamlToPdb(StringRef Path) {
       }
     }
 
-    auto CodeViewSubsections =
-        ExitOnErr(CodeViewYAML::convertSubsectionList(MI.Subsections, Strings));
+    auto CodeViewSubsections = ExitOnErr(CodeViewYAML::toCodeViewSubsectionList(
+        Allocator, MI.Subsections, Strings));
     for (auto &SS : CodeViewSubsections) {
       ModiBuilder.addDebugSubsection(std::move(SS));
     }

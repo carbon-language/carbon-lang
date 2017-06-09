@@ -17,9 +17,12 @@
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugCrossExSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugCrossImpSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugFrameDataSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugInlineeLinesSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugLinesSubsection.h"
+#include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugSubsectionVisitor.h"
+#include "llvm/DebugInfo/CodeView/DebugSymbolsSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugUnknownSubsection.h"
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
@@ -84,8 +87,9 @@ struct PageStats {
 
 class C13RawVisitor : public DebugSubsectionVisitor {
 public:
-  C13RawVisitor(ScopedPrinter &P, LazyRandomTypeCollection &IPI)
-      : P(P), IPI(IPI) {}
+  C13RawVisitor(ScopedPrinter &P, LazyRandomTypeCollection &TPI,
+                LazyRandomTypeCollection &IPI)
+      : P(P), TPI(TPI), IPI(IPI) {}
 
   Error visitLines(DebugLinesSubsectionRef &Lines,
                    const DebugSubsectionState &State) override {
@@ -204,6 +208,72 @@ public:
     return Error::success();
   }
 
+  Error visitFrameData(DebugFrameDataSubsectionRef &FD,
+                       const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::FrameData))
+      return Error::success();
+
+    ListScope L(P, "FrameData");
+    for (const auto &Frame : FD) {
+      DictScope D(P, "Frame");
+      auto Name = getNameFromStringTable(Frame.FrameFunc, State);
+      if (!Name)
+        return joinErrors(make_error<RawError>(raw_error_code::invalid_format,
+                                               "Invalid Frame.FrameFunc index"),
+                          std::move(Name.takeError()));
+      P.printNumber("Rva", Frame.RvaStart);
+      P.printNumber("CodeSize", Frame.CodeSize);
+      P.printNumber("LocalSize", Frame.LocalSize);
+      P.printNumber("ParamsSize", Frame.ParamsSize);
+      P.printNumber("MaxStackSize", Frame.MaxStackSize);
+      P.printString("FrameFunc", *Name);
+      P.printNumber("PrologSize", Frame.PrologSize);
+      P.printNumber("SavedRegsSize", Frame.SavedRegsSize);
+      P.printNumber("Flags", Frame.Flags);
+    }
+    return Error::success();
+  }
+
+  Error visitSymbols(DebugSymbolsSubsectionRef &Symbols,
+                     const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::Symbols))
+      return Error::success();
+    ListScope L(P, "Symbols");
+
+    // This section should not actually appear in a PDB file, it really only
+    // appears in object files.  But we support it here for testing.  So we
+    // specify the Object File container type.
+    codeview::CVSymbolDumper SD(P, TPI, CodeViewContainer::ObjectFile, nullptr,
+                                false);
+    for (auto S : Symbols) {
+      DictScope LL(P, "");
+      if (auto EC = SD.dump(S)) {
+        return make_error<RawError>(
+            raw_error_code::corrupt_file,
+            "DEBUG_S_SYMBOLS subsection contained corrupt symbol record");
+      }
+    }
+    return Error::success();
+  }
+
+  Error visitStringTable(DebugStringTableSubsectionRef &Strings,
+                         const DebugSubsectionState &State) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::StringTable))
+      return Error::success();
+
+    ListScope D(P, "String Table");
+    BinaryStreamReader Reader(Strings.getBuffer());
+    StringRef S;
+    consumeError(Reader.readCString(S));
+    while (Reader.bytesRemaining() > 0) {
+      consumeError(Reader.readCString(S));
+      if (S.empty() && Reader.bytesRemaining() < 4)
+        break;
+      P.printString(S);
+    }
+    return Error::success();
+  }
+
 private:
   Error dumpTypeRecord(StringRef Label, TypeIndex Index) {
     CompactTypeDumpVisitor CTDV(IPI, Index, &P);
@@ -245,6 +315,7 @@ private:
   }
 
   ScopedPrinter &P;
+  LazyRandomTypeCollection &TPI;
   LazyRandomTypeCollection &IPI;
 };
 }
@@ -847,14 +918,14 @@ Error LLVMOutputStyle::dumpDbiStream() {
         if (auto EC = ModS.reload())
           return EC;
 
+        auto ExpectedTpi = initializeTypeDatabase(StreamTPI);
+        if (!ExpectedTpi)
+          return ExpectedTpi.takeError();
+        auto &Tpi = *ExpectedTpi;
         if (ShouldDumpSymbols) {
-          auto ExpectedTypes = initializeTypeDatabase(StreamTPI);
-          if (!ExpectedTypes)
-            return ExpectedTypes.takeError();
-          auto &Types = *ExpectedTypes;
 
           ListScope SS(P, "Symbols");
-          codeview::CVSymbolDumper SD(P, Types, CodeViewContainer::Pdb, nullptr,
+          codeview::CVSymbolDumper SD(P, Tpi, CodeViewContainer::Pdb, nullptr,
                                       false);
           bool HadError = false;
           for (auto S : ModS.symbols(&HadError)) {
@@ -876,10 +947,10 @@ Error LLVMOutputStyle::dumpDbiStream() {
         }
         if (!opts::shared::DumpModuleSubsections.empty()) {
           ListScope SS(P, "Subsections");
-          auto ExpectedTypes = initializeTypeDatabase(StreamIPI);
-          if (!ExpectedTypes)
-            return ExpectedTypes.takeError();
-          auto &IpiItems = *ExpectedTypes;
+          auto ExpectedIpi = initializeTypeDatabase(StreamIPI);
+          if (!ExpectedIpi)
+            return ExpectedIpi.takeError();
+          auto &Ipi = *ExpectedIpi;
           auto ExpectedStrings = File.getStringTable();
           if (!ExpectedStrings)
             return joinErrors(
@@ -887,7 +958,7 @@ Error LLVMOutputStyle::dumpDbiStream() {
                                      "Could not get string table!"),
                 std::move(ExpectedStrings.takeError()));
 
-          C13RawVisitor V(P, IpiItems);
+          C13RawVisitor V(P, Tpi, Ipi);
           if (auto EC = codeview::visitDebugSubsections(
                   ModS.subsections(), V, ExpectedStrings->getStringTable()))
             return EC;
