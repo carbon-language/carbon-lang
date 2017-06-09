@@ -1,4 +1,4 @@
-// RUN: %clang_cc1  -ffreestanding -verify -fsyntax-only %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin -ffreestanding -verify -fsyntax-only %s
 
 #include <tmmintrin.h>
 #include <stdint.h>
