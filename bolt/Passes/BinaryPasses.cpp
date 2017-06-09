@@ -650,9 +650,10 @@ uint64_t SimplifyConditionalTailCalls::fixTailCalls(BinaryContext &BC,
       // if there are no other users.
       PredBB->removeSuccessor(BB);
       // Update BB execution count
-      if (BB->getKnownExecutionCount() > 0) {
-        assert(CTCTakenFreq <= BB->getKnownExecutionCount());
+      if (CTCTakenFreq && CTCTakenFreq <= BB->getKnownExecutionCount()) {
         BB->setExecutionCount(BB->getExecutionCount() - CTCTakenFreq);
+      } else if (CTCTakenFreq > BB->getKnownExecutionCount()) {
+        BB->setExecutionCount(0);
       }
 
       ++NumLocalCTCs;
