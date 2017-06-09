@@ -1,4 +1,4 @@
-//===- PrettyCompilandDumper.cpp - llvm-pdbdump compiland dumper -*- C++ *-===//
+//===- PrettyCompilandDumper.cpp - llvm-pdbutil compiland dumper -*- C++ *-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 
 #include "LinePrinter.h"
 #include "PrettyFunctionDumper.h"
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "llvm/DebugInfo/PDB/IPDBEnumChildren.h"
 #include "llvm/DebugInfo/PDB/IPDBLineNumber.h"

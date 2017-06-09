@@ -11,7 +11,7 @@
 
 #include "LinePrinter.h"
 #include "PrettyClassLayoutGraphicalDumper.h"
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"

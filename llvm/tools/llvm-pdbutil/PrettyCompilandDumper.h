@@ -1,4 +1,4 @@
-//===- PrettyCompilandDumper.h - llvm-pdbdump compiland dumper -*- C++ --*-===//
+//===- PrettyCompilandDumper.h - llvm-pdbutil compiland dumper -*- C++ --*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

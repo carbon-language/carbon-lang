@@ -10,7 +10,7 @@
 #include "Diff.h"
 
 #include "StreamUtil.h"
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "llvm/DebugInfo/PDB/Native/Formatters.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"

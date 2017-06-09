@@ -11,7 +11,7 @@
 
 #include "CompactTypeDumpVisitor.h"
 #include "StreamUtil.h"
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "llvm/DebugInfo/CodeView/CVTypeVisitor.h"
 #include "llvm/DebugInfo/CodeView/DebugChecksumsSubsection.h"

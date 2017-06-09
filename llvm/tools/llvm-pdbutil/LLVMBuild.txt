@@ -1,4 +1,4 @@
-;===- ./tools/llvm-pdbdump/LLVMBuild.txt -----------------------*- Conf -*--===;
+;===- ./tools/llvm-pdbutil/LLVMBuild.txt -----------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,7 +17,7 @@
 
 [component_0]
 type = Tool
-name = llvm-pdbdump
+name = llvm-pdbutil
 parent = Tools
 required_libraries = DebugInfoMSF DebugInfoPDB
 

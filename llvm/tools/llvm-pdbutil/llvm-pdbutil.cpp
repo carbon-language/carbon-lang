@@ -1,4 +1,4 @@
-//===- llvm-pdbdump.cpp - Dump debug info from a PDB file -------*- C++ -*-===//
+//===- llvm-pdbutil.cpp - Dump debug info from a PDB file -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "Analyze.h"
 #include "Diff.h"
@@ -867,7 +867,7 @@ int main(int argc_, const char *argv_[]) {
   sys::PrintStackTraceOnErrorSignal(argv_[0]);
   PrettyStackTraceProgram X(argc_, argv_);
 
-  ExitOnErr.setBanner("llvm-pdbdump: ");
+  ExitOnErr.setBanner("llvm-pdbutil: ");
 
   SmallVector<const char *, 256> argv;
   SpecificBumpPtrAllocator<char> ArgAllocator;

@@ -11,7 +11,7 @@
 
 #include "LinePrinter.h"
 #include "PrettyBuiltinDumper.h"
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "llvm/DebugInfo/PDB/PDBSymbolData.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolTypeBuiltin.h"

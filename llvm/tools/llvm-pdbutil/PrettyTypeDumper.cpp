@@ -14,7 +14,7 @@
 #include "PrettyClassDefinitionDumper.h"
 #include "PrettyEnumDumper.h"
 #include "PrettyTypedefDumper.h"
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "llvm/DebugInfo/PDB/IPDBSession.h"
 #include "llvm/DebugInfo/PDB/PDBSymbolExe.h"

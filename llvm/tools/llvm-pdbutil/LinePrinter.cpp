@@ -9,7 +9,7 @@
 
 #include "LinePrinter.h"
 
-#include "llvm-pdbdump.h"
+#include "llvm-pdbutil.h"
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/PDB/UDTLayout.h"

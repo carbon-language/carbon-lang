@@ -1,4 +1,4 @@
-//===-- llvm-pdbdump-fuzzer.cpp - Fuzz the llvm-pdbdump tool --------------===//
+//===-- llvm-pdbutil-fuzzer.cpp - Fuzz the llvm-pdbutil tool --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 ///
 /// \file
-/// \brief This file implements a function that runs llvm-pdbdump
+/// \brief This file implements a function that runs llvm-pdbutil
 ///  on a single input. This function is then linked into the Fuzzer library.
 ///
 //===----------------------------------------------------------------------===//

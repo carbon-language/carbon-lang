@@ -7,11 +7,11 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_tool(llvm-pdbdump
+add_llvm_tool(llvm-pdbutil
   Analyze.cpp
   CompactTypeDumpVisitor.cpp
   Diff.cpp
-  llvm-pdbdump.cpp
+  llvm-pdbutil.cpp
   LinePrinter.cpp
   LLVMOutputStyle.cpp
   PdbYaml.cpp

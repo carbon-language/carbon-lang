@@ -5,11 +5,11 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_executable(llvm-pdbdump-fuzzer
+add_llvm_executable(llvm-pdbutil-fuzzer
   EXCLUDE_FROM_ALL
-  llvm-pdbdump-fuzzer.cpp
+  llvm-pdbutil-fuzzer.cpp
   )
 
-target_link_libraries(llvm-pdbdump-fuzzer
+target_link_libraries(llvm-pdbutil-fuzzer
   LLVMFuzzer
   )

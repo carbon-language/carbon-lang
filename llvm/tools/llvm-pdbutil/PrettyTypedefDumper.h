@@ -1,4 +1,4 @@
-//===- PrettyTypedefDumper.h - llvm-pdbdump typedef dumper ---*- C++ ----*-===//
+//===- PrettyTypedefDumper.h - llvm-pdbutil typedef dumper ---*- C++ ----*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
