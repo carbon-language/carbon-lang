@@ -120,7 +120,7 @@ Error visitDebugSubsections(T &&FragmentRange, DebugSubsectionVisitor &V,
                             DebugSubsectionState &State) {
   State.initialize(std::forward<T>(FragmentRange));
 
-  for (const auto &L : FragmentRange) {
+  for (const DebugSubsectionRecord &L : FragmentRange) {
     if (auto EC = visitDebugSubsection(L, V, State))
       return EC;
   }

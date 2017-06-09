@@ -34,19 +34,6 @@ Error DebugSubsectionRecord::initialize(BinaryStreamRef Stream,
 
   DebugSubsectionKind Kind =
       static_cast<DebugSubsectionKind>(uint32_t(Header->Kind));
-  switch (Kind) {
-  case DebugSubsectionKind::FileChecksums:
-  case DebugSubsectionKind::Lines:
-  case DebugSubsectionKind::InlineeLines:
-  case DebugSubsectionKind::CrossScopeExports:
-  case DebugSubsectionKind::CrossScopeImports:
-  case DebugSubsectionKind::Symbols:
-  case DebugSubsectionKind::StringTable:
-  case DebugSubsectionKind::FrameData:
-    break;
-  default:
-    llvm_unreachable("Unexpected debug fragment kind!");
-  }
   if (auto EC = Reader.readStreamRef(Info.Data, Header->Length))
     return EC;
   Info.Container = Container;

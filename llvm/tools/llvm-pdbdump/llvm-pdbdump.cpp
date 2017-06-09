@@ -442,6 +442,8 @@ cl::list<ModuleSubsection> DumpModuleSubsections(
         clEnumValN(ModuleSubsection::Symbols, "symbols",
                    "Symbols (DEBUG_S_SYMBOLS subsection) (not typically "
                    "present in PDB file)"),
+        clEnumValN(ModuleSubsection::Unknown, "unknown",
+                   "Any subsection not covered by another option"),
         clEnumValN(ModuleSubsection::All, "all", "All known subsections")),
     cl::cat(FileOptions), cl::sub(RawSubcommand), cl::sub(PdbToYamlSubcommand));
 cl::opt<bool> DumpModuleSyms("module-syms", cl::desc("dump module symbols"),

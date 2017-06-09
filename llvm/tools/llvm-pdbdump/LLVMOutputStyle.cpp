@@ -91,6 +91,18 @@ public:
                 LazyRandomTypeCollection &IPI)
       : P(P), TPI(TPI), IPI(IPI) {}
 
+  Error visitUnknown(DebugUnknownSubsectionRef &Unknown) override {
+    if (!opts::checkModuleSubsection(opts::ModuleSubsection::Unknown))
+      return Error::success();
+    DictScope DD(P, "Unknown");
+    P.printHex("Kind", static_cast<uint32_t>(Unknown.kind()));
+    ArrayRef<uint8_t> Data;
+    BinaryStreamReader Reader(Unknown.getData());
+    consumeError(Reader.readBytes(Data, Reader.bytesRemaining()));
+    P.printBinaryBlock("Data", Data);
+    return Error::success();
+  }
+
   Error visitLines(DebugLinesSubsectionRef &Lines,
                    const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::Lines))
