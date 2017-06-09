@@ -140,6 +140,9 @@ class CompilerInstance : public ModuleLoader {
   /// fly as part of this overall compilation action.
   std::map<std::string, std::string> BuiltModules;
 
+  /// Should we delete the BuiltModules when we're done?
+  bool DeleteBuiltModules = true;
+
   /// \brief The location of the module-import keyword for the last module
   /// import. 
   SourceLocation LastModuleImportLoc;

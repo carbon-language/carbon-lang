@@ -667,8 +667,11 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
       llvm::sys::fs::remove(OF.Filename);
   }
   OutputFiles.clear();
-  for (auto &Module : BuiltModules)
-    llvm::sys::fs::remove(Module.second);
+  if (DeleteBuiltModules) {
+    for (auto &Module : BuiltModules)
+      llvm::sys::fs::remove(Module.second);
+    BuiltModules.clear();
+  }
   NonSeekStream.reset();
 }
 
@@ -1928,12 +1931,11 @@ void CompilerInstance::loadModuleFromSource(SourceLocation ImportLoc,
         llvm::MemoryBuffer::getMemBuffer(NullTerminatedSource.c_str()));
 
     Other.BuiltModules = std::move(BuiltModules);
+    Other.DeleteBuiltModules = false;
   };
 
   auto PostBuildStep = [this](CompilerInstance &Other) {
     BuiltModules = std::move(Other.BuiltModules);
-    // Make sure the child build action doesn't delete the .pcms.
-    Other.BuiltModules.clear();
   };
 
   // Build the module, inheriting any modules that we've built locally.
