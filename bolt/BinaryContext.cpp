@@ -85,6 +85,12 @@ MCSymbol *BinaryContext::getGlobalSymbolAtAddress(uint64_t Address) const {
   return Symbol;
 }
 
+MCSymbol *BinaryContext::getGlobalSymbolByName(const std::string &Name) const {
+  auto Itr = GlobalSymbols.find(Name);
+  return Itr == GlobalSymbols.end()
+    ? nullptr : getGlobalSymbolAtAddress(Itr->second);
+}
+
 void BinaryContext::foldFunction(BinaryFunction &ChildBF,
                                  BinaryFunction &ParentBF,
                                  std::map<uint64_t, BinaryFunction> &BFs) {

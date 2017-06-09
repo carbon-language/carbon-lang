@@ -82,6 +82,29 @@ UseEdgeCounts("use-edge-counts",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static cl::opt<bool>
+CgFromPerfData("cg-from-perf-data",
+  cl::desc("use perf data directly when constructing the call graph"
+           " for stale functions"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+CgIgnoreRecursiveCalls("cg-ignore-recursive-calls",
+  cl::desc("ignore recursive calls when constructing the call graph"),
+  cl::init(true),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static cl::opt<bool>
+CgUseSplitHotSize("cg-use-split-hot-size",
+  cl::desc("use hot/cold data on basic blocks to determine hot sizes for "
+           "call graph functions"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 static llvm::cl::opt<bool>
 UseGainCache("hfsort+-use-cache",
   llvm::cl::desc("Use a cache for mergeGain results when computing hfsort+."),
@@ -171,10 +194,19 @@ void ReorderFunctions::reorder(std::vector<Cluster> &&Clusters,
         uint64_t Dist = 0;
         uint64_t Calls = 0;
         for (auto Dst : Cg.successors(FuncId)) {
+          if (FuncId == Dst) // ignore recursive calls in stats
+            continue;
           const auto& Arc = *Cg.findArc(FuncId, Dst);
           const auto D = std::abs(FuncAddr[Arc.dst()] -
                                   (FuncAddr[FuncId] + Arc.avgCallOffset()));
           const auto W = Arc.weight();
+          if (D < 64 && PrintDetailed && opts::Verbosity > 2) {
+            outs() << "BOLT-INFO: short (" << D << "B) call:\n"
+                   << "BOLT-INFO:   Src: " << *Cg.nodeIdToFunc(FuncId) << "\n"
+                   << "BOLT-INFO:   Dst: " << *Cg.nodeIdToFunc(Dst) << "\n"
+                   << "BOLT-INFO:   Weight = " << W << "\n"
+                   << "BOLT-INFO:   AvgOffset = " << Arc.avgCallOffset() << "\n";
+          }
           Calls += W;
           if (D < 64)        TotalCalls64B += W;
           if (D < 4096)      TotalCalls4KB += W;
@@ -266,9 +298,12 @@ void ReorderFunctions::runOnFunctions(BinaryContext &BC,
                         [this](const BinaryFunction &BF) {
                           return !shouldOptimize(BF) || !BF.hasProfile();
                         },
+                        opts::CgFromPerfData,
                         false, // IncludeColdCalls
                         opts::ReorderFunctionsUseHotSize,
-                        opts::UseEdgeCounts);
+                        opts::CgUseSplitHotSize,
+                        opts::UseEdgeCounts,
+                        opts::CgIgnoreRecursiveCalls);
     Cg.normalizeArcWeights(opts::UseEdgeCounts);
   }
 

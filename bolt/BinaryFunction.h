@@ -1844,11 +1844,19 @@ public:
   /// of the added/removed branch instructions.
   /// Note that this size is optimistic and the actual size may increase
   /// after relaxation.
-  size_t estimateHotSize() const {
+  size_t estimateHotSize(const bool UseSplitSize = true) const {
     size_t Estimate = 0;
-    for (const auto *BB : BasicBlocksLayout) {
-      if (BB->getKnownExecutionCount() != 0) {
-        Estimate += BC.computeCodeSize(BB->begin(), BB->end());
+    if (UseSplitSize && IsSplit) {
+      for (const auto *BB : BasicBlocksLayout) {
+        if (!BB->isCold()) {
+          Estimate += BC.computeCodeSize(BB->begin(), BB->end());
+        }
+      }
+    } else {
+      for (const auto *BB : BasicBlocksLayout) {
+        if (BB->getKnownExecutionCount() != 0) {
+          Estimate += BC.computeCodeSize(BB->begin(), BB->end());
+        }
       }
     }
     return Estimate;

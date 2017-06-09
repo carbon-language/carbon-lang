@@ -194,6 +194,10 @@ public:
   /// global symbol was registered at the location.
   MCSymbol *getGlobalSymbolAtAddress(uint64_t Address) const;
 
+  /// Return MCSymbol for the given \p Name or nullptr if no
+  /// global symbol with that name exists.
+  MCSymbol *getGlobalSymbolByName(const std::string &Name) const;
+
   /// Print the global symbol table.
   void printGlobalSymbols(raw_ostream& OS) const;
 

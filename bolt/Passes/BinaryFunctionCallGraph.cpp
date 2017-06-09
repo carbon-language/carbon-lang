@@ -79,11 +79,15 @@ std::deque<BinaryFunction *> BinaryFunctionCallGraph::buildTraversalOrder() {
 BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
                                        std::map<uint64_t, BinaryFunction> &BFs,
                                        CgFilterFunction Filter,
+                                       bool CgFromPerfData,
                                        bool IncludeColdCalls,
                                        bool UseFunctionHotSize,
-                                       bool UseEdgeCounts) {
+                                       bool UseSplitHotSize,
+                                       bool UseEdgeCounts,
+                                       bool IgnoreRecursiveCalls) {
   NamedRegionTimer T1("Callgraph construction", "CG breakdown", opts::TimeOpts);
   BinaryFunctionCallGraph Cg;
+  static constexpr auto COUNT_NO_PROFILE = BinaryBasicBlock::COUNT_NO_PROFILE;
 
   // Add call graph nodes.
   auto lookupNode = [&](BinaryFunction *Function) {
@@ -94,7 +98,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       // computed by ReorderFunctions.  The cold part will be emitted with the
       // rest of the cold functions and code.
       const auto Size = UseFunctionHotSize && Function->isSplit()
-        ? Function->estimateHotSize()
+        ? Function->estimateHotSize(UseSplitHotSize)
         : Function->estimateSize();
       // NOTE: for functions without a profile, we set the number of samples
       // to zero.  This will keep these functions from appearing in the hot
@@ -114,7 +118,10 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
 
   // Add call graph edges.
   uint64_t NotProcessed = 0;
-  uint64_t TotalCalls = 0;
+  uint64_t TotalCallsites = 0;
+  uint64_t NoProfileCallsites = 0;
+  uint64_t NumFallbacks = 0;
+  uint64_t RecursiveCallsites = 0;
   for (auto &It : BFs) {
     auto *Function = &It.second;
 
@@ -125,12 +132,24 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
     auto BranchDataOrErr = BC.DR.getFuncBranchData(Function->getNames());
     const auto SrcId = lookupNode(Function);
     uint64_t Offset = Function->getAddress();
+    uint64_t LastInstSize = 0;
 
     auto recordCall = [&](const MCSymbol *DestSymbol, const uint64_t Count) {
-      if (auto *DstFunc = BC.getFunctionForSymbol(DestSymbol)) {
+      if (auto *DstFunc =
+          DestSymbol ? BC.getFunctionForSymbol(DestSymbol) : nullptr) {
+        if (DstFunc == Function) {
+          DEBUG(dbgs() << "BOLT-INFO: recursive call detected in "
+                       << *DstFunc << "\n");
+          ++RecursiveCallsites;
+          if (IgnoreRecursiveCalls)
+            return false;
+        }
         const auto DstId = lookupNode(DstFunc);
-        const auto AvgDelta = !UseEdgeCounts ? Offset - DstFunc->getAddress() : 0;
-        Cg.incArcWeight(SrcId, DstId, Count, AvgDelta);
+        const auto AvgDelta = UseEdgeCounts ? 0 : Offset - DstFunc->getAddress();
+        const bool IsValidCount = Count != COUNT_NO_PROFILE;
+        const auto AdjCount = UseEdgeCounts && IsValidCount ? Count : 1;
+        if (!IsValidCount) ++NoProfileCallsites;
+        Cg.incArcWeight(SrcId, DstId, AdjCount, AvgDelta);
         DEBUG(
           if (opts::Verbosity > 1) {
             dbgs() << "BOLT-DEBUG: buildCallGraph: call " << *Function
@@ -141,58 +160,95 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       return false;
     };
 
-    for (auto *BB : Function->layout()) {
-      // Don't count calls from cold blocks
-      if (BB->isCold() && !IncludeColdCalls)
-        continue;
+    auto getCallInfoFromBranchData = [&](const BranchInfo &BI, bool IsStale) {
+      MCSymbol *DstSym = nullptr;
+      uint64_t Count;
+      if (BI.To.IsSymbol && (DstSym = BC.getGlobalSymbolByName(BI.To.Name))) {
+        Count = BI.Branches;
+      } else {
+        Count = COUNT_NO_PROFILE;
+      }
+      // If we are using the perf data for a stale function we need to filter
+      // out data which comes from branches.  We'll assume that the To offset
+      // is non-zero for branches.
+      if (IsStale && BI.To.Offset != 0 &&
+          (!DstSym || Function == BC.getFunctionForSymbol(DstSym))) {
+        DstSym = nullptr;
+        Count = COUNT_NO_PROFILE;
+      }
+      return std::make_pair(DstSym, Count);
+    };
 
-      for (auto &Inst : *BB) {
-        // Find call instructions and extract target symbols from each one.
-        if (!BC.MIA->isCall(Inst))
+    // Get pairs of (symbol, count) for each target at this callsite.
+    // If the call is to an unknown function the symbol will be nullptr.
+    // If there is no profiling data the count will be COUNT_NO_PROFILE.
+    auto getCallInfo = [&](const BinaryBasicBlock *BB, const MCInst &Inst) {
+      std::vector<std::pair<const MCSymbol *, uint64_t>> Counts;
+      const auto *DstSym = BC.MIA->getTargetSymbol(Inst);
+
+      // If this is an indirect call use perf data directly.
+      if (!DstSym && BranchDataOrErr &&
+          BC.MIA->hasAnnotation(Inst, "EdgeCountData")) {
+        const auto DataOffset =
+          BC.MIA->getAnnotationAs<uint64_t>(Inst, "EdgeCountData");
+        for (const auto &BI : BranchDataOrErr->getBranchRange(DataOffset)) {
+          Counts.push_back(getCallInfoFromBranchData(BI, false));
+        }
+      } else {
+        const auto Count = BB->getExecutionCount();
+        Counts.push_back(std::make_pair(DstSym, Count));
+      }
+
+      return Counts;
+    };
+
+    // If the function has an invalid profile, try to use the perf data
+    // directly (if requested).  If there is no perf data for this function,
+    // fall back to the CFG walker which attempts to handle missing data.
+    if (!Function->hasValidProfile() && CgFromPerfData && BranchDataOrErr) {
+      DEBUG(dbgs() << "BOLT-DEBUG: buildCallGraph: Falling back to perf data"
+                   << " for " << *Function << "\n");
+      ++NumFallbacks;
+      for (const auto &BI : BranchDataOrErr->Data) {
+        Offset = Function->getAddress() + BI.From.Offset;
+        const auto CI = getCallInfoFromBranchData(BI, true);
+        if (!CI.first && CI.second == COUNT_NO_PROFILE) // probably a branch
+          continue;
+        ++TotalCallsites;
+        if (!recordCall(CI.first, CI.second)) {
+          ++NotProcessed;
+        }
+      }
+    } else {
+      for (auto *BB : Function->layout()) {
+        // Don't count calls from cold blocks unless requested.
+        if (BB->isCold() && !IncludeColdCalls)
           continue;
 
-        ++TotalCalls;
-        if (const auto *DstSym = BC.MIA->getTargetSymbol(Inst)) {
-          // For direct calls, just use the BB execution count.
-          const auto Count = UseEdgeCounts && BB->hasProfile()
-                           ? BB->getExecutionCount() : 1;
-          if (!recordCall(DstSym, Count))
-            ++NotProcessed;
-        } else if (BC.MIA->hasAnnotation(Inst, "EdgeCountData")) {
-          // For indirect calls and jump tables, use branch data.
-          if (!BranchDataOrErr) {
+        for (auto &Inst : *BB) {
+          if (!UseEdgeCounts) {
+            Offset += LastInstSize;
+            LastInstSize = BC.computeCodeSize(&Inst, &Inst + 1);
+          }
+
+          // Find call instructions and extract target symbols from each one.
+          if (!BC.MIA->isCall(Inst))
+            continue;
+
+          const auto CallInfo = getCallInfo(BB, Inst);
+
+          if (CallInfo.empty()) {
+            ++TotalCallsites;
             ++NotProcessed;
             continue;
           }
-          const FuncBranchData &BranchData = BranchDataOrErr.get();
-          const auto DataOffset =
-            BC.MIA->getAnnotationAs<uint64_t>(Inst, "EdgeCountData");
 
-          for (const auto &BI : BranchData.getBranchRange(DataOffset)) {
-            // Count each target as a separate call.
-            ++TotalCalls;
-
-            if (!BI.To.IsSymbol) {
+          for (const auto &CI : CallInfo) {
+            ++TotalCallsites;
+            if (!recordCall(CI.first, CI.second)) {
               ++NotProcessed;
-              continue;
             }
-
-            auto Itr = BC.GlobalSymbols.find(BI.To.Name);
-            if (Itr == BC.GlobalSymbols.end()) {
-              ++NotProcessed;
-              continue;
-            }
-
-            const auto *DstSym =
-              BC.getOrCreateGlobalSymbol(Itr->second, "FUNCat");
-
-            if (!recordCall(DstSym, UseEdgeCounts ? BI.Branches : 1))
-              ++NotProcessed;
           }
-        }
-
-        if (!UseEdgeCounts) {
-          Offset += BC.computeCodeSize(&Inst, &Inst + 1);
         }
       }
     }
@@ -204,9 +260,13 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
   bool PrintInfo = false;
 #endif
   if (PrintInfo || opts::Verbosity > 0) {
-    outs() << format("BOLT-INFO: buildCallGraph: %u nodes, density = %.6lf, "
-                     "%u callsites not processed out of %u.\n",
-                     Cg.numNodes(), Cg.density(), NotProcessed, TotalCalls);
+    outs() << format("BOLT-INFO: buildCallGraph: %u nodes, %u callsites "
+                     "(%u recursive), density = %.6lf, %u callsites not "
+                     "processed, %u callsites with invalid profile, "
+                     "used perf data for %u stale functions.\n",
+                     Cg.numNodes(), TotalCallsites, RecursiveCallsites,
+                     Cg.density(), NotProcessed, NoProfileCallsites,
+                     NumFallbacks);
   }
 
   return Cg;

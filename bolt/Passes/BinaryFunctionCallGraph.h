@@ -70,9 +70,12 @@ inline bool NoFilter(const BinaryFunction &) { return false; }
 BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
                                        std::map<uint64_t, BinaryFunction> &BFs,
                                        CgFilterFunction Filter = NoFilter,
+                                       bool CgFromPerfData = false,
                                        bool IncludeColdCalls = true,
                                        bool UseFunctionHotSize = false,
-                                       bool UseEdgeCounts = false);
+                                       bool UseSplitHotSize = false,
+                                       bool UseEdgeCounts = false,
+                                       bool IgnoreRecursiveCalls = false);
 
 }
 }
