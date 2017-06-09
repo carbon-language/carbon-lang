@@ -144,8 +144,8 @@ public:
 
   VarStreamArrayIterator(const ArrayType &Array, const Extractor &E,
                          uint32_t Offset, bool *HadError)
-      : IterRef(Array.Stream.drop_front(Offset)), Array(&Array),
-        AbsOffset(Offset), HadError(HadError), Extract(E) {
+      : IterRef(Array.Stream.drop_front(Offset)), Extract(E),
+        Array(&Array), AbsOffset(Offset), HadError(HadError) {
     if (IterRef.getLength() == 0)
       moveToEnd();
     else {
