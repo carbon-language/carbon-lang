@@ -1692,15 +1692,15 @@ static LazyValueInfo::Tristate getPredicateResult(unsigned Pred, Constant *C,
 
       if (CR.isSingleElement())
         return LazyValueInfo::False;
+    } else {
+      // Handle more complex predicates.
+      ConstantRange TrueValues = ConstantRange::makeExactICmpRegion(
+          (ICmpInst::Predicate)Pred, CI->getValue());
+      if (TrueValues.contains(CR))
+        return LazyValueInfo::True;
+      if (TrueValues.inverse().contains(CR))
+        return LazyValueInfo::False;
     }
-
-    // Handle more complex predicates.
-    ConstantRange TrueValues = ConstantRange::makeExactICmpRegion(
-        (ICmpInst::Predicate)Pred, CI->getValue());
-    if (TrueValues.contains(CR))
-      return LazyValueInfo::True;
-    if (TrueValues.inverse().contains(CR))
-      return LazyValueInfo::False;
     return LazyValueInfo::Unknown;
   }
 
