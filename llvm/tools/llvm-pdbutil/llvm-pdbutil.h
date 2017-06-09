@@ -37,6 +37,7 @@ enum class ModuleSubsection {
   StringTable,
   Symbols,
   FrameData,
+  CoffSymbolRVAs,
   All
 };
 
