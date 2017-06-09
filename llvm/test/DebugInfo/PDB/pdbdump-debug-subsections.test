@@ -41,7 +41,7 @@ YAML-NEXT:            Checksum:        1154D69F5B2650196E1FC34F4134E56B
 YAML-NEXT:      - !Lines
 YAML-NEXT:        CodeSize:        10
 YAML-NEXT:        Flags:           [  ]
-YAML-NEXT:        RelocOffset:     16
+YAML-NEXT:        RelocOffset:     100016
 YAML-NEXT:        RelocSegment:    1
 YAML-NEXT:        Blocks:
 YAML-NEXT:          - FileName:        'd:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp'
@@ -126,7 +126,7 @@ RAW-NEXT:           }
 RAW-NEXT:         }
 RAW-NEXT:         Lines {
 RAW-NEXT:           RelocSegment: 1
-RAW-NEXT:           RelocOffset: 16
+RAW-NEXT:           RelocOffset: 100016
 RAW-NEXT:           CodeSize: 10
 RAW-NEXT:           HasColumns: No
 RAW-NEXT:           FileEntry {
