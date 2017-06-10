@@ -446,6 +446,9 @@ TYPED_TEST(SmallVectorTest, AppendRepeatedNonForwardIterator) {
   struct output_iterator {
     typedef std::output_iterator_tag iterator_category;
     typedef int value_type;
+    typedef int difference_type;
+    typedef value_type *pointer;
+    typedef value_type &reference;
     operator int() { return 2; }
     operator Constructable() { return 7; }
   };
