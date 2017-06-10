@@ -2331,9 +2331,6 @@ class ExtractValueInst : public UnaryInstruction {
                           ArrayRef<unsigned> Idxs,
                           const Twine &NameStr, BasicBlock *InsertAtEnd);
 
-  // allocate space for exactly one operand
-  void *operator new(size_t s) { return User::operator new(s, 1); }
-
   void init(ArrayRef<unsigned> Idxs, const Twine &NameStr);
 
 protected:
