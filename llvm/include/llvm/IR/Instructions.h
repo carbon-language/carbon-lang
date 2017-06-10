@@ -2576,7 +2576,6 @@ class PHINode : public Instruction {
   unsigned ReservedSpace;
 
   PHINode(const PHINode &PN);
-  // allocate space for exactly zero operands
 
   explicit PHINode(Type *Ty, unsigned NumReservedValues,
                    const Twine &NameStr = "",
@@ -2595,6 +2594,7 @@ class PHINode : public Instruction {
     allocHungoffUses(ReservedSpace);
   }
 
+  // allocate space for exactly zero operands
   void *operator new(size_t s) {
     return User::operator new(s);
   }
