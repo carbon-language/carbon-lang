@@ -2234,6 +2234,8 @@ public:
     return User::operator new(s, 3);
   }
 
+  void *operator new(size_t, unsigned) = delete;
+
   /// Return true if a shufflevector instruction can be
   /// formed with the specified operands.
   static bool isValidOperands(const Value *V1, const Value *V2,
