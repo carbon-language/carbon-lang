@@ -111,6 +111,12 @@ endif()
 add_library(cxxabi_objects OBJECT ${LIBCXXABI_SOURCES} ${LIBCXXABI_HEADERS})
 set_target_properties(cxxabi_objects
                       PROPERTIES
+                        CXX_EXTENSIONS
+                          OFF
+                        CXX_STANDARD
+                          11
+                        CXX_STANDARD_REQUIRED
+                          ON
                         COMPILE_FLAGS
                           "${LIBCXXABI_COMPILE_FLAGS}"
                         POSITION_INDEPENDENT_CODE
@@ -124,6 +130,12 @@ if (LIBCXXABI_ENABLE_SHARED)
   target_link_libraries(cxxabi_shared ${LIBCXXABI_LIBRARIES})
   set_target_properties(cxxabi_shared
                         PROPERTIES
+                          CXX_EXTENSIONS
+                            OFF
+                          CXX_STANDARD
+                            11
+                          CXX_STANDARD_REQUIRED
+                            ON
                           LINK_FLAGS
                             "${LIBCXXABI_LINK_FLAGS} ${LIBCXXABI_SHARED_LINK_FLAGS}"
                           OUTPUT_NAME
@@ -143,6 +155,12 @@ if (LIBCXXABI_ENABLE_STATIC)
   target_link_libraries(cxxabi_static ${LIBCXXABI_LIBRARIES})
   set_target_properties(cxxabi_static
                         PROPERTIES
+                          CXX_EXTENSIONS
+                            OFF
+                          CXX_STANDARD
+                            11
+                          CXX_STANDARD_REQUIRED
+                            ON
                           LINK_FLAGS
                             "${LIBCXXABI_LINK_FLAGS}"
                           OUTPUT_NAME
