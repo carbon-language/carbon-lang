@@ -918,7 +918,10 @@ static void RenderDebugInfoCompressionArgs(const ArgList &Args,
     return;
 
   if (A->getOption().getID() == options::OPT_gz) {
-    CmdArgs.push_back("-compress-debug-sections");
+    if (llvm::zlib::isAvailable())
+      CmdArgs.push_back("-compress-debug-sections");
+    else
+      D.Diag(diag::warn_debug_compression_unavailable);
     return;
   }
 
@@ -926,11 +929,11 @@ static void RenderDebugInfoCompressionArgs(const ArgList &Args,
   if (Value == "none") {
     CmdArgs.push_back("-compress-debug-sections=none");
   } else if (Value == "zlib" || Value == "zlib-gnu") {
-    if (!llvm::zlib::isAvailable()) {
-      D.Diag(diag::warn_debug_compression_unavailable);
-    } else {
+    if (llvm::zlib::isAvailable()) {
       CmdArgs.push_back(
           Args.MakeArgString("-compress-debug-sections=" + Twine(Value)));
+    } else {
+      D.Diag(diag::warn_debug_compression_unavailable);
     }
   } else {
     D.Diag(diag::err_drv_unsupported_option_argument)
