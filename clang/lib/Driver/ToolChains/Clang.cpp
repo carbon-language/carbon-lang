@@ -1744,10 +1744,6 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
   // arg after parsing the '-I' arg.
   bool TakeNextArg = false;
 
-  // When using an integrated assembler, translate -Wa, and -Xassembler
-  // options.
-  bool CompressDebugSections = false;
-
   bool UseRelaxRelocations = ENABLE_X86_RELAX_RELOCATIONS;
   const char *MipsTargetFeature = nullptr;
   for (const Arg *A :
@@ -1822,12 +1818,11 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
         CmdArgs.push_back("-massembler-fatal-warnings");
       } else if (Value == "--noexecstack") {
         CmdArgs.push_back("-mnoexecstack");
-      } else if (Value == "-compress-debug-sections" ||
-                 Value == "--compress-debug-sections") {
-        CompressDebugSections = true;
-      } else if (Value == "-nocompress-debug-sections" ||
+      } else if (Value.startswith("-compress-debug-sections") ||
+                 Value.startswith("--compress-debug-sections") ||
+                 Value == "-nocompress-debug-sections" ||
                  Value == "--nocompress-debug-sections") {
-        CompressDebugSections = false;
+        CmdArgs.push_back(Value.data());
       } else if (Value == "-mrelax-relocations=yes" ||
                  Value == "--mrelax-relocations=yes") {
         UseRelaxRelocations = true;
@@ -1879,12 +1874,6 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
             << A->getOption().getName() << Value;
       }
     }
-  }
-  if (CompressDebugSections) {
-    if (llvm::zlib::isAvailable())
-      CmdArgs.push_back("-compress-debug-sections");
-    else
-      D.Diag(diag::warn_debug_compression_unavailable);
   }
   if (UseRelaxRelocations)
     CmdArgs.push_back("--mrelax-relocations");
