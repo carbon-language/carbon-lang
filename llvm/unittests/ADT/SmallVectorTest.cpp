@@ -444,11 +444,11 @@ TYPED_TEST(SmallVectorTest, AppendRepeatedNonForwardIterator) {
   SCOPED_TRACE("AppendRepeatedTest");
 
   struct output_iterator {
-    typedef __attribute__((used)) std::output_iterator_tag iterator_category;
-    typedef __attribute__((used)) int value_type;
-    typedef __attribute__((used)) int difference_type;
-    typedef __attribute__((used)) value_type *pointer;
-    typedef __attribute__((used)) value_type &reference;
+    typedef LLVM_ATTRIBUTE_USED std::output_iterator_tag iterator_category;
+    typedef LLVM_ATTRIBUTE_USED int value_type;
+    typedef LLVM_ATTRIBUTE_USED int difference_type;
+    typedef LLVM_ATTRIBUTE_USED value_type *pointer;
+    typedef LLVM_ATTRIBUTE_USED value_type &reference;
     operator int() { return 2; }
     operator Constructable() { return 7; }
   };
