@@ -910,6 +910,34 @@ static void RenderDebugEnablingArgs(const ArgList &Args, ArgStringList &CmdArgs,
   }
 }
 
+static void RenderDebugInfoCompressionArgs(const ArgList &Args,
+                                           ArgStringList &CmdArgs,
+                                           const Driver &D) {
+  const Arg *A = Args.getLastArg(options::OPT_gz, options::OPT_gz_EQ);
+  if (!A)
+    return;
+
+  if (A->getOption().getID() == options::OPT_gz) {
+    CmdArgs.push_back("-compress-debug-sections");
+    return;
+  }
+
+  StringRef Value = A->getValue();
+  if (Value == "none") {
+    CmdArgs.push_back("-compress-debug-sections=none");
+  } else if (Value == "zlib" || Value == "zlib-gnu") {
+    if (!llvm::zlib::isAvailable()) {
+      D.Diag(diag::warn_debug_compression_unavailable);
+    } else {
+      CmdArgs.push_back(
+          Args.MakeArgString("-compress-debug-sections=" + Twine(Value)));
+    }
+  } else {
+    D.Diag(diag::err_drv_unsupported_option_argument)
+        << A->getOption().getName() << Value;
+  }
+}
+
 static const char *RelocationModelName(llvm::Reloc::Model Model) {
   switch (Model) {
   case llvm::Reloc::Static:
@@ -2809,6 +2837,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-generate-type-units");
   }
+
+  RenderDebugInfoCompressionArgs(Args, CmdArgs, D);
 
   bool UseSeparateSections = isUseSeparateSections(Triple);
 
@@ -4913,6 +4943,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   const llvm::Triple &Triple = getToolChain().getEffectiveTriple();
   const std::string &TripleStr = Triple.getTriple();
+  const auto &D = getToolChain().getDriver();
 
   // Don't warn about "clang -w -c foo.s"
   Args.ClaimAllArgs(options::OPT_w);
@@ -5000,6 +5031,8 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   }
   RenderDebugEnablingArgs(Args, CmdArgs, DebugInfoKind, DwarfVersion,
                           llvm::DebuggerKind::Default);
+  RenderDebugInfoCompressionArgs(Args, CmdArgs, D);
+
 
   // Handle -fPIC et al -- the relocation-model affects the assembler
   // for some targets.
