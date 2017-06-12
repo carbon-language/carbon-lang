@@ -473,6 +473,10 @@ static void addMember(std::vector<NewArchiveMember> &Members,
   Expected<NewArchiveMember> NMOrErr =
       NewArchiveMember::getFile(FileName, Deterministic);
   failIfError(NMOrErr.takeError(), FileName);
+
+  // Use the basename of the object path for the member name.
+  NMOrErr->MemberName = sys::path::filename(NMOrErr->MemberName);
+
   if (Pos == -1)
     Members.push_back(std::move(*NMOrErr));
   else
