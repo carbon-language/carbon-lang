@@ -523,6 +523,16 @@ inlineCallsImpl(CallGraphSCC &SCC, CallGraph &CG,
       if (!Callee || Callee->isDeclaration())
         continue;
 
+      // FIXME for new PM: because of the old PM we currently generate ORE and
+      // in turn BFI on demand.  With the new PM, the ORE dependency should
+      // just become a regular analysis dependency.
+      OptimizationRemarkEmitter ORE(Caller);
+
+      // If the policy determines that we should inline this function,
+      // delete the call instead.
+      if (!shouldInline(CS, GetInlineCost, ORE))
+        continue;
+
       // If this call site is dead and it is to a readonly function, we should
       // just delete the call instead of trying to inline it, regardless of
       // size.  This happens because IPSCCP propagates the result out of the
@@ -548,15 +558,6 @@ inlineCallsImpl(CallGraphSCC &SCC, CallGraph &CG,
         // Get DebugLoc to report. CS will be invalid after Inliner.
         DebugLoc DLoc = CS.getInstruction()->getDebugLoc();
         BasicBlock *Block = CS.getParent();
-        // FIXME for new PM: because of the old PM we currently generate ORE and
-        // in turn BFI on demand.  With the new PM, the ORE dependency should
-        // just become a regular analysis dependency.
-        OptimizationRemarkEmitter ORE(Caller);
-
-        // If the policy determines that we should inline this function,
-        // try to do so.
-        if (!shouldInline(CS, GetInlineCost, ORE))
-          continue;
 
         // Attempt to inline the function.
         using namespace ore;
