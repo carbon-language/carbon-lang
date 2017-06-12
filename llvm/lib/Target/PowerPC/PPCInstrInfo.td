@@ -2544,6 +2544,14 @@ let Uses = [RM] in {
                       "mffs. $rT", IIC_IntMFFS, []>, isDOT;
 }
 
+let Predicates = [IsISA3_0] in {
+def MODSW : XForm_8<31, 779, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                        "modsw $rT, $rA, $rB", IIC_IntDivW,
+                        [(set i32:$rT, (srem i32:$rA, i32:$rB))]>;
+def MODUW : XForm_8<31, 267, (outs gprc:$rT), (ins gprc:$rA, gprc:$rB),
+                        "moduw $rT, $rA, $rB", IIC_IntDivW,
+                        [(set i32:$rT, (urem i32:$rA, i32:$rB))]>;
+}
 
 let PPC970_Unit = 1, hasSideEffects = 0 in {  // FXU Operations.
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
