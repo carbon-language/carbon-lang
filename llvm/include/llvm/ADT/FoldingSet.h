@@ -152,33 +152,6 @@ public:
   /// clear - Remove all nodes from the folding set.
   void clear();
 
-  /// RemoveNode - Remove a node from the folding set, returning true if one
-  /// was removed or false if the node was not in the folding set.
-  bool RemoveNode(Node *N);
-
-  /// GetOrInsertNode - If there is an existing simple Node exactly
-  /// equal to the specified node, return it.  Otherwise, insert 'N' and return
-  /// it instead.
-  Node *GetOrInsertNode(Node *N);
-
-  /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
-  /// return it.  If not, return the insertion token that will make insertion
-  /// faster.
-  Node *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos);
-
-  /// InsertNode - Insert the specified node into the folding set, knowing that
-  /// it is not already in the folding set.  InsertPos must be obtained from
-  /// FindNodeOrInsertPos.
-  void InsertNode(Node *N, void *InsertPos);
-
-  /// InsertNode - Insert the specified node into the folding set, knowing that
-  /// it is not already in the folding set.
-  void InsertNode(Node *N) {
-    Node *Inserted = GetOrInsertNode(N);
-    (void)Inserted;
-    assert(Inserted == N && "Node already inserted!");
-  }
-
   /// size - Returns the number of nodes in the folding set.
   unsigned size() const { return NumNodes; }
 
@@ -220,6 +193,28 @@ protected:
   /// ComputeNodeHash - Instantiations of the FoldingSet template implement
   /// this function to compute a hash value for the given node.
   virtual unsigned ComputeNodeHash(Node *N, FoldingSetNodeID &TempID) const = 0;
+
+  // The below methods are protected to encourage subclasses to provide a more
+  // type-safe API.
+
+  /// RemoveNode - Remove a node from the folding set, returning true if one
+  /// was removed or false if the node was not in the folding set.
+  bool RemoveNode(Node *N);
+
+  /// GetOrInsertNode - If there is an existing simple Node exactly
+  /// equal to the specified node, return it.  Otherwise, insert 'N' and return
+  /// it instead.
+  Node *GetOrInsertNode(Node *N);
+
+  /// FindNodeOrInsertPos - Look up the node specified by ID.  If it exists,
+  /// return it.  If not, return the insertion token that will make insertion
+  /// faster.
+  Node *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos);
+
+  /// InsertNode - Insert the specified node into the folding set, knowing that
+  /// it is not already in the folding set.  InsertPos must be obtained from
+  /// FindNodeOrInsertPos.
+  void InsertNode(Node *N, void *InsertPos);
 };
 
 //===----------------------------------------------------------------------===//
@@ -438,10 +433,14 @@ public:
     return bucket_iterator(Buckets + (hash & (NumBuckets-1)), true);
   }
 
+  /// RemoveNode - Remove a node from the folding set, returning true if one
+  /// was removed or false if the node was not in the folding set.
+  bool RemoveNode(T *N) { return FoldingSetBase::RemoveNode(N); }
+
   /// GetOrInsertNode - If there is an existing simple Node exactly
   /// equal to the specified node, return it.  Otherwise, insert 'N' and
   /// return it instead.
-  T *GetOrInsertNode(Node *N) {
+  T *GetOrInsertNode(T *N) {
     return static_cast<T *>(FoldingSetBase::GetOrInsertNode(N));
   }
 
@@ -450,6 +449,21 @@ public:
   /// faster.
   T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
     return static_cast<T *>(FoldingSetBase::FindNodeOrInsertPos(ID, InsertPos));
+  }
+
+  /// InsertNode - Insert the specified node into the folding set, knowing that
+  /// it is not already in the folding set.  InsertPos must be obtained from
+  /// FindNodeOrInsertPos.
+  void InsertNode(T *N, void *InsertPos) {
+    FoldingSetBase::InsertNode(N, InsertPos);
+  }
+
+  /// InsertNode - Insert the specified node into the folding set, knowing that
+  /// it is not already in the folding set.
+  void InsertNode(T *N) {
+    T *Inserted = GetOrInsertNode(N);
+    (void)Inserted;
+    assert(Inserted == N && "Node already inserted!");
   }
 };
 
