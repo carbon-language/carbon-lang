@@ -6819,6 +6819,7 @@ bool PPCTargetLowering::canReuseLoadAddress(SDValue Op, EVT MemVT,
 // Given the head of the old chain, ResChain, insert a token factor containing
 // it and NewResChain, and make users of ResChain now be users of that token
 // factor.
+// TODO: Remove and use DAG::makeEquivalentMemoryOrdering() instead.
 void PPCTargetLowering::spliceIntoChain(SDValue ResChain,
                                         SDValue NewResChain,
                                         SelectionDAG &DAG) const {
