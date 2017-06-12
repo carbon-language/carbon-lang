@@ -739,10 +739,12 @@ Error LLVMOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
     Label = "Type Info Stream (TPI)";
     VerLabel = "TPI Version";
   } else if (StreamIdx == StreamIPI) {
-    if (!File.hasPDBIpiStream()) {
-      P.printString("Type Info Stream (IPI) not present");
+    auto InfoS = File.getPDBInfoStream();
+    if (!InfoS)
+      return InfoS.takeError();
+
+    if (!File.hasPDBIpiStream() || !InfoS->containsIdStream())
       return Error::success();
-    }
     DumpRecordBytes = opts::raw::DumpIpiRecordBytes;
     DumpRecords = opts::raw::DumpIpiRecords;
     Label = "Type Info Stream (IPI)";

@@ -580,6 +580,14 @@ static void yamlToPdb(StringRef Path) {
     IpiBuilder.addTypeRecord(Type.RecordData, None);
   }
 
+  if (!Ipi.Records.empty()) {
+    // In theory newer PDBs always have an ID stream, but by saying that we're
+    // only going to *really* have an ID stream if there is at least one ID
+    // record, we leave open the opportunity to test older PDBs such as those
+    // that don't have an ID stream.
+    InfoBuilder.addFeature(PdbRaw_FeatureSig::VC140);
+  }
+
   ExitOnErr(Builder.commit(opts::yaml2pdb::YamlPdbOutputFile));
 }
 
@@ -855,6 +863,7 @@ static void mergePdbs() {
   MergedIpi.ForEachRecord([&DestIpi](TypeIndex TI, ArrayRef<uint8_t> Data) {
     DestIpi.addTypeRecord(Data, None);
   });
+  Builder.getInfoBuilder().addFeature(PdbRaw_FeatureSig::VC140);
 
   SmallString<64> OutFile(opts::merge::PdbOutputFile);
   if (OutFile.empty()) {
