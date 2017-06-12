@@ -494,7 +494,7 @@ static void addMember(std::vector<NewArchiveMember> &Members,
 
 enum InsertAction {
   IA_AddOldMember,
-  IA_AddNewMeber,
+  IA_AddNewMember,
   IA_Delete,
   IA_MoveOldMember,
   IA_MoveNewMember
@@ -526,7 +526,7 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
     StringRef PosName = sys::path::filename(RelPos);
     if (!OnlyUpdate) {
       if (PosName.empty())
-        return IA_AddNewMeber;
+        return IA_AddNewMember;
       return IA_MoveNewMember;
     }
 
@@ -543,7 +543,7 @@ static InsertAction computeInsertAction(ArchiveOperation Operation,
     }
 
     if (PosName.empty())
-      return IA_AddNewMeber;
+      return IA_AddNewMember;
     return IA_MoveNewMember;
   }
   llvm_unreachable("No such operation");
@@ -580,7 +580,7 @@ computeNewArchiveMembers(ArchiveOperation Operation,
       case IA_AddOldMember:
         addMember(Ret, Child);
         break;
-      case IA_AddNewMeber:
+      case IA_AddNewMember:
         addMember(Ret, *MemberI);
         break;
       case IA_Delete:
