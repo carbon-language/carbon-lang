@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-def FLATAtomic : ComplexPattern<i64, 3, "SelectFlat">;
+def FLATAtomic : ComplexPattern<i64, 3, "SelectFlatAtomic", [], [], -10>;
+def FLATOffset : ComplexPattern<i64, 3, "SelectFlat", [], [], -10>;
 
 //===----------------------------------------------------------------------===//
 // FLAT classes
@@ -338,31 +339,31 @@ def flat_truncstorei16 : flat_st <truncstorei16>;
 
 // Patterns for global loads with no offset.
 class FlatLoadPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat <
-  (vt (node i64:$addr)),
-  (inst $addr, 0, 0, 0)
+  (vt (node (FLATAtomic i64:$vaddr, i16:$offset, i1:$slc))),
+  (inst $vaddr, $offset, 0, $slc)
 >;
 
 class FlatLoadAtomicPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat <
-  (vt (node i64:$addr)),
-  (inst $addr, 0, 1, 0)
+  (vt (node (FLATAtomic i64:$vaddr, i16:$offset, i1:$slc))),
+  (inst $vaddr, $offset, 1, $slc)
 >;
 
 class FlatStorePat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat <
-  (node vt:$data, i64:$addr),
-  (inst $addr, $data, 0, 0, 0)
+  (node vt:$data, (FLATAtomic i64:$vaddr, i16:$offset, i1:$slc)),
+  (inst $vaddr, $data, $offset, 0, $slc)
 >;
 
 class FlatStoreAtomicPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt> : Pat <
   // atomic store follows atomic binop convention so the address comes
   // first.
-  (node i64:$addr, vt:$data),
-  (inst $addr, $data, 0, 1, 0)
+  (node (FLATAtomic i64:$vaddr, i16:$offset, i1:$slc), vt:$data),
+  (inst $vaddr, $data, $offset, 1, $slc)
 >;
 
 class FlatAtomicPat <FLAT_Pseudo inst, SDPatternOperator node, ValueType vt,
                      ValueType data_vt = vt> : Pat <
-  (vt (node i64:$addr, data_vt:$data)),
-  (inst $addr, $data, 0, 0)
+  (vt (node (FLATAtomic i64:$vaddr, i16:$offset, i1:$slc), data_vt:$data)),
+  (inst $vaddr, $data, $offset, $slc)
 >;
 
 let Predicates = [isCIVI] in {
