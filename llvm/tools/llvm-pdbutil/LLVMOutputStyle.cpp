@@ -300,9 +300,9 @@ public:
 private:
   Error dumpTypeRecord(StringRef Label, TypeIndex Index) {
     bool Success = false;
+    DictScope D(P, Label);
     if (IPI) {
       CompactTypeDumpVisitor CTDV(*IPI, Index, &P);
-      DictScope D(P, Label);
       if (IPI->contains(Index)) {
         CVType Type = IPI->getType(Index);
         if (auto EC = codeview::visitTypeRecord(Type, CTDV))
