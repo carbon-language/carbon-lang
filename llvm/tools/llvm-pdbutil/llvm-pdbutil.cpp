@@ -580,14 +580,6 @@ static void yamlToPdb(StringRef Path) {
     IpiBuilder.addTypeRecord(Type.RecordData, None);
   }
 
-  if (!Ipi.Records.empty()) {
-    // In theory newer PDBs always have an ID stream, but by saying that we're
-    // only going to *really* have an ID stream if there is at least one ID
-    // record, we leave open the opportunity to test older PDBs such as those
-    // that don't have an ID stream.
-    InfoBuilder.addFeature(PdbRaw_FeatureSig::VC140);
-  }
-
   ExitOnErr(Builder.commit(opts::yaml2pdb::YamlPdbOutputFile));
 }
 
