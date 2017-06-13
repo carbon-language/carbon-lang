@@ -691,10 +691,8 @@ void WindowsResourceCOFFWriter::writeDirectoryStringTable() {
   // Now write the directory string table for .rsrc$01
   uint32_t TotalStringTableSize = 0;
   for (auto String : StringTable) {
-    auto *LengthField =
-        reinterpret_cast<uint16_t *>(BufferStart + CurrentOffset);
     uint16_t Length = String.size();
-    *LengthField = Length;
+    support::endian::write16le(BufferStart + CurrentOffset, Length);
     CurrentOffset += sizeof(uint16_t);
     auto *Start = reinterpret_cast<UTF16 *>(BufferStart + CurrentOffset);
     std::copy(String.begin(), String.end(), Start);
