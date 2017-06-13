@@ -138,12 +138,11 @@ void ClangdScheduler::addToEnd(std::function<void()> Request) {
   RequestCV.notify_one();
 }
 
-ClangdServer::ClangdServer(std::unique_ptr<GlobalCompilationDatabase> CDB,
-                           std::unique_ptr<DiagnosticsConsumer> DiagConsumer,
-                           std::unique_ptr<FileSystemProvider> FSProvider,
+ClangdServer::ClangdServer(GlobalCompilationDatabase &CDB,
+                           DiagnosticsConsumer &DiagConsumer,
+                           FileSystemProvider &FSProvider,
                            bool RunSynchronously)
-    : CDB(std::move(CDB)), DiagConsumer(std::move(DiagConsumer)),
-      FSProvider(std::move(FSProvider)),
+    : CDB(CDB), DiagConsumer(DiagConsumer), FSProvider(FSProvider),
       PCHs(std::make_shared<PCHContainerOperations>()),
       WorkScheduler(RunSynchronously) {}
 
@@ -157,11 +156,11 @@ void ClangdServer::addDocument(PathRef File, StringRef Contents) {
 
     assert(FileContents.Draft &&
            "No contents inside a file that was scheduled for reparse");
-    auto TaggedFS = FSProvider->getTaggedFileSystem();
+    auto TaggedFS = FSProvider.getTaggedFileSystem();
     Units.runOnUnit(
-        FileStr, *FileContents.Draft, *CDB, PCHs, TaggedFS.Value,
+        FileStr, *FileContents.Draft, CDB, PCHs, TaggedFS.Value,
         [&](ClangdUnit const &Unit) {
-          DiagConsumer->onDiagnosticsReady(
+          DiagConsumer.onDiagnosticsReady(
               FileStr, make_tagged(Unit.getLocalDiagnostics(), TaggedFS.Tag));
         });
   });
@@ -198,11 +197,11 @@ ClangdServer::codeComplete(PathRef File, Position Pos,
   }
 
   std::vector<CompletionItem> Result;
-  auto TaggedFS = FSProvider->getTaggedFileSystem();
+  auto TaggedFS = FSProvider.getTaggedFileSystem();
   // It would be nice to use runOnUnitWithoutReparse here, but we can't
   // guarantee the correctness of code completion cache here if we don't do the
   // reparse.
-  Units.runOnUnit(File, *OverridenContents, *CDB, PCHs, TaggedFS.Value,
+  Units.runOnUnit(File, *OverridenContents, CDB, PCHs, TaggedFS.Value,
                   [&](ClangdUnit &Unit) {
                     Result = Unit.codeComplete(*OverridenContents, Pos,
                                                TaggedFS.Value);

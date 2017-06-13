@@ -136,10 +136,9 @@ private:
 /// diagnostics for tracked files).
 class ClangdServer {
 public:
-  ClangdServer(std::unique_ptr<GlobalCompilationDatabase> CDB,
-               std::unique_ptr<DiagnosticsConsumer> DiagConsumer,
-               std::unique_ptr<FileSystemProvider> FSProvider,
-               bool RunSynchronously);
+  ClangdServer(GlobalCompilationDatabase &CDB,
+               DiagnosticsConsumer &DiagConsumer,
+               FileSystemProvider &FSProvider, bool RunSynchronously);
 
   /// Add a \p File to the list of tracked C++ files or update the contents if
   /// \p File is already tracked. Also schedules parsing of the AST for it on a
@@ -181,9 +180,9 @@ public:
   std::string dumpAST(PathRef File);
 
 private:
-  std::unique_ptr<GlobalCompilationDatabase> CDB;
-  std::unique_ptr<DiagnosticsConsumer> DiagConsumer;
-  std::unique_ptr<FileSystemProvider> FSProvider;
+  GlobalCompilationDatabase &CDB;
+  DiagnosticsConsumer &DiagConsumer;
+  FileSystemProvider &FSProvider;
   DraftStore DraftMgr;
   ClangdUnitStore Units;
   std::shared_ptr<PCHContainerOperations> PCHs;
