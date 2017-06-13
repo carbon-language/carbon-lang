@@ -24,7 +24,7 @@ ensures we do not regress.
 
 Polly also successfully compiles `FFMPEG <http://fate.ffmpeg.org/>`_ and
 obviously the `LLVM test suite
-<http://lab.llvm.org:8011/console?category=polly>`_
+<http://lab.llvm.org:8011/console?category=polly>`_.
 
 ---------------------------------------------------------
 C++ bindings for isl math library improve maintainability
