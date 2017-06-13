@@ -12,7 +12,6 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "gtest/gtest.h"
 
 #include "PipSqueak.h"
@@ -51,28 +50,6 @@ template <class T> static void* PtrFunc(T *Func) {
   } Tmp;
   Tmp.F = Func;
   return Tmp.P;
-}
-
-static void
-NoPassRegistration(const PassManagerBuilder &, legacy::PassManagerBase &) {
-}
-
-static RegisterStandardPasses LocalPass(PassManagerBuilder::EP_LoopOptimizerEnd,
-                                        NoPassRegistration);
-
-typedef void (*TestPassReg)(void (*)(PassManagerBuilder::ExtensionPointTy,
-                                     PassManagerBuilder::ExtensionProc));
-
-TEST(DynamicLibrary, PassRegistration) {
-  std::string Err;
-  llvm_shutdown_obj Shutdown;
-  DynamicLibrary DL =
-      DynamicLibrary::getPermanentLibrary(LibPath().c_str(), &Err);
-  EXPECT_TRUE(DL.isValid());
-  EXPECT_TRUE(Err.empty());
-
-  TestPassReg RP = FuncPtr<TestPassReg>(DL.getAddressOfSymbol("TestPassReg"));
-  RP(&PassManagerBuilder::addGlobalExtension);
 }
 
 static const char *OverloadTestA() { return "OverloadCall"; }

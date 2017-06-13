@@ -8,10 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "PipSqueak.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
-
-#define PIPSQUEAK_TESTA_RETURN "LibCall"
-#include "ExportedFuncs.cxx"
 
 struct Global {
   std::string *Str;
@@ -49,13 +45,5 @@ extern "C" PIPSQUEAK_EXPORT void TestOrder(std::vector<std::string> &V) {
   Glb.Vec = &V;
 }
 
-
-static void LibPassRegistration(const llvm::PassManagerBuilder &,
-                                llvm::legacy::PassManagerBase &) {}
-
-extern "C" PIPSQUEAK_EXPORT void TestPassReg(
-    void (*addGlobalExtension)(llvm::PassManagerBuilder::ExtensionPointTy,
-                               llvm::PassManagerBuilder::ExtensionProc)) {
-  addGlobalExtension(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                     LibPassRegistration);
-}
+#define PIPSQUEAK_TESTA_RETURN "LibCall"
+#include "ExportedFuncs.cxx"

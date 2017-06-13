@@ -60,10 +60,9 @@ class PassManagerBuilder {
 public:
   /// Extensions are passed the builder itself (so they can see how it is
   /// configured) as well as the pass manager to add stuff to.
-  typedef void ExtensionProc(const PassManagerBuilder &Builder,
-                             legacy::PassManagerBase &PM);
-  typedef std::function<ExtensionProc> ExtensionFn;
-
+  typedef std::function<void(const PassManagerBuilder &Builder,
+                             legacy::PassManagerBase &PM)>
+      ExtensionFn;
   enum ExtensionPointTy {
     /// EP_EarlyAsPossible - This extension point allows adding passes before
     /// any other transformations, allowing them to see the code as it is coming
@@ -180,7 +179,7 @@ public:
   /// Adds an extension that will be used by all PassManagerBuilder instances.
   /// This is intended to be used by plugins, to register a set of
   /// optimisations to run automatically.
-  static void addGlobalExtension(ExtensionPointTy Ty, ExtensionProc Fn);
+  static void addGlobalExtension(ExtensionPointTy Ty, ExtensionFn Fn);
   void addExtension(ExtensionPointTy Ty, ExtensionFn Fn);
 
 private:
@@ -209,12 +208,10 @@ public:
 /// used by optimizer plugins to allow all front ends to transparently use
 /// them.  Create a static instance of this class in your plugin, providing a
 /// private function that the PassManagerBuilder can use to add your passes.
-/// Currently limited to real functions to avoid crashes when used within the
-/// main executable before a loaded plugin has a chance to use this.
 struct RegisterStandardPasses {
   RegisterStandardPasses(PassManagerBuilder::ExtensionPointTy Ty,
-                         PassManagerBuilder::ExtensionProc Fn) {
-    PassManagerBuilder::addGlobalExtension(Ty, Fn);
+                         PassManagerBuilder::ExtensionFn Fn) {
+    PassManagerBuilder::addGlobalExtension(Ty, std::move(Fn));
   }
 };
 

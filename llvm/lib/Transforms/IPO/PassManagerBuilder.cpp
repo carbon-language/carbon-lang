@@ -198,9 +198,10 @@ PassManagerBuilder::~PassManagerBuilder() {
 static ManagedStatic<SmallVector<std::pair<PassManagerBuilder::ExtensionPointTy,
    PassManagerBuilder::ExtensionFn>, 8> > GlobalExtensions;
 
-void PassManagerBuilder::addGlobalExtension(ExtensionPointTy Ty,
-                                            ExtensionProc Fn) {
-  GlobalExtensions->push_back(std::make_pair(Ty, Fn));
+void PassManagerBuilder::addGlobalExtension(
+    PassManagerBuilder::ExtensionPointTy Ty,
+    PassManagerBuilder::ExtensionFn Fn) {
+  GlobalExtensions->push_back(std::make_pair(Ty, std::move(Fn)));
 }
 
 void PassManagerBuilder::addExtension(ExtensionPointTy Ty, ExtensionFn Fn) {
