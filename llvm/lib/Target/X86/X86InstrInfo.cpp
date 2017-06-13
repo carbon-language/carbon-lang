@@ -5230,20 +5230,32 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
       return nullptr;
     }
   }
-  case X86::VPCMPBZ128rri: case X86::VPCMPUBZ128rri:
-  case X86::VPCMPBZ256rri: case X86::VPCMPUBZ256rri:
-  case X86::VPCMPBZrri:    case X86::VPCMPUBZrri:
-  case X86::VPCMPDZ128rri: case X86::VPCMPUDZ128rri:
-  case X86::VPCMPDZ256rri: case X86::VPCMPUDZ256rri:
-  case X86::VPCMPDZrri:    case X86::VPCMPUDZrri:
-  case X86::VPCMPQZ128rri: case X86::VPCMPUQZ128rri:
-  case X86::VPCMPQZ256rri: case X86::VPCMPUQZ256rri:
-  case X86::VPCMPQZrri:    case X86::VPCMPUQZrri:
-  case X86::VPCMPWZ128rri: case X86::VPCMPUWZ128rri:
-  case X86::VPCMPWZ256rri: case X86::VPCMPUWZ256rri:
-  case X86::VPCMPWZrri:    case X86::VPCMPUWZrri: {
+  case X86::VPCMPBZ128rri:  case X86::VPCMPUBZ128rri:
+  case X86::VPCMPBZ256rri:  case X86::VPCMPUBZ256rri:
+  case X86::VPCMPBZrri:     case X86::VPCMPUBZrri:
+  case X86::VPCMPDZ128rri:  case X86::VPCMPUDZ128rri:
+  case X86::VPCMPDZ256rri:  case X86::VPCMPUDZ256rri:
+  case X86::VPCMPDZrri:     case X86::VPCMPUDZrri:
+  case X86::VPCMPQZ128rri:  case X86::VPCMPUQZ128rri:
+  case X86::VPCMPQZ256rri:  case X86::VPCMPUQZ256rri:
+  case X86::VPCMPQZrri:     case X86::VPCMPUQZrri:
+  case X86::VPCMPWZ128rri:  case X86::VPCMPUWZ128rri:
+  case X86::VPCMPWZ256rri:  case X86::VPCMPUWZ256rri:
+  case X86::VPCMPWZrri:     case X86::VPCMPUWZrri:
+  case X86::VPCMPBZ128rrik: case X86::VPCMPUBZ128rrik:
+  case X86::VPCMPBZ256rrik: case X86::VPCMPUBZ256rrik:
+  case X86::VPCMPBZrrik:    case X86::VPCMPUBZrrik:
+  case X86::VPCMPDZ128rrik: case X86::VPCMPUDZ128rrik:
+  case X86::VPCMPDZ256rrik: case X86::VPCMPUDZ256rrik:
+  case X86::VPCMPDZrrik:    case X86::VPCMPUDZrrik:
+  case X86::VPCMPQZ128rrik: case X86::VPCMPUQZ128rrik:
+  case X86::VPCMPQZ256rrik: case X86::VPCMPUQZ256rrik:
+  case X86::VPCMPQZrrik:    case X86::VPCMPUQZrrik:
+  case X86::VPCMPWZ128rrik: case X86::VPCMPUWZ128rrik:
+  case X86::VPCMPWZ256rrik: case X86::VPCMPUWZ256rrik:
+  case X86::VPCMPWZrrik:    case X86::VPCMPUWZrrik: {
     // Flip comparison mode immediate (if necessary).
-    unsigned Imm = MI.getOperand(3).getImm() & 0x7;
+    unsigned Imm = MI.getOperand(MI.getNumOperands() - 1).getImm() & 0x7;
     switch (Imm) {
     default: llvm_unreachable("Unreachable!");
     case 0x01: Imm = 0x06; break; // LT  -> NLE
@@ -5257,7 +5269,7 @@ MachineInstr *X86InstrInfo::commuteInstructionImpl(MachineInstr &MI, bool NewMI,
       break;
     }
     auto &WorkingMI = cloneIfNew(MI);
-    WorkingMI.getOperand(3).setImm(Imm);
+    WorkingMI.getOperand(MI.getNumOperands() - 1).setImm(Imm);
     return TargetInstrInfo::commuteInstructionImpl(WorkingMI, /*NewMI=*/false,
                                                    OpIdx1, OpIdx2);
   }

@@ -1765,6 +1765,7 @@ multiclass avx512_icmp_cc<bits<8> opc, string Suffix, SDNode OpNode,
                               (_.VT (bitconvert (_.LdFrag addr:$src2))),
                               imm:$cc))],
              IIC_SSE_ALU_F32P_RM>, EVEX_4V;
+  let isCommutable = 1 in
   def rrik : AVX512AIi8<opc, MRMSrcReg,
               (outs _.KRC:$dst), (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2,
                                       AVX512ICC:$cc),
