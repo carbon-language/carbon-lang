@@ -14,6 +14,7 @@
 #include "BinaryContext.h"
 #include "BinaryFunction.h"
 #include "BinaryPassManager.h"
+#include "CalcCacheMetrics.h"
 #include "DataReader.h"
 #include "Exceptions.h"
 #include "RewriteInstance.h"
@@ -72,6 +73,13 @@ extern cl::OptionCategory BoltOptCategory;
 
 extern cl::opt<JumpTableSupportLevel> JumpTables;
 extern cl::opt<BinaryFunction::ReorderType> ReorderFunctions;
+
+static cl::opt<bool>
+CalcCacheMetrics("calc-cache-metrics",
+  cl::desc("calculate metrics of cache lines"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
 
 static cl::opt<std::string>
 OutputFilename("o",
@@ -809,6 +817,12 @@ void RewriteInstance::run() {
 
     runOptimizationPasses();
     emitFunctions();
+  }
+
+  if (opts::CalcCacheMetrics) {
+    outs() << "\nBOLT-INFO: After Optimization Call Graph Statistics: Call "
+            "Distance \n\n";
+    CalcCacheMetrics::calcGraphDistance(BinaryFunctions);
   }
 
   if (opts::UpdateDebugSections)
@@ -1857,6 +1871,12 @@ void RewriteInstance::disassembleFunctions() {
                << (*SFI)->getExecutionCount() << '\n';
       }
     }
+  }
+
+  if (opts::CalcCacheMetrics) {
+    outs() << "\nBOLT-INFO: Before Optimization Call Graph Statistics: Call "
+            "Distance \n\n";
+    CalcCacheMetrics::calcGraphDistance(BinaryFunctions);
   }
 }
 
