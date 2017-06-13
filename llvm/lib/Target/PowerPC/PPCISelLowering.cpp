@@ -1614,10 +1614,10 @@ bool PPC::isSplatShuffleMask(ShuffleVectorSDNode *N, unsigned EltSize) {
 /// Check that the mask is shuffling N byte elements. Within each N byte
 /// element of the mask, the indices could be either in increasing or
 /// decreasing order as long as they are consecutive.
-/// \param[in] N: the shuffle vector SD Node to analyze
-/// \param[in] Width: the element width in bytes, could be 2/4/8/16 (HalfWord/
+/// \param[in] N the shuffle vector SD Node to analyze
+/// \param[in] Width the element width in bytes, could be 2/4/8/16 (HalfWord/
 /// Word/DoubleWord/QuadWord).
-/// \param[in] StepLen: the delta indices number among the N byte element, if
+/// \param[in] StepLen the delta indices number among the N byte element, if
 /// the mask is in increasing/decreasing order then it is 1/-1.
 /// \return true iff the mask is shuffling N byte elements.
 static bool isNByteElemShuffleMask(ShuffleVectorSDNode *N, unsigned Width,
