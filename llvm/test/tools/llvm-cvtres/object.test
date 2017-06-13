@@ -7,7 +7,7 @@
 // > cvtres /machine:X86 /readonly /nologo /out:test_resource.obj.coff \
 //   test_resource.res
 
-RUN: llvm-cvtres /out:%t %p/Inputs/test_resource.res
+RUN: llvm-cvtres /verbose /out:%t %p/Inputs/test_resource.res
 RUN: llvm-readobj -coff-resources -section-data %t | FileCheck %s
 
 CHECK:     Resources [

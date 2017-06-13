@@ -8,7 +8,7 @@
 // > cvtres /machine:X86 /readonly /nologo /out:combined.obj.coff \
 //   languages.res test_resource.res
 
-RUN: llvm-cvtres /out:%t %p/Inputs/languages.res %p/Inputs/test_resource.res
+RUN: llvm-cvtres /verbose /out:%t %p/Inputs/languages.res %p/Inputs/test_resource.res
 RUN: llvm-readobj -coff-resources -section-data %t | FileCheck %s
 
 CHECK:     Resources [

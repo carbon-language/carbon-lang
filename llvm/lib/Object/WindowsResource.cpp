@@ -70,7 +70,7 @@ ResourceEntryRef::ResourceEntryRef(BinaryStreamRef Ref,
                                    const WindowsResource *Owner, Error &Err)
     : Reader(Ref), OwningRes(Owner) {
   if (loadNext())
-    Err = make_error<GenericBinaryError>("Could not read first entry.",
+    Err = make_error<GenericBinaryError>("Could not read first entry.\n",
                                          object_error::unexpected_eof);
 }
 
@@ -156,8 +156,8 @@ Error WindowsResourceParser::parse(WindowsResource *WR) {
   return Error::success();
 }
 
-void WindowsResourceParser::printTree() const {
-  ScopedPrinter Writer(outs());
+void WindowsResourceParser::printTree(raw_ostream &OS) const {
+  ScopedPrinter Writer(OS);
   Root.print(Writer, "Resource Tree");
 }
 
