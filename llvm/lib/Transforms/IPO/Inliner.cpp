@@ -523,6 +523,23 @@ inlineCallsImpl(CallGraphSCC &SCC, CallGraph &CG,
       if (!Callee || Callee->isDeclaration())
         continue;
 
+      Instruction *Instr = CS.getInstruction();
+
+      bool IsTriviallyDead = isInstructionTriviallyDead(Instr, &TLI);
+
+      int InlineHistoryID;
+      if (!IsTriviallyDead) {
+        // If this call site was obtained by inlining another function, verify
+        // that the include path for the function did not include the callee
+        // itself.  If so, we'd be recursively inlining the same function,
+        // which would provide the same callsites, which would cause us to
+        // infinitely inline.
+        InlineHistoryID = CallSites[CSi].second;
+        if (InlineHistoryID != -1 &&
+            InlineHistoryIncludes(Callee, InlineHistoryID, InlineHistory))
+          continue;
+      }
+
       // FIXME for new PM: because of the old PM we currently generate ORE and
       // in turn BFI on demand.  With the new PM, the ORE dependency should
       // just become a regular analysis dependency.
@@ -537,26 +554,15 @@ inlineCallsImpl(CallGraphSCC &SCC, CallGraph &CG,
       // just delete the call instead of trying to inline it, regardless of
       // size.  This happens because IPSCCP propagates the result out of the
       // call and then we're left with the dead call.
-      if (isInstructionTriviallyDead(CS.getInstruction(), &TLI)) {
-        DEBUG(dbgs() << "    -> Deleting dead call: " << *CS.getInstruction()
-                     << "\n");
+      if (IsTriviallyDead) {
+        DEBUG(dbgs() << "    -> Deleting dead call: " << *Instr << "\n");
         // Update the call graph by deleting the edge from Callee to Caller.
         CG[Caller]->removeCallEdgeFor(CS);
-        CS.getInstruction()->eraseFromParent();
+        Instr->eraseFromParent();
         ++NumCallsDeleted;
       } else {
-        // If this call site was obtained by inlining another function, verify
-        // that the include path for the function did not include the callee
-        // itself.  If so, we'd be recursively inlining the same function,
-        // which would provide the same callsites, which would cause us to
-        // infinitely inline.
-        int InlineHistoryID = CallSites[CSi].second;
-        if (InlineHistoryID != -1 &&
-            InlineHistoryIncludes(Callee, InlineHistoryID, InlineHistory))
-          continue;
-
         // Get DebugLoc to report. CS will be invalid after Inliner.
-        DebugLoc DLoc = CS.getInstruction()->getDebugLoc();
+        DebugLoc DLoc = Instr->getDebugLoc();
         BasicBlock *Block = CS.getParent();
 
         // Attempt to inline the function.
