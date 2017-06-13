@@ -3268,6 +3268,9 @@ extern int __kmp_aux_set_affinity_mask_proc(int proc, void **mask);
 extern int __kmp_aux_unset_affinity_mask_proc(int proc, void **mask);
 extern int __kmp_aux_get_affinity_mask_proc(int proc, void **mask);
 extern void __kmp_balanced_affinity(int tid, int team_size);
+#if KMP_OS_LINUX
+extern int kmp_set_thread_affinity_mask_initial(void);
+#endif
 #endif /* KMP_AFFINITY_SUPPORTED */
 
 extern void __kmp_cleanup_hierarchy();
