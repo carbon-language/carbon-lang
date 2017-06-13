@@ -2584,11 +2584,6 @@ class PHINode : public Instruction {
     allocHungoffUses(ReservedSpace);
   }
 
-  // allocate space for exactly zero operands
-  void *operator new(size_t s) {
-    return User::operator new(s);
-  }
-
 protected:
   // Note: Instruction needs to be a friend here to call cloneImpl.
   friend class Instruction;
