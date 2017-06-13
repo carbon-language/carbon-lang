@@ -133,16 +133,18 @@ Error WindowsResourceParser::parse(WindowsResource *WR) {
   ResourceEntryRef Entry = EntryOrErr.get();
   bool End = false;
   while (!End) {
-
     Data.push_back(Entry.getData());
 
-    if (Entry.checkTypeString())
+    bool IsNewTypeString = false;
+    bool IsNewNameString = false;
+
+    Root.addEntry(Entry, IsNewTypeString, IsNewNameString);
+
+    if (IsNewTypeString)
       StringTable.push_back(Entry.getTypeString());
 
-    if (Entry.checkNameString())
+    if (IsNewNameString)
       StringTable.push_back(Entry.getNameString());
-
-    Root.addEntry(Entry);
 
     RETURN_IF_ERROR(Entry.moveNext(End));
   }
@@ -155,9 +157,11 @@ void WindowsResourceParser::printTree() const {
   Root.print(Writer, "Resource Tree");
 }
 
-void WindowsResourceParser::TreeNode::addEntry(const ResourceEntryRef &Entry) {
-  TreeNode &TypeNode = addTypeNode(Entry);
-  TreeNode &NameNode = TypeNode.addNameNode(Entry);
+void WindowsResourceParser::TreeNode::addEntry(const ResourceEntryRef &Entry,
+                                               bool &IsNewTypeString,
+                                               bool &IsNewNameString) {
+  TreeNode &TypeNode = addTypeNode(Entry, IsNewTypeString);
+  TreeNode &NameNode = TypeNode.addNameNode(Entry, IsNewNameString);
   NameNode.addLanguageNode(Entry);
 }
 
@@ -171,7 +175,6 @@ WindowsResourceParser::TreeNode::TreeNode(uint16_t MajorVersion,
                                           uint32_t Characteristics)
     : IsDataNode(true), MajorVersion(MajorVersion), MinorVersion(MinorVersion),
       Characteristics(Characteristics) {
-  if (IsDataNode)
     DataIndex = DataCount++;
 }
 
@@ -194,17 +197,19 @@ WindowsResourceParser::TreeNode::createDataNode(uint16_t MajorVersion,
 }
 
 WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addTypeNode(const ResourceEntryRef &Entry) {
+WindowsResourceParser::TreeNode::addTypeNode(const ResourceEntryRef &Entry,
+                                             bool &IsNewTypeString) {
   if (Entry.checkTypeString())
-    return addChild(Entry.getTypeString());
+    return addChild(Entry.getTypeString(), IsNewTypeString);
   else
     return addChild(Entry.getTypeID());
 }
 
 WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addNameNode(const ResourceEntryRef &Entry) {
+WindowsResourceParser::TreeNode::addNameNode(const ResourceEntryRef &Entry,
+                                             bool &IsNewNameString) {
   if (Entry.checkNameString())
-    return addChild(Entry.getNameString());
+    return addChild(Entry.getNameString(), IsNewNameString);
   else
     return addChild(Entry.getNameID());
 }
@@ -232,7 +237,8 @@ WindowsResourceParser::TreeNode &WindowsResourceParser::TreeNode::addChild(
 }
 
 WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addChild(ArrayRef<UTF16> NameRef) {
+WindowsResourceParser::TreeNode::addChild(ArrayRef<UTF16> NameRef,
+                                          bool &IsNewString) {
   std::string NameString;
   ArrayRef<UTF16> CorrectedName;
   std::vector<UTF16> EndianCorrectedName;
@@ -248,6 +254,7 @@ WindowsResourceParser::TreeNode::addChild(ArrayRef<UTF16> NameRef) {
   auto Child = StringChildren.find(NameString);
   if (Child == StringChildren.end()) {
     auto NewChild = createStringNode();
+    IsNewString = true;
     WindowsResourceParser::TreeNode &Node = *NewChild;
     StringChildren.emplace(NameString, std::move(NewChild));
     return Node;
@@ -296,7 +303,6 @@ class WindowsResourceCOFFWriter {
 public:
   WindowsResourceCOFFWriter(StringRef OutputFile, Machine MachineType,
                             const WindowsResourceParser &Parser, Error &E);
-
   Error write();
 
 private:
