@@ -1,4 +1,4 @@
-set(LLVM_LINK_COMPONENTS Support)
+set(LLVM_LINK_COMPONENTS Support IPO)
 
 add_library(DynamicLibraryLib STATIC ExportedFuncs.cxx)
 
