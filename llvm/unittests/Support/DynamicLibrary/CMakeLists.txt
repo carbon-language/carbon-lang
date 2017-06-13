@@ -20,6 +20,7 @@ function(dynlib_add_module NAME)
     )
 
   add_dependencies(DynamicLibraryTests ${NAME})
+  llvm_update_compile_flags(${NAME})
 endfunction(dynlib_add_module)
 
 dynlib_add_module(PipSqueak)
