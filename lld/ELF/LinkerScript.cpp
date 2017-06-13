@@ -680,8 +680,7 @@ void LinkerScript::removeEmptyCommands() {
   auto Pos = std::remove_if(
       Opt.Commands.begin(), Opt.Commands.end(), [&](BaseCommand *Base) {
         if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
-          return std::find(OutputSections.begin(), OutputSections.end(),
-                           Cmd->Sec) == OutputSections.end();
+          return Cmd->Sec == nullptr;
         return false;
       });
   Opt.Commands.erase(Pos, Opt.Commands.end());
