@@ -690,7 +690,7 @@ void WindowsResourceCOFFWriter::writeDirectoryTree() {
 void WindowsResourceCOFFWriter::writeDirectoryStringTable() {
   // Now write the directory string table for .rsrc$01
   uint32_t TotalStringTableSize = 0;
-  for (auto String : StringTable) {
+  for (auto &String : StringTable) {
     uint16_t Length = String.size();
     support::endian::write16le(BufferStart + CurrentOffset, Length);
     CurrentOffset += sizeof(uint16_t);
