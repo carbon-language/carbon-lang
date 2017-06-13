@@ -142,10 +142,7 @@ void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
     Sym->Value = V.getValue();
   } else {
     Sym->Section = V.Sec;
-    if (Sym->Section->Flags & SHF_ALLOC)
-      Sym->Value = alignTo(V.Val, V.Alignment);
-    else
-      Sym->Value = V.getValue();
+    Sym->Value = alignTo(V.Val, V.Alignment);
   }
 }
 
@@ -649,7 +646,9 @@ void LinkerScript::assignOffsets(OutputSectionCommand *Cmd) {
   if (!Sec)
     return;
 
-  if (Cmd->AddrExpr && (Sec->Flags & SHF_ALLOC))
+  if (!(Sec->Flags & SHF_ALLOC))
+    Dot = 0;
+  else if (Cmd->AddrExpr)
     setDot(Cmd->AddrExpr, Cmd->Location, false);
 
   if (Cmd->LMAExpr) {
@@ -950,8 +949,6 @@ void LinkerScript::assignAddresses(
     OutputSection *Sec = Cmd->Sec;
     if (Sec->Flags & SHF_ALLOC)
       MinVA = std::min<uint64_t>(MinVA, Sec->Addr);
-    else
-      Sec->Addr = 0;
   }
 
   allocateHeaders(Phdrs, OutputSectionCommands, MinVA);
