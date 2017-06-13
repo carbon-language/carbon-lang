@@ -140,7 +140,11 @@ void ODRHash::AddTemplateName(TemplateName Name) {
   }
 }
 
-void ODRHash::AddTemplateArgument(TemplateArgument TA) {}
+void ODRHash::AddTemplateArgument(TemplateArgument TA) {
+  const auto Kind = TA.getKind();
+  ID.AddInteger(Kind);
+}
+
 void ODRHash::AddTemplateParameterList(const TemplateParameterList *TPL) {}
 
 void ODRHash::clear() {
