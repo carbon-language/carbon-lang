@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cassert>
@@ -72,7 +73,7 @@ public:
 };
 
 class BitVector {
-  typedef unsigned long BitWord;
+  using BitWord = unsigned long;
 
   enum { BITWORD_SIZE = (unsigned)sizeof(BitWord) * CHAR_BIT };
 
@@ -80,10 +81,11 @@ class BitVector {
                 "Unsupported word size");
 
   MutableArrayRef<BitWord> Bits; // Actual bits.
-  unsigned Size;                 // Size of bitvector in bits.
+  unsigned Size = 0;             // Size of bitvector in bits.
 
 public:
-  typedef unsigned size_type;
+  using size_type = unsigned;
+
   // Encapsulation of a single bit.
   class reference {
     friend class BitVector;
@@ -118,21 +120,8 @@ public:
     }
   };
 
-  typedef const_set_bits_iterator_impl<BitVector> const_set_bits_iterator;
-  typedef const_set_bits_iterator set_iterator;
-
-  const_set_bits_iterator set_bits_begin() const {
-    return const_set_bits_iterator(*this);
-  }
-  const_set_bits_iterator set_bits_end() const {
-    return const_set_bits_iterator(*this, -1);
-  }
-  iterator_range<const_set_bits_iterator> set_bits() const {
-    return make_range(set_bits_begin(), set_bits_end());
-  }
-
   /// BitVector default ctor - Creates an empty bitvector.
-  BitVector() : Size(0) {}
+  BitVector() = default;
 
   /// BitVector ctor - Creates a bitvector of specified number of bits. All
   /// bits are initialized to the specified value.
@@ -162,6 +151,21 @@ public:
   }
 
   ~BitVector() { std::free(Bits.data()); }
+
+  using const_set_bits_iterator = const_set_bits_iterator_impl<BitVector>;
+  using set_iterator = const_set_bits_iterator;
+
+  const_set_bits_iterator set_bits_begin() const {
+    return const_set_bits_iterator(*this);
+  }
+
+  const_set_bits_iterator set_bits_end() const {
+    return const_set_bits_iterator(*this, -1);
+  }
+
+  iterator_range<const_set_bits_iterator> set_bits() const {
+    return make_range(set_bits_begin(), set_bits_end());
+  }
 
   /// empty - Tests whether there are no bits in this bitvector.
   bool empty() const { return Size == 0; }
@@ -918,11 +922,13 @@ static inline size_t capacity_in_bytes(const BitVector &X) {
 } // end namespace llvm
 
 namespace std {
-  /// Implement std::swap in terms of BitVector swap.
-  inline void
-  swap(llvm::BitVector &LHS, llvm::BitVector &RHS) {
-    LHS.swap(RHS);
-  }
+
+/// Implement std::swap in terms of BitVector swap.
+inline void
+swap(llvm::BitVector &LHS, llvm::BitVector &RHS) {
+  LHS.swap(RHS);
+}
+
 } // end namespace std
 
 #endif // LLVM_ADT_BITVECTOR_H
