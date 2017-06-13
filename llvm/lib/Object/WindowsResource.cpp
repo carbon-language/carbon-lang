@@ -30,10 +30,6 @@ namespace object {
 
 const uint32_t MIN_HEADER_SIZE = 7 * sizeof(uint32_t) + 2 * sizeof(uint16_t);
 
-// COFF files seem to be inconsistent with alignment between sections, just use
-// 8-byte because it makes everyone happy.
-const uint32_t SECTION_ALIGNMENT = sizeof(uint64_t);
-
 static const size_t ResourceMagicSize = 16;
 
 static const size_t NullEntrySize = 16;
@@ -137,18 +133,16 @@ Error WindowsResourceParser::parse(WindowsResource *WR) {
   ResourceEntryRef Entry = EntryOrErr.get();
   bool End = false;
   while (!End) {
+
     Data.push_back(Entry.getData());
 
-    bool IsNewTypeString = false;
-    bool IsNewNameString = false;
-
-    Root.addEntry(Entry, IsNewTypeString, IsNewNameString);
-
-    if (IsNewTypeString)
+    if (Entry.checkTypeString())
       StringTable.push_back(Entry.getTypeString());
 
-    if (IsNewNameString)
+    if (Entry.checkNameString())
       StringTable.push_back(Entry.getNameString());
+
+    Root.addEntry(Entry);
 
     RETURN_IF_ERROR(Entry.moveNext(End));
   }
@@ -161,11 +155,9 @@ void WindowsResourceParser::printTree() const {
   Root.print(Writer, "Resource Tree");
 }
 
-void WindowsResourceParser::TreeNode::addEntry(const ResourceEntryRef &Entry,
-                                               bool &IsNewTypeString,
-                                               bool &IsNewNameString) {
-  TreeNode &TypeNode = addTypeNode(Entry, IsNewTypeString);
-  TreeNode &NameNode = TypeNode.addNameNode(Entry, IsNewNameString);
+void WindowsResourceParser::TreeNode::addEntry(const ResourceEntryRef &Entry) {
+  TreeNode &TypeNode = addTypeNode(Entry);
+  TreeNode &NameNode = TypeNode.addNameNode(Entry);
   NameNode.addLanguageNode(Entry);
 }
 
@@ -179,6 +171,7 @@ WindowsResourceParser::TreeNode::TreeNode(uint16_t MajorVersion,
                                           uint32_t Characteristics)
     : IsDataNode(true), MajorVersion(MajorVersion), MinorVersion(MinorVersion),
       Characteristics(Characteristics) {
+  if (IsDataNode)
     DataIndex = DataCount++;
 }
 
@@ -201,19 +194,17 @@ WindowsResourceParser::TreeNode::createDataNode(uint16_t MajorVersion,
 }
 
 WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addTypeNode(const ResourceEntryRef &Entry,
-                                             bool &IsNewTypeString) {
+WindowsResourceParser::TreeNode::addTypeNode(const ResourceEntryRef &Entry) {
   if (Entry.checkTypeString())
-    return addChild(Entry.getTypeString(), IsNewTypeString);
+    return addChild(Entry.getTypeString());
   else
     return addChild(Entry.getTypeID());
 }
 
 WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addNameNode(const ResourceEntryRef &Entry,
-                                             bool &IsNewNameString) {
+WindowsResourceParser::TreeNode::addNameNode(const ResourceEntryRef &Entry) {
   if (Entry.checkNameString())
-    return addChild(Entry.getNameString(), IsNewNameString);
+    return addChild(Entry.getNameString());
   else
     return addChild(Entry.getNameID());
 }
@@ -241,8 +232,7 @@ WindowsResourceParser::TreeNode &WindowsResourceParser::TreeNode::addChild(
 }
 
 WindowsResourceParser::TreeNode &
-WindowsResourceParser::TreeNode::addChild(ArrayRef<UTF16> NameRef,
-                                          bool &IsNewString) {
+WindowsResourceParser::TreeNode::addChild(ArrayRef<UTF16> NameRef) {
   std::string NameString;
   ArrayRef<UTF16> CorrectedName;
   std::vector<UTF16> EndianCorrectedName;
@@ -258,7 +248,6 @@ WindowsResourceParser::TreeNode::addChild(ArrayRef<UTF16> NameRef,
   auto Child = StringChildren.find(NameString);
   if (Child == StringChildren.end()) {
     auto NewChild = createStringNode();
-    IsNewString = true;
     WindowsResourceParser::TreeNode &Node = *NewChild;
     StringChildren.emplace(NameString, std::move(NewChild));
     return Node;
@@ -307,6 +296,7 @@ class WindowsResourceCOFFWriter {
 public:
   WindowsResourceCOFFWriter(StringRef OutputFile, Machine MachineType,
                             const WindowsResourceParser &Parser, Error &E);
+
   Error write();
 
 private:
@@ -324,8 +314,7 @@ private:
   void writeDirectoryStringTable();
   void writeFirstSectionRelocations();
   std::unique_ptr<FileOutputBuffer> Buffer;
-  uint8_t *BufferStart;
-  uint64_t CurrentOffset = 0;
+  uint8_t *Current;
   Machine MachineType;
   const WindowsResourceParser::TreeNode &Resources;
   const ArrayRef<std::vector<uint8_t>> Data;
@@ -397,7 +386,6 @@ void WindowsResourceCOFFWriter::performSectionOneLayout() {
   FileSize += SectionOneSize;
   FileSize += Data.size() *
               llvm::COFF::RelocationSize; // one relocation for each resource.
-  FileSize = alignTo(FileSize, SECTION_ALIGNMENT);
 }
 
 void WindowsResourceCOFFWriter::performSectionTwoLayout() {
@@ -410,7 +398,6 @@ void WindowsResourceCOFFWriter::performSectionTwoLayout() {
     SectionTwoSize += llvm::alignTo(Entry.size(), sizeof(uint64_t));
   }
   FileSize += SectionTwoSize;
-  FileSize = alignTo(FileSize, SECTION_ALIGNMENT);
 }
 
 static std::time_t getTime() {
@@ -421,7 +408,7 @@ static std::time_t getTime() {
 }
 
 Error WindowsResourceCOFFWriter::write() {
-  BufferStart = Buffer->getBufferStart();
+  Current = Buffer->getBufferStart();
 
   writeCOFFHeader();
   writeFirstSectionHeader();
@@ -440,8 +427,7 @@ Error WindowsResourceCOFFWriter::write() {
 
 void WindowsResourceCOFFWriter::writeCOFFHeader() {
   // Write the COFF header.
-  auto *Header =
-      reinterpret_cast<llvm::object::coff_file_header *>(BufferStart);
+  auto *Header = reinterpret_cast<llvm::object::coff_file_header *>(Current);
   switch (MachineType) {
   case Machine::ARM:
     Header->Machine = llvm::COFF::IMAGE_FILE_MACHINE_ARMNT;
@@ -466,9 +452,9 @@ void WindowsResourceCOFFWriter::writeCOFFHeader() {
 
 void WindowsResourceCOFFWriter::writeFirstSectionHeader() {
   // Write the first section header.
-  CurrentOffset += sizeof(llvm::object::coff_file_header);
-  auto *SectionOneHeader = reinterpret_cast<llvm::object::coff_section *>(
-      BufferStart + CurrentOffset);
+  Current += sizeof(llvm::object::coff_file_header);
+  auto *SectionOneHeader =
+      reinterpret_cast<llvm::object::coff_section *>(Current);
   strncpy(SectionOneHeader->Name, ".rsrc$01", (size_t)llvm::COFF::NameSize);
   SectionOneHeader->VirtualSize = 0;
   SectionOneHeader->VirtualAddress = 0;
@@ -487,9 +473,9 @@ void WindowsResourceCOFFWriter::writeFirstSectionHeader() {
 
 void WindowsResourceCOFFWriter::writeSecondSectionHeader() {
   // Write the second section header.
-  CurrentOffset += sizeof(llvm::object::coff_section);
-  auto *SectionTwoHeader = reinterpret_cast<llvm::object::coff_section *>(
-      BufferStart + CurrentOffset);
+  Current += sizeof(llvm::object::coff_section);
+  auto *SectionTwoHeader =
+      reinterpret_cast<llvm::object::coff_section *>(Current);
   strncpy(SectionTwoHeader->Name, ".rsrc$02", (size_t)llvm::COFF::NameSize);
   SectionTwoHeader->VirtualSize = 0;
   SectionTwoHeader->VirtualAddress = 0;
@@ -506,85 +492,75 @@ void WindowsResourceCOFFWriter::writeSecondSectionHeader() {
 
 void WindowsResourceCOFFWriter::writeFirstSection() {
   // Write section one.
-  CurrentOffset += sizeof(llvm::object::coff_section);
+  Current += sizeof(llvm::object::coff_section);
 
   writeDirectoryTree();
   writeDirectoryStringTable();
   writeFirstSectionRelocations();
-
-  CurrentOffset = alignTo(CurrentOffset, SECTION_ALIGNMENT);
 }
 
 void WindowsResourceCOFFWriter::writeSecondSection() {
   // Now write the .rsrc$02 section.
   for (auto const &RawDataEntry : Data) {
-    std::copy(RawDataEntry.begin(), RawDataEntry.end(),
-              BufferStart + CurrentOffset);
-    CurrentOffset += alignTo(RawDataEntry.size(), sizeof(uint64_t));
+    std::copy(RawDataEntry.begin(), RawDataEntry.end(), Current);
+    Current += alignTo(RawDataEntry.size(), sizeof(uint64_t));
   }
-
-  CurrentOffset = alignTo(CurrentOffset, SECTION_ALIGNMENT);
 }
 
 void WindowsResourceCOFFWriter::writeSymbolTable() {
   // Now write the symbol table.
   // First, the feat symbol.
-  auto *Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(BufferStart +
-                                                                 CurrentOffset);
+  auto *Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(Current);
   strncpy(Symbol->Name.ShortName, "@feat.00", (size_t)llvm::COFF::NameSize);
   Symbol->Value = 0x11;
   Symbol->SectionNumber = 0xffff;
   Symbol->Type = llvm::COFF::IMAGE_SYM_DTYPE_NULL;
   Symbol->StorageClass = llvm::COFF::IMAGE_SYM_CLASS_STATIC;
   Symbol->NumberOfAuxSymbols = 0;
-  CurrentOffset += sizeof(llvm::object::coff_symbol16);
+  Current += sizeof(llvm::object::coff_symbol16);
 
   // Now write the .rsrc1 symbol + aux.
-  Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(BufferStart +
-                                                           CurrentOffset);
+  Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(Current);
   strncpy(Symbol->Name.ShortName, ".rsrc$01", (size_t)llvm::COFF::NameSize);
   Symbol->Value = 0;
   Symbol->SectionNumber = 1;
   Symbol->Type = llvm::COFF::IMAGE_SYM_DTYPE_NULL;
   Symbol->StorageClass = llvm::COFF::IMAGE_SYM_CLASS_STATIC;
   Symbol->NumberOfAuxSymbols = 1;
-  CurrentOffset += sizeof(llvm::object::coff_symbol16);
-  auto *Aux = reinterpret_cast<llvm::object::coff_aux_section_definition *>(
-      BufferStart + CurrentOffset);
+  Current += sizeof(llvm::object::coff_symbol16);
+  auto *Aux =
+      reinterpret_cast<llvm::object::coff_aux_section_definition *>(Current);
   Aux->Length = SectionOneSize;
   Aux->NumberOfRelocations = Data.size();
   Aux->NumberOfLinenumbers = 0;
   Aux->CheckSum = 0;
   Aux->NumberLowPart = 0;
   Aux->Selection = 0;
-  CurrentOffset += sizeof(llvm::object::coff_aux_section_definition);
+  Current += sizeof(llvm::object::coff_aux_section_definition);
 
   // Now write the .rsrc2 symbol + aux.
-  Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(BufferStart +
-                                                           CurrentOffset);
+  Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(Current);
   strncpy(Symbol->Name.ShortName, ".rsrc$02", (size_t)llvm::COFF::NameSize);
   Symbol->Value = 0;
   Symbol->SectionNumber = 2;
   Symbol->Type = llvm::COFF::IMAGE_SYM_DTYPE_NULL;
   Symbol->StorageClass = llvm::COFF::IMAGE_SYM_CLASS_STATIC;
   Symbol->NumberOfAuxSymbols = 1;
-  CurrentOffset += sizeof(llvm::object::coff_symbol16);
-  Aux = reinterpret_cast<llvm::object::coff_aux_section_definition *>(
-      BufferStart + CurrentOffset);
+  Current += sizeof(llvm::object::coff_symbol16);
+  Aux = reinterpret_cast<llvm::object::coff_aux_section_definition *>(Current);
   Aux->Length = SectionTwoSize;
   Aux->NumberOfRelocations = 0;
   Aux->NumberOfLinenumbers = 0;
   Aux->CheckSum = 0;
   Aux->NumberLowPart = 0;
   Aux->Selection = 0;
-  CurrentOffset += sizeof(llvm::object::coff_aux_section_definition);
+  Current += sizeof(llvm::object::coff_aux_section_definition);
 
   // Now write a symbol for each relocation.
   for (unsigned i = 0; i < Data.size(); i++) {
     char RelocationName[9];
     sprintf(RelocationName, "$R%06X", DataOffsets[i]);
-    Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(BufferStart +
-                                                             CurrentOffset);
+    Symbol = reinterpret_cast<llvm::object::coff_symbol16 *>(Current);
     strncpy(Symbol->Name.ShortName, RelocationName,
             (size_t)llvm::COFF::NameSize);
     Symbol->Value = DataOffsets[i];
@@ -592,15 +568,14 @@ void WindowsResourceCOFFWriter::writeSymbolTable() {
     Symbol->Type = llvm::COFF::IMAGE_SYM_DTYPE_NULL;
     Symbol->StorageClass = llvm::COFF::IMAGE_SYM_CLASS_STATIC;
     Symbol->NumberOfAuxSymbols = 0;
-    CurrentOffset += sizeof(llvm::object::coff_symbol16);
+    Current += sizeof(llvm::object::coff_symbol16);
   }
 }
 
 void WindowsResourceCOFFWriter::writeStringTable() {
   // Just 4 null bytes for the string table.
-  auto COFFStringTable =
-      reinterpret_cast<uint32_t *>(BufferStart + CurrentOffset);
-  *COFFStringTable = 0;
+  auto COFFStringTable = reinterpret_cast<void *>(Current);
+  memset(COFFStringTable, 0, 4);
 }
 
 void WindowsResourceCOFFWriter::writeDirectoryTree() {
@@ -618,8 +593,8 @@ void WindowsResourceCOFFWriter::writeDirectoryTree() {
   while (!Queue.empty()) {
     auto CurrentNode = Queue.front();
     Queue.pop();
-    auto *Table = reinterpret_cast<llvm::object::coff_resource_dir_table *>(
-        BufferStart + CurrentOffset);
+    auto *Table =
+        reinterpret_cast<llvm::object::coff_resource_dir_table *>(Current);
     Table->Characteristics = CurrentNode->getCharacteristics();
     Table->TimeDateStamp = 0;
     Table->MajorVersion = CurrentNode->getMajorVersion();
@@ -628,13 +603,13 @@ void WindowsResourceCOFFWriter::writeDirectoryTree() {
     auto &StringChildren = CurrentNode->getStringChildren();
     Table->NumberOfNameEntries = StringChildren.size();
     Table->NumberOfIDEntries = IDChildren.size();
-    CurrentOffset += sizeof(llvm::object::coff_resource_dir_table);
+    Current += sizeof(llvm::object::coff_resource_dir_table);
     CurrentRelativeOffset += sizeof(llvm::object::coff_resource_dir_table);
 
     // Write the directory entries immediately following each directory table.
     for (auto const &Child : StringChildren) {
-      auto *Entry = reinterpret_cast<llvm::object::coff_resource_dir_entry *>(
-          BufferStart + CurrentOffset);
+      auto *Entry =
+          reinterpret_cast<llvm::object::coff_resource_dir_entry *>(Current);
       Entry->Identifier.NameOffset =
           StringTableOffsets[Child.second->getStringIndex()];
       if (Child.second->checkIsDataNode()) {
@@ -649,12 +624,12 @@ void WindowsResourceCOFFWriter::writeDirectoryTree() {
                                sizeof(llvm::object::coff_resource_dir_entry);
         Queue.push(Child.second.get());
       }
-      CurrentOffset += sizeof(llvm::object::coff_resource_dir_entry);
+      Current += sizeof(llvm::object::coff_resource_dir_entry);
       CurrentRelativeOffset += sizeof(llvm::object::coff_resource_dir_entry);
     }
     for (auto const &Child : IDChildren) {
-      auto *Entry = reinterpret_cast<llvm::object::coff_resource_dir_entry *>(
-          BufferStart + CurrentOffset);
+      auto *Entry =
+          reinterpret_cast<llvm::object::coff_resource_dir_entry *>(Current);
       Entry->Identifier.ID = Child.first;
       if (Child.second->checkIsDataNode()) {
         Entry->Offset.DataEntryOffset = NextLevelOffset;
@@ -668,7 +643,7 @@ void WindowsResourceCOFFWriter::writeDirectoryTree() {
                                sizeof(llvm::object::coff_resource_dir_entry);
         Queue.push(Child.second.get());
       }
-      CurrentOffset += sizeof(llvm::object::coff_resource_dir_entry);
+      Current += sizeof(llvm::object::coff_resource_dir_entry);
       CurrentRelativeOffset += sizeof(llvm::object::coff_resource_dir_entry);
     }
   }
@@ -676,14 +651,14 @@ void WindowsResourceCOFFWriter::writeDirectoryTree() {
   RelocationAddresses.resize(Data.size());
   // Now write all the resource data entries.
   for (auto DataNodes : DataEntriesTreeOrder) {
-    auto *Entry = reinterpret_cast<llvm::object::coff_resource_data_entry *>(
-        BufferStart + CurrentOffset);
+    auto *Entry =
+        reinterpret_cast<llvm::object::coff_resource_data_entry *>(Current);
     RelocationAddresses[DataNodes->getDataIndex()] = CurrentRelativeOffset;
     Entry->DataRVA = 0; // Set to zero because it is a relocation.
     Entry->DataSize = Data[DataNodes->getDataIndex()].size();
     Entry->Codepage = 0;
     Entry->Reserved = 0;
-    CurrentOffset += sizeof(llvm::object::coff_resource_data_entry);
+    Current += sizeof(llvm::object::coff_resource_data_entry);
     CurrentRelativeOffset += sizeof(llvm::object::coff_resource_data_entry);
   }
 }
@@ -692,17 +667,16 @@ void WindowsResourceCOFFWriter::writeDirectoryStringTable() {
   // Now write the directory string table for .rsrc$01
   uint32_t TotalStringTableSize = 0;
   for (auto String : StringTable) {
-    auto *LengthField =
-        reinterpret_cast<uint16_t *>(BufferStart + CurrentOffset);
+    auto *LengthField = reinterpret_cast<uint16_t *>(Current);
     uint16_t Length = String.size();
     *LengthField = Length;
-    CurrentOffset += sizeof(uint16_t);
-    auto *Start = reinterpret_cast<UTF16 *>(BufferStart + CurrentOffset);
+    Current += sizeof(uint16_t);
+    auto *Start = reinterpret_cast<UTF16 *>(Current);
     std::copy(String.begin(), String.end(), Start);
-    CurrentOffset += Length * sizeof(UTF16);
+    Current += Length * sizeof(UTF16);
     TotalStringTableSize += Length * sizeof(UTF16) + sizeof(uint16_t);
   }
-  CurrentOffset +=
+  Current +=
       alignTo(TotalStringTableSize, sizeof(uint32_t)) - TotalStringTableSize;
 }
 
@@ -713,8 +687,7 @@ void WindowsResourceCOFFWriter::writeFirstSectionRelocations() {
   // .rsrc section.
   uint32_t NextSymbolIndex = 5;
   for (unsigned i = 0; i < Data.size(); i++) {
-    auto *Reloc = reinterpret_cast<llvm::object::coff_relocation *>(
-        BufferStart + CurrentOffset);
+    auto *Reloc = reinterpret_cast<llvm::object::coff_relocation *>(Current);
     Reloc->VirtualAddress = RelocationAddresses[i];
     Reloc->SymbolTableIndex = NextSymbolIndex++;
     switch (MachineType) {
@@ -730,7 +703,7 @@ void WindowsResourceCOFFWriter::writeFirstSectionRelocations() {
     default:
       Reloc->Type = 0;
     }
-    CurrentOffset += sizeof(llvm::object::coff_relocation);
+    Current += sizeof(llvm::object::coff_relocation);
   }
 }
 
