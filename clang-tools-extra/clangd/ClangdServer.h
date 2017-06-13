@@ -152,8 +152,15 @@ public:
   /// Force \p File to be reparsed using the latest contents.
   void forceReparse(PathRef File);
 
-  /// Run code completion for \p File at \p Pos.
-  Tagged<std::vector<CompletionItem>> codeComplete(PathRef File, Position Pos);
+  /// Run code completion for \p File at \p Pos. If \p OverridenContents is not
+  /// None, they will used only for code completion, i.e. no diagnostics update
+  /// will be scheduled and a draft for \p File will not be updated.
+  /// If \p OverridenContents is None, contents of the current draft for \p File
+  /// will be used.
+  /// This method should only be called for currently tracked files.
+  Tagged<std::vector<CompletionItem>>
+  codeComplete(PathRef File, Position Pos,
+               llvm::Optional<StringRef> OverridenContents = llvm::None);
 
   /// Run formatting for \p Rng inside \p File.
   std::vector<tooling::Replacement> formatRange(PathRef File, Range Rng);
