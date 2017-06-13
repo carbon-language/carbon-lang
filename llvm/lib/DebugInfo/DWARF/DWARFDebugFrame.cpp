@@ -521,7 +521,7 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
   while (Data.isValidOffset(Offset)) {
     uint32_t StartOffset = Offset;
 
-    auto ReportError = [StartOffset](const char *ErrorMsg) {
+    auto ReportError = [StartOffset](const char *ErrorMsg) LLVM_ATTRIBUTE_NORETURN {
       std::string Str;
       raw_string_ostream OS(Str);
       OS << format(ErrorMsg, StartOffset);
@@ -585,7 +585,6 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
           switch (AugmentationString[i]) {
             default:
               ReportError("Unknown augmentation character in entry at %lx");
-              llvm_unreachable("ReportError should not return.");
             case 'L':
               LSDAPointerEncoding = Data.getU8(&Offset);
               break;
