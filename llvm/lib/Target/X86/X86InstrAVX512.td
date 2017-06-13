@@ -1631,6 +1631,7 @@ multiclass avx512_icmp_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
              [(set _.KRC:$dst, (OpNode (_.VT _.RC:$src1),
                                      (_.VT (bitconvert (_.LdFrag addr:$src2)))))],
              IIC_SSE_ALU_F32P_RM>, EVEX_4V;
+  let isCommutable = IsCommutable in
   def rrk : AVX512BI<opc, MRMSrcReg,
               (outs _.KRC:$dst), (ins _.KRCWM:$mask, _.RC:$src1, _.RC:$src2),
               !strconcat(OpcodeStr, "\t{$src2, $src1, $dst {${mask}}|",
