@@ -401,6 +401,11 @@ def Aext64: PatFrag<(ops node:$Rs), (i64 (anyext node:$Rs))>;
 def Zext64: PatFrag<(ops node:$Rs), (i64 (zext node:$Rs))>;
 def Sext64: PatLeaf<(i64 Usxtw:$Rs)>;
 
+def: Pat<(i32 (trunc (sra (mul Sext64:$Rs, Sext64:$Rt), (i32 32)))),
+         (M2_mpy_up (LoReg Sext64:$Rs), (LoReg Sext64:$Rt))>;
+def: Pat<(i32 (trunc (srl (mul Sext64:$Rs, Sext64:$Rt), (i32 32)))),
+         (M2_mpy_up (LoReg Sext64:$Rs), (LoReg Sext64:$Rt))>;
+
 def: Pat<(mul (Aext64 I32:$Rs), (Aext64 I32:$Rt)),
          (M2_dpmpyuu_s0 I32:$Rs, I32:$Rt)>;
 
