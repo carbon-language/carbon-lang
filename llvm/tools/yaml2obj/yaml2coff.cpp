@@ -17,6 +17,8 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/DebugInfo/CodeView/DebugStringTableSubsection.h"
+#include "llvm/DebugInfo/CodeView/StringsAndChecksums.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/ObjectYAML/ObjectYAML.h"
 #include "llvm/Support/Endian.h"
@@ -26,6 +28,33 @@
 #include <vector>
 
 using namespace llvm;
+
+namespace {
+template <typename T> struct WeakishPtr {
+public:
+  WeakishPtr() : Ref(nullptr) {}
+
+  WeakishPtr(std::unique_ptr<T> Value)
+      : Ref(Value.get()), UniquePtr(std::move(Value)) {}
+
+  WeakishPtr(std::unique_ptr<T> &&Value)
+      : Ref(Value.get()), UniquePtr(std::move(Value)) {}
+
+  WeakishPtr<T> &operator=(std::unique_ptr<T> &&Value) {
+    Owned = std::move(Value);
+    Ref = Owned.get();
+    return *this;
+  }
+
+  T *get() { return Ref; }
+  T &operator*() { return *Ref; }
+
+  operator bool() const { return Ref != nullptr; }
+
+  T *Ref;
+  std::unique_ptr<T> Owned;
+};
+} // namespace
 
 /// This parses a yaml stream that represents a COFF object file.
 /// See docs/yaml2obj for the yaml scheema.
@@ -142,6 +171,8 @@ struct COFFParser {
 
   COFFYAML::Object &Obj;
 
+  codeview::StringsAndChecksums StringsAndChecksums;
+  BumpPtrAllocator Allocator;
   StringMap<unsigned> StringTableMap;
   std::string StringTable;
   uint32_t SectionTableStart;
@@ -165,6 +196,32 @@ namespace {
 enum { DOSStubSize = 128 };
 }
 
+static yaml::BinaryRef
+toDebugS(ArrayRef<CodeViewYAML::YAMLDebugSubsection> Subsections,
+         const codeview::StringsAndChecksums &SC, BumpPtrAllocator &Allocator) {
+  using namespace codeview;
+  ExitOnError Err("Error occurred writing .debug$S section");
+  auto CVSS =
+      Err(CodeViewYAML::toCodeViewSubsectionList(Allocator, Subsections, SC));
+
+  std::vector<DebugSubsectionRecordBuilder> Builders;
+  uint32_t Size = sizeof(uint32_t);
+  for (auto &SS : CVSS) {
+    DebugSubsectionRecordBuilder B(SS, CodeViewContainer::ObjectFile);
+    Size += B.calculateSerializedLength();
+    Builders.push_back(std::move(B));
+  }
+  uint8_t *Buffer = Allocator.Allocate<uint8_t>(Size);
+  MutableArrayRef<uint8_t> Output(Buffer, Size);
+  BinaryStreamWriter Writer(Output, support::little);
+
+  Err(Writer.writeInteger<uint32_t>(COFF::DEBUG_SECTION_MAGIC));
+  for (const auto &B : Builders) {
+    Err(B.commit(Writer));
+  }
+  return {Output};
+}
+
 // Take a CP and assign addresses and sizes to everything. Returns false if the
 // layout is not valid to do.
 static bool layoutCOFF(COFFParser &CP) {
@@ -179,8 +236,33 @@ static bool layoutCOFF(COFFParser &CP) {
   uint32_t CurrentSectionDataOffset =
       CP.SectionTableStart + CP.SectionTableSize;
 
+  for (COFFYAML::Section &S : CP.Obj.Sections) {
+    // We support specifying exactly one of SectionData or Subsections.  So if
+    // there is already some SectionData, then we don't need to do any of this.
+    if (S.Name == ".debug$S" && S.SectionData.binary_size() == 0) {
+      CodeViewYAML::initializeStringsAndChecksums(S.DebugS,
+                                                  CP.StringsAndChecksums);
+      if (CP.StringsAndChecksums.hasChecksums() &&
+          CP.StringsAndChecksums.hasStrings())
+        break;
+    }
+  }
+
   // Assign each section data address consecutively.
   for (COFFYAML::Section &S : CP.Obj.Sections) {
+    if (S.Name == ".debug$S") {
+      if (S.SectionData.binary_size() == 0) {
+        assert(CP.StringsAndChecksums.hasStrings() &&
+               "Object file does not have debug string table!");
+
+        S.SectionData =
+            toDebugS(S.DebugS, CP.StringsAndChecksums, CP.Allocator);
+      }
+    } else if (S.Name == ".debug$T") {
+      if (S.SectionData.binary_size() == 0)
+        S.SectionData = CodeViewYAML::toDebugT(S.DebugT, CP.Allocator);
+    }
+
     if (S.SectionData.binary_size() > 0) {
       CurrentSectionDataOffset = alignTo(CurrentSectionDataOffset,
                                          CP.isPE() ? CP.getFileAlignment() : 4);
@@ -543,6 +625,7 @@ int yaml2coff(llvm::COFFYAML::Object &Doc, raw_ostream &Out) {
     errs() << "yaml2obj: Failed to layout optional header for COFF file!\n";
     return 1;
   }
+
   if (!layoutCOFF(CP)) {
     errs() << "yaml2obj: Failed to layout COFF file!\n";
     return 1;
