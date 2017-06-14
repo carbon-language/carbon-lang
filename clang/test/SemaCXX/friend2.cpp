@@ -170,15 +170,3 @@ struct Test {
 template class Test<int>;
 
 }
-
-namespace pr14785 {
-template<typename T>
-struct Somewhat {
-  void internal() const { }
-  friend void operator+(int const &, Somewhat<T> const &) {}  // expected-error{{redefinition of 'operator+'}}
-};
-
-void operator+(int const &, Somewhat<char> const &x) {  // expected-note {{previous definition is here}}
-  x.internal();  // expected-note{{in instantiation of template class 'pr14785::Somewhat<char>' requested here}}
-}
-}

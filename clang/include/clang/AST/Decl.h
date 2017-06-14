@@ -1872,7 +1872,7 @@ public:
   ///
   bool isThisDeclarationADefinition() const {
     return IsDeleted || IsDefaulted || Body || IsLateTemplateParsed ||
-      WillHaveBody || hasDefiningAttr();
+      hasDefiningAttr();
   }
 
   /// doesThisDeclarationHaveABody - Returns whether this specific
