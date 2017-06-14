@@ -1,4 +1,4 @@
-;===- ./lib/LLVMBuild.txt --------------------------------------*- Conf -*--===;
+;===- ./lib/Testing/LLVMBuild.txt ------------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -16,34 +16,4 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories =
- Analysis
- AsmParser
- Bitcode
- CodeGen
- DebugInfo
- Demangle
- ExecutionEngine
- LineEditor
- Linker
- IR
- IRReader
- LTO
- MC
- Object
- BinaryFormat
- ObjectYAML
- Option
- Passes
- ProfileData
- Support
- TableGen
- Target
- Testing
- ToolDrivers
- Transforms
-
-[component_0]
-type = Group
-name = Libraries
-parent = $ROOT
+subdirectories = Support
