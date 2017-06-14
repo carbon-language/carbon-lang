@@ -503,7 +503,7 @@ std::shared_ptr<DebugSubsection> YAMLFrameDataSubsection::toCodeViewSubsection(
     const codeview::StringsAndChecksums &SC) const {
   assert(SC.hasStrings());
 
-  auto Result = llvm::make_unique<DebugFrameDataSubsection>();
+  auto Result = std::make_shared<DebugFrameDataSubsection>();
   for (const auto &YF : Frames) {
     codeview::FrameData F;
     F.CodeSize = YF.CodeSize;
@@ -524,7 +524,7 @@ std::shared_ptr<DebugSubsection>
 YAMLCoffSymbolRVASubsection::toCodeViewSubsection(
     BumpPtrAllocator &Allocator,
     const codeview::StringsAndChecksums &SC) const {
-  auto Result = llvm::make_unique<DebugSymbolRVASubsection>();
+  auto Result = std::make_shared<DebugSymbolRVASubsection>();
   for (const auto &RVA : RVAs)
     Result->addRVA(RVA);
   return Result;
