@@ -159,7 +159,6 @@ void ODRHash::AddTemplateArgument(TemplateArgument TA) {
       AddStmt(TA.getAsExpr());
       break;
     case TemplateArgument::Pack:
-      llvm_unreachable("Pack");
       break;
   }
 }
