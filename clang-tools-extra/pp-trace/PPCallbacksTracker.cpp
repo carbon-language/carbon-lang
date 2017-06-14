@@ -590,7 +590,7 @@ void PPCallbacksTracker::appendArgument(const char *Name,
   SS << "[";
   // The argument tokens might include end tokens, so we reflect how
   // how getUnexpArgument provides the arguments.
-  for (int I = 0, E = Value->getNumArguments(); I < E; ++I) {
+  for (int I = 0, E = Value->getNumMacroArguments(); I < E; ++I) {
     const clang::Token *Current = Value->getUnexpArgument(I);
     int TokenCount = Value->getArgLength(Current) + 1; // include EOF
     E -= TokenCount;
