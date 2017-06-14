@@ -150,13 +150,16 @@ void ODRHash::AddTemplateArgument(TemplateArgument TA) {
     case TemplateArgument::Declaration:
     case TemplateArgument::NullPtr:
     case TemplateArgument::Integral:
+      break;
     case TemplateArgument::Template:
     case TemplateArgument::TemplateExpansion:
+      AddTemplateName(TA.getAsTemplateOrTemplatePattern());
       break;
     case TemplateArgument::Expression:
       AddStmt(TA.getAsExpr());
       break;
     case TemplateArgument::Pack:
+      llvm_unreachable("Pack");
       break;
   }
 }

@@ -1051,6 +1051,24 @@ S3 s3;
 // expected-note@first.h:* {{but in 'FirstModule' found type alias 'T' with different underlying type 'U3<2>'}}
 #endif
 
+#if defined(FIRST)
+template<class> struct T4a {};
+template <template <class> class T> struct U4 {};
+struct S4 {
+  U4<T4a> x;
+};
+#elif defined(SECOND)
+template<class> struct T4b {};
+template <template <class> class T> struct U4 {};
+struct S4 {
+  U4<T4b> x;
+};
+#else
+S4 s4;
+// expected-error@first.h:* {{'TemplateArgument::S4::x' from module 'FirstModule' is not present in definition of 'TemplateArgument::S4' in module 'SecondModule'}}
+// expected-note@second.h:* {{declaration of 'x' does not match}}
+#endif
+
 }
 
 // Interesting cases that should not cause errors.  struct S should not error
