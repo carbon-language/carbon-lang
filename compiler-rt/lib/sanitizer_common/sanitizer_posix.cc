@@ -146,22 +146,29 @@ void UnmapOrDie(void *addr, uptr size) {
 }
 
 // We want to map a chunk of address space aligned to 'alignment'.
-// We do it by maping a bit more and then unmaping redundant pieces.
+// We do it by mapping a bit more and then unmapping redundant pieces.
 // We probably can do it with fewer syscalls in some OS-dependent way.
-void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type) {
+void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type,
+                       uptr* padding_chunk) {
   CHECK(IsPowerOfTwo(size));
   CHECK(IsPowerOfTwo(alignment));
   uptr map_size = size + alignment;
   uptr map_res = (uptr)MmapOrDie(map_size, mem_type);
   uptr map_end = map_res + map_size;
+  bool is_aligned = IsAligned(map_res, alignment);
+  if (is_aligned && padding_chunk && size == alignment) {
+    *padding_chunk = map_res + size;
+    return (void *)map_res;
+  }
+  if (padding_chunk)
+    *padding_chunk = 0;
   uptr res = map_res;
-  if (res & (alignment - 1))  // Not aligned.
-    res = (map_res + alignment) & ~(alignment - 1);
-  uptr end = res + size;
-  if (res != map_res)
+  if (!is_aligned) {
+    res = (map_res + alignment - 1) & ~(alignment - 1);
     UnmapOrDie((void*)map_res, res - map_res);
-  if (end != map_end)
-    UnmapOrDie((void*)end, map_end - end);
+  }
+  uptr end = res + size;
+  UnmapOrDie((void*)end, map_end - end);
   return (void*)res;
 }
 

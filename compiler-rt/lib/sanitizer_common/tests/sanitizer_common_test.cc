@@ -77,11 +77,42 @@ TEST(SanitizerCommon, MmapAlignedOrDie) {
   for (uptr size = 1; size <= 32; size *= 2) {
     for (uptr alignment = 1; alignment <= 32; alignment *= 2) {
       for (int iter = 0; iter < 100; iter++) {
-        uptr res = (uptr)MmapAlignedOrDie(
-            size * PageSize, alignment * PageSize, "MmapAlignedOrDieTest");
+        uptr res = (uptr)MmapAlignedOrDie(size * PageSize, alignment * PageSize,
+            "MmapAlignedOrDieTest", nullptr);
         EXPECT_EQ(0U, res % (alignment * PageSize));
         internal_memset((void*)res, 1, size * PageSize);
         UnmapOrDie((void*)res, size * PageSize);
+      }
+    }
+  }
+}
+
+TEST(SanitizerCommon, MmapAlignedOrDiePaddingChunk) {
+  uptr PageSize = GetPageSizeCached();
+  for (uptr size = 1; size <= 32; size *= 2) {
+    for (uptr alignment = 1; alignment <= 32; alignment *= 2) {
+      for (int iter = 0; iter < 100; iter++) {
+        uptr padding_chunk;
+        uptr res = (uptr)MmapAlignedOrDie(size * PageSize, alignment * PageSize,
+            "MmapAlignedOrDiePaddingChunkTest", &padding_chunk);
+        EXPECT_EQ(0U, res % (alignment * PageSize));
+        internal_memset((void*)res, 1, size * PageSize);
+        UnmapOrDie((void*)res, size * PageSize);
+        if (SANITIZER_WINDOWS || (size != alignment)) {
+          // Not supported on Windows or for different size and alignment.
+          EXPECT_EQ(0U, padding_chunk);
+          continue;
+        }
+        if (size == 1 && alignment == 1) {
+          // mmap returns PageSize aligned chunks, so this is a specific case
+          // where we can check that padding_chunk will never be 0.
+          EXPECT_NE(0U, padding_chunk);
+        }
+        if (padding_chunk) {
+          EXPECT_EQ(res + size * PageSize, padding_chunk);
+          internal_memset((void*)padding_chunk, 1, alignment * PageSize);
+          UnmapOrDie((void*)padding_chunk, alignment * PageSize);
+        }
       }
     }
   }

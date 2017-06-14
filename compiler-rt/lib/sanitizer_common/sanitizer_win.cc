@@ -132,9 +132,13 @@ void UnmapOrDie(void *addr, uptr size) {
 }
 
 // We want to map a chunk of address space aligned to 'alignment'.
-void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type) {
+void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type,
+                       uptr *padding_chunk) {
   CHECK(IsPowerOfTwo(size));
   CHECK(IsPowerOfTwo(alignment));
+
+  if (padding_chunk)
+    *padding_chunk = 0;
 
   // Windows will align our allocations to at least 64K.
   alignment = Max(alignment, GetMmapGranularity());
