@@ -143,6 +143,22 @@ void ODRHash::AddTemplateName(TemplateName Name) {
 void ODRHash::AddTemplateArgument(TemplateArgument TA) {
   const auto Kind = TA.getKind();
   ID.AddInteger(Kind);
+
+  switch (Kind) {
+    case TemplateArgument::Null:
+    case TemplateArgument::Type:
+    case TemplateArgument::Declaration:
+    case TemplateArgument::NullPtr:
+    case TemplateArgument::Integral:
+    case TemplateArgument::Template:
+    case TemplateArgument::TemplateExpansion:
+      break;
+    case TemplateArgument::Expression:
+      AddStmt(TA.getAsExpr());
+      break;
+    case TemplateArgument::Pack:
+      break;
+  }
 }
 
 void ODRHash::AddTemplateParameterList(const TemplateParameterList *TPL) {}

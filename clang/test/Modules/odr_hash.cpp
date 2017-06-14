@@ -1018,6 +1018,39 @@ S1 s1;
 // expected-error@first.h:* {{'TemplateArgument::S1::x' from module 'FirstModule' is not present in definition of 'TemplateArgument::S1' in module 'SecondModule'}}
 // expected-note@second.h:* {{declaration of 'x' does not match}}
 #endif
+
+#if defined(FIRST)
+template <int> struct U2{};
+struct S2 {
+  using T = U2<2>;
+};
+#elif defined(SECOND)
+template <int> struct U2{};
+struct S2 {
+  using T = U2<(2)>;
+};
+#else
+S2 s2;
+// expected-error@second.h:* {{'TemplateArgument::S2' has different definitions in different modules; first difference is definition in module 'SecondModule' found type alias 'T' with underlying type 'U2<(2)>'}}
+// expected-note@first.h:* {{but in 'FirstModule' found type alias 'T' with different underlying type 'U2<2>'}}
+#endif
+
+#if defined(FIRST)
+template <int> struct U3{};
+struct S3 {
+  using T = U3<2>;
+};
+#elif defined(SECOND)
+template <int> struct U3{};
+struct S3 {
+  using T = U3<1 + 1>;
+};
+#else
+S3 s3;
+// expected-error@second.h:* {{'TemplateArgument::S3' has different definitions in different modules; first difference is definition in module 'SecondModule' found type alias 'T' with underlying type 'U3<1 + 1>'}}
+// expected-note@first.h:* {{but in 'FirstModule' found type alias 'T' with different underlying type 'U3<2>'}}
+#endif
+
 }
 
 // Interesting cases that should not cause errors.  struct S should not error
