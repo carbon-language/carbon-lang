@@ -92,15 +92,7 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size);
 void *MmapFixedNoAccess(uptr fixed_addr, uptr size, const char *name = nullptr);
 void *MmapNoAccess(uptr size);
 // Map aligned chunk of address space; size and alignment are powers of two.
-// Since the predominant use case of this function is "size == alignment" and
-// the nature of the way the alignment requirement is satisfied (by allocating
-// size+alignment bytes of memory), there's a potential of address space
-// fragmentation. The padding_chunk parameter provides the opportunity to
-// return the contiguous padding of "size" bytes of the allocated chunk if the
-// initial allocation happened to be perfectly aligned and the platform supports
-// partial unmapping of the mapped region.
-void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type,
-                       uptr *padding_chunk);
+void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
 // Disallow access to a memory range.  Use MmapFixedNoAccess to allocate an
 // unaccessible memory.
 bool MprotectNoAccess(uptr addr, uptr size);
