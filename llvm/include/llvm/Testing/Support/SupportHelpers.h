@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Error.h"
+#include "gtest/gtest-printers.h"
 
 namespace llvm {
 namespace detail {
@@ -34,7 +35,7 @@ inline void PrintTo(const ErrorHolder &Err, std::ostream *Out) {
 template <typename T>
 void PrintTo(const ExpectedHolder<T> &Item, std::ostream *Out) {
   if (Item.Success) {
-    *Out << "succeeded with value \"" << testing::PrintToString(**Item.Value)
+    *Out << "succeeded with value \"" << ::testing::PrintToString(**Item.Value)
          << "\"";
   } else {
     PrintTo(static_cast<const ErrorHolder &>(Item), Out);
