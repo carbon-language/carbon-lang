@@ -99,7 +99,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(StringRef Emul) {
   std::pair<ELFKind, uint16_t> Ret =
       StringSwitch<std::pair<ELFKind, uint16_t>>(S)
           .Cases("aarch64elf", "aarch64linux", {ELF64LEKind, EM_AARCH64})
-          .Case("armelf_linux_eabi", {ELF32LEKind, EM_ARM})
+          .Cases("armelf", "armelf_linux_eabi", {ELF32LEKind, EM_ARM})
           .Case("elf32_x86_64", {ELF32LEKind, EM_X86_64})
           .Cases("elf32btsmip", "elf32btsmipn32", {ELF32BEKind, EM_MIPS})
           .Cases("elf32ltsmip", "elf32ltsmipn32", {ELF32LEKind, EM_MIPS})
