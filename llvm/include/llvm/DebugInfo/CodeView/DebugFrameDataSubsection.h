@@ -49,7 +49,6 @@ public:
   Error commit(BinaryStreamWriter &Writer) const override;
 
   void addFrameData(const FrameData &Frame);
-  void setFrames(ArrayRef<FrameData> Frames);
 
 private:
   std::vector<FrameData> Frames;

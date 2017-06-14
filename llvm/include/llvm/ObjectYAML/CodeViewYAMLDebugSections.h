@@ -28,8 +28,6 @@ class DebugStringTableSubsectionRef;
 class DebugChecksumsSubsectionRef;
 class DebugStringTableSubsection;
 class DebugChecksumsSubsection;
-class StringsAndChecksums;
-class StringsAndChecksumsRef;
 }
 namespace CodeViewYAML {
 
@@ -105,24 +103,25 @@ struct InlineeInfo {
 
 struct YAMLDebugSubsection {
   static Expected<YAMLDebugSubsection>
-  fromCodeViewSubection(const codeview::StringsAndChecksumsRef &SC,
+  fromCodeViewSubection(const codeview::DebugStringTableSubsectionRef &Strings,
+                        const codeview::DebugChecksumsSubsectionRef &Checksums,
                         const codeview::DebugSubsectionRecord &SS);
 
   std::shared_ptr<detail::YAMLSubsectionBase> Subsection;
 };
 
-struct DebugSubsectionState {};
-
-Expected<std::vector<std::shared_ptr<codeview::DebugSubsection>>>
+Expected<std::vector<std::unique_ptr<codeview::DebugSubsection>>>
 toCodeViewSubsectionList(BumpPtrAllocator &Allocator,
                          ArrayRef<YAMLDebugSubsection> Subsections,
-                         const codeview::StringsAndChecksums &SC);
+                         codeview::DebugStringTableSubsection &Strings);
+Expected<std::vector<std::unique_ptr<codeview::DebugSubsection>>>
+toCodeViewSubsectionList(
+    BumpPtrAllocator &Allocator, ArrayRef<YAMLDebugSubsection> Subsections,
+    std::unique_ptr<codeview::DebugStringTableSubsection> &TakeStrings,
+    codeview::DebugStringTableSubsection *StringsRef);
 
-std::vector<YAMLDebugSubsection>
-fromDebugS(ArrayRef<uint8_t> Data, const codeview::StringsAndChecksumsRef &SC);
-
-void initializeStringsAndChecksums(ArrayRef<YAMLDebugSubsection> Sections,
-                                   codeview::StringsAndChecksums &SC);
+std::unique_ptr<codeview::DebugStringTableSubsection>
+findStringTable(ArrayRef<YAMLDebugSubsection> Sections);
 
 } // namespace CodeViewYAML
 } // namespace llvm

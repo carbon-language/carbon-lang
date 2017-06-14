@@ -28,7 +28,6 @@
 #include "llvm/DebugInfo/CodeView/EnumTables.h"
 #include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
-#include "llvm/DebugInfo/CodeView/StringsAndChecksums.h"
 #include "llvm/DebugInfo/CodeView/SymbolDumper.h"
 #include "llvm/DebugInfo/CodeView/TypeDatabaseVisitor.h"
 #include "llvm/DebugInfo/CodeView/TypeDumpVisitor.h"
@@ -106,7 +105,7 @@ public:
   }
 
   Error visitLines(DebugLinesSubsectionRef &Lines,
-                   const StringsAndChecksumsRef &State) override {
+                   const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::Lines))
       return Error::success();
 
@@ -147,7 +146,7 @@ public:
   }
 
   Error visitFileChecksums(DebugChecksumsSubsectionRef &Checksums,
-                           const StringsAndChecksumsRef &State) override {
+                           const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::FileChecksums))
       return Error::success();
 
@@ -165,7 +164,7 @@ public:
   }
 
   Error visitInlineeLines(DebugInlineeLinesSubsectionRef &Inlinees,
-                          const StringsAndChecksumsRef &State) override {
+                          const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::InlineeLines))
       return Error::success();
 
@@ -192,7 +191,7 @@ public:
   }
 
   Error visitCrossModuleExports(DebugCrossModuleExportsSubsectionRef &CSE,
-                                const StringsAndChecksumsRef &State) override {
+                                const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeExports))
       return Error::success();
 
@@ -206,7 +205,7 @@ public:
   }
 
   Error visitCrossModuleImports(DebugCrossModuleImportsSubsectionRef &CSI,
-                                const StringsAndChecksumsRef &State) override {
+                                const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::CrossScopeImports))
       return Error::success();
 
@@ -223,7 +222,7 @@ public:
   }
 
   Error visitFrameData(DebugFrameDataSubsectionRef &FD,
-                       const StringsAndChecksumsRef &State) override {
+                       const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::FrameData))
       return Error::success();
 
@@ -249,7 +248,7 @@ public:
   }
 
   Error visitSymbols(DebugSymbolsSubsectionRef &Symbols,
-                     const StringsAndChecksumsRef &State) override {
+                     const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::Symbols))
       return Error::success();
     ListScope L(P, "Symbols");
@@ -271,7 +270,7 @@ public:
   }
 
   Error visitStringTable(DebugStringTableSubsectionRef &Strings,
-                         const StringsAndChecksumsRef &State) override {
+                         const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::StringTable))
       return Error::success();
 
@@ -289,7 +288,7 @@ public:
   }
 
   Error visitCOFFSymbolRVAs(DebugSymbolRVASubsectionRef &RVAs,
-                            const StringsAndChecksumsRef &State) override {
+                            const DebugSubsectionState &State) override {
     if (!opts::checkModuleSubsection(opts::ModuleSubsection::CoffSymbolRVAs))
       return Error::success();
 
@@ -310,7 +309,7 @@ private:
           return EC;
       }
     }
-
+    
     if (!Success) {
       P.printString(
           llvm::formatv("Index: {0:x} (unknown function)", Index.getIndex())
@@ -319,7 +318,7 @@ private:
     return Error::success();
   }
   Error printFileName(StringRef Label, uint32_t Offset,
-                      const StringsAndChecksumsRef &State) {
+                      const DebugSubsectionState &State) {
     if (auto Result = getNameFromChecksumsBuffer(Offset, State)) {
       P.printString(Label, *Result);
       return Error::success();
@@ -328,13 +327,13 @@ private:
   }
 
   Expected<StringRef>
-  getNameFromStringTable(uint32_t Offset, const StringsAndChecksumsRef &State) {
+  getNameFromStringTable(uint32_t Offset, const DebugSubsectionState &State) {
     return State.strings().getString(Offset);
   }
 
   Expected<StringRef>
   getNameFromChecksumsBuffer(uint32_t Offset,
-                             const StringsAndChecksumsRef &State) {
+                             const DebugSubsectionState &State) {
     auto Array = State.checksums().getArray();
     auto ChecksumIter = Array.at(Offset);
     if (ChecksumIter == Array.end())

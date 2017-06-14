@@ -18,7 +18,6 @@
 #include "llvm/DebugInfo/CodeView/DebugSubsection.h"
 #include "llvm/DebugInfo/CodeView/DebugUnknownSubsection.h"
 #include "llvm/DebugInfo/CodeView/Line.h"
-#include "llvm/DebugInfo/CodeView/StringsAndChecksums.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
@@ -237,16 +236,14 @@ Error YAMLOutputStyle::dumpDbiStream() {
         if (!ExpectedChecksums)
           return ExpectedChecksums.takeError();
 
-        StringsAndChecksumsRef SC(ExpectedST->getStringTable(),
-                                  *ExpectedChecksums);
-
         for (const auto &SS : ModS.subsections()) {
           opts::ModuleSubsection OptionKind = convertSubsectionKind(SS.kind());
           if (!opts::checkModuleSubsection(OptionKind))
             continue;
 
           auto Converted =
-              CodeViewYAML::YAMLDebugSubsection::fromCodeViewSubection(SC, SS);
+              CodeViewYAML::YAMLDebugSubsection::fromCodeViewSubection(
+                  ExpectedST->getStringTable(), *ExpectedChecksums, SS);
           if (!Converted)
             return Converted.takeError();
           DMI.Subsections.push_back(*Converted);
