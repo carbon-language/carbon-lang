@@ -731,7 +731,7 @@ llvm::CodeViewYAML::fromDebugT(ArrayRef<uint8_t> DebugT) {
     auto CVT = Err(LeafRecord::fromCodeViewRecord(T));
     Result.push_back(CVT);
   }
-  return std::move(Result);
+  return Result;
 }
 
 ArrayRef<uint8_t> llvm::CodeViewYAML::toDebugT(ArrayRef<LeafRecord> Leafs,

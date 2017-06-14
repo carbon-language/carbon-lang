@@ -29,33 +29,6 @@
 
 using namespace llvm;
 
-namespace {
-template <typename T> struct WeakishPtr {
-public:
-  WeakishPtr() : Ref(nullptr) {}
-
-  WeakishPtr(std::unique_ptr<T> Value)
-      : Ref(Value.get()), UniquePtr(std::move(Value)) {}
-
-  WeakishPtr(std::unique_ptr<T> &&Value)
-      : Ref(Value.get()), UniquePtr(std::move(Value)) {}
-
-  WeakishPtr<T> &operator=(std::unique_ptr<T> &&Value) {
-    Owned = std::move(Value);
-    Ref = Owned.get();
-    return *this;
-  }
-
-  T *get() { return Ref; }
-  T &operator*() { return *Ref; }
-
-  operator bool() const { return Ref != nullptr; }
-
-  T *Ref;
-  std::unique_ptr<T> Owned;
-};
-} // namespace
-
 /// This parses a yaml stream that represents a COFF object file.
 /// See docs/yaml2obj for the yaml scheema.
 struct COFFParser {

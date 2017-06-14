@@ -399,7 +399,7 @@ std::shared_ptr<DebugSubsection> YAMLChecksumsSubsection::toCodeViewSubsection(
   for (const auto &CS : Checksums) {
     Result->addChecksum(CS.FileName, CS.Kind, CS.ChecksumBytes.Bytes);
   }
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection> YAMLLinesSubsection::toCodeViewSubsection(
@@ -429,7 +429,7 @@ std::shared_ptr<DebugSubsection> YAMLLinesSubsection::toCodeViewSubsection(
       }
     }
   }
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection>
@@ -450,7 +450,7 @@ YAMLInlineeLinesSubsection::toCodeViewSubsection(
       Result->addExtraFile(EF);
     }
   }
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection>
@@ -460,7 +460,7 @@ YAMLCrossModuleExportsSubsection::toCodeViewSubsection(
   auto Result = std::make_shared<DebugCrossModuleExportsSubsection>();
   for (const auto &M : Exports)
     Result->addMapping(M.Local, M.Global);
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection>
@@ -475,7 +475,7 @@ YAMLCrossModuleImportsSubsection::toCodeViewSubsection(
     for (const auto Id : M.ImportIds)
       Result->addImport(M.ModuleName, Id);
   }
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection> YAMLSymbolsSubsection::toCodeViewSubsection(
@@ -485,7 +485,7 @@ std::shared_ptr<DebugSubsection> YAMLSymbolsSubsection::toCodeViewSubsection(
   for (const auto &Sym : Symbols)
     Result->addSymbol(
         Sym.toCodeViewSymbol(Allocator, CodeViewContainer::ObjectFile));
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection>
@@ -495,7 +495,7 @@ YAMLStringTableSubsection::toCodeViewSubsection(
   auto Result = std::make_shared<DebugStringTableSubsection>();
   for (const auto &Str : this->Strings)
     Result->insert(Str);
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection> YAMLFrameDataSubsection::toCodeViewSubsection(
@@ -517,7 +517,7 @@ std::shared_ptr<DebugSubsection> YAMLFrameDataSubsection::toCodeViewSubsection(
     F.FrameFunc = SC.strings()->insert(YF.FrameFunc);
     Result->addFrameData(F);
   }
-  return std::move(Result);
+  return Result;
 }
 
 std::shared_ptr<DebugSubsection>
@@ -527,7 +527,7 @@ YAMLCoffSymbolRVASubsection::toCodeViewSubsection(
   auto Result = llvm::make_unique<DebugSymbolRVASubsection>();
   for (const auto &RVA : RVAs)
     Result->addRVA(RVA);
-  return std::move(Result);
+  return Result;
 }
 
 static Expected<SourceFileChecksumEntry>
@@ -907,7 +907,7 @@ llvm::CodeViewYAML::fromDebugS(ArrayRef<uint8_t> Data,
     auto YamlSS = Err(YAMLDebugSubsection::fromCodeViewSubection(SC, SS));
     Result.push_back(YamlSS);
   }
-  return std::move(Result);
+  return Result;
 }
 
 void llvm::CodeViewYAML::initializeStringsAndChecksums(
