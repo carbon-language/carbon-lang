@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_CODEVIEW_STRINGS_AND_CHECKSUMS_H
 
 #include "llvm/DebugInfo/CodeView/CodeView.h"
+#include "llvm/DebugInfo/CodeView/DebugSubsectionRecord.h"
 
 #include <memory>
 
