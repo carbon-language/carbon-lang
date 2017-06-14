@@ -15,6 +15,7 @@
 #include "Passes/IndirectCallPromotion.h"
 #include "Passes/Inliner.h"
 #include "Passes/ReorderFunctions.h"
+#include "Passes/StokeInfo.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <numeric>
@@ -200,6 +201,20 @@ VerifyCFG("verify-cfg",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+static llvm::cl::opt<bool>
+Stoke("stoke",
+  cl::desc("turn on the stoke analysis"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+static llvm::cl::opt<bool>
+PrintStoke("print-stoke",
+  cl::desc("print functions after stoke analysis"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
 } // namespace opts
 
 namespace llvm {
@@ -344,6 +359,10 @@ void BinaryFunctionPassManager::runAllPasses(
   Manager.registerPass(
     llvm::make_unique<SimplifyConditionalTailCalls>(PrintSCTC),
     opts::SimplifyConditionalTailCalls);
+
+  // Add the StokeInfo pass, which extract functions for stoke optimization and
+  // get the liveness information for them
+  Manager.registerPass(llvm::make_unique<StokeInfo>(PrintStoke), opts::Stoke);
 
   // This pass should always run last.*
   Manager.registerPass(llvm::make_unique<FinalizeFunctions>(PrintFinalized));

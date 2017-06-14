@@ -44,6 +44,7 @@ class RegAnalysis {
   /// we know nothing about the function.
   void beConservative(BitVector &Result) const;
 
+public:
   /// Compute the set of registers \p Func may read from during its execution.
   BitVector getFunctionUsedRegsList(const BinaryFunction *Func);
 
@@ -53,7 +54,6 @@ class RegAnalysis {
   /// set of clobbered registers.
   BitVector getFunctionClobberList(const BinaryFunction *Func);
 
-public:
   RegAnalysis(BinaryContext &BC, std::map<uint64_t, BinaryFunction> &BFs,
               BinaryFunctionCallGraph &CG);
 

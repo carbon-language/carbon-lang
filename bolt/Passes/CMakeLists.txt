@@ -22,6 +22,7 @@ add_llvm_library(LLVMBOLTPasses
   StackAvailableExpressions.cpp
   StackPointerTracking.cpp
   StackReachingUses.cpp
+  StokeInfo.cpp
   )
 
 include_directories( ${LLVM_MAIN_SRC_DIR}/tools/llvm-bolt )

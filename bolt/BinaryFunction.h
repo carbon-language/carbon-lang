@@ -923,6 +923,17 @@ public:
     return BLI != nullptr;
   }
 
+  const BinaryLoopInfo &getLoopInfo() {
+    return *BLI.get();
+  }
+
+  bool isLoopFree() {
+    if (!hasLoopInfo()) {
+      calculateLoopInfo();
+    }
+    return BLI->empty();
+  }
+
   /// Print loop information about the function.
   void printLoopInfo(raw_ostream &OS) const;
 
