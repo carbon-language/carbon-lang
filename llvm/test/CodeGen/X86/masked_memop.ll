@@ -462,7 +462,9 @@ define void @test14(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %val) {
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
 ; SKX-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm2[1],xmm0[2],xmm2[3]
-; SKX-NEXT:    vpcmpeqq %xmm2, %xmm0, %k1
+; SKX-NEXT:    vpcmpeqq %xmm2, %xmm0, %k0
+; SKX-NEXT:    kshiftlw $14, %k0, %k0
+; SKX-NEXT:    kshiftrw $14, %k0, %k1
 ; SKX-NEXT:    vmovups %xmm1, (%rdi) {%k1}
 ; SKX-NEXT:    retq
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer
@@ -548,7 +550,9 @@ define <2 x float> @test16(<2 x i32> %trigger, <2 x float>* %addr, <2 x float> %
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
 ; SKX-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm2[1],xmm0[2],xmm2[3]
-; SKX-NEXT:    vpcmpeqq %xmm2, %xmm0, %k1
+; SKX-NEXT:    vpcmpeqq %xmm2, %xmm0, %k0
+; SKX-NEXT:    kshiftlw $14, %k0, %k0
+; SKX-NEXT:    kshiftrw $14, %k0, %k1
 ; SKX-NEXT:    vblendmps (%rdi), %xmm1, %xmm0 {%k1}
 ; SKX-NEXT:    retq
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer
@@ -597,7 +601,9 @@ define <2 x i32> @test17(<2 x i32> %trigger, <2 x i32>* %addr, <2 x i32> %dst) {
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    vpxor %xmm2, %xmm2, %xmm2
 ; SKX-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm2[1],xmm0[2],xmm2[3]
-; SKX-NEXT:    vpcmpeqq %xmm2, %xmm0, %k1
+; SKX-NEXT:    vpcmpeqq %xmm2, %xmm0, %k0
+; SKX-NEXT:    kshiftlw $14, %k0, %k0
+; SKX-NEXT:    kshiftrw $14, %k0, %k1
 ; SKX-NEXT:    vpshufd {{.*#+}} xmm0 = xmm1[0,2,2,3]
 ; SKX-NEXT:    vmovdqu32 (%rdi), %xmm0 {%k1}
 ; SKX-NEXT:    vpmovsxdq %xmm0, %xmm0
@@ -639,7 +645,9 @@ define <2 x float> @test18(<2 x i32> %trigger, <2 x float>* %addr) {
 ; SKX:       ## BB#0:
 ; SKX-NEXT:    vpxor %xmm1, %xmm1, %xmm1
 ; SKX-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2],xmm1[3]
-; SKX-NEXT:    vpcmpeqq %xmm1, %xmm0, %k1
+; SKX-NEXT:    vpcmpeqq %xmm1, %xmm0, %k0
+; SKX-NEXT:    kshiftlw $14, %k0, %k0
+; SKX-NEXT:    kshiftrw $14, %k0, %k1
 ; SKX-NEXT:    vmovups (%rdi), %xmm0 {%k1} {z}
 ; SKX-NEXT:    retq
   %mask = icmp eq <2 x i32> %trigger, zeroinitializer
