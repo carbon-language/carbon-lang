@@ -12959,8 +12959,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
             TLI.allowsMemoryAccess(Context, DL, LegalizedStoredValueTy,
                                    FirstStoreAS, FirstStoreAlign, &IsFastSt) &&
             IsFastSt &&
-            TLI.allowsMemoryAccess(Context, DL, LegalizedStoredValueTy,
-                                   FirstLoadAS, FirstLoadAlign, &IsFastLd) &&
+            TLI.allowsMemoryAccess(Context, DL, StoreTy, FirstLoadAS,
+                                   FirstLoadAlign, &IsFastLd) &&
             IsFastLd)
           LastLegalIntegerType = i + 1;
       }
