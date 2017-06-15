@@ -117,11 +117,11 @@
 
 RAW:                               Modules
 RAW-NEXT: ============================================================
-RAW-NEXT:   Mod 0000 | Name: `E:\src\llvmbuild\ninja\tools\lld\test\coff\Output\pdb.test.tmp1.obj`:
-RAW-NEXT:              Obj: `E:\src\llvmbuild\ninja\tools\lld\test\coff\Output\pdb.test.tmp1.obj`:
+RAW-NEXT:   Mod 0000 | Name: `{{.*}}pdb.test.tmp1.obj`:
+RAW-NEXT:              Obj: `{{.*}}pdb.test.tmp1.obj`:
 RAW-NEXT:              debug stream: 9, # files: 0, has ec info: false
-RAW-NEXT:   Mod 0001 | Name: `E:\src\llvmbuild\ninja\tools\lld\test\coff\Output\pdb.test.tmp2.obj`:
-RAW-NEXT:              Obj: `E:\src\llvmbuild\ninja\tools\lld\test\coff\Output\pdb.test.tmp2.obj`:
+RAW-NEXT:   Mod 0001 | Name: `{{.*}}pdb.test.tmp2.obj`:
+RAW-NEXT:              Obj: `{{.*}}pdb.test.tmp2.obj`:
 RAW-NEXT:              debug stream: 10, # files: 0, has ec info: false
 RAW-NEXT:   Mod 0002 | Name: `* Linker *`:
 RAW-NEXT:              Obj: ``:
