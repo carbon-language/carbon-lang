@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/FormatVariadicDetails.h"
 #include "llvm/Support/NativeFormatting.h"
 
@@ -147,6 +148,19 @@ public:
     Style.consumeInteger(10, Digits);
     assert(Style.empty() && "Invalid integral format style!");
     write_integer(Stream, V, Digits, IS);
+  }
+};
+
+template <typename T, llvm::support::endianness E, int alignment>
+struct format_provider<
+    support::detail::packed_endian_specific_integral<T, E, alignment>> {
+  using Type =
+      support::detail::packed_endian_specific_integral<T, E, alignment>;
+
+public:
+  static void format(const Type &V, llvm::raw_ostream &Stream,
+                     StringRef Style) {
+    format_provider<T>::format(static_cast<T>(V), Stream, Style);
   }
 };
 
