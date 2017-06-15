@@ -103,15 +103,15 @@ static std::string formatCallingConvention(CallingConvention Convention) {
     RETURN_CASE(CallingConvention, NearFast, "fastcall");
     RETURN_CASE(CallingConvention, NearPascal, "pascal");
     RETURN_CASE(CallingConvention, NearStdCall, "stdcall");
+    RETURN_CASE(CallingConvention, NearSysCall, "near syscall");
     RETURN_CASE(CallingConvention, NearVector, "vectorcall");
     RETURN_CASE(CallingConvention, PpcCall, "ppccall");
+    RETURN_CASE(CallingConvention, SHCall, "shcall");
     RETURN_CASE(CallingConvention, SH5Call, "sh5call");
     RETURN_CASE(CallingConvention, ThisCall, "thiscall");
     RETURN_CASE(CallingConvention, TriCall, "tricall");
-  default:
-    return formatUnknownEnum(Convention);
   }
-  return "";
+  return formatUnknownEnum(Convention);
 }
 
 static std::string formatPointerMode(PointerMode Mode) {
@@ -121,19 +121,18 @@ static std::string formatPointerMode(PointerMode Mode) {
     RETURN_CASE(PointerMode, PointerToDataMember, "data member pointer");
     RETURN_CASE(PointerMode, PointerToMemberFunction, "member fn pointer");
     RETURN_CASE(PointerMode, RValueReference, "rvalue ref");
-  default:
-    return formatUnknownEnum(Mode);
   }
+  return formatUnknownEnum(Mode);
 }
 
 static std::string memberAccess(MemberAccess Access) {
   switch (Access) {
+    RETURN_CASE(MemberAccess, None, "");
     RETURN_CASE(MemberAccess, Private, "private");
     RETURN_CASE(MemberAccess, Protected, "protected");
     RETURN_CASE(MemberAccess, Public, "public");
-  default:
-    return formatUnknownEnum(Access);
   }
+  return formatUnknownEnum(Access);
 }
 
 static std::string methodKind(MethodKind Kind) {
@@ -145,9 +144,8 @@ static std::string methodKind(MethodKind Kind) {
     RETURN_CASE(MethodKind, IntroducingVirtual, "intro virtual");
     RETURN_CASE(MethodKind, PureVirtual, "pure virtual");
     RETURN_CASE(MethodKind, PureIntroducingVirtual, "pure intro virtual");
-  default:
-    return formatUnknownEnum(Kind);
   }
+  return formatUnknownEnum(Kind);
 }
 
 static std::string pointerKind(PointerKind Kind) {
@@ -165,9 +163,8 @@ static std::string pointerKind(PointerKind Kind) {
     RETURN_CASE(PointerKind, Near32, "ptr32");
     RETURN_CASE(PointerKind, Far32, "far ptr32");
     RETURN_CASE(PointerKind, Near64, "ptr64");
-  default:
-    return formatUnknownEnum(Kind);
   }
+  return formatUnknownEnum(Kind);
 }
 
 static std::string memberAttributes(const MemberAttributes &Attrs) {

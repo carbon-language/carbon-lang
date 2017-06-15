@@ -24,10 +24,10 @@ class MinimalSymbolDumper : public codeview::SymbolVisitorCallbacks {
 public:
   MinimalSymbolDumper(LinePrinter &P, bool RecordBytes,
                       codeview::LazyRandomTypeCollection &Types)
-      : P(P), RecordBytes(RecordBytes), Types(Types) {}
+      : P(P), Types(Types) {}
 
-  virtual Error visitSymbolBegin(codeview::CVSymbol &Record);
-  virtual Error visitSymbolEnd(codeview::CVSymbol &Record);
+  Error visitSymbolBegin(codeview::CVSymbol &Record) override;
+  Error visitSymbolEnd(codeview::CVSymbol &Record) override;
 
 #define SYMBOL_RECORD(EnumName, EnumVal, Name)                                 \
   virtual Error visitKnownRecord(codeview::CVSymbol &CVR,                      \
@@ -39,7 +39,6 @@ private:
   std::string typeIndex(codeview::TypeIndex TI) const;
 
   LinePrinter &P;
-  bool RecordBytes = false;
   codeview::LazyRandomTypeCollection &Types;
 };
 } // namespace pdb

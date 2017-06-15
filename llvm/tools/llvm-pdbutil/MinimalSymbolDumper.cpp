@@ -172,18 +172,16 @@ static std::string formatThunkOrdinal(ThunkOrdinal Ordinal) {
     RETURN_CASE(ThunkOrdinal, UnknownLoad, "unknown load");
     RETURN_CASE(ThunkOrdinal, TrampIncremental, "tramp incremental");
     RETURN_CASE(ThunkOrdinal, BranchIsland, "branch island");
-  default:
-    return formatUnknownEnum(Ordinal);
   }
+  return formatUnknownEnum(Ordinal);
 }
 
 static std::string formatTrampolineType(TrampolineType Tramp) {
   switch (Tramp) {
     RETURN_CASE(TrampolineType, TrampIncremental, "tramp incremental");
     RETURN_CASE(TrampolineType, BranchIsland, "branch island");
-  default:
-    return formatUnknownEnum(Tramp);
   }
+  return formatUnknownEnum(Tramp);
 }
 
 static std::string formatSourceLanguage(SourceLanguage Lang) {
@@ -196,6 +194,7 @@ static std::string formatSourceLanguage(SourceLanguage Lang) {
     RETURN_CASE(SourceLanguage, Basic, "basic");
     RETURN_CASE(SourceLanguage, Cobol, "cobol");
     RETURN_CASE(SourceLanguage, Link, "link");
+    RETURN_CASE(SourceLanguage, VB, "vb");
     RETURN_CASE(SourceLanguage, Cvtres, "cvtres");
     RETURN_CASE(SourceLanguage, Cvtpgd, "cvtpgd");
     RETURN_CASE(SourceLanguage, CSharp, "c#");
@@ -204,9 +203,8 @@ static std::string formatSourceLanguage(SourceLanguage Lang) {
     RETURN_CASE(SourceLanguage, JScript, "javascript");
     RETURN_CASE(SourceLanguage, MSIL, "msil");
     RETURN_CASE(SourceLanguage, HLSL, "hlsl");
-  default:
-    return formatUnknownEnum(Lang);
   }
+  return formatUnknownEnum(Lang);
 }
 
 static std::string formatMachineType(CPUType Cpu) {
@@ -270,9 +268,8 @@ static std::string formatMachineType(CPUType Cpu) {
     RETURN_CASE(CPUType, Thumb, "thumb");
     RETURN_CASE(CPUType, ARMNT, "arm nt");
     RETURN_CASE(CPUType, D3D11_Shader, "d3d11 shader");
-  default:
-    return formatUnknownEnum(Cpu);
   }
+  return formatUnknownEnum(Cpu);
 }
 
 static std::string formatCookieKind(FrameCookieKind Kind) {
@@ -281,9 +278,8 @@ static std::string formatCookieKind(FrameCookieKind Kind) {
     RETURN_CASE(FrameCookieKind, XorStackPointer, "xor stack ptr");
     RETURN_CASE(FrameCookieKind, XorFramePointer, "xor frame ptr");
     RETURN_CASE(FrameCookieKind, XorR13, "xor rot13");
-  default:
-    return formatUnknownEnum(Kind);
   }
+  return formatUnknownEnum(Kind);
 }
 
 static std::string formatRegisterId(RegisterId Id) {

@@ -608,7 +608,7 @@ Error RawOutputStyle::dumpSectionContribs() {
 
   class Visitor : public ISectionContribVisitor {
   public:
-    Visitor(LinePrinter &P, DbiStream &DS) : P(P), DS(DS) {}
+    Visitor(LinePrinter &P) : P(P) {}
     void visit(const SectionContrib &SC) override {
       P.formatLine(
           "SC  | mod = {2}, {0}, size = {1}, data crc = {3}, reloc crc = {4}",
@@ -631,10 +631,9 @@ Error RawOutputStyle::dumpSectionContribs() {
 
   private:
     LinePrinter &P;
-    DbiStream &DS;
   };
 
-  Visitor V(P, Dbi);
+  Visitor V(P);
   Dbi.visitSectionContributions(V);
   return Error::success();
 }
