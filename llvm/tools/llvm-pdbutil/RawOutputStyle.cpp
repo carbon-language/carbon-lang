@@ -103,12 +103,12 @@ Error RawOutputStyle::dump() {
       return EC;
   }
 
-  if (opts::raw::DumpTypes) {
+  if (opts::raw::DumpTypes || opts::raw::DumpTypeExtras) {
     if (auto EC = dumpTpiStream(StreamTPI))
       return EC;
   }
 
-  if (opts::raw::DumpIds) {
+  if (opts::raw::DumpIds || opts::raw::DumpIdExtras) {
     if (auto EC = dumpTpiStream(StreamIPI))
       return EC;
   }
@@ -367,15 +367,21 @@ Error RawOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
   assert(StreamIdx == StreamTPI || StreamIdx == StreamIPI);
 
   bool Present = false;
+  bool DumpTypes = false;
   bool DumpBytes = false;
+  bool DumpExtras = false;
   if (StreamIdx == StreamTPI) {
     printHeader(P, "Types (TPI Stream)");
     Present = File.hasPDBTpiStream();
+    DumpTypes = opts::raw::DumpTypes;
     DumpBytes = opts::raw::DumpTypeData;
+    DumpExtras = opts::raw::DumpTypeExtras;
   } else if (StreamIdx == StreamIPI) {
     printHeader(P, "Types (IPI Stream)");
     Present = File.hasPDBIpiStream();
+    DumpTypes = opts::raw::DumpIds;
     DumpBytes = opts::raw::DumpIdData;
+    DumpExtras = opts::raw::DumpIdExtras;
   }
 
   AutoIndent Indent(P);
@@ -391,16 +397,45 @@ Error RawOutputStyle::dumpTpiStream(uint32_t StreamIdx) {
 
   auto &Types = Err(initializeTypeDatabase(StreamIdx));
 
-  P.formatLine("Showing {0:N} records", Stream.getNumTypeRecords());
-  uint32_t Width =
-      NumDigits(TypeIndex::FirstNonSimpleIndex + Stream.getNumTypeRecords());
+  if (DumpTypes) {
+    P.formatLine("Showing {0:N} records", Stream.getNumTypeRecords());
+    uint32_t Width =
+        NumDigits(TypeIndex::FirstNonSimpleIndex + Stream.getNumTypeRecords());
 
-  MinimalTypeDumpVisitor V(P, Width + 2, DumpBytes, Types);
+    MinimalTypeDumpVisitor V(P, Width + 2, DumpBytes, DumpExtras, Types,
+                             Stream.getHashValues());
 
-  Optional<TypeIndex> I = Types.getFirst();
-  if (auto EC = codeview::visitTypeStream(Types, V)) {
-    P.formatLine("An error occurred dumping type records: {0}",
-                 toString(std::move(EC)));
+    Optional<TypeIndex> I = Types.getFirst();
+    if (auto EC = codeview::visitTypeStream(Types, V)) {
+      P.formatLine("An error occurred dumping type records: {0}",
+                   toString(std::move(EC)));
+    }
+  }
+
+  if (DumpExtras) {
+    P.NewLine();
+    auto IndexOffsets = Stream.getTypeIndexOffsets();
+    P.formatLine("Type Index Offsets:");
+    for (const auto &IO : IndexOffsets) {
+      AutoIndent Indent2(P);
+      P.formatLine("TI: {0}, Offset: {1}", IO.Type, fmtle(IO.Offset));
+    }
+
+    P.NewLine();
+    P.formatLine("Hash Adjusters:");
+    auto &Adjusters = Stream.getHashAdjusters();
+    auto &Strings = Err(File.getStringTable());
+    for (const auto &A : Adjusters) {
+      AutoIndent Indent2(P);
+      auto ExpectedStr = Strings.getStringForID(A.first);
+      TypeIndex TI(A.second);
+      if (ExpectedStr)
+        P.formatLine("`{0}` -> {1}", *ExpectedStr, TI);
+      else {
+        P.formatLine("unknown str id ({0}) -> {1}", A.first, TI);
+        consumeError(ExpectedStr.takeError());
+      }
+    }
   }
   return Error::success();
 }

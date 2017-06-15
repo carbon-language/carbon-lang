@@ -302,8 +302,8 @@ cl::opt<bool> DumpTypeData(
     cl::desc("dump CodeView type record raw bytes from TPI stream"),
     cl::cat(TypeOptions), cl::sub(RawSubcommand));
 
-cl::opt<bool> DumpTypeHashes("type-hash",
-                             cl::desc("dump CodeView TPI hash stream"),
+cl::opt<bool> DumpTypeExtras("type-extras",
+                             cl::desc("dump type hashes and index offsets"),
                              cl::cat(TypeOptions), cl::sub(RawSubcommand));
 
 cl::opt<bool> DumpIds("ids",
@@ -313,6 +313,10 @@ cl::opt<bool>
     DumpIdData("id-data",
                cl::desc("dump CodeView type record raw bytes from IPI stream"),
                cl::cat(TypeOptions), cl::sub(RawSubcommand));
+
+cl::opt<bool> DumpIdExtras("id-extras",
+                           cl::desc("dump id hashes and index offsets"),
+                           cl::cat(TypeOptions), cl::sub(RawSubcommand));
 
 // SYMBOL OPTIONS
 cl::opt<bool> DumpPublics("publics", cl::desc("dump Publics stream data"),
@@ -898,8 +902,9 @@ int main(int argc_, const char *argv_[]) {
       opts::raw::DumpSummary = true;
       opts::raw::DumpSymbols = true;
       opts::raw::DumpIds = true;
+      opts::raw::DumpIdExtras = true;
       opts::raw::DumpTypes = true;
-      opts::raw::DumpTypeHashes = true;
+      opts::raw::DumpTypeExtras = true;
       opts::raw::DumpModules = true;
       opts::raw::DumpModuleFiles = true;
     }
