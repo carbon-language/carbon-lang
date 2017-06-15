@@ -1009,7 +1009,7 @@ findOrphanPos(std::vector<BaseCommand *>::iterator B,
       break;
   }
   auto J = std::find_if(
-      make_reverse_iterator(I), make_reverse_iterator(B),
+      llvm::make_reverse_iterator(I), llvm::make_reverse_iterator(B),
       [](BaseCommand *Cmd) { return isa<OutputSectionCommand>(Cmd); });
   I = J.base();
   while (I != E && shouldSkip(*I))
@@ -1040,8 +1040,8 @@ template <class ELFT> void Writer<ELFT>::sortSections() {
       return isa<OutputSectionCommand>(Base);
     };
     I = std::find_if(I, E, IsSection);
-    E = std::find_if(make_reverse_iterator(E), make_reverse_iterator(I),
-                     IsSection)
+    E = std::find_if(llvm::make_reverse_iterator(E),
+                     llvm::make_reverse_iterator(I), IsSection)
             .base();
     std::stable_sort(I, E, compareSections);
     return;
