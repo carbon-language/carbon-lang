@@ -148,10 +148,16 @@ static SmallString<32> buildSuspendPrefixStr(CGCoroData &Coro, AwaitKind Kind) {
 //
 //  See llvm's docs/Coroutines.rst for more details.
 //
-static RValue emitSuspendExpression(CodeGenFunction &CGF, CGCoroData &Coro,
+namespace {
+  struct LValueOrRValue {
+    LValue LV;
+    RValue RV;
+  };
+}
+static LValueOrRValue emitSuspendExpression(CodeGenFunction &CGF, CGCoroData &Coro,
                                     CoroutineSuspendExpr const &S,
                                     AwaitKind Kind, AggValueSlot aggSlot,
-                                    bool ignoreResult) {
+                                    bool ignoreResult, bool forLValue) {
   auto *E = S.getCommonExpr();
 
   // FIXME: rsmith 5/22/2017. Does it still make sense for us to have a 
@@ -217,7 +223,12 @@ static RValue emitSuspendExpression(CodeGenFunction &CGF, CGCoroData &Coro,
 
   // Emit await_resume expression.
   CGF.EmitBlock(ReadyBlock);
-  return CGF.EmitAnyExpr(S.getResumeExpr(), aggSlot, ignoreResult);
+  LValueOrRValue Res;
+  if (forLValue)
+    Res.LV = CGF.EmitLValue(S.getResumeExpr());
+  else
+    Res.RV = CGF.EmitAnyExpr(S.getResumeExpr(), aggSlot, ignoreResult);
+  return Res;
 }
 
 RValue CodeGenFunction::EmitCoawaitExpr(const CoawaitExpr &E,
@@ -225,19 +236,51 @@ RValue CodeGenFunction::EmitCoawaitExpr(const CoawaitExpr &E,
                                         bool ignoreResult) {
   return emitSuspendExpression(*this, *CurCoro.Data, E,
                                CurCoro.Data->CurrentAwaitKind, aggSlot,
-                               ignoreResult);
+                               ignoreResult, /*forLValue*/false).RV;
 }
 RValue CodeGenFunction::EmitCoyieldExpr(const CoyieldExpr &E,
                                         AggValueSlot aggSlot,
                                         bool ignoreResult) {
   return emitSuspendExpression(*this, *CurCoro.Data, E, AwaitKind::Yield,
-                               aggSlot, ignoreResult);
+                               aggSlot, ignoreResult, /*forLValue*/false).RV;
 }
 
 void CodeGenFunction::EmitCoreturnStmt(CoreturnStmt const &S) {
   ++CurCoro.Data->CoreturnCount;
   EmitStmt(S.getPromiseCall());
   EmitBranchThroughCleanup(CurCoro.Data->FinalJD);
+}
+
+
+#ifndef NDEBUG
+static QualType getCoroutineSuspendExprReturnType(const ASTContext &Ctx,
+  const CoroutineSuspendExpr *E) {
+  const auto *RE = E->getResumeExpr();
+  // Is it possible for RE to be a CXXBindTemporaryExpr wrapping
+  // a MemberCallExpr?
+  assert(isa<CallExpr>(RE) && "unexpected suspend expression type");
+  return cast<CallExpr>(RE)->getCallReturnType(Ctx);
+}
+#endif
+
+LValue
+CodeGenFunction::EmitCoawaitLValue(const CoawaitExpr *E) {
+  assert(getCoroutineSuspendExprReturnType(getContext(), E)->isReferenceType() &&
+         "Can't have a scalar return unless the return type is a "
+         "reference type!");
+  return emitSuspendExpression(*this, *CurCoro.Data, *E,
+                               CurCoro.Data->CurrentAwaitKind, AggValueSlot::ignored(),
+                               /*ignoreResult*/false, /*forLValue*/true).LV;
+}
+
+LValue
+CodeGenFunction::EmitCoyieldLValue(const CoyieldExpr *E) {
+  assert(getCoroutineSuspendExprReturnType(getContext(), E)->isReferenceType() &&
+         "Can't have a scalar return unless the return type is a "
+         "reference type!");
+  return emitSuspendExpression(*this, *CurCoro.Data, *E,
+                               AwaitKind::Yield, AggValueSlot::ignored(),
+                               /*ignoreResult*/false, /*forLValue*/true).LV;
 }
 
 // Hunts for the parameter reference in the parameter copy/move declaration.
