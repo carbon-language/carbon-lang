@@ -1599,31 +1599,25 @@ Value *InstCombiner::foldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
   ConstantInt *LHSC = dyn_cast<ConstantInt>(LHS->getOperand(1));
   ConstantInt *RHSC = dyn_cast<ConstantInt>(RHS->getOperand(1));
 
+  // TODO support vector splats
   if (LHS->getPredicate() == ICmpInst::ICMP_EQ && LHSC && LHSC->isZero() &&
       RHS->getPredicate() == ICmpInst::ICMP_EQ && RHSC && RHSC->isZero()) {
 
-    BinaryOperator *LAnd = dyn_cast<BinaryOperator>(LHS->getOperand(0));
-    BinaryOperator *RAnd = dyn_cast<BinaryOperator>(RHS->getOperand(0));
-    if (LAnd && RAnd && LAnd->hasOneUse() && RHS->hasOneUse() &&
-        LAnd->getOpcode() == Instruction::And &&
-        RAnd->getOpcode() == Instruction::And) {
+    Value *A, *B, *C, *D;
+    if (match(LHS->getOperand(0), m_And(m_Value(A), m_Value(B))) &&
+        match(RHS->getOperand(0), m_And(m_Value(C), m_Value(D)))) {
+      if (A == D || B == D)
+        std::swap(C, D);
+      if (B == C)
+        std::swap(A, B);
 
-      Value *Mask = nullptr;
-      Value *Masked = nullptr;
-      if (LAnd->getOperand(0) == RAnd->getOperand(0) &&
-          isKnownToBeAPowerOfTwo(LAnd->getOperand(1), false, 0, CxtI) &&
-          isKnownToBeAPowerOfTwo(RAnd->getOperand(1), false, 0, CxtI)) {
-        Mask = Builder->CreateOr(LAnd->getOperand(1), RAnd->getOperand(1));
-        Masked = Builder->CreateAnd(LAnd->getOperand(0), Mask);
-      } else if (LAnd->getOperand(1) == RAnd->getOperand(1) &&
-                 isKnownToBeAPowerOfTwo(LAnd->getOperand(0), false, 0, CxtI) &&
-                 isKnownToBeAPowerOfTwo(RAnd->getOperand(0), false, 0, CxtI)) {
-        Mask = Builder->CreateOr(LAnd->getOperand(0), RAnd->getOperand(0));
-        Masked = Builder->CreateAnd(LAnd->getOperand(1), Mask);
-      }
-
-      if (Masked)
+      if (A == C &&
+          isKnownToBeAPowerOfTwo(B, false, 0, CxtI) &&
+          isKnownToBeAPowerOfTwo(D, false, 0, CxtI)) {
+        Value *Mask = Builder->CreateOr(B, D);
+        Value *Masked = Builder->CreateAnd(A, Mask);
         return Builder->CreateICmp(ICmpInst::ICMP_NE, Masked, Mask);
+      }
     }
   }
 
