@@ -19120,7 +19120,7 @@ static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
 
   SDValue IMask = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, MVT::v1i1, Mask);
   if (Op.getOpcode() == X86ISD::FSETCCM ||
-      Op.getOpcode() == X86ISD::FSETCCM_RND) 
+      Op.getOpcode() == X86ISD::FSETCCM_RND)
     return DAG.getNode(ISD::AND, dl, VT, Op, IMask);
   if (Op.getOpcode() == X86ISD::VFPCLASSS)
     return DAG.getNode(ISD::OR, dl, VT, Op, IMask);
