@@ -42,6 +42,8 @@ private:
   Error dumpBlockRanges();
   Error dumpStreamBytes();
   Error dumpStringTable();
+  Error dumpLines();
+  Error dumpInlineeLines();
   Error dumpTpiStream(uint32_t StreamIdx);
   Error dumpModules();
   Error dumpModuleFiles();

@@ -102,6 +102,9 @@ extern llvm::cl::opt<bool> DumpSummary;
 extern llvm::cl::opt<bool> DumpStreams;
 extern llvm::Optional<BlockRange> DumpBlockRange;
 extern llvm::cl::list<std::string> DumpStreamData;
+
+extern llvm::cl::opt<bool> DumpLines;
+extern llvm::cl::opt<bool> DumpInlineeLines;
 extern llvm::cl::opt<bool> DumpStringTable;
 extern llvm::cl::opt<bool> DumpTypes;
 extern llvm::cl::opt<bool> DumpTypeData;

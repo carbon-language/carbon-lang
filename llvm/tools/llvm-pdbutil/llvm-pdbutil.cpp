@@ -334,7 +334,15 @@ cl::opt<bool> DumpModules("modules", cl::desc("dump compiland information"),
                           cl::cat(FileOptions), cl::sub(RawSubcommand));
 cl::opt<bool> DumpModuleFiles(
     "files",
-    cl::desc("for each module dumped, dump the contributing source files"),
+    cl::desc("Dump the source files that contribute to each module's."),
+    cl::cat(FileOptions), cl::sub(RawSubcommand));
+cl::opt<bool> DumpLines(
+    "l",
+    cl::desc("dump source file/line information (DEBUG_S_LINES subsection)"),
+    cl::cat(FileOptions), cl::sub(RawSubcommand));
+cl::opt<bool> DumpInlineeLines(
+    "il",
+    cl::desc("dump inlinee line information (DEBUG_S_INLINEELINES subsection)"),
     cl::cat(FileOptions), cl::sub(RawSubcommand));
 
 // MISCELLANEOUS OPTIONS
@@ -893,6 +901,8 @@ int main(int argc_, const char *argv_[]) {
 
   if (opts::RawSubcommand) {
     if (opts::raw::RawAll) {
+      opts::raw::DumpLines = true;
+      opts::raw::DumpInlineeLines = true;
       opts::raw::DumpIds = true;
       opts::raw::DumpPublics = true;
       opts::raw::DumpSectionContribs = true;

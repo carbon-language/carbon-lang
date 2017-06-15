@@ -108,6 +108,16 @@ Error RawOutputStyle::dump() {
       return EC;
   }
 
+  if (opts::raw::DumpLines) {
+    if (auto EC = dumpLines())
+      return EC;
+  }
+
+  if (opts::raw::DumpInlineeLines) {
+    if (auto EC = dumpInlineeLines())
+      return EC;
+  }
+
   if (opts::raw::DumpTypes || opts::raw::DumpTypeExtras) {
     if (auto EC = dumpTpiStream(StreamTPI))
       return EC;
@@ -318,36 +328,6 @@ static Expected<ModuleDebugStreamRef> getModuleDebugStream(PDBFile &File,
   return std::move(ModS);
 }
 
-static StringMap<FileChecksumEntry> loadChecksums(PDBFile &File,
-                                                  uint32_t ModuleIndex) {
-  StringMap<FileChecksumEntry> Result;
-  auto MDS = getModuleDebugStream(File, ModuleIndex);
-  if (!MDS) {
-    consumeError(MDS.takeError());
-    return Result;
-  }
-
-  auto CS = MDS->findChecksumsSubsection();
-  if (!CS) {
-    consumeError(CS.takeError());
-    return Result;
-  }
-
-  auto Strings = File.getStringTable();
-  if (!Strings) {
-    consumeError(Strings.takeError());
-    return Result;
-  }
-
-  for (const auto &Entry : *CS) {
-    auto S = Strings->getStringForID(Entry.FileNameOffset);
-    if (!S)
-      continue;
-    Result[*S] = Entry;
-  }
-  return Result;
-}
-
 static std::string formatChecksumKind(FileChecksumKind Kind) {
   switch (Kind) {
     RETURN_CASE(FileChecksumKind, None, "None");
@@ -357,6 +337,120 @@ static std::string formatChecksumKind(FileChecksumKind Kind) {
   }
   return formatUnknownEnum(Kind);
 }
+
+template <typename Callback>
+static void iterateModules(PDBFile &File, LinePrinter &P, uint32_t IndentLevel,
+                           Callback Fn) {
+  AutoIndent Indent(P);
+  if (!File.hasPDBDbiStream()) {
+    P.formatLine("DBI Stream not present");
+    return;
+  }
+
+  ExitOnError Err("Unexpected error processing modules");
+
+  auto &Stream = Err(File.getPDBDbiStream());
+
+  const DbiModuleList &Modules = Stream.modules();
+  uint32_t Count = Modules.getModuleCount();
+  uint32_t Digits = NumDigits(Count);
+  for (uint32_t I = 0; I < Count; ++I) {
+    auto Modi = Modules.getModuleDescriptor(I);
+    P.formatLine("Mod {0:4} | `{1}`: ", fmt_align(I, AlignStyle::Right, Digits),
+                 Modi.getModuleName());
+
+    AutoIndent Indent2(P, IndentLevel);
+    Fn(I, Modi);
+  }
+}
+
+namespace {
+class StringsAndChecksumsPrinter {
+  const DebugStringTableSubsectionRef &extractStringTable(PDBFile &File) {
+    ExitOnError Err("Unexpected error processing modules");
+    return Err(File.getStringTable()).getStringTable();
+  }
+
+  template <typename... Args>
+  void formatInternal(LinePrinter &Printer, bool Append,
+                      Args &&... args) const {
+    if (Append)
+      Printer.format(std::forward<Args>(args)...);
+    else
+      Printer.formatLine(std::forward<Args>(args)...);
+  }
+
+public:
+  StringsAndChecksumsPrinter(PDBFile &File, uint32_t Modi)
+      : Records(extractStringTable(File)) {
+    auto MDS = getModuleDebugStream(File, Modi);
+    if (!MDS) {
+      consumeError(MDS.takeError());
+      return;
+    }
+
+    DebugStream = llvm::make_unique<ModuleDebugStreamRef>(std::move(*MDS));
+    Records.initialize(MDS->subsections());
+    if (Records.hasChecksums()) {
+      for (const auto &Entry : Records.checksums()) {
+        auto S = Records.strings().getString(Entry.FileNameOffset);
+        if (!S)
+          continue;
+        ChecksumsByFile[*S] = Entry;
+      }
+    }
+  }
+
+  Expected<StringRef> getNameFromStringTable(uint32_t Offset) const {
+    return Records.strings().getString(Offset);
+  }
+
+  void formatFromFileName(LinePrinter &Printer, StringRef File,
+                          bool Append = false) const {
+    auto FC = ChecksumsByFile.find(File);
+    if (FC == ChecksumsByFile.end()) {
+      formatInternal(Printer, Append, "- (no checksum) {0}", File);
+      return;
+    }
+
+    formatInternal(Printer, Append, "- ({0}: {1}) {2}",
+                   formatChecksumKind(FC->getValue().Kind),
+                   toHex(FC->getValue().Checksum), File);
+  }
+
+  void formatFromChecksumsOffset(LinePrinter &Printer, uint32_t Offset,
+                                 bool Append = false) const {
+    if (!Records.hasChecksums()) {
+      formatInternal(Printer, Append, "(unknown file name offset {0})", Offset);
+      return;
+    }
+
+    auto Iter = Records.checksums().getArray().at(Offset);
+    if (Iter == Records.checksums().getArray().end()) {
+      formatInternal(Printer, Append, "(unknown file name offset {0})", Offset);
+      return;
+    }
+
+    uint32_t FO = Iter->FileNameOffset;
+    auto ExpectedFile = getNameFromStringTable(FO);
+    if (!ExpectedFile) {
+      formatInternal(Printer, Append, "(unknown file name offset {0})", Offset);
+      consumeError(ExpectedFile.takeError());
+      return;
+    }
+    if (Iter->Kind == FileChecksumKind::None) {
+      formatInternal(Printer, Append, "{0} (no checksum)", *ExpectedFile);
+    } else {
+      formatInternal(Printer, Append, "{0} ({1}: {2})", *ExpectedFile,
+                     formatChecksumKind(Iter->Kind), toHex(Iter->Checksum));
+    }
+  }
+
+  std::unique_ptr<ModuleDebugStreamRef> DebugStream;
+  StringsAndChecksumsRef Records;
+  StringMap<FileChecksumEntry> ChecksumsByFile;
+};
+} // namespace
 
 Error RawOutputStyle::dumpModules() {
   printHeader(P, "Modules");
@@ -389,34 +483,143 @@ Error RawOutputStyle::dumpModules() {
 Error RawOutputStyle::dumpModuleFiles() {
   printHeader(P, "Files");
 
-  AutoIndent Indent(P);
-  if (!File.hasPDBDbiStream()) {
-    P.formatLine("DBI Stream not present");
-    return Error::success();
-  }
-
   ExitOnError Err("Unexpected error processing modules");
 
-  auto &Stream = Err(File.getPDBDbiStream());
+  iterateModules(File, P, 11,
+                 [this, &Err](uint32_t I, const DbiModuleDescriptor &Modi) {
+                   auto &Stream = Err(File.getPDBDbiStream());
+                   StringsAndChecksumsPrinter Strings(File, I);
 
-  const DbiModuleList &Modules = Stream.modules();
-  uint32_t Count = Modules.getModuleCount();
-  uint32_t Digits = NumDigits(Count);
-  for (uint32_t I = 0; I < Count; ++I) {
-    auto Modi = Modules.getModuleDescriptor(I);
-    P.formatLine("Mod {0:4} | `{1}`: ", fmt_align(I, AlignStyle::Right, Digits),
-                 Modi.getModuleName());
-    StringMap<FileChecksumEntry> CS = loadChecksums(File, I);
-    for (const auto &F : Modules.source_files(I)) {
-      auto FC = CS.find(F);
-      if (FC == CS.end())
-        P.formatLine("           - (no checksum) {0}", F);
+                   const DbiModuleList &Modules = Stream.modules();
+                   for (const auto &F : Modules.source_files(I)) {
+                     Strings.formatFromFileName(P, F);
+                   }
+                 });
+  return Error::success();
+}
+
+static void typesetLinesAndColumns(PDBFile &File, LinePrinter &P,
+                                   uint32_t Start, const LineColumnEntry &E) {
+  const uint32_t kMaxCharsPerLineNumber = 4; // 4 digit line number
+  uint32_t MinColumnWidth = kMaxCharsPerLineNumber + 5;
+
+  // Let's try to keep it under 100 characters
+  constexpr uint32_t kMaxRowLength = 100;
+  // At least 3 spaces between columns.
+  uint32_t ColumnsPerRow = kMaxRowLength / (MinColumnWidth + 3);
+  uint32_t ItemsLeft = E.LineNumbers.size();
+  auto LineIter = E.LineNumbers.begin();
+  while (ItemsLeft != 0) {
+    uint32_t RowColumns = std::min(ItemsLeft, ColumnsPerRow);
+    for (uint32_t I = 0; I < RowColumns; ++I) {
+      LineInfo Line(LineIter->Flags);
+      std::string LineStr;
+      if (Line.isAlwaysStepInto())
+        LineStr = "ASI";
+      else if (Line.isNeverStepInto())
+        LineStr = "NSI";
       else
-        P.formatLine("           - ({0}: {1}) {2}",
-                     formatChecksumKind(FC->getValue().Kind),
-                     toHex(FC->getValue().Checksum), F);
+        LineStr = utostr(Line.getStartLine());
+      char Statement = Line.isStatement() ? ' ' : '!';
+      P.format("{0} {1:X-} {2} ",
+               fmt_align(LineStr, AlignStyle::Right, kMaxCharsPerLineNumber),
+               fmt_align(Start + LineIter->Offset, AlignStyle::Right, 8, '0'),
+               Statement);
+      ++LineIter;
+      --ItemsLeft;
     }
+    P.NewLine();
   }
+}
+
+Error RawOutputStyle::dumpLines() {
+  printHeader(P, "Lines");
+  ExitOnError Err("Unexpected error processing modules");
+
+  iterateModules(
+      File, P, 4, [this](uint32_t I, const DbiModuleDescriptor &Modi) {
+
+        auto MDS = getModuleDebugStream(File, I);
+        if (!MDS) {
+          consumeError(MDS.takeError());
+          return;
+        }
+
+        StringsAndChecksumsPrinter Strings(File, I);
+
+        uint32_t LastNameIndex = UINT32_MAX;
+        for (const auto &SS : MDS->subsections()) {
+          if (SS.kind() != DebugSubsectionKind::Lines)
+            continue;
+
+          DebugLinesSubsectionRef Lines;
+          BinaryStreamReader Reader(SS.getRecordData());
+          if (auto EC = Lines.initialize(Reader)) {
+            P.formatLine("Line information not present");
+            continue;
+          }
+
+          uint16_t Segment = Lines.header()->RelocSegment;
+          uint32_t Begin = Lines.header()->RelocOffset;
+          uint32_t End = Begin + Lines.header()->CodeSize;
+          for (const auto &Block : Lines) {
+            if (Block.NameIndex != LastNameIndex) {
+              Strings.formatFromChecksumsOffset(P, Block.NameIndex);
+              LastNameIndex = Block.NameIndex;
+            }
+
+            AutoIndent Indent(P, 2);
+            P.formatLine("{0:X-4}:{1:X-8}-{2:X-8}, ", Segment, Begin, End);
+            uint32_t Count = Block.LineNumbers.size();
+            if (Lines.hasColumnInfo())
+              P.format("line/column/addr entries = {0}", Count);
+            else
+              P.format("line/addr entries = {0}", Count);
+
+            P.NewLine();
+            typesetLinesAndColumns(File, P, Begin, Block);
+          }
+        }
+      });
+
+  return Error::success();
+}
+
+Error RawOutputStyle::dumpInlineeLines() {
+  printHeader(P, "Inlinee Lines");
+  ExitOnError Err("Unexpected error processing modules");
+
+  iterateModules(
+      File, P, 2, [this](uint32_t I, const DbiModuleDescriptor &Modi) {
+
+        auto MDS = getModuleDebugStream(File, I);
+        if (!MDS) {
+          consumeError(MDS.takeError());
+          return;
+        }
+
+        StringsAndChecksumsPrinter Strings(File, I);
+
+        for (const auto &SS : MDS->subsections()) {
+          if (SS.kind() != DebugSubsectionKind::InlineeLines)
+            continue;
+
+          DebugInlineeLinesSubsectionRef Lines;
+          BinaryStreamReader Reader(SS.getRecordData());
+          if (auto EC = Lines.initialize(Reader)) {
+            continue;
+          }
+          P.formatLine("{0,+8} | {1,+5} | {2}", "Inlinee", "Line",
+                       "Source File");
+          for (const auto &Entry : Lines) {
+            P.formatLine("{0,+8} | {1,+5} | ", Entry.Header->Inlinee,
+                         fmtle(Entry.Header->SourceLineNum));
+            Strings.formatFromChecksumsOffset(P, Entry.Header->FileID, true);
+          }
+          P.NewLine();
+        }
+      });
+
   return Error::success();
 }
 

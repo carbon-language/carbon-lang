@@ -58,6 +58,17 @@ ALL-NEXT: ============================================================
 ALL-NEXT:   Mod 0000 | `d:\src\llvm\test\DebugInfo\PDB\Inputs\empty.obj`:
 ALL-NEXT:              - (MD5: A0A5BD0D3ECD93FC29D19DE826FBF4BC) d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp
 ALL-NEXT:   Mod 0001 | `* Linker *`:
+ALL:                                 Lines
+ALL-NEXT: ============================================================
+ALL-NEXT:   Mod 0000 | `d:\src\llvm\test\DebugInfo\PDB\Inputs\empty.obj`:
+ALL-NEXT:       d:\src\llvm\test\debuginfo\pdb\inputs\empty.cpp (MD5: A0A5BD0D3ECD93FC29D19DE826FBF4BC)
+ALL-NEXT:         0001:00000010-0000001A, line/addr entries = 3
+ALL-NEXT:            5 00000010      6 00000013      7 00000018
+ALL:       Mod 0001 | `* Linker *`:
+ALL:                             Inlinee Lines
+ALL-NEXT: ============================================================
+ALL-NEXT:   Mod 0000 | `d:\src\llvm\test\DebugInfo\PDB\Inputs\empty.obj`:
+ALL-NEXT:   Mod 0001 | `* Linker *`:
 ALL:                           Types (TPI Stream)
 ALL-NEXT: ============================================================
 ALL-NEXT:   Showing 75 records
