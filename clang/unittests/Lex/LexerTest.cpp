@@ -383,7 +383,7 @@ TEST_F(LexerTest, DontOverallocateStringifyArgs) {
   MacroInfo *MI = PP->AllocateMacroInfo({});
   MI->setIsFunctionLike();
   MI->setArgumentList(ArgList, Allocator);
-  EXPECT_EQ(3, MI->getNumArgs());
+  EXPECT_EQ(3u, MI->getNumArgs());
   EXPECT_TRUE(MI->isFunctionLike());
 
   Token Eof;
