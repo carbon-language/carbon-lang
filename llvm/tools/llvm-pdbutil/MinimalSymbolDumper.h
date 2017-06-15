@@ -38,7 +38,6 @@ public:
 private:
   std::string typeIndex(codeview::TypeIndex TI) const;
 
-  uint32_t Width;
   LinePrinter &P;
   bool RecordBytes = false;
   codeview::LazyRandomTypeCollection &Types;

@@ -45,8 +45,8 @@ public:
 private:
   StringRef getTypeName(codeview::TypeIndex TI) const;
 
-  uint32_t Width;
   LinePrinter &P;
+  uint32_t Width;
   bool RecordBytes = false;
   codeview::LazyRandomTypeCollection &Types;
 };

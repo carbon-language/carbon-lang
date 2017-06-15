@@ -33,7 +33,7 @@ namespace pdb {
 
 template <typename T> static std::string formatUnknownEnum(T Value) {
   return formatv("unknown ({0})",
-                 static_cast<std::underlying_type<T>::type>(Value))
+                 static_cast<typename std::underlying_type<T>::type>(Value))
       .str();
 }
 
