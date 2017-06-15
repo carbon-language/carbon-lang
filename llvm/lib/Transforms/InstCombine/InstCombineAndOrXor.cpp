@@ -1128,7 +1128,7 @@ Instruction *InstCombiner::foldCastedBitwiseLogic(BinaryOperator &I) {
   ICmpInst *ICmp1 = dyn_cast<ICmpInst>(Cast1Src);
   if (ICmp0 && ICmp1) {
     Value *Res = LogicOpc == Instruction::And ? foldAndOfICmps(ICmp0, ICmp1)
-                                              : foldOrOfICmps(ICmp0, ICmp1, &I);
+                                              : foldOrOfICmps(ICmp0, ICmp1, I);
     if (Res)
       return CastInst::Create(CastOpcode, Res, DestTy);
     return nullptr;
@@ -1591,7 +1591,7 @@ static Value *matchSelectFromAndOr(Value *A, Value *C, Value *B, Value *D,
 
 /// Fold (icmp)|(icmp) if possible.
 Value *InstCombiner::foldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
-                                   Instruction *CxtI) {
+                                   Instruction &CxtI) {
   ICmpInst::Predicate PredL = LHS->getPredicate(), PredR = RHS->getPredicate();
 
   // Fold (iszero(A & K1) | iszero(A & K2)) ->  (A & (K1 | K2)) != (K1 | K2)
@@ -1612,8 +1612,8 @@ Value *InstCombiner::foldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS,
         std::swap(A, B);
 
       if (A == C &&
-          isKnownToBeAPowerOfTwo(B, false, 0, CxtI) &&
-          isKnownToBeAPowerOfTwo(D, false, 0, CxtI)) {
+          isKnownToBeAPowerOfTwo(B, false, 0, &CxtI) &&
+          isKnownToBeAPowerOfTwo(D, false, 0, &CxtI)) {
         Value *Mask = Builder->CreateOr(B, D);
         Value *Masked = Builder->CreateAnd(A, Mask);
         return Builder->CreateICmp(ICmpInst::ICMP_NE, Masked, Mask);
@@ -2188,7 +2188,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     ICmpInst *LHS = dyn_cast<ICmpInst>(Op0);
     ICmpInst *RHS = dyn_cast<ICmpInst>(Op1);
     if (LHS && RHS)
-      if (Value *Res = foldOrOfICmps(LHS, RHS, &I))
+      if (Value *Res = foldOrOfICmps(LHS, RHS, I))
         return replaceInstUsesWith(I, Res);
 
     // TODO: Make this recursive; it's a little tricky because an arbitrary
@@ -2196,18 +2196,18 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     Value *X, *Y;
     if (LHS && match(Op1, m_OneUse(m_Or(m_Value(X), m_Value(Y))))) {
       if (auto *Cmp = dyn_cast<ICmpInst>(X))
-        if (Value *Res = foldOrOfICmps(LHS, Cmp, &I))
+        if (Value *Res = foldOrOfICmps(LHS, Cmp, I))
           return replaceInstUsesWith(I, Builder->CreateOr(Res, Y));
       if (auto *Cmp = dyn_cast<ICmpInst>(Y))
-        if (Value *Res = foldOrOfICmps(LHS, Cmp, &I))
+        if (Value *Res = foldOrOfICmps(LHS, Cmp, I))
           return replaceInstUsesWith(I, Builder->CreateOr(Res, X));
     }
     if (RHS && match(Op0, m_OneUse(m_Or(m_Value(X), m_Value(Y))))) {
       if (auto *Cmp = dyn_cast<ICmpInst>(X))
-        if (Value *Res = foldOrOfICmps(Cmp, RHS, &I))
+        if (Value *Res = foldOrOfICmps(Cmp, RHS, I))
           return replaceInstUsesWith(I, Builder->CreateOr(Res, Y));
       if (auto *Cmp = dyn_cast<ICmpInst>(Y))
-        if (Value *Res = foldOrOfICmps(Cmp, RHS, &I))
+        if (Value *Res = foldOrOfICmps(Cmp, RHS, I))
           return replaceInstUsesWith(I, Builder->CreateOr(Res, X));
     }
   }
