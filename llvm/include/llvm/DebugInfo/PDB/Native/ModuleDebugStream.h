@@ -40,10 +40,6 @@ public:
   iterator_range<codeview::CVSymbolArray::Iterator>
   symbols(bool *HadError) const;
 
-  const codeview::CVSymbolArray &getSymbolArray() const {
-    return SymbolsSubstream;
-  }
-
   llvm::iterator_range<DebugSubsectionIterator> subsections() const;
 
   bool hasDebugSubsections() const;

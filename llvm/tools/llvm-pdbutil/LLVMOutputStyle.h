@@ -1,4 +1,4 @@
-//===- RawOutputStyle.h -------------------------------------- *- C++ --*-===//
+//===- LLVMOutputStyle.h -------------------------------------- *- C++ --*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,15 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_LLVMPDBDUMP_RAWOUTPUTSTYLE_H
-#define LLVM_TOOLS_LLVMPDBDUMP_RAWOUTPUTSTYLE_H
+#ifndef LLVM_TOOLS_LLVMPDBDUMP_LLVMOUTPUTSTYLE_H
+#define LLVM_TOOLS_LLVMPDBDUMP_LLVMOUTPUTSTYLE_H
 
-#include "LinePrinter.h"
 #include "OutputStyle.h"
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/CodeView/TypeDatabase.h"
+#include "llvm/Support/ScopedPrinter.h"
 
 #include <string>
 
@@ -27,9 +27,9 @@ class LazyRandomTypeCollection;
 }
 
 namespace pdb {
-class RawOutputStyle : public OutputStyle {
+class LLVMOutputStyle : public OutputStyle {
 public:
-  RawOutputStyle(PDBFile &File);
+  LLVMOutputStyle(PDBFile &File);
 
   Error dump() override;
 
@@ -37,25 +37,34 @@ private:
   Expected<codeview::LazyRandomTypeCollection &>
   initializeTypeDatabase(uint32_t SN);
 
-  Error dumpFileSummary();
+  Error dumpFileHeaders();
   Error dumpStreamSummary();
+  Error dumpFreePageMap();
   Error dumpBlockRanges();
+  Error dumpGlobalsStream();
   Error dumpStreamBytes();
+  Error dumpStreamBlocks();
   Error dumpStringTable();
+  Error dumpInfoStream();
   Error dumpTpiStream(uint32_t StreamIdx);
-  Error dumpModules();
-  Error dumpModuleSyms();
-  Error dumpPublics();
+  Error dumpDbiStream();
   Error dumpSectionContribs();
   Error dumpSectionMap();
+  Error dumpPublicsStream();
+  Error dumpSectionHeaders();
+  Error dumpFpoStream();
+
+  void dumpBitVector(StringRef Name, const BitVector &V);
+
+  void flush();
 
   PDBFile &File;
-  LinePrinter P;
+  ScopedPrinter P;
   std::unique_ptr<codeview::LazyRandomTypeCollection> TpiTypes;
   std::unique_ptr<codeview::LazyRandomTypeCollection> IpiTypes;
   SmallVector<std::string, 32> StreamPurposes;
 };
-} // namespace pdb
-} // namespace llvm
+}
+}
 
 #endif

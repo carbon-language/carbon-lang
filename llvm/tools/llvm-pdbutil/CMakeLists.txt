@@ -12,10 +12,8 @@ add_llvm_tool(llvm-pdbutil
   CompactTypeDumpVisitor.cpp
   Diff.cpp
   llvm-pdbutil.cpp
-  FormatUtil.cpp
   LinePrinter.cpp
-  MinimalSymbolDumper.cpp
-  MinimalTypeDumper.cpp
+  LLVMOutputStyle.cpp
   PdbYaml.cpp
   PrettyBuiltinDumper.cpp
   PrettyClassDefinitionDumper.cpp
@@ -27,7 +25,6 @@ add_llvm_tool(llvm-pdbutil
   PrettyTypeDumper.cpp
   PrettyTypedefDumper.cpp
   PrettyVariableDumper.cpp
-  RawOutputStyle.cpp
   StreamUtil.cpp
   YAMLOutputStyle.cpp
   )

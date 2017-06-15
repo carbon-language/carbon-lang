@@ -32,13 +32,6 @@ using namespace llvm;
 using namespace llvm::codeview;
 using namespace llvm::pdb;
 
-static bool checkModuleSubsection(opts::ModuleSubsection MS) {
-  return any_of(opts::pdb2yaml::DumpModuleSubsections,
-                [=](opts::ModuleSubsection M) {
-                  return M == MS || M == opts::ModuleSubsection::All;
-                });
-}
-
 YAMLOutputStyle::YAMLOutputStyle(PDBFile &File)
     : File(File), Out(outs()), Obj(File.getAllocator()) {
   Out.setWriteDefaultValues(!opts::pdb2yaml::Minimal);
@@ -100,8 +93,8 @@ Error YAMLOutputStyle::dumpFileHeaders() {
 }
 
 Error YAMLOutputStyle::dumpStringTable() {
-  bool RequiresStringTable = opts::pdb2yaml::DumpModuleFiles ||
-                             !opts::pdb2yaml::DumpModuleSubsections.empty();
+  bool RequiresStringTable = opts::shared::DumpModuleFiles ||
+                             !opts::shared::DumpModuleSubsections.empty();
   bool RequestedStringTable = opts::pdb2yaml::StringTable;
   if (!RequiresStringTable && !RequestedStringTable)
     return Error::success();
@@ -208,7 +201,7 @@ Error YAMLOutputStyle::dumpDbiStream() {
   Obj.DbiStream->PdbDllRbld = DS.getPdbDllRbld();
   Obj.DbiStream->PdbDllVersion = DS.getPdbDllVersion();
   Obj.DbiStream->VerHeader = DS.getDbiVersion();
-  if (opts::pdb2yaml::DumpModules) {
+  if (opts::shared::DumpModules) {
     const auto &Modules = DS.modules();
     for (uint32_t I = 0; I < Modules.getModuleCount(); ++I) {
       DbiModuleDescriptor MI = Modules.getModuleDescriptor(I);
@@ -218,7 +211,7 @@ Error YAMLOutputStyle::dumpDbiStream() {
 
       DMI.Mod = MI.getModuleName();
       DMI.Obj = MI.getObjFileName();
-      if (opts::pdb2yaml::DumpModuleFiles) {
+      if (opts::shared::DumpModuleFiles) {
         auto Files = Modules.source_files(I);
         DMI.SourceFiles.assign(Files.begin(), Files.end());
       }
@@ -238,7 +231,7 @@ Error YAMLOutputStyle::dumpDbiStream() {
       auto ExpectedST = File.getStringTable();
       if (!ExpectedST)
         return ExpectedST.takeError();
-      if (!opts::pdb2yaml::DumpModuleSubsections.empty() &&
+      if (!opts::shared::DumpModuleSubsections.empty() &&
           ModS.hasDebugSubsections()) {
         auto ExpectedChecksums = ModS.findChecksumsSubsection();
         if (!ExpectedChecksums)
@@ -249,7 +242,7 @@ Error YAMLOutputStyle::dumpDbiStream() {
 
         for (const auto &SS : ModS.subsections()) {
           opts::ModuleSubsection OptionKind = convertSubsectionKind(SS.kind());
-          if (!checkModuleSubsection(OptionKind))
+          if (!opts::checkModuleSubsection(OptionKind))
             continue;
 
           auto Converted =
@@ -260,7 +253,7 @@ Error YAMLOutputStyle::dumpDbiStream() {
         }
       }
 
-      if (opts::pdb2yaml::DumpModuleSyms) {
+      if (opts::shared::DumpModuleSyms) {
         DMI.Modi.emplace();
 
         DMI.Modi->Signature = ModS.signature();

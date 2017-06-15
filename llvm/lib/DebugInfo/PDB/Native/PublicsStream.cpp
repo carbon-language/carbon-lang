@@ -130,13 +130,4 @@ PublicsStream::getSymbols(bool *HadError) const {
   return SS.getSymbols(HadError);
 }
 
-Expected<const codeview::CVSymbolArray &>
-PublicsStream::getSymbolArray() const {
-  auto SymbolS = Pdb.getPDBSymbolStream();
-  if (!SymbolS)
-    return SymbolS.takeError();
-
-  return SymbolS->getSymbolArray();
-}
-
 Error PublicsStream::commit() { return Error::success(); }

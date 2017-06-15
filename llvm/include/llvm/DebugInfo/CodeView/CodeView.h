@@ -418,8 +418,6 @@ CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(ProcSymFlags)
 
 /// Corresponds to COMPILESYM2::Flags bitfield.
 enum class CompileSym2Flags : uint32_t {
-  None = 0,
-  SourceLanguageMask = 0xFF,
   EC = 1 << 8,
   NoDbgInfo = 1 << 9,
   LTCG = 1 << 10,
@@ -434,8 +432,6 @@ CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(CompileSym2Flags)
 
 /// Corresponds to COMPILESYM3::Flags bitfield.
 enum class CompileSym3Flags : uint32_t {
-  None = 0,
-  SourceLanguageMask = 0xFF,
   EC = 1 << 8,
   NoDbgInfo = 1 << 9,
   LTCG = 1 << 10,
@@ -452,7 +448,6 @@ enum class CompileSym3Flags : uint32_t {
 CV_DEFINE_ENUM_CLASS_FLAGS_OPERATORS(CompileSym3Flags)
 
 enum class ExportFlags : uint16_t {
-  None = 0,
   IsConstant = 1 << 0,
   IsData = 1 << 1,
   IsPrivate = 1 << 2,

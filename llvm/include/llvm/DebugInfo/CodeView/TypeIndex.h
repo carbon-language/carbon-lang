@@ -248,8 +248,6 @@ public:
     return A.toArrayIndex() - B.toArrayIndex();
   }
 
-  static StringRef simpleTypeName(TypeIndex TI);
-
 private:
   support::ulittle32_t Index;
 };
