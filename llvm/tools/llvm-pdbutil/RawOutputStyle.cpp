@@ -103,6 +103,11 @@ Error RawOutputStyle::dump() {
       return EC;
   }
 
+  if (opts::raw::DumpModuleFiles) {
+    if (auto EC = dumpModuleFiles())
+      return EC;
+  }
+
   if (opts::raw::DumpTypes || opts::raw::DumpTypeExtras) {
     if (auto EC = dumpTpiStream(StreamTPI))
       return EC;
@@ -288,6 +293,71 @@ Error RawOutputStyle::dumpStreamBytes() {
   return Error::success();
 }
 
+static Expected<ModuleDebugStreamRef> getModuleDebugStream(PDBFile &File,
+                                                           uint32_t Index) {
+  ExitOnError Err("Unexpected error");
+
+  auto &Dbi = Err(File.getPDBDbiStream());
+  const auto &Modules = Dbi.modules();
+  auto Modi = Modules.getModuleDescriptor(Index);
+
+  uint16_t ModiStream = Modi.getModuleStreamIndex();
+  if (ModiStream == kInvalidStreamIndex)
+    return make_error<RawError>(raw_error_code::no_stream,
+                                "Module stream not present");
+
+  auto ModStreamData = MappedBlockStream::createIndexedStream(
+      File.getMsfLayout(), File.getMsfBuffer(), ModiStream,
+      File.getAllocator());
+
+  ModuleDebugStreamRef ModS(Modi, std::move(ModStreamData));
+  if (auto EC = ModS.reload())
+    return make_error<RawError>(raw_error_code::corrupt_file,
+                                "Invalid module stream");
+
+  return std::move(ModS);
+}
+
+static StringMap<FileChecksumEntry> loadChecksums(PDBFile &File,
+                                                  uint32_t ModuleIndex) {
+  StringMap<FileChecksumEntry> Result;
+  auto MDS = getModuleDebugStream(File, ModuleIndex);
+  if (!MDS) {
+    consumeError(MDS.takeError());
+    return Result;
+  }
+
+  auto CS = MDS->findChecksumsSubsection();
+  if (!CS) {
+    consumeError(CS.takeError());
+    return Result;
+  }
+
+  auto Strings = File.getStringTable();
+  if (!Strings) {
+    consumeError(Strings.takeError());
+    return Result;
+  }
+
+  for (const auto &Entry : *CS) {
+    auto S = Strings->getStringForID(Entry.FileNameOffset);
+    if (!S)
+      continue;
+    Result[*S] = Entry;
+  }
+  return Result;
+}
+
+static std::string formatChecksumKind(FileChecksumKind Kind) {
+  switch (Kind) {
+    RETURN_CASE(FileChecksumKind, None, "None");
+    RETURN_CASE(FileChecksumKind, MD5, "MD5");
+    RETURN_CASE(FileChecksumKind, SHA1, "SHA-1");
+    RETURN_CASE(FileChecksumKind, SHA256, "SHA-256");
+  }
+  return formatUnknownEnum(Kind);
+}
+
 Error RawOutputStyle::dumpModules() {
   printHeader(P, "Modules");
 
@@ -297,7 +367,7 @@ Error RawOutputStyle::dumpModules() {
     return Error::success();
   }
 
-  ExitOnError Err("Unexpected error processing symbols");
+  ExitOnError Err("Unexpected error processing modules");
 
   auto &Stream = Err(File.getPDBDbiStream());
 
@@ -312,15 +382,44 @@ Error RawOutputStyle::dumpModules() {
     P.formatLine("           debug stream: {0}, # files: {1}, has ec info: {2}",
                  Modi.getModuleStreamIndex(), Modi.getNumberOfFiles(),
                  Modi.hasECInfo());
-    if (opts::raw::DumpModuleFiles) {
-      P.formatLine("           contributing source files:");
-      for (const auto &F : Modules.source_files(I)) {
-        P.formatLine("           - {0}", F);
-      }
+  }
+  return Error::success();
+}
+
+Error RawOutputStyle::dumpModuleFiles() {
+  printHeader(P, "Files");
+
+  AutoIndent Indent(P);
+  if (!File.hasPDBDbiStream()) {
+    P.formatLine("DBI Stream not present");
+    return Error::success();
+  }
+
+  ExitOnError Err("Unexpected error processing modules");
+
+  auto &Stream = Err(File.getPDBDbiStream());
+
+  const DbiModuleList &Modules = Stream.modules();
+  uint32_t Count = Modules.getModuleCount();
+  uint32_t Digits = NumDigits(Count);
+  for (uint32_t I = 0; I < Count; ++I) {
+    auto Modi = Modules.getModuleDescriptor(I);
+    P.formatLine("Mod {0:4} | `{1}`: ", fmt_align(I, AlignStyle::Right, Digits),
+                 Modi.getModuleName());
+    StringMap<FileChecksumEntry> CS = loadChecksums(File, I);
+    for (const auto &F : Modules.source_files(I)) {
+      auto FC = CS.find(F);
+      if (FC == CS.end())
+        P.formatLine("           - (no checksum) {0}", F);
+      else
+        P.formatLine("           - ({0}: {1}) {2}",
+                     formatChecksumKind(FC->getValue().Kind),
+                     toHex(FC->getValue().Checksum), F);
     }
   }
   return Error::success();
 }
+
 Error RawOutputStyle::dumpStringTable() {
   printHeader(P, "String Table");
 

@@ -44,6 +44,7 @@ private:
   Error dumpStringTable();
   Error dumpTpiStream(uint32_t StreamIdx);
   Error dumpModules();
+  Error dumpModuleFiles();
   Error dumpModuleSyms();
   Error dumpPublics();
   Error dumpSectionContribs();

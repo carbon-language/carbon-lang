@@ -31,6 +31,7 @@ class ModuleDebugStreamRef {
 public:
   ModuleDebugStreamRef(const DbiModuleDescriptor &Module,
                        std::unique_ptr<msf::MappedBlockStream> Stream);
+  ModuleDebugStreamRef(ModuleDebugStreamRef &&Other);
   ~ModuleDebugStreamRef();
 
   Error reload();

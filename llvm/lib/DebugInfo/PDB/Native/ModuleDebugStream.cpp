@@ -30,6 +30,15 @@ ModuleDebugStreamRef::ModuleDebugStreamRef(
     std::unique_ptr<MappedBlockStream> Stream)
     : Mod(Module), Stream(std::move(Stream)) {}
 
+ModuleDebugStreamRef::ModuleDebugStreamRef(ModuleDebugStreamRef &&Other)
+    : Mod(Other.Mod), Signature(Other.Signature),
+      Stream(std::move(Other.Stream)),
+      SymbolsSubstream(std::move(Other.SymbolsSubstream)),
+      C11LinesSubstream(std::move(Other.C11LinesSubstream)),
+      C13LinesSubstream(std::move(Other.C13LinesSubstream)),
+      GlobalRefsSubstream(std::move(Other.GlobalRefsSubstream)),
+      Subsections(std::move(Other.Subsections)) {}
+
 ModuleDebugStreamRef::~ModuleDebugStreamRef() = default;
 
 Error ModuleDebugStreamRef::reload() {
