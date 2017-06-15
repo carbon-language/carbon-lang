@@ -1004,8 +1004,6 @@ define i8 @test_pcmpeq_q_256(<4 x i64> %a, <4 x i64> %b) {
 ; CHECK-LABEL: test_pcmpeq_q_256:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpeqq %ymm1, %ymm0, %k0 ## encoding: [0x62,0xf2,0xfd,0x28,0x29,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1018,8 +1016,6 @@ define i8 @test_mask_pcmpeq_q_256(<4 x i64> %a, <4 x i64> %b, i8 %mask) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpcmpeqq %ymm1, %ymm0, %k0 {%k1} ## encoding: [0x62,0xf2,0xfd,0x29,0x29,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1058,8 +1054,6 @@ define i8 @test_pcmpgt_q_256(<4 x i64> %a, <4 x i64> %b) {
 ; CHECK-LABEL: test_pcmpgt_q_256:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpgtq %ymm1, %ymm0, %k0 ## encoding: [0x62,0xf2,0xfd,0x28,0x37,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1072,8 +1066,6 @@ define i8 @test_mask_pcmpgt_q_256(<4 x i64> %a, <4 x i64> %b, i8 %mask) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpcmpgtq %ymm1, %ymm0, %k0 {%k1} ## encoding: [0x62,0xf2,0xfd,0x29,0x37,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1087,8 +1079,6 @@ define i8 @test_pcmpeq_d_128(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test_pcmpeq_d_128:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm0, %k0 ## encoding: [0x62,0xf1,0x7d,0x08,0x76,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1101,8 +1091,6 @@ define i8 @test_mask_pcmpeq_d_128(<4 x i32> %a, <4 x i32> %b, i8 %mask) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpcmpeqd %xmm1, %xmm0, %k0 {%k1} ## encoding: [0x62,0xf1,0x7d,0x09,0x76,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1116,10 +1104,6 @@ define i8 @test_pcmpeq_q_128(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: test_pcmpeq_q_128:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpeqq %xmm1, %xmm0, %k0 ## encoding: [0x62,0xf2,0xfd,0x08,0x29,0xc1]
-; CHECK-NEXT:    kshiftlw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0e]
-; CHECK-NEXT:    kshiftrw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0e]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1132,10 +1116,6 @@ define i8 @test_mask_pcmpeq_q_128(<2 x i64> %a, <2 x i64> %b, i8 %mask) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpcmpeqq %xmm1, %xmm0, %k0 {%k1} ## encoding: [0x62,0xf2,0xfd,0x09,0x29,0xc1]
-; CHECK-NEXT:    kshiftlw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0e]
-; CHECK-NEXT:    kshiftrw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0e]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1149,8 +1129,6 @@ define i8 @test_pcmpgt_d_128(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-LABEL: test_pcmpgt_d_128:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpgtd %xmm1, %xmm0, %k0 ## encoding: [0x62,0xf1,0x7d,0x08,0x66,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1163,8 +1141,6 @@ define i8 @test_mask_pcmpgt_d_128(<4 x i32> %a, <4 x i32> %b, i8 %mask) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpcmpgtd %xmm1, %xmm0, %k0 {%k1} ## encoding: [0x62,0xf1,0x7d,0x09,0x66,0xc1]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1178,10 +1154,6 @@ define i8 @test_pcmpgt_q_128(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-LABEL: test_pcmpgt_q_128:
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    vpcmpgtq %xmm1, %xmm0, %k0 ## encoding: [0x62,0xf2,0xfd,0x08,0x37,0xc1]
-; CHECK-NEXT:    kshiftlw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0e]
-; CHECK-NEXT:    kshiftrw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0e]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
@@ -1194,10 +1166,6 @@ define i8 @test_mask_pcmpgt_q_128(<2 x i64> %a, <2 x i64> %b, i8 %mask) {
 ; CHECK:       ## BB#0:
 ; CHECK-NEXT:    kmovw %edi, %k1 ## encoding: [0xc5,0xf8,0x92,0xcf]
 ; CHECK-NEXT:    vpcmpgtq %xmm1, %xmm0, %k0 {%k1} ## encoding: [0x62,0xf2,0xfd,0x09,0x37,0xc1]
-; CHECK-NEXT:    kshiftlw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0e]
-; CHECK-NEXT:    kshiftrw $14, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0e]
-; CHECK-NEXT:    kshiftlw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x32,0xc0,0x0c]
-; CHECK-NEXT:    kshiftrw $12, %k0, %k0 ## encoding: [0xc4,0xe3,0xf9,0x30,0xc0,0x0c]
 ; CHECK-NEXT:    kmovw %k0, %eax ## encoding: [0xc5,0xf8,0x93,0xc0]
 ; CHECK-NEXT:    ## kill: %AL<def> %AL<kill> %EAX<kill>
 ; CHECK-NEXT:    retq ## encoding: [0xc3]
