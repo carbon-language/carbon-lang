@@ -10889,9 +10889,10 @@ static SDValue lowerV8I16GeneralSingleInputVectorShuffle(
                  "We need to be changing the number of flipped inputs!");
           int PSHUFHalfMask[] = {0, 1, 2, 3};
           std::swap(PSHUFHalfMask[FixFreeIdx % 4], PSHUFHalfMask[FixIdx % 4]);
-          V = DAG.getNode(FixIdx < 4 ? X86ISD::PSHUFLW : X86ISD::PSHUFHW, DL,
-                          MVT::v8i16, V,
-                          getV4X86ShuffleImm8ForMask(PSHUFHalfMask, DL, DAG));
+          V = DAG.getNode(
+              FixIdx < 4 ? X86ISD::PSHUFLW : X86ISD::PSHUFHW, DL,
+              MVT::getVectorVT(MVT::i16, V.getValueSizeInBits() / 16), V,
+              getV4X86ShuffleImm8ForMask(PSHUFHalfMask, DL, DAG));
 
           for (int &M : Mask)
             if (M >= 0 && M == FixIdx)
