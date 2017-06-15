@@ -607,7 +607,6 @@ class Configuration(object):
             return
         config_site_header = os.path.join(self.libcxx_obj_root, '__config_site')
         if not os.path.isfile(config_site_header):
-            assert False
             return
         contained_macros = self.parse_config_site_and_add_features(
             config_site_header)
