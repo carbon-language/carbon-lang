@@ -214,7 +214,12 @@ void BPFDAGToDAGISel::PreprocessISelDAG() {
     if (Opcode != ISD::LOAD)
       continue;
 
-    unsigned char new_val[8]; // hold up the constant values replacing loads.
+    union {
+      uint8_t c[8];
+      uint16_t s;
+      uint32_t i;
+      uint64_t d;
+    } new_val; // hold up the constant values replacing loads.
     bool to_replace = false;
     SDLoc DL(Node);
     const LoadSDNode *LD = cast<LoadSDNode>(Node);
@@ -242,7 +247,7 @@ void BPFDAGToDAGISel::PreprocessISelDAG() {
       const ConstantSDNode *CDN = dyn_cast<ConstantSDNode>(OP2.getNode());
       if (GADN && CDN)
         to_replace =
-            getConstantFieldValue(GADN, CDN->getZExtValue(), size, new_val);
+            getConstantFieldValue(GADN, CDN->getZExtValue(), size, new_val.c);
     } else if (LDAddrNode->getOpcode() > ISD::BUILTIN_OP_END &&
                LDAddrNode->getNumOperands() > 0) {
       DEBUG(dbgs() << "Check candidate load: "; LD->dump(); dbgs() << '\n');
@@ -250,7 +255,7 @@ void BPFDAGToDAGISel::PreprocessISelDAG() {
       SDValue OP1 = LDAddrNode->getOperand(0);
       if (const GlobalAddressSDNode *GADN =
               dyn_cast<GlobalAddressSDNode>(OP1.getNode()))
-        to_replace = getConstantFieldValue(GADN, 0, size, new_val);
+        to_replace = getConstantFieldValue(GADN, 0, size, new_val.c);
     }
 
     if (!to_replace)
@@ -259,13 +264,13 @@ void BPFDAGToDAGISel::PreprocessISelDAG() {
     // replacing the old with a new value
     uint64_t val;
     if (size == 1)
-      val = *(uint8_t *)new_val;
+      val = new_val.c[0];
     else if (size == 2)
-      val = *(uint16_t *)new_val;
+      val = new_val.s;
     else if (size == 4)
-      val = *(uint32_t *)new_val;
+      val = new_val.i;
     else {
-      val = *(uint64_t *)new_val;
+      val = new_val.d;
     }
 
     DEBUG(dbgs() << "Replacing load of size " << size << " with constant "
@@ -318,14 +323,17 @@ bool BPFDAGToDAGISel::getConstantFieldValue(const GlobalAddressSDNode *Node,
   }
 
   // test whether host endianness matches target
-  uint8_t test_buf[2];
+  union {
+    uint8_t c[2];
+    uint16_t s;
+  } test_buf;
   uint16_t test_val = 0x2345;
   if (DL.isLittleEndian())
-    support::endian::write16le(test_buf, test_val);
+    support::endian::write16le(test_buf.c, test_val);
   else
-    support::endian::write16be(test_buf, test_val);
+    support::endian::write16be(test_buf.c, test_val);
 
-  bool endian_match = *(uint16_t *)test_buf == test_val;
+  bool endian_match = test_buf.s == test_val;
   for (uint64_t i = Offset, j = 0; i < Offset + Size; i++, j++)
     ByteSeq[j] = endian_match ? TmpVal[i] : TmpVal[Offset + Size - 1 - j];
 
