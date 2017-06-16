@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm-cvtres.h"
-
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/WindowsResource.h"
@@ -28,6 +26,8 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
+
+#include <system_error>
 
 using namespace llvm;
 using namespace object;
@@ -142,8 +142,8 @@ int main(int argc_, const char *argv_[]) {
   if (InputArgs.hasArg(OPT_OUT)) {
     OutputFile = InputArgs.getLastArgValue(OPT_OUT);
   } else {
-    OutputFile = llvm::sys::path::filename(StringRef(InputFiles[0]));
-    llvm::sys::path::replace_extension(OutputFile, ".obj");
+    OutputFile = sys::path::filename(StringRef(InputFiles[0]));
+    sys::path::replace_extension(OutputFile, ".obj");
   }
 
   if (Verbose) {
@@ -163,8 +163,7 @@ int main(int argc_, const char *argv_[]) {
   WindowsResourceParser Parser;
 
   for (const auto &File : InputFiles) {
-    Expected<object::OwningBinary<object::Binary>> BinaryOrErr =
-        object::createBinary(File);
+    Expected<OwningBinary<Binary>> BinaryOrErr = createBinary(File);
     if (!BinaryOrErr)
       reportError(File, errorToErrorCode(BinaryOrErr.takeError()));
 
@@ -193,7 +192,6 @@ int main(int argc_, const char *argv_[]) {
 
   if (Verbose) {
     Parser.printTree(outs());
-    Parser.printTree(errs());
   }
 
   std::unique_ptr<MemoryBuffer> OutputBuffer;
@@ -209,8 +207,7 @@ int main(int argc_, const char *argv_[]) {
   error(FileBuffer->commit());
 
   if (Verbose) {
-    Expected<object::OwningBinary<object::Binary>> BinaryOrErr =
-        object::createBinary(OutputFile);
+    Expected<OwningBinary<Binary>> BinaryOrErr = createBinary(OutputFile);
     if (!BinaryOrErr)
       reportError(OutputFile, errorToErrorCode(BinaryOrErr.takeError()));
     Binary &Binary = *BinaryOrErr.get().getBinary();

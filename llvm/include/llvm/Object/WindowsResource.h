@@ -30,7 +30,6 @@
 #define LLVM_INCLUDE_LLVM_OBJECT_RESFILE_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/BinaryFormat/COFF.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Object/Error.h"
@@ -44,7 +43,6 @@
 #include <map>
 
 namespace llvm {
-
 namespace object {
 
 class WindowsResource;
