@@ -365,10 +365,10 @@ bool TargetLowering::ShrinkDemandedConstant(SDValue Op, const APInt &Demanded,
 
     // If this is a 'not' op, don't touch it because that's a canonical form.
     const APInt &C = Op1C->getAPIntValue();
-    if (Opcode == ISD::XOR && (C | ~Demanded).isAllOnesValue())
+    if (Opcode == ISD::XOR && Demanded.isSubsetOf(C))
       return false;
 
-    if (C.intersects(~Demanded)) {
+    if (!C.isSubsetOf(Demanded)) {
       EVT VT = Op.getValueType();
       SDValue NewC = DAG.getConstant(Demanded & C, DL, VT);
       SDValue NewOp = DAG.getNode(Opcode, DL, VT, Op.getOperand(0), NewC);
@@ -1666,7 +1666,7 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         for (unsigned width = origWidth / 2; width>=8; width /= 2) {
           APInt newMask = APInt::getLowBitsSet(maskWidth, width);
           for (unsigned offset=0; offset<origWidth/width; offset++) {
-            if ((newMask & Mask) == Mask) {
+            if (Mask.isSubsetOf(newMask)) {
               if (DAG.getDataLayout().isLittleEndian())
                 bestOffset = (uint64_t)offset * (width/8);
               else
