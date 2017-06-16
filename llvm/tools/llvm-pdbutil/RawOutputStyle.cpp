@@ -119,6 +119,16 @@ Error RawOutputStyle::dump() {
       return EC;
   }
 
+  if (opts::raw::DumpXmi) {
+    if (auto EC = dumpXmi())
+      return EC;
+  }
+
+  if (opts::raw::DumpXme) {
+    if (auto EC = dumpXme())
+      return EC;
+  }
+
   if (opts::raw::DumpTypes || opts::raw::DumpTypeExtras) {
     if (auto EC = dumpTpiStream(StreamTPI))
       return EC;
@@ -566,7 +576,6 @@ static void typesetLinesAndColumns(PDBFile &File, LinePrinter &P,
 
 Error RawOutputStyle::dumpLines() {
   printHeader(P, "Lines");
-  ExitOnError Err("Unexpected error processing modules");
 
   uint32_t LastModi = UINT32_MAX;
   uint32_t LastNameIndex = UINT32_MAX;
@@ -603,7 +612,6 @@ Error RawOutputStyle::dumpLines() {
 
 Error RawOutputStyle::dumpInlineeLines() {
   printHeader(P, "Inlinee Lines");
-  ExitOnError Err("Unexpected error processing modules");
 
   iterateModuleSubsections<DebugInlineeLinesSubsectionRef>(
       File, P, 2,
@@ -616,6 +624,58 @@ Error RawOutputStyle::dumpInlineeLines() {
           Strings.formatFromChecksumsOffset(P, Entry.Header->FileID, true);
         }
         P.NewLine();
+      });
+
+  return Error::success();
+}
+
+Error RawOutputStyle::dumpXmi() {
+  printHeader(P, "Cross Module Imports");
+  iterateModuleSubsections<DebugCrossModuleImportsSubsectionRef>(
+      File, P, 2,
+      [this](uint32_t Modi, StringsAndChecksumsPrinter &Strings,
+             DebugCrossModuleImportsSubsectionRef &Imports) {
+        P.formatLine("{0,=32} | {1}", "Imported Module", "Type IDs");
+
+        for (const auto &Xmi : Imports) {
+          auto ExpectedModule =
+              Strings.getNameFromStringTable(Xmi.Header->ModuleNameOffset);
+          StringRef Module;
+          SmallString<32> ModuleStorage;
+          if (!ExpectedModule) {
+            Module = "(unknown module)";
+            consumeError(ExpectedModule.takeError());
+          } else
+            Module = *ExpectedModule;
+          if (Module.size() > 32) {
+            ModuleStorage = "...";
+            ModuleStorage += Module.take_back(32 - 3);
+            Module = ModuleStorage;
+          }
+          std::vector<std::string> TIs;
+          for (const auto I : Xmi.Imports)
+            TIs.push_back(formatv("{0,+10:X+}", fmtle(I)));
+          std::string Result =
+              typesetItemList(TIs, P.getIndentLevel() + 35, 12, " ");
+          P.formatLine("{0,+32} | {1}", Module, Result);
+        }
+      });
+
+  return Error::success();
+}
+
+Error RawOutputStyle::dumpXme() {
+  printHeader(P, "Cross Module Exports");
+
+  iterateModuleSubsections<DebugCrossModuleExportsSubsectionRef>(
+      File, P, 2,
+      [this](uint32_t Modi, StringsAndChecksumsPrinter &Strings,
+             DebugCrossModuleExportsSubsectionRef &Exports) {
+        P.formatLine("{0,-10} | {1}", "Local ID", "Global ID");
+        for (const auto &Export : Exports) {
+          P.formatLine("{0,+10:X+} | {1}", TypeIndex(Export.Local),
+                       TypeIndex(Export.Global));
+        }
       });
 
   return Error::success();
@@ -909,7 +969,7 @@ static std::string formatSectionCharacteristics(uint32_t IndentLevel,
   PUSH_FLAG(SC, IMAGE_SCN_MEM_EXECUTE, C, "IMAGE_SCN_MEM_EXECUTE");
   PUSH_FLAG(SC, IMAGE_SCN_MEM_READ, C, "IMAGE_SCN_MEM_READ");
   PUSH_FLAG(SC, IMAGE_SCN_MEM_WRITE, C, "IMAGE_SCN_MEM_WRITE");
-  return typesetItemList(Opts, 3, IndentLevel, " | ");
+  return typesetItemList(Opts, IndentLevel, 3, " | ");
 }
 
 static std::string formatSegMapDescriptorFlag(uint32_t IndentLevel,
@@ -925,7 +985,7 @@ static std::string formatSegMapDescriptorFlag(uint32_t IndentLevel,
   PUSH_FLAG(OMFSegDescFlags, IsSelector, Flags, "selector");
   PUSH_FLAG(OMFSegDescFlags, IsAbsoluteAddress, Flags, "absolute addr");
   PUSH_FLAG(OMFSegDescFlags, IsGroup, Flags, "group");
-  return typesetItemList(Opts, 4, IndentLevel, " | ");
+  return typesetItemList(Opts, IndentLevel, 4, " | ");
 }
 
 Error RawOutputStyle::dumpSectionContribs() {

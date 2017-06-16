@@ -44,6 +44,8 @@ private:
   Error dumpStringTable();
   Error dumpLines();
   Error dumpInlineeLines();
+  Error dumpXmi();
+  Error dumpXme();
   Error dumpTpiStream(uint32_t StreamIdx);
   Error dumpModules();
   Error dumpModuleFiles();

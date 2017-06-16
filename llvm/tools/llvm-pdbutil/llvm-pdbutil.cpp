@@ -344,6 +344,16 @@ cl::opt<bool> DumpInlineeLines(
     "il",
     cl::desc("dump inlinee line information (DEBUG_S_INLINEELINES subsection)"),
     cl::cat(FileOptions), cl::sub(RawSubcommand));
+cl::opt<bool> DumpXmi(
+    "xmi",
+    cl::desc(
+        "dump cross module imports (DEBUG_S_CROSSSCOPEIMPORTS subsection)"),
+    cl::cat(FileOptions), cl::sub(RawSubcommand));
+cl::opt<bool> DumpXme(
+    "xme",
+    cl::desc(
+        "dump cross module exports (DEBUG_S_CROSSSCOPEEXPORTS subsection)"),
+    cl::cat(FileOptions), cl::sub(RawSubcommand));
 
 // MISCELLANEOUS OPTIONS
 cl::opt<bool> DumpStringTable("string-table", cl::desc("dump PDB String Table"),
@@ -903,6 +913,8 @@ int main(int argc_, const char *argv_[]) {
     if (opts::raw::RawAll) {
       opts::raw::DumpLines = true;
       opts::raw::DumpInlineeLines = true;
+      opts::raw::DumpXme = true;
+      opts::raw::DumpXmi = true;
       opts::raw::DumpIds = true;
       opts::raw::DumpPublics = true;
       opts::raw::DumpSectionContribs = true;
