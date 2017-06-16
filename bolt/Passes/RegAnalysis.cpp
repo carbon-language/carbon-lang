@@ -68,7 +68,7 @@ RegAnalysis::RegAnalysis(BinaryContext &BC,
         CountFunctionsAllClobber += Count;
       ++NumFunctionsAllClobber;
     }
-    DEBUG_WITH_TYPE("fa",
+    DEBUG_WITH_TYPE("ra",
       dbgs() << "Killed regs set for func: " << Func->getPrintName() << "\n";
       const BitVector &RegsKilled = Iter->second;
       int RegIdx = RegsKilled.find_first();

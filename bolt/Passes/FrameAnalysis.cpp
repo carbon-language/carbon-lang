@@ -202,7 +202,7 @@ public:
       return true;
     }
 
-    if (BC.MIA->leaksStackAddress(Inst, *BC.MRI, SPT.HasFramePointer)) {
+    if (BC.MIA->escapesVariable(Inst, *BC.MRI, SPT.HasFramePointer)) {
       DEBUG(dbgs() << "Leaked stack address, giving up on this function.\n");
       DEBUG(dbgs() << "Blame insn: ");
       DEBUG(Inst.dump());
@@ -286,6 +286,21 @@ void FrameAnalysis::traverseCG(BinaryFunctionCallGraph &CG) {
   });
 
   CGWalker.walk();
+
+  DEBUG_WITH_TYPE("ra",
+    for (auto &MapEntry : ArgsTouchedMap) {
+      const auto *Func = MapEntry.first;
+      const auto &Set = MapEntry.second;
+      dbgs() << "Args accessed for " << Func->getPrintName() << ": ";
+      if (!Set.empty() && Set.count(std::make_pair(-1, 0))) {
+        dbgs() << "assume everything";
+      } else {
+        for (auto &Entry : Set) {
+          dbgs() << "[" << Entry.first << ", " << (int)Entry.second << "] ";
+        }
+      }
+      dbgs() << "\n";
+  });
 }
 
 bool FrameAnalysis::updateArgsTouchedFor(const BinaryFunction &BF, MCInst &Inst,
@@ -373,6 +388,8 @@ bool FrameAnalysis::computeArgsAccessed(BinaryFunction &BF) {
     return Updated;
   }
 
+  DEBUG(dbgs() << "Now computing args accessed for: " << BF.getPrintName()
+               << "\n");
   bool UpdatedArgsTouched = false;
   FrameAccessAnalysis FAA(BC, BF);
 

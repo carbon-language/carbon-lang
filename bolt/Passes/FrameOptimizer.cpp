@@ -197,6 +197,8 @@ void FrameOptimizerPass::removeUnusedStores(const FrameAnalysis &FA,
       DEBUG(dbgs() << "Unused store instruction: ");
       DEBUG(Inst.dump());
       DEBUG(dbgs() << "@BB: " << BB.getName() << "\n");
+      DEBUG(dbgs() << "FIE offset = " << FIEX->StackOffset
+                   << " size = " << (int)FIEX->Size << "\n");
       // Delete it!
       ToErase.push_back(std::make_pair(&BB, &Inst));
       Prev = &Inst;

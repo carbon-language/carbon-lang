@@ -159,7 +159,7 @@ protected:
         return SUPERPOSITION;
 
       if (!HasFramePointer) {
-        if (MIA->leaksStackAddress(Point, *this->BC.MRI, false)) {
+        if (MIA->escapesVariable(Point, *this->BC.MRI, false)) {
           HasFramePointer = true;
         }
       }
