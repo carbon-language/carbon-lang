@@ -1,5 +1,5 @@
-# RUN: llvm-mc %s -filetype=obj -o %t1.obj
-# RUN: llvm-mc %S/Inputs/associative-comdat-2.s -filetype=obj -o %t2.obj
+# RUN: llvm-mc -triple=x86_64-windows-msvc %s -filetype=obj -o %t1.obj
+# RUN: llvm-mc -triple=x86_64-windows-msvc %S/Inputs/associative-comdat-2.s -filetype=obj -o %t2.obj
 
 # RUN: lld-link -entry:main %t1.obj %t2.obj -out:%t.gc.exe
 # RUN: llvm-readobj -sections %t.gc.exe | FileCheck %s
