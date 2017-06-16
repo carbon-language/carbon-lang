@@ -84,6 +84,7 @@ Error BinaryStreamWriter::padToAlignment(uint32_t Align) {
   if (NewOffset > getLength())
     return make_error<BinaryStreamError>(stream_error_code::stream_too_short);
   while (Offset < NewOffset)
-    writeInteger('\0');
+    if (auto EC = writeInteger('\0'))
+      return EC;
   return Error::success();
 }
