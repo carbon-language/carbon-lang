@@ -536,9 +536,10 @@ private:
   void visitUnreachableInst(TerminatorInst &I) { /*returns void*/ }
   void visitFenceInst     (FenceInst &I) { /*returns void*/ }
   void visitInstruction(Instruction &I) {
-    // If a new instruction is added to LLVM that we don't handle.
+    // All the instructions we don't do any special handling for just
+    // go to overdefined.
     DEBUG(dbgs() << "SCCP: Don't know how to handle: " << I << '\n');
-    markOverdefined(&I);   // Just in case
+    markOverdefined(&I);
   }
 };
 
