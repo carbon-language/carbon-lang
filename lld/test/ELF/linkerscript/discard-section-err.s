@@ -11,3 +11,8 @@
 # RUN: not ld.lld -pie -o %t --script %t.script %t.o 2>&1 | \
 # RUN:   FileCheck -check-prefix=DYNAMIC %s
 # DYNAMIC: discarding .dynamic section is not allowed
+
+# RUN: echo "SECTIONS { /DISCARD/ : { *(.dynsym) } }" > %t.script
+# RUN: not ld.lld -pie -o %t --script %t.script %t.o 2>&1 | \
+# RUN:   FileCheck -check-prefix=DYNSYM %s
+# DYNSYM: discarding .dynsym section is not allowed
