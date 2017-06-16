@@ -353,7 +353,7 @@ WindowsResourceCOFFWriter::WindowsResourceCOFFWriter(
       StringTable(Parser.getStringTable()) {
   performFileLayout();
 
-  OutputBuffer = std::move(MemoryBuffer::getNewMemBuffer(FileSize));
+  OutputBuffer = MemoryBuffer::getNewMemBuffer(FileSize);
 }
 
 void WindowsResourceCOFFWriter::performFileLayout() {
