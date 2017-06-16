@@ -2,12 +2,14 @@
 # RUN: | not llvm-dwarfdump -verify - \
 # RUN: | FileCheck %s
 
-# CHECK: Verifying .apple_names...
-# CHECK-NEXT: error: Bucket[0] has invalid hash index: [-2]
+# CHECK-NOT: Verifying .apple_names...
 
 # This test is meant to verify that the -verify option 
-# in llvm-dwarfdump, correctly identifies
-# an invalid hash index for bucket[0] in the .apple_names section. 
+# in llvm-dwarfdump doesn't produce any .apple_names related
+# output when there's no such section int he object.
+# The test was manually modified to exclude the 
+# .apple_names section from the apple_names_verify_buckets.s
+# test file in the same directory.
 
   .section  __TEXT,__text,regular,pure_instructions
   .file 1 "basic.c"
@@ -100,26 +102,6 @@ Ldebug_range:
 Ldebug_macinfo:
 Lcu_macro_begin0:
   .byte 0                       ## End Of Macro List Mark
-  .section  __DWARF,__apple_names,regular,debug
-Lnames_begin:
-  .long 1212240712              ## Header Magic
-  .short  1                       ## Header Version
-  .short  0                       ## Header Hash Function
-  .long 1                       ## Header Bucket Count
-  .long 1                       ## Header Hash Count
-  .long 12                      ## Header Data Length
-  .long 0                       ## HeaderData Die Offset Base
-  .long 1                       ## HeaderData Atom Count
-  .short  1                       ## DW_ATOM_die_offset
-  .short  6                       ## DW_FORM_data4
-  .long -2                      ## Bucket 0 -- error: Bucket[0] has invalid hash index: [-2]
-  .long 177678                  ## Hash in Bucket 0
-  .long LNames0-Lnames_begin    ## Offset in Bucket 0
-LNames0:
-  .long 84                      ## i
-  .long 1                       ## Num DIEs
-  .long 30
-  .long 0
   .section  __DWARF,__apple_objc,regular,debug
 Lobjc_begin:
   .long 1212240712              ## Header Magic
