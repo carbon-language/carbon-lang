@@ -1815,15 +1815,11 @@ static bool runIPSCCP(Module &M, const DataLayout &DL,
     if (F.isDeclaration())
       continue;
 
-    if (Solver.isBlockExecutable(&F.front())) {
+    if (Solver.isBlockExecutable(&F.front()))
       for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E;
-           ++AI) {
-        if (AI->use_empty())
-          continue;
-        if (tryToReplaceWithConstant(Solver, &*AI))
+           ++AI)
+        if (!AI->use_empty() && tryToReplaceWithConstant(Solver, &*AI))
           ++IPNumArgsElimed;
-      }
-    }
 
     for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
       if (!Solver.isBlockExecutable(&*BB)) {
