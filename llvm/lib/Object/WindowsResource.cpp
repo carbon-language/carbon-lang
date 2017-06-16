@@ -21,6 +21,8 @@
 #include <sstream>
 #include <system_error>
 
+using namespace llvm;
+
 namespace llvm {
 namespace object {
 
@@ -305,7 +307,8 @@ uint32_t WindowsResourceParser::TreeNode::getTreeSize() const {
 
 class WindowsResourceCOFFWriter {
 public:
-  WindowsResourceCOFFWriter(StringRef OutputFile, Machine MachineType,
+  WindowsResourceCOFFWriter(std::unique_ptr<MemoryBuffer> &OutputBuffer,
+                            COFF::MachineTypes MachineType,
                             const WindowsResourceParser &Parser, Error &E);
   Error write();
 
@@ -323,10 +326,10 @@ private:
   void writeDirectoryTree();
   void writeDirectoryStringTable();
   void writeFirstSectionRelocations();
-  std::unique_ptr<FileOutputBuffer> Buffer;
-  uint8_t *BufferStart;
+  std::unique_ptr<MemoryBuffer> &OutputBuffer;
+  char *BufferStart;
   uint64_t CurrentOffset = 0;
-  Machine MachineType;
+  COFF::MachineTypes MachineType;
   const WindowsResourceParser::TreeNode &Resources;
   const ArrayRef<std::vector<uint8_t>> Data;
   uint64_t FileSize;
@@ -343,20 +346,14 @@ private:
 };
 
 WindowsResourceCOFFWriter::WindowsResourceCOFFWriter(
-    StringRef OutputFile, Machine MachineType,
+    std::unique_ptr<MemoryBuffer> &OutputBuffer, COFF::MachineTypes MachineType,
     const WindowsResourceParser &Parser, Error &E)
-    : MachineType(MachineType), Resources(Parser.getTree()),
-      Data(Parser.getData()), StringTable(Parser.getStringTable()) {
+    : OutputBuffer(OutputBuffer), MachineType(MachineType),
+      Resources(Parser.getTree()), Data(Parser.getData()),
+      StringTable(Parser.getStringTable()) {
   performFileLayout();
 
-  ErrorOr<std::unique_ptr<FileOutputBuffer>> BufferOrErr =
-      FileOutputBuffer::create(OutputFile, FileSize);
-  if (!BufferOrErr) {
-    E = errorCodeToError(BufferOrErr.getError());
-    return;
-  }
-
-  Buffer = std::move(*BufferOrErr);
+  OutputBuffer = std::move(MemoryBuffer::getNewMemBuffer(FileSize));
 }
 
 void WindowsResourceCOFFWriter::performFileLayout() {
@@ -421,7 +418,7 @@ static std::time_t getTime() {
 }
 
 Error WindowsResourceCOFFWriter::write() {
-  BufferStart = Buffer->getBufferStart();
+  BufferStart = const_cast<char *>(OutputBuffer->getBufferStart());
 
   writeCOFFHeader();
   writeFirstSectionHeader();
@@ -431,10 +428,6 @@ Error WindowsResourceCOFFWriter::write() {
   writeSymbolTable();
   writeStringTable();
 
-  if (auto EC = Buffer->commit()) {
-    return errorCodeToError(EC);
-  }
-
   return Error::success();
 }
 
@@ -443,13 +436,13 @@ void WindowsResourceCOFFWriter::writeCOFFHeader() {
   auto *Header =
       reinterpret_cast<llvm::object::coff_file_header *>(BufferStart);
   switch (MachineType) {
-  case Machine::ARM:
+  case COFF::IMAGE_FILE_MACHINE_ARMNT:
     Header->Machine = llvm::COFF::IMAGE_FILE_MACHINE_ARMNT;
     break;
-  case Machine::X64:
+  case COFF::IMAGE_FILE_MACHINE_AMD64:
     Header->Machine = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
     break;
-  case Machine::X86:
+  case COFF::IMAGE_FILE_MACHINE_I386:
     Header->Machine = llvm::COFF::IMAGE_FILE_MACHINE_I386;
     break;
   default:
@@ -481,7 +474,8 @@ void WindowsResourceCOFFWriter::writeFirstSectionHeader() {
   SectionOneHeader->Characteristics = llvm::COFF::IMAGE_SCN_ALIGN_1BYTES;
   SectionOneHeader->Characteristics +=
       llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
-  SectionOneHeader->Characteristics += llvm::COFF::IMAGE_SCN_MEM_DISCARDABLE;
+  SectionOneHeader->Characteristics +=
+      llvm::COFF::IMAGE_SCN_CNT_INITIALIZED_DATA;
   SectionOneHeader->Characteristics += llvm::COFF::IMAGE_SCN_MEM_READ;
 }
 
@@ -715,13 +709,13 @@ void WindowsResourceCOFFWriter::writeFirstSectionRelocations() {
     Reloc->VirtualAddress = RelocationAddresses[i];
     Reloc->SymbolTableIndex = NextSymbolIndex++;
     switch (MachineType) {
-    case Machine::ARM:
+    case COFF::IMAGE_FILE_MACHINE_ARMNT:
       Reloc->Type = llvm::COFF::IMAGE_REL_ARM_ADDR32NB;
       break;
-    case Machine::X64:
+    case COFF::IMAGE_FILE_MACHINE_AMD64:
       Reloc->Type = llvm::COFF::IMAGE_REL_AMD64_ADDR32NB;
       break;
-    case Machine::X86:
+    case COFF::IMAGE_FILE_MACHINE_I386:
       Reloc->Type = llvm::COFF::IMAGE_REL_I386_DIR32NB;
       break;
     default:
@@ -731,10 +725,11 @@ void WindowsResourceCOFFWriter::writeFirstSectionRelocations() {
   }
 }
 
-Error writeWindowsResourceCOFF(StringRef OutputFile, Machine MachineType,
+Error writeWindowsResourceCOFF(std::unique_ptr<MemoryBuffer> &OutputBuffer,
+                               COFF::MachineTypes MachineType,
                                const WindowsResourceParser &Parser) {
   Error E = Error::success();
-  WindowsResourceCOFFWriter Writer(OutputFile, MachineType, Parser, E);
+  WindowsResourceCOFFWriter Writer(OutputBuffer, MachineType, Parser, E);
   if (E)
     return E;
   return Writer.write();
