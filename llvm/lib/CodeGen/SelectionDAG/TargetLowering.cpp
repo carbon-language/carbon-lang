@@ -1785,12 +1785,12 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                                                               ExtSrcTyBits),
                                           dl, ExtDstTy),
                           Cond);
-    } else if ((N1C->isNullValue() || N1C->getAPIntValue() == 1) &&
+    } else if ((N1C->isNullValue() || N1C->isOne()) &&
                 (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
       // SETCC (SETCC), [0|1], [EQ|NE]  -> SETCC
       if (N0.getOpcode() == ISD::SETCC &&
           isTypeLegal(VT) && VT.bitsLE(N0.getValueType())) {
-        bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (N1C->getAPIntValue() != 1);
+        bool TrueWhenTrue = (Cond == ISD::SETEQ) ^ (!N1C->isOne());
         if (TrueWhenTrue)
           return DAG.getNode(ISD::TRUNCATE, dl, VT, N0);
         // Invert the condition.
@@ -1807,7 +1807,7 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
             N0.getOperand(0).getOpcode() == ISD::XOR &&
             N0.getOperand(1) == N0.getOperand(0).getOperand(1))) &&
           isa<ConstantSDNode>(N0.getOperand(1)) &&
-          cast<ConstantSDNode>(N0.getOperand(1))->getAPIntValue() == 1) {
+          cast<ConstantSDNode>(N0.getOperand(1))->isOne()) {
         // If this is (X^1) == 0/1, swap the RHS and eliminate the xor.  We
         // can only do this if the top bits are known zero.
         unsigned BitWidth = N0.getValueSizeInBits();
@@ -1830,7 +1830,7 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           return DAG.getSetCC(dl, VT, Val, N1,
                               Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
         }
-      } else if (N1C->getAPIntValue() == 1 &&
+      } else if (N1C->isOne() &&
                  (VT == MVT::i1 ||
                   getBooleanContents(N0->getValueType(0)) ==
                       ZeroOrOneBooleanContent)) {
@@ -1848,7 +1848,7 @@ SDValue TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         }
         if (Op0.getOpcode() == ISD::AND &&
             isa<ConstantSDNode>(Op0.getOperand(1)) &&
-            cast<ConstantSDNode>(Op0.getOperand(1))->getAPIntValue() == 1) {
+            cast<ConstantSDNode>(Op0.getOperand(1))->isOne()) {
           // If this is (X&1) == / != 1, normalize it to (X&1) != / == 0.
           if (Op0.getValueType().bitsGT(VT))
             Op0 = DAG.getNode(ISD::AND, dl, VT,
@@ -2482,7 +2482,7 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
         // gcc prints these as sign extended.  Sign extend value to 64 bits
         // now; without this it would get ZExt'd later in
         // ScheduleDAGSDNodes::EmitNode, which is very generic.
-        Ops.push_back(DAG.getTargetConstant(C->getAPIntValue().getSExtValue(),
+        Ops.push_back(DAG.getTargetConstant(C->getSExtValue(),
                                             SDLoc(C), MVT::i64));
       }
       return;
