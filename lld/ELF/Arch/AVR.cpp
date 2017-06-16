@@ -6,6 +6,25 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+//
+// AVR is a Harvard-architecture 8-bit micrcontroller designed for small
+// baremetal programs. All AVR-family processors have 32 8-bit registers.
+// The tiniest AVR has 32 byte RAM and 1 KiB program memory, and the largest
+// one supports up to 2^24 data address space and 2^22 code address space.
+//
+// Since it is a baremetal programming, there's usually no loader to load
+// ELF files on AVRs. You are expected to link your program against address
+// 0 and pull out a .text section from the result using objcopy, so that you
+// can write the linked code to on-chip flush memory. You can do that with
+// the following commands:
+//
+//   ld.lld -Ttext=0 -o foo foo.o
+//   objcopy -O binary --only-section=.text foo output.bin
+//
+// Note that the current AVR support is very preliminary so you can't
+// link any useful program yet, though.
+//
+//===----------------------------------------------------------------------===//
 
 #include "Error.h"
 #include "InputFiles.h"
