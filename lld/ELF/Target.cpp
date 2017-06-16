@@ -47,40 +47,40 @@ std::string lld::toString(uint32_t Type) {
   return S;
 }
 
-TargetInfo *elf::createTarget() {
+TargetInfo *elf::getTarget() {
   switch (Config->EMachine) {
   case EM_386:
   case EM_IAMCU:
-    return createX86TargetInfo();
+    return getX86TargetInfo();
   case EM_AARCH64:
-    return createAArch64TargetInfo();
+    return getAArch64TargetInfo();
   case EM_AMDGPU:
-    return createAMDGPUTargetInfo();
+    return getAMDGPUTargetInfo();
   case EM_ARM:
-    return createARMTargetInfo();
+    return getARMTargetInfo();
   case EM_AVR:
-    return createAVRTargetInfo();
+    return getAVRTargetInfo();
   case EM_MIPS:
     switch (Config->EKind) {
     case ELF32LEKind:
-      return createMipsTargetInfo<ELF32LE>();
+      return getMipsTargetInfo<ELF32LE>();
     case ELF32BEKind:
-      return createMipsTargetInfo<ELF32BE>();
+      return getMipsTargetInfo<ELF32BE>();
     case ELF64LEKind:
-      return createMipsTargetInfo<ELF64LE>();
+      return getMipsTargetInfo<ELF64LE>();
     case ELF64BEKind:
-      return createMipsTargetInfo<ELF64BE>();
+      return getMipsTargetInfo<ELF64BE>();
     default:
       fatal("unsupported MIPS target");
     }
   case EM_PPC:
-    return createPPCTargetInfo();
+    return getPPCTargetInfo();
   case EM_PPC64:
-    return createPPC64TargetInfo();
+    return getPPC64TargetInfo();
   case EM_X86_64:
     if (Config->EKind == ELF32LEKind)
-      return createX32TargetInfo();
-    return createX86_64TargetInfo();
+      return getX32TargetInfo();
+    return getX86_64TargetInfo();
   }
   fatal("unknown target machine");
 }

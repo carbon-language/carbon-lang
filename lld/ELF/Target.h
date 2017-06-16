@@ -102,16 +102,16 @@ public:
   virtual void relaxTlsLdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const;
 };
 
-TargetInfo *createAArch64TargetInfo();
-TargetInfo *createAMDGPUTargetInfo();
-TargetInfo *createARMTargetInfo();
-TargetInfo *createAVRTargetInfo();
-TargetInfo *createPPC64TargetInfo();
-TargetInfo *createPPCTargetInfo();
-TargetInfo *createX32TargetInfo();
-TargetInfo *createX86TargetInfo();
-TargetInfo *createX86_64TargetInfo();
-template <class ELFT> TargetInfo *createMipsTargetInfo();
+TargetInfo *getAArch64TargetInfo();
+TargetInfo *getAMDGPUTargetInfo();
+TargetInfo *getARMTargetInfo();
+TargetInfo *getAVRTargetInfo();
+TargetInfo *getPPC64TargetInfo();
+TargetInfo *getPPCTargetInfo();
+TargetInfo *getX32TargetInfo();
+TargetInfo *getX86TargetInfo();
+TargetInfo *getX86_64TargetInfo();
+template <class ELFT> TargetInfo *getMipsTargetInfo();
 
 std::string getErrorLocation(const uint8_t *Loc);
 
@@ -119,7 +119,7 @@ uint64_t getPPC64TocBase();
 uint64_t getAArch64Page(uint64_t Expr);
 
 extern TargetInfo *Target;
-TargetInfo *createTarget();
+TargetInfo *getTarget();
 
 template <unsigned N>
 static void checkInt(uint8_t *Loc, int64_t V, uint32_t Type) {

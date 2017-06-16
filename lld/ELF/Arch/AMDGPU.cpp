@@ -9,7 +9,6 @@
 
 #include "Error.h"
 #include "InputFiles.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "Target.h"
 #include "llvm/Object/ELF.h"
@@ -79,4 +78,7 @@ RelExpr AMDGPU::getRelExpr(uint32_t Type, const SymbolBody &S,
   }
 }
 
-TargetInfo *elf::createAMDGPUTargetInfo() { return make<AMDGPU>(); }
+TargetInfo *elf::getAMDGPUTargetInfo() {
+  static AMDGPU Target;
+  return &Target;
+}

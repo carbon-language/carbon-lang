@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Error.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "Target.h"
 #include "llvm/Support/Endian.h"
@@ -60,4 +59,7 @@ RelExpr PPC::getRelExpr(uint32_t Type, const SymbolBody &S,
   }
 }
 
-TargetInfo *elf::createPPCTargetInfo() { return make<PPC>(); }
+TargetInfo *elf::getPPCTargetInfo() {
+  static PPC Target;
+  return &Target;
+}

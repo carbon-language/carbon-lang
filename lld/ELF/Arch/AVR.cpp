@@ -28,7 +28,6 @@
 
 #include "Error.h"
 #include "InputFiles.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "Target.h"
 #include "llvm/Object/ELF.h"
@@ -75,4 +74,7 @@ void AVR::relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
   }
 }
 
-TargetInfo *elf::createAVRTargetInfo() { return make<AVR>(); }
+TargetInfo *elf::getAVRTargetInfo() {
+  static AVR Target;
+  return &Target;
+}

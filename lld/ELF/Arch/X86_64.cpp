@@ -9,7 +9,6 @@
 
 #include "Error.h"
 #include "InputFiles.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
@@ -464,5 +463,12 @@ void X86_64<ELFT>::relaxGot(uint8_t *Loc, uint64_t Val) const {
   write32le(Loc - 1, Val + 1);
 }
 
-TargetInfo *elf::createX32TargetInfo() { return make<X86_64<ELF32LE>>(); }
-TargetInfo *elf::createX86_64TargetInfo() { return make<X86_64<ELF64LE>>(); }
+TargetInfo *elf::getX32TargetInfo() {
+  static X86_64<ELF32LE> Target;
+  return &Target;
+}
+
+TargetInfo *elf::getX86_64TargetInfo() {
+  static X86_64<ELF64LE> Target;
+  return &Target;
+}

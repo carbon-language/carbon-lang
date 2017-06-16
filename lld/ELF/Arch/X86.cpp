@@ -9,7 +9,6 @@
 
 #include "Error.h"
 #include "InputFiles.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
@@ -360,4 +359,7 @@ void X86::relaxTlsLdToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
   memcpy(Loc - 2, Inst, sizeof(Inst));
 }
 
-TargetInfo *elf::createX86TargetInfo() { return make<X86>(); }
+TargetInfo *elf::getX86TargetInfo() {
+  static X86 Target;
+  return &Target;
+}

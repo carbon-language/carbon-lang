@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Error.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
@@ -371,4 +370,7 @@ void AArch64::relaxTlsIeToLe(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
   llvm_unreachable("invalid relocation for TLS IE to LE relaxation");
 }
 
-TargetInfo *elf::createAArch64TargetInfo() { return make<AArch64>(); }
+TargetInfo *elf::getAArch64TargetInfo() {
+  static AArch64 Target;
+  return &Target;
+}

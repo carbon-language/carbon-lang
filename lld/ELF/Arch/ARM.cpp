@@ -9,7 +9,6 @@
 
 #include "Error.h"
 #include "InputFiles.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
@@ -429,4 +428,7 @@ int64_t ARM::getImplicitAddend(const uint8_t *Buf, uint32_t Type) const {
   }
 }
 
-TargetInfo *elf::createARMTargetInfo() { return make<ARM>(); }
+TargetInfo *elf::getARMTargetInfo() {
+  static ARM Target;
+  return &Target;
+}

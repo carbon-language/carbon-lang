@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "Error.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
@@ -212,4 +211,7 @@ void PPC64::relocateOne(uint8_t *Loc, uint32_t Type, uint64_t Val) const {
   }
 }
 
-TargetInfo *elf::createPPC64TargetInfo() { return make<PPC64>(); }
+TargetInfo *elf::getPPC64TargetInfo() {
+  static PPC64 Target;
+  return &Target;
+}
