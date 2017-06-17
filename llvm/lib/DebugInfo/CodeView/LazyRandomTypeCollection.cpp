@@ -75,6 +75,15 @@ StringRef LazyRandomTypeCollection::getTypeName(TypeIndex Index) {
   if (Index.isNoneType() || Index.isSimple())
     return TypeIndex::simpleTypeName(Index);
 
+  // Try to make sure the type exists.  Even if it doesn't though, it may be
+  // because we're dumping a symbol stream with no corresponding type stream
+  // present, in which case we still want to be able to print <unknown UDT>
+  // for the type names.
+  if (auto EC = ensureTypeExists(Index)) {
+    consumeError(std::move(EC));
+    return "<unknown UDT>";
+  }
+
   uint32_t I = Index.toArrayIndex();
   if (I >= TypeNames.size())
     TypeNames.resize(I + 1);
