@@ -3000,7 +3000,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   // Write all section header entries while patching section references.
   for (uint64_t Index = 0; Index < SectionsToWrite.size(); ++Index) {
     auto &Section = SectionsToWrite[Index];
-    if (Section.sh_addr <= NewTextSectionStartAddress &&
+    if (Section.sh_flags & ELF::SHF_ALLOC &&
+        Section.sh_addr <= NewTextSectionStartAddress &&
         Section.sh_addr + Section.sh_size > NewTextSectionStartAddress) {
       NewTextSectionIndex = Index;
     }
@@ -3049,6 +3050,22 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
       } else {
         if (NewSymbol.st_shndx < ELF::SHN_LORESERVE) {
           NewSymbol.st_shndx = NewSectionIndex[NewSymbol.st_shndx];
+        }
+        // Set to zero local syms in the text section that we didn't update
+        // and were preserved by the linker to support relocations against
+        // .text (t15274167).
+        if (opts::Relocs && NewSymbol.getType() == ELF::STT_NOTYPE &&
+            NewSymbol.getBinding() == ELF::STB_LOCAL &&
+            NewSymbol.st_size == 0) {
+          if (auto SecOrErr =
+                  File->getELFFile()->getSection(NewSymbol.st_shndx)) {
+            auto Section = *SecOrErr;
+            if (Section->sh_type == ELF::SHT_PROGBITS &&
+                Section->sh_flags & ELF::SHF_ALLOC &&
+                Section->sh_flags & ELF::SHF_EXECINSTR) {
+              NewSymbol.st_value = 0;
+            }
+          }
         }
       }
 
