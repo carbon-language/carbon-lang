@@ -37,3 +37,16 @@ Understanding which pass makes a particular change
     - ``$ opt -O3 -polly -debug-pass=Arguments`` to get all passes that are run by default. ``-debug-pass=Arguments`` will list all passes that have run.
     - Bisect down to the pass that changes it.
 
+
+Debugging regressions introduced at some unknown earlier point
+--------------------------------------------------------------
+
+In case of a regression in performance or correctness (e.g., an earlier version
+of Polly behaved as expected and a later version does not), bisecting over the
+version history is the standard approach to identify the commit that introduced
+the regression.
+
+LLVM has a single repository that contains all projects. It can be cloned at:
+`<https://github.com/llvm-project/llvm-project-20170507>`_. How to bisect on a
+git repository is explained here
+`<https://www.metaltoad.com/blog/beginners-guide-git-bisect-process-elimination`.
