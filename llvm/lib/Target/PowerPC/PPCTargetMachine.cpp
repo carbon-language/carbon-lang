@@ -86,9 +86,9 @@ EnableMachineCombinerPass("ppc-machine-combiner",
 
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
-  RegisterTargetMachine<PPC32TargetMachine> A(getThePPC32Target());
-  RegisterTargetMachine<PPC64TargetMachine> B(getThePPC64Target());
-  RegisterTargetMachine<PPC64TargetMachine> C(getThePPC64LETarget());
+  RegisterTargetMachine<PPCTargetMachine> A(getThePPC32Target());
+  RegisterTargetMachine<PPCTargetMachine> B(getThePPC64Target());
+  RegisterTargetMachine<PPCTargetMachine> C(getThePPC64LETarget());
 
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializePPCBoolRetToIntPass(PR);
@@ -223,26 +223,6 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
 }
 
 PPCTargetMachine::~PPCTargetMachine() = default;
-
-void PPC32TargetMachine::anchor() {}
-
-PPC32TargetMachine::PPC32TargetMachine(const Target &T, const Triple &TT,
-                                       StringRef CPU, StringRef FS,
-                                       const TargetOptions &Options,
-                                       Optional<Reloc::Model> RM,
-                                       CodeModel::Model CM,
-                                       CodeGenOpt::Level OL)
-    : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
-
-void PPC64TargetMachine::anchor() {}
-
-PPC64TargetMachine::PPC64TargetMachine(const Target &T, const Triple &TT,
-                                       StringRef CPU, StringRef FS,
-                                       const TargetOptions &Options,
-                                       Optional<Reloc::Model> RM,
-                                       CodeModel::Model CM,
-                                       CodeGenOpt::Level OL)
-    : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
 
 const PPCSubtarget *
 PPCTargetMachine::getSubtargetImpl(const Function &F) const {
