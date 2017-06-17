@@ -677,6 +677,10 @@ static bool foldReturnAndProcessPred(BasicBlock *BB, ReturnInst *Ret,
                                      const TargetTransformInfo *TTI) {
   bool Change = false;
 
+  // Make sure this block is a trivial return block.
+  assert(BB->getFirstNonPHIOrDbg() == Ret &&
+         "Trying to fold non-trivial return block");
+
   // If the return block contains nothing but the return and PHI's,
   // there might be an opportunity to duplicate the return in its
   // predecessors and perform TRE there. Look for predecessors that end
