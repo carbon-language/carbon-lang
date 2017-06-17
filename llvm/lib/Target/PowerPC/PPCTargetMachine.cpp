@@ -177,18 +177,17 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
   assert(Options.MCOptions.getABIName().empty() &&
          "Unknown target-abi option!");
 
-  if (!TT.isMacOSX()) {
-    switch (TT.getArch()) {
-    case Triple::ppc64le:
-      return PPCTargetMachine::PPC_ABI_ELFv2;
-    case Triple::ppc64:
-      return PPCTargetMachine::PPC_ABI_ELFv1;
-    default:
-      // Fallthrough.
-      ;
-    }
+  if (TT.isMacOSX())
+    return PPCTargetMachine::PPC_ABI_UNKNOWN;
+
+  switch (TT.getArch()) {
+  case Triple::ppc64le:
+    return PPCTargetMachine::PPC_ABI_ELFv2;
+  case Triple::ppc64:
+    return PPCTargetMachine::PPC_ABI_ELFv1;
+  default:
+    return PPCTargetMachine::PPC_ABI_UNKNOWN;
   }
-  return PPCTargetMachine::PPC_ABI_UNKNOWN;
 }
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
