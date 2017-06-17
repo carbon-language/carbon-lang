@@ -1093,7 +1093,7 @@ public:
     return FileOffset;
   }
 
-  /// Return (original) size of the function.
+  /// Return (original) byte size of the function.
   uint64_t getSize() const {
     return Size;
   }
@@ -1101,6 +1101,15 @@ public:
   /// Return the maximum size the body of the function could have.
   uint64_t getMaxSize() const {
     return MaxSize;
+  }
+
+  /// Return the number of emitted instructions for this function.
+  uint32_t getNumNonPseudos() const {
+    uint32_t N = 0;
+    for (auto &BB : layout()) {
+      N += BB->getNumNonPseudos();
+    }
+    return N;
   }
 
   /// Return MC symbol associated with the function.
