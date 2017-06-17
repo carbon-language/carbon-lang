@@ -49,4 +49,8 @@ the regression.
 LLVM has a single repository that contains all projects. It can be cloned at:
 `<https://github.com/llvm-project/llvm-project-20170507>`_. How to bisect on a
 git repository is explained here
-`<https://www.metaltoad.com/blog/beginners-guide-git-bisect-process-elimination`.
+`<https://www.metaltoad.com/blog/beginners-guide-git-bisect-process-elimination`_.
+The bisect process can also be automated as explained here:
+`<https://www.metaltoad.com/blog/mechanizing-git-bisect-bug-hunting-lazy>`_.
+An LLVM specific run script is available here:
+`<https://gist.github.com/dcci/891cd98d80b1b95352a407d80914f7cf>`_.
