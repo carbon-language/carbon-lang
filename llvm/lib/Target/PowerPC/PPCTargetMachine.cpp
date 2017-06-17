@@ -192,16 +192,19 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
 
 static Reloc::Model getEffectiveRelocModel(const Triple &TT,
                                            Optional<Reloc::Model> RM) {
-  if (!RM.hasValue()) {
-    if (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le) {
-      if (!TT.isOSBinFormatMachO() && !TT.isMacOSX())
-        return Reloc::PIC_;
-    }
-    if (TT.isOSDarwin())
-      return Reloc::DynamicNoPIC;
-    return Reloc::Static;
-  }
-  return *RM;
+  if (RM.hasValue())
+    return *RM;
+
+  // Darwin defaults to dynamic-no-pic.
+  if (TT.isOSDarwin())
+    return Reloc::DynamicNoPIC;
+
+  // Non-darwin 64-bit platforms are PIC by default.
+  if (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le)
+    return Reloc::PIC_;
+
+  // 32-bit is static by default.
+  return Reloc::Static;
 }
 
 // The FeatureString here is a little subtle. We are modifying the feature
