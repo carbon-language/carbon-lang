@@ -1207,9 +1207,9 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 //    availability(ios,introduced=7.0)
 #if defined(_LIBCPP_USE_AVAILABILITY_APPLE) &&                                 \
     ((defined(__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__) &&                \
-      __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ <= 1090) ||                \
+      __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1090) ||                 \
      (defined(__ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__) &&               \
-      __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ <= 70000))
+      __ENVIRONMENT_IPHONE_OS_VERSION_MIN_REQUIRED__ < 70000))
 #define _LIBCPP_AVAILABILITY_NO_STREAMS_EXTERN_TEMPLATE
 #endif
 
