@@ -1091,7 +1091,7 @@ TEST(TripleTest, NormalizeARM) {
   EXPECT_EQ("armv7eb--netbsd-eabihf", Triple::normalize("armv7eb-netbsd-eabihf"));
 
   EXPECT_EQ("armv7-suse-linux-gnueabihf",
-            Triple::normalize("armv7hf-suse-linux-gnueabi"));
+            Triple::normalize("armv7-suse-linux-gnueabi"));
 
   Triple T;
   T = Triple("armv6--netbsd-eabi");
