@@ -1154,6 +1154,7 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
   __attribute__((availability(watchos,strict,introduced=3.0)))
 #define _LIBCPP_AVAILABILITY_BAD_OPTIONAL_ACCESS __attribute__((unavailable))
 #define _LIBCPP_AVAILABILITY_BAD_ARRAY_LENGTH __attribute__((unavailable))
+#define _LIBCPP_AVAILABILITY_BAD_ANY_CAST __attribute__((unavailable))
 #define _LIBCPP_AVAILABILITY_UNCAUGHT_EXCEPTIONS                               \
   __attribute__((availability(macosx,strict,introduced=10.12)))                \
   __attribute__((availability(ios,strict,introduced=10.0)))                    \
@@ -1179,6 +1180,7 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #define _LIBCPP_AVAILABILITY_SHARED_MUTEX
 #define _LIBCPP_AVAILABILITY_BAD_OPTIONAL_ACCESS
 #define _LIBCPP_AVAILABILITY_BAD_ARRAY_LENGTH
+#define _LIBCPP_AVAILABILITY_BAD_ANY_CAST
 #define _LIBCPP_AVAILABILITY_UNCAUGHT_EXCEPTIONS
 #define _LIBCPP_AVAILABILITY_SIZED_NEW_DELETE
 #define _LIBCPP_AVAILABILITY_FUTURE_ERROR
@@ -1191,9 +1193,12 @@ _LIBCPP_FUNC_VIS extern "C" void __sanitizer_annotate_contiguous_container(
 #ifdef _LIBCPP_NO_EXCEPTIONS
 #define _LIBCPP_AVAILABILITY_DYNARRAY
 #define _LIBCPP_AVAILABILITY_FUTURE
+#define _LIBCPP_AVAILABILITY_THROW_BAD_ANY_CAST
 #else
 #define _LIBCPP_AVAILABILITY_DYNARRAY _LIBCPP_AVAILABILITY_BAD_ARRAY_LENGTH
 #define _LIBCPP_AVAILABILITY_FUTURE _LIBCPP_AVAILABILITY_FUTURE_ERROR
+#define _LIBCPP_AVAILABILITY_THROW_BAD_ANY_CAST                                \
+  _LIBCPP_AVAILABILITY_BAD_ANY_CAST
 #endif
 
 // Availability of stream API in the dylib got dropped and re-added.  The
