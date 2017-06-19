@@ -2,17 +2,22 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file is distributed under the University of Illinois Open Source
+// \fileThis file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
-/// \file This file contains the AArch64 definition of the DAG scheduling
-/// mutation to pair instructions back to back.
+// This file contains the AArch64 definition of the DAG scheduling mutation
+// to pair instructions back to back.
 //
 //===----------------------------------------------------------------------===//
 
+#include "AArch64InstrInfo.h"
 #include "llvm/CodeGen/MachineScheduler.h"
+
+//===----------------------------------------------------------------------===//
+// AArch64MacroFusion - DAG post-processing to encourage fusion of macro ops.
+//===----------------------------------------------------------------------===//
 
 namespace llvm {
 

@@ -2,17 +2,22 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file is distributed under the University of Illinois Open Source
+// \file This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
-/// \file This file contains the X86 definition of the DAG scheduling mutation
-///  to pair instructions back to back.
+// This file contains the X86 definition of the DAG scheduling mutation to pair
+// instructions back to back.
 //
 //===----------------------------------------------------------------------===//
 
+#include "X86InstrInfo.h"
 #include "llvm/CodeGen/MachineScheduler.h"
+
+//===----------------------------------------------------------------------===//
+// X86MacroFusion - DAG post-processing to encourage fusion of macro ops.
+//===----------------------------------------------------------------------===//
 
 namespace llvm {
 
