@@ -458,6 +458,14 @@ TEST_F(FormatTest, FormatShortBracedStatements) {
                "}",
                AllowSimpleBracedStatements);
 
+  verifyFormat("struct A2 {\n"
+               "  int X;\n"
+               "};",
+               AllowSimpleBracedStatements);
+  verifyFormat("typedef struct A2 {\n"
+               "  int X;\n"
+               "} A2_t;",
+               AllowSimpleBracedStatements);
   verifyFormat("template <int> struct A2 {\n"
                "  struct B {};\n"
                "};",
