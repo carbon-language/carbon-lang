@@ -79,7 +79,8 @@ void EnableInThisThread() {
 
 u32 GetCurrentThread() {
   thread_local_data_t *data = get_tls_val(false);
-  return data ? data->current_thread_id : kInvalidTid;
+  CHECK(data);
+  return data->current_thread_id;
 }
 
 void SetCurrentThread(u32 tid) { get_tls_val(true)->current_thread_id = tid; }
