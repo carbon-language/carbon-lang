@@ -209,7 +209,7 @@ static void addObjectsToPDB(BumpPtrAllocator &Alloc, SymbolTable *Symtab,
           fatal(".debug$S sections must have both a string table subsection "
                 "and a checksum subsection table or neither");
         auto NewChecksums =
-            std::make_unique<DebugChecksumsSubsection>(*PDBStrTab);
+            make_unique<DebugChecksumsSubsection>(*PDBStrTab);
         for (FileChecksumEntry &FC : Checksums) {
           StringRef FileName = ExitOnErr(CVStrTab.getString(FC.FileNameOffset));
           ExitOnErr(Builder.getDbiBuilder().addModuleSourceFile(

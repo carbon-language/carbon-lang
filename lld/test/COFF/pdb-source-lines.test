@@ -32,8 +32,8 @@ CHECK-NEXT:   Flags:           0
 CHECK-NEXT:   MachineType:     x86
 CHECK-NEXT:   Modules:         
 
-CHECK-LABEL:    - Module:          '{{.*}}pdb_lines_1.obj'
-CHECK-NEXT:       ObjFile:         '{{.*}}pdb_lines_1.obj'
+CHECK-LABEL:    - Module:          {{.*}}pdb_lines_1.obj
+CHECK-NEXT:       ObjFile:         {{.*}}pdb_lines_1.obj
 CHECK-NEXT:       SourceFiles:     
 CHECK-NEXT:         - '{{.*}}pdb_lines_1.c'
 CHECK-NEXT:         - '{{.*}}foo.h'
@@ -93,8 +93,8 @@ CHECK-NEXT:                   IsStatement:     true
 CHECK-NEXT:                   EndDelta:        0
 CHECK-NEXT:               Columns:         
 
-CHECK-LABEL:    - Module:          '{{.*}}pdb_lines_2.obj'
-CHECK-NEXT:       ObjFile:         '{{.*}}pdb_lines_2.obj'
+CHECK-LABEL:    - Module:          {{.*}}pdb_lines_2.obj
+CHECK-NEXT:       ObjFile:         {{.*}}pdb_lines_2.obj
 CHECK-NEXT:       SourceFiles:     
 CHECK-NEXT:         - '{{.*}}pdb_lines_2.c'
 CHECK-NEXT:       Subsections:     
