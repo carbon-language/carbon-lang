@@ -75,35 +75,44 @@ public:
                                      unsigned Columns, bool ShowColors);
 
 protected:
-  void emitDiagnosticMessage(FullSourceLoc Loc, PresumedLoc PLoc,
-                             DiagnosticsEngine::Level Level, StringRef Message,
+  void emitDiagnosticMessage(SourceLocation Loc,PresumedLoc PLoc,
+                             DiagnosticsEngine::Level Level,
+                             StringRef Message,
                              ArrayRef<CharSourceRange> Ranges,
+                             const SourceManager *SM,
                              DiagOrStoredDiag D) override;
 
-  void emitDiagnosticLoc(FullSourceLoc Loc, PresumedLoc PLoc,
+  void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                          DiagnosticsEngine::Level Level,
-                         ArrayRef<CharSourceRange> Ranges) override;
+                         ArrayRef<CharSourceRange> Ranges,
+                         const SourceManager &SM) override;
 
-  void emitCodeContext(FullSourceLoc Loc, DiagnosticsEngine::Level Level,
-                       SmallVectorImpl<CharSourceRange> &Ranges,
-                       ArrayRef<FixItHint> Hints) override {
-    emitSnippetAndCaret(Loc, Level, Ranges, Hints);
+  void emitCodeContext(SourceLocation Loc,
+                       DiagnosticsEngine::Level Level,
+                       SmallVectorImpl<CharSourceRange>& Ranges,
+                       ArrayRef<FixItHint> Hints,
+                       const SourceManager &SM) override {
+    emitSnippetAndCaret(Loc, Level, Ranges, Hints, SM);
   }
 
-  void emitIncludeLocation(FullSourceLoc Loc, PresumedLoc PLoc) override;
+  void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
+                           const SourceManager &SM) override;
 
-  void emitImportLocation(FullSourceLoc Loc, PresumedLoc PLoc,
-                          StringRef ModuleName) override;
+  void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                          StringRef ModuleName,
+                          const SourceManager &SM) override;
 
-  void emitBuildingModuleLocation(FullSourceLoc Loc, PresumedLoc PLoc,
-                                  StringRef ModuleName) override;
+  void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                  StringRef ModuleName,
+                                  const SourceManager &SM) override;
 
 private:
   void emitFilename(StringRef Filename, const SourceManager &SM);
 
-  void emitSnippetAndCaret(FullSourceLoc Loc, DiagnosticsEngine::Level Level,
-                           SmallVectorImpl<CharSourceRange> &Ranges,
-                           ArrayRef<FixItHint> Hints);
+  void emitSnippetAndCaret(SourceLocation Loc, DiagnosticsEngine::Level Level,
+                           SmallVectorImpl<CharSourceRange>& Ranges,
+                           ArrayRef<FixItHint> Hints,
+                           const SourceManager &SM);
 
   void emitSnippet(StringRef SourceLine);
 

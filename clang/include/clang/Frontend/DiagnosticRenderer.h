@@ -70,27 +70,33 @@ protected:
                      DiagnosticOptions *DiagOpts);
   
   virtual ~DiagnosticRenderer();
-
-  virtual void emitDiagnosticMessage(FullSourceLoc Loc, PresumedLoc PLoc,
+  
+  virtual void emitDiagnosticMessage(SourceLocation Loc, PresumedLoc PLoc,
                                      DiagnosticsEngine::Level Level,
                                      StringRef Message,
                                      ArrayRef<CharSourceRange> Ranges,
+                                     const SourceManager *SM,
                                      DiagOrStoredDiag Info) = 0;
-
-  virtual void emitDiagnosticLoc(FullSourceLoc Loc, PresumedLoc PLoc,
+  
+  virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                                  DiagnosticsEngine::Level Level,
-                                 ArrayRef<CharSourceRange> Ranges) = 0;
+                                 ArrayRef<CharSourceRange> Ranges,
+                                 const SourceManager &SM) = 0;
 
-  virtual void emitCodeContext(FullSourceLoc Loc,
+  virtual void emitCodeContext(SourceLocation Loc,
                                DiagnosticsEngine::Level Level,
-                               SmallVectorImpl<CharSourceRange> &Ranges,
-                               ArrayRef<FixItHint> Hints) = 0;
-
-  virtual void emitIncludeLocation(FullSourceLoc Loc, PresumedLoc PLoc) = 0;
-  virtual void emitImportLocation(FullSourceLoc Loc, PresumedLoc PLoc,
-                                  StringRef ModuleName) = 0;
-  virtual void emitBuildingModuleLocation(FullSourceLoc Loc, PresumedLoc PLoc,
-                                          StringRef ModuleName) = 0;
+                               SmallVectorImpl<CharSourceRange>& Ranges,
+                               ArrayRef<FixItHint> Hints,
+                               const SourceManager &SM) = 0;
+  
+  virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                   const SourceManager &SM) = 0;
+  virtual void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                  StringRef ModuleName,
+                                  const SourceManager &SM) = 0;
+  virtual void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                          StringRef ModuleName,
+                                          const SourceManager &SM) = 0;
 
   virtual void beginDiagnostic(DiagOrStoredDiag D,
                                DiagnosticsEngine::Level Level) {}
@@ -100,21 +106,25 @@ protected:
   
 private:
   void emitBasicNote(StringRef Message);
-  void emitIncludeStack(FullSourceLoc Loc, PresumedLoc PLoc,
-                        DiagnosticsEngine::Level Level);
-  void emitIncludeStackRecursively(FullSourceLoc Loc);
-  void emitImportStack(FullSourceLoc Loc);
-  void emitImportStackRecursively(FullSourceLoc Loc, StringRef ModuleName);
+  void emitIncludeStack(SourceLocation Loc, PresumedLoc PLoc,
+                        DiagnosticsEngine::Level Level, const SourceManager &SM);
+  void emitIncludeStackRecursively(SourceLocation Loc, const SourceManager &SM);
+  void emitImportStack(SourceLocation Loc, const SourceManager &SM);
+  void emitImportStackRecursively(SourceLocation Loc, StringRef ModuleName,
+                                  const SourceManager &SM);
   void emitModuleBuildStack(const SourceManager &SM);
-  void emitCaret(FullSourceLoc Loc, DiagnosticsEngine::Level Level,
-                 ArrayRef<CharSourceRange> Ranges, ArrayRef<FixItHint> Hints);
-  void emitSingleMacroExpansion(FullSourceLoc Loc,
+  void emitCaret(SourceLocation Loc, DiagnosticsEngine::Level Level,
+                 ArrayRef<CharSourceRange> Ranges, ArrayRef<FixItHint> Hints,
+                 const SourceManager &SM);
+  void emitSingleMacroExpansion(SourceLocation Loc,
                                 DiagnosticsEngine::Level Level,
-                                ArrayRef<CharSourceRange> Ranges);
-  void emitMacroExpansions(FullSourceLoc Loc, DiagnosticsEngine::Level Level,
+                                ArrayRef<CharSourceRange> Ranges,
+                                const SourceManager &SM);
+  void emitMacroExpansions(SourceLocation Loc,
+                           DiagnosticsEngine::Level Level,
                            ArrayRef<CharSourceRange> Ranges,
-                           ArrayRef<FixItHint> Hints);
-
+                           ArrayRef<FixItHint> Hints,
+                           const SourceManager &SM);
 public:
   /// \brief Emit a diagnostic.
   ///
@@ -130,9 +140,10 @@ public:
   /// \param FixItHints The FixIt hints active for this diagnostic.
   /// \param SM The SourceManager; will be null if the diagnostic came from the
   ///        frontend, thus \p Loc will be invalid.
-  void emitDiagnostic(FullSourceLoc Loc, DiagnosticsEngine::Level Level,
+  void emitDiagnostic(SourceLocation Loc, DiagnosticsEngine::Level Level,
                       StringRef Message, ArrayRef<CharSourceRange> Ranges,
                       ArrayRef<FixItHint> FixItHints,
+                      const SourceManager *SM,
                       DiagOrStoredDiag D = (Diagnostic *)nullptr);
 
   void emitStoredDiagnostic(StoredDiagnostic &Diag);
@@ -148,15 +159,19 @@ public:
 
   ~DiagnosticNoteRenderer() override;
 
-  void emitIncludeLocation(FullSourceLoc Loc, PresumedLoc PLoc) override;
+  void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc,
+                           const SourceManager &SM) override;
 
-  void emitImportLocation(FullSourceLoc Loc, PresumedLoc PLoc,
-                          StringRef ModuleName) override;
+  void emitImportLocation(SourceLocation Loc, PresumedLoc PLoc,
+                          StringRef ModuleName,
+                          const SourceManager &SM) override;
 
-  void emitBuildingModuleLocation(FullSourceLoc Loc, PresumedLoc PLoc,
-                                  StringRef ModuleName) override;
+  void emitBuildingModuleLocation(SourceLocation Loc, PresumedLoc PLoc,
+                                  StringRef ModuleName,
+                                  const SourceManager &SM) override;
 
-  virtual void emitNote(FullSourceLoc Loc, StringRef Message) = 0;
+  virtual void emitNote(SourceLocation Loc, StringRef Message,
+                        const SourceManager *SM) = 0;
 };
 } // end clang namespace
 #endif
