@@ -1628,8 +1628,8 @@ Value *ReassociatePass::OptimizeAdd(Instruction *I,
 ///   ((((x*y)*x)*y)*x) -> [(x, 3), (y, 2)]
 ///
 /// \returns Whether any factors have a power greater than one.
-bool ReassociatePass::collectMultiplyFactors(SmallVectorImpl<ValueEntry> &Ops,
-                                             SmallVectorImpl<Factor> &Factors) {
+static bool collectMultiplyFactors(SmallVectorImpl<ValueEntry> &Ops,
+                                   SmallVectorImpl<Factor> &Factors) {
   // FIXME: Have Ops be (ValueEntry, Multiplicity) pairs, simplifying this.
   // Compute the sum of powers of simplifiable factors.
   unsigned FactorPowerSum = 0;
