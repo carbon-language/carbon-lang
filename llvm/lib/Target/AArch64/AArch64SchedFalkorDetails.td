@@ -519,7 +519,8 @@ def FalkorReadIncSt  : SchedReadAdvance<1, [FalkorWr_LdStInc_none_3cyc]>;
 
 // SchedPredicates and WriteVariants for Immediate Zero and LSLFast/ASRFast
 // -----------------------------------------------------------------------------
-def FalkorImmZPred    : SchedPredicate<[{MI->getOperand(1).getImm() == 0}]>;
+def FalkorImmZPred    : SchedPredicate<[{MI->getOperand(1).isImm() &&
+                                         MI->getOperand(1).getImm() == 0}]>;
 def FalkorOp1ZrReg    : SchedPredicate<[{MI->getOperand(1).getReg() == AArch64::WZR ||
 
                                          MI->getOperand(1).getReg() == AArch64::XZR}]>;
