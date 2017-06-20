@@ -162,8 +162,7 @@ struct WasmRelocationEntry {
 #endif
 };
 
-inline raw_ostream &operator<<(raw_ostream &OS,
-                               const WasmRelocationEntry &Rel) {
+raw_ostream &operator<<(raw_ostream &OS, const WasmRelocationEntry &Rel) {
   Rel.print(OS);
   return OS;
 }

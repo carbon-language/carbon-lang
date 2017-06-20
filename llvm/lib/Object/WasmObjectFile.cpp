@@ -753,6 +753,7 @@ uint64_t WasmObjectFile::getSymbolValueImpl(DataRefImpl Symb) const {
   case WasmSymbol::SymbolType::DEBUG_FUNCTION_NAME:
     return Sym.ElementIndex;
   }
+  llvm_unreachable("invalid symbol type");
 }
 
 uint32_t WasmObjectFile::getSymbolAlignment(DataRefImpl Symb) const {
