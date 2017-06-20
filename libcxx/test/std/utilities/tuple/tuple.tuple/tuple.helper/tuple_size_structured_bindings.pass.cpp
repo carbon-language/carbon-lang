@@ -117,7 +117,8 @@ template <size_t N>
 int get(Test const&) { static_assert(N == 0, ""); return -1; }
 
 template <>
-struct std::tuple_element<0, Test> {
+class std::tuple_element<0, Test> {
+public:
   typedef int type;
 };
 
@@ -128,7 +129,8 @@ void test_before_tuple_size_specialization() {
 }
 
 template <>
-struct std::tuple_size<Test> {
+class std::tuple_size<Test> {
+public:
   static const size_t value = 1;
 };
 
