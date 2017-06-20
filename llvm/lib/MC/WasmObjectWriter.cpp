@@ -162,10 +162,12 @@ struct WasmRelocationEntry {
 #endif
 };
 
+#if !defined(NDEBUG)
 raw_ostream &operator<<(raw_ostream &OS, const WasmRelocationEntry &Rel) {
   Rel.print(OS);
   return OS;
 }
+#endif
 
 class WasmObjectWriter : public MCObjectWriter {
   /// Helper struct for containing some precomputed information on symbols.
