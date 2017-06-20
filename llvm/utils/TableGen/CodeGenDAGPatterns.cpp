@@ -2762,8 +2762,8 @@ public:
     AnalyzeNode(Pat->getTree(0));
   }
 
-  void Analyze(const PatternToMatch *Pat) {
-    AnalyzeNode(Pat->getSrcPattern());
+  void Analyze(const PatternToMatch &Pat) {
+    AnalyzeNode(Pat.getSrcPattern());
   }
 
 private:
@@ -3305,7 +3305,7 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
       continue;
 
     InstAnalyzer PatInfo(*this);
-    PatInfo.Analyze(&PTM);
+    PatInfo.Analyze(PTM);
     Errors += InferFromPattern(InstInfo, PatInfo, PTM.getSrcRecord());
   }
 
@@ -3365,7 +3365,7 @@ void CodeGenDAGPatterns::VerifyInstructionFlags() {
 
     // Analyze the source pattern.
     InstAnalyzer PatInfo(*this);
-    PatInfo.Analyze(&PTM);
+    PatInfo.Analyze(PTM);
 
     // Collect error messages.
     SmallVector<std::string, 4> Msgs;
