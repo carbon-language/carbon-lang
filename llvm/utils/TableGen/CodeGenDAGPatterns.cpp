@@ -3289,9 +3289,7 @@ void CodeGenDAGPatterns::InferInstructionFlags() {
 
   // Second, look for single-instruction patterns defined outside the
   // instruction.
-  for (ptm_iterator I = ptm_begin(), E = ptm_end(); I != E; ++I) {
-    const PatternToMatch &PTM = *I;
-
+  for (const PatternToMatch &PTM : ptms()) {
     // We can only infer from single-instruction patterns, otherwise we won't
     // know which instruction should get the flags.
     SmallVector<Record*, 8> PatInstrs;
