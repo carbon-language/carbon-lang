@@ -243,6 +243,7 @@ public:
     Instance.createDiagnostics(
         new ForwardingDiagnosticConsumer(CI.getDiagnosticClient()),
         /*ShouldOwnClient=*/true);
+    Instance.getFrontendOpts().DisableFree = false;
     Instance.getFrontendOpts().Inputs.clear();
     Instance.getFrontendOpts().Inputs.emplace_back(
         Filename, InputKind(InputKind::Unknown, InputKind::Precompiled));
