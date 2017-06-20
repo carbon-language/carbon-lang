@@ -470,7 +470,7 @@ static MachineOperand *getImmOrMaterializedImm(MachineRegisterInfo &MRI,
       return &Op;
 
     MachineInstr *Def = MRI.getVRegDef(Op.getReg());
-    if (Def->isMoveImmediate()) {
+    if (Def && Def->isMoveImmediate()) {
       MachineOperand &ImmSrc = Def->getOperand(1);
       if (ImmSrc.isImm())
         return &ImmSrc;
