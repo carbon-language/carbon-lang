@@ -2368,7 +2368,7 @@ Value *InstCombiner::foldXorOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
         return Builder->CreateAnd(LHS, RHS);
       }
       if (OrICmp == RHS && AndICmp == LHS && LHS->hasOneUse()) {
-        // !(LHS & RHS) & (LHS | RHS) --> !LHS & !RHS
+        // !(LHS & RHS) & (LHS | RHS) --> !LHS & RHS
         LHS->setPredicate(LHS->getInversePredicate());
         return Builder->CreateAnd(LHS, RHS);
       }

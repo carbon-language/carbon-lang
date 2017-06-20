@@ -160,7 +160,7 @@ define i1 @bool_eq0(i64 %a) {
   ret i1 %and
 }
 
-; FIXME: This is equivalent to the previous test.
+; This is equivalent to the previous test.
 
 define i1 @xor_of_icmps(i64 %a) {
 ; CHECK-LABEL: @xor_of_icmps(
@@ -173,7 +173,7 @@ define i1 @xor_of_icmps(i64 %a) {
   ret i1 %xor
 }
 
-; FIXME: This is also equivalent to the previous test.
+; This is also equivalent to the previous test.
 
 define i1 @xor_of_icmps_commute(i64 %a) {
 ; CHECK-LABEL: @xor_of_icmps_commute(
