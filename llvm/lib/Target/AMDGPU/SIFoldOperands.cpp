@@ -166,6 +166,8 @@ static bool updateOperand(FoldCandidate &Fold,
   if (TargetRegisterInfo::isVirtualRegister(Old.getReg()) &&
       TargetRegisterInfo::isVirtualRegister(New->getReg())) {
     Old.substVirtReg(New->getReg(), New->getSubReg(), TRI);
+
+    Old.setIsUndef(New->isUndef());
     return true;
   }
 
