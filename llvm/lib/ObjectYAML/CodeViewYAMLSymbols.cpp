@@ -489,6 +489,8 @@ template <> void SymbolRecordImpl<ConstantSym>::map(IO &IO) {
 template <> void SymbolRecordImpl<DataSym>::map(IO &IO) {
   // TODO: Map linkage name
   IO.mapRequired("Type", Symbol.Type);
+  IO.mapOptional("DataOffset", Symbol.DataOffset, 0U);
+  IO.mapOptional("Segment", Symbol.Segment, uint16_t(0));
   IO.mapRequired("DisplayName", Symbol.Name);
 }
 
