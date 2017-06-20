@@ -1888,10 +1888,10 @@ CalcNodeSethiUllmanNumber(const SUnit *SU, std::vector<unsigned> &SUNumbers) {
         for (auto It : WorkList)
           assert(It.SU != PredSU && "Trying to push an element twice?");
 #endif
-        WorkList.push_back(PredSU);
-        AllPredsKnown = false;
         // Next time start processing this one starting from the next pred.
         Temp.PredsProcessed = P + 1;
+        WorkList.push_back(PredSU);
+        AllPredsKnown = false;
         break;
       }
     }
