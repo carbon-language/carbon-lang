@@ -567,8 +567,8 @@ bool X86InstructionSelector::selectZext(MachineInstr &I,
     else
       return false;
 
-    const RegisterBank &RegBank = *RBI.getRegBank(DstReg, MRI, TRI);
-    unsigned DefReg = MRI.createVirtualRegister(getRegClass(DstTy, RegBank));
+    unsigned DefReg =
+        MRI.createVirtualRegister(getRegClass(DstTy, DstReg, MRI));
 
     BuildMI(*I.getParent(), I, I.getDebugLoc(),
             TII.get(TargetOpcode::SUBREG_TO_REG), DefReg)
