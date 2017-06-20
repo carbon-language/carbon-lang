@@ -216,16 +216,16 @@ registers:
 # AVX1-NEXT:         %3(<32 x s8>) = COPY %ymm1
 # AVX1-NEXT:         %4(<32 x s8>) = COPY %ymm2
 # AVX1-NEXT:         %5(<32 x s8>) = COPY %ymm3
-# AVX1-NEXT:         %0(<64 x s8>) = G_MERGE_VALUES %2(<32 x s8>), %3(<32 x s8>)
-# AVX1-NEXT:         %1(<64 x s8>) = G_MERGE_VALUES %4(<32 x s8>), %5(<32 x s8>)
-# AVX1-NEXT:         %9(<16 x s8>), %10(<16 x s8>), %11(<16 x s8>), %12(<16 x s8>) = G_UNMERGE_VALUES %0(<64 x s8>)
-# AVX1-NEXT:         %13(<16 x s8>), %14(<16 x s8>), %15(<16 x s8>), %16(<16 x s8>) = G_UNMERGE_VALUES %1(<64 x s8>)
+# AVX1-NEXT:         %9(<16 x s8>), %10(<16 x s8>) = G_UNMERGE_VALUES %2(<32 x s8>)
+# AVX1-NEXT:         %11(<16 x s8>), %12(<16 x s8>) = G_UNMERGE_VALUES %3(<32 x s8>)
+# AVX1-NEXT:         %13(<16 x s8>), %14(<16 x s8>) = G_UNMERGE_VALUES %4(<32 x s8>)
+# AVX1-NEXT:         %15(<16 x s8>), %16(<16 x s8>) = G_UNMERGE_VALUES %5(<32 x s8>)
 # AVX1-NEXT:         %17(<16 x s8>) = G_ADD %9, %13
 # AVX1-NEXT:         %18(<16 x s8>) = G_ADD %10, %14
 # AVX1-NEXT:         %19(<16 x s8>) = G_ADD %11, %15
 # AVX1-NEXT:         %20(<16 x s8>) = G_ADD %12, %16
-# AVX1-NEXT:         %6(<64 x s8>) = G_MERGE_VALUES %17(<16 x s8>), %18(<16 x s8>), %19(<16 x s8>), %20(<16 x s8>)
-# AVX1-NEXT:         %7(<32 x s8>), %8(<32 x s8>) = G_UNMERGE_VALUES %6(<64 x s8>)
+# AVX1-NEXT:         %7(<32 x s8>) = G_MERGE_VALUES %17(<16 x s8>), %18(<16 x s8>)
+# AVX1-NEXT:         %8(<32 x s8>) = G_MERGE_VALUES %19(<16 x s8>), %20(<16 x s8>)
 # AVX1-NEXT:         %ymm0 = COPY %7(<32 x s8>)
 # AVX1-NEXT:         %ymm1 = COPY %8(<32 x s8>)
 # AVX1-NEXT:         RET 0, implicit %ymm0, implicit %ymm1
