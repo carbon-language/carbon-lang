@@ -1662,6 +1662,12 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
   MaxStoresPerMemcpyOptSize = 4;
   MaxStoresPerMemmove = 8; // For @llvm.memmove -> sequence of stores
   MaxStoresPerMemmoveOptSize = 4;
+
+  // TODO: These control memcmp expansion in CGP and are set low to prevent
+  // altering the vector expansion for 16/32 byte memcmp in SelectionDAGBuilder.
+  MaxLoadsPerMemcmp = 1;
+  MaxLoadsPerMemcmpOptSize = 1;
+
   // Set loop alignment to 2^ExperimentalPrefLoopAlignment bytes (default: 2^4).
   setPrefLoopAlignment(ExperimentalPrefLoopAlignment);
 
