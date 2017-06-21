@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SelectionDAGAddressAnalysis.h"
 #include "llvm/CodeGen/SelectionDAGTargetInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -4693,120 +4694,6 @@ SDNode *DAGCombiner::MatchRotate(SDValue LHS, SDValue RHS, const SDLoc &DL) {
 
   return nullptr;
 }
-
-namespace {
-/// Helper struct to parse and store a memory address as base + index + offset.
-/// We ignore sign extensions when it is safe to do so.
-/// The following two expressions are not equivalent. To differentiate we need
-/// to store whether there was a sign extension involved in the index
-/// computation.
-///  (load (i64 add (i64 copyfromreg %c)
-///                 (i64 signextend (add (i8 load %index)
-///                                      (i8 1))))
-/// vs
-///
-/// (load (i64 add (i64 copyfromreg %c)
-///                (i64 signextend (i32 add (i32 signextend (i8 load %index))
-///                                         (i32 1)))))
-class BaseIndexOffset {
-private:
-  SDValue Base;
-  SDValue Index;
-  int64_t Offset;
-  bool IsIndexSignExt;
-
-public:
-  BaseIndexOffset() : Offset(0), IsIndexSignExt(false) {}
-
-  BaseIndexOffset(SDValue Base, SDValue Index, int64_t Offset,
-                  bool IsIndexSignExt) :
-    Base(Base), Index(Index), Offset(Offset), IsIndexSignExt(IsIndexSignExt) {}
-
-  SDValue getBase() { return Base; }
-  SDValue getIndex() { return Index; }
-
-  bool equalBaseIndex(BaseIndexOffset &Other, const SelectionDAG &DAG) {
-    int64_t Off;
-    return equalBaseIndex(Other, DAG, Off);
-  }
-
-  bool equalBaseIndex(BaseIndexOffset &Other, const SelectionDAG &DAG,
-                      int64_t &Off) {
-    // Obvious equivalent
-    Off = Other.Offset - Offset;
-    if (Other.Base == Base && Other.Index == Index &&
-        Other.IsIndexSignExt == IsIndexSignExt)
-      return true;
-
-    // Match GlobalAddresses
-    if (Index == Other.Index)
-      if (GlobalAddressSDNode *A = dyn_cast<GlobalAddressSDNode>(Base))
-        if (GlobalAddressSDNode *B = dyn_cast<GlobalAddressSDNode>(Other.Base))
-          if (A->getGlobal() == B->getGlobal()) {
-            Off += B->getOffset() - A->getOffset();
-            return true;
-          }
-
-    // TODO: we should be able to add FrameIndex analysis improvements here.
-
-    return false;
-  }
-
-  /// Parses tree in Ptr for base, index, offset addresses.
-  static BaseIndexOffset match(SDValue Ptr) {
-    // (((B + I*M) + c)) + c ...
-    SDValue Base = Ptr;
-    SDValue Index = SDValue();
-    int64_t Offset = 0;
-    bool IsIndexSignExt = false;
-
-    //Consume constant adds
-    while (Base->getOpcode() == ISD::ADD &&
-           isa<ConstantSDNode>(Base->getOperand(1))) {
-      int64_t POffset = cast<ConstantSDNode>(Base->getOperand(1))->getSExtValue();
-      Offset += POffset;
-      Base = Base->getOperand(0);
-    }
-
-    if (Base->getOpcode() == ISD::ADD) {
-      // TODO: The following code appears to be needless as it just
-      //       bails on some Ptrs early, reducing the cases where we
-      //       find equivalence. We should be able to remove this.
-      // Inside a loop the current BASE pointer is calculated using an ADD and a
-      // MUL instruction. In this case Base is the actual BASE pointer.
-      // (i64 add (i64 %array_ptr)
-      //          (i64 mul (i64 %induction_var)
-      //                   (i64 %element_size)))
-      if (Base->getOperand(1)->getOpcode() == ISD::MUL)
-        return BaseIndexOffset(Base, Index, Offset, IsIndexSignExt);
-
-      // Look at Base + Index + Offset cases.
-      Index   = Base->getOperand(1);
-      SDValue PotentialBase = Base->getOperand(0);
-
-      // Skip signextends.
-      if (Index->getOpcode() == ISD::SIGN_EXTEND) {
-        Index = Index->getOperand(0);
-        IsIndexSignExt = true;
-      }
-
-      // Check if Index Offset pattern
-      if (Index->getOpcode() != ISD::ADD ||
-          !isa<ConstantSDNode>(Index->getOperand(1)))
-        return BaseIndexOffset(PotentialBase, Index, Offset, IsIndexSignExt);
-
-      Offset += cast<ConstantSDNode>(Index->getOperand(1))->getSExtValue();
-      Index = Index->getOperand(0);
-      if (Index->getOpcode() == ISD::SIGN_EXTEND) {
-        Index = Index->getOperand(0);
-        IsIndexSignExt = true;
-      } else IsIndexSignExt = false;
-      Base = PotentialBase;
-    }
-    return BaseIndexOffset(Base, Index, Offset, IsIndexSignExt);
-  }
-};
-} // namespace
 
 namespace {
 /// Represents known origin of an individual byte in load combine pattern. The
