@@ -1835,6 +1835,7 @@ Value *MemCmpExpansion::getCompareLoadPairs(unsigned Index, unsigned Size,
 
     Type *LoadSizeType = IntegerType::get(CI->getContext(), LoadSize * 8);
     Type *MaxLoadType = IntegerType::get(CI->getContext(), MaxLoadSize * 8);
+    assert(LoadSize <= MaxLoadSize && "Unexpected load type");
 
     Value *Source1 = CI->getArgOperand(0);
     Value *Source2 = CI->getArgOperand(1);
@@ -1868,13 +1869,13 @@ Value *MemCmpExpansion::getCompareLoadPairs(unsigned Index, unsigned Size,
 
     if (NumLoads != 1) {
       if (LoadSizeType != MaxLoadType) {
-        LoadSrc1 = Builder.CreateZExtOrTrunc(LoadSrc1, MaxLoadType);
-        LoadSrc2 = Builder.CreateZExtOrTrunc(LoadSrc2, MaxLoadType);
+        LoadSrc1 = Builder.CreateZExt(LoadSrc1, MaxLoadType);
+        LoadSrc2 = Builder.CreateZExt(LoadSrc2, MaxLoadType);
       }
       // If we have multiple loads per block, we need to generate a composite
       // comparison using xor+or.
       Diff = Builder.CreateXor(LoadSrc1, LoadSrc2);
-      Diff = Builder.CreateZExtOrTrunc(Diff, MaxLoadType);
+      Diff = Builder.CreateZExt(Diff, MaxLoadType);
       XorList.push_back(Diff);
     } else {
       // If there's only one load per block, we just compare the loaded values.
@@ -1949,6 +1950,7 @@ void MemCmpExpansion::emitLoadCompareBlock(unsigned Index, unsigned LoadSize,
 
   Type *LoadSizeType = IntegerType::get(CI->getContext(), LoadSize * 8);
   Type *MaxLoadType = IntegerType::get(CI->getContext(), MaxLoadSize * 8);
+  assert(LoadSize <= MaxLoadSize && "Unexpected load type");
 
   Value *Source1 = CI->getArgOperand(0);
   Value *Source2 = CI->getArgOperand(1);
@@ -1982,8 +1984,8 @@ void MemCmpExpansion::emitLoadCompareBlock(unsigned Index, unsigned LoadSize,
   }
 
   if (LoadSizeType != MaxLoadType) {
-    LoadSrc1 = Builder.CreateZExtOrTrunc(LoadSrc1, MaxLoadType);
-    LoadSrc2 = Builder.CreateZExtOrTrunc(LoadSrc2, MaxLoadType);
+    LoadSrc1 = Builder.CreateZExt(LoadSrc1, MaxLoadType);
+    LoadSrc2 = Builder.CreateZExt(LoadSrc2, MaxLoadType);
   }
 
   // Add the loaded values to the phi nodes for calculating memcmp result only
