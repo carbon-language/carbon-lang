@@ -957,8 +957,8 @@ static BinaryOperator *ConvertShiftToMul(Instruction *Shl) {
 /// Scan backwards and forwards among values with the same rank as element i
 /// to see if X exists.  If X does not exist, return i.  This is useful when
 /// scanning for 'x' when we see '-x' because they both get the same rank.
-static unsigned FindInOperandList(SmallVectorImpl<ValueEntry> &Ops, unsigned i,
-                                  Value *X) {
+static unsigned FindInOperandList(const SmallVectorImpl<ValueEntry> &Ops,
+                                  unsigned i, Value *X) {
   unsigned XRank = Ops[i].Rank;
   unsigned e = Ops.size();
   for (unsigned j = i+1; j != e && Ops[j].Rank == XRank; ++j) {
