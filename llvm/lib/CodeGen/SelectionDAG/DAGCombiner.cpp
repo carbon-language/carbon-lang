@@ -4708,32 +4708,57 @@ namespace {
 /// (load (i64 add (i64 copyfromreg %c)
 ///                (i64 signextend (i32 add (i32 signextend (i8 load %index))
 ///                                         (i32 1)))))
-struct BaseIndexOffset {
+class BaseIndexOffset {
+private:
   SDValue Base;
   SDValue Index;
   int64_t Offset;
   bool IsIndexSignExt;
 
+public:
   BaseIndexOffset() : Offset(0), IsIndexSignExt(false) {}
 
   BaseIndexOffset(SDValue Base, SDValue Index, int64_t Offset,
                   bool IsIndexSignExt) :
     Base(Base), Index(Index), Offset(Offset), IsIndexSignExt(IsIndexSignExt) {}
 
-  bool equalBaseIndex(const BaseIndexOffset &Other) {
-    return Other.Base == Base && Other.Index == Index &&
-      Other.IsIndexSignExt == IsIndexSignExt;
+  SDValue getBase() { return Base; }
+  SDValue getIndex() { return Index; }
+
+  bool equalBaseIndex(BaseIndexOffset &Other, const SelectionDAG &DAG) {
+    int64_t Off;
+    return equalBaseIndex(Other, DAG, Off);
+  }
+
+  bool equalBaseIndex(BaseIndexOffset &Other, const SelectionDAG &DAG,
+                      int64_t &Off) {
+    // Obvious equivalent
+    Off = Other.Offset - Offset;
+    if (Other.Base == Base && Other.Index == Index &&
+        Other.IsIndexSignExt == IsIndexSignExt)
+      return true;
+
+    // Match GlobalAddresses
+    if (Index == Other.Index)
+      if (GlobalAddressSDNode *A = dyn_cast<GlobalAddressSDNode>(Base))
+        if (GlobalAddressSDNode *B = dyn_cast<GlobalAddressSDNode>(Other.Base))
+          if (A->getGlobal() == B->getGlobal()) {
+            Off += B->getOffset() - A->getOffset();
+            return true;
+          }
+
+    // TODO: we should be able to add FrameIndex analysis improvements here.
+
+    return false;
   }
 
   /// Parses tree in Ptr for base, index, offset addresses.
-  static BaseIndexOffset match(SDValue Ptr, SelectionDAG &DAG) {
-
+  static BaseIndexOffset match(SDValue Ptr) {
+    // (((B + I*M) + c)) + c ...
     SDValue Base = Ptr;
     SDValue Index = SDValue();
     int64_t Offset = 0;
     bool IsIndexSignExt = false;
-
-    // (((B + I*M) + O)) + O ...
 
     //Consume constant adds
     while (Base->getOpcode() == ISD::ADD &&
@@ -4742,19 +4767,6 @@ struct BaseIndexOffset {
       Offset += POffset;
       Base = Base->getOperand(0);
     }
-
-    // Split up a folded GlobalAddress+Offset into its component parts.
-    if (GlobalAddressSDNode *GA = dyn_cast<GlobalAddressSDNode>(Base))
-      if (GA->getOpcode() == ISD::GlobalAddress && GA->getOffset() != 0) {
-        Base = DAG.getGlobalAddress(GA->getGlobal(),
-                                    SDLoc(GA),
-                                    GA->getValueType(0),
-                                    /*Offset*/ 0,
-                                    /*isTargetGA=*/false,
-                                    GA->getTargetFlags());
-        Offset += GA->getOffset();
-        return BaseIndexOffset(Base, Index, Offset, IsIndexSignExt);
-      }
 
     if (Base->getOpcode() == ISD::ADD) {
       // TODO: The following code appears to be needless as it just
@@ -5016,14 +5028,15 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
       return SDValue();
 
     // Loads must share the same base address
-    BaseIndexOffset Ptr = BaseIndexOffset::match(L->getBasePtr(), DAG);
+    BaseIndexOffset Ptr = BaseIndexOffset::match(L->getBasePtr());
+    int64_t ByteOffsetFromBase = 0;
     if (!Base)
       Base = Ptr;
-    else if (!Base->equalBaseIndex(Ptr))
+    else if (!Base->equalBaseIndex(Ptr, DAG, ByteOffsetFromBase))
       return SDValue();
 
     // Calculate the offset of the current byte from the base address
-    int64_t ByteOffsetFromBase = Ptr.Offset + MemoryByteOffset(*P);
+    ByteOffsetFromBase += MemoryByteOffset(*P);
     ByteOffsets[i] = ByteOffsetFromBase;
 
     // Remember the first byte load
@@ -12494,15 +12507,15 @@ void DAGCombiner::getStoreMergeCandidates(
     StoreSDNode *St, SmallVectorImpl<MemOpLink> &StoreNodes) {
   // This holds the base pointer, index, and the offset in bytes from the base
   // pointer.
-  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr(), DAG);
+  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr());
   EVT MemVT = St->getMemoryVT();
 
   // We must have a base and an offset.
-  if (!BasePtr.Base.getNode())
+  if (!BasePtr.getBase().getNode())
     return;
 
   // Do not handle stores to undef base pointers.
-  if (BasePtr.Base.isUndef())
+  if (BasePtr.getBase().isUndef())
     return;
 
   bool IsConstantSrc = isa<ConstantSDNode>(St->getValue()) ||
@@ -12514,10 +12527,11 @@ void DAGCombiner::getStoreMergeCandidates(
   BaseIndexOffset LBasePtr;
   // Match on loadbaseptr if relevant.
   if (IsLoadSrc)
-    LBasePtr = BaseIndexOffset::match(
-        cast<LoadSDNode>(St->getValue())->getBasePtr(), DAG);
+    LBasePtr =
+        BaseIndexOffset::match(cast<LoadSDNode>(St->getValue())->getBasePtr());
 
-  auto CandidateMatch = [&](StoreSDNode *Other, BaseIndexOffset &Ptr) -> bool {
+  auto CandidateMatch = [&](StoreSDNode *Other, BaseIndexOffset &Ptr,
+                            int64_t &Offset) -> bool {
     if (Other->isVolatile() || Other->isIndexed())
       return false;
     // We can merge constant floats to equivalent integers
@@ -12528,8 +12542,8 @@ void DAGCombiner::getStoreMergeCandidates(
     if (IsLoadSrc) {
       // The Load's Base Ptr must also match
       if (LoadSDNode *OtherLd = dyn_cast<LoadSDNode>(Other->getValue())) {
-        auto LPtr = BaseIndexOffset::match(OtherLd->getBasePtr(), DAG);
-        if (!(LBasePtr.equalBaseIndex(LPtr)))
+        auto LPtr = BaseIndexOffset::match(OtherLd->getBasePtr());
+        if (!(LBasePtr.equalBaseIndex(LPtr, DAG)))
           return false;
       } else
         return false;
@@ -12542,8 +12556,8 @@ void DAGCombiner::getStoreMergeCandidates(
       if (!(Other->getValue().getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
             Other->getValue().getOpcode() == ISD::EXTRACT_SUBVECTOR))
         return false;
-    Ptr = BaseIndexOffset::match(Other->getBasePtr(), DAG);
-    return (Ptr.equalBaseIndex(BasePtr));
+    Ptr = BaseIndexOffset::match(Other->getBasePtr());
+    return (BasePtr.equalBaseIndex(Ptr, DAG, Offset));
   };
   // We looking for a root node which is an ancestor to all mergable
   // stores. We search up through a load, to our root and then down
@@ -12571,16 +12585,18 @@ void DAGCombiner::getStoreMergeCandidates(
           if (I2.getOperandNo() == 0)
             if (StoreSDNode *OtherST = dyn_cast<StoreSDNode>(*I2)) {
               BaseIndexOffset Ptr;
-              if (CandidateMatch(OtherST, Ptr))
-                StoreNodes.push_back(MemOpLink(OtherST, Ptr.Offset));
+              int64_t PtrDiff;
+              if (CandidateMatch(OtherST, Ptr, PtrDiff))
+                StoreNodes.push_back(MemOpLink(OtherST, PtrDiff));
             }
   } else
     for (auto I = RootNode->use_begin(), E = RootNode->use_end(); I != E; ++I)
       if (I.getOperandNo() == 0)
         if (StoreSDNode *OtherST = dyn_cast<StoreSDNode>(*I)) {
           BaseIndexOffset Ptr;
-          if (CandidateMatch(OtherST, Ptr))
-            StoreNodes.push_back(MemOpLink(OtherST, Ptr.Offset));
+          int64_t PtrDiff;
+          if (CandidateMatch(OtherST, Ptr, PtrDiff))
+            StoreNodes.push_back(MemOpLink(OtherST, PtrDiff));
         }
 }
 
@@ -12883,11 +12899,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
       if (Ld->getMemoryVT() != MemVT)
         break;
 
-      BaseIndexOffset LdPtr = BaseIndexOffset::match(Ld->getBasePtr(), DAG);
+      BaseIndexOffset LdPtr = BaseIndexOffset::match(Ld->getBasePtr());
       // If this is not the first ptr that we check.
-      if (LdBasePtr.Base.getNode()) {
+      int64_t LdOffset = 0;
+      if (LdBasePtr.getBase().getNode()) {
         // The base ptr must be the same.
-        if (!LdPtr.equalBaseIndex(LdBasePtr))
+        if (!LdBasePtr.equalBaseIndex(LdPtr, DAG, LdOffset))
           break;
       } else {
         // Check that all other base pointers are the same as this one.
@@ -12895,7 +12912,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
       }
 
       // We found a potential memory operand to merge.
-      LoadNodes.push_back(MemOpLink(Ld, LdPtr.Offset));
+      LoadNodes.push_back(MemOpLink(Ld, LdOffset));
     }
 
     if (LoadNodes.size() < 2) {
@@ -16635,11 +16652,11 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
   unsigned NumBytes1 = Op1->getMemoryVT().getSizeInBits() >> 3;
 
   // Check for BaseIndexOffset matching.
-  BaseIndexOffset BasePtr0 = BaseIndexOffset::match(Op0->getBasePtr(), DAG);
-  BaseIndexOffset BasePtr1 = BaseIndexOffset::match(Op1->getBasePtr(), DAG);
-  if (BasePtr0.equalBaseIndex(BasePtr1))
-    return !((BasePtr0.Offset + NumBytes0 <= BasePtr1.Offset) ||
-             (BasePtr1.Offset + NumBytes1 <= BasePtr0.Offset));
+  BaseIndexOffset BasePtr0 = BaseIndexOffset::match(Op0->getBasePtr());
+  BaseIndexOffset BasePtr1 = BaseIndexOffset::match(Op1->getBasePtr());
+  int64_t PtrDiff;
+  if (BasePtr0.equalBaseIndex(BasePtr1, DAG, PtrDiff))
+    return !((NumBytes0 <= PtrDiff) || (PtrDiff + NumBytes1 <= 0));
 
   // FIXME: findBaseOffset and ConstantValue/GlobalValue/FrameIndex analysis
   // modified to use BaseIndexOffset.
@@ -16846,14 +16863,14 @@ SDValue DAGCombiner::FindBetterChain(SDNode *N, SDValue OldChain) {
 bool DAGCombiner::findBetterNeighborChains(StoreSDNode *St) {
   // This holds the base pointer, index, and the offset in bytes from the base
   // pointer.
-  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr(), DAG);
+  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr());
 
   // We must have a base and an offset.
-  if (!BasePtr.Base.getNode())
+  if (!BasePtr.getBase().getNode())
     return false;
 
   // Do not handle stores to undef base pointers.
-  if (BasePtr.Base.isUndef())
+  if (BasePtr.getBase().isUndef())
     return false;
 
   SmallVector<StoreSDNode *, 8> ChainedStores;
@@ -16872,10 +16889,10 @@ bool DAGCombiner::findBetterNeighborChains(StoreSDNode *St) {
       break;
 
     // Find the base pointer and offset for this memory node.
-    BaseIndexOffset Ptr = BaseIndexOffset::match(Index->getBasePtr(), DAG);
+    BaseIndexOffset Ptr = BaseIndexOffset::match(Index->getBasePtr());
 
     // Check that the base pointer is the same as the original one.
-    if (!Ptr.equalBaseIndex(BasePtr))
+    if (!BasePtr.equalBaseIndex(Ptr, DAG))
       break;
 
     // Walk up the chain to find the next store node, ignoring any
