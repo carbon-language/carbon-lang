@@ -17626,23 +17626,21 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     if ((isAllOnesConstant(Op1) || isAllOnesConstant(Op2)) &&
         (CondCode == X86::COND_E || CondCode == X86::COND_NE)) {
       SDValue Y = isAllOnesConstant(Op2) ? Op1 : Op2;
-
       SDValue CmpOp0 = Cmp.getOperand(0);
+
       // Apply further optimizations for special cases
       // (select (x != 0), -1, 0) -> neg & sbb
       // (select (x == 0), 0, -1) -> neg & sbb
       if (isNullConstant(Y) &&
-            (isAllOnesConstant(Op1) == (CondCode == X86::COND_NE))) {
-          SDVTList VTs = DAG.getVTList(CmpOp0.getValueType(), MVT::i32);
-          SDValue Neg = DAG.getNode(X86ISD::SUB, DL, VTs,
-                                    DAG.getConstant(0, DL,
-                                                    CmpOp0.getValueType()),
-                                    CmpOp0);
-          SDValue Res = DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
-                                    DAG.getConstant(X86::COND_B, DL, MVT::i8),
-                                    SDValue(Neg.getNode(), 1));
-          return Res;
-        }
+          (isAllOnesConstant(Op1) == (CondCode == X86::COND_NE))) {
+        SDVTList VTs = DAG.getVTList(CmpOp0.getValueType(), MVT::i32);
+        SDValue Zero = DAG.getConstant(0, DL, CmpOp0.getValueType());
+        SDValue Neg = DAG.getNode(X86ISD::SUB, DL, VTs, Zero, CmpOp0);
+        SDValue Res = DAG.getNode(X86ISD::SETCC_CARRY, DL, Op.getValueType(),
+                                  DAG.getConstant(X86::COND_B, DL, MVT::i8),
+                                  SDValue(Neg.getNode(), 1));
+        return Res;
+      }
 
       Cmp = DAG.getNode(X86ISD::CMP, DL, MVT::i32,
                         CmpOp0, DAG.getConstant(1, DL, CmpOp0.getValueType()));
@@ -29873,7 +29871,7 @@ static SDValue combineSelectOfTwoConstants(SDNode *N, SelectionDAG &DAG) {
     if (N->getValueType(0) == MVT::i32)
       Diff = (unsigned)Diff;
 
-    bool isFastMultiplier = false;
+    bool IsFastMultiplier = false;
     if (Diff < 10) {
       switch ((unsigned char)Diff) {
       default:
@@ -29885,12 +29883,12 @@ static SDValue combineSelectOfTwoConstants(SDNode *N, SelectionDAG &DAG) {
       case 5: // result = lea base(cond, cond*4)
       case 8: // result = lea base(    , cond*8)
       case 9: // result = lea base(cond, cond*8)
-        isFastMultiplier = true;
+        IsFastMultiplier = true;
         break;
       }
     }
 
-    if (isFastMultiplier) {
+    if (IsFastMultiplier) {
       APInt Diff = TrueC->getAPIntValue() - FalseC->getAPIntValue();
       if (NeedsCondInvert) // Invert the condition if needed.
         Cond = DAG.getNode(ISD::XOR, DL, Cond.getValueType(), Cond,
