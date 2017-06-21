@@ -4872,7 +4872,9 @@ SDValue SITargetLowering::performAddCombine(SDNode *N,
   case ISD::SIGN_EXTEND:
   case ISD::ANY_EXTEND: {
     auto Cond = RHS.getOperand(0);
-    if (Cond.getOpcode() != ISD::SETCC) break;
+    if (Cond.getOpcode() != ISD::SETCC &&
+        Cond.getOpcode() != AMDGPUISD::FP_CLASS)
+      break;
     SDVTList VTList = DAG.getVTList(MVT::i32, MVT::i1);
     SDValue Args[] = { LHS, DAG.getConstant(0, SL, MVT::i32), Cond };
     Opc = (Opc == ISD::SIGN_EXTEND) ? ISD::SUBCARRY : ISD::ADDCARRY;

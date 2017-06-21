@@ -116,6 +116,42 @@ bb:
   ret void
 }
 
+; GCN-LABEL: {{^}}zext_flclass:
+; GCN: v_cmp_class_f32_e{{32|64}} [[CC:[^,]+]],
+; GCN: v_addc_u32_e{{32|64}} v{{[0-9]+}}, {{[^,]+}}, 0, v{{[0-9]+}}, [[CC]]
+; GCN-NOT: v_cndmask
+
+define amdgpu_kernel void @zext_flclass(i32 addrspace(1)* nocapture %arg, float %x) {
+bb:
+  %id = tail call i32 @llvm.amdgcn.workitem.id.x()
+  %gep = getelementptr inbounds i32, i32 addrspace(1)* %arg, i32 %id
+  %v = load i32, i32 addrspace(1)* %gep, align 4
+  %cmp = tail call zeroext i1 @llvm.amdgcn.class.f32(float %x, i32 608)
+  %ext = zext i1 %cmp to i32
+  %add = add i32 %v, %ext
+  store i32 %add, i32 addrspace(1)* %gep, align 4
+  ret void
+}
+
+; GCN-LABEL: {{^}}sext_flclass:
+; GCN: v_cmp_class_f32_e{{32|64}} [[CC:[^,]+]],
+; GCN: v_subb_u32_e{{32|64}} v{{[0-9]+}}, {{[^,]+}}, v{{[0-9]+}}, 0, [[CC]]
+; GCN-NOT: v_cndmask
+
+define amdgpu_kernel void @sext_flclass(i32 addrspace(1)* nocapture %arg, float %x) {
+bb:
+  %id = tail call i32 @llvm.amdgcn.workitem.id.x()
+  %gep = getelementptr inbounds i32, i32 addrspace(1)* %arg, i32 %id
+  %v = load i32, i32 addrspace(1)* %gep, align 4
+  %cmp = tail call zeroext i1 @llvm.amdgcn.class.f32(float %x, i32 608)
+  %ext = sext i1 %cmp to i32
+  %add = add i32 %v, %ext
+  store i32 %add, i32 addrspace(1)* %gep, align 4
+  ret void
+}
+
+declare i1 @llvm.amdgcn.class.f32(float, i32) #0
+
 declare i32 @llvm.amdgcn.workitem.id.x() #0
 
 declare i32 @llvm.amdgcn.workitem.id.y() #0
