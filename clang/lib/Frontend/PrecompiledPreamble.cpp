@@ -73,12 +73,14 @@ TemporaryFiles::~TemporaryFiles() {
 void TemporaryFiles::addFile(StringRef File) {
   llvm::MutexGuard Guard(Mutex);
   auto IsInserted = Files.insert(File).second;
+  (void)IsInserted;
   assert(IsInserted && "File has already been added");
 }
 
 void TemporaryFiles::removeFile(StringRef File) {
   llvm::MutexGuard Guard(Mutex);
   auto WasPresent = Files.erase(File);
+  (void)WasPresent;
   assert(WasPresent && "File was not tracked");
   llvm::sys::fs::remove(File);
 }
