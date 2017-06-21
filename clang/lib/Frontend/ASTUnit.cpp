@@ -924,9 +924,6 @@ public:
 
 class ASTUnitPreambleCallbacks : public PreambleCallbacks {
 public:
-  ASTUnitPreambleCallbacks(llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags)
-      : StoredDiags(StoredDiags) {}
-
   unsigned getHash() const { return Hash; }
 
   std::vector<Decl *> takeTopLevelDecls() { return std::move(TopLevelDecls); }
@@ -964,7 +961,6 @@ public:
   }
 
 private:
-  llvm::SmallVectorImpl<StoredDiagnostic> &StoredDiags;
   unsigned Hash = 0;
   std::vector<Decl *> TopLevelDecls;
   std::vector<serialization::DeclID> TopLevelDeclIDs;
@@ -1259,7 +1255,7 @@ ASTUnit::getMainBufferWithPrecompiledPreamble(
 
   SmallVector<StandaloneDiagnostic, 4> NewPreambleDiagsStandalone;
   SmallVector<StoredDiagnostic, 4> NewPreambleDiags;
-  ASTUnitPreambleCallbacks Callbacks(NewPreambleDiags);
+  ASTUnitPreambleCallbacks Callbacks;
   {
     llvm::Optional<CaptureDroppedDiagnostics> Capture;
     if (CaptureDiagnostics)
@@ -1282,18 +1278,16 @@ ASTUnit::getMainBufferWithPrecompiledPreamble(
       case BuildPreambleError::PreambleIsEmpty:
         // Try again next time.
         PreambleRebuildCounter = 1;
-        break;
+        return nullptr;
       case BuildPreambleError::CouldntCreateTargetInfo:
       case BuildPreambleError::BeginSourceFileFailed:
       case BuildPreambleError::CouldntEmitPCH:
       case BuildPreambleError::CouldntCreateVFSOverlay:
         // These erros are more likely to repeat, retry after some period.
         PreambleRebuildCounter = DefaultPreambleRebuildInterval;
-        break;
-      default:
-        llvm_unreachable("unexpected BuildPreambleError");
+        return nullptr;
       }
-      return nullptr;
+      llvm_unreachable("unexpected BuildPreambleError");
     }
   }
 
