@@ -35,6 +35,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -106,11 +107,12 @@ XorOpnd::XorOpnd(Value *V) {
             I->getOpcode() == Instruction::And)) {
     Value *V0 = I->getOperand(0);
     Value *V1 = I->getOperand(1);
-    if (isa<ConstantInt>(V0))
+    const APInt *C;
+    if (match(V0, PatternMatch::m_APInt(C)))
       std::swap(V0, V1);
 
-    if (ConstantInt *C = dyn_cast<ConstantInt>(V1)) {
-      ConstPart = C->getValue();
+    if (match(V1, PatternMatch::m_APInt(C))) {
+      ConstPart = *C;
       SymbolicPart = V0;
       isOr = (I->getOpcode() == Instruction::Or);
       return;
@@ -119,7 +121,7 @@ XorOpnd::XorOpnd(Value *V) {
 
   // view the operand as "V | 0"
   SymbolicPart = V;
-  ConstPart = APInt::getNullValue(V->getType()->getIntegerBitWidth());
+  ConstPart = APInt::getNullValue(V->getType()->getScalarSizeInBits());
   isOr = true;
 }
 
@@ -1138,10 +1140,9 @@ static Value *createAndInstr(Instruction *InsertBefore, Value *Opnd,
                              const APInt &ConstOpnd) {
   if (!ConstOpnd.isNullValue()) {
     if (!ConstOpnd.isAllOnesValue()) {
-      LLVMContext &Ctx = Opnd->getType()->getContext();
-      Instruction *I;
-      I = BinaryOperator::CreateAnd(Opnd, ConstantInt::get(Ctx, ConstOpnd),
-                                    "and.ra", InsertBefore);
+      Instruction *I = BinaryOperator::CreateAnd(
+          Opnd, ConstantInt::get(Opnd->getType(), ConstOpnd), "and.ra",
+          InsertBefore);
       I->setDebugLoc(InsertBefore->getDebugLoc());
       return I;
     }
@@ -1276,26 +1277,23 @@ Value *ReassociatePass::OptimizeXor(Instruction *I,
   if (Ops.size() == 1)
     return nullptr;
 
-  Type *Ty = Ops[0].Op->getType();
-
-  // TODO: We should optimize vector Xor instructions, but they are
-  // currently unsupported.
-  if (Ty->isVectorTy())
-    return nullptr;
-
   SmallVector<XorOpnd, 8> Opnds;
   SmallVector<XorOpnd*, 8> OpndPtrs;
-  APInt ConstOpnd(Ty->getIntegerBitWidth(), 0);
+  Type *Ty = Ops[0].Op->getType();
+  APInt ConstOpnd(Ty->getScalarSizeInBits(), 0);
 
   // Step 1: Convert ValueEntry to XorOpnd
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     Value *V = Ops[i].Op;
-    if (!isa<ConstantInt>(V)) {
+    const APInt *C;
+    // TODO: Support non-splat vectors.
+    if (match(V, PatternMatch::m_APInt(C))) {
+      ConstOpnd ^= *C;
+    } else {
       XorOpnd O(V);
       O.setSymbolicRank(getRank(O.getSymbolicPart()));
       Opnds.push_back(O);
-    } else
-      ConstOpnd ^= cast<ConstantInt>(V)->getValue();
+    }
   }
 
   // NOTE: From this point on, do *NOT* add/delete element to/from "Opnds".
@@ -1377,16 +1375,16 @@ Value *ReassociatePass::OptimizeXor(Instruction *I,
       Ops.push_back(VE);
     }
     if (!ConstOpnd.isNullValue()) {
-      Value *C = ConstantInt::get(Ty->getContext(), ConstOpnd);
+      Value *C = ConstantInt::get(Ty, ConstOpnd);
       ValueEntry VE(getRank(C), C);
       Ops.push_back(VE);
     }
-    int Sz = Ops.size();
+    unsigned Sz = Ops.size();
     if (Sz == 1)
       return Ops.back().Op;
-    else if (Sz == 0) {
-      assert(ConstOpnd == 0);
-      return ConstantInt::get(Ty->getContext(), ConstOpnd);
+    if (Sz == 0) {
+      assert(ConstOpnd.isNullValue());
+      return ConstantInt::get(Ty, ConstOpnd);
     }
   }
 
