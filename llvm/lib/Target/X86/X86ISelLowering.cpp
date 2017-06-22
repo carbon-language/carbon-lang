@@ -18651,8 +18651,9 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                            SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   bool SplitStack = MF.shouldSplitStack();
+  bool EmitStackProbe = !getStackProbeSymbolName(MF).empty();
   bool Lower = (Subtarget.isOSWindows() && !Subtarget.isTargetMachO()) ||
-               SplitStack;
+               SplitStack || EmitStackProbe;
   SDLoc dl(Op);
 
   // Get the inputs.
@@ -36389,4 +36390,23 @@ void X86TargetLowering::insertCopiesSplitCSR(
 
 bool X86TargetLowering::supportSwiftError() const {
   return Subtarget.is64Bit();
+}
+
+/// Returns the name of the symbol used to emit stack probes or the empty
+/// string if not applicable.
+StringRef X86TargetLowering::getStackProbeSymbolName(MachineFunction &MF) const {
+  // If the function specifically requests stack probes, emit them.
+  if (MF.getFunction()->hasFnAttribute("probe-stack"))
+    return MF.getFunction()->getFnAttribute("probe-stack").getValueAsString();
+
+  // Generally, if we aren't on Windows, the platform ABI does not include
+  // support for stack probes, so don't emit them.
+  if (!Subtarget.isOSWindows() || Subtarget.isTargetMachO())
+    return "";
+
+  // We need a stack probe to conform to the Windows ABI. Choose the right
+  // symbol.
+  if (Subtarget.is64Bit())
+    return Subtarget.isTargetCygMing() ? "___chkstk_ms" : "__chkstk";
+  return Subtarget.isTargetCygMing() ? "_alloca" : "_chkstk";
 }

@@ -1374,6 +1374,12 @@ public:
   /// Returns the target-specific address of the unsafe stack pointer.
   virtual Value *getSafeStackPointerLocation(IRBuilder<> &IRB) const;
 
+  /// Returns the name of the symbol used to emit stack probes or the empty
+  /// string if not applicable.
+  virtual StringRef getStackProbeSymbolName(MachineFunction &MF) const {
+    return "";
+  }
+
   /// Returns true if a cast between SrcAS and DestAS is a noop.
   virtual bool isNoopAddrSpaceCast(unsigned SrcAS, unsigned DestAS) const {
     return false;
