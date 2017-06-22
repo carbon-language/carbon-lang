@@ -77,10 +77,10 @@ t6:
 // READOBJ:      IMAGE_SCN_MEM_WRITE (0x80000000)
 // READOBJ:    ]
 // READOBJ:    SectionData (
-// READOBJ:      0000: 10000000 00000000 0C000000 00000000  |................|
-// READOBJ:      0010: 08000000 00000000 0C000000 00000000  |................|
+// READOBJ:      0000: 08000000 00000000 04000000 00000000  |................|
+// READOBJ:      0010: 00000000 00000000 04000000 00000000  |................|
 // READOBJ:      0020: 01020000 00000000 00010000 00000000  |................|
-// READOBJ:      0030: 0C000000 00000000                    |........|
+// READOBJ:      0030: 04000000 00000000                    |........|
 // READOBJ:    )
 // READOBJ:  }
 // READOBJ:  ]
@@ -89,22 +89,22 @@ t6:
 // READOBJ:    Relocation {
 // READOBJ:      Offset: 0x0
 // READOBJ:      Type: IMAGE_REL_AMD64_REL32 (4)
-// READOBJ:      Symbol: .rdata
+// READOBJ:      Symbol: g3
 // READOBJ:    }
 // READOBJ:    Relocation {
 // READOBJ:      Offset: 0x8
 // READOBJ:      Type: IMAGE_REL_AMD64_REL32 (4)
-// READOBJ:      Symbol: .rdata
+// READOBJ:      Symbol: g3
 // READOBJ:    }
 // READOBJ:    Relocation {
 // READOBJ:      Offset: 0x10
 // READOBJ:      Type: IMAGE_REL_AMD64_REL32 (4)
-// READOBJ:      Symbol: .rdata
+// READOBJ:      Symbol: g3
 // READOBJ:    }
 // READOBJ:    Relocation {
 // READOBJ:      Offset: 0x18
 // READOBJ:      Type: IMAGE_REL_AMD64_REL32 (4)
-// READOBJ:      Symbol: .rdata
+// READOBJ:      Symbol: g3
 // READOBJ:    }
 // READOBJ:    Relocation {
 // READOBJ:      Offset: 0x1C
@@ -114,5 +114,5 @@ t6:
 // READOBJ:    Relocation {
 // READOBJ:      Offset: 0x30
 // READOBJ:      Type: IMAGE_REL_AMD64_REL32 (4)
-// READOBJ:      Symbol: .rdata
+// READOBJ:      Symbol: g3
 // READOBJ:    }

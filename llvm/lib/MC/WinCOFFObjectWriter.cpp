@@ -775,7 +775,7 @@ void WinCOFFObjectWriter::recordRelocation(
   Reloc.Data.VirtualAddress = Layout.getFragmentOffset(Fragment);
 
   // Turn relocations for temporary symbols into section relocations.
-  if (A.isTemporary() || SymB) {
+  if (A.isTemporary()) {
     MCSection *TargetSection = &A.getSection();
     assert(
         SectionMap.find(TargetSection) != SectionMap.end() &&
