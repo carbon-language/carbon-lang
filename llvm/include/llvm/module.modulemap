@@ -275,9 +275,6 @@ module LLVM_Utils {
     umbrella "Support"
     module * { export * }
 
-    // Exclude this; it's only included on Solaris.
-    exclude header "Support/Solaris.h"
-
     // Exclude this; it's fundamentally non-modular.
     exclude header "Support/PluginLoader.h"
 
