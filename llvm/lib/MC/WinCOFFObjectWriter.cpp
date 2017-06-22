@@ -735,7 +735,6 @@ void WinCOFFObjectWriter::recordRelocation(
 
   COFFSection *Sec = SectionMap[MCSec];
   const MCSymbolRefExpr *SymB = Target.getSymB();
-  bool CrossSection = false;
 
   if (SymB) {
     const MCSymbol *B = &SymB->getSymbol();
@@ -755,19 +754,11 @@ void WinCOFFObjectWriter::recordRelocation(
       return;
     }
 
-    CrossSection = &A.getSection() != &B->getSection();
+    assert(&A.getSection() != &B->getSection() &&
+           "This doesn't need a relocation");
 
     // Offset of the symbol in the section
     int64_t OffsetOfB = Layout.getSymbolOffset(*B);
-
-    // In the case where we have SymbA and SymB, we just need to store the delta
-    // between the two symbols.  Update FixedValue to account for the delta, and
-    // skip recording the relocation.
-    if (!CrossSection) {
-      int64_t OffsetOfA = Layout.getSymbolOffset(A);
-      FixedValue = (OffsetOfA - OffsetOfB) + Target.getConstant();
-      return;
-    }
 
     // Offset of the relocation in the section
     int64_t OffsetOfRelocation =
@@ -784,7 +775,7 @@ void WinCOFFObjectWriter::recordRelocation(
   Reloc.Data.VirtualAddress = Layout.getFragmentOffset(Fragment);
 
   // Turn relocations for temporary symbols into section relocations.
-  if (A.isTemporary() || CrossSection) {
+  if (A.isTemporary() || SymB) {
     MCSection *TargetSection = &A.getSection();
     assert(
         SectionMap.find(TargetSection) != SectionMap.end() &&
@@ -801,8 +792,8 @@ void WinCOFFObjectWriter::recordRelocation(
   ++Reloc.Symb->Relocations;
 
   Reloc.Data.VirtualAddress += Fixup.getOffset();
-  Reloc.Data.Type = TargetObjectWriter->getRelocType(
-      Target, Fixup, CrossSection, Asm.getBackend());
+  Reloc.Data.Type =
+      TargetObjectWriter->getRelocType(Target, Fixup, SymB, Asm.getBackend());
 
   // FIXME: Can anyone explain what this does other than adjust for the size
   // of the offset?
