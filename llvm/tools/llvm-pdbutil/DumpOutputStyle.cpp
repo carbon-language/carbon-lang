@@ -80,18 +80,6 @@ Error DumpOutputStyle::dump() {
     P.NewLine();
   }
 
-  if (opts::dump::DumpBlockRange.hasValue()) {
-    if (auto EC = dumpBlockRanges())
-      return EC;
-    P.NewLine();
-  }
-
-  if (!opts::dump::DumpStreamData.empty()) {
-    if (auto EC = dumpStreamBytes())
-      return EC;
-    P.NewLine();
-  }
-
   if (opts::dump::DumpStringTable) {
     if (auto EC = dumpStringTable())
       return EC;
@@ -213,103 +201,6 @@ Error DumpOutputStyle::dumpStreamSummary() {
         StreamPurposes[StreamIdx], File.getStreamByteSize(StreamIdx));
   }
 
-  return Error::success();
-}
-
-Error DumpOutputStyle::dumpBlockRanges() {
-  printHeader(P, "MSF Blocks");
-
-  auto &R = *opts::dump::DumpBlockRange;
-  uint32_t Max = R.Max.getValueOr(R.Min);
-
-  AutoIndent Indent(P);
-  if (Max < R.Min)
-    return make_error<StringError>(
-        "Invalid block range specified.  Max < Min",
-        std::make_error_code(std::errc::bad_address));
-  if (Max >= File.getBlockCount())
-    return make_error<StringError>(
-        "Invalid block range specified.  Requested block out of bounds",
-        std::make_error_code(std::errc::bad_address));
-
-  for (uint32_t I = R.Min; I <= Max; ++I) {
-    auto ExpectedData = File.getBlockData(I, File.getBlockSize());
-    if (!ExpectedData)
-      return ExpectedData.takeError();
-    std::string Label = formatv("Block {0}", I).str();
-    P.formatBinary(Label, *ExpectedData, 0);
-  }
-
-  return Error::success();
-}
-
-static Error parseStreamSpec(StringRef Str, uint32_t &SI, uint32_t &Offset,
-                             uint32_t &Size) {
-  if (Str.consumeInteger(0, SI))
-    return make_error<RawError>(raw_error_code::invalid_format,
-                                "Invalid Stream Specification");
-  if (Str.consume_front(":")) {
-    if (Str.consumeInteger(0, Offset))
-      return make_error<RawError>(raw_error_code::invalid_format,
-                                  "Invalid Stream Specification");
-  }
-  if (Str.consume_front("@")) {
-    if (Str.consumeInteger(0, Size))
-      return make_error<RawError>(raw_error_code::invalid_format,
-                                  "Invalid Stream Specification");
-  }
-  if (!Str.empty())
-    return make_error<RawError>(raw_error_code::invalid_format,
-                                "Invalid Stream Specification");
-  return Error::success();
-}
-
-Error DumpOutputStyle::dumpStreamBytes() {
-  if (StreamPurposes.empty())
-    discoverStreamPurposes(File, StreamPurposes);
-
-  printHeader(P, "Stream Data");
-  ExitOnError Err("Unexpected error reading stream data");
-
-  for (auto &Str : opts::dump::DumpStreamData) {
-    uint32_t SI = 0;
-    uint32_t Begin = 0;
-    uint32_t Size = 0;
-    uint32_t End = 0;
-
-    if (auto EC = parseStreamSpec(Str, SI, Begin, Size))
-      return EC;
-
-    AutoIndent Indent(P);
-    if (SI >= File.getNumStreams()) {
-      P.formatLine("Stream {0}: Not present", SI);
-      continue;
-    }
-
-    auto S = MappedBlockStream::createIndexedStream(
-        File.getMsfLayout(), File.getMsfBuffer(), SI, File.getAllocator());
-    if (!S) {
-      P.NewLine();
-      P.formatLine("Stream {0}: Not present", SI);
-      continue;
-    }
-
-    if (Size == 0)
-      End = S->getLength();
-    else
-      End = std::min(Begin + Size, S->getLength());
-
-    P.formatLine("Stream {0} ({1:N} bytes): {2}", SI, S->getLength(),
-                 StreamPurposes[SI]);
-    AutoIndent Indent2(P);
-
-    BinaryStreamReader R(*S);
-    ArrayRef<uint8_t> StreamData;
-    Err(R.readBytes(StreamData, S->getLength()));
-    Size = End - Begin;
-    StreamData = StreamData.slice(Begin, Size);
-    P.formatBinary("Data", StreamData, Begin);
-  }
   return Error::success();
 }
 

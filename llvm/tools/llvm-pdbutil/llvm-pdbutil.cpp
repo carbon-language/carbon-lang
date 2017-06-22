@@ -14,6 +14,7 @@
 #include "llvm-pdbutil.h"
 
 #include "Analyze.h"
+#include "BytesOutputStyle.h"
 #include "Diff.h"
 #include "DumpOutputStyle.h"
 #include "LinePrinter.h"
@@ -87,6 +88,8 @@ using namespace llvm::pdb;
 namespace opts {
 
 cl::SubCommand DumpSubcommand("dump", "Dump MSF and CodeView debug info");
+cl::SubCommand BytesSubcommand("bytes", "Dump raw bytes from the PDB file");
+
 cl::SubCommand
     PrettySubcommand("pretty",
                      "Dump semantic information about types and symbols");
@@ -263,6 +266,26 @@ cl::list<std::string> InputFilenames(cl::Positional,
 
 cl::OptionCategory FileOptions("Module & File Options");
 
+namespace bytes {
+llvm::Optional<BlockRange> DumpBlockRange;
+
+cl::opt<std::string>
+    DumpBlockRangeOpt("block-data", cl::value_desc("start[-end]"),
+                      cl::desc("Dump binary data from specified range."),
+                      cl::sub(BytesSubcommand));
+
+cl::list<std::string>
+    DumpStreamData("stream-data", cl::CommaSeparated, cl::ZeroOrMore,
+                   cl::desc("Dump binary data from specified streams.  Format "
+                            "is SN[:Start][@Size]"),
+                   cl::sub(BytesSubcommand));
+
+cl::list<std::string> InputFilenames(cl::Positional,
+                                     cl::desc("<input PDB files>"),
+                                     cl::OneOrMore, cl::sub(BytesSubcommand));
+
+} // namespace bytes
+
 namespace dump {
 
 cl::OptionCategory MsfOptions("MSF Container Options");
@@ -276,17 +299,6 @@ cl::opt<bool> DumpSummary("summary", cl::desc("dump file summary"),
 cl::opt<bool> DumpStreams("streams",
                           cl::desc("dump summary of the PDB streams"),
                           cl::cat(MsfOptions), cl::sub(DumpSubcommand));
-cl::opt<std::string>
-    DumpBlockRangeOpt("block-data", cl::value_desc("start[-end]"),
-                      cl::desc("Dump binary data from specified range."),
-                      cl::cat(MsfOptions), cl::sub(DumpSubcommand));
-llvm::Optional<BlockRange> DumpBlockRange;
-
-cl::list<std::string>
-    DumpStreamData("stream-data", cl::CommaSeparated, cl::ZeroOrMore,
-                   cl::desc("Dump binary data from specified streams.  Format "
-                            "is SN[:Start][@Size]"),
-                   cl::cat(MsfOptions), cl::sub(DumpSubcommand));
 
 // TYPE OPTIONS
 cl::opt<bool> DumpTypes("types",
@@ -626,6 +638,15 @@ static void dumpRaw(StringRef Path) {
   ExitOnErr(O->dump());
 }
 
+static void dumpBytes(StringRef Path) {
+  std::unique_ptr<IPDBSession> Session;
+  auto &File = loadPDB(Path, Session);
+
+  auto O = llvm::make_unique<BytesOutputStyle>(File);
+
+  ExitOnErr(O->dump());
+}
+
 static void dumpAnalysis(StringRef Path) {
   std::unique_ptr<IPDBSession> Session;
   auto &File = loadPDB(Path, Session);
@@ -882,6 +903,27 @@ static void mergePdbs() {
   ExitOnErr(Builder.commit(OutFile));
 }
 
+static bool validateBlockRangeArgument() {
+  if (opts::bytes::DumpBlockRangeOpt.empty())
+    return true;
+
+  llvm::Regex R("^([^-]+)(-([^-]+))?$");
+  llvm::SmallVector<llvm::StringRef, 2> Matches;
+  if (!R.match(opts::bytes::DumpBlockRangeOpt, &Matches))
+    return false;
+
+  opts::bytes::DumpBlockRange.emplace();
+  if (!to_integer(Matches[1], opts::bytes::DumpBlockRange->Min))
+    return false;
+
+  if (!Matches[3].empty()) {
+    opts::bytes::DumpBlockRange->Max.emplace();
+    if (!to_integer(Matches[3], *opts::bytes::DumpBlockRange->Max))
+      return false;
+  }
+  return true;
+}
+
 int main(int argc_, const char *argv_[]) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal(argv_[0]);
@@ -897,21 +939,11 @@ int main(int argc_, const char *argv_[]) {
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argv.size(), argv.data(), "LLVM PDB Dumper\n");
-  if (!opts::dump::DumpBlockRangeOpt.empty()) {
-    llvm::Regex R("^([0-9]+)(-([0-9]+))?$");
-    llvm::SmallVector<llvm::StringRef, 2> Matches;
-    if (!R.match(opts::dump::DumpBlockRangeOpt, &Matches)) {
-      errs() << "Argument '" << opts::dump::DumpBlockRangeOpt
-             << "' invalid format.\n";
-      errs().flush();
-      exit(1);
-    }
-    opts::dump::DumpBlockRange.emplace();
-    Matches[1].getAsInteger(10, opts::dump::DumpBlockRange->Min);
-    if (!Matches[3].empty()) {
-      opts::dump::DumpBlockRange->Max.emplace();
-      Matches[3].getAsInteger(10, *opts::dump::DumpBlockRange->Max);
-    }
+  if (!validateBlockRangeArgument()) {
+    errs() << "Argument '" << opts::bytes::DumpBlockRangeOpt
+           << "' invalid format.\n";
+    errs().flush();
+    exit(1);
   }
 
   if (opts::DumpSubcommand) {
@@ -1018,6 +1050,9 @@ int main(int argc_, const char *argv_[]) {
   } else if (opts::DumpSubcommand) {
     std::for_each(opts::dump::InputFilenames.begin(),
                   opts::dump::InputFilenames.end(), dumpRaw);
+  } else if (opts::BytesSubcommand) {
+    std::for_each(opts::bytes::InputFilenames.begin(),
+                  opts::bytes::InputFilenames.end(), dumpBytes);
   } else if (opts::DiffSubcommand) {
     if (opts::diff::InputFilenames.size() != 2) {
       errs() << "diff subcommand expects exactly 2 arguments.\n";
