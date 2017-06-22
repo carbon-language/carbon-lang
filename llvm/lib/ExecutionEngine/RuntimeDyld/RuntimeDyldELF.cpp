@@ -1251,7 +1251,8 @@ RuntimeDyldELF::processRelocationRef(
         if (Value.SymbolName) {
           addRelocationForSymbol(REHi, Value.SymbolName);
           addRelocationForSymbol(RELo, Value.SymbolName);
-        } else {
+        }
+        else {
           addRelocationForSection(REHi, Value.SectionID);
           addRelocationForSection(RELo, Value.SectionID);
         }
@@ -1300,14 +1301,10 @@ RuntimeDyldELF::processRelocationRef(
       processSimpleRelocation(SectionID, Offset, RelType, Value);
     }
   } else if (IsMipsN32ABI || IsMipsN64ABI) {
-    uint8_t *Placeholder = reinterpret_cast<uint8_t *>(
-        computePlaceholderAddress(SectionID, Offset));
-    uint32_t Opcode = readBytesUnaligned(Placeholder, 4);
-
     uint32_t r_type = RelType & 0xff;
     RelocationEntry RE(SectionID, Offset, RelType, Value.Addend);
-    if (r_type == ELF::R_MIPS_CALL16 || r_type == ELF::R_MIPS_GOT_PAGE ||
-        r_type == ELF::R_MIPS_GOT_DISP) {
+    if (r_type == ELF::R_MIPS_CALL16 || r_type == ELF::R_MIPS_GOT_PAGE
+        || r_type == ELF::R_MIPS_GOT_DISP) {
       StringMap<uint64_t>::iterator i = GOTSymbolOffsets.find(TargetName);
       if (i != GOTSymbolOffsets.end())
         RE.SymOffset = i->second;
@@ -1315,83 +1312,11 @@ RuntimeDyldELF::processRelocationRef(
         RE.SymOffset = allocateGOTEntries(1);
         GOTSymbolOffsets[TargetName] = RE.SymOffset;
       }
-      if (Value.SymbolName)
-        addRelocationForSymbol(RE, Value.SymbolName);
-      else
-        addRelocationForSection(RE, Value.SectionID);
-    } else if (RelType == ELF::R_MIPS_26) {
-      // This is an Mips branch relocation, need to use a stub function.
-      DEBUG(dbgs() << "\t\tThis is a Mips branch relocation.");
-      SectionEntry &Section = Sections[SectionID];
-
-      //  Look up for existing stub.
-      StubMap::const_iterator i = Stubs.find(Value);
-      if (i != Stubs.end()) {
-        RelocationEntry RE(SectionID, Offset, RelType, i->second);
-        addRelocationForSection(RE, SectionID);
-        DEBUG(dbgs() << " Stub function found\n");
-      } else {
-        // Create a new stub function.
-        DEBUG(dbgs() << " Create a new stub function\n");
-        Stubs[Value] = Section.getStubOffset();
-
-        unsigned AbiVariant;
-        O.getPlatformFlags(AbiVariant);
-
-        uint8_t *StubTargetAddr = createStubFunction(
-            Section.getAddressWithOffset(Section.getStubOffset()), AbiVariant);
-
-        if (IsMipsN32ABI) {
-          // Creating Hi and Lo relocations for the filled stub instructions.
-          RelocationEntry REHi(SectionID, StubTargetAddr - Section.getAddress(),
-                               ELF::R_MIPS_HI16, Value.Addend);
-          RelocationEntry RELo(SectionID,
-                               StubTargetAddr - Section.getAddress() + 4,
-                               ELF::R_MIPS_LO16, Value.Addend);
-          if (Value.SymbolName) {
-            addRelocationForSymbol(REHi, Value.SymbolName);
-            addRelocationForSymbol(RELo, Value.SymbolName);
-          } else {
-            addRelocationForSection(REHi, Value.SectionID);
-            addRelocationForSection(RELo, Value.SectionID);
-          }
-        } else {
-          // Creating Highest, Higher, Hi and Lo relocations for the filled stub
-          // instructions.
-          RelocationEntry REHighest(SectionID,
-                                    StubTargetAddr - Section.getAddress(),
-                                    ELF::R_MIPS_HIGHEST, Value.Addend);
-          RelocationEntry REHigher(SectionID,
-                                   StubTargetAddr - Section.getAddress() + 4,
-                                   ELF::R_MIPS_HIGHER, Value.Addend);
-          RelocationEntry REHi(SectionID,
-                               StubTargetAddr - Section.getAddress() + 12,
-                               ELF::R_MIPS_HI16, Value.Addend);
-          RelocationEntry RELo(SectionID,
-                               StubTargetAddr - Section.getAddress() + 20,
-                               ELF::R_MIPS_LO16, Value.Addend);
-          if (Value.SymbolName) {
-            addRelocationForSymbol(REHighest, Value.SymbolName);
-            addRelocationForSymbol(REHigher, Value.SymbolName);
-            addRelocationForSymbol(REHi, Value.SymbolName);
-            addRelocationForSymbol(RELo, Value.SymbolName);
-          } else {
-            addRelocationForSection(REHighest, Value.SectionID);
-            addRelocationForSection(REHigher, Value.SectionID);
-            addRelocationForSection(REHi, Value.SectionID);
-            addRelocationForSection(RELo, Value.SectionID);
-          }
-        }
-        RelocationEntry RE(SectionID, Offset, RelType, Section.getStubOffset());
-        addRelocationForSection(RE, SectionID);
-        Section.advanceStubOffset(getMaxStubSize());
-      }
-    } else if (RelType == ELF::R_MIPS_HI16 || RelType == ELF::R_MIPS_PCHI16 ||
-               RelType == ELF::R_MIPS_HIGHEST ||
-               RelType == ELF::R_MIPS_HIGHER || RelType == ELF::R_MIPS_LO16 ||
-               RelType == ELF::R_MIPS_PCLO16) {
-      processSimpleRelocation(SectionID, Offset, RelType, Value);
     }
+    if (Value.SymbolName)
+      addRelocationForSymbol(RE, Value.SymbolName);
+    else
+      addRelocationForSection(RE, Value.SectionID);
   } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
     if (RelType == ELF::R_PPC64_REL24) {
       // Determine ABI variant in use for this object.

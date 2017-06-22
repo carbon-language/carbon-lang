@@ -66,10 +66,8 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
       return 20; // movz; movk; movk; movk; br
     if (Arch == Triple::arm || Arch == Triple::thumb)
       return 8; // 32-bit instruction and 32-bit address
-    else if (IsMipsO32ABI || IsMipsN32ABI)
+    else if (IsMipsO32ABI)
       return 16;
-    else if (IsMipsN64ABI)
-      return 32;
     else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le)
       return 44;
     else if (Arch == Triple::x86_64)
