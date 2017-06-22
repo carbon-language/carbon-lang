@@ -36,6 +36,17 @@ public:
       : InstrsDataflowAnalysis(BC, BF), FA(FA) {}
   virtual ~StackReachingUses() {}
 
+  /// Return true if the stack position written by the store in \p StoreFIE was
+  /// later consumed by a load to a different register (not the same one used in
+  /// the store). Useful for identifying loads/stores of callee-saved regs.
+  bool isLoadedInDifferentReg(const FrameIndexEntry &StoreFIE,
+                              ExprIterator Candidates) const;
+
+  /// Answer whether the stack position written by the store represented in
+  /// \p StoreFIE is loaded from or consumed in any way. The set of all
+  /// relevant expressions reaching this store should be in \p Candidates.
+  /// If \p IncludelocalAccesses is false, we only consider wheter there is
+  /// a callee that consumes this stack position.
   bool isStoreUsed(const FrameIndexEntry &StoreFIE, ExprIterator Candidates,
                    bool IncludeLocalAccesses = true) const;
 

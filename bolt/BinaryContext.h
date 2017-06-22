@@ -278,7 +278,8 @@ public:
   uint64_t getHotThreshold() const {
     static uint64_t Threshold{0};
     if (Threshold == 0) {
-      Threshold = NumProfiledFuncs ? SumExecutionCount / NumProfiledFuncs : 1;
+      Threshold =
+          NumProfiledFuncs ? SumExecutionCount / (2 * NumProfiledFuncs) : 1;
     }
     return Threshold;
   }

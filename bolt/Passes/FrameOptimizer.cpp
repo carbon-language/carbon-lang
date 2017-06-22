@@ -40,6 +40,15 @@ FrameOptimization("frame-opt",
   cl::ZeroOrMore,
   cl::cat(BoltOptCategory));
 
+cl::opt<bool>
+RemoveStores("frame-opt-rm-stores",
+  cl::init(FOP_NONE),
+  cl::desc("apply additional analysis to remove stores (experimental)"),
+  cl::init(false),
+  cl::ZeroOrMore,
+  cl::cat(BoltOptCategory));
+
+
 } // namespace opts
 
 namespace llvm {
@@ -243,7 +252,7 @@ void FrameOptimizerPass::runOnFunctions(BinaryContext &BC,
       NamedRegionTimer T1("remove loads", "FOP breakdown", opts::TimeOpts);
       removeUnnecessaryLoads(RA, FA, BC, I.second);
     }
-    {
+    if (opts::RemoveStores) {
       NamedRegionTimer T1("remove stores", "FOP breakdown", opts::TimeOpts);
       removeUnusedStores(FA, BC, I.second);
     }

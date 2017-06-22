@@ -106,14 +106,17 @@ class FrameAccessAnalysis {
     MCPhysReg Reg{0};
     int64_t StackOffset{0};
     bool IsIndexed{false};
-    if (!BC.MIA->isStackAccess(
-            Inst, FIE.IsLoad, FIE.IsStore, FIE.IsStoreFromReg, Reg, SrcImm,
-            FIE.StackPtrReg, StackOffset, FIE.Size, FIE.IsSimple, IsIndexed)) {
+    if (!BC.MIA->isStackAccess(*BC.MRI, Inst, FIE.IsLoad, FIE.IsStore,
+                               FIE.IsStoreFromReg, Reg, SrcImm, FIE.StackPtrReg,
+                               StackOffset, FIE.Size, FIE.IsSimple,
+                               IsIndexed)) {
       return true;
     }
 
-    if (IsIndexed) {
-      DEBUG(dbgs() << "Giving up on indexed memory access in the frame\n");
+    if (IsIndexed || FIE.Size == 0) {
+      DEBUG(dbgs() << "Giving up on indexed memory access/unknown size\n");
+      DEBUG(dbgs() << "Blame insn: ");
+      DEBUG(Inst.dump());
       return false;
     }
 

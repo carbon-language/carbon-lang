@@ -397,6 +397,10 @@ private:
   /// by computeSaveLocations().
   void moveSaveRestores();
 
+  /// Compare multiple basic blocks created by splitting critical edges. If they
+  /// have the same contents and successor, fold them into one.
+  bool foldIdenticalSplitEdges();
+
   /// After the spill locations for reg \p CSR has been moved and all affected
   /// CFI has been removed, insert new updated CFI information for these
   /// locations.

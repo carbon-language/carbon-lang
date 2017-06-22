@@ -16,6 +16,22 @@
 namespace llvm {
 namespace bolt {
 
+bool StackReachingUses::isLoadedInDifferentReg(const FrameIndexEntry &StoreFIE,
+                                               ExprIterator Candidates) const {
+  for (auto I = Candidates; I != expr_end(); ++I) {
+    const MCInst *ReachingInst = *I;
+    if (auto FIEY = FA.getFIEFor(*ReachingInst)) {
+      assert(FIEY->IsLoad == 1);
+      if (StoreFIE.StackOffset + StoreFIE.Size > FIEY->StackOffset &&
+          StoreFIE.StackOffset < FIEY->StackOffset + FIEY->Size &&
+          StoreFIE.RegOrImm != FIEY->RegOrImm) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 bool StackReachingUses::isStoreUsed(const FrameIndexEntry &StoreFIE,
                                     ExprIterator Candidates,
                                     bool IncludeLocalAccesses) const {

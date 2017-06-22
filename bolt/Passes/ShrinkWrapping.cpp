@@ -26,7 +26,7 @@ static cl::opt<unsigned> ShrinkWrappingThreshold(
     cl::desc("Percentage of prologue execution count to use as threshold when"
              " evaluating whether a block is cold enough to be profitable to"
              " move eligible spills there"),
-    cl::init(40), cl::ZeroOrMore, cl::cat(BoltOptCategory));
+    cl::init(30), cl::ZeroOrMore, cl::cat(BoltOptCategory));
 }
 
 namespace llvm {
@@ -36,6 +36,7 @@ void CalleeSavedAnalysis::analyzeSaves() {
   ReachingDefOrUse</*Def=*/true> &RD = Info.getReachingDefs();
   StackReachingUses &SRU = Info.getStackReachingUses();
   auto &InsnToBB = Info.getInsnToBBMap();
+  BitVector BlacklistedRegs(BC.MRI->getNumRegs(), false);
 
   DEBUG(dbgs() << "Checking spill locations\n");
   for (auto &BB : BF) {
@@ -43,14 +44,26 @@ void CalleeSavedAnalysis::analyzeSaves() {
     const MCInst *Prev = nullptr;
     for (auto &Inst : BB) {
       if (auto FIE = FA.getFIEFor(Inst)) {
-        if (!FIE->IsStore || !FIE->IsSimple || !FIE->IsStoreFromReg ||
-            FIE->StackOffset >= 0) {
+        // Blacklist weird stores we don't understand
+        if ((!FIE->IsSimple || FIE->StackOffset >= 0) && FIE->IsStore &&
+            FIE->IsStoreFromReg) {
+          BlacklistedRegs.set(FIE->RegOrImm);
+          CalleeSaved.reset(FIE->RegOrImm);
           Prev = &Inst;
           continue;
         }
 
+        if (!FIE->IsStore || !FIE->IsStoreFromReg ||
+            BlacklistedRegs[FIE->RegOrImm]) {
+          Prev = &Inst;
+          continue;
+        }
+
+        // If this reg is defined locally, it is not a callee-saved reg
         if (RD.isReachedBy(FIE->RegOrImm,
                            Prev ? RD.expr_begin(*Prev) : RD.expr_begin(BB))) {
+          BlacklistedRegs.set(FIE->RegOrImm);
+          CalleeSaved.reset(FIE->RegOrImm);
           Prev = &Inst;
           continue;
         }
@@ -61,13 +74,32 @@ void CalleeSavedAnalysis::analyzeSaves() {
         if (SRU.isStoreUsed(*FIE,
                             Prev ? SRU.expr_begin(*Prev) : SRU.expr_begin(BB)),
             /*IncludeLocalAccesses=*/false) {
+          BlacklistedRegs.set(FIE->RegOrImm);
+          CalleeSaved.reset(FIE->RegOrImm);
+          Prev = &Inst;
+          continue;
+        }
+
+        // If this stack position is loaded elsewhere in another reg, we can't
+        // update it, so blacklist it.
+        if (SRU.isLoadedInDifferentReg(*FIE, Prev ? SRU.expr_begin(*Prev)
+                                                  : SRU.expr_begin(BB))) {
+          BlacklistedRegs.set(FIE->RegOrImm);
+          CalleeSaved.reset(FIE->RegOrImm);
+          Prev = &Inst;
+          continue;
+        }
+
+        // Ignore regs with multiple saves
+        if (CalleeSaved[FIE->RegOrImm]) {
+          BlacklistedRegs.set(FIE->RegOrImm);
+          CalleeSaved.reset(FIE->RegOrImm);
           Prev = &Inst;
           continue;
         }
 
         CalleeSaved.set(FIE->RegOrImm);
-        if (SaveFIEByReg[FIE->RegOrImm] == nullptr)
-          SaveFIEByReg[FIE->RegOrImm] = &*FIE;
+        SaveFIEByReg[FIE->RegOrImm] = &*FIE;
         SavingCost[FIE->RegOrImm] += InsnToBB[&Inst]->getKnownExecutionCount();
         BC.MIA->addAnnotation(BC.Ctx.get(), Inst, getSaveTag(), FIE->RegOrImm);
         OffsetsByReg[FIE->RegOrImm] = FIE->StackOffset;
@@ -88,8 +120,7 @@ void CalleeSavedAnalysis::analyzeRestores() {
     for (auto I = BB.rbegin(), E = BB.rend(); I != E; ++I) {
       auto &Inst = *I;
       if (auto FIE = FA.getFIEFor(Inst)) {
-        if (!FIE->IsLoad || !FIE->IsSimple || !CalleeSaved[FIE->RegOrImm] ||
-            FIE->StackOffset >= 0) {
+        if (!FIE->IsLoad || !CalleeSaved[FIE->RegOrImm]) {
           Prev = &Inst;
           continue;
         }
@@ -97,8 +128,12 @@ void CalleeSavedAnalysis::analyzeRestores() {
         // If this reg is used locally after a restore, then we are probably
         // not dealing with a callee-saved reg. Except if this use is by
         // another store, but we don't cover this case yet.
-        if (RU.isReachedBy(FIE->RegOrImm,
+        // Also not callee-saved if this load accesses caller stack or isn't
+        // simple.
+        if (!FIE->IsSimple || FIE->StackOffset >= 0 ||
+            RU.isReachedBy(FIE->RegOrImm,
                            Prev ? RU.expr_begin(*Prev) : RU.expr_begin(BB))) {
+          CalleeSaved.reset(FIE->RegOrImm);
           Prev = &Inst;
           continue;
         }
@@ -568,9 +603,9 @@ void StackLayoutModifier::performChanges() {
       bool IsStoreFromReg{false};
       uint8_t Size{0};
       bool Success{false};
-      Success = BC.MIA->isStackAccess(Inst, IsLoad, IsStore, IsStoreFromReg,
-                                      Reg, SrcImm, StackPtrReg, StackOffset,
-                                      Size, IsSimple, IsIndexed);
+      Success = BC.MIA->isStackAccess(*BC.MRI, Inst, IsLoad, IsStore,
+                                      IsStoreFromReg, Reg, SrcImm, StackPtrReg,
+                                      StackOffset, Size, IsSimple, IsIndexed);
       assert(Success && IsSimple && !IsIndexed && (!IsStore || IsStoreFromReg));
       if (StackPtrReg != BC.MIA->getFramePointer())
         Adjustment = -Adjustment;
@@ -851,11 +886,13 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
     CritEdgesFrom.emplace_back(FrontierBB);
     CritEdgesTo.emplace_back(0);
     auto &Dests = CritEdgesTo.back();
-    bool MayNeedLPSplitting{false};
     // Check for invoke instructions at the dominance frontier, which indicates
     // the landing pad is not dominated.
-    if (PP.isInst() && BC.MIA->isInvoke(*PP.getInst()))
-      MayNeedLPSplitting = true;
+    if (PP.isInst() && BC.MIA->isInvoke(*PP.getInst())) {
+      DEBUG(dbgs() << "Bailing on restore placement to avoid LP splitting\n");
+      Frontier.clear();
+      return Frontier;
+    }
     doForAllSuccs(*FrontierBB, [&](ProgramPoint P) {
       if (!DA.doesADominateB(*BestPosSave, P)) {
         Dests.emplace_back(Info.getParentBB(P));
@@ -863,12 +900,6 @@ ShrinkWrapping::doRestorePlacement(MCInst *BestPosSave, unsigned CSR,
       }
       HasCritEdges = true;
     });
-    // This confirms LP splitting is necessary to continue. Bail.
-    if (MayNeedLPSplitting && Dests.empty()) {
-      DEBUG(dbgs() << "Bailing on restore placement to avoid LP splitting\n");
-      Frontier.clear();
-      return Frontier;
-    }
     IsCritEdge.push_back(HasCritEdges);
   }
   if (std::accumulate(IsCritEdge.begin(), IsCritEdge.end(), 0)) {
@@ -1095,6 +1126,9 @@ void ShrinkWrapping::scheduleSaveRestoreInsertions(
 void ShrinkWrapping::moveSaveRestores() {
   bool DisablePushPopMode{false};
   bool UsedPushPopMode{false};
+  // Keeps info about successfully moved regs: reg index, save position and
+  // save size
+  std::vector<std::tuple<unsigned, MCInst *, size_t>> MovedRegs;
 
   for (unsigned I = 0, E = BC.MRI->getNumRegs(); I != E; ++I) {
     MCInst *BestPosSave{nullptr};
@@ -1132,25 +1166,12 @@ void ShrinkWrapping::moveSaveRestores() {
 
     scheduleOldSaveRestoresRemoval(I, UsePushPops);
     scheduleSaveRestoreInsertions(I, BestPosSave, RestorePoints, UsePushPops);
-
-    // Schedule modifications to stack-accessing instructions via
-    // StackLayoutModifier
-    if (UsePushPops) {
-      for (MCInst *Save : CSA.getSavesByReg(I)) {
-        SLM.collapseRegion(Save);
-      }
-      SLM.insertRegion(BestPosSave, SaveSize);
-    }
-
-    // Stats collection
-    if (UsePushPops)
-      ++SpillsMovedPushPopMode;
-    else
-      ++SpillsMovedRegularMode;
+    MovedRegs.emplace_back(std::make_tuple(I, BestPosSave, SaveSize));
   }
 
   // Revert push-pop mode if it failed for a single CSR
   if (DisablePushPopMode && UsedPushPopMode) {
+    UsedPushPopMode = false;
     for (auto &BB : BF) {
       auto WRI = Todo.find(&BB);
       if (WRI != Todo.end()) {
@@ -1176,6 +1197,86 @@ void ShrinkWrapping::moveSaveRestores() {
       }
     }
   }
+
+  // Update statistics
+  if (!UsedPushPopMode) {
+    SpillsMovedRegularMode += MovedRegs.size();
+    return;
+  }
+
+  // Schedule modifications to stack-accessing instructions via
+  // StackLayoutModifier.
+  SpillsMovedPushPopMode += MovedRegs.size();
+  for (auto &I : MovedRegs) {
+    unsigned RegNdx;
+    MCInst *SavePos;
+    size_t SaveSize;
+    std::tie(RegNdx, SavePos, SaveSize) = I;
+    for (MCInst *Save : CSA.getSavesByReg(RegNdx)) {
+      SLM.collapseRegion(Save);
+    }
+    SLM.insertRegion(SavePos, SaveSize);
+  }
+}
+
+namespace {
+/// Helper function to identify whether two basic blocks created by splitting
+/// a critical edge have the same contents.
+bool isIdenticalSplitEdgeBB(const BinaryBasicBlock &A,
+                            const BinaryBasicBlock &B) {
+  if (A.succ_size() != B.succ_size())
+    return false;
+  if (A.succ_size() != 1)
+    return false;
+
+  if (*A.succ_begin() != *B.succ_begin())
+    return false;
+
+  if (A.size() != B.size())
+    return false;
+
+  // Compare instructions
+  auto I = A.begin(), E = A.end();
+  auto OtherI = B.begin(), OtherE = B.end();
+  while (I != E && OtherI != OtherE) {
+    if (I->getOpcode() != OtherI->getOpcode())
+      return false;
+    if (!I->equals(*OtherI,
+                   [](const MCSymbol *A, const MCSymbol *B) { return true; }))
+      return false;
+    ++I;
+    ++OtherI;
+  }
+  return true;
+}
+}
+
+bool ShrinkWrapping::foldIdenticalSplitEdges() {
+  bool Changed{false};
+  for (auto Iter = BF.begin(); Iter != BF.end(); ++Iter) {
+    BinaryBasicBlock &BB = *Iter;
+    if (!BB.getName().startswith(".LSplitEdge"))
+      continue;
+    for (auto RIter = BF.rbegin(); RIter != BF.rend(); ++RIter) {
+      BinaryBasicBlock &RBB = *RIter;
+      if (&RBB == &BB)
+        break;
+      if (!RBB.getName().startswith(".LSplitEdge") ||
+          !RBB.isValid() ||
+          !isIdenticalSplitEdgeBB(*Iter, RBB))
+        continue;
+      assert(RBB.pred_size() == 1 && "Invalid split edge BB");
+      BinaryBasicBlock *Pred = *RBB.pred_begin();
+      uint64_t OrigCount{Pred->branch_info_begin()->Count};
+      uint64_t OrigMispreds{Pred->branch_info_begin()->MispredictedCount};
+      Pred->replaceSuccessor(&RBB, &BB, OrigCount, OrigMispreds);
+      Changed = true;
+      // Remove the block from CFG
+      RBB.markValid(false);
+    }
+  }
+
+  return Changed;
 }
 
 namespace {
@@ -1275,11 +1376,11 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
       bool IsSimple{false};
       bool IsStoreFromReg{false};
       uint8_t Size{0};
-      if (!BC.MIA->isStackAccess(*InstIter, IsLoad, IsStore, IsStoreFromReg,
-                                 Reg, SrcImm, StackPtrReg, StackOffset, Size,
-                                 IsSimple, IsIndexed))
+      if (!BC.MIA->isStackAccess(*BC.MRI, *InstIter, IsLoad, IsStore,
+                                 IsStoreFromReg, Reg, SrcImm, StackPtrReg,
+                                 StackOffset, Size, IsSimple, IsIndexed))
         continue;
-      if (Reg != CSR || !IsStore)
+      if (Reg != CSR || !IsStore || !IsSimple)
         continue;
       SavePoint = &*InstIter;
       break;
@@ -1317,11 +1418,20 @@ void ShrinkWrapping::insertUpdatedCFI(unsigned CSR, int SPValPush,
         }
       }
     }
-    if (InAffectedZoneAtBegin != PrevAffectedZone) {
+    // Are we at the hot-cold split point?
+    if (BF.isSplit() && PrevBB && BB->isCold() != PrevBB->isCold()) {
       if (InAffectedZoneAtBegin) {
-        insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, true, 0, SPValPush);
-      } else {
-        insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, false, 0, SPValPop);
+        insertCFIsForPushOrPop(*BB, BB->begin(), CSR, true, 0, SPValPush);
+      }
+    } else {
+      if (InAffectedZoneAtBegin != PrevAffectedZone) {
+        if (InAffectedZoneAtBegin) {
+          insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, true, 0,
+                                 SPValPush);
+        } else {
+          insertCFIsForPushOrPop(*PrevBB, PrevBB->end(), CSR, false, 0,
+                                 SPValPop);
+        }
       }
     }
     PrevAffectedZone = InAffectedZoneAtEnd;
@@ -1360,10 +1470,16 @@ void ShrinkWrapping::rebuildCFIForSP() {
         SPVal = CurVal;
       }
     }
-    if (SPValAtBegin != PrevSPVal) {
+    if (BF.isSplit() && PrevBB && BB->isCold() != PrevBB->isCold()) {
       BF.addCFIInstruction(
-          PrevBB, PrevBB->end(),
+          BB, BB->begin(),
           MCCFIInstruction::createDefCfaOffset(nullptr, SPValAtBegin));
+    } else {
+      if (SPValAtBegin != PrevSPVal) {
+        BF.addCFIInstruction(
+            PrevBB, PrevBB->end(),
+            MCCFIInstruction::createDefCfaOffset(nullptr, SPValAtBegin));
+      }
     }
     PrevSPVal = SPValAtEnd;
     PrevBB = BB;
@@ -1699,6 +1815,12 @@ void ShrinkWrapping::perform() {
   if (!processInsertions())
     return;
   processDeletions();
+  if (foldIdenticalSplitEdges()) {
+    const auto Stats = BF.eraseInvalidBBs();
+    DEBUG(dbgs() << "Deleted " << Stats.first << " redundant split edge BBs ("
+                 << Stats.second << " bytes) for " << BF.getPrintName()
+                 << "\n");
+  }
   rebuildCFI();
   // We may have split edges, creating BBs that need correct branching
   BF.fixBranches();
