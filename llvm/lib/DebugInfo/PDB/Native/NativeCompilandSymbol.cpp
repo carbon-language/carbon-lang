@@ -13,11 +13,16 @@ namespace llvm {
 namespace pdb {
 
 NativeCompilandSymbol::NativeCompilandSymbol(NativeSession &Session,
+                                             uint32_t SymbolId,
                                              DbiModuleDescriptor MI)
-    : NativeRawSymbol(Session), Module(MI) {}
+    : NativeRawSymbol(Session, SymbolId), Module(MI) {}
 
 PDB_SymType NativeCompilandSymbol::getSymTag() const {
   return PDB_SymType::Compiland;
+}
+
+std::unique_ptr<NativeRawSymbol> NativeCompilandSymbol::clone() const {
+  return std::make_unique<NativeCompilandSymbol>(Session, SymbolId, Module);
 }
 
 bool NativeCompilandSymbol::isEditAndContinueEnabled() const {
