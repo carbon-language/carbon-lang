@@ -328,9 +328,9 @@ LLVM_DUMP_METHOD void MCFragment::dump() const {
   case MCFragment::FT_Dummy: OS << "MCDummyFragment"; break;
   }
 
-  OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
+  OS << "<MCFragment " << (const void*) this << " LayoutOrder:" << LayoutOrder
      << " Offset:" << Offset
-     << " HasInstructions:" << hasInstructions() 
+     << " HasInstructions:" << hasInstructions()
      << " BundlePadding:" << static_cast<unsigned>(getBundlePadding()) << ">";
 
   switch (getKind()) {
