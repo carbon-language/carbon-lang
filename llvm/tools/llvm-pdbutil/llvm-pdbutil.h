@@ -92,7 +92,7 @@ extern llvm::cl::opt<ClassDefinitionFormat> ClassFormat;
 extern llvm::cl::opt<uint32_t> ClassRecursionDepth;
 }
 
-namespace raw {
+namespace dump {
 struct BlockRange {
   uint32_t Min;
   llvm::Optional<uint32_t> Max;
