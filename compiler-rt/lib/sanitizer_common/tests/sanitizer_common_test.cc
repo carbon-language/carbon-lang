@@ -72,12 +72,12 @@ TEST(SanitizerCommon, SortTest) {
   EXPECT_TRUE(IsSorted(array, 2));
 }
 
-TEST(SanitizerCommon, MmapAlignedOrDie) {
+TEST(SanitizerCommon, MmapAlignedOrDieOnFatalError) {
   uptr PageSize = GetPageSizeCached();
   for (uptr size = 1; size <= 32; size *= 2) {
     for (uptr alignment = 1; alignment <= 32; alignment *= 2) {
       for (int iter = 0; iter < 100; iter++) {
-        uptr res = (uptr)MmapAlignedOrDie(
+        uptr res = (uptr)MmapAlignedOrDieOnFatalError(
             size * PageSize, alignment * PageSize, "MmapAlignedOrDieTest");
         EXPECT_EQ(0U, res % (alignment * PageSize));
         internal_memset((void*)res, 1, size * PageSize);
