@@ -1615,12 +1615,8 @@ static Value *matchSelectFromAndOr(Value *A, Value *C, Value *B, Value *D,
   // The potential condition of the select may be bitcasted. In that case, look
   // through its bitcast and the corresponding bitcast of the 'not' condition.
   Type *OrigType = A->getType();
-  Value *SrcA, *SrcB;
-  if (match(A, m_OneUse(m_BitCast(m_Value(SrcA)))) &&
-      match(B, m_OneUse(m_BitCast(m_Value(SrcB))))) {
-    A = SrcA;
-    B = SrcB;
-  }
+  A = peekThroughBitcast(A, true);
+  B = peekThroughBitcast(B, true);
 
   if (Value *Cond = getSelectCondition(A, B, Builder)) {
     // ((bc Cond) & C) | ((bc ~Cond) & D) --> bc (select Cond, (bc C), (bc D))
