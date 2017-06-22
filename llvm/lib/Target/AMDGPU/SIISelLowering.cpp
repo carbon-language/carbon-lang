@@ -3551,8 +3551,7 @@ SDValue SITargetLowering::LowerINTRINSIC_VOID(SDValue Op,
      Op.getOperand(13), // slc
     };
 
-    const ConstantSDNode *tfe = cast<ConstantSDNode>(Op.getOperand(14));
-    assert(tfe->getZExtValue() == 0 &&
+    assert((cast<ConstantSDNode>(Op.getOperand(14)))->getZExtValue() == 0 &&
            "Value of tfe other than zero is unsupported");
 
     EVT VT = Op.getOperand(3).getValueType();
