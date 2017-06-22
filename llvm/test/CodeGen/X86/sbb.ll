@@ -8,9 +8,8 @@
 define i8 @i8_select_0_or_neg1(i8 %x) {
 ; CHECK-LABEL: i8_select_0_or_neg1:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    cmpb $1, %dil
-; CHECK-NEXT:    movb $-1, %al
-; CHECK-NEXT:    adcb $0, %al
+; CHECK-NEXT:    negb %dil
+; CHECK-NEXT:    sbbb %al, %al
 ; CHECK-NEXT:    retq
   %cmp = icmp eq i8 %x, 0
   %sel = select i1 %cmp, i8 0, i8 -1
@@ -22,9 +21,8 @@ define i8 @i8_select_0_or_neg1(i8 %x) {
 define i16 @i16_select_0_or_neg1_as_math(i16 %x) {
 ; CHECK-LABEL: i16_select_0_or_neg1_as_math:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    cmpw $1, %di
-; CHECK-NEXT:    movw $-1, %ax
-; CHECK-NEXT:    adcw $0, %ax
+; CHECK-NEXT:    negw %di
+; CHECK-NEXT:    sbbw %ax, %ax
 ; CHECK-NEXT:    retq
   %cmp = icmp eq i16 %x, 0
   %ext = zext i1 %cmp to i16
@@ -50,9 +48,8 @@ define i32 @i32_select_0_or_neg1_commuted(i32 %x) {
 define i64 @i64_select_0_or_neg1_commuted_as_math(i64 %x) {
 ; CHECK-LABEL: i64_select_0_or_neg1_commuted_as_math:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    xorl %eax, %eax
-; CHECK-NEXT:    cmpq $1, %rdi
-; CHECK-NEXT:    adcq $-1, %rax
+; CHECK-NEXT:    negq %rdi
+; CHECK-NEXT:    sbbq %rax, %rax
 ; CHECK-NEXT:    retq
   %cmp = icmp ne i64 %x, 0
   %ext = zext i1 %cmp to i64
