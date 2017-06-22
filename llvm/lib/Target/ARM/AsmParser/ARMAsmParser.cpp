@@ -8160,7 +8160,8 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
         isARMLowRegister(Inst.getOperand(1).getReg()) &&
         isARMLowRegister(Inst.getOperand(2).getReg()) &&
         Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg() &&
-        inITBlock() == (Inst.getOpcode() == ARM::t2MOVsr))
+        inITBlock() == (Inst.getOpcode() == ARM::t2MOVsr) &&
+        !HasWideQualifier)
       isNarrow = true;
     MCInst TmpInst;
     unsigned newOpc;
@@ -8194,7 +8195,8 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
     bool isNarrow = false;
     if (isARMLowRegister(Inst.getOperand(0).getReg()) &&
         isARMLowRegister(Inst.getOperand(1).getReg()) &&
-        inITBlock() == (Inst.getOpcode() == ARM::t2MOVsi))
+        inITBlock() == (Inst.getOpcode() == ARM::t2MOVsi) &&
+        !HasWideQualifier)
       isNarrow = true;
     MCInst TmpInst;
     unsigned newOpc;
