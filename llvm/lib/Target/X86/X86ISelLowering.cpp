@@ -34900,12 +34900,13 @@ static SDValue combineAddOrSubToADCOrSBB(SDNode *N, SelectionDAG &DAG) {
   SDValue Z = Cmp.getOperand(0);
   SDVTList VTs = DAG.getVTList(N->getValueType(0), MVT::i32);
 
-  // If X is -1 or 0, then we have an opportunity to avoid constants required by
-  // the cmp transform below. 'neg' sets the carry flag when Z != 0, so create 0
-  // or -1 using 'sbb' with fake operands:
-  //  0 - (Z != 0) --> sbb %eax, %eax, (neg Z)
-  // -1 + (Z == 0) --> sbb %eax, %eax, (neg Z)
+  // If X is -1 or 0, then we have an opportunity to avoid constants required in
+  // the general case below.
   if (auto *ConstantX = dyn_cast<ConstantSDNode>(X)) {
+    // 'neg' sets the carry flag when Z != 0, so create 0 or -1 using 'sbb' with
+    // fake operands:
+    //  0 - (Z != 0) --> sbb %eax, %eax, (neg Z)
+    // -1 + (Z == 0) --> sbb %eax, %eax, (neg Z)
     if ((IsSub && CC == X86::COND_NE && ConstantX->isNullValue()) ||
         (!IsSub && CC == X86::COND_E && ConstantX->isAllOnesValue())) {
       SDValue Zero = DAG.getConstant(0, DL, VT);
@@ -34913,6 +34914,17 @@ static SDValue combineAddOrSubToADCOrSBB(SDNode *N, SelectionDAG &DAG) {
       return DAG.getNode(X86ISD::SETCC_CARRY, DL, VT,
                          DAG.getConstant(X86::COND_B, DL, MVT::i8),
                          SDValue(Neg.getNode(), 1));
+    }
+    // cmp with 1 sets the carry flag when Z == 0, so create 0 or -1 using 'sbb'
+    // with fake operands:
+    //  0 - (Z == 0) --> sbb %eax, %eax, (cmp Z, 1)
+    // -1 + (Z != 0) --> sbb %eax, %eax, (cmp Z, 1)
+    if ((IsSub && CC == X86::COND_E && ConstantX->isNullValue()) ||
+        (!IsSub && CC == X86::COND_NE && ConstantX->isAllOnesValue())) {
+      SDValue One = DAG.getConstant(1, DL, Z.getValueType());
+      SDValue Cmp1 = DAG.getNode(X86ISD::CMP, DL, MVT::i32, Z, One);
+      return DAG.getNode(X86ISD::SETCC_CARRY, DL, VT,
+                         DAG.getConstant(X86::COND_B, DL, MVT::i8), Cmp1);
     }
   }
 
