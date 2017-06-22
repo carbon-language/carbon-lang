@@ -34,10 +34,12 @@ namespace llvm {
 namespace orc {
 
 class RTDyldObjectLinkingLayerBase {
-protected:
+public:
 
   using ObjectPtr =
     std::shared_ptr<object::OwningBinary<object::ObjectFile>>;
+
+protected:
 
   /// @brief Holds a set of objects to be allocated/linked as a unit in the JIT.
   ///
