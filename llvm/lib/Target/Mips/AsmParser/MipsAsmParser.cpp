@@ -322,7 +322,6 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseDirectiveSet();
   bool parseDirectiveOption();
   bool parseInsnDirective();
-  bool parseRSectionDirective(StringRef Section);
   bool parseSSectionDirective(StringRef Section, unsigned Type);
 
   bool parseSetAtDirective();
@@ -6953,23 +6952,6 @@ bool MipsAsmParser::parseInsnDirective() {
   return false;
 }
 
-/// parseRSectionDirective
-///  ::= .rdata
-bool MipsAsmParser::parseRSectionDirective(StringRef Section) {
-  // If this is not the end of the statement, report an error.
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    reportParseError("unexpected token, expected end of statement");
-    return false;
-  }
-
-  MCSection *ELFSection =
-      getContext().getELFSection(Section, ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
-  getParser().getStreamer().SwitchSection(ELFSection);
-
-  getParser().Lex(); // Eat EndOfStatement token.
-  return false;
-}
-
 /// parseSSectionDirective
 ///  ::= .sbss
 ///  ::= .sdata
@@ -7515,10 +7497,6 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   }
   if (IDVal == ".insn") {
     parseInsnDirective();
-    return false;
-  }
-  if (IDVal == ".rdata") {
-    parseRSectionDirective(".rodata");
     return false;
   }
   if (IDVal == ".sbss") {
