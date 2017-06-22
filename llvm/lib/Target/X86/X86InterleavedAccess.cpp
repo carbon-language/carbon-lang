@@ -264,8 +264,7 @@ bool X86TargetLowering::lowerInterleavedStore(StoreInst *SI,
   assert(Factor >= 2 && Factor <= getMaxSupportedInterleaveFactor() &&
          "Invalid interleave factor");
 
-  VectorType *VecTy = SVI->getType();
-  assert(VecTy->getVectorNumElements() % Factor == 0 &&
+  assert(SVI->getType()->getVectorNumElements() % Factor == 0 &&
          "Invalid interleaved store");
 
   // Holds the indices of SVI that correspond to the starting index of each
