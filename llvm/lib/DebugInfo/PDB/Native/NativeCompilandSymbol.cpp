@@ -9,6 +9,8 @@
 
 #include "llvm/DebugInfo/PDB/Native/NativeCompilandSymbol.h"
 
+#include "llvm/ADT/STLExtras.h"
+
 namespace llvm {
 namespace pdb {
 
@@ -22,7 +24,7 @@ PDB_SymType NativeCompilandSymbol::getSymTag() const {
 }
 
 std::unique_ptr<NativeRawSymbol> NativeCompilandSymbol::clone() const {
-  return std::make_unique<NativeCompilandSymbol>(Session, SymbolId, Module);
+  return llvm::make_unique<NativeCompilandSymbol>(Session, SymbolId, Module);
 }
 
 bool NativeCompilandSymbol::isEditAndContinueEnabled() const {
