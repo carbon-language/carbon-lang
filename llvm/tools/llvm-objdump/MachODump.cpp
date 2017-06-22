@@ -1224,8 +1224,13 @@ static void ProcessMachO(StringRef Name, MachOObjectFile *MachOOF,
     if (Error Err = MachOOF->checkSymbolTable())
       report_error(ArchiveName, FileName, std::move(Err), ArchitectureName);
 
-  if (Disassemble)
-    DisassembleMachO(FileName, MachOOF, "__TEXT", "__text");
+  if (Disassemble) {
+    if (MachOOF->getHeader().filetype == MachO::MH_KEXT_BUNDLE &&
+	MachOOF->getHeader().cputype == MachO::CPU_TYPE_ARM64)
+      DisassembleMachO(FileName, MachOOF, "__TEXT_EXEC", "__text");
+    else
+      DisassembleMachO(FileName, MachOOF, "__TEXT", "__text");
+  }
   if (IndirectSymbols)
     PrintIndirectSymbols(MachOOF, !NonVerbose);
   if (DataInCode)
