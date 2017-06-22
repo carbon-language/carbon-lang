@@ -12,6 +12,8 @@
 
 using namespace llvm::sys;
 
+static int *ReturnPointer() { return new int(47); }
+
 TEST(ErrnoTest, RetryAfterSignal) {
   EXPECT_EQ(1, RetryAfterSignal(-1, [] { return 1; }));
 
@@ -30,4 +32,7 @@ TEST(ErrnoTest, RetryAfterSignal) {
   EXPECT_EQ(2u, calls);
 
   EXPECT_EQ(1, RetryAfterSignal(-1, [](int x) { return x; }, 1));
+
+  std::unique_ptr<int> P{RetryAfterSignal(nullptr, ReturnPointer)};
+  EXPECT_EQ(47, *P);
 }

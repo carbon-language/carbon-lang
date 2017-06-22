@@ -31,11 +31,11 @@ std::string StrError();
 std::string StrError(int errnum);
 
 template <typename Fun, typename... Args,
-          typename ResultT =
-              typename std::result_of<Fun const &(const Args &...)>::type>
-inline ResultT RetryAfterSignal(ResultT Fail, const Fun &F,
-                                const Args &... As) {
-  ResultT Res;
+          typename ResultT = std::result_of<Fun const &(const Args &...)>>
+inline typename ResultT::type RetryAfterSignal(typename ResultT::type Fail,
+                                               const Fun &F,
+                                               const Args &... As) {
+  typename ResultT::type Res;
   do
     Res = F(As...);
   while (Res == Fail && errno == EINTR);
