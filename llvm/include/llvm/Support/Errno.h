@@ -16,7 +16,6 @@
 
 #include <cerrno>
 #include <string>
-#include <type_traits>
 
 namespace llvm {
 namespace sys {
@@ -29,18 +28,6 @@ std::string StrError();
 
 /// Like the no-argument version above, but uses \p errnum instead of errno.
 std::string StrError(int errnum);
-
-template <typename Fun, typename... Args,
-          typename ResultT = std::result_of<Fun const &(const Args &...)>>
-inline typename ResultT::type RetryAfterSignal(typename ResultT::type Fail,
-                                               const Fun &F,
-                                               const Args &... As) {
-  typename ResultT::type Res;
-  do
-    Res = F(As...);
-  while (Res == Fail && errno == EINTR);
-  return Res;
-}
 
 }  // namespace sys
 }  // namespace llvm
