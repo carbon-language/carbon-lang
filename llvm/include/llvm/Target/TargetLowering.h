@@ -410,6 +410,10 @@ public:
     return false;
   }
 
+  /// Should we merge stores after Legalization (generally
+  /// better quality) or before (simpler)
+  virtual bool mergeStoresAfterLegalization() const { return false; }
+
   /// Returns if it's reasonable to merge stores to MemVT size.
   virtual bool canMergeStoresTo(unsigned AddressSpace, EVT MemVT) const {
     return true;
