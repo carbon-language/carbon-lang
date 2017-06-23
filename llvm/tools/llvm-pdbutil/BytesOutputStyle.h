@@ -44,6 +44,10 @@ private:
   void dumpTypeServerMap();
   void dumpECData();
 
+  void dumpModuleSyms();
+  void dumpModuleC11();
+  void dumpModuleC13();
+
   void dumpTypeIndex(uint32_t StreamIdx, ArrayRef<uint32_t> Indices);
 
   Expected<codeview::LazyRandomTypeCollection &>

@@ -9,6 +9,7 @@
 
 #include "BytesOutputStyle.h"
 
+#include "FormatUtil.h"
 #include "StreamUtil.h"
 #include "llvm-pdbutil.h"
 
@@ -17,6 +18,7 @@
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
+#include "llvm/DebugInfo/PDB/Native/ModuleDebugStream.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
 #include "llvm/DebugInfo/PDB/Native/TpiStream.h"
@@ -168,6 +170,21 @@ Error BytesOutputStyle::dump() {
     P.NewLine();
   }
 
+  if (opts::bytes::ModuleSyms) {
+    dumpModuleSyms();
+    P.NewLine();
+  }
+
+  if (opts::bytes::ModuleC11) {
+    dumpModuleC11();
+    P.NewLine();
+  }
+
+  if (opts::bytes::ModuleC13) {
+    dumpModuleC13();
+    P.NewLine();
+  }
+
   return Error::success();
 }
 
@@ -295,6 +312,98 @@ void BytesOutputStyle::dumpTypeIndex(uint32_t StreamIdx,
     auto OneType = Substream.slice(Offset, Type.length());
     P.formatMsfStreamData(formatv("Type {0}", TI).str(), File, Layout, OneType);
   }
+}
+
+template <typename CallbackT>
+static void iterateOneModule(PDBFile &File, LinePrinter &P,
+                             const DbiModuleList &Modules, uint32_t I,
+                             uint32_t Digits, uint32_t IndentLevel,
+                             CallbackT Callback) {
+  auto Modi = Modules.getModuleDescriptor(I);
+  P.formatLine("Mod {0:4} | `{1}`: ",
+               fmt_align(I, AlignStyle::Right, std::max(Digits, 4U)),
+               Modi.getModuleName());
+
+  uint16_t ModiStream = Modi.getModuleStreamIndex();
+
+  AutoIndent Indent2(P, IndentLevel);
+  auto ModStreamData = MappedBlockStream::createIndexedStream(
+      File.getMsfLayout(), File.getMsfBuffer(), ModiStream,
+      File.getAllocator());
+  ModuleDebugStreamRef ModStream(Modi, std::move(ModStreamData));
+  if (auto EC = ModStream.reload()) {
+    P.formatLine("Could not parse debug information.");
+    return;
+  }
+  auto Layout = File.getStreamLayout(ModiStream);
+  Callback(I, ModStream, Layout);
+}
+
+template <typename CallbackT>
+static void iterateModules(PDBFile &File, LinePrinter &P, uint32_t IndentLevel,
+                           CallbackT Callback) {
+  AutoIndent Indent(P);
+  if (!File.hasPDBDbiStream()) {
+    P.formatLine("DBI Stream not present");
+    return;
+  }
+
+  ExitOnError Err("Unexpected error processing modules");
+
+  auto &Stream = Err(File.getPDBDbiStream());
+
+  const DbiModuleList &Modules = Stream.modules();
+
+  if (opts::bytes::ModuleIndex.getNumOccurrences() > 0) {
+    iterateOneModule(File, P, Modules, opts::bytes::ModuleIndex, 1, IndentLevel,
+                     Callback);
+  } else {
+    uint32_t Count = Modules.getModuleCount();
+    uint32_t Digits = NumDigits(Count);
+    for (uint32_t I = 0; I < Count; ++I) {
+      iterateOneModule(File, P, Modules, I, Digits, IndentLevel, Callback);
+    }
+  }
+}
+
+void BytesOutputStyle::dumpModuleSyms() {
+  printHeader(P, "Module Symbols");
+
+  AutoIndent Indent(P);
+
+  iterateModules(File, P, 2,
+                 [this](uint32_t Modi, const ModuleDebugStreamRef &Stream,
+                        const MSFStreamLayout &Layout) {
+                   auto Symbols = Stream.getSymbolsSubstream();
+                   P.formatMsfStreamData("Symbols", File, Layout, Symbols);
+                 });
+}
+
+void BytesOutputStyle::dumpModuleC11() {
+  printHeader(P, "C11 Debug Chunks");
+
+  AutoIndent Indent(P);
+
+  iterateModules(File, P, 2,
+                 [this](uint32_t Modi, const ModuleDebugStreamRef &Stream,
+                        const MSFStreamLayout &Layout) {
+                   auto Chunks = Stream.getC11LinesSubstream();
+                   P.formatMsfStreamData("C11 Debug Chunks", File, Layout,
+                                         Chunks);
+                 });
+}
+
+void BytesOutputStyle::dumpModuleC13() {
+  printHeader(P, "Debug Chunks");
+
+  AutoIndent Indent(P);
+
+  iterateModules(File, P, 2,
+                 [this](uint32_t Modi, const ModuleDebugStreamRef &Stream,
+                        const MSFStreamLayout &Layout) {
+                   auto Chunks = Stream.getC13LinesSubstream();
+                   P.formatMsfStreamData("Debug Chunks", File, Layout, Chunks);
+                 });
 }
 
 void BytesOutputStyle::dumpByteRanges(uint32_t Min, uint32_t Max) {
