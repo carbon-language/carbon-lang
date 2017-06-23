@@ -23710,7 +23710,7 @@ static SDValue LowerMGATHER(SDValue Op, const X86Subtarget &Subtarget,
     return DAG.getMergeValues(RetOps, dl);
   }
   if (N->getMemoryVT() == MVT::v2i32 && Subtarget.hasVLX()) {
-    // There is a special case when the return type is v2i32 is illegal and 
+    // There is a special case when the return type is v2i32 is illegal and
     // the type legaizer extended it to v2i64. Without this conversion we end up
     // with VPGATHERQQ (reading q-words from the memory) instead of VPGATHERQD.
     // In order to avoid this situation, we'll build an X86 specific Gather node
