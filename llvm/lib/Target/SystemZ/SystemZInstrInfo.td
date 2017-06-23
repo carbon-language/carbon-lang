@@ -1446,7 +1446,7 @@ let Predicates = [FeatureExecutionHint] in {
 // A serialization instruction that acts as a barrier for all memory
 // accesses, which expands to "bcr 14, 0".
 let hasSideEffects = 1 in
-def Serialize : Alias<2, (outs), (ins), [(z_serialize)]>;
+def Serialize : Alias<2, (outs), (ins), []>;
 
 // A pseudo instruction that serves as a compiler barrier.
 let hasSideEffects = 1, hasNoSchedulingInfo = 1 in
