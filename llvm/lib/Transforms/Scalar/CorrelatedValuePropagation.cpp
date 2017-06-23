@@ -290,7 +290,7 @@ static bool processSwitch(SwitchInst *SI, LazyValueInfo *LVI) {
       break;
     }
 
-    // Increment the case iterator sense we didn't delete it.
+    // Increment the case iterator since we didn't delete it.
     ++CI;
   }
 
