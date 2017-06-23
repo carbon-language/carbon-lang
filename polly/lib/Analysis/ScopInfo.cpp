@@ -98,7 +98,7 @@ static cl::opt<int>
     OptComputeOut("polly-analysis-computeout",
                   cl::desc("Bound the scop analysis by a maximal amount of "
                            "computational steps (0 means no bound)"),
-                  cl::Hidden, cl::init(600000), cl::ZeroOrMore,
+                  cl::Hidden, cl::init(800000), cl::ZeroOrMore,
                   cl::cat(PollyCategory));
 
 static cl::opt<bool> PollyRemarksMinimal(
@@ -2447,16 +2447,11 @@ buildMinMaxAccess(isl::set Set, Scop::MinMaxVectorTy &MinMaxAccesses, Scop &S) {
       return isl::stat::error;
   }
 
-  {
-    IslMaxOperationsGuard MaxOpGuard(Ctx.get(), OptComputeOut);
-    MinPMA = Set.lexmin_pw_multi_aff();
-    MaxPMA = Set.lexmax_pw_multi_aff();
-  }
+  MinPMA = Set.lexmin_pw_multi_aff();
+  MaxPMA = Set.lexmax_pw_multi_aff();
 
-  if (isl_ctx_last_error(Ctx.get()) == isl_error_quota) {
-    S.invalidate(COMPLEXITY, DebugLoc());
+  if (isl_ctx_last_error(Ctx.get()) == isl_error_quota)
     return isl::stat::error;
-  }
 
   MinPMA = MinPMA.coalesce();
   MaxPMA = MaxPMA.coalesce();
@@ -2500,7 +2495,6 @@ static bool calculateMinMaxAccess(Scop::AliasGroupTy AliasGroup, Scop &S,
   isl::union_set Locations = Accesses.range();
   Locations = Locations.coalesce();
   Locations = Locations.detect_equalities();
-  ;
 
   auto Lambda = [&MinMaxAccesses, &S](isl::set Set) -> isl::stat {
     return buildMinMaxAccess(Set, MinMaxAccesses, S);
@@ -3332,9 +3326,16 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   splitAliasGroupsByDomain(AliasGroups);
 
   for (AliasGroupTy &AG : AliasGroups) {
-    bool Valid = buildAliasGroup(AG, HasWriteAccess);
-    if (!Valid)
+    {
+      IslMaxOperationsGuard MaxOpGuard(getIslCtx(), OptComputeOut);
+      bool Valid = buildAliasGroup(AG, HasWriteAccess);
+      if (!Valid)
+        return false;
+    }
+    if (isl_ctx_last_error(getIslCtx()) == isl_error_quota) {
+      invalidate(COMPLEXITY, DebugLoc());
       return false;
+    }
   }
 
   return true;
