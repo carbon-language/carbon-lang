@@ -389,7 +389,7 @@ public:
   bool isAllOnesValue() const {
     if (isSingleWord())
       return U.VAL == WORD_MAX >> (APINT_BITS_PER_WORD - BitWidth);
-    return countPopulationSlowCase() == BitWidth;
+    return countTrailingOnesSlowCase() == BitWidth;
   }
 
   /// \brief Determine if all bits are clear
@@ -414,7 +414,7 @@ public:
   /// This checks to see if the value of this APInt is the maximum signed
   /// value for the APInt's bit width.
   bool isMaxSignedValue() const {
-    return !isNegative() && countPopulation() == BitWidth - 1;
+    return !isNegative() && countTrailingOnes() == BitWidth - 1;
   }
 
   /// \brief Determine if this is the smallest unsigned value.
@@ -428,7 +428,7 @@ public:
   /// This checks to see if the value of this APInt is the minimum signed
   /// value for the APInt's bit width.
   bool isMinSignedValue() const {
-    return isNegative() && isPowerOf2();
+    return isNegative() && countTrailingZeros() == BitWidth - 1;
   }
 
   /// \brief Check if this APInt has an N-bits unsigned integer value.
