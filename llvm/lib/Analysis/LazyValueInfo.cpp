@@ -1324,12 +1324,12 @@ getValueFromConditionImpl(Value *Val, Value *Cond, bool isTrueDest,
     return getValueFromICmpCondition(Val, ICI, isTrueDest);
 
   // Handle conditions in the form of (cond1 && cond2), we know that on the
-  // true dest path both of the conditions hold.
-  if (!isTrueDest)
-    return LVILatticeVal::getOverdefined();
-
+  // true dest path both of the conditions hold. Similarly for conditions of
+  // the form (cond1 || cond2), we know that on the false dest path neither
+  // condition holds.
   BinaryOperator *BO = dyn_cast<BinaryOperator>(Cond);
-  if (!BO || BO->getOpcode() != BinaryOperator::And)
+  if (!BO || (isTrueDest && BO->getOpcode() != BinaryOperator::And) ||
+             (!isTrueDest && BO->getOpcode() != BinaryOperator::Or))
     return LVILatticeVal::getOverdefined();
 
   auto RHS = getValueFromCondition(Val, BO->getOperand(0), isTrueDest, Visited);
