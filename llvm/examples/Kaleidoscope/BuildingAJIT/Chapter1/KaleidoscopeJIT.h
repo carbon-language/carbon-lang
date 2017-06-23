@@ -44,7 +44,7 @@ private:
   IRCompileLayer<decltype(ObjectLayer), SimpleCompiler> CompileLayer;
 
 public:
-  using ModuleHandle = decltype(CompileLayer)::ModuleHandleT;
+  using ModuleHandle = decltype(CompileLayer)::ModuleSetHandleT;
 
   KaleidoscopeJIT()
       : TM(EngineBuilder().selectTarget()), DL(TM->createDataLayout()),
@@ -72,11 +72,15 @@ public:
           return JITSymbol(nullptr);
         });
 
+    // Build a singleton module set to hold our module.
+    std::vector<std::unique_ptr<Module>> Ms;
+    Ms.push_back(std::move(M));
+
     // Add the set to the JIT with the resolver we created above and a newly
     // created SectionMemoryManager.
-    return CompileLayer.addModule(std::move(M),
-                                  make_unique<SectionMemoryManager>(),
-                                  std::move(Resolver));
+    return CompileLayer.addModuleSet(std::move(Ms),
+                                     make_unique<SectionMemoryManager>(),
+                                     std::move(Resolver));
   }
 
   JITSymbol findSymbol(const std::string Name) {
@@ -87,7 +91,7 @@ public:
   }
 
   void removeModule(ModuleHandle H) {
-    CompileLayer.removeModule(H);
+    CompileLayer.removeModuleSet(H);
   }
 };
 

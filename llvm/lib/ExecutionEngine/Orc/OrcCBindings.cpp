@@ -12,24 +12,6 @@
 
 using namespace llvm;
 
-LLVMSharedModuleRef LLVMOrcMakeSharedModule(LLVMModuleRef Mod) {
-  return wrap(new std::shared_ptr<Module>(unwrap(Mod)));
-}
-
-void LLVMOrcDisposeSharedModuleRef(LLVMSharedModuleRef SharedMod) {
-  delete unwrap(SharedMod);
-}
-
-LLVMSharedObjectBufferRef
-LLVMOrcMakeSharedObjectBuffer(LLVMMemoryBufferRef ObjBuffer) {
-  return wrap(new std::shared_ptr<MemoryBuffer>(unwrap(ObjBuffer)));
-}
-
-void
-LLVMOrcDisposeSharedObjectBufferRef(LLVMSharedObjectBufferRef SharedObjBuffer) {
-  delete unwrap(SharedObjBuffer);
-}
-
 LLVMOrcJITStackRef LLVMOrcCreateInstance(LLVMTargetMachineRef TM) {
   TargetMachine *TM2(unwrap(TM));
 
@@ -83,23 +65,21 @@ LLVMOrcErrorCode LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack,
 }
 
 LLVMOrcModuleHandle
-LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack,
-                            LLVMSharedModuleRef Mod,
+LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod,
                             LLVMOrcSymbolResolverFn SymbolResolver,
                             void *SymbolResolverCtx) {
   OrcCBindingsStack &J = *unwrap(JITStack);
-  std::shared_ptr<Module> *M(unwrap(Mod));
-  return J.addIRModuleEager(*M, SymbolResolver, SymbolResolverCtx);
+  Module *M(unwrap(Mod));
+  return J.addIRModuleEager(M, SymbolResolver, SymbolResolverCtx);
 }
 
 LLVMOrcModuleHandle
-LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack,
-                           LLVMSharedModuleRef Mod,
+LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod,
                            LLVMOrcSymbolResolverFn SymbolResolver,
                            void *SymbolResolverCtx) {
   OrcCBindingsStack &J = *unwrap(JITStack);
-  std::shared_ptr<Module> *M(unwrap(Mod));
-  return J.addIRModuleLazy(*M, SymbolResolver, SymbolResolverCtx);
+  Module *M(unwrap(Mod));
+  return J.addIRModuleLazy(M, SymbolResolver, SymbolResolverCtx);
 }
 
 void LLVMOrcRemoveModule(LLVMOrcJITStackRef JITStack, LLVMOrcModuleHandle H) {

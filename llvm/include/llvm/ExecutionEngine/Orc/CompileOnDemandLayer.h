@@ -84,7 +84,7 @@ private:
     return LambdaMaterializer<MaterializerFtor>(std::move(M));
   }
 
-  using BaseLayerModuleHandleT = typename BaseLayerT::ModuleHandleT;
+  using BaseLayerModuleSetHandleT = typename BaseLayerT::ModuleSetHandleT;
 
   // Provide type-erasure for the Modules and MemoryManagers.
   template <typename ResourceT>
@@ -139,11 +139,9 @@ private:
   struct LogicalDylib {
     using SymbolResolverFtor = std::function<JITSymbol(const std::string&)>;
 
-    using ModuleAdderFtor =
-      std::function<typename BaseLayerT::ModuleHandleT(
-                    BaseLayerT&,
-                    std::unique_ptr<Module>,
-                    std::unique_ptr<JITSymbolResolver>)>;
+    using ModuleAdderFtor = std::function<typename BaseLayerT::ModuleSetHandleT(
+        BaseLayerT &, std::unique_ptr<Module>,
+        std::unique_ptr<JITSymbolResolver>)>;
 
     struct SourceModuleEntry {
       std::unique_ptr<ResourceOwner<Module>> SourceMod;
@@ -181,7 +179,7 @@ private:
 
     void removeModulesFromBaseLayer(BaseLayerT &BaseLayer) {
       for (auto &BLH : BaseLayerHandles)
-        BaseLayer.removeModule(BLH);
+        BaseLayer.removeModuleSet(BLH);
     }
 
     std::unique_ptr<JITSymbolResolver> ExternalSymbolResolver;
@@ -190,14 +188,14 @@ private:
     StaticGlobalRenamer StaticRenamer;
     ModuleAdderFtor ModuleAdder;
     SourceModulesList SourceModules;
-    std::vector<BaseLayerModuleHandleT> BaseLayerHandles;
+    std::vector<BaseLayerModuleSetHandleT> BaseLayerHandles;
   };
 
   using LogicalDylibList = std::list<LogicalDylib>;
 
 public:
-  /// @brief Handle to loaded module.
-  using ModuleHandleT = typename LogicalDylibList::iterator;
+  /// @brief Handle to a set of loaded modules.
+  using ModuleSetHandleT = typename LogicalDylibList::iterator;
 
   /// @brief Module partitioning functor.
   using PartitioningFtor = std::function<std::set<Function*>(Function&)>;
@@ -218,15 +216,15 @@ public:
 
   ~CompileOnDemandLayer() {
     while (!LogicalDylibs.empty())
-      removeModule(LogicalDylibs.begin());
+      removeModuleSet(LogicalDylibs.begin());
   }
-
+  
   /// @brief Add a module to the compile-on-demand layer.
-  template <typename MemoryManagerPtrT, typename SymbolResolverPtrT>
-  ModuleHandleT addModule(std::shared_ptr<Module> M,
-                          MemoryManagerPtrT MemMgr,
-                          SymbolResolverPtrT Resolver) {
-
+  template <typename ModuleSetT, typename MemoryManagerPtrT,
+            typename SymbolResolverPtrT>
+  ModuleSetHandleT addModuleSet(ModuleSetT Ms,
+                                MemoryManagerPtrT MemMgr,
+                                SymbolResolverPtrT Resolver) {
     LogicalDylibs.push_back(LogicalDylib());
     auto &LD = LogicalDylibs.back();
     LD.ExternalSymbolResolver = std::move(Resolver);
@@ -238,25 +236,23 @@ public:
     LD.ModuleAdder =
       [&MemMgrRef](BaseLayerT &B, std::unique_ptr<Module> M,
                    std::unique_ptr<JITSymbolResolver> R) {
-        return B.addModule(std::move(M), &MemMgrRef, std::move(R));
+        std::vector<std::unique_ptr<Module>> Ms;
+        Ms.push_back(std::move(M));
+        return B.addModuleSet(std::move(Ms), &MemMgrRef, std::move(R));
       };
 
     // Process each of the modules in this module set.
-    addLogicalModule(LogicalDylibs.back(), std::move(M));
+    for (auto &M : Ms)
+      addLogicalModule(LogicalDylibs.back(), std::move(M));
 
     return std::prev(LogicalDylibs.end());
-  }
-
-  /// @brief Add extra modules to an existing logical module.
-  void addExtraModule(ModuleHandleT H, std::shared_ptr<Module> M) {
-    addLogicalModule(*H, std::move(M));
   }
 
   /// @brief Remove the module represented by the given handle.
   ///
   ///   This will remove all modules in the layers below that were derived from
   /// the module represented by H.
-  void removeModule(ModuleHandleT H) {
+  void removeModuleSet(ModuleSetHandleT H) {
     H->removeModulesFromBaseLayer(BaseLayer);
     LogicalDylibs.erase(H);
   }
@@ -278,7 +274,7 @@ public:
 
   /// @brief Get the address of a symbol provided by this layer, or some layer
   ///        below this one.
-  JITSymbol findSymbolIn(ModuleHandleT H, const std::string &Name,
+  JITSymbol findSymbolIn(ModuleSetHandleT H, const std::string &Name,
                          bool ExportedSymbolsOnly) {
     return H->findSymbol(BaseLayer, Name, ExportedSymbolsOnly);
   }
@@ -502,7 +498,7 @@ private:
   }
 
   template <typename PartitionT>
-  BaseLayerModuleHandleT
+  BaseLayerModuleSetHandleT
   emitPartition(LogicalDylib &LD,
                 typename LogicalDylib::SourceModuleHandle LMId,
                 const PartitionT &Part) {

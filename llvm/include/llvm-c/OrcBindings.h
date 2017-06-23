@@ -29,8 +29,6 @@
 extern "C" {
 #endif
 
-typedef struct LLVMOpaqueSharedModule *LLVMSharedModuleRef;
-typedef struct LLVMOpaqueSharedObjectBuffer *LLVMSharedObjectBufferRef;
 typedef struct LLVMOrcOpaqueJITStack *LLVMOrcJITStackRef;
 typedef uint32_t LLVMOrcModuleHandle;
 typedef uint64_t LLVMOrcTargetAddress;
@@ -39,45 +37,6 @@ typedef uint64_t (*LLVMOrcLazyCompileCallbackFn)(LLVMOrcJITStackRef JITStack,
                                                  void *CallbackCtx);
 
 typedef enum { LLVMOrcErrSuccess = 0, LLVMOrcErrGeneric } LLVMOrcErrorCode;
-
-/**
- * Turn an LLVMModuleRef into an LLVMSharedModuleRef.
- *
- * The JIT uses shared ownership for LLVM modules, since it is generally
- * difficult to know when the JIT will be finished with a module (and the JIT
- * has no way of knowing when a user may be finished with one).
- *
- * Calling this method with an LLVMModuleRef creates a shared-pointer to the
- * module, and returns a reference to this shared pointer.
- *
- * The shared module should be disposed when finished with by calling
- * LLVMOrcDisposeSharedModule (not LLVMDisposeModule). The Module will be
- * deleted when the last shared pointer owner relinquishes it.
- */
-
-LLVMSharedModuleRef LLVMOrcMakeSharedModule(LLVMModuleRef Mod);
-
-/**
- * Dispose of a shared module.
- *
- * The module should not be accessed after this call. The module will be
- * deleted once all clients (including the JIT itself) have released their
- * shared pointers.
- */
-
-void LLVMOrcDisposeSharedModuleRef(LLVMSharedModuleRef SharedMod);
-
-/**
- * Get an LLVMSharedObjectBufferRef from an LLVMMemoryBufferRef.
- */
-LLVMSharedObjectBufferRef
-LLVMOrcMakeSharedObjectBuffer(LLVMMemoryBufferRef ObjBuffer);
-
-/**
- * Dispose of a shared object buffer.
- */
-void
-LLVMOrcDisposeSharedObjectBufferRef(LLVMSharedObjectBufferRef SharedObjBuffer);
 
 /**
  * Create an ORC JIT stack.
@@ -136,8 +95,7 @@ LLVMOrcErrorCode LLVMOrcSetIndirectStubPointer(LLVMOrcJITStackRef JITStack,
  * Add module to be eagerly compiled.
  */
 LLVMOrcModuleHandle
-LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack,
-                            LLVMSharedModuleRef Mod,
+LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod,
                             LLVMOrcSymbolResolverFn SymbolResolver,
                             void *SymbolResolverCtx);
 
@@ -145,8 +103,7 @@ LLVMOrcAddEagerlyCompiledIR(LLVMOrcJITStackRef JITStack,
  * Add module to be lazily compiled one function at a time.
  */
 LLVMOrcModuleHandle
-LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack,
-                           LLVMSharedModuleRef Mod,
+LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack, LLVMModuleRef Mod,
                            LLVMOrcSymbolResolverFn SymbolResolver,
                            void *SymbolResolverCtx);
 
@@ -154,7 +111,7 @@ LLVMOrcAddLazilyCompiledIR(LLVMOrcJITStackRef JITStack,
  * Add an object file.
  */
 LLVMOrcModuleHandle LLVMOrcAddObjectFile(LLVMOrcJITStackRef JITStack,
-                                         LLVMSharedObjectBufferRef Obj,
+                                         LLVMObjectFileRef Obj,
                                          LLVMOrcSymbolResolverFn SymbolResolver,
                                          void *SymbolResolverCtx);
 

@@ -191,15 +191,10 @@ public:
     } else {
       assert(M->getDataLayout() == getDataLayout() && "DataLayout Mismatch");
     }
-    auto *MPtr = M.release();
-    Retain[MPtr] = false;
-    auto Deleter =
-      [this](Module *Mod) {
-        if (!Retain[Mod])
-          delete Mod;
-      };
-    LocalModules.push_back(std::shared_ptr<Module>(MPtr, std::move(Deleter)));
-    LazyEmitLayer.addModule(LocalModules.back(), &MemMgr, &Resolver);
+    Modules.push_back(std::move(M));
+    std::vector<Module *> Ms;
+    Ms.push_back(&*Modules.back());
+    LazyEmitLayer.addModuleSet(std::move(Ms), &MemMgr, &Resolver);
   }
 
   void addObjectFile(std::unique_ptr<object::ObjectFile> O) override {
@@ -386,8 +381,6 @@ private:
   std::map<ObjectLayerT::ObjHandleT, SectionAddrSet, ObjHandleCompare>
       UnfinalizedSections;
 
-  std::map<Module*, bool> Retain;
-  std::vector<std::shared_ptr<Module>> LocalModules;
   std::vector<object::OwningBinary<object::Archive>> Archives;
 };
 
