@@ -96,6 +96,22 @@ Error BytesOutputStyle::dump() {
     P.NewLine();
   }
 
+  if (opts::bytes::DumpByteRange.hasValue()) {
+    auto &R = *opts::bytes::DumpByteRange;
+    uint32_t Max = R.Max.getValueOr(File.getFileSize());
+
+    if (Max < R.Min)
+      return make_error<StringError>("Invalid byte range specified.  Max < Min",
+                                     inconvertibleErrorCode());
+    if (Max >= File.getFileSize())
+      return make_error<StringError>(
+          "Invalid byte range specified.  Requested byte larger than file size",
+          inconvertibleErrorCode());
+
+    dumpByteRanges(R.Min, Max);
+    P.NewLine();
+  }
+
   if (!opts::bytes::DumpStreamData.empty()) {
     dumpStreamBytes();
     P.NewLine();
@@ -120,6 +136,21 @@ void BytesOutputStyle::dumpBlockRanges(uint32_t Min, uint32_t Max) {
     std::string Label = formatv("Block {0}", I).str();
     P.formatBinary(Label, *ExpectedData, Base, 0);
   }
+}
+
+void BytesOutputStyle::dumpByteRanges(uint32_t Min, uint32_t Max) {
+  printHeader(P, "MSF Bytes");
+
+  AutoIndent Indent(P);
+
+  BinaryStreamReader Reader(File.getMsfBuffer());
+  ArrayRef<uint8_t> Data;
+  consumeError(Reader.skip(Min));
+  uint32_t Size = Max - Min + 1;
+  auto EC = Reader.readBytes(Data, Size);
+  assert(!EC);
+  consumeError(std::move(EC));
+  P.formatBinary("Bytes", Data, Min);
 }
 
 void BytesOutputStyle::dumpStreamBytes() {

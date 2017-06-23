@@ -29,6 +29,7 @@ public:
 
 private:
   void dumpBlockRanges(uint32_t Min, uint32_t Max);
+  void dumpByteRanges(uint32_t Min, uint32_t Max);
   void dumpStreamBytes();
 
   PDBFile &File;

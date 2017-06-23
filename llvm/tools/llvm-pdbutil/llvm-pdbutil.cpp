@@ -267,12 +267,18 @@ cl::list<std::string> InputFilenames(cl::Positional,
 cl::OptionCategory FileOptions("Module & File Options");
 
 namespace bytes {
-llvm::Optional<BlockRange> DumpBlockRange;
+llvm::Optional<NumberRange> DumpBlockRange;
+llvm::Optional<NumberRange> DumpByteRange;
+
+cl::opt<std::string> DumpBlockRangeOpt(
+    "block-range", cl::value_desc("start[-end]"),
+    cl::desc("Dump binary data from specified range of blocks."),
+    cl::sub(BytesSubcommand));
 
 cl::opt<std::string>
-    DumpBlockRangeOpt("block-data", cl::value_desc("start[-end]"),
-                      cl::desc("Dump binary data from specified range."),
-                      cl::sub(BytesSubcommand));
+    DumpByteRangeOpt("byte-range", cl::value_desc("start[-end]"),
+                     cl::desc("Dump binary data from specified range of bytes"),
+                     cl::sub(BytesSubcommand));
 
 cl::list<std::string>
     DumpStreamData("stream-data", cl::CommaSeparated, cl::ZeroOrMore,
@@ -903,22 +909,23 @@ static void mergePdbs() {
   ExitOnErr(Builder.commit(OutFile));
 }
 
-static bool validateBlockRangeArgument() {
-  if (opts::bytes::DumpBlockRangeOpt.empty())
+static bool parseRange(StringRef Str,
+                       Optional<opts::bytes::NumberRange> &Parsed) {
+  if (Str.empty())
     return true;
 
   llvm::Regex R("^([^-]+)(-([^-]+))?$");
   llvm::SmallVector<llvm::StringRef, 2> Matches;
-  if (!R.match(opts::bytes::DumpBlockRangeOpt, &Matches))
+  if (!R.match(Str, &Matches))
     return false;
 
-  opts::bytes::DumpBlockRange.emplace();
-  if (!to_integer(Matches[1], opts::bytes::DumpBlockRange->Min))
+  Parsed.emplace();
+  if (!to_integer(Matches[1], Parsed->Min))
     return false;
 
   if (!Matches[3].empty()) {
-    opts::bytes::DumpBlockRange->Max.emplace();
-    if (!to_integer(Matches[3], *opts::bytes::DumpBlockRange->Max))
+    Parsed->Max.emplace();
+    if (!to_integer(Matches[3], *Parsed->Max))
       return false;
   }
   return true;
@@ -939,11 +946,22 @@ int main(int argc_, const char *argv_[]) {
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   cl::ParseCommandLineOptions(argv.size(), argv.data(), "LLVM PDB Dumper\n");
-  if (!validateBlockRangeArgument()) {
-    errs() << "Argument '" << opts::bytes::DumpBlockRangeOpt
-           << "' invalid format.\n";
-    errs().flush();
-    exit(1);
+
+  if (opts::BytesSubcommand) {
+    if (!parseRange(opts::bytes::DumpBlockRangeOpt,
+                    opts::bytes::DumpBlockRange)) {
+      errs() << "Argument '" << opts::bytes::DumpBlockRangeOpt
+             << "' invalid format.\n";
+      errs().flush();
+      exit(1);
+    }
+    if (!parseRange(opts::bytes::DumpByteRangeOpt,
+                    opts::bytes::DumpByteRange)) {
+      errs() << "Argument '" << opts::bytes::DumpByteRangeOpt
+             << "' invalid format.\n";
+      errs().flush();
+      exit(1);
+    }
   }
 
   if (opts::DumpSubcommand) {

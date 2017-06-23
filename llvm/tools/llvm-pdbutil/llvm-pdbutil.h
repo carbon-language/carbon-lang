@@ -93,11 +93,13 @@ extern llvm::cl::opt<uint32_t> ClassRecursionDepth;
 }
 
 namespace bytes {
-struct BlockRange {
-  uint32_t Min;
-  llvm::Optional<uint32_t> Max;
+struct NumberRange {
+  uint64_t Min;
+  llvm::Optional<uint64_t> Max;
 };
-extern llvm::Optional<BlockRange> DumpBlockRange;
+
+extern llvm::Optional<NumberRange> DumpBlockRange;
+extern llvm::Optional<NumberRange> DumpByteRange;
 extern llvm::cl::list<std::string> DumpStreamData;
 } // namespace bytes
 
