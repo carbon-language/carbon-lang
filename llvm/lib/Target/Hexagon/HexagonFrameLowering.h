@@ -82,6 +82,8 @@ public:
       const TargetRegisterInfo *TRI, std::vector<CalleeSavedInfo> &CSI)
       const override;
 
+  unsigned getMaxStackAlignment(const MachineFunction &MF) const;
+
   bool needsAligna(const MachineFunction &MF) const;
   const MachineInstr *getAlignaInstr(const MachineFunction &MF) const;
 
