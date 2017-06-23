@@ -38,7 +38,8 @@ public:
 
   MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override;
 
-  void applyFixup(const MCFixup &Fixup, MutableArrayRef<char> Data,
+  void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                  const MCValue &Target, MutableArrayRef<char> Data,
                   uint64_t Value, bool IsPCRel, MCContext &Ctx) const override;
 
   Optional<MCFixupKind> getFixupKind(StringRef Name) const override;

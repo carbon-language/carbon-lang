@@ -273,7 +273,8 @@ namespace {
     ELFSparcAsmBackend(const Target &T, Triple::OSType OSType) :
       SparcAsmBackend(T), OSType(OSType) { }
 
-    void applyFixup(const MCFixup &Fixup, MutableArrayRef<char> Data,
+    void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                    const MCValue &Target, MutableArrayRef<char> Data,
                     uint64_t Value, bool IsPCRel,
                     MCContext &Ctx) const override {
 

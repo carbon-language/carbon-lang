@@ -71,7 +71,8 @@ public:
     return Infos[Kind - FirstTargetFixupKind];
   }
 
-  void applyFixup(const MCFixup &Fixup, MutableArrayRef<char> Data,
+  void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                  const MCValue &Target, MutableArrayRef<char> Data,
                   uint64_t Value, bool IsPCRel, MCContext &Ctx) const override;
 
   bool mayNeedRelaxation(const MCInst &Inst) const override;
@@ -260,7 +261,8 @@ unsigned AArch64AsmBackend::getFixupKindContainereSizeInBytes(unsigned Kind) con
   }
 }
 
-void AArch64AsmBackend::applyFixup(const MCFixup &Fixup,
+void AArch64AsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                                   const MCValue &Target,
                                    MutableArrayRef<char> Data, uint64_t Value,
                                    bool IsPCRel, MCContext &Ctx) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());

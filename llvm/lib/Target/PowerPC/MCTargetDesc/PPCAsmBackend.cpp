@@ -113,7 +113,8 @@ public:
     return (IsLittleEndian? InfosLE : InfosBE)[Kind - FirstTargetFixupKind];
   }
 
-  void applyFixup(const MCFixup &Fixup, MutableArrayRef<char> Data,
+  void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                  const MCValue &Target, MutableArrayRef<char> Data,
                   uint64_t Value, bool IsPCRel, MCContext &Ctx) const override {
     Value = adjustFixupValue(Fixup.getKind(), Value);
     if (!Value) return;           // Doesn't change encoding.

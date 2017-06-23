@@ -36,7 +36,8 @@ public:
                          const MCValue &Target, uint64_t &Value,
                          bool &IsResolved) override;
 
-  void applyFixup(const MCFixup &Fixup, MutableArrayRef<char> Data,
+  void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                  const MCValue &Target, MutableArrayRef<char> Data,
                   uint64_t Value, bool IsPCRel, MCContext &Ctx) const override;
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
@@ -129,7 +130,8 @@ void AMDGPUAsmBackend::processFixupValue(const MCAssembler &Asm,
     Value = adjustFixupValue(Fixup, Value, &Asm.getContext());
 }
 
-void AMDGPUAsmBackend::applyFixup(const MCFixup &Fixup,
+void AMDGPUAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
+                                  const MCValue &Target,
                                   MutableArrayRef<char> Data, uint64_t Value,
                                   bool IsPCRel, MCContext &Ctx) const {
   if (!Value)
