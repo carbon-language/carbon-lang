@@ -58,7 +58,7 @@ Improvements to clang-tidy
 --------------------------
 
 - New `android-file-open-flag
-    <http://clang.llvm.org/extra/clang-tidy/checks/android-file-open-flag>`_ check
+  <http://clang.llvm.org/extra/clang-tidy/checks/android-file-open-flag.html>`_ check
 
   Checks if the required file flag ``O_CLOEXEC`` exists in ``open()``,
   ``open64()`` and ``openat()``.
