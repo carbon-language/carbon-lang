@@ -126,6 +126,38 @@ which currently must be enabled through a linker option.
 - lld (as of LLVM r296702):
   ``-Wl,--thinlto-cache-dir=/path/to/cache``
 
+Cache Pruning
+-------------
+
+To help keep the size of the cache under control, ThinLTO supports cache
+pruning. Cache pruning is supported with ld64 and ELF lld, but currently only
+ELF lld allows you to control the policy with a policy string.  The cache
+policy must be specified with a linker option.
+
+- ELF lld (as of LLVM r298036):
+  ``-Wl,--thinlto-cache-policy,POLICY``
+
+A policy string is a series of key-value pairs separated by ``:`` characters.
+Possible key-value pairs are:
+
+- ``cache_size=X%``: The maximum size for the cache directory is ``X`` percent
+  of the available space on the the disk. Set to 100 to indicate no limit,
+  50 to indicate that the cache size will not be left over half the available
+  disk space. A value over 100 is invalid. A value of 0 disables the percentage
+  size-based pruning. The default is 75%.
+
+- ``prune_after=Xs``, ``prune_after=Xm``, ``prune_after=Xh``: Sets the
+  expiration time for cache files to ``X`` seconds (or minutes, hours
+  respectively).  When a file hasn't been accessed for ``prune_after`` seconds,
+  it is removed from the cache. A value of 0 disables the expiration-based
+  pruning. The default is 1 week.
+
+- ``prune_interval=Xs``, ``prune_interval=Xm``, ``prune_interval=Xh``:
+  Sets the pruning interval to ``X`` seconds (or minutes, hours
+  respectively). This is intended to be used to avoid scanning the directory
+  too often. It does not impact the decision of which files to prune. A
+  value of 0 forces the scan to occur. The default is every 20 minutes.
+
 Clang Bootstrap
 ---------------
 
