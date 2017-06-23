@@ -3326,6 +3326,9 @@ bool Scop::buildAliasGroups(AliasAnalysis &AA) {
   splitAliasGroupsByDomain(AliasGroups);
 
   for (AliasGroupTy &AG : AliasGroups) {
+    if (!hasFeasibleRuntimeContext())
+      return false;
+
     {
       IslMaxOperationsGuard MaxOpGuard(getIslCtx(), OptComputeOut);
       bool Valid = buildAliasGroup(AG, HasWriteAccess);
