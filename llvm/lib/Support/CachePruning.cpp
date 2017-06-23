@@ -79,9 +79,9 @@ llvm::parseCachePruningPolicy(StringRef PolicyStr) {
         return DurationOrErr.takeError();
       Policy.Expiration = *DurationOrErr;
     } else if (Key == "cache_size") {
-    if (Value.back() != '%')
-      return make_error<StringError>("'" + Value + "' must be a percentage",
-                                     inconvertibleErrorCode());
+      if (Value.back() != '%')
+        return make_error<StringError>("'" + Value + "' must be a percentage",
+                                       inconvertibleErrorCode());
       StringRef SizeStr = Value.drop_back();
       uint64_t Size;
       if (SizeStr.getAsInteger(0, Size))
