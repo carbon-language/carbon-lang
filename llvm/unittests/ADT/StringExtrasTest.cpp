@@ -70,7 +70,7 @@ TEST(StringExtrasTest, ToAndFromHex) {
 TEST(StringExtrasTest, to_float) {
   float F;
   EXPECT_TRUE(to_float("4.7", F));
-  EXPECT_FLOAT_EQ(4.7, F);
+  EXPECT_FLOAT_EQ(4.7f, F);
 
   double D;
   EXPECT_TRUE(to_float("4.7", D));
@@ -82,5 +82,5 @@ TEST(StringExtrasTest, to_float) {
 
   EXPECT_FALSE(to_float("foo", F));
   EXPECT_FALSE(to_float("7.4 foo", F));
-  EXPECT_FLOAT_EQ(4.7, F); // F should be unchanged
+  EXPECT_FLOAT_EQ(4.7f, F); // F should be unchanged
 }
