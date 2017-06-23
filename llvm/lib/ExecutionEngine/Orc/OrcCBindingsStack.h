@@ -43,9 +43,9 @@ namespace llvm {
 class OrcCBindingsStack;
 
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(std::shared_ptr<Module>,
-                                   LLVMSharedModuleRef);
+                                   LLVMSharedModuleRef)
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(std::shared_ptr<MemoryBuffer>,
-                                   LLVMSharedObjectBufferRef);
+                                   LLVMSharedObjectBufferRef)
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(OrcCBindingsStack, LLVMOrcJITStackRef)
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(TargetMachine, LLVMTargetMachineRef)
 
