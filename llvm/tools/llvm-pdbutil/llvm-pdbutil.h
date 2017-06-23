@@ -110,6 +110,9 @@ extern llvm::cl::opt<bool> FileInfo;
 extern llvm::cl::opt<bool> TypeServerMap;
 extern llvm::cl::opt<bool> ECData;
 
+extern llvm::cl::list<uint32_t> TypeIndex;
+extern llvm::cl::list<uint32_t> IdIndex;
+
 } // namespace bytes
 
 namespace dump {

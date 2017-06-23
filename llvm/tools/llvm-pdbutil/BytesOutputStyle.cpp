@@ -12,16 +12,20 @@
 #include "StreamUtil.h"
 #include "llvm-pdbutil.h"
 
+#include "llvm/DebugInfo/CodeView/Formatters.h"
+#include "llvm/DebugInfo/CodeView/LazyRandomTypeCollection.h"
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
+#include "llvm/DebugInfo/PDB/Native/TpiStream.h"
 #include "llvm/Support/BinaryStreamReader.h"
 #include "llvm/Support/FormatAdapters.h"
 #include "llvm/Support/FormatVariadic.h"
 
 using namespace llvm;
+using namespace llvm::codeview;
 using namespace llvm::msf;
 using namespace llvm::pdb;
 
@@ -154,6 +158,16 @@ Error BytesOutputStyle::dump() {
     P.NewLine();
   }
 
+  if (!opts::bytes::TypeIndex.empty()) {
+    dumpTypeIndex(StreamTPI, opts::bytes::TypeIndex);
+    P.NewLine();
+  }
+
+  if (!opts::bytes::IdIndex.empty()) {
+    dumpTypeIndex(StreamIPI, opts::bytes::IdIndex);
+    P.NewLine();
+  }
+
   return Error::success();
 }
 
@@ -253,6 +267,36 @@ void BytesOutputStyle::dumpECData() {
   P.formatMsfStreamData("Edit and Continue Data", File, Layout, NS);
 }
 
+void BytesOutputStyle::dumpTypeIndex(uint32_t StreamIdx,
+                                     ArrayRef<uint32_t> Indices) {
+  assert(StreamIdx == StreamTPI || StreamIdx == StreamIPI);
+  assert(!Indices.empty());
+
+  bool IsTpi = (StreamIdx == StreamTPI);
+
+  StringRef Label = IsTpi ? "Type (TPI) Records" : "Index (IPI) Records";
+  printHeader(P, Label);
+  auto &Stream = Err(IsTpi ? File.getPDBTpiStream() : File.getPDBIpiStream());
+
+  AutoIndent Indent(P);
+
+  auto Substream = Stream.getTypeRecordsSubstream();
+  auto &Types = Err(initializeTypes(StreamIdx));
+  auto Layout = File.getStreamLayout(StreamIdx);
+  for (const auto &Id : Indices) {
+    TypeIndex TI(Id);
+    if (TI.toArrayIndex() >= Types.capacity()) {
+      P.formatLine("Error: TypeIndex {0} does not exist", TI);
+      continue;
+    }
+
+    auto Type = Types.getType(TI);
+    uint32_t Offset = Types.getOffsetOfType(TI);
+    auto OneType = Substream.slice(Offset, Type.length());
+    P.formatMsfStreamData(formatv("Type {0}", TI).str(), File, Layout, OneType);
+  }
+}
+
 void BytesOutputStyle::dumpByteRanges(uint32_t Min, uint32_t Max) {
   printHeader(P, "MSF Bytes");
 
@@ -266,6 +310,26 @@ void BytesOutputStyle::dumpByteRanges(uint32_t Min, uint32_t Max) {
   assert(!EC);
   consumeError(std::move(EC));
   P.formatBinary("Bytes", Data, Min);
+}
+
+Expected<codeview::LazyRandomTypeCollection &>
+BytesOutputStyle::initializeTypes(uint32_t StreamIdx) {
+  auto &TypeCollection = (StreamIdx == StreamTPI) ? TpiTypes : IpiTypes;
+  if (TypeCollection)
+    return *TypeCollection;
+
+  auto Tpi = (StreamIdx == StreamTPI) ? File.getPDBTpiStream()
+                                      : File.getPDBIpiStream();
+  if (!Tpi)
+    return Tpi.takeError();
+
+  auto &Types = Tpi->typeArray();
+  uint32_t Count = Tpi->getNumTypeRecords();
+  auto Offsets = Tpi->getTypeIndexOffsets();
+  TypeCollection =
+      llvm::make_unique<LazyRandomTypeCollection>(Types, Count, Offsets);
+
+  return *TypeCollection;
 }
 
 void BytesOutputStyle::dumpStreamBytes() {

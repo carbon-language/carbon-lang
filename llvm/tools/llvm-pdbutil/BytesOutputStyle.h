@@ -17,6 +17,10 @@
 
 namespace llvm {
 
+namespace codeview {
+class LazyRandomTypeCollection;
+}
+
 namespace pdb {
 
 class PDBFile;
@@ -39,6 +43,14 @@ private:
   void dumpFileInfo();
   void dumpTypeServerMap();
   void dumpECData();
+
+  void dumpTypeIndex(uint32_t StreamIdx, ArrayRef<uint32_t> Indices);
+
+  Expected<codeview::LazyRandomTypeCollection &>
+  initializeTypes(uint32_t StreamIdx);
+
+  std::unique_ptr<codeview::LazyRandomTypeCollection> TpiTypes;
+  std::unique_ptr<codeview::LazyRandomTypeCollection> IpiTypes;
 
   PDBFile &File;
   LinePrinter P;
