@@ -746,17 +746,6 @@ void WinCOFFObjectWriter::recordRelocation(
       return;
     }
 
-    if (!A.getFragment()) {
-      Asm.getContext().reportError(
-          Fixup.getLoc(),
-          Twine("symbol '") + A.getName() +
-              "' can not be undefined in a subtraction expression");
-      return;
-    }
-
-    assert(&A.getSection() != &B->getSection() &&
-           "This doesn't need a relocation");
-
     // Offset of the symbol in the section
     int64_t OffsetOfB = Layout.getSymbolOffset(*B);
 

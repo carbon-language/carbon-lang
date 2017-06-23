@@ -58,17 +58,18 @@ t6:
 	.long	g3-(t6+16)
 	.zero	4
 
+.long foobar - .
 
 // READOBJ:  Section {
 // READOBJ:    Number: 5
 // READOBJ:    Name: .fix (2E 66 69 78 00 00 00 00)
 // READOBJ:    VirtualSize: 0x0
 // READOBJ:    VirtualAddress: 0x0
-// READOBJ:    RawDataSize: 56
+// READOBJ:    RawDataSize:
 // READOBJ:    PointerToRawData: 0xEC
-// READOBJ:    PointerToRelocations: 0x124
+// READOBJ:    PointerToRelocations:
 // READOBJ:    PointerToLineNumbers: 0x0
-// READOBJ:    RelocationCount: 6
+// READOBJ:    RelocationCount:
 // READOBJ:    LineNumberCount: 0
 // READOBJ:    Characteristics [ (0xC0500040)
 // READOBJ:      IMAGE_SCN_ALIGN_16BYTES (0x500000)
@@ -80,7 +81,7 @@ t6:
 // READOBJ:      0000: 08000000 00000000 04000000 00000000  |................|
 // READOBJ:      0010: 00000000 00000000 04000000 00000000  |................|
 // READOBJ:      0020: 01020000 00000000 00010000 00000000  |................|
-// READOBJ:      0030: 04000000 00000000                    |........|
+// READOBJ:      0030: 04000000 00000000 04000000           |............|
 // READOBJ:    )
 // READOBJ:  }
 // READOBJ:  ]
@@ -115,4 +116,9 @@ t6:
 // READOBJ:      Offset: 0x30
 // READOBJ:      Type: IMAGE_REL_AMD64_REL32 (4)
 // READOBJ:      Symbol: g3
+// READOBJ:    }
+// READOBJ:    Relocation {
+// READOBJ:      Offset: 0x38
+// READOBJ:      Type: IMAGE_REL_AMD64_REL32 (4)
+// READOBJ:      Symbol: foobar
 // READOBJ:    }
