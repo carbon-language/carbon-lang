@@ -1475,6 +1475,15 @@ the configuration (without a prefix: ``Auto``).
      #include "b.h"                 vs.     #include "a.h"
      #include "a.h"                         #include "b.h"
 
+**SortUsingDeclarations** (``bool``)
+  If ``true``, clang-format will sort using declarations.
+
+  .. code-block:: c++
+
+     false:                                 true:
+     using std::cout;               vs.     using std::cin;
+     using std::cin;                        using std::cout;
+
 **SpaceAfterCStyleCast** (``bool``)
   If ``true``, a space is inserted after C style casts.
 
