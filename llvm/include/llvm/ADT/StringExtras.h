@@ -146,15 +146,15 @@ inline bool to_float(const Twine &T, N &Num, N (*StrTo)(const char *, char **)) 
 }
 
 inline bool to_float(const Twine &T, float &Num) {
-  return detail::to_float(T, Num, std::strtof);
+  return detail::to_float(T, Num, strtof);
 }
 
 inline bool to_float(const Twine &T, double &Num) {
-  return detail::to_float(T, Num, std::strtod);
+  return detail::to_float(T, Num, strtod);
 }
 
 inline bool to_float(const Twine &T, long double &Num) {
-  return detail::to_float(T, Num, std::strtold);
+  return detail::to_float(T, Num, strtold);
 }
 
 static inline std::string utostr(uint64_t X, bool isNeg = false) {
