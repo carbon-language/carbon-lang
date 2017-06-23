@@ -126,14 +126,13 @@ void AMDGPUAsmBackend::processFixupValue(const MCAssembler &Asm,
     IsResolved = true;
 
   }
-  if (IsResolved)
-    Value = adjustFixupValue(Fixup, Value, &Asm.getContext());
 }
 
 void AMDGPUAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                                   const MCValue &Target,
                                   MutableArrayRef<char> Data, uint64_t Value,
                                   bool IsPCRel, MCContext &Ctx) const {
+  Value = adjustFixupValue(Fixup, Value, &Asm.getContext());
   if (!Value)
     return; // Doesn't change encoding.
 
