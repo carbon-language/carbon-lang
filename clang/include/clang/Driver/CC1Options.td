@@ -158,7 +158,7 @@ def msave_temp_labels : Flag<["-"], "msave-temp-labels">,
            "Note this may change .s semantics and shouldn't generally be used "
            "on compiler-generated code.">;
 def mrelocation_model : Separate<["-"], "mrelocation-model">,
-  HelpText<"The relocation model to use">;
+  HelpText<"The relocation model to use">, Values<"static,pic,ropi,rwpi,ropi-rwpi,dynamic-no-pic">;
 def fno_math_builtin : Flag<["-"], "fno-math-builtin">,
   HelpText<"Disable implicit builtin knowledge of math functions">;
 }
@@ -229,7 +229,7 @@ def no_struct_path_tbaa : Flag<["-"], "no-struct-path-tbaa">,
 def masm_verbose : Flag<["-"], "masm-verbose">,
   HelpText<"Generate verbose assembly output">;
 def mcode_model : Separate<["-"], "mcode-model">,
-  HelpText<"The code model to use">;
+  HelpText<"The code model to use">, Values<"small,kernel,medium,large">;
 def mdebug_pass : Separate<["-"], "mdebug-pass">,
   HelpText<"Enable additional debug output">;
 def mdisable_fp_elim : Flag<["-"], "mdisable-fp-elim">,
@@ -308,7 +308,7 @@ def fsanitize_coverage_no_prune
       HelpText<"Disable coverage pruning (i.e. instrument all blocks/edges)">;
 def fprofile_instrument_EQ : Joined<["-"], "fprofile-instrument=">,
     HelpText<"Enable PGO instrumentation. The accepted value is clang, llvm, "
-             "or none">;
+             "or none">, Values<"none,clang,llvm">;
 def fprofile_instrument_path_EQ : Joined<["-"], "fprofile-instrument-path=">,
     HelpText<"Generate instrumented code to collect execution counts into "
              "<file> (overridden by LLVM_PROFILE_FILE env var)">;
@@ -348,9 +348,9 @@ def diagnostic_serialized_file : Separate<["-"], "serialize-diagnostic-file">,
   HelpText<"File for serializing diagnostics in a binary format">;
 
 def fdiagnostics_format : Separate<["-"], "fdiagnostics-format">,
-  HelpText<"Change diagnostic formatting to match IDE and command line tools">;
+  HelpText<"Change diagnostic formatting to match IDE and command line tools">, Values<"clang,msvc,msvc-fallback,vi">;
 def fdiagnostics_show_category : Separate<["-"], "fdiagnostics-show-category">,
-  HelpText<"Print diagnostic category">;
+  HelpText<"Print diagnostic category">, Values<"none,id,name">;
 def fno_diagnostics_use_presumed_location : Flag<["-"], "fno-diagnostics-use-presumed-location">,
   HelpText<"Ignore #line directives when displaying diagnostic locations">;
 def ftabstop : Separate<["-"], "ftabstop">, MetaVarName<"<N>">,
@@ -595,11 +595,11 @@ def fconstant_string_class : Separate<["-"], "fconstant-string-class">,
   MetaVarName<"<class name>">,
   HelpText<"Specify the class to use for constant Objective-C string objects.">;
 def fobjc_arc_cxxlib_EQ : Joined<["-"], "fobjc-arc-cxxlib=">,
-  HelpText<"Objective-C++ Automatic Reference Counting standard library kind">;
+  HelpText<"Objective-C++ Automatic Reference Counting standard library kind">, Values<"libc++,libstdc++,none">;
 def fobjc_runtime_has_weak : Flag<["-"], "fobjc-runtime-has-weak">,
   HelpText<"The target Objective-C runtime supports ARC weak operations">;
 def fobjc_dispatch_method_EQ : Joined<["-"], "fobjc-dispatch-method=">,
-  HelpText<"Objective-C dispatch method to use">;
+  HelpText<"Objective-C dispatch method to use">, Values<"legacy,non-legacy,mixed">;
 def disable_objc_default_synthesize_properties : Flag<["-"], "disable-objc-default-synthesize-properties">,
   HelpText<"disable the default synthesis of Objective-C properties">;
 def fencode_extended_block_signature : Flag<["-"], "fencode-extended-block-signature">,
@@ -673,7 +673,7 @@ def fnative_half_arguments_and_returns : Flag<["-"], "fnative-half-arguments-and
 def fallow_half_arguments_and_returns : Flag<["-"], "fallow-half-arguments-and-returns">,
   HelpText<"Allow function arguments and returns of type half">;
 def fdefault_calling_conv_EQ : Joined<["-"], "fdefault-calling-conv=">,
-  HelpText<"Set default MS calling convention">;
+  HelpText<"Set default MS calling convention">, Values<"cdecl,fastcall,stdcall,vectorcall">;
 def finclude_default_header : Flag<["-"], "finclude-default-header">,
   HelpText<"Include the default header file for OpenCL">;
 def fpreserve_vec3_type : Flag<["-"], "fpreserve-vec3-type">,

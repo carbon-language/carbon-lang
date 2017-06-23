@@ -34,3 +34,5 @@
 // MFLOATABIALL: hard soft softfp
 // RUN: %clang --autocomplete=-mthread-model, | FileCheck %s -check-prefix=MTHREADMODELALL
 // MTHREADMODELALL: posix single
+// RUN: %clang --autocomplete=-mrelocation-model, | FileCheck %s -check-prefix=MRELOCMODELALL
+// MRELOCMODELALL: dynamic-no-pic pic ropi ropi-rwpi rwpi static
