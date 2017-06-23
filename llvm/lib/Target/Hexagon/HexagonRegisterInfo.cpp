@@ -283,36 +283,6 @@ bool HexagonRegisterInfo::useFPForScavengingIndex(const MachineFunction &MF)
   return MF.getSubtarget<HexagonSubtarget>().getFrameLowering()->hasFP(MF);
 }
 
-// The stack alignment on Hexagon can actually decrease in some cases,
-// specifically in some subset of cases when a variable-sized stack object
-// is present.
-// The issue is two-fold:
-// First of all, if there is a variable-sized object and the stack needs
-// extra alignment (due to pre-existing local objects), then a special
-// register will be reserved up front, acting as the aligned stack pointer
-// (call it AP). This register is only guaranteed to be live for accessing
-// these pre-existing local objects (the ones with the higher alignment).
-// Now, if the register allocator introduces vector register spills, their
-// spill slots will initially have an alignment equal to the register size,
-// which is higher than the normal stack alignment. Ideally, they should be
-// loaded/stored using AP, but AP may not be available at all required
-// places. To avoid this issue, the vector spill slots will have their
-// alignment lowered to 8, and they will be loaded/stored using unaligned
-// instructions.
-//
-// The lowering of the stack alignment may happen if the stack had a
-// variable-sized object, but otherwise retained its default alignment
-// up until register allocation. If the register allocator introduces
-// a vector spill, it will cause the max stack alignment to grow
-// (inside MachineFrameInfo). When the alignment of the spills is reset
-// back to the default stack alignment, MFI's max stack alignment will
-// not reflect that (since it cannot be lowered). Relying on that during
-// frame lowering will cause an unnecessary stack realignment.
-bool HexagonRegisterInfo::needsStackRealignment(const MachineFunction &MF)
-      const {
-  auto &HFI = *MF.getSubtarget<HexagonSubtarget>().getFrameLowering();
-  return HFI.getMaxStackAlignment(MF) > HFI.getStackAlignment();
-}
 
 unsigned HexagonRegisterInfo::getFirstCallerSavedNonParamReg() const {
   return Hexagon::R6;

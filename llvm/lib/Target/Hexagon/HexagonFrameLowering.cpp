@@ -552,7 +552,7 @@ void HexagonFrameLowering::insertPrologueInBlock(MachineBasicBlock &MBB,
   auto &HRI = *HST.getRegisterInfo();
   DebugLoc dl;
 
-  unsigned MaxAlign = std::max(getMaxStackAlignment(MF), getStackAlignment());
+  unsigned MaxAlign = std::max(MFI.getMaxAlignment(), getStackAlignment());
 
   // Calculate the total stack frame size.
   // Get the number of bytes to allocate from the FrameInfo.
@@ -2354,26 +2354,11 @@ void HexagonFrameLowering::expandAlloca(MachineInstr *AI,
   }
 }
 
-unsigned
-HexagonFrameLowering::getMaxStackAlignment(const MachineFunction &MF) const {
-  const MachineFrameInfo &MFI = MF.getFrameInfo();
-  // MFI's MaxAlignment can only grow, but we can actually reduce it
-  // for vector spills.
-  unsigned MaxAlign = 0;
-  for (int i = 0, e = MFI.getObjectIndexEnd(); i != e; ++i) {
-    if (MFI.isDeadObjectIndex(i))
-      continue;
-    unsigned Align = MFI.getObjectAlignment(i);
-    MaxAlign = std::max(MaxAlign, Align);
-  }
-  return MaxAlign;
-}
-
 bool HexagonFrameLowering::needsAligna(const MachineFunction &MF) const {
   const MachineFrameInfo &MFI = MF.getFrameInfo();
   if (!MFI.hasVarSizedObjects())
     return false;
-  unsigned MaxA = getMaxStackAlignment(MF);
+  unsigned MaxA = MFI.getMaxAlignment();
   if (MaxA <= getStackAlignment())
     return false;
   return true;
