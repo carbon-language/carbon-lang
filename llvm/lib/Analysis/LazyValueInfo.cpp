@@ -1660,6 +1660,26 @@ Constant *LazyValueInfo::getConstantOnEdge(Value *V, BasicBlock *FromBB,
   return nullptr;
 }
 
+ConstantRange LazyValueInfo::getConstantRangeOnEdge(Value *V,
+                                                    BasicBlock *FromBB,
+                                                    BasicBlock *ToBB,
+                                                    Instruction *CxtI) {
+  unsigned Width = V->getType()->getIntegerBitWidth();
+  const DataLayout &DL = FromBB->getModule()->getDataLayout();
+  LVILatticeVal Result =
+      getImpl(PImpl, AC, &DL, DT).getValueOnEdge(V, FromBB, ToBB, CxtI);
+
+  if (Result.isUndefined())
+    return ConstantRange(Width, /*isFullSet=*/false);
+  if (Result.isConstantRange())
+    return Result.getConstantRange();
+  // We represent ConstantInt constants as constant ranges but other kinds
+  // of integer constants, i.e. ConstantExpr will be tagged as constants
+  assert(!(Result.isConstant() && isa<ConstantInt>(Result.getConstant())) &&
+         "ConstantInt value must be represented as constantrange");
+  return ConstantRange(Width, /*isFullSet=*/true);
+}
+
 static LazyValueInfo::Tristate getPredicateResult(unsigned Pred, Constant *C,
                                                   const LVILatticeVal &Val,
                                                   const DataLayout &DL,
