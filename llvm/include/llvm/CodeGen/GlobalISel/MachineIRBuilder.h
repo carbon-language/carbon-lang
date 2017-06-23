@@ -484,8 +484,6 @@ public:
   /// \pre The bits defined by each Op (derived from index and scalar size) must
   ///      not overlap.
   /// \pre \p Indices must be in ascending order of bit position.
-  ///
-  /// \return a MachineInstrBuilder for the newly created instruction.
   void buildSequence(unsigned Res, ArrayRef<unsigned> Ops,
                      ArrayRef<uint64_t> Indices);
 
