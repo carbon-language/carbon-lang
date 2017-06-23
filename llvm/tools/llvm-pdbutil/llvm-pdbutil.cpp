@@ -286,6 +286,9 @@ cl::list<std::string>
                             "is SN[:Start][@Size]"),
                    cl::sub(BytesSubcommand));
 
+cl::opt<bool> NameMap("name-map", cl::desc("Dump bytes of PDB Name Map"),
+                      cl::sub(BytesSubcommand));
+
 cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input PDB files>"),
                                      cl::OneOrMore, cl::sub(BytesSubcommand));

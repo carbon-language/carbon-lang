@@ -28,12 +28,14 @@ public:
   Error dump() override;
 
 private:
+  void dumpNameMap();
   void dumpBlockRanges(uint32_t Min, uint32_t Max);
   void dumpByteRanges(uint32_t Min, uint32_t Max);
   void dumpStreamBytes();
 
   PDBFile &File;
   LinePrinter P;
+  ExitOnError Err;
   SmallVector<std::string, 8> StreamPurposes;
 };
 } // namespace pdb

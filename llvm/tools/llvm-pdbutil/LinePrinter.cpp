@@ -203,11 +203,12 @@ void LinePrinter::formatMsfStreamData(StringRef Label, PDBFile &File,
              StreamPurpose, Size, S->getLength());
   AutoIndent Indent(*this);
   BinaryStreamRef Slice(*S);
-  Slice = Slice.keep_front(Offset + Size);
-  BinaryStreamReader Reader(Slice);
-  consumeError(Reader.skip(Offset));
+  BinarySubstreamRef Substream;
+  Substream.Offset = Offset;
+  Substream.StreamData = Slice.drop_front(Offset).keep_front(Size);
+
   auto Layout = File.getStreamLayout(StreamIdx);
-  formatMsfStreamData(Label, File, Layout, Reader);
+  formatMsfStreamData(Label, File, Layout, Substream);
 }
 
 void LinePrinter::formatMsfStreamData(StringRef Label, PDBFile &File,
@@ -215,13 +216,6 @@ void LinePrinter::formatMsfStreamData(StringRef Label, PDBFile &File,
                                       BinarySubstreamRef Substream) {
   BinaryStreamReader Reader(Substream.StreamData);
 
-  consumeError(Reader.skip(Substream.Offset));
-  formatMsfStreamData(Label, File, Stream, Reader);
-}
-
-void LinePrinter::formatMsfStreamData(StringRef Label, PDBFile &File,
-                                      const msf::MSFStreamLayout &Stream,
-                                      BinaryStreamReader &Reader) {
   auto Runs = computeBlockRuns(File.getBlockSize(), Stream);
 
   NewLine();
@@ -231,7 +225,7 @@ void LinePrinter::formatMsfStreamData(StringRef Label, PDBFile &File,
 
     Run FoundRun;
     uint32_t RunOffset;
-    std::tie(FoundRun, RunOffset) = findRun(Reader.getOffset(), Runs);
+    std::tie(FoundRun, RunOffset) = findRun(Substream.Offset, Runs);
     assert(FoundRun.ByteLen >= RunOffset);
     uint32_t Len = FoundRun.ByteLen - RunOffset;
     Len = std::min(Len, Reader.bytesRemaining());
@@ -245,6 +239,7 @@ void LinePrinter::formatMsfStreamData(StringRef Label, PDBFile &File,
       OS << formatv("  {0}",
                     fmt_align("<discontinuity>", AlignStyle::Center, 114, '-'));
     }
+    Substream.Offset += Len;
   }
   NewLine();
   OS << ")";

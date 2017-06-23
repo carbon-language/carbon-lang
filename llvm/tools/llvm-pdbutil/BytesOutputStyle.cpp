@@ -13,6 +13,7 @@
 #include "llvm-pdbutil.h"
 
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
+#include "llvm/DebugInfo/PDB/Native/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
 #include "llvm/Support/BinaryStreamReader.h"
@@ -116,7 +117,23 @@ Error BytesOutputStyle::dump() {
     dumpStreamBytes();
     P.NewLine();
   }
+
+  if (opts::bytes::NameMap) {
+    dumpNameMap();
+    P.NewLine();
+  }
   return Error::success();
+}
+
+void BytesOutputStyle::dumpNameMap() {
+  printHeader(P, "Named Stream Map");
+
+  AutoIndent Indent(P);
+
+  auto &InfoS = Err(File.getPDBInfoStream());
+  BinarySubstreamRef NS = InfoS.getNamedStreamsBuffer();
+  auto Layout = File.getStreamLayout(StreamPDB);
+  P.formatMsfStreamData("Named Stream Map", File, Layout, NS);
 }
 
 void BytesOutputStyle::dumpBlockRanges(uint32_t Min, uint32_t Max) {

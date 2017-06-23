@@ -101,6 +101,7 @@ struct NumberRange {
 extern llvm::Optional<NumberRange> DumpBlockRange;
 extern llvm::Optional<NumberRange> DumpByteRange;
 extern llvm::cl::list<std::string> DumpStreamData;
+extern llvm::cl::opt<bool> NameMap;
 } // namespace bytes
 
 namespace dump {
