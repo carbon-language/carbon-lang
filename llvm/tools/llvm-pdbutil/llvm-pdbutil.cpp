@@ -267,27 +267,44 @@ cl::list<std::string> InputFilenames(cl::Positional,
 cl::OptionCategory FileOptions("Module & File Options");
 
 namespace bytes {
+cl::OptionCategory MsfBytes("MSF File Options");
+cl::OptionCategory DbiBytes("Dbi Stream Options");
+cl::OptionCategory PdbBytes("PDB Stream Options");
+
 llvm::Optional<NumberRange> DumpBlockRange;
 llvm::Optional<NumberRange> DumpByteRange;
 
 cl::opt<std::string> DumpBlockRangeOpt(
     "block-range", cl::value_desc("start[-end]"),
     cl::desc("Dump binary data from specified range of blocks."),
-    cl::sub(BytesSubcommand));
+    cl::sub(BytesSubcommand), cl::cat(MsfBytes));
 
 cl::opt<std::string>
     DumpByteRangeOpt("byte-range", cl::value_desc("start[-end]"),
                      cl::desc("Dump binary data from specified range of bytes"),
-                     cl::sub(BytesSubcommand));
+                     cl::sub(BytesSubcommand), cl::cat(MsfBytes));
 
 cl::list<std::string>
     DumpStreamData("stream-data", cl::CommaSeparated, cl::ZeroOrMore,
                    cl::desc("Dump binary data from specified streams.  Format "
                             "is SN[:Start][@Size]"),
-                   cl::sub(BytesSubcommand));
+                   cl::sub(BytesSubcommand), cl::cat(MsfBytes));
 
 cl::opt<bool> NameMap("name-map", cl::desc("Dump bytes of PDB Name Map"),
-                      cl::sub(BytesSubcommand));
+                      cl::sub(BytesSubcommand), cl::cat(PdbBytes));
+
+cl::opt<bool> SectionContributions("sc", cl::desc("Dump section contributions"),
+                                   cl::sub(BytesSubcommand), cl::cat(DbiBytes));
+cl::opt<bool> SectionMap("sm", cl::desc("Dump section map"),
+                         cl::sub(BytesSubcommand), cl::cat(DbiBytes));
+cl::opt<bool> ModuleInfos("modi", cl::desc("Dump module info"),
+                          cl::sub(BytesSubcommand), cl::cat(DbiBytes));
+cl::opt<bool> FileInfo("files", cl::desc("Dump source file info"),
+                       cl::sub(BytesSubcommand), cl::cat(DbiBytes));
+cl::opt<bool> TypeServerMap("type-server", cl::desc("Dump type server map"),
+                            cl::sub(BytesSubcommand), cl::cat(DbiBytes));
+cl::opt<bool> ECData("ec", cl::desc("Dump edit and continue map"),
+                     cl::sub(BytesSubcommand), cl::cat(DbiBytes));
 
 cl::list<std::string> InputFilenames(cl::Positional,
                                      cl::desc("<input PDB files>"),

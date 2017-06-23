@@ -33,6 +33,13 @@ private:
   void dumpByteRanges(uint32_t Min, uint32_t Max);
   void dumpStreamBytes();
 
+  void dumpSectionContributions();
+  void dumpSectionMap();
+  void dumpModuleInfos();
+  void dumpFileInfo();
+  void dumpTypeServerMap();
+  void dumpECData();
+
   PDBFile &File;
   LinePrinter P;
   ExitOnError Err;

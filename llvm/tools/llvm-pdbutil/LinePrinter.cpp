@@ -146,18 +146,19 @@ static std::vector<Run> computeBlockRuns(uint32_t BlockSize,
   ArrayRef<support::ulittle32_t> Blocks = Layout.Blocks;
   assert(!Blocks.empty());
   uint32_t StreamBytesRemaining = Layout.Length;
-  Runs.emplace_back(Blocks[0]);
+  uint32_t CurrentBlock = Blocks[0];
+  Runs.emplace_back(CurrentBlock);
   while (!Blocks.empty()) {
     Run *CurrentRun = &Runs.back();
     uint32_t NextBlock = Blocks.front();
-    if (NextBlock < CurrentRun->Block || (NextBlock - CurrentRun->Block > 1)) {
+    if (NextBlock < CurrentBlock || (NextBlock - CurrentBlock > 1)) {
       Runs.emplace_back(NextBlock);
       CurrentRun = &Runs.back();
     }
-
     uint32_t Used = std::min(BlockSize, StreamBytesRemaining);
     CurrentRun->ByteLen += Used;
     StreamBytesRemaining -= Used;
+    CurrentBlock = NextBlock;
     Blocks = Blocks.drop_front();
   }
   return Runs;

@@ -13,6 +13,7 @@
 #include "llvm-pdbutil.h"
 
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
+#include "llvm/DebugInfo/PDB/Native/DbiStream.h"
 #include "llvm/DebugInfo/PDB/Native/InfoStream.h"
 #include "llvm/DebugInfo/PDB/Native/PDBFile.h"
 #include "llvm/DebugInfo/PDB/Native/RawError.h"
@@ -122,6 +123,37 @@ Error BytesOutputStyle::dump() {
     dumpNameMap();
     P.NewLine();
   }
+
+  if (opts::bytes::SectionContributions) {
+    dumpSectionContributions();
+    P.NewLine();
+  }
+
+  if (opts::bytes::SectionMap) {
+    dumpSectionMap();
+    P.NewLine();
+  }
+
+  if (opts::bytes::ModuleInfos) {
+    dumpModuleInfos();
+    P.NewLine();
+  }
+
+  if (opts::bytes::FileInfo) {
+    dumpFileInfo();
+    P.NewLine();
+  }
+
+  if (opts::bytes::TypeServerMap) {
+    dumpTypeServerMap();
+    P.NewLine();
+  }
+
+  if (opts::bytes::ECData) {
+    dumpECData();
+    P.NewLine();
+  }
+
   return Error::success();
 }
 
@@ -153,6 +185,72 @@ void BytesOutputStyle::dumpBlockRanges(uint32_t Min, uint32_t Max) {
     std::string Label = formatv("Block {0}", I).str();
     P.formatBinary(Label, *ExpectedData, Base, 0);
   }
+}
+
+void BytesOutputStyle::dumpSectionContributions() {
+  printHeader(P, "Section Contributions");
+
+  AutoIndent Indent(P);
+
+  auto &DbiS = Err(File.getPDBDbiStream());
+  BinarySubstreamRef NS = DbiS.getSectionContributionData();
+  auto Layout = File.getStreamLayout(StreamDBI);
+  P.formatMsfStreamData("Section Contributions", File, Layout, NS);
+}
+
+void BytesOutputStyle::dumpSectionMap() {
+  printHeader(P, "Section Map");
+
+  AutoIndent Indent(P);
+
+  auto &DbiS = Err(File.getPDBDbiStream());
+  BinarySubstreamRef NS = DbiS.getSecMapSubstreamData();
+  auto Layout = File.getStreamLayout(StreamDBI);
+  P.formatMsfStreamData("Section Map", File, Layout, NS);
+}
+
+void BytesOutputStyle::dumpModuleInfos() {
+  printHeader(P, "Module Infos");
+
+  AutoIndent Indent(P);
+
+  auto &DbiS = Err(File.getPDBDbiStream());
+  BinarySubstreamRef NS = DbiS.getModiSubstreamData();
+  auto Layout = File.getStreamLayout(StreamDBI);
+  P.formatMsfStreamData("Module Infos", File, Layout, NS);
+}
+
+void BytesOutputStyle::dumpFileInfo() {
+  printHeader(P, "File Info");
+
+  AutoIndent Indent(P);
+
+  auto &DbiS = Err(File.getPDBDbiStream());
+  BinarySubstreamRef NS = DbiS.getFileInfoSubstreamData();
+  auto Layout = File.getStreamLayout(StreamDBI);
+  P.formatMsfStreamData("File Info", File, Layout, NS);
+}
+
+void BytesOutputStyle::dumpTypeServerMap() {
+  printHeader(P, "Type Server Map");
+
+  AutoIndent Indent(P);
+
+  auto &DbiS = Err(File.getPDBDbiStream());
+  BinarySubstreamRef NS = DbiS.getTypeServerMapSubstreamData();
+  auto Layout = File.getStreamLayout(StreamDBI);
+  P.formatMsfStreamData("Type Server Map", File, Layout, NS);
+}
+
+void BytesOutputStyle::dumpECData() {
+  printHeader(P, "Edit and Continue Data");
+
+  AutoIndent Indent(P);
+
+  auto &DbiS = Err(File.getPDBDbiStream());
+  BinarySubstreamRef NS = DbiS.getECSubstreamData();
+  auto Layout = File.getStreamLayout(StreamDBI);
+  P.formatMsfStreamData("Edit and Continue Data", File, Layout, NS);
 }
 
 void BytesOutputStyle::dumpByteRanges(uint32_t Min, uint32_t Max) {

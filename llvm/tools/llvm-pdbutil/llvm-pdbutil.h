@@ -102,6 +102,14 @@ extern llvm::Optional<NumberRange> DumpBlockRange;
 extern llvm::Optional<NumberRange> DumpByteRange;
 extern llvm::cl::list<std::string> DumpStreamData;
 extern llvm::cl::opt<bool> NameMap;
+
+extern llvm::cl::opt<bool> SectionContributions;
+extern llvm::cl::opt<bool> SectionMap;
+extern llvm::cl::opt<bool> ModuleInfos;
+extern llvm::cl::opt<bool> FileInfo;
+extern llvm::cl::opt<bool> TypeServerMap;
+extern llvm::cl::opt<bool> ECData;
+
 } // namespace bytes
 
 namespace dump {
