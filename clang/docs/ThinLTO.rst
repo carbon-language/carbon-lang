@@ -146,6 +146,18 @@ Possible key-value pairs are:
   disk space. A value over 100 is invalid. A value of 0 disables the percentage
   size-based pruning. The default is 75%.
 
+- ``cache_size_bytes=X``, ``cache_size_bytes=Xk``, ``cache_size_bytes=Xm``,
+  ``cache_size_bytes=Xg``:
+  Sets the maximum size for the cache directory to ``X`` bytes (or KB, MB,
+  GB respectively). A value over the amount of available space on the disk
+  will be reduced to the amount of available space. A value of 0 disables
+  the byte size-based pruning. The default is no byte size-based pruning.
+
+  Note that ThinLTO will apply both size-based pruning policies simultaneously,
+  and changing one does not affect the other. For example, a policy of
+  ``cache_size_bytes=1g`` on its own will cause both the 1GB and default 75%
+  policies to be applied unless the default ``cache_size`` is overridden.
+
 - ``prune_after=Xs``, ``prune_after=Xm``, ``prune_after=Xh``: Sets the
   expiration time for cache files to ``X`` seconds (or minutes, hours
   respectively).  When a file hasn't been accessed for ``prune_after`` seconds,
