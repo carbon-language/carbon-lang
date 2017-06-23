@@ -308,6 +308,10 @@ cl::opt<bool> DumpSummary("summary", cl::desc("dump file summary"),
 cl::opt<bool> DumpStreams("streams",
                           cl::desc("dump summary of the PDB streams"),
                           cl::cat(MsfOptions), cl::sub(DumpSubcommand));
+cl::opt<bool> DumpStreamBlocks(
+    "stream-blocks",
+    cl::desc("Add block information to the output of -streams"),
+    cl::cat(MsfOptions), cl::sub(DumpSubcommand));
 
 // TYPE OPTIONS
 cl::opt<bool> DumpTypes("types",
@@ -978,6 +982,7 @@ int main(int argc_, const char *argv_[]) {
       opts::dump::DumpSectionContribs = true;
       opts::dump::DumpSectionMap = true;
       opts::dump::DumpStreams = true;
+      opts::dump::DumpStreamBlocks = true;
       opts::dump::DumpStringTable = true;
       opts::dump::DumpSummary = true;
       opts::dump::DumpSymbols = true;

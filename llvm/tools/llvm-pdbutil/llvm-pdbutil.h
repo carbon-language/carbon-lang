@@ -108,6 +108,7 @@ namespace dump {
 
 extern llvm::cl::opt<bool> DumpSummary;
 extern llvm::cl::opt<bool> DumpStreams;
+extern llvm::cl::opt<bool> DumpStreamBlocks;
 
 extern llvm::cl::opt<bool> DumpLines;
 extern llvm::cl::opt<bool> DumpInlineeLines;
