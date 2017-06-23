@@ -414,7 +414,9 @@ public:
   /// This checks to see if the value of this APInt is the maximum signed
   /// value for the APInt's bit width.
   bool isMaxSignedValue() const {
-    return !isNegative() && countTrailingOnes() == BitWidth - 1;
+    if (isSingleWord())
+      return U.VAL == ((WordType(1) << (BitWidth - 1)) - 1);
+    return !isNegative() && countTrailingOnesSlowCase() == BitWidth - 1;
   }
 
   /// \brief Determine if this is the smallest unsigned value.
@@ -428,7 +430,9 @@ public:
   /// This checks to see if the value of this APInt is the minimum signed
   /// value for the APInt's bit width.
   bool isMinSignedValue() const {
-    return isNegative() && countTrailingZeros() == BitWidth - 1;
+    if (isSingleWord())
+      return U.VAL == (WordType(1) << (BitWidth - 1));
+    return isNegative() && countTrailingZerosSlowCase() == BitWidth - 1;
   }
 
   /// \brief Check if this APInt has an N-bits unsigned integer value.
