@@ -576,7 +576,12 @@ bool JumpThreadingPass::ComputeValueKnownInPredecessors(
   // Handle compare with phi operand, where the PHI is defined in this block.
   if (CmpInst *Cmp = dyn_cast<CmpInst>(I)) {
     assert(Preference == WantInteger && "Compares only produce integers");
-    PHINode *PN = dyn_cast<PHINode>(Cmp->getOperand(0));
+    Type *CmpType = Cmp->getType();
+    Value *CmpLHS = Cmp->getOperand(0);
+    Value *CmpRHS = Cmp->getOperand(1);
+    CmpInst::Predicate Pred = Cmp->getPredicate();
+
+    PHINode *PN = dyn_cast<PHINode>(CmpLHS);
     if (PN && PN->getParent() == BB) {
       const DataLayout &DL = PN->getModule()->getDataLayout();
       // We can do this simplification if any comparisons fold to true or false.
@@ -584,15 +589,15 @@ bool JumpThreadingPass::ComputeValueKnownInPredecessors(
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
         BasicBlock *PredBB = PN->getIncomingBlock(i);
         Value *LHS = PN->getIncomingValue(i);
-        Value *RHS = Cmp->getOperand(1)->DoPHITranslation(BB, PredBB);
+        Value *RHS = CmpRHS->DoPHITranslation(BB, PredBB);
 
-        Value *Res = SimplifyCmpInst(Cmp->getPredicate(), LHS, RHS, {DL});
+        Value *Res = SimplifyCmpInst(Pred, LHS, RHS, {DL});
         if (!Res) {
           if (!isa<Constant>(RHS))
             continue;
 
           LazyValueInfo::Tristate
-            ResT = LVI->getPredicateOnEdge(Cmp->getPredicate(), LHS,
+            ResT = LVI->getPredicateOnEdge(Pred, LHS,
                                            cast<Constant>(RHS), PredBB, BB,
                                            CxtI ? CxtI : Cmp);
           if (ResT == LazyValueInfo::Unknown)
@@ -609,21 +614,21 @@ bool JumpThreadingPass::ComputeValueKnownInPredecessors(
 
     // If comparing a live-in value against a constant, see if we know the
     // live-in value on any predecessors.
-    if (isa<Constant>(Cmp->getOperand(1)) && !Cmp->getType()->isVectorTy()) {
-      Constant *CmpConst = cast<Constant>(Cmp->getOperand(1));
+    if (isa<Constant>(CmpRHS) && !CmpType->isVectorTy()) {
+      Constant *CmpConst = cast<Constant>(CmpRHS);
 
-      if (!isa<Instruction>(Cmp->getOperand(0)) ||
-          cast<Instruction>(Cmp->getOperand(0))->getParent() != BB) {
+      if (!isa<Instruction>(CmpLHS) ||
+          cast<Instruction>(CmpLHS)->getParent() != BB) {
         for (BasicBlock *P : predecessors(BB)) {
           // If the value is known by LazyValueInfo to be a constant in a
           // predecessor, use that information to try to thread this block.
           LazyValueInfo::Tristate Res =
-            LVI->getPredicateOnEdge(Cmp->getPredicate(), Cmp->getOperand(0),
+            LVI->getPredicateOnEdge(Pred, CmpLHS,
                                     CmpConst, P, BB, CxtI ? CxtI : Cmp);
           if (Res == LazyValueInfo::Unknown)
             continue;
 
-          Constant *ResC = ConstantInt::get(Cmp->getType(), Res);
+          Constant *ResC = ConstantInt::get(CmpType, Res);
           Result.push_back(std::make_pair(ResC, P));
         }
 
@@ -638,8 +643,7 @@ bool JumpThreadingPass::ComputeValueKnownInPredecessors(
 
       for (const auto &LHSVal : LHSVals) {
         Constant *V = LHSVal.first;
-        Constant *Folded = ConstantExpr::getCompare(Cmp->getPredicate(),
-                                                    V, CmpConst);
+        Constant *Folded = ConstantExpr::getCompare(Pred, V, CmpConst);
         if (Constant *KC = getKnownConstant(Folded, WantInteger))
           Result.push_back(std::make_pair(KC, LHSVal.second));
       }
