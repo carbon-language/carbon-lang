@@ -132,36 +132,12 @@ void BytesOutputStyle::dumpStreamBytes() {
   auto Specs = parseStreamSpecs(P);
 
   for (const auto &Spec : Specs) {
-    uint32_t End = 0;
-
     AutoIndent Indent(P);
-    if (Spec.SI >= File.getNumStreams()) {
+    if (Spec.SI >= StreamPurposes.size()) {
       P.formatLine("Stream {0}: Not present", Spec.SI);
       continue;
     }
-
-    auto S = MappedBlockStream::createIndexedStream(
-        File.getMsfLayout(), File.getMsfBuffer(), Spec.SI, File.getAllocator());
-    if (!S) {
-      P.NewLine();
-      P.formatLine("Stream {0}: Not present", Spec.SI);
-      continue;
-    }
-
-    if (Spec.Size == 0)
-      End = S->getLength();
-    else
-      End = std::min(Spec.Begin + Spec.Size, S->getLength());
-    uint32_t Size = End - Spec.Begin;
-
-    P.formatLine("Stream {0} ({1:N} bytes): {2}", Spec.SI, S->getLength(),
-                 StreamPurposes[Spec.SI]);
-    AutoIndent Indent2(P);
-
-    BinaryStreamReader R(*S);
-    ArrayRef<uint8_t> StreamData;
-    Err(R.readBytes(StreamData, S->getLength()));
-    StreamData = StreamData.slice(Spec.Begin, Size);
-    P.formatBinary("Data", StreamData, Spec.Begin);
+    P.formatMsfStreamData("Data", File, Spec.SI, StreamPurposes[Spec.SI],
+                          Spec.Begin, Spec.Size);
   }
 }
