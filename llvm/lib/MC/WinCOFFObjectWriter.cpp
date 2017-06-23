@@ -781,8 +781,8 @@ void WinCOFFObjectWriter::recordRelocation(
   ++Reloc.Symb->Relocations;
 
   Reloc.Data.VirtualAddress += Fixup.getOffset();
-  Reloc.Data.Type =
-      TargetObjectWriter->getRelocType(Target, Fixup, SymB, Asm.getBackend());
+  Reloc.Data.Type = TargetObjectWriter->getRelocType(
+      Asm.getContext(), Target, Fixup, SymB, Asm.getBackend());
 
   // FIXME: Can anyone explain what this does other than adjust for the size
   // of the offset?
