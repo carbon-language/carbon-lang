@@ -59,7 +59,7 @@ TEST(CachePruningPolicyParser, MaxSizeBytes) {
   ASSERT_TRUE(bool(P));
   EXPECT_EQ(75u, P->MaxSizePercentageOfAvailableSpace);
   EXPECT_EQ(3u * 1024u * 1024u, P->MaxSizeBytes);
-  P = parseCachePruningPolicy("cache_size_bytes=4g");
+  P = parseCachePruningPolicy("cache_size_bytes=4G");
   ASSERT_TRUE(bool(P));
   EXPECT_EQ(75u, P->MaxSizePercentageOfAvailableSpace);
   EXPECT_EQ(4ull * 1024ull * 1024ull * 1024ull, P->MaxSizeBytes);

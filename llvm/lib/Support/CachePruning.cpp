@@ -94,7 +94,7 @@ llvm::parseCachePruningPolicy(StringRef PolicyStr) {
       Policy.MaxSizePercentageOfAvailableSpace = Size;
     } else if (Key == "cache_size_bytes") {
       uint64_t Mult = 1;
-      switch (Value.back()) {
+      switch (tolower(Value.back())) {
       case 'k':
         Mult = 1024;
         Value = Value.drop_back();
