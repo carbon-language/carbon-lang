@@ -744,7 +744,7 @@ void MCAssembler::layout(MCAsmLayout &Layout) {
         std::tie(Target, FixedValue, IsPCRel) =
             handleFixup(Layout, Frag, Fixup);
         getBackend().applyFixup(*this, Fixup, Target, Contents, FixedValue,
-                                IsPCRel, getContext());
+                                IsPCRel);
       }
     }
   }

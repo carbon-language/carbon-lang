@@ -40,7 +40,7 @@ public:
 
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
-                  uint64_t Value, bool IsPCRel, MCContext &Ctx) const override;
+                  uint64_t Value, bool IsPCRel) const override;
 
   Optional<MCFixupKind> getFixupKind(StringRef Name) const override;
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;

@@ -51,7 +51,7 @@ public:
 
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
-                  uint64_t Value, bool IsPCRel, MCContext &Ctx) const override;
+                  uint64_t Value, bool IsPCRel) const override;
 
   MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override;
 
@@ -92,7 +92,7 @@ bool LanaiAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
 void LanaiAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                                  const MCValue &Target,
                                  MutableArrayRef<char> Data, uint64_t Value,
-                                 bool /*IsPCRel*/, MCContext & /*Ctx*/) const {
+                                 bool /*IsPCRel*/) const {
   MCFixupKind Kind = Fixup.getKind();
   Value = adjustFixupValue(static_cast<unsigned>(Kind), Value);
 

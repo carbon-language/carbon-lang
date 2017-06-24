@@ -52,7 +52,7 @@ public:
   const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
   void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                   const MCValue &Target, MutableArrayRef<char> Data,
-                  uint64_t Value, bool IsPCRel, MCContext &Ctx) const override;
+                  uint64_t Value, bool IsPCRel) const override;
   bool mayNeedRelaxation(const MCInst &Inst) const override {
     return false;
   }
@@ -94,7 +94,7 @@ void SystemZMCAsmBackend::applyFixup(const MCAssembler &Asm,
                                      const MCFixup &Fixup,
                                      const MCValue &Target,
                                      MutableArrayRef<char> Data, uint64_t Value,
-                                     bool IsPCRel, MCContext &Ctx) const {
+                                     bool IsPCRel) const {
   MCFixupKind Kind = Fixup.getKind();
   unsigned Offset = Fixup.getOffset();
   unsigned BitSize = getFixupKindInfo(Kind).TargetSize;

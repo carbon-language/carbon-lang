@@ -275,8 +275,7 @@ namespace {
 
     void applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                     const MCValue &Target, MutableArrayRef<char> Data,
-                    uint64_t Value, bool IsPCRel,
-                    MCContext &Ctx) const override {
+                    uint64_t Value, bool IsPCRel) const override {
 
       Value = adjustFixupValue(Fixup.getKind(), Value);
       if (!Value) return;           // Doesn't change encoding.

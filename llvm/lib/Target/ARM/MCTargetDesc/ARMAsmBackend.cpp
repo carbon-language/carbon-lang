@@ -887,8 +887,9 @@ static unsigned getFixupKindContainerSizeBytes(unsigned Kind) {
 void ARMAsmBackend::applyFixup(const MCAssembler &Asm, const MCFixup &Fixup,
                                const MCValue &Target,
                                MutableArrayRef<char> Data, uint64_t Value,
-                               bool IsPCRel, MCContext &Ctx) const {
+                               bool IsPCRel) const {
   unsigned NumBytes = getFixupKindNumBytes(Fixup.getKind());
+  MCContext &Ctx = Asm.getContext();
   Value = adjustFixupValue(Asm, Fixup, Target, Value, IsPCRel, Ctx,
                            IsLittleEndian, true);
   if (!Value)
