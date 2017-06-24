@@ -43,7 +43,7 @@ These .rst files are also included during HTML generation so they are also
 viewable online (as noted above) at e.g.
 `http://llvm.org/docs/CommandGuide/Foo.html`.
 
-Checking links 
+Checking links
 ==============
 
 The reachability of external links in the documentation can be checked by
