@@ -167,10 +167,8 @@ inline match_combine_or<match_zero, match_neg_zero> m_AnyZero() {
 
 struct match_nan {
   template <typename ITy> bool match(ITy *V) {
-    if (const auto *C = dyn_cast<ConstantFP>(V)) {
-      const APFloat &APF = C->getValueAPF();
-      return APF.isNaN();
-    }
+    if (const auto *C = dyn_cast<ConstantFP>(V))
+      return C->isNaN();
     return false;
   }
 };
