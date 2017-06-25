@@ -153,3 +153,84 @@ non_dedicated_exit:
 ; CHECK:      non_dedicated_exit:
 ; CHECK-NEXT:   ret void
 }
+
+; Check that we form what dedicated exits we can even when some exits are
+; reached via indirectbr which precludes forming dedicated exits.
+define void @test_form_some_dedicated_exits_despite_indirectbr(i8 %a, i8* %ptr, i8** %addr.ptr) {
+; CHECK-LABEL: define void @test_form_some_dedicated_exits_despite_indirectbr(
+entry:
+  switch i8 %a, label %loop.ph [
+    i8 0, label %exit.a
+    i8 1, label %exit.b
+    i8 2, label %exit.c
+  ]
+; CHECK:      entry:
+; CHECK-NEXT:   switch i8 %a, label %loop.ph [
+; CHECK-NEXT:     i8 0, label %exit.a
+; CHECK-NEXT:     i8 1, label %exit.b
+; CHECK-NEXT:     i8 2, label %exit.c
+; CHECK-NEXT:   ]
+
+loop.ph:
+  br label %loop.header
+; CHECK:      loop.ph:
+; CHECK-NEXT:   br label %loop.header
+
+loop.header:
+  %addr1 = load volatile i8*, i8** %addr.ptr
+  indirectbr i8* %addr1, [label %loop.body1, label %exit.a]
+; CHECK:      loop.header:
+; CHECK-NEXT:   %[[ADDR1:.*]] = load volatile i8*, i8** %addr.ptr
+; CHECK-NEXT:   indirectbr i8* %[[ADDR1]], [label %loop.body1, label %exit.a]
+
+loop.body1:
+  %b = load volatile i8, i8* %ptr
+  switch i8 %b, label %loop.body2 [
+    i8 0, label %exit.a
+    i8 1, label %exit.b
+    i8 2, label %exit.c
+  ]
+; CHECK:      loop.body1:
+; CHECK-NEXT:   %[[B:.*]] = load volatile i8, i8* %ptr
+; CHECK-NEXT:   switch i8 %[[B]], label %loop.body2 [
+; CHECK-NEXT:     i8 0, label %exit.a
+; CHECK-NEXT:     i8 1, label %[[LOOPEXIT:.*]]
+; CHECK-NEXT:     i8 2, label %exit.c
+; CHECK-NEXT:   ]
+
+loop.body2:
+  %addr2 = load volatile i8*, i8** %addr.ptr
+  indirectbr i8* %addr2, [label %loop.backedge, label %exit.c]
+; CHECK:      loop.body2:
+; CHECK-NEXT:   %[[ADDR2:.*]] = load volatile i8*, i8** %addr.ptr
+; CHECK-NEXT:   indirectbr i8* %[[ADDR2]], [label %loop.backedge, label %exit.c]
+
+loop.backedge:
+  br label %loop.header
+; CHECK:      loop.backedge:
+; CHECK-NEXT:   br label %loop.header
+
+exit.a:
+  ret void
+; Check that there isn't a split loop exit.
+; CHECK-NOT:    br label %exit.a
+;
+; CHECK:      exit.a:
+; CHECK-NEXT:   ret void
+
+exit.b:
+  ret void
+; CHECK:      [[LOOPEXIT]]:
+; CHECK-NEXT:   br label %exit.b
+;
+; CHECK:      exit.b:
+; CHECK-NEXT:   ret void
+
+exit.c:
+  ret void
+; Check that there isn't a split loop exit.
+; CHECK-NOT:    br label %exit.c
+;
+; CHECK:      exit.c:
+; CHECK-NEXT:   ret void
+}
