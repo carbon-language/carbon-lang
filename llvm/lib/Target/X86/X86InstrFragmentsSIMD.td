@@ -641,7 +641,7 @@ def sdmem : Operand<v2f64> {
 // SSE pattern fragments
 //===----------------------------------------------------------------------===//
 
-// Vector load wrappers to prevent folding of non-temporal aligned loads on 
+// Vector load wrappers to prevent folding of non-temporal aligned loads on
 // supporting targets.
 def vec128load : PatFrag<(ops node:$ptr), (load node:$ptr), [{
   return !Subtarget->hasSSE41() || !cast<LoadSDNode>(N)->isNonTemporal() ||
