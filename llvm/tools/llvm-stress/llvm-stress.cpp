@@ -96,17 +96,13 @@ public:
     return Seed & 0x7ffff;
   }
 
-  /// Return a random 32 bit integer.
-  uint32_t Rand32() {
-    uint32_t Val = Rand();
-    Val &= 0xffff;
-    return Val | (Rand() << 16);
-  }
-
   /// Return a random 64 bit integer.
   uint64_t Rand64() {
-    uint64_t Val = Rand32();
-    return Val | (uint64_t(Rand32()) << 32);
+    uint64_t Val = Rand() & 0xffff;
+    Val |= uint64_t(Rand() & 0xffff) << 16;
+    Val |= uint64_t(Rand() & 0xffff) << 32;
+    Val |= uint64_t(Rand() & 0xffff) << 48;
+    return Val;
   }
 
   /// Rand operator for STL algorithms.
