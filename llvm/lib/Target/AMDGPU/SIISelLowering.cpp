@@ -1234,7 +1234,7 @@ static void reservePrivateMemoryRegs(const TargetMachine &TM,
     }
   }
 
-  if (NeedSP){
+  if (NeedSP) {
     unsigned ReservedStackPtrOffsetReg = TRI.reservedStackPtrOffsetReg(MF);
     Info.setStackPtrOffsetReg(ReservedStackPtrOffsetReg);
 
