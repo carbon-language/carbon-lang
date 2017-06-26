@@ -2663,8 +2663,9 @@ public:
     // the SCEVExpander may introduce while code generating the parameters and
     // which may introduce scalar dependences that prevent us from correctly
     // code generating this scop.
-    BasicBlock *StartBlock =
+    BBPair StartExitBlocks =
         executeScopConditionally(*S, Builder.getTrue(), *DT, *RI, *LI);
+    BasicBlock *StartBlock = std::get<0>(StartExitBlocks);
 
     GPUNodeBuilder NodeBuilder(Builder, Annotator, *DL, *LI, *SE, *DT, *S,
                                StartBlock, Prog, Runtime, Architecture);
