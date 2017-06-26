@@ -789,10 +789,10 @@ void CFLAndersAAResult::scan(const Function &Fn) {
   // resize and invalidating the reference returned by operator[]
   auto FunInfo = buildInfoFrom(Fn);
   Cache[&Fn] = std::move(FunInfo);
-  Handles.push_front(FunctionHandle(const_cast<Function *>(&Fn), this));
+  Handles.emplace_front(const_cast<Function *>(&Fn), this);
 }
 
-void CFLAndersAAResult::evict(const Function &Fn) { Cache.erase(&Fn); }
+void CFLAndersAAResult::evict(const Function *Fn) { Cache.erase(Fn); }
 
 const Optional<CFLAndersAAResult::FunctionInfo> &
 CFLAndersAAResult::ensureCached(const Function &Fn) {

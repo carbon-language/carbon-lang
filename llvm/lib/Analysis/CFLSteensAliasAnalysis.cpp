@@ -245,7 +245,7 @@ void CFLSteensAAResult::scan(Function *Fn) {
   auto FunInfo = buildSetsFrom(Fn);
   Cache[Fn] = std::move(FunInfo);
 
-  Handles.push_front(FunctionHandle(Fn, this));
+  Handles.emplace_front(Fn, this);
 }
 
 void CFLSteensAAResult::evict(Function *Fn) { Cache.erase(Fn); }
