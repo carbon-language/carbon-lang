@@ -6000,6 +6000,7 @@ shouldNotPrintDirectly(const ASTContext &Context,
   while (const TypedefType *UserTy = TyTy->getAs<TypedefType>()) {
     StringRef Name = UserTy->getDecl()->getName();
     QualType CastTy = llvm::StringSwitch<QualType>(Name)
+      .Case("CFIndex", Context.LongTy)
       .Case("NSInteger", Context.LongTy)
       .Case("NSUInteger", Context.UnsignedLongTy)
       .Case("SInt32", Context.IntTy)
