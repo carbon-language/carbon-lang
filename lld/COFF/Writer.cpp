@@ -215,6 +215,8 @@ uint32_t Defined::getSecrel() {
   switch (kind()) {
   case DefinedRegularKind:
     return cast<DefinedRegular>(this)->getSecrel();
+  case DefinedCommonKind:
+    return cast<DefinedCommon>(this)->getSecrel();
   case DefinedSyntheticKind:
     return cast<DefinedSynthetic>(this)->getSecrel();
   default:
@@ -235,6 +237,8 @@ uint16_t Defined::getSectionIndex() {
     return D->getChunk()->getOutputSection()->SectionIndex;
   if (isa<DefinedAbsolute>(this))
     return DefinedAbsolute::OutputSectionIndex;
+  if (auto *D = dyn_cast<DefinedCommon>(this))
+    return D->getSectionIndex();
   if (auto *D = dyn_cast<DefinedSynthetic>(this)) {
     if (!D->getChunk())
       return 0;
@@ -242,6 +246,10 @@ uint16_t Defined::getSectionIndex() {
   }
   fatal("SECTION relocation points to a non-regular symbol: " +
         toString(*this));
+}
+
+uint16_t DefinedCommon::getSectionIndex() {
+  return Data->getOutputSection()->SectionIndex;
 }
 
 bool Defined::isExecutable() {

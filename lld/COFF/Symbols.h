@@ -187,6 +187,8 @@ public:
   }
 
   uint64_t getRVA() { return Data->getRVA(); }
+  uint32_t getSecrel() { return Data->OutputSectionOff; }
+  uint16_t getSectionIndex();
 
 private:
   friend SymbolTable;
