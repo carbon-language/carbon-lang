@@ -142,7 +142,7 @@ public:
   /// \returns Optional<uint8_t> value with the fixed byte size or None if
   /// \p Form doesn't have a fixed byte size.
   static Optional<uint8_t> getFixedByteSize(dwarf::Form Form,
-                                            const DWARFFormParams &FormParams);
+                                            const DWARFFormParams FormParams);
 
   /// Skip a form's value in \p DebugInfoData at the offset specified by
   /// \p OffsetPtr.
@@ -154,7 +154,7 @@ public:
   /// \param Params DWARF parameters to help interpret forms.
   /// \returns true on success, false if the form was not skipped.
   bool skipValue(DataExtractor DebugInfoData, uint32_t *OffsetPtr,
-                 const DWARFFormParams &Params) const {
+                 const DWARFFormParams Params) const {
     return DWARFFormValue::skipValue(Form, DebugInfoData, OffsetPtr, Params);
   }
 
@@ -169,7 +169,7 @@ public:
   /// \param FormParams DWARF parameters to help interpret forms.
   /// \returns true on success, false if the form was not skipped.
   static bool skipValue(dwarf::Form Form, DataExtractor DebugInfoData,
-                        uint32_t *OffsetPtr, const DWARFFormParams &FormParams);
+                        uint32_t *OffsetPtr, const DWARFFormParams FormParams);
 
 private:
   void dumpString(raw_ostream &OS) const;
