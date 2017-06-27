@@ -45,14 +45,6 @@ function(compiler_rt_test_runtime runtime)
   endif()
 endfunction()
 
-function(compiler_rt_test_sanitizer sanitizer)
-  string(TOLOWER ${sanitizer} sanitizer_lowercase)
-  list(FIND COMPILER_RT_SANITIZERS_TO_BUILD ${sanitizer_lowercase} result)
-  if(NOT ${result} EQUAL -1)
-    compiler_rt_test_runtime(${sanitizer} ${ARGN})
-  endif()
-endfunction()
-
 # Run sanitizer tests only if we're sure that clang would produce
 # working binaries.
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
@@ -67,13 +59,9 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
     compiler_rt_test_runtime(ubsan cfi)
     compiler_rt_test_runtime(sanitizer_common)
 
-    compiler_rt_test_sanitizer(asan)
-    compiler_rt_test_sanitizer(dfsan)
-    compiler_rt_test_sanitizer(msan)
-    compiler_rt_test_sanitizer(tsan)
-    compiler_rt_test_sanitizer(safestack)
-    compiler_rt_test_sanitizer(esan)
-    compiler_rt_test_sanitizer(scudo)
+    foreach(sanitizer ${COMPILER_RT_SANITIZERS_TO_BUILD})
+      compiler_rt_test_runtime(${sanitizer})
+    endforeach()
 
     compiler_rt_test_runtime(profile)
   endif()
