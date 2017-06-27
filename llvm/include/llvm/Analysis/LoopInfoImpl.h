@@ -15,23 +15,12 @@
 #ifndef LLVM_ANALYSIS_LOOPINFOIMPL_H
 #define LLVM_ANALYSIS_LOOPINFOIMPL_H
 
-#include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/IR/Dominators.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
-#include <algorithm>
-#include <cassert>
-#include <vector>
 
 namespace llvm {
 
@@ -119,8 +108,7 @@ BlockT *LoopBase<BlockT, LoopT>::getLoopPreheader() const {
     return nullptr;
 
   // Make sure there is only one exit out of the preheader.
-  using BlockTraits = GraphTraits<BlockT *>;
-
+  typedef GraphTraits<BlockT*> BlockTraits;
   typename BlockTraits::ChildIteratorType SI = BlockTraits::child_begin(Out);
   ++SI;
   if (SI != BlockTraits::child_end(Out))
@@ -249,14 +237,14 @@ void LoopBase<BlockT, LoopT>::verifyLoop() const {
                        [&](BlockT *B){return contains(B);}) &&
            "Loop block has no in-loop successors!");
 
-    assert(std::any_of(GraphTraits<Inverse<BlockT *>>::child_begin(BB),
-                       GraphTraits<Inverse<BlockT *>>::child_end(BB),
+    assert(std::any_of(GraphTraits<Inverse<BlockT*> >::child_begin(BB),
+                       GraphTraits<Inverse<BlockT*> >::child_end(BB),
                        [&](BlockT *B){return contains(B);}) &&
            "Loop block has no in-loop predecessors!");
 
     SmallVector<BlockT *, 2> OutsideLoopPreds;
-    std::for_each(GraphTraits<Inverse<BlockT *>>::child_begin(BB),
-                  GraphTraits<Inverse<BlockT *>>::child_end(BB),
+    std::for_each(GraphTraits<Inverse<BlockT*> >::child_begin(BB),
+                  GraphTraits<Inverse<BlockT*> >::child_end(BB),
                   [&](BlockT *B){if (!contains(B))
                       OutsideLoopPreds.push_back(B);
                   });
@@ -356,7 +344,7 @@ template<class BlockT, class LoopT>
 static void discoverAndMapSubloop(LoopT *L, ArrayRef<BlockT*> Backedges,
                                   LoopInfoBase<BlockT, LoopT> *LI,
                                   const DominatorTreeBase<BlockT> &DomTree) {
-  using InvBlockTraits = GraphTraits<Inverse<BlockT *>>;
+  typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
 
   unsigned NumBlocks = 0;
   unsigned NumSubloops = 0;
@@ -413,13 +401,13 @@ static void discoverAndMapSubloop(LoopT *L, ArrayRef<BlockT*> Backedges,
 /// Populate all loop data in a stable order during a single forward DFS.
 template<class BlockT, class LoopT>
 class PopulateLoopsDFS {
-  using BlockTraits = GraphTraits<BlockT *>;
-  using SuccIterTy = typename BlockTraits::ChildIteratorType;
+  typedef GraphTraits<BlockT*> BlockTraits;
+  typedef typename BlockTraits::ChildIteratorType SuccIterTy;
 
   LoopInfoBase<BlockT, LoopT> *LI;
-
 public:
-  PopulateLoopsDFS(LoopInfoBase<BlockT, LoopT> *li) : LI(li) {}
+  PopulateLoopsDFS(LoopInfoBase<BlockT, LoopT> *li):
+    LI(li) {}
 
   void traverse(BlockT *EntryBlock);
 
@@ -669,6 +657,6 @@ void LoopInfoBase<BlockT, LoopT>::verify(
 #endif
 }
 
-} // end namespace llvm
+} // End llvm namespace
 
-#endif // LLVM_ANALYSIS_LOOPINFOIMPL_H
+#endif

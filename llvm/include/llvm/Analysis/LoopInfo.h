@@ -39,39 +39,26 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/iterator_range.h"
-#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CFG.h"
-#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/IR/Use.h"
-#include "llvm/IR/User.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/Casting.h"
 #include <algorithm>
-#include <cassert>
-#include <cstddef>
-#include <string>
-#include <utility>
-#include <vector>
 
 namespace llvm {
 
 class DominatorTree;
-template<class N> class DominatorTreeBase;
-class Function;
-class Loop;
 class LoopInfo;
-template<class N, class M> class LoopInfoBase;
+class Loop;
 class MDNode;
+class PHINode;
 class raw_ostream;
-class Value;
+template<class N> class DominatorTreeBase;
+template<class N, class M> class LoopInfoBase;
+template<class N, class M> class LoopBase;
 
 //===----------------------------------------------------------------------===//
 /// Instances of this class are used to represent loops that are detected in the
@@ -79,8 +66,7 @@ class Value;
 ///
 template<class BlockT, class LoopT>
 class LoopBase {
-  LoopT *ParentLoop = nullptr;
-
+  LoopT *ParentLoop;
   // Loops contained entirely within this one.
   std::vector<LoopT *> SubLoops;
 
@@ -92,12 +78,12 @@ class LoopBase {
   /// Indicator that this loop is no longer a valid loop.
   bool IsInvalid = false;
 
+  LoopBase(const LoopBase<BlockT, LoopT> &) = delete;
+  const LoopBase<BlockT, LoopT>&
+    operator=(const LoopBase<BlockT, LoopT> &) = delete;
 public:
   /// This creates an empty loop.
-  LoopBase() = default;
-  LoopBase(const LoopBase<BlockT, LoopT> &) = delete;
-  LoopBase<BlockT, LoopT> &operator=(const LoopBase<BlockT, LoopT> &) = delete;
-
+  LoopBase() : ParentLoop(nullptr) {}
   ~LoopBase() {
     for (size_t i = 0, e = SubLoops.size(); i != e; ++i)
       delete SubLoops[i];
@@ -140,11 +126,9 @@ public:
   /// Return the loops contained entirely within this loop.
   const std::vector<LoopT *> &getSubLoops() const { return SubLoops; }
   std::vector<LoopT *> &getSubLoopsVector() { return SubLoops; }
-
-  using iterator = typename std::vector<LoopT *>::const_iterator;
-  using reverse_iterator =
-      typename std::vector<LoopT *>::const_reverse_iterator;
-
+  typedef typename std::vector<LoopT *>::const_iterator iterator;
+  typedef typename std::vector<LoopT *>::const_reverse_iterator
+    reverse_iterator;
   iterator begin() const { return SubLoops.begin(); }
   iterator end() const { return SubLoops.end(); }
   reverse_iterator rbegin() const { return SubLoops.rbegin(); }
@@ -153,9 +137,7 @@ public:
 
   /// Get a list of the basic blocks which make up this loop.
   const std::vector<BlockT*> &getBlocks() const { return Blocks; }
-
-  using block_iterator = typename std::vector<BlockT*>::const_iterator;
-
+  typedef typename std::vector<BlockT*>::const_iterator block_iterator;
   block_iterator block_begin() const { return Blocks.begin(); }
   block_iterator block_end() const { return Blocks.end(); }
   inline iterator_range<block_iterator> blocks() const {
@@ -191,8 +173,8 @@ public:
     assert(contains(BB) && "block does not belong to the loop");
 
     BlockT *Header = getHeader();
-    auto PredBegin = GraphTraits<Inverse<BlockT*>>::child_begin(Header);
-    auto PredEnd = GraphTraits<Inverse<BlockT*>>::child_end(Header);
+    auto PredBegin = GraphTraits<Inverse<BlockT*> >::child_begin(Header);
+    auto PredEnd = GraphTraits<Inverse<BlockT*> >::child_end(Header);
     return std::find(PredBegin, PredEnd, BB) != PredEnd;
   }
 
@@ -201,7 +183,7 @@ public:
     unsigned NumBackEdges = 0;
     BlockT *H = getHeader();
 
-    for (const auto Pred : children<Inverse<BlockT *>>(H))
+    for (const auto Pred : children<Inverse<BlockT*> >(H))
       if (contains(Pred))
         ++NumBackEdges;
 
@@ -234,7 +216,7 @@ public:
   BlockT *getExitBlock() const;
 
   /// Edge type.
-  using Edge = std::pair<const BlockT*, const BlockT*>;
+  typedef std::pair<const BlockT*, const BlockT*> Edge;
 
   /// Return all pairs of (_inside_block_,_outside_block_).
   void getExitEdges(SmallVectorImpl<Edge> &ExitEdges) const;
@@ -338,7 +320,7 @@ public:
   /// Blocks as appropriate. This does not update the mapping in the LoopInfo
   /// class.
   void removeBlockFromLoop(BlockT *BB) {
-    auto I = llvm::find(Blocks, BB);
+    auto I = find(Blocks, BB);
     assert(I != Blocks.end() && "N is not in this list!");
     Blocks.erase(I);
 
@@ -356,7 +338,6 @@ public:
 
 protected:
   friend class LoopInfoBase<BlockT, LoopT>;
-
   explicit LoopBase(BlockT *BB) : ParentLoop(nullptr) {
     Blocks.push_back(BB);
     DenseBlockSet.insert(BB);
@@ -372,6 +353,7 @@ raw_ostream& operator<<(raw_ostream &OS, const LoopBase<BlockT, LoopT> &Loop) {
 // Implementation in LoopInfoImpl.h
 extern template class LoopBase<BasicBlock, Loop>;
 
+
 /// Represents a single loop in the control flow graph.  Note that not all SCCs
 /// in the CFG are necessarily loops.
 class Loop : public LoopBase<BasicBlock, Loop> {
@@ -382,7 +364,7 @@ public:
     DebugLoc End;
 
   public:
-    LocRange() = default;
+    LocRange() {}
     LocRange(DebugLoc Start) : Start(std::move(Start)), End(std::move(Start)) {}
     LocRange(DebugLoc Start, DebugLoc End) : Start(std::move(Start)),
                                              End(std::move(End)) {}
@@ -397,7 +379,7 @@ public:
     }
   };
 
-  Loop() = default;
+  Loop() {}
 
   /// Return true if the specified value is loop invariant.
   bool isLoopInvariant(const Value *V) const;
@@ -425,6 +407,7 @@ public:
   ///
   /// If InsertPt is specified, it is the point to hoist instructions to.
   /// If null, the terminator of the loop preheader is used.
+  ///
   bool makeLoopInvariant(Instruction *I, bool &Changed,
                          Instruction *InsertPt = nullptr) const;
 
@@ -434,6 +417,7 @@ public:
   ///
   /// The IndVarSimplify pass transforms loops to have a canonical induction
   /// variable.
+  ///
   PHINode *getCanonicalInductionVariable() const;
 
   /// Return true if the Loop is in LCSSA form.
@@ -470,7 +454,6 @@ public:
   /// contain llvm.loop or or if multiple latches contain different nodes then
   /// 0 is returned.
   MDNode *getLoopID() const;
-
   /// Set the llvm.loop loop id metadata for this loop.
   ///
   /// The LoopID metadata node will be added to each terminator instruction in
@@ -516,7 +499,6 @@ public:
 
 private:
   friend class LoopInfoBase<BasicBlock, Loop>;
-
   explicit Loop(BasicBlock *BB) : LoopBase<BasicBlock, Loop>(BB) {}
 };
 
@@ -527,17 +509,19 @@ private:
 
 template<class BlockT, class LoopT>
 class LoopInfoBase {
-  friend class LoopBase<BlockT, LoopT>;
-  friend class LoopInfo;
-
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
   DenseMap<const BlockT *, LoopT *> BBMap;
-
   std::vector<LoopT *> TopLevelLoops;
   std::vector<LoopT *> RemovedLoops;
 
+  friend class LoopBase<BlockT, LoopT>;
+  friend class LoopInfo;
+
+  void operator=(const LoopInfoBase &) = delete;
+  LoopInfoBase(const LoopInfoBase &) = delete;
 public:
-  LoopInfoBase() = default;
+  LoopInfoBase() { }
+  ~LoopInfoBase() { releaseMemory(); }
 
   LoopInfoBase(LoopInfoBase &&Arg)
       : BBMap(std::move(Arg.BBMap)),
@@ -545,7 +529,6 @@ public:
     // We have to clear the arguments top level loops as we've taken ownership.
     Arg.TopLevelLoops.clear();
   }
-
   LoopInfoBase &operator=(LoopInfoBase &&RHS) {
     BBMap = std::move(RHS.BBMap);
 
@@ -555,10 +538,6 @@ public:
     RHS.TopLevelLoops.clear();
     return *this;
   }
-
-  LoopInfoBase(const LoopInfoBase &) = delete;
-  LoopInfoBase &operator=(const LoopInfoBase &) = delete;
-  ~LoopInfoBase() { releaseMemory(); }
 
   void releaseMemory() {
     BBMap.clear();
@@ -573,10 +552,10 @@ public:
 
   /// iterator/begin/end - The interface to the top-level loops in the current
   /// function.
-  using iterator = typename std::vector<LoopT *>::const_iterator;
-  using reverse_iterator =
-      typename std::vector<LoopT *>::const_reverse_iterator;
-
+  ///
+  typedef typename std::vector<LoopT *>::const_iterator iterator;
+  typedef typename std::vector<LoopT *>::const_reverse_iterator
+    reverse_iterator;
   iterator begin() const { return TopLevelLoops.begin(); }
   iterator end() const { return TopLevelLoops.end(); }
   reverse_iterator rbegin() const { return TopLevelLoops.rbegin(); }
@@ -648,7 +627,7 @@ public:
   /// loop.
   void changeTopLevelLoop(LoopT *OldLoop,
                           LoopT *NewLoop) {
-    auto I = llvm::find(TopLevelLoops, OldLoop);
+    auto I = find(TopLevelLoops, OldLoop);
     assert(I != TopLevelLoops.end() && "Old loop not at top level!");
     *I = NewLoop;
     assert(!NewLoop->ParentLoop && !OldLoop->ParentLoop &&
@@ -696,23 +675,21 @@ public:
 extern template class LoopInfoBase<BasicBlock, Loop>;
 
 class LoopInfo : public LoopInfoBase<BasicBlock, Loop> {
+  typedef LoopInfoBase<BasicBlock, Loop> BaseT;
+
   friend class LoopBase<BasicBlock, Loop>;
 
-  using BaseT = LoopInfoBase<BasicBlock, Loop>;
-
+  void operator=(const LoopInfo &) = delete;
+  LoopInfo(const LoopInfo &) = delete;
 public:
-  LoopInfo() = default;
+  LoopInfo() {}
   explicit LoopInfo(const DominatorTreeBase<BasicBlock> &DomTree);
 
   LoopInfo(LoopInfo &&Arg) : BaseT(std::move(static_cast<BaseT &>(Arg))) {}
-
   LoopInfo &operator=(LoopInfo &&RHS) {
     BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
     return *this;
   }
-
-  LoopInfo(const LoopInfo &) = delete;
-  LoopInfo &operator=(const LoopInfo &) = delete;
 
   /// Handle invalidation explicitly.
   bool invalidate(Function &F, const PreservedAnalyses &PA,
@@ -821,8 +798,8 @@ public:
 
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const Loop*> {
-  using NodeRef = const Loop *;
-  using ChildIteratorType = LoopInfo::iterator;
+  typedef const Loop *NodeRef;
+  typedef LoopInfo::iterator ChildIteratorType;
 
   static NodeRef getEntryNode(const Loop *L) { return L; }
   static ChildIteratorType child_begin(NodeRef N) { return N->begin(); }
@@ -830,8 +807,8 @@ template <> struct GraphTraits<const Loop*> {
 };
 
 template <> struct GraphTraits<Loop*> {
-  using NodeRef = Loop *;
-  using ChildIteratorType = LoopInfo::iterator;
+  typedef Loop *NodeRef;
+  typedef LoopInfo::iterator ChildIteratorType;
 
   static NodeRef getEntryNode(Loop *L) { return L; }
   static ChildIteratorType child_begin(NodeRef N) { return N->begin(); }
@@ -841,11 +818,10 @@ template <> struct GraphTraits<Loop*> {
 /// \brief Analysis pass that exposes the \c LoopInfo for a function.
 class LoopAnalysis : public AnalysisInfoMixin<LoopAnalysis> {
   friend AnalysisInfoMixin<LoopAnalysis>;
-
   static AnalysisKey Key;
 
 public:
-  using Result = LoopInfo;
+  typedef LoopInfo Result;
 
   LoopInfo run(Function &F, FunctionAnalysisManager &AM);
 };
@@ -856,7 +832,6 @@ class LoopPrinterPass : public PassInfoMixin<LoopPrinterPass> {
 
 public:
   explicit LoopPrinterPass(raw_ostream &OS) : OS(OS) {}
-
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
 };
 
@@ -894,6 +869,6 @@ public:
 /// Function to print a loop's contents as LLVM's text IR assembly.
 void printLoop(Loop &L, raw_ostream &OS, const std::string &Banner = "");
 
-} // end namespace llvm
+} // End llvm namespace
 
-#endif // LLVM_ANALYSIS_LOOPINFO_H
+#endif
