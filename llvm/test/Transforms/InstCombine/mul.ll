@@ -324,3 +324,13 @@ define <2 x i32> @test33vec(<2 x i32> %X) {
   %mul = mul nsw <2 x i32> %X, <i32 1073741824, i32 1073741824>
   ret <2 x i32> %mul
 }
+
+; TODO: we should propagate nsw flag to the shift here, but we only handle i64 and smaller
+define i128 @test34(i128 %X) {
+; CHECK-LABEL: @test34(
+; CHECK-NEXT:    [[MUL:%.*]] = shl i128 [[X:%.*]], 1
+; CHECK-NEXT:    ret i128 [[MUL]]
+;
+  %mul = mul nsw i128 %X, 2
+  ret i128 %mul
+}
