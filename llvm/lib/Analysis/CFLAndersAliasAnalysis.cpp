@@ -68,17 +68,6 @@ CFLAndersAAResult::CFLAndersAAResult(CFLAndersAAResult &&RHS)
     : AAResultBase(std::move(RHS)), TLI(RHS.TLI) {}
 CFLAndersAAResult::~CFLAndersAAResult() {}
 
-static const Function *parentFunctionOfValue(const Value *Val) {
-  if (auto *Inst = dyn_cast<Instruction>(Val)) {
-    auto *Bb = Inst->getParent();
-    return Bb->getParent();
-  }
-
-  if (auto *Arg = dyn_cast<Argument>(Val))
-    return Arg->getParent();
-  return nullptr;
-}
-
 namespace {
 
 enum class MatchState : uint8_t {

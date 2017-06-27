@@ -90,17 +90,6 @@ const StratifiedIndex StratifiedLink::SetSentinel =
 /// Determines whether it would be pointless to add the given Value to our sets.
 static bool canSkipAddingToSets(Value *Val);
 
-static Function *parentFunctionOfValue(Value *Val) {
-  if (auto *Inst = dyn_cast<Instruction>(Val)) {
-    auto *Bb = Inst->getParent();
-    return Bb->getParent();
-  }
-
-  if (auto *Arg = dyn_cast<Argument>(Val))
-    return Arg->getParent();
-  return nullptr;
-}
-
 static bool canSkipAddingToSets(Value *Val) {
   // Constants can share instances, which may falsely unify multiple
   // sets, e.g. in
@@ -281,8 +270,8 @@ AliasResult CFLSteensAAResult::query(const MemoryLocation &LocA,
     return NoAlias;
 
   Function *Fn = nullptr;
-  Function *MaybeFnA = parentFunctionOfValue(ValA);
-  Function *MaybeFnB = parentFunctionOfValue(ValB);
+  Function *MaybeFnA = const_cast<Function *>(parentFunctionOfValue(ValA));
+  Function *MaybeFnB = const_cast<Function *>(parentFunctionOfValue(ValB));
   if (!MaybeFnA && !MaybeFnB) {
     // The only times this is known to happen are when globals + InlineAsm are
     // involved
