@@ -288,28 +288,27 @@ private:
   orc::ObjectLinkingLayer<> OLT;
 
   /// ELF-specific part. TODO: refactor into new class.
-  #define ELF_FUNCTION(FUNC) \
-    template <typename ELFT> \
-    void FUNC(ELFObjectFile<ELFT> *Obj); \
-    void FUNC() { \
-      if (auto *ELF32LE = dyn_cast<ELF32LEObjectFile>(InputFile)) \
-        return FUNC(ELF32LE); \
-      if (auto *ELF64LE = dyn_cast<ELF64LEObjectFile>(InputFile)) \
-        return FUNC(ELF64LE); \
-      if (auto *ELF32BE = dyn_cast<ELF32BEObjectFile>(InputFile)) \
-        return FUNC(ELF32BE); \
-      auto *ELF64BE = cast<ELF64BEObjectFile>(InputFile); \
-      return FUNC(ELF64BE); \
-    }
+#define ELF_FUNCTION(FUNC)                                                     \
+  template <typename ELFT> void FUNC(ELFObjectFile<ELFT> *Obj);                \
+  void FUNC() {                                                                \
+    if (auto *ELF32LE = dyn_cast<ELF32LEObjectFile>(InputFile))                \
+      return FUNC(ELF32LE);                                                    \
+    if (auto *ELF64LE = dyn_cast<ELF64LEObjectFile>(InputFile))                \
+      return FUNC(ELF64LE);                                                    \
+    if (auto *ELF32BE = dyn_cast<ELF32BEObjectFile>(InputFile))                \
+      return FUNC(ELF32BE);                                                    \
+    auto *ELF64BE = cast<ELF64BEObjectFile>(InputFile);                        \
+    return FUNC(ELF64BE);                                                      \
+  }
 
   /// Patch ELF book-keeping info.
   void patchELF();
   void patchELFPHDRTable();
 
-  /// Patch section header table.
+  /// Create section header table.
   ELF_FUNCTION(patchELFSectionHeaderTable);
 
-  /// Patch symbol tables.
+  /// Create the regular symbol table and patch dyn symbol tables.
   ELF_FUNCTION(patchELFSymTabs);
 
   /// Patch dynamic section/segment of ELF.
@@ -323,6 +322,14 @@ private:
 
   /// Finalize memory image of section header string table.
   ELF_FUNCTION(finalizeSectionStringTable);
+
+  /// Get a list of all the sections to include in the output binary along
+  /// with a map of input to output indices.
+  template <typename ELFT,
+            typename ELFShdrTy = typename ELFObjectFile<ELFT>::Elf_Shdr>
+  std::vector<uint32_t>
+  getOutputSections(ELFObjectFile<ELFT> *File,
+                    std::vector<ELFShdrTy> *OutputSections);
 
   /// Add a notes section containing the BOLT revision and command line options.
   void addBoltInfoSection();
@@ -379,6 +386,17 @@ private:
   /// When updating debug info, these are the sections we overwrite.
   static constexpr const char *SectionsToOverwrite[] = {
     ".shstrtab",
+    ".debug_aranges",
+    ".debug_line",
+    ".debug_loc",
+    ".debug_ranges",
+    ".gdb_index",
+  };
+
+  static constexpr const char *SectionsToOverwriteRelocMode[] = {
+    ".shstrtab",
+    ".symtab",
+    ".strtab",
     ".debug_aranges",
     ".debug_line",
     ".debug_loc",
@@ -450,10 +468,6 @@ private:
   /// Maps section name -> patcher.
   std::map<std::string, std::unique_ptr<BinaryPatcher>> SectionPatchers;
 
-  /// [old section index] -> [new section index] map. Used for adjusting
-  /// referenced section indices.
-  std::vector<uint64_t> NewSectionIndex;
-
   uint64_t NewTextSectionStartAddress{0};
 
   uint64_t NewTextSectionIndex{0};
@@ -488,6 +502,9 @@ private:
 
   /// Section header string table.
   StringTableBuilder SHStrTab;
+
+  /// A rewrite of strtab
+  std::string NewStrTab;
 
   static const std::string OrgSecPrefix;
 

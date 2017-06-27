@@ -403,6 +403,7 @@ size_t padFunction(const BinaryFunction &Function) {
 } // namespace opts
 
 constexpr const char *RewriteInstance::SectionsToOverwrite[];
+constexpr const char *RewriteInstance::SectionsToOverwriteRelocMode[];
 
 const std::string RewriteInstance::OrgSecPrefix = ".bolt.org";
 
@@ -2719,10 +2720,6 @@ void RewriteInstance::rewriteNoteSections() {
       Size = appendPadding(OS, Size, Section.sh_addralign);
     }
 
-    if (Section.sh_type == ELF::SHT_SYMTAB) {
-      NewSymTabOffset = NextAvailableOffset;
-    }
-
     // Address of extension to the section.
     uint64_t Address{0};
 
@@ -2853,6 +2850,179 @@ void RewriteInstance::addBoltInfoSection() {
   }
 }
 
+// Provide a mapping of the existing input binary sections to the output binary
+// section header table.
+// Return the map from the section header old index to its new index. Optionally
+// return in OutputSections an ordered list of the output sections. This is
+// optional because for reference updating in the symbol table we only need the
+// map of input to output indices, not the real output section list.
+template <typename ELFT, typename ELFShdrTy>
+std::vector<uint32_t>
+RewriteInstance::getOutputSections(ELFObjectFile<ELFT> *File,
+                                   std::vector<ELFShdrTy> *OutputSections) {
+  auto *Obj = File->getELFFile();
+
+  std::vector<uint32_t> NewSectionIndex(Obj->getNumSections(), 0);
+  NewTextSectionIndex = 0;
+  uint32_t CurIndex{0};
+
+  // Copy over entries for original allocatable sections with minor
+  // modifications (e.g. name).
+  for (auto &Section : Obj->sections()) {
+    // Always ignore this section.
+    if (Section.sh_type == ELF::SHT_NULL) {
+      NewSectionIndex[0] = CurIndex++;
+      if (OutputSections)
+        OutputSections->emplace_back(Section);
+      continue;
+    }
+
+    // Is this our new text? Then update our pointer indicating the new output
+    // text section
+    if (opts::UseOldText && Section.sh_flags & ELF::SHF_ALLOC &&
+        Section.sh_addr <= NewTextSectionStartAddress &&
+        Section.sh_addr + Section.sh_size > NewTextSectionStartAddress) {
+      NewTextSectionIndex = CurIndex;
+    }
+
+    // Skip non-allocatable sections.
+    if (!(Section.sh_flags & ELF::SHF_ALLOC))
+      continue;
+
+    NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
+      CurIndex++;
+
+    // If only computing the map, we're done with this iteration
+    if (!OutputSections)
+      continue;
+
+    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
+    check_error(SectionName.getError(), "cannot get section name");
+
+    auto NewSection = Section;
+    if (*SectionName == ".bss") {
+      // .bss section offset matches that of the next section.
+      NewSection.sh_offset = NewTextSegmentOffset;
+    }
+
+    if (willOverwriteSection(*SectionName)) {
+      NewSection.sh_name = SHStrTab.getOffset(OrgSecPrefix +
+                                              SectionName->str());
+    } else {
+      NewSection.sh_name = SHStrTab.getOffset(*SectionName);
+    }
+
+    OutputSections->emplace_back(NewSection);
+  }
+
+  // If we are creating our own .text section, it should be the first section
+  // we created in EFMM->SectionMapInfo, so this is the correct index.
+  if (!opts::UseOldText) {
+    NewTextSectionIndex = CurIndex;
+  }
+
+  // Process entries for all new allocatable sections.
+  for (auto &SMII : EFMM->SectionMapInfo) {
+    const auto &SectionName = SMII.first;
+    const auto &SI = SMII.second;
+    // Ignore function sections.
+    if (SI.FileAddress < NewTextSegmentAddress) {
+      if (opts::Verbosity)
+        outs() << "BOLT-INFO: not writing section header for existing section "
+               << SMII.first << '\n';
+      continue;
+    }
+
+    ++CurIndex;
+    // If only computing the map, we're done with this iteration
+    if (!OutputSections)
+      continue;
+
+    if (opts::Verbosity >= 1)
+      outs() << "BOLT-INFO: writing section header for " << SectionName << '\n';
+    ELFShdrTy NewSection;
+    NewSection.sh_name = SHStrTab.getOffset(SectionName);
+    NewSection.sh_type = ELF::SHT_PROGBITS;
+    NewSection.sh_addr = SI.FileAddress;
+    NewSection.sh_offset = SI.FileOffset;
+    NewSection.sh_size = SI.Size;
+    NewSection.sh_entsize = 0;
+    NewSection.sh_flags = ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
+    NewSection.sh_link = 0;
+    NewSection.sh_info = 0;
+    NewSection.sh_addralign = SI.Alignment;
+    OutputSections->emplace_back(NewSection);
+  }
+
+  uint64_t LastFileOffset = 0;
+
+  // Copy over entries for non-allocatable sections performing necessary
+  // adjustments.
+  for (auto &Section : Obj->sections()) {
+    if (Section.sh_type == ELF::SHT_NULL)
+      continue;
+    if (Section.sh_flags & ELF::SHF_ALLOC)
+      continue;
+    // Strip non-allocatable relocation sections.
+    if (Section.sh_type == ELF::SHT_RELA)
+      continue;
+
+    NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
+      CurIndex++;
+
+    // If only computing the map, we're done with this iteration
+    if (!OutputSections)
+      continue;
+
+    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
+    check_error(SectionName.getError(), "cannot get section name");
+
+    auto SII = EFMM->NoteSectionInfo.find(*SectionName);
+    assert(SII != EFMM->NoteSectionInfo.end() &&
+           "missing section info for non-allocatable section");
+
+    const auto &SI = SII->second;
+    auto NewSection = Section;
+    NewSection.sh_offset = SI.FileOffset;
+    NewSection.sh_size = SI.Size;
+    NewSection.sh_name = SHStrTab.getOffset(*SectionName);
+
+    OutputSections->emplace_back(NewSection);
+
+    LastFileOffset = SI.FileOffset;
+  }
+
+  // Map input -> output is ready. Early return if that's all we need.
+  if (!OutputSections)
+    return NewSectionIndex;
+
+  // Create entries for new non-allocatable sections.
+  for (auto &SII : EFMM->NoteSectionInfo) {
+    const auto &SectionName = SII.first;
+    const auto &SI = SII.second;
+
+    if (SI.FileOffset <= LastFileOffset)
+      continue;
+
+    if (opts::Verbosity >= 1)
+      outs() << "BOLT-INFO: writing section header for " << SectionName << '\n';
+    ELFShdrTy NewSection;
+    NewSection.sh_name = SHStrTab.getOffset(SectionName);
+    NewSection.sh_type = (SI.IsStrTab ? ELF::SHT_STRTAB : ELF::SHT_PROGBITS);
+    NewSection.sh_addr = 0;
+    NewSection.sh_offset = SI.FileOffset;
+    NewSection.sh_size = SI.Size;
+    NewSection.sh_entsize = 0;
+    NewSection.sh_flags = 0;
+    NewSection.sh_link = 0;
+    NewSection.sh_info = 0;
+    NewSection.sh_addralign = SI.Alignment ? SI.Alignment : 1;
+    OutputSections->emplace_back(NewSection);
+  }
+
+  return NewSectionIndex;
+}
+
 // Rewrite section header table inserting new entries as needed. The sections
 // header table size itself may affect the offsets of other sections,
 // so we are placing it at the end of the binary.
@@ -2872,136 +3042,15 @@ void RewriteInstance::addBoltInfoSection() {
 template <typename ELFT>
 void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   using Elf_Shdr = typename ELFObjectFile<ELFT>::Elf_Shdr;
-
-  auto *Obj = File->getELFFile();
+  std::vector<Elf_Shdr> OutputSections;
   auto &OS = Out->os();
+  auto *Obj = File->getELFFile();
 
-  std::vector<Elf_Shdr> SectionsToWrite;
-
-  NewSectionIndex.resize(Obj->getNumSections());
-
-  // Copy over entries for original allocatable sections with minor
-  // modifications (e.g. name).
-  for (auto &Section : Obj->sections()) {
-    // Always ignore this section.
-    if (Section.sh_type == ELF::SHT_NULL) {
-      NewSectionIndex[0] = SectionsToWrite.size();
-      SectionsToWrite.emplace_back(Section);
-      continue;
-    }
-
-    // Skip non-allocatable sections.
-    if (!(Section.sh_flags & ELF::SHF_ALLOC))
-      continue;
-
-    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
-    check_error(SectionName.getError(), "cannot get section name");
-
-    auto NewSection = Section;
-    if (*SectionName == ".bss") {
-      // .bss section offset matches that of the next section.
-      NewSection.sh_offset = NewTextSegmentOffset;
-    }
-
-    if (willOverwriteSection(*SectionName)) {
-      NewSection.sh_name = SHStrTab.getOffset(OrgSecPrefix +
-                                              SectionName->str());
-    } else {
-      NewSection.sh_name = SHStrTab.getOffset(*SectionName);
-    }
-
-    NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
-      SectionsToWrite.size();
-    SectionsToWrite.emplace_back(NewSection);
-  }
-
-  // Create entries for new allocatable sections.
-  for (auto &SMII : EFMM->SectionMapInfo) {
-    const auto &SectionName = SMII.first;
-    const auto &SI = SMII.second;
-    // Ignore function sections.
-    if (SI.FileAddress < NewTextSegmentAddress) {
-      if (opts::Verbosity)
-        outs() << "BOLT-INFO: not writing section header for existing section "
-               << SMII.first << '\n';
-      continue;
-    }
-    if (opts::Verbosity >= 1)
-      outs() << "BOLT-INFO: writing section header for " << SectionName << '\n';
-    Elf_Shdr NewSection;
-    NewSection.sh_name = SHStrTab.getOffset(SectionName);
-    NewSection.sh_type = ELF::SHT_PROGBITS;
-    NewSection.sh_addr = SI.FileAddress;
-    NewSection.sh_offset = SI.FileOffset;
-    NewSection.sh_size = SI.Size;
-    NewSection.sh_entsize = 0;
-    NewSection.sh_flags = ELF::SHF_ALLOC | ELF::SHF_EXECINSTR;
-    NewSection.sh_link = 0;
-    NewSection.sh_info = 0;
-    NewSection.sh_addralign = SI.Alignment;
-    SectionsToWrite.emplace_back(NewSection);
-  }
-
-  uint64_t LastFileOffset = 0;
-
-  // Copy over entries for non-allocatable sections performing necessary
-  // adjustments.
-  for (auto &Section : Obj->sections()) {
-    if (Section.sh_type == ELF::SHT_NULL)
-      continue;
-    if (Section.sh_flags & ELF::SHF_ALLOC)
-      continue;
-    // Strip non-allocatable relocation sections.
-    if (Section.sh_type == ELF::SHT_RELA)
-      continue;
-
-    ErrorOr<StringRef> SectionName = Obj->getSectionName(&Section);
-    check_error(SectionName.getError(), "cannot get section name");
-
-    auto SII = EFMM->NoteSectionInfo.find(*SectionName);
-    assert(SII != EFMM->NoteSectionInfo.end() &&
-           "missing section info for non-allocatable section");
-
-    const auto &SI = SII->second;
-    auto NewSection = Section;
-    NewSection.sh_offset = SI.FileOffset;
-    NewSection.sh_size = SI.Size;
-    NewSection.sh_name = SHStrTab.getOffset(*SectionName);
-
-    NewSectionIndex[std::distance(Obj->section_begin(), &Section)] =
-      SectionsToWrite.size();
-    SectionsToWrite.emplace_back(NewSection);
-
-    LastFileOffset = SI.FileOffset;
-  }
-
-  // Create entries for new non-allocatable sections.
-  for (auto &SII : EFMM->NoteSectionInfo) {
-    const auto &SectionName = SII.first;
-    const auto &SI = SII.second;
-
-    if (SI.FileOffset <= LastFileOffset)
-      continue;
-
-    if (opts::Verbosity >= 1)
-      outs() << "BOLT-INFO: writing section header for " << SectionName << '\n';
-    Elf_Shdr NewSection;
-    NewSection.sh_name = SHStrTab.getOffset(SectionName);
-    NewSection.sh_type = (SI.IsStrTab ? ELF::SHT_STRTAB : ELF::SHT_PROGBITS);
-    NewSection.sh_addr = 0;
-    NewSection.sh_offset = SI.FileOffset;
-    NewSection.sh_size = SI.Size;
-    NewSection.sh_entsize = 0;
-    NewSection.sh_flags = 0;
-    NewSection.sh_link = 0;
-    NewSection.sh_info = 0;
-    NewSection.sh_addralign = SI.Alignment ? SI.Alignment : 1;
-    SectionsToWrite.emplace_back(NewSection);
-  }
+  auto NewSectionIndex =  getOutputSections(File, &OutputSections);
 
   // Sort sections by their offset prior to writing. Only newly created sections
   // were unsorted, hence this wouldn't ruin indices in NewSectionIndex.
-  std::stable_sort(SectionsToWrite.begin(), SectionsToWrite.end(),
+  std::stable_sort(OutputSections.begin(), OutputSections.end(),
       [] (Elf_Shdr A, Elf_Shdr B) {
         return A.sh_offset < B.sh_offset;
       });
@@ -3018,13 +3067,8 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   SHTOffset = appendPadding(OS, SHTOffset, sizeof(Elf_Shdr));
 
   // Write all section header entries while patching section references.
-  for (uint64_t Index = 0; Index < SectionsToWrite.size(); ++Index) {
-    auto &Section = SectionsToWrite[Index];
-    if (Section.sh_flags & ELF::SHF_ALLOC &&
-        Section.sh_addr <= NewTextSectionStartAddress &&
-        Section.sh_addr + Section.sh_size > NewTextSectionStartAddress) {
-      NewTextSectionIndex = Index;
-    }
+  for (uint64_t Index = 0; Index < OutputSections.size(); ++Index) {
+    auto &Section = OutputSections[Index];
     Section.sh_link = NewSectionIndex[Section.sh_link];
     if (Section.sh_type == ELF::SHT_REL || Section.sh_type == ELF::SHT_RELA) {
       if (Section.sh_info)
@@ -3043,7 +3087,7 @@ void RewriteInstance::patchELFSectionHeaderTable(ELFObjectFile<ELFT> *File) {
   NewEhdr.e_phoff = PHDRTableOffset;
   NewEhdr.e_phnum = Phnum;
   NewEhdr.e_shoff = SHTOffset;
-  NewEhdr.e_shnum = SectionsToWrite.size();
+  NewEhdr.e_shnum = OutputSections.size();
   NewEhdr.e_shstrndx = NewSectionIndex[NewEhdr.e_shstrndx];
   OS.pwrite(reinterpret_cast<const char *>(&NewEhdr), sizeof(NewEhdr), 0);
 }
@@ -3054,26 +3098,54 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     return;
 
   auto *Obj = File->getELFFile();
-  auto &OS = Out->os();
+  // Set pointer at the end of the output file, so we can pwrite old symbol
+  // tables if we need to.
+  uint64_t NextAvailableOffset = getFileOffsetForAddress(NextAvailableAddress);
+  assert(NextAvailableOffset >= FirstNonAllocatableOffset &&
+         "next available offset calculation failure");
+  Out->os().seek(NextAvailableOffset);
 
   using Elf_Shdr = typename ELFObjectFile<ELFT>::Elf_Shdr;
   using Elf_Sym  = typename ELFObjectFile<ELFT>::Elf_Sym;
 
-  auto updateSymbolTable = [&](uint64_t SymTabOffset, const Elf_Shdr *Section) {
-    auto StringSectionOrError = Obj->getStringTableForSymtab(*Section);
+  // Compute a preview of how section indices will change after rewriting, so
+  // we can properly update the symbol table.
+  auto NewSectionIndex =
+      getOutputSections(File, (std::vector<Elf_Shdr> *)nullptr);
+
+  auto updateSymbolTable = [&](bool PatchExisting, const Elf_Shdr *Section,
+                               std::function<void(size_t, const char *, size_t)>
+                               Write,
+                               std::function<size_t(StringRef)> AddToStrTab) {
+    auto StringSection = *Obj->getStringTableForSymtab(*Section);
+
     for (const Elf_Sym &Symbol : Obj->symbols(Section)) {
       auto NewSymbol = Symbol;
-      if (const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value)) {
+      const auto *Function = getBinaryFunctionAtAddress(Symbol.st_value);
+      // Some section symbols may be mistakenly associated with the first
+      // function emitted in the section. Dismiss if it is a section symbol.
+      if (Function && NewSymbol.getType() != ELF::STT_SECTION) {
         NewSymbol.st_value = Function->getOutputAddress();
         NewSymbol.st_size = Function->getOutputSize();
         NewSymbol.st_shndx = NewTextSectionIndex;
+        if (!PatchExisting && Function->isSplit()) {
+          auto NewColdSym = NewSymbol;
+          SmallVector<char, 256> Buf;
+          NewColdSym.st_name = AddToStrTab(Twine(*Symbol.getName(StringSection))
+                                               .concat(".cold.0")
+                                               .toStringRef(Buf));
+          NewColdSym.st_value = Function->cold().getAddress();
+          NewColdSym.st_size = Function->cold().getImageSize();
+          Write(0, reinterpret_cast<const char *>(&NewColdSym),
+                sizeof(NewColdSym));
+        }
       } else {
         if (NewSymbol.st_shndx < ELF::SHN_LORESERVE) {
           NewSymbol.st_shndx = NewSectionIndex[NewSymbol.st_shndx];
         }
-        // Set to zero local syms in the text section that we didn't update
+        // Detect local syms in the text section that we didn't update
         // and were preserved by the linker to support relocations against
-        // .text (t15274167).
+        // .text (t15274167). Remove then from the symtab.
         if (opts::Relocs && NewSymbol.getType() == ELF::STT_NOTYPE &&
             NewSymbol.getBinding() == ELF::STB_LOCAL &&
             NewSymbol.st_size == 0) {
@@ -3083,6 +3155,11 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
             if (Section->sh_type == ELF::SHT_PROGBITS &&
                 Section->sh_flags & ELF::SHF_ALLOC &&
                 Section->sh_flags & ELF::SHF_EXECINSTR) {
+              // This will cause the symbol to not be emitted if we are
+              // creating a new symtab from scratch instead of patching one.
+              if (!PatchExisting)
+                continue;
+              // If patching an existing symtab, patch this value to zero.
               NewSymbol.st_value = 0;
             }
           }
@@ -3098,16 +3175,14 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
           return true;
         };
 
-        auto SymbolName = Symbol.getName(*StringSectionOrError);
+        auto SymbolName = Symbol.getName(StringSection);
         assert(SymbolName && "cannot get symbol name");
         if (*SymbolName == "__hot_start" || *SymbolName == "__hot_end")
           updateSymbolValue(*SymbolName);
       }
 
-      OS.pwrite(reinterpret_cast<const char *>(&NewSymbol),
-                sizeof(NewSymbol),
-                SymTabOffset +
-                  (&Symbol - Obj->symbol_begin(Section)) * sizeof(Elf_Sym));
+      Write((&Symbol - Obj->symbol_begin(Section)) * sizeof(Elf_Sym),
+            reinterpret_cast<const char *>(&NewSymbol), sizeof(NewSymbol));
     }
   };
 
@@ -3120,9 +3195,14 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     }
   }
   assert(DynSymSection && "no dynamic symbol table found");
-  updateSymbolTable(DynSymSection->sh_offset, DynSymSection);
+  updateSymbolTable(/*patch existing table?*/ true, DynSymSection,
+                    [&](size_t Offset, const char *Buf, size_t Size) {
+                      Out->os().pwrite(Buf, Size,
+                                       DynSymSection->sh_offset + Offset);
+                    },
+                    [](StringRef) -> size_t { return 0; });
 
-  // Update regular symbol table.
+  // (re)create regular symbol table.
   const Elf_Shdr *SymTabSection = nullptr;
   for (const auto &Section : Obj->sections()) {
     if (Section.sh_type == ELF::SHT_SYMTAB) {
@@ -3134,8 +3214,41 @@ void RewriteInstance::patchELFSymTabs(ELFObjectFile<ELFT> *File) {
     errs() << "BOLT-WARNING: no symbol table found\n";
     return;
   }
-  assert(NewSymTabOffset && "expected symbol table offset to be set");
-  updateSymbolTable(NewSymTabOffset, SymTabSection);
+
+  const Elf_Shdr *StrTabSection = *Obj->getSection(SymTabSection->sh_link);
+  std::string NewContents;
+  std::string NewStrTab =
+      File->getData().substr(StrTabSection->sh_offset, StrTabSection->sh_size);
+  auto SecName = *Obj->getSectionName(SymTabSection);
+  auto StrSecName = *Obj->getSectionName(StrTabSection);
+
+  updateSymbolTable(/*patch existing table?*/false, SymTabSection,
+                    [&](size_t Offset, const char *Buf, size_t Size) {
+                      NewContents.append(Buf, Size);
+                    }, [&](StringRef Str) {
+                      size_t Idx = NewStrTab.size();
+                      NewStrTab.append(Str.data(), Str.size());
+                      NewStrTab.append(1, '\0');
+                      return Idx;
+                    });
+
+  uint8_t *DataCopy = new uint8_t[NewContents.size()];
+  memcpy(DataCopy, NewContents.data(), NewContents.size());
+  EFMM->NoteSectionInfo[SecName] =
+      SectionInfo(reinterpret_cast<uint64_t>(DataCopy), NewContents.size(),
+                  /*Alignment*/ 1,
+                  /*IsCode=*/false,
+                  /*IsReadOnly=*/false,
+                  /*IsLocal=*/false);
+  DataCopy = new uint8_t[NewStrTab.size()];
+  memcpy(DataCopy, NewStrTab.data(), NewStrTab.size());
+  EFMM->NoteSectionInfo[StrSecName] =
+      SectionInfo(reinterpret_cast<uint64_t>(DataCopy), NewStrTab.size(),
+                  /*Alignment*/ 1,
+                  /*IsCode=*/false,
+                  /*IsReadOnly=*/false,
+                  /*IsLocal=*/false);
+  EFMM->NoteSectionInfo[StrSecName].IsStrTab = true;
 }
 
 template <typename ELFT>
@@ -3432,6 +3545,11 @@ void RewriteInstance::rewriteFile() {
   // Finalize memory image of section string table.
   finalizeSectionStringTable();
 
+  if (opts::Relocs) {
+    // Update symbol tables.
+    patchELFSymTabs();
+  }
+
   // Copy non-allocatable sections once allocatable part is finished.
   rewriteNoteSections();
 
@@ -3446,10 +3564,6 @@ void RewriteInstance::rewriteFile() {
 
   // Update ELF book-keeping info.
   patchELFSectionHeaderTable();
-
-  // Update symbol tables.
-  if (opts::Relocs)
-    patchELFSymTabs();
 
   // TODO: we should find a way to mark the binary as optimized by us.
   Out->keep();
@@ -3555,9 +3669,16 @@ uint64_t RewriteInstance::getFileOffsetForAddress(uint64_t Address) const {
 }
 
 bool RewriteInstance::willOverwriteSection(StringRef SectionName) {
-  for (auto &OverwriteName : SectionsToOverwrite) {
-    if (SectionName == OverwriteName)
-      return true;
+  if (opts::Relocs) {
+    for (auto &OverwriteName : SectionsToOverwriteRelocMode) {
+      if (SectionName == OverwriteName)
+        return true;
+    }
+  } else {
+    for (auto &OverwriteName : SectionsToOverwrite) {
+      if (SectionName == OverwriteName)
+        return true;
+    }
   }
 
   auto SMII = EFMM->SectionMapInfo.find(SectionName);
