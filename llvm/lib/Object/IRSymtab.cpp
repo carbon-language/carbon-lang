@@ -32,6 +32,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/StringSaver.h"
+#include "llvm/Support/VCSRevision.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <string>
@@ -42,6 +43,21 @@ using namespace llvm;
 using namespace irsymtab;
 
 namespace {
+
+const char *getExpectedProducerName() {
+  static char DefaultName[] = LLVM_VERSION_STRING
+#ifdef LLVM_REVISION
+      " " LLVM_REVISION
+#endif
+      ;
+  // Allows for testing of the irsymtab writer and upgrade mechanism. This
+  // environment variable should not be set by users.
+  if (char *OverrideName = getenv("LLVM_OVERRIDE_PRODUCER"))
+    return OverrideName;
+  return DefaultName;
+}
+
+const char *kExpectedProducerName = getExpectedProducerName();
 
 /// Stores the temporary state that is required to build an IR symbol table.
 struct Builder {
@@ -231,6 +247,8 @@ Error Builder::build(ArrayRef<Module *> IRMods) {
   storage::Header Hdr;
 
   assert(!IRMods.empty());
+  Hdr.Version = storage::Header::kCurrentVersion;
+  setStr(Hdr.Producer, kExpectedProducerName);
   setStr(Hdr.TargetTriple, IRMods[0]->getTargetTriple());
   setStr(Hdr.SourceFileName, IRMods[0]->getSourceFileName());
   TT = Triple(IRMods[0]->getTargetTriple());
