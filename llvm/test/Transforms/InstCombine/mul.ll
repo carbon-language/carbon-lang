@@ -300,7 +300,7 @@ define i32 @test32(i32 %X) {
 
 define <2 x i32> @test32vec(<2 x i32> %X) {
 ; CHECK-LABEL: @test32vec(
-; CHECK-NEXT:    [[MUL:%.*]] = shl <2 x i32> [[X:%.*]], <i32 31, i32 31>
+; CHECK-NEXT:    [[MUL:%.*]] = shl nsw <2 x i32> [[X:%.*]], <i32 31, i32 31>
 ; CHECK-NEXT:    ret <2 x i32> [[MUL]]
 ;
   %mul = mul nsw <2 x i32> %X, <i32 -2147483648, i32 -2147483648>
@@ -315,20 +315,18 @@ define i32 @test33(i32 %X) {
   ret i32 %mul
 }
 
-; TODO: we should propagate nsw flag to the shift here
 define <2 x i32> @test33vec(<2 x i32> %X) {
 ; CHECK-LABEL: @test33vec(
-; CHECK-NEXT:    [[MUL:%.*]] = shl <2 x i32> [[X:%.*]], <i32 30, i32 30>
+; CHECK-NEXT:    [[MUL:%.*]] = shl nsw <2 x i32> [[X:%.*]], <i32 30, i32 30>
 ; CHECK-NEXT:    ret <2 x i32> [[MUL]]
 ;
   %mul = mul nsw <2 x i32> %X, <i32 1073741824, i32 1073741824>
   ret <2 x i32> %mul
 }
 
-; TODO: we should propagate nsw flag to the shift here, but we only handle i64 and smaller
 define i128 @test34(i128 %X) {
 ; CHECK-LABEL: @test34(
-; CHECK-NEXT:    [[MUL:%.*]] = shl i128 [[X:%.*]], 1
+; CHECK-NEXT:    [[MUL:%.*]] = shl nsw i128 [[X:%.*]], 1
 ; CHECK-NEXT:    ret i128 [[MUL]]
 ;
   %mul = mul nsw i128 %X, 2
