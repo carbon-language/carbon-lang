@@ -193,6 +193,9 @@ static Error readSection(WasmSection &Section, const uint8_t *&Ptr,
 
 WasmObjectFile::WasmObjectFile(MemoryBufferRef Buffer, Error &Err)
     : ObjectFile(Binary::ID_Wasm, Buffer) {
+  LinkingData.DataAlignment = 0;
+  LinkingData.DataSize = 0;
+
   ErrorAsOutParameter ErrAsOutParam(&Err);
   Header.Magic = getData().substr(0, 4);
   if (Header.Magic != StringRef("\0asm", 4)) {
@@ -305,7 +308,7 @@ Error WasmObjectFile::parseLinkingSection(const uint8_t *Ptr,
         auto iter = SymbolMap.find(Symbol);
         if (iter == SymbolMap.end()) {
           return make_error<GenericBinaryError>(
-              "Invalid symbol name in linking section",
+              "Invalid symbol name in linking section: " + Symbol,
               object_error::parse_failed);
         }
         uint32_t SymIndex = iter->second;
@@ -318,6 +321,12 @@ Error WasmObjectFile::parseLinkingSection(const uint8_t *Ptr,
       }
       break;
     }
+    case wasm::WASM_DATA_SIZE:
+      LinkingData.DataSize = readVaruint32(Ptr);
+      break;
+    case wasm::WASM_DATA_ALIGNMENT:
+      LinkingData.DataAlignment = readVaruint32(Ptr);
+      break;
     case wasm::WASM_STACK_POINTER:
     default:
       Ptr += Size;
