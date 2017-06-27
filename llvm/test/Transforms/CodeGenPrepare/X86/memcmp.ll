@@ -14,15 +14,14 @@ define i32 @cmp2(i8* nocapture readonly %x, i8* nocapture readonly %y)  {
 ; X32-NEXT:    [[TMP5:%.*]] = call i16 @llvm.bswap.i16(i16 [[TMP3]])
 ; X32-NEXT:    [[TMP6:%.*]] = zext i16 [[TMP4]] to i32
 ; X32-NEXT:    [[TMP7:%.*]] = zext i16 [[TMP5]] to i32
-; X32-NEXT:    [[TMP8:%.*]] = sub i32 [[TMP6]], [[TMP7]]
-; X32-NEXT:    [[TMP9:%.*]] = icmp ne i32 [[TMP8]], 0
-; X32-NEXT:    br i1 [[TMP9]], label %res_block, label %endblock
+; X32-NEXT:    [[TMP8:%.*]] = icmp eq i32 [[TMP6]], [[TMP7]]
+; X32-NEXT:    br i1 [[TMP8]], label %endblock, label %res_block
 ; X32:       res_block:
-; X32-NEXT:    [[TMP10:%.*]] = icmp ult i32 [[TMP6]], [[TMP7]]
-; X32-NEXT:    [[TMP11:%.*]] = select i1 [[TMP10]], i32 -1, i32 1
+; X32-NEXT:    [[TMP9:%.*]] = icmp ult i32 [[TMP6]], [[TMP7]]
+; X32-NEXT:    [[TMP10:%.*]] = select i1 [[TMP9]], i32 -1, i32 1
 ; X32-NEXT:    br label %endblock
 ; X32:       endblock:
-; X32-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP11]], %res_block ]
+; X32-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP10]], %res_block ]
 ; X32-NEXT:    ret i32 [[PHI_RES]]
 ;
 ; X64-LABEL: @cmp2(
@@ -35,15 +34,14 @@ define i32 @cmp2(i8* nocapture readonly %x, i8* nocapture readonly %y)  {
 ; X64-NEXT:    [[TMP5:%.*]] = call i16 @llvm.bswap.i16(i16 [[TMP3]])
 ; X64-NEXT:    [[TMP6:%.*]] = zext i16 [[TMP4]] to i64
 ; X64-NEXT:    [[TMP7:%.*]] = zext i16 [[TMP5]] to i64
-; X64-NEXT:    [[TMP8:%.*]] = sub i64 [[TMP6]], [[TMP7]]
-; X64-NEXT:    [[TMP9:%.*]] = icmp ne i64 [[TMP8]], 0
-; X64-NEXT:    br i1 [[TMP9]], label %res_block, label %endblock
+; X64-NEXT:    [[TMP8:%.*]] = icmp eq i64 [[TMP6]], [[TMP7]]
+; X64-NEXT:    br i1 [[TMP8]], label %endblock, label %res_block
 ; X64:       res_block:
-; X64-NEXT:    [[TMP10:%.*]] = icmp ult i64 [[TMP6]], [[TMP7]]
-; X64-NEXT:    [[TMP11:%.*]] = select i1 [[TMP10]], i32 -1, i32 1
+; X64-NEXT:    [[TMP9:%.*]] = icmp ult i64 [[TMP6]], [[TMP7]]
+; X64-NEXT:    [[TMP10:%.*]] = select i1 [[TMP9]], i32 -1, i32 1
 ; X64-NEXT:    br label %endblock
 ; X64:       endblock:
-; X64-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP11]], %res_block ]
+; X64-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP10]], %res_block ]
 ; X64-NEXT:    ret i32 [[PHI_RES]]
 ;
   %call = tail call i32 @memcmp(i8* %x, i8* %y, i64 2)
@@ -68,15 +66,14 @@ define i32 @cmp4(i8* nocapture readonly %x, i8* nocapture readonly %y)  {
 ; X32-NEXT:    [[TMP3:%.*]] = load i32, i32* [[TMP1]]
 ; X32-NEXT:    [[TMP4:%.*]] = call i32 @llvm.bswap.i32(i32 [[TMP2]])
 ; X32-NEXT:    [[TMP5:%.*]] = call i32 @llvm.bswap.i32(i32 [[TMP3]])
-; X32-NEXT:    [[TMP6:%.*]] = sub i32 [[TMP4]], [[TMP5]]
-; X32-NEXT:    [[TMP7:%.*]] = icmp ne i32 [[TMP6]], 0
-; X32-NEXT:    br i1 [[TMP7]], label %res_block, label %endblock
+; X32-NEXT:    [[TMP6:%.*]] = icmp eq i32 [[TMP4]], [[TMP5]]
+; X32-NEXT:    br i1 [[TMP6]], label %endblock, label %res_block
 ; X32:       res_block:
-; X32-NEXT:    [[TMP8:%.*]] = icmp ult i32 [[TMP4]], [[TMP5]]
-; X32-NEXT:    [[TMP9:%.*]] = select i1 [[TMP8]], i32 -1, i32 1
+; X32-NEXT:    [[TMP7:%.*]] = icmp ult i32 [[TMP4]], [[TMP5]]
+; X32-NEXT:    [[TMP8:%.*]] = select i1 [[TMP7]], i32 -1, i32 1
 ; X32-NEXT:    br label %endblock
 ; X32:       endblock:
-; X32-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP9]], %res_block ]
+; X32-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP8]], %res_block ]
 ; X32-NEXT:    ret i32 [[PHI_RES]]
 ;
 ; X64-LABEL: @cmp4(
@@ -89,15 +86,14 @@ define i32 @cmp4(i8* nocapture readonly %x, i8* nocapture readonly %y)  {
 ; X64-NEXT:    [[TMP5:%.*]] = call i32 @llvm.bswap.i32(i32 [[TMP3]])
 ; X64-NEXT:    [[TMP6:%.*]] = zext i32 [[TMP4]] to i64
 ; X64-NEXT:    [[TMP7:%.*]] = zext i32 [[TMP5]] to i64
-; X64-NEXT:    [[TMP8:%.*]] = sub i64 [[TMP6]], [[TMP7]]
-; X64-NEXT:    [[TMP9:%.*]] = icmp ne i64 [[TMP8]], 0
-; X64-NEXT:    br i1 [[TMP9]], label %res_block, label %endblock
+; X64-NEXT:    [[TMP8:%.*]] = icmp eq i64 [[TMP6]], [[TMP7]]
+; X64-NEXT:    br i1 [[TMP8]], label %endblock, label %res_block
 ; X64:       res_block:
-; X64-NEXT:    [[TMP10:%.*]] = icmp ult i64 [[TMP6]], [[TMP7]]
-; X64-NEXT:    [[TMP11:%.*]] = select i1 [[TMP10]], i32 -1, i32 1
+; X64-NEXT:    [[TMP9:%.*]] = icmp ult i64 [[TMP6]], [[TMP7]]
+; X64-NEXT:    [[TMP10:%.*]] = select i1 [[TMP9]], i32 -1, i32 1
 ; X64-NEXT:    br label %endblock
 ; X64:       endblock:
-; X64-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP11]], %res_block ]
+; X64-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP10]], %res_block ]
 ; X64-NEXT:    ret i32 [[PHI_RES]]
 ;
   %call = tail call i32 @memcmp(i8* %x, i8* %y, i64 4)
@@ -144,15 +140,14 @@ define i32 @cmp8(i8* nocapture readonly %x, i8* nocapture readonly %y)  {
 ; X64-NEXT:    [[TMP3:%.*]] = load i64, i64* [[TMP1]]
 ; X64-NEXT:    [[TMP4:%.*]] = call i64 @llvm.bswap.i64(i64 [[TMP2]])
 ; X64-NEXT:    [[TMP5:%.*]] = call i64 @llvm.bswap.i64(i64 [[TMP3]])
-; X64-NEXT:    [[TMP6:%.*]] = sub i64 [[TMP4]], [[TMP5]]
-; X64-NEXT:    [[TMP7:%.*]] = icmp ne i64 [[TMP6]], 0
-; X64-NEXT:    br i1 [[TMP7]], label %res_block, label %endblock
+; X64-NEXT:    [[TMP6:%.*]] = icmp eq i64 [[TMP4]], [[TMP5]]
+; X64-NEXT:    br i1 [[TMP6]], label %endblock, label %res_block
 ; X64:       res_block:
-; X64-NEXT:    [[TMP8:%.*]] = icmp ult i64 [[TMP4]], [[TMP5]]
-; X64-NEXT:    [[TMP9:%.*]] = select i1 [[TMP8]], i32 -1, i32 1
+; X64-NEXT:    [[TMP7:%.*]] = icmp ult i64 [[TMP4]], [[TMP5]]
+; X64-NEXT:    [[TMP8:%.*]] = select i1 [[TMP7]], i32 -1, i32 1
 ; X64-NEXT:    br label %endblock
 ; X64:       endblock:
-; X64-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP9]], %res_block ]
+; X64-NEXT:    [[PHI_RES:%.*]] = phi i32 [ 0, %loadbb ], [ [[TMP8]], %res_block ]
 ; X64-NEXT:    ret i32 [[PHI_RES]]
 ;
   %call = tail call i32 @memcmp(i8* %x, i8* %y, i64 8)

@@ -13,10 +13,9 @@ entry:
 ; CHECK: ldbrx [[LOAD1:[0-9]+]]
 ; CHECK-NEXT: ldbrx [[LOAD2:[0-9]+]]
 ; CHECK-NEXT: li [[LI:[0-9]+]], 1
-; CHECK-NEXT: cmpld [[CMPLD:[0-9]+]], [[LOAD1]], [[LOAD2]]
-; CHECK-NEXT: subf. [[SUB:[0-9]+]], [[LOAD2]], [[LOAD1]]
+; CHECK-NEXT: cmpld [[LOAD1]], [[LOAD2]]
 ; CHECK-NEXT: li [[LI2:[0-9]+]], -1
-; CHECK-NEXT: isel [[ISEL:[0-9]+]], [[LI2]], [[LI]], 4
+; CHECK-NEXT: isel [[ISEL:[0-9]+]], [[LI2]], [[LI]], 0
 ; CHECK-NEXT: isel [[ISEL2:[0-9]+]], 0, [[ISEL]], 2
 ; CHECK-NEXT: extsw 3, [[ISEL2]]
 ; CHECK-NEXT: blr
@@ -35,10 +34,9 @@ entry:
 ; CHECK: lwbrx [[LOAD1:[0-9]+]]
 ; CHECK-NEXT: lwbrx [[LOAD2:[0-9]+]]
 ; CHECK-NEXT: li [[LI:[0-9]+]], 1
-; CHECK-NEXT: cmpld [[CMPLD:[0-9]+]], [[LOAD1]], [[LOAD2]]
-; CHECK-NEXT: subf. [[SUB:[0-9]+]], [[LOAD2]], [[LOAD1]]
+; CHECK-NEXT: cmpld [[LOAD1]], [[LOAD2]]
 ; CHECK-NEXT: li [[LI2:[0-9]+]], -1
-; CHECK-NEXT: isel [[ISEL:[0-9]+]], [[LI2]], [[LI]], 4
+; CHECK-NEXT: isel [[ISEL:[0-9]+]], [[LI2]], [[LI]], 0
 ; CHECK-NEXT: isel [[ISEL2:[0-9]+]], 0, [[ISEL]], 2
 ; CHECK-NEXT: extsw 3, [[ISEL2]]
 ; CHECK-NEXT: blr
@@ -57,10 +55,9 @@ entry:
 ; CHECK: lhbrx [[LOAD1:[0-9]+]]
 ; CHECK-NEXT: lhbrx [[LOAD2:[0-9]+]]
 ; CHECK-NEXT: li [[LI:[0-9]+]], 1
-; CHECK-NEXT: cmpld [[CMPLD:[0-9]+]], [[LOAD1]], [[LOAD2]]
-; CHECK-NEXT: subf. [[SUB:[0-9]+]], [[LOAD2]], [[LOAD1]]
+; CHECK-NEXT: cmpld [[LOAD1]], [[LOAD2]]
 ; CHECK-NEXT: li [[LI2:[0-9]+]], -1
-; CHECK-NEXT: isel [[ISEL:[0-9]+]], [[LI2]], [[LI]], 4
+; CHECK-NEXT: isel [[ISEL:[0-9]+]], [[LI2]], [[LI]], 0
 ; CHECK-NEXT: isel [[ISEL2:[0-9]+]], 0, [[ISEL]], 2
 ; CHECK-NEXT: extsw 3, [[ISEL2]]
 ; CHECK-NEXT: blr
