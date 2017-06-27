@@ -90,7 +90,7 @@ const StratifiedIndex StratifiedLink::SetSentinel =
 /// Determines whether it would be pointless to add the given Value to our sets.
 static bool canSkipAddingToSets(Value *Val);
 
-static Optional<Function *> parentFunctionOfValue(Value *Val) {
+static Function *parentFunctionOfValue(Value *Val) {
   if (auto *Inst = dyn_cast<Instruction>(Val)) {
     auto *Bb = Inst->getParent();
     return Bb->getParent();
@@ -98,7 +98,7 @@ static Optional<Function *> parentFunctionOfValue(Value *Val) {
 
   if (auto *Arg = dyn_cast<Argument>(Val))
     return Arg->getParent();
-  return None;
+  return nullptr;
 }
 
 static bool canSkipAddingToSets(Value *Val) {
@@ -281,9 +281,9 @@ AliasResult CFLSteensAAResult::query(const MemoryLocation &LocA,
     return NoAlias;
 
   Function *Fn = nullptr;
-  auto MaybeFnA = parentFunctionOfValue(ValA);
-  auto MaybeFnB = parentFunctionOfValue(ValB);
-  if (!MaybeFnA.hasValue() && !MaybeFnB.hasValue()) {
+  Function *MaybeFnA = parentFunctionOfValue(ValA);
+  Function *MaybeFnB = parentFunctionOfValue(ValB);
+  if (!MaybeFnA && !MaybeFnB) {
     // The only times this is known to happen are when globals + InlineAsm are
     // involved
     DEBUG(dbgs()
@@ -291,12 +291,12 @@ AliasResult CFLSteensAAResult::query(const MemoryLocation &LocA,
     return MayAlias;
   }
 
-  if (MaybeFnA.hasValue()) {
-    Fn = *MaybeFnA;
-    assert((!MaybeFnB.hasValue() || *MaybeFnB == *MaybeFnA) &&
+  if (MaybeFnA) {
+    Fn = MaybeFnA;
+    assert((!MaybeFnB || MaybeFnB == MaybeFnA) &&
            "Interprocedural queries not supported");
   } else {
-    Fn = *MaybeFnB;
+    Fn = MaybeFnB;
   }
 
   assert(Fn != nullptr);
