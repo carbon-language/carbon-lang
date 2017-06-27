@@ -1180,7 +1180,8 @@ void UnwrappedLineParser::parseStructuralElement() {
         parseBracedList();
       else if (Style.Language == FormatStyle::LK_Proto &&
                FormatTok->Tok.is(tok::less))
-        parseBracedList(/*ClosingBraceKind=*/tok::greater);
+        parseBracedList(/*ContinueOnSemicolons=*/false,
+                        /*ClosingBraceKind=*/tok::greater);
       break;
     case tok::l_square:
       parseSquare();
