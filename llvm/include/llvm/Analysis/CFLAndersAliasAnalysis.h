@@ -76,7 +76,7 @@ private:
   /// that simply has empty sets.
   DenseMap<const Function *, Optional<FunctionInfo>> Cache;
 
-  std::forward_list<FunctionHandle<CFLAndersAAResult>> Handles;
+  std::forward_list<cflaa::FunctionHandle<CFLAndersAAResult>> Handles;
 };
 
 /// Analysis pass providing a never-invalidated alias analysis result.

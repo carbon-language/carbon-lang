@@ -94,7 +94,7 @@ private:
   /// have any kind of recursion, it is discernable from a function
   /// that simply has empty sets.
   DenseMap<Function *, Optional<FunctionInfo>> Cache;
-  std::forward_list<FunctionHandle<CFLSteensAAResult>> Handles;
+  std::forward_list<cflaa::FunctionHandle<CFLSteensAAResult>> Handles;
 
   FunctionInfo buildSetsFrom(Function *F);
 };
