@@ -4314,6 +4314,23 @@ SDValue SITargetLowering::splitBinaryBitConstantOp(
   return SDValue();
 }
 
+// Returns true if argument is a boolean value which is not serialized into
+// memory or argument and does not require v_cmdmask_b32 to be deserialized.
+static bool isBoolSGPR(SDValue V) {
+  if (V.getValueType() != MVT::i1)
+    return false;
+  switch (V.getOpcode()) {
+  default: break;
+  case ISD::SETCC:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+  case AMDGPUISD::FP_CLASS:
+    return true;
+  }
+  return false;
+}
+
 SDValue SITargetLowering::performAndCombine(SDNode *N,
                                             DAGCombinerInfo &DCI) const {
   if (DCI.isBeforeLegalize())
@@ -4400,6 +4417,16 @@ SDValue SITargetLowering::performAndCombine(SDNode *N,
                            X, DAG.getConstant(Mask, DL, MVT::i32));
       }
     }
+  }
+
+  if (VT == MVT::i32 &&
+      (RHS.getOpcode() == ISD::SIGN_EXTEND || LHS.getOpcode() == ISD::SIGN_EXTEND)) {
+    // and x, (sext cc from i1) => select cc, x, 0
+    if (RHS.getOpcode() != ISD::SIGN_EXTEND)
+      std::swap(LHS, RHS);
+    if (isBoolSGPR(RHS.getOperand(0)))
+      return DAG.getSelect(SDLoc(N), MVT::i32, RHS.getOperand(0),
+                           LHS, DAG.getConstant(0, SDLoc(N), MVT::i32));
   }
 
   return SDValue();
@@ -4941,8 +4968,7 @@ SDValue SITargetLowering::performAddCombine(SDNode *N,
   case ISD::SIGN_EXTEND:
   case ISD::ANY_EXTEND: {
     auto Cond = RHS.getOperand(0);
-    if (Cond.getOpcode() != ISD::SETCC &&
-        Cond.getOpcode() != AMDGPUISD::FP_CLASS)
+    if (!isBoolSGPR(Cond))
       break;
     SDVTList VTList = DAG.getVTList(MVT::i32, MVT::i1);
     SDValue Args[] = { LHS, DAG.getConstant(0, SL, MVT::i32), Cond };
