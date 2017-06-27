@@ -5135,6 +5135,35 @@ SDValue SITargetLowering::performSetCCCombine(SDNode *N,
   SDValue LHS = N->getOperand(0);
   SDValue RHS = N->getOperand(1);
   EVT VT = LHS.getValueType();
+  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
+
+  auto CRHS = dyn_cast<ConstantSDNode>(RHS);
+  if (!CRHS) {
+    CRHS = dyn_cast<ConstantSDNode>(LHS);
+    if (CRHS) {
+      std::swap(LHS, RHS);
+      CC = getSetCCSwappedOperands(CC);
+    }
+  }
+
+  if (CRHS && VT == MVT::i32 && LHS.getOpcode() == ISD::SIGN_EXTEND &&
+      isBoolSGPR(LHS.getOperand(0))) {
+    // setcc (sext from i1 cc), -1, ne|sgt|ult) => not cc => xor cc, -1
+    // setcc (sext from i1 cc), -1, eq|sle|uge) => cc
+    // setcc (sext from i1 cc),  0, eq|sge|ule) => not cc => xor cc, -1
+    // setcc (sext from i1 cc),  0, ne|ugt|slt) => cc
+    if ((CRHS->isAllOnesValue() &&
+         (CC == ISD::SETNE || CC == ISD::SETGT || CC == ISD::SETULT)) ||
+        (CRHS->isNullValue() &&
+         (CC == ISD::SETEQ || CC == ISD::SETGE || CC == ISD::SETULE)))
+      return DAG.getNode(ISD::XOR, SL, MVT::i1, LHS.getOperand(0),
+                         DAG.getConstant(-1, SL, MVT::i1));
+    if ((CRHS->isAllOnesValue() &&
+         (CC == ISD::SETEQ || CC == ISD::SETLE || CC == ISD::SETUGE)) ||
+        (CRHS->isNullValue() &&
+         (CC == ISD::SETNE || CC == ISD::SETUGT || CC == ISD::SETLT)))
+      return LHS.getOperand(0);
+  }
 
   if (VT != MVT::f32 && VT != MVT::f64 && (Subtarget->has16BitInsts() &&
                                            VT != MVT::f16))
@@ -5142,7 +5171,6 @@ SDValue SITargetLowering::performSetCCCombine(SDNode *N,
 
   // Match isinf pattern
   // (fcmp oeq (fabs x), inf) -> (fp_class x, (p_infinity | n_infinity))
-  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
   if (CC == ISD::SETOEQ && LHS.getOpcode() == ISD::FABS) {
     const ConstantFPSDNode *CRHS = dyn_cast<ConstantFPSDNode>(RHS);
     if (!CRHS)
