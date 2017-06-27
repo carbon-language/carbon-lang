@@ -1,4 +1,4 @@
-//===--------- LoopIterator.h - Iterate over loop blocks --------*- C++ -*-===//
+//===- LoopIterator.h - Iterate over loop blocks ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,11 +24,23 @@
 #ifndef LLVM_ANALYSIS_LOOPITERATOR_H
 #define LLVM_ANALYSIS_LOOPITERATOR_H
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/iterator.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/IR/CFG.h"
+#include "llvm/Support/MathExtras.h"
+#include <cassert>
+#include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace llvm {
 
+class BasicBlock;
 class LoopBlocksTraversal;
 
 // A traits type that is intended to be used in graph algorithms. The graph
@@ -97,11 +109,11 @@ struct LoopBodyTraits {
 /// TODO: This could be generalized for any CFG region, or the entire CFG.
 class LoopBlocksDFS {
 public:
-  /// Postorder list iterators.
-  typedef std::vector<BasicBlock*>::const_iterator POIterator;
-  typedef std::vector<BasicBlock*>::const_reverse_iterator RPOIterator;
-
   friend class LoopBlocksTraversal;
+
+  /// Postorder list iterators.
+  using POIterator = std::vector<BasicBlock *>::const_iterator;
+  using RPOIterator = std::vector<BasicBlock *>::const_reverse_iterator;
 
 private:
   Loop *L;
@@ -171,8 +183,10 @@ public:
 /// Specialize po_iterator_storage to record postorder numbers.
 template<> class po_iterator_storage<LoopBlocksTraversal, true> {
   LoopBlocksTraversal &LBT;
+
 public:
   po_iterator_storage(LoopBlocksTraversal &lbs) : LBT(lbs) {}
+
   // These functions are defined below.
   bool insertEdge(Optional<BasicBlock *> From, BasicBlock *To);
   void finishPostorder(BasicBlock *BB);
@@ -182,7 +196,7 @@ public:
 class LoopBlocksTraversal {
 public:
   /// Graph traversal iterator.
-  typedef po_iterator<BasicBlock*, LoopBlocksTraversal, true> POTIterator;
+  using POTIterator = po_iterator<BasicBlock*, LoopBlocksTraversal, true>;
 
 private:
   LoopBlocksDFS &DFS;
@@ -236,6 +250,6 @@ finishPostorder(BasicBlock *BB) {
   LBT.finishPostorder(BB);
 }
 
-} // End namespace llvm
+} // end namespace llvm
 
-#endif
+#endif // LLVM_ANALYSIS_LOOPITERATOR_H
