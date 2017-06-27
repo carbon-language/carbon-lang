@@ -294,6 +294,7 @@ Error WasmObjectFile::parseNameSection(const uint8_t *Ptr, const uint8_t *End) {
 
 Error WasmObjectFile::parseLinkingSection(const uint8_t *Ptr,
                                           const uint8_t *End) {
+  HasLinkingSection = true;
   while (Ptr < End) {
     uint8_t Type = readVarint7(Ptr);
     uint32_t Size = readVaruint32(Ptr);
@@ -950,7 +951,9 @@ SubtargetFeatures WasmObjectFile::getFeatures() const {
   return SubtargetFeatures();
 }
 
-bool WasmObjectFile::isRelocatableObject() const { return false; }
+bool WasmObjectFile::isRelocatableObject() const {
+  return HasLinkingSection;
+}
 
 const WasmSection &WasmObjectFile::getWasmSection(DataRefImpl Ref) const {
   assert(Ref.d.a < Sections.size());

@@ -215,6 +215,7 @@ private:
   std::vector<WasmSymbol> Symbols;
   ArrayRef<uint8_t> CodeSection;
   uint32_t StartFunction = -1;
+  bool HasLinkingSection = false;
   wasm::WasmLinkingData LinkingData;
 
   StringMap<uint32_t> SymbolMap;
