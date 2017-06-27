@@ -1969,9 +1969,7 @@ void MemCmpExpansion::emitLoadCompareBlock(unsigned Index, unsigned LoadSize,
   Value *LoadSrc2 = Builder.CreateLoad(LoadSizeType, Source2);
 
   if (DL.isLittleEndian()) {
-    Function *F = LoadCmpBlocks[Index]->getParent();
-
-    Function *Bswap = Intrinsic::getDeclaration(F->getParent(),
+    Function *Bswap = Intrinsic::getDeclaration(CI->getModule(),
                                                 Intrinsic::bswap, LoadSizeType);
     LoadSrc1 = Builder.CreateCall(Bswap, LoadSrc1);
     LoadSrc2 = Builder.CreateCall(Bswap, LoadSrc2);
