@@ -60,7 +60,10 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
     compiler_rt_test_runtime(sanitizer_common)
 
     foreach(sanitizer ${COMPILER_RT_SANITIZERS_TO_BUILD})
-      compiler_rt_test_runtime(${sanitizer})
+      # cfi testing is gated on ubsan
+      if(NOT ${sanitizer} STREQUAL cfi)
+        compiler_rt_test_runtime(${sanitizer})
+      endif()
     endforeach()
 
     compiler_rt_test_runtime(profile)
