@@ -20,6 +20,9 @@ using namespace llvm;
 
 #define DEBUG_TYPE "regalloc"
 
+// Reserve an address that indicates a value that is known to be "undef".
+static VNInfo UndefVNI(0xbad, SlotIndex());
+
 void LiveRangeCalc::resetLiveOutMap() {
   unsigned NumBlocks = MF->getNumBlockIDs();
   Seen.clear();
@@ -283,8 +286,11 @@ bool LiveRangeCalc::isDefOnEntry(LiveRange &LR, ArrayRef<SlotIndex> Undefs,
     // Determine if the exit from the block is reached by some def.
     unsigned N = WorkList[i];
     MachineBasicBlock &B = *MF->getBlockNumbered(N);
-    if (Seen[N] && Map[&B].first != nullptr)
-      return MarkDefined(B);
+    if (Seen[N]) {
+      const LiveOutPair &LOB = Map[&B];
+      if (LOB.first != nullptr && LOB.first != &UndefVNI)
+        return MarkDefined(B);
+    }
     SlotIndex Begin, End;
     std::tie(Begin, End) = Indexes->getMBBRange(&B);
     // Treat End as not belonging to B.
@@ -387,7 +393,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
        auto EP = LR.extendInBlock(Undefs, Start, End);
        VNInfo *VNI = EP.first;
        FoundUndef |= EP.second;
-       setLiveOutValue(Pred, VNI);
+       setLiveOutValue(Pred, EP.second ? &UndefVNI : VNI);
        if (VNI) {
          if (TheVNI && TheVNI != VNI)
            UniqueVNI = false;
@@ -417,7 +423,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
 
   // If a unique reaching def was found, blit in the live ranges immediately.
   if (UniqueVNI) {
-    assert(TheVNI != nullptr);
+    assert(TheVNI != nullptr && TheVNI != &UndefVNI);
     LiveRangeUpdater Updater(&LR);
     for (unsigned BN : WorkList) {
       SlotIndex Start, End;
@@ -494,15 +500,20 @@ void LiveRangeCalc::updateSSA() {
         IDomValue = Map[IDom->getBlock()];
 
         // Cache the DomTree node that defined the value.
-        if (IDomValue.first && !IDomValue.second)
-          Map[IDom->getBlock()].second = IDomValue.second =
-            DomTree->getNode(Indexes->getMBBFromIndex(IDomValue.first->def));
+        if (IDomValue.first && IDomValue.first != &UndefVNI)
+          if (!IDomValue.second)
+            Map[IDom->getBlock()].second = IDomValue.second =
+              DomTree->getNode(Indexes->getMBBFromIndex(IDomValue.first->def));
 
         for (MachineBasicBlock::pred_iterator PI = MBB->pred_begin(),
                PE = MBB->pred_end(); PI != PE; ++PI) {
           LiveOutPair &Value = Map[*PI];
           if (!Value.first || Value.first == IDomValue.first)
             continue;
+          if (Value.first == &UndefVNI) {
+            needPHI = true;
+            break;
+          }
 
           // Cache the DomTree node that defined the value.
           if (!Value.second)
@@ -545,7 +556,7 @@ void LiveRangeCalc::updateSSA() {
             LR.addSegment(LiveInterval::Segment(Start, End, VNI));
           LOP = LiveOutPair(VNI, Node);
         }
-      } else if (IDomValue.first) {
+      } else if (IDomValue.first && IDomValue.first != &UndefVNI) {
         // No phi-def here. Remember incoming value.
         I.Value = IDomValue.first;
 
