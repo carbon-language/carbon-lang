@@ -1,5 +1,6 @@
 add_lldb_library(lldbUtility
   Baton.cpp
+  Connection.cpp
   ConstString.cpp
   DataBufferHeap.cpp
   DataBufferLLVM.cpp
@@ -8,6 +9,7 @@ add_lldb_library(lldbUtility
   FastDemangle.cpp
   FileSpec.cpp
   History.cpp
+  IOObject.cpp
   JSON.cpp
   LLDBAssert.cpp
   Log.cpp

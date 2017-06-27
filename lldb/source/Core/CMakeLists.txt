@@ -7,7 +7,6 @@ add_lldb_library(lldbCore
   ArchSpec.cpp
   Broadcaster.cpp
   Communication.cpp
-  Connection.cpp
   Debugger.cpp
   Disassembler.cpp
   DumpDataExtractor.cpp

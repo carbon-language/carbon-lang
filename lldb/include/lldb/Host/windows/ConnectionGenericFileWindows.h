@@ -10,7 +10,7 @@
 #ifndef liblldb_Host_windows_ConnectionGenericFileWindows_h_
 #define liblldb_Host_windows_ConnectionGenericFileWindows_h_
 
-#include "lldb/Core/Connection.h"
+#include "lldb/Host/Connection.h"
 #include "lldb/Host/windows/windows.h"
 #include "lldb/lldb-types.h"
 
