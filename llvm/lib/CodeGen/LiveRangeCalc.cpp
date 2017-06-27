@@ -24,7 +24,7 @@ void LiveRangeCalc::resetLiveOutMap() {
   unsigned NumBlocks = MF->getNumBlockIDs();
   Seen.clear();
   Seen.resize(NumBlocks);
-  EntryInfoMap.clear();
+  EntryInfos.clear();
   Map.resize(NumBlocks);
 }
 
@@ -433,15 +433,18 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
   }
 
   // Prepare the defined/undefined bit vectors.
-  auto EF = EntryInfoMap.find(&LR);
-  if (EF == EntryInfoMap.end()) {
+  EntryInfoMap::iterator Entry;
+  bool DidInsert;
+  std::tie(Entry, DidInsert) = EntryInfos.insert(
+      std::make_pair(&LR, std::make_pair(BitVector(), BitVector())));
+  if (DidInsert) {
+    // Initialize newly inserted entries.
     unsigned N = MF->getNumBlockIDs();
-    EF = EntryInfoMap.insert({&LR, {BitVector(), BitVector()}}).first;
-    EF->second.first.resize(N);
-    EF->second.second.resize(N);
+    Entry->second.first.resize(N);
+    Entry->second.second.resize(N);
   }
-  BitVector &DefOnEntry = EF->second.first;
-  BitVector &UndefOnEntry = EF->second.second;
+  BitVector &DefOnEntry = Entry->second.first;
+  BitVector &UndefOnEntry = Entry->second.second;
 
   // Multiple values were found, so transfer the work list to the LiveIn array
   // where UpdateSSA will use it as a work list.
