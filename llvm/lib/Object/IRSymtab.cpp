@@ -318,7 +318,31 @@ Expected<FileContents> irsymtab::readBitcode(const BitcodeFileContents &BFC) {
     return make_error<StringError>("Bitcode file does not contain any modules",
                                    inconvertibleErrorCode());
 
-  // Right now we have no on-disk representation of symbol tables, so we always
-  // upgrade.
-  return upgrade(BFC.Mods);
+  if (BFC.StrtabForSymtab.empty() ||
+      BFC.Symtab.size() < sizeof(storage::Header))
+    return upgrade(BFC.Mods);
+
+  // We cannot use the regular reader to read the version and producer, because
+  // it will expect the header to be in the current format. The only thing we
+  // can rely on is that the version and producer will be present as the first
+  // struct elements.
+  auto *Hdr = reinterpret_cast<const storage::Header *>(BFC.Symtab.data());
+  unsigned Version = Hdr->Version;
+  StringRef Producer = Hdr->Producer.get(BFC.StrtabForSymtab);
+  if (Version != storage::Header::kCurrentVersion ||
+      Producer != kExpectedProducerName)
+    return upgrade(BFC.Mods);
+
+  FileContents FC;
+  FC.TheReader = {{BFC.Symtab.data(), BFC.Symtab.size()},
+                  {BFC.StrtabForSymtab.data(), BFC.StrtabForSymtab.size()}};
+
+  // Finally, make sure that the number of modules in the symbol table matches
+  // the number of modules in the bitcode file. If they differ, it may mean that
+  // the bitcode file was created by binary concatenation, so we need to create
+  // a new symbol table from scratch.
+  if (FC.TheReader.getNumModules() != BFC.Mods.size())
+    return upgrade(std::move(BFC.Mods));
+
+  return std::move(FC);
 }

@@ -255,6 +255,8 @@ public:
   /// copied into an irsymtab::Symbol object.
   symbol_range symbols() const;
 
+  size_t getNumModules() const { return Modules.size(); }
+
   /// Returns a slice of the symbol table for the I'th module in the file.
   /// The symbols enumerated by this method are ephemeral, but they can be
   /// copied into an irsymtab::Symbol object.
