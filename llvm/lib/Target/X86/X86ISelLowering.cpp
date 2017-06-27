@@ -35072,7 +35072,7 @@ static SDValue combineLoopSADPattern(SDNode *N, SelectionDAG &DAG,
 /// that is commonly recognized as an idiom (has no register dependency), so
 /// that's better/smaller than loading a splat 1 constant.
 static SDValue combineIncDecVector(SDNode *N, SelectionDAG &DAG) {
-  assert(N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB &&
+  assert((N->getOpcode() == ISD::ADD || N->getOpcode() == ISD::SUB) &&
          "Unexpected opcode for increment/decrement transform");
 
   // Pseudo-legality check: getOnesVector() expects one of these types, so bail
