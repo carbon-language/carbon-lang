@@ -215,7 +215,6 @@ public:
 
   BumpPtrAllocator &getAllocator() { return Allocator; }
   AsmPrinter *getAsmPrinter() const { return Asm.get(); }
-  MCContext *getMCContext() const { return MC.get(); }
   DIEAbbrevSet &getAbbrevSet() { return Abbreviations; }
   DwarfStringPool &getStringPool() { return *StringPool; }
 
