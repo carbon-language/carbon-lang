@@ -25,7 +25,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/ValueHandle.h"
 
 namespace llvm {
 
@@ -35,7 +34,7 @@ class BasicBlock;
 class OrderedBasicBlock {
 private:
   /// \brief Map a instruction to its position in a BasicBlock.
-  SmallDenseMap<AssertingVH<const Instruction>, unsigned, 32> NumberedInsts;
+  SmallDenseMap<const Instruction *, unsigned, 32> NumberedInsts;
 
   /// \brief Keep track of last instruction inserted into \p NumberedInsts.
   /// It speeds up queries for uncached instructions by providing a start point
