@@ -348,6 +348,20 @@ bool Symbol::includeInDynsym() const {
          (body()->isUndefined() && Config->Shared);
 }
 
+// copyBody overwrites all attributes except symbol name with Other's
+// so that this symbol becomes an alias to Other. This is useful for
+// handling some options such as --wrap.
+//
+// The reason why we want to keep the symbol name is because, if we
+// copy symbol names, we'll end up having symbol tables in resulting
+// executables or DSOs containing two identical symbols, which is just
+// inconvenient.
+void Symbol::copyBody(Symbol *Other) {
+  StringRef S = body()->getName();
+  memcpy(this->Body.buffer, Other->Body.buffer, sizeof(Symbol::Body));
+  body()->setName(S);
+}
+
 // Print out a log message for --trace-symbol.
 void elf::printTraceSymbol(Symbol *Sym) {
   SymbolBody *B = Sym->body();

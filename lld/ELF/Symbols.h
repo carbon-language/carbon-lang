@@ -379,6 +379,8 @@ struct Symbol {
 
   SymbolBody *body() { return reinterpret_cast<SymbolBody *>(Body.buffer); }
   const SymbolBody *body() const { return const_cast<Symbol *>(this)->body(); }
+
+  void copyBody(Symbol *Other);
 };
 
 void printTraceSymbol(Symbol *Sym);
