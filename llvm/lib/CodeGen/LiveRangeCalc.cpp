@@ -412,7 +412,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &UseMBB,
   }
 
   LiveIn.clear();
-  FoundUndef |= (TheVNI == nullptr);
+  FoundUndef |= (TheVNI == nullptr || TheVNI == &UndefVNI);
   if (Undefs.size() > 0 && FoundUndef)
     UniqueVNI = false;
 
