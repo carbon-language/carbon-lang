@@ -762,16 +762,11 @@ define i1 @test52(i32 %x1) {
   ret i1 %A
 }
 
-; TODO we have a 64-bit or less restriction in the handling for this pattern. We should remove that and do the same thing we do above.
 define i1 @test52b(i128 %x1) {
 ; CHECK-LABEL: @test52b(
-; CHECK-NEXT:    [[CONV:%.*]] = and i128 [[X1:%.*]], 255
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i128 [[CONV]], 127
-; CHECK-NEXT:    [[TMP2:%.*]] = lshr i128 [[X1]], 16
-; CHECK-NEXT:    [[TMP3:%.*]] = trunc i128 [[TMP2]] to i8
-; CHECK-NEXT:    [[CMP15:%.*]] = icmp eq i8 [[TMP3]], 76
-; CHECK-NEXT:    [[A:%.*]] = and i1 [[CMP]], [[CMP15]]
-; CHECK-NEXT:    ret i1 [[A]]
+; CHECK-NEXT:    [[TMP1:%.*]] = and i128 [[X1:%.*]], 16711935
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp eq i128 [[TMP1]], 4980863
+; CHECK-NEXT:    ret i1 [[TMP2]]
 ;
   %conv = and i128 %x1, 255
   %cmp = icmp eq i128 %conv, 127
