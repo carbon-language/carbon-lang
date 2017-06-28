@@ -201,6 +201,11 @@ void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &O,
     PrintDomTree<NodeT>(*I, O, Lev + 1);
 }
 
+namespace DomTreeBuilder {
+template <class NodeT>
+struct SemiNCAInfo;
+}  // namespace DomTreeBuilder
+
 // The calculate routine is provided in a separate header but referenced here.
 template <class FuncT, class N>
 void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT, FuncT &F);
@@ -648,69 +653,14 @@ public:
   }
 
 protected:
-  // Information record used by Semi-NCA during tree construction.
-  struct SemiNCAInfo {
-    using NodePtr = NodeT *;
-    struct InfoRec {
-      unsigned DFSNum = 0;
-      unsigned Parent = 0;
-      unsigned Semi = 0;
-      NodePtr Label = nullptr;
-      NodePtr IDom = nullptr;
-    };
+ friend struct DomTreeBuilder::SemiNCAInfo<NodeT>;
+ using SNCAInfoTy = DomTreeBuilder::SemiNCAInfo<NodeT>;
 
-    std::vector<NodePtr> NumToNode;
-    DenseMap<NodePtr, InfoRec> NodeToInfo;
+ template <class FuncT, class NodeTy>
+ friend void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeTy>> &DT,
+                       FuncT &F);
 
-    NodeT *getIDom(NodeT *BB) const {
-      auto InfoIt = NodeToInfo.find(BB);
-      if (InfoIt == NodeToInfo.end()) return nullptr;
-
-      return InfoIt->second.IDom;
-    }
-  };
-
-  template <class GraphT>
-  friend typename GraphT::NodeRef Eval(
-      DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
-      typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &Info,
-      unsigned LastLinked);
-
-  template <class GraphT>
-  friend unsigned ReverseDFSPass(
-      DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
-      typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &Info,
-      unsigned N);
-
-  template <class GraphT>
-  friend unsigned DFSPass(
-      DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
-      typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &Info,
-      unsigned N);
-
-  template <class FuncT, class N>
-  friend void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT,
-  FuncT &F);
-
-  DomTreeNodeBase<NodeT> *getNodeForBlock(NodeT *BB,
-                                          const SemiNCAInfo& SNCAInfo) {
-    if (DomTreeNodeBase<NodeT> *Node = getNode(BB))
-      return Node;
-
-    // Haven't calculated this node yet?  Get or calculate the node for the
-    // immediate dominator.
-    NodeT *IDom = SNCAInfo.getIDom(BB);
-
-    assert(IDom || DomTreeNodes[nullptr]);
-    DomTreeNodeBase<NodeT> *IDomNode = getNodeForBlock(IDom, SNCAInfo);
-
-    // Add a new tree node for this NodeT, and link it as a child of
-    // IDomNode
-    return (DomTreeNodes[BB] = IDomNode->addChild(
-                llvm::make_unique<DomTreeNodeBase<NodeT>>(BB, IDomNode))).get();
-  }
-
-  void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
+ void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
 
 public:
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking

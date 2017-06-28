@@ -31,6 +31,54 @@
 
 namespace llvm {
 
+namespace DomTreeBuilder {
+// Information record used by Semi-NCA during tree construction.
+template <typename NodeT>
+struct SemiNCAInfo {
+  using NodePtr = NodeT *;
+  using DomTreeT = DominatorTreeBase<NodeT>;
+  using TreeNodePtr = DomTreeNodeBase<NodeT> *;
+
+  struct InfoRec {
+    unsigned DFSNum = 0;
+    unsigned Parent = 0;
+    unsigned Semi = 0;
+    NodePtr Label = nullptr;
+    NodePtr IDom = nullptr;
+  };
+
+  DomTreeT &DT;
+  std::vector<NodePtr> NumToNode;
+  DenseMap<NodePtr, InfoRec> NodeToInfo;
+
+  SemiNCAInfo(DomTreeT &DT) : DT(DT) {}
+
+  NodePtr getIDom(NodePtr BB) const {
+    auto InfoIt = NodeToInfo.find(BB);
+    if (InfoIt == NodeToInfo.end()) return nullptr;
+
+    return InfoIt->second.IDom;
+  }
+
+  TreeNodePtr getNodeForBlock(NodePtr BB) {
+    if (TreeNodePtr Node = DT.getNode(BB)) return Node;
+
+    // Haven't calculated this node yet?  Get or calculate the node for the
+    // immediate dominator.
+    NodePtr IDom = getIDom(BB);
+
+    assert(IDom || DT.DomTreeNodes[nullptr]);
+    TreeNodePtr IDomNode = getNodeForBlock(IDom);
+
+    // Add a new tree node for this NodeT, and link it as a child of
+    // IDomNode
+    return (DT.DomTreeNodes[BB] = IDomNode->addChild(
+                llvm::make_unique<DomTreeNodeBase<NodeT>>(BB, IDomNode)))
+        .get();
+  }
+};
+}  // namespace DomTreeBuilder
+
 // External storage for depth first iterator that reuses the info lookup map
 // domtree already has.  We don't have a set, but a map instead, so we are
 // converting the one argument insert calls.
@@ -49,20 +97,18 @@ private:
   BaseSet &Storage;
 };
 
-template <class GraphT>
-unsigned ReverseDFSPass(
-    DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
-    typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &SNCA,
-    unsigned N) {
-  using SNCAInfoTy = typename std::remove_reference<decltype(SNCA)>::type;
-  df_iterator_dom_storage<typename SNCAInfoTy::NodePtr,
-      typename SNCAInfoTy::InfoRec>
-      DFStorage(SNCA.NodeToInfo);
+template <class NodePtr,
+          class NodeT = typename std::remove_pointer<NodePtr>::type>
+unsigned ReverseDFSPass(NodePtr V, DomTreeBuilder::SemiNCAInfo<NodeT> &SNCA,
+                        unsigned N) {
+  using SNCAInfoTy = DomTreeBuilder::SemiNCAInfo<NodeT>;
+  df_iterator_dom_storage<NodePtr, typename SNCAInfoTy::InfoRec> DFStorage(
+      SNCA.NodeToInfo);
 
   bool IsChildOfArtificialExit = (N != 0);
   for (auto I = idf_ext_begin(V, DFStorage), E = idf_ext_end(V, DFStorage);
        I != E; ++I) {
-    typename GraphT::NodeRef BB = *I;
+    NodePtr BB = *I;
     auto &BBInfo = SNCA.NodeToInfo[BB];
     BBInfo.DFSNum = BBInfo.Semi = ++N;
     BBInfo.Label = BB;
@@ -79,18 +125,17 @@ unsigned ReverseDFSPass(
   }
   return N;
 }
-template <class GraphT>
-unsigned DFSPass(
-    DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
-    typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &SNCA,
-    unsigned N) {
-  using SNCAInfoTy = typename std::remove_reference<decltype(SNCA)>::type;
-  df_iterator_dom_storage<typename SNCAInfoTy::NodePtr,
-      typename SNCAInfoTy::InfoRec>
-      DFStorage(SNCA.NodeToInfo);
+
+template <class NodePtr,
+          class NodeT = typename std::remove_pointer<NodePtr>::type>
+unsigned DFSPass(NodePtr V, DomTreeBuilder::SemiNCAInfo<NodeT> &SNCA, unsigned N) {
+  using SNCAInfoTy = DomTreeBuilder::SemiNCAInfo<NodeT>;
+  df_iterator_dom_storage<NodePtr, typename SNCAInfoTy::InfoRec> DFStorage(
+      SNCA.NodeToInfo);
+
   for (auto I = df_ext_begin(V, DFStorage), E = df_ext_end(V, DFStorage);
        I != E; ++I) {
-    typename GraphT::NodeRef BB = *I;
+    NodePtr BB = *I;
     auto &BBInfo = SNCA.NodeToInfo[BB];
     BBInfo.DFSNum = BBInfo.Semi = ++N;
     BBInfo.Label = BB;
@@ -103,13 +148,10 @@ unsigned DFSPass(
   return N;
 }
 
-template <class GraphT>
-typename GraphT::NodeRef Eval(
-    DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef VIn,
-    typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &SNCA,
-    unsigned LastLinked) {
-  using NodePtr = typename GraphT::NodeRef;
-
+template <class NodePtr,
+          class NodeT = typename std::remove_pointer<NodePtr>::type>
+NodePtr Eval(NodePtr VIn, DomTreeBuilder::SemiNCAInfo<NodeT> &SNCA,
+             unsigned LastLinked) {
   auto &VInInfo = SNCA.NodeToInfo[VIn];
   if (VInInfo.DFSNum < LastLinked)
     return VIn;
@@ -153,11 +195,11 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   using GraphT = GraphTraits<NodeT>;
   using NodePtr = typename GraphT::NodeRef;
   static_assert(std::is_pointer<NodePtr>::value,
-                "NodeRef should be pointer type");
+                "NodePtr should be a pointer type");
   using NodeType = typename std::remove_pointer<NodePtr>::type;
 
   unsigned N = 0;
-  typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo SNCA;
+  DomTreeBuilder::SemiNCAInfo<NodeType> SNCA(DT);
   SNCA.NumToNode.push_back(nullptr);
 
   bool MultipleRoots = (DT.Roots.size() > 1);
@@ -174,9 +216,9 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   if (DT.isPostDominator()){
     for (unsigned i = 0, e = static_cast<unsigned>(DT.Roots.size());
          i != e; ++i)
-      N = ReverseDFSPass<GraphT>(DT, DT.Roots[i], SNCA, N);
+      N = ReverseDFSPass<NodePtr>(DT.Roots[i], SNCA, N);
   } else {
-    N = DFSPass<GraphT>(DT, DT.Roots[0], SNCA, N);
+    N = DFSPass<NodePtr>(DT.Roots[0], SNCA, N);
   }
 
   // It might be that some blocks did not get a DFS number (e.g., blocks of
@@ -199,7 +241,7 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
     WInfo.Semi = WInfo.Parent;
     for (const auto &N : inverse_children<NodeT>(W))
       if (SNCA.NodeToInfo.count(N)) {  // Only if this predecessor is reachable!
-        unsigned SemiU = SNCA.NodeToInfo[Eval<GraphT>(DT, N, SNCA, i + 1)].Semi;
+        unsigned SemiU = SNCA.NodeToInfo[Eval<NodePtr>(N, SNCA, i + 1)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
@@ -247,7 +289,7 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
     assert(ImmDom || DT.DomTreeNodes[nullptr]);
 
     // Get or calculate the node for the immediate dominator
-    DomTreeNodeBase<NodeType> *IDomNode = DT.getNodeForBlock(ImmDom, SNCA);
+    DomTreeNodeBase<NodeType> *IDomNode = SNCA.getNodeForBlock(ImmDom);
 
     // Add a new tree node for this BasicBlock, and link it as a child of
     // IDomNode
@@ -257,6 +299,6 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
 
   DT.updateDFSNumbers();
 }
-}
+} // namespace DomTreeBuilder
 
 #endif
