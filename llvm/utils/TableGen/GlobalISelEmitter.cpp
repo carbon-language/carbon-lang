@@ -1891,45 +1891,39 @@ Expected<RuleMatcher> GlobalISelEmitter::runOnPattern(const PatternToMatch &P) {
     if (!Dst->getChild(0)->isLeaf())
       return failedImport("EXTRACT_SUBREG child #1 is not a leaf");
 
-    if (DefInit *SubRegInit =
-            dyn_cast<DefInit>(Dst->getChild(1)->getLeafValue())) {
-      // Constrain the result to the same register bank as the operand.
-      Record *DstIOpRec =
-          getInitValueAsRegClass(Dst->getChild(0)->getLeafValue());
+    DefInit *SubRegInit = dyn_cast<DefInit>(Dst->getChild(1)->getLeafValue());
+    if (!SubRegInit)
+      return failedImport("EXTRACT_SUBREG child #1 is not a subreg index");
 
-      if (DstIOpRec == nullptr)
-        return failedImport("EXTRACT_SUBREG operand #1 isn't a register class");
+    // Constrain the result to the same register bank as the operand.
+    Record *DstIOpRec =
+        getInitValueAsRegClass(Dst->getChild(0)->getLeafValue());
 
-      CodeGenSubRegIndex *SubIdx = CGRegs.getSubRegIdx(SubRegInit->getDef());
-      CodeGenRegisterClass *SrcRC = CGRegs.getRegClass(
-          getInitValueAsRegClass(Dst->getChild(0)->getLeafValue()));
+    if (DstIOpRec == nullptr)
+      return failedImport("EXTRACT_SUBREG operand #1 isn't a register class");
 
-      // It would be nice to leave this constraint implicit but we're required
-      // to pick a register class so constrain the result to a register class
-      // that can hold the correct MVT.
-      //
-      // FIXME: This may introduce an extra copy if the chosen class doesn't
-      //        actually contain the subregisters.
-      assert(Src->getExtTypes().size() == 1);
+    CodeGenSubRegIndex *SubIdx = CGRegs.getSubRegIdx(SubRegInit->getDef());
+    CodeGenRegisterClass *SrcRC = CGRegs.getRegClass(
+        getInitValueAsRegClass(Dst->getChild(0)->getLeafValue()));
 
-      const auto &SrcRCDstRCPair =
-          SrcRC->getMatchingSubClassWithSubRegs(CGRegs, SubIdx);
-      assert(SrcRCDstRCPair->second && "Couldn't find a matching subclass");
-      M.addAction<ConstrainOperandToRegClassAction>("NewI", 0,
-                                                    *SrcRCDstRCPair->second);
-      M.addAction<ConstrainOperandToRegClassAction>("NewI", 1,
-                                                    *SrcRCDstRCPair->first);
+    // It would be nice to leave this constraint implicit but we're required
+    // to pick a register class so constrain the result to a register class
+    // that can hold the correct MVT.
+    //
+    // FIXME: This may introduce an extra copy if the chosen class doesn't
+    //        actually contain the subregisters.
+    assert(Src->getExtTypes().size() == 1 &&
+             "Expected Src of EXTRACT_SUBREG to have one result type");
 
-      // We're done with this pattern!  It's eligible for GISel emission; return
-      // it.
-      ++NumPatternImported;
-      return std::move(M);
-    }
-
-    return failedImport("EXTRACT_SUBREG child #1 is not a subreg index");
-  }
-
-  M.addAction<ConstrainOperandsToDefinitionAction>("NewI");
+    const auto &SrcRCDstRCPair =
+        SrcRC->getMatchingSubClassWithSubRegs(CGRegs, SubIdx);
+    assert(SrcRCDstRCPair->second && "Couldn't find a matching subclass");
+    M.addAction<ConstrainOperandToRegClassAction>("NewI", 0,
+                                                  *SrcRCDstRCPair->second);
+    M.addAction<ConstrainOperandToRegClassAction>("NewI", 1,
+                                                  *SrcRCDstRCPair->first);
+  } else
+    M.addAction<ConstrainOperandsToDefinitionAction>("NewI");
 
   // We're done with this pattern!  It's eligible for GISel emission; return it.
   ++NumPatternImported;
