@@ -50,26 +50,27 @@ private:
 };
 
 template <class GraphT>
-unsigned ReverseDFSPass(DominatorTreeBaseByGraphTraits<GraphT> &DT,
-                        typename GraphT::NodeRef V,
-                        std::vector<typename GraphT::NodeRef> &NumToNode,
-                        unsigned N) {
-  df_iterator_dom_storage<
-      typename GraphT::NodeRef,
-      typename DominatorTreeBaseByGraphTraits<GraphT>::InfoRec>
-      DFStorage(DT.Info);
+unsigned ReverseDFSPass(
+    DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
+    typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &SNCA,
+    unsigned N) {
+  using SNCAInfoTy = typename std::remove_reference<decltype(SNCA)>::type;
+  df_iterator_dom_storage<typename SNCAInfoTy::NodePtr,
+      typename SNCAInfoTy::InfoRec>
+      DFStorage(SNCA.NodeToInfo);
+
   bool IsChildOfArtificialExit = (N != 0);
   for (auto I = idf_ext_begin(V, DFStorage), E = idf_ext_end(V, DFStorage);
        I != E; ++I) {
     typename GraphT::NodeRef BB = *I;
-    auto &BBInfo = DT.Info[BB];
+    auto &BBInfo = SNCA.NodeToInfo[BB];
     BBInfo.DFSNum = BBInfo.Semi = ++N;
     BBInfo.Label = BB;
     // Set the parent to the top of the visited stack.  The stack includes us,
     // and is 1 based, so we subtract to account for both of these.
     if (I.getPathLength() > 1)
-      BBInfo.Parent = DT.Info[I.getPath(I.getPathLength() - 2)].DFSNum;
-    NumToNode.push_back(BB); // NumToNode[n] = V;
+      BBInfo.Parent = SNCA.NodeToInfo[I.getPath(I.getPathLength() - 2)].DFSNum;
+    SNCA.NumToNode.push_back(BB);  // NumToNode[n] = V;
 
     if (IsChildOfArtificialExit)
       BBInfo.Parent = 1;
@@ -79,24 +80,25 @@ unsigned ReverseDFSPass(DominatorTreeBaseByGraphTraits<GraphT> &DT,
   return N;
 }
 template <class GraphT>
-unsigned DFSPass(DominatorTreeBaseByGraphTraits<GraphT> &DT,
-                 typename GraphT::NodeRef V,
-                 std::vector<typename GraphT::NodeRef> &NumToNode, unsigned N) {
-  df_iterator_dom_storage<
-      typename GraphT::NodeRef,
-      typename DominatorTreeBaseByGraphTraits<GraphT>::InfoRec>
-      DFStorage(DT.Info);
+unsigned DFSPass(
+    DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
+    typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &SNCA,
+    unsigned N) {
+  using SNCAInfoTy = typename std::remove_reference<decltype(SNCA)>::type;
+  df_iterator_dom_storage<typename SNCAInfoTy::NodePtr,
+      typename SNCAInfoTy::InfoRec>
+      DFStorage(SNCA.NodeToInfo);
   for (auto I = df_ext_begin(V, DFStorage), E = df_ext_end(V, DFStorage);
        I != E; ++I) {
     typename GraphT::NodeRef BB = *I;
-    auto &BBInfo = DT.Info[BB];
+    auto &BBInfo = SNCA.NodeToInfo[BB];
     BBInfo.DFSNum = BBInfo.Semi = ++N;
     BBInfo.Label = BB;
     // Set the parent to the top of the visited stack.  The stack includes us,
     // and is 1 based, so we subtract to account for both of these.
     if (I.getPathLength() > 1)
-      BBInfo.Parent = DT.Info[I.getPath(I.getPathLength() - 2)].DFSNum;
-    NumToNode.push_back(BB); // NumToNode[n] = V;
+      BBInfo.Parent = SNCA.NodeToInfo[I.getPath(I.getPathLength() - 2)].DFSNum;
+    SNCA.NumToNode.push_back(BB);  // NumToNode[n] = V;
   }
   return N;
 }
@@ -104,11 +106,11 @@ unsigned DFSPass(DominatorTreeBaseByGraphTraits<GraphT> &DT,
 template <class GraphT>
 typename GraphT::NodeRef Eval(
     DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef VIn,
-    const std::vector<typename GraphT::NodeRef> &NumToNode,
+    typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &SNCA,
     unsigned LastLinked) {
   using NodePtr = typename GraphT::NodeRef;
 
-  auto &VInInfo = DT.Info[VIn];
+  auto &VInInfo = SNCA.NodeToInfo[VIn];
   if (VInInfo.DFSNum < LastLinked)
     return VIn;
 
@@ -120,8 +122,8 @@ typename GraphT::NodeRef Eval(
 
   while (!Work.empty()) {
     NodePtr V = Work.back();
-    auto &VInfo = DT.Info[V];
-    NodePtr VAncestor = NumToNode[VInfo.Parent];
+    auto &VInfo = SNCA.NodeToInfo[V];
+    NodePtr VAncestor = SNCA.NumToNode[VInfo.Parent];
 
     // Process Ancestor first
     if (Visited.insert(VAncestor).second && VInfo.Parent >= LastLinked) {
@@ -134,10 +136,10 @@ typename GraphT::NodeRef Eval(
     if (VInfo.Parent < LastLinked)
       continue;
 
-    auto &VAInfo = DT.Info[VAncestor];
+    auto &VAInfo = SNCA.NodeToInfo[VAncestor];
     NodePtr VAncestorLabel = VAInfo.Label;
     NodePtr VLabel = VInfo.Label;
-    if (DT.Info[VAncestorLabel].Semi < DT.Info[VLabel].Semi)
+    if (SNCA.NodeToInfo[VAncestorLabel].Semi < SNCA.NodeToInfo[VLabel].Semi)
       VInfo.Label = VAncestorLabel;
     VInfo.Parent = VAInfo.Parent;
   }
@@ -155,15 +157,16 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   using NodeType = typename std::remove_pointer<NodePtr>::type;
 
   unsigned N = 0;
-  std::vector<NodePtr> NumToNode = {nullptr};
+  typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo SNCA;
+  SNCA.NumToNode.push_back(nullptr);
 
   bool MultipleRoots = (DT.Roots.size() > 1);
   if (MultipleRoots) {
-    auto &BBInfo = DT.Info[nullptr];
+    auto &BBInfo = SNCA.NodeToInfo[nullptr];
     BBInfo.DFSNum = BBInfo.Semi = ++N;
     BBInfo.Label = nullptr;
 
-    NumToNode.push_back(nullptr); // NumToNode[n] = V;
+    SNCA.NumToNode.push_back(nullptr); // NumToNode[n] = V;
   }
 
   // Step #1: Number blocks in depth-first order and initialize variables used
@@ -171,9 +174,9 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   if (DT.isPostDominator()){
     for (unsigned i = 0, e = static_cast<unsigned>(DT.Roots.size());
          i != e; ++i)
-      N = ReverseDFSPass<GraphT>(DT, DT.Roots[i], NumToNode, N);
+      N = ReverseDFSPass<GraphT>(DT, DT.Roots[i], SNCA, N);
   } else {
-    N = DFSPass<GraphT>(DT, DT.Roots[0], NumToNode, N);
+    N = DFSPass<GraphT>(DT, DT.Roots[0], SNCA, N);
   }
 
   // It might be that some blocks did not get a DFS number (e.g., blocks of
@@ -182,20 +185,20 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
 
   // Initialize IDoms to spanning tree parents.
   for (unsigned i = 1; i <= N; ++i) {
-    const NodePtr V = NumToNode[i];
-    DT.IDoms[V] = NumToNode[DT.Info[V].Parent];
+    const NodePtr V = SNCA.NumToNode[i];
+    DT.IDoms[V] = SNCA.NumToNode[SNCA.NodeToInfo[V].Parent];
   }
 
   // Step #2: Calculate the semidominators of all vertices.
   for (unsigned i = N; i >= 2; --i) {
-    NodePtr W = NumToNode[i];
-    auto &WInfo = DT.Info[W];
+    NodePtr W = SNCA.NumToNode[i];
+    auto &WInfo = SNCA.NodeToInfo[W];
 
     // Initialize the semi dominator to point to the parent node.
     WInfo.Semi = WInfo.Parent;
     for (const auto &N : inverse_children<NodeT>(W))
-      if (DT.Info.count(N)) { // Only if this predecessor is reachable!
-        unsigned SemiU = DT.Info[Eval<GraphT>(DT, N, NumToNode, i + 1)].Semi;
+      if (SNCA.NodeToInfo.count(N)) {  // Only if this predecessor is reachable!
+        unsigned SemiU = SNCA.NodeToInfo[Eval<GraphT>(DT, N, SNCA, i + 1)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
@@ -207,11 +210,11 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   // Note that the parents were stored in IDoms and later got invalidated during
   // path compression in Eval.
   for (unsigned i = 2; i <= N; ++i) {
-    const NodePtr W = NumToNode[i];
-    const auto &WInfo = DT.Info[W];
-    const unsigned SDomNum = DT.Info[NumToNode[WInfo.Semi]].DFSNum;
+    const NodePtr W = SNCA.NumToNode[i];
+    const auto &WInfo = SNCA.NodeToInfo[W];
+    const unsigned SDomNum = SNCA.NodeToInfo[SNCA.NumToNode[WInfo.Semi]].DFSNum;
     NodePtr WIDomCandidate = DT.IDoms[W];
-    while (DT.Info[WIDomCandidate].DFSNum > SDomNum)
+    while (SNCA.NodeToInfo[WIDomCandidate].DFSNum > SDomNum)
       WIDomCandidate = DT.IDoms[WIDomCandidate];
 
     DT.IDoms[W] = WIDomCandidate;
@@ -232,7 +235,7 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
 
   // Loop over all of the reachable blocks in the function...
   for (unsigned i = 2; i <= N; ++i) {
-    NodePtr W = NumToNode[i];
+    NodePtr W = SNCA.NumToNode[i];
 
     // Don't replace this with 'count', the insertion side effect is important
     if (DT.DomTreeNodes[W])
@@ -253,7 +256,6 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
 
   // Free temporary memory used to construct idom's
   DT.IDoms.clear();
-  DT.Info.clear();
 
   DT.updateDFSNumbers();
 }

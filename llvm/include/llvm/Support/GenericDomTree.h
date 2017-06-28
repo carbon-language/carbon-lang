@@ -229,7 +229,6 @@ template <class NodeT> class DominatorTreeBase : public DominatorBase<NodeT> {
   void wipe() {
     DomTreeNodes.clear();
     IDoms.clear();
-    Info.clear();
     RootNode = nullptr;
   }
 
@@ -241,20 +240,8 @@ protected:
 
   mutable bool DFSInfoValid = false;
   mutable unsigned int SlowQueries = 0;
-  // Information record used during immediate dominators computation.
-  struct InfoRec {
-    unsigned DFSNum = 0;
-    unsigned Parent = 0;
-    unsigned Semi = 0;
-    NodeT *Label = nullptr;
-
-    InfoRec() = default;
-  };
 
   DenseMap<NodeT *, NodeT *> IDoms;
-
-  // Info - Collection of information used during the computation of idoms.
-  DenseMap<NodeT *, InfoRec> Info;
 
   void reset() {
     DomTreeNodes.clear();
@@ -334,8 +321,7 @@ public:
         RootNode(std::move(Arg.RootNode)),
         DFSInfoValid(std::move(Arg.DFSInfoValid)),
         SlowQueries(std::move(Arg.SlowQueries)),
-        IDoms(std::move(Arg.IDoms)),
-        Info(std::move(Arg.Info)) {
+        IDoms(std::move(Arg.IDoms)) {
     Arg.wipe();
   }
 
@@ -347,7 +333,6 @@ public:
     DFSInfoValid = std::move(RHS.DFSInfoValid);
     SlowQueries = std::move(RHS.SlowQueries);
     IDoms = std::move(RHS.IDoms);
-    Info = std::move(RHS.Info);
     RHS.wipe();
     return *this;
   }
@@ -669,22 +654,37 @@ public:
   }
 
 protected:
+  // Information record used by Semi-NCA during tree construction.
+  struct SemiNCAInfo {
+    using NodePtr = NodeT *;
+    struct InfoRec {
+      unsigned DFSNum = 0;
+      unsigned Parent = 0;
+      unsigned Semi = 0;
+      NodePtr Label = nullptr;
+    };
+
+    std::vector<NodePtr> NumToNode;
+    DenseMap<NodePtr, InfoRec> NodeToInfo;
+  };
+
   template <class GraphT>
   friend typename GraphT::NodeRef Eval(
       DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
-      const std::vector<typename GraphT::NodeRef> &NumToNode,
+      typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &Info,
       unsigned LastLinked);
 
   template <class GraphT>
   friend unsigned ReverseDFSPass(
       DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
-      std::vector<typename GraphT::NodeRef> &NumToNode, unsigned N);
+      typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &Info,
+      unsigned N);
 
   template <class GraphT>
-  friend unsigned DFSPass(DominatorTreeBaseByGraphTraits<GraphT> &DT,
-                          typename GraphT::NodeRef V,
-                          std::vector<typename GraphT::NodeRef> &NumToNode,
-                          unsigned N);
+  friend unsigned DFSPass(
+      DominatorTreeBaseByGraphTraits<GraphT> &DT, typename GraphT::NodeRef V,
+      typename DominatorTreeBaseByGraphTraits<GraphT>::SemiNCAInfo &Info,
+      unsigned N);
 
   template <class FuncT, class N>
   friend void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT,
