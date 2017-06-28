@@ -228,7 +228,6 @@ template <class NodeT> class DominatorTreeBase : public DominatorBase<NodeT> {
   /// assignable and destroyable state, but otherwise invalid.
   void wipe() {
     DomTreeNodes.clear();
-    IDoms.clear();
     RootNode = nullptr;
   }
 
@@ -241,11 +240,8 @@ protected:
   mutable bool DFSInfoValid = false;
   mutable unsigned int SlowQueries = 0;
 
-  DenseMap<NodeT *, NodeT *> IDoms;
-
   void reset() {
     DomTreeNodes.clear();
-    IDoms.clear();
     this->Roots.clear();
     RootNode = nullptr;
     DFSInfoValid = false;
@@ -320,8 +316,7 @@ public:
         DomTreeNodes(std::move(Arg.DomTreeNodes)),
         RootNode(std::move(Arg.RootNode)),
         DFSInfoValid(std::move(Arg.DFSInfoValid)),
-        SlowQueries(std::move(Arg.SlowQueries)),
-        IDoms(std::move(Arg.IDoms)) {
+        SlowQueries(std::move(Arg.SlowQueries)) {
     Arg.wipe();
   }
 
@@ -332,7 +327,6 @@ public:
     RootNode = std::move(RHS.RootNode);
     DFSInfoValid = std::move(RHS.DFSInfoValid);
     SlowQueries = std::move(RHS.SlowQueries);
-    IDoms = std::move(RHS.IDoms);
     RHS.wipe();
     return *this;
   }
@@ -662,10 +656,18 @@ protected:
       unsigned Parent = 0;
       unsigned Semi = 0;
       NodePtr Label = nullptr;
+      NodePtr IDom = nullptr;
     };
 
     std::vector<NodePtr> NumToNode;
     DenseMap<NodePtr, InfoRec> NodeToInfo;
+
+    NodeT *getIDom(NodeT *BB) const {
+      auto InfoIt = NodeToInfo.find(BB);
+      if (InfoIt == NodeToInfo.end()) return nullptr;
+
+      return InfoIt->second.IDom;
+    }
   };
 
   template <class GraphT>
@@ -690,24 +692,23 @@ protected:
   friend void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT,
   FuncT &F);
 
-  DomTreeNodeBase<NodeT> *getNodeForBlock(NodeT *BB) {
+  DomTreeNodeBase<NodeT> *getNodeForBlock(NodeT *BB,
+                                          const SemiNCAInfo& SNCAInfo) {
     if (DomTreeNodeBase<NodeT> *Node = getNode(BB))
       return Node;
 
     // Haven't calculated this node yet?  Get or calculate the node for the
     // immediate dominator.
-    NodeT *IDom = getIDom(BB);
+    NodeT *IDom = SNCAInfo.getIDom(BB);
 
     assert(IDom || DomTreeNodes[nullptr]);
-    DomTreeNodeBase<NodeT> *IDomNode = getNodeForBlock(IDom);
+    DomTreeNodeBase<NodeT> *IDomNode = getNodeForBlock(IDom, SNCAInfo);
 
     // Add a new tree node for this NodeT, and link it as a child of
     // IDomNode
     return (DomTreeNodes[BB] = IDomNode->addChild(
                 llvm::make_unique<DomTreeNodeBase<NodeT>>(BB, IDomNode))).get();
   }
-
-  NodeT *getIDom(NodeT *BB) const { return IDoms.lookup(BB); }
 
   void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
 

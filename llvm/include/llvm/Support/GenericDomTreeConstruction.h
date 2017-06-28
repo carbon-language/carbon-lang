@@ -186,7 +186,8 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   // Initialize IDoms to spanning tree parents.
   for (unsigned i = 1; i <= N; ++i) {
     const NodePtr V = SNCA.NumToNode[i];
-    DT.IDoms[V] = SNCA.NumToNode[SNCA.NodeToInfo[V].Parent];
+    auto &VInfo = SNCA.NodeToInfo[V];
+    VInfo.IDom = SNCA.NumToNode[VInfo.Parent];
   }
 
   // Step #2: Calculate the semidominators of all vertices.
@@ -211,13 +212,13 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   // path compression in Eval.
   for (unsigned i = 2; i <= N; ++i) {
     const NodePtr W = SNCA.NumToNode[i];
-    const auto &WInfo = SNCA.NodeToInfo[W];
+    auto &WInfo = SNCA.NodeToInfo[W];
     const unsigned SDomNum = SNCA.NodeToInfo[SNCA.NumToNode[WInfo.Semi]].DFSNum;
-    NodePtr WIDomCandidate = DT.IDoms[W];
+    NodePtr WIDomCandidate = WInfo.IDom;
     while (SNCA.NodeToInfo[WIDomCandidate].DFSNum > SDomNum)
-      WIDomCandidate = DT.IDoms[WIDomCandidate];
+      WIDomCandidate = SNCA.NodeToInfo[WIDomCandidate].IDom;
 
-    DT.IDoms[W] = WIDomCandidate;
+    WInfo.IDom = WIDomCandidate;
   }
 
   if (DT.Roots.empty()) return;
@@ -241,21 +242,18 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
     if (DT.DomTreeNodes[W])
       continue; // Haven't calculated this node yet?
 
-    NodePtr ImmDom = DT.getIDom(W);
+    NodePtr ImmDom = SNCA.getIDom(W);
 
     assert(ImmDom || DT.DomTreeNodes[nullptr]);
 
     // Get or calculate the node for the immediate dominator
-    DomTreeNodeBase<NodeType> *IDomNode = DT.getNodeForBlock(ImmDom);
+    DomTreeNodeBase<NodeType> *IDomNode = DT.getNodeForBlock(ImmDom, SNCA);
 
     // Add a new tree node for this BasicBlock, and link it as a child of
     // IDomNode
     DT.DomTreeNodes[W] = IDomNode->addChild(
         llvm::make_unique<DomTreeNodeBase<NodeType>>(W, IDomNode));
   }
-
-  // Free temporary memory used to construct idom's
-  DT.IDoms.clear();
 
   DT.updateDFSNumbers();
 }
