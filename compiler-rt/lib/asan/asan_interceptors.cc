@@ -711,7 +711,6 @@ void InitializeAsanInterceptors() {
   // Intercept str* functions.
   ASAN_INTERCEPT_FUNC(strcat);  // NOLINT
   ASAN_INTERCEPT_FUNC(strcpy);  // NOLINT
-  ASAN_INTERCEPT_FUNC(wcslen);
   ASAN_INTERCEPT_FUNC(strncat);
   ASAN_INTERCEPT_FUNC(strncpy);
   ASAN_INTERCEPT_FUNC(strdup);
