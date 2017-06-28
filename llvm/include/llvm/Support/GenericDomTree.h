@@ -660,7 +660,7 @@ protected:
  friend void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeTy>> &DT,
                        FuncT &F);
 
- void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
+  void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
 
 public:
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
