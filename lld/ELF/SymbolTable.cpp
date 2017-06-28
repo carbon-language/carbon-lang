@@ -195,7 +195,7 @@ template <class ELFT> void SymbolTable<ELFT>::applySymbolRenames() {
   for (auto &KV : Config->RenamedSymbols) {
     Symbol *Dst = KV.first;
     Symbol *Src = KV.second.Target;
-    Dst->copyBody(Src);
+    Dst->body()->copy(Src->body());
     Dst->Binding = KV.second.OriginalBinding;
   }
 }

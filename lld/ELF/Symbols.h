@@ -69,9 +69,9 @@ public:
   bool isLocal() const { return IsLocal; }
   bool isPreemptible() const;
   StringRef getName() const { return Name; }
-  void setName(StringRef S) { Name = S; }
   uint8_t getVisibility() const { return StOther & 0x3; }
   void parseSymbolVersion();
+  void copy(SymbolBody *Other);
 
   bool isInGot() const { return GotIndex != -1U; }
   bool isInPlt() const { return PltIndex != -1U; }
@@ -379,8 +379,6 @@ struct Symbol {
 
   SymbolBody *body() { return reinterpret_cast<SymbolBody *>(Body.buffer); }
   const SymbolBody *body() const { return const_cast<Symbol *>(this)->body(); }
-
-  void copyBody(Symbol *Other);
 };
 
 void printTraceSymbol(Symbol *Sym);
