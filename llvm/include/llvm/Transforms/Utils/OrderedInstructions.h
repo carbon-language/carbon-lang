@@ -24,13 +24,14 @@
 #include "llvm/Analysis/OrderedBasicBlock.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/ValueHandle.h"
 
 namespace llvm {
 
 class OrderedInstructions {
   /// Used to check dominance for instructions in same basic block.
-  mutable DenseMap<const BasicBlock *, std::unique_ptr<OrderedBasicBlock>>
-      OBBMap;
+  mutable DenseMap<AssertingVH<const BasicBlock>,
+                   std::unique_ptr<OrderedBasicBlock>> OBBMap;
 
   /// The dominator tree of the parent function.
   DominatorTree *DT;
