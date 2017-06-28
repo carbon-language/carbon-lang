@@ -4915,7 +4915,7 @@ SDValue DAGCombiner::MatchLoadCombine(SDNode *N) {
       return SDValue();
 
     // Loads must share the same base address
-    BaseIndexOffset Ptr = BaseIndexOffset::match(L->getBasePtr());
+    BaseIndexOffset Ptr = BaseIndexOffset::match(L->getBasePtr(), DAG);
     int64_t ByteOffsetFromBase = 0;
     if (!Base)
       Base = Ptr;
@@ -12394,7 +12394,7 @@ void DAGCombiner::getStoreMergeCandidates(
     StoreSDNode *St, SmallVectorImpl<MemOpLink> &StoreNodes) {
   // This holds the base pointer, index, and the offset in bytes from the base
   // pointer.
-  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr());
+  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr(), DAG);
   EVT MemVT = St->getMemoryVT();
 
   // We must have a base and an offset.
@@ -12414,8 +12414,8 @@ void DAGCombiner::getStoreMergeCandidates(
   BaseIndexOffset LBasePtr;
   // Match on loadbaseptr if relevant.
   if (IsLoadSrc)
-    LBasePtr =
-        BaseIndexOffset::match(cast<LoadSDNode>(St->getValue())->getBasePtr());
+    LBasePtr = BaseIndexOffset::match(
+        cast<LoadSDNode>(St->getValue())->getBasePtr(), DAG);
 
   auto CandidateMatch = [&](StoreSDNode *Other, BaseIndexOffset &Ptr,
                             int64_t &Offset) -> bool {
@@ -12429,7 +12429,7 @@ void DAGCombiner::getStoreMergeCandidates(
     if (IsLoadSrc) {
       // The Load's Base Ptr must also match
       if (LoadSDNode *OtherLd = dyn_cast<LoadSDNode>(Other->getValue())) {
-        auto LPtr = BaseIndexOffset::match(OtherLd->getBasePtr());
+        auto LPtr = BaseIndexOffset::match(OtherLd->getBasePtr(), DAG);
         if (!(LBasePtr.equalBaseIndex(LPtr, DAG)))
           return false;
       } else
@@ -12443,7 +12443,7 @@ void DAGCombiner::getStoreMergeCandidates(
       if (!(Other->getValue().getOpcode() == ISD::EXTRACT_VECTOR_ELT ||
             Other->getValue().getOpcode() == ISD::EXTRACT_SUBVECTOR))
         return false;
-    Ptr = BaseIndexOffset::match(Other->getBasePtr());
+    Ptr = BaseIndexOffset::match(Other->getBasePtr(), DAG);
     return (BasePtr.equalBaseIndex(Ptr, DAG, Offset));
   };
   // We looking for a root node which is an ancestor to all mergable
@@ -12786,7 +12786,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
       if (Ld->getMemoryVT() != MemVT)
         break;
 
-      BaseIndexOffset LdPtr = BaseIndexOffset::match(Ld->getBasePtr());
+      BaseIndexOffset LdPtr = BaseIndexOffset::match(Ld->getBasePtr(), DAG);
       // If this is not the first ptr that we check.
       int64_t LdOffset = 0;
       if (LdBasePtr.getBase().getNode()) {
@@ -16554,8 +16554,8 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
   unsigned NumBytes1 = Op1->getMemoryVT().getSizeInBits() >> 3;
 
   // Check for BaseIndexOffset matching.
-  BaseIndexOffset BasePtr0 = BaseIndexOffset::match(Op0->getBasePtr());
-  BaseIndexOffset BasePtr1 = BaseIndexOffset::match(Op1->getBasePtr());
+  BaseIndexOffset BasePtr0 = BaseIndexOffset::match(Op0->getBasePtr(), DAG);
+  BaseIndexOffset BasePtr1 = BaseIndexOffset::match(Op1->getBasePtr(), DAG);
   int64_t PtrDiff;
   if (BasePtr0.equalBaseIndex(BasePtr1, DAG, PtrDiff))
     return !((NumBytes0 <= PtrDiff) || (PtrDiff + NumBytes1 <= 0));
@@ -16577,18 +16577,6 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
   if (Base0 == Base1 || (GV0 && (GV0 == GV1)) || (CV0 && (CV0 == CV1)))
     return !((Offset0 + NumBytes0) <= Offset1 ||
              (Offset1 + NumBytes1) <= Offset0);
-
-  // It is possible for different frame indices to alias each other, mostly
-  // when tail call optimization reuses return address slots for arguments.
-  // To catch this case, look up the actual index of frame indices to compute
-  // the real alias relationship.
-  if (IsFrameIndex0 && IsFrameIndex1) {
-    MachineFrameInfo &MFI = DAG.getMachineFunction().getFrameInfo();
-    Offset0 += MFI.getObjectOffset(cast<FrameIndexSDNode>(Base0)->getIndex());
-    Offset1 += MFI.getObjectOffset(cast<FrameIndexSDNode>(Base1)->getIndex());
-    return !((Offset0 + NumBytes0) <= Offset1 ||
-             (Offset1 + NumBytes1) <= Offset0);
-  }
 
   // Otherwise, if we know what the bases are, and they aren't identical, then
   // we know they cannot alias.
@@ -16765,7 +16753,7 @@ SDValue DAGCombiner::FindBetterChain(SDNode *N, SDValue OldChain) {
 bool DAGCombiner::findBetterNeighborChains(StoreSDNode *St) {
   // This holds the base pointer, index, and the offset in bytes from the base
   // pointer.
-  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr());
+  BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr(), DAG);
 
   // We must have a base and an offset.
   if (!BasePtr.getBase().getNode())
@@ -16791,7 +16779,7 @@ bool DAGCombiner::findBetterNeighborChains(StoreSDNode *St) {
       break;
 
     // Find the base pointer and offset for this memory node.
-    BaseIndexOffset Ptr = BaseIndexOffset::match(Index->getBasePtr());
+    BaseIndexOffset Ptr = BaseIndexOffset::match(Index->getBasePtr(), DAG);
 
     // Check that the base pointer is the same as the original one.
     if (!BasePtr.equalBaseIndex(Ptr, DAG))

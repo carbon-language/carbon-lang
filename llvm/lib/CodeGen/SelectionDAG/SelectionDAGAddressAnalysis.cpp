@@ -11,6 +11,7 @@
 
 #include "llvm/CodeGen/SelectionDAGAddressAnalysis.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 
@@ -26,20 +27,28 @@ bool BaseIndexOffset::equalBaseIndex(BaseIndexOffset &Other,
 
   // Match GlobalAddresses
   if (Index == Other.Index)
-    if (GlobalAddressSDNode *A = dyn_cast<GlobalAddressSDNode>(Base))
-      if (GlobalAddressSDNode *B = dyn_cast<GlobalAddressSDNode>(Other.Base))
+    if (auto *A = dyn_cast<GlobalAddressSDNode>(Base))
+      if (auto *B = dyn_cast<GlobalAddressSDNode>(Other.Base))
         if (A->getGlobal() == B->getGlobal()) {
           Off += B->getOffset() - A->getOffset();
           return true;
         }
 
-  // TODO: we should be able to add FrameIndex analysis improvements here.
+  // Match FrameIndexes
+  if (Index == Other.Index)
+    if (auto *A = dyn_cast<FrameIndexSDNode>(Base))
+      if (auto *B = dyn_cast<FrameIndexSDNode>(Other.Base)) {
+        const MachineFrameInfo &MFI = DAG.getMachineFunction().getFrameInfo();
+        Off += MFI.getObjectOffset(B->getIndex()) -
+               MFI.getObjectOffset(A->getIndex());
+        return true;
+      }
 
   return false;
 }
 
 /// Parses tree in Ptr for base, index, offset addresses.
-BaseIndexOffset BaseIndexOffset::match(SDValue Ptr) {
+BaseIndexOffset BaseIndexOffset::match(SDValue Ptr, const SelectionDAG &DAG) {
   // (((B + I*M) + c)) + c ...
   SDValue Base = Ptr;
   SDValue Index = SDValue();
