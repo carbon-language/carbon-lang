@@ -68,6 +68,33 @@ bb:
   ret void
 }
 
+; GCN-LABEL: {{^}}alignbit_shr_pat_const30:
+; GCN: load_dwordx2 v{{\[}}[[LO:[0-9]+]]:[[HI:[0-9]+]]{{\]}}
+; GCN: v_alignbit_b32 v{{[0-9]+}}, v[[HI]], v[[LO]], 30
+
+define amdgpu_kernel void @alignbit_shr_pat_const30(i64 addrspace(1)* nocapture readonly %arg, i32 addrspace(1)* nocapture %arg1) {
+bb:
+  %tmp = load i64, i64 addrspace(1)* %arg, align 8
+  %tmp5 = lshr i64 %tmp, 30
+  %tmp6 = trunc i64 %tmp5 to i32
+  store i32 %tmp6, i32 addrspace(1)* %arg1, align 4
+  ret void
+}
+
+; GCN-LABEL: {{^}}alignbit_shr_pat_wrong_const33:
+; Negative test, shift amount more than 31
+; GCN: v_lshrrev_b32_e32 v{{[0-9]+}}, 1, v{{[0-9]+}}
+; GCN-NOT: v_alignbit_b32
+
+define amdgpu_kernel void @alignbit_shr_pat_wrong_const33(i64 addrspace(1)* nocapture readonly %arg, i32 addrspace(1)* nocapture %arg1) {
+bb:
+  %tmp = load i64, i64 addrspace(1)* %arg, align 8
+  %tmp5 = lshr i64 %tmp, 33
+  %tmp6 = trunc i64 %tmp5 to i32
+  store i32 %tmp6, i32 addrspace(1)* %arg1, align 4
+  ret void
+}
+
 declare i32 @llvm.amdgcn.workitem.id.x() #0
 
 attributes #0 = { nounwind readnone speculatable }
