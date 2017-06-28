@@ -655,7 +655,7 @@ unsigned AArch64TTIImpl::getMaxInterleaveFactor(unsigned VF) {
 static void
 getFalkorUnrollingPreferences(Loop *L, ScalarEvolution &SE,
                               TargetTransformInfo::UnrollingPreferences &UP) {
-  const int MaxStridedLoads = 7;
+  enum { MaxStridedLoads = 7 };
   auto countStridedLoads = [](Loop *L, ScalarEvolution &SE) {
     int StridedLoads = 0;
     // FIXME? We could make this more precise by looking at the CFG and
