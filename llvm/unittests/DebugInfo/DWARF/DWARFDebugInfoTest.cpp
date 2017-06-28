@@ -15,10 +15,14 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/BinaryFormat/Dwarf.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/Codegen/AsmPrinter.h"
 #include "llvm/DebugInfo/DWARF/DWARFCompileUnit.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDie.h"
 #include "llvm/DebugInfo/DWARF/DWARFFormValue.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/ObjectYAML/DWARFEmitter.h"
 #include "llvm/ObjectYAML/DWARFYAML.h"
@@ -2144,6 +2148,49 @@ TEST(DWARFDebugInfo, TestDwarfVerifyCUDontShareLineTable) {
   VerifyError(DwarfContext, "error: two compile unit DIEs, 0x0000000b and "
                             "0x0000001f, have the same DW_AT_stmt_list section "
                             "offset:");
+}
+
+TEST(DWARFDebugInfo, TestErrorReportingPolicy) {
+  initLLVMIfNeeded();
+  auto ExpectedDG = dwarfgen::Generator::create(Triple("x86_64-pc-linux"),
+                                                4 /*DwarfVersion*/);
+  if (HandleExpectedError(ExpectedDG))
+    return;
+  dwarfgen::Generator *DG = ExpectedDG.get().get();
+  AsmPrinter *AP = DG->getAsmPrinter();
+  MCContext *MC = DG->getMCContext();
+
+  // Emit two compressed sections with broken headers.
+  AP->OutStreamer->SwitchSection(
+      MC->getELFSection(".zdebug_foo", 0 /*Type*/, 0 /*Flags*/));
+  AP->OutStreamer->EmitBytes("0");
+  AP->OutStreamer->SwitchSection(
+      MC->getELFSection(".zdebug_bar", 0 /*Type*/, 0 /*Flags*/));
+  AP->OutStreamer->EmitBytes("0");
+
+  MemoryBufferRef FileBuffer(DG->generate(), "dwarf");
+  auto Obj = object::ObjectFile::createObjectFile(FileBuffer);
+  EXPECT_TRUE((bool)Obj);
+
+  // Case 1: error handler handles all errors. That allows
+  // DWARFContextInMemory
+  //         to parse whole file and find both two errors we know about.
+  int Errors = 0;
+  DWARFContextInMemory Ctx1(*Obj.get(), nullptr, [&](Error E) {
+    ++Errors;
+    consumeError(std::move(E));
+    return ErrorPolicy::Continue;
+  });
+  EXPECT_TRUE(Errors == 2);
+
+  // Case 2: error handler stops parsing of object after first error.
+  Errors = 0;
+  DWARFContextInMemory Ctx2(*Obj.get(), nullptr, [&](Error E) {
+    ++Errors;
+    consumeError(std::move(E));
+    return ErrorPolicy::Halt;
+  });
+  EXPECT_TRUE(Errors == 1);
 }
 
 } // end anonymous namespace
