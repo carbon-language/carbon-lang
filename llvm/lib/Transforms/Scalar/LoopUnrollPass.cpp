@@ -836,6 +836,8 @@ static bool computeUnrollCount(
     } else {
       UP.Count = TripCount;
     }
+    if (UP.Count > UP.MaxCount)
+      UP.Count = UP.MaxCount;
     if ((PragmaFullUnroll || PragmaEnableUnroll) && TripCount &&
         UP.Count != TripCount)
       ORE->emit(
