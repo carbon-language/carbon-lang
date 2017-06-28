@@ -2980,3 +2980,33 @@ define <2 x i1> @eq_mul_constants_with_tz_splat(<2 x i32> %x, <2 x i32> %y) {
   ret <2 x i1> %C
 }
 
+declare i32 @llvm.bswap.i32(i32)
+
+define i1 @bswap_ne(i32 %x, i32 %y) {
+; CHECK-LABEL: @bswap_ne(
+; CHECK-NEXT:    [[SWAPX:%.*]] = call i32 @llvm.bswap.i32(i32 %x)
+; CHECK-NEXT:    [[SWAPY:%.*]] = call i32 @llvm.bswap.i32(i32 %y)
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i32 [[SWAPX]], [[SWAPY]]
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %swapx = call i32 @llvm.bswap.i32(i32 %x)
+  %swapy = call i32 @llvm.bswap.i32(i32 %y)
+  %cmp = icmp ne i32 %swapx, %swapy
+  ret i1 %cmp
+}
+
+declare <8 x i16> @llvm.bswap.v8i16(<8 x i16>)
+
+define <8 x i1> @bswap_vec_eq(<8 x i16> %x, <8 x i16> %y) {
+; CHECK-LABEL: @bswap_vec_eq(
+; CHECK-NEXT:    [[SWAPX:%.*]] = call <8 x i16> @llvm.bswap.v8i16(<8 x i16> %x)
+; CHECK-NEXT:    [[SWAPY:%.*]] = call <8 x i16> @llvm.bswap.v8i16(<8 x i16> %y)
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq <8 x i16> [[SWAPX]], [[SWAPY]]
+; CHECK-NEXT:    ret <8 x i1> [[CMP]]
+;
+  %swapx = call <8 x i16> @llvm.bswap.v8i16(<8 x i16> %x)
+  %swapy = call <8 x i16> @llvm.bswap.v8i16(<8 x i16> %y)
+  %cmp = icmp eq <8 x i16> %swapx, %swapy
+  ret <8 x i1> %cmp
+}
+
