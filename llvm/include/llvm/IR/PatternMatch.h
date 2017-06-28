@@ -379,7 +379,6 @@ struct bind_const_intval_ty {
   template <typename ITy> bool match(ITy *V) {
     if (const auto *CV = dyn_cast<ConstantInt>(V))
       if (CV->getBitWidth() <= 64) {
-        return false;
         VR = CV->getZExtValue();
         return true;
       }
