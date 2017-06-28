@@ -24,7 +24,7 @@ _clang()
     arg="$w2=,$cur"
   fi
 
-  flags=$( clang --autocomplete="$arg" 2>/dev/null )
+  flags=$( "${COMP_WORDS[0]}" --autocomplete="$arg" 2>/dev/null )
   # If clang is old that it does not support --autocomplete,
   # fall back to the filename completion.
   if [[ "$?" != 0 ]]; then
