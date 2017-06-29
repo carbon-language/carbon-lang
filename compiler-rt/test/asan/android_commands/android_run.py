@@ -4,6 +4,7 @@ import os, signal, sys, subprocess, tempfile
 from android_common import *
 
 ANDROID_TMPDIR = '/data/local/tmp/Output'
+ANDROID_SYMBOLIZER_PATH = os.environ.get('ANDROID_SYMBOLIZER_PATH', None)
 
 here = os.path.abspath(os.path.dirname(sys.argv[0]))
 device_binary = os.path.join(ANDROID_TMPDIR, os.path.basename(sys.argv[0]))
@@ -12,6 +13,8 @@ def build_env():
     args = []
     # Android linker ignores RPATH. Set LD_LIBRARY_PATH to Output dir.
     args.append('LD_LIBRARY_PATH=%s' % (ANDROID_TMPDIR,))
+    if ANDROID_SYMBOLIZER_PATH:
+        args.append('ASAN_SYMBOLIZER_PATH=%s' % (ANDROID_SYMBOLIZER_PATH))
     for (key, value) in os.environ.items():
         if key in ['ASAN_OPTIONS', 'ASAN_ACTIVATION_OPTIONS']:
             args.append('%s="%s"' % (key, value))
