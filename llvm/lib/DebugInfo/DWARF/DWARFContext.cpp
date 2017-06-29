@@ -1073,7 +1073,7 @@ DWARFContextInMemory::DWARFContextInMemory(
         SmallString<32> Name;
         Reloc.getTypeName(Name);
         ErrorPolicy EP = HandleError(
-            createError("failed to compute relocation: " + name + ", ",
+            createError("failed to compute relocation: " + Name + ", ",
                         errorCodeToError(object_error::parse_failed)));
         if (EP == ErrorPolicy::Halt)
           return;
