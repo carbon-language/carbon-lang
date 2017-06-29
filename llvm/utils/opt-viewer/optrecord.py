@@ -42,8 +42,9 @@ else:
 
 def demangle(name):
     with p_lock:
-        p.stdin.write(name + '\n')
-        return p.stdout.readline().rstrip()
+        p.stdin.write((name + '\n').encode('utf-8'))
+        p.stdin.flush()
+        return p.stdout.readline().rstrip().decode('utf-8')
 
 
 def html_file_name(filename):
