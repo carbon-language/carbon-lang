@@ -323,6 +323,10 @@ def flto_unit: Flag<["-"], "flto-unit">,
 def fno_lto_unit: Flag<["-"], "fno-lto-unit">;
 def fthin_link_bitcode_EQ : Joined<["-"], "fthin-link-bitcode=">,
     HelpText<"Write minimized bitcode to <file> for the ThinLTO thin link only">;
+def fdebug_pass_manager : Flag<["-"], "fdebug-pass-manager">,
+    HelpText<"Prints debug information for the new pass manager">;
+def fno_debug_pass_manager : Flag<["-"], "fno-debug-pass-manager">,
+    HelpText<"Disables debug printing for the new pass manager">;
 
 //===----------------------------------------------------------------------===//
 // Dependency Output Options

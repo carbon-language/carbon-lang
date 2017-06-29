@@ -476,6 +476,10 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
       OPT_fexperimental_new_pass_manager, OPT_fno_experimental_new_pass_manager,
       /* Default */ false);
 
+  Opts.DebugPassManager =
+      Args.hasFlag(OPT_fdebug_pass_manager, OPT_fno_debug_pass_manager,
+                   /* Default */ false);
+
   if (Arg *A = Args.getLastArg(OPT_fveclib)) {
     StringRef Name = A->getValue();
     if (Name == "Accelerate")
