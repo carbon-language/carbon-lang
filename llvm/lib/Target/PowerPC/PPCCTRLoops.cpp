@@ -223,21 +223,28 @@ static bool memAddrUsesCTR(const PPCTargetMachine &TM, const Value *MemAddr) {
   return Model == TLSModel::GeneralDynamic || Model == TLSModel::LocalDynamic;
 }
 
+// Loop through the inline asm constraints and look for something that clobbers
+// ctr.
+static bool asmClobbersCTR(InlineAsm *IA) {
+  InlineAsm::ConstraintInfoVector CIV = IA->ParseConstraints();
+  for (unsigned i = 0, ie = CIV.size(); i < ie; ++i) {
+    InlineAsm::ConstraintInfo &C = CIV[i];
+    if (C.Type != InlineAsm::isInput)
+      for (unsigned j = 0, je = C.Codes.size(); j < je; ++j)
+        if (StringRef(C.Codes[j]).equals_lower("{ctr}"))
+          return true;
+  }
+  return false;
+}
+
 bool PPCCTRLoops::mightUseCTR(BasicBlock *BB) {
   for (BasicBlock::iterator J = BB->begin(), JE = BB->end();
        J != JE; ++J) {
     if (CallInst *CI = dyn_cast<CallInst>(J)) {
+      // Inline ASM is okay, unless it clobbers the ctr register.
       if (InlineAsm *IA = dyn_cast<InlineAsm>(CI->getCalledValue())) {
-        // Inline ASM is okay, unless it clobbers the ctr register.
-        InlineAsm::ConstraintInfoVector CIV = IA->ParseConstraints();
-        for (unsigned i = 0, ie = CIV.size(); i < ie; ++i) {
-          InlineAsm::ConstraintInfo &C = CIV[i];
-          if (C.Type != InlineAsm::isInput)
-            for (unsigned j = 0, je = C.Codes.size(); j < je; ++j)
-              if (StringRef(C.Codes[j]).equals_lower("{ctr}"))
-                return true;
-        }
-
+	if (asmClobbersCTR(IA))
+	  return true;
         continue;
       }
 
