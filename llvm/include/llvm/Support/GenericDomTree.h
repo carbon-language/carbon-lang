@@ -185,28 +185,7 @@ bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT);
 /// This class is a generic template over graph nodes. It is instantiated for
 /// various graphs in the LLVM IR or in the code generator.
 template <class NodeT> class DominatorTreeBase {
-  bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
-                               const DomTreeNodeBase<NodeT> *B) const {
-    assert(A != B);
-    assert(isReachableFromEntry(B));
-    assert(isReachableFromEntry(A));
-
-    const DomTreeNodeBase<NodeT> *IDom;
-    while ((IDom = B->getIDom()) != nullptr && IDom != A && IDom != B)
-      B = IDom; // Walk up the tree
-    return IDom != nullptr;
-  }
-
-  /// \brief Wipe this tree's state without releasing any resources.
-  ///
-  /// This is essentially a post-move helper only. It leaves the object in an
-  /// assignable and destroyable state, but otherwise invalid.
-  void wipe() {
-    DomTreeNodes.clear();
-    RootNode = nullptr;
-  }
-
-protected:
+ protected:
   std::vector<NodeT *> Roots;
   bool IsPostDominators;
 
@@ -218,73 +197,10 @@ protected:
   mutable bool DFSInfoValid = false;
   mutable unsigned int SlowQueries = 0;
 
-  void reset() {
-    DomTreeNodes.clear();
-    this->Roots.clear();
-    RootNode = nullptr;
-    DFSInfoValid = false;
-    SlowQueries = 0;
-  }
+  friend struct DomTreeBuilder::SemiNCAInfo<NodeT>;
+  using SNCAInfoTy = DomTreeBuilder::SemiNCAInfo<NodeT>;
 
-  // NewBB is split and now it has one successor. Update dominator tree to
-  // reflect this change.
-  template <class N>
-  void Split(typename GraphTraits<N>::NodeRef NewBB) {
-    using GraphT = GraphTraits<N>;
-    using NodeRef = typename GraphT::NodeRef;
-    assert(std::distance(GraphT::child_begin(NewBB),
-                         GraphT::child_end(NewBB)) == 1 &&
-           "NewBB should have a single successor!");
-    NodeRef NewBBSucc = *GraphT::child_begin(NewBB);
-
-    std::vector<NodeRef> PredBlocks;
-    for (const auto &Pred : children<Inverse<N>>(NewBB))
-      PredBlocks.push_back(Pred);
-
-    assert(!PredBlocks.empty() && "No predblocks?");
-
-    bool NewBBDominatesNewBBSucc = true;
-    for (const auto &Pred : children<Inverse<N>>(NewBBSucc)) {
-      if (Pred != NewBB && !dominates(NewBBSucc, Pred) &&
-          isReachableFromEntry(Pred)) {
-        NewBBDominatesNewBBSucc = false;
-        break;
-      }
-    }
-
-    // Find NewBB's immediate dominator and create new dominator tree node for
-    // NewBB.
-    NodeT *NewBBIDom = nullptr;
-    unsigned i = 0;
-    for (i = 0; i < PredBlocks.size(); ++i)
-      if (isReachableFromEntry(PredBlocks[i])) {
-        NewBBIDom = PredBlocks[i];
-        break;
-      }
-
-    // It's possible that none of the predecessors of NewBB are reachable;
-    // in that case, NewBB itself is unreachable, so nothing needs to be
-    // changed.
-    if (!NewBBIDom)
-      return;
-
-    for (i = i + 1; i < PredBlocks.size(); ++i) {
-      if (isReachableFromEntry(PredBlocks[i]))
-        NewBBIDom = findNearestCommonDominator(NewBBIDom, PredBlocks[i]);
-    }
-
-    // Create the new dominator tree node... and set the idom of NewBB.
-    DomTreeNodeBase<NodeT> *NewBBNode = addNewBlock(NewBB, NewBBIDom);
-
-    // If NewBB strictly dominates other blocks, then it is now the immediate
-    // dominator of NewBBSucc.  Update the dominator tree as appropriate.
-    if (NewBBDominatesNewBBSucc) {
-      DomTreeNodeBase<NodeT> *NewBBSuccNode = getNode(NewBBSucc);
-      changeImmediateDominator(NewBBSuccNode, NewBBNode);
-    }
-  }
-
-public:
+ public:
   explicit DominatorTreeBase(bool isPostDom) : IsPostDominators(isPostDom) {}
 
   DominatorTreeBase(DominatorTreeBase &&Arg)
@@ -633,16 +549,6 @@ public:
     if (getRootNode()) PrintDomTree<NodeT>(getRootNode(), O, 1);
   }
 
-protected:
- friend struct DomTreeBuilder::SemiNCAInfo<NodeT>;
- using SNCAInfoTy = DomTreeBuilder::SemiNCAInfo<NodeT>;
-
- template <class FuncT, class NodeTy>
- friend void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeTy>> &DT,
-                       FuncT &F);
-
-  void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
-
 public:
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
@@ -720,6 +626,96 @@ public:
     return this->isPostDominator()
            ? DomTreeBuilder::Verify<Inverse<NodeT *>>(*this)
            : DomTreeBuilder::Verify<NodeT *>(*this);
+  }
+
+ protected:
+  void addRoot(NodeT *BB) { this->Roots.push_back(BB); }
+
+  void reset() {
+    DomTreeNodes.clear();
+    this->Roots.clear();
+    RootNode = nullptr;
+    DFSInfoValid = false;
+    SlowQueries = 0;
+  }
+
+  // NewBB is split and now it has one successor. Update dominator tree to
+  // reflect this change.
+  template <class N>
+  void Split(typename GraphTraits<N>::NodeRef NewBB) {
+    using GraphT = GraphTraits<N>;
+    using NodeRef = typename GraphT::NodeRef;
+    assert(std::distance(GraphT::child_begin(NewBB),
+                         GraphT::child_end(NewBB)) == 1 &&
+           "NewBB should have a single successor!");
+    NodeRef NewBBSucc = *GraphT::child_begin(NewBB);
+
+    std::vector<NodeRef> PredBlocks;
+    for (const auto &Pred : children<Inverse<N>>(NewBB))
+      PredBlocks.push_back(Pred);
+
+    assert(!PredBlocks.empty() && "No predblocks?");
+
+    bool NewBBDominatesNewBBSucc = true;
+    for (const auto &Pred : children<Inverse<N>>(NewBBSucc)) {
+      if (Pred != NewBB && !dominates(NewBBSucc, Pred) &&
+          isReachableFromEntry(Pred)) {
+        NewBBDominatesNewBBSucc = false;
+        break;
+      }
+    }
+
+    // Find NewBB's immediate dominator and create new dominator tree node for
+    // NewBB.
+    NodeT *NewBBIDom = nullptr;
+    unsigned i = 0;
+    for (i = 0; i < PredBlocks.size(); ++i)
+      if (isReachableFromEntry(PredBlocks[i])) {
+        NewBBIDom = PredBlocks[i];
+        break;
+      }
+
+    // It's possible that none of the predecessors of NewBB are reachable;
+    // in that case, NewBB itself is unreachable, so nothing needs to be
+    // changed.
+    if (!NewBBIDom) return;
+
+    for (i = i + 1; i < PredBlocks.size(); ++i) {
+      if (isReachableFromEntry(PredBlocks[i]))
+        NewBBIDom = findNearestCommonDominator(NewBBIDom, PredBlocks[i]);
+    }
+
+    // Create the new dominator tree node... and set the idom of NewBB.
+    DomTreeNodeBase<NodeT> *NewBBNode = addNewBlock(NewBB, NewBBIDom);
+
+    // If NewBB strictly dominates other blocks, then it is now the immediate
+    // dominator of NewBBSucc.  Update the dominator tree as appropriate.
+    if (NewBBDominatesNewBBSucc) {
+      DomTreeNodeBase<NodeT> *NewBBSuccNode = getNode(NewBBSucc);
+      changeImmediateDominator(NewBBSuccNode, NewBBNode);
+    }
+  }
+
+ private:
+  bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
+                               const DomTreeNodeBase<NodeT> *B) const {
+    assert(A != B);
+    assert(isReachableFromEntry(B));
+    assert(isReachableFromEntry(A));
+
+    const DomTreeNodeBase<NodeT> *IDom;
+    while ((IDom = B->getIDom()) != nullptr && IDom != A && IDom != B)
+      B = IDom;  // Walk up the tree
+    return IDom != nullptr;
+  }
+
+  /// \brief Wipe this tree's state without releasing any resources.
+  ///
+  /// This is essentially a post-move helper only. It leaves the object in an
+  /// assignable and destroyable state, but otherwise invalid.
+  void wipe() {
+    DomTreeNodes.clear();
+    RootNode = nullptr;
   }
 };
 
