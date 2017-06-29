@@ -135,7 +135,7 @@ void *lsan_realloc(void *p, uptr size, const StackTrace &stack) {
 
 void *lsan_calloc(uptr nmemb, uptr size, const StackTrace &stack) {
   size *= nmemb;
-  return Allocate(stack, size, 1, true /**/);
+  return Allocate(stack, size, 1, true);
 }
 
 void *lsan_valloc(uptr size, const StackTrace &stack) {
