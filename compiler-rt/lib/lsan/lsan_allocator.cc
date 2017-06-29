@@ -74,7 +74,7 @@ void *Allocate(const StackTrace &stack, uptr size, uptr alignment,
     size = 1;
   if (size > kMaxAllowedMallocSize) {
     Report("WARNING: LeakSanitizer failed to allocate %zu bytes\n", size);
-    return Allocator::FailureHandler::OnBadRequest();
+    return nullptr;
   }
   void *p = allocator.Allocate(GetAllocatorCache(), size, alignment);
   // Do not rely on the allocator to clear the memory (it's slow).
@@ -99,7 +99,7 @@ void *Reallocate(const StackTrace &stack, void *p, uptr new_size,
   if (new_size > kMaxAllowedMallocSize) {
     Report("WARNING: LeakSanitizer failed to allocate %zu bytes\n", new_size);
     allocator.Deallocate(GetAllocatorCache(), p);
-    return Allocator::FailureHandler::OnBadRequest();
+    return nullptr;
   }
   p = allocator.Reallocate(GetAllocatorCache(), p, new_size, alignment);
   RegisterAllocation(stack, p, new_size);
@@ -134,8 +134,6 @@ void *lsan_realloc(void *p, uptr size, const StackTrace &stack) {
 }
 
 void *lsan_calloc(uptr nmemb, uptr size, const StackTrace &stack) {
-  if (CallocShouldReturnNullDueToOverflow(size, nmemb))
-    return Allocator::FailureHandler::OnBadRequest();
   size *= nmemb;
   return Allocate(stack, size, 1, true);
 }
