@@ -1053,7 +1053,7 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
     AddLinkSanitizerLibArgs(Args, CmdArgs, "ubsan");
   if (Sanitize.needsTsanRt())
     AddLinkSanitizerLibArgs(Args, CmdArgs, "tsan");
-  if (Sanitize.needsFuzzer())
+  if (Sanitize.needsFuzzer() && !Args.hasArg(options::OPT_dynamiclib))
     AddFuzzerLinkArgs(Args, CmdArgs);
   if (Sanitize.needsStatsRt()) {
     StringRef OS = isTargetMacOS() ? "osx" : "iossim";

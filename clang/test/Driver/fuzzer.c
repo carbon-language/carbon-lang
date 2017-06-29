@@ -15,6 +15,10 @@
 //
 // CHECK-LIBCXX-DARWIN: -lc++
 
+// Check that we don't link in libFuzzer.a when producing a shared object.
+// RUN: %clang -fsanitize=fuzzer %s -shared -o %t.so -### 2>&1 | FileCheck --check-prefixes=CHECK-NOLIB-SO %s
+// CHECK-NOLIB-SO-NOT: libLLVMFuzzer.a
+
 int LLVMFuzzerTestOneInput(const char *Data, long Size) {
   return 0;
 }
