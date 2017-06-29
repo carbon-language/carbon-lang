@@ -204,11 +204,15 @@ void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &O,
 namespace DomTreeBuilder {
 template <class NodeT>
 struct SemiNCAInfo;
-}  // namespace DomTreeBuilder
 
 // The calculate routine is provided in a separate header but referenced here.
 template <class FuncT, class N>
 void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT, FuncT &F);
+
+// The verify function is provided in a separate header but referenced here.
+template <class N>
+bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT);
+}  // namespace DomTreeBuilder
 
 /// \brief Core dominator tree base class.
 ///
@@ -723,15 +727,22 @@ public:
       NodeT *entry = TraitsTy::getEntryNode(&F);
       addRoot(entry);
 
-      Calculate<FT, NodeT *>(*this, F);
+      DomTreeBuilder::Calculate<FT, NodeT *>(*this, F);
     } else {
       // Initialize the roots list
       for (auto *Node : nodes(&F))
         if (TraitsTy::child_begin(Node) == TraitsTy::child_end(Node))
           addRoot(Node);
 
-      Calculate<FT, Inverse<NodeT *>>(*this, F);
+      DomTreeBuilder::Calculate<FT, Inverse<NodeT *>>(*this, F);
     }
+  }
+
+  /// verify - check parent and sibling property
+  bool verify() const {
+    return this->isPostDominator()
+           ? DomTreeBuilder::Verify<Inverse<NodeT *>>(*this)
+           : DomTreeBuilder::Verify<NodeT *>(*this);
   }
 };
 
