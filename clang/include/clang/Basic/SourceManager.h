@@ -1489,6 +1489,17 @@ public:
   /// \returns true if LHS source location comes before RHS, false otherwise.
   bool isBeforeInTranslationUnit(SourceLocation LHS, SourceLocation RHS) const;
 
+  /// \brief Determines whether the two decomposed source location is in the
+  ///        same translation unit. As a byproduct, it also calculates the order
+  ///        of the source locations in case they are in the same TU.
+  ///
+  /// \returns Pair of bools the first component is true if the two locations
+  ///          are in the same TU. The second bool is true if the first is true
+  ///          and \p LOffs is before \p ROffs.
+  std::pair<bool, bool>
+  isInTheSameTranslationUnit(std::pair<FileID, unsigned> &LOffs,
+                             std::pair<FileID, unsigned> &ROffs) const;
+
   /// \brief Determines the order of 2 source locations in the "source location
   /// address space".
   bool isBeforeInSLocAddrSpace(SourceLocation LHS, SourceLocation RHS) const {
