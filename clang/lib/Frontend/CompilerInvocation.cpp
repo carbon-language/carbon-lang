@@ -2106,6 +2106,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.AlignedAllocation =
       Args.hasFlag(OPT_faligned_allocation, OPT_fno_aligned_allocation,
                    Opts.AlignedAllocation);
+  Opts.AlignedAllocationUnavailable =
+      Opts.AlignedAllocation && Args.hasArg(OPT_aligned_alloc_unavailable);
   Opts.NewAlignOverride =
       getLastArgIntValue(Args, OPT_fnew_alignment_EQ, 0, Diags);
   if (Opts.NewAlignOverride && !llvm::isPowerOf2_32(Opts.NewAlignOverride)) {
