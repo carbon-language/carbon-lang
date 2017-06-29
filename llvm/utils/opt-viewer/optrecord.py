@@ -10,15 +10,14 @@ except ImportError:
     print("For faster parsing, you may want to install libYAML for PyYAML")
     from yaml import Loader
 
-import functools
-from collections import defaultdict
-import itertools
-from multiprocessing import Pool
-from multiprocessing import Lock, cpu_count
 import cgi
+from collections import defaultdict
+import functools
+from multiprocessing import Lock
 import subprocess
 
-import traceback
+import optpmap
+
 
 p = subprocess.Popen(['c++filt', '-n'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 p_lock = Lock()
@@ -210,8 +209,11 @@ def get_remarks(input_file):
     return max_hotness, all_remarks, file_remarks
 
 
-def gather_results(pmap, filenames):
-    remarks = pmap(get_remarks, filenames)
+def gather_results(filenames, num_jobs, should_print_progress):
+    if should_print_progress:
+        print('Reading YAML files...')
+    remarks = optpmap.pmap(
+        get_remarks, filenames, num_jobs, should_print_progress)
     max_hotness = max(entry[0] for entry in remarks)
 
     def merge_file_remarks(file_remarks_job, all_remarks, merged):
