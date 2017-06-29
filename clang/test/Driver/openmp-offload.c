@@ -589,3 +589,13 @@
 // CHK-UBUJOBS-ST-SAME: [[HOSTOBJ:[^\\/]+\.o]]" "{{.*}}[[HOSTASM]]"
 // CHK-UBUJOBS-ST: clang-offload-bundler{{.*}}" "-type=o" "-targets=openmp-powerpc64le-ibm-linux-gnu,openmp-x86_64-pc-linux-gnu,host-powerpc64le--linux" "-outputs=
 // CHK-UBUJOBS-ST-SAME: [[RES:[^\\/]+\.o]]" "-inputs={{.*}}[[T1OBJ]],{{.*}}[[T2OBJ]],{{.*}}[[HOSTOBJ]]"
+
+/// ###########################################################################
+
+/// Check -fopenmp-is-device is also passed when generating the *.i and *.s intermediate files.
+// RUN:   %clang -### -fopenmp=libomp -fopenmp-targets=powerpc64le-ibm-linux-gnu -save-temps -no-canonical-prefixes %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHK-FOPENMP-IS-DEVICE %s
+
+// CHK-FOPENMP-IS-DEVICE: clang{{.*}}.i" {{.*}}" "-fopenmp-is-device"
+// CHK-FOPENMP-IS-DEVICE-NEXT: clang{{.*}}.bc" {{.*}}.i" "-fopenmp-is-device" "-fopenmp-host-ir-file-path"
+// CHK-FOPENMP-IS-DEVICE-NEXT: clang{{.*}}.s" {{.*}}.bc" "-fopenmp-is-device"

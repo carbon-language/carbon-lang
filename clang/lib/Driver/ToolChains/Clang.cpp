@@ -4429,10 +4429,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // device declarations can be identified. Also, -fopenmp-is-device is passed
   // along to tell the frontend that it is generating code for a device, so that
   // only the relevant declarations are emitted.
-  if (IsOpenMPDevice && Inputs.size() == 2) {
+  if (IsOpenMPDevice) {
     CmdArgs.push_back("-fopenmp-is-device");
-    CmdArgs.push_back("-fopenmp-host-ir-file-path");
-    CmdArgs.push_back(Args.MakeArgString(Inputs.back().getFilename()));
+    if (Inputs.size() == 2) {
+      CmdArgs.push_back("-fopenmp-host-ir-file-path");
+      CmdArgs.push_back(Args.MakeArgString(Inputs.back().getFilename()));
+    }
   }
 
   // For all the host OpenMP offloading compile jobs we need to pass the targets
