@@ -1680,6 +1680,7 @@ bool Darwin::isAlignedAllocationUnavailable() const {
   case WatchOSSimulator: // Earlier than 4.0.
     return TargetVersion < VersionTuple(4U, 0U, 0U);
   }
+  llvm_unreachable("Unsupported platform");
 }
 
 void Darwin::addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
