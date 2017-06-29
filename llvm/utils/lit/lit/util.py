@@ -48,7 +48,7 @@ def to_string(b):
     #    - 'bytes' (2nd branch above)
     #
     # The last type we might expect is the Python2 'unicode' type. There is no
-    # 'uncode' type in Python3 (all the Python3 cases were already handled). In
+    # 'unicode' type in Python3 (all the Python3 cases were already handled). In
     # order to get a 'str' object, we need to encode the 'unicode' object.
     try:
         return b.encode('utf-8')
