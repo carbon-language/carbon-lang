@@ -58,40 +58,6 @@ template <typename GT>
 using DominatorTreeBaseByGraphTraits =
     typename detail::DominatorTreeBaseTraits<GT>::type;
 
-/// \brief Base class that other, more interesting dominator analyses
-/// inherit from.
-template <class NodeT> class DominatorBase {
-protected:
-  std::vector<NodeT *> Roots;
-  bool IsPostDominators;
-
-  explicit DominatorBase(bool isPostDom)
-      : Roots(), IsPostDominators(isPostDom) {}
-
-  DominatorBase(DominatorBase &&Arg)
-      : Roots(std::move(Arg.Roots)), IsPostDominators(Arg.IsPostDominators) {
-    Arg.Roots.clear();
-  }
-
-  DominatorBase &operator=(DominatorBase &&RHS) {
-    Roots = std::move(RHS.Roots);
-    IsPostDominators = RHS.IsPostDominators;
-    RHS.Roots.clear();
-    return *this;
-  }
-
-public:
-  /// getRoots - Return the root blocks of the current CFG.  This may include
-  /// multiple blocks if we are computing post dominators.  For forward
-  /// dominators, this will always be a single block (the entry node).
-  ///
-  const std::vector<NodeT *> &getRoots() const { return Roots; }
-
-  /// isPostDominator - Returns true if analysis based of postdoms
-  ///
-  bool isPostDominator() const { return IsPostDominators; }
-};
-
 /// \brief Base class for the actual dominator tree node.
 template <class NodeT> class DomTreeNodeBase {
   friend struct PostDominatorTree;
@@ -218,7 +184,7 @@ bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<N>> &DT);
 ///
 /// This class is a generic template over graph nodes. It is instantiated for
 /// various graphs in the LLVM IR or in the code generator.
-template <class NodeT> class DominatorTreeBase : public DominatorBase<NodeT> {
+template <class NodeT> class DominatorTreeBase {
   bool dominatedBySlowTreeWalk(const DomTreeNodeBase<NodeT> *A,
                                const DomTreeNodeBase<NodeT> *B) const {
     assert(A != B);
@@ -241,6 +207,9 @@ template <class NodeT> class DominatorTreeBase : public DominatorBase<NodeT> {
   }
 
 protected:
+  std::vector<NodeT *> Roots;
+  bool IsPostDominators;
+
   using DomTreeNodeMapType =
      DenseMap<NodeT *, std::unique_ptr<DomTreeNodeBase<NodeT>>>;
   DomTreeNodeMapType DomTreeNodes;
@@ -316,12 +285,11 @@ protected:
   }
 
 public:
-  explicit DominatorTreeBase(bool isPostDom)
-      : DominatorBase<NodeT>(isPostDom) {}
+  explicit DominatorTreeBase(bool isPostDom) : IsPostDominators(isPostDom) {}
 
   DominatorTreeBase(DominatorTreeBase &&Arg)
-      : DominatorBase<NodeT>(
-            std::move(static_cast<DominatorBase<NodeT> &>(Arg))),
+      : Roots(std::move(Arg.Roots)),
+        IsPostDominators(Arg.IsPostDominators),
         DomTreeNodes(std::move(Arg.DomTreeNodes)),
         RootNode(std::move(Arg.RootNode)),
         DFSInfoValid(std::move(Arg.DFSInfoValid)),
@@ -330,8 +298,8 @@ public:
   }
 
   DominatorTreeBase &operator=(DominatorTreeBase &&RHS) {
-    DominatorBase<NodeT>::operator=(
-        std::move(static_cast<DominatorBase<NodeT> &>(RHS)));
+    Roots = std::move(RHS.Roots);
+    IsPostDominators = RHS.IsPostDominators;
     DomTreeNodes = std::move(RHS.DomTreeNodes);
     RootNode = std::move(RHS.RootNode);
     DFSInfoValid = std::move(RHS.DFSInfoValid);
@@ -342,6 +310,16 @@ public:
 
   DominatorTreeBase(const DominatorTreeBase &) = delete;
   DominatorTreeBase &operator=(const DominatorTreeBase &) = delete;
+
+  /// getRoots - Return the root blocks of the current CFG.  This may include
+  /// multiple blocks if we are computing post dominators.  For forward
+  /// dominators, this will always be a single block (the entry node).
+  ///
+  const std::vector<NodeT *> &getRoots() const { return Roots; }
+
+  /// isPostDominator - Returns true if analysis based of postdoms
+  ///
+  bool isPostDominator() const { return IsPostDominators; }
 
   /// compare - Return false if the other dominator tree base matches this
   /// dominator tree base. Otherwise return true.
@@ -580,7 +558,6 @@ public:
     assert(!this->isPostDominator() &&
            "Cannot change root of post-dominator tree");
     DFSInfoValid = false;
-    auto &Roots = DominatorBase<NodeT>::Roots;
     DomTreeNodeBase<NodeT> *NewNode = (DomTreeNodes[BB] =
       llvm::make_unique<DomTreeNodeBase<NodeT>>(BB, nullptr)).get();
     if (Roots.empty()) {
