@@ -57,6 +57,11 @@ The improvements are...
 Improvements to clang-tidy
 --------------------------
 
+- New `android-cloexec-creat
+  <http://clang.llvm.org/extra/clang-tidy/checks/android-cloexec-creat.html>`_ check
+
+  Detect usage of ``creat()``.
+
 - New `android-file-open-flag
   <http://clang.llvm.org/extra/clang-tidy/checks/android-file-open-flag.html>`_ check
 
