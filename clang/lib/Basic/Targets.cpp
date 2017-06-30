@@ -3545,6 +3545,7 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
         Features["avx512pf"] = Features["avx512dq"] = Features["avx512bw"] =
             Features["avx512vl"] = Features["avx512vbmi"] =
                 Features["avx512ifma"] = Features["avx512vpopcntdq"] = false;
+    break;
   }
 }
 
@@ -3577,6 +3578,7 @@ void X86TargetInfo::setMMXLevel(llvm::StringMap<bool> &Features,
     LLVM_FALLTHROUGH;
   case AMD3DNowAthlon:
     Features["3dnowa"] = false;
+    break;
   }
 }
 
@@ -3611,6 +3613,7 @@ void X86TargetInfo::setXOPLevel(llvm::StringMap<bool> &Features, XOPEnum Level,
     LLVM_FALLTHROUGH;
   case XOP:
     Features["xop"] = false;
+    break;
   }
 }
 
@@ -4180,6 +4183,7 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
       break;
     default:
       Builder.defineMacro("_M_IX86_FP", Twine(0));
+      break;
     }
   }
 
