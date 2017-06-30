@@ -44,7 +44,6 @@ set(CLANG_TOOLS_TEST_DEPS
   clang-include-fixer
   clang-move
   clang-query
-  clang-rename
   clang-reorder-fields
   clang-tidy
   find-all-symbols
