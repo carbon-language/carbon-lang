@@ -49,10 +49,6 @@ static cl::opt<bool> TraceGVPlacement("trace-gv-placement",
   cl::Hidden, cl::init(false),
   cl::desc("Trace global value placement"));
 
-static cl::opt<bool>
-    EmitJtInText("hexagon-emit-jt-text", cl::Hidden, cl::init(false),
-                 cl::desc("Emit hexagon jump tables in function section"));
-
 // TraceGVPlacement controls messages for all builds. For builds with assertions
 // (debug or release), messages are also controlled by the usual debug flags
 // (e.g. -debug and -debug-only=globallayout)
@@ -258,11 +254,6 @@ bool HexagonTargetObjectFile::isSmallDataEnabled() const {
 
 unsigned HexagonTargetObjectFile::getSmallDataSize() const {
   return SmallDataThreshold;
-}
-
-bool HexagonTargetObjectFile::shouldPutJumpTableInFunctionSection(
-    bool UsesLabelDifference, const Function &F) const {
-  return EmitJtInText;
 }
 
 /// Descends any type down to "elementary" components,
