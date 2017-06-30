@@ -1070,6 +1070,40 @@ S4 s4;
 // expected-error@first.h:* {{'TemplateArgument::S4::x' from module 'FirstModule' is not present in definition of 'TemplateArgument::S4' in module 'SecondModule'}}
 // expected-note@second.h:* {{declaration of 'x' does not match}}
 #endif
+
+#if defined(FIRST)
+template <class T> struct U5 {};
+struct S5 {
+  U5<int> x;
+};
+#elif defined(SECOND)
+template <class T> struct U5 {};
+struct S5 {
+  U5<short> x;
+};
+#else
+S5 s5;
+// expected-error@first.h:* {{'TemplateArgument::S5::x' from module 'FirstModule' is not present in definition of 'TemplateArgument::S5' in module 'SecondModule'}}
+// expected-note@second.h:* {{declaration of 'x' does not match}}
+#endif
+
+#if defined(FIRST)
+template <class T> struct U6 {};
+struct S6 {
+  U6<int> x;
+  U6<short> y;
+};
+#elif defined(SECOND)
+template <class T> struct U6 {};
+struct S6 {
+  U6<short> y;
+  U6<int> x;
+};
+#else
+S6 s6;
+// expected-error@second.h:* {{'TemplateArgument::S6' has different definitions in different modules; first difference is definition in module 'SecondModule' found field 'y'}}
+// expected-note@first.h:* {{but in 'FirstModule' found field 'x'}}
+#endif
 }
 
 namespace TemplateTypeParmType {

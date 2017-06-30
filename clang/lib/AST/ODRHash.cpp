@@ -146,7 +146,10 @@ void ODRHash::AddTemplateArgument(TemplateArgument TA) {
 
   switch (Kind) {
     case TemplateArgument::Null:
+      llvm_unreachable("Expected valid TemplateArgument");
     case TemplateArgument::Type:
+      AddQualType(TA.getAsType());
+      break;
     case TemplateArgument::Declaration:
     case TemplateArgument::NullPtr:
     case TemplateArgument::Integral:
