@@ -172,7 +172,7 @@ class TestSuite:
         return os.path.join(self.source_root, *components)
 
     def getExecPath(self, components):
-        return os.path.join(self.exec_root, *components)
+        return os.path.join(self.exec_root, "Output", *components)
 
 class Test:
     """Test - Information on a single test instance."""
@@ -222,9 +222,12 @@ class Test:
             # Syntax error in an XFAIL line.
             self.result.code = UNRESOLVED
             self.result.output = str(e)
-        
+
     def getFullName(self):
         return self.suite.config.name + ' :: ' + '/'.join(self.path_in_suite)
+
+    def getTestBaseName(self):
+        return self.path_in_suite[-1]
 
     def getFilePath(self):
         if self.file_path:
@@ -234,8 +237,11 @@ class Test:
     def getSourcePath(self):
         return self.suite.getSourcePath(self.path_in_suite)
 
-    def getExecPath(self):
-        return self.suite.getExecPath(self.path_in_suite)
+    def getTempFilePrefix(self):
+        return self.suite.getExecPath(self.path_in_suite) + ".tmp"
+
+    def getTempFileDir(self):
+        return os.path.dirname(self.getTempFilePrefix())
 
     def isExpectedToFail(self):
         """
@@ -347,7 +353,7 @@ class Test:
         safe_name = self.suite.name.replace(".","-")
 
         if safe_test_path:
-            class_name = safe_name + "." + "/".join(safe_test_path) 
+            class_name = safe_name + "." + "/".join(safe_test_path)
         else:
             class_name = safe_name + "." + safe_name
 
