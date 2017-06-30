@@ -407,7 +407,7 @@ template <class NodeT> class DominatorTreeBase {
 
   /// findNearestCommonDominator - Find nearest common dominator basic block
   /// for basic block A and B. If there is no such block then return NULL.
-  NodeT *findNearestCommonDominator(NodeT *A, NodeT *B) {
+  NodeT *findNearestCommonDominator(NodeT *A, NodeT *B) const {
     assert(A->getParent() == B->getParent() &&
            "Two blocks are not in same function");
 
@@ -433,7 +433,8 @@ template <class NodeT> class DominatorTreeBase {
     return NodeA ? NodeA->getBlock() : nullptr;
   }
 
-  const NodeT *findNearestCommonDominator(const NodeT *A, const NodeT *B) {
+  const NodeT *findNearestCommonDominator(const NodeT *A,
+                                          const NodeT *B) const {
     // Cast away the const qualifiers here. This is ok since
     // const is re-introduced on the return type.
     return findNearestCommonDominator(const_cast<NodeT *>(A),

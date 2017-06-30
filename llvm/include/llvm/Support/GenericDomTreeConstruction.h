@@ -280,6 +280,7 @@ struct SemiNCAInfo {
   }
 
   void doFullDFSWalk(const DomTreeT &DT) {
+    NumToNode.push_back(nullptr);
     unsigned Num = 0;
     for (auto *Root : DT.Roots)
       if (!DT.isPostDominator())
@@ -342,6 +343,44 @@ struct SemiNCAInfo {
         errs() << " has level " << TN->getLevel() << " while it's IDom ";
         PrintBlockOrNullptr(errs(), IDom->getBlock());
         errs() << " has level " << IDom->getLevel() << "!\n";
+        errs().flush();
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Checks if for every edge From -> To in the graph
+  //     NCD(From, To) == IDom(To) or To.
+  bool verifyNCD(const DomTreeT &DT) {
+    clear();
+    doFullDFSWalk(DT);
+
+    for (auto &BlockToInfo : NodeToInfo) {
+      auto &Info = BlockToInfo.second;
+
+      const NodePtr From = NumToNode[Info.Parent];
+      if (!From) continue;
+
+      const NodePtr To = BlockToInfo.first;
+      const TreeNodePtr ToTN = DT.getNode(To);
+      assert(ToTN);
+
+      const NodePtr NCD = DT.findNearestCommonDominator(From, To);
+      const TreeNodePtr NCDTN = NCD ? DT.getNode(NCD) : nullptr;
+      const TreeNodePtr ToIDom = ToTN->getIDom();
+      if (NCDTN != ToTN && NCDTN != ToIDom) {
+        errs() << "NearestCommonDominator verification failed:\n\tNCD(From:";
+        PrintBlockOrNullptr(errs(), From);
+        errs() << ", To:";
+        PrintBlockOrNullptr(errs(), To);
+        errs() << ") = ";
+        PrintBlockOrNullptr(errs(), NCD);
+        errs() << ",\t (should be To or IDom[To]: ";
+        PrintBlockOrNullptr(errs(), ToIDom ? ToIDom->getBlock() : nullptr);
+        errs() << ")\n";
         errs().flush();
 
         return false;
@@ -439,7 +478,8 @@ bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT) {
   SemiNCAInfo<typename std::remove_pointer<NodePtr>::type> SNCA;
 
   return SNCA.verifyReachability(DT) && SNCA.VerifyLevels(DT) &&
-         SNCA.verifyParentProperty(DT) && SNCA.verifySiblingProperty(DT);
+         SNCA.verifyNCD(DT) && SNCA.verifyParentProperty(DT) &&
+         SNCA.verifySiblingProperty(DT);
 }
 
 }  // namespace DomTreeBuilder
