@@ -6571,12 +6571,12 @@ TEST_F(FormatTest, PullInlineOnlyFunctionDefinitionsIntoSingleLine) {
                MergeInlineOnly);
 }
 
-TEST_F(FormatTest, SplitEmptyFunctionBody) {
+TEST_F(FormatTest, SplitEmptyFunction) {
   FormatStyle Style = getLLVMStyle();
   Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
   Style.BreakBeforeBraces = FormatStyle::BS_Custom;
   Style.BraceWrapping.AfterFunction = true;
-  Style.BraceWrapping.SplitEmptyFunctionBody = false;
+  Style.BraceWrapping.SplitEmptyFunction = false;
   Style.ColumnLimit = 40;
 
   verifyFormat("int f()\n"
@@ -6636,6 +6636,178 @@ TEST_F(FormatTest, SplitEmptyFunctionBody) {
                "{\n"
                "  return 0;\n"
                "}",
+               Style);
+}
+
+TEST_F(FormatTest, SplitEmptyClass) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterClass = true;
+  Style.BraceWrapping.SplitEmptyRecord = false;
+
+  verifyFormat("class Foo\n"
+               "{};",
+               Style);
+  verifyFormat("/* something */ class Foo\n"
+               "{};",
+               Style);
+  verifyFormat("template <typename X> class Foo\n"
+               "{};",
+               Style);
+  verifyFormat("class Foo\n"
+               "{\n"
+               "  Foo();\n"
+               "};",
+               Style);
+  verifyFormat("typedef class Foo\n"
+               "{\n"
+               "} Foo_t;",
+               Style);
+}
+
+TEST_F(FormatTest, SplitEmptyStruct) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterStruct = true;
+  Style.BraceWrapping.SplitEmptyRecord = false;
+
+  verifyFormat("struct Foo\n"
+               "{};",
+               Style);
+  verifyFormat("/* something */ struct Foo\n"
+               "{};",
+               Style);
+  verifyFormat("template <typename X> struct Foo\n"
+               "{};",
+               Style);
+  verifyFormat("struct Foo\n"
+               "{\n"
+               "  Foo();\n"
+               "};",
+               Style);
+  verifyFormat("typedef struct Foo\n"
+               "{\n"
+               "} Foo_t;",
+               Style);
+  //typedef struct Bar {} Bar_t;
+}
+
+TEST_F(FormatTest, SplitEmptyUnion) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterUnion = true;
+  Style.BraceWrapping.SplitEmptyRecord = false;
+
+  verifyFormat("union Foo\n"
+               "{};",
+               Style);
+  verifyFormat("/* something */ union Foo\n"
+               "{};",
+               Style);
+  verifyFormat("union Foo\n"
+               "{\n"
+               "  A,\n"
+               "};",
+               Style);
+  verifyFormat("typedef union Foo\n"
+               "{\n"
+               "} Foo_t;",
+               Style);
+}
+
+TEST_F(FormatTest, SplitEmptyNamespace) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterNamespace = true;
+  Style.BraceWrapping.SplitEmptyNamespace = false;
+
+  verifyFormat("namespace Foo\n"
+               "{};",
+               Style);
+  verifyFormat("/* something */ namespace Foo\n"
+               "{};",
+               Style);
+  verifyFormat("inline namespace Foo\n"
+               "{};",
+               Style);
+  verifyFormat("namespace Foo\n"
+               "{\n"
+               "void Bar();\n"
+               "};",
+               Style);
+}
+
+TEST_F(FormatTest, NeverMergeShortRecords) {
+  FormatStyle Style = getLLVMStyle();
+
+  verifyFormat("class Foo {\n"
+               "  Foo();\n"
+               "};",
+               Style);
+  verifyFormat("typedef class Foo {\n"
+               "  Foo();\n"
+               "} Foo_t;",
+               Style);
+  verifyFormat("struct Foo {\n"
+               "  Foo();\n"
+               "};",
+               Style);
+  verifyFormat("typedef struct Foo {\n"
+               "  Foo();\n"
+               "} Foo_t;",
+               Style);
+  verifyFormat("union Foo {\n"
+               "  A,\n"
+               "};",
+               Style);
+  verifyFormat("typedef union Foo {\n"
+               "  A,\n"
+               "} Foo_t;",
+               Style);
+  verifyFormat("namespace Foo {\n"
+               "void Bar();\n"
+               "};",
+               Style);
+
+  Style.BreakBeforeBraces = FormatStyle::BS_Custom;
+  Style.BraceWrapping.AfterClass = true;
+  Style.BraceWrapping.AfterStruct = true;
+  Style.BraceWrapping.AfterUnion = true;
+  Style.BraceWrapping.AfterNamespace = true;
+  verifyFormat("class Foo\n"
+               "{\n"
+               "  Foo();\n"
+               "};",
+               Style);
+  verifyFormat("typedef class Foo\n"
+               "{\n"
+               "  Foo();\n"
+               "} Foo_t;",
+               Style);
+  verifyFormat("struct Foo\n"
+               "{\n"
+               "  Foo();\n"
+               "};",
+               Style);
+  verifyFormat("typedef struct Foo\n"
+               "{\n"
+               "  Foo();\n"
+               "} Foo_t;",
+               Style);
+  verifyFormat("union Foo\n"
+               "{\n"
+               "  A,\n"
+               "};",
+               Style);
+  verifyFormat("typedef union Foo\n"
+               "{\n"
+               "  A,\n"
+               "} Foo_t;",
+               Style);
+  verifyFormat("namespace Foo\n"
+               "{\n"
+               "void Bar();\n"
+               "};",
                Style);
 }
 
@@ -9371,7 +9543,9 @@ TEST_F(FormatTest, ParsesConfigurationBools) {
   CHECK_PARSE_NESTED_BOOL(BraceWrapping, BeforeCatch);
   CHECK_PARSE_NESTED_BOOL(BraceWrapping, BeforeElse);
   CHECK_PARSE_NESTED_BOOL(BraceWrapping, IndentBraces);
-  CHECK_PARSE_NESTED_BOOL(BraceWrapping, SplitEmptyFunctionBody);
+  CHECK_PARSE_NESTED_BOOL(BraceWrapping, SplitEmptyFunction);
+  CHECK_PARSE_NESTED_BOOL(BraceWrapping, SplitEmptyRecord);
+  CHECK_PARSE_NESTED_BOOL(BraceWrapping, SplitEmptyNamespace);
 }
 
 #undef CHECK_PARSE_BOOL
