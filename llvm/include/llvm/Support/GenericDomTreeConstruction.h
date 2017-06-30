@@ -317,6 +317,42 @@ struct SemiNCAInfo {
 
     return true;
   }
+  // The below routines verify the correctness of the dominator tree relative to
+  // the CFG it's coming from.  A tree is a dominator tree iff it has two
+  // properties, called the parent property and the sibling property.  Tarjan
+  // and Lengauer prove (but don't explicitly name) the properties as part of
+  // the proofs in their 1972 paper, but the proofs are mostly part of proving
+  // things about semidominators and idoms, and some of them are simply asserted
+  // based on even earlier papers (see, e.g., lemma 2).  Some papers refer to
+  // these properties as "valid" and "co-valid".  See, e.g., "Dominators,
+  // directed bipolar orders, and independent spanning trees" by Loukas
+  // Georgiadis and Robert E. Tarjan, as well as "Dominator Tree Verification
+  // and Vertex-Disjoint Paths " by the same authors.
+
+  // A very simple and direct explanation of these properties can be found in
+  // "An Experimental Study of Dynamic Dominators", found at
+  // https://arxiv.org/abs/1604.02711
+
+  // The easiest way to think of the parent property is that it's a requirement
+  // of being a dominator.  Let's just take immediate dominators.  For PARENT to
+  // be an immediate dominator of CHILD, all paths must go through PARAENT
+  // before they hit CHILD.  This implies that if you were to cut PARENT out of
+  // the CFG, there should be no paths to CHILD that are reachable.  If there
+  // were, then you now have a path from PARENT to CHILD that goes around PARENT
+  // and still reaches the target node, which by definition, means PARENT can't
+  // be a dominator (let alone an immediate one).
+
+  // The sibling property is similar.  It says that for each pair of sibling
+  // nodes in the dominator tree (LEFT and RIGHT) , they must not dominate each
+  // other.  If sibling LEFT dominated sibling RIGHT, it means there are no
+  // paths in the CFG from sibling LEFT to sibling RIGHT that do not go through
+  // LEFT, and thus, LEFT is really an ancestor (in the dominator tree) of
+  // RIGHT, not a sibling.
+
+  // It is possible to verify the parent and sibling properties in
+  // linear time, but the algorithms are complex. Instead, we do it in a
+  // straightforward N^2 and N^3 way below, using direct path reachability.
+
 
   // Checks if the tree has the parent property: if for all edges from V to W in
   // the input graph, such that V is reachable, the parent of W in the tree is
