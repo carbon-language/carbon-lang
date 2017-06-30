@@ -126,10 +126,17 @@ void LLVMContext::setDiagnosticHandler(DiagnosticHandlerTy DiagnosticHandler,
 }
 
 void LLVMContext::setDiagnosticHotnessRequested(bool Requested) {
-  pImpl->DiagnosticHotnessRequested = Requested;
+  pImpl->DiagnosticsHotnessRequested = Requested;
 }
 bool LLVMContext::getDiagnosticHotnessRequested() const {
-  return pImpl->DiagnosticHotnessRequested;
+  return pImpl->DiagnosticsHotnessRequested;
+}
+
+void LLVMContext::setDiagnosticsHotnessRequested(bool Requested) {
+  pImpl->DiagnosticsHotnessRequested = Requested;
+}
+bool LLVMContext::getDiagnosticsHotnessRequested() const {
+  return pImpl->DiagnosticsHotnessRequested;
 }
 
 yaml::Output *LLVMContext::getDiagnosticsOutputFile() {

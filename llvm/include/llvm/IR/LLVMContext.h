@@ -187,11 +187,20 @@ public:
   void *getDiagnosticContext() const;
 
   /// \brief Return if a code hotness metric should be included in optimization
-  /// diagnostics.
+  /// diagnostics. This method is deprecated; use getDiagnosticsHotnessRequested
+  /// instead.
   bool getDiagnosticHotnessRequested() const;
   /// \brief Set if a code hotness metric should be included in optimization
-  /// diagnostics.
+  /// diagnostics. This method is deprecated; use setDiagnosticsHotnessRequested
+  /// instead.
   void setDiagnosticHotnessRequested(bool Requested);
+
+  /// \brief Return if a code hotness metric should be included in optimization
+  /// diagnostics.
+  bool getDiagnosticsHotnessRequested() const;
+  /// \brief Set if a code hotness metric should be included in optimization
+  /// diagnostics.
+  void setDiagnosticsHotnessRequested(bool Requested);
 
   /// \brief Return the YAML file used by the backend to save optimization
   /// diagnostics.  If null, diagnostics are not saved in a file but only
