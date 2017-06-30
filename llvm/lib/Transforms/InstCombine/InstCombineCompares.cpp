@@ -1448,12 +1448,13 @@ Instruction *InstCombiner::foldICmpWithConstant(ICmpInst &Cmp) {
     // of a test and branch. So we avoid canonicalizing in such situations
     // because test and branch instruction has better branch displacement
     // than compare and branch instruction.
-    if (!(IsSignBit && hasBranchUse(Cmp)) && !Cmp.isEquality()) {
-      if (auto *AI = Intersection.getSingleElement())
-        return new ICmpInst(ICmpInst::ICMP_EQ, X, Builder->getInt(*AI));
-      if (auto *AD = Difference.getSingleElement())
-        return new ICmpInst(ICmpInst::ICMP_NE, X, Builder->getInt(*AD));
-    }
+    if (Cmp.isEquality() || (IsSignBit && hasBranchUse(Cmp)))
+      return nullptr;
+
+    if (auto *AI = Intersection.getSingleElement())
+      return new ICmpInst(ICmpInst::ICMP_EQ, X, Builder->getInt(*AI));
+    if (auto *AD = Difference.getSingleElement())
+      return new ICmpInst(ICmpInst::ICMP_NE, X, Builder->getInt(*AD));
   }
 
   return nullptr;
