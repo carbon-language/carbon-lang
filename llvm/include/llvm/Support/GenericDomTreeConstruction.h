@@ -335,12 +335,12 @@ struct SemiNCAInfo {
 
   // The easiest way to think of the parent property is that it's a requirement
   // of being a dominator.  Let's just take immediate dominators.  For PARENT to
-  // be an immediate dominator of CHILD, all paths must go through PARAENT
-  // before they hit CHILD.  This implies that if you were to cut PARENT out of
-  // the CFG, there should be no paths to CHILD that are reachable.  If there
-  // were, then you now have a path from PARENT to CHILD that goes around PARENT
-  // and still reaches the target node, which by definition, means PARENT can't
-  // be a dominator (let alone an immediate one).
+  // be an immediate dominator of CHILD, all paths in the CFG must go through
+  // PARENT before they hit CHILD.  This implies that if you were to cut PARENT
+  // out of the CFG, there should be no paths to CHILD that are reachable.  If
+  // there are, then you now have a path from PARENT to CHILD that goes around
+  // PARENT and still reaches CHILD, which by definition, means PARENT can't be
+  // a dominator of CHILD (let alone an immediate one).
 
   // The sibling property is similar.  It says that for each pair of sibling
   // nodes in the dominator tree (LEFT and RIGHT) , they must not dominate each
