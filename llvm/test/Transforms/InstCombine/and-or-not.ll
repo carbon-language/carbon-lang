@@ -518,7 +518,7 @@ define i64 @PR32830(i64 %a, i64 %b, i64 %c) {
 }
 
 ; (~a | b) & (~b | a) --> ~(a ^ b)
-; TODO: this increases instrunction count if the pieces have additional users
+; TODO: this increases instruction count if the pieces have additional users
 define i32 @and_to_nxor_multiuse(float %fa, float %fb) {
 ; CHECK-LABEL: @and_to_nxor_multiuse(
 ; CHECK-NEXT:    [[A:%.*]] = fptosi float [[FA:%.*]] to i32
@@ -545,7 +545,7 @@ define i32 @and_to_nxor_multiuse(float %fa, float %fb) {
 }
 
 ; (a & b) | ~(a | b) --> ~(a ^ b)
-; TODO: this increases instrunction count if the pieces have additional users
+; TODO: this increases instruction count if the pieces have additional users
 define i32 @or_to_nxor_multiuse(i32 %a, i32 %b) {
 ; CHECK-LABEL: @or_to_nxor_multiuse(
 ; CHECK-NEXT:    [[AND:%.*]] = and i32 [[A:%.*]], [[B:%.*]]
