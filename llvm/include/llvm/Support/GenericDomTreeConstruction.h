@@ -318,6 +318,39 @@ struct SemiNCAInfo {
     return true;
   }
 
+  // Check if for every parent with a level L in the tree all of its children
+  // have level L + 1.
+  static bool VerifyLevels(const DomTreeT &DT) {
+    for (auto &NodeToTN : DT.DomTreeNodes) {
+      const TreeNodePtr TN = NodeToTN.second.get();
+      const NodePtr BB = TN->getBlock();
+      if (!BB) continue;
+
+      const TreeNodePtr IDom = TN->getIDom();
+      if (!IDom && TN->getLevel() != 0) {
+        errs() << "Node without an IDom ";
+        PrintBlockOrNullptr(errs(), BB);
+        errs() << " has a nonzero level " << TN->getLevel() << "!\n";
+        errs().flush();
+
+        return false;
+      }
+
+      if (IDom && TN->getLevel() != IDom->getLevel() + 1) {
+        errs() << "Node ";
+        PrintBlockOrNullptr(errs(), BB);
+        errs() << " has level " << TN->getLevel() << " while it's IDom ";
+        PrintBlockOrNullptr(errs(), IDom->getBlock());
+        errs() << " has level " << IDom->getLevel() << "!\n";
+        errs().flush();
+
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   // Checks if the tree has the parent property: if for all edges from V to W in
   // the input graph, such that V is reachable, the parent of W in the tree is
   // an ancestor of V in the tree.
@@ -405,9 +438,8 @@ bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT) {
                 "NodePtr should be a pointer type");
   SemiNCAInfo<typename std::remove_pointer<NodePtr>::type> SNCA;
 
-  return SNCA.verifyReachability(DT) && SNCA.verifyParentProperty(DT) &&
-         SNCA.verifySiblingProperty(DT);
-
+  return SNCA.verifyReachability(DT) && SNCA.VerifyLevels(DT) &&
+         SNCA.verifyParentProperty(DT) && SNCA.verifySiblingProperty(DT);
 }
 
 }  // namespace DomTreeBuilder
