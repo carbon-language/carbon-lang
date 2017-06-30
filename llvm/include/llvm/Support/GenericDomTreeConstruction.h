@@ -280,7 +280,6 @@ struct SemiNCAInfo {
   }
 
   void doFullDFSWalk(const DomTreeT &DT) {
-    NumToNode.push_back(nullptr);
     unsigned Num = 0;
     for (auto *Root : DT.Roots)
       if (!DT.isPostDominator())
@@ -310,77 +309,6 @@ struct SemiNCAInfo {
         errs() << "DomTree node ";
         PrintBlockOrNullptr(errs(), BB);
         errs() << " not found by DFS walk!\n";
-        errs().flush();
-
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  // Check if for every parent with a level L in the tree all of its children
-  // have level L + 1.
-  static bool VerifyLevels(const DomTreeT &DT) {
-    for (auto &NodeToTN : DT.DomTreeNodes) {
-      const TreeNodePtr TN = NodeToTN.second.get();
-      const NodePtr BB = TN->getBlock();
-      if (!BB) continue;
-
-      const TreeNodePtr IDom = TN->getIDom();
-      if (!IDom && TN->getLevel() != 0) {
-        errs() << "Node without an IDom ";
-        PrintBlockOrNullptr(errs(), BB);
-        errs() << " has a nonzero level " << TN->getLevel() << "!\n";
-        errs().flush();
-
-        return false;
-      }
-
-      if (IDom && TN->getLevel() != IDom->getLevel() + 1) {
-        errs() << "Node ";
-        PrintBlockOrNullptr(errs(), BB);
-        errs() << " has level " << TN->getLevel() << " while it's IDom ";
-        PrintBlockOrNullptr(errs(), IDom->getBlock());
-        errs() << " has level " << IDom->getLevel() << "!\n";
-        errs().flush();
-
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  // Checks if for every edge From -> To in the graph
-  //     NCD(From, To) == IDom(To) or To.
-  bool verifyNCD(const DomTreeT &DT) {
-    clear();
-    doFullDFSWalk(DT);
-
-    for (auto &BlockToInfo : NodeToInfo) {
-      auto &Info = BlockToInfo.second;
-
-      const NodePtr From = NumToNode[Info.Parent];
-      if (!From) continue;
-
-      const NodePtr To = BlockToInfo.first;
-      const TreeNodePtr ToTN = DT.getNode(To);
-      assert(ToTN);
-
-      const NodePtr NCD = DT.findNearestCommonDominator(From, To);
-      const TreeNodePtr NCDTN = NCD ? DT.getNode(NCD) : nullptr;
-      const TreeNodePtr ToIDom = ToTN->getIDom();
-      if (NCDTN != ToTN && NCDTN != ToIDom) {
-        errs() << "NearestCommonDominator verification failed:\n\tNCD(From:";
-        PrintBlockOrNullptr(errs(), From);
-        errs() << ", To:";
-        PrintBlockOrNullptr(errs(), To);
-        errs() << ") = ";
-        PrintBlockOrNullptr(errs(), NCD);
-        errs() << ",\t (should be To or IDom[To]: ";
-        PrintBlockOrNullptr(errs(), ToIDom ? ToIDom->getBlock() : nullptr);
-        errs() << ")\n";
         errs().flush();
 
         return false;
@@ -477,9 +405,9 @@ bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT) {
                 "NodePtr should be a pointer type");
   SemiNCAInfo<typename std::remove_pointer<NodePtr>::type> SNCA;
 
-  return SNCA.verifyReachability(DT) && SNCA.VerifyLevels(DT) &&
-         SNCA.verifyNCD(DT) && SNCA.verifyParentProperty(DT) &&
+  return SNCA.verifyReachability(DT) && SNCA.verifyParentProperty(DT) &&
          SNCA.verifySiblingProperty(DT);
+
 }
 
 }  // namespace DomTreeBuilder

@@ -20,6 +20,14 @@ namespace llvm {
 template <class NodeTy>
 void IDFCalculator<NodeTy>::calculate(
     SmallVectorImpl<BasicBlock *> &PHIBlocks) {
+  // If we haven't computed dominator tree levels, do so now.
+  if (DomLevels.empty()) {
+    for (auto DFI = df_begin(DT.getRootNode()), DFE = df_end(DT.getRootNode());
+         DFI != DFE; ++DFI) {
+      DomLevels[*DFI] = DFI.getPathLength() - 1;
+    }
+  }
+
   // Use a priority queue keyed on dominator tree level so that inserted nodes
   // are handled from the bottom of the dominator tree upwards.
   typedef std::pair<DomTreeNode *, unsigned> DomTreeNodePair;
@@ -29,7 +37,7 @@ void IDFCalculator<NodeTy>::calculate(
 
   for (BasicBlock *BB : *DefBlocks) {
     if (DomTreeNode *Node = DT.getNode(BB))
-      PQ.push({Node, Node->getLevel()});
+      PQ.push(std::make_pair(Node, DomLevels.lookup(Node)));
   }
 
   SmallVector<DomTreeNode *, 32> Worklist;
@@ -64,7 +72,7 @@ void IDFCalculator<NodeTy>::calculate(
         if (SuccNode->getIDom() == Node)
           continue;
 
-        const unsigned SuccLevel = SuccNode->getLevel();
+        unsigned SuccLevel = DomLevels.lookup(SuccNode);
         if (SuccLevel > RootLevel)
           continue;
 
