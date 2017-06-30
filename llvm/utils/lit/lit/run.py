@@ -1,5 +1,4 @@
 import os
-import shutil
 import sys
 import threading
 import time
@@ -74,25 +73,6 @@ class Run(object):
         # Don't do anything if we aren't going to run any tests.
         if not self.tests or jobs == 0:
             return
-
-        # Create fresh output directories for each test we're going to run.
-        # This guarantees that test runs will not remnants of previous test
-        # runs' output.
-        clean_paths = set()
-        for test in self.tests:
-            clean_paths.add(os.path.normpath(test.getTempFileDir()))
-        clean_paths = list(clean_paths)
-        # Sort by number of path components, to ensure that parent directories
-        # get deleted and re-created before child directories.
-        clean_paths.sort(key=lambda x: len(x.split(os.sep)))
-        for base in clean_paths:
-            if os.path.exists(base):
-                if not os.path.islink(base) and os.path.isdir(base):
-                    shutil.rmtree(base, True)
-                else:
-                    os.unlink(os.path)
-            if not os.path.exists(base):
-                lit.util.mkdir_p(base)
 
         # Set up semaphores to limit parallelism of certain classes of tests.
         # For example, some ASan tests require lots of virtual memory and run
