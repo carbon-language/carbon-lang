@@ -238,6 +238,7 @@ PE32-NEXT:     IMAGE_FILE_EXECUTABLE_IMAGE (0x2)
 PE32-NEXT:   ]
 PE32-NEXT: }
 PE32-NEXT: ImageOptionalHeader {
+PE32-NEXT:   Magic: 0x10B
 PE32-NEXT:   MajorLinkerVersion: 11
 PE32-NEXT:   MinorLinkerVersion: 0
 PE32-NEXT:   SizeOfCode: 512

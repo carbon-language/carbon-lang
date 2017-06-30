@@ -678,6 +678,7 @@ void COFFDumper::printDOSHeader(const dos_header *DH) {
 template <class PEHeader>
 void COFFDumper::printPEHeader(const PEHeader *Hdr) {
   DictScope D(W, "ImageOptionalHeader");
+  W.printHex   ("Magic", Hdr->Magic);
   W.printNumber("MajorLinkerVersion", Hdr->MajorLinkerVersion);
   W.printNumber("MinorLinkerVersion", Hdr->MinorLinkerVersion);
   W.printNumber("SizeOfCode", Hdr->SizeOfCode);
