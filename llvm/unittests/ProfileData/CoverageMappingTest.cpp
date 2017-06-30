@@ -232,15 +232,16 @@ struct CoverageMappingTest : ::testing::TestWithParam<std::pair<bool, bool>> {
   }
 
   Expected<std::unique_ptr<CoverageMapping>> readOutputFunctions() {
-    if (!UseMultipleReaders) {
-      CoverageMappingReaderMock CovReader(OutputFunctions);
-      return CoverageMapping::load(CovReader, *ProfileReader);
-    }
-
     std::vector<std::unique_ptr<CoverageMappingReader>> CoverageReaders;
-    for (const auto &OF : OutputFunctions) {
-      ArrayRef<OutputFunctionCoverageData> Funcs(OF);
-      CoverageReaders.push_back(make_unique<CoverageMappingReaderMock>(Funcs));
+    if (UseMultipleReaders) {
+      for (const auto &OF : OutputFunctions) {
+        ArrayRef<OutputFunctionCoverageData> Funcs(OF);
+        CoverageReaders.push_back(
+            make_unique<CoverageMappingReaderMock>(Funcs));
+      }
+    } else {
+      CoverageReaders.push_back(
+          make_unique<CoverageMappingReaderMock>(OutputFunctions));
     }
     return CoverageMapping::load(CoverageReaders, *ProfileReader);
   }
