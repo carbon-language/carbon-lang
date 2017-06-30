@@ -6004,7 +6004,10 @@ TEST_F(FormatTest, LayoutBraceInitializersInReturnStatement) {
 TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   verifyFormat("vector<int> x{1, 2, 3, 4};");
   verifyFormat("vector<int> x{\n"
-               "    1, 2, 3, 4,\n"
+               "    1,\n"
+               "    2,\n"
+               "    3,\n"
+               "    4,\n"
                "};");
   verifyFormat("vector<T> x{{}, {}, {}, {}};");
   verifyFormat("f({1, 2});");
@@ -6048,6 +6051,17 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                "  };\n"
                "};");
   verifyFormat("#define A {a, a},");
+
+  // Binpacking only if there is no trailing comma
+  verifyFormat("const Aaaaaa aaaaa = {aaaaaaaaaa, bbbbbbbbbb,\n"
+               "                      cccccccccc, dddddddddd};",
+			   getLLVMStyleWithColumns(50));
+  verifyFormat("const Aaaaaa aaaaa = {\n"
+               "    aaaaaaaaaaa,\n"
+               "    bbbbbbbbbbb,\n"
+               "    ccccccccccc,\n"
+               "    ddddddddddd,\n"
+               "};", getLLVMStyleWithColumns(50));
 
   // Cases where distinguising braced lists and blocks is hard.
   verifyFormat("vector<int> v{12} GUARDED_BY(mutex);");
@@ -6128,10 +6142,12 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                    "                           // Second element:\n"
                    "                           2};",
                    getLLVMStyleWithColumns(30)));
-  // A trailing comma should still lead to an enforced line break.
+  // A trailing comma should still lead to an enforced line break and no
+  // binpacking.
   EXPECT_EQ("vector<int> SomeVector = {\n"
             "    // aaa\n"
-            "    1, 2,\n"
+            "    1,\n"
+            "    2,\n"
             "};",
             format("vector<int> SomeVector = { // aaa\n"
                    "    1, 2, };"));
@@ -6297,7 +6313,7 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
       "     aaaaaaaaaaaa, a, aaaaaaaaaa, aaaaaaaaa, aaa}};");
 
   // No column layout should be used here.
-  verifyFormat("aaaaaaaaaaaaaaa = {aaaaaaaaaaaaaaaaaaaaaaaaaaa, 0, 0,\n"
+  verifyFormat("aaaaaaaaaaaaaaa = {aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa, 0, 0,\n"
                "                   bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb};");
 
   verifyNoCrash("a<,");
