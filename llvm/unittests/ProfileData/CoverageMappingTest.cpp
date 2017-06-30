@@ -240,8 +240,9 @@ struct CoverageMappingTest : ::testing::TestWithParam<std::pair<bool, bool>> {
             make_unique<CoverageMappingReaderMock>(Funcs));
       }
     } else {
+      ArrayRef<OutputFunctionCoverageData> Funcs(OutputFunctions);
       CoverageReaders.push_back(
-          make_unique<CoverageMappingReaderMock>(OutputFunctions));
+          make_unique<CoverageMappingReaderMock>(Funcs));
     }
     return CoverageMapping::load(CoverageReaders, *ProfileReader);
   }
