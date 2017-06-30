@@ -370,7 +370,7 @@ define i32 @xor_to_xor6(float %fa, float %fb) {
 ; CHECK-LABEL: @xor_to_xor6(
 ; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
 ; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[B]], [[A]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[A]], [[B]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
 ;
   %a = fptosi float %fa to i32
@@ -408,7 +408,7 @@ define i32 @xor_to_xor8(float %fa, float %fb) {
 ; CHECK-LABEL: @xor_to_xor8(
 ; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
 ; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[B]], [[A]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[A]], [[B]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
 ;
   %a = fptosi float %fa to i32
@@ -446,7 +446,7 @@ define i32 @xor_to_xor10(float %fa, float %fb) {
 ; CHECK-LABEL: @xor_to_xor10(
 ; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
 ; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[B]], [[A]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[A]], [[B]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
 ;
   %a = fptosi float %fa to i32
@@ -484,7 +484,7 @@ define i32 @xor_to_xor12(float %fa, float %fb) {
 ; CHECK-LABEL: @xor_to_xor12(
 ; CHECK-NEXT:    [[A:%.*]] = fptosi float %fa to i32
 ; CHECK-NEXT:    [[B:%.*]] = fptosi float %fb to i32
-; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[B]], [[A]]
+; CHECK-NEXT:    [[XOR:%.*]] = xor i32 [[A]], [[B]]
 ; CHECK-NEXT:    ret i32 [[XOR]]
 ;
   %a = fptosi float %fa to i32
