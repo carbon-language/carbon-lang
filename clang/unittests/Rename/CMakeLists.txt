@@ -5,7 +5,7 @@ set(LLVM_LINK_COMPONENTS
 # We'd like clang/unittests/Tooling/RewriterTestContext.h in the test.
 include_directories(${CLANG_SOURCE_DIR})
 
-add_extra_unittest(ClangRenameTests
+add_clang_unittest(ClangRenameTests
   RenameClassTest.cpp
   )
 
