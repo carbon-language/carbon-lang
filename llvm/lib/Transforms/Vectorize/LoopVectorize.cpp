@@ -123,7 +123,7 @@ static cl::opt<unsigned> TinyTripCountVectorThreshold(
              "are incurred."));
 
 static cl::opt<bool> MaximizeBandwidth(
-    "vectorizer-maximize-bandwidth", cl::init(false), cl::Hidden,
+    "vectorizer-maximize-bandwidth", cl::init(true), cl::Hidden,
     cl::desc("Maximize bandwidth when selecting vectorization factor which "
              "will be determined by the smallest type in loop."));
 
