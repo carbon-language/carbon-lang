@@ -92,11 +92,6 @@ ARMSubtarget &ARMSubtarget::initializeSubtargetDependencies(StringRef CPU,
   return *this;
 }
 
-/// EnableExecuteOnly - Enables the generation of execute-only code on supported
-/// targets
-static cl::opt<bool>
-EnableExecuteOnly("arm-execute-only");
-
 ARMFrameLowering *ARMSubtarget::initializeFrameLowering(StringRef CPU,
                                                         StringRef FS) {
   ARMSubtarget &STI = initializeSubtargetDependencies(CPU, FS);
@@ -139,9 +134,8 @@ ARMSubtarget::ARMSubtarget(const Triple &TT, const std::string &CPU,
                            const std::string &FS,
                            const ARMBaseTargetMachine &TM, bool IsLittle)
     : ARMGenSubtargetInfo(TT, CPU, FS), UseMulOps(UseFusedMulOps),
-      GenExecuteOnly(EnableExecuteOnly), CPUString(CPU), IsLittle(IsLittle),
-      TargetTriple(TT), Options(TM.Options), TM(TM),
-      FrameLowering(initializeFrameLowering(CPU, FS)),
+      CPUString(CPU), IsLittle(IsLittle), TargetTriple(TT), Options(TM.Options),
+      TM(TM), FrameLowering(initializeFrameLowering(CPU, FS)),
       // At this point initializeSubtargetDependencies has been called so
       // we can query directly.
       InstrInfo(isThumb1Only()
