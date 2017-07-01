@@ -144,6 +144,9 @@ ARMSubtarget::ARMSubtarget(const Triple &TT, const std::string &CPU,
                           ? (ARMBaseInstrInfo *)new ARMInstrInfo(*this)
                           : (ARMBaseInstrInfo *)new Thumb2InstrInfo(*this)),
       TLInfo(TM, *this) {
+  assert((isThumb() || hasARMOps()) &&
+         "Target must either be thumb or support ARM operations!");
+
 #ifndef LLVM_BUILD_GLOBAL_ISEL
   GISelAccessor *GISel = new GISelAccessor();
 #else

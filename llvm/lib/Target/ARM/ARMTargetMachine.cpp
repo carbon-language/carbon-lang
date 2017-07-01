@@ -202,28 +202,35 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, const Triple &TT,
                         CPU, FS, Options, getEffectiveRelocModel(TT, RM), CM,
                         OL),
       TargetABI(computeTargetABI(TT, CPU, Options)),
-      TLOF(createTLOF(getTargetTriple())),
-      Subtarget(TT, CPU, FS, *this, isLittle), isLittle(isLittle) {
+      TLOF(createTLOF(getTargetTriple())), isLittle(isLittle) {
 
   // Default to triple-appropriate float ABI
-  if (Options.FloatABIType == FloatABI::Default)
-    this->Options.FloatABIType =
-        Subtarget.isTargetHardFloat() ? FloatABI::Hard : FloatABI::Soft;
+  if (Options.FloatABIType == FloatABI::Default) {
+    if (TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
+        TargetTriple.getEnvironment() == Triple::MuslEABIHF ||
+        TargetTriple.getEnvironment() == Triple::EABIHF ||
+        TargetTriple.isOSWindows() ||
+        TargetABI == ARMBaseTargetMachine::ARM_ABI_AAPCS16)
+      this->Options.FloatABIType = FloatABI::Hard;
+    else
+      this->Options.FloatABIType = FloatABI::Soft;
+  }
 
   // Default to triple-appropriate EABI
   if (Options.EABIVersion == EABI::Default ||
       Options.EABIVersion == EABI::Unknown) {
     // musl is compatible with glibc with regard to EABI version
-    if (Subtarget.isTargetGNUAEABI() || Subtarget.isTargetMuslAEABI())
+    if ((TargetTriple.getEnvironment() == Triple::GNUEABI ||
+	 TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
+	 TargetTriple.getEnvironment() == Triple::MuslEABI ||
+	 TargetTriple.getEnvironment() == Triple::MuslEABIHF) &&
+	!(TargetTriple.isOSWindows() || TargetTriple.isOSDarwin()))
       this->Options.EABIVersion = EABI::GNU;
     else
       this->Options.EABIVersion = EABI::EABI5;
   }
 
   initAsmInfo();
-  if (!Subtarget.isThumb() && !Subtarget.hasARMOps())
-    report_fatal_error("CPU: '" + Subtarget.getCPUString() + "' does not "
-                       "support ARM mode execution!");
 }
 
 ARMBaseTargetMachine::~ARMBaseTargetMachine() = default;
