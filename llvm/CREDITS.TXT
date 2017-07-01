@@ -223,7 +223,7 @@ N: Anton Korobeynikov
 E: anton at korobeynikov dot info
 D: Mingw32 fixes, cross-compiling support, stdcall/fastcall calling conv.
 D: x86/linux PIC codegen, aliases, regparm/visibility attributes
-D: Switch lowering refactoring 
+D: Switch lowering refactoring
 
 N: Sumant Kowshik
 E: kowshik@uiuc.edu
