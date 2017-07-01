@@ -5443,7 +5443,7 @@ public:
     if (Triple.getOS() == llvm::Triple::Linux ||
         Triple.getOS() == llvm::Triple::UnknownOS)
       this->MCountName =
-          Opts.EABIVersion == "gnu" ? "\01__gnu_mcount_nc" : "\01mcount";
+          Opts.EABIVersion == llvm::EABI::GNU ? "\01__gnu_mcount_nc" : "\01mcount";
   }
 
   StringRef getABI() const override { return ABI; }
@@ -6283,7 +6283,7 @@ public:
     if (Triple.getOS() == llvm::Triple::Linux)
       this->MCountName = "\01_mcount";
     else if (Triple.getOS() == llvm::Triple::UnknownOS)
-      this->MCountName = Opts.EABIVersion == "gnu" ? "\01_mcount" : "mcount";
+      this->MCountName = Opts.EABIVersion == llvm::EABI::GNU ? "\01_mcount" : "mcount";
   }
 
   StringRef getABI() const override { return ABI; }
