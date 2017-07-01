@@ -968,6 +968,24 @@ S9 s9;
 // expected-error@second.h:* {{'NestedNamespaceSpecifier::S9' has different definitions in different modules; first difference is definition in module 'SecondModule' found field 'x' with type 'P9::I' (aka 'int')}}
 // expected-note@first.h:* {{but in 'FirstModule' found field 'x' with type 'O9::I' (aka 'int')}}
 #endif
+
+namespace N10 {
+#if defined(FIRST)
+inline namespace A { struct X {}; }
+struct S10 {
+  A::X x;
+};
+#elif defined(SECOND)
+inline namespace B { struct X {}; }
+struct S10 {
+  B::X x;
+};
+#else
+S10 s10;
+// expected-error@second.h:* {{'NestedNamespaceSpecifier::N10::S10::x' from module 'SecondModule' is not present in definition of 'NestedNamespaceSpecifier::N10::S10' in module 'FirstModule'}}
+// expected-note@first.h:* {{declaration of 'x' does not match}}
+#endif
+}
 }
 
 namespace TemplateSpecializationType {
