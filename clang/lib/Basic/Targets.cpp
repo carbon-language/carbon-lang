@@ -2706,7 +2706,7 @@ class X86TargetInfo : public TargetInfo {
     CK_C3_2,
 
     /// This enumerator is a bit odd, as GCC no longer accepts -march=yonah.
-    /// Clang however has some logic to suport this.
+    /// Clang however has some logic to support this.
     // FIXME: Warn, deprecate, and potentially remove this.
     CK_Yonah,
     //@}
