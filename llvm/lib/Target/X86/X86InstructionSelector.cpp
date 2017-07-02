@@ -64,6 +64,8 @@ private:
                          MachineFunction &MF) const;
   bool selectFrameIndexOrGep(MachineInstr &I, MachineRegisterInfo &MRI,
                              MachineFunction &MF) const;
+  bool selectGlobalValue(MachineInstr &I, MachineRegisterInfo &MRI,
+                         MachineFunction &MF) const;
   bool selectConstant(MachineInstr &I, MachineRegisterInfo &MRI,
                       MachineFunction &MF) const;
   bool selectTrunc(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -264,6 +266,8 @@ bool X86InstructionSelector::select(MachineInstr &I) const {
     return true;
   if (selectFrameIndexOrGep(I, MRI, MF))
     return true;
+  if (selectGlobalValue(I, MRI, MF))
+    return true;
   if (selectConstant(I, MRI, MF))
     return true;
   if (selectTrunc(I, MRI, MF))
@@ -427,6 +431,15 @@ bool X86InstructionSelector::selectLoadStoreOp(MachineInstr &I,
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
 }
 
+static unsigned getLeaOP(LLT Ty, const X86Subtarget &STI) {
+  if (Ty == LLT::pointer(0, 64))
+    return X86::LEA64r;
+  else if (Ty == LLT::pointer(0, 32))
+    return STI.isTarget64BitILP32() ? X86::LEA64_32r : X86::LEA32r;
+  else
+    llvm_unreachable("Can't get LEA opcode. Unsupported type.");
+}
+
 bool X86InstructionSelector::selectFrameIndexOrGep(MachineInstr &I,
                                                    MachineRegisterInfo &MRI,
                                                    MachineFunction &MF) const {
@@ -439,14 +452,7 @@ bool X86InstructionSelector::selectFrameIndexOrGep(MachineInstr &I,
   LLT Ty = MRI.getType(DefReg);
 
   // Use LEA to calculate frame index and GEP
-  unsigned NewOpc;
-  if (Ty == LLT::pointer(0, 64))
-    NewOpc = X86::LEA64r;
-  else if (Ty == LLT::pointer(0, 32))
-    NewOpc = STI.isTarget64BitILP32() ? X86::LEA64_32r : X86::LEA32r;
-  else
-    llvm_unreachable("Can't select G_FRAME_INDEX/G_GEP, unsupported type.");
-
+  unsigned NewOpc = getLeaOP(Ty, STI);
   I.setDesc(TII.get(NewOpc));
   MachineInstrBuilder MIB(MF, I);
 
@@ -458,6 +464,54 @@ bool X86InstructionSelector::selectFrameIndexOrGep(MachineInstr &I,
     InxOp.ChangeToImmediate(1); // set Scale
     MIB.addImm(0).addReg(0);
   }
+
+  return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+}
+
+bool X86InstructionSelector::selectGlobalValue(MachineInstr &I,
+                                               MachineRegisterInfo &MRI,
+                                               MachineFunction &MF) const {
+  unsigned Opc = I.getOpcode();
+
+  if (Opc != TargetOpcode::G_GLOBAL_VALUE)
+    return false;
+
+  auto GV = I.getOperand(1).getGlobal();
+  if (GV->isThreadLocal()) {
+    return false; // TODO: we don't support TLS yet.
+  }
+
+  // Can't handle alternate code models yet.
+  if (TM.getCodeModel() != CodeModel::Small)
+    return 0;
+
+  X86AddressMode AM;
+  AM.GV = GV;
+  AM.GVOpFlags = STI.classifyGlobalReference(GV);
+
+  // TODO: The ABI requires an extra load. not supported yet.
+  if (isGlobalStubReference(AM.GVOpFlags))
+    return false;
+
+  // TODO: This reference is relative to the pic base. not supported yet.
+  if (isGlobalRelativeToPICBase(AM.GVOpFlags))
+    return false;
+
+  if (STI.isPICStyleRIPRel()) {
+    // Use rip-relative addressing.
+    assert(AM.Base.Reg == 0 && AM.IndexReg == 0);
+    AM.Base.Reg = X86::RIP;
+  }
+
+  const unsigned DefReg = I.getOperand(0).getReg();
+  LLT Ty = MRI.getType(DefReg);
+  unsigned NewOpc = getLeaOP(Ty, STI);
+
+  I.setDesc(TII.get(NewOpc));
+  MachineInstrBuilder MIB(MF, I);
+
+  I.RemoveOperand(1);
+  addFullAddress(MIB, AM);
 
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
 }
