@@ -149,26 +149,12 @@ define <32 x i16> @testv32i16(<32 x i16> %in) nounwind {
 ;
 ; AVX512VPOPCNTDQ-LABEL: testv32i16:
 ; AVX512VPOPCNTDQ:       # BB#0:
-; AVX512VPOPCNTDQ-NEXT:    vmovdqa {{.*#+}} ymm2 = [15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15]
-; AVX512VPOPCNTDQ-NEXT:    vpand %ymm2, %ymm0, %ymm3
-; AVX512VPOPCNTDQ-NEXT:    vmovdqa {{.*#+}} ymm4 = [0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4,0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4]
-; AVX512VPOPCNTDQ-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; AVX512VPOPCNTDQ-NEXT:    vpsrlw $4, %ymm0, %ymm0
-; AVX512VPOPCNTDQ-NEXT:    vpand %ymm2, %ymm0, %ymm0
-; AVX512VPOPCNTDQ-NEXT:    vpshufb %ymm0, %ymm4, %ymm0
-; AVX512VPOPCNTDQ-NEXT:    vpaddb %ymm3, %ymm0, %ymm0
-; AVX512VPOPCNTDQ-NEXT:    vpsllw $8, %ymm0, %ymm3
-; AVX512VPOPCNTDQ-NEXT:    vpaddb %ymm0, %ymm3, %ymm0
-; AVX512VPOPCNTDQ-NEXT:    vpsrlw $8, %ymm0, %ymm0
-; AVX512VPOPCNTDQ-NEXT:    vpand %ymm2, %ymm1, %ymm3
-; AVX512VPOPCNTDQ-NEXT:    vpshufb %ymm3, %ymm4, %ymm3
-; AVX512VPOPCNTDQ-NEXT:    vpsrlw $4, %ymm1, %ymm1
-; AVX512VPOPCNTDQ-NEXT:    vpand %ymm2, %ymm1, %ymm1
-; AVX512VPOPCNTDQ-NEXT:    vpshufb %ymm1, %ymm4, %ymm1
-; AVX512VPOPCNTDQ-NEXT:    vpaddb %ymm3, %ymm1, %ymm1
-; AVX512VPOPCNTDQ-NEXT:    vpsllw $8, %ymm1, %ymm2
-; AVX512VPOPCNTDQ-NEXT:    vpaddb %ymm1, %ymm2, %ymm1
-; AVX512VPOPCNTDQ-NEXT:    vpsrlw $8, %ymm1, %ymm1
+; AVX512VPOPCNTDQ-NEXT:    vpmovzxwd {{.*#+}} zmm0 = ymm0[0],zero,ymm0[1],zero,ymm0[2],zero,ymm0[3],zero,ymm0[4],zero,ymm0[5],zero,ymm0[6],zero,ymm0[7],zero,ymm0[8],zero,ymm0[9],zero,ymm0[10],zero,ymm0[11],zero,ymm0[12],zero,ymm0[13],zero,ymm0[14],zero,ymm0[15],zero
+; AVX512VPOPCNTDQ-NEXT:    vpopcntd %zmm0, %zmm0
+; AVX512VPOPCNTDQ-NEXT:    vpmovdw %zmm0, %ymm0
+; AVX512VPOPCNTDQ-NEXT:    vpmovzxwd {{.*#+}} zmm1 = ymm1[0],zero,ymm1[1],zero,ymm1[2],zero,ymm1[3],zero,ymm1[4],zero,ymm1[5],zero,ymm1[6],zero,ymm1[7],zero,ymm1[8],zero,ymm1[9],zero,ymm1[10],zero,ymm1[11],zero,ymm1[12],zero,ymm1[13],zero,ymm1[14],zero,ymm1[15],zero
+; AVX512VPOPCNTDQ-NEXT:    vpopcntd %zmm1, %zmm1
+; AVX512VPOPCNTDQ-NEXT:    vpmovdw %zmm1, %ymm1
 ; AVX512VPOPCNTDQ-NEXT:    retq
   %out = call <32 x i16> @llvm.ctpop.v32i16(<32 x i16> %in)
   ret <32 x i16> %out
