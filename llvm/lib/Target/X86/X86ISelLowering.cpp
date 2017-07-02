@@ -27156,6 +27156,26 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
     }
   }
 
+  // Handle PSHUFD/VPERMILPI vXi32/vXf32 repeated patterns.
+  // AVX introduced the VPERMILPD/VPERMILPS float permutes, before then we
+  // had to use 2-input SHUFPD/SHUFPS shuffles (not handled here).
+  if ((MaskScalarSizeInBits == 64 || MaskScalarSizeInBits == 32) &&
+      !ContainsZeros && (AllowIntDomain || Subtarget.hasAVX())) {
+    SmallVector<int, 4> RepeatedMask;
+    if (is128BitLaneRepeatedShuffleMask(MaskEltVT, Mask, RepeatedMask)) {
+      // Narrow the repeated mask to create 32-bit element permutes.
+      SmallVector<int, 4> WordMask = RepeatedMask;
+      if (MaskScalarSizeInBits == 64)
+        scaleShuffleMask(2, RepeatedMask, WordMask);
+
+      Shuffle = (AllowIntDomain ? X86ISD::PSHUFD : X86ISD::VPERMILPI);
+      ShuffleVT = (AllowIntDomain ? MVT::i32 : MVT::f32);
+      ShuffleVT = MVT::getVectorVT(ShuffleVT, InputSizeInBits / 32);
+      PermuteImm = getV4X86ShuffleImm(WordMask);
+      return true;
+    }
+  }
+
   // Handle PSHUFLW/PSHUFHW vXi16 repeated patterns.
   if (!ContainsZeros && AllowIntDomain && MaskScalarSizeInBits == 16) {
     SmallVector<int, 4> RepeatedMask;
@@ -27201,38 +27221,7 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
     }
   }
 
-  // Ensure we don't contain any zero elements.
-  if (ContainsZeros)
-    return false;
-
-  assert(llvm::all_of(Mask, [&](int M) {
-                        return SM_SentinelUndef <= M && M < (int)NumMaskElts;
-                      }) && "Expected unary shuffle");
-
-  // We only support permutation of 32/64 bit elements after this.
-  if (MaskScalarSizeInBits != 32 && MaskScalarSizeInBits != 64)
-    return false;
-
-  // AVX introduced the VPERMILPD/VPERMILPS float permutes, before then we
-  // had to use 2-input SHUFPD/SHUFPS shuffles (not handled here).
-  if ((AllowFloatDomain && !AllowIntDomain) && !Subtarget.hasAVX())
-    return false;
-
-  // We need a repeating shuffle mask for VPERMILPS/PSHUFD.
-  SmallVector<int, 4> RepeatedMask;
-  if (!is128BitLaneRepeatedShuffleMask(MaskEltVT, Mask, RepeatedMask))
-    return false;
-
-  // Narrow the repeated mask for 32-bit element permutes.
-  SmallVector<int, 4> WordMask = RepeatedMask;
-  if (MaskScalarSizeInBits == 64)
-    scaleShuffleMask(2, RepeatedMask, WordMask);
-
-  Shuffle = (AllowFloatDomain ? X86ISD::VPERMILPI : X86ISD::PSHUFD);
-  ShuffleVT = (AllowFloatDomain ? MVT::f32 : MVT::i32);
-  ShuffleVT = MVT::getVectorVT(ShuffleVT, InputSizeInBits / 32);
-  PermuteImm = getV4X86ShuffleImm(WordMask);
-  return true;
+  return false;
 }
 
 // Attempt to match a combined unary shuffle mask against supported binary
