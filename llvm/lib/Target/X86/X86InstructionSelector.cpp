@@ -75,6 +75,8 @@ private:
   bool selectUadde(MachineInstr &I, MachineRegisterInfo &MRI,
                    MachineFunction &MF) const;
   bool selectCopy(MachineInstr &I, MachineRegisterInfo &MRI) const;
+  bool selectUnmergeValues(MachineInstr &I, MachineRegisterInfo &MRI,
+                           MachineFunction &MF) const;
   bool selectMergeValues(MachineInstr &I, MachineRegisterInfo &MRI,
                          MachineFunction &MF) const;
   bool selectInsert(MachineInstr &I, MachineRegisterInfo &MRI,
@@ -271,6 +273,8 @@ bool X86InstructionSelector::select(MachineInstr &I) const {
   if (selectCmp(I, MRI, MF))
     return true;
   if (selectUadde(I, MRI, MF))
+    return true;
+  if (selectUnmergeValues(I, MRI, MF))
     return true;
   if (selectMergeValues(I, MRI, MF))
     return true;
@@ -916,6 +920,33 @@ bool X86InstructionSelector::selectInsert(MachineInstr &I,
   I.getOperand(3).setImm(Index);
 
   return constrainSelectedInstRegOperands(I, TII, TRI, RBI);
+}
+
+bool X86InstructionSelector::selectUnmergeValues(MachineInstr &I,
+                                                 MachineRegisterInfo &MRI,
+                                                 MachineFunction &MF) const {
+  if (I.getOpcode() != TargetOpcode::G_UNMERGE_VALUES)
+    return false;
+
+  // Split to extracts.
+  unsigned NumDefs = I.getNumOperands() - 1;
+  unsigned SrcReg = I.getOperand(NumDefs).getReg();
+  unsigned DefSize = MRI.getType(I.getOperand(0).getReg()).getSizeInBits();
+
+  for (unsigned Idx = 0; Idx < NumDefs; ++Idx) {
+
+    MachineInstr &ExtrInst =
+        *BuildMI(*I.getParent(), I, I.getDebugLoc(),
+                 TII.get(TargetOpcode::G_EXTRACT), I.getOperand(Idx).getReg())
+             .addReg(SrcReg)
+             .addImm(Idx * DefSize);
+
+    if (!select(ExtrInst))
+      return false;
+  }
+
+  I.eraseFromParent();
+  return true;
 }
 
 bool X86InstructionSelector::selectMergeValues(MachineInstr &I,
