@@ -3447,8 +3447,8 @@ Instruction *InstCombiner::foldICmpEquality(ICmpInst &I) {
   // TODO: Move this to a function similar to foldICmpIntrinsicWithConstant()
   // and handle more intrinsics.
   if ((match(Op0, m_BSwap(m_Value(A))) && match(Op1, m_BSwap(m_Value(B)))) ||
-      (match(Op0, m_Intrinsic<Intrinsic::bitreverse>(m_Value(A))) &&
-       match(Op1, m_Intrinsic<Intrinsic::bitreverse>(m_Value(B)))))
+      (match(Op0, m_BitReverse(m_Value(A))) &&
+       match(Op1, m_BitReverse(m_Value(B)))))
     return new ICmpInst(Pred, A, B);
 
   return nullptr;
