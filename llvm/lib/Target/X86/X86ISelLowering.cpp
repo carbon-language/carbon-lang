@@ -27120,29 +27120,44 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
     ContainsZeros |= (M == SM_SentinelZero);
   }
 
-  // Attempt to match against byte/bit shifts.
-  // FIXME: Add 512-bit support.
-  if (AllowIntDomain && ((MaskVT.is128BitVector() && Subtarget.hasSSE2()) ||
-                         (MaskVT.is256BitVector() && Subtarget.hasAVX2()))) {
-    int ShiftAmt = matchVectorShuffleAsShift(ShuffleVT, Shuffle,
-                                             MaskScalarSizeInBits, Mask,
-                                             0, Zeroable, Subtarget);
-    if (0 < ShiftAmt) {
-      PermuteImm = (unsigned)ShiftAmt;
+  // Handle VPERMI/VPERMILPD vXi64/vXi64 patterns.
+  if (!ContainsZeros && MaskScalarSizeInBits == 64) {
+    // Check for lane crossing permutes.
+    if (is128BitLaneCrossingShuffleMask(MaskEltVT, Mask)) {
+      // PERMPD/PERMQ permutes within a 256-bit vector (AVX2+).
+      if (Subtarget.hasAVX2() && MaskVT.is256BitVector()) {
+        Shuffle = X86ISD::VPERMI;
+        ShuffleVT = (AllowFloatDomain ? MVT::v4f64 : MVT::v4i64);
+        PermuteImm = getV4X86ShuffleImm(Mask);
+        return true;
+      }
+      if (Subtarget.hasAVX512() && MaskVT.is512BitVector()) {
+        SmallVector<int, 4> RepeatedMask;
+        if (is256BitLaneRepeatedShuffleMask(MVT::v8f64, Mask, RepeatedMask)) {
+          Shuffle = X86ISD::VPERMI;
+          ShuffleVT = (AllowFloatDomain ? MVT::v8f64 : MVT::v8i64);
+          PermuteImm = getV4X86ShuffleImm(RepeatedMask);
+          return true;
+        }
+      }
+    } else if (AllowFloatDomain && Subtarget.hasAVX()) {
+      // VPERMILPD can permute with a non-repeating shuffle.
+      Shuffle = X86ISD::VPERMILPI;
+      ShuffleVT = MVT::getVectorVT(MVT::f64, Mask.size());
+      PermuteImm = 0;
+      for (int i = 0, e = Mask.size(); i != e; ++i) {
+        int M = Mask[i];
+        if (M == SM_SentinelUndef)
+          continue;
+        assert(((M / 2) == (i / 2)) && "Out of range shuffle mask index");
+        PermuteImm |= (M & 1) << i;
+      }
       return true;
     }
   }
 
-  // Ensure we don't contain any zero elements.
-  if (ContainsZeros)
-    return false;
-
-  assert(llvm::all_of(Mask, [&](int M) {
-                        return SM_SentinelUndef <= M && M < (int)NumMaskElts;
-                      }) && "Expected unary shuffle");
-
-  // Handle PSHUFLW/PSHUFHW repeated patterns.
-  if (MaskScalarSizeInBits == 16) {
+  // Handle PSHUFLW/PSHUFHW vXi16 repeated patterns.
+  if (!ContainsZeros && AllowIntDomain && MaskScalarSizeInBits == 16) {
     SmallVector<int, 4> RepeatedMask;
     if (is128BitLaneRepeatedShuffleMask(MaskEltVT, Mask, RepeatedMask)) {
       ArrayRef<int> LoMask(Mask.data() + 0, 4);
@@ -27170,11 +27185,29 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
         PermuteImm = getV4X86ShuffleImm(OffsetHiMask);
         return true;
       }
-
-      return false;
     }
-    return false;
   }
+
+  // Attempt to match against byte/bit shifts.
+  // FIXME: Add 512-bit support.
+  if (AllowIntDomain && ((MaskVT.is128BitVector() && Subtarget.hasSSE2()) ||
+                         (MaskVT.is256BitVector() && Subtarget.hasAVX2()))) {
+    int ShiftAmt = matchVectorShuffleAsShift(ShuffleVT, Shuffle,
+                                             MaskScalarSizeInBits, Mask,
+                                             0, Zeroable, Subtarget);
+    if (0 < ShiftAmt) {
+      PermuteImm = (unsigned)ShiftAmt;
+      return true;
+    }
+  }
+
+  // Ensure we don't contain any zero elements.
+  if (ContainsZeros)
+    return false;
+
+  assert(llvm::all_of(Mask, [&](int M) {
+                        return SM_SentinelUndef <= M && M < (int)NumMaskElts;
+                      }) && "Expected unary shuffle");
 
   // We only support permutation of 32/64 bit elements after this.
   if (MaskScalarSizeInBits != 32 && MaskScalarSizeInBits != 64)
@@ -27184,48 +27217,6 @@ static bool matchUnaryPermuteVectorShuffle(MVT MaskVT, ArrayRef<int> Mask,
   // had to use 2-input SHUFPD/SHUFPS shuffles (not handled here).
   if ((AllowFloatDomain && !AllowIntDomain) && !Subtarget.hasAVX())
     return false;
-
-  // Pre-AVX2 we must use float shuffles on 256-bit vectors.
-  if (MaskVT.is256BitVector() && !Subtarget.hasAVX2()) {
-    AllowFloatDomain = true;
-    AllowIntDomain = false;
-  }
-
-  // Check for lane crossing permutes.
-  if (is128BitLaneCrossingShuffleMask(MaskEltVT, Mask)) {
-    // PERMPD/PERMQ permutes within a 256-bit vector (AVX2+).
-    if (Subtarget.hasAVX2() && MaskVT.is256BitVector() && Mask.size() == 4) {
-      Shuffle = X86ISD::VPERMI;
-      ShuffleVT = (AllowFloatDomain ? MVT::v4f64 : MVT::v4i64);
-      PermuteImm = getV4X86ShuffleImm(Mask);
-      return true;
-    }
-    if (Subtarget.hasAVX512() && MaskVT.is512BitVector() && Mask.size() == 8) {
-      SmallVector<int, 4> RepeatedMask;
-      if (is256BitLaneRepeatedShuffleMask(MVT::v8f64, Mask, RepeatedMask)) {
-        Shuffle = X86ISD::VPERMI;
-        ShuffleVT = (AllowFloatDomain ? MVT::v8f64 : MVT::v8i64);
-        PermuteImm = getV4X86ShuffleImm(RepeatedMask);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  // VPERMILPD can permute with a non-repeating shuffle.
-  if (AllowFloatDomain && MaskScalarSizeInBits == 64) {
-    Shuffle = X86ISD::VPERMILPI;
-    ShuffleVT = MVT::getVectorVT(MVT::f64, Mask.size());
-    PermuteImm = 0;
-    for (int i = 0, e = Mask.size(); i != e; ++i) {
-      int M = Mask[i];
-      if (M == SM_SentinelUndef)
-        continue;
-      assert(((M / 2) == (i / 2)) && "Out of range shuffle mask index");
-      PermuteImm |= (M & 1) << i;
-    }
-    return true;
-  }
 
   // We need a repeating shuffle mask for VPERMILPS/PSHUFD.
   SmallVector<int, 4> RepeatedMask;
@@ -27578,7 +27569,8 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
   // Which shuffle domains are permitted?
   // Permit domain crossing at higher combine depths.
   bool AllowFloatDomain = FloatDomain || (Depth > 3);
-  bool AllowIntDomain = !FloatDomain || (Depth > 3);
+  bool AllowIntDomain = (!FloatDomain || (Depth > 3)) &&
+                        (!MaskVT.is256BitVector() || Subtarget.hasAVX2());
 
   if (UnaryShuffle) {
     // If we are shuffling a X86ISD::VZEXT_LOAD then we can use the load
