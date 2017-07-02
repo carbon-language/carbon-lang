@@ -1,4 +1,5 @@
 ; RUN: opt < %s -loop-vectorize -mtriple=x86_64-unknown-linux -S -mcpu=slm -debug 2>&1 | FileCheck -check-prefix=MSG %s
+; REQUIRES: asserts
 ; This test should not be vectorized in X86\SLM arch
 ; Vectorizing the 64bit multiply in this case is wrong since
 ; it can be done with a lower bit mode (notice that the sources is 16bit)
