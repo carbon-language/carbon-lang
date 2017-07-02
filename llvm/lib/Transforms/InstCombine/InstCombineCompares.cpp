@@ -3438,6 +3438,15 @@ Instruction *InstCombiner::foldICmpEquality(ICmpInst &I) {
     }
   }
 
+  // If both operands are byte-swapped or bit-reversed, just compare the
+  // original values.
+  // TODO: Move this to a function similar to foldICmpIntrinsicWithConstant()
+  // and handle more intrinsics.
+  if ((match(Op0, m_BSwap(m_Value(A))) && match(Op1, m_BSwap(m_Value(B)))) ||
+      (match(Op0, m_Intrinsic<Intrinsic::bitreverse>(m_Value(A))) &&
+       match(Op1, m_Intrinsic<Intrinsic::bitreverse>(m_Value(B)))))
+    return new ICmpInst(Pred, A, B);
+
   return nullptr;
 }
 
