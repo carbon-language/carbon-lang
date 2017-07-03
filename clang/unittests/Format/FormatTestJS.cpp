@@ -1564,7 +1564,6 @@ TEST_F(FormatTestJS, TemplateStrings) {
                "                               aaaaa(  //\n"
                "                                   aaaaa)\n"
                "                             })`);");
-  verifyFormat("yield `hello`;");
 }
 
 TEST_F(FormatTestJS, TemplateStringMultiLineExpression) {
