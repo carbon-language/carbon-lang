@@ -80,14 +80,12 @@ static Value *getFCmpValue(unsigned Code, Value *LHS, Value *RHS,
 /// \return Pointer to node that must replace the original binary operator, or
 ///         null pointer if no transformation was made.
 Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
+  assert(I.isBitwiseLogicOp() && "Unexpected opcode for bswap simplifying");
+
   IntegerType *ITy = dyn_cast<IntegerType>(I.getType());
 
   // Can't do vectors.
   if (I.getType()->isVectorTy())
-    return nullptr;
-
-  // Can only do bitwise ops.
-  if (!I.isBitwiseLogicOp())
     return nullptr;
 
   Value *OldLHS = I.getOperand(0);
