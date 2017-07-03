@@ -82,12 +82,7 @@ static Value *getFCmpValue(unsigned Code, Value *LHS, Value *RHS,
 Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
   assert(I.isBitwiseLogicOp() && "Unexpected opcode for bswap simplifying");
 
-  IntegerType *ITy = dyn_cast<IntegerType>(I.getType());
-
-  // Can't do vectors.
-  if (I.getType()->isVectorTy())
-    return nullptr;
-
+  // TODO handle constant on one side with vectors.
   Value *OldLHS = I.getOperand(0);
   Value *OldRHS = I.getOperand(1);
   ConstantInt *ConstLHS = dyn_cast<ConstantInt>(OldLHS);
@@ -115,7 +110,8 @@ Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
                   Builder->getInt(ConstRHS->getValue().byteSwap());
 
   Value *BinOp = Builder->CreateBinOp(I.getOpcode(), NewLHS, NewRHS);
-  Function *F = Intrinsic::getDeclaration(I.getModule(), Intrinsic::bswap, ITy);
+  Function *F = Intrinsic::getDeclaration(I.getModule(), Intrinsic::bswap,
+                                          I.getType());
   return Builder->CreateCall(F, BinOp);
 }
 
