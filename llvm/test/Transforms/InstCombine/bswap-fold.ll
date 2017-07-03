@@ -247,6 +247,39 @@ define <2 x i32> @bs_xor32vec(<2 x i32> %a, <2 x i32> %b) #0 {
   ret <2 x i32> %tmp3
 }
 
+define <2 x i32> @bs_and32ivec(<2 x i32> %a, <2 x i32> %b) #0 {
+; CHECK-LABEL: @bs_and32ivec(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x i32> @llvm.bswap.v2i32(<2 x i32> [[A:%.*]])
+; CHECK-NEXT:    [[TMP2:%.*]] = and <2 x i32> [[TMP1]], <i32 100001, i32 100001>
+; CHECK-NEXT:    ret <2 x i32> [[TMP2]]
+;
+  %tmp1 = tail call <2 x i32> @llvm.bswap.v2i32(<2 x i32> %a)
+  %tmp2 = and <2 x i32> %tmp1, <i32 100001, i32 100001>
+  ret <2 x i32> %tmp2
+}
+
+define <2 x i32> @bs_or32ivec(<2 x i32> %a, <2 x i32> %b) #0 {
+; CHECK-LABEL: @bs_or32ivec(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x i32> @llvm.bswap.v2i32(<2 x i32> [[A:%.*]])
+; CHECK-NEXT:    [[TMP2:%.*]] = or <2 x i32> [[TMP1]], <i32 100001, i32 100001>
+; CHECK-NEXT:    ret <2 x i32> [[TMP2]]
+;
+  %tmp1 = tail call <2 x i32> @llvm.bswap.v2i32(<2 x i32> %a)
+  %tmp2 = or <2 x i32> %tmp1, <i32 100001, i32 100001>
+  ret <2 x i32> %tmp2
+}
+
+define <2 x i32> @bs_xor32ivec(<2 x i32> %a, <2 x i32> %b) #0 {
+; CHECK-LABEL: @bs_xor32ivec(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call <2 x i32> @llvm.bswap.v2i32(<2 x i32> [[A:%.*]])
+; CHECK-NEXT:    [[TMP2:%.*]] = xor <2 x i32> [[TMP1]], <i32 100001, i32 100001>
+; CHECK-NEXT:    ret <2 x i32> [[TMP2]]
+;
+  %tmp1 = tail call <2 x i32> @llvm.bswap.v2i32(<2 x i32> %a)
+  %tmp2 = xor <2 x i32> %tmp1, <i32 100001, i32 100001>
+  ret <2 x i32> %tmp2
+}
+
 declare i16 @llvm.bswap.i16(i16)
 declare i32 @llvm.bswap.i32(i32)
 declare i64 @llvm.bswap.i64(i64)
