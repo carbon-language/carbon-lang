@@ -1147,18 +1147,19 @@ static void removeUnusedSyntheticSections() {
       continue;
 
     OutputSectionCommand *Cmd = Script->getCmd(OS);
-    BaseCommand **Empty = nullptr;
-    for (BaseCommand *&B : Cmd->Commands) {
+    std::vector<BaseCommand *>::iterator Empty = Cmd->Commands.end();
+    for (auto I = Cmd->Commands.begin(), E = Cmd->Commands.end(); I != E; ++I) {
+      BaseCommand *B = *I;
       if (auto *ISD = dyn_cast<InputSectionDescription>(B)) {
-        auto I = std::find(ISD->Sections.begin(), ISD->Sections.end(), SS);
-        if (I != ISD->Sections.end())
-          ISD->Sections.erase(I);
+        auto P = std::find(ISD->Sections.begin(), ISD->Sections.end(), SS);
+        if (P != ISD->Sections.end())
+          ISD->Sections.erase(P);
         if (ISD->Sections.empty())
-          Empty = &B;
+          Empty = I;
       }
     }
-    if (Empty)
-      Cmd->Commands.erase(std::vector<BaseCommand *>::iterator(Empty));
+    if (Empty != Cmd->Commands.end())
+      Cmd->Commands.erase(Empty);
 
     // If there are no other sections in the output section, remove it from the
     // output.
