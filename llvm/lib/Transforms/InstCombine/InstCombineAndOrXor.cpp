@@ -82,27 +82,21 @@ static Value *getFCmpValue(unsigned Code, Value *LHS, Value *RHS,
 Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
   assert(I.isBitwiseLogicOp() && "Unexpected opcode for bswap simplifying");
 
-  // TODO handle constant on one side with vectors.
-  Value *OldLHS = I.getOperand(0);
-  Value *OldRHS = I.getOperand(1);
-  ConstantInt *ConstRHS = dyn_cast<ConstantInt>(OldRHS);
-  IntrinsicInst *IntrLHS = dyn_cast<IntrinsicInst>(OldLHS);
-  IntrinsicInst *IntrRHS = dyn_cast<IntrinsicInst>(OldRHS);
-  bool IsBswapLHS = (IntrLHS && IntrLHS->getIntrinsicID() == Intrinsic::bswap);
-  bool IsBswapRHS = (IntrRHS && IntrRHS->getIntrinsicID() == Intrinsic::bswap);
-
-  if (!IsBswapLHS)
+  Value *NewLHS;
+  if (!match(I.getOperand(0), m_BSwap(m_Value(NewLHS))))
     return nullptr;
 
-  if (!IsBswapRHS && !ConstRHS)
+  Value *NewRHS;
+  const APInt *C;
+
+  if (match(I.getOperand(1), m_BSwap(m_Value(NewRHS)))) {
+    // OP( BSWAP(x), BSWAP(y) ) -> BSWAP( OP(x, y) )
+    // NewRHS initialized by the matcher.
+  } else if (match(I.getOperand(1), m_APInt(C))) {
+    // OP( BSWAP(x), CONSTANT ) -> BSWAP( OP(x, BSWAP(CONSTANT) ) )
+    NewRHS = ConstantInt::get(I.getType(), C->byteSwap());
+  } else
     return nullptr;
-
-  /// OP( BSWAP(x), BSWAP(y) ) -> BSWAP( OP(x, y) )
-  /// OP( BSWAP(x), CONSTANT ) -> BSWAP( OP(x, BSWAP(CONSTANT) ) )
-  Value *NewLHS = IntrLHS->getOperand(0);
-
-  Value *NewRHS = IsBswapRHS ? IntrRHS->getOperand(0) :
-                  Builder->getInt(ConstRHS->getValue().byteSwap());
 
   Value *BinOp = Builder->CreateBinOp(I.getOpcode(), NewLHS, NewRHS);
   Function *F = Intrinsic::getDeclaration(I.getModule(), Intrinsic::bswap,
