@@ -82,6 +82,8 @@ static Value *getFCmpValue(unsigned Code, Value *LHS, Value *RHS,
 Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
   assert(I.isBitwiseLogicOp() && "Unexpected opcode for bswap simplifying");
 
+  // TODO We should probably check for single use of the bswap.
+
   Value *NewLHS;
   if (!match(I.getOperand(0), m_BSwap(m_Value(NewLHS))))
     return nullptr;
