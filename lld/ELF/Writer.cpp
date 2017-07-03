@@ -1149,8 +1149,17 @@ static void removeUnusedSyntheticSections(std::vector<OutputSection *> &V) {
     SS->Live = false;
     // If there are no other sections in the output section, remove it from the
     // output.
-    if (OS->Sections.empty())
+    if (OS->Sections.empty()) {
       V.erase(std::find(V.begin(), V.end(), OS));
+      // Also remove script commands matching the output section.
+      auto &Cmds = Script->Opt.Commands;
+      auto I = std::remove_if(Cmds.begin(), Cmds.end(), [&](BaseCommand *Cmd) {
+        if (auto *OSCmd = dyn_cast<OutputSectionCommand>(Cmd))
+          return OSCmd->Sec == OS;
+        return false;
+      });
+      Cmds.erase(I, Cmds.end());
+    }
   }
 }
 
