@@ -85,17 +85,13 @@ Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
   // TODO handle constant on one side with vectors.
   Value *OldLHS = I.getOperand(0);
   Value *OldRHS = I.getOperand(1);
-  ConstantInt *ConstLHS = dyn_cast<ConstantInt>(OldLHS);
   ConstantInt *ConstRHS = dyn_cast<ConstantInt>(OldRHS);
   IntrinsicInst *IntrLHS = dyn_cast<IntrinsicInst>(OldLHS);
   IntrinsicInst *IntrRHS = dyn_cast<IntrinsicInst>(OldRHS);
   bool IsBswapLHS = (IntrLHS && IntrLHS->getIntrinsicID() == Intrinsic::bswap);
   bool IsBswapRHS = (IntrRHS && IntrRHS->getIntrinsicID() == Intrinsic::bswap);
 
-  if (!IsBswapLHS && !IsBswapRHS)
-    return nullptr;
-
-  if (!IsBswapLHS && !ConstLHS)
+  if (!IsBswapLHS)
     return nullptr;
 
   if (!IsBswapRHS && !ConstRHS)
@@ -103,8 +99,7 @@ Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
 
   /// OP( BSWAP(x), BSWAP(y) ) -> BSWAP( OP(x, y) )
   /// OP( BSWAP(x), CONSTANT ) -> BSWAP( OP(x, BSWAP(CONSTANT) ) )
-  Value *NewLHS = IsBswapLHS ? IntrLHS->getOperand(0) :
-                  Builder->getInt(ConstLHS->getValue().byteSwap());
+  Value *NewLHS = IntrLHS->getOperand(0);
 
   Value *NewRHS = IsBswapRHS ? IntrRHS->getOperand(0) :
                   Builder->getInt(ConstRHS->getValue().byteSwap());
