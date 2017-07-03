@@ -66,10 +66,7 @@ define <16 x i8> @shuf_0zzzzzzz1zzzzzzz(<16 x i8> %a0) {
 ;
 ; BTVER1-LABEL: shuf_0zzzzzzz1zzzzzzz:
 ; BTVER1:       # BB#0:
-; BTVER1-NEXT:    movdqa %xmm0, %xmm1
-; BTVER1-NEXT:    extrq {{.*#+}} xmm1 = xmm1[1],zero,zero,zero,zero,zero,zero,zero,xmm1[u,u,u,u,u,u,u,u]
-; BTVER1-NEXT:    extrq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[u,u,u,u,u,u,u,u]
-; BTVER1-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; BTVER1-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
 ; BTVER1-NEXT:    retq
 ;
 ; BTVER2-LABEL: shuf_0zzzzzzz1zzzzzzz:
@@ -91,10 +88,7 @@ define <16 x i8> @shuf_2zzzzzzz3zzzzzzz(<16 x i8> %a0) {
 ;
 ; BTVER1-LABEL: shuf_2zzzzzzz3zzzzzzz:
 ; BTVER1:       # BB#0:
-; BTVER1-NEXT:    movdqa %xmm0, %xmm1
-; BTVER1-NEXT:    extrq {{.*#+}} xmm1 = xmm1[3],zero,zero,zero,zero,zero,zero,zero,xmm1[u,u,u,u,u,u,u,u]
-; BTVER1-NEXT:    extrq {{.*#+}} xmm0 = xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[u,u,u,u,u,u,u,u]
-; BTVER1-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; BTVER1-NEXT:    pshufb {{.*#+}} xmm0 = xmm0[2],zero,zero,zero,zero,zero,zero,zero,xmm0[3],zero,zero,zero,zero,zero,zero,zero
 ; BTVER1-NEXT:    retq
 ;
 ; BTVER2-LABEL: shuf_2zzzzzzz3zzzzzzz:
