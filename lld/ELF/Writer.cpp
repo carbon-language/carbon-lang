@@ -1550,11 +1550,9 @@ template <class ELFT>
 void Writer<ELFT>::addPtArmExid(std::vector<PhdrEntry> &Phdrs) {
   if (Config->EMachine != EM_ARM)
     return;
-  auto I =
-      std::find_if(OutputSectionCommands.begin(), OutputSectionCommands.end(),
-                   [](OutputSectionCommand *Cmd) {
-                     return Cmd->Sec->Type == SHT_ARM_EXIDX;
-                   });
+  auto I = llvm::find_if(OutputSectionCommands, [](OutputSectionCommand *Cmd) {
+    return Cmd->Sec->Type == SHT_ARM_EXIDX;
+  });
   if (I == OutputSectionCommands.end())
     return;
 
