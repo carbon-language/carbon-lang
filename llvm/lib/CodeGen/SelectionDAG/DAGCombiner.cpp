@@ -5268,13 +5268,16 @@ SDValue DAGCombiner::distributeTruncateThroughAnd(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitRotate(SDNode *N) {
+  SDLoc dl(N);
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  EVT VT = N->getValueType(0);
+
   // fold (rot* x, (trunc (and y, c))) -> (rot* x, (and (trunc y), (trunc c))).
-  if (N->getOperand(1).getOpcode() == ISD::TRUNCATE &&
-      N->getOperand(1).getOperand(0).getOpcode() == ISD::AND) {
-    if (SDValue NewOp1 =
-            distributeTruncateThroughAnd(N->getOperand(1).getNode()))
-      return DAG.getNode(N->getOpcode(), SDLoc(N), N->getValueType(0),
-                         N->getOperand(0), NewOp1);
+  if (N1.getOpcode() == ISD::TRUNCATE &&
+      N1.getOperand(0).getOpcode() == ISD::AND) {
+    if (SDValue NewOp1 = distributeTruncateThroughAnd(N1.getNode()))
+      return DAG.getNode(N->getOpcode(), dl, VT, N0, NewOp1);
   }
   return SDValue();
 }
