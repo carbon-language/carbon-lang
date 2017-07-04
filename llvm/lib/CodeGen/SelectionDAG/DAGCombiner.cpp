@@ -11049,7 +11049,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
     //   x1 * offset1 + y1 * ptr0 = t1 (the indexed load/store)
     //
     // where x0, x1, y0 and y1 in {-1, 1} are given by the types of the
-    // indexed load/store and the expresion that needs to be re-written.
+    // indexed load/store and the expression that needs to be re-written.
     //
     // Therefore, we have:
     //   t0 = (x0 * offset0 - x1 * y0 * y1 *offset1) + (y0 * y1) * t1
