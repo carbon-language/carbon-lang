@@ -753,8 +753,11 @@ uint32_t InstrProfRecord::getNumValueKinds() const {
 
 uint32_t InstrProfRecord::getNumValueData(uint32_t ValueKind) const {
   uint32_t N = 0;
-  for (auto &SR : getValueSitesForKind(ValueKind))
+  const std::vector<InstrProfValueSiteRecord> &SiteRecords =
+      getValueSitesForKind(ValueKind);
+  for (auto &SR : SiteRecords) {
     N += SR.ValueData.size();
+  }
   return N;
 }
 
