@@ -29,7 +29,7 @@ bool InstructionSelector::executeMatchTable(
   while (true) {
     switch (*Command++) {
     case GIM_RecordInsn: {
-      int64_t NewInsnID = *Command++;
+      int64_t NewInsnID LLVM_ATTRIBUTE_UNUSED = *Command++;
       int64_t InsnID = *Command++;
       int64_t OpIdx = *Command++;
 

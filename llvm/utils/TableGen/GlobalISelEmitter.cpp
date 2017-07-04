@@ -53,6 +53,8 @@ STATISTIC(NumPatternTotal, "Total number of patterns");
 STATISTIC(NumPatternImported, "Number of patterns imported from SelectionDAG");
 STATISTIC(NumPatternImportsSkipped, "Number of SelectionDAG imports skipped");
 STATISTIC(NumPatternEmitted, "Number of patterns emitted");
+/// A unique identifier for a MatchTable.
+static unsigned CurrentMatchTableID = 0;
 
 cl::OptionCategory GlobalISelEmitterCat("Options for -gen-global-isel");
 
@@ -1269,7 +1271,7 @@ void RuleMatcher::emit(raw_ostream &OS) {
   // on some targets but we don't need to make use of that yet.
   assert(Matchers.size() == 1 && "Cannot handle multi-root matchers yet");
 
-  OS << "  const static int64_t MatchTable" << NumPatternEmitted << "[] = {\n";
+  OS << "  const static int64_t MatchTable" << CurrentMatchTableID << "[] = {\n";
   if (!RequiredFeatures.empty()) {
     OS << "    GIM_CheckFeatures, " << getNameForFeatureBitset(RequiredFeatures)
        << ",\n";
@@ -1286,7 +1288,7 @@ void RuleMatcher::emit(raw_ostream &OS) {
      << "  State.MIs.clear();\n"
      << "  State.MIs.push_back(&I);\n"
      << "  if (executeMatchTable(*this, State, MatcherInfo, MatchTable"
-     << NumPatternEmitted << ", MRI, TRI, RBI, AvailableFeatures)) {\n";
+     << CurrentMatchTableID << ", MRI, TRI, RBI, AvailableFeatures)) {\n";
 
   // We must also check if it's safe to fold the matched instructions.
   if (InsnVariableIDs.size() >= 2) {
@@ -2171,7 +2173,10 @@ void GlobalISelEmitter::run(raw_ostream &OS) {
 
   for (auto &Rule : Rules) {
     Rule.emit(OS);
+    ++CurrentMatchTableID;
     ++NumPatternEmitted;
+    assert(CurrentMatchTableID == NumPatternEmitted &&
+           "Statistic deviates from number of emitted tables");
   }
 
   OS << "  return false;\n"
