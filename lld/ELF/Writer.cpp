@@ -200,6 +200,8 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (Config->CopyRelocs)
     addSectionSymbols();
 
+  clearOutputSections();
+
   // Now that we have a complete set of output sections. This function
   // completes section contents. For example, we need to add strings
   // to the string table, and add entries to .got and .plt.
@@ -1178,18 +1180,20 @@ static void removeUnusedSyntheticSections() {
 
 // Create output section objects and add them to OutputSections.
 template <class ELFT> void Writer<ELFT>::finalizeSections() {
-  Out::DebugInfo = findSection(".debug_info");
-  Out::PreinitArray = findSection(".preinit_array");
-  Out::InitArray = findSection(".init_array");
-  Out::FiniArray = findSection(".fini_array");
+  Out::DebugInfo = findSectionInScript(".debug_info");
+  Out::PreinitArray = findSectionInScript(".preinit_array");
+  Out::InitArray = findSectionInScript(".init_array");
+  Out::FiniArray = findSectionInScript(".fini_array");
 
   // The linker needs to define SECNAME_start, SECNAME_end and SECNAME_stop
   // symbols for sections, so that the runtime can get the start and end
   // addresses of each section by section name. Add such symbols.
   if (!Config->Relocatable) {
     addStartEndSymbols();
-    for (OutputSection *Sec : OutputSections)
-      addStartStopSymbols(Sec);
+    for (BaseCommand *Base : Script->Opt.Commands)
+      if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
+        if (Cmd->Sec)
+          addStartStopSymbols(Cmd->Sec);
   }
 
   // Add _DYNAMIC symbol. Unlike GNU gold, our _DYNAMIC symbol has no type.
@@ -1239,7 +1243,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   if (ErrorCount)
     return;
 
-  clearOutputSections();
   addPredefinedSections();
   removeUnusedSyntheticSections();
 
@@ -1365,7 +1368,7 @@ template <class ELFT> void Writer<ELFT>::addStartEndSymbols() {
   Define("__init_array_start", "__init_array_end", Out::InitArray);
   Define("__fini_array_start", "__fini_array_end", Out::FiniArray);
 
-  if (OutputSection *Sec = findSection(".ARM.exidx"))
+  if (OutputSection *Sec = findSectionInScript(".ARM.exidx"))
     Define("__exidx_start", "__exidx_end", Sec);
 }
 
