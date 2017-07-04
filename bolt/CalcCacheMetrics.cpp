@@ -50,10 +50,10 @@ getPositionMap(const BinaryFunction &Function) {
 /// Initialize and return a vector of traversals for a given function and its
 /// entry point
 std::vector<Traversal> getTraversals(const BinaryFunction &Function,
-                                     BinaryBasicBlock *BB) {
+                                     BinaryBasicBlock *EntryBB) {
   std::vector<Traversal> AllTraversals;
   std::stack<std::pair<BinaryBasicBlock *, Traversal>> Stack;
-  Stack.push(std::make_pair(BB, Traversal()));
+  Stack.push(std::make_pair(EntryBB, Traversal()));
   std::unordered_set<BinaryBasicBlock *> BBSet;
 
   while (!Stack.empty()) {
@@ -70,23 +70,28 @@ std::vector<Traversal> getTraversals(const BinaryFunction &Function,
       continue;
     }
 
-    uint64_t SuccTotalCount = 0;
+    bool HaveSuccCount = false;
     // Calculate total edges count of successors
     for (auto BI = CurrentBB->branch_info_begin();
          BI != CurrentBB->branch_info_end(); ++BI) {
-      if (BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) {
-        SuccTotalCount += BI->Count;
+      if (BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE && BI->Count > 0) {
+        HaveSuccCount = true;
+        break;
       }
     }
-    if (SuccTotalCount == 0) {
+    if (!HaveSuccCount) {
       AllTraversals.push_back(PrevTraversal);
       continue;
     }
 
     auto BI = CurrentBB->branch_info_begin();
     for (auto *SuccBB : CurrentBB->successors()) {
-      if (BBSet.find(SuccBB) == BBSet.end() && BI->Count != 0 &&
-          BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) {
+      // If we have never seen SuccBB, or SuccBB indicates the
+      // end of traversal, SuccBB will be added into stack for
+      // further exploring.
+      if ((BBSet.find(SuccBB) == BBSet.end() && BI->Count != 0 &&
+           BI->Count != BinaryBasicBlock::COUNT_NO_PROFILE) ||
+          SuccBB->succ_empty()) {
         Stack.push(std::make_pair(SuccBB, PrevTraversal));
       }
       ++BI;

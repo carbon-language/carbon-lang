@@ -820,7 +820,7 @@ void RewriteInstance::run() {
   }
 
   if (opts::CalcCacheMetrics) {
-    outs() << "\nBOLT-INFO: After Optimization Call Graph Statistics: Call "
+    outs() << "\nBOLT-INFO: After Optimization CFG Graph Statistics: Jump "
             "Distance \n\n";
     CalcCacheMetrics::calcGraphDistance(BinaryFunctions);
   }
@@ -1874,7 +1874,7 @@ void RewriteInstance::disassembleFunctions() {
   }
 
   if (opts::CalcCacheMetrics) {
-    outs() << "\nBOLT-INFO: Before Optimization Call Graph Statistics: Call "
+    outs() << "\nBOLT-INFO: Before Optimization CFG Graph Statistics: Jump "
             "Distance \n\n";
     CalcCacheMetrics::calcGraphDistance(BinaryFunctions);
   }
