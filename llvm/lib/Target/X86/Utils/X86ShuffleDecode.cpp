@@ -486,9 +486,9 @@ void DecodeEXTRQIMask(MVT VT, int Len, int Idx,
   // elements of the lower 64-bits. The upper 64-bits are undefined.
   for (int i = 0; i != Len; ++i)
     ShuffleMask.push_back(i + Idx);
-  for (int i = Len; i != HalfElts; ++i)
+  for (int i = Len; i != (int)HalfElts; ++i)
     ShuffleMask.push_back(SM_SentinelZero);
-  for (int i = HalfElts; i != NumElts; ++i)
+  for (int i = HalfElts; i != (int)NumElts; ++i)
     ShuffleMask.push_back(SM_SentinelUndef);
 }
 
@@ -529,9 +529,9 @@ void DecodeINSERTQIMask(MVT VT, int Len, int Idx,
     ShuffleMask.push_back(i);
   for (int i = 0; i != Len; ++i)
     ShuffleMask.push_back(i + NumElts);
-  for (int i = Idx + Len; i != HalfElts; ++i)
+  for (int i = Idx + Len; i != (int)HalfElts; ++i)
     ShuffleMask.push_back(i);
-  for (int i = HalfElts; i != NumElts; ++i)
+  for (int i = HalfElts; i != (int)NumElts; ++i)
     ShuffleMask.push_back(SM_SentinelUndef);
 }
 
