@@ -1,5 +1,7 @@
 ; RUN: llc < %s -fast-isel
 
+target datalayout = "e-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-pc-linux-gnu"
 ; Dont crash with gc intrinsics.
 
 ; gcrelocate call should not be an LLVM Machine Block by itself.
