@@ -1239,8 +1239,8 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
   if (ErrorCount)
     return;
 
-  addPredefinedSections();
   clearOutputSections();
+  addPredefinedSections();
   removeUnusedSyntheticSections();
 
   sortSections();
@@ -1330,21 +1330,18 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
 template <class ELFT> void Writer<ELFT>::addPredefinedSections() {
   // ARM ABI requires .ARM.exidx to be terminated by some piece of data.
   // We have the terminater synthetic section class. Add that at the end.
-  auto *OS = dyn_cast_or_null<OutputSection>(findSection(".ARM.exidx"));
-  if (!OS || OS->Sections.empty() || Config->Relocatable)
+  OutputSectionCommand *Cmd = findSectionCommand(".ARM.exidx");
+  if (!Cmd || Cmd->Commands.empty() || Config->Relocatable)
     return;
 
   auto *Sentinel = make<ARMExidxSentinelSection>();
-  OS->addSection(Sentinel);
-  // If there are linker script commands existing at this point then add the
-  // sentinel to the last of these too.
-  if (OutputSectionCommand *C = Script->getCmd(OS)) {
-    auto ISD = std::find_if(C->Commands.rbegin(), C->Commands.rend(),
-                            [](const BaseCommand *Base) {
-                              return isa<InputSectionDescription>(Base);
-                            });
-    cast<InputSectionDescription>(*ISD)->Sections.push_back(Sentinel);
-  }
+  Cmd->Sec->addSection(Sentinel);
+  // Add the sentinel to the last of these too.
+  auto ISD = std::find_if(Cmd->Commands.rbegin(), Cmd->Commands.rend(),
+                          [](const BaseCommand *Base) {
+                            return isa<InputSectionDescription>(Base);
+                          });
+  cast<InputSectionDescription>(*ISD)->Sections.push_back(Sentinel);
 }
 
 // The linker is expected to define SECNAME_start and SECNAME_end
@@ -1388,9 +1385,10 @@ void Writer<ELFT>::addStartStopSymbols(OutputSection *Sec) {
 
 template <class ELFT>
 OutputSectionCommand *Writer<ELFT>::findSectionCommand(StringRef Name) {
-  for (OutputSectionCommand *Cmd : OutputSectionCommands)
-    if (Cmd->Name == Name)
-      return Cmd;
+  for (BaseCommand *Base : Script->Opt.Commands)
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
+      if (Cmd->Name == Name)
+        return Cmd;
   return nullptr;
 }
 
