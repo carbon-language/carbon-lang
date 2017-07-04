@@ -197,10 +197,10 @@ template <class ELFT> void Writer<ELFT>::run() {
   if (Config->Discard != DiscardPolicy::All)
     copyLocalSymbols();
 
+  clearOutputSections();
+
   if (Config->CopyRelocs)
     addSectionSymbols();
-
-  clearOutputSections();
 
   // Now that we have a complete set of output sections. This function
   // completes section contents. For example, we need to add strings
@@ -501,11 +501,18 @@ template <class ELFT> void Writer<ELFT>::copyLocalSymbols() {
 template <class ELFT> void Writer<ELFT>::addSectionSymbols() {
   // Create one STT_SECTION symbol for each output section we might
   // have a relocation with.
-  for (OutputSection *Sec : OutputSections) {
-    if (Sec->Sections.empty())
+  for (BaseCommand *Base : Script->Opt.Commands) {
+    auto *Cmd = dyn_cast<OutputSectionCommand>(Base);
+    if (!Cmd)
       continue;
-
-    InputSection *IS = Sec->Sections[0];
+    auto I = llvm::find_if(Cmd->Commands, [](BaseCommand *Base) {
+      if (auto *ISD = dyn_cast<InputSectionDescription>(Base))
+        return !ISD->Sections.empty();
+      return false;
+    });
+    if (I == Cmd->Commands.end())
+      continue;
+    InputSection *IS = cast<InputSectionDescription>(*I)->Sections[0];
     if (isa<SyntheticSection>(IS) || IS->Type == SHT_REL ||
         IS->Type == SHT_RELA)
       continue;
