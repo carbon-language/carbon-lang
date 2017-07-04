@@ -361,5 +361,7 @@ bool LoopDeletionLegacyPass::runOnLoop(Loop *L, LPPassManager &) {
   ScalarEvolution &SE = getAnalysis<ScalarEvolutionWrapperPass>().getSE();
   LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 
+  DEBUG(dbgs() << "Analyzing Loop for deletion: ");
+  DEBUG(L->dump());
   return deleteLoopIfDead(L, DT, SE, LI);
 }
