@@ -908,9 +908,8 @@ static void sortBySymbolsOrder(ArrayRef<OutputSection *> OutputSections) {
   }
 
   // Sort sections by priority.
-  for (OutputSection *Base : OutputSections)
-    if (auto *Sec = dyn_cast<OutputSection>(Base))
-      Sec->sort([&](InputSectionBase *S) { return SectionOrder.lookup(S); });
+  for (OutputSection *Sec : OutputSections)
+    Sec->sort([&](InputSectionBase *S) { return SectionOrder.lookup(S); });
 }
 
 template <class ELFT>
