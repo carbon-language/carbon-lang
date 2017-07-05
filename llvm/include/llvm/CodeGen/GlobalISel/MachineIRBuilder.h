@@ -59,6 +59,7 @@ class MachineIRBuilder {
   }
 
   void validateTruncExt(unsigned Dst, unsigned Src, bool IsExtend);
+  MachineInstrBuilder buildBinaryOp(unsigned Opcode, unsigned Res, unsigned Op0, unsigned Op1);
 
 public:
   /// Getter for the function we currently build.
