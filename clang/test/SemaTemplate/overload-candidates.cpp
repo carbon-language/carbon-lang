@@ -137,4 +137,30 @@ namespace PR15673 {
 #endif
   void wibble() {}
   void wobble() { wibble<int>(); } // expected-error {{no matching function for call to 'wibble'}}
+
+  template<typename T>
+  struct some_passing_trait : std::true_type {};
+
+#if __cplusplus <= 199711L
+  // expected-warning@+4 {{default template arguments for a function template are a C++11 extension}}
+  // expected-warning@+4 {{default template arguments for a function template are a C++11 extension}}
+#endif
+  template<typename T,
+           int n = 42,
+           typename std::enable_if<n == 43 || (some_passing_trait<T>::value && some_trait<T>::value), int>::type = 0>
+  void almost_rangesv3(); // expected-note{{candidate template ignored: requirement '42 == 43 || (some_passing_trait<int>::value && some_trait<int>::value)' was not satisfied}}
+  void test_almost_rangesv3() { almost_rangesv3<int>(); } // expected-error{{no matching function for call to 'almost_rangesv3'}}
+
+  #define CONCEPT_REQUIRES_(...)                                        \
+    int x = 42,                                                         \
+    typename std::enable_if<(x == 43) || (__VA_ARGS__)>::type = 0
+
+#if __cplusplus <= 199711L
+  // expected-warning@+4 {{default template arguments for a function template are a C++11 extension}}
+  // expected-warning@+4 {{default template arguments for a function template are a C++11 extension}}
+#endif
+  template<typename T,
+           CONCEPT_REQUIRES_(some_passing_trait<T>::value && some_trait<T>::value)>
+  void rangesv3(); // expected-note{{candidate template ignored: requirement 'some_trait<int>::value' was not satisfied [with T = int, x = 42]}}
+  void test_rangesv3() { rangesv3<int>(); } // expected-error{{no matching function for call to 'rangesv3'}}
 }
