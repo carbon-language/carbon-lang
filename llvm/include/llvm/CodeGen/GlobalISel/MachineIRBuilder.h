@@ -306,8 +306,7 @@ public:
   ///      with the same (scalar or vector) type).
   ///
   /// \return a MachineInstrBuilder for the newly created instruction.
-  MachineInstrBuilder buildOr(unsigned Res, unsigned Op0,
-                              unsigned Op1);
+  MachineInstrBuilder buildOr(unsigned Res, unsigned Op0, unsigned Op1);
 
   /// Build and insert \p Res<def> = G_ANYEXT \p Op0
   ///

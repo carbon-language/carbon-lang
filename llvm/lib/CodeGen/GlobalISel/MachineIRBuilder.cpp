@@ -241,7 +241,7 @@ MachineInstrBuilder MachineIRBuilder::buildAnd(unsigned Res, unsigned Op0,
 }
 
 MachineInstrBuilder MachineIRBuilder::buildOr(unsigned Res, unsigned Op0,
-                                               unsigned Op1) {
+                                              unsigned Op1) {
   return buildBinaryOp(TargetOpcode::G_OR, Res, Op0, Op1);
 }
 
