@@ -191,7 +191,7 @@ bool InstructionSelector::executeMatchTable(
       break;
     }
     case GIR_BuildMI: {
-      int64_t InsnID = *Command++;
+      int64_t InsnID LLVM_ATTRIBUTE_UNUSED = *Command++;
       int64_t Opcode = *Command++;
       assert((size_t)InsnID == OutMIs.size() &&
              "Expected to store MIs in order");
