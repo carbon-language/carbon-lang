@@ -872,10 +872,9 @@ std::vector<PhdrEntry> LinkerScript::createPhdrs() {
 
   // Add output sections to program headers.
   for (OutputSectionCommand *Cmd : OutputSectionCommands) {
-    OutputSection *Sec = Cmd->Sec;
-
     // Assign headers specified by linker script
-    for (size_t Id : getPhdrIndices(Sec)) {
+    for (size_t Id : getPhdrIndices(Cmd)) {
+      OutputSection *Sec = Cmd->Sec;
       Ret[Id].add(Sec);
       if (Opt.PhdrsCommands[Id].Flags == UINT_MAX)
         Ret[Id].p_flags |= Sec->getPhdrFlags();
@@ -1095,17 +1094,14 @@ static const size_t NoPhdr = -1;
 
 // Returns indices of ELF headers containing specific section. Each index is a
 // zero based number of ELF header listed within PHDRS {} script block.
-std::vector<size_t> LinkerScript::getPhdrIndices(OutputSection *Sec) {
-  if (OutputSectionCommand *Cmd = getCmd(Sec)) {
-    std::vector<size_t> Ret;
-    for (StringRef PhdrName : Cmd->Phdrs) {
-      size_t Index = getPhdrIndex(Cmd->Location, PhdrName);
-      if (Index != NoPhdr)
-        Ret.push_back(Index);
-    }
-    return Ret;
+std::vector<size_t> LinkerScript::getPhdrIndices(OutputSectionCommand *Cmd) {
+  std::vector<size_t> Ret;
+  for (StringRef PhdrName : Cmd->Phdrs) {
+    size_t Index = getPhdrIndex(Cmd->Location, PhdrName);
+    if (Index != NoPhdr)
+      Ret.push_back(Index);
   }
-  return {};
+  return Ret;
 }
 
 // Returns the index of the segment named PhdrName if found otherwise
