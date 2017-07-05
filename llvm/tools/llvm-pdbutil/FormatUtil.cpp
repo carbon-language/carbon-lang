@@ -21,7 +21,7 @@ std::string llvm::pdb::truncateStringBack(StringRef S, uint32_t MaxLen) {
     return S;
 
   assert(MaxLen >= 3);
-  uint32_t FinalLen = std::min(S.size(), MaxLen - 3);
+  uint32_t FinalLen = std::min<size_t>(S.size(), MaxLen - 3);
   S = S.take_front(FinalLen);
   return std::string(S) + std::string("...");
 }
