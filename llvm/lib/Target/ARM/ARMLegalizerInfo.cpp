@@ -28,6 +28,10 @@ using namespace llvm;
 #error "You shouldn't build this"
 #endif
 
+static bool AEABI(const ARMSubtarget &ST) {
+  return ST.isTargetAEABI() || ST.isTargetGNUAEABI() || ST.isTargetMuslAEABI();
+}
+
 ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
   using namespace TargetOpcode;
 
@@ -66,8 +70,7 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
   for (unsigned Op : {G_SREM, G_UREM})
     if (ST.hasDivideInARMMode())
       setAction({Op, s32}, Lower);
-    else if (ST.isTargetAEABI() || ST.isTargetGNUAEABI() ||
-             ST.isTargetMuslAEABI())
+    else if (AEABI(ST))
       setAction({Op, s32}, Custom);
     else
       setAction({Op, s32}, Libcall);
