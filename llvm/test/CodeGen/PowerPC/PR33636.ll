@@ -1,6 +1,6 @@
 ; Just a test case for a crash reported in
 ; https://bugs.llvm.org/show_bug.cgi?id=33636
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -mtriple=powerpc64le-unknown-unknown -mcpu=pwr8 < %s | FileCheck %s
 @g_225 = external unnamed_addr global i16, align 2
 @g_756 = external global [6 x i32], align 4
 @g_3456 = external global i32, align 4
