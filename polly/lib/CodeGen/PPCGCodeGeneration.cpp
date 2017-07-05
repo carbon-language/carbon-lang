@@ -299,6 +299,9 @@ public:
   /// The maximal number of loops surrounding a parallel kernel.
   unsigned DeepestParallel = 0;
 
+  /// Return the name to set for the ptx_kernel.
+  std::string getKernelFuncName(int Kernel_id);
+
 private:
   /// A vector of array base pointers for which a new ScopArrayInfo was created.
   ///
@@ -661,6 +664,11 @@ private:
                               Value *BlockDimY, Value *BlockDimZ,
                               Value *Parameters);
 };
+
+std::string GPUNodeBuilder::getKernelFuncName(int Kernel_id) {
+  return "FUNC_" + S.getFunction().getName().str() + "_KERNEL_" +
+         std::to_string(Kernel_id);
+}
 
 void GPUNodeBuilder::initializeAfterRTH() {
   BasicBlock *NewBB = SplitBlock(Builder.GetInsertBlock(),
@@ -1621,7 +1629,7 @@ void GPUNodeBuilder::createKernel(__isl_take isl_ast_node *KernelStmt) {
   Builder.SetInsertPoint(&HostInsertPoint);
   Value *Parameters = createLaunchParameters(Kernel, F, SubtreeValues);
 
-  std::string Name = "kernel_" + std::to_string(Kernel->id);
+  std::string Name = getKernelFuncName(Kernel->id);
   Value *KernelString = Builder.CreateGlobalStringPtr(ASMString, Name);
   Value *NameString = Builder.CreateGlobalStringPtr(Name, Name + "_name");
   Value *GPUKernel = createCallGetKernel(KernelString, NameString);
@@ -1662,7 +1670,7 @@ Function *
 GPUNodeBuilder::createKernelFunctionDecl(ppcg_kernel *Kernel,
                                          SetVector<Value *> &SubtreeValues) {
   std::vector<Type *> Args;
-  std::string Identifier = "kernel_" + std::to_string(Kernel->id);
+  std::string Identifier = getKernelFuncName(Kernel->id);
 
   for (long i = 0; i < Prog->n_array; i++) {
     if (!ppcg_kernel_requires_array_argument(Kernel, i))
@@ -1926,7 +1934,7 @@ void GPUNodeBuilder::createKernelVariables(ppcg_kernel *Kernel, Function *FN) {
 void GPUNodeBuilder::createKernelFunction(
     ppcg_kernel *Kernel, SetVector<Value *> &SubtreeValues,
     SetVector<Function *> &SubtreeFunctions) {
-  std::string Identifier = "kernel_" + std::to_string(Kernel->id);
+  std::string Identifier = getKernelFuncName(Kernel->id);
   GPUModule.reset(new Module(Identifier, Builder.getContext()));
 
   switch (Arch) {
