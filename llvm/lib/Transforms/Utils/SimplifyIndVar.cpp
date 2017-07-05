@@ -262,6 +262,10 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
     ICmp->setPredicate(InvariantPredicate);
     ICmp->setOperand(0, NewLHS);
     ICmp->setOperand(1, NewRHS);
+  } else if (ICmpInst::isSigned(Pred) &&
+             SE->isKnownNonNegative(S) && SE->isKnownNonNegative(X)) {
+    DEBUG(dbgs() << "INDVARS: Turn to unsigned comparison: " << *ICmp << '\n');
+    ICmp->setPredicate(ICmpInst::getUnsignedPredicate(Pred));
   } else
     return;
 
