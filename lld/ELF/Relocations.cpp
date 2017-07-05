@@ -1054,12 +1054,12 @@ std::pair<Thunk *, bool> ThunkCreator::getThunk(SymbolBody &Body,
     // Check existing Thunks for Body to see if they can be reused
     for (Thunk *ET : Res.first->second)
       if (ET->isCompatibleWith(Type))
-        return {ET, false};
+        return std::make_pair(ET, false);
   }
   // No existing compatible Thunk in range, create a new one
   Thunk *T = addThunk(Type, Body);
   Res.first->second.push_back(T);
-  return {T, true};
+  return std::make_pair(T, true);
 }
 
 // Call Fn on every executable InputSection accessed via the linker script
