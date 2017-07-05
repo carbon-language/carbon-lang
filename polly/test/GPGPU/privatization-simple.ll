@@ -1,6 +1,8 @@
 ; RUN: opt %loadPolly -analyze -polly-scops < %s | FileCheck %s -check-prefix=SCOP
 ; RUN: opt %loadPolly -S -polly-codegen-ppcg < %s | FileCheck %s -check-prefix=HOST-IR
 
+; REQUIRES: pollyacc
+
 ; SCOP:      Function: f
 ; SCOP-NEXT: Region: %for.body---%for.end
 ; SCOP-NEXT: Max Loop Depth:  1
