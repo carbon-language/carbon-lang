@@ -79,7 +79,6 @@ private:
   void addStartEndSymbols();
   void addStartStopSymbols(OutputSection *Sec);
   uint64_t getEntryAddr();
-  OutputSection *findSection(StringRef Name);
   OutputSection *findSectionInScript(StringRef Name);
   OutputSectionCommand *findSectionCommand(StringRef Name);
 
@@ -186,9 +185,8 @@ template <class ELFT> void Writer<ELFT>::run() {
     // output sections by default rules. We still need to give the
     // linker script a chance to run, because it might contain
     // non-SECTIONS commands such as ASSERT.
-    createSections();
     Script->processCommands(Factory);
-    Script->fabricateDefaultCommands();
+    createSections();
   }
   clearOutputSections();
 
@@ -870,20 +868,19 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
 
 // Sort input sections by section name suffixes for
 // __attribute__((init_priority(N))).
-static void sortInitFini(OutputSection *S) {
-  if (S)
-    S->sortInitFini();
+static void sortInitFini(OutputSectionCommand *Cmd) {
+  if (Cmd)
+    Cmd->sortInitFini();
 }
 
 // Sort input sections by the special rule for .ctors and .dtors.
-static void sortCtorsDtors(OutputSection *S) {
-  if (S)
-    S->sortCtorsDtors();
+static void sortCtorsDtors(OutputSectionCommand *Cmd) {
+  if (Cmd)
+    Cmd->sortCtorsDtors();
 }
 
 // Sort input sections using the list provided by --symbol-ordering-file.
-template <class ELFT>
-static void sortBySymbolsOrder(ArrayRef<OutputSection *> OutputSections) {
+template <class ELFT> static void sortBySymbolsOrder() {
   if (Config->SymbolOrderingFile.empty())
     return;
 
@@ -908,8 +905,9 @@ static void sortBySymbolsOrder(ArrayRef<OutputSection *> OutputSections) {
   }
 
   // Sort sections by priority.
-  for (OutputSection *Sec : OutputSections)
-    Sec->sort([&](InputSectionBase *S) { return SectionOrder.lookup(S); });
+  for (BaseCommand *Base : Script->Opt.Commands)
+    if (auto *Cmd = dyn_cast<OutputSectionCommand>(Base))
+      Cmd->sort([&](InputSectionBase *S) { return SectionOrder.lookup(S); });
 }
 
 template <class ELFT>
@@ -939,11 +937,12 @@ template <class ELFT> void Writer<ELFT>::createSections() {
     if (IS)
       Factory.addInputSec(IS, getOutputSectionName(IS->Name));
 
-  sortBySymbolsOrder<ELFT>(OutputSections);
-  sortInitFini(findSection(".init_array"));
-  sortInitFini(findSection(".fini_array"));
-  sortCtorsDtors(findSection(".ctors"));
-  sortCtorsDtors(findSection(".dtors"));
+  Script->fabricateDefaultCommands();
+  sortBySymbolsOrder<ELFT>();
+  sortInitFini(findSectionCommand(".init_array"));
+  sortInitFini(findSectionCommand(".fini_array"));
+  sortCtorsDtors(findSectionCommand(".ctors"));
+  sortCtorsDtors(findSectionCommand(".dtors"));
 }
 
 // We want to find how similar two ranks are.
@@ -1395,13 +1394,6 @@ OutputSectionCommand *Writer<ELFT>::findSectionCommand(StringRef Name) {
 template <class ELFT> OutputSection *Writer<ELFT>::findSectionInScript(StringRef Name) {
   if (OutputSectionCommand *Cmd = findSectionCommand(Name))
     return Cmd->Sec;
-  return nullptr;
-}
-
-template <class ELFT> OutputSection *Writer<ELFT>::findSection(StringRef Name) {
-  for (OutputSection *Sec : OutputSections)
-    if (Sec->Name == Name)
-      return Sec;
   return nullptr;
 }
 

@@ -140,6 +140,10 @@ struct OutputSectionCommand : BaseCommand {
   template <class ELFT> void writeTo(uint8_t *Buf);
   template <class ELFT> void maybeCompress();
   uint32_t getFiller();
+
+  void sort(std::function<int(InputSectionBase *S)> Order);
+  void sortInitFini();
+  void sortCtorsDtors();
 };
 
 // This struct represents one section match pattern in SECTIONS() command.
