@@ -328,7 +328,7 @@ private:
   std::unique_ptr<MemoryBuffer> OutputBuffer;
   char *BufferStart;
   uint64_t CurrentOffset = 0;
-  Machine MachineType;
+  COFF::MachineTypes MachineType;
   const WindowsResourceParser::TreeNode &Resources;
   const ArrayRef<std::vector<uint8_t>> Data;
   uint64_t FileSize;
@@ -350,6 +350,7 @@ WindowsResourceCOFFWriter::WindowsResourceCOFFWriter(
     : MachineType(MachineType), Resources(Parser.getTree()),
       Data(Parser.getData()), StringTable(Parser.getStringTable()) {
   performFileLayout();
+
   OutputBuffer = MemoryBuffer::getNewMemBuffer(FileSize);
 }
 

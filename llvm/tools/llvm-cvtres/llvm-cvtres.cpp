@@ -120,21 +120,21 @@ int main(int argc_, const char *argv_[]) {
 
   bool Verbose = InputArgs.hasArg(OPT_VERBOSE);
 
-  Machine MachineType;
+  COFF::MachineTypes MachineType;
 
   if (InputArgs.hasArg(OPT_MACHINE)) {
     std::string MachineString = InputArgs.getLastArgValue(OPT_MACHINE).upper();
-    MachineType = StringSwitch<Machine>(MachineString)
-                      .Case("ARM", Machine::ARM)
-                      .Case("X64", Machine::X64)
-                      .Case("X86", Machine::X86)
-                      .Default(Machine::UNKNOWN);
-    if (MachineType == Machine::UNKNOWN)
+    MachineType = StringSwitch<COFF::MachineTypes>(MachineString)
+                      .Case("ARM", COFF::IMAGE_FILE_MACHINE_ARMNT)
+                      .Case("X64", COFF::IMAGE_FILE_MACHINE_AMD64)
+                      .Case("X86", COFF::IMAGE_FILE_MACHINE_I386)
+                      .Default(COFF::IMAGE_FILE_MACHINE_UNKNOWN);
+    if (MachineType == COFF::IMAGE_FILE_MACHINE_UNKNOWN)
       reportError("Unsupported machine architecture");
   } else {
     if (Verbose)
       outs() << "Machine architecture not specified; assumed X64.\n";
-    MachineType = Machine::X64;
+    MachineType = COFF::IMAGE_FILE_MACHINE_AMD64;
   }
 
   std::vector<std::string> InputFiles = InputArgs.getAllArgValues(OPT_INPUT);
@@ -155,10 +155,10 @@ int main(int argc_, const char *argv_[]) {
   if (Verbose) {
     outs() << "Machine: ";
     switch (MachineType) {
-    case Machine::ARM:
+    case COFF::IMAGE_FILE_MACHINE_ARMNT:
       outs() << "ARM\n";
       break;
-    case Machine::X86:
+    case COFF::IMAGE_FILE_MACHINE_I386:
       outs() << "X86\n";
       break;
     default:
@@ -207,6 +207,7 @@ int main(int argc_, const char *argv_[]) {
   std::copy(OutputBuffer->getBufferStart(), OutputBuffer->getBufferEnd(),
             FileBuffer->getBufferStart());
   error(FileBuffer->commit());
+
   if (Verbose) {
     Expected<OwningBinary<Binary>> BinaryOrErr = createBinary(OutputFile);
     if (!BinaryOrErr)

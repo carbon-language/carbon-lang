@@ -43,12 +43,9 @@
 #include <map>
 
 namespace llvm {
-
 namespace object {
 
 class WindowsResource;
-
-enum class Machine { UNKNOWN, ARM, X64, X86 };
 
 class ResourceEntryRef {
 public:
