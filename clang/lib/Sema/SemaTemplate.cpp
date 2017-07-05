@@ -2843,7 +2843,7 @@ static Expr *lookThroughRangesV3Condition(Preprocessor &PP, Expr *Cond) {
 
   // With an inner '==' that has a literal on the right-hand side.
   Expr *LHS = BinOp->getLHS();
-  auto InnerBinOp = dyn_cast<BinaryOperator>(LHS->IgnoreParenImpCasts());
+  auto *InnerBinOp = dyn_cast<BinaryOperator>(LHS->IgnoreParenImpCasts());
   if (!InnerBinOp) return Cond;
 
   if (InnerBinOp->getOpcode() != BO_EQ ||
@@ -2853,7 +2853,7 @@ static Expr *lookThroughRangesV3Condition(Preprocessor &PP, Expr *Cond) {
   // If the inner binary operation came from a macro expansion named
   // CONCEPT_REQUIRES or CONCEPT_REQUIRES_, return the right-hand side
   // of the '||', which is the real, user-provided condition.
-  auto Loc = InnerBinOp->getExprLoc();
+  SourceLocation Loc = InnerBinOp->getExprLoc();
   if (!Loc.isMacroID()) return Cond;
 
   StringRef MacroName = PP.getImmediateMacroName(Loc);

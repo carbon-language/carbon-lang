@@ -157,7 +157,7 @@ namespace PR15673 {
 
 #if __cplusplus <= 199711L
   // expected-warning@+4 {{default template arguments for a function template are a C++11 extension}}
-  // expected-warning@+4 {{default template arguments for a function template are a C++11 extension}}
+  // expected-warning@+3 {{default template arguments for a function template are a C++11 extension}}
 #endif
   template<typename T,
            CONCEPT_REQUIRES_(some_passing_trait<T>::value && some_trait<T>::value)>
