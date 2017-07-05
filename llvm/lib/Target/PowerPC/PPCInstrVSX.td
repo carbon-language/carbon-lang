@@ -2729,36 +2729,54 @@ def DblToFlt {
 }
 
 def ByteToWord {
-  dag A0 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 0)), i8));
-  dag A1 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 4)), i8));
-  dag A2 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 8)), i8));
-  dag A3 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 12)), i8));
+  dag LE_A0 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 0)), i8));
+  dag LE_A1 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 4)), i8));
+  dag LE_A2 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 8)), i8));
+  dag LE_A3 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 12)), i8));
+  dag BE_A0 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 3)), i8));
+  dag BE_A1 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 7)), i8));
+  dag BE_A2 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 11)), i8));
+  dag BE_A3 = (i32 (sext_inreg (i32 (vector_extract v16i8:$A, 15)), i8));
 }
 
 def ByteToDWord {
-  dag A0 = (i64 (sext_inreg
-            (i64 (anyext (i32 (vector_extract v16i8:$A, 0)))), i8));
-  dag A1 = (i64 (sext_inreg
-            (i64 (anyext (i32 (vector_extract v16i8:$A, 8)))), i8));
+  dag LE_A0 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v16i8:$A, 0)))), i8));
+  dag LE_A1 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v16i8:$A, 8)))), i8));
+  dag BE_A0 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v16i8:$A, 7)))), i8));
+  dag BE_A1 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v16i8:$A, 15)))), i8));
 }
 
 def HWordToWord {
-  dag A0 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 0)), i16));
-  dag A1 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 2)), i16));
-  dag A2 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 4)), i16));
-  dag A3 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 6)), i16));
+  dag LE_A0 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 0)), i16));
+  dag LE_A1 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 2)), i16));
+  dag LE_A2 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 4)), i16));
+  dag LE_A3 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 6)), i16));
+  dag BE_A0 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 1)), i16));
+  dag BE_A1 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 3)), i16));
+  dag BE_A2 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 5)), i16));
+  dag BE_A3 = (i32 (sext_inreg (i32 (vector_extract v8i16:$A, 7)), i16));
 }
 
 def HWordToDWord {
-  dag A0 = (i64 (sext_inreg
-            (i64 (anyext (i32 (vector_extract v8i16:$A, 0)))), i16));
-  dag A1 = (i64 (sext_inreg
-            (i64 (anyext (i32 (vector_extract v8i16:$A, 4)))), i16));
+  dag LE_A0 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v8i16:$A, 0)))), i16));
+  dag LE_A1 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v8i16:$A, 4)))), i16));
+  dag BE_A0 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v8i16:$A, 3)))), i16));
+  dag BE_A1 = (i64 (sext_inreg
+              (i64 (anyext (i32 (vector_extract v8i16:$A, 7)))), i16));
 }
 
 def WordToDWord {
-  dag A0 = (i64 (sext (i32 (vector_extract v4i32:$A, 0))));
-  dag A1 = (i64 (sext (i32 (vector_extract v4i32:$A, 2))));
+  dag LE_A0 = (i64 (sext (i32 (vector_extract v4i32:$A, 0))));
+  dag LE_A1 = (i64 (sext (i32 (vector_extract v4i32:$A, 2))));
+  dag BE_A0 = (i64 (sext (i32 (vector_extract v4i32:$A, 1))));
+  dag BE_A1 = (i64 (sext (i32 (vector_extract v4i32:$A, 3))));
 }
 
 def FltToIntLoad {
@@ -3016,18 +3034,46 @@ let AddedComplexity = 400 in {
   // P9 Altivec instructions that can be used to build vectors.
   // Adding them to PPCInstrVSX.td rather than PPCAltivecVSX.td to compete
   // with complexities of existing build vector patterns in this file.
-  let Predicates = [HasP9Altivec] in {
-    def : Pat<(v2i64 (build_vector WordToDWord.A0, WordToDWord.A1)),
+  let Predicates = [HasP9Altivec, IsLittleEndian] in {
+    def : Pat<(v2i64 (build_vector WordToDWord.LE_A0, WordToDWord.LE_A1)),
               (v2i64 (VEXTSW2D $A))>;
-    def : Pat<(v2i64 (build_vector HWordToDWord.A0, HWordToDWord.A1)),
+    def : Pat<(v2i64 (build_vector HWordToDWord.LE_A0, HWordToDWord.LE_A1)),
               (v2i64 (VEXTSH2D $A))>;
-    def : Pat<(v4i32 (build_vector HWordToWord.A0, HWordToWord.A1,
-                      HWordToWord.A2, HWordToWord.A3)),
+    def : Pat<(v4i32 (build_vector HWordToWord.LE_A0, HWordToWord.LE_A1,
+                      HWordToWord.LE_A2, HWordToWord.LE_A3)),
               (v4i32 (VEXTSH2W $A))>;
-    def : Pat<(v4i32 (build_vector ByteToWord.A0, ByteToWord.A1,
-                      ByteToWord.A2, ByteToWord.A3)),
+    def : Pat<(v4i32 (build_vector ByteToWord.LE_A0, ByteToWord.LE_A1,
+                      ByteToWord.LE_A2, ByteToWord.LE_A3)),
               (v4i32 (VEXTSB2W $A))>;
-    def : Pat<(v2i64 (build_vector ByteToDWord.A0, ByteToDWord.A1)),
+    def : Pat<(v2i64 (build_vector ByteToDWord.LE_A0, ByteToDWord.LE_A1)),
               (v2i64 (VEXTSB2D $A))>;
+  }
+
+  let Predicates = [HasP9Altivec, IsBigEndian] in {
+    def : Pat<(v2i64 (build_vector WordToDWord.BE_A0, WordToDWord.BE_A1)),
+              (v2i64 (VEXTSW2D $A))>;
+    def : Pat<(v2i64 (build_vector HWordToDWord.BE_A0, HWordToDWord.BE_A1)),
+              (v2i64 (VEXTSH2D $A))>;
+    def : Pat<(v4i32 (build_vector HWordToWord.BE_A0, HWordToWord.BE_A1,
+                      HWordToWord.BE_A2, HWordToWord.BE_A3)),
+              (v4i32 (VEXTSH2W $A))>;
+    def : Pat<(v4i32 (build_vector ByteToWord.BE_A0, ByteToWord.BE_A1,
+                      ByteToWord.BE_A2, ByteToWord.BE_A3)),
+              (v4i32 (VEXTSB2W $A))>;
+    def : Pat<(v2i64 (build_vector ByteToDWord.BE_A0, ByteToDWord.BE_A1)),
+              (v2i64 (VEXTSB2D $A))>;
+  }
+
+  let Predicates = [HasP9Altivec] in {
+    def: Pat<(v2i64 (PPCSExtVElems v16i8:$A)),
+              (v2i64 (VEXTSB2D $A))>;
+    def: Pat<(v2i64 (PPCSExtVElems v8i16:$A)),
+              (v2i64 (VEXTSH2D $A))>;
+    def: Pat<(v2i64 (PPCSExtVElems v4i32:$A)),
+              (v2i64 (VEXTSW2D $A))>;
+    def: Pat<(v4i32 (PPCSExtVElems v16i8:$A)),
+              (v4i32 (VEXTSB2W $A))>;
+    def: Pat<(v4i32 (PPCSExtVElems v8i16:$A)),
+              (v4i32 (VEXTSH2W $A))>;
   }
 }
