@@ -5273,6 +5273,10 @@ SDValue DAGCombiner::visitRotate(SDNode *N) {
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
 
+  // fold (rot x, 0) -> x
+  if (isNullConstantOrNullSplatConstant(N1))
+    return N0;
+
   // fold (rot* x, (trunc (and y, c))) -> (rot* x, (and (trunc y), (trunc c))).
   if (N1.getOpcode() == ISD::TRUNCATE &&
       N1.getOperand(0).getOpcode() == ISD::AND) {
