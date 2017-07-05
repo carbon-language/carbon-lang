@@ -350,7 +350,6 @@ WindowsResourceCOFFWriter::WindowsResourceCOFFWriter(
     : MachineType(MachineType), Resources(Parser.getTree()),
       Data(Parser.getData()), StringTable(Parser.getStringTable()) {
   performFileLayout();
-
   OutputBuffer = MemoryBuffer::getNewMemBuffer(FileSize);
 }
 
