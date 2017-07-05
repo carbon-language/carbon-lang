@@ -83,7 +83,6 @@ public:
   void sort(std::function<int(InputSectionBase *S)> Order);
   void sortInitFini();
   void sortCtorsDtors();
-  void assignOffsets();
   std::vector<InputSection *> Sections;
 
   // Used for implementation of --compress-debug-sections option.

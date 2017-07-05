@@ -1286,12 +1286,6 @@ template <class ELFT> void Writer<ELFT>::finalizeSections() {
     Out::ProgramHeaders->Size = sizeof(Elf_Phdr) * Phdrs.size();
   }
 
-  // Compute the size of .rela.dyn and .rela.plt early since we need
-  // them to populate .dynamic.
-  for (SyntheticSection *SS : {In<ELFT>::RelaDyn, In<ELFT>::RelaPlt})
-    if (SS->getParent() && !SS->empty())
-      SS->getParent()->assignOffsets();
-
   // Dynamic section must be the last one in this list and dynamic
   // symbol table section (DynSymTab) must be the first one.
   applySynthetic({InX::DynSymTab,    InX::Bss,           InX::BssRelRo,
