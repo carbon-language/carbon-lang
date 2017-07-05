@@ -153,7 +153,7 @@ struct WasmRelocationEntry {
   }
 
   void print(raw_ostream &Out) const {
-    Out << "Off=" << Offset << ", Sym=" << Symbol << ", Addend=" << Addend
+    Out << "Off=" << Offset << ", Sym=" << *Symbol << ", Addend=" << Addend
         << ", Type=" << Type << ", FixupSection=" << FixupSection;
   }
 
