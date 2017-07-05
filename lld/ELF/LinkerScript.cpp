@@ -1076,13 +1076,6 @@ template <class ELFT> void OutputSectionCommand::writeTo(uint8_t *Buf) {
       writeInt(Buf + Data->Offset, Data->Expression().getValue(), Data->Size);
 }
 
-bool LinkerScript::hasLMA(OutputSection *Sec) {
-  if (OutputSectionCommand *Cmd = getCmd(Sec))
-    if (Cmd->LMAExpr)
-      return true;
-  return false;
-}
-
 ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
   if (S == ".")
     return {CurOutSec, Dot - CurOutSec->Addr, Loc};
