@@ -119,6 +119,8 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
                                       MachineIRBuilder &MIRBuilder) const {
   using namespace TargetOpcode;
 
+  MIRBuilder.setInstr(MI);
+
   switch (MI.getOpcode()) {
   default:
     return false;
@@ -140,9 +142,9 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
     auto RetVal = MRI.createGenericVirtualRegister(
         getLLTForType(*RetTy, MIRBuilder.getMF().getDataLayout()));
 
-    auto Status = replaceWithLibcall(MI, MIRBuilder, Libcall, {RetVal, RetTy},
-                                     {{MI.getOperand(1).getReg(), ArgTy},
-                                      {MI.getOperand(2).getReg(), ArgTy}});
+    auto Status = createLibcall(MIRBuilder, Libcall, {RetVal, RetTy},
+                                {{MI.getOperand(1).getReg(), ArgTy},
+                                 {MI.getOperand(2).getReg(), ArgTy}});
     if (Status != LegalizerHelper::Legalized)
       return false;
 
@@ -153,7 +155,10 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
         {MRI.createGenericVirtualRegister(LLT::scalar(32)), OriginalResult},
         RetVal);
 
-    return LegalizerHelper::Legalized;
+    break;
   }
   }
+
+  MI.eraseFromParent();
+  return true;
 }
