@@ -240,6 +240,10 @@ MachineInstrBuilder MachineIRBuilder::buildAnd(unsigned Res, unsigned Op0,
   return buildBinaryOp(TargetOpcode::G_AND, Res, Op0, Op1);
 }
 
+MachineInstrBuilder MachineIRBuilder::buildOr(unsigned Res, unsigned Op0,
+                                               unsigned Op1) {
+  return buildBinaryOp(TargetOpcode::G_OR, Res, Op0, Op1);
+}
 
 MachineInstrBuilder MachineIRBuilder::buildBr(MachineBasicBlock &Dest) {
   return buildInstr(TargetOpcode::G_BR).addMBB(&Dest);
