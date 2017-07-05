@@ -1274,7 +1274,7 @@ void RuleMatcher::emit(raw_ostream &OS) {
      << "  };\n"
      << "  State.MIs.clear();\n"
      << "  State.MIs.push_back(&I);\n"
-     << "  DEBUG(dbgs() << \"Processing MatchTable" << NumPatternEmitted
+     << "  DEBUG(dbgs() << \"Processing MatchTable" << CurrentMatchTableID
      << "\\n\");\n"
      << "  if (executeMatchTable(*this, State, MatcherInfo, MatchTable"
      << CurrentMatchTableID << ", MRI, TRI, RBI, AvailableFeatures)) {\n";
@@ -1335,15 +1335,15 @@ void RuleMatcher::emit(raw_ostream &OS) {
     }
   }
 
-  OS << "    const static int64_t EmitTable" << NumPatternEmitted << "[] = {\n";
+  OS << "    const static int64_t EmitTable" << CurrentMatchTableID << "[] = {\n";
   for (const auto &MA : Actions)
     MA->emitCxxActionStmts(OS, *this, 0);
   OS << "      GIR_Done,\n"
      << "    };\n"
      << "    NewMIVector OutMIs;\n"
-     << "    DEBUG(dbgs() << \"Processing EmitTable" << NumPatternEmitted
+     << "    DEBUG(dbgs() << \"Processing EmitTable" << CurrentMatchTableID
      << "\\n\");\n"
-     << "    executeEmitTable(OutMIs, State, EmitTable" << NumPatternEmitted
+     << "    executeEmitTable(OutMIs, State, EmitTable" << CurrentMatchTableID
      << ", TII, TRI, RBI);\n";
 
   OS << "    return true;\n";
