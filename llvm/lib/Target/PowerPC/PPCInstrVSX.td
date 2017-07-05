@@ -1901,6 +1901,98 @@ let Predicates = [IsLittleEndian, HasVSX] in
 def : Pat<(v4i32 (int_ppc_vsx_lxvw4x_be xoaddr:$src)), (LXVW4X xoaddr:$src)>;
 def : Pat<(v2f64 (int_ppc_vsx_lxvd2x_be xoaddr:$src)), (LXVD2X xoaddr:$src)>;
 
+// Variable index unsigned vector_extract on Power9
+let Predicates = [HasP9Altivec, IsLittleEndian] in {
+  def : Pat<(i64 (anyext (i32 (vector_extract v16i8:$S, i64:$Idx)))),
+            (VEXTUBRX $Idx, $S)>;
+
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, i64:$Idx)))),
+            (VEXTUHRX (RLWINM8 $Idx, 1, 28, 30), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 0)))),
+            (VEXTUHRX (LI8 0), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 1)))),
+            (VEXTUHRX (LI8 2), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 2)))),
+            (VEXTUHRX (LI8 4), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 3)))),
+            (VEXTUHRX (LI8 6), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 4)))),
+            (VEXTUHRX (LI8 8), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 5)))),
+            (VEXTUHRX (LI8 10), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 6)))),
+            (VEXTUHRX (LI8 12), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 7)))),
+            (VEXTUHRX (LI8 14), $S)>;
+
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, i64:$Idx)))),
+            (VEXTUWRX (RLWINM8 $Idx, 2, 28, 29), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 0)))),
+            (VEXTUWRX (LI8 0), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 1)))),
+            (VEXTUWRX (LI8 4), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 2)))),
+            (VEXTUWRX (LI8 8), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 3)))),
+            (VEXTUWRX (LI8 12), $S)>;
+
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, i64:$Idx)))),
+            (EXTSW (VEXTUWRX (RLWINM8 $Idx, 2, 28, 29), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 0)))),
+            (EXTSW (VEXTUWRX (LI8 0), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 1)))),
+            (EXTSW (VEXTUWRX (LI8 4), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 2)))),
+            (EXTSW (VEXTUWRX (LI8 8), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 3)))),
+            (EXTSW (VEXTUWRX (LI8 12), $S))>;
+}
+let Predicates = [HasP9Altivec, IsBigEndian] in {
+  def : Pat<(i64 (anyext (i32 (vector_extract v16i8:$S, i64:$Idx)))),
+            (VEXTUBLX $Idx, $S)>;
+
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, i64:$Idx)))),
+            (VEXTUHLX (RLWINM8 $Idx, 1, 28, 30), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 0)))),
+            (VEXTUHLX (LI8 0), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 1)))),
+            (VEXTUHLX (LI8 2), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 2)))),
+            (VEXTUHLX (LI8 4), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 3)))),
+            (VEXTUHLX (LI8 6), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 4)))),
+            (VEXTUHLX (LI8 8), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 5)))),
+            (VEXTUHLX (LI8 10), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 6)))),
+            (VEXTUHLX (LI8 12), $S)>;
+  def : Pat<(i64 (anyext (i32 (vector_extract v8i16:$S, 7)))),
+            (VEXTUHLX (LI8 14), $S)>;
+
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, i64:$Idx)))),
+            (VEXTUWLX (RLWINM8 $Idx, 2, 28, 29), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 0)))),
+            (VEXTUWLX (LI8 0), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 1)))),
+            (VEXTUWLX (LI8 4), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 2)))),
+            (VEXTUWLX (LI8 8), $S)>;
+  def : Pat<(i64 (zext (i32 (vector_extract v4i32:$S, 3)))),
+            (VEXTUWLX (LI8 12), $S)>;
+
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, i64:$Idx)))),
+            (EXTSW (VEXTUWLX (RLWINM8 $Idx, 2, 28, 29), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 0)))),
+            (EXTSW (VEXTUWLX (LI8 0), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 1)))),
+            (EXTSW (VEXTUWLX (LI8 4), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 2)))),
+            (EXTSW (VEXTUWLX (LI8 8), $S))>;
+  def : Pat<(i64 (sext (i32 (vector_extract v4i32:$S, 3)))),
+            (EXTSW (VEXTUWLX (LI8 12), $S))>;
+}
+
 let Predicates = [IsLittleEndian, HasDirectMove] in {
   // v16i8 scalar <-> vector conversions (LE)
   def : Pat<(v16i8 (scalar_to_vector i32:$A)),
