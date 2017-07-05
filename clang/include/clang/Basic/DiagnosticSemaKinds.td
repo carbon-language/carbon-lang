@@ -2880,7 +2880,7 @@ def warn_partial_availability : Warning<"%0 is only available conditionally">,
 def warn_partial_availability_new : Warning<warn_partial_availability.Text>,
   InGroup<UnguardedAvailabilityNew>;
 def note_partial_availability_silence : Note<
-  "explicitly redeclare %0 to silence this warning">;
+  "annotate %select{%1|anonymous %1}0 with an availability attribute to silence">;
 def note_unguarded_available_silence : Note<
   "enclose %0 in %select{an @available|a __builtin_available}1 check to silence"
   " this warning">;
