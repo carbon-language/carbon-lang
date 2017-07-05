@@ -872,13 +872,13 @@ template <class ELFT> void Writer<ELFT>::addReservedSymbols() {
 // __attribute__((init_priority(N))).
 static void sortInitFini(OutputSection *S) {
   if (S)
-    reinterpret_cast<OutputSection *>(S)->sortInitFini();
+    S->sortInitFini();
 }
 
 // Sort input sections by the special rule for .ctors and .dtors.
 static void sortCtorsDtors(OutputSection *S) {
   if (S)
-    reinterpret_cast<OutputSection *>(S)->sortCtorsDtors();
+    S->sortCtorsDtors();
 }
 
 // Sort input sections using the list provided by --symbol-ordering-file.
