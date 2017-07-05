@@ -694,8 +694,8 @@ def : InstRW<[FXa, Lat6, GroupAlone], (instregex "FLOGR$")>;
 def : InstRW<[FXa, Lat3], (instregex "POPCNT$")>;
 
 // Extend
-def : InstRW<[FXa], (instregex "AEXT128_64$")>;
-def : InstRW<[FXa], (instregex "ZEXT128_(32|64)$")>;
+def : InstRW<[FXa], (instregex "AEXT128$")>;
+def : InstRW<[FXa], (instregex "ZEXT128$")>;
 
 // String instructions
 def : InstRW<[FXa, LSU, Lat30], (instregex "SRST$")>;
