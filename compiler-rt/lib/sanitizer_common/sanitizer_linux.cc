@@ -59,6 +59,14 @@
 #include <ucontext.h>
 #include <unistd.h>
 
+#if SANITIZER_LINUX
+#include <sys/utsname.h>
+#endif
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+#include <sys/personality.h>
+#endif
+
 #if SANITIZER_FREEBSD
 #include <sys/exec.h>
 #include <sys/sysctl.h>
