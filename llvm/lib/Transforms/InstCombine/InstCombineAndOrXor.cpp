@@ -80,7 +80,8 @@ static Value *getFCmpValue(unsigned Code, Value *LHS, Value *RHS,
 /// \param I Binary operator to transform.
 /// \return Pointer to node that must replace the original binary operator, or
 ///         null pointer if no transformation was made.
-Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
+static Value *SimplifyBSwap(BinaryOperator &I,
+                            InstCombiner::BuilderTy *Builder) {
   assert(I.isBitwiseLogicOp() && "Unexpected opcode for bswap simplifying");
 
   Value *OldLHS = I.getOperand(0);
@@ -1281,7 +1282,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Value *V = SimplifyUsingDistributiveLaws(I))
     return replaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyBSwap(I))
+  if (Value *V = SimplifyBSwap(I, Builder))
     return replaceInstUsesWith(I, V);
 
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
@@ -1985,7 +1986,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (Value *V = SimplifyUsingDistributiveLaws(I))
     return replaceInstUsesWith(I, V);
 
-  if (Value *V = SimplifyBSwap(I))
+  if (Value *V = SimplifyBSwap(I, Builder))
     return replaceInstUsesWith(I, V);
 
   if (isa<Constant>(Op1))
@@ -2400,7 +2401,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
   if (SimplifyDemandedInstructionBits(I))
     return &I;
 
-  if (Value *V = SimplifyBSwap(I))
+  if (Value *V = SimplifyBSwap(I, Builder))
     return replaceInstUsesWith(I, V);
 
   // Apply DeMorgan's Law for 'nand' / 'nor' logic with an inverted operand.
