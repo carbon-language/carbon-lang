@@ -799,7 +799,7 @@ void MaybeReexec() {
 char **GetArgv() {
   return *_NSGetArgv();
 }
-  
+
 #if defined(__aarch64__) && SANITIZER_IOS && !SANITIZER_IOSSIM
 // The task_vm_info struct is normally provided by the macOS SDK, but we need
 // fields only available in 10.12+. Declare the struct manually to be able to
