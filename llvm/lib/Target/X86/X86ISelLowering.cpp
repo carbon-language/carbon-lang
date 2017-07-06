@@ -9364,7 +9364,7 @@ static bool matchVectorShuffleAsEXTRQ(MVT VT, SDValue &V1, SDValue &V2,
   int Idx = -1;
   for (int i = 0; i != Len; ++i) {
     int M = Mask[i];
-    if (M < 0)
+    if (M == SM_SentinelUndef)
       continue;
     SDValue &V = (M < Size ? V1 : V2);
     M = M % Size;
@@ -27694,6 +27694,33 @@ static bool combineX86ShuffleChain(ArrayRef<SDValue> Inputs, SDValue Root,
     DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Res),
                   /*AddTo*/ true);
     return true;
+  }
+
+  // Annoyingly, SSE4A instructions don't map into the above match helpers.
+  if (Subtarget.hasSSE4A() && AllowIntDomain && RootSizeInBits == 128) {
+    ShuffleVT = MVT::getIntegerVT(MaskEltSizeInBits);
+    ShuffleVT = MVT::getVectorVT(ShuffleVT, NumMaskElts);
+
+    APInt Zeroable(NumMaskElts, 0);
+    for (unsigned i = 0; i != NumMaskElts; ++i)
+      if (isUndefOrZero(Mask[i]))
+        Zeroable.setBit(i);
+
+    uint64_t BitLen, BitIdx;
+    if (matchVectorShuffleAsEXTRQ(ShuffleVT, V1, V2, Mask, BitLen, BitIdx,
+                                  Zeroable)) {
+      if (Depth == 1 && Root.getOpcode() == X86ISD::EXTRQI)
+        return false; // Nothing to do!
+      V1 = DAG.getBitcast(ShuffleVT, V1);
+      DCI.AddToWorklist(V1.getNode());
+      Res = DAG.getNode(X86ISD::EXTRQI, DL, ShuffleVT, V1,
+                        DAG.getConstant(BitLen, DL, MVT::i8),
+                        DAG.getConstant(BitIdx, DL, MVT::i8));
+      DCI.AddToWorklist(Res.getNode());
+      DCI.CombineTo(Root.getNode(), DAG.getBitcast(RootVT, Res),
+                    /*AddTo*/ true);
+      return true;
+    }
   }
 
   // Don't try to re-form single instruction chains under any circumstances now
