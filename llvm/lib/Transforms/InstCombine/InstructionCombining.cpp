@@ -498,8 +498,7 @@ getBinOpsForFactorization(Instruction::BinaryOps TopLevelOpcode,
 
 /// This tries to simplify binary operations by factorizing out common terms
 /// (e. g. "(A*B)+(A*C)" -> "A*(B+C)").
-Value *InstCombiner::tryFactorization(InstCombiner::BuilderTy *Builder,
-                                      BinaryOperator &I,
+Value *InstCombiner::tryFactorization(BinaryOperator &I,
                                       Instruction::BinaryOps InnerOpcode,
                                       Value *A, Value *B, Value *C, Value *D) {
   assert(A && B && C && D && "All values must be provided");
@@ -610,7 +609,7 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
     // The instruction has the form "(A op' B) op (C op' D)".  Try to factorize
     // a common term.
     if (Op0 && Op1 && LHSOpcode == RHSOpcode)
-      if (Value *V = tryFactorization(Builder, I, LHSOpcode, A, B, C, D))
+      if (Value *V = tryFactorization(I, LHSOpcode, A, B, C, D))
         return V;
 
     // The instruction has the form "(A op' B) op (C)".  Try to factorize common
@@ -618,7 +617,7 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
     if (Op0)
       if (Value *Ident = getIdentityValue(LHSOpcode, RHS))
         if (Value *V =
-                tryFactorization(Builder, I, LHSOpcode, A, B, RHS, Ident))
+                tryFactorization(I, LHSOpcode, A, B, RHS, Ident))
           return V;
 
     // The instruction has the form "(B) op (C op' D)".  Try to factorize common
@@ -626,7 +625,7 @@ Value *InstCombiner::SimplifyUsingDistributiveLaws(BinaryOperator &I) {
     if (Op1)
       if (Value *Ident = getIdentityValue(RHSOpcode, LHS))
         if (Value *V =
-                tryFactorization(Builder, I, RHSOpcode, LHS, Ident, C, D))
+                tryFactorization(I, RHSOpcode, LHS, Ident, C, D))
           return V;
   }
 
