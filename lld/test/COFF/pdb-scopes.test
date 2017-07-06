@@ -33,7 +33,7 @@ RUN: yaml2obj %S/Inputs/pdb-scopes-b.yaml -o %t-b.obj
 RUN: lld-link %t-a.obj %t-b.obj -debug -entry:main -nodefaultlib -out:%t.exe -pdb:%t.pdb
 RUN: llvm-pdbutil dump -symbols %t.pdb | FileCheck %s
 
-CHECK-LABEL: Mod 0000 | `C:\src\llvm-project\build\tools\lld\test\COFF\Output\pdb-scopes.test.tmp-a.obj`:
+CHECK-LABEL: Mod 0000 | `{{.*}}pdb-scopes.test.tmp-a.obj`:
 CHECK: 104 | S_GPROC32_ID [size = 44] `g`
 CHECK:       parent = 0, end = 196, addr = 0002:0000, code size = 5
 CHECK:       debug start = 4, debug end = 4, flags = none
@@ -55,7 +55,7 @@ CHECK: 364 | S_REGREL32 [size = 16] `y`
 CHECK: 380 | S_END [size = 4]
 CHECK: 384 | S_END [size = 4]
 
-CHECK-LABEL: Mod 0001 | `C:\src\llvm-project\build\tools\lld\test\COFF\Output\pdb-scopes.test.tmp-b.obj`:
+CHECK-LABEL: Mod 0001 | `{{.*}}pdb-scopes.test.tmp-b.obj`:
 CHECK: 104 | S_GPROC32_ID [size = 44] `f`
 CHECK:       parent = 0, end = 284, addr = 0002:0080, code size = 62
 CHECK:       debug start = 8, debug end = 57, flags = none
