@@ -9337,11 +9337,11 @@ static SDValue lowerVectorShuffleAsShift(const SDLoc &DL, MVT VT, SDValue V1,
   return DAG.getBitcast(VT, V);
 }
 
-/// \brief Try to lower a vector shuffle using SSE4a EXTRQ/INSERTQ.
-static SDValue lowerVectorShuffleWithSSE4A(const SDLoc &DL, MVT VT, SDValue V1,
-                                           SDValue V2, ArrayRef<int> Mask,
-                                           const APInt &Zeroable,
-                                           SelectionDAG &DAG) {
+// EXTRQ: Extract Len elements from lower half of source, starting at Idx.
+// Remainder of lower half result is zero and upper half is all undef.
+static bool matchVectorShuffleAsEXTRQ(MVT VT, SDValue &V1, SDValue &V2,
+                                      ArrayRef<int> Mask, uint64_t &BitLen,
+                                      uint64_t &BitIdx, const APInt &Zeroable) {
   int Size = Mask.size();
   int HalfSize = Size / 2;
   assert(Size == (int)VT.getVectorNumElements() && "Unexpected mask size");
@@ -9349,120 +9349,133 @@ static SDValue lowerVectorShuffleWithSSE4A(const SDLoc &DL, MVT VT, SDValue V1,
 
   // Upper half must be undefined.
   if (!isUndefInRange(Mask, HalfSize, HalfSize))
-    return SDValue();
+    return false;
 
-  // EXTRQ: Extract Len elements from lower half of source, starting at Idx.
-  // Remainder of lower half result is zero and upper half is all undef.
-  auto LowerAsEXTRQ = [&]() {
-    // Determine the extraction length from the part of the
-    // lower half that isn't zeroable.
-    int Len = HalfSize;
-    for (; Len > 0; --Len)
-      if (!Zeroable[Len - 1])
-        break;
-    assert(Len > 0 && "Zeroable shuffle mask");
+  // Determine the extraction length from the part of the
+  // lower half that isn't zeroable.
+  int Len = HalfSize;
+  for (; Len > 0; --Len)
+    if (!Zeroable[Len - 1])
+      break;
+  assert(Len > 0 && "Zeroable shuffle mask");
 
-    // Attempt to match first Len sequential elements from the lower half.
-    SDValue Src;
-    int Idx = -1;
-    for (int i = 0; i != Len; ++i) {
-      int M = Mask[i];
-      if (M < 0)
-        continue;
-      SDValue &V = (M < Size ? V1 : V2);
-      M = M % Size;
+  // Attempt to match first Len sequential elements from the lower half.
+  SDValue Src;
+  int Idx = -1;
+  for (int i = 0; i != Len; ++i) {
+    int M = Mask[i];
+    if (M < 0)
+      continue;
+    SDValue &V = (M < Size ? V1 : V2);
+    M = M % Size;
 
-      // The extracted elements must start at a valid index and all mask
-      // elements must be in the lower half.
-      if (i > M || M >= HalfSize)
-        return SDValue();
+    // The extracted elements must start at a valid index and all mask
+    // elements must be in the lower half.
+    if (i > M || M >= HalfSize)
+      return false;
 
-      if (Idx < 0 || (Src == V && Idx == (M - i))) {
-        Src = V;
-        Idx = M - i;
-        continue;
-      }
-      return SDValue();
+    if (Idx < 0 || (Src == V && Idx == (M - i))) {
+      Src = V;
+      Idx = M - i;
+      continue;
+    }
+    return false;
+  }
+
+  if (!Src || Idx < 0)
+    return false;
+
+  assert((Idx + Len) <= HalfSize && "Illegal extraction mask");
+  BitLen = (Len * VT.getScalarSizeInBits()) & 0x3f;
+  BitIdx = (Idx * VT.getScalarSizeInBits()) & 0x3f;
+  V1 = Src;
+  return true;
+}
+
+// INSERTQ: Extract lowest Len elements from lower half of second source and
+// insert over first source, starting at Idx.
+// { A[0], .., A[Idx-1], B[0], .., B[Len-1], A[Idx+Len], .., UNDEF, ... }
+static bool matchVectorShuffleAsINSERTQ(MVT VT, SDValue &V1, SDValue &V2,
+                                        ArrayRef<int> Mask, uint64_t &BitLen,
+                                        uint64_t &BitIdx) {
+  int Size = Mask.size();
+  int HalfSize = Size / 2;
+  assert(Size == (int)VT.getVectorNumElements() && "Unexpected mask size");
+
+  // Upper half must be undefined.
+  if (!isUndefInRange(Mask, HalfSize, HalfSize))
+    return false;
+
+  for (int Idx = 0; Idx != HalfSize; ++Idx) {
+    SDValue Base;
+
+    // Attempt to match first source from mask before insertion point.
+    if (isUndefInRange(Mask, 0, Idx)) {
+      /* EMPTY */
+    } else if (isSequentialOrUndefInRange(Mask, 0, Idx, 0)) {
+      Base = V1;
+    } else if (isSequentialOrUndefInRange(Mask, 0, Idx, Size)) {
+      Base = V2;
+    } else {
+      continue;
     }
 
-    if (Idx < 0)
-      return SDValue();
+    // Extend the extraction length looking to match both the insertion of
+    // the second source and the remaining elements of the first.
+    for (int Hi = Idx + 1; Hi <= HalfSize; ++Hi) {
+      SDValue Insert;
+      int Len = Hi - Idx;
 
-    assert((Idx + Len) <= HalfSize && "Illegal extraction mask");
-    int BitLen = (Len * VT.getScalarSizeInBits()) & 0x3f;
-    int BitIdx = (Idx * VT.getScalarSizeInBits()) & 0x3f;
-    return DAG.getNode(X86ISD::EXTRQI, DL, VT, Src,
-                       DAG.getConstant(BitLen, DL, MVT::i8),
-                       DAG.getConstant(BitIdx, DL, MVT::i8));
-  };
+      // Match insertion.
+      if (isSequentialOrUndefInRange(Mask, Idx, Len, 0)) {
+        Insert = V1;
+      } else if (isSequentialOrUndefInRange(Mask, Idx, Len, Size)) {
+        Insert = V2;
+      } else {
+        continue;
+      }
 
-  if (SDValue ExtrQ = LowerAsEXTRQ())
-    return ExtrQ;
-
-  // INSERTQ: Extract lowest Len elements from lower half of second source and
-  // insert over first source, starting at Idx.
-  // { A[0], .., A[Idx-1], B[0], .., B[Len-1], A[Idx+Len], .., UNDEF, ... }
-  auto LowerAsInsertQ = [&]() {
-    for (int Idx = 0; Idx != HalfSize; ++Idx) {
-      SDValue Base;
-
-      // Attempt to match first source from mask before insertion point.
-      if (isUndefInRange(Mask, 0, Idx)) {
+      // Match the remaining elements of the lower half.
+      if (isUndefInRange(Mask, Hi, HalfSize - Hi)) {
         /* EMPTY */
-      } else if (isSequentialOrUndefInRange(Mask, 0, Idx, 0)) {
+      } else if ((!Base || (Base == V1)) &&
+                 isSequentialOrUndefInRange(Mask, Hi, HalfSize - Hi, Hi)) {
         Base = V1;
-      } else if (isSequentialOrUndefInRange(Mask, 0, Idx, Size)) {
+      } else if ((!Base || (Base == V2)) &&
+                 isSequentialOrUndefInRange(Mask, Hi, HalfSize - Hi,
+                                            Size + Hi)) {
         Base = V2;
       } else {
         continue;
       }
 
-      // Extend the extraction length looking to match both the insertion of
-      // the second source and the remaining elements of the first.
-      for (int Hi = Idx + 1; Hi <= HalfSize; ++Hi) {
-        SDValue Insert;
-        int Len = Hi - Idx;
-
-        // Match insertion.
-        if (isSequentialOrUndefInRange(Mask, Idx, Len, 0)) {
-          Insert = V1;
-        } else if (isSequentialOrUndefInRange(Mask, Idx, Len, Size)) {
-          Insert = V2;
-        } else {
-          continue;
-        }
-
-        // Match the remaining elements of the lower half.
-        if (isUndefInRange(Mask, Hi, HalfSize - Hi)) {
-          /* EMPTY */
-        } else if ((!Base || (Base == V1)) &&
-                   isSequentialOrUndefInRange(Mask, Hi, HalfSize - Hi, Hi)) {
-          Base = V1;
-        } else if ((!Base || (Base == V2)) &&
-                   isSequentialOrUndefInRange(Mask, Hi, HalfSize - Hi,
-                                              Size + Hi)) {
-          Base = V2;
-        } else {
-          continue;
-        }
-
-        // We may not have a base (first source) - this can safely be undefined.
-        if (!Base)
-          Base = DAG.getUNDEF(VT);
-
-        int BitLen = (Len * VT.getScalarSizeInBits()) & 0x3f;
-        int BitIdx = (Idx * VT.getScalarSizeInBits()) & 0x3f;
-        return DAG.getNode(X86ISD::INSERTQI, DL, VT, Base, Insert,
-                           DAG.getConstant(BitLen, DL, MVT::i8),
-                           DAG.getConstant(BitIdx, DL, MVT::i8));
-      }
+      BitLen = (Len * VT.getScalarSizeInBits()) & 0x3f;
+      BitIdx = (Idx * VT.getScalarSizeInBits()) & 0x3f;
+      V1 = Base;
+      V2 = Insert;
+      return true;
     }
+  }
 
-    return SDValue();
-  };
+  return false;
+}
 
-  if (SDValue InsertQ = LowerAsInsertQ())
-    return InsertQ;
+/// \brief Try to lower a vector shuffle using SSE4a EXTRQ/INSERTQ.
+static SDValue lowerVectorShuffleWithSSE4A(const SDLoc &DL, MVT VT, SDValue V1,
+                                           SDValue V2, ArrayRef<int> Mask,
+                                           const APInt &Zeroable,
+                                           SelectionDAG &DAG) {
+  uint64_t BitLen, BitIdx;
+  if (matchVectorShuffleAsEXTRQ(VT, V1, V2, Mask, BitLen, BitIdx, Zeroable))
+    return DAG.getNode(X86ISD::EXTRQI, DL, VT, V1,
+                       DAG.getConstant(BitLen, DL, MVT::i8),
+                       DAG.getConstant(BitIdx, DL, MVT::i8));
+
+  if (matchVectorShuffleAsINSERTQ(VT, V1, V2, Mask, BitLen, BitIdx))
+    return DAG.getNode(X86ISD::INSERTQI, DL, VT, V1 ? V1 : DAG.getUNDEF(VT),
+                       V2 ? V2 : DAG.getUNDEF(VT),
+                       DAG.getConstant(BitLen, DL, MVT::i8),
+                       DAG.getConstant(BitIdx, DL, MVT::i8));
 
   return SDValue();
 }
