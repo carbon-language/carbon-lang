@@ -137,7 +137,7 @@ PHINode *Loop::getCanonicalInductionVariable() const {
           if (Inc->getOpcode() == Instruction::Add &&
                 Inc->getOperand(0) == PN)
             if (ConstantInt *CI = dyn_cast<ConstantInt>(Inc->getOperand(1)))
-              if (CI->equalsInt(1))
+              if (CI->isOne())
                 return PN;
   }
   return nullptr;

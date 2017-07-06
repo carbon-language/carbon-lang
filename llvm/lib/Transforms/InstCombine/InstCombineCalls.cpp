@@ -860,7 +860,7 @@ static Value *simplifyX86extrq(IntrinsicInst &II, Value *Op0,
   }
 
   // Constant Fold - extraction from zero is always {zero, undef}.
-  if (CI0 && CI0->equalsInt(0))
+  if (CI0 && CI0->isZero())
     return LowConstantHighUndef(0);
 
   return nullptr;
