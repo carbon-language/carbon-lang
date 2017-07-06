@@ -750,9 +750,9 @@ Value *InstCombiner::dyn_castFNegVal(Value *V, bool IgnoreZeroSign) const {
 }
 
 static Value *foldOperationIntoSelectOperand(Instruction &I, Value *SO,
-                                             InstCombiner *IC) {
+                                             InstCombiner::BuilderTy *Builder) {
   if (auto *Cast = dyn_cast<CastInst>(&I))
-    return IC->Builder->CreateCast(Cast->getOpcode(), SO, I.getType());
+    return Builder->CreateCast(Cast->getOpcode(), SO, I.getType());
 
   assert(I.isBinaryOp() && "Unexpected opcode for select folding");
 
@@ -771,8 +771,8 @@ static Value *foldOperationIntoSelectOperand(Instruction &I, Value *SO,
     std::swap(Op0, Op1);
 
   auto *BO = cast<BinaryOperator>(&I);
-  Value *RI = IC->Builder->CreateBinOp(BO->getOpcode(), Op0, Op1,
-                                       SO->getName() + ".op");
+  Value *RI = Builder->CreateBinOp(BO->getOpcode(), Op0, Op1,
+                                   SO->getName() + ".op");
   auto *FPInst = dyn_cast<Instruction>(RI);
   if (FPInst && isa<FPMathOperator>(FPInst))
     FPInst->copyFastMathFlags(BO);
@@ -824,13 +824,13 @@ Instruction *InstCombiner::FoldOpIntoSelect(Instruction &Op, SelectInst *SI) {
     }
   }
 
-  Value *NewTV = foldOperationIntoSelectOperand(Op, TV, this);
-  Value *NewFV = foldOperationIntoSelectOperand(Op, FV, this);
+  Value *NewTV = foldOperationIntoSelectOperand(Op, TV, Builder);
+  Value *NewFV = foldOperationIntoSelectOperand(Op, FV, Builder);
   return SelectInst::Create(SI->getCondition(), NewTV, NewFV, "", nullptr, SI);
 }
 
 static Value *foldOperationIntoPhiValue(BinaryOperator *I, Value *InV,
-                                        InstCombiner *IC) {
+                                        InstCombiner::BuilderTy *Builder) {
   bool ConstIsRHS = isa<Constant>(I->getOperand(1));
   Constant *C = cast<Constant>(I->getOperand(ConstIsRHS));
 
@@ -844,7 +844,7 @@ static Value *foldOperationIntoPhiValue(BinaryOperator *I, Value *InV,
   if (!ConstIsRHS)
     std::swap(Op0, Op1);
 
-  Value *RI = IC->Builder->CreateBinOp(I->getOpcode(), Op0, Op1, "phitmp");
+  Value *RI = Builder->CreateBinOp(I->getOpcode(), Op0, Op1, "phitmp");
   auto *FPInst = dyn_cast<Instruction>(RI);
   if (FPInst && isa<FPMathOperator>(FPInst))
     FPInst->copyFastMathFlags(I);
@@ -969,7 +969,8 @@ Instruction *InstCombiner::foldOpIntoPhi(Instruction &I, PHINode *PN) {
     }
   } else if (auto *BO = dyn_cast<BinaryOperator>(&I)) {
     for (unsigned i = 0; i != NumPHIValues; ++i) {
-      Value *InV = foldOperationIntoPhiValue(BO, PN->getIncomingValue(i), this);
+      Value *InV = foldOperationIntoPhiValue(BO, PN->getIncomingValue(i),
+                                             Builder);
       NewPN->addIncoming(InV, PN->getIncomingBlock(i));
     }
   } else {
