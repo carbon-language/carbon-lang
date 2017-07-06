@@ -899,7 +899,7 @@ public:
 
   RendererKind getKind() const { return Kind; }
 
-  virtual void emitCxxRenderStmts(raw_ostream &OS, RuleMatcher &Rule) const = 0;
+  virtual void emitRenderOpcodes(raw_ostream &OS, RuleMatcher &Rule) const = 0;
 };
 
 /// A CopyRenderer emits code to copy a single operand from an existing
@@ -926,7 +926,7 @@ public:
 
   const StringRef getSymbolicName() const { return SymbolicName; }
 
-  void emitCxxRenderStmts(raw_ostream &OS, RuleMatcher &Rule) const override {
+  void emitRenderOpcodes(raw_ostream &OS, RuleMatcher &Rule) const override {
     const OperandMatcher &Operand = Matched.getOperand(SymbolicName);
     unsigned OldInsnVarID = Rule.getInsnVarID(Operand.getInstructionMatcher());
     OS << "    GIR_Copy, /*NewInsnID*/" << NewInsnID << ", /*OldInsnID*/"
@@ -962,7 +962,7 @@ public:
 
   const StringRef getSymbolicName() const { return SymbolicName; }
 
-  void emitCxxRenderStmts(raw_ostream &OS, RuleMatcher &Rule) const override {
+  void emitRenderOpcodes(raw_ostream &OS, RuleMatcher &Rule) const override {
     const OperandMatcher &Operand = Matched.getOperand(SymbolicName);
     unsigned OldInsnVarID = Rule.getInsnVarID(Operand.getInstructionMatcher());
     OS << "    GIR_CopySubReg, /*NewInsnID*/" << NewInsnID
@@ -988,7 +988,7 @@ public:
     return R->getKind() == OR_Register;
   }
 
-  void emitCxxRenderStmts(raw_ostream &OS, RuleMatcher &Rule) const override {
+  void emitRenderOpcodes(raw_ostream &OS, RuleMatcher &Rule) const override {
     OS << "      GIR_AddRegister, /*InsnID*/" << InsnID << ", "
        << (RegisterDef->getValue("Namespace")
                ? RegisterDef->getValueAsString("Namespace")
@@ -1011,7 +1011,7 @@ public:
     return R->getKind() == OR_Imm;
   }
 
-  void emitCxxRenderStmts(raw_ostream &OS, RuleMatcher &Rule) const override {
+  void emitRenderOpcodes(raw_ostream &OS, RuleMatcher &Rule) const override {
     OS << "      GIR_AddImm, /*InsnID*/" << InsnID << ", /*Imm*/" << Imm
        << ",\n";
   }
@@ -1043,7 +1043,7 @@ public:
     return R->getKind() == OR_ComplexPattern;
   }
 
-  void emitCxxRenderStmts(raw_ostream &OS, RuleMatcher &Rule) const override {
+  void emitRenderOpcodes(raw_ostream &OS, RuleMatcher &Rule) const override {
     OS << "    GIR_ComplexRenderer, /*InsnID*/" << InsnID << ", /*RendererID*/"
        << RendererID << ",\n";
   }
@@ -1153,7 +1153,7 @@ public:
     OS << "    GIR_BuildMI, /*InsnID*/" << InsnID << ", /*Opcode*/"
        << I->Namespace << "::" << I->TheDef->getName() << ",\n";
     for (const auto &Renderer : OperandRenderers)
-      Renderer->emitCxxRenderStmts(OS, Rule);
+      Renderer->emitRenderOpcodes(OS, Rule);
 
     OS << "    GIR_MergeMemOperands, /*InsnID*/" << InsnID << ",\n"
        << "    GIR_EraseFromParent, /*InsnID*/" << RecycleInsnID << ",\n";
