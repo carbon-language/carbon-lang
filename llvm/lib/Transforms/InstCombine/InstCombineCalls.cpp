@@ -213,7 +213,7 @@ Instruction *InstCombiner::SimplifyMemTransfer(MemIntrinsic *MI) {
   if (MDNode *M = MI->getMetadata(LLVMContext::MD_tbaa_struct)) {
     if (M->getNumOperands() == 3 && M->getOperand(0) &&
         mdconst::hasa<ConstantInt>(M->getOperand(0)) &&
-        mdconst::extract<ConstantInt>(M->getOperand(0))->isNullValue() &&
+        mdconst::extract<ConstantInt>(M->getOperand(0))->isZero() &&
         M->getOperand(1) &&
         mdconst::hasa<ConstantInt>(M->getOperand(1)) &&
         mdconst::extract<ConstantInt>(M->getOperand(1))->getValue() ==
@@ -2012,7 +2012,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (Power->isOne())
         return replaceInstUsesWith(CI, II->getArgOperand(0));
       // powi(x, -1) -> 1/x
-      if (Power->isAllOnesValue())
+      if (Power->isMinusOne())
         return BinaryOperator::CreateFDiv(ConstantFP::get(CI.getType(), 1.0),
                                           II->getArgOperand(0));
     }

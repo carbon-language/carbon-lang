@@ -131,7 +131,7 @@ PHINode *Loop::getCanonicalInductionVariable() const {
     PHINode *PN = cast<PHINode>(I);
     if (ConstantInt *CI =
         dyn_cast<ConstantInt>(PN->getIncomingValueForBlock(Incoming)))
-      if (CI->isNullValue())
+      if (CI->isZero())
         if (Instruction *Inc =
             dyn_cast<Instruction>(PN->getIncomingValueForBlock(Backedge)))
           if (Inc->getOpcode() == Instruction::Add &&

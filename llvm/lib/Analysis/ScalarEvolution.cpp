@@ -326,7 +326,7 @@ bool SCEV::isOne() const {
 
 bool SCEV::isAllOnesValue() const {
   if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(this))
-    return SC->getValue()->isAllOnesValue();
+    return SC->getValue()->isMinusOne();
   return false;
 }
 
@@ -5421,9 +5421,9 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       // For an expression like x&255 that merely masks off the high bits,
       // use zext(trunc(x)) as the SCEV expression.
       if (ConstantInt *CI = dyn_cast<ConstantInt>(BO->RHS)) {
-        if (CI->isNullValue())
+        if (CI->isZero())
           return getSCEV(BO->RHS);
-        if (CI->isAllOnesValue())
+        if (CI->isMinusOne())
           return getSCEV(BO->LHS);
         const APInt &A = CI->getValue();
 
@@ -5498,7 +5498,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
     case Instruction::Xor:
       if (ConstantInt *CI = dyn_cast<ConstantInt>(BO->RHS)) {
         // If the RHS of xor is -1, then this is a not operation.
-        if (CI->isAllOnesValue())
+        if (CI->isMinusOne())
           return getNotSCEV(getSCEV(BO->LHS));
 
         // Model xor(and(x, C), C) as and(~x, C), if C is a low-bits mask.
@@ -5577,7 +5577,7 @@ const SCEV *ScalarEvolution::createSCEV(Value *V) {
       if (CI->getValue().uge(BitWidth))
         break;
 
-      if (CI->isNullValue())
+      if (CI->isZero())
         return getSCEV(BO->LHS); // shift by zero --> noop
 
       uint64_t AShrAmt = CI->getZExtValue();
@@ -7640,7 +7640,7 @@ ScalarEvolution::howFarToZero(const SCEV *V, const Loop *L, bool ControlsExit,
   // Handle unitary steps, which cannot wraparound.
   // 1*N = -Start; -1*N = Start (mod 2^BW), so:
   //   N = Distance (as unsigned)
-  if (StepC->getValue()->equalsInt(1) || StepC->getValue()->isAllOnesValue()) {
+  if (StepC->getValue()->isOne() || StepC->getValue()->isMinusOne()) {
     APInt MaxBECount = getUnsignedRangeMax(Distance);
 
     // When a loop like "for (int i = 0; i != n; ++i) { /* body */ }" is rotated,
@@ -7696,7 +7696,7 @@ ScalarEvolution::howFarToNonZero(const SCEV *V, const Loop *L) {
   // If the value is a constant, check to see if it is known to be non-zero
   // already.  If so, the backedge will execute zero times.
   if (const SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
-    if (!C->getValue()->isNullValue())
+    if (!C->getValue()->isZero())
       return getZero(C->getType());
     return getCouldNotCompute();  // Otherwise it will loop infinitely.
   }

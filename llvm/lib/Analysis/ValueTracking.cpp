@@ -1952,7 +1952,7 @@ bool isKnownNonZero(const Value *V, unsigned Depth, const Query &Q) {
     }
     // Check if all incoming values are non-zero constant.
     bool AllNonZeroConstants = all_of(PN->operands(), [](Value *V) {
-      return isa<ConstantInt>(V) && !cast<ConstantInt>(V)->isZeroValue();
+      return isa<ConstantInt>(V) && !cast<ConstantInt>(V)->isZero();
     });
     if (AllNonZeroConstants)
       return true;

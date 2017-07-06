@@ -242,7 +242,7 @@ static Constant *ExtractConstantBytes(Constant *C, unsigned ByteStart,
 
     // X | -1 -> -1.
     if (ConstantInt *RHSC = dyn_cast<ConstantInt>(RHS))
-      if (RHSC->isAllOnesValue())
+      if (RHSC->isMinusOne())
         return RHSC;
 
     Constant *LHS = ExtractConstantBytes(CE->getOperand(0), ByteStart,ByteSize);
@@ -1041,7 +1041,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       break;
     case Instruction::And:
       if (CI2->isZero()) return C2;                           // X & 0 == 0
-      if (CI2->isAllOnesValue())
+      if (CI2->isMinusOne())
         return C1;                                            // X & -1 == X
 
       if (ConstantExpr *CE1 = dyn_cast<ConstantExpr>(C1)) {
@@ -1079,7 +1079,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       break;
     case Instruction::Or:
       if (CI2->equalsInt(0)) return C1;    // X | 0 == X
-      if (CI2->isAllOnesValue())
+      if (CI2->isMinusOne())
         return C2;                         // X | -1 == -1
       break;
     case Instruction::Xor:
@@ -1126,18 +1126,18 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       case Instruction::Mul:
         return ConstantInt::get(CI1->getContext(), C1V * C2V);
       case Instruction::UDiv:
-        assert(!CI2->isNullValue() && "Div by zero handled above");
+        assert(!CI2->isZero() && "Div by zero handled above");
         return ConstantInt::get(CI1->getContext(), C1V.udiv(C2V));
       case Instruction::SDiv:
-        assert(!CI2->isNullValue() && "Div by zero handled above");
+        assert(!CI2->isZero() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
           return UndefValue::get(CI1->getType());   // MIN_INT / -1 -> undef
         return ConstantInt::get(CI1->getContext(), C1V.sdiv(C2V));
       case Instruction::URem:
-        assert(!CI2->isNullValue() && "Div by zero handled above");
+        assert(!CI2->isZero() && "Div by zero handled above");
         return ConstantInt::get(CI1->getContext(), C1V.urem(C2V));
       case Instruction::SRem:
-        assert(!CI2->isNullValue() && "Div by zero handled above");
+        assert(!CI2->isZero() && "Div by zero handled above");
         if (C2V.isAllOnesValue() && C1V.isMinSignedValue())
           return UndefValue::get(CI1->getType());   // MIN_INT % -1 -> undef
         return ConstantInt::get(CI1->getContext(), C1V.srem(C2V));

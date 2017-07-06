@@ -547,7 +547,7 @@ bool SITargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.align = 0;
 
     const ConstantInt *Vol = dyn_cast<ConstantInt>(CI.getOperand(4));
-    Info.vol = !Vol || !Vol->isNullValue();
+    Info.vol = !Vol || !Vol->isZero();
     Info.readMem = true;
     Info.writeMem = true;
     return true;
