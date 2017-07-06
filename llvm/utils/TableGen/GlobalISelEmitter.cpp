@@ -1454,6 +1454,8 @@ GlobalISelEmitter::importRulePredicates(RuleMatcher &M,
 
 Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
     InstructionMatcher &InsnMatcher, const TreePatternNode *Src) const {
+  const CodeGenInstruction *SrcGIOrNull = nullptr;
+
   // Start with the defined operands (i.e., the results of the root operator).
   if (Src->getExtTypes().size() > 1)
     return failedImport("Src pattern has multiple results");
@@ -1467,7 +1469,7 @@ Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
       return failedImport(
           "Unable to deduce gMIR opcode to handle Src (which is a leaf)");
   } else {
-    auto SrcGIOrNull = findNodeEquiv(Src->getOperator());
+    SrcGIOrNull = findNodeEquiv(Src->getOperator());
     if (!SrcGIOrNull)
       return failedImport("Pattern operator lacks an equivalent Instruction" +
                           explainOperator(Src->getOperator()));
@@ -1501,10 +1503,31 @@ Expected<InstructionMatcher &> GlobalISelEmitter::createAndImportSelDAGMatcher(
       return failedImport(
           "Unable to deduce gMIR opcode to handle Src (which is a leaf)");
   } else {
+    assert(SrcGIOrNull &&
+           "Expected to have already found an equivalent Instruction");
     // Match the used operands (i.e. the children of the operator).
     for (unsigned i = 0, e = Src->getNumChildren(); i != e; ++i) {
-      if (auto Error = importChildMatcher(InsnMatcher, Src->getChild(i),
-                                          OpIdx++, TempOpIdx))
+      TreePatternNode *SrcChild = Src->getChild(i);
+
+      // For G_INTRINSIC, the operand immediately following the defs is an
+      // intrinsic ID.
+      if (SrcGIOrNull->TheDef->getName() == "G_INTRINSIC" && i == 0) {
+        if (!SrcChild->isLeaf())
+          return failedImport("Expected IntInit containing intrinsic ID");
+
+        if (IntInit *SrcChildIntInit =
+                dyn_cast<IntInit>(SrcChild->getLeafValue())) {
+          OperandMatcher &OM =
+              InsnMatcher.addOperand(OpIdx++, SrcChild->getName(), TempOpIdx);
+          OM.addPredicate<LiteralIntOperandMatcher>(SrcChildIntInit->getValue());
+          continue;
+        }
+
+        return failedImport("Expected IntInit containing instrinsic ID)");
+      }
+
+      if (auto Error =
+              importChildMatcher(InsnMatcher, SrcChild, OpIdx++, TempOpIdx))
         return std::move(Error);
     }
   }
@@ -1540,7 +1563,7 @@ Error GlobalISelEmitter::importChildMatcher(InstructionMatcher &InsnMatcher,
 
   auto OpTyOrNone = MVTToLLT(ChildTypes.front().getConcrete());
   if (!OpTyOrNone)
-    return failedImport("Src operand has an unsupported type");
+    return failedImport("Src operand has an unsupported type (" + to_string(*SrcChild) + ")");
   OM.addPredicate<LLTOperandMatcher>(*OpTyOrNone);
 
   // Check for nested instructions.
