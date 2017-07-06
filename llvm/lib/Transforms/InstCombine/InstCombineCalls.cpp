@@ -600,8 +600,7 @@ static Value *simplifyX86muldq(const IntrinsicInst &II,
   return Builder.CreateMul(LHS, RHS);
 }
 
-static Value *simplifyX86pack(IntrinsicInst &II, InstCombiner &IC,
-                              InstCombiner::BuilderTy &Builder, bool IsSigned) {
+static Value *simplifyX86pack(IntrinsicInst &II, bool IsSigned) {
   Value *Arg0 = II.getArgOperand(0);
   Value *Arg1 = II.getArgOperand(1);
   Type *ResTy = II.getType();
@@ -676,8 +675,7 @@ static Value *simplifyX86pack(IntrinsicInst &II, InstCombiner &IC,
   return ConstantVector::get(Vals);
 }
 
-static Value *simplifyX86movmsk(const IntrinsicInst &II,
-                                InstCombiner::BuilderTy &Builder) {
+static Value *simplifyX86movmsk(const IntrinsicInst &II) {
   Value *Arg = II.getArgOperand(0);
   Type *ResTy = II.getType();
   Type *ArgTy = Arg->getType();
@@ -2336,7 +2334,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx_movmsk_pd_256:
   case Intrinsic::x86_avx_movmsk_ps_256:
   case Intrinsic::x86_avx2_pmovmskb: {
-    if (Value *V = simplifyX86movmsk(*II, *Builder))
+    if (Value *V = simplifyX86movmsk(*II))
       return replaceInstUsesWith(*II, V);
     break;
   }
@@ -2705,7 +2703,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx2_packsswb:
   case Intrinsic::x86_avx512_packssdw_512:
   case Intrinsic::x86_avx512_packsswb_512:
-    if (Value *V = simplifyX86pack(*II, *this, *Builder, true))
+    if (Value *V = simplifyX86pack(*II, true))
       return replaceInstUsesWith(*II, V);
     break;
 
@@ -2715,7 +2713,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx2_packuswb:
   case Intrinsic::x86_avx512_packusdw_512:
   case Intrinsic::x86_avx512_packuswb_512:
-    if (Value *V = simplifyX86pack(*II, *this, *Builder, false))
+    if (Value *V = simplifyX86pack(*II, false))
       return replaceInstUsesWith(*II, V);
     break;
 
