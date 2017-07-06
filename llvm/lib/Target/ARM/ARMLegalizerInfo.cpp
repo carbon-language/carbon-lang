@@ -89,6 +89,8 @@ ARMLegalizerInfo::ARMLegalizerInfo(const ARMSubtarget &ST) {
   setAction({G_SELECT, 1, s1}, Legal);
 
   setAction({G_CONSTANT, s32}, Legal);
+  for (auto Ty : {s1, s8, s16})
+    setAction({G_CONSTANT, Ty}, WidenScalar);
 
   setAction({G_ICMP, s1}, Legal);
   for (auto Ty : {s8, s16})
