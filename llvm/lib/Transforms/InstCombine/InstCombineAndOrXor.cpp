@@ -82,20 +82,25 @@ static Value *getFCmpValue(unsigned Code, Value *LHS, Value *RHS,
 Value *InstCombiner::SimplifyBSwap(BinaryOperator &I) {
   assert(I.isBitwiseLogicOp() && "Unexpected opcode for bswap simplifying");
 
-  // TODO We should probably check for single use of the bswap.
+  Value *OldLHS = I.getOperand(0);
+  Value *OldRHS = I.getOperand(1);
 
   Value *NewLHS;
-  if (!match(I.getOperand(0), m_BSwap(m_Value(NewLHS))))
+  if (!match(OldLHS, m_BSwap(m_Value(NewLHS))))
     return nullptr;
 
   Value *NewRHS;
   const APInt *C;
 
-  if (match(I.getOperand(1), m_BSwap(m_Value(NewRHS)))) {
+  if (match(OldRHS, m_BSwap(m_Value(NewRHS)))) {
     // OP( BSWAP(x), BSWAP(y) ) -> BSWAP( OP(x, y) )
+    if (!OldLHS->hasOneUse() && !OldRHS->hasOneUse())
+      return nullptr;
     // NewRHS initialized by the matcher.
-  } else if (match(I.getOperand(1), m_APInt(C))) {
+  } else if (match(OldRHS, m_APInt(C))) {
     // OP( BSWAP(x), CONSTANT ) -> BSWAP( OP(x, BSWAP(CONSTANT) ) )
+    if (!OldLHS->hasOneUse())
+      return nullptr;
     NewRHS = ConstantInt::get(I.getType(), C->byteSwap());
   } else
     return nullptr;
