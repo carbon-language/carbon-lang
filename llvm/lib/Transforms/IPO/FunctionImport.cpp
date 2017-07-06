@@ -547,6 +547,11 @@ void llvm::thinLTOResolveWeakForLinkerModule(
 
     // Switch the linkage to weakany if asked for, e.g. we do this for
     // linker redefined symbols (via --wrap or --defsym).
+    // We record that the visibility should be changed here in `addThinLTO`
+    // as we need access to the resolution vectors for each input file in
+    // order to find which symbols have been redefined.
+    // We may consider reorganizing this code and moving the linkage recording
+    // somewhere else, e.g. in thinLTOResolveWeakForLinkerInIndex.
     if (NewLinkage == GlobalValue::WeakAnyLinkage) {
       GV.setLinkage(NewLinkage);
       return;
