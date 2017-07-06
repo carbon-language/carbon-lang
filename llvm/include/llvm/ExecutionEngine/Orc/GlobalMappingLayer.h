@@ -17,6 +17,7 @@
 
 #include "llvm/ExecutionEngine/JITSymbol.h"
 #include <map>
+#include <memory>
 #include <string>
 
 namespace llvm {
