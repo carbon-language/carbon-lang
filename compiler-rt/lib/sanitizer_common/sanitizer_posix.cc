@@ -49,45 +49,6 @@ uptr GetMmapGranularity() {
   return GetPageSize();
 }
 
-#if SANITIZER_WORDSIZE == 32
-// Take care of unusable kernel area in top gigabyte.
-static uptr GetKernelAreaSize() {
-#if SANITIZER_LINUX && !SANITIZER_X32
-  const uptr gbyte = 1UL << 30;
-
-  // Firstly check if there are writable segments
-  // mapped to top gigabyte (e.g. stack).
-  MemoryMappingLayout proc_maps(/*cache_enabled*/true);
-  uptr end, prot;
-  while (proc_maps.Next(/*start*/nullptr, &end,
-                        /*offset*/nullptr, /*filename*/nullptr,
-                        /*filename_size*/0, &prot)) {
-    if ((end >= 3 * gbyte)
-        && (prot & MemoryMappingLayout::kProtectionWrite) != 0)
-      return 0;
-  }
-
-#if !SANITIZER_ANDROID
-  // Even if nothing is mapped, top Gb may still be accessible
-  // if we are running on 64-bit kernel.
-  // Uname may report misleading results if personality type
-  // is modified (e.g. under schroot) so check this as well.
-  struct utsname uname_info;
-  int pers = personality(0xffffffffUL);
-  if (!(pers & PER_MASK)
-      && uname(&uname_info) == 0
-      && internal_strstr(uname_info.machine, "64"))
-    return 0;
-#endif  // SANITIZER_ANDROID
-
-  // Top gigabyte is reserved for kernel.
-  return gbyte;
-#else
-  return 0;
-#endif  // SANITIZER_LINUX && !SANITIZER_X32
-}
-#endif  // SANITIZER_WORDSIZE == 32
-
 void *MmapOrDie(uptr size, const char *mem_type, bool raw_report) {
   size = RoundUpTo(size, GetPageSizeCached());
   uptr res = internal_mmap(nullptr, size,
