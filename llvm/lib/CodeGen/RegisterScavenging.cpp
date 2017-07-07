@@ -388,7 +388,7 @@ findSurvivorBackwards(const MachineRegisterInfo &MRI,
   for (MachineBasicBlock::iterator I = From;; --I) {
     const MachineInstr &MI = *I;
 
-    Used.accumulateBackward(MI);
+    Used.accumulate(MI);
 
     if (I == To) {
       // See if one of the registers in RC wasn't used so far.
