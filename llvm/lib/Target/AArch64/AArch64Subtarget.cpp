@@ -130,7 +130,9 @@ void AArch64Subtarget::initializeProperties() {
     break;
   case CortexA35: break;
   case CortexA53: break;
-  case CortexA72: break;
+  case CortexA72:
+    PrefFunctionAlignment = 4;
+    break;
   case CortexA73: break;
   case Others: break;
   }
