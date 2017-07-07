@@ -81,6 +81,7 @@ void AArch64Subtarget::initializeProperties() {
     break;
   case CortexA57:
     MaxInterleaveFactor = 4;
+    PrefFunctionAlignment = 4;
     break;
   case ExynosM1:
     MaxInterleaveFactor = 4;
