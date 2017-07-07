@@ -176,7 +176,7 @@ CHECK-NEXT:   |Module "{{.*}}\pdb-diff.obj"|
 CHECK-NEXT:   |----------------------------------------+---|
 CHECK-NEXT:   |                                 - Modi | I |
 CHECK-NEXT:   |----------------------------------------+---|
-CHECK-NEXT:   |                        - Obj File Name | {{[EI]}} |
+CHECK-NEXT:   |                        - Obj File Name | {{[DEI]}} |
 CHECK-NEXT:   |----------------------------------------+---|
 CHECK-NEXT:   |                         - Debug Stream | {{[EI]}} |
 CHECK-NEXT:   |----------------------------------------+---|

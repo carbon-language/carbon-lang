@@ -13,11 +13,22 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/DebugInfo/PDB/Native/RawConstants.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/raw_ostream.h"
 
 #include <list>
 #include <unordered_set>
+
+namespace std {
+template <> struct hash<llvm::pdb::PdbRaw_FeatureSig> {
+  typedef llvm::pdb::PdbRaw_FeatureSig argument_type;
+  typedef std::size_t result_type;
+  result_type operator()(argument_type Item) const {
+    return std::hash<uint32_t>{}(uint32_t(Item));
+  }
+};
+} // namespace std
 
 namespace llvm {
 namespace pdb {
