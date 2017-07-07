@@ -37,13 +37,13 @@ CHECK-NEXT:   |                   DBI Stream | I |
 CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   |                   IPI Stream | I |
 CHECK-NEXT:   |------------------------------+---|
+CHECK-NEXT:   |                 New FPO Data | {{[EI]}} |
+CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   |          Section Header Data | {{[EI]}} |
 CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   |        Named Stream "/names" | {{[EI]}} |
 CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   |     Named Stream "/LinkInfo" | {{[EI]}} |
-CHECK-NEXT:   |------------------------------+---|
-CHECK-NEXT:   | Named Stream "/src/heade..." | D |
 CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   | Module "{{.*}}\pdb-diff.obj" | {{[EI]}} |
 CHECK-NEXT:   |------------------------------+---|
@@ -58,8 +58,6 @@ CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   |           Public Symbol Hash | D |
 CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   |        Public Symbol Records | D |
-CHECK-NEXT:   |------------------------------+---|
-CHECK-NEXT:   |                 New FPO Data | D |
 CHECK-NEXT:   |------------------------------+---|
 CHECK-NEXT:   ------------------------------------
 CHECK-NEXT:   |           String Table           |
@@ -101,15 +99,13 @@ CHECK-NEXT:   |       Features (set) | I |
 CHECK-NEXT:   |----------------------+---|
 CHECK-NEXT:   |              Feature | I |
 CHECK-NEXT:   |----------------------+---|
-CHECK-NEXT:   |    Named Stream Size | D |
+CHECK-NEXT:   |    Named Stream Size |
 CHECK-NEXT:   |----------------------+---|
-CHECK-NEXT:   |  Named Streams (map) | D |
+CHECK-NEXT:   |  Named Streams (map) | {{[EI]}} |
 CHECK-NEXT:   |----------------------+---|
-CHECK-NEXT:   |               /names | I |
+CHECK-NEXT:   |               /names | {{[EI]}} |
 CHECK-NEXT:   |----------------------+---|
-CHECK-NEXT:   |            /LinkInfo | E |
-CHECK-NEXT:   |----------------------+---|
-CHECK-NEXT:   |     /src/headerblock | D |
+CHECK-NEXT:   |            /LinkInfo | {{[EI]}} |
 CHECK-NEXT:   |----------------------+---|
 CHECK-NEXT:   ----------------------------------------------
 CHECK-NEXT:   |                 DBI Stream                 |
@@ -152,7 +148,7 @@ CHECK-NEXT:   |                            DBG (Xdata) | I |
 CHECK-NEXT:   |----------------------------------------+---|
 CHECK-NEXT:   |                            DBG (Pdata) | I |
 CHECK-NEXT:   |----------------------------------------+---|
-CHECK-NEXT:   |                           DBG (NewFPO) | D |
+CHECK-NEXT:   |                           DBG (NewFPO) | {{[EI]}} |
 CHECK-NEXT:   |----------------------------------------+---|
 CHECK-NEXT:   |                   DBG (SectionHdrOrig) | I |
 CHECK-NEXT:   |----------------------------------------+---|
