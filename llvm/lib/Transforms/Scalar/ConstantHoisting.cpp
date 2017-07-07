@@ -55,7 +55,7 @@ STATISTIC(NumConstantsHoisted, "Number of constants hoisted");
 STATISTIC(NumConstantsRebased, "Number of constants rebased");
 
 static cl::opt<bool> ConstHoistWithBlockFrequency(
-    "consthoist-with-block-frequency", cl::init(false), cl::Hidden,
+    "consthoist-with-block-frequency", cl::init(true), cl::Hidden,
     cl::desc("Enable the use of the block frequency analysis to reduce the "
              "chance to execute const materialization more frequently than "
              "without hoisting."));
