@@ -176,6 +176,28 @@ struct match_nan {
 /// Match an arbitrary NaN constant. This includes quiet and signalling nans.
 inline match_nan m_NaN() { return match_nan(); }
 
+struct match_one {
+  template <typename ITy> bool match(ITy *V) {
+    if (const auto *C = dyn_cast<Constant>(V))
+      return C->isOneValue();
+    return false;
+  }
+};
+
+/// \brief Match an integer 1 or a vector with all elements equal to 1.
+inline match_one m_One() { return match_one(); }
+
+struct match_all_ones {
+  template <typename ITy> bool match(ITy *V) {
+    if (const auto *C = dyn_cast<Constant>(V))
+      return C->isAllOnesValue();
+    return false;
+  }
+};
+
+/// \brief Match an integer 1 or a vector with all elements equal to 1.
+inline match_all_ones m_AllOnes() { return match_all_ones(); }
+
 struct apint_match {
   const APInt *&Res;
 
@@ -258,24 +280,6 @@ template <typename Predicate> struct api_pred_ty : public Predicate {
     return false;
   }
 };
-
-struct is_one {
-  bool isValue(const APInt &C) { return C.isOneValue(); }
-};
-
-/// \brief Match an integer 1 or a vector with all elements equal to 1.
-inline cst_pred_ty<is_one> m_One() { return cst_pred_ty<is_one>(); }
-inline api_pred_ty<is_one> m_One(const APInt *&V) { return V; }
-
-struct is_all_ones {
-  bool isValue(const APInt &C) { return C.isAllOnesValue(); }
-};
-
-/// \brief Match an integer or vector with all bits set to true.
-inline cst_pred_ty<is_all_ones> m_AllOnes() {
-  return cst_pred_ty<is_all_ones>();
-}
-inline api_pred_ty<is_all_ones> m_AllOnes(const APInt *&V) { return V; }
 
 struct is_sign_mask {
   bool isValue(const APInt &C) { return C.isSignMask(); }
