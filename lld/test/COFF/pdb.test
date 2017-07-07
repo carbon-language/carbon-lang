@@ -30,7 +30,7 @@
 # CHECK-NEXT:   Features:        [ VC140 ]
 # CHECK-NEXT:   Version:         VC70
 # CHECK-NEXT: DbiStream:
-# CHECK-NEXT:   VerHeader:       V110
+# CHECK-NEXT:   VerHeader:       V70
 # CHECK-NEXT:   Age:             1
 # CHECK-NEXT:   BuildNumber:     0
 # CHECK-NEXT:   PdbDllVersion:   0

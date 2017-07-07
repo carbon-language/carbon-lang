@@ -51,7 +51,8 @@ struct EquivalentDiffProvider {
 class DiffPrinter {
 public:
   DiffPrinter(uint32_t Indent, StringRef Header, uint32_t PropertyWidth,
-              uint32_t FieldWidth, raw_ostream &Stream);
+              uint32_t FieldWidth, bool Result, bool Values,
+              raw_ostream &Stream);
   ~DiffPrinter();
 
   template <typename T, typename U> struct Identical {};
@@ -138,15 +139,17 @@ public:
   void printFullRow(StringRef Text);
 
 private:
-  void printSame(StringRef Property, StringRef Value);
-  void printDifferent(StringRef Property, StringRef Left, StringRef Right);
+  uint32_t tableWidth() const;
 
   void printHeaderRow();
   void printSeparatorRow();
   void newLine(char InitialChar = '|');
-  void printField(StringRef Value, DiffResult C, AlignStyle Style,
-                  uint32_t Width);
+  void printValue(StringRef Value, DiffResult C, AlignStyle Style,
+                  uint32_t Width, bool Force);
+  void printResult(DiffResult Result);
 
+  bool PrintResult;
+  bool PrintValues;
   uint32_t Indent;
   uint32_t PropertyWidth;
   uint32_t FieldWidth;

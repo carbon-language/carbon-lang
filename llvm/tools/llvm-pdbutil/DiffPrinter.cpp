@@ -22,35 +22,60 @@ static void setColor(llvm::raw_ostream &OS, DiffResult Result) {
 
 DiffPrinter::DiffPrinter(uint32_t Indent, StringRef Header,
                          uint32_t PropertyWidth, uint32_t FieldWidth,
-                         raw_ostream &Stream)
-    : Indent(Indent), PropertyWidth(PropertyWidth), FieldWidth(FieldWidth),
-      OS(Stream) {
+                         bool Result, bool Fields, raw_ostream &Stream)
+    : PrintResult(Result), PrintValues(Fields), Indent(Indent),
+      PropertyWidth(PropertyWidth), FieldWidth(FieldWidth), OS(Stream) {
   printHeaderRow();
   printFullRow(Header);
 }
 
 DiffPrinter::~DiffPrinter() {}
 
+uint32_t DiffPrinter::tableWidth() const {
+  // `|`
+  uint32_t W = 1;
+
+  // `<width>|`
+  W += PropertyWidth + 1;
+
+  if (PrintResult) {
+    // ` I |`
+    W += 4;
+  }
+
+  if (PrintValues) {
+    // `<width>|<width>|`
+    W += 2 * (FieldWidth + 1);
+  }
+  return W;
+}
+
 void DiffPrinter::printFullRow(StringRef Text) {
   newLine();
-  printField(Text, DiffResult::UNSPECIFIED, AlignStyle::Center,
-             PropertyWidth + 1 + FieldWidth + 1 + FieldWidth);
+  printValue(Text, DiffResult::UNSPECIFIED, AlignStyle::Center,
+             tableWidth() - 2, true);
   printSeparatorRow();
 }
 
 void DiffPrinter::printSeparatorRow() {
   newLine();
   OS << formatv("{0}", fmt_repeat('-', PropertyWidth));
-  OS << '+';
-  OS << formatv("{0}", fmt_repeat('-', FieldWidth));
-  OS << '+';
-  OS << formatv("{0}", fmt_repeat('-', FieldWidth));
+  if (PrintResult) {
+    OS << '+';
+    OS << formatv("{0}", fmt_repeat('-', 3));
+  }
+  if (PrintValues) {
+    OS << '+';
+    OS << formatv("{0}", fmt_repeat('-', FieldWidth));
+    OS << '+';
+    OS << formatv("{0}", fmt_repeat('-', FieldWidth));
+  }
   OS << '|';
 }
 
 void DiffPrinter::printHeaderRow() {
   newLine('-');
-  OS << formatv("{0}", fmt_repeat('-', PropertyWidth + 2 * FieldWidth + 3));
+  OS << formatv("{0}", fmt_repeat('-', tableWidth() - 1));
 }
 
 void DiffPrinter::newLine(char InitialChar) {
@@ -61,34 +86,40 @@ void DiffPrinter::newLine(char InitialChar) {
 void DiffPrinter::printExplicit(StringRef Property, DiffResult C,
                                 StringRef Left, StringRef Right) {
   newLine();
-  printField(Property, DiffResult::UNSPECIFIED, AlignStyle::Right,
-             PropertyWidth);
-  printField(Left, C, AlignStyle::Center, FieldWidth);
-  printField(Right, C, AlignStyle::Center, FieldWidth);
+  printValue(Property, DiffResult::UNSPECIFIED, AlignStyle::Right,
+             PropertyWidth, true);
+  printResult(C);
+  printValue(Left, C, AlignStyle::Center, FieldWidth, false);
+  printValue(Right, C, AlignStyle::Center, FieldWidth, false);
   printSeparatorRow();
 }
 
-void DiffPrinter::printSame(StringRef Property, StringRef Value) {
-  newLine();
-  printField(Property, DiffResult::UNSPECIFIED, AlignStyle::Right,
-             PropertyWidth);
-  printField(Value, DiffResult::IDENTICAL, AlignStyle::Center,
-             FieldWidth + 1 + FieldWidth);
-  printSeparatorRow();
+void DiffPrinter::printResult(DiffResult Result) {
+  if (!PrintResult)
+    return;
+  switch (Result) {
+  case DiffResult::DIFFERENT:
+    printValue("D", Result, AlignStyle::Center, 3, true);
+    break;
+  case DiffResult::EQUIVALENT:
+    printValue("E", Result, AlignStyle::Center, 3, true);
+    break;
+  case DiffResult::IDENTICAL:
+    printValue("I", Result, AlignStyle::Center, 3, true);
+    break;
+  case DiffResult::UNSPECIFIED:
+    printValue(" ", Result, AlignStyle::Center, 3, true);
+    break;
+  default:
+    llvm_unreachable("unreachable!");
+  }
 }
 
-void DiffPrinter::printDifferent(StringRef Property, StringRef Left,
-                                 StringRef Right) {
-  newLine();
-  printField(Property, DiffResult::UNSPECIFIED, AlignStyle::Right,
-             PropertyWidth);
-  printField(Left, DiffResult::DIFFERENT, AlignStyle::Center, FieldWidth);
-  printField(Right, DiffResult::DIFFERENT, AlignStyle::Center, FieldWidth);
-  printSeparatorRow();
-}
+void DiffPrinter::printValue(StringRef Value, DiffResult C, AlignStyle Style,
+                             uint32_t Width, bool Force) {
+  if (!Force && !PrintValues)
+    return;
 
-void DiffPrinter::printField(StringRef Value, DiffResult C, AlignStyle Style,
-                             uint32_t Width) {
   if (Style == AlignStyle::Right)
     --Width;
 

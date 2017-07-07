@@ -410,6 +410,7 @@ void coff::createPDB(StringRef Path, SymbolTable *Symtab,
   // Add an Info stream.
   auto &InfoBuilder = Builder.getInfoBuilder();
   InfoBuilder.setAge(DI ? DI->PDB70.Age : 0);
+  InfoBuilder.setSignature(time(nullptr));
 
   llvm::SmallString<128> NativePath(Path.begin(), Path.end());
   llvm::sys::fs::make_absolute(NativePath);
@@ -425,7 +426,7 @@ void coff::createPDB(StringRef Path, SymbolTable *Symtab,
 
   // Add an empty DBI stream.
   pdb::DbiStreamBuilder &DbiBuilder = Builder.getDbiBuilder();
-  DbiBuilder.setVersionHeader(pdb::PdbDbiV110);
+  DbiBuilder.setVersionHeader(pdb::PdbDbiV70);
 
   // It's not entirely clear what this is, but the * Linker * module uses it.
   uint32_t PdbFilePathNI = DbiBuilder.addECName(NativePath);

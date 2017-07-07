@@ -108,7 +108,8 @@ static std::string shortFilePath(StringRef Path, uint32_t Width) {
 }
 
 Error DiffStyle::diffSuperBlock() {
-  DiffPrinter D(2, "MSF Super Block", 16, 20, outs());
+  DiffPrinter D(2, "MSF Super Block", 16, 20, opts::diff::PrintResultColumn,
+                opts::diff::PrintValueColumns, outs());
   D.printExplicit("File", DiffResult::UNSPECIFIED,
                   shortFilePath(File1.getFilePath(), 18),
                   shortFilePath(File2.getFilePath(), 18));
@@ -121,7 +122,8 @@ Error DiffStyle::diffSuperBlock() {
 }
 
 Error DiffStyle::diffStreamDirectory() {
-  DiffPrinter D(2, "Stream Directory", 30, 20, outs());
+  DiffPrinter D(2, "Stream Directory", 30, 20, opts::diff::PrintResultColumn,
+                opts::diff::PrintValueColumns, outs());
   D.printExplicit("File", DiffResult::UNSPECIFIED,
                   shortFilePath(File1.getFilePath(), 18),
                   shortFilePath(File2.getFilePath(), 18));
@@ -163,7 +165,8 @@ Error DiffStyle::diffStreamDirectory() {
 }
 
 Error DiffStyle::diffStringTable() {
-  DiffPrinter D(2, "String Table", 30, 20, outs());
+  DiffPrinter D(2, "String Table", 30, 20, opts::diff::PrintResultColumn,
+                opts::diff::PrintValueColumns, outs());
   D.printExplicit("File", DiffResult::UNSPECIFIED,
                   shortFilePath(File1.getFilePath(), 18),
                   shortFilePath(File2.getFilePath(), 18));
@@ -251,7 +254,8 @@ Error DiffStyle::diffStringTable() {
 Error DiffStyle::diffFreePageMap() { return Error::success(); }
 
 Error DiffStyle::diffInfoStream() {
-  DiffPrinter D(2, "PDB Stream", 22, 40, outs());
+  DiffPrinter D(2, "PDB Stream", 22, 40, opts::diff::PrintResultColumn,
+                opts::diff::PrintValueColumns, outs());
   D.printExplicit("File", DiffResult::UNSPECIFIED,
                   shortFilePath(File1.getFilePath(), 38),
                   shortFilePath(File2.getFilePath(), 38));
@@ -345,10 +349,11 @@ getModuleDescriptors(const DbiModuleList &ML) {
 }
 
 Error DiffStyle::diffDbiStream() {
-  DiffPrinter D(2, "DBI Stream", 40, 30, outs());
+  DiffPrinter D(2, "DBI Stream", 40, 30, opts::diff::PrintResultColumn,
+                opts::diff::PrintValueColumns, outs());
   D.printExplicit("File", DiffResult::UNSPECIFIED,
-                  shortFilePath(File1.getFilePath(), 38),
-                  shortFilePath(File2.getFilePath(), 38));
+                  shortFilePath(File1.getFilePath(), 28),
+                  shortFilePath(File2.getFilePath(), 28));
 
   auto ExpectedDbi1 = File1.getPDBDbiStream();
   auto ExpectedDbi2 = File2.getPDBDbiStream();
