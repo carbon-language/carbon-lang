@@ -203,6 +203,8 @@ namespace {
   char RAFast::ID = 0;
 }
 
+INITIALIZE_PASS(RAFast, "regallocfast", "Fast Register Allocator", false, false)
+
 /// getStackSpaceFor - This allocates space for the specified virtual register
 /// to be held on the stack.
 int RAFast::getStackSpaceFor(unsigned VirtReg, const TargetRegisterClass *RC) {
