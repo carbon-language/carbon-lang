@@ -616,8 +616,8 @@ void WindowsResourceCOFFWriter::writeDirectoryTree() {
     for (auto const &Child : StringChildren) {
       auto *Entry = reinterpret_cast<coff_resource_dir_entry *>(BufferStart +
                                                                 CurrentOffset);
-      Entry->Identifier.NameOffset =
-          StringTableOffsets[Child.second->getStringIndex()];
+      Entry->Identifier.setNameOffset(
+          StringTableOffsets[Child.second->getStringIndex()]);
       if (Child.second->checkIsDataNode()) {
         Entry->Offset.DataEntryOffset = NextLevelOffset;
         NextLevelOffset += sizeof(coff_resource_data_entry);
