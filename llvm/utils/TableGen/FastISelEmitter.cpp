@@ -441,7 +441,7 @@ void FastISelMap::collectPatterns(CodeGenDAGPatterns &CGP) {
   const CodeGenTarget &Target = CGP.getTargetInfo();
 
   // Determine the target's namespace name.
-  InstNS = Target.getInstNamespace() + "::";
+  InstNS = Target.getInstNamespace().str() + "::";
   assert(InstNS.size() > 2 && "Can't determine target-specific namespace!");
 
   // Scan through all the patterns and record the simple ones.
@@ -873,7 +873,7 @@ void EmitFastISel(RecordKeeper &RK, raw_ostream &OS) {
                        Target.getName().str() + " target", OS);
 
   // Determine the target's namespace name.
-  std::string InstNS = Target.getInstNamespace() + "::";
+  std::string InstNS = Target.getInstNamespace().str() + "::";
   assert(InstNS.size() > 2 && "Can't determine target-specific namespace!");
 
   FastISelMap F(InstNS);
