@@ -331,7 +331,7 @@ template <typename T> struct ARMInstructionSelector::CmpHelper {
             const ARMBaseInstrInfo &TII, MachineRegisterInfo &MRI,
             const TargetRegisterInfo &TRI, const RegisterBankInfo &RBI)
       : MBB(*MIB->getParent()), InsertBefore(std::next(MIB->getIterator())),
-        DebugLoc(MIB->getDebugLoc()), TII(TII), MRI(MRI), TRI(TRI), RBI(RBI),
+        DbgLoc(MIB->getDebugLoc()), TII(TII), MRI(MRI), TRI(TRI), RBI(RBI),
         Selector(Selector) {}
 
   // The opcode used for performing the comparison.
@@ -358,7 +358,7 @@ template <typename T> struct ARMInstructionSelector::CmpHelper {
   }
 
   void putConstant(unsigned DestReg, unsigned Constant) {
-    (void)BuildMI(MBB, InsertBefore, DebugLoc, TII.get(ARM::MOVi))
+    (void)BuildMI(MBB, InsertBefore, DbgLoc, TII.get(ARM::MOVi))
         .addDef(DestReg)
         .addImm(Constant)
         .add(predOps(ARMCC::AL))
@@ -369,7 +369,7 @@ template <typename T> struct ARMInstructionSelector::CmpHelper {
                         unsigned RHSReg, unsigned PrevRes) {
 
     // Perform the comparison.
-    auto CmpI = BuildMI(MBB, InsertBefore, DebugLoc, TII.get(ComparisonOpcode))
+    auto CmpI = BuildMI(MBB, InsertBefore, DbgLoc, TII.get(ComparisonOpcode))
                     .addUse(LHSReg)
                     .addUse(RHSReg)
                     .add(predOps(ARMCC::AL));
@@ -378,15 +378,14 @@ template <typename T> struct ARMInstructionSelector::CmpHelper {
 
     // Read the comparison flags (if necessary).
     if (ReadFlagsOpcode != ARM::INSTRUCTION_LIST_END) {
-      auto ReadI =
-          BuildMI(MBB, InsertBefore, DebugLoc, TII.get(ReadFlagsOpcode))
-              .add(predOps(ARMCC::AL));
+      auto ReadI = BuildMI(MBB, InsertBefore, DbgLoc, TII.get(ReadFlagsOpcode))
+                       .add(predOps(ARMCC::AL));
       if (!Selector.constrainSelectedInstRegOperands(*ReadI, TII, TRI, RBI))
         return false;
     }
 
     // Select either 1 or the previous result based on the value of the flags.
-    auto Mov1I = BuildMI(MBB, InsertBefore, DebugLoc, TII.get(SetResultOpcode))
+    auto Mov1I = BuildMI(MBB, InsertBefore, DbgLoc, TII.get(SetResultOpcode))
                      .addDef(ResReg)
                      .addUse(PrevRes)
                      .addImm(1)
@@ -436,7 +435,7 @@ private:
 
   MachineBasicBlock &MBB;
   MachineBasicBlock::instr_iterator InsertBefore;
-  const DebugLoc &DebugLoc;
+  const DebugLoc &DbgLoc;
 
   const ARMBaseInstrInfo &TII;
   MachineRegisterInfo &MRI;
@@ -527,14 +526,14 @@ bool ARMInstructionSelector::selectSelect(MachineInstrBuilder &MIB,
                                           const RegisterBankInfo &RBI) const {
   auto &MBB = *MIB->getParent();
   auto InsertBefore = std::next(MIB->getIterator());
-  auto &DebugLoc = MIB->getDebugLoc();
+  auto &DbgLoc = MIB->getDebugLoc();
 
   // Compare the condition to 0.
   auto CondReg = MIB->getOperand(1).getReg();
   assert(MRI.getType(CondReg).getSizeInBits() == 1 &&
          RBI.getRegBank(CondReg, MRI, TRI)->getID() == ARM::GPRRegBankID &&
          "Unsupported types for select operation");
-  auto CmpI = BuildMI(MBB, InsertBefore, DebugLoc, TII.get(ARM::CMPri))
+  auto CmpI = BuildMI(MBB, InsertBefore, DbgLoc, TII.get(ARM::CMPri))
                   .addUse(CondReg)
                   .addImm(0)
                   .add(predOps(ARMCC::AL));
@@ -552,7 +551,7 @@ bool ARMInstructionSelector::selectSelect(MachineInstrBuilder &MIB,
          RBI.getRegBank(TrueReg, MRI, TRI)->getID() == ARM::GPRRegBankID &&
          RBI.getRegBank(FalseReg, MRI, TRI)->getID() == ARM::GPRRegBankID &&
          "Unsupported types for select operation");
-  auto Mov1I = BuildMI(MBB, InsertBefore, DebugLoc, TII.get(ARM::MOVCCr))
+  auto Mov1I = BuildMI(MBB, InsertBefore, DbgLoc, TII.get(ARM::MOVCCr))
                    .addDef(ResReg)
                    .addUse(TrueReg)
                    .addUse(FalseReg)
