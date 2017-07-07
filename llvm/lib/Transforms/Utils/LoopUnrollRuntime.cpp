@@ -497,8 +497,6 @@ bool llvm::UnrollRuntimeLoopRemainder(Loop *L, unsigned Count,
   // Support runtime unrolling for multiple exit blocks and multiple exiting
   // blocks.
   if (!LatchExit) {
-    assert(UseEpilogRemainder && "Multi exit unrolling is currently supported "
-                                 "unrolling with epilog remainder only!");
     LatchExit = LatchBR->getSuccessor(ExitIndex);
     // We rely on LCSSA form being preserved when the exit blocks are
     // transformed.
