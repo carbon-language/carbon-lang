@@ -228,6 +228,7 @@ public:
   Error removeModule(ModuleHandleT H) {
     (*H)->removeModuleFromBaseLayer(BaseLayer);
     ModuleList.erase(H);
+    return Error::success();
   }
 
   /// @brief Search for the given named symbol.
