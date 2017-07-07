@@ -204,6 +204,17 @@ struct match_all_ones {
 /// \brief Match an integer or vector with all bits set to true.
 inline match_all_ones m_AllOnes() { return match_all_ones(); }
 
+struct match_sign_mask {
+  template <typename ITy> bool match(ITy *V) {
+    if (const auto *C = dyn_cast<Constant>(V))
+      return C->isMinSignedValue();
+    return false;
+  }
+};
+
+/// \brief Match an integer or vector with only the sign bit(s) set.
+inline match_sign_mask m_SignMask() { return match_sign_mask(); }
+
 struct apint_match {
   const APInt *&Res;
 
@@ -286,16 +297,6 @@ template <typename Predicate> struct api_pred_ty : public Predicate {
     return false;
   }
 };
-
-struct is_sign_mask {
-  bool isValue(const APInt &C) { return C.isSignMask(); }
-};
-
-/// \brief Match an integer or vector with only the sign bit(s) set.
-inline cst_pred_ty<is_sign_mask> m_SignMask() {
-  return cst_pred_ty<is_sign_mask>();
-}
-inline api_pred_ty<is_sign_mask> m_SignMask(const APInt *&V) { return V; }
 
 struct is_power2 {
   bool isValue(const APInt &C) { return C.isPowerOf2(); }
