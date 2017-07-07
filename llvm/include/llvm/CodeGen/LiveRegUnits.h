@@ -93,6 +93,8 @@ public:
   }
 
   /// Updates liveness when stepping backwards over the instruction \p MI.
+  /// This removes all register units defined or clobbered in \p MI and then
+  /// adds the units used (as in use operands) in \p MI.
   void stepBackward(const MachineInstr &MI);
 
   /// Adds all register units used, defined or clobbered in \p MI.
