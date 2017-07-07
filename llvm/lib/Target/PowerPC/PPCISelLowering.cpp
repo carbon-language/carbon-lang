@@ -136,6 +136,9 @@ PPCTargetLowering::PPCTargetLowering(const PPCTargetMachine &TM,
     addRegisterClass(MVT::f64, &PPC::F8RCRegClass);
   }
 
+  // Match BITREVERSE to customized fast code sequence in the td file.
+  setOperationAction(ISD::BITREVERSE, MVT::i32, Legal);
+
   // PowerPC has an i16 but no i8 (or i1) SEXTLOAD.
   for (MVT VT : MVT::integer_valuetypes()) {
     setLoadExtAction(ISD::SEXTLOAD, VT, MVT::i1, Promote);
