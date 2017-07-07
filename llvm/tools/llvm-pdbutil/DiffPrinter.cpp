@@ -110,8 +110,6 @@ void DiffPrinter::printResult(DiffResult Result) {
   case DiffResult::UNSPECIFIED:
     printValue(" ", Result, AlignStyle::Center, 3, true);
     break;
-  default:
-    llvm_unreachable("unreachable!");
   }
 }
 

@@ -348,6 +348,52 @@ getModuleDescriptors(const DbiModuleList &ML) {
   return List;
 }
 
+static void diffOneModule(
+    DiffPrinter &D, const std::pair<uint32_t, DbiModuleDescriptor> Item,
+    std::vector<std::pair<uint32_t, DbiModuleDescriptor>> &Other, bool Invert) {
+  D.printFullRow(
+      truncateQuotedNameFront("Module", Item.second.getModuleName(), 70));
+
+  auto Iter = llvm::find_if(
+      Other, [&Item](const std::pair<uint32_t, DbiModuleDescriptor> &Other) {
+        return Other.second.getModuleName().equals_lower(
+            Item.second.getModuleName());
+      });
+  if (Iter == Other.end()) {
+    // We didn't find this module at all on the other side.  Just print one row
+    // and continue.
+    D.print<ModiProvider>("- Modi", Item.first, None);
+    return;
+  }
+
+  // We did find this module.  Go through and compare each field.
+  const auto *L = &Item;
+  const auto *R = &*Iter;
+  if (Invert)
+    std::swap(L, R);
+
+  D.print<ModiProvider>("- Modi", L->first, R->first);
+  D.print<StringProvider>("- Obj File Name",
+                          shortFilePath(L->second.getObjFileName(), 28),
+                          shortFilePath(R->second.getObjFileName(), 28));
+  D.print<StreamNumberProvider>("- Debug Stream",
+                                L->second.getModuleStreamIndex(),
+                                R->second.getModuleStreamIndex());
+  D.print("- C11 Byte Size", L->second.getC11LineInfoByteSize(),
+          R->second.getC11LineInfoByteSize());
+  D.print("- C13 Byte Size", L->second.getC13LineInfoByteSize(),
+          R->second.getC13LineInfoByteSize());
+  D.print("- # of files", L->second.getNumberOfFiles(),
+          R->second.getNumberOfFiles());
+  D.print("- Pdb File Path Index", L->second.getPdbFilePathNameIndex(),
+          R->second.getPdbFilePathNameIndex());
+  D.print("- Source File Name Index", L->second.getSourceFileNameIndex(),
+          R->second.getSourceFileNameIndex());
+  D.print("- Symbol Byte Size", L->second.getSymbolDebugInfoByteSize(),
+          R->second.getSymbolDebugInfoByteSize());
+  Other.erase(Iter);
+}
+
 Error DiffStyle::diffDbiStream() {
   DiffPrinter D(2, "DBI Stream", 40, 30, opts::diff::PrintResultColumn,
                 opts::diff::PrintValueColumns, outs());
@@ -439,45 +485,11 @@ Error DiffStyle::diffDbiStream() {
   auto MDR = getModuleDescriptors(MR);
   // Scan all module descriptors from the left, and look for corresponding
   // module descriptors on the right.
-  for (const auto &L : MDL) {
-    D.printFullRow(
-        truncateQuotedNameFront("Module", L.second.getModuleName(), 70));
+  for (const auto &L : MDL)
+    diffOneModule(D, L, MDR, false);
 
-    auto Iter = llvm::find_if(
-        MDR, [&L](const std::pair<uint32_t, DbiModuleDescriptor> &R) {
-          return R.second.getModuleName().equals_lower(
-              L.second.getModuleName());
-        });
-    if (Iter == MDR.end()) {
-      // We didn't find this module at all on the right.  Just print one row
-      // and continue.
-      D.print<ModiProvider>("- Modi", L.first, None);
-      continue;
-    }
-
-    // We did find this module.  Go through and compare each field.
-    const auto &R = *Iter;
-    D.print<ModiProvider>("- Modi", L.first, R.first);
-    D.print<StringProvider>("- Obj File Name",
-                            shortFilePath(L.second.getObjFileName(), 28),
-                            shortFilePath(R.second.getObjFileName(), 28));
-    D.print<StreamNumberProvider>("- Debug Stream",
-                                  L.second.getModuleStreamIndex(),
-                                  R.second.getModuleStreamIndex());
-    D.print("- C11 Byte Size", L.second.getC11LineInfoByteSize(),
-            R.second.getC11LineInfoByteSize());
-    D.print("- C13 Byte Size", L.second.getC13LineInfoByteSize(),
-            R.second.getC13LineInfoByteSize());
-    D.print("- # of files", L.second.getNumberOfFiles(),
-            R.second.getNumberOfFiles());
-    D.print("- Pdb File Path Index", L.second.getPdbFilePathNameIndex(),
-            R.second.getPdbFilePathNameIndex());
-    D.print("- Source File Name Index", L.second.getSourceFileNameIndex(),
-            R.second.getSourceFileNameIndex());
-    D.print("- Symbol Byte Size", L.second.getSymbolDebugInfoByteSize(),
-            R.second.getSymbolDebugInfoByteSize());
-    MDR.erase(Iter);
-  }
+  for (const auto &R : MDR)
+    diffOneModule(D, R, MDL, true);
 
   return Error::success();
 }
