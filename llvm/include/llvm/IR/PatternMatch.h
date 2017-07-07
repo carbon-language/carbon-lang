@@ -158,12 +158,18 @@ struct match_neg_zero {
 /// zero
 inline match_neg_zero m_NegZero() { return match_neg_zero(); }
 
+struct match_any_zero {
+  template <typename ITy> bool match(ITy *V) {
+    if (const auto *C = dyn_cast<Constant>(V))
+      return C->isZeroValue();
+    return false;
+  }
+};
+
 /// \brief - Match an arbitrary zero/null constant.  This includes
 /// zero_initializer for vectors and ConstantPointerNull for pointers. For
 /// floating point constants, this will match negative zero and positive zero
-inline match_combine_or<match_zero, match_neg_zero> m_AnyZero() {
-  return m_CombineOr(m_Zero(), m_NegZero());
-}
+inline match_any_zero m_AnyZero() { return match_any_zero(); }
 
 struct match_nan {
   template <typename ITy> bool match(ITy *V) {
@@ -195,7 +201,7 @@ struct match_all_ones {
   }
 };
 
-/// \brief Match an integer 1 or a vector with all elements equal to 1.
+/// \brief Match an integer or vector with all bits set to true.
 inline match_all_ones m_AllOnes() { return match_all_ones(); }
 
 struct apint_match {
