@@ -910,11 +910,6 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     break; // "btver1";
   case 21:
     *Type = AMDFAM15H;
-    if (!(Features &
-          (1 << FEATURE_AVX))) { // If no AVX support, provide a sane fallback.
-      *Subtype = AMD_BTVER1;
-      break; // "btver1"
-    }
     if (Model >= 0x60 && Model <= 0x7f) {
       *Subtype = AMDFAM15H_BDVER4;
       break; // "bdver4"; 50h-6Fh: Excavator
@@ -934,20 +929,11 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     break;
   case 22:
     *Type = AMDFAM16H;
-    if (!(Features &
-          (1 << FEATURE_AVX))) { // If no AVX support provide a sane fallback.
-      *Subtype = AMD_BTVER1;
-      break; // "btver1";
-    }
     *Subtype = AMD_BTVER2;
     break; // "btver2"
   case 23:
     *Type = AMDFAM17H;
-    if (Features & (1 << FEATURE_ADX)) {
-      *Subtype = AMDFAM17H_ZNVER1;
-      break; // "znver1"
-    }
-    *Subtype =  AMD_BTVER1;
+    *Subtype = AMDFAM17H_ZNVER1;
     break;
   default:
     break; // "generic"
