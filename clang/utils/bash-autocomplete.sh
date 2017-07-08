@@ -34,12 +34,18 @@ _clang()
   elif [[ "$w1" == -*  && "$cur" == '=' ]]; then
     # -foo=<tab>
     arg="$w1=,"
+  elif [[ "$cur" == -*= ]]; then
+    # -foo=<tab>
+    arg="$cur,"
   elif [[ "$w1" == -* ]]; then
     # -foo <tab> or -foo bar<tab>
     arg="$w1,$cur"
   elif [[ "$w2" == -* && "$w1" == '=' ]]; then
     # -foo=bar<tab>
     arg="$w2=,$cur"
+  elif [[ ${cur: -1} != '=' && ${cur/=} != $cur ]]; then
+    # -foo=bar<tab>
+    arg="${cur%=*}=,${cur#*=}"
   fi
 
   # expand ~ to $HOME
