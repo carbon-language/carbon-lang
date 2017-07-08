@@ -2433,8 +2433,8 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   auto ExpectedAS =
       D ? D->getType().getAddressSpace()
         : (LangOpts.OpenCL ? LangAS::opencl_global : LangAS::Default);
-  auto ExpectedTargetAS = getContext().getTargetAddressSpace(ExpectedAS);
-  assert(ExpectedTargetAS == Ty->getPointerAddressSpace());
+  assert(getContext().getTargetAddressSpace(ExpectedAS) ==
+         Ty->getPointerAddressSpace());
   if (AddrSpace != ExpectedAS)
     return getTargetCodeGenInfo().performAddrSpaceCast(*this, GV, AddrSpace,
                                                        ExpectedAS, Ty);
