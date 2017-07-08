@@ -58,6 +58,212 @@ template <class C>
     const char* parse_unqualified_name(const char* first, const char* last, C& db);
 template <class C>
     const char* parse_decltype(const char* first, const char* last, C& db);
+template <std::size_t N>
+class arena
+{
+    static const std::size_t alignment = 16;
+    alignas(alignment) char buf_[N];
+    char* ptr_;
+
+    std::size_t 
+    align_up(std::size_t n) noexcept
+        {return (n + (alignment-1)) & ~(alignment-1);}
+
+    bool
+    pointer_in_buffer(char* p) noexcept
+        {return buf_ <= p && p <= buf_ + N;}
+
+public:
+    arena() noexcept : ptr_(buf_) {}
+    ~arena() {ptr_ = nullptr;}
+    arena(const arena&) = delete;
+    arena& operator=(const arena&) = delete;
+
+    char* allocate(std::size_t n);
+    void deallocate(char* p, std::size_t n) noexcept;
+
+    static constexpr std::size_t size() {return N;}
+    std::size_t used() const {return static_cast<std::size_t>(ptr_ - buf_);}
+    void reset() {ptr_ = buf_;}
+};
+
+template <std::size_t N>
+char*
+arena<N>::allocate(std::size_t n)
+{
+    n = align_up(n);
+    if (static_cast<std::size_t>(buf_ + N - ptr_) >= n)
+    {
+        char* r = ptr_;
+        ptr_ += n;
+        return r;
+    }
+    return static_cast<char*>(std::malloc(n));
+}
+
+template <std::size_t N>
+void
+arena<N>::deallocate(char* p, std::size_t n) noexcept
+{
+    if (pointer_in_buffer(p))
+    {
+        n = align_up(n);
+        if (p + n == ptr_)
+            ptr_ = p;
+    }
+    else
+        std::free(p);
+}
+
+template <class T, std::size_t N>
+class short_alloc
+{
+    arena<N>& a_;
+public:
+    typedef T value_type;
+
+public:
+    template <class _Up> struct rebind {typedef short_alloc<_Up, N> other;};
+
+    short_alloc(arena<N>& a) noexcept : a_(a) {}
+    template <class U>
+        short_alloc(const short_alloc<U, N>& a) noexcept
+            : a_(a.a_) {}
+    short_alloc(const short_alloc&) = default;
+    short_alloc& operator=(const short_alloc&) = delete;
+
+    T* allocate(std::size_t n)
+    {
+        return reinterpret_cast<T*>(a_.allocate(n*sizeof(T)));
+    }
+    void deallocate(T* p, std::size_t n) noexcept
+    {
+        a_.deallocate(reinterpret_cast<char*>(p), n*sizeof(T));
+    }
+
+    template <class T1, std::size_t N1, class U, std::size_t M>
+    friend
+    bool
+    operator==(const short_alloc<T1, N1>& x, const short_alloc<U, M>& y) noexcept;
+
+    template <class U, std::size_t M> friend class short_alloc;
+};
+
+template <class T, std::size_t N, class U, std::size_t M>
+inline
+bool
+operator==(const short_alloc<T, N>& x, const short_alloc<U, M>& y) noexcept
+{
+    return N == M && &x.a_ == &y.a_;
+}
+
+template <class T, std::size_t N, class U, std::size_t M>
+inline
+bool
+operator!=(const short_alloc<T, N>& x, const short_alloc<U, M>& y) noexcept
+{
+    return !(x == y);
+}
+
+template <class T>
+class malloc_alloc
+{
+public:
+    typedef T value_type;
+    typedef T& reference;
+    typedef const T& const_reference;
+    typedef T* pointer;
+    typedef const T* const_pointer;
+    typedef std::size_t size_type;
+    typedef std::ptrdiff_t difference_type;
+
+    malloc_alloc() = default;
+    template <class U> malloc_alloc(const malloc_alloc<U>&) noexcept {}
+
+    T* allocate(std::size_t n)
+    {
+        return static_cast<T*>(std::malloc(n*sizeof(T)));
+    }
+    void deallocate(T* p, std::size_t) noexcept
+    {
+        std::free(p);
+    }
+
+    template <class U> struct rebind { using other = malloc_alloc<U>; };
+    template <class U, class... Args>
+    void construct(U* p, Args&&... args)
+    {
+        ::new ((void*)p) U(std::forward<Args>(args)...);
+    }
+    void destroy(T* p)
+    {
+        p->~T();
+    }
+};
+
+template <class T, class U>
+inline
+bool
+operator==(const malloc_alloc<T>&, const malloc_alloc<U>&) noexcept
+{
+    return true;
+}
+
+template <class T, class U>
+inline
+bool
+operator!=(const malloc_alloc<T>& x, const malloc_alloc<U>& y) noexcept
+{
+    return !(x == y);
+}
+
+const size_t bs = 4 * 1024;
+template <class T> using Alloc = short_alloc<T, bs>;
+template <class T> using Vector = std::vector<T, Alloc<T>>;
+
+template <class StrT>
+struct string_pair
+{
+    StrT first;
+    StrT second;
+
+    string_pair() = default;
+    string_pair(StrT f) : first(std::move(f)) {}
+    string_pair(StrT f, StrT s)
+        : first(std::move(f)), second(std::move(s)) {}
+    template <size_t N>
+        string_pair(const char (&s)[N]) : first(s, N-1) {}
+
+    size_t size() const {return first.size() + second.size();}
+    bool empty() const { return first.empty() && second.empty(); }
+    StrT full() const {return first + second;}
+    StrT move_full() {return std::move(first) + std::move(second);}
+};
+
+struct Db
+{
+    typedef std::basic_string<char, std::char_traits<char>,
+                              malloc_alloc<char>> String;
+    typedef Vector<string_pair<String>> sub_type;
+    typedef Vector<sub_type> template_param_type;
+    sub_type names;
+    template_param_type subs;
+    Vector<template_param_type> template_param;
+    unsigned cv = 0;
+    unsigned ref = 0;
+    unsigned encoding_depth = 0;
+    bool parsed_ctor_dtor_cv = false;
+    bool tag_templates = true;
+    bool fix_forward_references = false;
+    bool try_to_parse_template_args = true;
+
+    template <size_t N>
+    Db(arena<N>& ar) :
+        names(ar),
+        subs(0, names, ar),
+        template_param(0, subs, ar)
+    {}
+};
 
 template <class C>
 void
@@ -4797,213 +5003,6 @@ demangle(const char* first, const char* last, C& db, int& status)
     if (status == success && db.names.empty())
         status = invalid_mangled_name;
 }
-
-template <std::size_t N>
-class arena
-{
-    static const std::size_t alignment = 16;
-    alignas(alignment) char buf_[N];
-    char* ptr_;
-
-    std::size_t 
-    align_up(std::size_t n) noexcept
-        {return (n + (alignment-1)) & ~(alignment-1);}
-
-    bool
-    pointer_in_buffer(char* p) noexcept
-        {return buf_ <= p && p <= buf_ + N;}
-
-public:
-    arena() noexcept : ptr_(buf_) {}
-    ~arena() {ptr_ = nullptr;}
-    arena(const arena&) = delete;
-    arena& operator=(const arena&) = delete;
-
-    char* allocate(std::size_t n);
-    void deallocate(char* p, std::size_t n) noexcept;
-
-    static constexpr std::size_t size() {return N;}
-    std::size_t used() const {return static_cast<std::size_t>(ptr_ - buf_);}
-    void reset() {ptr_ = buf_;}
-};
-
-template <std::size_t N>
-char*
-arena<N>::allocate(std::size_t n)
-{
-    n = align_up(n);
-    if (static_cast<std::size_t>(buf_ + N - ptr_) >= n)
-    {
-        char* r = ptr_;
-        ptr_ += n;
-        return r;
-    }
-    return static_cast<char*>(std::malloc(n));
-}
-
-template <std::size_t N>
-void
-arena<N>::deallocate(char* p, std::size_t n) noexcept
-{
-    if (pointer_in_buffer(p))
-    {
-        n = align_up(n);
-        if (p + n == ptr_)
-            ptr_ = p;
-    }
-    else
-        std::free(p);
-}
-
-template <class T, std::size_t N>
-class short_alloc
-{
-    arena<N>& a_;
-public:
-    typedef T value_type;
-
-public:
-    template <class _Up> struct rebind {typedef short_alloc<_Up, N> other;};
-
-    short_alloc(arena<N>& a) noexcept : a_(a) {}
-    template <class U>
-        short_alloc(const short_alloc<U, N>& a) noexcept
-            : a_(a.a_) {}
-    short_alloc(const short_alloc&) = default;
-    short_alloc& operator=(const short_alloc&) = delete;
-
-    T* allocate(std::size_t n)
-    {
-        return reinterpret_cast<T*>(a_.allocate(n*sizeof(T)));
-    }
-    void deallocate(T* p, std::size_t n) noexcept
-    {
-        a_.deallocate(reinterpret_cast<char*>(p), n*sizeof(T));
-    }
-
-    template <class T1, std::size_t N1, class U, std::size_t M>
-    friend
-    bool
-    operator==(const short_alloc<T1, N1>& x, const short_alloc<U, M>& y) noexcept;
-
-    template <class U, std::size_t M> friend class short_alloc;
-};
-
-template <class T, std::size_t N, class U, std::size_t M>
-inline
-bool
-operator==(const short_alloc<T, N>& x, const short_alloc<U, M>& y) noexcept
-{
-    return N == M && &x.a_ == &y.a_;
-}
-
-template <class T, std::size_t N, class U, std::size_t M>
-inline
-bool
-operator!=(const short_alloc<T, N>& x, const short_alloc<U, M>& y) noexcept
-{
-    return !(x == y);
-}
-
-template <class T>
-class malloc_alloc
-{
-public:
-    typedef T value_type;
-    typedef T& reference;
-    typedef const T& const_reference;
-    typedef T* pointer;
-    typedef const T* const_pointer;
-    typedef std::size_t size_type;
-    typedef std::ptrdiff_t difference_type;
-
-    malloc_alloc() = default;
-    template <class U> malloc_alloc(const malloc_alloc<U>&) noexcept {}
-
-    T* allocate(std::size_t n)
-    {
-        return static_cast<T*>(std::malloc(n*sizeof(T)));
-    }
-    void deallocate(T* p, std::size_t) noexcept
-    {
-        std::free(p);
-    }
-
-    template <class U> struct rebind { using other = malloc_alloc<U>; };
-    template <class U, class... Args>
-    void construct(U* p, Args&&... args)
-    {
-        ::new ((void*)p) U(std::forward<Args>(args)...);
-    }
-    void destroy(T* p)
-    {
-        p->~T();
-    }
-};
-
-template <class T, class U>
-inline
-bool
-operator==(const malloc_alloc<T>&, const malloc_alloc<U>&) noexcept
-{
-    return true;
-}
-
-template <class T, class U>
-inline
-bool
-operator!=(const malloc_alloc<T>& x, const malloc_alloc<U>& y) noexcept
-{
-    return !(x == y);
-}
-
-const size_t bs = 4 * 1024;
-template <class T> using Alloc = short_alloc<T, bs>;
-template <class T> using Vector = std::vector<T, Alloc<T>>;
-
-template <class StrT>
-struct string_pair
-{
-    StrT first;
-    StrT second;
-
-    string_pair() = default;
-    string_pair(StrT f) : first(std::move(f)) {}
-    string_pair(StrT f, StrT s)
-        : first(std::move(f)), second(std::move(s)) {}
-    template <size_t N>
-        string_pair(const char (&s)[N]) : first(s, N-1) {}
-
-    size_t size() const {return first.size() + second.size();}
-    bool empty() const { return first.empty() && second.empty(); }
-    StrT full() const {return first + second;}
-    StrT move_full() {return std::move(first) + std::move(second);}
-};
-
-struct Db
-{
-    typedef std::basic_string<char, std::char_traits<char>,
-                              malloc_alloc<char>> String;
-    typedef Vector<string_pair<String>> sub_type;
-    typedef Vector<sub_type> template_param_type;
-    sub_type names;
-    template_param_type subs;
-    Vector<template_param_type> template_param;
-    unsigned cv = 0;
-    unsigned ref = 0;
-    unsigned encoding_depth = 0;
-    bool parsed_ctor_dtor_cv = false;
-    bool tag_templates = true;
-    bool fix_forward_references = false;
-    bool try_to_parse_template_args = true;
-
-    template <size_t N>
-    Db(arena<N>& ar) :
-        names(ar),
-        subs(0, names, ar),
-        template_param(0, subs, ar)
-    {}
-};
 
 }  // unnamed namespace
 
