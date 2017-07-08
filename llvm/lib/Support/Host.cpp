@@ -987,8 +987,14 @@ static unsigned getAvailableFeatures(unsigned int ECX, unsigned int EDX,
   Features |= (HasAVX512Save << FEATURE_AVX512SAVE);
   Features |= (HasADX << FEATURE_ADX);
 
-  getX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
-  Features |= (((EDX >> 29) & 0x1) << FEATURE_EM64T);
+  unsigned MaxExtLevel;
+  getX86CpuIDAndInfo(0x80000000, &MaxExtLevel, &EBX, &ECX, &EDX);
+
+  bool HasExtLeaf1 = MaxExtLevel >= 0x80000001 &&
+                     !getX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+  if (HasExtLeaf1)
+    Features |= (((EDX >> 29) & 0x1) << FEATURE_EM64T);
+
   return Features;
 }
 
@@ -1004,10 +1010,9 @@ StringRef sys::getHostCPUName() {
   if(!isCpuIdSupported())
     return "generic";
 #endif
-  if (getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX))
+  if (getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX) || MaxLeaf < 1)
     return "generic";
-  if (getX86CpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX))
-    return "generic";
+  getX86CpuIDAndInfo(0x1, &EAX, &EBX, &ECX, &EDX);
 
   unsigned Brand_id = EBX & 0xff;
   unsigned Family = 0, Model = 0;
