@@ -915,7 +915,7 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       *Subtype = AMD_BTVER1;
       break; // "btver1"
     }
-    if (Model >= 0x50 && Model <= 0x6f) {
+    if (Model >= 0x60 && Model <= 0x7f) {
       *Subtype = AMDFAM15H_BDVER4;
       break; // "bdver4"; 50h-6Fh: Excavator
     }
