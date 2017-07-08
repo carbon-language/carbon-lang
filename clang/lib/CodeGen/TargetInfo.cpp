@@ -421,7 +421,8 @@ unsigned TargetCodeGenInfo::getGlobalVarAddressSpace(CodeGenModule &CGM,
   assert(!CGM.getLangOpts().OpenCL &&
          !(CGM.getLangOpts().CUDA && CGM.getLangOpts().CUDAIsDevice) &&
          "Address space agnostic languages only");
-  return D ? D->getType().getAddressSpace() : LangAS::Default;
+  return D ? D->getType().getAddressSpace()
+           : static_cast<unsigned>(LangAS::Default);
 }
 
 llvm::Value *TargetCodeGenInfo::performAddrSpaceCast(

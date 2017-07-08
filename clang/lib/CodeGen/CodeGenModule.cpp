@@ -2432,7 +2432,8 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
 
   auto ExpectedAS =
       D ? D->getType().getAddressSpace()
-        : (LangOpts.OpenCL ? LangAS::opencl_global : LangAS::Default);
+        : static_cast<unsigned>(LangOpts.OpenCL ? LangAS::opencl_global
+                                                : LangAS::Default);
   assert(getContext().getTargetAddressSpace(ExpectedAS) ==
          Ty->getPointerAddressSpace());
   if (AddrSpace != ExpectedAS)
@@ -2574,7 +2575,8 @@ CharUnits CodeGenModule::GetTargetTypeStoreSize(llvm::Type *Ty) const {
 unsigned CodeGenModule::GetGlobalVarAddressSpace(const VarDecl *D) {
   unsigned AddrSpace;
   if (LangOpts.OpenCL) {
-    AddrSpace = D ? D->getType().getAddressSpace() : LangAS::opencl_global;
+    AddrSpace = D ? D->getType().getAddressSpace()
+                  : static_cast<unsigned>(LangAS::opencl_global);
     assert(AddrSpace == LangAS::opencl_global ||
            AddrSpace == LangAS::opencl_constant ||
            AddrSpace == LangAS::opencl_local ||
