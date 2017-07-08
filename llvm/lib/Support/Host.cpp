@@ -827,10 +827,8 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
   }
 }
 
-static void getAMDProcessorTypeAndSubtype(unsigned Family,
-                                          unsigned Model,
-                                          unsigned Features,
-                                          unsigned *Type,
+static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
+                                          unsigned Features, unsigned *Type,
                                           unsigned *Subtype) {
   // FIXME: this poorly matches the generated SubtargetFeatureKV table.  There
   // appears to be no way to generate the wide variety of AMD-specific targets
