@@ -598,7 +598,7 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
 /// folding.
 static Constant *stripAndComputeConstantOffsets(const DataLayout &DL, Value *&V,
                                                 bool AllowNonInbounds = false) {
-  assert(V->getType()->getScalarType()->isPointerTy());
+  assert(V->getType()->isPtrOrPtrVectorTy());
 
   Type *IntPtrTy = DL.getIntPtrType(V->getType())->getScalarType();
   APInt Offset = APInt::getNullValue(IntPtrTy->getIntegerBitWidth());
@@ -627,8 +627,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout &DL, Value *&V,
         }
       break;
     }
-    assert(V->getType()->getScalarType()->isPointerTy() &&
-           "Unexpected operand type!");
+    assert(V->getType()->isPtrOrPtrVectorTy() && "Unexpected operand type!");
   } while (Visited.insert(V).second);
 
   Constant *OffsetIntPtr = ConstantInt::get(IntPtrTy, Offset);

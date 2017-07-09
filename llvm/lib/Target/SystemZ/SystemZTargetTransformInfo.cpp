@@ -787,7 +787,7 @@ getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) {
     int Cost = ((Val->getScalarSizeInBits() == 1) ? 2 /*+test-under-mask*/ : 1);
 
     // Give a slight penalty for moving out of vector pipeline to FXU unit.
-    if (Index == 0 && Val->getScalarType()->isIntegerTy())
+    if (Index == 0 && Val->isIntOrIntVectorTy())
       Cost += 1;
 
     return Cost;

@@ -1501,7 +1501,7 @@ void computeKnownBits(const Value *V, KnownBits &Known, unsigned Depth,
   unsigned BitWidth = Known.getBitWidth();
 
   assert((V->getType()->isIntOrIntVectorTy() ||
-          V->getType()->getScalarType()->isPointerTy()) &&
+          V->getType()->isPtrOrPtrVectorTy()) &&
          "Not integer or pointer type!");
   assert((Q.DL.getTypeSizeInBits(V->getType()->getScalarType()) == BitWidth) &&
          (!V->getType()->isIntOrIntVectorTy() ||
