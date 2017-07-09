@@ -512,7 +512,7 @@ ConstantInt *ConstantInt::getFalse(LLVMContext &Context) {
 }
 
 Constant *ConstantInt::getTrue(Type *Ty) {
-  assert(Ty->getScalarType()->isIntegerTy(1) && "Type not i1 or vector of i1.");
+  assert(Ty->isIntOrIntVectorTy(1) && "Type not i1 or vector of i1.");
   ConstantInt *TrueC = ConstantInt::getTrue(Ty->getContext());
   if (auto *VTy = dyn_cast<VectorType>(Ty))
     return ConstantVector::getSplat(VTy->getNumElements(), TrueC);
@@ -520,7 +520,7 @@ Constant *ConstantInt::getTrue(Type *Ty) {
 }
 
 Constant *ConstantInt::getFalse(Type *Ty) {
-  assert(Ty->getScalarType()->isIntegerTy(1) && "Type not i1 or vector of i1.");
+  assert(Ty->isIntOrIntVectorTy(1) && "Type not i1 or vector of i1.");
   ConstantInt *FalseC = ConstantInt::getFalse(Ty->getContext());
   if (auto *VTy = dyn_cast<VectorType>(Ty))
     return ConstantVector::getSplat(VTy->getNumElements(), FalseC);

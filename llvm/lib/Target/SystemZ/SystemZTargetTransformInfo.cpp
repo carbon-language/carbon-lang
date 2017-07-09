@@ -779,8 +779,7 @@ int SystemZTTIImpl::
 getVectorInstrCost(unsigned Opcode, Type *Val, unsigned Index) {
   // vlvgp will insert two grs into a vector register, so only count half the
   // number of instructions.
-  if (Opcode == Instruction::InsertElement &&
-      Val->getScalarType()->isIntegerTy(64))
+  if (Opcode == Instruction::InsertElement && Val->isIntOrIntVectorTy(64))
     return ((Index % 2 == 0) ? 1 : 0);
 
   if (Opcode == Instruction::ExtractElement) {

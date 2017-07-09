@@ -560,7 +560,7 @@ static Value *SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
     return Y;
 
   /// i1 add -> xor.
-  if (MaxRecurse && Op0->getType()->getScalarType()->isIntegerTy(1))
+  if (MaxRecurse && Op0->getType()->isIntOrIntVectorTy(1))
     if (Value *V = SimplifyXorInst(Op0, Op1, Q, MaxRecurse-1))
       return V;
 
@@ -770,7 +770,7 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
       return ConstantExpr::getIntegerCast(Result, Op0->getType(), true);
 
   // i1 sub -> xor.
-  if (MaxRecurse && Op0->getType()->getScalarType()->isIntegerTy(1))
+  if (MaxRecurse && Op0->getType()->isIntOrIntVectorTy(1))
     if (Value *V = SimplifyXorInst(Op0, Op1, Q, MaxRecurse-1))
       return V;
 
@@ -901,7 +901,7 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const SimplifyQuery &Q,
     return X;
 
   // i1 mul -> and.
-  if (MaxRecurse && Op0->getType()->getScalarType()->isIntegerTy(1))
+  if (MaxRecurse && Op0->getType()->isIntOrIntVectorTy(1))
     if (Value *V = SimplifyAndInst(Op0, Op1, Q, MaxRecurse-1))
       return V;
 
@@ -997,7 +997,7 @@ static Value *simplifyDivRem(Value *Op0, Value *Op1, bool IsDiv) {
   // X % 1 -> 0
   // If this is a boolean op (single-bit element type), we can't have
   // division-by-zero or remainder-by-zero, so assume the divisor is 1.
-  if (match(Op1, m_One()) || Ty->getScalarType()->isIntegerTy(1))
+  if (match(Op1, m_One()) || Ty->isIntOrIntVectorTy(1))
     return IsDiv ? Op0 : Constant::getNullValue(Ty);
 
   return nullptr;
@@ -2250,7 +2250,7 @@ static Value *simplifyICmpOfBools(CmpInst::Predicate Pred, Value *LHS,
                                   Value *RHS, const SimplifyQuery &Q) {
   Type *ITy = GetCompareTy(LHS); // The return type.
   Type *OpTy = LHS->getType();   // The operand type.
-  if (!OpTy->getScalarType()->isIntegerTy(1))
+  if (!OpTy->isIntOrIntVectorTy(1))
     return nullptr;
 
   // A boolean compared to true/false can be simplified in 14 out of the 20
