@@ -570,25 +570,48 @@ LazyCallGraph::SCC &llvm::updateCGAndAnalysisManagerForFunctionPass(
     // Otherwise we are switching an internal ref edge to a call edge. This
     // may merge away some SCCs, and we add those to the UpdateResult. We also
     // need to make sure to update the worklist in the event SCCs have moved
-    // before the current one in the post-order sequence.
+    // before the current one in the post-order sequence
+    bool HasFunctionAnalysisProxy = false;
     auto InitialSCCIndex = RC->find(*C) - RC->begin();
-    auto InvalidatedSCCs = RC->switchInternalEdgeToCall(N, *CallTarget);
-    if (!InvalidatedSCCs.empty()) {
+    bool FormedCycle = RC->switchInternalEdgeToCall(
+        N, *CallTarget, [&](ArrayRef<SCC *> MergedSCCs) {
+          for (SCC *MergedC : MergedSCCs) {
+            assert(MergedC != &TargetC && "Cannot merge away the target SCC!");
+
+            HasFunctionAnalysisProxy |=
+                AM.getCachedResult<FunctionAnalysisManagerCGSCCProxy>(
+                    *MergedC) != nullptr;
+
+            // Mark that this SCC will no longer be valid.
+            UR.InvalidatedSCCs.insert(MergedC);
+
+            // FIXME: We should really do a 'clear' here to forcibly release
+            // memory, but we don't have a good way of doing that and
+            // preserving the function analyses.
+            auto PA = PreservedAnalyses::allInSet<AllAnalysesOn<Function>>();
+            PA.preserve<FunctionAnalysisManagerCGSCCProxy>();
+            AM.invalidate(*MergedC, PA);
+          }
+        });
+
+    // If we formed a cycle by creating this call, we need to update more data
+    // structures.
+    if (FormedCycle) {
       C = &TargetC;
       assert(G.lookupSCC(N) == C && "Failed to update current SCC!");
 
+      // If one of the invalidated SCCs had a cached proxy to a function
+      // analysis manager, we need to create a proxy in the new current SCC as
+      // the invaliadted SCCs had their functions moved.
+      if (HasFunctionAnalysisProxy)
+        AM.getResult<FunctionAnalysisManagerCGSCCProxy>(*C, G);
+
       // Any analyses cached for this SCC are no longer precise as the shape
-      // has changed by introducing this cycle.
-      AM.invalidate(*C, PreservedAnalyses::none());
-
-      for (SCC *InvalidatedC : InvalidatedSCCs) {
-        assert(InvalidatedC != C && "Cannot invalidate the current SCC!");
-        UR.InvalidatedSCCs.insert(InvalidatedC);
-
-        // Also clear any cached analyses for the SCCs that are dead. This
-        // isn't really necessary for correctness but can release memory.
-        AM.clear(*InvalidatedC);
-      }
+      // has changed by introducing this cycle. However, we have taken care to
+      // update the proxies so it remains valide.
+      auto PA = PreservedAnalyses::allInSet<AllAnalysesOn<Function>>();
+      PA.preserve<FunctionAnalysisManagerCGSCCProxy>();
+      AM.invalidate(*C, PA);
     }
     auto NewSCCIndex = RC->find(*C) - RC->begin();
     if (InitialSCCIndex < NewSCCIndex) {
