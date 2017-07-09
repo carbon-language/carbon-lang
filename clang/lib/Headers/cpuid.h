@@ -79,7 +79,7 @@
 #define signature_VORTEX_edx 0x36387865
 #define signature_VORTEX_ecx 0x436f5320
 
-/* Features in %ecx for level 1 */
+/* Features in %ecx for leaf 1 */
 #define bit_SSE3        0x00000001
 #define bit_PCLMULQDQ   0x00000002
 #define bit_PCLMUL      bit_PCLMULQDQ   /* for gcc compat */
@@ -114,7 +114,7 @@
 #define bit_F16C        0x20000000
 #define bit_RDRND       0x40000000
 
-/* Features in %edx for level 1 */
+/* Features in %edx for leaf 1 */
 #define bit_FPU         0x00000001
 #define bit_VME         0x00000002
 #define bit_DE          0x00000004
@@ -147,10 +147,68 @@
 #define bit_TM          0x20000000
 #define bit_PBE         0x80000000
 
-/* Features in %ebx for level 7 sub-leaf 0 */
+/* Features in %ebx for leaf 7 sub-leaf 0 */
 #define bit_FSGSBASE    0x00000001
+#define bit_SGX         0x00000004
+#define bit_BMI         0x00000008
+#define bit_HLE         0x00000010
+#define bit_AVX2        0x00000020
 #define bit_SMEP        0x00000080
+#define bit_BMI2        0x00000100
 #define bit_ENH_MOVSB   0x00000200
+#define bit_RTM         0x00000800
+#define bit_MPX         0x00004000
+#define bit_AVX512F     0x00010000
+#define bit_AVX512DQ    0x00020000
+#define bit_RDSEED      0x00040000
+#define bit_ADX         0x00080000
+#define bit_AVX512IFMA  0x00200000
+#define bit_CLFLUSHOPT  0x00800000
+#define bit_CLWB        0x01000000
+#define bit_AVX512PF    0x04000000
+#define bit_AVX51SER    0x08000000
+#define bit_AVX512CD    0x10000000
+#define bit_SHA         0x20000000
+#define bit_AVX512BW    0x40000000
+#define bit_AVX512VL    0x80000000
+
+/* Features in %ecx for leaf 7 sub-leaf 0 */
+#define bit_PREFTCHWT1  0x00000001
+#define bit_AVX512VBMI  0x00000002
+#define bit_PKU         0x00000004
+#define bit_OSPKE       0x00000010
+#define bit_AVX512VPOPCNTDQ  0x00004000
+#define bit_RDPID       0x00400000
+
+/* Features in %edx for leaf 7 sub-leaf 0 */
+#define bit_AVX5124VNNIW  0x00000004
+#define bit_AVX5124FMAPS  0x00000008
+
+/* Features in %eax for leaf 13 sub-leaf 1 */
+#define bit_XSAVEOPT    0x00000001
+#define bit_XSAVEC      0x00000002
+#define bit_XSAVES      0x00000008
+
+/* Features in %ecx for leaf 0x80000001 */
+#define bit_LAHF_LM     0x00000001
+#define bit_ABM         0x00000020
+#define bit_SSE4a       0x00000040
+#define bit_PRFCHW      0x00000100
+#define bit_XOP         0x00000800
+#define bit_LWP         0x00008000
+#define bit_FMA4        0x00010000
+#define bit_TBM         0x00200000
+#define bit_MWAITX      0x20000000
+
+/* Features in %edx for leaf 0x80000001 */
+#define bit_MMXEXT      0x00400000
+#define bit_LM          0x20000000
+#define bit_3DNOWP      0x40000000
+#define bit_3DNOW       0x80000000
+
+/* Features in %ebx for leaf 0x80000001 */
+#define bit_CLZERO      0x00000001
+
 
 #if __i386__
 #define __cpuid(__leaf, __eax, __ebx, __ecx, __edx) \
