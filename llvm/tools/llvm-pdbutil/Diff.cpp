@@ -101,8 +101,8 @@ struct BinaryPathProvider {
 
   SmallString<64> removeRoot(StringRef Path, bool IsRight) const {
     SmallString<64> Native(Path);
-    SmallString<64> Root =
-        IsRight ? opts::diff::RightRoot : opts::diff::LeftRoot;
+    auto &RootOpt = IsRight ? opts::diff::RightRoot : opts::diff::LeftRoot;
+    SmallString<64> Root(static_cast<std::string>(RootOpt));
     // pdb paths always use windows syntax, convert slashes to backslashes.
     sys::path::native(Root, sys::path::Style::windows);
     if (sys::path::has_stem(Root, sys::path::Style::windows))
@@ -449,7 +449,7 @@ diffOneModule(DiffPrinter &D,
 
   BinaryPathProvider PathProvider(28);
   auto Iter = llvm::find_if(
-      Other, [&Item, &PathProvider, ItemIsRight,
+      Other, [&PathProvider, ItemIsRight,
               L](const std::pair<uint32_t, DbiModuleDescriptor> &Other) {
         const auto *Left = L;
         const auto *Right = &Other;
