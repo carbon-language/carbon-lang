@@ -88,41 +88,43 @@ static cl::opt<std::string> VectorizerStartEPPipeline(
 static void registerEPCallbacks(PassBuilder &PB, bool VerifyEachPass,
                                 bool DebugLogging) {
   if (!PeepholeEPPipeline.empty())
-    PB.registerPeepholeEPCallback(
-        [&](FunctionPassManager &PM, PassBuilder::OptimizationLevel Level) {
-          return PB.parsePassPipeline(PM, PeepholeEPPipeline, VerifyEachPass,
-                                      DebugPM);
-        });
+    PB.registerPeepholeEPCallback([&PB, VerifyEachPass, DebugLogging](
+        FunctionPassManager &PM, PassBuilder::OptimizationLevel Level) {
+      return PB.parsePassPipeline(PM, PeepholeEPPipeline, VerifyEachPass,
+                                  DebugPM);
+    });
   if (!LateLoopOptimizationsEPPipeline.empty())
     PB.registerLateLoopOptimizationsEPCallback(
-        [&](LoopPassManager &PM, PassBuilder::OptimizationLevel Level) {
+        [&PB, VerifyEachPass, DebugLogging](
+            LoopPassManager &PM, PassBuilder::OptimizationLevel Level) {
           return PB.parsePassPipeline(PM, LateLoopOptimizationsEPPipeline,
                                       VerifyEachPass, DebugPM);
         });
   if (!LoopOptimizerEndEPPipeline.empty())
-    PB.registerLoopOptimizerEndEPCallback(
-        [&](LoopPassManager &PM, PassBuilder::OptimizationLevel Level) {
-          return PB.parsePassPipeline(PM, LoopOptimizerEndEPPipeline,
-                                      VerifyEachPass, DebugPM);
-        });
+    PB.registerLoopOptimizerEndEPCallback([&PB, VerifyEachPass, DebugLogging](
+        LoopPassManager &PM, PassBuilder::OptimizationLevel Level) {
+      return PB.parsePassPipeline(PM, LoopOptimizerEndEPPipeline,
+                                  VerifyEachPass, DebugPM);
+    });
   if (!ScalarOptimizerLateEPPipeline.empty())
     PB.registerScalarOptimizerLateEPCallback(
-        [&](FunctionPassManager &PM, PassBuilder::OptimizationLevel Level) {
+        [&PB, VerifyEachPass, DebugLogging](
+            FunctionPassManager &PM, PassBuilder::OptimizationLevel Level) {
           return PB.parsePassPipeline(PM, ScalarOptimizerLateEPPipeline,
                                       VerifyEachPass, DebugPM);
         });
   if (!CGSCCOptimizerLateEPPipeline.empty())
-    PB.registerCGSCCOptimizerLateEPCallback(
-        [&](CGSCCPassManager &PM, PassBuilder::OptimizationLevel Level) {
-          return PB.parsePassPipeline(PM, CGSCCOptimizerLateEPPipeline,
-                                      VerifyEachPass, DebugPM);
-        });
+    PB.registerCGSCCOptimizerLateEPCallback([&PB, VerifyEachPass, DebugLogging](
+        CGSCCPassManager &PM, PassBuilder::OptimizationLevel Level) {
+      return PB.parsePassPipeline(PM, CGSCCOptimizerLateEPPipeline,
+                                  VerifyEachPass, DebugPM);
+    });
   if (!VectorizerStartEPPipeline.empty())
-    PB.registerVectorizerStartEPCallback(
-        [&](FunctionPassManager &PM, PassBuilder::OptimizationLevel Level) {
-          return PB.parsePassPipeline(PM, VectorizerStartEPPipeline,
-                                      VerifyEachPass, DebugPM);
-        });
+    PB.registerVectorizerStartEPCallback([&PB, VerifyEachPass, DebugLogging](
+        FunctionPassManager &PM, PassBuilder::OptimizationLevel Level) {
+      return PB.parsePassPipeline(PM, VectorizerStartEPPipeline, VerifyEachPass,
+                                  DebugPM);
+    });
 }
 
 bool llvm::runPassPipeline(StringRef Arg0, Module &M, TargetMachine *TM,
