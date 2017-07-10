@@ -138,11 +138,6 @@ static void foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
 
   int Src0Idx = AMDGPU::getNamedOperandIdx(MI.getOpcode(), AMDGPU::OpName::src0);
 
-  // Only one literal constant is allowed per instruction, so if src0 is a
-  // literal constant then we can't do any folding.
-  if (TII->isLiteralConstant(MI, Src0Idx))
-    return;
-
   // Try to fold Src0
   MachineOperand &Src0 = MI.getOperand(Src0Idx);
   if (Src0.isReg() && MRI.hasOneUse(Src0.getReg())) {
