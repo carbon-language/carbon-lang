@@ -51,7 +51,7 @@ _sigsetjmp$non_lazy_ptr:
 // original ones.
 ASM_HIDDEN(_Z18InitializeGuardPtrv)
 .global _Z18InitializeGuardPtrv
-.ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(_Z18InitializeGuardPtrv))
+ASM_TYPE_FUNCTION(ASM_TSAN_SYMBOL_INTERCEPTOR(_Z18InitializeGuardPtrv))
 _Z18InitializeGuardPtrv:
   CFI_STARTPROC
   // Allocates a jmp_buf for the setjmp call.
