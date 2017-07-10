@@ -87,10 +87,10 @@ static QualType lookupPromiseType(Sema &S, const FunctionDecl *FD,
       // [over.match.funcs]4
       // For non-static member functions, the type of the implicit object
       // parameter is
-      //  — “lvalue reference to cv X” for functions declared without a
-      //    ref-qualifier or with the & ref-qualifier
-      //  — “rvalue reference to cv X” for functions declared with the &&
-      //    ref-qualifier
+      //  -- "lvalue reference to cv X" for functions declared without a
+      //      ref-qualifier or with the & ref-qualifier
+      //  -- "rvalue reference to cv X" for functions declared with the &&
+      //      ref-qualifier
       QualType T =
           MD->getThisType(S.Context)->getAs<PointerType>()->getPointeeType();
       T = FnType->getRefQualifier() == RQ_RValue
