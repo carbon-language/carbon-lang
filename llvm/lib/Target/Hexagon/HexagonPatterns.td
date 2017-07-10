@@ -3113,41 +3113,6 @@ def: vshift_rr_pat <S2_asl_r_vw, HexagonVSHLW, V2I32>;
 def: vshift_rr_pat <S2_asl_r_vh, HexagonVSHLH, V4I16>;
 
 
-def SDTHexagonVecCompare_v8i8 : SDTypeProfile<1, 2,
-  [SDTCisSameAs<1, 2>, SDTCisVT<0, i1>, SDTCisVT<1, v8i8>]>;
-def SDTHexagonVecCompare_v4i16 : SDTypeProfile<1, 2,
-  [SDTCisSameAs<1, 2>, SDTCisVT<0, i1>, SDTCisVT<1, v4i16>]>;
-def SDTHexagonVecCompare_v2i32 : SDTypeProfile<1, 2,
-  [SDTCisSameAs<1, 2>, SDTCisVT<0, i1>, SDTCisVT<1, v2i32>]>;
-
-def HexagonVCMPBEQ:  SDNode<"HexagonISD::VCMPBEQ",  SDTHexagonVecCompare_v8i8>;
-def HexagonVCMPBGT:  SDNode<"HexagonISD::VCMPBGT",  SDTHexagonVecCompare_v8i8>;
-def HexagonVCMPBGTU: SDNode<"HexagonISD::VCMPBGTU", SDTHexagonVecCompare_v8i8>;
-def HexagonVCMPHEQ:  SDNode<"HexagonISD::VCMPHEQ",  SDTHexagonVecCompare_v4i16>;
-def HexagonVCMPHGT:  SDNode<"HexagonISD::VCMPHGT",  SDTHexagonVecCompare_v4i16>;
-def HexagonVCMPHGTU: SDNode<"HexagonISD::VCMPHGTU", SDTHexagonVecCompare_v4i16>;
-def HexagonVCMPWEQ:  SDNode<"HexagonISD::VCMPWEQ",  SDTHexagonVecCompare_v2i32>;
-def HexagonVCMPWGT:  SDNode<"HexagonISD::VCMPWGT",  SDTHexagonVecCompare_v2i32>;
-def HexagonVCMPWGTU: SDNode<"HexagonISD::VCMPWGTU", SDTHexagonVecCompare_v2i32>;
-
-
-class vcmp_i1_pat<InstHexagon MI, SDNode Op, PatFrag Value>
-  : Pat <(i1 (Op Value:$Rs, Value:$Rt)),
-         (MI Value:$Rs, Value:$Rt)>;
-
-def: vcmp_i1_pat<A2_vcmpbeq,  HexagonVCMPBEQ,  V8I8>;
-def: vcmp_i1_pat<A4_vcmpbgt,  HexagonVCMPBGT,  V8I8>;
-def: vcmp_i1_pat<A2_vcmpbgtu, HexagonVCMPBGTU, V8I8>;
-
-def: vcmp_i1_pat<A2_vcmpheq,  HexagonVCMPHEQ,  V4I16>;
-def: vcmp_i1_pat<A2_vcmphgt,  HexagonVCMPHGT,  V4I16>;
-def: vcmp_i1_pat<A2_vcmphgtu, HexagonVCMPHGTU, V4I16>;
-
-def: vcmp_i1_pat<A2_vcmpweq,  HexagonVCMPWEQ,  V2I32>;
-def: vcmp_i1_pat<A2_vcmpwgt,  HexagonVCMPWGT,  V2I32>;
-def: vcmp_i1_pat<A2_vcmpwgtu, HexagonVCMPWGTU, V2I32>;
-
-
 class vcmp_vi1_pat<InstHexagon MI, PatFrag Op, PatFrag InVal, ValueType OutTy>
   : Pat <(OutTy (Op InVal:$Rs, InVal:$Rt)),
          (MI InVal:$Rs, InVal:$Rt)>;
@@ -3255,13 +3220,6 @@ def: Pat<(v4i8 (trunc V4I16:$Rs)),
 def: Pat<(v2i16 (trunc V2I32:$Rs)),
          (LoReg (S2_packhl (HiReg $Rs), (LoReg $Rs)))>;
 
-
-def HexagonVSXTBH : SDNode<"HexagonISD::VSXTBH", SDTUnaryOp>;
-def HexagonVSXTBW : SDNode<"HexagonISD::VSXTBW", SDTUnaryOp>;
-
-def: Pat<(i64 (HexagonVSXTBH I32:$Rs)), (S2_vsxtbh I32:$Rs)>;
-def: Pat<(i64 (HexagonVSXTBW I32:$Rs)), (S2_vsxthw I32:$Rs)>;
-
 def: Pat<(v4i16 (zext   V4I8:$Rs)),  (S2_vzxtbh V4I8:$Rs)>;
 def: Pat<(v2i32 (zext   V2I16:$Rs)), (S2_vzxthw V2I16:$Rs)>;
 def: Pat<(v4i16 (anyext V4I8:$Rs)),  (S2_vzxtbh V4I8:$Rs)>;
@@ -3321,31 +3279,6 @@ def: Pat<(v8i8 (mul V8I8:$Rs, V8I8:$Rt)),
 def: Pat<(v8i8 (mul V8I8:$Rs, V8I8:$Rt)),
          (A2_combinew (S2_vtrunehb (VMPYB_no_V5 (HiReg $Rs), (HiReg $Rt))),
                       (S2_vtrunehb (VMPYB_no_V5 (LoReg $Rs), (LoReg $Rt))))>;
-
-def SDTHexagonBinOp64 : SDTypeProfile<1, 2,
-  [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisVT<0, i64>]>;
-
-def HexagonSHUFFEB: SDNode<"HexagonISD::SHUFFEB", SDTHexagonBinOp64>;
-def HexagonSHUFFEH: SDNode<"HexagonISD::SHUFFEH", SDTHexagonBinOp64>;
-def HexagonSHUFFOB: SDNode<"HexagonISD::SHUFFOB", SDTHexagonBinOp64>;
-def HexagonSHUFFOH: SDNode<"HexagonISD::SHUFFOH", SDTHexagonBinOp64>;
-
-class ShufflePat<InstHexagon MI, SDNode Op>
-  : Pat<(i64 (Op DoubleRegs:$src1, DoubleRegs:$src2)),
-        (i64 (MI DoubleRegs:$src1, DoubleRegs:$src2))>;
-
-// Shuffles even bytes for i=0..3: A[2*i].b = C[2*i].b; A[2*i+1].b = B[2*i].b
-def: ShufflePat<S2_shuffeb, HexagonSHUFFEB>;
-
-// Shuffles odd bytes for i=0..3: A[2*i].b = C[2*i+1].b; A[2*i+1].b = B[2*i+1].b
-def: ShufflePat<S2_shuffob, HexagonSHUFFOB>;
-
-// Shuffles even half for i=0,1: A[2*i].h = C[2*i].h; A[2*i+1].h = B[2*i].h
-def: ShufflePat<S2_shuffeh, HexagonSHUFFEH>;
-
-// Shuffles odd half for i=0,1: A[2*i].h = C[2*i+1].h; A[2*i+1].h = B[2*i+1].h
-def: ShufflePat<S2_shuffoh, HexagonSHUFFOH>;
-
 
 // Truncated store from v4i16 to v4i8.
 def truncstorev4i8: PatFrag<(ops node:$val, node:$ptr),
