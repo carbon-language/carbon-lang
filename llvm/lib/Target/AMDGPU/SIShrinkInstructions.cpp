@@ -150,6 +150,10 @@ static bool foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
           Src0.setSubReg(0);
           Src0.ChangeToImmediate(MovSrc.getImm());
           ConstantFolded = true;
+        } else if (MovSrc.isFI()) {
+          Src0.setSubReg(0);
+          Src0.ChangeToFrameIndex(MovSrc.getIndex());
+          ConstantFolded = true;
         }
 
         if (ConstantFolded) {
