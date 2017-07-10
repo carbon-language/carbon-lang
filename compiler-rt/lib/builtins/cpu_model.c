@@ -168,25 +168,25 @@ static bool isCpuIdSupported() {
 /// the specified arguments.  If we can't run cpuid on the host, return true.
 static bool getX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
                                unsigned *rECX, unsigned *rEDX) {
-#if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
 #if defined(__GNUC__) || defined(__clang__)
 #if defined(__x86_64__)
   // gcc doesn't know cpuid would clobber ebx/rbx. Preserve it manually.
+  // FIXME: should we save this for Clang?
   __asm__("movq\t%%rbx, %%rsi\n\t"
           "cpuid\n\t"
           "xchgq\t%%rbx, %%rsi\n\t"
           : "=a"(*rEAX), "=S"(*rEBX), "=c"(*rECX), "=d"(*rEDX)
           : "a"(value));
+  return false;
 #elif defined(__i386__)
   __asm__("movl\t%%ebx, %%esi\n\t"
           "cpuid\n\t"
           "xchgl\t%%ebx, %%esi\n\t"
           : "=a"(*rEAX), "=S"(*rEBX), "=c"(*rECX), "=d"(*rEDX)
           : "a"(value));
-// pedantic #else returns to appease -Wunreachable-code (so we don't generate
-// postprocessed code that looks like "return true; return false;")
+  return false;
 #else
-  assert(0 && "This method is defined only for x86.");
+  return true;
 #endif
 #elif defined(_MSC_VER)
   // The MSVC intrinsic is portable across x86 and x64.
@@ -196,7 +196,6 @@ static bool getX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
   *rEBX = registers[1];
   *rECX = registers[2];
   *rEDX = registers[3];
-#endif
   return false;
 #else
   return true;
@@ -209,7 +208,6 @@ static bool getX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
 static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
                                  unsigned *rEAX, unsigned *rEBX, unsigned *rECX,
                                  unsigned *rEDX) {
-#if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
 #if defined(__x86_64__) || defined(_M_X64)
 #if defined(__GNUC__) || defined(__clang__)
   // gcc doesn't know cpuid would clobber ebx/rbx. Preserve it manually.
@@ -219,6 +217,7 @@ static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
           "xchgq\t%%rbx, %%rsi\n\t"
           : "=a"(*rEAX), "=S"(*rEBX), "=c"(*rECX), "=d"(*rEDX)
           : "a"(value), "c"(subleaf));
+  return false;
 #elif defined(_MSC_VER)
   int registers[4];
   __cpuidex(registers, value, subleaf);
@@ -226,6 +225,9 @@ static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
   *rEBX = registers[1];
   *rECX = registers[2];
   *rEDX = registers[3];
+  return false;
+#else
+  return true;
 #endif
 #elif defined(__i386__) || defined(_M_IX86)
 #if defined(__GNUC__) || defined(__clang__)
@@ -234,6 +236,7 @@ static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
           "xchgl\t%%ebx, %%esi\n\t"
           : "=a"(*rEAX), "=S"(*rEBX), "=c"(*rECX), "=d"(*rEDX)
           : "a"(value), "c"(subleaf));
+  return false;
 #elif defined(_MSC_VER)
   __asm {
       mov   eax,value
@@ -248,11 +251,10 @@ static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
       mov   esi,rEDX
       mov   dword ptr [esi],edx
   }
-#endif
-#else
-  assert(0 && "This method is defined only for x86.");
-#endif
   return false;
+#else
+  return true;
+#endif
 #else
   return true;
 #endif
@@ -289,11 +291,10 @@ static void detectX86FamilyModel(unsigned EAX, unsigned *Family,
   }
 }
 
-static void getIntelProcessorTypeAndSubtype(unsigned Family,
-                                            unsigned Model,
-                                            unsigned Brand_id,
-                                            unsigned Features,
-                                            unsigned *Type, unsigned *Subtype) {
+static void
+getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
+                                unsigned Brand_id, unsigned Features,
+                                unsigned *Type, unsigned *Subtype) {
   if (Brand_id != 0)
     return;
   switch (Family) {
@@ -315,6 +316,7 @@ static void getIntelProcessorTypeAndSubtype(unsigned Family,
       *Type = INTEL_i486;
       break;
     }
+    break;
   case 5:
     switch (Model) {
     case 1: // Pentium OverDrive processor for Pentium processor (60, 66),
@@ -336,6 +338,7 @@ static void getIntelProcessorTypeAndSubtype(unsigned Family,
       *Type = INTEL_PENTIUM;
       break;
     }
+    break;
   case 6:
     switch (Model) {
     case 0x01: // Pentium Pro processor
@@ -391,7 +394,7 @@ static void getIntelProcessorTypeAndSubtype(unsigned Family,
     case 0x1e: // Intel(R) Core(TM) i7 CPU         870  @ 2.93GHz.
                // As found in a Summer 2010 model iMac.
     case 0x1f:
-    case 0x2e:              // Nehalem EX
+    case 0x2e:             // Nehalem EX
       *Type = INTEL_COREI7; // "nehalem"
       *Subtype = INTEL_COREI7_NEHALEM;
       break;
@@ -409,7 +412,7 @@ static void getIntelProcessorTypeAndSubtype(unsigned Family,
       *Subtype = INTEL_COREI7_SANDYBRIDGE;
       break;
     case 0x3a:
-    case 0x3e:              // Ivy Bridge EP
+    case 0x3e:             // Ivy Bridge EP
       *Type = INTEL_COREI7; // "ivybridge"
       *Subtype = INTEL_COREI7_IVYBRIDGE;
       break;
@@ -443,7 +446,7 @@ static void getIntelProcessorTypeAndSubtype(unsigned Family,
 
     // Skylake Xeon:
     case 0x55:
-      *Type = INTEL_COREI7; // "skylake"
+      *Type = INTEL_COREI7;
       *Subtype = INTEL_COREI7_SKYLAKE_AVX512; // "skylake-avx512"
       break;
 
@@ -537,6 +540,7 @@ static void getIntelProcessorTypeAndSubtype(unsigned Family,
       *Type = INTEL_PENTIUM_PRO;
       break;
     }
+    break;
   case 15: {
     switch (Model) {
     case 0: // Pentium 4 processor, Intel Xeon processor. All processors are
@@ -572,6 +576,7 @@ static void getIntelProcessorTypeAndSubtype(unsigned Family,
           ((Features & (1 << FEATURE_EM64T)) ? INTEL_X86_64 : INTEL_PENTIUM_IV);
       break;
     }
+    break;
   }
   default:
     break; /*"generic"*/
@@ -587,6 +592,7 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
   switch (Family) {
   case 4:
     *Type = AMD_i486;
+    break;
   case 5:
     *Type = AMDPENTIUM;
     switch (Model) {
@@ -604,9 +610,8 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     case 10:
       *Subtype = AMDPENTIUM_GEODE;
       break; // "geode"
-    default:
-      break;
     }
+    break;
   case 6:
     *Type = AMDATHLON;
     switch (Model) {
@@ -621,9 +626,8 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     case 10:
       *Subtype = AMDATHLON_XP;
       break; // "athlon-xp"
-    default:
-      break;
     }
+    break;
   case 15:
     *Type = AMDATHLON;
     if (Features & (1 << FEATURE_SSE3)) {
@@ -641,6 +645,7 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       *Subtype = AMDATHLON_64;
       break; // "athlon64"
     }
+    break;
   case 16:
     *Type = AMDFAM10H; // "amdfam10"
     switch (Model) {
@@ -653,21 +658,15 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     case 8:
       *Subtype = AMDFAM10H_ISTANBUL;
       break;
-    default:
-      break;
     }
+    break;
   case 20:
     *Type = AMDFAM14H;
     *Subtype = AMD_BTVER1;
     break; // "btver1";
   case 21:
     *Type = AMDFAM15H;
-    if (!(Features &
-          (1 << FEATURE_AVX))) { // If no AVX support, provide a sane fallback.
-      *Subtype = AMD_BTVER1;
-      break; // "btver1"
-    }
-    if (Model >= 0x50 && Model <= 0x6f) {
+    if (Model >= 0x60 && Model <= 0x7f) {
       *Subtype = AMDFAM15H_BDVER4;
       break; // "bdver4"; 50h-6Fh: Excavator
     }
@@ -685,21 +684,11 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     }
     break;
   case 22:
-    *Type = AMDFAM16H;
-    if (!(Features &
-          (1 << FEATURE_AVX))) { // If no AVX support provide a sane fallback.
-      *Subtype = AMD_BTVER1;
-      break; // "btver1";
-    }
-    *Subtype = AMD_BTVER2;
+    *Type = AMD_BTVER2;
     break; // "btver2"
   case 23:
     *Type = AMDFAM17H;
-    if (Features & (1 << FEATURE_ADX)) {
-      *Subtype = AMDFAM17H_ZNVER1;
-      break; // "znver1"
-    }
-    *Subtype =  AMD_BTVER1;
+    *Subtype = AMDFAM17H_ZNVER1;
     break;
   default:
     break; // "generic"
@@ -726,7 +715,8 @@ static unsigned getAvailableFeatures(unsigned ECX, unsigned EDX,
   bool HasAVX = ((ECX & AVXBits) == AVXBits) && !getX86XCR0(&EAX, &EDX) &&
                 ((EAX & 0x6) == 0x6);
   bool HasAVX512Save = HasAVX && ((EAX & 0xe0) == 0xe0);
-  bool HasLeaf7 = MaxLeaf >= 0x7 && !getX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
+  bool HasLeaf7 =
+      MaxLeaf >= 0x7 && !getX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
   bool HasADX = HasLeaf7 && ((EBX >> 19) & 1);
   bool HasAVX2 = HasAVX && HasLeaf7 && (EBX & 0x20);
   bool HasAVX512 = HasLeaf7 && HasAVX512Save && ((EBX >> 16) & 1);
