@@ -6,31 +6,18 @@
 using namespace llvm;
 using namespace llvm::pdb;
 
-namespace {
-struct Colorize {
-  Colorize(raw_ostream &OS, DiffResult Result) : OS(OS) {
-    if (!OS.has_colors())
-      return;
-    switch (Result) {
-    case DiffResult::IDENTICAL:
-      OS.changeColor(raw_ostream::Colors::GREEN, false);
-      break;
-    case DiffResult::EQUIVALENT:
-      OS.changeColor(raw_ostream::Colors::YELLOW, true);
-      break;
-    default:
-      OS.changeColor(raw_ostream::Colors::RED, false);
-      break;
-    }
+static void setColor(llvm::raw_ostream &OS, DiffResult Result) {
+  switch (Result) {
+  case DiffResult::IDENTICAL:
+    OS.changeColor(raw_ostream::Colors::GREEN, false);
+    break;
+  case DiffResult::EQUIVALENT:
+    OS.changeColor(raw_ostream::Colors::YELLOW, true);
+    break;
+  default:
+    OS.changeColor(raw_ostream::Colors::RED, false);
+    break;
   }
-
-  ~Colorize() {
-    if (OS.has_colors())
-      OS.resetColor();
-  }
-
-  raw_ostream &OS;
-};
 }
 
 DiffPrinter::DiffPrinter(uint32_t Indent, StringRef Header,
@@ -137,8 +124,9 @@ void DiffPrinter::printValue(StringRef Value, DiffResult C, AlignStyle Style,
   std::string FormattedItem =
       formatv("{0}", fmt_align(Value, Style, Width)).str();
   if (C != DiffResult::UNSPECIFIED) {
-    Colorize Color(OS, C);
+    setColor(OS, C);
     OS << FormattedItem;
+    OS.resetColor();
   } else
     OS << FormattedItem;
   if (Style == AlignStyle::Right)
