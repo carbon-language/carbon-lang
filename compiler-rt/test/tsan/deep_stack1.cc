@@ -26,7 +26,7 @@ void *Thread(void *p) {
 
 static size_t RoundUp(size_t n, size_t to) {
   return ((n + to - 1) / to) * to;
-} 
+}
 
 int main() {
   barrier_init(&barrier, 2);
