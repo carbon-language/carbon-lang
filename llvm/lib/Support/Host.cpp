@@ -448,7 +448,7 @@ static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
                                  unsigned *rEDX) {
 #if defined(__x86_64__) || defined(_M_X64)
 #if defined(__GNUC__) || defined(__clang__)
-  // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
+  // gcc doesn't know cpuid would clobber ebx/rbx. Preserve it manually.
   // FIXME: should we save this for Clang?
   __asm__("movq\t%%rbx, %%rsi\n\t"
           "cpuid\n\t"
