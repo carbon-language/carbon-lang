@@ -1726,6 +1726,39 @@ bool HexagonInstrInfo::getIncrementValue(const MachineInstr &MI,
   return false;
 }
 
+std::pair<unsigned, unsigned>
+HexagonInstrInfo::decomposeMachineOperandsTargetFlags(unsigned TF) const {
+  return std::make_pair(TF & ~HexagonII::MO_Bitmasks,
+                        TF & HexagonII::MO_Bitmasks);
+}
+
+ArrayRef<std::pair<unsigned, const char*>>
+HexagonInstrInfo::getSerializableDirectMachineOperandTargetFlags() const {
+  using namespace HexagonII;
+  static const std::pair<unsigned, const char*> Flags[] = {
+    {MO_PCREL,  "hexagon-pcrel"},
+    {MO_GOT,    "hexagon-got"},
+    {MO_LO16,   "hexagon-lo16"},
+    {MO_HI16,   "hexagon-hi16"},
+    {MO_GPREL,  "hexagon-gprel"},
+    {MO_GDGOT,  "hexagon-gdgot"},
+    {MO_GDPLT,  "hexagon-gdplt"},
+    {MO_IE,     "hexagon-ie"},
+    {MO_IEGOT,  "hexagon-iegot"},
+    {MO_TPREL,  "hexagon-tprel"}
+  };
+  return makeArrayRef(Flags);
+}
+
+ArrayRef<std::pair<unsigned, const char*>>
+HexagonInstrInfo::getSerializableBitmaskMachineOperandTargetFlags() const {
+  using namespace HexagonII;
+  static const std::pair<unsigned, const char*> Flags[] = {
+    {HMOTF_ConstExtended, "hexagon-ext"}
+  };
+  return makeArrayRef(Flags);
+}
+
 unsigned HexagonInstrInfo::createVR(MachineFunction *MF, MVT VT) const {
   MachineRegisterInfo &MRI = MF->getRegInfo();
   const TargetRegisterClass *TRC;
