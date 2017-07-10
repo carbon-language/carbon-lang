@@ -52,14 +52,10 @@ namespace HexagonISD {
 
       COMBINE,
       PACKHL,
-      VSPLATB,
-      VSPLATH,
-      VSRAW,
-      VSRAH,
-      VSRLW,
-      VSRLH,
-      VSHLW,
-      VSHLH,
+      VSPLAT,
+      VASL,
+      VASR,
+      VLSR,
 
       INSERT,
       INSERTRP,

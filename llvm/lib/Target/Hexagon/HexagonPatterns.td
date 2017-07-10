@@ -3021,16 +3021,16 @@ def : Pat<(v2i16 (add (v2i16 IntRegs:$src1), (v2i16 IntRegs:$src2))),
 def : Pat<(v2i16 (sub (v2i16 IntRegs:$src1), (v2i16 IntRegs:$src2))),
           (A2_svsubh IntRegs:$src1, IntRegs:$src2)>;
 
-def HexagonVSPLATB: SDNode<"HexagonISD::VSPLATB", SDTUnaryOp>;
-def HexagonVSPLATH: SDNode<"HexagonISD::VSPLATH", SDTUnaryOp>;
+def SDTHexagonVSPLAT: SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVT<1, i32>]>;
+def HexagonVSPLAT: SDNode<"HexagonISD::VSPLAT", SDTHexagonVSPLAT>;
 
 // Replicate the low 8-bits from 32-bits input register into each of the
 // four bytes of 32-bits destination register.
-def: Pat<(v4i8  (HexagonVSPLATB I32:$Rs)), (S2_vsplatrb I32:$Rs)>;
+def: Pat<(v4i8 (HexagonVSPLAT I32:$Rs)), (S2_vsplatrb I32:$Rs)>;
 
 // Replicate the low 16-bits from 32-bits input register into each of the
 // four halfwords of 64-bits destination register.
-def: Pat<(v4i16 (HexagonVSPLATH I32:$Rs)), (S2_vsplatrh I32:$Rs)>;
+def: Pat<(v4i16 (HexagonVSPLAT I32:$Rs)), (S2_vsplatrh I32:$Rs)>;
 
 
 class VArith_pat <InstHexagon MI, SDNode Op, PatFrag Type>
@@ -3068,49 +3068,44 @@ def: Pat<(v2i32 (shl V2I32:$b, (i64 (HexagonCOMBINE (i32 u5_0ImmPred:$c),
                                                     (i32 u5_0ImmPred:$c))))),
          (S2_asl_i_vw V2I32:$b, imm:$c)>;
 
-def: Pat<(v4i16 (sra V4I16:$b, (v4i16 (HexagonVSPLATH (i32 (u4_0ImmPred:$c)))))),
+def: Pat<(v4i16 (sra V4I16:$b, (v4i16 (HexagonVSPLAT u4_0ImmPred:$c)))),
          (S2_asr_i_vh V4I16:$b, imm:$c)>;
-def: Pat<(v4i16 (srl V4I16:$b, (v4i16 (HexagonVSPLATH (i32 (u4_0ImmPred:$c)))))),
+def: Pat<(v4i16 (srl V4I16:$b, (v4i16 (HexagonVSPLAT u4_0ImmPred:$c)))),
          (S2_lsr_i_vh V4I16:$b, imm:$c)>;
-def: Pat<(v4i16 (shl V4I16:$b, (v4i16 (HexagonVSPLATH (i32 (u4_0ImmPred:$c)))))),
+def: Pat<(v4i16 (shl V4I16:$b, (v4i16 (HexagonVSPLAT u4_0ImmPred:$c)))),
          (S2_asl_i_vh V4I16:$b, imm:$c)>;
 
 
-def SDTHexagon_v2i32_v2i32_i32 : SDTypeProfile<1, 2,
-  [SDTCisSameAs<0, 1>, SDTCisVT<0, v2i32>, SDTCisInt<2>]>;
-def SDTHexagon_v4i16_v4i16_i32 : SDTypeProfile<1, 2,
-  [SDTCisSameAs<0, 1>, SDTCisVT<0, v4i16>, SDTCisInt<2>]>;
+def SDTHexagonVShift
+  : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisVec<0>, SDTCisVT<2, i32>]>;
 
-def HexagonVSRAW: SDNode<"HexagonISD::VSRAW", SDTHexagon_v2i32_v2i32_i32>;
-def HexagonVSRAH: SDNode<"HexagonISD::VSRAH", SDTHexagon_v4i16_v4i16_i32>;
-def HexagonVSRLW: SDNode<"HexagonISD::VSRLW", SDTHexagon_v2i32_v2i32_i32>;
-def HexagonVSRLH: SDNode<"HexagonISD::VSRLH", SDTHexagon_v4i16_v4i16_i32>;
-def HexagonVSHLW: SDNode<"HexagonISD::VSHLW", SDTHexagon_v2i32_v2i32_i32>;
-def HexagonVSHLH: SDNode<"HexagonISD::VSHLH", SDTHexagon_v4i16_v4i16_i32>;
+def HexagonVASL: SDNode<"HexagonISD::VASL", SDTHexagonVShift>;
+def HexagonVASR: SDNode<"HexagonISD::VASR", SDTHexagonVShift>;
+def HexagonVLSR: SDNode<"HexagonISD::VLSR", SDTHexagonVShift>;
 
-def: Pat<(v2i32 (HexagonVSRAW V2I32:$Rs, u5_0ImmPred:$u5)),
-         (S2_asr_i_vw V2I32:$Rs, imm:$u5)>;
-def: Pat<(v4i16 (HexagonVSRAH V4I16:$Rs, u4_0ImmPred:$u4)),
-         (S2_asr_i_vh V4I16:$Rs, imm:$u4)>;
-def: Pat<(v2i32 (HexagonVSRLW V2I32:$Rs, u5_0ImmPred:$u5)),
-         (S2_lsr_i_vw V2I32:$Rs, imm:$u5)>;
-def: Pat<(v4i16 (HexagonVSRLH V4I16:$Rs, u4_0ImmPred:$u4)),
-         (S2_lsr_i_vh V4I16:$Rs, imm:$u4)>;
-def: Pat<(v2i32 (HexagonVSHLW V2I32:$Rs, u5_0ImmPred:$u5)),
+def: Pat<(v2i32 (HexagonVASL V2I32:$Rs, u5_0ImmPred:$u5)),
          (S2_asl_i_vw V2I32:$Rs, imm:$u5)>;
-def: Pat<(v4i16 (HexagonVSHLH V4I16:$Rs, u4_0ImmPred:$u4)),
+def: Pat<(v4i16 (HexagonVASL V4I16:$Rs, u4_0ImmPred:$u4)),
          (S2_asl_i_vh V4I16:$Rs, imm:$u4)>;
+def: Pat<(v2i32 (HexagonVASR V2I32:$Rs, u5_0ImmPred:$u5)),
+         (S2_asr_i_vw V2I32:$Rs, imm:$u5)>;
+def: Pat<(v4i16 (HexagonVASR V4I16:$Rs, u4_0ImmPred:$u4)),
+         (S2_asr_i_vh V4I16:$Rs, imm:$u4)>;
+def: Pat<(v2i32 (HexagonVLSR V2I32:$Rs, u5_0ImmPred:$u5)),
+         (S2_lsr_i_vw V2I32:$Rs, imm:$u5)>;
+def: Pat<(v4i16 (HexagonVLSR V4I16:$Rs, u4_0ImmPred:$u4)),
+         (S2_lsr_i_vh V4I16:$Rs, imm:$u4)>;
 
 class vshift_rr_pat<InstHexagon MI, SDNode Op, PatFrag Value>
   : Pat <(Op Value:$Rs, I32:$Rt),
          (MI Value:$Rs, I32:$Rt)>;
 
-def: vshift_rr_pat <S2_asr_r_vw, HexagonVSRAW, V2I32>;
-def: vshift_rr_pat <S2_asr_r_vh, HexagonVSRAH, V4I16>;
-def: vshift_rr_pat <S2_lsr_r_vw, HexagonVSRLW, V2I32>;
-def: vshift_rr_pat <S2_lsr_r_vh, HexagonVSRLH, V4I16>;
-def: vshift_rr_pat <S2_asl_r_vw, HexagonVSHLW, V2I32>;
-def: vshift_rr_pat <S2_asl_r_vh, HexagonVSHLH, V4I16>;
+def: vshift_rr_pat <S2_asl_r_vw, HexagonVASL, V2I32>;
+def: vshift_rr_pat <S2_asl_r_vh, HexagonVASL, V4I16>;
+def: vshift_rr_pat <S2_asr_r_vw, HexagonVASR, V2I32>;
+def: vshift_rr_pat <S2_asr_r_vh, HexagonVASR, V4I16>;
+def: vshift_rr_pat <S2_lsr_r_vw, HexagonVLSR, V2I32>;
+def: vshift_rr_pat <S2_lsr_r_vh, HexagonVLSR, V4I16>;
 
 
 class vcmp_vi1_pat<InstHexagon MI, PatFrag Op, PatFrag InVal, ValueType OutTy>
