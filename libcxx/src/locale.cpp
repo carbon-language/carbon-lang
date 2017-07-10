@@ -667,7 +667,7 @@ locale::id::__get()
 void
 locale::id::__init()
 {
-    __id_ = __sync_add_and_fetch(&__next_id, 1);
+    __id_ = __libcpp_sync_add_and_fetch(&__next_id, 1);
 }
 
 // template <> class collate_byname<char>
