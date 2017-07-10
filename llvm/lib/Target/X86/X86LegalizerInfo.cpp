@@ -69,6 +69,7 @@ void X86LegalizerInfo::setLegalizerInfo32bit() {
     for (auto Ty : {s8, s16, s32, p0})
       setAction({MemOp, Ty}, Legal);
 
+    setAction({MemOp, s1}, WidenScalar);
     // And everything's fine in addrspace 0.
     setAction({MemOp, 1, p0}, Legal);
   }
@@ -128,6 +129,7 @@ void X86LegalizerInfo::setLegalizerInfo64bit() {
     for (auto Ty : {s8, s16, s32, s64, p0})
       setAction({MemOp, Ty}, Legal);
 
+    setAction({MemOp, s1}, WidenScalar);
     // And everything's fine in addrspace 0.
     setAction({MemOp, 1, p0}, Legal);
   }
