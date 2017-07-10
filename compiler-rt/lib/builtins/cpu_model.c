@@ -67,6 +67,7 @@ enum ProcessorTypes {
   AMDATHLON,
   AMDFAM14H,
   AMDFAM16H,
+  AMDFAM17H,
   CPU_TYPE_MAX
 };
 
@@ -105,6 +106,7 @@ enum ProcessorSubtypes {
   AMD_BTVER2,
   AMDFAM15H_BDVER3,
   AMDFAM15H_BDVER4,
+  AMDFAM17H_ZNVER1,
   CPU_SUBTYPE_MAX
 };
 
@@ -164,11 +166,12 @@ static bool isCpuIdSupported() {
 
 /// getX86CpuIDAndInfo - Execute the specified cpuid and return the 4 values in
 /// the specified arguments.  If we can't run cpuid on the host, return true.
-static void getX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
+static bool getX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
                                unsigned *rECX, unsigned *rEDX) {
+#if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
 #if defined(__GNUC__) || defined(__clang__)
 #if defined(__x86_64__)
-  // gcc doesn't know cpuid would clobber ebx/rbx. Preseve it manually.
+  // gcc doesn't know cpuid would clobber ebx/rbx. Preserve it manually.
   __asm__("movq\t%%rbx, %%rsi\n\t"
           "cpuid\n\t"
           "xchgq\t%%rbx, %%rsi\n\t"
@@ -193,17 +196,20 @@ static void getX86CpuIDAndInfo(unsigned value, unsigned *rEAX, unsigned *rEBX,
   *rEBX = registers[1];
   *rECX = registers[2];
   *rEDX = registers[3];
+#endif
+  return false;
 #else
-  assert(0 && "This method is defined only for GNUC, Clang or MSVC.");
+  return true;
 #endif
 }
 
 /// getX86CpuIDAndInfoEx - Execute the specified cpuid with subleaf and return
 /// the 4 values in the specified arguments.  If we can't run cpuid on the host,
 /// return true.
-static void getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
+static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
                                  unsigned *rEAX, unsigned *rEBX, unsigned *rECX,
                                  unsigned *rEDX) {
+#if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
 #if defined(__x86_64__) || defined(_M_X64)
 #if defined(__GNUC__) || defined(__clang__)
   // gcc doesn't know cpuid would clobber ebx/rbx. Preserve it manually.
@@ -220,8 +226,6 @@ static void getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
   *rEBX = registers[1];
   *rECX = registers[2];
   *rEDX = registers[3];
-#else
-  assert(0 && "This method is defined only for GNUC, Clang or MSVC.");
 #endif
 #elif defined(__i386__) || defined(_M_IX86)
 #if defined(__GNUC__) || defined(__clang__)
@@ -244,11 +248,13 @@ static void getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
       mov   esi,rEDX
       mov   dword ptr [esi],edx
   }
-#else
-  assert(0 && "This method is defined only for GNUC, Clang or MSVC.");
 #endif
 #else
   assert(0 && "This method is defined only for x86.");
+#endif
+  return false;
+#else
+  return true;
 #endif
 }
 
@@ -283,10 +289,10 @@ static void detectX86FamilyModel(unsigned EAX, unsigned *Family,
   }
 }
 
-static void getIntelProcessorTypeAndSubtype(unsigned int Family,
-                                            unsigned int Model,
-                                            unsigned int Brand_id,
-                                            unsigned int Features,
+static void getIntelProcessorTypeAndSubtype(unsigned Family,
+                                            unsigned Model,
+                                            unsigned Brand_id,
+                                            unsigned Features,
                                             unsigned *Type, unsigned *Subtype) {
   if (Brand_id != 0)
     return;
@@ -427,13 +433,18 @@ static void getIntelProcessorTypeAndSubtype(unsigned int Family,
       break;
 
     // Skylake:
-    case 0x4e:
-      *Type = INTEL_COREI7; // "skylake-avx512"
-      *Subtype = INTEL_COREI7_SKYLAKE_AVX512;
-      break;
-    case 0x5e:
+    case 0x4e: // Skylake mobile
+    case 0x5e: // Skylake desktop
+    case 0x8e: // Kaby Lake mobile
+    case 0x9e: // Kaby Lake desktop
       *Type = INTEL_COREI7; // "skylake"
       *Subtype = INTEL_COREI7_SKYLAKE;
+      break;
+
+    // Skylake Xeon:
+    case 0x55:
+      *Type = INTEL_COREI7; // "skylake"
+      *Subtype = INTEL_COREI7_SKYLAKE_AVX512; // "skylake-avx512"
       break;
 
     case 0x1c: // Most 45 nm Intel Atom processors
@@ -567,9 +578,8 @@ static void getIntelProcessorTypeAndSubtype(unsigned int Family,
   }
 }
 
-static void getAMDProcessorTypeAndSubtype(unsigned int Family,
-                                          unsigned int Model,
-                                          unsigned int Features, unsigned *Type,
+static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
+                                          unsigned Features, unsigned *Type,
                                           unsigned *Subtype) {
   // FIXME: this poorly matches the generated SubtargetFeatureKV table.  There
   // appears to be no way to generate the wide variety of AMD-specific targets
@@ -683,15 +693,23 @@ static void getAMDProcessorTypeAndSubtype(unsigned int Family,
     }
     *Subtype = AMD_BTVER2;
     break; // "btver2"
+  case 23:
+    *Type = AMDFAM17H;
+    if (Features & (1 << FEATURE_ADX)) {
+      *Subtype = AMDFAM17H_ZNVER1;
+      break; // "znver1"
+    }
+    *Subtype =  AMD_BTVER1;
+    break;
   default:
     break; // "generic"
   }
 }
 
-static unsigned getAvailableFeatures(unsigned int ECX, unsigned int EDX,
+static unsigned getAvailableFeatures(unsigned ECX, unsigned EDX,
                                      unsigned MaxLeaf) {
   unsigned Features = 0;
-  unsigned int EAX, EBX;
+  unsigned EAX, EBX;
   Features |= (((EDX >> 23) & 1) << FEATURE_MMX);
   Features |= (((EDX >> 25) & 1) << FEATURE_SSE);
   Features |= (((EDX >> 26) & 1) << FEATURE_SSE2);
@@ -708,8 +726,7 @@ static unsigned getAvailableFeatures(unsigned int ECX, unsigned int EDX,
   bool HasAVX = ((ECX & AVXBits) == AVXBits) && !getX86XCR0(&EAX, &EDX) &&
                 ((EAX & 0x6) == 0x6);
   bool HasAVX512Save = HasAVX && ((EAX & 0xe0) == 0xe0);
-  bool HasLeaf7 = MaxLeaf >= 0x7;
-  getX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
+  bool HasLeaf7 = MaxLeaf >= 0x7 && !getX86CpuIDAndInfoEx(0x7, 0x0, &EAX, &EBX, &ECX, &EDX);
   bool HasADX = HasLeaf7 && ((EBX >> 19) & 1);
   bool HasAVX2 = HasAVX && HasLeaf7 && (EBX & 0x20);
   bool HasAVX512 = HasLeaf7 && HasAVX512Save && ((EBX >> 16) & 1);
@@ -719,8 +736,14 @@ static unsigned getAvailableFeatures(unsigned int ECX, unsigned int EDX,
   Features |= (HasAVX512Save << FEATURE_AVX512SAVE);
   Features |= (HasADX << FEATURE_ADX);
 
-  getX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
-  Features |= (((EDX >> 29) & 0x1) << FEATURE_EM64T);
+  unsigned MaxExtLevel;
+  getX86CpuIDAndInfo(0x80000000, &MaxExtLevel, &EBX, &ECX, &EDX);
+
+  bool HasExtLeaf1 = MaxExtLevel >= 0x80000001 &&
+                     !getX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
+  if (HasExtLeaf1)
+    Features |= (((EDX >> 29) & 0x1) << FEATURE_EM64T);
+
   return Features;
 }
 
@@ -751,11 +774,11 @@ struct __processor_model {
 
 int CONSTRUCTOR_ATTRIBUTE
 __cpu_indicator_init(void) {
-  unsigned int EAX, EBX, ECX, EDX;
-  unsigned int MaxLeaf = 5;
-  unsigned int Vendor;
-  unsigned int Model, Family, Brand_id;
-  unsigned int Features = 0;
+  unsigned EAX, EBX, ECX, EDX;
+  unsigned MaxLeaf = 5;
+  unsigned Vendor;
+  unsigned Model, Family, Brand_id;
+  unsigned Features = 0;
 
   /* This function needs to run just once.  */
   if (__cpu_model.__cpu_vendor)
@@ -765,9 +788,7 @@ __cpu_indicator_init(void) {
     return -1;
 
   /* Assume cpuid insn present. Run in level 0 to get vendor id. */
-  getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX);
-
-  if (MaxLeaf < 1) {
+  if (getX86CpuIDAndInfo(0, &MaxLeaf, &Vendor, &ECX, &EDX) || MaxLeaf < 1) {
     __cpu_model.__cpu_vendor = VENDOR_OTHER;
     return -1;
   }
