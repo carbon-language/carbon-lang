@@ -428,9 +428,7 @@ static void addLinkerModuleSymbols(StringRef Path,
   llvm::sys::fs::current_path(cwd);
   EBS.Fields.push_back(cwd);
   EBS.Fields.push_back("exe");
-  std::string Exe =
-      llvm::sys::fs::getMainExecutable(Config->Argv[0].data(), nullptr);
-  EBS.Fields.push_back(Exe);
+  EBS.Fields.push_back(Config->Argv[0]);
   EBS.Fields.push_back("pdb");
   EBS.Fields.push_back(Path);
   EBS.Fields.push_back("cmd");
