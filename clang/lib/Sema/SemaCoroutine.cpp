@@ -745,8 +745,6 @@ static Expr *buildStdNoThrowDeclRef(Sema &S, SourceLocation Loc) {
     return nullptr;
   }
 
-  // FIXME: Mark the variable as ODR used. This currently does not work
-  // likely due to the scope at in which this function is called.
   auto *VD = Result.getAsSingle<VarDecl>();
   if (!VD) {
     Result.suppressDiagnostics();
