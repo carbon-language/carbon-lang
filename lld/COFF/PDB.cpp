@@ -132,7 +132,7 @@ static void remapTypesInSymbolRecord(ObjectFile *File,
   for (const TiReference &Ref : TypeRefs) {
     unsigned ByteSize = Ref.Count * sizeof(TypeIndex);
     if (Contents.size() < Ref.Offset + ByteSize)
-      fatal("ignoring short symbol record");
+      fatal("symbol record too short");
     MutableArrayRef<TypeIndex> TIs(
         reinterpret_cast<TypeIndex *>(Contents.data() + Ref.Offset), Ref.Count);
     for (TypeIndex &TI : TIs) {
