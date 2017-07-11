@@ -6,9 +6,9 @@ import tempfile
 import threading
 
 try:
-    import cStringIO as StringIO
+    from StringIO import StringIO
 except ImportError:
-    import StringIO
+    from io import StringIO
 
 from lit.ShCommands import GlobItem
 import lit.ShUtil as ShUtil
@@ -240,7 +240,7 @@ def executeBuiltinEcho(cmd, shenv):
     is_redirected = True
     if stdout == subprocess.PIPE:
         is_redirected = False
-        stdout = StringIO.StringIO()
+        stdout = StringIO()
     elif kIsWindows:
         # Reopen stdout in binary mode to avoid CRLF translation. The versions
         # of echo we are replacing on Windows all emit plain LF, and the LLVM
