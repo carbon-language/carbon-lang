@@ -2333,6 +2333,7 @@
 // ARM-NETBSD:#define __SIZE_MAX__ 4294967295UL
 // ARM-NETBSD:#define __SIZE_TYPE__ long unsigned int
 // ARM-NETBSD:#define __SIZE_WIDTH__ 32
+// ARM-NETBSD:#define __SOFTFP__ 1
 // ARM-NETBSD:#define __UINT16_C_SUFFIX__
 // ARM-NETBSD:#define __UINT16_MAX__ 65535
 // ARM-NETBSD:#define __UINT16_TYPE__ unsigned short
@@ -2376,6 +2377,11 @@
 // ARM-NETBSD:#define __WINT_WIDTH__ 32
 // ARM-NETBSD:#define __arm 1
 // ARM-NETBSD:#define __arm__ 1
+
+// RUN: %clang -E -dM -ffreestanding -target arm-netbsd-eabihf %s -o - | FileCheck -match-full-lines -check-prefix ARMHF-NETBSD %s
+// ARMHF-NETBSD:#define __SIZE_WIDTH__ 32
+// ARMHF-NETBSD-NOT:#define __SOFTFP__ 1
+// ARMHF-NETBSD:#define __UINT16_C_SUFFIX__
 
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm-none-eabi < /dev/null | FileCheck -match-full-lines -check-prefix ARM-NONE-EABI %s
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm-none-eabihf < /dev/null | FileCheck -match-full-lines -check-prefix ARM-NONE-EABI %s
