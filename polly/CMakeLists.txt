@@ -24,6 +24,7 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   endif()
 
   # Enable unit tests if available.
+  set(POLLY_GTEST_AVAIL 0)
   set(UNITTEST_DIR ${LLVM_SOURCE_ROOT}/utils/unittest)
   if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h)
     # The build tree already exports the gtest target, which we can reuse

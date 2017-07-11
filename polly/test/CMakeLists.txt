@@ -62,12 +62,12 @@ add_lit_testsuite(check-polly-tests "Running polly regression tests"
 set_target_properties(check-polly-tests PROPERTIES FOLDER "Polly")
 add_dependencies(check-polly check-polly-tests)
 
-if (POLLY_GTEST_AVAIL)
-  configure_lit_site_cfg(
-    ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
-    ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
-    )
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Unit/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
+  )
 
+if (POLLY_GTEST_AVAIL)
   # Run only unit tests
   add_lit_testsuite(check-polly-unittests "Running polly unit tests only"
     ${CMAKE_CURRENT_BINARY_DIR}/Unit
