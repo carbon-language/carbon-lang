@@ -653,15 +653,12 @@ MCAssembler::handleFixup(const MCAsmLayout &Layout, MCFragment &F,
   // Evaluate the fixup.
   MCValue Target;
   uint64_t FixedValue;
-  bool IsPCRel = Backend.getFixupKindInfo(Fixup.getKind()).Flags &
-                 MCFixupKindInfo::FKF_IsPCRel;
   bool IsResolved = evaluateFixup(Layout, Fixup, &F, Target, FixedValue);
   if (!IsResolved) {
     // The fixup was unresolved, we need a relocation. Inform the object
     // writer of the relocation, and give it an opportunity to adjust the
     // fixup value if need be.
-    getWriter().recordRelocation(*this, Layout, &F, Fixup, Target, IsPCRel,
-                                 FixedValue);
+    getWriter().recordRelocation(*this, Layout, &F, Fixup, Target, FixedValue);
   }
   return std::make_tuple(Target, FixedValue, IsResolved);
 }
