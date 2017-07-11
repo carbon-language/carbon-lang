@@ -295,6 +295,7 @@ bool ARMLegalizerInfo::legalizeCustom(MachineInstr &MI,
              "Predicate needs libcalls, but none specified");
       MIRBuilder.buildConstant(OriginalResult,
                                Predicate == CmpInst::FCMP_TRUE ? 1 : 0);
+      MI.eraseFromParent();
       return true;
     }
 

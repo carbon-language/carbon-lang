@@ -337,8 +337,10 @@ body:             |
     ; CHECK-DAG: [[Y:%[0-9]+]](s32) = COPY %r1
     %2(s1) = G_FCMP floatpred(true), %0(s32), %1
     ; HARD: [[R:%[0-9]+]](s1) = G_FCMP floatpred(true), [[X]](s32), [[Y]]
+    ; SOFT-NOT: G_FCMP
     ; SOFT: [[REXT:%[0-9]+]](s32) = G_CONSTANT i32 -1
     ; SOFT: [[R:%[0-9]+]](s1) = G_TRUNC [[REXT]](s32)
+    ; SOFT-NOT: G_FCMP
     %3(s32) = G_ZEXT %2(s1)
     ; CHECK: [[REXT:%[0-9]+]](s32) = G_ZEXT [[R]](s1)
     %r0 = COPY %3(s32)
@@ -368,8 +370,10 @@ body:             |
     ; CHECK-DAG: [[Y:%[0-9]+]](s32) = COPY %r1
     %2(s1) = G_FCMP floatpred(false), %0(s32), %1
     ; HARD: [[R:%[0-9]+]](s1) = G_FCMP floatpred(false), [[X]](s32), [[Y]]
+    ; SOFT-NOT: G_FCMP
     ; SOFT: [[REXT:%[0-9]+]](s32) = G_CONSTANT i32 0
     ; SOFT: [[R:%[0-9]+]](s1) = G_TRUNC [[REXT]](s32)
+    ; SOFT-NOT: G_FCMP
     %3(s32) = G_ZEXT %2(s1)
     ; CHECK: [[REXT:%[0-9]+]](s32) = G_ZEXT [[R]](s1)
     %r0 = COPY %3(s32)
@@ -984,8 +988,10 @@ body:             |
     ; HARD-DAG: [[Y:%[0-9]+]](s64) = G_MERGE_VALUES [[Y0]](s32), [[Y1]](s32)
     %6(s1) = G_FCMP floatpred(true), %4(s64), %5
     ; HARD: [[R:%[0-9]+]](s1) = G_FCMP floatpred(true), [[X]](s64), [[Y]]
+    ; SOFT-NOT: G_FCMP
     ; SOFT: [[REXT:%[0-9]+]](s32) = G_CONSTANT i32 -1
     ; SOFT: [[R:%[0-9]+]](s1) = G_TRUNC [[REXT]](s32)
+    ; SOFT-NOT: G_FCMP
     %7(s32) = G_ZEXT %6(s1)
     ; CHECK: [[REXT:%[0-9]+]](s32) = G_ZEXT [[R]](s1)
     %r0 = COPY %7(s32)
@@ -1027,8 +1033,10 @@ body:             |
     ; HARD-DAG: [[Y:%[0-9]+]](s64) = G_MERGE_VALUES [[Y0]](s32), [[Y1]](s32)
     %6(s1) = G_FCMP floatpred(false), %4(s64), %5
     ; HARD: [[R:%[0-9]+]](s1) = G_FCMP floatpred(false), [[X]](s64), [[Y]]
+    ; SOFT-NOT: G_FCMP
     ; SOFT: [[REXT:%[0-9]+]](s32) = G_CONSTANT i32 0
     ; SOFT: [[R:%[0-9]+]](s1) = G_TRUNC [[REXT]](s32)
+    ; SOFT-NOT: G_FCMP
     %7(s32) = G_ZEXT %6(s1)
     ; CHECK: [[REXT:%[0-9]+]](s32) = G_ZEXT [[R]](s1)
     %r0 = COPY %7(s32)
