@@ -2061,9 +2061,10 @@ Value *NewGVN::getNextValueLeader(CongruenceClass *CC) const {
 //
 // The invariants of this function are:
 //
-// I must be moving to NewClass from OldClass The StoreCount of OldClass and
-// NewClass is expected to have been updated for I already if it is is a store.
-// The OldClass memory leader has not been updated yet if I was the leader.
+// - I must be moving to NewClass from OldClass
+// - The StoreCount of OldClass and NewClass is expected to have been updated
+//   for I already if it is is a store.
+// - The OldClass memory leader has not been updated yet if I was the leader.
 void NewGVN::moveMemoryToNewCongruenceClass(Instruction *I,
                                             MemoryAccess *InstMA,
                                             CongruenceClass *OldClass,
