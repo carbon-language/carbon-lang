@@ -2135,7 +2135,7 @@ void NewGVN::moveValueToNewCongruenceClass(Instruction *I, const Expression *E,
                      << NewClass->getID() << " from " << *NewClass->getLeader()
                      << " to  " << *SI << " because store joined class\n");
         // If we changed the leader, we have to mark it changed because we don't
-        // know what it will do to symbolic evlauation.
+        // know what it will do to symbolic evaluation.
         NewClass->setLeader(SI);
       }
       // We rely on the code below handling the MemoryAccess change.
