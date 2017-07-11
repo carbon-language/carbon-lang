@@ -43,12 +43,14 @@ if config.link_polly_into_tools == '' or \
                                  + ' -polly-process-unprofitable '
                                  + ' -polly-remarks-minimal '
                                  + ' -polly-use-llvm-names '
+                                 + ' -polly-import-jscop-dir=%S '
                                  ))
 else:
     config.substitutions.append(('%loadPolly', ''
                                  + ' -polly-process-unprofitable '
                                  + ' -polly-remarks-minimal '
                                  + ' -polly-use-llvm-names '
+                                 + ' -polly-import-jscop-dir=%S '
                                  ))
 
 if config.enable_gpgpu_codegen == 'TRUE' :
