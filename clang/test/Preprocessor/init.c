@@ -2185,13 +2185,13 @@
 // ARMV6-CLOUDABI:#define __CloudABI__ 1
 // ARMV6-CLOUDABI:#define __arm__ 1
 
-// RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm-netbsd-eabi < /dev/null | FileCheck -match-full-lines -check-prefix ARM-NETBSD %s
-//
+// RUN: %clang -E -dM -ffreestanding -target arm-netbsd-eabi %s -o - | FileCheck -match-full-lines -check-prefix ARM-NETBSD %s
+
 // ARM-NETBSD-NOT:#define _LP64
 // ARM-NETBSD:#define __APCS_32__ 1
 // ARM-NETBSD-NOT:#define __ARMEB__ 1
 // ARM-NETBSD:#define __ARMEL__ 1
-// ARM-NETBSD:#define __ARM_ARCH_4T__ 1
+// ARM-NETBSD:#define __ARM_ARCH_5TE__ 1
 // ARM-NETBSD:#define __ARM_DWARF_EH__ 1
 // ARM-NETBSD:#define __ARM_EABI__ 1
 // ARM-NETBSD-NOT:#define __ARM_BIG_ENDIAN 1
