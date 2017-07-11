@@ -7228,7 +7228,7 @@ bool MipsAsmParser::parseDirectiveModule() {
     // updated above.
     getTargetStreamer().updateABIInfo(*this);
 
-    // If priniing assembly, use the recently updated ABI Flags information.
+    // If printing assembly, use the recently updated ABI Flags information.
     // If generating ELF, don't do anything (the .MIPS.abiflags section gets
     // emitted later).
     getTargetStreamer().emitDirectiveModuleMT();
