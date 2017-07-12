@@ -469,12 +469,12 @@ lldb_private::Status StringExtractorGDBRemote::GetStatus() {
     uint8_t errc = GetHexU8(255);
     error.SetError(errc, lldb::eErrorTypeGeneric);
 
-    std::string error_messg("Error ");
-    error_messg += std::to_string(errc);
-    if (GetChar() == ';')
+    error.SetErrorStringWithFormat("Error %u", errc);
+    std::string error_messg;
+    if (GetChar() == ';') {
       GetHexByteString(error_messg);
-
-    error.SetErrorString(error_messg);
+      error.SetErrorString(error_messg);
+    }
   }
   return error;
 }
