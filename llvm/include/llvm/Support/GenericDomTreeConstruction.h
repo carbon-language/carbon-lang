@@ -137,7 +137,7 @@ struct SemiNCAInfo {
     }
 
     return LastNum;
-  };
+  }
 
   NodePtr eval(NodePtr VIn, unsigned LastLinked) {
     auto &VInInfo = NodeToInfo[VIn];
