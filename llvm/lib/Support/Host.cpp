@@ -281,11 +281,17 @@ enum ProcessorVendors {
 };
 
 enum ProcessorTypes {
-  INTEL_ATOM = 1,
+  INTEL_BONNELL = 1,
   INTEL_CORE2,
   INTEL_COREI7,
   AMDFAM10H,
   AMDFAM15H,
+  INTEL_SILVERMONT,
+  INTEL_KNL,
+  AMD_BTVER1,
+  AMD_BTVER2,
+  AMDFAM17H,
+  // Entries below this are not in libgcc/compiler-rt.
   INTEL_i386,
   INTEL_i486,
   INTEL_PENTIUM,
@@ -295,16 +301,13 @@ enum ProcessorTypes {
   INTEL_PENTIUM_IV,
   INTEL_PENTIUM_M,
   INTEL_CORE_DUO,
-  INTEL_XEONPHI,
   INTEL_X86_64,
   INTEL_NOCONA,
   INTEL_PRESCOTT,
   AMD_i486,
   AMDPENTIUM,
   AMDATHLON,
-  AMDFAM14H,
-  AMDFAM16H,
-  AMDFAM17H,
+  INTEL_GOLDMONT,
   CPU_TYPE_MAX
 };
 
@@ -317,18 +320,18 @@ enum ProcessorSubtypes {
   AMDFAM10H_ISTANBUL,
   AMDFAM15H_BDVER1,
   AMDFAM15H_BDVER2,
-  INTEL_PENTIUM_MMX,
-  INTEL_CORE2_65,
-  INTEL_CORE2_45,
+  AMDFAM15H_BDVER3,
+  AMDFAM15H_BDVER4,
+  AMDFAM17H_ZNVER1,
   INTEL_COREI7_IVYBRIDGE,
   INTEL_COREI7_HASWELL,
   INTEL_COREI7_BROADWELL,
   INTEL_COREI7_SKYLAKE,
   INTEL_COREI7_SKYLAKE_AVX512,
-  INTEL_ATOM_BONNELL,
-  INTEL_ATOM_SILVERMONT,
-  INTEL_ATOM_GOLDMONT,
-  INTEL_KNIGHTS_LANDING,
+  // Entries below this are not in libgcc/compiler-rt.
+  INTEL_PENTIUM_MMX,
+  INTEL_CORE2_65,
+  INTEL_CORE2_45,
   AMDPENTIUM_K6,
   AMDPENTIUM_K62,
   AMDPENTIUM_K63,
@@ -340,11 +343,6 @@ enum ProcessorSubtypes {
   AMDATHLON_OPTERON,
   AMDATHLON_FX,
   AMDATHLON_64,
-  AMD_BTVER1,
-  AMD_BTVER2,
-  AMDFAM15H_BDVER3,
-  AMDFAM15H_BDVER4,
-  AMDFAM17H_ZNVER1,
   CPU_SUBTYPE_MAX
 };
 
@@ -498,6 +496,7 @@ static bool getX86CpuIDAndInfoEx(unsigned value, unsigned subleaf,
 #endif
 }
 
+// Read control register 0 (XCR0). Used to detect features such as AVX.
 static bool getX86XCR0(unsigned *rEAX, unsigned *rEDX) {
 #if defined(__GNUC__) || defined(__clang__)
   // Check xgetbv; this uses a .byte sequence instead of the instruction
@@ -692,8 +691,7 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     case 0x27: // 32 nm Atom Medfield
     case 0x35: // 32 nm Atom Midview
     case 0x36: // 32 nm Atom Midview
-      *Type = INTEL_ATOM;
-      *Subtype = INTEL_ATOM_BONNELL;
+      *Type = INTEL_BONNELL;
       break; // "bonnell"
 
     // Atom Silvermont codes from the Intel software optimization guide.
@@ -703,24 +701,20 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     case 0x5a:
     case 0x5d:
     case 0x4c: // really airmont
-      *Type = INTEL_ATOM;
-      *Subtype = INTEL_ATOM_SILVERMONT;
+      *Type = INTEL_SILVERMONT;
       break; // "silvermont"
     // Goldmont:
     case 0x5c:
     case 0x5f:
-      *Type = INTEL_ATOM;
-      *Subtype = INTEL_ATOM_GOLDMONT;
+      *Type = INTEL_GOLDMONT;
       break; // "goldmont"
     case 0x57:
-      *Type = INTEL_XEONPHI; // knl
-      *Subtype = INTEL_KNIGHTS_LANDING;
+      *Type = INTEL_KNL; // knl
       break;
 
     default: // Unknown family 6 CPU, try to guess.
       if (Features & (1 << FEATURE_AVX512)) {
-        *Type = INTEL_XEONPHI; // knl
-        *Subtype = INTEL_KNIGHTS_LANDING;
+        *Type = INTEL_KNL; // knl
         break;
       }
       if (Features & (1 << FEATURE_ADX)) {
@@ -740,8 +734,7 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       }
       if (Features & (1 << FEATURE_SSE4_2)) {
         if (Features & (1 << FEATURE_MOVBE)) {
-          *Type = INTEL_ATOM;
-          *Subtype = INTEL_ATOM_SILVERMONT;
+          *Type = INTEL_SILVERMONT;
         } else {
           *Type = INTEL_COREI7;
           *Subtype = INTEL_COREI7_NEHALEM;
@@ -755,8 +748,7 @@ getIntelProcessorTypeAndSubtype(unsigned Family, unsigned Model,
       }
       if (Features & (1 << FEATURE_SSSE3)) {
         if (Features & (1 << FEATURE_MOVBE)) {
-          *Type = INTEL_ATOM;
-          *Subtype = INTEL_ATOM_BONNELL; // "bonnell"
+          *Type = INTEL_BONNELL; // "bonnell"
         } else {
           *Type = INTEL_CORE2; // "core2"
           *Subtype = INTEL_CORE2_65;
@@ -903,8 +895,7 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     }
     break;
   case 20:
-    *Type = AMDFAM14H;
-    *Subtype = AMD_BTVER1;
+    *Type = AMD_BTVER1;
     break; // "btver1";
   case 21:
     *Type = AMDFAM15H;
@@ -926,8 +917,7 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     }
     break;
   case 22:
-    *Type = AMDFAM16H;
-    *Subtype = AMD_BTVER2;
+    *Type = AMD_BTVER2;
     break; // "btver2"
   case 23:
     *Type = AMDFAM17H;
@@ -1059,19 +1049,14 @@ StringRef sys::getHostCPUName() {
       default:
         llvm_unreachable("Unexpected subtype!");
       }
-    case INTEL_ATOM:
-      switch (Subtype) {
-      case INTEL_ATOM_BONNELL:
-        return "bonnell";
-      case INTEL_ATOM_GOLDMONT:
-        return "goldmont";
-      case INTEL_ATOM_SILVERMONT:
-        return "silvermont";
-      default:
-        return "atom";
-      }
-    case INTEL_XEONPHI:
-      return "knl"; /*update for more variants added*/
+    case INTEL_BONNELL:
+      return "bonnell";
+    case INTEL_SILVERMONT:
+      return "silvermont";
+    case INTEL_GOLDMONT:
+      return "goldmont";
+    case INTEL_KNL:
+      return "knl";
     case INTEL_X86_64:
       return "x86-64";
     case INTEL_NOCONA:
@@ -1120,7 +1105,7 @@ StringRef sys::getHostCPUName() {
       }
     case AMDFAM10H:
       return "amdfam10";
-    case AMDFAM14H:
+    case AMD_BTVER1:
       return "btver1";
     case AMDFAM15H:
       switch (Subtype) {
@@ -1134,7 +1119,7 @@ StringRef sys::getHostCPUName() {
       case AMDFAM15H_BDVER4:
         return "bdver4";
       }
-    case AMDFAM16H:
+    case AMD_BTVER2:
       return "btver2";
     case AMDFAM17H:
       return "znver1";
