@@ -264,7 +264,7 @@ def : ItinRW<[GenericWriteLoad], [II_LWLE, II_LWRE]>;
 // MIPS MT instructions
 // ====================
 
-def : ItinRW<[GenericWriteMove], [II_DMT, II_EMT]>;
+def : ItinRW<[GenericWriteMove], [II_DMT, II_DVPE, II_EMT, II_EVPE]>;
 
 
 // MIPS32R6 and MIPS16e
