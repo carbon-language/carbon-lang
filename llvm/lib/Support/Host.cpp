@@ -910,7 +910,7 @@ static void getAMDProcessorTypeAndSubtype(unsigned Family, unsigned Model,
     *Type = AMDFAM15H;
     if (Model >= 0x60 && Model <= 0x7f) {
       *Subtype = AMDFAM15H_BDVER4;
-      break; // "bdver4"; 50h-6Fh: Excavator
+      break; // "bdver4"; 60h-7Fh: Excavator
     }
     if (Model >= 0x30 && Model <= 0x3f) {
       *Subtype = AMDFAM15H_BDVER3;
@@ -1036,7 +1036,7 @@ StringRef sys::getHostCPUName() {
       case INTEL_CORE2_45:
         return "penryn";
       default:
-        return "core2";
+        llvm_unreachable("Unexpected subtype!");
       }
     case INTEL_COREI7:
       switch (Subtype) {
@@ -1057,7 +1057,7 @@ StringRef sys::getHostCPUName() {
       case INTEL_COREI7_SKYLAKE_AVX512:
         return "skylake-avx512";
       default:
-        return "corei7";
+        llvm_unreachable("Unexpected subtype!");
       }
     case INTEL_ATOM:
       switch (Subtype) {
@@ -1079,7 +1079,7 @@ StringRef sys::getHostCPUName() {
     case INTEL_PRESCOTT:
       return "prescott";
     default:
-      return "generic";
+      break;
     }
   } else if (Vendor == SIG_AMD) {
     getAMDProcessorTypeAndSubtype(Family, Model, Features, &Type, &Subtype);
@@ -1116,7 +1116,7 @@ StringRef sys::getHostCPUName() {
       case AMDATHLON_64:
         return "athlon64";
       default:
-        return "athlon";
+        llvm_unreachable("Unexpected subtype!");
       }
     case AMDFAM10H:
       return "amdfam10";
@@ -1124,6 +1124,7 @@ StringRef sys::getHostCPUName() {
       return "btver1";
     case AMDFAM15H:
       switch (Subtype) {
+      default: // There are gaps in the subtype detection.
       case AMDFAM15H_BDVER1:
         return "bdver1";
       case AMDFAM15H_BDVER2:
@@ -1132,31 +1133,13 @@ StringRef sys::getHostCPUName() {
         return "bdver3";
       case AMDFAM15H_BDVER4:
         return "bdver4";
-      case AMD_BTVER1:
-        return "btver1";
-      default:
-        return "amdfam15";
       }
     case AMDFAM16H:
-      switch (Subtype) {
-      case AMD_BTVER1:
-        return "btver1";
-      case AMD_BTVER2:
-        return "btver2";
-      default:
-        return "amdfam16";
-      }
+      return "btver2";
     case AMDFAM17H:
-      switch (Subtype) {
-      case AMD_BTVER1:
-        return "btver1";
-      case AMDFAM17H_ZNVER1:
-        return "znver1";
-      default:
-        return "amdfam17";
-      }
+      return "znver1";
     default:
-      return "generic";
+      break;
     }
   }
   return "generic";
