@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LIBCPP___REFSTRING
-#define _LIBCPP___REFSTRING
+#ifndef _LIBCPP_REFSTRING_H
+#define _LIBCPP_REFSTRING_H
 
 #include <__config>
 #include <stdexcept>
@@ -124,4 +124,4 @@ bool __libcpp_refstring::__uses_refcount() const {
 
 _LIBCPP_END_NAMESPACE_STD
 
-#endif //_LIBCPP___REFSTRING
+#endif //_LIBCPP_REFSTRING_H
