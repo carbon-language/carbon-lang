@@ -22,9 +22,6 @@
 #include <set>
 
 #if defined(__has_include)
-#if __has_include(<sanitizer / coverage_interface.h>)
-#include <sanitizer/coverage_interface.h>
-#endif
 #if __has_include(<sanitizer / lsan_interface.h>)
 #include <sanitizer/lsan_interface.h>
 #endif
