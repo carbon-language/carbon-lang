@@ -74,6 +74,7 @@ class SyncClock {
   u32 tab_idx_;
   u32 size_;
 
+  void ResetImpl();
   ClockElem &elem(unsigned tid) const;
 };
 
