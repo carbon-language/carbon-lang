@@ -101,6 +101,9 @@ ThreadClock::ThreadClock(unsigned tid, unsigned reused)
   clk_[tid_].reused = reused_;
 }
 
+void ThreadClock::ResetCached(ClockCache *c) {
+}
+
 void ThreadClock::acquire(ClockCache *c, const SyncClock *src) {
   DCHECK_LE(nclk_, kMaxTid);
   DCHECK_LE(src->size_, kMaxTid);
@@ -346,7 +349,7 @@ void SyncClock::Resize(ClockCache *c, uptr nclk) {
 
 // Sets a single element in the vector clock.
 // This function is called only from weird places like AcquireGlobal.
-void ThreadClock::set(unsigned tid, u64 v) {
+void ThreadClock::set(ClockCache *c, unsigned tid, u64 v) {
   DCHECK_LT(tid, kMaxTid);
   DCHECK_GE(v, clk_[tid].epoch);
   clk_[tid].epoch = v;
