@@ -38,7 +38,7 @@ using namespace llvm::pdb;
 namespace {
 // Maps codeview::SimpleTypeKind of a built-in type to the parameters necessary
 // to instantiate a NativeBuiltinSymbol for that type.
-static const struct {
+static const struct BuiltinTypeEntry {
   codeview::SimpleTypeKind Kind;
   PDB_BuiltinType Type;
   uint32_t Size;
@@ -115,14 +115,16 @@ SymIndexId NativeSession::findSymbolByTypeIndex(codeview::TypeIndex Index) {
     if (Index.getSimpleMode() != codeview::SimpleTypeMode::Direct)
       return 0;
     const auto Kind = Index.getSimpleKind();
-    const auto It = std::find_if(
-        std::begin(BuiltinTypes), std::end(BuiltinTypes),
-        [Kind](const auto &Builtin) { return Builtin.Kind == Kind; });
+    const auto It =
+        std::find_if(std::begin(BuiltinTypes), std::end(BuiltinTypes),
+                     [Kind](const BuiltinTypeEntry &Builtin) {
+                       return Builtin.Kind == Kind;
+                     });
     if (It == std::end(BuiltinTypes))
       return 0;
     SymIndexId Id = SymbolCache.size();
     SymbolCache.emplace_back(
-        std::make_unique<NativeBuiltinSymbol>(*this, Id, It->Type, It->Size));
+        llvm::make_unique<NativeBuiltinSymbol>(*this, Id, It->Type, It->Size));
     TypeIndexToSymbolId[Index] = Id;
     return Id;
   }

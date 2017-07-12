@@ -23,7 +23,7 @@ NativeBuiltinSymbol::NativeBuiltinSymbol(NativeSession &PDBSession,
 NativeBuiltinSymbol::~NativeBuiltinSymbol() {}
 
 std::unique_ptr<NativeRawSymbol> NativeBuiltinSymbol::clone() const {
-  return std::make_unique<NativeBuiltinSymbol>(Session, SymbolId, Type, Length);
+  return llvm::make_unique<NativeBuiltinSymbol>(Session, SymbolId, Type, Length);
 }
 
 void NativeBuiltinSymbol::dump(raw_ostream &OS, int Indent) const {

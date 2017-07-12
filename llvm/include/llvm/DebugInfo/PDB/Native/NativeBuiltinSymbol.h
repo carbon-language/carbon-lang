@@ -29,7 +29,7 @@ public:
 
   void dump(raw_ostream &OS, int Indent) const override;
 
-  PDB_SymType NativeBuiltinSymbol::getSymTag() const override;
+  PDB_SymType getSymTag() const override;
 
   PDB_BuiltinType getBuiltinType() const override;
   bool isConstType() const override;
