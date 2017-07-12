@@ -119,6 +119,7 @@ def II_EMT              : InstrItinClass;
 def II_EVPE             : InstrItinClass;
 def II_EXT              : InstrItinClass; // Any EXT instruction
 def II_FLOOR            : InstrItinClass;
+def II_FORK             : InstrItinClass;
 def II_INS              : InstrItinClass; // Any INS instruction
 def II_IndirectBranchPseudo : InstrItinClass; // Indirect branch pseudo.
 def II_J                : InstrItinClass;
@@ -349,6 +350,7 @@ def II_WRPGPR           : InstrItinClass;
 def II_RDPGPR           : InstrItinClass;
 def II_DVP              : InstrItinClass;
 def II_EVP              : InstrItinClass;
+def II_YIELD            : InstrItinClass;
 
 //===----------------------------------------------------------------------===//
 // Mips Generic instruction itineraries.
@@ -413,6 +415,7 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_EMT             , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_EVPE            , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_EXT             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_FORK            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_INS             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_LUI             , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_MOVE            , [InstrStage<1,  [ALU]>]>,
@@ -678,5 +681,6 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_WRPGPR          , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_RDPGPR          , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_DVP             , [InstrStage<1,  [ALU]>]>,
-  InstrItinData<II_EVP             , [InstrStage<1,  [ALU]>]>
+  InstrItinData<II_EVP             , [InstrStage<1,  [ALU]>]>,
+  InstrItinData<II_YIELD           , [InstrStage<5,  [ALU]>]>
 ]>;

@@ -49,3 +49,30 @@ class COP0_MFMC0_MT<FIELD5 Op1, FIELD5 Op2, OPCODE1 sc> : MipsMTInst {
   let Inst{4-3}   = 0b00;
   let Inst{2-0}   = 0b001;
 }
+
+class SPECIAL3_MT_FORK : MipsMTInst {
+  bits<32> Inst;
+
+  bits<5> rs;
+  bits<5> rt;
+  bits<5> rd;
+  let Inst{31-26} = 0b011111; // SPECIAL3
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = 0b00000;
+  let Inst{5-0}   = 0b001000; // FORK
+}
+
+class SPECIAL3_MT_YIELD : MipsMTInst {
+  bits<32> Inst;
+
+  bits<5> rs;
+  bits<5> rd;
+  let Inst{31-26} = 0b011111; // SPECIAL3
+  let Inst{25-21} = rs;
+  let Inst{20-16} = 0b00000;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = 0b00000;
+  let Inst{5-0}   = 0b001001; // FORK
+}

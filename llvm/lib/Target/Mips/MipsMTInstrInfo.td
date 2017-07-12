@@ -23,6 +23,10 @@ class DVPE_ENC : COP0_MFMC0_MT<FIELD5_1_2_DVPE_EVPE, FIELD5_1_2_DVPE_EVPE,
 class EVPE_ENC : COP0_MFMC0_MT<FIELD5_1_2_DVPE_EVPE, FIELD5_1_2_DVPE_EVPE,
                                OPCODE_SC_E>;
 
+class FORK_ENC : SPECIAL3_MT_FORK;
+
+class YIELD_ENC : SPECIAL3_MT_YIELD;
+
 //===----------------------------------------------------------------------===//
 // MIPS MT Instruction Descriptions
 //===----------------------------------------------------------------------===//
@@ -33,6 +37,22 @@ class MT_1R_DESC_BASE<string instr_asm, InstrItinClass Itin = NoItinerary> {
   string AsmString = !strconcat(instr_asm, "\t$rt");
   list<dag> Pattern = [];
   InstrItinClass Itinerary = Itin;
+}
+
+class FORK_DESC {
+  dag OutOperandList = (outs GPR32Opnd:$rs, GPR32Opnd:$rd);
+  dag InOperandList = (ins GPR32Opnd:$rt);
+  string AsmString = "fork\t$rd, $rs, $rt";
+  list<dag> Pattern = [];
+  InstrItinClass Itinerary = II_FORK;
+}
+
+class YIELD_DESC {
+  dag OutOperandList = (outs GPR32Opnd:$rd);
+  dag InOperandList = (ins GPR32Opnd:$rs);
+  string AsmString = "yield\t$rd, $rs";
+  list<dag> Pattern = [];
+  InstrItinClass Itinerary = II_YIELD;
 }
 
 class DMT_DESC : MT_1R_DESC_BASE<"dmt", II_DMT>;
@@ -55,6 +75,10 @@ let hasSideEffects = 1, isNotDuplicable = 1,
   def DVPE : DVPE_ENC, DVPE_DESC, ASE_MT;
 
   def EVPE : EVPE_ENC, EVPE_DESC, ASE_MT;
+
+  def FORK : FORK_ENC, FORK_DESC, ASE_MT;
+
+  def YIELD : YIELD_ENC, YIELD_DESC, ASE_MT;
 }
 
 //===----------------------------------------------------------------------===//
@@ -69,4 +93,6 @@ let AdditionalPredicates = [NotInMicroMips] in {
   def : MipsInstAlias<"dvpe", (DVPE ZERO), 1>, ASE_MT;
 
   def : MipsInstAlias<"evpe", (EVPE ZERO), 1>, ASE_MT;
+
+  def : MipsInstAlias<"yield $rs", (YIELD ZERO, GPR32Opnd:$rs), 1>, ASE_MT;
 }
