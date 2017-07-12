@@ -212,6 +212,42 @@ TEST(Clock, Growth) {
   }
 }
 
+TEST(Clock, Growth2) {
+  // Test clock growth for every pair of sizes:
+  const uptr sizes[] = {0, 1, 2, 30, 61, 62, 63, 64, 65, 66, 100, 124, 125, 126,
+      127, 128, 129, 130, 188, 189, 190, 191, 192, 193, 254, 255};
+  const uptr n = sizeof(sizes) / sizeof(sizes[0]);
+  for (uptr fi = 0; fi < n; fi++) {
+    for (uptr ti = fi + 1; ti < n; ti++) {
+      const uptr from = sizes[fi];
+      const uptr to = sizes[ti];
+      SyncClock sync;
+      ThreadClock vector(0);
+      for (uptr i = 0; i < from; i++)
+        vector.set(i, i + 1);
+      if (from != 0)
+        vector.release(&cache, &sync);
+      ASSERT_EQ(sync.size(), from);
+      for (uptr i = 0; i < from; i++)
+        ASSERT_EQ(sync.get(i), i + 1);
+      for (uptr i = 0; i < to; i++)
+        vector.set(i, i + 1);
+      vector.release(&cache, &sync);
+      ASSERT_EQ(sync.size(), to);
+      for (uptr i = 0; i < to; i++)
+        ASSERT_EQ(sync.get(i), i + 1);
+      vector.set(to + 1, to + 1);
+      vector.release(&cache, &sync);
+      ASSERT_EQ(sync.size(), to + 2);
+      for (uptr i = 0; i < to; i++)
+        ASSERT_EQ(sync.get(i), i + 1);
+      ASSERT_EQ(sync.get(to), 0U);
+      ASSERT_EQ(sync.get(to + 1), to + 1);
+      sync.Reset(&cache);
+    }
+  }
+}
+
 const uptr kThreads = 4;
 const uptr kClocks = 4;
 
