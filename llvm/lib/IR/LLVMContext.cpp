@@ -86,11 +86,13 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
       pImpl->getOrInsertSyncScopeID("singlethread");
   assert(SingleThreadSSID == SyncScope::SingleThread &&
          "singlethread synchronization scope ID drifted!");
+  (void)SingleThreadSSID;
 
   SyncScope::ID SystemSSID =
       pImpl->getOrInsertSyncScopeID("");
   assert(SystemSSID == SyncScope::System &&
          "system synchronization scope ID drifted!");
+  (void)SystemSSID;
 }
 
 LLVMContext::~LLVMContext() { delete pImpl; }
