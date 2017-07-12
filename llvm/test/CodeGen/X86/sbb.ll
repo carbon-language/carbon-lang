@@ -191,9 +191,8 @@ define i32 @uge_select_0_or_neg1_sub(i32 %x, i32 %y) nounwind {
 define i64 @ugt_select_neg1_or_0_sub(i64 %x, i64 %y) nounwind {
 ; CHECK-LABEL: ugt_select_neg1_or_0_sub:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    xorl %eax, %eax
 ; CHECK-NEXT:    cmpq %rdi, %rsi
-; CHECK-NEXT:    sbbq $0, %rax
+; CHECK-NEXT:    sbbq %rax, %rax
 ; CHECK-NEXT:    retq
   %cmp = icmp ugt i64 %x, %y
   %zext = zext i1 %cmp to i64
@@ -207,10 +206,8 @@ define i64 @ugt_select_neg1_or_0_sub(i64 %x, i64 %y) nounwind {
 define i16 @ult_select_neg1_or_0_sub(i16 %x, i16 %y) nounwind {
 ; CHECK-LABEL: ult_select_neg1_or_0_sub:
 ; CHECK:       # BB#0:
-; CHECK-NEXT:    xorl %eax, %eax
 ; CHECK-NEXT:    cmpw %di, %si
-; CHECK-NEXT:    sbbl $0, %eax
-; CHECK-NEXT:    # kill: %AX<def> %AX<kill> %EAX<kill>
+; CHECK-NEXT:    sbbw %ax, %ax
 ; CHECK-NEXT:    retq
   %cmp = icmp ult i16 %y, %x
   %zext = zext i1 %cmp to i16
