@@ -119,9 +119,7 @@ void ThreadClock::acquire(ClockCache *c, const SyncClock *src) {
   // Check if we've already acquired src after the last release operation on src
   bool acquired = false;
   if (nclk > tid_) {
-    CPP_STAT_INC(StatClockAcquireLarge);
     if (src->elem(tid_).reused == reused_) {
-      CPP_STAT_INC(StatClockAcquireRepeat);
       for (unsigned i = 0; i < kDirtyTids; i++) {
         unsigned tid = src->dirty_tids_[i];
         if (tid != kInvalidTid) {
@@ -269,11 +267,11 @@ void ThreadClock::UpdateCurrentThread(SyncClock *dst) const {
 
   for (unsigned i = 0; i < kDirtyTids; i++) {
     if (dst->dirty_tids_[i] == tid_) {
-      CPP_STAT_INC(StatClockReleaseFast1);
+      CPP_STAT_INC(StatClockReleaseFast);
       return;
     }
     if (dst->dirty_tids_[i] == kInvalidTid) {
-      CPP_STAT_INC(StatClockReleaseFast2);
+      CPP_STAT_INC(StatClockReleaseFast);
       dst->dirty_tids_[i] = tid_;
       return;
     }
