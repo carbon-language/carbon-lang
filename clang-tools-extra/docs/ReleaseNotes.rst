@@ -73,6 +73,12 @@ Improvements to clang-tidy
 
   Checks if the required mode ``e`` exists in the mode argument of ``fopen()``.
 
+- New `android-cloexec-socket
+  <http://clang.llvm.org/extra/clang-tidy/checks/android-cloexec-socket.html>`_ check
+
+  Checks if the required file flag ``SOCK_CLOEXEC`` is present in the argument of
+  ``socket()``.
+
 - New `cert-dcl21-cpp
   <http://clang.llvm.org/extra/clang-tidy/checks/cert-dcl21-cpp.html>`_ check
 
