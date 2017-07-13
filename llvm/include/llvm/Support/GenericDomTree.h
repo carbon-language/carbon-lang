@@ -443,6 +443,10 @@ template <class NodeT> class DominatorTreeBase {
                                       const_cast<NodeT *>(B));
   }
 
+  bool isVirtualRoot(const DomTreeNodeBase<NodeT> *A) const {
+    return isPostDominator() && !A->getBlock();
+  }
+
   //===--------------------------------------------------------------------===//
   // API to update (Post)DominatorTree information based on modifications to
   // the CFG...

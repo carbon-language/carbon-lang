@@ -298,12 +298,25 @@ struct SemiNCAInfo {
     for (auto &NodeToTN : DT.DomTreeNodes) {
       const TreeNodePtr TN = NodeToTN.second.get();
       const NodePtr BB = TN->getBlock();
-      if (!BB) continue;
+
+      // Virtual root has a corresponding virtual CFG node.
+      if (DT.isVirtualRoot(TN)) continue;
 
       if (NodeToInfo.count(BB) == 0) {
         errs() << "DomTree node ";
         PrintBlockOrNullptr(errs(), BB);
         errs() << " not found by DFS walk!\n";
+        errs().flush();
+
+        return false;
+      }
+    }
+
+    for (const NodePtr N : NumToNode) {
+      if (N && !DT.getNode(N)) {
+        errs() << "CFG node ";
+        PrintBlockOrNullptr(errs(), N);
+        errs() << " not found in the DomTree!\n";
         errs().flush();
 
         return false;
@@ -363,7 +376,7 @@ struct SemiNCAInfo {
       assert(ToTN);
 
       const NodePtr NCD = DT.findNearestCommonDominator(From, To);
-      const TreeNodePtr NCDTN = NCD ? DT.getNode(NCD) : nullptr;
+      const TreeNodePtr NCDTN = DT.getNode(NCD);
       const TreeNodePtr ToIDom = ToTN->getIDom();
       if (NCDTN != ToTN && NCDTN != ToIDom) {
         errs() << "NearestCommonDominator verification failed:\n\tNCD(From:";
