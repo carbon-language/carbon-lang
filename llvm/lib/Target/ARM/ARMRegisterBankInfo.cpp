@@ -331,6 +331,9 @@ ARMRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
                             &ARM::ValueMappings[ARM::DPR3OpsIdx]});
     break;
   }
+  case G_BR:
+    OperandsMapping = getOperandsMapping({nullptr});
+    break;
   default:
     return getInvalidInstructionMapping();
   }
