@@ -49,13 +49,13 @@ struct ChildrenGetter<NodePtr, true> {
   }
 };
 
-// Information record used by Semi-NCA during tree construction.
-template <typename NodeT>
+template <typename DomTreeT>
 struct SemiNCAInfo {
-  using NodePtr = NodeT *;
-  using DomTreeT = DominatorTreeBase<NodeT>;
+  using NodePtr = typename DomTreeT::NodePtr;
+  using NodeT = typename DomTreeT::NodeType;
   using TreeNodePtr = DomTreeNodeBase<NodeT> *;
 
+  // Information record used by Semi-NCA during tree construction.
   struct InfoRec {
     unsigned DFSNum = 0;
     unsigned Parent = 0;
@@ -524,23 +524,16 @@ struct SemiNCAInfo {
   }
 };
 
-template <class FuncT, class NodeT>
-void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
-               FuncT &F) {
-  using NodePtr = typename GraphTraits<NodeT>::NodeRef;
-  static_assert(std::is_pointer<NodePtr>::value,
-                "NodePtr should be a pointer type");
-  SemiNCAInfo<typename std::remove_pointer<NodePtr>::type> SNCA;
+
+template <class DomTreeT, class FuncT>
+void Calculate(DomTreeT &DT, FuncT &F) {
+  SemiNCAInfo<DomTreeT> SNCA;
   SNCA.calculateFromScratch(DT, GraphTraits<FuncT *>::size(&F));
 }
 
-template <class NodeT>
-bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT) {
-  using NodePtr = typename GraphTraits<NodeT>::NodeRef;
-  static_assert(std::is_pointer<NodePtr>::value,
-                "NodePtr should be a pointer type");
-  SemiNCAInfo<typename std::remove_pointer<NodePtr>::type> SNCA;
-
+template <class DomTreeT>
+bool Verify(const DomTreeT &DT) {
+  SemiNCAInfo<DomTreeT> SNCA;
   return SNCA.verifyReachability(DT) && SNCA.VerifyLevels(DT) &&
          SNCA.verifyNCD(DT) && SNCA.verifyParentProperty(DT) &&
          SNCA.verifySiblingProperty(DT);
