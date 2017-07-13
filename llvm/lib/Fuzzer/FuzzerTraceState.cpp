@@ -82,79 +82,11 @@ void Fuzzer::InitializeTraceState() {
   TS = new TraceState(MD, Options, this);
 }
 
-static size_t InternalStrnlen(const char *S, size_t MaxLen) {
-  size_t Len = 0;
-  for (; Len < MaxLen && S[Len]; Len++) {}
-  return Len;
-}
-
-// Finds min of (strlen(S1), strlen(S2)).
-// Needed bacause one of these strings may actually be non-zero terminated.
-static size_t InternalStrnlen2(const char *S1, const char *S2) {
-  size_t Len = 0;
-  for (; S1[Len] && S2[Len]; Len++)  {}
-  return Len;
-}
-
 }  // namespace fuzzer
 
 using fuzzer::TS;
 
 extern "C" {
-
-// We may need to avoid defining weak hooks to stay compatible with older clang.
-#ifndef LLVM_FUZZER_DEFINES_SANITIZER_WEAK_HOOOKS
-# define LLVM_FUZZER_DEFINES_SANITIZER_WEAK_HOOOKS 1
-#endif
-
-#if LLVM_FUZZER_DEFINES_SANITIZER_WEAK_HOOOKS
-
-ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
-void __sanitizer_weak_hook_memcmp(void *caller_pc, const void *s1,
-                                  const void *s2, size_t n, int result) {
-  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
-  if (result == 0) return;  // No reason to mutate.
-  if (n <= 1) return;  // Not interesting.
-  fuzzer::TPC.AddValueForMemcmp(caller_pc, s1, s2, n, /*StopAtZero*/false);
-}
-
-ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
-void __sanitizer_weak_hook_strncmp(void *caller_pc, const char *s1,
-                                   const char *s2, size_t n, int result) {
-  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
-  if (result == 0) return;  // No reason to mutate.
-  size_t Len1 = fuzzer::InternalStrnlen(s1, n);
-  size_t Len2 = fuzzer::InternalStrnlen(s2, n);
-  n = std::min(n, Len1);
-  n = std::min(n, Len2);
-  if (n <= 1) return;  // Not interesting.
-  fuzzer::TPC.AddValueForMemcmp(caller_pc, s1, s2, n, /*StopAtZero*/true);
-}
-
-
-ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
-void __sanitizer_weak_hook_strcmp(void *caller_pc, const char *s1,
-                                   const char *s2, int result) {
-  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
-  if (result == 0) return;  // No reason to mutate.
-  size_t N = fuzzer::InternalStrnlen2(s1, s2);
-  if (N <= 1) return;  // Not interesting.
-  fuzzer::TPC.AddValueForMemcmp(caller_pc, s1, s2, N, /*StopAtZero*/true);
-}
-
-ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
-void __sanitizer_weak_hook_strncasecmp(void *called_pc, const char *s1,
-                                       const char *s2, size_t n, int result) {
-  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
-  return __sanitizer_weak_hook_strncmp(called_pc, s1, s2, n, result);
-}
-
-ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
-void __sanitizer_weak_hook_strcasecmp(void *called_pc, const char *s1,
-                                      const char *s2, int result) {
-  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
-  return __sanitizer_weak_hook_strcmp(called_pc, s1, s2, result);
-}
 
 ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
 void __sanitizer_weak_hook_strstr(void *called_pc, const char *s1,
@@ -177,5 +109,4 @@ void __sanitizer_weak_hook_memmem(void *called_pc, const void *s1, size_t len1,
   TS->AddInterestingWord(reinterpret_cast<const uint8_t *>(s2), len2);
 }
 
-#endif  // LLVM_FUZZER_DEFINES_SANITIZER_WEAK_HOOOKS
 }  // extern "C"
