@@ -259,6 +259,7 @@ ARMRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
     break;
   case G_SELECT: {
     LLT Ty = MRI.getType(MI.getOperand(0).getReg());
+    (void)Ty;
     LLT Ty2 = MRI.getType(MI.getOperand(1).getReg());
     (void)Ty2;
     assert(Ty.getSizeInBits() == 32 && "Unsupported size for G_SELECT");
@@ -282,6 +283,7 @@ ARMRegisterBankInfo::getInstrMapping(const MachineInstr &MI) const {
   }
   case G_FCMP: {
     LLT Ty = MRI.getType(MI.getOperand(0).getReg());
+    (void)Ty;
     LLT Ty1 = MRI.getType(MI.getOperand(2).getReg());
     LLT Ty2 = MRI.getType(MI.getOperand(3).getReg());
     (void)Ty2;
