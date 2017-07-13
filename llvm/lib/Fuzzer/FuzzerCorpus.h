@@ -139,6 +139,9 @@ class InputCorpus {
   }
 
   void Replace(InputInfo *II, const Unit &U) {
+    assert(II->U.size());
+    Hashes.erase(Sha1ToString(II->Sha1));
+    DeleteFile(*II);
     ComputeSHA1(U.data(), U.size(), II->Sha1);
     Hashes.insert(Sha1ToString(II->Sha1));
     II->U = U;
@@ -182,10 +185,14 @@ class InputCorpus {
     Printf("\n");
   }
 
-  void DeleteInput(size_t Idx) {
-    InputInfo &II = *Inputs[Idx];
+  void DeleteFile(const InputInfo &II) {
     if (!OutputCorpus.empty() && II.MayDeleteFile)
       RemoveFile(DirPlusFile(OutputCorpus, Sha1ToString(II.Sha1)));
+  }
+
+  void DeleteInput(size_t Idx) {
+    InputInfo &II = *Inputs[Idx];
+    DeleteFile(II);
     Unit().swap(II.U);
     if (FeatureDebug)
       Printf("EVICTED %zd\n", Idx);
