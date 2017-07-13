@@ -718,7 +718,6 @@ int main() {
 // CHECK: br i1 [[DONE]],
 
 // Check initialization of private copy.
-// CHECK: [[LHS_BEGIN:%.+]] = bitcast [10 x [4 x [[S_FLOAT_TY]]]]* %{{.+}} to [[S_FLOAT_TY]]*
 // CHECK: [[BEGIN:%.+]] = getelementptr inbounds [10 x [4 x [[S_FLOAT_TY]]]], [10 x [4 x [[S_FLOAT_TY]]]]* [[ARRS_PRIV]], i32 0, i32 0, i32 0
 // CHECK: [[END:%.+]] = getelementptr [[S_FLOAT_TY]], [[S_FLOAT_TY]]* [[BEGIN]], i64 40
 // CHECK: [[ISEMPTY:%.+]] = icmp eq [[S_FLOAT_TY]]* [[BEGIN]], [[END]]
@@ -727,6 +726,7 @@ int main() {
 // CHECK: call void @_ZN1SIfEC1Ev([[S_FLOAT_TY]]* %
 // CHECK: [[DONE:%.+]] = icmp eq [[S_FLOAT_TY]]* %{{.+}}, [[END]]
 // CHECK: br i1 [[DONE]],
+// CHECK: [[LHS_BEGIN:%.+]] = bitcast [10 x [4 x [[S_FLOAT_TY]]]]* %{{.+}} to [[S_FLOAT_TY]]*
 // CHECK: [[ARRS_PRIV_BEGIN:%.+]] = bitcast [10 x [4 x [[S_FLOAT_TY]]]]* [[ARRS_PRIV]] to [[S_FLOAT_TY]]*
 
 // CHECK: [[GTID_REF:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[GTID_ADDR_ADDR]]
@@ -903,8 +903,6 @@ int main() {
 // CHECK: getelementptr inbounds [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]** %{{.+}}, i64 4
 // CHECK: load [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]** %
 // CHECK: getelementptr inbounds [[S_FLOAT_TY]], [[S_FLOAT_TY]]* %{{.+}}, i64 6
-// CHECK: [[LD:%.+]] = load [[S_FLOAT_TY]]**, [[S_FLOAT_TY]]*** [[VAR2_ORIG]],
-// CHECK: [[ORIG_START:%.+]] = load [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]** [[LD]],
 // CHECK: [[LAST:%.+]] = ptrtoint [[S_FLOAT_TY]]* %{{.+}} to i64
 // CHECK: [[FIRST:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[LOW]] to i64
 // CHECK: [[BYTE_DIF:%.+]] = sub i64 [[LAST]], [[FIRST]]
@@ -912,6 +910,8 @@ int main() {
 // CHECK: [[SIZE:%.+]] = add nuw i64 [[DIF]], 1
 // CHECK: call i8* @llvm.stacksave()
 // CHECK: [[VAR2_PRIV:%.+]] = alloca [[S_FLOAT_TY]], i64 [[SIZE]],
+// CHECK: [[LD:%.+]] = load [[S_FLOAT_TY]]**, [[S_FLOAT_TY]]*** [[VAR2_ORIG]],
+// CHECK: [[ORIG_START:%.+]] = load [[S_FLOAT_TY]]*, [[S_FLOAT_TY]]** [[LD]],
 // CHECK: [[START:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[ORIG_START]] to i64
 // CHECK: [[LOW_BOUND:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[LOW]] to i64
 // CHECK: [[OFFSET_BYTES:%.+]] = sub i64 [[START]], [[LOW_BOUND]]
@@ -933,7 +933,6 @@ int main() {
 
 // CHECK: [[LOW:%.+]] = getelementptr inbounds [2 x [[S_FLOAT_TY]]], [2 x [[S_FLOAT_TY]]]* [[VVAR2_ORIG]], i64 0, i64 0
 // CHECK: getelementptr inbounds [2 x [[S_FLOAT_TY]]], [2 x [[S_FLOAT_TY]]]* [[VVAR2_ORIG]], i64 0, i64 4
-// CHECK: [[ORIG_START:%.+]] = bitcast [2 x [[S_FLOAT_TY]]]* [[VVAR2_ORIG]] to [[S_FLOAT_TY]]*
 // CHECK: [[LAST:%.+]] = ptrtoint [[S_FLOAT_TY]]* %{{.+}} to i64
 // CHECK: [[FIRST:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[LOW]] to i64
 // CHECK: [[BYTE_DIF:%.+]] = sub i64 [[LAST]], [[FIRST]]
@@ -941,6 +940,7 @@ int main() {
 // CHECK: [[SIZE:%.+]] = add nuw i64 [[DIF]], 1
 // CHECK: call i8* @llvm.stacksave()
 // CHECK: [[VVAR2_PRIV:%.+]] = alloca [[S_FLOAT_TY]], i64 [[SIZE]],
+// CHECK: [[ORIG_START:%.+]] = bitcast [2 x [[S_FLOAT_TY]]]* [[VVAR2_ORIG]] to [[S_FLOAT_TY]]*
 // CHECK: [[START:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[ORIG_START]] to i64
 // CHECK: [[LOW_BOUND:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[LOW]] to i64
 // CHECK: [[OFFSET_BYTES:%.+]] = sub i64 [[START]], [[LOW_BOUND]]
@@ -964,8 +964,6 @@ int main() {
 // CHECK: [[LOW:%.+]] = getelementptr inbounds [2 x [[S_FLOAT_TY]]], [2 x [[S_FLOAT_TY]]]* [[VAR3_ORIG]], i64 0, i64 1
 // CHECK: [[VAR3_ORIG:%.+]] = load [2 x [[S_FLOAT_TY]]]*, [2 x [[S_FLOAT_TY]]]** [[VAR3_ORIG_ADDR]],
 // CHECK: getelementptr inbounds [2 x [[S_FLOAT_TY]]], [2 x [[S_FLOAT_TY]]]* [[VAR3_ORIG]], i64 0, i64 2
-// CHECK: [[VAR3_ORIG:%.+]] = load [2 x [[S_FLOAT_TY]]]*, [2 x [[S_FLOAT_TY]]]** [[VAR3_ORIG_ADDR]],
-// CHECK: [[ORIG_START:%.+]] = bitcast [2 x [[S_FLOAT_TY]]]* [[VAR3_ORIG]] to [[S_FLOAT_TY]]*
 // CHECK: [[LAST:%.+]] = ptrtoint [[S_FLOAT_TY]]* %{{.+}} to i64
 // CHECK: [[FIRST:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[LOW]] to i64
 // CHECK: [[BYTE_DIF:%.+]] = sub i64 [[LAST]], [[FIRST]]
@@ -973,6 +971,8 @@ int main() {
 // CHECK: [[SIZE:%.+]] = add nuw i64 [[DIF]], 1
 // CHECK: call i8* @llvm.stacksave()
 // CHECK: [[VAR3_PRIV:%.+]] = alloca [[S_FLOAT_TY]], i64 [[SIZE]],
+// CHECK: [[VAR3_ORIG:%.+]] = load [2 x [[S_FLOAT_TY]]]*, [2 x [[S_FLOAT_TY]]]** [[VAR3_ORIG_ADDR]],
+// CHECK: [[ORIG_START:%.+]] = bitcast [2 x [[S_FLOAT_TY]]]* [[VAR3_ORIG]] to [[S_FLOAT_TY]]*
 // CHECK: [[START:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[ORIG_START]] to i64
 // CHECK: [[LOW_BOUND:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[LOW]] to i64
 // CHECK: [[OFFSET_BYTES:%.+]] = sub i64 [[START]], [[LOW_BOUND]]
@@ -997,11 +997,11 @@ int main() {
 // CHECK: [[VAR3_ORIG:%.+]] = load [2 x [[S_FLOAT_TY]]]*, [2 x [[S_FLOAT_TY]]]** [[VAR3_ORIG_ADDR]],
 // CHECK: store [2 x [[S_FLOAT_TY]]]* [[VAR3_ORIG]], [2 x [[S_FLOAT_TY]]]** [[VAR3_ORIG_ADDR:%.+]],
 // CHECK: [[VAR3_ORIG:%.+]] = load [2 x [[S_FLOAT_TY]]]*, [2 x [[S_FLOAT_TY]]]** [[VAR3_ORIG_ADDR]],
-// CHECK: bitcast [2 x [[S_FLOAT_TY]]]* [[VAR3_ORIG]] to [[S_FLOAT_TY]]*
 // CHECK: getelementptr inbounds [2 x [[S_FLOAT_TY]]], [2 x [[S_FLOAT_TY]]]* [[VAR3_PRIV]], i32 0, i32 0
 // CHECK: getelementptr [[S_FLOAT_TY]], [[S_FLOAT_TY]]* %{{.+}}, i64 2
 
 // CHECK: store [2 x [[S_FLOAT_TY]]]* [[VAR3_PRIV]], [2 x [[S_FLOAT_TY]]]** %
+// CHECK: bitcast [2 x [[S_FLOAT_TY]]]* [[VAR3_ORIG]] to [[S_FLOAT_TY]]*
 
 // CHECK: ret void
 

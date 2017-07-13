@@ -105,6 +105,86 @@ struct OMPTaskDataTy final {
   bool Nogroup = false;
 };
 
+/// Class intended to support codegen of all kind of the reduction clauses.
+class ReductionCodeGen {
+private:
+  /// Data requiored for codegen of reduction clauses.
+  struct ReductionData {
+    /// Reference to the original shared item.
+    const Expr *Ref = nullptr;
+    /// Helper expression for generation of private copy.
+    const Expr *Private = nullptr;
+    /// Helper expression for generation reduction operation.
+    const Expr *ReductionOp = nullptr;
+    ReductionData(const Expr *Ref, const Expr *Private, const Expr *ReductionOp)
+        : Ref(Ref), Private(Private), ReductionOp(ReductionOp) {}
+  };
+  /// List of reduction-based clauses.
+  SmallVector<ReductionData, 4> ClausesData;
+
+  /// List of addresses of original shared variables/expressions.
+  SmallVector<std::pair<LValue, LValue>, 4> SharedAddresses;
+  /// Sizes of the reduction items in chars.
+  SmallVector<llvm::Value *, 4> Sizes;
+  /// Base declarations for the reduction items.
+  SmallVector<const VarDecl *, 4> BaseDecls;
+  /// Emits lvalue for shared expresion.
+  LValue emitSharedLValue(CodeGenFunction &CGF, const Expr *E);
+  /// Emits upper bound for shared expression (if array section).
+  LValue emitSharedLValueUB(CodeGenFunction &CGF, const Expr *E);
+  /// Performs aggregate initialization.
+  /// \param N Number of reduction item in the common list.
+  /// \param PrivateAddr Address of the corresponding private item.
+  /// \param SharedLVal Addreiss of the original shared variable.
+  void emitAggregateInitialization(CodeGenFunction &CGF, unsigned N,
+                                   Address PrivateAddr, LValue SharedLVal);
+
+public:
+  ReductionCodeGen(ArrayRef<const Expr *> Shareds,
+                   ArrayRef<const Expr *> Privates,
+                   ArrayRef<const Expr *> ReductionOps);
+  /// Emits lvalue for a reduction item.
+  /// \param N Number of the reduction item.
+  void emitSharedLValue(CodeGenFunction &CGF, unsigned N);
+  /// Emits the code for the variable-modified type, if required.
+  /// \param N Number of the reduction item.
+  void emitAggregateType(CodeGenFunction &CGF, unsigned N);
+  /// Emits the code for the variable-modified type, if required.
+  /// \param N Number of the reduction item.
+  /// \param Size Size of the type in chars.
+  void emitAggregateType(CodeGenFunction &CGF, unsigned N, llvm::Value *Size);
+  /// Performs initialization of the private copy for the reduction item.
+  /// \param N Number of the reduction item.
+  /// \param PrivateAddr Address of the corresponding private item.
+  /// \param DefaultInit Default initialization sequence that should be
+  /// performed if no reduction specific initialization is found.
+  /// \param SharedLVal Addreiss of the original shared variable.
+  /// \return true, if the initialization sequence was emitted, false otherwise.
+  void
+  emitInitialization(CodeGenFunction &CGF, unsigned N, Address PrivateAddr,
+                     LValue SharedLVal,
+                     llvm::function_ref<bool(CodeGenFunction &)> DefaultInit);
+  /// ReturCns true if the private copy requires cleanups.
+  bool needCleanups(unsigned N);
+  /// Emits cleanup code nfor the reduction item.
+  /// \param N Number of the reduction item.
+  /// \param PrivateAddr Address of the corresponding private item.
+  void emitCleanups(CodeGenFunction &CGF, unsigned N, Address PrivateAddr);
+  /// Adjusts \p PrivatedAddr for using ninstead of the original variable
+  /// address in normal operations.
+  /// \param N Number of the reduction item.
+  /// \param PrivateAddr Address of the corresponding private item.
+  Address adjustPrivateAddress(CodeGenFunction &CGF, unsigned N,
+                               Address PrivateAddr);
+  /// Returns LValue for the reduction item.
+  LValue getSharedLValue(unsigned N) const { return SharedAddresses[N].first; }
+  /// Returns the size of the reduction item in chars, or nullptr, if the size
+  /// is a constant.
+  llvm::Value *getSizeInChars(unsigned N) const { return Sizes[N]; }
+  /// Returns the base declaration of the reduction item.
+  const VarDecl *getBaseDecl(unsigned N) const { return BaseDecls[N]; }
+};
+
 class CGOpenMPRuntime {
 protected:
   CodeGenModule &CGM;
