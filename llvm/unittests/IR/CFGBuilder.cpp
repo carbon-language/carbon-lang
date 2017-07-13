@@ -16,8 +16,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "gtest/gtest.h"
 
-#include <tuple>
-
 #define DEBUG_TYPE "cfg-builder"
 
 using namespace llvm;
@@ -29,10 +27,6 @@ CFGHolder::CFGHolder(StringRef ModuleName, StringRef FunctionName)
   F = cast<Function>(M->getOrInsertFunction(FunctionName, FTy));
 }
 CFGHolder::~CFGHolder() = default;
-
-bool llvm::operator<(const CFGBuilder::Arc &LHS, const CFGBuilder::Arc &RHS) {
-  return std::tie(LHS.From, LHS.To) < std::tie(RHS.From, RHS.To);
-}
 
 CFGBuilder::CFGBuilder(Function *F, const std::vector<Arc> &InitialArcs,
                        std::vector<Update> Updates)

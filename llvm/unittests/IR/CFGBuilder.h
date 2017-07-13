@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <set>
+#include <tuple>
 #include <vector>
 
 namespace llvm {
@@ -56,7 +57,10 @@ public:
     StringRef From;
     StringRef To;
 
-    friend bool operator<(const Arc &LHS, const Arc &RHS);
+    friend bool operator<(const Arc &LHS, const Arc &RHS) {
+      return std::tie(LHS.From, LHS.To) <
+             std::tie(RHS.From, RHS.To);
+    }
   };
 
   enum class ActionKind { Insert, Delete };
