@@ -306,12 +306,13 @@ int main() {
 // CHECK: [[RED_LIST:%.+]] = alloca [4 x i8*],
 
 // CHECK: store i{{[0-9]+}}* [[GTID_ADDR]], i{{[0-9]+}}** [[GTID_ADDR_ADDR:%.+]],
+// CHECK: store i{{[0-9]+}}* %{{.+}}, i{{[0-9]+}}**
+// CHECK: store i{{[0-9]+}}* %{{.+}}, i{{[0-9]+}}** [[ARR_ADDR:%.+]],
+// CHECK: [[ARR:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[ARR_ADDR]],
 
-// CHECK: [[IDX1:%.+]] = mul nsw i64 1, %{{.+}}
-// CHECK: [[LB1:%.+]] = getelementptr inbounds i32, i32* %{{.+}}, i64 [[IDX1]]
+// CHECK: [[LB1:%.+]] = getelementptr inbounds i32, i32* [[ARR]], i64
 // CHECK: [[LB1_0:%.+]] = getelementptr inbounds i32, i32* [[LB1]], i64 0
-// CHECK: [[IDX1:%.+]] = mul nsw i64 1, %{{.+}}
-// CHECK: [[UB1:%.+]] = getelementptr inbounds i32, i32* %{{.+}}, i64 [[IDX1]]
+// CHECK: [[UB1:%.+]] = getelementptr inbounds i32, i32* [[ARR]], i64
 // CHECK: [[UB1_UP:%.+]] = getelementptr inbounds i32, i32* [[UB1]], i64 %
 // CHECK: [[UB_CAST:%.+]] = ptrtoint i32* [[UB1_UP]] to i64
 // CHECK: [[LB_CAST:%.+]] = ptrtoint i32* [[LB1_0]] to i64
