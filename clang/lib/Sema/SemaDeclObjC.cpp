@@ -253,7 +253,17 @@ static void DiagnoseObjCImplementedDeprecations(Sema &S, const NamedDecl *ND,
   if (!ND)
     return;
   bool IsCategory = false;
-  if (!ND->isDeprecated()) {
+  AvailabilityResult Availability = ND->getAvailability();
+  if (Availability != AR_Deprecated) {
+    if (const auto *MD = dyn_cast<ObjCMethodDecl>(ND)) {
+      if (Availability != AR_Unavailable)
+        return;
+      // Warn about implementing unavailable methods.
+      S.Diag(ImplLoc, diag::warn_unavailable_def);
+      S.Diag(ND->getLocation(), diag::note_method_declared_at)
+          << ND->getDeclName();
+      return;
+    }
     if (const auto *CD = dyn_cast<ObjCCategoryDecl>(ND)) {
       if (!CD->getClassInterface()->isDeprecated())
         return;

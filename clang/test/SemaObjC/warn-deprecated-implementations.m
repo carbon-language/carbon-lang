@@ -1,9 +1,11 @@
-// RUN: %clang_cc1 -fsyntax-only -Wdeprecated-implementations -verify -Wno-objc-root-class %s
+// RUN: %clang_cc1 -triple=x86_64-apple-macos10.10 -fsyntax-only -Wdeprecated-implementations -verify -Wno-objc-root-class %s
 // rdar://8973810
 // rdar://12717705
 
 @protocol P
 - (void) D __attribute__((deprecated)); // expected-note {{method 'D' declared here}}
+
+- (void) unavailable __attribute__((__unavailable__)); // expected-note {{method 'unavailable' declared here}}
 @end
 
 @interface A <P>
@@ -18,6 +20,8 @@
 + (void)F { }	// No warning, implementing its own deprecated method
 - (void) D {} //  expected-warning {{implementing deprecated method}}
 - (void) E {} // No warning, implementing deprecated method in its class extension.
+
+- (void) unavailable { } // expected-warning {{implementing unavailable metho}}
 @end
 
 @interface A(CAT)
@@ -43,6 +47,8 @@ __attribute__((deprecated)) // expected-note {{'CL' has been explicitly marked d
 
 @interface BASE
 - (void) B __attribute__((deprecated)); // expected-note {{method 'B' declared here}}
+
++ (void) unavailable __attribute__((availability(macos, unavailable))); // expected-note {{method 'unavailable' declared here}}
 @end
 
 @interface SUB : BASE
@@ -50,6 +56,7 @@ __attribute__((deprecated)) // expected-note {{'CL' has been explicitly marked d
 
 @implementation SUB
 - (void) B {} // expected-warning {{implementing deprecated method}}
++ (void) unavailable { } // expected-warning {{implementing unavailable method}}
 @end
 
 @interface Test
