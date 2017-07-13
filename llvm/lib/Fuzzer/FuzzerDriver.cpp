@@ -441,7 +441,6 @@ int MinimizeCrashInputInternalStep(Fuzzer *F, InputCorpus *Corpus) {
     Printf("INFO: The input is small enough, exiting\n");
     exit(0);
   }
-  Corpus->AddToCorpus(U, 0);
   F->SetMaxInputLen(U.size());
   F->SetMaxMutationLen(U.size() - 1);
   F->MinimizeCrashLoop(U);

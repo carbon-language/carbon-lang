@@ -397,7 +397,8 @@ void Fuzzer::PrintPulseAndReportSlowInput(const uint8_t *Data, size_t Size) {
   }
 }
 
-bool Fuzzer::RunOne(const uint8_t *Data, size_t Size, bool MayDeleteFile) {
+bool Fuzzer::RunOne(const uint8_t *Data, size_t Size, bool MayDeleteFile,
+                    InputInfo *II) {
   if (!Size) return false;
 
   ExecuteCallback(Data, Size);
@@ -412,10 +413,16 @@ bool Fuzzer::RunOne(const uint8_t *Data, size_t Size, bool MayDeleteFile) {
   PrintPulseAndReportSlowInput(Data, Size);
   size_t NumNewFeatures = Corpus.NumFeatureUpdates() - NumUpdatesBefore;
   if (NumNewFeatures) {
+    Corpus.AddToCorpus({Data, Data + Size}, NumNewFeatures, MayDeleteFile,
+                       FeatureSetTmp);
     CheckExitOnSrcPosOrItem();
-    Corpus.AddToCorpus({Data, Data + Size}, NumNewFeatures, MayDeleteFile);
+    return true;
   }
-  return NumNewFeatures > 0;
+  if (II && Corpus.TryToReplace(II, Data, Size, FeatureSetTmp)) {
+    CheckExitOnSrcPosOrItem();
+    return true;
+  }
+  return false;
 }
 
 size_t Fuzzer::GetCurrentUnitInFuzzingThead(const uint8_t **Data) const {
@@ -596,7 +603,7 @@ void Fuzzer::MutateAndTestOne() {
     if (i == 0)
       StartTraceRecording();
     II.NumExecutedMutations++;
-    if (RunOne(CurrentUnitData, Size, /*MayDeleteFile=*/true))
+    if (RunOne(CurrentUnitData, Size, /*MayDeleteFile=*/true, &II))
       ReportNewCoverage(&II, {CurrentUnitData, CurrentUnitData + Size});
 
     StopTraceRecording();
