@@ -1,0 +1,4 @@
+# RUN: sanstats %p/Inputs/debuginfo.stats | FileCheck %s
+
+# CHECK: stats.cpp:23 vcall.cfi cfi-vcall 37
+# CHECK: stats.cpp:28 nvcall.cfi cfi-nvcall 51
