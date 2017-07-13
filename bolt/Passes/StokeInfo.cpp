@@ -1,16 +1,18 @@
 #include "StokeInfo.h"
 #include "llvm/Support/Options.h"
 
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "stoke"
+
 using namespace llvm;
 using namespace bolt;
 
 namespace opts {
-
-cl::OptionCategory StokeOptCategory("STOKE generic options");
+cl::OptionCategory StokeOptCategory("STOKE pass options");
 
 static cl::opt<std::string>
-StokeOutputDataFilename("stoke-data",
-  cl::desc("<info data for stoke>"),
+StokeOutputDataFilename("stoke-out",
+  cl::desc("output data for stoke's use"),
   cl::Optional,
   cl::cat(StokeOptCategory));
 }
@@ -18,25 +20,18 @@ StokeOutputDataFilename("stoke-data",
 namespace llvm {
 namespace bolt {
 
-void dumpRegNameFromBitVec(const BitVector &RegV, const BinaryContext &BC) {
-  dbgs() << "\t ";
-  int RegIdx = RegV.find_first();
-  while (RegIdx != -1) {
-    dbgs() << RegIdx << ":" << BC.MRI->getName(RegIdx) << " ";
-    RegIdx = RegV.find_next(RegIdx);
-  }
-  dbgs() << "\n";
-}
 
-void getRegNameFromBitVec(const BitVector &RegV, std::set<std::string> &NameVec,
-    const BinaryContext &BC) {
+void getRegNameFromBitVec(const BinaryContext &BC, const BitVector &RegV,
+    std::set<std::string> *NameVec = nullptr) {
   int RegIdx = RegV.find_first();
   while (RegIdx != -1) {
-    dbgs() << RegIdx << BC.MRI->getName(RegIdx) << "<>";
-    NameVec.insert(std::string(BC.MRI->getName(RegIdx)));
+    DEBUG(dbgs() << BC.MRI->getName(RegIdx) << " ");
+    if (NameVec) {
+      NameVec->insert(std::string(BC.MRI->getName(RegIdx)));
+    }
     RegIdx = RegV.find_next(RegIdx);
   }
-  dbgs() << "\n";
+  DEBUG(dbgs() << "\n");
 }
 
 void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
@@ -54,12 +49,8 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
       }
       // skip function with exception handling yet
       if (BC.MIA->isEHLabel(It) || BC.MIA->isInvoke(It) || BC.MIA->hasEHInfo(It)) {
-        outs() << "\t exception\n";
         FuncInfo.Omitted = true;
         return;
-      }
-      if (BC.MIA->hasRIPOperand(It)) {
-        outs() << "\t rip operand\n";
       }
       // check if this function contains call instruction
       if (BC.MIA->isCall(It)) {
@@ -69,18 +60,20 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
         if (TargetSymbol == nullptr) {
           FuncInfo.Omitted = true;
           return;
-        } else {
-          outs() << "\t calling " << TargetSymbol->getName() << "\n";
         }
       }
       // check if this function modify stack or heap
       // TODO: more accurate analysis
       auto IsPush = BC.MIA->isPush(It);
+      auto IsRipAddr = BC.MIA->hasRIPOperand(It);
       if (IsPush) {
         FuncInfo.StackOut = true;
       }
-      if (BC.MIA->isStore(It) && !IsPush && !BC.MIA->hasRIPOperand(It)) {
+      if (BC.MIA->isStore(It) && !IsPush && !IsRipAddr) {
         FuncInfo.HeapOut = true;
+      }
+      if (IsRipAddr) {
+        FuncInfo.HasRipAddr = true;
       }
 
     } // end of for (auto &It : ...)
@@ -102,41 +95,42 @@ bool StokeInfo::analyze(const BinaryContext &BC, BinaryFunction &BF,
   FuncInfo.Offset = BF.getFileOffset();
   FuncInfo.Size = BF.getMaxSize();
   FuncInfo.NumInstrs = BF.getNumNonPseudos();
-  FuncInfo.IsLoopFree = BF.isLoopFree();
-  FuncInfo.HotSize = BF.estimateHotSize();
-  FuncInfo.TotalSize = BF.estimateSize();
-
-  if (!FuncInfo.IsLoopFree) {
-    auto &BLI = BF.getLoopInfo();
-    FuncInfo.NumLoops = BLI.OuterLoops;
-    FuncInfo.MaxLoopDepth = BLI.MaximumDepth;
-  }
   // early stop for large functions
   if (FuncInfo.NumInstrs > 500) {
     return false;
   }
 
-  BinaryBasicBlock &EntryBB = BF.front();
-  assert(EntryBB.isEntryPoint() && "Weird, this block should be the entry block!");
+  FuncInfo.IsLoopFree = BF.isLoopFree();
+  if (!FuncInfo.IsLoopFree) {
+    auto &BLI = BF.getLoopInfo();
+    FuncInfo.NumLoops = BLI.OuterLoops;
+    FuncInfo.MaxLoopDepth = BLI.MaximumDepth;
+  }
 
-  dbgs() << "\t EntryBB offset: " << EntryBB.getInputOffset() << "\n";
+  FuncInfo.HotSize = BF.estimateHotSize();
+  FuncInfo.TotalSize = BF.estimateSize();
+  FuncInfo.Score = BF.getFunctionScore();
+
+  checkInstr(BC, BF, FuncInfo);
+
+  // register analysis
+  BinaryBasicBlock &EntryBB = BF.front();
+  assert(EntryBB.isEntryPoint() && "Weird, this should be the entry block!");
+
   auto *FirstNonPseudo = EntryBB.getFirstNonPseudoInstr();
   if (!FirstNonPseudo) {
     return false;
   }
-  dbgs() << "\t " << BC.InstPrinter->getOpcodeName(FirstNonPseudo->getOpcode()) << "\n";
 
-  dbgs() << "\t [DefIn at entry point]\n\t ";
+  DEBUG(dbgs() << "\t [DefIn]\n\t ");
   auto LiveInBV = *(DInfo.getLivenessAnalysis().getStateAt(FirstNonPseudo));
   LiveInBV &= DefaultDefInMask;
-  getRegNameFromBitVec(LiveInBV, FuncInfo.DefIn, BC);
+  getRegNameFromBitVec(BC, LiveInBV, &FuncInfo.DefIn);
 
-  outs() << "\t [LiveOut at return point]\n\t ";
+  DEBUG(dbgs() << "\t [LiveOut]\n\t ");
   auto LiveOutBV = RA.getFunctionClobberList(&BF);
   LiveOutBV &= DefaultLiveOutMask;
-  getRegNameFromBitVec(LiveOutBV, FuncInfo.LiveOut, BC);
-
-  checkInstr(BC, BF, FuncInfo);
+  getRegNameFromBitVec(BC, LiveOutBV, &FuncInfo.LiveOut);
 
   outs() << " STOKE-INFO: end function \n";
   return true;
@@ -152,14 +146,14 @@ void StokeInfo::runOnFunctions(
   if (!opts::StokeOutputDataFilename.empty()) {
     Outfile.open(opts::StokeOutputDataFilename);
   } else {
-    outs() << "STOKE-INFO: output file is required\n";
+    errs() << "STOKE-INFO: output file is required\n";
     return;
   }
 
   // check some context meta data
-  outs() << "\tTarget: " << BC.TheTarget->getName() << "\n";
-  outs() << "\tTripleName " << BC.TripleName << "\n";
-  outs() << "\tgetNumRegs " << BC.MRI->getNumRegs() << "\n";
+  DEBUG(dbgs() << "\tTarget: " << BC.TheTarget->getName() << "\n");
+  DEBUG(dbgs() << "\tTripleName " << BC.TripleName << "\n");
+  DEBUG(dbgs() << "\tgetNumRegs " << BC.MRI->getNumRegs() << "\n");
 
   auto CG = buildCallGraph(BC, BFs);
   RegAnalysis RA(BC, BFs, CG);
@@ -173,8 +167,8 @@ void StokeInfo::runOnFunctions(
   BC.MIA->getDefaultDefIn(DefaultDefInMask, *BC.MRI);
   BC.MIA->getDefaultLiveOut(DefaultLiveOutMask, *BC.MRI);
 
-  dumpRegNameFromBitVec(DefaultDefInMask, BC);
-  dumpRegNameFromBitVec(DefaultLiveOutMask, BC);
+  getRegNameFromBitVec(BC, DefaultDefInMask);
+  getRegNameFromBitVec(BC, DefaultLiveOutMask);
 
   StokeFuncInfo FuncInfo;
   // analyze all functions

@@ -44,11 +44,13 @@ struct StokeFuncInfo {
   unsigned MaxLoopDepth;
   uint64_t HotSize;
   uint64_t TotalSize;
+  uint64_t Score;
   bool HasCall;
   std::set<std::string> DefIn;
   std::set<std::string> LiveOut;
   bool HeapOut;
   bool StackOut;
+  bool HasRipAddr;
   bool Omitted;
 
   StokeFuncInfo() {
@@ -60,7 +62,14 @@ struct StokeFuncInfo {
     Offset = Size = NumInstrs = 0;
     NumLoops = MaxLoopDepth = 0;
     HotSize = TotalSize = 0;
-    IsLoopFree = HasCall = HeapOut = StackOut = Omitted = false;
+    Score = 0;
+    IsLoopFree
+      = HasCall
+      = HeapOut
+      = StackOut
+      = HasRipAddr
+      = Omitted
+      = false;
     DefIn.clear();
     LiveOut.clear();
   }
@@ -71,8 +80,11 @@ struct StokeFuncInfo {
         << "FuncName,Offset,Size,NumInstrs,"
         << "IsLoopFree,NumLoops,MaxLoopDepth,"
         << "HotSize,TotalSize,"
+        << "Score,"
         << "HasCall,"
-        << "DefIn,LiveOut,HeapOut,StackOut,Omitted\n";
+        << "DefIn,LiveOut,HeapOut,StackOut,"
+        << "HasRipAddr,"
+        << "Omitted\n";
     }
   }
 
@@ -82,15 +94,18 @@ struct StokeFuncInfo {
         << FuncName << "," << Offset << "," << Size << "," << NumInstrs << ","
         << IsLoopFree << "," << NumLoops << "," << MaxLoopDepth << ","
         << HotSize << "," << TotalSize << ","
-        << HasCall << ",{ ";
+        << Score << ","
+        << HasCall << ",\"{ ";
       for (auto s : DefIn) {
-        Outfile << s << " ";
+        Outfile << "%" << s << " ";
       }
-      Outfile << "},{ ";
+      Outfile << "}\",\"{ ";
       for (auto s : LiveOut) {
         Outfile << s << " ";
       }
-      Outfile << "}," << HeapOut << "," << StackOut << "," << Omitted << "\n";
+      Outfile << "}\"," << HeapOut << "," << StackOut << ","
+        << HasRipAddr << ","
+        << Omitted << "\n";
     }
   }
 };
