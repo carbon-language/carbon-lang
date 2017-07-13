@@ -16,7 +16,7 @@
 
 @implementation A
 + (void)F { }	// No warning, implementing its own deprecated method
-- (void) D {} //  expected-warning {{Implementing deprecated method}}
+- (void) D {} //  expected-warning {{implementing deprecated method}}
 - (void) E {} // No warning, implementing deprecated method in its class extension.
 @end
 
@@ -32,10 +32,10 @@ __attribute__((deprecated)) // expected-note {{'CL' has been explicitly marked d
 @interface CL // expected-note 2 {{class declared here}} 
 @end
 
-@implementation CL // expected-warning {{Implementing deprecated class}}
+@implementation CL // expected-warning {{implementing deprecated class}}
 @end
 
-@implementation CL (SomeCategory) // expected-warning {{Implementing deprecated category}}
+@implementation CL (SomeCategory) // expected-warning {{implementing deprecated category}}
 @end
 
 @interface CL_SUB : CL // expected-warning {{'CL' is deprecated}}
@@ -49,7 +49,7 @@ __attribute__((deprecated)) // expected-note {{'CL' has been explicitly marked d
 @end
 
 @implementation SUB
-- (void) B {} // expected-warning {{Implementing deprecated method}}
+- (void) B {} // expected-warning {{implementing deprecated method}}
 @end
 
 @interface Test
@@ -69,5 +69,5 @@ __attribute__((deprecated))
 @interface Test(DeprecatedCategory) // expected-note {{category declared here}}
 @end
 
-@implementation Test(DeprecatedCategory) // expected-warning {{Implementing deprecated category}}
+@implementation Test(DeprecatedCategory) // expected-warning {{implementing deprecated category}}
 @end
