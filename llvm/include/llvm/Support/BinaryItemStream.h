@@ -84,7 +84,7 @@ private:
     }
   }
 
-  Expected<uint32_t> translateOffsetIndex(uint32_t Offset) const {
+  Expected<uint32_t> translateOffsetIndex(uint32_t Offset) {
     // Make sure the offset is somewhere in our items array.
     if (Offset >= getLength())
       return make_error<BinaryStreamError>(stream_error_code::stream_too_short);
