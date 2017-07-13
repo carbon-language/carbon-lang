@@ -722,7 +722,6 @@ int main() {
 // CHECK: [[VVAR2_ORIG:%.+]] = load [2 x [[S_FLOAT_TY]]]*, [2 x [[S_FLOAT_TY]]]** [[VVAR2_ORIG_ADDR]],
 
 // CHECK: [[LOW:%.+]] = getelementptr inbounds [2 x [[S_FLOAT_TY]]], [2 x [[S_FLOAT_TY]]]* [[VVAR2_ORIG]], i64 0, i64 0
-// CHECK: getelementptr inbounds [2 x [[S_FLOAT_TY]]], [2 x [[S_FLOAT_TY]]]* [[VVAR2_ORIG]], i64 0, i64 4
 // CHECK: [[LAST:%.+]] = ptrtoint [[S_FLOAT_TY]]* %{{.+}} to i64
 // CHECK: [[FIRST:%.+]] = ptrtoint [[S_FLOAT_TY]]* [[LOW]] to i64
 // CHECK: [[BYTE_DIF:%.+]] = sub i64 [[LAST]], [[FIRST]]
