@@ -501,12 +501,8 @@ int main() {
 // CHECK: store i{{[0-9]+}}* %{{.+}}, i{{[0-9]+}}** [[ARR_ADDR:%.+]],
 // CHECK: [[ARR:%.+]] = load i{{[0-9]+}}*, i{{[0-9]+}}** [[ARR_ADDR]],
 
-// CHECK: [[LB1:%.+]] = getelementptr inbounds i32, i32* [[ARR]], i64
-// CHECK: [[LB1_0:%.+]] = getelementptr inbounds i32, i32* [[LB1]], i64 0
-// CHECK: [[UB1:%.+]] = getelementptr inbounds i32, i32* [[ARR]], i64
-// CHECK: [[UB1_UP:%.+]] = getelementptr inbounds i32, i32* [[UB1]], i64 %
-// CHECK: [[UB_CAST:%.+]] = ptrtoint i32* [[UB1_UP]] to i64
-// CHECK: [[LB_CAST:%.+]] = ptrtoint i32* [[LB1_0]] to i64
+// CHECK: [[UB_CAST:%.+]] = ptrtoint i32* [[UB1_UP:%.+]] to i64
+// CHECK: [[LB_CAST:%.+]] = ptrtoint i32* [[LB1_0:%.+]] to i64
 // CHECK: [[DIFF:%.+]] = sub i64 [[UB_CAST]], [[LB_CAST]]
 // CHECK: [[SIZE_1:%.+]] = sdiv exact i64 [[DIFF]], ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i64)
 // CHECK: [[ARR_SIZE:%.+]] = add nuw i64 [[SIZE_1]], 1
