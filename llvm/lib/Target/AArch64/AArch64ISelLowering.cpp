@@ -10567,9 +10567,6 @@ AArch64TargetLowering::shouldExpandAtomicRMWInIR(AtomicRMWInst *AI) const {
   if (Size > 128) return AtomicExpansionKind::None;
   // Nand not supported in LSE.
   if (AI->getOperation() == AtomicRMWInst::Nand) return AtomicExpansionKind::LLSC;
-  // Currently leaving And and Sub to LLSC
-  if ((AI->getOperation() == AtomicRMWInst::And) || (AI->getOperation() == AtomicRMWInst::Sub))
-    return AtomicExpansionKind::LLSC;
   // Leave 128 bits to LLSC.
   return (Subtarget->hasLSE() && Size < 128) ? AtomicExpansionKind::None : AtomicExpansionKind::LLSC;
 }
