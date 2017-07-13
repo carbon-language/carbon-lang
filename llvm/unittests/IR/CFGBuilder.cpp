@@ -144,9 +144,9 @@ Optional<CFGBuilder::Update> CFGBuilder::applyUpdate() {
     return None;
   Update NextUpdate = Updates[UpdateIdx++];
   if (NextUpdate.Action == ActionKind::Insert)
-    connect(NextUpdate.Arc);
+    connect(NextUpdate.Edge);
   else
-    disconnect(NextUpdate.Arc);
+    disconnect(NextUpdate.Edge);
 
   return NextUpdate;
 }
@@ -161,8 +161,8 @@ void CFGBuilder::dump(raw_ostream &OS) const {
   i = 0;
   for (const auto &U : Updates) {
     OS << (i + 1 == UpdateIdx ? "->" : "  ") << i
-       << ((U.Action == ActionKind::Insert) ? "\tIns " : "\tDel ") << U.Arc.From
-       << " -> " << U.Arc.To << "\n";
+       << ((U.Action == ActionKind::Insert) ? "\tIns " : "\tDel ")
+       << U.Edge.From << " -> " << U.Edge.To << "\n";
     ++i;
   }
 }
@@ -237,8 +237,8 @@ TEST(CFGBuilder, Deletions) {
 
   EXPECT_TRUE(UpdateC);
   EXPECT_EQ(UpdateC->Action, CFGBuilder::ActionKind::Delete);
-  EXPECT_EQ(UpdateC->Arc.From, "c");
-  EXPECT_EQ(UpdateC->Arc.To, "d");
+  EXPECT_EQ(UpdateC->Edge.From, "c");
+  EXPECT_EQ(UpdateC->Edge.To, "d");
   EXPECT_TRUE(isa<UnreachableInst>(B.getOrAddBlock("c")->getTerminator()));
 
   size_t i = 1;

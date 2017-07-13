@@ -62,7 +62,7 @@ public:
   enum class ActionKind { Insert, Delete };
   struct Update {
     ActionKind Action;
-    Arc Arc;
+    Arc Edge;
   };
 
   CFGBuilder(Function *F, const std::vector<Arc> &InitialArcs,
