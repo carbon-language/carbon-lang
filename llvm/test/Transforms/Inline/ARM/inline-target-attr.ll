@@ -49,7 +49,7 @@ define i32 @soft_float_fn() #4 {
 entry:
   %call = call i32 @foo()
   ret i32 %call
-; CHECK-LABEL: thumb_fn
+; CHECK-LABEL: soft_float_fn
 ; CHECK: call i32 @foo
 }
 
