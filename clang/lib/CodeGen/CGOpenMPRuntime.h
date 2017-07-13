@@ -159,7 +159,6 @@ public:
   /// \param DefaultInit Default initialization sequence that should be
   /// performed if no reduction specific initialization is found.
   /// \param SharedLVal Addreiss of the original shared variable.
-  /// \return true, if the initialization sequence was emitted, false otherwise.
   void
   emitInitialization(CodeGenFunction &CGF, unsigned N, Address PrivateAddr,
                      LValue SharedLVal,
