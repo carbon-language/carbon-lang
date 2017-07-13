@@ -108,7 +108,7 @@ struct OMPTaskDataTy final {
 /// Class intended to support codegen of all kind of the reduction clauses.
 class ReductionCodeGen {
 private:
-  /// Data requiored for codegen of reduction clauses.
+  /// Data required for codegen of reduction clauses.
   struct ReductionData {
     /// Reference to the original shared item.
     const Expr *Ref = nullptr;
@@ -158,18 +158,18 @@ public:
   /// \param PrivateAddr Address of the corresponding private item.
   /// \param DefaultInit Default initialization sequence that should be
   /// performed if no reduction specific initialization is found.
-  /// \param SharedLVal Addreiss of the original shared variable.
+  /// \param SharedLVal Address of the original shared variable.
   void
   emitInitialization(CodeGenFunction &CGF, unsigned N, Address PrivateAddr,
                      LValue SharedLVal,
                      llvm::function_ref<bool(CodeGenFunction &)> DefaultInit);
-  /// ReturCns true if the private copy requires cleanups.
+  /// Returns true if the private copy requires cleanups.
   bool needCleanups(unsigned N);
-  /// Emits cleanup code nfor the reduction item.
+  /// Emits cleanup code for the reduction item.
   /// \param N Number of the reduction item.
   /// \param PrivateAddr Address of the corresponding private item.
   void emitCleanups(CodeGenFunction &CGF, unsigned N, Address PrivateAddr);
-  /// Adjusts \p PrivatedAddr for using ninstead of the original variable
+  /// Adjusts \p PrivatedAddr for using instead of the original variable
   /// address in normal operations.
   /// \param N Number of the reduction item.
   /// \param PrivateAddr Address of the corresponding private item.
@@ -200,7 +200,7 @@ protected:
   /// \param OutlinedFnID Outlined function ID value to be defined by this call.
   /// \param IsOffloadEntry True if the outlined function is an offload entry.
   /// \param CodeGen Lambda codegen specific to an accelerator device.
-  /// An oulined function may not be an entry if, e.g. the if clause always
+  /// An outlined function may not be an entry if, e.g. the if clause always
   /// evaluates to false.
   virtual void emitTargetOutlinedFunctionHelper(const OMPExecutableDirective &D,
                                                 StringRef ParentName,
@@ -778,7 +778,7 @@ public:
   /// \param Loc Clang source location.
   /// \param ScheduleKind Schedule kind, specified by the 'schedule' clause.
   /// \param IVSize Size of the iteration variable in bits.
-  /// \param IVSigned Sign of the interation variable.
+  /// \param IVSigned Sign of the iteration variable.
   /// \param Ordered true if loop is ordered, false otherwise.
   /// \param DispatchValues struct containing llvm values for lower bound, upper
   /// bound, and chunk expression.
@@ -802,7 +802,7 @@ public:
   /// \param Loc Clang source location.
   /// \param ScheduleKind Schedule kind, specified by the 'schedule' clause.
   /// \param IVSize Size of the iteration variable in bits.
-  /// \param IVSigned Sign of the interation variable.
+  /// \param IVSigned Sign of the iteration variable.
   /// \param Ordered true if loop is ordered, false otherwise.
   /// \param IL Address of the output variable in which the flag of the
   /// last iteration is returned.
@@ -811,7 +811,7 @@ public:
   /// \param UB Address of the output variable in which the upper iteration
   /// number is returned.
   /// \param ST Address of the output variable in which the stride value is
-  /// returned nesessary to generated the static_chunked scheduled loop.
+  /// returned necessary to generated the static_chunked scheduled loop.
   /// \param Chunk Value of the chunk for the static_chunked scheduled loop.
   /// For the default (nullptr) value, the chunk 1 will be used.
   ///
@@ -826,7 +826,7 @@ public:
   /// \param Loc Clang source location.
   /// \param SchedKind Schedule kind, specified by the 'dist_schedule' clause.
   /// \param IVSize Size of the iteration variable in bits.
-  /// \param IVSigned Sign of the interation variable.
+  /// \param IVSigned Sign of the iteration variable.
   /// \param Ordered true if loop is ordered, false otherwise.
   /// \param IL Address of the output variable in which the flag of the
   /// last iteration is returned.
@@ -835,7 +835,7 @@ public:
   /// \param UB Address of the output variable in which the upper iteration
   /// number is returned.
   /// \param ST Address of the output variable in which the stride value is
-  /// returned nesessary to generated the static_chunked scheduled loop.
+  /// returned necessary to generated the static_chunked scheduled loop.
   /// \param Chunk Value of the chunk for the static_chunked scheduled loop.
   /// For the default (nullptr) value, the chunk 1 will be used.
   ///
@@ -852,7 +852,7 @@ public:
   /// \param CGF Reference to current CodeGenFunction.
   /// \param Loc Clang source location.
   /// \param IVSize Size of the iteration variable in bits.
-  /// \param IVSigned Sign of the interation variable.
+  /// \param IVSigned Sign of the iteration variable.
   ///
   virtual void emitForOrderedIterationEnd(CodeGenFunction &CGF,
                                           SourceLocation Loc, unsigned IVSize,
@@ -871,7 +871,7 @@ public:
   ///          kmp_int[32|64] *p_lower, kmp_int[32|64] *p_upper,
   ///          kmp_int[32|64] *p_stride);
   /// \param IVSize Size of the iteration variable in bits.
-  /// \param IVSigned Sign of the interation variable.
+  /// \param IVSigned Sign of the iteration variable.
   /// \param IL Address of the output variable in which the flag of the
   /// last iteration is returned.
   /// \param LB Address of the output variable in which the lower iteration
@@ -1108,7 +1108,7 @@ public:
   /// \param OutlinedFnID Outlined function ID value to be defined by this call.
   /// \param IsOffloadEntry True if the outlined function is an offload entry.
   /// \param CodeGen Code generation sequence for the \a D directive.
-  /// An oulined function may not be an entry if, e.g. the if clause always
+  /// An outlined function may not be an entry if, e.g. the if clause always
   /// evaluates to false.
   virtual void emitTargetOutlinedFunction(const OMPExecutableDirective &D,
                                           StringRef ParentName,
