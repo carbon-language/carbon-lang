@@ -27,7 +27,10 @@
 
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GenericDomTree.h"
+
+#define DEBUG_TYPE "dom-tree-builder"
 
 namespace llvm {
 namespace DomTreeBuilder {
@@ -62,11 +65,13 @@ struct SemiNCAInfo {
     SmallVector<NodePtr, 2> ReverseChildren;
   };
 
-  std::vector<NodePtr> NumToNode;
+  // Number to node mapping is 1-based. Initialize the mapping to start with
+  // a dummy element.
+  std::vector<NodePtr> NumToNode = {nullptr};
   DenseMap<NodePtr, InfoRec> NodeToInfo;
 
   void clear() {
-    NumToNode.clear();
+    NumToNode = {nullptr}; // Restore to initial state with a dummy start node.
     NodeToInfo.clear();
   }
 
@@ -177,44 +182,41 @@ struct SemiNCAInfo {
     return VInInfo.Label;
   }
 
-  template <typename NodeType>
-  void runSemiNCA(DomTreeT &DT, unsigned NumBlocks) {
-    // Step #1: Number blocks in depth-first order and initialize variables used
-    // in later stages of the algorithm.
-    const unsigned N = doFullDFSWalk(DT, AlwaysDescend);
-
-    // It might be that some blocks did not get a DFS number (e.g., blocks of
-    // infinite loops). In these cases an artificial exit node is required.
-    const bool MultipleRoots =
-        DT.Roots.size() > 1 || (DT.isPostDominator() && N != NumBlocks);
-
+  void runSemiNCA(DomTreeT &DT, const unsigned MinLevel = 0) {
+    const unsigned NextDFSNum(NumToNode.size());
     // Initialize IDoms to spanning tree parents.
-    for (unsigned i = 1; i <= N; ++i) {
+    for (unsigned i = 1; i < NextDFSNum; ++i) {
       const NodePtr V = NumToNode[i];
       auto &VInfo = NodeToInfo[V];
       VInfo.IDom = NumToNode[VInfo.Parent];
     }
 
-    // Step #2: Calculate the semidominators of all vertices.
-    for (unsigned i = N; i >= 2; --i) {
+    // Step #1: Calculate the semidominators of all vertices.
+    for (unsigned i = NextDFSNum - 1; i >= 2; --i) {
       NodePtr W = NumToNode[i];
       auto &WInfo = NodeToInfo[W];
 
       // Initialize the semi dominator to point to the parent node.
       WInfo.Semi = WInfo.Parent;
-      for (const auto &N : WInfo.ReverseChildren)
-        if (NodeToInfo.count(N)) {  // Only if this predecessor is reachable!
-          unsigned SemiU = NodeToInfo[eval(N, i + 1)].Semi;
-          if (SemiU < WInfo.Semi)
-            WInfo.Semi = SemiU;
-        }
+      for (const auto &N : WInfo.ReverseChildren) {
+        if (NodeToInfo.count(N) == 0)  // Skip unreachable predecessors.
+          continue;
+
+        const TreeNodePtr TN = DT.getNode(N);
+        // Skip predecessors whose level is above the subtree we are processing.
+        if (TN && TN->getLevel() < MinLevel)
+          continue;
+
+        unsigned SemiU = NodeToInfo[eval(N, i + 1)].Semi;
+        if (SemiU < WInfo.Semi) WInfo.Semi = SemiU;
+      }
     }
 
-    // Step #3: Explicitly define the immediate dominator of each vertex.
+    // Step #2: Explicitly define the immediate dominator of each vertex.
     //          IDom[i] = NCA(SDom[i], SpanningTreeParent(i)).
     // Note that the parents were stored in IDoms and later got invalidated
     // during path compression in Eval.
-    for (unsigned i = 2; i <= N; ++i) {
+    for (unsigned i = 2; i < NextDFSNum; ++i) {
       const NodePtr W = NumToNode[i];
       auto &WInfo = NodeToInfo[W];
       const unsigned SDomNum = NodeToInfo[NumToNode[WInfo.Semi]].DFSNum;
@@ -224,46 +226,11 @@ struct SemiNCAInfo {
 
       WInfo.IDom = WIDomCandidate;
     }
-
-    if (DT.Roots.empty()) return;
-
-    // Add a node for the root.  This node might be the actual root, if there is
-    // one exit block, or it may be the virtual exit (denoted by
-    // (BasicBlock *)0) which postdominates all real exits if there are multiple
-    // exit blocks, or an infinite loop.
-    NodePtr Root = !MultipleRoots ? DT.Roots[0] : nullptr;
-
-    DT.RootNode =
-        (DT.DomTreeNodes[Root] =
-             llvm::make_unique<DomTreeNodeBase<NodeT>>(Root, nullptr))
-            .get();
-
-    // Loop over all of the reachable blocks in the function...
-    for (unsigned i = 2; i <= N; ++i) {
-      NodePtr W = NumToNode[i];
-
-      // Don't replace this with 'count', the insertion side effect is important
-      if (DT.DomTreeNodes[W])
-        continue; // Haven't calculated this node yet?
-
-      NodePtr ImmDom = getIDom(W);
-
-      assert(ImmDom || DT.DomTreeNodes[nullptr]);
-
-      // Get or calculate the node for the immediate dominator
-      TreeNodePtr IDomNode = getNodeForBlock(ImmDom, DT);
-
-      // Add a new tree node for this BasicBlock, and link it as a child of
-      // IDomNode
-      DT.DomTreeNodes[W] = IDomNode->addChild(
-          llvm::make_unique<DomTreeNodeBase<NodeT>>(W, IDomNode));
-    }
   }
 
   template <typename DescendCondition>
   unsigned doFullDFSWalk(const DomTreeT &DT, DescendCondition DC) {
     unsigned Num = 0;
-    NumToNode.push_back(nullptr);
 
     if (DT.Roots.size() > 1) {
       auto &BBInfo = NodeToInfo[nullptr];
@@ -281,6 +248,56 @@ struct SemiNCAInfo {
     }
 
     return Num;
+  }
+
+  void calculateFromScratch(DomTreeT &DT, const unsigned NumBlocks) {
+    // Step #0: Number blocks in depth-first order and initialize variables used
+    // in later stages of the algorithm.
+    const unsigned LastDFSNum = doFullDFSWalk(DT, AlwaysDescend);
+
+    runSemiNCA(DT);
+
+    if (DT.Roots.empty()) return;
+
+    // Add a node for the root.  This node might be the actual root, if there is
+    // one exit block, or it may be the virtual exit (denoted by
+    // (BasicBlock *)0) which postdominates all real exits if there are multiple
+    // exit blocks, or an infinite loop.
+    // It might be that some blocks did not get a DFS number (e.g., blocks of
+    // infinite loops). In these cases an artificial exit node is required.
+    const bool MultipleRoots = DT.Roots.size() > 1 || (DT.isPostDominator() &&
+                                                       LastDFSNum != NumBlocks);
+    NodePtr Root = !MultipleRoots ? DT.Roots[0] : nullptr;
+
+    DT.RootNode = (DT.DomTreeNodes[Root] =
+                       llvm::make_unique<DomTreeNodeBase<NodeT>>(Root, nullptr))
+        .get();
+    attachNewSubtree(DT, DT.RootNode);
+  }
+
+  void attachNewSubtree(DomTreeT& DT, const TreeNodePtr AttachTo) {
+    // Attach the first unreachable block to AttachTo.
+    NodeToInfo[NumToNode[1]].IDom = AttachTo->getBlock();
+    // Loop over all of the discovered blocks in the function...
+    for (size_t i = 1, e = NumToNode.size(); i != e; ++i) {
+      NodePtr W = NumToNode[i];
+      DEBUG(dbgs() << "\tdiscovereed a new reachable node ");
+      DEBUG(PrintBlockOrNullptr(dbgs(), W));
+      DEBUG(dbgs() << "\n");
+
+      // Don't replace this with 'count', the insertion side effect is important
+      if (DT.DomTreeNodes[W]) continue;  // Haven't calculated this node yet?
+
+      NodePtr ImmDom = getIDom(W);
+
+      // Get or calculate the node for the immediate dominator
+      TreeNodePtr IDomNode = getNodeForBlock(ImmDom, DT);
+
+      // Add a new tree node for this BasicBlock, and link it as a child of
+      // IDomNode
+      DT.DomTreeNodes[W] = IDomNode->addChild(
+          llvm::make_unique<DomTreeNodeBase<NodeT>>(W, IDomNode));
+    }
   }
 
   static void PrintBlockOrNullptr(raw_ostream &O, NodePtr Obj) {
@@ -514,7 +531,7 @@ void Calculate(DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT,
   static_assert(std::is_pointer<NodePtr>::value,
                 "NodePtr should be a pointer type");
   SemiNCAInfo<typename std::remove_pointer<NodePtr>::type> SNCA;
-  SNCA.template runSemiNCA<NodeT>(DT, GraphTraits<FuncT *>::size(&F));
+  SNCA.calculateFromScratch(DT, GraphTraits<FuncT *>::size(&F));
 }
 
 template <class NodeT>
@@ -531,5 +548,7 @@ bool Verify(const DominatorTreeBaseByGraphTraits<GraphTraits<NodeT>> &DT) {
 
 }  // namespace DomTreeBuilder
 }  // namespace llvm
+
+#undef DEBUG_TYPE
 
 #endif
