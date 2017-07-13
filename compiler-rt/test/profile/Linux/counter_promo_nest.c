@@ -28,9 +28,6 @@ int main()
 // PROMO-NEXT: load{{.*}}@__profc_main{{.*}}
 // PROMO-NEXT: add
 // PROMO-NEXT: store{{.*}}@__profc_main{{.*}}
-// PROMO-NEXT: load{{.*}}@__profc_main{{.*}}
-// PROMO-NEXT: add
-// PROMO-NEXT: store{{.*}}@__profc_main{{.*}}
 {
   int i, j, k;
 
