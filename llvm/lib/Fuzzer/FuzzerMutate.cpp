@@ -251,7 +251,7 @@ size_t MutationDispatcher::Mutate_AddWordFromTORC(
     uint8_t *Data, size_t Size, size_t MaxSize) {
   Word W;
   DictionaryEntry DE;
-  switch (Rand(3)) {
+  switch (Rand(4)) {
   case 0: {
     auto X = TPC.TORC8.Get(Rand.Rand());
     DE = MakeDictionaryEntryFromCMP(X.A, X.B, Data, Size);
@@ -266,6 +266,10 @@ size_t MutationDispatcher::Mutate_AddWordFromTORC(
   case 2: {
     auto X = TPC.TORCW.Get(Rand.Rand());
     DE = MakeDictionaryEntryFromCMP(X.A, X.B, Data, Size);
+  } break;
+  case 3: if (Options.UseMemmem) {
+    auto X = TPC.MMT.Get(Rand.Rand());
+    DE = DictionaryEntry(X);
   } break;
   default:
     assert(0);

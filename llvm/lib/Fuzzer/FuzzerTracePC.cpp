@@ -37,6 +37,8 @@ namespace fuzzer {
 
 TracePC TPC;
 
+int ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr;
+
 uint8_t *TracePC::Counters() const {
   return __sancov_trace_pc_guard_8bit_counters;
 }
@@ -474,5 +476,26 @@ void __sanitizer_weak_hook_strcasecmp(void *called_pc, const char *s1,
                                       const char *s2, int result) {
   if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
   return __sanitizer_weak_hook_strcmp(called_pc, s1, s2, result);
+}
+
+ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
+void __sanitizer_weak_hook_strstr(void *called_pc, const char *s1,
+                                  const char *s2, char *result) {
+  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
+  fuzzer::TPC.MMT.Add(reinterpret_cast<const uint8_t *>(s2), strlen(s2));
+}
+
+ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
+void __sanitizer_weak_hook_strcasestr(void *called_pc, const char *s1,
+                                      const char *s2, char *result) {
+  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
+  fuzzer::TPC.MMT.Add(reinterpret_cast<const uint8_t *>(s2), strlen(s2));
+}
+
+ATTRIBUTE_INTERFACE ATTRIBUTE_NO_SANITIZE_MEMORY
+void __sanitizer_weak_hook_memmem(void *called_pc, const void *s1, size_t len1,
+                                  const void *s2, size_t len2, void *result) {
+  if (fuzzer::ScopedDoingMyOwnMemOrStr::DoingMyOwnMemOrStr) return;
+  fuzzer::TPC.MMT.Add(reinterpret_cast<const uint8_t *>(s2), len2);
 }
 }  // extern "C"
