@@ -538,7 +538,7 @@ TEST(DominatorTree, InsertDelete) {
   }
 }
 
-TEST(DominatorTree, InsertDeleteExhaustive) {
+TEST(DominatorTree, DISABLED_InsertDeleteExhaustive) {
   std::vector<CFGBuilder::Arc> Arcs = {
       {"1", "2"}, {"2", "3"}, {"3", "4"},  {"4", "5"},  {"5", "6"},  {"5", "7"},
       {"3", "8"}, {"8", "9"}, {"9", "10"}, {"8", "11"}, {"11", "12"}};
