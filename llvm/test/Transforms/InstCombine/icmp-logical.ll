@@ -127,6 +127,8 @@ define i1 @nomask_rhs(i32 %in) {
   ret i1 %val
 }
 
+; TODO: This test simplifies to a constant, so the functionality and test could be in InstSimplify.
+
 define i1 @fold_mask_cmps_to_false(i32 %x) {
 ; CHECK-LABEL: @fold_mask_cmps_to_false(
 ; CHECK-NEXT:    ret i1 false
@@ -138,6 +140,8 @@ define i1 @fold_mask_cmps_to_false(i32 %x) {
   ret i1 %4
 }
 
+; TODO: This test simplifies to a constant, so the functionality and test could be in InstSimplify.
+
 define i1 @fold_mask_cmps_to_true(i32 %x) {
 ; CHECK-LABEL: @fold_mask_cmps_to_true(
 ; CHECK-NEXT:    ret i1 true
@@ -147,5 +151,37 @@ define i1 @fold_mask_cmps_to_true(i32 %x) {
   %3 = icmp ne i32 %x, 2147483647
   %4 = or i1 %3, %2
   ret i1 %4
+}
+
+; PR32401 - https://bugs.llvm.org/show_bug.cgi?id=32401
+
+define i1 @cmpeq_bitwise(i8 %a, i8 %b, i8 %c, i8 %d) {
+; CHECK-LABEL: @cmpeq_bitwise(
+; CHECK-NEXT:    [[XOR1:%.*]] = xor i8 %a, %b
+; CHECK-NEXT:    [[XOR2:%.*]] = xor i8 %c, %d
+; CHECK-NEXT:    [[OR:%.*]] = or i8 [[XOR1]], [[XOR2]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[OR]], 0
+; CHECK-NEXT:    ret i1 [[CMP]]
+;
+  %xor1 = xor i8 %a, %b
+  %xor2 = xor i8 %c, %d
+  %or = or i8 %xor1, %xor2
+  %cmp = icmp eq i8 %or, 0
+  ret i1 %cmp
+}
+
+define <2 x i1> @cmpne_bitwise(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i64> %d) {
+; CHECK-LABEL: @cmpne_bitwise(
+; CHECK-NEXT:    [[XOR1:%.*]] = xor <2 x i64> %a, %b
+; CHECK-NEXT:    [[XOR2:%.*]] = xor <2 x i64> %c, %d
+; CHECK-NEXT:    [[OR:%.*]] = or <2 x i64> [[XOR1]], [[XOR2]]
+; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i64> [[OR]], zeroinitializer
+; CHECK-NEXT:    ret <2 x i1> [[CMP]]
+;
+  %xor1 = xor <2 x i64> %a, %b
+  %xor2 = xor <2 x i64> %c, %d
+  %or = or <2 x i64> %xor1, %xor2
+  %cmp = icmp ne <2 x i64> %or, zeroinitializer
+  ret <2 x i1> %cmp
 }
 
