@@ -241,7 +241,6 @@ void Fuzzer::CrashResistantMergeInternalStep(const std::string &CFPath) {
       return true;
     });
     // Show stats.
-    TotalNumberOfRuns++;
     if (!(TotalNumberOfRuns & (TotalNumberOfRuns - 1)))
       PrintStats("pulse ");
     // Write the post-run marker and the coverage.
