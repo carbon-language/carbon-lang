@@ -1027,7 +1027,7 @@ Starting with the macOS 10.12 SDK, the ``API_AVAILABLE`` macro from
   @end
 
 Also see the documentation for `@available
-<http://clang.llvm.org/docs/LanguageExtensions.html#objective-c-@available>`_
+<http://clang.llvm.org/docs/LanguageExtensions.html#objective-c-available>`_
   }];
 }
 
