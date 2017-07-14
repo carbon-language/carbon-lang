@@ -44,11 +44,18 @@ namespace llvm {
 template <typename NodeT, bool IsPostDom>
 class DominatorTreeBase;
 
+namespace DomTreeBuilder {
+template <class DomTreeT>
+struct SemiNCAInfo;
+}  // namespace DomTreeBuilder
+
 /// \brief Base class for the actual dominator tree node.
 template <class NodeT> class DomTreeNodeBase {
   friend struct PostDominatorTree;
   friend class DominatorTreeBase<NodeT, false>;
   friend class DominatorTreeBase<NodeT, true>;
+  friend struct DomTreeBuilder::SemiNCAInfo<DominatorTreeBase<NodeT, false>>;
+  friend struct DomTreeBuilder::SemiNCAInfo<DominatorTreeBase<NodeT, true>>;
 
   NodeT *TheBB;
   DomTreeNodeBase *IDom;
@@ -179,14 +186,14 @@ void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &O,
 }
 
 namespace DomTreeBuilder {
-template <typename DomTreeT>
-struct SemiNCAInfo;
-
-// The calculate routine is provided in a separate header but referenced here.
+// The routines below are provided in a separate header but referenced here.
 template <typename DomTreeT, typename FuncT>
 void Calculate(DomTreeT &DT, FuncT &F);
 
-// The verify function is provided in a separate header but referenced here.
+template <class DomTreeT>
+void InsertEdge(DomTreeT &DT, typename DomTreeT::NodePtr From,
+                typename DomTreeT::NodePtr To);
+
 template <typename DomTreeT>
 bool Verify(const DomTreeT &DT);
 }  // namespace DomTreeBuilder
@@ -440,6 +447,20 @@ class DominatorTreeBase {
   //===--------------------------------------------------------------------===//
   // API to update (Post)DominatorTree information based on modifications to
   // the CFG...
+
+  /// Inform the dominator tree about a CFG edge insertion and update the tree.
+  ///
+  /// This function has to be called just before or just after making the update
+  /// on the actual CFG. There cannot be any other updates that the dominator
+  /// tree doesn't know about.
+  /// Note that for postdominators it automatically takes care of inserting
+  /// a reverse edge internally (so there's no need to swap the parameters).
+  ///
+  void insertEdge(NodeT *From, NodeT *To) {
+    assert(From);
+    assert(To);
+    DomTreeBuilder::InsertEdge(*this, From, To);
+  }
 
   /// Add a new node to the dominator tree information.
   ///

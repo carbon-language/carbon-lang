@@ -15,6 +15,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
+#include "CFGBuilder.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -322,4 +323,128 @@ TEST(DominatorTree, NonUniqueEdges) {
         EXPECT_FALSE(DT->dominates(Edge_BB0_BB1_a, BB2));
         EXPECT_FALSE(DT->dominates(Edge_BB0_BB1_b, BB2));
       });
+}
+
+namespace {
+const auto Insert = CFGBuilder::ActionKind::Insert;
+
+bool CompUpdates(const CFGBuilder::Update &A, const CFGBuilder::Update &B) {
+  return std::tie(A.Action, A.Edge.From, A.Edge.To) <
+         std::tie(B.Action, B.Edge.From, B.Edge.To);
+};
+}  // namespace
+
+TEST(DominatorTree, InsertReachable) {
+  CFGHolder Holder;
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"}, {"3", "4"},  {"4", "5"},  {"5", "6"},  {"5", "7"},
+      {"3", "8"}, {"8", "9"}, {"9", "10"}, {"8", "11"}, {"11", "12"}};
+
+  std::vector<CFGBuilder::Update> Updates = {{Insert, {"12", "10"}},
+                                             {Insert, {"10", "9"}},
+                                             {Insert, {"7", "6"}},
+                                             {Insert, {"7", "5"}}};
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+  PostDomTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate;
+  while ((LastUpdate = B.applyUpdate())) {
+    EXPECT_EQ(LastUpdate->Action, Insert);
+    BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+    BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+    DT.insertEdge(From, To);
+    EXPECT_TRUE(DT.verify());
+    PDT.insertEdge(From, To);
+    EXPECT_TRUE(PDT.verify());
+  }
+}
+
+TEST(DominatorTree, InsertUnreachable) {
+  CFGHolder Holder;
+  std::vector<CFGBuilder::Arc> Arcs = {{"1", "2"},  {"2", "3"},  {"3", "4"},
+                                       {"5", "6"},  {"5", "7"},  {"3", "8"},
+                                       {"9", "10"}, {"11", "12"}};
+
+  std::vector<CFGBuilder::Update> Updates = {{Insert, {"4", "5"}},
+                                             {Insert, {"8", "9"}},
+                                             {Insert, {"10", "12"}},
+                                             {Insert, {"10", "11"}}};
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+  PostDomTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate;
+  while ((LastUpdate = B.applyUpdate())) {
+    EXPECT_EQ(LastUpdate->Action, Insert);
+    BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+    BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+    DT.insertEdge(From, To);
+    EXPECT_TRUE(DT.verify());
+    PDT.insertEdge(From, To);
+    EXPECT_TRUE(PDT.verify());
+  }
+}
+
+TEST(DominatorTree, InsertMixed) {
+  CFGHolder Holder;
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"},  {"3", "4"},  {"5", "6"},   {"5", "7"},
+      {"8", "9"}, {"9", "10"}, {"8", "11"}, {"11", "12"}, {"7", "3"}};
+
+  std::vector<CFGBuilder::Update> Updates = {
+      {Insert, {"4", "5"}},   {Insert, {"2", "5"}},   {Insert, {"10", "9"}},
+      {Insert, {"12", "10"}}, {Insert, {"12", "10"}}, {Insert, {"7", "8"}},
+      {Insert, {"7", "5"}}};
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+  PostDomTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate;
+  while ((LastUpdate = B.applyUpdate())) {
+    EXPECT_EQ(LastUpdate->Action, Insert);
+    BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+    BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+    DT.insertEdge(From, To);
+    EXPECT_TRUE(DT.verify());
+    PDT.insertEdge(From, To);
+    EXPECT_TRUE(PDT.verify());
+  }
+}
+
+TEST(DominatorTree, InsertPermut) {
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"},  {"3", "4"},  {"5", "6"},   {"5", "7"},
+      {"8", "9"}, {"9", "10"}, {"8", "11"}, {"11", "12"}, {"7", "3"}};
+
+  std::vector<CFGBuilder::Update> Updates = {{Insert, {"4", "5"}},
+                                             {Insert, {"2", "5"}},
+                                             {Insert, {"10", "9"}},
+                                             {Insert, {"12", "10"}}};
+
+  while (std::next_permutation(Updates.begin(), Updates.end(), CompUpdates)) {
+    CFGHolder Holder;
+    CFGBuilder B(Holder.F, Arcs, Updates);
+    DominatorTree DT(*Holder.F);
+    EXPECT_TRUE(DT.verify());
+    PostDomTree PDT(*Holder.F);
+    EXPECT_TRUE(PDT.verify());
+
+    Optional<CFGBuilder::Update> LastUpdate;
+    while ((LastUpdate = B.applyUpdate())) {
+      EXPECT_EQ(LastUpdate->Action, Insert);
+      BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+      BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+      DT.insertEdge(From, To);
+      EXPECT_TRUE(DT.verify());
+      PDT.insertEdge(From, To);
+      EXPECT_TRUE(PDT.verify());
+    }
+  }
 }

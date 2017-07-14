@@ -45,6 +45,12 @@ extern template void Calculate<BBDomTree, Function>(BBDomTree &DT, Function &F);
 extern template void Calculate<BBPostDomTree, Function>(BBPostDomTree &DT,
                                                         Function &F);
 
+extern template void InsertEdge<BBDomTree>(BBDomTree &DT, BasicBlock *From,
+                                           BasicBlock *To);
+extern template void InsertEdge<BBPostDomTree>(BBPostDomTree &DT,
+                                               BasicBlock *From,
+                                               BasicBlock *To);
+
 extern template bool Verify<BBDomTree>(const BBDomTree &DT);
 extern template bool Verify<BBPostDomTree>(const BBPostDomTree &DT);
 }  // namespace DomTreeBuilder
