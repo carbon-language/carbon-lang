@@ -157,10 +157,9 @@ define i1 @fold_mask_cmps_to_true(i32 %x) {
 
 define i1 @cmpeq_bitwise(i8 %a, i8 %b, i8 %c, i8 %d) {
 ; CHECK-LABEL: @cmpeq_bitwise(
-; CHECK-NEXT:    [[XOR1:%.*]] = xor i8 %a, %b
-; CHECK-NEXT:    [[XOR2:%.*]] = xor i8 %c, %d
-; CHECK-NEXT:    [[OR:%.*]] = or i8 [[XOR1]], [[XOR2]]
-; CHECK-NEXT:    [[CMP:%.*]] = icmp eq i8 [[OR]], 0
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 %a, %b
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp eq i8 %c, %d
+; CHECK-NEXT:    [[CMP:%.*]] = and i1 [[TMP1]], [[TMP2]]
 ; CHECK-NEXT:    ret i1 [[CMP]]
 ;
   %xor1 = xor i8 %a, %b
@@ -172,10 +171,9 @@ define i1 @cmpeq_bitwise(i8 %a, i8 %b, i8 %c, i8 %d) {
 
 define <2 x i1> @cmpne_bitwise(<2 x i64> %a, <2 x i64> %b, <2 x i64> %c, <2 x i64> %d) {
 ; CHECK-LABEL: @cmpne_bitwise(
-; CHECK-NEXT:    [[XOR1:%.*]] = xor <2 x i64> %a, %b
-; CHECK-NEXT:    [[XOR2:%.*]] = xor <2 x i64> %c, %d
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i64> [[XOR1]], [[XOR2]]
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ne <2 x i64> [[OR]], zeroinitializer
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp ne <2 x i64> %a, %b
+; CHECK-NEXT:    [[TMP2:%.*]] = icmp ne <2 x i64> %c, %d
+; CHECK-NEXT:    [[CMP:%.*]] = or <2 x i1> [[TMP1]], [[TMP2]]
 ; CHECK-NEXT:    ret <2 x i1> [[CMP]]
 ;
   %xor1 = xor <2 x i64> %a, %b
