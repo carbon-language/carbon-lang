@@ -327,6 +327,7 @@ TEST(DominatorTree, NonUniqueEdges) {
 
 namespace {
 const auto Insert = CFGBuilder::ActionKind::Insert;
+const auto Delete = CFGBuilder::ActionKind::Delete;
 
 bool CompUpdates(const CFGBuilder::Update &A, const CFGBuilder::Update &B) {
   return std::tie(A.Action, A.Edge.From, A.Edge.To) <
@@ -444,6 +445,132 @@ TEST(DominatorTree, InsertPermut) {
       DT.insertEdge(From, To);
       EXPECT_TRUE(DT.verify());
       PDT.insertEdge(From, To);
+      EXPECT_TRUE(PDT.verify());
+    }
+  }
+}
+
+TEST(DominatorTree, DeleteReachable) {
+  CFGHolder Holder;
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"}, {"2", "4"}, {"3", "4"}, {"4", "5"},  {"5", "6"},
+      {"5", "7"}, {"7", "8"}, {"3", "8"}, {"8", "9"}, {"9", "10"}, {"10", "2"}};
+
+  std::vector<CFGBuilder::Update> Updates = {
+      {Delete, {"2", "4"}}, {Delete, {"7", "8"}}, {Delete, {"10", "2"}}};
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+  PostDomTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate;
+  while ((LastUpdate = B.applyUpdate())) {
+    EXPECT_EQ(LastUpdate->Action, Delete);
+    BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+    BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+    DT.deleteEdge(From, To);
+    EXPECT_TRUE(DT.verify());
+    PDT.deleteEdge(From, To);
+    EXPECT_TRUE(PDT.verify());
+  }
+}
+
+TEST(DominatorTree, DeleteUnreachable) {
+  CFGHolder Holder;
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"}, {"3", "4"}, {"4", "5"},  {"5", "6"}, {"5", "7"},
+      {"7", "8"}, {"3", "8"}, {"8", "9"}, {"9", "10"}, {"10", "2"}};
+
+  std::vector<CFGBuilder::Update> Updates = {
+      {Delete, {"8", "9"}}, {Delete, {"7", "8"}}, {Delete, {"3", "4"}}};
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+  PostDomTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate;
+  while ((LastUpdate = B.applyUpdate())) {
+    EXPECT_EQ(LastUpdate->Action, Delete);
+    BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+    BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+    DT.deleteEdge(From, To);
+    EXPECT_TRUE(DT.verify());
+    PDT.deleteEdge(From, To);
+    EXPECT_TRUE(PDT.verify());
+  }
+}
+
+TEST(DominatorTree, InsertDelete) {
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"}, {"3", "4"},  {"4", "5"},  {"5", "6"},  {"5", "7"},
+      {"3", "8"}, {"8", "9"}, {"9", "10"}, {"8", "11"}, {"11", "12"}};
+
+  std::vector<CFGBuilder::Update> Updates = {
+      {Insert, {"2", "4"}},  {Insert, {"12", "10"}}, {Insert, {"10", "9"}},
+      {Insert, {"7", "6"}},  {Insert, {"7", "5"}},   {Delete, {"3", "8"}},
+      {Insert, {"10", "7"}}, {Insert, {"2", "8"}},   {Delete, {"3", "4"}},
+      {Delete, {"8", "9"}},  {Delete, {"11", "12"}}};
+
+  CFGHolder Holder;
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+  PostDomTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate;
+  while ((LastUpdate = B.applyUpdate())) {
+    BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+    BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+    if (LastUpdate->Action == Insert) {
+      DT.insertEdge(From, To);
+      PDT.insertEdge(From, To);
+    } else {
+      DT.deleteEdge(From, To);
+      PDT.deleteEdge(From, To);
+    }
+
+    EXPECT_TRUE(DT.verify());
+    EXPECT_TRUE(PDT.verify());
+  }
+}
+
+TEST(DominatorTree, InsertDeleteExhaustive) {
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"}, {"3", "4"},  {"4", "5"},  {"5", "6"},  {"5", "7"},
+      {"3", "8"}, {"8", "9"}, {"9", "10"}, {"8", "11"}, {"11", "12"}};
+
+  std::vector<CFGBuilder::Update> Updates = {
+      {Insert, {"2", "4"}},  {Insert, {"12", "10"}}, {Insert, {"10", "9"}},
+      {Insert, {"7", "6"}},  {Insert, {"7", "5"}},   {Delete, {"3", "8"}},
+      {Insert, {"10", "7"}}, {Insert, {"2", "8"}},   {Delete, {"3", "4"}},
+      {Delete, {"8", "9"}},  {Delete, {"11", "12"}}};
+
+  std::mt19937 Generator(0);
+  for (unsigned i = 0; i < 16; ++i) {
+    std::shuffle(Updates.begin(), Updates.end(), Generator);
+    CFGHolder Holder;
+    CFGBuilder B(Holder.F, Arcs, Updates);
+    DominatorTree DT(*Holder.F);
+    EXPECT_TRUE(DT.verify());
+    PostDomTree PDT(*Holder.F);
+    EXPECT_TRUE(PDT.verify());
+
+    Optional<CFGBuilder::Update> LastUpdate;
+    while ((LastUpdate = B.applyUpdate())) {
+      BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+      BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+      if (LastUpdate->Action == Insert) {
+        DT.insertEdge(From, To);
+        PDT.insertEdge(From, To);
+      } else {
+        DT.deleteEdge(From, To);
+        PDT.deleteEdge(From, To);
+      }
+
+      EXPECT_TRUE(DT.verify());
       EXPECT_TRUE(PDT.verify());
     }
   }
