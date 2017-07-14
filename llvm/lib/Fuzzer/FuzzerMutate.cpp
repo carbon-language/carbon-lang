@@ -43,8 +43,6 @@ MutationDispatcher::MutationDispatcher(Random &Rand,
           {&MutationDispatcher::Mutate_CrossOver, "CrossOver"},
           {&MutationDispatcher::Mutate_AddWordFromManualDictionary,
            "ManualDict"},
-          {&MutationDispatcher::Mutate_AddWordFromTemporaryAutoDictionary,
-           "TempAutoDict"},
           {&MutationDispatcher::Mutate_AddWordFromPersistentAutoDictionary,
            "PersAutoDict"},
       });
@@ -163,11 +161,6 @@ size_t MutationDispatcher::Mutate_AddWordFromManualDictionary(uint8_t *Data,
                                                               size_t Size,
                                                               size_t MaxSize) {
   return AddWordFromDictionary(ManualDictionary, Data, Size, MaxSize);
-}
-
-size_t MutationDispatcher::Mutate_AddWordFromTemporaryAutoDictionary(
-    uint8_t *Data, size_t Size, size_t MaxSize) {
-  return AddWordFromDictionary(TempAutoDictionary, Data, Size, MaxSize);
 }
 
 size_t MutationDispatcher::ApplyDictionaryEntry(uint8_t *Data, size_t Size,
@@ -535,16 +528,6 @@ size_t MutationDispatcher::MutateImpl(uint8_t *Data, size_t Size,
 void MutationDispatcher::AddWordToManualDictionary(const Word &W) {
   ManualDictionary.push_back(
       {W, std::numeric_limits<size_t>::max()});
-}
-
-void MutationDispatcher::AddWordToAutoDictionary(DictionaryEntry DE) {
-  static const size_t kMaxAutoDictSize = 1 << 14;
-  if (TempAutoDictionary.size() >= kMaxAutoDictSize) return;
-  TempAutoDictionary.push_back(DE);
-}
-
-void MutationDispatcher::ClearAutoDictionary() {
-  TempAutoDictionary.clear();
 }
 
 }  // namespace fuzzer
