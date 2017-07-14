@@ -101,6 +101,22 @@ struct SemiNCAInfo {
 
   static bool AlwaysDescend(NodePtr, NodePtr) { return true; }
 
+  struct BlockNamePrinter {
+    NodePtr N;
+
+    BlockNamePrinter(NodePtr Block) : N(Block) {}
+    BlockNamePrinter(TreeNodePtr TN) : N(TN ? TN->getBlock() : nullptr) {}
+
+    friend raw_ostream &operator<<(raw_ostream &O, const BlockNamePrinter &BP) {
+      if (!BP.N)
+        O << "nullptr";
+      else
+        BP.N->printAsOperand(O, false);
+
+      return O;
+    }
+  };
+
   // Custom DFS implementation which can skip nodes based on a provided
   // predicate. It also collects ReverseChildren so that we don't have to spend
   // time getting predecessors in SemiNCA.
@@ -281,9 +297,8 @@ struct SemiNCAInfo {
     // Loop over all of the discovered blocks in the function...
     for (size_t i = 1, e = NumToNode.size(); i != e; ++i) {
       NodePtr W = NumToNode[i];
-      DEBUG(dbgs() << "\tdiscovereed a new reachable node ");
-      DEBUG(PrintBlockOrNullptr(dbgs(), W));
-      DEBUG(dbgs() << "\n");
+      DEBUG(dbgs() << "\tdiscovered a new reachable node "
+                   << BlockNamePrinter(W) << "\n");
 
       // Don't replace this with 'count', the insertion side effect is important
       if (DT.DomTreeNodes[W]) continue;  // Haven't calculated this node yet?
@@ -300,13 +315,6 @@ struct SemiNCAInfo {
     }
   }
 
-  static void PrintBlockOrNullptr(raw_ostream &O, NodePtr Obj) {
-    if (!Obj)
-      O << "nullptr";
-    else
-      Obj->printAsOperand(O, false);
-  }
-
   // Checks if the tree contains all reachable nodes in the input graph.
   bool verifyReachability(const DomTreeT &DT) {
     clear();
@@ -320,9 +328,8 @@ struct SemiNCAInfo {
       if (DT.isVirtualRoot(TN)) continue;
 
       if (NodeToInfo.count(BB) == 0) {
-        errs() << "DomTree node ";
-        PrintBlockOrNullptr(errs(), BB);
-        errs() << " not found by DFS walk!\n";
+        errs() << "DomTree node " << BlockNamePrinter(BB)
+               << " not found by DFS walk!\n";
         errs().flush();
 
         return false;
@@ -331,9 +338,8 @@ struct SemiNCAInfo {
 
     for (const NodePtr N : NumToNode) {
       if (N && !DT.getNode(N)) {
-        errs() << "CFG node ";
-        PrintBlockOrNullptr(errs(), N);
-        errs() << " not found in the DomTree!\n";
+        errs() << "CFG node " << BlockNamePrinter(N)
+               << " not found in the DomTree!\n";
         errs().flush();
 
         return false;
@@ -353,20 +359,18 @@ struct SemiNCAInfo {
 
       const TreeNodePtr IDom = TN->getIDom();
       if (!IDom && TN->getLevel() != 0) {
-        errs() << "Node without an IDom ";
-        PrintBlockOrNullptr(errs(), BB);
-        errs() << " has a nonzero level " << TN->getLevel() << "!\n";
+        errs() << "Node without an IDom " << BlockNamePrinter(BB)
+               << " has a nonzero level " << TN->getLevel() << "!\n";
         errs().flush();
 
         return false;
       }
 
       if (IDom && TN->getLevel() != IDom->getLevel() + 1) {
-        errs() << "Node ";
-        PrintBlockOrNullptr(errs(), BB);
-        errs() << " has level " << TN->getLevel() << " while it's IDom ";
-        PrintBlockOrNullptr(errs(), IDom->getBlock());
-        errs() << " has level " << IDom->getLevel() << "!\n";
+        errs() << "Node " << BlockNamePrinter(BB) << " has level "
+               << TN->getLevel() << " while its IDom "
+               << BlockNamePrinter(IDom->getBlock()) << " has level "
+               << IDom->getLevel() << "!\n";
         errs().flush();
 
         return false;
@@ -396,15 +400,11 @@ struct SemiNCAInfo {
       const TreeNodePtr NCDTN = DT.getNode(NCD);
       const TreeNodePtr ToIDom = ToTN->getIDom();
       if (NCDTN != ToTN && NCDTN != ToIDom) {
-        errs() << "NearestCommonDominator verification failed:\n\tNCD(From:";
-        PrintBlockOrNullptr(errs(), From);
-        errs() << ", To:";
-        PrintBlockOrNullptr(errs(), To);
-        errs() << ") = ";
-        PrintBlockOrNullptr(errs(), NCD);
-        errs() << ",\t (should be To or IDom[To]: ";
-        PrintBlockOrNullptr(errs(), ToIDom ? ToIDom->getBlock() : nullptr);
-        errs() << ")\n";
+        errs() << "NearestCommonDominator verification failed:\n\tNCD(From:"
+               << BlockNamePrinter(From) << ", To:" << BlockNamePrinter(To)
+               << ") = " << BlockNamePrinter(NCD)
+               << ",\t (should be To or IDom[To]: " << BlockNamePrinter(ToIDom)
+               << ")\n";
         errs().flush();
 
         return false;
@@ -470,11 +470,9 @@ struct SemiNCAInfo {
 
       for (TreeNodePtr Child : TN->getChildren())
         if (NodeToInfo.count(Child->getBlock()) != 0) {
-          errs() << "Child ";
-          PrintBlockOrNullptr(errs(), Child->getBlock());
-          errs() << " reachable after its parent ";
-          PrintBlockOrNullptr(errs(), BB);
-          errs() << " is removed!\n";
+          errs() << "Child " << BlockNamePrinter(Child)
+                 << " reachable after its parent " << BlockNamePrinter(BB)
+                 << " is removed!\n";
           errs().flush();
 
           return false;
@@ -507,11 +505,9 @@ struct SemiNCAInfo {
           if (S == N) continue;
 
           if (NodeToInfo.count(S->getBlock()) == 0) {
-            errs() << "Node ";
-            PrintBlockOrNullptr(errs(), S->getBlock());
-            errs() << " not reachable when its sibling ";
-            PrintBlockOrNullptr(errs(), N->getBlock());
-            errs() << " is removed!\n";
+            errs() << "Node " << BlockNamePrinter(S)
+                   << " not reachable when its sibling " << BlockNamePrinter(N)
+                   << " is removed!\n";
             errs().flush();
 
             return false;
