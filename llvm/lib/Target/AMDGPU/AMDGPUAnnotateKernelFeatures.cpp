@@ -36,7 +36,6 @@ private:
   bool addFeatureAttributes(Function &F);
 
   void addAttrToCallers(Function &Intrin, StringRef AttrName);
-  bool addAttrsForIntrinsics(Module &M, ArrayRef<StringRef[2]>);
 
 public:
   static char ID;
@@ -268,21 +267,6 @@ void AMDGPUAnnotateKernelFeatures::addAttrToCallers(Function &Intrin,
     if (SeenFuncs.insert(CallingFunction).second)
       CallingFunction->addFnAttr(AttrName);
   }
-}
-
-bool AMDGPUAnnotateKernelFeatures::addAttrsForIntrinsics(
-  Module &M,
-  ArrayRef<StringRef[2]> IntrinsicToAttr) {
-  bool Changed = false;
-
-  for (const StringRef *Arr  : IntrinsicToAttr) {
-    if (Function *Fn = M.getFunction(Arr[0])) {
-      addAttrToCallers(*Fn, Arr[1]);
-      Changed = true;
-    }
-  }
-
-  return Changed;
 }
 
 bool AMDGPUAnnotateKernelFeatures::runOnSCC(CallGraphSCC &SCC) {
