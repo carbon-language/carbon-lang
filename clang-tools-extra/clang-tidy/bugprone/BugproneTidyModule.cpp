@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "SuspiciousMemsetUsageCheck.h"
+#include "UndefinedMemoryManipulationCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -21,6 +22,8 @@ public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
     CheckFactories.registerCheck<SuspiciousMemsetUsageCheck>(
         "bugprone-suspicious-memset-usage");
+    CheckFactories.registerCheck<UndefinedMemoryManipulationCheck>(
+        "bugprone-undefined-memory-manipulation");
   }
 };
 
