@@ -133,7 +133,7 @@ public:
 
 private:
   void mergeThunks();
-  ThunkSection *getOSThunkSec(OutputSection *OS,
+  ThunkSection *getOSThunkSec(OutputSectionCommand *Cmd,
                               std::vector<InputSection *> *ISR);
   ThunkSection *getISThunkSec(InputSection *IS, OutputSection *OS);
   void forEachExecInputSection(

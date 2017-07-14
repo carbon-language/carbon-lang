@@ -1000,16 +1000,16 @@ void ThunkCreator::mergeThunks() {
   }
 }
 
-ThunkSection *ThunkCreator::getOSThunkSec(OutputSection *OS,
+ThunkSection *ThunkCreator::getOSThunkSec(OutputSectionCommand *Cmd,
                                           std::vector<InputSection *> *ISR) {
   if (CurTS == nullptr) {
     uint32_t Off = 0;
-    for (auto *IS : OS->Sections) {
+    for (auto *IS : Cmd->Sec->Sections) {
       Off = IS->OutSecOff + IS->getSize();
       if ((IS->Flags & SHF_EXECINSTR) == 0)
         break;
     }
-    CurTS = addThunkSection(OS, ISR, Off);
+    CurTS = addThunkSection(Cmd->Sec, ISR, Off);
   }
   return CurTS;
 }
@@ -1120,7 +1120,7 @@ bool ThunkCreator::createThunks(
             if (auto *TIS = T->getTargetInputSection())
               TS = getISThunkSec(TIS, Cmd->Sec);
             else
-              TS = getOSThunkSec(Cmd->Sec, ISR);
+              TS = getOSThunkSec(Cmd, ISR);
             TS->addThunk(T);
             Thunks[T->ThunkSym] = T;
           }
