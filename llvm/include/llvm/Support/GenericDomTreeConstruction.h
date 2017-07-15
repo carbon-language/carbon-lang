@@ -410,7 +410,7 @@ struct SemiNCAInfo {
       II.AffectedQueue.push_back(CurrentNode);
 
       // Discover and collect affected successors of the current node.
-      VisitInsertion(DT, CurrentNode, ToLevel, NCD, II);
+      VisitInsertion(DT, CurrentNode, CurrentNode->getLevel(), NCD, II);
     }
 
     // Finish by updating immediate dominators and levels.

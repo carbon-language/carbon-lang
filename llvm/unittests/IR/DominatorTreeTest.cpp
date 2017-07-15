@@ -364,6 +364,32 @@ TEST(DominatorTree, InsertReachable) {
   }
 }
 
+TEST(DominatorTree, InsertReachable2) {
+  CFGHolder Holder;
+  std::vector<CFGBuilder::Arc> Arcs = {
+      {"1", "2"}, {"2", "3"}, {"3", "4"},  {"4", "5"},  {"5", "6"},  {"5", "7"},
+      {"7", "5"}, {"2", "8"}, {"8", "11"}, {"11", "12"}, {"12", "10"},
+      {"10", "9"}, {"9", "10"}};
+
+  std::vector<CFGBuilder::Update> Updates = {{Insert, {"10", "7"}}};
+  CFGBuilder B(Holder.F, Arcs, Updates);
+  DominatorTree DT(*Holder.F);
+  EXPECT_TRUE(DT.verify());
+  PostDomTree PDT(*Holder.F);
+  EXPECT_TRUE(PDT.verify());
+
+  Optional<CFGBuilder::Update> LastUpdate = B.applyUpdate();
+  EXPECT_TRUE(LastUpdate);
+
+  EXPECT_EQ(LastUpdate->Action, Insert);
+  BasicBlock *From = B.getOrAddBlock(LastUpdate->Edge.From);
+  BasicBlock *To = B.getOrAddBlock(LastUpdate->Edge.To);
+  DT.insertEdge(From, To);
+  EXPECT_TRUE(DT.verify());
+  PDT.insertEdge(From, To);
+  EXPECT_TRUE(PDT.verify());
+}
+
 TEST(DominatorTree, InsertUnreachable) {
   CFGHolder Holder;
   std::vector<CFGBuilder::Arc> Arcs = {{"1", "2"},  {"2", "3"},  {"3", "4"},
@@ -538,7 +564,7 @@ TEST(DominatorTree, InsertDelete) {
   }
 }
 
-TEST(DominatorTree, DISABLED_InsertDeleteExhaustive) {
+TEST(DominatorTree, InsertDeleteExhaustive) {
   std::vector<CFGBuilder::Arc> Arcs = {
       {"1", "2"}, {"2", "3"}, {"3", "4"},  {"4", "5"},  {"5", "6"},  {"5", "7"},
       {"3", "8"}, {"8", "9"}, {"9", "10"}, {"8", "11"}, {"11", "12"}};
