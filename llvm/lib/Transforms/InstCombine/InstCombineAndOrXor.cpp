@@ -1284,10 +1284,19 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Value *V = SimplifyBSwap(I, Builder))
     return replaceInstUsesWith(I, V);
 
-  // (0 - x) & 1 --> x & 1
-  Value *X;
-  if (match(Op1, m_One()) && match(Op0, m_Sub(m_Zero(), m_Value(X))))
-    return BinaryOperator::CreateAnd(X, Op1);
+  if (match(Op1, m_One())) {
+    Value *X;
+    // (0 - x) & 1 --> x & 1
+    if (match(Op0, m_Sub(m_Zero(), m_Value(X))))
+      return BinaryOperator::CreateAnd(X, Op1);
+
+    // (1 << x) & 1 --> zext(x == 0)
+    // (1 >> x) & 1 --> zext(x == 0)
+    if (match(Op0, m_OneUse(m_LogicalShift(m_One(), m_Value(X))))) {
+      Value *IsZero = Builder.CreateICmpEQ(X, ConstantInt::get(I.getType(), 0));
+      return new ZExtInst(IsZero, I.getType());
+    }
+  }
 
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
     const APInt &AndRHSMask = AndRHS->getValue();
@@ -1320,17 +1329,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
         break;
       }
-
-      case Instruction::Shl:
-      case Instruction::LShr:
-        // (1 << x) & 1 --> zext(x == 0)
-        // (1 >> x) & 1 --> zext(x == 0)
-        if (AndRHSMask.isOneValue() && Op0LHS == AndRHS) {
-          Value *NewICmp =
-            Builder.CreateICmpEQ(Op0RHS, Constant::getNullValue(I.getType()));
-          return new ZExtInst(NewICmp, I.getType());
-        }
-        break;
       }
 
       // ((C1 OP zext(X)) & C2) -> zext((C1-X) & C2) if C2 fits in the bitwidth
