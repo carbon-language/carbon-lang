@@ -2176,17 +2176,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         return BinaryOperator::CreateOr(Not, Op0);
       }
 
-  // (A & B) | (~A ^ B) -> (~A ^ B)
-  // (A & B) | (B ^ ~A) -> (~A ^ B)
-  // (B & A) | (~A ^ B) -> (~A ^ B)
-  // (B & A) | (B ^ ~A) -> (~A ^ B)
-  // The match order is important: match the xor first because the 'not'
-  // operation defines 'A'. We do not need to match the xor as Op0 because the
-  // xor was canonicalized to Op1 above.
-  if (match(Op1, m_c_Xor(m_Not(m_Value(A)), m_Value(B))) &&
-      match(Op0, m_c_And(m_Specific(A), m_Specific(B))))
-    return BinaryOperator::CreateXor(Builder.CreateNot(A), B);
-
   if (SwappedForXor)
     std::swap(Op0, Op1);
 
