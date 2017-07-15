@@ -230,14 +230,14 @@ void testSignedness(long i, unsigned long u) {
 }
 
 void testSizeTypes() {
-  printf("%zu", 0.f); // expected-warning{{format specifies type 'size_t' (aka 'unsigned long') but the argument has type 'float'}}
+  printf("%zu", 0.f); // expected-warning-re{{format specifies type 'size_t' (aka '{{.+}}') but the argument has type 'float'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%f"
 
-  printf("%zd", 0.f); // expected-warning{{format specifies type 'ssize_t' (aka 'long') but the argument has type 'float'}}
+  printf("%zd", 0.f); // expected-warning-re{{format specifies type 'ssize_t' (aka '{{.+}}') but the argument has type 'float'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%f"
   
   int x;
-  printf("%zn", &x); // expected-warning{{format specifies type 'ssize_t *' (aka 'long *') but the argument has type 'int *'}}
+  printf("%zn", &x); // expected-warning-re{{format specifies type 'ssize_t *' (aka '{{.+}}') but the argument has type 'int *'}}
   // PrintfSpecifier::fixType doesn't handle %n, so a fix-it is not emitted, 
   // see the comment in PrintfSpecifier::fixType in PrintfFormatString.cpp.
 }
