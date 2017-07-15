@@ -118,6 +118,78 @@ define i64 @test10(i64 %x) {
   ret i64 %add
 }
 
+define i8 @and1_shl1_is_cmp_eq_0(i8 %x) {
+; CHECK-LABEL: @and1_shl1_is_cmp_eq_0(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 %x, 0
+; CHECK-NEXT:    [[AND:%.*]] = zext i1 [[TMP1]] to i8
+; CHECK-NEXT:    ret i8 [[AND]]
+;
+  %sh = shl i8 1, %x
+  %and = and i8 %sh, 1
+  ret i8 %and
+}
+
+define i8 @and1_shl1_is_cmp_eq_0_multiuse(i8 %x) {
+; CHECK-LABEL: @and1_shl1_is_cmp_eq_0_multiuse(
+; CHECK-NEXT:    [[SH:%.*]] = shl i8 1, %x
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 %x, 0
+; CHECK-NEXT:    [[AND:%.*]] = zext i1 [[TMP1]] to i8
+; CHECK-NEXT:    [[ADD:%.*]] = add i8 [[SH]], [[AND]]
+; CHECK-NEXT:    ret i8 [[ADD]]
+;
+  %sh = shl i8 1, %x
+  %and = and i8 %sh, 1
+  %add = add i8 %sh, %and
+  ret i8 %add
+}
+
+define <2 x i8> @and1_shl1_is_cmp_eq_0_vec(<2 x i8> %x) {
+; CHECK-LABEL: @and1_shl1_is_cmp_eq_0_vec(
+; CHECK-NEXT:    [[SH:%.*]] = shl <2 x i8> <i8 1, i8 1>, %x
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i8> [[SH]], <i8 1, i8 1>
+; CHECK-NEXT:    ret <2 x i8> [[AND]]
+;
+  %sh = shl <2 x i8> <i8 1, i8 1>, %x
+  %and = and <2 x i8> %sh, <i8 1, i8 1>
+  ret <2 x i8> %and
+}
+
+define i8 @and1_lshr1_is_cmp_eq_0(i8 %x) {
+; CHECK-LABEL: @and1_lshr1_is_cmp_eq_0(
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 %x, 0
+; CHECK-NEXT:    [[AND:%.*]] = zext i1 [[TMP1]] to i8
+; CHECK-NEXT:    ret i8 [[AND]]
+;
+  %sh = lshr i8 1, %x
+  %and = and i8 %sh, 1
+  ret i8 %and
+}
+
+define i8 @and1_lshr1_is_cmp_eq_0_multiuse(i8 %x) {
+; CHECK-LABEL: @and1_lshr1_is_cmp_eq_0_multiuse(
+; CHECK-NEXT:    [[SH:%.*]] = lshr i8 1, %x
+; CHECK-NEXT:    [[TMP1:%.*]] = icmp eq i8 %x, 0
+; CHECK-NEXT:    [[AND:%.*]] = zext i1 [[TMP1]] to i8
+; CHECK-NEXT:    [[ADD:%.*]] = add i8 [[SH]], [[AND]]
+; CHECK-NEXT:    ret i8 [[ADD]]
+;
+  %sh = lshr i8 1, %x
+  %and = and i8 %sh, 1
+  %add = add i8 %sh, %and
+  ret i8 %add
+}
+
+define <2 x i8> @and1_lshr1_is_cmp_eq_0_vec(<2 x i8> %x) {
+; CHECK-LABEL: @and1_lshr1_is_cmp_eq_0_vec(
+; CHECK-NEXT:    [[SH:%.*]] = lshr <2 x i8> <i8 1, i8 1>, %x
+; CHECK-NEXT:    [[AND:%.*]] = and <2 x i8> [[SH]], <i8 1, i8 1>
+; CHECK-NEXT:    ret <2 x i8> [[AND]]
+;
+  %sh = lshr <2 x i8> <i8 1, i8 1>, %x
+  %and = and <2 x i8> %sh, <i8 1, i8 1>
+  ret <2 x i8> %and
+}
+
 ; The add in this test is unnecessary because the LSBs of the LHS are 0 and the 'and' only consumes bits from those LSBs. It doesn't matter what happens to the upper bits.
 define i32 @test11(i32 %a, i32 %b) {
 ; CHECK-LABEL: @test11(
