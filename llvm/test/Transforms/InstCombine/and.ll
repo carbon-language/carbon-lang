@@ -628,3 +628,51 @@ define i32 @test43(i32 %a, i32 %c, i32 %d) {
   %and = and i32 %or, %xor
   ret i32 %and
 }
+
+; (~y | x) & y -> x & y
+define i32 @test44(i32 %x, i32 %y) nounwind {
+; CHECK-LABEL: @test44(
+; CHECK-NEXT:    [[A:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[A]]
+;
+  %n = xor i32 %y, -1
+  %o = or i32 %n, %x
+  %a = and i32 %o, %y
+  ret i32 %a
+}
+
+; (x | ~y) & y -> x & y
+define i32 @test45(i32 %x, i32 %y) nounwind {
+; CHECK-LABEL: @test45(
+; CHECK-NEXT:    [[A:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[A]]
+;
+  %n = xor i32 %y, -1
+  %o = or i32 %x, %n
+  %a = and i32 %o, %y
+  ret i32 %a
+}
+
+; y & (~y | x) -> y | x
+define i32 @test46(i32 %x, i32 %y) nounwind {
+; CHECK-LABEL: @test46(
+; CHECK-NEXT:    [[A:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[A]]
+;
+  %n = xor i32 %y, -1
+  %o = or i32 %n, %x
+  %a = and i32 %y, %o
+  ret i32 %a
+}
+
+; y & (x | ~y) -> y | x
+define i32 @test47(i32 %x, i32 %y) nounwind {
+; CHECK-LABEL: @test47(
+; CHECK-NEXT:    [[A:%.*]] = and i32 [[X:%.*]], [[Y:%.*]]
+; CHECK-NEXT:    ret i32 [[A]]
+;
+  %n = xor i32 %y, -1
+  %o = or i32 %x, %n
+  %a = and i32 %y, %o
+  ret i32 %a
+}
