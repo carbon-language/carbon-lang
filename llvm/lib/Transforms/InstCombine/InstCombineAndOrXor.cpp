@@ -1284,6 +1284,11 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   if (Value *V = SimplifyBSwap(I, Builder))
     return replaceInstUsesWith(I, V);
 
+  // (0 - x) & 1 --> x & 1
+  Value *X;
+  if (match(Op1, m_One()) && match(Op0, m_Sub(m_Zero(), m_Value(X))))
+    return BinaryOperator::CreateAnd(X, Op1);
+
   if (ConstantInt *AndRHS = dyn_cast<ConstantInt>(Op1)) {
     const APInt &AndRHSMask = AndRHS->getValue();
 
@@ -1315,12 +1320,6 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
         break;
       }
-      case Instruction::Sub:
-        // -x & 1 -> x & 1
-        if (AndRHSMask.isOneValue() && match(Op0LHS, m_Zero()))
-          return BinaryOperator::CreateAnd(Op0RHS, AndRHS);
-
-        break;
 
       case Instruction::Shl:
       case Instruction::LShr:
