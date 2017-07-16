@@ -3728,13 +3728,37 @@ void Scop::assumeNoOutOfBounds() {
       Access->assumeNoOutOfBound();
 }
 
-void Scop::simplifySCoP(bool AfterHoisting) {
-  for (auto StmtIt = Stmts.begin(), StmtEnd = Stmts.end(); StmtIt != StmtEnd;) {
-    ScopStmt &Stmt = *StmtIt;
+void Scop::removeFromStmtMap(ScopStmt &Stmt) {
+  if (Stmt.isRegionStmt())
+    for (BasicBlock *BB : Stmt.getRegion()->blocks())
+      StmtMap.erase(BB);
+  else
+    StmtMap.erase(Stmt.getBasicBlock());
+}
 
+void Scop::removeStmts(std::function<bool(ScopStmt &)> ShouldDelete) {
+  for (auto StmtIt = Stmts.begin(), StmtEnd = Stmts.end(); StmtIt != StmtEnd;) {
+    if (!ShouldDelete(*StmtIt)) {
+      StmtIt++;
+      continue;
+    }
+
+    removeFromStmtMap(*StmtIt);
+    StmtIt = Stmts.erase(StmtIt);
+  }
+}
+
+void Scop::removeStmtNotInDomainMap() {
+  auto ShouldDelete = [this](ScopStmt &Stmt) -> bool {
+    return !this->DomainMap[Stmt.getEntryBlock()];
+  };
+  removeStmts(ShouldDelete);
+}
+
+void Scop::simplifySCoP(bool AfterHoisting) {
+
+  auto ShouldDelete = [AfterHoisting](ScopStmt &Stmt) -> bool {
     bool RemoveStmt = Stmt.isEmpty();
-    if (!RemoveStmt)
-      RemoveStmt = !DomainMap[Stmt.getEntryBlock()];
 
     // Remove read only statements only after invariant load hoisting.
     if (!RemoveStmt && AfterHoisting) {
@@ -3749,21 +3773,10 @@ void Scop::simplifySCoP(bool AfterHoisting) {
 
       RemoveStmt = OnlyRead;
     }
+    return RemoveStmt;
+  };
 
-    if (!RemoveStmt) {
-      StmtIt++;
-      continue;
-    }
-
-    // Remove the statement because it is unnecessary.
-    if (Stmt.isRegionStmt())
-      for (BasicBlock *BB : Stmt.getRegion()->blocks())
-        StmtMap.erase(BB);
-    else
-      StmtMap.erase(Stmt.getBasicBlock());
-
-    StmtIt = Stmts.erase(StmtIt);
-  }
+  removeStmts(ShouldDelete);
 }
 
 InvariantEquivClassTy *Scop::lookupInvariantEquivClass(Value *Val) {
