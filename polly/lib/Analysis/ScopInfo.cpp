@@ -3736,7 +3736,7 @@ void Scop::simplifySCoP(bool AfterHoisting) {
     if (!RemoveStmt)
       RemoveStmt = !DomainMap[Stmt.getEntryBlock()];
 
-    // Remove read only statements only after invariant loop hoisting.
+    // Remove read only statements only after invariant load hoisting.
     if (!RemoveStmt && AfterHoisting) {
       bool OnlyRead = true;
       for (MemoryAccess *MA : Stmt) {
