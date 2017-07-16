@@ -1285,13 +1285,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     return replaceInstUsesWith(I, V);
 
   if (match(Op1, m_One())) {
-    Value *X;
-    // (0 - x) & 1 --> x & 1
-    if (match(Op0, m_Sub(m_Zero(), m_Value(X))))
-      return BinaryOperator::CreateAnd(X, Op1);
-
     // (1 << x) & 1 --> zext(x == 0)
     // (1 >> x) & 1 --> zext(x == 0)
+    Value *X;
     if (match(Op0, m_OneUse(m_LogicalShift(m_One(), m_Value(X))))) {
       Value *IsZero = Builder.CreateICmpEQ(X, ConstantInt::get(I.getType(), 0));
       return new ZExtInst(IsZero, I.getType());
