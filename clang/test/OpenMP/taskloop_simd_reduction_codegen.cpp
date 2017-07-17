@@ -80,9 +80,7 @@ sum = 0.0;
 // CHECK:    [[DOTRD_INPUT_GEP_4:%.*]] = getelementptr inbounds [4 x %struct.kmp_task_red_input_t], [4 x %struct.kmp_task_red_input_t]* [[DOTRD_INPUT_]], i64 0, i64 1
 // CHECK:    [[TMP28:%.*]] = getelementptr inbounds [[STRUCT_KMP_TASK_RED_INPUT_T]], %struct.kmp_task_red_input_t* [[DOTRD_INPUT_GEP_4]], i32 0, i32 0
 // CHECK:    [[ARRAYIDX5:%.*]] = getelementptr inbounds [100 x %struct.S], [100 x %struct.S]* [[C]], i64 0, i64 0
-// CHECK:    [[TMP29:%.*]] = load i32, i32* [[N]], align 4
-// CHECK:    [[TMP30:%.*]] = sext i32 [[TMP29]] to i64
-// CHECK:    [[LB_ADD_LEN:%.*]] = add nsw i64 -1, [[TMP30]]
+// CHECK:    [[LB_ADD_LEN:%.*]] = add nsw i64 -1, %
 // CHECK:    [[ARRAYIDX6:%.*]] = getelementptr inbounds [100 x %struct.S], [100 x %struct.S]* [[C]], i64 0, i64 [[LB_ADD_LEN]]
 // CHECK:    [[TMP31:%.*]] = bitcast %struct.S* [[ARRAYIDX5]] to i8*
 // CHECK:    store i8* [[TMP31]], i8** [[TMP28]], align 8
