@@ -129,7 +129,7 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       continue;
     }
 
-    auto BranchDataOrErr = BC.DR.getFuncBranchData(Function->getNames());
+    const auto *BranchData = Function->getBranchData();
     const auto SrcId = lookupNode(Function);
     uint64_t Offset = Function->getAddress();
     uint64_t LastInstSize = 0;
@@ -187,11 +187,11 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
       const auto *DstSym = BC.MIA->getTargetSymbol(Inst);
 
       // If this is an indirect call use perf data directly.
-      if (!DstSym && BranchDataOrErr &&
+      if (!DstSym && BranchData &&
           BC.MIA->hasAnnotation(Inst, "EdgeCountData")) {
         const auto DataOffset =
           BC.MIA->getAnnotationAs<uint64_t>(Inst, "EdgeCountData");
-        for (const auto &BI : BranchDataOrErr->getBranchRange(DataOffset)) {
+        for (const auto &BI : BranchData->getBranchRange(DataOffset)) {
           Counts.push_back(getCallInfoFromBranchData(BI, false));
         }
       } else {
@@ -205,11 +205,11 @@ BinaryFunctionCallGraph buildCallGraph(BinaryContext &BC,
     // If the function has an invalid profile, try to use the perf data
     // directly (if requested).  If there is no perf data for this function,
     // fall back to the CFG walker which attempts to handle missing data.
-    if (!Function->hasValidProfile() && CgFromPerfData && BranchDataOrErr) {
+    if (!Function->hasValidProfile() && CgFromPerfData && BranchData) {
       DEBUG(dbgs() << "BOLT-DEBUG: buildCallGraph: Falling back to perf data"
                    << " for " << *Function << "\n");
       ++NumFallbacks;
-      for (const auto &BI : BranchDataOrErr->Data) {
+      for (const auto &BI : BranchData->Data) {
         Offset = Function->getAddress() + BI.From.Offset;
         const auto CI = getCallInfoFromBranchData(BI, true);
         if (!CI.first && CI.second == COUNT_NO_PROFILE) // probably a branch

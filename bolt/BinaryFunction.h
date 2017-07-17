@@ -312,8 +312,11 @@ private:
   /// The profile data for the number of times the function was executed.
   uint64_t ExecutionCount{COUNT_NO_PROFILE};
 
-  /// Profile match ration.
-  float ProfileMatchRatio{0.0};
+  /// Profile data for branches.
+  const FuncBranchData *BranchData{nullptr};
+
+  /// Profile match ratio for BranchData.
+  float ProfileMatchRatio{0.0f};
 
   /// Score of the function (estimated number of instructions executed,
   /// according to profile data). -1 if the score has not been calculated yet.
@@ -1278,7 +1281,8 @@ public:
   }
 
   /// Add new names this function is known under.
-  void addNewNames(const std::vector<std::string> &NewNames) {
+  template <class ContainterTy>
+  void addNewNames(const ContainterTy &NewNames) {
     Names.insert(Names.begin(),  NewNames.begin(), NewNames.end());
   }
 
@@ -1709,9 +1713,19 @@ public:
   /// cannot be statically evaluated for any given indirect branch.
   bool postProcessIndirectBranches();
 
+  /// Find the best matching profile for a function after the creation of basic
+  /// blocks.
+  void matchProfileData();
+
   /// Check how closely the profile data matches the function and set
-  /// ProfileMatchRatio to reflect the accuracy.
-  void evaluateProfileData(const FuncBranchData &BranchData);
+  /// Return accuracy (ranging from 0.0 to 1.0) of matching.
+  float evaluateProfileData(const FuncBranchData &BranchData);
+
+  /// Return profile data associated with this function, or nullptr if the
+  /// function has no associated profile.
+  const FuncBranchData *getBranchData() const {
+    return BranchData;
+  }
 
   /// Walks the list of basic blocks filling in missing information about
   /// edge frequency for fall-throughs.

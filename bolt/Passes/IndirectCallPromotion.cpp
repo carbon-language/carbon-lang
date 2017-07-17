@@ -194,10 +194,10 @@ IndirectCallPromotion::getCallTargets(
 
     Targets.erase(Result, Targets.end());
   } else {
-    const auto BranchDataOrErr = BC.DR.getFuncBranchData(BF.getNames());
-    const auto &BranchData = BranchDataOrErr.get();
+    const auto *BranchData = BF.getBranchData();
+    assert(BranchData && "expected initialized branch data");
     auto Offset = BC.MIA->getAnnotationAs<uint64_t>(Inst, "IndirectBranchData");
-    for (const auto &BI : BranchData.getBranchRange(Offset)) {
+    for (const auto &BI : BranchData->getBranchRange(Offset)) {
       Callsite Site(BF, BI);
       if (Site.isValid()) {
         Targets.emplace_back(std::move(Site));
@@ -692,17 +692,14 @@ void IndirectCallPromotion::runOnFunctions(
     if (!Function.isSimple() || !opts::shouldProcess(Function))
       continue;
 
-    const auto BranchDataOrErr = BC.DR.getFuncBranchData(Function.getNames());
-    if (const auto EC = BranchDataOrErr.getError()) {
-      DEBUG(dbgs() << "BOLT-INFO: no branch data found for \""
-                   << Function << "\"\n");
+    const auto *BranchData = Function.getBranchData();
+    if (!BranchData)
       continue;
-    }
-    const FuncBranchData &BranchData = BranchDataOrErr.get();
+
     const bool HasLayout = !Function.layout_empty();
 
     // Note: this is not just counting calls.
-    TotalCalls += BranchData.ExecutionCount;
+    TotalCalls += BranchData->ExecutionCount;
 
     // Total number of indirect calls issued from the current Function.
     // (a fraction of TotalIndirectCalls)

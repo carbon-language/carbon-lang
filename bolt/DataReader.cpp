@@ -14,10 +14,32 @@
 
 
 #include "DataReader.h"
+#include "llvm/Support/Debug.h"
 #include <map>
 
 namespace llvm {
 namespace bolt {
+
+Optional<StringRef> getLTOCommonName(const StringRef Name) {
+  auto LTOSuffixPos = Name.find(".lto_priv.");
+  if (LTOSuffixPos != StringRef::npos) {
+    return Name.substr(0, LTOSuffixPos + 10);
+  } else if ((LTOSuffixPos = Name.find(".constprop.")) != StringRef::npos) {
+    return Name.substr(0, LTOSuffixPos + 11);
+  } else {
+    return NoneType();
+  }
+}
+
+namespace {
+
+/// Return standard name of the function possibly renamed by BOLT.
+StringRef normalizeName(StringRef Name) {
+  // Strip "PG." prefix used for globalized locals.
+  return Name.startswith("PG.") ? Name.substr(2) : Name;
+}
+
+} // anonymous namespace
 
 iterator_range<FuncBranchData::ContainerTy::const_iterator>
 FuncBranchData::getBranchRange(uint64_t From) const {
@@ -173,6 +195,7 @@ DataReader::readPerfData(StringRef Path, raw_ostream &Diag) {
   }
   auto DR = make_unique<DataReader>(std::move(MB.get()), Diag);
   DR->parse();
+  DR->buildLTONameMap();
   return std::move(DR);
 }
 
@@ -422,16 +445,51 @@ std::error_code DataReader::parse() {
   return std::error_code();
 }
 
-ErrorOr<const FuncBranchData &>
+void DataReader::buildLTONameMap() {
+  for (const auto &FuncData : FuncsMap) {
+    const auto FuncName = FuncData.getKey();
+    const auto CommonName = getLTOCommonName(FuncName);
+    if (CommonName)
+      LTOCommonNameMap[*CommonName].push_back(&FuncData.getValue());
+  }
+}
+
+const FuncBranchData *
 DataReader::getFuncBranchData(const std::vector<std::string> &FuncNames) const {
   // Do a reverse order iteration since the name in profile has a higher chance
   // of matching a name at the end of the list.
   for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
-    const auto I = FuncsMap.find(*FI);
+    const auto I = FuncsMap.find(normalizeName(*FI));
     if (I != FuncsMap.end())
-      return I->getValue();
+      return &I->getValue();
   }
-  return make_error_code(llvm::errc::invalid_argument);
+  return nullptr;
+}
+
+std::vector<const FuncBranchData *>
+DataReader::getFuncBranchDataRegex(const std::vector<std::string> &FuncNames)
+    const {
+  std::vector<const FuncBranchData *> AllData;
+  // Do a reverse order iteration since the name in profile has a higher chance
+  // of matching a name at the end of the list.
+  for (auto FI = FuncNames.rbegin(), FE = FuncNames.rend(); FI != FE; ++FI) {
+    StringRef Name = *FI;
+    Name = normalizeName(Name);
+    const auto LTOCommonName = getLTOCommonName(Name);
+    if (LTOCommonName) {
+      const auto I = LTOCommonNameMap.find(*LTOCommonName);
+      if (I != LTOCommonNameMap.end()) {
+        const auto &CommonData = I->getValue();
+        AllData.insert(AllData.end(), CommonData.begin(), CommonData.end());
+      }
+    } else {
+      const auto I = FuncsMap.find(Name);
+      if (I != FuncsMap.end()) {
+        return {&I->getValue()};
+      }
+    }
+  }
+  return AllData;
 }
 
 bool DataReader::hasLocalsWithFileName() const {

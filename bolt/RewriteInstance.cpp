@@ -18,6 +18,7 @@
 #include "DataReader.h"
 #include "Exceptions.h"
 #include "RewriteInstance.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/DebugInfo/DWARF/DWARFContext.h"
 #include "llvm/DebugInfo/DWARF/DWARFDebugLine.h"
@@ -770,21 +771,29 @@ void RewriteInstance::run() {
     return;
   }
 
-  unsigned PassNumber = 1;
+  auto executeRewritePass = [&](const std::set<uint64_t> &NonSimpleFunctions) {
+    discoverStorage();
+    readSpecialSections();
+    discoverFileObjects();
+    readDebugInfo();
+    readProfileData();
+    disassembleFunctions();
+    for (uint64_t Address : NonSimpleFunctions) {
+      auto FI = BinaryFunctions.find(Address);
+      assert(FI != BinaryFunctions.end() && "bad non-simple function address");
+      FI->second.setSimple(false);
+    }
+    runOptimizationPasses();
+    emitFunctions();
+  };
 
   outs() << "BOLT-INFO: Target architecture: "
          << Triple::getArchTypeName(
                 (llvm::Triple::ArchType)InputFile->getArch())
          << "\n";
 
-  // Main "loop".
-  discoverStorage();
-  readSpecialSections();
-  discoverFileObjects();
-  readDebugInfo();
-  disassembleFunctions();
-  runOptimizationPasses();
-  emitFunctions();
+  unsigned PassNumber = 1;
+  executeRewritePass({});
 
   if (opts::SplitFunctions == BinaryFunction::ST_LARGE &&
       checkLargeFunctions()) {
@@ -792,13 +801,7 @@ void RewriteInstance::run() {
     // Emit again because now some functions have been split
     outs() << "BOLT: split-functions: starting pass " << PassNumber << "...\n";
     reset();
-    discoverStorage();
-    readSpecialSections();
-    discoverFileObjects();
-    readDebugInfo();
-    disassembleFunctions();
-    runOptimizationPasses();
-    emitFunctions();
+    executeRewritePass({});
   }
 
   // Emit functions again ignoring functions which still didn't fit in their
@@ -810,26 +813,7 @@ void RewriteInstance::run() {
     outs() << "BOLT: starting pass (ignoring large functions) "
            << PassNumber << "...\n";
     reset();
-    discoverStorage();
-    readSpecialSections();
-    discoverFileObjects();
-    readDebugInfo();
-    disassembleFunctions();
-
-    for (uint64_t Address : LargeFunctions) {
-      auto FunctionIt = BinaryFunctions.find(Address);
-      assert(FunctionIt != BinaryFunctions.end() &&
-             "Invalid large function address.");
-      if (opts::Verbosity >= 1) {
-        errs() << "BOLT-WARNING: Function " << FunctionIt->second
-               << " is larger than its orginal size: emitting again marking it "
-               << "as not simple.\n";
-      }
-      FunctionIt->second.setSimple(false);
-    }
-
-    runOptimizationPasses();
-    emitFunctions();
+    executeRewritePass(LargeFunctions);
   }
 
   if (opts::CalcCacheMetrics) {
@@ -943,7 +927,7 @@ void RewriteInstance::discoverFileObjects() {
     /// change the prefix to enforce global scope of the symbol.
     std::string Name =
       NameOrError->startswith(BC->AsmInfo->getPrivateGlobalPrefix())
-        ? "PG." + std::string(*NameOrError)
+        ? "PG" + std::string(*NameOrError)
         : std::string(*NameOrError);
 
     // Disambiguate all local symbols before adding to symbol table.
@@ -1144,9 +1128,11 @@ void RewriteInstance::discoverFileObjects() {
     const auto *FDE = FDEI.second;
     auto *BF = getBinaryFunctionContainingAddress(Address);
     if (!BF) {
-      errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address) << ", 0x"
-             << Twine::utohexstr(Address + FDE->getAddressRange())
-             << ") has no corresponding symbol table entry\n";
+      if (opts::Verbosity >= 1) {
+        errs() << "BOLT-WARNING: FDE [0x" << Twine::utohexstr(Address) << ", 0x"
+               << Twine::utohexstr(Address + FDE->getAddressRange())
+               << ") has no corresponding symbol table entry\n";
+      }
       auto Section = BC->getSectionForAddress(Address);
       assert(Section && "cannot get section for address from FDE");
       StringRef SectionName;
@@ -1540,16 +1526,18 @@ void RewriteInstance::readRelocations(const SectionRef &Section) {
     if (!IsPCRelative && Addend != 0 && IsFromCode && !SymbolIsSection) {
       auto RefSection = BC->getSectionForAddress(SymbolAddress);
       if (RefSection && RefSection->isText()) {
-        errs() << "BOLT-WARNING: detected absolute reference from code into a "
-               << "middle of a function:\n"
-               << " offset = 0x" << Twine::utohexstr(Rel.getOffset())
-               << "; symbol = " << SymbolName
-               << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
-               << "; addend = 0x" << Twine::utohexstr(Addend)
-               << "; address = 0x" << Twine::utohexstr(Address)
-               << "; type = " << Rel.getType()
-               << "; type name = " << TypeName
-               << '\n';
+        if (opts::Verbosity > 1) {
+          errs() << "BOLT-WARNING: detected absolute reference from code into "
+                 << "a middle of a function:\n"
+                 << " offset = 0x" << Twine::utohexstr(Rel.getOffset())
+                 << "; symbol = " << SymbolName
+                 << "; symbol address = 0x" << Twine::utohexstr(SymbolAddress)
+                 << "; addend = 0x" << Twine::utohexstr(Addend)
+                 << "; address = 0x" << Twine::utohexstr(Address)
+                 << "; type = " << Rel.getType()
+                 << "; type name = " << TypeName
+                 << '\n';
+        }
         assert(ExtractedValue == SymbolAddress + Addend && "value mismatch");
         Address = SymbolAddress;
         IsAbsoluteCodeRefWithAddend = true;
@@ -1681,6 +1669,21 @@ void RewriteInstance::readDebugInfo() {
     return;
 
   BC->preprocessDebugInfo(BinaryFunctions);
+}
+
+void RewriteInstance::readProfileData() {
+  if (BC->DR.getAllFuncsData().empty())
+    return;
+
+  for (auto &BFI : BinaryFunctions) {
+    auto &Function = BFI.second;
+    const auto *FuncData = BC->DR.getFuncBranchData(Function.getNames());
+    if (!FuncData)
+      continue;
+    Function.BranchData = FuncData;
+    Function.ExecutionCount = FuncData->ExecutionCount;
+    FuncData->Used = true;
+  }
 }
 
 void RewriteInstance::disassembleFunctions() {
@@ -1867,6 +1870,31 @@ void RewriteInstance::disassembleFunctions() {
                                       (float) NumAllProfiledFunctions * 100.0f)
            << " function" << (NumStaleProfileFunctions == 1 ? "" : "s")
            << " have invalid (possibly stale) profile.\n";
+  }
+
+  // Profile is marked as 'Used' if it either matches a function name
+  // exactly or if it 100% matches any of functions with matching common
+  // LTO names.
+  auto getUnusedObjects = [this]() -> Optional<std::vector<StringRef>> {
+    std::vector<StringRef> UnusedObjects;
+    for (const auto &Func : BC->DR.getAllFuncsData()) {
+      if (!Func.getValue().Used) {
+        UnusedObjects.emplace_back(Func.getKey());
+      }
+    }
+    if (UnusedObjects.empty())
+      return NoneType();
+    return UnusedObjects;
+  };
+
+  if (const auto UnusedObjects = getUnusedObjects()) {
+    outs() << "BOLT-INFO: profile for " << UnusedObjects->size()
+           << " objects was ignored\n";
+    if (opts::Verbosity >= 1) {
+      for (auto Name : *UnusedObjects) {
+        outs() << "  " << Name << '\n';
+      }
+    }
   }
 
   if (ProfiledFunctions.size() > 10) {

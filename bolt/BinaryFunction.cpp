@@ -961,7 +961,6 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
 
   auto &Ctx = BC.Ctx;
   auto &MIA = BC.MIA;
-  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
 
   DWARFUnitLineTable ULT = getDWARFUnitLineTable();
 
@@ -1220,7 +1219,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
                                       MCSymbolRefExpr::VK_None,
                                       *Ctx)));
 
-        if (BranchDataOrErr) {
+        if (BranchData) {
           if (IsCall) {
             MIA->addAnnotation(Ctx.get(), Instruction, "EdgeCountData", Offset);
           }
@@ -1243,7 +1242,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
               auto Result = MIA->convertJmpToTailCall(Instruction);
               (void)Result;
               assert(Result);
-              if (BranchDataOrErr) {
+              if (BranchData) {
                 MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
                                    Offset);
               }
@@ -1259,7 +1258,7 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             // Keep processing. We'll do more checks and fixes in
             // postProcessIndirectBranches().
             MaybeEdgeCountData = true;
-            if (BranchDataOrErr) {
+            if (BranchData) {
               MIA->addAnnotation(Ctx.get(),
                                  Instruction,
                                  "MaybeIndirectBranchData",
@@ -1268,12 +1267,12 @@ void BinaryFunction::disassemble(ArrayRef<uint8_t> FunctionData) {
             break;
           };
         } else if (MIA->isCall(Instruction)) {
-          if (BranchDataOrErr) {
+          if (BranchData) {
             MIA->addAnnotation(Ctx.get(), Instruction, "IndirectBranchData",
                                Offset);
           }
         }
-        if (BranchDataOrErr) {
+        if (BranchData) {
           const char* AttrName =
             MaybeEdgeCountData ? "MaybeEdgeCountData" : "EdgeCountData";
           MIA->addAnnotation(Ctx.get(), Instruction, AttrName, Offset);
@@ -1367,8 +1366,6 @@ void BinaryFunction::postProcessJumpTables() {
 }
 
 bool BinaryFunction::postProcessIndirectBranches() {
-  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
-
   for (auto *BB : layout()) {
     for (auto &Instr : *BB) {
       if (!BC.MIA->isIndirectBranch(Instr))
@@ -1527,13 +1524,6 @@ void BinaryFunction::recomputeLandingPads(const unsigned StartIndex,
 bool BinaryFunction::buildCFG() {
   auto &MIA = BC.MIA;
 
-  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
-  if (!BranchDataOrErr) {
-    DEBUG(dbgs() << "no branch data found for \"" << *this << "\"\n");
-  } else {
-    ExecutionCount = BranchDataOrErr->ExecutionCount;
-  }
-
   if (!isSimple()) {
     assert(!opts::Relocs &&
            "cannot process file with non-simple function in relocs mode");
@@ -1672,9 +1662,8 @@ bool BinaryFunction::buildCFG() {
   // e.g. exit(3), etc. Otherwise we'll see a false fall-through
   // blocks.
 
-  // Make sure we can use profile data for this function.
-  if (BranchDataOrErr)
-    evaluateProfileData(BranchDataOrErr.get());
+  // Possibly assign/re-assign branch profile data.
+  matchProfileData();
 
   for (auto &Branch : TakenBranches) {
     DEBUG(dbgs() << "registering branch [0x" << Twine::utohexstr(Branch.first)
@@ -1684,48 +1673,49 @@ bool BinaryFunction::buildCFG() {
     auto *ToBB = getBasicBlockAtOffset(Branch.second);
     assert(ToBB && "cannot find BB containing TO branch");
 
-    if (BranchDataOrErr.getError()) {
+    if (!BranchData) {
       FromBB->addSuccessor(ToBB);
-    } else {
-      const FuncBranchData &BranchData = BranchDataOrErr.get();
-      auto BranchInfoOrErr = BranchData.getBranch(Branch.first, Branch.second);
-      if (BranchInfoOrErr.getError()) {
-        FromBB->addSuccessor(ToBB);
-      } else {
-        const BranchInfo &BInfo = BranchInfoOrErr.get();
-        FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
-        // Populate profile counts for the jump table.
-        auto *LastInstr = FromBB->getLastNonPseudoInstr();
-        if (!LastInstr)
-          continue;
-        auto JTAddress = BC.MIA->getJumpTable(*LastInstr);
-        if (!JTAddress)
-          continue;
-        auto *JT = getJumpTableContainingAddress(JTAddress);
-        if (!JT)
-          continue;
-        JT->Count += BInfo.Branches;
-        if (opts::IndirectCallPromotion < ICP_JUMP_TABLES &&
-            opts::JumpTables < JTS_AGGRESSIVE)
-          continue;
-        if (JT->Counts.empty())
-          JT->Counts.resize(JT->Entries.size());
-        auto EI = JT->Entries.begin();
-        auto Delta = (JTAddress - JT->Address) / JT->EntrySize;
-        EI += Delta;
-        while (EI != JT->Entries.end()) {
-          if (ToBB->getLabel() == *EI) {
-            assert(Delta < JT->Counts.size());
-            JT->Counts[Delta].Mispreds += BInfo.Mispreds;
-            JT->Counts[Delta].Count += BInfo.Branches;
-          }
-          ++Delta;
-          ++EI;
-          // A label marks the start of another jump table.
-          if (JT->Labels.count(Delta * JT->EntrySize))
-            break;
-        }
+      continue;
+    }
+
+    auto BranchInfoOrErr = BranchData->getBranch(Branch.first, Branch.second);
+    if (!BranchInfoOrErr) {
+      FromBB->addSuccessor(ToBB);
+      continue;
+    }
+
+    const BranchInfo &BInfo = BranchInfoOrErr.get();
+    FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
+    // Populate profile counts for the jump table.
+    auto *LastInstr = FromBB->getLastNonPseudoInstr();
+    if (!LastInstr)
+      continue;
+    auto JTAddress = BC.MIA->getJumpTable(*LastInstr);
+    if (!JTAddress)
+      continue;
+    auto *JT = getJumpTableContainingAddress(JTAddress);
+    if (!JT)
+      continue;
+    JT->Count += BInfo.Branches;
+    if (opts::IndirectCallPromotion < ICP_JUMP_TABLES &&
+        opts::JumpTables < JTS_AGGRESSIVE)
+      continue;
+    if (JT->Counts.empty())
+      JT->Counts.resize(JT->Entries.size());
+    auto EI = JT->Entries.begin();
+    auto Delta = (JTAddress - JT->Address) / JT->EntrySize;
+    EI += Delta;
+    while (EI != JT->Entries.end()) {
+      if (ToBB->getLabel() == *EI) {
+        assert(Delta < JT->Counts.size());
+        JT->Counts[Delta].Mispreds += BInfo.Mispreds;
+        JT->Counts[Delta].Count += BInfo.Branches;
       }
+      ++Delta;
+      ++EI;
+      // A label marks the start of another jump table.
+      if (JT->Labels.count(Delta * JT->EntrySize))
+        break;
     }
   }
 
@@ -1762,9 +1752,8 @@ bool BinaryFunction::buildCFG() {
 
     // Does not add a successor if we can't find profile data, leave it to the
     // inference pass to guess its frequency
-    if (BranchDataOrErr) {
-      const FuncBranchData &BranchData = BranchDataOrErr.get();
-      auto BranchInfoOrErr = BranchData.getBranch(Branch.first, Branch.second);
+    if (BranchData) {
+      auto BranchInfoOrErr = BranchData->getBranch(Branch.first, Branch.second);
       if (BranchInfoOrErr) {
         const BranchInfo &BInfo = BranchInfoOrErr.get();
         FromBB->addSuccessor(ToBB, BInfo.Branches, BInfo.Mispreds);
@@ -1774,9 +1763,8 @@ bool BinaryFunction::buildCFG() {
 
   for (auto &I : TailCallTerminatedBlocks) {
     TailCallInfo &TCInfo = I.second;
-    if (BranchDataOrErr) {
-      const FuncBranchData &BranchData = BranchDataOrErr.get();
-      auto BranchInfoOrErr = BranchData.getDirectCallBranch(TCInfo.Offset);
+    if (BranchData) {
+      auto BranchInfoOrErr = BranchData->getDirectCallBranch(TCInfo.Offset);
       if (BranchInfoOrErr) {
         const BranchInfo &BInfo = BranchInfoOrErr.get();
         TCInfo.Count = BInfo.Branches;
@@ -1960,7 +1948,56 @@ void BinaryFunction::addEntryPoint(uint64_t Address) {
   }
 }
 
-void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
+void BinaryFunction::matchProfileData() {
+  if (BranchData) {
+    ProfileMatchRatio = evaluateProfileData(*BranchData);
+    if (ProfileMatchRatio == 1.0f)
+      return;
+  }
+
+  // Check if the function name can fluctuate between several compilations
+  // possibly triggered by minor unrelated code changes in the source code
+  // of the input binary.
+  const auto HasVolatileName = [this]() {
+    for (const auto Name : getNames()) {
+      if (getLTOCommonName(Name))
+        return true;
+    }
+    return false;
+  }();
+  if (!HasVolatileName)
+    return;
+
+  // Check for a profile that matches with 100% confidence.
+  const auto AllBranchData = BC.DR.getFuncBranchDataRegex(getNames());
+  for (const auto *NewBranchData : AllBranchData) {
+    // Prevent functions from sharing the same profile.
+    if (NewBranchData->Used)
+      continue;
+
+    if (evaluateProfileData(*NewBranchData) != 1.0f)
+      continue;
+
+    if (BranchData)
+      BranchData->Used = false;
+
+    // Update function profile data with the new set.
+    BranchData = NewBranchData;
+    ExecutionCount = NewBranchData->ExecutionCount;
+    ProfileMatchRatio = 1.0f;
+    BranchData->Used = true;
+    break;
+  }
+}
+
+float BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
+  // Until we define a minimal profile, we consider an empty branch data to be
+  // a valid profile. It could happen to a function without branches when we
+  // still have an EntryData for execution count.
+  if (BranchData.Data.empty()) {
+    return 1.0f;
+  }
+
   BranchListType ProfileBranches(BranchData.Data.size());
   std::transform(BranchData.Data.begin(),
                  BranchData.Data.end(),
@@ -1978,12 +2015,14 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                  return Branch.second != -1U;
                });
 
-  // Until we define a minimal profile, we consider no branch data to be a valid
-  // profile. It could happen to a function without branches.
-  if (LocalProfileBranches.empty()) {
-    ProfileMatchRatio = 1.0f;
-    return;
-  }
+  // Profile referencing external functions.
+  BranchListType ExternProfileBranches;
+  std::copy_if(ProfileBranches.begin(),
+               ProfileBranches.end(),
+               std::back_inserter(ExternProfileBranches),
+               [](const std::pair<uint32_t, uint32_t> &Branch) {
+                 return Branch.second == -1U;
+               });
 
   std::sort(LocalProfileBranches.begin(), LocalProfileBranches.end());
 
@@ -2014,7 +2053,9 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
       return false;
 
     // Check if it is a recursive call.
-    if (BC.MIA->isCall(SrcInstrI->second) && Branch.second == 0)
+    const auto &SrcInstr = SrcInstrI->second;
+    if ((BC.MIA->isCall(SrcInstr) || BC.MIA->isIndirectBranch(SrcInstr)) &&
+        Branch.second == 0)
       return true;
 
     auto DstInstrI = Instructions.find(Branch.second);
@@ -2022,9 +2063,9 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
       return false;
 
     // Check if it is a return from a recursive call.
-    bool IsSrcReturn = BC.MIA->isReturn(SrcInstrI->second);
+    bool IsSrcReturn = BC.MIA->isReturn(SrcInstr);
     // "rep ret" is considered to be 2 different instructions.
-    if (!IsSrcReturn && BC.MIA->isPrefix(SrcInstrI->second)) {
+    if (!IsSrcReturn && BC.MIA->isPrefix(SrcInstr)) {
       auto SrcInstrSuccessorI = SrcInstrI;
       ++SrcInstrSuccessorI;
       assert(SrcInstrSuccessorI != Instructions.end() &&
@@ -2046,15 +2087,37 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                       std::back_inserter(OrphanBranches),
                       isRecursiveBranch);
 
-  ProfileMatchRatio =
-    (float) (LocalProfileBranches.size() - OrphanBranches.size()) /
-    (float) LocalProfileBranches.size();
+  // Check all external branches.
+  std::copy_if(ExternProfileBranches.begin(),
+               ExternProfileBranches.end(),
+               std::back_inserter(OrphanBranches),
+               [&](const std::pair<uint32_t, uint32_t> &Branch) {
+                 auto II = Instructions.find(Branch.first);
+                 if (II == Instructions.end())
+                   return true;
+                 const auto &Instr = II->second;
+                 if (BC.MIA->isCall(Instr) ||
+                     BC.MIA->isIndirectBranch(Instr) ||
+                     BC.MIA->isReturn(Instr))
+                   return false;
+                 // Check for "rep ret"
+                 if (BC.MIA->isPrefix(Instr)) {
+                   ++II;
+                   if (II != Instructions.end() && BC.MIA->isReturn(II->second))
+                     return false;
+                 }
+                 return true;
+               });
 
-  if (opts::Verbosity >= 1 && !OrphanBranches.empty()) {
+  float MatchRatio =
+    (float) (ProfileBranches.size() - OrphanBranches.size()) /
+    (float) ProfileBranches.size();
+
+  if (opts::Verbosity >= 2 && !OrphanBranches.empty()) {
     errs() << "BOLT-WARNING: profile branches match only "
-           << format("%.1f%%", ProfileMatchRatio * 100.0f) << " ("
-           << (LocalProfileBranches.size() - OrphanBranches.size()) << '/'
-           << LocalProfileBranches.size() << ") for function "
+           << format("%.1f%%", MatchRatio * 100.0f) << " ("
+           << (ProfileBranches.size() - OrphanBranches.size()) << '/'
+           << ProfileBranches.size() << ") for function "
            << *this << '\n';
     DEBUG(
       for (auto &OBranch : OrphanBranches)
@@ -2062,8 +2125,10 @@ void BinaryFunction::evaluateProfileData(const FuncBranchData &BranchData) {
                << Twine::utohexstr(OBranch.second) << " (0x"
                << Twine::utohexstr(OBranch.first + getAddress()) << " -> 0x"
                << Twine::utohexstr(OBranch.second + getAddress()) << ")\n";
-    );
+        );
   }
+
+  return MatchRatio;
 }
 
 void BinaryFunction::clearProfile() {
@@ -2081,8 +2146,7 @@ void BinaryFunction::clearProfile() {
 
 void BinaryFunction::inferFallThroughCounts() {
   assert(!BasicBlocks.empty() && "basic block list should not be empty");
-
-  auto BranchDataOrErr = BC.DR.getFuncBranchData(getNames());
+  assert(BranchData && "cannot infer counts without branch data");
 
   // Compute preliminary execution count for each basic block
   for (auto CurBB : BasicBlocks) {
@@ -2106,13 +2170,10 @@ void BinaryFunction::inferFallThroughCounts() {
   }
 
   // Update execution counts of landing pad blocks.
-  if (!BranchDataOrErr.getError()) {
-    const FuncBranchData &BranchData = BranchDataOrErr.get();
-    for (const auto &I : BranchData.EntryData) {
-      BinaryBasicBlock *BB = getBasicBlockAtOffset(I.To.Offset);
-      if (BB && LandingPads.find(BB->getLabel()) != LandingPads.end()) {
-        BB->setExecutionCount(BB->getExecutionCount() + I.Branches);
-      }
+  for (const auto &I : BranchData->EntryData) {
+    BinaryBasicBlock *BB = getBasicBlockAtOffset(I.To.Offset);
+    if (BB && LandingPads.find(BB->getLabel()) != LandingPads.end()) {
+      BB->setExecutionCount(BB->getExecutionCount() + I.Branches);
     }
   }
 

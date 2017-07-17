@@ -171,6 +171,9 @@ public:
   /// Read information from debug sections.
   void readDebugInfo();
 
+  /// Associate profile data with functions.
+  void readProfileData();
+
   /// Disassemble each function in the binary and associate it with a
   /// BinaryFunction object, preparing all information necessary for binary
   /// optimization.

@@ -15,6 +15,7 @@
 #ifndef LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
 #define LLVM_TOOLS_LLVM_BOLT_DATA_READER_H
 
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
@@ -22,10 +23,37 @@
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include <map>
 #include <vector>
 
 namespace llvm {
 namespace bolt {
+
+/// LTO-generated function names take a form:
+//
+///   <function_name>.lto_priv.<decimal_number>/...
+///     or
+///   <function_name>.constprop.<decimal_number>/...
+///
+/// they can also be:
+///
+///   <function_name>.lto_priv.<decimal_number1>.lto_priv.<decimal_number2>/...
+///
+/// The <decimal_number> is a global counter used for the whole program. As a
+/// result, a tiny change in a program may affect the naming of many LTO
+/// functions. For us this means that if we do a precise name matching, then
+/// a large set of functions could be left without a profile.
+///
+/// To solve this issue, we try to match a function to a regex profile:
+///
+///   <function_name>.(lto_priv|consprop).*
+///
+/// The name before an asterisk above represents a common LTO name for a family
+/// of functions. Later out of all matching profiles we pick the one with the
+/// best match.
+
+/// Return a common part of LTO name for a given \p Name.
+Optional<StringRef> getLTOCommonName(const StringRef Name);
 
 struct Location {
   bool IsSymbol;
@@ -109,6 +137,9 @@ struct FuncBranchData {
   /// Total execution count for the function.
   int64_t ExecutionCount{0};
 
+  /// Indicate if the data was used.
+  mutable bool Used{false};
+
   FuncBranchData(StringRef Name, ContainerTy Data)
       : Name(Name), Data(std::move(Data)) {}
 
@@ -137,8 +168,8 @@ public:
   explicit DataReader(raw_ostream &Diag) : Diag(Diag) {}
 
   DataReader(std::unique_ptr<MemoryBuffer> MemBuf, raw_ostream &Diag)
-      : FileBuf(std::move(MemBuf)), Diag(Diag), ParsingBuf(FileBuf->getBuffer()),
-        Line(0), Col(0) {}
+      : FileBuf(std::move(MemBuf)), Diag(Diag),
+        ParsingBuf(FileBuf->getBuffer()), Line(0), Col(0) {}
 
   static ErrorOr<std::unique_ptr<DataReader>> readPerfData(StringRef Path,
                                                            raw_ostream &Diag);
@@ -187,8 +218,15 @@ public:
   /// offset d.
   std::error_code parse();
 
-  ErrorOr<const FuncBranchData &> getFuncBranchData(
-      const std::vector<std::string> &FuncNames) const;
+  /// Return branch data matching one of the names in \p FuncNames.
+  const FuncBranchData *
+  getFuncBranchData(const std::vector<std::string> &FuncNames) const;
+
+  /// Return a vector of all FuncBranchData matching the list of names.
+  /// Internally use fuzzy matching to match special names like LTO-generated
+  /// function names.
+  std::vector<const FuncBranchData *>
+  getFuncBranchDataRegex(const std::vector<std::string> &FuncNames) const;
 
   using FuncsMapType = StringMap<FuncBranchData>;
 
@@ -199,7 +237,6 @@ public:
   /// Return true if profile contains an entry for a local function
   /// that has a non-empty associated file name.
   bool hasLocalsWithFileName() const;
-
 
   /// Dumps the entire data structures parsed. Used for debugging.
   void dump() const;
@@ -216,7 +253,10 @@ private:
   ErrorOr<BranchInfo> parseBranchInfo();
   bool hasData();
 
-  // An in-memory copy of the input data file - owns strings used in reader
+  /// Build suffix map once the profile data is parsed.
+  void buildLTONameMap();
+
+  /// An in-memory copy of the input data file - owns strings used in reader.
   std::unique_ptr<MemoryBuffer> FileBuf;
   raw_ostream &Diag;
   StringRef ParsingBuf;
@@ -224,9 +264,10 @@ private:
   unsigned Col;
   FuncsMapType FuncsMap;
   static const char FieldSeparator = ' ';
+
+  /// Map of common LTO names to possible matching profiles.
+  StringMap<std::vector<const FuncBranchData *>> LTOCommonNameMap;
 };
-
-
 
 }
 }
