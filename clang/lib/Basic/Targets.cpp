@@ -4899,7 +4899,7 @@ public:
     case CC_Swift:
     case CC_X86VectorCall:
     case CC_IntelOclBicc:
-    case CC_X86_64Win64:
+    case CC_Win64:
     case CC_PreserveMost:
     case CC_PreserveAll:
     case CC_X86RegCall:
@@ -6290,6 +6290,9 @@ public:
     LongDoubleWidth = LongDoubleAlign = SuitableAlign = 128;
     LongDoubleFormat = &llvm::APFloat::IEEEquad();
 
+    // Make __builtin_ms_va_list available.
+    HasBuiltinMSVaList = true;
+
     // {} in inline assembly are neon specifiers, not assembly variant
     // specifiers.
     NoAsmVariants = true;
@@ -6473,6 +6476,7 @@ public:
     case CC_PreserveMost:
     case CC_PreserveAll:
     case CC_OpenCLKernel:
+    case CC_Win64:
       return CCCR_OK;
     default:
       return CCCR_Warning;

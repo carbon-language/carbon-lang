@@ -760,6 +760,7 @@ Sema::CheckBuiltinFunctionCall(FunctionDecl *FDecl, unsigned BuiltinID,
     if (CheckObjCString(TheCall->getArg(0)))
       return ExprError();
     break;
+  case Builtin::BI__builtin_ms_va_start:
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
     if (SemaBuiltinVAStart(BuiltinID, TheCall))
@@ -2101,9 +2102,6 @@ bool Sema::CheckX86BuiltinGatherScatterScale(unsigned BuiltinID,
 bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   if (BuiltinID == X86::BI__builtin_cpu_supports)
     return SemaBuiltinCpuSupports(*this, TheCall);
-
-  if (BuiltinID == X86::BI__builtin_ms_va_start)
-    return SemaBuiltinVAStart(BuiltinID, TheCall);
 
   // If the intrinsic has rounding or SAE make sure its valid.
   if (CheckX86BuiltinRoundingOrSAE(BuiltinID, TheCall))
@@ -3629,24 +3627,25 @@ ExprResult Sema::CheckOSLogFormatStringArg(Expr *Arg) {
 static bool checkVAStartABI(Sema &S, unsigned BuiltinID, Expr *Fn) {
   const llvm::Triple &TT = S.Context.getTargetInfo().getTriple();
   bool IsX64 = TT.getArch() == llvm::Triple::x86_64;
+  bool IsAArch64 = TT.getArch() == llvm::Triple::aarch64;
   bool IsWindows = TT.isOSWindows();
-  bool IsMSVAStart = BuiltinID == X86::BI__builtin_ms_va_start;
-  if (IsX64) {
+  bool IsMSVAStart = BuiltinID == Builtin::BI__builtin_ms_va_start;
+  if (IsX64 || IsAArch64) {
     clang::CallingConv CC = CC_C;
     if (const FunctionDecl *FD = S.getCurFunctionDecl())
       CC = FD->getType()->getAs<FunctionType>()->getCallConv();
     if (IsMSVAStart) {
       // Don't allow this in System V ABI functions.
-      if (CC == CC_X86_64SysV || (!IsWindows && CC != CC_X86_64Win64))
+      if (CC == CC_X86_64SysV || (!IsWindows && CC != CC_Win64))
         return S.Diag(Fn->getLocStart(),
                       diag::err_ms_va_start_used_in_sysv_function);
     } else {
-      // On x86-64 Unix, don't allow this in Win64 ABI functions.
+      // On x86-64/AArch64 Unix, don't allow this in Win64 ABI functions.
       // On x64 Windows, don't allow this in System V ABI functions.
       // (Yes, that means there's no corresponding way to support variadic
       // System V ABI functions on Windows.)
       if ((IsWindows && CC == CC_X86_64SysV) ||
-          (!IsWindows && CC == CC_X86_64Win64))
+          (!IsWindows && CC == CC_Win64))
         return S.Diag(Fn->getLocStart(),
                       diag::err_va_start_used_in_wrong_abi_function)
                << !IsWindows;
@@ -3655,7 +3654,7 @@ static bool checkVAStartABI(Sema &S, unsigned BuiltinID, Expr *Fn) {
   }
 
   if (IsMSVAStart)
-    return S.Diag(Fn->getLocStart(), diag::err_x86_builtin_64_only);
+    return S.Diag(Fn->getLocStart(), diag::err_builtin_x64_aarch64_only);
   return false;
 }
 

@@ -2795,6 +2795,33 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       Arg1 = Builder.CreateTruncOrBitCast(Arg1, PTy1);
     return RValue::get(Builder.CreateCall(F, {Arg0Val, Arg1}));
   }
+
+  case Builtin::BI__builtin_ms_va_start:
+  case Builtin::BI__builtin_ms_va_end:
+    return RValue::get(
+        EmitVAStartEnd(EmitMSVAListRef(E->getArg(0)).getPointer(),
+                       BuiltinID == Builtin::BI__builtin_ms_va_start));
+
+  case Builtin::BI__builtin_ms_va_copy: {
+    // Lower this manually. We can't reliably determine whether or not any
+    // given va_copy() is for a Win64 va_list from the calling convention
+    // alone, because it's legal to do this from a System V ABI function.
+    // With opaque pointer types, we won't have enough information in LLVM
+    // IR to determine this from the argument types, either. Best to do it
+    // now, while we have enough information.
+    Address DestAddr = EmitMSVAListRef(E->getArg(0));
+    Address SrcAddr = EmitMSVAListRef(E->getArg(1));
+
+    llvm::Type *BPP = Int8PtrPtrTy;
+
+    DestAddr = Address(Builder.CreateBitCast(DestAddr.getPointer(), BPP, "cp"),
+                       DestAddr.getAlignment());
+    SrcAddr = Address(Builder.CreateBitCast(SrcAddr.getPointer(), BPP, "ap"),
+                      SrcAddr.getAlignment());
+
+    Value *ArgPtr = Builder.CreateLoad(SrcAddr, "ap.val");
+    return RValue::get(Builder.CreateStore(ArgPtr, DestAddr));
+  }
   }
 
   // If this is an alias for a lib function (e.g. __builtin_sin), emit
@@ -7223,31 +7250,6 @@ static Value *EmitX86SExtMask(CodeGenFunction &CGF, Value *Op,
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
-  if (BuiltinID == X86::BI__builtin_ms_va_start ||
-      BuiltinID == X86::BI__builtin_ms_va_end)
-    return EmitVAStartEnd(EmitMSVAListRef(E->getArg(0)).getPointer(),
-                          BuiltinID == X86::BI__builtin_ms_va_start);
-  if (BuiltinID == X86::BI__builtin_ms_va_copy) {
-    // Lower this manually. We can't reliably determine whether or not any
-    // given va_copy() is for a Win64 va_list from the calling convention
-    // alone, because it's legal to do this from a System V ABI function.
-    // With opaque pointer types, we won't have enough information in LLVM
-    // IR to determine this from the argument types, either. Best to do it
-    // now, while we have enough information.
-    Address DestAddr = EmitMSVAListRef(E->getArg(0));
-    Address SrcAddr = EmitMSVAListRef(E->getArg(1));
-
-    llvm::Type *BPP = Int8PtrPtrTy;
-
-    DestAddr = Address(Builder.CreateBitCast(DestAddr.getPointer(), BPP, "cp"),
-                       DestAddr.getAlignment());
-    SrcAddr = Address(Builder.CreateBitCast(SrcAddr.getPointer(), BPP, "ap"),
-                      SrcAddr.getAlignment());
-
-    Value *ArgPtr = Builder.CreateLoad(SrcAddr, "ap.val");
-    return Builder.CreateStore(ArgPtr, DestAddr);
-  }
-
   SmallVector<Value*, 4> Ops;
 
   // Find out if any arguments are required to be integer constant expressions.
