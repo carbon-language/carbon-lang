@@ -82,12 +82,19 @@ int main(int argc, const char **argv) {
 
   CvtResOptTable T;
   unsigned MAI, MAC;
-  ArrayRef<const char *> ArgsArr = makeArrayRef(argv + 1, argc);
+  ArrayRef<const char *> ArgsArr = makeArrayRef(argv, argc);
   opt::InputArgList InputArgs = T.ParseArgs(ArgsArr, MAI, MAC);
 
+  for (int i = 0; i < argc; i++ ) {
+    errs() << argv[i] << "\n";
+  }
+
   for (auto &Arg : InputArgs) {
+    errs() << "found option: " << Arg->getOption().getName() << "\n";
     if (Arg->getOption().matches(OPT_unsupported)) {
       outs() << "llvm-mt: ignoring unsupported '" << Arg->getOption().getName()
+             << "' option\n";
+      errs() << "llvm-mt: ignoring unsupported '" << Arg->getOption().getName()
              << "' option\n";
     }
   }
