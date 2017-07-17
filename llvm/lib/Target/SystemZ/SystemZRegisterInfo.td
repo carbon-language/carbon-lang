@@ -272,7 +272,8 @@ class TypedReg<ValueType vtin, RegisterOperand opin> {
   RegisterOperand op = opin;
 }
 
-def v32eb   : TypedReg<f32,     VR32>;
+def v32f    : TypedReg<i32,     VR32>;
+def v32sb   : TypedReg<f32,     VR32>;
 def v64g    : TypedReg<i64,     VR64>;
 def v64db   : TypedReg<f64,     VR64>;
 def v128b   : TypedReg<v16i8,   VR128>;
@@ -280,7 +281,7 @@ def v128h   : TypedReg<v8i16,   VR128>;
 def v128f   : TypedReg<v4i32,   VR128>;
 def v128g   : TypedReg<v2i64,   VR128>;
 def v128q   : TypedReg<v16i8,   VR128>;
-def v128eb  : TypedReg<v4f32,   VR128>;
+def v128sb  : TypedReg<v4f32,   VR128>;
 def v128db  : TypedReg<v2f64,   VR128>;
 def v128any : TypedReg<untyped, VR128>;
 

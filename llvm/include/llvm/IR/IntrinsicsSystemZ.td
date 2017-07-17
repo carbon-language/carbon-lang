@@ -389,6 +389,22 @@ let TargetPrefix = "s390" in {
   def int_s390_vfmindb : Intrinsic<[llvm_v2f64_ty],
                                    [llvm_v2f64_ty, llvm_v2f64_ty, llvm_i32_ty],
                                    [IntrNoMem]>;
+  def int_s390_vfmaxsb : Intrinsic<[llvm_v4f32_ty],
+                                   [llvm_v4f32_ty, llvm_v4f32_ty, llvm_i32_ty],
+                                   [IntrNoMem]>;
+  def int_s390_vfminsb : Intrinsic<[llvm_v4f32_ty],
+                                   [llvm_v4f32_ty, llvm_v4f32_ty, llvm_i32_ty],
+                                   [IntrNoMem]>;
+
+  def int_s390_vfcesbs  : SystemZBinaryConvCC<llvm_v4i32_ty, llvm_v4f32_ty>;
+  def int_s390_vfchsbs  : SystemZBinaryConvCC<llvm_v4i32_ty, llvm_v4f32_ty>;
+  def int_s390_vfchesbs : SystemZBinaryConvCC<llvm_v4i32_ty, llvm_v4f32_ty>;
+
+  def int_s390_vftcisb : SystemZBinaryConvIntCC<llvm_v4i32_ty, llvm_v4f32_ty>;
+
+  def int_s390_vfisb : Intrinsic<[llvm_v4f32_ty],
+                                 [llvm_v4f32_ty, llvm_i32_ty, llvm_i32_ty],
+                                 [IntrNoMem]>;
 
   // Instructions from the Vector Packed Decimal Facility
   def int_s390_vlrl : GCCBuiltin<"__builtin_s390_vlrl">,

@@ -419,6 +419,21 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
 
   // The vector enhancements facility 1 has instructions for these.
   if (Subtarget.hasVectorEnhancements1()) {
+    setOperationAction(ISD::FADD, MVT::v4f32, Legal);
+    setOperationAction(ISD::FNEG, MVT::v4f32, Legal);
+    setOperationAction(ISD::FSUB, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMUL, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMA, MVT::v4f32, Legal);
+    setOperationAction(ISD::FDIV, MVT::v4f32, Legal);
+    setOperationAction(ISD::FABS, MVT::v4f32, Legal);
+    setOperationAction(ISD::FSQRT, MVT::v4f32, Legal);
+    setOperationAction(ISD::FRINT, MVT::v4f32, Legal);
+    setOperationAction(ISD::FNEARBYINT, MVT::v4f32, Legal);
+    setOperationAction(ISD::FFLOOR, MVT::v4f32, Legal);
+    setOperationAction(ISD::FCEIL, MVT::v4f32, Legal);
+    setOperationAction(ISD::FTRUNC, MVT::v4f32, Legal);
+    setOperationAction(ISD::FROUND, MVT::v4f32, Legal);
+
     setOperationAction(ISD::FMAXNUM, MVT::f64, Legal);
     setOperationAction(ISD::FMAXNAN, MVT::f64, Legal);
     setOperationAction(ISD::FMINNUM, MVT::f64, Legal);
@@ -428,6 +443,16 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FMAXNAN, MVT::v2f64, Legal);
     setOperationAction(ISD::FMINNUM, MVT::v2f64, Legal);
     setOperationAction(ISD::FMINNAN, MVT::v2f64, Legal);
+
+    setOperationAction(ISD::FMAXNUM, MVT::f32, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::f32, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::f32, Legal);
+    setOperationAction(ISD::FMINNAN, MVT::f32, Legal);
+
+    setOperationAction(ISD::FMAXNUM, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::v4f32, Legal);
+    setOperationAction(ISD::FMINNAN, MVT::v4f32, Legal);
   }
 
   // We have fused multiply-addition for f32 and f64 but not f128.
@@ -1478,21 +1503,25 @@ static bool isIntrinsicWithCC(SDValue Op, unsigned &Opcode, unsigned &CCValid) {
     return true;
 
   case Intrinsic::s390_vfcedbs:
+  case Intrinsic::s390_vfcesbs:
     Opcode = SystemZISD::VFCMPES;
     CCValid = SystemZ::CCMASK_VCMP;
     return true;
 
   case Intrinsic::s390_vfchdbs:
+  case Intrinsic::s390_vfchsbs:
     Opcode = SystemZISD::VFCMPHS;
     CCValid = SystemZ::CCMASK_VCMP;
     return true;
 
   case Intrinsic::s390_vfchedbs:
+  case Intrinsic::s390_vfchesbs:
     Opcode = SystemZISD::VFCMPHES;
     CCValid = SystemZ::CCMASK_VCMP;
     return true;
 
   case Intrinsic::s390_vftcidb:
+  case Intrinsic::s390_vftcisb:
     Opcode = SystemZISD::VFTCI;
     CCValid = SystemZ::CCMASK_VCMP;
     return true;
@@ -2332,11 +2361,15 @@ static SDValue expandV4F32ToV2F64(SelectionDAG &DAG, int Start, const SDLoc &DL,
 
 // Build a comparison of vectors CmpOp0 and CmpOp1 using opcode Opcode,
 // producing a result of type VT.
-static SDValue getVectorCmp(SelectionDAG &DAG, unsigned Opcode, const SDLoc &DL,
-                            EVT VT, SDValue CmpOp0, SDValue CmpOp1) {
-  // There is no hardware support for v4f32, so extend the vector into
-  // two v2f64s and compare those.
-  if (CmpOp0.getValueType() == MVT::v4f32) {
+SDValue SystemZTargetLowering::getVectorCmp(SelectionDAG &DAG, unsigned Opcode,
+                                            const SDLoc &DL, EVT VT,
+                                            SDValue CmpOp0,
+                                            SDValue CmpOp1) const {
+  // There is no hardware support for v4f32 (unless we have the vector
+  // enhancements facility 1), so extend the vector into two v2f64s
+  // and compare those.
+  if (CmpOp0.getValueType() == MVT::v4f32 &&
+      !Subtarget.hasVectorEnhancements1()) {
     SDValue H0 = expandV4F32ToV2F64(DAG, 0, DL, CmpOp0);
     SDValue L0 = expandV4F32ToV2F64(DAG, 2, DL, CmpOp0);
     SDValue H1 = expandV4F32ToV2F64(DAG, 0, DL, CmpOp1);
@@ -2350,9 +2383,11 @@ static SDValue getVectorCmp(SelectionDAG &DAG, unsigned Opcode, const SDLoc &DL,
 
 // Lower a vector comparison of type CC between CmpOp0 and CmpOp1, producing
 // an integer mask of type VT.
-static SDValue lowerVectorSETCC(SelectionDAG &DAG, const SDLoc &DL, EVT VT,
-                                ISD::CondCode CC, SDValue CmpOp0,
-                                SDValue CmpOp1) {
+SDValue SystemZTargetLowering::lowerVectorSETCC(SelectionDAG &DAG,
+                                                const SDLoc &DL, EVT VT,
+                                                ISD::CondCode CC,
+                                                SDValue CmpOp0,
+                                                SDValue CmpOp1) const {
   bool IsFP = CmpOp0.getValueType().isFloatingPoint();
   bool Invert = false;
   SDValue Cmp;

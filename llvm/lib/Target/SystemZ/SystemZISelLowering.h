@@ -480,6 +480,12 @@ private:
   const SystemZSubtarget &Subtarget;
 
   // Implement LowerOperation for individual opcodes.
+  SDValue getVectorCmp(SelectionDAG &DAG, unsigned Opcode,
+                       const SDLoc &DL, EVT VT,
+                       SDValue CmpOp0, SDValue CmpOp1) const;
+  SDValue lowerVectorSETCC(SelectionDAG &DAG, const SDLoc &DL,
+                           EVT VT, ISD::CondCode CC,
+                           SDValue CmpOp0, SDValue CmpOp1) const;
   SDValue lowerSETCC(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue lowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;

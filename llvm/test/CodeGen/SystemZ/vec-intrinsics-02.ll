@@ -6,8 +6,17 @@ declare <2 x i64> @llvm.s390.vbperm(<16 x i8>, <16 x i8>)
 declare <16 x i8> @llvm.s390.vmslg(<2 x i64>, <2 x i64>, <16 x i8>, i32)
 declare <16 x i8> @llvm.s390.vlrl(i32, i8 *)
 declare void @llvm.s390.vstrl(<16 x i8>, i32, i8 *)
+
+declare {<4 x i32>, i32} @llvm.s390.vfcesbs(<4 x float>, <4 x float>)
+declare {<4 x i32>, i32} @llvm.s390.vfchsbs(<4 x float>, <4 x float>)
+declare {<4 x i32>, i32} @llvm.s390.vfchesbs(<4 x float>, <4 x float>)
+declare {<4 x i32>, i32} @llvm.s390.vftcisb(<4 x float>, i32)
+declare <4 x float> @llvm.s390.vfisb(<4 x float>, i32, i32)
+
 declare <2 x double> @llvm.s390.vfmaxdb(<2 x double>, <2 x double>, i32)
 declare <2 x double> @llvm.s390.vfmindb(<2 x double>, <2 x double>, i32)
+declare <4 x float> @llvm.s390.vfmaxsb(<4 x float>, <4 x float>, i32)
+declare <4 x float> @llvm.s390.vfminsb(<4 x float>, <4 x float>, i32)
 
 ; VBPERM.
 define <2 x i64> @test_vbperm(<16 x i8> %a, <16 x i8> %b) {
@@ -192,6 +201,208 @@ define void @test_vstrl4(<16 x i8> %vec, i8 *%base, i64 %index) {
   ret void
 }
 
+; VFCESBS with no processing of the result.
+define i32 @test_vfcesbs(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfcesbs:
+; CHECK: vfcesbs {{%v[0-9]+}}, %v24, %v26
+; CHECK: ipm %r2
+; CHECK: srl %r2, 28
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfcesbs(<4 x float> %a,
+                                                   <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  ret i32 %res
+}
+
+; VFCESBS, returning 1 if any elements are equal (CC != 3).
+define i32 @test_vfcesbs_any_bool(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfcesbs_any_bool:
+; CHECK: vfcesbs {{%v[0-9]+}}, %v24, %v26
+; CHECK: ipm %r2
+; CHECK: afi %r2, -536870912
+; CHECK: srl %r2, 31
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfcesbs(<4 x float> %a,
+                                                   <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  %cmp = icmp ne i32 %res, 3
+  %ext = zext i1 %cmp to i32
+  ret i32 %ext
+}
+
+; VFCESBS, storing to %ptr if any elements are equal.
+define <4 x i32> @test_vfcesbs_any_store(<4 x float> %a, <4 x float> %b,
+                                         i32 *%ptr) {
+; CHECK-LABEL: test_vfcesbs_any_store:
+; CHECK-NOT: %r
+; CHECK: vfcesbs %v24, %v24, %v26
+; CHECK-NEXT: {{bor|bnler}} %r14
+; CHECK: mvhi 0(%r2), 0
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfcesbs(<4 x float> %a,
+                                                   <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 0
+  %cc = extractvalue {<4 x i32>, i32} %call, 1
+  %cmp = icmp ule i32 %cc, 2
+  br i1 %cmp, label %store, label %exit
+
+store:
+  store i32 0, i32 *%ptr
+  br label %exit
+
+exit:
+  ret <4 x i32> %res
+}
+
+; VFCHSBS with no processing of the result.
+define i32 @test_vfchsbs(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfchsbs:
+; CHECK: vfchsbs {{%v[0-9]+}}, %v24, %v26
+; CHECK: ipm %r2
+; CHECK: srl %r2, 28
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfchsbs(<4 x float> %a,
+                                                   <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  ret i32 %res
+}
+
+; VFCHSBS, returning 1 if not all elements are higher.
+define i32 @test_vfchsbs_notall_bool(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfchsbs_notall_bool:
+; CHECK: vfchsbs {{%v[0-9]+}}, %v24, %v26
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: risblg %r2, [[REG]], 31, 159, 36
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfchsbs(<4 x float> %a,
+                                                   <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  %cmp = icmp sge i32 %res, 1
+  %ext = zext i1 %cmp to i32
+  ret i32 %ext
+}
+
+; VFCHSBS, storing to %ptr if not all elements are higher.
+define <4 x i32> @test_vfchsbs_notall_store(<4 x float> %a, <4 x float> %b,
+                                            i32 *%ptr) {
+; CHECK-LABEL: test_vfchsbs_notall_store:
+; CHECK-NOT: %r
+; CHECK: vfchsbs %v24, %v24, %v26
+; CHECK-NEXT: {{bher|ber}} %r14
+; CHECK: mvhi 0(%r2), 0
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfchsbs(<4 x float> %a,
+                                                   <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 0
+  %cc = extractvalue {<4 x i32>, i32} %call, 1
+  %cmp = icmp ugt i32 %cc, 0
+  br i1 %cmp, label %store, label %exit
+
+store:
+  store i32 0, i32 *%ptr
+  br label %exit
+
+exit:
+  ret <4 x i32> %res
+}
+
+; VFCHESBS with no processing of the result.
+define i32 @test_vfchesbs(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfchesbs:
+; CHECK: vfchesbs {{%v[0-9]+}}, %v24, %v26
+; CHECK: ipm %r2
+; CHECK: srl %r2, 28
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfchesbs(<4 x float> %a,
+						    <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  ret i32 %res
+}
+
+; VFCHESBS, returning 1 if neither element is higher or equal.
+define i32 @test_vfchesbs_none_bool(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfchesbs_none_bool:
+; CHECK: vfchesbs {{%v[0-9]+}}, %v24, %v26
+; CHECK: ipm [[REG:%r[0-5]]]
+; CHECK: risblg %r2, [[REG]], 31, 159, 35
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfchesbs(<4 x float> %a,
+						    <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  %cmp = icmp eq i32 %res, 3
+  %ext = zext i1 %cmp to i32
+  ret i32 %ext
+}
+
+; VFCHESBS, storing to %ptr if neither element is higher or equal.
+define <4 x i32> @test_vfchesbs_none_store(<4 x float> %a, <4 x float> %b,
+                                           i32 *%ptr) {
+; CHECK-LABEL: test_vfchesbs_none_store:
+; CHECK-NOT: %r
+; CHECK: vfchesbs %v24, %v24, %v26
+; CHECK-NEXT: {{bnor|bler}} %r14
+; CHECK: mvhi 0(%r2), 0
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vfchesbs(<4 x float> %a,
+						    <4 x float> %b)
+  %res = extractvalue {<4 x i32>, i32} %call, 0
+  %cc = extractvalue {<4 x i32>, i32} %call, 1
+  %cmp = icmp uge i32 %cc, 3
+  br i1 %cmp, label %store, label %exit
+
+store:
+  store i32 0, i32 *%ptr
+  br label %exit
+
+exit:
+  ret <4 x i32> %res
+}
+
+; VFTCISB with the lowest useful class selector and no processing of the result.
+define i32 @test_vftcisb(<4 x float> %a) {
+; CHECK-LABEL: test_vftcisb:
+; CHECK: vftcisb {{%v[0-9]+}}, %v24, 1
+; CHECK: ipm %r2
+; CHECK: srl %r2, 28
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vftcisb(<4 x float> %a, i32 1)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  ret i32 %res
+}
+
+; VFTCISB with the highest useful class selector, returning 1 if all elements
+; have the right class (CC == 0).
+define i32 @test_vftcisb_all_bool(<4 x float> %a) {
+; CHECK-LABEL: test_vftcisb_all_bool:
+; CHECK: vftcisb {{%v[0-9]+}}, %v24, 4094
+; CHECK: afi %r2, -268435456
+; CHECK: srl %r2, 31
+; CHECK: br %r14
+  %call = call {<4 x i32>, i32} @llvm.s390.vftcisb(<4 x float> %a, i32 4094)
+  %res = extractvalue {<4 x i32>, i32} %call, 1
+  %cmp = icmp eq i32 %res, 0
+  %ext = zext i1 %cmp to i32
+  ret i32 %ext
+}
+
+; VFISB with a rounding mode not usable via standard intrinsics.
+define <4 x float> @test_vfisb_0_4(<4 x float> %a) {
+; CHECK-LABEL: test_vfisb_0_4:
+; CHECK: vfisb %v24, %v24, 0, 4
+; CHECK: br %r14
+  %res = call <4 x float> @llvm.s390.vfisb(<4 x float> %a, i32 0, i32 4)
+  ret <4 x float> %res
+}
+
+; VFISB with IEEE-inexact exception suppressed.
+define <4 x float> @test_vfisb_4_0(<4 x float> %a) {
+; CHECK-LABEL: test_vfisb_4_0:
+; CHECK: vfisb %v24, %v24, 4, 0
+; CHECK: br %r14
+  %res = call <4 x float> @llvm.s390.vfisb(<4 x float> %a, i32 4, i32 0)
+  ret <4 x float> %res
+}
+
 ; VFMAXDB.
 define <2 x double> @test_vfmaxdb(<2 x double> %a, <2 x double> %b) {
 ; CHECK-LABEL: test_vfmaxdb:
@@ -208,5 +419,23 @@ define <2 x double> @test_vfmindb(<2 x double> %a, <2 x double> %b) {
 ; CHECK: br %r14
   %res = call <2 x double> @llvm.s390.vfmindb(<2 x double> %a, <2 x double> %b, i32 4)
   ret <2 x double> %res
+}
+
+; VFMAXSB.
+define <4 x float> @test_vfmaxsb(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfmaxsb:
+; CHECK: vfmaxsb %v24, %v24, %v26, 4
+; CHECK: br %r14
+  %res = call <4 x float> @llvm.s390.vfmaxsb(<4 x float> %a, <4 x float> %b, i32 4)
+  ret <4 x float> %res
+}
+
+; VFMINSB.
+define <4 x float> @test_vfminsb(<4 x float> %a, <4 x float> %b) {
+; CHECK-LABEL: test_vfminsb:
+; CHECK: vfminsb %v24, %v24, %v26, 4
+; CHECK: br %r14
+  %res = call <4 x float> @llvm.s390.vfminsb(<4 x float> %a, <4 x float> %b, i32 4)
+  ret <4 x float> %res
 }
 
