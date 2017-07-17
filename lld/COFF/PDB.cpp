@@ -507,7 +507,7 @@ void PDBLinker::initialize(const llvm::codeview::DebugInfo *DI) {
   auto &InfoBuilder = Builder.getInfoBuilder();
   InfoBuilder.setAge(DI ? DI->PDB70.Age : 0);
 
-  pdb::PDB_UniqueId uuid{};
+  GUID uuid{};
   if (DI)
     memcpy(&uuid, &DI->PDB70.Signature, sizeof(uuid));
   InfoBuilder.setGuid(uuid);

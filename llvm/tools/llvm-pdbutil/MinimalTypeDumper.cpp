@@ -395,8 +395,7 @@ Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR,
 
 Error MinimalTypeDumpVisitor::visitKnownRecord(CVType &CVR,
                                                TypeServer2Record &TS) {
-  P.formatLine("name = {0}, age = {1}, guid = {2}", TS.Name, TS.Age,
-               fmt_guid(TS.Guid));
+  P.formatLine("name = {0}, age = {1}, guid = {2}", TS.Name, TS.Age, TS.Guid);
   return Error::success();
 }
 
