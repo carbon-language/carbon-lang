@@ -7503,6 +7503,7 @@ public:
       .Cases("arch9", "z196", 9)
       .Cases("arch10", "zEC12", 10)
       .Cases("arch11", "z13", 11)
+      .Cases("arch12", "z14", 12)
       .Default(-1);
   }
   bool setCPU(const std::string &Name) override {
@@ -7519,6 +7520,8 @@ public:
       Features["transactional-execution"] = true;
     if (ISARevision >= 11)
       Features["vector"] = true;
+    if (ISARevision >= 12)
+      Features["vector-enhancements-1"] = true;
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
   }
 
@@ -7548,6 +7551,7 @@ public:
         .Case("arch9", ISARevision >= 9)
         .Case("arch10", ISARevision >= 10)
         .Case("arch11", ISARevision >= 11)
+        .Case("arch12", ISARevision >= 12)
         .Case("htm", HasTransactionalExecution)
         .Case("vx", HasVector)
         .Default(false);

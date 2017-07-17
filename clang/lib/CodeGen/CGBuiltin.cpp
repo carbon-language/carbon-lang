@@ -8790,12 +8790,14 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F, {X, Undef});
   }
 
+  case SystemZ::BI__builtin_s390_vfsqsb:
   case SystemZ::BI__builtin_s390_vfsqdb: {
     llvm::Type *ResultType = ConvertType(E->getType());
     Value *X = EmitScalarExpr(E->getArg(0));
     Function *F = CGM.getIntrinsic(Intrinsic::sqrt, ResultType);
     return Builder.CreateCall(F, X);
   }
+  case SystemZ::BI__builtin_s390_vfmasb:
   case SystemZ::BI__builtin_s390_vfmadb: {
     llvm::Type *ResultType = ConvertType(E->getType());
     Value *X = EmitScalarExpr(E->getArg(0));
@@ -8804,6 +8806,7 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Intrinsic::fma, ResultType);
     return Builder.CreateCall(F, {X, Y, Z});
   }
+  case SystemZ::BI__builtin_s390_vfmssb:
   case SystemZ::BI__builtin_s390_vfmsdb: {
     llvm::Type *ResultType = ConvertType(E->getType());
     Value *X = EmitScalarExpr(E->getArg(0));
@@ -8813,12 +8816,35 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Intrinsic::fma, ResultType);
     return Builder.CreateCall(F, {X, Y, Builder.CreateFSub(Zero, Z, "sub")});
   }
+  case SystemZ::BI__builtin_s390_vfnmasb:
+  case SystemZ::BI__builtin_s390_vfnmadb: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Y = EmitScalarExpr(E->getArg(1));
+    Value *Z = EmitScalarExpr(E->getArg(2));
+    Value *Zero = llvm::ConstantFP::getZeroValueForNegation(ResultType);
+    Function *F = CGM.getIntrinsic(Intrinsic::fma, ResultType);
+    return Builder.CreateFSub(Zero, Builder.CreateCall(F, {X, Y, Z}), "sub");
+  }
+  case SystemZ::BI__builtin_s390_vfnmssb:
+  case SystemZ::BI__builtin_s390_vfnmsdb: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Y = EmitScalarExpr(E->getArg(1));
+    Value *Z = EmitScalarExpr(E->getArg(2));
+    Value *Zero = llvm::ConstantFP::getZeroValueForNegation(ResultType);
+    Function *F = CGM.getIntrinsic(Intrinsic::fma, ResultType);
+    Value *NegZ = Builder.CreateFSub(Zero, Z, "sub");
+    return Builder.CreateFSub(Zero, Builder.CreateCall(F, {X, Y, NegZ}));
+  }
+  case SystemZ::BI__builtin_s390_vflpsb:
   case SystemZ::BI__builtin_s390_vflpdb: {
     llvm::Type *ResultType = ConvertType(E->getType());
     Value *X = EmitScalarExpr(E->getArg(0));
     Function *F = CGM.getIntrinsic(Intrinsic::fabs, ResultType);
     return Builder.CreateCall(F, X);
   }
+  case SystemZ::BI__builtin_s390_vflnsb:
   case SystemZ::BI__builtin_s390_vflndb: {
     llvm::Type *ResultType = ConvertType(E->getType());
     Value *X = EmitScalarExpr(E->getArg(0));
@@ -8826,6 +8852,7 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Intrinsic::fabs, ResultType);
     return Builder.CreateFSub(Zero, Builder.CreateCall(F, X), "sub");
   }
+  case SystemZ::BI__builtin_s390_vfisb:
   case SystemZ::BI__builtin_s390_vfidb: {
     llvm::Type *ResultType = ConvertType(E->getType());
     Value *X = EmitScalarExpr(E->getArg(0));
@@ -8835,8 +8862,8 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
     bool IsConstM5 = E->getArg(2)->isIntegerConstantExpr(M5, getContext());
     assert(IsConstM4 && IsConstM5 && "Constant arg isn't actually constant?");
     (void)IsConstM4; (void)IsConstM5;
-    // Check whether this instance of vfidb can be represented via a LLVM
-    // standard intrinsic.  We only support some combinations of M4 and M5.
+    // Check whether this instance can be represented via a LLVM standard
+    // intrinsic.  We only support some combinations of M4 and M5.
     Intrinsic::ID ID = Intrinsic::not_intrinsic;
     switch (M4.getZExtValue()) {
     default: break;
@@ -8861,10 +8888,75 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
       Function *F = CGM.getIntrinsic(ID, ResultType);
       return Builder.CreateCall(F, X);
     }
-    Function *F = CGM.getIntrinsic(Intrinsic::s390_vfidb);
+    switch (BuiltinID) {
+      case SystemZ::BI__builtin_s390_vfisb: ID = Intrinsic::s390_vfisb; break;
+      case SystemZ::BI__builtin_s390_vfidb: ID = Intrinsic::s390_vfidb; break;
+      default: llvm_unreachable("Unknown BuiltinID");
+    }
+    Function *F = CGM.getIntrinsic(ID);
     Value *M4Value = llvm::ConstantInt::get(getLLVMContext(), M4);
     Value *M5Value = llvm::ConstantInt::get(getLLVMContext(), M5);
     return Builder.CreateCall(F, {X, M4Value, M5Value});
+  }
+  case SystemZ::BI__builtin_s390_vfmaxsb:
+  case SystemZ::BI__builtin_s390_vfmaxdb: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Y = EmitScalarExpr(E->getArg(1));
+    // Constant-fold the M4 mask argument.
+    llvm::APSInt M4;
+    bool IsConstM4 = E->getArg(2)->isIntegerConstantExpr(M4, getContext());
+    assert(IsConstM4 && "Constant arg isn't actually constant?");
+    (void)IsConstM4;
+    // Check whether this instance can be represented via a LLVM standard
+    // intrinsic.  We only support some values of M4.
+    Intrinsic::ID ID = Intrinsic::not_intrinsic;
+    switch (M4.getZExtValue()) {
+    default: break;
+    case 4: ID = Intrinsic::maxnum; break;
+    }
+    if (ID != Intrinsic::not_intrinsic) {
+      Function *F = CGM.getIntrinsic(ID, ResultType);
+      return Builder.CreateCall(F, {X, Y});
+    }
+    switch (BuiltinID) {
+      case SystemZ::BI__builtin_s390_vfmaxsb: ID = Intrinsic::s390_vfmaxsb; break;
+      case SystemZ::BI__builtin_s390_vfmaxdb: ID = Intrinsic::s390_vfmaxdb; break;
+      default: llvm_unreachable("Unknown BuiltinID");
+    }
+    Function *F = CGM.getIntrinsic(ID);
+    Value *M4Value = llvm::ConstantInt::get(getLLVMContext(), M4);
+    return Builder.CreateCall(F, {X, Y, M4Value});
+  }
+  case SystemZ::BI__builtin_s390_vfminsb:
+  case SystemZ::BI__builtin_s390_vfmindb: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Y = EmitScalarExpr(E->getArg(1));
+    // Constant-fold the M4 mask argument.
+    llvm::APSInt M4;
+    bool IsConstM4 = E->getArg(2)->isIntegerConstantExpr(M4, getContext());
+    assert(IsConstM4 && "Constant arg isn't actually constant?");
+    (void)IsConstM4;
+    // Check whether this instance can be represented via a LLVM standard
+    // intrinsic.  We only support some values of M4.
+    Intrinsic::ID ID = Intrinsic::not_intrinsic;
+    switch (M4.getZExtValue()) {
+    default: break;
+    case 4: ID = Intrinsic::minnum; break;
+    }
+    if (ID != Intrinsic::not_intrinsic) {
+      Function *F = CGM.getIntrinsic(ID, ResultType);
+      return Builder.CreateCall(F, {X, Y});
+    }
+    switch (BuiltinID) {
+      case SystemZ::BI__builtin_s390_vfminsb: ID = Intrinsic::s390_vfminsb; break;
+      case SystemZ::BI__builtin_s390_vfmindb: ID = Intrinsic::s390_vfmindb; break;
+      default: llvm_unreachable("Unknown BuiltinID");
+    }
+    Function *F = CGM.getIntrinsic(ID);
+    Value *M4Value = llvm::ConstantInt::get(getLLVMContext(), M4);
+    return Builder.CreateCall(F, {X, Y, M4Value});
   }
 
   // Vector intrisincs that output the post-instruction CC value.
@@ -8932,10 +9024,14 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
   INTRINSIC_WITH_CC(s390_vstrczhs);
   INTRINSIC_WITH_CC(s390_vstrczfs);
 
+  INTRINSIC_WITH_CC(s390_vfcesbs);
   INTRINSIC_WITH_CC(s390_vfcedbs);
+  INTRINSIC_WITH_CC(s390_vfchsbs);
   INTRINSIC_WITH_CC(s390_vfchdbs);
+  INTRINSIC_WITH_CC(s390_vfchesbs);
   INTRINSIC_WITH_CC(s390_vfchedbs);
 
+  INTRINSIC_WITH_CC(s390_vftcisb);
   INTRINSIC_WITH_CC(s390_vftcidb);
 
 #undef INTRINSIC_WITH_CC

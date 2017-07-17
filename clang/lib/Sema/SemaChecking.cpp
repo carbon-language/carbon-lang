@@ -1739,9 +1739,11 @@ bool Sema::CheckSystemZBuiltinFunctionCall(unsigned BuiltinID,
   case SystemZ::BI__builtin_s390_vfaezbs:
   case SystemZ::BI__builtin_s390_vfaezhs:
   case SystemZ::BI__builtin_s390_vfaezfs: i = 2; l = 0; u = 15; break;
+  case SystemZ::BI__builtin_s390_vfisb:
   case SystemZ::BI__builtin_s390_vfidb:
     return SemaBuiltinConstantArgRange(TheCall, 1, 0, 15) ||
            SemaBuiltinConstantArgRange(TheCall, 2, 0, 15);
+  case SystemZ::BI__builtin_s390_vftcisb:
   case SystemZ::BI__builtin_s390_vftcidb: i = 1; l = 0; u = 4095; break;
   case SystemZ::BI__builtin_s390_vlbb: i = 1; l = 0; u = 15; break;
   case SystemZ::BI__builtin_s390_vpdi: i = 2; l = 0; u = 15; break;
@@ -1758,6 +1760,11 @@ bool Sema::CheckSystemZBuiltinFunctionCall(unsigned BuiltinID,
   case SystemZ::BI__builtin_s390_vstrczbs:
   case SystemZ::BI__builtin_s390_vstrczhs:
   case SystemZ::BI__builtin_s390_vstrczfs: i = 3; l = 0; u = 15; break;
+  case SystemZ::BI__builtin_s390_vmslg: i = 3; l = 0; u = 15; break;
+  case SystemZ::BI__builtin_s390_vfminsb:
+  case SystemZ::BI__builtin_s390_vfmaxsb:
+  case SystemZ::BI__builtin_s390_vfmindb:
+  case SystemZ::BI__builtin_s390_vfmaxdb: i = 2; l = 0; u = 15; break;
   }
   return SemaBuiltinConstantArgRange(TheCall, i, l, u);
 }
