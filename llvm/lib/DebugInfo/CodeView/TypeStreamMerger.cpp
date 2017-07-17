@@ -59,9 +59,8 @@ namespace {
 /// looking at the record kind.
 class TypeStreamMerger : public TypeVisitorCallbacks {
 public:
-  explicit TypeStreamMerger(SmallVectorImpl<TypeIndex> &SourceToDest,
-                            TypeServerHandler *Handler)
-      : Handler(Handler), IndexMap(SourceToDest) {
+  explicit TypeStreamMerger(SmallVectorImpl<TypeIndex> &SourceToDest)
+      : IndexMap(SourceToDest) {
     SourceToDest.clear();
   }
 
@@ -71,10 +70,10 @@ public:
   Error visitTypeEnd(CVType &Record) override;
 
   Error mergeTypesAndIds(TypeTableBuilder &DestIds, TypeTableBuilder &DestTypes,
-    const CVTypeArray &IdsAndTypes);
+                         const CVTypeArray &IdsAndTypes);
   Error mergeIdRecords(TypeTableBuilder &Dest,
                        ArrayRef<TypeIndex> TypeSourceToDest,
-    const CVTypeArray &Ids);
+                       const CVTypeArray &Ids);
   Error mergeTypeRecords(TypeTableBuilder &Dest, const CVTypeArray &Types);
 
 private:
@@ -153,7 +152,6 @@ private:
 
   TypeTableBuilder *DestIdStream = nullptr;
   TypeTableBuilder *DestTypeStream = nullptr;
-  TypeServerHandler *Handler = nullptr;
 
   // If we're only mapping id records, this array contains the mapping for
   // type records.
@@ -256,7 +254,7 @@ bool TypeStreamMerger::remapItemIndex(TypeIndex &Idx) {
 }
 
 Error TypeStreamMerger::mergeTypeRecords(TypeTableBuilder &Dest,
-  const CVTypeArray &Types) {
+                                         const CVTypeArray &Types) {
   DestTypeStream = &Dest;
 
   return doit(Types);
@@ -264,7 +262,7 @@ Error TypeStreamMerger::mergeTypeRecords(TypeTableBuilder &Dest,
 
 Error TypeStreamMerger::mergeIdRecords(TypeTableBuilder &Dest,
                                        ArrayRef<TypeIndex> TypeSourceToDest,
-  const CVTypeArray &Ids) {
+                                       const CVTypeArray &Ids) {
   DestIdStream = &Dest;
   TypeLookup = TypeSourceToDest;
 
@@ -288,7 +286,7 @@ Error TypeStreamMerger::doit(const CVTypeArray &Types) {
   // would buy us much since it's already pretty fast, but it's probably worth
   // a few cycles.
   if (auto EC =
-          codeview::visitTypeStream(Types, *this, VDS_BytesExternal, Handler))
+          codeview::visitTypeStream(Types, *this, VDS_BytesExternal))
     return EC;
 
   // If we found bad indices but no other errors, try doing another pass and see
@@ -305,7 +303,7 @@ Error TypeStreamMerger::doit(const CVTypeArray &Types) {
     CurIndex = TypeIndex(TypeIndex::FirstNonSimpleIndex);
 
     if (auto EC =
-            codeview::visitTypeStream(Types, *this, VDS_BytesExternal, Handler))
+            codeview::visitTypeStream(Types, *this, VDS_BytesExternal))
       return EC;
 
     assert(NumBadIndices <= BadIndicesRemaining &&
@@ -323,24 +321,22 @@ Error TypeStreamMerger::doit(const CVTypeArray &Types) {
 
 Error llvm::codeview::mergeTypeRecords(TypeTableBuilder &Dest,
                                        SmallVectorImpl<TypeIndex> &SourceToDest,
-                                       TypeServerHandler *Handler,
-  const CVTypeArray &Types) {
-  TypeStreamMerger M(SourceToDest, Handler);
+                                       const CVTypeArray &Types) {
+  TypeStreamMerger M(SourceToDest);
   return M.mergeTypeRecords(Dest, Types);
 }
 
 Error llvm::codeview::mergeIdRecords(TypeTableBuilder &Dest,
                                      ArrayRef<TypeIndex> TypeSourceToDest,
                                      SmallVectorImpl<TypeIndex> &SourceToDest,
-  const CVTypeArray &Ids) {
-  TypeStreamMerger M(SourceToDest, nullptr);
+                                     const CVTypeArray &Ids) {
+  TypeStreamMerger M(SourceToDest);
   return M.mergeIdRecords(Dest, TypeSourceToDest, Ids);
 }
 
 Error llvm::codeview::mergeTypeAndIdRecords(
     TypeTableBuilder &DestIds, TypeTableBuilder &DestTypes,
-    SmallVectorImpl<TypeIndex> &SourceToDest, TypeServerHandler *Handler,
-    const CVTypeArray &IdsAndTypes) {
-  TypeStreamMerger M(SourceToDest, Handler);
+    SmallVectorImpl<TypeIndex> &SourceToDest, const CVTypeArray &IdsAndTypes) {
+  TypeStreamMerger M(SourceToDest);
   return M.mergeTypesAndIds(DestIds, DestTypes, IdsAndTypes);
 }
