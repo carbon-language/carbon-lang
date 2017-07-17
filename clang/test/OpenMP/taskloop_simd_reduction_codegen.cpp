@@ -190,7 +190,7 @@ sum = 0.0;
 // CHECK: ret void
 
 // CHECK: define internal void [[RED_COMB1]](i8*, i8*)
-// CHECK: fadd float %6, %7
+// CHECK: fadd float %
 // CHECK: store float %{{.+}}, float* %
 // CHECK: ret void
 
