@@ -88,6 +88,7 @@ enum NodeType : unsigned {
 
   // Wrappers around the ISD opcodes of the same name.  The output is GR128.
   // Input operands may be GR64 or GR32, depending on the instruction.
+  SMUL_LOHI,
   UMUL_LOHI,
   SDIVREM,
   UDIVREM,

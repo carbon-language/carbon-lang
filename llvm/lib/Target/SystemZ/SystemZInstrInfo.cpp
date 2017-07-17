@@ -1434,6 +1434,7 @@ SystemZII::Branch
 SystemZInstrInfo::getBranchInfo(const MachineInstr &MI) const {
   switch (MI.getOpcode()) {
   case SystemZ::BR:
+  case SystemZ::BI:
   case SystemZ::J:
   case SystemZ::JG:
     return SystemZII::Branch(SystemZII::BranchNormal, SystemZ::CCMASK_ANY,

@@ -316,7 +316,10 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
       setOperationAction(ISD::AND, VT, Legal);
       setOperationAction(ISD::OR, VT, Legal);
       setOperationAction(ISD::XOR, VT, Legal);
-      setOperationAction(ISD::CTPOP, VT, Custom);
+      if (Subtarget.hasVectorEnhancements1())
+        setOperationAction(ISD::CTPOP, VT, Legal);
+      else
+        setOperationAction(ISD::CTPOP, VT, Custom);
       setOperationAction(ISD::CTTZ, VT, Legal);
       setOperationAction(ISD::CTLZ, VT, Legal);
 
@@ -412,6 +415,19 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FCEIL, MVT::v2f64, Legal);
     setOperationAction(ISD::FTRUNC, MVT::v2f64, Legal);
     setOperationAction(ISD::FROUND, MVT::v2f64, Legal);
+  }
+
+  // The vector enhancements facility 1 has instructions for these.
+  if (Subtarget.hasVectorEnhancements1()) {
+    setOperationAction(ISD::FMAXNUM, MVT::f64, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::f64, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::f64, Legal);
+    setOperationAction(ISD::FMINNAN, MVT::f64, Legal);
+
+    setOperationAction(ISD::FMAXNUM, MVT::v2f64, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::v2f64, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::v2f64, Legal);
+    setOperationAction(ISD::FMINNAN, MVT::v2f64, Legal);
   }
 
   // We have fused multiply-addition for f32 and f64 but not f128.
@@ -2960,6 +2976,12 @@ SDValue SystemZTargetLowering::lowerSMUL_LOHI(SDValue Op,
     // We define this so that it can be used for constant division.
     lowerMUL_LOHI32(DAG, DL, ISD::SIGN_EXTEND, Op.getOperand(0),
                     Op.getOperand(1), Ops[1], Ops[0]);
+  else if (Subtarget.hasMiscellaneousExtensions2())
+    // SystemZISD::SMUL_LOHI returns the low result in the odd register and
+    // the high result in the even register.  ISD::SMUL_LOHI is defined to
+    // return the low half first, so the results are in reverse order.
+    lowerGR128Binary(DAG, DL, VT, SystemZISD::SMUL_LOHI,
+                     Op.getOperand(0), Op.getOperand(1), Ops[1], Ops[0]);
   else {
     // Do a full 128-bit multiplication based on SystemZISD::UMUL_LOHI:
     //
@@ -4658,6 +4680,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(SELECT_CCMASK);
     OPCODE(ADJDYNALLOC);
     OPCODE(POPCNT);
+    OPCODE(SMUL_LOHI);
     OPCODE(UMUL_LOHI);
     OPCODE(SDIVREM);
     OPCODE(UDIVREM);

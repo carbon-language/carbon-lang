@@ -373,6 +373,33 @@ let TargetPrefix = "s390" in {
   def int_s390_vfidb : Intrinsic<[llvm_v2f64_ty],
                                  [llvm_v2f64_ty, llvm_i32_ty, llvm_i32_ty],
                                  [IntrNoMem]>;
+
+  // Instructions from the Vector Enhancements Facility 1
+  def int_s390_vbperm : SystemZBinaryConv<"vbperm", llvm_v2i64_ty,
+                                          llvm_v16i8_ty>;
+
+  def int_s390_vmslg  : GCCBuiltin<"__builtin_s390_vmslg">,
+                        Intrinsic<[llvm_v16i8_ty],
+                                  [llvm_v2i64_ty, llvm_v2i64_ty, llvm_v16i8_ty,
+                                   llvm_i32_ty], [IntrNoMem]>;
+
+  def int_s390_vfmaxdb : Intrinsic<[llvm_v2f64_ty],
+                                   [llvm_v2f64_ty, llvm_v2f64_ty, llvm_i32_ty],
+                                   [IntrNoMem]>;
+  def int_s390_vfmindb : Intrinsic<[llvm_v2f64_ty],
+                                   [llvm_v2f64_ty, llvm_v2f64_ty, llvm_i32_ty],
+                                   [IntrNoMem]>;
+
+  // Instructions from the Vector Packed Decimal Facility
+  def int_s390_vlrl : GCCBuiltin<"__builtin_s390_vlrl">,
+                      Intrinsic<[llvm_v16i8_ty], [llvm_i32_ty, llvm_ptr_ty],
+                                [IntrReadMem, IntrArgMemOnly]>;
+
+  def int_s390_vstrl : GCCBuiltin<"__builtin_s390_vstrl">,
+                       Intrinsic<[], [llvm_v16i8_ty, llvm_i32_ty, llvm_ptr_ty],
+                                 // In fact write-only but there's no property
+                                 // for that.
+                                 [IntrArgMemOnly]>;
 }
 
 //===----------------------------------------------------------------------===//
