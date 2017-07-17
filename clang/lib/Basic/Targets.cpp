@@ -7476,7 +7476,7 @@ public:
     if (HasVector)
       Builder.defineMacro("__VX__");
     if (Opts.ZVector)
-      Builder.defineMacro("__VEC__", "10301");
+      Builder.defineMacro("__VEC__", "10302");
   }
   ArrayRef<Builtin::Info> getTargetBuiltins() const override {
     return llvm::makeArrayRef(BuiltinInfo,

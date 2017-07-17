@@ -2275,7 +2275,7 @@
 // RUN:     -target s390x-unknown-linux \
 // RUN:   | FileCheck -match-full-lines %s -check-prefix=CHECK_SYSTEMZ_ZVECTOR
 //
-// CHECK_SYSTEMZ_ZVECTOR: #define __VEC__ 10301
+// CHECK_SYSTEMZ_ZVECTOR: #define __VEC__ 10302
 
 // Begin amdgcn tests ----------------
 //
