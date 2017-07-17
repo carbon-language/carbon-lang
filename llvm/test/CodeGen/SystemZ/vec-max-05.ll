@@ -10,6 +10,9 @@ declare float @fmaxf(float, float)
 declare float @llvm.maxnum.f32(float, float)
 declare <4 x float> @llvm.maxnum.v4f32(<4 x float>, <4 x float>)
 
+declare fp128 @fmaxl(fp128, fp128)
+declare fp128 @llvm.maxnum.f128(fp128, fp128)
+
 ; Test the fmax library function.
 define double @f1(double %dummy, double %val1, double %val2) {
 ; CHECK-LABEL: f1:
@@ -108,5 +111,65 @@ define <4 x float> @f15(<4 x float> %dummy, <4 x float> %val1,
 ; CHECK: br %r14
   %ret = call <4 x float> @llvm.maxnum.v4f32(<4 x float> %val1, <4 x float> %val2)
   ret <4 x float> %ret
+}
+
+; Test the fmaxl library function.
+define void @f21(fp128 *%ptr1, fp128 *%ptr2, fp128 *%dst) {
+; CHECK-LABEL: f21:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vl [[REG2:%v[0-9]+]], 0(%r3)
+; CHECK: wfmaxxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 4
+; CHECK: vst [[RES]], 0(%r4)
+; CHECK: br %r14
+  %val1 = load fp128, fp128* %ptr1
+  %val2 = load fp128, fp128* %ptr2
+  %res = call fp128 @fmaxl(fp128 %val1, fp128 %val2) readnone
+  store fp128 %res, fp128* %dst
+  ret void
+}
+
+; Test the f128 maxnum intrinsic.
+define void @f22(fp128 *%ptr1, fp128 *%ptr2, fp128 *%dst) {
+; CHECK-LABEL: f22:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vl [[REG2:%v[0-9]+]], 0(%r3)
+; CHECK: wfmaxxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 4
+; CHECK: vst [[RES]], 0(%r4)
+; CHECK: br %r14
+  %val1 = load fp128, fp128* %ptr1
+  %val2 = load fp128, fp128* %ptr2
+  %res = call fp128 @llvm.maxnum.f128(fp128 %val1, fp128 %val2)
+  store fp128 %res, fp128* %dst
+  ret void
+}
+
+; Test a f128 constant compare/select resulting in maxnum.
+define void @f23(fp128 *%ptr, fp128 *%dst) {
+; CHECK-LABEL: f23:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vzero [[REG2:%v[0-9]+]]
+; CHECK: wfmaxxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 4
+; CHECK: vst [[RES]], 0(%r3)
+; CHECK: br %r14
+  %val = load fp128, fp128* %ptr
+  %cmp = fcmp ogt fp128 %val, 0xL00000000000000000000000000000000
+  %res = select i1 %cmp, fp128 %val, fp128 0xL00000000000000000000000000000000
+  store fp128 %res, fp128* %dst
+  ret void
+}
+
+; Test a f128 constant compare/select resulting in maxnan.
+define void @f24(fp128 *%ptr, fp128 *%dst) {
+; CHECK-LABEL: f24:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vzero [[REG2:%v[0-9]+]]
+; CHECK: wfmaxxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 1
+; CHECK: vst [[RES]], 0(%r3)
+; CHECK: br %r14
+  %val = load fp128, fp128* %ptr
+  %cmp = fcmp ugt fp128 %val, 0xL00000000000000000000000000000000
+  %res = select i1 %cmp, fp128 %val, fp128 0xL00000000000000000000000000000000
+  store fp128 %res, fp128* %dst
+  ret void
 }
 

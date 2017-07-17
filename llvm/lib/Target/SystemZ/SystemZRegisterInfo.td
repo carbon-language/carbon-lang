@@ -260,10 +260,10 @@ defm VF128 : SystemZRegClass<"VF128",
 
 // All vector registers.
 defm VR128 : SystemZRegClass<"VR128",
-                             [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], 128,
-                             (add (sequence "V%u", 0, 7),
-                                  (sequence "V%u", 16, 31),
-                                  (sequence "V%u", 8, 15))>;
+                             [f128, v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
+                             128, (add (sequence "V%u", 0, 7),
+                                       (sequence "V%u", 16, 31),
+                                       (sequence "V%u", 8, 15))>;
 
 // Attaches a ValueType to a register operand, to make the instruction
 // definitions easier.
@@ -283,6 +283,7 @@ def v128g   : TypedReg<v2i64,   VR128>;
 def v128q   : TypedReg<v16i8,   VR128>;
 def v128sb  : TypedReg<v4f32,   VR128>;
 def v128db  : TypedReg<v2f64,   VR128>;
+def v128xb  : TypedReg<f128,    VR128>;
 def v128any : TypedReg<untyped, VR128>;
 
 //===----------------------------------------------------------------------===//

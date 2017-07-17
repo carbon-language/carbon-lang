@@ -324,9 +324,9 @@ let isReturn = 1, isTerminator = 1, hasCtrlDep = 1 in {
 // Select instructions
 //===----------------------------------------------------------------------===//
 
-def Select32Mux : SelectWrapper<GRX32>, Requires<[FeatureHighWord]>;
-def Select32    : SelectWrapper<GR32>;
-def Select64    : SelectWrapper<GR64>;
+def Select32Mux : SelectWrapper<i32, GRX32>, Requires<[FeatureHighWord]>;
+def Select32    : SelectWrapper<i32, GR32>;
+def Select64    : SelectWrapper<i64, GR64>;
 
 // We don't define 32-bit Mux stores if we don't have STOCFH, because the
 // low-only STOC should then always be used if possible.

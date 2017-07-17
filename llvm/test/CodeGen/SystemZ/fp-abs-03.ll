@@ -28,8 +28,11 @@ define double @f2(double %f) {
 declare fp128 @llvm.fabs.f128(fp128 %f)
 define void @f3(fp128 *%ptr, fp128 *%ptr2) {
 ; CHECK-LABEL: f3:
-; CHECK: lpxbr
-; CHECK: dxbr
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vl [[REG2:%v[0-9]+]], 0(%r3)
+; CHECK-DAG: wflpxb [[POSREG1:%v[0-9]+]], [[REG1]]
+; CHECK: wfdxb [[RES:%v[0-9]+]], [[POSREG1]], [[REG2]]
+; CHECK: vst [[RES]], 0(%r2)
 ; CHECK: br %r14
   %orig = load fp128 , fp128 *%ptr
   %abs = call fp128 @llvm.fabs.f128(fp128 %orig)

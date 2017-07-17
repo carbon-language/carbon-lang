@@ -4672,10 +4672,10 @@ class RotateSelectRIEfPseudo<RegisterOperand cls1, RegisterOperand cls2>
 
 // Implements "$dst = $cc & (8 >> CC) ? $src1 : $src2", where CC is
 // the value of the PSW's 2-bit condition code field.
-class SelectWrapper<RegisterOperand cls>
+class SelectWrapper<ValueType vt, RegisterOperand cls>
   : Pseudo<(outs cls:$dst),
            (ins cls:$src1, cls:$src2, imm32zx4:$valid, imm32zx4:$cc),
-           [(set cls:$dst, (z_select_ccmask cls:$src1, cls:$src2,
+           [(set (vt cls:$dst), (z_select_ccmask cls:$src1, cls:$src2,
                                             imm32zx4:$valid, imm32zx4:$cc))]> {
   let usesCustomInserter = 1;
   // Although the instructions used by these nodes do not in themselves

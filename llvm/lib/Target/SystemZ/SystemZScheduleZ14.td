@@ -753,7 +753,7 @@ def : InstRW<[], (instregex "Insn.*")>;
 // FP: Select instructions
 //===----------------------------------------------------------------------===//
 
-def : InstRW<[FXa], (instregex "SelectF(32|64|128)$")>;
+def : InstRW<[FXa], (instregex "Select(F32|F64|F128|VR128)$")>;
 def : InstRW<[FXa], (instregex "CondStoreF32(Inv)?$")>;
 def : InstRW<[FXa], (instregex "CondStoreF64(Inv)?$")>;
 
@@ -1319,18 +1319,23 @@ def : InstRW<[VecBF], (instregex "WL(DE|ED)B$")>;
 def : InstRW<[VecBF], (instregex "VFL(L|R)$")>;
 def : InstRW<[VecBF], (instregex "VFL(LS|RD)$")>;
 def : InstRW<[VecBF], (instregex "WFL(LS|RD)$")>;
+def : InstRW<[VecBF2], (instregex "WFLLD$")>;
+def : InstRW<[VecDF2, Lat10], (instregex "WFLRX$")>;
 def : InstRW<[VecBF2], (instregex "VFI$")>;
 def : InstRW<[VecBF], (instregex "VFIDB$")>;
 def : InstRW<[VecBF], (instregex "WFIDB$")>;
 def : InstRW<[VecBF2], (instregex "VFISB$")>;
 def : InstRW<[VecBF], (instregex "WFISB$")>;
+def : InstRW<[VecDF2, Lat10], (instregex "WFIXB$")>;
 
 // Sign operations
 def : InstRW<[VecXsPm], (instregex "VFPSO$")>;
 def : InstRW<[VecXsPm], (instregex "(V|W)FPSODB$")>;
 def : InstRW<[VecXsPm], (instregex "(V|W)FPSOSB$")>;
+def : InstRW<[VecXsPm], (instregex "WFPSOXB$")>;
 def : InstRW<[VecXsPm], (instregex "(V|W)FL(C|N|P)DB$")>;
 def : InstRW<[VecXsPm], (instregex "(V|W)FL(C|N|P)SB$")>;
+def : InstRW<[VecXsPm], (instregex "WFL(C|N|P)XB$")>;
 
 // Minimum / maximum
 def : InstRW<[VecXsPm], (instregex "VF(MAX|MIN)$")>;
@@ -1338,11 +1343,13 @@ def : InstRW<[VecXsPm], (instregex "VF(MAX|MIN)DB$")>;
 def : InstRW<[VecXsPm], (instregex "WF(MAX|MIN)DB$")>;
 def : InstRW<[VecXsPm], (instregex "VF(MAX|MIN)SB$")>;
 def : InstRW<[VecXsPm], (instregex "WF(MAX|MIN)SB$")>;
+def : InstRW<[VecDFX], (instregex "WF(MAX|MIN)XB$")>;
 
 // Test data class
 def : InstRW<[VecXsPm, Lat4], (instregex "VFTCI$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "(V|W)FTCIDB$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "(V|W)FTCISB$")>;
+def : InstRW<[VecDFX, Lat4], (instregex "WFTCIXB$")>;
 
 // Add / subtract
 def : InstRW<[VecBF2], (instregex "VF(A|S)$")>;
@@ -1350,6 +1357,7 @@ def : InstRW<[VecBF], (instregex "VF(A|S)DB$")>;
 def : InstRW<[VecBF], (instregex "WF(A|S)DB$")>;
 def : InstRW<[VecBF2], (instregex "VF(A|S)SB$")>;
 def : InstRW<[VecBF], (instregex "WF(A|S)SB$")>;
+def : InstRW<[VecDF2, Lat10], (instregex "WF(A|S)XB$")>;
 
 // Multiply / multiply-and-add/subtract
 def : InstRW<[VecBF2], (instregex "VFM$")>;
@@ -1357,19 +1365,23 @@ def : InstRW<[VecBF], (instregex "VFMDB$")>;
 def : InstRW<[VecBF], (instregex "WFMDB$")>;
 def : InstRW<[VecBF2], (instregex "VFMSB$")>;
 def : InstRW<[VecBF], (instregex "WFMSB$")>;
+def : InstRW<[VecDF2, Lat20], (instregex "WFMXB$")>;
 def : InstRW<[VecBF2], (instregex "VF(N)?M(A|S)$")>;
 def : InstRW<[VecBF], (instregex "VF(N)?M(A|S)DB$")>;
 def : InstRW<[VecBF], (instregex "WF(N)?M(A|S)DB$")>;
 def : InstRW<[VecBF2], (instregex "VF(N)?M(A|S)SB$")>;
 def : InstRW<[VecBF], (instregex "WF(N)?M(A|S)SB$")>;
+def : InstRW<[VecDF2, Lat20], (instregex "WF(N)?M(A|S)XB$")>;
 
 // Divide / square root
 def : InstRW<[VecFPd], (instregex "VFD$")>;
 def : InstRW<[VecFPd], (instregex "(V|W)FDDB$")>;
 def : InstRW<[VecFPd], (instregex "(V|W)FDSB$")>;
+def : InstRW<[VecFPd], (instregex "WFDXB$")>;
 def : InstRW<[VecFPd], (instregex "VFSQ$")>;
 def : InstRW<[VecFPd], (instregex "(V|W)FSQDB$")>;
 def : InstRW<[VecFPd], (instregex "(V|W)FSQSB$")>;
+def : InstRW<[VecFPd], (instregex "WFSQXB$")>;
 
 //===----------------------------------------------------------------------===//
 // Vector: Floating-point comparison
@@ -1380,13 +1392,16 @@ def : InstRW<[VecXsPm], (instregex "VF(C|K)(E|H|HE)DB$")>;
 def : InstRW<[VecXsPm], (instregex "WF(C|K)(E|H|HE)DB$")>;
 def : InstRW<[VecXsPm], (instregex "VF(C|K)(E|H|HE)SB$")>;
 def : InstRW<[VecXsPm], (instregex "WF(C|K)(E|H|HE)SB$")>;
+def : InstRW<[VecDFX], (instregex "WF(C|K)(E|H|HE)XB$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "VF(C|K)(E|H|HE)DBS$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "WF(C|K)(E|H|HE)DBS$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "VF(C|K)(E|H|HE)SBS$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "WF(C|K)(E|H|HE)SBS$")>;
+def : InstRW<[VecDFX, Lat4], (instregex "WF(C|K)(E|H|HE)XBS$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "WF(C|K)$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "WF(C|K)DB$")>;
 def : InstRW<[VecXsPm, Lat4], (instregex "WF(C|K)SB$")>;
+def : InstRW<[VecDFX, Lat4], (instregex "WF(C|K)XB$")>;
 
 //===----------------------------------------------------------------------===//
 // Vector: Floating-point insertion and extraction

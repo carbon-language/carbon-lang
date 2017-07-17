@@ -25,8 +25,11 @@ define double @f2(double %f) {
 ; processing so that using FPRs is unequivocally better.
 define void @f3(fp128 *%ptr, fp128 *%ptr2) {
 ; CHECK-LABEL: f3:
-; CHECK: lcxbr
-; CHECK: dxbr
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vl [[REG2:%v[0-9]+]], 0(%r3)
+; CHECK-DAG: wflcxb [[NEGREG1:%v[0-9]+]], [[REG1]]
+; CHECK: wfdxb [[RES:%v[0-9]+]], [[NEGREG1]], [[REG2]]
+; CHECK: vst [[RES]], 0(%r2)
 ; CHECK: br %r14
   %orig = load fp128 , fp128 *%ptr
   %negzero = fpext float -0.0 to fp128

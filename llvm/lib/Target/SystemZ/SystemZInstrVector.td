@@ -938,6 +938,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFASB : BinaryVRRc<"vfasb", 0xE7E3, fadd, v128sb, v128sb, 2, 0>;
     def WFASB : BinaryVRRc<"wfasb", 0xE7E3, fadd, v32sb, v32sb, 2, 8>;
+    def WFAXB : BinaryVRRc<"wfaxb", 0xE7E3, fadd, v128xb, v128xb, 4, 8>;
   }
 
   // Convert from fixed 64-bit.
@@ -973,6 +974,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFDSB : BinaryVRRc<"vfdsb", 0xE7E5, fdiv, v128sb, v128sb, 2, 0>;
     def WFDSB : BinaryVRRc<"wfdsb", 0xE7E5, fdiv, v32sb, v32sb, 2, 8>;
+    def WFDXB : BinaryVRRc<"wfdxb", 0xE7E5, fdiv, v128xb, v128xb, 4, 8>;
   }
 
   // Load FP integer.
@@ -984,8 +986,10 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFISB : TernaryVRRa<"vfisb", 0xE7C7, int_s390_vfisb, v128sb, v128sb, 2, 0>;
     def WFISB : TernaryVRRa<"wfisb", 0xE7C7, null_frag, v32sb, v32sb, 2, 8>;
+    def WFIXB : TernaryVRRa<"wfixb", 0xE7C7, null_frag, v128xb, v128xb, 4, 8>;
     defm : VectorRounding<VFISB, v128sb>;
     defm : VectorRounding<WFISB, v32sb>;
+    defm : VectorRounding<WFIXB, v128xb>;
   }
 
   // Load lengthened.
@@ -998,6 +1002,9 @@ let Predicates = [FeatureVector] in {
       def VFLLS : UnaryVRRa<"vflls", 0xE7C4, null_frag, v128db, v128sb, 2, 0>;
       def WFLLS : UnaryVRRa<"wflls", 0xE7C4, null_frag, v64db, v32sb, 2, 8>;
     }
+    def WFLLD : UnaryVRRa<"wflld", 0xE7C4, fpextend, v128xb, v64db, 3, 8>;
+    def : Pat<(f128 (fpextend (f32 VR32:$src))),
+              (WFLLD (WLDEB VR32:$src))>;
   }
 
   // Load rounded.
@@ -1012,6 +1019,10 @@ let Predicates = [FeatureVector] in {
       def VFLRD : TernaryVRRa<"vflrd", 0xE7C5, null_frag, v128sb, v128db, 3, 0>;
       def WFLRD : TernaryVRRa<"wflrd", 0xE7C5, null_frag, v32sb, v64db, 3, 8>;
     }
+    def WFLRX : TernaryVRRa<"wflrx", 0xE7C5, null_frag, v64db, v128xb, 4, 8>;
+    def : FPConversion<WFLRX, fpround, v64db, v128xb, 0, 0>;
+    def : Pat<(f32 (fpround (f128 VR128:$src))),
+              (WLEDB (WFLRX VR128:$src, 0, 3), 0, 0)>;
   }
 
   // Maximum.
@@ -1029,10 +1040,13 @@ let Predicates = [FeatureVector] in {
                                    v128sb, v128sb, 2, 0>;
     def WFMAXSB : TernaryVRRcFloat<"wfmaxsb", 0xE7EF, null_frag,
                                    v32sb, v32sb, 2, 8>;
+    def WFMAXXB : TernaryVRRcFloat<"wfmaxxb", 0xE7EF, null_frag,
+                                   v128xb, v128xb, 4, 8>;
     defm : VectorMax<VFMAXDB, v128db>;
     defm : VectorMax<WFMAXDB, v64db>;
     defm : VectorMax<VFMAXSB, v128sb>;
     defm : VectorMax<WFMAXSB, v32sb>;
+    defm : VectorMax<WFMAXXB, v128xb>;
   }
 
   // Minimum.
@@ -1050,10 +1064,13 @@ let Predicates = [FeatureVector] in {
                                    v128sb, v128sb, 2, 0>;
     def WFMINSB : TernaryVRRcFloat<"wfminsb", 0xE7EE, null_frag,
                                    v32sb, v32sb, 2, 8>;
+    def WFMINXB : TernaryVRRcFloat<"wfminxb", 0xE7EE, null_frag,
+                                   v128xb, v128xb, 4, 8>;
     defm : VectorMin<VFMINDB, v128db>;
     defm : VectorMin<WFMINDB, v64db>;
     defm : VectorMin<VFMINSB, v128sb>;
     defm : VectorMin<WFMINSB, v32sb>;
+    defm : VectorMin<WFMINXB, v128xb>;
   }
 
   // Multiply.
@@ -1063,6 +1080,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFMSB : BinaryVRRc<"vfmsb", 0xE7E7, fmul, v128sb, v128sb, 2, 0>;
     def WFMSB : BinaryVRRc<"wfmsb", 0xE7E7, fmul, v32sb, v32sb, 2, 8>;
+    def WFMXB : BinaryVRRc<"wfmxb", 0xE7E7, fmul, v128xb, v128xb, 4, 8>;
   }
 
   // Multiply and add.
@@ -1072,6 +1090,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFMASB : TernaryVRRe<"vfmasb", 0xE78F, fma, v128sb, v128sb, 0, 2>;
     def WFMASB : TernaryVRRe<"wfmasb", 0xE78F, fma, v32sb, v32sb, 8, 2>;
+    def WFMAXB : TernaryVRRe<"wfmaxb", 0xE78F, fma, v128xb, v128xb, 8, 4>;
   }
 
   // Multiply and subtract.
@@ -1081,6 +1100,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFMSSB : TernaryVRRe<"vfmssb", 0xE78E, fms, v128sb, v128sb, 0, 2>;
     def WFMSSB : TernaryVRRe<"wfmssb", 0xE78E, fms, v32sb, v32sb, 8, 2>;
+    def WFMSXB : TernaryVRRe<"wfmsxb", 0xE78E, fms, v128xb, v128xb, 8, 4>;
   }
 
   // Negative multiply and add.
@@ -1090,6 +1110,7 @@ let Predicates = [FeatureVector] in {
     def WFNMADB : TernaryVRRe<"wfnmadb", 0xE79F, fnma, v64db, v64db, 8, 3>;
     def VFNMASB : TernaryVRRe<"vfnmasb", 0xE79F, fnma, v128sb, v128sb, 0, 2>;
     def WFNMASB : TernaryVRRe<"wfnmasb", 0xE79F, fnma, v32sb, v32sb, 8, 2>;
+    def WFNMAXB : TernaryVRRe<"wfnmaxb", 0xE79F, fnma, v128xb, v128xb, 8, 4>;
   }
 
   // Negative multiply and subtract.
@@ -1099,6 +1120,7 @@ let Predicates = [FeatureVector] in {
     def WFNMSDB : TernaryVRRe<"wfnmsdb", 0xE79E, fnms, v64db, v64db, 8, 3>;
     def VFNMSSB : TernaryVRRe<"vfnmssb", 0xE79E, fnms, v128sb, v128sb, 0, 2>;
     def WFNMSSB : TernaryVRRe<"wfnmssb", 0xE79E, fnms, v32sb, v32sb, 8, 2>;
+    def WFNMSXB : TernaryVRRe<"wfnmsxb", 0xE79E, fnms, v128xb, v128xb, 8, 4>;
   }
 
   // Perform sign operation.
@@ -1108,6 +1130,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFPSOSB : BinaryVRRa<"vfpsosb", 0xE7CC, null_frag, v128sb, v128sb, 2, 0>;
     def WFPSOSB : BinaryVRRa<"wfpsosb", 0xE7CC, null_frag, v32sb, v32sb, 2, 8>;
+    def WFPSOXB : BinaryVRRa<"wfpsoxb", 0xE7CC, null_frag, v128xb, v128xb, 4, 8>;
   }
 
   // Load complement.
@@ -1116,6 +1139,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFLCSB : UnaryVRRa<"vflcsb", 0xE7CC, fneg, v128sb, v128sb, 2, 0, 0>;
     def WFLCSB : UnaryVRRa<"wflcsb", 0xE7CC, fneg, v32sb, v32sb, 2, 8, 0>;
+    def WFLCXB : UnaryVRRa<"wflcxb", 0xE7CC, fneg, v128xb, v128xb, 4, 8, 0>;
   }
 
   // Load negative.
@@ -1124,6 +1148,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFLNSB : UnaryVRRa<"vflnsb", 0xE7CC, fnabs, v128sb, v128sb, 2, 0, 1>;
     def WFLNSB : UnaryVRRa<"wflnsb", 0xE7CC, fnabs, v32sb, v32sb, 2, 8, 1>;
+    def WFLNXB : UnaryVRRa<"wflnxb", 0xE7CC, fnabs, v128xb, v128xb, 4, 8, 1>;
   }
 
   // Load positive.
@@ -1132,6 +1157,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFLPSB : UnaryVRRa<"vflpsb", 0xE7CC, fabs, v128sb, v128sb, 2, 0, 2>;
     def WFLPSB : UnaryVRRa<"wflpsb", 0xE7CC, fabs, v32sb, v32sb, 2, 8, 2>;
+    def WFLPXB : UnaryVRRa<"wflpxb", 0xE7CC, fabs, v128xb, v128xb, 4, 8, 2>;
   }
 
   // Square root.
@@ -1141,6 +1167,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFSQSB : UnaryVRRa<"vfsqsb", 0xE7CE, fsqrt, v128sb, v128sb, 2, 0>;
     def WFSQSB : UnaryVRRa<"wfsqsb", 0xE7CE, fsqrt, v32sb, v32sb, 2, 8>;
+    def WFSQXB : UnaryVRRa<"wfsqxb", 0xE7CE, fsqrt, v128xb, v128xb, 4, 8>;
   }
 
   // Subtract.
@@ -1150,6 +1177,7 @@ let Predicates = [FeatureVector] in {
   let Predicates = [FeatureVectorEnhancements1] in {
     def VFSSB : BinaryVRRc<"vfssb", 0xE7E2, fsub, v128sb, v128sb, 2, 0>;
     def WFSSB : BinaryVRRc<"wfssb", 0xE7E2, fsub, v32sb, v32sb, 2, 8>;
+    def WFSXB : BinaryVRRc<"wfsxb", 0xE7E2, fsub, v128xb, v128xb, 4, 8>;
   }
 
   // Test data class immediate.
@@ -1160,6 +1188,7 @@ let Predicates = [FeatureVector] in {
     let Predicates = [FeatureVectorEnhancements1] in {
       def VFTCISB : BinaryVRIe<"vftcisb", 0xE74A, z_vftci, v128f, v128sb, 2, 0>;
       def WFTCISB : BinaryVRIe<"wftcisb", 0xE74A, null_frag, v32f, v32sb, 2, 8>;
+      def WFTCIXB : BinaryVRIe<"wftcixb", 0xE74A, null_frag, v128q, v128xb, 4, 8>;
     }
   }
 }
@@ -1175,6 +1204,7 @@ let Predicates = [FeatureVector] in {
     def WFCDB : CompareVRRa<"wfcdb", 0xE7CB, z_fcmp, v64db, 3>;
     let Predicates = [FeatureVectorEnhancements1] in {
       def WFCSB : CompareVRRa<"wfcsb", 0xE7CB, z_fcmp, v32sb, 2>;
+      def WFCXB : CompareVRRa<"wfcxb", 0xE7CB, z_fcmp, v128xb, 4>;
     }
   }
 
@@ -1184,6 +1214,7 @@ let Predicates = [FeatureVector] in {
     def WFKDB : CompareVRRa<"wfkdb", 0xE7CA, null_frag, v64db, 3>;
     let Predicates = [FeatureVectorEnhancements1] in {
       def WFKSB : CompareVRRa<"wfksb", 0xE7CA, null_frag, v32sb, 2>;
+      def WFKXB : CompareVRRa<"wfkxb", 0xE7CA, null_frag, v128xb, 4>;
     }
   }
 
@@ -1198,6 +1229,8 @@ let Predicates = [FeatureVector] in {
                                   v128f, v128sb, 2, 0>;
     defm WFCESB : BinaryVRRcSPair<"wfcesb", 0xE7E8, null_frag, null_frag,
                                   v32f, v32sb, 2, 8>;
+    defm WFCEXB : BinaryVRRcSPair<"wfcexb", 0xE7E8, null_frag, null_frag,
+                                  v128q, v128xb, 4, 8>;
   }
 
   // Compare and signal equal.
@@ -1210,6 +1243,8 @@ let Predicates = [FeatureVector] in {
                                   v128f, v128sb, 2, 4>;
     defm WFKESB : BinaryVRRcSPair<"wfkesb", 0xE7E8, null_frag, null_frag,
                                   v32f, v32sb, 2, 12>;
+    defm WFKEXB : BinaryVRRcSPair<"wfkexb", 0xE7E8, null_frag, null_frag,
+                                  v128q, v128xb, 4, 12>;
   }
 
   // Compare high.
@@ -1223,6 +1258,8 @@ let Predicates = [FeatureVector] in {
                                   v128f, v128sb, 2, 0>;
     defm WFCHSB : BinaryVRRcSPair<"wfchsb", 0xE7EB, null_frag, null_frag,
                                   v32f, v32sb, 2, 8>;
+    defm WFCHXB : BinaryVRRcSPair<"wfchxb", 0xE7EB, null_frag, null_frag,
+                                  v128q, v128xb, 4, 8>;
   }
 
   // Compare and signal high.
@@ -1235,6 +1272,8 @@ let Predicates = [FeatureVector] in {
                                   v128f, v128sb, 2, 4>;
     defm WFKHSB : BinaryVRRcSPair<"wfkhsb", 0xE7EB, null_frag, null_frag,
                                   v32f, v32sb, 2, 12>;
+    defm WFKHXB : BinaryVRRcSPair<"wfkhxb", 0xE7EB, null_frag, null_frag,
+                                  v128q, v128xb, 4, 12>;
   }
 
   // Compare high or equal.
@@ -1248,6 +1287,8 @@ let Predicates = [FeatureVector] in {
                                    v128f, v128sb, 2, 0>;
     defm WFCHESB : BinaryVRRcSPair<"wfchesb", 0xE7EA, null_frag, null_frag,
                                    v32f, v32sb, 2, 8>;
+    defm WFCHEXB : BinaryVRRcSPair<"wfchexb", 0xE7EA, null_frag, null_frag,
+                                   v128q, v128xb, 4, 8>;
   }
 
   // Compare and signal high or equal.
@@ -1260,6 +1301,8 @@ let Predicates = [FeatureVector] in {
                                    v128f, v128sb, 2, 4>;
     defm WFKHESB : BinaryVRRcSPair<"wfkhesb", 0xE7EA, null_frag, null_frag,
                                    v32f, v32sb, 2, 12>;
+    defm WFKHEXB : BinaryVRRcSPair<"wfkhexb", 0xE7EA, null_frag, null_frag,
+                                   v128q, v128xb, 4, 12>;
   }
 }
 
@@ -1272,36 +1315,49 @@ def : Pat<(v16i8 (bitconvert (v4i32 VR128:$src))), (v16i8 VR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v2i64 VR128:$src))), (v16i8 VR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v4f32 VR128:$src))), (v16i8 VR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v2f64 VR128:$src))), (v16i8 VR128:$src)>;
+def : Pat<(v16i8 (bitconvert (f128  VR128:$src))), (v16i8 VR128:$src)>;
 
 def : Pat<(v8i16 (bitconvert (v16i8 VR128:$src))), (v8i16 VR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v4i32 VR128:$src))), (v8i16 VR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v2i64 VR128:$src))), (v8i16 VR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v4f32 VR128:$src))), (v8i16 VR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v2f64 VR128:$src))), (v8i16 VR128:$src)>;
+def : Pat<(v8i16 (bitconvert (f128  VR128:$src))), (v8i16 VR128:$src)>;
 
 def : Pat<(v4i32 (bitconvert (v16i8 VR128:$src))), (v4i32 VR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v8i16 VR128:$src))), (v4i32 VR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v2i64 VR128:$src))), (v4i32 VR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v4f32 VR128:$src))), (v4i32 VR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v2f64 VR128:$src))), (v4i32 VR128:$src)>;
+def : Pat<(v4i32 (bitconvert (f128  VR128:$src))), (v4i32 VR128:$src)>;
 
 def : Pat<(v2i64 (bitconvert (v16i8 VR128:$src))), (v2i64 VR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v8i16 VR128:$src))), (v2i64 VR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v4i32 VR128:$src))), (v2i64 VR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v4f32 VR128:$src))), (v2i64 VR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v2f64 VR128:$src))), (v2i64 VR128:$src)>;
+def : Pat<(v2i64 (bitconvert (f128  VR128:$src))), (v2i64 VR128:$src)>;
 
 def : Pat<(v4f32 (bitconvert (v16i8 VR128:$src))), (v4f32 VR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v8i16 VR128:$src))), (v4f32 VR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v4i32 VR128:$src))), (v4f32 VR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v2i64 VR128:$src))), (v4f32 VR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v2f64 VR128:$src))), (v4f32 VR128:$src)>;
+def : Pat<(v4f32 (bitconvert (f128  VR128:$src))), (v4f32 VR128:$src)>;
 
 def : Pat<(v2f64 (bitconvert (v16i8 VR128:$src))), (v2f64 VR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v8i16 VR128:$src))), (v2f64 VR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v4i32 VR128:$src))), (v2f64 VR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v2i64 VR128:$src))), (v2f64 VR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v4f32 VR128:$src))), (v2f64 VR128:$src)>;
+def : Pat<(v2f64 (bitconvert (f128  VR128:$src))), (v2f64 VR128:$src)>;
+
+def : Pat<(f128  (bitconvert (v16i8 VR128:$src))), (f128  VR128:$src)>;
+def : Pat<(f128  (bitconvert (v8i16 VR128:$src))), (f128  VR128:$src)>;
+def : Pat<(f128  (bitconvert (v4i32 VR128:$src))), (f128  VR128:$src)>;
+def : Pat<(f128  (bitconvert (v2i64 VR128:$src))), (f128  VR128:$src)>;
+def : Pat<(f128  (bitconvert (v4f32 VR128:$src))), (f128  VR128:$src)>;
+def : Pat<(f128  (bitconvert (v2f64 VR128:$src))), (f128  VR128:$src)>;
 
 //===----------------------------------------------------------------------===//
 // Replicating scalars
@@ -1375,6 +1431,20 @@ let AddedComplexity = 4 in {
             (EXTRACT_SUBREG VR128:$vec, subreg_r64)>;
   def : Pat<(f64 (z_vector_extract (v2f64 VR128:$vec), imm32zx1:$index)),
             (EXTRACT_SUBREG (VREPG VR128:$vec, imm32zx1:$index), subreg_r64)>;
+}
+
+//===----------------------------------------------------------------------===//
+// Support for 128-bit floating-point values in vector registers
+//===----------------------------------------------------------------------===//
+
+let Predicates = [FeatureVectorEnhancements1] in {
+  def : Pat<(f128 (load bdxaddr12only:$addr)),
+            (VL bdxaddr12only:$addr)>;
+  def : Pat<(store (f128 VR128:$src), bdxaddr12only:$addr),
+            (VST VR128:$src, bdxaddr12only:$addr)>;
+
+  def : Pat<(f128 fpimm0), (VZERO)>;
+  def : Pat<(f128 fpimmneg0), (WFLNXB (VZERO))>;
 }
 
 //===----------------------------------------------------------------------===//

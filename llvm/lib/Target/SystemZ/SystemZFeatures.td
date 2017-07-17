@@ -217,6 +217,7 @@ def FeatureVectorEnhancements1 : SystemZFeature<
   "vector-enhancements-1", "VectorEnhancements1",
   "Assume that the vector enhancements facility 1 is installed"
 >;
+def FeatureNoVectorEnhancements1 : SystemZMissingFeature<"VectorEnhancements1">;
 
 def FeatureVectorPackedDecimal : SystemZFeature<
   "vector-packed-decimal", "VectorPackedDecimal",

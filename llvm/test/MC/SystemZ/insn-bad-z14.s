@@ -645,6 +645,20 @@
 	wfisb	%v0, %v0, 16, 0
 
 #CHECK: error: invalid operand
+#CHECK: wfixb	%v0, %v0, 0, -1
+#CHECK: error: invalid operand
+#CHECK: wfixb	%v0, %v0, 0, 16
+#CHECK: error: invalid operand
+#CHECK: wfixb	%v0, %v0, -1, 0
+#CHECK: error: invalid operand
+#CHECK: wfixb	%v0, %v0, 16, 0
+
+	wfixb	%v0, %v0, 0, -1
+	wfixb	%v0, %v0, 0, 16
+	wfixb	%v0, %v0, -1, 0
+	wfixb	%v0, %v0, 16, 0
+
+#CHECK: error: invalid operand
 #CHECK: wflrd	%v0, %v0, 0, -1
 #CHECK: error: invalid operand
 #CHECK: wflrd	%v0, %v0, 0, 16
@@ -657,6 +671,20 @@
 	wflrd	%v0, %v0, 0, 16
 	wflrd	%v0, %v0, -1, 0
 	wflrd	%v0, %v0, 16, 0
+
+#CHECK: error: invalid operand
+#CHECK: wflrx	%v0, %v0, 0, -1
+#CHECK: error: invalid operand
+#CHECK: wflrx	%v0, %v0, 0, 16
+#CHECK: error: invalid operand
+#CHECK: wflrx	%v0, %v0, -1, 0
+#CHECK: error: invalid operand
+#CHECK: wflrx	%v0, %v0, 16, 0
+
+	wflrx	%v0, %v0, 0, -1
+	wflrx	%v0, %v0, 0, 16
+	wflrx	%v0, %v0, -1, 0
+	wflrx	%v0, %v0, 16, 0
 
 #CHECK: error: invalid operand
 #CHECK: wfmaxdb	%v0, %v0, %v0, -1
@@ -675,6 +703,14 @@
 	wfmaxsb	%v0, %v0, %v0, 16
 
 #CHECK: error: invalid operand
+#CHECK: wfmaxxb	%v0, %v0, %v0, -1
+#CHECK: error: invalid operand
+#CHECK: wfmaxxb	%v0, %v0, %v0, 16
+
+	wfmaxxb	%v0, %v0, %v0, -1
+	wfmaxxb	%v0, %v0, %v0, 16
+
+#CHECK: error: invalid operand
 #CHECK: wfmindb	%v0, %v0, %v0, -1
 #CHECK: error: invalid operand
 #CHECK: wfmindb	%v0, %v0, %v0, 16
@@ -691,10 +727,26 @@
 	wfminsb	%v0, %v0, %v0, 16
 
 #CHECK: error: invalid operand
+#CHECK: wfminxb	%v0, %v0, %v0, -1
+#CHECK: error: invalid operand
+#CHECK: wfminxb	%v0, %v0, %v0, 16
+
+	wfminxb	%v0, %v0, %v0, -1
+	wfminxb	%v0, %v0, %v0, 16
+
+#CHECK: error: invalid operand
 #CHECK: wftcisb	%v0, %v0, -1
 #CHECK: error: invalid operand
 #CHECK: wftcisb	%v0, %v0, 4096
 
 	wftcisb	%v0, %v0, -1
 	wftcisb	%v0, %v0, 4096
+
+#CHECK: error: invalid operand
+#CHECK: wftcixb	%v0, %v0, -1
+#CHECK: error: invalid operand
+#CHECK: wftcixb	%v0, %v0, 4096
+
+	wftcixb	%v0, %v0, -1
+	wftcixb	%v0, %v0, 4096
 

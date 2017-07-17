@@ -101,7 +101,10 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
     addRegisterClass(MVT::f32, &SystemZ::FP32BitRegClass);
     addRegisterClass(MVT::f64, &SystemZ::FP64BitRegClass);
   }
-  addRegisterClass(MVT::f128, &SystemZ::FP128BitRegClass);
+  if (Subtarget.hasVectorEnhancements1())
+    addRegisterClass(MVT::f128, &SystemZ::VR128BitRegClass);
+  else
+    addRegisterClass(MVT::f128, &SystemZ::FP128BitRegClass);
 
   if (Subtarget.hasVector()) {
     addRegisterClass(MVT::v16i8, &SystemZ::VR128BitRegClass);
@@ -453,18 +456,36 @@ SystemZTargetLowering::SystemZTargetLowering(const TargetMachine &TM,
     setOperationAction(ISD::FMAXNAN, MVT::v4f32, Legal);
     setOperationAction(ISD::FMINNUM, MVT::v4f32, Legal);
     setOperationAction(ISD::FMINNAN, MVT::v4f32, Legal);
+
+    setOperationAction(ISD::FMAXNUM, MVT::f128, Legal);
+    setOperationAction(ISD::FMAXNAN, MVT::f128, Legal);
+    setOperationAction(ISD::FMINNUM, MVT::f128, Legal);
+    setOperationAction(ISD::FMINNAN, MVT::f128, Legal);
   }
 
   // We have fused multiply-addition for f32 and f64 but not f128.
   setOperationAction(ISD::FMA, MVT::f32,  Legal);
   setOperationAction(ISD::FMA, MVT::f64,  Legal);
-  setOperationAction(ISD::FMA, MVT::f128, Expand);
+  if (Subtarget.hasVectorEnhancements1())
+    setOperationAction(ISD::FMA, MVT::f128, Legal);
+  else
+    setOperationAction(ISD::FMA, MVT::f128, Expand);
+
+  // We don't have a copysign instruction on vector registers.
+  if (Subtarget.hasVectorEnhancements1())
+    setOperationAction(ISD::FCOPYSIGN, MVT::f128, Expand);
 
   // Needed so that we don't try to implement f128 constant loads using
   // a load-and-extend of a f80 constant (in cases where the constant
   // would fit in an f80).
   for (MVT VT : MVT::fp_valuetypes())
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::f80, Expand);
+
+  // We don't have extending load instruction on vector registers.
+  if (Subtarget.hasVectorEnhancements1()) {
+    setLoadExtAction(ISD::EXTLOAD, MVT::f128, MVT::f32, Expand);
+    setLoadExtAction(ISD::EXTLOAD, MVT::f128, MVT::f64, Expand);
+  }
 
   // Floating-point truncation and stores need to be done separately.
   setTruncStoreAction(MVT::f64,  MVT::f32, Expand);
@@ -530,7 +551,7 @@ bool SystemZTargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   case MVT::f64:
     return true;
   case MVT::f128:
-    return false;
+    return Subtarget.hasVectorEnhancements1();
   default:
     break;
   }
@@ -6176,6 +6197,7 @@ MachineBasicBlock *SystemZTargetLowering::EmitInstrWithCustomInserter(
   case SystemZ::SelectF32:
   case SystemZ::SelectF64:
   case SystemZ::SelectF128:
+  case SystemZ::SelectVR128:
     return emitSelect(MI, MBB, 0);
 
   case SystemZ::CondStore8Mux:

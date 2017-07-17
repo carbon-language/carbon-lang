@@ -10,6 +10,9 @@ declare float @fminf(float, float)
 declare float @llvm.minnum.f32(float, float)
 declare <4 x float> @llvm.minnum.v4f32(<4 x float>, <4 x float>)
 
+declare fp128 @fminl(fp128, fp128)
+declare fp128 @llvm.minnum.f128(fp128, fp128)
+
 ; Test the fmin library function.
 define double @f1(double %dummy, double %val1, double %val2) {
 ; CHECK-LABEL: f1:
@@ -108,5 +111,65 @@ define <4 x float> @f15(<4 x float> %dummy, <4 x float> %val1,
 ; CHECK: br %r14
   %ret = call <4 x float> @llvm.minnum.v4f32(<4 x float> %val1, <4 x float> %val2)
   ret <4 x float> %ret
+}
+
+; Test the fminl library function.
+define void @f21(fp128 *%ptr1, fp128 *%ptr2, fp128 *%dst) {
+; CHECK-LABEL: f21:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vl [[REG2:%v[0-9]+]], 0(%r3)
+; CHECK: wfminxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 4
+; CHECK: vst [[RES]], 0(%r4)
+; CHECK: br %r14
+  %val1 = load fp128, fp128* %ptr1
+  %val2 = load fp128, fp128* %ptr2
+  %res = call fp128 @fminl(fp128 %val1, fp128 %val2) readnone
+  store fp128 %res, fp128* %dst
+  ret void
+}
+
+; Test the f128 minnum intrinsic.
+define void @f22(fp128 *%ptr1, fp128 *%ptr2, fp128 *%dst) {
+; CHECK-LABEL: f22:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vl [[REG2:%v[0-9]+]], 0(%r3)
+; CHECK: wfminxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 4
+; CHECK: vst [[RES]], 0(%r4)
+; CHECK: br %r14
+  %val1 = load fp128, fp128* %ptr1
+  %val2 = load fp128, fp128* %ptr2
+  %res = call fp128 @llvm.minnum.f128(fp128 %val1, fp128 %val2)
+  store fp128 %res, fp128* %dst
+  ret void
+}
+
+; Test a f128 constant compare/select resulting in minnum.
+define void @f23(fp128 *%ptr, fp128 *%dst) {
+; CHECK-LABEL: f23:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vzero [[REG2:%v[0-9]+]]
+; CHECK: wfminxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 4
+; CHECK: vst [[RES]], 0(%r3)
+; CHECK: br %r14
+  %val = load fp128, fp128* %ptr
+  %cmp = fcmp olt fp128 %val, 0xL00000000000000000000000000000000
+  %res = select i1 %cmp, fp128 %val, fp128 0xL00000000000000000000000000000000
+  store fp128 %res, fp128* %dst
+  ret void
+}
+
+; Test a f128 constant compare/select resulting in minnan.
+define void @f24(fp128 *%ptr, fp128 *%dst) {
+; CHECK-LABEL: f24:
+; CHECK-DAG: vl [[REG1:%v[0-9]+]], 0(%r2)
+; CHECK-DAG: vzero [[REG2:%v[0-9]+]]
+; CHECK: wfminxb [[RES:%v[0-9]+]], [[REG1]], [[REG2]], 1
+; CHECK: vst [[RES]], 0(%r3)
+; CHECK: br %r14
+  %val = load fp128, fp128* %ptr
+  %cmp = fcmp ult fp128 %val, 0xL00000000000000000000000000000000
+  %res = select i1 %cmp, fp128 %val, fp128 0xL00000000000000000000000000000000
+  store fp128 %res, fp128* %dst
+  ret void
 }
 
