@@ -58,7 +58,6 @@ class MemoryMappedSegment {
   u8 uuid[kModuleUUIDSize];
 
 #if SANITIZER_MAC
-  char name[kMaxSegName];
 
  private:
   friend class MemoryMappingLayout;

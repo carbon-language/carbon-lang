@@ -42,13 +42,12 @@ void MemoryMappedSegment::NextSectionLoad(LoadedModule *module) {
 
   uptr sec_start = sc->addr + base_virt_addr_;
   uptr sec_end = sec_start + sc->size;
-  module->addAddressRange(sec_start, sec_end, IsExecutable(), IsWritable(),
-                          sc->sectname);
+  module->addAddressRange(sec_start, sec_end, IsExecutable(), IsWritable());
 }
 
 void MemoryMappedSegment::AddAddressRanges(LoadedModule *module) {
   if (!nsects_) {
-    module->addAddressRange(start, end, IsExecutable(), IsWritable(), name);
+    module->addAddressRange(start, end, IsExecutable(), IsWritable());
     return;
   }
 
@@ -200,7 +199,6 @@ bool MemoryMappingLayout::NextSegmentLoad(MemoryMappedSegment *segment) {
                             : _dyld_get_image_name(current_image_);
       internal_strncpy(segment->filename, src, segment->filename_size);
     }
-    internal_strncpy(segment->name, sc->segname, ARRAY_SIZE(segment->name));
     segment->arch = current_arch_;
     internal_memcpy(segment->uuid, current_uuid_, kModuleUUIDSize);
     return true;
