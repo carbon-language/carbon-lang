@@ -7,7 +7,6 @@ if (PkgConfig_FOUND)
   foreach (libname IN LISTS JSONCPP_LIBRARIES)
     find_library(lib NAMES ${libname}
       HINTS ${JSONCPP_LIBDIR} ${JSONCPP_LIBRARY_DIRS}
-      NO_DEFAULT_PATH
     )
     if (lib)
       list(APPEND fulllibs ${lib})
