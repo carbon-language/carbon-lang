@@ -7172,11 +7172,13 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
                                   N0.getValueType(), ExtLoad);
       ExtendSetCCUses(SetCCs, Trunc, ExtLoad, DL, ISD::SIGN_EXTEND);
       // If the load value is used only by N, replace it via CombineTo N.
-      if (N0.getValue(0).hasOneUse())
+      bool NoReplaceTrunc = SDValue(LN0, 0).hasOneUse();
+      CombineTo(N, ExtLoad);
+      if (NoReplaceTrunc)
         DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
       else
         CombineTo(LN0, Trunc, ExtLoad.getValue(1));
-      return CombineTo(N, ExtLoad); // Return N so it doesn't get rechecked!
+      return SDValue(N, 0);
     }
   }
 
@@ -7233,12 +7235,13 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
                                     SDLoc(N0.getOperand(0)),
                                     N0.getOperand(0).getValueType(), ExtLoad);
         ExtendSetCCUses(SetCCs, Trunc, ExtLoad, DL, ISD::SIGN_EXTEND);
-        // If the load value is used only by N, replace it via CombineTo N.
-        if (SDValue(LN0, 0).hasOneUse())
+        bool NoReplaceTrunc = SDValue(LN0, 0).hasOneUse();
+        CombineTo(N, And);
+        if (NoReplaceTrunc)
           DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
         else
           CombineTo(LN0, Trunc, ExtLoad.getValue(1));
-        return CombineTo(N, And); // Return N so it doesn't get rechecked!
+        return SDValue(N,0); // Return N so it doesn't get rechecked!
       }
     }
   }
@@ -7479,11 +7482,13 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                                   N0.getValueType(), ExtLoad);
       ExtendSetCCUses(SetCCs, Trunc, ExtLoad, SDLoc(N), ISD::ZERO_EXTEND);
       // If the load value is used only by N, replace it via CombineTo N.
-      if (SDValue(LN0, 0).hasOneUse())
+      bool NoReplaceTrunc = SDValue(LN0, 0).hasOneUse();
+      CombineTo(N, ExtLoad);
+      if (NoReplaceTrunc)
         DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
       else
         CombineTo(LN0, Trunc, ExtLoad.getValue(1));
-      return CombineTo(N, ExtLoad); // Return N so it doesn't get rechecked!
+      return SDValue(N, 0); // Return N so it doesn't get rechecked!
     }
   }
 
@@ -7534,12 +7539,13 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                                     SDLoc(N0.getOperand(0)),
                                     N0.getOperand(0).getValueType(), ExtLoad);
         ExtendSetCCUses(SetCCs, Trunc, ExtLoad, DL, ISD::ZERO_EXTEND);
-        // If the load value is used only by N, replace it via CombineTo N.
-        if (SDValue(LN0, 0).hasOneUse())
+        bool NoReplaceTrunc = SDValue(LN0, 0).hasOneUse();
+        CombineTo(N, And);
+        if (NoReplaceTrunc)
           DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
         else
           CombineTo(LN0, Trunc, ExtLoad.getValue(1));
-        return CombineTo(N, And); // Return N so it doesn't get rechecked!
+        return SDValue(N,0); // Return N so it doesn't get rechecked!
       }
     }
   }
@@ -7716,11 +7722,13 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
       ExtendSetCCUses(SetCCs, Trunc, ExtLoad, SDLoc(N),
                       ISD::ANY_EXTEND);
       // If the load value is used only by N, replace it via CombineTo N.
-      if (N0.hasOneUse())
+      bool NoReplaceTrunc = N0.hasOneUse();
+      CombineTo(N, ExtLoad); 
+      if (NoReplaceTrunc)
         DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
       else
         CombineTo(LN0, Trunc, ExtLoad.getValue(1));
-      return CombineTo(N, ExtLoad); // Return N so it doesn't get rechecked!
+      return SDValue(N, 0); // Return N so it doesn't get rechecked!
     }
   }
 
