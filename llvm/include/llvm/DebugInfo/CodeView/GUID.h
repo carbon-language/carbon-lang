@@ -27,6 +27,26 @@ inline bool operator==(const GUID &LHS, const GUID &RHS) {
   return 0 == ::memcmp(LHS.Guid, RHS.Guid, sizeof(LHS.Guid));
 }
 
+inline bool operator<(const GUID &LHS, const GUID &RHS) {
+  return ::memcmp(LHS.Guid, RHS.Guid, sizeof(LHS.Guid)) < 0;
+}
+
+inline bool operator<=(const GUID &LHS, const GUID &RHS) {
+  return ::memcmp(LHS.Guid, RHS.Guid, sizeof(LHS.Guid)) <= 0;
+}
+
+inline bool operator>(const GUID &LHS, const GUID &RHS) {
+  return !(LHS <= RHS);
+}
+
+inline bool operator>=(const GUID &LHS, const GUID &RHS) {
+  return !(LHS < RHS);
+}
+
+inline bool operator!=(const GUID &LHS, const GUID &RHS) {
+  return !(LHS == RHS);
+}
+
 raw_ostream &operator<<(raw_ostream &OS, const GUID &Guid);
 
 } // namespace codeview
