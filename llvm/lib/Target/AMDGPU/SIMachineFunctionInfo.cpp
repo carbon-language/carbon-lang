@@ -152,7 +152,8 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
     }
   }
 
-  if (ST.isAmdCodeObjectV2(MF)) {
+  bool IsCOV2 = ST.isAmdCodeObjectV2(MF);
+  if (IsCOV2) {
     if (HasStackObjects || MaySpill)
       PrivateSegmentBuffer = true;
 
@@ -172,12 +173,12 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   if (F->hasFnAttribute("amdgpu-kernarg-segment-ptr"))
     KernargSegmentPtr = true;
 
-  // We don't need to worry about accessing spills with flat instructions.
-  // TODO: On VI where we must use flat for global, we should be able to omit
-  // this if it is never used for generic access.
-  if (HasStackObjects && ST.hasFlatAddressSpace() && ST.isAmdHsaOS() &&
-      isEntryFunction())
-    FlatScratchInit = true;
+  if (ST.hasFlatAddressSpace() && isEntryFunction() && IsCOV2) {
+    // TODO: This could be refined a lot. The attribute is a poor way of
+    // detecting calls that may require it before argument lowering.
+    if (HasStackObjects || F->hasFnAttribute("amdgpu-flat-scratch"))
+      FlatScratchInit = true;
+  }
 }
 
 unsigned SIMachineFunctionInfo::addPrivateSegmentBuffer(
