@@ -131,14 +131,14 @@ class ObjectFactory {
   using u32 = support::ulittle32_t;
   MachineTypes Machine;
   BumpPtrAllocator Alloc;
-  StringRef DLLName;
+  StringRef ImportName;
   StringRef Library;
   std::string ImportDescriptorSymbolName;
   std::string NullThunkSymbolName;
 
 public:
   ObjectFactory(StringRef S, MachineTypes M)
-      : Machine(M), DLLName(S), Library(S.drop_back(4)),
+      : Machine(M), ImportName(S), Library(S.drop_back(4)),
         ImportDescriptorSymbolName(("__IMPORT_DESCRIPTOR_" + Library).str()),
         NullThunkSymbolName(("\x7f" + Library + "_NULL_THUNK_DATA").str()) {}
 
@@ -184,7 +184,7 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
           sizeof(coff_import_directory_table_entry) +
           NumberOfRelocations * sizeof(coff_relocation) +
           // .idata$4
-          (DLLName.size() + 1)),
+          (ImportName.size() + 1)),
       u32(NumberOfSymbols),
       u16(0),
       u16(is32bit(Machine) ? IMAGE_FILE_32BIT_MACHINE : 0),
@@ -208,7 +208,7 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
       {{'.', 'i', 'd', 'a', 't', 'a', '$', '6'},
        u32(0),
        u32(0),
-       u32(DLLName.size() + 1),
+       u32(ImportName.size() + 1),
        u32(sizeof(coff_file_header) + NumberOfSections * sizeof(coff_section) +
            sizeof(coff_import_directory_table_entry) +
            NumberOfRelocations * sizeof(coff_relocation)),
@@ -239,9 +239,9 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
 
   // .idata$6
   auto S = Buffer.size();
-  Buffer.resize(S + DLLName.size() + 1);
-  memcpy(&Buffer[S], DLLName.data(), DLLName.size());
-  Buffer[S + DLLName.size()] = '\0';
+  Buffer.resize(S + ImportName.size() + 1);
+  memcpy(&Buffer[S], ImportName.data(), ImportName.size());
+  Buffer[S + ImportName.size()] = '\0';
 
   // Symbol Table
   coff_symbol16 SymbolTable[NumberOfSymbols] = {
@@ -305,7 +305,7 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
                     NullThunkSymbolName});
 
   StringRef F{reinterpret_cast<const char *>(Buffer.data()), Buffer.size()};
-  return {MemoryBufferRef(F, DLLName)};
+  return {MemoryBufferRef(F, ImportName)};
 }
 
 NewArchiveMember
@@ -366,7 +366,7 @@ ObjectFactory::createNullImportDescriptor(std::vector<uint8_t> &Buffer) {
   writeStringTable(Buffer, {NullImportDescriptorSymbolName});
 
   StringRef F{reinterpret_cast<const char *>(Buffer.data()), Buffer.size()};
-  return {MemoryBufferRef(F, DLLName)};
+  return {MemoryBufferRef(F, ImportName)};
 }
 
 NewArchiveMember ObjectFactory::createNullThunk(std::vector<uint8_t> &Buffer) {
@@ -448,14 +448,14 @@ NewArchiveMember ObjectFactory::createNullThunk(std::vector<uint8_t> &Buffer) {
   writeStringTable(Buffer, {NullThunkSymbolName});
 
   StringRef F{reinterpret_cast<const char *>(Buffer.data()), Buffer.size()};
-  return {MemoryBufferRef{F, DLLName}};
+  return {MemoryBufferRef{F, ImportName}};
 }
 
 NewArchiveMember ObjectFactory::createShortImport(StringRef Sym,
                                                   uint16_t Ordinal,
                                                   ImportType ImportType,
                                                   ImportNameType NameType) {
-  size_t ImpSize = DLLName.size() + Sym.size() + 2; // +2 for NULs
+  size_t ImpSize = ImportName.size() + Sym.size() + 2; // +2 for NULs
   size_t Size = sizeof(coff_import_header) + ImpSize;
   char *Buf = Alloc.Allocate<char>(Size);
   memset(Buf, 0, Size);
@@ -474,9 +474,9 @@ NewArchiveMember ObjectFactory::createShortImport(StringRef Sym,
   // Write symbol name and DLL name.
   memcpy(P, Sym.data(), Sym.size());
   P += Sym.size() + 1;
-  memcpy(P, DLLName.data(), DLLName.size());
+  memcpy(P, ImportName.data(), ImportName.size());
 
-  return {MemoryBufferRef(StringRef(Buf, Size), DLLName)};
+  return {MemoryBufferRef(StringRef(Buf, Size), ImportName)};
 }
 
 NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
@@ -555,15 +555,15 @@ NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
   // Copied here so we can still use writeStringTable
   char *Buf = Alloc.Allocate<char>(Buffer.size());
   memcpy(Buf, Buffer.data(), Buffer.size());
-  return {MemoryBufferRef(StringRef(Buf, Buffer.size()), DLLName)};
+  return {MemoryBufferRef(StringRef(Buf, Buffer.size()), ImportName)};
 }
 
-std::error_code writeImportLibrary(StringRef DLLName, StringRef Path,
+std::error_code writeImportLibrary(StringRef ImportName, StringRef Path,
                                    ArrayRef<COFFShortExport> Exports,
                                    MachineTypes Machine) {
 
   std::vector<NewArchiveMember> Members;
-  ObjectFactory OF(llvm::sys::path::filename(DLLName), Machine);
+  ObjectFactory OF(llvm::sys::path::filename(ImportName), Machine);
 
   std::vector<uint8_t> ImportDescriptor;
   Members.push_back(OF.createImportDescriptor(ImportDescriptor));
