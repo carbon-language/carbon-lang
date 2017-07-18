@@ -16,7 +16,6 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/ToolDrivers/llvm-dlltool/DlltoolDriver.h"
 #include "llvm/ToolDrivers/llvm-lib/LibDriver.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ArchiveWriter.h"
@@ -864,9 +863,6 @@ int main(int argc, char **argv) {
   llvm::InitializeAllAsmParsers();
 
   StringRef Stem = sys::path::stem(ToolName);
-  if (Stem.find("dlltool") != StringRef::npos)
-    return dlltoolDriverMain(makeArrayRef(argv, argc));
-
   if (Stem.find("ranlib") == StringRef::npos &&
       Stem.find("lib") != StringRef::npos)
     return libDriverMain(makeArrayRef(argv, argc));
@@ -882,5 +878,5 @@ int main(int argc, char **argv) {
     return ranlib_main();
   if (Stem.find("ar") != StringRef::npos)
     return ar_main();
-  fail("Not ranlib, ar, lib or dlltool!");
+  fail("Not ranlib, ar or lib!");
 }

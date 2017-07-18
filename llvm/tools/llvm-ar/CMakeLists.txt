@@ -1,7 +1,6 @@
 set(LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
   Core
-  DlltoolDriver
   LibDriver
   Object
   Support
@@ -16,4 +15,3 @@ add_llvm_tool(llvm-ar
 
 add_llvm_tool_symlink(llvm-ranlib llvm-ar)
 add_llvm_tool_symlink(llvm-lib llvm-ar)
-add_llvm_tool_symlink(llvm-dlltool llvm-ar)
