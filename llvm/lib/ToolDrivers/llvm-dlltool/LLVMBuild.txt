@@ -1,4 +1,4 @@
-;===- ./lib/ToolDrivers/LLVMBuild.txt --------------------------*- Conf -*--===;
+;===- ./lib/ToolDrivers/llvm-dlltool/LLVMBuild.txt -------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = llvm-dlltool llvm-lib
-
 [component_0]
-type = Group
-name = ToolDrivers
+type = Library
+name = DlltoolDriver
 parent = Libraries
+required_libraries = Object Option Support
