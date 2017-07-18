@@ -22,6 +22,7 @@
 #include "llvm/Object/COFFImportFile.h"
 #include "llvm/Object/Error.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm::COFF;
@@ -188,9 +189,8 @@ private:
       if (Error Err = parseName(&Name, &Info.ImageBase))
         return Err;
       // Append the appropriate file extension if not already present.
-      StringRef Ext = IsDll ? ".dll" : ".exe";
-      if (!StringRef(Name).endswith_lower(Ext))
-        Name += Ext;
+      if (!sys::path::has_extension(Name))
+        Name += IsDll ? ".dll" : ".exe";
 
       // Set the output file, but don't override /out if it was already passed.
       if (Info.OutputFile.empty())
