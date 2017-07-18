@@ -68,11 +68,6 @@ LLVM_ATTRIBUTE_NORETURN void reportError(Twine Msg) {
 }
 
 int main(int argc, const char **argv) {
-  errs() << "very start\n";
-  for (int i = 0; i < argc; i++ ) {
-    errs() << argv[i] << "\n";
-  }
-
   sys::PrintStackTraceOnErrorSignal(argv[0]);
   PrettyStackTraceProgram X(argc, argv);
 
@@ -90,7 +85,6 @@ int main(int argc, const char **argv) {
   ArrayRef<const char *> ArgsArr = makeArrayRef(argv, argc);
   opt::InputArgList InputArgs = T.ParseArgs(ArgsArr, MAI, MAC);
 
-  errs() << "after\n";
   for (int i = 0; i < argc; i++ ) {
     errs() << argv[i] << "\n";
   }
