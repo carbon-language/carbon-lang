@@ -255,7 +255,8 @@ const CVIndexMap &PDBLinker::maybeMergeTypeServerPDB(ObjectFile *File,
     StringRef LocalPath =
         !File->ParentName.empty() ? File->ParentName : File->getName();
     SmallString<128> Path = sys::path::parent_path(LocalPath);
-    sys::path::append(Path, sys::path::filename(TS.getName()));
+    sys::path::append(
+        Path, sys::path::filename(TS.getName(), sys::path::Style::windows));
     ExpectedSession = tryToLoadPDB(TS.getGuid(), Path);
   }
   if (auto E = ExpectedSession.takeError())
