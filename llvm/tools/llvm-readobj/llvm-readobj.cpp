@@ -57,10 +57,14 @@ namespace opts {
     cl::desc("Alias for --file-headers"),
     cl::aliasopt(FileHeaders));
 
-  // -sections, -s
+  // -sections, -s, -S
+  // Note: In GNU readelf, -s means --symbols!
   cl::opt<bool> Sections("sections",
     cl::desc("Display all sections."));
   cl::alias SectionsShort("s",
+    cl::desc("Alias for --sections"),
+    cl::aliasopt(Sections));
+  cl::alias SectionsShortUpper("S",
     cl::desc("Alias for --sections"),
     cl::aliasopt(Sections));
 
