@@ -1,5 +1,7 @@
 ; RUN: not llc < %s -mcpu=skylake-avx512 2>&1 | FileCheck %s
 
+target triple = "x86_64-unknown-linux-gnu"
+
 ; make sure we don't crash if scale for gather isn't constant.
 
 ; CHECK: LLVM ERROR: Cannot select: intrinsic %llvm.x86.avx512.gather.dpi.512
