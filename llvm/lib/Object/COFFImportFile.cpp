@@ -162,14 +162,17 @@ public:
   // Library Format.
   NewArchiveMember createShortImport(StringRef Sym, uint16_t Ordinal,
                                      ImportType Type, ImportNameType NameType);
+
+  // Create a weak external file which is described in PE/COFF Aux Format 3.
+  NewArchiveMember createWeakExternal(StringRef Sym, StringRef Weak, bool Imp);
 };
 } // namespace
 
 NewArchiveMember
 ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
-  static const uint32_t NumberOfSections = 2;
-  static const uint32_t NumberOfSymbols = 7;
-  static const uint32_t NumberOfRelocations = 3;
+  const uint32_t NumberOfSections = 2;
+  const uint32_t NumberOfSymbols = 7;
+  const uint32_t NumberOfRelocations = 3;
 
   // COFF Header
   coff_file_header Header{
@@ -189,7 +192,7 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
   append(Buffer, Header);
 
   // Section Header Table
-  static const coff_section SectionTable[NumberOfSections] = {
+  const coff_section SectionTable[NumberOfSections] = {
       {{'.', 'i', 'd', 'a', 't', 'a', '$', '2'},
        u32(0),
        u32(0),
@@ -219,12 +222,12 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
   append(Buffer, SectionTable);
 
   // .idata$2
-  static const coff_import_directory_table_entry ImportDescriptor{
+  const coff_import_directory_table_entry ImportDescriptor{
       u32(0), u32(0), u32(0), u32(0), u32(0),
   };
   append(Buffer, ImportDescriptor);
 
-  static const coff_relocation RelocationTable[NumberOfRelocations] = {
+  const coff_relocation RelocationTable[NumberOfRelocations] = {
       {u32(offsetof(coff_import_directory_table_entry, NameRVA)), u32(2),
        u16(getImgRelRelocation(Machine))},
       {u32(offsetof(coff_import_directory_table_entry, ImportLookupTableRVA)),
@@ -307,8 +310,8 @@ ObjectFactory::createImportDescriptor(std::vector<uint8_t> &Buffer) {
 
 NewArchiveMember
 ObjectFactory::createNullImportDescriptor(std::vector<uint8_t> &Buffer) {
-  static const uint32_t NumberOfSections = 1;
-  static const uint32_t NumberOfSymbols = 1;
+  const uint32_t NumberOfSections = 1;
+  const uint32_t NumberOfSymbols = 1;
 
   // COFF Header
   coff_file_header Header{
@@ -325,7 +328,7 @@ ObjectFactory::createNullImportDescriptor(std::vector<uint8_t> &Buffer) {
   append(Buffer, Header);
 
   // Section Header Table
-  static const coff_section SectionTable[NumberOfSections] = {
+  const coff_section SectionTable[NumberOfSections] = {
       {{'.', 'i', 'd', 'a', 't', 'a', '$', '3'},
        u32(0),
        u32(0),
@@ -342,7 +345,7 @@ ObjectFactory::createNullImportDescriptor(std::vector<uint8_t> &Buffer) {
   append(Buffer, SectionTable);
 
   // .idata$3
-  static const coff_import_directory_table_entry ImportDescriptor{
+  const coff_import_directory_table_entry ImportDescriptor{
       u32(0), u32(0), u32(0), u32(0), u32(0),
   };
   append(Buffer, ImportDescriptor);
@@ -367,8 +370,8 @@ ObjectFactory::createNullImportDescriptor(std::vector<uint8_t> &Buffer) {
 }
 
 NewArchiveMember ObjectFactory::createNullThunk(std::vector<uint8_t> &Buffer) {
-  static const uint32_t NumberOfSections = 2;
-  static const uint32_t NumberOfSymbols = 1;
+  const uint32_t NumberOfSections = 2;
+  const uint32_t NumberOfSymbols = 1;
   uint32_t VASize = is32bit(Machine) ? 4 : 8;
 
   // COFF Header
@@ -388,7 +391,7 @@ NewArchiveMember ObjectFactory::createNullThunk(std::vector<uint8_t> &Buffer) {
   append(Buffer, Header);
 
   // Section Header Table
-  static const coff_section SectionTable[NumberOfSections] = {
+  const coff_section SectionTable[NumberOfSections] = {
       {{'.', 'i', 'd', 'a', 't', 'a', '$', '5'},
        u32(0),
        u32(0),
@@ -476,6 +479,85 @@ NewArchiveMember ObjectFactory::createShortImport(StringRef Sym,
   return {MemoryBufferRef(StringRef(Buf, Size), DLLName)};
 }
 
+NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
+                                                   StringRef Weak, bool Imp) {
+  std::vector<uint8_t> Buffer;
+  const uint32_t NumberOfSections = 1;
+  const uint32_t NumberOfSymbols = 5;
+
+  // COFF Header
+  coff_file_header Header{
+      u16(0),
+      u16(NumberOfSections),
+      u32(0),
+      u32(sizeof(Header) + (NumberOfSections * sizeof(coff_section))),
+      u32(NumberOfSymbols),
+      u16(0),
+      u16(0),
+  };
+  append(Buffer, Header);
+
+  // Section Header Table
+  const coff_section SectionTable[NumberOfSections] = {
+      {{'.', 'd', 'r', 'e', 'c', 't', 'v', 'e'},
+       u32(0),
+       u32(0),
+       u32(0),
+       u32(0),
+       u32(0),
+       u32(0),
+       u16(0),
+       u16(0),
+       u32(IMAGE_SCN_LNK_INFO | IMAGE_SCN_LNK_REMOVE)}};
+  append(Buffer, SectionTable);
+
+  // Symbol Table
+  coff_symbol16 SymbolTable[NumberOfSymbols] = {
+      {{{'@', 'c', 'o', 'm', 'p', '.', 'i', 'd'}},
+       u32(0),
+       u16(0xFFFF),
+       u16(0),
+       IMAGE_SYM_CLASS_STATIC,
+       0},
+      {{{'@', 'f', 'e', 'a', 't', '.', '0', '0'}},
+       u32(0),
+       u16(0xFFFF),
+       u16(0),
+       IMAGE_SYM_CLASS_STATIC,
+       0},
+      {{{0, 0, 0, 0, 0, 0, 0, 0}},
+       u32(0),
+       u16(0),
+       u16(0),
+       IMAGE_SYM_CLASS_EXTERNAL,
+       0},
+      {{{0, 0, 0, 0, 0, 0, 0, 0}},
+       u32(0),
+       u16(0),
+       u16(0),
+       IMAGE_SYM_CLASS_WEAK_EXTERNAL,
+       1},
+      {{{2, 0, 0, 0, 3, 0, 0, 0}}, u32(0), u16(0), u16(0), uint8_t(0), 0},
+  };
+  SymbolTable[2].Name.Offset.Offset = sizeof(uint32_t);
+
+  //__imp_ String Table
+  if (Imp) {
+    SymbolTable[3].Name.Offset.Offset = sizeof(uint32_t) + Sym.size() + 7;
+    writeStringTable(Buffer, {std::string("__imp_").append(Sym),
+                              std::string("__imp_").append(Weak)});
+  } else {
+    SymbolTable[3].Name.Offset.Offset = sizeof(uint32_t) + Sym.size() + 1;
+    writeStringTable(Buffer, {Sym, Weak});
+  }
+  append(Buffer, SymbolTable);
+
+  // Copied here so we can still use writeStringTable
+  char *Buf = Alloc.Allocate<char>(Buffer.size());
+  memcpy(Buf, Buffer.data(), Buffer.size());
+  return {MemoryBufferRef(StringRef(Buf, Buffer.size()), DLLName)};
+}
+
 std::error_code writeImportLibrary(StringRef DLLName, StringRef Path,
                                    ArrayRef<COFFShortExport> Exports,
                                    MachineTypes Machine) {
@@ -495,6 +577,12 @@ std::error_code writeImportLibrary(StringRef DLLName, StringRef Path,
   for (COFFShortExport E : Exports) {
     if (E.Private)
       continue;
+
+    if (E.isWeak()) {
+      Members.push_back(OF.createWeakExternal(E.Name, E.ExtName, false));
+      Members.push_back(OF.createWeakExternal(E.Name, E.ExtName, true));
+      continue;
+    }
 
     ImportType ImportType = IMPORT_CODE;
     if (E.Data)
