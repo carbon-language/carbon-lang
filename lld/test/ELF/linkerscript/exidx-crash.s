@@ -1,4 +1,4 @@
-# REQUIRES: x86
+# REQUIRES: aarch64
 
 # We used to crash on this.
 
