@@ -3881,13 +3881,10 @@ public:
 
   void redelayDiagnostics(sema::DelayedDiagnosticPool &pool);
 
-  void EmitAvailabilityWarning(AvailabilityResult AR,
-                               const NamedDecl *ReferringDecl,
-                               const NamedDecl *OffendingDecl,
-                               StringRef Message, SourceLocation Loc,
-                               const ObjCInterfaceDecl *UnknownObjCClass,
-                               const ObjCPropertyDecl *ObjCProperty,
-                               bool ObjCPropertyAccess);
+  void DiagnoseAvailabilityOfDecl(NamedDecl *D, SourceLocation Loc,
+                                  const ObjCInterfaceDecl *UnknownObjCClass,
+                                  bool ObjCPropertyAccess,
+                                  bool AvoidPartialAvailabilityChecks = false);
 
   bool makeUnavailableInSystemHeader(SourceLocation loc,
                                      UnavailableAttr::ImplicitReason reason);
@@ -10425,15 +10422,6 @@ public:
   DeclContext *getCurLexicalContext() const {
     return OriginalLexicalContext ? OriginalLexicalContext : CurContext;
   }
-
-  /// The diagnostic we should emit for \c D, and the declaration that
-  /// originated it, or \c AR_Available.
-  ///
-  /// \param D The declaration to check.
-  /// \param Message If non-null, this will be populated with the message from
-  /// the availability attribute that is selected.
-  std::pair<AvailabilityResult, const NamedDecl *>
-  ShouldDiagnoseAvailabilityOfDecl(const NamedDecl *D, std::string *Message);
 
   const DeclContext *getCurObjCLexicalContext() const {
     const DeclContext *DC = getCurLexicalContext();
