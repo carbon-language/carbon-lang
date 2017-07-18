@@ -2311,7 +2311,7 @@ ThunkSection::ThunkSection(OutputSection *OS, uint64_t Off)
 }
 
 void ThunkSection::addThunk(Thunk *T) {
-  uint64_t Off = alignTo(Size, T->alignment);
+  uint64_t Off = alignTo(Size, T->Alignment);
   T->Offset = Off;
   Thunks.push_back(T);
   T->addSymbols(*this);

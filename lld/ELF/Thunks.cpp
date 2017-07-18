@@ -72,7 +72,7 @@ public:
 
 class ThumbV7ABSLongThunk final : public Thunk {
 public:
-  ThumbV7ABSLongThunk(const SymbolBody &Dest) : Thunk(Dest) { alignment = 2; }
+  ThumbV7ABSLongThunk(const SymbolBody &Dest) : Thunk(Dest) { Alignment = 2; }
 
   uint32_t size() const override { return 10; }
   void writeTo(uint8_t *Buf, ThunkSection &IS) const override;
@@ -82,7 +82,7 @@ public:
 
 class ThumbV7PILongThunk final : public Thunk {
 public:
-  ThumbV7PILongThunk(const SymbolBody &Dest) : Thunk(Dest) { alignment = 2; }
+  ThumbV7PILongThunk(const SymbolBody &Dest) : Thunk(Dest) { Alignment = 2; }
 
   uint32_t size() const override { return 12; }
   void writeTo(uint8_t *Buf, ThunkSection &IS) const override;
