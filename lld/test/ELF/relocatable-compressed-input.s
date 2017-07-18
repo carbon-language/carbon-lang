@@ -1,3 +1,4 @@
+# REQUIRES: x86
 # REQUIRES: zlib
 
 # RUN: llvm-mc -compress-debug-sections=zlib-gnu -filetype=obj -triple=x86_64-unknown-linux %s -o %t1
