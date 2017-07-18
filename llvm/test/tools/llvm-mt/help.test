@@ -1,5 +1,3 @@
-RUN: not llvm-mt /hello /nonsense
-
 RUN: llvm-mt /h | FileCheck %s -check-prefix=HELP
 
 RUN: llvm-mt /inputresource:foo.res /manifest foo.manifest | FileCheck %s -check-prefix=NOT_SUPPORTED
