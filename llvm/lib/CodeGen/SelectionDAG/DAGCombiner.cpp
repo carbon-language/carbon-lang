@@ -12763,7 +12763,12 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode *St) {
              TLI.storeOfVectorConstantIsCheap(MemVT, i + 1, FirstStoreAS)) &&
             !NoVectors) {
           // Find a legal type for the vector store.
-          EVT Ty = EVT::getVectorVT(Context, MemVT, i + 1);
+          unsigned Elts = i + 1;
+          if (MemVT.isVector()) {
+            // When merging vector stores, get the total number of elements.
+            Elts *= MemVT.getVectorNumElements();
+          }
+          EVT Ty = EVT::getVectorVT(Context, MemVT.getScalarType(), Elts);
           if (TLI.isTypeLegal(Ty) &&
               TLI.canMergeStoresTo(FirstStoreAS, Ty, DAG) &&
               TLI.allowsMemoryAccess(Context, DL, Ty, FirstStoreAS,
