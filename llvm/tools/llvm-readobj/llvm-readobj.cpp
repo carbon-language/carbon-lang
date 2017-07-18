@@ -50,6 +50,13 @@ namespace opts {
     cl::desc("<input object files>"),
     cl::ZeroOrMore);
 
+  // -wide, -W
+  cl::opt<bool> WideOutput("wide",
+    cl::desc("Ignored for compatibility with GNU readelf"));
+  cl::alias WideOutputShort("W",
+    cl::desc("Alias for --wide"),
+    cl::aliasopt(WideOutput));
+
   // -file-headers, -h
   cl::opt<bool> FileHeaders("file-headers",
     cl::desc("Display file headers "));
@@ -543,6 +550,8 @@ int main(int argc, const char *argv[]) {
 
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
+
+  opts::WideOutput.setHiddenFlag(cl::Hidden);
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM Object Reader\n");
 
