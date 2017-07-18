@@ -158,7 +158,7 @@ SIFrameLowering::getReservedPrivateSegmentWaveByteOffsetReg(
   // No replacement necessary.
   if (ScratchWaveOffsetReg == AMDGPU::NoRegister ||
       !MRI.isPhysRegUsed(ScratchWaveOffsetReg)) {
-    assert(MFI->getStackPtrOffsetReg() == AMDGPU::NoRegister);
+    assert(MFI->getStackPtrOffsetReg() == AMDGPU::SP_REG);
     return std::make_pair(AMDGPU::NoRegister, AMDGPU::NoRegister);
   }
 
@@ -250,7 +250,9 @@ void SIFrameLowering::emitEntryFunctionPrologue(MachineFunction &MF,
     emitFlatScratchInit(ST, MF, MBB);
 
   unsigned SPReg = MFI->getStackPtrOffsetReg();
-  if (SPReg != AMDGPU::NoRegister) {
+  if (SPReg != AMDGPU::SP_REG) {
+    assert(MRI.isReserved(SPReg) && "SPReg used but not reserved");
+
     DebugLoc DL;
     int64_t StackSize = MF.getFrameInfo().getStackSize();
 

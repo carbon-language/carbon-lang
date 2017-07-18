@@ -23,10 +23,10 @@ using namespace llvm;
 SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
   : AMDGPUMachineFunction(MF),
     TIDReg(AMDGPU::NoRegister),
-    ScratchRSrcReg(AMDGPU::NoRegister),
-    ScratchWaveOffsetReg(AMDGPU::NoRegister),
-    FrameOffsetReg(AMDGPU::NoRegister),
-    StackPtrOffsetReg(AMDGPU::NoRegister),
+    ScratchRSrcReg(AMDGPU::PRIVATE_RSRC_REG),
+    ScratchWaveOffsetReg(AMDGPU::SCRATCH_WAVE_OFFSET_REG),
+    FrameOffsetReg(AMDGPU::FP_REG),
+    StackPtrOffsetReg(AMDGPU::SP_REG),
     PrivateSegmentBufferUserSGPR(AMDGPU::NoRegister),
     DispatchPtrUserSGPR(AMDGPU::NoRegister),
     QueuePtrUserSGPR(AMDGPU::NoRegister),
@@ -90,6 +90,9 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
     ScratchWaveOffsetReg = AMDGPU::SGPR4;
     FrameOffsetReg = AMDGPU::SGPR5;
     StackPtrOffsetReg = AMDGPU::SGPR32;
+
+    // FIXME: Not really a system SGPR.
+    PrivateSegmentWaveByteOffsetSystemSGPR = ScratchWaveOffsetReg;
   }
 
   CallingConv::ID CC = F->getCallingConv();
@@ -131,7 +134,7 @@ SIMachineFunctionInfo::SIMachineFunctionInfo(const MachineFunction &MF)
 
   const MachineFrameInfo &FrameInfo = MF.getFrameInfo();
   bool MaySpill = ST.isVGPRSpillingEnabled(*F);
-  bool HasStackObjects = FrameInfo.hasStackObjects() || FrameInfo.hasCalls();
+  bool HasStackObjects = FrameInfo.hasStackObjects();
 
   if (isEntryFunction()) {
     // X, XY, and XYZ are the only supported combinations, so make sure Y is
