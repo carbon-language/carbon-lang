@@ -539,18 +539,15 @@ NewArchiveMember ObjectFactory::createWeakExternal(StringRef Sym,
        1},
       {{{2, 0, 0, 0, 3, 0, 0, 0}}, u32(0), u16(0), u16(0), uint8_t(0), 0},
   };
-  reinterpret_cast<StringTableOffset &>(SymbolTable[2].Name).Offset =
-      sizeof(uint32_t);
+  SymbolTable[2].Name.Offset.Offset = sizeof(uint32_t);
 
   //__imp_ String Table
   if (Imp) {
-    reinterpret_cast<StringTableOffset &>(SymbolTable[3].Name).Offset =
-        sizeof(uint32_t) + Sym.size() + 1 + 6;
+    SymbolTable[3].Name.Offset.Offset = sizeof(uint32_t) + Sym.size() + 7;
     writeStringTable(Buffer, {std::string("__imp_").append(Sym),
                               std::string("__imp_").append(Weak)});
   } else {
-    reinterpret_cast<StringTableOffset &>(SymbolTable[3].Name).Offset =
-        sizeof(uint32_t) + Sym.size() + 1;
+    SymbolTable[3].Name.Offset.Offset = sizeof(uint32_t) + Sym.size() + 1;
     writeStringTable(Buffer, {Sym, Weak});
   }
   append(Buffer, SymbolTable);
