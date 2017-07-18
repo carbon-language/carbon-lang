@@ -5279,10 +5279,20 @@ SDValue DAGCombiner::visitRotate(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
+  unsigned Bitsize = VT.getScalarSizeInBits();
 
   // fold (rot x, 0) -> x
   if (isNullConstantOrNullSplatConstant(N1))
     return N0;
+
+  // fold (rot x, c) -> (rot x, c % BitSize)
+  if (ConstantSDNode *Cst = isConstOrConstSplat(N1)) {
+    if (Cst->getAPIntValue().uge(Bitsize)) {
+      uint64_t RotAmt = Cst->getAPIntValue().urem(Bitsize);
+      return DAG.getNode(N->getOpcode(), dl, VT, N0,
+                         DAG.getConstant(RotAmt, dl, N1.getValueType()));
+    }
+  }
 
   // fold (rot* x, (trunc (and y, c))) -> (rot* x, (and (trunc y), (trunc c))).
   if (N1.getOpcode() == ISD::TRUNCATE &&
@@ -5302,7 +5312,6 @@ SDValue DAGCombiner::visitRotate(SDNode *N) {
       unsigned CombineOp = SameSide ? ISD::ADD : ISD::SUB;
       if (SDValue CombinedShift =
               DAG.FoldConstantArithmetic(CombineOp, dl, ShiftVT, C1, C2)) {
-        unsigned Bitsize = VT.getScalarSizeInBits();
         SDValue BitsizeC = DAG.getConstant(Bitsize, dl, ShiftVT);
         SDValue CombinedShiftNorm = DAG.FoldConstantArithmetic(
             ISD::SREM, dl, ShiftVT, CombinedShift.getNode(),
