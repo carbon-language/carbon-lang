@@ -171,6 +171,11 @@ void ProcessPlatformSpecificAllocations(Frontier *frontier) {
   }
 }
 
+// On darwin, we can intercept _exit gracefully, and return a failing exit code
+// if required at that point. Calling Die() here is undefined behavior and
+// causes rare race conditions.
+void HandleLeaks() {}
+
 void DoStopTheWorld(StopTheWorldCallback callback, void *argument) {
   StopTheWorld(callback, argument);
 }
