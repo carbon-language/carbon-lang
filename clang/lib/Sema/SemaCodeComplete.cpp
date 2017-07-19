@@ -2418,7 +2418,7 @@ static std::string GetDefaultValueString(const ParmVarDecl *Param,
     // This happens if the code is incorrect (for example class is forward declared).
     return "";
   }
-  std::string DefValue{srcText};
+  std::string DefValue(srcText.str());
   // FIXME: remove this check if the Lexer::getSourceText value is fixed and
   // this value always has (or always does not have) '=' in front of it
   if (DefValue.at(0) != '=') {
