@@ -201,7 +201,7 @@ void LinkerDriver::parseDirectives(StringRef S) {
   opt::InputArgList Args = Parser.parse(S);
 
   for (auto *Arg : Args) {
-    switch (Arg->getOption().getID()) {
+    switch (Arg->getOption().getUnaliasedOption().getID()) {
     case OPT_alternatename:
       parseAlternateName(Arg->getValue());
       break;
