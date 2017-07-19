@@ -3746,7 +3746,7 @@ void Scop::removeStmts(std::function<bool(ScopStmt &)> ShouldDelete) {
 
 void Scop::removeStmtNotInDomainMap() {
   auto ShouldDelete = [this](ScopStmt &Stmt) -> bool {
-    return !this->DomainMap[Stmt.getEntryBlock()];
+    return !this->DomainMap.lookup(Stmt.getEntryBlock());
   };
   removeStmts(ShouldDelete);
 }
