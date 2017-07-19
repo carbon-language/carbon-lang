@@ -2387,8 +2387,9 @@ def err_attribute_requires_positive_integer : Error<
 def err_attribute_requires_opencl_version : Error<
   "%0 attribute requires OpenCL version %1%select{| or above}2">;
 def warn_unsupported_target_attribute
-    : Warning<"Ignoring unsupported '%0' in the target attribute string">,
-    InGroup<IgnoredAttributes>;
+    : Warning<"ignoring %select{unsupported|duplicate}0"
+              "%select{| architecture}1 '%2' in the target attribute string">,
+      InGroup<IgnoredAttributes>;
 def err_attribute_unsupported
     : Error<"%0 attribute is not supported for this target">;
 // The err_*_attribute_argument_not_int are separate because they're used by
