@@ -10,6 +10,7 @@
 ; RUN: -polly-target-2nd-cache-level-size=262144 \
 ; RUN: -polly-opt-isl -debug < %s 2>&1 \
 ; RUN: | FileCheck %s
+; REQUIRES: asserts
 ;
 ; Check that the pattern matching detects the matrix multiplication pattern
 ; in case scalar memory accesses were replaced by accesses to newly created
