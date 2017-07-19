@@ -325,9 +325,11 @@ Symbol *SymbolTable<ELFT>::addUndefined(StringRef Name, bool IsLocal,
 // .symver foo,foo@@@VER
 // we can delete this hack.
 static int compareVersion(Symbol *S, StringRef Name) {
-  if (Name.contains("@@") && !S->body()->getName().contains("@@"))
+  bool A = Name.contains("@@");
+  bool B = S->body()->getName().contains("@@");
+  if (A && !B)
     return 1;
-  if (!Name.contains("@@") && S->body()->getName().contains("@@"))
+  if (!A && B)
     return -1;
   return 0;
 }
