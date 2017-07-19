@@ -4414,11 +4414,11 @@ bool X86TargetInfo::validateCpuSupports(StringRef FeatureStr) const {
       .Case("avx512bw", true)
       .Case("avx512dq", true)
       .Case("avx512cd", true)
-      .Case("avx512vpopcntdq", true)
       .Case("avx512er", true)
       .Case("avx512pf", true)
       .Case("avx512vbmi", true)
       .Case("avx512ifma", true)
+      .Case("avx512vpopcntdq", true)
       .Default(false);
 }
 
