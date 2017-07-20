@@ -1429,6 +1429,22 @@ public:
   /// Return true if this statement does not contain any accesses.
   bool isEmpty() const { return MemAccs.empty(); }
 
+  /// Find all array accesses for @p Inst.
+  ///
+  /// @param Inst The instruction accessing an array.
+  ///
+  /// @return A list of array accesses (MemoryKind::Array) accessed by @p Inst.
+  ///         If there is no such access, it returns nullptr.
+  const MemoryAccessList *
+  lookupArrayAccessesFor(const Instruction *Inst) const {
+    auto It = InstructionToAccess.find(Inst);
+    if (It == InstructionToAccess.end())
+      return nullptr;
+    if (It->second.empty())
+      return nullptr;
+    return &It->second;
+  }
+
   /// Return the only array access for @p Inst, if existing.
   ///
   /// @param Inst The instruction for which to look up the access.
@@ -1543,6 +1559,26 @@ public:
 
   const std::vector<Instruction *> &getInstructions() const {
     return Instructions;
+  }
+
+  /// Set the list of instructions for this statement. It replaces the current
+  /// list.
+  void setInstructions(ArrayRef<Instruction *> Range) {
+    Instructions.assign(Range.begin(), Range.end());
+  }
+
+  std::vector<Instruction *>::const_iterator insts_begin() const {
+    return Instructions.begin();
+  }
+
+  std::vector<Instruction *>::const_iterator insts_end() const {
+    return Instructions.end();
+  }
+
+  /// The range of instructions in this statement.
+  llvm::iterator_range<std::vector<Instruction *>::const_iterator>
+  insts() const {
+    return {insts_begin(), insts_end()};
   }
 
   const char *getBaseName() const;

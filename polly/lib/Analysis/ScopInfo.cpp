@@ -1313,7 +1313,7 @@ MemoryAccess *ScopStmt::lookupPHIReadOf(PHINode *PHI) const {
   for (auto *MA : *this) {
     if (!MA->isRead())
       continue;
-    if (!MA->isLatestAnyPHIKind())
+    if (!MA->isOriginalAnyPHIKind())
       continue;
 
     if (MA->getAccessInstruction() == PHI)
