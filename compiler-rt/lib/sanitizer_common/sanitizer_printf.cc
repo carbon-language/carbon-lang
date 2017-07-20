@@ -229,9 +229,11 @@ static void CallPrintfAndReportCallback(const char *str) {
     PrintfAndReportCallback(str);
 }
 
-static void SharedPrintfCodeNoBuffer(bool append_pid, char *local_buffer,
-                                     int buffer_size, const char *format,
-                                     va_list args) {
+static void NOINLINE SharedPrintfCodeNoBuffer(bool append_pid,
+                                              char *local_buffer,
+                                              int buffer_size,
+                                              const char *format,
+                                              va_list args) {
   va_list args2;
   va_copy(args2, args);
   const int kLen = 16 * 1024;
@@ -286,8 +288,8 @@ static void SharedPrintfCodeNoBuffer(bool append_pid, char *local_buffer,
   va_end(args2);
 }
 
-static void SharedPrintfCode(bool append_pid, const char *format,
-                             va_list args) {
+static void NOINLINE SharedPrintfCode(bool append_pid, const char *format,
+                                      va_list args) {
   // |local_buffer| is small enough not to overflow the stack and/or violate
   // the stack limit enforced by TSan (-Wframe-larger-than=512). On the other
   // hand, the bigger the buffer is, the more the chance the error report will
