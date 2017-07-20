@@ -99,7 +99,6 @@ define i64 @t5(i64 %t, i64 %val) nounwind {
 define void @t5ptr(i64 %t, i64* %ptr) nounwind {
 ; X64-LABEL: t5ptr:
 ; X64:       ## BB#0:
-; X64-NEXT:    andb $-65, %dil
 ; X64-NEXT:    movl %edi, %ecx
 ; X64-NEXT:    shrq %cl, (%rsi)
 ; X64-NEXT:    retq
