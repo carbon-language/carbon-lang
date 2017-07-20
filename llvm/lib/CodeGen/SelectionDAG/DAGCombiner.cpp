@@ -7316,8 +7316,15 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
                                     SDLoc(N0.getOperand(0)),
                                     N0.getOperand(0).getValueType(), ExtLoad);
         ExtendSetCCUses(SetCCs, Trunc, ExtLoad, DL, ISD::SIGN_EXTEND);
+        bool NoReplaceTruncAnd = !N0.hasOneUse();
         bool NoReplaceTrunc = SDValue(LN0, 0).hasOneUse();
         CombineTo(N, And);
+        // If N0 has multiple uses, change other uses as well.
+        if (NoReplaceTruncAnd) {
+          SDValue TruncAnd =
+              DAG.getNode(ISD::TRUNCATE, DL, N0.getValueType(), And);
+          CombineTo(N0.getNode(), TruncAnd);
+        }
         if (NoReplaceTrunc)
           DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
         else
@@ -7620,8 +7627,15 @@ SDValue DAGCombiner::visitZERO_EXTEND(SDNode *N) {
                                     SDLoc(N0.getOperand(0)),
                                     N0.getOperand(0).getValueType(), ExtLoad);
         ExtendSetCCUses(SetCCs, Trunc, ExtLoad, DL, ISD::ZERO_EXTEND);
+        bool NoReplaceTruncAnd = !N0.hasOneUse();
         bool NoReplaceTrunc = SDValue(LN0, 0).hasOneUse();
         CombineTo(N, And);
+        // If N0 has multiple uses, change other uses as well.
+        if (NoReplaceTruncAnd) {
+          SDValue TruncAnd =
+              DAG.getNode(ISD::TRUNCATE, DL, N0.getValueType(), And);
+          CombineTo(N0.getNode(), TruncAnd);
+        }
         if (NoReplaceTrunc)
           DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
         else
