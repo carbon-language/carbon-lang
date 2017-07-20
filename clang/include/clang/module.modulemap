@@ -69,8 +69,7 @@ module Clang_Diagnostics {
   module Frontend { header "Frontend/FrontendDiagnostic.h" export * }
   module Lex { header "Lex/LexDiagnostic.h" export * }
   module Parse { header "Parse/ParseDiagnostic.h" export * }
-  // FIXME: This breaks the build of Clang_Sema, for unknown reasons.
-  //module Sema { header "Sema/SemaDiagnostic.h" export * }
+  module Sema { header "Sema/SemaDiagnostic.h" export * }
   module Serialization { header "Serialization/SerializationDiagnostic.h" export * }
 }
 
