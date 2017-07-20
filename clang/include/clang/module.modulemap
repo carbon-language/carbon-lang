@@ -103,7 +103,8 @@ module Clang_FrontendTool { requires cplusplus umbrella "FrontendTool" module * 
 module Clang_Index { requires cplusplus umbrella "Index" module * { export * } }
 module Clang_Lex { requires cplusplus umbrella "Lex" module * { export * } }
 module Clang_Parse { requires cplusplus umbrella "Parse" module * { export * } }
-module Clang_Rewrite { requires cplusplus umbrella "Rewrite" module * { export * } }
+module Clang_Rewrite { requires cplusplus umbrella "Rewrite/Core" module * { export * } }
+module Clang_RewriteFrontend { requires cplusplus umbrella "Rewrite/Frontend" module * { export * } }
 module Clang_Sema { requires cplusplus umbrella "Sema" module * { export * } }
 module Clang_Serialization { requires cplusplus umbrella "Serialization" module * { export * } }
 
