@@ -92,7 +92,7 @@ struct ppcg_grouping_leaf {
 
 /* Free all memory allocated for "leaves".
  */
-static void ppcg_grouping_leaf_free(int n, struct ppcg_grouping_leaf leaves[n])
+static void ppcg_grouping_leaf_free(int n, struct ppcg_grouping_leaf leaves[])
 {
 	int i;
 
@@ -271,7 +271,7 @@ static isl_stat check_merge(__isl_take isl_map *map, void *user)
 
 /* Merge the leaves at position "pos" and "pos + 1" in "leaves".
  */
-static isl_stat merge_pair(int n, struct ppcg_grouping_leaf leaves[n], int pos)
+static isl_stat merge_pair(int n, struct ppcg_grouping_leaf leaves[], int pos)
 {
 	int i;
 
@@ -309,7 +309,7 @@ static isl_stat merge_pair(int n, struct ppcg_grouping_leaf leaves[n], int pos)
  *
  * Return the final number of leaves in the sequence, or -1 on error.
  */
-static int merge_leaves(int n, struct ppcg_grouping_leaf leaves[n],
+static int merge_leaves(int n, struct ppcg_grouping_leaf leaves[],
 	__isl_keep isl_union_map *dep)
 {
 	int i;
@@ -473,7 +473,7 @@ static isl_union_pw_multi_aff *group_contraction_from_prefix_and_domain(
  * of each other (as a set).
  */
 static isl_stat add_groups(struct ppcg_grouping *grouping,
-	int n, struct ppcg_grouping_leaf leaves[n])
+	int n, struct ppcg_grouping_leaf leaves[])
 {
 	int i;
 
