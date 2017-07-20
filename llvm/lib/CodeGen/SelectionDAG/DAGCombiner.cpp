@@ -7791,7 +7791,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
                       ISD::ANY_EXTEND);
       // If the load value is used only by N, replace it via CombineTo N.
       bool NoReplaceTrunc = N0.hasOneUse();
-      CombineTo(N, ExtLoad); 
+      CombineTo(N, ExtLoad);
       if (NoReplaceTrunc)
         DAG.ReplaceAllUsesOfValueWith(SDValue(LN0, 1), ExtLoad.getValue(1));
       else
