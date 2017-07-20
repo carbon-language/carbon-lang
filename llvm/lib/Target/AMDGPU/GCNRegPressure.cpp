@@ -201,7 +201,7 @@ static LaneBitmask getUsedRegMask(const MachineOperand &MO,
     return MRI.getTargetRegisterInfo()->getSubRegIndexLaneMask(SubReg);
 
   auto MaxMask = MRI.getMaxLaneMaskForVReg(MO.getReg());
-  if (MaxMask.getAsInteger() == 1) // cannot have subregs
+  if (MaxMask == LaneBitmask::getLane(0)) // cannot have subregs
     return MaxMask;
 
   // For a tentative schedule LIS isn't updated yet but livemask should remain
