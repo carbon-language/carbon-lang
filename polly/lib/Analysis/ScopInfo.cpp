@@ -4935,7 +4935,7 @@ void Scop::buildSchedule(RegionNode *RN, LoopStackTy &LoopStack, LoopInfo &LI) {
   auto &LoopData = LoopStack.back();
   LoopData.NumBlocksProcessed += getNumBlocksInRegionNode(RN);
 
-  if (auto *Stmt = getStmtFor(RN)) {
+  for (auto *Stmt : getStmtListFor(RN)) {
     auto *UDomain = isl_union_set_from_set(Stmt->getDomain());
     auto *StmtSchedule = isl_schedule_from_domain(UDomain);
     LoopData.Schedule = combineInSequence(LoopData.Schedule, StmtSchedule);
@@ -4995,16 +4995,14 @@ ScopStmt *Scop::getLastStmtFor(BasicBlock *BB) const {
   return nullptr;
 }
 
-ScopStmt *Scop::getStmtFor(RegionNode *RN) const {
+ArrayRef<ScopStmt *> Scop::getStmtListFor(RegionNode *RN) const {
   if (RN->isSubRegion())
-    return getStmtFor(RN->getNodeAs<Region>());
-  return getStmtFor(RN->getNodeAs<BasicBlock>());
+    return getStmtListFor(RN->getNodeAs<Region>());
+  return getStmtListFor(RN->getNodeAs<BasicBlock>());
 }
 
-ScopStmt *Scop::getStmtFor(Region *R) const {
-  ScopStmt *Stmt = getStmtFor(R->getEntry());
-  assert(!Stmt || Stmt->getRegion() == R);
-  return Stmt;
+ArrayRef<ScopStmt *> Scop::getStmtListFor(Region *R) const {
+  return getStmtListFor(R->getEntry());
 }
 
 int Scop::getRelativeLoopDepth(const Loop *L) const {

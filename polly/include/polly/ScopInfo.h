@@ -2678,14 +2678,14 @@ public:
   /// to be executed last, only that the incoming value is available in it.
   ScopStmt *getLastStmtFor(BasicBlock *BB) const;
 
-  /// Return the ScopStmt that represents the Region @p R, or nullptr if
+  /// Return the ScopStmts that represents the Region @p R, or nullptr if
   ///        it is not represented by any statement in this Scop.
-  ScopStmt *getStmtFor(Region *R) const;
+  ArrayRef<ScopStmt *> getStmtListFor(Region *R) const;
 
-  /// Return the ScopStmt that represents @p RN; can return nullptr if
+  /// Return the ScopStmts that represents @p RN; can return nullptr if
   ///        the RegionNode is not within the SCoP or has been removed due to
   ///        simplifications.
-  ScopStmt *getStmtFor(RegionNode *RN) const;
+  ArrayRef<ScopStmt *> getStmtListFor(RegionNode *RN) const;
 
   /// Return the ScopStmt an instruction belongs to, or nullptr if it
   ///        does not belong to any statement in this Scop.
