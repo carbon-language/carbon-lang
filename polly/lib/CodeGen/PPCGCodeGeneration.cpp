@@ -1304,8 +1304,12 @@ isl_bool collectReferencesInGPUStmt(__isl_keep isl_ast_node *Node, void *User) {
 static bool isValidFunctionInKernel(llvm::Function *F) {
   assert(F && "F is an invalid pointer");
   // We string compare against the name of the function to allow
-  // all variants of the intrinsic "llvm.sqrt.*"
-  return F->isIntrinsic() && F->getName().startswith("llvm.sqrt");
+  // all variants of the intrinsic "llvm.sqrt.*", "llvm.fabs", and
+  // "llvm.copysign".
+  const StringRef Name = F->getName();
+  return F->isIntrinsic() &&
+         (Name.startswith("llvm.sqrt") || Name.startswith("llvm.fabs") ||
+          Name.startswith("llvm.copysign"));
 }
 
 /// Do not take `Function` as a subtree value.
