@@ -59,7 +59,6 @@ set(LLVM_TEST_DEPENDS
           llvm-mc
           llvm-mcmarkup
           llvm-modextract
-          llvm-mt
           llvm-nm
           llvm-objdump
           llvm-opt-report
@@ -137,6 +136,12 @@ if(TARGET ocaml_llvm)
           ocaml_llvm_scalar_opts
           ocaml_llvm_transform_utils
           ocaml_llvm_vectorize
+        )
+endif()
+
+if (LLVM_LIBXML2_ENABLED)
+  set(LLVM_TEST_DEPENDS ${LLVM_TEST_DEPENDS}
+          llvm-mt
         )
 endif()
 
