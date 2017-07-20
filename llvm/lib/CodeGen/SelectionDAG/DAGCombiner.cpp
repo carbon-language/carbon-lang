@@ -13589,7 +13589,7 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   // Remove redundant insertions:
   // (insert_vector_elt x (extract_vector_elt x idx) idx) -> x
   if (InVal.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
-      InVec == InVal->getOperand(0) && EltNo == InVal->getOperand(1))
+      InVec == InVal.getOperand(0) && EltNo == InVal.getOperand(1))
     return InVec;
 
   // Check that we know which element is being inserted
