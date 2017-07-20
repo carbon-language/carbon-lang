@@ -67,7 +67,9 @@ private:
   static void errorCallback(void *Ctx, const char *Format, ...);
   Error getParseError();
 
+#if LLVM_LIBXML2_ENABLED
   XMLNodeImpl CombinedRoot = nullptr;
+#endif
   bool ParseErrorOccurred = false;
 };
 
