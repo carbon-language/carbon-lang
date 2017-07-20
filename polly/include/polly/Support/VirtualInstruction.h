@@ -151,11 +151,11 @@ public:
   ///
   /// @param OS           Stream to print to.
   /// @param Reproducible If true, ensures that the output is stable between
-  /// runs and is suitable to check in regression tests. This excludes printing
-  /// e.g. pointer values.
-  ///                     If false, the output should not be used for regression
-  ///                     tests, but may contain more information useful in
-  ///                     debugger sessions.
+  ///                     runs and is suitable to check in regression tests.
+  ///                     This excludes printing e.g. pointer values. If false,
+  ///                     the output should not be used for regression tests,
+  ///                     but may contain more information useful in debugger
+  ///                     sessions.
   void print(raw_ostream &OS, bool Reproducible = true) const;
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
