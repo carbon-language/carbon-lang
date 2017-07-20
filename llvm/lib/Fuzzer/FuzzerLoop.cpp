@@ -175,6 +175,11 @@ void Fuzzer::StaticCrashSignalCallback() {
   F->CrashCallback();
 }
 
+void Fuzzer::StaticExitCallback() {
+  assert(F);
+  F->ExitCallback();
+}
+
 void Fuzzer::StaticInterruptCallback() {
   assert(F);
   F->InterruptCallback();
@@ -197,6 +202,19 @@ void Fuzzer::CrashCallback() {
   PrintFinalStats();
   _Exit(Options.ErrorExitCode);  // Stop right now.
 }
+
+void Fuzzer::ExitCallback() {
+  if (!RunningCB)
+    return; // This exit did not come from the user callback
+  Printf("==%lu== ERROR: libFuzzer: fuzz target exited\n", GetPid());
+  if (EF->__sanitizer_print_stack_trace)
+    EF->__sanitizer_print_stack_trace();
+  Printf("SUMMARY: libFuzzer: fuzz target exited\n");
+  DumpCurrentUnit("crash-");
+  PrintFinalStats();
+  _Exit(Options.ErrorExitCode);
+}
+
 
 void Fuzzer::InterruptCallback() {
   Printf("==%lu== libFuzzer: run interrupted; exiting\n", GetPid());
