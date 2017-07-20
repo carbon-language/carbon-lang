@@ -125,4 +125,5 @@ void LibIgnore::OnLibraryUnloaded() {
 
 } // namespace __sanitizer
 
-#endif // #if SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_MAC || SANITIZER_NETBSD
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_MAC ||
+        // SANITIZER_NETBSD
