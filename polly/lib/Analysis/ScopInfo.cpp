@@ -94,6 +94,12 @@ static int const MaxDisjunctsInDomain = 20;
 // number of disjunct when adding non-convex sets to the context.
 static int const MaxDisjunctsInContext = 4;
 
+// The maximal number of dimensions we allow during invariant load construction.
+// More complex access ranges will result in very high compile time and are also
+// unlikely to result in good code. This value is very high and should only
+// trigger for corner cases (e.g., the "dct_luma" function in h264, SPEC2006).
+static int const MaxDimensionsInAccessRange = 9;
+
 static cl::opt<int>
     OptComputeOut("polly-analysis-computeout",
                   cl::desc("Bound the scop analysis by a maximal amount of "
@@ -4024,6 +4030,35 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
   isl_set_free(DomainCtx);
 }
 
+/// Check if an access range is too complex.
+///
+/// An access range is too complex, if it contains either many disjuncts or
+/// very complex expressions. As a simple heuristic, we assume if a set to
+/// be too complex if the sum of existentially quantified dimensions and
+/// set dimensions is larger than a threshold. This reliably detects both
+/// sets with many disjuncts as well as sets with many divisions as they
+/// arise in h264.
+///
+/// @param AccessRange The range to check for complexity.
+///
+/// @returns True if the access range is too complex.
+static bool isAccessRangeTooComplex(isl::set AccessRange) {
+  unsigned NumTotalDims = 0;
+
+  auto CountDimensions = [&NumTotalDims](isl::basic_set BSet) -> isl::stat {
+    NumTotalDims += BSet.dim(isl::dim::div);
+    NumTotalDims += BSet.dim(isl::dim::set);
+    return isl::stat::ok;
+  };
+
+  AccessRange.foreach_basic_set(CountDimensions);
+
+  if (NumTotalDims > MaxDimensionsInAccessRange)
+    return true;
+
+  return false;
+}
+
 isl::set Scop::getNonHoistableCtx(MemoryAccess *Access, isl::union_map Writes) {
   // TODO: Loads that are not loop carried, hence are in a statement with
   //       zero iterators, are by construction invariant, though we
@@ -4071,6 +4106,9 @@ isl::set Scop::getNonHoistableCtx(MemoryAccess *Access, isl::union_map Writes) {
   } else {
     SafeToLoad = AccessRelation.range();
   }
+
+  if (isAccessRangeTooComplex(AccessRelation.range()))
+    return nullptr;
 
   isl::union_map Written = Writes.intersect_range(SafeToLoad);
   isl::set WrittenCtx = Written.params();
