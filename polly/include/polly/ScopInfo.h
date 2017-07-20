@@ -1253,6 +1253,9 @@ private:
   /// will be inserted.
   DenseMap<PHINode *, MemoryAccess *> PHIWrites;
 
+  /// Map from PHI nodes to its read access in this statement.
+  DenseMap<PHINode *, MemoryAccess *> PHIReads;
+
   //@}
 
   /// A SCoP statement represents either a basic block (affine/precise case) or
@@ -1497,7 +1500,10 @@ public:
 
   /// Return the MemoryAccess that loads a PHINode value, or nullptr if not
   /// existing, respectively not yet added.
-  MemoryAccess *lookupPHIReadOf(PHINode *PHI) const;
+  MemoryAccess *lookupPHIReadOf(PHINode *PHI) const {
+    assert(isBlockStmt() || R->getEntry() == PHI->getParent());
+    return PHIReads.lookup(PHI);
+  }
 
   /// Return the PHI write MemoryAccess for the incoming values from any
   ///        basic block in this ScopStmt, or nullptr if not existing,

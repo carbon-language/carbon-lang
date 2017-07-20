@@ -1309,19 +1309,6 @@ void ScopStmt::buildAccessRelations() {
   }
 }
 
-MemoryAccess *ScopStmt::lookupPHIReadOf(PHINode *PHI) const {
-  for (auto *MA : *this) {
-    if (!MA->isRead())
-      continue;
-    if (!MA->isOriginalAnyPHIKind())
-      continue;
-
-    if (MA->getAccessInstruction() == PHI)
-      return MA;
-  }
-  return nullptr;
-}
-
 void ScopStmt::addAccess(MemoryAccess *Access) {
   Instruction *AccessInst = Access->getAccessInstruction();
 
@@ -1344,6 +1331,11 @@ void ScopStmt::addAccess(MemoryAccess *Access) {
     assert(!PHIWrites.lookup(PHI));
 
     PHIWrites[PHI] = Access;
+  } else if (Access->isAnyPHIKind() && Access->isRead()) {
+    PHINode *PHI = cast<PHINode>(Access->getAccessValue());
+    assert(!PHIReads.lookup(PHI));
+
+    PHIReads[PHI] = Access;
   }
 
   MemAccs.push_back(Access);
@@ -2014,6 +2006,11 @@ void ScopStmt::removeAccessData(MemoryAccess *MA) {
   }
   if (MA->isWrite() && MA->isOriginalAnyPHIKind()) {
     bool Found = PHIWrites.erase(cast<PHINode>(MA->getAccessInstruction()));
+    (void)Found;
+    assert(Found && "Expected access data not found");
+  }
+  if (MA->isRead() && MA->isOriginalAnyPHIKind()) {
+    bool Found = PHIReads.erase(cast<PHINode>(MA->getAccessInstruction()));
     (void)Found;
     assert(Found && "Expected access data not found");
   }
