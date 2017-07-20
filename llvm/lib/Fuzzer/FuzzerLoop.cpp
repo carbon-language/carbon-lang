@@ -344,8 +344,10 @@ void Fuzzer::RereadOutputCorpus(size_t MaxSize) {
     if (U.size() > MaxSize)
       U.resize(MaxSize);
     if (!Corpus.HasUnit(U)) {
-      if (RunOne(U.data(), U.size()))
+      if (RunOne(U.data(), U.size())) {
+        CheckExitOnSrcPosOrItem();
         Reloaded = true;
+      }
     }
   }
   if (Reloaded)
@@ -371,6 +373,7 @@ void Fuzzer::ShuffleAndMinimize(UnitVector *InitialCorpus) {
 
   for (const auto &U : *InitialCorpus) {
     RunOne(U.data(), U.size());
+    CheckExitOnSrcPosOrItem();
     TryDetectingAMemoryLeak(U.data(), U.size(),
                             /*DuringInitialCorpusExecution*/ true);
   }
@@ -418,14 +421,12 @@ bool Fuzzer::RunOne(const uint8_t *Data, size_t Size, bool MayDeleteFile,
   if (NumNewFeatures) {
     Corpus.AddToCorpus({Data, Data + Size}, NumNewFeatures, MayDeleteFile,
                        UniqFeatureSetTmp);
-    CheckExitOnSrcPosOrItem();
     return true;
   }
   if (II && FoundUniqFeaturesOfII &&
       FoundUniqFeaturesOfII == II->UniqFeatureSet.size() &&
       II->U.size() > Size) {
     Corpus.Replace(II, {Data, Data + Size});
-    CheckExitOnSrcPosOrItem();
     return true;
   }
   return false;
@@ -527,6 +528,7 @@ void Fuzzer::ReportNewCoverage(InputInfo *II, const Unit &U) {
   WriteToOutputCorpus(U);
   NumberOfNewUnitsAdded++;
   TPC.PrintNewPCs();
+  CheckExitOnSrcPosOrItem();  // Check only after the unit is saved to corpus.
 }
 
 // Tries detecting a memory leak on the particular input that we have just
