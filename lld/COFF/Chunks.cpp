@@ -183,11 +183,10 @@ static void applyArm64Imm(uint8_t *Off, uint64_t Imm) {
 }
 
 static void applyArm64Ldr(uint8_t *Off, uint64_t Imm) {
-  int Size = read32le(Off) >> 30;
+  uint32_t Size = read32le(Off) >> 30;
   if ((Imm & ((1 << Size) - 1)) != 0)
     fatal("misaligned ldr/str offset");
-  Imm >>= Size;
-  applyArm64Imm(Off, Imm);
+  applyArm64Imm(Off, Imm >> Size);
 }
 
 void SectionChunk::applyRelARM64(uint8_t *Off, uint16_t Type, OutputSection *OS,
