@@ -2667,13 +2667,16 @@ public:
   ///        none.
   ScopStmt *getStmtFor(BasicBlock *BB) const;
 
+  /// Return the list of ScopStmts that represent the given @p BB.
+  ArrayRef<ScopStmt *> getStmtListFor(BasicBlock *BB) const;
+
   /// Return the last statement representing @p BB.
   ///
   /// Of the sequence of statements that represent a @p BB, this is the last one
   /// to be executed. It is typically used to determine which instruction to add
   /// a MemoryKind::PHI WRITE to. For this purpose, it is not strictly required
   /// to be executed last, only that the incoming value is available in it.
-  ScopStmt *getLastStmtFor(BasicBlock *BB) const { return getStmtFor(BB); }
+  ScopStmt *getLastStmtFor(BasicBlock *BB) const;
 
   /// Return the ScopStmt that represents the Region @p R, or nullptr if
   ///        it is not represented by any statement in this Scop.

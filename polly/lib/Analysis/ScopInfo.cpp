@@ -4979,6 +4979,22 @@ ScopStmt *Scop::getStmtFor(BasicBlock *BB) const {
   return StmtMapIt->second.front();
 }
 
+ArrayRef<ScopStmt *> Scop::getStmtListFor(BasicBlock *BB) const {
+  auto StmtMapIt = StmtMap.find(BB);
+  if (StmtMapIt == StmtMap.end())
+    return {};
+  assert(StmtMapIt->second.size() == 1 &&
+         "Each statement corresponds to exactly one BB.");
+  return StmtMapIt->second;
+}
+
+ScopStmt *Scop::getLastStmtFor(BasicBlock *BB) const {
+  ArrayRef<ScopStmt *> StmtList = getStmtListFor(BB);
+  if (StmtList.size() > 0)
+    return StmtList.back();
+  return nullptr;
+}
+
 ScopStmt *Scop::getStmtFor(RegionNode *RN) const {
   if (RN->isSubRegion())
     return getStmtFor(RN->getNodeAs<Region>());
