@@ -107,7 +107,7 @@ void GCNRegPressure::inc(unsigned Reg,
     assert(PrevMask < NewMask);
 
     Value[Kind == SGPR_TUPLE ? SGPR32 : VGPR32] +=
-      Sign * countPopulation((~PrevMask & NewMask).getAsInteger());
+      Sign * (~PrevMask & NewMask).getNumLanes();
 
     if (PrevMask.none()) {
       assert(NewMask.any());
