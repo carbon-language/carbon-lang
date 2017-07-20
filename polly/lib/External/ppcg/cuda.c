@@ -178,20 +178,20 @@ static __isl_give isl_printer *copy_array_from_device(
 	return p;
 }
 
-static void print_reverse_list(FILE *out, int len, int *list)
+static __isl_give isl_printer* print_reverse_list(__isl_take isl_printer *p, int len, int *list)
 {
 	int i;
 
-	if (!out || len == 0)
-		return;
+	if (len == 0)
+		return p;
 
-	fprintf(out, "(");
+	p = isl_printer_print_str(p, "(");
 	for (i = 0; i < len; ++i) {
 		if (i)
-			fprintf(out, ", ");
-		fprintf(out, "%d", list[len - 1 - i]);
+			p = isl_printer_print_str(p, ", ");
+		p = isl_printer_print_int(p, list[len - 1 - i]);
 	}
-	fprintf(out, ")");
+	return isl_printer_print_str(p, ")");
 }
 
 /* Print the effective grid size as a list of the sizes in each
@@ -499,7 +499,7 @@ static void print_kernel(struct gpu_prog *prog, struct ppcg_kernel *kernel,
 
 	print_options = isl_ast_print_options_alloc(ctx);
 	print_options = isl_ast_print_options_set_print_user(print_options,
-						    &print_kernel_stmt, NULL);
+							&print_kernel_stmt, NULL);
 	p = isl_ast_node_print(kernel->tree, p, print_options);
 	isl_printer_free(p);
 
@@ -595,7 +595,7 @@ struct print_host_user_data {
  * In case of a kernel launch, print a block of statements that
  * defines the grid and the block and then launches the kernel.
  */
-static __isl_give isl_printer *print_host_user(__isl_take isl_printer *p,
+__isl_give isl_printer *print_host_user(__isl_take isl_printer *p,
 	__isl_take isl_ast_print_options *print_options,
 	__isl_keep isl_ast_node *node, void *user)
 {
@@ -627,8 +627,7 @@ static __isl_give isl_printer *print_host_user(__isl_take isl_printer *p,
 	p = isl_printer_print_str(p, "dim3 k");
 	p = isl_printer_print_int(p, kernel->id);
 	p = isl_printer_print_str(p, "_dimBlock");
-	print_reverse_list(isl_printer_get_file(p),
-				kernel->n_block, kernel->block_dim);
+	p = print_reverse_list(p, kernel->n_block, kernel->block_dim);
 	p = isl_printer_print_str(p, ";");
 	p = isl_printer_end_line(p);
 
@@ -655,7 +654,9 @@ static __isl_give isl_printer *print_host_user(__isl_take isl_printer *p,
 	p = isl_printer_start_line(p);
 	p = isl_printer_end_line(p);
 
+#if 0
 	print_kernel(data->prog, kernel, data->cuda);
+#endif
 
 	return p;
 }

@@ -113,6 +113,8 @@ struct gpu_array_info {
 	 * It is set to NULL otherwise.
 	 */
 	isl_union_map *dep_order;
+
+    void *user;
 };
 
 /* Represents an outer array accessed by a ppcg_kernel, localized
@@ -207,6 +209,16 @@ struct gpu_gen {
 		struct gpu_prog *prog, __isl_keep isl_ast_node *tree,
 		struct gpu_types *types, void *user);
 	void *print_user;
+
+    isl_id_to_ast_expr *(*build_ast_expr)(void *stmt,
+            isl_ast_build *build,
+            isl_multi_pw_aff *(*fn_index)(
+                __isl_take isl_multi_pw_aff *mpa, isl_id *id,
+                void *user),
+            void *user_index,
+            isl_ast_expr *(*fn_expr)(isl_ast_expr *expr,
+                isl_id *id, void *user),
+        void *user_expr);
 
 	struct gpu_prog *prog;
 	/* The generated AST. */
@@ -432,4 +444,13 @@ __isl_give isl_schedule_node *gpu_create_kernel(struct gpu_gen *gen,
 	__isl_take isl_schedule_node *node, int scale,
 	__isl_keep isl_multi_val *sizes);
 
+__isl_give isl_schedule *get_schedule(struct gpu_gen *gen);
+int has_any_permutable_node(__isl_keep isl_schedule *schedule);
+__isl_give isl_schedule *map_to_device(struct gpu_gen *gen,
+                                       __isl_take isl_schedule *schedule);
+__isl_give isl_ast_node *generate_code(struct gpu_gen *gen,
+                                       __isl_take isl_schedule *schedule);
+
+__isl_give isl_union_set *compute_may_persist(struct gpu_prog *prog);
+void collect_references(struct gpu_prog *prog, struct gpu_array_info *array);
 #endif

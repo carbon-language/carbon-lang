@@ -105,6 +105,9 @@ int ppcg_scop_any_hidden_declarations(struct ppcg_scop *scop)
 	if (!scop)
 		return 0;
 
+    // This is a pet feature not available in Polly.
+    return 0;
+
 	for (i = 0; i < scop->pet->n_array; ++i)
 		if (scop->pet->arrays[i]->declared &&
 		    !scop->pet->arrays[i]->exposed)
@@ -341,7 +344,7 @@ static __isl_give isl_union_map *project_out_tags(
  *
  *	{ [S[i,j] -> R_1[]] -> S[i,j]; [S[i,j] -> R_2[]] -> S[i,j] }
  */
-static void compute_tagger(struct ppcg_scop *ps)
+void compute_tagger(struct ppcg_scop *ps)
 {
 	isl_union_map *tagged;
 	isl_union_pw_multi_aff *tagger;
@@ -711,7 +714,7 @@ static void compute_flow_dep(struct ppcg_scop *ps)
  * set of order dependences and a set of external false dependences
  * in compute_live_range_reordering_dependences.
  */
-static void compute_dependences(struct ppcg_scop *scop)
+void compute_dependences(struct ppcg_scop *scop)
 {
 	isl_union_map *may_source;
 	isl_union_access_info *access;
@@ -766,7 +769,7 @@ static void compute_dependences(struct ppcg_scop *scop)
  * hull of the live iterations (bounded to the original iteration
  * domains) each time we have added extra iterations.
  */
-static void eliminate_dead_code(struct ppcg_scop *ps)
+void eliminate_dead_code(struct ppcg_scop *ps)
 {
 	isl_union_set *live;
 	isl_union_map *dep;
@@ -830,7 +833,7 @@ static __isl_give isl_set *set_intersect_str(__isl_take isl_set *set,
 	return set;
 }
 
-static void *ppcg_scop_free(struct ppcg_scop *ps)
+void *ppcg_scop_free(struct ppcg_scop *ps)
 {
 	if (!ps)
 		return NULL;
@@ -1026,6 +1029,7 @@ static int check_options(isl_ctx *ctx)
 	return 0;
 }
 
+#if 0
 int main(int argc, char **argv)
 {
 	int r;
@@ -1060,3 +1064,4 @@ int main(int argc, char **argv)
 
 	return r;
 }
+#endif
