@@ -83,6 +83,10 @@ class InstSI <dag outs, dag ins, string asm = "",
   // the clamp modifier has floating point semantics.
   field bit FPClamp = 0;
 
+  // This bit indicates that this is a VOP3 opcode which supports op_sel
+  // modifier (gfx9 only).
+  field bit VOP3_OPSEL = 0;
+
   // These need to be kept in sync with the enum in SIInstrFlags.
   let TSFlags{0} = SALU;
   let TSFlags{1} = VALU;
@@ -127,6 +131,7 @@ class InstSI <dag outs, dag ins, string asm = "",
   let TSFlags{40} = FixedSize;
   let TSFlags{41} = VOPAsmPrefer32Bit;
   let TSFlags{42} = FPClamp;
+  let TSFlags{43} = VOP3_OPSEL;
 
   let SchedRW = [Write32Bit];
 
