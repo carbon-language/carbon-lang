@@ -2746,7 +2746,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     }
     case Instruction::Call: {
       CallInst *CI = cast<CallInst>(VL0);
-      setInsertPointAfterBundle(E->Scalars);
+      setInsertPointAfterBundle(VL0);
       Function *FI;
       Intrinsic::ID IID  = Intrinsic::not_intrinsic;
       Value *ScalarArg = nullptr;
@@ -2986,9 +2986,8 @@ BoUpSLP::vectorizeTree(ExtraValueToDebugLocsMap &ExternallyUsedValues) {
         for (User *U : Scalar->users()) {
           DEBUG(dbgs() << "SLP: \tvalidating user:" << *U << ".\n");
 
-          assert((getTreeEntry(U) ||
-                  // It is legal to replace users in the ignorelist by undef.
-                  is_contained(UserIgnoreList, U)) &&
+          // It is legal to replace users in the ignorelist by undef.
+          assert((getTreeEntry(U) || is_contained(UserIgnoreList, U)) &&
                  "Replacing out-of-tree value with undef");
         }
 #endif
