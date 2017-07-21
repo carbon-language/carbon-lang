@@ -1058,12 +1058,12 @@ multiclass MUBUFLoad_Atomic_Pattern <MUBUF_Pseudo Instr_ADDR64, MUBUF_Pseudo Ins
   def : Pat <
      (vt (atomic_ld (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i32:$soffset,
                                    i16:$offset, i1:$slc))),
-     (Instr_ADDR64 $vaddr, $srsrc, $soffset, $offset, 1, $slc, 0)
+     (Instr_ADDR64 $vaddr, $srsrc, $soffset, $offset, 0, $slc, 0)
   >;
 
   def : Pat <
     (vt (atomic_ld (MUBUFOffsetNoGLC v4i32:$rsrc, i32:$soffset, i16:$offset))),
-    (Instr_OFFSET $rsrc, $soffset, (as_i16imm $offset), 1, 0, 0)
+    (Instr_OFFSET $rsrc, $soffset, (as_i16imm $offset), 0, 0, 0)
   >;
 }
 
@@ -1174,12 +1174,12 @@ multiclass MUBUFStore_Atomic_Pattern <MUBUF_Pseudo Instr_ADDR64, MUBUF_Pseudo In
   def : Pat <
      (atomic_st (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i32:$soffset,
                                    i16:$offset, i1:$slc), vt:$val),
-     (Instr_ADDR64 $val, $vaddr, $srsrc, $soffset, $offset, 1, $slc, 0)
+     (Instr_ADDR64 $val, $vaddr, $srsrc, $soffset, $offset, 0, $slc, 0)
   >;
 
   def : Pat <
     (atomic_st (MUBUFOffsetNoGLC v4i32:$rsrc, i32:$soffset, i16:$offset), vt:$val),
-    (Instr_OFFSET $val, $rsrc, $soffset, (as_i16imm $offset), 1, 0, 0)
+    (Instr_OFFSET $val, $rsrc, $soffset, (as_i16imm $offset), 0, 0, 0)
   >;
 }
 let Predicates = [isSICI] in {
