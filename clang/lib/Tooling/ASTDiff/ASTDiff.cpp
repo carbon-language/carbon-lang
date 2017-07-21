@@ -469,7 +469,7 @@ public:
 
     bool RootNodePair = true;
 
-    TreePairs.emplace_back(S1.getSize(), S2.getSize());
+    TreePairs.emplace_back(SNodeId(S1.getSize()), SNodeId(S2.getSize()));
 
     while (!TreePairs.empty()) {
       SNodeId LastRow, LastCol, FirstRow, FirstCol, Row, Col;
