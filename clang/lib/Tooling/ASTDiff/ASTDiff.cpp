@@ -138,7 +138,7 @@ struct PreorderVisitor : public RecursiveASTVisitor<PreorderVisitor> {
     Parent = MyId;
     ++Id;
     ++Depth;
-    return {MyId, Root.getNode(MyId).Parent};
+    return std::make_tuple(MyId, Root.getNode(MyId).Parent);
   }
   void PostTraverse(std::tuple<NodeId, NodeId> State) {
     NodeId MyId, PreviousParent;
