@@ -137,6 +137,7 @@ class FLAT_Load_Pseudo <string opName, RegisterClass regClass,
   let has_saddr = HasSaddr;
   let enabled_saddr = EnableSaddr;
   let PseudoInstr = opName#!if(!and(HasSaddr, EnableSaddr), "_SADDR", "");
+  let maybeAtomic = 1;
 }
 
 class FLAT_Store_Pseudo <string opName, RegisterClass vdataClass,
@@ -157,6 +158,7 @@ class FLAT_Store_Pseudo <string opName, RegisterClass vdataClass,
   let has_saddr = HasSaddr;
   let enabled_saddr = EnableSaddr;
   let PseudoInstr = opName#!if(!and(HasSaddr, EnableSaddr), "_SADDR", "");
+  let maybeAtomic = 1;
 }
 
 multiclass FLAT_Global_Load_Pseudo<string opName, RegisterClass regClass> {
@@ -187,6 +189,7 @@ class FLAT_Scratch_Load_Pseudo <string opName, RegisterClass regClass,
   let enabled_saddr = EnableSaddr;
   let has_vaddr = !if(EnableSaddr, 0, 1);
   let PseudoInstr = opName#!if(EnableSaddr, "_SADDR", "");
+  let maybeAtomic = 1;
 }
 
 class FLAT_Scratch_Store_Pseudo <string opName, RegisterClass vdataClass, bit EnableSaddr = 0> : FLAT_Pseudo<
@@ -202,8 +205,8 @@ class FLAT_Scratch_Store_Pseudo <string opName, RegisterClass vdataClass, bit En
   let has_saddr = 1;
   let enabled_saddr = EnableSaddr;
   let has_vaddr = !if(EnableSaddr, 0, 1);
-
   let PseudoInstr = opName#!if(EnableSaddr, "_SADDR", "");
+  let maybeAtomic = 1;
 }
 
 multiclass FLAT_Scratch_Load_Pseudo<string opName, RegisterClass regClass> {
@@ -228,6 +231,7 @@ class FLAT_AtomicNoRet_Pseudo<string opName, dag outs, dag ins,
     let has_glc  = 0;
     let glcValue = 0;
     let has_vdst = 0;
+    let maybeAtomic = 1;
 }
 
 class FLAT_AtomicRet_Pseudo<string opName, dag outs, dag ins,
