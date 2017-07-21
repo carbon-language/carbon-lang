@@ -1611,8 +1611,10 @@ public:
 
   /// Print the ScopStmt.
   ///
-  /// @param OS The output stream the ScopStmt is printed to.
-  void print(raw_ostream &OS) const;
+  /// @param OS                The output stream the ScopStmt is printed to.
+  /// @param PrintInstructions Whether to print the statement's instructions as
+  ///                          well.
+  void print(raw_ostream &OS, bool PrintInstructions) const;
 
   /// Print the instructions in ScopStmt.
   ///
@@ -1623,10 +1625,7 @@ public:
 };
 
 /// Print ScopStmt S to raw_ostream O.
-static inline raw_ostream &operator<<(raw_ostream &O, const ScopStmt &S) {
-  S.print(O);
-  return O;
-}
+raw_ostream &operator<<(raw_ostream &O, const ScopStmt &S);
 
 /// Static Control Part
 ///
@@ -2318,7 +2317,7 @@ private:
   //@{
   void printContext(raw_ostream &OS) const;
   void printArrayInfo(raw_ostream &OS) const;
-  void printStatements(raw_ostream &OS) const;
+  void printStatements(raw_ostream &OS, bool PrintInstructions) const;
   void printAliasAssumptions(raw_ostream &OS) const;
   //@}
 
@@ -2811,7 +2810,9 @@ public:
   /// Print the static control part.
   ///
   /// @param OS The output stream the static control part is printed to.
-  void print(raw_ostream &OS) const;
+  /// @param PrintInstructions Whether to print the statement's instructions as
+  ///                          well.
+  void print(raw_ostream &OS, bool PrintInstructions) const;
 
   /// Print the ScopStmt to stderr.
   void dump() const;
@@ -2956,10 +2957,7 @@ public:
 };
 
 /// Print Scop scop to raw_ostream O.
-static inline raw_ostream &operator<<(raw_ostream &O, const Scop &scop) {
-  scop.print(O);
-  return O;
-}
+raw_ostream &operator<<(raw_ostream &O, const Scop &scop);
 
 /// The legacy pass manager's analysis pass to compute scop information
 ///        for a region.
