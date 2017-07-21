@@ -1151,8 +1151,7 @@ void SIInsertWaitcnts::updateEventWaitCntAfter(
   // instruction, update the upper-bound of the appropriate counter's
   // bracket and the destination operand scores.
   // TODO: Use the (TSFlags & SIInstrFlags::LGKM_CNT) property everywhere.
-  uint64_t TSFlags = Inst.getDesc().TSFlags;
-  if (TII->isDS(Inst) && (TSFlags & SIInstrFlags::LGKM_CNT)) {
+  if (TII->isDS(Inst) && TII->usesLGKM_CNT(Inst)) {
     if (TII->getNamedOperand(Inst, AMDGPU::OpName::gds) &&
 	TII->getNamedOperand(Inst, AMDGPU::OpName::gds)->getImm() != 0) {
       ScoreBrackets->updateByEvent(TII, TRI, MRI, GDS_ACCESS, Inst);
@@ -1162,8 +1161,12 @@ void SIInsertWaitcnts::updateEventWaitCntAfter(
     }
   } else if (TII->isFLAT(Inst)) {
     assert(Inst.mayLoad() || Inst.mayStore());
-    ScoreBrackets->updateByEvent(TII, TRI, MRI, VMEM_ACCESS, Inst);
-    ScoreBrackets->updateByEvent(TII, TRI, MRI, LDS_ACCESS, Inst);
+
+    if (TII->usesVM_CNT(Inst))
+      ScoreBrackets->updateByEvent(TII, TRI, MRI, VMEM_ACCESS, Inst);
+
+    if (TII->usesLGKM_CNT(Inst))
+      ScoreBrackets->updateByEvent(TII, TRI, MRI, LDS_ACCESS, Inst);
 
     // This is a flat memory operation. Check to see if it has memory
     // tokens for both LDS and Memory, and if so mark it as a flat.

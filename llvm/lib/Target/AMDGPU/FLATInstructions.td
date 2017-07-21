@@ -25,11 +25,6 @@ class FLAT_Pseudo<string opName, dag outs, dag ins,
   let SubtargetPredicate = isCIVI;
 
   let FLAT = 1;
-  // Internally, FLAT instruction are executed as both an LDS and a
-  // Buffer instruction; so, they increment both VM_CNT and LGKM_CNT
-  // and are not considered done until both have been decremented.
-  let VM_CNT = 1;
-  let LGKM_CNT = 1;
 
   let UseNamedOperandTable = 1;
   let hasSideEffects = 0;
@@ -59,6 +54,12 @@ class FLAT_Pseudo<string opName, dag outs, dag ins,
 
   // TODO: M0 if it could possibly access LDS (before gfx9? only)?
   let Uses = !if(is_flat_global, [EXEC], [EXEC, FLAT_SCR]);
+
+  // Internally, FLAT instruction are executed as both an LDS and a
+  // Buffer instruction; so, they increment both VM_CNT and LGKM_CNT
+  // and are not considered done until both have been decremented.
+  let VM_CNT = 1;
+  let LGKM_CNT = !if(!or(is_flat_global, is_flat_scratch), 0, 1);
 }
 
 class FLAT_Real <bits<7> op, FLAT_Pseudo ps> :
