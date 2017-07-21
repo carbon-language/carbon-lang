@@ -35,7 +35,7 @@ void amdgpu::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                           CmdArgs, Inputs));
 }
 
-/// AMDGPU Toolchain
+/// AMDGPU Toolchain 
 AMDGPUToolChain::AMDGPUToolChain(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args)
   : Generic_ELF(D, Triple, Args) { }
