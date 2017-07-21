@@ -279,9 +279,7 @@ std::string SyntaxTreeImpl::getNodeValueImpl(const DynTypedNode &DTN) const {
     return X->getString();
   if (auto *X = DTN.get<ValueDecl>())
     return X->getNameAsString() + "(" + X->getType().getAsString() + ")";
-  if (auto *X = DTN.get<DeclStmt>())
-    return "";
-  if (auto *X = DTN.get<TranslationUnitDecl>())
+  if (DTN.get<DeclStmt>() || DTN.get<TranslationUnitDecl>())
     return "";
   std::string Value;
   if (auto *X = DTN.get<DeclRefExpr>()) {
@@ -297,15 +295,15 @@ std::string SyntaxTreeImpl::getNodeValueImpl(const DynTypedNode &DTN) const {
     Value += X->getNameAsString() + ";";
   if (auto *X = DTN.get<TypedefNameDecl>())
     return Value + X->getUnderlyingType().getAsString() + ";";
-  if (auto *X = DTN.get<NamespaceDecl>())
+  if (DTN.get<NamespaceDecl>())
     return Value;
   if (auto *X = DTN.get<TypeDecl>())
     if (X->getTypeForDecl())
       Value +=
           X->getTypeForDecl()->getCanonicalTypeInternal().getAsString() + ";";
-  if (auto *X = DTN.get<Decl>())
+  if (DTN.get<Decl>())
     return Value;
-  if (auto *X = DTN.get<Stmt>())
+  if (DTN.get<Stmt>())
     return "";
   llvm_unreachable("Fatal: unhandled AST node.\n");
 }
