@@ -1297,7 +1297,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
       // loading/storing it as an i8 struct. If we vectorize loads/stores from
       // such a struct we read/write packed bits disagreeing with the
       // unvectorized version.
-      Type *ScalarTy = VL[0]->getType();
+      Type *ScalarTy = VL0->getType();
 
       if (DL->getTypeSizeInBits(ScalarTy) !=
           DL->getTypeAllocSizeInBits(ScalarTy)) {
@@ -1399,7 +1399,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
     case Instruction::FCmp: {
       // Check that all of the compares have the same predicate.
       CmpInst::Predicate P0 = cast<CmpInst>(VL0)->getPredicate();
-      Type *ComparedTy = cast<Instruction>(VL[0])->getOperand(0)->getType();
+      Type *ComparedTy = VL0->getOperand(0)->getType();
       for (unsigned i = 1, e = VL.size(); i < e; ++i) {
         CmpInst *Cmp = cast<CmpInst>(VL[i]);
         if (Cmp->getPredicate() != P0 ||
@@ -1479,7 +1479,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
 
       // We can't combine several GEPs into one vector if they operate on
       // different types.
-      Type *Ty0 = cast<Instruction>(VL0)->getOperand(0)->getType();
+      Type *Ty0 = VL0->getOperand(0)->getType();
       for (unsigned j = 0; j < VL.size(); ++j) {
         Type *CurTy = cast<Instruction>(VL[j])->getOperand(0)->getType();
         if (Ty0 != CurTy) {
@@ -1536,7 +1536,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth,
     }
     case Instruction::Call: {
       // Check if the calls are all to the same vectorizable intrinsic.
-      CallInst *CI = cast<CallInst>(VL[0]);
+      CallInst *CI = cast<CallInst>(VL0);
       // Check if this is an Intrinsic call or something that can be
       // represented by an intrinsic call
       Intrinsic::ID ID = getVectorIntrinsicIDForCall(CI, TLI);
