@@ -451,7 +451,7 @@ registerPollyScalarOptimizerLatePasses(const llvm::PassManagerBuilder &Builder,
 ///   be optimized away.
 ///
 /// We are currently evaluating the benefit or running Polly at position b) or
-/// c). b) is likely to early as it interacts with the inliner. c) is nice
+/// c). b) is likely too early as it interacts with the inliner. c) is nice
 /// as everything is fully inlined and canonicalized, but we need to be able
 /// to handle LICMed code to make it useful.
 static llvm::RegisterStandardPasses RegisterPollyOptimizerEarly(
