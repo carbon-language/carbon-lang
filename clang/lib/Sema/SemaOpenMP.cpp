@@ -745,9 +745,8 @@ void DSAStackTy::addReductionData(ValueDecl *D, SourceRange SR,
                                   BinaryOperatorKind BOK) {
   D = getCanonicalDecl(D);
   assert(!isStackEmpty() && "Data-sharing attributes stack is empty");
-  auto &Data = Stack.back().first.back().SharingMap[D];
   assert(
-      Data.Attributes == OMPC_reduction &&
+      Stack.back().first.back().SharingMap[D].Attributes == OMPC_reduction &&
       "Additional reduction info may be specified only for reduction items.");
   auto &ReductionData = Stack.back().first.back().ReductionMap[D];
   assert(ReductionData.ReductionRange.isInvalid() &&
@@ -760,9 +759,8 @@ void DSAStackTy::addReductionData(ValueDecl *D, SourceRange SR,
                                   const Expr *ReductionRef) {
   D = getCanonicalDecl(D);
   assert(!isStackEmpty() && "Data-sharing attributes stack is empty");
-  auto &Data = Stack.back().first.back().SharingMap[D];
   assert(
-      Data.Attributes == OMPC_reduction &&
+      Stack.back().first.back().SharingMap[D].Attributes == OMPC_reduction &&
       "Additional reduction info may be specified only for reduction items.");
   auto &ReductionData = Stack.back().first.back().ReductionMap[D];
   assert(ReductionData.ReductionRange.isInvalid() &&
