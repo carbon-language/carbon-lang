@@ -423,39 +423,6 @@ public:
   }
 };
 
-// Bitrig Target
-template <typename Target>
-class LLVM_LIBRARY_VISIBILITY BitrigTargetInfo : public OSTargetInfo<Target> {
-protected:
-  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
-                    MacroBuilder &Builder) const override {
-    // Bitrig defines; list based off of gcc output
-
-    Builder.defineMacro("__Bitrig__");
-    DefineStd(Builder, "unix", Opts);
-    Builder.defineMacro("__ELF__");
-    if (Opts.POSIXThreads)
-      Builder.defineMacro("_REENTRANT");
-
-    switch (Triple.getArch()) {
-    default:
-      break;
-    case llvm::Triple::arm:
-    case llvm::Triple::armeb:
-    case llvm::Triple::thumb:
-    case llvm::Triple::thumbeb:
-      Builder.defineMacro("__ARM_DWARF_EH__");
-      break;
-    }
-  }
-
-public:
-  BitrigTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
-      : OSTargetInfo<Target>(Triple, Opts) {
-    this->MCountName = "__mcount";
-  }
-};
-
 // PSP Target
 template <typename Target>
 class LLVM_LIBRARY_VISIBILITY PSPTargetInfo : public OSTargetInfo<Target> {

@@ -95,10 +95,10 @@ class LLVM_LIBRARY_VISIBILITY ARMTargetInfo : public TargetInfo {
     DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 64;
     const llvm::Triple &T = getTriple();
 
-    // size_t is unsigned long on MachO-derived environments, NetBSD,
-    // OpenBSD and Bitrig.
+    // size_t is unsigned long on MachO-derived environments, NetBSD, and
+    // OpenBSD.
     if (T.isOSBinFormatMachO() || T.getOS() == llvm::Triple::NetBSD ||
-        T.getOS() == llvm::Triple::OpenBSD || T.getOS() == llvm::Triple::Bitrig)
+        T.getOS() == llvm::Triple::OpenBSD)
       SizeType = UnsignedLong;
     else
       SizeType = UnsignedInt;

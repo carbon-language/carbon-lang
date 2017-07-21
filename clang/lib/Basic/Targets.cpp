@@ -153,8 +153,6 @@ TargetInfo *AllocateTarget(const llvm::Triple &Triple,
       return new NetBSDTargetInfo<ARMleTargetInfo>(Triple, Opts);
     case llvm::Triple::OpenBSD:
       return new OpenBSDTargetInfo<ARMleTargetInfo>(Triple, Opts);
-    case llvm::Triple::Bitrig:
-      return new BitrigTargetInfo<ARMleTargetInfo>(Triple, Opts);
     case llvm::Triple::RTEMS:
       return new RTEMSTargetInfo<ARMleTargetInfo>(Triple, Opts);
     case llvm::Triple::NaCl:
@@ -189,8 +187,6 @@ TargetInfo *AllocateTarget(const llvm::Triple &Triple,
       return new NetBSDTargetInfo<ARMbeTargetInfo>(Triple, Opts);
     case llvm::Triple::OpenBSD:
       return new OpenBSDTargetInfo<ARMbeTargetInfo>(Triple, Opts);
-    case llvm::Triple::Bitrig:
-      return new BitrigTargetInfo<ARMbeTargetInfo>(Triple, Opts);
     case llvm::Triple::RTEMS:
       return new RTEMSTargetInfo<ARMbeTargetInfo>(Triple, Opts);
     case llvm::Triple::NaCl:
@@ -421,8 +417,6 @@ TargetInfo *AllocateTarget(const llvm::Triple &Triple,
       return new NetBSDI386TargetInfo(Triple, Opts);
     case llvm::Triple::OpenBSD:
       return new OpenBSDI386TargetInfo(Triple, Opts);
-    case llvm::Triple::Bitrig:
-      return new BitrigI386TargetInfo(Triple, Opts);
     case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<X86_32TargetInfo>(Triple, Opts);
     case llvm::Triple::KFreeBSD:
@@ -478,8 +472,6 @@ TargetInfo *AllocateTarget(const llvm::Triple &Triple,
       return new NetBSDTargetInfo<X86_64TargetInfo>(Triple, Opts);
     case llvm::Triple::OpenBSD:
       return new OpenBSDX86_64TargetInfo(Triple, Opts);
-    case llvm::Triple::Bitrig:
-      return new BitrigX86_64TargetInfo(Triple, Opts);
     case llvm::Triple::FreeBSD:
       return new FreeBSDTargetInfo<X86_64TargetInfo>(Triple, Opts);
     case llvm::Triple::Fuchsia:

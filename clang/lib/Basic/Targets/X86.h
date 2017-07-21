@@ -617,17 +617,6 @@ public:
   }
 };
 
-class LLVM_LIBRARY_VISIBILITY BitrigI386TargetInfo
-    : public BitrigTargetInfo<X86_32TargetInfo> {
-public:
-  BitrigI386TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
-      : BitrigTargetInfo<X86_32TargetInfo>(Triple, Opts) {
-    SizeType = UnsignedLong;
-    IntPtrType = SignedLong;
-    PtrDiffType = SignedLong;
-  }
-};
-
 class LLVM_LIBRARY_VISIBILITY DarwinI386TargetInfo
     : public DarwinTargetInfo<X86_32TargetInfo> {
 public:
@@ -1107,16 +1096,6 @@ class LLVM_LIBRARY_VISIBILITY OpenBSDX86_64TargetInfo
 public:
   OpenBSDX86_64TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
       : OpenBSDTargetInfo<X86_64TargetInfo>(Triple, Opts) {
-    IntMaxType = SignedLongLong;
-    Int64Type = SignedLongLong;
-  }
-};
-
-class LLVM_LIBRARY_VISIBILITY BitrigX86_64TargetInfo
-    : public BitrigTargetInfo<X86_64TargetInfo> {
-public:
-  BitrigX86_64TargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
-      : BitrigTargetInfo<X86_64TargetInfo>(Triple, Opts) {
     IntMaxType = SignedLongLong;
     Int64Type = SignedLongLong;
   }
