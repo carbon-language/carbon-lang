@@ -1195,7 +1195,7 @@ def MipsLongCall : InheritableAttr, TargetSpecificAttr<TargetMips> {
 }
 
 def MipsShortCall : InheritableAttr, TargetSpecificAttr<TargetMips> {
-  let Spellings = [GCC<"near">];
+  let Spellings = [GCC<"short_call">, GCC<"near">];
   let Subjects = SubjectList<[Function]>;
   let Documentation = [MipsShortCallStyleDocs];
 }
