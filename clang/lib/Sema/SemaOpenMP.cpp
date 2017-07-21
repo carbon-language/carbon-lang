@@ -86,10 +86,9 @@ private:
   typedef llvm::DenseMap<OMPDependClause *, OperatorOffsetTy>
       DoacrossDependMapTy;
   struct ReductionData {
+    typedef llvm::PointerEmbeddedInt<BinaryOperatorKind, 16> BOKPtrType;
     SourceRange ReductionRange;
-    llvm::PointerUnion<const Expr *,
-                       llvm::PointerEmbeddedInt<BinaryOperatorKind>>
-        ReductionOp;
+    llvm::PointerUnion<const Expr *, BOKPtrType> ReductionOp;
     ReductionData() = default;
     void set(BinaryOperatorKind BO, SourceRange RR) {
       ReductionRange = RR;
@@ -788,8 +787,7 @@ bool DSAStackTy::getTopMostReductionData(ValueDecl *D, SourceRange &SR,
         ReductionData.ReductionOp.is<const Expr *>())
       return false;
     SR = ReductionData.ReductionRange;
-    BOK = ReductionData.ReductionOp
-              .get<llvm::PointerEmbeddedInt<BinaryOperatorKind>>();
+    BOK = ReductionData.ReductionOp.get<ReductionData::BOKPtrType>();
     return true;
   }
   return false;
