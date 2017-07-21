@@ -364,8 +364,10 @@ public:
   /// of pre-existing. If false, it is allocated using alloca instead malloca.
   bool isOnHeap() const { return IsOnHeap; }
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   /// Dump a readable representation to stderr.
   void dump() const;
+#endif
 
   /// Print a readable representation to @p OS.
   ///
@@ -1106,8 +1108,10 @@ public:
   /// @param OS The output stream the MemoryAccess is printed to.
   void print(raw_ostream &OS) const;
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   /// Print the MemoryAccess to stderr.
   void dump() const;
+#endif
 
   /// Is the memory access affine?
   bool isAffine() const { return IsAffine; }
@@ -1620,8 +1624,10 @@ public:
   ///
   void printInstructions(raw_ostream &OS) const;
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   /// Print the ScopStmt to stderr.
   void dump() const;
+#endif
 };
 
 /// Print ScopStmt S to raw_ostream O.
@@ -2814,8 +2820,10 @@ public:
   ///                          well.
   void print(raw_ostream &OS, bool PrintInstructions) const;
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   /// Print the ScopStmt to stderr.
   void dump() const;
+#endif
 
   /// Get the isl context of this static control part.
   ///
