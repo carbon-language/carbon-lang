@@ -29309,15 +29309,27 @@ static SDValue combineBitcastvxi1(SelectionDAG &DAG, SDValue BitCast,
     // truncating the result of the compare to 128-bits.
     break;
   case MVT::v32i1:
-    // TODO: Handle pre-AVX2 cases by splitting to two v16i1's.
-    if (!Subtarget.hasInt256())
-      return SDValue();
     SExtVT = MVT::v32i8;
     break;
   };
 
   SDLoc DL(BitCast);
   SDValue V = DAG.getSExtOrTrunc(N0, DL, SExtVT);
+
+  if (SExtVT == MVT::v32i8 && !Subtarget.hasInt256()) {
+    // Handle pre-AVX2 cases by splitting to two v16i1's.
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    MVT ShiftTy = TLI.getScalarShiftAmountTy(DAG.getDataLayout(), MVT::i32);
+    SDValue Lo = extract128BitVector(V, 0, DAG, DL);
+    SDValue Hi = extract128BitVector(V, 16, DAG, DL);
+    Lo = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Lo);
+    Hi = DAG.getNode(X86ISD::MOVMSK, DL, MVT::i32, Hi);
+    Hi = DAG.getNode(ISD::SHL, DL, MVT::i32, Hi,
+                     DAG.getConstant(16, DL, ShiftTy));
+    V = DAG.getNode(ISD::OR, DL, MVT::i32, Lo, Hi);
+    return DAG.getZExtOrTrunc(V, DL, VT);
+  }
+
   if (SExtVT == MVT::v8i16) {
     V = DAG.getBitcast(MVT::v16i8, V);
     V = DAG.getVectorShuffle(
