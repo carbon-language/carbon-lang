@@ -37,7 +37,7 @@ public:
   iterator_range<codeview::CVSymbolArray::Iterator>
   getSymbols(bool *HadError) const;
   FixedStreamArray<PSHashRecord> getHashRecords() const { return HashRecords; }
-  FixedStreamArray<PSHashRecord> getHashBitmap() const { return HashBitmap; }
+  ArrayRef<uint8_t> getHashBitmap() const { return HashBitmap; }
   FixedStreamArray<support::ulittle32_t> getHashBuckets() const {
     return HashBuckets;
   }

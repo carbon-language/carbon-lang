@@ -55,6 +55,7 @@ struct GSIHashHeader {
 };
 
 Error readGSIHashBuckets(FixedStreamArray<support::ulittle32_t> &HashBuckets,
+                         ArrayRef<uint8_t> &HashBitmap,
                          const GSIHashHeader *HashHdr,
                          BinaryStreamReader &Reader);
 Error readGSIHashHeader(const GSIHashHeader *&HashHdr,
