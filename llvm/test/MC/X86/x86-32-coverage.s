@@ -2067,6 +2067,14 @@
 // CHECK:  encoding: [0x0f,0x1f,0x05,0x78,0x56,0x34,0x12]
         	nopl	0x12345678
 
+// CHECK: nopw	%ax
+// CHECK:  encoding: [0x66,0x0f,0x1f,0xc0]
+        	nopw	%ax
+
+// CHECK: nopl	%eax
+// CHECK:  encoding: [0x0f,0x1f,0xc0]
+        	nopl	%eax
+
 // CHECK: nop
 // CHECK:  encoding: [0x90]
         	nop
