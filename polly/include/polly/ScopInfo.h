@@ -1591,6 +1591,12 @@ public:
     return {insts_begin(), insts_end()};
   }
 
+  /// Insert an instruction before all other instructions in this statement.
+  void prependInstrunction(Instruction *Inst) {
+    assert(isBlockStmt() && "Only block statements support instruction lists");
+    Instructions.insert(Instructions.begin(), Inst);
+  }
+
   const char *getBaseName() const;
 
   /// Set the isl AST build.
