@@ -120,6 +120,7 @@ private:
     switch (VUse.getKind()) {
     case VirtualUse::Constant:
     case VirtualUse::Block:
+    case VirtualUse::Hoisted:
       // These can be used anywhere without special considerations.
       if (DoIt)
         return FD_DidForward;
@@ -128,11 +129,6 @@ private:
     case VirtualUse::Synthesizable:
       // Not supported yet.
       DEBUG(dbgs() << "    Cannot forward synthesizable: " << *UseVal << "\n");
-      return FD_CannotForward;
-
-    case VirtualUse::Hoisted:
-      // Not supported yet.
-      DEBUG(dbgs() << "    Cannot forward hoisted load: " << *UseVal << "\n");
       return FD_CannotForward;
 
     case VirtualUse::ReadOnly:
