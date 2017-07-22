@@ -38,3 +38,37 @@ body:             |
     S_ENDPGM
 
 ...
+
+# Similar assert which happens when trying to rematerialize.
+# https://bugs.llvm.org/show_bug.cgi?id=33884
+---
+# CHECK-LABEL: name: rematerialize_empty_interval_has_reference
+
+# CHECK-NOT: MOV
+# CHECK: undef %3.sub2 = V_MOV_B32_e32 1786773504, implicit %exec
+
+# CHECK: bb.1:
+# CHECK-NEXT: S_NOP 0, implicit %3.sub2
+# CHECK-NEXT: S_NOP 0, implicit undef %6.sub0
+# CHECK-NEXT: undef %4.sub2 = V_MOV_B32_e32 0, implicit %exec
+# CHECK-NEXT: S_NOP 0, implicit %4.sub2
+name: rematerialize_empty_interval_has_reference
+tracksRegLiveness: true
+registers:
+  - { id: 0, class: vreg_128, preferred-register: '' }
+  - { id: 1, class: vgpr_32, preferred-register: '' }
+  - { id: 2, class: vgpr_32, preferred-register: '' }
+  - { id: 3, class: vreg_128, preferred-register: '' }
+body:             |
+  bb.0:
+    successors: %bb.1
+
+    undef %0.sub2 = V_MOV_B32_e32 0, implicit %exec
+    undef %3.sub2 = V_MOV_B32_e32 1786773504, implicit %exec
+
+  bb.1:
+    S_NOP 0, implicit %3.sub2
+    S_NOP 0, implicit undef %0.sub0
+    S_NOP 0, implicit %0.sub2
+
+...
