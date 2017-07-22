@@ -1966,7 +1966,7 @@ void ScopStmt::printInstructions(raw_ostream &OS) const {
   for (Instruction *Inst : Instructions)
     OS.indent(16) << *Inst << "\n";
 
-  OS.indent(16) << "}\n";
+  OS.indent(12) << "}\n";
 }
 
 void ScopStmt::print(raw_ostream &OS, bool PrintInstructions) const {
