@@ -36,6 +36,8 @@ STATISTIC(InBetweenStore, "Number of Load-Store pairs NOT removed because "
 STATISTIC(TotalOverwritesRemoved, "Number of removed overwritten writes");
 STATISTIC(TotalRedundantWritesRemoved,
           "Number of writes of same value removed in any SCoP");
+STATISTIC(TotalEmptyPartialAccessesRemoved,
+          "Number of empty partial accesses removed");
 STATISTIC(TotalDeadAccessesRemoved, "Number of dead accesses removed");
 STATISTIC(TotalDeadInstructionsRemoved,
           "Number of unused instructions removed");
@@ -97,6 +99,9 @@ private:
   /// Number of redundant writes removed from this SCoP.
   int RedundantWritesRemoved = 0;
 
+  /// Number of writes with empty access domain removed.
+  int EmptyPartialAccessesRemoved = 0;
+
   /// Number of unused accesses removed from this SCoP.
   int DeadAccessesRemoved = 0;
 
@@ -109,8 +114,8 @@ private:
   /// Return whether at least one simplification has been applied.
   bool isModified() const {
     return OverwritesRemoved > 0 || RedundantWritesRemoved > 0 ||
-           DeadAccessesRemoved > 0 || DeadInstructionsRemoved > 0 ||
-           StmtsRemoved > 0;
+           EmptyPartialAccessesRemoved > 0 || DeadAccessesRemoved > 0 ||
+           DeadInstructionsRemoved > 0 || StmtsRemoved > 0;
   }
 
   MemoryAccess *getReadAccessForValue(ScopStmt *Stmt, llvm::Value *Val) {
@@ -319,6 +324,33 @@ private:
     TotalStmtsRemoved += StmtsRemoved;
   }
 
+  /// Remove accesses that have an empty domain.
+  void removeEmptyPartialAccesses() {
+    for (ScopStmt &Stmt : *S) {
+      // Defer the actual removal to not invalidate iterators.
+      SmallVector<MemoryAccess *, 8> DeferredRemove;
+
+      for (MemoryAccess *MA : Stmt) {
+        if (!MA->isWrite())
+          continue;
+
+        isl::map AccRel = give(MA->getAccessRelation());
+        if (!AccRel.is_empty().is_true())
+          continue;
+
+        DEBUG(dbgs() << "Removing " << MA
+                     << " because it's a partial access that never occurs\n");
+        DeferredRemove.push_back(MA);
+      }
+
+      for (MemoryAccess *MA : DeferredRemove) {
+        Stmt.removeSingleMemoryAccess(MA);
+        EmptyPartialAccessesRemoved++;
+        TotalEmptyPartialAccessesRemoved++;
+      }
+    }
+  }
+
   /// Mark all reachable instructions and access, and sweep those that are not
   /// reachable.
   void markAndSweep(LoopInfo *LI) {
@@ -380,6 +412,8 @@ private:
                           << '\n';
     OS.indent(Indent + 4) << "Redundant writes removed: "
                           << RedundantWritesRemoved << "\n";
+    OS.indent(Indent + 4) << "Access with empty domains removed: "
+                          << EmptyPartialAccessesRemoved << "\n";
     OS.indent(Indent + 4) << "Dead accesses removed: " << DeadAccessesRemoved
                           << '\n';
     OS.indent(Indent + 4) << "Dead instructions removed: "
@@ -424,6 +458,9 @@ public:
     DEBUG(dbgs() << "Removing redundant writes...\n");
     removeRedundantWrites();
 
+    DEBUG(dbgs() << "Removing partial writes that never happen...\n");
+    removeEmptyPartialAccesses();
+
     DEBUG(dbgs() << "Cleanup unused accesses...\n");
     LoopInfo *LI = &getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
     markAndSweep(LI);
@@ -456,6 +493,7 @@ public:
 
     OverwritesRemoved = 0;
     RedundantWritesRemoved = 0;
+    EmptyPartialAccessesRemoved = 0;
     DeadAccessesRemoved = 0;
     DeadInstructionsRemoved = 0;
     StmtsRemoved = 0;
