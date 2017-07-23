@@ -712,14 +712,13 @@ std::string MemoryAccess::getAccessRelationStr() const {
   return isl::manage(getAccessRelation()).to_str();
 }
 
-__isl_give isl_basic_map *
-MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
-  isl_space *Space = isl_space_set_alloc(Statement->getIslCtx(), 0, 1);
-  Space = isl_space_align_params(Space, Statement->getDomainSpace());
+isl::basic_map MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
+  isl::space Space = isl::space(Statement->getIslCtx(), 0, 1);
+  Space = Space.align_params(isl::manage(Statement->getDomainSpace()));
 
-  return isl_basic_map_from_domain_and_range(
-      isl_basic_set_universe(Statement->getDomainSpace()),
-      isl_basic_set_universe(Space));
+  return isl::basic_map::from_domain_and_range(
+      isl::basic_set::universe(isl::manage(Statement->getDomainSpace())),
+      isl::basic_set::universe(Space));
 }
 
 // Formalize no out-of-bound access assumption
@@ -977,7 +976,8 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
     // access must or may happen. However, for write accesses it is important to
     // differentiate between writes that must happen and writes that may happen.
     if (!AccessRelation)
-      AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
+      AccessRelation =
+          isl_map_from_basic_map(createBasicAccessMap(Statement).release());
 
     AccessRelation =
         isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);

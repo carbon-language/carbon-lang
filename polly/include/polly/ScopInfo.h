@@ -647,7 +647,7 @@ private:
   AssertingVH<Value> FAD;
   // @}
 
-  __isl_give isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
+  isl::basic_map createBasicAccessMap(ScopStmt *Statement);
 
   void assumeNoOutOfBound();
 
