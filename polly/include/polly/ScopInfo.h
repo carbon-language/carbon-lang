@@ -634,7 +634,7 @@ private:
   ///    S:     A[i] = *((double*)&A[4 * i]);
   ///
   ///    => { S[i] -> A[i]; S[i] -> A[o] : 4i <= o <= 4i + 3 }
-  isl_map *AccessRelation;
+  isl::map AccessRelation;
 
   /// Updated access relation read from JSCOP file.
   isl_map *NewAccessRelation;
