@@ -1163,7 +1163,7 @@ Value *IslNodeBuilder::preloadUnconditionally(isl_set *AccessRange,
 Value *IslNodeBuilder::preloadInvariantLoad(const MemoryAccess &MA,
                                             isl_set *Domain) {
 
-  isl_set *AccessRange = isl_map_range(MA.getAddressFunction());
+  isl_set *AccessRange = isl_map_range(MA.getAddressFunction().release());
   AccessRange = isl_set_gist_params(AccessRange, S.getContext());
 
   if (!materializeParameters(AccessRange)) {

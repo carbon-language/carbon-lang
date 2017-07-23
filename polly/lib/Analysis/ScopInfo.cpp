@@ -668,8 +668,8 @@ __isl_give isl_id *MemoryAccess::getLatestArrayId() const {
   return NewAccessRelation.get_tuple_id(isl::dim::out).release();
 }
 
-__isl_give isl_map *MemoryAccess::getAddressFunction() const {
-  return isl_map_lexmin(getAccessRelation().release());
+isl::map MemoryAccess::getAddressFunction() const {
+  return getAccessRelation().lexmin();
 }
 
 __isl_give isl_pw_multi_aff *MemoryAccess::applyScheduleToAccessRelation(
@@ -680,7 +680,8 @@ __isl_give isl_pw_multi_aff *MemoryAccess::applyScheduleToAccessRelation(
   UDomain = isl_union_set_from_set(getStatement()->getDomain());
   USchedule = isl_union_map_intersect_domain(USchedule, UDomain);
   Schedule = isl_map_from_union_map(USchedule);
-  ScheduledAccRel = isl_map_apply_domain(getAddressFunction(), Schedule);
+  ScheduledAccRel =
+      isl_map_apply_domain(getAddressFunction().release(), Schedule);
   return isl_pw_multi_aff_from_map(ScheduledAccRel);
 }
 

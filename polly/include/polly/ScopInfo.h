@@ -831,7 +831,7 @@ public:
   /// will return the address function { S[i] -> A[4i] }.
   ///
   /// @returns The address function for this memory access.
-  __isl_give isl_map *getAddressFunction() const;
+  isl::map getAddressFunction() const;
 
   /// Return the access relation after the schedule was applied.
   __isl_give isl_pw_multi_aff *
