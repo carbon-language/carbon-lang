@@ -643,29 +643,27 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
 MemoryAccess::~MemoryAccess() { isl_set_free(InvalidDomain); }
 
 const ScopArrayInfo *MemoryAccess::getOriginalScopArrayInfo() const {
-  isl_id *ArrayId = getArrayId();
-  void *User = isl_id_get_user(ArrayId);
+  isl::id ArrayId = getArrayId();
+  void *User = ArrayId.get_user();
   const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
-  isl_id_free(ArrayId);
   return SAI;
 }
 
 const ScopArrayInfo *MemoryAccess::getLatestScopArrayInfo() const {
-  isl_id *ArrayId = getLatestArrayId();
-  void *User = isl_id_get_user(ArrayId);
+  isl::id ArrayId = getLatestArrayId();
+  void *User = ArrayId.get_user();
   const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
-  isl_id_free(ArrayId);
   return SAI;
 }
 
-__isl_give isl_id *MemoryAccess::getOriginalArrayId() const {
-  return isl_map_get_tuple_id(AccessRelation.get(), isl_dim_out);
+isl::id MemoryAccess::getOriginalArrayId() const {
+  return AccessRelation.get_tuple_id(isl::dim::out);
 }
 
-__isl_give isl_id *MemoryAccess::getLatestArrayId() const {
+isl::id MemoryAccess::getLatestArrayId() const {
   if (!hasNewAccessRelation())
     return getOriginalArrayId();
-  return NewAccessRelation.get_tuple_id(isl::dim::out).release();
+  return NewAccessRelation.get_tuple_id(isl::dim::out);
 }
 
 isl::map MemoryAccess::getAddressFunction() const {

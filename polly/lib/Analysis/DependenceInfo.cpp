@@ -102,7 +102,7 @@ static __isl_give isl_map *tag(__isl_take isl_map *Relation,
 static __isl_give isl_map *tag(__isl_take isl_map *Relation, MemoryAccess *MA,
                                Dependences::AnalysisLevel TagLevel) {
   if (TagLevel == Dependences::AL_Reference)
-    return tag(Relation, MA->getArrayId());
+    return tag(Relation, MA->getArrayId().release());
 
   if (TagLevel == Dependences::AL_Access)
     return tag(Relation, MA->getId().release());

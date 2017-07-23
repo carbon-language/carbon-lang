@@ -856,14 +856,14 @@ public:
   Value *getOriginalBaseAddr() const { return BaseAddr; }
 
   /// Get the detection-time base array isl_id for this access.
-  isl_id *getOriginalArrayId() const;
+  isl::id getOriginalArrayId() const;
 
   /// Get the base array isl_id for this access, modifiable through
   /// setNewAccessRelation().
-  __isl_give isl_id *getLatestArrayId() const;
+  isl::id getLatestArrayId() const;
 
   /// Old name of getOriginalArrayId().
-  __isl_give isl_id *getArrayId() const { return getOriginalArrayId(); }
+  isl::id getArrayId() const { return getOriginalArrayId(); }
 
   /// Get the detection-time ScopArrayInfo object for the base address.
   const ScopArrayInfo *getOriginalScopArrayInfo() const;
