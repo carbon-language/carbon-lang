@@ -657,10 +657,10 @@ private:
   void computeBoundsOnAccessRelation(unsigned ElementSize);
 
   /// Get the original access function as read from IR.
-  __isl_give isl_map *getOriginalAccessRelation() const;
+  isl::map getOriginalAccessRelation() const;
 
   /// Return the space in which the access relation lives in.
-  __isl_give isl_space *getOriginalAccessRelationSpace() const;
+  isl::space getOriginalAccessRelationSpace() const;
 
   /// Get the new access function imported or set by a pass
   __isl_give isl_map *getNewAccessRelation() const;
@@ -812,7 +812,7 @@ public:
   ///
   __isl_give isl_map *getLatestAccessRelation() const {
     return hasNewAccessRelation() ? getNewAccessRelation()
-                                  : getOriginalAccessRelation();
+                                  : getOriginalAccessRelation().release();
   }
 
   /// Old name of getLatestAccessRelation().

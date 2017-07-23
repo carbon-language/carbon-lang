@@ -687,16 +687,16 @@ __isl_give isl_pw_multi_aff *MemoryAccess::applyScheduleToAccessRelation(
   return isl_pw_multi_aff_from_map(ScheduledAccRel);
 }
 
-__isl_give isl_map *MemoryAccess::getOriginalAccessRelation() const {
-  return AccessRelation.copy();
+isl::map MemoryAccess::getOriginalAccessRelation() const {
+  return AccessRelation;
 }
 
 std::string MemoryAccess::getOriginalAccessRelationStr() const {
   return stringFromIslObj(AccessRelation.get());
 }
 
-__isl_give isl_space *MemoryAccess::getOriginalAccessRelationSpace() const {
-  return isl_map_get_space(AccessRelation.get());
+isl::space MemoryAccess::getOriginalAccessRelationSpace() const {
+  return AccessRelation.get_space();
 }
 
 __isl_give isl_map *MemoryAccess::getNewAccessRelation() const {
@@ -745,7 +745,7 @@ void MemoryAccess::assumeNoOutOfBound() {
   if (PollyIgnoreInbounds)
     return;
   auto *SAI = getScopArrayInfo();
-  isl::space Space = give(getOriginalAccessRelationSpace()).range();
+  isl::space Space = getOriginalAccessRelationSpace().range();
   isl::set Outside = isl::set::empty(Space);
   for (int i = 1, Size = Space.dim(isl::dim::set); i < Size; ++i) {
     isl::local_space LS(Space);
