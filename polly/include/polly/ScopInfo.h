@@ -637,7 +637,7 @@ private:
   isl::map AccessRelation;
 
   /// Updated access relation read from JSCOP file.
-  isl_map *NewAccessRelation;
+  isl::map NewAccessRelation;
 
   /// Fortran arrays whose sizes are not statically known are stored in terms
   /// of a descriptor struct. This maintains a raw pointer to the memory,
@@ -663,7 +663,7 @@ private:
   isl::space getOriginalAccessRelationSpace() const;
 
   /// Get the new access function imported or set by a pass
-  __isl_give isl_map *getNewAccessRelation() const;
+  isl::map getNewAccessRelation() const;
 
   /// Fold the memory access to consider parametric offsets
   ///
@@ -798,7 +798,7 @@ public:
   }
 
   /// Check if a new access relation was imported or set by a pass.
-  bool hasNewAccessRelation() const { return NewAccessRelation; }
+  bool hasNewAccessRelation() const { return !NewAccessRelation.is_null(); }
 
   /// Return the newest access relation of this access.
   ///
@@ -810,15 +810,13 @@ public:
   /// As 2) is by construction "newer" than 1) we return the new access
   /// relation if present.
   ///
-  __isl_give isl_map *getLatestAccessRelation() const {
+  isl::map getLatestAccessRelation() const {
     return hasNewAccessRelation() ? getNewAccessRelation()
-                                  : getOriginalAccessRelation().release();
+                                  : getOriginalAccessRelation();
   }
 
   /// Old name of getLatestAccessRelation().
-  __isl_give isl_map *getAccessRelation() const {
-    return getLatestAccessRelation();
-  }
+  isl::map getAccessRelation() const { return getLatestAccessRelation(); }
 
   /// Get an isl map describing the memory address accessed.
   ///

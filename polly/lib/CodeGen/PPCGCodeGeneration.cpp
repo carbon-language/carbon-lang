@@ -2363,7 +2363,7 @@ public:
     for (auto &Stmt : *S)
       for (auto &Acc : Stmt)
         if (Acc->getType() == AccessTy) {
-          isl_map *Relation = Acc->getAccessRelation();
+          isl_map *Relation = Acc->getAccessRelation().release();
           Relation = isl_map_intersect_domain(Relation, Stmt.getDomain());
 
           isl_space *Space = isl_map_get_space(Relation);
@@ -2507,14 +2507,14 @@ public:
       auto Access = isl_alloc_type(S->getIslCtx(), struct gpu_stmt_access);
       Access->read = Acc->isRead();
       Access->write = Acc->isWrite();
-      Access->access = Acc->getAccessRelation();
+      Access->access = Acc->getAccessRelation().release();
       isl_space *Space = isl_map_get_space(Access->access);
       Space = isl_space_range(Space);
       Space = isl_space_from_range(Space);
       Space = isl_space_set_tuple_id(Space, isl_dim_in, Acc->getId().release());
       isl_map *Universe = isl_map_universe(Space);
       Access->tagged_access =
-          isl_map_domain_product(Acc->getAccessRelation(), Universe);
+          isl_map_domain_product(Acc->getAccessRelation().release(), Universe);
       Access->exact_write = !Acc->isMayWrite();
       Access->ref_id = Acc->getId().release();
       Access->next = Accesses;

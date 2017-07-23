@@ -134,7 +134,7 @@ static void collectInfo(Scop &S, isl_union_map *&Read,
   for (ScopStmt &Stmt : S) {
     for (MemoryAccess *MA : Stmt) {
       isl_set *domcp = Stmt.getDomain();
-      isl_map *accdom = MA->getAccessRelation();
+      isl_map *accdom = MA->getAccessRelation().release();
 
       accdom = isl_map_intersect_domain(accdom, domcp);
 
@@ -625,7 +625,7 @@ void Dependences::calculateDependences(Scop &S) {
     for (MemoryAccess *MA : Stmt) {
       if (!MA->isReductionLike())
         continue;
-      isl_set *AccDomW = isl_map_wrap(MA->getAccessRelation());
+      isl_set *AccDomW = isl_map_wrap(MA->getAccessRelation().release());
       isl_map *Identity =
           isl_map_from_domain_and_range(isl_set_copy(AccDomW), AccDomW);
       RED = isl_union_map_add_map(RED, Identity);
@@ -670,7 +670,7 @@ void Dependences::calculateDependences(Scop &S) {
       if (!MA->isReductionLike())
         continue;
 
-      isl_set *AccDomW = isl_map_wrap(MA->getAccessRelation());
+      isl_set *AccDomW = isl_map_wrap(MA->getAccessRelation().release());
       isl_union_map *AccRedDepU = isl_union_map_intersect_domain(
           isl_union_map_copy(TC_RED), isl_union_set_from_set(AccDomW));
       if (isl_union_map_is_empty(AccRedDepU)) {

@@ -806,7 +806,7 @@ IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
       auto Dom = Stmt->getDomain();
       auto SchedDom = isl_set_from_union_set(
           isl_union_map_domain(isl_union_map_copy(Schedule)));
-      auto AccDom = isl_map_domain(MA->getAccessRelation());
+      auto AccDom = isl_map_domain(MA->getAccessRelation().release());
       Dom = isl_set_intersect_params(Dom, Stmt->getParent()->getContext());
       SchedDom =
           isl_set_intersect_params(SchedDom, Stmt->getParent()->getContext());

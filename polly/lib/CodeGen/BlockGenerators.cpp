@@ -319,7 +319,7 @@ void BlockGenerator::generateArrayStore(ScopStmt &Stmt, StoreInst *Store,
                                         ValueMapT &BBMap, LoopToScevMapT &LTS,
                                         isl_id_to_ast_expr *NewAccesses) {
   MemoryAccess &MA = Stmt.getArrayAccessFor(Store);
-  isl::set AccDom = give(isl_map_domain(MA.getAccessRelation()));
+  isl::set AccDom = MA.getAccessRelation().domain();
   std::string Subject = MA.getId().get_name();
 
   generateConditionalExecution(Stmt, AccDom, Subject.c_str(), [&, this]() {
@@ -545,7 +545,7 @@ void BlockGenerator::generateScalarLoads(
 
 #ifndef NDEBUG
     auto *StmtDom = Stmt.getDomain();
-    auto *AccDom = isl_map_domain(MA->getAccessRelation());
+    auto *AccDom = isl_map_domain(MA->getAccessRelation().release());
     assert(isl_set_is_subset(StmtDom, AccDom) &&
            "Scalar must be loaded in all statement instances");
     isl_set_free(StmtDom);
@@ -645,7 +645,7 @@ void BlockGenerator::generateScalarStores(
     if (MA->isOriginalArrayKind() || MA->isRead())
       continue;
 
-    isl::set AccDom = give(isl_map_domain(MA->getAccessRelation()));
+    isl::set AccDom = MA->getAccessRelation().domain();
     std::string Subject = MA->getId().get_name();
 
     generateConditionalExecution(
@@ -1570,7 +1570,7 @@ void RegionGenerator::generateScalarStores(
     if (MA->isOriginalArrayKind() || MA->isRead())
       continue;
 
-    isl::set AccDom = give(isl_map_domain(MA->getAccessRelation()));
+    isl::set AccDom = MA->getAccessRelation().domain();
     std::string Subject = MA->getId().get_name();
     generateConditionalExecution(
         Stmt, AccDom, Subject.c_str(), [&, this, MA]() {
