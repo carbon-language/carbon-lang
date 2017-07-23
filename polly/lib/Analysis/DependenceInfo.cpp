@@ -105,7 +105,7 @@ static __isl_give isl_map *tag(__isl_take isl_map *Relation, MemoryAccess *MA,
     return tag(Relation, MA->getArrayId());
 
   if (TagLevel == Dependences::AL_Access)
-    return tag(Relation, MA->getId());
+    return tag(Relation, MA->getId().release());
 
   // No need to tag at the statement level.
   return Relation;

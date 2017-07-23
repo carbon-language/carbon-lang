@@ -500,7 +500,7 @@ private:
   ///
   /// The identifier is unique between all memory accesses belonging to the same
   /// scop statement.
-  isl_id *Id;
+  isl::id Id;
 
   /// What is modeled by this MemoryAccess.
   /// @see MemoryKind
@@ -858,7 +858,7 @@ public:
   Value *getOriginalBaseAddr() const { return BaseAddr; }
 
   /// Get the detection-time base array isl_id for this access.
-  __isl_give isl_id *getOriginalArrayId() const;
+  isl_id *getOriginalArrayId() const;
 
   /// Get the base array isl_id for this access, modifiable through
   /// setNewAccessRelation().
@@ -1101,7 +1101,7 @@ public:
   ///
   /// This identifier is unique for all accesses that belong to the same scop
   /// statement.
-  __isl_give isl_id *getId() const;
+  isl::id getId() const;
 
   /// Print the MemoryAccess.
   ///

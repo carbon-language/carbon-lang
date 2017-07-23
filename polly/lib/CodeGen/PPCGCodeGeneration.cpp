@@ -275,7 +275,7 @@ static __isl_give isl_id_to_ast_expr *pollyBuildAstExprForStmt(
   for (MemoryAccess *Acc : *Stmt) {
     isl_map *AddrFunc = Acc->getAddressFunction();
     AddrFunc = isl_map_intersect_domain(AddrFunc, Stmt->getDomain());
-    isl_id *RefId = Acc->getId();
+    isl_id *RefId = Acc->getId().release();
     isl_pw_multi_aff *PMA = isl_pw_multi_aff_from_map(AddrFunc);
     isl_multi_pw_aff *MPA = isl_multi_pw_aff_from_pw_multi_aff(PMA);
     MPA = isl_multi_pw_aff_coalesce(MPA);
@@ -2369,7 +2369,8 @@ public:
           isl_space *Space = isl_map_get_space(Relation);
           Space = isl_space_range(Space);
           Space = isl_space_from_range(Space);
-          Space = isl_space_set_tuple_id(Space, isl_dim_in, Acc->getId());
+          Space =
+              isl_space_set_tuple_id(Space, isl_dim_in, Acc->getId().release());
           isl_map *Universe = isl_map_universe(Space);
           Relation = isl_map_domain_product(Relation, Universe);
           Accesses = isl_union_map_add_map(Accesses, Relation);
@@ -2510,12 +2511,12 @@ public:
       isl_space *Space = isl_map_get_space(Access->access);
       Space = isl_space_range(Space);
       Space = isl_space_from_range(Space);
-      Space = isl_space_set_tuple_id(Space, isl_dim_in, Acc->getId());
+      Space = isl_space_set_tuple_id(Space, isl_dim_in, Acc->getId().release());
       isl_map *Universe = isl_map_universe(Space);
       Access->tagged_access =
           isl_map_domain_product(Acc->getAccessRelation(), Universe);
       Access->exact_write = !Acc->isMayWrite();
-      Access->ref_id = Acc->getId();
+      Access->ref_id = Acc->getId().release();
       Access->next = Accesses;
       Access->n_index = Acc->getScopArrayInfo()->getNumberOfDimensions();
       Accesses = Access;

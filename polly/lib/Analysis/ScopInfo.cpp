@@ -641,7 +641,6 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
 }
 
 MemoryAccess::~MemoryAccess() {
-  isl_id_free(Id);
   isl_set_free(InvalidDomain);
   isl_map_free(AccessRelation);
   isl_map_free(NewAccessRelation);
@@ -962,7 +961,7 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
   InvalidDomain = isl_set_empty(isl_set_get_space(StmtInvalidDomain));
   isl_set_free(StmtInvalidDomain);
 
-  isl_ctx *Ctx = isl_id_get_ctx(Id);
+  isl_ctx *Ctx = Id.get_ctx().release();
   isl_id *BaseAddrId = SAI->getBasePtrId().release();
 
   if (getAccessInstruction() && isa<MemIntrinsic>(getAccessInstruction())) {
@@ -1020,7 +1019,7 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
   const std::string Access = TypeStrings[AccType] + utostr(Stmt->size());
 
   std::string IdName = Stmt->getBaseName() + Access;
-  Id = isl_id_alloc(Stmt->getParent()->getIslCtx(), IdName.c_str(), this);
+  Id = isl::id::alloc(Stmt->getParent()->getIslCtx(), IdName.c_str(), this);
 }
 
 MemoryAccess::MemoryAccess(ScopStmt *Stmt, AccessType AccType,
@@ -1040,7 +1039,7 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, AccessType AccType,
   const std::string Access = TypeStrings[AccType] + utostr(Stmt->size());
 
   std::string IdName = Stmt->getBaseName() + Access;
-  Id = isl_id_alloc(Stmt->getParent()->getIslCtx(), IdName.c_str(), this);
+  Id = isl::id::alloc(Stmt->getParent()->getIslCtx(), IdName.c_str(), this);
 }
 
 void MemoryAccess::realignParams() {
@@ -1053,7 +1052,7 @@ const std::string MemoryAccess::getReductionOperatorStr() const {
   return MemoryAccess::getReductionOperatorStr(getReductionType());
 }
 
-__isl_give isl_id *MemoryAccess::getId() const { return isl_id_copy(Id); }
+isl::id MemoryAccess::getId() const { return Id; }
 
 raw_ostream &polly::operator<<(raw_ostream &OS,
                                MemoryAccess::ReductionType RT) {

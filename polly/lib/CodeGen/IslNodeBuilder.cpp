@@ -831,7 +831,8 @@ IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
     }
 
     auto AccessExpr = isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
-    NewAccesses = isl_id_to_ast_expr_set(NewAccesses, MA->getId(), AccessExpr);
+    NewAccesses =
+        isl_id_to_ast_expr_set(NewAccesses, MA->getId().release(), AccessExpr);
   }
 
   return NewAccesses;
@@ -884,9 +885,10 @@ void IslNodeBuilder::generateCopyStmt(
          "Accesses use the same data type");
   assert((*ReadAccess)->isArrayKind() && (*WriteAccess)->isArrayKind());
   auto *AccessExpr =
-      isl_id_to_ast_expr_get(NewAccesses, (*ReadAccess)->getId());
+      isl_id_to_ast_expr_get(NewAccesses, (*ReadAccess)->getId().release());
   auto *LoadValue = ExprBuilder.create(AccessExpr);
-  AccessExpr = isl_id_to_ast_expr_get(NewAccesses, (*WriteAccess)->getId());
+  AccessExpr =
+      isl_id_to_ast_expr_get(NewAccesses, (*WriteAccess)->getId().release());
   auto *StoreAddr = ExprBuilder.createAccessAddress(AccessExpr);
   Builder.CreateStore(LoadValue, StoreAddr);
 }
