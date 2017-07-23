@@ -672,17 +672,16 @@ isl::map MemoryAccess::getAddressFunction() const {
   return getAccessRelation().lexmin();
 }
 
-__isl_give isl_pw_multi_aff *MemoryAccess::applyScheduleToAccessRelation(
-    __isl_take isl_union_map *USchedule) const {
-  isl_map *Schedule, *ScheduledAccRel;
-  isl_union_set *UDomain;
+isl::pw_multi_aff
+MemoryAccess::applyScheduleToAccessRelation(isl::union_map USchedule) const {
+  isl::map Schedule, ScheduledAccRel;
+  isl::union_set UDomain;
 
-  UDomain = isl_union_set_from_set(getStatement()->getDomain());
-  USchedule = isl_union_map_intersect_domain(USchedule, UDomain);
-  Schedule = isl_map_from_union_map(USchedule);
-  ScheduledAccRel =
-      isl_map_apply_domain(getAddressFunction().release(), Schedule);
-  return isl_pw_multi_aff_from_map(ScheduledAccRel);
+  UDomain = isl::manage(getStatement()->getDomain());
+  USchedule = USchedule.intersect_domain(UDomain);
+  Schedule = isl::map::from_union_map(USchedule);
+  ScheduledAccRel = getAddressFunction().apply_domain(Schedule);
+  return isl::pw_multi_aff::from_map(ScheduledAccRel);
 }
 
 isl::map MemoryAccess::getOriginalAccessRelation() const {

@@ -820,7 +820,8 @@ IslNodeBuilder::createNewAccesses(ScopStmt *Stmt,
     }
 #endif
 
-    auto PWAccRel = MA->applyScheduleToAccessRelation(Schedule);
+    auto PWAccRel =
+        MA->applyScheduleToAccessRelation(isl::manage(Schedule)).release();
 
     // isl cannot generate an index expression for access-nothing accesses.
     isl::set AccDomain =

@@ -834,8 +834,8 @@ public:
   isl::map getAddressFunction() const;
 
   /// Return the access relation after the schedule was applied.
-  __isl_give isl_pw_multi_aff *
-  applyScheduleToAccessRelation(__isl_take isl_union_map *Schedule) const;
+  isl::pw_multi_aff
+  applyScheduleToAccessRelation(isl::union_map Schedule) const;
 
   /// Get an isl string representing the access function read from IR.
   std::string getOriginalAccessRelationStr() const;
