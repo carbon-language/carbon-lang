@@ -193,7 +193,6 @@ raw_ostream &llvm::pdb::operator<<(raw_ostream &OS, const PDB_Lang &Lang) {
   switch (Lang) {
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, C, OS)
     CASE_OUTPUT_ENUM_CLASS_STR(PDB_Lang, Cpp, "C++", OS)
-    CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, D, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, Fortran, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, Masm, OS)
     CASE_OUTPUT_ENUM_CLASS_NAME(PDB_Lang, Pascal, OS)
