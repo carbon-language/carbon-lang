@@ -255,7 +255,7 @@ static MustKillsInfo computeMustKillsInfo(const Scop &S) {
 /// This function is a callback for to generate the ast expressions for each
 /// of the scheduled ScopStmts.
 static __isl_give isl_id_to_ast_expr *pollyBuildAstExprForStmt(
-    void *StmtT, isl_ast_build *Build,
+    void *StmtT, __isl_take isl_ast_build *Build_C,
     isl_multi_pw_aff *(*FunctionIndex)(__isl_take isl_multi_pw_aff *MPA,
                                        isl_id *Id, void *User),
     void *UserIndex,
@@ -264,28 +264,30 @@ static __isl_give isl_id_to_ast_expr *pollyBuildAstExprForStmt(
 
   ScopStmt *Stmt = (ScopStmt *)StmtT;
 
-  isl_ctx *Ctx;
-
-  if (!Stmt || !Build)
+  if (!Stmt || !Build_C)
     return NULL;
 
-  Ctx = isl_ast_build_get_ctx(Build);
-  isl_id_to_ast_expr *RefToExpr = isl_id_to_ast_expr_alloc(Ctx, 0);
+  isl::ast_build Build = isl::manage(isl_ast_build_copy(Build_C));
+  isl::ctx Ctx = Build.get_ctx();
+  isl::id_to_ast_expr RefToExpr = isl::id_to_ast_expr::alloc(Ctx, 0);
 
   for (MemoryAccess *Acc : *Stmt) {
-    isl_map *AddrFunc = Acc->getAddressFunction().release();
-    AddrFunc = isl_map_intersect_domain(AddrFunc, Stmt->getDomain());
-    isl_id *RefId = Acc->getId().release();
-    isl_pw_multi_aff *PMA = isl_pw_multi_aff_from_map(AddrFunc);
-    isl_multi_pw_aff *MPA = isl_multi_pw_aff_from_pw_multi_aff(PMA);
-    MPA = isl_multi_pw_aff_coalesce(MPA);
-    MPA = FunctionIndex(MPA, RefId, UserIndex);
-    isl_ast_expr *Access = isl_ast_build_access_from_multi_pw_aff(Build, MPA);
-    Access = FunctionExpr(Access, RefId, UserExpr);
-    RefToExpr = isl_id_to_ast_expr_set(RefToExpr, RefId, Access);
+    isl::map AddrFunc = Acc->getAddressFunction();
+    AddrFunc = AddrFunc.intersect_domain(isl::manage(Stmt->getDomain()));
+
+    isl::id RefId = Acc->getId();
+    isl::pw_multi_aff PMA = isl::pw_multi_aff::from_map(AddrFunc);
+
+    isl::multi_pw_aff MPA = isl::multi_pw_aff(PMA);
+    MPA = MPA.coalesce();
+    MPA = isl::manage(FunctionIndex(MPA.release(), RefId.get(), UserIndex));
+
+    isl::ast_expr Access = Build.access_from(MPA);
+    Access = isl::manage(FunctionExpr(Access.release(), RefId.get(), UserExpr));
+    RefToExpr = RefToExpr.set(RefId, Access);
   }
 
-  return RefToExpr;
+  return RefToExpr.release();
 }
 
 /// Given a LLVM Type, compute its size in bytes,
