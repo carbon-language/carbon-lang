@@ -56,7 +56,7 @@ enum ForwardingDecision {
   /// where "5" is moved as part of a larger operand tree. "5" would be placed
   /// (disregarding for a moment that literal constants don't have a location
   /// and can be used anywhere) into the same statement as %add would.
-  FD_CanForward,
+  FD_CanForwardLeaf,
 
   /// The root instruction can be forwarded in a non-trivial way. This requires
   /// the operand tree root to be an instruction in some statement.
@@ -155,7 +155,7 @@ private:
       // These can be used anywhere without special considerations.
       if (DoIt)
         return FD_DidForward;
-      return FD_CanForward;
+      return FD_CanForwardLeaf;
 
     case VirtualUse::Synthesizable:
       // Not supported yet.
@@ -171,7 +171,7 @@ private:
       // scalar MemoryAccess. It interprets FD_CanForwardTree as the permission
       // to do so.
       if (!DoIt)
-        return FD_CanForward;
+        return FD_CanForwardLeaf;
 
       // If we model read-only scalars, we need to create a MemoryAccess for it.
       if (ModelReadOnlyScalars)
@@ -227,7 +227,7 @@ private:
           assert(!DoIt);
           return FD_CannotForward;
 
-        case FD_CanForward:
+        case FD_CanForwardLeaf:
         case FD_CanForwardTree:
           assert(!DoIt);
           break;
