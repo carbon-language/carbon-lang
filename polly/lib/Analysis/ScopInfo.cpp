@@ -778,14 +778,14 @@ void MemoryAccess::buildMemIntrinsicAccessRelation() {
   assert(isMemoryIntrinsic());
   assert(Subscripts.size() == 2 && Sizes.size() == 1);
 
-  isl::pw_aff SubscriptPWA = give(getPwAff(Subscripts[0]));
+  isl::pw_aff SubscriptPWA = getPwAff(Subscripts[0]);
   isl::map SubscriptMap = isl::map::from_pw_aff(SubscriptPWA);
 
   isl::map LengthMap;
   if (Subscripts[1] == nullptr) {
     LengthMap = isl::map::universe(SubscriptMap.get_space());
   } else {
-    isl::pw_aff LengthPWA = give(getPwAff(Subscripts[1]));
+    isl::pw_aff LengthPWA = getPwAff(Subscripts[1]);
     LengthMap = isl::map::from_pw_aff(LengthPWA);
     isl::space RangeSpace = LengthMap.get_space().range();
     LengthMap = LengthMap.apply_range(isl::map::lex_gt(RangeSpace));
@@ -854,7 +854,7 @@ void MemoryAccess::foldAccessRelation() {
   for (int i = Size - 2; i >= 0; --i) {
     isl::space Space;
     isl::map MapOne, MapTwo;
-    isl::pw_aff DimSize = give(getPwAff(Sizes[i + 1]));
+    isl::pw_aff DimSize = getPwAff(Sizes[i + 1]);
 
     isl::space SpaceSize = DimSize.get_space();
     isl::id ParamId =
@@ -976,10 +976,9 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
   AccessRelation = isl::map::universe(Space);
 
   for (int i = 0, Size = Subscripts.size(); i < Size; ++i) {
-    isl_pw_aff *Affine = getPwAff(Subscripts[i]);
-    isl_map *SubscriptMap = isl_map_from_pw_aff(Affine);
-    AccessRelation =
-        AccessRelation.flat_range_product(isl::manage(SubscriptMap));
+    isl::pw_aff Affine = getPwAff(Subscripts[i]);
+    isl::map SubscriptMap = isl::map::from_pw_aff(Affine);
+    AccessRelation = AccessRelation.flat_range_product(SubscriptMap);
   }
 
   Space = isl::manage(Statement->getDomainSpace());
@@ -1082,13 +1081,14 @@ void MemoryAccess::print(raw_ostream &OS) const {
 LLVM_DUMP_METHOD void MemoryAccess::dump() const { print(errs()); }
 #endif
 
-__isl_give isl_pw_aff *MemoryAccess::getPwAff(const SCEV *E) {
+isl::pw_aff MemoryAccess::getPwAff(const SCEV *E) {
   auto *Stmt = getStatement();
   PWACtx PWAC = Stmt->getParent()->getPwAff(E, Stmt->getEntryBlock());
-  isl_set *StmtDom = isl_set_reset_tuple_id(getStatement()->getDomain());
-  isl_set *NewInvalidDom = isl_set_intersect(StmtDom, PWAC.second);
-  InvalidDomain = isl_set_union(InvalidDomain, NewInvalidDom);
-  return PWAC.first;
+  isl::set StmtDom = isl::manage(getStatement()->getDomain());
+  StmtDom = StmtDom.reset_tuple_id();
+  isl::set NewInvalidDom = StmtDom.intersect(isl::manage(PWAC.second));
+  InvalidDomain = isl_set_union(InvalidDomain, NewInvalidDom.release());
+  return isl::manage(PWAC.first);
 }
 
 // Create a map in the size of the provided set domain, that maps from the
