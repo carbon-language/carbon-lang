@@ -1010,12 +1010,11 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, Instruction *AccessInst,
   Id = isl::id::alloc(Stmt->getParent()->getIslCtx(), IdName.c_str(), this);
 }
 
-MemoryAccess::MemoryAccess(ScopStmt *Stmt, AccessType AccType,
-                           __isl_take isl_map *AccRel)
+MemoryAccess::MemoryAccess(ScopStmt *Stmt, AccessType AccType, isl::map AccRel)
     : Kind(MemoryKind::Array), AccType(AccType), RedType(RT_NONE),
       Statement(Stmt), InvalidDomain(nullptr), AccessInstruction(nullptr),
-      IsAffine(true), AccessRelation(nullptr),
-      NewAccessRelation(isl::manage(AccRel)), FAD(nullptr) {
+      IsAffine(true), AccessRelation(nullptr), NewAccessRelation(AccRel),
+      FAD(nullptr) {
   isl::id ArrayInfoId = NewAccessRelation.get_tuple_id(isl::dim::out);
   auto *SAI = ScopArrayInfo::getFromId(ArrayInfoId);
   Sizes.push_back(nullptr);
@@ -1746,12 +1745,13 @@ ScopStmt::ScopStmt(Scop &parent, __isl_take isl_map *SourceRel,
   auto *Id = isl_id_alloc(getIslCtx(), getBaseName(), this);
   Domain = isl_set_set_tuple_id(Domain, isl_id_copy(Id));
   TargetRel = isl_map_set_tuple_id(TargetRel, isl_dim_in, Id);
-  auto *Access =
-      new MemoryAccess(this, MemoryAccess::AccessType::MUST_WRITE, TargetRel);
+  auto *Access = new MemoryAccess(this, MemoryAccess::AccessType::MUST_WRITE,
+                                  isl::manage(TargetRel));
   parent.addAccessFunction(Access);
   addAccess(Access);
   SourceRel = isl_map_set_tuple_id(SourceRel, isl_dim_in, isl_id_copy(Id));
-  Access = new MemoryAccess(this, MemoryAccess::AccessType::READ, SourceRel);
+  Access = new MemoryAccess(this, MemoryAccess::AccessType::READ,
+                            isl::manage(SourceRel));
   parent.addAccessFunction(Access);
   addAccess(Access);
 }
