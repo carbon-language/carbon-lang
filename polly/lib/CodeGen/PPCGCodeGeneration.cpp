@@ -1015,25 +1015,28 @@ static bool isPrefix(std::string String, std::string Prefix) {
 }
 
 Value *GPUNodeBuilder::getArraySize(gpu_array_info *Array) {
-  isl_ast_build *Build = isl_ast_build_from_context(S.getContext());
+  isl::ast_build Build =
+      isl::ast_build::from_context(isl::manage(S.getContext()));
   Value *ArraySize = ConstantInt::get(Builder.getInt64Ty(), Array->size);
 
   if (!gpu_array_is_scalar(Array)) {
-    auto OffsetDimZero = isl_multi_pw_aff_get_pw_aff(Array->bound, 0);
-    isl_ast_expr *Res = isl_ast_build_expr_from_pw_aff(Build, OffsetDimZero);
+    isl::multi_pw_aff ArrayBound =
+        isl::manage(isl_multi_pw_aff_copy(Array->bound));
+
+    isl::pw_aff OffsetDimZero = ArrayBound.get_pw_aff(0);
+    isl::ast_expr Res = Build.expr_from(OffsetDimZero);
 
     for (unsigned int i = 1; i < Array->n_index; i++) {
-      isl_pw_aff *Bound_I = isl_multi_pw_aff_get_pw_aff(Array->bound, i);
-      isl_ast_expr *Expr = isl_ast_build_expr_from_pw_aff(Build, Bound_I);
-      Res = isl_ast_expr_mul(Res, Expr);
+      isl::pw_aff Bound_I = ArrayBound.get_pw_aff(i);
+      isl::ast_expr Expr = Build.expr_from(Bound_I);
+      Res = Res.mul(Expr);
     }
 
-    Value *NumElements = ExprBuilder.create(Res);
+    Value *NumElements = ExprBuilder.create(Res.release());
     if (NumElements->getType() != ArraySize->getType())
       NumElements = Builder.CreateSExt(NumElements, ArraySize->getType());
     ArraySize = Builder.CreateMul(ArraySize, NumElements);
   }
-  isl_ast_build_free(Build);
   return ArraySize;
 }
 
