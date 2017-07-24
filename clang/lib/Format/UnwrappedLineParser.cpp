@@ -494,8 +494,8 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel,
 
   if (MunchSemi && FormatTok->Tok.is(tok::semi))
     nextToken();
-  Line->MatchingOpeningBlockLineIndex = OpeningLineIndex;
   Line->Level = InitialLevel;
+  Line->MatchingOpeningBlockLineIndex = OpeningLineIndex;
   if (OpeningLineIndex != UnwrappedLine::kInvalidIndex) {
     // Update the opening line to add the forward reference as well
     (*CurrentLines)[OpeningLineIndex].MatchingOpeningBlockLineIndex =
