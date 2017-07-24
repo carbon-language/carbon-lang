@@ -437,16 +437,15 @@ void ScopArrayInfo::print(raw_ostream &OS, bool SizeAsPwAff) const {
 }
 
 const ScopArrayInfo *
-ScopArrayInfo::getFromAccessFunction(__isl_keep isl_pw_multi_aff *PMA) {
-  isl_id *Id = isl_pw_multi_aff_get_tuple_id(PMA, isl_dim_out);
-  assert(Id && "Output dimension didn't have an ID");
+ScopArrayInfo::getFromAccessFunction(isl::pw_multi_aff PMA) {
+  isl::id Id = PMA.get_tuple_id(isl::dim::out);
+  assert(!Id.is_null() && "Output dimension didn't have an ID");
   return getFromId(Id);
 }
 
-const ScopArrayInfo *ScopArrayInfo::getFromId(__isl_take isl_id *Id) {
-  void *User = isl_id_get_user(Id);
+const ScopArrayInfo *ScopArrayInfo::getFromId(isl::id Id) {
+  void *User = Id.get_user();
   const ScopArrayInfo *SAI = static_cast<ScopArrayInfo *>(User);
-  isl_id_free(Id);
   return SAI;
 }
 
@@ -1017,7 +1016,7 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, AccessType AccType,
       Statement(Stmt), InvalidDomain(nullptr), AccessInstruction(nullptr),
       IsAffine(true), AccessRelation(nullptr),
       NewAccessRelation(isl::manage(AccRel)), FAD(nullptr) {
-  auto *ArrayInfoId = NewAccessRelation.get_tuple_id(isl::dim::out).release();
+  isl::id ArrayInfoId = NewAccessRelation.get_tuple_id(isl::dim::out);
   auto *SAI = ScopArrayInfo::getFromId(ArrayInfoId);
   Sizes.push_back(nullptr);
   for (unsigned i = 1; i < SAI->getNumberOfDimensions(); i++)
@@ -4719,6 +4718,16 @@ Scop::getAccessesOfType(std::function<bool(MemoryAccess &)> Predicate) {
       Accesses = isl_union_map_add_map(Accesses, AccessDomain);
     }
   }
+
+  return isl_union_map_coalesce(Accesses);
+
+  for (auto X : this->getInvariantAccesses())
+    for (auto A : X.InvariantAccesses) {
+      if (!Predicate(*A))
+        continue;
+      Accesses =
+          isl_union_map_add_map(Accesses, A->getAccessRelation().release());
+    }
   return isl_union_map_coalesce(Accesses);
 }
 
