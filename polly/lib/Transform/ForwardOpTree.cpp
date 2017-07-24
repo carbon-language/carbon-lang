@@ -36,10 +36,33 @@ STATISTIC(ScopsModified, "Number of SCoPs with at least one forwarded tree");
 namespace {
 
 /// The state of whether an operand tree was/can be forwarded.
+///
+/// The items apply to an instructions and its operand tree with the instruction
+/// as the root element. If the value in question is not an instruction in the
+/// SCoP, it can be a leaf of an instruction's operand tree.
 enum ForwardingDecision {
+  /// The root instruction or value cannot be forwarded at all.
   FD_CannotForward,
+
+  /// The root instruction or value can be forwarded as a leaf of a larger
+  /// operand tree.
+  /// It does not make sense to move the value itself, it would just replace it
+  /// by a use of itself. For instance, a constant "5" used in a statement can
+  /// be forwarded, but it would just replace it by the same constant "5".
+  /// However, it makes sense to move as an operand of
+  ///
+  ///   %add = add 5, 5
+  ///
+  /// where "5" is moved as part of a larger operand tree. "5" would be placed
+  /// (disregarding for a moment that literal constants don't have a location
+  /// and can be used anywhere) into the same statement as %add would.
   FD_CanForward,
+
+  /// The root instruction can be forwarded in a non-trivial way. This requires
+  /// the operand tree root to be an instruction in some statement.
   FD_CanForwardTree,
+
+  /// Used to indicate that a forwarding has be carried out successfully.
   FD_DidForward,
 };
 
@@ -140,6 +163,13 @@ private:
       return FD_CannotForward;
 
     case VirtualUse::ReadOnly:
+      // Note that we cannot return FD_CanForwardTree here. With a operand tree
+      // depth of 0, UseVal is the use in TargetStmt that we try to replace.
+      // With -polly-analyze-read-only-scalars=true we would ensure the
+      // existence of a MemoryAccess (which already exists for a leaf) and be
+      // removed again by tryForwardTree because it's goal is to remove this
+      // scalar MemoryAccess. It interprets FD_CanForwardTree as the permission
+      // to do so.
       if (!DoIt)
         return FD_CanForward;
 
