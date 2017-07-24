@@ -10,7 +10,7 @@
 # RUN: ld.lld --symbol-ordering-file %t_order_lto.txt %t.o %t.bc -o %t2.out
 # RUN: llvm-readobj -elf-output-style=GNU -t %t2.out| FileCheck %s
 
-# Check that the order is pat -> _start -> tin.
+# Check that the order is tin -> _start -> pat.
 
 # CHECK: Symbol table '.symtab' contains 4 entries:
 # CHECK-NEXT:   Num:    Value          Size Type    Bind   Vis      Ndx Name
