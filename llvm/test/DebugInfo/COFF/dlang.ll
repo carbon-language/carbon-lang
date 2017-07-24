@@ -11,8 +11,8 @@
 ; OBJ-NEXT:    Flags [ (0x0)
 ; OBJ-NEXT:    ]
 ; OBJ-NEXT:    Machine: X64 (0xD0)
-; OBJ-NEXT:    FrontendVersion: 6.0.0.0
-; OBJ-NEXT:    BackendVersion: 6000.0.0.0
+; OBJ-NEXT:    FrontendVersion: {{[0-9.]*}}
+; OBJ-NEXT:    BackendVersion: {{[0-9.]*}}
 ; OBJ-NEXT:    VersionName: LDC version 6.0.0
 ; OBJ-NEXT:  }
 
