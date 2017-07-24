@@ -1590,7 +1590,7 @@ public:
   }
 
   /// Insert an instruction before all other instructions in this statement.
-  void prependInstrunction(Instruction *Inst) {
+  void prependInstruction(Instruction *Inst) {
     assert(isBlockStmt() && "Only block statements support instruction lists");
     Instructions.insert(Instructions.begin(), Inst);
   }

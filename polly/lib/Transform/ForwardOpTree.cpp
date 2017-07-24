@@ -169,7 +169,7 @@ private:
         // instruction using them.
         // TODO: The operand tree is not really a tree, but a DAG. We should be
         // able to handle DAGs without duplication.
-        TargetStmt->prependInstrunction(Inst);
+        TargetStmt->prependInstruction(Inst);
         NumInstructionsCopied++;
         TotalInstructionsCopied++;
       }
