@@ -639,7 +639,7 @@ static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
   }
 }
 
-MemoryAccess::~MemoryAccess() { isl_set_free(InvalidDomain); }
+MemoryAccess::~MemoryAccess() {}
 
 const ScopArrayInfo *MemoryAccess::getOriginalScopArrayInfo() const {
   isl::id ArrayId = getArrayId();
@@ -947,11 +947,10 @@ void MemoryAccess::buildAccessRelation(const ScopArrayInfo *SAI) {
 
   // Initialize the invalid domain which describes all iterations for which the
   // access relation is not modeled correctly.
-  auto *StmtInvalidDomain = getStatement()->getInvalidDomain();
-  InvalidDomain = isl_set_empty(isl_set_get_space(StmtInvalidDomain));
-  isl_set_free(StmtInvalidDomain);
+  isl::set StmtInvalidDomain = isl::manage(getStatement()->getInvalidDomain());
+  InvalidDomain = isl::set::empty(StmtInvalidDomain.get_space());
 
-  isl_ctx *Ctx = Id.get_ctx().release();
+  isl::ctx Ctx = Id.get_ctx();
   isl::id BaseAddrId = SAI->getBasePtrId();
 
   if (getAccessInstruction() && isa<MemIntrinsic>(getAccessInstruction())) {
@@ -1029,9 +1028,9 @@ MemoryAccess::MemoryAccess(ScopStmt *Stmt, AccessType AccType, isl::map AccRel)
 }
 
 void MemoryAccess::realignParams() {
-  auto *Ctx = Statement->getParent()->getContext();
-  InvalidDomain = isl_set_gist_params(InvalidDomain, isl_set_copy(Ctx));
-  AccessRelation = AccessRelation.gist_params(isl::manage(Ctx));
+  isl::set Ctx = isl::manage(Statement->getParent()->getContext());
+  InvalidDomain = InvalidDomain.gist_params(Ctx);
+  AccessRelation = AccessRelation.gist_params(Ctx);
 }
 
 const std::string MemoryAccess::getReductionOperatorStr() const {
@@ -1087,7 +1086,7 @@ isl::pw_aff MemoryAccess::getPwAff(const SCEV *E) {
   isl::set StmtDom = isl::manage(getStatement()->getDomain());
   StmtDom = StmtDom.reset_tuple_id();
   isl::set NewInvalidDom = StmtDom.intersect(isl::manage(PWAC.second));
-  InvalidDomain = isl_set_union(InvalidDomain, NewInvalidDom.release());
+  InvalidDomain = InvalidDomain.unite(NewInvalidDom);
   return isl::manage(PWAC.first);
 }
 
@@ -3965,7 +3964,7 @@ void Scop::addInvariantLoads(ScopStmt &Stmt, InvariantAccessesTy &InvMAs) {
     Type *Ty = LInst->getType();
     const SCEV *PointerSCEV = SE->getSCEV(LInst->getPointerOperand());
 
-    auto *MAInvalidCtx = MA->getInvalidContext();
+    auto *MAInvalidCtx = MA->getInvalidContext().release();
     bool NonHoistableCtxIsEmpty = isl_set_is_empty(NHCtx);
     bool MAInvalidCtxIsEmpty = isl_set_is_empty(MAInvalidCtx);
 
