@@ -28,7 +28,13 @@ int main(int argc, char **argv)
   p = malloc(size);
   assert(p);
   free(p);
+  p = malloc(size + 1);
+  assert(p);
+  free(p);
   assert(posix_memalign(&p, alignment, size) == 0);
+  assert(p);
+  free(p);
+  assert(posix_memalign(&p, alignment, size + 1) == 0);
   assert(p);
   free(p);
 
