@@ -104,8 +104,8 @@ private:
   ///                   DoIt==true if an operand tree is not known to be
   ///                   forwardable.
   ///
-  /// @return When DoIt==true, return whether the operand tree can be forwarded.
-  ///         When DoIt==false, return FD_DidForward.
+  /// @return If DoIt==false, return whether the operand tree can be forwarded.
+  ///         If DoIt==true, return FD_DidForward.
   ForwardingDecision canForwardTree(ScopStmt *TargetStmt, Value *UseVal,
                                     ScopStmt *UseStmt, Loop *UseLoop,
                                     bool DoIt) {
