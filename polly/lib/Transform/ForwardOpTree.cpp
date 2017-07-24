@@ -187,13 +187,13 @@ private:
 
       // Compatible instructions must satisfy the following conditions:
       // 1. Idempotent (instruction will be copied, not moved; although its
-      // original instance might be removed by simplification)
+      //    original instance might be removed by simplification)
       // 2. Not access memory (There might be memory writes between)
       // 3. Not cause undefined behaviour (we might copy to a location when the
-      // original instruction was no executed; this is currently not possible
-      // because we do not forward PHINodes)
+      //    original instruction was no executed; this is currently not possible
+      //    because we do not forward PHINodes)
       // 4. Not leak memory if executed multiple times (I am looking at you,
-      // malloc!)
+      //    malloc!)
       //
       // Instruction::mayHaveSideEffects is not sufficient because it considers
       // malloc to not have side-effects. llvm::isSafeToSpeculativelyExecute is
