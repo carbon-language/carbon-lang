@@ -1,5 +1,5 @@
 // REQUIRES: x86-registered-target
-// RUN: %clang_cc1 %s -fasm-blocks -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple x86_64-pc-win32 -fasm-blocks -emit-llvm -o - | FileCheck %s
 namespace x {
 enum { A = 12 };
 struct y_t {
