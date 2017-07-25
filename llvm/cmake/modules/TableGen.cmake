@@ -110,7 +110,7 @@ function(add_public_tablegen_target target)
   set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${target} PARENT_SCOPE)
 endfunction()
 
-if(LLVM_USE_HOST_TOOLS)
+if(LLVM_USE_HOST_TOOLS AND NOT TARGET NATIVE_LIB_LLVMTABLEGEN)
   llvm_ExternalProject_BuildCmd(tblgen_build_cmd LLVMSupport
     ${LLVM_NATIVE_BUILD}
     CONFIGURATION Release)
