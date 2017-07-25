@@ -1498,7 +1498,6 @@ public:
   /// Return the MemoryAccess that loads a PHINode value, or nullptr if not
   /// existing, respectively not yet added.
   MemoryAccess *lookupPHIReadOf(PHINode *PHI) const {
-    assert(isBlockStmt() || R->getEntry() == PHI->getParent());
     return PHIReads.lookup(PHI);
   }
 
