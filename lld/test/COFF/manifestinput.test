@@ -1,7 +1,7 @@
 # REQUIRES: win_mt
 
 # RUN: yaml2obj %p/Inputs/ret42.yaml > %t.obj
-# RUN: lld-link /out:%t.exe /entry:main \
+# RUN: lld-link /out:%t.exe /entry:main /manifest \
 # RUN:   /manifestuac:"level='requireAdministrator'" \
 # RUN:   /manifestinput:%p/Inputs/manifestinput.test %t.obj
 # RUN: FileCheck %s < %t.exe.manifest
