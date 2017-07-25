@@ -121,7 +121,7 @@ if(LLVM_USE_HOST_TOOLS AND NOT TARGET NATIVE_LIB_LLVMTABLEGEN)
       COMMENT "Building libLLVMTableGen for native TableGen..."
       USES_TERMINAL)
   add_custom_target(NATIVE_LIB_LLVMTABLEGEN DEPENDS LIB_LLVMTABLEGEN)
-endif(LLVM_USE_HOST_TOOLS)
+endif()
 
 macro(add_tablegen target project)
   set(${target}_OLD_LLVM_LINK_COMPONENTS ${LLVM_LINK_COMPONENTS})
