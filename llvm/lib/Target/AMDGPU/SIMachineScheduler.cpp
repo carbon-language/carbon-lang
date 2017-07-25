@@ -1422,8 +1422,8 @@ void SIScheduleBlockCreator::fillStats() {
     else {
       unsigned Depth = 0;
       for (SIScheduleBlock *Pred : Block->getPreds()) {
-        if (Depth < Pred->Depth + 1)
-          Depth = Pred->Depth + 1;
+        if (Depth < Pred->Depth + Pred->getCost())
+          Depth = Pred->Depth + Pred->getCost();
       }
       Block->Depth = Depth;
     }
@@ -1437,7 +1437,7 @@ void SIScheduleBlockCreator::fillStats() {
     else {
       unsigned Height = 0;
       for (const auto &Succ : Block->getSuccs())
-        Height = std::min(Height, Succ.first->Height + 1);
+        Height = std::max(Height, Succ.first->Height + Succ.first->getCost());
       Block->Height = Height;
     }
   }
