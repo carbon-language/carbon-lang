@@ -65,6 +65,8 @@ uptr ParseHex(const char **p) {
 }
 
 void MemoryMappedSegment::AddAddressRanges(LoadedModule *module) {
+  // data_ should be unused on this platform
+  CHECK(!data_);
   module->addAddressRange(start, end, IsExecutable(), IsWritable());
 }
 
