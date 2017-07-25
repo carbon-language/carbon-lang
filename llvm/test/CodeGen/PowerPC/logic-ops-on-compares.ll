@@ -18,7 +18,7 @@ define signext i32 @logic_ne_32(i32 signext %a, i32 signext %b, i32 signext %c) 
 ; CHECK-NEXT:    srwi r6, r6, 5
 ; CHECK-NEXT:    srwi r5, r5, 5
 ; CHECK-NEXT:    or. r5, r6, r5
-; CHECK-NEXT:    bc 4, 1
+; CHECK-NEXT:    bc 4, gt
 entry:
   %tobool = icmp eq i32 %a, %b
   %tobool1 = icmp eq i32 %b, 0
@@ -45,7 +45,7 @@ define void @neg_truncate_i32_eq(i32 *%ptr) {
 ; CHECK:       # BB#0: # %entry
 ; CHECK-NEXT:    lwz r3, 0(r3)
 ; CHECK-NEXT:    rldicl. r3, r3, 0, 63
-; CHECK-NEXT:    bclr 12, 2, 0
+; CHECK-NEXT:    bclr 12, eq, 0
 ; CHECK-NEXT:  # BB#1: # %if.end29.thread136
 ; CHECK-NEXT:  .LBB1_2: # %if.end29
 entry:
@@ -77,7 +77,7 @@ define i64 @logic_eq_64(i64 %a, i64 %b, i64 %c) {
 ; CHECK-NEXT:    rldicl r6, r6, 58, 63
 ; CHECK-NEXT:    rldicl r5, r5, 58, 63
 ; CHECK-NEXT:    or. r5, r6, r5
-; CHECK-NEXT:    bc 4, 1
+; CHECK-NEXT:    bc 4, gt
 entry:
   %tobool = icmp eq i64 %a, %b
   %tobool1 = icmp eq i64 %b, 0
@@ -104,7 +104,7 @@ define void @neg_truncate_i64_eq(i64 *%ptr) {
 ; CHECK:       # BB#0: # %entry
 ; CHECK-NEXT:    ld r3, 0(r3)
 ; CHECK-NEXT:    rldicl. r3, r3, 0, 63
-; CHECK-NEXT:    bclr 12, 2, 0
+; CHECK-NEXT:    bclr 12, eq, 0
 ; CHECK-NEXT:  # BB#1: # %if.end29.thread136
 ; CHECK-NEXT:  .LBB3_2: # %if.end29
 entry:
@@ -138,7 +138,7 @@ define i64 @logic_ne_64(i64 %a, i64 %b, i64 %c) {
 ; CHECK-NEXT:    subfe r6, r12, r4
 ; CHECK-NEXT:    and r6, r7, r6
 ; CHECK-NEXT:    or. r5, r6, r5
-; CHECK-NEXT:    bc 4, 1
+; CHECK-NEXT:    bc 4, gt
 entry:
   %tobool = icmp ne i64 %a, %b
   %tobool1 = icmp ne i64 %b, 0
@@ -165,7 +165,7 @@ define void @neg_truncate_i64_ne(i64 *%ptr) {
 ; CHECK:       # BB#0: # %entry
 ; CHECK-NEXT:    ld r3, 0(r3)
 ; CHECK-NEXT:    andi. r3, r3, 1
-; CHECK-NEXT:    bclr 12, 1, 0
+; CHECK-NEXT:    bclr 12, gt, 0
 ; CHECK-NEXT:  # BB#1: # %if.end29.thread136
 ; CHECK-NEXT:  .LBB5_2: # %if.end29
 entry:
