@@ -510,14 +510,24 @@ namespace {
 
 /// Create BinaryContext for a given architecture \p ArchName and
 /// triple \p TripleName.
-std::unique_ptr<BinaryContext> createBinaryContext(
-    std::string ArchName,
-    std::string TripleName,
-    const DataReader &DR,
-    std::unique_ptr<DWARFContext> DwCtx) {
+std::unique_ptr<BinaryContext>
+createBinaryContext(ELFObjectFileBase *File, const DataReader &DR,
+                    std::unique_ptr<DWARFContext> DwCtx) {
+  std::string ArchName;
+  std::string TripleName;
+  llvm::Triple::ArchType Arch = (llvm::Triple::ArchType)File->getArch();
+  if (Arch == llvm::Triple::x86_64) {
+    ArchName = "x86-64";
+    TripleName = "x86_64-unknown-linux";
+  } else if (Arch == llvm::Triple::aarch64) {
+    ArchName = "aarch64";
+    TripleName = "aarch64-unknown-linux";
+  } else {
+    errs() << "BOLT-ERROR: Unrecognized machine in ELF file.\n";
+    return nullptr;
+  }
 
   std::string Error;
-
   std::unique_ptr<Triple> TheTriple = llvm::make_unique<Triple>(TripleName);
   const Target *TheTarget = TargetRegistry::lookupTarget(ArchName,
                                                          *TheTriple,
@@ -619,17 +629,13 @@ std::unique_ptr<BinaryContext> createBinaryContext(
 
 } // namespace
 
-RewriteInstance::RewriteInstance(ELFObjectFileBase *File,
-                                 const DataReader &DR,
-                                 const int Argc,
-                                 const char *const *Argv)
-    : InputFile(File),
-      Argc(Argc),
-      Argv(Argv),
-      BC(createBinaryContext("x86-64", "x86_64-unknown-linux", DR,
-         std::unique_ptr<DWARFContext>(
-           new DWARFContextInMemory(*InputFile, nullptr, true)))) {
-}
+RewriteInstance::RewriteInstance(ELFObjectFileBase *File, const DataReader &DR,
+                                 const int Argc, const char *const *Argv)
+    : InputFile(File), Argc(Argc), Argv(Argv),
+      BC(createBinaryContext(
+          File, DR,
+          std::unique_ptr<DWARFContext>(
+              new DWARFContextInMemory(*InputFile, nullptr, true)))) {}
 
 RewriteInstance::~RewriteInstance() {}
 
@@ -637,9 +643,10 @@ void RewriteInstance::reset() {
   BinaryFunctions.clear();
   FileSymRefs.clear();
   auto &DR = BC->DR;
-  BC = createBinaryContext("x86-64", "x86_64-unknown-linux", DR,
-           std::unique_ptr<DWARFContext>(
-             new DWARFContextInMemory(*InputFile, nullptr, true)));
+  BC = createBinaryContext(
+      InputFile, DR,
+      std::unique_ptr<DWARFContext>(
+          new DWARFContextInMemory(*InputFile, nullptr, true)));
   CFIRdWrt.reset(nullptr);
   EFMM.reset(nullptr);
   Out.reset(nullptr);
@@ -764,6 +771,11 @@ void RewriteInstance::run() {
   }
 
   unsigned PassNumber = 1;
+
+  outs() << "BOLT-INFO: Target architecture: "
+         << Triple::getArchTypeName(
+                (llvm::Triple::ArchType)InputFile->getArch())
+         << "\n";
 
   // Main "loop".
   discoverStorage();
