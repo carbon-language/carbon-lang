@@ -38,6 +38,7 @@ namespace __sanitizer {
 
 // Contains information used to iterate through sections.
 struct MemoryMappedSegmentData {
+  char name[kMaxSegName];
   uptr nsects;
   char *current_load_cmd_addr;
   u32 lc_type;
@@ -53,7 +54,8 @@ static void NextSectionLoad(LoadedModule *module, MemoryMappedSegmentData *data,
 
   uptr sec_start = (sc->addr & data->addr_mask) + data->base_virt_addr;
   uptr sec_end = sec_start + sc->size;
-  module->addAddressRange(sec_start, sec_end, /*executable=*/false, isWritable);
+  module->addAddressRange(sec_start, sec_end, /*executable=*/false, isWritable,
+                          sc->sectname);
 }
 
 void MemoryMappedSegment::AddAddressRanges(LoadedModule *module) {
@@ -63,7 +65,8 @@ void MemoryMappedSegment::AddAddressRanges(LoadedModule *module) {
   // it will confuse libignore, and because the extra granularity
   // of information is not needed by any sanitizers.
   if (!data_ || !data_->nsects || IsExecutable()) {
-    module->addAddressRange(start, end, IsExecutable(), IsWritable());
+    module->addAddressRange(start, end, IsExecutable(), IsWritable(),
+                            data_ ? data_->name : nullptr);
     return;
   }
 
@@ -212,6 +215,8 @@ bool MemoryMappingLayout::NextSegmentLoad(MemoryMappedSegment *segment) {
       segment->data_->lc_type = kLCSegment;
       segment->data_->base_virt_addr = base_virt_addr;
       segment->data_->addr_mask = addr_mask;
+      internal_strncpy(segment->data_->name, sc->segname,
+                       ARRAY_SIZE(segment->data_->name));
     }
 
     // Return the initial protection.
