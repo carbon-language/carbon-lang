@@ -429,7 +429,7 @@ static void reportDuplicate(SymbolBody *Sym, InputSectionBase *ErrSec,
                             typename ELFT::uint ErrOffset) {
   DefinedRegular *D = dyn_cast<DefinedRegular>(Sym);
   if (!D || !D->Section || !ErrSec) {
-    reportDuplicate(Sym, ErrSec ? ErrSec->getFile<ELFT>() : nullptr);
+    reportDuplicate(Sym, ErrSec ? ErrSec->File : nullptr);
     return;
   }
 
