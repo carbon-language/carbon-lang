@@ -95,6 +95,7 @@ int main(int argc, const char **argv) {
   SpecificBumpPtrAllocator<char> ArgAllocator;
   ExitOnErr(errorCodeToError(sys::Process::GetArgumentVector(
       argv_buf, makeArrayRef(argv, argc), ArgAllocator)));
+
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   CvtResOptTable T;

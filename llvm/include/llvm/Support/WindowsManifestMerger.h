@@ -57,8 +57,6 @@ private:
 
 class WindowsManifestMerger {
 public:
-  ~WindowsManifestMerger();
-
   Error merge(const MemoryBuffer &Manifest);
 
   // Returns vector containing merged xml manifest, or uninitialized vector for
@@ -70,8 +68,7 @@ private:
   Error getParseError();
 
 #if LLVM_LIBXML2_ENABLED
-  XMLDocumentImpl CombinedDoc = nullptr;
-  std::vector<XMLDocumentImpl> MergedDocs;
+  XMLNodeImpl CombinedRoot = nullptr;
 #endif
   bool ParseErrorOccurred = false;
 };
