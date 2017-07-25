@@ -141,6 +141,9 @@ void CalcCacheMetrics::calcGraphDistance(
   uint64_t FuncCount = 0;
   for (auto &BFI : BinaryFunctions) {
     auto &Function = BFI.second;
+    // Only consider functions which are known to be executed
+    if (Function.getKnownExecutionCount() == 0)
+      continue;
 
     std::unordered_map<uint64_t, double> TraversalMap;
     uint64_t TraversalCount = 0;
@@ -159,7 +162,7 @@ void CalcCacheMetrics::calcGraphDistance(
     double AverageValue =
         TraversalMap.empty() ? 0 : (TotalValue * 1.0 / TraversalMap.size());
     TotalFuncValue += AverageValue;
-    ++FuncCount;
+    FuncCount += TraversalMap.empty() ? 0 : 1;
   }
 
   outs() << format("           Sum of averages of traversal distance for all "
