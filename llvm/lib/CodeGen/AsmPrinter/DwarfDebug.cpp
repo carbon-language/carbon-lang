@@ -779,7 +779,6 @@ void DwarfDebug::ensureAbstractVariableIsCreatedIfScoped(DwarfCompileUnit &CU,
 // Collect variable information from side table maintained by MF.
 void DwarfDebug::collectVariableInfoFromMFTable(
     DwarfCompileUnit &TheCU, DenseSet<InlinedVariable> &Processed) {
-  SmallDenseMap<const DILocalVariable *, DbgVariable *> MFVars;
   for (const auto &VI : Asm->MF->getVariableDbgInfo()) {
     if (!VI.Var)
       continue;
@@ -797,12 +796,8 @@ void DwarfDebug::collectVariableInfoFromMFTable(
     ensureAbstractVariableIsCreatedIfScoped(TheCU, Var, Scope->getScopeNode());
     auto RegVar = make_unique<DbgVariable>(Var.first, Var.second);
     RegVar->initializeMMI(VI.Expr, VI.Slot);
-    if (DbgVariable *DbgVar = MFVars.lookup(VI.Var))
-      DbgVar->addMMIEntry(*RegVar);
-    else if (InfoHolder.addScopeVariable(Scope, RegVar.get())) {
-      MFVars.insert({VI.Var, RegVar.get()});
+    if (InfoHolder.addScopeVariable(Scope, RegVar.get()))
       ConcreteVariables.push_back(std::move(RegVar));
-    }
   }
 }
 
