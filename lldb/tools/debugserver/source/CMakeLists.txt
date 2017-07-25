@@ -95,10 +95,8 @@ add_library(lldbDebugserverCommon ${lldbDebugserverCommonSources})
 if (APPLE)
   if(IOS)
     find_library(COCOA_LIBRARY UIKit)
-    target_link_libraries(lldbDebugserverCommon INTERFACE ${COCOA_LIBRARY} ${CORE_FOUNDATION_LIBRARY} ${FOUNDATION_LIBRARY})
   else()
     find_library(COCOA_LIBRARY Cocoa)
-    target_link_libraries(lldbDebugserverCommon INTERFACE ${COCOA_LIBRARY})
   endif()
 endif()
 
@@ -117,6 +115,11 @@ add_lldb_tool(debugserver INCLUDE_IN_FRAMEWORK
     lldbDebugserverCommon
   )
 
+set(entitlements_xml ${CMAKE_CURRENT_SOURCE_DIR}/debugserver-macosx-entitlements.plist)
+if(IOS)
+  set(entitlements_xml ${CMAKE_CURRENT_SOURCE_DIR}/debugserver-entitlements.plist)
+endif()
+
 set(LLDB_CODESIGN_IDENTITY "lldb_codesign"
   CACHE STRING "Identity used for code signing. Set to empty string to skip the signing step.")
 if (NOT ("${LLDB_CODESIGN_IDENTITY}" STREQUAL ""))
@@ -129,6 +132,7 @@ if (NOT ("${LLDB_CODESIGN_IDENTITY}" STREQUAL ""))
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E env CODESIGN_ALLOCATE=${CODESIGN_ALLOCATE}
             codesign --force --sign ${LLDB_CODESIGN_IDENTITY}
+            --entitlements ${entitlements_xml}
             $<TARGET_FILE:debugserver>
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
   )
