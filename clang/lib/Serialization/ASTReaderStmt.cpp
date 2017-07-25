@@ -2786,6 +2786,7 @@ void ASTStmtReader::VisitOMPTaskgroupDirective(OMPTaskgroupDirective *D) {
   // The NumClauses field was read in ReadStmtFromStream.
   Record.skipInts(1);
   VisitOMPExecutableDirective(D);
+  D->setReductionRef(Record.readSubExpr());
 }
 
 void ASTStmtReader::VisitOMPFlushDirective(OMPFlushDirective *D) {
