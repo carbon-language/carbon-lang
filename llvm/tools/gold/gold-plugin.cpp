@@ -750,6 +750,9 @@ static std::unique_ptr<LTO> createLTO() {
   // FIXME: Check the gold version or add a new option to enable them.
   Conf.Options.RelaxELFRelocations = false;
 
+  // Enable function sections by default.
+  Conf.Options.FunctionSections = true;
+
   Conf.MAttrs = MAttrs;
   Conf.RelocModel = RelocationModel;
   Conf.CGOptLevel = getCGOptLevel();
