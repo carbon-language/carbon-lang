@@ -770,6 +770,19 @@ template Symbol *SymbolTable::addUndefined<ELF32BE>(StringRef);
 template Symbol *SymbolTable::addUndefined<ELF64LE>(StringRef);
 template Symbol *SymbolTable::addUndefined<ELF64BE>(StringRef);
 
+template Symbol *SymbolTable::addUndefined<ELF32LE>(StringRef, bool, uint8_t,
+                                                    uint8_t, uint8_t, bool,
+                                                    InputFile *);
+template Symbol *SymbolTable::addUndefined<ELF32BE>(StringRef, bool, uint8_t,
+                                                    uint8_t, uint8_t, bool,
+                                                    InputFile *);
+template Symbol *SymbolTable::addUndefined<ELF64LE>(StringRef, bool, uint8_t,
+                                                    uint8_t, uint8_t, bool,
+                                                    InputFile *);
+template Symbol *SymbolTable::addUndefined<ELF64BE>(StringRef, bool, uint8_t,
+                                                    uint8_t, uint8_t, bool,
+                                                    InputFile *);
+
 template void SymbolTable::addSymbolAlias<ELF32LE>(StringRef, StringRef);
 template void SymbolTable::addSymbolAlias<ELF32BE>(StringRef, StringRef);
 template void SymbolTable::addSymbolAlias<ELF64LE>(StringRef, StringRef);
