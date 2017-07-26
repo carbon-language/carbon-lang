@@ -1,8 +1,5 @@
 # RUN: %{python} %s
 #
-# PR33942
-# XFAIL: windows
-#
 # END.
 
 
