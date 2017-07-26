@@ -575,7 +575,7 @@ PassBuilder::buildModuleSimplificationPipeline(OptimizationLevel Level,
   // Add all the requested passes for PGO, if requested.
   if (PGOOpt) {
     assert(PGOOpt->RunProfileGen || !PGOOpt->SampleProfileFile.empty() ||
-           !PGOOpt->ProfileUseFile.empty());
+           !PGOOpt->ProfileUseFile.empty() || PGOOpt->SamplePGOSupport);
     if (PGOOpt->SampleProfileFile.empty())
       addPGOInstrPasses(MPM, DebugLogging, Level, PGOOpt->RunProfileGen,
                         PGOOpt->ProfileGenFile, PGOOpt->ProfileUseFile);
