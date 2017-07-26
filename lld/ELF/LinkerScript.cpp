@@ -66,7 +66,7 @@ uint64_t ExprValue::getSecAddr() const {
   return 0;
 }
 
-template <class ELFT> static SymbolBody *addRegular(SymbolAssignment *Cmd) {
+static SymbolBody *addRegular(SymbolAssignment *Cmd) {
   Symbol *Sym;
   uint8_t Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
   std::tie(Sym, std::ignore) = Symtab->insert(Cmd->Name, /*Type*/ 0, Visibility,
@@ -142,21 +142,6 @@ void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   }
 }
 
-static SymbolBody *addRegularSymbol(SymbolAssignment *Cmd) {
-  switch (Config->EKind) {
-  case ELF32LEKind:
-    return addRegular<ELF32LE>(Cmd);
-  case ELF32BEKind:
-    return addRegular<ELF32BE>(Cmd);
-  case ELF64LEKind:
-    return addRegular<ELF64LE>(Cmd);
-  case ELF64BEKind:
-    return addRegular<ELF64BE>(Cmd);
-  default:
-    llvm_unreachable("unknown Config->EKind");
-  }
-}
-
 void LinkerScript::addSymbol(SymbolAssignment *Cmd) {
   if (Cmd->Name == ".")
     return;
@@ -167,7 +152,7 @@ void LinkerScript::addSymbol(SymbolAssignment *Cmd) {
   if (Cmd->Provide && (!B || B->isDefined()))
     return;
 
-  Cmd->Sym = addRegularSymbol(Cmd);
+  Cmd->Sym = addRegular(Cmd);
 }
 
 bool SymbolAssignment::classof(const BaseCommand *C) {
