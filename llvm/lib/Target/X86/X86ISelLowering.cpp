@@ -24888,9 +24888,7 @@ bool X86TargetLowering::isNarrowingProfitable(EVT VT1, EVT VT2) const {
 /// VECTOR_SHUFFLE operations, those with specific masks.
 /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values
 /// are assumed to be legal.
-bool
-X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
-                                      EVT VT) const {
+bool X86TargetLowering::isShuffleMaskLegal(ArrayRef<int> M, EVT VT) const {
   if (!VT.isSimple())
     return false;
 

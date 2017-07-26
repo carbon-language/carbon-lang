@@ -978,8 +978,7 @@ namespace llvm {
     /// VECTOR_SHUFFLE operations, those with specific masks. By default, if a
     /// target supports the VECTOR_SHUFFLE node, all mask values are assumed to
     /// be legal.
-    bool isShuffleMaskLegal(const SmallVectorImpl<int> &Mask,
-                            EVT VT) const override;
+    bool isShuffleMaskLegal(ArrayRef<int> Mask, EVT VT) const override;
 
     /// Similar to isShuffleMaskLegal. This is used by Targets can use this to
     /// indicate if there is a suitable VECTOR_SHUFFLE that can be used to
