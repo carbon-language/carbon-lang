@@ -13,8 +13,6 @@
 #include "llvm/DebugInfo/MSF/MappedBlockStream.h"
 #include "llvm/DebugInfo/PDB/Native/GlobalsStream.h"
 
-#include "GSI.h"
-
 using namespace llvm;
 using namespace llvm::msf;
 using namespace llvm::pdb;
