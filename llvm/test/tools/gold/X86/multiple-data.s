@@ -9,9 +9,9 @@
 # RUN:     --section-ordering-file=%t_order_lto.txt
 # RUN: llvm-readobj -elf-output-style=GNU -t %t.exe | FileCheck %s
 
-# CHECK:      00000000004010fc     4 OBJECT  GLOBAL DEFAULT    2 dipsy
-# CHECK:      00000000004010f8     4 OBJECT  GLOBAL DEFAULT    2 tin
-# CHECK:      0000000000401100     4 OBJECT  GLOBAL DEFAULT    2 pat
+# CHECK-DAG:      00000000004010fc     4 OBJECT  GLOBAL DEFAULT    2 dipsy
+# CHECK-DAG:      00000000004010f8     4 OBJECT  GLOBAL DEFAULT    2 tin
+# CHECK-DAG:      0000000000401100     4 OBJECT  GLOBAL DEFAULT    2 pat
 
 .globl _start
 _start:
