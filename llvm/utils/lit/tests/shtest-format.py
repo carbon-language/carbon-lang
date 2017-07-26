@@ -1,5 +1,8 @@
 # Check the various features of the ShTest format.
 #
+# PR33939
+# XFAIL: windows
+#
 # RUN: not %{lit} -j 1 -v %{inputs}/shtest-format > %t.out
 # RUN: FileCheck < %t.out %s
 #

@@ -1,5 +1,8 @@
 # Check the lit adaption to run under unittest.
 #
+# PR33943
+# XFAIL: windows
+#
 # RUN: %{python} %s %{inputs}/unittest-adaptor 2> %t.err
 # RUN: FileCheck < %t.err %s
 #
