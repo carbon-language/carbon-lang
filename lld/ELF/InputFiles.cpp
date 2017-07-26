@@ -587,7 +587,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
 
   switch (Sym->st_shndx) {
   case SHN_UNDEF:
-    return elf::Symtab
+    return Symtab
         ->addUndefined<ELFT>(Name, /*IsLocal=*/false, Binding, StOther, Type,
                              /*CanOmitFromDynSym=*/false, this)
         ->body();
@@ -595,8 +595,7 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
     if (Value == 0 || Value >= UINT32_MAX)
       fatal(toString(this) + ": common symbol '" + Name +
             "' has invalid alignment: " + Twine(Value));
-    return elf::Symtab
-        ->addCommon(Name, Size, Value, Binding, StOther, Type, this)
+    return Symtab->addCommon(Name, Size, Value, Binding, StOther, Type, this)
         ->body();
   }
 
@@ -607,11 +606,11 @@ SymbolBody *elf::ObjectFile<ELFT>::createSymbolBody(const Elf_Sym *Sym) {
   case STB_WEAK:
   case STB_GNU_UNIQUE:
     if (Sec == &InputSection::Discarded)
-      return elf::Symtab
+      return Symtab
           ->addUndefined<ELFT>(Name, /*IsLocal=*/false, Binding, StOther, Type,
                                /*CanOmitFromDynSym=*/false, this)
           ->body();
-    return elf::Symtab
+    return Symtab
         ->addRegular<ELFT>(Name, StOther, Type, Value, Size, Binding, Sec, this)
         ->body();
   }
@@ -787,14 +786,14 @@ template <class ELFT> void SharedFile<ELFT>::parseRest() {
         VersymIndex == VER_NDX_GLOBAL ? nullptr : Verdefs[VersymIndex];
 
     if (!Hidden)
-      elf::Symtab->addShared(this, Name, Sym, V);
+      Symtab->addShared(this, Name, Sym, V);
 
     // Also add the symbol with the versioned name to handle undefined symbols
     // with explicit versions.
     if (V) {
       StringRef VerName = this->StringTable.data() + V->getAux()->vda_name;
       Name = Saver.save(Name + "@" + VerName);
-      elf::Symtab->addShared(this, Name, Sym, V);
+      Symtab->addShared(this, Name, Sym, V);
     }
   }
 }
@@ -946,13 +945,12 @@ template <class ELFT> void BinaryFile::parse() {
     if (!isalnum(S[I]))
       S[I] = '_';
 
-  elf::Symtab->addRegular<ELFT>(Saver.save(S + "_start"), STV_DEFAULT,
-                                STT_OBJECT, 0, 0, STB_GLOBAL, Section, nullptr);
-  elf::Symtab->addRegular<ELFT>(Saver.save(S + "_end"), STV_DEFAULT, STT_OBJECT,
-                                Data.size(), 0, STB_GLOBAL, Section, nullptr);
-  elf::Symtab->addRegular<ELFT>(Saver.save(S + "_size"), STV_DEFAULT,
-                                STT_OBJECT, Data.size(), 0, STB_GLOBAL, nullptr,
-                                nullptr);
+  Symtab->addRegular<ELFT>(Saver.save(S + "_start"), STV_DEFAULT, STT_OBJECT,
+                           0, 0, STB_GLOBAL, Section, nullptr);
+  Symtab->addRegular<ELFT>(Saver.save(S + "_end"), STV_DEFAULT, STT_OBJECT,
+                           Data.size(), 0, STB_GLOBAL, Section, nullptr);
+  Symtab->addRegular<ELFT>(Saver.save(S + "_size"), STV_DEFAULT, STT_OBJECT,
+                           Data.size(), 0, STB_GLOBAL, nullptr, nullptr);
 }
 
 static bool isBitcode(MemoryBufferRef MB) {
