@@ -220,7 +220,8 @@ class DominatorTreeBase {
   static constexpr bool IsPostDominator = IsPostDom;
 
  protected:
-  std::vector<NodeT *> Roots;
+  // Dominators always have a single root, postdominators can have more.
+  SmallVector<NodeT *, IsPostDom ? 4 : 1> Roots;
 
   using DomTreeNodeMapType =
      DenseMap<NodeT *, std::unique_ptr<DomTreeNodeBase<NodeT>>>;
@@ -264,7 +265,7 @@ class DominatorTreeBase {
   /// multiple blocks if we are computing post dominators.  For forward
   /// dominators, this will always be a single block (the entry node).
   ///
-  const std::vector<NodeT *> &getRoots() const { return Roots; }
+  const SmallVectorImpl<NodeT *> &getRoots() const { return Roots; }
 
   /// isPostDominator - Returns true if analysis based of postdoms
   ///
