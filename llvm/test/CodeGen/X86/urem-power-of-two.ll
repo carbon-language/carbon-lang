@@ -101,15 +101,15 @@ define i8 @and_pow_2(i8 %x, i8 %y) {
   ret i8 %urem
 }
 
-; A vector splat constant divisor should get the same treatment as a scalar.
+; A vector constant divisor should get the same treatment as a scalar.
 
-define <4 x i32> @vec_const_pow_2(<4 x i32> %x) {
-; X86-LABEL: vec_const_pow_2:
+define <4 x i32> @vec_const_uniform_pow_2(<4 x i32> %x) {
+; X86-LABEL: vec_const_uniform_pow_2:
 ; X86:       # BB#0:
 ; X86-NEXT:    andps {{\.LCPI.*}}, %xmm0
 ; X86-NEXT:    retl
 ;
-; X64-LABEL: vec_const_pow_2:
+; X64-LABEL: vec_const_uniform_pow_2:
 ; X64:       # BB#0:
 ; X64-NEXT:    andps {{.*}}(%rip), %xmm0
 ; X64-NEXT:    retq
@@ -117,3 +117,16 @@ define <4 x i32> @vec_const_pow_2(<4 x i32> %x) {
   ret <4 x i32> %urem
 }
 
+define <4 x i32> @vec_const_nonuniform_pow_2(<4 x i32> %x) {
+; X86-LABEL: vec_const_nonuniform_pow_2:
+; X86:       # BB#0:
+; X86-NEXT:    andps {{\.LCPI.*}}, %xmm0
+; X86-NEXT:    retl
+;
+; X64-LABEL: vec_const_nonuniform_pow_2:
+; X64:       # BB#0:
+; X64-NEXT:    andps {{.*}}(%rip), %xmm0
+; X64-NEXT:    retq
+  %urem = urem <4 x i32> %x, <i32 2, i32 4, i32 8, i32 16>
+  ret <4 x i32> %urem
+}
