@@ -37,23 +37,6 @@ class BinaryStreamReader;
 
 namespace pdb {
 
-/// From https://github.com/Microsoft/microsoft-pdb/blob/master/PDB/dbi/gsi.cpp
-static const unsigned IPHR_HASH = 4096;
-
-/// Header of the hash tables found in the globals and publics sections.
-/// Based on GSIHashHdr in
-/// https://github.com/Microsoft/microsoft-pdb/blob/master/PDB/dbi/gsi.h
-struct GSIHashHeader {
-  enum : unsigned {
-    HdrSignature = ~0U,
-    HdrVersion = 0xeffe0000 + 19990810,
-  };
-  support::ulittle32_t VerSignature;
-  support::ulittle32_t VerHdr;
-  support::ulittle32_t HrSize;
-  support::ulittle32_t NumBuckets;
-};
-
 Error readGSIHashBuckets(FixedStreamArray<support::ulittle32_t> &HashBuckets,
                          ArrayRef<uint8_t> &HashBitmap,
                          const GSIHashHeader *HashHdr,
