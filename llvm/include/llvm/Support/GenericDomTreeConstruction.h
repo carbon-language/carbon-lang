@@ -705,7 +705,7 @@ struct SemiNCAInfo {
 
     TreeNodePtr MinNode = ToTN;
 
-    // Identify the top of the subtree to rebuilt by finding the NCD of all
+    // Identify the top of the subtree to rebuild by finding the NCD of all
     // the affected nodes.
     for (const NodePtr N : AffectedQueue) {
       const TreeNodePtr TN = DT.getNode(N);

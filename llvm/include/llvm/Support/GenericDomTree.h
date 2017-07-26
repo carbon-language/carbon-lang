@@ -484,7 +484,7 @@ class DominatorTreeBase {
   /// This function has to be called just after making the update
   /// on the actual CFG. There cannot be any other updates that the dominator
   /// tree doesn't know about. The only exception is when the deletion that the
-  /// tree is informed about makes some (domominator) subtree unreachable -- in
+  /// tree is informed about makes some (dominator) subtree unreachable -- in
   /// this case, it is fine to perform deletions within this subtree.
   ///
   /// Note that for postdominators it automatically takes care of deleting
