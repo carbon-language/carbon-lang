@@ -11,7 +11,7 @@
 //
 //===---------------------------------------------------------------------===//
 
-#include "llvm/Support/WindowsManifestMerger.h"
+#include "llvm/WindowsManifest/WindowsManifestMerger.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 #include <stdarg.h>
