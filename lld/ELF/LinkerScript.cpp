@@ -69,9 +69,9 @@ uint64_t ExprValue::getSecAddr() const {
 template <class ELFT> static SymbolBody *addRegular(SymbolAssignment *Cmd) {
   Symbol *Sym;
   uint8_t Visibility = Cmd->Hidden ? STV_HIDDEN : STV_DEFAULT;
-  std::tie(Sym, std::ignore) = Symtab<ELFT>::X->insert(
-      Cmd->Name, /*Type*/ 0, Visibility, /*CanOmitFromDynSym*/ false,
-      /*File*/ nullptr);
+  std::tie(Sym, std::ignore) = Symtab->insert(Cmd->Name, /*Type*/ 0, Visibility,
+                                              /*CanOmitFromDynSym*/ false,
+                                              /*File*/ nullptr);
   Sym->Binding = STB_GLOBAL;
   ExprValue Value = Cmd->Expression();
   SectionBase *Sec = Value.isAbsolute() ? nullptr : Value.Sec;
@@ -142,21 +142,6 @@ void LinkerScript::assignSymbol(SymbolAssignment *Cmd, bool InSec) {
   }
 }
 
-static SymbolBody *findSymbol(StringRef S) {
-  switch (Config->EKind) {
-  case ELF32LEKind:
-    return Symtab<ELF32LE>::X->find(S);
-  case ELF32BEKind:
-    return Symtab<ELF32BE>::X->find(S);
-  case ELF64LEKind:
-    return Symtab<ELF64LE>::X->find(S);
-  case ELF64BEKind:
-    return Symtab<ELF64BE>::X->find(S);
-  default:
-    llvm_unreachable("unknown Config->EKind");
-  }
-}
-
 static SymbolBody *addRegularSymbol(SymbolAssignment *Cmd) {
   switch (Config->EKind) {
   case ELF32LEKind:
@@ -178,7 +163,7 @@ void LinkerScript::addSymbol(SymbolAssignment *Cmd) {
 
   // If a symbol was in PROVIDE(), we need to define it only when
   // it is a referenced undefined symbol.
-  SymbolBody *B = findSymbol(Cmd->Name);
+  SymbolBody *B = Symtab->find(Cmd->Name);
   if (Cmd->Provide && (!B || B->isDefined()))
     return;
 
@@ -1189,7 +1174,7 @@ template <class ELFT> void OutputSectionCommand::writeTo(uint8_t *Buf) {
 ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
   if (S == ".")
     return {CurAddressState->OutSec, Dot - CurAddressState->OutSec->Addr, Loc};
-  if (SymbolBody *B = findSymbol(S)) {
+  if (SymbolBody *B = Symtab->find(S)) {
     if (auto *D = dyn_cast<DefinedRegular>(B))
       return {D->Section, D->Value, Loc};
     if (auto *C = dyn_cast<DefinedCommon>(B))
@@ -1199,7 +1184,7 @@ ExprValue LinkerScript::getSymbolValue(const Twine &Loc, StringRef S) {
   return 0;
 }
 
-bool LinkerScript::isDefined(StringRef S) { return findSymbol(S) != nullptr; }
+bool LinkerScript::isDefined(StringRef S) { return Symtab->find(S) != nullptr; }
 
 static const size_t NoPhdr = -1;
 
