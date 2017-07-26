@@ -1,4 +1,4 @@
-//===- HexagonBlockRanges.h -------------------------------------*- C++ -*-===//
+//===--- HexagonBlockRanges.h -----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,6 +10,7 @@
 #define HEXAGON_BLOCK_RANGES_H
 
 #include "llvm/ADT/BitVector.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include <cassert>
 #include <map>
 #include <set>
@@ -22,7 +23,6 @@ class HexagonSubtarget;
 class MachineBasicBlock;
 class MachineFunction;
 class MachineInstr;
-class MachineRegisterInfo;
 class raw_ostream;
 class TargetInstrInfo;
 class TargetRegisterInfo;
@@ -32,12 +32,11 @@ struct HexagonBlockRanges {
 
   struct RegisterRef {
     unsigned Reg, Sub;
-
     bool operator<(RegisterRef R) const {
       return Reg < R.Reg || (Reg == R.Reg && Sub < R.Sub);
     }
   };
-  using RegisterSet = std::set<RegisterRef>;
+  typedef std::set<RegisterRef> RegisterSet;
 
   // This is to represent an "index", which is an abstraction of a position
   // of an instruction within a basic block.
@@ -50,7 +49,7 @@ struct HexagonBlockRanges {
       First = 11  // 10th + 1st
     };
 
-    IndexType() = default;
+    IndexType() : Index(None) {}
     IndexType(unsigned Idx) : Index(Idx) {}
 
     static bool isInstr(IndexType X) { return X.Index >= First; }
@@ -69,13 +68,13 @@ struct HexagonBlockRanges {
     bool operator>  (IndexType Idx) const;
     bool operator>= (IndexType Idx) const;
 
-    unsigned Index = None;
+    unsigned Index;
   };
 
   // A range of indices, essentially a representation of a live range.
   // This is also used to represent "dead ranges", i.e. ranges where a
   // register is dead.
-  class IndexRange : public std::pair<IndexType, IndexType> {
+  class IndexRange : public std::pair<IndexType,IndexType> {
   public:
     IndexRange() = default;
     IndexRange(IndexType Start, IndexType End, bool F = false, bool T = false)
@@ -139,8 +138,7 @@ struct HexagonBlockRanges {
     std::map<IndexType,MachineInstr*> Map;
   };
 
-  using RegToRangeMap = std::map<RegisterRef, RangeList>;
-
+  typedef std::map<RegisterRef,RangeList> RegToRangeMap;
   RegToRangeMap computeLiveMap(InstrIndexMap &IndexMap);
   RegToRangeMap computeDeadMap(InstrIndexMap &IndexMap, RegToRangeMap &LiveMap);
   static RegisterSet expandToSubRegs(RegisterRef R,
