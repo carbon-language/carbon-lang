@@ -14,8 +14,8 @@
 /// graph types.
 ///
 /// Unlike ADT/* graph algorithms, generic dominator tree has more requirements
-/// on the graph's NodeRef. The NodeRef should be a pointer and, depending on
-/// the implementation, e.g. NodeRef->getParent() return the parent node.
+/// on the graph's NodeRef. The NodeRef should be a pointer and,
+/// NodeRef->getParent() must return the parent node that is also a pointer.
 ///
 /// FIXME: Maybe GenericDomTree needs a TreeTraits, instead of GraphTraits.
 ///
@@ -187,8 +187,8 @@ void PrintDomTree(const DomTreeNodeBase<NodeT> *N, raw_ostream &O,
 
 namespace DomTreeBuilder {
 // The routines below are provided in a separate header but referenced here.
-template <typename DomTreeT, typename FuncT>
-void Calculate(DomTreeT &DT, FuncT &F);
+template <typename DomTreeT>
+void Calculate(DomTreeT &DT);
 
 template <class DomTreeT>
 void InsertEdge(DomTreeT &DT, typename DomTreeT::NodePtr From,
@@ -208,6 +208,17 @@ bool Verify(const DomTreeT &DT);
 /// various graphs in the LLVM IR or in the code generator.
 template <typename NodeT, bool IsPostDom>
 class DominatorTreeBase {
+ public:
+  static_assert(std::is_pointer<typename GraphTraits<NodeT *>::NodeRef>::value,
+                "Currently DominatorTreeBase supports only pointer nodes");
+  using NodeType = NodeT;
+  using NodePtr = NodeT *;
+  using ParentPtr = decltype(std::declval<NodeT *>()->getParent());
+  static_assert(std::is_pointer<ParentPtr>::value,
+                "Currently NodeT's parent must be a pointer type");
+  using ParentType = typename std::remove_pointer<ParentPtr>::type;
+  static constexpr bool IsPostDominator = IsPostDom;
+
  protected:
   std::vector<NodeT *> Roots;
 
@@ -215,7 +226,6 @@ class DominatorTreeBase {
      DenseMap<NodeT *, std::unique_ptr<DomTreeNodeBase<NodeT>>>;
   DomTreeNodeMapType DomTreeNodes;
   DomTreeNodeBase<NodeT> *RootNode;
-  using ParentPtr = decltype(std::declval<NodeT *>()->getParent());
   ParentPtr Parent = nullptr;
 
   mutable bool DFSInfoValid = false;
@@ -224,12 +234,6 @@ class DominatorTreeBase {
   friend struct DomTreeBuilder::SemiNCAInfo<DominatorTreeBase>;
 
  public:
-  static_assert(std::is_pointer<typename GraphTraits<NodeT *>::NodeRef>::value,
-                "Currently DominatorTreeBase supports only pointer nodes");
-  using NodeType = NodeT;
-  using NodePtr = NodeT *;
-  static constexpr bool IsPostDominator = IsPostDom;
-
   DominatorTreeBase() {}
 
   DominatorTreeBase(DominatorTreeBase &&Arg)
@@ -650,23 +654,10 @@ public:
   }
 
   /// recalculate - compute a dominator tree for the given function
-  template <class FT> void recalculate(FT &F) {
-    using TraitsTy = GraphTraits<FT *>;
+  void recalculate(ParentType &Func) {
     reset();
-    Parent = &F;
-
-    if (!IsPostDominator) {
-      // Initialize root
-      NodeT *entry = TraitsTy::getEntryNode(&F);
-      addRoot(entry);
-    } else {
-      // Initialize the roots list
-      for (auto *Node : nodes(&F))
-        if (TraitsTy::child_begin(Node) == TraitsTy::child_end(Node))
-          addRoot(Node);
-    }
-
-    DomTreeBuilder::Calculate(*this, F);
+    Parent = &Func;
+    DomTreeBuilder::Calculate(*this);
   }
 
   /// verify - check parent and sibling property
