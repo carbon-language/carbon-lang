@@ -428,8 +428,7 @@ void LinkerScript::addOrphanSections(OutputSectionFactory &Factory) {
     });
     if (I == End) {
       Factory.addInputSec(S, Name);
-      OutputSection *Sec = S->getOutputSection();
-      assert(Sec->SectionIndex == INT_MAX);
+      assert(S->getOutputSection()->SectionIndex == INT_MAX);
     } else {
       OutputSection *Sec = cast<OutputSection>(*I);
       Factory.addInputSec(S, Name, Sec);
