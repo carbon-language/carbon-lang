@@ -261,4 +261,9 @@ int main() {
   test_copy_ctor_valueless_by_exception();
   test_copy_ctor_sfinae();
   test_constexpr_copy_ctor_extension();
+{ // This is the motivating example from P0739R0
+  std::variant<int, double> v1(3);
+  std::variant v2 = v1;
+  (void) v2;
+}
 }
