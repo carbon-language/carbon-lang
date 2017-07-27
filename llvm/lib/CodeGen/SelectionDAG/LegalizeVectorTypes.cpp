@@ -2989,7 +2989,7 @@ SDValue DAGTypeLegalizer::convertMask(SDValue InMask, EVT MaskVT,
 
   // Make a new Mask node, with a legal result VT.
   SmallVector<SDValue, 4> Ops;
-  for (unsigned i = 0; i < InMask->getNumOperands(); ++i)
+  for (unsigned i = 0, e = InMask->getNumOperands(); i < e; ++i)
     Ops.push_back(InMask->getOperand(i));
   SDValue Mask = DAG.getNode(InMaskOpc, SDLoc(InMask), MaskVT, Ops);
 
