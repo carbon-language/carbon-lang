@@ -396,17 +396,16 @@ bool ARMSubtarget::hasSinCos() const {
 }
 
 bool ARMSubtarget::enableMachineScheduler() const {
-  // Enable the MachineScheduler before register allocation for out-of-order
-  // architectures where we do not use the PostRA scheduler anymore (for now
-  // restricted to swift).
-  return getSchedModel().isOutOfOrder() && isSwift();
+  // Enable the MachineScheduler before register allocation for subtargets
+  // with the use-misched feature.
+  return useMachineScheduler();
 }
 
 // This overrides the PostRAScheduler bit in the SchedModel for any CPU.
 bool ARMSubtarget::enablePostRAScheduler() const {
-  // No need for PostRA scheduling on out of order CPUs (for now restricted to
-  // swift).
-  if (getSchedModel().isOutOfOrder() && isSwift())
+  // No need for PostRA scheduling on subtargets where we use the
+  // MachineScheduler.
+  if (useMachineScheduler())
     return false;
   return (!isThumb() || hasThumb2());
 }
