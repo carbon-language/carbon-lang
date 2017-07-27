@@ -132,7 +132,7 @@ selectCallee(const ModuleSummaryIndex &Index,
         if (GlobalValue::isInterposableLinkage(GVSummary->linkage()))
           // There is no point in importing these, we can't inline them
           return false;
-        if (auto *AS = dyn_cast<AliasSummary>(GVSummary))
+        if (isa<AliasSummary>(GVSummary))
           // Aliases can't point to "available_externally".
           // FIXME: we should import alias as available_externally *function*,
           // the destination module does not need to know it is an alias.
