@@ -170,6 +170,13 @@ static bool isEscaping(Scop *S, Instruction *ComputingInst) {
     BasicBlock *UserBB = getUseBlock(Use);
     if (!S->contains(UserBB))
       return true;
+
+    // When the SCoP region exit needs to be simplified, PHIs in the region exit
+    // move to a new basic block such that its incoming blocks are not in the
+    // scop anymore.
+    if (S->hasSingleExitEdge() && isa<PHINode>(Use.getUser()) &&
+        S->isExit(cast<PHINode>(Use.getUser())->getParent()))
+      return true;
   }
   return false;
 }
