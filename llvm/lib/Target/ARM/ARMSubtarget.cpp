@@ -209,11 +209,11 @@ void ARMSubtarget::initSubtargetFeatures(StringRef CPU, StringRef FS) {
 
     if (isTargetDarwin()) {
       StringRef ArchName = TargetTriple.getArchName();
-      unsigned ArchKind = ARM::parseArch(ArchName);
-      if (ArchKind == ARM::AK_ARMV7S)
+      ARM::ArchKind AK = ARM::parseArch(ArchName);
+      if (AK == ARM::ArchKind::ARMV7S)
         // Default to the Swift CPU when targeting armv7s/thumbv7s.
         CPUString = "swift";
-      else if (ArchKind == ARM::AK_ARMV7K)
+      else if (AK == ARM::ArchKind::ARMV7K)
         // Default to the Cortex-a7 CPU when targeting armv7k/thumbv7k.
         // ARMv7k does not use SjLj exception handling.
         CPUString = "cortex-a7";
