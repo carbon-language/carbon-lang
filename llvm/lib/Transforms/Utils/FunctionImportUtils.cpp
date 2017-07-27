@@ -24,14 +24,14 @@ bool FunctionImportGlobalProcessing::doImportAsDefinition(
     const GlobalValue *SGV, SetVector<GlobalValue *> *GlobalsToImport) {
 
   // Only import the globals requested for importing.
-  if (GlobalsToImport->count(const_cast<GlobalValue *>(SGV)))
-    return true;
+  if (!GlobalsToImport->count(const_cast<GlobalValue *>(SGV)))
+    return false;
 
   assert(!isa<GlobalAlias>(SGV) &&
          "Unexpected global alias in the import list.");
 
-  // Otherwise no.
-  return false;
+  // Otherwise yes.
+  return true;
 }
 
 bool FunctionImportGlobalProcessing::doImportAsDefinition(
