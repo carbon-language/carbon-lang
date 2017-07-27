@@ -30,12 +30,12 @@
 ; CHECK-O-NEXT: Running pass: InferFunctionAttrsPass
 ; CHECK-O-NEXT: Running analysis: TargetLibraryAnalysis
 ; CHECK-O2-NEXT: PGOIndirectCallPromotion
-; CHECK-O2-NEXT: Running analysis: InnerAnalysisManagerProxy<FunctionAnalysisManager
+; CHECK-O2-NEXT: Running analysis: InnerAnalysisManagerProxy<{{.*}}Function
 ; CHECK-O2-NEXT: Running analysis: OptimizationRemarkEmitterAnalysis
 ; CHECK-O2-NEXT: Running pass: IPSCCPPass
 ; CHECK-O-NEXT: Running pass: ModuleToPostOrderCGSCCPassAdaptor<{{.*}}PostOrderFunctionAttrsPass>
-; CHECK-O-NEXT: Running analysis: InnerAnalysisManagerProxy<CGSCCAnalysisManager
-; CHECK-O1-NEXT: Running analysis: InnerAnalysisManagerProxy<FunctionAnalysisManager
+; CHECK-O-NEXT: Running analysis: InnerAnalysisManagerProxy<{{.*}}SCC
+; CHECK-O1-NEXT: Running analysis: InnerAnalysisManagerProxy<{{.*}}Function
 ; CHECK-O-NEXT: Running analysis: LazyCallGraphAnalysis
 ; CHECK-O-NEXT: Running analysis: FunctionAnalysisManagerCGSCCProxy
 ; CHECK-O-NEXT: Running analysis: OuterAnalysisManagerProxy<{{.*}}LazyCallGraph{{.*}}>
