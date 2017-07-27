@@ -12,7 +12,7 @@ cl::OptionCategory StokeOptCategory("STOKE pass options");
 
 static cl::opt<std::string>
 StokeOutputDataFilename("stoke-out",
-  cl::desc("output data for stoke's use"),
+  cl::desc("output data (.csv) for Stoke's use"),
   cl::Optional,
   cl::cat(StokeOptCategory));
 }
@@ -80,7 +80,7 @@ void StokeInfo::checkInstr(const BinaryContext &BC, const BinaryFunction &BF,
   } // end of for (auto *BB : ...)
 }
 
-bool StokeInfo::analyze(const BinaryContext &BC, BinaryFunction &BF,
+bool StokeInfo::checkFunction(const BinaryContext &BC, BinaryFunction &BF,
     DataflowInfoManager &DInfo, RegAnalysis &RA,
     StokeFuncInfo &FuncInfo) {
 
@@ -95,6 +95,7 @@ bool StokeInfo::analyze(const BinaryContext &BC, BinaryFunction &BF,
   FuncInfo.Offset = BF.getFileOffset();
   FuncInfo.Size = BF.getMaxSize();
   FuncInfo.NumInstrs = BF.getNumNonPseudos();
+  FuncInfo.NumBlocks = BF.size();
   // early stop for large functions
   if (FuncInfo.NumInstrs > 500) {
     return false;
@@ -176,7 +177,7 @@ void StokeInfo::runOnFunctions(
   for (auto &BF : BFs) {
     DataflowInfoManager DInfo(BC, BF.second, &RA/*RA.get()*/, nullptr);
     FuncInfo.reset();
-    if (analyze(BC, BF.second, DInfo, RA, FuncInfo)) {
+    if (checkFunction(BC, BF.second, DInfo, RA, FuncInfo)) {
       FuncInfo.printData(Outfile);
     }
   }

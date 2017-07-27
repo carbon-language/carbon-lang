@@ -39,6 +39,7 @@ struct StokeFuncInfo {
   uint64_t Offset;
   uint64_t Size;
   uint64_t NumInstrs;
+  uint64_t NumBlocks;
   bool IsLoopFree;
   unsigned NumLoops;
   unsigned MaxLoopDepth;
@@ -59,7 +60,7 @@ struct StokeFuncInfo {
 
   void reset() {
     FuncName = "";
-    Offset = Size = NumInstrs = 0;
+    Offset = Size = NumInstrs = NumBlocks = 0;
     NumLoops = MaxLoopDepth = 0;
     HotSize = TotalSize = 0;
     Score = 0;
@@ -77,7 +78,7 @@ struct StokeFuncInfo {
   void printCsvHeader(std::ofstream &Outfile) {
     if (Outfile.is_open()) {
       Outfile
-        << "FuncName,Offset,Size,NumInstrs,"
+        << "FuncName,Offset,Size,NumInstrs,NumBlocks,"
         << "IsLoopFree,NumLoops,MaxLoopDepth,"
         << "HotSize,TotalSize,"
         << "Score,"
@@ -91,7 +92,8 @@ struct StokeFuncInfo {
   void printData(std::ofstream &Outfile) {
     if (Outfile.is_open()) {
       Outfile
-        << FuncName << "," << Offset << "," << Size << "," << NumInstrs << ","
+        << FuncName << ","
+        << Offset << "," << Size << "," << NumInstrs << "," << NumBlocks << ","
         << IsLoopFree << "," << NumLoops << "," << MaxLoopDepth << ","
         << HotSize << "," << TotalSize << ","
         << Score << ","
@@ -101,7 +103,7 @@ struct StokeFuncInfo {
       }
       Outfile << "}\",\"{ ";
       for (auto s : LiveOut) {
-        Outfile << s << " ";
+        Outfile << "%" << s << " ";
       }
       Outfile << "}\"," << HeapOut << "," << StackOut << ","
         << HasRipAddr << ","
@@ -132,7 +134,7 @@ public:
     StokeFuncInfo &FuncInfo);
 
   /// Get all required information for the stoke optimization
-  bool analyze(const BinaryContext &BC, BinaryFunction &BF,
+  bool checkFunction(const BinaryContext &BC, BinaryFunction &BF,
     DataflowInfoManager &DInfo, RegAnalysis &RA,
     StokeFuncInfo &FuncInfo);
 
