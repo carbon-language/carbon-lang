@@ -3021,12 +3021,9 @@ SDValue DAGTypeLegalizer::convertMask(SDValue InMask, EVT MaskVT,
   } else if (CurrMaskNumEls < ToMaskVT.getVectorNumElements()) {
     unsigned NumSubVecs = (ToMaskVT.getVectorNumElements() / CurrMaskNumEls);
     EVT SubVT = Mask->getValueType(0);
-    SmallVector<SDValue, 16> SubConcatOps(NumSubVecs);
-    SubConcatOps[0] = Mask;
-    for (unsigned i = 1; i < NumSubVecs; ++i)
-      SubConcatOps[i] = DAG.getUNDEF(SubVT);
-    Mask =
-        DAG.getNode(ISD::CONCAT_VECTORS, SDLoc(Mask), ToMaskVT, SubConcatOps);
+    SmallVector<SDValue, 16> SubOps(NumSubVecs, DAG.getUNDEF(SubVT));
+    SubOps[0] = Mask;
+    Mask = DAG.getNode(ISD::CONCAT_VECTORS, SDLoc(Mask), ToMaskVT, SubOps);
   }
 
   assert((Mask->getValueType(0) == ToMaskVT) &&
