@@ -355,7 +355,8 @@ static void walkReachable(Scop *S, LoopInfo *LI,
       continue;
 
     // Add all operands to the worklists.
-    if (PHINode *PHI = dyn_cast<PHINode>(Inst)) {
+    PHINode *PHI = dyn_cast<PHINode>(Inst);
+    if (PHI && PHI->getParent() == Stmt->getEntryBlock()) {
       if (MemoryAccess *PHIRead = Stmt->lookupPHIReadOf(PHI))
         WorklistAccs.push_back(PHIRead);
     } else {
