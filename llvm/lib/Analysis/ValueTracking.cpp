@@ -4384,60 +4384,22 @@ isImpliedCondMatchingImmOperands(CmpInst::Predicate APred, const Value *ALHS,
   return None;
 }
 
-Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
-                                        const DataLayout &DL, bool LHSIsFalse,
-                                        unsigned Depth) {
-  // A mismatch occurs when we compare a scalar cmp to a vector cmp, for example.
-  if (LHS->getType() != RHS->getType())
-    return None;
-
-  Type *OpTy = LHS->getType();
-  assert(OpTy->isIntOrIntVectorTy(1));
-
-  // LHS ==> RHS by definition
-  if (LHS == RHS)
-    return !LHSIsFalse;
-
-  if (OpTy->isVectorTy())
-    // TODO: extending the code below to handle vectors
-    return None;
-  assert(OpTy->isIntegerTy(1) && "implied by above");
-
-  Value *BLHS, *BRHS;
-  ICmpInst::Predicate BPred;
-  // We expect the RHS to be an icmp.
-  if (!match(RHS, m_ICmp(BPred, m_Value(BLHS), m_Value(BRHS))))
-    return None;
-
-  Value *ALHS, *ARHS;
-  ICmpInst::Predicate APred;
-  // The LHS can be an 'or', 'and', or 'icmp'.
-  if (!match(LHS, m_ICmp(APred, m_Value(ALHS), m_Value(ARHS)))) {
-    // The remaining tests are all recursive, so bail out if we hit the limit.
-    if (Depth == MaxDepth)
-      return None;
-    // If the result of an 'or' is false, then we know both legs of the 'or' are
-    // false.  Similarly, if the result of an 'and' is true, then we know both
-    // legs of the 'and' are true.
-    if ((LHSIsFalse && match(LHS, m_Or(m_Value(ALHS), m_Value(ARHS)))) ||
-        (!LHSIsFalse && match(LHS, m_And(m_Value(ALHS), m_Value(ARHS))))) {
-      if (Optional<bool> Implication =
-              isImpliedCondition(ALHS, RHS, DL, LHSIsFalse, Depth + 1))
-        return Implication;
-      if (Optional<bool> Implication =
-              isImpliedCondition(ARHS, RHS, DL, LHSIsFalse, Depth + 1))
-        return Implication;
-      return None;
-    }
-    return None;
-  }
-  // All of the below logic assumes both LHS and RHS are icmps.
-  assert(isa<ICmpInst>(LHS) && isa<ICmpInst>(RHS) && "Expected icmps.");
-
+/// Return true if LHS implies RHS is true.  Return false if LHS implies RHS is
+/// false.  Otherwise, return None if we can't infer anything.
+static Optional<bool> isImpliedCondICmps(const ICmpInst *LHS,
+                                         const ICmpInst *RHS,
+                                         const DataLayout &DL, bool LHSIsFalse,
+                                         unsigned Depth) {
+  Value *ALHS = LHS->getOperand(0);
+  Value *ARHS = LHS->getOperand(1);
   // The rest of the logic assumes the LHS condition is true.  If that's not the
   // case, invert the predicate to make it so.
-  if (LHSIsFalse)
-    APred = CmpInst::getInversePredicate(APred);
+  ICmpInst::Predicate APred =
+      LHSIsFalse ? LHS->getInversePredicate() : LHS->getPredicate();
+
+  Value *BLHS = RHS->getOperand(0);
+  Value *BRHS = RHS->getOperand(1);
+  ICmpInst::Predicate BPred = RHS->getPredicate();
 
   // Can we infer anything when the two compares have matching operands?
   bool IsSwappedOps;
@@ -4464,6 +4426,65 @@ Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
 
   if (APred == BPred)
     return isImpliedCondOperands(APred, ALHS, ARHS, BLHS, BRHS, DL, Depth);
-
   return None;
+}
+
+Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
+                                        const DataLayout &DL, bool LHSIsFalse,
+                                        unsigned Depth) {
+  // A mismatch occurs when we compare a scalar cmp to a vector cmp, for example.
+  if (LHS->getType() != RHS->getType())
+    return None;
+
+  Type *OpTy = LHS->getType();
+  assert(OpTy->isIntOrIntVectorTy(1));
+
+  // LHS ==> RHS by definition
+  if (LHS == RHS)
+    return !LHSIsFalse;
+
+  if (OpTy->isVectorTy())
+    // TODO: extending the code below to handle vectors
+    return None;
+  assert(OpTy->isIntegerTy(1) && "implied by above");
+
+  // We expect the RHS to be an icmp.
+  if (!isa<ICmpInst>(RHS))
+    return None;
+
+  // Both LHS and RHS are icmps.
+  if (isa<ICmpInst>(LHS))
+    return isImpliedCondICmps(cast<ICmpInst>(LHS), cast<ICmpInst>(RHS), DL,
+                              LHSIsFalse, Depth);
+
+  // The LHS can be an 'or' or an 'and' instruction.
+  const Instruction *LHSInst = dyn_cast<Instruction>(LHS);
+  if (!LHSInst)
+    return None;
+
+  switch (LHSInst->getOpcode()) {
+  default:
+    return None;
+  case Instruction::Or:
+  case Instruction::And: {
+    // The remaining tests are all recursive, so bail out if we hit the limit.
+    if (Depth == MaxDepth)
+      return None;
+    // If the result of an 'or' is false, then we know both legs of the 'or' are
+    // false.  Similarly, if the result of an 'and' is true, then we know both
+    // legs of the 'and' are true.
+    Value *ALHS, *ARHS;
+    if ((LHSIsFalse && match(LHS, m_Or(m_Value(ALHS), m_Value(ARHS)))) ||
+        (!LHSIsFalse && match(LHS, m_And(m_Value(ALHS), m_Value(ARHS))))) {
+      if (Optional<bool> Implication =
+              isImpliedCondition(ALHS, RHS, DL, LHSIsFalse, Depth + 1))
+        return Implication;
+      if (Optional<bool> Implication =
+              isImpliedCondition(ARHS, RHS, DL, LHSIsFalse, Depth + 1))
+        return Implication;
+      return None;
+    }
+    return None;
+  }
+  }
 }
