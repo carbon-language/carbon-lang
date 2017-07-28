@@ -85,7 +85,7 @@ set_target_properties(MsanUnitTests PROPERTIES FOLDER "MSan unit tests")
 macro(add_msan_tests_for_arch arch kind cflags)
   # Build gtest instrumented with MSan.
   set(MSAN_INST_GTEST)
-  msan_compile(MSAN_INST_GTEST ${COMPILER_RT_GTEST_SOURCE} ${arch} ${kind}
+  msan_compile(MSAN_INST_GTEST ${COMPILER_RT_GTEST_SOURCE} ${arch} "${kind}"
                                "${cflags}")
 
   # Instrumented tests.
