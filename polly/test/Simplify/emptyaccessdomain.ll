@@ -30,7 +30,7 @@ return:
 
 
 ; CHECK: Statistics {
-; CHECK:     Overwrites removed: 1
+; CHECK:     Access with empty domains removed: 1
 ; CHECK:     Stmts removed: 1
 ; CHECK: }
 
