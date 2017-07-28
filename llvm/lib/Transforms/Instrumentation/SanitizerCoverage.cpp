@@ -84,7 +84,7 @@ static cl::opt<bool> ClTracePCGuard("sanitizer-coverage-trace-pc-guard",
 // to __sanitizer_cov_pcs_init.
 // This way the coverage instrumentation does not need to acquire the PCs
 // at run-time. Works with trace-pc-guard and inline-8bit-counters.
-static cl::opt<bool> ClCreatePCTable("sanitizer-coverage-create-pc-table",
+static cl::opt<bool> ClCreatePCTable("sanitizer-coverage-pc-table",
                                      cl::desc("create a static PC table"),
                                      cl::Hidden, cl::init(false));
 
@@ -147,6 +147,7 @@ SanitizerCoverageOptions OverrideFromCL(SanitizerCoverageOptions Options) {
   Options.TracePC |= ClTracePC;
   Options.TracePCGuard |= ClTracePCGuard;
   Options.Inline8bitCounters |= ClInline8bitCounters;
+  Options.PCTable |= ClCreatePCTable;
   if (!Options.TracePCGuard && !Options.TracePC && !Options.Inline8bitCounters)
     Options.TracePCGuard = true; // TracePCGuard is default.
   Options.NoPrune |= !ClPruneBlocks;
@@ -216,7 +217,7 @@ private:
 
   GlobalVariable *FunctionGuardArray;  // for trace-pc-guard.
   GlobalVariable *Function8bitCounterArray;  // for inline-8bit-counters.
-  GlobalVariable *FunctionPCsArray;  // for create-pc-table.
+  GlobalVariable *FunctionPCsArray;  // for pc-table.
 
   SanitizerCoverageOptions Options;
 };
@@ -341,7 +342,7 @@ bool SanitizerCoverageModule::runOnModule(Module &M) {
   if (Function8bitCounterArray)
     Ctor = CreateInitCallsForSections(M, SanCov8bitCountersInitName, Int8PtrTy,
                                       SanCovCountersSectionName);
-  if (Ctor && ClCreatePCTable) {
+  if (Ctor && Options.PCTable) {
     auto SecStartEnd = CreateSecStartEnd(M, SanCovPCsSectionName, Int8PtrTy);
     Function *InitFunction = declareSanitizerInitFunction(
         M, SanCovPCsInitName, {Int8PtrTy, Int8PtrTy});
@@ -515,7 +516,7 @@ void SanitizerCoverageModule::CreateFunctionLocalArrays(
   if (Options.Inline8bitCounters)
     Function8bitCounterArray = CreateFunctionLocalArrayInSection(
         AllBlocks.size(), F, Int8Ty, SanCovCountersSectionName);
-  if (ClCreatePCTable)
+  if (Options.PCTable)
     CreatePCArray(F, AllBlocks);
 }
 
