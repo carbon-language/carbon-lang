@@ -115,6 +115,10 @@ if (APPLE)
   endif()
 endif()
 
+if(HAVE_LIBCOMPRESSION)
+  set(LIBCOMPRESSION compression)
+endif()
+
 if(NOT SKIP_DEBUGSERVER)
   target_link_libraries(lldbDebugserverCommon
                         INTERFACE ${COCOA_LIBRARY}
@@ -127,7 +131,7 @@ if(NOT SKIP_DEBUGSERVER)
                         ${LOCKDOWN_LIBRARY}
                         lldbDebugserverArchSupport
                         lldbDebugserverDarwin_DarwinLog
-                        compression)
+                        ${LIBCOMPRESSION})
   if(HAVE_LIBCOMPRESSION)
     set_property(TARGET lldbDebugserverCommon APPEND PROPERTY
                  COMPILE_DEFINITIONS HAVE_LIBCOMPRESSION)
@@ -159,7 +163,7 @@ if(IOS)
                       ${FOUNDATION_LIBRARY}
                       lldbDebugserverArchSupport
                       lldbDebugserverDarwin_DarwinLog
-                      compression)
+                      ${LIBCOMPRESSION})
   if(HAVE_LIBCOMPRESSION)
     set_property(TARGET lldbDebugserverCommon_NonUI APPEND PROPERTY
                  COMPILE_DEFINITIONS HAVE_LIBCOMPRESSION)
