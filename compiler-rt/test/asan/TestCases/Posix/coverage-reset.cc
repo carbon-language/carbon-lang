@@ -19,7 +19,7 @@ void bar1();
 void bar2();
 
 int main(int argc, char **argv) {
-  fprintf(stderr, "RESET");
+  fprintf(stderr, "RESET\n");
   __sanitizer_cov_reset();
   foo1();
   foo2();
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 // CHECK: SanitizerCoverage: ./coverage-reset.cc{{.*}}.sancov: 2 PCs written
 // CHECK: SanitizerCoverage: ./libcoverage-reset.cc{{.*}}.sancov: 2 PCs written
 
-  fprintf(stderr, "RESET");
+  fprintf(stderr, "RESET\n");
   __sanitizer_cov_reset();
   foo1();
   bar1();
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 // CHECK: SanitizerCoverage: ./coverage-reset.cc{{.*}}.sancov: 1 PCs written
 // CHECK: SanitizerCoverage: ./libcoverage-reset.cc{{.*}}.sancov: 1 PCs written
 
-  fprintf(stderr, "RESET");
+  fprintf(stderr, "RESET\n");
   __sanitizer_cov_reset();
   foo1();
   foo2();
@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 // CHECK: RESET
 // CHECK: SanitizerCoverage: ./coverage-reset.cc{{.*}}.sancov: 2 PCs written
 
-  fprintf(stderr, "RESET");
+  fprintf(stderr, "RESET\n");
   __sanitizer_cov_reset();
   bar1();
   bar2();
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 // CHECK: RESET
 // CHECK: SanitizerCoverage: ./libcoverage-reset.cc{{.*}}.sancov: 2 PCs written
 
-  fprintf(stderr, "RESET");
+  fprintf(stderr, "RESET\n");
   __sanitizer_cov_reset();
 // CHECK: RESET
 
