@@ -181,6 +181,7 @@ addInstructionRoots(ScopStmt *Stmt,
     for (auto *BB : Stmt->getRegion()->blocks())
       for (Instruction &Inst : *BB)
         RootInsts.emplace_back(Stmt, &Inst);
+    return;
   }
 
   for (Instruction *Inst : Stmt->getInstructions())
