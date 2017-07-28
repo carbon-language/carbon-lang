@@ -14,6 +14,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <cctype>
