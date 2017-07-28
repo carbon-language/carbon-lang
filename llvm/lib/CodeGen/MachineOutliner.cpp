@@ -187,8 +187,7 @@ struct SuffixTreeNode {
   /// \brief For internal nodes, a pointer to the internal node representing
   /// the same sequence with the first character chopped off.
   ///
-  /// This has two major purposes in the suffix tree. The first is as a
-  /// shortcut in Ukkonen's construction algorithm. One of the things that
+  /// This acts as a shortcut in Ukkonen's algorithm. One of the things that
   /// Ukkonen's algorithm does to achieve linear-time construction is
   /// keep track of which node the next insert should be at. This makes each
   /// insert O(1), and there are a total of O(N) inserts. The suffix link
@@ -203,27 +202,6 @@ struct SuffixTreeNode {
   /// move to the next insertion point in O(1) time. If we don't, then we'd
   /// have to query from the root, which takes O(N) time. This would make the
   /// construction algorithm O(N^2) rather than O(N).
-  ///
-  /// The suffix link is also used during the tree pruning process to let us
-  /// quickly throw out a bunch of potential overlaps. Say we have a sequence
-  /// S we want to outline. Then each of its suffixes contribute to at least
-  /// one overlapping case. Therefore, we can follow the suffix links
-  /// starting at the node associated with S to the root and "delete" those
-  /// nodes, save for the root. For each candidate, this removes
-  /// O(|candidate|) overlaps from the search space. We don't actually
-  /// completely invalidate these nodes though; doing that is far too
-  /// aggressive. Consider the following pathological string:
-  ///
-  /// 1 2 3 1 2 3 2 3 2 3 2 3 2 3 2 3 2 3
-  ///
-  /// If we, for the sake of example, outlined 1 2 3, then we would throw
-  /// out all instances of 2 3. This isn't desirable. To get around this,
-  /// when we visit a link node, we decrement its occurrence count by the
-  /// number of sequences we outlined in the current step. In the pathological
-  /// example, the 2 3 node would have an occurrence count of 8, while the
-  /// 1 2 3 node would have an occurrence count of 2. Thus, the 2 3 node
-  /// would survive to the next round allowing us to outline the extra
-  /// instances of 2 3.
   SuffixTreeNode *Link = nullptr;
 
   /// The parent of this node. Every node except for the root has a parent.
