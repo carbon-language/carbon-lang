@@ -415,7 +415,7 @@ private:
                           << '\n';
     OS.indent(Indent + 4) << "Redundant writes removed: "
                           << RedundantWritesRemoved << "\n";
-    OS.indent(Indent + 4) << "Access with empty domains removed: "
+    OS.indent(Indent + 4) << "Accesses with empty domains removed: "
                           << EmptyPartialAccessesRemoved << "\n";
     OS.indent(Indent + 4) << "Dead accesses removed: " << DeadAccessesRemoved
                           << '\n';
