@@ -517,6 +517,7 @@ private:
     DK_CFI_SAME_VALUE,
     DK_CFI_RESTORE,
     DK_CFI_ESCAPE,
+    DK_CFI_RETURN_COLUMN,
     DK_CFI_SIGNAL_FRAME,
     DK_CFI_UNDEFINED,
     DK_CFI_REGISTER,
@@ -594,6 +595,7 @@ private:
   bool parseDirectiveCFISameValue(SMLoc DirectiveLoc);
   bool parseDirectiveCFIRestore(SMLoc DirectiveLoc);
   bool parseDirectiveCFIEscape();
+  bool parseDirectiveCFIReturnColumn(SMLoc DirectiveLoc);
   bool parseDirectiveCFISignalFrame();
   bool parseDirectiveCFIUndefined(SMLoc DirectiveLoc);
 
@@ -2065,6 +2067,8 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
       return parseDirectiveCFIRestore(IDLoc);
     case DK_CFI_ESCAPE:
       return parseDirectiveCFIEscape();
+    case DK_CFI_RETURN_COLUMN:
+      return parseDirectiveCFIReturnColumn(IDLoc);
     case DK_CFI_SIGNAL_FRAME:
       return parseDirectiveCFISignalFrame();
     case DK_CFI_UNDEFINED:
@@ -4019,6 +4023,16 @@ bool AsmParser::parseDirectiveCFIEscape() {
   return false;
 }
 
+/// parseDirectiveCFIReturnColumn
+/// ::= .cfi_return_column register
+bool AsmParser::parseDirectiveCFIReturnColumn(SMLoc DirectiveLoc) {
+  int64_t Register = 0;
+  if (parseRegisterOrRegisterNumber(Register, DirectiveLoc))
+    return true;
+  getStreamer().EmitCFIReturnColumn(Register);
+  return false;
+}
+
 /// parseDirectiveCFISignalFrame
 /// ::= .cfi_signal_frame
 bool AsmParser::parseDirectiveCFISignalFrame() {
@@ -5138,6 +5152,7 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".cfi_same_value"] = DK_CFI_SAME_VALUE;
   DirectiveKindMap[".cfi_restore"] = DK_CFI_RESTORE;
   DirectiveKindMap[".cfi_escape"] = DK_CFI_ESCAPE;
+  DirectiveKindMap[".cfi_return_column"] = DK_CFI_RETURN_COLUMN;
   DirectiveKindMap[".cfi_signal_frame"] = DK_CFI_SIGNAL_FRAME;
   DirectiveKindMap[".cfi_undefined"] = DK_CFI_UNDEFINED;
   DirectiveKindMap[".cfi_register"] = DK_CFI_REGISTER;
