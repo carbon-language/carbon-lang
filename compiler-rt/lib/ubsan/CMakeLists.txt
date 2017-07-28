@@ -34,10 +34,13 @@ set(UBSAN_CXXFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_rtti_flag(ON UBSAN_CXXFLAGS)
 append_list_if(SANITIZER_CAN_USE_CXXABI -DUBSAN_CAN_USE_CXXABI UBSAN_CXXFLAGS)
 
+set(UBSAN_DYNAMIC_LIBS ${SANITIZER_COMMON_LINK_LIBS})
+
 append_list_if(COMPILER_RT_HAS_LIBDL dl UBSAN_DYNAMIC_LIBS)
 append_list_if(COMPILER_RT_HAS_LIBLOG log UBSAN_DYNAMIC_LIBS)
 append_list_if(COMPILER_RT_HAS_LIBRT rt UBSAN_DYNAMIC_LIBS)
 append_list_if(COMPILER_RT_HAS_LIBPTHREAD pthread UBSAN_DYNAMIC_LIBS)
+append_list_if(COMPILER_RT_HAS_LIBSTDCXX stdc++ UBSAN_DYNAMIC_LIBS)
 
 add_compiler_rt_component(ubsan)
 
@@ -156,6 +159,7 @@ else()
               RTSanitizerCommonLibc
               RTUbsan
       CFLAGS ${UBSAN_CFLAGS}
+      LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS}
       LINK_LIBS ${UBSAN_DYNAMIC_LIBS}
       PARENT_TARGET ubsan)
 
@@ -167,6 +171,7 @@ else()
               RTUbsan
               RTUbsan_cxx
       CFLAGS ${UBSAN_CXXFLAGS}
+      LINK_FLAGS ${SANITIZER_COMMON_LINK_FLAGS}
       LINK_LIBS ${UBSAN_DYNAMIC_LIBS}
       PARENT_TARGET ubsan)
 
