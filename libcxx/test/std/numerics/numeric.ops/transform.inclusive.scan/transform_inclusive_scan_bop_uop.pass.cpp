@@ -90,8 +90,8 @@ void basic_tests()
     std::vector<int> v(10);
     std::fill(v.begin(), v.end(), 3);
     std::transform_inclusive_scan(v.begin(), v.end(), v.begin(), std::plus<>(), identity<>());
- 	std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, " "));
-	std::cout << std::endl;
+    std::copy(v.begin(), v.end(), std::ostream_iterator<int>(std::cout, " "));
+    std::cout << std::endl;
     for (size_t i = 0; i < v.size(); ++i)
         assert(v[i] == (int)(i+1) * 3);
     }
