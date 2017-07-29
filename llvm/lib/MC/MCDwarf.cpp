@@ -1465,24 +1465,26 @@ namespace {
 
 struct CIEKey {
   static const CIEKey getEmptyKey() {
-    return CIEKey(nullptr, 0, -1, false, false);
+    return CIEKey(nullptr, 0, -1, false, false, static_cast<unsigned>(INT_MAX));
   }
 
   static const CIEKey getTombstoneKey() {
-    return CIEKey(nullptr, -1, 0, false, false);
+    return CIEKey(nullptr, -1, 0, false, false, static_cast<unsigned>(INT_MAX));
   }
 
   CIEKey(const MCSymbol *Personality, unsigned PersonalityEncoding,
-         unsigned LsdaEncoding, bool IsSignalFrame, bool IsSimple)
+         unsigned LsdaEncoding, bool IsSignalFrame, bool IsSimple,
+         unsigned RAReg)
       : Personality(Personality), PersonalityEncoding(PersonalityEncoding),
         LsdaEncoding(LsdaEncoding), IsSignalFrame(IsSignalFrame),
-        IsSimple(IsSimple) {}
+        IsSimple(IsSimple), RAReg(RAReg) {}
 
   const MCSymbol *Personality;
   unsigned PersonalityEncoding;
   unsigned LsdaEncoding;
   bool IsSignalFrame;
   bool IsSimple;
+  unsigned RAReg;
 };
 
 } // end anonymous namespace
@@ -1496,7 +1498,7 @@ template <> struct DenseMapInfo<CIEKey> {
   static unsigned getHashValue(const CIEKey &Key) {
     return static_cast<unsigned>(
         hash_combine(Key.Personality, Key.PersonalityEncoding, Key.LsdaEncoding,
-                     Key.IsSignalFrame, Key.IsSimple));
+                     Key.IsSignalFrame, Key.IsSimple, Key.RAReg));
   }
 
   static bool isEqual(const CIEKey &LHS, const CIEKey &RHS) {
@@ -1504,7 +1506,8 @@ template <> struct DenseMapInfo<CIEKey> {
            LHS.PersonalityEncoding == RHS.PersonalityEncoding &&
            LHS.LsdaEncoding == RHS.LsdaEncoding &&
            LHS.IsSignalFrame == RHS.IsSignalFrame &&
-           LHS.IsSimple == RHS.IsSimple;
+           LHS.IsSimple == RHS.IsSimple &&
+           LHS.RAReg == RHS.RAReg;
   }
 };
 
@@ -1561,8 +1564,8 @@ void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
       // of by the compact unwind encoding.
       continue;
 
-    CIEKey Key(Frame.Personality, Frame.PersonalityEncoding,
-               Frame.LsdaEncoding, Frame.IsSignalFrame, Frame.IsSimple);
+    CIEKey Key(Frame.Personality, Frame.PersonalityEncoding, Frame.LsdaEncoding,
+               Frame.IsSignalFrame, Frame.IsSimple, Frame.RAReg);
     const MCSymbol *&CIEStart = IsEH ? CIEStarts[Key] : DummyDebugKey;
     if (!CIEStart)
       CIEStart = &Emitter.EmitCIE(
