@@ -20,6 +20,14 @@ g:
 	.cfi_return_column 65
 	.cfi_endproc
 
+	.section .text.h,"ax",@progbits
+	.global h
+	.type g,@function
+h:
+	.cfi_startproc
+	.cfi_return_column 65
+	.cfi_endproc
+
 // CHECK-ASM-ROUNDTRIP-LABEL: f:
 // CHECK-ASM-ROUNDTRIP: .cfi_startproc
 // CHECK-ASM-ROUNDTRIP-NEXT: .cfi_return_column 0
