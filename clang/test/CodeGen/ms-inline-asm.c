@@ -704,10 +704,12 @@ void label5() {
 void label6(){
   __asm {
       jmp short label
+      jc  short label
+      jz  short label
     label:
   }
   // CHECK-LABEL: define void @label6
-  // CHECK: call void asm sideeffect inteldialect "jmp {{.*}}__MSASMLABEL_.${:uid}__label\0A\09{{.*}}__MSASMLABEL_.${:uid}__label:", "~{dirflag},~{fpsr},~{flags}"()
+  // CHECK: jmp {{.*}}__MSASMLABEL_.${:uid}__label\0A\09jc {{.*}}__MSASMLABEL_.${:uid}__label\0A\09jz {{.*}}__MSASMLABEL_.${:uid}__label\0A\09{{.*}}__MSASMLABEL_.${:uid}__label:"
 }
 
 // Don't include mxcsr in the clobber list.
