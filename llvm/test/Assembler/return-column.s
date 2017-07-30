@@ -1,5 +1,5 @@
 // RUN: llvm-mc -triple i686-unknown-linux-gnu -filetype asm -o - %s | FileCheck %s -check-prefix CHECK-ASM-ROUNDTRIP
-// RUN: llvm-mc -triple i686-unknown-linux-gnu -filetype obj -o - %s | llvm-objdump -s -j .eh_frame - | FileCheck %s -check-prefix CHECK-EH_FRAME
+// RUN: llvm-mc -triple i686-unknown-linux-gnu -filetype obj -o - %s | llvm-objdump -dwarf=frames - | FileCheck %s -check-prefix CHECK-EH_FRAME
 // REQUIRES: x86-registered-target
 
 	.text
@@ -25,7 +25,11 @@ g:
 // CHECK-ASM-ROUNDTRIP-NEXT: .cfi_return_column 0
 // CHECK-ASM-ROUNDTRIP: .cfi_endproc
 
-// CHECK-EH_FRAME: Contents of section .eh_frame:
-// CHECK-EH_FRAME:  0000 14000000 00000000 017a5200 017c0001  .........zR..|..
-// CHECK-EH_FRAME:  0030 00000000 017a5200 017c4101 1b0c0404  .....zR..|A.....
+// CHECK-EH_FRAME: 00000000 00000014 ffffffff CIE
+// CHECK-EH_FRAME:   Return address column: 0
+
+// CHECK-EH_FRAME: 0000002c 00000014 ffffffff CIE
+// CHECK-EH_FRAME:   Return address column: 65
+
+// CHECK-EH_FRAME-NOT: ........ 00000014 ffffffff CIE
 
