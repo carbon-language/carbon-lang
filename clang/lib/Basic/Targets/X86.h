@@ -773,40 +773,6 @@ public:
   bool allowsLargerPreferedTypeAlignment() const override { return false; }
 };
 
-// RTEMS Target
-template <typename Target>
-class LLVM_LIBRARY_VISIBILITY RTEMSTargetInfo : public OSTargetInfo<Target> {
-protected:
-  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
-                    MacroBuilder &Builder) const override {
-    // RTEMS defines; list based off of gcc output
-
-    Builder.defineMacro("__rtems__");
-    Builder.defineMacro("__ELF__");
-  }
-
-public:
-  RTEMSTargetInfo(const llvm::Triple &Triple, const TargetOptions &Opts)
-      : OSTargetInfo<Target>(Triple, Opts) {
-    switch (Triple.getArch()) {
-    default:
-    case llvm::Triple::x86:
-      // this->MCountName = ".mcount";
-      break;
-    case llvm::Triple::mips:
-    case llvm::Triple::mipsel:
-    case llvm::Triple::ppc:
-    case llvm::Triple::ppc64:
-    case llvm::Triple::ppc64le:
-      // this->MCountName = "_mcount";
-      break;
-    case llvm::Triple::arm:
-      // this->MCountName = "__mcount";
-      break;
-    }
-  }
-};
-
 // x86-32 RTEMS target
 class LLVM_LIBRARY_VISIBILITY RTEMSX86_32TargetInfo : public X86_32TargetInfo {
 public:
