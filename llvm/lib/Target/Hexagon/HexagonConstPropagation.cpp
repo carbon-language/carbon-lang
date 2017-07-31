@@ -170,10 +170,12 @@ namespace {
     bool convertToProperty();
   };
 
+#ifndef NDEBUG
   raw_ostream &operator<< (raw_ostream &os, const LatticeCell &L) {
     L.print(os);
     return os;
   }
+#endif
 
   class MachineConstEvaluator;
 
@@ -463,6 +465,7 @@ bool LatticeCell::convertToProperty() {
   return true;
 }
 
+#ifndef NDEBUG
 void LatticeCell::print(raw_ostream &os) const {
   if (isProperty()) {
     os << "{ ";
@@ -500,6 +503,7 @@ void LatticeCell::print(raw_ostream &os) const {
   }
   os << " }";
 }
+#endif
 
 // "Meet" operation on two cells. This is the key of the propagation
 // algorithm.
