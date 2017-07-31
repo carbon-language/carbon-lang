@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only -cl-std=CL2.0
 
+#pragma OPENCL EXTENSION cl_khr_subgroups : enable
+
 void test1(read_only pipe int p, global int* ptr){
   int tmp;
   reserve_id_t rid;
