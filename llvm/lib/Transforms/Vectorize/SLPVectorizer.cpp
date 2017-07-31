@@ -4585,8 +4585,10 @@ private:
     Type *ScalarTy = FirstReducedVal->getType();
     Type *VecTy = VectorType::get(ScalarTy, ReduxWidth);
 
-    int PairwiseRdxCost = TTI->getReductionCost(ReductionOpcode, VecTy, true);
-    int SplittingRdxCost = TTI->getReductionCost(ReductionOpcode, VecTy, false);
+    int PairwiseRdxCost =
+        TTI->getArithmeticReductionCost(ReductionOpcode, VecTy, true);
+    int SplittingRdxCost =
+        TTI->getArithmeticReductionCost(ReductionOpcode, VecTy, false);
 
     IsPairwiseReduction = PairwiseRdxCost < SplittingRdxCost;
     int VecReduxCost = IsPairwiseReduction ? PairwiseRdxCost : SplittingRdxCost;

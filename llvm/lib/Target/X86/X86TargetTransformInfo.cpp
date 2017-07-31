@@ -1805,8 +1805,8 @@ int X86TTIImpl::getAddressComputationCost(Type *Ty, ScalarEvolution *SE,
   return BaseT::getAddressComputationCost(Ty, SE, Ptr);
 }
 
-int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
-                                 bool IsPairwise) {
+int X86TTIImpl::getArithmeticReductionCost(unsigned Opcode, Type *ValTy,
+                                           bool IsPairwise) {
 
   std::pair<int, MVT> LT = TLI->getTypeLegalizationCost(DL, ValTy);
 
@@ -1874,7 +1874,7 @@ int X86TTIImpl::getReductionCost(unsigned Opcode, Type *ValTy,
         return LT.first * Entry->Cost;
   }
 
-  return BaseT::getReductionCost(Opcode, ValTy, IsPairwise);
+  return BaseT::getArithmeticReductionCost(Opcode, ValTy, IsPairwise);
 }
 
 /// \brief Calculate the cost of materializing a 64-bit value. This helper

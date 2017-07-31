@@ -496,9 +496,9 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
     Type *ReduxType;
 
     if (matchVectorSplittingReduction(EEI, ReduxOpCode, ReduxType))
-      return TTI->getReductionCost(ReduxOpCode, ReduxType, false);
+      return TTI->getArithmeticReductionCost(ReduxOpCode, ReduxType, false);
     else if (matchPairwiseReduction(EEI, ReduxOpCode, ReduxType))
-      return TTI->getReductionCost(ReduxOpCode, ReduxType, true);
+      return TTI->getArithmeticReductionCost(ReduxOpCode, ReduxType, true);
 
     return TTI->getVectorInstrCost(I->getOpcode(),
                                    EEI->getOperand(0)->getType(), Idx);
