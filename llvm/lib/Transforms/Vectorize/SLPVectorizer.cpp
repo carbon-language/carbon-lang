@@ -4385,9 +4385,9 @@ class HorizontalReduction {
     /// Checks if two operation data are both a reduction op or both a reduced
     /// value.
     bool operator==(const OperationData &OD) {
-      assert((IsReducedValue != OD.IsReducedValue) ||
-             ((!LHS == !OD.LHS) && (!RHS == !OD.RHS)) &&
-                 "One of the comparing operations is incorrect.");
+      assert(((IsReducedValue != OD.IsReducedValue) ||
+              ((!LHS == !OD.LHS) && (!RHS == !OD.RHS))) &&
+             "One of the comparing operations is incorrect.");
       return this == &OD ||
              (IsReducedValue == OD.IsReducedValue && Opcode == OD.Opcode);
     }
