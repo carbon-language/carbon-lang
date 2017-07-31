@@ -1295,7 +1295,7 @@ define i32 @test_insertelement_v32i1(i32 %a, i32 %b, <32 x i32> %x , <32 x i32> 
 ; SKX-NEXT:    vpmovm2w %k0, %zmm0
 ; SKX-NEXT:    kmovd %eax, %k0
 ; SKX-NEXT:    vpmovm2w %k0, %zmm1
-; SKX-NEXT:    vmovdqu16 {{.*#+}} zmm2 = [0,1,2,3,32,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
+; SKX-NEXT:    vmovdqa64 {{.*#+}} zmm2 = [0,1,2,3,32,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]
 ; SKX-NEXT:    vpermi2w %zmm1, %zmm0, %zmm2
 ; SKX-NEXT:    vpmovw2m %zmm2, %k0
 ; SKX-NEXT:    kmovd %k0, %eax

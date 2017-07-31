@@ -996,7 +996,7 @@ define <16 x i16> @test_broadcast_8i16_16i16_reuse(<8 x i16> *%p0, <8 x i16> *%p
 ; X32-AVX512BW:       ## BB#0:
 ; X32-AVX512BW-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-AVX512BW-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X32-AVX512BW-NEXT:    vmovdqu (%ecx), %xmm0
+; X32-AVX512BW-NEXT:    vmovdqa (%ecx), %xmm0
 ; X32-AVX512BW-NEXT:    vmovdqu %xmm0, (%eax)
 ; X32-AVX512BW-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
 ; X32-AVX512BW-NEXT:    retl
@@ -1026,7 +1026,7 @@ define <16 x i16> @test_broadcast_8i16_16i16_reuse(<8 x i16> *%p0, <8 x i16> *%p
 ;
 ; X64-AVX512BW-LABEL: test_broadcast_8i16_16i16_reuse:
 ; X64-AVX512BW:       ## BB#0:
-; X64-AVX512BW-NEXT:    vmovdqu (%rdi), %xmm0
+; X64-AVX512BW-NEXT:    vmovdqa (%rdi), %xmm0
 ; X64-AVX512BW-NEXT:    vmovdqu %xmm0, (%rsi)
 ; X64-AVX512BW-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
 ; X64-AVX512BW-NEXT:    retq
@@ -1066,7 +1066,7 @@ define <32 x i8> @test_broadcast_16i8_32i8_reuse(<16 x i8> *%p0, <16 x i8> *%p1)
 ; X32-AVX512BW:       ## BB#0:
 ; X32-AVX512BW-NEXT:    movl {{[0-9]+}}(%esp), %eax
 ; X32-AVX512BW-NEXT:    movl {{[0-9]+}}(%esp), %ecx
-; X32-AVX512BW-NEXT:    vmovdqu (%ecx), %xmm0
+; X32-AVX512BW-NEXT:    vmovdqa (%ecx), %xmm0
 ; X32-AVX512BW-NEXT:    vmovdqu %xmm0, (%eax)
 ; X32-AVX512BW-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
 ; X32-AVX512BW-NEXT:    retl
@@ -1096,7 +1096,7 @@ define <32 x i8> @test_broadcast_16i8_32i8_reuse(<16 x i8> *%p0, <16 x i8> *%p1)
 ;
 ; X64-AVX512BW-LABEL: test_broadcast_16i8_32i8_reuse:
 ; X64-AVX512BW:       ## BB#0:
-; X64-AVX512BW-NEXT:    vmovdqu (%rdi), %xmm0
+; X64-AVX512BW-NEXT:    vmovdqa (%rdi), %xmm0
 ; X64-AVX512BW-NEXT:    vmovdqu %xmm0, (%rsi)
 ; X64-AVX512BW-NEXT:    vinserti128 $1, %xmm0, %ymm0, %ymm0
 ; X64-AVX512BW-NEXT:    retq
