@@ -20,4 +20,3 @@ if( LLVM_ENABLE_PIC AND LLVM_BINUTILS_INCDIR )
     )
 
 endif()
-
