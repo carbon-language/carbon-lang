@@ -542,7 +542,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
     }
 
     if (MIR) {
-      assert(MMI && "addPassesToEmitFile didn't set MMI");
+      assert(MMI && "Forgot to create MMI?");
       if (MIR->parseMachineFunctions(*M, *MMI))
         return 1;
     }
