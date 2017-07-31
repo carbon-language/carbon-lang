@@ -418,6 +418,9 @@ bool SanitizerCoverageModule::runOnFunction(Function &F) {
     return false; // Should not instrument sanitizer init functions.
   if (F.getName().startswith("__sanitizer_"))
     return false;  // Don't instrument __sanitizer_* callbacks.
+  // Don't touch available_externally functions, their actual body is elewhere.
+  if (F.getLinkage() == GlobalValue::AvailableExternallyLinkage)
+    return false;
   // Don't instrument MSVC CRT configuration helpers. They may run before normal
   // initialization.
   if (F.getName() == "__local_stdio_printf_options" ||
