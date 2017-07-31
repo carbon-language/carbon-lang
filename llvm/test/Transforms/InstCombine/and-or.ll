@@ -73,8 +73,8 @@ define i8 @and_or_hoist_mask(i8 %a, i8 %b) {
 define <2 x i8> @and_xor_hoist_mask_vec_splat(<2 x i8> %a, <2 x i8> %b) {
 ; CHECK-LABEL: @and_xor_hoist_mask_vec_splat(
 ; CHECK-NEXT:    [[SH:%.*]] = lshr <2 x i8> %a, <i8 6, i8 6>
-; CHECK-NEXT:    [[XOR:%.*]] = xor <2 x i8> [[SH]], %b
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i8> [[XOR]], <i8 3, i8 3>
+; CHECK-NEXT:    [[B_MASKED:%.*]] = and <2 x i8> %b, <i8 3, i8 3>
+; CHECK-NEXT:    [[AND:%.*]] = xor <2 x i8> [[SH]], [[B_MASKED]]
 ; CHECK-NEXT:    ret <2 x i8> [[AND]]
 ;
   %sh = lshr <2 x i8> %a, <i8 6, i8 6>
@@ -102,8 +102,8 @@ define <2 x i8> @and_or_hoist_mask_commute_vec_splat(<2 x i8> %a, <2 x i8> %b) {
 ; CHECK-LABEL: @and_or_hoist_mask_commute_vec_splat(
 ; CHECK-NEXT:    [[C:%.*]] = mul <2 x i8> %b, <i8 43, i8 43>
 ; CHECK-NEXT:    [[SH:%.*]] = lshr <2 x i8> %a, <i8 6, i8 6>
-; CHECK-NEXT:    [[OR:%.*]] = or <2 x i8> [[C]], [[SH]]
-; CHECK-NEXT:    [[AND:%.*]] = and <2 x i8> [[OR]], <i8 3, i8 3>
+; CHECK-NEXT:    [[C_MASKED:%.*]] = and <2 x i8> [[C]], <i8 3, i8 3>
+; CHECK-NEXT:    [[AND:%.*]] = or <2 x i8> [[C_MASKED]], [[SH]]
 ; CHECK-NEXT:    ret <2 x i8> [[AND]]
 ;
   %c = mul <2 x i8> %b, <i8 43, i8 43> ; thwart complexity-based ordering
