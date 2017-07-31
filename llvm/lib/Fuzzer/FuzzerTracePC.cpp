@@ -66,6 +66,15 @@ void TracePC::HandleInline8bitCountersInit(uint8_t *Start, uint8_t *Stop) {
   NumInline8bitCounters += Stop - Start;
 }
 
+void TracePC::HandlePCsInit(const uint8_t *Start, const uint8_t *Stop) {
+  const uintptr_t *B = reinterpret_cast<const uintptr_t *>(Start);
+  const uintptr_t *E = reinterpret_cast<const uintptr_t *>(Stop);
+  if (NumPCTables && ModulePCTable[NumPCTables - 1].Start == B) return;
+  assert(NumPCTables < sizeof(ModulePCTable) / sizeof(ModulePCTable[0]));
+  ModulePCTable[NumPCTables++] = {B, E};
+  NumPCsInPCTables = E - B;
+}
+
 void TracePC::HandleInit(uint32_t *Start, uint32_t *Stop) {
   if (Start == Stop || *Start) return;
   assert(NumModules < sizeof(Modules) / sizeof(Modules[0]));
@@ -85,15 +94,26 @@ void TracePC::HandleInit(uint32_t *Start, uint32_t *Stop) {
 }
 
 void TracePC::PrintModuleInfo() {
-  Printf("INFO: Loaded %zd modules (%zd guards): ", NumModules, NumGuards);
-  for (size_t i = 0; i < NumModules; i++)
-    Printf("[%p, %p), ", Modules[i].Start, Modules[i].Stop);
-  Printf("\n");
+  if (NumGuards) {
+    Printf("INFO: Loaded %zd modules (%zd guards): ", NumModules, NumGuards);
+    for (size_t i = 0; i < NumModules; i++)
+      Printf("[%p, %p), ", Modules[i].Start, Modules[i].Stop);
+    Printf("\n");
+  }
   if (NumModulesWithInline8bitCounters) {
-    Printf("INFO: Loaded %zd modules with %zd inline 8-bit counters\n",
+    Printf("INFO: Loaded %zd modules with %zd inline 8-bit counters: ",
            NumModulesWithInline8bitCounters, NumInline8bitCounters);
     for (size_t i = 0; i < NumModulesWithInline8bitCounters; i++)
       Printf("[%p, %p), ", ModuleCounters[i].Start, ModuleCounters[i].Stop);
+    Printf("\n");
+  }
+  if (NumPCTables) {
+    Printf("INFO: Loaded %zd PC tables,   %zd PCs: ", NumPCTables,
+           NumPCsInPCTables);
+    for (size_t i = 0; i < NumPCTables; i++) {
+      Printf("[%p,%p), ", ModulePCTable[i].Start, ModulePCTable[i].Stop,
+             ModulePCTable[i].Stop - ModulePCTable[i].Start);
+    }
     Printf("\n");
   }
 }
@@ -354,6 +374,7 @@ void __sanitizer_cov_8bit_counters_init(uint8_t *Start, uint8_t *Stop) {
 
 ATTRIBUTE_INTERFACE
 void __sanitizer_cov_pcs_init(const uint8_t *pcs_beg, const uint8_t *pcs_end) {
+  fuzzer::TPC.HandlePCsInit(pcs_beg, pcs_end);
 }
 
 ATTRIBUTE_INTERFACE
