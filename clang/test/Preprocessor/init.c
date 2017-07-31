@@ -1236,13 +1236,13 @@
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=aarch64-apple-ios7.0 < /dev/null | FileCheck -match-full-lines -check-prefix AARCH64-DARWIN %s
 //
 // AARCH64-DARWIN: #define _LP64 1
-// AARCH64-NOT: #define __AARCH64EB__ 1
+// AARCH64-DARWIN-NOT: #define __AARCH64EB__ 1
 // AARCH64-DARWIN: #define __AARCH64EL__ 1
-// AARCH64-NOT: #define __AARCH_BIG_ENDIAN 1
+// AARCH64-DARWIN-NOT: #define __AARCH_BIG_ENDIAN 1
 // AARCH64-DARWIN: #define __ARM_64BIT_STATE 1
 // AARCH64-DARWIN: #define __ARM_ARCH 8
 // AARCH64-DARWIN: #define __ARM_ARCH_ISA_A64 1
-// AARCH64-NOT: #define __ARM_BIG_ENDIAN 1
+// AARCH64-DARWIN-NOT: #define __ARM_BIG_ENDIAN 1
 // AARCH64-DARWIN: #define __BIGGEST_ALIGNMENT__ 8
 // AARCH64-DARWIN: #define __BYTE_ORDER__ __ORDER_LITTLE_ENDIAN__
 // AARCH64-DARWIN: #define __CHAR16_TYPE__ unsigned short
