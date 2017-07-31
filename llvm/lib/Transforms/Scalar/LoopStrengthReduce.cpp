@@ -195,11 +195,11 @@ public:
 
 } // end anonymous namespace
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void RegSortData::print(raw_ostream &OS) const {
   OS << "[NumUses=" << UsedByIndices.count() << ']';
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void RegSortData::dump() const {
   print(errs()); errs() << '\n';
 }
@@ -1350,6 +1350,7 @@ bool Cost::isLess(Cost &Other, const TargetTransformInfo &TTI) {
   return TTI.isLSRCostLess(C, Other.C);
 }
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void Cost::print(raw_ostream &OS) const {
   if (InsnsCost)
     OS << C.Insns << " instruction" << (C.Insns == 1 ? " " : "s ");
@@ -1370,7 +1371,6 @@ void Cost::print(raw_ostream &OS) const {
     OS << ", plus " << C.SetupCost << " setup cost";
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void Cost::dump() const {
   print(errs()); errs() << '\n';
 }
@@ -3859,12 +3859,12 @@ struct WorkItem {
 
 } // end anonymous namespace
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void WorkItem::print(raw_ostream &OS) const {
   OS << "in formulae referencing " << *OrigReg << " in use " << LUIdx
      << " , add offset " << Imm;
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void WorkItem::dump() const {
   print(errs()); errs() << '\n';
 }
@@ -5364,13 +5364,13 @@ void LSRInstance::print_uses(raw_ostream &OS) const {
   }
 }
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void LSRInstance::print(raw_ostream &OS) const {
   print_factors_and_types(OS);
   print_fixups(OS);
   print_uses(OS);
 }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 LLVM_DUMP_METHOD void LSRInstance::dump() const {
   print(errs()); errs() << '\n';
 }
