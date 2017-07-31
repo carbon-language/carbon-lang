@@ -5,6 +5,8 @@ declare i32 @llvm.x86.tbm.bextri.u32(i32, i32) nounwind readnone
 declare i64 @llvm.x86.tbm.bextri.u64(i64, i64) nounwind readnone
 declare i32 @llvm.x86.bmi.bextr.32(i32, i32) nounwind readnone
 declare i64 @llvm.x86.bmi.bextr.64(i64, i64) nounwind readnone
+declare i32 @llvm.x86.bmi.bzhi.32(i32, i32) nounwind readnone
+declare i64 @llvm.x86.bmi.bzhi.64(i64, i64) nounwind readnone
 
 define i32 @test_x86_tbm_bextri_u32(i32 %a) nounwind readnone {
 ; CHECK-LABEL: @test_x86_tbm_bextri_u32(
@@ -199,5 +201,71 @@ define i64 @test_x86_bmi_bextri_64_constfold3() nounwind readnone {
 ; CHECK-NEXT:    ret i64 233495534
 ;
   %1 = tail call i64 @llvm.x86.bmi.bextr.64(i64 3735928559, i64 32772) ; extract bits 131:4 from 0xDEADBEEF
+  ret i64 %1
+}
+
+define i32 @test_x86_bmi_bzhi_32(i32 %a) nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_32(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call i32 @llvm.x86.bmi.bzhi.32(i32 [[A:%.*]], i32 31)
+; CHECK-NEXT:    ret i32 [[TMP1]]
+;
+  %1 = tail call i32 @llvm.x86.bmi.bzhi.32(i32 %a, i32 31)
+  ret i32 %1
+}
+
+define i32 @test_x86_bmi_bzhi_32_zero(i32 %a) nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_32_zero(
+; CHECK-NEXT:    ret i32 0
+;
+  %1 = tail call i32 @llvm.x86.bmi.bzhi.32(i32 %a, i32 0)
+  ret i32 %1
+}
+
+define i32 @test_x86_bmi_bzhi_32_max(i32 %a) nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_32_max(
+; CHECK-NEXT:    ret i32 [[A:%.*]]
+;
+  %1 = tail call i32 @llvm.x86.bmi.bzhi.32(i32 %a, i32 32)
+  ret i32 %1
+}
+
+define i32 @test_x86_bmi_bzhi_32_constfold() nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_32_constfold(
+; CHECK-NEXT:    ret i32 1
+;
+  %1 = tail call i32 @llvm.x86.bmi.bzhi.32(i32 5, i32 1)
+  ret i32 %1
+}
+
+define i64 @test_x86_bmi_bzhi_64(i64 %a) nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_64(
+; CHECK-NEXT:    [[TMP1:%.*]] = tail call i64 @llvm.x86.bmi.bzhi.64(i64 [[A:%.*]], i64 63)
+; CHECK-NEXT:    ret i64 [[TMP1]]
+;
+  %1 = tail call i64 @llvm.x86.bmi.bzhi.64(i64 %a, i64 63)
+  ret i64 %1
+}
+
+define i64 @test_x86_bmi_bzhi_64_zero(i64 %a) nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_64_zero(
+; CHECK-NEXT:    ret i64 0
+;
+  %1 = tail call i64 @llvm.x86.bmi.bzhi.64(i64 %a, i64 0)
+  ret i64 %1
+}
+
+define i64 @test_x86_bmi_bzhi_64_max(i64 %a) nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_64_max(
+; CHECK-NEXT:    ret i64 [[A:%.*]]
+;
+  %1 = tail call i64 @llvm.x86.bmi.bzhi.64(i64 %a, i64 64)
+  ret i64 %1
+}
+
+define i64 @test_x86_bmi_bzhi_64_constfold() nounwind readnone {
+; CHECK-LABEL: @test_x86_bmi_bzhi_64_constfold(
+; CHECK-NEXT:    ret i64 1
+;
+  %1 = tail call i64 @llvm.x86.bmi.bzhi.64(i64 5, i64 1)
   ret i64 %1
 }

@@ -2274,6 +2274,26 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     }
     break;
 
+  case Intrinsic::x86_bmi_bzhi_32:
+  case Intrinsic::x86_bmi_bzhi_64:
+    // If the RHS is a constant we can try some simplifications.
+    if (auto *C = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
+      uint64_t Index = C->getZExtValue() & 0xff;
+      unsigned BitWidth = II->getType()->getIntegerBitWidth();
+      if (Index >= BitWidth)
+        return replaceInstUsesWith(CI, II->getArgOperand(0));
+      if (Index == 0)
+        return replaceInstUsesWith(CI, ConstantInt::get(II->getType(), 0));
+      // If the LHS is also a constant, we can completely constant fold this.
+      if (auto *InC = dyn_cast<ConstantInt>(II->getArgOperand(0))) {
+        uint64_t Result = InC->getZExtValue();
+        Result &= maskTrailingOnes<uint64_t>(Index);
+        return replaceInstUsesWith(CI, ConstantInt::get(II->getType(), Result));
+      }
+      // TODO should we convert this to an AND if the RHS is constant?
+    }
+    break;
+
   case Intrinsic::x86_vcvtph2ps_128:
   case Intrinsic::x86_vcvtph2ps_256: {
     auto Arg = II->getArgOperand(0);
