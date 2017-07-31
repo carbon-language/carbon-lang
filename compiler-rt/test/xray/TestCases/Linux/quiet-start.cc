@@ -20,7 +20,7 @@ int main(int, char**) {
   // QUIET-NOT: {{.*}}XRay instrumentation map missing. Not initializing XRay.
   // DEFAULT-NOT: {{.*}}XRay instrumentation map missing. Not initializing XRay.
   cout << "Hello, XRay!" << endl;
-  // NOISY-NEXT: Hello, XRay!
+  // NOISY: Hello, XRay!
   // QUIET: Hello, XRay!
   // DEFAULT: Hello, XRay!
 }
