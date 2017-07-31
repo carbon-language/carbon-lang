@@ -487,6 +487,8 @@ GlobalVariable *SanitizerCoverageModule::CreateFunctionLocalArrayInSection(
   if (auto Comdat = F.getComdat())
     Array->setComdat(Comdat);
   Array->setSection(getSectionName(Section));
+  Array->setAlignment(Ty->isPointerTy() ? DL->getPointerSize()
+                                        : Ty->getPrimitiveSizeInBits() / 8);
   return Array;
 }
 
@@ -505,7 +507,6 @@ void SanitizerCoverageModule::CreatePCArray(Function &F,
   FunctionPCsArray->setInitializer(
       ConstantArray::get(ArrayType::get(Int8PtrTy, N), PCs));
   FunctionPCsArray->setConstant(true);
-  FunctionPCsArray->setAlignment(DL->getPointerSize());
 }
 
 void SanitizerCoverageModule::CreateFunctionLocalArrays(
