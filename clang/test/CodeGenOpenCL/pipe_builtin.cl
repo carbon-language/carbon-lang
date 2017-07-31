@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -O0 -cl-std=CL2.0 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -cl-ext=+cl_khr_subgroups -O0 -cl-std=CL2.0 -o - %s | FileCheck %s
 
 // CHECK: %opencl.pipe_t = type opaque
 // CHECK: %opencl.reserve_id_t = type opaque
