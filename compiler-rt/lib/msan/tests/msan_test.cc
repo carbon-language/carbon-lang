@@ -3449,17 +3449,6 @@ TEST(MemorySanitizer, pvalloc) {
   EXPECT_EQ(0U, (uintptr_t)p % PageSize);
   EXPECT_EQ(PageSize, __sanitizer_get_allocated_size(p));
   free(p);
-
-  // Overflows in pvalloc should be caught.
-  errno = 0;
-  p = pvalloc((uintptr_t)-PageSize);
-  EXPECT_EQ(p, nullptr);
-  EXPECT_EQ(errno, ENOMEM);
-
-  errno = 0;
-  p = pvalloc((uintptr_t)-1);
-  EXPECT_EQ(p, nullptr);
-  EXPECT_EQ(errno, ENOMEM);
 }
 #endif
 
