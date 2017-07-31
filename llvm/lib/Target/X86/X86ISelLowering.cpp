@@ -34525,7 +34525,7 @@ static SDValue combineFMA(SDNode *N, SelectionDAG &DAG,
   else
     NewOpcode = (!NegC) ? X86ISD::FNMADD : X86ISD::FNMSUB;
 
-  // For FMA and FAMDD, we risk reconstructing the node we started with.
+  // For FMA and FMADD, we risk reconstructing the node we started with.
   // In order to avoid this, we check for negation or opcode change. If
   // one of the two happened, then it is a new node and we return it.
   if (N->getOpcode() == X86ISD::FMADD || N->getOpcode() == ISD::FMA) {
