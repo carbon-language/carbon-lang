@@ -3631,7 +3631,7 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
     // 3rd parameter required to be a constant.
     const ConstantSDNode *Param = dyn_cast<ConstantSDNode>(Op.getOperand(3));
     if (!Param)
-      return DAG.getUNDEF(VT);
+      return DAG.getMergeValues({ DAG.getUNDEF(VT), DAG.getUNDEF(MVT::i1) }, DL);
 
     // Translate to the operands expected by the machine instruction. The
     // first parameter must be the same as the first instruction.
@@ -6005,6 +6005,60 @@ SDNode *SITargetLowering::PostISelFolding(MachineSDNode *Node,
     legalizeTargetIndependentNode(Node, DAG);
     return Node;
   }
+
+  switch (Opcode) {
+  case AMDGPU::V_DIV_SCALE_F32:
+  case AMDGPU::V_DIV_SCALE_F64: {
+    // Satisfy the operand register constraint when one of the inputs is
+    // undefined. Ordinarily each undef value will have its own implicit_def of
+    // a vreg, so force these to use a single register.
+    SDValue Src0 = Node->getOperand(0);
+    SDValue Src1 = Node->getOperand(1);
+    SDValue Src2 = Node->getOperand(2);
+
+    if ((Src0.isMachineOpcode() &&
+         Src0.getMachineOpcode() != AMDGPU::IMPLICIT_DEF) &&
+        (Src0 == Src1 || Src0 == Src2))
+      break;
+
+    MVT VT = Src0.getValueType().getSimpleVT();
+    const TargetRegisterClass *RC = getRegClassFor(VT);
+
+    MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
+    SDValue UndefReg = DAG.getRegister(MRI.createVirtualRegister(RC), VT);
+
+    SDValue ImpDef = DAG.getCopyToReg(DAG.getEntryNode(), SDLoc(Node),
+                                      UndefReg, Src0, SDValue());
+
+    // src0 must be the same register as src1 or src2, even if the value is
+    // undefined, so make sure we don't violate this constraint.
+    if (Src0.isMachineOpcode() &&
+        Src0.getMachineOpcode() == AMDGPU::IMPLICIT_DEF) {
+      if (Src1.isMachineOpcode() &&
+          Src1.getMachineOpcode() != AMDGPU::IMPLICIT_DEF)
+        Src0 = Src1;
+      else if (Src2.isMachineOpcode() &&
+               Src2.getMachineOpcode() != AMDGPU::IMPLICIT_DEF)
+        Src0 = Src2;
+      else {
+        assert(Src1.getMachineOpcode() == AMDGPU::IMPLICIT_DEF);
+        Src0 = UndefReg;
+        Src1 = UndefReg;
+      }
+    } else
+      break;
+
+    SmallVector<SDValue, 4> Ops = { Src0, Src1, Src2 };
+    for (unsigned I = 3, N = Node->getNumOperands(); I != N; ++I)
+      Ops.push_back(Node->getOperand(I));
+
+    Ops.push_back(ImpDef.getValue(1));
+    return DAG.getMachineNode(Opcode, SDLoc(Node), Node->getVTList(), Ops);
+  }
+  default:
+    break;
+  }
+
   return Node;
 }
 
