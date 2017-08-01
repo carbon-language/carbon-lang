@@ -27,6 +27,12 @@ using namespace polly;
 
 namespace {
 
+/// Number of max disjuncts we allow in removeOverwrites(). This is to avoid
+/// that the analysis of accesses in a statement is becoming too complex. Chosen
+/// to be relatively small because all the common cases should access only few
+/// array elements per statement.
+static int const SimplifyMaxDisjuncts = 4;
+
 STATISTIC(ScopsProcessed, "Number of SCoPs processed");
 STATISTIC(ScopsModified, "Number of SCoPs simplified");
 
@@ -55,6 +61,45 @@ static bool isExplicitAccess(MemoryAccess *MA) {
 
 static bool isImplicitWrite(MemoryAccess *MA) {
   return MA->isWrite() && MA->isOriginalScalarKind();
+}
+
+/// Like isl::union_map::add_map, but may also return an underapproximated
+/// result if getting too complex.
+///
+/// This is implemented by adding disjuncts to the results until the limit is
+/// reached.
+static isl::union_map underapproximatedAddMap(isl::union_map UMap,
+                                              isl::map Map) {
+  if (UMap.is_null() || Map.is_null())
+    return {};
+
+  isl::map PrevMap = UMap.extract_map(Map.get_space());
+
+  // Fast path: If known that we cannot exceed the disjunct limit, just add
+  // them.
+  if (isl_map_n_basic_map(PrevMap.get()) + isl_map_n_basic_map(Map.get()) <=
+      SimplifyMaxDisjuncts)
+    return UMap.add_map(Map);
+
+  isl::map Result = isl::map::empty(PrevMap.get_space());
+  PrevMap.foreach_basic_map([&Result](isl::basic_map BMap) -> isl::stat {
+    if (isl_map_n_basic_map(Result.get()) > SimplifyMaxDisjuncts)
+      return isl::stat::error;
+    Result = Result.unite(BMap);
+    return isl::stat::ok;
+  });
+  Map.foreach_basic_map([&Result](isl::basic_map BMap) -> isl::stat {
+    if (isl_map_n_basic_map(Result.get()) > SimplifyMaxDisjuncts)
+      return isl::stat::error;
+    Result = Result.unite(BMap);
+    return isl::stat::ok;
+  });
+
+  isl::union_map UResult =
+      UMap.subtract(isl::map::universe(PrevMap.get_space()));
+  UResult.add_map(Result);
+
+  return UResult;
 }
 
 /// Return a vector that contains MemoryAccesses in the order in
@@ -223,7 +268,10 @@ private:
 
         // If a value is read in-between, do not consider it as overwritten.
         if (MA->isRead()) {
-          WillBeOverwritten = WillBeOverwritten.subtract(AccRel);
+          // Invalidate all overwrites for the array it accesses to avoid too
+          // complex isl sets.
+          isl::map AccRelUniv = isl::map::universe(AccRel.get_space());
+          WillBeOverwritten = WillBeOverwritten.subtract(AccRelUniv);
           continue;
         }
 
@@ -239,8 +287,12 @@ private:
         }
 
         // Unconditional writes overwrite other values.
-        if (MA->isMustWrite())
-          WillBeOverwritten = WillBeOverwritten.add_map(AccRel);
+        if (MA->isMustWrite()) {
+          // Avoid too complex isl sets. If necessary, throw away some of the
+          // knowledge.
+          WillBeOverwritten =
+              underapproximatedAddMap(WillBeOverwritten, AccRel);
+        }
       }
     }
   }
@@ -385,14 +437,31 @@ private:
         // from the list of eligible writes. Don't just remove the accessed
         // elements, but any MemoryAccess that touches any of the invalidated
         // elements.
-        // { MemoryAccess[] }
-        isl::union_set TouchedAccesses =
-            FutureWrites.intersect_domain(AccRelWrapped)
-                .range()
-                .unwrap()
-                .range();
-        FutureWrites =
-            FutureWrites.uncurry().subtract_range(TouchedAccesses).curry();
+        SmallPtrSet<MemoryAccess *, 2> TouchedAccesses;
+        FutureWrites.intersect_domain(AccRelWrapped)
+            .foreach_map([&TouchedAccesses](isl::map Map) -> isl::stat {
+              MemoryAccess *MA = (MemoryAccess *)Map.get_space()
+                                     .range()
+                                     .unwrap()
+                                     .get_tuple_id(isl::dim::out)
+                                     .get_user();
+              TouchedAccesses.insert(MA);
+              return isl::stat::ok;
+            });
+        isl::union_map NewFutureWrites =
+            isl::union_map::empty(FutureWrites.get_space());
+        FutureWrites.foreach_map([&TouchedAccesses, &NewFutureWrites](
+                                     isl::map FutureWrite) -> isl::stat {
+          MemoryAccess *MA = (MemoryAccess *)FutureWrite.get_space()
+                                 .range()
+                                 .unwrap()
+                                 .get_tuple_id(isl::dim::out)
+                                 .get_user();
+          if (!TouchedAccesses.count(MA))
+            NewFutureWrites = NewFutureWrites.add_map(FutureWrite);
+          return isl::stat::ok;
+        });
+        FutureWrites = NewFutureWrites;
 
         if (MA->isMustWrite() && !ValSet.is_null()) {
           // { MemoryAccess[] }
