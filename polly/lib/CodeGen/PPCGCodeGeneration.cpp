@@ -1481,16 +1481,18 @@ void GPUNodeBuilder::clearLoops(Function *F) {
 
 std::tuple<Value *, Value *> GPUNodeBuilder::getGridSizes(ppcg_kernel *Kernel) {
   std::vector<Value *> Sizes;
-  isl_ast_build *Context = isl_ast_build_from_context(S.getContext());
+  isl::ast_build Context =
+      isl::ast_build::from_context(isl::manage(S.getContext()));
 
+  isl::multi_pw_aff GridSizePwAffs =
+      isl::manage(isl_multi_pw_aff_copy(Kernel->grid_size));
   for (long i = 0; i < Kernel->n_grid; i++) {
-    isl_pw_aff *Size = isl_multi_pw_aff_get_pw_aff(Kernel->grid_size, i);
-    isl_ast_expr *GridSize = isl_ast_build_expr_from_pw_aff(Context, Size);
-    Value *Res = ExprBuilder.create(GridSize);
+    isl::pw_aff Size = GridSizePwAffs.get_pw_aff(i);
+    isl::ast_expr GridSize = Context.expr_from(Size);
+    Value *Res = ExprBuilder.create(GridSize.release());
     Res = Builder.CreateTrunc(Res, Builder.getInt32Ty());
     Sizes.push_back(Res);
   }
-  isl_ast_build_free(Context);
 
   for (long i = Kernel->n_grid; i < 3; i++)
     Sizes.push_back(ConstantInt::get(Builder.getInt32Ty(), 1));
