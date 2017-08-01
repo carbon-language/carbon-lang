@@ -4,7 +4,7 @@
 ; GCN:      s_and_saveexec_b64 [[SAVEEXEC:s\[[0-9:]+\]]]
 ; GCN-NEXT: ; mask branch [[ENDIF:BB[0-9_]+]]
 ; GCN-NEXT: s_cbranch_execz [[ENDIF]]
-; GCN:      s_and_saveexec_b64
+; GCN:      s_and_b64 exec, exec, vcc
 ; GCN-NEXT: ; mask branch [[ENDIF]]
 ; GCN-NEXT: {{^BB[0-9_]+}}:
 ; GCN:      store_dword

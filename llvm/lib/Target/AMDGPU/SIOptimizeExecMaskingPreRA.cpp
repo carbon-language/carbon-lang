@@ -147,6 +147,30 @@ bool SIOptimizeExecMaskingPreRA::runOnMachineFunction(MachineFunction &MF) {
     }
 
     Changed = true;
+
+    // If the only use of saved exec in the removed instruction is S_AND_B64
+    // fold the copy now.
+    auto SaveExec = getOrExecSource(*Lead, *TII, MRI);
+    if (!SaveExec || !SaveExec->isFullCopy())
+      continue;
+
+    unsigned SavedExec = SaveExec->getOperand(0).getReg();
+    bool SafeToReplace = true;
+    for (auto& U : MRI.use_nodbg_instructions(SavedExec)) {
+      if (U.getParent() != SaveExec->getParent()) {
+        SafeToReplace = false;
+        break;
+      }
+
+      DEBUG(dbgs() << "Redundant EXEC COPY: " << *SaveExec << '\n');
+    }
+
+    if (SafeToReplace) {
+      LIS->RemoveMachineInstrFromMaps(*SaveExec);
+      SaveExec->eraseFromParent();
+      MRI.replaceRegWith(SavedExec, AMDGPU::EXEC);
+      LIS->removeInterval(SavedExec);
+    }
   }
 
   if (Changed) {
