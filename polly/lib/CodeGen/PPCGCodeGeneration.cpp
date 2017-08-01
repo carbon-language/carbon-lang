@@ -1057,42 +1057,35 @@ Value *GPUNodeBuilder::getArrayOffset(gpu_array_info *Array) {
   if (gpu_array_is_scalar(Array))
     return nullptr;
 
-  isl_ast_build *Build = isl_ast_build_from_context(S.getContext());
+  isl::ast_build Build =
+      isl::ast_build::from_context(isl::manage(S.getContext()));
 
-  isl_set *Min = isl_set_lexmin(isl_set_copy(Array->extent));
+  isl::set Min = isl::manage(isl_set_copy(Array->extent)).lexmin();
 
-  isl_set *ZeroSet = isl_set_universe(isl_set_get_space(Min));
+  isl::set ZeroSet = isl::set::universe(Min.get_space());
 
-  for (long i = 0; i < isl_set_dim(Min, isl_dim_set); i++)
-    ZeroSet = isl_set_fix_si(ZeroSet, isl_dim_set, i, 0);
+  for (long i = 0; i < Min.dim(isl::dim::set); i++)
+    ZeroSet = ZeroSet.fix_si(isl::dim::set, i, 0);
 
-  if (isl_set_is_subset(Min, ZeroSet)) {
-    isl_set_free(Min);
-    isl_set_free(ZeroSet);
-    isl_ast_build_free(Build);
+  if (Min.is_subset(ZeroSet)) {
     return nullptr;
   }
-  isl_set_free(ZeroSet);
 
-  isl_ast_expr *Result =
-      isl_ast_expr_from_val(isl_val_int_from_si(isl_set_get_ctx(Min), 0));
+  isl::ast_expr Result = isl::ast_expr::from_val(isl::val(Min.get_ctx(), 0));
 
-  for (long i = 0; i < isl_set_dim(Min, isl_dim_set); i++) {
+  for (long i = 0; i < Min.dim(isl::dim::set); i++) {
     if (i > 0) {
-      isl_pw_aff *Bound_I = isl_multi_pw_aff_get_pw_aff(Array->bound, i - 1);
-      isl_ast_expr *BExpr = isl_ast_build_expr_from_pw_aff(Build, Bound_I);
-      Result = isl_ast_expr_mul(Result, BExpr);
+      isl::pw_aff Bound_I =
+          isl::manage(isl_multi_pw_aff_get_pw_aff(Array->bound, i - 1));
+      isl::ast_expr BExpr = Build.expr_from(Bound_I);
+      Result = Result.mul(BExpr);
     }
-    isl_pw_aff *DimMin = isl_set_dim_min(isl_set_copy(Min), i);
-    isl_ast_expr *MExpr = isl_ast_build_expr_from_pw_aff(Build, DimMin);
-    Result = isl_ast_expr_add(Result, MExpr);
+    isl::pw_aff DimMin = Min.dim_min(i);
+    isl::ast_expr MExpr = Build.expr_from(DimMin);
+    Result = Result.add(MExpr);
   }
 
-  Value *ResultValue = ExprBuilder.create(Result);
-  isl_set_free(Min);
-  isl_ast_build_free(Build);
-
-  return ResultValue;
+  return ExprBuilder.create(Result.release());
 }
 
 Value *GPUNodeBuilder::getOrCreateManagedDeviceArray(gpu_array_info *Array,
