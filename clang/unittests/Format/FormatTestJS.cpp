@@ -259,6 +259,15 @@ TEST_F(FormatTestJS, ReservedWordsMethods) {
       "}\n");
 }
 
+TEST_F(FormatTestJS, ReservedWordsParenthesized) {
+  // All of these are statements using the keyword, not function calls.
+  verifyFormat("throw (x + y);\n"
+               "await (await x).y;\n"
+               "void (0);\n"
+               "delete (x.y);\n"
+               "return (x);\n");
+}
+
 TEST_F(FormatTestJS, CppKeywords) {
   // Make sure we don't mess stuff up because of C++ keywords.
   verifyFormat("return operator && (aa);");
