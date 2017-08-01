@@ -3577,7 +3577,6 @@ void RewriteInstance::rewriteFile() {
   // Update ELF book-keeping info.
   patchELFSectionHeaderTable();
 
-  // TODO: we should find a way to mark the binary as optimized by us.
   Out->keep();
 
   // If requested, open again the binary we just wrote to dump its EH Frame

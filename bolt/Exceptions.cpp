@@ -64,7 +64,7 @@ namespace bolt {
 //
 // The best visual representation of the tables comprising LSDA and
 // relationships between them is illustrated at:
-//   http://mentorembedded.github.io/cxx-abi/exceptions.pdf
+//   https://github.com/itanium-cxx-abi/cxx-abi/blob/master/exceptions.pdf
 // Keep in mind that GCC implementation deviates slightly from that document.
 //
 // To summarize, there are 4 tables in LSDA: call site table, actions table,
@@ -145,7 +145,7 @@ void BinaryFunction::parseLSDA(ArrayRef<uint8_t> LSDASectionData,
   intptr_t MaxTypeIndexTableOffset = 0;
 
   // The actual type info table starts at the same location, but grows in
-  // different direction. Encoding is different too (TTypeEncoding).
+  // opposite direction. TTypeEncoding is used to encode stored values.
   auto TypeTableStart = reinterpret_cast<const uint32_t *>(Ptr + TTypeEnd);
 
   uint8_t       CallSiteEncoding = *Ptr++;
