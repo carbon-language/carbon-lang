@@ -120,10 +120,6 @@ def SSE_DIV_ITINS_P : SizeItins<
 >;
 
 let Sched = WriteVecLogic in
-def SSE_VEC_BIT_ITINS_P : OpndItins<
-  IIC_SSE_BIT_P_RR, IIC_SSE_BIT_P_RM
->;
-
 def SSE_BIT_ITINS_P : OpndItins<
   IIC_SSE_BIT_P_RR, IIC_SSE_BIT_P_RM
 >;
@@ -312,13 +308,13 @@ multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       pat_rr, NoItinerary, d>,
+       pat_rr, IIC_SSE_BIT_P_RR, d>,
        Sched<[WriteVecLogic]>;
   def rm : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
        !if(Is2Addr,
            !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
            !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       pat_rm, NoItinerary, d>,
+       pat_rm, IIC_SSE_BIT_P_RM, d>,
        Sched<[WriteVecLogicLd, ReadAfterLd]>;
 }
 
@@ -2789,13 +2785,13 @@ let Predicates = [HasAVX2, prd] in
 // These are ordered here for pattern ordering requirements with the fp versions
 
 defm PAND  : PDI_binop_all<0xDB, "pand", and, v2i64, v4i64,
-                           SSE_VEC_BIT_ITINS_P, 1, NoVLX>;
+                           SSE_BIT_ITINS_P, 1, NoVLX>;
 defm POR   : PDI_binop_all<0xEB, "por", or, v2i64, v4i64,
-                           SSE_VEC_BIT_ITINS_P, 1, NoVLX>;
+                           SSE_BIT_ITINS_P, 1, NoVLX>;
 defm PXOR  : PDI_binop_all<0xEF, "pxor", xor, v2i64, v4i64,
-                           SSE_VEC_BIT_ITINS_P, 1, NoVLX>;
+                           SSE_BIT_ITINS_P, 1, NoVLX>;
 defm PANDN : PDI_binop_all<0xDF, "pandn", X86andnp, v2i64, v4i64,
-                           SSE_VEC_BIT_ITINS_P, 0, NoVLX>;
+                           SSE_BIT_ITINS_P, 0, NoVLX>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Logical Instructions

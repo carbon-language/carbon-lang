@@ -114,12 +114,8 @@ define <4 x float> @test_andps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a
 ;
 ; ATOM-LABEL: test_andps:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    andps %xmm1, %xmm0
-; ATOM-NEXT:    andps (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    andps %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    andps (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -174,12 +170,8 @@ define <4 x float> @test_andnotps(<4 x float> %a0, <4 x float> %a1, <4 x float> 
 ;
 ; ATOM-LABEL: test_andnotps:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    andnps %xmm1, %xmm0
-; ATOM-NEXT:    andnps (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    andnps %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    andnps (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -239,7 +231,7 @@ define <4 x float> @test_cmpps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    cmpeqps %xmm0, %xmm1 # sched: [5:5.00]
 ; ATOM-NEXT:    cmpeqps (%rdi), %xmm0 # sched: [5:5.00]
-; ATOM-NEXT:    orps %xmm1, %xmm0
+; ATOM-NEXT:    orps %xmm1, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_cmpps:
@@ -1748,12 +1740,8 @@ define <4 x float> @test_orps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a2
 ;
 ; ATOM-LABEL: test_orps:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    orps %xmm1, %xmm0
-; ATOM-NEXT:    orps (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    orps %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    orps (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -2686,12 +2674,8 @@ define <4 x float> @test_xorps(<4 x float> %a0, <4 x float> %a1, <4 x float> *%a
 ;
 ; ATOM-LABEL: test_xorps:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    xorps %xmm1, %xmm0
-; ATOM-NEXT:    xorps (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    xorps %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    xorps (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]

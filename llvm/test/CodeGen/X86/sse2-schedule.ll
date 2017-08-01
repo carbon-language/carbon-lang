@@ -115,8 +115,8 @@ define <2 x double> @test_andpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; ATOM-LABEL: test_andpd:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    andpd %xmm1, %xmm0
-; ATOM-NEXT:    andpd (%rdi), %xmm0
+; ATOM-NEXT:    andpd %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    andpd (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    addpd %xmm1, %xmm0 # sched: [6:3.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
@@ -175,8 +175,8 @@ define <2 x double> @test_andnotpd(<2 x double> %a0, <2 x double> %a1, <2 x doub
 ;
 ; ATOM-LABEL: test_andnotpd:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    andnpd %xmm1, %xmm0
-; ATOM-NEXT:    andnpd (%rdi), %xmm0
+; ATOM-NEXT:    andnpd %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    andnpd (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    addpd %xmm1, %xmm0 # sched: [6:3.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
@@ -239,7 +239,7 @@ define <2 x double> @test_cmppd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    cmpeqpd %xmm0, %xmm1 # sched: [6:3.00]
 ; ATOM-NEXT:    cmpeqpd (%rdi), %xmm0 # sched: [7:3.50]
-; ATOM-NEXT:    orpd %xmm1, %xmm0
+; ATOM-NEXT:    orpd %xmm1, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_cmppd:
@@ -923,7 +923,7 @@ define float @test_cvtsd2ss(double %a0, double *%a1) {
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    movsd {{.*#+}} xmm1 = mem[0],zero sched: [1:1.00]
 ; ATOM-NEXT:    cvtsd2ss %xmm0, %xmm2 # sched: [6:3.00]
-; ATOM-NEXT:    xorps %xmm0, %xmm0
+; ATOM-NEXT:    xorps %xmm0, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    cvtsd2ss %xmm1, %xmm0 # sched: [6:3.00]
 ; ATOM-NEXT:    addss %xmm2, %xmm0 # sched: [5:5.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
@@ -1101,7 +1101,7 @@ define double @test_cvtss2sd(float %a0, float *%a1) {
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    movss {{.*#+}} xmm1 = mem[0],zero,zero,zero sched: [1:1.00]
 ; ATOM-NEXT:    cvtss2sd %xmm0, %xmm2 # sched: [6:3.00]
-; ATOM-NEXT:    xorps %xmm0, %xmm0
+; ATOM-NEXT:    xorps %xmm0, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    cvtss2sd %xmm1, %xmm0 # sched: [6:3.00]
 ; ATOM-NEXT:    addsd %xmm2, %xmm0 # sched: [5:5.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
@@ -2757,8 +2757,8 @@ define <2 x double> @test_orpd(<2 x double> %a0, <2 x double> %a1, <2 x double> 
 ;
 ; ATOM-LABEL: test_orpd:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    orpd %xmm1, %xmm0
-; ATOM-NEXT:    orpd (%rdi), %xmm0
+; ATOM-NEXT:    orpd %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    orpd (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    addpd %xmm1, %xmm0 # sched: [6:3.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
@@ -6842,8 +6842,8 @@ define <2 x double> @test_xorpd(<2 x double> %a0, <2 x double> %a1, <2 x double>
 ;
 ; ATOM-LABEL: test_xorpd:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    xorpd %xmm1, %xmm0
-; ATOM-NEXT:    xorpd (%rdi), %xmm0
+; ATOM-NEXT:    xorpd %xmm1, %xmm0 # sched: [1:0.50]
+; ATOM-NEXT:    xorpd (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    addpd %xmm1, %xmm0 # sched: [6:3.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
