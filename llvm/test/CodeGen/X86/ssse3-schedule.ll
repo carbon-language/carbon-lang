@@ -128,49 +128,58 @@ declare <4 x i32> @llvm.x86.ssse3.pabs.d.128(<4 x i32>) nounwind readnone
 define <8 x i16> @test_pabsw(<8 x i16> %a0, <8 x i16> *%a1) {
 ; GENERIC-LABEL: test_pabsw:
 ; GENERIC:       # BB#0:
-; GENERIC-NEXT:    pabsw %xmm0, %xmm0 # sched: [1:0.50]
+; GENERIC-NEXT:    pabsw %xmm0, %xmm1 # sched: [1:0.50]
+; GENERIC-NEXT:    pabsw (%rdi), %xmm0 # sched: [7:0.50]
+; GENERIC-NEXT:    por %xmm1, %xmm0 # sched: [1:0.33]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_pabsw:
 ; ATOM:       # BB#0:
+; ATOM-NEXT:    pabsw (%rdi), %xmm1 # sched: [1:1.00]
 ; ATOM-NEXT:    pabsw %xmm0, %xmm0 # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    por %xmm0, %xmm1 # sched: [1:0.50]
+; ATOM-NEXT:    movdqa %xmm1, %xmm0 # sched: [1:0.50]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_pabsw:
 ; SLM:       # BB#0:
-; SLM-NEXT:    pabsw %xmm0, %xmm0 # sched: [1:0.50]
+; SLM-NEXT:    pabsw %xmm0, %xmm1 # sched: [1:0.50]
+; SLM-NEXT:    pabsw (%rdi), %xmm0 # sched: [4:1.00]
+; SLM-NEXT:    por %xmm1, %xmm0 # sched: [1:0.50]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_pabsw:
 ; SANDY:       # BB#0:
 ; SANDY-NEXT:    vpabsw %xmm0, %xmm0 # sched: [1:0.50]
+; SANDY-NEXT:    vpabsw (%rdi), %xmm1 # sched: [7:0.50]
+; SANDY-NEXT:    vpor %xmm1, %xmm0, %xmm0 # sched: [1:0.33]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pabsw:
 ; HASWELL:       # BB#0:
 ; HASWELL-NEXT:    vpabsw %xmm0, %xmm0 # sched: [1:0.50]
+; HASWELL-NEXT:    vpabsw (%rdi), %xmm1 # sched: [5:0.50]
+; HASWELL-NEXT:    vpor %xmm1, %xmm0, %xmm0 # sched: [1:0.33]
 ; HASWELL-NEXT:    retq # sched: [1:1.00]
 ;
 ; BTVER2-LABEL: test_pabsw:
 ; BTVER2:       # BB#0:
+; BTVER2-NEXT:    vpabsw (%rdi), %xmm1 # sched: [6:1.00]
 ; BTVER2-NEXT:    vpabsw %xmm0, %xmm0 # sched: [1:0.50]
+; BTVER2-NEXT:    vpor %xmm1, %xmm0, %xmm0 # sched: [1:0.50]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_pabsw:
 ; ZNVER1:       # BB#0:
+; ZNVER1-NEXT:    vpabsw (%rdi), %xmm1 # sched: [8:0.50]
 ; ZNVER1-NEXT:    vpabsw %xmm0, %xmm0 # sched: [1:0.25]
+; ZNVER1-NEXT:    vpor %xmm1, %xmm0, %xmm0 # sched: [1:0.25]
 ; ZNVER1-NEXT:    retq # sched: [5:0.50]
   %1 = call <8 x i16> @llvm.x86.ssse3.pabs.w.128(<8 x i16> %a0)
   %2 = load <8 x i16>, <8 x i16> *%a1, align 16
   %3 = call <8 x i16> @llvm.x86.ssse3.pabs.w.128(<8 x i16> %2)
   %4 = or <8 x i16> %1, %3
-  ret <8 x i16> %1
+  ret <8 x i16> %4
 }
 declare <8 x i16> @llvm.x86.ssse3.pabs.w.128(<8 x i16>) nounwind readnone
 
@@ -591,41 +600,48 @@ define <8 x i16> @test_pmulhrsw(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ; GENERIC-LABEL: test_pmulhrsw:
 ; GENERIC:       # BB#0:
 ; GENERIC-NEXT:    pmulhrsw %xmm1, %xmm0 # sched: [3:1.00]
+; GENERIC-NEXT:    pmulhrsw (%rdi), %xmm0 # sched: [9:1.00]
 ; GENERIC-NEXT:    retq # sched: [1:1.00]
 ;
 ; ATOM-LABEL: test_pmulhrsw:
 ; ATOM:       # BB#0:
 ; ATOM-NEXT:    pmulhrsw %xmm1, %xmm0 # sched: [5:5.00]
+; ATOM-NEXT:    pmulhrsw (%rdi), %xmm0 # sched: [5:5.00]
 ; ATOM-NEXT:    retq # sched: [79:39.50]
 ;
 ; SLM-LABEL: test_pmulhrsw:
 ; SLM:       # BB#0:
 ; SLM-NEXT:    pmulhrsw %xmm1, %xmm0 # sched: [4:1.00]
+; SLM-NEXT:    pmulhrsw (%rdi), %xmm0 # sched: [7:1.00]
 ; SLM-NEXT:    retq # sched: [4:1.00]
 ;
 ; SANDY-LABEL: test_pmulhrsw:
 ; SANDY:       # BB#0:
 ; SANDY-NEXT:    vpmulhrsw %xmm1, %xmm0, %xmm0 # sched: [3:1.00]
+; SANDY-NEXT:    vpmulhrsw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
 ; SANDY-NEXT:    retq # sched: [1:1.00]
 ;
 ; HASWELL-LABEL: test_pmulhrsw:
 ; HASWELL:       # BB#0:
 ; HASWELL-NEXT:    vpmulhrsw %xmm1, %xmm0, %xmm0 # sched: [5:1.00]
+; HASWELL-NEXT:    vpmulhrsw (%rdi), %xmm0, %xmm0 # sched: [9:1.00]
 ; HASWELL-NEXT:    retq # sched: [1:1.00]
 ;
 ; BTVER2-LABEL: test_pmulhrsw:
 ; BTVER2:       # BB#0:
 ; BTVER2-NEXT:    vpmulhrsw %xmm1, %xmm0, %xmm0 # sched: [2:1.00]
+; BTVER2-NEXT:    vpmulhrsw (%rdi), %xmm0, %xmm0 # sched: [7:1.00]
 ; BTVER2-NEXT:    retq # sched: [4:1.00]
 ;
 ; ZNVER1-LABEL: test_pmulhrsw:
 ; ZNVER1:       # BB#0:
 ; ZNVER1-NEXT:    vpmulhrsw %xmm1, %xmm0, %xmm0 # sched: [4:1.00]
+; ZNVER1-NEXT:    vpmulhrsw (%rdi), %xmm0, %xmm0 # sched: [11:1.00]
 ; ZNVER1-NEXT:    retq # sched: [5:0.50]
   %1 = call <8 x i16> @llvm.x86.ssse3.pmul.hr.sw.128(<8 x i16> %a0, <8 x i16> %a1)
   %2 = load <8 x i16>, <8 x i16> *%a2, align 16
   %3 = call <8 x i16> @llvm.x86.ssse3.pmul.hr.sw.128(<8 x i16> %1, <8 x i16> %2)
-  ret <8 x i16> %1
+  ret <8 x i16> %3
 }
 declare <8 x i16> @llvm.x86.ssse3.pmul.hr.sw.128(<8 x i16>, <8 x i16>) nounwind readnone
 
