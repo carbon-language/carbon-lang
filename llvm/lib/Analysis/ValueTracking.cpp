@@ -4452,14 +4452,14 @@ isImpliedCondMatchingImmOperands(CmpInst::Predicate APred, const Value *ALHS,
 /// false.  Otherwise, return None if we can't infer anything.
 static Optional<bool> isImpliedCondICmps(const ICmpInst *LHS,
                                          const ICmpInst *RHS,
-                                         const DataLayout &DL, bool LHSIsFalse,
+                                         const DataLayout &DL, bool LHSIsTrue,
                                          unsigned Depth) {
   Value *ALHS = LHS->getOperand(0);
   Value *ARHS = LHS->getOperand(1);
   // The rest of the logic assumes the LHS condition is true.  If that's not the
   // case, invert the predicate to make it so.
   ICmpInst::Predicate APred =
-      LHSIsFalse ? LHS->getInversePredicate() : LHS->getPredicate();
+      LHSIsTrue ? LHS->getPredicate() : LHS->getInversePredicate();
 
   Value *BLHS = RHS->getOperand(0);
   Value *BRHS = RHS->getOperand(1);
@@ -4498,7 +4498,7 @@ static Optional<bool> isImpliedCondICmps(const ICmpInst *LHS,
 /// RHS to be an icmp and the LHS to be an 'and' or an 'or' instruction.
 static Optional<bool> isImpliedCondAndOr(const BinaryOperator *LHS,
                                          const ICmpInst *RHS,
-                                         const DataLayout &DL, bool LHSIsFalse,
+                                         const DataLayout &DL, bool LHSIsTrue,
                                          unsigned Depth) {
   // The LHS must be an 'or' or an 'and' instruction.
   assert((LHS->getOpcode() == Instruction::And ||
@@ -4513,14 +4513,14 @@ static Optional<bool> isImpliedCondAndOr(const BinaryOperator *LHS,
   // false.  Similarly, if the result of an 'and' is true, then we know both
   // legs of the 'and' are true.
   Value *ALHS, *ARHS;
-  if ((LHSIsFalse && match(LHS, m_Or(m_Value(ALHS), m_Value(ARHS)))) ||
-      (!LHSIsFalse && match(LHS, m_And(m_Value(ALHS), m_Value(ARHS))))) {
+  if ((!LHSIsTrue && match(LHS, m_Or(m_Value(ALHS), m_Value(ARHS)))) ||
+      (LHSIsTrue && match(LHS, m_And(m_Value(ALHS), m_Value(ARHS))))) {
     // FIXME: Make this non-recursion.
     if (Optional<bool> Implication =
-            isImpliedCondition(ALHS, RHS, DL, LHSIsFalse, Depth + 1))
+            isImpliedCondition(ALHS, RHS, DL, LHSIsTrue, Depth + 1))
       return Implication;
     if (Optional<bool> Implication =
-            isImpliedCondition(ARHS, RHS, DL, LHSIsFalse, Depth + 1))
+            isImpliedCondition(ARHS, RHS, DL, LHSIsTrue, Depth + 1))
       return Implication;
     return None;
   }
@@ -4528,7 +4528,7 @@ static Optional<bool> isImpliedCondAndOr(const BinaryOperator *LHS,
 }
 
 Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
-                                        const DataLayout &DL, bool LHSIsFalse,
+                                        const DataLayout &DL, bool LHSIsTrue,
                                         unsigned Depth) {
   // A mismatch occurs when we compare a scalar cmp to a vector cmp, for
   // example.
@@ -4540,7 +4540,7 @@ Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
 
   // LHS ==> RHS by definition
   if (LHS == RHS)
-    return !LHSIsFalse;
+    return LHSIsTrue;
 
   // FIXME: Extending the code below to handle vectors.
   if (OpTy->isVectorTy())
@@ -4552,7 +4552,7 @@ Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
   const ICmpInst *LHSCmp = dyn_cast<ICmpInst>(LHS);
   const ICmpInst *RHSCmp = dyn_cast<ICmpInst>(RHS);
   if (LHSCmp && RHSCmp)
-    return isImpliedCondICmps(LHSCmp, RHSCmp, DL, LHSIsFalse, Depth);
+    return isImpliedCondICmps(LHSCmp, RHSCmp, DL, LHSIsTrue, Depth);
 
   // The LHS should be an 'or' or an 'and' instruction.  We expect the RHS to be
   // an icmp. FIXME: Add support for and/or on the RHS.
@@ -4560,7 +4560,7 @@ Optional<bool> llvm::isImpliedCondition(const Value *LHS, const Value *RHS,
   if (LHSBO && RHSCmp) {
     if ((LHSBO->getOpcode() == Instruction::And ||
          LHSBO->getOpcode() == Instruction::Or))
-      return isImpliedCondAndOr(LHSBO, RHSCmp, DL, LHSIsFalse, Depth);
+      return isImpliedCondAndOr(LHSBO, RHSCmp, DL, LHSIsTrue, Depth);
   }
   return None;
 }

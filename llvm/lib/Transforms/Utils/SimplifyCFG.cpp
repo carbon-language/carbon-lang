@@ -5761,9 +5761,9 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     if (PBI && PBI->isConditional() &&
         PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
       assert(PBI->getSuccessor(0) == BB || PBI->getSuccessor(1) == BB);
-      bool CondIsFalse = PBI->getSuccessor(1) == BB;
+      bool CondIsTrue = PBI->getSuccessor(0) == BB;
       Optional<bool> Implication = isImpliedCondition(
-          PBI->getCondition(), BI->getCondition(), DL, CondIsFalse);
+          PBI->getCondition(), BI->getCondition(), DL, CondIsTrue);
       if (Implication) {
         // Turn this into a branch on constant.
         auto *OldCond = BI->getCondition();
