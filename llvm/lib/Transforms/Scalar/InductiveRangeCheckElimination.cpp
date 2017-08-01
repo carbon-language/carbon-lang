@@ -779,6 +779,7 @@ LoopStructure::parseLoopStructure(ScalarEvolution &SE, BranchProbabilityInfo &BP
     if (const SCEVConstant *StepExpr =
             dyn_cast<SCEVConstant>(AR->getStepRecurrence(SE))) {
       ConstantInt *StepCI = StepExpr->getValue();
+      assert(!StepCI->isZero() && "Zero step?");
       if (StepCI->isOne() || StepCI->isMinusOne()) {
         IsIncreasing = StepCI->isOne();
         return true;
