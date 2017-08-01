@@ -1104,6 +1104,7 @@ Value *GPUNodeBuilder::getOrCreateManagedDeviceArray(gpu_array_info *Array,
       HostPtr = BlockGen.getOrCreateAlloca(ArrayInfo);
     else
       HostPtr = ArrayInfo->getBasePtr();
+    HostPtr = getLatestValue(HostPtr);
 
     Value *Offset = getArrayOffset(Array);
     if (Offset) {
@@ -1137,6 +1138,7 @@ void GPUNodeBuilder::createDataTransfer(__isl_take isl_ast_node *TransferStmt,
     HostPtr = BlockGen.getOrCreateAlloca(ScopArray);
   else
     HostPtr = ScopArray->getBasePtr();
+  HostPtr = getLatestValue(HostPtr);
 
   if (Offset) {
     HostPtr = Builder.CreatePointerCast(
