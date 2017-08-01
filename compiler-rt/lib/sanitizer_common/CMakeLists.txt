@@ -31,6 +31,7 @@ set(SANITIZER_SOURCES_NOTERMINATION
   sanitizer_stoptheworld_mac.cc
   sanitizer_suppressions.cc
   sanitizer_symbolizer.cc
+  sanitizer_symbolizer_fuchsia.cc
   sanitizer_symbolizer_libbacktrace.cc
   sanitizer_symbolizer_mac.cc
   sanitizer_symbolizer_win.cc
