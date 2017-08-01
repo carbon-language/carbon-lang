@@ -1500,6 +1500,7 @@ InductiveRangeCheck::computeSafeIterationSpace(
   const SCEVConstant *B = dyn_cast<SCEVConstant>(IndVar->getStepRecurrence(SE));
   if (!B)
     return None;
+  assert(!B->isZero() && "Recurrence with zero step?");
 
   const SCEV *C = getOffset();
   const SCEVConstant *D = dyn_cast<SCEVConstant>(getScale());
