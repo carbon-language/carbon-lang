@@ -896,7 +896,7 @@ public:
     case SpecialSubKind::iostream:
       return StringView("basic_iostream");
     }
-    return StringView();
+    _LIBCPP_UNREACHABLE();
   }
 
   void printLeft(OutputStream &S) const override {
@@ -945,7 +945,7 @@ public:
     case SpecialSubKind::iostream:
       return StringView("iostream");
     }
-    return StringView();
+    _LIBCPP_UNREACHABLE();
   }
 
   void printLeft(OutputStream &S) const override {
