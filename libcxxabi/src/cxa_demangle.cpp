@@ -5867,6 +5867,8 @@ parse_encoding(const char* first, const char* last, Db& db)
                     if (t != last && *t == 'v')
                     {
                         ++t;
+                        if (db.names.empty())
+                            return first;
                         Node* name = db.names.back();
                         db.names.pop_back();
                         result = db.make<TopLevelFunctionDecl>(
