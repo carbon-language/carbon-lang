@@ -15713,38 +15713,23 @@ SDValue DAGCombiner::visitSCALAR_TO_VECTOR(SDNode *N) {
   EVT VT = N->getValueType(0);
 
   // Replace a SCALAR_TO_VECTOR(EXTRACT_VECTOR_ELT(V,C0)) pattern
-  // with a VECTOR_SHUFFLE and possible truncate.
+  // with a VECTOR_SHUFFLE.
   if (InVal.getOpcode() == ISD::EXTRACT_VECTOR_ELT) {
     SDValue InVec = InVal->getOperand(0);
     SDValue EltNo = InVal->getOperand(1);
-    auto InVecT = InVec.getValueType();
-    ConstantSDNode *C0 = dyn_cast<ConstantSDNode>(EltNo);
 
-    if (C0) {
-      SmallVector<int, 8> NewMask(InVecT.getVectorNumElements(), -1);
+    // FIXME: We could support implicit truncation if the shuffle can be
+    // scaled to a smaller vector scalar type.
+    ConstantSDNode *C0 = dyn_cast<ConstantSDNode>(EltNo);
+    if (C0 && VT == InVec.getValueType() &&
+        VT.getScalarType() == InVal.getValueType()) {
+      SmallVector<int, 8> NewMask(VT.getVectorNumElements(), -1);
       int Elt = C0->getZExtValue();
       NewMask[0] = Elt;
-      SDValue Val;
-      if (VT.getVectorNumElements() <= InVecT.getVectorNumElements() &&
-          TLI.isShuffleMaskLegal(NewMask, VT)) {
-        Val = DAG.getVectorShuffle(InVecT, SDLoc(N), InVec,
-                                   DAG.getUNDEF(InVecT), NewMask);
-        // If the initial vector is the correct size this shuffle is a
-        // valid result.
-        if (VT == InVecT)
-          return Val;
-        // If not we must truncate the vector.
-        if (VT.getVectorNumElements() != InVecT.getVectorNumElements()) {
-          MVT IdxTy = TLI.getVectorIdxTy(DAG.getDataLayout());
-          SDValue ZeroIdx = DAG.getConstant(0, SDLoc(N), IdxTy);
-          EVT SubVT =
-              EVT::getVectorVT(*DAG.getContext(), InVecT.getVectorElementType(),
-                               VT.getVectorNumElements());
-          Val = DAG.getNode(ISD::EXTRACT_SUBVECTOR, SDLoc(N), SubVT, Val,
-                            ZeroIdx);
-          return Val;
-        }
-      }
+
+      if (TLI.isShuffleMaskLegal(NewMask, VT))
+        return DAG.getVectorShuffle(VT, SDLoc(N), InVec, DAG.getUNDEF(VT),
+                                    NewMask);
     }
   }
 
