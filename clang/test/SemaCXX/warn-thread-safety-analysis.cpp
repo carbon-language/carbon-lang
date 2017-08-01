@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -Wno-thread-safety-negative -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -Wno-thread-safety-negative -fcxx-exceptions -DUSE_ASSERT_CAPABILITY=0 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -Wno-thread-safety-negative -fcxx-exceptions -DUSE_ASSERT_CAPABILITY=1 %s
 
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 -Wc++98-compat %s
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
@@ -13,8 +14,15 @@
 #define ACQUIRED_BEFORE(...) __attribute__((acquired_before(__VA_ARGS__)))
 #define EXCLUSIVE_LOCK_FUNCTION(...)    __attribute__((exclusive_lock_function(__VA_ARGS__)))
 #define SHARED_LOCK_FUNCTION(...)       __attribute__((shared_lock_function(__VA_ARGS__)))
+
+#if USE_ASSERT_CAPABILITY
+#define ASSERT_EXCLUSIVE_LOCK(...)      __attribute__((assert_capability(__VA_ARGS__)))
+#define ASSERT_SHARED_LOCK(...)         __attribute__((assert_shared_capability(__VA_ARGS__)))
+#else
 #define ASSERT_EXCLUSIVE_LOCK(...)      __attribute__((assert_exclusive_lock(__VA_ARGS__)))
 #define ASSERT_SHARED_LOCK(...)         __attribute__((assert_shared_lock(__VA_ARGS__)))
+#endif
+
 #define EXCLUSIVE_TRYLOCK_FUNCTION(...) __attribute__((exclusive_trylock_function(__VA_ARGS__)))
 #define SHARED_TRYLOCK_FUNCTION(...)    __attribute__((shared_trylock_function(__VA_ARGS__)))
 #define UNLOCK_FUNCTION(...)            __attribute__((unlock_function(__VA_ARGS__)))
