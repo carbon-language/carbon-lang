@@ -499,12 +499,13 @@ void SanitizerCoverageModule::CreatePCArray(Function &F,
                                             ArrayRef<BasicBlock *> AllBlocks) {
   size_t N = AllBlocks.size();
   assert(N);
-  assert(&F.getEntryBlock() == AllBlocks[0]);
   SmallVector<Constant *, 16> PCs;
   IRBuilder<> IRB(&*F.getEntryBlock().getFirstInsertionPt());
-  PCs.push_back((Constant *)IRB.CreatePointerCast(&F, Int8PtrTy));
-  for (size_t i = 1; i < N; i++)
-    PCs.push_back(BlockAddress::get(AllBlocks[i]));
+  for (size_t i = 0; i < N; i++)
+    if (&F.getEntryBlock() == AllBlocks[i])
+      PCs.push_back((Constant *)IRB.CreatePointerCast(&F, Int8PtrTy));
+    else
+      PCs.push_back(BlockAddress::get(AllBlocks[i]));
   FunctionPCsArray =
       CreateFunctionLocalArrayInSection(N, F, Int8PtrTy, SanCovPCsSectionName);
   FunctionPCsArray->setInitializer(
