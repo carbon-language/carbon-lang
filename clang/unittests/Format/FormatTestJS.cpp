@@ -1400,6 +1400,17 @@ TEST_F(FormatTestJS, InterfaceDeclarations) {
                "}");
 }
 
+TEST_F(FormatTestJS, ObjectTypesInExtendsImplements) {
+  verifyFormat("class C extends {} {}");
+  verifyFormat("class C implements {bar: number} {}");
+  // Somewhat odd, but probably closest to reasonable formatting?
+  verifyFormat("class C implements {\n"
+               "  bar: number,\n"
+               "  baz: string,\n"
+               "} {}");
+  verifyFormat("class C<P extends {}> {}");
+}
+
 TEST_F(FormatTestJS, EnumDeclarations) {
   verifyFormat("enum Foo {\n"
                "  A = 1,\n"
