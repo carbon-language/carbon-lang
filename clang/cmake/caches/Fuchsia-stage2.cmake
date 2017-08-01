@@ -68,6 +68,7 @@ set(LLVM_TOOLCHAIN_TOOLS
   llvm-size
   llvm-symbolizer
   opt
+  sancov
   CACHE STRING "")
 
 set(LLVM_DISTRIBUTION_COMPONENTS
