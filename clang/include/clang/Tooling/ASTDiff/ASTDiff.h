@@ -64,7 +64,7 @@ struct Node {
 
 class ASTDiff {
 public:
-  ASTDiff(SyntaxTree &T1, SyntaxTree &T2, const ComparisonOptions &Options);
+  ASTDiff(SyntaxTree &Src, SyntaxTree &Dst, const ComparisonOptions &Options);
   ~ASTDiff();
 
   // Returns a list of matches.
@@ -92,7 +92,7 @@ public:
   /// Constructs a tree from any AST node.
   template <class T>
   SyntaxTree(T *Node, const ASTContext &AST)
-      : TreeImpl(llvm::make_unique<SyntaxTreeImpl>(this, Node, AST)) {}
+      : TreeImpl(llvm::make_unique<Impl>(this, Node, AST)) {}
   ~SyntaxTree();
 
   const Node &getNode(NodeId Id) const;
@@ -104,7 +104,8 @@ public:
 
   void printAsJson(raw_ostream &OS);
 
-  std::unique_ptr<SyntaxTreeImpl> TreeImpl;
+  class Impl;
+  std::unique_ptr<Impl> TreeImpl;
 };
 
 struct ComparisonOptions {
