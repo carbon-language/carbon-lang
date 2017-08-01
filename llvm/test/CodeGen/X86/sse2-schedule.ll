@@ -2816,12 +2816,8 @@ define <8 x i16> @test_packssdw(<4 x i32> %a0, <4 x i32> %a1, <4 x i32> *%a2) {
 ;
 ; ATOM-LABEL: test_packssdw:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    packssdw %xmm1, %xmm0
-; ATOM-NEXT:    packssdw (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    packssdw %xmm1, %xmm0 # sched: [1:1.00]
+; ATOM-NEXT:    packssdw (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -2874,12 +2870,8 @@ define <16 x i8> @test_packsswb(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; ATOM-LABEL: test_packsswb:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    packsswb %xmm1, %xmm0
-; ATOM-NEXT:    packsswb (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    packsswb %xmm1, %xmm0 # sched: [1:1.00]
+; ATOM-NEXT:    packsswb (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
@@ -2932,12 +2924,8 @@ define <16 x i8> @test_packuswb(<8 x i16> %a0, <8 x i16> %a1, <8 x i16> *%a2) {
 ;
 ; ATOM-LABEL: test_packuswb:
 ; ATOM:       # BB#0:
-; ATOM-NEXT:    packuswb %xmm1, %xmm0
-; ATOM-NEXT:    packuswb (%rdi), %xmm0
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
-; ATOM-NEXT:    nop # sched: [1:0.50]
+; ATOM-NEXT:    packuswb %xmm1, %xmm0 # sched: [1:1.00]
+; ATOM-NEXT:    packuswb (%rdi), %xmm0 # sched: [1:1.00]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
 ; ATOM-NEXT:    nop # sched: [1:0.50]
