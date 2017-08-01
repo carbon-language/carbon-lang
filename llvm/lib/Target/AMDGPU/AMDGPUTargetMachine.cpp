@@ -123,6 +123,12 @@ static cl::opt<bool> LateCFGStructurize(
   cl::init(false),
   cl::Hidden);
 
+static cl::opt<bool> EnableAMDGPUFunctionCalls(
+  "amdgpu-function-calls",
+  cl::Hidden,
+  cl::desc("Enable AMDGPU function call support"),
+  cl::init(false));
+
 extern "C" void LLVMInitializeAMDGPUTarget() {
   // Register the target
   RegisterTargetMachine<R600TargetMachine> X(getTheAMDGPUTarget());
@@ -268,6 +274,11 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
 }
 
 AMDGPUTargetMachine::~AMDGPUTargetMachine() = default;
+
+bool AMDGPUTargetMachine::enableFunctionCalls() const {
+  return EnableAMDGPUFunctionCalls &&
+         getTargetTriple().getArch() == Triple::amdgcn;
+}
 
 StringRef AMDGPUTargetMachine::getGPUName(const Function &F) const {
   Attribute GPUAttr = F.getFnAttribute("target-cpu");

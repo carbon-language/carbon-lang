@@ -317,6 +317,45 @@ def SI_RETURN_TO_EPILOG : SPseudoInstSI <
   let DisableWQM = 1;
 }
 
+// Return for returning function calls.
+def SI_RETURN : SPseudoInstSI <
+  (outs), (ins), [],
+  "; return"> {
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let isReturn = 1;
+  let SchedRW = [WriteBranch];
+}
+
+// Return for returning function calls.
+def SI_CALL : SPseudoInstSI <
+  (outs), (ins SSrc_b64:$src0), [(AMDGPUcall i64:$src0)],
+  "; call $src0"> {
+  let Size = 4;
+  let isCall = 1;
+  let SchedRW = [WriteBranch];
+  let usesCustomInserter = 1;
+}
+
+def ADJCALLSTACKUP : SPseudoInstSI<
+  (outs), (ins i32imm:$amt0, i32imm:$amt1),
+  [(callseq_start timm:$amt0, timm:$amt1)],
+  "; adjcallstackup $amt0 $amt1"> {
+  let Size = 8; // Worst case. (s_add_u32 + constant)
+  let FixedSize = 1;
+  let hasSideEffects = 1;
+  let usesCustomInserter = 1;
+}
+
+def ADJCALLSTACKDOWN : SPseudoInstSI<
+  (outs), (ins i32imm:$amt1, i32imm:$amt2),
+  [(callseq_end timm:$amt1, timm:$amt2)],
+  "; adjcallstackdown $amt1"> {
+  let Size = 8; // Worst case. (s_add_u32 + constant)
+  let hasSideEffects = 1;
+  let usesCustomInserter = 1;
+}
+
 let Defs = [M0, EXEC],
   UseNamedOperandTable = 1 in {
 

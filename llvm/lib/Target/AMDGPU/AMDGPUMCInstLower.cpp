@@ -121,6 +121,9 @@ bool AMDGPUMCInstLower::lowerOperand(const MachineOperand &MO,
     MCOp = MCOperand::createExpr(Expr);
     return true;
   }
+  case MachineOperand::MO_RegisterMask:
+    // Regmasks are like implicit defs.
+    return false;
   }
 }
 

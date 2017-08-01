@@ -575,6 +575,41 @@ void SIFrameLowering::processFunctionBeforeFrameFinalized(
   }
 }
 
+MachineBasicBlock::iterator SIFrameLowering::eliminateCallFramePseudoInstr(
+  MachineFunction &MF,
+  MachineBasicBlock &MBB,
+  MachineBasicBlock::iterator I) const {
+  int64_t Amount = I->getOperand(0).getImm();
+  if (Amount == 0)
+    return MBB.erase(I);
+
+  const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
+  const SIInstrInfo *TII = ST.getInstrInfo();
+  const DebugLoc &DL = I->getDebugLoc();
+  unsigned Opc = I->getOpcode();
+  bool IsDestroy = Opc == TII->getCallFrameDestroyOpcode();
+  uint64_t CalleePopAmount = IsDestroy ? I->getOperand(1).getImm() : 0;
+
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  if (!TFI->hasReservedCallFrame(MF)) {
+    unsigned Align = getStackAlignment();
+
+    Amount = alignTo(Amount, Align);
+    assert(isUInt<32>(Amount) && "exceeded stack address space size");
+    const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+    unsigned SPReg = MFI->getStackPtrOffsetReg();
+
+    unsigned Op = IsDestroy ? AMDGPU::S_SUB_U32 : AMDGPU::S_ADD_U32;
+    BuildMI(MBB, I, DL, TII->get(Op), SPReg)
+      .addReg(SPReg)
+      .addImm(Amount * ST.getWavefrontSize());
+  } else if (CalleePopAmount != 0) {
+    llvm_unreachable("is this used?");
+  }
+
+  return MBB.erase(I);
+}
+
 void SIFrameLowering::emitDebuggerPrologue(MachineFunction &MF,
                                            MachineBasicBlock &MBB) const {
   const SISubtarget &ST = MF.getSubtarget<SISubtarget>();
